@@ -1,5 +1,9 @@
 #include "TypeDefinitions.h"
 
+double Get_Determinant(Tensor);
+
+Tensor Get_Inverse(Tensor);
+
 void Initialize_Element(Element *, char *, double **, int * );
 
 void Initialize_GP(GaussPoint *, Vector *);

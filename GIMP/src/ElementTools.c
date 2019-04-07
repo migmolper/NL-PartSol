@@ -5,6 +5,113 @@
 #include "include/ShapeFunctions.h"
 
 
+/*********************************************************************/
+
+/* Function to get the determinant of a matrix (max 3x3)  */
+double Get_Determinant(Tensor M)
+/* 
+   Inputs : Matrix (Tensor type)
+   Outputs : Determinant
+*/
+{
+
+  double Det_out;
+
+  switch(M.Size){
+
+  case 1:
+    Det_out = *M.n[0];
+    break;
+
+  case 2:
+    Det_out =
+      M.n[0][0]*M.n[1][1] -
+      M.n[0][1]*M.n[1][0];
+    break;
+    
+  case 3:
+    Det_out =
+      M.n[0][0]*M.n[1][1]*M.n[2][2] - /* + a11*a22*a33 */
+      M.n[0][0]*M.n[1][2]*M.n[2][1] + /* - a11*a23*a32 */
+      M.n[0][1]*M.n[1][2]*M.n[2][0] - /* + a12*a23*a31 */
+      M.n[0][1]*M.n[1][0]*M.n[2][2] + /* - a12*a33*a21 */
+      M.n[0][2]*M.n[1][0]*M.n[2][1] - /* + a13*a21*a32 */
+      M.n[0][2]*M.n[1][1]*M.n[2][0] ; /* - a13*a22*a31 */
+    break;
+  }
+  
+  return Det_out;
+}
+
+
+/*********************************************************************/
+
+/* Function to get the inverse of the matrix */
+Tensor Get_Inverse(Tensor M_in)
+/* 
+   Inputs : Matrix in, dimension os the matrix
+   Outpus : Matrix out
+*/
+{
+
+  Tensor M_out;
+  M_out.Size = M_in.Size;
+  M_out.n = (double **)Allocate_Matrix(M_in.Size,M_in.Size,sizeof(double));
+  
+  /* Get the determinant of the matrix */
+  double Det = Get_Determinant(M_in);
+  if(Det <= 0){
+    printf("Determinant null o less than zero \n");
+    exit(0);
+  }
+
+  /* Do in a different fashion if it is 2D or 3D */
+  if(M_in.Size == 2){
+    M_out.n[0][0] = 1/(Det)*M_in.n[1][1];
+
+    M_out.n[0][1] = -1/(Det)*M_in.n[0][1];
+
+    M_out.n[1][0] = -1/(Det)*M_in.n[1][0];
+
+    M_out.n[1][1] = 1/(Det)*M_in.n[0][0];
+  }
+  else if(M_in.Size == 3){
+    M_out.n[0][0] = 1/(Det)*(M_in.n[1][1]*M_in.n[2][2] -
+			     M_in.n[1][2]*M_in.n[2][1]);
+    
+    M_out.n[0][1] = -1/(Det)*(M_in.n[0][1]*M_in.n[2][2] -
+			      M_in.n[0][2]*M_in.n[2][1]);
+    
+    M_out.n[0][2] = 1/(Det)*(M_in.n[0][1]*M_in.n[1][2] -
+			     M_in.n[0][2]*M_in.n[1][1]);
+    
+    M_out.n[1][0] = -1/(Det)*(M_in.n[1][0]*M_in.n[2][2] -
+			      M_in.n[1][2]*M_in.n[2][0]);
+    
+    M_out.n[1][1] = 1/(Det)*(M_in.n[0][0]*M_in.n[2][2] -
+			     M_in.n[0][2]*M_in.n[2][0]);
+    
+    M_out.n[1][2] = -1/(Det)*(M_in.n[0][0]*M_in.n[1][2] -
+			      M_in.n[0][2]*M_in.n[1][0]);
+    
+    M_out.n[2][0] = 1/(Det)*(M_in.n[1][0]*M_in.n[2][1] -
+			     M_in.n[1][1]*M_in.n[2][0]);
+    
+    M_out.n[2][1] = -1/(Det)*(M_in.n[0][0]*M_in.n[2][1] -
+			      M_in.n[0][1]*M_in.n[2][0]);
+    
+    M_out.n[2][2] = 1/(Det)*(M_in.n[0][0]*M_in.n[1][1] -
+			     M_in.n[0][1]*M_in.n[1][0]);
+  }
+
+  /* Return the inverse matrix */
+  return M_out;
+  
+}
+
+/*********************************************************************/
+
+
 /* Function for defining the element properties */
 void Initialize_Element(Element * Elem,
 			char * TypeElement,
@@ -162,30 +269,30 @@ void Get_RefDeformation_Gradient(GaussPoint * GP,
 
 /*********************************************************************/
 
-/* void Get_Deformation_Gradient(Element * Elem, /\* Gauss point *\/ */
-/* 			      GaussPoint * GP) /\* Element *\/ */
-/* { */
-/*   double ** F_ref_m1 = (double **)Allocate_Matrix(2,2,sizeof(double)); */
-
-/*   /\* Deformation reference gradient F_ref *\/ */
-/*   Get_RefDeformation_Gradient(GP,Elem); */
-
-/*   /\* Get the inverse of the deformation gradient *\/ */
-/*   Get_Inverse(GP[0].F_ref.n,F_ref_m1,2); */
-
-/*   /\* Iterate over the nodes in the Element to get B *\/ */
-/*   for(int i = 0 ; i<Element[0].NumberNodes ; i++){ */
-
-    
-    
-/*   }/\* Nodes loop *\/ */
-
-/*   /\* Once we have calculated the deformation gradient */
-/*      matrix we dont need anymore the inverse of the */
-/*      reference deformation gradient so we free memory *\/   */
-/*   free(F_ref_m1); */
+void Get_Deformation_Gradient(Element * Elem, /* Gauss point */
+			      GaussPoint * GP) /* Element */
+{
   
-/* } */
+  /* Deformation reference gradient F_ref */
+  Get_RefDeformation_Gradient(GP,Elem);
+
+  /* Get the inverse of the deformation gradient */
+  Tensor F_ref_m1;
+  F_ref_m1 = Get_Inverse(GP[0].F_ref);
+
+  /* /\* Iterate over the nodes in the Element to get B *\/ */
+  /* for(int i = 0 ; i<Element[0].NumberNodes ; i++){ */
+
+    
+    
+  /* }/\* Nodes loop *\/ */
+
+  /* Once we have calculated the deformation gradient
+     matrix we dont need anymore the inverse of the
+     reference deformation gradient so we free memory */
+  free(F_ref_m1.n);
+  
+}
 
 
 /*********************************************************************/
