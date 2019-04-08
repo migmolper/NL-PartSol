@@ -1,0 +1,66 @@
+#include <stdio.h>
+#include <stdlib.h>
+
+/***************************************************************************/
+
+
+// Allocate function for array
+void * AllocateArray(int dim,int trama)
+/*
+  Inputs
+  - dim : Dimension of the array
+  - trama : Number of bytes of one single element in the array
+
+  Outputs
+  - Pointer to the to the reserved zone in memory
+*/
+{
+  // Declaration of the pointer
+  void * v;
+
+  // Save data in memory
+  v = malloc(dim*trama);
+
+  // Error message
+  if(v == NULL) { puts("Error in allocate_array"); exit(0); }
+  
+  // Return the pointer
+  return v;  
+}
+
+
+/***************************************************************************/
+
+
+// Allocate function for matrix
+void ** AllocateMatrix(int n_row, int n_col, int trama)
+  /*
+  Inputs
+  - n_row : Number of rows
+  - n_col : Number of columns
+  - trama : Number of bytes of one single element in the matrix
+
+  Outputs
+  - Pointer to the to the reserved zone in memory
+  */
+{
+  void ** m;
+
+  // Allocate of the pointer to the pointer table (rows)
+  m = (void **)malloc((unsigned) n_row * sizeof(void *));
+  if (m == NULL) { puts("Error in allocate_matrix"); exit(0); }
+
+  // Allocate the pointer in each row (columns)
+  for(int i = 0; i<n_row; i++){
+
+    m[i] = malloc((unsigned) n_col * trama);
+    if( m[i] == NULL ) { puts("Error in allocate_matrix"); exit(0);  }
+    
+  }
+
+  // Return the matrix
+  return m;
+}
+
+
+/***************************************************************************/
