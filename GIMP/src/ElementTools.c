@@ -1,151 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "include/Utils.h"
-#include "include/ShapeFunctions.h"
-
-
-/*********************************************************************/
-
-/* Function to get the determinant of a matrix (max 3x3)  */
-double Get_Determinant(Tensor M)
-/* 
-   Inputs : Matrix (Tensor type)
-   Outputs : Determinant
-*/
-{
-
-  double Det_out;
-
-  switch(M.Size){
-
-  case 1:
-    Det_out = *M.n[0];
-    break;
-
-  case 2:
-    Det_out =
-      M.n[0][0]*M.n[1][1] -
-      M.n[0][1]*M.n[1][0];
-    break;
-    
-  case 3:
-    Det_out =
-      M.n[0][0]*M.n[1][1]*M.n[2][2] - /* + a11*a22*a33 */
-      M.n[0][0]*M.n[1][2]*M.n[2][1] + /* - a11*a23*a32 */
-      M.n[0][1]*M.n[1][2]*M.n[2][0] - /* + a12*a23*a31 */
-      M.n[0][1]*M.n[1][0]*M.n[2][2] + /* - a12*a33*a21 */
-      M.n[0][2]*M.n[1][0]*M.n[2][1] - /* + a13*a21*a32 */
-      M.n[0][2]*M.n[1][1]*M.n[2][0] ; /* - a13*a22*a31 */
-    break;
-  }
-  
-  return Det_out;
-}
-
+#include "ToolsLib/TypeDefinitions.h"
+#include "ToolsLib/Utils.h"
+#include "ToolsLib/ShapeFunctions.h"
 
 /*********************************************************************/
-
-/* Function to get the inverse of the matrix */
-Tensor Get_Inverse(Tensor M_in)
-/* 
-   Inputs : Matrix in, dimension os the matrix
-   Outpus : Matrix out
-*/
-{
-
-  Tensor M_out;
-  M_out.Size = M_in.Size;
-  M_out.n = (double **)Allocate_Matrix(M_in.Size,M_in.Size,sizeof(double));
-  
-  /* Get the determinant of the matrix */
-  double Det = Get_Determinant(M_in);
-  if(Det <= 0){
-    printf("Determinant null o less than zero \n");
-    exit(0);
-  }
-
-  /* Do in a different fashion if it is 2D or 3D */
-  if(M_in.Size == 2){
-    M_out.n[0][0] = 1/(Det)*M_in.n[1][1];
-
-    M_out.n[0][1] = -1/(Det)*M_in.n[0][1];
-
-    M_out.n[1][0] = -1/(Det)*M_in.n[1][0];
-
-    M_out.n[1][1] = 1/(Det)*M_in.n[0][0];
-  }
-  else if(M_in.Size == 3){
-    M_out.n[0][0] = 1/(Det)*(M_in.n[1][1]*M_in.n[2][2] -
-			     M_in.n[1][2]*M_in.n[2][1]);
-    
-    M_out.n[0][1] = -1/(Det)*(M_in.n[0][1]*M_in.n[2][2] -
-			      M_in.n[0][2]*M_in.n[2][1]);
-    
-    M_out.n[0][2] = 1/(Det)*(M_in.n[0][1]*M_in.n[1][2] -
-			     M_in.n[0][2]*M_in.n[1][1]);
-    
-    M_out.n[1][0] = -1/(Det)*(M_in.n[1][0]*M_in.n[2][2] -
-			      M_in.n[1][2]*M_in.n[2][0]);
-    
-    M_out.n[1][1] = 1/(Det)*(M_in.n[0][0]*M_in.n[2][2] -
-			     M_in.n[0][2]*M_in.n[2][0]);
-    
-    M_out.n[1][2] = -1/(Det)*(M_in.n[0][0]*M_in.n[1][2] -
-			      M_in.n[0][2]*M_in.n[1][0]);
-    
-    M_out.n[2][0] = 1/(Det)*(M_in.n[1][0]*M_in.n[2][1] -
-			     M_in.n[1][1]*M_in.n[2][0]);
-    
-    M_out.n[2][1] = -1/(Det)*(M_in.n[0][0]*M_in.n[2][1] -
-			      M_in.n[0][1]*M_in.n[2][0]);
-    
-    M_out.n[2][2] = 1/(Det)*(M_in.n[0][0]*M_in.n[1][1] -
-			     M_in.n[0][1]*M_in.n[1][0]);
-  }
-
-  /* Return the inverse matrix */
-  return M_out;
-  
-}
-
-/*********************************************************************/
-
-
-/* Function for defining the element properties */
-void Initialize_Element(Element * Elem,
-			char * TypeElement,
-			double ** GlobalNodsCoords,
-			int * GlobalNodsId){
-  
-  if (strcmp(TypeElement,"Q4")==0){
-
-    /* Identification number of the element */
-    Elem[0].id = 0;
-
-    /* Number of nodes in this element */
-    Elem[0].NumberNodes = 4;
-
-    /* Number of degree of freedom for each node */
-    Elem[0].NumberDOF = 2;
-
-    /* Global coordiantes of the nodes */
-    Elem[0].X_g = GlobalNodsCoords;
-
-    /* Conectivity mesh */
-    Elem[0].N_id = GlobalNodsId;
-
-    /* Shape functions and its derivatives */
-    Elem[0].n = Q4;
-    Elem[0].dn = dQ4;
-
-    /* Auxiliar matrix to do the operations in K matrix */
-    Elem[0].B.N_cols = 2;
-    Elem[0].B.N_rows = 4;
-    Elem[0].B.n = (double **)Allocate_Matrix(4,2,sizeof(double));
-  }
-  
-}
 
 void Initialize_GP(GaussPoint * GP,Vector * RefCoords)
 /* In this function we Initialize and allocate all the variables of the Gauss Points,
@@ -217,6 +77,50 @@ void Initialize_GP(GaussPoint * GP,Vector * RefCoords)
 
 /*********************************************************************/
 
+
+/* Function for defining the element properties */
+void Initialize_Element(Element * Elem,
+			GaussPoint * GP_e,
+			char * TypeElement,
+			double ** GlobalNodsCoords,
+			int * GlobalNodsId){
+  
+  if (strcmp(TypeElement,"Q4")==0){
+
+    /* Identification number of the element */
+    Elem[0].id = 0;
+
+    /* Number of nodes in this element */
+    Elem[0].NumberNodes = 4;
+
+    /* Number of degree of freedom for each node */
+    Elem[0].NumberDOF = 2;
+
+    /* Global coordiantes of the nodes */
+    Elem[0].X_g = GlobalNodsCoords;
+
+    /* Conectivity mesh */
+    Elem[0].N_id = GlobalNodsId;
+
+    /* Shape functions and its derivatives */
+    Elem[0].N_ref = Q4;
+    Elem[0].dNdX_ref = dQ4;
+
+    /* List of GP inside of the element */
+    Elem[0].GP_e = GP_e;
+
+    /* Auxiliar matrix to do the operations in K matrix */
+    Elem[0].B.N_cols = 2;
+    Elem[0].B.N_rows = 4;
+    Elem[0].B.n = (double **)Allocate_Matrix(4,2,sizeof(double));
+  }
+  
+}
+
+
+
+/*********************************************************************/
+
 void Get_RefDeformation_Gradient(GaussPoint * GP,
 				 Element * Elem)
 /*
@@ -234,12 +138,11 @@ void Get_RefDeformation_Gradient(GaussPoint * GP,
   - B_ref -> Ma
 */
 {
-
   Element Elem_GP = Elem[GP[0].Element_id];
   
   /* Get the values of the shape functions derivatives */
-  double ** deriv_SHPF = (double **)Allocate_Matrix(4,2,sizeof(double));
-  deriv_SHPF = Elem_GP.dn(&(GP[0].x_EC));
+  double ** dNdX_ref = (double **)Allocate_Matrix(4,2,sizeof(double));
+  dNdX_ref = Elem_GP.dNdX_ref(&(GP[0].x_EC));
 
   for(int n = 0 ; n<Elem_GP.NumberNodes ; n++){
     /* Loop over the nodes of the element */    
@@ -250,11 +153,11 @@ void Get_RefDeformation_Gradient(GaussPoint * GP,
 
 	/* In this case we use isoparametric formulation, */
 	if(n==0){/* Initialize and increase */
-	  GP[0].F_ref.n[i][j] = 0;
-	  GP[0].F_ref.n[i][j] += Elem_GP.X_g[n][j]*deriv_SHPF[n][i];
+	  GP[0].F_ref.nM[i][j] = 0;
+	  GP[0].F_ref.nM[i][j] += Elem_GP.X_g.nM[n][j]*dNdX_ref[n][i];
 	}
 	else{ /* Increase */
-	  GP[0].F_ref.n[i][j] += Elem_GP.X_g[n][j]*deriv_SHPF[n][i];
+	  GP[0].F_ref.nM[i][j] += Elem_GP.X_g.nM[n][j]*dNdX_ref[n][i];
 	}
 	
       }/* for j */
@@ -262,73 +165,140 @@ void Get_RefDeformation_Gradient(GaussPoint * GP,
   }/* for n */
 
   /* Free the gradient of the shape functions */
-  free(deriv_SHPF);
+  free(dNdX_ref);
   
 }
 
 
 /*********************************************************************/
 
-void Get_Deformation_Gradient(Element * Elem, /* Gauss point */
-			      GaussPoint * GP) /* Element */
-{
+/* void Get_Deformation_Gradient(Element * Elem, /\* Gauss point *\/ */
+/* 			      GaussPoint * GP) /\* Element *\/ */
+/* { */
   
-  /* Deformation reference gradient F_ref */
-  Get_RefDeformation_Gradient(GP,Elem);
+/*   /\* Deformation reference gradient F_ref *\/ */
+/*   Get_RefDeformation_Gradient(GP,Elem); */
 
-  /* Get the inverse of the deformation gradient */
-  Tensor F_ref_m1;
-  F_ref_m1 = Get_Inverse(GP[0].F_ref);
+/*   /\* Get the inverse of the deformation gradient *\/ */
+/*   Tensor F_ref_m1; */
+/*   F_ref_m1 = Get_Inverse(GP[0].F_ref); */
 
-  /* /\* Iterate over the nodes in the Element to get B *\/ */
-  /* for(int i = 0 ; i<Element[0].NumberNodes ; i++){ */
+/*   /\* Iterate over the nodes in the Element to get B *\/ */
+/*   for(int i = 0 ; i<Element[0].NumberNodes ; i++){ */
 
     
     
-  /* }/\* Nodes loop *\/ */
+/*   }/\* Nodes loop *\/ */
 
-  /* Once we have calculated the deformation gradient
-     matrix we dont need anymore the inverse of the
-     reference deformation gradient so we free memory */
-  free(F_ref_m1.n);
+/*   /\* Once we have calculated the deformation gradient */
+/*      matrix we dont need anymore the inverse of the */
+/*      reference deformation gradient so we free memory *\/ */
+/*   free(F_ref_m1.n); */
   
-}
+/* } */
 
 
 /*********************************************************************/
 
-void Get_Lagrangian_CG_Tensor(GaussPoint * GP) /* Gauss point */
-			        
-/* The Right Cauchy Green Deformation Tensor :
-   C = F^{T} \cdot F 
+Matrix Get_dNdx_matrix(Element * Elem,
+		       GaussPoint * GP)
+/* Get the derivative matrix of the shape functions in global coordiantes, it is
+   the so called B matrix in the classical formulation of the finite element method 
+   Inputs: Element, GP where to evaluate it
+   Outputs : Matrix dNdX
 */
 {
-  /* Get C */
-  for(int i = 0; i<GP[0].F.Size ; i++){
-    for(int j = 0; j<GP[0].F.Size; j++){
-      GP[0].C.n[i][j] = GP[0].F.n[j][i] * GP[0].F.n[i][j];
-      /*    C         =       F^{T}     *       F  */
-    } /* for j */
-  } /* for i */
-  
-}
 
+  /* Store the GP information in a auxiliary element */
+  Element Elem_GP = Elem[GP[0].Element_id];
+  
+  /* Allocate the output */
+  Matrix dNdX;
+  dNdX.N_rows = Elem_GP.NumberNodes;
+  dNdX.N_cols = Elem_GP.NumberDOF;
+  dNdX.nM = (double **)Allocate_Matrix(dNdX.N_rows,
+				      dNdX.N_cols,
+				      sizeof(double));
+  
+  /* Get the values of the shape functions derivatives */
+  double ** dNdX_ref = (double **)Allocate_Matrix(dNdX.N_rows,
+						  dNdX.N_cols,
+						  sizeof(double));
+  dNdX_ref = Elem_GP.dNdX_ref(GP[0].x_EC);
+  
+  /* Get the inverse of the reference deformation gradient and transpose it */
+  Matrix F_ref_m1T;
+  double aux;
+  F_ref_m1T = Get_Inverse(GP[0].F_ref);
+  for(int i = 0 ; i < F_ref_m1T.N_rows ; i++ ){
+    for(int j = i ; j < F_ref_m1T.N_cols ; j++){
+      aux = F_ref_m1T.n[i][j];
+      F_ref_m1T.nM[i][j] = F_ref_m1T.nM[j][i];
+      F_ref_m1T.nM[j][i] = aux;
+    }
+  }
+
+  /* Fill the matrix */
+  for(int i = 0 ; i < dNdX.N_rows ; i++){ /* Iterate over the nodes */
+    for(int j = 0 ; j < dNdX.N_cols ; j++){ /* Iterate over the degree of freedom */
+      dNdX.nM[i][j] = 0; /* Fill first with a zero */
+      
+      for(int k = 0 ; k < dNdX.N_cols ; k++){
+	dNdX.nM[i][j] += F_ref_m1T.nM[j][k]*dNdX_ref[i][j+k];
+      }
+      
+    } /* for i */
+  } /* for j */
+
+  free(dNdX_ref);
+  
+  return dNdX;  
+}
 
 
 /*********************************************************************/
 
-void Get_Eulerian_CG_Tensor(GaussPoint * GP) /* Gauss point */
-  
-  /* The Left Cauchy Green Deformation Tensor :
-   B = F \cdot F^{T} */
+void Get_Lagrangian_CG_Tensor(GaussPoint * GP)
+/* 
+   The Right Cauchy Green Deformation Tensor :
+   C = F^{T} \cdot F 
+
+   Inputs : Gauss point
+*/
 {
+  /* Check if we have a null matrix */
+  if (GP[0].F.n == NULL){
+    puts("Error in Get_Lagrangian_CG_Tensor : GP.F tensor = NULL");
+    exit(0);
+  }
+  
+  /* Get C */
+  GP[0].C = Scalar_prod(Transpose_Mat(GP[0].F), /* F^T */
+			GP[0].F); /* F */
+  
+}
+
+
+
+/*********************************************************************/
+
+void Get_Eulerian_CG_Tensor(GaussPoint * GP) 
+/*
+ The Left Cauchy Green Deformation Tensor :
+ B = F \cdot F^{T} 
+
+ Inputs : Gauss point 
+*/
+{  
+  /* Check if we have a null matrix */
+  if (GP[0].F.n == NULL){
+    puts("Error in Get_Eulerian_CG_Tensor : GP.F tensor = NULL");
+    exit(0);
+  }
+  
   /* Get B */
-  for(int i = 0; i<GP[0].F.Size ; i++){
-    for(int j = 0; j<GP[0].F.Size; j++){
-      GP[0].B.n[i][j] = GP[0].F.n[i][j] * GP[0].F.n[j][i];
-      /*    B         =       F         *       F^{T}  */
-    } /* for j */
-  } /* for i */
+  GP[0].B = Scalar_prod(GP[0].F, /* F */
+			Transpose_Mat(GP[0].F)); /* F^T */
   
 }
 
@@ -336,31 +306,41 @@ void Get_Eulerian_CG_Tensor(GaussPoint * GP) /* Gauss point */
 /*********************************************************************/
 
 
-/* double ** Get_Stiffness_Matrix(double ** D, /\* Constitutive matrix *\/ */
-/* 			       GaussPoint * GP, /\* Gauss points of the element *\/ */
-/* 			       Element * Elem) /\* Element to analyze *\/ */
+/* Matrix Get_Stiffness_Matrix(Matrix D, /\* Constitutive matrix *\/ */
+/* 			    Element * Elem) /\* Element to analyze *\/ */
 /* /\* Calcule the element stiffness matrix K *\/ */
 /* { */
 
-/*   /\* We need the deformation grafient F and later it inverse *\/ */
+/*   Element Elem_e; */
+/*   Matrix dNdX; */
+/*   Matrix K; */
+/*   double J; */
   
-/*   double ** B = (double **)Allocate_Matrix(Element->NumberNodes, */
-/* 					   Element->NumberDOF, */
-/* 					   sizeof(double)); */
-
-/*   for(int i = 0 ; i<Element.NumberGP ; i++){/\* Iterate over the Gauss Points *\/ */
-
+/*   /\* Allocate and initialize K *\/ */
+/*   K.N_rows = Elem.NumberNodes * Elem.NumberDOF; */
+/*   K.N_cols = Elem.NumberNodes * Elem.NumberDOF; */
+/*   K.n = (double **)Allocate_Matrix(K.N_rows,K.N_cols,sizeof(double **)); */
+  
+/*   /\* Iterate over the Gauss Points *\/ */
+/*   for(int i_gp = 0 ; i_gp<Elem.NumberGP ; i_gp++){ */
     
-/*     for(int j = 0 ; j<Element.NumberDOF ; j++){/\* Iterate over the degree of freedom *\/ */
-      
-      
-/*     }/\* GP loop *\/ */
+/*     /\* Get the derivatives of the shape function in global coordiantes *\/ */
+/*     dNdx = Get_dNdx_matrix(Elem_e,Elem_e.GP_e[i_gp]); */
     
-/*   }/\* DOF loop *\/ */
-
-
-/*   free(F); */
-/*   free(F_m1); */
+/*     /\* Get the Jacobian of the transformation *\/ */
+/*     /\* Check if we have a null matrix *\/ */
+/*     J = Get_Determinant(Elem_e.GP_e[i_gp].F_ref); */
+    
+/*     /\* Iterate nodes *\/ */
+/*     K_gp = Mat_Mul(D,dNdX); */
+/*     K_gp = Mat_Mul(dNdX,K); */
+/*     K_gp *= J; */
+    
+/*     K = Mat_Sum(K,K_gp); */
+    
+/*   } */
+/*   /\* We dont need the derivatives *\/ */
+/*   free(dNdX.n); */
   
 /*   return K; */
 /* } */

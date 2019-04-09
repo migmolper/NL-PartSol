@@ -1,7 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "include/Utils.h"
-#include "include/ElementTools.h"
+#include "ToolsLib/TypeDefinitions.h"
+#include "ToolsLib/Utils.h"
+#include "ToolsLib/ElementTools.h"
 
 
 int main(void){
@@ -35,7 +36,12 @@ int main(void){
   I_g[2] = 2;
   I_g[2] = 3;
   
-  Initialize_Element(E2D,ElementType,X_g,I_g);
+  Initialize_Element(E2D,
+		     GP_e,
+		     ElementType,
+		     X_g,
+		     I_g);
+  
   Initialize_GP(GP_e,X_e);
 
   printf("%i ; %i \n (%f,%f) \n",
@@ -43,38 +49,6 @@ int main(void){
 	 GP_e[0].x_EC.n[0],
 	 GP_e[0].x_EC.n[1]);
 
-  double ** B_ref = (double **)Allocate_Matrix(E2D->NumberNodes,
-  					       E2D->NumberDOF,
-  					       sizeof(double));
-
-  double ** C_e = (double **)Allocate_Matrix(E2D->NumberDOF,
-  					     E2D->NumberDOF,
-  					     sizeof(double));
-  
-  Get_RefDeformation_Gradient(GP_e,E2D);
-  printf("%f ; %f ; %f ; %f \n",
-  	 GP_e[0].F_ref.n[0][0],
-  	 GP_e[0].F_ref.n[0][1],
-  	 GP_e[0].F_ref.n[1][0],
-  	 GP_e[0].F_ref.n[1][1]);
-
-  /* double J_e = Get_Determinant(F_e,2); */
-  /* printf("%f \n",J_e); */
-
-  /* Get_Lagrangian_CG_Tensor(GP_e,E2D,C_e); */
-  /* printf("%f ; %f ; %f ; %f \n", */
-  /* 	 C_e[0][0], */
-  /* 	 C_e[0][1], */
-  /* 	 C_e[1][0], */
-  /* 	 C_e[1][1]); */
-  
-  /* Get_Inverse(F_e,Inv_F_e,2); */
-  /* printf("%f ; %f ; %f ; %f \n", */
-  /* 	 Inv_F_e[0][0], */
-  /* 	 Inv_F_e[0][1], */
-  /* 	 Inv_F_e[1][0], */
-  /* 	 Inv_F_e[1][1]); */
-  
-  
+   
   return 0;
 }

@@ -1,0 +1,106 @@
+
+/* Math structures */
+typedef struct{
+  int N_elem;
+  double * n;
+} Array;
+
+typedef struct{
+  int N_rows;
+  int N_cols;
+  double ** n;
+} Matrix;
+
+
+/* Fields declaration */
+typedef struct {
+  int Size;
+  double * n;
+} Vector; /* Vectorial field */
+
+typedef struct{
+  int Size;
+  double ** n;
+} Tensor; /* Tensorial field */
+
+/* Gauss points definitions */
+typedef struct {
+
+  /* Identification number of the GP */
+  int id;
+
+  /* Identification of the element where it is */
+  int Element_id;
+
+  /* Name of the Material */
+  char Material [20];
+
+  /* Position of the GP with global coordiantes */
+  Vector x_GC;
+
+  /* Position of the GP with element coordiantes */
+  Vector x_EC;
+
+  /* Velocity field */
+  Vector v;
+  
+  /* Acceleration field */
+  Vector a;
+  
+  /* Stress field */
+  Tensor Stress;
+  
+  /* Strain field */
+  Tensor Strain;
+  
+  /* Reference deformation gradient */
+  Tensor F_ref;
+  
+  /* Deformation gradient */
+  Tensor F;
+  
+  /* Lagrangian Cauchy-Green tensor (right) */
+  Tensor C;
+  
+  /* Eulerian Cauchy-Green tensor (left) */
+  Tensor B; 
+  
+} GaussPoint;
+
+
+/* Element type definition */
+typedef struct {
+
+  /* Identification number of the element */
+  int id;
+
+  /* Number of nodes of the element */
+  int NumberNodes;
+
+  /* Degrees of freedom for each node*/
+  int NumberDOF;
+
+  /* Number of Gauss points inside of the element */
+  int NumberGP;
+
+  /* Global index of the nodes (connectivity) */
+  int * N_id;
+
+  /* Global coordiantes of the element nodes */
+  double ** X_g;
+
+  /* Shape function of the reference element evaluated in a GP */
+  double * (* N_ref)(Vector *);
+
+  /* Derivative shape function of the reference element evaluated in a GP */
+  double ** (* dNdX_ref)(Vector *);
+
+  /* List of GP inside of the element */
+  GaussPoint * GP_e;
+
+  /* It is not the Eulerian Cauchy-Green tensor, it is the operator matrix 
+     to get the deformation of the mesh */
+  Matrix B;
+  
+} Element;
+
