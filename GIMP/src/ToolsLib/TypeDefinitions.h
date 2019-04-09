@@ -48,12 +48,6 @@ typedef struct {
   /* Deformation gradient */
   Matrix F;
   
-  /* Lagrangian Cauchy-Green tensor (right) */
-  Matrix C;
-  
-  /* Eulerian Cauchy-Green tensor (left) */
-  Matrix B; 
-  
 } GaussPoint;
 
 

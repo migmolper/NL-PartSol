@@ -26,10 +26,10 @@ Matrix Q4(Matrix X_e){
 				      sizeof(double));
 
   /* Fill the array */
-  N_ref[0] = 1 - X_e.nv[0] - X_e.nv[1] + (X_e.nv[0])*(X_e.nv[1]);
-  N_ref[1] = X_e.nv[0] - (X_e.nvn[0])*(X_e.nv[1]);
-  N_ref[2] = (X_e.nv[0])*(X_e.nv[1]);
-  N_ref[3] = X_e.nv[1] - X_e.nv[1]*(X_e.nv[0]);
+  N_ref.nV[0] = 1 - X_e.nv[0] - X_e.nv[1] + (X_e.nv[0])*(X_e.nv[1]);
+  N_ref.nV[1] = X_e.nv[0] - (X_e.nvn[0])*(X_e.nv[1]);
+  N_ref.nV[2] = (X_e.nv[0])*(X_e.nv[1]);
+  N_ref.nV[3] = X_e.nv[1] - X_e.nv[1]*(X_e.nv[0]);
   
   return N_ref;
 }
@@ -47,15 +47,15 @@ Matrix dQ4(Matrix X_e){
 
   /* Fill the matrix */
   /* $\xi$ */
-  dNdX_ref[0][0] = X_e.nv[1] - 1; /* \frac{\partial N0}{\partial \xi} */
-  dNdX_ref[0][1] = 1 - X_e.nv[1]; /* \frac{\partial N1}{\partial \xi} */
-  dNdX_ref[0][2] = X_e.nv[1]; /* \frac{\partial N2}{\partial \xi} */
-  dNdX_ref[0][3] = - X_e.nv[1]; /* \frac{\partial N3}{\partial \xi} */
+  dNdX_ref.nM[0][0] = X_e.nv[1] - 1; /* \frac{\partial N0}{\partial \xi} */
+  dNdX_ref.nM[0][1] = 1 - X_e.nv[1]; /* \frac{\partial N1}{\partial \xi} */
+  dNdX_ref.nM[0][2] = X_e.nv[1]; /* \frac{\partial N2}{\partial \xi} */
+  dNdX_ref.nM[0][3] = - X_e.nv[1]; /* \frac{\partial N3}{\partial \xi} */
   /* $\eta$ */
-  dNdX_ref[1][1]= X_e.nv[0] - 1; /* \frac{\partial N0}{\partial \eta} */
-  dNdX_ref[1][1] = - X_e[0]; /* \frac{\partial N1}{\partial \eta} */
-  dNdX_ref[2][1] = X_e.nvn[0]; /* \frac{\partial N2}{\partial \eta} */
-  dNdX_ref[3][1] = 1 - X_e.nv[0]; /* \frac{\partial N3}{\partial \eta} */
+  dNdX_ref.nM[1][0] = X_e.nv[0] - 1; /* \frac{\partial N0}{\partial \eta} */
+  dNdX_ref.nM[1][1] = - X_e[0]; /* \frac{\partial N1}{\partial \eta} */
+  dNdX_ref.nM[1][2] = X_e.nvn[0]; /* \frac{\partial N2}{\partial \eta} */
+  dNdX_ref.nM[1][3] = 1 - X_e.nv[0]; /* \frac{\partial N3}{\partial \eta} */
   
   return dNdX_ref;
 }

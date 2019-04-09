@@ -7,112 +7,76 @@
 
 /*********************************************************************/
 
-void Initialize_GP(GaussPoint * GP,Vector * RefCoords)
+void Initialize_GP(GaussPoint GP,Matrix RefCoords)
 /* In this function we Initialize and allocate all the variables of the Gauss Points,
    if they are necessary */
 {
 
   /* Initialize_Element id of the GP */
-  GP[0].id = 0;
+  GP.id = 0;
 
   /* Id of the element where it is */
-  GP[0].Element_id = 0; 
+  GP.Element_id = 0; 
 
   /* Initialize kind of material */
-  strcpy(GP[0].Material,"Elastic");
+  strcpy(GP.Material,"Elastic");
 
   /* Initialize and allocate position field (Vectorial) in global coordiantes
    and in element coordinates */
-  GP[0].x_GC.Size = 2;
-  GP[0].x_GC.n = (double *)Allocate_Array(2,sizeof(double));
-  /* GP[0].x_GC.n = ... Initialize */
-  
-  GP[0].x_EC.Size = 2;
-  GP[0].x_EC.n = (double *)Allocate_Array(2,sizeof(double));
-  GP[0].x_EC.n = RefCoords[0].n;
+  GP.x_GC = MatAlloc(1,2);
+  GP.x_EC = MatAlloc(1,2);
+  /* GP.x_GC.nV = ... Initialize */
+  GP.x_EC.nV = RefCoords.nV;
 
   /* Allocate and Initialize the Velocity and acceleration field (Vectorial) */
-  GP[0].v.Size = 2;
-  GP[0].v.n = (double *)Allocate_Array(2,sizeof(double));
-  /*  GP[0].v.n = ... Initialize */
-
-  GP[0].a.Size = 2;
-  GP[0].a.n = (double *)Allocate_Array(2,sizeof(double));
-  /*  GP[0].v.n = ... Initialize */
+  GP.v = MatAlloc(1,2);
+  GP.a = MatAlloc(1,2);
+  /*  GP.v.nV = ... Initialize */
+  /*  GP.v.nV = ... Initialize */
 
   /* Allocate and Initialize the Stress and Strain fields (Tensorial) */
-  GP[0].Stress.Size = 2;
-  GP[0].Stress.n = (double **)Allocate_Matrix(2,2,sizeof(double));
-  /* GP[0].Stress.n = ... Initialize */
-
-  GP[0].Strain.Size = 2;
-  GP[0].Strain.n = (double **)Allocate_Matrix(2,2,sizeof(double));
-  /*GP[0].Strain.n = ...  Initialize */
-  
-  /* Initialize and allocate the deformation gradient of the reference element 
-     It is a tensor field */
-  GP[0].F_ref.Size = 2;
-  GP[0].F_ref.n = (double **)Allocate_Matrix(2,2,sizeof(double));
-  /*  GP[0].F_ref.n = ... Initialize */
-  
-  /* Initialize and allocate the deformation gradient of the element 
-     It is a tensor field */
-  GP[0].F.Size = 2;
-  GP[0].F.n = (double **)Allocate_Matrix(2,2,sizeof(double));
-  /*  GP[0].F.n = ... Initialize */
-
-  /* Initialize and allocate the Lagrangian Cauchy-Green tensor (right) 
-   of the element, it is a tensor field */
-  GP[0].C.Size = 2;
-  GP[0].C.n = (double **)Allocate_Matrix(2,2,sizeof(double));
-  /*  GP[0].C.n = ... Initialize */
-
-  /* Initialize and allocate the Eulerian Cauchy-Green tensor (left) 
-   of the element, it is a tensor field */
-  GP[0].B.Size = 2;
-  GP[0].B.n = (double **)Allocate_Matrix(2,2,sizeof(double));
-  /*  GP[0].B.n = ... Initialize */
-  
+  GP.Stress = MatAlloc(2,2);
+  GP.Strain = MatAlloc(2,2);
+  /* GP.Strain.nM = ...  Initialize */
+  /* GP.Stress.nM = ... Initialize */
 }
 
 /*********************************************************************/
 
 
 /* Function for defining the element properties */
-void Initialize_Element(Element * Elem,
+void Initialize_Element(Element Elem,
 			GaussPoint * GP_e,
 			char * TypeElement,
-			double ** GlobalNodsCoords,
+			Matrix GlobalNodsCoords,
 			int * GlobalNodsId){
   
   if (strcmp(TypeElement,"Q4")==0){
 
     /* Identification number of the element */
-    Elem[0].id = 0;
+    Elem.id = 0;
 
     /* Number of nodes in this element */
-    Elem[0].NumberNodes = 4;
+    Elem.NumberNodes = 4;
 
     /* Number of degree of freedom for each node */
-    Elem[0].NumberDOF = 2;
+    Elem.NumberDOF = 2;
 
     /* Global coordiantes of the nodes */
-    Elem[0].X_g = GlobalNodsCoords;
+    Elem.X_g = GlobalNodsCoords;
 
     /* Conectivity mesh */
-    Elem[0].N_id = GlobalNodsId;
+    Elem.N_id = GlobalNodsId;
 
     /* Shape functions and its derivatives */
-    Elem[0].N_ref = Q4;
-    Elem[0].dNdX_ref = dQ4;
+    Elem.N_ref = Q4;
+    Elem.dNdX_ref = dQ4;
 
     /* List of GP inside of the element */
-    Elem[0].GP_e = GP_e;
+    Elem.GP_e = GP_e;
 
     /* Auxiliar matrix to do the operations in K matrix */
-    Elem[0].B.N_cols = 2;
-    Elem[0].B.N_rows = 4;
-    Elem[0].B.n = (double **)Allocate_Matrix(4,2,sizeof(double));
+    Elem.B = MatAlloc(4,2);
   }
   
 }
@@ -121,12 +85,12 @@ void Initialize_Element(Element * Elem,
 
 /*********************************************************************/
 
-void Get_RefDeformation_Gradient(GaussPoint * GP,
-				 Element * Elem)
+void Get_RefDeformation_Gradient(GaussPoint GP,
+				 Element Elem_GP)
 /*
   Get the deformation gradient of the reference element:
 
-  F = x_{\alpha} \otimes grad(N_{\alpha})
+  F = grad(N_{\alpha}) \otimes x_{\alpha}
   
   Inputs : 
   - GP -> GP structure
@@ -138,35 +102,8 @@ void Get_RefDeformation_Gradient(GaussPoint * GP,
   - B_ref -> Ma
 */
 {
-  Element Elem_GP = Elem[GP[0].Element_id];
-  
-  /* Get the values of the shape functions derivatives */
-  double ** dNdX_ref = (double **)Allocate_Matrix(4,2,sizeof(double));
-  dNdX_ref = Elem_GP.dNdX_ref(&(GP[0].x_EC));
-
-  for(int n = 0 ; n<Elem_GP.NumberNodes ; n++){
-    /* Loop over the nodes of the element */    
-    for(int i = 0 ; i<Elem_GP.NumberDOF ; i++){
-      /* Loop over the degree of freedoms (Reference Element) */
-      for(int j = 0 ; j<Elem_GP.NumberDOF ; j++){
-	/* Loop over the degree of freedoms (Element) */
-
-	/* In this case we use isoparametric formulation, */
-	if(n==0){/* Initialize and increase */
-	  GP[0].F_ref.nM[i][j] = 0;
-	  GP[0].F_ref.nM[i][j] += Elem_GP.X_g.nM[n][j]*dNdX_ref[n][i];
-	}
-	else{ /* Increase */
-	  GP[0].F_ref.nM[i][j] += Elem_GP.X_g.nM[n][j]*dNdX_ref[n][i];
-	}
-	
-      }/* for j */
-    }/* for i */
-  }/* for n */
-
-  /* Free the gradient of the shape functions */
-  free(dNdX_ref);
-  
+  GP.F_ref = Scalar_prod(Elem_GP.dNdX_ref(GP.x_EC), /* grad(N_{\alpha}) */
+			 Elem_GP.X_g);  /* x_{\alpha} */
 }
 
 
@@ -198,59 +135,77 @@ void Get_RefDeformation_Gradient(GaussPoint * GP,
 /* } */
 
 
+
 /*********************************************************************/
 
-Matrix Get_dNdx_matrix(Element * Elem,
-		       GaussPoint * GP)
+Matrix Get_dNdi_matrix(Matrix dN_di){
+
+  Matrix dNdi_matrix;
+
+  if(dNdi_matrix.nM != NULL){
+    puts("Error in Get_dNdi_matrix() : The input must be an array !");
+    exit(0);
+  }
+
+  switch(dNdi_matrix.N_cols*dNdi_matrix.N_rows){
+  case 1:
+    puts("Error in Get_dNdi_matrix() : 1D cases not implemented yet");
+    exit(0);
+  case 2:
+    dNdi_matrix = MatAlloc(3,2);
+    dNdi_matrix.nM[0][0] = dN_di[0];
+    dNdi_matrix.nM[1][0] = 0; 
+    dNdi_matrix.nM[2][0] = dN_di[1]; 
+    dNdi_matrix.nM[0][1] = 0; 
+    dNdi_matrix.nM[1][1] = dN_di[1]; 
+    dNdi_matrix.nM[2][1] = dN_di[0];
+    break;
+  case 3:
+    puts("Error in Get_dNdi_matrix() : 3D cases not implemented yet");
+    exit(0);
+  default :
+    puts("Error in Get_dNdi_matrix() : Wrong case select");
+    exit(0);
+  }
+  
+  return dNdi_matrix;
+
+}
+
+/*********************************************************************/
+
+Matrix Get_dNdx_matrix(Element Elem_GP,
+		       GaussPoint GP)
 /* Get the derivative matrix of the shape functions in global coordiantes, it is
    the so called B matrix in the classical formulation of the finite element method 
    Inputs: Element, GP where to evaluate it
    Outputs : Matrix dNdX
 */
 {
-
-  /* Store the GP information in a auxiliary element */
-  Element Elem_GP = Elem[GP[0].Element_id];
+  /* Variables */
+  Matrix dNdX;
+  Matrix dNdX_ref;
+  Matrix dNdi_matrix;
+  Matrix F_ref_m1T;
   
   /* Allocate the output */
-  Matrix dNdX;
-  dNdX.N_rows = Elem_GP.NumberNodes;
-  dNdX.N_cols = Elem_GP.NumberDOF;
-  dNdX.nM = (double **)Allocate_Matrix(dNdX.N_rows,
-				      dNdX.N_cols,
-				      sizeof(double));
-  
-  /* Get the values of the shape functions derivatives */
-  double ** dNdX_ref = (double **)Allocate_Matrix(dNdX.N_rows,
-						  dNdX.N_cols,
-						  sizeof(double));
-  dNdX_ref = Elem_GP.dNdX_ref(GP[0].x_EC);
-  
+  dNdX = MatAlloc(3,4);
+
   /* Get the inverse of the reference deformation gradient and transpose it */
-  Matrix F_ref_m1T;
-  double aux;
-  F_ref_m1T = Get_Inverse(GP[0].F_ref);
-  for(int i = 0 ; i < F_ref_m1T.N_rows ; i++ ){
-    for(int j = i ; j < F_ref_m1T.N_cols ; j++){
-      aux = F_ref_m1T.n[i][j];
-      F_ref_m1T.nM[i][j] = F_ref_m1T.nM[j][i];
-      F_ref_m1T.nM[j][i] = aux;
-    }
+  F_ref_m1T = Transpose_Mat(Get_Inverse(GP.F_ref));
+
+  /* Get the values of the shape functions derivatives in each node */  
+  dNdX_ref = Elem_GP.dNdX_ref(GP.x_EC);
+
+  for(int i = 0 ; i < Elem_GP.NumberNodes ; i++){  
+
+    /* Ojo, cuidado con las dimensiones del producto !!!!!!!!!!!!!!!*/
+    dNdi_matrix = Get_dNdi_matrix(Scalar_prod(F_ref_m1T,dNdX_ref));
+
   }
-
-  /* Fill the matrix */
-  for(int i = 0 ; i < dNdX.N_rows ; i++){ /* Iterate over the nodes */
-    for(int j = 0 ; j < dNdX.N_cols ; j++){ /* Iterate over the degree of freedom */
-      dNdX.nM[i][j] = 0; /* Fill first with a zero */
-      
-      for(int k = 0 ; k < dNdX.N_cols ; k++){
-	dNdX.nM[i][j] += F_ref_m1T.nM[j][k]*dNdX_ref[i][j+k];
-      }
-      
-    } /* for i */
-  } /* for j */
-
-  free(dNdX_ref);
+  
+  free(dNdX_ref.nM);
+  free(F_ref_m1T.nM)
   
   return dNdX;  
 }
@@ -258,12 +213,13 @@ Matrix Get_dNdx_matrix(Element * Elem,
 
 /*********************************************************************/
 
-void Get_Lagrangian_CG_Tensor(GaussPoint * GP)
+Matrix Get_Lagrangian_CG_Tensor(GaussPoint GP)
 /* 
    The Right Cauchy Green Deformation Tensor :
    C = F^{T} \cdot F 
 
    Inputs : Gauss point
+   Output : C
 */
 {
   /* Check if we have a null matrix */
@@ -271,10 +227,14 @@ void Get_Lagrangian_CG_Tensor(GaussPoint * GP)
     puts("Error in Get_Lagrangian_CG_Tensor : GP.F tensor = NULL");
     exit(0);
   }
+
+  Matrix C;
   
   /* Get C */
-  GP[0].C = Scalar_prod(Transpose_Mat(GP[0].F), /* F^T */
-			GP[0].F); /* F */
+  C = Scalar_prod(Transpose_Mat(GP.F), /* F^T */
+		  GP.F); /* F */
+
+  return C;
   
 }
 
@@ -282,12 +242,13 @@ void Get_Lagrangian_CG_Tensor(GaussPoint * GP)
 
 /*********************************************************************/
 
-void Get_Eulerian_CG_Tensor(GaussPoint * GP) 
+Matrix Get_Eulerian_CG_Tensor(GaussPoint * GP) 
 /*
  The Left Cauchy Green Deformation Tensor :
  B = F \cdot F^{T} 
 
  Inputs : Gauss point 
+ Output : B
 */
 {  
   /* Check if we have a null matrix */
@@ -295,10 +256,14 @@ void Get_Eulerian_CG_Tensor(GaussPoint * GP)
     puts("Error in Get_Eulerian_CG_Tensor : GP.F tensor = NULL");
     exit(0);
   }
+
+  Matrix B;
   
   /* Get B */
-  GP[0].B = Scalar_prod(GP[0].F, /* F */
-			Transpose_Mat(GP[0].F)); /* F^T */
+  B = Scalar_prod(GP.F, /* F */
+		  Transpose_Mat(GP.F)); /* F^T */
+
+  return B;
   
 }
 

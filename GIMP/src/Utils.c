@@ -42,6 +42,27 @@ void ** Allocate_Matrix(int NumberRows,int NumberColumns, int SizeType)
 
 /*********************************************************************/
 
+Matrix MatAlloc(int NumberRows,int NumberColumns){
+
+  Matrix M;
+  M.N_rows = NumberRows;
+  M.N_cols = NumberColumns;
+
+  if( (NumberRows == 1) || (NumberColumns == 1) ){ /* It is an array */
+    M.nV = (double *)Allocate_Array(NumberRows*NumberColumns,
+				     sizeof(double));
+  }
+  else{ /* It is a matrix */
+    M.nM = (double **)Allocate_Matrix(NumberRows,
+				      NumberColumns,
+				      sizeof(double));    
+  }
+  
+  return M;
+}
+
+/*********************************************************************/
+
 /* Function to get the determinant of a matrix (max 3x3)  */
 double Get_Determinant(Matrix M_in)
 /* 
@@ -185,6 +206,10 @@ Matrix Get_Inverse(Matrix M_in)
 			     M_in.nM[0][1]*M_in.nM[1][0]);
   }
 
+
+  /* Free memory */
+  free(M_in.nM);
+  
   /* Return the inverse matrix */
   return M_out;
   
@@ -208,10 +233,14 @@ Matrix Transpose_Mat(Matrix M){
       for(int j = 0 ; j < M_T.N_cols){
 	  M_T.nM[i][j] = M.nM[j][i];
       }/* for i*/
-    }/* for j */ 
+    }/* for j */
+
+     /* Free input data (only if it is a matrix) */
+    free(M.nM);    
   }
   /* If it is an array you dont have to do anything in the allocation */
-  
+
+   
   return M_T;
 }
 
