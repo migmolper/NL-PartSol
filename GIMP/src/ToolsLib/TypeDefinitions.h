@@ -4,6 +4,7 @@
    note that this definition in not very eficient,
    but give you more flexibility.
 */
+
 typedef struct{
   int N_rows;
   int N_cols;
@@ -41,6 +42,9 @@ typedef struct {
   
   /* Strain field */
   Matrix Strain;
+
+  /* Constitutive response */
+  Matrix D;
   
   /* Reference deformation gradient */
   Matrix F_ref;

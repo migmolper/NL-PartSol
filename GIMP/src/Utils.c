@@ -5,7 +5,7 @@
 /* Function for arrays declaration */
 void * Allocate_Array(int SizeArray, int SizeType)
 /*
-  Function for matrix declaration
+  Function for array declaration
   Inputs : Number of rows, number of columns and kind of element (double, integer, ...)
   Outpus : Matrix
 */
@@ -13,6 +13,25 @@ void * Allocate_Array(int SizeArray, int SizeType)
   
   void * V;  
   V = (void *)malloc(SizeArray*SizeType);  
+  if (V == NULL){puts("Error in the array declaration"); exit(0);}  
+  return V;
+  
+}
+
+/*********************************************************************/
+
+
+/* Function for arrays declaration */
+double * Allocate_ArrayZ(int SizeArray)
+/*
+  Function for array of zeros declaration (double)
+  Inputs : Number of rows, number of columns and kind of element (double, integer, ...)
+  Outpus : Matrix
+*/
+{
+  
+  double * V;
+  V = (double*)calloc(SizeArray, sizeof(double));
   if (V == NULL){puts("Error in the array declaration"); exit(0);}  
   return V;
   
@@ -42,6 +61,28 @@ void ** Allocate_Matrix(int NumberRows,int NumberColumns, int SizeType)
 
 /*********************************************************************/
 
+double ** Allocate_MatrixZ(int NumberRows,int NumberColumns)
+/*
+  Function for matrix of zeros declaration (double)
+  Inputs : Number of rows, number of columns.
+  Outpus : Matrix
+ */
+{
+
+  double ** M;
+  M = (double **)calloc(NumberRows,sizeof(double *));
+  if (M == NULL){puts("Error in matrix declaration"); exit(0);}
+  for(int i = 0 ; i<NumberRows ; i++){
+    M[i] = (double *)calloc(NumberColumns,sizeof(double));
+    if (M[i] == NULL){puts("Error in matrix declaration"); exit(0);}
+  }
+  return M;
+  
+}
+
+
+/*********************************************************************/
+
 Matrix MatAlloc(int NumberRows,int NumberColumns){
 
   Matrix M;
@@ -51,11 +92,13 @@ Matrix MatAlloc(int NumberRows,int NumberColumns){
   if( (NumberRows == 1) || (NumberColumns == 1) ){ /* It is an array */
     M.nV = (double *)Allocate_Array(NumberRows*NumberColumns,
 				     sizeof(double));
+    M.nM = NULL;
   }
-  else{ /* It is a matrix */
+  else if( (NumberRows != 1) && (NumberColumns != 1)  ){ /* It is a matrix */
     M.nM = (double **)Allocate_Matrix(NumberRows,
 				      NumberColumns,
-				      sizeof(double));    
+				      sizeof(double));
+    M.nV = NULL;
   }
   
   return M;
@@ -63,32 +106,84 @@ Matrix MatAlloc(int NumberRows,int NumberColumns){
 
 /*********************************************************************/
 
-/* Function to get the determinant of a matrix (max 3x3)  */
+
+Matrix MatAllocZ(int NumberRows,int NumberColumns)
+/*
+  Allocate the matrix structure with zeros 
+*/
+{
+
+  Matrix M;
+  M.N_rows = NumberRows;
+  M.N_cols = NumberColumns;
+
+  if( (NumberRows == 1) || (NumberColumns == 1) ){ /* It is an array */
+    M.nV = Allocate_ArrayZ(NumberRows*NumberColumns);
+    M.nM = NULL;
+  }
+  else if( (NumberRows != 1) && (NumberColumns != 1)  ){ /* It is a matrix */
+    M.nM = Allocate_MatrixZ(NumberRows,NumberColumns);
+    M.nV = NULL;
+  }
+  
+  return M;
+}
+
+/*********************************************************************/
+
+Matrix CopyMat(Matrix In)
+/* 
+   Copy the input matrix in a auxiliar matrix, this is necessary because the operators 
+   for the linear algebra are destructive for the input data
+ */
+{
+  Matrix Out = MatAlloc(In.N_rows,In.N_cols);
+
+  if(In.nM != NULL){
+    for(int i = 0 ; i<In.N_rows ; i++){
+      for(int j = 0 ; j<In.N_cols ; j++){
+	Out.nM[i][j] = In.nM[i][j];
+      }
+    }
+  }
+  if(In.nV != NULL){
+    for(int i = 0 ; i<In.N_rows*In.N_cols ; i++){
+      Out.nV[i] = In.nV[i];
+    }
+  }
+  if( (In.nM == NULL) &&(In.nV == NULL) ){
+    puts("Error in CopyMat() : The input matrix is NULL !");
+  }
+
+  return Out;
+}
+
+
+/*********************************************************************/
+
 double Get_Determinant(Matrix M_in)
 /* 
+   Function to get the determinant of a matrix (max 3x3) :
    Inputs : M_in Matrix (Tensor type)
    Outputs : Determinant
 */
 {
-
-  /* Check if the matrix is square */
-  if(M_in.N_cols != M_in.N_rows){
-    puts(" Error in Get_Determinant() : Non square matrix !");
-    exit(0);
-  }
- 
   /* Check if we dont have a null matrix */
   if (M_in.nM == NULL){
     if(M_in.nV != NULL){
       puts("Error in Get_Determinant() : An array does not have determinant !");
       exit(0);
     }
-    else{
-      puts("Error in Get_Determinant() : Input matrix = NULL !");    
-      exit(0);
-    }
+    puts("Error in Get_Determinant() : Input matrix = NULL !");    
+    exit(0);
   }
   
+  /* Check if the matrix is square */
+  if(M_in.N_cols != M_in.N_rows){
+    puts(" Error in Get_Determinant() : Non square matrix !");
+    exit(0);
+  }
+   
   double Det_out;
 
   /* Get the determinant */
@@ -125,15 +220,14 @@ double Get_Determinant(Matrix M_in)
 
 /*********************************************************************/
 
-/* Function to get the inverse of the matrix */
 Matrix Get_Inverse(Matrix M_in)
 /* 
+   Function to get the inverse of the matrix, delete the input matrix :
    Inputs : Matrix in, dimension os the matrix
    Outpus : Matrix out
 */
 { 
   /* Check if we dont have a null matrix */
-    /* Check if we dont have a null matrix */
   if (M_in.nM == NULL){
     if(M_in.nV != NULL){
       puts("Error in Get_Inverse : An array does not have inverse !");
@@ -160,12 +254,9 @@ Matrix Get_Inverse(Matrix M_in)
     exit(0);
   }
 
-  Matrix M_out;
-  M_out.N_cols = M_in.N_cols;
-  M_out.N_rows = M_in.N_rows;
-  M_out.nM = (double **)Allocate_Matrix(M_out.N_rows,
-				       M_out.N_cols,
-				       sizeof(double));
+  /* Allocate the output */
+  Matrix M_out = MatAlloc(M_in.N_rows,M_in.N_cols);
+ 
 
   /* Do in a different fashion if it is 2D or 3D */
   if(M_in.N_cols == 2){
@@ -206,7 +297,6 @@ Matrix Get_Inverse(Matrix M_in)
 			     M_in.nM[0][1]*M_in.nM[1][0]);
   }
 
-
   /* Free memory */
   free(M_in.nM);
   
@@ -217,30 +307,37 @@ Matrix Get_Inverse(Matrix M_in)
 
 /*********************************************************************/
 
-Matrix Transpose_Mat(Matrix M){
+Matrix Transpose_Mat(Matrix M)
+/* 
+   It gives to you the transpose of a matrix or an array and delete the input
+   matrix.
+ */
+{
 
   /* Define and allocate the output matrix */
-  Matrix M_T;  
-  M_T.N_cols = M.N_rows;
-  M_T.N_rows = M.N_cols;
+  Matrix M_T = MatAlloc(M.N_cols,M.N_rows);  
 
   /* Do it in a different fashion if it is a matrix o an array */
-  if ( (M_T.N_cols != 1) && (M_T.N_rows =! 1) ){ /* It is a matrix */
-    
-    M_T.nM = (double **)Allocate_Matrix(M_T.N_rows,M_T.N_cols,sizeof(double));
-    
-    for(int i = 0 ; i < M_T.N_rows){
-      for(int j = 0 ; j < M_T.N_cols){
+  if ( M.nM != NULL ){ /* It is a matrix */    
+    for(int i = 0 ; i < M_T.N_rows ; i++){
+      for(int j = 0 ; j < M_T.N_cols ; j++){
 	  M_T.nM[i][j] = M.nM[j][i];
       }/* for i*/
     }/* for j */
 
-     /* Free input data (only if it is a matrix) */
+     /* Free input data */
     free(M.nM);    
   }
-  /* If it is an array you dont have to do anything in the allocation */
+  if( M.nV != NULL){
+    M_T.nV = M.nV;
 
-   
+    /* Free input data */
+    free(M.nV);
+  }
+  if(M.n != -999){
+    puts("Warning : Your are transposing a scalar ");
+  }
+  
   return M_T;
 }
 
@@ -248,7 +345,7 @@ Matrix Transpose_Mat(Matrix M){
 
 Matrix Scalar_prod(Matrix A,Matrix B)
 /*
-  Multiply two matrix A and B, and return the result C
+  Multiply two matrix A and B, and return the result C. Then, A and B are deleted.
 */
 {
 
@@ -257,67 +354,131 @@ Matrix Scalar_prod(Matrix A,Matrix B)
     exit(0);
   }
 
-  /* Allocate output matrix */
+  /* Variable declaration output matrix */
   Matrix C;
   double C_aux;
-  C.N_rows = A.N_rows;
-  C.N_cols = B.N_cols;
 
   /* If it is array or matrix, allocate and operate in a different fashion */
 
   if ( (A.nM != NULL) && (B.nM != NULL) ) { /* Scalar product of two matrix */
+    
     /* The result is a matrix */
-    C.nM = (double **)Allocate_Matrix(C.N_rows,C.N_cols,sizeof(double));
+    C = MatAlloc(A.N_rows,B.N_cols);
     
     /* Multiply */
     for(int i = 0 ; i < C.N_rows ; i++){
       for(int j = 0 ; j < C.N_cols ; j++){
 	C_aux = 0;
-	for(int k = 0 ; k < B.N_rows ; i++){
+	for(int k = 0 ; k < B.N_rows ; k++){
 	  C_aux += A.nM[i][k]*B.nM[k][j];
 	}
 	C.nM[i][j] = C_aux;
       } /* for j */
     } /* for i */
+
+    /* Free memory once you have finished the calculus */
+    free(A.nM);
+    free(B.nM);
     
   }
   else if( (A.nV != NULL) && (B.nV != NULL) ){ /* Scalar product of an array by an array */
     /* The result is an scalar */
-    puts("Warning : You have an scalar in a matrix type (Not eficient) ! ");
+    puts("Warning : You have a scalar in a matrix type (Not eficient) ! ");
     /* Multiply */
     C_aux = 0;
-    for(int k = 0 ; k < A.N_cols ; i++){
+    for(int k = 0 ; k < A.N_cols ; k++){
       C_aux += A.nV[k]*B.nV[k];
     }
     C.n = C_aux;
+
+    /* Free memory once you have finished the calculus */
+    free(A.nV);
+    free(B.nV);
     
   }
   else if (( (A.nV != NULL)&&(B.nM != NULL) ) ||
 	   ( (A.nM != NULL)&&(B.nV != NULL) )){ /* Scalar product of an array by a matrix */
+    
     /* The result is an array */
-    C.nV = (double *)Allocate_Array(C.N_rows*C.N_cols,sizeof(double));
+    C = MatAlloc(A.N_rows,B.N_cols);
       
     if( (A.nV != NULL)&&(B.nM != NULL) ){ /* Row array */
       for(int i = 0 ; i<B.N_cols ; i++){
 	C_aux = 0;
 	for(int j = 0 ; j<B.N_rows ; j++){
-	  C_aux += A[j]*B[j][i];
+	  C_aux += A.nV[j]*B.nM[j][i];
 	}
 	C.nV[i] = C_aux;
-      }      
+      }
+
+      /* Free memory once you have finished the calculus */
+      free(A.nV);
+      free(B.nM);
+      
     }
     if( (A.nM != NULL)&&(B.nV != NULL) ){ /* Column array */
       for(int i = 0 ; i<A.N_rows ; i++){
 	C_aux = 0;
 	for(int j = 0 ; j<A.N_cols ; j++){
-	  C_aux += A[i][j]*B[j];
+	  C_aux += A.nM[i][j]*B.nV[j];
 	}
 	C.nV[i] = C_aux;
-      }      
+      }
+      
+      /* Free memory once you have finished the calculus */
+      free(A.nM);
+      free(B.nV);
+      
     }
     
   }
+  else if( ( (A.nM != NULL)&&(B.n != -999) ) ||
+	   ( (A.n != -999)&&(B.nM != NULL) )){ /* Scalar product of a scalar by a matrix */
+
+    if(A.nM != NULL){ /* A is a matrix and B a scalar */
+      /* The result is a matrix */
+      C = MatAlloc(A.N_rows,A.N_cols);
+      for(int i = 0 ; i<A.N_rows ; i++){
+	for(int j = 0 ; j<A.N_cols ; j++){
+	  C.nM[i][j] = A.nM[i][j]*B.n;
+	}
+      }
+      free(A.nM);
+    }
+    if(B.nM != NULL){ /* A is a scalar and B a matrix */
+      /* The result is a matrix */
+      C = MatAlloc(B.N_rows,B.N_cols);
+      for(int i = 0 ; i<B.N_rows ; i++){
+	for(int j = 0 ; j<B.N_cols ; j++){
+	  C.nM[i][j] = A.n*B.nM[i][j];
+	}
+      }
+      free(B.nM);
+    }
+      
+  }
+  else if( ( (A.nV != NULL)&&(B.n != -999) ) ||
+	   ( (A.n != -999)&&(B.nV != NULL) )){ /* Scalar product of a scalar by a array */
+
+    if(A.nV != NULL){ /* A is an array and B a scalar */
+      /* The result is a matrix */
+      C = MatAlloc(A.N_rows,A.N_cols);
+      for(int i = 0 ; i<A.N_rows*A.N_cols ; i++){
+	C.nV[i] = A.nV[i]*B.n;
+      }
+      free(A.nV);
+    }
+    if(B.nM != NULL){ /* A is a scalar and B an array */
+      /* The result is a matrix */
+      C = MatAlloc(B.N_rows,B.N_cols);
+      for(int i = 0 ; i<B.N_rows*B.N_cols ; i++){
+	C.nV[i] = A.n*B.nV[i];
+      }
+      free(B.nV);
+    }
   
+  }
+
   return C;
     
 }
@@ -326,24 +487,34 @@ Matrix Scalar_prod(Matrix A,Matrix B)
   
 Matrix Tensorial_prod(Matrix A,Matrix B)
 /*
-
-  Tensorial product
-  
+  Tensorial product between A and B, note that the input data is deleted 
+  once you have finished the calculus.
  */
 {
   /* Matrix declaration */
   Matrix C;
 
   if( (A.nV != NULL)&&(B.nV != NULL) ){ /* Tensorial product between two arrays */
-    C.N_rows = A.N_rows;
-    C.N_cols = B.N_cols;
-    C.nM = (double **)Allocate_Matrix(C.N_rows,C.N_cols,sizeof(double));
+
+    if( (A.N_cols != 1) || (B.N_rows !=1) ){
+      puts("Error in Tensorial_prod() : Incompatible shape of arrays ");
+      puts("Remember that it should be : (nx1) · (1xn)  ");
+      exit(0);
+    }
+    
+    /* Allocate matrix */
+    C = MatAlloc(A.N_rows,B.N_cols);
 
     for(int i = 0 ; i<C.N_rows ; i++){
       for(int j = 0 ; j<C.N_cols ; j++){
 	C.nM[i][j] = A.nV[i]*B.nV[j];	
       } /* for i */
-    } /* for j */    
+    } /* for j */
+
+    /* Free memory */
+    free(A.nV);
+    free(B.nV);
+    
   }  /* Tensorial product between two arrays */
   else if( ((A.nM != NULL)&&(B.nV != NULL)) ||
 	   ((A.nV != NULL)&&(B.nM != NULL))){
@@ -370,6 +541,11 @@ Matrix Add_Mat(Matrix A,Matrix B)
    
  */
 {
+
+  /* Variable declaration */
+  Matrix C;
+  double C_aux;
+  
   /* Check if it is possible to do the addition */
   if((A.N_cols != B.N_cols)||(A.N_rows != B.N_rows)){
     puts("Error in Add_Mat() : Your are trying to add incompatible matrix");
@@ -377,25 +553,31 @@ Matrix Add_Mat(Matrix A,Matrix B)
   }
 
   /* Allocate output matrix */
-  Matrix C;
-  double C_aux;
-  C.N_rows = A.N_rows;
-  C.N_cols = A.N_cols;
+  C = MatAlloc(A.N_rows,A.N_cols);
 
   /* Difference if we are doing an addition of two matrix or two vectors */
-  if( (A.nV != NULL) && (B.nV != NULL) ){ /* two matrix addition */
-    C.nV = (double *)Allocate_Array(C.N_rows*C.N_cols,sizeof(double));
-    for(int i = 0 ; i<C.N_rows*C.N_cols ; i++){
+  if( (A.nV != NULL) && (B.nV != NULL) ){ /* two array addition */
+    
+    for(int i = 0 ; i<C.N_rows*C.N_cols ; i++){  
 	C.nV[i] = A.nV[i] + B.nV[i];
     }
+
+    /* Free input data */
+    free(A.nM);
+    free(B.nM);
+    
   }
-  else if( (A.nT != NULL) && (B.nT != NULL) ){ /* two array addition */
-    C.nM = (double **)Allocate_Matrix(C.N_rows,C.N_cols,sizeof(double));
+  else if( (A.nM != NULL) && (B.nM != NULL) ){ /* two matrix addition */
+    
     for(int i = 0 ; i < C.N_rows ; i++){
       for(int j = 0 ; j < C.N_cols ; j++){
 	C.nM[i][j] = A.nM[i][j] + B.nM[i][j];
       }
-    } 
+    }
+
+    /* Free input data */
+    free(A.nV);
+    free(B.nV);
     
   }
   else{
@@ -418,37 +600,50 @@ Matrix Sub_Mat(Matrix A,Matrix B)
    
  */
 {
+
+  /* Variable declaration */
+  Matrix C;
+  double C_aux;
+  
   /* Check if it is possible to do the substraction */
   if((A.N_cols != B.N_cols)||(A.N_rows != B.N_rows)){
-    puts("Error in Sub_Mat() : Your are trying to substact incompatible matrix");
+    puts("Error in Sub_Mat() : Your are trying to add incompatible matrix");
     exit(0);
   }
 
   /* Allocate output matrix */
-  Matrix C;
-  double C_aux;
-  C.N_rows = A.N_rows;
-  C.N_cols = A.N_cols;
+  C = MatAlloc(A.N_rows,A.N_cols);
 
-  /* Difference if we are doing an addition of two matrix or two vectors */
-  if( (A.nV != NULL) && (B.nV != NULL) ){ /* two matrix substraction */
-    C.nV = (double *)Allocate_Array(C.N_rows*C.N_cols,sizeof(double));
-    for(int i = 0 ; i<C.N_rows*C.N_cols ; i++){
+  /* Difference if we are doing an substraction of two matrix or two vectors */
+  if( (A.nV != NULL) && (B.nV != NULL) ){ /* two array substraction */
+    
+    for(int i = 0 ; i<C.N_rows*C.N_cols ; i++){  
 	C.nV[i] = A.nV[i] - B.nV[i];
     }
+
+    /* Free input data */
+    free(A.nM);
+    free(B.nM);
+    
   }
-  else if( (A.nT != NULL) && (B.nT != NULL) ){ /* two array substraction */
-    C.nM = (double **)Allocate_Matrix(C.N_rows,C.N_cols,sizeof(double));
+  else if( (A.nM != NULL) && (B.nM != NULL) ){ /* two matrix substraction */
+    
     for(int i = 0 ; i < C.N_rows ; i++){
       for(int j = 0 ; j < C.N_cols ; j++){
 	C.nM[i][j] = A.nM[i][j] - B.nM[i][j];
       }
-    }    
+    }
+
+    /* Free input data */
+    free(A.nV);
+    free(B.nV);
+    
   }
   else{
     puts("Error in Sub_Mat() : Inputs must be of the same range !");
     exit(0);
   }  
+
 
   return C;
 }

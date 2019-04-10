@@ -2,8 +2,8 @@
 #include <stdlib.h>
 #include "Utils.h"
 
-#ifndef "TypeDefinitions.h"
-#define "TypeDefinitions.h"
+#ifndef TypeDefinitions
+#define TypeDefinitions
 #endif
 
 Matrix LinearElastic(double,double);

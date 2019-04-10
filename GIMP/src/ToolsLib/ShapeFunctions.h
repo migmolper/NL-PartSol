@@ -6,6 +6,6 @@
 #define TypeDefinitions
 #endif
 
-double * Q4(Vector *);
+Matrix Q4(Matrix);
 
-double ** dQ4(Vector *);
+Matrix dQ4(Matrix);

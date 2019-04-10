@@ -2,24 +2,30 @@
 #define TypeDefinitions
 #endif
 
-void * Allocate_Array(int, int);
+void * Allocate_Array(int,int);
 
-void ** Allocate_Matrix(int,int, int);
+double * Allocate_ArrayZ(int);
 
-double Get_Determinant(Tensor);
+void ** Allocate_Matrix(int,int,int);
 
-Tensor Get_Inverse(Tensor);
+double ** Allocate_MatrixZ(int,int);
 
-Matrix Mat_Mul(Matrix, Matrix);
+Matrix MatAlloc(int,int);
 
-Matrix Mat_Sum(Matrix, Matrix);
+Matrix MatAllocZ(int,int);
 
-Matrix Mat_Sub(Matrix, Matrix);
+Matrix CopyMat(Matrix);
 
-/*
+double Get_Determinant(Matrix);
 
-diadic product
+Matrix Get_Inverse(Matrix);
 
+Matrix Transpose_Mat(Matrix);
 
+Matrix Scalar_prod(Matrix,Matrix);
 
-*/
+Matrix Tensorial_prod(Matrix,Matrix);
+
+Matrix Add_Mat(Matrix,Matrix);
+
+Matrix Sub_Mat(Matrix,Matrix);

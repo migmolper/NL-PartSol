@@ -4,10 +4,14 @@
 #include "ToolsLib/TypeDefinitions.h"
 #include "ToolsLib/Utils.h"
 #include "ToolsLib/ShapeFunctions.h"
+#include "ToolsLib/Constitutive.h"
 
 /*********************************************************************/
 
-void Initialize_GP(GaussPoint GP,Matrix RefCoords)
+void Initialize_GP(GaussPoint GP,
+		   Matrix RefCoords,
+		   double PoissonRatio,
+		   double YoungModulus)
 /* In this function we Initialize and allocate all the variables of the Gauss Points,
    if they are necessary */
 {
@@ -35,10 +39,14 @@ void Initialize_GP(GaussPoint GP,Matrix RefCoords)
   /*  GP.v.nV = ... Initialize */
 
   /* Allocate and Initialize the Stress and Strain fields (Tensorial) */
-  GP.Stress = MatAlloc(2,2);
-  GP.Strain = MatAlloc(2,2);
+  GP.Stress = MatAlloc(3,1);
+  GP.Strain = MatAlloc(3,1);
   /* GP.Strain.nM = ...  Initialize */
   /* GP.Stress.nM = ... Initialize */
+
+  /* Allocate and Initialize the constitutive response */
+  GP.D = MatAlloc(3,3);
+  GP.D = LinearElastic(PoissonRatio,YoungModulus);
 }
 
 /*********************************************************************/
@@ -102,8 +110,10 @@ void Get_RefDeformation_Gradient(GaussPoint GP,
   - B_ref -> Ma
 */
 {
+  Matrix X_g = CopyMat(Elem_GP.X_g);
+  
   GP.F_ref = Scalar_prod(Elem_GP.dNdX_ref(GP.x_EC), /* grad(N_{\alpha}) */
-			 Elem_GP.X_g);  /* x_{\alpha} */
+			 X_g);  /* x_{\alpha} */
 }
 
 
@@ -135,49 +145,12 @@ void Get_RefDeformation_Gradient(GaussPoint GP,
 /* } */
 
 
-
-/*********************************************************************/
-
-Matrix Get_dNdi_matrix(Matrix dN_di){
-
-  Matrix dNdi_matrix;
-
-  if(dNdi_matrix.nM != NULL){
-    puts("Error in Get_dNdi_matrix() : The input must be an array !");
-    exit(0);
-  }
-
-  switch(dNdi_matrix.N_cols*dNdi_matrix.N_rows){
-  case 1:
-    puts("Error in Get_dNdi_matrix() : 1D cases not implemented yet");
-    exit(0);
-  case 2:
-    dNdi_matrix = MatAlloc(3,2);
-    dNdi_matrix.nM[0][0] = dN_di[0];
-    dNdi_matrix.nM[1][0] = 0; 
-    dNdi_matrix.nM[2][0] = dN_di[1]; 
-    dNdi_matrix.nM[0][1] = 0; 
-    dNdi_matrix.nM[1][1] = dN_di[1]; 
-    dNdi_matrix.nM[2][1] = dN_di[0];
-    break;
-  case 3:
-    puts("Error in Get_dNdi_matrix() : 3D cases not implemented yet");
-    exit(0);
-  default :
-    puts("Error in Get_dNdi_matrix() : Wrong case select");
-    exit(0);
-  }
-  
-  return dNdi_matrix;
-
-}
-
 /*********************************************************************/
 
 Matrix Get_dNdx_matrix(Element Elem_GP,
 		       GaussPoint GP)
 /* Get the derivative matrix of the shape functions in global coordiantes, it is
-   the so called B matrix in the classical formulation of the finite element method 
+   the so called B matrix in the classical formulation of the finite element method
    Inputs: Element, GP where to evaluate it
    Outputs : Matrix dNdX
 */
@@ -185,29 +158,64 @@ Matrix Get_dNdx_matrix(Element Elem_GP,
   /* Variables */
   Matrix dNdX;
   Matrix dNdX_ref;
-  Matrix dNdi_matrix;
+  Matrix F_ref;
   Matrix F_ref_m1T;
-  
-  /* Allocate the output */
-  dNdX = MatAlloc(3,4);
+  Matrix dN_di;
+  Matrix dN_di_ref;
+  Matrix aux;
 
-  /* Get the inverse of the reference deformation gradient and transpose it */
-  F_ref_m1T = Transpose_Mat(Get_Inverse(GP.F_ref));
-
-  /* Get the values of the shape functions derivatives in each node */  
+  /* Get the values of the shape functions derivatives in each node */
   dNdX_ref = Elem_GP.dNdX_ref(GP.x_EC);
 
-  for(int i = 0 ; i < Elem_GP.NumberNodes ; i++){  
+  switch(Elem_GP.NumberDOF){
+    
+  case 1:
+    puts("Error in Get_dNdi_matrix() : 1D cases not implemented yet");
+    exit(0);
+    
+  case 2:
+    /* Allocate the output */
+    dNdX = MatAlloc(3,2*Elem_GP.NumberNodes);
+    /* Allocate the auxiliar array */
+    dN_di_ref = MatAlloc(2,1);
 
-    /* Ojo, cuidado con las dimensiones del producto !!!!!!!!!!!!!!!*/
-    dNdi_matrix = Get_dNdi_matrix(Scalar_prod(F_ref_m1T,dNdX_ref));
+    /* Fill the matrix */
+    for(int i = 0 ; i<Elem_GP.NumberNodes ; i++){
 
+      /* Fill an array with the nodal derivatives in the reference element */
+      dN_di_ref.nV[0] = dNdX_ref.nM[0][i];
+      dN_di_ref.nV[1] = dNdX_ref.nM[1][i];
+
+      /* Get the inverse of the reference deformation gradient and transpose it */
+      F_ref = CopyMat(GP.F_ref);
+      F_ref_m1T = Transpose_Mat(Get_Inverse(F_ref));
+      /* Obtain the nodal derivarives in the real element */      
+      dN_di = Scalar_prod(F_ref_m1T,dN_di_ref);
+      
+      /* Fill the array with the nodal partial derivation of the reference element */     
+      dNdX.nM[0][2*i] = dN_di.nV[0];
+      dNdX.nM[1][2*i] = 0; 
+      dNdX.nM[2][2*i] = dN_di.nV[1]; 
+      dNdX.nM[0][2*i + 1] = 0; 
+      dNdX.nM[1][2*i + 1] = dN_di.nV[1]; 
+      dNdX.nM[2][2*i + 1] = dN_di.nV[0];
+    }
+    break;
+    
+  case 3:
+    puts("Error in Get_dNdi_matrix() : 3D cases not implemented yet");
+    exit(0);
+    
+  default :
+    puts("Error in Get_dNdi_matrix() : Wrong case select");
+    exit(0);
   }
   
+  /* Free memory */
   free(dNdX_ref.nM);
-  free(F_ref_m1T.nM)
+  free(dN_di.nV);
   
-  return dNdX;  
+  return dNdX;
 }
 
 
@@ -223,16 +231,18 @@ Matrix Get_Lagrangian_CG_Tensor(GaussPoint GP)
 */
 {
   /* Check if we have a null matrix */
-  if (GP[0].F.n == NULL){
+  if (GP.F.nM == NULL){
     puts("Error in Get_Lagrangian_CG_Tensor : GP.F tensor = NULL");
     exit(0);
   }
 
+  /* Output, we dont need to allocate it because the memory reserve is done 
+     in the function Scalar_prod() */
   Matrix C;
-  
+  /* Make a temporal copy of F because Scalar_prod() destroy the input */
+  Matrix F = CopyMat(GP.F);
   /* Get C */
-  C = Scalar_prod(Transpose_Mat(GP.F), /* F^T */
-		  GP.F); /* F */
+  C = Scalar_prod(Transpose_Mat(F),F);
 
   return C;
   
@@ -242,7 +252,7 @@ Matrix Get_Lagrangian_CG_Tensor(GaussPoint GP)
 
 /*********************************************************************/
 
-Matrix Get_Eulerian_CG_Tensor(GaussPoint * GP) 
+Matrix Get_Eulerian_CG_Tensor(GaussPoint GP) 
 /*
  The Left Cauchy Green Deformation Tensor :
  B = F \cdot F^{T} 
@@ -252,16 +262,19 @@ Matrix Get_Eulerian_CG_Tensor(GaussPoint * GP)
 */
 {  
   /* Check if we have a null matrix */
-  if (GP[0].F.n == NULL){
+  if (GP.F.nM == NULL){
     puts("Error in Get_Eulerian_CG_Tensor : GP.F tensor = NULL");
     exit(0);
   }
 
+  /* Output, we dont need to allocate it because the memory reserve is done 
+   in the function Scalar_prod() */
   Matrix B;
+  /* Make a temporal copy of F because Scalar_prod() destroy the input */
+  Matrix F = CopyMat(GP.F);
   
   /* Get B */
-  B = Scalar_prod(GP.F, /* F */
-		  Transpose_Mat(GP.F)); /* F^T */
+  B = Scalar_prod(F,Transpose_Mat(F));
 
   return B;
   
@@ -271,42 +284,50 @@ Matrix Get_Eulerian_CG_Tensor(GaussPoint * GP)
 /*********************************************************************/
 
 
-/* Matrix Get_Stiffness_Matrix(Matrix D, /\* Constitutive matrix *\/ */
-/* 			    Element * Elem) /\* Element to analyze *\/ */
-/* /\* Calcule the element stiffness matrix K *\/ */
-/* { */
+Matrix Get_Stiffness_Matrix(Element Elem) /* Element to analyze */
+/* 
+   Calcule the element-stiffness matrix K :
+   Inputs : Constitutive matrix
+   Outputs : Element
+*/
+{
 
-/*   Element Elem_e; */
-/*   Matrix dNdX; */
-/*   Matrix K; */
-/*   double J; */
+  Matrix dNdX;
+  Matrix dNdX_T;
+  Matrix K;
+  Matrix K_GP;
+  Matrix D;
+  Matrix J;
   
-/*   /\* Allocate and initialize K *\/ */
-/*   K.N_rows = Elem.NumberNodes * Elem.NumberDOF; */
-/*   K.N_cols = Elem.NumberNodes * Elem.NumberDOF; */
-/*   K.n = (double **)Allocate_Matrix(K.N_rows,K.N_cols,sizeof(double **)); */
+  /* Allocate and initialize K to zero */
+  K = MatAllocZ(Elem.NumberNodes * Elem.NumberDOF,
+		 Elem.NumberNodes * Elem.NumberDOF);
+    
+  /* Iterate over the Gauss Points */
+  for(int i_GP = 0 ; i_GP<Elem.NumberGP ; i_GP++){
+
+    /* Get the derivative Matrix and it transposse evaluated in the gauss point */
+    dNdX = Get_dNdx_matrix(Elem,Elem.GP_e[i_GP]);
+    dNdX_T= Transpose_Mat(Get_dNdx_matrix(Elem,Elem.GP_e[i_GP]));
+
+    /* Get the jacobian of the transformation and store it as a scalar */
+    J.n = Get_Determinant(Elem.GP_e[i_GP].F_ref);
+
+    /* Multiply the constitutive matrix by the derivative matrix */
+    D = CopyMat(Elem.GP_e[i_GP].D);
+    K_GP = Scalar_prod(D,dNdX);
+
+    /* Multiply the result by the derivative matrix transpose */
+    K_GP = Scalar_prod(dNdX_T,K_GP);
+
+    /* Multiply by the jacobian*/
+    K_GP = Scalar_prod(K_GP,J);
+
+    /* Acumulate for the integral rule */
+    K = Add_Mat(K,K_GP);
+    
+  }
   
-/*   /\* Iterate over the Gauss Points *\/ */
-/*   for(int i_gp = 0 ; i_gp<Elem.NumberGP ; i_gp++){ */
-    
-/*     /\* Get the derivatives of the shape function in global coordiantes *\/ */
-/*     dNdx = Get_dNdx_matrix(Elem_e,Elem_e.GP_e[i_gp]); */
-    
-/*     /\* Get the Jacobian of the transformation *\/ */
-/*     /\* Check if we have a null matrix *\/ */
-/*     J = Get_Determinant(Elem_e.GP_e[i_gp].F_ref); */
-    
-/*     /\* Iterate nodes *\/ */
-/*     K_gp = Mat_Mul(D,dNdX); */
-/*     K_gp = Mat_Mul(dNdX,K); */
-/*     K_gp *= J; */
-    
-/*     K = Mat_Sum(K,K_gp); */
-    
-/*   } */
-/*   /\* We dont need the derivatives *\/ */
-/*   free(dNdX.n); */
-  
-/*   return K; */
-/* } */
+  return K;
+}
 
