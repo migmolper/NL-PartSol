@@ -1,5 +1,7 @@
+
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "ToolsLib/TypeDefinitions.h"
 
 /* Function for arrays declaration */
@@ -93,12 +95,14 @@ Matrix MatAlloc(int NumberRows,int NumberColumns){
     M.nV = (double *)Allocate_Array(NumberRows*NumberColumns,
 				     sizeof(double));
     M.nM = NULL;
+    M.n = -999;
   }
   else if( (NumberRows != 1) && (NumberColumns != 1)  ){ /* It is a matrix */
     M.nM = (double **)Allocate_Matrix(NumberRows,
 				      NumberColumns,
 				      sizeof(double));
     M.nV = NULL;
+    M.n = -999;
   }
   
   return M;
@@ -137,19 +141,22 @@ Matrix CopyMat(Matrix In)
    for the linear algebra are destructive for the input data
  */
 {
+  if( (In.N_rows==0) || (In.N_cols==0)){
+    puts("Error in CopyMat() : Input matrix has 0 dimensions !");
+    exit(0);
+  }
   Matrix Out = MatAlloc(In.N_rows,In.N_cols);
 
   if(In.nM != NULL){
-    for(int i = 0 ; i<In.N_rows ; i++){
-      for(int j = 0 ; j<In.N_cols ; j++){
-	Out.nM[i][j] = In.nM[i][j];
-      }
+    for(int i = 0; i<In.N_rows; i++){
+      memcpy(&Out.nM[i], &In.nM[i], sizeof(In.nM[0]));
     }
   }
   if(In.nV != NULL){
-    for(int i = 0 ; i<In.N_rows*In.N_cols ; i++){
-      Out.nV[i] = In.nV[i];
+    for(int i = 0; i<In.N_rows; i++){
+      memcpy(&Out.nV[i], &In.nV[i], sizeof(In.nV[0]));
     }
+
   }
   if( (In.nM == NULL) &&(In.nV == NULL) ){
     puts("Error in CopyMat() : The input matrix is NULL !");
@@ -349,11 +356,6 @@ Matrix Scalar_prod(Matrix A,Matrix B)
 */
 {
 
-  if(A.N_cols != B.N_rows){
-    puts("Error in Mat_mul() : Your are trying to multiply incompatible matrix");
-    exit(0);
-  }
-
   /* Variable declaration output matrix */
   Matrix C;
   double C_aux;
@@ -361,9 +363,15 @@ Matrix Scalar_prod(Matrix A,Matrix B)
   /* If it is array or matrix, allocate and operate in a different fashion */
 
   if ( (A.nM != NULL) && (B.nM != NULL) ) { /* Scalar product of two matrix */
-    
+
+    /* Check if the input matrix are not compatible */
+    if(A.N_cols != B.N_rows){
+      puts("Error in Mat_mul() : Your are trying to multiply incompatible matrix");
+      exit(0);
+    }
+     
     /* The result is a matrix */
-    C = MatAlloc(A.N_rows,B.N_cols);
+    C = MatAlloc(A.N_rows,B.N_cols);   
     
     /* Multiply */
     for(int i = 0 ; i < C.N_rows ; i++){
@@ -382,6 +390,13 @@ Matrix Scalar_prod(Matrix A,Matrix B)
     
   }
   else if( (A.nV != NULL) && (B.nV != NULL) ){ /* Scalar product of an array by an array */
+
+    /* Check if the input matrix are not compatible */
+    if(A.N_cols != B.N_rows){
+      puts("Error in Mat_mul() : Your are trying to multiply incompatible matrix");
+      exit(0);
+    }
+
     /* The result is an scalar */
     puts("Warning : You have a scalar in a matrix type (Not eficient) ! ");
     /* Multiply */
@@ -398,7 +413,13 @@ Matrix Scalar_prod(Matrix A,Matrix B)
   }
   else if (( (A.nV != NULL)&&(B.nM != NULL) ) ||
 	   ( (A.nM != NULL)&&(B.nV != NULL) )){ /* Scalar product of an array by a matrix */
-    
+
+    /* Check if the input matrix are not compatible */
+    if(A.N_cols != B.N_rows){
+      puts("Error in Mat_mul() : Your are trying to multiply incompatible matrix");
+      exit(0);
+    }
+      
     /* The result is an array */
     C = MatAlloc(A.N_rows,B.N_cols);
       
@@ -434,7 +455,7 @@ Matrix Scalar_prod(Matrix A,Matrix B)
   }
   else if( ( (A.nM != NULL)&&(B.n != -999) ) ||
 	   ( (A.n != -999)&&(B.nM != NULL) )){ /* Scalar product of a scalar by a matrix */
-
+  
     if(A.nM != NULL){ /* A is a matrix and B a scalar */
       /* The result is a matrix */
       C = MatAlloc(A.N_rows,A.N_cols);
@@ -459,7 +480,7 @@ Matrix Scalar_prod(Matrix A,Matrix B)
   }
   else if( ( (A.nV != NULL)&&(B.n != -999) ) ||
 	   ( (A.n != -999)&&(B.nV != NULL) )){ /* Scalar product of a scalar by a array */
-
+  
     if(A.nV != NULL){ /* A is an array and B a scalar */
       /* The result is a matrix */
       C = MatAlloc(A.N_rows,A.N_cols);

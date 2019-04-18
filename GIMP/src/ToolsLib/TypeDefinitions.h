@@ -75,7 +75,11 @@ typedef struct {
 
   /* Global coordinates of the element nodes */
   Matrix X_g;
-
+  /*
+    ^
+    |_____ Future updates : remove this field and use only the connectivity mesh
+  */
+  
   /* Shape function of the reference element evaluated in a GP */
   Matrix (* N_ref)(Matrix );
 
