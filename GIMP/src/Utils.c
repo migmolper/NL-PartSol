@@ -1,6 +1,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 #include <string.h>
 #include "ToolsLib/TypeDefinitions.h"
 
@@ -124,10 +125,12 @@ Matrix MatAllocZ(int NumberRows,int NumberColumns)
   if( (NumberRows == 1) || (NumberColumns == 1) ){ /* It is an array */
     M.nV = Allocate_ArrayZ(NumberRows*NumberColumns);
     M.nM = NULL;
+    M.n = -999;
   }
   else if( (NumberRows != 1) && (NumberColumns != 1)  ){ /* It is a matrix */
     M.nM = Allocate_MatrixZ(NumberRows,NumberColumns);
     M.nV = NULL;
+    M.n = -999;
   }
   
   return M;
@@ -667,4 +670,38 @@ Matrix Sub_Mat(Matrix A,Matrix B)
 
 
   return C;
+}
+
+
+Matrix Norm_Mat(Matrix In,int kind)
+/*
+  Get the norm of a vector in a Euclidean space R2. Implemented norms :
+  - Euclidean norm (kind == 2)
+*/
+{
+
+  /* Check */
+  if( (In.nM != NULL) || (In.n != -999)){
+    puts("Error in Norm_Mat() : The input data is not a vector ! ");
+    exit(0);
+  }
+    
+  Matrix Out;
+  double aux;
+
+  /* Euclidean norm */
+  if(kind == 2){
+
+    aux = 0;
+    for(int i = 0 ; i< In.N_rows*In.N_cols ; i++){
+      aux += In.nV[i]*In.nV[i] ;
+    }
+    Out.n = pow(aux,0.5);
+  }
+
+  /* Set to NULL the array and the matrix */
+  Out.nV = NULL;
+  Out.nM = NULL;  
+
+  return Out;  
 }

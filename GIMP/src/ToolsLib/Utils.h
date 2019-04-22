@@ -29,3 +29,5 @@ Matrix Tensorial_prod(Matrix,Matrix);
 Matrix Add_Mat(Matrix,Matrix);
 
 Matrix Sub_Mat(Matrix,Matrix);
+
+Matrix Norm_Mat(Matrix,int);

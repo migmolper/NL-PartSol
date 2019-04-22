@@ -6,13 +6,6 @@
 #endif
 
 
-GaussPoint * AllocateMaterialPoints(int);
-
-void Initialize_GP(GaussPoint *,
-		   Matrix,
-		   double,
-		   double);
-
 void Initialize_Element(Element *,
 			GaussPoint *,
 			char *,
@@ -24,9 +17,5 @@ void Get_RefDeformation_Gradient(GaussPoint *,
 
 Matrix Get_dNdx_matrix(Element *,
 		       GaussPoint *);
-
-void Get_Lagrangian_CG_Tensor(GaussPoint *);
-
-void Get_Eulerian_CG_Tensor(GaussPoint *); 
 
 Matrix Get_Stiffness_Matrix(Element *); 

@@ -1,0 +1,10 @@
+
+#include "Utils.h"
+
+#ifndef TypeDefinitions
+#define TypeDefinitions
+#endif
+
+
+Matrix Conjugate_Gradient_Precondicionated(Matrix,Matrix);
+
