@@ -3,6 +3,12 @@
 #include "ToolsLib/TypeDefinitions.h"
 #include "ToolsLib/Utils.h"
 
+/* List of solver implemented :
+   - The Conjugate Gradient method without preconditioning (CG)
+   - The Conjugate Gradient method with the Jacobi preconditioner (CGJ)
+   - The Generalized Minimal Resituals (GMRes) -> Not yet implemented...
+*/
+
 /*********************************************************************/
 
 Matrix Conjugate_Gradient_Method(Matrix K, Matrix F, Matrix U0)
@@ -49,12 +55,15 @@ https://en.wikipedia.org/wiki/Conjugate_gradient_method#The_preconditioned_conju
 
 */
 {
-  /* First we check if the input data */
+
+   /* First we check if the input data */
   if((K.N_cols != K.N_rows) ||
-     ( (K.N_rows != F.N_rows) || (F.N_cols != 1))){
-    puts("Error in Conjugate_Gradient_Precondicionated() : Wrong input data !");
-    exit(0);
-  }
+     ( (K.N_rows != F.N_rows) || (F.N_cols != 1)) ||
+     ( (K.N_rows != U0.N_rows) || (U0.N_cols != 1) ))
+    {
+      puts("Error in Conjugate_Gradient_Method() : Wrong input data !");
+      exit(0);
+    }
   
   int N = K.N_rows;
   double aux;
@@ -62,7 +71,7 @@ https://en.wikipedia.org/wiki/Conjugate_gradient_method#The_preconditioned_conju
   double alpha_k,beta_k;
   double dividend,divisor;
   Matrix Norm_U,Norm_r;
-  Matrix r_k,r_kT,r_k1,r_k1T;
+  Matrix r_k,r_k1;
   Matrix p;
   Matrix U;
   int STOP_CRITERIA = 0;
@@ -72,18 +81,19 @@ https://en.wikipedia.org/wiki/Conjugate_gradient_method#The_preconditioned_conju
   Num_Iter_Max = 25;
   Tol_U = 0.0001;
   Tol_r = 0.0001;
+
+  /* Allocate the residual and the p basis arrays */
+  r_k = MatAlloc(N,1);
+  r_k1 = MatAlloc(N,1);
+  p = MatAlloc(N,1);
   
   /* Set initial solution to the initial solution */
   U = U0;
 
-  /* Calculate the residual r^1 : 
-     $r^1 = F - A x^1$
-   */
-  r_k = MatAlloc(N,1);
-  r_k1 = MatAlloc(N,1);
-  p = MatAlloc(N,1);
-
+  /* Do initial step */
   for(int i = 0 ; i<N ; i++){
+
+    /* Calculate the residual $r^1 = F - A x^1$ */
     aux = 0;
     for(int j = 0 ; j<N ; j++){
       aux += K.nM[i][j]*U.nV[j];
@@ -133,7 +143,7 @@ https://en.wikipedia.org/wiki/Conjugate_gradient_method#The_preconditioned_conju
 	(Num_Iter >= Num_Iter_Max) ){
       STOP_CRITERIA = 1;
 
-      if(Num_Iter <= Num_Iter_Max){
+      if(Num_Iter < Num_Iter_Max){
 	printf("Convergence criteria reached after %i iterations \n",Num_Iter);
       }
       else{
@@ -165,7 +175,12 @@ https://en.wikipedia.org/wiki/Conjugate_gradient_method#The_preconditioned_conju
     }
 
   }
-   
+
+  /* Free memory */
+  free(r_k.nV);
+  free(r_k1.nV);
+  free(p.nV);
+  
   return U;
   
 }
@@ -185,13 +200,150 @@ Matrix Jacobi_Conjugate_Gradient_Method(Matrix K, Matrix F, Matrix U0)
   \end{equation}
   who modifies the definition of $\alpha^k$, $\beta^k$, $p^k$ :
   \begin{equation}
-  \alpha^k = \frac{}{}
-  \beta^k = \frac{}{}
-  p^{k+1} = 
+  \alpha^k = \frac{z^k^T r^k}{p^k^T A p^k}
+  \beta^k = \frac{z^{k+1^T} r^{k+1}}{z^{k^T} r^k}
+  p^{k+1} = z^{k+1} + \beta^k p^k
   \end{equation}
  */
 {
 
+   /* First we check if the input data */
+  if((K.N_cols != K.N_rows) ||
+     ( (K.N_rows != F.N_rows) || (F.N_cols != 1)) ||
+     ( (K.N_rows != U0.N_rows) || (U0.N_cols != 1) ))
+    {
+      puts("Error in Jacobi_Conjugate_Gradient_Method() : Wrong input data !");
+      exit(0);
+    }
   
+  int N = K.N_rows;
+  double aux;
+  double Tol_U,Tol_r;
+  double alpha_k,beta_k;
+  double dividend,divisor;
+  Matrix Norm_U,Norm_r;
+  Matrix r_k,r_k1;
+  Matrix z_k,z_k1;
+  Matrix p;
+  Matrix U;
+  int STOP_CRITERIA = 0;
+  int Num_Iter,Num_Iter_Max;
+
+  Num_Iter = 0;
+  Num_Iter_Max = 25;
+  Tol_U = 0.0001;
+  Tol_r = 0.0001;
+
+  /* Allocate the residual arrays and the basis p array */
+  r_k = MatAlloc(N,1);
+  r_k1 = MatAlloc(N,1);
+  z_k = MatAlloc(N,1);
+  z_k1 = MatAlloc(N,1);
+  p = MatAlloc(N,1);
+  
+  
+  /* Set initial solution to the initial solution */
+  U = U0;
+
+  /* Do initial step */
+  for(int i = 0 ; i<N ; i++){
+  
+    /* Calculate the residual $r^1 = F - A x^1$ */
+    aux = 0;
+    for(int j = 0 ; j<N ; j++){
+      aux += K.nM[i][j]*U.nV[j];
+    }
+    r_k.nV[i] = F.nV[i] - aux;
+
+    /* Calcule the z vector $z^k = \tilde{K}^{-1} r^k $ */
+    z_k.nV[i] = (1/K.nM[i][i])*r_k.nV[i];
+
+    /* Set p^1 = z^1   : */
+    p.nV[i] = z_k.nV[i];    
+  }
+
+  /* iterate */
+  while(STOP_CRITERIA == 0){
+
+    /* 1th step : Get alpha */
+    alpha_k = 0;
+    dividend = 0;
+    divisor = 0;
+    for(int i = 0 ; i<N ; i++){
+      /* Scalar product -> dividend = r_k^T \cdot r_k */
+      dividend +=  r_k.nV[i]*z_k.nV[i];
+      /* Scalar product -> divisor = r_k^T \cdot K \cdot r_k */
+      aux = 0;
+      for(int j = 0 ; j<N ; j++){
+	aux += K.nM[i][j]*p.nV[j];
+      }
+      divisor += p.nV[i]*aux;      
+    }
+    alpha_k = dividend/divisor;
+    
+    for(int i = 0 ; i<N ; i++){
+      /* 2th Step : Get the solution array (Update) */
+      U.nV[i] += alpha_k*p.nV[i];
+      /* 3th Step : Calcule the residual */
+      aux = 0;
+      for(int j = 0 ; j<N ; j++){
+	aux += K.nM[i][j]*p.nV[j];
+      }      
+      r_k1.nV[i] = r_k.nV[i] - alpha_k*aux;
+    }
+
+    /* Calcule the stopping criteria */
+    Norm_U = Norm_Mat(U,2);
+    Norm_r = Norm_Mat(r_k1,2);
+    Num_Iter++;
+    if( (Norm_r.n < Tol_r) ||
+	(Norm_U.n < Tol_U) ||
+	(Num_Iter >= Num_Iter_Max) ){
+      STOP_CRITERIA = 1;
+
+      if(Num_Iter < Num_Iter_Max){
+	printf("Convergence criteria reached after %i iterations \n",Num_Iter);
+      }
+      else{
+	printf("Warning not convergence reached after the maximum number of iterations: \n");
+	printf("\t Norm of r: %f \n",Norm_r.n);
+	printf("\t Norm of U: %f \n",Norm_U.n);
+      }
+      
+    }
+       
+    beta_k = 0;
+    dividend = 0;
+    divisor = 0;
+    for(int i = 0 ; i<N ; i++){
+      /* 4th step : */
+      z_k1.nV[i] = (1/K.nM[i][i])*r_k1.nV[i];
+      /* 5th step :*/  
+      /* Scalar product -> dividend = r_{k+1}^T \cdot r_{k+1} */
+      dividend +=  z_k1.nV[i]*r_k1.nV[i];
+      /* Scalar product -> divisor = r_k^T \cdot r_k */
+      divisor += z_k.nV[i]*r_k.nV[i];      
+    }
+    beta_k = dividend/divisor;
+
+    for(int i = 0 ; i<N ; i++){
+      /* 6th step : Update the basis vector $p$ */
+      p.nV[i] = z_k1.nV[i] + beta_k*p.nV[i];
+
+      /* 7th step : Update the residual $r_{k}$ and the $z_k$ vector  */
+      r_k.nV[i] = r_k1.nV[i];
+      z_k.nV[i] = z_k1.nV[i];
+    }
+
+  }
+
+  /* Free memory */
+  free(r_k.nV);
+  free(r_k1.nV);
+  free(z_k.nV);
+  free(z_k1.nV);
+  free(p.nV);
+   
+  return U;
   
 }

@@ -23,45 +23,47 @@ GaussPoint * AllocateGaussPoints(int NumberGP)
 
 /*********************************************************************/
 
-void Initialize_GP(GaussPoint * GP,
-		   int GP_id,
-		   Matrix RefCoords,
-		   double PoissonRatio,
-		   double YoungModulus)
+GaussPoint Initialize_GP(int GP_id,
+			 Matrix RefCoords,
+			 double PoissonRatio,
+			 double YoungModulus)
 /* In this function we Initialize and allocate all the variables of the Gauss Points,
    if they are necessary */
 {
+  GaussPoint GP;
 
   /* Initialize id of the GP */
-  GP->id = GP_id;
+  GP.id = GP_id;
 
   /* Id of the element where it is */
-  GP->Element_id = 0; 
+  GP.Element_id = 0; 
 
   /* Initialize kind of material */
-  strcpy(GP->Material,"Elastic");
+  strcpy(GP.Material,"Elastic");
 
   /* Initialize position field (Vectorial) in global coordiantes
    and in element coordinates : 
    It is not necessary to allocate memory...think about it ;) */
   
   /* GP.x_GC.nV = ... Initialize */
-  GP->x_EC = RefCoords;
+  GP.x_EC = RefCoords;
 
   /* Allocate and Initialize the Velocity and acceleration field (Vectorial) */
-  GP->v = MatAlloc(2,1);
-  GP->a = MatAlloc(2,1);
+  GP.v = MatAlloc(2,1);
+  GP.a = MatAlloc(2,1);
   /*  GP.v.nV = ... Initialize */
   /*  GP.v.nV = ... Initialize */
 
   /* Allocate and Initialize the Stress and Strain fields (Tensorial) */
-  GP->Stress = MatAlloc(3,1);
-  GP->Strain = MatAlloc(3,1);
+  GP.Stress = MatAlloc(3,1);
+  GP.Strain = MatAlloc(3,1);
   /* GP.Strain.nM = ...  Initialize */
   /* GP.Stress.nM = ... Initialize */
 
   /* Allocate and Initialize the constitutive response */
-  GP->D = LinearElastic(PoissonRatio,YoungModulus);
+  GP.D = LinearElastic(PoissonRatio,YoungModulus);
+
+  return GP;
 
 }
 

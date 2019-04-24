@@ -7,11 +7,10 @@
 
 GaussPoint * AllocateGaussPoints(int);
 
-void Initialize_GP(GaussPoint *,
-		   int,
-		   Matrix,
-		   double,
-		   double);
+GaussPoint Initialize_GP(int,
+			 Matrix,
+			 double,
+			 double);
 
 void Get_Lagrangian_CG_Tensor(GaussPoint *);
 

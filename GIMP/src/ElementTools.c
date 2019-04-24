@@ -29,7 +29,7 @@ void Initialize_Element(Element * Elem,
     Elem->NumberDOF = 2;
     
     /* Number of Gauss points inside of the element */
-    Elem->NumberGP = 1;
+    Elem->NumberGP = 4;
 
     /* Conectivity mesh :
        Here we only pass by reference the connectivity mesh, the 
@@ -53,7 +53,6 @@ void Initialize_Element(Element * Elem,
     /* List of GP inside of the element :
        This list is generated outside of the element and passed by reference */
     Elem->GP_e = GP_e;
-
     /* Auxiliar matrix to do the operations in K matrix */
     Elem->B = MatAlloc(4,2);
   }
@@ -170,6 +169,7 @@ Matrix Get_dNdx_matrix(Element * Elem_GP,
       dNdX.nM[0][2*i] = dN_di.nV[0];
       dNdX.nM[1][2*i] = 0; 
       dNdX.nM[2][2*i] = dN_di.nV[1]; 
+
       dNdX.nM[0][2*i + 1] = 0; 
       dNdX.nM[1][2*i + 1] = dN_di.nV[1]; 
       dNdX.nM[2][2*i + 1] = dN_di.nV[0];
@@ -227,7 +227,7 @@ Matrix Get_Stiffness_Matrix(Element * Elem) /* Element to analyze */
     /* Pointer to the GP in the element */
     GP_ei = &Elem->GP_e[i_GP];
     
-    dNdX = Get_dNdx_matrix(Elem,GP_ei);    
+    dNdX = Get_dNdx_matrix(Elem,GP_ei);
     dNdX_T= Transpose_Mat(Get_dNdx_matrix(Elem,GP_ei));
 
     /* Get the jacobian of the transformation and store it as a scalar */

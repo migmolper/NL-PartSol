@@ -22,10 +22,10 @@ Matrix Q4(Matrix X_e){
   Matrix N_ref =  MatAlloc(1,4);
 
   /* Fill the array */
-  N_ref.nV[0] = 1 - X_e.nV[0] - X_e.nV[1] + (X_e.nV[0])*(X_e.nV[1]);
-  N_ref.nV[1] = X_e.nV[0] - (X_e.nV[0])*(X_e.nV[1]);
-  N_ref.nV[2] = (X_e.nV[0])*(X_e.nV[1]);
-  N_ref.nV[3] = X_e.nV[1] - X_e.nV[1]*(X_e.nV[0]);
+  N_ref.nV[0] = 0.25 - 0.25*X_e.nV[0] - 0.25*X_e.nV[1] + 0.25*(X_e.nV[0])*(X_e.nV[1]);
+  N_ref.nV[1] = 0.25 + 0.25*X_e.nV[0] - 0.25*X_e.nV[1] - 0.25*(X_e.nV[0])*(X_e.nV[1]);
+  N_ref.nV[2] = 0.25 + 0.25*X_e.nV[0] + 0.25*X_e.nV[1] + 0.25*(X_e.nV[0])*(X_e.nV[1]);
+  N_ref.nV[3] = 0.25 - 0.25*X_e.nV[0] + 0.25*X_e.nV[1] - 0.25*(X_e.nV[0])*(X_e.nV[1]);
   
   return N_ref;
 }
@@ -37,16 +37,18 @@ Matrix dQ4(Matrix X_e){
   Matrix dNdX_ref = MatAlloc(2,4);
   
   /* Fill the matrix */
-  /* $\xi$ */
-  dNdX_ref.nM[0][0] = X_e.nV[1] - 1; /* \frac{\partial N0}{\partial \xi} */
-  dNdX_ref.nM[0][1] = 1 - X_e.nV[1]; /* \frac{\partial N1}{\partial \xi} */
-  dNdX_ref.nM[0][2] = X_e.nV[1]; /* \frac{\partial N2}{\partial \xi} */
-  dNdX_ref.nM[0][3] = - X_e.nV[1]; /* \frac{\partial N3}{\partial \xi} */
-  /* $\eta$ */
-  dNdX_ref.nM[1][0] = X_e.nV[0] - 1; /* \frac{\partial N0}{\partial \eta} */
-  dNdX_ref.nM[1][1] = - X_e.nV[0]; /* \frac{\partial N1}{\partial \eta} */
-  dNdX_ref.nM[1][2] = X_e.nV[0]; /* \frac{\partial N2}{\partial \eta} */
-  dNdX_ref.nM[1][3] = 1 - X_e.nV[0]; /* \frac{\partial N3}{\partial \eta} */
+  /* Node 1 */
+  dNdX_ref.nM[0][0] = - 0.25 + 0.25*(X_e.nV[1]); /* \frac{\partial N0}{\partial \xi} */
+  dNdX_ref.nM[1][0] = - 0.25 + 0.25*(X_e.nV[0]); /* \frac{\partial N0}{\partial \eta} */
+  /* Node 2 */
+  dNdX_ref.nM[0][1] = + 0.25 - 0.25*(X_e.nV[1]); /* \frac{\partial N1}{\partial \xi} */
+  dNdX_ref.nM[1][1] = - 0.25 - 0.25*(X_e.nV[0]); /* \frac{\partial N1}{\partial \eta} */
+  /* Node 3 */
+  dNdX_ref.nM[0][2] = + 0.25 + 0.25*(X_e.nV[1]); /* \frac{\partial N2}{\partial \xi} */
+  dNdX_ref.nM[1][2] = + 0.25 + 0.25*(X_e.nV[0]); /* \frac{\partial N2}{\partial \eta} */
+  /* Node 4 */
+  dNdX_ref.nM[0][3] = - 0.25 - 0.25*(X_e.nV[1]); /* \frac{\partial N3}{\partial \xi} */
+  dNdX_ref.nM[1][3] = + 0.25 - 0.25*(X_e.nV[0]); /* \frac{\partial N3}{\partial \eta} */
   
   return dNdX_ref;
 }
