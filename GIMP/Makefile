@@ -7,7 +7,14 @@ myprog = GIMP
 CC = gcc
 
 # Source code
-csrc = $(wildcard src/*.c)
+csrc = \
+	$(wildcard src/*.c)\
+	$(wildcard src/ToolsLib/*.c)\
+	$(wildcard src/Constitutive/*.c)\
+	$(wildcard src/Solvers/*.c)\
+	$(wildcard src/ElementsFunctions/*.c)\
+	$(wildcard src/GaussPointsFunctions/*.c)\
+	$(wildcard src/Forces/*.c)
 
 # Transforms the contents of the src variable, changing all file suffixes
 # from .c to .o, thus constructing the object file list we need.

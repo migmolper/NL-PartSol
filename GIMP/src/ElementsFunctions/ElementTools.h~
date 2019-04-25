@@ -6,11 +6,10 @@
 #endif
 
 
-void Initialize_Element(Element *,
-			GaussPoint *,
-			char *,
-			Matrix ,
-			int *);
+Element Initialize_Element(GaussPoint *,
+			   char *,
+			   Matrix ,
+			   int *);
 
 void Get_RefDeformation_Gradient(GaussPoint *,
 				 Element *);

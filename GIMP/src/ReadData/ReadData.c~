@@ -1,0 +1,166 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include "../GeneralVariables/GeneralVariables.h"
+#include "../AuxiliarFunctions/AuxiliarFunctions.h"
+
+/***************************************************************************/
+
+
+void ReadData(char * Name_File)
+/*
+  Read data from the .DAT file and initialize the variables
+  
+  Inputs
+  - Name_file : Name of the file
+  - 
+  Outputs
+  - Conectivity matrix
+  - Coordenates of the nodes
+  - phi_n : Values of the variables in the n step, 
+        initializerd with the Initial conditions
+  - DeltaT : Time-step
+  - A_el : Area of the element
+  - type_elem : Type of the element (1)
+  - 
+  - N_nodes : Number of nodes
+  - N_elem : Number of elements
+  - N_steps : Number of time steps
+*/
+{
+  /* Number of lines with coments in the header */
+  int num_coment;
+
+
+  /* Variable for the index in nodes and conectivitie */
+  int ix;
+
+  /* Auxiliar variable for reading the lines in the files */
+  char line[200];
+  
+  /* Allocate a string with enough space for the extensions. */
+  char *Name_Simulation = malloc(strlen(Name_File+5));
+  
+  /* Copy the name with extensions into fn. */
+  sprintf(Name_Simulation, "%s.dat", Name_File); 
+  
+  /* Open and check .dat file */
+  Sim_dat = fopen(Name_Simulation,"r");
+  
+  if (Sim_dat==NULL){
+    puts("Error during the lecture of .dat file");
+    exit(0);
+  }
+
+  /* Read number of lines with a coment */
+  fscanf(Sim_dat,"%d",
+	 &num_coment);
+
+  /* Skip commented lines */
+  for(int i = 0;i<=num_coment;i++){
+    fgets(line, sizeof(line), Sim_dat);
+  }
+
+  /* Read number of nodes and elements */
+  fgets(line, sizeof(line), Sim_dat);
+  fgets(line, sizeof(line), Sim_dat);
+  sscanf(line,"%d%d",
+	 &N_nodes,
+	 &N_elem);
+
+  /* Read delta_t and number of time-steps */
+  fgets(line, sizeof(line), Sim_dat);
+  fgets(line, sizeof(line), Sim_dat);
+  sscanf(line,"%lf%d",
+	 &DeltaT,
+	 &N_steps);
+
+  /* Type of problem, type of element and type of time integration */
+  fgets(line, sizeof(line), Sim_dat);
+  fgets(line, sizeof(line), Sim_dat);
+  sscanf(line,"%d%d%d",
+	 &type_problem,
+	 &type_elem,
+	 &temp_integration);
+  
+  /* Allocate data ( Depends of the type of simulation ) */
+  coordinates_1D = (double * ) AllocateArray(N_nodes,sizeof(double));
+  conectivity_1D = (int * ) AllocateArray(N_elem*2,sizeof(int));
+  
+  /* Read coordinates of the node of the mesh and assemble it */
+  fgets(line, sizeof(line), Sim_dat);
+  for(int i = 0;i<N_nodes;i++){
+    
+    /* Read each nodal position */
+    fgets(line, sizeof(line), Sim_dat);
+    sscanf(line,"%d %lf",
+	   &ix, /* Index of the node */
+	   &coordinates_1D[i]); /* Coordinate of the node */
+  }
+
+
+  
+  /* Read conectivity of the mesh */
+  fgets(line, sizeof(line), Sim_dat);
+  for(int i = 0;i<N_elem;i++){
+
+    /* Read each element conectivity */
+    fgets(line, sizeof(line), Sim_dat);
+    sscanf(line,"%d%d%d",
+	     &ix,
+	     &conectivity_1D[i*2],
+	     &conectivity_1D[i*2+1]);
+  }
+  
+  /* Read physical parameters */
+  fgets(line, sizeof(line), Sim_dat);
+  fgets(line, sizeof(line), Sim_dat);
+  sscanf(line,"%lf%lf",
+	 &A_el,
+	 &g);
+
+  /* Allocate array of variables in the t = n */
+  phi_n = (double * ) AllocateArray(N_nodes,sizeof(double));
+  
+  /* Read initial conditions and save them in the phi_n array */
+  fgets(line, sizeof(line), Sim_dat);
+  for(int i = 0;i<N_nodes;i++){
+    fgets(line, sizeof(line), Sim_dat);
+    sscanf(line,"%lf",
+	   &phi_n[i]);
+  }
+  
+  /* /\* Read boundary conditions *\/ */
+  /* fgets(line, sizeof(line), Sim_dat); */
+  /* if(type_problem == 1){ */
+
+  /*   /\* Boundary conditions for 1D cases *\/ */
+  /*   BoundaryConditions  = (int **) AllocateMatrix(2,3,sizeof(int)); */
+    
+  /*   /\* X = 0 *\/ */
+  /*   fgets(line, sizeof(line), Sim_dat); */
+  /*   sscanf(line,"%d%d%d", */
+  /* 	   &BoundaryConditions[0][0], /\* Node *\/ */
+  /* 	   &BoundaryConditions[0][1], /\* Type of BCC *\/ */
+  /* 	   &BoundaryConditions[0][2]); /\* Label of BCC *\/ */
+
+  /*   /\* X = L *\/ */
+  /*   fgets(line, sizeof(line), Sim_dat); */
+  /*   sscanf(line,"%d%d%d", */
+  /* 	   &BoundaryConditions[1][0], /\* Node *\/ */
+  /* 	   &BoundaryConditions[1][1], /\* Type of BCC *\/ */
+  /* 	   &BoundaryConditions[1][2]); /\* Label of BCC *\/ */
+    
+  /* } /\* if(type_problem == 1) *\/ */
+     
+    
+  // Close .dat file
+  free(Name_Simulation); // Free the memory gained from malloc. 
+  fclose(Sim_dat);
+  
+
+} /* void read_dat(char * Name_File) */
+
+
+
+/***************************************************************************/

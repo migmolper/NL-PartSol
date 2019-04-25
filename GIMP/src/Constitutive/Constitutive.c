@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "ToolsLib/TypeDefinitions.h"
-#include "ToolsLib/Utils.h"
+#include "../ToolsLib/TypeDefinitions.h"
+#include "../ToolsLib/Utils.h"
 
 
 Matrix LinearElastic(double PoissonRatio,double YoungModulus){

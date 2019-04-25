@@ -5,40 +5,42 @@
 #include "ToolsLib/TypeDefinitions.h"
 #include "ToolsLib/Utils.h"
 #include "ToolsLib/ShapeFunctions.h"
-#include "ToolsLib/Constitutive.h"
+#include "Constitutive/Constitutive.h"
 
 /*********************************************************************/
 
 /* Function for defining the element properties */
-void Initialize_Element(Element * Elem,
-			GaussPoint * GP_e,
-			char * TypeElement,
-			Matrix GlobalNodsCoords,
-			int * GlobalNodsId){
+Element Initialize_Element(GaussPoint * GP_e,
+			   char * TypeElement,
+			   Matrix GlobalNodsCoords,
+			   int * GlobalNodsId){
+
+  
+  Element Elem;
 
   /* Linear quadrilateral of four nodes */
   if (strcmp(TypeElement,"Q4")==0){
 
     /* Identification number of the element */
-    Elem->id = 0;
+    Elem.id = 0;
 
     /* Number of nodes in this element */
-    Elem->NumberNodes = 4;
+    Elem.NumberNodes = 4;
 
     /* Number of degree of freedom for each node */
-    Elem->NumberDOF = 2;
+    Elem.NumberDOF = 2;
     
     /* Number of Gauss points inside of the element */
-    Elem->NumberGP = 4;
+    Elem.NumberGP = 4;
 
     /* Conectivity mesh :
        Here we only pass by reference the connectivity mesh, the 
        allocation of it occurs ouside of the Initialize_Element() */
-    Elem->N_id = GlobalNodsId;
+    Elem.N_id = GlobalNodsId;
     
     /* Global coordiantes of the nodes :
        x and y coordiantes of each node of the element (Nnodes X Ndof) */
-    Elem->X_g = GlobalNodsCoords;
+    Elem.X_g = GlobalNodsCoords;
     /*
       ^
       |_____ Future updates : remove this field and use only the connectivity mesh
@@ -47,19 +49,19 @@ void Initialize_Element(Element * Elem,
     /* Shape functions and its derivatives:
        Here we only pass by reference the function, the output Matrix 
        is allocated insede of N_ref() and dNdX_ref() */
-    Elem->N_ref = Q4;
-    Elem->dNdX_ref = dQ4;
+    Elem.N_ref = Q4;
+    Elem.dNdX_ref = dQ4;
 
     /* List of GP inside of the element :
        This list is generated outside of the element and passed by reference */
-    Elem->GP_e = GP_e;
+    Elem.GP_e = GP_e;
     /* Auxiliar matrix to do the operations in K matrix */
-    Elem->B = MatAlloc(4,2);
+    Elem.B = MatAlloc(4,2);
   }
+
+  return Elem;
   
 }
-
-
 
 /*********************************************************************/
 
@@ -119,7 +121,8 @@ void Get_RefDeformation_Gradient(GaussPoint * GP,
 
 Matrix Get_dNdx_matrix(Element * Elem_GP,
 		       GaussPoint * GP)
-/* Get the derivative matrix of the shape functions in global coordiantes, it is
+/* 
+   Get the derivative matrix of the shape functions in global coordiantes, it is
    the so called B matrix in the classical formulation of the finite element method
    Inputs: Element, GP where to evaluate it
    Outputs : Matrix dNdX

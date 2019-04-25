@@ -4,9 +4,9 @@
 #include <math.h>
 #include "ToolsLib/TypeDefinitions.h"
 #include "ToolsLib/Utils.h"
-#include "ToolsLib/ElementTools.h"
-#include "ToolsLib/GaussPointsTools.h"
-#include "ToolsLib/Solvers.h"
+#include "ElementsFunctions/ElementTools.h"
+#include "GaussPointsFunctions/GaussPointsTools.h"
+#include "Solvers/Solvers.h"
 
 
 int main(void){
@@ -44,7 +44,7 @@ int main(void){
   }
 
   /* Define one single element */
-  Element Elem;
+  Element ElementMesh;
 
   /* Type of the element */
   char TypeElement[4] = "Q4";
@@ -72,19 +72,19 @@ int main(void){
 
   
   /* Initialize the element mesh */
-  Initialize_Element(&Elem,GP_e,TypeElement,
-		     GlobalNodsCoords_e,
-		     GlobalNodsId_e);
+  ElementMesh = Initialize_Element(GP_e,TypeElement,
+				   GlobalNodsCoords_e,
+				   GlobalNodsId_e);
   
   for(int i = 0 ; i<4 ; i++){
 
-    Get_RefDeformation_Gradient(&GP_e[i],&Elem);
+    Get_RefDeformation_Gradient(&GP_e[i],&ElementMesh);
 
   }
  
   Matrix K;
 
-  K = Get_Stiffness_Matrix(&Elem);
+  K = Get_Stiffness_Matrix(&ElementMesh);
 
   printf("[%f ; %f ; %f ; %f ; %f ; %f ; %f ; %f ] \n",
   	 K.nM[0][0],K.nM[0][1],K.nM[0][2],K.nM[0][3],K.nM[0][4],K.nM[0][5],K.nM[0][6],K.nM[0][7]);
