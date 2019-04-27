@@ -41,6 +41,9 @@ GaussPoint Initialize_GP(int GP_id,
   /* Initialize kind of material */
   strcpy(GP.Material,"Elastic");
 
+  /* Initialize the mass of the material point */
+  GP.m = 1;
+
   /* Initialize position field (Vectorial) in global coordiantes
    and in element coordinates : 
    It is not necessary to allocate memory...think about it ;) */

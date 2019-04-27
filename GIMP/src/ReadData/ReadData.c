@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "../GeneralVariables/GeneralVariables.h"
-#include "../AuxiliarFunctions/AuxiliarFunctions.h"
+#include "../ToolsLib/GlobalVariables.h"
+#include "../ToolsLib/Utils.h"
 
 /***************************************************************************/
 
@@ -96,8 +96,8 @@ void ReadData(char * Name_File)
     printf("\t Kind of element for the mesh \n");    
     exit(0);
   }
-  if((SpatialDimensions == 2) || (SpatialDimensions ==3)){
-    printf("For the moment I am only able to deal with 1D problems \n");
+  if((SpatialDimensions == 1) || (SpatialDimensions == 3)){
+    printf("For the moment I am only able to deal with 2D problems \n");
     exit(0);
   }
   if( (SpatialDimensions != 1) &&
@@ -134,7 +134,6 @@ void ReadData(char * Name_File)
     printf(" The minimum number of fields to simulate is 1 \nx");
     exit(0);
   }
-
 
   /* Allocate an array with the list of the fields */
   Fields = (double *) AllocateArray(NumberNodes*NumberFields,sizeof(double));

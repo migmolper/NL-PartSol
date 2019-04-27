@@ -258,3 +258,60 @@ Matrix Get_Stiffness_Matrix(Element * Elem) /* Element to analyze */
   return K;
 }
 
+/*********************************************************************/
+
+Matrix Get_Mass_Matrix(Element * Elem) /* Element to analyze */
+/* 
+   Calcule the element-mass matrix M :
+   Inputs : Element
+   Outputs : Mass matrix (M)
+*/
+{
+    Matrix dNdX;
+  Matrix N;
+  Matrix K;
+  Matrix K_GP;
+  Matrix D;
+  Matrix J;
+
+  /* Auxiliar pointer */
+  GaussPoint * GP_ei;
+  
+  /* Allocate and initialize M to zero */
+  M = MatAllocZ(Elem->NumberNodes * Elem->NumberDOF,
+		 Elem->NumberNodes * Elem->NumberDOF);
+
+  /* Iterate over the Gauss Points */
+  for(int i_GP = 0 ; i_GP<Elem->NumberGP ; i_GP++){
+
+    /* Get the derivative Matrix and it transposse evaluated in the gauss point */
+
+    /* Pointer to the GP in the element */
+    GP_ei = &Elem->GP_e[i_GP];
+
+    N_T = Transpose_Mat(N);
+    N = ;
+    
+
+    /* Get the jacobian of the transformation and store it as a scalar */
+    J.n = Get_Determinant(GP_ei->F_ref);
+    J.nM = NULL;
+    J.nV = NULL;
+    J.N_cols = 1;
+    J.N_rows = 1;
+
+    /* Multiply the result by the derivative matrix transpose */
+    M = Tensorial_prod(N_T,N); /* <- Esto está maaaaaaaaaaal */
+    
+    /* Multiply by the jacobian and by the mass of the GP */
+    M = Scalar_prod(M,J*GP_ei->m);
+    
+    /* Acumulate for the integral rule */
+    K = Add_Mat(K,K_GP);
+    
+  }
+
+  return M;
+
+
+}

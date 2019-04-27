@@ -10,6 +10,7 @@ CC = gcc
 csrc = \
 	$(wildcard src/*.c)\
 	$(wildcard src/ToolsLib/*.c)\
+	$(wildcard src/ReadData/*.c)\
 	$(wildcard src/Constitutive/*.c)\
 	$(wildcard src/Solvers/*.c)\
 	$(wildcard src/ElementsFunctions/*.c)\

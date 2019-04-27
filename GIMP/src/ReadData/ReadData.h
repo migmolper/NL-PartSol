@@ -1,2 +1,7 @@
+#include "../ToolsLib/Utils.h"
 
-void ReadData(char * Name_File);
+#ifndef TypeDefinitions
+#define TypeDefinitions
+#endif
+
+void ReadData(char *){}

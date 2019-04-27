@@ -25,6 +25,9 @@ typedef struct {
   /* Name of the Material */
   char Material [20];
 
+  /* Mass of the GP */
+  double m;
+
   /* Position of the GP with global coordiantes */
   Matrix x_GC;
 

@@ -1,0 +1,32 @@
+
+0   1   2   3
+*---*---*---*
+  0   1   2
+  
+Num Elem * Num nodes * Num dim * Kind elem
+4 1 2 1
+Fields
+
+Time=step *  
+3 100 
+TIPO DE LA SIMULACION -- TIPO DE ELEMENTO -- INTEGRACION TEMPORAL
+1 1 1
+NODOS
+0 0.0
+1 0.5
+2 1.0
+3 1.5
+CONECTIVIDAD
+0 0 1
+1 1 2
+2 2 3
+AREA DEL ELEMENTO - GRAVEDAD
+1.0    9.81
+CONDICION INICIAL
+0.0
+0.0
+0.0
+0.0
+CONDICION DE CONTORNO
+0 1 1
+3 0 2

@@ -1,3 +1,3 @@
 
 double g = 9.81;
-int NumDim = 2;
+int NumberDimensions = 2;
