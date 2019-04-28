@@ -1,15 +1,52 @@
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 #include "ToolsLib/TypeDefinitions.h"
 #include "ToolsLib/Utils.h"
+#include "InOutFun/InOutFun.h"
 #include "ElementsFunctions/ElementTools.h"
 #include "GaussPointsFunctions/GaussPointsTools.h"
 #include "Solvers/Solvers.h"
 
+void main(int argc, char *argv[])
+/*
+  Inputs parameters :
+  * Mesh file
+  * Data file
+*/
+{
+  /* Check command-line arguments */
+  if(argc == 1){
+    perror("Error in main(), insuficient number of input files !");
+    exit(0);
+  }
 
-int main(void){
+  /* Initialize parser to read files */
+  ParserDictionary Dict = InitParserDictionary();
+
+  /* Declaration of the structure that contain the data of the mesh */
+  ElementProperties ElemProp;
+  MeshProperties MeshProp;
+
+  /* Read mesh data */
+  ReadGidMesh(argv[1],&ElemProp,&MeshProp,Dict);
+
+  printf("%i ; %i \n",MeshProp.Nnodes,ElemProp.Nnodes);
+  puts("paso");
+  exit(0);
+
+  for(int i = 0 ; i<MeshProp.Nnodes ; i++){
+    printf("Nodes of the element (%i) = \n",i);
+    for(int j = 0 ; j<ElemProp.Nnodes ; j++){
+      printf(" %i ",MeshProp.Connectivity[i][j]);
+    }
+    printf("\n");
+  }
+
+  
+
+
+  /* Read the mesh */
 
   /* Physical parameters */
   double PoissonRatio = 0.1;
@@ -81,7 +118,7 @@ int main(void){
     Get_RefDeformation_Gradient(&GP_e[i],&ElementMesh);
 
   }
- 
+
   Matrix K;
 
   K = Get_Stiffness_Matrix(&ElementMesh);
@@ -103,23 +140,6 @@ int main(void){
   printf("[%f ; %f ; %f ; %f ; %f ; %f ; %f ; %f ] \n",
   	 K.nM[7][0],K.nM[7][1],K.nM[7][2],K.nM[7][3],K.nM[7][4],K.nM[7][5],K.nM[7][6],K.nM[7][7]);
 
-  /* printf("Resolver sistema de ecuaciones \n"); */
-
-  /* Matrix A = MatAlloc(2,2); */
-  /* A.nM[0][0] = 4; */
-  /* A.nM[0][1] = 1; */
-  /* A.nM[1][0] = 1; */
-  /* A.nM[1][1] = 3; */
-  /* Matrix b = MatAlloc(2,1); */
-  /* b.nV[0] = 1; */
-  /* b.nV[1] = 2; */
-  /* Matrix x0 = MatAllocZ(2,1); */
-
-  /* // Matrix x_cgm = Conjugate_Gradient_Method(A,b,x0); */
-  /* // printf("Sol Ax = b : %f ; %f \n",x_cgm.nV[0],x_cgm.nV[1]); */
-  /* Matrix x_jcgm = Jacobi_Conjugate_Gradient_Method(A,b,x0); */
-  /* printf("Sol Ax = b : %f ; %f \n",x_jcgm.nV[0],x_jcgm.nV[1]); */
-
   
-  return 0;
+  exit(EXIT_SUCCESS);
 }

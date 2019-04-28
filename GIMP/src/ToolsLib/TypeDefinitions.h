@@ -5,6 +5,8 @@
    but give you more flexibility.
 */
 
+/*******************************************************/
+
 typedef struct{
   int N_rows;
   int N_cols;
@@ -12,6 +14,56 @@ typedef struct{
   double * nV;
   double ** nM;
 } Matrix;
+
+
+/*******************************************************/
+
+typedef struct{
+  
+  /* Integer identificator for the separator */
+  int NumberSeparators;
+  int * ascii_sep;
+  /* List of keyword por the parser engine */
+  int NumberKeyWords;
+  char ** KeyWords;
+  
+} ParserDictionary;
+
+
+/*******************************************************/
+
+
+typedef struct {
+
+  /* Number of nodes in the mesh */
+  int Nnodes;
+  /* Number of elements in the mesh */
+  int Nelem;
+  /* Table with the coordinates of the nodes of the mesh */
+  double ** Coordinates;
+  /* List of nodes for each element (Connectivity) */
+  int **  Connectivity;
+  
+} MeshProperties;
+
+
+/*******************************************************/
+
+
+typedef struct {
+
+  /* Number of dimensions of the element */
+  int Dimension;
+  /* Name of the element */
+  char Type[20];
+  /* Number of nodes of the element */
+  int Nnodes;
+  
+} ElementProperties;
+
+
+/*******************************************************/
+
 
 /* Gauss points definitions */
 typedef struct {
@@ -57,6 +109,7 @@ typedef struct {
   
 } GaussPoint;
 
+/*******************************************************/
 
 /* Element type definition */
 typedef struct {
@@ -98,3 +151,4 @@ typedef struct {
   
 } Element;
 
+/*******************************************************/

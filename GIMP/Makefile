@@ -10,7 +10,7 @@ CC = gcc
 csrc = \
 	$(wildcard src/*.c)\
 	$(wildcard src/ToolsLib/*.c)\
-	$(wildcard src/ReadData/*.c)\
+	$(wildcard src/InOutFun/*.c)\
 	$(wildcard src/Constitutive/*.c)\
 	$(wildcard src/Solvers/*.c)\
 	$(wildcard src/ElementsFunctions/*.c)\
@@ -27,11 +27,11 @@ LDFLAGS = -lm
 # compile
 $(myprog): $(obj)
 	$(CC) -o $@  $^ $(LDFLAGS)
-	./$(myprog)
+	./$(myprog) test/mesh.msh
 
 # run
 run:
-	./$(myprog)
+	./$(myprog) test/mesh.msh
 # New rule for cleaning up every target, in order to rebuild
 # the whole program from scratch
 .PHONY: clean
