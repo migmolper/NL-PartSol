@@ -1,4 +1,3 @@
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -91,6 +90,7 @@ Matrix MatAlloc(int NumberRows,int NumberColumns){
   Matrix M;
   M.N_rows = NumberRows;
   M.N_cols = NumberColumns;
+  strcpy(M.Info,"None");
 
   if( (NumberRows == 1) || (NumberColumns == 1) ){ /* It is an array */
     M.nV = (double *)Allocate_Array(NumberRows*NumberColumns,

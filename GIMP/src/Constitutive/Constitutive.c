@@ -1,10 +1,20 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "../ToolsLib/TypeDefinitions.h"
 #include "../ToolsLib/Utils.h"
 
+Matrix LinearElastic1D(double YoungModulus){
 
-Matrix LinearElastic(double PoissonRatio,double YoungModulus){
+  Matrix D  = MatAlloc(1,1);
+
+  D.n = YoungModulus;
+
+  return D;
+
+}
+
+Matrix LinearElastic2D(double PoissonRatio,double YoungModulus){
 
   Matrix D = MatAlloc(3,3);
   
@@ -22,6 +32,11 @@ Matrix LinearElastic(double PoissonRatio,double YoungModulus){
   D.nM[2][0] = 0;
   D.nM[2][1] = 0;
   D.nM[2][2] = 2*LameSecondParam;
+
+  
+  /* Initialize name of material */
+  strcpy(D.Info,"Elastic");
   
   return D;
+  
 }

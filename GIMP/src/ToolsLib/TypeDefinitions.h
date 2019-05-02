@@ -13,6 +13,7 @@ typedef struct{
   double n;
   double * nV;
   double ** nM;
+  char Info [80];
 } Matrix;
 
 
@@ -46,66 +47,62 @@ typedef struct {
   
 } MeshProperties;
 
-
 /*******************************************************/
-
 
 typedef struct {
 
   /* Number of dimensions of the element */
   int Dimension;
   /* Name of the element */
-  char Type[20];
+  char Type [20];
   /* Number of nodes of the element */
   int Nnodes;
   
 } ElementProperties;
 
-
 /*******************************************************/
 
+typedef struct {
+
+  /* Position in global coordinates */
+  Matrix x_GC;  
+  /* Position in element coordiantes */
+  Matrix x_EC;
+  /* Density field */
+  double rho;
+  /* Mass field */
+  double mass;
+  /* Displacement field */
+  Matrix dis;
+  /* Velocity field */
+  Matrix vel;
+  /* Acceleration field */
+  Matrix acc;
+  /* Stress field */
+  Matrix Stress;
+  /* Strain field */
+  Matrix Strain;
+  /* Deformation gradient */
+  Matrix F;
+  
+} Fields;
+
+/*******************************************************/
 
 /* Gauss points definitions */
 typedef struct {
 
-  /* Identification number of the GP */
-  int id;
+  /* Total number of the GP */
+  int NumGP;
 
   /* Identification of the element where it is */
-  int Element_id;
+  int * Element_id;
 
-  /* Name of the Material */
-  char Material [20];
-
-  /* Mass of the GP */
-  double m;
-
-  /* Position of the GP with global coordiantes */
-  Matrix x_GC;
-
-  /* Position of the GP with element coordiantes */
-  Matrix x_EC;
-
-  /* Velocity field */
-  Matrix v;
-  
-  /* Acceleration field */
-  Matrix a;
-  
-  /* Stress field */
-  Matrix Stress;
-  
-  /* Strain field */
-  Matrix Strain;
+  /* List of Fields */
+  Fields Phi;
 
   /* Constitutive response */
   Matrix D;
-  
-  /* Reference deformation gradient */
-  Matrix F_ref;
-  
-  /* Deformation gradient */
-  Matrix F;
   
 } GaussPoint;
 
@@ -128,26 +125,27 @@ typedef struct {
 
   /* Global index of the nodes (connectivity) */
   int * N_id;
-
-  /* Global coordinates of the element nodes */
-  Matrix X_g;
-  /*
-    ^
-    |_____ Future updates : remove this field and use only the connectivity mesh
-  */
   
   /* Shape function of the reference element evaluated in a GP */
   Matrix (* N_ref)(Matrix );
 
   /* Derivative shape function of the reference element evaluated in a GP */
   Matrix (* dNdX_ref)(Matrix );
+  
+  /* Ful derivative matrix to get the deformation of the element */
+  Matrix dNdx;
 
-  /* List of GP inside of the element */
-  GaussPoint * GP_e;
+  /* Reference deformation tensor */
+  Matrix F_ref;
 
-  /* It is not the Eulerian Cauchy-Green tensor, it is the operator matrix 
-     to get the deformation of the mesh */
+  /* Deformation tensor */
+  Matrix F;
+
+  /* Eulerian Cauchy-Green tensor */
   Matrix B;
+  
+  /* Lagrangian Cauchy-Green tensor */
+  Matrix C;
   
 } Element;
 

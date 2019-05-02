@@ -1,13 +1,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "../ToolsLib/GlobalVariables.h"
+#include "../ToolsLib/TypeDefinitions.h"
 #include "../ToolsLib/Utils.h"
 
 /***************************************************************************/
 
 
-void ReadData(char * Name_File)
+void ReadDatFile(char * Name_File)
 /*
   Read data from the .DAT file and initialize the variables
   
@@ -28,6 +28,9 @@ void ReadData(char * Name_File)
   - N_steps : Number of time steps
 */
 {
+  /* Simulation file */
+  FILE * Sim_dat;
+
   /* Number of lines with coments in the header */
   int num_coment;
 

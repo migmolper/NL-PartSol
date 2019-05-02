@@ -1,18 +1,17 @@
-#include "../ToolsLib/Utils.h"
-#include "../ElementsFunctions/ShapeFunctions.h"
 
 #ifndef TypeDefinitions
 #define TypeDefinitions
 #endif
 
-GaussPoint * AllocateGaussPoints(int);
+#ifndef GlobalVariables
+#define GlobalVariables
+#endif
 
-GaussPoint Initialize_GP(int,
-			 Matrix,
-			 double,
-			 double);
 
-void Get_Lagrangian_CG_Tensor(GaussPoint *);
+GaussPoint Initialize_GP_Mesh(Matrix,Matrix);
 
-void Get_Eulerian_CG_Tensor(GaussPoint *); 
+void UpdateElementLocationGP(GaussPoint);
 
+/* void Get_Lagrangian_CG_Tensor(GaussPoint *); */
+
+/* void Get_Eulerian_CG_Tensor(GaussPoint *); */

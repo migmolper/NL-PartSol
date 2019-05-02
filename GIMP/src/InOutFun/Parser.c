@@ -4,16 +4,16 @@
 #include <string.h>
 #include <ctype.h>
 #include "../ToolsLib/TypeDefinitions.h"
+#include "../ToolsLib/Utils.h"
+#include "InOutFun.h"
 
 /***************************************************************************/
 
-ParserDictionary InitParserDictionary(void)
+void InitParserDictionary(void)
 /*
 */
 {
-
-  ParserDictionary Dict;
-  
+ 
   char *hashtag = "#";
   int ascii_hashtag = (int)*hashtag;
   char *equal = "=";
@@ -38,28 +38,40 @@ ParserDictionary InitParserDictionary(void)
      ascii_comma,
      ascii_white};
 
-  char * KeyWords [14] =
-    {"NumberNodes",
-     "NumberGaussPoints",
-     "ElemType",
-     "DegreeFreedom",
-     "KindOfAnalisys",
+  char * KeyWords [21] =
+    {"NUM_NODES",
+     "NUM_GAUSSPOINTS",
+     "ELEM_TYPE",
+     "DOF",
+     "RESTART",
+     "TRUE",
+     "FALSE",  
+     "KIND_ANALYSIS",
      "U",
      "U_P",
-     "Sigma_V",
-     "Gravity",
-     "Density",
-     "Materials",
-     "Air",
-     "Water",
-     "Soil"};
+     "SIGMA_V",
+     "G",
+     "RHO",
+     "MATERIAL",
+     "AIR",
+     "WATER",
+     "SOIL",
+     "X_GP",
+     "U_X",
+     "V_X",
+     "SIGMA_X",
+     "TIME_STEP",
+     "NUM_STEP",
+     "MESH_FILE",
+     "COND_INIT",
+     "BOUND_COND",
+     "2STG"};
 
   Dict.ascii_sep = ascii_sep;
   Dict.NumberSeparators = 7;
   Dict.KeyWords = KeyWords;
-  Dict.NumberKeyWords = 14;
+  Dict.NumberKeyWords = 21;
   
-  return Dict;
 }
 
 /***************************************************************************/
@@ -97,6 +109,4 @@ int GetWords(char *line, char *words[], int separator ,int maxwords)
 	return nwords;
     }
 }
-
-/***************************************************************************/
 

@@ -27,11 +27,14 @@ LDFLAGS = -lm
 # compile
 $(myprog): $(obj)
 	$(CC) -o $@  $^ $(LDFLAGS)
-	./$(myprog) test/mesh.msh
+	./$(myprog) test/mesh1D.msh test/data.init
 
 # run
-run:
-	./$(myprog) test/mesh.msh
+test1D:
+	./$(myprog) test/mesh1D.msh test/data.init
+test2D:
+	./$(myprog) test/mesh2D.msh test/data.init
+
 # New rule for cleaning up every target, in order to rebuild
 # the whole program from scratch
 .PHONY: clean

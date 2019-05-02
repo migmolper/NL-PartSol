@@ -1,0 +1,17 @@
+MESH dimension 3 ElemType Linear Nnode 2
+Coordinates
+    1         7.01945         1.84211               0
+    2        4.413042        1.837532               0
+    3        1.806634        1.832954               0
+    4       -0.799774        1.828376               0
+    5       -3.406182        1.823798               0
+    6        -6.01259         1.81922               0
+End Coordinates
+
+Elements
+1 6 5
+2 5 4
+3 4 3
+4 3 2
+5 2 1
+End Elements

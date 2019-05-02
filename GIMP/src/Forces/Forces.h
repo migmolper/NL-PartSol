@@ -1,8 +1,9 @@
-
-#include "../ToolsLib/Utils.h"
-
 #ifndef TypeDefinitions
 #define TypeDefinitions
+#endif
+
+#ifndef GlobalVariables
+#define GlobalVariables
 #endif
 
 

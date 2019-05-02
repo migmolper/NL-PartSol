@@ -3,9 +3,42 @@
 #include "../ToolsLib/TypeDefinitions.h"
 #include "../ToolsLib/Utils.h"
 
+/***********************************************/
+/************** 1D linear element **************/
+/***********************************************/
+
+/*              */
+/*  o-------o   */
+/* (0)     (1)  */
+
+Matrix L2(Matrix X_e){
+
+  /* Definition and allocation */
+  Matrix N_ref =  MatAlloc(1,2);
+
+  /* Fill the array */
+  N_ref.nV[0] = 1-X_e.n;
+  N_ref.nV[1] = X_e.n;
+  
+  return N_ref;
+}
+
+/* Derivatives of the shape functions */
+Matrix dL2(Matrix X_e){
+
+  /* Definition and allocation */
+  Matrix dNdX_ref = MatAlloc(1,2);
+
+  /* Fill the matrix */
+  dNdX_ref.nV[0] = -1;
+  dNdX_ref.nV[1] = +1;
+
+  return dNdX_ref;
+}
+
 
 /***********************************************/
-/*** Four nodes cuadrilateral lineal element ***/
+/******* 2D cuadrilateral linear element *******/
 /***********************************************/
 
 /* (3)     (2)  */
