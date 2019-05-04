@@ -56,7 +56,10 @@ void ReadGidMesh(char * MeshName)
       exit(0);
     }
   } /* end if */
-  
+
+  fgets(line, sizeof line, MeshFile);
+  nwords = parse(words, line, delims);
+
   /* Set the number of nodes coordinates of the mesh */
   for(strcmp(words[0],"Coordinates") == 0 ;
       strcmp(words[0],"End") != 0 ;
@@ -64,14 +67,17 @@ void ReadGidMesh(char * MeshName)
 	nwords = parse(words, line,delims) ){
     ++MeshProp.Nnodes;
   }
+  
   /* Correct the number of nodes in the mesh : The prevoius algorithim counts 
      also the header ("Coordinates") and the footer ("End Coordiantes") */
-  MeshProp.Nnodes -= 2;
+  MeshProp.Nnodes -= 1;
 
   /* Continuing reading the mesh */
   fgets(line, sizeof line, MeshFile);
   nwords = parse(words, line, delims);
-  
+  fgets(line, sizeof line, MeshFile);
+  nwords = parse(words, line, delims);
+
   /* Set the number of elements of the mesh */
   for(strcmp(words[0],"Elements") == 0 ;
       strcmp(words[0],"End") != 0 ;
@@ -81,7 +87,7 @@ void ReadGidMesh(char * MeshName)
   }
   /* Correct the number of elements in the mesh : The prevoius algorithim counts 
      also the header ("Elements") and the footer ("End Elements") */
-  MeshProp.Nelem -= 2;
+  MeshProp.Nelem -= 1;
       
   /* At the end close the mesh file */
   fclose(MeshFile);
@@ -117,17 +123,22 @@ void ReadGidMesh(char * MeshName)
   fgets(line, sizeof line, MeshFile);
   /* Split the line in word using the space character as a delimiter */
   nwords = parse(words, line, delims);
-  
+
+  fgets(line, sizeof line, MeshFile);
+  nwords = parse(words, line, delims);
+
+  printf("%s \n",words[0]);
   for(strcmp(words[0],"Elements") == 0 ;
       strcmp(words[0],"End") != 0 ;
       fgets(line, sizeof line, MeshFile),
 	nwords = parse(words, line, delims) ){
-    if(nwords == (ElemProp.Nnodes + 1)){
+    if(nwords>2){
       Element_i = atoi(words[0]) - 1;
       for(Nodes_i = 0 ; Nodes_i<ElemProp.Nnodes ; Nodes_i++){
 	MeshProp.Connectivity[Element_i][Nodes_i] = atoi(words[Nodes_i+1]);
       }
     }
+        
   }
   
   fclose(MeshFile);

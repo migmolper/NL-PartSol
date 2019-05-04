@@ -15,7 +15,7 @@ ParserDictionary InitParserDictionary(void)
 */
 {
 
-  char * sep [8] = {"#","=","@","&",";",","," ","%"};
+  char * sep [8] = {"#","=","@","&",";",","," \n","%"};
 
   char * KeyWords [27] = {"NUM_NODES","NUM_GAUSSPOINTS",
      "ELEM_TYPE","DOF","RESTART","TRUE","FALSE","KIND_ANALYSIS",

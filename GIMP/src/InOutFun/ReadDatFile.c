@@ -90,7 +90,7 @@ void ReadDatFile(char * Name_File)
 	      if( strcmp(KindAnalysis[1],"SIGMA_V") == 0 ){
 		printf("\t The stress tensor and the velocity will be the analysis fields \n");
 	      }
-	      if( strcmp(KindAnalysis[2],"2STG\n") == 0 ){
+	      if( strcmp(KindAnalysis[2],"2STG") == 0 ){
 		printf("\t The temporal discretization will be done with Two-step Taylor-Galerkin \n");
 	      }
        
