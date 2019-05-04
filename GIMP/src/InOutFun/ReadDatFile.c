@@ -35,44 +35,99 @@ void ReadDatFile(char * Name_File)
   /* Simulation file */
   FILE * Sim_dat;
 
-  /* Char */
-  char line[80];
-
+  /* Auxiliar variable for reading the lines in the files */
+  char line[MAXC] = {0};
+  
   /* Number of element in the line , just for check */
   int nwords;
-  int aux;
-  char * words[20];
+  int nSimParameter;
+  int nKindAnalysis;
+  char * words[MAXW] = {NULL};
+  char * SimParameter[MAXW] = {NULL};
+  char * KindAnalysis[MAXW] = {NULL};
   int Element_i,Nodes_i;
 
-  
+  /* Initialize parser to read files */
+  ParserDictionary Dict = InitParserDictionary();
+  char * delim_spa = Dict.sep[6];
+  char * delim_equ = Dict.sep[1];
+  char * delim_perc = Dict.sep[7];
 
-  
-  /* Array with the possible index fields */
-  int AuxiliarArrayFields[14];
-
-  /* Variable for the index in nodes and conectivitie */
-  int ix;
-
-  /* Auxiliar variable for reading the lines in the files */
-  char line[200];
-  
-  /* Allocate a string with enough space for the extensions. */
-  char *Name_Simulation = malloc(strlen(Name_File+5));
-  
-  /* Copy the name with extensions into fn. */
-  sprintf(Name_Simulation, "%s.dat", Name_File); 
+  printf("Begin of read data file : %s \n",Name_File);
   
   /* Open and check .dat file */
-  Sim_dat = fopen(Name_Simulation,"r");  
+  Sim_dat = fopen(Name_File,"r");  
   if (Sim_dat==NULL){
     puts("Error during the lecture of .dat file");
     exit(0);
   }
 
-  
-    
-  // Close .dat file
-  free(Name_Simulation); // Free the memory gained from malloc. 
+  /* Read the file line by line */
+  while( fgets(line, sizeof line, Sim_dat) != NULL ){
+
+    /* Read the line with the white space as separators */
+    nwords = parse (words, line, delim_spa);
+    if(nwords>=1){
+      /* In the line, read the words */
+      for(int i = 0; i<nwords ; i++){
+	/* Use the equal (=) separator */
+	nSimParameter = parse (SimParameter, words[i], delim_equ);
+	if(nSimParameter > 1){
+
+	  if ( strcmp(SimParameter[0],"G") == 0 ){
+	    g = atof(SimParameter[1]);
+	    printf("Set gravity to : %f \n",g);
+	  }
+
+	  if( strcmp(SimParameter[0],"KIND_ANALYSIS") == 0 ){
+	    nKindAnalysis = parse (KindAnalysis, SimParameter[1], delim_perc);
+	    if(nKindAnalysis == 3){
+	      printf("Kind of analysis : \n");
+
+	      if( strcmp(KindAnalysis[0],"FEM") == 0 ){
+		printf("\t This is a finite element method simulation \n");
+	      }
+	      if( strcmp(KindAnalysis[1],"SIGMA_V") == 0 ){
+		printf("\t The stress tensor and the velocity will be the analysis fields \n");
+	      }
+	      if( strcmp(KindAnalysis[2],"2STG\n") == 0 ){
+		printf("\t The temporal discretization will be done with Two-step Taylor-Galerkin \n");
+	      }
+       
+	    }
+	  }
+
+	  /* Time parameters */
+	  if( strcmp(SimParameter[0],"TIME_STEP") == 0 ){
+	    DeltaTimeStep = atof(SimParameter[1]);
+	    printf("Set increment of time step to : %f \n",DeltaTimeStep);
+	  }
+	  if( strcmp(SimParameter[0],"NUM_STEP") == 0 ){
+	    NumTimeStep = atoi(SimParameter[1]);
+	    printf("Set number of time steps to : %i \n",NumTimeStep);
+	  }
+
+	  /* Names of files */
+	  if( strcmp(SimParameter[0],"MESH_FILE") == 0 ){
+	    MeshFileName = SimParameter[1];
+	    printf("Set name of the mesh file : %s \n",MeshFileName);
+	  }
+	  if( strcmp(SimParameter[0],"COND_INIT") == 0 ){
+	    InitCondFileName = SimParameter[1];
+	    printf("Set name of the initial conditions file : %s \n",InitCondFileName);
+	  }
+	  if( strcmp(SimParameter[0],"BOUND_COND") == 0 ){
+	    BounCondFileName = SimParameter[1];
+	    printf("Set name of the boundary conditions file : %s \n",BounCondFileName);
+	  }
+	  
+	} /* End if nSimParameter */     
+      } /* End for nwords */
+    } /* End if nwords */  
+  } /* End while */   
+      
+  /* Close .dat file */
+  printf("End of read : %s \n",Name_File);
   fclose(Sim_dat);
   
 

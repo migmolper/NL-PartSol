@@ -23,7 +23,7 @@ typedef struct{
   
   /* Integer identificator for the separator */
   int NumberSeparators;
-  int * ascii_sep;
+  char ** sep;
   /* List of keyword por the parser engine */
   int NumberKeyWords;
   char ** KeyWords;

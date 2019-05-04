@@ -2,11 +2,6 @@
 #include <stdlib.h>
 #include <math.h>
 #include "ToolsLib/TypeDefinitions.h"
-
-#ifndef GlobalVariables
-#define GlobalVariables
-#endif
-
 #include "ToolsLib/Utils.h"
 #include "InOutFun/InOutFun.h"
 #include "Constitutive/Constitutive.h"
@@ -28,18 +23,18 @@ void main(int argc, char *argv[])
     exit(0);
   }
 
-  /* Initialize parser to read files */
-  InitParserDictionary();
-
   /* Read mesh data */
   ReadGidMesh(argv[1]);
-
+  
   /* Initialize the element mesh */
   char * TypeElement = "L2";
   Element ElementMesh = Initialize_Element(0,TypeElement);
   
   /* Read the input fields as a CSV */
   Matrix InputFields = Read_CSV(argv[2], 5);
+
+  /* Read the .dat file */
+  ReadDatFile(argv[3]);
     
   /* Read the data file */  /* Physical parameters */
   double YoungModulus = 1;
@@ -52,7 +47,7 @@ void main(int argc, char *argv[])
 
   /* Localize all the Gauss-Points */
   UpdateElementLocationGP(GP_Mesh);
-
     
   exit(EXIT_SUCCESS);
+  
 }

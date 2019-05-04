@@ -15,7 +15,6 @@ csrc = \
 	$(wildcard src/Solvers/*.c)\
 	$(wildcard src/ElementsFunctions/*.c)\
 	$(wildcard src/GaussPointsFunctions/*.c)\
-	$(wildcard src/Forces/*.c)
 
 # Transforms the contents of the src variable, changing all file suffixes
 # from .c to .o, thus constructing the object file list we need.
@@ -27,13 +26,13 @@ LDFLAGS = -lm
 # compile
 $(myprog): $(obj)
 	$(CC) -o $@  $^ $(LDFLAGS)
-	./$(myprog) test/mesh1D.msh test/data.init
+	./$(myprog) test/mesh1D.msh test/data.init test/ejemplo.dat
 
 # run
 test1D:
-	./$(myprog) test/mesh1D.msh test/data.init
+	./$(myprog) test/mesh1D.msh test/data.init test/ejemplo.dat
 test2D:
-	./$(myprog) test/mesh2D.msh test/data.init
+	./$(myprog) test/mesh2D.msh test/data.init test/ejemplo.dat
 
 # New rule for cleaning up every target, in order to rebuild
 # the whole program from scratch

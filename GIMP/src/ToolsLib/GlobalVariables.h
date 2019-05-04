@@ -1,6 +1,14 @@
 
-/**/
+/* Name of inputs files */
+char * MeshFileName;
+char * InitCondFileName;
+char * BounCondFileName;
 
-double g = 9.81;
-int NumberDimensions = 1;
+/**/
+double g;
+int NumberDimensions;
 char KIND_ANALYSIS;
+
+/* Time integration */
+double DeltaTimeStep;
+int NumTimeStep;

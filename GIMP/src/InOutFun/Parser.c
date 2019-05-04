@@ -9,104 +9,84 @@
 
 /***************************************************************************/
 
-void InitParserDictionary(void)
+ParserDictionary InitParserDictionary(void)
 /*
+
 */
 {
- 
-  char *hashtag = "#";
-  int ascii_hashtag = (int)*hashtag;
-  char *equal = "=";
-  int ascii_equal = (int)*equal;  
-  char *at = "@";
-  int ascii_at = (int)*at;
-  char *ampersand = "&";
-  int ascii_ampersand = (int)*ampersand;  
-  char *semicolon = ";";
-  int ascii_semicolon = (int)*semicolon;  
-  char *comma = ",";
-  int ascii_comma = (int)*comma; 
-  char *white = " ";
-  int ascii_white = (int)*white;
 
-  int ascii_sep [7] =
-    {ascii_hashtag,
-     ascii_equal,
-     ascii_at,
-     ascii_ampersand,
-     ascii_semicolon,
-     ascii_comma,
-     ascii_white};
+  char * sep [8] = {"#","=","@","&",";",","," ","%"};
 
-  char * KeyWords [21] =
-    {"NUM_NODES",
-     "NUM_GAUSSPOINTS",
-     "ELEM_TYPE",
-     "DOF",
-     "RESTART",
-     "TRUE",
-     "FALSE",  
-     "KIND_ANALYSIS",
-     "U",
-     "U_P",
-     "SIGMA_V",
-     "G",
-     "RHO",
-     "MATERIAL",
-     "AIR",
-     "WATER",
-     "SOIL",
-     "X_GP",
-     "U_X",
-     "V_X",
-     "SIGMA_X",
-     "TIME_STEP",
-     "NUM_STEP",
-     "MESH_FILE",
-     "COND_INIT",
-     "BOUND_COND",
-     "2STG"};
+  char * KeyWords [27] = {"NUM_NODES","NUM_GAUSSPOINTS",
+     "ELEM_TYPE","DOF","RESTART","TRUE","FALSE","KIND_ANALYSIS",
+     "U","U_P","SIGMA_V","G","RHO","MATERIAL","AIR","WATER",
+     "SOIL","X_GP","U_X","V_X","SIGMA_X","TIME_STEP","NUM_STEP",
+     "MESH_FILE","COND_INIT","BOUND_COND","2STG"};
 
-  Dict.ascii_sep = ascii_sep;
+  ParserDictionary Dict;
+  
+  Dict.sep = sep;
   Dict.NumberSeparators = 7;
   Dict.KeyWords = KeyWords;
-  Dict.NumberKeyWords = 21;
+  Dict.NumberKeyWords = 27;
+
+  return Dict;
   
 }
 
 /***************************************************************************/
 
 
-int GetWords(char *line, char *words[], int separator ,int maxwords)
-/*
-*/
-{  
- 
-  char *p = line;
-  int nwords = 0;    
- 
+/* int GetWords(char * line, char * words []  , int separator, int maxwords) */
+/* /\* */
+/*  *\/   */
+/* {   */
+/*   char *p = line; */
+/*   int nwords = 0; */
 
-  while(1)
+/*   while(1){ */
+    
+/*     while( (int)*p == separator ){ */
+/*       p++; */
+/*     } */
+    
+/*     if( *p == '\0' ) return nwords; */
+    
+/*     words[nwords++] = p; */
+      
+/*     while( ( (int)*p != separator ) && */
+/* 	   ( *p != '\0')  ){ */
+/*       p++; */
+/*     } */
+      
+/*     if(*p == '\0') return nwords; */
+      
+/*     *p++ = '\0'; */
+      
+/*     if(nwords >= maxwords) */
+/*       return nwords; */
+/*   } */
+  
+  
+/* } */
+
+/***************************************************************************/
+
+
+int parse (char **words, char *str, char * delims)
+{
+  int n = 0;
+  char *p;
+  
+  for (p = strtok (str, delims); p; p = strtok (NULL, delims)) 
     {
-      while( isspace(*p) ){
-	p++;
+      words[n++] = strdup (p);    /* allocate/copy */
+      
+      if (n == MAXW) { /* limit reached - realloc/break */
+	fprintf (stderr, "warning: MAXW reached.\n");
+            break;
       }
-	  
-      if(*p == '\0') return nwords;
-	  
-      words[nwords++] = p;
-	  
-      while( ((int)*p != separator ) &&
-	     (*p != '\0') ){
-	p++;
-      }
-	  
-      if(*p == '\0') return nwords;
-	  
-      *p++ = '\0';
-	  
-      if(nwords >= maxwords)
-	return nwords;
     }
-}
 
+  return n;
+}

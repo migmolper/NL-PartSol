@@ -12,13 +12,20 @@ Matrix Read_CSV(char * Name_File, int NumData){
 
   /* Auxiliar variables */
   FILE * CSV_file;
-  char * Field[20];
-  char line[80];
+  char line[MAXC] = {0};
+  char * Field[MAXW] = {NULL};
+  
   int NumFields;
   int int_aux;
 
   /* Outputs */
   Matrix Mat_Out;
+
+  /* Initialize parser to read files */
+  ParserDictionary Dict = InitParserDictionary();
+  char * delims = Dict.sep[4];
+
+  printf("Begin of read init file : %s \n",Name_File);
 
   /* Simulation file */
   CSV_file  = fopen(Name_File,"r");
@@ -30,8 +37,9 @@ Matrix Read_CSV(char * Name_File, int NumData){
 
   /* Read the first line with the header */
   fgets(line, sizeof line, CSV_file);
-  NumFields = GetWords(line, Field, Dict.ascii_sep[4], 20);
+  NumFields = parse (Field, line, delims);
 
+    
   /* Allocate data  */
   Mat_Out = MatAlloc(NumFields,NumData);
   strcpy(Mat_Out.Info,line);
@@ -39,7 +47,7 @@ Matrix Read_CSV(char * Name_File, int NumData){
   /* Read data */
   if(NumData == 1){ /* Multiple fields with only one line */
     fgets(line, sizeof line, CSV_file);
-    int_aux = GetWords(line, Field, Dict.ascii_sep[4], 20);
+    int_aux = parse (Field, line, delims);
     if(int_aux != NumFields){
       printf("Error in Read_CSV() : Incorrect number of fields : %i ! \n",int_aux);
       exit(0);
@@ -51,7 +59,7 @@ Matrix Read_CSV(char * Name_File, int NumData){
   else if(NumFields == 1){ /* Only one Field with multiple data */
     for(int i = 0 ; i<NumData ; i++){
       fgets(line, sizeof line, CSV_file);
-      int_aux = GetWords(line, Field, Dict.ascii_sep[4], 20);
+      int_aux = parse (Field, line, delims);
       if(int_aux != 1){
 	printf("Error in Read_CSV() : Incorrect number of fields in line %i ! \n",i);
 	exit(0);
@@ -62,14 +70,14 @@ Matrix Read_CSV(char * Name_File, int NumData){
   else if((NumData != 1) && (NumFields != 1)){
     for(int i = 0 ; i<NumData ; i++){ /*  */
       fgets(line, sizeof line, CSV_file);
-      int_aux = GetWords(line, Field, Dict.ascii_sep[4], 20);
+      int_aux = parse (Field, line, delims);
       if(int_aux != NumFields){
 	printf("Error in Read_CSV() : Incorrect number of fields : %i ! \n",int_aux);
 	printf("Error detected in line %i \n",i);
 	exit(0);
       }
       for(int j = 0 ; j<NumFields ; j++){
-	Mat_Out.nM[j][i] = atof(Field[j]);
+	Mat_Out.nM[j][i] = atof(Field[j]);	
 	/* Note that the information is stored in a matrix with as rows as fields and 
 	 as columns as data lines, this is because the matrix is stored in memory as rows arrays 
 	 and for future computations this storage system is more eficient */
