@@ -4,11 +4,11 @@
 
 void * Allocate_Array(int,int);
 
-double * Allocate_ArrayZ(int);
+void * Allocate_ArrayZ(int,int);
 
 void ** Allocate_Matrix(int,int,int);
 
-double ** Allocate_MatrixZ(int,int);
+void ** Allocate_MatrixZ(int,int,int);
 
 Matrix MatAlloc(int,int);
 
@@ -31,3 +31,5 @@ Matrix Add_Mat(Matrix,Matrix);
 Matrix Sub_Mat(Matrix,Matrix);
 
 Matrix Norm_Mat(Matrix,int);
+
+Matrix Get_Lumped_Matrix(Matrix);

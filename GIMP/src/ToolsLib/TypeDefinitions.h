@@ -1,4 +1,5 @@
 
+
 /* Math structures :
    As in matlab, arrays and matrix are the same,
    note that this definition in not very eficient,
@@ -13,7 +14,7 @@ typedef struct{
   double n;
   double * nV;
   double ** nM;
-  char Info [80];
+  char Info [100];
 } Matrix;
 
 
@@ -30,36 +31,6 @@ typedef struct{
   
 } ParserDictionary;
 
-
-/*******************************************************/
-
-
-typedef struct {
-
-  /* Number of nodes in the mesh */
-  int Nnodes;
-  /* Number of elements in the mesh */
-  int Nelem;
-  /* Table with the coordinates of the nodes of the mesh */
-  double ** Coordinates;
-  /* List of nodes for each element (Connectivity) */
-  int **  Connectivity;
-  
-} MeshProperties;
-
-/*******************************************************/
-
-typedef struct {
-
-  /* Number of dimensions of the element */
-  int Dimension;
-  /* Name of the element */
-  char Type [20];
-  /* Number of nodes of the element */
-  int Nnodes;
-  
-} ElementProperties;
-
 /*******************************************************/
 
 typedef struct {
@@ -71,7 +42,7 @@ typedef struct {
   /* Density field */
   double rho;
   /* Mass field */
-  double mass;
+  Matrix mass;
   /* Displacement field */
   Matrix dis;
   /* Velocity field */
@@ -94,13 +65,10 @@ typedef struct {
 
   /* Total number of the GP */
   int NumGP;
-
   /* Identification of the element where it is */
   int * Element_id;
-
   /* List of Fields */
   Fields Phi;
-
   /* Constitutive response */
   Matrix D;
   
@@ -111,42 +79,33 @@ typedef struct {
 /* Element type definition */
 typedef struct {
 
-  /* Identification number of the element */
-  int id;
+  /*** GENERAL MESH PROPERTIES ***/
+  /* Number of nodes in the mesh */
+  int NumNodesMesh;
+  /* Number of elements in the mesh */
+  int NumElemMesh;
+  /* Table with the coordinates of the nodes of the mesh */
+  double ** Coordinates;
+  /* List of nodes for each element (Connectivity) */
+  int **  Connectivity;
+  /* Active element : 
+     Boolean variable that set the element ative (1) or not (0) */
+  int * ActiveElem;
 
+  /*** INDIVIDUAL ELEMENT PROPERTIES ***/
+  /* Number of dimensions of the element */
+  int Dimension;
+  /* Name of the element */
+  char TypeElem [20];
   /* Number of nodes of the element */
-  int NumberNodes;
-
+  int NumNodesElem;
   /* Degrees of freedom for each node*/
   int NumberDOF;
-
-  /* Number of Gauss points inside of the element */
-  int NumberGP;
-
-  /* Global index of the nodes (connectivity) */
-  int * N_id;
-  
   /* Shape function of the reference element evaluated in a GP */
   Matrix (* N_ref)(Matrix );
-
   /* Derivative shape function of the reference element evaluated in a GP */
   Matrix (* dNdX_ref)(Matrix );
-  
-  /* Ful derivative matrix to get the deformation of the element */
-  Matrix dNdx;
 
-  /* Reference deformation tensor */
-  Matrix F_ref;
-
-  /* Deformation tensor */
-  Matrix F;
-
-  /* Eulerian Cauchy-Green tensor */
-  Matrix B;
-  
-  /* Lagrangian Cauchy-Green tensor */
-  Matrix C;
-  
+    
 } Element;
 
-/*******************************************************/

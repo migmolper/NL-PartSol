@@ -14,7 +14,7 @@ Matrix Read_CSV(char * Name_File, int NumData){
   FILE * CSV_file;
   char line[MAXC] = {0};
   char * Field[MAXW] = {NULL};
-  
+  char Info[MAXC] = {0};
   int NumFields;
   int int_aux;
 
@@ -37,12 +37,12 @@ Matrix Read_CSV(char * Name_File, int NumData){
 
   /* Read the first line with the header */
   fgets(line, sizeof line, CSV_file);
+  strcpy(Info,line);
   NumFields = parse (Field, line, delims);
-
     
   /* Allocate data  */
   Mat_Out = MatAlloc(NumFields,NumData);
-  strcpy(Mat_Out.Info,line);
+  strcpy(Mat_Out.Info,Info);  
 
   /* Read data */
   if(NumData == 1){ /* Multiple fields with only one line */

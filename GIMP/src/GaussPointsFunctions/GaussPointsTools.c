@@ -11,7 +11,8 @@
 /*********************************************************************/
 
 GaussPoint Initialize_GP_Mesh(Matrix InputFields,
-			      Matrix D)
+			      Matrix D,
+			      Element Elem)
 /*
   
 */
@@ -21,13 +22,18 @@ GaussPoint Initialize_GP_Mesh(Matrix InputFields,
   int Init_Num_GP_Elem;
   int Size_GP_Mesh;
   int NumFields;
-  char * Fields[20];
+  char * Field[MAXW] = {NULL};
+  /* Initialize parser to read files */
+  ParserDictionary Dict = InitParserDictionary();
+  char * delims = Dict.sep[4];
+
 
   /* do this with a swich...*/
-  if (strcmp(ElemProp.Type,"Linear")==0){
-    if(ElemProp.Nnodes == 2){ /* 1D Linear mesh */
+  if (strcmp(Elem.TypeElem,"Linear")==0){
+    if(Elem.NumNodesElem == 2){ /* 1D Linear mesh */
       Init_Num_GP_Elem = 1;
-      Size_GP_Mesh = Init_Num_GP_Elem*(MeshProp.Nelem);       
+      Size_GP_Mesh = Init_Num_GP_Elem*(Elem.NumElemMesh);
+      GP_Mesh.Phi.x_EC = MatAlloc(1,Size_GP_Mesh);
     }
   }
   
@@ -40,11 +46,22 @@ GaussPoint Initialize_GP_Mesh(Matrix InputFields,
        - Stress and Strain fields (Tensorial) 
        Note : It is not necessary to allocate memory...think about it ;) 
   */
-  //  NumFields = GetWords(InputFields.Info, Fields, Dict.ascii_sep[4], 20);
-  
-  GP_Mesh.Phi.x_GC.nV = InputFields.nM[0];
-  GP_Mesh.Phi.vel.nV = InputFields.nM[1];
-  GP_Mesh.Phi.Stress.nV = InputFields.nM[2];
+
+  NumFields = parse (Field, InputFields.Info, ";\n");
+    
+  for(int i = 0; i<NumFields ; i++){
+    if(strcmp(Field[i],"X_GP")==0)
+      GP_Mesh.Phi.x_GC.nV = InputFields.nM[i];
+
+    if(strcmp(Field[i],"V_X")==0)
+      GP_Mesh.Phi.vel.nV = InputFields.nM[i];
+
+    if(strcmp(Field[i],"SIGMA_X")==0)
+      GP_Mesh.Phi.Stress.nV = InputFields.nM[i];
+
+    if(strcmp(Field[i],"MASS")==0)
+      GP_Mesh.Phi.mass.nV = InputFields.nM[i];
+  }
   
   /* Id of the element set to a NaN value */ 
   GP_Mesh.Element_id = (int *)Allocate_Array(Size_GP_Mesh,sizeof(int));
@@ -61,7 +78,7 @@ GaussPoint Initialize_GP_Mesh(Matrix InputFields,
 
 /*********************************************************************/
 
-void UpdateElementLocationGP(GaussPoint GP_Mesh){
+void UpdateElementLocationGP(GaussPoint GP_Mesh,Element ElementMesh){
 
   double GP_x;
   int Elem_1D_0,Elem_1D_1;
@@ -69,18 +86,26 @@ void UpdateElementLocationGP(GaussPoint GP_Mesh){
   for(int i = 0 ; i<GP_Mesh.NumGP ; i++){
     if(GP_Mesh.Element_id[i] == -999){
       GP_x = GP_Mesh.Phi.x_GC.nV[i];
-      for(int j = 0 ; j<MeshProp.Nelem ; j++){
-	Elem_1D_0 = MeshProp.Connectivity[j][0];
-	Elem_1D_1 = MeshProp.Connectivity[j][1];
-	if( (GP_x >= MeshProp.Coordinates[Elem_1D_0-1][0]) &&
-	    (GP_x <= MeshProp.Coordinates[Elem_1D_1-1][0]) ){
+      for(int j = 0 ; j<ElementMesh.NumElemMesh ; j++){
+	Elem_1D_0 = ElementMesh.Connectivity[j][0];
+	Elem_1D_1 = ElementMesh.Connectivity[j][1];
+	if( (GP_x >= ElementMesh.Coordinates[Elem_1D_0-1][0]) &&
+	    (GP_x <= ElementMesh.Coordinates[Elem_1D_1-1][0]) ){
 	  GP_Mesh.Element_id[i] = j;
+	  GP_Mesh.Phi.x_EC.nV[i] = 0.5;
+	  /* Activate element */
+	  ElementMesh.ActiveElem[i] = 1;
 	}
       }   
     }
   }
   
 }
+
+/*********************************************************************/
+
+/* double GetJacobian(){ */
+/* } */
 
 /*********************************************************************/
 

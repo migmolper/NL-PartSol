@@ -8,9 +8,9 @@
 #endif
 
 
-GaussPoint Initialize_GP_Mesh(Matrix,Matrix);
+GaussPoint Initialize_GP_Mesh(Matrix,Matrix,Element);
 
-void UpdateElementLocationGP(GaussPoint);
+void UpdateElementLocationGP(GaussPoint,Element);
 
 /* void Get_Lagrangian_CG_Tensor(GaussPoint *); */
 

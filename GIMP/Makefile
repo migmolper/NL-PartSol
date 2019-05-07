@@ -26,13 +26,13 @@ LDFLAGS = -lm
 # compile
 $(myprog): $(obj)
 	$(CC) -o $@  $^ $(LDFLAGS)
-	./$(myprog) test/mesh1D.msh test/data.init test/ejemplo.dat
+	./$(myprog) test/ejemplo.dat
 
 # run
 test1D:
-	./$(myprog) test/mesh1D.msh test/data.init test/ejemplo.dat
+	./$(myprog) test/ejemplo.dat
 test2D:
-	./$(myprog) test/mesh2D.msh test/data.init test/ejemplo.dat
+	./$(myprog) test/ejemplo.dat
 
 # New rule for cleaning up every target, in order to rebuild
 # the whole program from scratch

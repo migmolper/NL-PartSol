@@ -5,14 +5,14 @@
 #define TypeDefinitions
 #endif
 
-/* Variable definitions : */
-ElementProperties ElemProp;
-MeshProperties MeshProp;
-
 /* Functions definitions :*/
-Element Initialize_Element(int, char *);
-/* void Get_RefDeformation_Gradient(GaussPoint *, */
-/* 				 Element *); */
-/* Matrix Get_dNdx_matrix(Element *, */
-/* 		       GaussPoint *); */
+Matrix Get_RefDeformation_Gradient(Matrix,
+				   Matrix);
+
+Matrix Get_dNdx_matrix(Matrix,
+		       Matrix,
+		       int,int);
+
 /* Matrix Get_Stiffness_Matrix(Element *);  */
+
+Matrix Get_Geom_Mass_Matrix(GaussPoint,Element);
