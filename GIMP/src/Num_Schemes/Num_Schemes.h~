@@ -1,0 +1,8 @@
+
+#ifndef TypeDefinitions
+#define TypeDefinitions
+#endif
+
+void Get_RefDeformation_Gradient(Element,
+				 GaussPoint,
+				 Matrix);

@@ -15,6 +15,7 @@ csrc = \
 	$(wildcard src/Solvers/*.c)\
 	$(wildcard src/ElementsFunctions/*.c)\
 	$(wildcard src/GaussPointsFunctions/*.c)\
+	$(wildcard src/Num_Schemes/*.c)
 
 # Transforms the contents of the src variable, changing all file suffixes
 # from .c to .o, thus constructing the object file list we need.

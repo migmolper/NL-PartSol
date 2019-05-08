@@ -9,6 +9,7 @@
 #include "ElementsFunctions/ElementTools.h"
 #include "GaussPointsFunctions/GaussPointsTools.h"
 #include "Solvers/Solvers.h"
+#include "Num_Schemes/Num_Schemes.h"
 
 void main(int argc, char *argv[])
 /*
@@ -32,9 +33,6 @@ void main(int argc, char *argv[])
     
   /* Read the initial conditions fields as a CSV */
   Matrix InputFields = Read_CSV(InitCondFileName, 5);
-    
-  /* Read the data file */  /* Physical parameters */
-  double YoungModulus = 1;
   
   /* Get material Constitutive matrix */
   Matrix D = LinearElastic1D(YoungModulus);
@@ -51,6 +49,15 @@ void main(int argc, char *argv[])
 
   /* Get the Lumped-Mass matrix */
   Matrix M_l = Get_Lumped_Matrix(M);
+
+  /* First step of the TSTG */
+  Matrix A = MatAllocZ(2,2);
+  A.nM[0][0] = - D.n;
+  A.nM[1][1] = - (double)1/Density;
+
+  Two_Steps_TG_Mc(ElementMesh,GP_Mesh,A);
+  
+  /*****************************************************/
 
   for(int i = 0; i<ElementMesh.NumNodesMesh ; i++){
     printf("Nodal coordinates : [%f, %f, %f] \n",

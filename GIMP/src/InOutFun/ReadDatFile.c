@@ -74,11 +74,22 @@ void ReadDatFile(char * Name_File)
 	nSimParameter = parse (SimParameter, words[i], delim_equ);
 	if(nSimParameter > 1){
 
+	  /***********************************************************************/
 	  if ( strcmp(SimParameter[0],"G") == 0 ){
 	    g = atof(SimParameter[1]);
 	    printf("Set gravity to : %f \n",g);
 	  }
-
+	  /***********************************************************************/
+	  if( strcmp(SimParameter[0],"DENSITY") == 0 ){
+	    Density = atof(SimParameter[1]);
+	    printf("Set the value of the density : %f \n",Density);
+	  }
+	  /***********************************************************************/
+	  if( strcmp(SimParameter[0],"ELASTIC_MODULUS") == 0 ){
+	    ElasticModulus = atof(SimParameter[1]);
+	    printf("Set the value of E : %f \n",ElasticModulus);
+	  }
+	  /***********************************************************************/
 	  if( strcmp(SimParameter[0],"KIND_ANALYSIS") == 0 ){
 	    nKindAnalysis = parse (KindAnalysis, SimParameter[1], delim_perc);
 	    if(nKindAnalysis == 3){
@@ -96,30 +107,32 @@ void ReadDatFile(char * Name_File)
        
 	    }
 	  }
-
-	  /* Time parameters */
+	  /***********************************************************************/
 	  if( strcmp(SimParameter[0],"TIME_STEP") == 0 ){
 	    DeltaTimeStep = atof(SimParameter[1]);
 	    printf("Set increment of time step to : %f \n",DeltaTimeStep);
 	  }
+	  /***********************************************************************/
 	  if( strcmp(SimParameter[0],"NUM_STEP") == 0 ){
 	    NumTimeStep = atoi(SimParameter[1]);
 	    printf("Set number of time steps to : %i \n",NumTimeStep);
 	  }
-
-	  /* Names of files */
+	  /***********************************************************************/
 	  if( strcmp(SimParameter[0],"MESH_FILE") == 0 ){
 	    MeshFileName = SimParameter[1];
 	    printf("Set name of the mesh file : %s \n",MeshFileName);
 	  }
+	  /***********************************************************************/
 	  if( strcmp(SimParameter[0],"COND_INIT") == 0 ){
 	    InitCondFileName = SimParameter[1];
 	    printf("Set name of the initial conditions file : %s \n",InitCondFileName);
 	  }
+	  /***********************************************************************/
 	  if( strcmp(SimParameter[0],"BOUND_COND") == 0 ){
 	    BounCondFileName = SimParameter[1];
 	    printf("Set name of the boundary conditions file : %s \n",BounCondFileName);
 	  }
+	  /***********************************************************************/
 	  
 	} /* End if nSimParameter */     
       } /* End for nwords */
