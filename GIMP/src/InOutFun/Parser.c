@@ -15,7 +15,7 @@ ParserDictionary InitParserDictionary(void)
 */
 {
 
-  char * sep [8] = {"#","=","@","&",";",","," \n","%"};
+  char * sep [9] = {"#","=","@","&",";",","," \n","%",":"};
 
   char * KeyWords [28] = {"NUM_NODES","NUM_GAUSSPOINTS",
 			  "ELEM_TYPE","DOF","RESTART",
@@ -29,7 +29,7 @@ ParserDictionary InitParserDictionary(void)
   ParserDictionary Dict;
   
   Dict.sep = sep;
-  Dict.NumberSeparators = 7;
+  Dict.NumberSeparators = 8;
   Dict.KeyWords = KeyWords;
   Dict.NumberKeyWords = 28;
 

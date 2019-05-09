@@ -16,7 +16,6 @@ void ReadDatFile(char * Name_File)
   
   Inputs
   - Name_file : Name of the file
-  - 
   Outputs
   - Conectivity matrix
   - Coordenates of the nodes

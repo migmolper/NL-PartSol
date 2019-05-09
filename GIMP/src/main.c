@@ -33,6 +33,11 @@ void main(int argc, char *argv[])
     
   /* Read the initial conditions fields as a CSV */
   Matrix InputFields = Read_CSV(InitCondFileName, 5);
+
+  /* Read the initial conditions */
+  ReadBCC(BounCondFileName);
+
+  exit(0);
   
   /* Get material Constitutive matrix */
   Matrix D = LinearElastic1D(YoungModulus);
@@ -43,12 +48,6 @@ void main(int argc, char *argv[])
 
   /* Localize all the Gauss-Points */
   UpdateElementLocationGP(GP_Mesh,ElementMesh);
-
-  /* Get the mass matrix */
-  Matrix M = Get_Geom_Mass_Matrix(GP_Mesh,ElementMesh);
-
-  /* Get the Lumped-Mass matrix */
-  Matrix M_l = Get_Lumped_Matrix(M);
 
   /* First step of the TSTG */
   Matrix A = MatAllocZ(2,2);
@@ -107,22 +106,6 @@ void main(int argc, char *argv[])
     printf("\t Mass : %f \n",
 	   GP_Mesh.Phi.mass.nV[i]);
   }
-
-  printf("Geometrical mass matrix : \n");
-  for(int j = 0 ; j<ElementMesh.NumNodesMesh ; j++){
-    printf("[");
-    for(int i = 0 ; i<ElementMesh.NumNodesMesh ; i++){
-      printf(" %f ",M.nM[i][j]);
-    }
-    printf("]\n");
-  }
-
-  printf("Inverse of the lumped version of the geometrical mass matrix : \n");
-  printf("[");
-  for(int i = 0 ; i<M_l.N_rows ; i++){
-    printf(" %f ",1/M_l.nV[i]);
-  }
-  printf("]\n");
   
     
   exit(EXIT_SUCCESS);

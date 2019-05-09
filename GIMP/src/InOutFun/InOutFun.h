@@ -16,4 +16,4 @@ int parse (char **words, char *str, char *delims);
 Element ReadGidMesh(char *);
 Matrix Read_CSV(char *,int);
 void ReadDatFile(char *);
-
+void ReadBCC(char *);
