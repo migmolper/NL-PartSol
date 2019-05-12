@@ -7,7 +7,8 @@
 #include "../ToolsLib/Utils.h"
 #include "../ElementsFunctions/ElementTools.h"
 
-void Two_Steps_TG_Mc(Element ElementMesh, GaussPoint GP_Mesh, Matrix A)
+void Two_Steps_TG_Mc(Element ElementMesh, GaussPoint GP_Mesh,
+		     Matrix A, int TimeStep)
 /* 
 
    This sheme pretends to solve :
@@ -46,18 +47,36 @@ void Two_Steps_TG_Mc(Element ElementMesh, GaussPoint GP_Mesh, Matrix A)
 */
 {
   /* Variable definitions */
+
+  /* Fields defined in the Gauss-Points */
   Matrix Phi_n; /* Fields values in t = n */
   Matrix Phi_n12; /* Fields values in t = n + 1/2 */
+  Matrix Phi_n1; /* Fields values in t = n + 1 */
+  
+  /* Flux fields defined inthe Gauss-Points*/
   Matrix Flux_n; /* Flux in t = n */
   Matrix Flux_n12; /* Flux in t = n + 1/2 */
+
+  /* Elements properties */
   Matrix J_GP; /* Jacobian of the element */
   Matrix dNdX_Ref_GP; /* Derivative Matrix */
   Matrix X_ElemNod = MatAlloc(2,1); /* Coordenates of the element nodes */
   int * Id_ElemNod; /* Pointer to the Connectivity of the element */
   Matrix M; /* Geometrical mass matrix */
   Matrix M_l; /* Lumped geometrical mass matrix */
+
+  /* Nodal variables */
   Matrix RHS; /* Array with the right-hand side */
-  int NumEquations;
+  Matrix DeltaPhiNod; /* Increment of the field solution in the nodes */
+
+
+  /* Set the number of equations to solve */
+  if(A.N_cols != A.N_rows){
+    printf("Error in Two_Steps_TG_Mc() : The matrix A is not square \n");
+    exit(0);
+  }
+  int NumEquations = A.N_cols;
+  
   /* Auxiliar pointer to the fields in t = n, in this special case, to avoid
    a second malloc that waste memory, we create a two rows table of pointer,
   so we have to fill the rest of the Matrix type field, in order to allow a 
@@ -70,21 +89,15 @@ void Two_Steps_TG_Mc(Element ElementMesh, GaussPoint GP_Mesh, Matrix A)
   Phi_n.nM[0] = GP_Mesh.Phi.Stress.nV; /* Asign to the first row the stress field */
   Phi_n.nM[1] = GP_Mesh.Phi.vel.nV; /* Asign to the first row the velocity field */
 
-  /* Set the number of equations to solve */
-  if(A.N_cols != A.N_rows){
-    printf("Error in Two_Steps_TG_Mc() : The matrix A is not square \n");
-    exit(0);
-  }
-  NumEquations = A.N_cols;
-  
-  /* Allocate an auxiar variable with the fiels of analysis : 
-   change this in the future for a clever fields selector...*/
-  Phi_n12 = MatAllocZ(2,GP_Mesh.NumGP);
-
   /* Get the flux for the GP in t = n */
   Flux_n = Scalar_prod(A,Phi_n);
 
   /* First step : Get U_n12 */
+
+  /* Allocate an auxiar variable with the fiels of analysis : 
+     change this in the future for a clever fields selector...*/
+  Phi_n12 = MatAllocZ(2,GP_Mesh.NumGP);
+  
   for(int i = 0 ; i<GP_Mesh.NumGP ; i++){
 
     /* Calcule the Jacobian of the element evaluated in the GP : */
@@ -108,10 +121,13 @@ void Two_Steps_TG_Mc(Element ElementMesh, GaussPoint GP_Mesh, Matrix A)
   }
 
   /* Get the flux for the GP in t = n + 1/2 */
-  Flux_n12 = Scalar_prod(A,Phi_n12); 
+  Flux_n12 = Scalar_prod(A,Phi_n12);
+
+  /* Once we have use it, we free the memory */
+  free(Phi_n12.nM);
   
   /* Second step : Get RHS and solve */
-
+  
   /* Allocate the right hand side */
   RHS = MatAllocZ(2,ElementMesh.NumNodesMesh);
 
@@ -140,21 +156,47 @@ void Two_Steps_TG_Mc(Element ElementMesh, GaussPoint GP_Mesh, Matrix A)
 	fabs(J_GP.n)*
 	Flux_n12.nM[j][i];
       }      
-    }
-    
+    }    
   }
 
+  
+  /* Boundary conditions variables */
+  Matrix BCC;
+  int i_BCC;
+  
   for(int i = 0 ; i<ElementMesh.NumNodesMesh ; i++){
     printf("%f ; %f \n",RHS.nM[0][i],RHS.nM[1][i]);
   }
-
-  /* Include the boundary conditions */
   
-  /* Get the mass matrix */
-  M = Get_Geom_Mass_Matrix(GP_Mesh,ElementMesh);
-  /* Get the Lumped-Mass matrix */
-  M_l = Get_Lumped_Matrix(M);
+  /* Include the boundary conditions in the mesh */
+  BCC = Scalar_prod(A,GetBoundaryCondition(TimeStep));
 
+  for(int i = 0 ; i<ElementMesh.NumNodesBound ; i++){
+    i_BCC = ElementMesh.NodesBound[i];
+    for(int j = 0 ; j<NumEquations; j++){
+      RHS.nM[j][i_BCC] += BCC.nM[j][i];
+    }
+  }
   
+  /* /\* Get the mass matrix *\/ */
+  /* M = Get_Geom_Mass_Matrix(GP_Mesh,ElementMesh); */
+  /* /\* Get the Lumped-Mass matrix *\/ */
+  /* M_l = Get_Lumped_Matrix(M); */
+
+  /* /\* Solve the sistem of equations *\/ */
+  /* DeltaPhiNod = MatAllocZ(2,ElementMesh.NumNodesMesh); */
+
+  /* /\* Once we have use it, we free the memory *\/ */
+  /* free(RHS.nM); */
+  
+  /* /\* Pass the nodal values to the Gauss-Points *\/ */
+  /* for(){ */
+  /* } */
+  
+  /* /\* Update the fields *\/ */
+
+  /* /\* Once we have use it, we free the memory *\/ */
+  /* free(Phi_n.nM); */
+  /* free(Phi_n1.nM); */
   
 }

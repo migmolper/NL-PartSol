@@ -14,11 +14,16 @@ void ReadBCC(char * Name_File)
   Read the boundary conditions file :
   Inputs
   - Name_file : Name of the file
-  FORMAT example : BCC T#[1:100] SIGMA#[1]={0} V#[6]={0}
+  FORMAT example 1D : BCC T#[1:100] SIGMA#[1]={0} V#[6]={0}
+  FORMAT example 2D : BCC T#[1:100] SIGMA#[1]={0,0,0} V#[6]={0,0}
+  FORMAT example 3D : BCC T#[1:100] SIGMA#[1]={0,0,0,0,0,0} V#[6]={0,0,0}
 
   Note : Only read those lines with a BCC in the init 
 */
 {
+
+  /* create a array with the number of steps and fill it with  V#[1]={-1} V#[6]={0} */
+  
   /* Simulation file */
   FILE * Sim_dat;
 
@@ -29,6 +34,10 @@ void ReadBCC(char * Name_File)
   int nkwords,nparam;
   char * kwords[MAXW] = {NULL};
   char * param[MAXW] = {NULL};
+
+  /* Variable for the kind of analysis parser */
+  int nKindAnalysis;
+  char * KindAnalysisParam[MAXW] = {NULL};
   /* Variable for the time parser */
   int auxT;
   char * T_range[MAXW] = {NULL};
@@ -42,8 +51,11 @@ void ReadBCC(char * Name_File)
   char * SIGMA[MAXW] = {NULL};
   char * SIGMA_nod[MAXW] = {NULL};
   char * SIGMA_val[MAXW] = {NULL};
-  
-  printf("Begin of read boundary condition file : %s \n",Name_File);
+
+  printf("************************************************* \n");
+  printf("Begin of set boundary conditions !!! \n");
+  printf(" * Begin of read boundary files : %s \n",Name_File);
+  printf(" * Boundary conditions values : \n");
   
   /* Open and check .bcc file */
   Sim_dat = fopen(Name_File,"r");  
@@ -68,10 +80,10 @@ void ReadBCC(char * Name_File)
 	  if( strcmp(param[0],"T") == 0 ){
 	    auxT = parse (T_range,param[1],"[:]\n");
 	    if(auxT==2){
-	      printf("Range : [%i -> %i] \n",atoi(T_range[0]),atoi(T_range[i]));
+	      printf("\t -> Range : [%i -> %i] \n",atoi(T_range[0]),atoi(T_range[1]));
 	    }
 	    else if(auxT==1){
-	      printf("Instant : %i \n",atoi(T_range[0]));
+	      printf("\t -> Instant : %i \n",atoi(T_range[0]));
 	    }
 	  } /* End parse Time */
 
@@ -82,7 +94,14 @@ void ReadBCC(char * Name_File)
 	    auxV_nod = parse(V_nod,V[0],"[:]\n");
 	    /* Read the value to impose */
 	    auxV_val = parse(V_val,V[1],"={,}\n");
-	    printf("V[%i] = %f \n",atoi(V_nod[0]),atof(V_val[0]));
+	    for(int i = 0 ; i<auxV_nod ; i++){
+	      printf("\t V[%i] = ",atoi(V_nod[i]));
+	      printf("{");
+	      for(int j  = 0 ; j<auxV_val ; j++ ){
+		printf(" %f ",atof(V_val[j]));
+	      }
+	      printf("}\n");
+	    }
 	  } /* End parse Velocity BCC */
 
 	  /* Parse the Stress BCC */
@@ -92,14 +111,33 @@ void ReadBCC(char * Name_File)
 	    auxSIGMA_nod = parse(SIGMA_nod,SIGMA[0],"[,]\n");
 	    /* Read the value to impose */
 	    auxSIGMA_val = parse(SIGMA_val,SIGMA[1],"={,}\n");
-	    printf("SIGMA[%i] = %f \n",atoi(SIGMA_nod[0]),atof(SIGMA_val[0]));
+	    for(int i = 0 ; i<auxSIGMA_nod ; i++){
+	      printf("\t SIGMA[%i] = ",atoi(SIGMA_nod[i]));
+	      printf("{");
+	      for(int j  = 0 ; j<auxSIGMA_val ; j++ ){
+		printf(" %f ",atof(SIGMA_val[j]));
+	      }
+	      printf("}\n");
+	    }	    
 	  } /* End parse Stress BCC */
-
+	  
 	  /* Other parsers */
-	 
+
+	  /* Fill output array */
+	  /* if(auxT==1){ /\* Fill a instant *\/ */
+	  /*   int T_i = atoi(T_range[0]);	     */
+	  /* } */
+	  /* else if(auxT == 2){ /\* Fill a time range *\/ */
+	  /*   for(int T_i = atoi(T_range[0]) ; i<= atoi(T_range[1]) ; i++){ */
+	  /*     BCC[T_i][auxSIGMA_nod] = ; */
+	  /*   } */
+	  /* } */
+	  
 	} /* Read word by word */
       } /* Read only keywords with an asignement */
       printf("\n");
     } /* Read only those lines with BCC in the begin */
   }  /* End of read file */
-}
+  printf("End of read boundary conditions file !!! \n");
+  fclose(Sim_dat);
+} /* void ReadBCC(char * Name_File) */

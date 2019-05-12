@@ -7,6 +7,7 @@
 #include "../ElementsFunctions/ShapeFunctions.h"
 #include "../ElementsFunctions/ElementTools.h"
 #include "../Constitutive/Constitutive.h"
+#include "GaussPointsTools.h"
 
 /*********************************************************************/
 
@@ -27,6 +28,9 @@ GaussPoint Initialize_GP_Mesh(Matrix InputFields,
   ParserDictionary Dict = InitParserDictionary();
   char * delims = Dict.sep[4];
 
+  /* Screen message */
+  printf("************************************************* \n");
+  printf("Begin of initialize the Gauss-Points mesh !!! \n");
 
   /* do this with a swich...*/
   if (strcmp(Elem.TypeElem,"Linear")==0){
@@ -71,6 +75,30 @@ GaussPoint Initialize_GP_Mesh(Matrix InputFields,
   
   /* Allocate and Initialize the constitutive response */
   GP_Mesh.D = D;
+
+  /* Localize all the Gauss-Points */
+  UpdateElementLocationGP(GP_Mesh,Elem);
+
+  /* Initial conditions */
+
+  for(int i = 0 ; i<GP_Mesh.NumGP ;i++){
+    printf("* Set the GP %i initial conditions : \n",i+1);
+    printf("\t -> Element : %i \n",
+	   GP_Mesh.Element_id[i]+1);
+    printf("\t -> X Glob coordinate : %f \n",
+	   GP_Mesh.Phi.x_GC.nV[i]);
+    printf("\t -> X Ref coordiante : %f \n",
+	   GP_Mesh.Phi.x_EC.nV[i]);
+    printf("\t -> Velocity : %f \n",
+	   GP_Mesh.Phi.vel.nV[i]);
+    printf("\t -> Stress : %f \n",
+	   GP_Mesh.Phi.Stress.nV[i]);
+    printf("\t -> Mass : %f \n",
+	   GP_Mesh.Phi.mass.nV[i]);
+  }
+
+  /* Final messages */
+  printf("End of initialize the Gauss-Points mesh !!! \n");
   
   return GP_Mesh;
 

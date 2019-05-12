@@ -4,24 +4,24 @@
 #include "../ToolsLib/TypeDefinitions.h"
 #include "../ToolsLib/Utils.h"
 
-Matrix LinearElastic1D(double YoungModulus){
+Matrix LinearElastic1D(double ElasticModulus_Mat){
 
   Matrix D  = MatAlloc(1,1);
 
-  D.n = YoungModulus;
+  D.n = ElasticModulus_Mat;
 
   return D;
 
 }
 
-Matrix LinearElastic2D(double PoissonRatio,double YoungModulus){
+Matrix LinearElastic2D(double PoissonRatio_Mat,double ElasticModulus_Mat){
 
   Matrix D = MatAlloc(3,3);
   
   double LameFirstParam = /* Lambda */
-    PoissonRatio*YoungModulus/((1-PoissonRatio*2)*(1+PoissonRatio));
+    PoissonRatio_Mat*ElasticModulus_Mat/((1-PoissonRatio_Mat*2)*(1+PoissonRatio_Mat));
   double LameSecondParam = /* G */
-    YoungModulus/(2*(1+PoissonRatio));
+    ElasticModulus_Mat/(2*(1+PoissonRatio_Mat));
 
   D.nM[0][0] = LameFirstParam + 2*LameSecondParam;
   D.nM[0][1] = LameFirstParam;

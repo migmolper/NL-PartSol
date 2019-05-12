@@ -84,10 +84,14 @@ typedef struct {
   int NumNodesMesh;
   /* Number of elements in the mesh */
   int NumElemMesh;
+  /* Number of boundary nodes */
+  int NumNodesBound;
   /* Table with the coordinates of the nodes of the mesh */
   double ** Coordinates;
   /* List of nodes for each element (Connectivity) */
   int **  Connectivity;
+  /* List with the boundary nodes */
+  int * NodesBound;
   /* Active element : 
      Boolean variable that set the element ative (1) or not (0) */
   int * ActiveElem;

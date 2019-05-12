@@ -29,7 +29,11 @@ Element ReadGidMesh(char * MeshName)
   char * delims = Dict.sep[6];
 
   /* Screen message */
-  printf("Begin of read mesh file : %s \n",MeshName);
+  printf("************************************************* \n");
+  printf("Begin of set mesh properties !!! \n");
+
+  printf(" * Begin of read mesh file : %s \n",MeshName);
+  printf("\t -> Reading mesh ...\n");
 
   /* Open the mesh file and store in the FILE * variable */
   MeshFile = fopen(MeshName,"r");
@@ -43,6 +47,8 @@ Element ReadGidMesh(char * MeshName)
   Elem.NumNodesMesh = 0;
   /* Set the number of elements in the mesh to zero */
   Elem.NumElemMesh = 0;
+  /* Set to zero the number of nodes in the boundary of the mesh */
+  Elem.NumNodesBound = 0;
   
   /* 
      Read line and store in a char array (max 80 characters) and 
@@ -50,15 +56,16 @@ Element ReadGidMesh(char * MeshName)
      In the first line we have some properties of the mesh
   */
   fgets(line, sizeof line, MeshFile);
-  nwords = parse (words, line, delims);
+  nwords = parse (words, line, " \n");
 
   /* Element properties of the mesh */
   if ( strcmp(words[0],"MESH") == 0 ){
+    /* Check if the first word is the keyword MESH */
     if( nwords == 7){
       /* ElemType */
-      strcpy(Elem.TypeElem,words[4]);
+      strcpy(Elem.TypeElem,words[4]);      
       /* Number of nodes per element */
-      Elem.NumNodesElem = atoi(words[6]); 
+      Elem.NumNodesElem = atoi(words[6]);      
     }
     else{
       perror("Error in ReadGidMesh()");
@@ -156,7 +163,6 @@ Element ReadGidMesh(char * MeshName)
   fgets(line, sizeof line, MeshFile);
   nwords = parse(words, line, delims);
 
-  printf("%s \n",words[0]);
   for(strcmp(words[0],"Elements") == 0 ;
       strcmp(words[0],"End") != 0 ;
       fgets(line, sizeof line, MeshFile),
@@ -169,11 +175,60 @@ Element ReadGidMesh(char * MeshName)
     }
         
   }
-  
-  fclose(MeshFile);
 
-  puts("End of read mesh");
+  /* Close mesh file */
+  fclose(MeshFile);
+  printf(" * End of read mesh file \n");
+
+  /* Find the nodes in the boundary */  
+  switch(Elem.Dimension){
+  case 1:
+    /* In a 1D mesh we only have two nodes in the boundary */
+    Elem.NumNodesBound = 2;
+    /* Allocate the size of the array with the nodes */
+    Elem.NodesBound = (int *)Allocate_Array(2,sizeof(int));
+    /* Set the boundary nodes */
+    Elem.NodesBound[0] = 1;
+    Elem.NodesBound[1] = Elem.NumNodesMesh;
+    break;
+  case 2:
+    break;
+  case 3:
+    break;
+  default :
+    printf("************************************************* \n");
+    puts("Error in FindBoundaryNodes() : Wrong number of dimensions !");
+    printf("************************************************* \n");
+    exit(0);
+  }
+
+  /* Print mesh properties */
+  printf(" * Set Mesh properties : \n");
+  printf("\t -> Number of nodes : %i \n",Elem.NumNodesMesh);
+  printf("\t -> Number of boundary nodes : %i \n",Elem.NumNodesBound);
+  printf("\t -> Number of elements : %i \n",Elem.NumElemMesh);
+  printf("\t -> Order of the element : %s \n",Elem.TypeElem);
+  printf("\t -> Number of nodes per element : %i \n",Elem.NumNodesElem);
+
+  printf(" * Nodal coordinates : \n");
+  for(int i = 0; i<Elem.NumNodesMesh ; i++){
+    printf("\t [%f, %f, %f] \n",
+	   Elem.Coordinates[i][0],
+	   Elem.Coordinates[i][1],
+	   Elem.Coordinates[i][2]);
+  }
+  printf(" * Connectivity mesh : \n");
+  for(int i =0; i<Elem.NumElemMesh; i++){
+    printf("\t Element(%i) : [",i+1);
+    for(int j = 0 ; j<Elem.NumNodesElem; j++){
+      printf(" %i ",Elem.Connectivity[i][j]);
+    }
+    printf("]\n");
+  }
+
+
+  /* Final messages */
+  printf("End of set mesh properties !!! \n");
 
   return Elem;
-  
 }

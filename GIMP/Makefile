@@ -1,7 +1,7 @@
 # Makefile for the FEM_Miguel
 
 # Name of the program
-myprog = GIMP
+myprog = GeHoJerez
 
 # Compiler and preprocesor
 CC = gcc
@@ -27,8 +27,13 @@ LDFLAGS = -lm
 # compile
 $(myprog): $(obj)
 	$(CC) -o $@  $^ $(LDFLAGS)
+	@echo " "
+	@echo "*************  GeHoJerez compiled !! ************"
+	@echo " "
+	@echo "**************** Run test case ******************"
 	./$(myprog) test/ejemplo.dat
-
+	@echo " "
+	@echo "*************** Test case passed ****************"
 # run
 test1D:
 	./$(myprog) test/ejemplo.dat

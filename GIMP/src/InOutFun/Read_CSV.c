@@ -25,7 +25,9 @@ Matrix Read_CSV(char * Name_File, int NumData){
   ParserDictionary Dict = InitParserDictionary();
   char * delims = Dict.sep[4];
 
-  printf("Begin of read init file : %s \n",Name_File);
+  printf("************************************************* \n");
+  printf("Begin of read CSV file !!! \n");
+  printf(" * Name of the file : %s  \n",Name_File);
 
   /* Simulation file */
   CSV_file  = fopen(Name_File,"r");

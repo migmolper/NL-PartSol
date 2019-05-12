@@ -16,3 +16,5 @@ Matrix Get_dNdx_matrix(Matrix,
 /* Matrix Get_Stiffness_Matrix(Element *);  */
 
 Matrix Get_Geom_Mass_Matrix(GaussPoint,Element);
+
+Matrix GetBoundaryCondition(int TimeStep);
