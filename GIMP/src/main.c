@@ -32,7 +32,7 @@ void main(int argc, char *argv[])
   ElementMesh.NumberDOF = 2; /* Change this */
     
   /* Read the initial conditions fields as a CSV */
-  Matrix InputFields = Read_CSV(InitCondFileName, 5);
+  Matrix InputFields = Read_CSV(InitCondFileName, 10);
 
   /* Read the boundary conditions */
   ReadBCC(BounCondFileName);
@@ -46,8 +46,8 @@ void main(int argc, char *argv[])
 
   
   Matrix A = MatAllocZ(2,2);
-  A.nM[0][0] = - D.n;
-  A.nM[1][1] = - (double)1/Density;
+  A.nM[0][1] = - D.n;
+  A.nM[1][0] = - (double)1/Density;
   printf("************************************************* \n");
   printf("Coupling matrix A : \n");
   printf("\t [ %f %f ] \n",A.nM[0][0],A.nM[0][1]);
@@ -56,13 +56,21 @@ void main(int argc, char *argv[])
   /* Run simulation  */
   printf("************************************************* \n");
   printf("Run simulation :  !!! \n");
+
+  for(int t_i = 0 ; t_i<10; t_i++){
+    printf("************************************************* \n");
+
+    GnuplotOutput1D(GP_Mesh.Phi.x_GC,
+		    GP_Mesh.Phi.vel,
+		    0.0, 5.0,
+		    t_i,GP_Mesh.NumGP);
+
+    printf("Time step : %i \n",t_i);
+    Two_Steps_TG_Mc(ElementMesh,GP_Mesh,A,t_i);
+  }
   
-  printf("************************************************* \n");
-  printf("Time step : %i \n",0);
-  Two_Steps_TG_Mc(ElementMesh,GP_Mesh,A,0);
-  
-  
-    
   exit(EXIT_SUCCESS);
   
 }
+
+

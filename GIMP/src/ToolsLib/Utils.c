@@ -182,7 +182,7 @@ double Get_Determinant(Matrix M_in)
 */
 {
   /* Check if we dont have a null matrix */
-  if (M_in.nM == NULL){
+  if ( (M_in.nM == NULL) && (M_in.n == -999) ){
     if(M_in.nV != NULL){
       puts("Error in Get_Determinant() : An array does not have determinant !");
       exit(0);
@@ -203,7 +203,7 @@ double Get_Determinant(Matrix M_in)
   switch(M_in.N_cols){
 
   case 1:
-    Det_out = *M_in.nM[0];
+    Det_out = M_in.n;
     break;
 
   case 2:
@@ -389,7 +389,7 @@ Matrix Scalar_prod(Matrix A,Matrix B)
     }
 
     /* The result is an scalar */
-    puts("Warning : You have a scalar in a matrix type (Not eficient) ! ");
+    /* puts("Warning : You have a scalar in a matrix type (Not eficient) ! "); */
     /* Multiply */
     C_aux = 0;
     for(int k = 0 ; k < A.N_cols ; k++){

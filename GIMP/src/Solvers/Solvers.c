@@ -70,7 +70,7 @@ https://en.wikipedia.org/wiki/Conjugate_gradient_method#The_preconditioned_conju
   double Tol_U,Tol_r;
   double alpha_k,beta_k;
   double dividend,divisor;
-  Matrix Norm_U,Norm_r;
+  Matrix Norm_r;
   Matrix r_k,r_k1;
   Matrix p;
   Matrix U;
@@ -79,7 +79,6 @@ https://en.wikipedia.org/wiki/Conjugate_gradient_method#The_preconditioned_conju
 
   Num_Iter = 0;
   Num_Iter_Max = 25;
-  Tol_U = 0.0001;
   Tol_r = 0.0001;
 
   /* Allocate the residual and the p basis arrays */
@@ -103,7 +102,15 @@ https://en.wikipedia.org/wiki/Conjugate_gradient_method#The_preconditioned_conju
     /* Set p^1 = r^1   : */
     p.nV[i] = r_k.nV[i];    
   }
-     
+
+  /* Calcule the stopping criteria in the first step */
+  Norm_r = Norm_Mat(r_k,2);
+  if( (Norm_r.n < Tol_r) ){
+    STOP_CRITERIA = 1;
+    printf("The initial solution was correct \n");   
+  }
+
+    
   /* iterate */
   while(STOP_CRITERIA == 0){
 
@@ -135,11 +142,9 @@ https://en.wikipedia.org/wiki/Conjugate_gradient_method#The_preconditioned_conju
     }
 
     /* Calcule the stopping criteria */
-    Norm_U = Norm_Mat(U,2);
     Norm_r = Norm_Mat(r_k1,2);
     Num_Iter++;
     if( (Norm_r.n < Tol_r) ||
-	(Norm_U.n < Tol_U) ||
 	(Num_Iter >= Num_Iter_Max) ){
       STOP_CRITERIA = 1;
 
@@ -149,7 +154,6 @@ https://en.wikipedia.org/wiki/Conjugate_gradient_method#The_preconditioned_conju
       else{
 	printf("Warning not convergence reached after the maximum number of iterations: \n");
 	printf("\t Norm of r: %f \n",Norm_r.n);
-	printf("\t Norm of U: %f \n",Norm_U.n);
       }
       
     }
@@ -221,7 +225,8 @@ Matrix Jacobi_Conjugate_Gradient_Method(Matrix K, Matrix F, Matrix U0)
   double Tol_U,Tol_r;
   double alpha_k,beta_k;
   double dividend,divisor;
-  Matrix Norm_U,Norm_r;
+  Matrix K_l; /* Lumped matrix */
+  Matrix Norm_r;
   Matrix r_k,r_k1;
   Matrix z_k,z_k1;
   Matrix p;
@@ -231,8 +236,7 @@ Matrix Jacobi_Conjugate_Gradient_Method(Matrix K, Matrix F, Matrix U0)
 
   Num_Iter = 0;
   Num_Iter_Max = 25;
-  Tol_U = 0.0001;
-  Tol_r = 0.0001;
+  Tol_r = 0.0000001;
 
   /* Allocate the residual arrays and the basis p array */
   r_k = MatAlloc(N,1);
@@ -261,6 +265,16 @@ Matrix Jacobi_Conjugate_Gradient_Method(Matrix K, Matrix F, Matrix U0)
     /* Set p^1 = z^1   : */
     p.nV[i] = z_k.nV[i];    
   }
+
+  /* Calcule the stopping criteria in the first step */
+  Norm_r = Norm_Mat(r_k,2);
+  if( (Norm_r.n < Tol_r) ){
+    STOP_CRITERIA = 1;
+    printf("The initial solution was correct \n");   
+  }
+
+  /* Get the Lumped-Mass matrix */
+  K_l = Get_Lumped_Matrix(K);
 
   /* iterate */
   while(STOP_CRITERIA == 0){
@@ -293,11 +307,9 @@ Matrix Jacobi_Conjugate_Gradient_Method(Matrix K, Matrix F, Matrix U0)
     }
 
     /* Calcule the stopping criteria */
-    Norm_U = Norm_Mat(U,2);
     Norm_r = Norm_Mat(r_k1,2);
     Num_Iter++;
     if( (Norm_r.n < Tol_r) ||
-	(Norm_U.n < Tol_U) ||
 	(Num_Iter >= Num_Iter_Max) ){
       STOP_CRITERIA = 1;
 
@@ -307,9 +319,7 @@ Matrix Jacobi_Conjugate_Gradient_Method(Matrix K, Matrix F, Matrix U0)
       else{
 	printf("Warning not convergence reached after the maximum number of iterations: \n");
 	printf("\t Norm of r: %f \n",Norm_r.n);
-	printf("\t Norm of U: %f \n",Norm_U.n);
-      }
-      
+      }      
     }
        
     beta_k = 0;
@@ -317,7 +327,7 @@ Matrix Jacobi_Conjugate_Gradient_Method(Matrix K, Matrix F, Matrix U0)
     divisor = 0;
     for(int i = 0 ; i<N ; i++){
       /* 4th step : */
-      z_k1.nV[i] = (1/K.nM[i][i])*r_k1.nV[i];
+      z_k1.nV[i] = ((double)1/K_l.nV[i])*r_k1.nV[i];
       /* 5th step :*/  
       /* Scalar product -> dividend = r_{k+1}^T \cdot r_{k+1} */
       dividend +=  z_k1.nV[i]*r_k1.nV[i];
@@ -343,7 +353,37 @@ Matrix Jacobi_Conjugate_Gradient_Method(Matrix K, Matrix F, Matrix U0)
   free(z_k.nV);
   free(z_k1.nV);
   free(p.nV);
+  free(K_l.nV);
    
   return U;
   
+}
+
+/*********************************************************************/
+
+Matrix One_Iteration_Lumped(Matrix K, Matrix F, Matrix U0){
+
+  Matrix K_l; /* Lumped matrix */
+  Matrix U;
+
+     /* First we check if the input data */
+  if((K.N_cols != K.N_rows) ||
+     ( (K.N_rows != F.N_rows) || (F.N_cols != 1)) ||
+     ( (K.N_rows != U0.N_rows) || (U0.N_cols != 1) ))
+    {
+      puts("Error in Jacobi_Conjugate_Gradient_Method() : Wrong input data !");
+      exit(0);
+    }
+
+  K_l = Get_Lumped_Matrix(K);
+  U = U0;
+
+  for(int i = 0 ; i<F.N_rows ; i++){
+    U.nV[i] = (double)1/K_l.nV[i]*F.nV[i];
+  }
+
+  free(K_l.nV);
+  
+  return U;
+
 }

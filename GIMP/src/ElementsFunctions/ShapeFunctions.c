@@ -16,7 +16,6 @@ Matrix L2(Matrix X_e){
   /* Definition and allocation */
   Matrix N_ref =  MatAlloc(1,2);
 
-  /* Fill the array */
   N_ref.nV[0] = 1-X_e.n;
   N_ref.nV[1] = X_e.n;
   

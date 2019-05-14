@@ -2,9 +2,9 @@ G=9.81 Esto es en la tierra
 DENSITY=1
 ELASTIC_MODULUS=1
 KIND_ANALYSIS=FEM%SIGMA_V%2STG
-TIME_STEP=0.9
+TIME_STEP=0.4
 NUM_STEP=100
  Hola esto es un comentario 
-MESH_FILE=test/mesh1D.msh
-COND_INIT=test/data.init
+MESH_FILE=test/mesh1D_HD.msh
+COND_INIT=test/data_HD.init
 BOUND_COND=test/data.bcc
