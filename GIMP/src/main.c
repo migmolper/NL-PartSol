@@ -32,7 +32,7 @@ void main(int argc, char *argv[])
   ElementMesh.NumberDOF = 2; /* Change this */
     
   /* Read the initial conditions fields as a CSV */
-  Matrix InputFields = Read_CSV(InitCondFileName, 10);
+  Matrix InputFields = Read_CSV(InitCondFileName, 20);
 
   /* Read the boundary conditions */
   ReadBCC(BounCondFileName);
@@ -57,19 +57,26 @@ void main(int argc, char *argv[])
   printf("************************************************* \n");
   printf("Run simulation :  !!! \n");
 
-  for(int t_i = 0 ; t_i<10; t_i++){
+  for(int t_i = 0 ; t_i<20; t_i++){
     printf("************************************************* \n");
 
     GnuplotOutput1D(GP_Mesh.Phi.x_GC,
 		    GP_Mesh.Phi.vel,
 		    0.0, 5.0,
-		    t_i,GP_Mesh.NumGP);
+		    t_i,GP_Mesh.NumGP,
+		    "Velocity");
+    GnuplotOutput1D(GP_Mesh.Phi.x_GC,
+		    GP_Mesh.Phi.Stress,
+		    0.0, 5.0,
+		    t_i,GP_Mesh.NumGP,
+		    "Stress");
 
     printf("Time step : %i \n",t_i);
     Two_Steps_TG_Mc(ElementMesh,GP_Mesh,A,t_i);
   }
   
   exit(EXIT_SUCCESS);
+  
   
 }
 

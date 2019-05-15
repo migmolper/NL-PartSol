@@ -17,4 +17,4 @@ Element ReadGidMesh(char *);
 Matrix Read_CSV(char *,int);
 void ReadDatFile(char *);
 void ReadBCC(char *);
-void GnuplotOutput1D(Matrix, Matrix, double, double, int, int);
+void GnuplotOutput1D(Matrix, Matrix, double, double, int, int, char[20]);

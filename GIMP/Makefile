@@ -31,7 +31,7 @@ $(myprog): $(obj)
 	@echo "*************  GeHoJerez compiled !! ************"
 	@echo " "
 	@echo "**************** Run test case ******************"
-	./$(myprog) test/ejemplo_HD.dat
+	./$(myprog) test/ejemplo_HD2.dat
 	@echo " "
 	@echo "*************** Test case passed ****************"
 # run

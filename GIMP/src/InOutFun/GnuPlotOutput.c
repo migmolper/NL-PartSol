@@ -3,7 +3,7 @@
 #include <string.h>
 #include "../ToolsLib/TypeDefinitions.h"
 
-void GnuplotOutput1D(Matrix X, Matrix Y, double X_0, double X_n, int Instant, int Number ){
+void GnuplotOutput1D(Matrix X, Matrix Y, double X_0, double X_n, int Instant, int Number, char * Title){
     /* Initialize GnuPlot*/
     FILE *gnuplotPipe = popen("gnuplot -persist","w");
     if (gnuplotPipe==NULL){
@@ -12,10 +12,12 @@ void GnuplotOutput1D(Matrix X, Matrix Y, double X_0, double X_n, int Instant, in
     }
     if (gnuplotPipe) { fprintf(gnuplotPipe, "set style data lines\n");
       fprintf(gnuplotPipe,
-	      "set terminal png nocrop enhanced size 1280,720; set output 'Velocity_%d.png'\n",
+	      "set terminal png nocrop enhanced size 1280,720; set output '%s_%d.png'\n",
+	      Title,
 	      Instant);
       fprintf(gnuplotPipe,
-	      "set title 'Velocity in time : %d'\n",
+	      "set title '%s in time : %d'\n",
+	      Title,
 	      Instant);
       fprintf(gnuplotPipe,
 	      "set xrange [%f:%f]; set yrange [-1.2:1.2]\n",
