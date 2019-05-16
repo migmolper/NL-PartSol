@@ -8,8 +8,9 @@
 #include "../ElementsFunctions/ElementTools.h"
 #include "../Solvers/Solvers.h"
 
-void Two_Steps_TG_Mc(Element ElementMesh, GaussPoint GP_Mesh,
-		     Matrix A, int TimeStep)
+void Two_Steps_TG(Element ElementMesh, GaussPoint GP_Mesh,
+		  Matrix Phi_n_Nod, Matrix Phi_n_GP,
+		  Matrix A, int TimeStep)
 /* 
 
    This sheme pretends to solve :
@@ -19,17 +20,19 @@ void Two_Steps_TG_Mc(Element ElementMesh, GaussPoint GP_Mesh,
    - Ui : array with the fields
    - ()_t : partial time derivative
    - ()_x : partial x derivative
-   - Aij : Matrix with the physical properties, 
+   - Aij : Matrix with the physical properties,
    depends of the case that we are solving
 
    Input parameters :
-   - Element mesh
-   - Gauss points mesh
-   - "A" matrix
+   - ElementMesh -> Finite element mesh properties
+   - GP_Mesh - > Gauss points mesh
+   - A -> Matrix of the flux
+   - Phi_n_GP -> Matrix with the values in the GP
+   - TimeStep -> Time step
 
    Two steps Taylor-Galerkin using the consistent mass matrix :
 
-   Employ linear element for the discretization via Bubnov-Galerkin 
+   Employ linear element for the discretization via Bubnov-Galerkin
    --> First step (advective predictor) :
    U_n12 = U_n - 0.5*DeltaT*Flux(U^a)_n
    --> Second step (corrector therm) :
@@ -46,33 +49,22 @@ void Two_Steps_TG_Mc(Element ElementMesh, GaussPoint GP_Mesh,
    See on : J.Peraire, "A Finite Element Method for Convection dominated Flows",
    Ph.D. Thesis. University of Wales, Swansea (1986).
 */
-/******************************************************************/
-/*                                                                */
-/*  Phi_n --> Phi_e <-- Phi_n --> Phi_e <-- Phi_n                 */
-/*  [N0]------(e0)------[N1]------(e1)------[N2]-- ;  t = n + 1   */
-/*     ^                ^  ^                ^                     */
-/*     |___          ___|  |___          ___|                     */
-/*          \       /          \        /                         */
-/*           F(Phi)_e           F(Phi)_e                          */
-/*  [N0]------(e0)------[N1]------(e1)------[N2]-- ;  t = n + 1/2 */
-/*             ^                   ^                              */
-/*             |                   |                              */
-/*  [N0]------(e0)------[N1]------(e1)------[N2]-- ;  t = n       */
-/*                                                                */
-/******************************************************************/
   
 {
   /* Variable definitions */
 
   /* Set the number of equations to solve */
   if(A.N_cols != A.N_rows){
-    printf("Error in Two_Steps_TG_Mc() : The matrix A is not square \n");
+    printf("Error in Two_Steps_TG_Mc() : The matrix A is not square !!! \n");
     exit(0);
   }
-  int NumDOF = A.N_cols;
+  if (Phi_n_GP.N_rows != A.N_cols){
+    printf("Error in Two_Steps_TG_Mc() : The Phi and A, has not the same fields !!! \n");
+  }
+  int NumDOF = Phi_n_GP.N_rows;
 
   /* Fields defined in the Gauss-Points */
-  Matrix Phi_n; /* Fields values in t = n */
+   /* Fields values in t = n */
   Matrix Phi_n12; /* Fields values in t = n + 1/2 */
   Matrix Phi_n1; /* Fields values in t = n + 1 */
   
@@ -81,15 +73,16 @@ void Two_Steps_TG_Mc(Element ElementMesh, GaussPoint GP_Mesh,
   Matrix Flux_n12; /* Flux in t = n + 1/2 */
 
   /* Elements properties */
+  Matrix GP_i_XE; /* Element coordinates of the Gauss Points */
   Matrix F_Ref_GP; /* Reference deformation gradient evaluated in the GP */
   double J_GP; /* Jacobian evaluated in the Gauss-Point */
   Matrix dNdX_Ref_GP; /* Derivative Matrix */
   Matrix X_ElemNod = MatAlloc(2,1); /* Coordenates of the element nodes */
   int * Id_ElemNod; /* Pointer to the Connectivity of the element */
   Matrix M; /* Geometrical mass matrix */
+  Matrix M_l; /* Geometrical mass matrix lumped */
 
   /* Nodal variables */
-  Matrix Phi_n_Nod; /* Nodal values of each field */
   Matrix Flux_n_Nod; /* Nodal values of the fluxes */
   Matrix RHS; /* Array with the right-hand side */
   Matrix RHS_i; /* Matrix with pointer functions to each field for the global RHS */
@@ -97,26 +90,8 @@ void Two_Steps_TG_Mc(Element ElementMesh, GaussPoint GP_Mesh,
   Matrix DeltaPhiNod_i; /* Matrix of pointers to each field of the global DeltaPhinod */
 
   /* Boundary conditions variables */
-  double BCC_GP_DOF;
-  int i_BCC;  
-
-  /* Auxiliar variable to the transference from the nodes to the Gauss Points */
-  int Elem_GP_i; /* Element where the GP is placed */
-  int * Nodes_Elem_GP_i; /* Nodes of the element where the GP is placed */
-  Matrix GP_i_XE; /* Element coordinates of the Gauss Points */
-  Matrix N_ref_XG; /* Element function evaluated in the Gauss-Points */
-  
-  /* Auxiliar pointer to the fields in t = n, in this special case, to avoid
-   a second malloc that waste memory, we create a two rows table of pointer,
-  so we have to fill the rest of the Matrix type field, in order to allow a 
-  nide behaviour of the linear algebra functions */
-  Phi_n.nM =  (double **)malloc((unsigned)NumDOF*sizeof(double *));
-  Phi_n.nV = NULL; /* Set to NULL the (double *) pointer */
-  Phi_n.n = -999; /* Set to -999 the scalar variable */
-  Phi_n.N_rows = NumDOF; /* Number of rows */
-  Phi_n.N_cols = GP_Mesh.NumGP; /* Number of columns */
-  Phi_n.nM[0] = GP_Mesh.Phi.Stress.nV; /* Asign to the first row the stress field */
-  Phi_n.nM[1] = GP_Mesh.Phi.vel.nV; /* Asign to the first row the velocity field */
+  double BCC_val;
+  int i_BCC_GP;
 
   /* Pointers fields for the input solver */
   DeltaPhiNod_i.nM = NULL;
@@ -125,48 +100,14 @@ void Two_Steps_TG_Mc(Element ElementMesh, GaussPoint GP_Mesh,
   DeltaPhiNod_i.N_cols = 1;  
   RHS_i.nM = NULL;
   RHS_i.n = -999;
-  RHS_i.N_rows = ElementMesh.NumNodesMesh; 
+  RHS_i.N_rows = ElementMesh.NumNodesMesh;
   RHS_i.N_cols = 1;
 
-
-  printf(" * First step : Get U_n12 \n ");
+  printf(" * Get Gauss-Points-Fields values in t = n + 1/2 \n ");
   /**********************************************************************/
-  /*********************** First step : Get U_n12 ***********************/
+  /********* First step : Get GP-Fields values in t = n + 1/2  **********/
   /**********************************************************************/
-
-  printf("\t --> Transfer the Gauss-Points information to the mesh \n");
-  /************* Transfer the GP information to the mesh ****************/
-  /**********************************************************************/
-  /*  [N0]-------(e0)-------[N1]-------(e1)-------[N2]-- ;  t = n       */
-  /* Phi_n0 <-- Phi_e0 --> Phi_n1 <-- Phi_e1 --> Phi_n2                 */
-  /**********************************************************************/
-  /* 1º Allocate the variable to store the nodal information */
-  Phi_n_Nod = MatAllocZ(NumDOF,ElementMesh.NumNodesMesh);
-  for(int i=0 ; i<GP_Mesh.NumGP ; i++){
-     
-    /* 2º Index of the element where the G-P is located */
-    Elem_GP_i = GP_Mesh.Element_id[i];
-    
-    /* 3º List of nodes of the element */
-    Nodes_Elem_GP_i = ElementMesh.Connectivity[Elem_GP_i];
-    
-    /* 4º Element coordinates of the G-P */
-    GP_i_XE.n = GP_Mesh.Phi.x_EC.nV[i];
-    
-    /* 5º Evaluate the shape functions of the element in the 
-       coordinates of the G-P */
-    N_ref_XG = ElementMesh.N_ref(GP_i_XE);
-    
-    /* 6º Iterate over the nodes of the element */
-    for(int j=0 ; j<ElementMesh.NumNodesElem ; j++){
-      /* 7º Iterate over the fields */
-      for(int k=0 ; k<NumDOF ; k++){
-  	/* 8º Update the field value */;
-  	Phi_n_Nod.nM[k][Nodes_Elem_GP_i[j]-1] += N_ref_XG.nV[j]*Phi_n.nM[k][i];
-      }
-    }
-  }
-
+  
   printf("\t --> Get the flux in the mesh for t = n \n");
   /****************** Get the flux in the mesh for t = n ****************/
   /**********************************************************************/
@@ -174,7 +115,12 @@ void Two_Steps_TG_Mc(Element ElementMesh, GaussPoint GP_Mesh,
   /*   [N0]-------(e0)-------[N1]-------(e1)-------[N2]-- ;  t = n      */
   /*  Phi_n0     Phi_e0     Phi_n1     Phi_e1     Phi_n2                */
   /**********************************************************************/
-  Flux_n_Nod = Scalar_prod(A,Phi_n_Nod);  
+  Flux_n_Nod = Scalar_prod(A,Phi_n_Nod);
+
+  /* printf("Flux_n_Nod \n %f ; %f \n %f ; %f \n", */
+  /* 	 Flux_n_Nod.nM[0][0],Flux_n_Nod.nM[1][0], */
+  /* 	 Flux_n_Nod.nM[0][1],Flux_n_Nod.nM[1][1]); */
+  
 
   printf("\t --> Get the fields values in the Gauss-Points for t = n + 1/2 \n");
   /*** Get the value of the fields in the Gauss points for t = n + 1/2 ***/
@@ -210,33 +156,28 @@ void Two_Steps_TG_Mc(Element ElementMesh, GaussPoint GP_Mesh,
     /* 5º Iterate over the fields */
     for(int j = 0 ; j<NumDOF ; j++){
       /* 6º Add the therm of the previous step */
-      Phi_n12.nM[j][i] = Phi_n.nM[j][i];
-      /* 7º Check if this DOF of this Gauss-Point has some kind of restriction */
-      BCC_GP_DOF = GetBoundaryCondition(i,j,TimeStep);
-      if(BCC_GP_DOF != BCC_GP_DOF){
-	/* 8aº Add the flux contributions iterating over the elements nodes */
-	for(int k = 0 ; k<ElementMesh.NumNodesElem ; k++){
-	  Phi_n12.nM[j][i] -= 0.5*DeltaTimeStep*(double)1/F_Ref_GP.n*
-	    Flux_n_Nod.nM[j][Id_ElemNod[k]-1]*dNdX_Ref_GP.nV[k];
-	}
-      }
-      else{
-	/* 8bº Set the value and do not introduce the fluxes */
-	Phi_n12.nM[j][i] = BCC_GP_DOF;
-      }
-      
+      Phi_n12.nM[j][i] = Phi_n_GP.nM[j][i];
+      /* 7º Add the flux contributions iterating over the elements nodes */
+      for(int k = 0 ; k<ElementMesh.NumNodesElem ; k++){
+	Phi_n12.nM[j][i] -= 0.5*DeltaTimeStep*(double)1/F_Ref_GP.n*
+	  Flux_n_Nod.nM[j][Id_ElemNod[k]-1]*dNdX_Ref_GP.nV[k];
+      }      
     }    
   }
+
+  /* printf("Phi_n12 \n %f ; %f \n %f ; %f \n", */
+  /* 	 Phi_n12.nM[0][0],Phi_n12.nM[1][0], */
+  /* 	 Phi_n12.nM[0][1],Phi_n12.nM[1][1]); */
   
   /* Once we have use it, we free the memory */
   free(Flux_n_Nod.nM);
 
-  printf(" * Second step : Get U_n1 \n ");
+  printf(" * Get Nodal-Fields values in t = n + 1 \n ");
   /**********************************************************************/
-  /*********************** Second step : Get U_n1 ***********************/
+  /******** Second step : Get Nodal-Fields values in t = n + 1 **********/
   /**********************************************************************/
 
-  printf("\t --> Get the flux for the Gauss-Points for t = n + 1/2 \n");
+  printf("\t --> Get the flux for the Gauss-Points in t = n + 1/2 \n");
   /************** Get the flux for the GP for t = n + 1/2 ****************/
   /***********************************************************************/
   /*            F(Phi_e0)             F(Phi_e1)                          */
@@ -244,13 +185,16 @@ void Two_Steps_TG_Mc(Element ElementMesh, GaussPoint GP_Mesh,
   /*  Phi_n0     Phi_e0     Phi_n1     Phi_e1     Phi_n2                 */
   /***********************************************************************/
   Flux_n12 = Scalar_prod(A,Phi_n12);
+  
+  /* printf("Flux_n12 \n %f ; %f \n %f ; %f \n", */
+  /* 	 Flux_n12.nM[0][0],Flux_n12.nM[1][0], */
+  /* 	 Flux_n12.nM[0][1],Flux_n12.nM[1][1]); */
+  
 
   /* Once we have use it, we free the memory */
   free(Phi_n12.nM);
 
-  printf("\t --> Get the RHS in the mesh for t = n + 1/2 \n");
-  /************ Calcule the RHS in the mesh for t = n + 1/2 **************/
-  /***********************************************************************/
+  printf("\t --> Get the RHS in the mesh in t = n + 1/2 \n");
   /************ Calcule the RHS in the mesh for t = n + 1/2 **************/
   /***********************************************************************/
   /*   [N0]-------(e0)-------[N1]-------(e1)-------[N2]-- ;  t = n + 1   */
@@ -291,39 +235,52 @@ void Two_Steps_TG_Mc(Element ElementMesh, GaussPoint GP_Mesh,
     J_GP = Get_Determinant(F_Ref_GP);
 
     /* 8º Add the flux contribution to the RHS, note that each 
-     GP contributes to each node of the element where it is */
+       GP contributes to each node of the element where it is */
     for(int j = 0 ; j<ElementMesh.NumNodesElem ; j++){
       for(int k = 0 ; k<NumDOF ; k++){
-	/* 9º Check if this Gauss-Point has a set value in this DOF */
-	BCC_GP_DOF = GetBoundaryCondition(i,k,TimeStep);
-	if(BCC_GP_DOF != BCC_GP_DOF){
-	  /* 10aº If not, get calcule the flux and add to the RHS */
-	  RHS.nM[k][Id_ElemNod[j]-1] +=
-	    dNdX_Ref_GP.nV[j]*(double)1/F_Ref_GP.n*fabs(J_GP)*Flux_n12.nM[k][i];
-	}
-	else{
-	  /* 10bº If yes, calcule the RHS taking this into account */
-	  RHS.nM[k][Id_ElemNod[j]-1] += BCC_GP_DOF;
-	}	
+	/* 9º If Get calcule the flux and add to the RHS */
+	RHS.nM[k][Id_ElemNod[j]-1] +=
+	  - dNdX_Ref_GP.nV[j]*(double)1/F_Ref_GP.n*fabs(J_GP)*Flux_n12.nM[k][i];
       }      
     }    
   }
-  /* 9º Multiply by the time step */
+    
+  /* 10º Add the flux contributions in the boundary */
+  for(int i = 0 ; i<ElementMesh.NumNodesBound ; i++){
+    for(int j = 0 ; j<NumDOF ; j++){
+      
+      BCC_val = GetBoundaryCondition(ElementMesh.NodesBound[i]-1,j,TimeStep);
+
+      if( (ElementMesh.NodesBound[i] - 1) == 0) i_BCC_GP = 0;
+      if( (ElementMesh.NodesBound[i] - 1) == 20) i_BCC_GP = 19;
+
+      if ( BCC_val != BCC_val ){
+	RHS.nM[j][i] += -0.5*Flux_n12.nM[j][i_BCC_GP];
+      }
+      else {
+	RHS.nM[j][i] += -1*BCC_val;
+      }   
+      
+    }
+  }
+  
+  /* 11º Multiply by the time step */
   for(int i = 0 ; i<ElementMesh.NumNodesMesh ; i++){
     for(int j = 0 ; j<NumDOF ; j++){
       RHS.nM[j][i] *= -DeltaTimeStep;
     }
   }
   
+  
   printf("\t --> Solve the sistem of equations to get U_n1 in the nodes \n");
   /******** Solve the sistem of equations to get U_n1 in the nodes *******/
-  /***********************************************************************/
   
   /* 1º Get the mass matrix */
   M = Get_Geom_Mass_Matrix(GP_Mesh,ElementMesh);
-  
-  /* 2º Allocate the array with the solutions */
-  DeltaPhiNod = MatAllocZ(NumDOF,ElementMesh.NumNodesMesh);
+  M_l = Get_Lumped_Matrix(M);
+
+  /* 2º Allocate the output array solution */
+  DeltaPhiNod = MatAllocZ(2,ElementMesh.NumNodesMesh);
   
   /* 3º Iterate over the fields */
   for(int i = 0 ; i<NumDOF ; i++){
@@ -332,7 +289,7 @@ void Two_Steps_TG_Mc(Element ElementMesh, GaussPoint GP_Mesh,
     RHS_i.nV = RHS.nM[i];
     /* 5º Run the solver */
     /* DeltaPhiNod_i = Jacobi_Conjugate_Gradient_Method(M,RHS_i,DeltaPhiNod_i); */
-    DeltaPhiNod_i = One_Iteration_Lumped(M,RHS_i,DeltaPhiNod_i);
+    DeltaPhiNod_i = One_Iteration_Lumped(M_l,RHS_i,DeltaPhiNod_i);
     /* Note that we dont have to return to DeltaPhinod,
        because the pointer will do for us */
   }
@@ -340,51 +297,26 @@ void Two_Steps_TG_Mc(Element ElementMesh, GaussPoint GP_Mesh,
   /* Once we have use it, we free the memory */
   free(RHS.nM);
   free(M.nM);
+  free(M_l.nV);
 
   /* 6º Update the solution */
   for(int i = 0; i<ElementMesh.NumNodesMesh ; i++){
     for(int k=0 ; k<NumDOF ; k++){
       Phi_n_Nod.nM[k][i] += DeltaPhiNod.nM[k][i];
-    }
-  }
-
-  
-  printf("\t --> Transfer the nodal values of U_n1 to the Gauss-Points \n");
-  /************ Transfer the nodal values of U_n1 to the G-P *************/
-  /***********************************************************************/
-
-  /* 1º Iterate over the G-P */
-  for(int i=0 ; i<GP_Mesh.NumGP ; i++){
-    
-    /* 2º Index of the element where the G-P is located */
-    Elem_GP_i = GP_Mesh.Element_id[i];
-    
-    /* 3º List of nodes of the element */
-    Nodes_Elem_GP_i = ElementMesh.Connectivity[Elem_GP_i];
-    
-    /* 4º Element coordinates of the G-P */
-    GP_i_XE.n = GP_Mesh.Phi.x_EC.nV[i];
-
-    /* 5º Evaluate the shape functions of the element in the coordinates of the G-P */
-    N_ref_XG = ElementMesh.N_ref(GP_i_XE);
-
-    /* 6º Set to zero the field value */
-    for(int k=0 ; k<NumDOF ; k++){
-      /* 7º Update the field value */
-      Phi_n.nM[k][i] = 0;
     }    
-
-    /* 8º Iterate over the nodes of the element */
-    for(int j=0 ; j<ElementMesh.NumNodesElem ; j++){
-      /* 9º Iterate over the fields */
-      for(int k=0 ; k<NumDOF ; k++){
-  	/* 10º Update the field value */
-  	Phi_n.nM[k][i] += N_ref_XG.nV[j]*Phi_n_Nod.nM[k][Nodes_Elem_GP_i[j]-1];
-      }
-    }
   }
-
-  /* Free memory */
-  free(Phi_n_Nod.nM);
+  
+  /* printf("DeltaPhiNod \n %f ; %f \n %f ; %f \n", */
+  /* 	 DeltaPhiNod.nM[0][0],DeltaPhiNod.nM[1][0], */
+  /* 	 DeltaPhiNod.nM[0][1],DeltaPhiNod.nM[1][1]); */
+  
+  /* printf("Phi_n_Nod \n %f ; %f \n %f ; %f \n", */
+  /* 	 Phi_n_Nod.nM[0][0],Phi_n_Nod.nM[1][0], */
+  /* 	 Phi_n_Nod.nM[0][1],Phi_n_Nod.nM[1][1]); */
+  
+  
+  /* Once we have use it, we free the memory */
+  free(DeltaPhiNod.nM);
+  
   
 } /* End of Two_Steps_TG_Mc() */

@@ -361,29 +361,23 @@ Matrix Jacobi_Conjugate_Gradient_Method(Matrix K, Matrix F, Matrix U0)
 
 /*********************************************************************/
 
-Matrix One_Iteration_Lumped(Matrix K, Matrix F, Matrix U0){
+Matrix One_Iteration_Lumped(Matrix K_l, Matrix F, Matrix U0){
 
-  Matrix K_l; /* Lumped matrix */
-  Matrix U;
+  /* 0º First we check if the input data */
+  if( K_l.N_cols*K_l.N_rows != F.N_cols*F.N_rows ){
+    puts("Error in One_Iteration_Lumped() : Wrong input data !");
+    exit(0);
+  }
 
-     /* First we check if the input data */
-  if((K.N_cols != K.N_rows) ||
-     ( (K.N_rows != F.N_rows) || (F.N_cols != 1)) ||
-     ( (K.N_rows != U0.N_rows) || (U0.N_cols != 1) ))
-    {
-      puts("Error in Jacobi_Conjugate_Gradient_Method() : Wrong input data !");
-      exit(0);
-    }
+  /* 1º Initialice the solution array */
+  Matrix U = U0;
 
-  K_l = Get_Lumped_Matrix(K);
-  U = U0;
-
+  /* 2º Solve the sistem */
   for(int i = 0 ; i<F.N_rows ; i++){
     U.nV[i] = (double)1/K_l.nV[i]*F.nV[i];
   }
 
-  free(K_l.nV);
-  
+  /* 3º Return the solution */
   return U;
 
 }

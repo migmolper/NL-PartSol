@@ -106,7 +106,7 @@ GaussPoint Initialize_GP_Mesh(Matrix InputFields,
 
 /*********************************************************************/
 
-void UpdateElementLocationGP(GaussPoint GP_Mesh,Element ElementMesh){
+void UpdateElementLocationGP(GaussPoint GP_Mesh, Element ElementMesh){
 
   double GP_x;
   int Elem_1D_0,Elem_1D_1;
@@ -128,6 +128,114 @@ void UpdateElementLocationGP(GaussPoint GP_Mesh,Element ElementMesh){
     }
   }
   
+}
+
+/*********************************************************************/
+
+void GaussPointsToMesh(Element ElementMesh,
+		       GaussPoint GP_Mesh,
+		       Matrix Phi_n_GP,
+		       Matrix Phi_n_Nod){
+
+  printf(" * Transfer the Gauss-Points information to the mesh \n");
+  /************* Transfer the GP information to the mesh ****************/
+  /**********************************************************************/
+  /*  [N0]-------(e0)-------[N1]-------(e1)-------[N2]-- ;  t = n       */
+  /* Phi_n_GP0 <-- Phi_e0 --> Phi_n_GP1 <-- Phi_e1 --> Phi_n_GP2                 */
+  /**********************************************************************/
+  
+  /* 0º Define auxiliar variable to the transference from
+     the nodes to the Gauss Points */
+  int NumDOF; /* Degree of freedom of the GP */
+  int Elem_GP_i; /* Element where the GP is placed */
+  int * Nodes_Elem_GP_i; /* Nodes of the element where the GP is placed */
+  Matrix GP_i_XE; /* Element coordinates of the Gauss Points */
+  Matrix N_ref_XG; /* Element function evaluated in the Gauss-Points */
+   
+  /* 1º Set the number of degree of freedom of the problem */
+  NumDOF = Phi_n_GP.N_rows;
+  
+  for(int i=0 ; i<GP_Mesh.NumGP ; i++){
+     
+    /* 2º Index of the element where the G-P is located */
+    Elem_GP_i = GP_Mesh.Element_id[i];
+    
+    /* 3º List of nodes of the element */
+    Nodes_Elem_GP_i = ElementMesh.Connectivity[Elem_GP_i];
+    
+    /* 4º Element coordinates of the G-P */
+    GP_i_XE.n = GP_Mesh.Phi.x_EC.nV[i];
+    
+    /* 5º Evaluate the shape functions of the element in the 
+       coordinates of the G-P */
+    N_ref_XG = ElementMesh.N_ref(GP_i_XE);
+    
+    /* 6º Iterate over the nodes of the element */
+    for(int j=0 ; j<ElementMesh.NumNodesElem ; j++){
+      /* 7º Iterate over the fields */
+      for(int k=0 ; k<NumDOF ; k++){
+	/* 8º Update the field value */;
+	Phi_n_Nod.nM[k][Nodes_Elem_GP_i[j]-1] += N_ref_XG.nV[j]*Phi_n_GP.nM[k][i];
+      }
+    }
+  }
+
+}
+
+/*********************************************************************/
+
+void MeshToGaussPoints(Element ElementMesh,
+			 GaussPoint GP_Mesh,
+			 Matrix Phi_n_Nod,
+			 Matrix Phi_n_GP){
+
+  printf(" * Transfer the nodal values to the Gauss-Points \n");
+  /************ Transfer the nodal values of U_n1 to the G-P *************/
+  /***********************************************************************/
+  /*   Phi_n ---> Phi_e <--- Phi_n ---> Phi_e <--- Phi_n                 */
+  /*   [N0]-------(e0)-------[N1]-------(e1)-------[N2]-- ;  t = n + 1   */
+  /***********************************************************************/
+
+  /* 0º Define auxiliar variable to the transference from
+     the Gauss Points to the nodes */
+  int NumDOF; /* Degree of freedom of the GP */
+  int Elem_GP_i; /* Element where the GP is placed */
+  int * Nodes_Elem_GP_i; /* Nodes of the element where the GP is placed */
+  Matrix GP_i_XE; /* Element coordinates of the Gauss Points */
+  Matrix N_ref_XG; /* Element function evaluated in the Gauss-Points */
+
+  NumDOF = Phi_n_Nod.N_rows;
+  
+  /* 1º Iterate over the G-P */
+  for(int i=0 ; i<GP_Mesh.NumGP ; i++){
+    
+    /* 2º Index of the element where the G-P is located */
+    Elem_GP_i = GP_Mesh.Element_id[i];
+    
+    /* 3º List of nodes of the element */
+    Nodes_Elem_GP_i = ElementMesh.Connectivity[Elem_GP_i];
+    
+    /* 4º Element coordinates of the G-P */
+    GP_i_XE.n = GP_Mesh.Phi.x_EC.nV[i];
+
+    /* 5º Evaluate the shape functions of the element in the coordinates of the G-P */
+    N_ref_XG = ElementMesh.N_ref(GP_i_XE);
+
+    /* 6º Set to zero the field value */
+    for(int k=0 ; k<NumDOF ; k++){
+      /* 7º Update the field value */
+      Phi_n_GP.nM[k][i] = 0;
+    }    
+
+    /* 8º Iterate over the nodes of the element */
+    for(int j=0 ; j<ElementMesh.NumNodesElem ; j++){
+      /* 9º Iterate over the fields */
+      for(int k=0 ; k<NumDOF ; k++){
+  	/* 10º Update the field value */
+  	Phi_n_GP.nM[k][i] += N_ref_XG.nV[j]*Phi_n_Nod.nM[k][Nodes_Elem_GP_i[j]-1];
+      }
+    }
+  }
 }
 
 /*********************************************************************/

@@ -3,4 +3,6 @@
 #define TypeDefinitions
 #endif
 
-void Two_Steps_TG_Mc(Element, GaussPoint, Matrix, int);
+void Two_Steps_TG(Element, GaussPoint,
+		  Matrix, Matrix,
+		  Matrix, int);

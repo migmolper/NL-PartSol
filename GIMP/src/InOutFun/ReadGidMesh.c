@@ -210,6 +210,12 @@ Element ReadGidMesh(char * MeshName)
   printf("\t -> Order of the element : %s \n",Elem.TypeElem);
   printf("\t -> Number of nodes per element : %i \n",Elem.NumNodesElem);
 
+  printf(" * Boundary nodes : \n");
+  for(int i = 0 ; i<Elem.NumNodesBound ; i++){
+    printf(" %i ",Elem.NodesBound[i]);
+  }
+  printf("\n");
+
   printf(" * Nodal coordinates : \n");
   for(int i = 0; i<Elem.NumNodesMesh ; i++){
     printf("\t [%f, %f, %f] \n",
