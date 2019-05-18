@@ -320,3 +320,16 @@ void Two_Steps_TG(Element ElementMesh, GaussPoint GP_Mesh,
   
   
 } /* End of Two_Steps_TG_Mc() */
+
+
+void Flux_Corrected_Transport(Element ElementMesh, GaussPoint GP_Mesh,
+			      Matrix Phi_n_Nod, Matrix Phi_n_GP,
+			      Matrix A, int TimeStep)
+/* Flux-corrected transport solver, based on :
+   "Finite element Flux-Corrected transport (FEM-FCT) 
+   for the euler and navier-stokes equations"
+   Rainald Löhner, Ken Morgan, Jaime Peraire and Medhi Vahdati
+ */
+{
+  
+} 
