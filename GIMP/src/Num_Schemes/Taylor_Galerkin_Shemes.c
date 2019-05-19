@@ -63,21 +63,21 @@ void Two_Steps_TG(Element ElementMesh, GaussPoint GP_Mesh,
   }
   int NumDOF = Phi_n_GP.N_rows;
 
-  /* Fields defined in the Gauss-Points */
-   /* Fields values in t = n */
-  Matrix Phi_n12; /* Fields values in t = n + 1/2 */
-  Matrix Phi_n1; /* Fields values in t = n + 1 */
+  /* Fields defined in the Gauss-Points in t = n + 1/2 */
+  Matrix Phi_n12_GP; 
   
   /* Flux fields defined inthe Gauss-Points*/
-  Matrix Flux_n; /* Flux in t = n */
-  Matrix Flux_n12; /* Flux in t = n + 1/2 */
+  Matrix Flux_n_GP; /* Flux in t = n */
+  Matrix Flux_n12_GP; /* Flux in t = n + 1/2 */
 
   /* Elements properties */
   Matrix GP_i_XE; /* Element coordinates of the Gauss Points */
   Matrix F_Ref_GP; /* Reference deformation gradient evaluated in the GP */
   double J_GP; /* Jacobian evaluated in the Gauss-Point */
   Matrix dNdX_Ref_GP; /* Derivative Matrix */
+  double dNdX_GP; /* Deformation gradient */
   Matrix X_ElemNod = MatAlloc(2,1); /* Coordenates of the element nodes */
+  int Elem_GP_i;
   int * Id_ElemNod; /* Pointer to the Connectivity of the element */
   Matrix M; /* Geometrical mass matrix */
   Matrix M_l; /* Geometrical mass matrix lumped */
@@ -117,9 +117,9 @@ void Two_Steps_TG(Element ElementMesh, GaussPoint GP_Mesh,
   /**********************************************************************/
   Flux_n_Nod = Scalar_prod(A,Phi_n_Nod);
 
-  /* printf("Flux_n_Nod \n %f ; %f \n %f ; %f \n", */
-  /* 	 Flux_n_Nod.nM[0][0],Flux_n_Nod.nM[1][0], */
-  /* 	 Flux_n_Nod.nM[0][1],Flux_n_Nod.nM[1][1]); */
+  printf("Flux_n_Nod \n %f ; %f \n %f ; %f \n",
+  	 Flux_n_Nod.nM[0][0],Flux_n_Nod.nM[1][0],
+  	 Flux_n_Nod.nM[0][1],Flux_n_Nod.nM[1][1]);
   
 
   printf("\t --> Get the fields values in the Gauss-Points for t = n + 1/2 \n");
@@ -135,39 +135,44 @@ void Two_Steps_TG(Element ElementMesh, GaussPoint GP_Mesh,
   /***********************************************************************/
   
   /* 1º Allocate an auxiar variable with the fiels of analysis */
-  Phi_n12 = MatAllocZ(NumDOF,GP_Mesh.NumGP);  
+  Phi_n12_GP = MatAllocZ(NumDOF,GP_Mesh.NumGP);  
   for(int i = 0 ; i<GP_Mesh.NumGP ; i++){
 
-    /* 2º Get the element connectivity */
-    Id_ElemNod = ElementMesh.Connectivity[i];
+    /* 2º Index of the element where the G-P is located */
+    Elem_GP_i = GP_Mesh.Element_id[i];
+
+    /* 3º Get the element connectivity */
+    Id_ElemNod = ElementMesh.Connectivity[Elem_GP_i];
     
-    /* 3º Get the nodal coordinates (take in to account that 
+    /* 4º Get the nodal coordinates (take in to account that 
        in the C programming languaje the index starts in 0) */
     for(int j = 0 ; j<ElementMesh.NumNodesElem ; j++){
       X_ElemNod.nV[j] = ElementMesh.Coordinates[Id_ElemNod[j] - 1][0];
     }
     
-    /* 4º Get the gradient of the element shape functions evaluated 
+    /* 5º Get the gradient of the element shape functions evaluated 
        in the Gauss-Point position */
     GP_i_XE.n = GP_Mesh.Phi.x_EC.nV[i];
     dNdX_Ref_GP = ElementMesh.dNdX_ref(GP_i_XE);
     F_Ref_GP = Get_RefDeformation_Gradient(X_ElemNod,dNdX_Ref_GP);
 
-    /* 5º Iterate over the fields */
+    /* 6º Iterate over the fields */
     for(int j = 0 ; j<NumDOF ; j++){
-      /* 6º Add the therm of the previous step */
-      Phi_n12.nM[j][i] = Phi_n_GP.nM[j][i];
-      /* 7º Add the flux contributions iterating over the elements nodes */
+      /* 7º Add the therm of the previous step */
+      Phi_n12_GP.nM[j][i] = Phi_n_GP.nM[j][i];
       for(int k = 0 ; k<ElementMesh.NumNodesElem ; k++){
-	Phi_n12.nM[j][i] -= 0.5*DeltaTimeStep*(double)1/F_Ref_GP.n*
-	  Flux_n_Nod.nM[j][Id_ElemNod[k]-1]*dNdX_Ref_GP.nV[k];
+	/* 8º Get the deformation gradient */
+	dNdX_GP = (double)1/F_Ref_GP.n*dNdX_Ref_GP.nV[k];
+	/* 9º Add the flux contributions */
+	Phi_n12_GP.nM[j][i] -= 0.5*DeltaTimeStep*
+	  dNdX_GP*Flux_n_Nod.nM[j][Id_ElemNod[k]-1];
       }      
     }    
   }
 
-  /* printf("Phi_n12 \n %f ; %f \n %f ; %f \n", */
-  /* 	 Phi_n12.nM[0][0],Phi_n12.nM[1][0], */
-  /* 	 Phi_n12.nM[0][1],Phi_n12.nM[1][1]); */
+  printf("Phi_n12_GP \n %f ; %f \n %f ; %f \n",
+  	 Phi_n12_GP.nM[0][0],Phi_n12_GP.nM[1][0],
+  	 Phi_n12_GP.nM[0][1],Phi_n12_GP.nM[1][1]);
   
   /* Once we have use it, we free the memory */
   free(Flux_n_Nod.nM);
@@ -184,15 +189,15 @@ void Two_Steps_TG(Element ElementMesh, GaussPoint GP_Mesh,
   /*   [N0]-------(e0)-------[N1]-------(e1)-------[N2]-- ;  t = n + 1/2 */
   /*  Phi_n0     Phi_e0     Phi_n1     Phi_e1     Phi_n2                 */
   /***********************************************************************/
-  Flux_n12 = Scalar_prod(A,Phi_n12);
+  Flux_n12_GP = Scalar_prod(A,Phi_n12_GP);
   
-  /* printf("Flux_n12 \n %f ; %f \n %f ; %f \n", */
-  /* 	 Flux_n12.nM[0][0],Flux_n12.nM[1][0], */
-  /* 	 Flux_n12.nM[0][1],Flux_n12.nM[1][1]); */
+  printf("Flux_n12_GP \n %f ; %f \n %f ; %f \n",
+  	 Flux_n12_GP.nM[0][0],Flux_n12_GP.nM[1][0],
+  	 Flux_n12_GP.nM[0][1],Flux_n12_GP.nM[1][1]);
   
 
   /* Once we have use it, we free the memory */
-  free(Phi_n12.nM);
+  free(Phi_n12_GP.nM);
 
   printf("\t --> Get the RHS in the mesh in t = n + 1/2 \n");
   /************ Calcule the RHS in the mesh for t = n + 1/2 **************/
@@ -224,10 +229,10 @@ void Two_Steps_TG(Element ElementMesh, GaussPoint GP_Mesh,
     /* 4º Get the GP coordiantes in the element */
     GP_i_XE.n = GP_Mesh.Phi.x_EC.nV[i];
     
-    /* 5º Get the shape functions derivatives of the element evaluated in the GP */
+    /* 5º Get the reference shape functions derivatives of the element evaluated in the GP */
     dNdX_Ref_GP = ElementMesh.dNdX_ref(GP_i_XE);
     
-    /* 6º Get the deformation gradient of the element in the GP */
+    /* 6º Get the reference deformation gradient of the element in the GP */
     F_Ref_GP = Get_RefDeformation_Gradient(X_ElemNod,dNdX_Ref_GP);
     F_Ref_GP.N_cols = 1, F_Ref_GP.N_rows = 1;
     
@@ -237,32 +242,28 @@ void Two_Steps_TG(Element ElementMesh, GaussPoint GP_Mesh,
     /* 8º Add the flux contribution to the RHS, note that each 
        GP contributes to each node of the element where it is */
     for(int j = 0 ; j<ElementMesh.NumNodesElem ; j++){
+      /* 9º Get the deformation gradient */
+      dNdX_GP = dNdX_Ref_GP.nV[j]*(double)1/F_Ref_GP.n;
       for(int k = 0 ; k<NumDOF ; k++){
-	/* 9º If Get calcule the flux and add to the RHS */
+	/* 10º Calcule the flux and add to the RHS */
 	RHS.nM[k][Id_ElemNod[j]-1] +=
-	  - dNdX_Ref_GP.nV[j]*(double)1/F_Ref_GP.n*fabs(J_GP)*Flux_n12.nM[k][i];
+	  - dNdX_GP*fabs(J_GP)*Flux_n12_GP.nM[k][i];
       }      
     }    
   }
     
   /* 10º Add the flux contributions in the boundary */
-  for(int i = 0 ; i<ElementMesh.NumNodesBound ; i++){
-    for(int j = 0 ; j<NumDOF ; j++){
-      
-      BCC_val = GetBoundaryCondition(ElementMesh.NodesBound[i]-1,j,TimeStep);
-
-      if( (ElementMesh.NodesBound[i] - 1) == 0) i_BCC_GP = 0;
-      if( (ElementMesh.NodesBound[i] - 1) == 20) i_BCC_GP = 19;
-
-      if ( BCC_val != BCC_val ){
-	RHS.nM[j][i] += -0.5*Flux_n12.nM[j][i_BCC_GP];
-      }
-      else {
-	RHS.nM[j][i] += -1*BCC_val;
-      }   
-      
-    }
+  if((TimeStep == 0) || (TimeStep == 1) || (TimeStep == 2) || (TimeStep == 3)){
+      RHS.nM[0][0] -= Flux_n12_GP.nM[0][0]; /* -0.5*Flux_n12_GP.nM[j][i_BCC_GP] */
+      RHS.nM[1][0] -= -0.5;
   }
+  else{
+      RHS.nM[0][0] -= 0; /* -0.5*Flux_n12_GP.nM[j][i_BCC_GP] */
+      RHS.nM[1][0] -= Flux_n12_GP.nM[1][0];
+  }  
+  RHS.nM[0][20] += Flux_n12_GP.nM[0][19]; /* -0.5*Flux_n12_GP.nM[j][i_BCC_GP] */
+  RHS.nM[1][20] += 0;
+
   
   /* 11º Multiply by the time step */
   for(int i = 0 ; i<ElementMesh.NumNodesMesh ; i++){
@@ -270,6 +271,10 @@ void Two_Steps_TG(Element ElementMesh, GaussPoint GP_Mesh,
       RHS.nM[j][i] *= -DeltaTimeStep;
     }
   }
+
+  printf("RHS \n %f ; %f \n %f ; %f \n",
+  	 RHS.nM[0][0],RHS.nM[1][0],
+  	 RHS.nM[0][1],RHS.nM[1][1]);
   
   
   printf("\t --> Solve the sistem of equations to get U_n1 in the nodes \n");
@@ -293,7 +298,7 @@ void Two_Steps_TG(Element ElementMesh, GaussPoint GP_Mesh,
     /* Note that we dont have to return to DeltaPhinod,
        because the pointer will do for us */
   }
-
+  
   /* Once we have use it, we free the memory */
   free(RHS.nM);
   free(M.nM);
@@ -306,13 +311,13 @@ void Two_Steps_TG(Element ElementMesh, GaussPoint GP_Mesh,
     }    
   }
   
-  /* printf("DeltaPhiNod \n %f ; %f \n %f ; %f \n", */
-  /* 	 DeltaPhiNod.nM[0][0],DeltaPhiNod.nM[1][0], */
-  /* 	 DeltaPhiNod.nM[0][1],DeltaPhiNod.nM[1][1]); */
+  printf("DeltaPhiNod \n %f ; %f \n %f ; %f \n",
+  	 DeltaPhiNod.nM[0][0],DeltaPhiNod.nM[1][0],
+  	 DeltaPhiNod.nM[0][1],DeltaPhiNod.nM[1][1]);
   
-  /* printf("Phi_n_Nod \n %f ; %f \n %f ; %f \n", */
-  /* 	 Phi_n_Nod.nM[0][0],Phi_n_Nod.nM[1][0], */
-  /* 	 Phi_n_Nod.nM[0][1],Phi_n_Nod.nM[1][1]); */
+  printf("Phi_n_Nod \n %f ; %f \n %f ; %f \n",
+  	 Phi_n_Nod.nM[0][0],Phi_n_Nod.nM[1][0],
+  	 Phi_n_Nod.nM[0][1],Phi_n_Nod.nM[1][1]);
   
   
   /* Once we have use it, we free the memory */
@@ -322,14 +327,14 @@ void Two_Steps_TG(Element ElementMesh, GaussPoint GP_Mesh,
 } /* End of Two_Steps_TG_Mc() */
 
 
-void Flux_Corrected_Transport(Element ElementMesh, GaussPoint GP_Mesh,
-			      Matrix Phi_n_Nod, Matrix Phi_n_GP,
-			      Matrix A, int TimeStep)
-/* Flux-corrected transport solver, based on :
-   "Finite element Flux-Corrected transport (FEM-FCT) 
-   for the euler and navier-stokes equations"
-   Rainald Löhner, Ken Morgan, Jaime Peraire and Medhi Vahdati
- */
-{
+/* void Flux_Corrected_Transport(Element ElementMesh, GaussPoint GP_Mesh, */
+/* 			      Matrix Phi_n_Nod, Matrix Phi_n_GP, */
+/* 			      Matrix A, int TimeStep) */
+/* /\* Flux-corrected transport solver, based on : */
+/*    "Finite element Flux-Corrected transport (FEM-FCT)  */
+/*    for the euler and navier-stokes equations" */
+/*    Rainald Löhner, Ken Morgan, Jaime Peraire and Medhi Vahdati */
+/*  *\/ */
+/* { */
   
-} 
+/* }  */

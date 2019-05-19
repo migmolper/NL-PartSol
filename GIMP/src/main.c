@@ -70,7 +70,8 @@ void main(int argc, char *argv[])
   printf("\t [ %f %f ] \n",A.nM[1][0],A.nM[1][1]);
 
   
-  /* Transfer information from the GP to the mesh --> for MPM this step is in the loop */
+  /* Transfer information from the GP to the mesh --> 
+     For MPM this step is in the loop */
   GaussPointsToMesh(ElementMesh,GP_Mesh,Phi_n_GP,Phi_n_Nod);    
   /* printf("Phi_n_Nod \n %f ; %f \n %f ; %f \n", */
   /* 	   Phi_n_Nod.nM[0][0],Phi_n_Nod.nM[1][0], */
@@ -81,15 +82,17 @@ void main(int argc, char *argv[])
   printf("************************************************* \n");
   printf("Run simulation :  !!! \n");
 
-  for(int t_i = 0 ; t_i<20; t_i++){
+  for(int t_i = 0 ; t_i<25; t_i++){
     printf("************************************************* \n");
     printf("Time step : %i \n",t_i);
 
-    /* Transfer information from the mesh to the GP --> For MPM this step is after solve eulerian */
-    MeshToGaussPoints(ElementMesh,GP_Mesh,Phi_n_Nod,Phi_n_GP);    
-    /* printf("Phi_n_GP \n %f ; %f \n %f ; %f \n", */
-    /* 	   Phi_n_GP.nM[0][0],Phi_n_GP.nM[1][0], */
-    /* 	   Phi_n_GP.nM[0][1],Phi_n_GP.nM[1][1]); */
+    /* Transfer information from the mesh to the GP -->
+       For MPM this step is after solve eulerian */
+    MeshToGaussPoints(ElementMesh,GP_Mesh,Phi_n_Nod,Phi_n_GP);
+
+    printf("Phi_n_GP \n %f ; %f \n %f ; %f \n",
+    	   Phi_n_GP.nM[0][0],Phi_n_GP.nM[1][0],
+    	   Phi_n_GP.nM[0][1],Phi_n_GP.nM[1][1]);
 
     /* Print the solution in the GP */    
     GnuplotOutput1D(GP_Mesh.Phi.x_GC,

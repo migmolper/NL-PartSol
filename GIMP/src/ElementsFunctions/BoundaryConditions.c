@@ -10,7 +10,7 @@ double GetBoundaryCondition(int Node_i, int DOF_i,int TimeStep){
   double BCC_val;
   /* Fill the boundary conditions array */
   
-  if( (TimeStep == 1) || (TimeStep == 2) || (TimeStep == 3) ){
+  if( (TimeStep == 1) || (TimeStep == 2) || (TimeStep == 3) || (TimeStep == 4)){
     
     if( (Node_i == 0 ) && (DOF_i == 1) ){
       printf ("paso\n");
