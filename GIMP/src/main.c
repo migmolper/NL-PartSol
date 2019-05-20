@@ -32,7 +32,7 @@ void main(int argc, char *argv[])
   ElementMesh.NumberDOF = 2; /* Change this */
     
   /* Read the initial conditions fields as a CSV */
-  Matrix InputFields = Read_CSV(InitCondFileName, 20);
+  Matrix InputFields = Read_CSV(InitCondFileName,9);
 
   /* Read the boundary conditions */
   ReadBCC(BounCondFileName);
@@ -58,8 +58,8 @@ void main(int argc, char *argv[])
   Phi_n_GP.nM[0] = GP_Mesh.Phi.Stress.nV; /* Asign to the first row the stress field */
   Phi_n_GP.nM[1] = GP_Mesh.Phi.vel.nV; /* Asign to the first row the velocity field */
 
-  /* Defne nodal values of the sigma-v */
-  Matrix Phi_n_Nod = MatAllocZ(2,ElementMesh.NumNodesMesh);
+  /* Define nodal values of the sigma-v */
+  Matrix Phi_n_Nod = MatAlloc(2,ElementMesh.NumNodesMesh);
   
   Matrix A = MatAllocZ(2,2);
   A.nM[0][1] = - D.n;
@@ -97,12 +97,12 @@ void main(int argc, char *argv[])
     /* Print the solution in the GP */    
     GnuplotOutput1D(GP_Mesh.Phi.x_GC,
 		    GP_Mesh.Phi.vel,
-		    0.0, 5.0,
+		    0.0, 8.0,
 		    t_i,GP_Mesh.NumGP,
 		    "Velocity");
     GnuplotOutput1D(GP_Mesh.Phi.x_GC,
 		    GP_Mesh.Phi.Stress,
-		    0.0, 5.0,
+		    0.0, 8.0,
 		    t_i,GP_Mesh.NumGP,
 		    "Stress");
     

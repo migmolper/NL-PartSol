@@ -251,20 +251,7 @@ void Two_Steps_TG(Element ElementMesh, GaussPoint GP_Mesh,
       }      
     }    
   }
-    
-  /* 10º Add the flux contributions in the boundary */
-  if((TimeStep == 0) || (TimeStep == 1) || (TimeStep == 2) || (TimeStep == 3)){
-      RHS.nM[0][0] -= Flux_n12_GP.nM[0][0]; /* -0.5*Flux_n12_GP.nM[j][i_BCC_GP] */
-      RHS.nM[1][0] -= -0.5;
-  }
-  else{
-      RHS.nM[0][0] -= 0; /* -0.5*Flux_n12_GP.nM[j][i_BCC_GP] */
-      RHS.nM[1][0] -= Flux_n12_GP.nM[1][0];
-  }  
-  RHS.nM[0][20] += Flux_n12_GP.nM[0][19]; /* -0.5*Flux_n12_GP.nM[j][i_BCC_GP] */
-  RHS.nM[1][20] += 0;
-
-  
+      
   /* 11º Multiply by the time step */
   for(int i = 0 ; i<ElementMesh.NumNodesMesh ; i++){
     for(int j = 0 ; j<NumDOF ; j++){
@@ -310,6 +297,16 @@ void Two_Steps_TG(Element ElementMesh, GaussPoint GP_Mesh,
       Phi_n_Nod.nM[k][i] += DeltaPhiNod.nM[k][i];
     }    
   }
+
+  /* 7º Add the Boundary conditions contributions in the boundary */
+  if((TimeStep == 1)){
+    Phi_n_Nod.nM[1][0] = -1;
+  }
+  else{
+      Phi_n_Nod.nM[0][0] = 0;
+  }  
+  Phi_n_Nod.nM[1][8] = 0;
+  
   
   printf("DeltaPhiNod \n %f ; %f \n %f ; %f \n",
   	 DeltaPhiNod.nM[0][0],DeltaPhiNod.nM[1][0],
