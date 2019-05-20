@@ -77,7 +77,7 @@ GaussPoint Initialize_GP_Mesh(Matrix InputFields,
   GP_Mesh.D = D;
 
   /* Localize all the Gauss-Points */
-  UpdateElementLocationGP(GP_Mesh,Elem);
+  LocateGP(GP_Mesh,Elem);
 
   /* Initial conditions */
 
@@ -106,9 +106,9 @@ GaussPoint Initialize_GP_Mesh(Matrix InputFields,
 
 /*********************************************************************/
 
-void UpdateElementLocationGP(GaussPoint GP_Mesh, Element ElementMesh){
+void LocateGP(GaussPoint GP_Mesh, Element ElementMesh){
 
-  double GP_x;
+  double GP_x, Ex_0, Ex_1;
   int Elem_1D_0,Elem_1D_1;
   
   for(int i = 0 ; i<GP_Mesh.NumGP ; i++){
@@ -117,12 +117,14 @@ void UpdateElementLocationGP(GaussPoint GP_Mesh, Element ElementMesh){
       for(int j = 0 ; j<ElementMesh.NumElemMesh ; j++){
 	Elem_1D_0 = ElementMesh.Connectivity[j][0];
 	Elem_1D_1 = ElementMesh.Connectivity[j][1];
-	if( (GP_x >= ElementMesh.Coordinates[Elem_1D_0-1][0]) &&
-	    (GP_x <= ElementMesh.Coordinates[Elem_1D_1-1][0]) ){
+	Ex_0 = ElementMesh.Coordinates[Elem_1D_0-1][0];
+	Ex_1 = ElementMesh.Coordinates[Elem_1D_1-1][0];
+	if( (GP_x >= Ex_0) &&
+	    (GP_x <= Ex_1) ){
 	  GP_Mesh.Element_id[i] = j;
-	  GP_Mesh.Phi.x_EC.nV[i] = 0.5;
+	  GP_Mesh.Phi.x_EC.nV[i] = (double)(GP_x-Ex_0)/(Ex_1-Ex_0);
 	  /* Activate element */
-	  ElementMesh.ActiveElem[i] = 1;
+	  ElementMesh.ActiveElem[i] += 1;
 	}
       }   
     }
@@ -132,10 +134,52 @@ void UpdateElementLocationGP(GaussPoint GP_Mesh, Element ElementMesh){
 
 /*********************************************************************/
 
+Matrix GetMassMatrix_L(Element ElementMesh,
+		       GaussPoint GP_Mesh){
+  
+  Matrix M_l = MatAllocZ(ElementMesh.NumNodesMesh,1);
+  int Elem_GP_i; /* Element where the GP is placed */
+  double M_GP; /* Mass of the Gauss-Point */
+  int * Nodes_Elem_GP_i; /* Nodes of the element where the GP is placed */
+  Matrix GP_i_XE; /* Element coordinates of the Gauss Points */
+  Matrix N_ref_XG; /* Element function evaluated in the Gauss-Points */
+
+  for(int i=0 ; i<GP_Mesh.NumGP ; i++){
+     
+    /* 4º Index of the element where the G-P is located */
+    Elem_GP_i = GP_Mesh.Element_id[i];
+    
+    /* 5º List of nodes of the element */
+    Nodes_Elem_GP_i = ElementMesh.Connectivity[Elem_GP_i];
+    
+    /* 6º Element coordinates of the G-P */
+    GP_i_XE.n = GP_Mesh.Phi.x_EC.nV[i];
+    
+    /* 7º Evaluate the shape functions of the element in the 
+       coordinates of the G-P */
+    N_ref_XG = ElementMesh.N_ref(GP_i_XE);
+
+    /* 8º Get the mass of the material point */
+    M_GP = GP_Mesh.Phi.mass.nV[i];
+    
+    /* 8º Iterate over the nodes of the element */
+    for(int j=0 ; j<ElementMesh.NumNodesElem ; j++){
+      M_l.nV[Nodes_Elem_GP_i[j]-1] += M_GP*N_ref_XG.nV[j];
+    }
+    
+  }
+
+  return M_l;
+}
+
+
+/*********************************************************************/
+
 void GaussPointsToMesh(Element ElementMesh,
 		       GaussPoint GP_Mesh,
 		       Matrix Phi_n_GP,
-		       Matrix Phi_n_Nod){
+		       Matrix Phi_n_Nod,
+		       Matrix M_l){
 
   printf(" * Transfer the Gauss-Points information to the mesh \n");
   /************* Transfer the GP information to the mesh ****************/
@@ -148,6 +192,7 @@ void GaussPointsToMesh(Element ElementMesh,
      the nodes to the Gauss Points */
   int NumDOF; /* Degree of freedom of the GP */
   int Elem_GP_i; /* Element where the GP is placed */
+  double M_GP; /* Mass of the Gauss-Point */
   int * Nodes_Elem_GP_i; /* Nodes of the element where the GP is placed */
   Matrix GP_i_XE; /* Element coordinates of the Gauss Points */
   Matrix N_ref_XG; /* Element function evaluated in the Gauss-Points */
@@ -193,26 +238,38 @@ void GaussPointsToMesh(Element ElementMesh,
     /* 7º Evaluate the shape functions of the element in the 
        coordinates of the G-P */
     N_ref_XG = ElementMesh.N_ref(GP_i_XE);
+
+    /* 8º Get the mass of the material point */
+    M_GP = GP_Mesh.Phi.mass.nV[i];
     
     /* 8º Iterate over the nodes of the element */
     for(int j=0 ; j<ElementMesh.NumNodesElem ; j++){
       /* 9º Iterate over the fields */
       for(int k=0 ; k<NumDOF ; k++){
 	/* 10º Update the field value */;
-	Phi_n_Nod.nM[k][Nodes_Elem_GP_i[j]-1] += N_ref_XG.nV[j]*Phi_n_GP.nM[k][i];
+	Phi_n_Nod.nM[k][Nodes_Elem_GP_i[j]-1] += Phi_n_GP.nM[k][i]*M_GP*N_ref_XG.nV[j];
       }
     }
     
   }
+
+  /* 11º Fix the nodal value with the lumped mass matrix */
+  for(int i = 0 ; i<ElementMesh.NumNodesMesh ; i++){
+    for(int j = 0 ; j<NumDOF ; j++){
+      Phi_n_Nod.nM[j][i] /= M_l.nV[i]; 
+    }
+  }
+
 
 }
 
 /*********************************************************************/
 
 void MeshToGaussPoints(Element ElementMesh,
-			 GaussPoint GP_Mesh,
-			 Matrix Phi_n_Nod,
-			 Matrix Phi_n_GP){
+		       GaussPoint GP_Mesh,
+		       Matrix Phi_n_Nod,
+		       Matrix Phi_n_GP,
+		       Matrix M_l){
 
   printf(" * Transfer the nodal values to the Gauss-Points \n");
   /************ Transfer the nodal values of U_n1 to the G-P *************/

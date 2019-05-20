@@ -10,7 +10,7 @@
 
 void Two_Steps_TG(Element ElementMesh, GaussPoint GP_Mesh,
 		  Matrix Phi_n_Nod, Matrix Phi_n_GP,
-		  Matrix A, int TimeStep)
+		  Matrix A, Matrix M, int TimeStep)
 /* 
 
    This sheme pretends to solve :
@@ -79,8 +79,6 @@ void Two_Steps_TG(Element ElementMesh, GaussPoint GP_Mesh,
   Matrix X_ElemNod = MatAlloc(2,1); /* Coordenates of the element nodes */
   int Elem_GP_i;
   int * Id_ElemNod; /* Pointer to the Connectivity of the element */
-  Matrix M; /* Geometrical mass matrix */
-  Matrix M_l; /* Geometrical mass matrix lumped */
 
   /* Nodal variables */
   Matrix Flux_n_Nod; /* Nodal values of the fluxes */
@@ -115,12 +113,7 @@ void Two_Steps_TG(Element ElementMesh, GaussPoint GP_Mesh,
   /*   [N0]-------(e0)-------[N1]-------(e1)-------[N2]-- ;  t = n      */
   /*  Phi_n0     Phi_e0     Phi_n1     Phi_e1     Phi_n2                */
   /**********************************************************************/
-  Flux_n_Nod = Scalar_prod(A,Phi_n_Nod);
-
-  printf("Flux_n_Nod \n %f ; %f \n %f ; %f \n",
-  	 Flux_n_Nod.nM[0][0],Flux_n_Nod.nM[1][0],
-  	 Flux_n_Nod.nM[0][1],Flux_n_Nod.nM[1][1]);
-  
+  Flux_n_Nod = Scalar_prod(A,Phi_n_Nod); 
 
   printf("\t --> Get the fields values in the Gauss-Points for t = n + 1/2 \n");
   /*** Get the value of the fields in the Gauss points for t = n + 1/2 ***/
@@ -170,10 +163,6 @@ void Two_Steps_TG(Element ElementMesh, GaussPoint GP_Mesh,
     }    
   }
 
-  printf("Phi_n12_GP \n %f ; %f \n %f ; %f \n",
-  	 Phi_n12_GP.nM[0][0],Phi_n12_GP.nM[1][0],
-  	 Phi_n12_GP.nM[0][1],Phi_n12_GP.nM[1][1]);
-  
   /* Once we have use it, we free the memory */
   free(Flux_n_Nod.nM);
 
@@ -190,11 +179,6 @@ void Two_Steps_TG(Element ElementMesh, GaussPoint GP_Mesh,
   /*  Phi_n0     Phi_e0     Phi_n1     Phi_e1     Phi_n2                 */
   /***********************************************************************/
   Flux_n12_GP = Scalar_prod(A,Phi_n12_GP);
-  
-  printf("Flux_n12_GP \n %f ; %f \n %f ; %f \n",
-  	 Flux_n12_GP.nM[0][0],Flux_n12_GP.nM[1][0],
-  	 Flux_n12_GP.nM[0][1],Flux_n12_GP.nM[1][1]);
-  
 
   /* Once we have use it, we free the memory */
   free(Phi_n12_GP.nM);
@@ -258,64 +242,37 @@ void Two_Steps_TG(Element ElementMesh, GaussPoint GP_Mesh,
       RHS.nM[j][i] *= -DeltaTimeStep;
     }
   }
-
-  printf("RHS \n %f ; %f \n %f ; %f \n",
-  	 RHS.nM[0][0],RHS.nM[1][0],
-  	 RHS.nM[0][1],RHS.nM[1][1]);
-  
   
   printf("\t --> Solve the sistem of equations to get U_n1 in the nodes \n");
   /******** Solve the sistem of equations to get U_n1 in the nodes *******/
   
-  /* 1º Get the mass matrix */
-  M = Get_Geom_Mass_Matrix(GP_Mesh,ElementMesh);
-  M_l = Get_Lumped_Matrix(M);
-
-  /* 2º Allocate the output array solution */
+  /* 1º Allocate the output array solution */
   DeltaPhiNod = MatAllocZ(2,ElementMesh.NumNodesMesh);
   
-  /* 3º Iterate over the fields */
+  /* 2º Iterate over the fields */
   for(int i = 0 ; i<NumDOF ; i++){
-    /* 4º Asign values to the pointer to solve the equations */
+    /* 3º Asign values to the pointer to solve the equations */
     DeltaPhiNod_i.nV = DeltaPhiNod.nM[i];
     RHS_i.nV = RHS.nM[i];
-    /* 5º Run the solver */
+    /* 4º Run the solver */
     /* DeltaPhiNod_i = Jacobi_Conjugate_Gradient_Method(M,RHS_i,DeltaPhiNod_i); */
-    DeltaPhiNod_i = One_Iteration_Lumped(M_l,RHS_i,DeltaPhiNod_i);
+    DeltaPhiNod_i = One_Iteration_Lumped(M,RHS_i,DeltaPhiNod_i);
     /* Note that we dont have to return to DeltaPhinod,
        because the pointer will do for us */
   }
   
   /* Once we have use it, we free the memory */
   free(RHS.nM);
-  free(M.nM);
-  free(M_l.nV);
 
-  /* 6º Update the solution */
+  /* 5º Update the solution */
   for(int i = 0; i<ElementMesh.NumNodesMesh ; i++){
     for(int k=0 ; k<NumDOF ; k++){
       Phi_n_Nod.nM[k][i] += DeltaPhiNod.nM[k][i];
     }    
   }
 
-  /* 7º Add the Boundary conditions contributions in the boundary */
-  if((TimeStep == 1)){
-    Phi_n_Nod.nM[1][0] = -1;
-  }
-  else{
-      Phi_n_Nod.nM[0][0] = 0;
-  }  
-  Phi_n_Nod.nM[1][8] = 0;
-  
-  
-  printf("DeltaPhiNod \n %f ; %f \n %f ; %f \n",
-  	 DeltaPhiNod.nM[0][0],DeltaPhiNod.nM[1][0],
-  	 DeltaPhiNod.nM[0][1],DeltaPhiNod.nM[1][1]);
-  
-  printf("Phi_n_Nod \n %f ; %f \n %f ; %f \n",
-  	 Phi_n_Nod.nM[0][0],Phi_n_Nod.nM[1][0],
-  	 Phi_n_Nod.nM[0][1],Phi_n_Nod.nM[1][1]);
-  
+  /* 6º Add the Boundary conditions contributions in the boundary */
+  ApplyBoundaryCondition(Phi_n_Nod,TimeStep);  
   
   /* Once we have use it, we free the memory */
   free(DeltaPhiNod.nM);

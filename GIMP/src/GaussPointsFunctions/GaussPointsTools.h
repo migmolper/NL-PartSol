@@ -10,13 +10,15 @@
 
 GaussPoint Initialize_GP_Mesh(Matrix,Matrix,Element);
 
-void UpdateElementLocationGP(GaussPoint,Element);
+void LocateGP(GaussPoint,Element);
+
+Matrix GetMassMatrix_L(Element,GaussPoint);
 
 void GaussPointsToMesh(Element,GaussPoint,
-		       Matrix,Matrix);
+		       Matrix,Matrix,Matrix);
 
 void MeshToGaussPoints(Element,GaussPoint,
-		       Matrix,Matrix);
+		       Matrix,Matrix,Matrix);
 
 /* void Get_Lagrangian_CG_Tensor(GaussPoint *); */
 

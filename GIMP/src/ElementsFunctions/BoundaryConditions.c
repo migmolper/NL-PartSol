@@ -6,37 +6,17 @@
 #include "../ToolsLib/GlobalVariables.h"
 #include "../ToolsLib/Utils.h"
 
-double GetBoundaryCondition(int Node_i, int DOF_i,int TimeStep){
-  double BCC_val;
+void ApplyBoundaryCondition(Matrix Phi_n_Nod,int TimeStep){
+  
   /* Fill the boundary conditions array */
   
-  if( (TimeStep == 1) || (TimeStep == 2) || (TimeStep == 3) || (TimeStep == 4)){
-    
-    if( (Node_i == 0 ) && (DOF_i == 1) ){
-      printf ("paso\n");
-      BCC_val = -0.5;
-    }
-    else if( (Node_i == 20 ) && (DOF_i == 1) ){
-      BCC_val = 0;
-    }    
-    else{
-      BCC_val = NAN;
-    }
-   
+  if( (TimeStep == 1) ){
+    Phi_n_Nod.nM[1][0] = -1;
   }
   else {
-
-    if( (Node_i == 0 ) && (DOF_i == 0) ){
-      BCC_val = 0;
-    }
-    else if( (Node_i == 20 ) && (DOF_i == 1) ){
-      BCC_val = 0;
-    }    
-    else{
-      BCC_val = NAN;
-    }
-    
+    Phi_n_Nod.nM[0][0] = 0;
   }
-  
-  return BCC_val;
+
+  Phi_n_Nod.nM[1][8] = 0;
+ 
 }
