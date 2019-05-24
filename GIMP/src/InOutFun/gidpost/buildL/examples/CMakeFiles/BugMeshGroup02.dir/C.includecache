@@ -1,0 +1,24 @@
+#IncludeRegexLine: ^[ 	]*#[ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+../source/gidpost.h
+gidpost_config.h
+../source/gidpost_config.h
+stdlib.h
+-
+
+../source/gidpost_config.h
+
+/home/miguel/GID-git/gidproject/gidpost/examples/BugMeshGroup02.c
+stdlib.h
+-
+stdio.h
+-
+gidpost.h
+/home/miguel/GID-git/gidproject/gidpost/examples/gidpost.h
+

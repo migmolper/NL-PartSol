@@ -1,0 +1,166 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="MinSizeRel|x64">
+      <Configuration>MinSizeRel</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="RelWithDebInfo|x64">
+      <Configuration>RelWithDebInfo</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{733A3BAA-2E11-3A4A-9914-8E4FB856FDEF}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <Platform>x64</Platform>
+    <ProjectName>ZERO_CHECK</ProjectName>
+    <VCProjectUpgraderObjectName>NoUpgrade</VCProjectUpgraderObjectName>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Utility</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v141</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Utility</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v141</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'" Label="Configuration">
+    <ConfigurationType>Utility</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v141</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'" Label="Configuration">
+    <ConfigurationType>Utility</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v141</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>10.0.20506.1</_ProjectFileVersion>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Midl>
+      <AdditionalIncludeDirectories>C:\GID64-git\gidproject\gidpost\buildW;C:\GID64-git\gidproject\gidpost;C:\GID64-git\gidproject\gidpost\source;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Midl>
+      <AdditionalIncludeDirectories>C:\GID64-git\gidproject\gidpost\buildW;C:\GID64-git\gidproject\gidpost;C:\GID64-git\gidproject\gidpost\source;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">
+    <Midl>
+      <AdditionalIncludeDirectories>C:\GID64-git\gidproject\gidpost\buildW;C:\GID64-git\gidproject\gidpost;C:\GID64-git\gidproject\gidpost\source;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">
+    <Midl>
+      <AdditionalIncludeDirectories>C:\GID64-git\gidproject\gidpost\buildW;C:\GID64-git\gidproject\gidpost;C:\GID64-git\gidproject\gidpost\source;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <CustomBuild Include="C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\54eb2c23d87a0eb21e4a72c81d3dff63\generate.stamp.rule">
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Checking Build System</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
+C:\UnxUtils\cmake-3.9.4-win64-x64\bin\cmake.exe -HC:/GID64-git/gidproject/gidpost -BC:/GID64-git/gidproject/gidpost/buildW --check-stamp-list CMakeFiles/generate.stamp.list --vs-solution-file C:/GID64-git/gidproject/gidpost/buildW/gidpost.sln
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:/GID64-git/gidproject/gidpost/buildW/CMakeFiles/54eb2c23d87a0eb21e4a72c81d3dff63/generate.stamp.rule;C:\GID64-git\gidproject\gidpost\CMakeLists.txt;C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\3.9.4\CMakeCCompiler.cmake;C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\3.9.4\CMakeCXXCompiler.cmake;C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\3.9.4\CMakeRCCompiler.cmake;C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\3.9.4\CMakeSystem.cmake;C:\GID64-git\gidproject\gidpost\buildW\source\CMakeFiles\hdf5\cmake_hdf5_test.c;C:\GID64-git\gidproject\gidpost\examples\CMakeLists.txt;C:\GID64-git\gidproject\gidpost\gidpost_config.h.in;C:\GID64-git\gidproject\gidpost\source\CMakeLists.txt;C:\UnxUtils\cmake-3.9.4-win64-x64\share\cmake-3.9\Modules\CMakeCInformation.cmake;C:\UnxUtils\cmake-3.9.4-win64-x64\share\cmake-3.9\Modules\CMakeCXXInformation.cmake;C:\UnxUtils\cmake-3.9.4-win64-x64\share\cmake-3.9\Modules\CMakeCommonLanguageInclude.cmake;C:\UnxUtils\cmake-3.9.4-win64-x64\share\cmake-3.9\Modules\CMakeGenericSystem.cmake;C:\UnxUtils\cmake-3.9.4-win64-x64\share\cmake-3.9\Modules\CMakeLanguageInformation.cmake;C:\UnxUtils\cmake-3.9.4-win64-x64\share\cmake-3.9\Modules\CMakeRCInformation.cmake;C:\UnxUtils\cmake-3.9.4-win64-x64\share\cmake-3.9\Modules\CMakeSystemSpecificInformation.cmake;C:\UnxUtils\cmake-3.9.4-win64-x64\share\cmake-3.9\Modules\CMakeSystemSpecificInitialize.cmake;C:\UnxUtils\cmake-3.9.4-win64-x64\share\cmake-3.9\Modules\CheckIncludeFile.cmake;C:\UnxUtils\cmake-3.9.4-win64-x64\share\cmake-3.9\Modules\CheckLibraryExists.cmake;C:\UnxUtils\cmake-3.9.4-win64-x64\share\cmake-3.9\Modules\CheckSymbolExists.cmake;C:\UnxUtils\cmake-3.9.4-win64-x64\share\cmake-3.9\Modules\Compiler\CMakeCommonCompilerMacros.cmake;C:\UnxUtils\cmake-3.9.4-win64-x64\share\cmake-3.9\Modules\Compiler\MSVC-CXX.cmake;C:\UnxUtils\cmake-3.9.4-win64-x64\share\cmake-3.9\Modules\FindHDF5.cmake;C:\UnxUtils\cmake-3.9.4-win64-x64\share\cmake-3.9\Modules\FindPackageHandleStandardArgs.cmake;C:\UnxUtils\cmake-3.9.4-win64-x64\share\cmake-3.9\Modules\FindPackageMessage.cmake;C:\UnxUtils\cmake-3.9.4-win64-x64\share\cmake-3.9\Modules\FindThreads.cmake;C:\UnxUtils\cmake-3.9.4-win64-x64\share\cmake-3.9\Modules\FindZLIB.cmake;C:\UnxUtils\cmake-3.9.4-win64-x64\share\cmake-3.9\Modules\Platform\Windows-MSVC-C.cmake;C:\UnxUtils\cmake-3.9.4-win64-x64\share\cmake-3.9\Modules\Platform\Windows-MSVC-CXX.cmake;C:\UnxUtils\cmake-3.9.4-win64-x64\share\cmake-3.9\Modules\Platform\Windows-MSVC.cmake;C:\UnxUtils\cmake-3.9.4-win64-x64\share\cmake-3.9\Modules\Platform\Windows.cmake;C:\UnxUtils\cmake-3.9.4-win64-x64\share\cmake-3.9\Modules\Platform\WindowsPaths.cmake;C:\UnxUtils\cmake-3.9.4-win64-x64\share\cmake-3.9\Modules\SelectLibraryConfigurations.cmake;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\generate.stamp;C:\GID64-git\gidproject\gidpost\buildW\source\CMakeFiles\generate.stamp;C:\GID64-git\gidproject\gidpost\buildW\examples\CMakeFiles\generate.stamp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Checking Build System</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">setlocal
+C:\UnxUtils\cmake-3.9.4-win64-x64\bin\cmake.exe -HC:/GID64-git/gidproject/gidpost -BC:/GID64-git/gidproject/gidpost/buildW --check-stamp-list CMakeFiles/generate.stamp.list --vs-solution-file C:/GID64-git/gidproject/gidpost/buildW/gidpost.sln
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:/GID64-git/gidproject/gidpost/buildW/CMakeFiles/54eb2c23d87a0eb21e4a72c81d3dff63/generate.stamp.rule;C:\GID64-git\gidproject\gidpost\CMakeLists.txt;C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\3.9.4\CMakeCCompiler.cmake;C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\3.9.4\CMakeCXXCompiler.cmake;C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\3.9.4\CMakeRCCompiler.cmake;C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\3.9.4\CMakeSystem.cmake;C:\GID64-git\gidproject\gidpost\buildW\source\CMakeFiles\hdf5\cmake_hdf5_test.c;C:\GID64-git\gidproject\gidpost\examples\CMakeLists.txt;C:\GID64-git\gidproject\gidpost\gidpost_config.h.in;C:\GID64-git\gidproject\gidpost\source\CMakeLists.txt;C:\UnxUtils\cmake-3.9.4-win64-x64\share\cmake-3.9\Modules\CMakeCInformation.cmake;C:\UnxUtils\cmake-3.9.4-win64-x64\share\cmake-3.9\Modules\CMakeCXXInformation.cmake;C:\UnxUtils\cmake-3.9.4-win64-x64\share\cmake-3.9\Modules\CMakeCommonLanguageInclude.cmake;C:\UnxUtils\cmake-3.9.4-win64-x64\share\cmake-3.9\Modules\CMakeGenericSystem.cmake;C:\UnxUtils\cmake-3.9.4-win64-x64\share\cmake-3.9\Modules\CMakeLanguageInformation.cmake;C:\UnxUtils\cmake-3.9.4-win64-x64\share\cmake-3.9\Modules\CMakeRCInformation.cmake;C:\UnxUtils\cmake-3.9.4-win64-x64\share\cmake-3.9\Modules\CMakeSystemSpecificInformation.cmake;C:\UnxUtils\cmake-3.9.4-win64-x64\share\cmake-3.9\Modules\CMakeSystemSpecificInitialize.cmake;C:\UnxUtils\cmake-3.9.4-win64-x64\share\cmake-3.9\Modules\CheckIncludeFile.cmake;C:\UnxUtils\cmake-3.9.4-win64-x64\share\cmake-3.9\Modules\CheckLibraryExists.cmake;C:\UnxUtils\cmake-3.9.4-win64-x64\share\cmake-3.9\Modules\CheckSymbolExists.cmake;C:\UnxUtils\cmake-3.9.4-win64-x64\share\cmake-3.9\Modules\Compiler\CMakeCommonCompilerMacros.cmake;C:\UnxUtils\cmake-3.9.4-win64-x64\share\cmake-3.9\Modules\Compiler\MSVC-CXX.cmake;C:\UnxUtils\cmake-3.9.4-win64-x64\share\cmake-3.9\Modules\FindHDF5.cmake;C:\UnxUtils\cmake-3.9.4-win64-x64\share\cmake-3.9\Modules\FindPackageHandleStandardArgs.cmake;C:\UnxUtils\cmake-3.9.4-win64-x64\share\cmake-3.9\Modules\FindPackageMessage.cmake;C:\UnxUtils\cmake-3.9.4-win64-x64\share\cmake-3.9\Modules\FindThreads.cmake;C:\UnxUtils\cmake-3.9.4-win64-x64\share\cmake-3.9\Modules\FindZLIB.cmake;C:\UnxUtils\cmake-3.9.4-win64-x64\share\cmake-3.9\Modules\Platform\Windows-MSVC-C.cmake;C:\UnxUtils\cmake-3.9.4-win64-x64\share\cmake-3.9\Modules\Platform\Windows-MSVC-CXX.cmake;C:\UnxUtils\cmake-3.9.4-win64-x64\share\cmake-3.9\Modules\Platform\Windows-MSVC.cmake;C:\UnxUtils\cmake-3.9.4-win64-x64\share\cmake-3.9\Modules\Platform\Windows.cmake;C:\UnxUtils\cmake-3.9.4-win64-x64\share\cmake-3.9\Modules\Platform\WindowsPaths.cmake;C:\UnxUtils\cmake-3.9.4-win64-x64\share\cmake-3.9\Modules\SelectLibraryConfigurations.cmake;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\generate.stamp;C:\GID64-git\gidproject\gidpost\buildW\source\CMakeFiles\generate.stamp;C:\GID64-git\gidproject\gidpost\buildW\examples\CMakeFiles\generate.stamp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">Checking Build System</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">setlocal
+C:\UnxUtils\cmake-3.9.4-win64-x64\bin\cmake.exe -HC:/GID64-git/gidproject/gidpost -BC:/GID64-git/gidproject/gidpost/buildW --check-stamp-list CMakeFiles/generate.stamp.list --vs-solution-file C:/GID64-git/gidproject/gidpost/buildW/gidpost.sln
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:/GID64-git/gidproject/gidpost/buildW/CMakeFiles/54eb2c23d87a0eb21e4a72c81d3dff63/generate.stamp.rule;C:\GID64-git\gidproject\gidpost\CMakeLists.txt;C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\3.9.4\CMakeCCompiler.cmake;C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\3.9.4\CMakeCXXCompiler.cmake;C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\3.9.4\CMakeRCCompiler.cmake;C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\3.9.4\CMakeSystem.cmake;C:\GID64-git\gidproject\gidpost\buildW\source\CMakeFiles\hdf5\cmake_hdf5_test.c;C:\GID64-git\gidproject\gidpost\examples\CMakeLists.txt;C:\GID64-git\gidproject\gidpost\gidpost_config.h.in;C:\GID64-git\gidproject\gidpost\source\CMakeLists.txt;C:\UnxUtils\cmake-3.9.4-win64-x64\share\cmake-3.9\Modules\CMakeCInformation.cmake;C:\UnxUtils\cmake-3.9.4-win64-x64\share\cmake-3.9\Modules\CMakeCXXInformation.cmake;C:\UnxUtils\cmake-3.9.4-win64-x64\share\cmake-3.9\Modules\CMakeCommonLanguageInclude.cmake;C:\UnxUtils\cmake-3.9.4-win64-x64\share\cmake-3.9\Modules\CMakeGenericSystem.cmake;C:\UnxUtils\cmake-3.9.4-win64-x64\share\cmake-3.9\Modules\CMakeLanguageInformation.cmake;C:\UnxUtils\cmake-3.9.4-win64-x64\share\cmake-3.9\Modules\CMakeRCInformation.cmake;C:\UnxUtils\cmake-3.9.4-win64-x64\share\cmake-3.9\Modules\CMakeSystemSpecificInformation.cmake;C:\UnxUtils\cmake-3.9.4-win64-x64\share\cmake-3.9\Modules\CMakeSystemSpecificInitialize.cmake;C:\UnxUtils\cmake-3.9.4-win64-x64\share\cmake-3.9\Modules\CheckIncludeFile.cmake;C:\UnxUtils\cmake-3.9.4-win64-x64\share\cmake-3.9\Modules\CheckLibraryExists.cmake;C:\UnxUtils\cmake-3.9.4-win64-x64\share\cmake-3.9\Modules\CheckSymbolExists.cmake;C:\UnxUtils\cmake-3.9.4-win64-x64\share\cmake-3.9\Modules\Compiler\CMakeCommonCompilerMacros.cmake;C:\UnxUtils\cmake-3.9.4-win64-x64\share\cmake-3.9\Modules\Compiler\MSVC-CXX.cmake;C:\UnxUtils\cmake-3.9.4-win64-x64\share\cmake-3.9\Modules\FindHDF5.cmake;C:\UnxUtils\cmake-3.9.4-win64-x64\share\cmake-3.9\Modules\FindPackageHandleStandardArgs.cmake;C:\UnxUtils\cmake-3.9.4-win64-x64\share\cmake-3.9\Modules\FindPackageMessage.cmake;C:\UnxUtils\cmake-3.9.4-win64-x64\share\cmake-3.9\Modules\FindThreads.cmake;C:\UnxUtils\cmake-3.9.4-win64-x64\share\cmake-3.9\Modules\FindZLIB.cmake;C:\UnxUtils\cmake-3.9.4-win64-x64\share\cmake-3.9\Modules\Platform\Windows-MSVC-C.cmake;C:\UnxUtils\cmake-3.9.4-win64-x64\share\cmake-3.9\Modules\Platform\Windows-MSVC-CXX.cmake;C:\UnxUtils\cmake-3.9.4-win64-x64\share\cmake-3.9\Modules\Platform\Windows-MSVC.cmake;C:\UnxUtils\cmake-3.9.4-win64-x64\share\cmake-3.9\Modules\Platform\Windows.cmake;C:\UnxUtils\cmake-3.9.4-win64-x64\share\cmake-3.9\Modules\Platform\WindowsPaths.cmake;C:\UnxUtils\cmake-3.9.4-win64-x64\share\cmake-3.9\Modules\SelectLibraryConfigurations.cmake;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\generate.stamp;C:\GID64-git\gidproject\gidpost\buildW\source\CMakeFiles\generate.stamp;C:\GID64-git\gidproject\gidpost\buildW\examples\CMakeFiles\generate.stamp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">Checking Build System</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">setlocal
+C:\UnxUtils\cmake-3.9.4-win64-x64\bin\cmake.exe -HC:/GID64-git/gidproject/gidpost -BC:/GID64-git/gidproject/gidpost/buildW --check-stamp-list CMakeFiles/generate.stamp.list --vs-solution-file C:/GID64-git/gidproject/gidpost/buildW/gidpost.sln
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:/GID64-git/gidproject/gidpost/buildW/CMakeFiles/54eb2c23d87a0eb21e4a72c81d3dff63/generate.stamp.rule;C:\GID64-git\gidproject\gidpost\CMakeLists.txt;C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\3.9.4\CMakeCCompiler.cmake;C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\3.9.4\CMakeCXXCompiler.cmake;C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\3.9.4\CMakeRCCompiler.cmake;C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\3.9.4\CMakeSystem.cmake;C:\GID64-git\gidproject\gidpost\buildW\source\CMakeFiles\hdf5\cmake_hdf5_test.c;C:\GID64-git\gidproject\gidpost\examples\CMakeLists.txt;C:\GID64-git\gidproject\gidpost\gidpost_config.h.in;C:\GID64-git\gidproject\gidpost\source\CMakeLists.txt;C:\UnxUtils\cmake-3.9.4-win64-x64\share\cmake-3.9\Modules\CMakeCInformation.cmake;C:\UnxUtils\cmake-3.9.4-win64-x64\share\cmake-3.9\Modules\CMakeCXXInformation.cmake;C:\UnxUtils\cmake-3.9.4-win64-x64\share\cmake-3.9\Modules\CMakeCommonLanguageInclude.cmake;C:\UnxUtils\cmake-3.9.4-win64-x64\share\cmake-3.9\Modules\CMakeGenericSystem.cmake;C:\UnxUtils\cmake-3.9.4-win64-x64\share\cmake-3.9\Modules\CMakeLanguageInformation.cmake;C:\UnxUtils\cmake-3.9.4-win64-x64\share\cmake-3.9\Modules\CMakeRCInformation.cmake;C:\UnxUtils\cmake-3.9.4-win64-x64\share\cmake-3.9\Modules\CMakeSystemSpecificInformation.cmake;C:\UnxUtils\cmake-3.9.4-win64-x64\share\cmake-3.9\Modules\CMakeSystemSpecificInitialize.cmake;C:\UnxUtils\cmake-3.9.4-win64-x64\share\cmake-3.9\Modules\CheckIncludeFile.cmake;C:\UnxUtils\cmake-3.9.4-win64-x64\share\cmake-3.9\Modules\CheckLibraryExists.cmake;C:\UnxUtils\cmake-3.9.4-win64-x64\share\cmake-3.9\Modules\CheckSymbolExists.cmake;C:\UnxUtils\cmake-3.9.4-win64-x64\share\cmake-3.9\Modules\Compiler\CMakeCommonCompilerMacros.cmake;C:\UnxUtils\cmake-3.9.4-win64-x64\share\cmake-3.9\Modules\Compiler\MSVC-CXX.cmake;C:\UnxUtils\cmake-3.9.4-win64-x64\share\cmake-3.9\Modules\FindHDF5.cmake;C:\UnxUtils\cmake-3.9.4-win64-x64\share\cmake-3.9\Modules\FindPackageHandleStandardArgs.cmake;C:\UnxUtils\cmake-3.9.4-win64-x64\share\cmake-3.9\Modules\FindPackageMessage.cmake;C:\UnxUtils\cmake-3.9.4-win64-x64\share\cmake-3.9\Modules\FindThreads.cmake;C:\UnxUtils\cmake-3.9.4-win64-x64\share\cmake-3.9\Modules\FindZLIB.cmake;C:\UnxUtils\cmake-3.9.4-win64-x64\share\cmake-3.9\Modules\Platform\Windows-MSVC-C.cmake;C:\UnxUtils\cmake-3.9.4-win64-x64\share\cmake-3.9\Modules\Platform\Windows-MSVC-CXX.cmake;C:\UnxUtils\cmake-3.9.4-win64-x64\share\cmake-3.9\Modules\Platform\Windows-MSVC.cmake;C:\UnxUtils\cmake-3.9.4-win64-x64\share\cmake-3.9\Modules\Platform\Windows.cmake;C:\UnxUtils\cmake-3.9.4-win64-x64\share\cmake-3.9\Modules\Platform\WindowsPaths.cmake;C:\UnxUtils\cmake-3.9.4-win64-x64\share\cmake-3.9\Modules\SelectLibraryConfigurations.cmake;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\generate.stamp;C:\GID64-git\gidproject\gidpost\buildW\source\CMakeFiles\generate.stamp;C:\GID64-git\gidproject\gidpost\buildW\examples\CMakeFiles\generate.stamp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">false</LinkObjects>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+  </ItemGroup>
+  <ItemGroup>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

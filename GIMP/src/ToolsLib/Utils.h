@@ -24,12 +24,16 @@ Matrix Transpose_Mat(Matrix);
 
 Matrix Scalar_prod(Matrix,Matrix);
 
+Matrix Vectorial_prod(Matrix a, Matrix b);
+
 Matrix Tensorial_prod(Matrix,Matrix);
 
 Matrix Add_Mat(Matrix,Matrix);
 
 Matrix Sub_Mat(Matrix,Matrix);
 
-Matrix Norm_Mat(Matrix,int);
+double Norm_Mat(Matrix,int);
+
+int InOut_Poligon(Matrix, Matrix);
 
 Matrix Get_Lumped_Matrix(Matrix);

@@ -8,16 +8,16 @@
 #endif
 
 
-GaussPoint Initialize_GP_Mesh(Matrix,Matrix,Element);
+GaussPoint Initialize_GP_Mesh(char *,Matrix, double, Matrix);
 
-void LocateGP(GaussPoint,Element);
+void LocateGP(GaussPoint,Mesh,int);
 
-Matrix GetMassMatrix_L(Element,GaussPoint);
+Matrix GetMassMatrix_L(Mesh,GaussPoint);
 
-void GaussPointsToMesh(Element,GaussPoint,
+void GaussPointsToMesh(Mesh,GaussPoint,
 		       Matrix,Matrix,Matrix);
 
-void MeshToGaussPoints(Element,GaussPoint,
+void MeshToGaussPoints(Mesh,GaussPoint,
 		       Matrix,Matrix,Matrix);
 
 /* void Get_Lagrangian_CG_Tensor(GaussPoint *); */

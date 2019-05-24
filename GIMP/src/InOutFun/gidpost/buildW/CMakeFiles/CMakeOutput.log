@@ -1,0 +1,1245 @@
+The system is: Windows - 6.3.9600 - AMD64
+Compiling the C compiler identification source file "CMakeCCompilerId.c" succeeded.
+Compiler:  
+Build flags: 
+Id flags:  
+
+The output was:
+0
+Microsoft (R) Build Engine versi�n 15.5.180.51428 para .NET Framework
+Copyright (C) Microsoft Corporation. Todos los derechos reservados.
+
+Compilaci�n iniciada a las 23/01/2018 13:10:21.
+Proyecto "C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\3.9.4\CompilerIdC\CompilerIdC.vcxproj" en nodo 1 (destinos predeterminados).
+PrepareForBuild:
+  Creando directorio "Debug\".
+  Creando directorio "Debug\CompilerIdC.tlog\".
+InitializeBuildStatus:
+  Se crear� "Debug\CompilerIdC.tlog\unsuccessfulbuild" porque se especific� "AlwaysCreate".
+ClCompile:
+  C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\VC\Tools\MSVC\14.12.25827\bin\HostX86\x64\CL.exe /c /nologo /W0 /WX- /diagnostics:classic /Od /D _MBCS /Gm- /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"Debug\\" /Fd"Debug\vc141.pdb" /Gd /TC /errorReport:queue CMakeCCompilerId.c
+  CMakeCCompilerId.c
+Link:
+  C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\VC\Tools\MSVC\14.12.25827\bin\HostX86\x64\link.exe /ERRORREPORT:QUEUE /OUT:".\CompilerIdC.exe" /INCREMENTAL:NO /NOLOGO kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /PDB:".\CompilerIdC.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:".\CompilerIdC.lib" /MACHINE:X64 Debug\CMakeCCompilerId.obj
+  CompilerIdC.vcxproj -> C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\3.9.4\CompilerIdC\.\CompilerIdC.exe
+PostBuildEvent:
+  for %%i in (cl.exe) do @echo CMAKE_C_COMPILER=%%~$PATH:i
+  :VCEnd
+  CMAKE_C_COMPILER=C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\VC\Tools\MSVC\14.12.25827\bin\Hostx86\x64\cl.exe
+FinalizeBuildStatus:
+  Se eliminar� el archivo "Debug\CompilerIdC.tlog\unsuccessfulbuild".
+  Aplicando tarea Touch a "Debug\CompilerIdC.tlog\CompilerIdC.lastbuildstate".
+Compilaci�n del proyecto terminada "C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\3.9.4\CompilerIdC\CompilerIdC.vcxproj" (destinos predeterminados).
+
+Compilaci�n correcta.
+    0 Advertencia(s)
+    0 Errores
+
+Tiempo transcurrido 00:00:01.14
+
+
+Compilation of the C compiler identification source "CMakeCCompilerId.c" produced "CompilerIdC.exe"
+
+Compilation of the C compiler identification source "CMakeCCompilerId.c" produced "CompilerIdC.vcxproj"
+
+The C compiler identification is MSVC, found in "C:/GID64-git/gidproject/gidpost/buildW/CMakeFiles/3.9.4/CompilerIdC/CompilerIdC.exe"
+
+Compiling the CXX compiler identification source file "CMakeCXXCompilerId.cpp" succeeded.
+Compiler:  
+Build flags: 
+Id flags:  
+
+The output was:
+0
+Microsoft (R) Build Engine versi�n 15.5.180.51428 para .NET Framework
+Copyright (C) Microsoft Corporation. Todos los derechos reservados.
+
+Compilaci�n iniciada a las 23/01/2018 13:10:22.
+Proyecto "C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\3.9.4\CompilerIdCXX\CompilerIdCXX.vcxproj" en nodo 1 (destinos predeterminados).
+PrepareForBuild:
+  Creando directorio "Debug\".
+  Creando directorio "Debug\CompilerIdCXX.tlog\".
+InitializeBuildStatus:
+  Se crear� "Debug\CompilerIdCXX.tlog\unsuccessfulbuild" porque se especific� "AlwaysCreate".
+ClCompile:
+  C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\VC\Tools\MSVC\14.12.25827\bin\HostX86\x64\CL.exe /c /nologo /W0 /WX- /diagnostics:classic /Od /D _MBCS /Gm- /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"Debug\\" /Fd"Debug\vc141.pdb" /Gd /TP /errorReport:queue CMakeCXXCompilerId.cpp
+  CMakeCXXCompilerId.cpp
+Link:
+  C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\VC\Tools\MSVC\14.12.25827\bin\HostX86\x64\link.exe /ERRORREPORT:QUEUE /OUT:".\CompilerIdCXX.exe" /INCREMENTAL:NO /NOLOGO kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /PDB:".\CompilerIdCXX.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:".\CompilerIdCXX.lib" /MACHINE:X64 Debug\CMakeCXXCompilerId.obj
+  CompilerIdCXX.vcxproj -> C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\3.9.4\CompilerIdCXX\.\CompilerIdCXX.exe
+PostBuildEvent:
+  for %%i in (cl.exe) do @echo CMAKE_CXX_COMPILER=%%~$PATH:i
+  :VCEnd
+  CMAKE_CXX_COMPILER=C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\VC\Tools\MSVC\14.12.25827\bin\Hostx86\x64\cl.exe
+FinalizeBuildStatus:
+  Se eliminar� el archivo "Debug\CompilerIdCXX.tlog\unsuccessfulbuild".
+  Aplicando tarea Touch a "Debug\CompilerIdCXX.tlog\CompilerIdCXX.lastbuildstate".
+Compilaci�n del proyecto terminada "C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\3.9.4\CompilerIdCXX\CompilerIdCXX.vcxproj" (destinos predeterminados).
+
+Compilaci�n correcta.
+    0 Advertencia(s)
+    0 Errores
+
+Tiempo transcurrido 00:00:00.83
+
+
+Compilation of the CXX compiler identification source "CMakeCXXCompilerId.cpp" produced "CompilerIdCXX.exe"
+
+Compilation of the CXX compiler identification source "CMakeCXXCompilerId.cpp" produced "CompilerIdCXX.vcxproj"
+
+The CXX compiler identification is MSVC, found in "C:/GID64-git/gidproject/gidpost/buildW/CMakeFiles/3.9.4/CompilerIdCXX/CompilerIdCXX.exe"
+
+Determining if the C compiler works passed with the following output:
+Change Dir: C:/GID64-git/gidproject/gidpost/buildW/CMakeFiles/CMakeTmp
+
+Run Build Command:"C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise/MSBuild/15.0/Bin/MSBuild.exe" "cmTC_93445.vcxproj" "/p:Configuration=Debug" "/p:VisualStudioVersion=15.0"
+Microsoft (R) Build Engine versi¢n 15.5.180.51428 para .NET Framework
+Copyright (C) Microsoft Corporation. Todos los derechos reservados.
+
+Compilaci¢n iniciada a las 23/01/2018 13:10:23.
+Proyecto "C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\CMakeTmp\cmTC_93445.vcxproj" en nodo 1 (destinos predeterminados).
+PrepareForBuild:
+  Creando directorio "cmTC_93445.dir\Debug\".
+  Creando directorio "C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\CMakeTmp\Debug\".
+  Creando directorio "cmTC_93445.dir\Debug\cmTC_93445.tlog\".
+InitializeBuildStatus:
+  Se crear  "cmTC_93445.dir\Debug\cmTC_93445.tlog\unsuccessfulbuild" porque se especific¢ "AlwaysCreate".
+ClCompile:
+  C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\VC\Tools\MSVC\14.12.25827\bin\HostX86\x64\CL.exe /c /Zi /W3 /WX- /diagnostics:classic /Od /Ob0 /D WIN32 /D _WINDOWS /D "CMAKE_INTDIR=\"Debug\"" /D _MBCS /Gm- /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"cmTC_93445.dir\Debug\\" /Fd"cmTC_93445.dir\Debug\vc141.pdb" /Gd /TC /errorReport:queue "C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\CMakeTmp\testCCompiler.c"
+  Microsoft (R) C/C++ Optimizing Compiler Version 19.12.25834 for x64
+  Copyright (C) Microsoft Corporation.  All rights reserved.
+  
+  cl /c /Zi /W3 /WX- /diagnostics:classic /Od /Ob0 /D WIN32 /D _WINDOWS /D "CMAKE_INTDIR=\"Debug\"" /D _MBCS /Gm- /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"cmTC_93445.dir\Debug\\" /Fd"cmTC_93445.dir\Debug\vc141.pdb" /Gd /TC /errorReport:queue "C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\CMakeTmp\testCCompiler.c"
+  testCCompiler.c
+  
+Link:
+  C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\VC\Tools\MSVC\14.12.25827\bin\HostX86\x64\link.exe /ERRORREPORT:QUEUE /OUT:"C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\CMakeTmp\Debug\cmTC_93445.exe" /INCREMENTAL /NOLOGO kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"C:/GID64-git/gidproject/gidpost/buildW/CMakeFiles/CMakeTmp/Debug/cmTC_93445.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:/GID64-git/gidproject/gidpost/buildW/CMakeFiles/CMakeTmp/Debug/cmTC_93445.lib" /MACHINE:X64  /machine:x64 cmTC_93445.dir\Debug\testCCompiler.obj
+  cmTC_93445.vcxproj -> C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\CMakeTmp\Debug\cmTC_93445.exe
+FinalizeBuildStatus:
+  Se eliminar  el archivo "cmTC_93445.dir\Debug\cmTC_93445.tlog\unsuccessfulbuild".
+  Aplicando tarea Touch a "cmTC_93445.dir\Debug\cmTC_93445.tlog\cmTC_93445.lastbuildstate".
+Compilaci¢n del proyecto terminada "C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\CMakeTmp\cmTC_93445.vcxproj" (destinos predeterminados).
+
+Compilaci¢n correcta.
+    0 Advertencia(s)
+    0 Errores
+
+Tiempo transcurrido 00:00:00.66
+
+
+Detecting C compiler ABI info compiled with the following output:
+Change Dir: C:/GID64-git/gidproject/gidpost/buildW/CMakeFiles/CMakeTmp
+
+Run Build Command:"C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise/MSBuild/15.0/Bin/MSBuild.exe" "cmTC_b2231.vcxproj" "/p:Configuration=Debug" "/p:VisualStudioVersion=15.0"
+Microsoft (R) Build Engine versi¢n 15.5.180.51428 para .NET Framework
+Copyright (C) Microsoft Corporation. Todos los derechos reservados.
+
+Compilaci¢n iniciada a las 23/01/2018 13:10:24.
+Proyecto "C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\CMakeTmp\cmTC_b2231.vcxproj" en nodo 1 (destinos predeterminados).
+PrepareForBuild:
+  Creando directorio "cmTC_b2231.dir\Debug\".
+  Creando directorio "C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\CMakeTmp\Debug\".
+  Creando directorio "cmTC_b2231.dir\Debug\cmTC_b2231.tlog\".
+InitializeBuildStatus:
+  Se crear  "cmTC_b2231.dir\Debug\cmTC_b2231.tlog\unsuccessfulbuild" porque se especific¢ "AlwaysCreate".
+ClCompile:
+  C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\VC\Tools\MSVC\14.12.25827\bin\HostX86\x64\CL.exe /c /Zi /W3 /WX- /diagnostics:classic /Od /Ob0 /D WIN32 /D _WINDOWS /D "CMAKE_INTDIR=\"Debug\"" /D _MBCS /Gm- /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"cmTC_b2231.dir\Debug\\" /Fd"cmTC_b2231.dir\Debug\vc141.pdb" /Gd /TC /errorReport:queue "C:\UnxUtils\cmake-3.9.4-win64-x64\share\cmake-3.9\Modules\CMakeCCompilerABI.c"
+  Microsoft (R) C/C++ Optimizing Compiler Version 19.12.25834 for x64
+  Copyright (C) Microsoft Corporation.  All rights reserved.
+  
+  cl /c /Zi /W3 /WX- /diagnostics:classic /Od /Ob0 /D WIN32 /D _WINDOWS /D "CMAKE_INTDIR=\"Debug\"" /D _MBCS /Gm- /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"cmTC_b2231.dir\Debug\\" /Fd"cmTC_b2231.dir\Debug\vc141.pdb" /Gd /TC /errorReport:queue "C:\UnxUtils\cmake-3.9.4-win64-x64\share\cmake-3.9\Modules\CMakeCCompilerABI.c"
+  CMakeCCompilerABI.c
+  
+Link:
+  C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\VC\Tools\MSVC\14.12.25827\bin\HostX86\x64\link.exe /ERRORREPORT:QUEUE /OUT:"C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\CMakeTmp\Debug\cmTC_b2231.exe" /INCREMENTAL /NOLOGO kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"C:/GID64-git/gidproject/gidpost/buildW/CMakeFiles/CMakeTmp/Debug/cmTC_b2231.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:/GID64-git/gidproject/gidpost/buildW/CMakeFiles/CMakeTmp/Debug/cmTC_b2231.lib" /MACHINE:X64  /machine:x64 cmTC_b2231.dir\Debug\CMakeCCompilerABI.obj
+  cmTC_b2231.vcxproj -> C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\CMakeTmp\Debug\cmTC_b2231.exe
+FinalizeBuildStatus:
+  Se eliminar  el archivo "cmTC_b2231.dir\Debug\cmTC_b2231.tlog\unsuccessfulbuild".
+  Aplicando tarea Touch a "cmTC_b2231.dir\Debug\cmTC_b2231.tlog\cmTC_b2231.lastbuildstate".
+Compilaci¢n del proyecto terminada "C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\CMakeTmp\cmTC_b2231.vcxproj" (destinos predeterminados).
+
+Compilaci¢n correcta.
+    0 Advertencia(s)
+    0 Errores
+
+Tiempo transcurrido 00:00:00.64
+
+
+Determining if the CXX compiler works passed with the following output:
+Change Dir: C:/GID64-git/gidproject/gidpost/buildW/CMakeFiles/CMakeTmp
+
+Run Build Command:"C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise/MSBuild/15.0/Bin/MSBuild.exe" "cmTC_5a121.vcxproj" "/p:Configuration=Debug" "/p:VisualStudioVersion=15.0"
+Microsoft (R) Build Engine versi¢n 15.5.180.51428 para .NET Framework
+Copyright (C) Microsoft Corporation. Todos los derechos reservados.
+
+Compilaci¢n iniciada a las 23/01/2018 13:10:25.
+Proyecto "C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\CMakeTmp\cmTC_5a121.vcxproj" en nodo 1 (destinos predeterminados).
+PrepareForBuild:
+  Creando directorio "cmTC_5a121.dir\Debug\".
+  Creando directorio "C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\CMakeTmp\Debug\".
+  Creando directorio "cmTC_5a121.dir\Debug\cmTC_5a121.tlog\".
+InitializeBuildStatus:
+  Se crear  "cmTC_5a121.dir\Debug\cmTC_5a121.tlog\unsuccessfulbuild" porque se especific¢ "AlwaysCreate".
+ClCompile:
+  C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\VC\Tools\MSVC\14.12.25827\bin\HostX86\x64\CL.exe /c /Zi /W3 /WX- /diagnostics:classic /Od /Ob0 /D WIN32 /D _WINDOWS /D "CMAKE_INTDIR=\"Debug\"" /D _MBCS /Gm- /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /GR /Fo"cmTC_5a121.dir\Debug\\" /Fd"cmTC_5a121.dir\Debug\vc141.pdb" /Gd /TP /errorReport:queue "C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\CMakeTmp\testCXXCompiler.cxx"
+  Microsoft (R) C/C++ Optimizing Compiler Version 19.12.25834 for x64
+  Copyright (C) Microsoft Corporation.  All rights reserved.
+  
+  cl /c /Zi /W3 /WX- /diagnostics:classic /Od /Ob0 /D WIN32 /D _WINDOWS /D "CMAKE_INTDIR=\"Debug\"" /D _MBCS /Gm- /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /GR /Fo"cmTC_5a121.dir\Debug\\" /Fd"cmTC_5a121.dir\Debug\vc141.pdb" /Gd /TP /errorReport:queue "C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\CMakeTmp\testCXXCompiler.cxx"
+  testCXXCompiler.cxx
+  
+Link:
+  C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\VC\Tools\MSVC\14.12.25827\bin\HostX86\x64\link.exe /ERRORREPORT:QUEUE /OUT:"C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\CMakeTmp\Debug\cmTC_5a121.exe" /INCREMENTAL /NOLOGO kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"C:/GID64-git/gidproject/gidpost/buildW/CMakeFiles/CMakeTmp/Debug/cmTC_5a121.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:/GID64-git/gidproject/gidpost/buildW/CMakeFiles/CMakeTmp/Debug/cmTC_5a121.lib" /MACHINE:X64  /machine:x64 cmTC_5a121.dir\Debug\testCXXCompiler.obj
+  cmTC_5a121.vcxproj -> C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\CMakeTmp\Debug\cmTC_5a121.exe
+FinalizeBuildStatus:
+  Se eliminar  el archivo "cmTC_5a121.dir\Debug\cmTC_5a121.tlog\unsuccessfulbuild".
+  Aplicando tarea Touch a "cmTC_5a121.dir\Debug\cmTC_5a121.tlog\cmTC_5a121.lastbuildstate".
+Compilaci¢n del proyecto terminada "C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\CMakeTmp\cmTC_5a121.vcxproj" (destinos predeterminados).
+
+Compilaci¢n correcta.
+    0 Advertencia(s)
+    0 Errores
+
+Tiempo transcurrido 00:00:00.81
+
+
+Detecting CXX compiler ABI info compiled with the following output:
+Change Dir: C:/GID64-git/gidproject/gidpost/buildW/CMakeFiles/CMakeTmp
+
+Run Build Command:"C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise/MSBuild/15.0/Bin/MSBuild.exe" "cmTC_049fa.vcxproj" "/p:Configuration=Debug" "/p:VisualStudioVersion=15.0"
+Microsoft (R) Build Engine versi¢n 15.5.180.51428 para .NET Framework
+Copyright (C) Microsoft Corporation. Todos los derechos reservados.
+
+Compilaci¢n iniciada a las 23/01/2018 13:10:26.
+Proyecto "C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\CMakeTmp\cmTC_049fa.vcxproj" en nodo 1 (destinos predeterminados).
+PrepareForBuild:
+  Creando directorio "cmTC_049fa.dir\Debug\".
+  Creando directorio "C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\CMakeTmp\Debug\".
+  Creando directorio "cmTC_049fa.dir\Debug\cmTC_049fa.tlog\".
+InitializeBuildStatus:
+  Se crear  "cmTC_049fa.dir\Debug\cmTC_049fa.tlog\unsuccessfulbuild" porque se especific¢ "AlwaysCreate".
+ClCompile:
+  C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\VC\Tools\MSVC\14.12.25827\bin\HostX86\x64\CL.exe /c /Zi /W3 /WX- /diagnostics:classic /Od /Ob0 /D WIN32 /D _WINDOWS /D "CMAKE_INTDIR=\"Debug\"" /D _MBCS /Gm- /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /GR /Fo"cmTC_049fa.dir\Debug\\" /Fd"cmTC_049fa.dir\Debug\vc141.pdb" /Gd /TP /errorReport:queue "C:\UnxUtils\cmake-3.9.4-win64-x64\share\cmake-3.9\Modules\CMakeCXXCompilerABI.cpp"
+  Microsoft (R) C/C++ Optimizing Compiler Version 19.12.25834 for x64
+  Copyright (C) Microsoft Corporation.  All rights reserved.
+  
+  cl /c /Zi /W3 /WX- /diagnostics:classic /Od /Ob0 /D WIN32 /D _WINDOWS /D "CMAKE_INTDIR=\"Debug\"" /D _MBCS /Gm- /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /GR /Fo"cmTC_049fa.dir\Debug\\" /Fd"cmTC_049fa.dir\Debug\vc141.pdb" /Gd /TP /errorReport:queue "C:\UnxUtils\cmake-3.9.4-win64-x64\share\cmake-3.9\Modules\CMakeCXXCompilerABI.cpp"
+  CMakeCXXCompilerABI.cpp
+  
+Link:
+  C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\VC\Tools\MSVC\14.12.25827\bin\HostX86\x64\link.exe /ERRORREPORT:QUEUE /OUT:"C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\CMakeTmp\Debug\cmTC_049fa.exe" /INCREMENTAL /NOLOGO kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"C:/GID64-git/gidproject/gidpost/buildW/CMakeFiles/CMakeTmp/Debug/cmTC_049fa.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:/GID64-git/gidproject/gidpost/buildW/CMakeFiles/CMakeTmp/Debug/cmTC_049fa.lib" /MACHINE:X64  /machine:x64 cmTC_049fa.dir\Debug\CMakeCXXCompilerABI.obj
+  cmTC_049fa.vcxproj -> C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\CMakeTmp\Debug\cmTC_049fa.exe
+FinalizeBuildStatus:
+  Se eliminar  el archivo "cmTC_049fa.dir\Debug\cmTC_049fa.tlog\unsuccessfulbuild".
+  Aplicando tarea Touch a "cmTC_049fa.dir\Debug\cmTC_049fa.tlog\cmTC_049fa.lastbuildstate".
+Compilaci¢n del proyecto terminada "C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\CMakeTmp\cmTC_049fa.vcxproj" (destinos predeterminados).
+
+Compilaci¢n correcta.
+    0 Advertencia(s)
+    0 Errores
+
+Tiempo transcurrido 00:00:00.64
+
+
+
+
+Detecting CXX [] compiler features compiled with the following output:
+Change Dir: C:/GID64-git/gidproject/gidpost/buildW/CMakeFiles/CMakeTmp
+
+Run Build Command:"C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise/MSBuild/15.0/Bin/MSBuild.exe" "cmTC_825b7.vcxproj" "/p:Configuration=Debug" "/p:VisualStudioVersion=15.0"
+Microsoft (R) Build Engine versi¢n 15.5.180.51428 para .NET Framework
+Copyright (C) Microsoft Corporation. Todos los derechos reservados.
+
+Compilaci¢n iniciada a las 23/01/2018 13:10:27.
+Proyecto "C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\CMakeTmp\cmTC_825b7.vcxproj" en nodo 1 (destinos predeterminados).
+PrepareForBuild:
+  Creando directorio "cmTC_825b7.dir\Debug\".
+  Creando directorio "C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\CMakeTmp\Debug\".
+  Creando directorio "cmTC_825b7.dir\Debug\cmTC_825b7.tlog\".
+InitializeBuildStatus:
+  Se crear  "cmTC_825b7.dir\Debug\cmTC_825b7.tlog\unsuccessfulbuild" porque se especific¢ "AlwaysCreate".
+ClCompile:
+  C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\VC\Tools\MSVC\14.12.25827\bin\HostX86\x64\CL.exe /c /Zi /W3 /WX- /diagnostics:classic /Od /Ob0 /D WIN32 /D _WINDOWS /D "CMAKE_INTDIR=\"Debug\"" /D _MBCS /Gm- /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /GR /Fo"cmTC_825b7.dir\Debug\\" /Fd"cmTC_825b7.dir\Debug\vc141.pdb" /Gd /TP /errorReport:queue "C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\feature_tests.cxx"
+  Microsoft (R) C/C++ Optimizing Compiler Version 19.12.25834 for x64
+  Copyright (C) Microsoft Corporation.  All rights reserved.
+  
+  cl /c /Zi /W3 /WX- /diagnostics:classic /Od /Ob0 /D WIN32 /D _WINDOWS /D "CMAKE_INTDIR=\"Debug\"" /D _MBCS /Gm- /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /GR /Fo"cmTC_825b7.dir\Debug\\" /Fd"cmTC_825b7.dir\Debug\vc141.pdb" /Gd /TP /errorReport:queue "C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\feature_tests.cxx"
+  feature_tests.cxx
+  
+Link:
+  C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\VC\Tools\MSVC\14.12.25827\bin\HostX86\x64\link.exe /ERRORREPORT:QUEUE /OUT:"C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\CMakeTmp\Debug\cmTC_825b7.exe" /INCREMENTAL /NOLOGO kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"C:/GID64-git/gidproject/gidpost/buildW/CMakeFiles/CMakeTmp/Debug/cmTC_825b7.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:/GID64-git/gidproject/gidpost/buildW/CMakeFiles/CMakeTmp/Debug/cmTC_825b7.lib" /MACHINE:X64  /machine:x64 cmTC_825b7.dir\Debug\feature_tests.obj
+  cmTC_825b7.vcxproj -> C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\CMakeTmp\Debug\cmTC_825b7.exe
+FinalizeBuildStatus:
+  Se eliminar  el archivo "cmTC_825b7.dir\Debug\cmTC_825b7.tlog\unsuccessfulbuild".
+  Aplicando tarea Touch a "cmTC_825b7.dir\Debug\cmTC_825b7.tlog\cmTC_825b7.lastbuildstate".
+Compilaci¢n del proyecto terminada "C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\CMakeTmp\cmTC_825b7.vcxproj" (destinos predeterminados).
+
+Compilaci¢n correcta.
+    0 Advertencia(s)
+    0 Errores
+
+Tiempo transcurrido 00:00:00.64
+
+
+    Feature record: CXX_FEATURE:1cxx_aggregate_default_initializers
+    Feature record: CXX_FEATURE:1cxx_alias_templates
+    Feature record: CXX_FEATURE:1cxx_alignas
+    Feature record: CXX_FEATURE:1cxx_alignof
+    Feature record: CXX_FEATURE:1cxx_attributes
+    Feature record: CXX_FEATURE:1cxx_attribute_deprecated
+    Feature record: CXX_FEATURE:1cxx_auto_type
+    Feature record: CXX_FEATURE:1cxx_binary_literals
+    Feature record: CXX_FEATURE:1cxx_constexpr
+    Feature record: CXX_FEATURE:1cxx_contextual_conversions
+    Feature record: CXX_FEATURE:1cxx_decltype
+    Feature record: CXX_FEATURE:1cxx_decltype_auto
+    Feature record: CXX_FEATURE:1cxx_default_function_template_args
+    Feature record: CXX_FEATURE:1cxx_defaulted_functions
+    Feature record: CXX_FEATURE:1cxx_defaulted_move_initializers
+    Feature record: CXX_FEATURE:1cxx_delegating_constructors
+    Feature record: CXX_FEATURE:1cxx_deleted_functions
+    Feature record: CXX_FEATURE:1cxx_digit_separators
+    Feature record: CXX_FEATURE:1cxx_enum_forward_declarations
+    Feature record: CXX_FEATURE:1cxx_explicit_conversions
+    Feature record: CXX_FEATURE:1cxx_extended_friend_declarations
+    Feature record: CXX_FEATURE:1cxx_extern_templates
+    Feature record: CXX_FEATURE:1cxx_final
+    Feature record: CXX_FEATURE:1cxx_func_identifier
+    Feature record: CXX_FEATURE:1cxx_generalized_initializers
+    Feature record: CXX_FEATURE:1cxx_generic_lambdas
+    Feature record: CXX_FEATURE:1cxx_inheriting_constructors
+    Feature record: CXX_FEATURE:1cxx_inline_namespaces
+    Feature record: CXX_FEATURE:1cxx_lambdas
+    Feature record: CXX_FEATURE:1cxx_lambda_init_captures
+    Feature record: CXX_FEATURE:1cxx_local_type_template_args
+    Feature record: CXX_FEATURE:1cxx_long_long_type
+    Feature record: CXX_FEATURE:1cxx_noexcept
+    Feature record: CXX_FEATURE:1cxx_nonstatic_member_init
+    Feature record: CXX_FEATURE:1cxx_nullptr
+    Feature record: CXX_FEATURE:1cxx_override
+    Feature record: CXX_FEATURE:1cxx_range_for
+    Feature record: CXX_FEATURE:1cxx_raw_string_literals
+    Feature record: CXX_FEATURE:1cxx_reference_qualified_functions
+    Feature record: CXX_FEATURE:1cxx_return_type_deduction
+    Feature record: CXX_FEATURE:1cxx_right_angle_brackets
+    Feature record: CXX_FEATURE:1cxx_rvalue_references
+    Feature record: CXX_FEATURE:1cxx_sizeof_member
+    Feature record: CXX_FEATURE:1cxx_static_assert
+    Feature record: CXX_FEATURE:1cxx_strong_enums
+    Feature record: CXX_FEATURE:1cxx_template_template_parameters
+    Feature record: CXX_FEATURE:1cxx_thread_local
+    Feature record: CXX_FEATURE:1cxx_trailing_return_types
+    Feature record: CXX_FEATURE:1cxx_unicode_literals
+    Feature record: CXX_FEATURE:1cxx_uniform_initialization
+    Feature record: CXX_FEATURE:1cxx_unrestricted_unions
+    Feature record: CXX_FEATURE:1cxx_user_literals
+    Feature record: CXX_FEATURE:1cxx_variable_templates
+    Feature record: CXX_FEATURE:1cxx_variadic_macros
+    Feature record: CXX_FEATURE:1cxx_variadic_templates
+
+
+Detecting CXX [] compiler features compiled with the following output:
+Change Dir: C:/GID64-git/gidproject/gidpost/buildW/CMakeFiles/CMakeTmp
+
+Run Build Command:"C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise/MSBuild/15.0/Bin/MSBuild.exe" "cmTC_b3ba6.vcxproj" "/p:Configuration=Debug" "/p:VisualStudioVersion=15.0"
+Microsoft (R) Build Engine versi¢n 15.5.180.51428 para .NET Framework
+Copyright (C) Microsoft Corporation. Todos los derechos reservados.
+
+Compilaci¢n iniciada a las 23/01/2018 13:10:28.
+Proyecto "C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\CMakeTmp\cmTC_b3ba6.vcxproj" en nodo 1 (destinos predeterminados).
+PrepareForBuild:
+  Creando directorio "cmTC_b3ba6.dir\Debug\".
+  Creando directorio "C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\CMakeTmp\Debug\".
+  Creando directorio "cmTC_b3ba6.dir\Debug\cmTC_b3ba6.tlog\".
+InitializeBuildStatus:
+  Se crear  "cmTC_b3ba6.dir\Debug\cmTC_b3ba6.tlog\unsuccessfulbuild" porque se especific¢ "AlwaysCreate".
+ClCompile:
+  C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\VC\Tools\MSVC\14.12.25827\bin\HostX86\x64\CL.exe /c /Zi /W3 /WX- /diagnostics:classic /Od /Ob0 /D WIN32 /D _WINDOWS /D "CMAKE_INTDIR=\"Debug\"" /D _MBCS /Gm- /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /GR /Fo"cmTC_b3ba6.dir\Debug\\" /Fd"cmTC_b3ba6.dir\Debug\vc141.pdb" /Gd /TP /errorReport:queue "C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\feature_tests.cxx"
+  Microsoft (R) C/C++ Optimizing Compiler Version 19.12.25834 for x64
+  Copyright (C) Microsoft Corporation.  All rights reserved.
+  
+  cl /c /Zi /W3 /WX- /diagnostics:classic /Od /Ob0 /D WIN32 /D _WINDOWS /D "CMAKE_INTDIR=\"Debug\"" /D _MBCS /Gm- /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /GR /Fo"cmTC_b3ba6.dir\Debug\\" /Fd"cmTC_b3ba6.dir\Debug\vc141.pdb" /Gd /TP /errorReport:queue "C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\feature_tests.cxx"
+  feature_tests.cxx
+  
+Link:
+  C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\VC\Tools\MSVC\14.12.25827\bin\HostX86\x64\link.exe /ERRORREPORT:QUEUE /OUT:"C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\CMakeTmp\Debug\cmTC_b3ba6.exe" /INCREMENTAL /NOLOGO kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"C:/GID64-git/gidproject/gidpost/buildW/CMakeFiles/CMakeTmp/Debug/cmTC_b3ba6.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:/GID64-git/gidproject/gidpost/buildW/CMakeFiles/CMakeTmp/Debug/cmTC_b3ba6.lib" /MACHINE:X64  /machine:x64 cmTC_b3ba6.dir\Debug\feature_tests.obj
+  cmTC_b3ba6.vcxproj -> C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\CMakeTmp\Debug\cmTC_b3ba6.exe
+FinalizeBuildStatus:
+  Se eliminar  el archivo "cmTC_b3ba6.dir\Debug\cmTC_b3ba6.tlog\unsuccessfulbuild".
+  Aplicando tarea Touch a "cmTC_b3ba6.dir\Debug\cmTC_b3ba6.tlog\cmTC_b3ba6.lastbuildstate".
+Compilaci¢n del proyecto terminada "C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\CMakeTmp\cmTC_b3ba6.vcxproj" (destinos predeterminados).
+
+Compilaci¢n correcta.
+    0 Advertencia(s)
+    0 Errores
+
+Tiempo transcurrido 00:00:00.76
+
+
+    Feature record: CXX_FEATURE:1cxx_aggregate_default_initializers
+    Feature record: CXX_FEATURE:1cxx_alias_templates
+    Feature record: CXX_FEATURE:1cxx_alignas
+    Feature record: CXX_FEATURE:1cxx_alignof
+    Feature record: CXX_FEATURE:1cxx_attributes
+    Feature record: CXX_FEATURE:1cxx_attribute_deprecated
+    Feature record: CXX_FEATURE:1cxx_auto_type
+    Feature record: CXX_FEATURE:1cxx_binary_literals
+    Feature record: CXX_FEATURE:1cxx_constexpr
+    Feature record: CXX_FEATURE:1cxx_contextual_conversions
+    Feature record: CXX_FEATURE:1cxx_decltype
+    Feature record: CXX_FEATURE:1cxx_decltype_auto
+    Feature record: CXX_FEATURE:1cxx_default_function_template_args
+    Feature record: CXX_FEATURE:1cxx_defaulted_functions
+    Feature record: CXX_FEATURE:1cxx_defaulted_move_initializers
+    Feature record: CXX_FEATURE:1cxx_delegating_constructors
+    Feature record: CXX_FEATURE:1cxx_deleted_functions
+    Feature record: CXX_FEATURE:1cxx_digit_separators
+    Feature record: CXX_FEATURE:1cxx_enum_forward_declarations
+    Feature record: CXX_FEATURE:1cxx_explicit_conversions
+    Feature record: CXX_FEATURE:1cxx_extended_friend_declarations
+    Feature record: CXX_FEATURE:1cxx_extern_templates
+    Feature record: CXX_FEATURE:1cxx_final
+    Feature record: CXX_FEATURE:1cxx_func_identifier
+    Feature record: CXX_FEATURE:1cxx_generalized_initializers
+    Feature record: CXX_FEATURE:1cxx_generic_lambdas
+    Feature record: CXX_FEATURE:1cxx_inheriting_constructors
+    Feature record: CXX_FEATURE:1cxx_inline_namespaces
+    Feature record: CXX_FEATURE:1cxx_lambdas
+    Feature record: CXX_FEATURE:1cxx_lambda_init_captures
+    Feature record: CXX_FEATURE:1cxx_local_type_template_args
+    Feature record: CXX_FEATURE:1cxx_long_long_type
+    Feature record: CXX_FEATURE:1cxx_noexcept
+    Feature record: CXX_FEATURE:1cxx_nonstatic_member_init
+    Feature record: CXX_FEATURE:1cxx_nullptr
+    Feature record: CXX_FEATURE:1cxx_override
+    Feature record: CXX_FEATURE:1cxx_range_for
+    Feature record: CXX_FEATURE:1cxx_raw_string_literals
+    Feature record: CXX_FEATURE:1cxx_reference_qualified_functions
+    Feature record: CXX_FEATURE:1cxx_return_type_deduction
+    Feature record: CXX_FEATURE:1cxx_right_angle_brackets
+    Feature record: CXX_FEATURE:1cxx_rvalue_references
+    Feature record: CXX_FEATURE:1cxx_sizeof_member
+    Feature record: CXX_FEATURE:1cxx_static_assert
+    Feature record: CXX_FEATURE:1cxx_strong_enums
+    Feature record: CXX_FEATURE:1cxx_template_template_parameters
+    Feature record: CXX_FEATURE:1cxx_thread_local
+    Feature record: CXX_FEATURE:1cxx_trailing_return_types
+    Feature record: CXX_FEATURE:1cxx_unicode_literals
+    Feature record: CXX_FEATURE:1cxx_uniform_initialization
+    Feature record: CXX_FEATURE:1cxx_unrestricted_unions
+    Feature record: CXX_FEATURE:1cxx_user_literals
+    Feature record: CXX_FEATURE:1cxx_variable_templates
+    Feature record: CXX_FEATURE:1cxx_variadic_macros
+    Feature record: CXX_FEATURE:1cxx_variadic_templates
+
+
+Detecting CXX [] compiler features compiled with the following output:
+Change Dir: C:/GID64-git/gidproject/gidpost/buildW/CMakeFiles/CMakeTmp
+
+Run Build Command:"C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise/MSBuild/15.0/Bin/MSBuild.exe" "cmTC_5083d.vcxproj" "/p:Configuration=Debug" "/p:VisualStudioVersion=15.0"
+Microsoft (R) Build Engine versi¢n 15.5.180.51428 para .NET Framework
+Copyright (C) Microsoft Corporation. Todos los derechos reservados.
+
+Compilaci¢n iniciada a las 23/01/2018 13:10:29.
+Proyecto "C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\CMakeTmp\cmTC_5083d.vcxproj" en nodo 1 (destinos predeterminados).
+PrepareForBuild:
+  Creando directorio "cmTC_5083d.dir\Debug\".
+  Creando directorio "C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\CMakeTmp\Debug\".
+  Creando directorio "cmTC_5083d.dir\Debug\cmTC_5083d.tlog\".
+InitializeBuildStatus:
+  Se crear  "cmTC_5083d.dir\Debug\cmTC_5083d.tlog\unsuccessfulbuild" porque se especific¢ "AlwaysCreate".
+ClCompile:
+  C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\VC\Tools\MSVC\14.12.25827\bin\HostX86\x64\CL.exe /c /Zi /W3 /WX- /diagnostics:classic /Od /Ob0 /D WIN32 /D _WINDOWS /D "CMAKE_INTDIR=\"Debug\"" /D _MBCS /Gm- /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /GR /Fo"cmTC_5083d.dir\Debug\\" /Fd"cmTC_5083d.dir\Debug\vc141.pdb" /Gd /TP /errorReport:queue "C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\feature_tests.cxx"
+  Microsoft (R) C/C++ Optimizing Compiler Version 19.12.25834 for x64
+  Copyright (C) Microsoft Corporation.  All rights reserved.
+  
+  cl /c /Zi /W3 /WX- /diagnostics:classic /Od /Ob0 /D WIN32 /D _WINDOWS /D "CMAKE_INTDIR=\"Debug\"" /D _MBCS /Gm- /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /GR /Fo"cmTC_5083d.dir\Debug\\" /Fd"cmTC_5083d.dir\Debug\vc141.pdb" /Gd /TP /errorReport:queue "C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\feature_tests.cxx"
+  feature_tests.cxx
+  
+Link:
+  C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\VC\Tools\MSVC\14.12.25827\bin\HostX86\x64\link.exe /ERRORREPORT:QUEUE /OUT:"C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\CMakeTmp\Debug\cmTC_5083d.exe" /INCREMENTAL /NOLOGO kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"C:/GID64-git/gidproject/gidpost/buildW/CMakeFiles/CMakeTmp/Debug/cmTC_5083d.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:/GID64-git/gidproject/gidpost/buildW/CMakeFiles/CMakeTmp/Debug/cmTC_5083d.lib" /MACHINE:X64  /machine:x64 cmTC_5083d.dir\Debug\feature_tests.obj
+  cmTC_5083d.vcxproj -> C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\CMakeTmp\Debug\cmTC_5083d.exe
+FinalizeBuildStatus:
+  Se eliminar  el archivo "cmTC_5083d.dir\Debug\cmTC_5083d.tlog\unsuccessfulbuild".
+  Aplicando tarea Touch a "cmTC_5083d.dir\Debug\cmTC_5083d.tlog\cmTC_5083d.lastbuildstate".
+Compilaci¢n del proyecto terminada "C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\CMakeTmp\cmTC_5083d.vcxproj" (destinos predeterminados).
+
+Compilaci¢n correcta.
+    0 Advertencia(s)
+    0 Errores
+
+Tiempo transcurrido 00:00:00.66
+
+
+    Feature record: CXX_FEATURE:1cxx_aggregate_default_initializers
+    Feature record: CXX_FEATURE:1cxx_alias_templates
+    Feature record: CXX_FEATURE:1cxx_alignas
+    Feature record: CXX_FEATURE:1cxx_alignof
+    Feature record: CXX_FEATURE:1cxx_attributes
+    Feature record: CXX_FEATURE:1cxx_attribute_deprecated
+    Feature record: CXX_FEATURE:1cxx_auto_type
+    Feature record: CXX_FEATURE:1cxx_binary_literals
+    Feature record: CXX_FEATURE:1cxx_constexpr
+    Feature record: CXX_FEATURE:1cxx_contextual_conversions
+    Feature record: CXX_FEATURE:1cxx_decltype
+    Feature record: CXX_FEATURE:1cxx_decltype_auto
+    Feature record: CXX_FEATURE:1cxx_default_function_template_args
+    Feature record: CXX_FEATURE:1cxx_defaulted_functions
+    Feature record: CXX_FEATURE:1cxx_defaulted_move_initializers
+    Feature record: CXX_FEATURE:1cxx_delegating_constructors
+    Feature record: CXX_FEATURE:1cxx_deleted_functions
+    Feature record: CXX_FEATURE:1cxx_digit_separators
+    Feature record: CXX_FEATURE:1cxx_enum_forward_declarations
+    Feature record: CXX_FEATURE:1cxx_explicit_conversions
+    Feature record: CXX_FEATURE:1cxx_extended_friend_declarations
+    Feature record: CXX_FEATURE:1cxx_extern_templates
+    Feature record: CXX_FEATURE:1cxx_final
+    Feature record: CXX_FEATURE:1cxx_func_identifier
+    Feature record: CXX_FEATURE:1cxx_generalized_initializers
+    Feature record: CXX_FEATURE:1cxx_generic_lambdas
+    Feature record: CXX_FEATURE:1cxx_inheriting_constructors
+    Feature record: CXX_FEATURE:1cxx_inline_namespaces
+    Feature record: CXX_FEATURE:1cxx_lambdas
+    Feature record: CXX_FEATURE:1cxx_lambda_init_captures
+    Feature record: CXX_FEATURE:1cxx_local_type_template_args
+    Feature record: CXX_FEATURE:1cxx_long_long_type
+    Feature record: CXX_FEATURE:1cxx_noexcept
+    Feature record: CXX_FEATURE:1cxx_nonstatic_member_init
+    Feature record: CXX_FEATURE:1cxx_nullptr
+    Feature record: CXX_FEATURE:1cxx_override
+    Feature record: CXX_FEATURE:1cxx_range_for
+    Feature record: CXX_FEATURE:1cxx_raw_string_literals
+    Feature record: CXX_FEATURE:1cxx_reference_qualified_functions
+    Feature record: CXX_FEATURE:1cxx_return_type_deduction
+    Feature record: CXX_FEATURE:1cxx_right_angle_brackets
+    Feature record: CXX_FEATURE:1cxx_rvalue_references
+    Feature record: CXX_FEATURE:1cxx_sizeof_member
+    Feature record: CXX_FEATURE:1cxx_static_assert
+    Feature record: CXX_FEATURE:1cxx_strong_enums
+    Feature record: CXX_FEATURE:1cxx_template_template_parameters
+    Feature record: CXX_FEATURE:1cxx_thread_local
+    Feature record: CXX_FEATURE:1cxx_trailing_return_types
+    Feature record: CXX_FEATURE:1cxx_unicode_literals
+    Feature record: CXX_FEATURE:1cxx_uniform_initialization
+    Feature record: CXX_FEATURE:1cxx_unrestricted_unions
+    Feature record: CXX_FEATURE:1cxx_user_literals
+    Feature record: CXX_FEATURE:1cxx_variable_templates
+    Feature record: CXX_FEATURE:1cxx_variadic_macros
+    Feature record: CXX_FEATURE:1cxx_variadic_templates
+
+
+Detecting CXX [] compiler features compiled with the following output:
+Change Dir: C:/GID64-git/gidproject/gidpost/buildW/CMakeFiles/CMakeTmp
+
+Run Build Command:"C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise/MSBuild/15.0/Bin/MSBuild.exe" "cmTC_b9e70.vcxproj" "/p:Configuration=Debug" "/p:VisualStudioVersion=15.0"
+Microsoft (R) Build Engine versi¢n 15.5.180.51428 para .NET Framework
+Copyright (C) Microsoft Corporation. Todos los derechos reservados.
+
+Compilaci¢n iniciada a las 23/01/2018 13:10:29.
+Proyecto "C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\CMakeTmp\cmTC_b9e70.vcxproj" en nodo 1 (destinos predeterminados).
+PrepareForBuild:
+  Creando directorio "cmTC_b9e70.dir\Debug\".
+  Creando directorio "C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\CMakeTmp\Debug\".
+  Creando directorio "cmTC_b9e70.dir\Debug\cmTC_b9e70.tlog\".
+InitializeBuildStatus:
+  Se crear  "cmTC_b9e70.dir\Debug\cmTC_b9e70.tlog\unsuccessfulbuild" porque se especific¢ "AlwaysCreate".
+ClCompile:
+  C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\VC\Tools\MSVC\14.12.25827\bin\HostX86\x64\CL.exe /c /Zi /W3 /WX- /diagnostics:classic /Od /Ob0 /D WIN32 /D _WINDOWS /D "CMAKE_INTDIR=\"Debug\"" /D _MBCS /Gm- /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /GR /Fo"cmTC_b9e70.dir\Debug\\" /Fd"cmTC_b9e70.dir\Debug\vc141.pdb" /Gd /TP /errorReport:queue "C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\feature_tests.cxx"
+  Microsoft (R) C/C++ Optimizing Compiler Version 19.12.25834 for x64
+  Copyright (C) Microsoft Corporation.  All rights reserved.
+  
+  cl /c /Zi /W3 /WX- /diagnostics:classic /Od /Ob0 /D WIN32 /D _WINDOWS /D "CMAKE_INTDIR=\"Debug\"" /D _MBCS /Gm- /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /GR /Fo"cmTC_b9e70.dir\Debug\\" /Fd"cmTC_b9e70.dir\Debug\vc141.pdb" /Gd /TP /errorReport:queue "C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\feature_tests.cxx"
+  feature_tests.cxx
+  
+Link:
+  C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\VC\Tools\MSVC\14.12.25827\bin\HostX86\x64\link.exe /ERRORREPORT:QUEUE /OUT:"C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\CMakeTmp\Debug\cmTC_b9e70.exe" /INCREMENTAL /NOLOGO kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"C:/GID64-git/gidproject/gidpost/buildW/CMakeFiles/CMakeTmp/Debug/cmTC_b9e70.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:/GID64-git/gidproject/gidpost/buildW/CMakeFiles/CMakeTmp/Debug/cmTC_b9e70.lib" /MACHINE:X64  /machine:x64 cmTC_b9e70.dir\Debug\feature_tests.obj
+  cmTC_b9e70.vcxproj -> C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\CMakeTmp\Debug\cmTC_b9e70.exe
+FinalizeBuildStatus:
+  Se eliminar  el archivo "cmTC_b9e70.dir\Debug\cmTC_b9e70.tlog\unsuccessfulbuild".
+  Aplicando tarea Touch a "cmTC_b9e70.dir\Debug\cmTC_b9e70.tlog\cmTC_b9e70.lastbuildstate".
+Compilaci¢n del proyecto terminada "C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\CMakeTmp\cmTC_b9e70.vcxproj" (destinos predeterminados).
+
+Compilaci¢n correcta.
+    0 Advertencia(s)
+    0 Errores
+
+Tiempo transcurrido 00:00:00.67
+
+
+    Feature record: CXX_FEATURE:1cxx_aggregate_default_initializers
+    Feature record: CXX_FEATURE:1cxx_alias_templates
+    Feature record: CXX_FEATURE:1cxx_alignas
+    Feature record: CXX_FEATURE:1cxx_alignof
+    Feature record: CXX_FEATURE:1cxx_attributes
+    Feature record: CXX_FEATURE:1cxx_attribute_deprecated
+    Feature record: CXX_FEATURE:1cxx_auto_type
+    Feature record: CXX_FEATURE:1cxx_binary_literals
+    Feature record: CXX_FEATURE:1cxx_constexpr
+    Feature record: CXX_FEATURE:1cxx_contextual_conversions
+    Feature record: CXX_FEATURE:1cxx_decltype
+    Feature record: CXX_FEATURE:1cxx_decltype_auto
+    Feature record: CXX_FEATURE:1cxx_default_function_template_args
+    Feature record: CXX_FEATURE:1cxx_defaulted_functions
+    Feature record: CXX_FEATURE:1cxx_defaulted_move_initializers
+    Feature record: CXX_FEATURE:1cxx_delegating_constructors
+    Feature record: CXX_FEATURE:1cxx_deleted_functions
+    Feature record: CXX_FEATURE:1cxx_digit_separators
+    Feature record: CXX_FEATURE:1cxx_enum_forward_declarations
+    Feature record: CXX_FEATURE:1cxx_explicit_conversions
+    Feature record: CXX_FEATURE:1cxx_extended_friend_declarations
+    Feature record: CXX_FEATURE:1cxx_extern_templates
+    Feature record: CXX_FEATURE:1cxx_final
+    Feature record: CXX_FEATURE:1cxx_func_identifier
+    Feature record: CXX_FEATURE:1cxx_generalized_initializers
+    Feature record: CXX_FEATURE:1cxx_generic_lambdas
+    Feature record: CXX_FEATURE:1cxx_inheriting_constructors
+    Feature record: CXX_FEATURE:1cxx_inline_namespaces
+    Feature record: CXX_FEATURE:1cxx_lambdas
+    Feature record: CXX_FEATURE:1cxx_lambda_init_captures
+    Feature record: CXX_FEATURE:1cxx_local_type_template_args
+    Feature record: CXX_FEATURE:1cxx_long_long_type
+    Feature record: CXX_FEATURE:1cxx_noexcept
+    Feature record: CXX_FEATURE:1cxx_nonstatic_member_init
+    Feature record: CXX_FEATURE:1cxx_nullptr
+    Feature record: CXX_FEATURE:1cxx_override
+    Feature record: CXX_FEATURE:1cxx_range_for
+    Feature record: CXX_FEATURE:1cxx_raw_string_literals
+    Feature record: CXX_FEATURE:1cxx_reference_qualified_functions
+    Feature record: CXX_FEATURE:1cxx_return_type_deduction
+    Feature record: CXX_FEATURE:1cxx_right_angle_brackets
+    Feature record: CXX_FEATURE:1cxx_rvalue_references
+    Feature record: CXX_FEATURE:1cxx_sizeof_member
+    Feature record: CXX_FEATURE:1cxx_static_assert
+    Feature record: CXX_FEATURE:1cxx_strong_enums
+    Feature record: CXX_FEATURE:1cxx_template_template_parameters
+    Feature record: CXX_FEATURE:1cxx_thread_local
+    Feature record: CXX_FEATURE:1cxx_trailing_return_types
+    Feature record: CXX_FEATURE:1cxx_unicode_literals
+    Feature record: CXX_FEATURE:1cxx_uniform_initialization
+    Feature record: CXX_FEATURE:1cxx_unrestricted_unions
+    Feature record: CXX_FEATURE:1cxx_user_literals
+    Feature record: CXX_FEATURE:1cxx_variable_templates
+    Feature record: CXX_FEATURE:1cxx_variadic_macros
+    Feature record: CXX_FEATURE:1cxx_variadic_templates
+Compiling the C compiler identification source file "CMakeCCompilerId.c" succeeded.
+Compiler:  
+Build flags: /DWIN32;/D_WINDOWS;/W3
+Id flags:  
+
+The output was:
+0
+Microsoft (R) Build Engine versi�n 15.6.85.37198 para .NET Framework
+Copyright (C) Microsoft Corporation. Todos los derechos reservados.
+
+Compilaci�n iniciada a las 05/04/2018 19:41:10.
+Proyecto "C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\3.9.4\CompilerIdC\CompilerIdC.vcxproj" en nodo 1 (destinos predeterminados).
+PrepareForBuild:
+  Creando directorio "Debug\".
+  Creando directorio "Debug\CompilerIdC.tlog\".
+InitializeBuildStatus:
+  Se crear� "Debug\CompilerIdC.tlog\unsuccessfulbuild" porque se especific� "AlwaysCreate".
+ClCompile:
+  C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\VC\Tools\MSVC\14.13.26128\bin\HostX86\x64\CL.exe /c /nologo /W0 /WX- /diagnostics:classic /Od /D _MBCS /Gm- /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"Debug\\" /Fd"Debug\vc141.pdb" /Gd /TC /FC /errorReport:queue CMakeCCompilerId.c
+  CMakeCCompilerId.c
+Link:
+  C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\VC\Tools\MSVC\14.13.26128\bin\HostX86\x64\link.exe /ERRORREPORT:QUEUE /OUT:".\CompilerIdC.exe" /INCREMENTAL:NO /NOLOGO kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /PDB:".\CompilerIdC.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:".\CompilerIdC.lib" /MACHINE:X64 Debug\CMakeCCompilerId.obj
+  CompilerIdC.vcxproj -> C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\3.9.4\CompilerIdC\.\CompilerIdC.exe
+PostBuildEvent:
+  for %%i in (cl.exe) do @echo CMAKE_C_COMPILER=%%~$PATH:i
+  :VCEnd
+  CMAKE_C_COMPILER=C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\VC\Tools\MSVC\14.13.26128\bin\Hostx86\x64\cl.exe
+FinalizeBuildStatus:
+  Se eliminar� el archivo "Debug\CompilerIdC.tlog\unsuccessfulbuild".
+  Aplicando tarea Touch a "Debug\CompilerIdC.tlog\CompilerIdC.lastbuildstate".
+Compilaci�n del proyecto terminada "C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\3.9.4\CompilerIdC\CompilerIdC.vcxproj" (destinos predeterminados).
+
+Compilaci�n correcta.
+    0 Advertencia(s)
+    0 Errores
+
+Tiempo transcurrido 00:00:01.71
+
+
+Compilation of the C compiler identification source "CMakeCCompilerId.c" produced "CompilerIdC.exe"
+
+Compilation of the C compiler identification source "CMakeCCompilerId.c" produced "CompilerIdC.vcxproj"
+
+The C compiler identification is MSVC, found in "C:/GID64-git/gidproject/gidpost/buildW/CMakeFiles/3.9.4/CompilerIdC/CompilerIdC.exe"
+
+Compiling the CXX compiler identification source file "CMakeCXXCompilerId.cpp" succeeded.
+Compiler:  
+Build flags: /DWIN32;/D_WINDOWS;/W3;/GR;/EHsc
+Id flags:  
+
+The output was:
+0
+Microsoft (R) Build Engine versi�n 15.6.85.37198 para .NET Framework
+Copyright (C) Microsoft Corporation. Todos los derechos reservados.
+
+Compilaci�n iniciada a las 05/04/2018 19:41:12.
+Proyecto "C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\3.9.4\CompilerIdCXX\CompilerIdCXX.vcxproj" en nodo 1 (destinos predeterminados).
+PrepareForBuild:
+  Creando directorio "Debug\".
+  Creando directorio "Debug\CompilerIdCXX.tlog\".
+InitializeBuildStatus:
+  Se crear� "Debug\CompilerIdCXX.tlog\unsuccessfulbuild" porque se especific� "AlwaysCreate".
+ClCompile:
+  C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\VC\Tools\MSVC\14.13.26128\bin\HostX86\x64\CL.exe /c /nologo /W0 /WX- /diagnostics:classic /Od /D _MBCS /Gm- /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"Debug\\" /Fd"Debug\vc141.pdb" /Gd /TP /FC /errorReport:queue CMakeCXXCompilerId.cpp
+  CMakeCXXCompilerId.cpp
+Link:
+  C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\VC\Tools\MSVC\14.13.26128\bin\HostX86\x64\link.exe /ERRORREPORT:QUEUE /OUT:".\CompilerIdCXX.exe" /INCREMENTAL:NO /NOLOGO kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /PDB:".\CompilerIdCXX.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:".\CompilerIdCXX.lib" /MACHINE:X64 Debug\CMakeCXXCompilerId.obj
+  CompilerIdCXX.vcxproj -> C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\3.9.4\CompilerIdCXX\.\CompilerIdCXX.exe
+PostBuildEvent:
+  for %%i in (cl.exe) do @echo CMAKE_CXX_COMPILER=%%~$PATH:i
+  :VCEnd
+  CMAKE_CXX_COMPILER=C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\VC\Tools\MSVC\14.13.26128\bin\Hostx86\x64\cl.exe
+FinalizeBuildStatus:
+  Se eliminar� el archivo "Debug\CompilerIdCXX.tlog\unsuccessfulbuild".
+  Aplicando tarea Touch a "Debug\CompilerIdCXX.tlog\CompilerIdCXX.lastbuildstate".
+Compilaci�n del proyecto terminada "C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\3.9.4\CompilerIdCXX\CompilerIdCXX.vcxproj" (destinos predeterminados).
+
+Compilaci�n correcta.
+    0 Advertencia(s)
+    0 Errores
+
+Tiempo transcurrido 00:00:00.71
+
+
+Compilation of the CXX compiler identification source "CMakeCXXCompilerId.cpp" produced "CompilerIdCXX.exe"
+
+Compilation of the CXX compiler identification source "CMakeCXXCompilerId.cpp" produced "CompilerIdCXX.vcxproj"
+
+The CXX compiler identification is MSVC, found in "C:/GID64-git/gidproject/gidpost/buildW/CMakeFiles/3.9.4/CompilerIdCXX/CompilerIdCXX.exe"
+
+Determining if the C compiler works passed with the following output:
+Change Dir: C:/GID64-git/gidproject/gidpost/buildW/CMakeFiles/CMakeTmp
+
+Run Build Command:"C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise/MSBuild/15.0/Bin/MSBuild.exe" "cmTC_4d494.vcxproj" "/p:Configuration=Debug" "/p:VisualStudioVersion=15.0"
+Microsoft (R) Build Engine versión 15.6.85.37198 para .NET Framework
+Copyright (C) Microsoft Corporation. Todos los derechos reservados.
+
+Compilación iniciada a las 05/04/2018 19:41:13.
+Proyecto "C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\CMakeTmp\cmTC_4d494.vcxproj" en nodo 1 (destinos predeterminados).
+PrepareForBuild:
+  Creando directorio "cmTC_4d494.dir\Debug\".
+  Creando directorio "C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\CMakeTmp\Debug\".
+  Creando directorio "cmTC_4d494.dir\Debug\cmTC_4d494.tlog\".
+InitializeBuildStatus:
+  Se creará "cmTC_4d494.dir\Debug\cmTC_4d494.tlog\unsuccessfulbuild" porque se especificó "AlwaysCreate".
+ClCompile:
+  C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\VC\Tools\MSVC\14.13.26128\bin\HostX86\x64\CL.exe /c /Zi /W3 /WX- /diagnostics:classic /Od /Ob0 /D WIN32 /D _WINDOWS /D "CMAKE_INTDIR=\"Debug\"" /D _MBCS /Gm- /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"cmTC_4d494.dir\Debug\\" /Fd"cmTC_4d494.dir\Debug\vc141.pdb" /Gd /TC /FC /errorReport:queue "C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\CMakeTmp\testCCompiler.c"
+  Microsoft (R) C/C++ Optimizing Compiler Version 19.13.26129 for x64
+  Copyright (C) Microsoft Corporation.  All rights reserved.
+  
+  cl /c /Zi /W3 /WX- /diagnostics:classic /Od /Ob0 /D WIN32 /D _WINDOWS /D "CMAKE_INTDIR=\"Debug\"" /D _MBCS /Gm- /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"cmTC_4d494.dir\Debug\\" /Fd"cmTC_4d494.dir\Debug\vc141.pdb" /Gd /TC /FC /errorReport:queue "C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\CMakeTmp\testCCompiler.c"
+  testCCompiler.c
+  
+Link:
+  C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\VC\Tools\MSVC\14.13.26128\bin\HostX86\x64\link.exe /ERRORREPORT:QUEUE /OUT:"C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\CMakeTmp\Debug\cmTC_4d494.exe" /INCREMENTAL /NOLOGO kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"C:/GID64-git/gidproject/gidpost/buildW/CMakeFiles/CMakeTmp/Debug/cmTC_4d494.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:/GID64-git/gidproject/gidpost/buildW/CMakeFiles/CMakeTmp/Debug/cmTC_4d494.lib" /MACHINE:X64  /machine:x64 cmTC_4d494.dir\Debug\testCCompiler.obj
+  cmTC_4d494.vcxproj -> C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\CMakeTmp\Debug\cmTC_4d494.exe
+FinalizeBuildStatus:
+  Se eliminará el archivo "cmTC_4d494.dir\Debug\cmTC_4d494.tlog\unsuccessfulbuild".
+  Aplicando tarea Touch a "cmTC_4d494.dir\Debug\cmTC_4d494.tlog\cmTC_4d494.lastbuildstate".
+Compilación del proyecto terminada "C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\CMakeTmp\cmTC_4d494.vcxproj" (destinos predeterminados).
+
+Compilación correcta.
+    0 Advertencia(s)
+    0 Errores
+
+Tiempo transcurrido 00:00:00.62
+
+
+Detecting C compiler ABI info compiled with the following output:
+Change Dir: C:/GID64-git/gidproject/gidpost/buildW/CMakeFiles/CMakeTmp
+
+Run Build Command:"C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise/MSBuild/15.0/Bin/MSBuild.exe" "cmTC_a6277.vcxproj" "/p:Configuration=Debug" "/p:VisualStudioVersion=15.0"
+Microsoft (R) Build Engine versión 15.6.85.37198 para .NET Framework
+Copyright (C) Microsoft Corporation. Todos los derechos reservados.
+
+Compilación iniciada a las 05/04/2018 19:41:13.
+Proyecto "C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\CMakeTmp\cmTC_a6277.vcxproj" en nodo 1 (destinos predeterminados).
+PrepareForBuild:
+  Creando directorio "cmTC_a6277.dir\Debug\".
+  Creando directorio "C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\CMakeTmp\Debug\".
+  Creando directorio "cmTC_a6277.dir\Debug\cmTC_a6277.tlog\".
+InitializeBuildStatus:
+  Se creará "cmTC_a6277.dir\Debug\cmTC_a6277.tlog\unsuccessfulbuild" porque se especificó "AlwaysCreate".
+ClCompile:
+  C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\VC\Tools\MSVC\14.13.26128\bin\HostX86\x64\CL.exe /c /Zi /W3 /WX- /diagnostics:classic /Od /Ob0 /D WIN32 /D _WINDOWS /D "CMAKE_INTDIR=\"Debug\"" /D _MBCS /Gm- /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"cmTC_a6277.dir\Debug\\" /Fd"cmTC_a6277.dir\Debug\vc141.pdb" /Gd /TC /FC /errorReport:queue "C:\UnxUtils\cmake-3.9.4-win64-x64\share\cmake-3.9\Modules\CMakeCCompilerABI.c"
+  Microsoft (R) C/C++ Optimizing Compiler Version 19.13.26129 for x64
+  Copyright (C) Microsoft Corporation.  All rights reserved.
+  
+  cl /c /Zi /W3 /WX- /diagnostics:classic /Od /Ob0 /D WIN32 /D _WINDOWS /D "CMAKE_INTDIR=\"Debug\"" /D _MBCS /Gm- /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"cmTC_a6277.dir\Debug\\" /Fd"cmTC_a6277.dir\Debug\vc141.pdb" /Gd /TC /FC /errorReport:queue "C:\UnxUtils\cmake-3.9.4-win64-x64\share\cmake-3.9\Modules\CMakeCCompilerABI.c"
+  CMakeCCompilerABI.c
+  
+Link:
+  C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\VC\Tools\MSVC\14.13.26128\bin\HostX86\x64\link.exe /ERRORREPORT:QUEUE /OUT:"C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\CMakeTmp\Debug\cmTC_a6277.exe" /INCREMENTAL /NOLOGO kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"C:/GID64-git/gidproject/gidpost/buildW/CMakeFiles/CMakeTmp/Debug/cmTC_a6277.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:/GID64-git/gidproject/gidpost/buildW/CMakeFiles/CMakeTmp/Debug/cmTC_a6277.lib" /MACHINE:X64  /machine:x64 cmTC_a6277.dir\Debug\CMakeCCompilerABI.obj
+  cmTC_a6277.vcxproj -> C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\CMakeTmp\Debug\cmTC_a6277.exe
+FinalizeBuildStatus:
+  Se eliminará el archivo "cmTC_a6277.dir\Debug\cmTC_a6277.tlog\unsuccessfulbuild".
+  Aplicando tarea Touch a "cmTC_a6277.dir\Debug\cmTC_a6277.tlog\cmTC_a6277.lastbuildstate".
+Compilación del proyecto terminada "C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\CMakeTmp\cmTC_a6277.vcxproj" (destinos predeterminados).
+
+Compilación correcta.
+    0 Advertencia(s)
+    0 Errores
+
+Tiempo transcurrido 00:00:00.62
+
+
+Determining if the CXX compiler works passed with the following output:
+Change Dir: C:/GID64-git/gidproject/gidpost/buildW/CMakeFiles/CMakeTmp
+
+Run Build Command:"C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise/MSBuild/15.0/Bin/MSBuild.exe" "cmTC_34bce.vcxproj" "/p:Configuration=Debug" "/p:VisualStudioVersion=15.0"
+Microsoft (R) Build Engine versión 15.6.85.37198 para .NET Framework
+Copyright (C) Microsoft Corporation. Todos los derechos reservados.
+
+Compilación iniciada a las 05/04/2018 19:41:14.
+Proyecto "C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\CMakeTmp\cmTC_34bce.vcxproj" en nodo 1 (destinos predeterminados).
+PrepareForBuild:
+  Creando directorio "cmTC_34bce.dir\Debug\".
+  Creando directorio "C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\CMakeTmp\Debug\".
+  Creando directorio "cmTC_34bce.dir\Debug\cmTC_34bce.tlog\".
+InitializeBuildStatus:
+  Se creará "cmTC_34bce.dir\Debug\cmTC_34bce.tlog\unsuccessfulbuild" porque se especificó "AlwaysCreate".
+ClCompile:
+  C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\VC\Tools\MSVC\14.13.26128\bin\HostX86\x64\CL.exe /c /Zi /W3 /WX- /diagnostics:classic /Od /Ob0 /D WIN32 /D _WINDOWS /D "CMAKE_INTDIR=\"Debug\"" /D _MBCS /Gm- /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /GR /Fo"cmTC_34bce.dir\Debug\\" /Fd"cmTC_34bce.dir\Debug\vc141.pdb" /Gd /TP /FC /errorReport:queue "C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\CMakeTmp\testCXXCompiler.cxx"
+  Microsoft (R) C/C++ Optimizing Compiler Version 19.13.26129 for x64
+  Copyright (C) Microsoft Corporation.  All rights reserved.
+  
+  cl /c /Zi /W3 /WX- /diagnostics:classic /Od /Ob0 /D WIN32 /D _WINDOWS /D "CMAKE_INTDIR=\"Debug\"" /D _MBCS /Gm- /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /GR /Fo"cmTC_34bce.dir\Debug\\" /Fd"cmTC_34bce.dir\Debug\vc141.pdb" /Gd /TP /FC /errorReport:queue "C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\CMakeTmp\testCXXCompiler.cxx"
+  testCXXCompiler.cxx
+  
+Link:
+  C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\VC\Tools\MSVC\14.13.26128\bin\HostX86\x64\link.exe /ERRORREPORT:QUEUE /OUT:"C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\CMakeTmp\Debug\cmTC_34bce.exe" /INCREMENTAL /NOLOGO kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"C:/GID64-git/gidproject/gidpost/buildW/CMakeFiles/CMakeTmp/Debug/cmTC_34bce.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:/GID64-git/gidproject/gidpost/buildW/CMakeFiles/CMakeTmp/Debug/cmTC_34bce.lib" /MACHINE:X64  /machine:x64 cmTC_34bce.dir\Debug\testCXXCompiler.obj
+  cmTC_34bce.vcxproj -> C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\CMakeTmp\Debug\cmTC_34bce.exe
+FinalizeBuildStatus:
+  Se eliminará el archivo "cmTC_34bce.dir\Debug\cmTC_34bce.tlog\unsuccessfulbuild".
+  Aplicando tarea Touch a "cmTC_34bce.dir\Debug\cmTC_34bce.tlog\cmTC_34bce.lastbuildstate".
+Compilación del proyecto terminada "C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\CMakeTmp\cmTC_34bce.vcxproj" (destinos predeterminados).
+
+Compilación correcta.
+    0 Advertencia(s)
+    0 Errores
+
+Tiempo transcurrido 00:00:00.64
+
+
+Detecting CXX compiler ABI info compiled with the following output:
+Change Dir: C:/GID64-git/gidproject/gidpost/buildW/CMakeFiles/CMakeTmp
+
+Run Build Command:"C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise/MSBuild/15.0/Bin/MSBuild.exe" "cmTC_8a270.vcxproj" "/p:Configuration=Debug" "/p:VisualStudioVersion=15.0"
+Microsoft (R) Build Engine versión 15.6.85.37198 para .NET Framework
+Copyright (C) Microsoft Corporation. Todos los derechos reservados.
+
+Compilación iniciada a las 05/04/2018 19:41:15.
+Proyecto "C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\CMakeTmp\cmTC_8a270.vcxproj" en nodo 1 (destinos predeterminados).
+PrepareForBuild:
+  Creando directorio "cmTC_8a270.dir\Debug\".
+  Creando directorio "C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\CMakeTmp\Debug\".
+  Creando directorio "cmTC_8a270.dir\Debug\cmTC_8a270.tlog\".
+InitializeBuildStatus:
+  Se creará "cmTC_8a270.dir\Debug\cmTC_8a270.tlog\unsuccessfulbuild" porque se especificó "AlwaysCreate".
+ClCompile:
+  C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\VC\Tools\MSVC\14.13.26128\bin\HostX86\x64\CL.exe /c /Zi /W3 /WX- /diagnostics:classic /Od /Ob0 /D WIN32 /D _WINDOWS /D "CMAKE_INTDIR=\"Debug\"" /D _MBCS /Gm- /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /GR /Fo"cmTC_8a270.dir\Debug\\" /Fd"cmTC_8a270.dir\Debug\vc141.pdb" /Gd /TP /FC /errorReport:queue "C:\UnxUtils\cmake-3.9.4-win64-x64\share\cmake-3.9\Modules\CMakeCXXCompilerABI.cpp"
+  Microsoft (R) C/C++ Optimizing Compiler Version 19.13.26129 for x64
+  Copyright (C) Microsoft Corporation.  All rights reserved.
+  
+  cl /c /Zi /W3 /WX- /diagnostics:classic /Od /Ob0 /D WIN32 /D _WINDOWS /D "CMAKE_INTDIR=\"Debug\"" /D _MBCS /Gm- /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /GR /Fo"cmTC_8a270.dir\Debug\\" /Fd"cmTC_8a270.dir\Debug\vc141.pdb" /Gd /TP /FC /errorReport:queue "C:\UnxUtils\cmake-3.9.4-win64-x64\share\cmake-3.9\Modules\CMakeCXXCompilerABI.cpp"
+  CMakeCXXCompilerABI.cpp
+  
+Link:
+  C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\VC\Tools\MSVC\14.13.26128\bin\HostX86\x64\link.exe /ERRORREPORT:QUEUE /OUT:"C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\CMakeTmp\Debug\cmTC_8a270.exe" /INCREMENTAL /NOLOGO kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"C:/GID64-git/gidproject/gidpost/buildW/CMakeFiles/CMakeTmp/Debug/cmTC_8a270.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:/GID64-git/gidproject/gidpost/buildW/CMakeFiles/CMakeTmp/Debug/cmTC_8a270.lib" /MACHINE:X64  /machine:x64 cmTC_8a270.dir\Debug\CMakeCXXCompilerABI.obj
+  cmTC_8a270.vcxproj -> C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\CMakeTmp\Debug\cmTC_8a270.exe
+FinalizeBuildStatus:
+  Se eliminará el archivo "cmTC_8a270.dir\Debug\cmTC_8a270.tlog\unsuccessfulbuild".
+  Aplicando tarea Touch a "cmTC_8a270.dir\Debug\cmTC_8a270.tlog\cmTC_8a270.lastbuildstate".
+Compilación del proyecto terminada "C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\CMakeTmp\cmTC_8a270.vcxproj" (destinos predeterminados).
+
+Compilación correcta.
+    0 Advertencia(s)
+    0 Errores
+
+Tiempo transcurrido 00:00:00.61
+
+
+
+
+Detecting CXX [] compiler features compiled with the following output:
+Change Dir: C:/GID64-git/gidproject/gidpost/buildW/CMakeFiles/CMakeTmp
+
+Run Build Command:"C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise/MSBuild/15.0/Bin/MSBuild.exe" "cmTC_5b65c.vcxproj" "/p:Configuration=Debug" "/p:VisualStudioVersion=15.0"
+Microsoft (R) Build Engine versión 15.6.85.37198 para .NET Framework
+Copyright (C) Microsoft Corporation. Todos los derechos reservados.
+
+Compilación iniciada a las 05/04/2018 19:41:16.
+Proyecto "C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\CMakeTmp\cmTC_5b65c.vcxproj" en nodo 1 (destinos predeterminados).
+PrepareForBuild:
+  Creando directorio "cmTC_5b65c.dir\Debug\".
+  Creando directorio "C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\CMakeTmp\Debug\".
+  Creando directorio "cmTC_5b65c.dir\Debug\cmTC_5b65c.tlog\".
+InitializeBuildStatus:
+  Se creará "cmTC_5b65c.dir\Debug\cmTC_5b65c.tlog\unsuccessfulbuild" porque se especificó "AlwaysCreate".
+ClCompile:
+  C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\VC\Tools\MSVC\14.13.26128\bin\HostX86\x64\CL.exe /c /Zi /W3 /WX- /diagnostics:classic /Od /Ob0 /D WIN32 /D _WINDOWS /D "CMAKE_INTDIR=\"Debug\"" /D _MBCS /Gm- /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /GR /Fo"cmTC_5b65c.dir\Debug\\" /Fd"cmTC_5b65c.dir\Debug\vc141.pdb" /Gd /TP /FC /errorReport:queue "C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\feature_tests.cxx"
+  Microsoft (R) C/C++ Optimizing Compiler Version 19.13.26129 for x64
+  Copyright (C) Microsoft Corporation.  All rights reserved.
+  
+  cl /c /Zi /W3 /WX- /diagnostics:classic /Od /Ob0 /D WIN32 /D _WINDOWS /D "CMAKE_INTDIR=\"Debug\"" /D _MBCS /Gm- /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /GR /Fo"cmTC_5b65c.dir\Debug\\" /Fd"cmTC_5b65c.dir\Debug\vc141.pdb" /Gd /TP /FC /errorReport:queue "C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\feature_tests.cxx"
+  feature_tests.cxx
+  
+Link:
+  C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\VC\Tools\MSVC\14.13.26128\bin\HostX86\x64\link.exe /ERRORREPORT:QUEUE /OUT:"C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\CMakeTmp\Debug\cmTC_5b65c.exe" /INCREMENTAL /NOLOGO kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"C:/GID64-git/gidproject/gidpost/buildW/CMakeFiles/CMakeTmp/Debug/cmTC_5b65c.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:/GID64-git/gidproject/gidpost/buildW/CMakeFiles/CMakeTmp/Debug/cmTC_5b65c.lib" /MACHINE:X64  /machine:x64 cmTC_5b65c.dir\Debug\feature_tests.obj
+  cmTC_5b65c.vcxproj -> C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\CMakeTmp\Debug\cmTC_5b65c.exe
+FinalizeBuildStatus:
+  Se eliminará el archivo "cmTC_5b65c.dir\Debug\cmTC_5b65c.tlog\unsuccessfulbuild".
+  Aplicando tarea Touch a "cmTC_5b65c.dir\Debug\cmTC_5b65c.tlog\cmTC_5b65c.lastbuildstate".
+Compilación del proyecto terminada "C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\CMakeTmp\cmTC_5b65c.vcxproj" (destinos predeterminados).
+
+Compilación correcta.
+    0 Advertencia(s)
+    0 Errores
+
+Tiempo transcurrido 00:00:00.61
+
+
+    Feature record: CXX_FEATURE:1cxx_aggregate_default_initializers
+    Feature record: CXX_FEATURE:1cxx_alias_templates
+    Feature record: CXX_FEATURE:1cxx_alignas
+    Feature record: CXX_FEATURE:1cxx_alignof
+    Feature record: CXX_FEATURE:1cxx_attributes
+    Feature record: CXX_FEATURE:1cxx_attribute_deprecated
+    Feature record: CXX_FEATURE:1cxx_auto_type
+    Feature record: CXX_FEATURE:1cxx_binary_literals
+    Feature record: CXX_FEATURE:1cxx_constexpr
+    Feature record: CXX_FEATURE:1cxx_contextual_conversions
+    Feature record: CXX_FEATURE:1cxx_decltype
+    Feature record: CXX_FEATURE:1cxx_decltype_auto
+    Feature record: CXX_FEATURE:1cxx_default_function_template_args
+    Feature record: CXX_FEATURE:1cxx_defaulted_functions
+    Feature record: CXX_FEATURE:1cxx_defaulted_move_initializers
+    Feature record: CXX_FEATURE:1cxx_delegating_constructors
+    Feature record: CXX_FEATURE:1cxx_deleted_functions
+    Feature record: CXX_FEATURE:1cxx_digit_separators
+    Feature record: CXX_FEATURE:1cxx_enum_forward_declarations
+    Feature record: CXX_FEATURE:1cxx_explicit_conversions
+    Feature record: CXX_FEATURE:1cxx_extended_friend_declarations
+    Feature record: CXX_FEATURE:1cxx_extern_templates
+    Feature record: CXX_FEATURE:1cxx_final
+    Feature record: CXX_FEATURE:1cxx_func_identifier
+    Feature record: CXX_FEATURE:1cxx_generalized_initializers
+    Feature record: CXX_FEATURE:1cxx_generic_lambdas
+    Feature record: CXX_FEATURE:1cxx_inheriting_constructors
+    Feature record: CXX_FEATURE:1cxx_inline_namespaces
+    Feature record: CXX_FEATURE:1cxx_lambdas
+    Feature record: CXX_FEATURE:1cxx_lambda_init_captures
+    Feature record: CXX_FEATURE:1cxx_local_type_template_args
+    Feature record: CXX_FEATURE:1cxx_long_long_type
+    Feature record: CXX_FEATURE:1cxx_noexcept
+    Feature record: CXX_FEATURE:1cxx_nonstatic_member_init
+    Feature record: CXX_FEATURE:1cxx_nullptr
+    Feature record: CXX_FEATURE:1cxx_override
+    Feature record: CXX_FEATURE:1cxx_range_for
+    Feature record: CXX_FEATURE:1cxx_raw_string_literals
+    Feature record: CXX_FEATURE:1cxx_reference_qualified_functions
+    Feature record: CXX_FEATURE:1cxx_return_type_deduction
+    Feature record: CXX_FEATURE:1cxx_right_angle_brackets
+    Feature record: CXX_FEATURE:1cxx_rvalue_references
+    Feature record: CXX_FEATURE:1cxx_sizeof_member
+    Feature record: CXX_FEATURE:1cxx_static_assert
+    Feature record: CXX_FEATURE:1cxx_strong_enums
+    Feature record: CXX_FEATURE:1cxx_template_template_parameters
+    Feature record: CXX_FEATURE:1cxx_thread_local
+    Feature record: CXX_FEATURE:1cxx_trailing_return_types
+    Feature record: CXX_FEATURE:1cxx_unicode_literals
+    Feature record: CXX_FEATURE:1cxx_uniform_initialization
+    Feature record: CXX_FEATURE:1cxx_unrestricted_unions
+    Feature record: CXX_FEATURE:1cxx_user_literals
+    Feature record: CXX_FEATURE:1cxx_variable_templates
+    Feature record: CXX_FEATURE:1cxx_variadic_macros
+    Feature record: CXX_FEATURE:1cxx_variadic_templates
+
+
+Detecting CXX [] compiler features compiled with the following output:
+Change Dir: C:/GID64-git/gidproject/gidpost/buildW/CMakeFiles/CMakeTmp
+
+Run Build Command:"C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise/MSBuild/15.0/Bin/MSBuild.exe" "cmTC_6339e.vcxproj" "/p:Configuration=Debug" "/p:VisualStudioVersion=15.0"
+Microsoft (R) Build Engine versión 15.6.85.37198 para .NET Framework
+Copyright (C) Microsoft Corporation. Todos los derechos reservados.
+
+Compilación iniciada a las 05/04/2018 19:41:17.
+Proyecto "C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\CMakeTmp\cmTC_6339e.vcxproj" en nodo 1 (destinos predeterminados).
+PrepareForBuild:
+  Creando directorio "cmTC_6339e.dir\Debug\".
+  Creando directorio "C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\CMakeTmp\Debug\".
+  Creando directorio "cmTC_6339e.dir\Debug\cmTC_6339e.tlog\".
+InitializeBuildStatus:
+  Se creará "cmTC_6339e.dir\Debug\cmTC_6339e.tlog\unsuccessfulbuild" porque se especificó "AlwaysCreate".
+ClCompile:
+  C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\VC\Tools\MSVC\14.13.26128\bin\HostX86\x64\CL.exe /c /Zi /W3 /WX- /diagnostics:classic /Od /Ob0 /D WIN32 /D _WINDOWS /D "CMAKE_INTDIR=\"Debug\"" /D _MBCS /Gm- /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /GR /Fo"cmTC_6339e.dir\Debug\\" /Fd"cmTC_6339e.dir\Debug\vc141.pdb" /Gd /TP /FC /errorReport:queue "C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\feature_tests.cxx"
+  Microsoft (R) C/C++ Optimizing Compiler Version 19.13.26129 for x64
+  Copyright (C) Microsoft Corporation.  All rights reserved.
+  
+  cl /c /Zi /W3 /WX- /diagnostics:classic /Od /Ob0 /D WIN32 /D _WINDOWS /D "CMAKE_INTDIR=\"Debug\"" /D _MBCS /Gm- /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /GR /Fo"cmTC_6339e.dir\Debug\\" /Fd"cmTC_6339e.dir\Debug\vc141.pdb" /Gd /TP /FC /errorReport:queue "C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\feature_tests.cxx"
+  feature_tests.cxx
+  
+Link:
+  C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\VC\Tools\MSVC\14.13.26128\bin\HostX86\x64\link.exe /ERRORREPORT:QUEUE /OUT:"C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\CMakeTmp\Debug\cmTC_6339e.exe" /INCREMENTAL /NOLOGO kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"C:/GID64-git/gidproject/gidpost/buildW/CMakeFiles/CMakeTmp/Debug/cmTC_6339e.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:/GID64-git/gidproject/gidpost/buildW/CMakeFiles/CMakeTmp/Debug/cmTC_6339e.lib" /MACHINE:X64  /machine:x64 cmTC_6339e.dir\Debug\feature_tests.obj
+  cmTC_6339e.vcxproj -> C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\CMakeTmp\Debug\cmTC_6339e.exe
+FinalizeBuildStatus:
+  Se eliminará el archivo "cmTC_6339e.dir\Debug\cmTC_6339e.tlog\unsuccessfulbuild".
+  Aplicando tarea Touch a "cmTC_6339e.dir\Debug\cmTC_6339e.tlog\cmTC_6339e.lastbuildstate".
+Compilación del proyecto terminada "C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\CMakeTmp\cmTC_6339e.vcxproj" (destinos predeterminados).
+
+Compilación correcta.
+    0 Advertencia(s)
+    0 Errores
+
+Tiempo transcurrido 00:00:00.63
+
+
+    Feature record: CXX_FEATURE:1cxx_aggregate_default_initializers
+    Feature record: CXX_FEATURE:1cxx_alias_templates
+    Feature record: CXX_FEATURE:1cxx_alignas
+    Feature record: CXX_FEATURE:1cxx_alignof
+    Feature record: CXX_FEATURE:1cxx_attributes
+    Feature record: CXX_FEATURE:1cxx_attribute_deprecated
+    Feature record: CXX_FEATURE:1cxx_auto_type
+    Feature record: CXX_FEATURE:1cxx_binary_literals
+    Feature record: CXX_FEATURE:1cxx_constexpr
+    Feature record: CXX_FEATURE:1cxx_contextual_conversions
+    Feature record: CXX_FEATURE:1cxx_decltype
+    Feature record: CXX_FEATURE:1cxx_decltype_auto
+    Feature record: CXX_FEATURE:1cxx_default_function_template_args
+    Feature record: CXX_FEATURE:1cxx_defaulted_functions
+    Feature record: CXX_FEATURE:1cxx_defaulted_move_initializers
+    Feature record: CXX_FEATURE:1cxx_delegating_constructors
+    Feature record: CXX_FEATURE:1cxx_deleted_functions
+    Feature record: CXX_FEATURE:1cxx_digit_separators
+    Feature record: CXX_FEATURE:1cxx_enum_forward_declarations
+    Feature record: CXX_FEATURE:1cxx_explicit_conversions
+    Feature record: CXX_FEATURE:1cxx_extended_friend_declarations
+    Feature record: CXX_FEATURE:1cxx_extern_templates
+    Feature record: CXX_FEATURE:1cxx_final
+    Feature record: CXX_FEATURE:1cxx_func_identifier
+    Feature record: CXX_FEATURE:1cxx_generalized_initializers
+    Feature record: CXX_FEATURE:1cxx_generic_lambdas
+    Feature record: CXX_FEATURE:1cxx_inheriting_constructors
+    Feature record: CXX_FEATURE:1cxx_inline_namespaces
+    Feature record: CXX_FEATURE:1cxx_lambdas
+    Feature record: CXX_FEATURE:1cxx_lambda_init_captures
+    Feature record: CXX_FEATURE:1cxx_local_type_template_args
+    Feature record: CXX_FEATURE:1cxx_long_long_type
+    Feature record: CXX_FEATURE:1cxx_noexcept
+    Feature record: CXX_FEATURE:1cxx_nonstatic_member_init
+    Feature record: CXX_FEATURE:1cxx_nullptr
+    Feature record: CXX_FEATURE:1cxx_override
+    Feature record: CXX_FEATURE:1cxx_range_for
+    Feature record: CXX_FEATURE:1cxx_raw_string_literals
+    Feature record: CXX_FEATURE:1cxx_reference_qualified_functions
+    Feature record: CXX_FEATURE:1cxx_return_type_deduction
+    Feature record: CXX_FEATURE:1cxx_right_angle_brackets
+    Feature record: CXX_FEATURE:1cxx_rvalue_references
+    Feature record: CXX_FEATURE:1cxx_sizeof_member
+    Feature record: CXX_FEATURE:1cxx_static_assert
+    Feature record: CXX_FEATURE:1cxx_strong_enums
+    Feature record: CXX_FEATURE:1cxx_template_template_parameters
+    Feature record: CXX_FEATURE:1cxx_thread_local
+    Feature record: CXX_FEATURE:1cxx_trailing_return_types
+    Feature record: CXX_FEATURE:1cxx_unicode_literals
+    Feature record: CXX_FEATURE:1cxx_uniform_initialization
+    Feature record: CXX_FEATURE:1cxx_unrestricted_unions
+    Feature record: CXX_FEATURE:1cxx_user_literals
+    Feature record: CXX_FEATURE:1cxx_variable_templates
+    Feature record: CXX_FEATURE:1cxx_variadic_macros
+    Feature record: CXX_FEATURE:1cxx_variadic_templates
+
+
+Detecting CXX [] compiler features compiled with the following output:
+Change Dir: C:/GID64-git/gidproject/gidpost/buildW/CMakeFiles/CMakeTmp
+
+Run Build Command:"C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise/MSBuild/15.0/Bin/MSBuild.exe" "cmTC_8aff2.vcxproj" "/p:Configuration=Debug" "/p:VisualStudioVersion=15.0"
+Microsoft (R) Build Engine versión 15.6.85.37198 para .NET Framework
+Copyright (C) Microsoft Corporation. Todos los derechos reservados.
+
+Compilación iniciada a las 05/04/2018 19:41:17.
+Proyecto "C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\CMakeTmp\cmTC_8aff2.vcxproj" en nodo 1 (destinos predeterminados).
+PrepareForBuild:
+  Creando directorio "cmTC_8aff2.dir\Debug\".
+  Creando directorio "C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\CMakeTmp\Debug\".
+  Creando directorio "cmTC_8aff2.dir\Debug\cmTC_8aff2.tlog\".
+InitializeBuildStatus:
+  Se creará "cmTC_8aff2.dir\Debug\cmTC_8aff2.tlog\unsuccessfulbuild" porque se especificó "AlwaysCreate".
+ClCompile:
+  C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\VC\Tools\MSVC\14.13.26128\bin\HostX86\x64\CL.exe /c /Zi /W3 /WX- /diagnostics:classic /Od /Ob0 /D WIN32 /D _WINDOWS /D "CMAKE_INTDIR=\"Debug\"" /D _MBCS /Gm- /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /GR /Fo"cmTC_8aff2.dir\Debug\\" /Fd"cmTC_8aff2.dir\Debug\vc141.pdb" /Gd /TP /FC /errorReport:queue "C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\feature_tests.cxx"
+  Microsoft (R) C/C++ Optimizing Compiler Version 19.13.26129 for x64
+  Copyright (C) Microsoft Corporation.  All rights reserved.
+  
+  cl /c /Zi /W3 /WX- /diagnostics:classic /Od /Ob0 /D WIN32 /D _WINDOWS /D "CMAKE_INTDIR=\"Debug\"" /D _MBCS /Gm- /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /GR /Fo"cmTC_8aff2.dir\Debug\\" /Fd"cmTC_8aff2.dir\Debug\vc141.pdb" /Gd /TP /FC /errorReport:queue "C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\feature_tests.cxx"
+  feature_tests.cxx
+  
+Link:
+  C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\VC\Tools\MSVC\14.13.26128\bin\HostX86\x64\link.exe /ERRORREPORT:QUEUE /OUT:"C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\CMakeTmp\Debug\cmTC_8aff2.exe" /INCREMENTAL /NOLOGO kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"C:/GID64-git/gidproject/gidpost/buildW/CMakeFiles/CMakeTmp/Debug/cmTC_8aff2.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:/GID64-git/gidproject/gidpost/buildW/CMakeFiles/CMakeTmp/Debug/cmTC_8aff2.lib" /MACHINE:X64  /machine:x64 cmTC_8aff2.dir\Debug\feature_tests.obj
+  cmTC_8aff2.vcxproj -> C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\CMakeTmp\Debug\cmTC_8aff2.exe
+FinalizeBuildStatus:
+  Se eliminará el archivo "cmTC_8aff2.dir\Debug\cmTC_8aff2.tlog\unsuccessfulbuild".
+  Aplicando tarea Touch a "cmTC_8aff2.dir\Debug\cmTC_8aff2.tlog\cmTC_8aff2.lastbuildstate".
+Compilación del proyecto terminada "C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\CMakeTmp\cmTC_8aff2.vcxproj" (destinos predeterminados).
+
+Compilación correcta.
+    0 Advertencia(s)
+    0 Errores
+
+Tiempo transcurrido 00:00:00.61
+
+
+    Feature record: CXX_FEATURE:1cxx_aggregate_default_initializers
+    Feature record: CXX_FEATURE:1cxx_alias_templates
+    Feature record: CXX_FEATURE:1cxx_alignas
+    Feature record: CXX_FEATURE:1cxx_alignof
+    Feature record: CXX_FEATURE:1cxx_attributes
+    Feature record: CXX_FEATURE:1cxx_attribute_deprecated
+    Feature record: CXX_FEATURE:1cxx_auto_type
+    Feature record: CXX_FEATURE:1cxx_binary_literals
+    Feature record: CXX_FEATURE:1cxx_constexpr
+    Feature record: CXX_FEATURE:1cxx_contextual_conversions
+    Feature record: CXX_FEATURE:1cxx_decltype
+    Feature record: CXX_FEATURE:1cxx_decltype_auto
+    Feature record: CXX_FEATURE:1cxx_default_function_template_args
+    Feature record: CXX_FEATURE:1cxx_defaulted_functions
+    Feature record: CXX_FEATURE:1cxx_defaulted_move_initializers
+    Feature record: CXX_FEATURE:1cxx_delegating_constructors
+    Feature record: CXX_FEATURE:1cxx_deleted_functions
+    Feature record: CXX_FEATURE:1cxx_digit_separators
+    Feature record: CXX_FEATURE:1cxx_enum_forward_declarations
+    Feature record: CXX_FEATURE:1cxx_explicit_conversions
+    Feature record: CXX_FEATURE:1cxx_extended_friend_declarations
+    Feature record: CXX_FEATURE:1cxx_extern_templates
+    Feature record: CXX_FEATURE:1cxx_final
+    Feature record: CXX_FEATURE:1cxx_func_identifier
+    Feature record: CXX_FEATURE:1cxx_generalized_initializers
+    Feature record: CXX_FEATURE:1cxx_generic_lambdas
+    Feature record: CXX_FEATURE:1cxx_inheriting_constructors
+    Feature record: CXX_FEATURE:1cxx_inline_namespaces
+    Feature record: CXX_FEATURE:1cxx_lambdas
+    Feature record: CXX_FEATURE:1cxx_lambda_init_captures
+    Feature record: CXX_FEATURE:1cxx_local_type_template_args
+    Feature record: CXX_FEATURE:1cxx_long_long_type
+    Feature record: CXX_FEATURE:1cxx_noexcept
+    Feature record: CXX_FEATURE:1cxx_nonstatic_member_init
+    Feature record: CXX_FEATURE:1cxx_nullptr
+    Feature record: CXX_FEATURE:1cxx_override
+    Feature record: CXX_FEATURE:1cxx_range_for
+    Feature record: CXX_FEATURE:1cxx_raw_string_literals
+    Feature record: CXX_FEATURE:1cxx_reference_qualified_functions
+    Feature record: CXX_FEATURE:1cxx_return_type_deduction
+    Feature record: CXX_FEATURE:1cxx_right_angle_brackets
+    Feature record: CXX_FEATURE:1cxx_rvalue_references
+    Feature record: CXX_FEATURE:1cxx_sizeof_member
+    Feature record: CXX_FEATURE:1cxx_static_assert
+    Feature record: CXX_FEATURE:1cxx_strong_enums
+    Feature record: CXX_FEATURE:1cxx_template_template_parameters
+    Feature record: CXX_FEATURE:1cxx_thread_local
+    Feature record: CXX_FEATURE:1cxx_trailing_return_types
+    Feature record: CXX_FEATURE:1cxx_unicode_literals
+    Feature record: CXX_FEATURE:1cxx_uniform_initialization
+    Feature record: CXX_FEATURE:1cxx_unrestricted_unions
+    Feature record: CXX_FEATURE:1cxx_user_literals
+    Feature record: CXX_FEATURE:1cxx_variable_templates
+    Feature record: CXX_FEATURE:1cxx_variadic_macros
+    Feature record: CXX_FEATURE:1cxx_variadic_templates
+
+
+Detecting CXX [] compiler features compiled with the following output:
+Change Dir: C:/GID64-git/gidproject/gidpost/buildW/CMakeFiles/CMakeTmp
+
+Run Build Command:"C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise/MSBuild/15.0/Bin/MSBuild.exe" "cmTC_ce813.vcxproj" "/p:Configuration=Debug" "/p:VisualStudioVersion=15.0"
+Microsoft (R) Build Engine versión 15.6.85.37198 para .NET Framework
+Copyright (C) Microsoft Corporation. Todos los derechos reservados.
+
+Compilación iniciada a las 05/04/2018 19:41:18.
+Proyecto "C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\CMakeTmp\cmTC_ce813.vcxproj" en nodo 1 (destinos predeterminados).
+PrepareForBuild:
+  Creando directorio "cmTC_ce813.dir\Debug\".
+  Creando directorio "C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\CMakeTmp\Debug\".
+  Creando directorio "cmTC_ce813.dir\Debug\cmTC_ce813.tlog\".
+InitializeBuildStatus:
+  Se creará "cmTC_ce813.dir\Debug\cmTC_ce813.tlog\unsuccessfulbuild" porque se especificó "AlwaysCreate".
+ClCompile:
+  C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\VC\Tools\MSVC\14.13.26128\bin\HostX86\x64\CL.exe /c /Zi /W3 /WX- /diagnostics:classic /Od /Ob0 /D WIN32 /D _WINDOWS /D "CMAKE_INTDIR=\"Debug\"" /D _MBCS /Gm- /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /GR /Fo"cmTC_ce813.dir\Debug\\" /Fd"cmTC_ce813.dir\Debug\vc141.pdb" /Gd /TP /FC /errorReport:queue "C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\feature_tests.cxx"
+  Microsoft (R) C/C++ Optimizing Compiler Version 19.13.26129 for x64
+  Copyright (C) Microsoft Corporation.  All rights reserved.
+  
+  cl /c /Zi /W3 /WX- /diagnostics:classic /Od /Ob0 /D WIN32 /D _WINDOWS /D "CMAKE_INTDIR=\"Debug\"" /D _MBCS /Gm- /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /GR /Fo"cmTC_ce813.dir\Debug\\" /Fd"cmTC_ce813.dir\Debug\vc141.pdb" /Gd /TP /FC /errorReport:queue "C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\feature_tests.cxx"
+  feature_tests.cxx
+  
+Link:
+  C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\VC\Tools\MSVC\14.13.26128\bin\HostX86\x64\link.exe /ERRORREPORT:QUEUE /OUT:"C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\CMakeTmp\Debug\cmTC_ce813.exe" /INCREMENTAL /NOLOGO kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"C:/GID64-git/gidproject/gidpost/buildW/CMakeFiles/CMakeTmp/Debug/cmTC_ce813.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:/GID64-git/gidproject/gidpost/buildW/CMakeFiles/CMakeTmp/Debug/cmTC_ce813.lib" /MACHINE:X64  /machine:x64 cmTC_ce813.dir\Debug\feature_tests.obj
+  cmTC_ce813.vcxproj -> C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\CMakeTmp\Debug\cmTC_ce813.exe
+FinalizeBuildStatus:
+  Se eliminará el archivo "cmTC_ce813.dir\Debug\cmTC_ce813.tlog\unsuccessfulbuild".
+  Aplicando tarea Touch a "cmTC_ce813.dir\Debug\cmTC_ce813.tlog\cmTC_ce813.lastbuildstate".
+Compilación del proyecto terminada "C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\CMakeTmp\cmTC_ce813.vcxproj" (destinos predeterminados).
+
+Compilación correcta.
+    0 Advertencia(s)
+    0 Errores
+
+Tiempo transcurrido 00:00:00.59
+
+
+    Feature record: CXX_FEATURE:1cxx_aggregate_default_initializers
+    Feature record: CXX_FEATURE:1cxx_alias_templates
+    Feature record: CXX_FEATURE:1cxx_alignas
+    Feature record: CXX_FEATURE:1cxx_alignof
+    Feature record: CXX_FEATURE:1cxx_attributes
+    Feature record: CXX_FEATURE:1cxx_attribute_deprecated
+    Feature record: CXX_FEATURE:1cxx_auto_type
+    Feature record: CXX_FEATURE:1cxx_binary_literals
+    Feature record: CXX_FEATURE:1cxx_constexpr
+    Feature record: CXX_FEATURE:1cxx_contextual_conversions
+    Feature record: CXX_FEATURE:1cxx_decltype
+    Feature record: CXX_FEATURE:1cxx_decltype_auto
+    Feature record: CXX_FEATURE:1cxx_default_function_template_args
+    Feature record: CXX_FEATURE:1cxx_defaulted_functions
+    Feature record: CXX_FEATURE:1cxx_defaulted_move_initializers
+    Feature record: CXX_FEATURE:1cxx_delegating_constructors
+    Feature record: CXX_FEATURE:1cxx_deleted_functions
+    Feature record: CXX_FEATURE:1cxx_digit_separators
+    Feature record: CXX_FEATURE:1cxx_enum_forward_declarations
+    Feature record: CXX_FEATURE:1cxx_explicit_conversions
+    Feature record: CXX_FEATURE:1cxx_extended_friend_declarations
+    Feature record: CXX_FEATURE:1cxx_extern_templates
+    Feature record: CXX_FEATURE:1cxx_final
+    Feature record: CXX_FEATURE:1cxx_func_identifier
+    Feature record: CXX_FEATURE:1cxx_generalized_initializers
+    Feature record: CXX_FEATURE:1cxx_generic_lambdas
+    Feature record: CXX_FEATURE:1cxx_inheriting_constructors
+    Feature record: CXX_FEATURE:1cxx_inline_namespaces
+    Feature record: CXX_FEATURE:1cxx_lambdas
+    Feature record: CXX_FEATURE:1cxx_lambda_init_captures
+    Feature record: CXX_FEATURE:1cxx_local_type_template_args
+    Feature record: CXX_FEATURE:1cxx_long_long_type
+    Feature record: CXX_FEATURE:1cxx_noexcept
+    Feature record: CXX_FEATURE:1cxx_nonstatic_member_init
+    Feature record: CXX_FEATURE:1cxx_nullptr
+    Feature record: CXX_FEATURE:1cxx_override
+    Feature record: CXX_FEATURE:1cxx_range_for
+    Feature record: CXX_FEATURE:1cxx_raw_string_literals
+    Feature record: CXX_FEATURE:1cxx_reference_qualified_functions
+    Feature record: CXX_FEATURE:1cxx_return_type_deduction
+    Feature record: CXX_FEATURE:1cxx_right_angle_brackets
+    Feature record: CXX_FEATURE:1cxx_rvalue_references
+    Feature record: CXX_FEATURE:1cxx_sizeof_member
+    Feature record: CXX_FEATURE:1cxx_static_assert
+    Feature record: CXX_FEATURE:1cxx_strong_enums
+    Feature record: CXX_FEATURE:1cxx_template_template_parameters
+    Feature record: CXX_FEATURE:1cxx_thread_local
+    Feature record: CXX_FEATURE:1cxx_trailing_return_types
+    Feature record: CXX_FEATURE:1cxx_unicode_literals
+    Feature record: CXX_FEATURE:1cxx_uniform_initialization
+    Feature record: CXX_FEATURE:1cxx_unrestricted_unions
+    Feature record: CXX_FEATURE:1cxx_user_literals
+    Feature record: CXX_FEATURE:1cxx_variable_templates
+    Feature record: CXX_FEATURE:1cxx_variadic_macros
+    Feature record: CXX_FEATURE:1cxx_variadic_templates

@@ -1,0 +1,38 @@
+Determining if the include file pthread.h exists failed with the following output:
+Change Dir: C:/GID64-git/gidproject/gidpost/buildW/CMakeFiles/CMakeTmp
+
+Run Build Command:"C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise/MSBuild/15.0/Bin/MSBuild.exe" "cmTC_388a8.vcxproj" "/p:Configuration=Debug" "/p:VisualStudioVersion=15.0"
+Microsoft (R) Build Engine versi¢n 15.5.180.51428 para .NET Framework
+Copyright (C) Microsoft Corporation. Todos los derechos reservados.
+
+Compilaci¢n iniciada a las 23/01/2018 13:10:31.
+Proyecto "C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\CMakeTmp\cmTC_388a8.vcxproj" en nodo 1 (destinos predeterminados).
+PrepareForBuild:
+  Creando directorio "cmTC_388a8.dir\Debug\".
+  Creando directorio "C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\CMakeTmp\Debug\".
+  Creando directorio "cmTC_388a8.dir\Debug\cmTC_388a8.tlog\".
+InitializeBuildStatus:
+  Se crear  "cmTC_388a8.dir\Debug\cmTC_388a8.tlog\unsuccessfulbuild" porque se especific¢ "AlwaysCreate".
+ClCompile:
+  C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\VC\Tools\MSVC\14.12.25827\bin\HostX86\x64\CL.exe /c /Zi /W3 /WX- /diagnostics:classic /Od /Ob0 /D WIN32 /D _WINDOWS /D "CMAKE_INTDIR=\"Debug\"" /D _MBCS /Gm- /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"cmTC_388a8.dir\Debug\\" /Fd"cmTC_388a8.dir\Debug\vc141.pdb" /Gd /TC /errorReport:queue "C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\CMakeTmp\CheckIncludeFile.c"
+  Microsoft (R) C/C++ Optimizing Compiler Version 19.12.25834 for x64
+  Copyright (C) Microsoft Corporation.  All rights reserved.
+  
+  cl /c /Zi /W3 /WX- /diagnostics:classic /Od /Ob0 /D WIN32 /D _WINDOWS /D "CMAKE_INTDIR=\"Debug\"" /D _MBCS /Gm- /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"cmTC_388a8.dir\Debug\\" /Fd"cmTC_388a8.dir\Debug\vc141.pdb" /Gd /TC /errorReport:queue "C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\CMakeTmp\CheckIncludeFile.c"
+  CheckIncludeFile.c
+  
+C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\CMakeTmp\CheckIncludeFile.c(1): fatal error C1083: Cannot open include file: 'pthread.h': No such file or directory [C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\CMakeTmp\cmTC_388a8.vcxproj]
+Compilaci¢n del proyecto terminada "C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\CMakeTmp\cmTC_388a8.vcxproj" (destinos predeterminados) -- ERROR.
+
+ERROR al compilar.
+
+"C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\CMakeTmp\cmTC_388a8.vcxproj" (destino predeterminado) (1) ->
+(ClCompile destino) -> 
+  C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\CMakeTmp\CheckIncludeFile.c(1): fatal error C1083: Cannot open include file: 'pthread.h': No such file or directory [C:\GID64-git\gidproject\gidpost\buildW\CMakeFiles\CMakeTmp\cmTC_388a8.vcxproj]
+
+    0 Advertencia(s)
+    1 Errores
+
+Tiempo transcurrido 00:00:00.40
+
+

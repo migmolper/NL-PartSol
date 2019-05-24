@@ -20,7 +20,7 @@ void ReadDatFile(char * Name_File)
   - Conectivity matrix
   - Coordenates of the nodes
   - phi_n : Values of the variables in the n step, 
-        initializerd with the Initial conditions
+  initializerd with the Initial conditions
   - DeltaT : Time-step
   - A_el : Area of the element
   - type_elem : Type of the element (1)
@@ -43,6 +43,7 @@ void ReadDatFile(char * Name_File)
   int nKindAnalysis;
   char * words[MAXW] = {NULL};
   char * SimParameter[MAXW] = {NULL};
+  char * KIND_ANALYSIS[MAXW] = {NULL};
   int Element_i,Nodes_i;
 
   /* Initialize parser to read files */
@@ -89,19 +90,63 @@ void ReadDatFile(char * Name_File)
 	    printf(" * Set the value of E : %f \n",ElasticModulus);
 	  }
 	  /***********************************************************************/
+	  if( strcmp(SimParameter[0],"POISSON_MODULUS") == 0 ){
+	    PoissonModulus = atof(SimParameter[1]);
+	    printf(" * Set the value of mu : %f \n",PoissonModulus);
+	  }
+	  /***********************************************************************/
 	  if( strcmp(SimParameter[0],"KIND_ANALYSIS") == 0 ){
 	    nKindAnalysis = parse (KIND_ANALYSIS, SimParameter[1], delim_perc);
-	    if(nKindAnalysis == 3){
+	    if(nKindAnalysis == 4){
 	      printf(" * Kind of analysis : \n");
+	      /* First parameter of KIND_ANALYSIS : FEM/MPM */
 	      if( strcmp(KIND_ANALYSIS[0],"FEM") == 0 ){
-	  	printf("\t -> Finite element method simulation \n");
+		KindAnalysis = KIND_ANALYSIS[0];
+		printf("\t -> %s : Finite Element Method \n",KindAnalysis); 
 	      }
+	      if(strcmp(KIND_ANALYSIS[0],"MPM") == 0){
+		KindAnalysis = KIND_ANALYSIS[0];
+		printf("\t -> %s : Material Point Method \n",KindAnalysis); 
+	      }
+	      /*************************************************************/
+	      /* Second parameter of KIND_ANALYSIS : U/SIGMA_V */
 	      if( strcmp(KIND_ANALYSIS[1],"SIGMA_V") == 0 ){
-	  	printf("\t -> Sigma-Velocity \n");
+		FieldsAnalysis = KIND_ANALYSIS[1];
+		printf("\t -> %s : Stress-Velocity \n",FieldsAnalysis); 
 	      }
-	      if( strcmp(KIND_ANALYSIS[2],"2STG") == 0 ){
-	  	printf("\t -> Two-step Taylor-Galerkin \n");
+	      if( strcmp(KIND_ANALYSIS[1],"U") == 0 ){
+		FieldsAnalysis = KIND_ANALYSIS[1];
+		printf("\t -> %s : Displacement \n",FieldsAnalysis);
 	      }
+	      /*************************************************************/
+	      /* Third parameter of KIND_ANALYSIS : 1D/2D/3D */
+	      if( strcmp(KIND_ANALYSIS[2],"1D") == 0 ){
+		NumberDimensions = 1;
+		printf("\t -> 1D \n");
+	      }
+	      if( strcmp(KIND_ANALYSIS[2],"2D") == 0 ){
+		NumberDimensions = 2;
+		printf("\t -> 2D \n");
+	      }
+	      if( strcmp(KIND_ANALYSIS[2],"3D") == 0 ){
+		NumberDimensions = 3;
+		printf("\t -> 3D \n");
+	      }
+	      /*************************************************************/
+	      /* Third parameter of KIND_ANALYSIS : 2STG/VerletLF */
+	      if( strcmp(KIND_ANALYSIS[3],"2STG") == 0 ){
+		TimeIntegration = KIND_ANALYSIS[3];
+		printf("\t -> %s : Two-Steps Taylor Galerkin \n",TimeIntegration); 
+	      }
+	      if( strcmp(KIND_ANALYSIS[3],"VerletLF") == 0 ){
+		TimeIntegration = KIND_ANALYSIS[3];
+		printf("\t -> %s : Leapfrog Verlet \n",TimeIntegration); 
+	      }
+	      /*************************************************************/
+	    }
+	    else{
+	      printf("Error in ReadDatFile() : KIND_ANALYSIS !!! \n");
+	      exit(0);
 	    }
 	  }    
 	  /***********************************************************************/
@@ -117,10 +162,15 @@ void ReadDatFile(char * Name_File)
 		   NumTimeStep);
 	  }
 	  /***********************************************************************/
-	  if( strcmp(SimParameter[0],"MESH_FILE") == 0 ){
-	    MeshFileName = SimParameter[1];
+	  if( strcmp(SimParameter[0],"FEM_FILE_NAME") == 0 ){
+	    FEM_MeshFileName = SimParameter[1];
 	    printf(" * Set name of the mesh file : \n");
-	    printf("\t -> %s \n",MeshFileName);
+	    printf("\t -> %s \n",FEM_MeshFileName);
+	  }
+	  if( strcmp(SimParameter[0],"MPM_FILE_NAME") == 0 ){
+	    MPM_MeshFileName = SimParameter[1];
+	    printf(" * Set name of the mesh file : \n");
+	    printf("\t -> %s \n",MPM_MeshFileName);
 	  }
 	  /***********************************************************************/
 	  if( strcmp(SimParameter[0],"COND_INIT") == 0 ){

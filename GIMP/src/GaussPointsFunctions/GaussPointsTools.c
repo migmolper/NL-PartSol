@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 #include "../ToolsLib/TypeDefinitions.h"
 #include "../ToolsLib/Utils.h"
 #include "../InOutFun/InOutFun.h"
@@ -11,17 +12,19 @@
 
 /*********************************************************************/
 
-GaussPoint Initialize_GP_Mesh(Matrix InputFields,
-			      Matrix D,
-			      Element Elem)
+GaussPoint Initialize_GP_Mesh(char * MPM_GID_MeshName,
+			      Matrix InputFields,
+			      double Density0,
+			      Matrix D)
 /*
   
 */
 {
   /* Material point mesh (Gauss-Points) */
-  GaussPoint GP_Mesh;
+  Mesh MPM_GID_Mesh;
+  GaussPoint MPM_Mesh;
   int Init_Num_GP_Elem;
-  int Size_GP_Mesh;
+  int Size_MPM_Mesh;
   int NumFields;
   char * Field[MAXW] = {NULL};
   /* Initialize parser to read files */
@@ -32,109 +35,223 @@ GaussPoint Initialize_GP_Mesh(Matrix InputFields,
   printf("************************************************* \n");
   printf("Begin of initialize the Gauss-Points mesh !!! \n");
 
-  /* do this with a swich...*/
-  if (strcmp(Elem.TypeElem,"Linear")==0){
-    if(Elem.NumNodesElem == 2){ /* 1D Linear mesh */
-      Init_Num_GP_Elem = 1;
-      Size_GP_Mesh = Init_Num_GP_Elem*(Elem.NumElemMesh);
-      GP_Mesh.Phi.x_EC = MatAlloc(1,Size_GP_Mesh);
+  /* Read GP mesh */
+  MPM_GID_Mesh = ReadGidMesh(MPM_GID_MeshName);
+
+  /* The number of Gauss-Points is the same as the number of elements
+   in the input mesh, because we set a GP in the middle of each element */
+  MPM_Mesh.NumGP = MPM_GID_Mesh.NumElemMesh;
+
+  /* Allocate fields */
+  
+  /* Index of the Element */
+  MPM_Mesh.Element_id = (int *)Allocate_ArrayZ(MPM_Mesh.NumGP,sizeof(int));
+
+  /* Coordinates of the GP (Global/Local)*/
+  MPM_Mesh.Phi.x_GC = MatAllocZ(MPM_Mesh.NumGP,3);
+  MPM_Mesh.Phi.x_EC = MatAllocZ(MPM_Mesh.NumGP,2);
+
+  /* Displacement field (Vectorial) */
+  MPM_Mesh.Phi.dis = MatAllocZ(MPM_Mesh.NumGP,2);
+
+  /* Velocity field (Vectorial) */
+  MPM_Mesh.Phi.vel = MatAllocZ(MPM_Mesh.NumGP,2);
+
+  /* Acceleration field (Vectorial) */
+  MPM_Mesh.Phi.acc = MatAllocZ(MPM_Mesh.NumGP,2);
+  
+  /* Stress field (Tensor) */
+  MPM_Mesh.Phi.Stress = MatAllocZ(MPM_Mesh.NumGP,3);
+
+  /* Strain field (Tensor) */
+  MPM_Mesh.Phi.Strain = MatAllocZ(MPM_Mesh.NumGP,3);
+
+  /* Mass field (Scalar) */
+  MPM_Mesh.Phi.mass = MatAllocZ(MPM_Mesh.NumGP,1);
+
+  /* Density field (Scalar) */
+  MPM_Mesh.Phi.rho = MatAllocZ(MPM_Mesh.NumGP,1);
+
+  if(strcmp(MPM_GID_Mesh.TypeElem,"Triangle") == 0 ){
+    Matrix a = MatAllocZ(3,1);
+    Matrix b = MatAllocZ(3,1);
+    Matrix c;
+    Matrix A_el;
+    int NOD_e[3];
+
+    for(int i = 0 ; i<MPM_Mesh.NumGP ; i++){
+      
+      /* Element connectivity */
+      NOD_e[0] = MPM_GID_Mesh.Connectivity[i][0];
+      NOD_e[1] = MPM_GID_Mesh.Connectivity[i][1];
+      NOD_e[2] = MPM_GID_Mesh.Connectivity[i][2];
+      /* a array */
+      a.nV[0] = MPM_GID_Mesh.Coordinates.nM[NOD_e[0]][0] -
+	MPM_GID_Mesh.Coordinates.nM[NOD_e[1]][0];
+      a.nV[1] = MPM_GID_Mesh.Coordinates.nM[NOD_e[0]][1] -
+	MPM_GID_Mesh.Coordinates.nM[NOD_e[1]][1];
+      a.nV[2] = 0.0;
+      /* b array */
+      b.nV[0] = MPM_GID_Mesh.Coordinates.nM[NOD_e[0]][0] -
+	MPM_GID_Mesh.Coordinates.nM[NOD_e[2]][0];
+      b.nV[1] = MPM_GID_Mesh.Coordinates.nM[NOD_e[0]][1] -
+	MPM_GID_Mesh.Coordinates.nM[NOD_e[2]][1];
+      b.nV[2] = 0.0;
+      /* c array */
+      c = Vectorial_prod(a,b);
+      /* Get the area of the element */
+      A_el = Norm_Mat(c,2);
+      A_el.n *= 0.5;
+      free(c.nV);
+      
+      /* Assign the mass parameter */
+      MPM_Mesh.Phi.mass.nV[i] = fabs(A_el.n)*Density0;
+      /* Set the initial density */
+      MPM_Mesh.Phi.rho.nV[i] = Density0;
+      /* Get the coordinates of the centre */
+      MPM_Mesh.Phi.x_GC.nM[i][0] = (double)1/3*(MPM_GID_Mesh.Coordinates.nM[NOD_e[0]][0] +
+						MPM_GID_Mesh.Coordinates.nM[NOD_e[1]][0] +
+						MPM_GID_Mesh.Coordinates.nM[NOD_e[2]][0]);
+      MPM_Mesh.Phi.x_GC.nM[i][1] = (double)1/3*(MPM_GID_Mesh.Coordinates.nM[NOD_e[0]][1] +
+						MPM_GID_Mesh.Coordinates.nM[NOD_e[1]][1] +
+						MPM_GID_Mesh.Coordinates.nM[NOD_e[2]][1]);
+      MPM_Mesh.Phi.x_GC.nM[i][2] = 0.0;
+      /* Local coordinates of the element */
+      MPM_Mesh.Element_id[i] = -999;
+      /* Location in the natural coordinates
+	 of the element (Init to zero) */
+      MPM_Mesh.Phi.x_EC.nM[i][0] = 0.0;
+      MPM_Mesh.Phi.x_EC.nM[i][1] = 0.0;
+      /* Initial displacement */
+      MPM_Mesh.Phi.dis.nM[i][0] = 0.0;
+      MPM_Mesh.Phi.dis.nM[i][1] = 0.0;
+      /* Initial Velocity */
+      MPM_Mesh.Phi.vel.nM[i][0] = 0.0;
+      MPM_Mesh.Phi.vel.nM[i][1] = 0.0;
+      /* Initial Acceleration */
+      MPM_Mesh.Phi.acc.nM[i][0] = 0.0;
+      MPM_Mesh.Phi.acc.nM[i][1] = 0.0;
+      /* Initial Stress */
+      MPM_Mesh.Phi.Stress.nM[i][0] = 0.0;
+      MPM_Mesh.Phi.Stress.nM[i][1] = 0.0;
+      MPM_Mesh.Phi.Stress.nM[i][2] = 0.0;
+      /* Initial Strain */
+      MPM_Mesh.Phi.Strain.nM[i][0] = 0.0;
+      MPM_Mesh.Phi.Strain.nM[i][1] = 0.0;
+      MPM_Mesh.Phi.Strain.nM[i][2] = 0.0;      
+
+      
     }
-  }
-  
-  /* Initialize id of the GP */
-  GP_Mesh.NumGP = Size_GP_Mesh;
-  /* Initialize all the fields :
-     - Mass of the material point  
-       - Position field (Vectorial) in global coordiantes and in element coordinates : 
-       - Displacement, Velocity and acceleration field (Vectorial)  
-       - Stress and Strain fields (Tensorial) 
-       Note : It is not necessary to allocate memory...think about it ;) 
-  */
 
-  NumFields = parse (Field, InputFields.Info, ";\n");
+    /* Free auxiliar arrays */
+    free(a.nV);
+    free(b.nV);
+
+    /* Initialize all the fields :
+       - Mass of the material point
+       - Position field (Vectorial) in global coordiantes and in element coordinates :
+       - Displacement, Velocity and acceleration field (Vectorial)
+       - Stress and Strain fields (Tensorial)
+       Note : It is not necessary to allocate memory...think about it ;)
+    */
+    if(InputFields.nM != NULL){ /* Only if we want to do a hot-start */
+
+      /* NumFields = parse (Field, InputFields.Info, ";\n"); */
     
-  for(int i = 0; i<NumFields ; i++){
-    if(strcmp(Field[i],"X_GP")==0)
-      GP_Mesh.Phi.x_GC.nV = InputFields.nM[i];
+      /* for(int i = 0; i<NumFields ; i++){ */
+      /* 	if(strcmp(Field[i],"X_GP")==0) */
+      /* 	  MPM_Mesh.Phi.x_GC.nM[0] = InputFields.nM[i]; */
 
-    if(strcmp(Field[i],"V_X")==0)
-      GP_Mesh.Phi.vel.nV = InputFields.nM[i];
+      /* 	if(strcmp(Field[i],"Y_GP")==0) */
+      /* 	  MPM_Mesh.Phi.x_GC.nM[1] = InputFields.nM[i]; */
 
-    if(strcmp(Field[i],"SIGMA_X")==0)
-      GP_Mesh.Phi.Stress.nV = InputFields.nM[i];
+      /* 	if(strcmp(Field[i],"V_X")==0) */
+      /* 	  MPM_Mesh.Phi.vel.nM[0] = InputFields.nM[i]; */
 
-    if(strcmp(Field[i],"MASS")==0)
-      GP_Mesh.Phi.mass.nV = InputFields.nM[i];
+      /* 	if(strcmp(Field[i],"V_Y")==0) */
+      /* 	  MPM_Mesh.Phi.vel.nM[1] = InputFields.nM[i]; */
+
+      /* 	if(strcmp(Field[i],"SIGMA_X")==0) */
+      /* 	  MPM_Mesh.Phi.Stress.nM[0] = InputFields.nM[i]; */
+
+      /* 	if(strcmp(Field[i],"SIGMA_Y")==0) */
+      /* 	  MPM_Mesh.Phi.Stress.nM[1] = InputFields.nM[i]; */
+      
+      /* 	if(strcmp(Field[i],"TAUB_XY")==0) */
+      /* 	  MPM_Mesh.Phi.Stress.nM[2] = InputFields.nM[i]; */
+
+      /* 	if(strcmp(Field[i],"MASS")==0) */
+      /* 	  MPM_Mesh.Phi.mass.nV = InputFields.nM[i]; */
+      /* } */
+
+    }
+
+    /* Allocate and Initialize the constitutive response */
+    MPM_Mesh.D = D;
   }
-  
-  /* Id of the element set to a NaN value */ 
-  GP_Mesh.Element_id = (int *)Allocate_Array(Size_GP_Mesh,sizeof(int));
-  for(int i = 0 ; i<Size_GP_Mesh ; i++){
-    GP_Mesh.Element_id[i] = -999;
-  }
-  
-  /* Allocate and Initialize the constitutive response */
-  GP_Mesh.D = D;
 
-  /* Localize all the Gauss-Points */
-  LocateGP(GP_Mesh,Elem);
 
-  /* Initial conditions */
-
-  for(int i = 0 ; i<GP_Mesh.NumGP ;i++){
-    printf("* Set the GP %i initial conditions : \n",i+1);
-    printf("\t -> Element : %i \n",
-	   GP_Mesh.Element_id[i]+1);
-    printf("\t -> X Glob coordinate : %f \n",
-	   GP_Mesh.Phi.x_GC.nV[i]);
-    printf("\t -> X Ref coordiante : %f \n",
-	   GP_Mesh.Phi.x_EC.nV[i]);
-    printf("\t -> Velocity : %f \n",
-	   GP_Mesh.Phi.vel.nV[i]);
-    printf("\t -> Stress : %f \n",
-	   GP_Mesh.Phi.Stress.nV[i]);
-    printf("\t -> Mass : %f \n",
-	   GP_Mesh.Phi.mass.nV[i]);
-  }
+  /* Free the input data */
+  free(MPM_GID_Mesh.Coordinates.nM);
+  free(MPM_GID_Mesh.Connectivity);
+  free(MPM_GID_Mesh.ActiveElem);
 
   /* Final messages */
   printf("End of initialize the Gauss-Points mesh !!! \n");
   
-  return GP_Mesh;
-
+  return MPM_Mesh;
 }
 
 /*********************************************************************/
 
-void LocateGP(GaussPoint GP_Mesh, Element ElementMesh){
+void LocateGP(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int TimeStep){
 
-  double GP_x, Ex_0, Ex_1;
-  int Elem_1D_0,Elem_1D_1;
+  Matrix X_GP;
+  X_GP.N_cols = 3;
+  X_GP.N_rows = 1;
+  X_GP.n = NAN;
+  Matrix Poligon = MatAllocZ(FEM_Mesh.NumNodesElem,3);
+  int * Poligon_Connectivity;
   
-  for(int i = 0 ; i<GP_Mesh.NumGP ; i++){
-    if(GP_Mesh.Element_id[i] == -999){
-      GP_x = GP_Mesh.Phi.x_GC.nV[i];
-      for(int j = 0 ; j<ElementMesh.NumElemMesh ; j++){
-	Elem_1D_0 = ElementMesh.Connectivity[j][0];
-	Elem_1D_1 = ElementMesh.Connectivity[j][1];
-	Ex_0 = ElementMesh.Coordinates[Elem_1D_0-1][0];
-	Ex_1 = ElementMesh.Coordinates[Elem_1D_1-1][0];
-	if( (GP_x >= Ex_0) &&
-	    (GP_x <= Ex_1) ){
-	  GP_Mesh.Element_id[i] = j;
-	  GP_Mesh.Phi.x_EC.nV[i] = (double)(GP_x-Ex_0)/(Ex_1-Ex_0);
-	  /* Activate element */
-	  ElementMesh.ActiveElem[i] += 1;
-	}
-      }   
-    }
-  }
+  for(int i = 0 ; i<MPM_Mesh.NumGP ; i++){
+
+    X_GP.nV = MPM_Mesh.Phi.x_GC.nM[i];
+
+    for(int j = 0 ; j<FEM_Mesh.NumElemMesh ; j++){
+
+      /* Connectivity of the Poligon */
+      Poligon_Connectivity = FEM_Mesh.Connectivity[j];
+
+      /* Fill the poligon Matrix */
+      for(int k = 0 ; k<FEM_Mesh.NumNodesElem ; k++){
+	Poligon.nM[k][0] = FEM_Mesh.Coordinates.nM[Poligon_Connectivity[k]][0];
+	Poligon.nM[k][1] = FEM_Mesh.Coordinates.nM[Poligon_Connectivity[k]][1];
+	Poligon.nM[k][2] = FEM_Mesh.Coordinates.nM[Poligon_Connectivity[k]][2];
+      }
+
+      /* Check out if the GP is in the Element */
+      if(InOut_Poligon(X_GP,Poligon) == 1){
+	/* If the GP is in the element, set the index of the position */
+	MPM_Mesh.Element_id[i] = j;
+	/* If the GP is in the element, get its natural coordinates */
+	MPM_Mesh.Phi.x_EC.nM[i] = GetNaturalCoordinates(Poligon,
+							MPM_Mesh.Phi.x_EC.nM[i],
+							FEM_Mesh.dNdX_ref);
+	break;
+      }
+      
+    } /* Loop over the elements */
+
+  } /* Loop over the GP */
+
+  /* Free memory */
+  free(Poligon.nM);
   
 }
 
 /*********************************************************************/
 
-Matrix GetMassMatrix_L(Element ElementMesh,
+Matrix GetMassMatrix_L(Mesh ElementMesh,
 		       GaussPoint GP_Mesh){
   
   Matrix M_l = MatAllocZ(ElementMesh.NumNodesMesh,1);
@@ -175,7 +292,7 @@ Matrix GetMassMatrix_L(Element ElementMesh,
 
 /*********************************************************************/
 
-void GaussPointsToMesh(Element ElementMesh,
+void GaussPointsToMesh(Mesh ElementMesh,
 		       GaussPoint GP_Mesh,
 		       Matrix Phi_n_GP,
 		       Matrix Phi_n_Nod,
@@ -265,7 +382,7 @@ void GaussPointsToMesh(Element ElementMesh,
 
 /*********************************************************************/
 
-void MeshToGaussPoints(Element ElementMesh,
+void MeshToGaussPoints(Mesh ElementMesh,
 		       GaussPoint GP_Mesh,
 		       Matrix Phi_n_Nod,
 		       Matrix Phi_n_GP,

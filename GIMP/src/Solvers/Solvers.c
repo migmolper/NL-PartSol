@@ -70,7 +70,7 @@ https://en.wikipedia.org/wiki/Conjugate_gradient_method#The_preconditioned_conju
   double Tol_U,Tol_r;
   double alpha_k,beta_k;
   double dividend,divisor;
-  Matrix Norm_r;
+  double Norm_r;
   Matrix r_k,r_k1;
   Matrix p;
   Matrix U;
@@ -105,7 +105,7 @@ https://en.wikipedia.org/wiki/Conjugate_gradient_method#The_preconditioned_conju
 
   /* Calcule the stopping criteria in the first step */
   Norm_r = Norm_Mat(r_k,2);
-  if( (Norm_r.n < Tol_r) ){
+  if( (Norm_r < Tol_r) ){
     STOP_CRITERIA = 1;
     printf("The initial solution was correct \n");   
   }
@@ -144,7 +144,7 @@ https://en.wikipedia.org/wiki/Conjugate_gradient_method#The_preconditioned_conju
     /* Calcule the stopping criteria */
     Norm_r = Norm_Mat(r_k1,2);
     Num_Iter++;
-    if( (Norm_r.n < Tol_r) ||
+    if( (Norm_r < Tol_r) ||
 	(Num_Iter >= Num_Iter_Max) ){
       STOP_CRITERIA = 1;
 
@@ -153,7 +153,7 @@ https://en.wikipedia.org/wiki/Conjugate_gradient_method#The_preconditioned_conju
       }
       else{
 	printf("Warning not convergence reached after the maximum number of iterations: \n");
-	printf("\t Norm of r: %f \n",Norm_r.n);
+	printf("\t Norm of r: %f \n",Norm_r);
       }
       
     }
@@ -268,7 +268,7 @@ Matrix Jacobi_Conjugate_Gradient_Method(Matrix K, Matrix F, Matrix U0)
 
   /* Calcule the stopping criteria in the first step */
   Norm_r = Norm_Mat(r_k,2);
-  if( (Norm_r.n < Tol_r) ){
+  if( (Norm_r < Tol_r) ){
     STOP_CRITERIA = 1;
     printf("The initial solution was correct \n");   
   }
@@ -309,7 +309,7 @@ Matrix Jacobi_Conjugate_Gradient_Method(Matrix K, Matrix F, Matrix U0)
     /* Calcule the stopping criteria */
     Norm_r = Norm_Mat(r_k1,2);
     Num_Iter++;
-    if( (Norm_r.n < Tol_r) ||
+    if( (Norm_r < Tol_r) ||
 	(Num_Iter >= Num_Iter_Max) ){
       STOP_CRITERIA = 1;
 
@@ -318,7 +318,7 @@ Matrix Jacobi_Conjugate_Gradient_Method(Matrix K, Matrix F, Matrix U0)
       }
       else{
 	printf("Warning not convergence reached after the maximum number of iterations: \n");
-	printf("\t Norm of r: %f \n",Norm_r.n);
+	printf("\t Norm of r: %f \n",Norm_r);
       }      
     }
        

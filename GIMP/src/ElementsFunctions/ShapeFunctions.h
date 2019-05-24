@@ -10,6 +10,10 @@ Matrix L2(Matrix);
 
 Matrix dL2(Matrix);
 
+Matrix T3(Matrix);
+
+Matrix dT3(Matrix);
+
 Matrix Q4(Matrix);
 
 Matrix dQ4(Matrix);

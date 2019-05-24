@@ -1,0 +1,107 @@
+# Jamfile for gidpost building
+
+import modules ;
+#using gcc ;
+
+if [ modules.peek : OS ] = NT {
+  using msvc ;
+  using ifort ;
+} else {
+  using gfortran ;
+}
+
+path-constant GIDPOST_ROOT : .. ;
+
+project gidpost-prj
+    :
+    source-location $(GIDPOST_ROOT)/source
+    :
+    requirements <include>$(GIDPOST_ROOT)
+                 <include>$(GIDPOST_ROOT)/source
+    ;
+
+rule gidpost-reqs ( properties * )
+{
+  local result ;
+  switch [ modules.peek : OS ]
+  {
+  case LINUX :
+    {
+      result = <define>f2cFortran ;
+    }
+  case NT :
+    {
+      result = <define>VISUAL_CPLUSPLUS ;
+      if <link>shared in $(properties)
+      {
+        result += <define>GIDPOST_SHARED <define>GIDPOST_EXPORTS <define>_CRT_SECURE_NO_DEPRECATE ;
+      }
+      result += <define>_CRT_SECURE_NO_DEPRECATE ;
+    }
+  }
+  result += <define>GP_USE_CONST ;
+  return $(result) ;
+}
+
+rule fortexe-reqs ( properties * )
+{
+  ECHO "maloooo" ;
+  return "" ;
+}
+
+if [ modules.peek : OS ] = NT {
+  alias libthread ;
+  alias libmath ;
+
+  obj apifortran1 : gidpostfor.c 
+                  : <define>FCALLSC_QUALIFIER="" 
+                    <conditional>@gidpost-reqs ;
+  obj apifortran2 : gidpostfor.c
+                  : <conditional>@gidpost-reqs ;
+
+  alias apifortran : apifortran1 apifortran2 ;
+} else {
+  lib pthread ;
+  alias libthread : pthread ;
+  lib math : : <name>m ;
+  alias libmath : math ;
+  alias apifortran : gidpostfor.c ;
+}
+
+lib z ;
+# zlibint1.c zlibint2.c
+
+lib gidpost
+    :
+    gidpost.c gidpostInt.c  gidpostfor.c gidpostforAPI.c
+    gidpostHash.c hashtab.c recycle.c lookupa.c libthread z
+    :
+    <conditional>@gidpost-reqs
+    ;
+
+
+lib g2clib : : <name>g2c ;
+
+exe testc
+    :
+    ../examples/testpost.c gidpost libmath 
+    :
+    <define>GP_USE_CONST ;
+
+exe testc_fd
+    :
+    ../examples/testpost_fd.c gidpost libmath ;
+
+lib gfortran ;
+
+exe testf
+    :
+    ../examples/testpostfor.f g2clib gidpost gfortran
+    ;
+
+exe bugbin : ../examples/bugbin.c gidpost ;
+
+exe ex1_sphere : ../examples/ex1_sphere.c gidpost libmath ;
+exe ex1_sphere_fd : ../examples/ex1_sphere_fd.c gidpost libmath ;
+
+explicit testf bugbin ;

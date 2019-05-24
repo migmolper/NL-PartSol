@@ -3,6 +3,7 @@
 #include <math.h>
 #include <string.h>
 #include "TypeDefinitions.h"
+#include "Utils.h"
 
 /* Function for arrays declaration */
 void * Allocate_Array(int SizeArray, int SizeType)
@@ -475,7 +476,28 @@ Matrix Scalar_prod(Matrix A,Matrix B)
   return C;
     
 }
+
+/*********************************************************************/
+
+Matrix Vectorial_prod(Matrix a, Matrix b){
+  Matrix c;
+
+  if((a.N_rows == 3)&&(b.N_rows == 3)&&(a.N_cols==1)&&(b.N_cols==1)){
+      c = MatAlloc(3,1);
+      c.nV[0] = a.nV[1]*b.nV[2] - a.nV[2]*b.nV[1];
+      c.nV[1] = a.nV[2]*b.nV[0] - a.nV[0]*b.nV[2];
+      c.nV[2] = a.nV[0]*b.nV[1] - a.nV[1]*b.nV[0];
+  }
+  else{
+    puts("Error in Vectorial_prod() : Incompatible shape of arrays !! ");
+    puts("Remember that it should be : (3x1) x (3x1)  ");
+    exit(0);
+  }
   
+  return c;
+  
+}
+
 /*********************************************************************/
   
 Matrix Tensorial_prod(Matrix A,Matrix B)
@@ -518,6 +540,46 @@ Matrix Tensorial_prod(Matrix A,Matrix B)
   return C;
 }
   
+
+/*********************************************************************/
+
+Matrix Incr_Mat(Matrix A, Matrix Incr)
+/*
+  Increment term by term the Matrix A with Incr
+*/
+{
+
+  /* Variable declaration */
+  Matrix A_incr;
+
+  switch(Incr.N_cols*Incr.N_cols == 1){
+    
+  case 0: /* Incr is a matrix or an array */
+
+    if(){
+    }
+    if(){
+    }
+    
+    break;
+    
+  case 1: /* Incr is a scalar */
+    
+    if(){
+    }
+    if(){
+    }
+    
+    break;
+
+    
+  default :
+    exit(0);
+  }
+
+  return A_incr;
+}  
+
 
 /*********************************************************************/
 
@@ -623,7 +685,7 @@ Matrix Sub_Mat(Matrix A,Matrix B)
 }
 
 
-Matrix Norm_Mat(Matrix In,int kind)
+double Norm_Mat(Matrix In,int kind)
 /*
   Get the norm of a vector in a Euclidean space R2. Implemented norms :
   - Euclidean norm (kind == 2)
@@ -654,6 +716,150 @@ Matrix Norm_Mat(Matrix In,int kind)
   Out.nM = NULL;  
 
   return Out;  
+}
+
+/*********************************************************************/
+
+int InOut_Poligon(Matrix X_Point, Matrix Poligon)
+/*
+  Check if a point is or not (1/0) inside of a poligon.
+  Inputs :
+  - X_Point : Coordinates of the point 
+  - Poligon : Coordinates of the vertex 0,1,....,n,0
+*/
+{
+  /* By default, we suppose that the point is in the poligon */
+  int InOut = 1;
+
+  Matrix a = MatAllocZ(3,1);
+  Matrix b = MatAllocZ(3,1);
+  Matrix c;
+  Matrix n;
+  Matrix nxc;
+
+  /* Get the normal vector */
+  a.nV[0] = Poligon.nM[1][0] - Poligon.nM[0][0];
+  a.nV[1] = Poligon.nM[1][1] - Poligon.nM[0][1];
+  a.nV[2] = Poligon.nM[1][2] - Poligon.nM[0][2];
+  b.nV[0] = Poligon.nM[Poligon.N_rows-1][0] - Poligon.nM[0][0];
+  b.nV[1] = Poligon.nM[Poligon.N_rows-1][1] - Poligon.nM[0][1];
+  b.nV[2] = Poligon.nM[Poligon.N_rows-1][2] - Poligon.nM[0][2];
+  n = Vectorial_prod(a,b);
+  n.N_rows = 1;
+  n.N_cols = 3;
+
+  /* Fill a and b for the First search */
+  a.nV[0] = Poligon.nM[0][0] - Poligon.nM[Poligon.N_rows-1][0];
+  a.nV[1] = Poligon.nM[0][1] - Poligon.nM[Poligon.N_rows-1][1];
+  a.nV[2] = Poligon.nM[0][2] - Poligon.nM[Poligon.N_rows-1][2];
+
+  b.nV[0] = X_Point.nV[0] - Poligon.nM[Poligon.N_rows-1][0];
+  b.nV[1] = X_Point.nV[1] - Poligon.nM[Poligon.N_rows-1][1];
+  b.nV[2] = X_Point.nV[2] - Poligon.nM[Poligon.N_rows-1][2];
+
+  
+  for(int i = 0 ; i<Poligon.N_rows-1 ; i++){
+
+    c = Vectorial_prod(a,b);
+    nxc = Scalar_prod(n,c);
+
+    if(nxc.n < 0){
+      InOut = 0;
+      break;
+    }
+    
+    a.nV[0] = Poligon.nM[i+1][0] - Poligon.nM[i][0];
+    a.nV[1] = Poligon.nM[i+1][1] - Poligon.nM[i][1];
+    a.nV[2] = Poligon.nM[i+1][2] - Poligon.nM[i][2];
+
+    b.nV[0] = X_Point.nV[0] - Poligon.nM[i][0];
+    b.nV[1] = X_Point.nV[1] - Poligon.nM[i][1];
+    b.nV[2] = X_Point.nV[2] - Poligon.nM[i][2];
+    
+
+    
+  }
+
+  free(a.nV);
+  free(b.nV);
+  free(c.nV);
+
+  return InOut;
+}
+
+
+/*********************************************************************/
+
+Matrix Newton_Rapson(Matrix(* Function)(Matrix, Matrix),Matrix Parameter_F,
+		     Matrix(* Jacobian)(Matrix, Matrix),Matrix Parameter_J,
+		     Matrix X)
+
+/*
+  Newton-Rapson method to solve non-linear sistems of equations.
+  Inputs :
+  - Function(X,Parameter_F) : Pointer to function to solve
+  - Parameter_F : F function optional parameters
+  - Jacobian(X,Parameter_J) : Pointer to the jacobian of the function 
+  - Parameter_J : Jacobian optional parameters
+  - X : Initial value of the objetive 
+*/
+{
+
+  /* Auxiliar variables */
+  Matrix F_n;
+  Matrix J_n;
+  Matrix J_m1_n;
+  Matrix DeltaX;
+  double TOL_NormDeltaX = pow(10,-4);
+  double NormDeltaX = pow(10,4);
+  int Num_Iter = 200;  
+  int Iter_i = 0;
+
+  /* 0º Check the convergence criterium */
+  while( (NormDeltaX > TOL_NormDeltaX )
+	 && (Iter_i < Num_Iter) ){
+    
+    /* 1º Evaluate F in X0 and get the negative value */
+    F_n = Function(X,Parameter_F);
+    for(int i = 0 ; i<F_n.N_cols*F_n.N_rows){
+      F_n *= -1;
+    }
+
+    /* 2º Get the jacobian matrix in X0 */
+    J_n = Jacobian(X,Parameter_Jacobian);
+    /* Implement the numerical solution of the Jacobian for cases where the 
+     Jacobian is not easy to derive */
+
+    /* 3º Solve the sistem J(X0)*DeltaX = F(X0) */
+    switch(Jacobian_n.N_cols>3){
+    case 0 : /* If the size of the Jacobian is less than 4, use analitical */
+      J_m1_n = Get_Inverse(J_n);
+      DeltaX = Scalar_prod(J_m1_n,F_n);
+      break;
+    case 1 : /* If the size of the Jacobian is great than 4, use numerical */
+      DeltaX = Jacobi_Conjugate_Gradient_Method(J_n,F_n,DeltaX);
+      break;
+    default :
+      exit(0);
+    }
+
+    /* 4º Update the variables of the convergence criterium */
+    NormDeltaX = Norm_Mat(DeltaX,2);
+    Iter_i++;   
+
+    /* 4º Update the solution */
+    X = Incr_Mat(X,DeltaX);
+
+    /* 5º Free memory */
+    free(J_n.nM);
+    free(J_m1_n.nM);
+    free(DeltaX.nV);
+    
+  }
+  
+  /* 6º Return X */
+  return X;
+  
 }
 
 /*********************************************************************/

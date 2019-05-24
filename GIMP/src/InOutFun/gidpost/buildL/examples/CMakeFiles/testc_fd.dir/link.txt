@@ -1,0 +1,1 @@
+/usr/bin/cc   -std=c99 -D_BSD_SOURCE    CMakeFiles/testc_fd.dir/testpost_fd.c.o  -o testc_fd  -L/home/miguel/GID-git/gidproject/gidpost/buildL/source -rdynamic ../source/libgidpost.a /home/miguel/lib/libhdf5.so /home/miguel/lib/libz.so -ldl -lm -lz -lpthread -lm -Wl,-rpath,/home/miguel/GID-git/gidproject/gidpost/buildL/source:/home/miguel/lib 

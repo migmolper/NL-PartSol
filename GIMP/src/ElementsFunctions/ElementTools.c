@@ -14,7 +14,7 @@ Matrix Get_RefDeformation_Gradient(Matrix X_g,
 /*
   Get the deformation gradient of the reference element:
 
-  F = grad(N_{\alpha}) \otimes x_{\alpha}
+  F_ref = grad(N_{\alpha}) \otimes x_{\alpha}
   
   Inputs :
   - X_g -> This are the coordinates of the nodes
@@ -66,92 +66,92 @@ Matrix Get_RefDeformation_Gradient(Matrix X_g,
 
 /*********************************************************************/
 
-Matrix Get_dNdx_matrix(Matrix X_g,
-		       Matrix dNdX_Ref_GP,
-		       int NumNodesElem,
-		       int Ndim)
-/*
-   Get the derivative matrix of the shape functions in global coordiantes, it is
-   the so called B matrix in the classical formulation of the finite element method
-   Inputs: 
-   - dNdX_ref_GP : Values of the shape functions derivatives in each node
-   evaluate in the GP 
+/* Matrix Get_dNdx_matrix(Matrix X_g, */
+/* 		       Matrix dNdX_Ref_GP, */
+/* 		       int NumNodesElem, */
+/* 		       int Ndim) */
+/* /\* */
+/*    Get the derivative matrix of the shape functions in global coordiantes, it is */
+/*    the so called B matrix in the classical formulation of the finite element method */
+/*    Inputs:  */
+/*    - dNdX_ref_GP : Values of the shape functions derivatives in each node */
+/*    evaluate in the GP  */
 
-   Outputs : Matrix dNdX_GP
-*/
-{
-  /* Decalaration of the output matrix */
-  Matrix dNdX_GP;
-  /* Inverse and transpose of the reference deformation gradient */
-  Matrix F_Ref;
-  Matrix F_Ref_m1;
-  Matrix F_Ref_m1T;
-  /* Nodal values of the reference shape functions derivatives in each node
-     evaluate in the GP */
-  Matrix dN_di_Ref_GP;
-  /* Nodal derivative matrix evaluated in the GP */
-  Matrix dN_di_GP;
+/*    Outputs : Matrix dNdX_GP */
+/* *\/ */
+/* { */
+/*   /\* Decalaration of the output matrix *\/ */
+/*   Matrix dNdX_GP; */
+/*   /\* Inverse and transpose of the reference deformation gradient *\/ */
+/*   Matrix F_Ref; */
+/*   Matrix F_Ref_m1; */
+/*   Matrix F_Ref_m1T; */
+/*   /\* Nodal values of the reference shape functions derivatives in each node */
+/*      evaluate in the GP *\/ */
+/*   Matrix dN_di_Ref_GP; */
+/*   /\* Nodal derivative matrix evaluated in the GP *\/ */
+/*   Matrix dN_di_GP; */
   
-  switch(Ndim){
+/*   switch(Ndim){ */
     
-  case 1:
-    puts("Error in Get_dNdi_matrix() : 1D cases not implemented yet");
-    exit(0);
+/*   case 1: */
+/*     puts("Error in Get_dNdi_matrix() : 1D cases not implemented yet"); */
+/*     exit(0); */
     
-  case 2:
+/*   case 2: */
     
-    /* Allocate the output */
-    dNdX_GP = MatAlloc(3,2*NumNodesElem);
+/*     /\* Allocate the output *\/ */
+/*     dNdX_GP = MatAlloc(3,2*NumNodesElem); */
 
-    /* Allocate the auxiliar array */
-    dN_di_Ref_GP = MatAlloc(2,1);
+/*     /\* Allocate the auxiliar array *\/ */
+/*     dN_di_Ref_GP = MatAlloc(2,1); */
 
-    /* Get the inverse of the reference deformation gradient and transpose it */
-    F_Ref = Get_RefDeformation_Gradient(X_g,dNdX_Ref_GP);
-    F_Ref_m1 = Get_Inverse(F_Ref);
-    free(F_Ref.nM);
-    F_Ref_m1T = Transpose_Mat(F_Ref_m1);
-    free(F_Ref_m1.nM);
+/*     /\* Get the inverse of the reference deformation gradient and transpose it *\/ */
+/*     F_Ref = Get_RefDeformation_Gradient(X_g,dNdX_Ref_GP); */
+/*     F_Ref_m1 = Get_Inverse(F_Ref); */
+/*     free(F_Ref.nM); */
+/*     F_Ref_m1T = Transpose_Mat(F_Ref_m1); */
+/*     free(F_Ref_m1.nM); */
     
-    /* Fill the matrix */
-    for(int i = 0 ; i<NumNodesElem ; i++){
+/*     /\* Fill the matrix *\/ */
+/*     for(int i = 0 ; i<NumNodesElem ; i++){ */
 
-      /* Fill an array with the nodal derivatives in the reference element */
-      dN_di_Ref_GP.nV[0] = dNdX_Ref_GP.nM[0][i];
-      dN_di_Ref_GP.nV[1] = dNdX_Ref_GP.nM[1][i];
+/*       /\* Fill an array with the nodal derivatives in the reference element *\/ */
+/*       dN_di_Ref_GP.nV[0] = dNdX_Ref_GP.nM[0][i]; */
+/*       dN_di_Ref_GP.nV[1] = dNdX_Ref_GP.nM[1][i]; */
 	    
-      /* Obtain the nodal derivarives in the real element */
-      dN_di_GP = Scalar_prod(F_Ref_m1T,dN_di_Ref_GP);
+/*       /\* Obtain the nodal derivarives in the real element *\/ */
+/*       dN_di_GP = Scalar_prod(F_Ref_m1T,dN_di_Ref_GP); */
       
-      /* Fill the array with the nodal partial derivation of the reference element */
-      dNdX_GP.nM[0][2*i] = dN_di_GP.nV[0];
-      dNdX_GP.nM[1][2*i] = 0;
-      dNdX_GP.nM[2][2*i] = dN_di_GP.nV[1];
+/*       /\* Fill the array with the nodal partial derivation of the reference element *\/ */
+/*       dNdX_GP.nM[0][2*i] = dN_di_GP.nV[0]; */
+/*       dNdX_GP.nM[1][2*i] = 0; */
+/*       dNdX_GP.nM[2][2*i] = dN_di_GP.nV[1]; */
 
-      dNdX_GP.nM[0][2*i + 1] = 0;
-      dNdX_GP.nM[1][2*i + 1] = dN_di_GP.nV[1];
-      dNdX_GP.nM[2][2*i + 1] = dN_di_GP.nV[0];
+/*       dNdX_GP.nM[0][2*i + 1] = 0; */
+/*       dNdX_GP.nM[1][2*i + 1] = dN_di_GP.nV[1]; */
+/*       dNdX_GP.nM[2][2*i + 1] = dN_di_GP.nV[0]; */
       
-    }
+/*     } */
 
-    /* Free memory */
-    free(dN_di_GP.nV);
-    free(dN_di_Ref_GP.nV);
-    free(F_Ref_m1T.nM);
+/*     /\* Free memory *\/ */
+/*     free(dN_di_GP.nV); */
+/*     free(dN_di_Ref_GP.nV); */
+/*     free(F_Ref_m1T.nM); */
 
-    break;
+/*     break; */
     
-  case 3:
-    puts("Error in Get_dNdi_matrix() : 3D cases not implemented yet");
-    exit(0);
+/*   case 3: */
+/*     puts("Error in Get_dNdi_matrix() : 3D cases not implemented yet"); */
+/*     exit(0); */
     
-  default :
-    puts("Error in Get_dNdi_matrix() : Wrong case select");
-    exit(0);
-  }
+/*   default : */
+/*     puts("Error in Get_dNdi_matrix() : Wrong case select"); */
+/*     exit(0); */
+/*   } */
   
-  return dNdX_GP;
-}
+/*   return dNdX_GP; */
+/* } */
 
 /*********************************************************************/
 
@@ -216,60 +216,85 @@ Matrix Get_dNdx_matrix(Matrix X_g,
 
 /*********************************************************************/
 
-Matrix Get_Geom_Mass_Matrix(GaussPoint GP_Mesh,
-			    Element ElementMesh) 
-/*
-   Calcule the mass matrix M :
-   Inputs : Element
-   Outputs : Mass matrix (M)
+/* Matrix Get_Geom_Mass_Matrix(GaussPoint GP_Mesh, */
+/* 			    Mesh ElementMesh)  */
+/* /\* */
+/*    Calcule the mass matrix M : */
+/*    Inputs : Element */
+/*    Outputs : Mass matrix (M) */
+/* *\/ */
+/* { */
+/*   /\* Mass matrix *\/ */
+/*   Matrix M; */
+/*   /\* Index of the element where it is the GP *\/ */
+/*   int i_GP_Elem; */
+  
+/*   /\* Coordenates of the element nodes *\/ */
+/*   Matrix X_ElemNod; */
+/*   /\* Pointer to the Connectivity of the element *\/ */
+/*   int * Id_ElemNod; */
+/*   /\* Derivative Matrix *\/ */
+/*   Matrix dNdX_Ref_GP; */
+
+/*   /\* Jacobian *\/ */
+/*   Matrix J_GP; */
+  
+/*   /\* Allocate and initialize M to zero *\/ */
+/*   M = MatAllocZ(ElementMesh.NumNodesMesh, */
+/* 		ElementMesh.NumNodesMesh); */
+
+/*   /\* Allocate the mesh with the nodal coordinates *\/ */
+/*   X_ElemNod = MatAlloc(ElementMesh.NumNodesElem, */
+/* 		       ElementMesh.Dimension); */
+
+/*   /\* Iterate over the Gauss Points *\/ */
+/*   for(int i_GP = 0 ; i_GP<GP_Mesh.NumGP ; i_GP++){ */
+    
+/*     i_GP_Elem = GP_Mesh.Element_id[i_GP]; */
+
+/*     /\* Calcule the Jacobian of the element evaluated in the GP : *\/ */
+/*     /\* Get the element connectivity and take in to account that  */
+/*        in the C programming languaje the index starts in 0 *\/ */
+/*     Id_ElemNod = ElementMesh.Connectivity[i_GP_Elem]; */
+/*     /\* Get the coordinates of the nodes *\/ */
+/*     X_ElemNod.nV[0] = ElementMesh.Coordinates.nM[Id_ElemNod[0] - 1][0]; */
+/*     X_ElemNod.nV[1] = ElementMesh.Coordinates.nM[Id_ElemNod[1] - 1][0]; */
+/*     dNdX_Ref_GP = ElementMesh.dNdX_ref(X_ElemNod); */
+/*     J_GP = Get_RefDeformation_Gradient(X_ElemNod,dNdX_Ref_GP); */
+
+/*     M.nM[Id_ElemNod[0]-1][Id_ElemNod[0]-1] += (double)1/3 * J_GP.n; */
+/*     M.nM[Id_ElemNod[0]-1][Id_ElemNod[1]-1] += (double)1/6 * J_GP.n; */
+/*     M.nM[Id_ElemNod[1]-1][Id_ElemNod[0]-1] += (double)1/6 * J_GP.n; */
+/*     M.nM[Id_ElemNod[1]-1][Id_ElemNod[1]-1] += (double)1/3 * J_GP.n; */
+    
+/*   } */
+
+/*   return M; */
+
+
+/* } */
+
+/*********************************************************************/
+
+
+double * GetNaturalCoordinates(Matrix Element_Coords,
+			       double * x0_EC,
+			       Matrix(* dNdX_ref)(Matrix ))
+/* 
+   The function return the natural coordinates of a point inside of the element, 
+   Inputs :
+   - Coordinates of the element nodes
+   - Initial coordinate of the point to start the search 
+   - Derivative function of the element
 */
 {
-  /* Mass matrix */
-  Matrix M;
-  /* Index of the element where it is the GP */
-  int i_GP_Elem;
-  
-  /* Coordenates of the element nodes */
-  Matrix X_ElemNod;
-  /* Pointer to the Connectivity of the element */
-  int * Id_ElemNod;
-  /* Derivative Matrix */
-  Matrix dNdX_Ref_GP;
 
-  /* Jacobian */
-  Matrix J_GP;
-  
-  /* Allocate and initialize M to zero */
-  M = MatAllocZ(ElementMesh.NumNodesMesh,
-		ElementMesh.NumNodesMesh);
+  double * x_EC;
 
-  /* Allocate the mesh with the nodal coordinates */
-  X_ElemNod = MatAlloc(ElementMesh.NumNodesElem,
-		       ElementMesh.Dimension);
+  /* Assign the initial value to the new-one */
+  x_EC = x0_EC;
 
-  /* Iterate over the Gauss Points */
-  for(int i_GP = 0 ; i_GP<GP_Mesh.NumGP ; i_GP++){
-    
-    i_GP_Elem = GP_Mesh.Element_id[i_GP];
 
-    /* Calcule the Jacobian of the element evaluated in the GP : */
-    /* Get the element connectivity and take in to account that 
-       in the C programming languaje the index starts in 0 */
-    Id_ElemNod = ElementMesh.Connectivity[i_GP_Elem];
-    /* Get the coordinates of the nodes */
-    X_ElemNod.nV[0] = ElementMesh.Coordinates[Id_ElemNod[0] - 1][0];
-    X_ElemNod.nV[1] = ElementMesh.Coordinates[Id_ElemNod[1] - 1][0];
-    dNdX_Ref_GP = ElementMesh.dNdX_ref(X_ElemNod);
-    J_GP = Get_RefDeformation_Gradient(X_ElemNod,dNdX_Ref_GP);
-
-    M.nM[Id_ElemNod[0]-1][Id_ElemNod[0]-1] += (double)1/3 * J_GP.n;
-    M.nM[Id_ElemNod[0]-1][Id_ElemNod[1]-1] += (double)1/6 * J_GP.n;
-    M.nM[Id_ElemNod[1]-1][Id_ElemNod[0]-1] += (double)1/6 * J_GP.n;
-    M.nM[Id_ElemNod[1]-1][Id_ElemNod[1]-1] += (double)1/3 * J_GP.n;
-    
-  }
-
-  return M;
-
+  return x_EC;
 
 }

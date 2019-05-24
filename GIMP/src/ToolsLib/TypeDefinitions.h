@@ -40,7 +40,7 @@ typedef struct {
   /* Position in element coordiantes */
   Matrix x_EC;
   /* Density field */
-  double rho;
+  Matrix rho;
   /* Mass field */
   Matrix mass;
   /* Displacement field */
@@ -87,7 +87,8 @@ typedef struct {
   /* Number of boundary nodes */
   int NumNodesBound;
   /* Table with the coordinates of the nodes of the mesh */
-  double ** Coordinates;
+  /* double ** Coordinates; */
+  Matrix Coordinates;
   /* List of nodes for each element (Connectivity) */
   int **  Connectivity;
   /* List with the boundary nodes */
@@ -109,7 +110,6 @@ typedef struct {
   Matrix (* N_ref)(Matrix );
   /* Derivative shape function of the reference element evaluated in a GP */
   Matrix (* dNdX_ref)(Matrix );
-
     
-} Element;
+} Mesh;
 

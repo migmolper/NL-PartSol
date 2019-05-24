@@ -15,7 +15,9 @@ csrc = \
 	$(wildcard src/Solvers/*.c)\
 	$(wildcard src/ElementsFunctions/*.c)\
 	$(wildcard src/GaussPointsFunctions/*.c)\
-	$(wildcard src/Num_Schemes/*.c)
+	$(wildcard src/Num_Schemes/*.c)\
+	$(wildcard src/MPM_Subroutines/*.c)\
+	$(wildcard src/Boundary_Conditions/*.c)
 
 # Transforms the contents of the src variable, changing all file suffixes
 # from .c to .o, thus constructing the object file list we need.
@@ -31,14 +33,14 @@ $(myprog): $(obj)
 	@echo "*************  GeHoJerez compiled !! ************"
 	@echo " "
 	@echo "**************** Run test case ******************"
-	./$(myprog) test/ejemplo.dat
+	./$(myprog) test/MPM_test/ejemplo.dat
 	@echo " "
 	@echo "*************** Test case passed ****************"
 # run
 test1D:
-	./$(myprog) test/ejemplo.dat
+	./$(myprog) test/FEM_test/ejemplo.dat
 test2D:
-	./$(myprog) test/ejemplo.dat
+	./$(myprog) test/FEM_test/ejemplo.dat
 
 # New rule for cleaning up every target, in order to rebuild
 # the whole program from scratch

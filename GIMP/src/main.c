@@ -5,11 +5,9 @@
 #include "ToolsLib/Utils.h"
 #include "ToolsLib/GlobalVariables.h"
 #include "InOutFun/InOutFun.h"
-#include "Constitutive/Constitutive.h"
 #include "ElementsFunctions/ElementTools.h"
 #include "GaussPointsFunctions/GaussPointsTools.h"
-#include "Solvers/Solvers.h"
-#include "Num_Schemes/Num_Schemes.h"
+#include "Constitutive/Constitutive.h"
 
 void main(int argc, char *argv[])
 /*
@@ -27,91 +25,72 @@ void main(int argc, char *argv[])
   /* Read the .dat file */
   ReadDatFile(argv[1]);
 
-  /* Read mesh data and initialize the element mesh */
-  Element ElementMesh = ReadGidMesh(MeshFileName);
-  ElementMesh.NumberDOF = 2; /* Change this */
-    
-  /* Read the initial conditions fields as a CSV */
-  Matrix InputFields = Read_CSV(InitCondFileName,9);
+  Matrix D_e = LinearElastic2D(PoissonModulus,ElasticModulus);
 
-  /* Read the boundary conditions */
-  ReadBCC(BounCondFileName);
-  
-  /* Get material Constitutive matrix */
-  Matrix D = LinearElastic1D(ElasticModulus);
+  /* Read mesh data and initialize the element mesh */
+  Mesh FEM_Mesh = ReadGidMesh(FEM_MeshFileName);
 
   /* Define Gauss point mesh */
-  GaussPoint GP_Mesh  = Initialize_GP_Mesh(InputFields,D,
-					   ElementMesh);
+  Matrix InputFields;
+  InputFields.nM = NULL;
+  GaussPoint GP_Mesh  = Initialize_GP_Mesh(MPM_MeshFileName,InputFields,Density,D_e);
 
-  /* Define the fields of the sigma-v */
-  Matrix Phi_n_GP; 
-  /* Auxiliar pointer to the fields in t = n, in this special case, to avoid
-     a second malloc that waste memory, we create a two rows table of pointer,
-     so we have to fill the rest of the Matrix type field, in order to allow a 
-     nide behaviour of the linear algebra functions */
-  Phi_n_GP.nM =  (double **)malloc((unsigned)2*sizeof(double *));
-  Phi_n_GP.nV = NULL; /* Set to NULL the (double *) pointer */
-  Phi_n_GP.n = -999; /* Set to -999 the scalar variable */
-  Phi_n_GP.N_rows = 2; /* Number of rows */
-  Phi_n_GP.N_cols = GP_Mesh.NumGP; /* Number of columns */
-  Phi_n_GP.nM[0] = GP_Mesh.Phi.Stress.nV; /* Asign to the first row the stress field */
-  Phi_n_GP.nM[1] = GP_Mesh.Phi.vel.nV; /* Asign to the first row the velocity field */
+  LocateGP(GP_Mesh,FEM_Mesh,0);
 
-  /* Define nodal values of the sigma-v */
-  Matrix Phi_n_Nod = MatAlloc(2,ElementMesh.NumNodesMesh);
-  
-  Matrix A = MatAllocZ(2,2);
-  A.nM[0][1] = - D.n;
-  A.nM[1][0] = - (double)1/Density;
-  printf("************************************************* \n");
-  printf("Coupling matrix A : \n");
-  printf("\t [ %f %f ] \n",A.nM[0][0],A.nM[0][1]);
-  printf("\t [ %f %f ] \n",A.nM[1][0],A.nM[1][1]);
+  /*  */
+  Matrix List_Fields;
+  WriteVtk_MPM("Initial_conditions",GP_Mesh,List_Fields,0);
 
-  /* printf("Phi_n_Nod \n %f ; %f \n %f ; %f \n", */
-  /* 	   Phi_n_Nod.nM[0][0],Phi_n_Nod.nM[1][0], */
-  /* 	   Phi_n_Nod.nM[0][1],Phi_n_Nod.nM[1][1]); */
+  /* /\* Locate the GP in the background mesh (do it in every loop) *\/ */
+  /* LocateGP(GP_Mesh,ElementMesh,t_i); */
+    
+  /* /\* Read the initial conditions fields as a CSV *\/ */
+  /* Matrix InputFields = Read_CSV(InitCondFileName,9); */
 
-  /* Get the lumped mass matrix, in this case, we dont have to update it */
-  /* Matrix M = Get_Geom_Mass_Matrix(GP_Mesh,ElementMesh); */
-  /* Matrix M_l = Get_Lumped_Matrix(M); */
-  Matrix M_l = GetMassMatrix_L(ElementMesh,GP_Mesh);
+  /* /\* Read the boundary conditions *\/ */
+  /* ReadBCC(BounCondFileName); */
 
-  /* Transfer information from the GP to the mesh */
-  GaussPointsToMesh(ElementMesh,GP_Mesh,Phi_n_GP,Phi_n_Nod,M_l);
+  /* /\* Define Gauss point mesh *\/ */
+  /* GaussPoint GP_Mesh  = Initialize_GP_Mesh(InputFields,D, */
+  /* 					   ElementMesh); */
 
-  /* Run simulation  */
-  printf("************************************************* \n");
-  printf("Run simulation :  !!! \n");
 
-  for(int t_i = 0 ; t_i<25; t_i++){
-    printf("************************************************* \n");
-    printf("Time step : %i \n",t_i);
 
-    /* Print the solution in the GP */    
-    GnuplotOutput1D(GP_Mesh.Phi.x_GC,
-		    GP_Mesh.Phi.vel,
-		    0.0, 8.0,
-		    t_i,GP_Mesh.NumGP,
-		    "Velocity");
-    GnuplotOutput1D(GP_Mesh.Phi.x_GC,
-		    GP_Mesh.Phi.Stress,
-		    0.0, 8.0,
-		    t_i,GP_Mesh.NumGP,
-		    "Stress");
-       
-    /* Solve the Eulerian part of the problem in the mesh and get the results in the nodes */
-    Two_Steps_TG(ElementMesh,GP_Mesh,Phi_n_Nod,Phi_n_GP,A,M_l,t_i);
-
-    /* Transfer information from the mesh to the GP for MPM */
-    MeshToGaussPoints(ElementMesh,GP_Mesh,Phi_n_Nod,Phi_n_GP,M_l);
-  
-  }
-  
   exit(EXIT_SUCCESS);
   
   
 }
 
 
+  /* /\********************************************************************\/ */
+  /* /\* Print mesh properties *\/ */
+  /* printf(" * Set Mesh properties : \n"); */
+  /* printf("\t -> Number of nodes : %i \n",ElementMesh.NumNodesMesh); */
+  /* printf("\t -> Number of boundary nodes : %i \n",ElementMesh.NumNodesBound); */
+  /* printf("\t -> Number of elements : %i \n",ElementMesh.NumElemMesh); */
+  /* printf("\t -> Order of the element : %s \n",ElementMesh.TypeElem); */
+  /* printf("\t -> Number of nodes per element : %i \n",ElementMesh.NumNodesElem); */
+  /* printf(" * Boundary nodes : \n"); */
+  /* for(int i = 0 ; i<ElementMesh.NumNodesBound ; i++){ */
+  /*   printf(" %i ",ElementMesh.NodesBound[i]); */
+  /*   if( ((i+1)%4 == 0)) printf("\n"); */
+  /* } */
+  /* printf("\n"); */
+  /* printf(" * Nodal coordinates : \n"); */
+  /* for(int i = 0; i<ElementMesh.NumNodesMesh ; i++){ */
+  /*   printf("\t [%f, %f, %f] \n", */
+  /* 	   ElementMesh.Coordinates.nM[i][0], */
+  /* 	   ElementMesh.Coordinates.nM[i][1], */
+  /* 	   ElementMesh.Coordinates.nM[i][2]); */
+  /* } */
+  /* printf(" * Connectivity mesh : \n"); */
+  /* for(int i =0; i<ElementMesh.NumElemMesh; i++){ */
+  /*   printf("\t Element(%i) : [",i); */
+  /*   for(int j = 0 ; j<ElementMesh.NumNodesElem; j++){ */
+  /*     printf(" %i ",ElementMesh.Connectivity[i][j]); */
+  /*   } */
+  /*   printf("]\n"); */
+  /* } */
+  /* /\* Final messages *\/ */
+  /* printf("End of set mesh properties !!! \n"); */
+  /* /\********************************************************************\/ */
