@@ -1,2 +1,2 @@
-# Minitest2D
+# GeHoJerez
 2D examples
