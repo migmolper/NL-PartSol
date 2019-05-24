@@ -1,4 +1,0 @@
-
-void * AllocateArray(int dim,int trama);
-
-void ** AllocateMatrix(int n_row, int n_col, int trama);
