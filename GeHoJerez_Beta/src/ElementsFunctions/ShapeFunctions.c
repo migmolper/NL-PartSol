@@ -136,6 +136,38 @@ Matrix dQ4(Matrix X_e){
 
 /*********************************************************************/
 
+Matrix Get_GlobalCoordinates_Q4(Matrix X_NC_GP,Matrix X_GC_Nodes)
+/*
+This function evaluate the position of the GP in the element, and get it global coordiantes    
+ */
+{
+  /* 0º Variable declaration */
+  Matrix N_ref;
+  Matrix X_GC_GP;
+  
+  N_ref = Q4(X_NC_GP);
+
+  X_GC_GP.nV[0] =
+    N_ref.nV[0]*X_GC_Nodes.nM[0][0] +
+    N_ref.nV[1]*X_GC_Nodes.nM[1][0] +
+    N_ref.nV[2]*X_GC_Nodes.nM[2][0] +
+    N_ref.nV[3]*X_GC_Nodes.nM[3][0];
+  
+  X_GC_GP.nV[1] =
+    N_ref.nV[0]*X_GC_Nodes.nM[0][1] +
+    N_ref.nV[1]*X_GC_Nodes.nM[1][1] +
+    N_ref.nV[2]*X_GC_Nodes.nM[2][1] +
+    N_ref.nV[3]*X_GC_Nodes.nM[3][1];
+
+
+  free(N_ref.nV);
+
+  return X_GC_GP;
+ 
+}
+
+
+/*********************************************************************/
 
 Matrix Get_RefDeformation_Gradient_Q4(Matrix X_NC_GP,Matrix X_GC_Nodes)
 /*

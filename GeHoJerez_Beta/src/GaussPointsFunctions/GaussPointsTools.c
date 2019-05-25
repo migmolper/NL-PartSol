@@ -235,7 +235,7 @@ void LocateGP(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int TimeStep){
 	/* If the GP is in the element, set the index of the position */
 	MPM_Mesh.Element_id[i] = j;
 	/* If the GP is in the element, get its natural coordinates */
-	X_GP = GetNaturalCoordinates(Poligon,X_GP,FEM_Mesh.dNdX_ref);
+	X_GP = GetNaturalCoordinates(Poligon,X_GP);
 	break;
       }
       

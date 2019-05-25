@@ -246,27 +246,24 @@
 
 /* } */
 
-/*********************************************************************/
-
-
 
 /*********************************************************************/
 
 
-Matrix GetNaturalCoordinates(Matrix Element_Coords,
-			     Matrix X_GP,
-			     Matrix(* dNdX_ref)(Matrix ))
+Matrix GetNaturalCoordinates(Matrix Element_Coords,Matrix X_GP)
 /* 
    The function return the natural coordinates of a point inside of the element, 
    Inputs :
    - Coordinates of the element nodes
    - Initial coordinate of the point to start the search 
    - Derivative function of the element
+
+   Depending of the kind of element, we employ differents types of shape functions
 */
 {
 
-  X_GP =  Newton_Rapson(Matrix(* Function)(Matrix, Matrix),Element_Coords,
-			Matrix(* Jacobian)(Matrix, Matrix),Element_Coords,
+  X_GP =  Newton_Rapson(Get_GlobalCoordinates_Q4,Element_Coords,
+			Get_RefDeformation_Gradient_Q4,Element_Coords,
 			X_GP);
 
   

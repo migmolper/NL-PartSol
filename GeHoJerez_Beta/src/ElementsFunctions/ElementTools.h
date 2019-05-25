@@ -18,3 +18,5 @@ Matrix Get_dNdx_matrix(Matrix,
 
 Matrix Get_Geom_Mass_Matrix(GaussPoint,Mesh);
 
+Matrix GetNaturalCoordinates(Matrix,Matrix);
+
