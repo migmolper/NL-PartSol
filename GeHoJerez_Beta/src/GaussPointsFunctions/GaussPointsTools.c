@@ -215,6 +215,7 @@ void LocateGP(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int TimeStep){
   
   for(int i = 0 ; i<MPM_Mesh.NumGP ; i++){
 
+    /* Assign the value to this auxiliar pointer */ 
     X_GP.nV = MPM_Mesh.Phi.x_GC.nM[i];
 
     for(int j = 0 ; j<FEM_Mesh.NumElemMesh ; j++){
@@ -234,9 +235,7 @@ void LocateGP(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int TimeStep){
 	/* If the GP is in the element, set the index of the position */
 	MPM_Mesh.Element_id[i] = j;
 	/* If the GP is in the element, get its natural coordinates */
-	MPM_Mesh.Phi.x_EC.nM[i] = GetNaturalCoordinates(Poligon,
-							MPM_Mesh.Phi.x_EC.nM[i],
-							FEM_Mesh.dNdX_ref);
+	X_GP = GetNaturalCoordinates(Poligon,X_GP,FEM_Mesh.dNdX_ref);
 	break;
       }
       

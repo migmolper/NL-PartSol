@@ -133,3 +133,40 @@ Matrix dQ4(Matrix X_e){
   return dNdX_ref;
 }
 
+
+/*********************************************************************/
+
+
+Matrix Get_RefDeformation_Gradient_Q4(Matrix X_NC_GP,Matrix X_GC_Nodes)
+/*
+  Get the deformation gradient of the reference element:
+
+  F_ref = grad(N_{\alpha}) \otimes x_{\alpha}
+  
+  Inputs :
+  - X_g -> This are the coordinates of the nodes
+  - dNdX_Ref_GP -> Derivative gradient evaluated in the GP
+
+  Output :
+  - F_Ref -> Deformation gradient of the reference element
+  evaluated in the GP
+*/
+{
+  /* Variable declaration */
+  Matrix F_Ref;
+  Matrix dNdX_Ref_GP;
+
+
+  /* 1º Evaluate the derivarive of the shape function in the GP */
+  dNdX_Ref_GP = dQ4(X_NC_GP);
+
+  /* 2º Get the F_ref */
+  F_Ref = Scalar_prod(dNdX_Ref_GP, /* grad(N_{\alpha}) */
+		      X_GC_Nodes);  /* x_{\alpha} */
+
+  /* 3º Free memory */
+  free(dNdX_Ref_GP.nM);
+    
+
+  return F_Ref;
+}

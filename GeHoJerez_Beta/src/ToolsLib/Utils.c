@@ -835,6 +835,7 @@ Matrix Newton_Rapson(Matrix(* Function)(Matrix, Matrix),Matrix Parameter_F,
     case 0 : /* If the size of the Jacobian is less than 4, use analitical */
       J_m1_n = Get_Inverse(J_n);
       DeltaX = Scalar_prod(J_m1_n,F_n);
+      free(J_m1_n.nM);
       break;
     case 1 : /* If the size of the Jacobian is great than 4, use numerical */
       DeltaX = Jacobi_Conjugate_Gradient_Method(J_n,F_n,DeltaX);
@@ -850,10 +851,10 @@ Matrix Newton_Rapson(Matrix(* Function)(Matrix, Matrix),Matrix Parameter_F,
     /* 4º Update the solution */
     X = Incr_Mat(X,DeltaX);
 
-    /* 5º Free memory */
+    /* 5º Free memory for general variables */
     free(J_n.nM);
-    free(J_m1_n.nM);
     free(DeltaX.nV);
+    free(F_n.nV);
     
   }
   

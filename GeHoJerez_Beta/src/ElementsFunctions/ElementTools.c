@@ -7,34 +7,6 @@
 #include "../Constitutive/Constitutive.h"
 #include "ElementTools.h"
 
-/*********************************************************************/
-
-Matrix Get_RefDeformation_Gradient(Matrix X_g,
-				   Matrix dNdX_Ref_GP)
-/*
-  Get the deformation gradient of the reference element:
-
-  F_ref = grad(N_{\alpha}) \otimes x_{\alpha}
-  
-  Inputs :
-  - X_g -> This are the coordinates of the nodes
-  - dNdX_Ref_GP -> Derivative gradient evaluated in the GP
-
-  Output :
-  - F_Ref -> Deformation gradient of the reference element
-  evaluated in the GP
-*/
-{
-  /* Output declaration */
-  Matrix F_Ref;
-  
-  F_Ref = Scalar_prod(dNdX_Ref_GP, /* grad(N_{\alpha}) */
-		      X_g);  /* x_{\alpha} */
-    
-
-  return F_Ref;
-}
-
 
 /*********************************************************************/
 
@@ -277,9 +249,13 @@ Matrix Get_RefDeformation_Gradient(Matrix X_g,
 /*********************************************************************/
 
 
-double * GetNaturalCoordinates(Matrix Element_Coords,
-			       double * x0_EC,
-			       Matrix(* dNdX_ref)(Matrix ))
+
+/*********************************************************************/
+
+
+Matrix GetNaturalCoordinates(Matrix Element_Coords,
+			     Matrix X_GP,
+			     Matrix(* dNdX_ref)(Matrix ))
 /* 
    The function return the natural coordinates of a point inside of the element, 
    Inputs :
@@ -289,12 +265,12 @@ double * GetNaturalCoordinates(Matrix Element_Coords,
 */
 {
 
-  double * x_EC;
+  X_GP =  Newton_Rapson(Matrix(* Function)(Matrix, Matrix),Element_Coords,
+			Matrix(* Jacobian)(Matrix, Matrix),Element_Coords,
+			X_GP);
 
-  /* Assign the initial value to the new-one */
-  x_EC = x0_EC;
+  
 
-
-  return x_EC;
+  return X_GP;
 
 }
