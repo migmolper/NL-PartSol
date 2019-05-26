@@ -3,6 +3,7 @@
 #include <math.h>
 #include <string.h>
 #include "TypeDefinitions.h"
+#include "../Solvers/Solvers.h"
 #include "Utils.h"
 
 /* Function for arrays declaration */
@@ -549,25 +550,53 @@ Matrix Incr_Mat(Matrix A, Matrix Incr)
 */
 {
 
-  /* Variable declaration */
-  Matrix A_incr;
+  int Bool;
 
-  switch(Incr.N_cols*Incr.N_cols == 1){
+  Bool = Incr.N_cols*Incr.N_rows == 1;
+
+  switch(Bool){
     
   case 0: /* Incr is a matrix or an array */
 
-    if(){
+    if( (A.N_cols != Incr.N_cols) ||
+	(A.N_rows != Incr.N_rows) ){ /* Check the size of the input */
+      printf("Error in Incr_Mat() : A is incompatible with the Incr !! \n");
+      exit(0);
     }
-    if(){
+
+    if(Incr.N_cols == Incr.N_rows){ /* Matrix */
+      for(int i = 0 ; i<Incr.N_rows ; i++){
+	for(int j = 0 ; j<Incr.N_cols ; j++){
+	  A.nM[i][j] += Incr.nM[i][j];
+	}
+      }	
+    }
+    
+    if( (Incr.N_cols == 1) ||
+	(Incr.N_rows == 1) ){ /* Array */
+      for(int i = 0 ; i<Incr.N_cols*Incr.N_rows ; i++){
+	A.nV[i] += Incr.nV[i];
+      }
     }
     
     break;
     
   case 1: /* Incr is a scalar */
     
-    if(){
+    if( (A.N_cols == 1) ||
+	(A.N_rows == 1) ){ /* A is an array */
+      for(int i = 0 ; i<A.N_cols*A.N_rows ; i++){
+	A.nV[i] += Incr.n;
+      }
     }
-    if(){
+    
+    if( (A.N_cols != 1) &&
+	(A.N_rows != 1) ){
+      for(int i = 0 ; i<A.N_rows ; i++){
+	for(int j = 0 ; j<A.N_cols ; j++){
+	  A.nM[i][j] += Incr.n;
+	}
+      }	
     }
     
     break;
@@ -577,7 +606,7 @@ Matrix Incr_Mat(Matrix A, Matrix Incr)
     exit(0);
   }
 
-  return A_incr;
+  return A;
 }  
 
 
@@ -698,7 +727,7 @@ double Norm_Mat(Matrix In,int kind)
     exit(0);
   }
     
-  Matrix Out;
+  double Out;
   double aux;
 
   /* Euclidean norm */
@@ -708,12 +737,8 @@ double Norm_Mat(Matrix In,int kind)
     for(int i = 0 ; i< In.N_rows*In.N_cols ; i++){
       aux += In.nV[i]*In.nV[i] ;
     }
-    Out.n = pow(aux,0.5);
+    Out = pow(aux,0.5);
   }
-
-  /* Set to NULL the array and the matrix */
-  Out.nV = NULL;
-  Out.nM = NULL;  
 
   return Out;  
 }
@@ -792,11 +817,14 @@ int InOut_Poligon(Matrix X_Point, Matrix Poligon)
 
 Matrix Newton_Rapson(Matrix(* Function)(Matrix, Matrix),Matrix Parameter_F,
 		     Matrix(* Jacobian)(Matrix, Matrix),Matrix Parameter_J,
-		     Matrix X)
+		     Matrix Y,Matrix X)
 
 /*
-  Newton-Rapson method to solve non-linear sistems of equations.
+  Newton-Rapson method to solve non-linear sistems of equations :
+  Y = Y(X) -> We solve -> F(X) =  Y - Y(X) = 0
+  F(X + DeltaX) = F(X) + J(X)*DeltaX = 0 ---> DeltaX = - J(X)^{-1}*F(X)
   Inputs :
+  - Y : Value of the function
   - Function(X,Parameter_F) : Pointer to function to solve
   - Parameter_F : F function optional parameters
   - Jacobian(X,Parameter_J) : Pointer to the jacobian of the function 
@@ -812,26 +840,28 @@ Matrix Newton_Rapson(Matrix(* Function)(Matrix, Matrix),Matrix Parameter_F,
   Matrix DeltaX;
   double TOL_NormDeltaX = pow(10,-4);
   double NormDeltaX = pow(10,4);
-  int Num_Iter = 200;  
+  int Num_Iter = 20;  
   int Iter_i = 0;
+  int Bool;
 
   /* 0º Check the convergence criterium */
   while( (NormDeltaX > TOL_NormDeltaX )
 	 && (Iter_i < Num_Iter) ){
-    
+
     /* 1º Evaluate F in X0 and get the negative value */
     F_n = Function(X,Parameter_F);
-    for(int i = 0 ; i<F_n.N_cols*F_n.N_rows){
-      F_n *= -1;
+    for(int i = 0 ; i<F_n.N_cols*F_n.N_rows ; i++){
+      F_n.nV[i] = Y.nV[i] - F_n.nV[i];
     }
-
+    
     /* 2º Get the jacobian matrix in X0 */
-    J_n = Jacobian(X,Parameter_Jacobian);
+    J_n = Jacobian(X,Parameter_J);
     /* Implement the numerical solution of the Jacobian for cases where the 
      Jacobian is not easy to derive */
 
     /* 3º Solve the sistem J(X0)*DeltaX = F(X0) */
-    switch(Jacobian_n.N_cols>3){
+    Bool = J_n.N_cols>3;
+    switch(Bool){
     case 0 : /* If the size of the Jacobian is less than 4, use analitical */
       J_m1_n = Get_Inverse(J_n);
       DeltaX = Scalar_prod(J_m1_n,F_n);
@@ -846,11 +876,11 @@ Matrix Newton_Rapson(Matrix(* Function)(Matrix, Matrix),Matrix Parameter_F,
 
     /* 4º Update the variables of the convergence criterium */
     NormDeltaX = Norm_Mat(DeltaX,2);
-    Iter_i++;   
+    Iter_i++;
 
     /* 4º Update the solution */
     X = Incr_Mat(X,DeltaX);
-
+    
     /* 5º Free memory for general variables */
     free(J_n.nM);
     free(DeltaX.nV);

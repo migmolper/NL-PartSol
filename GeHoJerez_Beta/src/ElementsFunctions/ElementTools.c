@@ -250,7 +250,7 @@
 /*********************************************************************/
 
 
-Matrix GetNaturalCoordinates(Matrix Element_Coords,Matrix X_GP)
+Matrix GetNaturalCoordinates(Matrix X_EC_GP,Matrix X_GC_GP,Matrix Element_GC_Nod)
 /* 
    The function return the natural coordinates of a point inside of the element, 
    Inputs :
@@ -261,13 +261,11 @@ Matrix GetNaturalCoordinates(Matrix Element_Coords,Matrix X_GP)
    Depending of the kind of element, we employ differents types of shape functions
 */
 {
-
-  X_GP =  Newton_Rapson(Get_GlobalCoordinates_Q4,Element_Coords,
-			Get_RefDeformation_Gradient_Q4,Element_Coords,
-			X_GP);
-
   
+  X_EC_GP =  Newton_Rapson(Get_GlobalCoordinates_Q4,Element_GC_Nod,
+			   Get_RefDeformation_Gradient_Q4,Element_GC_Nod,
+			   X_GC_GP,X_EC_GP);
 
-  return X_GP;
+  return X_EC_GP;
 
 }

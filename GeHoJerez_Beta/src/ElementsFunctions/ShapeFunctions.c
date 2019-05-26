@@ -35,6 +35,63 @@ Matrix dL2(Matrix X_e){
   return dNdX_ref;
 }
 
+/* Global coordinates of the four nodes quadrilateral */
+Matrix Get_GlobalCoordinates_L2(Matrix X_NC_GP,Matrix X_GC_Nodes)
+/*
+This function evaluate the position of the GP in the element, and get it global coordiantes    
+ */
+{
+  /* 0º Variable declaration */
+  Matrix N_ref;
+  Matrix X_GC_GP;
+  
+  N_ref = L2(X_NC_GP);
+
+  X_GC_GP.n = N_ref.nV[0]*X_GC_Nodes.nM[0][0] +
+    N_ref.nV[1]*X_GC_Nodes.nM[1][0];
+
+  free(N_ref.nV);
+
+  return X_GC_GP;
+ 
+}
+
+/* Deformation gradient of the two-nodes linear element */
+Matrix Get_RefDeformation_Gradient_L2(Matrix X_NC_GP,Matrix X_GC_Nodes)
+/*
+  Get the deformation gradient of the reference element:
+
+  F_ref = grad(N_{\alpha}) \otimes x_{\alpha}
+  
+  Inputs :
+  - X_g -> This are the coordinates of the nodes
+  - dNdX_Ref_GP -> Derivative gradient evaluated in the GP
+
+  Output :
+  - F_Ref -> Deformation gradient of the reference element
+  evaluated in the GP
+*/
+{
+  /* Variable declaration */
+  Matrix F_Ref;
+  Matrix dNdX_Ref_GP;
+
+
+  /* 1º Evaluate the derivarive of the shape function in the GP */
+  dNdX_Ref_GP = dL2(X_NC_GP);
+
+  /* 2º Get the F_ref */
+  F_Ref.n = dNdX_Ref_GP.nV[0]*X_GC_Nodes.nM[0][0] +
+    dNdX_Ref_GP.nV[1]*X_GC_Nodes.nM[1][0];
+    
+  /* 3º Free memory */
+  free(dNdX_Ref_GP.nM);
+    
+
+  return F_Ref;
+}
+
+
 /***********************************************/
 /********* 2D triangle linear element **********/
 /***********************************************/
@@ -133,9 +190,7 @@ Matrix dQ4(Matrix X_e){
   return dNdX_ref;
 }
 
-
-/*********************************************************************/
-
+/* Global coordinates of the four nodes quadrilateral */
 Matrix Get_GlobalCoordinates_Q4(Matrix X_NC_GP,Matrix X_GC_Nodes)
 /*
 This function evaluate the position of the GP in the element, and get it global coordiantes    
@@ -146,6 +201,8 @@ This function evaluate the position of the GP in the element, and get it global 
   Matrix X_GC_GP;
   
   N_ref = Q4(X_NC_GP);
+
+  X_GC_GP = MatAlloc(2,1);
 
   X_GC_GP.nV[0] =
     N_ref.nV[0]*X_GC_Nodes.nM[0][0] +
@@ -159,16 +216,13 @@ This function evaluate the position of the GP in the element, and get it global 
     N_ref.nV[2]*X_GC_Nodes.nM[2][1] +
     N_ref.nV[3]*X_GC_Nodes.nM[3][1];
 
-
   free(N_ref.nV);
 
   return X_GC_GP;
  
 }
 
-
-/*********************************************************************/
-
+/* Deformation gradient of the four-nodes quadrilateral */
 Matrix Get_RefDeformation_Gradient_Q4(Matrix X_NC_GP,Matrix X_GC_Nodes)
 /*
   Get the deformation gradient of the reference element:
@@ -185,7 +239,7 @@ Matrix Get_RefDeformation_Gradient_Q4(Matrix X_NC_GP,Matrix X_GC_Nodes)
 */
 {
   /* Variable declaration */
-  Matrix F_Ref;
+  Matrix F_Ref = MatAlloc(2,2);
   Matrix dNdX_Ref_GP;
 
 
@@ -193,8 +247,25 @@ Matrix Get_RefDeformation_Gradient_Q4(Matrix X_NC_GP,Matrix X_GC_Nodes)
   dNdX_Ref_GP = dQ4(X_NC_GP);
 
   /* 2º Get the F_ref */
-  F_Ref = Scalar_prod(dNdX_Ref_GP, /* grad(N_{\alpha}) */
-		      X_GC_Nodes);  /* x_{\alpha} */
+  F_Ref.nM[0][0] = X_GC_Nodes.nM[0][0]*dNdX_Ref_GP.nM[0][0] +
+    X_GC_Nodes.nM[1][0]*dNdX_Ref_GP.nM[0][1] +
+    X_GC_Nodes.nM[2][0]*dNdX_Ref_GP.nM[0][2] +
+    X_GC_Nodes.nM[3][0]*dNdX_Ref_GP.nM[0][3];
+  
+  F_Ref.nM[0][1] = X_GC_Nodes.nM[0][0]*dNdX_Ref_GP.nM[1][0] +
+    X_GC_Nodes.nM[1][0]*dNdX_Ref_GP.nM[1][1] +
+    X_GC_Nodes.nM[2][0]*dNdX_Ref_GP.nM[1][2] +
+    X_GC_Nodes.nM[3][0]*dNdX_Ref_GP.nM[1][3];
+  
+  F_Ref.nM[1][0] = X_GC_Nodes.nM[0][1]*dNdX_Ref_GP.nM[0][0] +
+    X_GC_Nodes.nM[1][1]*dNdX_Ref_GP.nM[0][1] +
+    X_GC_Nodes.nM[2][1]*dNdX_Ref_GP.nM[0][2] +
+    X_GC_Nodes.nM[3][1]*dNdX_Ref_GP.nM[0][3];
+  
+  F_Ref.nM[1][1] = X_GC_Nodes.nM[0][1]*dNdX_Ref_GP.nM[1][0] +
+    X_GC_Nodes.nM[1][1]*dNdX_Ref_GP.nM[1][1] +
+    X_GC_Nodes.nM[2][1]*dNdX_Ref_GP.nM[1][2] +
+    X_GC_Nodes.nM[3][1]*dNdX_Ref_GP.nM[1][3];
 
   /* 3º Free memory */
   free(dNdX_Ref_GP.nM);

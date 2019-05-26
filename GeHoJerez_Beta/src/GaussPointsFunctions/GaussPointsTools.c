@@ -76,7 +76,7 @@ GaussPoint Initialize_GP_Mesh(char * MPM_GID_MeshName,
     Matrix a = MatAllocZ(3,1);
     Matrix b = MatAllocZ(3,1);
     Matrix c;
-    Matrix A_el;
+    double A_el;
     int NOD_e[3];
 
     for(int i = 0 ; i<MPM_Mesh.NumGP ; i++){
@@ -100,12 +100,11 @@ GaussPoint Initialize_GP_Mesh(char * MPM_GID_MeshName,
       /* c array */
       c = Vectorial_prod(a,b);
       /* Get the area of the element */
-      A_el = Norm_Mat(c,2);
-      A_el.n *= 0.5;
+      A_el = fabs(Norm_Mat(c,2)*0.5);
       free(c.nV);
       
       /* Assign the mass parameter */
-      MPM_Mesh.Phi.mass.nV[i] = fabs(A_el.n)*Density0;
+      MPM_Mesh.Phi.mass.nV[i] = A_el*Density0;
       /* Set the initial density */
       MPM_Mesh.Phi.rho.nV[i] = Density0;
       /* Get the coordinates of the centre */
@@ -206,17 +205,21 @@ GaussPoint Initialize_GP_Mesh(char * MPM_GID_MeshName,
 
 void LocateGP(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int TimeStep){
 
-  Matrix X_GP;
-  X_GP.N_cols = 3;
-  X_GP.N_rows = 1;
-  X_GP.n = NAN;
-  Matrix Poligon = MatAllocZ(FEM_Mesh.NumNodesElem,3);
+  Matrix X_GC_GP;
+  X_GC_GP.N_rows = FEM_Mesh.Dimension;
+  X_GC_GP.N_cols = 1;  
+  X_GC_GP.n = NAN;
+  Matrix X_EC_GP;
+  X_EC_GP.N_rows = FEM_Mesh.Dimension;
+  X_EC_GP.N_cols = 1;  
+  X_EC_GP.n = NAN;
+  Matrix Poligon = MatAllocZ(FEM_Mesh.NumNodesElem,FEM_Mesh.Dimension);
   int * Poligon_Connectivity;
   
   for(int i = 0 ; i<MPM_Mesh.NumGP ; i++){
 
     /* Assign the value to this auxiliar pointer */ 
-    X_GP.nV = MPM_Mesh.Phi.x_GC.nM[i];
+    X_GC_GP.nV = MPM_Mesh.Phi.x_GC.nM[i];
 
     for(int j = 0 ; j<FEM_Mesh.NumElemMesh ; j++){
 
@@ -225,18 +228,18 @@ void LocateGP(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int TimeStep){
 
       /* Fill the poligon Matrix */
       for(int k = 0 ; k<FEM_Mesh.NumNodesElem ; k++){
-	Poligon.nM[k][0] = FEM_Mesh.Coordinates.nM[Poligon_Connectivity[k]][0];
-	Poligon.nM[k][1] = FEM_Mesh.Coordinates.nM[Poligon_Connectivity[k]][1];
-	Poligon.nM[k][2] = FEM_Mesh.Coordinates.nM[Poligon_Connectivity[k]][2];
+	for(int l = 0 ; l<FEM_Mesh.Dimension ; l++){
+	  Poligon.nM[k][l] = FEM_Mesh.Coordinates.nM[Poligon_Connectivity[k]][l];
+	}
       }
 
       /* Check out if the GP is in the Element */
-      if(InOut_Poligon(X_GP,Poligon) == 1){
+      if(InOut_Poligon(X_GC_GP,Poligon) == 1){
 	/* If the GP is in the element, set the index of the position */
 	MPM_Mesh.Element_id[i] = j;
 	/* If the GP is in the element, get its natural coordinates */
-	X_GP = GetNaturalCoordinates(Poligon,X_GP);
-	break;
+	X_EC_GP.nV = MPM_Mesh.Phi.x_EC.nM[i];
+	X_EC_GP = GetNaturalCoordinates(X_EC_GP,X_GC_GP,Poligon);
       }
       
     } /* Loop over the elements */

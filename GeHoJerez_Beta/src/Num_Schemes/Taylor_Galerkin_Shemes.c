@@ -149,7 +149,7 @@ void Two_Steps_TG_FEM(Mesh ElementMesh, GaussPoint GP_Mesh,
        in the Gauss-Point position */
     GP_i_XE.n = GP_Mesh.Phi.x_EC.nV[i];
     dNdX_Ref_GP = ElementMesh.dNdX_ref(GP_i_XE);
-    F_Ref_GP = Get_RefDeformation_Gradient(X_ElemNod,dNdX_Ref_GP);
+    F_Ref_GP = Get_RefDeformation_Gradient_L2(X_ElemNod,dNdX_Ref_GP);
 
     /* 6º Iterate over the fields */
     for(int j = 0 ; j<NumDOF ; j++){
@@ -220,7 +220,7 @@ void Two_Steps_TG_FEM(Mesh ElementMesh, GaussPoint GP_Mesh,
     dNdX_Ref_GP = ElementMesh.dNdX_ref(GP_i_XE);
     
     /* 6º Get the reference deformation gradient of the element in the GP */
-    F_Ref_GP = Get_RefDeformation_Gradient(X_ElemNod,dNdX_Ref_GP);
+    F_Ref_GP = Get_RefDeformation_Gradient_L2(X_ElemNod,dNdX_Ref_GP);
     F_Ref_GP.N_cols = 1, F_Ref_GP.N_rows = 1;
     
     /* 7º Get the Jacobian of the element in the GP */
@@ -323,7 +323,7 @@ void Two_Steps_TG_MPM(Mesh ElementMesh, GaussPoint GP_Mesh,
     
     GP_i_XE.n = GP_Mesh.Phi.x_EC.nV[i];
     dNdX_Ref_GP = ElementMesh.dNdX_ref(GP_i_XE);
-    F_Ref_GP = Get_RefDeformation_Gradient(X_ElemNod,dNdX_Ref_GP);
+    F_Ref_GP = Get_RefDeformation_Gradient_L2(X_ElemNod,dNdX_Ref_GP);
 
     /* 6º Iterate over the fields */
     for(int j = 0 ; j<2 ; j++){
@@ -351,7 +351,7 @@ void Two_Steps_TG_MPM(Mesh ElementMesh, GaussPoint GP_Mesh,
     }
     GP_i_XE.n = GP_Mesh.Phi.x_EC.nV[i];
     dNdX_Ref_GP = ElementMesh.dNdX_ref(GP_i_XE);
-    F_Ref_GP = Get_RefDeformation_Gradient(X_ElemNod,dNdX_Ref_GP);
+    F_Ref_GP = Get_RefDeformation_Gradient_L2(X_ElemNod,dNdX_Ref_GP);
 
     for(int j = 0 ; j<ElementMesh.NumNodesElem ; j++){
       dNdX_GP = (double)1/F_Ref_GP.n*dNdX_Ref_GP.nV[j];

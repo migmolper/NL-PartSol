@@ -226,7 +226,7 @@ Matrix Jacobi_Conjugate_Gradient_Method(Matrix K, Matrix F, Matrix U0)
   double alpha_k,beta_k;
   double dividend,divisor;
   Matrix K_l; /* Lumped matrix */
-  Matrix Norm_r;
+  double Norm_r;
   Matrix r_k,r_k1;
   Matrix z_k,z_k1;
   Matrix p;

@@ -38,6 +38,6 @@ int InOut_Poligon(Matrix, Matrix);
 
 Matrix Newton_Rapson(Matrix(* Function)(Matrix, Matrix), Matrix,
 		     Matrix(* Jacobian)(Matrix, Matrix), Matrix,
-		     Matrix);
+		     Matrix,Matrix);
 
 Matrix Get_Lumped_Matrix(Matrix);

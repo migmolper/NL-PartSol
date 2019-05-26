@@ -135,7 +135,7 @@ Mesh ReadGidMesh(char * MeshName)
   fclose(MeshFile);
  
   /* Allocate the mesh data */
-  GID_Mesh.Coordinates = MatAlloc(GID_Mesh.NumNodesMesh,3);
+  GID_Mesh.Coordinates = MatAlloc(GID_Mesh.NumNodesMesh,GID_Mesh.Dimension);
   /* GID_Mesh.Coordinates =  (double **) Allocate_Matrix(GID_Mesh.NumNodesMesh,3,sizeof(double)); */  
   GID_Mesh.Connectivity = (int **)
     Allocate_Matrix(GID_Mesh.NumElemMesh,
@@ -157,9 +157,9 @@ Mesh ReadGidMesh(char * MeshName)
 	nwords = parse(words, line, delims) ){
     if(nwords == 4){
       Nodes_i = atoi(words[0]) - 1;
-      GID_Mesh.Coordinates.nM[Nodes_i][0] = atof(words[1]); 
-      GID_Mesh.Coordinates.nM[Nodes_i][1] = atof(words[2]);
-      GID_Mesh.Coordinates.nM[Nodes_i][2] = atof(words[3]);
+      for(int i = 0 ; i<GID_Mesh.Dimension ; i++){
+	GID_Mesh.Coordinates.nM[Nodes_i][i] = atof(words[1+i]);
+      }
     }
   }
 
