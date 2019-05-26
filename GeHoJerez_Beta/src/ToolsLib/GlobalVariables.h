@@ -4,6 +4,7 @@ char * FEM_MeshFileName;
 char * MPM_MeshFileName;
 char * InitCondFileName;
 char * BounCondFileName;
+char * OutputDir;
 
 /* Find of analysis */
 char * KindAnalysis;

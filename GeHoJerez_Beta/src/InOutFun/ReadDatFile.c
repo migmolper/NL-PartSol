@@ -185,6 +185,12 @@ void ReadDatFile(char * Name_File)
 	    printf("\t -> %s \n",BounCondFileName); 
 	  }
 	  /***********************************************************************/
+	  if( strcmp(SimParameter[0],"OUTPUT_DIR") == 0 ){
+	    OutputDir = SimParameter[1];
+	    printf(" * Set route for the outputs  : \n");
+	    printf("\t -> %s \n",OutputDir); 
+	  }
+	  /***********************************************************************/
 	} /* End if nSimParameter */     
       } /* End for nwords */
     } /* End if nwords */  

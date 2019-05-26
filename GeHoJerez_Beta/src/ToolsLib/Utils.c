@@ -848,7 +848,7 @@ Matrix Newton_Rapson(Matrix(* Function)(Matrix, Matrix),Matrix Parameter_F,
   while( (NormDeltaX > TOL_NormDeltaX )
 	 && (Iter_i < Num_Iter) ){
 
-    /* 1º Evaluate F in X0 and get the negative value */
+    /* 1º Evaluate F in X0 and get F(x) = Y - Y(x) */
     F_n = Function(X,Parameter_F);
     for(int i = 0 ; i<F_n.N_cols*F_n.N_rows ; i++){
       F_n.nV[i] = Y.nV[i] - F_n.nV[i];
@@ -856,6 +856,7 @@ Matrix Newton_Rapson(Matrix(* Function)(Matrix, Matrix),Matrix Parameter_F,
     
     /* 2º Get the jacobian matrix in X0 */
     J_n = Jacobian(X,Parameter_J);
+    
     /* Implement the numerical solution of the Jacobian for cases where the 
      Jacobian is not easy to derive */
 

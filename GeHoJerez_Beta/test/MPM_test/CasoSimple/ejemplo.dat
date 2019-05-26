@@ -10,3 +10,4 @@ FEM_FILE_NAME=test/MPM_test/CasoSimple/FEM_Mesh.msh
 MPM_FILE_NAME=test/MPM_test/CasoSimple/MPM_Mesh.msh
 COND_INIT=test/data.init
 BOUND_COND=test/data.bcc
+OUTPUT_DIR=test/MPM_test/CasoSimple

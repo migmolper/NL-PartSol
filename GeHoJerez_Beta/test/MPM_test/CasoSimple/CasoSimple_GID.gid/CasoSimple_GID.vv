@@ -1,0 +1,33 @@
+BeginZE /home/miguel/Documentos/PHD/PROGRAMACION/GeHoJerez/GeHoJerez_Beta/test/MPM_test/CasoSimple/CasoSimple_GID.gid/CasoSimple_GID.vv
+   x -8.72754287719726562 7.92183971405029297
+   y 4.76122331619262695 -4.09249544143676758
+   z -3.08775091171264648 3.08775091171264648
+   e 2.90593266487121582
+   v 0 0 0
+   r 1
+   m 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1
+   c 0 -0.181818187236785889 0
+   pd 0
+   pno 0
+   pfo 0
+   pf 4
+   pv 0
+   NowUse 1
+   DrawingType 0
+   LightVector 90 90 150 0
+   OGLShadow(UseShadows) 0
+   OGLShadow(RenderMode) RenderNice
+   OGLShadow(ShadowBias) -0.002
+   OGLShadow(AmbientShadows) 1
+   OGLShadow(UseFBO) 0
+   OGLShadow(FBOSize) 2048
+   OGLShadow(DimmedLightFactor) 0.02
+   OGLStereo(UseStereo) 0
+   OGLStereo(RelativeEyeDistance) 1
+   OGLStereo(FlipEyes) 0
+   OGLStereo(StereoMode) AnaglyphColors
+   OGLStereo(EyeDistance) 0.075
+   OGLStereo(LeftEyeDistance) 1 0 0 1
+   OGLStereo(RightEyeDistance) 0 1 1 1
+EndZE /home/miguel/Documentos/PHD/PROGRAMACION/GeHoJerez/GeHoJerez_Beta/test/MPM_test/CasoSimple/CasoSimple_GID.gid/CasoSimple_GID.vv
+

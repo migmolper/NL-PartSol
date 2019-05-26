@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 #include "../ToolsLib/TypeDefinitions.h"
 #include "../ToolsLib/Utils.h"
 
@@ -154,6 +155,11 @@ Matrix dT3(Matrix X_e){
 
 /* Shape functions */
 Matrix Q4(Matrix X_e){
+
+  if( (fabs(X_e.nV[0]) > 1 ) || (fabs(X_e.nV[1]) > 1 ) ){
+    printf("Error in Q4() : Out of the element bounds !!! \n");
+    exit(0);
+  }    
   
   /* Definition and allocation */
   Matrix N_ref =  MatAlloc(1,4);
@@ -169,6 +175,11 @@ Matrix Q4(Matrix X_e){
 
 /* Derivatives of the shape functions */
 Matrix dQ4(Matrix X_e){
+
+  if( (fabs(X_e.nV[0]) > 1 ) || (fabs(X_e.nV[1]) > 1 ) ){
+    printf("Error in dQ4() : Out of the element bounds !!! \n");
+    exit(0);
+  }    
   
   /* Definition and allocation */
   Matrix dNdX_ref = MatAlloc(2,4);
@@ -199,11 +210,14 @@ This function evaluate the position of the GP in the element, and get it global 
   /* 0º Variable declaration */
   Matrix N_ref;
   Matrix X_GC_GP;
-  
+
+  /* 1º Evaluate the Q4 element in the element coordinates */
   N_ref = Q4(X_NC_GP);
 
+  /* 2º Allocate the output coordinates */
   X_GC_GP = MatAlloc(2,1);
 
+  /* 3º Get the global coordinates for this element coordiantes in this element */
   X_GC_GP.nV[0] =
     N_ref.nV[0]*X_GC_Nodes.nM[0][0] +
     N_ref.nV[1]*X_GC_Nodes.nM[1][0] +
@@ -216,8 +230,10 @@ This function evaluate the position of the GP in the element, and get it global 
     N_ref.nV[2]*X_GC_Nodes.nM[2][1] +
     N_ref.nV[3]*X_GC_Nodes.nM[3][1];
 
+  /* 4º Free memory */
   free(N_ref.nV);
 
+  /* 5º Output */
   return X_GC_GP;
  
 }
@@ -244,25 +260,29 @@ Matrix Get_RefDeformation_Gradient_Q4(Matrix X_NC_GP,Matrix X_GC_Nodes)
 
 
   /* 1º Evaluate the derivarive of the shape function in the GP */
-  dNdX_Ref_GP = dQ4(X_NC_GP);
+  dNdX_Ref_GP = dQ4(X_NC_GP); 
 
   /* 2º Get the F_ref */
-  F_Ref.nM[0][0] = X_GC_Nodes.nM[0][0]*dNdX_Ref_GP.nM[0][0] +
+  F_Ref.nM[0][0] =
+    X_GC_Nodes.nM[0][0]*dNdX_Ref_GP.nM[0][0] +
     X_GC_Nodes.nM[1][0]*dNdX_Ref_GP.nM[0][1] +
     X_GC_Nodes.nM[2][0]*dNdX_Ref_GP.nM[0][2] +
     X_GC_Nodes.nM[3][0]*dNdX_Ref_GP.nM[0][3];
   
-  F_Ref.nM[0][1] = X_GC_Nodes.nM[0][0]*dNdX_Ref_GP.nM[1][0] +
+  F_Ref.nM[0][1] =
+    X_GC_Nodes.nM[0][0]*dNdX_Ref_GP.nM[1][0] +
     X_GC_Nodes.nM[1][0]*dNdX_Ref_GP.nM[1][1] +
     X_GC_Nodes.nM[2][0]*dNdX_Ref_GP.nM[1][2] +
     X_GC_Nodes.nM[3][0]*dNdX_Ref_GP.nM[1][3];
   
-  F_Ref.nM[1][0] = X_GC_Nodes.nM[0][1]*dNdX_Ref_GP.nM[0][0] +
+  F_Ref.nM[1][0] =
+    X_GC_Nodes.nM[0][1]*dNdX_Ref_GP.nM[0][0] +
     X_GC_Nodes.nM[1][1]*dNdX_Ref_GP.nM[0][1] +
     X_GC_Nodes.nM[2][1]*dNdX_Ref_GP.nM[0][2] +
     X_GC_Nodes.nM[3][1]*dNdX_Ref_GP.nM[0][3];
   
-  F_Ref.nM[1][1] = X_GC_Nodes.nM[0][1]*dNdX_Ref_GP.nM[1][0] +
+  F_Ref.nM[1][1] =
+    X_GC_Nodes.nM[0][1]*dNdX_Ref_GP.nM[1][0] +
     X_GC_Nodes.nM[1][1]*dNdX_Ref_GP.nM[1][1] +
     X_GC_Nodes.nM[2][1]*dNdX_Ref_GP.nM[1][2] +
     X_GC_Nodes.nM[3][1]*dNdX_Ref_GP.nM[1][3];

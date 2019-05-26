@@ -37,7 +37,7 @@ void main(int argc, char *argv[])
 
   LocateGP(GP_Mesh,FEM_Mesh,0);
 
-  /*  */
+  /* Output for Paraview */
   Matrix List_Fields;
   WriteVtk_MPM("Initial_conditions",GP_Mesh,List_Fields,0);
 
