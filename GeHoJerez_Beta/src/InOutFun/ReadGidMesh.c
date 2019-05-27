@@ -186,58 +186,72 @@ Mesh ReadGidMesh(char * MeshName)
   
   /* Find the nodes in the boundary */
   switch(NumberDimensions){
-  case 1:/* 1D mesh */
+    
+  case 1: /******************** 1D mesh ********************/
     /* In a 1D mesh we only have two nodes in the boundary */
     GID_Mesh.NumNodesBound = 2;
     /* Allocate the size of the array with the nodes */
-    GID_Mesh.NodesBound = (int *)Allocate_Array(2,sizeof(int));
+    GID_Mesh.NodesBound = (int **)Allocate_MatrixZ(GID_Mesh.NumNodesBound,
+						   1+NumberDOF,sizeof(int));
     /* Set the boundary nodes */
-    GID_Mesh.NodesBound[0] = 0;
-    GID_Mesh.NodesBound[1] = GID_Mesh.NumNodesMesh-1;
-    break;
+    GID_Mesh.NodesBound[0][0] = 0;
+    GID_Mesh.NodesBound[1][0] = GID_Mesh.NumNodesMesh-1;    
+    break; /******************** 2D mesh ********************/
     
-  case 2: /* 2D mesh (quadrangular/triangular) */
-    NodesBound_aux = (int *)Allocate_Array(GID_Mesh.NumNodesMesh,sizeof(int));
-    GID_Mesh.NumNodesBound = 0;
-    
-    for(int i = 0 ; i<GID_Mesh.NumNodesMesh ; i++){
+  case 2: /******************** 2D mesh ********************/
 
-      /* Set the counter to zero */
-      Repeat_Nod = 0;
-      
-      /* Loop over the connectivity mesh */
-      for(int j = 0 ; j<GID_Mesh.NumElemMesh ; j++){
-	for(int k = 0 ; k<GID_Mesh.NumNodesElem ; k++){
-	  if(GID_Mesh.Connectivity[j][k] == i){
-	    Repeat_Nod++;
+    if(GID_Mesh.NumNodesElem == 4){ /* Quadrilateral elements */    
+      /* 0º Allocate an array of zeros to assign a 1 to those nodes in the boundary */
+      NodesBound_aux = (int *)Allocate_ArrayZ(GID_Mesh.NumNodesMesh,sizeof(int));
+      /* 1º Set to zero the number of nodes in the boundary */
+      GID_Mesh.NumNodesBound = 0;
+      /* 2º Iterate over the nodes to fin the nodes in the boundary */    
+      for(int i = 0 ; i<GID_Mesh.NumNodesMesh ; i++){
+	/* 3º Set the counter to zero */
+	Repeat_Nod = 0;      
+	/* 4º Loop over the connectivity mesh */
+	for(int j = 0 ; j<GID_Mesh.NumElemMesh ; j++){
+	  for(int k = 0 ; k<GID_Mesh.NumNodesElem ; k++){
+	    if(GID_Mesh.Connectivity[j][k] == i){
+	      Repeat_Nod++;
+	    }
 	  }
 	}
+	/* 5º Add this elemente to the boundary */
+	if (Repeat_Nod < 4){
+	  NodesBound_aux[i] = 1;
+	  GID_Mesh.NumNodesBound++;
+	}
+      }    
+      /* 6º Allocate the array with in the index of the nodal boundaries
+	 - [i][0] : Index of the node
+	 - [i][1] ... [i][n] : Kind of BC to each DOF
+	 And allocate the array with the nodal values 
+      */
+      GID_Mesh.NodesBound = (int **)Allocate_MatrixZ(GID_Mesh.NumNodesBound,
+						     1+NumberDOF,sizeof(int));
+      GID_Mesh.ValueBC = MatAlloc(GID_Mesh.NumNodesBound,NumberDOF);   
+      /* 7º Fill the array GID_Mesh.NodesBound */
+      aux = 0;
+      for(int i = 0 ; i<GID_Mesh.NumNodesMesh ; i++){
+	if(NodesBound_aux[i] == 1){
+	  GID_Mesh.NodesBound[aux][0] = i;
+	  aux++;
+	}
       }
-      /* Add this elemente to the boundary */
-      if (Repeat_Nod < 4){
-	NodesBound_aux[i] = 1;
-	GID_Mesh.NumNodesBound++;
-      }
-      
-    }
-    
-    /* Allocate the array with in the index of the nodal boundaries */
-    GID_Mesh.NodesBound = (int *)Allocate_Array(GID_Mesh.NumNodesBound,sizeof(int));
-
-    /* Fill the array GID_Mesh.NodesBound */
-    aux = 0;
-    for(int i = 0 ; i<GID_Mesh.NumNodesMesh ; i++){
-      if(NodesBound_aux[i] == 1){
-	GID_Mesh.NodesBound[aux] = i;
-	aux++;
-      }
-    }
+    } /* Quadrilateral elements */
     
     free(NodesBound_aux);
+
+    break; /******************** 2D mesh ********************/
     
-    break;
-  case 3:
-    break;
+  case 3: /******************** 3D mesh ********************/
+    printf("************************************************* \n");
+    puts("Error in ReadGidMesh() : 3D cases not implemented yet !");
+    printf("************************************************* \n");
+    exit(0);
+    break; /******************** 2D mesh ********************/
+    
   default :
     printf("************************************************* \n");
     puts("Error in ReadGidMesh() : Wrong number of dimensions !");

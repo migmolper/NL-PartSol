@@ -30,32 +30,35 @@ void main(int argc, char *argv[])
   /* Read mesh data and initialize the element mesh */
   Mesh FEM_Mesh = ReadGidMesh(FEM_MeshFileName);
 
-  /* Define Gauss point mesh */
+  /* Read and imposse the boundary conditions */
+  ReadBCC(BounCondFileName,FEM_Mesh);
+
+  for(int i = 0 ; i<FEM_Mesh.NumNodesBound ; i++){
+    for(int j = 1 ; j<=NumberDOF ; j++){
+      if(FEM_Mesh.NodesBound[i][j] == 1){
+	printf("Node %i -> Value %f, DOF : %i \n",
+	       FEM_Mesh.NodesBound[i][0],
+	       FEM_Mesh.ValueBC.nM[i][j-1],j-1);
+      }
+    }
+  }
+
+  /* Define Gauss point mesh and initialize it */
   Matrix InputFields;
   InputFields.nM = NULL;
   GaussPoint GP_Mesh  = Initialize_GP_Mesh(MPM_MeshFileName,InputFields,Density,D_e);
 
+  /* Search the GP in the mesh */
   LocateGP(GP_Mesh,FEM_Mesh,0);
 
   /* Output for Paraview */
   Matrix List_Fields;
-  WriteVtk_MPM("Initial_conditions",GP_Mesh,List_Fields,0);
-
-  /* /\* Locate the GP in the background mesh (do it in every loop) *\/ */
-  /* LocateGP(GP_Mesh,ElementMesh,t_i); */
+  WriteVtk_MPM("Initial_conditions",GP_Mesh,List_Fields,0);  
+  WriteVtk_FEM("Mesh",FEM_Mesh,List_Fields,0);
     
   /* /\* Read the initial conditions fields as a CSV *\/ */
   /* Matrix InputFields = Read_CSV(InitCondFileName,9); */
-
-  /* /\* Read the boundary conditions *\/ */
-  /* ReadBCC(BounCondFileName); */
-
-  /* /\* Define Gauss point mesh *\/ */
-  /* GaussPoint GP_Mesh  = Initialize_GP_Mesh(InputFields,D, */
-  /* 					   ElementMesh); */
-
-
-
+  
   exit(EXIT_SUCCESS);
   
   

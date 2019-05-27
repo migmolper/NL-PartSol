@@ -194,7 +194,27 @@ void ReadDatFile(char * Name_File)
 	} /* End if nSimParameter */     
       } /* End for nwords */
     } /* End if nwords */  
-  } /* End while */   
+  } /* End while */
+
+  /* Set the number of DOFs for each node depending of the kind of analysis */
+  if( strcmp(FieldsAnalysis,"U") == 0 ){
+    if(NumberDimensions == 1)
+      NumberDOF = 1;
+    if(NumberDimensions == 2)
+      NumberDOF = 2;
+    if(NumberDimensions == 3)
+      NumberDOF = 3;
+  }
+  if( strcmp(FieldsAnalysis,"SIGMA_V") == 0 ){
+    if(NumberDimensions == 1)
+      NumberDOF = 2;
+    if(NumberDimensions == 2)
+      NumberDOF = 5;
+    if(NumberDimensions == 3)
+      NumberDOF = 9;
+  }
+
+  
       
   /* Close .dat file */
   /* Final message */

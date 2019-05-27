@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 #include "../ToolsLib/TypeDefinitions.h"
 #include "../ToolsLib/GlobalVariables.h"
 #include "../ToolsLib/Utils.h"
@@ -9,7 +10,7 @@
 
 /***************************************************************************/
 
-void ReadBCC(char * Name_File)
+void ReadBCC(char * Name_File, Mesh FEM_Mesh)
 /*
   Read the boundary conditions file :
   Inputs
@@ -51,6 +52,13 @@ void ReadBCC(char * Name_File)
   char * SIGMA[MAXW] = {NULL};
   char * SIGMA_nod[MAXW] = {NULL};
   char * SIGMA_val[MAXW] = {NULL};
+  /* Variables for the TOP, BOTTOM, RIGHT, LEFT */
+  double TOP_val = NAN;
+  double BOTTOM_val = NAN;
+  double RIGHT_val = NAN;
+  double LEFT_val = NAN;
+  /* Apply the BC */
+  int BC_nod;
 
   printf("************************************************* \n");
   printf("Begin of set boundary conditions !!! \n");
@@ -69,7 +77,8 @@ void ReadBCC(char * Name_File)
 
     /* Read the line with the space as separators */
     nkwords = parse (kwords, line," \n");
-    /* Only read those lines with a BCC in the init */
+    
+    /* General BCC */
     if ( strcmp(kwords[0],"BCC") == 0 ){
       for(int i  = 0 ; i<nkwords ; i++){ /* Loop over the words */
 	/* Parse the keywords parameters */
@@ -136,7 +145,239 @@ void ReadBCC(char * Name_File)
 	} /* Read word by word */
       } /* Read only keywords with an asignement */
       printf("\n");
-    } /* Read only those lines with BCC in the begin */
+    } /* Read general BCC */
+
+    /* Set BCC in those node in the top of the domain */
+    if ( strcmp(kwords[0],"BCC_TOP") == 0 ){
+      for(int i  = 0 ; i<nkwords ; i++){ /* Loop over the words */
+	/* Parse the keywords parameters */
+	nparam = parse (param,kwords[i],"#\n");
+	if(nparam>1){ /* Read only keywords with an asignement */
+
+	  /* Parse the time range (init:end)*/
+	  if( strcmp(param[0],"T") == 0 ){
+	    auxT = parse (T_range,param[1],"[:]\n");
+	    if(auxT==2){
+	      printf("\t -> Range : [%i -> %i] \n",atoi(T_range[0]),atoi(T_range[1]));
+	    }
+	    else if(auxT==1){
+	      printf("\t -> Instant : %i \n",atoi(T_range[0]));
+	    }
+	    else if(auxT==0){
+	      printf("\t -> This boundary condition will be applied all the simulation \n");
+	    }
+	  } /* End parse Time */
+
+	  /* Parse the position of the boundary */
+	  if( strcmp(param[0],"TOP") == 0 ){
+	    auxT = parse (T_range,param[1],"[=]\n");
+	    TOP_val = atof(T_range[1]);
+	    if(auxT==2){	      
+	      printf("\t -> Boundary : %s = %f \n",T_range[0],TOP_val);	      
+	    }
+	  } /* End parse position of the boundary */	  
+	  
+	  /* Parse the Velocity BCC */
+	  if(strcmp(param[0],"U") == 0){
+	    auxV = parse(V,param[1],"=\n");
+	    /* Read the DOFS to impose the BCC :*/
+	    auxV_nod = parse(V_nod,V[0],"[:]\n");
+	    /* Read the value to impose */
+	    auxV_val = parse(V_val,V[1],"{,}\n");
+	    for(int j = 0 ; j<auxV_nod ; j++){
+	      if(atoi(V_nod[j]) == 1){ /* This DOF is impossed */
+	  	printf("\t V[%i] = %f \n",j,atof(V_val[j]));
+	  	/* Apply this boundary conditions */
+	  	for(int k = 0 ; k<FEM_Mesh.NumNodesBound ; k++){
+	  	  BC_nod = FEM_Mesh.NodesBound[k][0];
+	  	    if(FEM_Mesh.Coordinates.nM[BC_nod][1] >= TOP_val){
+		      FEM_Mesh.NodesBound[k][j+1] = 1;
+	  	      FEM_Mesh.ValueBC.nM[k][j] = atof(V_val[j]);
+	  	    }
+	  	} /* End of apply this boundary conditions */
+	      }
+	    }
+	  } /* End parse Velocity BCC */
+	  
+	} /* Read word by word */
+      } /* Read only keywords with an asignement */
+      printf("\n");
+      
+    } /* End of read BC in the top */
+
+    /* Set BCC in those node in the bottom of the domain */
+    if ( strcmp(kwords[0],"BCC_BOTTOM") == 0 ){
+      for(int i  = 0 ; i<nkwords ; i++){ /* Loop over the words */
+	/* Parse the keywords parameters */
+	nparam = parse (param,kwords[i],"#\n");
+	if(nparam>1){ /* Read only keywords with an asignement */
+
+	  /* Parse the time range (init:end)*/
+	  if( strcmp(param[0],"T") == 0 ){
+	    auxT = parse (T_range,param[1],"[:]\n");
+	    if(auxT==2){
+	      printf("\t -> Range : [%i -> %i] \n",atoi(T_range[0]),atoi(T_range[1]));
+	    }
+	    else if(auxT==1){
+	      printf("\t -> Instant : %i \n",atoi(T_range[0]));
+	    }
+	    else if(auxT==0){
+	      printf("\t -> This boundary condition will be applied all the simulation \n");
+	    }
+	  } /* End parse Time */
+
+	  /* Parse the position of the boundary */
+	  if( strcmp(param[0],"BOTTOM") == 0 ){
+	    auxT = parse (T_range,param[1],"[=]\n");
+	    BOTTOM_val = atof(T_range[1]);
+	    if(auxT==2){	      
+	      printf("\t -> Boundary : %s = %f \n",T_range[0],BOTTOM_val);	      
+	    }
+	  } /* End parse position of the boundary */
+
+	  
+	  /* Parse the Velocity BCC */
+	  if(strcmp(param[0],"U") == 0){
+	    auxV = parse(V,param[1],"=\n");
+	    /* Read the DOFS to impose the BCC :*/
+	    auxV_nod = parse(V_nod,V[0],"[:]\n");
+	    /* Read the value to impose */
+	    auxV_val = parse(V_val,V[1],"{,}\n");
+	    for(int j = 0 ; j<auxV_nod ; j++){
+	      if(atoi(V_nod[j]) == 1){ /* This DOF is impossed */
+	  	printf("\t V[%i] = %f \n",j,atof(V_val[j]));
+	  	/* Apply this boundary conditions */
+	  	for(int k = 0 ; k<FEM_Mesh.NumNodesBound ; k++){
+	  	  BC_nod = FEM_Mesh.NodesBound[k][0];
+	  	    if(FEM_Mesh.Coordinates.nM[BC_nod][1] <= BOTTOM_val){
+		      FEM_Mesh.NodesBound[k][j+1] = 1;
+	  	      FEM_Mesh.ValueBC.nM[k][j] = atof(V_val[j]);
+	  	    }
+	  	} /* End of apply this boundary conditions */
+	      }
+	    }
+	  } /* End parse Velocity BCC */
+
+	} /* Read word by word */
+      } /* Read only keywords with an asignement */
+      printf("\n");
+    } /* End of read BC in the bottom */
+
+    /* Set BCC in those node in the right of the domain */
+    if ( strcmp(kwords[0],"BCC_RIGHT") == 0 ){
+      for(int i  = 0 ; i<nkwords ; i++){ /* Loop over the words */
+    	/* Parse the keywords parameters */
+    	nparam = parse (param,kwords[i],"#\n");
+    	if(nparam>1){ /* Read only keywords with an asignement */
+
+    	  /* Parse the time range (init:end)*/
+    	  if( strcmp(param[0],"T") == 0 ){
+    	    auxT = parse (T_range,param[1],"[:]\n");
+    	    if(auxT==2){
+    	      printf("\t -> Range : [%i -> %i] \n",atoi(T_range[0]),atoi(T_range[1]));
+    	    }
+    	    else if(auxT==1){
+    	      printf("\t -> Instant : %i \n",atoi(T_range[0]));
+    	    }
+    	    else if(auxT==0){
+    	      printf("\t -> This boundary condition will be applied all the simulation \n");
+    	    }
+    	  } /* End parse Time */
+
+    	  /* Parse the position of the boundary */
+    	  if( strcmp(param[0],"RIGHT") == 0 ){
+    	    auxT = parse (T_range,param[1],"[=]\n");
+    	    RIGHT_val = atof(T_range[1]);
+    	    if(auxT==2){
+    	      printf("\t -> Boundary : %s = %f \n",T_range[0],RIGHT_val);
+    	    }
+    	  } /* End parse position of the boundary */
+
+	  /* Parse the Velocity BCC */
+	  if(strcmp(param[0],"U") == 0){
+	    auxV = parse(V,param[1],"=\n");
+	    /* Read the DOFS to impose the BCC :*/
+	    auxV_nod = parse(V_nod,V[0],"[:]\n");
+	    /* Read the value to impose */
+	    auxV_val = parse(V_val,V[1],"{,}\n");
+	    for(int j = 0 ; j<auxV_nod ; j++){
+	      if(atoi(V_nod[j]) == 1){ /* This DOF is impossed */
+	  	printf("\t V[%i] = %f \n",j,atof(V_val[j]));
+	  	/* Apply this boundary conditions */
+	  	for(int k = 0 ; k<FEM_Mesh.NumNodesBound ; k++){
+	  	  BC_nod = FEM_Mesh.NodesBound[k][0];
+	  	    if(FEM_Mesh.Coordinates.nM[BC_nod][0] >= RIGHT_val){
+		      FEM_Mesh.NodesBound[k][j+1] = 1;
+	  	      FEM_Mesh.ValueBC.nM[k][j] = atof(V_val[j]);
+	  	    }
+	  	} /* End of apply this boundary conditions */
+	      }
+	    }
+	  } /* End parse Velocity BCC */
+
+    	} /* Read word by word */
+      } /* Read only keywords with an asignement */
+      printf("\n");
+    } /* End of read BC in the right */
+
+    /* Set BCC in those node in the left of the domain */
+    if ( strcmp(kwords[0],"BCC_LEFT") == 0 ){
+      for(int i  = 0 ; i<nkwords ; i++){ /* Loop over the words */
+    	/* Parse the keywords parameters */
+    	nparam = parse (param,kwords[i],"#\n");
+    	if(nparam>1){ /* Read only keywords with an asignement */
+
+    	  /* Parse the time range (init:end)*/
+    	  if( strcmp(param[0],"T") == 0 ){
+    	    auxT = parse (T_range,param[1],"[:]\n");
+    	    if(auxT==2){
+    	      printf("\t -> Range : [%i -> %i] \n",atoi(T_range[0]),atoi(T_range[1]));
+    	    }
+    	    else if(auxT==1){
+    	      printf("\t -> Instant : %i \n",atoi(T_range[0]));
+    	    }
+    	    else if(auxT==0){
+    	      printf("\t -> This boundary condition will be applied all the simulation \n");
+    	    }
+    	  } /* End parse Time */
+
+    	  /* Parse the position of the boundary */
+    	  if( strcmp(param[0],"LEFT") == 0 ){
+    	    auxT = parse (T_range,param[1],"[=]\n");
+    	    LEFT_val = atof(T_range[1]);
+    	    if(auxT==2){
+    	      printf("\t -> Boundary : %s = %f \n",T_range[0],LEFT_val);
+    	    }
+    	  } /* End parse position of the boundary */
+
+	  /* Parse the Velocity BCC */
+	  if(strcmp(param[0],"U") == 0){
+	    auxV = parse(V,param[1],"=\n");
+	    /* Read the DOFS to impose the BCC :*/
+	    auxV_nod = parse(V_nod,V[0],"[:]\n");
+	    /* Read the value to impose */
+	    auxV_val = parse(V_val,V[1],"{,}\n");
+	    for(int j = 0 ; j<auxV_nod ; j++){
+	      if(atoi(V_nod[j]) == 1){ /* This DOF is impossed */
+	  	printf("\t V[%i] = %f \n",j,atof(V_val[j]));
+	  	/* Apply this boundary conditions */
+	  	for(int k = 0 ; k<FEM_Mesh.NumNodesBound ; k++){
+	  	  BC_nod = FEM_Mesh.NodesBound[k][0];
+	  	    if(FEM_Mesh.Coordinates.nM[BC_nod][0] <= LEFT_val){
+		      FEM_Mesh.NodesBound[k][j+1] = 1;
+	  	      FEM_Mesh.ValueBC.nM[k][j] = atof(V_val[j]);
+	  	    }
+	  	} /* End of apply this boundary conditions */
+	      }
+	    }
+	  } /* End parse Velocity BCC */
+
+    	} /* Read word by word */
+      } /* Read only keywords with an asignement */
+      printf("\n");
+    } /* End of read BC in the left */
+
+    
   }  /* End of read file */
   printf("End of read boundary conditions file !!! \n");
   fclose(Sim_dat);

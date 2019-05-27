@@ -1,0 +1,4 @@
+BCC_TOP TOP#[Y=3] T#[:] U#[0:1]={NAN,0}
+BCC_BOTTOM BOTTOM#[Y=-3] T#[:] U#[0:1]={NAN,0}
+BCC_RIGHT RIGHT#[X=3] T#[:] U#[1:0]={0,NAN}
+BCC_LEFT LEFT#[X=-3] T#[:] U#[1:0]={0,NAN}

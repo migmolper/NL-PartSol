@@ -41,7 +41,7 @@ GaussPoint Initialize_GP_Mesh(char * MPM_GID_MeshName,
   /* The number of Gauss-Points is the same as the number of elements
    in the input mesh, because we set a GP in the middle of each element */
   MPM_Mesh.NumGP = MPM_GID_Mesh.NumElemMesh;
-
+  
   /* Allocate fields */
   
   /* Index of the Element */
@@ -72,6 +72,7 @@ GaussPoint Initialize_GP_Mesh(char * MPM_GID_MeshName,
   /* Density field (Scalar) */
   MPM_Mesh.Phi.rho = MatAllocZ(MPM_Mesh.NumGP,1);
 
+  
   if(strcmp(MPM_GID_Mesh.TypeElem,"Triangle") == 0 ){
     Matrix a = MatAllocZ(3,1);
     Matrix b = MatAllocZ(3,1);

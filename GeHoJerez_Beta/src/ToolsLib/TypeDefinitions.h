@@ -84,18 +84,23 @@ typedef struct {
   int NumNodesMesh;
   /* Number of elements in the mesh */
   int NumElemMesh;
-  /* Number of boundary nodes */
-  int NumNodesBound;
   /* Table with the coordinates of the nodes of the mesh */
   /* double ** Coordinates; */
   Matrix Coordinates;
   /* List of nodes for each element (Connectivity) */
   int **  Connectivity;
-  /* List with the boundary nodes */
-  int * NodesBound;
   /* Active element : 
      Boolean variable that set the element ative (1) or not (0) */
   int * ActiveElem;
+
+
+  /*** BOUNDARY CONDITIONS ***/
+  /* Number of boundary nodes */
+  int NumNodesBound;
+  /* List and kind of boundary conditions */
+  int ** NodesBound;
+  /* Value of boundary conditions */
+  Matrix ValueBC;
 
   /*** INDIVIDUAL ELEMENT PROPERTIES ***/
   /* Number of dimensions of the element */
@@ -104,8 +109,6 @@ typedef struct {
   char TypeElem [20];
   /* Number of nodes of the element */
   int NumNodesElem;
-  /* Degrees of freedom for each node*/
-  int NumberDOF;
   /* Shape function of the reference element evaluated in a GP */
   Matrix (* N_ref)(Matrix );
   /* Derivative shape function of the reference element evaluated in a GP */

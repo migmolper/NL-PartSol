@@ -10,6 +10,7 @@ char * OutputDir;
 char * KindAnalysis;
 char * FieldsAnalysis;
 int NumberDimensions;
+int NumberDOF;
 char * TimeIntegration;
 
 /* Time integration */

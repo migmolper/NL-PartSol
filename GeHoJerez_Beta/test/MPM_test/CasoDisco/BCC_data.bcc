@@ -1,0 +1,6 @@
+En el inicio del calculo,
+le doy un tirón a la barra
+BCC T#[0] V#[1]={-1} V#[6]={0}
+Después dejo suelta la barra y
+la veo oscilar
+BCC T#[1:100] SIGMA#[1]={0} V#[6]={0}

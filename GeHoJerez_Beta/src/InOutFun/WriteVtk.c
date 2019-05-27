@@ -15,7 +15,7 @@ void WriteVtk_MPM(char * Name_File, GaussPoint MPM_Mesh,
 
   char Name_file_t[80];
 
-  sprintf(Name_file_t,"%s/%s_%i.vtk",OutputDir,Name_File,TimeStep_i);
+  sprintf(Name_file_t,"%s/MPM_%s_%i.vtk",OutputDir,Name_File,TimeStep_i);
   
   Vtk_file = fopen(Name_file_t,"w");
 
@@ -92,4 +92,65 @@ void WriteVtk_MPM(char * Name_File, GaussPoint MPM_Mesh,
     
   }
   
+}
+
+/*********************************************************************/
+
+void WriteVtk_FEM(char * Name_File, Mesh ElementMesh,
+		  Matrix List_Fields, int TimeStep_i){
+
+  FILE * Vtk_file;
+
+  char Name_file_t[80];
+
+  sprintf(Name_file_t,"%s/FEM_%s_%i.vtk",OutputDir,Name_File,TimeStep_i);
+  
+  Vtk_file = fopen(Name_file_t,"w");
+
+  /* Header */
+  fprintf(Vtk_file,"# vtk DataFile Version 3.0 \n");
+  fprintf(Vtk_file,"vtk output \n");
+  fprintf(Vtk_file,"ASCII \n");
+  fprintf(Vtk_file,"DATASET UNSTRUCTURED_GRID \n");
+
+   /* Coordinates */
+  fprintf(Vtk_file,"POINTS %i float \n",ElementMesh.NumNodesMesh);
+  for(int i = 0 ; i<ElementMesh.NumNodesMesh ; i++){
+    fprintf(Vtk_file,"%f %f %f \n",
+	    ElementMesh.Coordinates.nM[i][0],
+	    ElementMesh.Coordinates.nM[i][1],
+	    ElementMesh.Coordinates.nM[i][2]);
+  }
+
+  /* Connectivity */
+  fprintf(Vtk_file,"CELLS %i %i \n",
+	  ElementMesh.NumElemMesh,
+	  ElementMesh.NumElemMesh*(1+ElementMesh.NumNodesElem));
+  for(int i = 0 ; i<ElementMesh.NumElemMesh ; i++){
+    fprintf(Vtk_file,"%i",ElementMesh.NumNodesElem);
+    for(int j = 0 ; j<ElementMesh.NumNodesElem ; j++){
+      fprintf(Vtk_file," %i ",ElementMesh.Connectivity[i][j] + 1);
+    }
+    fprintf(Vtk_file,"\n");
+  }
+
+  /* Type of element */
+  fprintf(Vtk_file,"CELL_TYPES %i \n",ElementMesh.NumElemMesh);
+  for(int i = 0 ; i<ElementMesh.NumElemMesh ; i++){
+    fprintf(Vtk_file,"%i \n",8);
+  }
+
+  /* Point data */
+  fprintf(Vtk_file,"POINT_DATA %i \n",ElementMesh.NumNodesMesh);
+  fprintf(Vtk_file,"VECTORS %s float \n","X_GC");
+  for(int i =  0 ; i<ElementMesh.NumNodesMesh ; i++){
+    fprintf(Vtk_file,"%f %f %f \n",
+	    ElementMesh.Coordinates.nM[i][0],
+	    ElementMesh.Coordinates.nM[i][1],
+	    ElementMesh.Coordinates.nM[i][2]);
+  }
+  
+  /* Cell data */  
+  fprintf(Vtk_file,"CELL_DATA %i \n",ElementMesh.NumElemMesh);
+
 }

@@ -269,3 +269,5 @@ Matrix GetNaturalCoordinates(Matrix X_EC_GP,Matrix X_GC_GP,Matrix Element_GC_Nod
   return X_EC_GP;
 
 }
+
+

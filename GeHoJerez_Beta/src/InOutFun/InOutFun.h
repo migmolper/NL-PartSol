@@ -14,10 +14,11 @@ ParserDictionary InitParserDictionary(void);
 /* int GetWords(char *, char * [], int, int); */
 int parse (char **words, char *str, char *delims);
 Mesh ReadGidMesh(char *);
-Matrix Read_CSV(char *,int);
+Matrix Read_CSV(char *, int);
 void ReadDatFile(char *);
-void ReadBCC(char *);
+void ReadBCC(char * , Mesh);
 void GnuplotOutput1D(Matrix, Matrix, double, double, int, int, char[20]);
 
 /* Outputs */
-void WriteVtk_MPM(char *,GaussPoint,Matrix,int);
+void WriteVtk_MPM(char * , GaussPoint, Matrix, int);
+void WriteVtk_FEM(char * , Mesh, Matrix, int);
