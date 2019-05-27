@@ -781,7 +781,6 @@ int InOut_Poligon(Matrix X_Point, Matrix Poligon)
   b.nV[0] = X_Point.nV[0] - Poligon.nM[Poligon.N_rows-1][0];
   b.nV[1] = X_Point.nV[1] - Poligon.nM[Poligon.N_rows-1][1];
   b.nV[2] = X_Point.nV[2] - Poligon.nM[Poligon.N_rows-1][2];
-
   
   for(int i = 0 ; i<Poligon.N_rows-1 ; i++){
 
@@ -801,8 +800,13 @@ int InOut_Poligon(Matrix X_Point, Matrix Poligon)
     b.nV[1] = X_Point.nV[1] - Poligon.nM[i][1];
     b.nV[2] = X_Point.nV[2] - Poligon.nM[i][2];
     
+  }
 
-    
+  /* Last check */
+  c = Vectorial_prod(a,b);
+  nxc = Scalar_prod(n,c);
+  if(nxc.n < 0){
+    InOut = 0;
   }
 
   free(a.nV);

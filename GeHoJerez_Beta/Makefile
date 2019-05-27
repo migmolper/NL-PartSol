@@ -24,7 +24,7 @@ csrc = \
 obj = $(csrc:.c=.o)
 
 # List of libraries required during linking
-LDFLAGS = -lm
+LDFLAGS = -lm -g
 
 # compile
 $(myprog): $(obj)
