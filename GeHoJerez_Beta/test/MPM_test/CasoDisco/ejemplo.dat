@@ -5,8 +5,8 @@ ELASTIC_MODULUS=2100
 KIND_ANALYSIS=MPM%U%2D%VerletLF
 TIME_STEP=1
 NUM_STEP=100
- Hola esto es un comentario 
-FEM_FILE_NAME=test/MPM_test/Mesh.msh
-MPM_FILE_NAME=test/MPM_test/Disc_Mesh.msh
-COND_INIT=test/data.init
-BOUND_COND=test/data.bcc
+FEM_FILE_NAME=test/MPM_test/CasoDisco/Mesh.msh
+MPM_FILE_NAME=test/MPM_test/CasoDisco/Disc_Mesh.msh
+COND_INIT=test/MPM_test/CasoDisco/data.init
+BOUND_COND=test/MPM_test/CasoDisco/BCC_data.bcc
+OUTPUT_DIR=test/MPM_test/CasoDisco

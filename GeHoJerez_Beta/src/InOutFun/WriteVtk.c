@@ -97,7 +97,7 @@ void WriteVtk_MPM(char * Name_File, GaussPoint MPM_Mesh,
 /*********************************************************************/
 
 void WriteVtk_FEM(char * Name_File, Mesh ElementMesh,
-		  Matrix List_Fields, int TimeStep_i){
+		  Matrix List_Nod_Fields, int TimeStep_i){
 
   FILE * Vtk_file;
 
@@ -129,7 +129,7 @@ void WriteVtk_FEM(char * Name_File, Mesh ElementMesh,
   for(int i = 0 ; i<ElementMesh.NumElemMesh ; i++){
     fprintf(Vtk_file,"%i",ElementMesh.NumNodesElem);
     for(int j = 0 ; j<ElementMesh.NumNodesElem ; j++){
-      fprintf(Vtk_file," %i ",ElementMesh.Connectivity[i][j] + 1);
+      fprintf(Vtk_file," %i ",ElementMesh.Connectivity[i][j]);
     }
     fprintf(Vtk_file,"\n");
   }
@@ -137,7 +137,7 @@ void WriteVtk_FEM(char * Name_File, Mesh ElementMesh,
   /* Type of element */
   fprintf(Vtk_file,"CELL_TYPES %i \n",ElementMesh.NumElemMesh);
   for(int i = 0 ; i<ElementMesh.NumElemMesh ; i++){
-    fprintf(Vtk_file,"%i \n",8);
+    fprintf(Vtk_file,"%i \n",9);
   }
 
   /* Point data */
@@ -149,8 +149,22 @@ void WriteVtk_FEM(char * Name_File, Mesh ElementMesh,
 	    ElementMesh.Coordinates.nM[i][1],
 	    ElementMesh.Coordinates.nM[i][2]);
   }
+
+ 
+  fprintf(Vtk_file,"SCALARS Nod_Mass float \n");
+  fprintf(Vtk_file,"LOOKUP_TABLE default \n");
+  for(int i =  0 ; i<ElementMesh.NumNodesMesh ; i++){
+    fprintf(Vtk_file,"%f \n",List_Nod_Fields.nM[0][i]);
+  }
   
   /* Cell data */  
   fprintf(Vtk_file,"CELL_DATA %i \n",ElementMesh.NumElemMesh);
+
+  fprintf(Vtk_file,"SCALARS Active_Elem int 1 \n");
+  fprintf(Vtk_file,"LOOKUP_TABLE table_Elem \n");
+  for(int i = 0 ; i<ElementMesh.NumElemMesh ; i++){
+    fprintf(Vtk_file,"%i\n",
+	    ElementMesh.ActiveElem[i]);
+  } 
 
 }

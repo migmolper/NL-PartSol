@@ -90,7 +90,7 @@ typedef struct {
   /* List of nodes for each element (Connectivity) */
   int **  Connectivity;
   /* Active element : 
-     Boolean variable that set the element ative (1) or not (0) */
+     Boolean variable that set the element ative (1>) or not (0) */
   int * ActiveElem;
 
 

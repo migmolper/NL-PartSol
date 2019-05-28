@@ -135,8 +135,8 @@ Mesh ReadGidMesh(char * MeshName)
   fclose(MeshFile);
  
   /* Allocate the mesh data */
-  GID_Mesh.Coordinates = MatAlloc(GID_Mesh.NumNodesMesh,GID_Mesh.Dimension);
-  /* GID_Mesh.Coordinates =  (double **) Allocate_Matrix(GID_Mesh.NumNodesMesh,3,sizeof(double)); */  
+  GID_Mesh.Coordinates = MatAlloc(GID_Mesh.NumNodesMesh,
+				  GID_Mesh.Dimension);
   GID_Mesh.Connectivity = (int **)
     Allocate_Matrix(GID_Mesh.NumElemMesh,
 		    GID_Mesh.NumNodesElem,sizeof(int));
@@ -240,6 +240,10 @@ Mesh ReadGidMesh(char * MeshName)
 	}
       }
     } /* Quadrilateral elements */
+    if(GID_Mesh.NumNodesElem == 3){ /* Triangular elements */
+      puts("Error in ReadGidMesh() : Boundary nodes localization for T3 not implemented yet !");
+    } /* Triangular elements */
+    
     
     free(NodesBound_aux);
 

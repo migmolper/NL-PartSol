@@ -40,7 +40,7 @@ $(myprog): $(obj)
 test1D:
 	./$(myprog) test/FEM_test/ejemplo.dat
 test2D:
-	./$(myprog) test/FEM_test/ejemplo.dat
+	./$(myprog) test/MPM_test/CasoDisco/ejemplo.dat
 
 # New rule for cleaning up every target, in order to rebuild
 # the whole program from scratch

@@ -6,6 +6,7 @@
 #include "ToolsLib/GlobalVariables.h"
 #include "InOutFun/InOutFun.h"
 #include "ElementsFunctions/ElementTools.h"
+#include "MPM_Subroutines/MPM_Subroutines.h"
 #include "GaussPointsFunctions/GaussPointsTools.h"
 #include "Constitutive/Constitutive.h"
 
@@ -33,16 +34,6 @@ void main(int argc, char *argv[])
   /* Read and imposse the boundary conditions */
   ReadBCC(BounCondFileName,FEM_Mesh);
 
-  for(int i = 0 ; i<FEM_Mesh.NumNodesBound ; i++){
-    for(int j = 1 ; j<=NumberDOF ; j++){
-      if(FEM_Mesh.NodesBound[i][j] == 1){
-	printf("Node %i -> Value %f, DOF : %i \n",
-	       FEM_Mesh.NodesBound[i][0],
-	       FEM_Mesh.ValueBC.nM[i][j-1],j-1);
-      }
-    }
-  }
-
   /* Define Gauss point mesh and initialize it */
   Matrix InputFields;
   InputFields.nM = NULL;
@@ -51,10 +42,13 @@ void main(int argc, char *argv[])
   /* Search the GP in the mesh */
   LocateGP(GP_Mesh,FEM_Mesh,0);
 
+  /* */
+  Matrix Nod_mass = GetNodalValuesFromGP(GP_Mesh, FEM_Mesh, "MASS");
+  
   /* Output for Paraview */
   Matrix List_Fields;
-  WriteVtk_MPM("Initial_conditions",GP_Mesh,List_Fields,0);  
-  WriteVtk_FEM("Mesh",FEM_Mesh,List_Fields,0);
+  WriteVtk_MPM("Initial_conditions",GP_Mesh,List_Fields,0);
+  WriteVtk_FEM("Mesh",FEM_Mesh,Nod_mass,0);
     
   /* /\* Read the initial conditions fields as a CSV *\/ */
   /* Matrix InputFields = Read_CSV(InitCondFileName,9); */

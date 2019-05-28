@@ -3,6 +3,7 @@
 #include <string.h>
 #include <math.h>
 #include "../ToolsLib/TypeDefinitions.h"
+#include "../ToolsLib/GlobalVariables.h"
 #include "../ToolsLib/Utils.h"
 #include "../InOutFun/InOutFun.h"
 #include "../ElementsFunctions/ShapeFunctions.h"
@@ -48,23 +49,56 @@ GaussPoint Initialize_GP_Mesh(char * MPM_GID_MeshName,
   MPM_Mesh.Element_id = (int *)Allocate_ArrayZ(MPM_Mesh.NumGP,sizeof(int));
 
   /* Coordinates of the GP (Global/Local)*/
-  MPM_Mesh.Phi.x_GC = MatAllocZ(MPM_Mesh.NumGP,3);
-  MPM_Mesh.Phi.x_EC = MatAllocZ(MPM_Mesh.NumGP,2);
+  MPM_Mesh.Phi.x_GC = MatAllocZ(MPM_Mesh.NumGP,3);  
 
-  /* Displacement field (Vectorial) */
-  MPM_Mesh.Phi.dis = MatAllocZ(MPM_Mesh.NumGP,2);
-
-  /* Velocity field (Vectorial) */
-  MPM_Mesh.Phi.vel = MatAllocZ(MPM_Mesh.NumGP,2);
-
-  /* Acceleration field (Vectorial) */
-  MPM_Mesh.Phi.acc = MatAllocZ(MPM_Mesh.NumGP,2);
-  
-  /* Stress field (Tensor) */
-  MPM_Mesh.Phi.Stress = MatAllocZ(MPM_Mesh.NumGP,3);
-
-  /* Strain field (Tensor) */
-  MPM_Mesh.Phi.Strain = MatAllocZ(MPM_Mesh.NumGP,3);
+  /* Allocate vectorial/tensorial fields */
+  switch(NumberDimensions){
+  case 1 :
+    /* Natural coordinates (Vectorial) */
+    MPM_Mesh.Phi.x_EC = MatAllocZ(MPM_Mesh.NumGP,1);
+    /* Displacement field (Vectorial) */
+    MPM_Mesh.Phi.dis = MatAllocZ(MPM_Mesh.NumGP,1);
+    /* Velocity field (Vectorial) */
+    MPM_Mesh.Phi.vel = MatAllocZ(MPM_Mesh.NumGP,1);
+    /* Acceleration field (Vectorial) */
+    MPM_Mesh.Phi.acc = MatAllocZ(MPM_Mesh.NumGP,1);
+    /* Strain field (Tensor) */
+    MPM_Mesh.Phi.Strain = MatAllocZ(MPM_Mesh.NumGP,1);
+    /* Stress field (Tensor) */
+    MPM_Mesh.Phi.Stress = MatAllocZ(MPM_Mesh.NumGP,1);
+    break;
+  case 2 :
+    /* Natural coordinates (Vectorial) */
+    MPM_Mesh.Phi.x_EC = MatAllocZ(MPM_Mesh.NumGP,2);
+    /* Displacement field (Vectorial) */
+    MPM_Mesh.Phi.dis = MatAllocZ(MPM_Mesh.NumGP,2);
+    /* Velocity field (Vectorial) */
+    MPM_Mesh.Phi.vel = MatAllocZ(MPM_Mesh.NumGP,2);
+    /* Acceleration field (Vectorial) */
+    MPM_Mesh.Phi.acc = MatAllocZ(MPM_Mesh.NumGP,2);
+    /* Strain field (Tensor) */
+    MPM_Mesh.Phi.Strain = MatAllocZ(MPM_Mesh.NumGP,3);
+    /* Stress field (Tensor) */
+    MPM_Mesh.Phi.Stress = MatAllocZ(MPM_Mesh.NumGP,3);
+    break;
+  case 3:
+    /* Natural coordinates (Vectorial) */
+    MPM_Mesh.Phi.x_EC = MatAllocZ(MPM_Mesh.NumGP,3);
+    /* Displacement field (Vectorial) */
+    MPM_Mesh.Phi.dis = MatAllocZ(MPM_Mesh.NumGP,3);
+    /* Velocity field (Vectorial) */
+    MPM_Mesh.Phi.vel = MatAllocZ(MPM_Mesh.NumGP,3);
+    /* Acceleration field (Vectorial) */
+    MPM_Mesh.Phi.acc = MatAllocZ(MPM_Mesh.NumGP,3);
+    /* Strain field (Tensor) */
+    MPM_Mesh.Phi.Strain = MatAllocZ(MPM_Mesh.NumGP,9);
+    /* Stress field (Tensor) */
+    MPM_Mesh.Phi.Stress = MatAllocZ(MPM_Mesh.NumGP,9);
+    break;
+  default:
+    puts("Error in Initialize_GP_Mesh() : Wrong number of dimensions !!!");
+    exit(0);
+  }  
 
   /* Mass field (Scalar) */
   MPM_Mesh.Phi.mass = MatAllocZ(MPM_Mesh.NumGP,1);
@@ -226,25 +260,22 @@ void LocateGP(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int TimeStep){
 
       /* Connectivity of the Poligon */
       Poligon_Connectivity = FEM_Mesh.Connectivity[j];
-
       /* Fill the poligon Matrix */
       for(int k = 0 ; k<FEM_Mesh.NumNodesElem ; k++){
 	for(int l = 0 ; l<FEM_Mesh.Dimension ; l++){
 	  Poligon.nM[k][l] = FEM_Mesh.Coordinates.nM[Poligon_Connectivity[k]][l];
 	}
       }
-
       /* Check out if the GP is in the Element */
       if(InOut_Poligon(X_GC_GP,Poligon) == 1){
-
-	/* If the GP is in the element, set the index of the position */
+	/* If the GP is in the element, set the index of the position and 
+	 update the array to set if an element is active or not */
 	MPM_Mesh.Element_id[i] = j;
-
+	FEM_Mesh.ActiveElem[j] += 1;	
 	/* If the GP is in the element, get its natural coordinates */
 	X_EC_GP.nV = MPM_Mesh.Phi.x_EC.nM[i];
 	X_EC_GP = GetNaturalCoordinates(X_EC_GP,X_GC_GP,Poligon);
-      }
-      
+      }      
     } /* Loop over the elements */
 
   } /* Loop over the GP */

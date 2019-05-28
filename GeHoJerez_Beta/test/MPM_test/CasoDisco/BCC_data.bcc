@@ -1,6 +1,4 @@
-En el inicio del calculo,
-le doy un tirón a la barra
-BCC T#[0] V#[1]={-1} V#[6]={0}
-Después dejo suelta la barra y
-la veo oscilar
-BCC T#[1:100] SIGMA#[1]={0} V#[6]={0}
+BCC_TOP TOP#[Y=1] T#[:] U#[0:1]={NAN,0}
+BCC_BOTTOM BOTTOM#[Y=-3] T#[:] U#[0:1]={NAN,0}
+BCC_RIGHT RIGHT#[X=1] T#[:] U#[1:0]={0,NAN}
+BCC_LEFT LEFT#[X=0] T#[:] U#[1:0]={0,NAN}
