@@ -12,7 +12,6 @@ void WriteVtk_MPM(char * Name_File, GaussPoint MPM_Mesh,
 		  Matrix List_Fields, int TimeStep_i){
 
   FILE * Vtk_file;
-
   char Name_file_t[80];
 
   sprintf(Name_file_t,"%s/MPM_%s_%i.vtk",OutputDir,Name_File,TimeStep_i);
@@ -100,8 +99,10 @@ void WriteVtk_FEM(char * Name_File, Mesh ElementMesh,
 		  Matrix List_Nod_Fields, int TimeStep_i){
 
   FILE * Vtk_file;
-
   char Name_file_t[80];
+  int NumberFields;
+  char * FieldsList[MAXW] = {NULL};
+  int i_Field;
 
   sprintf(Name_file_t,"%s/FEM_%s_%i.vtk",OutputDir,Name_File,TimeStep_i);
   
@@ -149,13 +150,42 @@ void WriteVtk_FEM(char * Name_File, Mesh ElementMesh,
 	    ElementMesh.Coordinates.nM[i][1],
 	    ElementMesh.Coordinates.nM[i][2]);
   }
+  
+  NumberFields = parse (FieldsList,List_Nod_Fields.Info,";\n");
 
- 
-  fprintf(Vtk_file,"SCALARS Nod_Mass float \n");
-  fprintf(Vtk_file,"LOOKUP_TABLE default \n");
-  for(int i =  0 ; i<ElementMesh.NumNodesMesh ; i++){
-    fprintf(Vtk_file,"%f \n",List_Nod_Fields.nM[0][i]);
-  }
+  /* Auxiliar index for the input fields */
+  i_Field = 0;
+
+  /* Loop over the fields */
+  for(int i = 0 ; i<NumberFields ; i++){
+    if(strcmp(FieldsList[i],"MASS") == 0){
+      fprintf(Vtk_file,"SCALARS Nod_Mass float \n");
+      fprintf(Vtk_file,"LOOKUP_TABLE default \n");
+      for(int j =  0 ; j<ElementMesh.NumNodesMesh ; j++){
+	fprintf(Vtk_file,"%f \n",List_Nod_Fields.nM[i_Field][j]);
+      }
+      /* Update the index of the field */
+      i_Field += 1;
+    }
+
+    if(strcmp(FieldsList[i],"MOMENTUM") == 0){
+      fprintf(Vtk_file,"VECTORS %s float \n","MOMENTUM");
+      for(int j =  0 ; j<ElementMesh.NumNodesMesh ; j++){
+	/* Print the dimensions of the array */
+	for(int k = 0 ; k<NumberDimensions ; k++){
+	  fprintf(Vtk_file,"%f ",List_Nod_Fields.nM[i_Field+k][j]);
+	}
+	/* Add the rest of the coordinates : is compulsary to add 3 */
+	for(int k = 0 ; k<(3-NumberDimensions) ; k++){
+	  fprintf(Vtk_file,"%f ",0.0);
+	}
+	fprintf(Vtk_file,"\n");	
+      }
+      /* Update the index of the field */
+      i_Field += NumberDimensions ;
+    }
+
+  }   
   
   /* Cell data */  
   fprintf(Vtk_file,"CELL_DATA %i \n",ElementMesh.NumElemMesh);

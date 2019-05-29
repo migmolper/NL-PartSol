@@ -101,6 +101,8 @@ typedef struct {
   int ** NodesBound;
   /* Value of boundary conditions */
   Matrix ValueBC;
+  /* Name of the BC */
+  char InfoBC [100];
 
   /*** INDIVIDUAL ELEMENT PROPERTIES ***/
   /* Number of dimensions of the element */

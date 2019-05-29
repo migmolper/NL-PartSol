@@ -8,6 +8,7 @@
 #include "ElementsFunctions/ElementTools.h"
 #include "MPM_Subroutines/MPM_Subroutines.h"
 #include "GaussPointsFunctions/GaussPointsTools.h"
+#include "Boundary_Conditions/BoundaryConditions.h"
 #include "Constitutive/Constitutive.h"
 
 void main(int argc, char *argv[])
@@ -17,6 +18,9 @@ void main(int argc, char *argv[])
   * Data file
 */
 {
+
+  /* Variable decalaration for the program */
+  
   /* Check command-line arguments */
   if(argc == 1){
     perror("Error in main(), insuficient number of input files !");
@@ -26,29 +30,85 @@ void main(int argc, char *argv[])
   /* Read the .dat file */
   ReadDatFile(argv[1]);
 
-  Matrix D_e = LinearElastic2D(PoissonModulus,ElasticModulus);
+    Matrix D_e;
+  Mesh FEM_Mesh;
+  Matrix InputFields;
+  InputFields.nM = NULL;
+  GaussPoint GP_Mesh;
+  char Get_values[MAXW];
+  Matrix Nod_Values;
+  Matrix Nodal_MASS;
+  Matrix Nodal_VELOCITY;
+  Nodal_VELOCITY.nM = (double **)malloc((unsigned)NumberDimensions*sizeof(double*));
+  Matrix Nodal_MOMENTUM;
+  Nodal_MOMENTUM.nM = (double **)malloc((unsigned)NumberDimensions*sizeof(double*));
+  Matrix Nodal_F_TOT;
+  Nodal_F_TOT.nM = (double **)malloc((unsigned)NumberDimensions*sizeof(double*));
+
+
+  /**/
+  D_e = LinearElastic2D(PoissonModulus,ElasticModulus);
 
   /* Read mesh data and initialize the element mesh */
-  Mesh FEM_Mesh = ReadGidMesh(FEM_MeshFileName);
+  FEM_Mesh = ReadGidMesh(FEM_MeshFileName);
 
   /* Read and imposse the boundary conditions */
   ReadBCC(BounCondFileName,FEM_Mesh);
 
   /* Define Gauss point mesh and initialize it */
-  Matrix InputFields;
-  InputFields.nM = NULL;
-  GaussPoint GP_Mesh  = Initialize_GP_Mesh(MPM_MeshFileName,InputFields,Density,D_e);
+  GP_Mesh  = Initialize_GP_Mesh(MPM_MeshFileName,InputFields,Density,D_e);
 
   /* Search the GP in the mesh */
   LocateGP(GP_Mesh,FEM_Mesh,0);
 
-  /* */
-  Matrix Nod_mass = GetNodalValuesFromGP(GP_Mesh, FEM_Mesh, "MASS");
+  /* First step : Get the nodal mass and the momentum */
+  printf("************************************************* \n");
+  printf(" First step : Get the nodal mass and the momentum \n");
+  printf(" \t Working ... \n");
+  Get_values = "MASS;MOMENTUM";
+  Nod_Values = GetNodalValuesFromGP(GP_Mesh,FEM_Mesh,Get_values);
+  Nodal_MASS.nV = Nod_Values.nM[0];
+  Nodal_MOMENTUM.nM[0] = Nod_Values.nM[1];
+  Nodal_MOMENTUM.nM[1] = Nod_Values.nM[2];
+  printf(" DONE !!! \n");
+
+  /* Second step : Set the essential boundary conditions (over p)*/
+  printf("************************************************* \n");
+  printf(" Second step : Set the essential BCC (over P) \n");
+  printf(" \t Working ... \n");
+  ApplyBoundaryCondition_Nod(FEM_Mesh,Nodal_MOMENTUM,0);
+  printf(" DONE !!! \n");
+
+  /* Third step (USF only) : Update the particle stress state */
+  printf("************************************************* \n");
+  printf(" Third step : Update the particle stress state \n");
+  
+  /* a) Get the grid nodal velocity */
+  printf(" \t a) Get the grid nodal velocity ... WORKING \n");
+  Nodal_VELOCITY = GetNodalVelocity(Nodal_MOMENTUM, Nodal_MASS);
+  /* b) Calculate the strain increment */
+  
+  /* c) Update the particle density */
+
+  /* d) Update the particle stress state */
+
+  /* Four step : Calculate the nodal internal, external and the total forces */
+
+  /* Five step : Integrate the grid nodal momentum equation */
+
+  /* Six step : Update the particle velocity and position */
+
+  /* Seven step (MUSL only) : Recalculate the grid nodal momentum */
+
+  /* Eight step (MUSL & USL only) : */
+
+  /* Nine step : Store all the material properties in the particles so that the deformed grid
+   can be discarted */
   
   /* Output for Paraview */
   Matrix List_Fields;
   WriteVtk_MPM("Initial_conditions",GP_Mesh,List_Fields,0);
-  WriteVtk_FEM("Mesh",FEM_Mesh,Nod_mass,0);
+  WriteVtk_FEM("Mesh",FEM_Mesh,Nod_Values,0);
     
   /* /\* Read the initial conditions fields as a CSV *\/ */
   /* Matrix InputFields = Read_CSV(InitCondFileName,9); */

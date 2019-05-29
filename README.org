@@ -4,10 +4,24 @@ This is a simple MPM code write in C, the main purpose of this code is to unders
 
 Miguel Molinos Pérez, PhD candidate. Madrid 28-5-2019
 
-* Basics equations
+* Physical problem
+
+** Balance of momentum (Equilibrium)
 
 \rho \cdot \partial_{t} v + \partial_{x} \sigma =  \rho \cdot b
 
+** Compatibility
+
+
+** Constitutive response
+
+\sigma = 2G\Epsilon + \lambda tr(\Epsilon) I
+
+   
+* Material Point Method 
+
+
+* Proposed tests
 
 ** Simple propagation of a shock wave in a 1D media 
 
@@ -21,3 +35,8 @@ The algorithm is as follows :
 3. Get the solution in the nodes for t = n + 1 : 
 
 ** Simple propagation of a shock wave in a 1D elastic media using the formulation \sigma - v
+
+
+* List of new items
+
+
