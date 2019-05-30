@@ -30,27 +30,29 @@ void main(int argc, char *argv[])
   /* Read the .dat file */
   ReadDatFile(argv[1]);
 
-    Matrix D_e;
+  Matrix D_e;
   Mesh FEM_Mesh;
+  GaussPoint GP_Mesh;
   Matrix InputFields;
   InputFields.nM = NULL;
-  GaussPoint GP_Mesh;
-  char Get_values[MAXW];
-  Matrix Nod_Values;
-  Matrix Nodal_MASS;
-  Matrix Nodal_VELOCITY;
-  Nodal_VELOCITY.nM = (double **)malloc((unsigned)NumberDimensions*sizeof(double*));
-  Matrix Nodal_MOMENTUM;
-  Nodal_MOMENTUM.nM = (double **)malloc((unsigned)NumberDimensions*sizeof(double*));
-  Matrix Nodal_F_TOT;
-  Nodal_F_TOT.nM = (double **)malloc((unsigned)NumberDimensions*sizeof(double*));
+  /* char Get_values[MAXW]; */
 
-
-  /**/
+  /* 2D linear elasticity */
   D_e = LinearElastic2D(PoissonModulus,ElasticModulus);
 
   /* Read mesh data and initialize the element mesh */
   FEM_Mesh = ReadGidMesh(FEM_MeshFileName);
+
+  /* Initialize auxiliar structures to store nodal information */
+  Matrix Nod_Values;
+  Matrix Nodal_MASS;
+  Matrix Nodal_VELOCITY;
+  Matrix Nodal_MOMENTUM;
+  Nodal_MOMENTUM.N_rows = NumberDimensions;
+  Nodal_MOMENTUM.N_cols = FEM_Mesh.NumNodesMesh;
+  Nodal_MOMENTUM.nM = (double **)malloc((unsigned)NumberDimensions*sizeof(double*));
+  Matrix Nodal_F_TOT;
+  Nodal_F_TOT.nM = (double **)malloc((unsigned)NumberDimensions*sizeof(double*));
 
   /* Read and imposse the boundary conditions */
   ReadBCC(BounCondFileName,FEM_Mesh);
@@ -64,8 +66,8 @@ void main(int argc, char *argv[])
   /* First step : Get the nodal mass and the momentum */
   printf("************************************************* \n");
   printf(" First step : Get the nodal mass and the momentum \n");
-  printf(" \t Working ... \n");
-  Get_values = "MASS;MOMENTUM";
+  printf(" \t WORKING ... \n");
+  char Get_values[MAXW] = "MASS;MOMENTUM";
   Nod_Values = GetNodalValuesFromGP(GP_Mesh,FEM_Mesh,Get_values);
   Nodal_MASS.nV = Nod_Values.nM[0];
   Nodal_MOMENTUM.nM[0] = Nod_Values.nM[1];
@@ -75,7 +77,7 @@ void main(int argc, char *argv[])
   /* Second step : Set the essential boundary conditions (over p)*/
   printf("************************************************* \n");
   printf(" Second step : Set the essential BCC (over P) \n");
-  printf(" \t Working ... \n");
+  printf(" \t WORKING ... \n");
   ApplyBoundaryCondition_Nod(FEM_Mesh,Nodal_MOMENTUM,0);
   printf(" DONE !!! \n");
 
@@ -86,12 +88,19 @@ void main(int argc, char *argv[])
   /* a) Get the grid nodal velocity */
   printf(" \t a) Get the grid nodal velocity ... WORKING \n");
   Nodal_VELOCITY = GetNodalVelocity(Nodal_MOMENTUM, Nodal_MASS);
+  printf(" \t DONE !!! \n");
   /* b) Calculate the strain increment */
-  
+  printf(" \t b) Calculate the strain increment ... WORKING \n");
+  GetGaussPointStrainIncrement(GP_Mesh,FEM_Mesh,Nodal_VELOCITY);
+  printf(" \t DONE !!! \n");
   /* c) Update the particle density */
-
+  printf(" \t c) Update the particle density ... WORKING \n");
+  UpdateGaussPointDensity(GP_Mesh);
+  printf(" \t DONE !!! \n");
   /* d) Update the particle stress state */
-
+  printf(" \t d) Update the particle stress state ... WORKING \n");
+  UpdateGaussPointStressTensor(GP_Mesh);
+  printf(" \t DONE !!! \n");
   /* Four step : Calculate the nodal internal, external and the total forces */
 
   /* Five step : Integrate the grid nodal momentum equation */

@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "../ToolsLib/TypeDefinitions.h"
+#include "../ToolsLib/GlobalVariables.h"
 #include "../ToolsLib/Utils.h"
 #include "ShapeFunctions.h"
 #include "../Constitutive/Constitutive.h"
@@ -38,92 +39,91 @@
 
 /*********************************************************************/
 
-/* Matrix Get_dNdx_matrix(Matrix X_g, */
-/* 		       Matrix dNdX_Ref_GP, */
-/* 		       int NumNodesElem, */
-/* 		       int Ndim) */
-/* /\* */
-/*    Get the derivative matrix of the shape functions in global coordiantes, it is */
-/*    the so called B matrix in the classical formulation of the finite element method */
-/*    Inputs:  */
-/*    - dNdX_ref_GP : Values of the shape functions derivatives in each node */
-/*    evaluate in the GP  */
+Matrix Get_B_GP(Matrix X_EC_GP,Matrix Element)
+/*
+   Get the B matrix (Usual in the classical formulation of 
+   the finite element method )
+   Inputs:
+   - Matrix X_NC_GP : Element coordinates
+   - Matrix Element : Coordinates of the element 
 
-/*    Outputs : Matrix dNdX_GP */
-/* *\/ */
-/* { */
-/*   /\* Decalaration of the output matrix *\/ */
-/*   Matrix dNdX_GP; */
-/*   /\* Inverse and transpose of the reference deformation gradient *\/ */
-/*   Matrix F_Ref; */
-/*   Matrix F_Ref_m1; */
-/*   Matrix F_Ref_m1T; */
-/*   /\* Nodal values of the reference shape functions derivatives in each node */
-/*      evaluate in the GP *\/ */
-/*   Matrix dN_di_Ref_GP; */
-/*   /\* Nodal derivative matrix evaluated in the GP *\/ */
-/*   Matrix dN_di_GP; */
-  
-/*   switch(Ndim){ */
-    
-/*   case 1: */
-/*     puts("Error in Get_dNdi_matrix() : 1D cases not implemented yet"); */
-/*     exit(0); */
-    
-/*   case 2: */
-    
-/*     /\* Allocate the output *\/ */
-/*     dNdX_GP = MatAlloc(3,2*NumNodesElem); */
+   Outputs : Matrix B
+*/
+{
 
-/*     /\* Allocate the auxiliar array *\/ */
-/*     dN_di_Ref_GP = MatAlloc(2,1); */
+  /* 0º Define variables */
+  Matrix B_GP; /* Declaration of the output matrix (NdimVecStrain x Nnodes*Ndim) */
+  Matrix N_Ref_GP; /* Shape function evaluated in the GP (1 x Nnodes) */
+  Matrix dNdX_Ref_GP; /* Derivative of the shape function evaluated in the GP (Ndim x Nnodes) */
+  Matrix F_Ref_GP; /* Reference deformation gradient evaluated in the GP (Ndim x Ndim) */
+  Matrix F_Ref_GP_T; /* Transpose of the reference deformation gradient */
+  Matrix F_Ref_GP_Tm1; /* Inverse of the transpose reference deformation gradient */
+  Matrix dNdx_XG_GP; /* Derivatives of the shape function evaluates in the GP (Ndim x Ndim) */
 
-/*     /\* Get the inverse of the reference deformation gradient and transpose it *\/ */
-/*     F_Ref = Get_RefDeformation_Gradient(X_g,dNdX_Ref_GP); */
-/*     F_Ref_m1 = Get_Inverse(F_Ref); */
-/*     free(F_Ref.nM); */
-/*     F_Ref_m1T = Transpose_Mat(F_Ref_m1); */
-/*     free(F_Ref_m1.nM); */
+  /* 1º Select the case to solve */
+  switch(NumberDimensions){
     
-/*     /\* Fill the matrix *\/ */
-/*     for(int i = 0 ; i<NumNodesElem ; i++){ */
+  case 1:  /* 1D stress tensor */
+    
+    puts("Error in Get_dNdi_matrix() : 1D cases not implemented yet");
+    exit(0);
+    
+  case 2: /* 2D stress tensor */
+    
+    /* 2º Allocate the output */
+    B_GP = MatAlloc(3,2*Element.N_rows);
 
-/*       /\* Fill an array with the nodal derivatives in the reference element *\/ */
-/*       dN_di_Ref_GP.nV[0] = dNdX_Ref_GP.nM[0][i]; */
-/*       dN_di_Ref_GP.nV[1] = dNdX_Ref_GP.nM[1][i]; */
-	    
-/*       /\* Obtain the nodal derivarives in the real element *\/ */
-/*       dN_di_GP = Scalar_prod(F_Ref_m1T,dN_di_Ref_GP); */
+    if(strcmp(Element.Info,"Quadrilateral") == 0){      
+      /* 3º Evaluate the shape function and it derivarive in the GP */
+      N_Ref_GP = Q4(X_EC_GP);
+
+      /* 4º Evaluate the gradient of the shape function in the GP */
+      dNdX_Ref_GP = dQ4(X_EC_GP);
+
+      /* 5º Get the reference deformation gradient in the GP */
+      F_Ref_GP = Get_RefDeformation_Gradient_Q4(X_EC_GP,Element);
+    }
+
+    /* 6º Get the deformation gradient (dNdx_XG) : Only in some cases */
+    /* 6aº Get the transpose of the deformation gradient */
+    F_Ref_GP_T = Transpose_Mat(F_Ref_GP), 
+      free(F_Ref_GP.nM);
+    /* 6bº Get the inverse of the transpose of the deformation gradient */
+    F_Ref_GP_Tm1 = Get_Inverse(F_Ref_GP_T), 
+      free(F_Ref_GP_T.nM);
+    /* 6cº Get the gradient of the shape functions in global coordinates */
+    dNdx_XG_GP = Scalar_prod(F_Ref_GP_Tm1,dNdX_Ref_GP), 
+      free(F_Ref_GP_Tm1.nM),
+      free(dNdX_Ref_GP.nM);
+    
+    /* 7º Fill the array with the nodal partial derivation of the reference element */
+    
+    for(int i = 0 ; i<Element.N_rows ; i++){
+      B_GP.nM[0][2*i] = dNdx_XG_GP.nM[0][i];
+      B_GP.nM[1][2*i] = 0;
+      B_GP.nM[2][2*i] = dNdx_XG_GP.nM[1][i];
       
-/*       /\* Fill the array with the nodal partial derivation of the reference element *\/ */
-/*       dNdX_GP.nM[0][2*i] = dN_di_GP.nV[0]; */
-/*       dNdX_GP.nM[1][2*i] = 0; */
-/*       dNdX_GP.nM[2][2*i] = dN_di_GP.nV[1]; */
+      B_GP.nM[0][2*i + 1] = 0;
+      B_GP.nM[1][2*i + 1] = dNdx_XG_GP.nM[1][i];
+      B_GP.nM[2][2*i + 1] = dNdx_XG_GP.nM[0][i];      
+    }
 
-/*       dNdX_GP.nM[0][2*i + 1] = 0; */
-/*       dNdX_GP.nM[1][2*i + 1] = dN_di_GP.nV[1]; */
-/*       dNdX_GP.nM[2][2*i + 1] = dN_di_GP.nV[0]; */
-      
-/*     } */
+    /* 8º Free memory */
+    free(dNdx_XG_GP.nM);
 
-/*     /\* Free memory *\/ */
-/*     free(dN_di_GP.nV); */
-/*     free(dN_di_Ref_GP.nV); */
-/*     free(F_Ref_m1T.nM); */
-
-/*     break; */
+    break;
     
-/*   case 3: */
-/*     puts("Error in Get_dNdi_matrix() : 3D cases not implemented yet"); */
-/*     exit(0); */
+  case 3: /* 3D stress tensor */
+    puts("Error in Get_dNdi_matrix() : 3D cases not implemented yet");
+    exit(0);
     
-/*   default : */
-/*     puts("Error in Get_dNdi_matrix() : Wrong case select"); */
-/*     exit(0); */
-/*   } */
+  default :
+    puts("Error in Get_dNdi_matrix() : Wrong case select");
+    exit(0);
+  }
   
-/*   return dNdX_GP; */
-/* } */
+  return B_GP;
+}
 
 /*********************************************************************/
 

@@ -37,6 +37,12 @@ The algorithm is as follows :
 ** Simple propagation of a shock wave in a 1D elastic media using the formulation \sigma - v
 
 
-* List of new items
+* Items
 
+** DONE Get the Nodal coordinates of the material points
 
+*** 23-05-2019, Madrid
+
+** Get the strain increment in the material points
+
+*** 28-05-2019, Madrid

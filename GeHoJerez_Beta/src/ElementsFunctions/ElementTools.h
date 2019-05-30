@@ -7,16 +7,13 @@
 
 /* Functions definitions :*/
 
-Matrix Get_RefDeformation_Gradient(Matrix,
-				   Matrix);
+/* Matrix Get_RefDeformation_Gradient(Matrix, */
+/* 				   Matrix); */
 
-Matrix Get_dNdx_matrix(Matrix,
-		       Matrix,
-		       int,int);
+Matrix Get_B_GP(Matrix, Matrix);
 
 /* Matrix Get_Stiffness_Matrix(Element *);  */
 
-Matrix Get_Geom_Mass_Matrix(GaussPoint,Mesh);
+/* Matrix Get_Geom_Mass_Matrix(GaussPoint,Mesh); */
 
 Matrix GetNaturalCoordinates(Matrix,Matrix,Matrix);
-

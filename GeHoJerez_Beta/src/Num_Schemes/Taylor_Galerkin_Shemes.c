@@ -278,7 +278,7 @@ void Two_Steps_TG_FEM(Mesh ElementMesh, GaussPoint GP_Mesh,
   free(DeltaPhiNod.nM);
 
   /* 6º Add the Boundary conditions contributions in the boundary */
-  ApplyBoundaryCondition_Nod(Phi_n_Nod,TimeStep);  
+  /* ApplyBoundaryCondition_Nod(Phi_n_Nod,TimeStep);   */
 
   /* 7º Transfer information from the mesh to the GP for MPM */
   MeshToGaussPoints(ElementMesh,GP_Mesh,Phi_n_Nod,Phi_n_GP,M);
@@ -368,7 +368,7 @@ void Two_Steps_TG_MPM(Mesh ElementMesh, GaussPoint GP_Mesh,
     Phi_n_Nod.nM[0][i] += (double)1/M_l.nV[i]*DeltaTimeStep*(-Nod_Int_Forces.nM[0][i]);
   }
 
-  ApplyBoundaryCondition_Nod(Phi_n_Nod,TimeStep);
+  /* ApplyBoundaryCondition_Nod(Phi_n_Nod,TimeStep); */
 
   MeshToGaussPoints(ElementMesh,GP_Mesh,Phi_n_Nod,Phi_n_GP,M_l);
 

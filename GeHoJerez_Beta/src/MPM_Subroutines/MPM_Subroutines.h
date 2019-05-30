@@ -10,4 +10,10 @@
 Mesh RectangularMesh(double, double,
 		     double, double,
 		     double, double, char *);
-Matrix GetNodalValuesFromGP(GaussPoint, Mesh, char LisOfFields[MAXW]);
+Matrix GetNodalValuesFromGP(GaussPoint, Mesh, char [MAXW]);
+
+Matrix GetNodalVelocity(Matrix, Matrix);
+
+void GetGaussPointStrainIncrement(GaussPoint, Mesh, Matrix);
+
+void UpdateGaussPointDensity(GaussPoint);
