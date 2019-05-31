@@ -1,4 +1,4 @@
-# GeHoJerez
+#+TITLE: GeHoJerez
 
 This is a simple MPM code write in C, the main purpose of this code is to understand the basics concepts of a MPM code. I also write this lines to keep some order in my ideas during this crazy years. 
 
@@ -8,18 +8,45 @@ Miguel Molinos Pérez, PhD candidate. Madrid 28-5-2019
 
 ** Balance of momentum (Equilibrium)
 
+\begin{equation}
 \rho \cdot \partial_{t} v + \partial_{x} \sigma =  \rho \cdot b
+\end{equation}
 
-** Compatibility
 
 
+** Compatibility 
 ** Constitutive response
 
-\sigma = 2G\Epsilon + \lambda tr(\Epsilon) I
+\begin{equation}
+\sigma = 2G\epsilon + \lambda tr(\epsilon) I
+\end{equation}
 
-   
 * Material Point Method 
+  
+** Explicit MPM Scheme
 
+1. Calculate the grid nodal mass and momentum by maping the particle mass and momentum to the corresponding grid nodes.
+\begin{equation}
+m_{I}^{k} = \sum^{n_p}_{p=1} m_p N_{Ip}^{k}
+\end{equation} 
+\begin{equation}
+p_{I,i}^{k-1/2} = \sum^{n_p}_{p=1} m_p v_{ip}^{k-1/2}N_{Ip}^{k}
+\end{equation}
+1. Impose essential boundary conditions on the grid nodal momentum. At the fixed boundary, set $p_{iI}^{k-1/2} = 0$.
+2. For the USF only, calculate the particle strain increment $\Delta \epsilon_{ijp}^{k-1/2}$, and the update the particle density and stress as follows:
+   + Calculate the grid nodal velocity $v_{iI}^{k-1/2}$
+     \begin{equation}
+     v_{iI}^{k-1/2} = \frac{p_{iI}^{k-1/2}}{m_I^k}
+     \end{equation}
+   + Calculate the particle strain increment $\Delta \epsilon_{ijp}^{k-1/2}$ with :
+     \begin{equation}
+     \Delta \epsilon_{ijp}^{k-1/2} = \frac{1}{2}(N_{Ip,j}^{k} v_{iI}^{k-1/2} + N_{Ip,i}^{k} v_{jI}^{k-1/2})
+     \end{equation}
+   + Update the particle density with :
+     \begin{equation}
+     \rho_p^{k+1} = \frac{\rho_p^k}{1 + \Delta\epsilon_{iip}^{k-1/2}}
+     \end{equation}
+   + Update the particle stress stated based on $\Delta_{ijp}^{k-1/2}$ with an appropriate constitutive law.
 
 * Proposed tests
 
@@ -42,7 +69,8 @@ The algorithm is as follows :
 ** DONE Get the Nodal coordinates of the material points
 
 *** 23-05-2019, Madrid
-
-** Get the strain increment in the material points
+    
+** DONE Get the strain increment in the material points
 
 *** 28-05-2019, Madrid
+** DONE Get the stress state
