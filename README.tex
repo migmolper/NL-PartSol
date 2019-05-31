@@ -1,4 +1,4 @@
-% Created 2019-05-28 mar 20:38
+% Created 2019-05-31 vie 10:12
 \documentclass[11pt]{article}
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
@@ -18,7 +18,7 @@
 \tolerance=1000
 \author{Miguel Molinos Pérez}
 \date{\today}
-\title{README}
+\title{GeHoJerez}
 \hypersetup{
   pdfkeywords={},
   pdfsubject={},
@@ -27,7 +27,6 @@
 
 \maketitle
 \tableofcontents
-
 
 This is a simple MPM code write in C, the main purpose of this code is to understand the basics concepts of a MPM code. I also write this lines to keep some order in my ideas during this crazy years. 
 
@@ -39,20 +38,55 @@ Miguel Molinos Pérez, PhD candidate. Madrid 28-5-2019
 \subsection{Balance of momentum (Equilibrium)}
 \label{sec-1-1}
 
-$\rho$ $\cdot$ $\partial$$_{\text{t}}$ v + $\partial$$_{\text{x}}$ $\sigma$ =  $\rho$ $\cdot$ b
+\begin{equation}
+\rho \cdot \partial_{t} v + \partial_{x} \sigma =  \rho \cdot b
+\end{equation}
+
+
 
 \subsection{Compatibility}
 \label{sec-1-2}
-
-
 \subsection{Constitutive response}
 \label{sec-1-3}
 
-$\sigma$ = 2GE + $\lambda$ tr(E) I
-
+\begin{equation}
+\sigma = 2G\epsilon + \lambda tr(\epsilon) I
+\end{equation}
 
 \section{Material Point Method}
 \label{sec-2}
+
+\subsection{Explicit MPM Scheme}
+\label{sec-2-1}
+
+\begin{enumerate}
+\item Calculate the grid nodal mass and momentum by maping the particle mass and momentum to the corresponding grid nodes.
+\end{enumerate}
+\begin{equation}
+m_{I}^{k} = \sum^{n_p}_{p=1} m_p N_{Ip}^{k}
+\end{equation} 
+\begin{equation}
+p_{I,i}^{k-1/2} = \sum^{n_p}_{p=1} m_p v_{ip}^{k-1/2}N_{Ip}^{k}
+\end{equation}
+\begin{enumerate}
+\item Impose essential boundary conditions on the grid nodal momentum. At the fixed boundary, set $p_{iI}^{k-1/2} = 0$.
+\item For the USF only, calculate the particle strain increment $\Delta \epsilon_{ijp}^{k-1/2}$, and the update the particle density and stress as follows:
+\begin{itemize}
+\item Calculate the grid nodal velocity $v_{iI}^{k-1/2}$
+\begin{equation}
+v_{iI}^{k-1/2} = \frac{p_{iI}^{k-1/2}}{m_I^k}
+\end{equation}
+\item Calculate the particle strain increment $\Delta \epsilon_{ijp}^{k-1/2}$ with :
+\begin{equation}
+\Delta \epsilon_{ijp}^{k-1/2} = \frac{1}{2}(N_{Ip,j}^{k} v_{iI}^{k-1/2} + N_{Ip,i}^{k} v_{jI}^{k-1/2})
+\end{equation}
+\item Update the particle density with :
+\begin{equation}
+\rho_p^{k+1} = \frac{\rho_p^k}{1 + \Delta\epsilon_{iip}^{k-1/2}}
+\end{equation}
+\item Update the particle stress stated based on $\Delta_{ijp}^{k-1/2}$ with an appropriate constitutive law.
+\end{itemize}
+\end{enumerate}
 
 \section{Proposed tests}
 \label{sec-3}
@@ -74,7 +108,22 @@ The algorithm is as follows :
 \subsection{Simple propagation of a shock wave in a 1D elastic media using the formulation $\sigma$ - v}
 \label{sec-3-2}
 
-\section{List of new items}
+
+\section{Items}
 \label{sec-4}
+
+\subsection{{\bfseries\sffamily DONE} Get the Nodal coordinates of the material points}
+\label{sec-4-1}
+
+\subsubsection{23-05-2019, Madrid}
+\label{sec-4-1-1}
+
+\subsection{{\bfseries\sffamily DONE} Get the strain increment in the material points}
+\label{sec-4-2}
+
+\subsubsection{28-05-2019, Madrid}
+\label{sec-4-2-1}
+\subsection{{\bfseries\sffamily DONE} Get the stress state}
+\label{sec-4-3}
 % Emacs 25.2.2 (Org mode 8.2.10)
 \end{document}

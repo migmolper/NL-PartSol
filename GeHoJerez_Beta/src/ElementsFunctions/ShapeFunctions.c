@@ -289,7 +289,6 @@ Matrix Get_RefDeformation_Gradient_Q4(Matrix X_NC_GP,Matrix X_GC_Nodes)
 
   /* 3º Free memory */
   free(dNdX_Ref_GP.nM);
-    
-
+  
   return F_Ref;
 }

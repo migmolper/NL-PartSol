@@ -17,3 +17,5 @@ Matrix GetNodalVelocity(Matrix, Matrix);
 void GetGaussPointStrainIncrement(GaussPoint, Mesh, Matrix);
 
 void UpdateGaussPointDensity(GaussPoint);
+
+void UpdateGaussPointStressTensor(GaussPoint, Matrix);

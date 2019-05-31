@@ -53,6 +53,8 @@ void main(int argc, char *argv[])
   Nodal_MOMENTUM.nM = (double **)malloc((unsigned)NumberDimensions*sizeof(double*));
   Matrix Nodal_F_TOT;
   Nodal_F_TOT.nM = (double **)malloc((unsigned)NumberDimensions*sizeof(double*));
+  char Get_values_1[MAXW] = "MASS;MOMENTUM";
+  char Get_values_2[MAXW] = "F_INT";
 
   /* Read and imposse the boundary conditions */
   ReadBCC(BounCondFileName,FEM_Mesh);
@@ -67,8 +69,7 @@ void main(int argc, char *argv[])
   printf("************************************************* \n");
   printf(" First step : Get the nodal mass and the momentum \n");
   printf(" \t WORKING ... \n");
-  char Get_values[MAXW] = "MASS;MOMENTUM";
-  Nod_Values = GetNodalValuesFromGP(GP_Mesh,FEM_Mesh,Get_values);
+  Nod_Values = GetNodalValuesFromGP(GP_Mesh,FEM_Mesh,Get_values_1);
   Nodal_MASS.nV = Nod_Values.nM[0];
   Nodal_MOMENTUM.nM[0] = Nod_Values.nM[1];
   Nodal_MOMENTUM.nM[1] = Nod_Values.nM[2];
@@ -99,10 +100,16 @@ void main(int argc, char *argv[])
   printf(" \t DONE !!! \n");
   /* d) Update the particle stress state */
   printf(" \t d) Update the particle stress state ... WORKING \n");
-  UpdateGaussPointStressTensor(GP_Mesh);
+  UpdateGaussPointStressTensor(GP_Mesh,D_e);
   printf(" \t DONE !!! \n");
-  /* Four step : Calculate the nodal internal, external and the total forces */
 
+  /* Four step : Calculate the nodal internal, external and the total forces */
+  printf("************************************************* \n");
+  printf(" Four step : Calculate F_int, F_ext and F_tot \n");
+  printf(" \t WORKING ... \n");
+  Nodal_F_TOT = GetNodalValuesFromGP(GP_Mesh,FEM_Mesh,Get_values_2);
+  printf(" DONE !!! \n");
+  
   /* Five step : Integrate the grid nodal momentum equation */
 
   /* Six step : Update the particle velocity and position */

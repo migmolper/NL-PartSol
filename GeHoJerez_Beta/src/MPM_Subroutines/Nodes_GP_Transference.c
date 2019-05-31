@@ -16,16 +16,18 @@ Matrix GetNodalValuesFromGP(GaussPoint MPM_Mesh, Mesh FEM_Mesh, char LisOfFields
   int Elem_GP; /* Index of the element */
   int * Elem_Nods;
   Matrix X_EC_GP;
-  Matrix N_Ref_GP, dNdX_Ref_GP;
-  Matrix F_Ref_GP, F_Ref_GP_T, F_Ref_GP_Tm1;
-  Matrix dNdx_XG;
+  X_EC_GP.N_rows = NumberDimensions;
+  X_EC_GP.N_cols = 1;
+  Matrix N_Ref_GP;
+  Matrix B, B_T;
   char * FieldsList[MAXW] = {NULL};
   int NumberFields;
   int Size_Nod_Fields = 0; /* Number of fields ouput */
   int i_Field;
-  Matrix Elem_Coords = MatAllocZ(FEM_Mesh.NumNodesElem,FEM_Mesh.Dimension);
-  int CalcGradient = 0; /* Boolean variable, set to zero by defaul */
-  Matrix F_INT_NOD; /* Internal forces for each node */
+  Matrix Elem_Coords = MatAllocZ(FEM_Mesh.NumNodesElem,NumberDimensions);
+  strcpy(Elem_Coords.Info,FEM_Mesh.TypeElem);
+  Matrix StressTensor_GP; /* Stress tensor of a Gauss Point */
+  Matrix F_INT_ELEM; /* Internal forces for each node in a element (by a GP)*/
 
   /* 1º Get those fields to transfeer */
   strcpy(Nod_Fields.Info,LisOfFields); /* Transfeer this information first */
@@ -39,9 +41,10 @@ Matrix GetNodalValuesFromGP(GaussPoint MPM_Mesh, Mesh FEM_Mesh, char LisOfFields
       Size_Nod_Fields += NumberDimensions;
     }
     if(strcmp(FieldsList[i],"F_INT") == 0){
-      CalcGradient = 1;
       Size_Nod_Fields += NumberDimensions;
-      F_INT_NOD = MatAllocZ(NumberDimensions,1);
+      StressTensor_GP.N_rows = MPM_Mesh.Phi.Stress.N_cols;
+      StressTensor_GP.N_cols = 1;
+      StressTensor_GP.nM = NULL;
     }
   }
   
@@ -80,34 +83,14 @@ Matrix GetNodalValuesFromGP(GaussPoint MPM_Mesh, Mesh FEM_Mesh, char LisOfFields
 
     /* 8º Evaluate the shape function and it derivarive in the GP */
     N_Ref_GP = FEM_Mesh.N_ref(X_EC_GP);
-
-    /* Do this only when we have to evaluate a gradient, for example to get the
-     internal forces */
-    if(CalcGradient){
-      /* 9º Evaluate the gradient of the shape function in the GP */
-      dNdX_Ref_GP = FEM_Mesh.dNdX_ref(X_EC_GP);
-
-      /* 10º Get the reference deformation gradient in the GP */
-      F_Ref_GP = Get_RefDeformation_Gradient_Q4(X_EC_GP,Elem_Coords);
-
-      /* 11º Get the deformation gradient (dNdx_XG) : Only in some cases */
-      F_Ref_GP_T = Transpose_Mat(F_Ref_GP),
-	free(F_Ref_GP.nM);
-      F_Ref_GP_Tm1 = Get_Inverse(F_Ref_GP_T),
-	free(F_Ref_GP_T.nM);
-      dNdx_XG = Scalar_prod(F_Ref_GP_Tm1,dNdX_Ref_GP),
-	free(F_Ref_GP_Tm1.nM),
-	free(dNdX_Ref_GP.nM);      
-    }
-
-    
-    /* Auxiliar index for the input fields */
+   
+    /* 10º Set to zero the auxiliar index for the input fields */
     i_Field = 0;
     
-    /* 12º Loop for each nodal field that we want to calc : */
+    /* 11º Loop for each nodal field that we want to calc : */
     for(int j = 0 ; j<NumberFields ; j++){
 
-      /* 13aº Asign GP mass to the nodes */
+      /* 12aº Asign GP mass to the nodes */
       if(strcmp(FieldsList[j],"MASS") == 0){
       	for(int k = 0 ; k<FEM_Mesh.NumNodesElem ; k++){
       	  Nod_Fields.nM[i_Field][Elem_Nods[k]] += MPM_Mesh.Phi.mass.nV[i]*N_Ref_GP.nV[k];
@@ -116,7 +99,7 @@ Matrix GetNodalValuesFromGP(GaussPoint MPM_Mesh, Mesh FEM_Mesh, char LisOfFields
 	i_Field += 1;
       }
 
-      /* 13bº Asign GP momentum to the nodes */
+      /* 12bº Asign GP momentum to the nodes */
       if( strcmp(FieldsList[j],"MOMENTUM") == 0 ){
       	for(int k = 0 ; k<FEM_Mesh.NumNodesElem ; k++){
       	  for(int l = 0 ; l<NumberDimensions ; l++){
@@ -130,44 +113,59 @@ Matrix GetNodalValuesFromGP(GaussPoint MPM_Mesh, Mesh FEM_Mesh, char LisOfFields
 	i_Field += NumberDimensions; /* Number of components of the Velocity field */
       }
 
-      /* 13cº Asign GP internal forces to the nodes */
+      /* 12cº Asign GP internal forces to the nodes */
       if(strcmp(FieldsList[j],"F_INT") == 0){
-	for(int k = 0 ; k<FEM_Mesh.NumNodesElem ; k++){
 
-	  /* Get the divergence of the stress tensor in each node */
-	  if(NumberDimensions == 2){
-	    F_INT_NOD.nV[0] = (MPM_Mesh.Phi.mass.nV[i]/MPM_Mesh.Phi.rho.nV[i])*
-	      (MPM_Mesh.Phi.Stress.nM[i][0]*dNdx_XG.nM[0][k] +
-	       MPM_Mesh.Phi.Stress.nM[i][2]*dNdx_XG.nM[1][k]);
-	    F_INT_NOD.nV[1] = (MPM_Mesh.Phi.mass.nV[i]/MPM_Mesh.Phi.rho.nV[i])*
-	      (MPM_Mesh.Phi.Stress.nM[i][2]*dNdx_XG.nM[0][k] +
-	       MPM_Mesh.Phi.Stress.nM[i][1]*dNdx_XG.nM[1][k]);
-	  }
-	  
+	/* Asign to an auxiliar variable the value of the stress tensor */
+	StressTensor_GP.nV = MPM_Mesh.Phi.Stress.nM[i];
+
+	/* Multiply the stress tensor by the mass and the inverse of the density */
+	for(int k = 0 ; k<StressTensor_GP.N_rows ; k++){
+	  StressTensor_GP.nV[k] *= (MPM_Mesh.Phi.mass.nV[i]/MPM_Mesh.Phi.rho.nV[i]);
+	}
+	
+	/* Get the B_T matrix to for the derivates */
+	B = Get_B_GP(X_EC_GP,Elem_Coords);
+	
+	B_T = Transpose_Mat(B), free(B.nM);
+
+	/* Get forces in the nodes of the element created by the Gauss-Point */
+	F_INT_ELEM = Scalar_prod(B_T,StressTensor_GP);
+
+	/* Acumulate this forces to the total array with the internal forces */
+	for(int k = 0 ; k<FEM_Mesh.NumNodesElem ; k++){  
 	  for(int l = 0 ; l<NumberDimensions ; l++){
-	    Nod_Fields.nM[i_Field+l][Elem_Nods[k]] -= F_INT_NOD.nV[l];
+	    Nod_Fields.nM[i_Field+l][Elem_Nods[k]] -=  F_INT_ELEM.nV[k*NumberDimensions + l];
 	  }
 	}
 
+	/* Free memory */
+	free(F_INT_ELEM.nV);
+
 	/* Update the index of the field */
+	if(NumberDimensions == 1)
+	  i_Field += 1; /* Number of components of the 2D stress tensor */
 	if(NumberDimensions == 2)
 	  i_Field += 3; /* Number of components of the 2D stress tensor */
+	if(NumberDimensions == 3)
+	  i_Field += 6; /* Number of components of the 3D stress tensor */
+
 
       }
 
-      /* 13dº Asign GP body forces to the nodes */
-      if(strcmp(FieldsList[j],"F_B") == 0){
+      /* 12dº Asign GP body forces to the nodes */
+      if(strcmp(FieldsList[j],"F_BODY") == 0){
 	puts("Functionality not implemented yet");
 	exit(0);
       }
 
-      /* 13eº Asign GP local forces to the nodes */
-      if(strcmp(FieldsList[j],"F_T") == 0){
+      /* 12eº Asign GP local forces to the nodes */
+      if(strcmp(FieldsList[j],"F_LOC") == 0){
 	puts("Functionality not implemented yet");
 	exit(0);
       }
 
-      /* 13fº Asign GP total forces to the nodes */
+      /* 12fº Asign GP total forces to the nodes */
       if(strcmp(FieldsList[j],"F_TOT") == 0){
 	puts("Functionality not implemented yet");
 	exit(0);
@@ -177,12 +175,10 @@ Matrix GetNodalValuesFromGP(GaussPoint MPM_Mesh, Mesh FEM_Mesh, char LisOfFields
     
   }
 
-  /* 14º Free */
-  if(CalcGradient){
-    free(dNdx_XG.nM);
-    free(F_INT_NOD.nV);
-  }
+  /* 13º Free The value of the shape functions */
+  free(N_Ref_GP.nV);
 
+  
   return Nod_Fields;
   
 }
@@ -224,6 +220,8 @@ void GetGaussPointStrainIncrement(GaussPoint MPM_Mesh,
 {
   /* 0º Define variables */
   Matrix X_EC_GP; /* Element coordinates of the Gauss-Point */
+  X_EC_GP.N_rows = NumberDimensions;
+  X_EC_GP.N_cols = 1;
   int Elem_GP; /* Index of the element of the Gauss-Point */
   int * Elem_Nods; /* Connectivity of the element */
   Matrix Elem_Coords; /* Coordinates of the nodes of the element */
@@ -315,31 +313,44 @@ void UpdateGaussPointDensity(GaussPoint MPM_Mesh){
 
 void UpdateGaussPointStressTensor(GaussPoint MPM_Mesh, Matrix D){
 
-  /*  */
-  Matrix StrainTensor_GP;
-  Matrix StressTensor_GP;
+  /* 0º Variable declaration  */
+  Matrix DeltaStrainTensor_GP;
+  Matrix DeltaStressTensor_GP;
 
+  /* 1º Switch the dimensions of the aulixiar strain tensor */
   switch(NumberDimensions){
   case 1:
-    StrainTensor_GP.nV
-    StressTensor_GP = MatAlloc(1,1);
+    DeltaStrainTensor_GP.N_rows = 1;
+    DeltaStrainTensor_GP.N_cols = 1;
+    DeltaStrainTensor_GP.nM = NULL;
     break;
   case 2:
-    StressTensor_GP = MatAlloc(1,3);
+    DeltaStrainTensor_GP.N_rows = 3;
+    DeltaStrainTensor_GP.N_cols = 1;
+    DeltaStrainTensor_GP.nM = NULL;
     break;
   case 3:
-    StrainTensor_GP = MatAlloc(1,6);
-    StressTensor_GP = MatAlloc(1,6);
+    DeltaStrainTensor_GP.N_rows = 6;
+    DeltaStrainTensor_GP.N_cols = 1;
+    DeltaStrainTensor_GP.nM = NULL;
     break;
   default :
     puts("Error in UpdateGaussPointStressTensor() : Wrong number of dimensions !!! ");
     exit(0);
   }
 
+  /* 2º Iterate over the Gauss-Points */
   for(int i = 0 ; i<MPM_Mesh.NumGP ; i++){
-    StrainTensor_GP.nV = MPM_Mesh.Phi.Strain.nM[i];
-    StressTensor_GP = Scalar_prod(D,StrainTensor_GP);
-    
+    /* 3º Store in an auxiliar variable the increment of the strain tensor in the GP */
+    DeltaStrainTensor_GP.nV = MPM_Mesh.Phi.Strain.nM[i];
+    /* 4º Get the increment of the stress tensor */
+    DeltaStressTensor_GP = Scalar_prod(D,DeltaStrainTensor_GP);
+    /* 5º Update the stress tensor with the increment */
+    for(int j = 0 ; j<DeltaStrainTensor_GP.N_rows ; j++){
+      MPM_Mesh.Phi.Stress.nM[i][j] += DeltaStressTensor_GP.nV[j];
+    }
+    /* 6º Free memory */
+    free(DeltaStressTensor_GP.nV);
   }
   
 }
