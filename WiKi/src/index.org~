@@ -1,4 +1,16 @@
 #+TITLE: GeHoJerez
+#+AUTHOR: Miguel Molinos Pérez
+#+EMAIL: m.molinos@outlook.es
+#+HTML_MATHJAX: lign: left indent: 5em tagside: left font: Neo-Euler
+#+CREATOR: <a href="http://www.gnu.org/software/emacs/">Emacs</a> 25.2.2 (<a href="http://orgmode.org">Org</a> mode 8.2.10)
+#+HTML_CONTAINER: div
+#+HTML_DOCTYPE: xhtml-strict
+#+HTML_HEAD:
+#+HTML_HEAD_EXTRA:
+#+HTML_LINK_HOME:
+#+HTML_LINK_UP:
+#+INFOJS_OPT:
+#+LATEX_HEADER:
 
 This is a simple MPM code write in C, the main purpose of this code is to understand the basics concepts of a MPM code. I also write this lines to keep some order in my ideas during this crazy years. 
 
@@ -27,10 +39,20 @@ discretization procedure begins with the
 #+CAPTION: This is the workflow of the MPM-algorithm
 #+NAME: MPM-algorithm
 #+ATTR_HTML: :width 600
-[[./WiKi/Figuras/mpm-algorithm.png]]
+[[./img/mpm-algorithm.png]]
 
 
 * Governing Equations
+  
+** Description of motion
+Considering the motion of a continuum body within wich a 
+material point (particle) moves from it original psition $P$ at time $t = 0$
+to its current position $p$ at time $t$, as show in 
+
+#+CAPTION: Initial configuration and current configuration.
+#+NAME: Initial configuration and current configuration.
+#+ATTR_HTML: :width 600
+[[./img/Displacement_of_a_continuum.svg]]
 
 ** Balance of momentum 
 
@@ -117,7 +139,6 @@ Finally we get :
 \cdot t \ d\Gamma - \int_{\Omega}  \nabla \psi^T : \sigma\ d\Omega
   + \int_{\Omega} \psi^T b\ d\Omega  
 \end{equation}
-
 
 ** Compatibility 
 

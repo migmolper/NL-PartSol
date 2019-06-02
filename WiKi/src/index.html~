@@ -1,0 +1,769 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<!-- 2019-06-02 dom 19:58 -->
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>GeHoJerez</title>
+<meta name="generator" content="Org mode" />
+<meta name="author" content="Miguel Molinos Pérez" />
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  .title  { text-align: center;
+             margin-bottom: .2em; }
+  .subtitle { text-align: center;
+              font-size: medium;
+              font-weight: bold;
+              margin-top:0; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 3px #eee;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: visible;
+    padding-top: 1.2em;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    background-color: white;
+    top: -10px;
+    right: 10px;
+    padding: 3px;
+    border: 1px solid black;
+  }
+  pre.src:hover:before { display: inline;}
+  /* Languages per Org manual */
+  pre.src-asymptote:before { content: 'Asymptote'; }
+  pre.src-awk:before { content: 'Awk'; }
+  pre.src-C:before { content: 'C'; }
+  /* pre.src-C++ doesn't work in CSS */
+  pre.src-clojure:before { content: 'Clojure'; }
+  pre.src-css:before { content: 'CSS'; }
+  pre.src-D:before { content: 'D'; }
+  pre.src-ditaa:before { content: 'ditaa'; }
+  pre.src-dot:before { content: 'Graphviz'; }
+  pre.src-calc:before { content: 'Emacs Calc'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-fortran:before { content: 'Fortran'; }
+  pre.src-gnuplot:before { content: 'gnuplot'; }
+  pre.src-haskell:before { content: 'Haskell'; }
+  pre.src-hledger:before { content: 'hledger'; }
+  pre.src-java:before { content: 'Java'; }
+  pre.src-js:before { content: 'Javascript'; }
+  pre.src-latex:before { content: 'LaTeX'; }
+  pre.src-ledger:before { content: 'Ledger'; }
+  pre.src-lisp:before { content: 'Lisp'; }
+  pre.src-lilypond:before { content: 'Lilypond'; }
+  pre.src-lua:before { content: 'Lua'; }
+  pre.src-matlab:before { content: 'MATLAB'; }
+  pre.src-mscgen:before { content: 'Mscgen'; }
+  pre.src-ocaml:before { content: 'Objective Caml'; }
+  pre.src-octave:before { content: 'Octave'; }
+  pre.src-org:before { content: 'Org mode'; }
+  pre.src-oz:before { content: 'OZ'; }
+  pre.src-plantuml:before { content: 'Plantuml'; }
+  pre.src-processing:before { content: 'Processing.js'; }
+  pre.src-python:before { content: 'Python'; }
+  pre.src-R:before { content: 'R'; }
+  pre.src-ruby:before { content: 'Ruby'; }
+  pre.src-sass:before { content: 'Sass'; }
+  pre.src-scheme:before { content: 'Scheme'; }
+  pre.src-screen:before { content: 'Gnu Screen'; }
+  pre.src-sed:before { content: 'Sed'; }
+  pre.src-sh:before { content: 'shell'; }
+  pre.src-sql:before { content: 'SQL'; }
+  pre.src-sqlite:before { content: 'SQLite'; }
+  /* additional languages in org.el's org-babel-load-languages alist */
+  pre.src-forth:before { content: 'Forth'; }
+  pre.src-io:before { content: 'IO'; }
+  pre.src-J:before { content: 'J'; }
+  pre.src-makefile:before { content: 'Makefile'; }
+  pre.src-maxima:before { content: 'Maxima'; }
+  pre.src-perl:before { content: 'Perl'; }
+  pre.src-picolisp:before { content: 'Pico Lisp'; }
+  pre.src-scala:before { content: 'Scala'; }
+  pre.src-shell:before { content: 'Shell Script'; }
+  pre.src-ebnf2ps:before { content: 'ebfn2ps'; }
+  /* additional language identifiers per "defun org-babel-execute"
+       in ob-*.el */
+  pre.src-cpp:before  { content: 'C++'; }
+  pre.src-abc:before  { content: 'ABC'; }
+  pre.src-coq:before  { content: 'Coq'; }
+  pre.src-groovy:before  { content: 'Groovy'; }
+  /* additional language identifiers from org-babel-shell-names in
+     ob-shell.el: ob-shell is the only babel language using a lambda to put
+     the execution function name together. */
+  pre.src-bash:before  { content: 'bash'; }
+  pre.src-csh:before  { content: 'csh'; }
+  pre.src-ash:before  { content: 'ash'; }
+  pre.src-dash:before  { content: 'dash'; }
+  pre.src-ksh:before  { content: 'ksh'; }
+  pre.src-mksh:before  { content: 'mksh'; }
+  pre.src-posh:before  { content: 'posh'; }
+  /* Additional Emacs modes also supported by the LaTeX listings package */
+  pre.src-ada:before { content: 'Ada'; }
+  pre.src-asm:before { content: 'Assembler'; }
+  pre.src-caml:before { content: 'Caml'; }
+  pre.src-delphi:before { content: 'Delphi'; }
+  pre.src-html:before { content: 'HTML'; }
+  pre.src-idl:before { content: 'IDL'; }
+  pre.src-mercury:before { content: 'Mercury'; }
+  pre.src-metapost:before { content: 'MetaPost'; }
+  pre.src-modula-2:before { content: 'Modula-2'; }
+  pre.src-pascal:before { content: 'Pascal'; }
+  pre.src-ps:before { content: 'PostScript'; }
+  pre.src-prolog:before { content: 'Prolog'; }
+  pre.src-simula:before { content: 'Simula'; }
+  pre.src-tcl:before { content: 'tcl'; }
+  pre.src-tex:before { content: 'TeX'; }
+  pre.src-plain-tex:before { content: 'Plain TeX'; }
+  pre.src-verilog:before { content: 'Verilog'; }
+  pre.src-vhdl:before { content: 'VHDL'; }
+  pre.src-xml:before { content: 'XML'; }
+  pre.src-nxml:before { content: 'XML'; }
+  /* add a generic configuration mode; LaTeX export needs an additional
+     (add-to-list 'org-latex-listings-langs '(conf " ")) in .emacs */
+  pre.src-conf:before { content: 'Configuration File'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.org-right  { text-align: center;  }
+  th.org-left   { text-align: center;   }
+  th.org-center { text-align: center; }
+  td.org-right  { text-align: right;  }
+  td.org-left   { text-align: left;   }
+  td.org-center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara { display: inline; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .equation-container {
+    display: table;
+    text-align: center;
+    width: 100%;
+  }
+  .equation {
+    vertical-align: middle;
+  }
+  .equation-label {
+    display: table-cell;
+    text-align: right;
+    vertical-align: middle;
+  }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  .org-svg { width: 90%; }
+  /*]]>*/-->
+</style>
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2019 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        displayAlign: "center",
+        displayIndent: "0em",
+
+        "HTML-CSS": { scale: 100,
+                        linebreaks: { automatic: "false" },
+                        webFont: "TeX"
+                       },
+        SVG: {scale: 100,
+              linebreaks: { automatic: "false" },
+              font: "TeX"},
+        NativeMML: {scale: 100},
+        TeX: { equationNumbers: {autoNumber: "AMS"},
+               MultLineWidth: "85%",
+               TagSide: "right",
+               TagIndent: ".8em"
+             }
+});
+</script>
+<script type="text/javascript"
+        src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS_HTML"></script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">GeHoJerez</h1>
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#orgaa40d17">1. Material Point Method</a>
+<ul>
+<li><a href="#org6b6ff8c">1.1. Initial discretization</a></li>
+<li><a href="#org1e83869">1.2. Discrete Solution Procedure</a></li>
+<li><a href="#orgdcf8828">1.3. Explicit MPM Scheme</a></li>
+<li><a href="#org83d6f59">1.4. Large strain formulation for the material-point-method</a>
+<ul>
+<li><a href="#org9508449">1.4.1. Tracking large deformation</a></li>
+<li><a href="#orgc3a31fc">1.4.2. Large strain analysis by the material point method}</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#org10f882d">2. Constitutive response</a>
+<ul>
+<li><a href="#org7755a64">2.1. Elastic material</a></li>
+<li><a href="#org68f463c">2.2. Visco-elastic material</a></li>
+</ul>
+</li>
+<li><a href="#orgff0a2bb">3. Proposed tests</a>
+<ul>
+<li><a href="#orgad0924c">3.1. Simple propagation of a shock wave in a 1D media</a></li>
+<li><a href="#org63b1448">3.2. Simple propagation of a shock wave in a 1D elastic media using the formulation &sigma; - v</a></li>
+</ul>
+</li>
+<li><a href="#org3d32794">4. Items</a>
+<ul>
+<li><a href="#orgd46b5d9">4.1. <span class="done DONE">DONE</span> Get the Nodal coordinates of the material points</a>
+<ul>
+<li><a href="#org079d97d">4.1.1. 23-05-2019, Madrid</a></li>
+</ul>
+</li>
+<li><a href="#org97b9db9">4.2. <span class="done DONE">DONE</span> Get the strain increment in the material points</a>
+<ul>
+<li><a href="#org8d5e977">4.2.1. 28-05-2019, Madrid</a></li>
+</ul>
+</li>
+<li><a href="#org09a7991">4.3. <span class="done DONE">DONE</span> Get the stress state</a></li>
+</ul>
+</li>
+<li><a href="#orga12d6b6">5. Codes</a></li>
+<li><a href="#org5567b24">6. Biblio and footnotes</a></li>
+</ul>
+</div>
+</div>
+<p>
+This is a simple MPM code write in C, the main purpose of this code is to understand the basics concepts of a MPM code. 
+I also write this lines to keep some order in my ideas during this crazy years. 
+</p>
+
+<p>
+<a href="mailto:m.molinos@outlook.es">Miguel Molinos Pérez</a>, PhD candidate <sup><a id="fnr.1" class="footref" href="#fn.1">1</a></sup>. Madrid 28-5-2019
+</p>
+
+
+<ul class="org-ul">
+<li><a href="Introduction/Introduction.html">Introduction</a></li>
+
+<li><a href="Governing_Equations/Governing_Equations.html">Governing Equations</a></li>
+</ul>
+
+<div id="outline-container-orgaa40d17" class="outline-2">
+<h2 id="orgaa40d17"><span class="section-number-2">1</span> Material Point Method</h2>
+<div class="outline-text-2" id="text-1">
+</div>
+<div id="outline-container-org6b6ff8c" class="outline-3">
+<h3 id="org6b6ff8c"><span class="section-number-3">1.1</span> Initial discretization</h3>
+<div class="outline-text-3" id="text-1-1">
+<p>
+The particle characteristic function are required to be a partition of
+unity in the initial configuration :
+</p>
+\begin{equation}
+  \label{eq:part_uniti_chi_i}
+  \sum_{p=1}^{Np}\chi_p^i(x)\ =\ 1
+\end{equation}
+
+<p>
+Where \(\chi_p^i\) denotes the particle characteristic functions
+restricted to their initial positions and undeformed state. In the
+simplest cases, particle characteristic function are taken to be
+initially non-overlapping. However, nothing precludes overlapping, or
+''fuzzy'' particles, as discussed later. Initial particle volumes
+\(V_p^i\) are defined by :
+</p>
+\begin{equation}
+  \label{eq:vpi_def}
+  V_p^i = \int_{\Omega^i}\chi^i_p(x)\ d\Omega
+\end{equation}
+<p>
+where \(\Omega^i\) is the initial volume of the continuum body to be
+discredited. In addition to initial particle volumes, the material
+point initial masses, \(m_p^i\), momenta, \(p_p^i\) ans stresses,
+\(\sigma_p^i\), must be defined. These properties of the continuum
+against the particle characteristic functions:
+</p>
+
+\begin{align}
+  \label{eq:m_pi}
+  m_p^i =& \int_{\Omega_i}\rho^i(x)\chi_p^i(x)\ d\Omega \\
+  \label{eq:p_pi}
+  p_p^i =& \int_{\Omega_i}\rho^i(x)v^i(x)\chi_p^i(x)\ d\Omega
+\end{align}
+
+<p>
+where \(\rho^i_p\)
+</p>
+</div>
+</div>
+
+<div id="outline-container-org1e83869" class="outline-3">
+<h3 id="org1e83869"><span class="section-number-3">1.2</span> Discrete Solution Procedure</h3>
+<div class="outline-text-3" id="text-1-2">
+<p>
+Given a material point property, \(f_p\), a representation consistent
+with the initial discretization procedure is the sum over the material
+points.
+</p>
+\begin{equation}
+f(x) = \sum_p^{Np}f_p \chi_p(x)  
+\end{equation}
+
+<p>
+The particle characteristic functions are used as a basis for
+representing particle data throughout the computational domain and
+determine the degree of smoothness of the spatial variation.
+</p>
+
+<p>
+Approaching term by term of the balance of momentum using the discretization procedure of the MPM , we get the following :
+</p>
+
+<ul class="org-ul">
+<li><p>
+Acceleration term :
+</p>
+\begin{eqnarray}
+\int_{\Omega} \psi^T \rho \cdot a \cdot d\Omega =& \int_{\Omega} \psi^T \frac{m}{V}
+\dot{v}\ d\Omega = \int_{\Omega} \psi^T \frac{1}{V}
+\overbrace{m\dot{v}}^{\dot{p}}\ d\Omega = \int_{\Omega} \psi^T \frac{\dot{p}}{V} d\Omega = \nonumber \\
+=&  \int_{\Omega} \psi^T \left[ \sum^{Np}_{p=1} \frac{\dot{p}_p}{V_p} \chi_p(x) \right]\ d\Omega =
+\sum^{Np}_{p=1} \left[ \int_{\Omega_p \bigcap \Omega}
+\psi^T\frac{\dot{p}_p}{V_p}\chi_p(x)\ d\Omega \right] 
+\end{eqnarray}</li>
+
+<li><p>
+Internal forces :
+</p>
+\begin{align}
+\int_{\Omega}  \nabla \psi^T \sigma\ d\Omega = \int_{\Omega}  \nabla
+\psi^T \left[\sum^{Np}_{p=1} \sigma_p \chi_p(x) \right]\ d\Omega =
+\sum^{Np}_{p=1} \left[ \int_{\Omega_p \bigcap \Omega}
+\nabla\psi^T\sigma_p\chi_p(x)\ d\Omega \right]
+\end{align}</li>
+<li>External forces :</li>
+</ul>
+\begin{align}
+\int_{\Omega} \psi^T \rho b\ d\Omega =& \int_{\Omega} \psi^T \frac{m}{V} b\
+d\Omega = \int_{\Omega} \psi^T \left[ \sum^{Np}_{p=1}
+\frac{m_p}{V_p}\chi_p(x) \right] b\ d\Omega = \sum_{p=1}^{Np}
+\left[ \int_{\Omega_p \bigcap \Omega}
+\psi^T \frac{m_p}{V_p} \chi_p(x) b\ d\Omega \right]
+\end{align}  
+
+<p>
+Finally we get the balance of momentum with the GIPM :
+</p>
+
+\begin{align}
+\sum^{Np}_{p=1} \left[  \int_{\Omega_p \bigcap \Omega}
+\psi^T\frac{\dot{p}_p}{V_p}\chi_p(x)\ d\Omega \right] + \sum^{Np}_{p=1} \left[ \int_{\Omega_p \bigcap \Omega}
+\nabla\psi^T\sigma_p\chi_p(x)\ d\Omega \right] =
+\int_{\Gamma}\psi^T t\ d\Gamma + \sum_{p=1}^{Np}
+\left[ \int_{\Omega_p \bigcap \Omega}
+\psi^T \frac{m_p}{V_p} \chi_p(x) b\ d\Omega \right]
+\end{align}
+
+<p>
+where \(\Omega_p\) denotes the current support of particle
+characteristic function p, and the current particle volumes are
+defined by :
+</p>
+\begin{equation}
+V_p = \int_{\Omega_p \bigcap \Omega} \chi_p(x)\ d\Omega
+\end{equation}
+
+<p>
+Rewriting the balance of momentum, the equation 
+</p>
+
+<p>
+The other fundamental aspect of PIC methods is the use of a
+computational grid. In MPM the grid serves as a scratch pad for the
+solution of conservation of momentum, from which particle states are
+updated. To complete the discretization procedure, approximations to
+the admissible velocity fields, or test functions, are introduced in
+terms of grid vertex quantities and grid shape functions. This step is
+analogous to the development of FEM discrete equations. However, use
+of both grid and particle basis functions to represent test functions
+and trial functions, respectively, is a Petrov–Galerkin method,
+[Johnson (1987)], and therefore more akin to some of the meshless
+methods (in particular [Demkowicz and Oden (1986); Atluri and Zhu
+(2000)]) than the FEM. The continuous representation, \(g(x)\), of grid
+data, \(g_i\) , then
+</p>
+\begin{equation}
+g(x) = \sum_{i = 1}^{Nn}=g_iN_i(x)
+\end{equation}
+
+<p>
+Here \(N_i(x)\) is a computational grid shape function, which takes unit
+value at node \(i\) and zero value all the other nodes. Further, the
+shape function are required to be a partition of unity
+</p>
+
+\begin{equation}
+\sum_{i=1}^{Nn} N_i(x) = 1
+\end{equation}
+
+\begin{eqnarray}  
+\sum^{Np}_{p=1} \left[ \int_{\Omega_p \bigcap \Omega}
+\psi^T\frac{\dot{p}_p}{V_p}\chi_p(x) d\Omega \right] =& \sum^{Np}_{p=1}\left[ \frac{1}{V_p}\int_{\Omega_p \bigcap \Omega} N_i(x) \chi_p(x) d\Omega \dot{p}_p  \right] = \nonumber \\
+=& \sum_{p=1}^{Np} \overline{S}_{ip}\cdot \dot{p}_p = \dot{p}_i
+\end{eqnarray}
+
+\begin{eqnarray}
+-\sum^{Np}_{p=1}\left[ \int_{\Omega_p \bigcap \Omega}\nabla\psi^T \sigma_p \chi_p  d\Omega \right] =& -\sum^{Np}_{p=1}\left[ \int_{\Omega_p \bigcap \Omega}\nabla N_i(x) \sigma_p \chi_p  d\Omega \right] = \nonumber \\
+=& - \sum^{Np}_{p=1}\left[ \frac{V_p}{V_p} \int_{\Omega_p \bigcap \Omega}\nabla N_i(x) \chi_p  d\Omega \sigma_p \right] = \nonumber \\
+=& - \sum^{Np}_{p=1}\left[V_p\overline{\nabla S}_{ip} \sigma_p \right] = f_i^{int}
+\end{eqnarray}
+
+\begin{equation}
+\int_{\Gamma \equiv \partial \Omega} \psi^T t d\Gamma = \int_{\Gamma \equiv \partial \Omega} N_i(x) t d\Gamma = f_i^t
+\end{equation}
+
+\begin{eqnarray}
+\sum_{p=1}^{Np} \left[ \int_{\Omega_p \bigcap \Omega} \psi^T \frac{m_p}{V_p} \chi_p(x) b d\Omega \right] = \sum_{p=1}^{Np} \left[ \int_{\Omega_p \bigcap \Omega} N_i(x)  \frac{m_p}{V_p} \chi_p(x) b d\Omega  \right] =  \sum_{p=1}^{Np} \overline{S}_{ip}b m_p = f_i^b  
+\end{eqnarray}
+
+
+\begin{eqnarray}
+\sum_{p=1}^{Np} \overline{S}_{ip}\cdot \dot{p}_p  =
+-\sum^{Np}_{p=1}\left[V_p\overline{\nabla S}_{ip} \sigma_p \right]
++&  \int_{\Gamma \equiv \partial \Omega} N_i(x) t d\Gamma \nonumber
++& \sum_{p=1}^{Np} \overline{S}_{ip}b m_p \nonumber\\
+\Downarrow&  \\
+\dot{p}_p = f_i^{int} + f_i^t + f_i^b \nonumber
+\end{eqnarray}
+</div>
+</div>
+
+<div id="outline-container-orgdcf8828" class="outline-3">
+<h3 id="orgdcf8828"><span class="section-number-3">1.3</span> Explicit MPM Scheme</h3>
+<div class="outline-text-3" id="text-1-3">
+<ol class="org-ol">
+<li>Calculate the grid nodal mass and momentum by maping the particle mass and momentum to the corresponding grid nodes.
+<ul class="org-ul">
+<li><p>
+Get the nodal mass \(m_I^k\)
+</p>
+\begin{equation}
+m_{I}^{k} = \sum^{n_p}_{p=1} m_p N_{Ip}^{k}
+\end{equation}</li>
+<li><p>
+Get the nodal momentum \(p_{I,i}^{k-1/2}\)
+</p>
+\begin{equation}
+p_{I,i}^{k-1/2} = \sum^{n_p}_{p=1} m_p v_{ip}^{k-1/2}N_{Ip}^{k}
+\end{equation}</li>
+</ul></li>
+<li>Impose essential boundary conditions on the grid nodal momentum. At the fixed boundary, set \(p_{iI}^{k-1/2} = 0\).</li>
+<li>For the USF only, calculate the particle strain increment \(\Delta \epsilon_{ijp}^{k-1/2}\), and the update the particle density and stress as follows:
+<ul class="org-ul">
+<li><p>
+Calculate the grid nodal velocity \(v_{iI}^{k-1/2}\)
+</p>
+\begin{equation}
+v_{iI}^{k-1/2} = \frac{p_{iI}^{k-1/2}}{m_I^k}
+\end{equation}</li>
+<li><p>
+Calculate the particle strain increment \(\Delta \epsilon_{ijp}^{k-1/2}\) with :
+</p>
+\begin{equation}
+\Delta \epsilon_{ijp}^{k-1/2} = \frac{1}{2}(N_{Ip,j}^{k} v_{iI}^{k-1/2} + N_{Ip,i}^{k} v_{jI}^{k-1/2})
+\end{equation}</li>
+<li><p>
+Update the particle density with :
+</p>
+\begin{equation}
+\rho_p^{k+1} = \frac{\rho_p^k}{1 + \Delta\epsilon_{iip}^{k-1/2}}
+\end{equation}</li>
+<li>Update the particle stress stated based on \(\Delta_{ijp}^{k-1/2}\) with an appropriate constitutive law.</li>
+<li></li>
+</ul></li>
+</ol>
+</div>
+</div>
+
+<div id="outline-container-org83d6f59" class="outline-3">
+<h3 id="org83d6f59"><span class="section-number-3">1.4</span> Large strain formulation for the material-point-method</h3>
+<div class="outline-text-3" id="text-1-4">
+</div>
+<div id="outline-container-org9508449" class="outline-4">
+<h4 id="org9508449"><span class="section-number-4">1.4.1</span> Tracking large deformation</h4>
+<div class="outline-text-4" id="text-1-4-1">
+<p>
+The geometric area associated with a material point is the given the notion <code>voxel</code>. 
+In the reference configuration, the voxel is defined such that \(V_p\) corresponds to 
+the size of the <code>voxel</code>. The <code>voxel</code> notion, was introduced by
+\cite{Steffen2008}. The location of the corners associated with each
+voxel at a deformed state is specified through the
+deformation-gradient tensor which needs to be tracked throughout the
+simulation.
+Adopting this concept, a deformation gradient is associated with each
+material point in the current state as
+</p>
+\begin{equation}
+F_p = \frac{\partial x_p}{\partial x^0} = \frac{1}{V_p^0}
+\int_{\Omega_p^0}F(x)\ d\Omega  
+\end{equation}
+
+<p>
+In the initial configuration, the deformation gradient tensor is
+know. Typically, an undeformed material state will be prescribed (\(F^0
+= I\), where \(I\) is the identity tensor). An explicit forward
+difference updating scheme for updating the deformation gradient is
+employed as we can see in
+</p>
+
+\begin{equation}
+  \label{eq:update_defor_grad}
+  F^{k+1} = \Delta F^{k+1} F^{k}
+\end{equation}
+
+
+
+<p>
+This way of integrating the deformation gradient, using the grid
+velocities, in also employed by \cite{Guilkey2003} and
+\cite{love_sulsky_2006}
+</p>
+</div>
+</div>
+
+
+
+<div id="outline-container-orgc3a31fc" class="outline-4">
+<h4 id="orgc3a31fc"><span class="section-number-4">1.4.2</span> Large strain analysis by the material point method}</h4>
+<div class="outline-text-4" id="text-1-4-2">
+<ul class="org-ul">
+<li>Evaluationg the weighting functions using Gauss</li>
+
+<li>Analytical approximation of the weighting functions</li>
+
+<li>Refinement in the material-point-method</li>
+
+<li>Material-point splitting</li>
+
+<li>Material-point splitting in case of extreme deformations</li>
+
+<li>Refining the computational grid</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+
+
+<div id="outline-container-org10f882d" class="outline-2">
+<h2 id="org10f882d"><span class="section-number-2">2</span> Constitutive response</h2>
+<div class="outline-text-2" id="text-2">
+</div>
+<div id="outline-container-org7755a64" class="outline-3">
+<h3 id="org7755a64"><span class="section-number-3">2.1</span> Elastic material</h3>
+<div class="outline-text-3" id="text-2-1">
+\begin{equation}
+\sigma = 2G\epsilon + \lambda tr(\epsilon) I
+\end{equation}
+</div>
+</div>
+
+<div id="outline-container-org68f463c" class="outline-3">
+<h3 id="org68f463c"><span class="section-number-3">2.2</span> Visco-elastic material</h3>
+<div class="outline-text-3" id="text-2-2">
+<p>
+Viscoelastic fluids exhibit both viscous and elastic behaviour when
+subjected to deformation. Therefore these materials are governed by
+the Navier-Stokes equations enriched with an extra <b>elastic</b> stress
+\(\mathbf{\tau}_p\)
+</p>
+\begin{equation}
+\rho\left[\partial_t\mathbf{u}+\nabla\cdot(\mathbf{u}\otimes\mathbf{u})\right] = 
+- \nabla p + \nabla\cdot(2\mu_s\mathbf{D}) + \nabla\cdot\mathbf{\tau}_p
++ \rho\mathbf{a}
+\end{equation}
+<p>
+where \(\mathbf{D}=[\nabla\mathbf{u} + (\nabla\mathbf{u})^T]/2\) is the
+deformation tensor and \(\mu_s\) is the solvent viscosity of the
+viscoelastic fluid.
+</p>
+</div>
+</div>
+</div>
+
+
+<div id="outline-container-orgff0a2bb" class="outline-2">
+<h2 id="orgff0a2bb"><span class="section-number-2">3</span> Proposed tests</h2>
+<div class="outline-text-2" id="text-3">
+</div>
+<div id="outline-container-orgad0924c" class="outline-3">
+<h3 id="orgad0924c"><span class="section-number-3">3.1</span> Simple propagation of a shock wave in a 1D media</h3>
+<div class="outline-text-3" id="text-3-1">
+<p>
+Here we solve the transport equation with a time integrator called Two-Step Taylor-Galerkin that stabilize the solution avoiding the formation of spurious oscillations during the transport. For the spatial discretization will be used 1D li
+</p>
+
+<p>
+&part;<sub>t</sub> u + c &sdot; &part;<sub>x</sub> u = 0
+</p>
+
+<p>
+The algorithm is as follows : 
+</p>
+<ol class="org-ol">
+<li>Transfer information to the Gauss-Points :  u<sup>n</sup><sub>GP</sub> = &sum;<sup>N</sup><sub>i=0</sub>N(x<sub>i</sub>) &sdot; u<sup>n</sup><sub>i</sub></li>
+<li>Get the solution in the Gauss-Points for t = n + 1/2 : u<sup>n+1/2</sup><sub>GP</sub> = u<sup>n</sup><sub>GP</sub> - &Delta; t/2 &sdot; &sum;<sup>N</sup><sub>i=0</sub> &part; N(x<sub>i</sub>) &sdot; u<sup>n</sup><sub>i</sub></li>
+<li>Get the solution in the nodes for t = n + 1 :</li>
+</ol>
+</div>
+</div>
+
+<div id="outline-container-org63b1448" class="outline-3">
+<h3 id="org63b1448"><span class="section-number-3">3.2</span> Simple propagation of a shock wave in a 1D elastic media using the formulation &sigma; - v</h3>
+</div>
+</div>
+
+
+<div id="outline-container-org3d32794" class="outline-2">
+<h2 id="org3d32794"><span class="section-number-2">4</span> Items</h2>
+<div class="outline-text-2" id="text-4">
+</div>
+<div id="outline-container-orgd46b5d9" class="outline-3">
+<h3 id="orgd46b5d9"><span class="section-number-3">4.1</span> <span class="done DONE">DONE</span> Get the Nodal coordinates of the material points</h3>
+<div class="outline-text-3" id="text-4-1">
+</div>
+<div id="outline-container-org079d97d" class="outline-4">
+<h4 id="org079d97d"><span class="section-number-4">4.1.1</span> 23-05-2019, Madrid</h4>
+</div>
+</div>
+
+<div id="outline-container-org97b9db9" class="outline-3">
+<h3 id="org97b9db9"><span class="section-number-3">4.2</span> <span class="done DONE">DONE</span> Get the strain increment in the material points</h3>
+<div class="outline-text-3" id="text-4-2">
+</div>
+<div id="outline-container-org8d5e977" class="outline-4">
+<h4 id="org8d5e977"><span class="section-number-4">4.2.1</span> 28-05-2019, Madrid</h4>
+</div>
+</div>
+<div id="outline-container-org09a7991" class="outline-3">
+<h3 id="org09a7991"><span class="section-number-3">4.3</span> <span class="done DONE">DONE</span> Get the stress state</h3>
+</div>
+</div>
+
+
+<div id="outline-container-orga12d6b6" class="outline-2">
+<h2 id="orga12d6b6"><span class="section-number-2">5</span> Codes</h2>
+<div class="outline-text-2" id="text-5">
+<div class="org-src-container">
+<pre class="src src-C">fprintf("Hola mundo \n");
+</pre>
+</div>
+</div>
+</div>
+
+
+<div id="outline-container-org5567b24" class="outline-2">
+<h2 id="org5567b24"><span class="section-number-2">6</span> Biblio and footnotes</h2>
+<div class="outline-text-2" id="text-6">
+</div>
+</div>
+<div id="footnotes">
+<h2 class="footnotes">Footnotes: </h2>
+<div id="text-footnotes">
+
+<div class="footdef"><sup><a id="fn.1" class="footnum" href="#fnr.1">1</a></sup> <div class="footpara"><p class="footpara">
+<a href="https://www.researchgate.net/profile/Miguel_Molinos_Perez">ResearcheGate Profile</a>  
+</p></div></div>
+
+
+</div>
+</div></div>
+<div id="postamble" class="status">
+<p class="author">Author: Miguel Molinos Pérez</p>
+<p class="date">Created: 2019-06-02 dom 19:58</p>
+<p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
+</div>
+</body>
+</html>
