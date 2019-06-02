@@ -4,7 +4,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
 <title>GeHoJerez</title>
-<!-- 2019-06-01 sáb 14:05 -->
+<!-- 2019-06-01 sáb 14:07 -->
 <meta  http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta  name="generator" content="Org-mode" />
 <meta  name="author" content="Miguel Molinos Pérez" />
@@ -205,28 +205,29 @@ for the JavaScript code in this tag.
 </li>
 </ul>
 </li>
-<li><a href="#sec-4">4. Codes</a></li>
-<li><a href="#sec-5">5. Proposed tests</a>
+<li><a href="#sec-4">4. Proposed tests</a>
 <ul>
-<li><a href="#sec-5-1">5.1. Simple propagation of a shock wave in a 1D media</a></li>
-<li><a href="#sec-5-2">5.2. Simple propagation of a shock wave in a 1D elastic media using the formulation &sigma; - v</a></li>
+<li><a href="#sec-4-1">4.1. Simple propagation of a shock wave in a 1D media</a></li>
+<li><a href="#sec-4-2">4.2. Simple propagation of a shock wave in a 1D elastic media using the formulation &sigma; - v</a></li>
 </ul>
 </li>
-<li><a href="#sec-6">6. Items</a>
+<li><a href="#sec-5">5. Items</a>
 <ul>
-<li><a href="#sec-6-1">6.1. <span class="done DONE">DONE</span> Get the Nodal coordinates of the material points</a>
+<li><a href="#sec-5-1">5.1. <span class="done DONE">DONE</span> Get the Nodal coordinates of the material points</a>
 <ul>
-<li><a href="#sec-6-1-1">6.1.1. 23-05-2019, Madrid</a></li>
+<li><a href="#sec-5-1-1">5.1.1. 23-05-2019, Madrid</a></li>
 </ul>
 </li>
-<li><a href="#sec-6-2">6.2. <span class="done DONE">DONE</span> Get the strain increment in the material points</a>
+<li><a href="#sec-5-2">5.2. <span class="done DONE">DONE</span> Get the strain increment in the material points</a>
 <ul>
-<li><a href="#sec-6-2-1">6.2.1. 28-05-2019, Madrid</a></li>
+<li><a href="#sec-5-2-1">5.2.1. 28-05-2019, Madrid</a></li>
 </ul>
 </li>
-<li><a href="#sec-6-3">6.3. <span class="done DONE">DONE</span> Get the stress state</a></li>
+<li><a href="#sec-5-3">5.3. <span class="done DONE">DONE</span> Get the stress state</a></li>
 </ul>
 </li>
+<li><a href="#sec-6">6. Codes</a></li>
+<li><a href="#sec-7">7. Biblio and footnotes</a></li>
 </ul>
 </div>
 </div>
@@ -271,6 +272,7 @@ discretization procedure begins with the
 </div>
 </div>
 </div>
+
 
 <div id="outline-container-sec-2" class="outline-2">
 <h2 id="sec-2"><span class="section-number-2">2</span> Governing Equations</h2>
@@ -637,7 +639,6 @@ v_{iI}^{k-1/2} = \frac{p_{iI}^{k-1/2}}{m_I^k}
 </div>
 </div>
 
-
 <div id="outline-container-sec-3-4" class="outline-3">
 <h3 id="sec-3-4"><span class="section-number-3">3.4</span> Large strain formulation for the material-point-method</h3>
 <div class="outline-text-3" id="text-3-4">
@@ -713,24 +714,12 @@ velocities, in also employed by \cite{Guilkey2003} and
 </div>
 
 
-
 <div id="outline-container-sec-4" class="outline-2">
-<h2 id="sec-4"><span class="section-number-2">4</span> Codes</h2>
+<h2 id="sec-4"><span class="section-number-2">4</span> Proposed tests</h2>
 <div class="outline-text-2" id="text-4">
-<div class="org-src-container">
-
-<pre class="src src-C">fprintf("Hola mundo \n");
-</pre>
-</div>
-</div>
-</div>
-
-<div id="outline-container-sec-5" class="outline-2">
-<h2 id="sec-5"><span class="section-number-2">5</span> Proposed tests</h2>
-<div class="outline-text-2" id="text-5">
-</div><div id="outline-container-sec-5-1" class="outline-3">
-<h3 id="sec-5-1"><span class="section-number-3">5.1</span> Simple propagation of a shock wave in a 1D media</h3>
-<div class="outline-text-3" id="text-5-1">
+</div><div id="outline-container-sec-4-1" class="outline-3">
+<h3 id="sec-4-1"><span class="section-number-3">4.1</span> Simple propagation of a shock wave in a 1D media</h3>
+<div class="outline-text-3" id="text-4-1">
 <p>
 Here we solve the transport equation with a time integrator called Two-Step Taylor-Galerkin that stabilize the solution avoiding the formation of spurious oscillations during the transport. For the spatial discretization will be used 1D li
 </p>
@@ -753,34 +742,51 @@ The algorithm is as follows :
 </div>
 </div>
 
+<div id="outline-container-sec-4-2" class="outline-3">
+<h3 id="sec-4-2"><span class="section-number-3">4.2</span> Simple propagation of a shock wave in a 1D elastic media using the formulation &sigma; - v</h3>
+</div>
+</div>
+
+
+<div id="outline-container-sec-5" class="outline-2">
+<h2 id="sec-5"><span class="section-number-2">5</span> Items</h2>
+<div class="outline-text-2" id="text-5">
+</div><div id="outline-container-sec-5-1" class="outline-3">
+<h3 id="sec-5-1"><span class="section-number-3">5.1</span> <span class="done DONE">DONE</span> Get the Nodal coordinates of the material points</h3>
+<div class="outline-text-3" id="text-5-1">
+</div><div id="outline-container-sec-5-1-1" class="outline-4">
+<h4 id="sec-5-1-1"><span class="section-number-4">5.1.1</span> 23-05-2019, Madrid</h4>
+</div>
+</div>
+
 <div id="outline-container-sec-5-2" class="outline-3">
-<h3 id="sec-5-2"><span class="section-number-3">5.2</span> Simple propagation of a shock wave in a 1D elastic media using the formulation &sigma; - v</h3>
+<h3 id="sec-5-2"><span class="section-number-3">5.2</span> <span class="done DONE">DONE</span> Get the strain increment in the material points</h3>
+<div class="outline-text-3" id="text-5-2">
+</div><div id="outline-container-sec-5-2-1" class="outline-4">
+<h4 id="sec-5-2-1"><span class="section-number-4">5.2.1</span> 28-05-2019, Madrid</h4>
+</div>
+</div>
+<div id="outline-container-sec-5-3" class="outline-3">
+<h3 id="sec-5-3"><span class="section-number-3">5.3</span> <span class="done DONE">DONE</span> Get the stress state</h3>
 </div>
 </div>
 
 
 <div id="outline-container-sec-6" class="outline-2">
-<h2 id="sec-6"><span class="section-number-2">6</span> Items</h2>
+<h2 id="sec-6"><span class="section-number-2">6</span> Codes</h2>
 <div class="outline-text-2" id="text-6">
-</div><div id="outline-container-sec-6-1" class="outline-3">
-<h3 id="sec-6-1"><span class="section-number-3">6.1</span> <span class="done DONE">DONE</span> Get the Nodal coordinates of the material points</h3>
-<div class="outline-text-3" id="text-6-1">
-</div><div id="outline-container-sec-6-1-1" class="outline-4">
-<h4 id="sec-6-1-1"><span class="section-number-4">6.1.1</span> 23-05-2019, Madrid</h4>
+<div class="org-src-container">
+
+<pre class="src src-C">fprintf("Hola mundo \n");
+</pre>
+</div>
 </div>
 </div>
 
-<div id="outline-container-sec-6-2" class="outline-3">
-<h3 id="sec-6-2"><span class="section-number-3">6.2</span> <span class="done DONE">DONE</span> Get the strain increment in the material points</h3>
-<div class="outline-text-3" id="text-6-2">
-</div><div id="outline-container-sec-6-2-1" class="outline-4">
-<h4 id="sec-6-2-1"><span class="section-number-4">6.2.1</span> 28-05-2019, Madrid</h4>
-</div>
-</div>
-<div id="outline-container-sec-6-3" class="outline-3">
-<h3 id="sec-6-3"><span class="section-number-3">6.3</span> <span class="done DONE">DONE</span> Get the stress state</h3>
-<div class="outline-text-3" id="text-6-3">
-</div>
+
+<div id="outline-container-sec-7" class="outline-2">
+<h2 id="sec-7"><span class="section-number-2">7</span> Biblio and footnotes</h2>
+<div class="outline-text-2" id="text-7">
 </div>
 </div>
 <div id="footnotes">
@@ -796,7 +802,7 @@ The algorithm is as follows :
 </div></div>
 <div id="postamble" class="status">
 <p class="author">Author: Miguel Molinos Pérez</p>
-<p class="date">Created: 2019-06-01 sáb 14:05</p>
+<p class="date">Created: 2019-06-01 sáb 14:07</p>
 <p class="creator"><a href="http://www.gnu.org/software/emacs/">Emacs</a> 25.2.2 (<a href="http://orgmode.org">Org</a> mode 8.2.10)</p>
 <p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>

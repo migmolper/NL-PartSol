@@ -1,0 +1,399 @@
+#+TITLE: GeHoJerez
+
+This is a simple MPM code write in C, the main purpose of this code is to understand the basics concepts of a MPM code. I also write this lines to keep some order in my ideas during this crazy years. 
+
+Miguel Molinos Pérez, PhD candidate [fn:1]. Madrid 28-5-2019
+
+* Introduction
+
+The past several decades have brought tremendous advances in computing
+power and provided fertile ground for the development of the
+computational sciences. In computational solid mechanics the Finite
+Element Method (FEM) (METER CITA MOLONA) has been very successfully
+applied to a wide range of problems with good results. However, body
+fixed FEM meshes can be difficult and time consuming to generate for
+complex three-dimensional objects. Further, mesh distorsion associated
+with large deformations compromises solution accuracy, ultimately
+requiring re-meshing. These difficulties have spurred the development
+of alternative discretization strategies which avoid mesh distorsion by
+dicretizing at points and never
+maintaining a body-fixed mesh.\\
+
+Quite a number of ''meshless methods'' have been developed. Some of
+the ways in which the methods differ include whether or not a
+temporary mesh is used in the solution procedure, whether the
+discretization procedure begins with the
+
+#+CAPTION: This is the workflow of the MPM-algorithm
+#+NAME: MPM-algorithm
+#+ATTR_HTML: :width 600
+[[./Figuras/mpm-algorithm.png]]
+
+
+* Governing Equations
+
+** Balance of momentum 
+
+In  the following  derivation  of the  discrete  equations, bold  face
+quantities  indicate tensor,  $\nabla$ id  the gradient  operator, and
+$\cdot$,  and $:$  are first  order (vector)  and second  order tensor
+contraction, respectively. The subscript $p$ is used to index material
+point  variables   and  $i$   grid  vertex  variables.   The  notation
+$\sum_p^{Np}$ and $\sum_i^{Np}$  is used to denote  summation over all
+material points, and over all grid vertex, respectively.
+
+Of  interest  in  solid  mechanics is  the  deformation  and  material
+response to a continuous solid  body under prescribed loads and initial
+conditions,    as   governed    by    conservation    of   mass    and
+momentum.  Conservation of  mass  is satisfied  implicitly by  leaving
+discrete particle  masses unchanged throughout a  computation. Here we
+develop  the  discrete  version  of conservation  of  momentum,  which
+permits  evolution  of  particle  momenta   in  time.  We  consider  a
+deformable body acted upon by forces and subjected to either kinematic
+or  traction  boundary conditions  every  where  on its  surface.  The
+continuum mechanics theory
+
++ Balance of momentum
++ Compatibility
+  
+
+We works over the balance of momentum in the strong formulation, as we
+can see in \ref{eq:sf_conserv_momentum}
+
+#+CAPTION: Balance Of momentum
+\begin{equation}
+\rho a = \nabla \cdot(\sigma) + \rho b  
+\end{equation}
+
+Multiplying by $\psi$ we get :
+\begin{equation}
+\psi^T \cdot \rho a = \psi^T \cdot \nabla\cdot(\sigma) + \psi^T \cdot \rho b
+\end{equation}
+
+The function $\psi$ belongs to a space $\mathcal{H}$ (vectorial space
+with scalar product defined) wich verifies
+$a(\ddot{u},\dot{u},u,\psi)=l(\psi) \quad \forall\ \psi\ \in\
+\mathcal{H}$. In other hand, in every point of $\Omega$ where we have
+imposed the Dirichlet bounday condition,
+
+
+\begin{equation}
+\mathcal{H} = \{  \psi(x)/\psi \mid_{\Gamma_D} = 0 \quad , \quad \psi \in H^1(\Omega)  \}
+\end{equation}
+
+In other words, $\mathcal{H}$ is the space defined by all the
+functions $g$, that $ \psi$ and $\nabla \psi$ are FUNCIONES DE
+CUADRADO INTEGRABLE in $\Omega$
+
+\begin{equation}
+\int_{\Omega}\psi\ d\Omega < \infty \quad , \quad \int_{\Omega}\nabla\psi\ d\Omega < \infty
+\end{equation}
+
+Integrating over $\Omega$ we get :
+
+\begin{equation}
+\int_{\Omega} \psi^T \cdot \rho a\ d\Omega = \int_{\Omega} \psi^T \cdot \nabla\cdot(\sigma)\ d\Omega + \int_{\Omega} \psi^T \cdot \rho b\ d\Omega
+\end{equation}
+
+Integrating by parts the therm of the internal tension, we get :
+\begin{equation}
+\int_{\Omega} \psi^T\cdot \rho a\ d\Omega = \int_{\Omega}  \nabla\cdot \left( \psi^T \cdot
+\sigma \right)\ d\Omega - \int_{\Omega}  \nabla\psi^T : \sigma\ d\Omega
+  + \int_{\Omega} \psi^T\cdot b\ d\Omega
+\end{equation}
+
+Applying the Gauss theorem over it, and following the definition of the stress
+vector $t = \sigma \cdot n$ where $n$ is the vector orthogonal to a
+surface in the solid, finally we get the variational form for
+conservation of momentum may be written as
+\begin{equation}
+\int_{\Omega} \psi^T \cdot \rho a\ d\Omega = \int_{\Gamma}  \psi^T
+\cdot \overbrace{\sigma \cdot n}^{t}\ d\Gamma - \int_{\Omega}  \nabla \psi^T : \sigma\ d\Omega
+  + \int_{\Omega} \psi^T b\ d\Omega  
+\end{equation}
+Finally we get :
+\begin{equation}
+\int_{\Omega} \psi^T \cdot \rho a\ d\Omega = \int_{\Gamma}  \psi^T
+\cdot t \ d\Gamma - \int_{\Omega}  \nabla \psi^T : \sigma\ d\Omega
+  + \int_{\Omega} \psi^T b\ d\Omega  
+\end{equation}
+
+
+** Compatibility 
+
+** Constitutive response
+
+\begin{equation}
+\sigma = 2G\epsilon + \lambda tr(\epsilon) I
+\end{equation}
+
+
+* Material Point Method 
+  
+** Initial discretization
+The particle characteristic function are required to be a partition of
+unity in the initial configuration :
+\begin{equation}
+  \label{eq:part_uniti_chi_i}
+  \sum_{p=1}^{Np}\chi_p^i(x)\ =\ 1
+\end{equation}
+
+Where $\chi_p^i$ denotes the particle characteristic functions
+restricted to their initial positions and undeformed state. In the
+simplest cases, particle characteristic function are taken to be
+initially non-overlapping. However, nothing precludes overlapping, or
+''fuzzy'' particles, as discussed later. Initial particle volumes
+$V_p^i$ are defined by :
+\begin{equation}
+  \label{eq:vpi_def}
+  V_p^i = \int_{\Omega^i}\chi^i_p(x)\ d\Omega
+\end{equation}
+where $\Omega^i$ is the initial volume of the continuum body to be
+discredited. In addition to initial particle volumes, the material
+point initial masses, $m_p^i$, momenta, $p_p^i$ ans stresses,
+$\sigma_p^i$, must be defined. These properties of the continuum
+against the particle characteristic functions:
+
+\begin{align}
+  \label{eq:m_pi}
+  m_p^i =& \int_{\Omega_i}\rho^i(x)\chi_p^i(x)\ d\Omega \\
+  \label{eq:p_pi}
+  p_p^i =& \int_{\Omega_i}\rho^i(x)v^i(x)\chi_p^i(x)\ d\Omega
+\end{align}
+
+where $\rho^i_p$
+
+** Discrete Solution Procedure 
+
+Given a material point property, $f_p$, a representation consistent
+with the initial discretization procedure is the sum over the material
+points.
+\begin{equation}
+f(x) = \sum_p^{Np}f_p \chi_p(x)  
+\end{equation}
+
+The particle characteristic functions are used as a basis for
+representing particle data throughout the computational domain and
+determine the degree of smoothness of the spatial variation.
+
+Approaching term by term of the balance of momentum using the discretization procedure of the MPM , we get the following :
+
++ Acceleration term :
+  \begin{eqnarray}
+  \int_{\Omega} \psi^T \rho \cdot a \cdot d\Omega =& \int_{\Omega} \psi^T \frac{m}{V}
+  \dot{v}\ d\Omega = \int_{\Omega} \psi^T \frac{1}{V}
+  \overbrace{m\dot{v}}^{\dot{p}}\ d\Omega = \int_{\Omega} \psi^T \frac{\dot{p}}{V} d\Omega = \nonumber \\
+  =&  \int_{\Omega} \psi^T \left[ \sum^{Np}_{p=1} \frac{\dot{p}_p}{V_p} \chi_p(x) \right]\ d\Omega =
+  \sum^{Np}_{p=1} \left[ \int_{\Omega_p \bigcap \Omega}
+  \psi^T\frac{\dot{p}_p}{V_p}\chi_p(x)\ d\Omega \right] 
+  \end{eqnarray}
+  
++ Internal forces :
+  \begin{align}
+  \int_{\Omega}  \nabla \psi^T \sigma\ d\Omega = \int_{\Omega}  \nabla
+  \psi^T \left[\sum^{Np}_{p=1} \sigma_p \chi_p(x) \right]\ d\Omega =
+  \sum^{Np}_{p=1} \left[ \int_{\Omega_p \bigcap \Omega}
+  \nabla\psi^T\sigma_p\chi_p(x)\ d\Omega \right]
+  \end{align}
++ External forces :
+\begin{align}
+\int_{\Omega} \psi^T \rho b\ d\Omega =& \int_{\Omega} \psi^T \frac{m}{V} b\
+d\Omega = \int_{\Omega} \psi^T \left[ \sum^{Np}_{p=1}
+\frac{m_p}{V_p}\chi_p(x) \right] b\ d\Omega = \sum_{p=1}^{Np}
+\left[ \int_{\Omega_p \bigcap \Omega}
+\psi^T \frac{m_p}{V_p} \chi_p(x) b\ d\Omega \right]
+\end{align}  
+
+Finally we get the balance of momentum with the GIPM :
+
+\begin{align}
+\sum^{Np}_{p=1} \left[  \int_{\Omega_p \bigcap \Omega}
+\psi^T\frac{\dot{p}_p}{V_p}\chi_p(x)\ d\Omega \right] + \sum^{Np}_{p=1} \left[ \int_{\Omega_p \bigcap \Omega}
+\nabla\psi^T\sigma_p\chi_p(x)\ d\Omega \right] =
+\int_{\Gamma}\psi^T t\ d\Gamma + \sum_{p=1}^{Np}
+\left[ \int_{\Omega_p \bigcap \Omega}
+\psi^T \frac{m_p}{V_p} \chi_p(x) b\ d\Omega \right]
+\end{align}
+
+where $\Omega_p$ denotes the current support of particle
+characteristic function p, and the current particle volumes are
+defined by :
+\begin{equation}
+V_p = \int_{\Omega_p \bigcap \Omega} \chi_p(x)\ d\Omega
+\end{equation}
+
+Rewriting the balance of momentum, the equation 
+
+The other fundamental aspect of PIC methods is the use of a
+computational grid. In MPM the grid serves as a scratch pad for the
+solution of conservation of momentum, from which particle states are
+updated. To complete the discretization procedure, approximations to
+the admissible velocity fields, or test functions, are introduced in
+terms of grid vertex quantities and grid shape functions. This step is
+analogous to the development of FEM discrete equations. However, use
+of both grid and particle basis functions to represent test functions
+and trial functions, respectively, is a Petrov–Galerkin method,
+[Johnson (1987)], and therefore more akin to some of the meshless
+methods (in particular [Demkowicz and Oden (1986); Atluri and Zhu
+(2000)]) than the FEM. The continuous representation, $g(x)$, of grid
+data, $g_i$ , then
+\begin{equation}
+g(x) = \sum_{i = 1}^{Nn}=g_iN_i(x)
+\end{equation}
+
+Here $N_i(x)$ is a computational grid shape function, which takes unit
+value at node $i$ and zero value all the other nodes. Further, the
+shape function are required to be a partition of unity
+
+\begin{equation}
+\sum_{i=1}^{Nn} N_i(x) = 1
+\end{equation}
+
+\begin{eqnarray}  
+\sum^{Np}_{p=1} \left[ \int_{\Omega_p \bigcap \Omega}
+\psi^T\frac{\dot{p}_p}{V_p}\chi_p(x) d\Omega \right] =& \sum^{Np}_{p=1}\left[ \frac{1}{V_p}\int_{\Omega_p \bigcap \Omega} N_i(x) \chi_p(x) d\Omega \dot{p}_p  \right] = \nonumber \\
+=& \sum_{p=1}^{Np} \overline{S}_{ip}\cdot \dot{p}_p = \dot{p}_i
+\end{eqnarray}
+
+\begin{eqnarray}
+-\sum^{Np}_{p=1}\left[ \int_{\Omega_p \bigcap \Omega}\nabla\psi^T \sigma_p \chi_p  d\Omega \right] =& -\sum^{Np}_{p=1}\left[ \int_{\Omega_p \bigcap \Omega}\nabla N_i(x) \sigma_p \chi_p  d\Omega \right] = \nonumber \\
+=& - \sum^{Np}_{p=1}\left[ \frac{V_p}{V_p} \int_{\Omega_p \bigcap \Omega}\nabla N_i(x) \chi_p  d\Omega \sigma_p \right] = \nonumber \\
+=& - \sum^{Np}_{p=1}\left[V_p\overline{\nabla S}_{ip} \sigma_p \right] = f_i^{int}
+\end{eqnarray}
+
+\begin{equation}
+\int_{\Gamma \equiv \partial \Omega} \psi^T t d\Gamma = \int_{\Gamma \equiv \partial \Omega} N_i(x) t d\Gamma = f_i^t
+\end{equation}
+
+\begin{eqnarray}
+\sum_{p=1}^{Np} \left[ \int_{\Omega_p \bigcap \Omega} \psi^T \frac{m_p}{V_p} \chi_p(x) b d\Omega \right] = \sum_{p=1}^{Np} \left[ \int_{\Omega_p \bigcap \Omega} N_i(x)  \frac{m_p}{V_p} \chi_p(x) b d\Omega  \right] =  \sum_{p=1}^{Np} \overline{S}_{ip}b m_p = f_i^b  
+\end{eqnarray}
+
+
+\begin{eqnarray}
+\sum_{p=1}^{Np} \overline{S}_{ip}\cdot \dot{p}_p  =
+-\sum^{Np}_{p=1}\left[V_p\overline{\nabla S}_{ip} \sigma_p \right]
++&  \int_{\Gamma \equiv \partial \Omega} N_i(x) t d\Gamma \nonumber
++& \sum_{p=1}^{Np} \overline{S}_{ip}b m_p \nonumber\\
+\Downarrow&  \\
+\dot{p}_p = f_i^{int} + f_i^t + f_i^b \nonumber
+\end{eqnarray}
+  
+** Explicit MPM Scheme
+
+1. Calculate the grid nodal mass and momentum by maping the particle mass and momentum to the corresponding grid nodes.
+   + Get the nodal mass $m_I^k$
+     \begin{equation}
+     m_{I}^{k} = \sum^{n_p}_{p=1} m_p N_{Ip}^{k}
+     \end{equation} 
+   + Get the nodal momentum $p_{I,i}^{k-1/2}$
+     \begin{equation}
+     p_{I,i}^{k-1/2} = \sum^{n_p}_{p=1} m_p v_{ip}^{k-1/2}N_{Ip}^{k}
+     \end{equation}
+2. Impose essential boundary conditions on the grid nodal momentum. At the fixed boundary, set $p_{iI}^{k-1/2} = 0$.   
+3. For the USF only, calculate the particle strain increment $\Delta \epsilon_{ijp}^{k-1/2}$, and the update the particle density and stress as follows:
+   + Calculate the grid nodal velocity $v_{iI}^{k-1/2}$
+     \begin{equation}
+     v_{iI}^{k-1/2} = \frac{p_{iI}^{k-1/2}}{m_I^k}
+     \end{equation}
+   + Calculate the particle strain increment $\Delta \epsilon_{ijp}^{k-1/2}$ with :
+     \begin{equation}
+     \Delta \epsilon_{ijp}^{k-1/2} = \frac{1}{2}(N_{Ip,j}^{k} v_{iI}^{k-1/2} + N_{Ip,i}^{k} v_{jI}^{k-1/2})
+     \end{equation}
+   + Update the particle density with :
+     \begin{equation}
+     \rho_p^{k+1} = \frac{\rho_p^k}{1 + \Delta\epsilon_{iip}^{k-1/2}}
+     \end{equation}
+   + Update the particle stress stated based on $\Delta_{ijp}^{k-1/2}$ with an appropriate constitutive law.
+   + 
+
+** Large strain formulation for the material-point-method
+
+*** Tracking large deformation
+
+The geometric area associated with a material point is the given the notion ~voxel~. 
+In the reference configuration, the voxel is defined such that $V_p$ corresponds to 
+the size of the ~voxel~. The ~voxel~ notion, was introduced by
+\cite{Steffen2008}. The location of the corners associated with each
+voxel at a deformed state is specified through the
+deformation-gradient tensor which needs to be tracked throughout the
+simulation.
+Adopting this concept, a deformation gradient is associated with each
+material point in the current state as
+\begin{equation}
+F_p = \frac{\partial x_p}{\partial x^0} = \frac{1}{V_p^0}
+\int_{\Omega_p^0}F(x)\ d\Omega  
+\end{equation}
+
+In the initial configuration, the deformation gradient tensor is
+know. Typically, an undeformed material state will be prescribed ($F^0
+= I$, where $I$ is the identity tensor). An explicit forward
+difference updating scheme for updating the deformation gradient is
+employed as we can see in
+
+\begin{equation}
+  \label{eq:update_defor_grad}
+  F^{k+1} = \Delta F^{k+1} F^{k}
+\end{equation}
+
+
+
+This way of integrating the deformation gradient, using the grid
+velocities, in also employed by \cite{Guilkey2003} and
+\cite{love_sulsky_2006}
+
+
+
+*** Large strain analysis by the material point method}
+
++ Evaluationg the weighting functions using Gauss
+
++ Analytical approximation of the weighting functions
+
++ Refinement in the material-point-method
+
++ Material-point splitting
+
++ Material-point splitting in case of extreme deformations
+
++ Refining the computational grid
+
+   
+* Proposed tests
+
+** Simple propagation of a shock wave in a 1D media 
+
+Here we solve the transport equation with a time integrator called Two-Step Taylor-Galerkin that stabilize the solution avoiding the formation of spurious oscillations during the transport. For the spatial discretization will be used 1D li
+
+ \partial_{t} u + c \cdot \partial_{x} u = 0
+
+The algorithm is as follows : 
+1. Transfer information to the Gauss-Points :  u^{n}_{GP} = \sum^{N}_{i=0}N(x_i) \cdot u^{n}_{i}
+2. Get the solution in the Gauss-Points for t = n + 1/2 : u^{n+1/2}_{GP} = u^{n}_{GP} - \Delta t/2 \cdot \sum^{N}_{i=0} \partial N(x_i) \cdot u^{n}_{i}
+3. Get the solution in the nodes for t = n + 1 : 
+
+** Simple propagation of a shock wave in a 1D elastic media using the formulation \sigma - v
+   
+
+* Items
+
+** DONE Get the Nodal coordinates of the material points
+
+*** 23-05-2019, Madrid
+    
+** DONE Get the strain increment in the material points
+
+*** 28-05-2019, Madrid
+** DONE Get the stress state
+   
+
+* Codes 
+
+#+BEGIN_SRC C
+fprintf("Hola mundo \n");
+#+END_SRC 
+
+
+* Biblio and footnotes
+  
+[fn:1] [[https://www.researchgate.net/profile/Miguel_Molinos_Perez][ResearcheGate Profile]]  
