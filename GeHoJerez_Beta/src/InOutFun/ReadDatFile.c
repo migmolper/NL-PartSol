@@ -229,8 +229,6 @@ void ReadDatFile(char * Name_File)
       NumberDOF = 9;
   }
 
-  
-      
   /* Close .dat file */
   /* Final message */
   printf("End of read data file !!! \n");

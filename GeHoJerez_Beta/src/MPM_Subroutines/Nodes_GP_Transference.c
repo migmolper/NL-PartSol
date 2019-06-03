@@ -415,10 +415,69 @@ void UpdateGridNodalMomentum(Mesh FEM_Mesh,
   for(int i = 0 ; i<FEM_Mesh.NumNodesMesh ; i++){
     for(int j = 0 ; j<NumberDimensions ; j++){
       Nodal_MOMENTUM.nM[j][i] += DeltaTimeStep*(Nodal_INT_FORCES.nM[j][i] +
-						Nodal_EXT_FORCES.nM[j][i]); 
+						Nodal_EXT_FORCES.nM[j][i]);
     }
   }
   
 }
 
 /*******************************************************/
+
+void UpdateVelocityAndPositionGP(GaussPoint MPM_Mesh,
+				 Mesh FEM_Mesh,
+				 Matrix Nodal_MASS,
+				 Matrix Nodal_MOMENTUM,
+				 Matrix Nodal_TOT_FORCES){
+
+  /* 0º Variable declaration */
+  Matrix Nodal_INT_FORCES;
+  Nodal_INT_FORCES.nM = (double **)malloc((unsigned)NumberDimensions*sizeof(double*));
+  Nodal_INT_FORCES.nM[0] = Nodal_TOT_FORCES.nM[0];
+  Nodal_INT_FORCES.nM[1] = Nodal_TOT_FORCES.nM[1];
+  Matrix Nodal_EXT_FORCES;
+  Nodal_EXT_FORCES.nM = (double **)malloc((unsigned)NumberDimensions*sizeof(double*));
+  Nodal_EXT_FORCES.nM[0] = Nodal_TOT_FORCES.nM[2];
+  Nodal_EXT_FORCES.nM[1] = Nodal_TOT_FORCES.nM[3];
+  Matrix X_EC_GP; /* Local coordinates of the Gauss-Point */
+  X_EC_GP.N_rows = NumberDimensions;
+  X_EC_GP.N_cols = 1;
+  int Elem_GP; /* Index of the element */
+  int * Elem_Nods; /* Array with the connectivity */
+  Matrix N_Ref_GP; /* Value of the shape-function in the GP */
+
+  /* 1º iterate over the Gauss-Points */
+  for(int i = 0 ; i<MPM_Mesh.NumGP ; i++){
+
+    /* 2º Get the coordinates of the GP (in the element) */
+    X_EC_GP.nV = MPM_Mesh.Phi.x_EC.nM[i];
+
+    /* 3º Get the index of the element */
+    Elem_GP = MPM_Mesh.Element_id[i];
+
+    /* 4º Nodes of the element */
+    Elem_Nods = FEM_Mesh.Connectivity[Elem_GP];
+
+    /* 5º Evaluate the shape function in the coordinates of the GP */
+    N_Ref_GP = FEM_Mesh.N_ref(X_EC_GP);
+
+    /* 6º Iterate over the nodes of the element */
+    for(int j = 0 ; j<FEM_Mesh.NumNodesElem ; j++){
+      for(int k = 0 ; k<NumberDimensions ; k++){
+
+	/* 7aº Update the GP velocities */
+	MPM_Mesh.Phi.vel.nM[i][k] += DeltaTimeStep*N_Ref_GP.nV[j]*
+	  (Nodal_INT_FORCES.nM[k][Elem_GP] + Nodal_EXT_FORCES.nM[k][Elem_GP])/
+	  Nodal_MASS.nV[Elem_GP];
+	/* 7bº Update the GP position */
+	MPM_Mesh.Phi.x_GC.nM[i][k] += DeltaTimeStep*N_Ref_GP.nV[j]*
+	  Nodal_MOMENTUM.nM[k][Elem_GP]/
+	  Nodal_MASS.nV[Elem_GP];
+
+      }      
+    }
+
+    /* 8º Free The value of the shape functions */
+    free(N_Ref_GP.nV);
+    
+  }  
+}

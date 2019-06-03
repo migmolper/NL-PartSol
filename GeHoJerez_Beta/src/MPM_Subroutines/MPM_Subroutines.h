@@ -21,3 +21,6 @@ void UpdateGaussPointDensity(GaussPoint);
 void UpdateGaussPointStressTensor(GaussPoint, Matrix);
 
 void UpdateGridNodalMomentum(Mesh, Matrix, Matrix);
+
+void UpdateVelocityAndPositionGP(GaussPoint, Mesh,
+				 Matrix, Matrix, Matrix);
