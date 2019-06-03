@@ -51,10 +51,19 @@ void main(int argc, char *argv[])
   Nodal_MOMENTUM.N_rows = NumberDimensions;
   Nodal_MOMENTUM.N_cols = FEM_Mesh.NumNodesMesh;
   Nodal_MOMENTUM.nM = (double **)malloc((unsigned)NumberDimensions*sizeof(double*));
-  Matrix Nodal_F_TOT;
-  Nodal_F_TOT.nM = (double **)malloc((unsigned)NumberDimensions*sizeof(double*));
+  Matrix Nodal_INT_FORCES; /* Nodal values of the internal forces */
+  Nodal_INT_FORCES.N_rows = NumberDimensions;
+  Nodal_INT_FORCES.N_cols = FEM_Mesh.NumNodesMesh;
+  Nodal_INT_FORCES.nM = (double **)malloc((unsigned)NumberDimensions*sizeof(double*));
+  Matrix Nodal_GRAVITY_FORCES; /* Nodal values of the gravity forces */
+  Nodal_GRAVITY_FORCES.N_rows = NumberDimensions;
+  Nodal_GRAVITY_FORCES.N_cols = FEM_Mesh.NumNodesMesh;
+  Nodal_GRAVITY_FORCES.nM = (double **)malloc((unsigned)NumberDimensions*sizeof(double*));
+  Matrix Nodal_TOT_FORCES; /* Nodal total forces */
+  Nodal_TOT_FORCES.nM = (double **)malloc((unsigned)NumberDimensions*2*sizeof(double*));
+  
   char Get_values_1[MAXW] = "MASS;MOMENTUM";
-  char Get_values_2[MAXW] = "F_INT";
+  char Get_values_2[MAXW] = "F_INT;F_GRAV";
 
   /* Read and imposse the boundary conditions */
   ReadBCC(BounCondFileName,FEM_Mesh);
@@ -103,14 +112,23 @@ void main(int argc, char *argv[])
   UpdateGaussPointStressTensor(GP_Mesh,D_e);
   printf(" \t DONE !!! \n");
 
-  /* Four step : Calculate the nodal internal, external and the total forces */
+  /* Four step : Calculate the nodal internal, external forces */
   printf("************************************************* \n");
-  printf(" Four step : Calculate F_int, F_ext and F_tot \n");
+  printf(" Four step : Calculate internal and external forces\n");
   printf(" \t WORKING ... \n");
-  Nodal_F_TOT = GetNodalValuesFromGP(GP_Mesh,FEM_Mesh,Get_values_2);
+  Nodal_TOT_FORCES = GetNodalValuesFromGP(GP_Mesh,FEM_Mesh,Get_values_2);
+  Nodal_INT_FORCES.nM[0] = Nodal_TOT_FORCES.nM[0];
+  Nodal_INT_FORCES.nM[1] = Nodal_TOT_FORCES.nM[1];
+  Nodal_GRAVITY_FORCES.nM[0] = Nodal_TOT_FORCES.nM[2];
+  Nodal_GRAVITY_FORCES.nM[1] = Nodal_TOT_FORCES.nM[3];
   printf(" DONE !!! \n");
-  
+
   /* Five step : Integrate the grid nodal momentum equation */
+  printf("************************************************* \n");
+  printf(" Five step : Integrate the grid nodal momentum equation\n");
+  printf(" \t WORKING ... \n");
+  UpdateGridNodalMomentum(FEM_Mesh,Nodal_MOMENTUM,Nodal_TOT_FORCES);
+  printf(" DONE !!! \n");
 
   /* Six step : Update the particle velocity and position */
 
@@ -125,6 +143,8 @@ void main(int argc, char *argv[])
   Matrix List_Fields;
   WriteVtk_MPM("Initial_conditions",GP_Mesh,List_Fields,0);
   WriteVtk_FEM("Mesh",FEM_Mesh,Nod_Values,0);
+  WriteVtk_FEM("Mesh_Equilibrium",FEM_Mesh,Nodal_TOT_FORCES,0);
+  
     
   /* /\* Read the initial conditions fields as a CSV *\/ */
   /* Matrix InputFields = Read_CSV(InitCondFileName,9); */

@@ -3,8 +3,8 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<title>GeHoJerez <img src="./img/GeHoJerez_Logo.svg" alt="GeHoJerez_Logo.svg" /></title>
-<!-- 2019-06-03 lun 11:07 -->
+<title>Constitutive models</title>
+<!-- 2019-06-03 lun 08:53 -->
 <meta  http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta  name="generator" content="Org-mode" />
 <meta  name="author" content="Miguel Molinos Pérez" />
@@ -134,77 +134,100 @@ for the JavaScript code in this tag.
  }
 /*]]>*///-->
 </script>
+<script type="text/javascript" src="http://orgmode.org/mathjax/MathJax.js"></script>
+<script type="text/javascript">
+<!--/*--><![CDATA[/*><!--*/
+    MathJax.Hub.Config({
+        // Only one of the two following lines, depending on user settings
+        // First allows browser-native MathML display, second forces HTML/CSS
+        //  config: ["MMLorHTML.js"], jax: ["input/TeX"],
+            jax: ["input/TeX", "output/HTML-CSS"],
+        extensions: ["tex2jax.js","TeX/AMSmath.js","TeX/AMSsymbols.js",
+                     "TeX/noUndefined.js"],
+        tex2jax: {
+            inlineMath: [ ["\\(","\\)"] ],
+            displayMath: [ ['$$','$$'], ["\\[","\\]"], ["\\begin{displaymath}","\\end{displaymath}"] ],
+            skipTags: ["script","noscript","style","textarea","pre","code"],
+            ignoreClass: "tex2jax_ignore",
+            processEscapes: false,
+            processEnvironments: true,
+            preview: "TeX"
+        },
+        showProcessingMessages: true,
+        displayAlign: "center",
+        displayIndent: "2em",
+
+        "HTML-CSS": {
+             scale: 100,
+             availableFonts: ["STIX","TeX"],
+             preferredFont: "TeX",
+             webFont: "TeX",
+             imageFont: "TeX",
+             showMathMenu: true,
+        },
+        MMLorHTML: {
+             prefer: {
+                 MSIE:    "MML",
+                 Firefox: "MML",
+                 Opera:   "HTML",
+                 other:   "HTML"
+             }
+        }
+    });
+/*]]>*///-->
+</script>
 </head>
 <body>
 <div id="content">
-<h1 class="title">GeHoJerez <img src="./img/GeHoJerez_Logo.svg" alt="GeHoJerez_Logo.svg" /></h1>
+<h1 class="title">Constitutive models</h1>
 <div id="table-of-contents">
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#sec-1">1. Introduction</a></li>
-<li><a href="#sec-2">2. Governing Equations</a></li>
-<li><a href="#sec-3">3. Material Point Method</a></li>
-<li><a href="#sec-4">4. Constitutive models</a></li>
-<li><a href="#sec-5">5. Proposed tests</a></li>
-<li><a href="#sec-6">6. Items and new code</a></li>
-<li><a href="#sec-7">7. Biblio and footnotes</a></li>
+<li><a href="#sec-1">Elastic material</a></li>
+<li><a href="#sec-2">Visco-elastic material</a></li>
 </ul>
 </div>
 </div>
 <p>
-This is a simple MPM code write in C, the main purpose of this code is to understand the basics concepts of a MPM code. 
-I also write this lines to keep some order in my ideas during this crazy years. 
-</p>
-
-<p>
-<a href="mailto:m.molinos@outlook.es">Miguel Molinos Pérez</a>, PhD candidate <sup><a id="fnr.1" name="fnr.1" class="footref" href="#fn.1">1</a></sup>. Madrid 28-5-2019
+<a href="../index.html">Main page of GeHoJerez</a>
 </p>
 
 
 <div id="outline-container-sec-1" class="outline-2">
-<h2 id="sec-1"><span class="section-number-2">1</span> <a href="Introduction/Introduction.html">Introduction</a></h2>
+<h2 id="sec-1">Elastic material</h2>
+<div class="outline-text-2" id="text-1">
+\begin{equation}
+\sigma = 2G\epsilon + \lambda tr(\epsilon) I
+\end{equation}
+</div>
 </div>
 
 <div id="outline-container-sec-2" class="outline-2">
-<h2 id="sec-2"><span class="section-number-2">2</span> <a href="Governing_Equations/Governing_Equations.html">Governing Equations</a></h2>
-</div>
-
-<div id="outline-container-sec-3" class="outline-2">
-<h2 id="sec-3"><span class="section-number-2">3</span> <a href="Material_Point_Method/Material_Point_Method.html">Material Point Method</a></h2>
-</div>
-
-<div id="outline-container-sec-4" class="outline-2">
-<h2 id="sec-4"><span class="section-number-2">4</span> <a href="Constitutive_models/Constitutive_models.html">Constitutive models</a></h2>
-</div>
-
-<div id="outline-container-sec-5" class="outline-2">
-<h2 id="sec-5"><span class="section-number-2">5</span> <a href="tests/tests.html">Proposed tests</a></h2>
-</div>
-
-<div id="outline-container-sec-6" class="outline-2">
-<h2 id="sec-6"><span class="section-number-2">6</span> <a href="Items_Code/Items_Code.html">Items and new code</a></h2>
-</div>
-
-<div id="outline-container-sec-7" class="outline-2">
-<h2 id="sec-7"><span class="section-number-2">7</span> Biblio and footnotes</h2>
-<div class="outline-text-2" id="text-7">
+<h2 id="sec-2">Visco-elastic material</h2>
+<div class="outline-text-2" id="text-2">
+<p>
+Viscoelastic fluids exhibit both viscous and elastic behaviour when
+subjected to deformation. Therefore these materials are governed by
+the Navier-Stokes equations enriched with an extra <b>elastic</b> stress
+\(\mathbf{\tau}_p\)
+</p>
+\begin{equation}
+\rho\left[\partial_t\mathbf{u}+\nabla\cdot(\mathbf{u}\otimes\mathbf{u})\right] = 
+- \nabla p + \nabla\cdot(2\mu_s\mathbf{D}) + \nabla\cdot\mathbf{\tau}_p
++ \rho\mathbf{a}
+\end{equation}
+<p>
+where \(\mathbf{D}=[\nabla\mathbf{u} + (\nabla\mathbf{u})^T]/2\) is the
+deformation tensor and \(\mu_s\) is the solvent viscosity of the
+viscoelastic fluid.
+</p>
 </div>
 </div>
-<div id="footnotes">
-<h2 class="footnotes">Footnotes: </h2>
-<div id="text-footnotes">
-
-<div class="footdef"><sup><a id="fn.1" name="fn.1" class="footnum" href="#fnr.1">1</a></sup> <p class="footpara">
-<a href="https://www.researchgate.net/profile/Miguel_Molinos_Perez">ResearcheGate Profile</a>  
-</p></div>
-
-
 </div>
-</div></div>
 <div id="postamble" class="status">
 <p class="author">Author: Miguel Molinos Pérez</p>
-<p class="date">Created: 2019-06-03 lun 11:07</p>
+<p class="date">Created: 2019-06-03 lun 08:53</p>
 <p class="creator"><a href="http://www.gnu.org/software/emacs/">Emacs</a> 25.2.2 (<a href="http://orgmode.org">Org</a> mode 8.2.10)</p>
 <p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>

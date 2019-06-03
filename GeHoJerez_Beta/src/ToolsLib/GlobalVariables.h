@@ -18,7 +18,7 @@ double DeltaTimeStep;
 int NumTimeStep;
 
 /* Constitutive parameters */
-double g;
+Matrix g;
 double ElasticModulus;
 double PoissonModulus;
 double Density;

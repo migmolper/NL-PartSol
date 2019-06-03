@@ -19,3 +19,5 @@ void GetGaussPointStrainIncrement(GaussPoint, Mesh, Matrix);
 void UpdateGaussPointDensity(GaussPoint);
 
 void UpdateGaussPointStressTensor(GaussPoint, Matrix);
+
+void UpdateGridNodalMomentum(Mesh, Matrix, Matrix);
