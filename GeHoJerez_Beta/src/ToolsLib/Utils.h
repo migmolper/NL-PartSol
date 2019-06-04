@@ -14,6 +14,8 @@ Matrix MatAlloc(int,int);
 
 Matrix MatAllocZ(int,int);
 
+void PrintMatrix(Matrix, int, int);
+
 Matrix CopyMat(Matrix);
 
 double Get_Determinant(Matrix);

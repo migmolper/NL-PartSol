@@ -448,6 +448,7 @@ void UpdateVelocityAndPositionGP(GaussPoint MPM_Mesh,
   X_EC_GP.N_rows = NumberDimensions;
   X_EC_GP.N_cols = 1;
   int Elem_GP; /* Index of the element */
+  int * Elem_Nods; /* Connectivity of the element */
   Matrix N_Ref_GP; /* Value of the shape-function in the GP */
 
   /* 1º iterate over the Gauss-Points */
@@ -459,6 +460,9 @@ void UpdateVelocityAndPositionGP(GaussPoint MPM_Mesh,
     /* 3º Get the index of the element */
     Elem_GP = MPM_Mesh.Element_id[i];
 
+    /* Get the connectivity of the element */
+    Elem_Nods = FEM_Mesh.Connectivity[Elem_GP];
+
     /* 4º Evaluate the shape function in the coordinates of the GP */
     N_Ref_GP = FEM_Mesh.N_ref(X_EC_GP);
 
@@ -468,13 +472,13 @@ void UpdateVelocityAndPositionGP(GaussPoint MPM_Mesh,
 
 	/* 6aº Update the GP velocities */
 	MPM_Mesh.Phi.vel.nM[i][k] += DeltaTimeStep*N_Ref_GP.nV[j]*
-	  (Nodal_INT_FORCES.nM[k][Elem_GP] + Nodal_EXT_FORCES.nM[k][Elem_GP])/
-	  Nodal_MASS.nV[Elem_GP];
+	  (Nodal_INT_FORCES.nM[k][Elem_Nods[j]] + Nodal_EXT_FORCES.nM[k][Elem_Nods[j]])/
+	  Nodal_MASS.nV[Elem_Nods[j]];
 	
 	/* 6bº Update the GP position */
 	MPM_Mesh.Phi.x_GC.nM[i][k] += DeltaTimeStep*N_Ref_GP.nV[j]*
-	  Nodal_MOMENTUM.nM[k][Elem_GP]/
-	  Nodal_MASS.nV[Elem_GP];
+	  Nodal_MOMENTUM.nM[k][Elem_Nods[j]]/
+	  Nodal_MASS.nV[Elem_Nods[j]];
       }      
     }
 

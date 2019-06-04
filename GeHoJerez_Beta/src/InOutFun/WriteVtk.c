@@ -90,6 +90,52 @@ void WriteVtk_MPM(char * Name_File, GaussPoint MPM_Mesh,
     fprintf(Vtk_file,"%i \n",MPM_Mesh.Element_id[i]);
     
   }
+
+  fprintf(Vtk_file,"TENSORS STRESS float \n");
+  for(int i =  0 ; i<MPM_Mesh.NumGP ; i++){
+    for(int j = 0 ; j<3 ; j++){
+      for(int k = 0 ; k<3 ; k++){
+	/* Principal diagonal */
+	if(j==k){
+	  if(j<NumberDimensions)
+	    fprintf(Vtk_file,"%f ",MPM_Mesh.Phi.Stress.nM[i][j]);
+	  else
+	    fprintf(Vtk_file,"%f ",0.0);
+	}
+	else{
+	  if((j<NumberDimensions)&&(k<NumberDimensions))
+	    fprintf(Vtk_file,"%f ",MPM_Mesh.Phi.Stress.nM[i][NumberDimensions+j]);
+	  else
+	    fprintf(Vtk_file,"%f ",0.0);
+	}
+      }
+      fprintf(Vtk_file,"\n");
+    }
+    fprintf(Vtk_file,"\n");
+  }
+
+  fprintf(Vtk_file,"TENSORS STRAIN float \n");
+  for(int i =  0 ; i<MPM_Mesh.NumGP ; i++){
+    for(int j = 0 ; j<3 ; j++){
+      for(int k = 0 ; k<3 ; k++){
+	/* Principal diagonal */
+	if(j==k){
+	  if(j<NumberDimensions)
+	    fprintf(Vtk_file,"%f ",MPM_Mesh.Phi.Strain.nM[i][j]);
+	  else
+	    fprintf(Vtk_file,"%f ",0.0);
+	}
+	else{
+	  if((j<NumberDimensions)&&(k<NumberDimensions))
+	    fprintf(Vtk_file,"%f ",MPM_Mesh.Phi.Strain.nM[i][NumberDimensions+j]);
+	  else
+	    fprintf(Vtk_file,"%f ",0.0);
+	}
+      }
+      fprintf(Vtk_file,"\n");
+    }
+    fprintf(Vtk_file,"\n");
+  }  
   
 }
 

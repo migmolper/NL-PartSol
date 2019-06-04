@@ -6,6 +6,9 @@
 #include "../Solvers/Solvers.h"
 #include "Utils.h"
 
+#define MAXVAL(A,B) ((A)>(B) ? (A) : (B))
+#define MINVAL(A,B) ((A)<(B) ? (A) : (B))
+
 /* Function for arrays declaration */
 void * Allocate_Array(int SizeArray, int SizeType)
 /*
@@ -92,7 +95,6 @@ Matrix MatAlloc(int NumberRows,int NumberColumns){
   Matrix M;
   M.N_rows = NumberRows;
   M.N_cols = NumberColumns;
-  strcpy(M.Info,"None");
 
   if( (NumberRows == 1) || (NumberColumns == 1) ){ /* It is an array */
     M.nV = (double *)Allocate_Array(NumberRows*NumberColumns,
@@ -140,6 +142,33 @@ Matrix MatAllocZ(int NumberRows,int NumberColumns)
   
   return M;
 }
+
+/*********************************************************************/
+
+void PrintMatrix(Matrix In, int NumCols, int NumRows)
+{
+
+  int Nvalues_a, Nvalues_b;
+  
+  if( In.nV != NULL ){
+    printf("%s : \n",In.Info);
+    Nvalues_a = MAXVAL(NumCols,NumRows);
+    Nvalues_b = MAXVAL(In.N_cols,In.N_rows);
+    for(int i = 0 ; i<MINVAL(Nvalues_a,Nvalues_b) ; i++){
+      printf("%f \n",In.nV[i]);
+    }
+  }
+  if( In.nM != NULL ){
+    printf("%s : \n",In.Info);
+    for(int i = 0 ; i<MINVAL(In.N_rows,NumRows) ; i++){
+      for(int j = 0 ; j<MINVAL(In.N_cols,NumCols) ; j++){
+	printf(" %f ",In.nM[i][j]);
+      }
+      printf("\n");
+    }
+  }
+}
+
 
 /*********************************************************************/
 

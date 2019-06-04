@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <math.h>
 #include "ToolsLib/TypeDefinitions.h"
 #include "ToolsLib/Utils.h"
@@ -52,21 +53,37 @@ int main(int argc, char *argv[])
   /***********************************************************************/
   Matrix Nod_Values;
   Matrix Nodal_MASS;
+  Nodal_MASS.N_rows = 1;
+  Nodal_MASS.N_cols = FEM_Mesh.NumNodesMesh;
+  Nodal_MASS.nM = NULL;
+  strcpy(Nodal_MASS.Info,"Nodal mass");
   Matrix Nodal_VELOCITY;
+  Nodal_VELOCITY.N_rows = NumberDimensions;
+  Nodal_VELOCITY.N_cols = FEM_Mesh.NumNodesMesh;
+  Nodal_VELOCITY.nV = NULL;
+  strcpy(Nodal_VELOCITY.Info,"Nodal Velocity");
   Matrix Nodal_MOMENTUM;
   Nodal_MOMENTUM.N_rows = NumberDimensions;
   Nodal_MOMENTUM.N_cols = FEM_Mesh.NumNodesMesh;
+  Nodal_MOMENTUM.nV = NULL;
   Nodal_MOMENTUM.nM = (double **)malloc((unsigned)NumberDimensions*sizeof(double*));
+  strcpy(Nodal_MOMENTUM.Info,"Nodal momentum");
   Matrix Nodal_INT_FORCES; /* Nodal values of the internal forces */
   Nodal_INT_FORCES.N_rows = NumberDimensions;
   Nodal_INT_FORCES.N_cols = FEM_Mesh.NumNodesMesh;
+  Nodal_INT_FORCES.nV = NULL;
   Nodal_INT_FORCES.nM = (double **)malloc((unsigned)NumberDimensions*sizeof(double*));
+  strcpy(Nodal_INT_FORCES.Info,"Nodal Internal forces");
   Matrix Nodal_GRAVITY_FORCES; /* Nodal values of the gravity forces */
   Nodal_GRAVITY_FORCES.N_rows = NumberDimensions;
   Nodal_GRAVITY_FORCES.N_cols = FEM_Mesh.NumNodesMesh;
+  Nodal_GRAVITY_FORCES.nV = NULL;
   Nodal_GRAVITY_FORCES.nM = (double **)malloc((unsigned)NumberDimensions*sizeof(double*));
+  strcpy(Nodal_GRAVITY_FORCES.Info,"Nodal Gravity forces");
   Matrix Nodal_TOT_FORCES; /* Nodal total forces */
-  Nodal_TOT_FORCES.nM = (double **)malloc((unsigned)NumberDimensions*2*sizeof(double*));  
+  Nodal_TOT_FORCES.nV = NULL;
+  Nodal_TOT_FORCES.nM = (double **)malloc((unsigned)NumberDimensions*2*sizeof(double*));
+  strcpy(Nodal_TOT_FORCES.Info,"Nodal total forces");
   /***********************************************************************/
   /***********************************************************************/
 

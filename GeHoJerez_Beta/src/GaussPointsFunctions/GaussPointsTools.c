@@ -44,51 +44,70 @@ GaussPoint Initialize_GP_Mesh(char * MPM_GID_MeshName,
   MPM_Mesh.Element_id = (int *)Allocate_ArrayZ(MPM_Mesh.NumGP,sizeof(int));
 
   /* Coordinates of the GP (Global/Local)*/
-  MPM_Mesh.Phi.x_GC = MatAllocZ(MPM_Mesh.NumGP,3);  
+  MPM_Mesh.Phi.x_GC = MatAllocZ(MPM_Mesh.NumGP,3);
+  strcpy(MPM_Mesh.Phi.x_GC.Info,"Global Coordinates");
 
   /* Allocate vectorial/tensorial fields */
   switch(NumberDimensions){
   case 1 :
     /* Natural coordinates (Vectorial) */
     MPM_Mesh.Phi.x_EC = MatAllocZ(MPM_Mesh.NumGP,1);
+    strcpy(MPM_Mesh.Phi.x_EC.Info,"Element Coordinates GP");
     /* Displacement field (Vectorial) */
     MPM_Mesh.Phi.dis = MatAllocZ(MPM_Mesh.NumGP,1);
+    strcpy(MPM_Mesh.Phi.dis.Info,"Displacement field GP");
     /* Velocity field (Vectorial) */
     MPM_Mesh.Phi.vel = MatAllocZ(MPM_Mesh.NumGP,1);
+    strcpy(MPM_Mesh.Phi.vel.Info,"Velocity field GP");
     /* Acceleration field (Vectorial) */
     MPM_Mesh.Phi.acc = MatAllocZ(MPM_Mesh.NumGP,1);
+    strcpy(MPM_Mesh.Phi.acc.Info,"Acceleration field GP");
     /* Strain field (Tensor) */
     MPM_Mesh.Phi.Strain = MatAllocZ(MPM_Mesh.NumGP,1);
+    strcpy(MPM_Mesh.Phi.Strain.Info,"Strain field GP");
     /* Stress field (Tensor) */
     MPM_Mesh.Phi.Stress = MatAllocZ(MPM_Mesh.NumGP,1);
+    strcpy(MPM_Mesh.Phi.Stress.Info,"Stress field GP");
     break;
   case 2 :
     /* Natural coordinates (Vectorial) */
     MPM_Mesh.Phi.x_EC = MatAllocZ(MPM_Mesh.NumGP,2);
+    strcpy(MPM_Mesh.Phi.x_EC.Info,"Element Coordinates GP");
     /* Displacement field (Vectorial) */
     MPM_Mesh.Phi.dis = MatAllocZ(MPM_Mesh.NumGP,2);
+    strcpy(MPM_Mesh.Phi.dis.Info,"Displacement field GP");
     /* Velocity field (Vectorial) */
     MPM_Mesh.Phi.vel = MatAllocZ(MPM_Mesh.NumGP,2);
+    strcpy(MPM_Mesh.Phi.vel.Info,"Velocity field GP");
     /* Acceleration field (Vectorial) */
     MPM_Mesh.Phi.acc = MatAllocZ(MPM_Mesh.NumGP,2);
+    strcpy(MPM_Mesh.Phi.acc.Info,"Acceleration field GP");
     /* Strain field (Tensor) */
     MPM_Mesh.Phi.Strain = MatAllocZ(MPM_Mesh.NumGP,3);
+    strcpy(MPM_Mesh.Phi.Strain.Info,"Strain field GP");
     /* Stress field (Tensor) */
     MPM_Mesh.Phi.Stress = MatAllocZ(MPM_Mesh.NumGP,3);
+    strcpy(MPM_Mesh.Phi.Stress.Info,"Stress field GP");
     break;
   case 3:
     /* Natural coordinates (Vectorial) */
     MPM_Mesh.Phi.x_EC = MatAllocZ(MPM_Mesh.NumGP,3);
+    strcpy(MPM_Mesh.Phi.x_EC.Info,"Element Coordinates GP");
     /* Displacement field (Vectorial) */
     MPM_Mesh.Phi.dis = MatAllocZ(MPM_Mesh.NumGP,3);
+    strcpy(MPM_Mesh.Phi.dis.Info,"Displacement field GP");
     /* Velocity field (Vectorial) */
     MPM_Mesh.Phi.vel = MatAllocZ(MPM_Mesh.NumGP,3);
+    strcpy(MPM_Mesh.Phi.vel.Info,"Velocity field GP");
     /* Acceleration field (Vectorial) */
     MPM_Mesh.Phi.acc = MatAllocZ(MPM_Mesh.NumGP,3);
+    strcpy(MPM_Mesh.Phi.acc.Info,"Acceleration field GP");
     /* Strain field (Tensor) */
     MPM_Mesh.Phi.Strain = MatAllocZ(MPM_Mesh.NumGP,9);
+    strcpy(MPM_Mesh.Phi.Strain.Info,"Strain field GP");
     /* Stress field (Tensor) */
     MPM_Mesh.Phi.Stress = MatAllocZ(MPM_Mesh.NumGP,9);
+    strcpy(MPM_Mesh.Phi.Stress.Info,"Stress field GP");
     break;
   default:
     puts("Error in Initialize_GP_Mesh() : Wrong number of dimensions !!!");
@@ -97,9 +116,11 @@ GaussPoint Initialize_GP_Mesh(char * MPM_GID_MeshName,
 
   /* Mass field (Scalar) */
   MPM_Mesh.Phi.mass = MatAllocZ(MPM_Mesh.NumGP,1);
+  strcpy(MPM_Mesh.Phi.mass.Info,"Mass field GP");
 
   /* Density field (Scalar) */
   MPM_Mesh.Phi.rho = MatAllocZ(MPM_Mesh.NumGP,1);
+  strcpy(MPM_Mesh.Phi.rho.Info,"Density field GP");
 
   
   if(strcmp(MPM_GID_Mesh.TypeElem,"Triangle") == 0 ){
