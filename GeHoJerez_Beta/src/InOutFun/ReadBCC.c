@@ -36,9 +36,6 @@ void ReadBCC(char * Name_File, Mesh FEM_Mesh)
   char * kwords[MAXW] = {NULL};
   char * param[MAXW] = {NULL};
 
-  /* Variable for the kind of analysis parser */
-  int nKindAnalysis;
-  char * KindAnalysisParam[MAXW] = {NULL};
   /* Variable for the time parser */
   int auxT;
   char * T_range[MAXW] = {NULL};
@@ -47,7 +44,7 @@ void ReadBCC(char * Name_File, Mesh FEM_Mesh)
   char * V[MAXW] = {NULL};
   char * V_nod[MAXW] = {NULL};
   char * V_val[MAXW] = {NULL};
-  /* Variable for the velocity parser */
+  /* Variable for the stress parser */
   int auxSIGMA,auxSIGMA_nod,auxSIGMA_val;
   char * SIGMA[MAXW] = {NULL};
   char * SIGMA_nod[MAXW] = {NULL};
@@ -99,10 +96,14 @@ void ReadBCC(char * Name_File, Mesh FEM_Mesh)
 	  /* Parse the Velocity BCC */
 	  if(strcmp(param[0],"V") == 0){
 	    auxV = parse(V,param[1],"=\n");
+	    if(auxV<2){
+	      printf("Error in ReadBCC() : Check in input velocity !! \n");
+	      exit(0);
+	    }
 	    /* Read the nodes to impose the BCC :*/
 	    auxV_nod = parse(V_nod,V[0],"[:]\n");
 	    /* Read the value to impose */
-	    auxV_val = parse(V_val,V[1],"={,}\n");
+	    auxV_val = parse(V_val,V[1],"{,}\n");
 	    for(int i = 0 ; i<auxV_nod ; i++){
 	      printf("\t V[%i] = ",atoi(V_nod[i]));
 	      printf("{");
@@ -116,6 +117,10 @@ void ReadBCC(char * Name_File, Mesh FEM_Mesh)
 	  /* Parse the Stress BCC */
 	  if(strcmp(param[0],"SIGMA") == 0){
 	    auxSIGMA = parse(SIGMA,param[1],"=\n");
+	    if(auxSIGMA<2){
+	      printf("Error in ReadBCC() : Check in input stress !! \n");
+	      exit(0);
+	    }
 	    /* Read the nodes to impose the BCC :*/
 	    auxSIGMA_nod = parse(SIGMA_nod,SIGMA[0],"[,]\n");
 	    /* Read the value to impose */

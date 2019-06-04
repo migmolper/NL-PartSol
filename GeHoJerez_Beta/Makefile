@@ -24,11 +24,19 @@ csrc = \
 obj = $(csrc:.c=.o)
 
 # List of libraries required during linking
-LDFLAGS = -lm -g
+LDFLAGS = -lm
+DBFLAGS = -g -Wall
 
-# compile
+SRC      = $(wildcard *.c)
+OBJ      = $(SRC:.c=.o)
+
+# All recipie
+all: $(myprog)
+
+# Link process
 $(myprog): $(obj)
-	$(CC) -o $@  $^ $(LDFLAGS)
+	@echo "*************************************************"
+	$(CC) -o $@ $^ $(LDFLAGS)
 	@echo " "
 	@echo "*************  GeHoJerez compiled !! ************"
 	@echo " "
@@ -36,6 +44,12 @@ $(myprog): $(obj)
 	./$(myprog) test/MPM_test/CasoSimple/ejemplo.dat
 	@echo " "
 	@echo "*************** Test case passed ****************"
+
+# Compile	
+%.o: %.c
+	@echo "*************************************************"
+	$(CC) -o $@ -c $(DBFLAGS) $<
+	@echo "\t Compiled "$<" successfully !!"
 # run
 test1D:
 	./$(myprog) test/FEM_test/ejemplo.dat

@@ -44,7 +44,6 @@ void ReadDatFile(char * Name_File)
   char * words[MAXW] = {NULL};
   char * SimParameter[MAXW] = {NULL};
   char * KIND_ANALYSIS[MAXW] = {NULL};
-  int Element_i,Nodes_i;
 
   /* Initialize parser to read files */
   ParserDictionary Dict = InitParserDictionary();

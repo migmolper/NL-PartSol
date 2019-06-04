@@ -69,7 +69,6 @@ void Two_Steps_TG_FEM(Mesh ElementMesh, GaussPoint GP_Mesh,
   Matrix Phi_n12_GP; 
   
   /* Flux fields defined inthe Gauss-Points*/
-  Matrix Flux_n_GP; /* Flux in t = n */
   Matrix Flux_n12_GP; /* Flux in t = n + 1/2 */
 
   /* Elements properties */
@@ -88,10 +87,6 @@ void Two_Steps_TG_FEM(Mesh ElementMesh, GaussPoint GP_Mesh,
   Matrix RHS_i; /* Matrix with pointer functions to each field for the global RHS */
   Matrix DeltaPhiNod; /* Increment of the field solution in the nodes */
   Matrix DeltaPhiNod_i; /* Matrix of pointers to each field of the global DeltaPhinod */
-
-  /* Boundary conditions variables */
-  double BCC_val;
-  int i_BCC_GP;
 
   /* Pointers fields for the input solver */
   DeltaPhiNod_i.nM = NULL;
@@ -291,10 +286,8 @@ void Two_Steps_TG_MPM(Mesh ElementMesh, GaussPoint GP_Mesh,
 		      Matrix Phi_n_GP,Matrix M_l, Matrix A, int TimeStep){
 
   Matrix Nod_Int_Forces = MatAllocZ(2,ElementMesh.NumNodesMesh);
-  Matrix Nod_Ext_Forces = MatAllocZ(2,ElementMesh.NumNodesMesh);
   Matrix Phi_n_Nod;
   int Elem_GP_i;
-  double V_Flux;
   int * Id_ElemNod;
   Matrix X_ElemNod = MatAlloc(2,1);
   Matrix GP_i_XE;

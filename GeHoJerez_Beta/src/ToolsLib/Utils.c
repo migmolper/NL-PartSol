@@ -624,7 +624,6 @@ Matrix Add_Mat(Matrix A,Matrix B)
 
   /* Variable declaration */
   Matrix C;
-  double C_aux;
   
   /* Check if it is possible to do the addition */
   if((A.N_cols != B.N_cols)||(A.N_rows != B.N_rows)){
@@ -675,7 +674,6 @@ Matrix Sub_Mat(Matrix A,Matrix B)
 
   /* Variable declaration */
   Matrix C;
-  double C_aux;
   
   /* Check if it is possible to do the substraction */
   if((A.N_cols != B.N_cols)||(A.N_rows != B.N_rows)){

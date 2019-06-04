@@ -67,7 +67,7 @@ https://en.wikipedia.org/wiki/Conjugate_gradient_method#The_preconditioned_conju
   
   int N = K.N_rows;
   double aux;
-  double Tol_U,Tol_r;
+  double Tol_r;
   double alpha_k,beta_k;
   double dividend,divisor;
   double Norm_r;
@@ -222,7 +222,7 @@ Matrix Jacobi_Conjugate_Gradient_Method(Matrix K, Matrix F, Matrix U0)
   
   int N = K.N_rows;
   double aux;
-  double Tol_U,Tol_r;
+  double Tol_r;
   double alpha_k,beta_k;
   double dividend,divisor;
   Matrix K_l; /* Lumped matrix */

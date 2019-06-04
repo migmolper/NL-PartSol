@@ -11,7 +11,7 @@
 #include "Boundary_Conditions/BoundaryConditions.h"
 #include "Constitutive/Constitutive.h"
 
-void main(int argc, char *argv[])
+int main(int argc, char *argv[])
 /*
   Inputs parameters :
   * Mesh file
@@ -67,8 +67,6 @@ void main(int argc, char *argv[])
   Nodal_GRAVITY_FORCES.nM = (double **)malloc((unsigned)NumberDimensions*sizeof(double*));
   Matrix Nodal_TOT_FORCES; /* Nodal total forces */
   Nodal_TOT_FORCES.nM = (double **)malloc((unsigned)NumberDimensions*2*sizeof(double*));  
-  char Get_values_1[MAXW] = "MASS;MOMENTUM";
-  char Get_values_2[MAXW] = "F_INT;F_GRAV";
   /***********************************************************************/
   /***********************************************************************/
 
@@ -157,7 +155,7 @@ void main(int argc, char *argv[])
     Nodal_INT_FORCES.nM[1] = Nodal_TOT_FORCES.nM[1];
     Nodal_GRAVITY_FORCES.nM[0] = Nodal_TOT_FORCES.nM[2];
     Nodal_GRAVITY_FORCES.nM[1] = Nodal_TOT_FORCES.nM[3];
-    printf(" DONE !!! \n");
+    printf(" DONE !!! \n");    
 
     /* Five step : Integrate the grid nodal momentum equation */
     printf("************************************************* \n");

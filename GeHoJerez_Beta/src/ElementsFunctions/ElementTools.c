@@ -53,7 +53,6 @@ Matrix Get_B_GP(Matrix X_EC_GP,Matrix Element)
 
   /* 0º Define variables */
   Matrix B_GP; /* Declaration of the output matrix (NdimVecStrain x Nnodes*Ndim) */
-  Matrix N_Ref_GP; /* Shape function evaluated in the GP (1 x Nnodes) */
   Matrix dNdX_Ref_GP; /* Derivative of the shape function evaluated in the GP (Ndim x Nnodes) */
   Matrix F_Ref_GP; /* Reference deformation gradient evaluated in the GP (Ndim x Ndim) */
   Matrix F_Ref_GP_T; /* Transpose of the reference deformation gradient */
@@ -74,17 +73,15 @@ Matrix Get_B_GP(Matrix X_EC_GP,Matrix Element)
     B_GP = MatAlloc(3,2*Element.N_rows);
 
     if(strcmp(Element.Info,"Quadrilateral") == 0){      
-      /* 3º Evaluate the shape function and it derivarive in the GP */
-      N_Ref_GP = Q4(X_EC_GP);
 
-      /* 4º Evaluate the gradient of the shape function in the GP */
+      /* 3º Evaluate the gradient of the shape function in the GP */
       dNdX_Ref_GP = dQ4(X_EC_GP);
 
-      /* 5º Get the reference deformation gradient in the GP */
+      /* 4º Get the reference deformation gradient in the GP */
       F_Ref_GP = Get_RefDeformation_Gradient_Q4(X_EC_GP,Element);
     }
 
-    /* 6º Get the deformation gradient (dNdx_XG) : Only in some cases */
+    /* 5º Get the deformation gradient (dNdx_XG) : Only in some cases */
     /* 6aº Get the transpose of the deformation gradient */
     F_Ref_GP_T = Transpose_Mat(F_Ref_GP), 
       free(F_Ref_GP.nM);

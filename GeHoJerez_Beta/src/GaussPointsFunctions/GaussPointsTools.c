@@ -24,13 +24,8 @@ GaussPoint Initialize_GP_Mesh(char * MPM_GID_MeshName,
   /* Material point mesh (Gauss-Points) */
   Mesh MPM_GID_Mesh;
   GaussPoint MPM_Mesh;
-  int Init_Num_GP_Elem;
-  int Size_MPM_Mesh;
-  int NumFields;
-  char * Field[MAXW] = {NULL};
-  /* Initialize parser to read files */
-  ParserDictionary Dict = InitParserDictionary();
-  char * delims = Dict.sep[4];
+  /* int NumFields; */
+  /* char * Field[MAXW] = {NULL}; */
 
   /* Screen message */
   printf("************************************************* \n");
