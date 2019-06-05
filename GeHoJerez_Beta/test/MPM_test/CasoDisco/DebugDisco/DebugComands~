@@ -1,0 +1,34 @@
+
+# Cargo fichero
+start test/MPM_test/CasoDisco/ejemplo.dat
+
+# Borro breakpoints si los hubiera de antes
+delete breakpoints
+
+# Pongo breackpoints
+break main.c:135
+break main.c:151
+break main.c:155
+break main.c:159
+break main.c:163
+break main.c:175
+break main.c:182
+break main.c:190
+break main.c:217
+
+# Avanzo hasta el siguiente bp
+continue
+
+# Print Nodal Mass (b135)
+echo ****** Print Nodal mass ****** \n
+
+
+# Avanzo hasta el siguiente bp
+continue
+
+# Print 
+echo ****** Print Nodal mass ****** \n
+
+#call PrintMatrix(,,)
+
+#call StatsMatrix(,)

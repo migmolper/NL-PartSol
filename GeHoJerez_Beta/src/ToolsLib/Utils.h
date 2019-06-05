@@ -16,6 +16,10 @@ Matrix MatAllocZ(int,int);
 
 void PrintMatrix(Matrix, int, int);
 
+double StatsDouMatrix(double *, int, char *);
+
+double StatsIntMatrix(int *, int, char *);
+
 Matrix CopyMat(Matrix);
 
 double Get_Determinant(Matrix);

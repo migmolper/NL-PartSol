@@ -146,27 +146,171 @@ Matrix MatAllocZ(int NumberRows,int NumberColumns)
 /*********************************************************************/
 
 void PrintMatrix(Matrix In, int NumCols, int NumRows)
+/*
+  Print term by term the input matrix
+*/
 {
 
-  int Nvalues_a, Nvalues_b;
+  int Nvalues;
   
   if( In.nV != NULL ){
+    Nvalues = In.N_cols*In.N_rows;
+    Nvalues = MINVAL(NumRows,Nvalues);
     printf("%s : \n",In.Info);
-    Nvalues_a = MAXVAL(NumCols,NumRows);
-    Nvalues_b = MAXVAL(In.N_cols,In.N_rows);
-    for(int i = 0 ; i<MINVAL(Nvalues_a,Nvalues_b) ; i++){
+    for(int i = 0 ; i<Nvalues ; i++){
       printf("%f \n",In.nV[i]);
     }
   }
+  
   if( In.nM != NULL ){
+    
     printf("%s : \n",In.Info);
-    for(int i = 0 ; i<MINVAL(In.N_rows,NumRows) ; i++){
-      for(int j = 0 ; j<MINVAL(In.N_cols,NumCols) ; j++){
-	printf(" %f ",In.nM[i][j]);
+    for(int i = 0 ; i<MAXVAL(In.N_cols,In.N_rows) ; i++){
+      for(int j = 0 ; j<MINVAL(In.N_cols,In.N_rows) ; j++){
+	if(In.N_cols<In.N_rows)
+	  printf(" %f ",In.nM[i][j]);
+	else
+	  printf(" %f ",In.nM[j][i]);
       }
       printf("\n");
     }
   }
+}
+
+/*********************************************************************/
+
+
+double StatsDouMatrix(double * In, int NumElems, char * OutChar)
+/*
+  Print some stats of the input matrix
+ */
+{
+  double MaxVal;
+  double MinVal;
+  double MeanVal;
+  double SumVal;
+  double StdDesvVal;
+  double OutVal;
+
+  /* Do the stats for an array */
+  if(In != NULL){
+
+    /* Initialice the stats */
+    MaxVal = In[0];
+    MinVal = In[0];
+    MeanVal = In[0];
+    StdDesvVal = 0;
+    SumVal = 0;
+
+    /* Get the MaxVal, the MinVal and the MeanVal */
+    for(int i = 0 ; i<NumElems ; i++){
+      MaxVal = MAXVAL(MaxVal,In[i]);
+      MinVal = MINVAL(MinVal,In[i]);
+      SumVal += In[i];      
+    }
+    MeanVal = (double)SumVal/NumElems;
+
+    /* Get the standard desviation */
+    for(int i = 0 ; i<NumElems ; i++){
+      StdDesvVal += (In[i] - MeanVal)*(In[i] - MeanVal);
+    }
+    StdDesvVal *= (double)1/(NumElems-1);
+    StdDesvVal = pow(StdDesvVal,0.5);
+  }
+  else{
+    puts("Error in StatMatrix() : The input pointer is empty !! \n");
+  }
+
+
+  if(strcmp(OutChar,"PrintStats") == 0){
+    printf("The stats are : \n");
+    printf("\t Maximum : %f \n",MaxVal);
+    printf("\t Minimum : %f \n",MinVal);
+    printf("\t The sum of all the terms : %f \n",SumVal);
+    printf("\t Mean : %f \n",MeanVal);
+    printf("\t Standard deviation : %f \n",StdDesvVal);
+    OutVal = 0;
+  }
+  else if(strcmp(OutChar,"MaxVal") == 0) OutVal = MaxVal;
+  else if(strcmp(OutChar,"MinVal") == 0) OutVal = MinVal;
+  else if(strcmp(OutChar,"SumVal") == 0) OutVal = SumVal;
+  else if(strcmp(OutChar,"MeanVal") == 0) OutVal = MeanVal;
+  else if(strcmp(OutChar,"StdDesvVal") == 0) OutVal = StdDesvVal;
+  else{
+    printf("Error in StatsIntMatrix() : Wrong imput parameters !!! \n");
+    OutVal = NAN;
+  }
+  
+  return OutVal;
+}
+
+/*********************************************************************/
+
+double StatsIntMatrix(int * In, int NumElems, char * OutChar)
+/*
+  Print some stats of the input matrix
+ */
+{
+  double MaxVal;
+  double MinVal;
+  double MeanVal;
+  double SumVal;
+  double StdDesvVal;
+  double OutVal;
+
+  printf("OutChar : %s\n",OutChar);
+
+  /* Do the stats for an array */
+  if(In != NULL){
+
+    /* Initialice the stats */
+    MaxVal = (double)In[0];
+    MinVal = (double)In[0];
+    MeanVal = (double)In[0];
+    StdDesvVal = 0.0;
+    SumVal = 0.0;
+
+    /* Get the MaxVal, the MinVal and the MeanVal */
+    for(int i = 0 ; i<NumElems ; i++){
+      MaxVal = MAXVAL(MaxVal,(double)In[i]);
+      MinVal = MINVAL(MinVal,(double)In[i]);
+      SumVal += (double)In[i];      
+    }
+    MeanVal = (double)SumVal/NumElems;
+
+    /* Get the standard desviation */
+    for(int i = 0 ; i<NumElems ; i++){
+      StdDesvVal += ((double)In[i] - MeanVal)*
+	((double)In[i] - MeanVal);
+    }
+    StdDesvVal *= (double)1/(NumElems-1);
+    StdDesvVal = pow(StdDesvVal,0.5);
+  }
+  else{
+    puts("Error in StatMatrix() : The input pointer is empty !! \n");
+  }
+
+  if(strcmp(OutChar,"PrintStats") == 0){
+    printf("The stats are : \n");
+    printf("\t Maximum : %f \n",MaxVal);
+    printf("\t Minimum : %f \n",MinVal);
+    printf("\t The sum of all the terms : %f \n",SumVal);
+    printf("\t Mean : %f \n",MeanVal);
+    printf("\t Standard deviation : %f \n",StdDesvVal);
+    OutVal = 0;
+  }
+  else if(strcmp(OutChar,"MaxVal") == 0) OutVal = MaxVal;
+  else if(strcmp(OutChar,"MinVal") == 0) OutVal = MinVal;
+  else if(strcmp(OutChar,"SumVal") == 0) OutVal = SumVal;
+  else if(strcmp(OutChar,"MeanVal") == 0) OutVal = MeanVal;
+  else if(strcmp(OutChar,"StdDesvVal") == 0) OutVal = StdDesvVal;
+  else{
+    printf("Error in StatsIntMatrix() : Wrong imput parameters !!! \n");
+    OutVal = NAN;
+  }
+  
+  return OutVal;
+  
 }
 
 

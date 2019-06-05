@@ -152,7 +152,7 @@ Matrix GetNodalValuesFromGP(GaussPoint MPM_Mesh, Mesh FEM_Mesh, char LisOfFields
 	    Nodal_MOMENTUM.nM[l][Elem_Nods[k]] +=
       	      MPM_Mesh.Phi.mass.nV[i]*
       	      MPM_Mesh.Phi.vel.nM[i][l]*
-      	      N_Ref_GP.nV[j];
+      	      N_Ref_GP.nV[k];
       	  }
 	}
       }
@@ -197,7 +197,7 @@ Matrix GetNodalValuesFromGP(GaussPoint MPM_Mesh, Mesh FEM_Mesh, char LisOfFields
 	  for(int l = 0 ; l<NumberDimensions ; l++){
 	    Nodal_GRAVITY_FORCES.nM[l][Elem_Nods[k]] +=
 	      MPM_Mesh.Phi.mass.nV[i]*
-	      N_Ref_GP.nV[j]*g.nV[l];
+	      N_Ref_GP.nV[k]*g.nV[l];
 	  }
 	}	
       }
@@ -347,7 +347,7 @@ void UpdateGaussPointDensity(GaussPoint MPM_Mesh){
     }
 
     /* 4º Update the density */
-    MPM_Mesh.Phi.rho.nV[i] /= 1 + TraceStrainTensor;
+    MPM_Mesh.Phi.rho.nV[i] *= (double)1/(1 + TraceStrainTensor);
   }
   
 }

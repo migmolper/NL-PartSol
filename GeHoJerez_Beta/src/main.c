@@ -104,7 +104,6 @@ int main(int argc, char *argv[])
   printf(" \t WORKING ... \n");
   LocateGP(GP_Mesh,FEM_Mesh,0);
   printf(" DONE !!! \n");
-
  
   /***********************************************************************/
   /********************** START THE MPM CALCULUS *************************/
@@ -132,6 +131,7 @@ int main(int argc, char *argv[])
     Nodal_MASS.nV = Nod_Values.nM[0];
     Nodal_MOMENTUM.nM[0] = Nod_Values.nM[1];
     Nodal_MOMENTUM.nM[1] = Nod_Values.nM[2];
+
     printf(" DONE !!! \n");
 
     /* Second step : Set the essential boundary conditions (over p)*/
