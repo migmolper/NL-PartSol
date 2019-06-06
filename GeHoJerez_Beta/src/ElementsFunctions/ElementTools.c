@@ -55,8 +55,8 @@ Matrix Get_B_GP(Matrix X_EC_GP,Matrix Element)
   Matrix B_GP; /* Declaration of the output matrix (NdimVecStrain x Nnodes*Ndim) */
   Matrix dNdX_Ref_GP; /* Derivative of the shape function evaluated in the GP (Ndim x Nnodes) */
   Matrix F_Ref_GP; /* Reference deformation gradient evaluated in the GP (Ndim x Ndim) */
-  Matrix F_Ref_GP_T; /* Transpose of the reference deformation gradient */
-  Matrix F_Ref_GP_Tm1; /* Inverse of the transpose reference deformation gradient */
+  Matrix F_Ref_GP_m1; /* Inverse of the reference deformation gradient */
+  Matrix F_Ref_GP_Tm1; /* Transpose of the inverse reference deformation gradient */
   Matrix dNdx_XG_GP; /* Derivatives of the shape function evaluates in the GP (Ndim x Ndim) */
 
   /* 1º Select the case to solve */
@@ -73,28 +73,25 @@ Matrix Get_B_GP(Matrix X_EC_GP,Matrix Element)
     B_GP = MatAlloc(3,2*Element.N_rows);
 
     if(strcmp(Element.Info,"Quadrilateral") == 0){      
-
       /* 3º Evaluate the gradient of the shape function in the GP */
       dNdX_Ref_GP = dQ4(X_EC_GP);
-
       /* 4º Get the reference deformation gradient in the GP */
       F_Ref_GP = Get_RefDeformation_Gradient_Q4(X_EC_GP,Element);
     }
 
     /* 5º Get the deformation gradient (dNdx_XG) : Only in some cases */
-    /* 6aº Get the transpose of the deformation gradient */
-    F_Ref_GP_T = Transpose_Mat(F_Ref_GP), 
+    /* 6aº Get the inverse of the deformation gradient */
+    F_Ref_GP_m1 = Get_Inverse(F_Ref_GP), 
       free(F_Ref_GP.nM);
-    /* 6bº Get the inverse of the transpose of the deformation gradient */
-    F_Ref_GP_Tm1 = Get_Inverse(F_Ref_GP_T), 
-      free(F_Ref_GP_T.nM);
+    /* 6bº Get the transpose of the inverse of the deformation gradient */
+    F_Ref_GP_Tm1 = Transpose_Mat(F_Ref_GP_m1), 
+      free(F_Ref_GP_m1.nM);
     /* 6cº Get the gradient of the shape functions in global coordinates */
     dNdx_XG_GP = Scalar_prod(F_Ref_GP_Tm1,dNdX_Ref_GP), 
       free(F_Ref_GP_Tm1.nM),
       free(dNdX_Ref_GP.nM);
     
-    /* 7º Fill the array with the nodal partial derivation of the reference element */
-    
+    /* 7º Fill the array with the nodal partial derivation of the reference element */    
     for(int i = 0 ; i<Element.N_rows ; i++){
       B_GP.nM[0][2*i] = dNdx_XG_GP.nM[0][i];
       B_GP.nM[1][2*i] = 0;

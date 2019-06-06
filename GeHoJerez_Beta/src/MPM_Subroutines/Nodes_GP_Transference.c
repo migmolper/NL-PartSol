@@ -129,7 +129,7 @@ Matrix GetNodalValuesFromGP(GaussPoint MPM_Mesh, Mesh FEM_Mesh, char LisOfFields
       }
     }
 
-    /* 10º Evaluate the shape function and it derivarive in the GP */
+    /* 10º Evaluate the shape function in the GP */
     N_Ref_GP = FEM_Mesh.N_ref(X_EC_GP);
     
     /* 11º Loop for each nodal field that we want to calc : */
@@ -179,8 +179,9 @@ Matrix GetNodalValuesFromGP(GaussPoint MPM_Mesh, Mesh FEM_Mesh, char LisOfFields
 	/* Acumulate this forces to the total array with the internal forces */
 	for(int k = 0 ; k<FEM_Mesh.NumNodesElem ; k++){  
 	  for(int l = 0 ; l<NumberDimensions ; l++){
-	    Nodal_INT_FORCES.nM[l][Elem_Nods[k]] -=
+	    Nodal_INT_FORCES.nM[l][Elem_Nods[k]] +=
 	      F_INT_ELEM.nV[k*NumberDimensions + l];
+	    /* Nodal_INT_FORCES.nM[l][Elem_Nods[k]] += 0; */
 	  }
 	}
 
@@ -249,9 +250,9 @@ Matrix GetNodalVelocity(Matrix Nodal_MOMENTUM,
 
 /*******************************************************/
 
-void GetGaussPointStrainIncrement(GaussPoint MPM_Mesh,
-				  Mesh FEM_Mesh,
-				  Matrix Nodal_VELOCITY)
+void UpdateGaussPointStrain(GaussPoint MPM_Mesh,
+			    Mesh FEM_Mesh,
+			    Matrix Nodal_VELOCITY)
 /*
   Calcule the particle stress increment :
 
@@ -271,7 +272,7 @@ void GetGaussPointStrainIncrement(GaussPoint MPM_Mesh,
   Matrix Elem_Coords; /* Coordinates of the nodes of the element */
   Matrix Nodal_VELOCITY_Elem; /* Array with the nodal velocities */
   Matrix B; /* B marix to get the deformation */
-  Matrix Strain_GP; /* Vectoriced strain tensor */
+  Matrix Increment_Strain_GP; /* Vectoriced strain tensor */
 
   /* 1º Allocate auxiliar variables */
   Elem_Coords = MatAllocZ(FEM_Mesh.NumNodesElem,NumberDimensions);
@@ -307,16 +308,19 @@ void GetGaussPointStrainIncrement(GaussPoint MPM_Mesh,
     }
 
     /* 8º Multiply B by the velocity array */
-    Strain_GP = Scalar_prod(B,Nodal_VELOCITY_Elem);
+    Increment_Strain_GP = Scalar_prod(B,Nodal_VELOCITY_Elem);
 
-    /* 9º Set the Gauss-Point increment strain tensor */
+    /* 9º Udate the Gauss-Point strain tensor */
     for(int j = 0 ; j<MPM_Mesh.Phi.Strain.N_cols ; j++){
-      MPM_Mesh.Phi.Strain.nM[i][j] = Strain_GP.nV[j];
+      MPM_Mesh.Phi.Strain.nM[i][j] += Increment_Strain_GP.nV[j]*DeltaTimeStep;
     }
+
+    printf(" v : %f %f \n",Nodal_VELOCITY_Elem.nV[0],Nodal_VELOCITY_Elem.nV[1]);
+    printf("trEpsilon : %f \n",MPM_Mesh.Phi.Strain.nM[i][0]+MPM_Mesh.Phi.Strain.nM[i][1]);
 
     /* 10º Free memory for the next step */
     free(B.nM);
-    free(Strain_GP.nV);
+    free(Increment_Strain_GP.nV);
     
   }
 
@@ -355,46 +359,46 @@ void UpdateGaussPointDensity(GaussPoint MPM_Mesh){
 
 /*******************************************************/
 
-void UpdateGaussPointStressTensor(GaussPoint MPM_Mesh, Matrix D){
+void UpdateGaussPointStress(GaussPoint MPM_Mesh, Matrix D){
 
   /* 0º Variable declaration  */
-  Matrix DeltaStrainTensor_GP;
-  Matrix DeltaStressTensor_GP;
+  Matrix StrainTensor_GP;
+  Matrix StressTensor_GP;
 
   /* 1º Switch the dimensions of the aulixiar strain tensor */
   switch(NumberDimensions){
   case 1:
-    DeltaStrainTensor_GP.N_rows = 1;
-    DeltaStrainTensor_GP.N_cols = 1;
-    DeltaStrainTensor_GP.nM = NULL;
+    StrainTensor_GP.N_rows = 1;
+    StrainTensor_GP.N_cols = 1;
+    StrainTensor_GP.nM = NULL;
     break;
   case 2:
-    DeltaStrainTensor_GP.N_rows = 3;
-    DeltaStrainTensor_GP.N_cols = 1;
-    DeltaStrainTensor_GP.nM = NULL;
+    StrainTensor_GP.N_rows = 3;
+    StrainTensor_GP.N_cols = 1;
+    StrainTensor_GP.nM = NULL;
     break;
   case 3:
-    DeltaStrainTensor_GP.N_rows = 6;
-    DeltaStrainTensor_GP.N_cols = 1;
-    DeltaStrainTensor_GP.nM = NULL;
+    StrainTensor_GP.N_rows = 6;
+    StrainTensor_GP.N_cols = 1;
+    StrainTensor_GP.nM = NULL;
     break;
   default :
-    puts("Error in UpdateGaussPointStressTensor() : Wrong number of dimensions !!! ");
+    puts("Error in UpdateGaussPointStress() : Wrong number of dimensions !!! ");
     exit(0);
   }
 
   /* 2º Iterate over the Gauss-Points */
   for(int i = 0 ; i<MPM_Mesh.NumGP ; i++){
-    /* 3º Store in an auxiliar variable the increment of the strain tensor in the GP */
-    DeltaStrainTensor_GP.nV = MPM_Mesh.Phi.Strain.nM[i];
-    /* 4º Get the increment of the stress tensor */
-    DeltaStressTensor_GP = Scalar_prod(D,DeltaStrainTensor_GP);
-    /* 5º Update the stress tensor with the increment */
-    for(int j = 0 ; j<DeltaStrainTensor_GP.N_rows ; j++){
-      MPM_Mesh.Phi.Stress.nM[i][j] += DeltaStressTensor_GP.nV[j];
+    /* 3º Store in an auxiliar variable the strain tensor in the GP */
+    StrainTensor_GP.nV = MPM_Mesh.Phi.Strain.nM[i];
+    /* 4º Get the new stress tensor */
+    StressTensor_GP = Scalar_prod(D,StrainTensor_GP);
+    /* 5º Update the stress tensor with the new-one */
+    for(int j = 0 ; j<StrainTensor_GP.N_rows ; j++){
+      MPM_Mesh.Phi.Stress.nM[i][j] = StressTensor_GP.nV[j];
     }
     /* 6º Free memory */
-    free(DeltaStressTensor_GP.nV);
+    free(StressTensor_GP.nV);
   }
   
 }
@@ -420,7 +424,7 @@ void UpdateGridNodalMomentum(Mesh FEM_Mesh,
   /* Update the grid nodal momentum */
   for(int i = 0 ; i<FEM_Mesh.NumNodesMesh ; i++){
     for(int j = 0 ; j<NumberDimensions ; j++){
-      Nodal_MOMENTUM.nM[j][i] += DeltaTimeStep*(Nodal_INT_FORCES.nM[j][i] +
+      Nodal_MOMENTUM.nM[j][i] += DeltaTimeStep*(-Nodal_INT_FORCES.nM[j][i] +
 						Nodal_EXT_FORCES.nM[j][i]);
     }
   }
@@ -472,7 +476,7 @@ void UpdateVelocityAndPositionGP(GaussPoint MPM_Mesh,
 
 	/* 6aº Update the GP velocities */
 	MPM_Mesh.Phi.vel.nM[i][k] += DeltaTimeStep*N_Ref_GP.nV[j]*
-	  (Nodal_INT_FORCES.nM[k][Elem_Nods[j]] + Nodal_EXT_FORCES.nM[k][Elem_Nods[j]])/
+	  (-Nodal_INT_FORCES.nM[k][Elem_Nods[j]] + Nodal_EXT_FORCES.nM[k][Elem_Nods[j]])/
 	  Nodal_MASS.nV[Elem_Nods[j]];
 	
 	/* 6bº Update the GP position */

@@ -56,18 +56,18 @@ int main(int argc, char *argv[])
   Nodal_MASS.N_rows = 1;
   Nodal_MASS.N_cols = FEM_Mesh.NumNodesMesh;
   Nodal_MASS.nM = NULL;
-  strcpy(Nodal_MASS.Info,"Nodal mass");
+  strcpy(Nodal_MASS.Info,"MASS");
   Matrix Nodal_VELOCITY;
   Nodal_VELOCITY.N_rows = NumberDimensions;
   Nodal_VELOCITY.N_cols = FEM_Mesh.NumNodesMesh;
   Nodal_VELOCITY.nV = NULL;
-  strcpy(Nodal_VELOCITY.Info,"Nodal Velocity");
+  strcpy(Nodal_VELOCITY.Info,"VELOCITY");
   Matrix Nodal_MOMENTUM;
   Nodal_MOMENTUM.N_rows = NumberDimensions;
   Nodal_MOMENTUM.N_cols = FEM_Mesh.NumNodesMesh;
   Nodal_MOMENTUM.nV = NULL;
   Nodal_MOMENTUM.nM = (double **)malloc((unsigned)NumberDimensions*sizeof(double*));
-  strcpy(Nodal_MOMENTUM.Info,"Nodal momentum");
+  strcpy(Nodal_MOMENTUM.Info,"MOMENTUM");
   Matrix Nodal_INT_FORCES; /* Nodal values of the internal forces */
   Nodal_INT_FORCES.N_rows = NumberDimensions;
   Nodal_INT_FORCES.N_cols = FEM_Mesh.NumNodesMesh;
@@ -79,11 +79,11 @@ int main(int argc, char *argv[])
   Nodal_GRAVITY_FORCES.N_cols = FEM_Mesh.NumNodesMesh;
   Nodal_GRAVITY_FORCES.nV = NULL;
   Nodal_GRAVITY_FORCES.nM = (double **)malloc((unsigned)NumberDimensions*sizeof(double*));
-  strcpy(Nodal_GRAVITY_FORCES.Info,"Nodal Gravity forces");
+  strcpy(Nodal_GRAVITY_FORCES.Info,"F_GRAV");
   Matrix Nodal_TOT_FORCES; /* Nodal total forces */
   Nodal_TOT_FORCES.nV = NULL;
   Nodal_TOT_FORCES.nM = (double **)malloc((unsigned)NumberDimensions*2*sizeof(double*));
-  strcpy(Nodal_TOT_FORCES.Info,"Nodal total forces");
+  strcpy(Nodal_TOT_FORCES.Info,"F_TOT");
   /***********************************************************************/
   /***********************************************************************/
 
@@ -151,7 +151,7 @@ int main(int argc, char *argv[])
     printf(" \t DONE !!! \n");
     /* b) Calculate the strain increment */
     printf(" \t b) Calculate the strain increment ... WORKING \n");
-    GetGaussPointStrainIncrement(GP_Mesh,FEM_Mesh,Nodal_VELOCITY);
+    UpdateGaussPointStrain(GP_Mesh,FEM_Mesh,Nodal_VELOCITY);
     printf(" \t DONE !!! \n");
     /* c) Update the particle density */
     printf(" \t c) Update the particle density ... WORKING \n");
@@ -159,7 +159,7 @@ int main(int argc, char *argv[])
     printf(" \t DONE !!! \n");
     /* d) Update the particle stress state */
     printf(" \t d) Update the particle stress state ... WORKING \n");
-    UpdateGaussPointStressTensor(GP_Mesh,D_e);
+    UpdateGaussPointStress(GP_Mesh,D_e);
     printf(" \t DONE !!! \n");
 
     /* Four step : Calculate the nodal internal, external forces */
@@ -194,6 +194,8 @@ int main(int argc, char *argv[])
     printf("************************************************* \n");
     printf(" Seven step : Reset nodal values of the mesh \n");
     printf(" \t WORKING ... \n");
+    /* Print nodal values*/
+    WriteVtk_FEM("Mesh",FEM_Mesh,Nodal_MOMENTUM,TimeStep);
     /* Deallocate the array */
     free(Nod_Values.nM);
     free(Nodal_MASS.nV);
@@ -225,7 +227,6 @@ int main(int argc, char *argv[])
   /***********************************************************************/
    
   /* WriteVtk_FEM("Mesh",FEM_Mesh,NULL,0); */
-  /* WriteVtk_FEM("Mesh",FEM_Mesh,Nod_Values,0); */
   /* WriteVtk_FEM("Mesh_Equilibrium",FEM_Mesh,Nodal_TOT_FORCES,0); */
   
       

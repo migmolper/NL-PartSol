@@ -266,7 +266,11 @@ void LocateGP(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int TimeStep){
   X_EC_GP.n = NAN;
   Matrix Poligon = MatAllocZ(FEM_Mesh.NumNodesElem,FEM_Mesh.Dimension);
   int * Poligon_Connectivity;
-  
+
+  /* Set to zero the active/non-active elements */
+  free(FEM_Mesh.ActiveElem);
+  FEM_Mesh.ActiveElem = (int *)Allocate_ArrayZ(FEM_Mesh.NumElemMesh,sizeof(int));
+    
   for(int i = 0 ; i<MPM_Mesh.NumGP ; i++){
 
     /* Assign the value to this auxiliar pointer */ 

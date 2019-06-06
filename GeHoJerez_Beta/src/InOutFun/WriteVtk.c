@@ -91,6 +91,14 @@ void WriteVtk_MPM(char * Name_File, GaussPoint MPM_Mesh,
     
   }
 
+  fprintf(Vtk_file,"VECTORS VELOCITY float \n");
+  for(int i =  0 ; i<MPM_Mesh.NumGP ; i++){
+    for(int j = 0 ; j<3 ; j++){
+      fprintf(Vtk_file,"%f ",MPM_Mesh.Phi.vel.nM[i][j]);
+    }
+    fprintf(Vtk_file,"\n");
+  }
+
   fprintf(Vtk_file,"TENSORS STRESS float \n");
   for(int i =  0 ; i<MPM_Mesh.NumGP ; i++){
     for(int j = 0 ; j<3 ; j++){
@@ -216,6 +224,23 @@ void WriteVtk_FEM(char * Name_File, Mesh ElementMesh,
 
     if(strcmp(FieldsList[i],"MOMENTUM") == 0){
       fprintf(Vtk_file,"VECTORS %s float \n","MOMENTUM");
+      for(int j =  0 ; j<ElementMesh.NumNodesMesh ; j++){
+	/* Print the dimensions of the array */
+	for(int k = 0 ; k<NumberDimensions ; k++){
+	  fprintf(Vtk_file,"%f ",List_Nod_Fields.nM[i_Field+k][j]);
+	}
+	/* Add the rest of the coordinates : is compulsary to add 3 */
+	for(int k = 0 ; k<(3-NumberDimensions) ; k++){
+	  fprintf(Vtk_file,"%f ",0.0);
+	}
+	fprintf(Vtk_file,"\n");	
+      }
+      /* Update the index of the field */
+      i_Field += NumberDimensions ;
+    }
+
+    if(strcmp(FieldsList[i],"VELOCITY") == 0){
+      fprintf(Vtk_file,"VECTORS %s float \n","VELOCITY");
       for(int j =  0 ; j<ElementMesh.NumNodesMesh ; j++){
 	/* Print the dimensions of the array */
 	for(int k = 0 ; k<NumberDimensions ; k++){

@@ -51,8 +51,8 @@ $(myprog): $(obj)
 	$(CC) -o $@ -c $(DBFLAGS) $<
 	@echo "\t Compiled "$<" successfully !!"
 # run
-test1D:
-	./$(myprog) test/FEM_test/ejemplo.dat
+Simpli1D:
+	./$(myprog) test/MPM_test/CasoSimple/ejemplo.dat
 test2D:
 	./$(myprog) test/MPM_test/CasoDisco/ejemplo.dat
 
