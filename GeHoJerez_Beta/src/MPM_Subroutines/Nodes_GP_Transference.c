@@ -184,7 +184,6 @@ Matrix GetNodalValuesFromGP(GaussPoint MPM_Mesh, Mesh FEM_Mesh, char LisOfFields
 	    /* Nodal_INT_FORCES.nM[l][Elem_Nods[k]] += 0; */
 	  }
 	}
-
 	
 	/* Free memory */
 	free(F_INT_ELEM.nV);
@@ -314,9 +313,6 @@ void UpdateGaussPointStrain(GaussPoint MPM_Mesh,
     for(int j = 0 ; j<MPM_Mesh.Phi.Strain.N_cols ; j++){
       MPM_Mesh.Phi.Strain.nM[i][j] += Increment_Strain_GP.nV[j]*DeltaTimeStep;
     }
-
-    printf(" v : %f %f \n",Nodal_VELOCITY_Elem.nV[0],Nodal_VELOCITY_Elem.nV[1]);
-    printf("trEpsilon : %f \n",MPM_Mesh.Phi.Strain.nM[i][0]+MPM_Mesh.Phi.Strain.nM[i][1]);
 
     /* 10º Free memory for the next step */
     free(B.nM);

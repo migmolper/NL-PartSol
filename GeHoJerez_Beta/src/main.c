@@ -18,8 +18,7 @@ int main(int argc, char *argv[])
   * Mesh file
   * Data file
 */
-{
-
+{  
   /* Variable decalaration for the program */
   
   /* Check command-line arguments */

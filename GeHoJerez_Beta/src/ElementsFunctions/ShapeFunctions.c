@@ -239,56 +239,33 @@ This function evaluate the position of the GP in the element, and get it global 
 }
 
 /* Deformation gradient of the four-nodes quadrilateral */
-Matrix Get_RefDeformation_Gradient_Q4(Matrix X_NC_GP,Matrix X_GC_Nodes)
+Matrix Get_Jacobian_Q4(Matrix X_NC_GP,Matrix X_GC_Nodes)
 /*
-  Get the deformation gradient of the reference element:
+  Get the jacobian of the transformation of the reference element :
 
-  F_ref = grad(N_{\alpha}) \otimes x_{\alpha}
+  J = grad(N_{\alpha}) \cdot x_{\alpha}
   
   Inputs :
   - X_g -> This are the coordinates of the nodes
   - dNdX_Ref_GP -> Derivative gradient evaluated in the GP
 
   Output :
-  - F_Ref -> Deformation gradient of the reference element
+  - Jacobian -> Jacobian of the reference element
   evaluated in the GP
 */
 {
   /* Variable declaration */
-  Matrix F_Ref = MatAlloc(2,2);
+  Matrix Jacobian = MatAlloc(2,2);
   Matrix dNdX_Ref_GP;
-
 
   /* 1º Evaluate the derivarive of the shape function in the GP */
   dNdX_Ref_GP = dQ4(X_NC_GP); 
 
   /* 2º Get the F_ref */
-  F_Ref.nM[0][0] =
-    X_GC_Nodes.nM[0][0]*dNdX_Ref_GP.nM[0][0] +
-    X_GC_Nodes.nM[1][0]*dNdX_Ref_GP.nM[0][1] +
-    X_GC_Nodes.nM[2][0]*dNdX_Ref_GP.nM[0][2] +
-    X_GC_Nodes.nM[3][0]*dNdX_Ref_GP.nM[0][3];
+  Jacobian = Scalar_prod(dNdX_Ref_GP,X_GC_Nodes);
   
-  F_Ref.nM[0][1] =
-    X_GC_Nodes.nM[0][0]*dNdX_Ref_GP.nM[1][0] +
-    X_GC_Nodes.nM[1][0]*dNdX_Ref_GP.nM[1][1] +
-    X_GC_Nodes.nM[2][0]*dNdX_Ref_GP.nM[1][2] +
-    X_GC_Nodes.nM[3][0]*dNdX_Ref_GP.nM[1][3];
-  
-  F_Ref.nM[1][0] =
-    X_GC_Nodes.nM[0][1]*dNdX_Ref_GP.nM[0][0] +
-    X_GC_Nodes.nM[1][1]*dNdX_Ref_GP.nM[0][1] +
-    X_GC_Nodes.nM[2][1]*dNdX_Ref_GP.nM[0][2] +
-    X_GC_Nodes.nM[3][1]*dNdX_Ref_GP.nM[0][3];
-  
-  F_Ref.nM[1][1] =
-    X_GC_Nodes.nM[0][1]*dNdX_Ref_GP.nM[1][0] +
-    X_GC_Nodes.nM[1][1]*dNdX_Ref_GP.nM[1][1] +
-    X_GC_Nodes.nM[2][1]*dNdX_Ref_GP.nM[1][2] +
-    X_GC_Nodes.nM[3][1]*dNdX_Ref_GP.nM[1][3];
-
   /* 3º Free memory */
   free(dNdX_Ref_GP.nM);
   
-  return F_Ref;
+  return Jacobian;
 }

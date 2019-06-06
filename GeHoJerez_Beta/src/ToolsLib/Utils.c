@@ -448,13 +448,13 @@ Matrix Get_Inverse(Matrix M_in)
 
   /* Do in a different fashion if it is 2D or 3D */
   if(M_in.N_cols == 2){
-    M_out.nM[0][0] = 1/(Det)*M_in.nM[1][1];
+    M_out.nM[0][0] = (double)1/(Det)*M_in.nM[1][1];
 
-    M_out.nM[0][1] = -1/(Det)*M_in.nM[0][1];
+    M_out.nM[0][1] = -(double)1/(Det)*M_in.nM[0][1];
 
-    M_out.nM[1][0] = -1/(Det)*M_in.nM[1][0];
+    M_out.nM[1][0] = -(double)1/(Det)*M_in.nM[1][0];
 
-    M_out.nM[1][1] = 1/(Det)*M_in.nM[0][0];
+    M_out.nM[1][1] = (double)1/(Det)*M_in.nM[0][0];
   }
   else if(M_in.N_cols == 3){
     M_out.nM[0][0] = 1/(Det)*(M_in.nM[1][1]*M_in.nM[2][2] -
