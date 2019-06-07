@@ -40,21 +40,17 @@ $(myprog): $(obj)
 	@echo " "
 	@echo "*************  GeHoJerez compiled !! ************"
 	@echo " "
-	@echo "**************** Run test case ******************"
-	./$(myprog) test/MPM_test/CasoSimple/ejemplo.dat
-	@echo " "
-	@echo "*************** Test case passed ****************"
-
 # Compile	
 %.o: %.c
 	@echo "*************************************************"
 	$(CC) -o $@ -c $(DBFLAGS) $<
 	@echo "\t Compiled "$<" successfully !!"
 # run
-Simpli1D:
+Disco2D:
+	@echo "**************** Run test case ******************"
 	./$(myprog) test/MPM_test/CasoSimple/ejemplo.dat
-test2D:
-	./$(myprog) test/MPM_test/CasoDisco/ejemplo.dat
+	@echo " "
+	@echo "*************** Test case passed ****************"
 
 # New rule for cleaning up every target, in order to rebuild
 # the whole program from scratch

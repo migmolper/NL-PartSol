@@ -19,7 +19,7 @@ void ApplyBoundaryCondition_Nod(Mesh FEM_Mesh, Matrix Nod_Field, int Time)
   
   for(int i=0 ; i<FEM_Mesh.NumNodesBound ; i++){
     Id_BCC = FEM_Mesh.NodesBound[i][0];
-    for(int j=0 ; j<NumberDOF ; j++){
+    for(int j=0 ; j<Nod_Field.N_rows ; j++){
       Kind_BCC = FEM_Mesh.NodesBound[i][j+1];
       if(Kind_BCC == 1){
 	if(NumberDOF>1)
@@ -29,7 +29,7 @@ void ApplyBoundaryCondition_Nod(Mesh FEM_Mesh, Matrix Nod_Field, int Time)
       }
     }    
   } 
- 
+  
 }
 
 /*********************************************************************/

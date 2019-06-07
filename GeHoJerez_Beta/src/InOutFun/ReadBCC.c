@@ -183,7 +183,7 @@ void ReadBCC(char * Name_File, Mesh FEM_Mesh)
 	  } /* End parse position of the boundary */	  
 	  
 	  /* Parse the Velocity BCC */
-	  if(strcmp(param[0],"U") == 0){
+	  if(strcmp(param[0],"V") == 0){
 	    auxV = parse(V,param[1],"=\n");
 	    /* Read the DOFS to impose the BCC :*/
 	    auxV_nod = parse(V_nod,V[0],"[:]\n");
@@ -242,7 +242,7 @@ void ReadBCC(char * Name_File, Mesh FEM_Mesh)
 
 	  
 	  /* Parse the Velocity BCC */
-	  if(strcmp(param[0],"U") == 0){
+	  if(strcmp(param[0],"V") == 0){
 	    auxV = parse(V,param[1],"=\n");
 	    /* Read the DOFS to impose the BCC :*/
 	    auxV_nod = parse(V_nod,V[0],"[:]\n");
@@ -254,10 +254,10 @@ void ReadBCC(char * Name_File, Mesh FEM_Mesh)
 	  	/* Apply this boundary conditions */
 	  	for(int k = 0 ; k<FEM_Mesh.NumNodesBound ; k++){
 	  	  BC_nod = FEM_Mesh.NodesBound[k][0];
-	  	    if(FEM_Mesh.Coordinates.nM[BC_nod][1] <= BOTTOM_val){
-		      FEM_Mesh.NodesBound[k][j+1] = 1;
-	  	      FEM_Mesh.ValueBC.nM[k][j] = atof(V_val[j]);
-	  	    }
+		  if(FEM_Mesh.Coordinates.nM[BC_nod][1] <= BOTTOM_val){
+		    FEM_Mesh.NodesBound[k][j+1] = 1;
+		    FEM_Mesh.ValueBC.nM[k][j] = atof(V_val[j]);
+		  }
 	  	} /* End of apply this boundary conditions */
 	      }
 	    }
@@ -299,7 +299,7 @@ void ReadBCC(char * Name_File, Mesh FEM_Mesh)
     	  } /* End parse position of the boundary */
 
 	  /* Parse the Velocity BCC */
-	  if(strcmp(param[0],"U") == 0){
+	  if(strcmp(param[0],"V") == 0){
 	    auxV = parse(V,param[1],"=\n");
 	    /* Read the DOFS to impose the BCC :*/
 	    auxV_nod = parse(V_nod,V[0],"[:]\n");
@@ -356,7 +356,7 @@ void ReadBCC(char * Name_File, Mesh FEM_Mesh)
     	  } /* End parse position of the boundary */
 
 	  /* Parse the Velocity BCC */
-	  if(strcmp(param[0],"U") == 0){
+	  if(strcmp(param[0],"V") == 0){
 	    auxV = parse(V,param[1],"=\n");
 	    /* Read the DOFS to impose the BCC :*/
 	    auxV_nod = parse(V_nod,V[0],"[:]\n");
