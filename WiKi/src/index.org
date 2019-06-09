@@ -1,5 +1,7 @@
 
-#+TITLE: GeHoJerez [[./img/GeHoJerez_Logo.png]]
+#+TITLE: GeHoJerez 
+[[./img/GeHoJerez_Logo.png]]
+
 This is a simple MPM code write in C, the main purpose of this code is to understand the basics concepts of a MPM code. 
 I also write this lines to keep some order in my ideas during this crazy years. 
 
