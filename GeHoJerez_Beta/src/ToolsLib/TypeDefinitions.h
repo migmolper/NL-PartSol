@@ -92,7 +92,10 @@ typedef struct {
   /* Active node : 
      Boolean variable that set the node ative (1>) or not (0) */
   int * ActiveNode;
-
+  /* Number of elements that shares a node */
+  int * NumNeighbour;
+  /* List of elements that share a node */
+  int ** NodeNeighbour;
 
   /*** BOUNDARY CONDITIONS ***/
   /* Number of boundary nodes */

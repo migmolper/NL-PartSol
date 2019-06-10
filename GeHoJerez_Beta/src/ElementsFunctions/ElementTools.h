@@ -10,6 +10,8 @@
 /* Matrix Get_RefDeformation_Gradient(Matrix, */
 /* 				   Matrix); */
 
+void GetNodalConnectivity(Mesh * FEM_Mesh);
+
 Matrix Get_B_GP(Matrix, Matrix);
 
 /* Matrix Get_Stiffness_Matrix(Element *);  */

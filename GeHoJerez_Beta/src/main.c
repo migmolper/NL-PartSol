@@ -46,6 +46,8 @@ int main(int argc, char *argv[])
 
   /* Read mesh data and initialize the element mesh */
   FEM_Mesh = ReadGidMesh(FEM_MeshFileName);
+  /* Get the Connectivity of each node */
+  GetNodalConnectivity(FEM_Mesh);
 
   /***********************************************************************/
   /****** INITIALIZE AUXILIAR STRUCTURES TO STORE NODAL INFORMATION ******/
