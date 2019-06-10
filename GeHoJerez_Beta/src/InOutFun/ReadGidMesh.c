@@ -140,8 +140,8 @@ Mesh ReadGidMesh(char * MeshName)
   GID_Mesh.Connectivity = (int **)
     Allocate_Matrix(GID_Mesh.NumElemMesh,
 		    GID_Mesh.NumNodesElem,sizeof(int));
-  GID_Mesh.ActiveElem = (int *)
-    Allocate_ArrayZ(GID_Mesh.NumElemMesh,sizeof(int));
+  GID_Mesh.ActiveNode = (int *)
+    Allocate_ArrayZ(GID_Mesh.NumNodesMesh,sizeof(int));
   
   /* Open the file again and read the mesh */
   MeshFile = fopen(MeshName,"r");

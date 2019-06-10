@@ -244,7 +244,7 @@ GaussPoint Initialize_GP_Mesh(char * MPM_GID_MeshName,
   /* Free the input data */
   free(MPM_GID_Mesh.Coordinates.nM);
   free(MPM_GID_Mesh.Connectivity);
-  free(MPM_GID_Mesh.ActiveElem);
+  free(MPM_GID_Mesh.ActiveNode);
 
   /* Final messages */
   printf("End of initialize the Gauss-Points mesh !!! \n");
@@ -252,58 +252,7 @@ GaussPoint Initialize_GP_Mesh(char * MPM_GID_MeshName,
   return MPM_Mesh;
 }
 
-/*********************************************************************/
 
-void LocateGP(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int TimeStep){
-
-  Matrix X_GC_GP;
-  X_GC_GP.N_rows = FEM_Mesh.Dimension;
-  X_GC_GP.N_cols = 1;  
-  X_GC_GP.n = NAN;
-  Matrix X_EC_GP;
-  X_EC_GP.N_rows = FEM_Mesh.Dimension;
-  X_EC_GP.N_cols = 1;  
-  X_EC_GP.n = NAN;
-  Matrix Poligon = MatAllocZ(FEM_Mesh.NumNodesElem,FEM_Mesh.Dimension);
-  int * Poligon_Connectivity;
-
-  /* Set to zero the active/non-active elements */
-  free(FEM_Mesh.ActiveElem);
-  FEM_Mesh.ActiveElem = (int *)Allocate_ArrayZ(FEM_Mesh.NumElemMesh,sizeof(int));
-    
-  for(int i = 0 ; i<MPM_Mesh.NumGP ; i++){
-
-    /* Assign the value to this auxiliar pointer */ 
-    X_GC_GP.nV = MPM_Mesh.Phi.x_GC.nM[i];
-
-    for(int j = 0 ; j<FEM_Mesh.NumElemMesh ; j++){
-
-      /* Connectivity of the Poligon */
-      Poligon_Connectivity = FEM_Mesh.Connectivity[j];
-      /* Fill the poligon Matrix */
-      for(int k = 0 ; k<FEM_Mesh.NumNodesElem ; k++){
-	for(int l = 0 ; l<FEM_Mesh.Dimension ; l++){
-	  Poligon.nM[k][l] = FEM_Mesh.Coordinates.nM[Poligon_Connectivity[k]][l];
-	}
-      }
-      /* Check out if the GP is in the Element */
-      if(InOut_Poligon(X_GC_GP,Poligon) == 1){
-	/* If the GP is in the element, set the index of the position and 
-	 update the array to set if an element is active or not */
-	MPM_Mesh.Element_id[i] = j;
-	FEM_Mesh.ActiveElem[j] += 1;	
-	/* If the GP is in the element, get its natural coordinates */
-	X_EC_GP.nV = MPM_Mesh.Phi.x_EC.nM[i];
-	X_EC_GP = GetNaturalCoordinates(X_EC_GP,X_GC_GP,Poligon);
-      }      
-    } /* Loop over the elements */
-
-  } /* Loop over the GP */
-
-  /* Free memory */
-  free(Poligon.nM);
-  
-}
 
 /*********************************************************************/
 

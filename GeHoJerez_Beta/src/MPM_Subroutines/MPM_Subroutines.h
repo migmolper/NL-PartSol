@@ -10,15 +10,21 @@
 Mesh RectangularMesh(double, double,
 		     double, double,
 		     double, double, char *);
-Matrix GetNodalValuesFromGP(GaussPoint, Mesh, char [MAXW]);
 
-Matrix GetNodalVelocity(Matrix, Matrix);
+
+void LocateGaussPoints(GaussPoint, Mesh, int);
+
+Matrix GetNodalMassMomentum(GaussPoint, Mesh);
+
+Matrix GetNodalVelocity(Mesh, Matrix, Matrix);
 
 void UpdateGaussPointStrain(GaussPoint, Mesh, Matrix);
 
 void UpdateGaussPointDensity(GaussPoint);
 
 void UpdateGaussPointStress(GaussPoint, Matrix);
+
+Matrix GetNodalForces(GaussPoint, Mesh);
 
 void UpdateGridNodalMomentum(Mesh, Matrix, Matrix);
 

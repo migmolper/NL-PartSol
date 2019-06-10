@@ -204,6 +204,14 @@ void WriteVtk_FEM(char * Name_File, Mesh ElementMesh,
 	    ElementMesh.Coordinates.nM[i][1],
 	    ElementMesh.Coordinates.nM[i][2]);
   }
+
+  /* Active nodes */
+  fprintf(Vtk_file,"SCALARS Active_Nod_Active int \n");
+  fprintf(Vtk_file,"LOOKUP_TABLE default \n");
+  for(int i = 0 ; i<ElementMesh.NumNodesMesh ; i++){
+    fprintf(Vtk_file,"%i\n",
+	    ElementMesh.ActiveNode[i]);
+  } 
   
   NumberFields = parse (FieldsList,List_Nod_Fields.Info,";\n");
 
@@ -313,12 +321,5 @@ void WriteVtk_FEM(char * Name_File, Mesh ElementMesh,
   
   /* Cell data */  
   fprintf(Vtk_file,"CELL_DATA %i \n",ElementMesh.NumElemMesh);
-
-  fprintf(Vtk_file,"SCALARS Active_Elem int 1 \n");
-  fprintf(Vtk_file,"LOOKUP_TABLE table_Elem \n");
-  for(int i = 0 ; i<ElementMesh.NumElemMesh ; i++){
-    fprintf(Vtk_file,"%i\n",
-	    ElementMesh.ActiveElem[i]);
-  } 
 
 }

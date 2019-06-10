@@ -29,7 +29,7 @@ Mesh RectangularMesh(double X0, double Y0,
     /* Allocate matrix with the coordinates of the nodes */
     OutMesh.Coordinates = MatAlloc(OutMesh.NumNodesMesh,2);
     OutMesh.Connectivity = (int **)Allocate_Matrix(OutMesh.NumElemMesh,4,sizeof(int));
-    OutMesh.ActiveElem = (int *)Allocate_ArrayZ(OutMesh.NumElemMesh,sizeof(int));
+    OutMesh.ActiveNode = (int *)Allocate_ArrayZ(OutMesh.NumNodesMesh,sizeof(int));
 
     /* Fill matrix with coordinates */
     for(int i = 0 ; i<(int)((X1-X0)/Dx + 1) ; i++){

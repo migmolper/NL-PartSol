@@ -10,8 +10,6 @@
 
 GaussPoint Initialize_GP_Mesh(char *,Matrix, double, Matrix);
 
-void LocateGP(GaussPoint,Mesh,int);
-
 Matrix GetMassMatrix_L(Mesh,GaussPoint);
 
 void GaussPointsToMesh(Mesh,GaussPoint,

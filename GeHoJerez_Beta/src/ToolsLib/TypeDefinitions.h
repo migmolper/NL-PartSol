@@ -89,9 +89,9 @@ typedef struct {
   Matrix Coordinates;
   /* List of nodes for each element (Connectivity) */
   int **  Connectivity;
-  /* Active element : 
-     Boolean variable that set the element ative (1>) or not (0) */
-  int * ActiveElem;
+  /* Active node : 
+     Boolean variable that set the node ative (1>) or not (0) */
+  int * ActiveNode;
 
 
   /*** BOUNDARY CONDITIONS ***/
