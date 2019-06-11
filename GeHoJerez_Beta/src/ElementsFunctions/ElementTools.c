@@ -41,27 +41,29 @@
 
 /*********************************************************************/
 
-void GetNodalConnectivity(Mesh * FEM_Mesh){
+int ** GetNodalConnectivity(Mesh FEM_Mesh){
 
   /* 0º Create an auxiliar table of pointer to store the information */
   int ** TableNeighbourNode;
-  TableNeighbourNode = (int **)Allocate_MatrixZ(FEM_Mesh->NumNodesMesh,MAXNEIGHBOUR,sizeof(int));
-  FEM_Mesh->NumNeighbour = (int *)Allocate_ArrayZ(FEM_Mesh->NumNodesMesh,sizeof(int));
+  int ** NodeNeighbour;
+  int * NumNeighbour;
+  TableNeighbourNode = (int **)Allocate_MatrixZ(FEM_Mesh.NumNodesMesh,MAXNEIGHBOUR,sizeof(int));
+  NumNeighbour = (int *)Allocate_ArrayZ(FEM_Mesh.NumNodesMesh,sizeof(int));
 
   /* 1º Start the search of neighbour for each node */
-  for(int i = 0 ; i<FEM_Mesh->NumNodesMesh ; i++){
+  for(int i = 0 ; i<FEM_Mesh.NumNodesMesh ; i++){
     /* 2º Loop over all the elements in the mesh */
-    for(int j = 0 ; j<FEM_Mesh->NumElemMesh ; j++){
+    for(int j = 0 ; j<FEM_Mesh.NumElemMesh ; j++){
       /* 3º Loop over the all the node in an element */
-      for(int k = 0 ; k<FEM_Mesh->NumNodesElem ; k++){
+      for(int k = 0 ; k<FEM_Mesh.NumNodesElem ; k++){
 	/* 4º If my node belong to the element */
-	if(FEM_Mesh->Connectivity[j][k] == i){
-	  if(FEM_Mesh->NumNeighbour[i] == MAXNEIGHBOUR){
+	if(FEM_Mesh.Connectivity[j][k] == i){
+	  if(NumNeighbour[i] == MAXNEIGHBOUR){
 	    puts("Error in GetNodalConnectivity() : Max number of neighbour reached !!! ");
 	    exit(0);
 	  }
-	  TableNeighbourNode[i][FEM_Mesh->NumNeighbour[i]] = j;
-	  FEM_Mesh->NumNeighbour[i] += 1;
+	  TableNeighbourNode[i][NumNeighbour[i]] = j;
+	  NumNeighbour[i] += 1;
 	}
       }
     }      
@@ -70,26 +72,30 @@ void GetNodalConnectivity(Mesh * FEM_Mesh){
   
 
   /* 5º Resize the table of pointer */
-  FEM_Mesh->NodeNeighbour = (int **)malloc((unsigned)FEM_Mesh->NumNodesMesh *
-					 sizeof(int *));
+  NodeNeighbour = (int **)malloc((unsigned)FEM_Mesh.NumNodesMesh *
+				 sizeof(int *));
   /* 6º Loop over the pointer table */
-  for(int i = 0 ; i<FEM_Mesh->NumNodesMesh ; i++){
+  for(int i = 0 ; i<FEM_Mesh.NumNodesMesh ; i++){
     /* 7º Save space for the each nodes neighbour */
-    FEM_Mesh->NodeNeighbour[i] = malloc((unsigned) FEM_Mesh->NumNeighbour[i] *
-				      sizeof(int));
+    NodeNeighbour[i] = malloc((unsigned) (NumNeighbour[i] + 1) *
+			      sizeof(int));
     /* 8º Check if it is not out of memory  */
-    if (FEM_Mesh->NodeNeighbour[i] == NULL){
+    if (NodeNeighbour[i] == NULL){
       puts("Error in GetNodalConnectivity() : Out of memory !!! ");
       exit(0);
     }
     /* 9º Fill the new table */
-    for(int j = 0 ; j<FEM_Mesh->NumNeighbour[i] ; j++){
-      FEM_Mesh->NodeNeighbour[i][j] = TableNeighbourNode[i][j];
+    NodeNeighbour[i][0] = NumNeighbour[i];
+    for(int j = 1 ; j<=NumNeighbour[i] ; j++){
+      NodeNeighbour[i][j] = TableNeighbourNode[i][j-1];
     }    
   } 
   /* 10º Free memory */
   free(TableNeighbourNode);
-  
+  free(NumNeighbour);
+
+  /* 11º Return data */
+  return NodeNeighbour; 
   
 }
 

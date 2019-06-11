@@ -48,7 +48,12 @@ $(myprog): $(obj)
 # run
 Disco2D:
 	@echo "**************** Run test case ******************"
-	./$(myprog) test/MPM_test/CasoSimple/ejemplo.dat
+	./$(myprog) test/MPM_test/CasoDisco/ejemplo.dat
+	@echo " "
+	@echo "*************** Test case passed ****************"
+Cuadrado2D:
+	@echo "**************** Run test case ******************"
+	./$(myprog) test/MPM_test/CasoCuadrado/ejemplo.dat
 	@echo " "
 	@echo "*************** Test case passed ****************"
 

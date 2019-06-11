@@ -12,7 +12,9 @@ Mesh RectangularMesh(double, double,
 		     double, double, char *);
 
 
-void LocateGaussPoints(GaussPoint, Mesh, int);
+void GlobalSearchGaussPoints(GaussPoint, Mesh);
+
+void LocalSearchGaussPoints(GaussPoint, Mesh);
 
 Matrix GetNodalMassMomentum(GaussPoint, Mesh);
 

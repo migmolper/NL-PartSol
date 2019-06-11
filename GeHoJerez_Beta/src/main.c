@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <math.h>
 #include "ToolsLib/TypeDefinitions.h"
 #include "ToolsLib/Utils.h"
@@ -19,6 +20,15 @@ int main(int argc, char *argv[])
   * Data file
 */
 {  
+
+  /* Variables for the tic-toc */
+  clock_t start_t, end_t, total_t;
+
+  /* Start of tic-toc */
+  start_t = clock();
+  printf("Starting of the program, start_t = %ld\n", start_t);
+
+
   /* Variable decalaration for the program */
   
   /* Check command-line arguments */
@@ -47,7 +57,7 @@ int main(int argc, char *argv[])
   /* Read mesh data and initialize the element mesh */
   FEM_Mesh = ReadGidMesh(FEM_MeshFileName);
   /* Get the Connectivity of each node */
-  GetNodalConnectivity(FEM_Mesh);
+  FEM_Mesh.NodeNeighbour = GetNodalConnectivity(FEM_Mesh);
 
   /***********************************************************************/
   /****** INITIALIZE AUXILIAR STRUCTURES TO STORE NODAL INFORMATION ******/
@@ -79,6 +89,7 @@ int main(int argc, char *argv[])
   /***********************************************************************/
   /***********************************************************************/
 
+  GlobalSearchGaussPoints(GP_Mesh,FEM_Mesh);
   
   /***********************************************************************/
   /********************** START THE MPM CALCULUS *************************/
@@ -90,13 +101,6 @@ int main(int argc, char *argv[])
     printf("********************** STEP : %i \n",TimeStep);
     printf("************************************************* \n");
     
-    /* Zero step : Search the GP in the mesh */
-    printf("************************************************* \n");
-    printf(" Zero step : Search the GP in the mesh \n");
-    printf(" \t WORKING ... \n");
-    LocateGaussPoints(GP_Mesh,FEM_Mesh,TimeStep);
-    printf(" DONE !!! \n");
-
     /* First step : Output Gauss-Points values to Paraview */
     printf("************************************************* \n");
     printf(" First step : Output Gauss-Points values to Paraview \n");
@@ -177,15 +181,28 @@ int main(int argc, char *argv[])
     free(Nodal_TOT_FORCES.nM);
     printf(" DONE !!! \n");
 
+    /* Nine step : Search the GP in the mesh */
+    printf("************************************************* \n");
+    printf(" Zero step : Search the GP in the mesh \n");
+    printf(" \t WORKING ... \n");
+    /* GlobalSearchGaussPoints(GP_Mesh,FEM_Mesh); */
+    LocalSearchGaussPoints(GP_Mesh,FEM_Mesh);
+    printf(" DONE !!! \n");
+
   } /* End of temporal integration */
   
   /***********************************************************************/
   /*********************** END THE MPM CALCULUS **************************/
   /***********************************************************************/
-   
-  /* WriteVtk_FEM("Mesh",FEM_Mesh,NULL,0); */
-  /* WriteVtk_FEM("Mesh_Equilibrium",FEM_Mesh,Nodal_TOT_FORCES,0); */
-  
+
+
+  /* End of tic-toc */
+  end_t = clock();
+  printf("End of the big loop, end_t = %ld\n", end_t);
+  total_t = (double)(end_t - start_t) / CLOCKS_PER_SEC;
+  printf("Total time taken by CPU: %ld\n", total_t  );
+  printf("Exiting of the program...\n");
+     
       
   exit(EXIT_SUCCESS);
   

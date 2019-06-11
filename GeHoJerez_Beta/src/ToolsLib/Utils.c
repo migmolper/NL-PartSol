@@ -100,14 +100,14 @@ Matrix MatAlloc(int NumberRows,int NumberColumns){
     M.nV = (double *)Allocate_Array(NumberRows*NumberColumns,
 				     sizeof(double));
     M.nM = NULL;
-    M.n = -999;
+    M.n = NAN;
   }
   else if( (NumberRows != 1) && (NumberColumns != 1)  ){ /* It is a matrix */
     M.nM = (double **)Allocate_Matrix(NumberRows,
 				      NumberColumns,
 				      sizeof(double));
     M.nV = NULL;
-    M.n = -999;
+    M.n = NAN;
   }
   
   return M;
@@ -130,14 +130,14 @@ Matrix MatAllocZ(int NumberRows,int NumberColumns)
     M.nV = (double *)Allocate_ArrayZ(NumberRows*NumberColumns,
 				     sizeof(double));
     M.nM = NULL;
-    M.n = -999;
+    M.n = NAN;
   }
   else if( (NumberRows != 1) && (NumberColumns != 1)  ){ /* It is a matrix */
     M.nM = (double **)Allocate_MatrixZ(NumberRows,
 				      NumberColumns,
 				      sizeof(double));
     M.nV = NULL;
-    M.n = -999;
+    M.n = NAN;
   }
   
   return M;
@@ -357,7 +357,7 @@ double Get_Determinant(Matrix M_in)
 */
 {
   /* Check if we dont have a null matrix */
-  if ( (M_in.nM == NULL) && (M_in.n == -999) ){
+  if ( (M_in.nM == NULL) && (M_in.n != M_in.n) ){
     if(M_in.nV != NULL){
       puts("Error in Get_Determinant() : An array does not have determinant !");
       exit(0);
@@ -512,7 +512,7 @@ Matrix Transpose_Mat(Matrix M)
   if( M.nV != NULL){
     M_T.nV = M.nV;
   }
-  if(M.n != -999){
+  if(M.n == M.n){
     puts("Warning : Your are transposing a scalar ");
   }
   
@@ -604,8 +604,8 @@ Matrix Scalar_prod(Matrix A,Matrix B)
     }
     
   }
-  else if( ( (A.nM != NULL)&&(B.n != -999) ) ||
-	   ( (A.n != -999)&&(B.nM != NULL) )){ /* Scalar product of a scalar by a matrix */
+  else if( ( (A.nM != NULL)&&(B.n == B.n) ) ||
+	   ( (A.n == A.n)&&(B.nM != NULL) )){ /* Scalar product of a scalar by a matrix */
   
     if(A.nM != NULL){ /* A is a matrix and B a scalar */
       /* The result is a matrix */
@@ -627,8 +627,8 @@ Matrix Scalar_prod(Matrix A,Matrix B)
     }
       
   }
-  else if( ( (A.nV != NULL)&&(B.n != -999) ) ||
-	   ( (A.n != -999)&&(B.nV != NULL) )){ /* Scalar product of a scalar by a array */
+  else if( ( (A.nV != NULL)&&(B.n == B.n) ) ||
+	   ( (A.n == A.n)&&(B.nV != NULL) )){ /* Scalar product of a scalar by a array */
   
     if(A.nV != NULL){ /* A is an array and B a scalar */
       /* The result is a matrix */
@@ -893,7 +893,7 @@ double Norm_Mat(Matrix In,int kind)
 {
 
   /* Check */
-  if( (In.nM != NULL) || (In.n != -999)){
+  if( (In.nM != NULL) || (In.n == In.n)){
     puts("Error in Norm_Mat() : The input data is not a vector ! ");
     exit(0);
   }
