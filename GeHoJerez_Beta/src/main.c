@@ -168,7 +168,15 @@ int main(int argc, char *argv[])
 				Nodal_MOMENTUM,Nodal_TOT_FORCES);
     printf(" DONE !!! \n");
 
-    /* Eight step : Store all the material properties in the particles so that the deformed grid
+    /* Eight step : Search the GP in the mesh */
+    printf("************************************************* \n");
+    printf(" Zero step : Search the GP in the mesh \n");
+    printf(" \t WORKING ... \n");
+    GlobalSearchGaussPoints(GP_Mesh,FEM_Mesh);
+    /* LocalSearchGaussPoints(GP_Mesh,FEM_Mesh); */
+    printf(" DONE !!! \n");
+
+    /* Nine step : Store all the material properties in the particles so that the deformed grid
        can be discarted */
     printf("************************************************* \n");
     printf(" Eight step : Reset nodal values of the mesh \n");
@@ -179,14 +187,6 @@ int main(int argc, char *argv[])
     free(Nodal_MASS_MOMENTUM.nM);
     free(Nodal_VELOCITY.nM);
     free(Nodal_TOT_FORCES.nM);
-    printf(" DONE !!! \n");
-
-    /* Nine step : Search the GP in the mesh */
-    printf("************************************************* \n");
-    printf(" Zero step : Search the GP in the mesh \n");
-    printf(" \t WORKING ... \n");
-    /* GlobalSearchGaussPoints(GP_Mesh,FEM_Mesh); */
-    LocalSearchGaussPoints(GP_Mesh,FEM_Mesh);
     printf(" DONE !!! \n");
 
   } /* End of temporal integration */

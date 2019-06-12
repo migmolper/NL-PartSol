@@ -1,0 +1,21 @@
+\babel@toc {english}{}
+\contentsline {section}{\numberline {1}Introduction}{3}{section.1}
+\contentsline {section}{\numberline {2}Governing Equations}{4}{section.2}
+\contentsline {subsection}{\numberline {2.1}Initial discretization}{4}{subsection.2.1}
+\contentsline {subsection}{\numberline {2.2}Discrete Solution Procedure}{5}{subsection.2.2}
+\contentsline {subsection}{\numberline {2.3}Observations}{6}{subsection.2.3}
+\contentsline {section}{\numberline {3}Stresses in the material-point-method}{7}{section.3}
+\contentsline {subsection}{\numberline {3.1}Objective evaluation of stresses}{7}{subsection.3.1}
+\contentsline {subsection}{\numberline {3.2}Grid-crossing errors in the MPM}{7}{subsection.3.2}
+\contentsline {subsection}{\numberline {3.3}Gravitational loading in the MPM}{7}{subsection.3.3}
+\contentsline {subsection}{\numberline {3.4}Alternative approaches for updating stresses}{7}{subsection.3.4}
+\contentsline {subsection}{\numberline {3.5}Reduced integration of stress}{7}{subsection.3.5}
+\contentsline {section}{\numberline {4}Large strain formulation for the material-point-method}{8}{section.4}
+\contentsline {subsection}{\numberline {4.1}Tracking large deformation}{8}{subsection.4.1}
+\contentsline {subsection}{\numberline {4.2}Large strain analysis by the material point method}{8}{subsection.4.2}
+\contentsline {subsubsection}{\numberline {4.2.1}Evaluationg the weighting functions using Gauss quadrature}{8}{subsubsection.4.2.1}
+\contentsline {subsubsection}{\numberline {4.2.2}Analytical approximation of the weighting functions}{8}{subsubsection.4.2.2}
+\contentsline {subsection}{\numberline {4.3}Refinement in the material-point-method}{8}{subsection.4.3}
+\contentsline {subsubsection}{\numberline {4.3.1}Material-point splitting}{8}{subsubsection.4.3.1}
+\contentsline {subsubsection}{\numberline {4.3.2}Material-point splitting in case of extreme deformations}{8}{subsubsection.4.3.2}
+\contentsline {subsubsection}{\numberline {4.3.3}Refining the computational grid}{8}{subsubsection.4.3.3}

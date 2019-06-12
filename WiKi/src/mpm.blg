@@ -1,0 +1,72 @@
+This is BibTeX, Version 0.99d (TeX Live 2017/Debian)
+Capacity: max_strings=100000, hash_size=100000, hash_prime=85009
+The top-level auxiliary file: mpm.aux
+A level-1 auxiliary file: SECTIONS/introduccion.aux
+A level-1 auxiliary file: SECTIONS/derivacion_de.aux
+A level-1 auxiliary file: SECTIONS/stresses_mpm.aux
+A level-1 auxiliary file: SECTIONS/large_strain_mpm.aux
+The style file: acm.bst
+Database file #1: /home/migmolper2/Documentos/PHD/BIBLIOGRAFIA/library.bib
+Repeated entry---line 2236 of file /home/migmolper2/Documentos/PHD/BIBLIOGRAFIA/library.bib
+ : @misc{Guilkey2003
+ :                  ,
+I'm skipping whatever remains of this entry
+Repeated entry---line 2243 of file /home/migmolper2/Documentos/PHD/BIBLIOGRAFIA/library.bib
+ : @article{Steffen2008
+ :                     ,
+I'm skipping whatever remains of this entry
+Repeated entry---line 2571 of file /home/migmolper2/Documentos/PHD/BIBLIOGRAFIA/library.bib
+ : @article{Andersen2010
+ :                      ,
+I'm skipping whatever remains of this entry
+Repeated entry---line 3012 of file /home/migmolper2/Documentos/PHD/BIBLIOGRAFIA/library.bib
+ : @article{Bardenhagen2002
+ :                         ,
+I'm skipping whatever remains of this entry
+Repeated entry---line 3363 of file /home/migmolper2/Documentos/PHD/BIBLIOGRAFIA/library.bib
+ : @article{Schreyer1994
+ :                      ,
+I'm skipping whatever remains of this entry
+Warning--there's a number but no series in Tran2019d
+You've used 7 entries,
+            2253 wiz_defined-function locations,
+            587 strings with 5426 characters,
+and the built_in function-call counts, 2470 in all, are:
+= -- 244
+> -- 109
+< -- 0
++ -- 45
+- -- 38
+* -- 217
+:= -- 396
+add.period$ -- 20
+call.type$ -- 7
+change.case$ -- 40
+chr.to.int$ -- 0
+cite$ -- 8
+duplicate$ -- 74
+empty$ -- 200
+format.name$ -- 38
+if$ -- 505
+int.to.chr$ -- 0
+int.to.str$ -- 7
+missing$ -- 6
+newline$ -- 37
+num.names$ -- 14
+pop$ -- 37
+preamble$ -- 1
+purify$ -- 33
+quote$ -- 0
+skip$ -- 49
+stack$ -- 0
+substring$ -- 190
+swap$ -- 20
+text.length$ -- 0
+text.prefix$ -- 0
+top$ -- 0
+type$ -- 28
+warning$ -- 1
+while$ -- 27
+width$ -- 8
+write$ -- 71
+(There were 5 error messages)

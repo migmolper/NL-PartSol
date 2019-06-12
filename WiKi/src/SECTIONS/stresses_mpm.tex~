@@ -1,0 +1,32 @@
+
+\section{Stresses in the material-point-method}
+\label{sec:stress-mater-point}
+
+As we can see in \cite{Andersen2010}
+
+\subsection{Objective evaluation of stresses}
+\label{sec:object-eval-stress}
+
+
+\subsection{Grid-crossing errors in the MPM}
+\label{sec:grid-crossing-errors}
+
+\subsection{Gravitational loading in the MPM}
+\label{sec:grav-load-mpm}
+
+
+\subsection{Alternative approaches for updating stresses}
+\label{sec:altern-appr-updat}
+
+
+
+
+\subsection{Reduced integration of stress}
+\label{sec:reduc-integr-stress}
+
+
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "../mpm"
+%%% End:

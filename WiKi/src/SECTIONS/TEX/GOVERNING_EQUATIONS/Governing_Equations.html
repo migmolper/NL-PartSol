@@ -1,0 +1,431 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<title>Governing Equations</title>
+<!-- 2019-06-03 lun 09:45 -->
+<meta  http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta  name="generator" content="Org-mode" />
+<meta  name="author" content="Miguel Molinos Pérez" />
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  .title  { text-align: center; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { color: green; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 3px #eee;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: visible;
+    padding-top: 1.2em;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    background-color: white;
+    top: -10px;
+    right: 10px;
+    padding: 3px;
+    border: 1px solid black;
+  }
+  pre.src:hover:before { display: inline;}
+  pre.src-sh:before    { content: 'sh'; }
+  pre.src-bash:before  { content: 'sh'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-R:before     { content: 'R'; }
+  pre.src-perl:before  { content: 'Perl'; }
+  pre.src-java:before  { content: 'Java'; }
+  pre.src-sql:before   { content: 'SQL'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.right  { text-align: center;  }
+  th.left   { text-align: center;   }
+  th.center { text-align: center; }
+  td.right  { text-align: right;  }
+  td.left   { text-align: left;   }
+  td.center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara:nth-child(2) { display: inline; }
+  .footpara { display: block; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  /*]]>*/-->
+</style>
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2013 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+<script type="text/javascript" src="http://orgmode.org/mathjax/MathJax.js"></script>
+<script type="text/javascript">
+<!--/*--><![CDATA[/*><!--*/
+    MathJax.Hub.Config({
+        // Only one of the two following lines, depending on user settings
+        // First allows browser-native MathML display, second forces HTML/CSS
+        //  config: ["MMLorHTML.js"], jax: ["input/TeX"],
+            jax: ["input/TeX", "output/HTML-CSS"],
+        extensions: ["tex2jax.js","TeX/AMSmath.js","TeX/AMSsymbols.js",
+                     "TeX/noUndefined.js"],
+        tex2jax: {
+            inlineMath: [ ["\\(","\\)"] ],
+            displayMath: [ ['$$','$$'], ["\\[","\\]"], ["\\begin{displaymath}","\\end{displaymath}"] ],
+            skipTags: ["script","noscript","style","textarea","pre","code"],
+            ignoreClass: "tex2jax_ignore",
+            processEscapes: false,
+            processEnvironments: true,
+            preview: "TeX"
+        },
+        showProcessingMessages: true,
+        displayAlign: "center",
+        displayIndent: "2em",
+
+        "HTML-CSS": {
+             scale: 100,
+             availableFonts: ["STIX","TeX"],
+             preferredFont: "TeX",
+             webFont: "TeX",
+             imageFont: "TeX",
+             showMathMenu: true,
+        },
+        MMLorHTML: {
+             prefer: {
+                 MSIE:    "MML",
+                 Firefox: "MML",
+                 Opera:   "HTML",
+                 other:   "HTML"
+             }
+        }
+    });
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">Governing Equations</h1>
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#sec-1">Description of motion</a></li>
+<li><a href="#sec-2">Deformation gradient</a></li>
+<li><a href="#sec-3">Rate of deformation</a></li>
+<li><a href="#sec-4">Cauchy stress</a></li>
+<li><a href="#sec-5">Jaumann stress rate</a></li>
+<li><a href="#sec-6">Updated Lagrangian Formulation</a>
+<ul>
+<li><a href="#sec-6-1">Conservation of Mass</a></li>
+<li><a href="#sec-6-2">Balance of momentum</a></li>
+<li><a href="#sec-6-3">Conservation of Energy</a></li>
+<li><a href="#sec-6-4">Governing Equations</a></li>
+</ul>
+</li>
+<li><a href="#sec-7">Weak form of the updated Lagrangian Formulation</a></li>
+</ul>
+</div>
+</div>
+<p>
+<a href="../index.html">Main page of GeHoJerez</a>
+</p>
+
+<div id="outline-container-sec-1" class="outline-2">
+<h2 id="sec-1">Description of motion</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+   Considering the motion of a continuum body within wich a 
+material point (particle) moves from it original psition \(P\) at time \(t = 0\)
+to its current position \(p\) at time \(t\), as show in the the figure
+ <a href="#fig:dis_continuum">1</a>.
+</p>
+
+
+<div id="fig:dis_continuum" class="figure">
+<p><img src="../img/Displacement_of_a_continuum.svg" alt="Displacement_of_a_continuum.svg" width="600" />
+</p>
+<p><span class="figure-number">Figure 1:</span> Initial configuration and current configuration.</p>
+</div>
+
+<p>
+The region of the three-dimensional (3D) Euclidean space occupied by the body at time \(t\) is called
+the <b>initial or undeformed configuration</b> (\(\Omega_0\)), while the region of 3D Euclidean space 
+occupied by the body at time <i>t</i>  is called the <b>current or deformed configuration</b> (\(\Omega\)).
+To measure the motion of the body, one particular configuration should be selected as the
+ <b>reference configuration</b> to which the motion of the body will be referred. <br  />
+Any possible configuration can be chosen as the reference configuration, 
+but a common practice is to choose the initial configuration as the reference configuration. <br  />
+The original position vector \(X\) of a particle in the reference configuration can be expressed as 
+\ref{eq:reference_config}.
+</p>
+
+\begin{equation}
+\label{eq:reference_config}
+X = X_i E_i, \quad i = 1, 2, 3 
+\end{equation}
+
+<p>
+where \(E_i\) is the unit vector that defines the basis of the material (body-frame) coordinate 
+system, and the components \(X_i\) are the coordinates of the particle in the material coordinate 
+system. Here, the subscripts  with the lowercase Latin alphabet, such as <i>i</i>, <i>j</i>, and <i>k</i>,
+ indicate the spatial components following the <a href="https://en.wikipedia.org/wiki/Einstein_notation">Einstein summation convection</a>, namely, 
+repeated indices imply the summation over all the values of the index. The original position 
+vector \(X\) of the particle \(P\) serves as a label to the particle. The coordinate \(X_i\) are called
+the <b>material coordinates</b> or <a href="https://en.wikipedia.org/wiki/Lagrangian_and_Eulerian_specification_of_the_flow_field"><b>Lagrangian coordinates</b></a>. The position of the vector \(x\) of the 
+particle \(X\) in the current configuration, as we can see in the figure <a href="#fig:dis_continuum">1</a>, and can
+be writen as \ref{eq:current_config}.
+</p>
+
+\begin{equation}
+\label{eq:current_config}
+x = x_i e_i \quad i = 1, 2, 3
+\end{equation}
+
+<p>
+where \(e_i\) is the unit vector that defines the basis of the spatial coordinate system, and the
+components \(x_i\) are the coordinates of the particle in the spatial coordinate system. The 
+coordinates \(x_i\) define the spatial position of the particle such that they are called the 
+<b>spatial coordinates</b> or <a href="https://en.wikipedia.org/wiki/Lagrangian_and_Eulerian_specification_of_the_flow_field"><b>Eulerian coordinates</b></a>. The motion and defomration of a continnuum 
+body can be described by the evolution of configuration with time. There are two types of 
+descriptions for the motion, namely <b>material</b> or <b>Lagrangian description</b> and <b>spatial</b> or 
+<b>Eulerian description</b>. The Lagrangian description is in terms of the material coordinates
+so that the position and physical properties of the particle are described in therms of the 
+material coordinates \(X\) and time <i>t</i>. The reference configuration is the initial configuration
+\(t = 0\). In the Lagrangian description, an observer standing in the body-frame observes the changes
+in the position and physical properties as the contunuum body moves in space with time, which is
+commonly used in solid mechanics.<br  />
+</p>
+</div>
+</div>
+
+
+
+<div id="outline-container-sec-2" class="outline-2">
+<h2 id="sec-2">Deformation gradient</h2>
+</div>
+
+<div id="outline-container-sec-3" class="outline-2">
+<h2 id="sec-3">Rate of deformation</h2>
+</div>
+
+<div id="outline-container-sec-4" class="outline-2">
+<h2 id="sec-4">Cauchy stress</h2>
+</div>
+
+<div id="outline-container-sec-5" class="outline-2">
+<h2 id="sec-5">Jaumann stress rate</h2>
+</div>
+
+<div id="outline-container-sec-6" class="outline-2">
+<h2 id="sec-6">Updated Lagrangian Formulation</h2>
+<div class="outline-text-2" id="text-6">
+</div><div id="outline-container-sec-6-1" class="outline-3">
+<h3 id="sec-6-1">Conservation of Mass</h3>
+</div>
+<div id="outline-container-sec-6-2" class="outline-3">
+<h3 id="sec-6-2">Balance of momentum</h3>
+<div class="outline-text-3" id="text-6-2">
+<p>
+In  the following  derivation  of the  discrete  equations, bold  face
+quantities  indicate tensor,  \(\nabla\) id  the gradient  operator, \(\cdot\),
+and \(:\)  are first (vector) and second  order tensor contraction, respectively.
+The subscript \(p\) is used to index material point  variables   and  \(i\)
+grid  vertex  variables. The  notation \(\sum_p^{Np}\) and \(\sum_i^{Np}\) 
+is used to denote  summation over all material points, and over
+all grid vertex, respectively.
+</p>
+
+<p>
+Of  interest  in  solid  mechanics is  the  deformation  and  material
+response to a continuous solid  body under prescribed loads and initial
+conditions,    as   governed    by    conservation    of   mass    and
+momentum.  Conservation of  mass  is satisfied  implicitly by  leaving
+discrete particle  masses unchanged throughout a  computation. Here we
+develop  the  discrete  version  of conservation  of  momentum,  which
+permits  evolution  of  particle  momenta   in  time.  We  consider  a
+deformable body acted upon by forces and subjected to either kinematic
+or  traction  boundary conditions  every  where  on its  surface.  The
+continuum mechanics theory
+</p>
+
+<ul class="org-ul">
+<li>Balance of momentum
+</li>
+<li>Compatibility
+</li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-sec-6-3" class="outline-3">
+<h3 id="sec-6-3">Conservation of Energy</h3>
+</div>
+<div id="outline-container-sec-6-4" class="outline-3">
+<h3 id="sec-6-4">Governing Equations</h3>
+</div>
+</div>
+
+<div id="outline-container-sec-7" class="outline-2">
+<h2 id="sec-7">Weak form of the updated Lagrangian Formulation</h2>
+<div class="outline-text-2" id="text-7">
+<p>
+We works over the balance of momentum in the strong formulation, as we
+can see in \ref{eq:sf_conserv_momentum}
+</p>
+
+\begin{equation}
+\label{eq:sf_conserv_momentum}
+\rho a = \nabla \cdot(\sigma) + \rho b  
+\end{equation}
+
+<p>
+Define now a function \(\psi\) belongs to a <a href="https://en.wikipedia.org/wiki/Hilbert_space">Hilbert space</a> \(\mathcal{H}\) (vectorial space
+with scalar product defined) wich verifies
+\(a(\ddot{u},\dot{u},u,\psi)=l(\psi) \quad \forall\ \psi\ \in\
+\mathcal{H}\). In other hand, in every point of \(\Omega\) where we have
+imposed the Dirichlet bounday condition,
+</p>
+
+\begin{equation}
+\mathcal{H} = \{  \psi(x)/\psi \mid_{\Gamma_D} = 0 \quad , \quad \psi \in H^1(\Omega)  \}
+\end{equation}
+
+<p>
+In other words, \(\mathcal{H}\) is the space defined by all the
+functions \(g\), that $ &psi;$ and \(\nabla \psi\) are <a href="https://en.wikipedia.org/wiki/Square-integrable_function">square-integrable function</a> in \(\Omega\)
+</p>
+
+\begin{equation}
+\int_{\Omega}\psi\ d\Omega < \infty \quad , \quad \int_{\Omega}\nabla\psi\ d\Omega < \infty
+\end{equation}
+
+<p>
+Multiplying by \(\psi\) we get \ref{eq:var_conserv_momentum}
+</p>
+\begin{equation}
+\label{eq:var_conserv_momentum}
+\psi^T \cdot \rho a = \psi^T \cdot \nabla\cdot(\sigma) + \psi^T \cdot \rho b
+\end{equation}
+
+<p>
+Integrating over \(\Omega\) we get :
+</p>
+
+\begin{equation}
+\int_{\Omega} \psi^T \cdot \rho a\ d\Omega = \int_{\Omega} \psi^T \cdot \nabla\cdot(\sigma)\ d\Omega + \int_{\Omega} \psi^T \cdot \rho b\ d\Omega
+\end{equation}
+
+<p>
+Integrating by parts the therm of the internal tension, we get :
+</p>
+\begin{equation}
+\int_{\Omega} \psi^T\cdot \rho a\ d\Omega = \int_{\Omega}  \nabla\cdot \left( \psi^T \cdot
+\sigma \right)\ d\Omega - \int_{\Omega}  \nabla\psi^T : \sigma\ d\Omega
+  + \int_{\Omega} \psi^T\cdot b\ d\Omega
+\end{equation}
+
+<p>
+Applying the Gauss theorem over it, and following the definition of the stress
+vector \(t = \sigma \cdot n\) where \(n\) is the vector orthogonal to a
+surface in the solid, finally we get the variational form for
+conservation of momentum may be written as
+</p>
+\begin{equation}
+\int_{\Omega} \psi^T \cdot \rho a\ d\Omega = \int_{\Gamma}  \psi^T
+\cdot \overbrace{\sigma \cdot n}^{t}\ d\Gamma - \int_{\Omega}  \nabla \psi^T : \sigma\ d\Omega
+  + \int_{\Omega} \psi^T b\ d\Omega  
+\end{equation}
+<p>
+Finally we get :
+</p>
+\begin{equation}
+\int_{\Omega} \psi^T \cdot \rho a\ d\Omega = \int_{\Gamma}  \psi^T
+\cdot t \ d\Gamma - \int_{\Omega}  \nabla \psi^T : \sigma\ d\Omega
+  + \int_{\Omega} \psi^T b\ d\Omega  
+\end{equation}
+</div>
+</div>
+</div>
+<div id="postamble" class="status">
+<p class="author">Author: Miguel Molinos Pérez</p>
+<p class="date">Created: 2019-06-03 lun 09:45</p>
+<p class="creator"><a href="http://www.gnu.org/software/emacs/">Emacs</a> 25.2.2 (<a href="http://orgmode.org">Org</a> mode 8.2.10)</p>
+<p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
+</div>
+</body>
+</html>

@@ -1,0 +1,29 @@
+
+\section{Introduction}
+\label{sec:intro}
+
+The past several decades have brought tremendous advances in computing
+power and provided fertile ground for the development of the
+computational sciences. In computational solid mechanics the Finite
+Element Method (FEM) (METER CITA MOLONA) has been very successfully
+applied to a wide range of problems with good results. However, body
+fixed FEM meshes can be difficult and time consuming to generate for
+complex three-dimensional objects. Further, mesh distorsion associated
+with large deformations compromises solution accuracy, ultimately
+requiring re-meshing. These difficulties have spurred the development
+of alternative discretization strategies which avoid mesh distorsion by
+dicretizing at points and never
+maintaining a body-fixed mesh.\\
+
+Quite a number of ''meshless methods'' have been developed. Some of
+the ways in which the methods differ include whether or not a
+temporary mesh is used in the solution procedure, whether the
+discretization procedure begins with the
+
+\cite{Schreyer1994}
+
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "../mpm"
+%%% End:

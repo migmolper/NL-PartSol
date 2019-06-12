@@ -1,0 +1,27 @@
+#+STARTUP:    align fold nodlcheck hidestars oddeven lognotestate
+#+SEQ_TODO:   TODO(t) INPROGRESS(i) WAITING(w@) | DONE(d) CANCELED(c@)
+#+TAGS:       Write(w) Update(u) Fix(f) Check(c) 
+#+TITLE:      Proposed tests
+#+AUTHOR:     Miguel Molinos Pérez
+#+EMAIL:      m.molinos AT outlook DOT com
+#+LANGUAGE:   en
+#+PRIORITIES: A C B
+#+CATEGORY:   worg
+#+OPTIONS:   H:3 num:nil toc:t \n:nil ::t |:t ^:t -:t f:t *:t tex:t d:(HIDE) tags:not-in-toc
+
+[[file:../index.org][Main page of GeHoJerez]]
+
+
+** Simple propagation of a shock wave in a 1D media 
+
+Here we solve the transport equation with a time integrator called Two-Step Taylor-Galerkin that stabilize the solution avoiding the formation of spurious oscillations during the transport. For the spatial discretization will be used 1D li
+
+ \partial_{t} u + c \cdot \partial_{x} u = 0
+
+The algorithm is as follows : 
+1. Transfer information to the Gauss-Points :  u^{n}_{GP} = \sum^{N}_{i=0}N(x_i) \cdot u^{n}_{i}
+2. Get the solution in the Gauss-Points for t = n + 1/2 : u^{n+1/2}_{GP} = u^{n}_{GP} - \Delta t/2 \cdot \sum^{N}_{i=0} \partial N(x_i) \cdot u^{n}_{i}
+3. Get the solution in the nodes for t = n + 1 : 
+
+** Simple propagation of a shock wave in a 1D elastic media using the formulation \sigma - v
+   
