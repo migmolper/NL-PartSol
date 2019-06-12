@@ -916,6 +916,44 @@ double Norm_Mat(Matrix In,int kind)
 
 /*********************************************************************/
 
+double Area_Poligon(Matrix Poligon)
+/*
+  Get the area of a poligon on n vertex 
+*/
+{
+  double A_Poligon;
+  int N_vertex;
+
+  /* Asign the number of vertex */
+  N_vertex = Poligon.N_cols;
+
+  /* Check the number of vertex */
+  if(N_vertex<3){
+    puts("Error in Area_Poligon : Wrong number of vertex !!!");
+    exit(0);
+  }
+  
+  /* Initialize the area value with the initial therm */
+  A_Poligon = Poligon.nM[1][0]*(Poligon.nM[0][N_vertex-1] - Poligon.nM[0][1]);
+
+  /* Addd the middle therm */
+  for(int i = 1 ; i<N_vertex-1 ; i++){
+    A_Poligon += Poligon.nM[1][i]*(Poligon.nM[0][i-1] - Poligon.nM[0][1]); 
+  }
+
+  /* Addd the final therm */
+  A_Poligon += Poligon.nM[1][N_vertex-1]*(Poligon.nM[0][N_vertex-2] - Poligon.nM[0][0]);
+
+  /* Get the area */
+  A_Poligon = 0.5*fabs(A_Poligon);
+    
+  return A_Poligon;
+}
+
+
+
+/*********************************************************************/
+
 int InOut_Poligon(Matrix X_Point, Matrix Poligon)
 /*
   Check if a point is or not (1/0) inside of a poligon.

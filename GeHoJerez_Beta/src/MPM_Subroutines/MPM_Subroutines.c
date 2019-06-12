@@ -14,14 +14,14 @@ void GlobalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh){
 
   /* 0º Variable declaration */
   Matrix X_GC_GP;
-  X_GC_GP.N_rows = FEM_Mesh.Dimension;
+  X_GC_GP.N_rows = NumberDimensions;
   X_GC_GP.N_cols = 1;  
   X_GC_GP.n = NAN;
   Matrix X_EC_GP;
-  X_EC_GP.N_rows = FEM_Mesh.Dimension;
+  X_EC_GP.N_rows = NumberDimensions;
   X_EC_GP.N_cols = 1;  
   X_EC_GP.n = NAN;
-  Matrix Poligon = MatAllocZ(FEM_Mesh.NumNodesElem,FEM_Mesh.Dimension);
+  Matrix Poligon = MatAllocZ(FEM_Mesh.NumNodesElem,NumberDimensions);
   int * Poligon_Connectivity;
 
   /* 1º Set to zero the active/non-active elements */
@@ -39,7 +39,7 @@ void GlobalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh){
       Poligon_Connectivity = FEM_Mesh.Connectivity[j];
       /* 4º Fill the poligon Matrix */
       for(int k = 0 ; k<FEM_Mesh.NumNodesElem ; k++){
-	for(int l = 0 ; l<FEM_Mesh.Dimension ; l++){
+	for(int l = 0 ; l<NumberDimensions ; l++){
 	  Poligon.nM[k][l] = FEM_Mesh.Coordinates.nM[Poligon_Connectivity[k]][l];
 	}
       }
@@ -78,14 +78,14 @@ void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 
   /* 0º Variable declaration */
   Matrix X_GC_GP;
-  X_GC_GP.N_rows = FEM_Mesh.Dimension;
+  X_GC_GP.N_rows = NumberDimensions;
   X_GC_GP.N_cols = 1;
   X_GC_GP.n = NAN;
   Matrix X_EC_GP;
-  X_EC_GP.N_rows = FEM_Mesh.Dimension;
+  X_EC_GP.N_rows = NumberDimensions;
   X_EC_GP.N_cols = 1;
   X_EC_GP.n = NAN;
-  Matrix Element_GP_Coordinates = MatAllocZ(FEM_Mesh.NumNodesElem,FEM_Mesh.Dimension);
+  Matrix Element_GP_Coordinates = MatAllocZ(FEM_Mesh.NumNodesElem,NumberDimensions);
   int * Element_GP_Connectivity;
   int Element_GP_i; /* Index of the initial element */
   Matrix V_GP; /* Velocity array */

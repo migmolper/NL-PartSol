@@ -123,37 +123,27 @@ GaussPoint Initialize_GP_Mesh(char * MPM_GID_MeshName,
   strcpy(MPM_Mesh.Phi.rho.Info,"Density field GP");
 
   
-  if(strcmp(MPM_GID_Mesh.TypeElem,"Triangle") == 0 ){
-    Matrix a = MatAllocZ(3,1);
-    Matrix b = MatAllocZ(3,1);
-    Matrix c;
-    double A_el;
-    int NOD_e[3];
+  Matrix Poligon = MatAllocZ(FEM_Mesh.NumNodesElem,FEM_Mesh.Dimension);
+  int * Poligon_Connectivity;
+  
+  double A_el;
 
-    for(int i = 0 ; i<MPM_Mesh.NumGP ; i++){
-      
-      /* Element connectivity */
-      NOD_e[0] = MPM_GID_Mesh.Connectivity[i][0];
-      NOD_e[1] = MPM_GID_Mesh.Connectivity[i][1];
-      NOD_e[2] = MPM_GID_Mesh.Connectivity[i][2];
-      /* a array */
-      a.nV[0] = MPM_GID_Mesh.Coordinates.nM[NOD_e[0]][0] -
-	MPM_GID_Mesh.Coordinates.nM[NOD_e[1]][0];
-      a.nV[1] = MPM_GID_Mesh.Coordinates.nM[NOD_e[0]][1] -
-	MPM_GID_Mesh.Coordinates.nM[NOD_e[1]][1];
-      a.nV[2] = 0.0;
-      /* b array */
-      b.nV[0] = MPM_GID_Mesh.Coordinates.nM[NOD_e[0]][0] -
-	MPM_GID_Mesh.Coordinates.nM[NOD_e[2]][0];
-      b.nV[1] = MPM_GID_Mesh.Coordinates.nM[NOD_e[0]][1] -
-	MPM_GID_Mesh.Coordinates.nM[NOD_e[2]][1];
-      b.nV[2] = 0.0;
-      /* c array */
-      c = Vectorial_prod(a,b);
-      /* Get the area of the element */
-      A_el = fabs(Norm_Mat(c,2)*0.5);
-      free(c.nV);
-      
+  for(int i = 0 ; i<MPM_Mesh.NumGP ; i++){
+
+
+    if(InputFields.nM == NULL){
+      /* Get the connectivity of the elements vertex */
+      Poligon_Connectivity = MPM_GID_Mesh.Connectivity[i];
+
+      /* Get the coordiantes of the element vertex */
+      for(int j = 0 ; j<MPM_GID_Mesh.NumNodesElem ; j++){
+	for(int k = 0 ; k<NumberDimensions ; k++){
+	  Poligon.nM[j][k] = MPM_GID_Mesh.Coordinates.nM[Poligon_Connectivity[j]][k];
+	}
+      }
+      /* Get the area of the poligon defined by the vertex of the element */
+      A_el = Area_Poligon(Poligon);
+           
       /* Assign the mass parameter */
       MPM_Mesh.Phi.mass.nV[i] = A_el*Density0;
       /* Set the initial density */
@@ -192,54 +182,51 @@ GaussPoint Initialize_GP_Mesh(char * MPM_GID_MeshName,
 
       
     }
+    else { /* Only if we want to do a hot-start */
 
-    /* Free auxiliar arrays */
-    free(a.nV);
-    free(b.nV);
-
-    /* Initialize all the fields :
-       - Mass of the material point
-       - Position field (Vectorial) in global coordiantes and in element coordinates :
-       - Displacement, Velocity and acceleration field (Vectorial)
-       - Stress and Strain fields (Tensorial)
-       Note : It is not necessary to allocate memory...think about it ;)
-    */
-    if(InputFields.nM != NULL){ /* Only if we want to do a hot-start */
-
-      /* NumFields = parse (Field, InputFields.Info, ";\n"); */
+      NumFields = parse (Field, InputFields.Info, ";\n");
     
-      /* for(int i = 0; i<NumFields ; i++){ */
-      /* 	if(strcmp(Field[i],"X_GP")==0) */
-      /* 	  MPM_Mesh.Phi.x_GC.nM[0] = InputFields.nM[i]; */
+      for(int i = 0; i<NumFields ; i++){
+    	if(strcmp(Field[i],"X_GP")==0)
+    	  MPM_Mesh.Phi.x_GC.nM[0] = InputFields.nM[i];
 
-      /* 	if(strcmp(Field[i],"Y_GP")==0) */
-      /* 	  MPM_Mesh.Phi.x_GC.nM[1] = InputFields.nM[i]; */
+    	if(strcmp(Field[i],"Y_GP")==0)
+    	  MPM_Mesh.Phi.x_GC.nM[1] = InputFields.nM[i];
 
-      /* 	if(strcmp(Field[i],"V_X")==0) */
-      /* 	  MPM_Mesh.Phi.vel.nM[0] = InputFields.nM[i]; */
+    	if(strcmp(Field[i],"V_X")==0)
+    	  MPM_Mesh.Phi.vel.nM[0] = InputFields.nM[i];
 
-      /* 	if(strcmp(Field[i],"V_Y")==0) */
-      /* 	  MPM_Mesh.Phi.vel.nM[1] = InputFields.nM[i]; */
+    	if(strcmp(Field[i],"V_Y")==0)
+    	  MPM_Mesh.Phi.vel.nM[1] = InputFields.nM[i];
 
-      /* 	if(strcmp(Field[i],"SIGMA_X")==0) */
-      /* 	  MPM_Mesh.Phi.Stress.nM[0] = InputFields.nM[i]; */
+    	if(strcmp(Field[i],"SIGMA_X")==0)
+    	  MPM_Mesh.Phi.Stress.nM[0] = InputFields.nM[i];
 
-      /* 	if(strcmp(Field[i],"SIGMA_Y")==0) */
-      /* 	  MPM_Mesh.Phi.Stress.nM[1] = InputFields.nM[i]; */
+    	if(strcmp(Field[i],"SIGMA_Y")==0)
+    	  MPM_Mesh.Phi.Stress.nM[1] = InputFields.nM[i];
       
-      /* 	if(strcmp(Field[i],"TAUB_XY")==0) */
-      /* 	  MPM_Mesh.Phi.Stress.nM[2] = InputFields.nM[i]; */
+    	if(strcmp(Field[i],"TAUB_XY")==0)
+    	  MPM_Mesh.Phi.Stress.nM[2] = InputFields.nM[i];
 
-      /* 	if(strcmp(Field[i],"MASS")==0) */
-      /* 	  MPM_Mesh.Phi.mass.nV = InputFields.nM[i]; */
-      /* } */
+    	if(strcmp(Field[i],"MASS")==0)
+    	  MPM_Mesh.Phi.mass.nV = InputFields.nM[i];
+      }
 
     }
 
-    /* Allocate and Initialize the constitutive response */
-    MPM_Mesh.D = D;
+    
   }
+  /* Initialize all the fields :
+     - Mass of the material point
+     - Position field (Vectorial) in global coordiantes and in element coordinates :
+     - Displacement, Velocity and acceleration field (Vectorial)
+     - Stress and Strain fields (Tensorial)
+     Note : It is not necessary to allocate memory...think about it ;)
+  */
 
+
+  /* Allocate and Initialize the constitutive response */
+  MPM_Mesh.D = D;
 
   /* Free the input data */
   free(MPM_GID_Mesh.Coordinates.nM);

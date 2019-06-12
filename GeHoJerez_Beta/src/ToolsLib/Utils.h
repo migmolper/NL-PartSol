@@ -40,6 +40,8 @@ Matrix Sub_Mat(Matrix,Matrix);
 
 double Norm_Mat(Matrix,int);
 
+double Area_Poligon(Matrix);
+
 int InOut_Poligon(Matrix, Matrix);
 
 Matrix Newton_Rapson(Matrix(* Function)(Matrix, Matrix), Matrix,
