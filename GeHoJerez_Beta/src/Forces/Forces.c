@@ -10,27 +10,29 @@
 /*********************************************************************/
 
 
-/* Matrix VolumeForces(){ */
-/* } */
+Matrix GaussPointForces(int Num_GP, int TimeStep)
+/*
+  Forces defined in the Gauss Points :
+  Inputs
+*/
+{
+  /* Definition of the local traction */
+  Matrix t_GP;
 
-/* Matrix SurfaceForces(){ */
-/* } */
+  /* Allocate the local traction matrix for the gauss points */
+  t_GP = MatAllocZ(Num_GP,NumberDimensions);
 
-/* Matrix LineForces(){ */
-/* } */
+  /* Fill the matrix with the local forces */
+  for(int i = 0 ; i<Num_GP ; i++){
+    for(int j = 0 ; j<NumberDimensions ; j++){
+      t_GP.nM[i][j] = ;
+    }
+  }
+  
+  return t_GP;
+}
 
-/* Matrix PuntualForces(){ */
-/* } */
-
-
-/* Matrix GaussPointForces(GaussPoint * MaterialPoints) */
-/* /\* */
-/*   Forces defined in the Gauss Points : */
-/*   Inputs  */
-/* *\/ */
-/* { */
-
-/* } */
+/*********************************************************************/
 
 Matrix NodalForces(Element * ElementMesh,int NumberActiveNodes)
 /*

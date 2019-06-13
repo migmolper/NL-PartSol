@@ -556,10 +556,16 @@ Matrix GetNodalForces(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
     /* 11º Acumulate this forces to the total array with the internal forces */
     for(int k = 0 ; k<FEM_Mesh.NumNodesElem ; k++){  
       for(int l = 0 ; l<NumberDimensions ; l++){
-	/* 11aº Get get the internal forces */
-	Nodal_TOT_FORCES.nM[l][Elem_Nods[k]] -= Element_INT_FORCES.nV[k*NumberDimensions + l];
-	/* 11bº Get the body forces */
-	Nodal_TOT_FORCES.nM[l][Elem_Nods[k]] += MPM_Mesh.Phi.mass.nV[i]*N_Ref_GP.nV[k]*g.nV[l];
+	/* 11aº Add the internal forces */
+	Nodal_TOT_FORCES.nM[l][Elem_Nods[k]] -=
+	  Element_INT_FORCES.nV[k*NumberDimensions + l];
+	/* 11bº Add the body forces */
+	Nodal_TOT_FORCES.nM[l][Elem_Nods[k]] +=
+	  MPM_Mesh.Phi.mass.nV[i]*N_Ref_GP.nV[k]*g.nV[l];
+	/* 11cº Add the contact forces */
+	/* Nodal_TOT_FORCES.nM[l][Elem_Nods[k]] += */
+	/*   N_Ref_GP.nV[k]*MPM_Mesh.t_GP.nMx[i][j]* */
+	/*   (MPM_Mesh.Phi.mass.nV[i]/MPM_Mesh.Phi.rho.nV[i]); */
       }
     }
 	

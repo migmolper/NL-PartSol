@@ -24,8 +24,8 @@ GaussPoint Initialize_GP_Mesh(char * MPM_GID_MeshName,
   /* Material point mesh (Gauss-Points) */
   Mesh MPM_GID_Mesh;
   GaussPoint MPM_Mesh;
-  /* int NumFields; */
-  /* char * Field[MAXW] = {NULL}; */
+  int NumFields;
+  char * Field[MAXW] = {NULL};
 
   /* Screen message */
   printf("************************************************* \n");
@@ -123,10 +123,9 @@ GaussPoint Initialize_GP_Mesh(char * MPM_GID_MeshName,
   strcpy(MPM_Mesh.Phi.rho.Info,"Density field GP");
 
   
-  Matrix Poligon = MatAllocZ(FEM_Mesh.NumNodesElem,FEM_Mesh.Dimension);
-  int * Poligon_Connectivity;
-  
-  double A_el;
+  Matrix Poligon = MatAllocZ(MPM_GID_Mesh.NumNodesElem,NumberDimensions);
+  int * Poligon_Connectivity;  
+  Matrix Poligon_Centroid;
 
   for(int i = 0 ; i<MPM_Mesh.NumGP ; i++){
 
@@ -141,21 +140,23 @@ GaussPoint Initialize_GP_Mesh(char * MPM_GID_MeshName,
 	  Poligon.nM[j][k] = MPM_GID_Mesh.Coordinates.nM[Poligon_Connectivity[j]][k];
 	}
       }
-      /* Get the area of the poligon defined by the vertex of the element */
-      A_el = Area_Poligon(Poligon);
+
+      /* Get the area (Poligon_Centroid.n) 
+	 and the position of the centroid (Poligon_Centroid.nV) */
+      Poligon_Centroid = Centroid_Poligon(Poligon);
            
       /* Assign the mass parameter */
-      MPM_Mesh.Phi.mass.nV[i] = A_el*Density0;
+      MPM_Mesh.Phi.mass.nV[i] = Poligon_Centroid.n*Density0;
       /* Set the initial density */
       MPM_Mesh.Phi.rho.nV[i] = Density0;
       /* Get the coordinates of the centre */
-      MPM_Mesh.Phi.x_GC.nM[i][0] = (double)1/3*(MPM_GID_Mesh.Coordinates.nM[NOD_e[0]][0] +
-						MPM_GID_Mesh.Coordinates.nM[NOD_e[1]][0] +
-						MPM_GID_Mesh.Coordinates.nM[NOD_e[2]][0]);
-      MPM_Mesh.Phi.x_GC.nM[i][1] = (double)1/3*(MPM_GID_Mesh.Coordinates.nM[NOD_e[0]][1] +
-						MPM_GID_Mesh.Coordinates.nM[NOD_e[1]][1] +
-						MPM_GID_Mesh.Coordinates.nM[NOD_e[2]][1]);
+      MPM_Mesh.Phi.x_GC.nM[i][0] = Poligon_Centroid.nV[0];
+      MPM_Mesh.Phi.x_GC.nM[i][1] = Poligon_Centroid.nV[1];
       MPM_Mesh.Phi.x_GC.nM[i][2] = 0.0;
+
+      /* Free data */
+      free(Poligon_Centroid.nV);
+      
       /* Local coordinates of the element */
       MPM_Mesh.Element_id[i] = -999;
       /* Location in the natural coordinates

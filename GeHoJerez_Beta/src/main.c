@@ -86,6 +86,7 @@ int main(int argc, char *argv[])
   ReadBCC(BounCondFileName,FEM_Mesh);
   /* Define Gauss point mesh and initialize it */
   GP_Mesh  = Initialize_GP_Mesh(MPM_MeshFileName,InputFields,Density,D_e);
+
   /***********************************************************************/
   /***********************************************************************/
 
@@ -107,7 +108,7 @@ int main(int argc, char *argv[])
     printf(" \t WORKING ... \n");
     WriteVtk_MPM("MPM_VALUES",GP_Mesh,List_Fields,TimeStep);
     printf(" DONE !!! \n");
-  
+   
     /* Second step : Get the nodal mass and the momentum */
     printf("************************************************* \n");
     printf(" Second step : Get the nodal mass and the momentum \n");
@@ -182,7 +183,7 @@ int main(int argc, char *argv[])
     printf(" Eight step : Reset nodal values of the mesh \n");
     printf(" \t WORKING ... \n");
     /* Print nodal values*/
-    WriteVtk_FEM("Mesh",FEM_Mesh,Nodal_MOMENTUM,TimeStep);
+    /* WriteVtk_FEM("Mesh",FEM_Mesh,Nodal_MOMENTUM,TimeStep); */
     /* Reset nodal values */
     free(Nodal_MASS_MOMENTUM.nM);
     free(Nodal_VELOCITY.nM);

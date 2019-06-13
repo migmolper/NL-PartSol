@@ -918,14 +918,16 @@ double Norm_Mat(Matrix In,int kind)
 
 double Area_Poligon(Matrix Poligon)
 /*
-  Get the area of a poligon on n vertex 
+  Get the area of a poligon on n vertex using the 
+  Shoelace formula :
+  https://en.wikipedia.org/wiki/Shoelace_formula
 */
 {
   double A_Poligon;
   int N_vertex;
 
   /* Asign the number of vertex */
-  N_vertex = Poligon.N_cols;
+  N_vertex = Poligon.N_rows;
 
   /* Check the number of vertex */
   if(N_vertex<3){
@@ -934,15 +936,16 @@ double Area_Poligon(Matrix Poligon)
   }
   
   /* Initialize the area value with the initial therm */
-  A_Poligon = Poligon.nM[1][0]*(Poligon.nM[0][N_vertex-1] - Poligon.nM[0][1]);
+  A_Poligon = Poligon.nM[0][1]*(Poligon.nM[N_vertex-1][0] - Poligon.nM[1][0]);
 
   /* Addd the middle therm */
   for(int i = 1 ; i<N_vertex-1 ; i++){
-    A_Poligon += Poligon.nM[1][i]*(Poligon.nM[0][i-1] - Poligon.nM[0][1]); 
+    A_Poligon += Poligon.nM[i][1]*(Poligon.nM[i-1][0] - Poligon.nM[i+1][0]); 
   }
 
   /* Addd the final therm */
-  A_Poligon += Poligon.nM[1][N_vertex-1]*(Poligon.nM[0][N_vertex-2] - Poligon.nM[0][0]);
+  A_Poligon += Poligon.nM[N_vertex-1][1]*(Poligon.nM[N_vertex-2][0] -
+					  Poligon.nM[0][0]);
 
   /* Get the area */
   A_Poligon = 0.5*fabs(A_Poligon);
@@ -950,6 +953,72 @@ double Area_Poligon(Matrix Poligon)
   return A_Poligon;
 }
 
+/*********************************************************************/
+
+Matrix Centroid_Poligon(Matrix Poligon)
+/*
+  Get the position of the centroid of a poligon, also return the value of the 
+  area
+*/
+{
+
+  Matrix C_Poligon;
+  double A_aux;
+  int N_vertex;
+  int N_dimensions;
+
+  /* Asign the number of vertex and check it  */
+  N_vertex = Poligon.N_rows; 
+  if(N_vertex<3){
+    puts("Error in Centroid_Poligon() : Wrong number of vertex !!!");
+    exit(0);
+  }
+
+  /* Asign the number of dimensions and check it */
+  N_dimensions = Poligon.N_cols;
+  if(N_dimensions != 2){
+    puts("Error in Centroid_Poligon() : Wrong number of dimensions !!!");
+    exit(0);
+  }
+  
+  /* Allocate the array for the centroid */
+  C_Poligon = MatAllocZ(1,N_dimensions);
+  
+  /* Initialize the area of the poligon */
+  C_Poligon.n = 0;
+  
+  /* Calcule the area and the centroid */
+  for(int i = 0 ; i<N_vertex-1 ; i++){
+
+    A_aux = Poligon.nM[i][0]*Poligon.nM[i+1][1] -
+      Poligon.nM[i+1][0]*Poligon.nM[i][1];
+
+    C_Poligon.nV[0] += (Poligon.nM[i][0] + Poligon.nM[i+1][0])*A_aux;
+    C_Poligon.nV[1] += (Poligon.nM[i][1] + Poligon.nM[i+1][1])*A_aux;
+    C_Poligon.n += A_aux;
+   
+  }
+
+  /* Addd the final therm */
+  A_aux = Poligon.nM[N_vertex-1][0]*Poligon.nM[0][1] -
+    Poligon.nM[0][0]*Poligon.nM[N_vertex-1][1];
+
+  C_Poligon.nV[0] += (Poligon.nM[N_vertex-1][0] + Poligon.nM[0][0])*A_aux;
+  C_Poligon.nV[1] += (Poligon.nM[N_vertex-1][1] + Poligon.nM[0][1])*A_aux;
+  C_Poligon.n += A_aux;
+
+  /* Fix the area */
+  C_Poligon.n *= 0.5;
+
+  /* Fix the centroid */
+  C_Poligon.nV[0] /= 6*C_Poligon.n;
+  C_Poligon.nV[1] /= 6*C_Poligon.n;
+
+  /* Fix the sign of the area */
+  C_Poligon.n = fabs(C_Poligon.n);
+
+  return C_Poligon;
+}
 
 
 /*********************************************************************/
