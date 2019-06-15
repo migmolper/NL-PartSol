@@ -24,7 +24,7 @@ void UpdateGaussPointStrain(GaussPoint, Mesh, Matrix);
 
 void UpdateGaussPointDensity(GaussPoint);
 
-void UpdateGaussPointStress(GaussPoint, Matrix);
+void UpdateGaussPointStress(GaussPoint);
 
 Matrix GetNodalForces(GaussPoint, Mesh);
 

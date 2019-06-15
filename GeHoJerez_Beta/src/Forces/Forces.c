@@ -10,27 +10,29 @@
 /*********************************************************************/
 
 
-Matrix GaussPointForces(int Num_GP, int TimeStep)
-/*
-  Forces defined in the Gauss Points :
-  Inputs
-*/
-{
-  /* Definition of the local traction */
-  Matrix t_GP;
+/* Matrix GaussPointForces(GaussPoint GP_Mesh, int TimeStep) */
+/* /\* */
+/*   Forces defined in the Gauss Points : */
+/*   Inputs */
+/* *\/ */
+/* { */
+/*   /\* Definition of the local traction *\/ */
+/*   Matrix t_GP; */
 
-  /* Allocate the local traction matrix for the gauss points */
-  t_GP = MatAllocZ(Num_GP,NumberDimensions);
+/*   /\* Allocate the local traction matrix for the gauss points *\/ */
+/*   t_GP = MatAllocZ(GP_Mesh.NumGP,NumberDimensions); */
 
-  /* Fill the matrix with the local forces */
-  for(int i = 0 ; i<Num_GP ; i++){
-    for(int j = 0 ; j<NumberDimensions ; j++){
-      t_GP.nM[i][j] = ;
-    }
-  }
+/*   /\* Fill the matrix with the local forces *\/ */
+/*   for(int i = 0 ; i<GP_Mesh.NumGP ; i++){ */
+    
+/*     for(int j = 0 ; j<NumberDimensions ; j++){ */
+/*       t_GP.nM[i][j] = ; */
+/*     } */
+    
+/*   } */
   
-  return t_GP;
-}
+/*   return t_GP; */
+/* } */
 
 /*********************************************************************/
 

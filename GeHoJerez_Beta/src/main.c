@@ -144,7 +144,7 @@ int main(int argc, char *argv[])
     printf(" \t DONE !!! \n");
     /* d) Update the particle stress state */
     printf(" \t d) Update the particle stress state ... WORKING \n");
-    UpdateGaussPointStress(GP_Mesh,D_e);
+    UpdateGaussPointStress(GP_Mesh);
     printf(" \t DONE !!! \n");
 
     /* Five step : Calculate the nodal internal, external forces */

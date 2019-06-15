@@ -301,13 +301,12 @@ Matrix GetNodalMassMomentum(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 	  N_Ref_GP.nV[k];
       }
     }
+
+    /* 9º Free the value of the shape functions */
+    free(N_Ref_GP.nV);
     
   }
-
-  /* 9º Free The value of the shape functions */
-  free(N_Ref_GP.nV);
-
-  
+    
   return Nodal_FIELDS;
   
 }
@@ -448,11 +447,12 @@ void UpdateGaussPointDensity(GaussPoint MPM_Mesh){
 
 /*******************************************************/
 
-void UpdateGaussPointStress(GaussPoint MPM_Mesh, Matrix D){
+void UpdateGaussPointStress(GaussPoint MPM_Mesh){
 
   /* 0º Variable declaration  */
   Matrix StrainTensor_GP;
   Matrix StressTensor_GP;
+  Matrix D = MPM_Mesh.D;
 
   /* 1º Switch the dimensions of the aulixiar strain tensor */
   switch(NumberDimensions){
@@ -550,8 +550,10 @@ Matrix GetNodalForces(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
     B = Get_B_GP(X_EC_GP,Elem_Coords);	
     B_T = Transpose_Mat(B), free(B.nM);
 
-    /* 10º Get forces in the nodes of the element created by the Gauss-Point */
+    /* 10º Get forces in the nodes of the element created by the Gauss-Point 
+     and free the B_T matrix */
     Element_INT_FORCES = Scalar_prod(B_T,StressTensor_GP);
+    free(B_T.nV);
 
     /* 11º Acumulate this forces to the total array with the internal forces */
     for(int k = 0 ; k<FEM_Mesh.NumNodesElem ; k++){  
@@ -571,6 +573,7 @@ Matrix GetNodalForces(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 	
     /* 12º Free memory */
     free(Element_INT_FORCES.nV);
+    free(N_Ref_GP.nV);
 
   }  
 
