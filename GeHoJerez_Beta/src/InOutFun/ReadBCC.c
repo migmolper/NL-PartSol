@@ -1,4 +1,3 @@
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -10,7 +9,7 @@
 
 /***************************************************************************/
 
-void ReadBCC(char * Name_File, Mesh FEM_Mesh)
+BoundayConditions ReadBCC(char * Name_File, Mesh FEM_Mesh)
 /*
   Read the boundary conditions file :
   Inputs
@@ -19,11 +18,20 @@ void ReadBCC(char * Name_File, Mesh FEM_Mesh)
   FORMAT example 2D : BCC T#[1:100] SIGMA#[1]={0,0,0} V#[6]={0,0}
   FORMAT example 3D : BCC T#[1:100] SIGMA#[1]={0,0,0,0,0,0} V#[6]={0,0,0}
 
+  - Load format : 
+  LOAD_FILE NAME#name CURVE#curve.txt NUM_NODES#integer
+  LOAD_NODES 
+  .
+  . integer (NLIST)
+  .
+  END LIST_NODES
+
   Note : Only read those lines with a BCC in the init 
 */
 {
 
-  /* create a array with the number of steps and fill it with  V#[1]={-1} V#[6]={0} */
+  /* Create a array with the number of steps and fill it with  V#[1]={-1} V#[6]={0} */
+  BoundayConditions BCC;
   
   /* Simulation file */
   FILE * Sim_dat;
@@ -382,8 +390,57 @@ void ReadBCC(char * Name_File, Mesh FEM_Mesh)
       printf("\n");
     } /* End of read BC in the left */
 
+
+    if (strcmp(kwords[0],"LOAD_GP") == 0 ){
+
+      for(int i  = 1 ; i<nkwords ; i++){
+	nparam = parse (param,kwords[i],"#\n");	
+	if(nparam == 2){
+
+	  if(strcmp(param[0],"NAME") == 0){ 
+	    DatCurve.NList = param[1]; // name.txt
+	  }
+	  
+	  if(strcmp(param[0],"CURVE") == 0){ 
+	    DatCurve.NList = param[1]; // name.txt
+	  }
+	  if(strcmp(param[0],"NUM_NODES") == 0){ // integer
+	    DatCurve.NList = atoi(param[1]);
+	    DatCurve.List =
+	      (int *)Allocate_Array(DatCurve.NList,sizeof(int));
+	  }
+	  
+	}	
+      }
+      LOAD_GP FILE#name.txt NUM_NODES#integer;
+      LOAD_GP_LIST ;
+      .;
+      . integer (NLIST);
+      .;
+      END LOAD_GP_LIST;
+    }
+    if ( strcmp(kwords[0],"LIST_NODES") == 0 ){
+
+      /* Fill the list of nodes */
+      for(int i = 0 ; i<DatCurve.NList ; i++){
+	fgets(line_nodes, sizeof line_nodes, Sim_dat);
+	nparam = parse (param,line_nodes," \n");
+	if(nparam == 1){
+	  DatCurve.List[i] = atoi(param[0]);
+	}
+	else{
+	  puts("Error in ReadLoads_GP() : Check the list of nodes ");
+	  exit(0);
+	}
+      }
+    }
+
     
   }  /* End of read file */
   printf("End of read boundary conditions file !!! \n");
   fclose(Sim_dat);
-} /* void ReadBCC(char * Name_File) */
+
+  /* Return output */
+  return BCC;  
+  
+} /* BoundayConditions ReadBCC(char * Name_File) */

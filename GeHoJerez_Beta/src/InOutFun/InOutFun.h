@@ -9,16 +9,18 @@
 /* Word Parser */
 enum { MAXW = 100, MAXC = 1000 };
 
-/* Functions definitions : */
+/* Auxiliar functions */
 ParserDictionary InitParserDictionary(void);
-/* int GetWords(char *, char * [], int, int); */
-int parse (char **words, char *str, char *delims);
+Curve ReadCurve(char *);
+int parse(char **words, char *str, char *delims);
+
+/* Inputs */
 Mesh ReadGidMesh(char *);
 Matrix Read_CSV(char *, int);
 void ReadDatFile(char *);
 void ReadBCC(char * , Mesh);
-void GnuplotOutput1D(Matrix, Matrix, double, double, int, int, char[20]);
 
 /* Outputs */
+void WriteGnuplot(Matrix, Matrix, double, double, int, int, char[20]);
 void WriteVtk_MPM(char * , GaussPoint, Matrix, int);
 void WriteVtk_FEM(char * , Mesh, Matrix, int);

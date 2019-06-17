@@ -9,14 +9,21 @@
 /*******************************************************/
 
 typedef struct{
-  int N_rows;
-  int N_cols;
-  double n;
-  double * nV;
-  double ** nM;
-  char Info [100];
+  int N_rows; /* Number of rows */
+  int N_cols; /* Number of columns */
+  double n; /* Value if is an scalar */
+  double * nV; /* Value if is a vector */
+  double ** nM; /* Value if is a matrix */
+  char Info [100]; /* Aditional information */
 } Matrix;
 
+/*******************************************************/
+
+typedef struct{
+  int Num; /* Number of items in the curve */
+  double * Fx; /* Values for each time */
+  char Info [100]; /* Aditional information */
+} Curve;
 
 /*******************************************************/
 
@@ -53,7 +60,7 @@ typedef struct {
   Matrix Stress;
   /* Strain field */
   Matrix Strain;
-  /* Deformation gradient */
+  /* External forces */
   Matrix F;
   
 } Fields;
@@ -119,4 +126,23 @@ typedef struct {
   Matrix (* dNdX_ref)(Matrix );
     
 } Mesh;
+
+
+/*******************************************************/
+
+/* Boundary conditions definition */
+typedef struct {
+
+  /* Dimension where it is applied the BCC */
+  int Dim;
+  /* Number of nodes/GP with this BCC */
+  int NumNodes;
+  /* List of nodes with this BCC */
+  int * Nodes;
+  /* Curve with the value in the time */
+  Curve Value;
+  /* Some information about this BCC */
+  char Info [100];
+  
+} BoundayConditions;
 
