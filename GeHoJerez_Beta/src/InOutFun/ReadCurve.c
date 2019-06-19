@@ -13,18 +13,21 @@ Curve ReadCurve(char * Name_File)
   Read the external forces file :
   Inputs
   - Name_file : Name of the file
-  FORMAT example : 
+  FORMAT example custom curve: 
   DAT_CURVE SCALE#double NUM#integer
   CUSTOM_CURVE
   .
   . double (NVALUE)
   .
-  END CUSTOM_CURVE
+
+  FORMAT example constant curve:
+  DAT_CURVE SCALE#double NUM#integer
+  CONSTANT_CURVE
+
 */
 {
   /* Define load curve */
   Curve DatCurve;
-
 
   /* Scale parameter */
   double Scale;
@@ -34,14 +37,12 @@ Curve ReadCurve(char * Name_File)
 
   /* Auxiliar variable for reading the lines in the files */
   char line[MAXC] = {0};
-  char line_nodes[MAXC] = {0};
   char line_values[MAXC] = {0};
   
   /* Number of element in the line , just for check */
   int nkwords,nparam;
   char * kwords[MAXW] = {NULL};
   char * param[MAXW] = {NULL};
-
 
   /* Open and check .load file */
   Sim_dat = fopen(Name_File,"r");  
@@ -75,10 +76,10 @@ Curve ReadCurve(char * Name_File)
 
     if ( strcmp(kwords[0],"CUSTOM_CURVE") == 0 ){
       /* Allocate the curve */
-      Curve.Fx = (double *)Allocate_Array(DatCurve.Num,sizeof(double));
+      DatCurve.Fx = (double *)Allocate_Array(DatCurve.Num,sizeof(double));
       
       /* Fill the values of the curve */
-      for(int i = 0 ; i<DatCurve.NValue ; i++){
+      for(int i = 0 ; i<DatCurve.Num ; i++){
 	fgets(line_values, sizeof line_values, Sim_dat);
 	nparam = parse (param,line_values," \n");
 	if(nparam == 1){
@@ -88,13 +89,22 @@ Curve ReadCurve(char * Name_File)
 	  puts("Error in ReadLoads_GP() : Check the values of the curve ");
 	  exit(0);
 	}
+      }    
+    }
+
+    
+    if ( strcmp(kwords[0],"CONSTANT_CURVE") == 0 ){
+      /* Allocate the curve */
+      DatCurve.Fx = (double *)Allocate_Array(DatCurve.Num,sizeof(double));
+
+      /* Fill the values of the curve */
+      for(int i = 0 ; i<DatCurve.Num ; i++){
+	DatCurve.Fx[i] = Scale;
       }
-      
     }
 
     
   }/* End of read file */
-  printf("End of read load curve file !!! \n");
   fclose(Sim_dat);
 
   return DatCurve;

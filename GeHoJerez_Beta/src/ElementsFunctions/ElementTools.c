@@ -47,7 +47,8 @@ int ** GetNodalConnectivity(Mesh FEM_Mesh){
   int ** TableNeighbourNode;
   int ** NodeNeighbour;
   int * NumNeighbour;
-  TableNeighbourNode = (int **)Allocate_MatrixZ(FEM_Mesh.NumNodesMesh,MAXNEIGHBOUR,sizeof(int));
+  TableNeighbourNode = (int **)Allocate_MatrixZ(FEM_Mesh.NumNodesMesh,
+						MAXNEIGHBOUR,sizeof(int));
   NumNeighbour = (int *)Allocate_ArrayZ(FEM_Mesh.NumNodesMesh,sizeof(int));
 
   /* 1º Start the search of neighbour for each node */
@@ -98,9 +99,6 @@ int ** GetNodalConnectivity(Mesh FEM_Mesh){
   return NodeNeighbour; 
   
 }
-
-/*********************************************************************/
-
 
 /*********************************************************************/
 

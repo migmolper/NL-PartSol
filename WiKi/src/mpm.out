@@ -18,3 +18,6 @@
 \BOOKMARK [3][-]{subsubsection.4.3.1}{Material-point splitting}{subsection.4.3}% 18
 \BOOKMARK [3][-]{subsubsection.4.3.2}{Material-point splitting in case of extreme deformations}{subsection.4.3}% 19
 \BOOKMARK [3][-]{subsubsection.4.3.3}{Refining the computational grid}{subsection.4.3}% 20
+\BOOKMARK [1][-]{section.5}{Algorithms for the Material Point Method}{}% 21
+\BOOKMARK [2][-]{subsection.5.1}{Calculus of the natural coordinates of a Gauss point}{section.5}% 22
+\BOOKMARK [2][-]{subsection.5.2}{Local search of Gauss points}{section.5}% 23

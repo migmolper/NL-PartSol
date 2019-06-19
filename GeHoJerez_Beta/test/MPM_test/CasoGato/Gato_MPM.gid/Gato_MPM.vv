@@ -1,0 +1,33 @@
+BeginZE /home/migmolper2/Documentos/PHD/PROGRAMACION/CODIGOS/GeHoJerez/GeHoJerez_Beta/test/MPM_test/CasoGato/Gato.gid/Gato.vv
+   x -5.28246927261352539 3.49535822868347168
+   y 3.64634943008422852 -1.57968151569366455
+   z -4.66929435729980469 4.66929435729980469
+   e 3.41529512405395508
+   v 0 0 0
+   r 1
+   m 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1
+   c -0.859761297702789307 0.912865996360778809 0
+   pd 0
+   pno 0
+   pfo 0
+   pf 4
+   pv 0
+   NowUse 1
+   DrawingType 0
+   LightVector 90 90 150 0
+   OGLShadow(UseShadows) 0
+   OGLShadow(RenderMode) RenderNice
+   OGLShadow(ShadowBias) -0.002
+   OGLShadow(AmbientShadows) 1
+   OGLShadow(UseFBO) 0
+   OGLShadow(FBOSize) 2048
+   OGLShadow(DimmedLightFactor) 0.02
+   OGLStereo(UseStereo) 0
+   OGLStereo(RelativeEyeDistance) 1
+   OGLStereo(FlipEyes) 0
+   OGLStereo(StereoMode) AnaglyphColors
+   OGLStereo(EyeDistance) 0.075
+   OGLStereo(LeftEyeDistance) 1 0 0 1
+   OGLStereo(RightEyeDistance) 0 1 1 1
+EndZE /home/migmolper2/Documentos/PHD/PROGRAMACION/CODIGOS/GeHoJerez/GeHoJerez_Beta/test/MPM_test/CasoGato/Gato.gid/Gato.vv
+

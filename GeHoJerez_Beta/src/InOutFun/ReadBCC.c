@@ -9,17 +9,15 @@
 
 /***************************************************************************/
 
-BoundayConditions ReadBCC(char * Name_File, Mesh FEM_Mesh)
+BoundaryConditions ReadBCC(char * Name_File, Mesh FEM_Mesh)
 /*
   Read the boundary conditions file :
   Inputs
   - Name_file : Name of the file
-  FORMAT example 1D : BCC T#[1:100] SIGMA#[1]={0} V#[6]={0}
-  FORMAT example 2D : BCC T#[1:100] SIGMA#[1]={0,0,0} V#[6]={0,0}
-  FORMAT example 3D : BCC T#[1:100] SIGMA#[1]={0,0,0,0,0,0} V#[6]={0,0,0}
+  BCC_BOTTOM V#[0:1]={NAN,curve.txt}
 
   - Load format : 
-  LOAD_FILE NAME#name CURVE#curve.txt NUM_NODES#integer
+  LOAD_GP DIM#integer CURVE#curve.txt NUM_NODES#integer
   LOAD_NODES 
   .
   . integer (NLIST)
@@ -31,44 +29,37 @@ BoundayConditions ReadBCC(char * Name_File, Mesh FEM_Mesh)
 {
 
   /* Create a array with the number of steps and fill it with  V#[1]={-1} V#[6]={0} */
-  BoundayConditions BCC;
+  BoundaryConditions BCC;
   
   /* Simulation file */
   FILE * Sim_dat;
 
   /* Auxiliar variable for reading the lines in the files */
   char line[MAXC] = {0};
+  char line_nodes[MAXC] = {0};
   
   /* Number of element in the line , just for check */
   int nkwords,nparam;
   char * kwords[MAXW] = {NULL};
   char * param[MAXW] = {NULL};
 
-  /* Variable for the time parser */
-  int auxT;
-  char * T_range[MAXW] = {NULL};
+  /* /\* Variable for the time parser *\/ */
+  /* int auxT; */
+  /* char * T_range[MAXW] = {NULL}; */
   /* Variable for the velocity parser */
   int auxV,auxV_nod,auxV_val;
   char * V[MAXW] = {NULL};
   char * V_nod[MAXW] = {NULL};
   char * V_val[MAXW] = {NULL};
-  /* Variable for the stress parser */
-  int auxSIGMA,auxSIGMA_nod,auxSIGMA_val;
-  char * SIGMA[MAXW] = {NULL};
-  char * SIGMA_nod[MAXW] = {NULL};
-  char * SIGMA_val[MAXW] = {NULL};
-  /* Variables for the TOP, BOTTOM, RIGHT, LEFT */
-  double TOP_val = NAN;
-  double BOTTOM_val = NAN;
-  double RIGHT_val = NAN;
-  double LEFT_val = NAN;
-  /* Apply the BC */
-  int BC_nod;
+  /* /\* Variable for the stress parser *\/ */
+  /* int auxSIGMA,auxSIGMA_nod,auxSIGMA_val; */
+  /* char * SIGMA[MAXW] = {NULL}; */
+  /* char * SIGMA_nod[MAXW] = {NULL}; */
+  /* char * SIGMA_val[MAXW] = {NULL}; */
 
   printf("************************************************* \n");
   printf("Begin of set boundary conditions !!! \n");
   printf(" * Begin of read boundary files : %s \n",Name_File);
-  printf(" * Boundary conditions values : \n");
   
   /* Open and check .bcc file */
   Sim_dat = fopen(Name_File,"r");  
@@ -82,314 +73,249 @@ BoundayConditions ReadBCC(char * Name_File, Mesh FEM_Mesh)
 
     /* Read the line with the space as separators */
     nkwords = parse (kwords, line," \n");
+
     
-    /* General BCC */
-    if ( strcmp(kwords[0],"BCC") == 0 ){
-      for(int i  = 0 ; i<nkwords ; i++){ /* Loop over the words */
-	/* Parse the keywords parameters */
-	nparam = parse (param,kwords[i],"#\n");
-	if(nparam>1){ /* Read only keywords with an asignement */
-
-	  /* Parse the time range (init:end)*/
-	  if( strcmp(param[0],"T") == 0 ){
-	    auxT = parse (T_range,param[1],"[:]\n");
-	    if(auxT==2){
-	      printf("\t -> Range : [%i -> %i] \n",atoi(T_range[0]),atoi(T_range[1]));
-	    }
-	    else if(auxT==1){
-	      printf("\t -> Instant : %i \n",atoi(T_range[0]));
-	    }
-	  } /* End parse Time */
-
-	  /* Parse the Velocity BCC */
-	  if(strcmp(param[0],"V") == 0){
-	    auxV = parse(V,param[1],"=\n");
-	    if(auxV<2){
-	      printf("Error in ReadBCC() : Check in input velocity !! \n");
-	      exit(0);
-	    }
-	    /* Read the nodes to impose the BCC :*/
-	    auxV_nod = parse(V_nod,V[0],"[:]\n");
-	    /* Read the value to impose */
-	    auxV_val = parse(V_val,V[1],"{,}\n");
-	    for(int i = 0 ; i<auxV_nod ; i++){
-	      printf("\t V[%i] = ",atoi(V_nod[i]));
-	      printf("{");
-	      for(int j  = 0 ; j<auxV_val ; j++ ){
-		printf(" %f ",atof(V_val[j]));
-	      }
-	      printf("}\n");
-	    }
-	  } /* End parse Velocity BCC */
-
-	  /* Parse the Stress BCC */
-	  if(strcmp(param[0],"SIGMA") == 0){
-	    auxSIGMA = parse(SIGMA,param[1],"=\n");
-	    if(auxSIGMA<2){
-	      printf("Error in ReadBCC() : Check in input stress !! \n");
-	      exit(0);
-	    }
-	    /* Read the nodes to impose the BCC :*/
-	    auxSIGMA_nod = parse(SIGMA_nod,SIGMA[0],"[,]\n");
-	    /* Read the value to impose */
-	    auxSIGMA_val = parse(SIGMA_val,SIGMA[1],"={,}\n");
-	    for(int i = 0 ; i<auxSIGMA_nod ; i++){
-	      printf("\t SIGMA[%i] = ",atoi(SIGMA_nod[i]));
-	      printf("{");
-	      for(int j  = 0 ; j<auxSIGMA_val ; j++ ){
-		printf(" %f ",atof(SIGMA_val[j]));
-	      }
-	      printf("}\n");
-	    }	    
-	  } /* End parse Stress BCC */
-	  
-	  /* Other parsers */
-
-	  /* Fill output array */
-	  /* if(auxT==1){ /\* Fill a instant *\/ */
-	  /*   int T_i = atoi(T_range[0]);	     */
-	  /* } */
-	  /* else if(auxT == 2){ /\* Fill a time range *\/ */
-	  /*   for(int T_i = atoi(T_range[0]) ; i<= atoi(T_range[1]) ; i++){ */
-	  /*     BCC[T_i][auxSIGMA_nod] = ; */
-	  /*   } */
-	  /* } */
-	  
-	} /* Read word by word */
-      } /* Read only keywords with an asignement */
-      printf("\n");
-    } /* Read general BCC */
-
     /* Set BCC in those node in the top of the domain */
     if ( strcmp(kwords[0],"BCC_TOP") == 0 ){
+
+      /* Screen output */
+      printf(" * This boundary condition is in the TOP \n");
+      
       for(int i  = 0 ; i<nkwords ; i++){ /* Loop over the words */
 	/* Parse the keywords parameters */
 	nparam = parse (param,kwords[i],"#\n");
 	if(nparam>1){ /* Read only keywords with an asignement */
 
-	  /* Parse the time range (init:end)*/
-	  if( strcmp(param[0],"T") == 0 ){
-	    auxT = parse (T_range,param[1],"[:]\n");
-	    if(auxT==2){
-	      printf("\t -> Range : [%i -> %i] \n",atoi(T_range[0]),atoi(T_range[1]));
-	    }
-	    else if(auxT==1){
-	      printf("\t -> Instant : %i \n",atoi(T_range[0]));
-	    }
-	    else if(auxT==0){
-	      printf("\t -> This boundary condition will be applied all the simulation \n");
-	    }
-	  } /* End parse Time */
-
-	  /* Parse the position of the boundary */
-	  if( strcmp(param[0],"TOP") == 0 ){
-	    auxT = parse (T_range,param[1],"[=]\n");
-	    TOP_val = atof(T_range[1]);
-	    if(auxT==2){	      
-	      printf("\t -> Boundary : %s = %f \n",T_range[0],TOP_val);	      
-	    }
-	  } /* End parse position of the boundary */	  
+	  /* Apply this boundary conditions */
+	  BCC.Nodes = FEM_Mesh.TOP;
+	  BCC.NumNodes = FEM_Mesh.NumTOP;
 	  
 	  /* Parse the Velocity BCC */
 	  if(strcmp(param[0],"V") == 0){
+
+	    /* Screen output */
+	    printf(" * This boundary condition is over the velocity field \n");
+	    
 	    auxV = parse(V,param[1],"=\n");
+	    if(auxV != 2){
+	      puts("Error in ReadBCC() : Check the input format of the velocity !!!");
+	      exit(0);
+	    }
+
 	    /* Read the DOFS to impose the BCC :*/
 	    auxV_nod = parse(V_nod,V[0],"[:]\n");
-	    /* Read the value to impose */
-	    auxV_val = parse(V_val,V[1],"{,}\n");
 	    for(int j = 0 ; j<auxV_nod ; j++){
 	      if(atoi(V_nod[j]) == 1){ /* This DOF is impossed */
-	  	printf("\t V[%i] = %f \n",j,atof(V_val[j]));
-	  	/* Apply this boundary conditions */
-	  	for(int k = 0 ; k<FEM_Mesh.NumNodesBound ; k++){
-	  	  BC_nod = FEM_Mesh.NodesBound[k][0];
-	  	    if(FEM_Mesh.Coordinates.nM[BC_nod][1] >= TOP_val){
-		      FEM_Mesh.NodesBound[k][j+1] = 1;
-	  	      FEM_Mesh.ValueBC.nM[k][j] = atof(V_val[j]);
-	  	    }
-	  	} /* End of apply this boundary conditions */
+		BCC.Dim = atoi(V_nod[j]);
 	      }
 	    }
-	  } /* End parse Velocity BCC */
+
+	    /* Screen output */
+	    printf(" * This boundary condition is over the %i direction \n",BCC.Dim);
+	    
+	    /* Read curve with the value to impose */
+	    auxV_val = parse(V_val,V[1],"{,}\n");
+	    if(auxV_val != NumberDimensions){
+	      puts("Error in ReadBCC() : Check the number of dim of the velocity !!!");
+	      exit(0);
+	    }	    
+	    /* Init reading curve */
+	    printf(" * Begin of read load curve file !!! \n");
+	    printf(" \t -> WORKING ... \n");
+	    BCC.Value = ReadCurve(V_val[BCC.Dim]);
+	    printf(" \t -> DONE !!! \n");
+	    printf(" * End of read load curve file !!! \n");
+
+	    /* Copy information of the BCC */
+	    strcpy(BCC.Info,"V_TOP");
+	    
+	  }
 	  
-	} /* Read word by word */
-      } /* Read only keywords with an asignement */
-      printf("\n");
-      
+	} /* End parse Velocity BCC */ 
+      } /* Read word by word */
     } /* End of read BC in the top */
 
     /* Set BCC in those node in the bottom of the domain */
     if ( strcmp(kwords[0],"BCC_BOTTOM") == 0 ){
+
+      /* Screen output */
+      printf(" * This boundary condition is in the BOTTOM \n");
+      
       for(int i  = 0 ; i<nkwords ; i++){ /* Loop over the words */
 	/* Parse the keywords parameters */
 	nparam = parse (param,kwords[i],"#\n");
 	if(nparam>1){ /* Read only keywords with an asignement */
 
-	  /* Parse the time range (init:end)*/
-	  if( strcmp(param[0],"T") == 0 ){
-	    auxT = parse (T_range,param[1],"[:]\n");
-	    if(auxT==2){
-	      printf("\t -> Range : [%i -> %i] \n",atoi(T_range[0]),atoi(T_range[1]));
-	    }
-	    else if(auxT==1){
-	      printf("\t -> Instant : %i \n",atoi(T_range[0]));
-	    }
-	    else if(auxT==0){
-	      printf("\t -> This boundary condition will be applied all the simulation \n");
-	    }
-	  } /* End parse Time */
-
-	  /* Parse the position of the boundary */
-	  if( strcmp(param[0],"BOTTOM") == 0 ){
-	    auxT = parse (T_range,param[1],"[=]\n");
-	    BOTTOM_val = atof(T_range[1]);
-	    if(auxT==2){	      
-	      printf("\t -> Boundary : %s = %f \n",T_range[0],BOTTOM_val);	      
-	    }
-	  } /* End parse position of the boundary */
-
-	  
+	  /* Apply this boundary conditions */
+	  BCC.Nodes = FEM_Mesh.BOTTOM;
+	  BCC.NumNodes = FEM_Mesh.NumBOTTOM;
+	  	  
 	  /* Parse the Velocity BCC */
 	  if(strcmp(param[0],"V") == 0){
+
+	    /* Screen output */
+	    printf(" * This boundary condition is over the velocity field \n");
+	    
 	    auxV = parse(V,param[1],"=\n");
+	    if(auxV != 2){
+	      puts("Error in ReadBCC() : Check the input format of the velocity !!!");
+	      exit(0);
+	    }
+
 	    /* Read the DOFS to impose the BCC :*/
 	    auxV_nod = parse(V_nod,V[0],"[:]\n");
-	    /* Read the value to impose */
-	    auxV_val = parse(V_val,V[1],"{,}\n");
 	    for(int j = 0 ; j<auxV_nod ; j++){
 	      if(atoi(V_nod[j]) == 1){ /* This DOF is impossed */
-	  	printf("\t V[%i] = %f \n",j,atof(V_val[j]));
-	  	/* Apply this boundary conditions */
-	  	for(int k = 0 ; k<FEM_Mesh.NumNodesBound ; k++){
-	  	  BC_nod = FEM_Mesh.NodesBound[k][0];
-		  if(FEM_Mesh.Coordinates.nM[BC_nod][1] <= BOTTOM_val){
-		    FEM_Mesh.NodesBound[k][j+1] = 1;
-		    FEM_Mesh.ValueBC.nM[k][j] = atof(V_val[j]);
-		  }
-	  	} /* End of apply this boundary conditions */
+		BCC.Dim = atoi(V_nod[j]);
 	      }
 	    }
-	  } /* End parse Velocity BCC */
 
-	} /* Read word by word */
-      } /* Read only keywords with an asignement */
-      printf("\n");
+	    /* Screen output */
+	    printf(" * This boundary condition is over the %i direction \n",BCC.Dim);
+	    
+	    /* Read curve with the value to impose */
+	    auxV_val = parse(V_val,V[1],"{,}\n");
+	    if(auxV_val != NumberDimensions){
+	      puts("Error in ReadBCC() : Check the number of dim of the velocity !!!");
+	      exit(0);
+	    }	    
+	    /* Init reading curve */
+	    printf(" * Begin of read load curve file !!! \n");
+	    printf(" \t -> WORKING ... \n");
+	    BCC.Value = ReadCurve(V_val[BCC.Dim]);
+	    printf(" \t -> DONE !!! \n");
+	    printf(" * End of read load curve file !!! \n");
+
+	    /* Copy information of the BCC */
+	    strcpy(BCC.Info,"V_BOTTOM");
+	    
+	  }
+	  
+	} /* End parse Velocity BCC */ 
+      } /* Read word by word */
     } /* End of read BC in the bottom */
 
     /* Set BCC in those node in the right of the domain */
     if ( strcmp(kwords[0],"BCC_RIGHT") == 0 ){
+
+      /* Screen output */
+      printf(" * This boundary condition is in the RIGHT \n");
+      
       for(int i  = 0 ; i<nkwords ; i++){ /* Loop over the words */
-    	/* Parse the keywords parameters */
-    	nparam = parse (param,kwords[i],"#\n");
-    	if(nparam>1){ /* Read only keywords with an asignement */
+	/* Parse the keywords parameters */
+	nparam = parse (param,kwords[i],"#\n");
+	if(nparam>1){ /* Read only keywords with an asignement */
 
-    	  /* Parse the time range (init:end)*/
-    	  if( strcmp(param[0],"T") == 0 ){
-    	    auxT = parse (T_range,param[1],"[:]\n");
-    	    if(auxT==2){
-    	      printf("\t -> Range : [%i -> %i] \n",atoi(T_range[0]),atoi(T_range[1]));
-    	    }
-    	    else if(auxT==1){
-    	      printf("\t -> Instant : %i \n",atoi(T_range[0]));
-    	    }
-    	    else if(auxT==0){
-    	      printf("\t -> This boundary condition will be applied all the simulation \n");
-    	    }
-    	  } /* End parse Time */
-
-    	  /* Parse the position of the boundary */
-    	  if( strcmp(param[0],"RIGHT") == 0 ){
-    	    auxT = parse (T_range,param[1],"[=]\n");
-    	    RIGHT_val = atof(T_range[1]);
-    	    if(auxT==2){
-    	      printf("\t -> Boundary : %s = %f \n",T_range[0],RIGHT_val);
-    	    }
-    	  } /* End parse position of the boundary */
-
+	  /* Apply this boundary conditions */
+	  BCC.Nodes = FEM_Mesh.RIGHT;
+	  BCC.NumNodes = FEM_Mesh.NumRIGHT;
+ 	  	   
 	  /* Parse the Velocity BCC */
 	  if(strcmp(param[0],"V") == 0){
+
+	    /* Screen output */
+	    printf(" * This boundary condition is over the velocity field \n");
+	    
 	    auxV = parse(V,param[1],"=\n");
+	    if(auxV != 2){
+	      puts("Error in ReadBCC() : Check the input format of the velocity !!!");
+	      exit(0);
+	    }
+
 	    /* Read the DOFS to impose the BCC :*/
 	    auxV_nod = parse(V_nod,V[0],"[:]\n");
-	    /* Read the value to impose */
-	    auxV_val = parse(V_val,V[1],"{,}\n");
 	    for(int j = 0 ; j<auxV_nod ; j++){
 	      if(atoi(V_nod[j]) == 1){ /* This DOF is impossed */
-	  	printf("\t V[%i] = %f \n",j,atof(V_val[j]));
-	  	/* Apply this boundary conditions */
-	  	for(int k = 0 ; k<FEM_Mesh.NumNodesBound ; k++){
-	  	  BC_nod = FEM_Mesh.NodesBound[k][0];
-	  	    if(FEM_Mesh.Coordinates.nM[BC_nod][0] >= RIGHT_val){
-		      FEM_Mesh.NodesBound[k][j+1] = 1;
-	  	      FEM_Mesh.ValueBC.nM[k][j] = atof(V_val[j]);
-	  	    }
-	  	} /* End of apply this boundary conditions */
+		BCC.Dim = atoi(V_nod[j]);
 	      }
 	    }
-	  } /* End parse Velocity BCC */
 
-    	} /* Read word by word */
-      } /* Read only keywords with an asignement */
-      printf("\n");
+	    /* Screen output */
+	    printf(" * This boundary condition is over the %i direction \n",BCC.Dim);
+	    
+	    /* Read curve with the value to impose */
+	    auxV_val = parse(V_val,V[1],"{,}\n");
+	    if(auxV_val != NumberDimensions){
+	      puts("Error in ReadBCC() : Check the number of dim of the velocity !!!");
+	      exit(0);
+	    }	    
+	    /* Init reading curve */
+	    printf(" * Begin of read load curve file !!! \n");
+	    printf(" \t -> WORKING ... \n");
+	    BCC.Value = ReadCurve(V_val[BCC.Dim]);
+	    printf(" \t -> DONE !!! \n");
+	    printf(" * End of read load curve file !!! \n");
+
+	    /* Copy information of the BCC */
+	    strcpy(BCC.Info,"V_RIGHT");
+	    
+	  }
+	  
+	} /* End parse Velocity BCC */ 
+      } /* Read word by word */
     } /* End of read BC in the right */
 
     /* Set BCC in those node in the left of the domain */
     if ( strcmp(kwords[0],"BCC_LEFT") == 0 ){
+
+      /* Screen output */
+      printf(" * This boundary condition is in the LEFT \n");
+     
       for(int i  = 0 ; i<nkwords ; i++){ /* Loop over the words */
-    	/* Parse the keywords parameters */
-    	nparam = parse (param,kwords[i],"#\n");
-    	if(nparam>1){ /* Read only keywords with an asignement */
+	/* Parse the keywords parameters */
+	nparam = parse (param,kwords[i],"#\n");
+	if(nparam>1){ /* Read only keywords with an asignement */
 
-    	  /* Parse the time range (init:end)*/
-    	  if( strcmp(param[0],"T") == 0 ){
-    	    auxT = parse (T_range,param[1],"[:]\n");
-    	    if(auxT==2){
-    	      printf("\t -> Range : [%i -> %i] \n",atoi(T_range[0]),atoi(T_range[1]));
-    	    }
-    	    else if(auxT==1){
-    	      printf("\t -> Instant : %i \n",atoi(T_range[0]));
-    	    }
-    	    else if(auxT==0){
-    	      printf("\t -> This boundary condition will be applied all the simulation \n");
-    	    }
-    	  } /* End parse Time */
-
-    	  /* Parse the position of the boundary */
-    	  if( strcmp(param[0],"LEFT") == 0 ){
-    	    auxT = parse (T_range,param[1],"[=]\n");
-    	    LEFT_val = atof(T_range[1]);
-    	    if(auxT==2){
-    	      printf("\t -> Boundary : %s = %f \n",T_range[0],LEFT_val);
-    	    }
-    	  } /* End parse position of the boundary */
-
+	  /* Apply this boundary conditions */
+	  BCC.Nodes = FEM_Mesh.LEFT;
+	  BCC.NumNodes = FEM_Mesh.NumLEFT;
+	  
 	  /* Parse the Velocity BCC */
 	  if(strcmp(param[0],"V") == 0){
+
+	    /* Screen output */
+	    printf(" * This boundary condition is over the velocity field \n");
+	    
 	    auxV = parse(V,param[1],"=\n");
+	    if(auxV != 2){
+	      puts("Error in ReadBCC() : Check the input format of the velocity !!!");
+	      exit(0);
+	    }
+
 	    /* Read the DOFS to impose the BCC :*/
 	    auxV_nod = parse(V_nod,V[0],"[:]\n");
-	    /* Read the value to impose */
-	    auxV_val = parse(V_val,V[1],"{,}\n");
 	    for(int j = 0 ; j<auxV_nod ; j++){
 	      if(atoi(V_nod[j]) == 1){ /* This DOF is impossed */
-	  	printf("\t V[%i] = %f \n",j,atof(V_val[j]));
-	  	/* Apply this boundary conditions */
-	  	for(int k = 0 ; k<FEM_Mesh.NumNodesBound ; k++){
-	  	  BC_nod = FEM_Mesh.NodesBound[k][0];
-	  	    if(FEM_Mesh.Coordinates.nM[BC_nod][0] <= LEFT_val){
-		      FEM_Mesh.NodesBound[k][j+1] = 1;
-	  	      FEM_Mesh.ValueBC.nM[k][j] = atof(V_val[j]);
-	  	    }
-	  	} /* End of apply this boundary conditions */
+		BCC.Dim = atoi(V_nod[j]);
 	      }
 	    }
-	  } /* End parse Velocity BCC */
 
-    	} /* Read word by word */
-      } /* Read only keywords with an asignement */
-      printf("\n");
+	    /* Screen output */
+	    printf(" * This boundary condition is over the %i direction \n",BCC.Dim);
+	    
+	    /* Read curve with the value to impose */
+	    auxV_val = parse(V_val,V[1],"{,}\n");
+	    if(auxV_val != NumberDimensions){
+	      puts("Error in ReadBCC() : Check the number of dim of the velocity !!!");
+	      exit(0);
+	    }	    
+	    /* Init reading curve */
+	    printf(" * Begin of read load curve file !!! \n");
+	    printf(" \t -> WORKING ... \n");
+	    BCC.Value = ReadCurve(V_val[BCC.Dim]);
+	    printf(" \t -> DONE !!! \n");
+	    printf(" * End of read load curve file !!! \n");
+
+	    /* Copy information of the BCC */
+	    strcpy(BCC.Info,"V_LEFT");
+	    
+	  }
+	  
+	} /* End parse Velocity BCC */ 
+      } /* Read word by word */
     } /* End of read BC in the left */
 
+    /* Precribed loads in some material point */
 
     if (strcmp(kwords[0],"LOAD_GP") == 0 ){
 
@@ -397,36 +323,29 @@ BoundayConditions ReadBCC(char * Name_File, Mesh FEM_Mesh)
 	nparam = parse (param,kwords[i],"#\n");	
 	if(nparam == 2){
 
-	  if(strcmp(param[0],"NAME") == 0){ 
-	    DatCurve.NList = param[1]; // name.txt
-	  }
-	  
+	  if(strcmp(param[0],"DIM") == 0){ 
+	    BCC.Dim = atoi(param[1]); 
+	  }	  
 	  if(strcmp(param[0],"CURVE") == 0){ 
-	    DatCurve.NList = param[1]; // name.txt
+	    BCC.Value = ReadCurve(param[1]);
 	  }
 	  if(strcmp(param[0],"NUM_NODES") == 0){ // integer
-	    DatCurve.NList = atoi(param[1]);
-	    DatCurve.List =
-	      (int *)Allocate_Array(DatCurve.NList,sizeof(int));
+	    BCC.NumNodes = atoi(param[1]);
+	    BCC.Nodes =
+	      (int *)Allocate_Array(BCC.NumNodes,sizeof(int));
 	  }
 	  
 	}	
       }
-      LOAD_GP FILE#name.txt NUM_NODES#integer;
-      LOAD_GP_LIST ;
-      .;
-      . integer (NLIST);
-      .;
-      END LOAD_GP_LIST;
     }
     if ( strcmp(kwords[0],"LIST_NODES") == 0 ){
 
       /* Fill the list of nodes */
-      for(int i = 0 ; i<DatCurve.NList ; i++){
+      for(int i = 0 ; i<BCC.NumNodes ; i++){
 	fgets(line_nodes, sizeof line_nodes, Sim_dat);
 	nparam = parse (param,line_nodes," \n");
 	if(nparam == 1){
-	  DatCurve.List[i] = atoi(param[0]);
+	  BCC.Nodes[i] = atoi(param[0]);
 	}
 	else{
 	  puts("Error in ReadLoads_GP() : Check the list of nodes ");

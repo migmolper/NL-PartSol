@@ -80,17 +80,28 @@ int main(int argc, char *argv[])
   /***********************************************************************/
 
   /***********************************************************************/
+  /******** INITIALIZE AUXILIAR STRUCTURES FOR BOUNDARY CONDITIONS *******/
+  /***********************************************************************/
+  /* Define BC variables */
+  BoundaryConditions BCC_Momentum_BOTTOM;
+  /* Read and imposse the boundary conditions in the bottom of the domain */
+  BCC_Momentum_BOTTOM = ReadBCC(BounCondFileName,FEM_Mesh);
+  /***********************************************************************/
+  /***********************************************************************/
+
+  /***********************************************************************/
   /****************** INITIALIZE GAUSS-POINT MESH ************************/
   /***********************************************************************/
-  /* Read and imposse the boundary conditions */
-  ReadBCC(BounCondFileName,FEM_Mesh);
   /* Define Gauss point mesh and initialize it */
   GP_Mesh  = Initialize_GP_Mesh(MPM_MeshFileName,InputFields,Density,D_e);
-
   /***********************************************************************/
   /***********************************************************************/
 
+  printf("************************************************* \n");
+  printf(" Begin of the global search of the GP over the mesh \n");
+  printf(" \t WORKING ... \n");
   GlobalSearchGaussPoints(GP_Mesh,FEM_Mesh);
+  printf(" DONE !!! \n");
   
   /***********************************************************************/
   /********************** START THE MPM CALCULUS *************************/
@@ -123,7 +134,7 @@ int main(int argc, char *argv[])
     printf("************************************************* \n");
     printf(" Third step : Set the essential BCC (over P) \n");
     printf(" \t WORKING ... \n");
-    ApplyBoundaryCondition_Nod(FEM_Mesh,Nodal_MOMENTUM,TimeStep);
+    BCC_Nod_Momentum(FEM_Mesh,BCC_Momentum_BOTTOM,Nodal_MOMENTUM,TimeStep);
     printf(" DONE !!! \n");
 
     /* Four step : Update the particle stress state */
@@ -171,20 +182,25 @@ int main(int argc, char *argv[])
 
     /* Eight step : Search the GP in the mesh */
     printf("************************************************* \n");
-    printf(" Zero step : Search the GP in the mesh \n");
+    printf(" Eight step : Search the GP in the mesh \n");
     printf(" \t WORKING ... \n");
     /* GlobalSearchGaussPoints(GP_Mesh,FEM_Mesh); */
     LocalSearchGaussPoints(GP_Mesh,FEM_Mesh);
     printf(" DONE !!! \n");
 
-    /* Nine step : Store all the material properties in the particles so that the deformed grid
-       can be discarted */
+    /* Nine step : Print nodal values */
     printf("************************************************* \n");
-    printf(" Eight step : Reset nodal values of the mesh \n");
+    printf(" Nine step : Print nodal values \n");
     printf(" \t WORKING ... \n");
-    /* Print nodal values*/
-    /* WriteVtk_FEM("Mesh",FEM_Mesh,Nodal_MOMENTUM,TimeStep); */
-    /* Reset nodal values */
+    WriteVtk_FEM("Mesh",FEM_Mesh,Nodal_MOMENTUM,TimeStep);
+    printf(" DONE !!! \n");
+    
+    /* Ten step : Store all the material properties in the particles
+       so that the deformed grid can be discarted */
+    printf("************************************************* \n");
+    printf(" Ten step : Reset nodal values of the mesh \n");
+    printf(" \t WORKING ... \n");
+     /* Reset nodal values */
     free(Nodal_MASS_MOMENTUM.nM);
     free(Nodal_VELOCITY.nM);
     free(Nodal_TOT_FORCES.nM);

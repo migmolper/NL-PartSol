@@ -212,112 +212,117 @@ void WriteVtk_FEM(char * Name_File, Mesh ElementMesh,
     fprintf(Vtk_file,"%i\n",
 	    ElementMesh.ActiveNode[i]);
   } 
-  
-  NumberFields = parse (FieldsList,List_Nod_Fields.Info,";\n");
 
-  /* Auxiliar index for the input fields */
-  i_Field = 0;
+  if(List_Nod_Fields.nM != NULL){
+    
+    NumberFields = parse (FieldsList,List_Nod_Fields.Info,";\n");
 
-  /* Loop over the fields */
-  for(int i = 0 ; i<NumberFields ; i++){
-    if(strcmp(FieldsList[i],"MASS") == 0){
-      fprintf(Vtk_file,"SCALARS Nod_Mass float \n");
-      fprintf(Vtk_file,"LOOKUP_TABLE default \n");
-      for(int j =  0 ; j<ElementMesh.NumNodesMesh ; j++){
-	fprintf(Vtk_file,"%f \n",List_Nod_Fields.nM[i_Field][j]);
+    /* Auxiliar index for the input fields */
+    i_Field = 0;
+
+    /* Loop over the fields */
+    for(int i = 0 ; i<NumberFields ; i++){
+      if(strcmp(FieldsList[i],"MASS") == 0){
+	fprintf(Vtk_file,"SCALARS Nod_Mass float \n");
+	fprintf(Vtk_file,"LOOKUP_TABLE default \n");
+	for(int j =  0 ; j<ElementMesh.NumNodesMesh ; j++){
+	  fprintf(Vtk_file,"%f \n",List_Nod_Fields.nM[i_Field][j]);
+	}
+	/* Update the index of the field */
+	i_Field += 1;
       }
-      /* Update the index of the field */
-      i_Field += 1;
+
+      if(strcmp(FieldsList[i],"MOMENTUM") == 0){
+	fprintf(Vtk_file,"VECTORS %s float \n","MOMENTUM");
+	for(int j =  0 ; j<ElementMesh.NumNodesMesh ; j++){
+	  /* Print the dimensions of the array */
+	  for(int k = 0 ; k<3 ; k++){
+
+	    if(k<NumberDimensions)
+	      fprintf(Vtk_file,"%f ",List_Nod_Fields.nM[i_Field+k][j]);
+	    else
+	      fprintf(Vtk_file,"%f ",0.0);
+	  
+	  }
+	  fprintf(Vtk_file,"\n");	
+	}
+	/* Update the index of the field */
+	i_Field += NumberDimensions ;
+      }
+
+      if(strcmp(FieldsList[i],"VELOCITY") == 0){
+	fprintf(Vtk_file,"VECTORS %s float \n","VELOCITY");
+	for(int j =  0 ; j<ElementMesh.NumNodesMesh ; j++){
+	  /* Print the dimensions of the array */
+	  for(int k = 0 ; k<NumberDimensions ; k++){
+	    fprintf(Vtk_file,"%f ",List_Nod_Fields.nM[i_Field+k][j]);
+	  }
+	  /* Add the rest of the coordinates : is compulsary to add 3 */
+	  for(int k = 0 ; k<(3-NumberDimensions) ; k++){
+	    fprintf(Vtk_file,"%f ",0.0);
+	  }
+	  fprintf(Vtk_file,"\n");	
+	}
+	/* Update the index of the field */
+	i_Field += NumberDimensions ;
+      }
+
+
+      if(strcmp(FieldsList[i],"F_INT") == 0){
+	fprintf(Vtk_file,"VECTORS %s float \n","F_INT");
+	for(int j =  0 ; j<ElementMesh.NumNodesMesh ; j++){
+	  /* Print the dimensions of the array */
+	  for(int k = 0 ; k<NumberDimensions ; k++){
+	    fprintf(Vtk_file,"%f ",List_Nod_Fields.nM[i_Field+k][j]);
+	  }
+	  /* Add the rest of the coordinates : is compulsary to add 3 */
+	  for(int k = 0 ; k<(3-NumberDimensions) ; k++){
+	    fprintf(Vtk_file,"%f ",0.0);
+	  }
+	  fprintf(Vtk_file,"\n");	
+	}
+	/* Update the index of the field */
+	i_Field += NumberDimensions ;
+      }
+
+
+      if(strcmp(FieldsList[i],"F_GRAV") == 0){
+	fprintf(Vtk_file,"VECTORS %s float \n","F_GRAV");
+	for(int j =  0 ; j<ElementMesh.NumNodesMesh ; j++){
+	  /* Print the dimensions of the array */
+	  for(int k = 0 ; k<NumberDimensions ; k++){
+	    fprintf(Vtk_file,"%f ",List_Nod_Fields.nM[i_Field+k][j]);
+	  }
+	  /* Add the rest of the coordinates : is compulsary to add 3 */
+	  for(int k = 0 ; k<(3-NumberDimensions) ; k++){
+	    fprintf(Vtk_file,"%f ",0.0);
+	  }
+	  fprintf(Vtk_file,"\n");	
+	}
+	/* Update the index of the field */
+	i_Field += NumberDimensions ;
+      }
+
+      if(strcmp(FieldsList[i],"F_TOT") == 0){
+	fprintf(Vtk_file,"VECTORS %s float \n","F_TOT");
+	for(int j =  0 ; j<ElementMesh.NumNodesMesh ; j++){
+	  /* Print the dimensions of the array */
+	  for(int k = 0 ; k<NumberDimensions ; k++){
+	    fprintf(Vtk_file,"%f ",List_Nod_Fields.nM[i_Field+k][j]);
+	  }
+	  /* Add the rest of the coordinates : is compulsary to add 3 */
+	  for(int k = 0 ; k<(3-NumberDimensions) ; k++){
+	    fprintf(Vtk_file,"%f ",0.0);
+	  }
+	  fprintf(Vtk_file,"\n");	
+	}
+	/* Update the index of the field */
+	i_Field += NumberDimensions ;
+      }       
+
     }
 
-    if(strcmp(FieldsList[i],"MOMENTUM") == 0){
-      fprintf(Vtk_file,"VECTORS %s float \n","MOMENTUM");
-      for(int j =  0 ; j<ElementMesh.NumNodesMesh ; j++){
-	/* Print the dimensions of the array */
-	for(int k = 0 ; k<NumberDimensions ; k++){
-	  fprintf(Vtk_file,"%f ",List_Nod_Fields.nM[i_Field+k][j]);
-	}
-	/* Add the rest of the coordinates : is compulsary to add 3 */
-	for(int k = 0 ; k<(3-NumberDimensions) ; k++){
-	  fprintf(Vtk_file,"%f ",0.0);
-	}
-	fprintf(Vtk_file,"\n");	
-      }
-      /* Update the index of the field */
-      i_Field += NumberDimensions ;
-    }
-
-    if(strcmp(FieldsList[i],"VELOCITY") == 0){
-      fprintf(Vtk_file,"VECTORS %s float \n","VELOCITY");
-      for(int j =  0 ; j<ElementMesh.NumNodesMesh ; j++){
-	/* Print the dimensions of the array */
-	for(int k = 0 ; k<NumberDimensions ; k++){
-	  fprintf(Vtk_file,"%f ",List_Nod_Fields.nM[i_Field+k][j]);
-	}
-	/* Add the rest of the coordinates : is compulsary to add 3 */
-	for(int k = 0 ; k<(3-NumberDimensions) ; k++){
-	  fprintf(Vtk_file,"%f ",0.0);
-	}
-	fprintf(Vtk_file,"\n");	
-      }
-      /* Update the index of the field */
-      i_Field += NumberDimensions ;
-    }
-
-
-    if(strcmp(FieldsList[i],"F_INT") == 0){
-      fprintf(Vtk_file,"VECTORS %s float \n","F_INT");
-      for(int j =  0 ; j<ElementMesh.NumNodesMesh ; j++){
-	/* Print the dimensions of the array */
-	for(int k = 0 ; k<NumberDimensions ; k++){
-	  fprintf(Vtk_file,"%f ",List_Nod_Fields.nM[i_Field+k][j]);
-	}
-	/* Add the rest of the coordinates : is compulsary to add 3 */
-	for(int k = 0 ; k<(3-NumberDimensions) ; k++){
-	  fprintf(Vtk_file,"%f ",0.0);
-	}
-	fprintf(Vtk_file,"\n");	
-      }
-      /* Update the index of the field */
-      i_Field += NumberDimensions ;
-    }
-
-
-    if(strcmp(FieldsList[i],"F_GRAV") == 0){
-      fprintf(Vtk_file,"VECTORS %s float \n","F_GRAV");
-      for(int j =  0 ; j<ElementMesh.NumNodesMesh ; j++){
-	/* Print the dimensions of the array */
-	for(int k = 0 ; k<NumberDimensions ; k++){
-	  fprintf(Vtk_file,"%f ",List_Nod_Fields.nM[i_Field+k][j]);
-	}
-	/* Add the rest of the coordinates : is compulsary to add 3 */
-	for(int k = 0 ; k<(3-NumberDimensions) ; k++){
-	  fprintf(Vtk_file,"%f ",0.0);
-	}
-	fprintf(Vtk_file,"\n");	
-      }
-      /* Update the index of the field */
-      i_Field += NumberDimensions ;
-    }
-
-    if(strcmp(FieldsList[i],"F_TOT") == 0){
-      fprintf(Vtk_file,"VECTORS %s float \n","F_TOT");
-      for(int j =  0 ; j<ElementMesh.NumNodesMesh ; j++){
-	/* Print the dimensions of the array */
-	for(int k = 0 ; k<NumberDimensions ; k++){
-	  fprintf(Vtk_file,"%f ",List_Nod_Fields.nM[i_Field+k][j]);
-	}
-	/* Add the rest of the coordinates : is compulsary to add 3 */
-	for(int k = 0 ; k<(3-NumberDimensions) ; k++){
-	  fprintf(Vtk_file,"%f ",0.0);
-	}
-	fprintf(Vtk_file,"\n");	
-      }
-      /* Update the index of the field */
-      i_Field += NumberDimensions ;
-    }       
-
-  }   
+  }
   
   /* Cell data */  
   fprintf(Vtk_file,"CELL_DATA %i \n",ElementMesh.NumElemMesh);

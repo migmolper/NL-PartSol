@@ -8,6 +8,9 @@
 #include "../ToolsLib/Utils.h"
 #include "InOutFun.h"
 
+#define MAXVAL(A,B) ((A)>(B) ? (A) : (B))
+#define MINVAL(A,B) ((A)<(B) ? (A) : (B))
+
 Mesh ReadGidMesh(char * MeshName)
 /*
 
@@ -24,9 +27,19 @@ Mesh ReadGidMesh(char * MeshName)
   /* Number of words in a text line */
   int nwords;
   /* Some auxiliar variables */
-  int aux, Element_i, Nodes_i;
+  int Element_i, Nodes_i;
   int Repeat_Nod;
+  int NumNodesBound;
   int * NodesBound_aux;
+  int aux_RIGHT = 0; 
+  int aux_TOP = 0;
+  int aux_LEFT = 0;
+  int aux_BOTTOM = 0;
+  /* Set to zero X and Y min and max values of the mesh */
+  double MAX_X = 0;
+  double MAX_Y = 0;
+  double MIN_X = 0;
+  double MIN_Y = 0;   
   /* Parser dictionay stuff */
   ParserDictionary Dict = InitParserDictionary();
   char * delims = Dict.sep[6];
@@ -51,8 +64,11 @@ Mesh ReadGidMesh(char * MeshName)
   /* Set the number of elements in the mesh to zero */
   GID_Mesh.NumElemMesh = 0;
   /* Set to zero the number of nodes in the boundary of the mesh */
-  GID_Mesh.NumNodesBound = 0;
-  
+  GID_Mesh.NumTOP = 0;
+  GID_Mesh.NumBOTTOM = 0;
+  GID_Mesh.NumRIGHT = 0;
+  GID_Mesh.NumLEFT= 0;
+    
   /* 
      Read line and store in a char array (max 80 characters) and 
      split the line in word using the space character as a delimiter.
@@ -189,13 +205,14 @@ Mesh ReadGidMesh(char * MeshName)
     
   case 1: /******************** 1D mesh ********************/
     /* In a 1D mesh we only have two nodes in the boundary */
-    GID_Mesh.NumNodesBound = 2;
+    GID_Mesh.NumLEFT = 1;
+    GID_Mesh.NumRIGHT = 1;
     /* Allocate the size of the array with the nodes */
-    GID_Mesh.NodesBound = (int **)Allocate_MatrixZ(GID_Mesh.NumNodesBound,
-						   1+NumberDOF,sizeof(int));
-    /* Set the boundary nodes */
-    GID_Mesh.NodesBound[0][0] = 0;
-    GID_Mesh.NodesBound[1][0] = GID_Mesh.NumNodesMesh-1;    
+    GID_Mesh.LEFT = (int *)Allocate_ArrayZ(1,sizeof(int));
+    GID_Mesh.RIGHT = (int *)Allocate_ArrayZ(1,sizeof(int));
+    /* Set the nodes of the boundaries */
+    GID_Mesh.LEFT[0] = 0;
+    GID_Mesh.RIGHT[0] = 1-GID_Mesh.NumNodesMesh;
     break; /******************** 2D mesh ********************/
     
   case 2: /******************** 2D mesh ********************/
@@ -204,12 +221,19 @@ Mesh ReadGidMesh(char * MeshName)
       /* 0º Allocate an array of zeros to assign a 1 to those nodes in the boundary */
       NodesBound_aux = (int *)Allocate_ArrayZ(GID_Mesh.NumNodesMesh,sizeof(int));
       /* 1º Set to zero the number of nodes in the boundary */
-      GID_Mesh.NumNodesBound = 0;
+      NumNodesBound = 0;
       /* 2º Iterate over the nodes to fin the nodes in the boundary */    
       for(int i = 0 ; i<GID_Mesh.NumNodesMesh ; i++){
-	/* 3º Set the counter to zero */
+
+	/* 3º Get the max values of the boundary */
+	MAX_X = MAXVAL(MAX_X,GID_Mesh.Coordinates.nM[i][0]);
+	MAX_Y = MAXVAL(MAX_Y,GID_Mesh.Coordinates.nM[i][1]);
+	MIN_X = MINVAL(MIN_X,GID_Mesh.Coordinates.nM[i][0]);
+	MIN_Y = MINVAL(MIN_Y,GID_Mesh.Coordinates.nM[i][1]);
+	
+	/* 4º Set the counter to zero */
 	Repeat_Nod = 0;      
-	/* 4º Loop over the connectivity mesh */
+	/* 5º Loop over the connectivity mesh */
 	for(int j = 0 ; j<GID_Mesh.NumElemMesh ; j++){
 	  for(int k = 0 ; k<GID_Mesh.NumNodesElem ; k++){
 	    if(GID_Mesh.Connectivity[j][k] == i){
@@ -217,28 +241,64 @@ Mesh ReadGidMesh(char * MeshName)
 	    }
 	  }
 	}
-	/* 5º Add this elemente to the boundary */
+	/* 6º Add this element to the boundary */
 	if (Repeat_Nod < 4){
 	  NodesBound_aux[i] = 1;
-	  GID_Mesh.NumNodesBound++;
-	}
-      }    
-      /* 6º Allocate the array with in the index of the nodal boundaries
-	 - [i][0] : Index of the node
-	 - [i][1] ... [i][n] : Kind of BC to each DOF
-	 And allocate the array with the nodal values 
-      */
-      GID_Mesh.NodesBound = (int **)Allocate_MatrixZ(GID_Mesh.NumNodesBound,
-						     1+NumberDOF,sizeof(int));
-      GID_Mesh.ValueBC = MatAlloc(GID_Mesh.NumNodesBound,NumberDOF);   
+	  NumNodesBound++;
+	}	
+      }
+      
       /* 7º Fill the array GID_Mesh.NodesBound */
-      aux = 0;
       for(int i = 0 ; i<GID_Mesh.NumNodesMesh ; i++){
 	if(NodesBound_aux[i] == 1){
-	  GID_Mesh.NodesBound[aux][0] = i;
-	  aux++;
+
+  	  if(GID_Mesh.Coordinates.nM[i][0] == MAX_X){
+	    GID_Mesh.NumRIGHT ++;
+	  }
+	  if(GID_Mesh.Coordinates.nM[i][1] == MAX_Y){
+	    GID_Mesh.NumTOP ++;
+	  }
+	  if(GID_Mesh.Coordinates.nM[i][0] == MIN_X){
+	    GID_Mesh.NumLEFT ++;
+	  }
+	  if(GID_Mesh.Coordinates.nM[i][1] == MIN_Y){
+	    GID_Mesh.NumBOTTOM ++;
+	  }
+	    
 	}
       }
+      
+      /* Allocate the arrays with the boundary nodes */
+      GID_Mesh.TOP = (int *)Allocate_ArrayZ(GID_Mesh.NumTOP,sizeof(int));
+      GID_Mesh.BOTTOM = (int *)Allocate_ArrayZ(GID_Mesh.NumBOTTOM,sizeof(int));
+      GID_Mesh.LEFT = (int *)Allocate_ArrayZ(GID_Mesh.NumLEFT,sizeof(int));
+      GID_Mesh.RIGHT = (int *)Allocate_ArrayZ(GID_Mesh.NumRIGHT,sizeof(int));
+
+      /* Fill the arrays  */
+      for(int i = 0 ; i<GID_Mesh.NumNodesMesh ; i++){
+	if(NodesBound_aux[i] == 1){
+
+  	  if(GID_Mesh.Coordinates.nM[i][0] == MAX_X){
+	    GID_Mesh.RIGHT[aux_RIGHT] = i;
+	    aux_RIGHT++;
+	  }
+	  if(GID_Mesh.Coordinates.nM[i][1] == MAX_Y){
+	    GID_Mesh.TOP[aux_TOP] = i;
+	    aux_TOP++;
+	  }
+	  if(GID_Mesh.Coordinates.nM[i][0] == MIN_X){
+	    GID_Mesh.LEFT[aux_LEFT] = i;
+	    aux_LEFT++;
+	  }
+	  if(GID_Mesh.Coordinates.nM[i][1] == MIN_Y){
+	    GID_Mesh.BOTTOM[aux_BOTTOM] = i;
+	    aux_BOTTOM++;
+	  }
+	    
+	}
+      }
+
+      
     } /* Quadrilateral elements */
     if(GID_Mesh.NumNodesElem == 3){ /* Triangular elements */
       puts("Error in ReadGidMesh() : Boundary nodes localization for T3 not implemented yet !");

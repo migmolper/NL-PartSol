@@ -27,7 +27,7 @@ void GlobalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh){
   /* 1º Set to zero the active/non-active elements */
   free(FEM_Mesh.ActiveNode);
   FEM_Mesh.ActiveNode = (int *)Allocate_ArrayZ(FEM_Mesh.NumNodesMesh,sizeof(int));
-    
+   
   for(int i = 0 ; i<MPM_Mesh.NumGP ; i++){
 
     /* 2º Assign the value to this auxiliar pointer */ 

@@ -28,7 +28,6 @@ GaussPoint Initialize_GP_Mesh(char * MPM_GID_MeshName,
   char * Field[MAXW] = {NULL};
 
   /* Screen message */
-  printf("************************************************* \n");
   printf("Begin of initialize the Gauss-Points mesh !!! \n");
 
   /* Read GP mesh */
@@ -137,7 +136,6 @@ GaussPoint Initialize_GP_Mesh(char * MPM_GID_MeshName,
   Matrix Poligon_Centroid;
 
   for(int i = 0 ; i<MPM_Mesh.NumGP ; i++){
-
 
     if(InputFields.nM == NULL){
       /* Get the connectivity of the elements vertex */

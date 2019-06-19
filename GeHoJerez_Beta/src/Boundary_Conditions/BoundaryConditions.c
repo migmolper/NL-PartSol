@@ -9,41 +9,43 @@
 /**********************************************************************/
 
 void BCC_Nod_Momentum(Mesh FEM_Mesh,
-		      BoundayConditions BCC_Momentum,
-		      Matrix Nod_Field, int TimeStep)
+		      BoundaryConditions BCC_Momentum,
+		      Matrix Nodal_MOMENTUM, int TimeStep)
 /*
-  Apply the boundary conditions
+  Apply the momentum boundary conditions over the nodes 
 */
 {
 
   /* 0º  Check the time step */
   if( (TimeStep < 0) ||
       (TimeStep > BCC_Momentum.Value.Num)){
-    puts("Error in BCC_Nod_Momentum() : The time step is out of the curve !!");
+    puts("Error in BCC_Nodal_MOMENTUM() : The time step is out of the curve !!");
     exit(0);
   }
-  
-  int Kind_BCC; /* Kind of the boundary condition 0/1 */
+
+  /* 1º Define auxilar variables */
+  int Dim_BCC; /* Dimension where is applied the boundary condition */
   int Id_BCC; /* Index of the node where we apply the BCC */
+
+  /* 2º Set the dimension */
+  Dim_BCC = BCC_Momentum.Dim;
   
+  /* 3º Loop over the nodes of the boundary */
   for(int i=0 ; i<BCC_Momentum.NumNodes ; i++){
-    Id_BCC = FEM_Mesh.NodesBound[i][0];
-    for(int j=0 ; j<Nod_Field.N_rows ; j++){
-      Kind_BCC = FEM_Mesh.NodesBound[i][j+1];
-      if(Kind_BCC == 1){
-	if(NumberDOF>1)
-	  Nod_Field.nM[j][Id_BCC] = FEM_Mesh.ValueBC.nM[i][j];
-	if(NumberDOF==1)
-	  Nod_Field.nV[Id_BCC] = FEM_Mesh.ValueBC.nV[i];	
-      }
-    }    
+
+    /* 4º Get the index of the element */
+    Id_BCC = BCC_Momentum.Nodes[i];
+
+    /* 5º Assign the BC to the nodes */
+    Nodal_MOMENTUM.nM[Dim_BCC][Id_BCC] = BCC_Momentum.Value.Fx[TimeStep];
+          
   } 
 
 }
 
 /*********************************************************************/
 
-void BCC_GP_Forces(GaussPoint GP_Mesh, BoundayConditions Loads, int TimeStep)
+void BCC_GP_Forces(GaussPoint GP_Mesh, BoundaryConditions Loads, int TimeStep)
 /*
   Forces defined in the Gauss Points :
   Inputs
@@ -70,22 +72,5 @@ void BCC_GP_Forces(GaussPoint GP_Mesh, BoundayConditions Loads, int TimeStep)
   }
 
 }
-
-/*********************************************************************/
-
-/* void ApplyBoundaryCondition_GP(Matrix Phi_n_GP,int TimeStep){ */
-  
-/*   /\* Fill the boundary conditions array *\/ */
-  
-/*   if( (TimeStep == 1)){ */
-/*     Phi_n_GP.nM[1][0] = -1; */
-/*   } */
-/*   else { */
-/*     Phi_n_GP.nM[0][0] = 0; */
-/*   } */
-
-/*   Phi_n_GP.nM[1][7] = 0; */
- 
-/* } */
 
 /*********************************************************************/

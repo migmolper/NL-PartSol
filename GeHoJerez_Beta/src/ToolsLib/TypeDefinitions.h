@@ -103,15 +103,15 @@ typedef struct {
      of elements that share a node */
   int ** NodeNeighbour;
 
-  /*** BOUNDARY CONDITIONS ***/
-  /* Number of boundary nodes */
-  int NumNodesBound;
-  /* List and kind of boundary conditions */
-  int ** NodesBound;
-  /* Value of boundary conditions */
-  Matrix ValueBC;
-  /* Name of the BC */
-  char InfoBC [100];
+  /*** BOUNDARY NODES (Only square domains) ***/
+  int NumTOP;
+  int * TOP;
+  int NumBOTTOM;
+  int * BOTTOM;
+  int NumLEFT;
+  int * LEFT;
+  int NumRIGHT;
+  int * RIGHT;
 
   /*** INDIVIDUAL ELEMENT PROPERTIES ***/
   /* Number of dimensions of the element */
@@ -144,5 +144,5 @@ typedef struct {
   /* Some information about this BCC */
   char Info [100];
   
-} BoundayConditions;
+} BoundaryConditions;
 
