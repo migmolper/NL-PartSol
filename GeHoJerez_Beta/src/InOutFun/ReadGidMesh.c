@@ -18,14 +18,26 @@ Mesh ReadGidMesh(char * MeshName)
 {
   /* Output element mesh */
   Mesh GID_Mesh;
+
   /* Pointer to the file */
   FILE * MeshFile;
+
   /* Variable to save the line of a text */
   char line[MAXC] = {0};
+  char line_coords[MAXC] = {0};
+  char line_connectivity[MAXC] = {0};
+        
   /* Char pointer to store the words in a line */
   char * words[MAXW] = {NULL};
+  char * read_coords[MAXW] = {NULL};
+  char * read_connectivity[MAXW] = {NULL};
+  
   /* Number of words in a text line */
   int nwords;
+  int ncoords;
+  int nconnectivity;
+  int Count_Connectivity = 0;
+  int Count_Coordinates = 0;
   /* Some auxiliar variables */
   int Element_i, Nodes_i;
   int Repeat_Nod;
@@ -50,112 +62,138 @@ Mesh ReadGidMesh(char * MeshName)
 
   printf(" * Begin of read mesh file : %s \n",MeshName);
   printf("\t -> Reading mesh ...\n");
-
-  /* Open the mesh file and store in the FILE * variable */
-  MeshFile = fopen(MeshName,"r");
-  
-  /* If the file is corrupted, put a wrong message */
-  if( MeshFile == NULL ){
-    perror(MeshName);
-  }
-
-  /* Set the number of nodes in the mesh to zero */
-  GID_Mesh.NumNodesMesh = 0;
-  /* Set the number of elements in the mesh to zero */
-  GID_Mesh.NumElemMesh = 0;
-  /* Set to zero the number of nodes in the boundary of the mesh */
-  GID_Mesh.NumTOP = 0;
-  GID_Mesh.NumBOTTOM = 0;
-  GID_Mesh.NumRIGHT = 0;
-  GID_Mesh.NumLEFT= 0;
-    
+   
   /* 
      Read line and store in a char array (max 80 characters) and 
      split the line in word using the space character as a delimiter.
      In the first line we have some properties of the mesh
   */
-  fgets(line, sizeof line, MeshFile);
-  nwords = parse (words, line, " \n");
 
-  /* Element properties of the mesh */
-  if ( strcmp(words[0],"MESH") == 0 ){
-    /* Check if the first word is the keyword MESH */
-    if( nwords == 7){
-      /* ElemType */
-      strcpy(GID_Mesh.TypeElem,words[4]);      
-      /* Number of nodes per element */
-      GID_Mesh.NumNodesElem = atoi(words[6]);      
+  /* Open the mesh file and store in the FILE * variable */
+  MeshFile = fopen(MeshName,"r");  
+  /* If the file is corrupted, put a wrong message */
+  if( MeshFile == NULL ){
+    perror(MeshName);
+  }
+
+  /* Initialize some mesh parameters */
+  GID_Mesh.NumNodesMesh = 0; /* Set the number of nodes in the mesh to zero */
+  GID_Mesh.NumElemMesh = 0; /* Set the number of elements in the mesh to zero */
+  GID_Mesh.NumTOP = 0; /* Set to zero the number of nodes in the boundary of the mesh */
+  GID_Mesh.NumBOTTOM = 0;
+  GID_Mesh.NumRIGHT = 0;
+  GID_Mesh.NumLEFT= 0;
+
+  /* Read the file line by line */
+  while( fgets(line, sizeof line, MeshFile) != NULL ){
+
+    /* Parse line */
+    nwords = parse (words, line, " \n\t");
+  
+    /* Element properties of the mesh */
+    if ( strcmp(words[0],"MESH") == 0 ){
+      /* Check if the first word is the keyword MESH */
+      if( nwords == 7){
+	/* ElemType */
+	strcpy(GID_Mesh.TypeElem,words[4]);      
+	/* Number of nodes per element */
+	GID_Mesh.NumNodesElem = atoi(words[6]);
+	/* Shape functions and its derivatives:
+	   Here we only pass by reference the function, the output Matrix
+	   is allocated insede of N_ref() and dNdX_ref(), we also set the
+	   number of dimensions */
+	if( (strcmp(GID_Mesh.TypeElem,"Linear") == 0) &&
+	    (GID_Mesh.NumNodesElem == 2) ){
+	  GID_Mesh.Dimension = 1;
+	  GID_Mesh.N_ref = L2;
+	  GID_Mesh.dNdX_ref = dL2;
+	}
+	if( (strcmp(GID_Mesh.TypeElem,"Quadrilateral") == 0) &&
+	    (GID_Mesh.NumNodesElem == 4) ){
+	  GID_Mesh.Dimension = 2;
+	  GID_Mesh.N_ref = Q4;
+	  GID_Mesh.dNdX_ref = dQ4;
+	}
+	if( (strcmp(GID_Mesh.TypeElem,"Triangle") == 0) &&
+	    (GID_Mesh.NumNodesElem == 3) ){
+	  GID_Mesh.Dimension = 2;
+	  GID_Mesh.N_ref = T3;
+	  GID_Mesh.dNdX_ref = dT3;
+	}	
+      }
+      else{
+	perror("Error in ReadGidMesh()");
+	printf("Wrong number of mesh properties : %i ! \n",nwords);
+	exit(0);
+      }
     }
-    else{
-      perror("Error in ReadGidMesh()");
-      printf("Wrong number of mesh properties : %i ! \n",nwords);
-      exit(0);
-    }
-  } /* end if */
 
-  /* Shape functions and its derivatives:
-     Here we only pass by reference the function, the output Matrix
-     is allocated insede of N_ref() and dNdX_ref(), we also set the
-     number of dimensions */
-  if( (strcmp(GID_Mesh.TypeElem,"Linear") == 0) &&
-      (GID_Mesh.NumNodesElem == 2) ){
-    GID_Mesh.Dimension = 1;
-    GID_Mesh.N_ref = L2;
-    GID_Mesh.dNdX_ref = dL2;
-  }
-  if( (strcmp(GID_Mesh.TypeElem,"Quadrilateral") == 0) &&
-      (GID_Mesh.NumNodesElem == 4) ){
-    GID_Mesh.Dimension = 2;
-    GID_Mesh.N_ref = Q4;
-    GID_Mesh.dNdX_ref = dQ4;
-  }
-  if( (strcmp(GID_Mesh.TypeElem,"Triangle") == 0) &&
-      (GID_Mesh.NumNodesElem == 3) ){
-    GID_Mesh.Dimension = 2;
-    GID_Mesh.N_ref = T3;
-    GID_Mesh.dNdX_ref = dT3;
-  }
+    /* /\* Initit to count the coordinates *\/ */
+    /* if(strcmp(words[0],"Coordinates") == 0){ */
+    /*   Count_Coordinates = 1; */
+    /* } */
+    /* /\* Set the number of nodes coordinates of the mesh *\/ */
+    /* while(Count_Coordinates){ */
+    /*   /\* Read and parse the first line *\/ */
+    /*   fgets(line_coords, sizeof line_coords, MeshFile); */
+    /*   ncoords = parse (read_coords, line_coords, " \t\n"); */
+    /*   printf("%s \n",read_coords[0]); */
+    /*   /\* Add number of nodes to the mesh *\/ */
+    /*   if(ncoords == 4){ */
+    /* 	GID_Mesh.NumNodesMesh++; */
+    /*   } */
+    /*   /\* Out of the loop *\/ */
+      
+    /*   if(strcmp(read_coords[0],"End") == 0){ */
+    /* 	Count_Coordinates = 0; */
+    /* 	printf("paso \n"); */
+    /* 	break; */
+    /*   } */
+    /* } */
 
-  fgets(line, sizeof line, MeshFile);
-  nwords = parse(words, line, delims);
-  /* Set the number of nodes coordinates of the mesh */
-  for(strcmp(words[0],"Coordinates") == 0 ;
-      strcmp(words[0],"End") != 0 ;
-      fgets(line, sizeof line, MeshFile),
-	nwords = parse(words, line,delims) ){
-    ++GID_Mesh.NumNodesMesh;
+    for( strcmp(words[0],"Coordinates");
+	 strcmp(words[1],"Coordinates") == 0;
+	 fgets(line, sizeof line, MeshFile)){
+      printf("%s \n",words[0]);
+      nwords = parse(words, line, delims);       
+     }
+
+    /* /\* Initit to count the connectivity *\/ */
+    /* if(strcmp(words[0],"Elements") == 0){ */
+    /*   Count_Connectivity = 1; */
+    /* } */
+    /* /\* Read the connectivity *\/ */
+    /* while(Count_Connectivity){ */
+    /*   /\* Read and parse the first line *\/ */
+    /*   fgets(line_connectivity, sizeof line_connectivity, MeshFile); */
+    /*   nconnectivity = parse(read_connectivity, line_connectivity," \n\t"); */
+    /*   /\* Check the format *\/ */
+    /*   if(nconnectivity == 1+GID_Mesh.NumNodesElem){ */
+    /* 	/\* Add number of elements to the mesh *\/ */
+    /* 	GID_Mesh.NumElemMesh++; */
+    /*   } */
+    /*   /\* Stop counting the connectivity *\/ */
+    /*   if(strcmp(read_connectivity[0],"End") == 0){ */
+    /* 	Count_Connectivity = 0; */
+    /*   } */
+    /* } */
+    
   }
   
-  /* Correct the number of nodes in the mesh : The prevoius algorithim counts 
-     also the header ("Coordinates") and the footer ("End Coordiantes") */
-  GID_Mesh.NumNodesMesh -= 1;
-
-  /* Continuing reading the mesh */
-  fgets(line, sizeof line, MeshFile);
-  nwords = parse(words, line, delims);
-  fgets(line, sizeof line, MeshFile);
-  nwords = parse(words, line, delims);
-
-  /* Set the number of elements of the mesh */
-  for(strcmp(words[0],"Elements") == 0 ;
-      strcmp(words[0],"End") != 0 ;
-      fgets(line, sizeof line, MeshFile),
-	nwords = parse (words, line, delims) ){
-    ++GID_Mesh.NumElemMesh;
-  }
-  /* Correct the number of elements in the mesh : The prevoius algorithim counts 
-     also the header ("Elements") and the footer ("End Elements") */
-  GID_Mesh.NumElemMesh -= 1;
-      
   /* At the end close the mesh file */
   fclose(MeshFile);
+
+  printf("%i %i \n",GID_Mesh.NumNodesMesh,GID_Mesh.NumElemMesh);
+
+  
+  exit(0);
  
   /* Allocate the mesh data */
   GID_Mesh.Coordinates = MatAlloc(GID_Mesh.NumNodesMesh,
-				  GID_Mesh.Dimension);
+  				  GID_Mesh.Dimension);
   GID_Mesh.Connectivity = (int **)
     Allocate_Matrix(GID_Mesh.NumElemMesh,
-		    GID_Mesh.NumNodesElem,sizeof(int));
+  		    GID_Mesh.NumNodesElem,sizeof(int));
   GID_Mesh.ActiveNode = (int *)
     Allocate_ArrayZ(GID_Mesh.NumNodesMesh,sizeof(int));
   
@@ -167,18 +205,34 @@ Mesh ReadGidMesh(char * MeshName)
   /* Split the line in word using the space character as a delimiter */
   nwords = parse(words, line, delims);
 
-  for(strcmp(words[0],"Coordinates") == 0 ;
-      strcmp(words[0],"End") != 0 ;
-      fgets(line, sizeof line, MeshFile),
-	nwords = parse(words, line, delims) ){
-    if(nwords == 4){
-      Nodes_i = atoi(words[0]) - 1;
-      for(int i = 0 ; i<GID_Mesh.Dimension ; i++){
-	GID_Mesh.Coordinates.nM[Nodes_i][i] = atof(words[1+i]);
+  /* Read line and store in a char array (max 80 characters)*/
+  fgets(line, sizeof line, MeshFile);
+  /* Split the line in word using the space character as a delimiter */
+  nwords = parse(words, line, delims);
+  if(strcmp(words[0],"Coordinates") == 0){
+    for(int i = 0 ; i<GID_Mesh.NumNodesMesh ; i++){
+      fgets(line_coords, sizeof line_coords, MeshFile);
+      ncoords = parse(read_coords, line_coords," \n\t");
+      if(ncoords == 4){
+  	Nodes_i = atoi(read_coords[0]) - 1;
+  	for(int j = 0 ; j<GID_Mesh.Dimension ; j++){
+  	  GID_Mesh.Coordinates.nM[Nodes_i][j] = atof(read_coords[j+1]);
+  	}
+      }
+      else{
+  	printf("Check the node : %i \n", atoi(read_coords[0]) - 1);
+  	puts("Error in ReadGidMesh() : Format error in the input mesh !!!");
+  	exit(0);
       }
     }
   }
+  
+  /* Read line and store in a char array (max 80 characters)*/
+  fgets(line, sizeof line, MeshFile);
+  /* Split the line in word using the space character as a delimiter */
+  nwords = parse(words, line, delims);
 
+    
   /* Read line and store in a char array (max 80 characters)*/
   fgets(line, sizeof line, MeshFile);
   /* Split the line in word using the space character as a delimiter */
@@ -190,12 +244,14 @@ Mesh ReadGidMesh(char * MeshName)
   for(strcmp(words[0],"Elements") == 0 ;
       strcmp(words[0],"End") != 0 ;
       fgets(line, sizeof line, MeshFile),
-	nwords = parse(words, line, delims) ){
+  	nwords = parse(words, line, delims) ){
     if(nwords>2){
       Element_i = atoi(words[0]) - 1;
       for(Nodes_i = 0 ; Nodes_i<GID_Mesh.NumNodesElem ; Nodes_i++){
-	GID_Mesh.Connectivity[Element_i][Nodes_i] = atoi(words[Nodes_i+1]) - 1;
+  	GID_Mesh.Connectivity[Element_i][Nodes_i] = atoi(words[Nodes_i+1]) - 1;
+  	printf("%i ",atoi(words[Nodes_i+1]) - 1);
       }
+      printf("\n");
     }
         
   }
@@ -217,55 +273,55 @@ Mesh ReadGidMesh(char * MeshName)
     
   case 2: /******************** 2D mesh ********************/
 
-    if(GID_Mesh.NumNodesElem == 4){ /* Quadrilateral elements */    
+    if(GID_Mesh.NumNodesElem == 4){ /* Quadrilateral elements */
       /* 0º Allocate an array of zeros to assign a 1 to those nodes in the boundary */
       NodesBound_aux = (int *)Allocate_ArrayZ(GID_Mesh.NumNodesMesh,sizeof(int));
       /* 1º Set to zero the number of nodes in the boundary */
       NumNodesBound = 0;
-      /* 2º Iterate over the nodes to fin the nodes in the boundary */    
+      /* 2º Iterate over the nodes to fin the nodes in the boundary */
       for(int i = 0 ; i<GID_Mesh.NumNodesMesh ; i++){
 
-	/* 3º Get the max values of the boundary */
-	MAX_X = MAXVAL(MAX_X,GID_Mesh.Coordinates.nM[i][0]);
-	MAX_Y = MAXVAL(MAX_Y,GID_Mesh.Coordinates.nM[i][1]);
-	MIN_X = MINVAL(MIN_X,GID_Mesh.Coordinates.nM[i][0]);
-	MIN_Y = MINVAL(MIN_Y,GID_Mesh.Coordinates.nM[i][1]);
+  	/* 3º Get the max values of the boundary */
+  	MAX_X = MAXVAL(MAX_X,GID_Mesh.Coordinates.nM[i][0]);
+  	MAX_Y = MAXVAL(MAX_Y,GID_Mesh.Coordinates.nM[i][1]);
+  	MIN_X = MINVAL(MIN_X,GID_Mesh.Coordinates.nM[i][0]);
+  	MIN_Y = MINVAL(MIN_Y,GID_Mesh.Coordinates.nM[i][1]);
 	
-	/* 4º Set the counter to zero */
-	Repeat_Nod = 0;      
-	/* 5º Loop over the connectivity mesh */
-	for(int j = 0 ; j<GID_Mesh.NumElemMesh ; j++){
-	  for(int k = 0 ; k<GID_Mesh.NumNodesElem ; k++){
-	    if(GID_Mesh.Connectivity[j][k] == i){
-	      Repeat_Nod++;
-	    }
-	  }
-	}
-	/* 6º Add this element to the boundary */
-	if (Repeat_Nod < 4){
-	  NodesBound_aux[i] = 1;
-	  NumNodesBound++;
-	}	
+  	/* 4º Set the counter to zero */
+  	Repeat_Nod = 0;
+  	/* 5º Loop over the connectivity mesh */
+  	for(int j = 0 ; j<GID_Mesh.NumElemMesh ; j++){
+  	  for(int k = 0 ; k<GID_Mesh.NumNodesElem ; k++){
+  	    if(GID_Mesh.Connectivity[j][k] == i){
+  	      Repeat_Nod++;
+  	    }
+  	  }
+  	}
+  	/* 6º Add this element to the boundary */
+  	if (Repeat_Nod < 4){
+  	  NodesBound_aux[i] = 1;
+  	  NumNodesBound++;
+  	}
       }
       
       /* 7º Fill the array GID_Mesh.NodesBound */
       for(int i = 0 ; i<GID_Mesh.NumNodesMesh ; i++){
-	if(NodesBound_aux[i] == 1){
+  	if(NodesBound_aux[i] == 1){
 
   	  if(GID_Mesh.Coordinates.nM[i][0] == MAX_X){
-	    GID_Mesh.NumRIGHT ++;
-	  }
-	  if(GID_Mesh.Coordinates.nM[i][1] == MAX_Y){
-	    GID_Mesh.NumTOP ++;
-	  }
-	  if(GID_Mesh.Coordinates.nM[i][0] == MIN_X){
-	    GID_Mesh.NumLEFT ++;
-	  }
-	  if(GID_Mesh.Coordinates.nM[i][1] == MIN_Y){
-	    GID_Mesh.NumBOTTOM ++;
-	  }
+  	    GID_Mesh.NumRIGHT ++;
+  	  }
+  	  if(GID_Mesh.Coordinates.nM[i][1] == MAX_Y){
+  	    GID_Mesh.NumTOP ++;
+  	  }
+  	  if(GID_Mesh.Coordinates.nM[i][0] == MIN_X){
+  	    GID_Mesh.NumLEFT ++;
+  	  }
+  	  if(GID_Mesh.Coordinates.nM[i][1] == MIN_Y){
+  	    GID_Mesh.NumBOTTOM ++;
+  	  }
 	    
-	}
+  	}
       }
       
       /* Allocate the arrays with the boundary nodes */
@@ -276,26 +332,26 @@ Mesh ReadGidMesh(char * MeshName)
 
       /* Fill the arrays  */
       for(int i = 0 ; i<GID_Mesh.NumNodesMesh ; i++){
-	if(NodesBound_aux[i] == 1){
+  	if(NodesBound_aux[i] == 1){
 
   	  if(GID_Mesh.Coordinates.nM[i][0] == MAX_X){
-	    GID_Mesh.RIGHT[aux_RIGHT] = i;
-	    aux_RIGHT++;
-	  }
-	  if(GID_Mesh.Coordinates.nM[i][1] == MAX_Y){
-	    GID_Mesh.TOP[aux_TOP] = i;
-	    aux_TOP++;
-	  }
-	  if(GID_Mesh.Coordinates.nM[i][0] == MIN_X){
-	    GID_Mesh.LEFT[aux_LEFT] = i;
-	    aux_LEFT++;
-	  }
-	  if(GID_Mesh.Coordinates.nM[i][1] == MIN_Y){
-	    GID_Mesh.BOTTOM[aux_BOTTOM] = i;
-	    aux_BOTTOM++;
-	  }
+  	    GID_Mesh.RIGHT[aux_RIGHT] = i;
+  	    aux_RIGHT++;
+  	  }
+  	  if(GID_Mesh.Coordinates.nM[i][1] == MAX_Y){
+  	    GID_Mesh.TOP[aux_TOP] = i;
+  	    aux_TOP++;
+  	  }
+  	  if(GID_Mesh.Coordinates.nM[i][0] == MIN_X){
+  	    GID_Mesh.LEFT[aux_LEFT] = i;
+  	    aux_LEFT++;
+  	  }
+  	  if(GID_Mesh.Coordinates.nM[i][1] == MIN_Y){
+  	    GID_Mesh.BOTTOM[aux_BOTTOM] = i;
+  	    aux_BOTTOM++;
+  	  }
 	    
-	}
+  	}
       }
 
       

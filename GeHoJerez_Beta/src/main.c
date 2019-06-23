@@ -97,6 +97,9 @@ int main(int argc, char *argv[])
   /***********************************************************************/
   /***********************************************************************/
 
+  /* PrintMatrix(GP_Mesh.Phi.x_GC,GP_Mesh.NumGP,2); */
+  /* PrintMatrix(FEM_Mesh.Coordinates,FEM_Mesh.NumNodesMesh,2); */
+
   printf("************************************************* \n");
   printf(" Begin of the global search of the GP over the mesh \n");
   printf(" \t WORKING ... \n");
