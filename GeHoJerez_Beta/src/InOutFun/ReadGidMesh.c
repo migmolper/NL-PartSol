@@ -26,7 +26,7 @@ Mesh ReadGidMesh(char * MeshName)
   char line[MAXC] = {0};
   char line_coords[MAXC] = {0};
   char line_connectivity[MAXC] = {0};
-        
+  
   /* Char pointer to store the words in a line */
   char * words[MAXW] = {NULL};
   char * read_coords[MAXW] = {NULL};
@@ -35,9 +35,7 @@ Mesh ReadGidMesh(char * MeshName)
   /* Number of words in a text line */
   int nwords;
   int ncoords;
-  int nconnectivity;
-  int Count_Connectivity = 0;
-  int Count_Coordinates = 0;
+  /* int nconnectivity; */
   /* Some auxiliar variables */
   int Element_i, Nodes_i;
   int Repeat_Nod;
@@ -52,9 +50,6 @@ Mesh ReadGidMesh(char * MeshName)
   double MAX_Y = 0;
   double MIN_X = 0;
   double MIN_Y = 0;   
-  /* Parser dictionay stuff */
-  ParserDictionary Dict = InitParserDictionary();
-  char * delims = Dict.sep[6];
 
   /* Screen message */
   printf("************************************************* \n");
@@ -63,11 +58,11 @@ Mesh ReadGidMesh(char * MeshName)
   printf(" * Begin of read mesh file : %s \n",MeshName);
   printf("\t -> Reading mesh ...\n");
    
-  /* 
-     Read line and store in a char array (max 80 characters) and 
-     split the line in word using the space character as a delimiter.
-     In the first line we have some properties of the mesh
-  */
+  /***************************************************************************/ 
+  /*     Read line and store in a char array (max 80 characters) and         */ 
+  /*   split the line in word using the space character as a delimiter.      */
+  /*     In the first line we have some properties of the mesh               */
+  /***************************************************************************/
 
   /* Open the mesh file and store in the FILE * variable */
   MeshFile = fopen(MeshName,"r");  
@@ -84,110 +79,92 @@ Mesh ReadGidMesh(char * MeshName)
   GID_Mesh.NumRIGHT = 0;
   GID_Mesh.NumLEFT= 0;
 
-  /* Read the file line by line */
-  while( fgets(line, sizeof line, MeshFile) != NULL ){
+  /* Parse line */
+  fgets(line, sizeof line, MeshFile);
+  nwords = parse (words, line, " \n\t");
 
-    /* Parse line */
-    nwords = parse (words, line, " \n\t");
-  
-    /* Element properties of the mesh */
-    if ( strcmp(words[0],"MESH") == 0 ){
-      /* Check if the first word is the keyword MESH */
-      if( nwords == 7){
-	/* ElemType */
-	strcpy(GID_Mesh.TypeElem,words[4]);      
-	/* Number of nodes per element */
-	GID_Mesh.NumNodesElem = atoi(words[6]);
-	/* Shape functions and its derivatives:
-	   Here we only pass by reference the function, the output Matrix
-	   is allocated insede of N_ref() and dNdX_ref(), we also set the
-	   number of dimensions */
-	if( (strcmp(GID_Mesh.TypeElem,"Linear") == 0) &&
-	    (GID_Mesh.NumNodesElem == 2) ){
-	  GID_Mesh.Dimension = 1;
-	  GID_Mesh.N_ref = L2;
-	  GID_Mesh.dNdX_ref = dL2;
-	}
-	if( (strcmp(GID_Mesh.TypeElem,"Quadrilateral") == 0) &&
-	    (GID_Mesh.NumNodesElem == 4) ){
-	  GID_Mesh.Dimension = 2;
-	  GID_Mesh.N_ref = Q4;
-	  GID_Mesh.dNdX_ref = dQ4;
-	}
-	if( (strcmp(GID_Mesh.TypeElem,"Triangle") == 0) &&
-	    (GID_Mesh.NumNodesElem == 3) ){
-	  GID_Mesh.Dimension = 2;
-	  GID_Mesh.N_ref = T3;
-	  GID_Mesh.dNdX_ref = dT3;
-	}	
+  /* Element properties of the mesh */
+  if ( strcmp(words[0],"MESH") == 0 ){
+    /* Check if the first word is the keyword MESH */
+    if( nwords == 7){
+      /* ElemType */
+      strcpy(GID_Mesh.TypeElem,words[4]);      
+      /* Number of nodes per element */
+      GID_Mesh.NumNodesElem = atoi(words[6]);
+      /* Shape functions and its derivatives:
+	 Here we only pass by reference the function, the output Matrix
+	 is allocated insede of N_ref() and dNdX_ref(), we also set the
+	 number of dimensions */
+      if( (strcmp(GID_Mesh.TypeElem,"Linear") == 0) &&
+	  (GID_Mesh.NumNodesElem == 2) ){
+	GID_Mesh.Dimension = 1;
+	GID_Mesh.N_ref = L2;
+	GID_Mesh.dNdX_ref = dL2;
       }
-      else{
-	perror("Error in ReadGidMesh()");
-	printf("Wrong number of mesh properties : %i ! \n",nwords);
-	exit(0);
+      if( (strcmp(GID_Mesh.TypeElem,"Quadrilateral") == 0) &&
+	  (GID_Mesh.NumNodesElem == 4) ){
+	GID_Mesh.Dimension = 2;
+	GID_Mesh.N_ref = Q4;
+	GID_Mesh.dNdX_ref = dQ4;
       }
+      if( (strcmp(GID_Mesh.TypeElem,"Triangle") == 0) &&
+	  (GID_Mesh.NumNodesElem == 3) ){
+	GID_Mesh.Dimension = 2;
+	GID_Mesh.N_ref = T3;
+	GID_Mesh.dNdX_ref = dT3;
+      }	
     }
+    else{
+      perror("Error in ReadGidMesh()");
+      printf("Wrong number of mesh properties : %i ! \n",nwords);
+      exit(0);
+    }
+  }
 
-    /* /\* Initit to count the coordinates *\/ */
-    /* if(strcmp(words[0],"Coordinates") == 0){ */
-    /*   Count_Coordinates = 1; */
-    /* } */
-    /* /\* Set the number of nodes coordinates of the mesh *\/ */
-    /* while(Count_Coordinates){ */
-    /*   /\* Read and parse the first line *\/ */
-    /*   fgets(line_coords, sizeof line_coords, MeshFile); */
-    /*   ncoords = parse (read_coords, line_coords, " \t\n"); */
-    /*   printf("%s \n",read_coords[0]); */
-    /*   /\* Add number of nodes to the mesh *\/ */
-    /*   if(ncoords == 4){ */
-    /* 	GID_Mesh.NumNodesMesh++; */
-    /*   } */
-    /*   /\* Out of the loop *\/ */
-      
-    /*   if(strcmp(read_coords[0],"End") == 0){ */
-    /* 	Count_Coordinates = 0; */
-    /* 	printf("paso \n"); */
-    /* 	break; */
-    /*   } */
-    /* } */
+  /* Check the format for the nodes */
+  fgets(line, sizeof line, MeshFile);
+  nwords = parse (words, line, " \n\t");
+  if(strcmp(words[0],"Coordinates") != 0){
+    puts("Error in ReadGidMesh() : Format error in the input mesh !!!");
+    exit(0);
+  }
 
-    for( strcmp(words[0],"Coordinates");
-	 strcmp(words[1],"Coordinates") == 0;
-	 fgets(line, sizeof line, MeshFile)){
-      printf("%s \n",words[0]);
-      nwords = parse(words, line, delims);       
-     }
+  /* Count number of nodes */
+  fgets(line, sizeof line, MeshFile);
+  nwords = parse (words, line, " \n\t");
+  for( ; strcmp(words[1],"Coordinates") != 0;
+       fgets(line, sizeof line, MeshFile),
+	 parse (words, line, " \n\t")){
+    GID_Mesh.NumNodesMesh++;
+  }
 
-    /* /\* Initit to count the connectivity *\/ */
-    /* if(strcmp(words[0],"Elements") == 0){ */
-    /*   Count_Connectivity = 1; */
-    /* } */
-    /* /\* Read the connectivity *\/ */
-    /* while(Count_Connectivity){ */
-    /*   /\* Read and parse the first line *\/ */
-    /*   fgets(line_connectivity, sizeof line_connectivity, MeshFile); */
-    /*   nconnectivity = parse(read_connectivity, line_connectivity," \n\t"); */
-    /*   /\* Check the format *\/ */
-    /*   if(nconnectivity == 1+GID_Mesh.NumNodesElem){ */
-    /* 	/\* Add number of elements to the mesh *\/ */
-    /* 	GID_Mesh.NumElemMesh++; */
-    /*   } */
-    /*   /\* Stop counting the connectivity *\/ */
-    /*   if(strcmp(read_connectivity[0],"End") == 0){ */
-    /* 	Count_Connectivity = 0; */
-    /*   } */
-    /* } */
-    
+  /* White space */
+  fgets(line, sizeof line, MeshFile);
+
+  /* Check the format for the elements */
+  fgets(line, sizeof line, MeshFile);
+  nwords = parse (words, line, " \n\t");
+  if(strcmp(words[0],"Elements") != 0){
+    puts("Error in ReadGidMesh() : Format error in the input mesh !!!");
+    exit(0);
+  }
+
+  /* Count number of elements */
+  fgets(line, sizeof line, MeshFile);
+  nwords = parse (words, line, " \n\t");
+  for( ; strcmp(words[1],"Elements") != 0;
+       fgets(line, sizeof line, MeshFile),
+	 parse (words, line, " \n\t")){
+    GID_Mesh.NumElemMesh++;
   }
   
   /* At the end close the mesh file */
   fclose(MeshFile);
 
-  printf("%i %i \n",GID_Mesh.NumNodesMesh,GID_Mesh.NumElemMesh);
-
+  /***************************************************************************/
+  /***************************************************************************/
+  /***************************************************************************/
   
-  exit(0);
- 
   /* Allocate the mesh data */
   GID_Mesh.Coordinates = MatAlloc(GID_Mesh.NumNodesMesh,
   				  GID_Mesh.Dimension);
@@ -203,12 +180,12 @@ Mesh ReadGidMesh(char * MeshName)
   /* Read line and store in a char array (max 80 characters)*/
   fgets(line, sizeof line, MeshFile);
   /* Split the line in word using the space character as a delimiter */
-  nwords = parse(words, line, delims);
+  nwords = parse(words, line, " \n\t");
 
   /* Read line and store in a char array (max 80 characters)*/
   fgets(line, sizeof line, MeshFile);
   /* Split the line in word using the space character as a delimiter */
-  nwords = parse(words, line, delims);
+  nwords = parse(words, line, " \n\t");
   if(strcmp(words[0],"Coordinates") == 0){
     for(int i = 0 ; i<GID_Mesh.NumNodesMesh ; i++){
       fgets(line_coords, sizeof line_coords, MeshFile);
@@ -230,21 +207,21 @@ Mesh ReadGidMesh(char * MeshName)
   /* Read line and store in a char array (max 80 characters)*/
   fgets(line, sizeof line, MeshFile);
   /* Split the line in word using the space character as a delimiter */
-  nwords = parse(words, line, delims);
+  nwords = parse(words, line, " \n\t");
 
     
   /* Read line and store in a char array (max 80 characters)*/
   fgets(line, sizeof line, MeshFile);
   /* Split the line in word using the space character as a delimiter */
-  nwords = parse(words, line, delims);
+  nwords = parse(words, line, " \n\t");
 
   fgets(line, sizeof line, MeshFile);
-  nwords = parse(words, line, delims);
+  nwords = parse(words, line, " \n\t");
 
   for(strcmp(words[0],"Elements") == 0 ;
       strcmp(words[0],"End") != 0 ;
       fgets(line, sizeof line, MeshFile),
-  	nwords = parse(words, line, delims) ){
+  	nwords = parse(words, line, " \n\t") ){
     if(nwords>2){
       Element_i = atoi(words[0]) - 1;
       for(Nodes_i = 0 ; Nodes_i<GID_Mesh.NumNodesElem ; Nodes_i++){
@@ -255,6 +232,10 @@ Mesh ReadGidMesh(char * MeshName)
     }
         
   }
+
+  
+  exit(0);
+
   
   /* Find the nodes in the boundary */
   switch(NumberDimensions){
