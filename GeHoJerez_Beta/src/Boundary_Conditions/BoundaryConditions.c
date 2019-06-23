@@ -74,3 +74,11 @@ void BCC_GP_Forces(GaussPoint GP_Mesh, BoundaryConditions Loads, int TimeStep)
 }
 
 /*********************************************************************/
+
+/* void BC_Nod_Springs(GaussPoint GP_Mesh, BoundaryConditions Loads, int TimeStep) */
+/* /\* */
+/*   Add to a surface springs to simulate the winkler */
+/* *\/ */
+/* { */
+  
+/* } */

@@ -22,5 +22,8 @@ BoundaryConditions ReadBCC(char *, Mesh);
 
 /* Outputs */
 void WriteGnuplot(Matrix, Matrix, double, double, int, int, char[20]);
-void WriteVtk_MPM(char * , GaussPoint, Matrix, int);
-void WriteVtk_FEM(char * , Mesh, Matrix, int);
+void WriteVtk_MPM(char *, GaussPoint, Matrix, int);
+void WriteVtk_FEM(char *, Mesh, Matrix, int);
+void WriteVtk_Float_Scalar(char *, Matrix);
+void WriteVtk_Float_Vector(char *, Matrix);
+void WriteVtk_Float_Tensor(char *, Matrix);

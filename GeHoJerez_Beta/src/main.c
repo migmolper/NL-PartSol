@@ -84,8 +84,12 @@ int main(int argc, char *argv[])
   /***********************************************************************/
   /* Define BC variables */
   BoundaryConditions BCC_Momentum_BOTTOM;
-  /* Read and imposse the boundary conditions in the bottom of the domain */
+  /* BoundaryConditions BCC_Loads; */
+  
+  /* Read the boundary conditions in the bottom of the domain */
   BCC_Momentum_BOTTOM = ReadBCC(BounCondFileName,FEM_Mesh);
+  /* Read boundary conditions in the MPM nodes */
+  /* BCC_Loads = ReadBCC(LoadsFileName,FEM_Mesh); */
   /***********************************************************************/
   /***********************************************************************/
 
@@ -158,10 +162,11 @@ int main(int argc, char *argv[])
     UpdateGaussPointStress(GP_Mesh);
     printf(" \t DONE !!! \n");
 
-    /* Five step : Calculate the nodal internal, external forces */
+    /* Five step : Calculate total forces */
     printf("************************************************* \n");
-    printf(" Five step : Calculate internal and external forces\n");
+    printf(" Five step : Calculate total forces forces\n");
     printf(" \t WORKING ... \n");
+    /* BCC_GP_Forces(GP_Mesh, BCC_Loads, TimeStep); */
     Nodal_TOT_FORCES = GetNodalForces(GP_Mesh,FEM_Mesh);
     printf(" DONE !!! \n");    
 

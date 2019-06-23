@@ -143,7 +143,10 @@ void WriteVtk_MPM(char * Name_File, GaussPoint MPM_Mesh,
       fprintf(Vtk_file,"\n");
     }
     fprintf(Vtk_file,"\n");
-  }  
+  }
+
+  /* Close the file */
+  fclose(Vtk_file);
   
 }
 
@@ -327,4 +330,86 @@ void WriteVtk_FEM(char * Name_File, Mesh ElementMesh,
   /* Cell data */  
   fprintf(Vtk_file,"CELL_DATA %i \n",ElementMesh.NumElemMesh);
 
+  /* Close the file */
+  fclose(Vtk_file);
+
+}
+
+/*********************************************************************/
+
+void WriteVtk_Float_Scalar(char * Name_File, Matrix Field){
+
+  FILE * Vtk_file; 
+  Vtk_file = fopen(Name_File,"a");
+
+  fprintf(Vtk_file,"SCALARS %s float \n",Field.Info);
+  fprintf(Vtk_file,"LOOKUP_TABLE default \n");
+  for(int j =  0 ; j<Field.N_cols ; j++){
+    fprintf(Vtk_file,"%f \n",Field.nV[j]);
+  }
+
+  /* Close the file */
+  fclose(Vtk_file);
+
+}
+
+/*********************************************************************/
+
+void WriteVtk_Float_Vector(char * Name_File, Matrix Field){  
+
+  FILE * Vtk_file; 
+  Vtk_file = fopen(Name_File,"a");
+  
+  fprintf(Vtk_file,"VECTORS %s float \n",Field.Info);
+  for(int i =  0 ; i<Field.N_cols ; i++){
+    /* Print the dimensions of the array */
+    for(int j = 0 ; j<NumberDimensions ; j++){
+      fprintf(Vtk_file,"%f ",Field.nM[j][i]);
+    }
+    /* Add the rest of the coordinates : is compulsary to add 3 */
+    for(int j = 0 ; j<(3-NumberDimensions) ; j++){
+      fprintf(Vtk_file,"%f ",0.0);
+    }
+    fprintf(Vtk_file,"\n");	
+  }
+
+  /* Close the file */
+  fclose(Vtk_file); 
+  
+}
+
+/*********************************************************************/
+
+
+void WriteVtk_Float_Tensor(char * Name_File, Matrix Field){  
+
+  FILE * Vtk_file; 
+  Vtk_file = fopen(Name_File,"a");
+  
+  fprintf(Vtk_file,"TENSORS %s float \n",Field.Info);
+  for(int i =  0 ; i<Field.N_cols ; i++){
+    for(int j = 0 ; j<3 ; j++){
+      for(int k = 0 ; k<3 ; k++){
+	/* Principal diagonal */
+	if(j==k){
+	  if(j<NumberDimensions)
+	    fprintf(Vtk_file,"%f ",Field.nM[i][j]);
+	  else
+	    fprintf(Vtk_file,"%f ",0.0);
+	}
+	else{
+	  if((j<NumberDimensions)&&(k<NumberDimensions))
+	    fprintf(Vtk_file,"%f ",Field.nM[i][NumberDimensions+j]);
+	  else
+	    fprintf(Vtk_file,"%f ",0.0);
+	}
+      }
+      fprintf(Vtk_file,"\n");
+    }
+    fprintf(Vtk_file,"\n");
+  }
+ 
+  /* Close the file */
+  fclose(Vtk_file); 
+  
 }

@@ -14,13 +14,13 @@ material point code.
 
 Exists several algorithms proposed by other authors to do the search
 of a particle in the MPM scheme. In this case, we adopt one based on
-the Gauss-Point velocity field, the
+the Gauss-Point velocity field
 
 \begin{enumerate}
-\item Get the list of elements that share each vertex, for this, if the
-  reader is using a pointer-based programming language as C, we suggest to
+\item Get the list of elements that share each vertex, for this,is
+  interesting to use a pointer-based programming language, we suggest to
   use a table of pointers in order to store the data in a more compact
-  and flexible fashion. This allows also to extend this algorithm to
+  and flexible way. This allows also to extend this algorithm to
   any kind of mesh (IE: Quadrilaterals, triangular and hybrid). This
   step will be done at the beginning of the calculus because it is an
   information that will not change during the simulation unless we
@@ -78,7 +78,7 @@ the Gauss-Point velocity field, the
       \end{equation}
     \item For each dimension of $\overrightarrow{n_B}$, multiply it
       component by component by the velocity vector of the material
-      point, like some kind of proyection, if all the components of
+      point, like some kind of projection, if all the components of
       the resultant vector are positive we should search the material
       point in this direction, else if try in the next node.
 

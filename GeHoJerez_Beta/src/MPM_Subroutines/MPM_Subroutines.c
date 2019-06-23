@@ -565,9 +565,9 @@ Matrix GetNodalForces(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 	Nodal_TOT_FORCES.nM[l][Elem_Nods[k]] +=
 	  MPM_Mesh.Phi.mass.nV[i]*N_Ref_GP.nV[k]*g.nV[l];
 	/* 11cº Add the contact forces */
-	/* Nodal_TOT_FORCES.nM[l][Elem_Nods[k]] += */
-	/*   N_Ref_GP.nV[k]*MPM_Mesh.t_GP.nMx[i][j]* */
-	/*   (MPM_Mesh.Phi.mass.nV[i]/MPM_Mesh.Phi.rho.nV[i]); */
+	Nodal_TOT_FORCES.nM[l][Elem_Nods[k]] +=
+	  N_Ref_GP.nV[k]*MPM_Mesh.Phi.F.nM[i][l]*
+	  (MPM_Mesh.Phi.mass.nV[i]/MPM_Mesh.Phi.rho.nV[i]);
       }
     }
 	
