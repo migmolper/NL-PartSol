@@ -93,6 +93,9 @@ Matrix Get_RefDeformation_Gradient_L2(Matrix X_NC_GP,Matrix X_GC_Nodes)
 }
 
 
+/*********************************************************************/
+
+
 /***********************************************/
 /********* 2D triangle linear element **********/
 /***********************************************/
@@ -139,7 +142,7 @@ Matrix dT3(Matrix X_e){
 }
 
 
-
+/*********************************************************************/
 
 
 /***********************************************/
@@ -201,8 +204,66 @@ Matrix dQ4(Matrix X_e){
   return dNdX_ref;
 }
 
+
+/* Jacobian of the transformation for the four-nodes quadrilateral */
+Matrix Get_F_Ref_Q4(Matrix X_NC_GP,Matrix X_GC_Nodes)
+/*
+  Get the jacobian of the transformation of the reference element :
+
+  J = grad(N_{\alpha}) \cdot x_{\alpha}
+  
+  Inputs :
+  - X_g -> This are the coordinates of the nodes (4x2)
+  - dNdX_Ref_GP -> Derivative gradient evaluated in the GP (2x4)
+
+  Output :
+  - Jacobian -> Jacobian of the reference element
+  evaluated in the GP
+*/
+{
+  /* Variable declaration */
+  Matrix dNdX_Ref_GP;
+  Matrix X_alpha = MatAlloc(2,1);
+  Matrix dNdx_alpha = MatAlloc(1,2);
+  Matrix F_Ref_alpha;
+  Matrix F_Ref = MatAllocZ(2,2);
+
+  /* 1º Evaluate the derivarive of the shape function in the GP */
+  dNdX_Ref_GP = dQ4(X_NC_GP); 
+
+  /* 2º Get the F_Ref doing a loop over the nodes of the element */
+  for(int i = 0 ; i<4 ; i++){
+
+    /* 3º Fill arrays for the tensorial product */
+    for(int j = 0 ; j<2 ; j++){
+      X_alpha.nV[j] = X_GC_Nodes.nM[i][j];
+      dNdx_alpha.nV[j] = dNdX_Ref_GP.nM[j][i];
+    }
+
+    /* 4º Get the nodal contribution */
+    F_Ref_alpha = Tensorial_prod(X_alpha,dNdx_alpha);
+
+    /* 5º Increment the reference deformation gradient */
+    F_Ref = Incr_Mat(F_Ref, F_Ref_alpha);
+
+    /* 6º Free data of the nodal contribution */
+    free(F_Ref_alpha.nM);
+    
+  }
+  
+  /* 7º Free memory */
+  free(dNdX_Ref_GP.nM);
+  free(X_alpha.nV);
+  free(dNdx_alpha.nV);
+
+  /* 8º Output */
+  return F_Ref;
+}
+
+
+
 /* Global coordinates of the four nodes quadrilateral */
-Matrix Get_GlobalCoordinates_Q4(Matrix X_NC_GP,Matrix X_GC_Nodes)
+Matrix Get_X_GC_Q4(Matrix X_NC_GP,Matrix X_GC_Nodes)
 /*
 This function evaluate the position of the GP in the element, and get it global coordiantes    
  */
@@ -238,38 +299,6 @@ This function evaluate the position of the GP in the element, and get it global 
  
 }
 
-/* Deformation gradient of the four-nodes quadrilateral */
-Matrix Get_Jacobian_Q4(Matrix X_NC_GP,Matrix X_GC_Nodes)
-/*
-  Get the jacobian of the transformation of the reference element :
-
-  J = grad(N_{\alpha}) \cdot x_{\alpha}
-  
-  Inputs :
-  - X_g -> This are the coordinates of the nodes
-  - dNdX_Ref_GP -> Derivative gradient evaluated in the GP
-
-  Output :
-  - Jacobian -> Jacobian of the reference element
-  evaluated in the GP
-*/
-{
-  /* Variable declaration */
-  Matrix Jacobian = MatAlloc(2,2);
-  Matrix dNdX_Ref_GP;
-
-  /* 1º Evaluate the derivarive of the shape function in the GP */
-  dNdX_Ref_GP = dQ4(X_NC_GP); 
-
-  /* 2º Get the F_ref */
-  Jacobian = Scalar_prod(dNdX_Ref_GP,X_GC_Nodes);
-  
-  /* 3º Free memory */
-  free(dNdX_Ref_GP.nM);
-  
-  return Jacobian;
-}
-
 
 /* Element gradient in the real element */
 Matrix Get_dNdX_Q4(Matrix X_EC_GP,Matrix Element)
@@ -281,29 +310,30 @@ Matrix Get_dNdX_Q4(Matrix X_EC_GP,Matrix Element)
   
   /* 0º Definition and allocation */
   Matrix dNdX_Ref_GP; /* Derivative of the shape function evaluated in the GP (Ndim x Nnodes) */
-  Matrix J_GP; /* Jacobian of the transformation evaluated in the GP (Ndim x Ndim) */
-  Matrix J_GP_m1; /* Inverse of the Jacobian */
-  Matrix J_GP_Tm1; /* Transpose of the inverse Jacobian */
+  Matrix F_GP; /* Jacobian of the transformation evaluated in the GP (Ndim x Ndim) */
+  Matrix F_GP_m1; /* Inverse of the Jacobian */
+  Matrix F_GP_Tm1; /* Transpose of the inverse Jacobian */
   Matrix dNdx_GP; /* Derivatives of the shape function evaluates in the GP (Ndim x Ndim) */
 
   /* 1º Evaluate the gradient of the shape function in the GP */
   dNdX_Ref_GP = dQ4(X_EC_GP);
   
   /* 2º Get the Jacobian of the transformation evaluated in the GP */
-  J_GP = Get_Jacobian_Q4(X_EC_GP,Element);
+  F_GP = Get_F_Ref_Q4(X_EC_GP,Element);
     
   /* 3º Get the inverse of the deformation gradient */
-  J_GP_m1 = Get_Inverse(J_GP), 
-    free(J_GP.nM);
+  F_GP_m1 = Get_Inverse(F_GP), 
+    free(F_GP.nM);
   /* 4º Get the transpose of the inverse of the Jacobian */
-  J_GP_Tm1 = Transpose_Mat(J_GP_m1),
-    free(J_GP_m1.nM);
+  F_GP_Tm1 = Transpose_Mat(F_GP_m1),
+    free(F_GP_m1.nM);
   
   /* 5º Get the gradient of the shape functions in global coordinates */
-  dNdx_GP = Scalar_prod(J_GP_Tm1,dNdX_Ref_GP),
-    free(J_GP_Tm1.nM),
+  dNdx_GP = Scalar_prod(F_GP_Tm1,dNdX_Ref_GP),
+    free(F_GP_Tm1.nM),
     free(dNdX_Ref_GP.nM);
 
   /* 6º Return result */
   return dNdx_GP;
 }
+

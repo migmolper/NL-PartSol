@@ -34,6 +34,8 @@ Matrix Vectorial_prod(Matrix a, Matrix b);
 
 Matrix Tensorial_prod(Matrix,Matrix);
 
+Matrix Incr_Mat(Matrix, Matrix);
+
 Matrix Add_Mat(Matrix,Matrix);
 
 Matrix Sub_Mat(Matrix,Matrix);

@@ -301,8 +301,8 @@ Matrix GetNaturalCoordinates(Matrix X_EC_GP,Matrix X_GC_GP,Matrix Element_GC_Nod
 */
 {
   
-  X_EC_GP = Newton_Rapson(Get_GlobalCoordinates_Q4,Element_GC_Nod,
-			  Get_Jacobian_Q4,Element_GC_Nod,
+  X_EC_GP = Newton_Rapson(Get_X_GC_Q4,Element_GC_Nod,
+			  Get_F_Ref_Q4,Element_GC_Nod,
 			  X_GC_GP,X_EC_GP);
 
   return X_EC_GP;

@@ -19,6 +19,6 @@ Matrix dT3(Matrix);
 /* Quadrilateral of four nodes functions */
 Matrix Q4(Matrix);
 Matrix dQ4(Matrix);
-Matrix Get_GlobalCoordinates_Q4(Matrix,Matrix);
-Matrix Get_Jacobian_Q4(Matrix,Matrix);
+Matrix Get_F_Ref_Q4(Matrix,Matrix);
 Matrix Get_dNdX_Q4(Matrix,Matrix);
+Matrix Get_X_GC_Q4(Matrix,Matrix);

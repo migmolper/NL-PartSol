@@ -700,7 +700,7 @@ Matrix Tensorial_prod(Matrix A,Matrix B)
       } /* for i */
     } /* for j */
     
-  }  /* Tensorial product between two arrays */
+  }  /* Tensorial product between an array and a matrix */
   else if( ((A.nM != NULL)&&(B.nV != NULL)) ||
 	   ((A.nV != NULL)&&(B.nM != NULL))){
     puts(" Tensorial producto between a matrix and a array is not already defined");
@@ -1121,7 +1121,7 @@ Matrix Newton_Rapson(Matrix(* Function)(Matrix, Matrix),Matrix Parameter_F,
   Matrix dY_dX;
   Matrix dY_dX_m1;
   Matrix DeltaX;
-  double TOL_NormDeltaX = pow(10,-3);
+  double TOL_NormDeltaX = pow(10,-4);
   double NormDeltaX = pow(10,4);
   int Num_Iter = 20;  
   int Iter_i = 0;
@@ -1141,10 +1141,9 @@ Matrix Newton_Rapson(Matrix(* Function)(Matrix, Matrix),Matrix Parameter_F,
     }
     
     /* 2º Get the jacobian matrix in X0 DY_dX */
-    dY_dX = Jacobian(X,Parameter_J);
-    
     /* Implement the numerical solution of the Jacobian for cases where the 
-     Jacobian is not easy to derive */
+       Jacobian is not easy to derive */
+    dY_dX = Jacobian(X,Parameter_J);
 
     /* 3º Solve the sistem DY_dX(X0)*DeltaX = F(X0) -> DeltaX */
     Bool = dY_dX.N_cols>3;
