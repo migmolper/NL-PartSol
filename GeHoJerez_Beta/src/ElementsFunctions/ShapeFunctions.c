@@ -269,3 +269,41 @@ Matrix Get_Jacobian_Q4(Matrix X_NC_GP,Matrix X_GC_Nodes)
   
   return Jacobian;
 }
+
+
+/* Element gradient in the real element */
+Matrix Get_dNdX_Q4(Matrix X_EC_GP,Matrix Element)
+/*
+  - Matrix X_EC_GP : Element coordinates of the gauss point
+  - Matrix Element : Coordinates of the element (NumNodesElem x NumberDimensions)
+*/
+{
+  
+  /* 0º Definition and allocation */
+  Matrix dNdX_Ref_GP; /* Derivative of the shape function evaluated in the GP (Ndim x Nnodes) */
+  Matrix J_GP; /* Jacobian of the transformation evaluated in the GP (Ndim x Ndim) */
+  Matrix J_GP_m1; /* Inverse of the Jacobian */
+  Matrix J_GP_Tm1; /* Transpose of the inverse Jacobian */
+  Matrix dNdx_GP; /* Derivatives of the shape function evaluates in the GP (Ndim x Ndim) */
+
+  /* 1º Evaluate the gradient of the shape function in the GP */
+  dNdX_Ref_GP = dQ4(X_EC_GP);
+  
+  /* 2º Get the Jacobian of the transformation evaluated in the GP */
+  J_GP = Get_Jacobian_Q4(X_EC_GP,Element);
+    
+  /* 3º Get the inverse of the deformation gradient */
+  J_GP_m1 = Get_Inverse(J_GP), 
+    free(J_GP.nM);
+  /* 4º Get the transpose of the inverse of the Jacobian */
+  J_GP_Tm1 = Transpose_Mat(J_GP_m1),
+    free(J_GP_m1.nM);
+  
+  /* 5º Get the gradient of the shape functions in global coordinates */
+  dNdx_GP = Scalar_prod(J_GP_Tm1,dNdX_Ref_GP),
+    free(J_GP_Tm1.nM),
+    free(dNdX_Ref_GP.nM);
+
+  /* 6º Return result */
+  return dNdx_GP;
+}

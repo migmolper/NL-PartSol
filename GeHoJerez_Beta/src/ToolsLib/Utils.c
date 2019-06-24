@@ -1116,42 +1116,46 @@ Matrix Newton_Rapson(Matrix(* Function)(Matrix, Matrix),Matrix Parameter_F,
 {
 
   /* Auxiliar variables */
-  Matrix F_n;
-  Matrix J_n;
-  Matrix J_m1_n;
+  Matrix F_x;
+  Matrix Y_x;
+  Matrix dY_dX;
+  Matrix dY_dX_m1;
   Matrix DeltaX;
-  double TOL_NormDeltaX = pow(10,-4);
+  double TOL_NormDeltaX = pow(10,-3);
   double NormDeltaX = pow(10,4);
   int Num_Iter = 20;  
   int Iter_i = 0;
   int Bool;
 
+  /* Allocate matrix for the function */
+  F_x = MatAlloc(Y.N_rows,Y.N_cols);
+  
   /* 0º Check the convergence criterium */
   while( (NormDeltaX > TOL_NormDeltaX )
 	 && (Iter_i < Num_Iter) ){
-
-    /* 1º Evaluate F in X0 and get F(x) = Y - Y(x) */
-    F_n = Function(X,Parameter_F);
-    for(int i = 0 ; i<F_n.N_cols*F_n.N_rows ; i++){
-      F_n.nV[i] = Y.nV[i] - F_n.nV[i];
+    
+    /* 1º Get F(x) = Y - Y(x) */
+    Y_x = Function(X,Parameter_F);
+    for(int i = 0 ; i<Y.N_rows*Y.N_cols ; i++){
+      F_x.nV[i] = Y.nV[i] - Y_x.nV[i];
     }
     
-    /* 2º Get the jacobian matrix in X0 */
-    J_n = Jacobian(X,Parameter_J);
+    /* 2º Get the jacobian matrix in X0 DY_dX */
+    dY_dX = Jacobian(X,Parameter_J);
     
     /* Implement the numerical solution of the Jacobian for cases where the 
      Jacobian is not easy to derive */
 
-    /* 3º Solve the sistem J(X0)*DeltaX = F(X0) */
-    Bool = J_n.N_cols>3;
+    /* 3º Solve the sistem DY_dX(X0)*DeltaX = F(X0) -> DeltaX */
+    Bool = dY_dX.N_cols>3;
     switch(Bool){
     case 0 : /* If the size of the Jacobian is less than 4, use analitical */
-      J_m1_n = Get_Inverse(J_n);
-      DeltaX = Scalar_prod(J_m1_n,F_n);
-      free(J_m1_n.nM);
+      dY_dX_m1 = Get_Inverse(dY_dX), free(dY_dX.nM);
+      DeltaX = Scalar_prod(dY_dX_m1,F_x), free(dY_dX_m1.nM);
       break;
     case 1 : /* If the size of the Jacobian is great than 4, use numerical */
-      DeltaX = Jacobi_Conjugate_Gradient_Method(J_n,F_n,DeltaX);
+      DeltaX = Jacobi_Conjugate_Gradient_Method(dY_dX,F_x,DeltaX);
+      free(dY_dX.nM);
       break;
     default :
       exit(0);
@@ -1161,15 +1165,13 @@ Matrix Newton_Rapson(Matrix(* Function)(Matrix, Matrix),Matrix Parameter_F,
     NormDeltaX = Norm_Mat(DeltaX,2);
     Iter_i++;
 
-    /* 4º Update the solution */
-    X = Incr_Mat(X,DeltaX);
-    
-    /* 5º Free memory for general variables */
-    free(J_n.nM);
-    free(DeltaX.nV);
-    free(F_n.nV);
-    
+    /* 4º Update the solution and free memory */
+    X = Incr_Mat(X,DeltaX), free(DeltaX.nV);
+        
   }
+
+  /* Free array with the function value */
+  free(F_x.nV);
   
   /* 6º Return X */
   return X;

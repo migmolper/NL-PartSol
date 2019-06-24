@@ -21,3 +21,4 @@ Matrix Q4(Matrix);
 Matrix dQ4(Matrix);
 Matrix Get_GlobalCoordinates_Q4(Matrix,Matrix);
 Matrix Get_Jacobian_Q4(Matrix,Matrix);
+Matrix Get_dNdX_Q4(Matrix,Matrix);

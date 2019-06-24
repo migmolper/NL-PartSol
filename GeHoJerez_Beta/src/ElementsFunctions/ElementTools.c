@@ -108,7 +108,7 @@ Matrix Get_B_GP(Matrix X_EC_GP,Matrix Element)
    the finite element method )
    Inputs:
    - Matrix X_NC_GP : Element coordinates
-   - Matrix Element : Coordinates of the element 
+   - Matrix Element : Coordinates of the element (NumNodesElem x NumberDimensions)
 
    Outputs : Matrix B
 */
@@ -116,10 +116,6 @@ Matrix Get_B_GP(Matrix X_EC_GP,Matrix Element)
 
   /* 0º Define variables */
   Matrix B_GP; /* Declaration of the output matrix (NdimVecStrain x Nnodes*Ndim) */
-  Matrix dNdX_Ref_GP; /* Derivative of the shape function evaluated in the GP (Ndim x Nnodes) */
-  Matrix J_GP; /* Jacobian of the transformation evaluated in the GP (Ndim x Ndim) */
-  Matrix J_GP_m1; /* Inverse of the Jacobian */
-  Matrix J_GP_Tm1; /* Transpose of the inverse Jacobian */
   Matrix dNdx_XG_GP; /* Derivatives of the shape function evaluates in the GP (Ndim x Ndim) */
 
   /* 1º Select the case to solve */
@@ -135,26 +131,12 @@ Matrix Get_B_GP(Matrix X_EC_GP,Matrix Element)
     /* 2º Allocate the output */
     B_GP = MatAlloc(3,2*Element.N_rows);
 
-    if(strcmp(Element.Info,"Quadrilateral") == 0){      
-      /* 3º Evaluate the gradient of the shape function in the GP */
-      dNdX_Ref_GP = dQ4(X_EC_GP);
-      /* 4º Get the jacobian of the transformation evaluated in the GP */
-      J_GP = Get_Jacobian_Q4(X_EC_GP,Element);
+    if(strcmp(Element.Info,"Quadrilateral") == 0){
+      /* 3º Get the element gradient in natural coordinates*/
+      dNdx_XG_GP = Get_dNdX_Q4(X_EC_GP,Element);
     }
-
-    /* 5º Get the deformation gradient (dNdx_XG) : Only in some cases */
-    /* 5aº Get the inverse of the deformation gradient */
-    J_GP_m1 = Get_Inverse(J_GP), 
-      free(J_GP.nM);
-    /* 5bº Get the transpose of the inverse of the Jacobian */
-    J_GP_Tm1 = Transpose_Mat(J_GP_m1),
-      free(J_GP_m1.nM);
-    /* 5cº Get the gradient of the shape functions in global coordinates */
-    dNdx_XG_GP = Scalar_prod(J_GP_Tm1,dNdX_Ref_GP),
-      free(J_GP_Tm1.nM),
-      free(dNdX_Ref_GP.nM);
-    
-    /* 6º Fill the array with the nodal partial derivation of the reference element */    
+        
+    /* 4º Fill the array with the nodal partial derivation of the reference element */    
     for(int i = 0 ; i<Element.N_rows ; i++){
       B_GP.nM[0][2*i] = dNdx_XG_GP.nM[0][i];
       B_GP.nM[1][2*i] = 0;
@@ -165,7 +147,7 @@ Matrix Get_B_GP(Matrix X_EC_GP,Matrix Element)
       B_GP.nM[2][2*i + 1] = dNdx_XG_GP.nM[0][i];      
     }
 
-    /* 7º Free memory */
+    /* 5º Free memory */
     free(dNdx_XG_GP.nM);
 
     break;
