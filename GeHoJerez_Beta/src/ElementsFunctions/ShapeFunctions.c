@@ -322,16 +322,16 @@ Matrix Get_dNdX_Q4(Matrix X_EC_GP,Matrix Element)
   F_GP = Get_F_Ref_Q4(X_EC_GP,Element);
     
   /* 3º Get the inverse of the deformation gradient */
-  F_GP_m1 = Get_Inverse(F_GP), 
-    free(F_GP.nM);
+  F_GP_m1 = Get_Inverse(F_GP);
+  free(F_GP.nM);
   /* 4º Get the transpose of the inverse of the Jacobian */
-  F_GP_Tm1 = Transpose_Mat(F_GP_m1),
-    free(F_GP_m1.nM);
+  F_GP_Tm1 = Transpose_Mat(F_GP_m1);
+  free(F_GP_m1.nM);
   
   /* 5º Get the gradient of the shape functions in global coordinates */
-  dNdx_GP = Scalar_prod(F_GP_Tm1,dNdX_Ref_GP),
-    free(F_GP_Tm1.nM),
-    free(dNdX_Ref_GP.nM);
+  dNdx_GP = Scalar_prod(F_GP_Tm1,dNdX_Ref_GP);
+  free(F_GP_Tm1.nM);
+  free(dNdX_Ref_GP.nM);
 
   /* 6º Return result */
   return dNdx_GP;

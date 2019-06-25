@@ -1,3 +1,4 @@
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -6,6 +7,7 @@
 #include "../ToolsLib/GlobalVariables.h"
 #include "../ElementsFunctions/ElementTools.h"
 #include "../InOutFun/InOutFun.h"
+#include "MPM_Subroutines.h"
 
 
 /*********************************************************************/
@@ -363,7 +365,8 @@ void UpdateGaussPointStrain(GaussPoint MPM_Mesh,
   Matrix Elem_Coords; /* Coordinates of the nodes of the element */
   Matrix Nodal_VELOCITY_Elem; /* Array with the nodal velocities */
   Matrix B; /* B marix to get the deformation */
-  Matrix Increment_Strain_GP; /* Vectoriced strain tensor */
+  Matrix Increment_Strain_GP; /* Vectoriced Strain tensor */
+  double Incr_TraceStrain; /* Increment of the trace of the Stress tensor */
 
   /* 1º Allocate auxiliar variables */
   Elem_Coords = MatAllocZ(FEM_Mesh.NumNodesElem,NumberDimensions);
@@ -398,21 +401,34 @@ void UpdateGaussPointStrain(GaussPoint MPM_Mesh,
       }
     }
 
-    /* 8º Multiply B by the velocity array */
+    /* 8º Multiply B by the velocity array and by the time step to get
+       the increment stress tensor */
     Increment_Strain_GP = Scalar_prod(B,Nodal_VELOCITY_Elem);
-
-    /* 9º Udate the Gauss-Point strain tensor */
+    free(B.nM);
+    
     for(int j = 0 ; j<MPM_Mesh.Phi.Strain.N_cols ; j++){
-      MPM_Mesh.Phi.Strain.nM[i][j] += Increment_Strain_GP.nV[j]*DeltaTimeStep;
+      Increment_Strain_GP.nV[j] *= DeltaTimeStep;
     }
 
-    /* 10º Free memory for the next step */
-    free(B.nM);
+    /* 9º Set to zero the trace of the stress tensor */
+    Incr_TraceStrain = 0;
+
+    for(int j = 0 ; j<MPM_Mesh.Phi.Strain.N_cols ; j++){
+      /* 10º Udate the Gauss-Point strain tensor */
+      MPM_Mesh.Phi.Strain.nM[i][j] += Increment_Strain_GP.nV[j];
+      /* 11º Get the trace of the stress tensor */
+      if(j<NumberDimensions)
+	Incr_TraceStrain += Increment_Strain_GP.nV[j];
+    }
     free(Increment_Strain_GP.nV);
+
+    /* 12º Update the density of the GP */
+    MPM_Mesh.Phi.rho.nV[i] = UpdateGaussPointDensity(MPM_Mesh.Phi.rho.nV[i], Incr_TraceStrain);
+
     
   }
 
-  /* 11º Free memory for the global variables */
+  /* 14º Free memory for the global variables */
   free(Elem_Coords.nM);
   free(Nodal_VELOCITY_Elem.nV);
 
@@ -422,26 +438,15 @@ void UpdateGaussPointStrain(GaussPoint MPM_Mesh,
 /*******************************************************/
 
 
-void UpdateGaussPointDensity(GaussPoint MPM_Mesh){
+double UpdateGaussPointDensity(double rho_n,
+			       double Incr_TraceStrain){
 
-  /* 0º Define auxiliar variables */
-  double TraceStrainTensor;
+  double rho_n1;
 
-  /* 1º Loop over the Gauss-Points */
-  for(int i = 0 ; i<MPM_Mesh.NumGP ; i++){
+  /* Update the density */
+  rho_n1 = (double)rho_n/(1 + Incr_TraceStrain);
 
-    /* 2º Set to zero the trace of the strain tensor */
-    TraceStrainTensor = 0;
-
-    /* 3º Calcule the trace of the strain tensor */
-    for(int j = 0 ; j<NumberDimensions ; j++){
-      TraceStrainTensor += MPM_Mesh.Phi.Strain.nM[i][j];      
-    }
-
-    /* 4º Update the density */
-    MPM_Mesh.Phi.rho.nV[i] *= (double)1/(1 + TraceStrainTensor);
-  }
-  
+  return rho_n1;  
 }
 
 
@@ -548,12 +553,13 @@ Matrix GetNodalForces(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 	
     /* 9º Get the B_T matrix for the derivates */
     B = Get_B_GP(X_EC_GP,Elem_Coords);	
-    B_T = Transpose_Mat(B), free(B.nM);
+    B_T = Transpose_Mat(B);
+    free(B.nM);
 
     /* 10º Get forces in the nodes of the element created by the Gauss-Point 
      and free the B_T matrix */
     Element_INT_FORCES = Scalar_prod(B_T,StressTensor_GP);
-    free(B_T.nV);
+    free(B_T.nM);
 
     /* 11º Acumulate this forces to the total array with the internal forces */
     for(int k = 0 ; k<FEM_Mesh.NumNodesElem ; k++){  

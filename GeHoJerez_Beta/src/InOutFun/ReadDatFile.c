@@ -207,7 +207,7 @@ void ReadDatFile(char * Name_File)
 	  /***********************************************************************/
 	} /* End if nSimParameter */     
       } /* End for nwords */
-    } /* End if nwords */  
+    } /* End if nwords */
   } /* End while */
 
   /* Set the number of DOFs for each node depending of the kind of analysis */

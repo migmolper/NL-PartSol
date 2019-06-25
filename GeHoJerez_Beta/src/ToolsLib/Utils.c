@@ -1064,6 +1064,7 @@ int InOut_Poligon(Matrix X_Point, Matrix Poligon)
 
     c = Vectorial_prod(a,b);
     nxc = Scalar_prod(n,c);
+    free(c.nV);
 
     if(nxc.n < 0){
       InOut = 0;
@@ -1090,6 +1091,7 @@ int InOut_Poligon(Matrix X_Point, Matrix Poligon)
   free(a.nV);
   free(b.nV);
   free(c.nV);
+  free(n.nV);
 
   return InOut;
 }
@@ -1149,8 +1151,10 @@ Matrix Newton_Rapson(Matrix(* Function)(Matrix, Matrix),Matrix Parameter_F,
     Bool = dY_dX.N_cols>3;
     switch(Bool){
     case 0 : /* If the size of the Jacobian is less than 4, use analitical */
-      dY_dX_m1 = Get_Inverse(dY_dX), free(dY_dX.nM);
-      DeltaX = Scalar_prod(dY_dX_m1,F_x), free(dY_dX_m1.nM);
+      dY_dX_m1 = Get_Inverse(dY_dX);
+      free(dY_dX.nM);
+      DeltaX = Scalar_prod(dY_dX_m1,F_x);
+      free(dY_dX_m1.nM);
       break;
     case 1 : /* If the size of the Jacobian is great than 4, use numerical */
       DeltaX = Jacobi_Conjugate_Gradient_Method(dY_dX,F_x,DeltaX);

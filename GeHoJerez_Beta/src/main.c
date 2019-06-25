@@ -156,12 +156,8 @@ int main(int argc, char *argv[])
     printf(" \t b) Calculate the strain increment ... WORKING \n");
     UpdateGaussPointStrain(GP_Mesh,FEM_Mesh,Nodal_VELOCITY);
     printf(" \t DONE !!! \n");
-    /* c) Update the particle density */
-    printf(" \t c) Update the particle density ... WORKING \n");
-    UpdateGaussPointDensity(GP_Mesh);
-    printf(" \t DONE !!! \n");
-    /* d) Update the particle stress state */
-    printf(" \t d) Update the particle stress state ... WORKING \n");
+    /* c) Update the particle stress state */
+    printf(" \t c) Update the particle stress state ... WORKING \n");
     UpdateGaussPointStress(GP_Mesh);
     printf(" \t DONE !!! \n");
 
