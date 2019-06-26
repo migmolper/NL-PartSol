@@ -148,7 +148,7 @@ Matrix Get_B_GP(Matrix X_EC_GP,Matrix Element)
     }
 
     /* 5º Free memory */
-    free(dNdx_XG_GP.nM);
+    FreeMat(dNdx_XG_GP);
 
     break;
     

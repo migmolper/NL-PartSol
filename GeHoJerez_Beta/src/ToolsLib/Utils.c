@@ -145,6 +145,28 @@ Matrix MatAllocZ(int NumberRows,int NumberColumns)
 
 /*********************************************************************/
 
+void FreeMat(Matrix Input){
+
+  if( ((Input.N_cols == 1) && (Input.N_rows > 1)) ||
+      ((Input.N_cols > 1) && (Input.N_rows == 1)) ){ /* It is a vector */
+    free(Input.nV);
+  }
+  else if( (Input.N_cols > 1) && (Input.N_rows > 1) ){ /* It is a matrix */
+    for(int i = 0 ; i<Input.N_rows ; i++){
+      free(Input.nM[i]);
+    }
+    free(Input.nM);
+  }
+  else{
+    printf("Error in FreeMat() : You are trying to free a scalar !!! \n");
+    exit(0);
+  }
+  
+}
+
+
+/*********************************************************************/
+
 void PrintMatrix(Matrix In, int NumCols, int NumRows)
 /*
   Print term by term the input matrix
@@ -1064,7 +1086,7 @@ int InOut_Poligon(Matrix X_Point, Matrix Poligon)
 
     c = Vectorial_prod(a,b);
     nxc = Scalar_prod(n,c);
-    free(c.nV);
+    FreeMat(c);
 
     if(nxc.n < 0){
       InOut = 0;
@@ -1088,10 +1110,10 @@ int InOut_Poligon(Matrix X_Point, Matrix Poligon)
     InOut = 0;
   }
 
-  free(a.nV);
-  free(b.nV);
-  free(c.nV);
-  free(n.nV);
+  FreeMat(a);
+  FreeMat(b);
+  FreeMat(c);
+  FreeMat(n);
 
   return InOut;
 }
@@ -1152,13 +1174,13 @@ Matrix Newton_Rapson(Matrix(* Function)(Matrix, Matrix),Matrix Parameter_F,
     switch(Bool){
     case 0 : /* If the size of the Jacobian is less than 4, use analitical */
       dY_dX_m1 = Get_Inverse(dY_dX);
-      free(dY_dX.nM);
+      FreeMat(dY_dX);
       DeltaX = Scalar_prod(dY_dX_m1,F_x);
-      free(dY_dX_m1.nM);
+      FreeMat(dY_dX_m1);
       break;
     case 1 : /* If the size of the Jacobian is great than 4, use numerical */
       DeltaX = Jacobi_Conjugate_Gradient_Method(dY_dX,F_x,DeltaX);
-      free(dY_dX.nM);
+      FreeMat(dY_dX);
       break;
     default :
       exit(0);
@@ -1169,12 +1191,13 @@ Matrix Newton_Rapson(Matrix(* Function)(Matrix, Matrix),Matrix Parameter_F,
     Iter_i++;
 
     /* 4º Update the solution and free memory */
-    X = Incr_Mat(X,DeltaX), free(DeltaX.nV);
+    X = Incr_Mat(X,DeltaX);
+    FreeMat(DeltaX);
         
   }
 
   /* Free array with the function value */
-  free(F_x.nV);
+  FreeMat(F_x);
   
   /* 6º Return X */
   return X;

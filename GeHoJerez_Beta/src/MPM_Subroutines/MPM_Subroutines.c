@@ -66,7 +66,7 @@ void GlobalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh){
   } /* Loop over the GP */
 
   /* 8º Free memory */
-  free(Poligon.nM);
+  FreeMat(Poligon);
   
 }
 
@@ -241,9 +241,9 @@ void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
   } /* Loop over the GP */
 
   /* 8º Free memory */
-  free(V_GP_n.nV);
-  free(Search_Direction.nV);
-  free(Element_GP_Coordinates.nM);
+  FreeMat(V_GP_n);
+  FreeMat(Search_Direction);
+  FreeMat(Element_GP_Coordinates);
 
  
 }
@@ -305,7 +305,7 @@ Matrix GetNodalMassMomentum(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
     }
 
     /* 9º Free the value of the shape functions */
-    free(N_Ref_GP.nV);
+    FreeMat(N_Ref_GP);
     
   }
     
@@ -404,7 +404,7 @@ void UpdateGaussPointStrain(GaussPoint MPM_Mesh,
     /* 8º Multiply B by the velocity array and by the time step to get
        the increment stress tensor */
     Increment_Strain_GP = Scalar_prod(B,Nodal_VELOCITY_Elem);
-    free(B.nM);
+    FreeMat(B);
     
     for(int j = 0 ; j<MPM_Mesh.Phi.Strain.N_cols ; j++){
       Increment_Strain_GP.nV[j] *= DeltaTimeStep;
@@ -420,7 +420,7 @@ void UpdateGaussPointStrain(GaussPoint MPM_Mesh,
       if(j<NumberDimensions)
 	Incr_TraceStrain += Increment_Strain_GP.nV[j];
     }
-    free(Increment_Strain_GP.nV);
+    FreeMat(Increment_Strain_GP);
 
     /* 12º Update the density of the GP */
     MPM_Mesh.Phi.rho.nV[i] = UpdateGaussPointDensity(MPM_Mesh.Phi.rho.nV[i], Incr_TraceStrain);
@@ -429,8 +429,8 @@ void UpdateGaussPointStrain(GaussPoint MPM_Mesh,
   }
 
   /* 14º Free memory for the global variables */
-  free(Elem_Coords.nM);
-  free(Nodal_VELOCITY_Elem.nV);
+  FreeMat(Elem_Coords);
+  FreeMat(Nodal_VELOCITY_Elem);
 
 }
 
@@ -492,7 +492,7 @@ void UpdateGaussPointStress(GaussPoint MPM_Mesh){
       MPM_Mesh.Phi.Stress.nM[i][j] = StressTensor_GP.nV[j];
     }
     /* 6º Free memory */
-    free(StressTensor_GP.nV);
+    FreeMat(StressTensor_GP);
   }
   
 }
@@ -554,12 +554,12 @@ Matrix GetNodalForces(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
     /* 9º Get the B_T matrix for the derivates */
     B = Get_B_GP(X_EC_GP,Elem_Coords);	
     B_T = Transpose_Mat(B);
-    free(B.nM);
+    FreeMat(B);
 
     /* 10º Get forces in the nodes of the element created by the Gauss-Point 
      and free the B_T matrix */
     Element_INT_FORCES = Scalar_prod(B_T,StressTensor_GP);
-    free(B_T.nM);
+    FreeMat(B_T);
 
     /* 11º Acumulate this forces to the total array with the internal forces */
     for(int k = 0 ; k<FEM_Mesh.NumNodesElem ; k++){  
@@ -578,8 +578,8 @@ Matrix GetNodalForces(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
     }
 	
     /* 12º Free memory */
-    free(Element_INT_FORCES.nV);
-    free(N_Ref_GP.nV);
+    FreeMat(Element_INT_FORCES);
+    FreeMat(N_Ref_GP);
 
   }  
 
@@ -653,7 +653,7 @@ void UpdateVelocityAndPositionGP(GaussPoint MPM_Mesh,
     }
 
     /* 7º Free The value of the shape functions */
-    free(N_Ref_GP.nV);
+    FreeMat(N_Ref_GP);
     
   }  
 }

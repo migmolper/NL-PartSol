@@ -181,9 +181,9 @@ https://en.wikipedia.org/wiki/Conjugate_gradient_method#The_preconditioned_conju
   }
 
   /* Free memory */
-  free(r_k.nV);
-  free(r_k1.nV);
-  free(p.nV);
+  FreeMat(r_k);
+  FreeMat(r_k1);
+  FreeMat(p);
   
   return U;
   
@@ -348,12 +348,12 @@ Matrix Jacobi_Conjugate_Gradient_Method(Matrix K, Matrix F, Matrix U0)
   }
 
   /* Free memory */
-  free(r_k.nV);
-  free(r_k1.nV);
-  free(z_k.nV);
-  free(z_k1.nV);
-  free(p.nV);
-  free(K_l.nV);
+  FreeMat(r_k);
+  FreeMat(r_k1);
+  FreeMat(z_k);
+  FreeMat(z_k1);
+  FreeMat(p);
+  FreeMat(K_l);
    
   return U;
   

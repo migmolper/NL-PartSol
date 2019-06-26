@@ -14,6 +14,8 @@ Matrix MatAlloc(int,int);
 
 Matrix MatAllocZ(int,int);
 
+void FreeMat(Matrix);
+
 void PrintMatrix(Matrix, int, int);
 
 double StatsDouMatrix(double *, int, char *);

@@ -162,7 +162,7 @@ GaussPoint Initialize_GP_Mesh(char * MPM_GID_MeshName,
       MPM_Mesh.Phi.x_GC.nM[i][2] = 0.0;
 
       /* Free data */
-      free(Poligon_Centroid.nV);
+      FreeMat(Poligon_Centroid);
       
       /* Local coordinates of the element */
       MPM_Mesh.Element_id[i] = -999;
@@ -237,7 +237,7 @@ GaussPoint Initialize_GP_Mesh(char * MPM_GID_MeshName,
   MPM_Mesh.D = D;
 
   /* Free the input data */
-  free(MPM_GID_Mesh.Coordinates.nM);
+  FreeMat(MPM_GID_Mesh.Coordinates);
   free(MPM_GID_Mesh.Connectivity);
   free(MPM_GID_Mesh.ActiveNode);
 
@@ -320,11 +320,11 @@ void GaussPointsToMesh(Mesh ElementMesh,
   /* 2º Check if it is necessary to do a resize of Phi_n_Nod  */
   if(ElementMesh.NumNodesMesh != Phi_n_Nod.N_cols){
     if(NumDOF >= 2){ /* 2aº Vectorial */
-      free(Phi_n_Nod.nM); /* Free previous data field */
+      FreeMat(Phi_n_Nod); /* Free previous data field */
       Phi_n_Nod = MatAllocZ(NumDOF,ElementMesh.NumNodesMesh); /* Resize */
     }
     else{/* 2bº Scalar */
-      free(Phi_n_Nod.nV); /* Free previous data field */
+      FreeMat(Phi_n_Nod); /* Free previous data field */
       Phi_n_Nod = MatAllocZ(NumDOF,ElementMesh.NumNodesMesh); /* Resize */
     }
   }

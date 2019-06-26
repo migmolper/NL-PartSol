@@ -83,11 +83,18 @@ int main(int argc, char *argv[])
   /******** INITIALIZE AUXILIAR STRUCTURES FOR BOUNDARY CONDITIONS *******/
   /***********************************************************************/
   /* Define BC variables */
+  /* BoundaryConditions BCC_Momentum_TOP; */
   BoundaryConditions BCC_Momentum_BOTTOM;
+  /* BoundaryConditions BCC_Momentum_LEFT; */
+  /* BoundaryConditions BCC_Momentum_RIGHT;  */  
   /* BoundaryConditions BCC_Loads; */
   
-  /* Read the boundary conditions in the bottom of the domain */
+  /* Read the boundary conditions in the contours of the domain */
+  /* BCC_Momentum_TOP = ReadBCC(BounCondFileName,FEM_Mesh); */
   BCC_Momentum_BOTTOM = ReadBCC(BounCondFileName,FEM_Mesh);
+  /* BCC_Momentum_LEFT = ReadBCC(BounCondFileName,FEM_Mesh); */
+  /* BCC_Momentum_RIGHT = ReadBCC(BounCondFileName,FEM_Mesh); */
+  
   /* Read boundary conditions in the MPM nodes */
   /* BCC_Loads = ReadBCC(LoadsFileName,FEM_Mesh); */
   /***********************************************************************/
@@ -205,9 +212,9 @@ int main(int argc, char *argv[])
     printf(" Ten step : Reset nodal values of the mesh \n");
     printf(" \t WORKING ... \n");
      /* Reset nodal values */
-    free(Nodal_MASS_MOMENTUM.nM);
-    free(Nodal_VELOCITY.nM);
-    free(Nodal_TOT_FORCES.nM);
+    FreeMat(Nodal_MASS_MOMENTUM);
+    FreeMat(Nodal_VELOCITY);
+    FreeMat(Nodal_TOT_FORCES);
     printf(" DONE !!! \n");
 
   } /* End of temporal integration */

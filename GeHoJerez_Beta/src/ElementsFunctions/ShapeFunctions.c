@@ -51,7 +51,7 @@ This function evaluate the position of the GP in the element, and get it global 
   X_GC_GP.n = N_ref.nV[0]*X_GC_Nodes.nM[0][0] +
     N_ref.nV[1]*X_GC_Nodes.nM[1][0];
 
-  free(N_ref.nV);
+  FreeMat(N_ref);
 
   return X_GC_GP;
  
@@ -86,7 +86,7 @@ Matrix Get_RefDeformation_Gradient_L2(Matrix X_NC_GP,Matrix X_GC_Nodes)
     dNdX_Ref_GP.nV[1]*X_GC_Nodes.nM[1][0];
     
   /* 3º Free memory */
-  free(dNdX_Ref_GP.nM);
+  FreeMat(dNdX_Ref_GP);
     
 
   return F_Ref;
@@ -247,14 +247,14 @@ Matrix Get_F_Ref_Q4(Matrix X_NC_GP,Matrix X_GC_Nodes)
     F_Ref = Incr_Mat(F_Ref, F_Ref_alpha);
 
     /* 6º Free data of the nodal contribution */
-    free(F_Ref_alpha.nM);
+    FreeMat(F_Ref_alpha);
     
   }
   
   /* 7º Free memory */
-  free(dNdX_Ref_GP.nM);
-  free(X_alpha.nV);
-  free(dNdx_alpha.nV);
+  FreeMat(dNdX_Ref_GP);
+  FreeMat(X_alpha);
+  FreeMat(dNdx_alpha);
 
   /* 8º Output */
   return F_Ref;
@@ -292,7 +292,7 @@ This function evaluate the position of the GP in the element, and get it global 
     N_ref.nV[3]*X_GC_Nodes.nM[3][1];
 
   /* 4º Free memory */
-  free(N_ref.nV);
+  FreeMat(N_ref);
 
   /* 5º Output */
   return X_GC_GP;
@@ -323,15 +323,15 @@ Matrix Get_dNdX_Q4(Matrix X_EC_GP,Matrix Element)
     
   /* 3º Get the inverse of the deformation gradient */
   F_GP_m1 = Get_Inverse(F_GP);
-  free(F_GP.nM);
+  FreeMat(F_GP);
   /* 4º Get the transpose of the inverse of the Jacobian */
   F_GP_Tm1 = Transpose_Mat(F_GP_m1);
-  free(F_GP_m1.nM);
+  FreeMat(F_GP_m1);
   
   /* 5º Get the gradient of the shape functions in global coordinates */
   dNdx_GP = Scalar_prod(F_GP_Tm1,dNdX_Ref_GP);
-  free(F_GP_Tm1.nM);
-  free(dNdX_Ref_GP.nM);
+  FreeMat(F_GP_Tm1);
+  FreeMat(dNdX_Ref_GP);
 
   /* 6º Return result */
   return dNdx_GP;

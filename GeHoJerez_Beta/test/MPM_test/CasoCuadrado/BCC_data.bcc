@@ -1,4 +1,1 @@
-BCC_TOP TOP#[Y=1] T#[:] V#[0:1]={NAN,0}
-BCC_BOTTOM BOTTOM#[Y=-3] T#[:] V#[0:1]={NAN,0}
-BCC_RIGHT RIGHT#[X=1] T#[:] V#[1:0]={0,NAN}
-BCC_LEFT LEFT#[X=-1] T#[:] V#[1:0]={0,NAN}
+BCC_BOTTOM V#[0:1]={NAN,test/MPM_test/CasoCuadrado/CurveConstant.txt}

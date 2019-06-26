@@ -161,7 +161,7 @@ void Two_Steps_TG_FEM(Mesh ElementMesh, GaussPoint GP_Mesh,
   }
 
   /* Once we have use it, we free the memory */
-  free(Flux_n_Nod.nM);
+  FreeMat(Flux_n_Nod);
 
   printf(" * Get Nodal-Fields values in t = n + 1 \n ");
   /**********************************************************************/
@@ -179,7 +179,7 @@ void Two_Steps_TG_FEM(Mesh ElementMesh, GaussPoint GP_Mesh,
   Flux_n12_GP = Scalar_prod(A,Phi_n12_GP);
 
   /* Once we have use it, we free the memory */
-  free(Phi_n12_GP.nM);
+  FreeMat(Phi_n12_GP);
 
   printf("\t --> Get the RHS in the mesh in t = n + 1/2 \n");
   /************ Calcule the RHS in the mesh for t = n + 1/2 **************/
@@ -260,7 +260,7 @@ void Two_Steps_TG_FEM(Mesh ElementMesh, GaussPoint GP_Mesh,
   }
   
   /* Once we have use it, we free the memory */
-  free(RHS.nM);
+  FreeMat(RHS);
 
   /* 5º Update the solution */
   for(int i = 0; i<ElementMesh.NumNodesMesh ; i++){
@@ -270,7 +270,7 @@ void Two_Steps_TG_FEM(Mesh ElementMesh, GaussPoint GP_Mesh,
   }
 
   /* Once we have use it, we free the memory */
-  free(DeltaPhiNod.nM);
+  FreeMat(DeltaPhiNod);
 
   /* 6º Add the Boundary conditions contributions in the boundary */
   /* ApplyBoundaryCondition_Nod(Phi_n_Nod,TimeStep);   */
@@ -333,7 +333,7 @@ void Two_Steps_TG_MPM(Mesh ElementMesh, GaussPoint GP_Mesh,
   }
 
   /* Once we have use it, we free the memory */
-  free(Flux_n_Nod.nM);  
+  FreeMat(Flux_n_Nod);  
 
   /* Get internal forces and external forces */
   for(int i = 0 ; i<GP_Mesh.NumGP ; i++){
@@ -354,7 +354,7 @@ void Two_Steps_TG_MPM(Mesh ElementMesh, GaussPoint GP_Mesh,
       
   }
   
-  free(Phi_n12_GP.nM);
+  FreeMat(Phi_n12_GP);
 
   for(int i = 0 ; i<ElementMesh.NumNodesMesh ; i++){
     Phi_n_Nod.nM[1][i] += (double)1/M_l.nV[i]*DeltaTimeStep*(-Nod_Int_Forces.nM[1][i]);
@@ -365,8 +365,8 @@ void Two_Steps_TG_MPM(Mesh ElementMesh, GaussPoint GP_Mesh,
 
   MeshToGaussPoints(ElementMesh,GP_Mesh,Phi_n_Nod,Phi_n_GP,M_l);
 
-  free(Phi_n_Nod.nM);
-  free(Nod_Int_Forces.nM);
+  FreeMat(Phi_n_Nod);
+  FreeMat(Nod_Int_Forces);
 
 
 }
