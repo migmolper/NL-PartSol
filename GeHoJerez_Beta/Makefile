@@ -1,13 +1,29 @@
-# Makefile for the FEM_Miguel
+# Makefile for the GeHoJerez
+
+# Compiler root
+GCC_ROOT = /usr/bin
+
+# Current directory
+BASEPATH = $(shell pwd)
+
+# Name of the directories
+SRCDIR = $(BASEPATH)/src
+OBJDIR = $(BASEPATH)/obj
+DEBDIR = $(BASEPATH)/bin/Debug
+RELDIR = $(BASEPATH)/bin/Release
+TESTDIR = $(BASEPATH)/test
+INSTDIR = /usr/bin
 
 # Name of the program
-myprog = GeHoJerez
+EXE = GeHoJerez_V1_Linux
 
 # Compiler and preprocesor
-CC = gcc
+CC = $(GCC_ROOT)/gcc
+
+#####################################################################
 
 # Source code
-csrc = \
+SOURCES = \
 	$(wildcard src/*.c)\
 	$(wildcard src/ToolsLib/*.c)\
 	$(wildcard src/InOutFun/*.c)\
@@ -19,22 +35,26 @@ csrc = \
 	$(wildcard src/MPM_Subroutines/*.c)\
 	$(wildcard src/Boundary_Conditions/*.c)
 
+#####################################################################
+
 # Transforms the contents of the src variable, changing all file suffixes
 # from .c to .o, thus constructing the object file list we need.
-obj = $(csrc:.c=.o)
+OBJS = $(SOURCES:.c=.o)
+
+#####################################################################
 
 # List of libraries required during linking
 LDFLAGS = -lm
-DBFLAGS = -g -Wall
+DBFLAGS = -g -Wall -Wpedantic -Wextra 
+RLFLAGS = -O2
 
-SRC      = $(wildcard *.c)
-OBJ      = $(SRC:.c=.o)
+#####################################################################
 
-# All recipie
-all: $(myprog)
+# Debug recipie
+debug: $(DEBDIR)/$(EXE)
 
 # Link process
-$(myprog): $(obj)
+$(DEBDIR)/$(EXE): $(OBJS)
 	@echo "*************************************************"
 	$(CC) -o $@ $^ $(LDFLAGS)
 	@echo " "
@@ -45,21 +65,68 @@ $(myprog): $(obj)
 	@echo "*************************************************"
 	$(CC) -o $@ -c $(DBFLAGS) $<
 	@echo "\t Compiled "$<" successfully !!"
-# run
+
+#####################################################################
+
+# Release recipie
+release: $(RELDIR)/$(EXE)
+
+# Link process
+$(RELDIR)/$(EXE): $(OBJS)
+	@echo "*************************************************"
+	$(CC) -o $@ $^ $(LDFLAGS)
+	@echo " "
+	@echo "*************  GeHoJerez compiled !! ************"
+	@echo " "
+# Compile	
+%.o: %.c
+	@echo "*************************************************"
+	$(CC) -o $@ -c $(RLFLAGS) $<
+	@echo "\t Compiled "$<" successfully !!"
+
+#####################################################################
+# Rule for benchmarks
+.PHONY: Benchmarks Disco2D Cuadrado2D
+
+# Run al the Benchmarks
+Benchmarks: Disco2D Cuadrado2D
+
+# Caso Disco
 Disco2D:
 	@echo "**************** Run test case ******************"
-	./$(myprog) test/MPM_test/CasoDisco/ejemplo.dat
-	@echo " "
-	@echo "*************** Test case passed ****************"
-Cuadrado2D:
-	@echo "**************** Run test case ******************"
-	./$(myprog) test/MPM_test/CasoCuadrado/ejemplo.dat
+	$(DEBDIR)/./$(EXE) $(TESTDIR)/CasoDisco/ejemplo.dat
 	@echo " "
 	@echo "*************** Test case passed ****************"
 
-# New rule for cleaning up every target, in order to rebuild
+# Caso cuadrado
+Cuadrado2D:
+	@echo "**************** Run test case ******************"
+	$(DEBDIR)/./$(EXE) $(TESTDIR)/CasoCuadrado/ejemplo.dat
+	@echo " "
+	@echo "*************** Test case passed ****************"
+
+#####################################################################
+# Rule for installing GeHoJerez
+.PHONY: install
+install: $(RELDIR)/$(EXE)
+	@echo "************** Install GeHoJerez ****************"
+	mkdir -p $(INSTDIR)/$(EXE)
+	cp $< $(INSTDIR)/$(EXE)
+	@echo "************ Installed successfully *************"
+
+.PHONY: uninstall
+uninstall:
+	@echo "************* Uninstall GeHoJerez ***************"
+	rm -rf $(INSTDIR)/$(EXE)
+	@echo "*********** Uninstalled successfully ************"
+
+#####################################################################
+
+# Rule for cleaning up every target, in order to rebuild
 # the whole program from scratch
 .PHONY: clean
 clean:
-	rm -f $(obj) $(myprog)
-
+	rm -f $(OBJS)
+	rm -f $(BINDIR)/$(DEB)/$(EXE)
+	rm -f $(BINDIR)/$(REL)/$(EXE)
+	@echo "Cleanup complete!"

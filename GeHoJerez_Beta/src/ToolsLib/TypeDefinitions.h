@@ -133,8 +133,8 @@ typedef struct {
 /* Boundary conditions definition */
 typedef struct {
 
-  /* Dimension where it is applied the BCC */
-  int Dim;
+  /* Array with the direction where it is applied the BCC */
+  int * Dir;
   /* Number of nodes/GP with this BCC */
   int NumNodes;
   /* List of nodes with this BCC */
