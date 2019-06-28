@@ -83,6 +83,24 @@ typedef struct {
 
 /*******************************************************/
 
+/* Boundary conditions definition */
+typedef struct {
+
+  /* Array with the direction where it is applied the BCC */
+  int * Dir;
+  /* Number of nodes/GP with this BCC */
+  int NumNodes;
+  /* List of nodes with this BCC */
+  int * Nodes;
+  /* Curve with the value in the time */
+  Curve Value;
+  /* Some information about this BCC */
+  char Info [100];
+  
+} BoundaryConditions;
+
+/*******************************************************/
+
 /* Element type definition */
 typedef struct {
 
@@ -104,15 +122,15 @@ typedef struct {
   int ** NodeNeighbour;
 
   /*** BOUNDARY NODES (Only square domains) ***/
-  int NumTOP;
-  int * TOP;
-  int NumBOTTOM;
-  int * BOTTOM;
-  int NumLEFT;
-  int * LEFT;
-  int NumRIGHT;
-  int * RIGHT;
-
+  /* TOP */
+  BoundaryConditions TOP;
+  /* BOTTOM */
+  BoundaryConditions BOTTOM;
+  /* RIGHT */
+  BoundaryConditions RIGHT;
+  /* LEFT */
+  BoundaryConditions LEFT;
+  
   /*** INDIVIDUAL ELEMENT PROPERTIES ***/
   /* Number of dimensions of the element */
   int Dimension;
@@ -126,23 +144,4 @@ typedef struct {
   Matrix (* dNdX_ref)(Matrix );
     
 } Mesh;
-
-
-/*******************************************************/
-
-/* Boundary conditions definition */
-typedef struct {
-
-  /* Array with the direction where it is applied the BCC */
-  int * Dir;
-  /* Number of nodes/GP with this BCC */
-  int NumNodes;
-  /* List of nodes with this BCC */
-  int * Nodes;
-  /* Curve with the value in the time */
-  Curve Value;
-  /* Some information about this BCC */
-  char Info [100];
-  
-} BoundaryConditions;
 

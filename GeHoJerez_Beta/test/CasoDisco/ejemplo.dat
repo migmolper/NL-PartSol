@@ -5,13 +5,8 @@ POISSON_MODULUS=0.3
 ELASTIC_MODULUS=1.e5
 TIME_STEP=0.00008
 NUM_STEP=10000
-FEM_FILE_NAME=test/MPM_test/CasoDisco/FEM_Mesh.msh
-MPM_FILE_NAME=test/MPM_test/CasoDisco/MPM_Mesh.msh
-BOUND_COND=test/MPM_test/CasoDisco/BCC_data.bcc
+FEM_FILE_NAME=test/CasoDisco/FEM_Mesh.msh
+MPM_FILE_NAME=test/CasoDisco/MPM_Mesh.msh
+BOUND_COND=test/CasoDisco/BCC_data.bcc
 COND_INIT=test/data.init
-OUTPUT_DIR=test/MPM_test/CasoDisco
-BCC_TOP
-BCC_BOTTOM
-BCC_LEFT
-BCC_RIGHT
-
+OUTPUT_DIR=test/CasoDisco

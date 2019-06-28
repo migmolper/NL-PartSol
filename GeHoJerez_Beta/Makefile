@@ -62,7 +62,7 @@ $(DEBDIR)/$(EXE): $(OBJS)
 	@echo " "
 # Compile	
 %.o: %.c
-	@echo "*************************************************"
+	@echo "****************** Debug mode *******************"
 	$(CC) -o $@ -c $(DBFLAGS) $<
 	@echo "\t Compiled "$<" successfully !!"
 
@@ -80,8 +80,8 @@ $(RELDIR)/$(EXE): $(OBJS)
 	@echo " "
 # Compile	
 %.o: %.c
-	@echo "*************************************************"
-	$(CC) -o $@ -c $(RLFLAGS) $<
+	@echo "***************** Release mode ******************"
+	$(CC) -o $@ -c $(DBFLAGS) $<
 	@echo "\t Compiled "$<" successfully !!"
 
 #####################################################################

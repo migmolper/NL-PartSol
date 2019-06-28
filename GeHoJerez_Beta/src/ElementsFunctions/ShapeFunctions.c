@@ -14,6 +14,11 @@
 
 Matrix L2(Matrix X_e){
 
+  if( (X_e.n > 1 ) || (X_e.n < 0 ) ){
+    printf("Error in L2() : Out of the element bounds !!! \n");
+    exit(0);
+  }    
+
   /* Definition and allocation */
   Matrix N_ref =  MatAlloc(1,2);
 
@@ -25,6 +30,11 @@ Matrix L2(Matrix X_e){
 
 /* Derivatives of the shape functions */
 Matrix dL2(Matrix X_e){
+
+  if( (X_e.n > 1 ) || (X_e.n < 0 ) ){
+    printf("Error in dL2() : Out of the element bounds !!! \n");
+    exit(0);
+  }    
 
   /* Definition and allocation */
   Matrix dNdX_ref = MatAlloc(1,2);

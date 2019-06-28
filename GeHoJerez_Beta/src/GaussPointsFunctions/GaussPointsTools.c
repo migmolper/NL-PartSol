@@ -424,7 +424,7 @@ void MeshToGaussPoints(Mesh ElementMesh,
     for(int k=0 ; k<NumDOF ; k++){
       /* 7º Update the field value */
       Phi_n_GP.nM[k][i] = 0;
-    }    
+    }
 
     /* 8º Iterate over the nodes of the element */
     for(int j=0 ; j<ElementMesh.NumNodesElem ; j++){

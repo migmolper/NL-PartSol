@@ -76,14 +76,14 @@ Mesh ReadGidMesh(char * MeshName)
   /* Initialize some mesh parameters */
   GID_Mesh.NumNodesMesh = 0; /* Set the number of nodes in the mesh to zero */
   GID_Mesh.NumElemMesh = 0; /* Set the number of elements in the mesh to zero */
-  GID_Mesh.NumTOP = 0; /* Set to zero the number of nodes in the boundary of the mesh */
-  GID_Mesh.NumBOTTOM = 0;
-  GID_Mesh.NumRIGHT = 0;
-  GID_Mesh.NumLEFT= 0;
 
-  /* Parse line */
-
+  /* Set to zero the number of nodes in the boundary of the mesh */
+  GID_Mesh.TOP.NumNodes = 0;
+  GID_Mesh.BOTTOM.NumNodes = 0;
+  GID_Mesh.RIGHT.NumNodes = 0;
+  GID_Mesh.LEFT.NumNodes = 0;
   
+    
   /* Read the first line with the header */
   Aux_line = fgets(line, sizeof line, MeshFile);
   if(Aux_line != NULL){
@@ -283,14 +283,14 @@ Mesh ReadGidMesh(char * MeshName)
     
   case 1: /******************** 1D mesh ********************/
     /* In a 1D mesh we only have two nodes in the boundary */
-    GID_Mesh.NumLEFT = 1;
-    GID_Mesh.NumRIGHT = 1;
+    GID_Mesh.LEFT.NumNodes = 1;
+    GID_Mesh.RIGHT.NumNodes = 1;
     /* Allocate the size of the array with the nodes */
-    GID_Mesh.LEFT = (int *)Allocate_ArrayZ(1,sizeof(int));
-    GID_Mesh.RIGHT = (int *)Allocate_ArrayZ(1,sizeof(int));
+    GID_Mesh.LEFT.Nodes = (int *)Allocate_ArrayZ(1,sizeof(int));
+    GID_Mesh.RIGHT.Nodes = (int *)Allocate_ArrayZ(1,sizeof(int));
     /* Set the nodes of the boundaries */
-    GID_Mesh.LEFT[0] = 0;
-    GID_Mesh.RIGHT[0] = 1-GID_Mesh.NumNodesMesh;
+    GID_Mesh.LEFT.Nodes[0] = 0;
+    GID_Mesh.RIGHT.Nodes[0] = 1-GID_Mesh.NumNodesMesh;
     break; /******************** 2D mesh ********************/
     
   case 2: /******************** 2D mesh ********************/
@@ -331,45 +331,49 @@ Mesh ReadGidMesh(char * MeshName)
   	if(NodesBound_aux[i] == 1){
 
   	  if(GID_Mesh.Coordinates.nM[i][0] == MAX_X){
-  	    GID_Mesh.NumRIGHT ++;
+  	    GID_Mesh.RIGHT.NumNodes ++;
   	  }
   	  if(GID_Mesh.Coordinates.nM[i][1] == MAX_Y){
-  	    GID_Mesh.NumTOP ++;
+  	    GID_Mesh.TOP.NumNodes ++;
   	  }
   	  if(GID_Mesh.Coordinates.nM[i][0] == MIN_X){
-  	    GID_Mesh.NumLEFT ++;
+  	    GID_Mesh.LEFT.NumNodes ++;
   	  }
   	  if(GID_Mesh.Coordinates.nM[i][1] == MIN_Y){
-  	    GID_Mesh.NumBOTTOM ++;
+  	    GID_Mesh.BOTTOM.NumNodes ++;
   	  }
 	    
   	}
       }
       
       /* Allocate the arrays with the boundary nodes */
-      GID_Mesh.TOP = (int *)Allocate_ArrayZ(GID_Mesh.NumTOP,sizeof(int));
-      GID_Mesh.BOTTOM = (int *)Allocate_ArrayZ(GID_Mesh.NumBOTTOM,sizeof(int));
-      GID_Mesh.LEFT = (int *)Allocate_ArrayZ(GID_Mesh.NumLEFT,sizeof(int));
-      GID_Mesh.RIGHT = (int *)Allocate_ArrayZ(GID_Mesh.NumRIGHT,sizeof(int));
+      GID_Mesh.TOP.Nodes =
+	(int *)Allocate_ArrayZ(GID_Mesh.TOP.NumNodes,sizeof(int));
+      GID_Mesh.BOTTOM.Nodes =
+	(int *)Allocate_ArrayZ(GID_Mesh.BOTTOM.NumNodes,sizeof(int));
+      GID_Mesh.LEFT.Nodes =
+	(int *)Allocate_ArrayZ(GID_Mesh.LEFT.NumNodes,sizeof(int));
+      GID_Mesh.RIGHT.Nodes =
+	(int *)Allocate_ArrayZ(GID_Mesh.RIGHT.NumNodes,sizeof(int));
 
       /* Fill the arrays  */
       for(int i = 0 ; i<GID_Mesh.NumNodesMesh ; i++){
   	if(NodesBound_aux[i] == 1){
 
   	  if(GID_Mesh.Coordinates.nM[i][0] == MAX_X){
-  	    GID_Mesh.RIGHT[aux_RIGHT] = i;
+  	    GID_Mesh.RIGHT.Nodes[aux_RIGHT] = i;
   	    aux_RIGHT++;
   	  }
   	  if(GID_Mesh.Coordinates.nM[i][1] == MAX_Y){
-  	    GID_Mesh.TOP[aux_TOP] = i;
+  	    GID_Mesh.TOP.Nodes[aux_TOP] = i;
   	    aux_TOP++;
   	  }
   	  if(GID_Mesh.Coordinates.nM[i][0] == MIN_X){
-  	    GID_Mesh.LEFT[aux_LEFT] = i;
+  	    GID_Mesh.LEFT.Nodes[aux_LEFT] = i;
   	    aux_LEFT++;
   	  }
   	  if(GID_Mesh.Coordinates.nM[i][1] == MIN_Y){
-  	    GID_Mesh.BOTTOM[aux_BOTTOM] = i;
+  	    GID_Mesh.BOTTOM.Nodes[aux_BOTTOM] = i;
   	    aux_BOTTOM++;
   	  }
 	    

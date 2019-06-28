@@ -82,20 +82,12 @@ int main(int argc, char *argv[])
   /***********************************************************************/
   /******** INITIALIZE AUXILIAR STRUCTURES FOR BOUNDARY CONDITIONS *******/
   /***********************************************************************/
-  /* Define domain and its boundary conditions */
-  /* BoundaryConditions BCC_Momentum_TOP; */
-  BoundaryConditions BCC_Momentum_BOTTOM;
-  /* BoundaryConditions BCC_Momentum_LEFT; */
-  /* BoundaryConditions BCC_Momentum_RIGHT;  */
+
+  /* Read boundary conditions in the FEM mesh */
+  void Read_FEM_BCC(char *, Mesh);
 
   /* Define loads */
   /* BoundaryConditions BCC_Loads; */
-  
-  /* Read the boundary conditions in the contours of the domain */
-  /* BCC_Momentum_TOP = ReadBCC(BounCondFileName,FEM_Mesh); */
-  BCC_Momentum_BOTTOM = ReadBCC(BounCondFileName,FEM_Mesh);
-  /* BCC_Momentum_LEFT = ReadBCC(BounCondFileName,FEM_Mesh); */
-  /* BCC_Momentum_RIGHT = ReadBCC(BounCondFileName,FEM_Mesh); */
   
   /* Read boundary conditions in the MPM nodes */
   /* BCC_Loads = ReadBCC(LoadsFileName,FEM_Mesh); */

@@ -67,7 +67,7 @@ Curve ReadCurve(char * Name_File)
   /* Open and check .load file */
   Sim_dat = fopen(Name_File,"r");  
   if (Sim_dat==NULL){
-    puts("Error during the lecture of .load file");
+    printf("Error in ReadCurve() during the lecture of %s \n",Name_File);
     exit(0);
   }
 

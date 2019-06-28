@@ -45,12 +45,6 @@ void ReadDatFile(char * Name_File)
   char * SimParameter[MAXW] = {NULL};
   char * KIND_ANALYSIS[MAXW] = {NULL};
 
-  /* Initialize parser to read files */
-  ParserDictionary Dict = InitParserDictionary();
-  char * delim_spa = Dict.sep[6];
-  char * delim_equ = Dict.sep[1];
-  char * delim_perc = Dict.sep[7];
-
   /* Auxiliar variables for G */
   int AUX_G_DAT;
   char * G_DAT[MAXW] = {NULL};
@@ -68,18 +62,19 @@ void ReadDatFile(char * Name_File)
 
   /* Read the file line by line */
   while( fgets(line, sizeof line, Sim_dat) != NULL ){
-
     /* Read the line with the white space as separators */
-    nwords = parse (words, line, delim_spa);
+    nwords = parse (words, line," \n");
     if(nwords>=1){
       /* In the line, read the words */
       for(int i = 0; i<nwords ; i++){
 	/* Use the equal (=) separator */
-	nSimParameter = parse (SimParameter, words[i], delim_equ);
+	printf("%s \n",words[i]);
+	nSimParameter = parse (SimParameter, words[i], "=\n");
 	if(nSimParameter > 1){
 	  /***********************************************************************/
 	  if( strcmp(SimParameter[0],"KIND_ANALYSIS") == 0 ){
-	    nKindAnalysis = parse (KIND_ANALYSIS, SimParameter[1], delim_perc);
+	    nKindAnalysis = parse (KIND_ANALYSIS, SimParameter[1],"%\n");
+
 	    if(nKindAnalysis == 4){
 	      printf(" * Kind of analysis : \n");
 	      /* First parameter of KIND_ANALYSIS : FEM/MPM */

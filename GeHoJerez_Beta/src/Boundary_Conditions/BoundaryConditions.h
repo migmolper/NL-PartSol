@@ -3,9 +3,11 @@
 #define TypeDefinitions
 #endif
 
-BoundaryConditions SetBoundaryConditions(int *, int, int *, char *, char *);
+void Read_FEM_BCC(char *, Mesh);
 
-void BCC_Nod_Momentum(Mesh, BoundaryConditions, Matrix, int);
+BoundaryConditions SetBCC(int *, int, int *, char *, char *);
+
+void BCC_Nod_Momentum(Mesh, Matrix, int);
 
 void BCC_GP_Forces(GaussPoint, BoundaryConditions, int);
 

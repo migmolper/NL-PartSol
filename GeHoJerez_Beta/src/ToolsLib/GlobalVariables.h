@@ -1,29 +1,43 @@
+/***************************************/
+/******** Name of inputs files *********/
+/***************************************/
 
-/* Name of inputs files */
 char * FEM_MeshFileName;
 char * MPM_MeshFileName;
 char * InitCondFileName;
 char * BounCondFileName;
 char * OutputDir;
 
-/* Find of analysis */
+/***************************************/
+/*********** Find of analysis **********/
+/***************************************/
+
 char * KindAnalysis;
 char * FieldsAnalysis;
 int NumberDimensions;
 int NumberDOF;
 char * TimeIntegration;
 
-/* Time integration */
+/***************************************/
+/********* Time integration ************/
+/***************************************/
+
 double DeltaTimeStep;
 int NumTimeStep;
 
-/* Constitutive parameters */
+/***************************************/
+/******* Constitutive parameters *******/
+/***************************************/
+
 Matrix g;
 double ElasticModulus;
 double PoissonModulus;
 double Density;
 
-/* Boundary conditions */
+/***************************************/
+/******** Boundary conditions **********/
+/***************************************/
+
 char Field[10];
 int * Node;
 double * Value;
