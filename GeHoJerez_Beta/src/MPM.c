@@ -84,13 +84,11 @@ int main(int argc, char *argv[])
   /***********************************************************************/
 
   /* Read boundary conditions in the FEM mesh */
-  void Read_FEM_BCC(char *, Mesh);
-
-  /* Define loads */
-  /* BoundaryConditions BCC_Loads; */
+  Read_FEM_BCC(BCC_FEM_FileName, FEM_Mesh);
   
   /* Read boundary conditions in the MPM nodes */
   /* BCC_Loads = ReadBCC(LoadsFileName,FEM_Mesh); */
+
   /***********************************************************************/
   /***********************************************************************/
 
@@ -102,15 +100,16 @@ int main(int argc, char *argv[])
   /***********************************************************************/
   /***********************************************************************/
 
-  /* PrintMatrix(GP_Mesh.Phi.x_GC,GP_Mesh.NumGP,2); */
-  /* PrintMatrix(FEM_Mesh.Coordinates,FEM_Mesh.NumNodesMesh,2); */
 
+  /***********************************************************************/
+  /*************** GLOBAL SEARCH OF THE GAUSS-POINTS *********************/
+  /***********************************************************************/  
   printf("************************************************* \n");
   printf(" Begin of the global search of the GP over the mesh \n");
   printf(" \t WORKING ... \n");
   GlobalSearchGaussPoints(GP_Mesh,FEM_Mesh);
   printf(" DONE !!! \n");
-  
+
   /***********************************************************************/
   /********************** START THE MPM CALCULUS *************************/
   /***********************************************************************/
@@ -142,7 +141,7 @@ int main(int argc, char *argv[])
     printf("************************************************* \n");
     printf(" Third step : Set the essential BCC (over P) \n");
     printf(" \t WORKING ... \n");
-    BCC_Nod_Momentum(FEM_Mesh,BCC_Momentum_BOTTOM,Nodal_MOMENTUM,TimeStep);
+    BCC_Nod_Momentum(FEM_Mesh,Nodal_MOMENTUM,TimeStep);
     printf(" DONE !!! \n");
 
     /* Four step : Update the particle stress state */

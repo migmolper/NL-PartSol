@@ -1,1 +1,4 @@
+BCC_TOP DIR#[0,-1] CURVE#{test/CasoDisco/CurveConstat.txt}
 BCC_BOTTOM DIR#[0,1] CURVE#{test/CasoDisco/CurveConstat.txt}
+BCC_RIGHT DIR#[-1,0] CURVE#{test/CasoDisco/CurveConstat.txt}
+BCC_LEFT DIR#[1,0] CURVE#{test/CasoDisco/CurveConstat.txt}

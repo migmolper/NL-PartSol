@@ -189,9 +189,9 @@ void ReadDatFile(char * Name_File)
 	  }
 	  /***********************************************************************/
 	  if( strcmp(SimParameter[0],"BOUND_COND") == 0 ){
-	    BounCondFileName = SimParameter[1];
+	    BCC_FEM_FileName = SimParameter[1];
 	    printf(" * Set name of the boundary conditions file : \n");
-	    printf("\t -> %s \n",BounCondFileName); 
+	    printf("\t -> %s \n",BCC_FEM_FileName); 
 	  }
 	  /***********************************************************************/
 	  if( strcmp(SimParameter[0],"OUTPUT_DIR") == 0 ){

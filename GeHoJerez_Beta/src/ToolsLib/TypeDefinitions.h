@@ -27,6 +27,24 @@ typedef struct{
 
 /*******************************************************/
 
+/* Boundary conditions definition */
+typedef struct {
+
+  /* Array with the direction where it is applied the BCC */
+  int * Dir;
+  /* Number of nodes/GP with this BCC */
+  int NumNodes;
+  /* List of nodes with this BCC */
+  int * Nodes;
+  /* Curve with the value in the time */
+  Curve Value;
+  /* Some information about this BCC */
+  char Info [100];
+  
+} BoundaryConditions;
+
+/*******************************************************/
+
 typedef struct{
   
   /* Integer identificator for the separator */
@@ -81,23 +99,6 @@ typedef struct {
   
 } GaussPoint;
 
-/*******************************************************/
-
-/* Boundary conditions definition */
-typedef struct {
-
-  /* Array with the direction where it is applied the BCC */
-  int * Dir;
-  /* Number of nodes/GP with this BCC */
-  int NumNodes;
-  /* List of nodes with this BCC */
-  int * Nodes;
-  /* Curve with the value in the time */
-  Curve Value;
-  /* Some information about this BCC */
-  char Info [100];
-  
-} BoundaryConditions;
 
 /*******************************************************/
 

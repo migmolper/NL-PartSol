@@ -15,20 +15,24 @@ void Read_FEM_BCC(char * Name_File, Mesh FEM_Mesh)
   Read the boundary conditions file :
   Inputs
   - Name_file : Name of the file
+  BCC_TOP DIR#[0,1] CURVE#{curve.txt}
   BCC_BOTTOM DIR#[0,1] CURVE#{curve.txt}
+  BCC_RIGHT DIR#[0,1] CURVE#{curve.txt}
+  BCC_LEFT DIR#[0,1] CURVE#{curve.txt}
   Note : Only read those lines with a BCC in the init 
 */
 {
-
-  /* Create a array with the number of steps and fill it with  V#[1]={-1} V#[6]={0} */
-  BoundaryConditions BCC;
+  /* Pointer to the FEM boundary conditions file */
+  FILE * File_BCC;
   
-  /* Simulation file */
-  FILE * Sim_dat;
+  /* Array with the direction of the boundary condition */
+  int * Dir_BCC;
 
+  /* Auxiliar structure with the load curve */
+  Curve Curve_BCC;
+  
   /* Auxiliar variable for reading the lines in the files */
   char line[MAXC] = {0};
-  char line_nodes[MAXC] = {0};
   
   /* Number of element in the line , just for check */
   int nkwords,nparam;
@@ -47,14 +51,14 @@ void Read_FEM_BCC(char * Name_File, Mesh FEM_Mesh)
   printf(" * Begin of read boundary files : %s \n",Name_File);
   
   /* Open and check .bcc file */
-  Sim_dat = fopen(Name_File,"r");  
-  if (Sim_dat==NULL){
+  File_BCC = fopen(Name_File,"r");  
+  if (File_BCC==NULL){
     puts("Error during the lecture of .bcc file");
     exit(0);
   }
 
   /* Read the file line by line */
-  while( fgets(line, sizeof line, Sim_dat) != NULL ){
+  while( fgets(line, sizeof line, File_BCC) != NULL ){
 
     /* Read the line with the space as separators */
     nkwords = parse (kwords, line," \n");
@@ -65,25 +69,24 @@ void Read_FEM_BCC(char * Name_File, Mesh FEM_Mesh)
 	 ( strcmp(kwords[0],"BCC_RIGHT") == 0 ) ||
 	 ( strcmp(kwords[0],"BCC_LEFT") == 0) ){
 
-        
-      for(int i  = 0 ; i<nkwords ; i++){ /* Loop over the words */
-	/* Parse the keywords parameters */
+      /* Loop over the words in each line */
+      for(int i  = 0 ; i<nkwords ; i++){ 
+	/* Parse/descompose the words parameters with # */
 	nparam = parse (param,kwords[i],"#\n");
-	if(nparam>1){ /* Read only keywords with an asignement */
+	/* Read only keywords with an asignement # */
+	if(nparam>1){ 
 	  /* Parse the direction of the BCC */
 	  if(strcmp(param[0],"DIR") == 0){ 
-
 	    /* Read the DOFS to impose the BCC :*/
 	    aux_DIR = parse(DIR,param[1],"[,]\n");
 	    if(aux_DIR != NumberDimensions){
 	      printf("Error in ReadBCC() : Invalid direction in BCC !!! ");
 	      exit(0);
 	    }
-	    BCC.Dir = (int *)Allocate_ArrayZ(aux_DIR,sizeof(int));
+	    Dir_BCC = (int *)Allocate_ArrayZ(aux_DIR,sizeof(int));
 	    for(int j = 0 ; j<aux_DIR ; j++){
-	      BCC.Dir[j] = atoi(DIR[j]);
+	      Dir_BCC[j] = atoi(DIR[j]);
 	    }
-	    
 	  }
 	  /* Parse the curve assigned to this BC */
 	  if(strcmp(param[0],"CURVE") == 0){
@@ -93,44 +96,42 @@ void Read_FEM_BCC(char * Name_File, Mesh FEM_Mesh)
 	      printf("Error in ReadBCC() : Wrong format for the CURVE#{File}");
 	      exit(0);
 	    }
-	    BCC.Value = ReadCurve(CURVE[0]); 
-	  }
-	  	  
+	    Curve_BCC = ReadCurve(CURVE[0]); 
+	  }	  	  
 	} 
       } /* Read word by word */
 
       /* Apply this boundary conditions and copy information of the BCC */
       if(strcmp(kwords[0],"BCC_TOP") == 0){
-	BCC.Nodes = FEM_Mesh.TOP;
-	BCC.NumNodes = FEM_Mesh.NumTOP;
-	strcpy(BCC.Info,"TOP");
+	FEM_Mesh.TOP.Dir = Dir_BCC;
+	printf("paso TOP : %i %i \n",FEM_Mesh.TOP.Dir[0],FEM_Mesh.TOP.Dir[1]);
+	FEM_Mesh.TOP.Value = Curve_BCC;
+	strcpy(FEM_Mesh.TOP.Info,"V");
       }
       else if(strcmp(kwords[0],"BCC_BOTTOM") == 0){
-	BCC.Nodes = FEM_Mesh.BOTTOM;
-	BCC.NumNodes = FEM_Mesh.NumBOTTOM;
-	strcpy(BCC.Info,"BOTTOM");
+	FEM_Mesh.BOTTOM.Dir = Dir_BCC;
+	printf("paso BOTTOM : %i %i \n",FEM_Mesh.BOTTOM.Dir[0],FEM_Mesh.BOTTOM.Dir[1]);
+	FEM_Mesh.BOTTOM.Value = Curve_BCC;
+	strcpy(FEM_Mesh.BOTTOM.Info,"V");
       }
       else if(strcmp(kwords[0],"BCC_RIGHT") == 0){
-	BCC.Nodes = FEM_Mesh.RIGHT;
-	BCC.NumNodes = FEM_Mesh.NumRIGHT;
-	strcpy(BCC.Info,"RIGHT");
+	FEM_Mesh.RIGHT.Dir = Dir_BCC;
+	printf("paso RIGHT : %i %i \n",FEM_Mesh.RIGHT.Dir[0],FEM_Mesh.RIGHT.Dir[1]);
+	FEM_Mesh.RIGHT.Value = Curve_BCC;
+	strcpy(FEM_Mesh.RIGHT.Info,"V");
       }
       else if(strcmp(kwords[0],"BCC_LEFT") == 0){
-	BCC.Nodes = FEM_Mesh.LEFT;
-	BCC.NumNodes = FEM_Mesh.NumLEFT;
-	strcpy(BCC.Info,"LEFT");
+	FEM_Mesh.LEFT.Dir = Dir_BCC;
+	printf("paso LEFT : %i %i \n",FEM_Mesh.LEFT.Dir[0],FEM_Mesh.LEFT.Dir[1]);
+	FEM_Mesh.LEFT.Value = Curve_BCC;
+	strcpy(FEM_Mesh.LEFT.Info,"V");
       }
-
-
       
     } /* End of read BC */
     
   }  /* End of read file */
   printf("End of read boundary conditions file !!! \n");
-  fclose(Sim_dat);
-
-  /* Return output */
-  return BCC;  
+  fclose(File_BCC);
   
 } /* BoundayConditions ReadBCC(char * Name_File) */
 
@@ -279,7 +280,6 @@ void BCC_Nod_Momentum(Mesh FEM_Mesh, Matrix Nodal_MOMENTUM, int TimeStep)
 {
 
   /* 1º Define auxilar variables */
-  int Dim_BCC; /* Dimension where is applied the boundary condition */
   int Id_BCC; /* Index of the node where we apply the BCC */
   
 
@@ -294,6 +294,7 @@ void BCC_Nod_Momentum(Mesh FEM_Mesh, Matrix Nodal_MOMENTUM, int TimeStep)
     /* 3º Get the index of the element */
     Id_BCC = FEM_Mesh.TOP.Nodes[i];
     /* 4º Loop over the dimensions */
+    printf("paso TOP : %i %i \n",FEM_Mesh.TOP.Dir[0],FEM_Mesh.TOP.Dir[1]);
     for(int j = 0 ; j<NumberDimensions ; j++){
       /* 5º Assign the BC to the nodes */
       if((FEM_Mesh.TOP.Dir[j] == 1) ||
@@ -332,16 +333,16 @@ void BCC_Nod_Momentum(Mesh FEM_Mesh, Matrix Nodal_MOMENTUM, int TimeStep)
     exit(0);
   }
   /* 2º Loop over the nodes of the RIGHT boundary */
-  for(int i = 0 ; i<BCC_Momentum.NumNodes ; i++){
+  for(int i = 0 ; i<FEM_Mesh.RIGHT.NumNodes ; i++){
     /* 3º Get the index of the element */
-    Id_BCC = BCC_Momentum.Nodes[i];
+    Id_BCC = FEM_Mesh.RIGHT.Nodes[i];
     /* 4º Loop over the dimensions */
     for(int j = 0 ; j<NumberDimensions ; j++){
       /* 5º Assign the BC to the nodes */
-      if((BCC_Momentum.Dir[j] == 1) ||
-	 (BCC_Momentum.Dir[j] == -1)){
+      if((FEM_Mesh.RIGHT.Dir[j] == 1) ||
+	 (FEM_Mesh.RIGHT.Dir[j] == -1)){
 	Nodal_MOMENTUM.nM[j][Id_BCC] =
-	  (double)BCC_Momentum.Dir[j]*BCC_Momentum.Value.Fx[TimeStep];
+	  (double)FEM_Mesh.RIGHT.Dir[j]*FEM_Mesh.RIGHT.Value.Fx[TimeStep];
       }
     }          
   }
@@ -354,16 +355,16 @@ void BCC_Nod_Momentum(Mesh FEM_Mesh, Matrix Nodal_MOMENTUM, int TimeStep)
     exit(0);
   }  
   /* 2º Loop over the nodes of the LEFT boundary */
-  for(int i = 0 ; i<BCC_Momentum.NumNodes ; i++){
+  for(int i = 0 ; i<FEM_Mesh.LEFT.NumNodes ; i++){
     /* 3º Get the index of the element */
-    Id_BCC = BCC_Momentum.Nodes[i];
+    Id_BCC = FEM_Mesh.LEFT.Nodes[i];
     /* 4º Loop over the dimensions */
     for(int j = 0 ; j<NumberDimensions ; j++){
       /* 5º Assign the BC to the nodes */
-      if((BCC_Momentum.Dir[j] == 1) ||
-	 (BCC_Momentum.Dir[j] == -1)){
+      if((FEM_Mesh.LEFT.Dir[j] == 1) ||
+	 (FEM_Mesh.LEFT.Dir[j] == -1)){
 	Nodal_MOMENTUM.nM[j][Id_BCC] =
-	  (double)BCC_Momentum.Dir[j]*BCC_Momentum.Value.Fx[TimeStep];
+	  (double)FEM_Mesh.LEFT.Dir[j]*FEM_Mesh.LEFT.Value.Fx[TimeStep];
       }
     }          
   } 
