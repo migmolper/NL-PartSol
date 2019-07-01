@@ -14,32 +14,20 @@ Curve ReadCurve(char * Name_File)
   Inputs
   - Name_file : Name of the file
 
-  FORMAT example custom curve: 
-  DAT_CURVE SCALE#double NUM#integer
+  FORMAT example custom curve + constant: 
+  DAT_CURVE NUM#3 NUMDIM#2
+  HEAVISIDE_CURVE DIM#0 SCALE#2.5 Tc#integer
+  CONSTANT_CURVE DIM#1 SCALE#0
+  
+  Curve parameters :
+  CONSTANT_CURVE DIM#int SCALE#double
+  RAMP CURVE DIM#int SCALE#double 
+  HEAVISIDE_CURVE DIM#int SCALE#double Tc#integer
+  DELTA_CURVE DIM#int SCALE#double Tc#integer
+  HAT_CURVE DIM#int SCALE#double T0#integer T1#integer
+
+  Future curves :
   CUSTOM_CURVE
-  .
-  . double (NVALUE)
-  .
-
-  FORMAT example constant curve:
-  DAT_CURVE SCALE#double NUM#integer
-  CONSTANT_CURVE
-
-  FORMAT example heaviside curve:
-  DAT_CURVE SCALE#double NUM#integer
-  HEAVISIDE_CURVE Tc#integer
-
-  FORMAT example delta curve:
-  DAT_CURVE SCALE#double NUM#integer
-  DELTA_CURVE Tc#integer
-
-  FORMAT example hat curve:
-  DAT_CURVE SCALE#double NUM#integer
-  HAT_CURVE T0#integer T1#integer
-
-  FORMAT example ramp curve:
-  DAT_CURVE SCALE#double NUM#integer
-  RAMP_CURVE
 
 */
 {
@@ -48,13 +36,15 @@ Curve ReadCurve(char * Name_File)
 
   /* Scale parameter */
   double Scale;
+
+  /* Index of dimension for the curve*/
+  int iDim;
   
   /* Define simulation file */
   FILE * Sim_dat;
 
   /* Auxiliar variable for reading the lines in the files */
   char line[MAXC] = {0};
-  char line_values[MAXC] = {0};
   
   /* Number of element in the line , just for check */
   int nkwords,nparam;
@@ -83,8 +73,8 @@ Curve ReadCurve(char * Name_File)
 	nparam = parse (param,kwords[i],"#\n");
 	if(nparam == 2){
 	  /* Scale parameter for the curve */
-	  if(strcmp(param[0],"SCALE") == 0){
-	   Scale = atof(param[1]);
+	  if(strcmp(param[0],"NUMDIM") == 0){
+	   DatCurve.Dim = atoi(param[1]);
 	  }
 	  /* Number of values, it should be the same 
 	     as the number of timesteps */
@@ -96,134 +86,213 @@ Curve ReadCurve(char * Name_File)
     }
     /*********************************************************************/
 
-    /* CUSTOM CURVE */
-    /*********************************************************************/
-    if ( strcmp(kwords[0],"CUSTOM_CURVE") == 0 ){
-      /* Allocate the curve */
-      DatCurve.Fx = (double *)Allocate_Array(DatCurve.Num,sizeof(double));
-      
-      /* Fill the values of the curve */
-      for(int i = 0 ; i<DatCurve.Num ; i++){
-	fgets(line_values, sizeof line_values, Sim_dat);
-	nparam = parse (param,line_values," \n");
-	if(nparam == 1){
-	  DatCurve.Fx[i] = Scale*atof(param[0]);
-	}
-	else{
-	  puts("Error in ReadCurve() : Check the values of the curve ");
-	  exit(0);
-	}
-      }    
-    }
-    /*********************************************************************/
+    /* ALLOCATE FX MATRIX */
+    DatCurve.Fx = (double **)Allocate_MatrixZ(DatCurve.Num,
+					      DatCurve.Dim,
+					      sizeof(double));
 
-    /* CONSTANT CURVE */
+        
+    /* CONSTANT_CURVE DIM#int SCALE#double  */
     /*********************************************************************/
     if ( strcmp(kwords[0],"CONSTANT_CURVE") == 0 ){
-      /* Allocate the curve */
-      DatCurve.Fx = (double *)Allocate_Array(DatCurve.Num,sizeof(double));
+
+      /* Dimension where it is applied the curve */
+      nparam = parse (param,kwords[1],"#\n");
+      if(strcmp(param[0],"DIM") == 0){
+	iDim = atoi(param[1]);
+      }
+      else{
+	puts("Error in ReadCurve() : Wrong parameters of the constant curve !!!");
+	exit(0);
+      }
+
+      /* Scale parameter of the curve */
+      nparam = parse (param,kwords[2],"#\n");
+      if(strcmp(param[0],"SCALE") == 0){
+	Scale = atof(param[1]);
+      }
+      else{
+	puts("Error in ReadCurve() : Wrong parameters of the constant curve !!!");
+	exit(0);
+      }
 
       /* Fill the values of the curve */
       for(int i = 0 ; i<DatCurve.Num ; i++){
-	DatCurve.Fx[i] = Scale;
+	DatCurve.Fx[i][iDim] += Scale;
       }
     }
     /*********************************************************************/
 
-    /* RAMP CURVE */
+    /* RAMP CURVE DIM#int SCALE#double */
     /*********************************************************************/
     if ( strcmp(kwords[0],"RAMP_CURVE") == 0 ){
-      /* Allocate the curve */
-      DatCurve.Fx = (double *)Allocate_Array(DatCurve.Num,sizeof(double));
+
+      /* Dimension where it is applied the curve */
+      nparam = parse (param,kwords[1],"#\n");
+      if(strcmp(param[0],"DIM") == 0){
+	iDim = atoi(param[1]);
+      }
+      else{
+	puts("Error in ReadCurve() : Wrong parameters of the ramp curve !!!");
+	exit(0);
+      }
+
+      /* Scale parameter of the curve */
+      nparam = parse (param,kwords[2],"#\n");
+      if(strcmp(param[0],"SCALE") == 0){
+	Scale = atof(param[1]);
+      }
+      else{
+	puts("Error in ReadCurve() : Wrong parameters of the ramp curve !!!");
+	exit(0);
+      }
 
       /* Fill the values of the curve */
       for(int i = 0 ; i<DatCurve.Num ; i++){
-	DatCurve.Fx[i] = Scale*(double)i/DatCurve.Num;
+	DatCurve.Fx[i][iDim] = Scale*(double)i/DatCurve.Num;
       }
     }
     /*********************************************************************/
 
-    /* HEAVISIDE CURVE */
+    /* HEAVISIDE_CURVE DIM#int SCALE#double Tc#integer */
     /*********************************************************************/
     if ( strcmp(kwords[0],"HEAVISIDE_CURVE") == 0 ){
-      /* Allocate the curve */
-      DatCurve.Fx = (double *)Allocate_Array(DatCurve.Num,sizeof(double));
 
+      /* Dimension where it is applied the curve */
       nparam = parse (param,kwords[1],"#\n");
-      if( (strcmp(param[0],"Tc") == 0) || (nparam != 2) ){
+      if(strcmp(param[0],"DIM") == 0){
+	iDim = atoi(param[1]);
+      }
+      else{
 	puts("Error in ReadCurve() : Wrong parameters of the Heaviside curve !!!");
 	exit(0);
       }
 
-      /* Critic time of the Heaviside */
-      Tc = atoi(param[1]);
-      if(Tc > DatCurve.Num){
-	puts("Error in ReadCurve() : Tc > DatCurve.Num in the Heaviside curve !!!");
+      /* Scale parameter of the curve */
+      nparam = parse (param,kwords[2],"#\n");
+      if(strcmp(param[0],"SCALE") == 0){
+	Scale = atof(param[1]);
+      }
+      else{
+	puts("Error in ReadCurve() : Wrong parameters of the Heaviside curve !!!");
 	exit(0);
       }
-      if(Tc < 0){
-	puts("Error in ReadCurve() : Tc < 0 in the Heaviside curve !!!");
+
+      /* Critical time of the curve */
+      nparam = parse (param,kwords[3],"#\n");
+      if(strcmp(param[0],"Tc") == 0){
+	Tc = atoi(param[1]);
+	/* Check the critical time */
+	if(Tc > DatCurve.Num){
+	  puts("Error in ReadCurve() : Tc > DatCurve.Num in the Heaviside curve !!!");
+	  exit(0);
+	}
+	if(Tc < 0){
+	  puts("Error in ReadCurve() : Tc < 0 in the Heaviside curve !!!");
+	  exit(0);
+	}
+      }
+      else{
+	puts("Error in ReadCurve() : Wrong parameters of the Heaviside curve !!!");
 	exit(0);
       }
-      
+           
       /* Fill the values of the curve */
       for(int i = 0 ; i< DatCurve.Num; i++){
 	if(i<=Tc)
-	  DatCurve.Fx[i] = 0;
+	  DatCurve.Fx[i][iDim] += 0;
 	else
-	  DatCurve.Fx[i] = Scale;
+	  DatCurve.Fx[i][iDim] += Scale;
       }
     }
     /*********************************************************************/
 
-    /* DELTA CURVE */
+    /* DELTA_CURVE DIM#int SCALE#double Tc#integer */
     /*********************************************************************/
     if ( strcmp(kwords[0],"DELTA_CURVE") == 0 ){
-      /* Allocate the curve */
-      DatCurve.Fx = (double *)Allocate_Array(DatCurve.Num,sizeof(double));
 
+      /* Dimension where it is applied the curve */
       nparam = parse (param,kwords[1],"#\n");
-      if( (strcmp(param[0],"Tc") == 0) || (nparam != 2) ){
-	puts("Error in ReadCurve() : Wrong parameters of the Delta curve !!!");
+      if(strcmp(param[0],"DIM") == 0){
+	iDim = atoi(param[1]);
+      }
+      else{
+	puts("Error in ReadCurve() : Wrong parameters of the delta curve !!!");
 	exit(0);
       }
 
-      /* Critic time of the Delta */
-      Tc = atoi(param[1]);
-      if(Tc > DatCurve.Num){
-	puts("Error in ReadCurve() : Tc > DatCurve.Num in the Delta curve !!!");
+      /* Scale parameter of the curve */
+      nparam = parse (param,kwords[2],"#\n");
+      if(strcmp(param[0],"SCALE") == 0){
+	Scale = atof(param[1]);
+      }
+      else{
+	puts("Error in ReadCurve() : Wrong parameters of the delta curve !!!");
 	exit(0);
       }
-      if(Tc < 0){
-	puts("Error in ReadCurve() : Tc < 0 in the delta curve !!!");
+
+      /* Critical time of the delta */
+      nparam = parse (param,kwords[3],"#\n");
+      if(strcmp(param[0],"Tc") == 0){
+	Tc = atoi(param[1]);
+	/* Check the critical time */
+	if(Tc > DatCurve.Num){
+	  puts("Error in ReadCurve() : Tc > DatCurve.Num in the delta curve !!!");
+	  exit(0);
+	}
+	if(Tc < 0){
+	  puts("Error in ReadCurve() : Tc < 0 in the delta curve !!!");
+	  exit(0);
+	}
+      }
+      else{
+	puts("Error in ReadCurve() : Wrong parameters of the delta curve !!!");
 	exit(0);
       }
       
       /* Fill the values of the curve */
       for(int i = 0 ; i< DatCurve.Num; i++){
 	if(i == Tc)
-	  DatCurve.Fx[i] = Scale;
+	  DatCurve.Fx[i][iDim] += Scale;
 	else
-	  DatCurve.Fx[i] = 0;
+	  DatCurve.Fx[i][iDim] += 0;
       }
     }
     /*********************************************************************/
 
-    /* HAT CURVE */
+    /* HAT_CURVE DIM#int SCALE#double T0#integer T1#integer */
     /*********************************************************************/
     if ( strcmp(kwords[0],"HAT_CURVE") == 0 ){
-      /* Allocate the curve */
-      DatCurve.Fx = (double *)Allocate_Array(DatCurve.Num,sizeof(double));
 
-      /* Read */
+      /* Dimension where it is applied the curve */
       nparam = parse (param,kwords[1],"#\n");
+      if(strcmp(param[0],"DIM") == 0){
+	iDim = atoi(param[1]);
+      }
+      else{
+	puts("Error in ReadCurve() : Wrong parameters of the hat curve !!!");
+	exit(0);
+      }
+
+      /* Scale parameter of the curve */
+      nparam = parse (param,kwords[2],"#\n");
+      if(strcmp(param[0],"SCALE") == 0){
+	Scale = atof(param[1]);
+      }
+      else{
+	puts("Error in ReadCurve() : Wrong parameters of the hat curve !!!");
+	exit(0);
+      }
+
+      /* Read critical times */
+      nparam = parse (param,kwords[3],"#\n");
       if( (strcmp(param[0],"T0") == 0) || (nparam != 2) ){
 	puts("Error in ReadCurve() : Wrong parameters of the Hat curve !!!");
 	exit(0);
       }
       T0 = atoi(param[1]);
 
-      nparam = parse (param,kwords[1],"#\n");
+      nparam = parse (param,kwords[4],"#\n");
       if( (strcmp(param[0],"T1") == 0) || (nparam != 2) ){
 	puts("Error in ReadCurve() : Wrong parameters of the Hat curve !!!");
 	exit(0);
@@ -248,16 +317,14 @@ Curve ReadCurve(char * Name_File)
       /* Fill the values of the curve */
       for(int i = 0 ; i< DatCurve.Num; i++){
 	if(i < T0)
-	  DatCurve.Fx[i] = 0;
+	  DatCurve.Fx[i][iDim] += 0;
 	else if ( (i >= T0) || (i <= T1) )
-	  DatCurve.Fx[i] = Scale;
+	  DatCurve.Fx[i][iDim] += Scale;
 	else
-	  DatCurve.Fx[i] = 0;
+	  DatCurve.Fx[i][iDim] += 0;
       }
     }
     /*********************************************************************/
-
-
 
     
   }/* End of read file */

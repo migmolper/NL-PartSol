@@ -45,10 +45,6 @@ void ReadDatFile(char * Name_File)
   char * SimParameter[MAXW] = {NULL};
   char * KIND_ANALYSIS[MAXW] = {NULL};
 
-  /* Auxiliar variables for G */
-  int AUX_G_DAT;
-  char * G_DAT[MAXW] = {NULL};
-
   /* Initial message */
   printf("************************************************* \n");
   printf("Begin of read data file : %s !!! \n",Name_File);

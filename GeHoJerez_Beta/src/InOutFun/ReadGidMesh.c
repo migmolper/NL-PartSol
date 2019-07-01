@@ -291,11 +291,6 @@ Mesh ReadGidMesh(char * MeshName)
     /* Set the nodes of the boundaries */
     GID_Mesh.LEFT.Nodes[0] = 0;
     GID_Mesh.RIGHT.Nodes[0] = 1-GID_Mesh.NumNodesMesh;
-    /* Allocate boundary directions */
-    GID_Mesh.LEFT.Dir =
-      (int *)Allocate_ArrayZ(NumberDimensions,sizeof(int));
-    GID_Mesh.RIGHT.Dir =
-      (int *)Allocate_ArrayZ(NumberDimensions,sizeof(int));
     
     break; /******************** 2D mesh ********************/
     
@@ -361,16 +356,6 @@ Mesh ReadGidMesh(char * MeshName)
 	(int *)Allocate_ArrayZ(GID_Mesh.LEFT.NumNodes,sizeof(int));
       GID_Mesh.RIGHT.Nodes =
 	(int *)Allocate_ArrayZ(GID_Mesh.RIGHT.NumNodes,sizeof(int));
-
-      /* Allocate boundary directions */
-      GID_Mesh.TOP.Dir =
-	(int *)Allocate_ArrayZ(NumberDimensions,sizeof(int));
-      GID_Mesh.BOTTOM.Dir =
-	(int *)Allocate_ArrayZ(NumberDimensions,sizeof(int));
-      GID_Mesh.LEFT.Dir =
-	(int *)Allocate_ArrayZ(NumberDimensions,sizeof(int));
-      GID_Mesh.RIGHT.Dir =
-	(int *)Allocate_ArrayZ(NumberDimensions,sizeof(int));
 
       /* Fill the arrays  */
       for(int i = 0 ; i<GID_Mesh.NumNodesMesh ; i++){

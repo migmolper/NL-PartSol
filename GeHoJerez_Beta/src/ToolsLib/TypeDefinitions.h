@@ -21,7 +21,8 @@ typedef struct{
 
 typedef struct{
   int Num; /* Number of items in the curve */
-  double * Fx; /* Values for each time */
+  int Dim; /* Number of dimensions of the curve */
+  double ** Fx; /* Values for each time and dimensions */
   char Info [100]; /* Aditional information */
 } Curve;
 
@@ -30,13 +31,11 @@ typedef struct{
 /* Boundary conditions definition */
 typedef struct {
 
-  /* Array with the direction where it is applied the BCC */
-  int * Dir;
   /* Number of nodes/GP with this BCC */
   int NumNodes;
   /* List of nodes with this BCC */
   int * Nodes;
-  /* Curve with the value in the time */
+  /* Curve with the value in the time for each direction */
   Curve Value;
   /* Some information about this BCC */
   char Info [100];
@@ -47,9 +46,6 @@ typedef struct {
 
 typedef struct {
 
-  /* Array with the direction where it is applied the BCC */
-  int * Dir; /* Future update, change this with the time
-		to include centripetal forces or more complex load cases */
   /* Number of nodes/GP with this load */
   int NumNodes;
   /* List of nodes with this load */
@@ -83,10 +79,6 @@ typedef struct {
   Matrix Stress;
   /* Strain field */
   Matrix Strain;
-  /* External forces */
-  Load F;
-  /* Body forces */
-  Load B;
   
 } Fields;
 
@@ -103,7 +95,11 @@ typedef struct {
   Fields Phi;
   /* Constitutive response */
   Matrix D;
-  
+  /* External forces */
+  Load F;
+  /* Body forces */
+  Load B;
+
 } GaussPoint;
 
 

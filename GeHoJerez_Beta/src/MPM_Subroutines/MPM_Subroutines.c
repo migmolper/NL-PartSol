@@ -521,7 +521,7 @@ Matrix GetNodalForces(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int TimeStep)
   Nodal_TOT_FORCES = MatAllocZ(NumberDimensions,FEM_Mesh.NumNodesMesh);
   strcpy(Nodal_TOT_FORCES.Info,"Nodal_TOT_FORCES");
 
-  /* 1º Iterate over the GP to get the nodal values */
+  /* 1º Iterate over all the GP to get the nodal values */
   for(int i = 0 ; i<MPM_Mesh.NumGP ; i++){
 
     /* 2º Get the coordinates of the GP in the Element */
@@ -570,11 +570,11 @@ Matrix GetNodalForces(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int TimeStep)
 	/* 11bº Add the body forces */
 	Nodal_TOT_FORCES.nM[l][Elem_Nods[k]] +=
 	  MPM_Mesh.Phi.mass.nV[i]*N_Ref_GP.nV[k]*
-	  MPM_Mesh.Phi.B.Dir[l]*MPM_Mesh.Phi.B.Value.Fx[TimeStep];
+	  MPM_Mesh.B.Value.Fx[TimeStep][l];
 	/* 11cº Add the contact forces */
 	Nodal_TOT_FORCES.nM[l][Elem_Nods[k]] +=
-	  N_Ref_GP.nV[k]*(MPM_Mesh.Phi.mass.nV[i]/MPM_Mesh.Phi.rho.nV[i])*
-	  MPM_Mesh.Phi.F.Dir[l]*MPM_Mesh.Phi.F.Value.Fx[TimeStep];
+	  MPM_Mesh.Phi.mass.nV[i]*(1/MPM_Mesh.Phi.rho.nV[i])*N_Ref_GP.nV[k]*
+	  MPM_Mesh.F.Value.Fx[TimeStep][l];
       }
     }
 	
@@ -582,8 +582,8 @@ Matrix GetNodalForces(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int TimeStep)
     FreeMat(Element_INT_FORCES);
     FreeMat(N_Ref_GP);
 
-  }  
-
+  }
+  
   return Nodal_TOT_FORCES;
   
 }

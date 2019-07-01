@@ -167,7 +167,7 @@ int main(int argc, char *argv[])
     printf(" Five step : Calculate total forces forces\n");
     printf(" \t WORKING ... \n");
     /* BCC_GP_Forces(GP_Mesh, BCC_Loads, TimeStep); */
-    Nodal_TOT_FORCES = GetNodalForces(GP_Mesh,FEM_Mesh);
+    Nodal_TOT_FORCES = GetNodalForces(GP_Mesh,FEM_Mesh,TimeStep);
     printf(" DONE !!! \n");    
 
     /* Six step : Integrate the grid nodal momentum equation */

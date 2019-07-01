@@ -26,7 +26,7 @@ double UpdateGaussPointDensity(double, double);
 
 void UpdateGaussPointStress(GaussPoint);
 
-Matrix GetNodalForces(GaussPoint, Mesh);
+Matrix GetNodalForces(GaussPoint, Mesh, int);
 
 void UpdateGridNodalMomentum(Mesh, Matrix, Matrix);
 
