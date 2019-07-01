@@ -128,22 +128,6 @@ void ReadDatFile(char * Name_File)
 	    }
 	  }
 	  /***********************************************************************/
-	  if ( strcmp(SimParameter[0],"G") == 0 ){
-	    g = MatAlloc(NumberDimensions,1);
-	    AUX_G_DAT = parse(G_DAT,SimParameter[1],"{,}\n");
-	    if(AUX_G_DAT != NumberDimensions){
-	      puts("Error in ReadDatFile() : Wrong number of dimensions of gravity");
-	      exit(0);
-	    }
-	    printf(" * Set gravity to : {");
-	    for(int j = 0; j<NumberDimensions ; j++){
-	      g.nV[j] = atof(G_DAT[j]);
-	      printf(" %f ",g.nV[j]);
-	    }
-	    printf("}\n");
-	    
-	  }
-	  /***********************************************************************/
 	  if( strcmp(SimParameter[0],"DENSITY") == 0 ){
 	    Density = atof(SimParameter[1]);
 	    printf(" * Set the value of the density : %f \n",Density);

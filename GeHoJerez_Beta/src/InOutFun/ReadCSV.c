@@ -23,10 +23,6 @@ Matrix Read_CSV(char * Name_File, int NumData){
   /* Outputs */
   Matrix Mat_Out;
 
-  /* Initialize parser to read files */
-  ParserDictionary Dict = InitParserDictionary();
-  char * delims = Dict.sep[4];
-
   printf("************************************************* \n");
   printf("Begin of read CSV file !!! \n");
   printf(" * Name of the file : %s  \n",Name_File);
@@ -43,7 +39,7 @@ Matrix Read_CSV(char * Name_File, int NumData){
   Aux_line = fgets(line, sizeof line, CSV_file);
   if(Aux_line != NULL){
     strcpy(Info,line);
-    NumFields = parse (Field, line, delims);
+    NumFields = parse (Field, line, ";\n");
     Num_line++;
   }
   else{
@@ -59,7 +55,7 @@ Matrix Read_CSV(char * Name_File, int NumData){
   if(NumData == 1){ /* Multiple fields with only one line */
     Aux_line = fgets(line, sizeof line, CSV_file);
     if(Aux_line != NULL){
-      int_aux = parse (Field, line, delims);
+      int_aux = parse (Field, line, ";\n");
       if(int_aux != NumFields){
 	printf("Error in Read_CSV() : Incorrect number of fields : %i ! \n",int_aux);
 	exit(0);
@@ -78,7 +74,7 @@ Matrix Read_CSV(char * Name_File, int NumData){
     for(int i = 0 ; i<NumData ; i++){
       Aux_line = fgets(line, sizeof line, CSV_file);
       if(Aux_line != NULL){
-	int_aux = parse (Field, line, delims);
+	int_aux = parse (Field, line, ";\n");
 	if(int_aux != 1){
 	  printf("Error in Read_CSV() : Incorrect number of fields in line %i ! \n",i);
 	  exit(0);
@@ -96,7 +92,7 @@ Matrix Read_CSV(char * Name_File, int NumData){
     for(int i = 0 ; i<NumData ; i++){ /*  */
       Aux_line = fgets(line, sizeof line, CSV_file);
       if(Aux_line != NULL){
-	int_aux = parse (Field, line, delims);
+	int_aux = parse (Field, line, ";\n");
 	if(int_aux != NumFields){
 	  printf("Error in Read_CSV() : Incorrect number of fields : %i ! \n",int_aux);
 	  printf("Error detected in line %i \n",i);

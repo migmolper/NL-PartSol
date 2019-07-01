@@ -69,7 +69,10 @@ GaussPoint Initialize_GP_Mesh(char * MPM_GID_MeshName,
     strcpy(MPM_Mesh.Phi.Stress.Info,"Stress field GP");
     /* External forces (Vector) */
     MPM_Mesh.Phi.F = MatAllocZ(MPM_Mesh.NumGP,1);
-    strcpy(MPM_Mesh.Phi.F.Info,"Stress field GP");
+    strcpy(MPM_Mesh.Phi.F.Info,"External forces field GP");
+    /* Body forces (Vector) */
+    MPM_Mesh.Phi.B = MatAllocZ(MPM_Mesh.NumGP,1);
+    strcpy(MPM_Mesh.Phi.B.Info,"Body forces field GP");
     break;
   case 2 :
     /* Natural coordinates (Vectorial) */
@@ -92,7 +95,10 @@ GaussPoint Initialize_GP_Mesh(char * MPM_GID_MeshName,
     strcpy(MPM_Mesh.Phi.Stress.Info,"Stress field GP");
     /* External forces (Vector) */
     MPM_Mesh.Phi.F = MatAllocZ(MPM_Mesh.NumGP,2);
-    strcpy(MPM_Mesh.Phi.F.Info,"Stress field GP");
+    strcpy(MPM_Mesh.Phi.F.Info,"External forces GP");
+    /* Body forces (Vector) */
+    MPM_Mesh.Phi.B = MatAllocZ(MPM_Mesh.NumGP,2);
+    strcpy(MPM_Mesh.Phi.B.Info,"Body forces field GP");
     break;
   case 3:
     /* Natural coordinates (Vectorial) */
@@ -115,7 +121,10 @@ GaussPoint Initialize_GP_Mesh(char * MPM_GID_MeshName,
     strcpy(MPM_Mesh.Phi.Stress.Info,"Stress field GP");
     /* External forces (Vector) */
     MPM_Mesh.Phi.F = MatAllocZ(MPM_Mesh.NumGP,3);
-    strcpy(MPM_Mesh.Phi.F.Info,"Stress field GP");
+    strcpy(MPM_Mesh.Phi.F.Info,"Extermal forces field GP");
+    /* Body forces (Vector) */
+    MPM_Mesh.Phi.B = MatAllocZ(MPM_Mesh.NumGP,3);
+    strcpy(MPM_Mesh.Phi.B.Info,"Internal forces field GP");
     break;
   default:
     puts("Error in Initialize_GP_Mesh() : Wrong number of dimensions !!!");

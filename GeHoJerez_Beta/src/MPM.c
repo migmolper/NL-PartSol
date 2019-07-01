@@ -84,7 +84,8 @@ int main(int argc, char *argv[])
   /***********************************************************************/
 
   /* Read boundary conditions in the FEM mesh */
-  Read_FEM_BCC(BCC_FEM_FileName, FEM_Mesh);
+  /* Pass FEM_Mesh by reference because it is necessary to add the BCC (try to change this) */
+  Read_FEM_BCC(BCC_FEM_FileName, &FEM_Mesh);
   
   /* Read boundary conditions in the MPM nodes */
   /* BCC_Loads = ReadBCC(LoadsFileName,FEM_Mesh); */

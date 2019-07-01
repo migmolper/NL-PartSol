@@ -45,16 +45,21 @@ typedef struct {
 
 /*******************************************************/
 
-typedef struct{
-  
-  /* Integer identificator for the separator */
-  int NumberSeparators;
-  char ** sep;
-  /* List of keyword por the parser engine */
-  int NumberKeyWords;
-  char ** KeyWords;
-  
-} ParserDictionary;
+typedef struct {
+
+  /* Array with the direction where it is applied the BCC */
+  int * Dir; /* Future update, change this with the time
+		to include centripetal forces or more complex load cases */
+  /* Number of nodes/GP with this load */
+  int NumNodes;
+  /* List of nodes with this load */
+  int * Nodes;
+  /* Curve with the evolution value with the time */
+  Curve Value;
+  /* Some information about this load */
+  char Info [100];
+
+} Load;
 
 /*******************************************************/
 
@@ -79,7 +84,9 @@ typedef struct {
   /* Strain field */
   Matrix Strain;
   /* External forces */
-  Matrix F;
+  Load F;
+  /* Body forces */
+  Load B;
   
 } Fields;
 

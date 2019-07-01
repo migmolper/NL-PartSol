@@ -9,36 +9,6 @@
 
 /***************************************************************************/
 
-ParserDictionary InitParserDictionary(void)
-/*
-
-*/
-{
-
-  char * sep [9] = {"#","=","@","&",";",","," \n","%",":"};
-
-  char * KeyWords [28] = {"NUM_NODES","NUM_GAUSSPOINTS",
-			  "ELEM_TYPE","DOF","RESTART",
-			  "TRUE","FALSE","KIND_ANALYSIS",
-			  "U","U_P","SIGMA_V","G","RHO",
-			  "MATERIAL","AIR","WATER","SOIL",
-			  "X_GP","U_X","V_X","SIGMA_X",
-			  "TIME_STEP","NUM_STEP","MESH_FILE",
-			  "COND_INIT","BOUND_COND","2STG","MASS"};
-
-  ParserDictionary Dict;
-  
-  Dict.sep = sep;
-  Dict.NumberSeparators = 8;
-  Dict.KeyWords = KeyWords;
-  Dict.NumberKeyWords = 28;
-
-  return Dict;
-  
-}
-
-/***************************************************************************/
-
 int parse(char ** words, char * str, char * delims)
 /*
   Parser function :

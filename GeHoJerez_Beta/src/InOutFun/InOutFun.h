@@ -10,7 +10,6 @@
 enum { MAXW = 100, MAXC = 1000 };
 
 /* Auxiliar functions */
-ParserDictionary InitParserDictionary(void);
 Curve ReadCurve(char *);
 int parse(char **words, char *str, char *delims);
 

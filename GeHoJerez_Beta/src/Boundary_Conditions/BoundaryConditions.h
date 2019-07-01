@@ -3,7 +3,7 @@
 #define TypeDefinitions
 #endif
 
-void Read_FEM_BCC(char *, Mesh);
+void Read_FEM_BCC(char *, Mesh *);
 
 BoundaryConditions SetBCC(int *, int, int *, char *, char *);
 

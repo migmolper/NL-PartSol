@@ -28,8 +28,6 @@ int NumTimeStep;
 /***************************************/
 /******* Constitutive parameters *******/
 /***************************************/
-
-Matrix g;
 double ElasticModulus;
 double PoissonModulus;
 double Density;
