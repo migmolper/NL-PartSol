@@ -8,7 +8,7 @@
 #endif
 
 
-GaussPoint Initialize_GP_Mesh(char *,Matrix, double, Matrix);
+GaussPoint Define_GP_Mesh(char *, double, Matrix);
 
 Matrix GetMassMatrix_L(Mesh,GaussPoint);
 

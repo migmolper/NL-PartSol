@@ -1,12 +1,38 @@
+/***************************************/
+/********** GENERAL PARAMETERS *********/
+/***************************************/
 KIND_ANALYSIS=MPM%U%2D%VerletLF
-G={0,-9.81}
 DENSITY=20
 POISSON_MODULUS=0.3
 ELASTIC_MODULUS=1.e5
 TIME_STEP=0.00008
 NUM_STEP=10000
+
+
+/***************************************/
+/******* SIMULATION FILES AND DIR ******/
+/***************************************/
 FEM_FILE_NAME=test/CasoDisco/FEM_Mesh.msh
 MPM_FILE_NAME=test/CasoDisco/MPM_Mesh.msh
-BOUND_COND=test/CasoDisco/BCC_data.bcc
-COND_INIT=test/data.init
 OUTPUT_DIR=test/CasoDisco
+
+/***************************************/
+/********* BOUNDARY CONDITIONS *********/
+/***************************************/
+BCC_NUM 4
+BCC_TOP FIELD=V CURVE={test/CasoDisco/CurveConstat.txt}
+BCC_BOTTOM FIELD=V CURVE={test/CasoDisco/CurveConstat.txt}
+BCC_RIGHT FIELD=V CURVE={test/CasoDisco/CurveConstat.txt}
+BCC_LEFT FIELD=V CURVE={test/CasoDisco/CurveConstat.txt}
+
+/***************************************/
+/********** INITIAL CONDITIONS *********/
+/***************************************/
+INIT_NUM 1
+INIT_GP FIELD#V CURVE#{curve.txt} NUM_NODES#ALL_NODES
+
+/***************************************/
+/********** LOADS OVER THE GPs *********/
+/***************************************/
+LOAD_NUM 1
+LOAD_GP FIELD#B CURVE#{gravity.txt} NUM_NODES#ALL_NODES

@@ -64,7 +64,7 @@ Curve ReadCurve(char * Name_File)
   while( fgets(line, sizeof line, Sim_dat) != NULL ){
 
     /* Read the line with the space as separators */
-    nkwords = parse (kwords, line," \n");
+    nkwords = parse (kwords, line," \n\t");
 
     /* Read general data of the curve */
     /*********************************************************************/

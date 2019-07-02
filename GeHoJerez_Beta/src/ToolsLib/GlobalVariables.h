@@ -4,8 +4,6 @@
 
 char * FEM_MeshFileName;
 char * MPM_MeshFileName;
-char * InitCondFileName;
-char * BCC_FEM_FileName;
 char * OutputDir;
 
 /***************************************/

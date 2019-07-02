@@ -37,27 +37,62 @@ int main(int argc, char *argv[])
     exit(0);
   }
 
+  /***********************************************************************/
+  /******************** DEFINE GENERAL VARIABLES *************************/
+  /***********************************************************************/
   /* Read the .dat file */
-  ReadDatFile(argv[1]);
-
+  Read_GeneralParameters(argv[1]);
   /* General variables */
   Matrix D_e; /* Constitutive matrix */
   Mesh FEM_Mesh; /* Define FEM mesh */
   GaussPoint GP_Mesh; /* Define MPM mesh */
   int TimeStep; /* Time step */
-
   /* Some auxiliar variables for the outputs */
-  Matrix InputFields;
-  InputFields.nM = NULL;
   Matrix List_Fields;
-
   /* 2D linear elasticity */
   D_e = LinearElastic2D(PoissonModulus,ElasticModulus);
+  /***********************************************************************/
+  /***********************************************************************/
 
-  /* Read mesh data and initialize the element mesh */
+
+  /***********************************************************************/
+  /******************* DEFINE FINITE ELEMENT MESH ************************/
+  /***********************************************************************/
+  printf("************************************************* \n");
+  printf(" Generate the MPM mesh \n");
+  printf(" \t Defining background FEM mesh ... \n");
   FEM_Mesh = ReadGidMesh(FEM_MeshFileName);
-  /* Get the Connectivity of each node */
+  printf(" \t DONE !!! \n");
+  printf(" \t Searching neighbours elements for each node ... \n");
   FEM_Mesh.NodeNeighbour = GetNodalConnectivity(FEM_Mesh);
+  printf(" \t DONE !!! \n");
+  printf(" \t Reading FEM boundary conditions ... \n");
+  Read_FEM_BCC(argv[1], &FEM_Mesh);
+  printf(" \t DONE !!! \n");
+  /***********************************************************************/
+  /***********************************************************************/
+
+  
+  /***********************************************************************/
+  /******************** DEFINE GAUSS-POINT MESH **************************/
+  /***********************************************************************/
+  printf("************************************************* \n");
+  printf(" Generate the MPM mesh \n");
+  printf(" \t Defining MPM mesh of GPs ... \n");
+  GP_Mesh = Define_GP_Mesh(MPM_MeshFileName,Density,D_e);
+  printf(" \t DONE !!! \n");
+  printf(" \t Searching GPs in the FEM mesh ... \n");
+  GlobalSearchGaussPoints(GP_Mesh,FEM_Mesh);
+  printf(" \t DONE !!! \n");
+  printf(" \t Reading MPM boundary conditions ... \n");
+  /* BCC_Loads = ReadBCC(LoadsFileName,FEM_Mesh); */
+  printf(" \t DONE !!! \n");
+  printf(" \t Reading MPM initial conditions ... \n");
+  /* Read_MPM_InitVal(argv[1], &GP_Mesh); */
+  printf(" \t DONE !!! \n");  
+  /***********************************************************************/
+  /***********************************************************************/
+
 
   /***********************************************************************/
   /****** INITIALIZE AUXILIAR STRUCTURES TO STORE NODAL INFORMATION ******/
@@ -79,37 +114,7 @@ int main(int argc, char *argv[])
   /***********************************************************************/
   /***********************************************************************/
 
-  /***********************************************************************/
-  /******** INITIALIZE AUXILIAR STRUCTURES FOR BOUNDARY CONDITIONS *******/
-  /***********************************************************************/
-
-  /* Read boundary conditions in the FEM mesh */
-  /* Pass FEM_Mesh by reference because it is necessary to add the BCC (try to change this) */
-  Read_FEM_BCC(BCC_FEM_FileName, &FEM_Mesh);
-  
-  /* Read boundary conditions in the MPM nodes */
-  /* BCC_Loads = ReadBCC(LoadsFileName,FEM_Mesh); */
-
-  /***********************************************************************/
-  /***********************************************************************/
-
-  /***********************************************************************/
-  /****************** INITIALIZE GAUSS-POINT MESH ************************/
-  /***********************************************************************/
-  /* Define Gauss point mesh and initialize it */
-  GP_Mesh  = Initialize_GP_Mesh(MPM_MeshFileName,InputFields,Density,D_e);
-  /***********************************************************************/
-  /***********************************************************************/
-
-
-  /***********************************************************************/
-  /*************** GLOBAL SEARCH OF THE GAUSS-POINTS *********************/
-  /***********************************************************************/  
-  printf("************************************************* \n");
-  printf(" Begin of the global search of the GP over the mesh \n");
-  printf(" \t WORKING ... \n");
-  GlobalSearchGaussPoints(GP_Mesh,FEM_Mesh);
-  printf(" DONE !!! \n");
+  exit(0);
 
   /***********************************************************************/
   /********************** START THE MPM CALCULUS *************************/
@@ -126,7 +131,7 @@ int main(int argc, char *argv[])
     printf(" First step : Output Gauss-Points values to Paraview \n");
     printf(" \t WORKING ... \n");
     WriteVtk_MPM("MPM_VALUES",GP_Mesh,List_Fields,TimeStep);
-    printf(" DONE !!! \n");
+    printf(" \t DONE !!! \n");
    
     /* Second step : Get the nodal mass and the momentum */
     printf("************************************************* \n");
@@ -136,7 +141,7 @@ int main(int argc, char *argv[])
     Nodal_MASS.nV = Nodal_MASS_MOMENTUM.nM[0];
     Nodal_MOMENTUM.nM[0] = Nodal_MASS_MOMENTUM.nM[1];
     Nodal_MOMENTUM.nM[1] = Nodal_MASS_MOMENTUM.nM[2];
-    printf(" DONE !!! \n");
+    printf(" \t DONE !!! \n");
 
     /* Third step : Set the essential boundary conditions (over p)*/
     printf("************************************************* \n");

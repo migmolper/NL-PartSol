@@ -16,7 +16,12 @@ int parse(char **words, char *str, char *delims);
 /* Inputs */
 Mesh ReadGidMesh(char *);
 Matrix Read_CSV(char *, int);
-void ReadDatFile(char *);
+
+/* Read parameters from the .dat file */
+void Read_GeneralParameters(char *);
+void Read_FEM_BCC(char *, Mesh *);
+/* Load * Read_MPM_Loads(char *, GaussPoint *); */
+/* void Read_MPM_InitVal(char *, GaussPoint *); */
 
 /* Outputs */
 void WriteGnuplot(Matrix, Matrix, double, double, int, int, char[20]);

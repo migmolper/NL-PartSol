@@ -31,7 +31,6 @@ SOURCES = \
 	$(wildcard src/Solvers/*.c)\
 	$(wildcard src/ElementsFunctions/*.c)\
 	$(wildcard src/GaussPointsFunctions/*.c)\
-	$(wildcard src/Num_Schemes/*.c)\
 	$(wildcard src/MPM_Subroutines/*.c)\
 	$(wildcard src/Boundary_Conditions/*.c)
 

@@ -10,7 +10,7 @@
 /***************************************************************************/
 
 
-void ReadDatFile(char * Name_File)
+void Read_GeneralParameters(char * Name_File)
 /*
   Read data from the .DAT file and initialize the variables
   
@@ -59,12 +59,11 @@ void ReadDatFile(char * Name_File)
   /* Read the file line by line */
   while( fgets(line, sizeof line, Sim_dat) != NULL ){
     /* Read the line with the white space as separators */
-    nwords = parse (words, line," \n");
+    nwords = parse (words, line," \n\t");
     if(nwords>=1){
       /* In the line, read the words */
       for(int i = 0; i<nwords ; i++){
 	/* Use the equal (=) separator */
-	printf("%s \n",words[i]);
 	nSimParameter = parse (SimParameter, words[i], "=\n");
 	if(nSimParameter > 1){
 	  /***********************************************************************/
@@ -162,18 +161,6 @@ void ReadDatFile(char * Name_File)
 	    printf("\t -> %s \n",MPM_MeshFileName);
 	  }
 	  /***********************************************************************/
-	  if( strcmp(SimParameter[0],"COND_INIT") == 0 ){
-	    InitCondFileName = SimParameter[1];
-	    printf(" * Set name of the initial conditions file :  \n");
-	    printf("\t -> %s \n",InitCondFileName);
-	  }
-	  /***********************************************************************/
-	  if( strcmp(SimParameter[0],"BOUND_COND") == 0 ){
-	    BCC_FEM_FileName = SimParameter[1];
-	    printf(" * Set name of the boundary conditions file : \n");
-	    printf("\t -> %s \n",BCC_FEM_FileName); 
-	  }
-	  /***********************************************************************/
 	  if( strcmp(SimParameter[0],"OUTPUT_DIR") == 0 ){
 	    OutputDir = SimParameter[1];
 	    printf(" * Set route for the outputs  : \n");
@@ -212,5 +199,342 @@ void ReadDatFile(char * Name_File)
 } /* void read_dat(char * Name_File) */
 
 
-
 /***************************************************************************/
+
+void Read_FEM_BCC(char * Name_File, Mesh * FEM_Mesh)
+/*
+  Read the boundary conditions file :
+  Inputs
+  - Name_file : Name of the file
+  BCC_TOP FIELD#V CURVE#{curve.txt}
+  BCC_BOTTOM FIELD#V CURVE#{curve.txt}
+  BCC_RIGHT FIELD#V CURVE#{curve.txt}
+  BCC_LEFT FIELD#V CURVE#{curve.txt}
+  Note : Only read those lines with a BCC in the init 
+*/
+{
+  /* Pointer to the FEM boundary conditions file */
+  FILE * File_BCC;
+
+  /* Number of boundary conditions */
+  int BCC_NUM = 0;
+  
+  /* Auxiliar structure with the load curve */
+  Curve Curve_BCC;
+  
+  /* Auxiliar variable for reading the lines in the files */
+  char line[MAXC] = {0};
+  
+  /* Number of element in the line , just for check */
+  int nkwords,nparam;
+  char * kwords[MAXW] = {NULL};
+  char * param[MAXW] = {NULL};
+
+  /* Read the curve file */
+  int aux_CURVE;
+  char * CURVE[MAXW] = {NULL};
+
+  /* Read the field */
+  char * FIELD;
+
+  
+  printf("************************************************* \n");
+  printf("Begin of set boundary conditions !!! \n");
+  printf(" * Begin of read boundary files : %s \n",Name_File);
+  
+  /* Open and check .bcc file */
+  File_BCC = fopen(Name_File,"r");  
+  if (File_BCC==NULL){
+    puts("Error during the lecture of .bcc file");
+    exit(0);
+  }
+
+  /* Read the file line by line */
+  while( fgets(line, sizeof line, File_BCC) != NULL ){
+
+    /* Read the line with the space as separators */
+    nkwords = parse (kwords, line," \n\t");
+
+    /* When the parser find the keyword BCC_NUM : start reading BCC */
+    if(strcmp(kwords[0],"BCC_NUM") == 0 ){
+
+      BCC_NUM = atoi(kwords[1]);
+
+      for(int i = 0 ; i<BCC_NUM ; i++){
+
+	/* Read as line as BCC */
+	fgets(line, sizeof line, File_BCC);
+	/* Read the line with the space as separators */
+	nkwords = parse (kwords, line," \n\t");
+
+	/* Set BCC in those node in the left of the domain */
+	if ( ( strcmp(kwords[0],"BCC_TOP") == 0 ) ||
+	     ( strcmp(kwords[0],"BCC_BOTTOM") == 0 ) ||
+	     ( strcmp(kwords[0],"BCC_RIGHT") == 0 ) ||
+	     ( strcmp(kwords[0],"BCC_LEFT") == 0) ){
+
+
+	  /* Read the field to impose the boundary condition */
+	  nparam = parse (param,kwords[1],"=\n");
+	  if(strcmp(param[0],"FIELD") == 0){
+	    FIELD = param[1];
+	  }
+	  else{
+	    puts("Error in Read_FEM_BCC() : Wrong format of BCC !!!");
+	    exit(0);
+	  }
+
+	  /* Read the curve to impose the boundary condition */
+	  nparam = parse (param,kwords[2],"=\n");
+	  if(strcmp(param[0],"CURVE") == 0){
+	    /* Read file of the curve */
+	    aux_CURVE = parse(CURVE,param[1],"{}\n");
+	    if(aux_CURVE != 1){
+	      printf("Error in ReadBCC() : Wrong format for the CURVE#{File}");
+	      exit(0);
+	    }
+	    Curve_BCC = ReadCurve(CURVE[0]); 
+	  }
+	  else{
+	    puts("Error in Read_FEM_BCC() : Wrong format of BCC !!!");
+	    exit(0);
+	  }
+
+	  /* Apply this boundary conditions and copy information of the BCC */
+	  if(strcmp(kwords[0],"BCC_TOP") == 0){
+	    FEM_Mesh->TOP.Value = Curve_BCC;
+	    strcpy(FEM_Mesh->TOP.Info,FIELD);
+	  }
+	  else if(strcmp(kwords[0],"BCC_BOTTOM") == 0){
+	    FEM_Mesh->BOTTOM.Value = Curve_BCC;
+	    strcpy(FEM_Mesh->BOTTOM.Info,FIELD);
+	  }
+	  else if(strcmp(kwords[0],"BCC_RIGHT") == 0){
+	    FEM_Mesh->RIGHT.Value = Curve_BCC;
+	    strcpy(FEM_Mesh->RIGHT.Info,FIELD);
+	  }
+	  else if(strcmp(kwords[0],"BCC_LEFT") == 0){
+	    FEM_Mesh->LEFT.Value = Curve_BCC;
+	    strcpy(FEM_Mesh->LEFT.Info,FIELD);
+	  }
+      
+	} /* End of read BC */
+      }
+      
+    } /* End of if(strcmp(kwords[0],"BCC_NUM") == 0 ) */
+    
+  }  /* End of while */
+  printf("End of read boundary conditions file !!! \n");
+  fclose(File_BCC);
+  
+} /* BoundayConditions ReadBCC(char * Name_File) */
+
+/**********************************************************************/
+
+/* Load * Read_MPM_Loads(char * Name_File, GaussPoint * GP_Mesh) */
+/* /\* */
+
+/*   Read loads over the GP (.bcc) */
+
+/*   - Load format examples : */
+/*   - - External forces */
+/*   LOAD_GP FIELD#F CURVE#{curve.txt} NUM_NODES#integer */
+/*   . */
+/*   . integer (NLIST) */
+/*   . */
+
+/*   - - Gravity load */
+/*   LOAD_GP FIELD#G CURVE#{curve.txt} NUM_NODES#ALL_NODES */
+
+/* *\/ */
+
+/* { */
+
+  
+/*   /\* Read the file line by line *\/ */
+/*   while( fgets(line, sizeof line, File_BCC) != NULL ){ */
+
+/*     /\* Read the line with the space as separators *\/ */
+/*     nkwords = parse (kwords, line," \n\t"); */
+  
+/*     /\* If the first word is SET_GP read it : Asigned value */
+
+/*        - - External forces */
+/*        SET_GP FIELD#F CURVE#{curve.txt} NUM_NODES#integer */
+/*        . */
+/*        . integer (NLIST) */
+/*        . */
+
+/*        - - Gravity load */
+/*        SET_GP FIELD#G CURVE#{curve.txt} NUM_NODES#ALL_NODES */
+
+/*     *\/ */
+/*     if (strcmp(kwords[0],"LOAD_GP") == 0 ){ */
+
+/*       /\* Read the field to impose the boundary condition *\/ */
+/*       nparam = parse (param,kwords[1],"#\n"); */
+/*       if(strcmp(param[0],"FIELD") == 0){ */
+	
+/*       } */
+/*       else{ */
+/* 	puts("Error in Asign_MPM_Values() : Wrong format of SET_GP !!!"); */
+/* 	exit(0); */
+/*       } */
+	
+/*       /\* Read the curve associated to the boundary condition *\/ */
+/*       nparam = parse (param,kwords[2],"#\n"); */
+/*       if(strcmp(param[0],"CURVE") == 0){ */
+
+/*       } */
+/*       else{ */
+/* 	puts("Error in Asign_MPM_Values() : Wrong format of SET_GP !!!"); */
+/* 	exit(0); */
+/*       } */
+
+/*       /\* Read the number of nodes associated to this initial condition *\/ */
+/*       if(strcmp(param[0],"NUM_NODES") == 0){ */
+/* 	if(strcmp(param[1],"ALL_NODES") == 0){ */
+/* 	  BCC.Nodes = */
+/* 	    (int *)Allocate_Array(GaussPoint->NumGP,sizeof(int)); */
+/* 	} */
+/* 	else{ */
+/* 	  BCC.NumNodes = atoi(param[1]); */
+/* 	  BCC.Nodes = */
+/* 	    (int *)Allocate_Array(BCC.NumNodes,sizeof(int)); */
+/* 	  /\* Fill the list of nodes *\/ */
+/* 	  for(int j = 0 ; j<BCC.NumNodes ; j++){ */
+/* 	    fgets(line_nodes, sizeof line_nodes, Sim_dat); */
+/* 	    nparam = parse(param,line_nodes," \n"); */
+/* 	    if(nparam == 1){ */
+/* 	      BCC.Nodes[j] = atoi(param[0]); */
+/* 	    } */
+/* 	    else{ */
+/* 	      puts("Error in ReadLoads_GP() : Check the list of nodes "); */
+/* 	      exit(0); */
+/* 	    } */
+/* 	  } */
+/* 	} */
+/*       } */
+
+/*     } */
+
+/*   } */
+
+
+/*   return LoadsGP; */
+/* } */
+
+/**********************************************************************/
+
+/* void Read_MPM_InitVal(char * Name_File, GaussPoint * GP_Mesh) */
+/* /\* */
+/*   - Initial values format : */
+/*   - - Initial velocities */
+/*   INIT_GP FIELD#V CURVE#{curve.txt} NUM_NODES#integer */
+/*   . */
+/*   . integer (NLIST) */
+/*   . */
+
+/*   - - ALL_NODES */
+/*   INIT_GP FIELD#V CURVE#{curve.txt} NUM_NODES#ALL_NODES */
+/* *\/ */
+/* { */
+
+/*   /\* Read the file line by line *\/ */
+/*   while( fgets(line, sizeof line, File_BCC) != NULL ){ */
+
+/*     /\* If the first word is INIT_GP read it : set an initial value  */
+
+/*        - Initial values format : */
+/*        - - Initial velocities */
+/*        INIT_GP FIELD#V CURVE#{curve.txt} NUM_NODES#integer */
+/*        . */
+/*        . integer (NLIST) */
+/*        . */
+/*        - - ALL_NODES */
+/*        INIT_GP FIELD#V CURVE#{curve.txt} NUM_NODES#ALL_NODES */
+
+/*     *\/ */
+/*     if (strcmp(kwords[0],"INIT_GP") == 0 ){ */
+
+/*       /\* Read the field to impose the initial condition *\/ */
+/*       nparam = parse (param,kwords[1],"#\n"); */
+/*       if(strcmp(param[0],"FIELD") == 0){ */
+	
+/*       } */
+/*       else{ */
+/* 	puts("Error in Asign_MPM_Values() : Wrong format of INIT_GP !!!"); */
+/* 	exit(0); */
+/*       } */
+      
+/*       /\* Read the curve associated to the initial condition *\/ */
+/*       nparam = parse (param,kwords[2],"#\n"); */
+/*       if(strcmp(param[0],"CURVE") == 0){ */
+
+/*       } */
+/*       else{ */
+/* 	puts("Error in Asign_MPM_Values() : Wrong format of INIT_GP !!!"); */
+/* 	exit(0); */
+/*       } */
+
+/*       /\* Read the number of nodes associated to this initial condition *\/ */
+/*       nparam = parse (param,kwords[2],"#\n"); */
+/*       if(strcmp(param[0],"NUM_NODES") == 0){ */
+	
+/*       } */
+/*       else{ */
+/* 	puts("Error in Asign_MPM_Values() : Wrong format of INIT_GP !!!"); */
+/* 	exit(0); */
+/*       } */
+
+      
+/*     } */
+
+
+/*   } */
+
+/* } */
+
+
+/**********************************************************************/
+
+/* void BCC_GP_Forces(GaussPoint MeshGP, Load * LoadsGP, int NumLoadsGP, int TimeStep) */
+/* /\* */
+/*   Forces defined in the Gauss Points : */
+/*   Inputs */
+/* *\/ */
+/* { */
+/*   /\* 0º Loop over the loads *\/ */
+/*   for(int i = 0 ; i<NumLoadsGP ; i++){ */
+  
+/*     /\* 1º  Check the time step *\/ */
+/*     if( (TimeStep < 0) || */
+/* 	(TimeStep > LoadsGP[i].Value.Num)){ */
+/*       puts("Error in BCC_GP_Forces() : The time step is out of the curve !!"); */
+/*       exit(0); */
+/*     } */
+  
+/*     /\* 2º Fill the matrix with the local forces *\/ */
+/*     for(int j = 0 ; j<Loads[i].NumNodes ; j++){ */
+      
+/*       /\* 3º Check if this GP has a force applied *\/ */
+/*       if( (Loads[i].Nodes[j] > GP_Mesh.NumGP) || */
+/* 	  (Loads[i].Nodes[j] < 0)){ */
+/* 	puts("Error in BCC_GP_Forces() : This GP does not exist !!"); */
+/* 	exit(0); */
+/*       } */
+      
+/*       /\* 4º Loop over the dimensions *\/ */
+/*       for(int k = 0 ; k<NumberDimensions ; k++){ */
+/* 	/\* 5º Apply the force in the node *\/ */
+/* 	GP_Mesh.Phi.F.nM[Loads[i].Nodes[j]][k] += */
+/* 	  Loads[i].Value.Fx[TimeStep][k]; */
+/*       } */
+      
+/*     } */
+
+/*   } */
+
+/* } */
+
+/**********************************************************************/
