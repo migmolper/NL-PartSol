@@ -47,7 +47,7 @@ void Read_GeneralParameters(char * Name_File)
 
   /* Initial message */
   printf("************************************************* \n");
-  printf("Begin of read data file : %s !!! \n",Name_File);
+  printf(" \t * Begin of read general parameters in : %s !!! \n",Name_File);
   
   /* Open and check .dat file */
   Sim_dat = fopen(Name_File,"r");  
@@ -237,10 +237,9 @@ void Read_FEM_BCC(char * Name_File, Mesh * FEM_Mesh)
   /* Read the field */
   char * FIELD;
 
-  
+  /* Initial message */  
   printf("************************************************* \n");
-  printf("Begin of set boundary conditions !!! \n");
-  printf(" * Begin of read boundary files : %s \n",Name_File);
+  printf(" \t * Begin of read boundary conditions in : %s \n",Name_File);
   
   /* Open and check .bcc file */
   File_BCC = fopen(Name_File,"r");  
@@ -426,74 +425,160 @@ void Read_FEM_BCC(char * Name_File, Mesh * FEM_Mesh)
 
 /**********************************************************************/
 
-/* void Read_MPM_InitVal(char * Name_File, GaussPoint * GP_Mesh) */
-/* /\* */
-/*   - Initial values format : */
-/*   - - Initial velocities */
-/*   INIT_GP FIELD#V CURVE#{curve.txt} NUM_NODES#integer */
-/*   . */
-/*   . integer (NLIST) */
-/*   . */
+void Read_MPM_InitVal(char * Name_File, GaussPoint GP_Mesh)
+/*
+  If the first word is INIT_GP read it : set an initial value
+  
+  - Initial values format :
+  - - Initial velocities
+  INIT_GP FIELD#V CURVE#{curve.txt} NUM_NODES#integer
+  .
+  . integer (NLIST)
+  .
+  - - ALL_NODES
+  INIT_GP FIELD#V CURVE#{curve.txt} NUM_NODES#ALL_NODES
+*/
+{
 
-/*   - - ALL_NODES */
-/*   INIT_GP FIELD#V CURVE#{curve.txt} NUM_NODES#ALL_NODES */
-/* *\/ */
-/* { */
+  /* Simulation file */
+  FILE * Sim_dat;
 
-/*   /\* Read the file line by line *\/ */
-/*   while( fgets(line, sizeof line, File_BCC) != NULL ){ */
+  /* Special variables for line-reading */
+  char line[MAXC] = {0}; /* Variable for reading the lines in the files */
+  char * kwords[MAXW] = {NULL}; /* Variable to store the parser of a line */
+  int nkwords; /* Number of element in the line , just for check */
+  int nparam;
+  char * param[MAXW] = {NULL};
 
-/*     /\* If the first word is INIT_GP read it : set an initial value  */
+  /* Number of initial conditions (by default is zero) */
+  int INIT_NUM = 0;
+  
+  /* Special variables for the initial conditions parser */
+  char FIELD[MAXC] = {0}; /* Name of the field of the initial condition */
+  int DIM_FIELD; /* Number of dimensions of the field */
+  int AUX_VAL; /* Output of the parser for the field value */
+  char * READ_VAL[MAXW] = {NULL}; /* Variable to store the parser */
+  double * FIELD_VAL; /* Value of the field */
+  
+  int NUM_NODES; /* Number of nodes whis this initial condition */
+  int AUX_NODES; /* Output of the parser for the nodes value */
+  char * READ_NODES[MAXW] = {NULL}; /* Variable to store the parser */
 
-/*        - Initial values format : */
-/*        - - Initial velocities */
-/*        INIT_GP FIELD#V CURVE#{curve.txt} NUM_NODES#integer */
-/*        . */
-/*        . integer (NLIST) */
-/*        . */
-/*        - - ALL_NODES */
-/*        INIT_GP FIELD#V CURVE#{curve.txt} NUM_NODES#ALL_NODES */
+  /* Initial message */  
+  printf("************************************************* \n");
+  printf(" \t * Begin of read initial conditions in : %s \n",Name_File);
+  
+  /* Open and check .bcc file */
+  Sim_dat = fopen(Name_File,"r");  
+  if (Sim_dat==NULL){
+    printf("Error in Read_MPM_InitVal() during the lecture of : %s",Name_File);
+    exit(0);
+  }
 
-/*     *\/ */
-/*     if (strcmp(kwords[0],"INIT_GP") == 0 ){ */
+  /* Read the file line by line */
+  while( fgets(line, sizeof line, Sim_dat) != NULL ){
 
-/*       /\* Read the field to impose the initial condition *\/ */
-/*       nparam = parse (param,kwords[1],"#\n"); */
-/*       if(strcmp(param[0],"FIELD") == 0){ */
-	
-/*       } */
-/*       else{ */
-/* 	puts("Error in Asign_MPM_Values() : Wrong format of INIT_GP !!!"); */
-/* 	exit(0); */
-/*       } */
+    /* Read the line with the space as separators */
+    nkwords = parse (kwords, line," \n\t");
+
+    /* When the parser find the keyword INIT_NUM : start reading initial conditions */
+    if(strcmp(kwords[0],"INIT_NUM") == 0 ){
+
+      /* Get the number of initial conditions in the problem */
+      INIT_NUM = atoi(kwords[1]);
+
+      /* Loop over the initial conditions */
+      for(int i = 0 ; i<INIT_NUM ; i++){
+
+	/* Read as line as initial conditions */
+	fgets(line, sizeof line, Sim_dat);
+	/* Read the line with the space as separators */
+	nkwords = parse (kwords, line," \n\t");
       
-/*       /\* Read the curve associated to the initial condition *\/ */
-/*       nparam = parse (param,kwords[2],"#\n"); */
-/*       if(strcmp(param[0],"CURVE") == 0){ */
+	if (strcmp(kwords[0],"INIT_GP") == 0 ){
 
-/*       } */
-/*       else{ */
-/* 	puts("Error in Asign_MPM_Values() : Wrong format of INIT_GP !!!"); */
-/* 	exit(0); */
-/*       } */
+	  /* Read the field to impose the initial condition */
+	  nparam = parse (param,kwords[1],"=\n");
+	  if(strcmp(param[0],"FIELD") == 0){
+	    strcpy(FIELD,param[1]);
+	    if (strcmp(FIELD,"V") == 0){
+	      DIM_FIELD = GP_Mesh.Phi.vel.N_cols;
+	      FIELD_VAL = (double *)Allocate_Array(DIM_FIELD,sizeof(double));
+	    }
+	  }
+	  else{
+	    puts("Error in Read_MPM_InitVal() : Wrong format of INIT_GP !!!");
+	    exit(0);
+	  }
+      
+	  /* Read the curve associated to the initial condition */
+	  nparam = parse (param,kwords[2],"=\n");
+	  if(strcmp(param[0],"VALUE") == 0){
+	    /* Read file of the curve */
+	    AUX_VAL = parse(READ_VAL,param[1],"{,}\n");
+	    if(AUX_VAL == DIM_FIELD){
+	      for(int j = 0 ; j<DIM_FIELD ; j++){
+		FIELD_VAL[j] = atof(READ_VAL[j]);
+	      }
+	    }
+	    else{
+	      printf("Error in Read_MPM_InitVal() : Wrong number of dimensions for VALUE={,}");
+	      exit(0);
+	    }
+	  }
+	  else{
+	    puts("Error in Read_MPM_InitVal() : Wrong format of INIT_GP !!!");
+	    exit(0);
+	  }
 
-/*       /\* Read the number of nodes associated to this initial condition *\/ */
-/*       nparam = parse (param,kwords[2],"#\n"); */
-/*       if(strcmp(param[0],"NUM_NODES") == 0){ */
-	
-/*       } */
-/*       else{ */
-/* 	puts("Error in Asign_MPM_Values() : Wrong format of INIT_GP !!!"); */
-/* 	exit(0); */
-/*       } */
+	  /* Read the number of nodes associated to this initial condition */
+	  nparam = parse (param,kwords[3],"=\n");
+	  if(strcmp(param[0],"NUM_NODES") == 0){
+	    /* Read the number of nodes associated to this initial condition */
+	    if(strcmp(param[1],"ALL_NODES") == 0){
+	      for(int j = 0 ; j<GP_Mesh.NumGP ; j++){
+		for(int k = 0 ; k<DIM_FIELD ; k++){
+		  if (strcmp(FIELD,"V") == 0)
+		    GP_Mesh.Phi.vel.nM[j][k] = FIELD_VAL[k];
+		}		
+	      }
+	    }
+	    else{
+	      NUM_NODES = atoi(param[1]);
+	      for(int j = 0 ; j<NUM_NODES ; j++){		
+		fgets(line, sizeof line, Sim_dat);
+		AUX_NODES = parse(READ_NODES,line," \n");
+		if(AUX_NODES == 1){
+		  for(int k = 0 ; k<DIM_FIELD ; k++){
+		    if (strcmp(FIELD,"V") == 0)
+		      GP_Mesh.Phi.vel.nM[atoi(READ_NODES[0])][k] = FIELD_VAL[k];
+		  }
+		  
+		}
+		else{
+		  puts("Error in ReadLoads_GP() : Check the list of nodes ");
+		  exit(0);
+		}
+	      }
+	    }
+	  }
+	  else{
+	    puts("Error in Read_MPM_InitVal() : Wrong format of INIT_GP !!!");
+	    exit(0);
+	  }
+
+	  /* Asign initial conditions*/
 
       
-/*     } */
+	}
+      }
+      
+    } /* End if(strcmp(kwords[0],"INIT_NUM") == 0 ) */
+    
+  } /* end While */
 
+}
 
-/*   } */
-
-/* } */
 
 
 /**********************************************************************/

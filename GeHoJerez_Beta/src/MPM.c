@@ -88,7 +88,7 @@ int main(int argc, char *argv[])
   /* BCC_Loads = ReadBCC(LoadsFileName,FEM_Mesh); */
   printf(" \t DONE !!! \n");
   printf(" \t Reading MPM initial conditions ... \n");
-  /* Read_MPM_InitVal(argv[1], &GP_Mesh); */
+  Read_MPM_InitVal(argv[1],GP_Mesh);
   printf(" \t DONE !!! \n");  
   /***********************************************************************/
   /***********************************************************************/

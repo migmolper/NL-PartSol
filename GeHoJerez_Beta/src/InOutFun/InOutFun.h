@@ -20,8 +20,8 @@ Matrix Read_CSV(char *, int);
 /* Read parameters from the .dat file */
 void Read_GeneralParameters(char *);
 void Read_FEM_BCC(char *, Mesh *);
+void Read_MPM_InitVal(char *, GaussPoint);
 /* Load * Read_MPM_Loads(char *, GaussPoint *); */
-/* void Read_MPM_InitVal(char *, GaussPoint *); */
 
 /* Outputs */
 void WriteGnuplot(Matrix, Matrix, double, double, int, int, char[20]);

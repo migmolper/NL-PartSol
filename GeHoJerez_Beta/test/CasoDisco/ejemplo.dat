@@ -26,13 +26,13 @@ BCC_RIGHT FIELD=V CURVE={test/CasoDisco/CurveConstat.txt}
 BCC_LEFT FIELD=V CURVE={test/CasoDisco/CurveConstat.txt}
 
 /***************************************/
-/********** INITIAL CONDITIONS *********/
+/**** INITIAL CONDITIONS FOR THE GPs ***/
 /***************************************/
 INIT_NUM 1
-INIT_GP FIELD#V CURVE#{curve.txt} NUM_NODES#ALL_NODES
+INIT_GP FIELD=V VALUE={0,0} NUM_NODES=ALL_NODES
 
 /***************************************/
 /********** LOADS OVER THE GPs *********/
 /***************************************/
 LOAD_NUM 1
-LOAD_GP FIELD#B CURVE#{gravity.txt} NUM_NODES#ALL_NODES
+LOAD_GP FIELD#B CURVE={gravity.txt} NUM_NODES=ALL_NODES
