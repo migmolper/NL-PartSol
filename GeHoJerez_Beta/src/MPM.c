@@ -84,15 +84,15 @@ int main(int argc, char *argv[])
   printf(" \t Searching GPs in the FEM mesh ... \n");
   GlobalSearchGaussPoints(GP_Mesh,FEM_Mesh);
   printf(" \t DONE !!! \n");
-  printf(" \t Reading MPM boundary conditions ... \n");
-  /* BCC_Loads = ReadBCC(LoadsFileName,FEM_Mesh); */
+  printf(" \t Reading MPM load cases ... \n");
+  GP_Mesh.F = Read_MPM_LoadCase_ExtForces(argv[1],GP_Mesh);
+  GP_Mesh.B = Read_MPM_LoadCase_BodyForces(argv[1],GP_Mesh);
   printf(" \t DONE !!! \n");
   printf(" \t Reading MPM initial conditions ... \n");
   Read_MPM_InitVal(argv[1],GP_Mesh);
   printf(" \t DONE !!! \n");  
   /***********************************************************************/
   /***********************************************************************/
-
 
   /***********************************************************************/
   /****** INITIALIZE AUXILIAR STRUCTURES TO STORE NODAL INFORMATION ******/
@@ -113,8 +113,6 @@ int main(int argc, char *argv[])
   Matrix Nodal_TOT_FORCES; /* Nodal total forces */
   /***********************************************************************/
   /***********************************************************************/
-
-  exit(0);
 
   /***********************************************************************/
   /********************** START THE MPM CALCULUS *************************/
@@ -147,7 +145,7 @@ int main(int argc, char *argv[])
     printf("************************************************* \n");
     printf(" Third step : Set the essential BCC (over P) \n");
     printf(" \t WORKING ... \n");
-    BCC_Nod_Momentum(FEM_Mesh,Nodal_MOMENTUM,TimeStep);
+    BCC_Nod_VALUE(FEM_Mesh,Nodal_MOMENTUM,TimeStep);
     printf(" DONE !!! \n");
 
     /* Four step : Update the particle stress state */

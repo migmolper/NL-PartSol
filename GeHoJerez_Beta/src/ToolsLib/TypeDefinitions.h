@@ -1,10 +1,33 @@
+/*
 
+  Library with all the structures adopted in the code to extend the
+  basic functionalities of C with them : 
 
-/* Math structures :
-   As in matlab, arrays and matrix are the same,
-   note that this definition in not very eficient,
-   but give you more flexibility.
+  -> Matrix : Usefull structure to deal with algebraic operations.
+  -> Curve : Structure created for dealing with complex boundary
+  conditions and loads.
+  -> BoundaryConditions : Structure that store all the information
+  of a boundary condition and allow to me and others programers to
+  programe/imposse easily new ones.
+  -> Load : Structure that the store all the information about 
+  one kind of load over the GPs*.
+  -> LoadCase : Structure created to join multiple kind of loads in
+  one single structure to deal with complex load cases.
+  -> Fields : Structure that store all the physical variables of
+  the MPM** simulation related with the GPs*.
+  -> GaussPoint : Structure created for store general properties of
+  a set of GPs*, this allows to generate several groups of them, with
+  diferent properties. Ie : water, soil, air.
+  -> Mesh : Structure created for store general properties of a FEM*** 
+  mesh, this allows to generate differents mesh for diferents sets of 
+  GPs*.
+
+  Note* : GPs -> Gauss Points
+  Note** : MPM -> Material Point Method
+  Note*** : FEM -> Finite Element Method
+
 */
+
 
 /*******************************************************/
 
@@ -20,38 +43,37 @@ typedef struct{
 /*******************************************************/
 
 typedef struct{
-  int Num; /* Number of items in the curve */
-  int Dim; /* Number of dimensions of the curve */
-  double ** Fx; /* Values for each time and dimensions */
-  char Info [100]; /* Aditional information */
+
+  /* Number of items in the curve */
+  int Num; 
+  /* Values for each time */
+  double * Fx; 
+  /* Aditional information */
+  char Info [100];
+  
 } Curve;
 
 /*******************************************************/
 
-/* Boundary conditions definition */
-typedef struct {
-
-  /* Number of nodes/GP with this BCC */
-  int NumNodes;
-  /* List of nodes with this BCC */
-  int * Nodes;
-  /* Curve with the value in the time for each direction */
-  Curve Value;
-  /* Some information about this BCC */
-  char Info [100];
-  
-} BoundaryConditions;
-
-/*******************************************************/
-
+/* Loads definition :
+ An important aclaration about this code, a force is a load,
+ or even a boundary condition is defined as a load from the
+ point of view of the code (as a structure). The idea is
+ a force and a boundary condition both of them has a direction, 
+ a value, a list of nodes/GPs where it is applied,... So it's
+ a good idea to use this structure for both porpouses.
+*/
 typedef struct {
 
   /* Number of nodes/GP with this load */
   int NumNodes;
+  /* Number of dimensions of the load */
+  int Dim; 
   /* List of nodes with this load */
   int * Nodes;
-  /* Curve with the evolution value with the time */
-  Curve Value;
+  /* Curve for each dimension with the evolution
+     value with the time */
+  Curve * Value;
   /* Some information about this load */
   char Info [100];
 
@@ -59,6 +81,36 @@ typedef struct {
 
 /*******************************************************/
 
+/* Boundary conditions definition */
+typedef struct {
+
+  /* Number of boundaries of the domain */
+  int NumBounds;
+  /* Table with all the boundaries and its values */
+  Load * BCC_i;
+  /* Some information about this BCC */
+  char Info [100];
+  
+} Boundaries;
+
+
+/*******************************************************/
+
+/* Load case : multiple loads */
+typedef struct {
+
+  /* Number of nodes/GP with this load */
+  int NumLoads;
+  /* List of loads */
+  Load * Load_i;
+  /* Some information about this load */
+  char Info [100];
+
+} LoadCase;
+
+/*******************************************************/
+
+/* Physical fields */
 typedef struct {
 
   /* Position in global coordinates */
@@ -96,16 +148,16 @@ typedef struct {
   /* Constitutive response */
   Matrix D;
   /* External forces */
-  Load F;
+  LoadCase F;
   /* Body forces */
-  Load B;
+  LoadCase B;
 
 } GaussPoint;
 
 
 /*******************************************************/
 
-/* Element type definition */
+/* Mesh definition */
 typedef struct {
 
   /*** GENERAL MESH PROPERTIES ***/
@@ -125,15 +177,8 @@ typedef struct {
      of elements that share a node */
   int ** NodeNeighbour;
 
-  /*** BOUNDARY NODES (Only square domains) ***/
-  /* TOP */
-  BoundaryConditions TOP;
-  /* BOTTOM */
-  BoundaryConditions BOTTOM;
-  /* RIGHT */
-  BoundaryConditions RIGHT;
-  /* LEFT */
-  BoundaryConditions LEFT;
+  /*** BOUNDARIES ***/
+  Boundaries Bounds;
   
   /*** INDIVIDUAL ELEMENT PROPERTIES ***/
   /* Number of dimensions of the element */

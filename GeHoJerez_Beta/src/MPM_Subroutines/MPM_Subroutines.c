@@ -1,4 +1,3 @@
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -502,7 +501,7 @@ void UpdateGaussPointStress(GaussPoint MPM_Mesh){
 Matrix GetNodalForces(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int TimeStep)
 {
   
-  /* 0bº Auxiliar variable declaration */
+  /* 0º Auxiliar variable declaration */
   int Elem_GP; /* Index of the element */
   int * Elem_Nods;
   Matrix X_EC_GP;
@@ -520,69 +519,107 @@ Matrix GetNodalForces(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int TimeStep)
   Matrix Nodal_TOT_FORCES; /* Total forces */
   Nodal_TOT_FORCES = MatAllocZ(NumberDimensions,FEM_Mesh.NumNodesMesh);
   strcpy(Nodal_TOT_FORCES.Info,"Nodal_TOT_FORCES");
+  Matrix Contact_Forces_t;
+  Contact_Forces_t = MatAllocZ(NumberDimensions,MPM_Mesh.NumGP);
+  Matrix Body_Forces_t;
+  Body_Forces_t = MatAllocZ(NumberDimensions,MPM_Mesh.NumGP);
+  int GP_Force;
 
-  /* 1º Iterate over all the GP to get the nodal values */
+  
+  /* 1º Fill matrix with the body forces for TimeStep */ 
+  if(MPM_Mesh.B.NumLoads>0){
+    for(int i = 0 ; i<MPM_Mesh.B.NumLoads; i++){
+      for(int j = 0 ; j<MPM_Mesh.B.Load_i[i].NumNodes ; j++){
+	GP_Force = MPM_Mesh.B.Load_i[i].Nodes[j];
+	for(int k = 0 ; k<NumberDimensions ; k++){
+	  Body_Forces_t.nM[k][GP_Force] += MPM_Mesh.B.Load_i[i].Value.Fx[TimeStep][k];
+	}
+      }
+    }
+  }
+  
+  /* 2º Fill matrix with the contact forces for TimeStep */
+  if(MPM_Mesh.F.NumLoads>0){
+    for(int i = 0 ; i<MPM_Mesh.F.NumLoads; i++){
+      for(int j = 0 ; j<MPM_Mesh.F.Load_i[i].NumNodes ; j++){
+	GP_Force = MPM_Mesh.F.Load_i[i].Nodes[j];
+	for(int k = 0 ; k<NumberDimensions ; k++){
+	  Contact_Forces_t.nM[k][GP_Force] += MPM_Mesh.F.Load_i[i].Value.Fx[TimeStep][k];
+	}
+      }
+    }
+  }
+
+  /* 3º Iterate over all the GP to get the nodal values */
   for(int i = 0 ; i<MPM_Mesh.NumGP ; i++){
 
-    /* 2º Get the coordinates of the GP in the Element */
+    /* 4º Get the coordinates of the GP in the Element */
     X_EC_GP.nV = MPM_Mesh.Phi.x_EC.nM[i];
 
-    /* 3º Get the index of the element */
+    /* 5º Get the index of the element */
     Elem_GP = MPM_Mesh.Element_id[i];
 
-    /* 4º Nodes of the element */
+    /* 6º Nodes of the element */
     Elem_Nods = FEM_Mesh.Connectivity[Elem_GP];
 
-    /* 5º Coordinates of the element */
+    /* 7º Coordinates of the element */
     for(int j = 0 ; j<FEM_Mesh.NumNodesElem ; j++){
       for(int k = 0 ; k<FEM_Mesh.Dimension ; k++){
 	Elem_Coords.nM[j][k] = FEM_Mesh.Coordinates.nM[Elem_Nods[j]][k];
       }
     }
 
-    /* 6º Evaluate the shape function in the GP */
+    /* 8º Evaluate the shape function in the GP */
     N_Ref_GP = FEM_Mesh.N_ref(X_EC_GP);
 
-    /* 7º Asign to an auxiliar variable the value of the stress tensor */
+    /* 9º Asign to an auxiliar variable the value of the stress tensor */
     StressTensor_GP.nV = MPM_Mesh.Phi.Stress.nM[i];
 
-    /* 8º Multiply the stress tensor by the mass and the inverse of the density */
+    /* 10º Multiply the stress tensor by the mass and the inverse of the density */
     for(int k = 0 ; k<StressTensor_GP.N_rows ; k++){
       StressTensor_GP.nV[k] *= (MPM_Mesh.Phi.mass.nV[i]/MPM_Mesh.Phi.rho.nV[i]);	  
     }
 	
-    /* 9º Get the B_T matrix for the derivates */
+    /* 11º Get the B_T matrix for the derivates */
     B = Get_B_GP(X_EC_GP,Elem_Coords);	
     B_T = Transpose_Mat(B);
     FreeMat(B);
 
-    /* 10º Get forces in the nodes of the element created by the Gauss-Point 
+    /* 12º Get forces in the nodes of the element created by the Gauss-Point 
      and free the B_T matrix */
     Element_INT_FORCES = Scalar_prod(B_T,StressTensor_GP);
     FreeMat(B_T);
 
-    /* 11º Acumulate this forces to the total array with the internal forces */
+    /* 13º Acumulate this forces to the total array with the internal forces */
     for(int k = 0 ; k<FEM_Mesh.NumNodesElem ; k++){  
       for(int l = 0 ; l<NumberDimensions ; l++){
-	/* 11aº Add the internal forces */
+
+	/* 14aº Add the internal forces */
 	Nodal_TOT_FORCES.nM[l][Elem_Nods[k]] -=
 	  Element_INT_FORCES.nV[k*NumberDimensions + l];
-	/* 11bº Add the body forces */
+
+	/* 14bº Add the body forces */
 	Nodal_TOT_FORCES.nM[l][Elem_Nods[k]] +=
 	  MPM_Mesh.Phi.mass.nV[i]*N_Ref_GP.nV[k]*
-	  MPM_Mesh.B.Value.Fx[TimeStep][l];
-	/* 11cº Add the contact forces */
+	  Body_Forces_t.nM[l][i];
+	
+	/* 14cº Add the contact forces */
 	Nodal_TOT_FORCES.nM[l][Elem_Nods[k]] +=
 	  MPM_Mesh.Phi.mass.nV[i]*(1/MPM_Mesh.Phi.rho.nV[i])*N_Ref_GP.nV[k]*
-	  MPM_Mesh.F.Value.Fx[TimeStep][l];
+	  Contact_Forces_t.nM[l][i];
+	
       }
     }
 	
-    /* 12º Free memory */
+    /* 15º Free memory */
     FreeMat(Element_INT_FORCES);
     FreeMat(N_Ref_GP);
 
   }
+
+  /* 16º Free memory */
+  FreeMat(Contact_Forces_t);
+  FreeMat(Body_Forces_t);
   
   return Nodal_TOT_FORCES;
   
@@ -600,8 +637,7 @@ void UpdateGridNodalMomentum(Mesh FEM_Mesh,
       Nodal_MOMENTUM.nM[j][i] +=
 	DeltaTimeStep*Nodal_TOT_FORCES.nM[j][i];
     }
-  }
-  
+  } 
 }
 
 /*******************************************************/

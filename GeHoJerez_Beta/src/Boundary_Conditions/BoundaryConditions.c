@@ -9,111 +9,40 @@
 
 /**********************************************************************/
 
-BoundaryConditions SetBCC(int NumNodes, int * Nodes,
-			  char * Info, char * Curve_File){
-  
-  /* Define boundary conditions */
-  BoundaryConditions BCC;
-
-  /* Apply this boundary conditions */
-  BCC.Nodes = Nodes;
-  BCC.NumNodes = NumNodes;
-
-  /* Asign curve of values */
-  BCC.Value = ReadCurve(Curve_File);
-
-  /* Copy information of the BCC */
-  strcpy(BCC.Info,Info);
-
-  /* Return boundary condition */
-  return BCC;
-}
-
-
-/**********************************************************************/
-
-void BCC_Nod_Momentum(Mesh FEM_Mesh, Matrix Nodal_MOMENTUM, int TimeStep)
+void BCC_Nod_VALUE(Mesh FEM_Mesh, Matrix Nodal_VALUE, int TimeStep)
 /*
-  Apply the momentum boundary conditions over the nodes 
+  Apply the boundary conditions over the nodes 
 */
 {
 
   /* 1º Define auxilar variables */
+  int NumNodesBound; /* Number of nodes of the bound */
   int Id_BCC; /* Index of the node where we apply the BCC */
+
+  /* 2º Loop over the the boundaries */
+  for(int i = 0 ; i<FEM_Mesh.Bounds.NumBounds ; i++){
+    /* 3º Get the number of nodes of this boundarie */
+    NumNodesBound = FEM_Mesh.Bounds.BCC_i[i].NumNodes;
+    /* 4º Get the number of dimensions where the BCC it is applied */
+    NumDimBound = FEM_Mesh.Bounds.BCC_i[i].NumDim;
+    for(int j = 0 ; j<NumNodesBound ; j++){
+      /* 5º Get the index of the node */
+      Id_BCC = FEM_Mesh.Bounds.BCC_i[i].Nodes[i];
+      /* 6º Loop over the dimensions of the boundary condition */
+      for(int k = 0 ; k<NumDimBound ; k++){
+	/* 7º Check if the curve it is on time */
+	if( (TimeStep < 0) ||
+	    (TimeStep > FEM_Mesh.Bounds.BCC_i[i].Value[k].Num)){
+	  puts("Error in BCC_Nodal_VALUE() : The time step is out of the curve !!");
+	  exit(0);
+	}
+	/* 8º Assign the boundary condition */
+	Nodal_VALUE.nM[k][Id_BCC] =
+	  FEM_Mesh.Bounds.BCC_i[i].Value[k].Fx[TimeStep];
+      }
+    }    
+  }
   
-
-  /* 2º Check the time range */
-  if( (TimeStep < 0) ||
-      (TimeStep > FEM_Mesh.TOP.Value.Num)){
-    puts("Error in BCC_Nodal_MOMENTUM() : The time step is out of the curve !!");
-    exit(0);
-  }
-  /* 2º Loop over the nodes of the TOP boundary */
-  for(int i = 0 ; i<FEM_Mesh.TOP.NumNodes ; i++){
-    /* 3º Get the index of the element */
-    Id_BCC = FEM_Mesh.TOP.Nodes[i];
-    /* 4º Loop over the dimensions */
-    for(int j = 0 ; j<NumberDimensions ; j++){
-      /* 5º Assign the BC to the nodes */
-      Nodal_MOMENTUM.nM[j][Id_BCC] =
-	FEM_Mesh.TOP.Value.Fx[TimeStep][j];
-    }          
-  }
-
-  /* 2º Check the time range */
-  if( (TimeStep < 0) ||
-      (TimeStep > FEM_Mesh.BOTTOM.Value.Num)){
-    puts("Error in BCC_Nodal_MOMENTUM() : The time step is out of the curve !!");
-    exit(0);
-  }
-  /* 2º Loop over the nodes of the BOTTOM boundary */
-  for(int i = 0 ; i<FEM_Mesh.BOTTOM.NumNodes ; i++){
-    /* 3º Get the index of the element */
-    Id_BCC = FEM_Mesh.BOTTOM.Nodes[i];
-    /* 4º Loop over the dimensions */
-    for(int j = 0 ; j<NumberDimensions ; j++){
-      /* 5º Assign the BC to the nodes */
-      Nodal_MOMENTUM.nM[j][Id_BCC] =
-	FEM_Mesh.BOTTOM.Value.Fx[TimeStep][j];
-    }          
-  }
-
-  /* 2º Check the time range */
-  if( (TimeStep < 0) ||
-      (TimeStep > FEM_Mesh.RIGHT.Value.Num)){
-    puts("Error in BCC_Nodal_MOMENTUM() : The time step is out of the curve !!");
-    exit(0);
-  }
-  /* 2º Loop over the nodes of the RIGHT boundary */
-  for(int i = 0 ; i<FEM_Mesh.RIGHT.NumNodes ; i++){
-    /* 3º Get the index of the element */
-    Id_BCC = FEM_Mesh.RIGHT.Nodes[i];
-    /* 4º Loop over the dimensions */
-    for(int j = 0 ; j<NumberDimensions ; j++){
-      /* 5º Assign the BC to the nodes */
-      Nodal_MOMENTUM.nM[j][Id_BCC] =
-	FEM_Mesh.RIGHT.Value.Fx[TimeStep][j];
-    }          
-  }
-
-  
-  /* 2º Check the time range */
-  if( (TimeStep < 0) ||
-      (TimeStep > FEM_Mesh.LEFT.Value.Num)){
-    puts("Error in BCC_Nodal_MOMENTUM() : The time step is out of the curve !!");
-    exit(0);
-  }  
-  /* 2º Loop over the nodes of the LEFT boundary */
-  for(int i = 0 ; i<FEM_Mesh.LEFT.NumNodes ; i++){
-    /* 3º Get the index of the element */
-    Id_BCC = FEM_Mesh.LEFT.Nodes[i];
-    /* 4º Loop over the dimensions */
-    for(int j = 0 ; j<NumberDimensions ; j++){
-      /* 5º Assign the BC to the nodes */
-      Nodal_MOMENTUM.nM[j][Id_BCC] =
-	FEM_Mesh.LEFT.Value.Fx[TimeStep][j];
-    }          
-  } 
   
 
 }
