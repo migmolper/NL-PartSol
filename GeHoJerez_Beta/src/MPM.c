@@ -67,7 +67,7 @@ int main(int argc, char *argv[])
   FEM_Mesh.NodeNeighbour = GetNodalConnectivity(FEM_Mesh);
   printf(" \t DONE !!! \n");
   printf(" \t Reading FEM boundary conditions ... \n");
-  Read_FEM_BCC(argv[1], &FEM_Mesh);
+  FEM_Mesh.Bounds = Set_FEM_BCC(argv[1], FEM_Mesh);
   printf(" \t DONE !!! \n");
   /***********************************************************************/
   /***********************************************************************/

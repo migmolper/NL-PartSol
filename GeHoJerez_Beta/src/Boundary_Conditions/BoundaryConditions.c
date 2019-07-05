@@ -17,14 +17,16 @@ void BCC_Nod_VALUE(Mesh FEM_Mesh, Matrix Nodal_VALUE, int TimeStep)
 
   /* 1º Define auxilar variables */
   int NumNodesBound; /* Number of nodes of the bound */
+  int NumDimBound; /* Number of dimensions */
   int Id_BCC; /* Index of the node where we apply the BCC */
+  int DirBCC; /* Direction of the boundary condition */
 
   /* 2º Loop over the the boundaries */
   for(int i = 0 ; i<FEM_Mesh.Bounds.NumBounds ; i++){
     /* 3º Get the number of nodes of this boundarie */
     NumNodesBound = FEM_Mesh.Bounds.BCC_i[i].NumNodes;
     /* 4º Get the number of dimensions where the BCC it is applied */
-    NumDimBound = FEM_Mesh.Bounds.BCC_i[i].NumDim;
+    NumDimBound = FEM_Mesh.Bounds.BCC_i[i].Dim;
     for(int j = 0 ; j<NumNodesBound ; j++){
       /* 5º Get the index of the node */
       Id_BCC = FEM_Mesh.Bounds.BCC_i[i].Nodes[i];
@@ -36,9 +38,12 @@ void BCC_Nod_VALUE(Mesh FEM_Mesh, Matrix Nodal_VALUE, int TimeStep)
 	  puts("Error in BCC_Nodal_VALUE() : The time step is out of the curve !!");
 	  exit(0);
 	}
-	/* 8º Assign the boundary condition */
-	Nodal_VALUE.nM[k][Id_BCC] =
-	  FEM_Mesh.Bounds.BCC_i[i].Value[k].Fx[TimeStep];
+	/* 8º Get the direction of this boundary condition */
+	DirBCC = FEM_Mesh.Bounds.BCC_i[i].Dir[k];
+	/* 9º Assign the boundary condition */
+	if(DirBCC == 1)
+	  Nodal_VALUE.nM[k][Id_BCC] =
+	    FEM_Mesh.Bounds.BCC_i[i].Value[k].Fx[TimeStep];
       }
     }    
   }

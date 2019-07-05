@@ -524,6 +524,7 @@ Matrix GetNodalForces(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int TimeStep)
   Matrix Body_Forces_t;
   Body_Forces_t = MatAllocZ(NumberDimensions,MPM_Mesh.NumGP);
   int GP_Force;
+  int DirForce;
 
   
   /* 1º Fill matrix with the body forces for TimeStep */ 
@@ -531,8 +532,11 @@ Matrix GetNodalForces(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int TimeStep)
     for(int i = 0 ; i<MPM_Mesh.B.NumLoads; i++){
       for(int j = 0 ; j<MPM_Mesh.B.Load_i[i].NumNodes ; j++){
 	GP_Force = MPM_Mesh.B.Load_i[i].Nodes[j];
-	for(int k = 0 ; k<NumberDimensions ; k++){
-	  Body_Forces_t.nM[k][GP_Force] += MPM_Mesh.B.Load_i[i].Value.Fx[TimeStep][k];
+	for(int k = 0 ; k<MPM_Mesh.B.Load_i[i].Dim ; k++){
+	  DirForce = MPM_Mesh.B.Load_i[i].Dir[k];
+	  if(DirForce == 1)
+	    Body_Forces_t.nM[k][GP_Force] +=
+	      MPM_Mesh.B.Load_i[i].Value[k].Fx[TimeStep];
 	}
       }
     }
@@ -543,8 +547,11 @@ Matrix GetNodalForces(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int TimeStep)
     for(int i = 0 ; i<MPM_Mesh.F.NumLoads; i++){
       for(int j = 0 ; j<MPM_Mesh.F.Load_i[i].NumNodes ; j++){
 	GP_Force = MPM_Mesh.F.Load_i[i].Nodes[j];
-	for(int k = 0 ; k<NumberDimensions ; k++){
-	  Contact_Forces_t.nM[k][GP_Force] += MPM_Mesh.F.Load_i[i].Value.Fx[TimeStep][k];
+	for(int k = 0 ; k<MPM_Mesh.F.Load_i[i].Dim ; k++){
+	  DirForce = MPM_Mesh.F.Load_i[i].Dir[k];
+	  if(DirForce == 1)
+	    Body_Forces_t.nM[k][GP_Force] +=
+	      MPM_Mesh.F.Load_i[i].Value[k].Fx[TimeStep];
 	}
       }
     }

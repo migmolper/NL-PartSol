@@ -20,10 +20,10 @@ OUTPUT_DIR=test/CasoDisco
 /********* BOUNDARY CONDITIONS *********/
 /***************************************/
 BCC_NUM 4
-BCC LABEL=TOP FIELD=V DIR={0,1} CURVE={test/CasoDisco/CurveConstat.txt}
-BCC LABEL=BOTTOM FIELD=V DIR={0,1} CURVE={test/CasoDisco/CurveConstat.txt}
-BCC LABEL=RIGHT FIELD=V DIR={1,0} CURVE={test/CasoDisco/CurveConstat.txt}
-BCC LABEL=LEFT FIELD=V DIR={1,0} CURVE={test/CasoDisco/CurveConstat.txt}
+BCC LABEL=TOP FIELD=V DIR={0,1} CURVE={NULL,test/CasoDisco/CurveConstat.txt}
+BCC LABEL=BOTTOM FIELD=V DIR={0,1} CURVE={NULL,test/CasoDisco/CurveConstat.txt}
+BCC LABEL=RIGHT FIELD=V DIR={1,0} CURVE={test/CasoDisco/CurveConstat.txt,NULL}
+BCC LABEL=LEFT FIELD=V DIR={1,0} CURVE={test/CasoDisco/CurveConstat.txt,NULL}
 
 /***************************************/
 /**** INITIAL CONDITIONS FOR THE GPs ***/
@@ -36,4 +36,4 @@ INIT_GP FIELD=V VALUE={0,-0.5} NUM_NODES=ALL_NODES
 /***************************************/
 F_LOAD_NUM 0
 B_LOAD_NUM 1
-B_LOAD_GP CURVE={test/CasoDisco/gravity.txt} NUM_NODES=ALL_NODES
+B_LOAD_GP DIR={0,1} CURVE={NULL,test/CasoDisco/gravity.txt} NUM_NODES=ALL_NODES

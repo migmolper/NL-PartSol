@@ -68,7 +68,9 @@ typedef struct {
   /* Number of nodes/GP with this load */
   int NumNodes;
   /* Number of dimensions of the load */
-  int Dim; 
+  int Dim;
+  /* Direction of the load {0,0} {1,0} {0,1} {1,1} */
+  int * Dir;
   /* List of nodes with this load */
   int * Nodes;
   /* Curve for each dimension with the evolution
@@ -88,7 +90,7 @@ typedef struct {
   int NumBounds;
   /* Table with all the boundaries and its values */
   Load * BCC_i;
-  /* Some information about this BCC */
+  /* Some information about the boundaries */
   char Info [100];
   
 } Boundaries;
