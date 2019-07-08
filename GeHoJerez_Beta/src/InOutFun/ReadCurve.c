@@ -68,11 +68,12 @@ Curve ReadCurve(char * Name_File)
     if ( strcmp(kwords[0],"DAT_CURVE") == 0 ){
       for(int i  = 1 ; i<nkwords ; i++){ /* Loop over the words */
 	nparam = parse (param,kwords[i],"#\n");
-	if(nparam == 1){
+	if(nparam == 2){
 	  /* Number of values, it should be the same 
 	     as the number of timesteps */
 	  if(strcmp(param[0],"NUM") == 0){
 	    DatCurve.Num = atoi(param[1]);
+	    printf("DatCurve.Num : %i \n",DatCurve.Num);
 	  }
 	}	
       }
