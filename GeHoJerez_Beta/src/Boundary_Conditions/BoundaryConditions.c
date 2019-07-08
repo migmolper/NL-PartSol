@@ -32,18 +32,20 @@ void BCC_Nod_VALUE(Mesh FEM_Mesh, Matrix Nodal_VALUE, int TimeStep)
       Id_BCC = FEM_Mesh.Bounds.BCC_i[i].Nodes[i];
       /* 6º Loop over the dimensions of the boundary condition */
       for(int k = 0 ; k<NumDimBound ; k++){
-	/* 7º Check if the curve it is on time */
-	if( (TimeStep < 0) ||
-	    (TimeStep > FEM_Mesh.Bounds.BCC_i[i].Value[k].Num)){
-	  puts("Error in BCC_Nodal_VALUE() : The time step is out of the curve !!");
-	  exit(0);
-	}
-	/* 8º Get the direction of this boundary condition */
+	/* 7º Get the direction of this boundary condition */
 	DirBCC = FEM_Mesh.Bounds.BCC_i[i].Dir[k];
-	/* 9º Assign the boundary condition */
-	if(DirBCC == 1)
+	/* 8º Apply only if the direction is active (1) */
+	if(DirBCC == 1){
+	  /* 9º Check if the curve it is on time */
+	  if( (TimeStep < 0) ||
+	      (TimeStep > FEM_Mesh.Bounds.BCC_i[i].Value[k].Num)){
+	    puts("Error in BCC_Nodal_VALUE() : The time step is out of the curve !!");
+	    exit(0);
+	  }
+	  /* 10º Assign the boundary condition */
 	  Nodal_VALUE.nM[k][Id_BCC] =
 	    FEM_Mesh.Bounds.BCC_i[i].Value[k].Fx[TimeStep];
+	}
       }
     }    
   }

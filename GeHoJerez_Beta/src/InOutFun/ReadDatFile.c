@@ -269,6 +269,9 @@ Boundaries Set_FEM_BCC(char * Name_File, Mesh FEM_Mesh)
   /* Asign the number of boundaries for a square domain */
   FEM_BCC.NumBounds = 4;
 
+  /* Generate boundaries for the domain */
+  FEM_BCC.BCC_i = (Load *)Allocate_Array(FEM_BCC.NumBounds,sizeof(Load));
+
   /* Fill some parameters */
   for(int i = 0 ; i<FEM_BCC.NumBounds  ; i++){
     /* Set to zero the number of nodes in the boundary of the mesh */
@@ -277,13 +280,11 @@ Boundaries Set_FEM_BCC(char * Name_File, Mesh FEM_Mesh)
     strcpy(FEM_BCC.BCC_i[i].Info,BoundLabels[i]);
   }
 
-  /* Generate boundaries for the domain */
-  FEM_BCC.BCC_i = (Load *)Allocate_Array(FEM_BCC.NumBounds,sizeof(Load));
  
   /*
     - BCC LABEL=TOP FIELD#V DIR={0,1} CURVE#{curve.txt}
   */
-
+    
   /* Find the nodes in the boundary */
   switch(NumberDimensions){
     
@@ -433,8 +434,7 @@ Boundaries Set_FEM_BCC(char * Name_File, Mesh FEM_Mesh)
 
 
   /* Initial message */  
-  printf("************************************************* \n");
-  printf(" \t * Begin of read boundary conditions in : \n\t %s \n",Name_File);
+  printf(" \t -> Begin of read boundary conditions in : \n\t %s \n",Name_File);
   
   /* Open and check .bcc file */
   File_BCC = fopen(Name_File,"r");  
@@ -476,6 +476,7 @@ Boundaries Set_FEM_BCC(char * Name_File, Mesh FEM_Mesh)
 	    puts("Error in Read_FEM_BCC() : Wrong format !!!");
 	    exit(0);
 	  }
+
 	
 	  /* Read the field to impose the boundary condition */
 	  nparam = parse (param,kwords[2],"=\n");
@@ -488,7 +489,7 @@ Boundaries Set_FEM_BCC(char * Name_File, Mesh FEM_Mesh)
 	  }
 
 	  /* Read the dirrection to impose the boundary condition */
-	  nparam = parse (param,kwords[3],"=\n");
+	  nparam = parse (param,kwords[3],"={,}\n");
 	  if( (strcmp(param[0],"DIR") == 0 ) && (nparam >= 2) ){
 	    /* Number of dimensions of the BCC */
 	    FEM_BCC.BCC_i[IndexBoundary].Dim = nparam - 1;
@@ -497,7 +498,7 @@ Boundaries Set_FEM_BCC(char * Name_File, Mesh FEM_Mesh)
 	      (int *)Allocate_Array(FEM_BCC.BCC_i[IndexBoundary].Dim,sizeof(int));
 	    /* Fill the direction of the BCC */
 	    for(int j = 0 ; j<FEM_BCC.BCC_i[IndexBoundary].Dim ; j++){
-	      FEM_BCC.BCC_i[IndexBoundary].Dir[0] = atoi(param[i+1]);
+	      FEM_BCC.BCC_i[IndexBoundary].Dir[j] = atoi(param[j+1]);
 	    }	    
 	  }
 	  else{
@@ -506,7 +507,7 @@ Boundaries Set_FEM_BCC(char * Name_File, Mesh FEM_Mesh)
 	  }
 
 	  /* Read the curve to impose the boundary condition */
-	  nparam = parse (param,kwords[4],"={}\n");
+	  nparam = parse (param,kwords[4],"={,}\n");
 	  if( (strcmp(param[0],"CURVE") == 0) || (nparam >= 2) ){
 
 	    /* Alocate the table of curves */
@@ -514,8 +515,8 @@ Boundaries Set_FEM_BCC(char * Name_File, Mesh FEM_Mesh)
 	      (Curve *)Allocate_Array(FEM_BCC.BCC_i[IndexBoundary].Dim,sizeof(Curve));
 	    /* Fill the curve table */
 	    for(int j = 0 ; j<FEM_BCC.BCC_i[IndexBoundary].Dim ; j++){
-	      if(strcmp(param[i+1],"NULL") != 0)
-		FEM_BCC.BCC_i[IndexBoundary].Value[j] = ReadCurve(param[i+1]);
+	      if(strcmp(param[j+1],"NULL") != 0)
+		FEM_BCC.BCC_i[IndexBoundary].Value[j] = ReadCurve(param[j+1]);
 	    }    
 	  }
 	  else{
@@ -534,7 +535,7 @@ Boundaries Set_FEM_BCC(char * Name_File, Mesh FEM_Mesh)
     } /* End of if(strcmp(kwords[0],"BCC_NUM") == 0 ) */
     
   }  /* End of while */
-  printf("\t * End of read boundary conditions file !!! \n");
+  printf("\t -> End of read boundary conditions file !!! \n");
   fclose(File_BCC);
 
   return FEM_BCC;
@@ -704,7 +705,7 @@ LoadCase Read_MPM_LoadCase_ExtForces(char * Name_File,GaussPoint GP_Mesh)
 
   /* Close .dat file */
   /* Final message */
-  printf("\t * End of read data file !!! \n");
+  printf("\t -> End of read data file !!! \n");
   fclose(Sim_dat);
 
   return GP_Loads;
@@ -720,7 +721,7 @@ LoadCase Read_MPM_LoadCase_BodyForces(char * Name_File,GaussPoint GP_Mesh)
   - Load format examples :
   - - Body forces
   B_LOAD_NUM number
-  B_LOAD_GP DIR={int,int} CURVE={curve.txt,curve.txt} NUM_NODES#integer
+  B_LOAD_GP DIR={int,int} CURVE={curve.txt,curve.txt} NUM_NODES=integer
   .
   . integer (NLIST)
   .
@@ -790,7 +791,7 @@ LoadCase Read_MPM_LoadCase_BodyForces(char * Name_File,GaussPoint GP_Mesh)
 	/* Read each line and split it in individual words */
 	fgets(line, sizeof line, Sim_dat);
 	nkwords = parse (kwords, line," \n\t");
-	if( (nkwords != 4) || (strcmp(kwords[0],"B_LOAD_GP") == 0) ){
+	if( (nkwords != 4) || (strcmp(kwords[0],"B_LOAD_GP") != 0) ){
 	  puts("Error in Read_MPM_LoadCase_BodyForces() : Wrong format !!!");
 	  exit(0);
 	}
@@ -809,7 +810,7 @@ LoadCase Read_MPM_LoadCase_BodyForces(char * Name_File,GaussPoint GP_Mesh)
 	  }
 	}
 	else{
-	  puts("Error in Read_MPM_LoadCase_BodyForces() : Wrong format !!!");
+	  puts("Error in Read_MPM_LoadCase_BodyForces() : Wrong format direction !!!");
 	  exit(0);
 	}
 
@@ -826,7 +827,7 @@ LoadCase Read_MPM_LoadCase_BodyForces(char * Name_File,GaussPoint GP_Mesh)
 	  }
 	}
 	else{
-	  puts("Error in Read_MPM_LoadCase_BodyForces() : Wrong format !!!");
+	  puts("Error in Read_MPM_LoadCase_BodyForces() : Wrong format curve !!!");
 	  exit(0);
 	}
 
@@ -862,7 +863,7 @@ LoadCase Read_MPM_LoadCase_BodyForces(char * Name_File,GaussPoint GP_Mesh)
 	  }
 	}
 	else{
-	  puts("Error in Read_MPM_LoadCase_BodyForces() : Wrong format !!!");
+	  puts("Error in Read_MPM_LoadCase_BodyForces() : Wrong format num nodes !!!");
 	  exit(0);
 	}
       }
