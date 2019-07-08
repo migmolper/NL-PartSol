@@ -112,6 +112,7 @@ int main(int argc, char *argv[])
   Matrix Nodal_TOT_FORCES; /* Nodal total forces */
   /***********************************************************************/
   /***********************************************************************/
+  
 
   /***********************************************************************/
   /********************** START THE MPM CALCULUS *************************/
@@ -187,6 +188,7 @@ int main(int argc, char *argv[])
 				Nodal_MOMENTUM,Nodal_TOT_FORCES);
     printf(" DONE !!! \n");
 
+    
     /* Eight step : Search the GP in the mesh */
     printf("************************************************* \n");
     printf(" Eight step : Search the GP in the mesh \n");

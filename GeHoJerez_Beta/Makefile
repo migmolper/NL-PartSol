@@ -3,15 +3,12 @@
 # Compiler root
 GCC_ROOT = /usr/bin
 
-# Current directory
-BASEPATH = $(shell pwd)
-
 # Name of the directories
-SRCDIR = $(BASEPATH)/src
-OBJDIR = $(BASEPATH)/obj
-DEBDIR = $(BASEPATH)/bin/Debug
-RELDIR = $(BASEPATH)/bin/Release
-TESTDIR = $(BASEPATH)/test
+SRCDIR = src
+OBJDIR = obj
+DEBDIR = bin/Debug
+RELDIR = bin/Release
+TESTDIR = test
 INSTDIR = /usr/bin
 
 # Name of the program
@@ -85,10 +82,10 @@ $(RELDIR)/$(EXE): $(OBJS)
 
 #####################################################################
 # Rule for benchmarks
-.PHONY: Benchmarks Disco2D Cuadrado2D
+.PHONY: Benchmarks Disco2D Cuadrado2D Barra1D
 
 # Run al the Benchmarks
-Benchmarks: Disco2D Cuadrado2D
+Benchmarks: Disco2D Cuadrado2D Barra1D
 
 # Caso Disco
 Disco2D:
@@ -101,6 +98,13 @@ Disco2D:
 Cuadrado2D:
 	@echo "**************** Run test case ******************"
 	$(DEBDIR)/./$(EXE) $(TESTDIR)/CasoCuadrado/ejemplo.dat
+	@echo " "
+	@echo "*************** Test case passed ****************"
+
+# Caso barra 1D
+Barra1D:
+	@echo "**************** Run test case ******************"
+	$(DEBDIR)/./$(EXE) $(TESTDIR)/CasoBarraVertical/ejemplo.dat
 	@echo " "
 	@echo "*************** Test case passed ****************"
 

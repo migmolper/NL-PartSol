@@ -73,10 +73,10 @@ Curve ReadCurve(char * Name_File)
 	     as the number of timesteps */
 	  if(strcmp(param[0],"NUM") == 0){
 	    DatCurve.Num = atoi(param[1]);
-	    printf("DatCurve.Num : %i \n",DatCurve.Num);
 	  }
 	}	
       }
+      printf("DatCurve.Num : %i \n",DatCurve.Num);
       /* ALLOCATE FX MATRIX */
       DatCurve.Fx = (double *)Allocate_ArrayZ(DatCurve.Num,sizeof(double));
     }

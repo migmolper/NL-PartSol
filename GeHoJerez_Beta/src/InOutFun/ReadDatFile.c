@@ -638,7 +638,7 @@ LoadCase Read_MPM_LoadCase_ExtForces(char * Name_File,GaussPoint GP_Mesh)
 	    (int *)Allocate_Array(GP_Loads.Load_i[i].Dim,sizeof(int));
 	  /* Fill the direction of the load */
 	  for(int j = 0 ; j<GP_Loads.Load_i[i].Dim ; j++){
-	    GP_Loads.Load_i[i].Dir[0] = atoi(DIR[i+1]);
+	    GP_Loads.Load_i[i].Dir[j] = atoi(DIR[j+1]);
 	  }
 	}
 	else{
@@ -654,8 +654,8 @@ LoadCase Read_MPM_LoadCase_ExtForces(char * Name_File,GaussPoint GP_Mesh)
 	    (Curve *)Allocate_Array(GP_Loads.Load_i[i].Dim,sizeof(Curve));
 	  /* Fill the curve table */
 	  for(int j = 0 ; j<GP_Loads.Load_i[i].Dim ; j++){
-	    if(strcmp(CURVE[i+1],"NULL") != 0)
-	      GP_Loads.Load_i[i].Value[j] = ReadCurve(CURVE[i+1]);
+	    if(strcmp(CURVE[j+1],"NULL") != 0)
+	      GP_Loads.Load_i[i].Value[j] = ReadCurve(CURVE[j+1]);
 	  }
 	}
 	else{
@@ -806,7 +806,7 @@ LoadCase Read_MPM_LoadCase_BodyForces(char * Name_File,GaussPoint GP_Mesh)
 	    (int *)Allocate_Array(GP_Loads.Load_i[i].Dim,sizeof(int));
 	  /* Fill the direction of the load */
 	  for(int j = 0 ; j<GP_Loads.Load_i[i].Dim ; j++){
-	    GP_Loads.Load_i[i].Dir[0] = atoi(DIR[i+1]);
+	    GP_Loads.Load_i[i].Dir[j] = atoi(DIR[j+1]);
 	  }
 	}
 	else{
@@ -822,8 +822,8 @@ LoadCase Read_MPM_LoadCase_BodyForces(char * Name_File,GaussPoint GP_Mesh)
 	    (Curve *)Allocate_Array(GP_Loads.Load_i[i].Dim,sizeof(Curve));
 	  /* Fill the curve table */
 	  for(int j = 0 ; j<GP_Loads.Load_i[i].Dim ; j++){
-	    if(strcmp(CURVE[i+1],"NULL") != 0)
-	      GP_Loads.Load_i[i].Value[j] = ReadCurve(CURVE[i+1]);
+	    if(strcmp(CURVE[j+1],"NULL") != 0)
+	      GP_Loads.Load_i[i].Value[j] = ReadCurve(CURVE[j+1]);
 	  }
 	}
 	else{
