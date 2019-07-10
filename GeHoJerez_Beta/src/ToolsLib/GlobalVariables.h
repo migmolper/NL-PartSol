@@ -22,6 +22,7 @@ char * TimeIntegration;
 
 double DeltaTimeStep;
 int NumTimeStep;
+int ResultsTimeStep;
 
 /***************************************/
 /******* Constitutive parameters *******/

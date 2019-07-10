@@ -6,7 +6,8 @@ DENSITY=20
 POISSON_MODULUS=0.0
 ELASTIC_MODULUS=1.e5
 TIME_STEP=0.00001
-NUM_STEP=1000
+RESULT_STEP=5000
+NUM_STEP=300000
 
 
 /***************************************/
@@ -28,12 +29,12 @@ BCC LABEL=LEFT FIELD=V DIR={1,0} CURVE={test/CasoBarraVertical/CurveConstat.txt,
 /***************************************/
 /**** INITIAL CONDITIONS FOR THE GPs ***/
 /***************************************/
-INIT_NUM 0
+INIT_NUM 1
 INIT_GP FIELD=V VALUE={0,-0.5} NUM_NODES=ALL_NODES
 
 /***************************************/
 /********** LOADS OVER THE GPs *********/
 /***************************************/
 F_LOAD_NUM 0
-B_LOAD_NUM 1
+B_LOAD_NUM 0
 B_LOAD_GP DIR={0,1} CURVE={NULL,test/CasoBarraVertical/gravity.txt} NUM_NODES=ALL_NODES

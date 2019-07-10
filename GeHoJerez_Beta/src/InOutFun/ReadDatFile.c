@@ -153,6 +153,12 @@ void Read_GeneralParameters(char * Name_File)
 		   NumTimeStep);
 	  }
 	  /***********************************************************************/
+	  if( strcmp(SimParameter[0],"RESULT_STEP") == 0 ){
+	    ResultsTimeStep = atoi(SimParameter[1]);
+	    printf(" * Set time steps to generate outputs : %i \n",
+		   ResultsTimeStep);
+	  }
+	  /***********************************************************************/
 	  if( strcmp(SimParameter[0],"FEM_FILE_NAME") == 0 ){
 	    FEM_MeshFileName = SimParameter[1];
 	    printf(" * Set name of the mesh file : \n");

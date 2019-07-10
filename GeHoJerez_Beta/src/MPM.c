@@ -125,11 +125,13 @@ int main(int argc, char *argv[])
     printf("************************************************* \n");
     
     /* First step : Output Gauss-Points values to Paraview */
-    printf("************************************************* \n");
-    printf(" First step : Output Gauss-Points values to Paraview \n");
-    printf(" \t WORKING ... \n");
-    WriteVtk_MPM("MPM_VALUES",GP_Mesh,List_Fields,TimeStep);
-    printf(" \t DONE !!! \n");
+    if(TimeStep % ResultsTimeStep == 0){
+      printf("************************************************* \n");
+      printf(" First step : Output Gauss-Points values to Paraview \n");
+      printf(" \t WORKING ... \n");
+      WriteVtk_MPM("MPM_VALUES",GP_Mesh,List_Fields,(int)TimeStep/ResultsTimeStep);
+      printf(" \t DONE !!! \n");
+    }
    
     /* Second step : Get the nodal mass and the momentum */
     printf("************************************************* \n");
@@ -197,11 +199,13 @@ int main(int argc, char *argv[])
     printf(" DONE !!! \n");
 
     /* Nine step : Print nodal values */
-    printf("************************************************* \n");
-    printf(" Nine step : Print nodal values \n");
-    printf(" \t WORKING ... \n");
-    WriteVtk_FEM("Mesh",FEM_Mesh,Nodal_MOMENTUM,TimeStep);
-    printf(" DONE !!! \n");
+    if(TimeStep % ResultsTimeStep == 0){
+      printf("************************************************* \n");
+      printf(" Nine step : Print nodal values \n");
+      printf(" \t WORKING ... \n");
+      WriteVtk_FEM("Mesh",FEM_Mesh,Nodal_MOMENTUM,(int)TimeStep/ResultsTimeStep);
+      printf(" DONE !!! \n");
+    }
     
     /* Ten step : Store all the material properties in the particles
        so that the deformed grid can be discarted */
