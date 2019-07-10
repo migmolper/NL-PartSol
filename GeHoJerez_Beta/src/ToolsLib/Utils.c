@@ -149,9 +149,17 @@ void FreeMat(Matrix Input){
 
   if( ((Input.N_cols == 1) && (Input.N_rows > 1)) ||
       ((Input.N_cols > 1) && (Input.N_rows == 1)) ){ /* It is a vector */
+    if(Input.nV == NULL){
+      printf("Error in FreeMat() : This vector is NULL");
+      exit(0);
+    }
     free(Input.nV);
   }
   else if( (Input.N_cols > 1) && (Input.N_rows > 1) ){ /* It is a matrix */
+    if(Input.nM == NULL){
+      printf("Error in FreeMat() : This matrix is NULL !!! \n");
+      exit(0);
+    }
     for(int i = 0 ; i<Input.N_rows ; i++){
       free(Input.nM[i]);
     }

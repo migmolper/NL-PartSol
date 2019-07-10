@@ -26,9 +26,10 @@ void GlobalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh){
   int * Poligon_Connectivity;
 
   /* 1º Set to zero the active/non-active elements */
-  free(FEM_Mesh.ActiveNode);
-  FEM_Mesh.ActiveNode = (int *)Allocate_ArrayZ(FEM_Mesh.NumNodesMesh,sizeof(int));
-   
+  for(int i = 0 ; i<FEM_Mesh.NumNodesMesh ; i++){
+    FEM_Mesh.ActiveNode[i] = 0;
+  }
+  
   for(int i = 0 ; i<MPM_Mesh.NumGP ; i++){
 
     /* 2º Assign the value to this auxiliar pointer */ 
@@ -103,8 +104,9 @@ void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
   int * SearchList; /* Pointer to store the search list */
   
   /* 1º Set to zero the active/non-active elements */
-  free(FEM_Mesh.ActiveNode);
-  FEM_Mesh.ActiveNode = (int *)Allocate_ArrayZ(FEM_Mesh.NumNodesMesh,sizeof(int));
+  for(int i = 0 ; i<FEM_Mesh.NumNodesMesh ; i++){
+    FEM_Mesh.ActiveNode[i] = 0;
+  }
 
   /* 2º Loop over the GP */
   for(int i = 0 ; i<MPM_Mesh.NumGP ; i++){

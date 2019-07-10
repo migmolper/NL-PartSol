@@ -76,7 +76,6 @@ Curve ReadCurve(char * Name_File)
 	  }
 	}	
       }
-      printf("DatCurve.Num : %i \n",DatCurve.Num);
       /* ALLOCATE FX MATRIX */
       DatCurve.Fx = (double *)Allocate_ArrayZ(DatCurve.Num,sizeof(double));
     }
