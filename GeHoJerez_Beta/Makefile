@@ -6,8 +6,8 @@ GCC_ROOT = /usr/bin
 # Name of the directories
 SRCDIR = src
 OBJDIR = obj
-DEBDIR = bin/Debug
-RELDIR = bin/Release
+# DEBDIR = bin/Debug
+# RELDIR = bin/Release
 TESTDIR = test
 INSTDIR = /usr/bin
 
@@ -42,15 +42,17 @@ OBJS = $(SOURCES:.c=.o)
 # List of libraries required during linking
 LDFLAGS = -lm
 DBFLAGS = -g -Wall -Wpedantic -Wextra 
-RLFLAGS = -O2
+# RLFLAGS = -O2
 
 #####################################################################
 
 # Debug recipie
-debug: $(DEBDIR)/$(EXE)
+# debug: $(DEBDIR)/$(EXE)
+debug: $(EXE)
 
 # Link process
-$(DEBDIR)/$(EXE): $(OBJS)
+# $(DEBDIR)/$(EXE): $(OBJS)
+$(EXE): $(OBJS)
 	@echo "*************************************************"
 	$(CC) -o $@ $^ $(LDFLAGS)
 	@echo " "
@@ -64,21 +66,23 @@ $(DEBDIR)/$(EXE): $(OBJS)
 
 #####################################################################
 
-# Release recipie
-release: $(RELDIR)/$(EXE)
+# # Release recipie
+# # release: $(RELDIR)/$(EXE)
+# release: $(EXE)
 
-# Link process
-$(RELDIR)/$(EXE): $(OBJS)
-	@echo "*************************************************"
-	$(CC) -o $@ $^ $(LDFLAGS)
-	@echo " "
-	@echo "*************  GeHoJerez compiled !! ************"
-	@echo " "
-# Compile	
-%.o: %.c
-	@echo "***************** Release mode ******************"
-	$(CC) -o $@ -c $(DBFLAGS) $<
-	@echo "\t Compiled "$<" successfully !!"
+# # Link process
+# # $(RELDIR)/$(EXE): $(OBJS)
+# $(EXE): $(OBJS)
+# 	@echo "*************************************************"
+# 	$(CC) -o $@ $^ $(LDFLAGS)
+# 	@echo " "
+# 	@echo "*************  GeHoJerez compiled !! ************"
+# 	@echo " "
+# # Compile	
+# %.o: %.c
+# 	@echo "***************** Release mode ******************"
+# 	$(CC) -o $@ -c $(DBFLAGS) $<
+# 	@echo "\t Compiled "$<" successfully !!"
 
 #####################################################################
 # Rule for benchmarks
@@ -90,38 +94,41 @@ Benchmarks: Disco2D Cuadrado2D Barra1D
 # Caso Disco
 Disco2D:
 	@echo "**************** Run test case ******************"
-	$(DEBDIR)/./$(EXE) $(TESTDIR)/CasoDisco/ejemplo.dat
+	$ ./$(EXE) $(TESTDIR)/CasoDisco/ejemplo.dat
+	# $(DEBDIR)/./$(EXE) $(TESTDIR)/CasoDisco/ejemplo.dat
 	@echo " "
 	@echo "*************** Test case passed ****************"
 
 # Caso cuadrado
 Cuadrado2D:
 	@echo "**************** Run test case ******************"
-	$(DEBDIR)/./$(EXE) $(TESTDIR)/CasoCuadrado/ejemplo.dat
+	$ ./$(EXE) $(TESTDIR)/CasoCuadrado/ejemplo.dat
+	# $(DEBDIR)/./$(EXE) $(TESTDIR)/CasoCuadrado/ejemplo.dat
 	@echo " "
 	@echo "*************** Test case passed ****************"
 
 # Caso barra 1D
 Barra1D:
 	@echo "**************** Run test case ******************"
-	$(DEBDIR)/./$(EXE) $(TESTDIR)/CasoBarraVertical/ejemplo.dat
+	# $(DEBDIR)/./$(EXE) $(TESTDIR)/CasoBarraVertical/ejemplo.dat
+	$ ./$(EXE) $(TESTDIR)/CasoBarraVertical/ejemplo.dat
 	@echo " "
 	@echo "*************** Test case passed ****************"
 
 #####################################################################
 # Rule for installing GeHoJerez
-.PHONY: install
-install: $(RELDIR)/$(EXE)
-	@echo "************** Install GeHoJerez ****************"
-	mkdir -p $(INSTDIR)/$(EXE)
-	cp $< $(INSTDIR)/$(EXE)
-	@echo "************ Installed successfully *************"
+# .PHONY: install
+# install: $(RELDIR)/$(EXE)
+# 	@echo "************** Install GeHoJerez ****************"
+# 	mkdir -p $(INSTDIR)/$(EXE)
+# 	cp $< $(INSTDIR)/$(EXE)
+# 	@echo "************ Installed successfully *************"
 
-.PHONY: uninstall
-uninstall:
-	@echo "************* Uninstall GeHoJerez ***************"
-	rm -rf $(INSTDIR)/$(EXE)
-	@echo "*********** Uninstalled successfully ************"
+# .PHONY: uninstall
+# uninstall:
+# 	@echo "************* Uninstall GeHoJerez ***************"
+# 	rm -rf $(INSTDIR)/$(EXE)
+# 	@echo "*********** Uninstalled successfully ************"
 
 #####################################################################
 
@@ -130,6 +137,7 @@ uninstall:
 .PHONY: clean
 clean:
 	rm -f $(OBJS)
-	rm -f $(BINDIR)/$(DEB)/$(EXE)
-	rm -f $(BINDIR)/$(REL)/$(EXE)
+	rm -f $(EXE)
+	# rm -f $(BINDIR)/$(DEB)/$(EXE)
+	# rm -f $(BINDIR)/$(REL)/$(EXE)
 	@echo "Cleanup complete!"

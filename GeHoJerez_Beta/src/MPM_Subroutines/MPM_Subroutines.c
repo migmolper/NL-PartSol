@@ -135,7 +135,7 @@ void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 	FEM_Mesh.ActiveNode[Element_GP_Connectivity[j]] += 1;
       }
       /* 6bº If the GP is in the element, get its natural coordinates */
-      X_EC_GP.nV = MPM_Mesh.Phi.x_EC.nM[i];
+      X_EC_GP.nV = MPM_Mesh.Phi.x_EC.nM[i];     
       X_EC_GP = GetNaturalCoordinates(X_EC_GP,X_GC_GP,Element_GP_Coordinates);
     }
     /* 7º If the GP is not in the same element, search in the neighbour */
@@ -186,7 +186,8 @@ void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 	}
 
       }
-      
+
+     
       /* 7dº Check for errors */
       if (SearchVertex<0 || SearchVertex>=FEM_Mesh.NumNodesMesh){
 	puts("Error in LocalSearchGaussPoints() : Search algorithm fails !!! ");
@@ -195,7 +196,7 @@ void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 
       /* 7eº Create the search list of this vertex */
       SearchList = FEM_Mesh.NodeNeighbour[SearchVertex];
-      
+     
       /* 7fº Search in the search list */
       for(int j  = 1 ; j<(FEM_Mesh.NodeNeighbour[SearchVertex][0]+1) ; j++){
 
@@ -307,6 +308,9 @@ Matrix GetNodalMassMomentum(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
     FreeMat(N_Ref_GP);
     
   }
+
+  /* 10º Free the coordinates of the element */
+  FreeMat(Elem_Coords);
     
   return Nodal_FIELDS;
   
@@ -635,6 +639,7 @@ Matrix GetNodalForces(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int TimeStep)
   }
 
   /* 16º Free memory */
+  FreeMat(Elem_Coords);
   FreeMat(Contact_Forces_t);
   FreeMat(Body_Forces_t);
   

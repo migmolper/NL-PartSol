@@ -1163,6 +1163,7 @@ Matrix Newton_Rapson(Matrix(* Function)(Matrix, Matrix),Matrix Parameter_F,
     for(int i = 0 ; i<Y.N_rows*Y.N_cols ; i++){
       F_x.nV[i] = Y.nV[i] - Y_x.nV[i];
     }
+    FreeMat(Y_x);
     
     /* 2º Get the jacobian matrix in X0 DY_dX */
     /* Implement the numerical solution of the Jacobian for cases where the 
