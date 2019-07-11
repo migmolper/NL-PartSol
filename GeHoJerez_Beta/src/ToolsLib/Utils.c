@@ -706,8 +706,7 @@ Matrix Vectorial_prod(Matrix a, Matrix b){
   
 Matrix Tensorial_prod(Matrix A,Matrix B)
 /*
-  Tensorial product between A and B, note that the input data is deleted 
-  once you have finished the calculus.
+  Tensorial product between A and B.
  */
 {
   /* Matrix declaration */
@@ -1153,7 +1152,7 @@ Matrix Newton_Rapson(Matrix(* Function)(Matrix, Matrix),Matrix Parameter_F,
   Matrix dY_dX;
   Matrix dY_dX_m1;
   Matrix DeltaX;
-  double TOL_NormDeltaX = pow(10,-4);
+  double TOL_NormDeltaX = pow(10,-10);
   double NormDeltaX = pow(10,4);
   int Num_Iter = 20;  
   int Iter_i = 0;

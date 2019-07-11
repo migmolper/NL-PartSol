@@ -629,7 +629,7 @@ LoadCase Read_MPM_LoadCase_ExtForces(char * Name_File,GaussPoint GP_Mesh)
 	/* Read each line and split it in individual words */
 	fgets(line, sizeof line, Sim_dat);
 	nkwords = parse (kwords, line," \n\t");
-	if( (nkwords != 4) || (strcmp(kwords[0],"F_LOAD_GP") == 0) ){
+	if( (nkwords != 4) || (strcmp(kwords[0],"F_LOAD_GP") != 0) ){
 	  puts("Error in Read_MPM_LoadCase_ExtForces() : Wrong format !!!");
 	  exit(0);
 	}
@@ -648,7 +648,7 @@ LoadCase Read_MPM_LoadCase_ExtForces(char * Name_File,GaussPoint GP_Mesh)
 	  }
 	}
 	else{
-	  puts("Error in Read_MPM_LoadCase_ExtForces() : Wrong format !!!");
+	  puts("Error in Read_MPM_LoadCase_ExtForces() : Wrong format DIR={,} !!!");
 	  exit(0);
 	}
 
@@ -665,7 +665,7 @@ LoadCase Read_MPM_LoadCase_ExtForces(char * Name_File,GaussPoint GP_Mesh)
 	  }
 	}
 	else{
-	  puts("Error in Read_MPM_LoadCase_ExtForces() : Wrong format !!!");
+	  puts("Error in Read_MPM_LoadCase_ExtForces() : Wrong format CURVE={,} !!!");
 	  exit(0);
 	}
 
@@ -701,7 +701,7 @@ LoadCase Read_MPM_LoadCase_ExtForces(char * Name_File,GaussPoint GP_Mesh)
 	  }
 	}
 	else{
-	  puts("Error in Read_MPM_LoadCase_ExtForces() : Wrong format !!!");
+	  puts("Error in Read_MPM_LoadCase_ExtForces() : Wrong format NUM_NODES !!!");
 	  exit(0);
 	}
       }

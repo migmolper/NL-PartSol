@@ -13,28 +13,50 @@ NUM_STEP=50000
 /***************************************/
 /******* SIMULATION FILES AND DIR ******/
 /***************************************/
-FEM_FILE_NAME=test/CasoBarraVertical/FEM_Mesh.msh
-MPM_FILE_NAME=test/CasoBarraVertical/MPM_Mesh.msh
-OUTPUT_DIR=test/CasoBarraVertical
+FEM_FILE_NAME=test/BarraTraccion1D/FEM_Mesh.msh
+MPM_FILE_NAME=test/BarraTraccion1D/MPM_Mesh.msh
+OUTPUT_DIR=test/BarraTraccion1D
 
 /***************************************/
 /********* BOUNDARY CONDITIONS *********/
 /***************************************/
 BCC_NUM 4
-BCC LABEL=BOTTOM FIELD=V DIR={0,1} CURVE={NULL,test/CasoBarraVertical/CurveConstat.txt}
-BCC LABEL=RIGHT FIELD=V DIR={1,0} CURVE={test/CasoBarraVertical/CurveConstat.txt,NULL}
+BCC LABEL=BOTTOM FIELD=V DIR={0,1} CURVE={NULL,test/BarraTraccion1D/CurveConstat.txt}
+BCC LABEL=RIGHT FIELD=V DIR={1,0} CURVE={test/BarraTraccion1D/CurveConstat.txt,NULL}
 BCC LABEL=TOP FIELD=V DIR={0,0} CURVE={NULL,NULL}
-BCC LABEL=LEFT FIELD=V DIR={1,0} CURVE={test/CasoBarraVertical/CurveConstat.txt,NULL}
+BCC LABEL=LEFT FIELD=V DIR={1,0} CURVE={test/BarraTraccion1D/CurveConstat.txt,NULL}
 
 /***************************************/
 /**** INITIAL CONDITIONS FOR THE GPs ***/
 /***************************************/
-INIT_NUM 1
-INIT_GP FIELD=V VALUE={0,-0.5} NUM_NODES=ALL_NODES
+INIT_NUM 0
 
 /***************************************/
 /********** LOADS OVER THE GPs *********/
 /***************************************/
-F_LOAD_NUM 0
+F_LOAD_NUM 2
+F_LOAD_GP DIR={0,1} CURVE={NULL,test/BarraTraccion1D/Load.txt} NUM_NODES=11
+0
+1
+4
+10
+16
+24
+33
+43
+57
+72
+87
+F_LOAD_GP DIR={0,-1} CURVE={NULL,test/BarraTraccion1D/Load.txt} NUM_NODES=11
+214
+215
+216
+218
+220
+222
+224
+226
+228
+229
+230
 B_LOAD_NUM 0
-B_LOAD_GP DIR={0,1} CURVE={NULL,test/CasoBarraVertical/gravity.txt} NUM_NODES=ALL_NODES
