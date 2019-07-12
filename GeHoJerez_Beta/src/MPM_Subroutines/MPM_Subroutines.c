@@ -332,7 +332,7 @@ Matrix GetNodalVelocity(Mesh FEM_Mesh,
       if(FEM_Mesh.ActiveNode[i] > 0){
 	Nodal_VELOCITY.nM[j][i] = Nodal_MOMENTUM.nM[j][i] / Nodal_MASS.nV[i];
       }
-    }
+    }    
   }
 
   return Nodal_VELOCITY;
@@ -399,11 +399,12 @@ void UpdateGaussPointStrain(GaussPoint MPM_Mesh,
       }
     }
 
+
     /* 8º Multiply B by the velocity array and by the time step to get
        the increment stress tensor */
     Increment_Strain_GP = Scalar_prod(B,Nodal_VELOCITY_Elem);
     FreeMat(B);
-    
+   
     for(int j = 0 ; j<MPM_Mesh.Phi.Strain.N_cols ; j++){
       Increment_Strain_GP.nV[j] *= DeltaTimeStep;
     }

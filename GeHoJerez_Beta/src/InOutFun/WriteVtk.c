@@ -112,7 +112,7 @@ void WriteVtk_MPM(char * Name_File, GaussPoint MPM_Mesh,
 	}
 	else{
 	  if((j<NumberDimensions)&&(k<NumberDimensions))
-	    fprintf(Vtk_file,"%f ",MPM_Mesh.Phi.Stress.nM[i][NumberDimensions+j]);
+	    fprintf(Vtk_file,"%f ",MPM_Mesh.Phi.Stress.nM[i][NumberDimensions+j+k]);
 	  else
 	    fprintf(Vtk_file,"%f ",0.0);
 	}
@@ -135,7 +135,7 @@ void WriteVtk_MPM(char * Name_File, GaussPoint MPM_Mesh,
 	}
 	else{
 	  if((j<NumberDimensions)&&(k<NumberDimensions))
-	    fprintf(Vtk_file,"%f ",MPM_Mesh.Phi.Strain.nM[i][NumberDimensions+j]);
+	    fprintf(Vtk_file,"%f ",MPM_Mesh.Phi.Strain.nM[i][NumberDimensions+j+k]);
 	  else
 	    fprintf(Vtk_file,"%f ",0.0);
 	}
