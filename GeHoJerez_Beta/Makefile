@@ -86,10 +86,10 @@ $(EXE): $(OBJS)
 
 #####################################################################
 # Rule for benchmarks
-.PHONY: Benchmarks Disco2D Cuadrado2D Barra1D_caida Barra1D_traccion
+.PHONY: Benchmarks Disco2D Cuadrado2D Barra1D_caida Barra1D_traccion Dyka1D Dyka1D_Blanc
 
 # Run al the Benchmarks
-Benchmarks: Disco2D Cuadrado2D Barra1D_caida Barra1D_traccion
+Benchmarks: Disco2D Cuadrado2D Barra1D_caida Barra1D_traccion Dyka1D_Blanc
 
 # Caso Disco
 Disco2D:
@@ -122,7 +122,19 @@ Barra1D_traccion:
 	$ ./$(EXE) $(TESTDIR)/BarraTraccion1D/ejemplo.dat
 	@echo " "
 	@echo "*************** Test case passed ****************"
+# Caso barra Dyka
+Dyka1D:
+	@echo "**************** Run test case ******************"
+	$ ./$(EXE) $(TESTDIR)/CasoDyka/ejemplo.dat
+	@echo " "
+	@echo "*************** Test case passed ****************"
 
+# Caso barra Dyka Thomas Blanc thesis
+Dyka1D_Blanc:
+	@echo "**************** Run test case ******************"
+	$ ./$(EXE) $(TESTDIR)/CasoDyka_Pastor_Blanc/ejemplo.dat
+	@echo " "
+	@echo "*************** Test case passed ****************"
 
 #####################################################################
 # Rule for installing GeHoJerez

@@ -81,7 +81,7 @@ Curve ReadCurve(char * Name_File)
     }
     /*********************************************************************/
         
-    /* CONSTANT_CURVE DIM#int SCALE#double  */
+    /* CONSTANT_CURVE SCALE#double  */
     /*********************************************************************/
     if ( strcmp(kwords[0],"CONSTANT_CURVE") == 0 ){
 
@@ -102,7 +102,7 @@ Curve ReadCurve(char * Name_File)
     }
     /*********************************************************************/
 
-    /* RAMP CURVE DIM#int SCALE#double */
+    /* RAMP CURVE SCALE#double */
     /*********************************************************************/
     if ( strcmp(kwords[0],"RAMP_CURVE") == 0 ){
 
@@ -123,7 +123,7 @@ Curve ReadCurve(char * Name_File)
     }
     /*********************************************************************/
 
-    /* HEAVISIDE_CURVE DIM#int SCALE#double Tc#integer */
+    /* HEAVISIDE_CURVE SCALE#double Tc#integer */
     /*********************************************************************/
     if ( strcmp(kwords[0],"HEAVISIDE_CURVE") == 0 ){
 
@@ -166,7 +166,7 @@ Curve ReadCurve(char * Name_File)
     }
     /*********************************************************************/
 
-    /* DELTA_CURVE DIM#int SCALE#double Tc#integer */
+    /* DELTA_CURVE SCALE#double Tc#integer */
     /*********************************************************************/
     if ( strcmp(kwords[0],"DELTA_CURVE") == 0 ){
 
@@ -209,7 +209,7 @@ Curve ReadCurve(char * Name_File)
     }
     /*********************************************************************/
 
-    /* HAT_CURVE DIM#int SCALE#double T0#integer T1#integer */
+    /* HAT_CURVE SCALE#double T0#integer T1#integer */
     /*********************************************************************/
     if ( strcmp(kwords[0],"HAT_CURVE") == 0 ){
 
@@ -225,18 +225,22 @@ Curve ReadCurve(char * Name_File)
 
       /* Read critical times */
       nparam = parse (param,kwords[2],"#\n");
-      if( (strcmp(param[0],"T0") == 0) || (nparam != 2) ){
+      if( (strcmp(param[0],"T0") == 0) && (nparam == 2) ){
+	T0 = atoi(param[1]);
+      }
+      else{
 	puts("Error in ReadCurve() : Wrong parameters of the Hat curve !!!");
 	exit(0);
       }
-      T0 = atoi(param[1]);
-
+      
       nparam = parse (param,kwords[3],"#\n");
-      if( (strcmp(param[0],"T1") == 0) || (nparam != 2) ){
+      if( (strcmp(param[0],"T1") == 0) && (nparam == 2) ){
+	T1 = atoi(param[1]);
+      }
+      else{
 	puts("Error in ReadCurve() : Wrong parameters of the Hat curve !!!");
 	exit(0);
-      }
-      T1 = atoi(param[1]);
+      }      
 
 
       /* Check the time T0 and T1 of the hat */

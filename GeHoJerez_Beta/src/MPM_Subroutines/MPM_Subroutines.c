@@ -533,7 +533,8 @@ Matrix GetNodalForces(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int TimeStep)
       for(int j = 0 ; j<MPM_Mesh.B.Load_i[i].NumNodes ; j++){
 	GP_Force = MPM_Mesh.B.Load_i[i].Nodes[j];
 	for(int k = 0 ; k<MPM_Mesh.B.Load_i[i].Dim ; k++){
-	  if(fabs((double)MPM_Mesh.B.Load_i[i].Dir[k]) == 1){
+	  if( (MPM_Mesh.B.Load_i[i].Dir[k] == 1) ||
+	      (MPM_Mesh.B.Load_i[i].Dir[k] == -1)){
 	    if( (TimeStep < 0) ||
 		(TimeStep > MPM_Mesh.B.Load_i[i].Value[k].Num)){
 	      puts("Error in GetNodalForces() : The time step is out of the curve !!");
@@ -555,7 +556,8 @@ Matrix GetNodalForces(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int TimeStep)
       for(int j = 0 ; j<MPM_Mesh.F.Load_i[i].NumNodes ; j++){
 	GP_Force = MPM_Mesh.F.Load_i[i].Nodes[j];
 	for(int k = 0 ; k<MPM_Mesh.F.Load_i[i].Dim ; k++){
-	  if(fabs((double)MPM_Mesh.F.Load_i[i].Dir[k]) == 1){
+	  if( (MPM_Mesh.F.Load_i[i].Dir[k] == 1) ||
+	      (MPM_Mesh.F.Load_i[i].Dir[k] == -1)){
 	    if( (TimeStep < 0) ||
 		(TimeStep > MPM_Mesh.F.Load_i[i].Value[k].Num)){
 	      puts("Error in GetNodalForces() : The time step is out of the curve !!");

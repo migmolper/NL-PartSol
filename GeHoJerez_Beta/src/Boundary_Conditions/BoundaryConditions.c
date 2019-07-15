@@ -19,7 +19,6 @@ void BCC_Nod_VALUE(Mesh FEM_Mesh, Matrix Nodal_VALUE, int TimeStep)
   int NumNodesBound; /* Number of nodes of the bound */
   int NumDimBound; /* Number of dimensions */
   int Id_BCC; /* Index of the node where we apply the BCC */
-  int DirBCC; /* Direction of the boundary condition */
 
   /* 2º Loop over the the boundaries */
   for(int i = 0 ; i<FEM_Mesh.Bounds.NumBounds ; i++){
@@ -29,22 +28,22 @@ void BCC_Nod_VALUE(Mesh FEM_Mesh, Matrix Nodal_VALUE, int TimeStep)
     NumDimBound = FEM_Mesh.Bounds.BCC_i[i].Dim;
     for(int j = 0 ; j<NumNodesBound ; j++){
       /* 5º Get the index of the node */
-      Id_BCC = FEM_Mesh.Bounds.BCC_i[i].Nodes[i];
+      Id_BCC = FEM_Mesh.Bounds.BCC_i[i].Nodes[j];
       /* 6º Loop over the dimensions of the boundary condition */
       for(int k = 0 ; k<NumDimBound ; k++){
-	/* 7º Get the direction of this boundary condition */
-	DirBCC = FEM_Mesh.Bounds.BCC_i[i].Dir[k];
-	/* 8º Apply only if the direction is active (1) */
-	if(DirBCC == 1){
-	  /* 9º Check if the curve it is on time */
+	/* 7º Apply only if the direction is active (1) */
+	if( (FEM_Mesh.Bounds.BCC_i[i].Dir[k] == 1) ||
+	    (FEM_Mesh.Bounds.BCC_i[i].Dir[k] == -1)){
+	  /* 8º Check if the curve it is on time */
 	  if( (TimeStep < 0) ||
 	      (TimeStep > FEM_Mesh.Bounds.BCC_i[i].Value[k].Num)){
 	    puts("Error in BCC_Nodal_VALUE() : The time step is out of the curve !!");
 	    exit(0);
 	  }
-	  /* 10º Assign the boundary condition */
+	  /* 9º Assign the boundary condition */
 	  Nodal_VALUE.nM[k][Id_BCC] =
-	    FEM_Mesh.Bounds.BCC_i[i].Value[k].Fx[TimeStep];
+	    FEM_Mesh.Bounds.BCC_i[i].Value[k].Fx[TimeStep]*
+	    (double)FEM_Mesh.Bounds.BCC_i[i].Dir[k];
 	}
       }
     }    

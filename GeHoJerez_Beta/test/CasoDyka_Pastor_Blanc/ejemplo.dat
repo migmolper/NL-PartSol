@@ -1,0 +1,40 @@
+/***************************************/
+/********** GENERAL PARAMETERS *********/
+/***************************************/
+KIND_ANALYSIS=MPM%U%2D%VerletLF
+DENSITY=7833
+POISSON_MODULUS=0.0
+ELASTIC_MODULUS=200.e9
+TIME_STEP=6.e-10
+RESULT_STEP=500
+NUM_STEP=160000
+
+
+/***************************************/
+/******* SIMULATION FILES AND DIR ******/
+/***************************************/
+FEM_FILE_NAME=test/CasoDyka_Pastor_Blanc/FEM_Mesh.msh
+MPM_FILE_NAME=test/CasoDyka_Pastor_Blanc/MPM_Mesh.msh
+OUTPUT_DIR=test/CasoDyka_Pastor_Blanc
+
+/***************************************/
+/********* BOUNDARY CONDITIONS *********/
+/***************************************/
+BCC_NUM 4
+BCC LABEL=BOTTOM FIELD=V DIR={0,0} CURVE={NULL,NULL}
+BCC LABEL=RIGHT FIELD=V DIR={0,0} CURVE={NULL,NULL}
+BCC LABEL=TOP FIELD=V DIR={0,0} CURVE={NULL,NULL}
+BCC LABEL=LEFT FIELD=V DIR={-1,0} CURVE={test/CasoDyka_Pastor_Blanc/CurveConstat.txt,NULL}
+
+/***************************************/
+/**** INITIAL CONDITIONS FOR THE GPs ***/
+/***************************************/
+INIT_NUM 1
+INIT_GP FIELD=V VALUE={5.0,0.0} NUM_NODES=40
+1749
+
+/***************************************/
+/********** LOADS OVER THE GPs *********/
+/***************************************/
+F_LOAD_NUM 0
+B_LOAD_NUM 0
