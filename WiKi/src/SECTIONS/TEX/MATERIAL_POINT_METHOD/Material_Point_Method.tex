@@ -1,0 +1,234 @@
+
+\section{State of art of the material point method}
+\label{sec:state-art-material}
+
+The material point method (MPM) was developed by Sulsky and coworkers,
+see \cite{Schreyer1994}, as an extension for solids mechanics of the
+fluid-implicit particle-method (FLIP) developed by (Brackbill). Further, the
+FLIP originally was proposed as an extension of the particle-in-cell
+method developed by (Harlow). More recent developments are centered in
+trying to solve the well-know grid-crossing error of the MPM,
+described deeply in \ref{sec:grid-crossing-errors}, the first of this early attempts was the
+presented by \cite{Bardenhagen2004} called the generalized interpolation
+material point method (GIMP), other approach to solve this problem are
+the implicit Generalized Interpolation Material Point (GIMP) presented
+by \cite{Charlton2017}, the convected Particle Domain Interpolation
+(CPDI) and the second-order convected particle domain interpolation
+(CPDI 2) by \cite{Sadeghirad2013}, \cite{Sadeghirad2013a}, the dual
+Domain Material Point Method (DDMPM) by \cite{Zhang2011}, and the
+B-Spline MPM by \cite{Bing2019}.
+
+All of this methods has a starting point the variation form for
+conservation momentum \eqref{eq:wf_conserv_momentum3} presented in
+\ref{sec:deriv_eq}. In order to arrive to a finite set of equations,
+the continuum domain $\Omega$ is discretized as as a finite sum of
+material points. Here, the index $p$ is used for the material point
+values, $I$ for the nodes of the grid nodes and the index $i,j,k$ are
+used for the dimensions of the variables. Each material point has a
+position $x_{p,i}$ defined by the centroid of the volume $\Omega_p$.
+
+Each material point is assigned initial values of position, velocity,
+mass, volume and stress, denoted by $x_{p,i}$, $v_{p,i}$, $m_{p}$, $V_{p,i}$,
+$\sigma_{p,ij}$, and others. Given a material point property, $f_p$, a
+representation consistent with the initial discretization procedure is
+the sum over the material point as we can see in \eqref{eq:mpm_discretization}
+\begin{equation}
+  \label{eq:mpm_discretization}
+  f(x_i,t) = \sum_p^{N_p} f_p(t) \chi_p(x_i)
+\end{equation}
+where $\chi$ denotes the particle characteristic function.
+
+As an example, the density field can be discretized as we can see in
+\eqref{eq:mpm_density}.
+\begin{equation}
+  \label{eq:mpm_density}
+  \rho(x_i,t) =  \sum_p^{N_p}m_p \chi_p(x_i)
+\end{equation}
+In order to discretize the stress therm of  \eqref{eq:wf_conserv_momentum3}, a specific
+stress is defined by \eqref{eq:specific_stress}
+\begin{equation}
+  \label{eq:specific_stress}
+  \sigma_s = \frac{\sigma}{rho}
+\end{equation}
+so the stress term becomes
+\begin{equation}
+  \label{eq:specific_stress_intforces}
+  \int_{\Omega}  \nabla \psi^T : \sigma\ d\Omega = \int_{\Omega}  \nabla \psi^T : \rho\sigma_s\ d\Omega
+\end{equation}
+
+\subsection{The original material point method}
+\label{sec:orig-mater-point}
+
+The particle characteristic function are required to be a partition of
+unity in the initial configuration as we can see in
+(\ref{eq:part_uniti_chi_i}).
+
+\begin{equation}
+  \label{eq:part_uniti_chi_i}
+  \sum_{p=1}^{Np}\chi_p^i(x)\ =\ 1
+\end{equation}
+
+Where $\chi_p^i$ denotes the particle characteristic functions
+restricted to their initial positions and undeformed state. In the
+simplest cases, particle characteristic function are taken to be
+initially non-overlapping. However, nothing precludes overlapping, or
+''fuzzy'' particles, as discussed later. Initial particle volumes
+$V_p^i$ are defined by (\ref{eq:vpi_def}).
+\begin{equation}
+  \label{eq:vpi_def}
+  V_p^i = \int_{\Omega^i}\chi^i_p(x)\ d\Omega
+\end{equation}
+where $\Omega^i$ is the initial volume of the continuum body to be
+discredited. In addition to initial particle volumes, the material
+point initial masses, $m_p^i$, momenta, $p_p^i$ ans stresses,
+$\sigma_p^i$, must be defined. These properties of the continuum
+against the particle characteristic functions, as we can see in the
+equations (\ref{eq:m_pi}) and (\ref{eq:p_pi})
+
+\begin{align}
+  \label{eq:m_pi}
+  m_p^i =& \int_{\Omega_i}\rho^i(x)\chi_p^i(x)\ d\Omega \\
+  \label{eq:p_pi}
+  p_p^i =& \int_{\Omega_i}\rho^i(x)v^i(x)\chi_p^i(x)\ d\Omega
+\end{align}
+
+where $\rho^i$
+
+\subsection{Discrete Solution Procedure}
+\label{sec:discr_sol_proc}
+
+Given a material point property, $f_p$, a representation consistent
+with the initial discretization procedure is the sum over the material
+points.
+\begin{equation}
+  \label{eq:mat_point_discretiz}
+  f(x) = \sum_p^{Np}f_p \chi_p(x)  
+\end{equation}
+
+The particle characteristic functions are used as a basis for
+representing particle data throughout the computational domain and
+determine the degree of smoothness of the spatial variation.
+
+Approaching term by term of (\ref{eq:wf_conserv_momentum3}) using
+(\ref{eq:mat_point_discretiz}) we get the following :
+
+
+
+\begin{itemize}
+\item Acceleration term :
+  \begin{eqnarray}
+    \label{eq:wf_conserv_momentum_acc}
+   \int_{\Omega} \psi^T \rho \cdot a \cdot d\Omega =& \int_{\Omega} \psi^T \frac{m}{V}
+                                                     \dot{v}\ d\Omega = \int_{\Omega} \psi^T \frac{1}{V}
+                                                     \overbrace{m\dot{v}}^{\dot{p}}\ d\Omega = \int_{\Omega} \psi^T \frac{\dot{p}}{V} d\Omega = \nonumber \\
+  =&  \int_{\Omega} \psi^T \left[ \sum^{Np}_{p=1} \frac{\dot{p}_p}{V_p} \chi_p(x) \right]\ d\Omega =
+     \sum^{Np}_{p=1} \left[ \int_{\Omega_p \bigcap \Omega}
+     \psi^T\frac{\dot{p}_p}{V_p}\chi_p(x)\ d\Omega \right] 
+  \end{eqnarray}
+
+
+\item Internal forces :
+  \begin{align}
+    \label{eq:wf_conserv_momentum_int_forces}
+    \int_{\Omega}  \nabla \psi^T \sigma\ d\Omega = \int_{\Omega}  \nabla
+    \psi^T \left[\sum^{Np}_{p=1} \sigma_p \chi_p(x) \right]\ d\Omega =
+    \sum^{Np}_{p=1} \left[ \int_{\Omega_p \bigcap \Omega}
+    \nabla\psi^T\sigma_p\chi_p(x)\ d\Omega \right]
+  \end{align}
+\item External forces :
+  \begin{align}
+    \label{eq:wf_conserv_momentum_ext_forces}
+    \int_{\Omega} \psi^T \rho b\ d\Omega =& \int_{\Omega} \psi^T \frac{m}{V} b\
+                                           d\Omega = \int_{\Omega} \psi^T \left[ \sum^{Np}_{p=1}
+                                           \frac{m_p}{V_p}\chi_p(x) \right] b\ d\Omega = \sum_{p=1}^{Np}
+                                           \left[ \int_{\Omega_p \bigcap \Omega}
+                                           \psi^T \frac{m_p}{V_p} \chi_p(x) b\ d\Omega \right]
+  \end{align}  
+\end{itemize}
+
+Finally we get the \eqref{eq:sf_conserv_momentum} with the GIPM
+discretization as \eqref{eq:wf_conserv_momentum_GIMP}:
+
+\begin{align}
+  \label{eq:wf_conserv_momentum_GIMP}
+  \sum^{Np}_{p=1} \left[  \int_{\Omega_p \bigcap \Omega}
+  \psi^T\frac{\dot{p}_p}{V_p}\chi_p(x)\ d\Omega \right] + \sum^{Np}_{p=1} \left[ \int_{\Omega_p \bigcap \Omega}
+  \nabla\psi^T\sigma_p\chi_p(x)\ d\Omega \right] =
+  \int_{\Gamma}\psi^T t\ d\Gamma + \sum_{p=1}^{Np}
+  \left[ \int_{\Omega_p \bigcap \Omega}
+  \psi^T \frac{m_p}{V_p} \chi_p(x) b\ d\Omega \right]
+\end{align}
+\\
+where $\Omega_p$ denotes the current support of particle
+characteristic function p, and the current particle volumes are
+defined by (\ref{eq:charact_volum})
+
+\begin{equation}
+  \label{eq:charact_volum}
+  V_p = \int_{\Omega_p \bigcap \Omega} \chi_p(x)\ d\Omega
+\end{equation}
+
+Rewriting the balance of momentum, the equation 
+
+
+The other fundamental aspect of PIC methods is the use of a
+computational grid. In MPM the grid serves as a scratch pad for the
+solution of conservation of momentum, from which particle states are
+updated. To complete the discretization procedure, approximations to
+the admissible velocity fields, or test functions, are introduced in
+terms of grid vertex quantities and grid shape functions. This step is
+analogous to the development of FEM discrete equations. However, use
+of both grid and particle basis functions to represent test functions
+and trial functions, respectively, is a Petrov–Galerkin method,
+[Johnson (1987)], and therefore more akin to some of the meshless
+methods (in particular [Demkowicz and Oden (1986); Atluri and Zhu
+(2000)]) than the FEM. The continuous representation, $g(x)$, of grid
+data, $g_i$ , then
+\begin{equation}
+  g(x) = \sum_{i = 1}^{Nn}=g_iN_i(x)
+\end{equation}
+
+Here $N_i(x)$ is a computational grid shape function, which takes unit
+value at node $i$ and zero value all the other nodes. Further, the
+shape function are required to be a partition of unity
+
+\begin{equation}
+  \label{eq:Partition_Unity}
+  \sum_{i=1}^{Nn} N_i(x) = 1  
+\end{equation}
+
+
+\begin{eqnarray}  
+  \sum^{Np}_{p=1} \left[ \int_{\Omega_p \bigcap \Omega}
+  \psi^T\frac{\dot{p}_p}{V_p}\chi_p(x) d\Omega \right] =& \sum^{Np}_{p=1}\left[ \frac{1}{V_p}\int_{\Omega_p \bigcap \Omega} N_i(x) \chi_p(x) d\Omega \dot{p}_p  \right] = \nonumber \\
+  =& \sum_{p=1}^{Np} \overline{S}_{ip}\cdot \dot{p}_p = \dot{p}_i
+\end{eqnarray}
+
+\begin{eqnarray}
+  -\sum^{Np}_{p=1}\left[ \int_{\Omega_p \bigcap \Omega}\nabla\psi^T \sigma_p \chi_p  d\Omega \right] =& -\sum^{Np}_{p=1}\left[ \int_{\Omega_p \bigcap \Omega}\nabla N_i(x) \sigma_p \chi_p  d\Omega \right] = \nonumber \\
+  =& - \sum^{Np}_{p=1}\left[ \frac{V_p}{V_p} \int_{\Omega_p \bigcap \Omega}\nabla N_i(x) \chi_p  d\Omega \sigma_p \right] = \nonumber \\
+  =& - \sum^{Np}_{p=1}\left[V_p\overline{\nabla S}_{ip} \sigma_p \right] = f_i^{int}
+\end{eqnarray}
+
+\begin{equation}
+  \int_{\Gamma \equiv \partial \Omega} \psi^T t d\Gamma = \int_{\Gamma \equiv \partial \Omega} N_i(x) t d\Gamma = f_i^t
+\end{equation}
+
+\begin{eqnarray}
+  \sum_{p=1}^{Np} \left[ \int_{\Omega_p \bigcap \Omega} \psi^T \frac{m_p}{V_p} \chi_p(x) b d\Omega \right] = \sum_{p=1}^{Np} \left[ \int_{\Omega_p \bigcap \Omega} N_i(x)  \frac{m_p}{V_p} \chi_p(x) b d\Omega  \right] =  \sum_{p=1}^{Np} \overline{S}_{ip}b m_p = f_i^b  
+\end{eqnarray}
+
+
+\begin{eqnarray}
+  \sum_{p=1}^{Np} \overline{S}_{ip}\cdot \dot{p}_p  =
+  -\sum^{Np}_{p=1}\left[V_p\overline{\nabla S}_{ip} \sigma_p \right]
+  +&  \int_{\Gamma \equiv \partial \Omega} N_i(x) t d\Gamma \nonumber
+     +& \sum_{p=1}^{Np} \overline{S}_{ip}b m_p \nonumber\\
+  \Downarrow&  \\
+  \dot{p}_p = f_i^{int} + f_i^t + f_i^b \nonumber
+\end{eqnarray}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "../../../mpm"
+%%% End:

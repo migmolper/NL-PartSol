@@ -113,175 +113,177 @@ conservation of momentum may be written as
 \end{equation}
 
 
-\subsection{Initial discretization}
-\label{sec:ini_discr}
+% \subsection{Initial discretization}
+% \label{sec:ini_discr}
 
-The particle characteristic function are required to be a partition of
-unity in the initial configuration as we can see in
-(\ref{eq:part_uniti_chi_i}).
+% The particle characteristic function are required to be a partition of
+% unity in the initial configuration as we can see in
+% (\ref{eq:part_uniti_chi_i}).
 
-\begin{equation}
-  \label{eq:part_uniti_chi_i}
-  \sum_{p=1}^{Np}\chi_p^i(x)\ =\ 1
-\end{equation}
+% \begin{equation}
+%   \label{eq:part_uniti_chi_i}
+%   \sum_{p=1}^{Np}\chi_p^i(x)\ =\ 1
+% \end{equation}
 
-Where $\chi_p^i$ denotes the particle characteristic functions
-restricted to their initial positions and undeformed state. In the
-simplest cases, particle characteristic function are taken to be
-initially non-overlapping. However, nothing precludes overlapping, or
-''fuzzy'' particles, as discussed later. Initial particle volumes
-$V_p^i$ are defined by (\ref{eq:vpi_def}).
-\begin{equation}
-  \label{eq:vpi_def}
-  V_p^i = \int_{\Omega^i}\chi^i_p(x)\ d\Omega
-\end{equation}
-where $\Omega^i$ is the initial volume of the continuum body to be
-discredited. In addition to initial particle volumes, the material
-point initial masses, $m_p^i$, momenta, $p_p^i$ ans stresses,
-$\sigma_p^i$, must be defined. These properties of the continuum
-against the particle characteristic functions, as we can see in the
-equations (\ref{eq:m_pi}) and (\ref{eq:p_pi})
+% Where $\chi_p^i$ denotes the particle characteristic functions
+% restricted to their initial positions and undeformed state. In the
+% simplest cases, particle characteristic function are taken to be
+% initially non-overlapping. However, nothing precludes overlapping, or
+% ''fuzzy'' particles, as discussed later. Initial particle volumes
+% $V_p^i$ are defined by (\ref{eq:vpi_def}).
+% \begin{equation}
+%   \label{eq:vpi_def}
+%   V_p^i = \int_{\Omega^i}\chi^i_p(x)\ d\Omega
+% \end{equation}
+% where $\Omega^i$ is the initial volume of the continuum body to be
+% discredited. In addition to initial particle volumes, the material
+% point initial masses, $m_p^i$, momenta, $p_p^i$ ans stresses,
+% $\sigma_p^i$, must be defined. These properties of the continuum
+% against the particle characteristic functions, as we can see in the
+% equations (\ref{eq:m_pi}) and (\ref{eq:p_pi})
 
-\begin{align}
-  \label{eq:m_pi}
-  m_p^i =& \int_{\Omega_i}\rho^i(x)\chi_p^i(x)\ d\Omega \\
-  \label{eq:p_pi}
-  p_p^i =& \int_{\Omega_i}\rho^i(x)v^i(x)\chi_p^i(x)\ d\Omega
-\end{align}
+% \begin{align}
+%   \label{eq:m_pi}
+%   m_p^i =& \int_{\Omega_i}\rho^i(x)\chi_p^i(x)\ d\Omega \\
+%   \label{eq:p_pi}
+%   p_p^i =& \int_{\Omega_i}\rho^i(x)v^i(x)\chi_p^i(x)\ d\Omega
+% \end{align}
 
-where $\rho^i$
+% where $\rho^i$
 
-\subsection{Discrete Solution Procedure}
-\label{sec:discr_sol_proc}
+% \subsection{Discrete Solution Procedure}
+% \label{sec:discr_sol_proc}
 
-Given a material point property, $f_p$, a representation consistent
-with the initial discretization procedure is the sum over the material
-points.
-\begin{equation}
-  \label{eq:mat_point_discretiz}
-  f(x) = \sum_p^{Np}f_p \chi_p(x)  
-\end{equation}
+% Given a material point property, $f_p$, a representation consistent
+% with the initial discretization procedure is the sum over the material
+% points.
+% \begin{equation}
+%   \label{eq:mat_point_discretiz}
+%   f(x) = \sum_p^{Np}f_p \chi_p(x)  
+% \end{equation}
 
-The particle characteristic functions are used as a basis for
-representing particle data throughout the computational domain and
-determine the degree of smoothness of the spatial variation.
+% The particle characteristic functions are used as a basis for
+% representing particle data throughout the computational domain and
+% determine the degree of smoothness of the spatial variation.
 
-Approaching term by term of (\ref{eq:wf_conserv_momentum3}) using
-(\ref{eq:mat_point_discretiz}) we get the following :
-
-
-
-\begin{itemize}
-\item Acceleration term :
-  \begin{eqnarray}
-    \label{eq:wf_conserv_momentum_acc}
-   \int_{\Omega} \psi^T \rho \cdot a \cdot d\Omega =& \int_{\Omega} \psi^T \frac{m}{V}
-                                                     \dot{v}\ d\Omega = \int_{\Omega} \psi^T \frac{1}{V}
-                                                     \overbrace{m\dot{v}}^{\dot{p}}\ d\Omega = \int_{\Omega} \psi^T \frac{\dot{p}}{V} d\Omega = \nonumber \\
-  =&  \int_{\Omega} \psi^T \left[ \sum^{Np}_{p=1} \frac{\dot{p}_p}{V_p} \chi_p(x) \right]\ d\Omega =
-     \sum^{Np}_{p=1} \left[ \int_{\Omega_p \bigcap \Omega}
-     \psi^T\frac{\dot{p}_p}{V_p}\chi_p(x)\ d\Omega \right] 
-  \end{eqnarray}
+% Approaching term by term of (\ref{eq:wf_conserv_momentum3}) using
+% (\ref{eq:mat_point_discretiz}) we get the following :
 
 
-\item Internal forces :
-  \begin{align}
-    \label{eq:wf_conserv_momentum_int_forces}
-    \int_{\Omega}  \nabla \psi^T \sigma\ d\Omega = \int_{\Omega}  \nabla
-    \psi^T \left[\sum^{Np}_{p=1} \sigma_p \chi_p(x) \right]\ d\Omega =
-    \sum^{Np}_{p=1} \left[ \int_{\Omega_p \bigcap \Omega}
-    \nabla\psi^T\sigma_p\chi_p(x)\ d\Omega \right]
-  \end{align}
-\item External forces :
-  \begin{align}
-    \label{eq:wf_conserv_momentum_ext_forces}
-    \int_{\Omega} \psi^T \rho b\ d\Omega =& \int_{\Omega} \psi^T \frac{m}{V} b\
-                                           d\Omega = \int_{\Omega} \psi^T \left[ \sum^{Np}_{p=1}
-                                           \frac{m_p}{V_p}\chi_p(x) \right] b\ d\Omega = \sum_{p=1}^{Np}
-                                           \left[ \int_{\Omega_p \bigcap \Omega}
-                                           \psi^T \frac{m_p}{V_p} \chi_p(x) b\ d\Omega \right]
-  \end{align}  
-\end{itemize}
 
-Finally we get the \eqref{eq:sf_conserv_momentum} with the GIPM
-discretization as \eqref{eq:wf_conserv_momentum_GIMP}:
-
-\begin{align}
-  \label{eq:wf_conserv_momentum_GIMP}
-  \sum^{Np}_{p=1} \left[  \int_{\Omega_p \bigcap \Omega}
-  \psi^T\frac{\dot{p}_p}{V_p}\chi_p(x)\ d\Omega \right] + \sum^{Np}_{p=1} \left[ \int_{\Omega_p \bigcap \Omega}
-  \nabla\psi^T\sigma_p\chi_p(x)\ d\Omega \right] =
-  \int_{\Gamma}\psi^T t\ d\Gamma + \sum_{p=1}^{Np}
-  \left[ \int_{\Omega_p \bigcap \Omega}
-  \psi^T \frac{m_p}{V_p} \chi_p(x) b\ d\Omega \right]
-\end{align}
-\\
-where $\Omega_p$ denotes the current support of particle
-characteristic function p, and the current particle volumes are
-defined by (\ref{eq:charact_volum})
-
-\begin{equation}
-  \label{eq:charact_volum}
-  V_p = \int_{\Omega_p \bigcap \Omega} \chi_p(x)\ d\Omega
-\end{equation}
-
-Rewriting the balance of momentum, the equation 
+% \begin{itemize}
+% \item Acceleration term :
+%   \begin{eqnarray}
+%     \label{eq:wf_conserv_momentum_acc}
+%    \int_{\Omega} \psi^T \rho \cdot a \cdot d\Omega =& \int_{\Omega} \psi^T \frac{m}{V}
+%                                                      \dot{v}\ d\Omega = \int_{\Omega} \psi^T \frac{1}{V}
+%                                                      \overbrace{m\dot{v}}^{\dot{p}}\ d\Omega = \int_{\Omega} \psi^T \frac{\dot{p}}{V} d\Omega = \nonumber \\
+%   =&  \int_{\Omega} \psi^T \left[ \sum^{Np}_{p=1} \frac{\dot{p}_p}{V_p} \chi_p(x) \right]\ d\Omega =
+%      \sum^{Np}_{p=1} \left[ \int_{\Omega_p \bigcap \Omega}
+%      \psi^T\frac{\dot{p}_p}{V_p}\chi_p(x)\ d\Omega \right] 
+%   \end{eqnarray}
 
 
-The other fundamental aspect of PIC methods is the use of a
-computational grid. In MPM the grid serves as a scratch pad for the
-solution of conservation of momentum, from which particle states are
-updated. To complete the discretization procedure, approximations to
-the admissible velocity fields, or test functions, are introduced in
-terms of grid vertex quantities and grid shape functions. This step is
-analogous to the development of FEM discrete equations. However, use
-of both grid and particle basis functions to represent test functions
-and trial functions, respectively, is a Petrov–Galerkin method,
-[Johnson (1987)], and therefore more akin to some of the meshless
-methods (in particular [Demkowicz and Oden (1986); Atluri and Zhu
-(2000)]) than the FEM. The continuous representation, $g(x)$, of grid
-data, $g_i$ , then
-\begin{equation}
-  g(x) = \sum_{i = 1}^{Nn}=g_iN_i(x)
-\end{equation}
+% \item Internal forces :
+%   \begin{align}
+%     \label{eq:wf_conserv_momentum_int_forces}
+%     \int_{\Omega}  \nabla \psi^T \sigma\ d\Omega = \int_{\Omega}  \nabla
+%     \psi^T \left[\sum^{Np}_{p=1} \sigma_p \chi_p(x) \right]\ d\Omega =
+%     \sum^{Np}_{p=1} \left[ \int_{\Omega_p \bigcap \Omega}
+%     \nabla\psi^T\sigma_p\chi_p(x)\ d\Omega \right]
+%   \end{align}
+% \item External forces :
+%   \begin{align}
+%     \label{eq:wf_conserv_momentum_ext_forces}
+%     \int_{\Omega} \psi^T \rho b\ d\Omega =& \int_{\Omega} \psi^T \frac{m}{V} b\
+%                                            d\Omega = \int_{\Omega} \psi^T \left[ \sum^{Np}_{p=1}
+%                                            \frac{m_p}{V_p}\chi_p(x) \right] b\ d\Omega = \sum_{p=1}^{Np}
+%                                            \left[ \int_{\Omega_p \bigcap \Omega}
+%                                            \psi^T \frac{m_p}{V_p} \chi_p(x) b\ d\Omega \right]
+%   \end{align}  
+% \end{itemize}
 
-Here $N_i(x)$ is a computational grid shape function, which takes unit
-value at node $i$ and zero value all the other nodes. Further, the
-shape function are required to be a partition of unity
+% Finally we get the \eqref{eq:sf_conserv_momentum} with the GIPM
+% discretization as \eqref{eq:wf_conserv_momentum_GIMP}:
 
-\begin{equation}
-  \sum_{i=1}^{Nn} N_i(x) = 1
-\end{equation}
+% \begin{align}
+%   \label{eq:wf_conserv_momentum_GIMP}
+%   \sum^{Np}_{p=1} \left[  \int_{\Omega_p \bigcap \Omega}
+%   \psi^T\frac{\dot{p}_p}{V_p}\chi_p(x)\ d\Omega \right] + \sum^{Np}_{p=1} \left[ \int_{\Omega_p \bigcap \Omega}
+%   \nabla\psi^T\sigma_p\chi_p(x)\ d\Omega \right] =
+%   \int_{\Gamma}\psi^T t\ d\Gamma + \sum_{p=1}^{Np}
+%   \left[ \int_{\Omega_p \bigcap \Omega}
+%   \psi^T \frac{m_p}{V_p} \chi_p(x) b\ d\Omega \right]
+% \end{align}
+% \\
+% where $\Omega_p$ denotes the current support of particle
+% characteristic function p, and the current particle volumes are
+% defined by (\ref{eq:charact_volum})
 
-\begin{eqnarray}  
-  \sum^{Np}_{p=1} \left[ \int_{\Omega_p \bigcap \Omega}
-  \psi^T\frac{\dot{p}_p}{V_p}\chi_p(x) d\Omega \right] =& \sum^{Np}_{p=1}\left[ \frac{1}{V_p}\int_{\Omega_p \bigcap \Omega} N_i(x) \chi_p(x) d\Omega \dot{p}_p  \right] = \nonumber \\
-  =& \sum_{p=1}^{Np} \overline{S}_{ip}\cdot \dot{p}_p = \dot{p}_i
-\end{eqnarray}
+% \begin{equation}
+%   \label{eq:charact_volum}
+%   V_p = \int_{\Omega_p \bigcap \Omega} \chi_p(x)\ d\Omega
+% \end{equation}
 
-\begin{eqnarray}
-  -\sum^{Np}_{p=1}\left[ \int_{\Omega_p \bigcap \Omega}\nabla\psi^T \sigma_p \chi_p  d\Omega \right] =& -\sum^{Np}_{p=1}\left[ \int_{\Omega_p \bigcap \Omega}\nabla N_i(x) \sigma_p \chi_p  d\Omega \right] = \nonumber \\
-  =& - \sum^{Np}_{p=1}\left[ \frac{V_p}{V_p} \int_{\Omega_p \bigcap \Omega}\nabla N_i(x) \chi_p  d\Omega \sigma_p \right] = \nonumber \\
-  =& - \sum^{Np}_{p=1}\left[V_p\overline{\nabla S}_{ip} \sigma_p \right] = f_i^{int}
-\end{eqnarray}
-
-\begin{equation}
-  \int_{\Gamma \equiv \partial \Omega} \psi^T t d\Gamma = \int_{\Gamma \equiv \partial \Omega} N_i(x) t d\Gamma = f_i^t
-\end{equation}
-
-\begin{eqnarray}
-  \sum_{p=1}^{Np} \left[ \int_{\Omega_p \bigcap \Omega} \psi^T \frac{m_p}{V_p} \chi_p(x) b d\Omega \right] = \sum_{p=1}^{Np} \left[ \int_{\Omega_p \bigcap \Omega} N_i(x)  \frac{m_p}{V_p} \chi_p(x) b d\Omega  \right] =  \sum_{p=1}^{Np} \overline{S}_{ip}b m_p = f_i^b  
-\end{eqnarray}
+% Rewriting the balance of momentum, the equation 
 
 
-\begin{eqnarray}
-  \sum_{p=1}^{Np} \overline{S}_{ip}\cdot \dot{p}_p  =
-  -\sum^{Np}_{p=1}\left[V_p\overline{\nabla S}_{ip} \sigma_p \right]
-  +&  \int_{\Gamma \equiv \partial \Omega} N_i(x) t d\Gamma \nonumber
-     +& \sum_{p=1}^{Np} \overline{S}_{ip}b m_p \nonumber\\
-  \Downarrow&  \\
-  \dot{p}_p = f_i^{int} + f_i^t + f_i^b \nonumber
-\end{eqnarray}
+% The other fundamental aspect of PIC methods is the use of a
+% computational grid. In MPM the grid serves as a scratch pad for the
+% solution of conservation of momentum, from which particle states are
+% updated. To complete the discretization procedure, approximations to
+% the admissible velocity fields, or test functions, are introduced in
+% terms of grid vertex quantities and grid shape functions. This step is
+% analogous to the development of FEM discrete equations. However, use
+% of both grid and particle basis functions to represent test functions
+% and trial functions, respectively, is a Petrov–Galerkin method,
+% [Johnson (1987)], and therefore more akin to some of the meshless
+% methods (in particular [Demkowicz and Oden (1986); Atluri and Zhu
+% (2000)]) than the FEM. The continuous representation, $g(x)$, of grid
+% data, $g_i$ , then
+% \begin{equation}
+%   g(x) = \sum_{i = 1}^{Nn}=g_iN_i(x)
+% \end{equation}
+
+% Here $N_i(x)$ is a computational grid shape function, which takes unit
+% value at node $i$ and zero value all the other nodes. Further, the
+% shape function are required to be a partition of unity
+
+% \begin{equation}
+%   \label{eq:Partition_Unity}
+%   \sum_{i=1}^{Nn} N_i(x) = 1  
+% \end{equation}
+
+
+% \begin{eqnarray}  
+%   \sum^{Np}_{p=1} \left[ \int_{\Omega_p \bigcap \Omega}
+%   \psi^T\frac{\dot{p}_p}{V_p}\chi_p(x) d\Omega \right] =& \sum^{Np}_{p=1}\left[ \frac{1}{V_p}\int_{\Omega_p \bigcap \Omega} N_i(x) \chi_p(x) d\Omega \dot{p}_p  \right] = \nonumber \\
+%   =& \sum_{p=1}^{Np} \overline{S}_{ip}\cdot \dot{p}_p = \dot{p}_i
+% \end{eqnarray}
+
+% \begin{eqnarray}
+%   -\sum^{Np}_{p=1}\left[ \int_{\Omega_p \bigcap \Omega}\nabla\psi^T \sigma_p \chi_p  d\Omega \right] =& -\sum^{Np}_{p=1}\left[ \int_{\Omega_p \bigcap \Omega}\nabla N_i(x) \sigma_p \chi_p  d\Omega \right] = \nonumber \\
+%   =& - \sum^{Np}_{p=1}\left[ \frac{V_p}{V_p} \int_{\Omega_p \bigcap \Omega}\nabla N_i(x) \chi_p  d\Omega \sigma_p \right] = \nonumber \\
+%   =& - \sum^{Np}_{p=1}\left[V_p\overline{\nabla S}_{ip} \sigma_p \right] = f_i^{int}
+% \end{eqnarray}
+
+% \begin{equation}
+%   \int_{\Gamma \equiv \partial \Omega} \psi^T t d\Gamma = \int_{\Gamma \equiv \partial \Omega} N_i(x) t d\Gamma = f_i^t
+% \end{equation}
+
+% \begin{eqnarray}
+%   \sum_{p=1}^{Np} \left[ \int_{\Omega_p \bigcap \Omega} \psi^T \frac{m_p}{V_p} \chi_p(x) b d\Omega \right] = \sum_{p=1}^{Np} \left[ \int_{\Omega_p \bigcap \Omega} N_i(x)  \frac{m_p}{V_p} \chi_p(x) b d\Omega  \right] =  \sum_{p=1}^{Np} \overline{S}_{ip}b m_p = f_i^b  
+% \end{eqnarray}
+
+
+% \begin{eqnarray}
+%   \sum_{p=1}^{Np} \overline{S}_{ip}\cdot \dot{p}_p  =
+%   -\sum^{Np}_{p=1}\left[V_p\overline{\nabla S}_{ip} \sigma_p \right]
+%   +&  \int_{\Gamma \equiv \partial \Omega} N_i(x) t d\Gamma \nonumber
+%      +& \sum_{p=1}^{Np} \overline{S}_{ip}b m_p \nonumber\\
+%   \Downarrow&  \\
+%   \dot{p}_p = f_i^{int} + f_i^t + f_i^b \nonumber
+% \end{eqnarray}
 
 
 
@@ -298,7 +300,7 @@ shape function are required to be a partition of unity
 %%% TeX-master: "../../../mpm"
 %%% End:
 
-\message{ !name(../../../mpm.tex) !offset(-249) }
+\message{ !name(../../../mpm.tex) !offset(-245) }
 
 \end{document}
 

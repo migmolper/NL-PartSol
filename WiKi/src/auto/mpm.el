@@ -16,6 +16,8 @@
     "latex2e"
     "SECTIONS/TEX/INTRODUCTION/Introduction"
     "SECTIONS/TEX/GOVERNING_EQUATIONS/Governing_Equations"
+    "SECTIONS/TEX/MATERIAL_POINT_METHOD/Material_Point_Method"
+    "SECTIONS/TEX/MATERIAL_POINT_METHOD/time_integration_mpm"
     "SECTIONS/TEX/MATERIAL_POINT_METHOD/stresses_mpm"
     "SECTIONS/TEX/MATERIAL_POINT_METHOD/large_strain_mpm"
     "SECTIONS/TEX/ALGORITHMS/Algorithms"

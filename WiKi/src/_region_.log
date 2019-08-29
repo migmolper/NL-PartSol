@@ -1,10 +1,7 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.18 (TeX Live 2017/Debian) (preloaded format=prv_mpm 2019.6.18)  18 JUN 2019 16:28
+This is pdfTeX, Version 3.14159265-2.6-1.40.20 (MiKTeX 2.9.7050) (preloaded format=prv_mpm 2019.7.18)  18 JUL 2019 12:06
 entering extended mode
- restricted \write18 enabled.
- file:line:error style messages enabled.
- %&-line parsing enabled.
 **&prv_mpm /AUCTEXINPUT{ _region_.tex }
-(./_region_.tex
+(_region_.tex
 No file _region_.aux.
 LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 14.
 LaTeX Font Info:    ... okay on input line 14.
@@ -26,64 +23,73 @@ LaTeX Font Info:    Checking defaults for FMX/futm/m/n on input line 14.
 LaTeX Font Info:    ... okay on input line 14.
 LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 14.
 LaTeX Font Info:    Try loading font information for TS1+cmr on input line 14.
-(/usr/share/texlive/texmf-dist/tex/latex/base/ts1cmr.fd
+(/usr/local/share/miktex-texmf/tex/latex/base/ts1cmr.fd
 File: ts1cmr.fd 2014/09/29 v2.5h Standard LaTeX font definitions
 )
 LaTeX Font Info:    ... okay on input line 14.
 LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 14.
 LaTeX Font Info:    ... okay on input line 14.
- (/home/migmolper2/.emacs.d/elpa/auctex-12.1.2/latex/preview.sty
+
+(/home/miguelmolinos/.emacs.d/elpa/auctex-12.1.2/latex/preview.sty
 Package: preview 2017/04/24 12.1 (AUCTeX/preview-latex)
- (/usr/share/texlive/texmf-dist/tex/generic/luatex85/luatex85.sty
+
+(/home/miguelmolinos/.miktex/texmfs/install/tex/generic/luatex85/luatex85.sty
 Package: luatex85 2016/06/15 v1.4 pdftex aliases for luatex
-) (/home/migmolper2/.emacs.d/elpa/auctex-12.1.2/latex/prtightpage.def
+)
+(/home/miguelmolinos/.emacs.d/elpa/auctex-12.1.2/latex/prtightpage.def
 \PreviewBorder=\dimen127
-) (/home/migmolper2/.emacs.d/elpa/auctex-12.1.2/latex/prauctex.def
+)
+(/home/miguelmolinos/.emacs.d/elpa/auctex-12.1.2/latex/prauctex.def
 No auxiliary output files.
 
 
-\hbadness=\count114
+\hbadness=\count115
 \hfuzz=\dimen128
-(/home/migmolper2/.emacs.d/elpa/auctex-12.1.2/latex/prauctex.cfg)) (/home/migmolper2/.emacs.d/elpa/auctex-12.1.2/latex/prfootnotes.def)
-\pr@snippet=\count115
-\pr@box=\box28
+(/home/miguelmolinos/.emacs.d/elpa/auctex-12.1.2/latex/prauctex.cfg))
+(/home/miguelmolinos/.emacs.d/elpa/auctex-12.1.2/latex/prfootnotes.def)
+\pr@snippet=\count116
+\pr@box=\box29
 \pr@output=\toks23
 
 Preview: Fontsize 10pt
 Preview: PDFoutput 1
-) (/usr/share/texlive/texmf-dist/tex/context/base/mkii/supp-pdf.mkii
+)
+(/home/miguelmolinos/.miktex/texmfs/install/tex/context/base/mkii/supp-pdf.mkii
 [Loading MPS to PDF converter (version 2006.09.02).]
-\scratchcounter=\count116
+\scratchcounter=\count117
 \scratchdimen=\dimen129
-\scratchbox=\box29
-\nofMPsegments=\count117
-\nofMParguments=\count118
+\scratchbox=\box30
+\nofMPsegments=\count118
+\nofMParguments=\count119
 \everyMPshowfont=\toks24
-\MPscratchCnt=\count119
+\MPscratchCnt=\count120
 \MPscratchDim=\dimen130
-\MPnumerator=\count120
-\makeMPintoPDFobject=\count121
+\MPnumerator=\count121
+\makeMPintoPDFobject=\count122
 \everyMPtoPDFconversion=\toks25
-) (/usr/share/texlive/texmf-dist/tex/latex/oberdiek/epstopdf-base.sty
+) (/usr/local/share/miktex-texmf/tex/latex/oberdiek/epstopdf-base.sty
 Package: epstopdf-base 2016/05/15 v2.6 Base part for package epstopdf
- (/usr/share/texlive/texmf-dist/tex/latex/oberdiek/grfext.sty
+
+(/usr/local/share/miktex-texmf/tex/latex/oberdiek/grfext.sty
 Package: grfext 2016/05/16 v1.2 Manage graphics extensions (HO)
 )
-Package epstopdf-base Info: Redefining graphics rule for `.eps' on input line 438.
+Package epstopdf-base Info: Redefining graphics rule for `.eps' on input line 4
+38.
 Package grfext Info: Graphics extension search list:
-(grfext)             [.pdf,.png,.jpg,.mps,.jpeg,.jbig2,.jb2,.PDF,.PNG,.JPG,.JPEG,.JBIG2,.JB2,.eps]
+(grfext)             [.pdf,.png,.jpg,.mps,.jpeg,.jbig2,.jb2,.PDF,.PNG,.JPG,.JPE
+G,.JBIG2,.JB2,.eps]
 (grfext)             \AppendGraphicsExtensions on input line 456.
- (/usr/share/texlive/texmf-dist/tex/latex/latexconfig/epstopdf-sys.cfg
-File: epstopdf-sys.cfg 2010/07/13 v1.3 Configuration of (r)epstopdf for TeX Live
-))
-\AtBeginShipoutBox=\box30
+)
+\AtBeginShipoutBox=\box31
 Package hyperref Info: Link coloring OFF on input line 14.
- (/usr/share/texlive/texmf-dist/tex/latex/hyperref/nameref.sty
+
+(/usr/local/share/miktex-texmf/tex/latex/hyperref/nameref.sty
 Package: nameref 2016/05/21 v2.44 Cross-referencing by name of section
- (/usr/share/texlive/texmf-dist/tex/generic/oberdiek/gettitlestring.sty
+
+(/usr/local/share/miktex-texmf/tex/generic/oberdiek/gettitlestring.sty
 Package: gettitlestring 2016/05/16 v1.5 Cleanup title references (HO)
 )
-\c@section@level=\count122
+\c@section@level=\count123
 )
 LaTeX Info: Redefining \ref on input line 14.
 LaTeX Info: Redefining \pageref on input line 14.
@@ -123,8 +129,9 @@ LaTeX Info: Redefining \nameref on input line 14.
 * \@reversemarginfalse
 * (1in=72.27pt=25.4mm, 1cm=28.453pt)
 
+
  !name(SECTIONS/TEX/GOVERNING_EQUATIONS/Governing_Equations.tex) !offset(-16) 
-./_region_.tex:18: Preview: Snippet 1 started.
+_region_.tex:18: Preview: Snippet 1 started.
 <-><->
       
 l.18 \section
@@ -134,24 +141,24 @@ Not a real error.
 LaTeX Font Info:    Font shape `T1/futs/bx/n' in size <14.4> not available
 (Font)              Font shape `T1/futs/b/n' tried instead on input line 18.
 Preview: Tightpage -32891 -32891 32891 32891
-./_region_.tex:18: Preview: Snippet 1 ended.(616719+212807x31699558).
+_region_.tex:18: Preview: Snippet 1 ended.(616719+212807x31699558).
 <-><->
       
 l.18 \section{Governing Equations}
                                   
 Not a real error.
 
-[1{/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}
+[1{/home/miguelmolinos/.miktex/texmfs/data/pdftex/config/pdftex.map}
 
 ]
-./_region_.tex:22: Preview: Snippet 2 started.
+_region_.tex:22: Preview: Snippet 2 started.
 <-><->
       
 l.22 quantities  indicate tensor,  $
                                     \nabla$ id  the gradient  operator, and
 Not a real error.
 
-./_region_.tex:22: Preview: Snippet 2 ended.(419758+4587x433848).
+_region_.tex:22: Preview: Snippet 2 ended.(419758+4587x433848).
 <-><->
       
 l.22 quantities  indicate tensor,  $\nabla$
@@ -159,14 +166,14 @@ l.22 quantities  indicate tensor,  $\nabla$
 Not a real error.
 
 [2]
-./_region_.tex:23: Preview: Snippet 3 started.
+_region_.tex:23: Preview: Snippet 3 started.
 <-><->
       
 l.23 $
       \cdot$,  and $:$  are first  order (vector)  and second  order tensor
 Not a real error.
 
-./_region_.tex:23: Preview: Snippet 3 ended.(214630+0x167771).
+_region_.tex:23: Preview: Snippet 3 ended.(214630+0x167771).
 <-><->
       
 l.23 $\cdot$
@@ -174,14 +181,14 @@ l.23 $\cdot$
 Not a real error.
 
 [3]
-./_region_.tex:23: Preview: Snippet 4 started.
+_region_.tex:23: Preview: Snippet 4 started.
 <-><->
       
 l.23 $\cdot$,  and $
                     :$  are first  order (vector)  and second  order tensor
 Not a real error.
 
-./_region_.tex:23: Preview: Snippet 4 ended.(302120+3276x159908).
+_region_.tex:23: Preview: Snippet 4 ended.(302120+3276x159908).
 <-><->
       
 l.23 $\cdot$,  and $:$
@@ -189,14 +196,14 @@ l.23 $\cdot$,  and $:$
 Not a real error.
 
 [4]
-./_region_.tex:24: Preview: Snippet 5 started.
+_region_.tex:24: Preview: Snippet 5 started.
 <-><->
       
 l.24 contraction, respectively. The subscript $
                                                p$ is used to index material
 Not a real error.
 
-./_region_.tex:24: Preview: Snippet 5 ended.(298188+148111x414842).
+_region_.tex:24: Preview: Snippet 5 ended.(298188+148111x414842).
 <-><->
       
 l.24 contraction, respectively. The subscript $p$
@@ -204,14 +211,14 @@ l.24 contraction, respectively. The subscript $p$
 Not a real error.
 
 [5]
-./_region_.tex:25: Preview: Snippet 6 started.
+_region_.tex:25: Preview: Snippet 6 started.
 <-><->
       
 l.25 point  variables   and  $
                               i$   grid  vertex  variables.   The  notation
 Not a real error.
 
-./_region_.tex:25: Preview: Snippet 6 ended.(435158+5242x263455).
+_region_.tex:25: Preview: Snippet 6 ended.(435158+5242x263455).
 <-><->
       
 l.25 point  variables   and  $i$
@@ -219,14 +226,14 @@ l.25 point  variables   and  $i$
 Not a real error.
 
 [6]
-./_region_.tex:26: Preview: Snippet 7 started.
+_region_.tex:26: Preview: Snippet 7 started.
 <-><->
       
 l.26 $
       \sum_p^{Np}$ and $\sum_i^{Np}$  is used to denote  summation over all
 Not a real error.
 
-./_region_.tex:26: Preview: Snippet 7 ended.(663760+248377x1260989).
+_region_.tex:26: Preview: Snippet 7 ended.(663760+248377x1260989).
 <-><->
       
 l.26 $\sum_p^{Np}$
@@ -234,14 +241,14 @@ l.26 $\sum_p^{Np}$
 Not a real error.
 
 [7]
-./_region_.tex:26: Preview: Snippet 8 started.
+_region_.tex:26: Preview: Snippet 8 started.
 <-><->
       
 l.26 $\sum_p^{Np}$ and $
                         \sum_i^{Np}$  is used to denote  summation over all
 Not a real error.
 
-./_region_.tex:26: Preview: Snippet 8 ended.(663760+243894x1260989).
+_region_.tex:26: Preview: Snippet 8 ended.(663760+243894x1260989).
 <-><->
       
 l.26 $\sum_p^{Np}$ and $\sum_i^{Np}$
@@ -250,20 +257,22 @@ Not a real error.
 
 [8]
 LaTeX Font Info:    Try loading font information for TS1+futs on input line 41.
- (/usr/share/texlive/texmf-dist/tex/latex/fourier/ts1futs.fd
+
+ (/home/miguelmolinos/.miktex/texmfs/install/tex/latex/fourier/ts1futs.fd
 File: ts1futs.fd 2004/03/26 Fontinst v1.926 font definitions for TS1/futs.
 )
 
-LaTeX Warning: Reference `eq:sf_conserv_momentum' on page 1 undefined on input line 48.
+LaTeX Warning: Reference `eq:sf_conserv_momentum' on page 1 undefined on input 
+line 48.
 
-./_region_.tex:50: Preview: Snippet 9 started.
+_region_.tex:50: Preview: Snippet 9 started.
 <-><->
       
 l.50 \begin{equation}
                      
 Not a real error.
 
-./_region_.tex:53: Preview: Snippet 9 ended.(598671+0x31699558).
+_region_.tex:53: Preview: Snippet 9 ended.(598671+0x31699558).
 <-><->
       
 l.53 \end{equation}
@@ -274,16 +283,17 @@ Not a real error.
 
 ]
 
-LaTeX Warning: Reference `eq:sf_conserv_momentum' on page 1 undefined on input line 55.
+LaTeX Warning: Reference `eq:sf_conserv_momentum' on page 1 undefined on input 
+line 55.
 
-./_region_.tex:55: Preview: Snippet 10 started.
+_region_.tex:55: Preview: Snippet 10 started.
 <-><->
       
 l.55 ...plying (\ref{eq:sf_conserv_momentum}) by $
                                                   \psi$ we get
 Not a real error.
 
-./_region_.tex:55: Preview: Snippet 10 ended.(339803+148111x476446).
+_region_.tex:55: Preview: Snippet 10 ended.(339803+148111x476446).
 <-><->
       
 l.55 ...g (\ref{eq:sf_conserv_momentum}) by $\psi$
@@ -292,16 +302,17 @@ Not a real error.
 
 [10]
 
-LaTeX Warning: Reference `eq:sf_conserv_momentum_2' on page 1 undefined on input line 56.
+LaTeX Warning: Reference `eq:sf_conserv_momentum_2' on page 1 undefined on inpu
+t line 56.
 
-./_region_.tex:58: Preview: Snippet 11 started.
+_region_.tex:58: Preview: Snippet 11 started.
 <-><->
       
 l.58 \begin{equation}
                      
 Not a real error.
 
-./_region_.tex:61: Preview: Snippet 11 ended.(739284+0x31699558).
+_region_.tex:61: Preview: Snippet 11 ended.(739284+0x31699558).
 <-><->
       
 l.61 \end{equation}
@@ -311,14 +322,14 @@ Not a real error.
 [11
 
 ]
-./_region_.tex:63: Preview: Snippet 12 started.
+_region_.tex:63: Preview: Snippet 12 started.
 <-><->
       
 l.63 The function $
                    \psi$ belongs to a space $\mathcal{H}$ (vectorial space
 Not a real error.
 
-./_region_.tex:63: Preview: Snippet 12 ended.(339803+148111x476446).
+_region_.tex:63: Preview: Snippet 12 ended.(339803+148111x476446).
 <-><->
       
 l.63 The function $\psi$
@@ -326,14 +337,14 @@ l.63 The function $\psi$
 Not a real error.
 
 [12]
-./_region_.tex:63: Preview: Snippet 13 started.
+_region_.tex:63: Preview: Snippet 13 started.
 <-><->
       
 l.63 The function $\psi$ belongs to a space $
                                              \mathcal{H}$ (vectorial space
 Not a real error.
 
-./_region_.tex:63: Preview: Snippet 13 ended.(439746+4587x754973).
+_region_.tex:63: Preview: Snippet 13 ended.(439746+4587x754973).
 <-><->
       
 l.63 ...on $\psi$ belongs to a space $\mathcal{H}$
@@ -341,14 +352,14 @@ l.63 ...on $\psi$ belongs to a space $\mathcal{H}$
 Not a real error.
 
 [13]
-./_region_.tex:65: Preview: Snippet 14 started.
+_region_.tex:65: Preview: Snippet 14 started.
 <-><->
       
 l.65 $
       a(\ddot{u},\dot{u},u,\psi)=l(\psi) \quad \forall\ \psi\ \in\
 Not a real error.
 
-./_region_.tex:66: Preview: Snippet 14 ended.(450560+148111x8200341).
+_region_.tex:66: Preview: Snippet 14 ended.(450560+148111x8200341).
 <-><->
       
 l.66 \mathcal{H}$
@@ -356,14 +367,14 @@ l.66 \mathcal{H}$
 Not a real error.
 
 [14]
-./_region_.tex:66: Preview: Snippet 15 started.
+_region_.tex:66: Preview: Snippet 15 started.
 <-><->
       
 l.66 ...al{H}$. In other hand, in every point of $
                                                   \Omega$ where we have
 Not a real error.
 
-./_region_.tex:66: Preview: Snippet 15 ended.(421723+0x485621).
+_region_.tex:66: Preview: Snippet 15 ended.(421723+0x485621).
 <-><->
       
 l.66 ... In other hand, in every point of $\Omega$
@@ -371,14 +382,14 @@ l.66 ... In other hand, in every point of $\Omega$
 Not a real error.
 
 [15]
-./_region_.tex:70: Preview: Snippet 16 started.
+_region_.tex:70: Preview: Snippet 16 started.
 <-><->
       
 l.70 \begin{equation}
                      
 Not a real error.
 
-./_region_.tex:73: Preview: Snippet 16 ended.(753492+0x31699558).
+_region_.tex:73: Preview: Snippet 16 ended.(753492+0x31699558).
 <-><->
       
 l.73 \end{equation}
@@ -388,14 +399,14 @@ Not a real error.
 [16
 
 ]
-./_region_.tex:75: Preview: Snippet 17 started.
+_region_.tex:75: Preview: Snippet 17 started.
 <-><->
       
 l.75 In other words, $
                       \mathcal{H}$ is the space defined by all the
 Not a real error.
 
-./_region_.tex:75: Preview: Snippet 17 ended.(439746+4587x754973).
+_region_.tex:75: Preview: Snippet 17 ended.(439746+4587x754973).
 <-><->
       
 l.75 In other words, $\mathcal{H}$
@@ -403,14 +414,14 @@ l.75 In other words, $\mathcal{H}$
 Not a real error.
 
 [17]
-./_region_.tex:76: Preview: Snippet 18 started.
+_region_.tex:76: Preview: Snippet 18 started.
 <-><->
       
 l.76 functions $
                 g$, that $ \psi$ and $\nabla \psi$ are FUNCIONES DE
 Not a real error.
 
-./_region_.tex:76: Preview: Snippet 18 ended.(307691+148111x391248).
+_region_.tex:76: Preview: Snippet 18 ended.(307691+148111x391248).
 <-><->
       
 l.76 functions $g$
@@ -418,14 +429,14 @@ l.76 functions $g$
 Not a real error.
 
 [18]
-./_region_.tex:76: Preview: Snippet 19 started.
+_region_.tex:76: Preview: Snippet 19 started.
 <-><->
       
 l.76 functions $g$, that $
                            \psi$ and $\nabla \psi$ are FUNCIONES DE
 Not a real error.
 
-./_region_.tex:76: Preview: Snippet 19 ended.(339803+148111x476446).
+_region_.tex:76: Preview: Snippet 19 ended.(339803+148111x476446).
 <-><->
       
 l.76 functions $g$, that $ \psi$
@@ -433,14 +444,14 @@ l.76 functions $g$, that $ \psi$
 Not a real error.
 
 [19]
-./_region_.tex:76: Preview: Snippet 20 started.
+_region_.tex:76: Preview: Snippet 20 started.
 <-><->
       
 l.76 functions $g$, that $ \psi$ and $
                                       \nabla \psi$ are FUNCIONES DE
 Not a real error.
 
-./_region_.tex:76: Preview: Snippet 20 ended.(419758+148111x910294).
+_region_.tex:76: Preview: Snippet 20 ended.(419758+148111x910294).
 <-><->
       
 l.76 functions $g$, that $ \psi$ and $\nabla \psi$
@@ -448,14 +459,14 @@ l.76 functions $g$, that $ \psi$ and $\nabla \psi$
 Not a real error.
 
 [20]
-./_region_.tex:77: Preview: Snippet 21 started.
+_region_.tex:77: Preview: Snippet 21 started.
 <-><->
       
 l.77 CUADRADO INTEGRABLE in $
                              \Omega$
 Not a real error.
 
-./_region_.tex:77: Preview: Snippet 21 ended.(421723+0x485621).
+_region_.tex:77: Preview: Snippet 21 ended.(421723+0x485621).
 <-><->
       
 l.77 CUADRADO INTEGRABLE in $\Omega$
@@ -463,14 +474,14 @@ l.77 CUADRADO INTEGRABLE in $\Omega$
 Not a real error.
 
 [21]
-./_region_.tex:79: Preview: Snippet 22 started.
+_region_.tex:79: Preview: Snippet 22 started.
 <-><->
       
 l.79 \begin{equation}
                      
 Not a real error.
 
-./_region_.tex:82: Preview: Snippet 22 ended.(1362201+0x31699558).
+_region_.tex:82: Preview: Snippet 22 ended.(1362201+0x31699558).
 <-><->
       
 l.82 \end{equation}
@@ -481,16 +492,17 @@ Not a real error.
 
 ]
 
-LaTeX Warning: Reference `eq:sf_conserv_momentum_2' on page 1 undefined on input line 84.
+LaTeX Warning: Reference `eq:sf_conserv_momentum_2' on page 1 undefined on inpu
+t line 84.
 
-./_region_.tex:84: Preview: Snippet 23 started.
+_region_.tex:84: Preview: Snippet 23 started.
 <-><->
       
 l.84 ...ng (\ref{eq:sf_conserv_momentum_2}) over $
                                                   \Omega$ we get
 Not a real error.
 
-./_region_.tex:84: Preview: Snippet 23 ended.(421723+0x485621).
+_region_.tex:84: Preview: Snippet 23 ended.(421723+0x485621).
 <-><->
       
 l.84 ...f{eq:sf_conserv_momentum_2}) over $\Omega$
@@ -499,16 +511,17 @@ Not a real error.
 
 [23]
 
-LaTeX Warning: Reference `eq:wf_conserv_momentum_1' on page 1 undefined on input line 85.
+LaTeX Warning: Reference `eq:wf_conserv_momentum_1' on page 1 undefined on inpu
+t line 85.
 
-./_region_.tex:87: Preview: Snippet 24 started.
+_region_.tex:87: Preview: Snippet 24 started.
 <-><->
       
 l.87 \begin{equation}
                      
 Not a real error.
 
-./_region_.tex:90: Preview: Snippet 24 ended.(1362201+0x31699558).
+_region_.tex:90: Preview: Snippet 24 ended.(1362201+0x31699558).
 <-><->
       
 l.90 \end{equation}
@@ -519,19 +532,21 @@ Not a real error.
 
 ]
 
-LaTeX Warning: Reference `eq:wf_conserv_momentum_1' on page 1 undefined on input line 93.
+LaTeX Warning: Reference `eq:wf_conserv_momentum_1' on page 1 undefined on inpu
+t line 93.
 
 
-LaTeX Warning: Reference `eq:wf_conserv_momentum_2' on page 1 undefined on input line 93.
+LaTeX Warning: Reference `eq:wf_conserv_momentum_2' on page 1 undefined on inpu
+t line 93.
 
-./_region_.tex:95: Preview: Snippet 25 started.
+_region_.tex:95: Preview: Snippet 25 started.
 <-><->
       
 l.95 \begin{equation}
                      
 Not a real error.
 
-./_region_.tex:100: Preview: Snippet 25 ended.(1362201+0x31699558).
+_region_.tex:100: Preview: Snippet 25 ended.(1362201+0x31699558).
 <-><->
       
 l.100 \end{equation}
@@ -542,16 +557,17 @@ Not a real error.
 
 ]
 
-LaTeX Warning: Reference `eq:wf_conserv_momentum_2' on page 1 undefined on input line 102.
+LaTeX Warning: Reference `eq:wf_conserv_momentum_2' on page 1 undefined on inpu
+t line 102.
 
-./_region_.tex:103: Preview: Snippet 26 started.
+_region_.tex:103: Preview: Snippet 26 started.
 <-><->
       
 l.103 vector $
               t = \sigma \cdot n$ where $n$ is the vector orthogonal to a
 Not a real error.
 
-./_region_.tex:103: Preview: Snippet 26 ended.(371589+5242x2093642).
+_region_.tex:103: Preview: Snippet 26 ended.(371589+5242x2093642).
 <-><->
       
 l.103 vector $t = \sigma \cdot n$
@@ -559,14 +575,14 @@ l.103 vector $t = \sigma \cdot n$
 Not a real error.
 
 [26]
-./_region_.tex:103: Preview: Snippet 27 started.
+_region_.tex:103: Preview: Snippet 27 started.
 <-><->
       
 l.103 vector $t = \sigma \cdot n$ where $
                                          n$ is the vector orthogonal to a
 Not a real error.
 
-./_region_.tex:103: Preview: Snippet 27 ended.(298188+5242x405667).
+_region_.tex:103: Preview: Snippet 27 ended.(298188+5242x405667).
 <-><->
       
 l.103 vector $t = \sigma \cdot n$ where $n$
@@ -575,16 +591,17 @@ Not a real error.
 
 [27]
 
-LaTeX Warning: Reference `eq:wf_conserv_momentum3' on page 1 undefined on input line 106.
+LaTeX Warning: Reference `eq:wf_conserv_momentum3' on page 1 undefined on input
+ line 106.
 
-./_region_.tex:108: Preview: Snippet 28 started.
+_region_.tex:108: Preview: Snippet 28 started.
 <-><->
       
 l.108 \begin{equation}
                       
 Not a real error.
 
-./_region_.tex:113: Preview: Snippet 28 ended.(1750854+0x31699558).
+_region_.tex:113: Preview: Snippet 28 ended.(1750854+0x31699558).
 <-><->
       
 l.113 \end{equation}
@@ -594,563 +611,55 @@ Not a real error.
 [28
 
 ]
-./_region_.tex:116: Preview: Snippet 29 started.
+_region_.tex:292: Preview: Snippet 29 started.
 <-><->
       
-l.116 \subsection
-                 {Initial discretization}
+l.292 \subsection
+                 {Observations}
 Not a real error.
 
 LaTeX Font Info:    Font shape `T1/futs/bx/n' in size <12> not available
-(Font)              Font shape `T1/futs/b/n' tried instead on input line 116.
-./_region_.tex:116: Preview: Snippet 29 ended.(543424+2358x31699558).
+(Font)              Font shape `T1/futs/b/n' tried instead on input line 292.
+_region_.tex:292: Preview: Snippet 29 ended.(543424+16908x31699558).
 <-><->
       
-l.116 \subsection{Initial discretization}
-                                         
+l.292 \subsection{Observations}
+                               
 Not a real error.
 
 [29
 
-]
-
-LaTeX Warning: Reference `eq:part_uniti_chi_i' on page 1 undefined on input line 121.
-
-./_region_.tex:123: Preview: Snippet 30 started.
-<-><->
-      
-l.123 \begin{equation}
-                      
-Not a real error.
-
-./_region_.tex:126: Preview: Snippet 30 ended.(1889959+0x31699558).
-<-><->
-      
-l.126 \end{equation}
-                    
-Not a real error.
-
-[30
-
-]
-./_region_.tex:128: Preview: Snippet 31 started.
-<-><->
-      
-l.128 Where $
-             \chi_p^i$ denotes the particle characteristic functions
-Not a real error.
-
-./_region_.tex:128: Preview: Snippet 31 ended.(568615+274437x726190).
-<-><->
-      
-l.128 Where $\chi_p^i$
-                       denotes the particle characteristic functions
-Not a real error.
-
-[31]
-./_region_.tex:133: Preview: Snippet 32 started.
-<-><->
-      
-l.133 $
-       V_p^i$ are defined by (\ref{eq:vpi_def}).
-Not a real error.
-
-./_region_.tex:133: Preview: Snippet 32 ended.(568615+274437x726478).
-<-><->
-      
-l.133 $V_p^i$
-              are defined by (\ref{eq:vpi_def}).
-Not a real error.
-
-[32]
-
-LaTeX Warning: Reference `eq:vpi_def' on page 1 undefined on input line 133.
-
-./_region_.tex:134: Preview: Snippet 33 started.
-<-><->
-      
-l.134 \begin{equation}
-                      
-Not a real error.
-
-./_region_.tex:137: Preview: Snippet 33 ended.(1362201+0x31699558).
-<-><->
-      
-l.137 \end{equation}
-                    
-Not a real error.
-
-[33
-
-]
-./_region_.tex:138: Preview: Snippet 34 started.
-<-><->
-      
-l.138 where $
-             \Omega^i$ is the initial volume of the continuum body to be
-Not a real error.
-
-./_region_.tex:138: Preview: Snippet 34 ended.(568615+0x718614).
-<-><->
-      
-l.138 where $\Omega^i$
-                       is the initial volume of the continuum body to be
-Not a real error.
-
-[34]
-./_region_.tex:140: Preview: Snippet 35 started.
-<-><->
-      
-l.140 point initial masses, $
-                             m_p^i$, momenta, $p_p^i$ ans stresses,
-Not a real error.
-
-./_region_.tex:140: Preview: Snippet 35 ended.(568615+274437x917556).
-<-><->
-      
-l.140 point initial masses, $m_p^i$
-                                   , momenta, $p_p^i$ ans stresses,
-Not a real error.
-
-[35]
-./_region_.tex:140: Preview: Snippet 36 started.
-<-><->
-      
-l.140 point initial masses, $m_p^i$, momenta, $
-                                               p_p^i$ ans stresses,
-Not a real error.
-
-./_region_.tex:140: Preview: Snippet 36 ended.(568615+274437x749783).
-<-><->
-      
-l.140 ...initial masses, $m_p^i$, momenta, $p_p^i$
-                                                   ans stresses,
-Not a real error.
-
-[36]
-./_region_.tex:141: Preview: Snippet 37 started.
-<-><->
-      
-l.141 $
-       \sigma_p^i$, must be defined. These properties of the continuum
-Not a real error.
-
-./_region_.tex:141: Preview: Snippet 37 ended.(568615+274437x766823).
-<-><->
-      
-l.141 $\sigma_p^i$
-                  , must be defined. These properties of the continuum
-Not a real error.
-
-[37]
-
-LaTeX Warning: Reference `eq:m_pi' on page 1 undefined on input line 143.
-
-
-LaTeX Warning: Reference `eq:p_pi' on page 1 undefined on input line 143.
-
-./_region_.tex:145: Preview: Snippet 38 started.
-<-><->
-      
-l.145 \begin{align}
-                   
-Not a real error.
-
-./_region_.tex:150: Preview: Snippet 38 ended.(3164384+0x31699558).
-<-><->
-      
-l.150 \end{align}
-                 
-Not a real error.
-
-[38
-
-
-]
-./_region_.tex:152: Preview: Snippet 39 started.
-<-><->
-      
-l.152 where $
-             \rho^i$
-Not a real error.
-
-./_region_.tex:152: Preview: Snippet 39 ended.(568615+148111x616378).
-<-><->
-      
-l.152 where $\rho^i$
-                    
-Not a real error.
-
-[39]
-./_region_.tex:154: Preview: Snippet 40 started.
-<-><->
-      
-l.154 \subsection
-                 {Discrete Solution Procedure}
-Not a real error.
-
-./_region_.tex:154: Preview: Snippet 40 ended.(543424+16908x31699558).
-<-><->
-      
-l.154 \subsection{Discrete Solution Procedure}
-                                              
-Not a real error.
-
-[40
-
-]
-./_region_.tex:157: Preview: Snippet 41 started.
-<-><->
-      
-l.157 Given a material point property, $
-                                        f_p$, a representation consistent
-Not a real error.
-
-./_region_.tex:157: Preview: Snippet 41 ended.(450560+210867x636406).
-<-><->
-      
-l.157 Given a material point property, $f_p$
-                                            , a representation consistent
-Not a real error.
-
-[41]
-./_region_.tex:160: Preview: Snippet 42 started.
-<-><->
-      
-l.160 \begin{equation}
-                      
-Not a real error.
-
-./_region_.tex:163: Preview: Snippet 42 ended.(1844416+0x31699558).
-<-><->
-      
-l.163 \end{equation}
-                    
-Not a real error.
-
-[42
-
-]
-
-LaTeX Warning: Reference `eq:wf_conserv_momentum3' on page 1 undefined on input line 169.
-
-
-LaTeX Warning: Reference `eq:mat_point_discretiz' on page 1 undefined on input line 170.
-
-./_region_.tex:176: Preview: Snippet 43 started.
-<-><->
-      
-l.176   \begin{eqnarray}
-                        
-Not a real error.
-
-./_region_.tex:184: Preview: Snippet 43 ended.(3321243+0x31699558).
-<-><->
-      
-l.184   \end{eqnarray}
-                      
-Not a real error.
-
-[43
-
-]
-./_region_.tex:188: Preview: Snippet 44 started.
-<-><->
-      
-l.188   \begin{align}
-                     
-Not a real error.
-
-./_region_.tex:194: Preview: Snippet 44 ended.(1889959+0x31699558).
-<-><->
-      
-l.194   \end{align}
-                   
-Not a real error.
-
-[44
-
-]
-./_region_.tex:196: Preview: Snippet 45 started.
-<-><->
-      
-l.196   \begin{align}
-                     
-Not a real error.
-
-./_region_.tex:203: Preview: Snippet 45 ended.(1889959+0x31699558).
-<-><->
-      
-l.203   \end{align}
-                   
-Not a real error.
-
-[45
-
-]
-
-LaTeX Warning: Reference `eq:sf_conserv_momentum' on page 1 undefined on input line 206.
-
-
-LaTeX Warning: Reference `eq:wf_conserv_momentum_GIMP' on page 1 undefined on input line 207.
-
-./_region_.tex:209: Preview: Snippet 46 started.
-<-><->
-      
-l.209 \begin{align}
-                   
-Not a real error.
-
-./_region_.tex:217: Preview: Snippet 46 ended.(1889959+0x31699558).
-<-><->
-      
-l.217 \end{align}
-                 
-Not a real error.
-
-[46
-
-]
-./_region_.tex:219: Preview: Snippet 47 started.
-<-><->
-      
-l.219 where $
-             \Omega_p$ denotes the current support of particle
-Not a real error.
-
-./_region_.tex:219: Preview: Snippet 47 ended.(421723+210867x833669).
-<-><->
-      
-l.219 where $\Omega_p$
-                       denotes the current support of particle
-Not a real error.
-
-[47]
-
-LaTeX Warning: Reference `eq:charact_volum' on page 1 undefined on input line 221.
-
-./_region_.tex:223: Preview: Snippet 48 started.
-<-><->
-      
-l.223 \begin{equation}
-                      
-Not a real error.
-
-./_region_.tex:226: Preview: Snippet 48 ended.(1525777+0x31699558).
-<-><->
-      
-l.226 \end{equation}
-                    
-Not a real error.
-
-[48
-
-]
-./_region_.tex:242: Preview: Snippet 49 started.
-<-><->
-      
-l.242 ...the FEM. The continuous representation, $
-                                                  g(x)$, of grid
-Not a real error.
-
-./_region_.tex:242: Preview: Snippet 49 ended.(426639+148111x1179643).
-<-><->
-      
-l.242 ...EM. The continuous representation, $g(x)$
-                                                  , of grid
-Not a real error.
-
-[49]
-./_region_.tex:243: Preview: Snippet 50 started.
-<-><->
-      
-l.243 data, $
-             g_i$ , then
-Not a real error.
-
-./_region_.tex:243: Preview: Snippet 50 ended.(307691+148111x586231).
-<-><->
-      
-l.243 data, $g_i$
-                  , then
-Not a real error.
-
-[50]
-./_region_.tex:244: Preview: Snippet 51 started.
-<-><->
-      
-l.244 \begin{equation}
-                      
-Not a real error.
-
-./_region_.tex:246: Preview: Snippet 51 ended.(1746315+0x31699558).
-<-><->
-      
-l.246 \end{equation}
-                    
-Not a real error.
-
-[51]
-./_region_.tex:248: Preview: Snippet 52 started.
-<-><->
-      
-l.248 Here $
-            N_i(x)$ is a computational grid shape function, which takes unit
-Not a real error.
-
-./_region_.tex:248: Preview: Snippet 52 ended.(426639+104018x1507664).
-<-><->
-      
-l.248 Here $N_i(x)$
-                    is a computational grid shape function, which takes unit
-Not a real error.
-
-[52]
-./_region_.tex:249: Preview: Snippet 53 started.
-<-><->
-      
-l.249 value at node $
-                     i$ and zero value all the other nodes. Further, the
-Not a real error.
-
-./_region_.tex:249: Preview: Snippet 53 ended.(435158+5242x263455).
-<-><->
-      
-l.249 value at node $i$
-                        and zero value all the other nodes. Further, the
-Not a real error.
-
-[53]
-./_region_.tex:252: Preview: Snippet 54 started.
-<-><->
-      
-l.252 \begin{equation}
-                      
-Not a real error.
-
-./_region_.tex:254: Preview: Snippet 54 ended.(1746315+0x31699558).
-<-><->
-      
-l.254 \end{equation}
-                    
-Not a real error.
-
-[54]
-./_region_.tex:256: Preview: Snippet 55 started.
-<-><->
-      
-l.256 \begin{eqnarray}
-                      
-Not a real error.
-
-./_region_.tex:260: Preview: Snippet 55 ended.(3144430+0x31699558).
-<-><->
-      
-l.260 \end{eqnarray}
-                    
-Not a real error.
-
-[55]
-./_region_.tex:262: Preview: Snippet 56 started.
-<-><->
-      
-l.262 \begin{eqnarray}
-                      
-Not a real error.
-
-./_region_.tex:266: Preview: Snippet 56 ended.(4601586+0x31699558).
-<-><->
-      
-l.266 \end{eqnarray}
-                    
-Not a real error.
-
-[56]
-./_region_.tex:268: Preview: Snippet 57 started.
-<-><->
-      
-l.268 \begin{equation}
-                      
-Not a real error.
-
-./_region_.tex:270: Preview: Snippet 57 ended.(1366185+0x31699558).
-<-><->
-      
-l.270 \end{equation}
-                    
-Not a real error.
-
-[57]
-./_region_.tex:272: Preview: Snippet 58 started.
-<-><->
-      
-l.272 \begin{eqnarray}
-                      
-Not a real error.
-
-./_region_.tex:274: Preview: Snippet 58 ended.(1889959+0x31699558).
-<-><->
-      
-l.274 \end{eqnarray}
-                    
-Not a real error.
-
-[58]
-./_region_.tex:277: Preview: Snippet 59 started.
-<-><->
-      
-l.277 \begin{eqnarray}
-                      
-Not a real error.
-
-./_region_.tex:284: Preview: Snippet 59 ended.(3772649+0x31699558).
-<-><->
-      
-l.284 \end{eqnarray}
-                    
-Not a real error.
-
-[59]
-./_region_.tex:290: Preview: Snippet 60 started.
-<-><->
-      
-l.290 \subsection
-                 {Observations}
-Not a real error.
-
-./_region_.tex:290: Preview: Snippet 60 ended.(543424+16908x31699558).
-<-><->
-      
-l.290 \subsection{Observations}
-                               
-Not a real error.
-
-[60
-
-]  !name(../../../mpm.tex) !offset(-249) 
-Package atveryend Info: Empty hook `BeforeClearDocument' on input line 303.
-Package atveryend Info: Empty hook `AfterLastShipout' on input line 303.
-Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 303.
-Package atveryend Info: Empty hook `AtEndAfterFileList' on input line 303.
+]  !name(../../../mpm.tex) !offset(-245) 
+Package atveryend Info: Empty hook `BeforeClearDocument' on input line 305.
+Package atveryend Info: Empty hook `AfterLastShipout' on input line 305.
+Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 305.
+Package atveryend Info: Empty hook `AtEndAfterFileList' on input line 305.
 
 
 LaTeX Warning: There were undefined references.
 
-Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 303.
+Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 305.
  ) 
 Here is how much of TeX's memory you used:
- 852 strings out of 485490
- 13332 string characters out of 6030870
- 210138 words of memory out of 5000000
- 11699 multiletter control sequences out of 15000+600000
- 67618 words of font info for 72 fonts, out of 8000000 for 9000
+ 818 strings out of 485653
+ 12823 string characters out of 3029729
+ 213353 words of memory out of 3000000
+ 11795 multiletter control sequences out of 15000+200000
+ 67201 words of font info for 70 fonts, out of 3000000 for 9000
  1141 hyphenation exceptions out of 8191
- 30i,16n,30p,307b,364s stack positions out of 5000i,500n,10000p,200000b,80000s
-{/usr/share/texlive/texmf-dist/fonts/enc/dvips/base/8r.enc}</usr/share/texlive/texmf-dist/fonts/type1/public/fourier/fourier-mcl.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/fourier/fourier-mex.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/fourier/fourier-ml.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/fourier/fourier-mlit.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/fourier/fourier-ms.pfb></usr/share/texlive/texmf-dist/fonts/type1/adobe/utopia/putb8a.pfb></usr/share/texlive/texmf-dist/fonts/type1/adobe/utopia/putr8a.pfb></usr/share/texlive/texmf-dist/fonts/type1/adobe/utopia/putri8a.pfb>
-Output written on _region_.pdf (60 pages, 76221 bytes).
+ 30i,9n,30p,310b,368s stack positions out of 5000i,500n,10000p,200000b,50000s
+{/usr/local/share/miktex-texmf/fonts/enc/dvips/base/8r.enc}</home/miguelmolin
+os/.miktex/texmfs/install/fonts/type1/public/fourier/fourier-mcl.pfb></home/mig
+uelmolinos/.miktex/texmfs/install/fonts/type1/public/fourier/fourier-mex.pfb></
+home/miguelmolinos/.miktex/texmfs/install/fonts/type1/public/fourier/fourier-ml
+.pfb></home/miguelmolinos/.miktex/texmfs/install/fonts/type1/public/fourier/fou
+rier-mlit.pfb></home/miguelmolinos/.miktex/texmfs/install/fonts/type1/public/fo
+urier/fourier-ms.pfb></usr/local/share/miktex-texmf/fonts/type1/adobe/utopia/pu
+tb8a.pfb></usr/local/share/miktex-texmf/fonts/type1/adobe/utopia/putr8a.pfb></u
+sr/local/share/miktex-texmf/fonts/type1/adobe/utopia/putri8a.pfb>
+Output written on _region_.pdf (29 pages, 70686 bytes).
 PDF statistics:
- 267 PDF objects out of 1000 (max. 8388607)
- 195 compressed objects within 2 object streams
- 28 named destinations out of 1000 (max. 500000)
+ 142 PDF objects out of 1000 (max. 8388607)
+ 9 named destinations out of 1000 (max. 500000)
  1 words of extra memory for PDF output out of 10000 (max. 10000000)
 
