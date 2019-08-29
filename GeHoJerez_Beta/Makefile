@@ -35,7 +35,7 @@ SOURCES = \
 
 # Transforms the contents of the src variable, changing all file suffixes
 # from .c to .o, thus constructing the object file list we need.
-OBJS = $(SOURCES:.c=.o)
+OBJS = $(SOURCES:.c=.c.o)
 
 #####################################################################
 
@@ -59,7 +59,7 @@ $(EXE): $(OBJS)
 	@echo "*************  GeHoJerez compiled !! ************"
 	@echo " "
 # Compile	
-%.o: %.c
+%.c.o: %.c
 	@echo "****************** Debug mode *******************"
 	$(CC) -o $@ -c $(DBFLAGS) $<
 	@echo "\t Compiled "$<" successfully !!"
