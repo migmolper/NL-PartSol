@@ -58,38 +58,38 @@ int main(int argc, char *argv[])
   /***********************************************************************/
   /******************* DEFINE FINITE ELEMENT MESH ************************/
   /***********************************************************************/
-  printf("************************************************* \n");
-  printf(" Generate the MPM mesh \n");
-  printf(" \t Defining background FEM mesh ... \n");
+  puts("*************************************************");
+  puts(" Generate the MPM mesh");
+  puts(" \t Defining background FEM mesh ...");
   FEM_Mesh = ReadGidMesh(FEM_MeshFileName);
-  printf(" \t DONE !!! \n");
-  printf(" \t Searching neighbours elements for each node ... \n");
+  puts(" \t DONE !!!");
+  puts(" \t Searching neighbours elements for each node ...");
   FEM_Mesh.NodeNeighbour = GetNodalConnectivity(FEM_Mesh);
-  printf(" \t DONE !!! \n");
-  printf(" \t Reading FEM boundary conditions ... \n");
+  puts(" \t DONE !!!");
+  puts(" \t Reading FEM boundary conditions ...");
   FEM_Mesh.Bounds = Set_FEM_BCC(argv[1], FEM_Mesh);
-  printf(" \t DONE !!! \n");
+  puts(" \t DONE !!! ");
   /***********************************************************************/
   /***********************************************************************/
 
   /***********************************************************************/
   /******************** DEFINE GAUSS-POINT MESH **************************/
   /***********************************************************************/
-  printf("************************************************* \n");
-  printf(" Generate the MPM mesh \n");
-  printf(" \t Defining MPM mesh of GPs ... \n");
+  puts("*************************************************");
+  puts(" Generate the MPM mesh");
+  puts(" \t Defining MPM mesh of GPs ...");
   GP_Mesh = Define_GP_Mesh(MPM_MeshFileName,Density,D_e);
-  printf(" \t DONE !!! \n");
-  printf(" \t Searching GPs in the FEM mesh ... \n");
+  puts(" \t DONE !!!");
+  puts(" \t Searching GPs in the FEM mesh ...");
   GlobalSearchGaussPoints(GP_Mesh,FEM_Mesh);
-  printf(" \t DONE !!! \n");
-  printf(" \t Reading MPM load cases ... \n");
+  puts(" \t DONE !!!");
+  puts(" \t Reading MPM load cases ...");
   GP_Mesh.F = Read_MPM_LoadCase_ExtForces(argv[1],GP_Mesh);
   GP_Mesh.B = Read_MPM_LoadCase_BodyForces(argv[1],GP_Mesh);
-  printf(" \t DONE !!! \n");
-  printf(" \t Reading MPM initial conditions ... \n");
+  puts(" \t DONE !!!");
+  puts(" \t Reading MPM initial conditions ...");
   Read_MPM_InitVal(argv[1],GP_Mesh);
-  printf(" \t DONE !!! \n");  
+  puts(" \t DONE !!!");  
   /***********************************************************************/
   /***********************************************************************/
 
@@ -120,23 +120,23 @@ int main(int argc, char *argv[])
 
   for(TimeStep = 0 ; TimeStep<NumTimeStep ; TimeStep++ ){
 
-    printf("************************************************* \n");
+    puts("*************************************************");
     printf("********************** STEP : %i \n",TimeStep);
-    printf("************************************************* \n");
+    puts("*************************************************");
     
     /* First step : Output Gauss-Points values to Paraview */
     if(TimeStep % ResultsTimeStep == 0){
-      printf("************************************************* \n");
-      printf(" First step : Output Gauss-Points values to Paraview \n");
-      printf(" \t WORKING ... \n");
+     puts("*************************************************");
+     puts(" First step : Output Gauss-Points values to Paraview");
+     puts(" \t WORKING ...");
       WriteVtk_MPM("MPM_VALUES",GP_Mesh,List_Fields,(int)TimeStep/ResultsTimeStep);
       printf(" \t DONE !!! \n");
     }
    
     /* Second step : Get the nodal mass and the momentum */
-    printf("************************************************* \n");
-    printf(" Second step : Get the nodal mass and the momentum \n");
-    printf(" \t WORKING ... \n");
+    puts("*************************************************");
+    puts(" Second step : Get the nodal mass and the momentum");
+    puts(" \t WORKING ...");
     Nodal_MASS_MOMENTUM = GetNodalMassMomentum(GP_Mesh,FEM_Mesh);
     Nodal_MASS.nV = Nodal_MASS_MOMENTUM.nM[0];
     Nodal_MOMENTUM.nM[0] = Nodal_MASS_MOMENTUM.nM[1];
@@ -144,79 +144,79 @@ int main(int argc, char *argv[])
     printf(" \t DONE !!! \n");
 
     /* Third step : Set the essential boundary conditions (over p)*/
-    printf("************************************************* \n");
-    printf(" Third step : Set the essential BCC (over P) \n");
-    printf(" \t WORKING ... \n");
+    puts("*************************************************");
+    puts(" Third step : Set the essential BCC (over P)");
+    puts(" \t WORKING ...");
     BCC_Nod_VALUE(FEM_Mesh,Nodal_MOMENTUM,TimeStep);
-    printf(" DONE !!! \n");
+    puts(" DONE !!!");
 
     /* Four step : Update the particle stress state */
-    printf("************************************************* \n");
-    printf(" Four step : Update the particle stress state \n");
+    puts("*************************************************");
+    puts(" Four step : Update the particle stress state");
   
     /* a) Get the grid nodal velocity */
-    printf(" \t a) Get the grid nodal velocity ... WORKING \n");
+    puts(" \t a) Get the grid nodal velocity ... WORKING");
     Nodal_VELOCITY = GetNodalVelocity(FEM_Mesh,Nodal_MOMENTUM, Nodal_MASS);
-    printf(" \t DONE !!! \n");
+    puts(" \t DONE !!!");
     /* b) Calculate the strain increment */
-    printf(" \t b) Calculate the strain increment ... WORKING \n");
+    puts(" \t b) Calculate the strain increment ... WORKING");
     UpdateGaussPointStrain(GP_Mesh,FEM_Mesh,Nodal_VELOCITY);
-    printf(" \t DONE !!! \n");
+    puts(" \t DONE !!!");
     /* c) Update the particle stress state */
-    printf(" \t c) Update the particle stress state ... WORKING \n");
+    puts(" \t c) Update the particle stress state ... WORKING");
     UpdateGaussPointStress(GP_Mesh);
-    printf(" \t DONE !!! \n");
+    puts(" \t DONE !!!");
 
     /* Five step : Calculate total forces */
-    printf("************************************************* \n");
-    printf(" Five step : Calculate total forces forces\n");
-    printf(" \t WORKING ... \n");
+    puts("*************************************************");
+    puts(" Five step : Calculate total forces forces");
+    puts(" \t WORKING ...");
     /* BCC_GP_Forces(GP_Mesh, BCC_Loads, TimeStep); */
     Nodal_TOT_FORCES = GetNodalForces(GP_Mesh,FEM_Mesh,TimeStep);
-    printf(" DONE !!! \n");    
+    puts(" DONE !!!");    
 
     /* Six step : Integrate the grid nodal momentum equation */
-    printf("************************************************* \n");
-    printf(" Six step : Integrate the grid nodal momentum equation\n");
-    printf(" \t WORKING ... \n");
+    puts("*************************************************");
+    puts(" Six step : Integrate the grid nodal momentum equation");
+    puts(" \t WORKING ...");
     UpdateGridNodalMomentum(FEM_Mesh,Nodal_MOMENTUM,Nodal_TOT_FORCES);
-    printf(" DONE !!! \n");
+    puts(" DONE !!!");
 
     /* Seven step : Update the particle velocity and position */
-    printf("************************************************* \n");
-    printf(" Seven step : Update the particle velocity and position\n");
-    printf(" \t WORKING ... \n");
+    puts("*************************************************");
+    puts(" Seven step : Update the particle velocity and position");
+    puts(" \t WORKING ...");
     UpdateVelocityAndPositionGP(GP_Mesh,FEM_Mesh,Nodal_MASS,
 				Nodal_MOMENTUM,Nodal_TOT_FORCES);
-    printf(" DONE !!! \n");
+    puts(" DONE !!!");
 
     
     /* Eight step : Search the GP in the mesh */
-    printf("************************************************* \n");
-    printf(" Eight step : Search the GP in the mesh \n");
-    printf(" \t WORKING ... \n");
+    puts("*************************************************");
+    puts(" Eight step : Search the GP in the mesh");
+    puts(" \t WORKING ...");
     LocalSearchGaussPoints(GP_Mesh,FEM_Mesh);
-    printf(" DONE !!! \n");
+    puts(" DONE !!!");
 
     /* Nine step : Print nodal values */
     if(TimeStep % ResultsTimeStep == 0){
-      printf("************************************************* \n");
-      printf(" Nine step : Print nodal values \n");
-      printf(" \t WORKING ... \n");
+      puts("*************************************************");
+      puts(" Nine step : Print nodal values");
+      puts(" \t WORKING ...");
       WriteVtk_FEM("Mesh",FEM_Mesh,Nodal_MOMENTUM,(int)TimeStep/ResultsTimeStep);
-      printf(" DONE !!! \n");
+      puts(" DONE !!!");
     }
     
     /* Ten step : Store all the material properties in the particles
        so that the deformed grid can be discarted */
-    printf("************************************************* \n");
-    printf(" Ten step : Reset nodal values of the mesh \n");
-    printf(" \t WORKING ... \n");
+    puts("*************************************************");
+    puts(" Ten step : Reset nodal values of the mesh");
+    puts(" \t WORKING ...");
      /* Reset nodal values */
     FreeMat(Nodal_MASS_MOMENTUM);
     FreeMat(Nodal_VELOCITY);
     FreeMat(Nodal_TOT_FORCES);
-    printf(" DONE !!! \n");
+    puts(" DONE !!!");
 
   } /* End of temporal integration */
   
@@ -230,7 +230,7 @@ int main(int argc, char *argv[])
   printf("End of the big loop, end_t = %ld\n", end_t);
   total_t = (double)(end_t - start_t) / CLOCKS_PER_SEC;
   printf("Total time taken by CPU: %ld\n", total_t  );
-  printf("Exiting of the program...\n");
+  puts("Exiting of the program...");
      
       
   exit(EXIT_SUCCESS);
