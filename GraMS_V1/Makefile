@@ -12,7 +12,7 @@ TESTDIR = test
 INSTDIR = /usr/bin
 
 # Name of the program
-EXE = GeHoJerez_V1_Linux
+EXE = GraMS
 
 # Compiler and preprocesor
 CC = $(GCC_ROOT)/gcc
@@ -56,7 +56,7 @@ $(EXE): $(OBJS)
 	@echo "*************************************************"
 	$(CC) -o $@ $^ $(LDFLAGS)
 	@echo " "
-	@echo "*************  GeHoJerez compiled !! ************"
+	@echo "***** GRAnular Mechanics Solver compiled !! *****"
 	@echo " "
 # Compile	
 %.c.o: %.c
