@@ -7,17 +7,8 @@
 #define GlobalVariables
 #endif
 
+GaussPoint Define_GP_Mesh(char *, double);
 
-GaussPoint Define_GP_Mesh(char *, double, Matrix);
+GaussPoint InitializeGP(char *, Mesh, Matrix);
 
-Matrix GetMassMatrix_L(Mesh,GaussPoint);
 
-void GaussPointsToMesh(Mesh,GaussPoint,
-		       Matrix,Matrix,Matrix);
-
-void MeshToGaussPoints(Mesh,GaussPoint,
-		       Matrix,Matrix,Matrix);
-
-/* void Get_Lagrangian_CG_Tensor(GaussPoint *); */
-
-/* void Get_Eulerian_CG_Tensor(GaussPoint *); */

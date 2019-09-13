@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "../ToolsLib/Utils.h"
+#include "../MathTools/MathTools.h"
 
 #ifndef TypeDefinitions
 #define TypeDefinitions

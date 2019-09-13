@@ -3,7 +3,7 @@
 #include <string.h>
 #include "../ToolsLib/TypeDefinitions.h"
 #include "../ToolsLib/GlobalVariables.h"
-#include "../ToolsLib/Utils.h"
+#include "../MathTools/MathTools.h"
 #include "InOutFun.h"
 
 #define MAXVAL(A,B) ((A)>(B) ? (A) : (B))

@@ -3,8 +3,8 @@
 #include <string.h>
 #include "../ToolsLib/TypeDefinitions.h"
 #include "../ToolsLib/GlobalVariables.h"
-#include "../ElementsFunctions/ElementTools.h"
-#include "../ToolsLib/Utils.h"
+#include "../MeshTools/MeshTools.h"
+#include "../MathTools/MathTools.h"
 #include "InOutFun.h"
 
 Mesh ReadGidMesh(char * MeshName)

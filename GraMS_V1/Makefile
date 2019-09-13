@@ -25,11 +25,12 @@ SOURCES = \
 	$(wildcard src/ToolsLib/*.c)\
 	$(wildcard src/InOutFun/*.c)\
 	$(wildcard src/Constitutive/*.c)\
-	$(wildcard src/Solvers/*.c)\
-	$(wildcard src/ElementsFunctions/*.c)\
+	$(wildcard src/MathTools/*.c)\
+	$(wildcard src/MeshTools/*.c)\
 	$(wildcard src/GaussPointsFunctions/*.c)\
 	$(wildcard src/MPM_Subroutines/*.c)\
-	$(wildcard src/Boundary_Conditions/*.c)
+	$(wildcard src/Boundary_Conditions/*.c)\
+	$(wildcard src/NumSchemes/*.c)
 
 #####################################################################
 
@@ -94,45 +95,45 @@ Benchmarks: Disco2D Cuadrado2D Barra1D_caida Barra1D_traccion Dyka1D_Blanc
 # Caso Disco
 Disco2D:
 	@echo "**************** Run test case ******************"
-	$ ./$(EXE) $(TESTDIR)/CasoDisco/ejemplo.dat
-	# $(DEBDIR)/./$(EXE) $(TESTDIR)/CasoDisco/ejemplo.dat
+	$ ./$(EXE) $(TESTDIR)/CasoDisco/ejemplo.gdf
+	# $(DEBDIR)/./$(EXE) $(TESTDIR)/CasoDisco/ejemplo.gdf
 	@echo " "
 	@echo "*************** Test case passed ****************"
 
 # Caso cuadrado
 Cuadrado2D:
 	@echo "**************** Run test case ******************"
-	$ ./$(EXE) $(TESTDIR)/CasoCuadrado/ejemplo.dat
-	# $(DEBDIR)/./$(EXE) $(TESTDIR)/CasoCuadrado/ejemplo.dat
+	$ ./$(EXE) $(TESTDIR)/CasoCuadrado/ejemplo.gdf
+	# $(DEBDIR)/./$(EXE) $(TESTDIR)/CasoCuadrado/ejemplo.gdf
 	@echo " "
 	@echo "*************** Test case passed ****************"
 
 # Caso barra caida 1D
 Barra1D_caida:
 	@echo "**************** Run test case ******************"
-	# $(DEBDIR)/./$(EXE) $(TESTDIR)/CasoBarraVertical/ejemplo.dat
-	$ ./$(EXE) $(TESTDIR)/CasoBarraVertical/ejemplo.dat
+	# $(DEBDIR)/./$(EXE) $(TESTDIR)/CasoBarraVertical/ejemplo.gdf
+	$ ./$(EXE) $(TESTDIR)/CasoBarraVertical/ejemplo.gdf
 	@echo " "
 	@echo "*************** Test case passed ****************"
 
 # Caso barra traccion 1D
 Barra1D_traccion:
 	@echo "**************** Run test case ******************"
-	# $(DEBDIR)/./$(EXE) $(TESTDIR)/CasoBarraVertical/ejemplo.dat
-	$ ./$(EXE) $(TESTDIR)/BarraTraccion1D/ejemplo.dat
+	# $(DEBDIR)/./$(EXE) $(TESTDIR)/CasoBarraVertical/ejemplo.gdf
+	$ ./$(EXE) $(TESTDIR)/BarraTraccion1D/ejemplo.gdf
 	@echo " "
 	@echo "*************** Test case passed ****************"
 # Caso barra Dyka
 Dyka1D:
 	@echo "**************** Run test case ******************"
-	$ ./$(EXE) $(TESTDIR)/CasoDyka/ejemplo.dat
+	$ ./$(EXE) $(TESTDIR)/CasoDyka/ejemplo.gdf
 	@echo " "
 	@echo "*************** Test case passed ****************"
 
 # Caso barra Dyka Thomas Blanc thesis
 Dyka1D_Blanc:
 	@echo "**************** Run test case ******************"
-	$ ./$(EXE) $(TESTDIR)/CasoDyka_Pastor_Blanc/ejemplo.dat
+	$ ./$(EXE) $(TESTDIR)/CasoDyka_Pastor_Blanc/ejemplo.gdf
 	@echo " "
 	@echo "*************** Test case passed ****************"
 

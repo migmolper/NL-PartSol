@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "../ToolsLib/TypeDefinitions.h"
-#include "../ToolsLib/Utils.h"
+#include "../MathTools/MathTools.h"
 
 Matrix LinearElastic1D(double ElasticModulus_Mat){
 

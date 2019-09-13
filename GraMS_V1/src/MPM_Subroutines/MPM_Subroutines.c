@@ -4,7 +4,7 @@
 #include <math.h>
 #include "../ToolsLib/TypeDefinitions.h"
 #include "../ToolsLib/GlobalVariables.h"
-#include "../ElementsFunctions/ElementTools.h"
+#include "../MeshTools/MeshTools.h"
 #include "../InOutFun/InOutFun.h"
 #include "MPM_Subroutines.h"
 
@@ -42,15 +42,17 @@ void GlobalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh){
       /* 4º Fill the poligon Matrix */
       for(int k = 0 ; k<FEM_Mesh.NumNodesElem ; k++){
 	for(int l = 0 ; l<NumberDimensions ; l++){
-	  Poligon.nM[k][l] = FEM_Mesh.Coordinates.nM[Poligon_Connectivity[k]][l];
+	  Poligon.nM[k][l] =
+	    FEM_Mesh.Coordinates.nM[Poligon_Connectivity[k]][l];
 	}
       }
       /* 5º Check out if the GP is in the Element */
       if(InOut_Poligon(X_GC_GP,Poligon) == 1){
-	/* 6º If the GP is in the element, set the index of the position and 
-	 update the array to set if an element is active or not */
-
-	/* 6º If the GP is in the element, set the index of the position and 
+	/* 6º If the GP is in the element, 
+	   set the index of the position and 
+	   update the array to set if an element is active or not */
+	/* 6º If the GP is in the element,
+	   set the index of the position and 
 	   update the array to set if an element is active or not */
 	for(int k = 0 ; k<FEM_Mesh.NumNodesElem ; k++){
 	  FEM_Mesh.ActiveNode[Poligon_Connectivity[k]] += 1;
@@ -59,11 +61,13 @@ void GlobalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh){
 
 	/* 7º If the GP is in the element, get its natural coordinates */
 	X_EC_GP.nV = MPM_Mesh.Phi.x_EC.nM[i];
-	X_EC_GP = GetNaturalCoordinates(X_EC_GP,X_GC_GP,Poligon);
+	GetNaturalCoordinates(X_EC_GP,X_GC_GP,Poligon);
       }      
     } /* Loop over the elements */
 
   } /* Loop over the GP */
+
+  
 
   /* 8º Free memory */
   FreeMat(Poligon);
@@ -87,7 +91,8 @@ void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
   X_EC_GP.N_rows = NumberDimensions;
   X_EC_GP.N_cols = 1;
   X_EC_GP.n = NAN;
-  Matrix Element_GP_Coordinates = MatAllocZ(FEM_Mesh.NumNodesElem,NumberDimensions);
+  Matrix Element_GP_Coordinates =
+    MatAllocZ(FEM_Mesh.NumNodesElem,NumberDimensions);
   int * Element_GP_Connectivity;
   int Element_GP_i; /* Index of the initial element */
   Matrix V_GP; /* Velocity array */
@@ -120,7 +125,8 @@ void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
     /* 5º Get the connectivity of the initial element  */
     Element_GP_Connectivity = FEM_Mesh.Connectivity[Element_GP_i];
 
-    /* 6º Fill the matrix with the nodal coordinates of the initial element */
+    /* 6º Fill the matrix with the nodal coordinates of 
+       the initial element */
     for(int j = 0 ; j<FEM_Mesh.NumNodesElem ; j++){
       for(int k = 0 ; k<NumberDimensions ; k++){
 	Element_GP_Coordinates.nM[j][k] =
@@ -130,7 +136,8 @@ void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 
     /* 6º Check if the GP is in the same element */
     if(InOut_Poligon(X_GC_GP,Element_GP_Coordinates) == 1){
-      /* 6aº If the GP is in the element, set the index of the position and
+      /* 6aº If the GP is in the element,
+	 set the index of the position and
 	 update the array to set if an element is active or not,
 	 it is not necessary to update the index of the element */
       for(int j = 0 ; j<FEM_Mesh.NumNodesElem ; j++){
@@ -138,7 +145,7 @@ void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
       }
       /* 6bº If the GP is in the element, get its natural coordinates */
       X_EC_GP.nV = MPM_Mesh.Phi.x_EC.nM[i];     
-      X_EC_GP = GetNaturalCoordinates(X_EC_GP,X_GC_GP,Element_GP_Coordinates);
+      GetNaturalCoordinates(X_EC_GP,X_GC_GP,Element_GP_Coordinates);
     }
     /* 7º If the GP is not in the same element, search in the neighbour */
     else{
@@ -223,13 +230,14 @@ void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 	    FEM_Mesh.ActiveNode[Element_GP_Connectivity[k]] += 1;
 	  }
 	  MPM_Mesh.Element_id[i] = SearchList[j];
-	  /* If the GP is in the element, set to zero the initial element coordinates */
+	  /* If the GP is in the element, 
+	     set to zero the initial element coordinates */
 	  for(int k = 0 ; k<NumberDimensions ; k++){
 	    MPM_Mesh.Phi.x_EC.nM[i][k] = 0;
 	  }
 	  /* Get its natural coordinates */
 	  X_EC_GP.nV = MPM_Mesh.Phi.x_EC.nM[i];
-	  X_EC_GP = GetNaturalCoordinates(X_EC_GP,X_GC_GP,Element_GP_Coordinates);
+	  GetNaturalCoordinates(X_EC_GP,X_GC_GP,Element_GP_Coordinates);
 	  /* If this is true, stop the search */
 	  break;
 	}
@@ -237,8 +245,9 @@ void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
       }
 
       if(Element_GP_i == MPM_Mesh.Element_id[i]){
-	printf("Error in LocalSearchGaussPoints() : GP %i is not in the neighbours of %i !!! \n",
-	       i,SearchVertex);
+	printf(" %s %i %s %i !!! \n",
+	       "Error in LocalSearchGaussPoints() : GP",i,
+	       "is not in the neighbours of",SearchVertex);
 	exit(0);
       }
       
@@ -512,20 +521,29 @@ Matrix GetNodalForces(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int TimeStep)
   Matrix B, B_T;
   Matrix Elem_Coords = MatAllocZ(FEM_Mesh.NumNodesElem,NumberDimensions);
   strcpy(Elem_Coords.Info,FEM_Mesh.TypeElem);
-  Matrix StressTensor_GP; /* Stress tensor of a Gauss Point */
+
+  /* Stress tensor of a Gauss Point */
+  Matrix StressTensor_GP; 
   StressTensor_GP.N_rows = MPM_Mesh.Phi.Stress.N_cols;
   StressTensor_GP.N_cols = 1;
   StressTensor_GP.nM = NULL;
-  Matrix Div_Stress_Tensor; /* Internal forces for each node in a element (by a GP)*/  
-  Matrix Nodal_TOT_FORCES; /* Total forces */
+
+  /* Internal forces for each node in a element (by a GP)*/  
+  Matrix Div_Stress_Tensor;
+
+  /* Total forces */
+  Matrix Nodal_TOT_FORCES; 
   Nodal_TOT_FORCES = MatAllocZ(NumberDimensions,FEM_Mesh.NumNodesMesh);
   strcpy(Nodal_TOT_FORCES.Info,"Nodal_TOT_FORCES");
+
+  /* Contact forces */
   Matrix Contact_Forces_t;
   Contact_Forces_t = MatAllocZ(NumberDimensions,MPM_Mesh.NumGP);
+
+  /* Body Forces */
   Matrix Body_Forces_t;
   Body_Forces_t = MatAllocZ(NumberDimensions,MPM_Mesh.NumGP);
   int GP_Force;
-
   
   /* 1º Fill matrix with the body forces for TimeStep */ 
   if(MPM_Mesh.B.NumLoads>0){

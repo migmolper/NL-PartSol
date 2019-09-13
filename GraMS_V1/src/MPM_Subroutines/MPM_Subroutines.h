@@ -7,10 +7,6 @@
 #define TypeDefinitions
 #endif
 
-/* Mesh RectangularMesh(double, double, */
-/* 		     double, double, */
-/* 		     double, double, char *); */
-
 
 void GlobalSearchGaussPoints(GaussPoint, Mesh);
 
