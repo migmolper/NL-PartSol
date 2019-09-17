@@ -262,6 +262,28 @@ void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 
  
 }
+
+/*********************************************************************/
+
+/* int SearchGaussPoint(int idx0, Matrix X_GP, Matrix V_GP, Mesh FEM_Mesh){ */
+
+/*   int idx; */
+  
+/*   switch( idx0 >= 0 ? 0 : 1){ */
+/*   case 0:  */
+/*     idx = LocalSearchGaussPoints(idx0, X_GP, V_GP, FEM_Mesh); */
+/*     break; */
+/*   case 1: */
+/*     idx = GlobalSearchGaussPoints(X_GP, FEM_Mesh); */
+/*     break; */
+/*   default : */
+/*     puts("Error in SearchGaussPoint() : Logical error"); */
+/*     exit(0); */
+/*   } */
+  
+/*   return idx; */
+/* } */
+
 /*********************************************************************/
 
 

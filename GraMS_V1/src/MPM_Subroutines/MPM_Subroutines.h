@@ -12,6 +12,8 @@ void GlobalSearchGaussPoints(GaussPoint, Mesh);
 
 void LocalSearchGaussPoints(GaussPoint, Mesh);
 
+int SearchGaussPoint(int, Matrix, Matrix, Mesh);
+
 Matrix GetNodalMassMomentum(GaussPoint, Mesh);
 
 Matrix GetNodalVelocity(Mesh, Matrix, Matrix);
