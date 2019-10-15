@@ -38,6 +38,8 @@ GaussPoint Define_GP_Mesh(char * MPM_GID_MeshName,
   /* Index of the Element */
   MPM_Mesh.Element_id =
     (int *)Allocate_ArrayZ(MPM_Mesh.NumGP,sizeof(int));
+  MPM_Mesh.Nodes =
+    (int **)Allocate_MatrixZ(MPM_Mesh.NumGP,4,sizeof(int));
 
   /* Coordinates of the GP (Global/Local)*/
   MPM_Mesh.Phi.x_GC = MatAllocZ(MPM_Mesh.NumGP,3);
@@ -154,6 +156,10 @@ GaussPoint Define_GP_Mesh(char * MPM_GID_MeshName,
       
     /* Local coordinates of the element */
     MPM_Mesh.Element_id[i] = -999;
+    for(int j = 0 ; j<4 ; j++){
+      MPM_Mesh.Nodes[i][j] = -999;
+    }
+
     /* Location in the natural coordinates
        of the element (Init to zero) */
     MPM_Mesh.Phi.x_EC.nM[i][0] = 0.0;

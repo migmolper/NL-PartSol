@@ -145,6 +145,8 @@ typedef struct {
   int NumGP;
   /* Identification of the element where it is */
   int * Element_id;
+  /* List of tributary nodes */
+  int ** Nodes; 
   /* List of Fields */
   Fields Phi;
   /* Constitutive response */

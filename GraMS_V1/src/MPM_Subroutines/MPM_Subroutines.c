@@ -51,13 +51,14 @@ void GlobalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh){
 	/* 6º If the GP is in the element, 
 	   set the index of the position and 
 	   update the array to set if an element is active or not */
-	/* 6º If the GP is in the element,
-	   set the index of the position and 
-	   update the array to set if an element is active or not */
 	for(int k = 0 ; k<FEM_Mesh.NumNodesElem ; k++){
 	  FEM_Mesh.ActiveNode[Poligon_Connectivity[k]] += 1;
-	}	
+	}
 	MPM_Mesh.Element_id[i] = j;
+	/* ACTUALIZACION */
+	for(int k = 0 ; k<4 ; k++){
+	  MPM_Mesh.Nodes[i][k] = Poligon_Connectivity[k];
+	}
 
 	/* 7º If the GP is in the element, get its natural coordinates */
 	X_EC_GP.nV = MPM_Mesh.Phi.x_EC.nM[i];
@@ -123,7 +124,8 @@ void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
     Element_GP_i = MPM_Mesh.Element_id[i];
 
     /* 5º Get the connectivity of the initial element  */
-    Element_GP_Connectivity = FEM_Mesh.Connectivity[Element_GP_i];
+    //    Element_GP_Connectivity = FEM_Mesh.Connectivity[Element_GP_i];
+    Element_GP_Connectivity = MPM_Mesh.Nodes[i];
 
     /* 6º Fill the matrix with the nodal coordinates of 
        the initial element */
@@ -230,6 +232,11 @@ void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 	    FEM_Mesh.ActiveNode[Element_GP_Connectivity[k]] += 1;
 	  }
 	  MPM_Mesh.Element_id[i] = SearchList[j];
+	  /* ACTUALIZACION */
+	  for(int k = 0 ; k<4 ; k++){
+	    MPM_Mesh.Nodes[i][k] = Element_GP_Connectivity[k];
+	  }
+	  
 	  /* If the GP is in the element, 
 	     set to zero the initial element coordinates */
 	  for(int k = 0 ; k<NumberDimensions ; k++){
@@ -292,7 +299,7 @@ Matrix GetNodalMassMomentum(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 
   /* 0º Variable declaration */
   Matrix Nodal_FIELDS; /* Output */
-  int Elem_GP; /* Index of the element */
+  //  int Elem_GP; /* Index of the element */
   int * Elem_Nods;
   Matrix X_EC_GP;
   X_EC_GP.N_rows = NumberDimensions;
@@ -309,10 +316,11 @@ Matrix GetNodalMassMomentum(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
     X_EC_GP.nV = MPM_Mesh.Phi.x_EC.nM[i];
 
     /* 4º Get the index of the element */
-    Elem_GP = MPM_Mesh.Element_id[i];
+    //    Elem_GP = MPM_Mesh.Element_id[i];
 
     /* 5º Nodes of the element */
-    Elem_Nods = FEM_Mesh.Connectivity[Elem_GP];
+    //    Elem_Nods = FEM_Mesh.Connectivity[Elem_GP];
+    Elem_Nods = MPM_Mesh.Nodes[i];
 
     /* 7º Evaluate the shape function in the GP */
     N_Ref_GP = FEM_Mesh.N_ref(X_EC_GP);
@@ -388,7 +396,7 @@ void UpdateGaussPointStrain(GaussPoint MPM_Mesh,
   Matrix X_EC_GP; /* Element coordinates of the Gauss-Point */
   X_EC_GP.N_rows = NumberDimensions;
   X_EC_GP.N_cols = 1;
-  int Elem_GP; /* Index of the element of the Gauss-Point */
+  //  int Elem_GP; /* Index of the element of the Gauss-Point */
   int * Elem_Nods; /* Connectivity of the element */
   Matrix Elem_Coords; /* Coordinates of the nodes of the element */
   Matrix Nodal_VELOCITY_Elem; /* Array with the nodal velocities */
@@ -407,10 +415,11 @@ void UpdateGaussPointStrain(GaussPoint MPM_Mesh,
     X_EC_GP.nV = MPM_Mesh.Phi.x_EC.nM[i];
 
     /* 3º Get the index of the element */
-    Elem_GP = MPM_Mesh.Element_id[i];
+    //    Elem_GP = MPM_Mesh.Element_id[i];
 
     /* 4º Nodes of the element */
-    Elem_Nods = FEM_Mesh.Connectivity[Elem_GP];
+    //    Elem_Nods = FEM_Mesh.Connectivity[Elem_GP];
+    Elem_Nods = MPM_Mesh.Nodes[i];
 
     /* 5º Coordinates of each node for the element */
     for(int j = 0 ; j<FEM_Mesh.NumNodesElem ; j++){
@@ -534,7 +543,7 @@ Matrix GetNodalForces(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int TimeStep)
 {
   
   /* 0º Auxiliar variable declaration */
-  int Elem_GP; /* Index of the element */
+  //  int Elem_GP; /* Index of the element */
   int * Elem_Nods;
   Matrix X_EC_GP;
   X_EC_GP.N_rows = NumberDimensions;
@@ -619,10 +628,11 @@ Matrix GetNodalForces(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int TimeStep)
     X_EC_GP.nV = MPM_Mesh.Phi.x_EC.nM[i];
 
     /* 5º Get the index of the element */
-    Elem_GP = MPM_Mesh.Element_id[i];
+    //    Elem_GP = MPM_Mesh.Element_id[i];
 
     /* 6º Nodes of the element */
-    Elem_Nods = FEM_Mesh.Connectivity[Elem_GP];
+    //    Elem_Nods = FEM_Mesh.Connectivity[Elem_GP];
+    Elem_Nods = MPM_Mesh.Nodes[i];
 
     /* 7º Coordinates of the element */
     for(int j = 0 ; j<FEM_Mesh.NumNodesElem ; j++){
@@ -713,7 +723,7 @@ void UpdateVelocityAndPositionGP(GaussPoint MPM_Mesh,
   Matrix X_EC_GP; /* Local coordinates of the Gauss-Point */
   X_EC_GP.N_rows = NumberDimensions;
   X_EC_GP.N_cols = 1;
-  int Elem_GP; /* Index of the element */
+  //  int Elem_GP; /* Index of the element */
   int * Elem_Nods; /* Connectivity of the element */
   Matrix N_Ref_GP; /* Value of the shape-function in the GP */
 
@@ -724,10 +734,11 @@ void UpdateVelocityAndPositionGP(GaussPoint MPM_Mesh,
     X_EC_GP.nV = MPM_Mesh.Phi.x_EC.nM[i];
 
     /* 3º Get the index of the element */
-    Elem_GP = MPM_Mesh.Element_id[i];
+    //    Elem_GP = MPM_Mesh.Element_id[i];
 
     /* Get the connectivity of the element */
-    Elem_Nods = FEM_Mesh.Connectivity[Elem_GP];
+    //    Elem_Nods = FEM_Mesh.Connectivity[Elem_GP];
+    Elem_Nods = MPM_Mesh.Nodes[i];
 
     /* 4º Evaluate the shape function in the coordinates of the GP */
     N_Ref_GP = FEM_Mesh.N_ref(X_EC_GP);
