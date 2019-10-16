@@ -9,7 +9,7 @@ Mesh InitializeMesh(char * GDF);
 
 /* Functions definitions :*/
 int ** GetNodalConnectivity(Mesh FEM_Mesh);
-Matrix Get_B_GP(Matrix, Matrix);
+Matrix Get_B_GP(Matrix);
 void GetNaturalCoordinates(Matrix,Matrix,Matrix);
 void BCC_Nod_VALUE(Mesh, Matrix, int);
 

@@ -4,6 +4,7 @@
   basic functionalities of C with them : 
 
   -> Matrix : Usefull structure to deal with algebraic operations.
+  -> Table : Table of integers.
   -> Curve : Structure created for dealing with complex boundary
   conditions and loads.
   -> BoundaryConditions : Structure that store all the information
@@ -39,6 +40,16 @@ typedef struct{
   double ** nM; /* Value if is a matrix */
   char Info [100]; /* Aditional information */
 } Matrix;
+
+/*******************************************************/
+
+typedef struct{
+  int N_rows; /* Number of rows */
+  int N_cols; /* Number of columns */
+  int * nV; /* 1D list */
+  int ** nM; /* 2D list */
+  char Info [100]; /* Aditional information */
+} Table;
 
 /*******************************************************/
 
@@ -119,6 +130,8 @@ typedef struct {
   Matrix x_GC;  
   /* Position in element coordiantes */
   Matrix x_EC;
+  /* Voxel shape */
+  Matrix lp;
   /* Density field */
   Matrix rho;
   /* Mass field */
@@ -145,8 +158,8 @@ typedef struct {
   int NumGP;
   /* Identification of the element where it is */
   int * Element_id;
-  /* List of tributary nodes */
-  int ** Nodes; 
+  /* Table of tributary nodes */
+  Table Nodes;
   /* List of Fields */
   Fields Phi;
   /* Constitutive response */
@@ -157,7 +170,6 @@ typedef struct {
   LoadCase B;
 
 } GaussPoint;
-
 
 /*******************************************************/
 
@@ -184,9 +196,11 @@ typedef struct {
   /*** BOUNDARIES ***/
   Boundaries Bounds;
   
-  /*** INDIVIDUAL ELEMENT PROPERTIES ***/
+  /*** ELEMENT PROPERTIES ***/
   /* Number of dimensions of the element */
   int Dimension;
+  /* Size of the element (COURANT) */
+  double DeltaX;
   /* Name of the element */
   char TypeElem [20];
   /* Number of nodes of the element */

@@ -393,45 +393,52 @@ void UpdateGaussPointStrain(GaussPoint MPM_Mesh,
 */
 {
   /* 0º Define variables */
-  Matrix X_EC_GP; /* Element coordinates of the Gauss-Point */
-  X_EC_GP.N_rows = NumberDimensions;
-  X_EC_GP.N_cols = 1;
+  Matrix X_GP; /* Element coordinates of the Gauss-Point */
+  X_GP.N_rows = NumberDimensions;
+  X_GP.N_cols = 1;
+  Matrix lp; /* Particle voxel */
   //  int Elem_GP; /* Index of the element of the Gauss-Point */
   int * Elem_Nods; /* Connectivity of the element */
   Matrix Elem_Coords; /* Coordinates of the nodes of the element */
   Matrix Nodal_VELOCITY_Elem; /* Array with the nodal velocities */
+  Matrix dNdx_GP; /* Matrix with the nodal derivatives of the GP */
   Matrix B; /* B marix to get the deformation */
   Matrix Increment_Strain_GP; /* Vectoriced Strain tensor */
   double Incr_TraceStrain; /* Increment of the trace of the Stress tensor */
 
   /* 1º Allocate auxiliar variables */
-  Elem_Coords = MatAllocZ(FEM_Mesh.NumNodesElem,NumberDimensions);
-  strcpy(Elem_Coords.Info,FEM_Mesh.TypeElem);
   Nodal_VELOCITY_Elem = MatAllocZ(FEM_Mesh.NumNodesElem*NumberDimensions,1);
   
   for(int i = 0 ; i<MPM_Mesh.NumGP ; i++){
-
-    /* 2º Get the coordinates of the GP in the Element */
-    X_EC_GP.nV = MPM_Mesh.Phi.x_EC.nM[i];
-
-    /* 3º Get the index of the element */
-    //    Elem_GP = MPM_Mesh.Element_id[i];
-
-    /* 4º Nodes of the element */
-    //    Elem_Nods = FEM_Mesh.Connectivity[Elem_GP];
+    
+    /* 2º Define element of the GP */
     Elem_Nods = MPM_Mesh.Nodes[i];
-
-    /* 5º Coordinates of each node for the element */
+    Elem_Coords = MatAllocZ(MPM_Mesh.Nodes.nV[i],NumberDimensions);
     for(int j = 0 ; j<FEM_Mesh.NumNodesElem ; j++){
       for(int k = 0 ; k<FEM_Mesh.Dimension ; k++){
 	Elem_Coords.nM[j][k] = FEM_Mesh.Coordinates.nM[Elem_Nods[j]][k];
       }
     }
+    
+    /* 3º Get the B matrix */
+    /* 3ºa Get the element gradient */
+    if(strcmp(FEM_Mesh.TypeElem,"Quadrilateral") == 0){
+      X_GP.nV = MPM_Mesh.Phi.x_EC.nM[i];
+      dNdx_GP = Get_dNdX_Q4(X_GP,Elem_Coords);
+    }
+    else if(strcmp(FEM_Mesh.TypeElem,"GIMP2D") == 0){
+      X_GP.nV = MPM_Mesh.Phi.x_C.nM[i];
+      lp.nV = MPM_Mesh.Phi.lp.nM[i];
+      dNdx_GP = dGIMP_2D(X_GP,lp,Elem_Coords,FEM_Mesh.DeltaX);
+    }
+    /* Free memory */
+    FreeMat(Elem_Coords);
+    /* 3ºb Calcule the B matrix */
+    B = Get_B_GP(dNdx_GP);
+    /* 3ºc Free shape-function derivatives */
+    FreeMat(dNdx_GP);
 
-    /* 6º Get the B matrix */
-    B = Get_B_GP(X_EC_GP,Elem_Coords);
-
-    /* 7º Get the nodal velocities in the element */
+    /* 4º Get the nodal velocities in the element */
     for(int j = 0 ; j<FEM_Mesh.NumNodesElem ; j++){
       for(int k = 0 ; k<NumberDimensions ; k++){
 	Nodal_VELOCITY_Elem.nV[j*NumberDimensions + k] =
@@ -440,36 +447,34 @@ void UpdateGaussPointStrain(GaussPoint MPM_Mesh,
     }
 
 
-    /* 8º Multiply B by the velocity array and by the time step to get
+    /* 4º Multiply B by the velocity array and by the time step to get
        the increment stress tensor */
     Increment_Strain_GP = Scalar_prod(B,Nodal_VELOCITY_Elem);
     FreeMat(B);
-   
     for(int j = 0 ; j<MPM_Mesh.Phi.Strain.N_cols ; j++){
       Increment_Strain_GP.nV[j] *= DeltaTimeStep;
     }
 
-    /* 9º Set to zero the trace of the stress tensor */
+    /* 5º Set to zero the trace of the stress tensor */
     Incr_TraceStrain = 0;
 
-    /* 10º Udate the Gauss-Point strain tensor */
+    /* 6º Udate the Gauss-Point strain tensor */
     for(int j = 0 ; j<MPM_Mesh.Phi.Strain.N_cols ; j++){
       MPM_Mesh.Phi.Strain.nM[i][j] += Increment_Strain_GP.nV[j];
-      /* 11º Get the trace of the stress tensor */
+      /* 7º Get the trace of the stress tensor */
       if(j<NumberDimensions)
 	Incr_TraceStrain += Increment_Strain_GP.nV[j];
     }
     FreeMat(Increment_Strain_GP);
 
-    /* 12º Update the density of the GP */
+    /* 8º Update the density of the GP */
     MPM_Mesh.Phi.rho.nV[i] =
       UpdateGaussPointDensity(MPM_Mesh.Phi.rho.nV[i], Incr_TraceStrain);
 
     
   }
 
-  /* 14º Free memory for the global variables */
-  FreeMat(Elem_Coords);
+  /* 9º Free memory for the global variables */
   FreeMat(Nodal_VELOCITY_Elem);
 
 }
@@ -545,13 +550,14 @@ Matrix GetNodalForces(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int TimeStep)
   /* 0º Auxiliar variable declaration */
   //  int Elem_GP; /* Index of the element */
   int * Elem_Nods;
-  Matrix X_EC_GP;
+  Matrix X_GP;
   X_EC_GP.N_rows = NumberDimensions;
   X_EC_GP.N_cols = 1;
-  Matrix N_Ref_GP;
+  Matrix lp; /* Particle voxel */
+  Matrix N_GP; /* Matrix with the nodal shape functions for GP */
+  Matrix dNdx_GP; /* Matrix with the nodal derivatives of the GP */
   Matrix B, B_T;
-  Matrix Elem_Coords = MatAllocZ(FEM_Mesh.NumNodesElem,NumberDimensions);
-  strcpy(Elem_Coords.Info,FEM_Mesh.TypeElem);
+  Matrix Elem_Coords;
 
   /* Stress tensor of a Gauss Point */
   Matrix StressTensor_GP; 
@@ -624,71 +630,75 @@ Matrix GetNodalForces(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int TimeStep)
   /* 3º Iterate over all the GP to get the nodal values */
   for(int i = 0 ; i<MPM_Mesh.NumGP ; i++){
 
-    /* 4º Get the coordinates of the GP in the Element */
-    X_EC_GP.nV = MPM_Mesh.Phi.x_EC.nM[i];
-
-    /* 5º Get the index of the element */
-    //    Elem_GP = MPM_Mesh.Element_id[i];
-
-    /* 6º Nodes of the element */
-    //    Elem_Nods = FEM_Mesh.Connectivity[Elem_GP];
+    /* 4º Define element of the GP */
     Elem_Nods = MPM_Mesh.Nodes[i];
-
-    /* 7º Coordinates of the element */
+    Elem_Coords = MatAllocZ(MPM_Mesh.Nodes.nV[i],NumberDimensions);
     for(int j = 0 ; j<FEM_Mesh.NumNodesElem ; j++){
       for(int k = 0 ; k<FEM_Mesh.Dimension ; k++){
 	Elem_Coords.nM[j][k] = FEM_Mesh.Coordinates.nM[Elem_Nods[j]][k];
       }
     }
 
-    /* 8º Evaluate the shape function in the GP */
-    N_Ref_GP = FEM_Mesh.N_ref(X_EC_GP);
-
-    /* 9º Asign to an auxiliar variable the value of the stress tensor */
-    StressTensor_GP.nV = MPM_Mesh.Phi.Stress.nM[i];
-	
-    /* 10º Get the B_T matrix for the derivates */
-    B = Get_B_GP(X_EC_GP,Elem_Coords);	
+    /* 5º Evaluate the shape function in the GP */	
+    if(strcmp(FEM_Mesh.TypeElem,"Quadrilateral") == 0){
+      X_GP.nV = MPM_Mesh.Phi.x_EC.nM[i];
+      N_GP = Q4(X_GP);
+      dNdx_GP = Get_dNdX_Q4(X_GP,Elem_Coords);
+    }
+    else if(strcmp(FEM_Mesh.TypeElem,"GIMP2D") == 0){
+      X_GP.nV = MPM_Mesh.Phi.x_GC.nM[i];
+      lp.nV = MPM_Mesh.Phi.lp.nM[i];
+      N_GP = GIMP_2D(X_GP,lp,Elem_Coords,FEM_Mesh.DeltaX);
+      dNdx_GP = dGIMP_2D(X_GP,lp,Elem_Coords,FEM_Mesh.DeltaX);
+    }
+    /* Free memory */
+    FreeMat(Elem_Coords);
+       
+    /* 6º Get the B_T matrix for the derivates */
+    B = Get_B_GP(dNdx_GP);
+    FreeMat(dNdx_GP);
     B_T = Transpose_Mat(B);
     FreeMat(B);
 
-    /* 11º Get the divergence stress tensor evaluates in the Gauss-Point 
+    /* 7º Asign to an auxiliar variable the value of the stress tensor */
+    StressTensor_GP.nV = MPM_Mesh.Phi.Stress.nM[i];
+
+    /* 8º Get the divergence stress tensor evaluates in the Gauss-Point 
      and free the B_T matrix */
     Div_Stress_Tensor = Scalar_prod(B_T,StressTensor_GP);
     FreeMat(B_T);
 
-    /* 12º Acumulate this forces to the total array with the internal forces */
+    /* 9º Acumulate this forces to the total array with the internal forces */
     for(int k = 0 ; k<FEM_Mesh.NumNodesElem ; k++){  
       for(int l = 0 ; l<NumberDimensions ; l++){
 
-	/* 13aº Add the internal forces */
+	/* 9aº Add the internal forces */
 	Nodal_TOT_FORCES.nM[l][Elem_Nods[k]] -=
 	  Div_Stress_Tensor.nV[k*NumberDimensions + l]*
 	  (MPM_Mesh.Phi.mass.nV[i]/MPM_Mesh.Phi.rho.nV[i]);
 
-	/* 13bº Add the body forces */
+	/* 9bº Add the body forces */
 	Nodal_TOT_FORCES.nM[l][Elem_Nods[k]] +=
 	  MPM_Mesh.Phi.mass.nV[i]*
-	  N_Ref_GP.nV[k]*
+	  N_GP.nV[k]*
 	  Body_Forces_t.nM[l][i];
 	
-	/* 13cº Add the contact forces */
+	/* 9cº Add the contact forces */
 	Nodal_TOT_FORCES.nM[l][Elem_Nods[k]] +=
-	  N_Ref_GP.nV[k]*
+	  N_GP.nV[k]*
 	  Contact_Forces_t.nM[l][i]*
 	  (MPM_Mesh.Phi.mass.nV[i]/MPM_Mesh.Phi.rho.nV[i]);
 	
       }
     }
 	
-    /* 14º Free memory */
+    /* 10º Free memory */
     FreeMat(Div_Stress_Tensor);
-    FreeMat(N_Ref_GP);
+    FreeMat(N_GP);
 
   }
 
-  /* 15º Free memory */
-  FreeMat(Elem_Coords);
+  /* 11º Free memory */
   FreeMat(Contact_Forces_t);
   FreeMat(Body_Forces_t);
   
@@ -724,45 +734,54 @@ void UpdateVelocityAndPositionGP(GaussPoint MPM_Mesh,
   X_EC_GP.N_rows = NumberDimensions;
   X_EC_GP.N_cols = 1;
   //  int Elem_GP; /* Index of the element */
+  Matrix Elem_Coords;
   int * Elem_Nods; /* Connectivity of the element */
-  Matrix N_Ref_GP; /* Value of the shape-function in the GP */
+  Matrix N_GP; /* Value of the shape-function in the GP */
 
   /* 1º iterate over the Gauss-Points */
   for(int i = 0 ; i<MPM_Mesh.NumGP ; i++){
 
-    /* 2º Get the coordinates of the GP (in the element) */
-    X_EC_GP.nV = MPM_Mesh.Phi.x_EC.nM[i];
-
-    /* 3º Get the index of the element */
-    //    Elem_GP = MPM_Mesh.Element_id[i];
-
-    /* Get the connectivity of the element */
-    //    Elem_Nods = FEM_Mesh.Connectivity[Elem_GP];
+    /* 2º Define element of the GP */
     Elem_Nods = MPM_Mesh.Nodes[i];
+    Elem_Coords = MatAllocZ(MPM_Mesh.Nodes.nV[i],NumberDimensions);
+    for(int j = 0 ; j<FEM_Mesh.NumNodesElem ; j++){
+      for(int k = 0 ; k<FEM_Mesh.Dimension ; k++){
+	Elem_Coords.nM[j][k] = FEM_Mesh.Coordinates.nM[Elem_Nods[j]][k];
+      }
+    }
 
-    /* 4º Evaluate the shape function in the coordinates of the GP */
-    N_Ref_GP = FEM_Mesh.N_ref(X_EC_GP);
+    /* 3º Evaluate the shape function in the coordinates of the GP */
+    if(strcmp(FEM_Mesh.TypeElem,"Quadrilateral") == 0){
+      X_GP.nV = MPM_Mesh.Phi.x_EC.nM[i];
+      N_GP = Q4(X_GP);
+    }
+    else if(strcmp(FEM_Mesh.TypeElem,"GIMP2D") == 0){      
+      X_GP.nV = MPM_Mesh.Phi.x_GC.nM[i];
+      lp.nV = MPM_Mesh.Phi.lp.nM[i];
+      N_GP = GIMP_2D(X_GP,lp,Elem_Coords,FEM_Mesh.DeltaX);      
+    }
 
-    /* 5º Iterate over the nodes of the element */
+    /* 4º Iterate over the nodes of the element */
     for(int j = 0 ; j<FEM_Mesh.NumNodesElem ; j++){
       for(int k = 0 ; k<NumberDimensions ; k++){
 
-	/* 6aº Update the GP velocities */
+	/* 4aº Update the GP velocities */
 	MPM_Mesh.Phi.vel.nM[i][k] +=
-	  DeltaTimeStep*N_Ref_GP.nV[j]*
+	  DeltaTimeStep*N_GP.nV[j]*
 	  Nodal_TOT_FORCES.nM[k][Elem_Nods[j]]/
 	  Nodal_MASS.nV[Elem_Nods[j]];
 	
-	/* 6bº Update the GP position */
+	/* 4bº Update the GP position */
 	MPM_Mesh.Phi.x_GC.nM[i][k] +=
-	  DeltaTimeStep*N_Ref_GP.nV[j]*
+	  DeltaTimeStep*N_GP.nV[j]*
 	  Nodal_MOMENTUM.nM[k][Elem_Nods[j]]/
 	  Nodal_MASS.nV[Elem_Nods[j]];
       }      
     }
 
-    /* 7º Free The value of the shape functions */
-    FreeMat(N_Ref_GP);
+    /* 5º Free memory */
+    FreeMat(N_GP);
+    FreeMat(Elem_Coords);
     
   }  
 }

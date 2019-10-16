@@ -73,8 +73,7 @@ int ** GetNodalConnectivity(Mesh FEM_Mesh){
 
 /*********************************************************************/
 
-Matrix Get_B_GP(Matrix X_EC_GP,
-		Matrix Element)
+Matrix Get_B_GP(Matrix dNdX_GP)
 /*
    Get the B matrix (Usual in the classical formulation of 
    the finite element method )
@@ -90,8 +89,6 @@ Matrix Get_B_GP(Matrix X_EC_GP,
   /* 0º Define variables */
   /* Declaration of the output matrix (NdimVecStrain x Nnodes*Ndim) */
   Matrix B_GP;
-  /* Derivatives of the SF evaluates in the GP (Ndim x Ndim) */
-  Matrix dNdx_XG_GP; 
 
   /* 1º Select the case to solve */
   switch(NumberDimensions){
@@ -104,27 +101,19 @@ Matrix Get_B_GP(Matrix X_EC_GP,
   case 2: /* 2D stress tensor */
     
     /* 2º Allocate the output */
-    B_GP = MatAlloc(3,2*Element.N_rows);
-
-    if(strcmp(Element.Info,"Quadrilateral") == 0){
-      /* 3º Get the element gradient in natural coordinates*/
-      dNdx_XG_GP = Get_dNdX_Q4(X_EC_GP,Element);
-    }
-        
+    B_GP = MatAlloc(3,2*dNdX_GP.N_rows);
+    
     /* 4º Fill the array with the nodal partial derivation 
        of the reference element */    
-    for(int i = 0 ; i<Element.N_rows ; i++){
-      B_GP.nM[0][2*i] = dNdx_XG_GP.nM[0][i];
+    for(int i = 0 ; i<dNdX_GP.N_rows ; i++){
+      B_GP.nM[0][2*i] = dNdX_GP.nM[0][i];
       B_GP.nM[1][2*i] = 0;
-      B_GP.nM[2][2*i] = dNdx_XG_GP.nM[1][i];
+      B_GP.nM[2][2*i] = dNdX_GP.nM[1][i];
       
       B_GP.nM[0][2*i + 1] = 0;
-      B_GP.nM[1][2*i + 1] = dNdx_XG_GP.nM[1][i];
-      B_GP.nM[2][2*i + 1] = dNdx_XG_GP.nM[0][i];      
+      B_GP.nM[1][2*i + 1] = dNdX_GP.nM[1][i];
+      B_GP.nM[2][2*i + 1] = dNdX_GP.nM[0][i];      
     }
-
-    /* 5º Free memory */
-    FreeMat(dNdx_XG_GP);
 
     break;
     
