@@ -31,3 +31,8 @@ Matrix Get_F_Ref_Q4(Matrix,Matrix);
 Matrix Get_dNdX_Q4(Matrix,Matrix);
 Matrix Get_X_GC_Q4(Matrix,Matrix);
 
+/* GIMP shape functions */
+double uGIMP(double, double, double, double);
+double d_uGIMP(double, double, double, double);
+Matrix GIMP_2D(Matrix, Matrix, Matrix, double);
+Matrix dGIMP_2D(Matrix, Matrix, Matrix, double);

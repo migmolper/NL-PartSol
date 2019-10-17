@@ -569,7 +569,7 @@ Matrix Scalar_prod(Matrix A,Matrix B)
 
     /* Check if the input matrix are not compatible */
     if(A.N_cols != B.N_rows){
-      puts("Error in Mat_mul() : Your are trying to multiply incompatible matrix");
+      puts("Error in Scalar_prod() : Your are trying to multiply incompatible matrix");
       exit(0);
     }
      
@@ -591,7 +591,7 @@ Matrix Scalar_prod(Matrix A,Matrix B)
 
     /* Check if the input matrix are not compatible */
     if(A.N_cols != B.N_rows){
-      puts("Error in Mat_mul() : Your are trying to multiply incompatible matrix");
+      puts("Error in Scalar_prod() : Your are trying to multiply incompatible matrix");
       exit(0);
     }
 
@@ -609,7 +609,7 @@ Matrix Scalar_prod(Matrix A,Matrix B)
 
     /* Check if the input matrix are not compatible */
     if(A.N_cols != B.N_rows){
-      puts("Error in Mat_mul() : Your are trying to multiply incompatible matrix");
+      puts("Error in Scalar_prod() : Your are trying to multiply incompatible matrix");
       exit(0);
     }
       

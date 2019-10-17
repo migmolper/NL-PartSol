@@ -67,11 +67,11 @@ double d_uGIMP(double L, double lp, double Xp, double Xi){
 Matrix GIMP_2D(Matrix X_GC_GP, Matrix lp, Matrix Element, double L){
 
   /* 1º Variable declaration */
-  Matrix S_Ip = MatAlloc(1,Element.n);
+  Matrix S_Ip = MatAlloc(1,Element.N_rows);
   Matrix X_GC_I;
 
   /* 2º Fill the shape function array */
-  for(int i = 0 ; i<Element.n ; i++){
+  for(int i = 0 ; i<Element.N_rows ; i++){
 
     /* 3º Coordinate of the node */
     X_GC_I.nV = Element.nM[i];
@@ -89,11 +89,11 @@ Matrix GIMP_2D(Matrix X_GC_GP, Matrix lp, Matrix Element, double L){
 Matrix dGIMP_2D(Matrix X_GC_GP, Matrix lp, Matrix Nodes, double L){
 
   /* 1º Variable declaration */
-  Matrix dS_Ip = MatAlloc(2,Nodes.Num);
+  Matrix dS_Ip = MatAlloc(2,Nodes.N_rows);
   Matrix X_GC_I;
   
   /* 2º Fill the shape function array */
-  for(int i = 0 ; i<Nodes.Num ; i++){
+  for(int i = 0 ; i<Nodes.N_rows ; i++){
     
     /* 3º Coordinate of the node */
     X_GC_I.nV = Nodes.nM[i];

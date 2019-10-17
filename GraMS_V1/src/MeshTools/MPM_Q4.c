@@ -196,6 +196,7 @@ Matrix Get_dNdX_Q4(Matrix X_EC_GP,Matrix Element)
   /* 3º Get the inverse of the deformation gradient */
   F_GP_m1 = Get_Inverse(F_GP);
   FreeMat(F_GP);
+  
   /* 4º Get the transpose of the inverse of the Jacobian */
   F_GP_Tm1 = Transpose_Mat(F_GP_m1);
   FreeMat(F_GP_m1);

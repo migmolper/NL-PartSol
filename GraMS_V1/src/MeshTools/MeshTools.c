@@ -101,7 +101,7 @@ Matrix Get_B_GP(Matrix dNdX_GP)
   case 2: /* 2D stress tensor */
     
     /* 2º Allocate the output */
-    B_GP = MatAlloc(3,2*dNdX_GP.N_rows);
+    B_GP = MatAlloc(3,2*dNdX_GP.N_cols);
     
     /* 4º Fill the array with the nodal partial derivation 
        of the reference element */    
