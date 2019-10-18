@@ -4,14 +4,29 @@
 #include "../ToolsLib/TypeDefinitions.h"
 #include "../MathTools/MathTools.h"
 
+/***********************************************/
+/******* 2D cuadrilateral linear element *******/
+/***********************************************/
 
+/*            ^           */
+/*          __|__         */
+/*        _/  |  \_       */
+/*      _/    |    \_     */
+/*   __/      |      \__  */
+/*  --o-------o-------o-- */
+/*   (-1)    (0)     (1)  */
+
+/* Uniform GIMP shape function */
 double uGIMP(double L, double lp, double Xp, double Xi){
-  
+
+  /* Variable definition */
   double S_Ip;
   double Delta_xp;
 
+  /* Calcule the distance from the GP to the node */
   Delta_xp = Xp-Xi;
-  
+
+  /* Evaluation of the shape function */
   if ((-L+lp < Delta_xp) && (Delta_xp <= -lp)){
     S_Ip = 1 + (Xp-Xi)/L;
   }
@@ -34,14 +49,19 @@ double uGIMP(double L, double lp, double Xp, double Xi){
   return S_Ip;
 }
 
+/*********************************************************************/
 
+/* Uniform GIMP derivative shape function */
 double d_uGIMP(double L, double lp, double Xp, double Xi){
-  
+
+  /* Variable definition */
   double dS_Ip;
   double Delta_xp;
 
+  /* Calcule the distance from the GP to the node */
   Delta_xp = Xp-Xi;
-  
+
+  /* Evaluation of the shape function */
   if ((-L+lp < Delta_xp) && (Delta_xp <= -lp)){
     dS_Ip = 1/L;
   }
@@ -64,6 +84,9 @@ double d_uGIMP(double L, double lp, double Xp, double Xi){
   return dS_Ip;
 }
 
+/*********************************************************************/
+
+/* Uniform GIMP shape function 2D */
 Matrix GIMP_2D(Matrix X_GC_GP, Matrix lp, Matrix Element, double L){
 
   /* 1º Variable declaration */
@@ -86,6 +109,9 @@ Matrix GIMP_2D(Matrix X_GC_GP, Matrix lp, Matrix Element, double L){
   return S_Ip;
 }
 
+/*********************************************************************/
+
+/* Uniform GIMP derivative shape function 2D */
 Matrix dGIMP_2D(Matrix X_GC_GP, Matrix lp, Matrix Nodes, double L){
 
   /* 1º Variable declaration */
@@ -109,3 +135,5 @@ Matrix dGIMP_2D(Matrix X_GC_GP, Matrix lp, Matrix Nodes, double L){
   /* 5º Output */
   return dS_Ip;
 }
+
+/*********************************************************************/

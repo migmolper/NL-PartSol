@@ -47,7 +47,7 @@ Matrix dL2(Matrix X_e){
 }
 
 /* Global coordinates of the four nodes quadrilateral */
-Matrix Get_GlobalCoordinates_L2(Matrix X_NC_GP,Matrix X_GC_Nodes)
+Matrix Get_X_GC_L2(Matrix X_NC_GP,Matrix X_GC_Nodes)
 /*
 This function evaluate the position of the GP in the element, and get it global coordiantes    
  */
@@ -68,7 +68,7 @@ This function evaluate the position of the GP in the element, and get it global 
 }
 
 /* Deformation gradient of the two-nodes linear element */
-Matrix Get_RefDeformation_Gradient_L2(Matrix X_NC_GP,Matrix X_GC_Nodes)
+Matrix Get_F_Ref_L2(Matrix X_NC_GP,Matrix X_GC_Nodes)
 /*
   Get the deformation gradient of the reference element:
 

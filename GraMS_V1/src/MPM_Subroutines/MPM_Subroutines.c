@@ -48,29 +48,31 @@ void GlobalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh){
       }
       /* 5º Check out if the GP is in the Element */
       if(InOut_Poligon(X_GC_GP,Poligon) == 1){
-	/* 6º If the GP is in the element, 
-	   set the index of the position and 
-	   update the array to set if an element is active or not */
-	for(int k = 0 ; k<FEM_Mesh.NumNodesElem ; k++){
-	  FEM_Mesh.ActiveNode[Poligon_Connectivity[k]] += 1;
-	}
+
+	/* 6º Asign to the GP a element in the background mesh, just for 
+	   searching porpuses */
 	MPM_Mesh.Element_id[i] = j;
-	/* ACTUALIZACION */
-	for(int k = 0 ; k<MPM_Mesh.Nodes.nV[i] ; k++){
-	  MPM_Mesh.Nodes.nM[i][k] = Poligon_Connectivity[k];
-	}
 
 	/* 7º If the GP is in the element, get its natural coordinates */
 	X_EC_GP.nV = MPM_Mesh.Phi.x_EC.nM[i];
-	GetNaturalCoordinates(X_EC_GP,X_GC_GP,Poligon);
+	Get_X_EC_Q4(X_EC_GP,X_GC_GP,Poligon);
+
+	/* 8º Create a connectivity for the GP */
+	for(int k = 0 ; k<MPM_Mesh.Nodes.nV[i] ; k++){
+	  MPM_Mesh.Nodes.nM[i][k] = Poligon_Connectivity[k];
+	}
+	
+	/* 9º Active those nodes that interact with the GP */
+	for(int k = 0 ; k<FEM_Mesh.NumNodesElem ; k++){
+	  FEM_Mesh.ActiveNode[Poligon_Connectivity[k]] += 1;
+	}
+	
       }      
     } /* Loop over the elements */
 
   } /* Loop over the GP */
 
-  
-
-  /* 8º Free memory */
+  /* 10º Free memory */
   FreeMat(Poligon);
   
 }
@@ -124,7 +126,6 @@ void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
     Element_GP_i = MPM_Mesh.Element_id[i];
 
     /* 5º Get the connectivity of the initial element  */
-    //    Element_GP_Connectivity = FEM_Mesh.Connectivity[Element_GP_i];
     Element_GP_Connectivity = MPM_Mesh.Nodes.nM[i];
 
     /* 6º Fill the matrix with the nodal coordinates of 
@@ -138,27 +139,32 @@ void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 
     /* 6º Check if the GP is in the same element */
     if(InOut_Poligon(X_GC_GP,Element_GP_Coordinates) == 1){
-      /* 6aº If the GP is in the element,
-	 set the index of the position and
-	 update the array to set if an element is active or not,
-	 it is not necessary to update the index of the element */
+      
+      /* 6bº If the GP is in the element, get its natural coordinates */
+      X_EC_GP.nV = MPM_Mesh.Phi.x_EC.nM[i];     
+      Get_X_EC_Q4(X_EC_GP,X_GC_GP,Element_GP_Coordinates);
+      
+      /* 6aº Active those nodes that interact with the GP */
       for(int j = 0 ; j<FEM_Mesh.NumNodesElem ; j++){
 	FEM_Mesh.ActiveNode[Element_GP_Connectivity[j]] += 1;
       }
-      /* 6bº If the GP is in the element, get its natural coordinates */
-      X_EC_GP.nV = MPM_Mesh.Phi.x_EC.nM[i];     
-      GetNaturalCoordinates(X_EC_GP,X_GC_GP,Element_GP_Coordinates);
+      
     }
     /* 7º If the GP is not in the same element, search in the neighbour */
     else{
-
-      /* 7aº Get the velocity vector of the GP */
+      
+      /* 7aº As we are in a new element we set to zero the element coordinates */
+      for(int j = 0 ; j<NumberDimensions ; j++){
+	MPM_Mesh.Phi.x_EC.nM[i][j] = 0;
+      }
+      
+      /* 7bº Get the velocity vector of the GP */
       V_GP.nV = MPM_Mesh.Phi.vel.nM[i];
 
       /* 7bº Set to a NAN the SearchVertex in order to avoid bugs */
       SearchVertex = -999;
 
-      /* 7cº Get the search direction for the vertex of the element
+      /* 7dº Get the search direction for the vertex of the element
        and check the search direction */
       for(int j = 0 ; j<FEM_Mesh.NumNodesElem ; j++){
 
@@ -197,18 +203,17 @@ void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 	}
 
       }
-
      
-      /* 7dº Check for errors */
+      /* 7eº Check for errors */
       if (SearchVertex<0 || SearchVertex>=FEM_Mesh.NumNodesMesh){
 	puts("Error in LocalSearchGaussPoints() : Search algorithm fails !!! ");
 	exit(0);
       }
 
-      /* 7eº Create the search list of this vertex */
+      /* 7fº Create the search list of this vertex */
       SearchList = FEM_Mesh.NodeNeighbour[SearchVertex];
      
-      /* 7fº Search in the search list */
+      /* 7gº Search in the search list */
       for(int j  = 1 ; j<(FEM_Mesh.NodeNeighbour[SearchVertex][0]+1) ; j++){
 
 	/* Discard the initial element for the search */
@@ -226,25 +231,25 @@ void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 	}
 
 	if(InOut_Poligon(X_GC_GP,Element_GP_Coordinates) == 1){
-	  /* If the GP is in the element, set the index of the position and
-	     update the array to set if an element is active or not */
-	  for(int k = 0 ; k<FEM_Mesh.NumNodesElem ; k++){
-	    FEM_Mesh.ActiveNode[Element_GP_Connectivity[k]] += 1;
-	  }
+
+	  /* Asign to the GP a element in the background mesh, just for 
+	     searching porpuses */
 	  MPM_Mesh.Element_id[i] = SearchList[j];
 
+	  /* Get its natural coordinates */
+	  X_EC_GP.nV = MPM_Mesh.Phi.x_EC.nM[i];
+	  Get_X_EC_Q4(X_EC_GP,X_GC_GP,Element_GP_Coordinates);
+
+	  /* Generate a GP connectivity */
 	  for(int k = 0 ; k<MPM_Mesh.Nodes.nV[i] ; k++){
 	    MPM_Mesh.Nodes.nM[i][k] = Element_GP_Connectivity[k];
 	  }
-	  
-	  /* If the GP is in the element, 
-	     set to zero the initial element coordinates */
-	  for(int k = 0 ; k<NumberDimensions ; k++){
-	    MPM_Mesh.Phi.x_EC.nM[i][k] = 0;
+
+	  /* Active those nodes that interact with the GP */
+	  for(int k = 0 ; k<FEM_Mesh.NumNodesElem ; k++){
+	    FEM_Mesh.ActiveNode[Element_GP_Connectivity[k]] += 1;
 	  }
-	  /* Get its natural coordinates */
-	  X_EC_GP.nV = MPM_Mesh.Phi.x_EC.nM[i];
-	  GetNaturalCoordinates(X_EC_GP,X_GC_GP,Element_GP_Coordinates);
+
 	  /* If this is true, stop the search */
 	  break;
 	}

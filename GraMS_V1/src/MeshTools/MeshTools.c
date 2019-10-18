@@ -129,28 +129,6 @@ Matrix Get_B_GP(Matrix dNdX_GP)
   return B_GP;
 }
 
-/*********************************************************************/
 
-void GetNaturalCoordinates(Matrix X_EC_GP,
-			   Matrix X_GC_GP,
-			   Matrix Element_GC_Nod)
-/* 
-   The function return the natural coordinates of a point 
-   inside of the element.
- 
-   Inputs :
-   - Coordinates of the element nodes
-   - Initial coordinate of the point to start the search 
-   - Derivative function of the element
-
-   Depending of the kind of element, we employ differents types
-   of shape functions
-*/
-{
-  
-  X_EC_GP = Newton_Rapson(Get_X_GC_Q4,Element_GC_Nod,
-			  Get_F_Ref_Q4,Element_GC_Nod,
-			  X_GC_GP,X_EC_GP);
-}
 
 

@@ -19,6 +19,7 @@
 /* Shape functions */
 Matrix Q4(Matrix X_e){
 
+  /* Error check */
   if( (fabs(X_e.nV[0]) > 1 ) || (fabs(X_e.nV[1]) > 1 ) ){
     printf("Error in Q4() : Out of the element bounds !!! \n");
     exit(0);
@@ -36,9 +37,12 @@ Matrix Q4(Matrix X_e){
   return N_ref;
 }
 
+/*********************************************************************/
+
 /* Derivatives of the shape functions */
 Matrix dQ4(Matrix X_e){
 
+  /* Error check */
   if( (fabs(X_e.nV[0]) > 1 ) || (fabs(X_e.nV[1]) > 1 ) ){
     printf("Error in dQ4() : Out of the element bounds !!! \n");
     exit(0);
@@ -76,6 +80,7 @@ Matrix dQ4(Matrix X_e){
   return dNdX_ref;
 }
 
+/*********************************************************************/
 
 /* Jacobian of the transformation for the four-nodes quadrilateral */
 Matrix Get_F_Ref_Q4(Matrix X_NC_GP,Matrix X_GC_Nodes)
@@ -132,45 +137,7 @@ Matrix Get_F_Ref_Q4(Matrix X_NC_GP,Matrix X_GC_Nodes)
   return F_Ref;
 }
 
-
-
-/* Global coordinates of the four nodes quadrilateral */
-Matrix Get_X_GC_Q4(Matrix X_NC_GP,Matrix X_GC_Nodes)
-/*
-This function evaluate the position of the GP in the element, and get it global coordiantes    
- */
-{
-  /* 0º Variable declaration */
-  Matrix N_ref;
-  Matrix X_GC_GP;
-
-  /* 1º Evaluate the Q4 element in the element coordinates */
-  N_ref = Q4(X_NC_GP);
-
-  /* 2º Allocate the output coordinates */
-  X_GC_GP = MatAlloc(2,1);
-
-  /* 3º Get the global coordinates for this element coordiantes in this element */
-  X_GC_GP.nV[0] =
-    N_ref.nV[0]*X_GC_Nodes.nM[0][0] +
-    N_ref.nV[1]*X_GC_Nodes.nM[1][0] +
-    N_ref.nV[2]*X_GC_Nodes.nM[2][0] +
-    N_ref.nV[3]*X_GC_Nodes.nM[3][0];
-  
-  X_GC_GP.nV[1] =
-    N_ref.nV[0]*X_GC_Nodes.nM[0][1] +
-    N_ref.nV[1]*X_GC_Nodes.nM[1][1] +
-    N_ref.nV[2]*X_GC_Nodes.nM[2][1] +
-    N_ref.nV[3]*X_GC_Nodes.nM[3][1];
-
-  /* 4º Free memory */
-  FreeMat(N_ref);
-
-  /* 5º Output */
-  return X_GC_GP;
- 
-}
-
+/*********************************************************************/
 
 /* Element gradient in the real element */
 Matrix Get_dNdX_Q4(Matrix X_EC_GP,Matrix Element)
@@ -210,3 +177,67 @@ Matrix Get_dNdX_Q4(Matrix X_EC_GP,Matrix Element)
   return dNdx_GP;
 }
 
+/*********************************************************************/
+
+/* Global coordinates of the four nodes quadrilateral */
+Matrix Get_X_GC_Q4(Matrix X_NC_GP,Matrix X_GC_Nodes)
+/*
+This function evaluate the position of the GP in the element, and get it global coordiantes    
+ */
+{
+  /* 0º Variable declaration */
+  Matrix N_ref;
+  Matrix X_GC_GP;
+
+  /* 1º Evaluate the Q4 element in the element coordinates */
+  N_ref = Q4(X_NC_GP);
+
+  /* 2º Allocate the output coordinates */
+  X_GC_GP = MatAlloc(2,1);
+
+  /* 3º Get the global coordinates for this element coordiantes in this element */
+  X_GC_GP.nV[0] =
+    N_ref.nV[0]*X_GC_Nodes.nM[0][0] +
+    N_ref.nV[1]*X_GC_Nodes.nM[1][0] +
+    N_ref.nV[2]*X_GC_Nodes.nM[2][0] +
+    N_ref.nV[3]*X_GC_Nodes.nM[3][0];
+  
+  X_GC_GP.nV[1] =
+    N_ref.nV[0]*X_GC_Nodes.nM[0][1] +
+    N_ref.nV[1]*X_GC_Nodes.nM[1][1] +
+    N_ref.nV[2]*X_GC_Nodes.nM[2][1] +
+    N_ref.nV[3]*X_GC_Nodes.nM[3][1];
+
+  /* 4º Free memory */
+  FreeMat(N_ref);
+
+  /* 5º Output */
+  return X_GC_GP;
+ 
+}
+
+/*********************************************************************/
+
+void Get_X_EC_Q4(Matrix X_EC_GP,
+		 Matrix X_GC_GP,
+		 Matrix Element_GC_Nod)
+/* 
+   The function return the natural coordinates of a point 
+   inside of the element.
+ 
+   Inputs :
+   - Coordinates of the element nodes
+   - Initial coordinate of the point to start the search 
+   - Derivative function of the element
+
+   Depending of the kind of element, we employ differents types
+   of shape functions
+*/
+{
+  
+  X_EC_GP = Newton_Rapson(Get_X_GC_Q4,Element_GC_Nod,
+			  Get_F_Ref_Q4,Element_GC_Nod,
+			  X_GC_GP,X_EC_GP);
+}
+
+/*********************************************************************/

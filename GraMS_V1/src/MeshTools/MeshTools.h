@@ -10,26 +10,31 @@ Mesh InitializeMesh(char * GDF);
 /* Functions definitions :*/
 int ** GetNodalConnectivity(Mesh FEM_Mesh);
 Matrix Get_B_GP(Matrix);
-void GetNaturalCoordinates(Matrix,Matrix,Matrix);
+
+/* Boundary conditions functions */
 void BCC_Nod_VALUE(Mesh, Matrix, int);
 
-
-/* 1D of two nodes functions */
+/* 1D of two nodes shape functions */
 Matrix L2(Matrix);
 Matrix dL2(Matrix);
-Matrix Get_GlobalCoordinates_L2(Matrix,Matrix);
-Matrix Get_RefDeformation_Gradient_L2(Matrix,Matrix);
+Matrix Get_F_Ref_L2(Matrix,Matrix);
+Matrix Get_X_GC_L2(Matrix,Matrix);
 
-/* Triangle of three nodes functions */
+/* Triangle of three nodes shape functions */
 Matrix T3(Matrix);
 Matrix dT3(Matrix);
+Matrix Get_F_Ref_T3(Matrix,Matrix);
+Matrix Get_dNdX_T3(Matrix,Matrix);
+Matrix Get_X_GC_T3(Matrix,Matrix);
+void Get_X_EC_T3(Matrix,Matrix,Matrix);
 
-/* Quadrilateral of four nodes functions */
+/* Quadrilateral of four nodes shape functions */
 Matrix Q4(Matrix);
 Matrix dQ4(Matrix);
 Matrix Get_F_Ref_Q4(Matrix,Matrix);
 Matrix Get_dNdX_Q4(Matrix,Matrix);
 Matrix Get_X_GC_Q4(Matrix,Matrix);
+void Get_X_EC_Q4(Matrix,Matrix,Matrix);
 
 /* GIMP shape functions */
 double uGIMP(double, double, double, double);
