@@ -32,6 +32,7 @@
 
 /*******************************************************/
 
+/* Matrix definition */
 typedef struct{
   int N_rows; /* Number of rows */
   int N_cols; /* Number of columns */
@@ -43,6 +44,7 @@ typedef struct{
 
 /*******************************************************/
 
+/* Table definition */
 typedef struct{
   int N_rows; /* Number of rows */
   int N_cols; /* Number of columns */
@@ -53,6 +55,15 @@ typedef struct{
 
 /*******************************************************/
 
+/* Chain of nodes */
+typedef struct Chain { 
+    int I; 
+    struct Chain * next; 
+} Chain; 
+
+/*******************************************************/
+
+/* Curve definition */
 typedef struct{
 
   /* Number of items in the curve */

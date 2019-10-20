@@ -137,3 +137,104 @@ Matrix dGIMP_2D(Matrix X_GC_GP, Matrix lp, Matrix Nodes, double L){
 }
 
 /*********************************************************************/
+
+Table Tributary_Nodes_GP_GIMP(Matrix X_EC_GP, Matrix lp,
+			      double L, Table NodesElem,
+			      int ** NodeNeighbour){
+
+  Table Triburary_Nodes_GP;
+  Matrix Dist = MatAlloc(1,2);
+
+  for(int i = 0 ; i<2; i++){
+    Dist.nV[i] = 1 - lp.nV[i]/L;
+  }
+
+  /* Check if is in the central area */
+  if ((fabs(X_EC_GP.nV[0]) < Dist.nV[0]) &&
+      (fabs(X_EC_GP.nV[1]) < Dist.nV[1])){    
+    Triburary_Nodes_GP.nV = (int *)Allocate_ArrayZ(4,sizeof(int));
+  }
+  
+  /* Check if it is in the 1º Quadrant */
+  else if((X_EC_GP.nV[0]>0) &&
+	  (X_EC_GP.nV[1]>0)){
+
+    if((X_EC_GP.nV[0] > Dist.nV[0]) &&
+       (X_EC_GP.nV[1] < Dist.nV[1])){
+      Triburary_Nodes_GP.nV = (int *)Allocate_ArrayZ(6,sizeof(int));
+    }
+    else if((X_EC_GP.nV[0] < Dist.nV[0]) &&
+	    (X_EC_GP.nV[1] > Dist.nV[1])){
+      Triburary_Nodes_GP.nV = (int *)Allocate_ArrayZ(6,sizeof(int));
+    }
+    else if((X_EC_GP.nV[0] > Dist.nV[0]) &&
+	    (X_EC_GP.nV[1] > Dist.nV[1])){
+      Triburary_Nodes_GP.nV = (int *)Allocate_ArrayZ(9,sizeof(int));
+    }
+    
+  }
+  
+  /* Check if it is in the 2º Quadrant */
+  else if((X_EC_GP.nV[0]<0) &&
+	  (X_EC_GP.nV[1]>0)){
+
+    if((X_EC_GP.nV[0] > -Dist.nV[0]) &&
+       (X_EC_GP.nV[1] > Dist.nV[1])){
+      Triburary_Nodes_GP.nV = (int *)Allocate_ArrayZ(6,sizeof(int));
+    }
+    else if((X_EC_GP.nV[0] < -Dist.nV[0]) &&
+	    (X_EC_GP.nV[1] < Dist.nV[1])){
+      Triburary_Nodes_GP.nV = (int *)Allocate_ArrayZ(6,sizeof(int));
+    }
+    else if((X_EC_GP.nV[0] < -Dist.nV[0]) &&
+	    (X_EC_GP.nV[1] > Dist.nV[1])){
+      Triburary_Nodes_GP.nV = (int *)Allocate_ArrayZ(9,sizeof(int));
+    }
+    
+  }
+  
+  /* Check if it is in the 3º Quadrant */
+  else if((X_EC_GP.nV[0]<0) &&
+	  (X_EC_GP.nV[1]<0)){
+    
+    if((X_EC_GP.nV[0] < -Dist.nV[0]) &&
+       (X_EC_GP.nV[1] > -Dist.nV[1])){
+      Triburary_Nodes_GP.nV = (int *)Allocate_ArrayZ(6,sizeof(int));
+    }
+    else if((X_EC_GP.nV[0] > -Dist.nV[0]) &&
+	    (X_EC_GP.nV[1] < -Dist.nV[1])){
+      Triburary_Nodes_GP.nV = (int *)Allocate_ArrayZ(6,sizeof(int));
+    }
+    else if((X_EC_GP.nV[1] < -Dist.nV[1]) &&
+	    (X_EC_GP.nV[0] < -Dist.nV[0])){
+      Triburary_Nodes_GP.nV = (int *)Allocate_ArrayZ(9,sizeof(int));
+    }
+    
+  }
+  
+  /* Check if it is in the 4º Quadrant */
+  else if((X_EC_GP.nV[0]>0) &&
+	  (X_EC_GP.nV[1]<0)){
+
+    if((X_EC_GP.nV[0] < Dist.nV[0]) &&
+       (X_EC_GP.nV[1] < -Dist.nV[1])){
+      Triburary_Nodes_GP.nV = (int *)Allocate_ArrayZ(6,sizeof(int));
+    }
+    else if((X_EC_GP.nV[0] > Dist.nV[0]) &&
+	    (X_EC_GP.nV[1] > -Dist.nV[1])){
+      Triburary_Nodes_GP.nV = (int *)Allocate_ArrayZ(6,sizeof(int));
+    }
+    else if((X_EC_GP.nV[0] > Dist.nV[0]) &&
+	    (X_EC_GP.nV[1] < -Dist.nV[1])){
+      Triburary_Nodes_GP.nV = (int *)Allocate_ArrayZ(9,sizeof(int));
+    }
+    
+  }
+
+  /* Free memory */
+  FreeMat(Dist);
+  
+  return Triburary_Nodes_GP;
+}
+
+/*********************************************************************/

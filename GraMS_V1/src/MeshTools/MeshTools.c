@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h> 
 #include "../ToolsLib/TypeDefinitions.h"
 #include "../ToolsLib/GlobalVariables.h"
 #include "../MathTools/MathTools.h"
@@ -129,6 +130,98 @@ Matrix Get_B_GP(Matrix dNdX_GP)
   return B_GP;
 }
 
+/*********************************************************************/
 
+/* A utility function to insert a node at the begining of a linked list*/
+void push (Chain ** A, int new_I) 
+{ 
+    /* allocate node */
+    Chain * new_Node = (Chain *)malloc(sizeof(Node)); 
+  
+    /* put in the data */
+    new_Node->I = new_I; 
+  
+    /* link the old list off the new node */
+    new_Node->next = (* A); 
+  
+    /* move the head to point to the new node */
+    (*A) = new_Node; 
+}
 
+/*********************************************************************/
 
+/* A utility function that returns true if data is  
+   present in linked list else return false */
+bool isPresent (Chain * A, int I) 
+{ 
+    Chain * t = A; 
+    while (t != NULL){ 
+        if (t->I == I) 
+            return 1; 
+        t = t->next; 
+    } 
+    return 0; 
+} 
+
+/*********************************************************************/
+
+/* Function to get union of two linked lists
+   A and B */
+Chain * getUnion(Chain * A,
+		Chain * B) 
+{ 
+    Chain * C = NULL; 
+    Chain * t1 = A, * t2 = B; 
+  
+    // Insert all elements of A to the result list 
+    while (t1 != NULL){ 
+      push(&C, t1->I); 
+      t1 = t1->next; 
+    }
+    
+    // Insert those elements of B which are not 
+    // present in result list 
+    while (t2 != NULL){ 
+        if (!isPresent(C, t2->I)) 
+            push(&C, t2->I); 
+        t2 = t2->next; 
+    } 
+  
+    return C; 
+}
+
+/*********************************************************************/
+  
+/* Function to get intersection of two linked lists 
+   A and B */
+Chain * getIntersection(Chain * A,  
+			Chain * B) 
+{ 
+    Chain * C = NULL; 
+    Chain * t1 = A; 
+  
+    // Traverse A and search each element of it in 
+    // B. If the element is present in B, then 
+    // insert the element to result 
+    while (t1 != NULL){ 
+      if (isPresent(B, t1->I)) 
+	push (&C, t1->I); 
+      t1 = t1->next; 
+    }
+    
+    return C; 
+}
+
+/*********************************************************************/
+    
+/* A utility function to print a linked list*/
+void printList (Chain * A) 
+{ 
+    while (A != NULL) 
+    { 
+        printf ("%d ", A->I); 
+        A = A->next; 
+    } 
+} 
+
+/*********************************************************************/
