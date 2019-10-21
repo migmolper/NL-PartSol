@@ -37,11 +37,19 @@ GaussPoint Define_GP_Mesh(char * MPM_GID_MeshName,
   
   /* Index of the Element */
   MPM_Mesh.Element_id =
-    (int *)Allocate_ArrayZ(MPM_Mesh.NumGP,sizeof(int));
-  MPM_Mesh.Nodes.nV =
-    (int *)Allocate_ArrayZ(MPM_Mesh.NumGP,sizeof(int));
-  MPM_Mesh.Nodes.nM =
-    (int **)Allocate_MatrixZ(MPM_Mesh.NumGP,4,sizeof(int));
+    (int *)Allocate_ArrayZ(MPM_Mesh.NumGP,sizeof(int));  
+
+  /* A list with the number of tributary nodes of the GP */
+  MPM_Mesh.NumberNodes =
+    (int *)Allocate_ArrayZ(,sizeof(int));
+
+  /* A table of chains with the nodal connectivity of the GP */
+  MPM_Mesh.ListNodes =
+    (ChainPtr *)malloc(MPM_Mesh.NumGP*sizeof(ChainPtr));
+  if(MPM_Mesh.ListNodes == NULL){
+    puts("Error in Chain declaration");
+    exit(0);
+  }
 
   /* Coordinates of the GP (Global/Local)*/
   MPM_Mesh.Phi.x_GC = MatAllocZ(MPM_Mesh.NumGP,3);
@@ -158,10 +166,7 @@ GaussPoint Define_GP_Mesh(char * MPM_GID_MeshName,
       
     /* Local coordinates of the element */
     MPM_Mesh.Element_id[i] = -999;
-    MPM_Mesh.Nodes.nV[i] = 4;
-    for(int j = 0 ; j<MPM_Mesh.Nodes.nV[i] ; j++){
-      MPM_Mesh.Nodes.nM[i][j] = -999;
-    }
+    MPM_Mesh.NumberNodes[i] = 4;
 
     /* Location in the natural coordinates
        of the element (Init to zero) */

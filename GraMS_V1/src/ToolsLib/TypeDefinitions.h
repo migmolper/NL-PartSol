@@ -5,6 +5,7 @@
 
   -> Matrix : Usefull structure to deal with algebraic operations.
   -> Table : Table of integers.
+  -> Chain and ChainPtr : Chain of nodes and pointer to a chain of nodes.
   -> Curve : Structure created for dealing with complex boundary
   conditions and loads.
   -> BoundaryConditions : Structure that store all the information
@@ -48,6 +49,7 @@ typedef struct{
 typedef struct{
   int N_rows; /* Number of rows */
   int N_cols; /* Number of columns */
+  int n; /* Scalar*/
   int * nV; /* 1D list */
   int ** nM; /* 2D list */
   char Info [100]; /* Aditional information */
@@ -57,9 +59,12 @@ typedef struct{
 
 /* Chain of nodes */
 typedef struct Chain { 
-    int I; 
-    struct Chain * next; 
+  int I; /* Index of the node */
+  struct Chain * next;  /* Pointer to the next element */
 } Chain; 
+
+/* Pointer to a chain */
+typedef Chain * ChainPtr;
 
 /*******************************************************/
 
@@ -169,8 +174,9 @@ typedef struct {
   int NumGP;
   /* Identification of the element where it is */
   int * Element_id;
-  /* Table of tributary nodes */
-  Table Nodes;
+  /* Tributary nodes variables */
+  int * NumberNodes;
+  ChainPtr * ListNodes;
   /* List of Fields */
   Fields Phi;
   /* Constitutive response */

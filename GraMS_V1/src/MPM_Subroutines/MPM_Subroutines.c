@@ -13,7 +13,7 @@
 
 void GlobalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh){
 
-  /* 0º Variable declaration */
+  /* Variables for the GP coordinates */
   Matrix X_GC_GP;
   X_GC_GP.N_rows = NumberDimensions;
   X_GC_GP.N_cols = 1;  
@@ -22,14 +22,18 @@ void GlobalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh){
   X_EC_GP.N_rows = NumberDimensions;
   X_EC_GP.N_cols = 1;  
   X_EC_GP.n = NAN;
+
+  /* Variables for the poligon */
   Matrix Poligon = MatAllocZ(FEM_Mesh.NumNodesElem,NumberDimensions);
-  int * Poligon_Connectivity;
+  ChainPtr Poligon_Connectivity = NULL;
+  ChainPtr INode = NULL;
+  int VertexPoligon = FEM_Mesh.NumNodesElem;
 
   /* 1º Set to zero the active/non-active elements */
   for(int i = 0 ; i<FEM_Mesh.NumNodesMesh ; i++){
     FEM_Mesh.ActiveNode[i] = 0;
   }
-  
+
   for(int i = 0 ; i<MPM_Mesh.NumGP ; i++){
 
     /* 2º Assign the value to this auxiliar pointer */ 
@@ -38,52 +42,56 @@ void GlobalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh){
     for(int j = 0 ; j<FEM_Mesh.NumElemMesh ; j++){
 
       /* 3º Connectivity of the Poligon */
-      Poligon_Connectivity = FEM_Mesh.Connectivity[j];
+      Poligon_Connectivity = ChainAlloc(FEM_Mesh.Connectivity[j],VertexPoligon);
+      
       /* 4º Fill the poligon Matrix */
-      for(int k = 0 ; k<FEM_Mesh.NumNodesElem ; k++){
+      /* Initialize chain interator */
+      INode = Poligon_Connectivity;
+      /* Loop in the chain */
+      while(INode != NULL){
+	/* Fill the poligon */
 	for(int l = 0 ; l<NumberDimensions ; l++){
-	  Poligon.nM[k][l] =
-	    FEM_Mesh.Coordinates.nM[Poligon_Connectivity[k]][l];
+	  Poligon.nM[k][l] = FEM_Mesh.Coordinates.nM[INode->I][l];
 	}
+	/* Update chain iterator */
+	INode = INode->next;
       }
+      
       /* 5º Check out if the GP is in the Element */
       if(InOut_Poligon(X_GC_GP,Poligon) == 1){
 
 	/* 6º Asign to the GP a element in the background mesh, just for 
 	   searching porpuses */
 	MPM_Mesh.Element_id[i] = j;
-<<<<<<< Updated upstream
-=======
-
-	for(int k = 0 ; k<MPM_Mesh.Nodes.nV[i] ; k++){
-	  MPM_Mesh.Nodes.nM[i][k] = Poligon_Connectivity[k];
-	}
->>>>>>> Stashed changes
 
 	/* 7º If the GP is in the element, get its natural coordinates */
 	X_EC_GP.nV = MPM_Mesh.Phi.x_EC.nM[i];
 	Get_X_EC_Q4(X_EC_GP,X_GC_GP,Poligon);
 
-	/* 8º Create a connectivity for the GP */
-	for(int k = 0 ; k<MPM_Mesh.Nodes.nV[i] ; k++){
-	  MPM_Mesh.Nodes.nM[i][k] = Poligon_Connectivity[k];
-	}
-	
+	/* 8º Assign the connectivity to the GP */
+	MPM_Mesh.ListNodes[i] = Poligon_Connectivity;
+
 	/* 9º Active those nodes that interact with the GP */
-	for(int k = 0 ; k<FEM_Mesh.NumNodesElem ; k++){
-	  FEM_Mesh.ActiveNode[Poligon_Connectivity[k]] += 1;
-	}
-	
-      }      
+	/* Initialize chain interator */
+	INode = Poligon_Connectivity;
+	/* Loop in the chain */
+	while(INode != NULL){
+	    FEM_Mesh.ActiveNode[INode->I] += 1;
+	    /* Update chain iterator */
+	    INode = INode->next;
+	}	
+      }
+      /* If is not in the element, deallocate the chain */
+      else{
+	FreeChain(Poligon_Connectivity);
+	Poligon_Connectivity = NULL;
+      }
+      
     } /* Loop over the elements */
 
   } /* Loop over the GP */
 
-<<<<<<< Updated upstream
-  /* 10º Free memory */
-=======
   /* 8º Free memory */
->>>>>>> Stashed changes
   FreeMat(Poligon);
   
 }
@@ -96,7 +104,7 @@ void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 */
 {
 
-  /* 0º Variable declaration */
+  /* Variables for the GP coordinates */
   Matrix X_GC_GP;
   X_GC_GP.N_rows = NumberDimensions;
   X_GC_GP.N_cols = 1;
@@ -105,18 +113,24 @@ void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
   X_EC_GP.N_rows = NumberDimensions;
   X_EC_GP.N_cols = 1;
   X_EC_GP.n = NAN;
-  Matrix Element_GP_Coordinates =
-    MatAllocZ(FEM_Mesh.NumNodesElem,NumberDimensions);
-  int * Element_GP_Connectivity;
-  int Element_GP_i; /* Index of the initial element */
+
+  /* Variables for the poligon description */
+  Matrix Poligon = MatAllocZ(FEM_Mesh.NumNodesElem,NumberDimensions);
+  ChainPtr Poligon_Connectivity = NULL;
+  ChainPtr PrevNode;
+  ChainPtr INode = NULL;
+  ChainPtr NextNode;
+  int * ElemConnectivity;
+  int NumVertex = FEM_Mesh.NumNodesElem;
+  
+  int Elem_i; /* Element of the GP i */
   Matrix V_GP; /* Velocity array */
   V_GP.N_rows = NumberDimensions;
   V_GP.N_cols = 1;
   V_GP.nM = NULL;
   V_GP.n = NAN;
   strcpy(V_GP.Info,"V_GP");
-  Matrix Search_Direction ; /* Auxiliar array for the local search */
-  Search_Direction = MatAllocZ(1,NumberDimensions);
+  double Search_Direction ; 
   Matrix V_GP_n;
   V_GP_n = MatAllocZ(1,NumberDimensions);
   int SearchVertex; /* Index to start the search */
@@ -134,30 +148,41 @@ void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
     X_GC_GP.nV = MPM_Mesh.Phi.x_GC.nM[i];
 
     /* 4º Get the index of the initial element */
-    Element_GP_i = MPM_Mesh.Element_id[i];
+    Elem_i = MPM_Mesh.Element_id[i];
 
     /* 5º Get the connectivity of the initial element  */
-    Element_GP_Connectivity = MPM_Mesh.Nodes.nM[i];
+    Poligon_Connectivity = ChainAlloc(FEM_Mesh.Connectivity[Element_GP_i],
+				      NumVertex);
 
     /* 6º Fill the matrix with the nodal coordinates of 
        the initial element */
-    for(int j = 0 ; j<FEM_Mesh.NumNodesElem ; j++){
-      for(int k = 0 ; k<NumberDimensions ; k++){
-	Element_GP_Coordinates.nM[j][k] =
-	  FEM_Mesh.Coordinates.nM[Element_GP_Connectivity[j]][k];
+    /* Initialize chain interator */
+    INode = Poligon_Connectivity;
+    /* Loop in the chain */
+    while(INode != NULL){
+      /* Fill the poligon */
+      for(int l = 0 ; l<NumberDimensions ; l++){
+	Poligon.nM[k][l] = FEM_Mesh.Coordinates.nM[INode->I][l];
       }
+      /* Update chain iterator */
+      INode = INode->next;
     }
 
     /* 6º Check if the GP is in the same element */
-    if(InOut_Poligon(X_GC_GP,Element_GP_Coordinates) == 1){
+    if(InOut_Poligon(X_GC_GP,Poligon_Coordinates) == 1){
       
-      /* 6bº If the GP is in the element, get its natural coordinates */
+      /* If the GP is in the element, get its natural coordinates */
       X_EC_GP.nV = MPM_Mesh.Phi.x_EC.nM[i];     
-      Get_X_EC_Q4(X_EC_GP,X_GC_GP,Element_GP_Coordinates);
+      Get_X_EC_Q4(X_EC_GP,X_GC_GP,Poligon_Coordinates);
       
-      /* 6aº Active those nodes that interact with the GP */
-      for(int j = 0 ; j<FEM_Mesh.NumNodesElem ; j++){
-	FEM_Mesh.ActiveNode[Element_GP_Connectivity[j]] += 1;
+      /* Active those nodes that interact with the GP */
+      /* Initialize chain interator */
+      INode = Poligon_Connectivity;
+      /* Loop in the chain */
+      while(INode != NULL){
+	FEM_Mesh.ActiveNode[INode->I] += 1;
+	/* Update chain iterator */
+	INode = INode->next;
       }
       
     }
@@ -176,43 +201,59 @@ void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
       SearchVertex = -999;
 
       /* 7dº Get the search direction for the vertex of the element
-       and check the search direction */
-      for(int j = 0 ; j<FEM_Mesh.NumNodesElem ; j++){
+	 and check the search direction */
+      PrevNode = NULL;
+      INode = Poligon_Connectivity;
+      NextNode = INode->next; 
+      /* Loop in the chain */
+      while(INode != NULL){
 
-	if(j == 0){ /* First vertex */
+	/* First vertex */
+	if(PrevNode == NULL){ 
+	  ElemConnectivity = FEM_Mesh.Connectivity[Elem_i];
 	  for(int k = 0 ; k<NumberDimensions ; k++){
-	    Search_Direction.nV[k] =
-	      2*FEM_Mesh.Coordinates.nM[Element_GP_Connectivity[0]][k] -
-	      FEM_Mesh.Coordinates.nM[Element_GP_Connectivity[1]][k] -
-	      FEM_Mesh.Coordinates.nM[Element_GP_Connectivity[FEM_Mesh.NumNodesElem-1]][k];
+	    Search_Direction =
+	      2*FEM_Mesh.Coordinates.nM[ElemConnectivity[0]][k] -
+	      FEM_Mesh.Coordinates.nM[ElemConnectivity[1]][k] -
+	      FEM_Mesh.Coordinates.nM[ElemConnectivity[NumVertex-1]][k];
+	    /* Get the velocity proyection in the search direction */
+	    V_GP_n.nV[k] = V_GP.nV[k]*Search_Direction;
 	  }
 	}
-	else if(j == FEM_Mesh.NumNodesElem-1){ /* Last vertex */
+	/* Last vertex */
+	else if(NextNode == NULL){ 
+	  ElemConnectivity = FEM_Mesh.Connectivity[Elem_i];
 	  for(int k = 0 ; k<NumberDimensions ; k++){
-	    Search_Direction.nV[k] =
-	      2*FEM_Mesh.Coordinates.nM[Element_GP_Connectivity[FEM_Mesh.NumNodesElem-1]][k] -
-	      FEM_Mesh.Coordinates.nM[Element_GP_Connectivity[0]][k] -
-	      FEM_Mesh.Coordinates.nM[Element_GP_Connectivity[FEM_Mesh.NumNodesElem-2]][k];
+	    Search_Direction =
+	      2*FEM_Mesh.Coordinates.nM[ElemConnectivity[NumVertex-1]][k] -
+	      FEM_Mesh.Coordinates.nM[ElemConnectivity[0]][k] -
+	      FEM_Mesh.Coordinates.nM[ElemConnectivity[NumVertex-2]][k];
+	    /* Get the velocity proyection in the search direction */
+	    V_GP_n.nV[k] = V_GP.nV[k]*Search_Direction;
 	  }
 	}
-	else{ /* The rest of the elements */
+	/* The rest of the elements */
+	else{ 
 	  for(int k = 0 ; k<NumberDimensions ; k++){
-	    Search_Direction.nV[k] =
-	      2*FEM_Mesh.Coordinates.nM[Element_GP_Connectivity[j]][k] -
-	      FEM_Mesh.Coordinates.nM[Element_GP_Connectivity[j+1]][k] -
-	      FEM_Mesh.Coordinates.nM[Element_GP_Connectivity[j-1]][k];
+	    Search_Direction =
+	      2*FEM_Mesh.Coordinates.nM[INode->I][k] -
+	      FEM_Mesh.Coordinates.nM[NextNode->I][k] -
+	      FEM_Mesh.Coordinates.nM[PrevNode->I][k];
+	    /* Get the velocity proyection in the search direction */
+	    V_GP_n.nV[k] = V_GP.nV[k]*Search_Direction;
 	  }
 	}
-
-	for(int k = 0 ; k<NumberDimensions ; k++){
-	  V_GP_n.nV[k] = V_GP.nV[k]*Search_Direction.nV[k];
-	}
-
+	/* Check the projection of the velocity vector */
 	if( (V_GP_n.nV[0] >= 0) && (V_GP_n.nV[1] >= 0)){
-	  SearchVertex = Element_GP_Connectivity[j];
+	  SearchVertex = Poligon_Connectivity.nV[j];
 	  break;
 	}
-
+	
+	/* Update pointers for the loop */
+	PrevNode = INode;
+	INode = NextNode;
+	NextNode = INode->next;
+	  
       }
      
       /* 7eº Check for errors */
@@ -221,6 +262,9 @@ void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 	exit(0);
       }
 
+      /* Reset the poligon connectivity */
+      FreeChain(Poligon_Connectivity);
+
       /* 7fº Create the search list of this vertex */
       SearchList = FEM_Mesh.NodeNeighbour[SearchVertex];
      
@@ -228,20 +272,26 @@ void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
       for(int j  = 1 ; j<(FEM_Mesh.NodeNeighbour[SearchVertex][0]+1) ; j++){
 
 	/* Discard the initial element for the search */
-	if(SearchList[j] == Element_GP_i) continue; 
+	if(SearchList[j] == Elem_i) continue; 
 
 	/* Connectivity of the Element in the list */
-	Element_GP_Connectivity = FEM_Mesh.Connectivity[SearchList[j]];
+	Poligon_Connectivity = ChainAlloc(FEM_Mesh.Connectivity[SearchList[j]],
+					  NumVertex);
 
 	/* Fill the matrix with the nodal coordinates */
-	for(int k = 0 ; k<FEM_Mesh.NumNodesElem ; k++){
+	/* Initialize chain interator */
+	INode = Poligon_Connectivity;
+	/* Loop in the chain */
+	while(INode != NULL){
+	  /* Fill the poligon */
 	  for(int l = 0 ; l<NumberDimensions ; l++){
-	    Element_GP_Coordinates.nM[k][l] =
-	      FEM_Mesh.Coordinates.nM[Element_GP_Connectivity[k]][l];
+	    Poligon.nM[k][l] = FEM_Mesh.Coordinates.nM[INode->I][l];
 	  }
+	  /* Update chain iterator */
+	  INode = INode->next;
 	}
 
-	if(InOut_Poligon(X_GC_GP,Element_GP_Coordinates) == 1){
+	if(InOut_Poligon(X_GC_GP,Poligon_Coordinates) == 1){
 
 	  /* Asign to the GP a element in the background mesh, just for 
 	     searching porpuses */
@@ -249,25 +299,37 @@ void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 
 	  /* Get its natural coordinates */
 	  X_EC_GP.nV = MPM_Mesh.Phi.x_EC.nM[i];
-	  Get_X_EC_Q4(X_EC_GP,X_GC_GP,Element_GP_Coordinates);
+	  Get_X_EC_Q4(X_EC_GP,X_GC_GP,Poligon_Coordinates);
 
-	  /* Generate a GP connectivity */
-	  for(int k = 0 ; k<MPM_Mesh.Nodes.nV[i] ; k++){
-	    MPM_Mesh.Nodes.nM[i][k] = Element_GP_Connectivity[k];
-	  }
+	  /* Free the actual connectivity of the GP */
+	  FreeChain(MPM_Mesh.ListNodes[i]);	  
+	  /* Assign the new connectivity of the GP */
+	  MPM_Mesh.ListNodes[i] = Poligon_Connectivity;
 
 	  /* Active those nodes that interact with the GP */
-	  for(int k = 0 ; k<FEM_Mesh.NumNodesElem ; k++){
-	    FEM_Mesh.ActiveNode[Element_GP_Connectivity[k]] += 1;
+	  /* Initialize chain interator */
+	  INode = Poligon_Connectivity;
+	  /* Loop in the chain */
+	  while(INode != NULL){
+	    FEM_Mesh.ActiveNode[INode->I] += 1;
+	    /* Update chain iterator */
+	    INode = INode->next;
 	  }
+
+	  /* Free poligon connectivity */
+	  FreeChain(Poligon_Connectivity);
 
 	  /* If this is true, stop the search */
 	  break;
 	}
+	else{
+	  /* Free poligon connectivity */
+	  FreeChain(Poligon_Connectivity);
+	}
 	
       }
 
-      if(Element_GP_i == MPM_Mesh.Element_id[i]){
+      if(MPM_Mesh.Element_id[i] == Elem_i){
 	printf(" %s %i %s %i !!! \n",
 	       "Error in LocalSearchGaussPoints() : GP",i,
 	       "is not in the neighbours of",SearchVertex);
@@ -280,10 +342,8 @@ void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 
   /* 8º Free memory */
   FreeMat(V_GP_n);
-  FreeMat(Search_Direction);
-  FreeMat(Element_GP_Coordinates);
+  FreeMat(Poligon_Coordinates);
 
- 
 }
 
 /*********************************************************************/
@@ -308,7 +368,6 @@ void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 /* } */
 
 /*********************************************************************/
-
 
 Matrix GetNodalMassMomentum(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 {
@@ -389,16 +448,16 @@ Matrix GetNodalMassMomentum(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 Matrix GetNodalVelocity(Mesh FEM_Mesh,
 			Matrix Nodal_MOMENTUM,
 			Matrix Nodal_MASS){
-/*
-  Get the nodal velocity using : 
-  v_{i,I}^{k-1/2} = \frac{p_{i,I}^{k-1/2}}{m_I^{k}}
-  Initialize nodal velocities 
-*/
+  /*
+    Get the nodal velocity using : 
+    v_{i,I}^{k-1/2} = \frac{p_{i,I}^{k-1/2}}{m_I^{k}}
+    Initialize nodal velocities 
+  */
   Matrix Vel_Mesh;
   Vel_Mesh = MatAllocZ(NumberDimensions,FEM_Mesh.NumNodesMesh);
   strcpy(Vel_Mesh.Info,"VELOCITY");
   
-/* 1º Get nodal values of the velocity */
+  /* 1º Get nodal values of the velocity */
   for(int i = 0 ; i<FEM_Mesh.NumNodesMesh ; i++){
     for(int j = 0 ; j<NumberDimensions ; j++){
       if(FEM_Mesh.ActiveNode[i] > 0){
@@ -407,7 +466,7 @@ Matrix GetNodalVelocity(Mesh FEM_Mesh,
     }    
   }
   
-return Vel_Mesh;
+  return Vel_Mesh;
 }
 
 /*******************************************************/

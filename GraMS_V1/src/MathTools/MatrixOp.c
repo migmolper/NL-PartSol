@@ -3,6 +3,7 @@
 #include <math.h>
 #include <time.h>
 #include <string.h>
+#include <stdbool.h> 
 #include "../ToolsLib/TypeDefinitions.h"
 #include "MathTools.h"
 

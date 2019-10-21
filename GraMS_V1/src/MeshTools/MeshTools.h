@@ -16,11 +16,14 @@ Matrix Get_B_GP(Matrix);
 void BCC_Nod_VALUE(Mesh, Matrix, int);
 
 /* Nodes operations */
-void push (Chain **, int);
-bool isPresent (Chain *, int);
-Chain * getUnion(Chain *, Chain *);
-Chain * getIntersection(Chain *, Chain *);
-void printList (Chain *);
+ChainPtr ChainAlloc(int *, int);
+void FreeChain(ChainPtr);
+bool IsPresentNode (ChainPtr, int);
+void PushNode (ChainPtr *, int);
+void PopNode (ChainPtr *, int);
+ChainPtr GetUnion(ChainPtr, ChainPtr);
+ChainPtr GetIntersection(ChainPtr, ChainPtr);
+void printList (ChainPtr);
 
 /* 1D of two nodes shape functions */
 Matrix L2(Matrix);
