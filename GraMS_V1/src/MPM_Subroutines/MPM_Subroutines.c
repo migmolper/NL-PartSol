@@ -52,6 +52,13 @@ void GlobalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh){
 	/* 6º Asign to the GP a element in the background mesh, just for 
 	   searching porpuses */
 	MPM_Mesh.Element_id[i] = j;
+<<<<<<< Updated upstream
+=======
+
+	for(int k = 0 ; k<MPM_Mesh.Nodes.nV[i] ; k++){
+	  MPM_Mesh.Nodes.nM[i][k] = Poligon_Connectivity[k];
+	}
+>>>>>>> Stashed changes
 
 	/* 7º If the GP is in the element, get its natural coordinates */
 	X_EC_GP.nV = MPM_Mesh.Phi.x_EC.nM[i];
@@ -72,7 +79,11 @@ void GlobalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh){
 
   } /* Loop over the GP */
 
+<<<<<<< Updated upstream
   /* 10º Free memory */
+=======
+  /* 8º Free memory */
+>>>>>>> Stashed changes
   FreeMat(Poligon);
   
 }
