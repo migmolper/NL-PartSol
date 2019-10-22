@@ -41,7 +41,7 @@ GaussPoint Define_GP_Mesh(char * MPM_GID_MeshName,
 
   /* A list with the number of tributary nodes of the GP */
   MPM_Mesh.NumberNodes =
-    (int *)Allocate_ArrayZ(,sizeof(int));
+    (int *)Allocate_ArrayZ(MPM_Mesh.NumGP,sizeof(int));
 
   /* A table of chains with the nodal connectivity of the GP */
   MPM_Mesh.ListNodes =

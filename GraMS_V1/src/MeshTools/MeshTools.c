@@ -33,7 +33,7 @@ int ** GetNodalConnectivity(Mesh FEM_Mesh){
 	/* 4º If my node belong to the element */
 	if(FEM_Mesh.Connectivity[j][k] == i){
 	  if(NumNeighbour[i] == MAXNEIGHBOUR){
-	    puts("Error in GetNodalConnectivity() : Max number of neighbour reached !!! ");
+	    puts("Error in GetNodalConnectivity(): Max number of neighbour reached !");
 	    exit(0);
 	  }
 	  TableNeighbourNode[i][NumNeighbour[i]] = j;
@@ -106,7 +106,7 @@ Matrix Get_B_GP(Matrix dNdX_GP)
     
     /* 4º Fill the array with the nodal partial derivation 
        of the reference element */    
-    for(int i = 0 ; i<dNdX_GP.N_rows ; i++){
+    for(int i = 0 ; i<dNdX_GP.N_cols ; i++){
       B_GP.nM[0][2*i] = dNdX_GP.nM[0][i];
       B_GP.nM[1][2*i] = 0;
       B_GP.nM[2][2*i] = dNdX_GP.nM[1][i];
@@ -138,7 +138,7 @@ ChainPtr ChainAlloc(int * NodesIndex, int NumNodes){
   ChainPtr NewChain = NULL;
 
   /* Loop over the list to generate a List */
-  for(int i = 0 ; i<NumNodes ; i++){
+  for(int i = NumNodes-1; i > -1 ; i--){
     PushNode(&NewChain, NodesIndex[i]);    
   }
 
