@@ -205,7 +205,7 @@ void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
       NextNode = INode->next; 
       /* Loop in the chain */
       while(INode != NULL){
-      /* for(int j = 0 ; (INode != NULL) || (j<GP_NumNodes) ; Node_i = INode->I, j++){ */
+      /* for(int j = 0; (INode != NULL) || (j<GP_NumNodes); Node_i = INode->I, j++){ */
 	/* First vertex */
 	if(PrevNode == NULL){ 
 	  ElemConnectivity = FEM_Mesh.Connectivity[Elem_i];
@@ -563,17 +563,18 @@ void UpdateGaussPointStrain(GaussPoint MPM_Mesh,
 	(k<GP_NumNodes) || (INode != NULL);
 	k++, INode = INode->next){
       GP_I = INode->I;
-      for(int k = 0 ; k<NumberDimensions ; k++){
-	Elem_Vel.nV[k*NumberDimensions + k] = Mesh_Vel.nM[k][GP_I];
+      for(int l = 0 ; l<NumberDimensions ; l++){
+	Elem_Vel.nV[k*NumberDimensions + l] = Mesh_Vel.nM[l][GP_I];
       }
     }
 
     /* 5º Multiply B by the velocity array and by the time step to get
        the increment stress tensor */
-    Increment_Strain_GP = Scalar_prod(B,Elem_Vel);
+    Increment_Strain_GP = Scalar_prod(B,Elem_Vel);    
     for(int j = 0 ; j<MPM_Mesh.Phi.Strain.N_cols ; j++){
       Increment_Strain_GP.nV[j] *= DeltaTimeStep;
     }
+    
     /* Free memory */
     FreeMat(Elem_Vel);
     FreeMat(B);
@@ -805,9 +806,9 @@ Matrix GetNodalForces(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int TimeStep)
 
     /* 8º Get the divergence stress tensor evaluates in the Gauss-Point 
      and free the B_T matrix */
-    Div_Stress_Tensor = Scalar_prod(B_T,StressTensor_GP);
+    Div_Stress_Tensor = Scalar_prod(B_T,StressTensor_GP);    
     FreeMat(B_T);
-
+    
     /* 9º Calcule the volumen of the Gauss-Point */
     GP_mass = MPM_Mesh.Phi.mass.nV[i];
     Vol_GP = GP_mass/MPM_Mesh.Phi.rho.nV[i];
@@ -863,7 +864,7 @@ void UpdateGridNodalMomentum(Mesh FEM_Mesh,
 	  DeltaTimeStep*Nodal_TOT_FORCES.nM[j][i];
       }
     }
-  } 
+  }  
 }
 
 /*******************************************************/
