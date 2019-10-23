@@ -7,11 +7,6 @@
 #define TypeDefinitions
 #endif
 
-
-void GlobalSearchGaussPoints(GaussPoint, Mesh);
-
-void LocalSearchGaussPoints(GaussPoint, Mesh);
-
 int SearchGaussPoint(int, Matrix, Matrix, Mesh);
 
 Matrix GetNodalMassMomentum(GaussPoint, Mesh);

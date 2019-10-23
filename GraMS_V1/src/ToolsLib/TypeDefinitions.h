@@ -202,7 +202,8 @@ typedef struct {
   /* double ** Coordinates; */
   Matrix Coordinates;
   /* List of nodes for each element (Connectivity) */
-  int **  Connectivity;
+  int * NumNodesElem;
+  ChainPtr * Connectivity;
   /* Active node : 
      Boolean variable that set the node ative (1>) or not (0) */
   int * ActiveNode;
@@ -220,8 +221,6 @@ typedef struct {
   double DeltaX;
   /* Name of the element */
   char TypeElem [20];
-  /* Number of nodes of the element */
-  int NumNodesElem;
   /* Shape function of the reference element evaluated in a GP */
   Matrix (* N_ref)(Matrix );
   /* Derivative shape function of the reference element evaluated in a GP */

@@ -10,13 +10,16 @@ Mesh InitializeMesh(char * GDF);
 
 /* Functions definitions :*/
 int ** GetNodalConnectivity(Mesh FEM_Mesh);
+void GlobalSearchGaussPoints(GaussPoint, Mesh);
+void LocalSearchGaussPoints(GaussPoint, Mesh);
 Matrix Get_B_GP(Matrix);
 
 /* Boundary conditions functions */
 void BCC_Nod_VALUE(Mesh, Matrix, int);
 
 /* Nodes operations */
-ChainPtr ChainAlloc(int *, int);
+ChainPtr ArrayToChain(int *, int);
+int * ChainToArray(ChainPtr, int);
 void FreeChain(ChainPtr);
 bool IsPresentNode (ChainPtr, int);
 void PushNode (ChainPtr *, int);
@@ -52,5 +55,6 @@ double uGIMP(double, double, double, double);
 double d_uGIMP(double, double, double, double);
 Matrix GIMP_2D(Matrix, Matrix, Matrix, double);
 Matrix dGIMP_2D(Matrix, Matrix, Matrix, double);
-Table Tributary_Nodes_GP_GIMP(Matrix, Matrix,
-			      double, Table, int **);
+ChainPtr Tributary_Nodes_GIMP(Matrix,ChainPtr,
+			      Matrix, double,
+			      int **);

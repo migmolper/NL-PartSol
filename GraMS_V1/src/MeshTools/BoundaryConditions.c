@@ -54,15 +54,3 @@ void BCC_Nod_VALUE(Mesh FEM_Mesh, Matrix Nodal_VALUE, int TimeStep)
 }
 
 /*********************************************************************/
-
-
-
-/*********************************************************************/
-
-/* void BC_Nod_Springs(GaussPoint GP_Mesh, BoundaryConditions Loads, int TimeStep) */
-/* /\* */
-/*   Add to a surface springs to simulate the winkler */
-/* *\/ */
-/* { */
-  
-/* } */

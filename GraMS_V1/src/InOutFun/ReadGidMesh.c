@@ -37,6 +37,10 @@ Mesh ReadGidMesh(char * MeshName)
   int ncoords;
   int nconnectivity;
 
+  /* Variables to fill the Connectivity */
+  int NumNodesElem;
+  int * ConnectivityElem;
+
   /* Screen message */
   printf("************************************************* \n");
   printf("Begin of set mesh properties !!! \n");
@@ -79,25 +83,26 @@ Mesh ReadGidMesh(char * MeshName)
       /* ElemType */
       strcpy(GID_Mesh.TypeElem,words[4]);      
       /* Number of nodes per element */
-      GID_Mesh.NumNodesElem = atoi(words[6]);
+      NumNodesElem = atoi(words[6]);
+      ConnectivityElem = (int *)Allocate_Array(NumNodesElem,sizeof(int));
       /* Shape functions and its derivatives:
 	 Here we only pass by reference the function, the output Matrix
 	 is allocated insede of N_ref() and dNdX_ref(), we also set the
 	 number of dimensions */
       if( (strcmp(GID_Mesh.TypeElem,"Linear") == 0) &&
-	  (GID_Mesh.NumNodesElem == 2) ){
+	  (NumNodesElem == 2) ){
 	GID_Mesh.Dimension = 1;
 	GID_Mesh.N_ref = L2;
 	GID_Mesh.dNdX_ref = dL2;
       }
       if( (strcmp(GID_Mesh.TypeElem,"Quadrilateral") == 0) &&
-	  (GID_Mesh.NumNodesElem == 4) ){
+	  (NumNodesElem == 4) ){
 	GID_Mesh.Dimension = 2;
 	GID_Mesh.N_ref = Q4;
 	GID_Mesh.dNdX_ref = dQ4;
       }
       if( (strcmp(GID_Mesh.TypeElem,"Triangle") == 0) &&
-	  (GID_Mesh.NumNodesElem == 3) ){
+	  (NumNodesElem == 3) ){
 	GID_Mesh.Dimension = 2;
 	GID_Mesh.N_ref = T3;
 	GID_Mesh.dNdX_ref = dT3;
@@ -179,9 +184,12 @@ Mesh ReadGidMesh(char * MeshName)
   /* Allocate the mesh data */
   GID_Mesh.Coordinates = MatAlloc(GID_Mesh.NumNodesMesh,
   				  GID_Mesh.Dimension);
-  GID_Mesh.Connectivity = (int **)
-    Allocate_Matrix(GID_Mesh.NumElemMesh,
-  		    GID_Mesh.NumNodesElem,sizeof(int));
+  GID_Mesh.Connectivity = (ChainPtr *)
+    malloc(GID_Mesh.NumElemMesh*sizeof(ChainPtr));
+  
+  GID_Mesh.NumNodesElem =  (int *)
+    Allocate_ArrayZ(GID_Mesh.NumElemMesh,sizeof(int));
+
   GID_Mesh.ActiveNode = (int *)
     Allocate_ArrayZ(GID_Mesh.NumNodesMesh,sizeof(int));
 
@@ -228,12 +236,14 @@ Mesh ReadGidMesh(char * MeshName)
   nwords = parse(words, line, " \n\t");
   if(strcmp(words[0],"Elements") == 0){
     for(int i = 0 ; i<GID_Mesh.NumElemMesh ; i++){
+      GID_Mesh.NumNodesElem[i] = NumNodesElem;
       fgets(line_connectivity, sizeof line_connectivity, MeshFile);
       nconnectivity = parse(read_connectivity, line_connectivity," \n\t");
-      if(nconnectivity == 1 + GID_Mesh.NumNodesElem){
-  	for(int j = 0 ; j<GID_Mesh.NumNodesElem ; j++){
-  	  GID_Mesh.Connectivity[i][j] = atoi(read_connectivity[j+1]) - 1;
+      if(nconnectivity == 1 + NumNodesElem){
+  	for(int j = 0 ; j<NumNodesElem ; j++){
+  	  ConnectivityElem[j] = atoi(read_connectivity[j+1]) - 1;
   	}
+	GID_Mesh.Connectivity[i] = ArrayToChain(ConnectivityElem,NumNodesElem);
       }
       else{
   	printf("Check the element : %i \n", atoi(read_connectivity[0]) - 1);
@@ -241,6 +251,7 @@ Mesh ReadGidMesh(char * MeshName)
   	exit(0);
       }
     }
+    free(ConnectivityElem);
   }
 
   /* End Elements */

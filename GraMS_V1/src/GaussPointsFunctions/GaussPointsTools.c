@@ -22,6 +22,11 @@ GaussPoint Define_GP_Mesh(char * MPM_GID_MeshName,
   /* Material point mesh (Gauss-Points) */
   Mesh MPM_GID_Mesh;
   GaussPoint MPM_Mesh;
+  Matrix Poligon_Coordinates;
+  ChainPtr Poligon_Connectivity;
+  ChainPtr Vertex;
+  int NumVertex;
+  Matrix Poligon_Centroid;
 
   /* Screen message */
   printf("Begin of initialize the Gauss-Points mesh !!! \n");
@@ -129,29 +134,38 @@ GaussPoint Define_GP_Mesh(char * MPM_GID_MeshName,
   /* Density field (Scalar) */
   MPM_Mesh.Phi.rho = MatAllocZ(MPM_Mesh.NumGP,1);
   strcpy(MPM_Mesh.Phi.rho.Info,"Density field GP");
-
-  
-  Matrix Poligon = MatAllocZ(MPM_GID_Mesh.NumNodesElem,NumberDimensions);
-  int * Poligon_Connectivity;  
-  Matrix Poligon_Centroid;
-
+ 
+  /* Fill geometrical properties of the GP mesh */
   for(int i = 0 ; i<MPM_Mesh.NumGP ; i++){
 
     /* Get the connectivity of the elements vertex */
     Poligon_Connectivity = MPM_GID_Mesh.Connectivity[i];
-
-    /* Get the coordiantes of the element vertex */
-    for(int j = 0 ; j<MPM_GID_Mesh.NumNodesElem ; j++){
-      for(int k = 0 ; k<NumberDimensions ; k++){
-	Poligon.nM[j][k] =
-	  MPM_GID_Mesh.Coordinates.nM[Poligon_Connectivity[j]][k];
+    
+    /* Generate a matrix with the poligon coordinates */
+    NumVertex = MPM_GID_Mesh.NumNodesElem[i];
+    Poligon_Coordinates = MatAllocZ(NumVertex,NumberDimensions); 
+    /* Initialize chain interator */
+    Vertex = Poligon_Connectivity;
+    /* Loop in the chain to fill the poligon */
+    for(int k = 0, I_Vertex = 0;
+	(k<NumVertex) || (Vertex != NULL);
+	k++, Vertex = Vertex->next){
+      I_Vertex = Vertex->I;
+      for(int l = 0 ; l<NumberDimensions ; l++){
+	Poligon_Coordinates.nM[k][l] = MPM_GID_Mesh.Coordinates.nM[I_Vertex][l];
       }
     }
 
+    /* Free data */
+    FreeChain(MPM_GID_Mesh.Connectivity[i]);
+
     /* Get the area (Poligon_Centroid.n) 
        and the position of the centroid (Poligon_Centroid.nV) */
-    Poligon_Centroid = Centroid_Poligon(Poligon);
-           
+    Poligon_Centroid = Centroid_Poligon(Poligon_Coordinates);
+
+    /* Free data */
+    FreeMat(Poligon_Coordinates);
+    
     /* Assign the mass parameter */
     MPM_Mesh.Phi.mass.nV[i] = Poligon_Centroid.n*Density;
     /* Set the initial density */
@@ -189,22 +203,14 @@ GaussPoint Define_GP_Mesh(char * MPM_GID_MeshName,
     MPM_Mesh.Phi.Strain.nM[i][0] = 0.0;
     MPM_Mesh.Phi.Strain.nM[i][1] = 0.0;
     MPM_Mesh.Phi.Strain.nM[i][2] = 0.0;      
-
     
   }
-  /* Initialize all the fields :
-     - Mass of the material point
-     - Position field (Vectorial) in global coordiantes 
-     and in element coordinates :
-     - Displacement, Velocity and acceleration field (Vectorial)
-     - Stress and Strain fields (Tensorial)
-     Note : It is not necessary to allocate memory...think about it ;)
-  */
 
   /* Free the input data */
   FreeMat(MPM_GID_Mesh.Coordinates);
   free(MPM_GID_Mesh.Connectivity);
   free(MPM_GID_Mesh.ActiveNode);
+  free(MPM_GID_Mesh.NumNodesElem);
 
   /* Final messages */
   printf("End of initialize the Gauss-Points mesh !!! \n");

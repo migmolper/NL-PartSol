@@ -3,6 +3,7 @@
 #include <math.h>
 #include "../ToolsLib/TypeDefinitions.h"
 #include "../MathTools/MathTools.h"
+#include "MeshTools.h"
 
 /***********************************************/
 /******* 2D cuadrilateral linear element *******/
@@ -138,103 +139,102 @@ Matrix dGIMP_2D(Matrix X_GC_GP, Matrix lp, Matrix Nodes, double L){
 
 /*********************************************************************/
 
-Table Tributary_Nodes_GP_GIMP(Matrix X_EC_GP, Matrix lp,
-			      double L, Table NodesElem,
+ChainPtr Tributary_Nodes_GIMP(Matrix X_EC_GP,
+			      ChainPtr NodesElem,
+			      Matrix lp,double L,
 			      int ** NodeNeighbour){
 
-  Table Triburary_Nodes_GP;
-  Matrix Dist = MatAlloc(1,2);
+  ChainPtr Triburary_Nodes_n1;
+  double Dist[2];
 
+  /* Get the reference distance measured from the center of the element */
   for(int i = 0 ; i<2; i++){
-    Dist.nV[i] = 1 - lp.nV[i]/L;
+    Dist[i] = 1 - lp.nV[i]/L;
   }
 
-  /* Check if is in the central area */
-  if ((fabs(X_EC_GP.nV[0]) < Dist.nV[0]) &&
-      (fabs(X_EC_GP.nV[1]) < Dist.nV[1])){    
-    Triburary_Nodes_GP.nV = (int *)Allocate_ArrayZ(4,sizeof(int));
+  /* Check if I am in the central area */
+  if ((fabs(X_EC_GP.nV[0]) < Dist[0]) &&
+      (fabs(X_EC_GP.nV[1]) < Dist[1])){    
+    Triburary_Nodes_n1 = NodesElem;
   }
   
-  /* Check if it is in the 1º Quadrant */
+  /* Check if I am in the 1º Quadrant */
   else if((X_EC_GP.nV[0]>0) &&
 	  (X_EC_GP.nV[1]>0)){
 
-    if((X_EC_GP.nV[0] > Dist.nV[0]) &&
-       (X_EC_GP.nV[1] < Dist.nV[1])){
-      Triburary_Nodes_GP.nV = (int *)Allocate_ArrayZ(6,sizeof(int));
+    if((X_EC_GP.nV[0] > Dist[0]) &&
+       (X_EC_GP.nV[1] < Dist[1])){
+      
     }
-    else if((X_EC_GP.nV[0] < Dist.nV[0]) &&
-	    (X_EC_GP.nV[1] > Dist.nV[1])){
-      Triburary_Nodes_GP.nV = (int *)Allocate_ArrayZ(6,sizeof(int));
+    else if((X_EC_GP.nV[0] < Dist[0]) &&
+	    (X_EC_GP.nV[1] > Dist[1])){
+
     }
-    else if((X_EC_GP.nV[0] > Dist.nV[0]) &&
-	    (X_EC_GP.nV[1] > Dist.nV[1])){
-      Triburary_Nodes_GP.nV = (int *)Allocate_ArrayZ(9,sizeof(int));
+    else if((X_EC_GP.nV[0] > Dist[0]) &&
+	    (X_EC_GP.nV[1] > Dist[1])){
+
     }
     
   }
   
-  /* Check if it is in the 2º Quadrant */
+  /* Check if I am in the 2º Quadrant */
   else if((X_EC_GP.nV[0]<0) &&
 	  (X_EC_GP.nV[1]>0)){
 
-    if((X_EC_GP.nV[0] > -Dist.nV[0]) &&
-       (X_EC_GP.nV[1] > Dist.nV[1])){
-      Triburary_Nodes_GP.nV = (int *)Allocate_ArrayZ(6,sizeof(int));
+    if((X_EC_GP.nV[0] > -Dist[0]) &&
+       (X_EC_GP.nV[1] > Dist[1])){
+
     }
-    else if((X_EC_GP.nV[0] < -Dist.nV[0]) &&
-	    (X_EC_GP.nV[1] < Dist.nV[1])){
-      Triburary_Nodes_GP.nV = (int *)Allocate_ArrayZ(6,sizeof(int));
+    else if((X_EC_GP.nV[0] < -Dist[0]) &&
+	    (X_EC_GP.nV[1] < Dist[1])){
+
     }
-    else if((X_EC_GP.nV[0] < -Dist.nV[0]) &&
-	    (X_EC_GP.nV[1] > Dist.nV[1])){
-      Triburary_Nodes_GP.nV = (int *)Allocate_ArrayZ(9,sizeof(int));
+    else if((X_EC_GP.nV[0] < -Dist[0]) &&
+	    (X_EC_GP.nV[1] > Dist[1])){
+
     }
     
   }
   
-  /* Check if it is in the 3º Quadrant */
+  /* Check if I am in the 3º Quadrant */
   else if((X_EC_GP.nV[0]<0) &&
 	  (X_EC_GP.nV[1]<0)){
     
-    if((X_EC_GP.nV[0] < -Dist.nV[0]) &&
-       (X_EC_GP.nV[1] > -Dist.nV[1])){
-      Triburary_Nodes_GP.nV = (int *)Allocate_ArrayZ(6,sizeof(int));
+    if((X_EC_GP.nV[0] < -Dist[0]) &&
+       (X_EC_GP.nV[1] > -Dist[1])){
+
     }
-    else if((X_EC_GP.nV[0] > -Dist.nV[0]) &&
-	    (X_EC_GP.nV[1] < -Dist.nV[1])){
-      Triburary_Nodes_GP.nV = (int *)Allocate_ArrayZ(6,sizeof(int));
+    else if((X_EC_GP.nV[0] > -Dist[0]) &&
+	    (X_EC_GP.nV[1] < -Dist[1])){
+
     }
-    else if((X_EC_GP.nV[1] < -Dist.nV[1]) &&
-	    (X_EC_GP.nV[0] < -Dist.nV[0])){
-      Triburary_Nodes_GP.nV = (int *)Allocate_ArrayZ(9,sizeof(int));
+    else if((X_EC_GP.nV[1] < -Dist[1]) &&
+	    (X_EC_GP.nV[0] < -Dist[0])){
+
     }
     
   }
   
-  /* Check if it is in the 4º Quadrant */
+  /* Check if it I am the 4º Quadrant */
   else if((X_EC_GP.nV[0]>0) &&
 	  (X_EC_GP.nV[1]<0)){
 
-    if((X_EC_GP.nV[0] < Dist.nV[0]) &&
-       (X_EC_GP.nV[1] < -Dist.nV[1])){
-      Triburary_Nodes_GP.nV = (int *)Allocate_ArrayZ(6,sizeof(int));
+    if((X_EC_GP.nV[0] < Dist[0]) &&
+       (X_EC_GP.nV[1] < -Dist[1])){
+
     }
-    else if((X_EC_GP.nV[0] > Dist.nV[0]) &&
-	    (X_EC_GP.nV[1] > -Dist.nV[1])){
-      Triburary_Nodes_GP.nV = (int *)Allocate_ArrayZ(6,sizeof(int));
+    else if((X_EC_GP.nV[0] > Dist[0]) &&
+	    (X_EC_GP.nV[1] > -Dist[1])){
+
     }
-    else if((X_EC_GP.nV[0] > Dist.nV[0]) &&
-	    (X_EC_GP.nV[1] < -Dist.nV[1])){
-      Triburary_Nodes_GP.nV = (int *)Allocate_ArrayZ(9,sizeof(int));
+    else if((X_EC_GP.nV[0] > Dist[0]) &&
+	    (X_EC_GP.nV[1] < -Dist[1])){
+
     }
     
   }
-
-  /* Free memory */
-  FreeMat(Dist);
-  
-  return Triburary_Nodes_GP;
+ 
+  return Triburary_Nodes_n1;
 }
 
 /*********************************************************************/

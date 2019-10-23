@@ -224,6 +224,9 @@ Boundaries Set_FEM_BCC(char * Name_File, Mesh FEM_Mesh)
 */
 {
 
+  /* Auxiliar variable with the number of nodes in a element */
+  int NumNodesElem;
+  
   /* Define output */
   Boundaries FEM_BCC;
   
@@ -253,7 +256,8 @@ Boundaries Set_FEM_BCC(char * Name_File, Mesh FEM_Mesh)
   int NumNodesBound;
 
   /* Count the number of elements that share this node */
-  int Repeat_Nod;
+  ChainPtr Elem_Conn; /* Loop over the connectivity chain */
+  int Repeat_Nod; /* Counter */
   /* Variables that fills the boundaries nodes */
   int aux_RIGHT = 0; 
   int aux_TOP = 0;
@@ -320,8 +324,11 @@ Boundaries Set_FEM_BCC(char * Name_File, Mesh FEM_Mesh)
      *-----*
         0
     */
+
+    /* FIX THIS ---> TEMPORARY */
+    NumNodesElem = FEM_Mesh.NumNodesElem[0];
     
-    if(FEM_Mesh.NumNodesElem == 4){ /* Quadrilateral elements */
+    if(NumNodesElem == 4){ /* Quadrilateral elements */
       /* 0º Allocate an array of zeros to assign a 1 to those nodes in the boundary */
       NodesBound_aux = (int *)Allocate_ArrayZ(FEM_Mesh.NumNodesMesh,sizeof(int));
       CounterNodesBound = (int *)Allocate_ArrayZ(4,sizeof(int));
@@ -338,14 +345,18 @@ Boundaries Set_FEM_BCC(char * Name_File, Mesh FEM_Mesh)
 	
   	/* 4º Set the counter to zero */
   	Repeat_Nod = 0;
+	
   	/* 5º Loop over the connectivity mesh */
-  	for(int j = 0 ; j<FEM_Mesh.NumElemMesh ; j++){
-  	  for(int k = 0 ; k<FEM_Mesh.NumNodesElem ; k++){
-  	    if(FEM_Mesh.Connectivity[j][k] == i){
-  	      Repeat_Nod++;
-  	    }
-  	  }
-  	}
+	for(int j = 0 ; j<FEM_Mesh.NumElemMesh ; j++){
+	  Elem_Conn = FEM_Mesh.Connectivity[j];
+	  while(Elem_Conn != NULL){
+	    if((Elem_Conn->I) == i){
+	      Repeat_Nod++;
+	    }
+	    Elem_Conn = Elem_Conn->next;
+	  }
+	}
+	
   	/* 6º Add this element to the boundary */
   	if (Repeat_Nod < 4){
   	  NodesBound_aux[i] = 1;
@@ -353,7 +364,7 @@ Boundaries Set_FEM_BCC(char * Name_File, Mesh FEM_Mesh)
   	}
       }
       
-      /* 7º Count the nu,ber of nodes in each boundarie */
+      /* 7º Count the number of nodes in each boundarie */
       for(int i = 0 ; i<FEM_Mesh.NumNodesMesh ; i++){
   	if(NodesBound_aux[i] == 1){
 
@@ -415,7 +426,7 @@ Boundaries Set_FEM_BCC(char * Name_File, Mesh FEM_Mesh)
 
       
     } /* Quadrilateral elements */
-    if(FEM_Mesh.NumNodesElem == 3){ /* Triangular elements */
+    if(NumNodesElem == 3){ /* Triangular elements */
       puts("Error in Set_FEM_BCC() : Boundary nodes localization for T3 not implemented yet !");
     } /* Triangular elements */
     

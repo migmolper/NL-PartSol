@@ -159,6 +159,8 @@ void WriteVtk_FEM(char * Name_File, Mesh ElementMesh,
   int NumberFields;
   char * FieldsList[MAXW] = {NULL};
   int i_Field;
+  int NumNodesElem;
+  ChainPtr Elem_Conn;
 
   sprintf(Name_file_t,"%s/FEM_%s_%i.vtk",OutputDir,Name_File,TimeStep_i);
   
@@ -179,17 +181,23 @@ void WriteVtk_FEM(char * Name_File, Mesh ElementMesh,
 	    ElementMesh.Coordinates.nM[i][2]);
   }
 
+  /* TEMPORARY --> FIX IT*/
+  NumNodesElem = ElementMesh.NumNodesElem[0];
   /* Connectivity */
   fprintf(Vtk_file,"CELLS %i %i \n",
 	  ElementMesh.NumElemMesh,
-	  ElementMesh.NumElemMesh*(1+ElementMesh.NumNodesElem));
+	  ElementMesh.NumElemMesh*(1+NumNodesElem));
   for(int i = 0 ; i<ElementMesh.NumElemMesh ; i++){
-    fprintf(Vtk_file,"%i",ElementMesh.NumNodesElem);
-    for(int j = 0 ; j<ElementMesh.NumNodesElem ; j++){
-      fprintf(Vtk_file," %i ",ElementMesh.Connectivity[i][j]);
+    fprintf(Vtk_file,"%i",NumNodesElem);
+    Elem_Conn = ElementMesh.Connectivity[i];
+    while(Elem_Conn != NULL){
+      fprintf(Vtk_file," %i ",Elem_Conn->I);
+      Elem_Conn = Elem_Conn->next;
     }
     fprintf(Vtk_file,"\n");
   }
+
+
 
   /* Type of element */
   fprintf(Vtk_file,"CELL_TYPES %i \n",ElementMesh.NumElemMesh);
