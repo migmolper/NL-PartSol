@@ -116,7 +116,7 @@ void GlobalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh){
       NumVertex = FEM_Mesh.NumNodesElem[j];
       Poligon_Connectivity =
 	ChainToArray(FEM_Mesh.Connectivity[j],NumVertex);
-      
+     
       /* 4º Allocate the polligon Matrix and fill it */
       Poligon_Coordinates = MatAllocZ(NumVertex,NumberDimensions);
       for(int k = 0; k<NumVertex; k++){
@@ -215,7 +215,7 @@ void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
     Poligon_Connectivity = ChainToArray(MPM_Mesh.ListNodes[i],
 					NumVertex);
       
-    /* 6º Allocate the polligon Matrix and fill it */
+    /* 6º Allocate the poligon Matrix and fill it */
     Poligon_Coordinates = MatAllocZ(NumVertex,NumberDimensions);
     for(int k = 0; k<NumVertex; k++){
       for(int l = 0 ; l<NumberDimensions ; l++){
@@ -237,6 +237,7 @@ void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
       }
 
       /* Free memory */
+      free(Poligon_Connectivity);
       FreeMat(Poligon_Coordinates);
       
     }
@@ -268,7 +269,7 @@ void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 	  }
 	}
 	/* Last vertex */
-	else if(j == NumVertex -1){ 
+	else if(j == (NumVertex - 1)){ 
 	  for(int k = 0 ; k<NumberDimensions ; k++){
 	    Search_Direction =
 	      2*Poligon_Coordinates.nM[NumVertex-1][k] -
@@ -291,22 +292,20 @@ void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 	}
 	/* Check the projection of the velocity vector */
 	if( (V_GP_n.nV[0] >= 0) && (V_GP_n.nV[1] >= 0)){
-	  SearchVertex = j;
+	  SearchVertex = Poligon_Connectivity[j];
 	  break;
 	}	  
       }
 
       /* Free memory */
       FreeMat(Poligon_Coordinates);
+      free(Poligon_Connectivity);
      
       /* 7eº Check for errors */
       if (SearchVertex<0 || SearchVertex>=FEM_Mesh.NumNodesMesh){
 	puts("Error in LocalSearchGaussPoints() : Search algorithm fails !!! ");
 	exit(0);
       }
-
-      /* Free memory */
-      free(Poligon_Connectivity);
 
       /* 7fº Create the search list of this vertex */
       SearchList = FEM_Mesh.NodeNeighbour[SearchVertex];

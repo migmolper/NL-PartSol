@@ -47,9 +47,7 @@ void BCC_Nod_VALUE(Mesh FEM_Mesh, Matrix Nodal_VALUE, int TimeStep)
 	}
       }
     }    
-  }
-  
-  
+  } 
 
 }
 
