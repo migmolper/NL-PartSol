@@ -21,11 +21,12 @@ void BCC_Nod_VALUE(Mesh, Matrix, int);
 ChainPtr ArrayToChain(int *, int);
 int * ChainToArray(ChainPtr, int);
 void FreeChain(ChainPtr);
+int LenghtChain(ChainPtr);
 bool IsPresentNode (ChainPtr, int);
 void PushNode (ChainPtr *, int);
 void PopNode (ChainPtr *, int);
-ChainPtr GetUnion(ChainPtr, ChainPtr);
-ChainPtr GetIntersection(ChainPtr, ChainPtr);
+ChainPtr ChainUnion(ChainPtr, ChainPtr);
+ChainPtr ChainIntersection(ChainPtr, ChainPtr);
 void printList (ChainPtr);
 
 /* 1D of two nodes shape functions */
@@ -55,6 +56,7 @@ double uGIMP(double, double, double, double);
 double d_uGIMP(double, double, double, double);
 Matrix GIMP_2D(Matrix, Matrix, Matrix, double);
 Matrix dGIMP_2D(Matrix, Matrix, Matrix, double);
-ChainPtr Tributary_Nodes_GIMP(Matrix,ChainPtr,
-			      Matrix, double,
-			      int **);
+ChainPtr Tributary_Nodes_GIMP(Matrix, int,
+			      ChainPtr *,
+			      ChainPtr *,
+			      Matrix, double);

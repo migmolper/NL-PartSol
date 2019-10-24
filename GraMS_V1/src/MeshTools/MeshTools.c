@@ -204,10 +204,9 @@ void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
     /* 4º Get the velocity vector of the GP and if the norm of the velocity 
      vector is zero, cicle */
     V_GP.nV = MPM_Mesh.Phi.vel.nM[i];
-    /* if(Norm_Mat(V_GP,2) == 0){ */
-    /*   printf("paso \n"); */
-    /*   break; */
-    /* } */
+    if(Norm_Mat(V_GP,2) == 0){
+      continue;
+    }
 
     /* 4º Get the index of the initial element */
     Elem_i = MPM_Mesh.Element_id[i];
@@ -593,7 +592,7 @@ void PopNode (ChainPtr * TopNodePtr, int I_trash)
 
 /* Function to get union of two linked lists
    A and B */
-ChainPtr GetUnion(ChainPtr A, ChainPtr B) 
+ChainPtr ChainUnion(ChainPtr A, ChainPtr B) 
 { 
     ChainPtr C = NULL; 
     ChainPtr iPtrA = A, iPtrB = B; 
@@ -624,7 +623,7 @@ ChainPtr GetUnion(ChainPtr A, ChainPtr B)
   
 /* Function to get intersection of two linked lists 
    A and B */
-ChainPtr GetIntersection(ChainPtr A,ChainPtr B) 
+ChainPtr ChainIntersection(ChainPtr A,ChainPtr B) 
 { 
     ChainPtr C = NULL; 
     ChainPtr iPtrA = A; 

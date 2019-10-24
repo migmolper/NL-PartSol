@@ -209,6 +209,9 @@ typedef struct {
   int * ActiveNode;
   /* Number of elements that shares a node and list 
      of elements that share a node */
+
+  /* int * NumElemNods; */
+  /* ChainPtr * NodeNeighbour; */
   int ** NodeNeighbour;
 
   /*** BOUNDARIES ***/

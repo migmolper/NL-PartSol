@@ -140,11 +140,16 @@ Matrix dGIMP_2D(Matrix X_GC_GP, Matrix lp, Matrix Nodes, double L){
 /*********************************************************************/
 
 ChainPtr Tributary_Nodes_GIMP(Matrix X_EC_GP,
-			      ChainPtr NodesElem,
-			      Matrix lp,double L,
-			      int ** NodeNeighbour){
+			      int Elem_GP,
+			      ChainPtr * Connectivity,
+			      ChainPtr * NodeNeighbour,
+			      Matrix lp,double L){
 
-  ChainPtr Triburary_Nodes_n1;
+  ChainPtr Triburary_Nodes;
+  ChainPtr ChainElements;
+  int * Tributary_Elements;
+  int * NodesElem;
+  int Elem_i;
   double Dist[2];
 
   /* Get the reference distance measured from the center of the element */
@@ -155,25 +160,66 @@ ChainPtr Tributary_Nodes_GIMP(Matrix X_EC_GP,
   /* Check if I am in the central area */
   if ((fabs(X_EC_GP.nV[0]) < Dist[0]) &&
       (fabs(X_EC_GP.nV[1]) < Dist[1])){    
-    Triburary_Nodes_n1 = NodesElem;
+    Triburary_Nodes = Connectivity[Elem_GP];
   }
   
   /* Check if I am in the 1º Quadrant */
   else if((X_EC_GP.nV[0]>0) &&
 	  (X_EC_GP.nV[1]>0)){
 
+    /* Create an array with the nodes of the element */
+    NodesElem = ChainToArray(Connectivity[Elem_GP],4);
+
     if((X_EC_GP.nV[0] > Dist[0]) &&
        (X_EC_GP.nV[1] < Dist[1])){
+
+      /* Generate the list of Elements whose nodes contributes to the GP */       
+      ChainElements = ChainIntersection(NodeNeighbour[NodesElem[0]],
+					NodeNeighbour[NodesElem[3]]);
+      Tributary_Elements =  ChainToArray(ChainElements,2);
+      FreeChain(ChainElements);
+
+      /* Iterate in the list and select the union of the sets of nodes */
+      for(int i = 0 ; i<2 ; i++){
+	Elem_i = Tributary_Elements[i];
+	Triburary_Nodes = ChainUnion(Triburary_Nodes,Connectivity[Elem_i]);
+      }
       
     }
     else if((X_EC_GP.nV[0] < Dist[0]) &&
 	    (X_EC_GP.nV[1] > Dist[1])){
 
+      /* Generate the list of Elements whose nodes contributes to the GP */ 
+      ChainElements = ChainIntersection(NodeNeighbour[NodesElem[0]],
+					NodeNeighbour[NodesElem[1]]);
+      Tributary_Elements =  ChainToArray(ChainElements,2);
+      FreeChain(ChainElements);
+
+      /* Iterate in the list and select the union of the sets of nodes */
+      for(int i = 0 ; i<2 ; i++){
+	Elem_i = Tributary_Elements[i];
+	Triburary_Nodes = ChainUnion(Triburary_Nodes,Connectivity[Elem_i]);
+      }
+      
     }
     else if((X_EC_GP.nV[0] > Dist[0]) &&
 	    (X_EC_GP.nV[1] > Dist[1])){
 
+      /* Generate the list of Elements whose nodes contributes to the GP */ 
+      ChainElements = NodeNeighbour[NodesElem[0]];
+      Tributary_Elements =  ChainToArray(ChainElements,4);
+      FreeChain(ChainElements);
+
+      /* Iterate in the list and select the union of the sets of nodes */
+      for(int i = 0 ; i<4 ; i++){
+	Elem_i = Tributary_Elements[i];
+	Triburary_Nodes = ChainUnion(Triburary_Nodes,Connectivity[Elem_i]);
+      }
+      
     }
+
+    /* Free memory */
+    free(NodesElem);
     
   }
   
@@ -181,18 +227,59 @@ ChainPtr Tributary_Nodes_GIMP(Matrix X_EC_GP,
   else if((X_EC_GP.nV[0]<0) &&
 	  (X_EC_GP.nV[1]>0)){
 
+    /* Create an array with the nodes of the element */
+    NodesElem = ChainToArray(Connectivity[Elem_GP],4);
+
     if((X_EC_GP.nV[0] > -Dist[0]) &&
        (X_EC_GP.nV[1] > Dist[1])){
 
+      /* Generate the list of Elements whose nodes contributes to the GP */ 
+      ChainElements = ChainIntersection(NodeNeighbour[NodesElem[0]],
+					NodeNeighbour[NodesElem[1]]);
+      Tributary_Elements =  ChainToArray(ChainElements,2);
+      FreeChain(ChainElements);
+
+      /* Iterate in the list and select the union of the sets of nodes */
+      for(int i = 0 ; i<2 ; i++){
+	Elem_i = Tributary_Elements[i];
+	Triburary_Nodes = ChainUnion(Triburary_Nodes,Connectivity[Elem_i]);
+      }
+      
     }
     else if((X_EC_GP.nV[0] < -Dist[0]) &&
 	    (X_EC_GP.nV[1] < Dist[1])){
 
+      /* Generate the list of Elements whose nodes contributes to the GP */ 
+      ChainElements = ChainIntersection(NodeNeighbour[NodesElem[1]],
+					NodeNeighbour[NodesElem[2]]);
+      Tributary_Elements =  ChainToArray(ChainElements,2);
+      FreeChain(ChainElements);
+
+      /* Iterate in the list and select the union of the sets of nodes */
+      for(int i = 0 ; i<2 ; i++){
+	Elem_i = Tributary_Elements[i];
+	Triburary_Nodes = ChainUnion(Triburary_Nodes,Connectivity[Elem_i]);
+      }
+      
     }
     else if((X_EC_GP.nV[0] < -Dist[0]) &&
 	    (X_EC_GP.nV[1] > Dist[1])){
 
+      /* Generate the list of Elements whose nodes contributes to the GP */ 
+      ChainElements = NodeNeighbour[NodesElem[1]];
+      Tributary_Elements =  ChainToArray(ChainElements,4);
+      FreeChain(ChainElements);
+
+      /* Iterate in the list and select the union of the sets of nodes */
+      for(int i = 0 ; i<4 ; i++){
+	Elem_i = Tributary_Elements[i];
+	Triburary_Nodes = ChainUnion(Triburary_Nodes,Connectivity[Elem_i]);
+      }
+      
     }
+
+    /* Free memory */
+    free(NodesElem);
     
   }
   
@@ -200,18 +287,59 @@ ChainPtr Tributary_Nodes_GIMP(Matrix X_EC_GP,
   else if((X_EC_GP.nV[0]<0) &&
 	  (X_EC_GP.nV[1]<0)){
     
+    /* Create an array with the nodes of the element */
+    NodesElem = ChainToArray(Connectivity[Elem_GP],4);
+    
     if((X_EC_GP.nV[0] < -Dist[0]) &&
        (X_EC_GP.nV[1] > -Dist[1])){
 
+      /* Generate the list of Elements whose nodes contributes to the GP */ 
+      ChainElements = ChainIntersection(NodeNeighbour[NodesElem[1]],
+					NodeNeighbour[NodesElem[2]]);
+      Tributary_Elements = ChainToArray(ChainElements,2);
+      FreeChain(ChainElements);
+
+      /* Iterate in the list and select the union of the sets of nodes */
+      for(int i = 0 ; i<2 ; i++){
+	Elem_i = Tributary_Elements[i];
+	Triburary_Nodes = ChainUnion(Triburary_Nodes,Connectivity[Elem_i]);
+      }
+      
     }
     else if((X_EC_GP.nV[0] > -Dist[0]) &&
 	    (X_EC_GP.nV[1] < -Dist[1])){
+      
+      /* Generate the list of Elements whose nodes contributes to the GP */ 
+      ChainElements = ChainIntersection(NodeNeighbour[NodesElem[2]],
+					NodeNeighbour[NodesElem[3]]);
+      Tributary_Elements = ChainToArray(ChainElements,2);
+      FreeChain(ChainElements);
 
+      /* Iterate in the list and select the union of the sets of nodes */
+      for(int i = 0 ; i<2 ; i++){
+	Elem_i = Tributary_Elements[i];
+	Triburary_Nodes = ChainUnion(Triburary_Nodes,Connectivity[Elem_i]);
+      }
+      
     }
     else if((X_EC_GP.nV[1] < -Dist[1]) &&
 	    (X_EC_GP.nV[0] < -Dist[0])){
 
+      /* Generate the list of Elements whose nodes contributes to the GP */ 
+      ChainElements = NodeNeighbour[NodesElem[2]];
+      Tributary_Elements =  ChainToArray(ChainElements,4);
+      FreeChain(ChainElements);
+
+      /* Iterate in the list and select the union of the sets of nodes */
+      for(int i = 0 ; i<4 ; i++){
+	Elem_i = Tributary_Elements[i];
+	Triburary_Nodes = ChainUnion(Triburary_Nodes,Connectivity[Elem_i]);
+      }
+      
     }
+
+    /* Free memory */
+    free(NodesElem);
     
   }
   
@@ -219,22 +347,63 @@ ChainPtr Tributary_Nodes_GIMP(Matrix X_EC_GP,
   else if((X_EC_GP.nV[0]>0) &&
 	  (X_EC_GP.nV[1]<0)){
 
+    /* Create an array with the nodes of the element */
+    NodesElem = ChainToArray(Connectivity[Elem_GP],4);
+
     if((X_EC_GP.nV[0] < Dist[0]) &&
        (X_EC_GP.nV[1] < -Dist[1])){
 
+      /* Generate the list of Elements whose nodes contributes to the GP */ 
+      ChainElements = ChainIntersection(NodeNeighbour[NodesElem[2]],
+					NodeNeighbour[NodesElem[3]]);
+      Tributary_Elements =  ChainToArray(ChainElements,2);
+      FreeChain(ChainElements);
+
+      /* Iterate in the list and select the union of the sets of nodes */
+      for(int i = 0 ; i<2 ; i++){
+	Elem_i = Tributary_Elements[i];
+	Triburary_Nodes = ChainUnion(Triburary_Nodes,Connectivity[Elem_i]);
+      }
+      
     }
     else if((X_EC_GP.nV[0] > Dist[0]) &&
 	    (X_EC_GP.nV[1] > -Dist[1])){
 
+      /* Generate the list of Elements whose nodes contributes to the GP */ 
+      ChainElements = ChainIntersection(NodeNeighbour[NodesElem[0]],
+					NodeNeighbour[NodesElem[3]]);
+      Tributary_Elements =  ChainToArray(ChainElements,2);
+      FreeChain(ChainElements);
+
+      /* Iterate in the list and select the union of the sets of nodes */
+      for(int i = 0 ; i<2 ; i++){
+	Elem_i = Tributary_Elements[i];
+	Triburary_Nodes = ChainUnion(Triburary_Nodes,Connectivity[Elem_i]);
+      }
+      
     }
     else if((X_EC_GP.nV[0] > Dist[0]) &&
 	    (X_EC_GP.nV[1] < -Dist[1])){
 
+      /* Generate the list of Elements whose nodes contributes to the GP */
+      ChainElements = NodeNeighbour[NodesElem[3]];
+      Tributary_Elements =  ChainToArray(ChainElements,4);
+      FreeChain(ChainElements);
+
+      /* Iterate in the list and select the union of the sets of nodes */
+      for(int i = 0 ; i<4 ; i++){
+	Elem_i = Tributary_Elements[i];
+	Triburary_Nodes = ChainUnion(Triburary_Nodes,Connectivity[Elem_i]);
+      }
+      
     }
+
+    /* Free memory */
+    free(NodesElem);
     
   }
  
-  return Triburary_Nodes_n1;
+  return Triburary_Nodes;
 }
 
 /*********************************************************************/
