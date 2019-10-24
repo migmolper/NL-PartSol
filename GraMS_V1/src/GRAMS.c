@@ -10,7 +10,7 @@
 #include "MeshTools/MeshTools.h"
 #include "GaussPointsFunctions/GaussPointsTools.h"
 #include "Constitutive/Constitutive.h"
-#include "NumSchemes/NumSchemes.h"
+#include "Formulations/Formulations.h"
 
 int main(int argc, char * argv[])
 /*
@@ -41,25 +41,22 @@ int main(int argc, char * argv[])
   /*********************************************************************/
   /******************* DEFINE CONSTITUTIVE MODEL ***********************/
   /*********************************************************************/
-  Matrix D_e; 
-  D_e = LinearElastic2D(PoissonModulus,ElasticModulus);
+  Matrix D_e = LinearElastic2D(PoissonModulus,ElasticModulus);
 
   /*********************************************************************/
   /********************* DEFINE CALCULUS MESH **************************/
   /*********************************************************************/
-  Mesh FEM_Mesh; /* Define FEM mesh */
-  FEM_Mesh = InitializeMesh(argv[1]);
+  Mesh FEM_Mesh = InitializeMesh(argv[1]);
 
   /*********************************************************************/
   /******************* DEFINE GAUSS-POINT MESH *************************/
   /*********************************************************************/
-  GaussPoint GP_Mesh; 
-  GP_Mesh = InitializeGP(argv[1], FEM_Mesh, D_e);
+  GaussPoint GP_Mesh = InitializeGP(argv[1], FEM_Mesh, D_e);
 
   /*********************************************************************/
   /********************** RUN THE MPM CALCULUS *************************/
   /*********************************************************************/
-  ForwardEuler(FEM_Mesh, GP_Mesh);
+  u_ForwardEuler(FEM_Mesh, GP_Mesh);
 
   /*********************************************************************/
   /******************** CRONOGRAPH CALCULUS : END **********************/

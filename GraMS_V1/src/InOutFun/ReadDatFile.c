@@ -1026,7 +1026,7 @@ void Read_MPM_InitVal(char * Name_File, GaussPoint GP_Mesh)
 	    }
 	    else{
 	      NUM_NODES = atoi(param[1]);
-	      for(int j = 0 ; j<NUM_NODES ; j++){		
+	      for(int j = 0 ; j<NUM_NODES; j++){		
 		fgets(line, sizeof line, Sim_dat);
 		AUX_NODES = parse(READ_NODES,line," \n");
 		if(AUX_NODES == 1){

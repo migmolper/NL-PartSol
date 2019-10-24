@@ -204,8 +204,10 @@ void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
     /* 4º Get the velocity vector of the GP and if the norm of the velocity 
      vector is zero, cicle */
     V_GP.nV = MPM_Mesh.Phi.vel.nM[i];
-    if(Norm_Mat(V_GP,2) == 0)
-      break;
+    /* if(Norm_Mat(V_GP,2) == 0){ */
+    /*   printf("paso \n"); */
+    /*   break; */
+    /* } */
 
     /* 4º Get the index of the initial element */
     Elem_i = MPM_Mesh.Element_id[i];

@@ -30,7 +30,7 @@ SOURCES = \
 	$(wildcard src/GaussPointsFunctions/*.c)\
 	$(wildcard src/MPM_Subroutines/*.c)\
 	$(wildcard src/Boundary_Conditions/*.c)\
-	$(wildcard src/NumSchemes/*.c)
+	$(wildcard src/Formulations/*.c)
 
 #####################################################################
 

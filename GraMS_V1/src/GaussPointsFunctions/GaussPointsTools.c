@@ -240,7 +240,7 @@ GaussPoint InitializeGP(char * GDF, Mesh FEM_Mesh, Matrix D){
   GP_Mesh.F = Read_MPM_LoadCase_ExtForces(GDF,GP_Mesh);
   GP_Mesh.B = Read_MPM_LoadCase_BodyForces(GDF,GP_Mesh);
   puts(" \t DONE !!!");
-  puts(" \t Reading MPM initial conditions ...");
+  puts(" \t Reading MPM initial conditions ...");  
   Read_MPM_InitVal(GDF,GP_Mesh);
   puts(" \t DONE !!!");
 

@@ -30,7 +30,7 @@ BCC LABEL=LEFT FIELD=V DIR={-1,0} CURVE={test/CasoDyka_Pastor_Blanc/CurveConstat
 /**** INITIAL CONDITIONS FOR THE GPs ***/
 /***************************************/
 INIT_NUM 1
-INIT_GP FIELD=V VALUE={5.0,0.0} NUM_NODES=500
+INIT_GP FIELD=V VALUE={5.0,0.0} NUM_NODES=502
 749
 750
 751
