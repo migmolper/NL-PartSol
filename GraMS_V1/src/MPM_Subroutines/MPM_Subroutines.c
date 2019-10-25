@@ -66,7 +66,7 @@ Matrix GetNodalMassMomentum(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
     else if(strcmp(MPM_Mesh.ShapeFunctionGP,"uGIMP2D") == 0){      
       X_GP.nV = MPM_Mesh.Phi.x_GC.nM[i];
       lp.nV = MPM_Mesh.Phi.lp.nM[i];
-      N_GP = GIMP_2D(X_GP,lp,GP_ElemCoord,FEM_Mesh.DeltaX);      
+      N_GP = GIMP_2D(X_GP,lp,GP_ElemCoord,FEM_Mesh.DeltaX);
     }
     
     /* Free memory */
@@ -193,6 +193,7 @@ void UpdateGaussPointStrain(GaussPoint MPM_Mesh,
     FreeMat(GP_ElemCoord);
     /* Calcule the B matrix */
     B = Get_B_GP(dNdx_GP);
+   
     /* Free shape-function derivatives */
     FreeMat(dNdx_GP);
 
@@ -238,8 +239,7 @@ void UpdateGaussPointStrain(GaussPoint MPM_Mesh,
     /* 8º Update the density of the GP */
     MPM_Mesh.Phi.rho.nV[i] =
       UpdateGaussPointDensity(MPM_Mesh.Phi.rho.nV[i],
-			      Incr_TraceStrain);
-    
+			      Incr_TraceStrain);    
   }
 
 }
@@ -305,8 +305,7 @@ void UpdateGaussPointStress(GaussPoint MPM_Mesh){
     }
     /* 6º Free memory */
     FreeMat(StressTensor_GP);
-  }
-  
+  }  
 }
 
 /*******************************************************/
@@ -487,7 +486,7 @@ Matrix GetNodalForces(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int TimeStep)
 
   /* 11º Free memory */
   FreeMat(Contact_Forces_t);
-  FreeMat(Body_Forces_t);
+  FreeMat(Body_Forces_t);  
   
   return Nodal_TOT_FORCES;
   
