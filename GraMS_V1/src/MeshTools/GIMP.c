@@ -29,19 +29,19 @@ double uGIMP(double L, double lp, double Xp, double Xi){
 
   /* Evaluation of the shape function */
   if ((-L+lp < Delta_xp) && (Delta_xp <= -lp)){
-    S_Ip = 1 + (Xp-Xi)/L;
+    S_Ip = 1 + Delta_xp/L;
   }
   else if ((lp < Delta_xp) && (Delta_xp <= L-lp)){
-    S_Ip = 1 - (Xp-Xi)/L;
+    S_Ip = 1 - Delta_xp/L;
   }
   else if ((-lp < Delta_xp) && (Delta_xp <= lp)){
-    S_Ip = 1 - ((Xp-Xi)*(Xp-Xi) + lp*lp)/(2*L*lp);
+    S_Ip = 1 - (Delta_xp*Delta_xp + lp*lp)/(2*L*lp);
   }
   else if ((-L-lp < Delta_xp) && (Delta_xp <= -L+lp)){
-    S_Ip = ((L+lp+Xp-Xi)*(L+lp+Xp-Xi))/(1/(4*L*lp));
+    S_Ip = ((L+lp+Delta_xp)*(L+lp+Delta_xp))/(1/(4*L*lp));
   }
   else if ((L-lp < Delta_xp) && (Delta_xp <= L+lp)){
-    S_Ip = ((L+lp-Xp+Xi)*(L+lp-Xp+Xi))/(4*L*lp);
+    S_Ip = ((L+lp-Delta_xp)*(L+lp-Delta_xp))/(4*L*lp);
   }
   else if (fabs(Delta_xp) >= L+lp){
     S_Ip = 0;
@@ -70,13 +70,13 @@ double d_uGIMP(double L, double lp, double Xp, double Xi){
     dS_Ip = 1/L;
   }
   else if ((-lp < Delta_xp) && (Delta_xp <= lp)){
-    dS_Ip = - (Xp-Xi)/(L*lp);
+    dS_Ip = - Delta_xp/(L*lp);
   }
   else if ((-L-lp < Delta_xp) && (Delta_xp <= -L+lp)){
-    dS_Ip = (L+lp+Xp-Xi)/(2*L*lp);
+    dS_Ip = (L+lp+Delta_xp)/(2*L*lp);
   }
   else if ((L-lp < Delta_xp) && (Delta_xp <= L+lp)){
-    dS_Ip = (L+lp-Xp+Xi)/(4*L*lp);
+    dS_Ip = (L+lp-Delta_xp)/(4*L*lp);
   }
   else if (fabs(Delta_xp) >= L+lp){
     dS_Ip = 0;
