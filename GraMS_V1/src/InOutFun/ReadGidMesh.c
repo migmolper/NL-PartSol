@@ -74,7 +74,10 @@ Mesh ReadGidMesh(char * MeshName)
   else{
     printf("Error in ReadGidMesh() : during line %i !!! \n",Num_line);
     exit(0);
-  }  
+  }
+
+  /* CHANGES THISSSS */
+  GID_Mesh.DeltaX = 0.0001333;
   
   /* Element properties of the mesh */
   if ( strcmp(words[0],"MESH") == 0 ){
