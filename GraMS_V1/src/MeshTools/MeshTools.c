@@ -9,26 +9,14 @@
 #include "../Constitutive/Constitutive.h"
 #include "MeshTools.h"
 
-#define MAXNEIGHBOUR 10
-
 /*********************************************************************/
 
-int ** GetNodalConnectivity(Mesh FEM_Mesh){
+void GetNodalConnectivity(Mesh FEM_Mesh){
 
-  /* 0º Create an auxiliar table of pointer to store the information */
-  int ** TableNeighbourNode;
-  int ** NodeNeighbour;
-  int * NumNeighbour;
+  /* Variable declaration */
   int * Element_Connectivity;
   int NumNodesElem;
   
-  /* Allocate pointers */
-  TableNeighbourNode =
-    (int **)Allocate_MatrixZ(FEM_Mesh.NumNodesMesh,
-			     MAXNEIGHBOUR,sizeof(int));
-  NumNeighbour =
-    (int *)Allocate_ArrayZ(FEM_Mesh.NumNodesMesh,sizeof(int));
-
   /* 1º Start the search of neighbour for each node */
   for(int i = 0 ; i<FEM_Mesh.NumNodesMesh ; i++){
     /* 2º Loop over all the elements in the mesh */
@@ -39,46 +27,16 @@ int ** GetNodalConnectivity(Mesh FEM_Mesh){
       for(int k = 0 ; k<NumNodesElem ; k++){
 	/* 4º If my node belong to the element */
 	if(Element_Connectivity[k] == i){
-	  if(NumNeighbour[i] == MAXNEIGHBOUR){
-	    puts("Error in GetNodalConnectivity(): Max number of neighbour reached !");
-	    exit(0);
-	  }
-	  TableNeighbourNode[i][NumNeighbour[i]] = j;
-	  NumNeighbour[i] += 1;
+	  /* 5º Introduce the element in the chain */
+	  PushNode(&FEM_Mesh.NodeNeighbour[i], j);
+	  /* 6º Update the counter */
+	  FEM_Mesh.NumNeighbour[i] += 1;	  
 	}
       }
       /* Free memory */
       free(Element_Connectivity);
     }      
-  }
-
-  /* 5º Resize the table of pointer */
-  NodeNeighbour = (int **)malloc((unsigned)FEM_Mesh.NumNodesMesh *
-				 sizeof(int *));
-  /* 6º Loop over the pointer table */
-  for(int i = 0 ; i<FEM_Mesh.NumNodesMesh ; i++){
-    /* 7º Save space for the each nodes neighbour */
-    NodeNeighbour[i] = malloc((unsigned) (NumNeighbour[i] + 1) *
-			      sizeof(int));
-    /* 8º Check if it is not out of memory  */
-    if (NodeNeighbour[i] == NULL){
-      puts("Error in GetNodalConnectivity() : Out of memory !!! ");
-      exit(0);
-    }
-    /* 9º Fill the new table */
-    NodeNeighbour[i][0] = NumNeighbour[i];
-    for(int j = 1 ; j<=NumNeighbour[i] ; j++){
-      NodeNeighbour[i][j] = TableNeighbourNode[i][j-1];
-    }    
-  }
-  
-  /* 10º Free memory */
-  free(TableNeighbourNode);
-  free(NumNeighbour);
-
-  /* 11º Return data */
-  return NodeNeighbour; 
-  
+  }  
 }
 
 /*********************************************************************/
@@ -99,6 +57,7 @@ void GlobalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh){
   int NumVertex;
   int * Poligon_Connectivity;
   Matrix Poligon_Coordinates;
+  ChainPtr ListNodes_I;
 
   /* 1º Set to zero the active/non-active elements */
   for(int i = 0 ; i<FEM_Mesh.NumNodesMesh ; i++){
@@ -125,27 +84,41 @@ void GlobalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh){
 	    FEM_Mesh.Coordinates.nM[Poligon_Connectivity[k]][l];
 	}
       }
+
+      /* 5º Free memory */
+      free(Poligon_Connectivity);
       
-      /* 5º Check out if the GP is in the Element */
+      /* 6º Check out if the GP is in the Element */
       if(InOut_Poligon(X_GC_GP,Poligon_Coordinates) == 1){
 
-	/* 6º Asign to the GP a element in the background mesh, just for 
+	/* 7º Asign to the GP a element in the background mesh, just for 
 	   searching porpuses */
 	MPM_Mesh.Element_id[i] = j;
-	/* 7º If the GP is in the element, get its natural coordinates */
+	
+	/* 8º If the GP is in the element, get its natural coordinates */
 	X_EC_GP.nV = MPM_Mesh.Phi.x_EC.nM[i];
 	Get_X_EC_Q4(X_EC_GP,X_GC_GP,Poligon_Coordinates);
-	/* 8º Assign the connectivity to the GP in the chain shape */
-	MPM_Mesh.ListNodes[i] = FEM_Mesh.Connectivity[j];
-	/* 9º Active those nodes that interact with the GP */
-	for(int k = 0 ; k<NumVertex ; k++){
-	  FEM_Mesh.ActiveNode[Poligon_Connectivity[k]] += 1;
+
+	/* 9º Assign the new connectivity of the GP */
+	if(strcmp(FEM_Mesh.TypeElem,"Quadrilateral") == 0){
+	  MPM_Mesh.ListNodes[i] = FEM_Mesh.Connectivity[j];
+	}
+	else if(strcmp(FEM_Mesh.TypeElem,"GIMP2D") == 0){
+	  MPM_Mesh.ListNodes[i] =
+	    Tributary_Nodes_GIMP(X_EC_GP,MPM_Mesh.Element_id[i],
+				 MPM_Mesh.Phi.lp,FEM_Mesh);
+	}
+	  
+	/* 10º Active those nodes that interact with the GP */
+	ListNodes_I = MPM_Mesh.ListNodes[i];
+	while(ListNodes_I != NULL){
+	  FEM_Mesh.ActiveNode[ListNodes_I->I] += 1;
+	  ListNodes_I = ListNodes_I->next; 
 	}
 	
       }
       
-      /* 10º Free memory */
-      free(Poligon_Connectivity);
+      /* 11º Free memory */
       FreeMat(Poligon_Coordinates);
       
     } 
@@ -189,6 +162,7 @@ void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
   V_GP_n = MatAllocZ(1,NumberDimensions);
   int SearchVertex; /* Index to start the search */
   int * SearchList; /* Pointer to store the search list */
+  ChainPtr ListNodes_I;
   
   /* 1º Set to zero the active/non-active elements */
   for(int i = 0 ; i<FEM_Mesh.NumNodesMesh ; i++){
@@ -309,10 +283,11 @@ void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
       }
 
       /* 7fº Create the search list of this vertex */
-      SearchList = FEM_Mesh.NodeNeighbour[SearchVertex];
+      SearchList = ChainToArray(FEM_Mesh.NodeNeighbour[SearchVertex],
+				FEM_Mesh.NumNeighbour[SearchVertex]);
      
       /* 7gº Search in the search list */
-      for(int j = 1 ; j<(FEM_Mesh.NodeNeighbour[SearchVertex][0]+1) ; j++){
+      for(int j = 1 ; j<(FEM_Mesh.NumNeighbour[SearchVertex]+1) ; j++){
 
 	/* Discard the initial element for the search */
 	if(SearchList[j] == Elem_i) continue;
@@ -331,6 +306,9 @@ void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 	  }
 	}
 
+	/* Free poligon connectivity */
+	free(Poligon_Connectivity);
+
 	if(InOut_Poligon(X_GC_GP,Poligon_Coordinates) == 1){
 
 	  /* Asign to the GP a element in the background mesh, just for 
@@ -343,17 +321,23 @@ void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 
 	  /* Free memory */
 	  FreeMat(Poligon_Coordinates);
-	  
+
 	  /* Assign the new connectivity of the GP */
-	  MPM_Mesh.ListNodes[i] = FEM_Mesh.Connectivity[SearchList[j]];
-
-	  /* Active those nodes that interact with the GP */
-	  for(int k = 0 ; k<NumVertex ; k++){
-	    FEM_Mesh.ActiveNode[Poligon_Connectivity[k]] += 1;
+	  if(strcmp(FEM_Mesh.TypeElem,"Quadrilateral") == 0){
+	    MPM_Mesh.ListNodes[i] = FEM_Mesh.Connectivity[SearchList[j]];
 	  }
-
-	  /* Free poligon connectivity */
-	  free(Poligon_Connectivity);
+	  else if(strcmp(FEM_Mesh.TypeElem,"GIMP2D") == 0){
+	    MPM_Mesh.ListNodes[i] =
+	      Tributary_Nodes_GIMP(X_EC_GP,MPM_Mesh.Element_id[i],
+				   MPM_Mesh.Phi.lp,FEM_Mesh);
+	  }
+	  
+	  /* Active those nodes that interact with the GP */
+	  ListNodes_I = MPM_Mesh.ListNodes[i];
+	  while(ListNodes_I != NULL){
+	    FEM_Mesh.ActiveNode[ListNodes_I->I] += 1;
+	    ListNodes_I = ListNodes_I->next; 
+	  }
 
 	  /* If this is true, stop the search */
 	  break;
@@ -361,10 +345,12 @@ void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 	else{
 	  /* Free memory */
 	  FreeMat(Poligon_Coordinates);
-	  free(Poligon_Connectivity);
 	}
 	
       }
+
+      /* Free memory */
+      free(SearchList);
 
       if(MPM_Mesh.Element_id[i] == Elem_i){
 	printf(" %s %i %s %i !!! \n",

@@ -210,8 +210,9 @@ GaussPoint Define_GP_Mesh(char * MPM_GID_MeshName,
   FreeMat(MPM_GID_Mesh.Coordinates);
   free(MPM_GID_Mesh.Connectivity);
   free(MPM_GID_Mesh.ActiveNode);
-  free(MPM_GID_Mesh.NumNodesElem);
-
+  free(MPM_GID_Mesh.NumNeighbour);
+  free(MPM_GID_Mesh.NodeNeighbour);
+  
   /* Final messages */
   printf("End of initialize the Gauss-Points mesh !!! \n");
   

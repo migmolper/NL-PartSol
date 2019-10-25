@@ -186,12 +186,18 @@ Mesh ReadGidMesh(char * MeshName)
   				  GID_Mesh.Dimension);
   GID_Mesh.Connectivity = (ChainPtr *)
     malloc(GID_Mesh.NumElemMesh*sizeof(ChainPtr));
+
+  GID_Mesh.NodeNeighbour = (ChainPtr *)
+    malloc(GID_Mesh.NumNodesMesh*sizeof(ChainPtr));
   
   GID_Mesh.NumNodesElem =  (int *)
     Allocate_ArrayZ(GID_Mesh.NumElemMesh,sizeof(int));
 
   GID_Mesh.ActiveNode = (int *)
     Allocate_ArrayZ(GID_Mesh.NumNodesMesh,sizeof(int));
+
+   GID_Mesh.NumNeighbour =  (int *)
+    Allocate_ArrayZ(GID_Mesh.NumElemMesh,sizeof(int)); 
 
   /***************************************************************************/
   /***************************************************************************/

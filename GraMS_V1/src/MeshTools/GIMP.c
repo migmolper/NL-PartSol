@@ -140,10 +140,8 @@ Matrix dGIMP_2D(Matrix X_GC_GP, Matrix lp, Matrix Nodes, double L){
 /*********************************************************************/
 
 ChainPtr Tributary_Nodes_GIMP(Matrix X_EC_GP,
-			      int Elem_GP,
-			      ChainPtr * Connectivity,
-			      ChainPtr * NodeNeighbour,
-			      Matrix lp,double L){
+			      int Elem_GP,Matrix lp,
+			      Mesh FEM_Mesh){
 
   ChainPtr Triburary_Nodes;
   ChainPtr ChainElements;
@@ -154,13 +152,13 @@ ChainPtr Tributary_Nodes_GIMP(Matrix X_EC_GP,
 
   /* Get the reference distance measured from the center of the element */
   for(int i = 0 ; i<2; i++){
-    Dist[i] = 1 - lp.nV[i]/L;
+    Dist[i] = 1 - lp.nV[i]/FEM_Mesh.DeltaX;
   }
 
   /* Check if I am in the central area */
   if ((fabs(X_EC_GP.nV[0]) < Dist[0]) &&
       (fabs(X_EC_GP.nV[1]) < Dist[1])){    
-    Triburary_Nodes = Connectivity[Elem_GP];
+    Triburary_Nodes = FEM_Mesh.Connectivity[Elem_GP];
   }
   
   /* Check if I am in the 1º Quadrant */
@@ -168,21 +166,22 @@ ChainPtr Tributary_Nodes_GIMP(Matrix X_EC_GP,
 	  (X_EC_GP.nV[1]>0)){
 
     /* Create an array with the nodes of the element */
-    NodesElem = ChainToArray(Connectivity[Elem_GP],4);
+    NodesElem = ChainToArray(FEM_Mesh.Connectivity[Elem_GP],4);
 
     if((X_EC_GP.nV[0] > Dist[0]) &&
        (X_EC_GP.nV[1] < Dist[1])){
 
       /* Generate the list of Elements whose nodes contributes to the GP */       
-      ChainElements = ChainIntersection(NodeNeighbour[NodesElem[0]],
-					NodeNeighbour[NodesElem[3]]);
+      ChainElements = ChainIntersection(FEM_Mesh.NodeNeighbour[NodesElem[0]],
+					FEM_Mesh.NodeNeighbour[NodesElem[3]]);
       Tributary_Elements =  ChainToArray(ChainElements,2);
       FreeChain(ChainElements);
 
       /* Iterate in the list and select the union of the sets of nodes */
       for(int i = 0 ; i<2 ; i++){
 	Elem_i = Tributary_Elements[i];
-	Triburary_Nodes = ChainUnion(Triburary_Nodes,Connectivity[Elem_i]);
+	Triburary_Nodes = ChainUnion(Triburary_Nodes,
+				     FEM_Mesh.Connectivity[Elem_i]);
       }
       
     }
@@ -190,15 +189,16 @@ ChainPtr Tributary_Nodes_GIMP(Matrix X_EC_GP,
 	    (X_EC_GP.nV[1] > Dist[1])){
 
       /* Generate the list of Elements whose nodes contributes to the GP */ 
-      ChainElements = ChainIntersection(NodeNeighbour[NodesElem[0]],
-					NodeNeighbour[NodesElem[1]]);
+      ChainElements = ChainIntersection(FEM_Mesh.NodeNeighbour[NodesElem[0]],
+					FEM_Mesh.NodeNeighbour[NodesElem[1]]);
       Tributary_Elements =  ChainToArray(ChainElements,2);
       FreeChain(ChainElements);
 
       /* Iterate in the list and select the union of the sets of nodes */
       for(int i = 0 ; i<2 ; i++){
 	Elem_i = Tributary_Elements[i];
-	Triburary_Nodes = ChainUnion(Triburary_Nodes,Connectivity[Elem_i]);
+	Triburary_Nodes = ChainUnion(Triburary_Nodes,
+				     FEM_Mesh.Connectivity[Elem_i]);
       }
       
     }
@@ -206,14 +206,15 @@ ChainPtr Tributary_Nodes_GIMP(Matrix X_EC_GP,
 	    (X_EC_GP.nV[1] > Dist[1])){
 
       /* Generate the list of Elements whose nodes contributes to the GP */ 
-      ChainElements = NodeNeighbour[NodesElem[0]];
+      ChainElements = FEM_Mesh.NodeNeighbour[NodesElem[0]];
       Tributary_Elements =  ChainToArray(ChainElements,4);
       FreeChain(ChainElements);
 
       /* Iterate in the list and select the union of the sets of nodes */
       for(int i = 0 ; i<4 ; i++){
 	Elem_i = Tributary_Elements[i];
-	Triburary_Nodes = ChainUnion(Triburary_Nodes,Connectivity[Elem_i]);
+	Triburary_Nodes = ChainUnion(Triburary_Nodes,
+				     FEM_Mesh.Connectivity[Elem_i]);
       }
       
     }
@@ -228,21 +229,22 @@ ChainPtr Tributary_Nodes_GIMP(Matrix X_EC_GP,
 	  (X_EC_GP.nV[1]>0)){
 
     /* Create an array with the nodes of the element */
-    NodesElem = ChainToArray(Connectivity[Elem_GP],4);
+    NodesElem = ChainToArray(FEM_Mesh.Connectivity[Elem_GP],4);
 
     if((X_EC_GP.nV[0] > -Dist[0]) &&
        (X_EC_GP.nV[1] > Dist[1])){
 
       /* Generate the list of Elements whose nodes contributes to the GP */ 
-      ChainElements = ChainIntersection(NodeNeighbour[NodesElem[0]],
-					NodeNeighbour[NodesElem[1]]);
+      ChainElements = ChainIntersection(FEM_Mesh.NodeNeighbour[NodesElem[0]],
+					FEM_Mesh.NodeNeighbour[NodesElem[1]]);
       Tributary_Elements =  ChainToArray(ChainElements,2);
       FreeChain(ChainElements);
 
       /* Iterate in the list and select the union of the sets of nodes */
       for(int i = 0 ; i<2 ; i++){
 	Elem_i = Tributary_Elements[i];
-	Triburary_Nodes = ChainUnion(Triburary_Nodes,Connectivity[Elem_i]);
+	Triburary_Nodes = ChainUnion(Triburary_Nodes,
+				     FEM_Mesh.Connectivity[Elem_i]);
       }
       
     }
@@ -250,15 +252,16 @@ ChainPtr Tributary_Nodes_GIMP(Matrix X_EC_GP,
 	    (X_EC_GP.nV[1] < Dist[1])){
 
       /* Generate the list of Elements whose nodes contributes to the GP */ 
-      ChainElements = ChainIntersection(NodeNeighbour[NodesElem[1]],
-					NodeNeighbour[NodesElem[2]]);
+      ChainElements = ChainIntersection(FEM_Mesh.NodeNeighbour[NodesElem[1]],
+					FEM_Mesh.NodeNeighbour[NodesElem[2]]);
       Tributary_Elements =  ChainToArray(ChainElements,2);
       FreeChain(ChainElements);
 
       /* Iterate in the list and select the union of the sets of nodes */
       for(int i = 0 ; i<2 ; i++){
 	Elem_i = Tributary_Elements[i];
-	Triburary_Nodes = ChainUnion(Triburary_Nodes,Connectivity[Elem_i]);
+	Triburary_Nodes = ChainUnion(Triburary_Nodes,
+				     FEM_Mesh.Connectivity[Elem_i]);
       }
       
     }
@@ -266,14 +269,15 @@ ChainPtr Tributary_Nodes_GIMP(Matrix X_EC_GP,
 	    (X_EC_GP.nV[1] > Dist[1])){
 
       /* Generate the list of Elements whose nodes contributes to the GP */ 
-      ChainElements = NodeNeighbour[NodesElem[1]];
+      ChainElements = FEM_Mesh.NodeNeighbour[NodesElem[1]];
       Tributary_Elements =  ChainToArray(ChainElements,4);
       FreeChain(ChainElements);
 
       /* Iterate in the list and select the union of the sets of nodes */
       for(int i = 0 ; i<4 ; i++){
 	Elem_i = Tributary_Elements[i];
-	Triburary_Nodes = ChainUnion(Triburary_Nodes,Connectivity[Elem_i]);
+	Triburary_Nodes = ChainUnion(Triburary_Nodes,
+				     FEM_Mesh.Connectivity[Elem_i]);
       }
       
     }
@@ -288,21 +292,22 @@ ChainPtr Tributary_Nodes_GIMP(Matrix X_EC_GP,
 	  (X_EC_GP.nV[1]<0)){
     
     /* Create an array with the nodes of the element */
-    NodesElem = ChainToArray(Connectivity[Elem_GP],4);
+    NodesElem = ChainToArray(FEM_Mesh.Connectivity[Elem_GP],4);
     
     if((X_EC_GP.nV[0] < -Dist[0]) &&
        (X_EC_GP.nV[1] > -Dist[1])){
 
       /* Generate the list of Elements whose nodes contributes to the GP */ 
-      ChainElements = ChainIntersection(NodeNeighbour[NodesElem[1]],
-					NodeNeighbour[NodesElem[2]]);
+      ChainElements = ChainIntersection(FEM_Mesh.NodeNeighbour[NodesElem[1]],
+					FEM_Mesh.NodeNeighbour[NodesElem[2]]);
       Tributary_Elements = ChainToArray(ChainElements,2);
       FreeChain(ChainElements);
 
       /* Iterate in the list and select the union of the sets of nodes */
       for(int i = 0 ; i<2 ; i++){
 	Elem_i = Tributary_Elements[i];
-	Triburary_Nodes = ChainUnion(Triburary_Nodes,Connectivity[Elem_i]);
+	Triburary_Nodes = ChainUnion(Triburary_Nodes,
+				     FEM_Mesh.Connectivity[Elem_i]);
       }
       
     }
@@ -310,15 +315,16 @@ ChainPtr Tributary_Nodes_GIMP(Matrix X_EC_GP,
 	    (X_EC_GP.nV[1] < -Dist[1])){
       
       /* Generate the list of Elements whose nodes contributes to the GP */ 
-      ChainElements = ChainIntersection(NodeNeighbour[NodesElem[2]],
-					NodeNeighbour[NodesElem[3]]);
+      ChainElements = ChainIntersection(FEM_Mesh.NodeNeighbour[NodesElem[2]],
+					FEM_Mesh.NodeNeighbour[NodesElem[3]]);
       Tributary_Elements = ChainToArray(ChainElements,2);
       FreeChain(ChainElements);
 
       /* Iterate in the list and select the union of the sets of nodes */
       for(int i = 0 ; i<2 ; i++){
 	Elem_i = Tributary_Elements[i];
-	Triburary_Nodes = ChainUnion(Triburary_Nodes,Connectivity[Elem_i]);
+	Triburary_Nodes = ChainUnion(Triburary_Nodes,
+				     FEM_Mesh.Connectivity[Elem_i]);
       }
       
     }
@@ -326,14 +332,15 @@ ChainPtr Tributary_Nodes_GIMP(Matrix X_EC_GP,
 	    (X_EC_GP.nV[0] < -Dist[0])){
 
       /* Generate the list of Elements whose nodes contributes to the GP */ 
-      ChainElements = NodeNeighbour[NodesElem[2]];
+      ChainElements = FEM_Mesh.NodeNeighbour[NodesElem[2]];
       Tributary_Elements =  ChainToArray(ChainElements,4);
       FreeChain(ChainElements);
 
       /* Iterate in the list and select the union of the sets of nodes */
       for(int i = 0 ; i<4 ; i++){
 	Elem_i = Tributary_Elements[i];
-	Triburary_Nodes = ChainUnion(Triburary_Nodes,Connectivity[Elem_i]);
+	Triburary_Nodes = ChainUnion(Triburary_Nodes,
+				     FEM_Mesh.Connectivity[Elem_i]);
       }
       
     }
@@ -348,21 +355,22 @@ ChainPtr Tributary_Nodes_GIMP(Matrix X_EC_GP,
 	  (X_EC_GP.nV[1]<0)){
 
     /* Create an array with the nodes of the element */
-    NodesElem = ChainToArray(Connectivity[Elem_GP],4);
+    NodesElem = ChainToArray(FEM_Mesh.Connectivity[Elem_GP],4);
 
     if((X_EC_GP.nV[0] < Dist[0]) &&
        (X_EC_GP.nV[1] < -Dist[1])){
 
       /* Generate the list of Elements whose nodes contributes to the GP */ 
-      ChainElements = ChainIntersection(NodeNeighbour[NodesElem[2]],
-					NodeNeighbour[NodesElem[3]]);
+      ChainElements = ChainIntersection(FEM_Mesh.NodeNeighbour[NodesElem[2]],
+					FEM_Mesh.NodeNeighbour[NodesElem[3]]);
       Tributary_Elements =  ChainToArray(ChainElements,2);
       FreeChain(ChainElements);
 
       /* Iterate in the list and select the union of the sets of nodes */
       for(int i = 0 ; i<2 ; i++){
 	Elem_i = Tributary_Elements[i];
-	Triburary_Nodes = ChainUnion(Triburary_Nodes,Connectivity[Elem_i]);
+	Triburary_Nodes = ChainUnion(Triburary_Nodes,
+				     FEM_Mesh.Connectivity[Elem_i]);
       }
       
     }
@@ -370,15 +378,16 @@ ChainPtr Tributary_Nodes_GIMP(Matrix X_EC_GP,
 	    (X_EC_GP.nV[1] > -Dist[1])){
 
       /* Generate the list of Elements whose nodes contributes to the GP */ 
-      ChainElements = ChainIntersection(NodeNeighbour[NodesElem[0]],
-					NodeNeighbour[NodesElem[3]]);
+      ChainElements = ChainIntersection(FEM_Mesh.NodeNeighbour[NodesElem[0]],
+					FEM_Mesh.NodeNeighbour[NodesElem[3]]);
       Tributary_Elements =  ChainToArray(ChainElements,2);
       FreeChain(ChainElements);
 
       /* Iterate in the list and select the union of the sets of nodes */
       for(int i = 0 ; i<2 ; i++){
 	Elem_i = Tributary_Elements[i];
-	Triburary_Nodes = ChainUnion(Triburary_Nodes,Connectivity[Elem_i]);
+	Triburary_Nodes = ChainUnion(Triburary_Nodes,
+				     FEM_Mesh.Connectivity[Elem_i]);
       }
       
     }
@@ -386,14 +395,15 @@ ChainPtr Tributary_Nodes_GIMP(Matrix X_EC_GP,
 	    (X_EC_GP.nV[1] < -Dist[1])){
 
       /* Generate the list of Elements whose nodes contributes to the GP */
-      ChainElements = NodeNeighbour[NodesElem[3]];
+      ChainElements = FEM_Mesh.NodeNeighbour[NodesElem[3]];
       Tributary_Elements =  ChainToArray(ChainElements,4);
       FreeChain(ChainElements);
 
       /* Iterate in the list and select the union of the sets of nodes */
       for(int i = 0 ; i<4 ; i++){
 	Elem_i = Tributary_Elements[i];
-	Triburary_Nodes = ChainUnion(Triburary_Nodes,Connectivity[Elem_i]);
+	Triburary_Nodes = ChainUnion(Triburary_Nodes,
+				     FEM_Mesh.Connectivity[Elem_i]);
       }
       
     }

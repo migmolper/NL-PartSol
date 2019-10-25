@@ -18,7 +18,7 @@ Mesh InitializeMesh(char * GDF){
   Back_Mesh = ReadGidMesh(FEM_MeshFileName);
   puts(" \t DONE !!!");
   puts(" \t Searching neighbours elements for each node ...");
-  Back_Mesh.NodeNeighbour = GetNodalConnectivity(Back_Mesh);
+  GetNodalConnectivity(Back_Mesh);
   puts(" \t DONE !!!");
   puts(" \t Reading FEM boundary conditions ...");
   Back_Mesh.Bounds = Set_FEM_BCC(GDF, Back_Mesh);

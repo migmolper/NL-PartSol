@@ -9,7 +9,7 @@
 Mesh InitializeMesh(char * GDF);
 
 /* Functions definitions :*/
-int ** GetNodalConnectivity(Mesh FEM_Mesh);
+void GetNodalConnectivity(Mesh FEM_Mesh);
 void GlobalSearchGaussPoints(GaussPoint, Mesh);
 void LocalSearchGaussPoints(GaussPoint, Mesh);
 Matrix Get_B_GP(Matrix);
@@ -57,6 +57,4 @@ double d_uGIMP(double, double, double, double);
 Matrix GIMP_2D(Matrix, Matrix, Matrix, double);
 Matrix dGIMP_2D(Matrix, Matrix, Matrix, double);
 ChainPtr Tributary_Nodes_GIMP(Matrix, int,
-			      ChainPtr *,
-			      ChainPtr *,
-			      Matrix, double);
+			      Matrix, Mesh);
