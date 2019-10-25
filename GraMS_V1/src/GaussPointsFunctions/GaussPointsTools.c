@@ -69,6 +69,11 @@ GaussPoint Define_GP_Mesh(char * MPM_GID_MeshName,
     /* Natural coordinates (Vectorial) */
     MPM_Mesh.Phi.x_EC = MatAllocZ(MPM_Mesh.NumGP,1);
     strcpy(MPM_Mesh.Phi.x_EC.Info,"Element Coordinates GP");
+    /* Lenght of the Voxel (Only GIMP) */
+    if(strcmp(MPM_Mesh.ShapeFunctionGP,"uGIMP2D") == 0){
+      MPM_Mesh.Phi.lp = MatAllocZ(MPM_Mesh.NumGP,1);
+      strcpy(MPM_Mesh.Phi.lp.Info,"Voxel lenght GP");
+    }      
     /* Displacement field (Vectorial) */
     MPM_Mesh.Phi.dis = MatAllocZ(MPM_Mesh.NumGP,1);
     strcpy(MPM_Mesh.Phi.dis.Info,"Displacement field GP");
@@ -89,6 +94,11 @@ GaussPoint Define_GP_Mesh(char * MPM_GID_MeshName,
     /* Natural coordinates (Vectorial) */
     MPM_Mesh.Phi.x_EC = MatAllocZ(MPM_Mesh.NumGP,2);
     strcpy(MPM_Mesh.Phi.x_EC.Info,"Element Coordinates GP");
+    /* Lenght of the Voxel (Only GIMP) */
+    if(strcmp(MPM_Mesh.ShapeFunctionGP,"uGIMP2D") == 0){
+      MPM_Mesh.Phi.lp = MatAllocZ(MPM_Mesh.NumGP,2);
+      strcpy(MPM_Mesh.Phi.lp.Info,"Voxel lenght GP");
+    }      
     /* Displacement field (Vectorial) */
     MPM_Mesh.Phi.dis = MatAllocZ(MPM_Mesh.NumGP,2);
     strcpy(MPM_Mesh.Phi.dis.Info,"Displacement field GP");
@@ -109,6 +119,11 @@ GaussPoint Define_GP_Mesh(char * MPM_GID_MeshName,
     /* Natural coordinates (Vectorial) */
     MPM_Mesh.Phi.x_EC = MatAllocZ(MPM_Mesh.NumGP,3);
     strcpy(MPM_Mesh.Phi.x_EC.Info,"Element Coordinates GP");
+    /* Lenght of the Voxel (Only GIMP) */
+    if(strcmp(MPM_Mesh.ShapeFunctionGP,"uGIMP2D") == 0){
+      MPM_Mesh.Phi.lp = MatAllocZ(MPM_Mesh.NumGP,3);
+      strcpy(MPM_Mesh.Phi.lp.Info,"Voxel lenght GP");
+    }      
     /* Displacement field (Vectorial) */
     MPM_Mesh.Phi.dis = MatAllocZ(MPM_Mesh.NumGP,3);
     strcpy(MPM_Mesh.Phi.dis.Info,"Displacement field GP");
@@ -177,7 +192,11 @@ GaussPoint Define_GP_Mesh(char * MPM_GID_MeshName,
     MPM_Mesh.Phi.x_GC.nM[i][0] = Poligon_Centroid.nV[0];
     MPM_Mesh.Phi.x_GC.nM[i][1] = Poligon_Centroid.nV[1];
     MPM_Mesh.Phi.x_GC.nM[i][2] = 0.0;
-
+    /* Voxel lenght */
+    if(strcmp(MPM_Mesh.ShapeFunctionGP,"uGIMP2D") == 0){
+      MPM_Mesh.Phi.lp.nM[i][0] = pow(Poligon_Centroid.n,0.5);
+      MPM_Mesh.Phi.lp.nM[i][1] = pow(Poligon_Centroid.n,0.5);
+    }   
     /* Free data */
     FreeMat(Poligon_Centroid);
       

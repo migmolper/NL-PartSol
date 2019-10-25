@@ -126,11 +126,12 @@ Matrix dGIMP_2D(Matrix X_GC_GP, Matrix lp, Matrix Nodes, double L){
     X_GC_I.nV = Nodes.nM[i];
 
     /* 4º Gradient of the shape function for each node*/
-    for(int j = 0, k = 2 ; j<2 && k>0 ; j++, k--){
-      dS_Ip.nM[i][j] =
+    for(int j = 0, k = 1 ; j<=1 && k>=0 ; j++, k--){
+      dS_Ip.nM[j][i] =
 	d_uGIMP(L, lp.nV[j], X_GC_GP.nV[j], X_GC_I.nV[j]) *
 	uGIMP(L, lp.nV[k], X_GC_GP.nV[k], X_GC_I.nV[k]);    
     }
+
   }
 
   /* 5º Output */

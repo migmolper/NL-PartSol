@@ -175,7 +175,7 @@ typedef struct {
   /* Identification of the element where it is */
   int * Element_id;
   /* Kind of shape function for the GP mesh */
-  char * ShapeFunctionGP;
+  char ShapeFunctionGP [20];
   /* Tributary nodes variables */
   int * NumberNodes;
   ChainPtr * ListNodes;
