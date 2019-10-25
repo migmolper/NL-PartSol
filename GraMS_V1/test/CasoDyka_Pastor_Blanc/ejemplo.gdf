@@ -1,7 +1,7 @@
 /***************************************/
 /********** GENERAL PARAMETERS *********/
 /***************************************/
-KIND_ANALYSIS=MPM%U%2D%VerletLF
+KIND_ANALYSIS=MPMQ4%U%2D%VerletLF
 DENSITY=7833
 POISSON_MODULUS=0.0
 ELASTIC_MODULUS=200.e9

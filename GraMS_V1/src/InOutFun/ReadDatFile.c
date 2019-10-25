@@ -50,7 +50,8 @@ void Read_GeneralParameters(char * Name_File)
 
   /* Initial message */
   printf("************************************************* \n");
-  printf(" \t * Begin of read general parameters in : \n\t %s !!! \n",Name_File);
+  printf(" \t * Begin of read general parameters in : \n\t %s !!! \n",
+	 Name_File);
   
   /* Open and check .dat file */
   Sim_dat = fopen(Name_File,"r");  
@@ -76,23 +77,23 @@ void Read_GeneralParameters(char * Name_File)
 	    if(nKindAnalysis == 4){
 	      printf(" * Kind of analysis : \n");
 	      /* First parameter of KIND_ANALYSIS : FEM/MPM */
-	      if( strcmp(KIND_ANALYSIS[0],"FEM") == 0 ){
-		KindAnalysis = KIND_ANALYSIS[0];
-		printf("\t -> %s : Finite Element Method \n",KindAnalysis); 
+	      if( strcmp(KIND_ANALYSIS[0],"uGIMP2D") == 0 ){
+		ShapeFunctionGP = KIND_ANALYSIS[0];
+		puts("\t -> Uniform GIMP 2D"); 
 	      }
-	      if(strcmp(KIND_ANALYSIS[0],"MPM") == 0){
-		KindAnalysis = KIND_ANALYSIS[0];
-		printf("\t -> %s : Material Point Method \n",KindAnalysis); 
+	      if(strcmp(KIND_ANALYSIS[0],"MPMQ4") == 0){
+		ShapeFunctionGP = KIND_ANALYSIS[0];
+		puts("\t -> Linear Quadrilateral"); 
 	      }
 	      /*************************************************************/
 	      /* Second parameter of KIND_ANALYSIS : U/SIGMA_V */
 	      if( strcmp(KIND_ANALYSIS[1],"SIGMA_V") == 0 ){
-		FieldsAnalysis = KIND_ANALYSIS[1];
-		printf("\t -> %s : Stress-Velocity \n",FieldsAnalysis); 
+		Formulation = KIND_ANALYSIS[1];
+		printf("\t -> %s : Stress-Velocity \n",Formulation); 
 	      }
 	      if( strcmp(KIND_ANALYSIS[1],"U") == 0 ){
-		FieldsAnalysis = KIND_ANALYSIS[1];
-		printf("\t -> %s : Displacement \n",FieldsAnalysis);
+		Formulation = KIND_ANALYSIS[1];
+		printf("\t -> %s : Displacement \n",Formulation);
 	      }
 	      /*************************************************************/
 	      /* Third parameter of KIND_ANALYSIS : 1D/2D/3D */
@@ -182,7 +183,7 @@ void Read_GeneralParameters(char * Name_File)
   } /* End while */
 
   /* Set the number of DOFs for each node depending of the kind of analysis */
-  if( strcmp(FieldsAnalysis,"U") == 0 ){
+  if( strcmp(Formulation,"U") == 0 ){
     if(NumberDimensions == 1)
       NumberDOF = 1;
     if(NumberDimensions == 2)
@@ -190,7 +191,7 @@ void Read_GeneralParameters(char * Name_File)
     if(NumberDimensions == 3)
       NumberDOF = 3;
   }
-  if( strcmp(FieldsAnalysis,"SIGMA_V") == 0 ){
+  if( strcmp(Formulation,"SIGMA_V") == 0 ){
     if(NumberDimensions == 1)
       NumberDOF = 2;
     if(NumberDimensions == 2)

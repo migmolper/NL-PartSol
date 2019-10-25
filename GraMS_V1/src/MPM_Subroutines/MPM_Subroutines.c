@@ -59,11 +59,11 @@ Matrix GetNodalMassMomentum(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
     }
     
     /* 5º Evaluate the shape function in the coordinates of the GP */
-    if(strcmp(FEM_Mesh.TypeElem,"Quadrilateral") == 0){
+    if(strcmp(MPM_Mesh.ShapeFunctionGP,"MPMQ4") == 0){
       X_GP.nV = MPM_Mesh.Phi.x_EC.nM[i];
       N_GP = Q4(X_GP);
     }
-    else if(strcmp(FEM_Mesh.TypeElem,"GIMP2D") == 0){      
+    else if(strcmp(MPM_Mesh.ShapeFunctionGP,"uGIMP2D") == 0){      
       X_GP.nV = MPM_Mesh.Phi.x_GC.nM[i];
       lp.nV = MPM_Mesh.Phi.lp.nM[i];
       N_GP = GIMP_2D(X_GP,lp,GP_ElemCoord,FEM_Mesh.DeltaX);      
@@ -180,11 +180,11 @@ void UpdateGaussPointStrain(GaussPoint MPM_Mesh,
            
     /* 2º Get the B matrix */
     /* Get the element gradient */
-    if(strcmp(FEM_Mesh.TypeElem,"Quadrilateral") == 0){
+    if(strcmp(MPM_Mesh.ShapeFunctionGP,"MPMQ4") == 0){
       X_GP.nV = MPM_Mesh.Phi.x_EC.nM[i];
       dNdx_GP = Get_dNdX_Q4(X_GP,GP_ElemCoord);
     }
-    else if(strcmp(FEM_Mesh.TypeElem,"GIMP2D") == 0){
+    else if(strcmp(MPM_Mesh.ShapeFunctionGP,"uGIMP2D") == 0){
       X_GP.nV = MPM_Mesh.Phi.x_GC.nM[i];
       lp.nV = MPM_Mesh.Phi.lp.nM[i];
       dNdx_GP = dGIMP_2D(X_GP,lp,GP_ElemCoord,FEM_Mesh.DeltaX);
@@ -424,12 +424,12 @@ Matrix GetNodalForces(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int TimeStep)
     }
       
     /* 5º Evaluate the shape function in the GP */	
-    if(strcmp(FEM_Mesh.TypeElem,"Quadrilateral") == 0){
+    if(strcmp(MPM_Mesh.ShapeFunctionGP,"MPMQ4") == 0){
       X_GP.nV = MPM_Mesh.Phi.x_EC.nM[i];
       N_GP = Q4(X_GP);
       dNdx_GP = Get_dNdX_Q4(X_GP,GP_ElemCoord);
     }
-    else if(strcmp(FEM_Mesh.TypeElem,"GIMP2D") == 0){
+    else if(strcmp(MPM_Mesh.ShapeFunctionGP,"uGIMP2D") == 0){
       X_GP.nV = MPM_Mesh.Phi.x_GC.nM[i];
       lp.nV = MPM_Mesh.Phi.lp.nM[i];
       N_GP = GIMP_2D(X_GP,lp,GP_ElemCoord,FEM_Mesh.DeltaX);
@@ -557,11 +557,11 @@ void UpdateVelocityAndPositionGP(GaussPoint MPM_Mesh,
     }
 
     /* 3º Evaluate the shape function in the coordinates of the GP */
-    if(strcmp(FEM_Mesh.TypeElem,"Quadrilateral") == 0){
+    if(strcmp(MPM_Mesh.ShapeFunctionGP,"MPMQ4") == 0){
       X_GP.nV = MPM_Mesh.Phi.x_EC.nM[i];
       N_GP = Q4(X_GP);
     }
-    else if(strcmp(FEM_Mesh.TypeElem,"GIMP2D") == 0){      
+    else if(strcmp(MPM_Mesh.ShapeFunctionGP,"uGIMP2D") == 0){      
       X_GP.nV = MPM_Mesh.Phi.x_GC.nM[i];
       lp.nV = MPM_Mesh.Phi.lp.nM[i];
       N_GP = GIMP_2D(X_GP,lp,GP_ElemCoord,FEM_Mesh.DeltaX);      

@@ -174,6 +174,8 @@ typedef struct {
   int NumGP;
   /* Identification of the element where it is */
   int * Element_id;
+  /* Kind of shape function for the GP mesh */
+  char * ShapeFunctionGP;
   /* Tributary nodes variables */
   int * NumberNodes;
   ChainPtr * ListNodes;
@@ -222,9 +224,9 @@ typedef struct {
   double DeltaX;
   /* Name of the element */
   char TypeElem [20];
-  /* Shape function of the reference element evaluated in a GP */
+  /* Shape function for the mesh, for interpolation porpouses */
   Matrix (* N_ref)(Matrix );
-  /* Derivative shape function of the reference element evaluated in a GP */
+  /* Derivative shape function, for interpolation porpouses */
   Matrix (* dNdX_ref)(Matrix );
     
 } Mesh;

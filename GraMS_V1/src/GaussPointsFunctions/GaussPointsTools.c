@@ -56,6 +56,9 @@ GaussPoint Define_GP_Mesh(char * MPM_GID_MeshName,
     exit(0);
   }
 
+  /* Define the shapefunction employed by the GP */
+  strcpy(MPM_Mesh.ShapeFunctionGP,ShapeFunctionGP);
+
   /* Coordinates of the GP (Global/Local)*/
   MPM_Mesh.Phi.x_GC = MatAllocZ(MPM_Mesh.NumGP,3);
   strcpy(MPM_Mesh.Phi.x_GC.Info,"Global Coordinates");

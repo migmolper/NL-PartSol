@@ -10,8 +10,8 @@ char * OutputDir;
 /*********** Find of analysis **********/
 /***************************************/
 
-char * KindAnalysis;
-char * FieldsAnalysis;
+char * ShapeFunctionGP;
+char * Formulation;
 int NumberDimensions;
 int NumberDOF;
 char * TimeIntegration;
