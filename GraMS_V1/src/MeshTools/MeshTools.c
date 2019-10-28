@@ -36,7 +36,8 @@ void GetNodalConnectivity(Mesh FEM_Mesh){
       /* Free memory */
       free(Element_Connectivity);
     }      
-  }  
+  }
+  
 }
 
 /*********************************************************************/
@@ -101,7 +102,7 @@ void GlobalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh){
 
 	/* 9º Assign the new connectivity of the GP */
 	if(strcmp(FEM_Mesh.TypeElem,"Quadrilateral") == 0){
-	  MPM_Mesh.ListNodes[i] = FEM_Mesh.Connectivity[j];
+	  MPM_Mesh.ListNodes[i] = CopyChain(FEM_Mesh.Connectivity[j]);
 	}
 	else if(strcmp(FEM_Mesh.TypeElem,"GIMP2D") == 0){
 	  MPM_Mesh.ListNodes[i] =
@@ -187,6 +188,7 @@ void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 
     /* 5º Connectivity of the Poligon */
     NumVertex = MPM_Mesh.NumberNodes[i];
+    
     Poligon_Connectivity = ChainToArray(MPM_Mesh.ListNodes[i],
 					NumVertex);
       
@@ -198,6 +200,7 @@ void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 	  FEM_Mesh.Coordinates.nM[Poligon_Connectivity[k]][l];
       }
     }
+
 
     /* 7º Check if the GP is in the same element */
     if(InOut_Poligon(X_GC_GP,Poligon_Coordinates) == 1){
@@ -218,7 +221,7 @@ void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
     }
     /* 7º If the GP is not in the same element, search in the neighbour */
     else{
-      
+    
       /* 7aº As we are in a new element we set to zero the element coordinates
        and reset the chain with the nodal connectivity of the GP */
       for(int j = 0 ; j<NumberDimensions ; j++){
@@ -272,6 +275,7 @@ void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 	}	  
       }
 
+
       /* Free memory */
       FreeMat(Poligon_Coordinates);
       free(Poligon_Connectivity);
@@ -285,10 +289,11 @@ void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
       /* 7fº Create the search list of this vertex */
       SearchList = ChainToArray(FEM_Mesh.NodeNeighbour[SearchVertex],
 				FEM_Mesh.NumNeighbour[SearchVertex]);
+
      
       /* 7gº Search in the search list */
       for(int j = 1 ; j<(FEM_Mesh.NumNeighbour[SearchVertex]+1) ; j++){
-
+	
 	/* Discard the initial element for the search */
 	if(SearchList[j] == Elem_i) continue;
 
@@ -296,6 +301,8 @@ void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 	NumVertex = FEM_Mesh.NumNodesElem[SearchList[j]];
 	Poligon_Connectivity = ChainToArray(FEM_Mesh.Connectivity[SearchList[j]],
 					    NumVertex);
+
+	puts("paso 4");
       
 	/* Allocate the polligon Matrix and fill it */
 	Poligon_Coordinates = MatAllocZ(NumVertex,NumberDimensions);
@@ -305,6 +312,7 @@ void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 	      FEM_Mesh.Coordinates.nM[Poligon_Connectivity[k]][l];
 	  }
 	}
+
 
 	/* Free poligon connectivity */
 	free(Poligon_Connectivity);
@@ -322,15 +330,19 @@ void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 	  /* Free memory */
 	  FreeMat(Poligon_Coordinates);
 
+	  puts("paso 6");
+
 	  /* Assign the new connectivity of the GP */
 	  if(strcmp(FEM_Mesh.TypeElem,"Quadrilateral") == 0){
-	    MPM_Mesh.ListNodes[i] = FEM_Mesh.Connectivity[SearchList[j]];
+	    MPM_Mesh.ListNodes[i] = CopyChain(FEM_Mesh.Connectivity[SearchList[j]]);
 	  }
 	  else if(strcmp(FEM_Mesh.TypeElem,"GIMP2D") == 0){
 	    MPM_Mesh.ListNodes[i] =
 	      Tributary_Nodes_GIMP(X_EC_GP,MPM_Mesh.Element_id[i],
 				   MPM_Mesh.Phi.lp,FEM_Mesh);
 	  }
+
+	  puts("paso 7");
 	  
 	  /* Active those nodes that interact with the GP */
 	  ListNodes_I = MPM_Mesh.ListNodes[i];
@@ -361,7 +373,7 @@ void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
       
     }
   } /* Loop over the GP */
-
+  
   /* 8º Free memory */
   FreeMat(V_GP_n);
 
@@ -572,6 +584,26 @@ void PopNode (ChainPtr * TopNodePtr, int I_trash)
     iPtr = iPtr->next;
   }
 
+}
+
+/*********************************************************************/
+
+/* Function to copy the chain A in to the chain B */
+ChainPtr CopyChain(ChainPtr A)
+{
+
+  ChainPtr B = NULL;
+  ChainPtr iPtrA = A;
+
+  /* Insert all elements of A to the result list */
+  while (iPtrA != NULL){
+    /* Introduce a new element in the new chain */
+    PushNode(&B, iPtrA->I);
+    /* Updtate the interator index */
+      iPtrA = iPtrA->next; 
+  }
+  
+  return B;
 }
 
 /*********************************************************************/

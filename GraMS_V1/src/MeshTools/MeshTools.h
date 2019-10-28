@@ -25,6 +25,7 @@ int LenghtChain(ChainPtr);
 bool IsPresentNode (ChainPtr, int);
 void PushNode (ChainPtr *, int);
 void PopNode (ChainPtr *, int);
+ChainPtr CopyChain(ChainPtr);
 ChainPtr ChainUnion(ChainPtr, ChainPtr);
 ChainPtr ChainIntersection(ChainPtr, ChainPtr);
 void printList (ChainPtr);
@@ -52,9 +53,9 @@ Matrix Get_X_GC_Q4(Matrix,Matrix);
 void Get_X_EC_Q4(Matrix,Matrix,Matrix);
 
 /* GIMP shape functions */
-double uGIMP(double, double, double, double);
-double d_uGIMP(double, double, double, double);
-Matrix GIMP_2D(Matrix, Matrix, Matrix, double);
-Matrix dGIMP_2D(Matrix, Matrix, Matrix, double);
+double uGIMP(double, double, double);
+double d_uGIMP(double, double, double);
+Matrix GIMP_2D(Matrix, Matrix, double);
+Matrix dGIMP_2D(Matrix, Matrix, double);
 ChainPtr Tributary_Nodes_GIMP(Matrix, int,
 			      Matrix, Mesh);

@@ -32,6 +32,7 @@ Matrix Incr_Mat(Matrix, Matrix);
 Matrix Add_Mat(Matrix,Matrix);
 Matrix Sub_Mat(Matrix,Matrix);
 Matrix Get_Lumped_Matrix(Matrix);
+double SignumFunct(double x);
 
 /* MATH */
 double Area_Poligon(Matrix);

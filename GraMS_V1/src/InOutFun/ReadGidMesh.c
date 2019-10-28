@@ -77,7 +77,7 @@ Mesh ReadGidMesh(char * MeshName)
   }
 
   /* CHANGES THISSSS */
-  GID_Mesh.DeltaX = 0.0001333;
+  GID_Mesh.DeltaX = 0.0002666;
   
   /* Element properties of the mesh */
   if ( strcmp(words[0],"MESH") == 0 ){
@@ -200,7 +200,7 @@ Mesh ReadGidMesh(char * MeshName)
     Allocate_ArrayZ(GID_Mesh.NumNodesMesh,sizeof(int));
 
    GID_Mesh.NumNeighbour =  (int *)
-    Allocate_ArrayZ(GID_Mesh.NumElemMesh,sizeof(int)); 
+    Allocate_ArrayZ(GID_Mesh.NumNodesMesh,sizeof(int)); 
 
   /***************************************************************************/
   /***************************************************************************/

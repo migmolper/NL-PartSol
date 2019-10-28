@@ -22,7 +22,8 @@ Matrix GetNodalMassMomentum(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
   Matrix X_GP; /* Local coordinates */
   X_GP.N_rows = NumberDimensions;
   X_GP.N_cols = 1;
-  Matrix lp; /* Particle voxel */
+  Matrix lp; /* Just for GIMP -> Particle voxel */
+  Matrix Delta_Xip; /* Just for GIMP -> Distance from GP to the nodes */
   Matrix N_GP; /* Value of the shape-function */
   double N_GP_I; /* Evaluation of the GP in the node */
   double GP_mass; /* Mass of the GP */
@@ -64,9 +65,16 @@ Matrix GetNodalMassMomentum(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
       N_GP = Q4(X_GP);
     }
     else if(strcmp(MPM_Mesh.ShapeFunctionGP,"uGIMP2D") == 0){      
-      X_GP.nV = MPM_Mesh.Phi.x_GC.nM[i];
+      Delta_Xip = MatAlloc(GP_ElemCoord.N_rows,2);
+      for(int k = 0 ; k<GP_ElemCoord.N_rows ; k++){
+	for(int l = 0 ; l<2 ; l++){
+	  Delta_Xip.nM[k][l] =
+	    MPM_Mesh.Phi.x_GC.nM[i][l]-GP_ElemCoord.nM[k][l];
+	}
+      }
       lp.nV = MPM_Mesh.Phi.lp.nM[i];
-      N_GP = GIMP_2D(X_GP,lp,GP_ElemCoord,FEM_Mesh.DeltaX);
+      N_GP = GIMP_2D(Delta_Xip,lp,FEM_Mesh.DeltaX);
+      FreeMat(Delta_Xip);
     }
     
     /* Free memory */
@@ -145,7 +153,8 @@ void UpdateGaussPointStrain(GaussPoint MPM_Mesh,
   Matrix X_GP; /* Element coordinates of the Gauss-Point */
   X_GP.N_rows = NumberDimensions;
   X_GP.N_cols = 1;
-  Matrix lp; /* Particle voxel */
+  Matrix lp; /* Just for GIMP -> Particle voxel */
+  Matrix Delta_Xip; /* Just for GIMP -> Distance from GP to the nodes */
   
   /* Element for each Gauss-Point */
   int GP_NumNodes; /* Number of nodes */
@@ -185,10 +194,18 @@ void UpdateGaussPointStrain(GaussPoint MPM_Mesh,
       dNdx_GP = Get_dNdX_Q4(X_GP,GP_ElemCoord);
     }
     else if(strcmp(MPM_Mesh.ShapeFunctionGP,"uGIMP2D") == 0){
-      X_GP.nV = MPM_Mesh.Phi.x_GC.nM[i];
+      Delta_Xip = MatAlloc(GP_ElemCoord.N_rows,2);
+      for(int k = 0 ; k<GP_ElemCoord.N_rows ; k++){
+	for(int l = 0 ; l<2 ; l++){
+	  Delta_Xip.nM[k][l] =
+	    MPM_Mesh.Phi.x_GC.nM[i][l]-GP_ElemCoord.nM[k][l];
+	}
+      }
       lp.nV = MPM_Mesh.Phi.lp.nM[i];
-      dNdx_GP = dGIMP_2D(X_GP,lp,GP_ElemCoord,FEM_Mesh.DeltaX);
+      dNdx_GP = dGIMP_2D(Delta_Xip,lp,FEM_Mesh.DeltaX);
+      FreeMat(Delta_Xip);
     }
+    
     /* Free memory */
     FreeMat(GP_ElemCoord);
     /* Calcule the B matrix */
@@ -305,7 +322,7 @@ void UpdateGaussPointStress(GaussPoint MPM_Mesh){
     }
     /* 6º Free memory */
     FreeMat(StressTensor_GP);
-  }  
+  }
 }
 
 /*******************************************************/
@@ -319,7 +336,8 @@ Matrix GetNodalForces(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int TimeStep)
   Matrix X_GP; /* Coordinate for each Gauss-Point */
   X_GP.N_rows = NumberDimensions;
   X_GP.N_cols = 1;
-  Matrix lp; /* Particle voxel */
+  Matrix lp; /* Just for GIMP -> Particle voxel */
+  Matrix Delta_Xip; /* Just for GIMP -> Distance from GP to the nodes */
   double GP_mass; /* Mass of the GP */
   double Vol_GP; /* Gauss-Point volumen */
 
@@ -429,16 +447,23 @@ Matrix GetNodalForces(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int TimeStep)
       dNdx_GP = Get_dNdX_Q4(X_GP,GP_ElemCoord);
     }
     else if(strcmp(MPM_Mesh.ShapeFunctionGP,"uGIMP2D") == 0){
-      X_GP.nV = MPM_Mesh.Phi.x_GC.nM[i];
+      Delta_Xip = MatAlloc(GP_ElemCoord.N_rows,2);
+      for(int k = 0 ; k<GP_ElemCoord.N_rows ; k++){
+	for(int l = 0 ; l<2 ; l++){
+	  Delta_Xip.nM[k][l] =
+	    MPM_Mesh.Phi.x_GC.nM[i][l]-GP_ElemCoord.nM[k][l];
+	}
+      }
       lp.nV = MPM_Mesh.Phi.lp.nM[i];
-      N_GP = GIMP_2D(X_GP,lp,GP_ElemCoord,FEM_Mesh.DeltaX);
-      dNdx_GP = dGIMP_2D(X_GP,lp,GP_ElemCoord,FEM_Mesh.DeltaX);
+      N_GP = GIMP_2D(Delta_Xip,lp,FEM_Mesh.DeltaX);
+      dNdx_GP = dGIMP_2D(Delta_Xip,lp,FEM_Mesh.DeltaX);
+      FreeMat(Delta_Xip);      
     }
     /* Free memory */
     FreeMat(GP_ElemCoord);
        
     /* 6º Get the B_T matrix for the derivates */
-    B = Get_B_GP(dNdx_GP);    
+    B = Get_B_GP(dNdx_GP);
     FreeMat(dNdx_GP);
     B_T = Transpose_Mat(B);
     FreeMat(B);
@@ -523,7 +548,8 @@ void UpdateVelocityAndPositionGP(GaussPoint MPM_Mesh,
   Matrix X_GP; /* Local coordinates of the Gauss-Point */
   X_GP.N_rows = NumberDimensions;
   X_GP.N_cols = 1;
-  Matrix lp; /* Particle voxel */
+  Matrix lp; /* Just for GIMP -> Particle voxel */
+  Matrix Delta_Xip; /* Just for GIMP -> Distance from GP to the nodes */
   Matrix N_GP; /* Value of the shape-function in the GP */
 
   /* Element for each Gauss-Point */
@@ -561,9 +587,16 @@ void UpdateVelocityAndPositionGP(GaussPoint MPM_Mesh,
       N_GP = Q4(X_GP);
     }
     else if(strcmp(MPM_Mesh.ShapeFunctionGP,"uGIMP2D") == 0){      
-      X_GP.nV = MPM_Mesh.Phi.x_GC.nM[i];
+      Delta_Xip = MatAlloc(GP_ElemCoord.N_rows,2);
+      for(int k = 0 ; k<GP_ElemCoord.N_rows ; k++){
+	for(int l = 0 ; l<2 ; l++){
+	  Delta_Xip.nM[k][l] =
+	    MPM_Mesh.Phi.x_GC.nM[i][l]-GP_ElemCoord.nM[k][l];
+	}
+      }
       lp.nV = MPM_Mesh.Phi.lp.nM[i];
-      N_GP = GIMP_2D(X_GP,lp,GP_ElemCoord,FEM_Mesh.DeltaX);      
+      N_GP = GIMP_2D(Delta_Xip,lp,FEM_Mesh.DeltaX);
+      FreeMat(Delta_Xip);       
     }
 
     /* 4º Free memory */

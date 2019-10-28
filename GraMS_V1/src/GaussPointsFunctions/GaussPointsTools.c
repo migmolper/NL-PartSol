@@ -55,7 +55,7 @@ GaussPoint Define_GP_Mesh(char * MPM_GID_MeshName,
     puts("Error in Chain declaration");
     exit(0);
   }
-
+  
   /* Define the shapefunction employed by the GP */
   strcpy(MPM_Mesh.ShapeFunctionGP,ShapeFunctionGP);
 
@@ -143,7 +143,7 @@ GaussPoint Define_GP_Mesh(char * MPM_GID_MeshName,
   default:
     puts("Error in Initialize_GP_Mesh() : Wrong number of dimensions");
     exit(0);
-  }  
+  }
 
   /* Mass field (Scalar) */
   MPM_Mesh.Phi.mass = MatAllocZ(MPM_Mesh.NumGP,1);
@@ -194,8 +194,8 @@ GaussPoint Define_GP_Mesh(char * MPM_GID_MeshName,
     MPM_Mesh.Phi.x_GC.nM[i][2] = 0.0;
     /* Voxel lenght */
     if(strcmp(MPM_Mesh.ShapeFunctionGP,"uGIMP2D") == 0){
-      MPM_Mesh.Phi.lp.nM[i][0] = pow(Poligon_Centroid.n,0.5);
-      MPM_Mesh.Phi.lp.nM[i][1] = pow(Poligon_Centroid.n,0.5);
+      MPM_Mesh.Phi.lp.nM[i][0] = 0.00021328; //pow(Poligon_Centroid.n,0.5);
+      MPM_Mesh.Phi.lp.nM[i][1] = 0.00021328; //pow(Poligon_Centroid.n,0.5);
     }   
     /* Free data */
     FreeMat(Poligon_Centroid);

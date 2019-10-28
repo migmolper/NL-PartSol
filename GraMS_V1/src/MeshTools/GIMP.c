@@ -18,123 +18,84 @@
 /*   (-1)    (0)     (1)  */
 
 /* Uniform GIMP shape function */
-double uGIMP(double L, double lp, double Xp, double Xi){
-
-  /* Variable definition */
-  double S_Ip;
-  double Delta_xp;
-
-  /* Calcule the distance from the GP to the node */
-  Delta_xp = Xp-Xi;
+double uGIMP(double L, double lp, double Delta_xp){
 
   /* Evaluation of the shape function */
-  if ((-L+lp < Delta_xp) && (Delta_xp <= -lp)){
-    S_Ip = 1 + Delta_xp/L;
+  if ((0.5*lp <= fabs(Delta_xp)) && (fabs(Delta_xp) <= L-0.5*lp)){
+    return 1 - fabs(Delta_xp)/L;
   }
-  else if ((lp < Delta_xp) && (Delta_xp <= L-lp)){
-    S_Ip = 1 - Delta_xp/L;
+  else if((L-0.5*lp <= fabs(Delta_xp)) && (fabs(Delta_xp) < L + 0.5*lp)){
+    return 0.5*(L+0.5*lp-fabs(Delta_xp))*(L+0.5*lp-fabs(Delta_xp))/(L*lp);
   }
-  else if ((-lp < Delta_xp) && (Delta_xp <= lp)){
-    S_Ip = 1 - (Delta_xp*Delta_xp + lp*lp)/(2*L*lp);
+  else if(fabs(Delta_xp) < 0.5*lp){
+    return 1 - 0.25*(4*Delta_xp*Delta_xp+lp*lp)/(L*lp);
   }
-  else if ((-L-lp < Delta_xp) && (Delta_xp <= -L+lp)){
-    S_Ip = ((L+lp+Delta_xp)*(L+lp+Delta_xp))/(1/(4*L*lp));
-  }
-  else if ((L-lp < Delta_xp) && (Delta_xp <= L+lp)){
-    S_Ip = ((L+lp-Delta_xp)*(L+lp-Delta_xp))/(4*L*lp);
-  }
-  else if (fabs(Delta_xp) >= L+lp){
-    S_Ip = 0;
+  else{
+    return 0;
   }
   
-  return S_Ip;
 }
 
 /*********************************************************************/
 
 /* Uniform GIMP derivative shape function */
-double d_uGIMP(double L, double lp, double Xp, double Xi){
-
-  /* Variable definition */
-  double dS_Ip;
-  double Delta_xp;
-
-  /* Calcule the distance from the GP to the node */
-  Delta_xp = Xp-Xi;
+double d_uGIMP(double L, double lp, double Delta_xp){
 
   /* Evaluation of the shape function */
-  if ((-L+lp < Delta_xp) && (Delta_xp <= -lp)){
-    dS_Ip = 1/L;
+  if((0.5*lp <= fabs(Delta_xp)) && (fabs(Delta_xp) <= L-0.5*lp)){
+    return -(1/L)*SignumFunct(Delta_xp);
   }
-  else if ((lp < Delta_xp) && (Delta_xp <= L-lp)){
-    dS_Ip = 1/L;
+  else if((L-0.5*lp <= fabs(Delta_xp)) && (fabs(Delta_xp) < L+0.5*lp)){
+    return -SignumFunct(Delta_xp)*(L+0.5*lp-fabs(Delta_xp))/(L*lp);
   }
-  else if ((-lp < Delta_xp) && (Delta_xp <= lp)){
-    dS_Ip = - Delta_xp/(L*lp);
+  else if(fabs(Delta_xp) < 0.5*lp){
+    return -2*Delta_xp/(L*lp);
   }
-  else if ((-L-lp < Delta_xp) && (Delta_xp <= -L+lp)){
-    dS_Ip = (L+lp+Delta_xp)/(2*L*lp);
-  }
-  else if ((L-lp < Delta_xp) && (Delta_xp <= L+lp)){
-    dS_Ip = (L+lp-Delta_xp)/(4*L*lp);
-  }
-  else if (fabs(Delta_xp) >= L+lp){
-    dS_Ip = 0;
+  else{
+    return 0;
   }
   
-  return dS_Ip;
 }
 
 /*********************************************************************/
 
 /* Uniform GIMP shape function 2D */
-Matrix GIMP_2D(Matrix X_GC_GP, Matrix lp, Matrix Element, double L){
+Matrix GIMP_2D(Matrix Delta_xp, Matrix lp, double L){
 
   /* 1º Variable declaration */
-  Matrix S_Ip = MatAlloc(1,Element.N_rows);
-  Matrix X_GC_I;
+  Matrix S_Ip = MatAlloc(1,Delta_xp.N_rows);
 
   /* 2º Fill the shape function array */
-  for(int i = 0 ; i<Element.N_rows ; i++){
-
-    /* 3º Coordinate of the node */
-    X_GC_I.nV = Element.nM[i];
-
-    /* 4º Shape function in this node */
+  for(int i = 0 ; i<Delta_xp.N_rows ; i++){
+    /* 3º Shape function in this node */
     S_Ip.nV[i] =
-      uGIMP(L, lp.nV[0], X_GC_GP.nV[0], X_GC_I.nV[0])*
-      uGIMP(L, lp.nV[1], X_GC_GP.nV[1], X_GC_I.nV[1]);
+      uGIMP(L, lp.nV[0], Delta_xp.nM[i][0])*
+      uGIMP(L, lp.nV[1], Delta_xp.nM[i][1]);
   }
 
-  /* 5º Output */
+  /* 4º Output */
   return S_Ip;
 }
 
 /*********************************************************************/
 
 /* Uniform GIMP derivative shape function 2D */
-Matrix dGIMP_2D(Matrix X_GC_GP, Matrix lp, Matrix Nodes, double L){
+Matrix dGIMP_2D(Matrix Delta_xp, Matrix lp, double L){
 
   /* 1º Variable declaration */
-  Matrix dS_Ip = MatAlloc(2,Nodes.N_rows);
-  Matrix X_GC_I;
+  Matrix dS_Ip = MatAlloc(2,Delta_xp.N_rows);
   
   /* 2º Fill the shape function array */
-  for(int i = 0 ; i<Nodes.N_rows ; i++){
-    
-    /* 3º Coordinate of the node */
-    X_GC_I.nV = Nodes.nM[i];
-
-    /* 4º Gradient of the shape function for each node*/
+  for(int i = 0 ; i<Delta_xp.N_rows ; i++){
+    /* 3º Gradient of the shape function for each node*/
     for(int j = 0, k = 1 ; j<=1 && k>=0 ; j++, k--){
       dS_Ip.nM[j][i] =
-	d_uGIMP(L, lp.nV[j], X_GC_GP.nV[j], X_GC_I.nV[j]) *
-	uGIMP(L, lp.nV[k], X_GC_GP.nV[k], X_GC_I.nV[k]);    
+	d_uGIMP(L, lp.nV[j], Delta_xp.nM[i][j]) *
+	uGIMP(L, lp.nV[k], Delta_xp.nM[i][k]);
     }
-
   }
 
-  /* 5º Output */
+  /* 4º Output */
   return dS_Ip;
 }
 
