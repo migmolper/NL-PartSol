@@ -24,7 +24,7 @@ double uGIMP(double L, double lp, double Delta_xp){
   if ((0.5*lp <= fabs(Delta_xp)) && (fabs(Delta_xp) <= L-0.5*lp)){
     return 1 - fabs(Delta_xp)/L;
   }
-  else if((L-0.5*lp <= fabs(Delta_xp)) && (fabs(Delta_xp) < L + 0.5*lp)){
+  else if((L-0.5*lp <= fabs(Delta_xp)) && (fabs(Delta_xp) < L+0.5*lp)){
     return 0.5*(L+0.5*lp-fabs(Delta_xp))*(L+0.5*lp-fabs(Delta_xp))/(L*lp);
   }
   else if(fabs(Delta_xp) < 0.5*lp){
@@ -43,7 +43,7 @@ double d_uGIMP(double L, double lp, double Delta_xp){
 
   /* Evaluation of the shape function */
   if((0.5*lp <= fabs(Delta_xp)) && (fabs(Delta_xp) <= L-0.5*lp)){
-    return -(1/L)*SignumFunct(Delta_xp);
+    return -SignumFunct(Delta_xp)*(1/L);
   }
   else if((L-0.5*lp <= fabs(Delta_xp)) && (fabs(Delta_xp) < L+0.5*lp)){
     return -SignumFunct(Delta_xp)*(L+0.5*lp-fabs(Delta_xp))/(L*lp);
@@ -60,7 +60,7 @@ double d_uGIMP(double L, double lp, double Delta_xp){
 /*********************************************************************/
 
 /* Uniform GIMP shape function 2D */
-Matrix GIMP_2D(Matrix Delta_xp, Matrix lp, double L){
+Matrix GIMP_2D(Matrix Delta_Xp, Matrix lp, double L){
 
   /* 1º Variable declaration */
   Matrix S_Ip = MatAlloc(1,Delta_xp.N_rows);
@@ -69,8 +69,8 @@ Matrix GIMP_2D(Matrix Delta_xp, Matrix lp, double L){
   for(int i = 0 ; i<Delta_xp.N_rows ; i++){
     /* 3º Shape function in this node */
     S_Ip.nV[i] =
-      uGIMP(L, lp.nV[0], Delta_xp.nM[i][0])*
-      uGIMP(L, lp.nV[1], Delta_xp.nM[i][1]);
+      uGIMP(L, lp.nV[0], Delta_Xp.nM[i][0])*
+      uGIMP(L, lp.nV[1], Delta_Xp.nM[i][1]);
   }
 
   /* 4º Output */
@@ -120,7 +120,7 @@ ChainPtr Tributary_Nodes_GIMP(Matrix X_EC_GP,
   /* Check if I am in the central area */
   if ((fabs(X_EC_GP.nV[0]) < Dist[0]) &&
       (fabs(X_EC_GP.nV[1]) < Dist[1])){    
-    Triburary_Nodes = FEM_Mesh.Connectivity[Elem_GP];
+    Triburary_Nodes = CopyChain(FEM_Mesh.Connectivity[Elem_GP]);
   }
   
   /* Check if I am in the 1º Quadrant */

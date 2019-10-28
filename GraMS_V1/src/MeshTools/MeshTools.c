@@ -292,7 +292,7 @@ void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 
      
       /* 7gº Search in the search list */
-      for(int j = 1 ; j<(FEM_Mesh.NumNeighbour[SearchVertex]+1) ; j++){
+      for(int j = 0 ; j<FEM_Mesh.NumNeighbour[SearchVertex] ; j++){
 	
 	/* Discard the initial element for the search */
 	if(SearchList[j] == Elem_i) continue;
@@ -301,8 +301,6 @@ void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 	NumVertex = FEM_Mesh.NumNodesElem[SearchList[j]];
 	Poligon_Connectivity = ChainToArray(FEM_Mesh.Connectivity[SearchList[j]],
 					    NumVertex);
-
-	puts("paso 4");
       
 	/* Allocate the polligon Matrix and fill it */
 	Poligon_Coordinates = MatAllocZ(NumVertex,NumberDimensions);
@@ -330,19 +328,16 @@ void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 	  /* Free memory */
 	  FreeMat(Poligon_Coordinates);
 
-	  puts("paso 6");
-
 	  /* Assign the new connectivity of the GP */
 	  if(strcmp(FEM_Mesh.TypeElem,"Quadrilateral") == 0){
-	    MPM_Mesh.ListNodes[i] = CopyChain(FEM_Mesh.Connectivity[SearchList[j]]);
+	    MPM_Mesh.ListNodes[i] =
+	      CopyChain(FEM_Mesh.Connectivity[SearchList[j]]);
 	  }
 	  else if(strcmp(FEM_Mesh.TypeElem,"GIMP2D") == 0){
 	    MPM_Mesh.ListNodes[i] =
 	      Tributary_Nodes_GIMP(X_EC_GP,MPM_Mesh.Element_id[i],
 				   MPM_Mesh.Phi.lp,FEM_Mesh);
 	  }
-
-	  puts("paso 7");
 	  
 	  /* Active those nodes that interact with the GP */
 	  ListNodes_I = MPM_Mesh.ListNodes[i];
