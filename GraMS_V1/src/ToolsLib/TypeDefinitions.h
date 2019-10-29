@@ -180,7 +180,8 @@ typedef struct {
   int * NumberNodes;
   ChainPtr * ListNodes;
   /* List of Fields */
-  Fields Phi;
+  Fields Phi; /* Values from the actual step */
+  Fields Phi_n0; /* Values from the previous step */
   /* Constitutive response */
   Matrix D;
   /* External forces */
