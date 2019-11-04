@@ -1,12 +1,12 @@
-BeginZE /home/migmolper2/Documentos/PHD/PROGRAMACION/CODIGOS/GeHoJerez/GeHoJerez_Beta/test/CasoDyka/MallaMPM.gid/MallaMPM.vv
-   x 0.802345871925354004 1.01908493041992188
-   y 0.0543696023523807526 -0.0746699869632720947
-   z -1.45527076721191406 1.45527076721191406
-   e 0.552770793437957764
+BeginZE /home/migmolper2/Documentos/PHD/PROGRAMACION/CODIGOS/GeHoJerez/GeHoJerez_Beta/test/CasoDyka_Pastor_Blanc/MallaMPM.gid/MallaMPM.vv
+   x -0.000930383044760674238 0.00477919448167085648
+   y 0.00160450837574899197 -0.00179479003418236971
+   z -0.138068288564682007 0.138068288564682007
+   e 0.0736843496561050415
    v 0 0 0
    r 1
    m 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1
-   c 0.902499973773956299 -5.53459392746932234e-18 0
+   c 0.00226609990932047367 0 0
    pd 0
    pno 0
    pfo 0
@@ -19,7 +19,7 @@ BeginZE /home/migmolper2/Documentos/PHD/PROGRAMACION/CODIGOS/GeHoJerez/GeHoJerez
    OGLShadow(RenderMode) RenderNice
    OGLShadow(ShadowBias) -0.002
    OGLShadow(AmbientShadows) 1
-   OGLShadow(UseFBO) 1
+   OGLShadow(UseFBO) 0
    OGLShadow(FBOSize) 2048
    OGLShadow(DimmedLightFactor) 0.02
    OGLStereo(UseStereo) 0
@@ -29,5 +29,5 @@ BeginZE /home/migmolper2/Documentos/PHD/PROGRAMACION/CODIGOS/GeHoJerez/GeHoJerez
    OGLStereo(EyeDistance) 0.075
    OGLStereo(LeftEyeDistance) 1 0 0 1
    OGLStereo(RightEyeDistance) 0 1 1 1
-EndZE /home/migmolper2/Documentos/PHD/PROGRAMACION/CODIGOS/GeHoJerez/GeHoJerez_Beta/test/CasoDyka/MallaMPM.gid/MallaMPM.vv
+EndZE /home/migmolper2/Documentos/PHD/PROGRAMACION/CODIGOS/GeHoJerez/GeHoJerez_Beta/test/CasoDyka_Pastor_Blanc/MallaMPM.gid/MallaMPM.vv
 

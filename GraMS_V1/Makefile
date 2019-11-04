@@ -87,10 +87,10 @@ $(EXE): $(OBJS)
 
 #####################################################################
 # Rule for benchmarks
-.PHONY: Benchmarks Disco2D Cuadrado2D Barra1D_caida Barra1D_traccion Dyka1D Dyka1D_Blanc
+.PHONY: Benchmarks Disco2D Cuadrado2D Barra1D_caida Barra1D_traccion Dyka_MPM Dyka_GIMP
 
 # Run al the Benchmarks
-Benchmarks: Disco2D Cuadrado2D Barra1D_caida Barra1D_traccion Dyka1D_Blanc
+Benchmarks: Disco2D Cuadrado2D Barra1D_caida Barra1D_traccion Dyka_MPM Dyka_GIMP
 
 # Caso Disco
 Disco2D:
@@ -123,17 +123,16 @@ Barra1D_traccion:
 	$ ./$(EXE) $(TESTDIR)/BarraTraccion1D/ejemplo.gdf
 	@echo " "
 	@echo "*************** Test case passed ****************"
-# Caso barra Dyka
-Dyka1D:
-	@echo "**************** Run test case ******************"
-	$ ./$(EXE) $(TESTDIR)/CasoDyka/ejemplo.gdf
-	@echo " "
-	@echo "*************** Test case passed ****************"
 
 # Caso barra Dyka Thomas Blanc thesis
-Dyka1D_Blanc:
+Dyka_MPM:
 	@echo "**************** Run test case ******************"
-	$ ./$(EXE) $(TESTDIR)/CasoDyka_Pastor_Blanc/ejemplo.gdf
+	$ ./$(EXE) $(TESTDIR)/Dyka_MPM/ejemplo.gdf
+	@echo " "
+	@echo "*************** Test case passed ****************"
+Dyka_GIMP:
+	@echo "**************** Run test case ******************"
+	$ ./$(EXE) $(TESTDIR)/Dyka_GIMP/ejemplo.gdf
 	@echo " "
 	@echo "*************** Test case passed ****************"
 

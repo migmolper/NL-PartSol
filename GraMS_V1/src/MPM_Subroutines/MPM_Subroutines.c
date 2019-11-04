@@ -76,6 +76,24 @@ Matrix GetNodalMassMomentum(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
       N_GP = GIMP_2D(Delta_Xip,lp,FEM_Mesh.DeltaX);
       FreeMat(Delta_Xip);
     }
+
+    X_GP.nV = MPM_Mesh.Phi.x_EC.nM[i];
+    Matrix aux = Get_X_GC_Q4(X_GP,GP_ElemCoord);
+    printf("%f, %f \n",aux.nV[0],aux.nV[1]);
+    printf("%f, %f \n",MPM_Mesh.Phi.x_GC.nM[i][0],MPM_Mesh.Phi.x_GC.nM[i][1]);
+    puts("CALC A");
+    for(int k = 0 ; k<4 ; k++){
+      printf("%f\n",
+	     (1-fabs((MPM_Mesh.Phi.x_GC.nM[i][0]-GP_ElemCoord.nM[k][0]))/
+	      FEM_Mesh.DeltaX)*
+	     (1-fabs((MPM_Mesh.Phi.x_GC.nM[i][1]-GP_ElemCoord.nM[k][1]))/
+	      FEM_Mesh.DeltaX));
+    }
+    puts("CALC B");
+    for(int k = 0 ; k<4 ; k++){
+      printf("%f \n",N_GP.nV[k]);
+    }
+    exit(0);
     
     /* Free memory */
     FreeMat(GP_ElemCoord);
@@ -192,6 +210,8 @@ void UpdateGaussPointStrain(GaussPoint MPM_Mesh,
     if(strcmp(MPM_Mesh.ShapeFunctionGP,"MPMQ4") == 0){
       X_GP.nV = MPM_Mesh.Phi.x_EC.nM[i];
       dNdx_GP = Get_dNdX_Q4(X_GP,GP_ElemCoord);
+      /* Free memory */
+      FreeMat(GP_ElemCoord);
     }
     else if(strcmp(MPM_Mesh.ShapeFunctionGP,"uGIMP2D") == 0){
       Delta_Xip = MatAlloc(GP_ElemCoord.N_rows,2);
@@ -203,14 +223,13 @@ void UpdateGaussPointStrain(GaussPoint MPM_Mesh,
       }
       lp.nV = MPM_Mesh.Phi.lp.nM[i];
       dNdx_GP = dGIMP_2D(Delta_Xip,lp,FEM_Mesh.DeltaX);
+      /* Free memory */
+      FreeMat(GP_ElemCoord);
       FreeMat(Delta_Xip);
     }
     
-    /* Free memory */
-    FreeMat(GP_ElemCoord);
     /* Calcule the B matrix */
     B = Get_B_GP(dNdx_GP);
-   
     /* Free shape-function derivatives */
     FreeMat(dNdx_GP);
 
@@ -292,7 +311,7 @@ void UpdateGaussPointStress(GaussPoint MPM_Mesh){
   switch(NumberDimensions){
   case 1:
     StrainTensor_GP.N_rows = 1;
-    StrainTensor_GP.N_cols = 1;
+     StrainTensor_GP.N_cols = 1;
     StrainTensor_GP.nM = NULL;
     break;
   case 2:
@@ -459,11 +478,23 @@ Matrix GetNodalForces(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int TimeStep)
       dNdx_GP = dGIMP_2D(Delta_Xip,lp,FEM_Mesh.DeltaX);
       FreeMat(Delta_Xip);      
     }
+
+    /* printf("X_GP : %f %f \n", */
+    /* 	   MPM_Mesh.Phi.x_GC.nM[i][0],MPM_Mesh.Phi.x_GC.nM[i][1]); */
+    /* for(int k = 0 ; k<dNdx_GP.N_cols ; k++){ */
+    /*   printf("X : (%f, %f) ; Sip : %f ; DSip : (%f, %f) \n", */
+    /* 	     GP_ElemCoord.nM[k][0],GP_ElemCoord.nM[k][1], */
+    /* 	     N_GP.nV[k], */
+    /* 	     dNdx_GP.nM[0][k],dNdx_GP.nM[1][k]); */
+    /* } */
+    /* exit(0); */
+
     /* Free memory */
     FreeMat(GP_ElemCoord);
+
        
     /* 6º Get the B_T matrix for the derivates */
-    B = Get_B_GP(dNdx_GP);
+    B = Get_B_GP(dNdx_GP);    
     FreeMat(dNdx_GP);
     B_T = Transpose_Mat(B);
     FreeMat(B);
@@ -500,7 +531,7 @@ Matrix GetNodalForces(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int TimeStep)
 	/* 10cº Add the contact forces */
 	Nodal_TOT_FORCES.nM[l][GP_I] +=
 	  N_GP_I*Contact_Forces_t.nM[l][i]*Vol_GP;	
-      }      
+      }
     }
 	
     /* 10dº Free memory */
