@@ -50,9 +50,9 @@ Matrix GetNodalMassMomentum(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
     /* Initialize chain interator */
     INode = GP_Connect;
     /* Loop in the chain to fill the poligon */
-    for(int k = 0, GP_I = 0;
-	(k<GP_NumNodes) || (INode != NULL);
-	k++, INode = INode->next){
+    for(int k = GP_NumNodes-1, GP_I = 0;
+	(k>-1) || (INode != NULL);
+	k--, INode = INode->next){
       GP_I = INode->I;
       for(int l = 0 ; l<NumberDimensions ; l++){
 	GP_ElemCoord.nM[k][l] = FEM_Mesh.Coordinates.nM[GP_I][l];
@@ -76,24 +76,6 @@ Matrix GetNodalMassMomentum(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
       N_GP = GIMP_2D(Delta_Xip,lp,FEM_Mesh.DeltaX);
       FreeMat(Delta_Xip);
     }
-
-    X_GP.nV = MPM_Mesh.Phi.x_EC.nM[i];
-    Matrix aux = Get_X_GC_Q4(X_GP,GP_ElemCoord);
-    printf("%f, %f \n",aux.nV[0],aux.nV[1]);
-    printf("%f, %f \n",MPM_Mesh.Phi.x_GC.nM[i][0],MPM_Mesh.Phi.x_GC.nM[i][1]);
-    puts("CALC A");
-    for(int k = 0 ; k<4 ; k++){
-      printf("%f\n",
-	     (1-fabs((MPM_Mesh.Phi.x_GC.nM[i][0]-GP_ElemCoord.nM[k][0]))/
-	      FEM_Mesh.DeltaX)*
-	     (1-fabs((MPM_Mesh.Phi.x_GC.nM[i][1]-GP_ElemCoord.nM[k][1]))/
-	      FEM_Mesh.DeltaX));
-    }
-    puts("CALC B");
-    for(int k = 0 ; k<4 ; k++){
-      printf("%f \n",N_GP.nV[k]);
-    }
-    exit(0);
     
     /* Free memory */
     FreeMat(GP_ElemCoord);
@@ -196,9 +178,9 @@ void UpdateGaussPointStrain(GaussPoint MPM_Mesh,
     /* Initialize chain interator */
     INode = GP_Connect;
     /* Loop in the chain to fill the poligon */
-    for(int k = 0, GP_I = 0;
-	(k<GP_NumNodes) || (INode != NULL);
-	k++, INode = INode->next){
+    for(int k = GP_NumNodes-1, GP_I = 0;
+	(k>-1) || (INode != NULL);
+	k--, INode = INode->next){
       GP_I = INode->I;
       for(int l = 0 ; l<NumberDimensions ; l++){
 	GP_ElemCoord.nM[k][l] = FEM_Mesh.Coordinates.nM[GP_I][l];
@@ -450,13 +432,13 @@ Matrix GetNodalForces(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int TimeStep)
     /* Initialize chain interator */
     INode = GP_Connect;
     /* Loop in the chain to fill the poligon */
-    for(int k = 0, GP_I = 0;
-	(k<GP_NumNodes) || (INode != NULL);
-	k++, INode = INode->next){
+    for(int k = GP_NumNodes-1, GP_I = 0;
+	(k>-1) || (INode != NULL);
+	k--, INode = INode->next){
       GP_I = INode->I;
       for(int l = 0 ; l<NumberDimensions ; l++){
 	GP_ElemCoord.nM[k][l] = FEM_Mesh.Coordinates.nM[GP_I][l];
-      }      
+      }
     }
       
     /* 5º Evaluate the shape function in the GP */	
@@ -603,13 +585,13 @@ void UpdateVelocityAndPositionGP(GaussPoint MPM_Mesh,
     /* Initialize chain interator */
     INode = GP_Connect;
     /* Loop in the chain to fill the poligon */
-    for(int j = 0, GP_I = 0;
-	(j<GP_NumNodes) || (INode != NULL);
-	j++, INode = INode->next){
+    for(int k = GP_NumNodes-1, GP_I = 0;
+	(k>-1) || (INode != NULL);
+	k--, INode = INode->next){
       GP_I = INode->I;
-      for(int k = 0 ; k<NumberDimensions ; k++){
-	GP_ElemCoord.nM[j][k] = FEM_Mesh.Coordinates.nM[GP_I][k];
-      }      
+      for(int l = 0 ; l<NumberDimensions ; l++){
+	GP_ElemCoord.nM[k][l] = FEM_Mesh.Coordinates.nM[GP_I][l];
+      }
     }
 
     /* 3º Evaluate the shape function in the coordinates of the GP */

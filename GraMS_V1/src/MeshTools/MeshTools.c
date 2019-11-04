@@ -100,14 +100,6 @@ void GlobalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh){
 	X_EC_GP.nV = MPM_Mesh.Phi.x_EC.nM[i];
 	Get_X_EC_Q4(X_EC_GP,X_GC_GP,Poligon_Coordinates);
 
-	
-	X_GP.nV = MPM_Mesh.Phi.x_EC.nM[i];
-	Matrix aux = Get_X_GC_Q4(X_GP,GP_ElemCoord);
-	printf("%f, %f \n",aux.nV[0],aux.nV[1]);
-	printf("%f, %f \n",MPM_Mesh.Phi.x_GC.nM[i][0],MPM_Mesh.Phi.x_GC.nM[i][1]);
-	exit(0);
-	
-
 	/* 9º Assign the new connectivity of the GP */
 	if(strcmp(FEM_Mesh.TypeElem,"Quadrilateral") == 0){
 	  MPM_Mesh.ListNodes[i] = CopyChain(FEM_Mesh.Connectivity[j]);
