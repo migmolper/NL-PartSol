@@ -37,7 +37,9 @@ void BCC_Nod_VALUE(Mesh FEM_Mesh, Matrix Nodal_VALUE, int TimeStep)
 	  /* 8º Check if the curve it is on time */
 	  if( (TimeStep < 0) ||
 	      (TimeStep > FEM_Mesh.Bounds.BCC_i[i].Value[k].Num)){
-	    puts("Error in BCC_Nodal_VALUE() : The time step is out of the curve !!");
+	    printf("%s : %s \n",
+		   "Error in BCC_Nodal_VALUE()",
+		   "The time step is out of the curve !!");
 	    exit(0);
 	  }
 	  /* 9º Assign the boundary condition */
