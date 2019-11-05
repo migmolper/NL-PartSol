@@ -79,9 +79,7 @@ void u_ForwardEuler(Mesh FEM_Mesh, GaussPoint GP_Mesh){
     puts("*************************************************");
     puts(" Third step : Set the essential BCC (over P)");
     puts(" \t WORKING ...");
-    BCC_Nod_VALUE(FEM_Mesh,
-		  Nodal_MOMENTUM,
-		  TimeStep);
+    BCC_Nod_VALUE(FEM_Mesh,Nodal_MOMENTUM,TimeStep);
     puts(" DONE !!!");
 
     /* Four step : Update the particle stress state */

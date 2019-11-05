@@ -28,7 +28,7 @@ void GetNodalConnectivity(Mesh FEM_Mesh){
 	/* 4º If my node belong to the element */
 	if(Element_Connectivity[k] == i){
 	  /* 5º Introduce the element in the chain */
-	  PushNode(&FEM_Mesh.NodeNeighbour[i], j);
+	  PushNodeTop(&FEM_Mesh.NodeNeighbour[i], j);
 	  /* 6º Update the counter */
 	  FEM_Mesh.NumNeighbour[i] += 1;	  
 	}
@@ -101,13 +101,14 @@ void GlobalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh){
 	Get_X_EC_Q4(X_EC_GP,X_GC_GP,Poligon_Coordinates);
 
 	/* 9º Assign the new connectivity of the GP */
-	if(strcmp(FEM_Mesh.TypeElem,"Quadrilateral") == 0){
+	if(strcmp(MPM_Mesh.ShapeFunctionGP,"MPMQ4") == 0){
 	  MPM_Mesh.ListNodes[i] = CopyChain(FEM_Mesh.Connectivity[j]);
 	}
-	else if(strcmp(FEM_Mesh.TypeElem,"GIMP2D") == 0){
-	  MPM_Mesh.ListNodes[i] =
-	    Tributary_Nodes_GIMP(X_EC_GP,MPM_Mesh.Element_id[i],
-				 MPM_Mesh.Phi.lp,FEM_Mesh);
+	else if(strcmp(MPM_Mesh.ShapeFunctionGP,"uGIMP2D") == 0){
+	  /* MPM_Mesh.ListNodes[i] = */
+	  /*   Tributary_Nodes_GIMP(X_EC_GP,MPM_Mesh.Element_id[i], */
+	  /* 			 MPM_Mesh.Phi.lp,FEM_Mesh); */
+	  MPM_Mesh.ListNodes[i] = CopyChain(FEM_Mesh.Connectivity[j]);
 	}
 	  
 	/* 10º Active those nodes that interact with the GP */
@@ -329,14 +330,15 @@ void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 	  FreeMat(Poligon_Coordinates);
 
 	  /* Assign the new connectivity of the GP */
-	  if(strcmp(FEM_Mesh.TypeElem,"Quadrilateral") == 0){
+	  if(strcmp(MPM_Mesh.ShapeFunctionGP,"MPMQ4") == 0){
 	    MPM_Mesh.ListNodes[i] =
 	      CopyChain(FEM_Mesh.Connectivity[SearchList[j]]);
 	  }
-	  else if(strcmp(FEM_Mesh.TypeElem,"GIMP2D") == 0){
-	    MPM_Mesh.ListNodes[i] =
-	      Tributary_Nodes_GIMP(X_EC_GP,MPM_Mesh.Element_id[i],
-				   MPM_Mesh.Phi.lp,FEM_Mesh);
+	  else if(strcmp(MPM_Mesh.ShapeFunctionGP,"uGIMP2D") == 0){
+	    /* MPM_Mesh.ListNodes[i] = */
+	    /*   Tributary_Nodes_GIMP(X_EC_GP,MPM_Mesh.Element_id[i], */
+	    /* 			   MPM_Mesh.Phi.lp,FEM_Mesh); */
+	    MPM_Mesh.ListNodes[i] = CopyChain(FEM_Mesh.Connectivity[j]);
 	  }
 	  
 	  /* Active those nodes that interact with the GP */
@@ -441,7 +443,7 @@ ChainPtr ArrayToChain(int * A_array, int NumNodes){
 
   /* Loop over the array to generate a chain */
   for(int i = NumNodes-1; i > -1 ; i--){
-    PushNode(&A_chain, A_array[i]);    
+    PushNodeTop(&A_chain, A_array[i]);    
   }
 
   /* Return the chain */
@@ -521,7 +523,7 @@ bool IsPresentNode (ChainPtr Node, int I)
 /*********************************************************************/
 
 /* A utility function to insert a node at the top of a linked list */
-void PushNode (ChainPtr * TopNodePtr, int I_new) 
+void PushNodeTop (ChainPtr * TopNodePtr, int I_new) 
 {
   /* Pointer to the new node of the chain */
   ChainPtr NewNodePtr;
@@ -539,8 +541,10 @@ void PushNode (ChainPtr * TopNodePtr, int I_new)
     (*TopNodePtr) = NewNodePtr; 
   }
   else{
-    printf("Unable to insert node %i. No memory available.\n",
-	   I_new);
+    printf("%s %i : %s \n",
+	   "Unable to insert node",
+	   I_new,
+	   "No memory available.");
   }
     
 }
@@ -583,22 +587,48 @@ void PopNode (ChainPtr * TopNodePtr, int I_trash)
 
 /*********************************************************************/
 
-/* Function to copy the chain A in to the chain B */
-ChainPtr CopyChain(ChainPtr A)
-{
+/* /\* Function to copy the chain A in to the chain B *\/ */
+/* ChainPtr CopyChain(ChainPtr A) */
+/* { */
 
-  ChainPtr B = NULL;
-  ChainPtr iPtrA = A;
+/*   ChainPtr B = NULL; */
+/*   ChainPtr iPtrA = A; */
 
-  /* Insert all elements of A to the result list */
-  while (iPtrA != NULL){
-    /* Introduce a new element in the new chain */
-    PushNode(&B, iPtrA->I);
-    /* Updtate the interator index */
-      iPtrA = iPtrA->next; 
-  }
+/*   /\* Insert all elements of A to the result list *\/ */
+/*   while (iPtrA != NULL){ */
+/*     /\* Introduce a new element in the new chain *\/ */
+/*     PushNodeTop(&B, iPtrA->I); */
+/*     /\* Updtate the interator index *\/ */
+/*       iPtrA = iPtrA->next;  */
+/*   } */
   
-  return B;
+/*   return B; */
+/* } */
+
+ChainPtr CopyChain(ChainPtr start1){
+  
+  ChainPtr start2=NULL;
+  ChainPtr previous=NULL;
+
+  while(start1!=NULL){
+  
+    ChainPtr temp = (ChainPtr) malloc (sizeof(Chain));
+    temp->I=start1->I;
+    temp->next=NULL;
+
+    if(start2==NULL)
+      {
+        start2=temp;
+        previous=temp;
+      }
+    else
+      {
+        previous->next=temp;
+        previous=temp;          
+      }
+    start1=start1->next;
+  }
+  return start2;
 }
 
 /*********************************************************************/
@@ -613,7 +643,7 @@ ChainPtr ChainUnion(ChainPtr A, ChainPtr B)
     /* Insert all elements of A to the result list */
     while (iPtrA != NULL){
       /* Introduce a new element in the new chain */
-      PushNode(&C, iPtrA->I);
+      PushNodeTop(&C, iPtrA->I);
       /* Updtate the interator index */
       iPtrA = iPtrA->next; 
     }
@@ -623,7 +653,7 @@ ChainPtr ChainUnion(ChainPtr A, ChainPtr B)
     while (iPtrB != NULL){
       /* Introduce a new element in the new chain */      
       if (!IsPresentNode(C, iPtrB->I)){
-	PushNode(&C, iPtrB->I);
+	PushNodeTop(&C, iPtrB->I);
       }
       /* Updtate the interator index */
       iPtrB = iPtrB->next; 
@@ -646,7 +676,7 @@ ChainPtr ChainIntersection(ChainPtr A,ChainPtr B)
     /* insert the element to result  */
     while (iPtrA != NULL){ 
       if (IsPresentNode(B, iPtrA->I)) 
-	PushNode(&C, iPtrA->I); 
+	PushNodeTop(&C, iPtrA->I); 
       iPtrA = iPtrA->next; 
     }
     

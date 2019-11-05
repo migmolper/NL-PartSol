@@ -23,7 +23,7 @@ int * ChainToArray(ChainPtr, int);
 void FreeChain(ChainPtr);
 int LenghtChain(ChainPtr);
 bool IsPresentNode (ChainPtr, int);
-void PushNode (ChainPtr *, int);
+void PushNodeTop (ChainPtr *, int);
 void PopNode (ChainPtr *, int);
 ChainPtr CopyChain(ChainPtr);
 ChainPtr ChainUnion(ChainPtr, ChainPtr);

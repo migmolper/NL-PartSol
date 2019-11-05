@@ -35,22 +35,22 @@ double uGIMP(double L, double lp, double Delta_xp){
   /* }   */
 
   if ((-lp < Delta_xp) && (Delta_xp <= lp)){
-    return 1 - (Delta_xp*Delta_xp + lp*lp)/(2*L*lp);
+    return 1 - 0.5*(Delta_xp*Delta_xp + lp*lp)*(double)1/(L*lp);
   }
   else if (((-L-lp) < Delta_xp) && (Delta_xp <= (-L+lp))){
-    return (1/(4*L*lp))*(L+lp+Delta_xp)*(L+lp+Delta_xp);
+    return (double)(0.25/(L*lp))*(L+lp+Delta_xp)*(L+lp+Delta_xp);
   }
   else if (((L-lp) < Delta_xp) && (Delta_xp <= (L+lp))){
-    return (1/(4*L*lp))*(L+lp-Delta_xp)*(L+lp-Delta_xp);
+    return (double)(0.25/(L*lp))*(L+lp-Delta_xp)*(L+lp-Delta_xp);
   }
   else if (((-L+lp) < Delta_xp) && (Delta_xp <= -lp)){
-    return 1 + Delta_xp/L;
+    return 1 + (double)Delta_xp/L;
   }
   else if ((lp < Delta_xp) && (Delta_xp <= (L-lp))){
-    return 1 - Delta_xp/L;
+    return 1 - (double)Delta_xp/L;
   }
   else {
-    return 0;
+    return (double)0.0;
   }  
 }
 
@@ -74,22 +74,22 @@ double d_uGIMP(double L, double lp, double Delta_xp){
   /* } */
 
   if (((-L-lp) < Delta_xp) && (Delta_xp <= (-L+lp))){
-    return (1/(2*L*lp))*(L+lp+Delta_xp);
+    return (double)(0.5/(L*lp))*(L+lp+Delta_xp);
   }
   else if (((-L+lp) < Delta_xp) && (Delta_xp <= -lp)){
-    return 1/L;
+    return (double)1/L;
   }
   else if ((-lp < Delta_xp) && (Delta_xp <= lp)){
-    return -Delta_xp/(L*lp);
+    return -(double)Delta_xp/(L*lp);
   }
   else if ((lp < Delta_xp) && (Delta_xp <= (L-lp))){
-    return -1/L;
+    return -(double)1/L;
   }
   else if (((L-lp) < Delta_xp) && (Delta_xp <= (L+lp))){
-    return -(1/(2*L*lp))*(L+lp-Delta_xp);
+    return -(double)(0.5/(L*lp))*(L+lp-Delta_xp);
   }
   else {
-    return 0;
+    return (double)0.0;
   }
 }
 
