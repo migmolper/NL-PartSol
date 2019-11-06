@@ -42,23 +42,23 @@ Matrix GetNodalMassMomentum(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
     /* 3º Define element of the GP */
     GP_NumNodes = MPM_Mesh.NumberNodes[i];
     GP_Connect = ChainToArray(MPM_Mesh.ListNodes[i],GP_NumNodes);
-    
+
     /* 4º Evaluate the shape function in the coordinates of the GP */
     if(strcmp(MPM_Mesh.ShapeFunctionGP,"MPMQ4") == 0){
       X_GP.nV = MPM_Mesh.Phi.x_EC.nM[i];
       N_GP = Q4(X_GP);
     }
-    else if(strcmp(MPM_Mesh.ShapeFunctionGP,"uGIMP2D") == 0){   
+    else if(strcmp(MPM_Mesh.ShapeFunctionGP,"uGIMP2D") == 0){
       /* Fill the poligon */
       Delta_Xip = MatAlloc(GP_NumNodes,2);
       for(int k = 0 ; k<GP_NumNodes ; k++){
-	/* Get the node for the GP */
-	GP_I = GP_Connect[k];
-	for(int l = 0 ; l<NumberDimensions ; l++){
-	  Delta_Xip.nM[k][l] =
-	    MPM_Mesh.Phi.x_GC.nM[i][l]-
-	    FEM_Mesh.Coordinates.nM[GP_I][l];
-	}
+    	/* Get the node for the GP */
+    	GP_I = GP_Connect[k];
+    	for(int l = 0 ; l<NumberDimensions ; l++){
+    	  Delta_Xip.nM[k][l] =
+    	    MPM_Mesh.Phi.x_GC.nM[i][l]-
+    	    FEM_Mesh.Coordinates.nM[GP_I][l];
+    	}
       }
       /* Get the lenght voxel */
       lp.nV = MPM_Mesh.Phi.lp.nM[i];
@@ -67,14 +67,7 @@ Matrix GetNodalMassMomentum(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
       /* Free memory */
       FreeMat(Delta_Xip);
     }
-
-    
-    if(i==1811){
-      for(int k = 0 ; k<GP_NumNodes;k++){
-	printf("%i \n",GP_Connect[k]);
-      }
-    }
-    
+   
     /* 5º Get the mass of the GP */
     GP_mass = MPM_Mesh.Phi.mass.nV[i];
 
@@ -156,7 +149,6 @@ void UpdateGaussPointStrain(GaussPoint MPM_Mesh,
   Matrix GP_ElemCoord; /* Coordinates of the nodes */
   int GP_I; /* Get the node for the GP */
   
-
   /* Mesh variables */
   Matrix Elem_Vel; /* Array with the nodal velocities */
   Matrix dNdx_GP; /* Matrix with the nodal derivatives */
@@ -169,18 +161,18 @@ void UpdateGaussPointStrain(GaussPoint MPM_Mesh,
     /* 1º Define element of the GP */
     GP_NumNodes = MPM_Mesh.NumberNodes[i];
     GP_Connect = ChainToArray(MPM_Mesh.ListNodes[i],GP_NumNodes);
-           
+    
     /* 2º Get the element gradient */
     if(strcmp(MPM_Mesh.ShapeFunctionGP,"MPMQ4") == 0){
       /* Fill the poligon */
-      GP_ElemCoord = MatAllocZ(GP_NumNodes,NumberDimensions); 
+      GP_ElemCoord = MatAllocZ(GP_NumNodes,NumberDimensions);
       for(int k = 0; k<GP_NumNodes ; k++){
-	/* Get the node for the GP */
-	GP_I = GP_Connect[k];
-	for(int l = 0 ; l<NumberDimensions ; l++){
-	  GP_ElemCoord.nM[k][l] =
-	    FEM_Mesh.Coordinates.nM[GP_I][l];
-	}
+    	/* Get the node for the GP */
+    	GP_I = GP_Connect[k];
+    	for(int l = 0 ; l<NumberDimensions ; l++){
+    	  GP_ElemCoord.nM[k][l] =
+    	    FEM_Mesh.Coordinates.nM[GP_I][l];
+    	}
       }
       /* Get the element coordinates of the GP */
       X_GP.nV = MPM_Mesh.Phi.x_EC.nM[i];
@@ -193,13 +185,13 @@ void UpdateGaussPointStrain(GaussPoint MPM_Mesh,
       /* Generate a matrix with the distances to the nodes */
       Delta_Xip = MatAlloc(GP_NumNodes,2);
       for(int k = 0 ; k<GP_NumNodes ; k++){
-	/* Get the node for the GP */
-	GP_I = GP_Connect[k];
-	for(int l = 0 ; l<NumberDimensions ; l++){
-	  Delta_Xip.nM[k][l] =
-	    MPM_Mesh.Phi.x_GC.nM[i][l]-
-	    FEM_Mesh.Coordinates.nM[GP_I][l];
-	}
+    	/* Get the node for the GP */
+    	GP_I = GP_Connect[k];
+    	for(int l = 0 ; l<NumberDimensions ; l++){
+    	  Delta_Xip.nM[k][l] =
+    	    MPM_Mesh.Phi.x_GC.nM[i][l]-
+    	    FEM_Mesh.Coordinates.nM[GP_I][l];
+    	}
       }
       /* Get the GP voxel */
       lp.nV = MPM_Mesh.Phi.lp.nM[i];
@@ -430,17 +422,17 @@ Matrix GetNodalForces(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int TimeStep)
     /* 4º Define element of the GP */
     GP_NumNodes = MPM_Mesh.NumberNodes[i];
     GP_Connect = ChainToArray(MPM_Mesh.ListNodes[i],GP_NumNodes);
-      
-    /* 5º Evaluate the shape function in the GP */	
+
+    /* 5º Evaluate the shape function in the GP */
     if(strcmp(MPM_Mesh.ShapeFunctionGP,"MPMQ4") == 0){
       /* Get the coordinates of the element */
-      GP_ElemCoord = MatAllocZ(GP_NumNodes,NumberDimensions); 
+      GP_ElemCoord = MatAllocZ(GP_NumNodes,NumberDimensions);
       for(int k = 0; k<GP_NumNodes; k++){
-	GP_I = GP_Connect[k];
-	for(int l = 0 ; l<NumberDimensions ; l++){
-	  GP_ElemCoord.nM[k][l] =
-	    FEM_Mesh.Coordinates.nM[GP_I][l];
-	}
+    	GP_I = GP_Connect[k];
+    	for(int l = 0 ; l<NumberDimensions ; l++){
+    	  GP_ElemCoord.nM[k][l] =
+    	    FEM_Mesh.Coordinates.nM[GP_I][l];
+    	}
       }
       /* Get the natural coordinates of the GP */
       X_GP.nV = MPM_Mesh.Phi.x_EC.nM[i];
@@ -454,20 +446,20 @@ Matrix GetNodalForces(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int TimeStep)
       /* Get the distance of the GP to the nodes */
       Delta_Xip = MatAlloc(GP_NumNodes,2);
       for(int k = 0 ; k<GP_NumNodes ; k++){
-	GP_I = GP_Connect[k];
-	for(int l = 0 ; l<NumberDimensions ; l++){
-	  Delta_Xip.nM[k][l] =
-	    MPM_Mesh.Phi.x_GC.nM[i][l]-
-	    FEM_Mesh.Coordinates.nM[GP_I][l];
-	}
+    	GP_I = GP_Connect[k];
+    	for(int l = 0 ; l<NumberDimensions ; l++){
+    	  Delta_Xip.nM[k][l] =
+    	    MPM_Mesh.Phi.x_GC.nM[i][l]-
+    	    FEM_Mesh.Coordinates.nM[GP_I][l];
+    	}
       }
       /* Get the voxel of the GP */
       lp.nV = MPM_Mesh.Phi.lp.nM[i];
-      /* Evaluate the shape function and it gradient */      
+      /* Evaluate the shape function and it gradient */
       N_GP = GIMP_2D(Delta_Xip,lp,FEM_Mesh.DeltaX);
       dNdx_GP = dGIMP_2D(Delta_Xip,lp,FEM_Mesh.DeltaX);
       /* Free memory */
-      FreeMat(Delta_Xip);      
+      FreeMat(Delta_Xip);
     }
        
     /* 6º Get the B_T matrix for the derivates */
@@ -572,29 +564,29 @@ void UpdateVelocityAndPositionGP(GaussPoint MPM_Mesh,
     /* 2º Define element of the GP */
     GP_NumNodes = MPM_Mesh.NumberNodes[i];
     GP_Connect = ChainToArray(MPM_Mesh.ListNodes[i],GP_NumNodes);
-    
+
     /* 3º Evaluate MPM-Q4 shape function  */
     if(strcmp(MPM_Mesh.ShapeFunctionGP,"MPMQ4") == 0){
       X_GP.nV = MPM_Mesh.Phi.x_EC.nM[i];
       N_GP = Q4(X_GP);
     }
     /* 4º Evaluate GIMP shape function */
-    else if(strcmp(MPM_Mesh.ShapeFunctionGP,"uGIMP2D") == 0){    
+    else if(strcmp(MPM_Mesh.ShapeFunctionGP,"uGIMP2D") == 0){
       /* Get the distance of the GP to the nodes */
       Delta_Xip = MatAlloc(GP_NumNodes,2);
       for(int k = 0 ; k<GP_NumNodes ; k++){
-	for(int l = 0 ; l<NumberDimensions ; l++){
-	  Delta_Xip.nM[k][l] =
-	    MPM_Mesh.Phi.x_GC.nM[i][l]-
-	    FEM_Mesh.Coordinates.nM[GP_Connect[k]][l];
-	}
+    	for(int l = 0 ; l<NumberDimensions ; l++){
+    	  Delta_Xip.nM[k][l] =
+    	    MPM_Mesh.Phi.x_GC.nM[i][l]-
+    	    FEM_Mesh.Coordinates.nM[GP_Connect[k]][l];
+    	}
       }
       /* Get the GP voxel */
       lp.nV = MPM_Mesh.Phi.lp.nM[i];
       /* Evaluate shape function */
       N_GP = GIMP_2D(Delta_Xip,lp,FEM_Mesh.DeltaX);
       /* Free memory */
-      FreeMat(Delta_Xip);      
+      FreeMat(Delta_Xip);
     }
     /* 5º Iterate over the nodes of the element */
     for(int j = 0; j<GP_NumNodes; j++){

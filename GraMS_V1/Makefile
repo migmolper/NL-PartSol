@@ -87,10 +87,10 @@ $(EXE): $(OBJS)
 
 #####################################################################
 # Rule for benchmarks
-.PHONY: Benchmarks Disco2D Cuadrado2D Barra1D_caida Barra1D_traccion Dyka_MPM Dyka_GIMP
+.PHONY: Benchmarks Disco2D Cuadrado2D Barra1D_caida Traccion_MPM Traccion_GIMP Dyka_MPM Dyka_GIMP
 
 # Run al the Benchmarks
-Benchmarks: Disco2D Cuadrado2D Barra1D_caida Barra1D_traccion Dyka_MPM Dyka_GIMP
+Benchmarks: Disco2D Cuadrado2D Barra1D_caida Traccion_MPM Traccion_GIMP Dyka_MPM Dyka_GIMP
 
 # Caso Disco
 Disco2D:
@@ -117,10 +117,14 @@ Barra1D_caida:
 	@echo "*************** Test case passed ****************"
 
 # Caso barra traccion 1D
-Barra1D_traccion:
+Traccion_MPM:
 	@echo "**************** Run test case ******************"
-	# $(DEBDIR)/./$(EXE) $(TESTDIR)/CasoBarraVertical/ejemplo.gdf
-	$ ./$(EXE) $(TESTDIR)/BarraTraccion1D/ejemplo.gdf
+	$ ./$(EXE) $(TESTDIR)/Traccion_MPM/ejemplo.gdf
+	@echo " "
+	@echo "*************** Test case passed ****************"
+Traccion_GIMP:
+	@echo "**************** Run test case ******************"
+	$ ./$(EXE) $(TESTDIR)/Traccion_GIMP/ejemplo.gdf
 	@echo " "
 	@echo "*************** Test case passed ****************"
 

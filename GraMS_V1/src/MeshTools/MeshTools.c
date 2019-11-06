@@ -59,6 +59,7 @@ void GlobalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh){
   int * Poligon_Connectivity;
   Matrix Poligon_Coordinates;
   ChainPtr ListNodes_I;
+  Matrix lp; /* Just for GIMP -> Particle voxel */
 
   /* 1º Set to zero the active/non-active elements */
   for(int i = 0 ; i<FEM_Mesh.NumNodesMesh ; i++){
@@ -105,10 +106,10 @@ void GlobalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh){
 	  MPM_Mesh.ListNodes[i] = CopyChain(FEM_Mesh.Connectivity[j]);
 	}
 	else if(strcmp(MPM_Mesh.ShapeFunctionGP,"uGIMP2D") == 0){
-	  /* MPM_Mesh.ListNodes[i] = */
-	  /*   Tributary_Nodes_GIMP(X_EC_GP,MPM_Mesh.Element_id[i], */
-	  /* 			 MPM_Mesh.Phi.lp,FEM_Mesh); */
-	  MPM_Mesh.ListNodes[i] = CopyChain(FEM_Mesh.Connectivity[j]);
+	  lp.nV = MPM_Mesh.Phi.lp.nM[i];
+	  MPM_Mesh.ListNodes[i] =
+	    Tributary_Nodes_GIMP(X_EC_GP,MPM_Mesh.Element_id[i],
+	  			 lp,FEM_Mesh);
 	}
 	  
 	/* 10º Active those nodes that interact with the GP */
@@ -165,6 +166,7 @@ void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
   int SearchVertex; /* Index to start the search */
   int * SearchList; /* Pointer to store the search list */
   ChainPtr ListNodes_I;
+  Matrix lp;
   
   /* 1º Set to zero the active/non-active elements */
   for(int i = 0 ; i<FEM_Mesh.NumNodesMesh ; i++){
@@ -188,10 +190,10 @@ void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
     Elem_i = MPM_Mesh.Element_id[i];
 
     /* 5º Connectivity of the Poligon */
-    NumVertex = MPM_Mesh.NumberNodes[i];
+    NumVertex = FEM_Mesh.NumNodesElem[Elem_i];
     
-    Poligon_Connectivity = ChainToArray(MPM_Mesh.ListNodes[i],
-					NumVertex);
+    Poligon_Connectivity =
+      ChainToArray(FEM_Mesh.Connectivity[Elem_i],NumVertex);
       
     /* 6º Allocate the poligon Matrix and fill it */
     Poligon_Coordinates = MatAllocZ(NumVertex,NumberDimensions);
@@ -201,7 +203,6 @@ void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 	  FEM_Mesh.Coordinates.nM[Poligon_Connectivity[k]][l];
       }
     }
-
 
     /* 7º Check if the GP is in the same element */
     if(InOut_Poligon(X_GC_GP,Poligon_Coordinates) == 1){
@@ -291,7 +292,6 @@ void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
       SearchList = ChainToArray(FEM_Mesh.NodeNeighbour[SearchVertex],
 				FEM_Mesh.NumNeighbour[SearchVertex]);
 
-     
       /* 7gº Search in the search list */
       for(int j = 0 ; j<FEM_Mesh.NumNeighbour[SearchVertex] ; j++){
 	
@@ -335,10 +335,10 @@ void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 	      CopyChain(FEM_Mesh.Connectivity[SearchList[j]]);
 	  }
 	  else if(strcmp(MPM_Mesh.ShapeFunctionGP,"uGIMP2D") == 0){
-	    /* MPM_Mesh.ListNodes[i] = */
-	    /*   Tributary_Nodes_GIMP(X_EC_GP,MPM_Mesh.Element_id[i], */
-	    /* 			   MPM_Mesh.Phi.lp,FEM_Mesh); */
-	    MPM_Mesh.ListNodes[i] = CopyChain(FEM_Mesh.Connectivity[j]);
+	    lp.nV = MPM_Mesh.Phi.lp.nM[i];
+	    MPM_Mesh.ListNodes[i] =
+	      Tributary_Nodes_GIMP(X_EC_GP,MPM_Mesh.Element_id[i],
+	    			   lp,FEM_Mesh);
 	  }
 	  
 	  /* Active those nodes that interact with the GP */
@@ -364,7 +364,7 @@ void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
       if(MPM_Mesh.Element_id[i] == Elem_i){
 	printf(" %s %i %s %i !!! \n",
 	       "Error in LocalSearchGaussPoints() : GP",i,
-	       "is not in the neighbours of",SearchVertex);
+	       "is not in the neighbours of",Elem_i);
 	exit(0);
       }
       
@@ -457,6 +457,13 @@ int * ChainToArray(ChainPtr A_chain, int NumNodes){
   /* Variable declaration */
   ChainPtr iChain;
   int * A_Array = Allocate_Array(NumNodes, sizeof(int));
+
+  if(A_chain == NULL){
+    printf(" %s : %s \n",
+	   "Error in ChainToArray",
+	   "The chain is empty");
+    exit(0);
+  }
 
   /* Loop over the chain to generate an array */
   iChain = A_chain;
@@ -690,7 +697,7 @@ void printList (ChainPtr A)
 { 
     while (A != NULL) 
     { 
-        printf ("%d ", A->I); 
+        printf ("%d \n", A->I); 
         A = A->next; 
     } 
 } 
