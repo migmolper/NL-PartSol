@@ -210,7 +210,6 @@ ChainPtr Tributary_Nodes_GIMP(Matrix X_EC_GP,
       ChainElements = FEM_Mesh.NodeNeighbour[NodesElem[2]];
       Num_Elem = LenghtChain(ChainElements);
       Tributary_Elements = ChainToArray(ChainElements,Num_Elem);
-      FreeChain(ChainElements);
 
       /* Iterate in the list and select the union of the sets of nodes */
       for(int i = 0 ; i<Num_Elem ; i++){
@@ -275,7 +274,6 @@ ChainPtr Tributary_Nodes_GIMP(Matrix X_EC_GP,
       ChainElements = FEM_Mesh.NodeNeighbour[NodesElem[3]];
       Num_Elem = LenghtChain(ChainElements);
       Tributary_Elements =  ChainToArray(ChainElements,Num_Elem);
-      FreeChain(ChainElements);
 
       /* Iterate in the list and select the union of the sets of nodes */
       for(int i = 0 ; i<Num_Elem ; i++){
@@ -317,6 +315,7 @@ ChainPtr Tributary_Nodes_GIMP(Matrix X_EC_GP,
     }
     else if((fabs(X_EC_GP.nV[0]) < Dist[0]) &&
 	    (fabs(X_EC_GP.nV[1]) > Dist[1])){
+      puts("paso 2");
       /* Generate the list of Elements whose nodes contributes to the GP */
       ChainElements = ChainIntersection(FEM_Mesh.NodeNeighbour[NodesElem[0]],
 					FEM_Mesh.NodeNeighbour[NodesElem[1]]);
@@ -333,12 +332,12 @@ ChainPtr Tributary_Nodes_GIMP(Matrix X_EC_GP,
       free(Tributary_Elements);
     }
     else if((fabs(X_EC_GP.nV[1]) > Dist[1]) &&
-	    (fabs(X_EC_GP.nV[0]) > Dist[0])){ 
+	    (fabs(X_EC_GP.nV[0]) > Dist[0])){
+      puts("paso 3");
       /* Generate the list of Elements whose nodes contributes to the GP */ 
       ChainElements = FEM_Mesh.NodeNeighbour[NodesElem[0]];
       Num_Elem = LenghtChain(ChainElements);
       Tributary_Elements = ChainToArray(ChainElements,Num_Elem);
-      FreeChain(ChainElements);
 
       /* Iterate in the list and select the union of the sets of nodes */
       for(int i = 0 ; i<Num_Elem ; i++){
@@ -404,7 +403,6 @@ ChainPtr Tributary_Nodes_GIMP(Matrix X_EC_GP,
       ChainElements = FEM_Mesh.NodeNeighbour[NodesElem[1]];
       Num_Elem = LenghtChain(ChainElements);
       Tributary_Elements = ChainToArray(ChainElements,Num_Elem);
-      FreeChain(ChainElements);
 
       /* Iterate in the list and select the union of the sets of nodes */
       for(int i = 0 ; i<Num_Elem ; i++){

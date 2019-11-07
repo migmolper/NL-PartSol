@@ -37,7 +37,6 @@ void GetNodalConnectivity(Mesh FEM_Mesh){
       free(Element_Connectivity);
     }      
   }
-  
 }
 
 /*********************************************************************/

@@ -87,7 +87,7 @@ $(EXE): $(OBJS)
 
 #####################################################################
 # Rule for benchmarks
-.PHONY: Disco_MPM Disco_GIMP Traccion_MPM Traccion_GIMP Dyka_MPM Dyka_GIMP
+.PHONY: Cuadrado_MPM Disco_MPM Disco_GIMP Traccion_MPM Traccion_GIMP Dyka_MPM Dyka_GIMP
 
 # Caso Disco
 Disco_MPM:

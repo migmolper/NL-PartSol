@@ -1,0 +1,40 @@
+/***************************************/
+/********** GENERAL PARAMETERS *********/
+/***************************************/
+KIND_ANALYSIS=MPMQ4%U%2D%VerletLF
+DENSITY=20
+POISSON_MODULUS=0.3
+ELASTIC_MODULUS=1.e5
+TIME_STEP=0.00008
+RESULT_STEP=100
+NUM_STEP=10000
+
+
+/***************************************/
+/******* SIMULATION FILES AND DIR ******/
+/***************************************/
+FEM_FILE_NAME=test/CasoCuadrado/FEM_Mesh.msh
+MPM_FILE_NAME=test/CasoCuadrado/MPM_Mesh.msh
+OUTPUT_DIR=test/CasoCuadrado
+
+/***************************************/
+/********* BOUNDARY CONDITIONS *********/
+/***************************************/
+BCC_NUM 4
+BCC LABEL=TOP FIELD=V DIR={0,1} CURVE={NULL,test/CasoCuadrado/CurveConstat.txt}
+BCC LABEL=BOTTOM FIELD=V DIR={0,1} CURVE={NULL,test/CasoCuadrado/CurveConstat.txt}
+BCC LABEL=RIGHT FIELD=V DIR={0,0} CURVE={NULL,NULL}
+BCC LABEL=LEFT FIELD=V DIR={0,0} CURVE={NULL,NULL}
+
+/***************************************/
+/**** INITIAL CONDITIONS FOR THE GPs ***/
+/***************************************/
+INIT_NUM 1
+INIT_GP FIELD=V VALUE={0,-0.5} NUM_NODES=ALL_NODES
+
+/***************************************/
+/********** LOADS OVER THE GPs *********/
+/***************************************/
+F_LOAD_NUM 0
+B_LOAD_NUM 1
+B_LOAD_GP DIR={0,1} CURVE={NULL,test/CasoCuadrado/gravity.txt} NUM_NODES=ALL_NODES
