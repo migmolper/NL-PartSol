@@ -116,6 +116,7 @@ void u_ForwardEuler(Mesh FEM_Mesh, GaussPoint GP_Mesh){
     puts(" Six step : Integrate the grid nodal momentum equation");
     puts(" \t WORKING ...");
     UpdateGridNodalMomentum(FEM_Mesh,Nodal_MOMENTUM,Nodal_TOT_FORCES);
+    BCC_Nod_VALUE(FEM_Mesh,Nodal_TOT_FORCES,TimeStep);
     puts(" DONE !!!");
 
     /* Seven step : Update the particle velocity and position */

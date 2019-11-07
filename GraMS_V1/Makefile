@@ -87,32 +87,17 @@ $(EXE): $(OBJS)
 
 #####################################################################
 # Rule for benchmarks
-.PHONY: Benchmarks Disco2D Cuadrado2D Barra1D_caida Traccion_MPM Traccion_GIMP Dyka_MPM Dyka_GIMP
-
-# Run al the Benchmarks
-Benchmarks: Disco2D Cuadrado2D Barra1D_caida Traccion_MPM Traccion_GIMP Dyka_MPM Dyka_GIMP
+.PHONY: Disco_MPM Disco_GIMP Traccion_MPM Traccion_GIMP Dyka_MPM Dyka_GIMP
 
 # Caso Disco
-Disco2D:
+Disco_MPM:
 	@echo "**************** Run test case ******************"
-	$ ./$(EXE) $(TESTDIR)/CasoDisco/ejemplo.gdf
-	# $(DEBDIR)/./$(EXE) $(TESTDIR)/CasoDisco/ejemplo.gdf
+	$ ./$(EXE) $(TESTDIR)/Disco_MPM/ejemplo.gdf
 	@echo " "
 	@echo "*************** Test case passed ****************"
-
-# Caso cuadrado
-Cuadrado2D:
+Disco_GIMP:
 	@echo "**************** Run test case ******************"
-	$ ./$(EXE) $(TESTDIR)/CasoCuadrado/ejemplo.gdf
-	# $(DEBDIR)/./$(EXE) $(TESTDIR)/CasoCuadrado/ejemplo.gdf
-	@echo " "
-	@echo "*************** Test case passed ****************"
-
-# Caso barra caida 1D
-Barra1D_caida:
-	@echo "**************** Run test case ******************"
-	# $(DEBDIR)/./$(EXE) $(TESTDIR)/CasoBarraVertical/ejemplo.gdf
-	$ ./$(EXE) $(TESTDIR)/CasoBarraVertical/ejemplo.gdf
+	$ ./$(EXE) $(TESTDIR)/Disco_GIMP/ejemplo.gdf
 	@echo " "
 	@echo "*************** Test case passed ****************"
 

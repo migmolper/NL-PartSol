@@ -1,60 +1,40 @@
 /***************************************/
 /********** GENERAL PARAMETERS *********/
 /***************************************/
-KIND_ANALYSIS=uGIMP2D%U%2D%VerletLF
+KIND_ANALYSIS=MPMQ4%U%2D%VerletLF
 DENSITY=20
-POISSON_MODULUS=0.0
-ELASTIC_MODULUS=5.e4
-TIME_STEP=0.000005
-RESULT_STEP=500
-NUM_STEP=60000
+POISSON_MODULUS=0.3
+ELASTIC_MODULUS=1.e5
+TIME_STEP=0.00008
+RESULT_STEP=100
+NUM_STEP=10000
 
 
 /***************************************/
 /******* SIMULATION FILES AND DIR ******/
 /***************************************/
-FEM_FILE_NAME=test/Traccion_GIMP/FEM_Mesh.msh
-MPM_FILE_NAME=test/Traccion_GIMP/MPM_Mesh.msh
-OUTPUT_DIR=test/Traccion_GIMP
+FEM_FILE_NAME=test/Disco_MPM/FEM_Mesh.msh
+MPM_FILE_NAME=test/Disco_MPM/MPM_Mesh.msh
+OUTPUT_DIR=test/Disco_MPM
 
 /***************************************/
 /********* BOUNDARY CONDITIONS *********/
 /***************************************/
 BCC_NUM 4
-BCC LABEL=BOTTOM FIELD=V DIR={0,0} CURVE={NULL,NULL}
+BCC LABEL=TOP FIELD=V DIR={0,1} CURVE={NULL,test/Disco_MPM/CurveConstat.txt}
+BCC LABEL=BOTTOM FIELD=V DIR={0,1} CURVE={NULL,test/Disco_MPM/CurveConstat.txt}
 BCC LABEL=RIGHT FIELD=V DIR={0,0} CURVE={NULL,NULL}
-BCC LABEL=TOP FIELD=V DIR={0,0} CURVE={NULL,NULL}
 BCC LABEL=LEFT FIELD=V DIR={0,0} CURVE={NULL,NULL}
 
 /***************************************/
 /**** INITIAL CONDITIONS FOR THE GPs ***/
 /***************************************/
-INIT_NUM 0
+INIT_NUM 1
+INIT_GP FIELD=V VALUE={0,-0.5} NUM_NODES=ALL_NODES
 
 /***************************************/
 /********** LOADS OVER THE GPs *********/
 /***************************************/
-F_LOAD_NUM 2
-F_LOAD_GP DIR={0,1} CURVE={NULL,test/Traccion_GIMP/Load.txt} NUM_NODES=10
-199
-179
-159
-139
-119
-99
-79
-59
-39
-19
-F_LOAD_GP DIR={0,-1} CURVE={NULL,test/Traccion_GIMP/Load.txt} NUM_NODES=10
-180
-160
-140
-120
-100
-80
-60
-40
-20
-0
-B_LOAD_NUM 0
+F_LOAD_NUM 0
+B_LOAD_NUM 1
+B_LOAD_GP DIR={0,1} CURVE={NULL,test/Disco_MPM/gravity.txt} NUM_NODES=ALL_NODES

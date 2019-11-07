@@ -21,37 +21,38 @@
 double uGIMP(double L, double lp, double Delta_xp){
 
   /* Evaluation of the shape function */
-  if(fabs(Delta_xp) < lp){
-    return 1 - 0.5*(Delta_xp*Delta_xp+lp*lp)*(1/(L*lp));
-  }
-  else if ((lp <= fabs(Delta_xp)) && (fabs(Delta_xp) <= L-lp)){
-    return 1 - fabs(Delta_xp)*(1/L);
-  }
-  else if((L-lp <= fabs(Delta_xp)) && (fabs(Delta_xp) < L+lp)){
-    return 0.25*(L+lp-fabs(Delta_xp))*(L+lp-fabs(Delta_xp))*(1/(L*lp));
-  }
-  else{
-    return 0;
-  }
 
-  /* if ((-lp < Delta_xp) && (Delta_xp <= lp)){ */
-  /*   return 1 - 0.5*(Delta_xp*Delta_xp + lp*lp)*(double)1/(L*lp); */
+  /* if(fabs(Delta_xp) < lp){ */
+  /*   return 1 - 0.5*(Delta_xp*Delta_xp+lp*lp)*(1/(L*lp)); */
   /* } */
-  /* else if (((-L-lp) < Delta_xp) && (Delta_xp <= (-L+lp))){ */
-  /*   return (double)(0.25/(L*lp))*(L+lp+Delta_xp)*(L+lp+Delta_xp); */
+  /* else if ((lp <= fabs(Delta_xp)) && (fabs(Delta_xp) <= L-lp)){ */
+  /*   return 1 - fabs(Delta_xp)*(1/L); */
   /* } */
-  /* else if (((L-lp) < Delta_xp) && (Delta_xp <= (L+lp))){ */
-  /*   return (double)(0.25/(L*lp))*(L+lp-Delta_xp)*(L+lp-Delta_xp); */
+  /* else if((L-lp <= fabs(Delta_xp)) && (fabs(Delta_xp) < L+lp)){ */
+  /*   return 0.25*(L+lp-fabs(Delta_xp))*(L+lp-fabs(Delta_xp))*(1/(L*lp)); */
   /* } */
-  /* else if (((-L+lp) < Delta_xp) && (Delta_xp <= -lp)){ */
-  /*   return 1 + (double)Delta_xp/L; */
+  /* else{ */
+  /*   return 0; */
   /* } */
-  /* else if ((lp < Delta_xp) && (Delta_xp <= (L-lp))){ */
-  /*   return 1 - (double)Delta_xp/L; */
-  /* } */
-  /* else { */
-  /*   return (double)0.0; */
-  /* }   */
+
+  if ((-lp < Delta_xp) && (Delta_xp <= lp)){
+    return 1 - 0.5*(Delta_xp*Delta_xp + lp*lp)*(double)1/(L*lp);
+  }
+  else if (((-L-lp) < Delta_xp) && (Delta_xp <= (-L+lp))){
+    return (double)(0.25/(L*lp))*(L+lp+Delta_xp)*(L+lp+Delta_xp);
+  }
+  else if (((L-lp) < Delta_xp) && (Delta_xp <= (L+lp))){
+    return (double)(0.25/(L*lp))*(L+lp-Delta_xp)*(L+lp-Delta_xp);
+  }
+  else if (((-L+lp) < Delta_xp) && (Delta_xp <= -lp)){
+    return 1 + (double)Delta_xp/L;
+  }
+  else if ((lp < Delta_xp) && (Delta_xp <= (L-lp))){
+    return 1 - (double)Delta_xp/L;
+  }
+  else {
+    return (double)0.0;
+  }
 }
 
 /*********************************************************************/
@@ -60,37 +61,38 @@ double uGIMP(double L, double lp, double Delta_xp){
 double d_uGIMP(double L, double lp, double Delta_xp){
 
   /* Evaluation of the shape function */
-  if((lp <= fabs(Delta_xp)) && (fabs(Delta_xp) <= L-lp)){
-    return -SignumFunct(Delta_xp)*(1/L);
-  }
-  else if((L-lp <= fabs(Delta_xp)) && (fabs(Delta_xp) <= L+lp)){
-    return -SignumFunct(Delta_xp)*(L+lp-fabs(Delta_xp))/(2*L*lp);
-  }
-  else if(fabs(Delta_xp) <= lp){
-    return -Delta_xp/(L*lp);
-  }
-  else{
-    return 0;
-  }
 
-  /* if (((-L-lp) < Delta_xp) && (Delta_xp <= (-L+lp))){ */
-  /*   return (double)(0.5/(L*lp))*(L+lp+Delta_xp); */
+  /* if((lp <= fabs(Delta_xp)) && (fabs(Delta_xp) <= L-lp)){ */
+  /*   return -SignumFunct(Delta_xp)*(1/L); */
   /* } */
-  /* else if (((-L+lp) < Delta_xp) && (Delta_xp <= -lp)){ */
-  /*   return (double)1/L; */
+  /* else if((L-lp <= fabs(Delta_xp)) && (fabs(Delta_xp) <= L+lp)){ */
+  /*   return -SignumFunct(Delta_xp)*(L+lp-fabs(Delta_xp))/(2*L*lp); */
   /* } */
-  /* else if ((-lp < Delta_xp) && (Delta_xp <= lp)){ */
-  /*   return -(double)Delta_xp/(L*lp); */
+  /* else if(fabs(Delta_xp) <= lp){ */
+  /*   return -Delta_xp/(L*lp); */
   /* } */
-  /* else if ((lp < Delta_xp) && (Delta_xp <= (L-lp))){ */
-  /*   return -(double)1/L; */
+  /* else{ */
+  /*   return 0; */
   /* } */
-  /* else if (((L-lp) < Delta_xp) && (Delta_xp <= (L+lp))){ */
-  /*   return -(double)(0.5/(L*lp))*(L+lp-Delta_xp); */
-  /* } */
-  /* else { */
-  /*   return (double)0.0; */
-  /* } */
+
+  if (((-L-lp) < Delta_xp) && (Delta_xp <= (-L+lp))){
+    return (double)(0.5/(L*lp))*(L+lp+Delta_xp);
+  }
+  else if (((-L+lp) < Delta_xp) && (Delta_xp <= -lp)){
+    return (double)1/L;
+  }
+  else if ((-lp < Delta_xp) && (Delta_xp <= lp)){
+    return -(double)Delta_xp/(L*lp);
+  }
+  else if ((lp < Delta_xp) && (Delta_xp <= (L-lp))){
+    return -(double)1/L;
+  }
+  else if (((L-lp) < Delta_xp) && (Delta_xp <= (L+lp))){
+    return -(double)(0.5/(L*lp))*(L+lp-Delta_xp);
+  }
+  else {
+    return (double)0.0;
+  }
 }
 
 /*********************************************************************/
