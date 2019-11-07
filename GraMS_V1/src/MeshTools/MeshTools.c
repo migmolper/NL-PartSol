@@ -110,6 +110,7 @@ void GlobalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh){
 	  MPM_Mesh.ListNodes[i] =
 	    Tributary_Nodes_GIMP(X_EC_GP,MPM_Mesh.Element_id[i],
 	  			 lp,FEM_Mesh);
+	  MPM_Mesh.NumberNodes[i] = LenghtChain(MPM_Mesh.ListNodes[i]);
 	}
 	  
 	/* 10º Active those nodes that interact with the GP */
@@ -339,6 +340,7 @@ void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 	    MPM_Mesh.ListNodes[i] =
 	      Tributary_Nodes_GIMP(X_EC_GP,MPM_Mesh.Element_id[i],
 	    			   lp,FEM_Mesh);
+	    MPM_Mesh.NumberNodes[i] = LenghtChain(MPM_Mesh.ListNodes[i]);
 	  }
 	  
 	  /* Active those nodes that interact with the GP */
@@ -368,7 +370,7 @@ void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 	exit(0);
       }
       
-    }
+    }   
   } /* Loop over the GP */
   
   /* 8º Free memory */

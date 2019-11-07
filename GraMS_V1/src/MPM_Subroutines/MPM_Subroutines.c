@@ -485,7 +485,7 @@ Matrix GetNodalForces(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int TimeStep)
       /* Get the node for the GP */
       GP_I = GP_Connect[k];
       /* Evaluate the GP function in the node */
-      N_GP_I = N_GP.nV[k];      
+      N_GP_I = N_GP.nV[k];
       for(int l = 0; l<NumberDimensions; l++){
 	/* 10aº Add the internal forces */
 	Nodal_TOT_FORCES.nM[l][GP_I] -=
