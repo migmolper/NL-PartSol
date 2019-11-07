@@ -89,7 +89,14 @@ $(EXE): $(OBJS)
 # Rule for benchmarks
 .PHONY: Cuadrado_MPM Disco_MPM Disco_GIMP Traccion_MPM Traccion_GIMP Dyka_MPM Dyka_GIMP
 
-# Caso Disco
+# Caso cuadrado caida
+Cuadrado_MPM:
+	@echo "**************** Run test case ******************"
+	$ ./$(EXE) $(TESTDIR)/Cuadrado_MPM/ejemplo.gdf
+	@echo " "
+	@echo "*************** Test case passed ****************"
+
+# Caso disco caida
 Disco_MPM:
 	@echo "**************** Run test case ******************"
 	$ ./$(EXE) $(TESTDIR)/Disco_MPM/ejemplo.gdf
@@ -101,7 +108,7 @@ Disco_GIMP:
 	@echo " "
 	@echo "*************** Test case passed ****************"
 
-# Caso barra traccion 1D
+# Caso barra traccion
 Traccion_MPM:
 	@echo "**************** Run test case ******************"
 	$ ./$(EXE) $(TESTDIR)/Traccion_MPM/ejemplo.gdf
