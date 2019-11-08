@@ -103,7 +103,14 @@ Sulsky_MPM:
 	@echo " "
 	@echo "*************** Test case passed ****************"
 
-# Caso Disco
+# Caso cuadrado caida
+Cuadrado_MPM:
+	@echo "**************** Run test case ******************"
+	$ ./$(EXE) $(TESTDIR)/Cuadrado_MPM/ejemplo.gdf
+	@echo " "
+	@echo "*************** Test case passed ****************"
+
+# Caso disco caida
 Disco_MPM:
 	@echo "**************** Run test case ******************"
 	$ ./$(EXE) $(TESTDIR)/Disco_MPM/ejemplo.gdf
@@ -115,7 +122,7 @@ Disco_GIMP:
 	@echo " "
 	@echo "*************** Test case passed ****************"
 
-# Caso barra traccion 1D
+# Caso barra traccion
 Traccion_MPM:
 	@echo "**************** Run test case ******************"
 	$ ./$(EXE) $(TESTDIR)/Traccion_MPM/ejemplo.gdf
