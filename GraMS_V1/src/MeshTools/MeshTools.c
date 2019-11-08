@@ -35,7 +35,7 @@ void GetNodalConnectivity(Mesh FEM_Mesh){
       }
       /* Free memory */
       free(Element_Connectivity);
-    }      
+    }
   }
 }
 
@@ -111,7 +111,7 @@ void GlobalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh){
 	  			 lp,FEM_Mesh);
 	  MPM_Mesh.NumberNodes[i] = LenghtChain(MPM_Mesh.ListNodes[i]);
 	}
-	  
+	
 	/* 10º Active those nodes that interact with the GP */
 	ListNodes_I = MPM_Mesh.ListNodes[i];
 	while(ListNodes_I != NULL){
@@ -206,14 +206,29 @@ void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 
     /* 7º Check if the GP is in the same element */
     if(InOut_Poligon(X_GC_GP,Poligon_Coordinates) == 1){
+
+      printf("%i \n",i);
       
       /* If the GP is in the element, get its natural coordinates */
       X_EC_GP.nV = MPM_Mesh.Phi.x_EC.nM[i];     
       Get_X_EC_Q4(X_EC_GP,X_GC_GP,Poligon_Coordinates);
-      
+
+      /* Assign the new connectivity of the GP */
+      if(strcmp(MPM_Mesh.ShapeFunctionGP,"uGIMP2D") == 0){
+	lp.nV = MPM_Mesh.Phi.lp.nM[i];
+	MPM_Mesh.ListNodes[i] =
+	  Tributary_Nodes_GIMP(X_EC_GP,MPM_Mesh.Element_id[i],
+			       lp,FEM_Mesh);
+	MPM_Mesh.NumberNodes[i] = LenghtChain(MPM_Mesh.ListNodes[i]);
+      }
+
+      printList(MPM_Mesh.ListNodes[i]);
+            
       /* Active those nodes that interact with the GP */
-      for(int k = 0 ; k<NumVertex ; k++){
-	FEM_Mesh.ActiveNode[Poligon_Connectivity[k]] += 1;
+      ListNodes_I = MPM_Mesh.ListNodes[i];
+      while(ListNodes_I != NULL){
+	FEM_Mesh.ActiveNode[ListNodes_I->I] += 1;
+	ListNodes_I = ListNodes_I->next; 
       }
 
       /* Free memory */
@@ -369,7 +384,7 @@ void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 	exit(0);
       }
       
-    }   
+    }
   } /* Loop over the GP */
   
   /* 8º Free memory */
@@ -497,7 +512,14 @@ void FreeChain(ChainPtr A){
 /*********************************************************************/
 
 int LenghtChain(ChainPtr A){
-
+  
+  if(A == NULL){
+    printf(" %s : %s \n",
+	   "Error in LenghtChain",
+	   "The chain is empty");
+    exit(0);
+  }
+  
   int NumElem = 0;
   ChainPtr INode = A;
 
@@ -695,12 +717,18 @@ ChainPtr ChainIntersection(ChainPtr A,ChainPtr B)
 
 /* A utility function to print a linked list */
 void printList (ChainPtr A) 
-{ 
-    while (A != NULL) 
-    { 
-        printf ("%d \n", A->I); 
-        A = A->next; 
-    } 
+{
+  if(A == NULL){
+      printf(" %s : %s \n",
+	     "Error in printList",
+	     "The chain is empty");
+      exit(0);
+  }
+  
+  while (A != NULL){ 
+    printf ("%d \n", A->I); 
+    A = A->next; 
+  } 
 } 
 
 /*********************************************************************/

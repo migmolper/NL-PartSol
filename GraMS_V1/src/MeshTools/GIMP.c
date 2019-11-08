@@ -144,7 +144,7 @@ ChainPtr Tributary_Nodes_GIMP(Matrix X_EC_GP,
 			      Mesh FEM_Mesh){
 
   ChainPtr Triburary_Nodes = NULL;
-  ChainPtr ChainElements;
+  ChainPtr ChainElements = NULL;
   int * Tributary_Elements;
   int * NodesElem;
   int Elem_i;
@@ -153,24 +153,21 @@ ChainPtr Tributary_Nodes_GIMP(Matrix X_EC_GP,
 
   /* Get the reference distance measured from the center of the element */
   for(int i = 0 ; i<2; i++){
-    Dist[i] = 1 - lp.nV[i]/FEM_Mesh.DeltaX;
+    Dist[i] = 1 - 2*lp.nV[i]/FEM_Mesh.DeltaX;
   }
 
   /* Check if I am in the central area */
-  if ((fabs(X_EC_GP.nV[0]) < Dist[0]) &&
-      (fabs(X_EC_GP.nV[1]) < Dist[1])){
+  if ((fabs(X_EC_GP.nV[0]) <= Dist[0]) &&
+      (fabs(X_EC_GP.nV[1]) <= Dist[1])){
     Triburary_Nodes = CopyChain(FEM_Mesh.Connectivity[Elem_GP]);
-  }
-    
+  }    
   /* Check if I am in the 1º Quadrant */
-  else if((X_EC_GP.nV[0]>0) &&
-	  (X_EC_GP.nV[1]>0)){
+  else if((X_EC_GP.nV[0]>=0) &&
+	  (X_EC_GP.nV[1]>=0)){
     /* Create an array with the nodes of the element */
     NodesElem = ChainToArray(FEM_Mesh.Connectivity[Elem_GP],4);
-
-    if((fabs(X_EC_GP.nV[0]) > Dist[0]) &&
-       (fabs(X_EC_GP.nV[1]) < Dist[1])){
-
+    if((fabs(X_EC_GP.nV[0]) >= Dist[0]) &&
+       (fabs(X_EC_GP.nV[1]) <= Dist[1])){
       /* Generate the list of Elements whose nodes contributes to the GP */       
       ChainElements = ChainIntersection(FEM_Mesh.NodeNeighbour[NodesElem[2]],
 					FEM_Mesh.NodeNeighbour[NodesElem[1]]);
@@ -186,8 +183,8 @@ ChainPtr Tributary_Nodes_GIMP(Matrix X_EC_GP,
       }
       
     }
-    else if((fabs(X_EC_GP.nV[0]) < Dist[0]) &&
-	    (fabs(X_EC_GP.nV[1]) > Dist[1])){
+    else if((fabs(X_EC_GP.nV[0]) <= Dist[0]) &&
+	    (fabs(X_EC_GP.nV[1]) >= Dist[1])){
       /* Generate the list of Elements whose nodes contributes to the GP */ 
       ChainElements = ChainIntersection(FEM_Mesh.NodeNeighbour[NodesElem[2]],
 					FEM_Mesh.NodeNeighbour[NodesElem[3]]);
@@ -204,8 +201,8 @@ ChainPtr Tributary_Nodes_GIMP(Matrix X_EC_GP,
       /* Free memory */
       free(Tributary_Elements);
     }
-    else if((fabs(X_EC_GP.nV[0]) > Dist[0]) &&
-	    (fabs(X_EC_GP.nV[1]) > Dist[1])){
+    else if((fabs(X_EC_GP.nV[0]) >= Dist[0]) &&
+	    (fabs(X_EC_GP.nV[1]) >= Dist[1])){
       /* Generate the list of Elements whose nodes contributes to the GP */ 
       ChainElements = FEM_Mesh.NodeNeighbour[NodesElem[2]];
       Num_Elem = LenghtChain(ChainElements);
@@ -223,16 +220,15 @@ ChainPtr Tributary_Nodes_GIMP(Matrix X_EC_GP,
     }
     /* Free memory */
     free(NodesElem);    
-  }
-  
+  }  
   /* Check if I am in the 2º Quadrant */
-  else if((X_EC_GP.nV[0]<0) &&
-	  (X_EC_GP.nV[1]>0)){
+  else if((X_EC_GP.nV[0]<=0) &&
+	  (X_EC_GP.nV[1]>=0)){
     /* Create an array with the nodes of the element */
     NodesElem = ChainToArray(FEM_Mesh.Connectivity[Elem_GP],4);
 
-    if((fabs(X_EC_GP.nV[0]) < Dist[0]) &&
-       (fabs(X_EC_GP.nV[1]) > Dist[1])){
+    if((fabs(X_EC_GP.nV[0]) <= Dist[0]) &&
+       (fabs(X_EC_GP.nV[1]) >= Dist[1])){
 
       /* Generate the list of Elements whose nodes contributes to the GP */ 
       ChainElements = ChainIntersection(FEM_Mesh.NodeNeighbour[NodesElem[2]],
@@ -250,8 +246,8 @@ ChainPtr Tributary_Nodes_GIMP(Matrix X_EC_GP,
       /* Free memory */
       free(Tributary_Elements);
     }
-    else if((fabs(X_EC_GP.nV[0]) > Dist[0]) &&
-	    (fabs(X_EC_GP.nV[1]) < Dist[1])){
+    else if((fabs(X_EC_GP.nV[0]) >= Dist[0]) &&
+	    (fabs(X_EC_GP.nV[1]) <= Dist[1])){
       /* Generate the list of Elements whose nodes contributes to the GP */ 
       ChainElements = ChainIntersection(FEM_Mesh.NodeNeighbour[NodesElem[3]],
 					FEM_Mesh.NodeNeighbour[NodesElem[0]]);
@@ -268,8 +264,8 @@ ChainPtr Tributary_Nodes_GIMP(Matrix X_EC_GP,
       /* Free memory */
       free(Tributary_Elements);
     }
-    else if((fabs(X_EC_GP.nV[0]) > Dist[0]) &&
-	    (fabs(X_EC_GP.nV[1]) > Dist[1])){
+    else if((fabs(X_EC_GP.nV[0]) >= Dist[0]) &&
+	    (fabs(X_EC_GP.nV[1]) >= Dist[1])){
       /* Generate the list of Elements whose nodes contributes to the GP */ 
       ChainElements = FEM_Mesh.NodeNeighbour[NodesElem[3]];
       Num_Elem = LenghtChain(ChainElements);
@@ -288,15 +284,14 @@ ChainPtr Tributary_Nodes_GIMP(Matrix X_EC_GP,
     /* Free memory */
     free(NodesElem);
     
-  }
-  
+  }  
   /* Check if I am in the 3º Quadrant */
-  else if((X_EC_GP.nV[0]<0) &&
-	  (X_EC_GP.nV[1]<0)){
+  else if((X_EC_GP.nV[0]<=0) &&
+	  (X_EC_GP.nV[1]<=0)){
     /* Create an array with the nodes of the element */
     NodesElem = ChainToArray(FEM_Mesh.Connectivity[Elem_GP],4);   
-    if((fabs(X_EC_GP.nV[0]) > Dist[0]) &&
-       (fabs(X_EC_GP.nV[1]) < Dist[1])){
+    if((fabs(X_EC_GP.nV[0]) >= Dist[0]) &&
+       (fabs(X_EC_GP.nV[1]) <= Dist[1])){
       /* Generate the list of Elements whose nodes contributes to the GP */ 
       ChainElements = ChainIntersection(FEM_Mesh.NodeNeighbour[NodesElem[3]],
 					FEM_Mesh.NodeNeighbour[NodesElem[0]]);
@@ -313,9 +308,8 @@ ChainPtr Tributary_Nodes_GIMP(Matrix X_EC_GP,
       /* Free memory */
       free(Tributary_Elements);
     }
-    else if((fabs(X_EC_GP.nV[0]) < Dist[0]) &&
-	    (fabs(X_EC_GP.nV[1]) > Dist[1])){
-      puts("paso 2");
+    else if((fabs(X_EC_GP.nV[0]) <= Dist[0]) &&
+	    (fabs(X_EC_GP.nV[1]) >= Dist[1])){
       /* Generate the list of Elements whose nodes contributes to the GP */
       ChainElements = ChainIntersection(FEM_Mesh.NodeNeighbour[NodesElem[0]],
 					FEM_Mesh.NodeNeighbour[NodesElem[1]]);
@@ -331,9 +325,8 @@ ChainPtr Tributary_Nodes_GIMP(Matrix X_EC_GP,
       /* Free memory */      
       free(Tributary_Elements);
     }
-    else if((fabs(X_EC_GP.nV[1]) > Dist[1]) &&
-	    (fabs(X_EC_GP.nV[0]) > Dist[0])){
-      puts("paso 3");
+    else if((fabs(X_EC_GP.nV[1]) >= Dist[1]) &&
+	    (fabs(X_EC_GP.nV[0]) >= Dist[0])){
       /* Generate the list of Elements whose nodes contributes to the GP */ 
       ChainElements = FEM_Mesh.NodeNeighbour[NodesElem[0]];
       Num_Elem = LenghtChain(ChainElements);
@@ -350,17 +343,15 @@ ChainPtr Tributary_Nodes_GIMP(Matrix X_EC_GP,
     }
     /* Free memory */
     free(NodesElem);    
-  }
-  
+  }  
   /* Check if it I am the 4º Quadrant */
-  else if((X_EC_GP.nV[0]>0) &&
-	  (X_EC_GP.nV[1]<0)){
+  else if((X_EC_GP.nV[0]>=0) &&
+	  (X_EC_GP.nV[1]<=0)){
     /* Create an array with the nodes of the element */
     NodesElem = ChainToArray(FEM_Mesh.Connectivity[Elem_GP],4);
 
-    if((fabs(X_EC_GP.nV[0]) < Dist[0]) &&
-       (fabs(X_EC_GP.nV[1]) > Dist[1])){
-
+    if((fabs(X_EC_GP.nV[0]) <= Dist[0]) &&
+       (fabs(X_EC_GP.nV[1]) >= Dist[1])){
       /* Generate the list of Elements whose nodes contributes to the GP */ 
       ChainElements = ChainIntersection(FEM_Mesh.NodeNeighbour[NodesElem[0]],
 					FEM_Mesh.NodeNeighbour[NodesElem[1]]);
@@ -377,9 +368,8 @@ ChainPtr Tributary_Nodes_GIMP(Matrix X_EC_GP,
       /* Free memory */      
       free(Tributary_Elements);
     }
-    else if((fabs(X_EC_GP.nV[0]) > Dist[0]) &&
-	    (fabs(X_EC_GP.nV[1]) < Dist[1])){
-
+    else if((fabs(X_EC_GP.nV[0]) >= Dist[0]) &&
+	    (fabs(X_EC_GP.nV[1]) <= Dist[1])){
       /* Generate the list of Elements whose nodes contributes to the GP */ 
       ChainElements = ChainIntersection(FEM_Mesh.NodeNeighbour[NodesElem[2]],
 					FEM_Mesh.NodeNeighbour[NodesElem[1]]);
@@ -396,14 +386,12 @@ ChainPtr Tributary_Nodes_GIMP(Matrix X_EC_GP,
       /* Free memory */      
       free(Tributary_Elements);
     }
-    else if((fabs(X_EC_GP.nV[0]) > Dist[0]) &&
-	    (fabs(X_EC_GP.nV[1]) > Dist[1])){
-
+    else if((fabs(X_EC_GP.nV[0]) >= Dist[0]) &&
+	    (fabs(X_EC_GP.nV[1]) >= Dist[1])){
       /* Generate the list of Elements whose nodes contributes to the GP */
       ChainElements = FEM_Mesh.NodeNeighbour[NodesElem[1]];
       Num_Elem = LenghtChain(ChainElements);
       Tributary_Elements = ChainToArray(ChainElements,Num_Elem);
-
       /* Iterate in the list and select the union of the sets of nodes */
       for(int i = 0 ; i<Num_Elem ; i++){
 	Elem_i = Tributary_Elements[i];
@@ -415,6 +403,15 @@ ChainPtr Tributary_Nodes_GIMP(Matrix X_EC_GP,
     }
     /* Free memory */
     free(NodesElem);
+  }
+  else{
+    printf("%s : %s \n",
+	   "Error in Tributary_Nodes_GIMP",
+	   "Unlocated GP in the element");
+    printf("%s : (%f;%f) \n",
+	   "Natural coordinates of the GP",
+	   X_EC_GP.nV[0],X_EC_GP.nV[1]);
+    exit(0);
   }
  
   return Triburary_Nodes;

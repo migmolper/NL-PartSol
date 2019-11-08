@@ -55,6 +55,9 @@ GaussPoint Define_GP_Mesh(char * MPM_GID_MeshName,
     puts("Error in Chain declaration");
     exit(0);
   }
+  for(int i = 0 ; i<MPM_Mesh.NumGP ; i++){
+    MPM_Mesh.ListNodes[i] = NULL;  
+  }
   
   /* Define the shapefunction employed by the GP */
   strcpy(MPM_Mesh.ShapeFunctionGP,ShapeFunctionGP);

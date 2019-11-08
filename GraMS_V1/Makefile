@@ -87,7 +87,21 @@ $(EXE): $(OBJS)
 
 #####################################################################
 # Rule for benchmarks
-.PHONY: Cuadrado_MPM Disco_MPM Disco_GIMP Traccion_MPM Traccion_GIMP Dyka_MPM Dyka_GIMP
+.PHONY: Debug_MPM Sulsky_MPM Cuadrado_MPM Disco_MPM Disco_GIMP Traccion_MPM Traccion_GIMP Dyka_MPM Dyka_GIMP
+
+# Caso para debugear
+Debug_MPM:
+	@echo "**************** Run test case ******************"
+	$ ./$(EXE) $(TESTDIR)/Debug_MPM/ejemplo.gdf
+	@echo " "
+	@echo "*************** Test case passed ****************"
+
+# Caso impacto elastico discos Sulsky
+Sulsky_MPM:
+	@echo "**************** Run test case ******************"
+	$ ./$(EXE) $(TESTDIR)/Sulsky_MPM/ejemplo.gdf
+	@echo " "
+	@echo "*************** Test case passed ****************"
 
 # Caso Disco
 Disco_MPM:

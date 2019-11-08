@@ -1,0 +1,46 @@
+/***************************************/
+/********** GENERAL PARAMETERS *********/
+/***************************************/
+KIND_ANALYSIS=uGIMP2D%U%2D%VerletLF
+DENSITY=20
+POISSON_MODULUS=0.3
+ELASTIC_MODULUS=1.e5
+TIME_STEP=0.00005
+RESULT_STEP=1
+NUM_STEP=4000
+
+
+/***************************************/
+/******* SIMULATION FILES AND DIR ******/
+/***************************************/
+FEM_FILE_NAME=test/Debug_MPM/FEM_Mesh.msh
+MPM_FILE_NAME=test/Debug_MPM/MPM_Mesh.msh
+OUTPUT_DIR=test/Debug_MPM
+
+/***************************************/
+/********* BOUNDARY CONDITIONS *********/
+/***************************************/
+BCC_NUM 4
+BCC LABEL=TOP FIELD=V DIR={0,0} CURVE={NULL,NULL}
+BCC LABEL=BOTTOM FIELD=V DIR={0,0} CURVE={NULL,NULL}
+BCC LABEL=RIGHT FIELD=V DIR={0,0} CURVE={NULL,NULL}
+BCC LABEL=LEFT FIELD=V DIR={0,0} CURVE={NULL,NULL}
+
+/***************************************/
+/**** INITIAL CONDITIONS FOR THE GPs ***/
+/***************************************/
+INIT_NUM 0
+
+/***************************************/
+/********** LOADS OVER THE GPs *********/
+/***************************************/
+F_LOAD_NUM 4
+F_LOAD_GP DIR={1,1} CURVE={test/Debug_MPM/Load.txt,test/Debug_MPM/Load.txt} NUM_NODES=1
+8
+F_LOAD_GP DIR={-1,1} CURVE={test/Debug_MPM/Load.txt,test/Debug_MPM/Load.txt} NUM_NODES=1
+6
+F_LOAD_GP DIR={-1,-1} CURVE={test/Debug_MPM/Load.txt,test/Debug_MPM/Load.txt} NUM_NODES=1
+0
+F_LOAD_GP DIR={1,-1} CURVE={test/Debug_MPM/Load.txt,test/Debug_MPM/Load.txt} NUM_NODES=1
+2
+B_LOAD_NUM 0

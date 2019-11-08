@@ -78,8 +78,9 @@ Mesh ReadGidMesh(char * MeshName)
 
   /* CHANGES THISSSS */
   /* GID_Mesh.DeltaX = 0.0002666; */
-  /* GID_Mesh.DeltaX = 1; */
-  GID_Mesh.DeltaX = 0.851851852;
+  GID_Mesh.DeltaX = 1;
+  /* GID_Mesh.DeltaX = 0.851851852; */
+  /* GID_Mesh.DeltaX = 0.1; */
   
   /* Element properties of the mesh */
   if ( strcmp(words[0],"MESH") == 0 ){
@@ -191,9 +192,23 @@ Mesh ReadGidMesh(char * MeshName)
   				  GID_Mesh.Dimension);
   GID_Mesh.Connectivity = (ChainPtr *)
     malloc(GID_Mesh.NumElemMesh*sizeof(ChainPtr));
+  if(GID_Mesh.Connectivity == NULL){
+    puts("Error in Chain declaration");
+    exit(0);
+  }
+  for(int i = 0 ; i<GID_Mesh.NumElemMesh ; i++){
+    GID_Mesh.Connectivity[i] = NULL;  
+  }
 
   GID_Mesh.NodeNeighbour = (ChainPtr *)
     malloc(GID_Mesh.NumNodesMesh*sizeof(ChainPtr));
+  if(GID_Mesh.NodeNeighbour == NULL){
+    puts("Error in Chain declaration");
+    exit(0);
+  }
+  for(int i = 0 ; i<GID_Mesh.NumNodesMesh ; i++){
+    GID_Mesh.NodeNeighbour[i] = NULL;  
+  }
   
   GID_Mesh.NumNodesElem =  (int *)
     Allocate_ArrayZ(GID_Mesh.NumElemMesh,sizeof(int));
