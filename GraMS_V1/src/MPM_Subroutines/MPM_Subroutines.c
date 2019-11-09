@@ -77,6 +77,10 @@ Matrix GetNodalMassMomentum(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
       GP_I = GP_Connect[k];
       /* Evaluate the GP function in the node */
       N_GP_I = N_GP.nV[k];
+      /* If this node has a null Value of the SHF continue */
+      if(N_GP_I == 0){
+	continue;
+      }
       /* Nodal mass */
       Nodal_FIELDS.nM[0][GP_I] += GP_mass*N_GP_I;
       /* Nodal momentum */
@@ -112,7 +116,7 @@ Matrix GetNodalVelocity(Mesh FEM_Mesh,
   /* 1º Get nodal values of the velocity */
   for(int i = 0 ; i<FEM_Mesh.NumNodesMesh ; i++){
     for(int j = 0 ; j<NumberDimensions ; j++){
-      if(FEM_Mesh.ActiveNode[i] > 0){
+      if(Nodal_MASS.nV[i] > 0){
 	Vel_Mesh.nM[j][i] = (double)Nodal_MOMENTUM.nM[j][i]/Nodal_MASS.nV[i];
       }
     }    
@@ -486,6 +490,10 @@ Matrix GetNodalForces(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int TimeStep)
       GP_I = GP_Connect[k];
       /* Evaluate the GP function in the node */
       N_GP_I = N_GP.nV[k];
+      /* If this node has a null Value of the SHF continue */
+      if(N_GP_I == 0){
+	continue;
+      }
       for(int l = 0; l<NumberDimensions; l++){
 	/* 10aº Add the internal forces */
 	Nodal_TOT_FORCES.nM[l][GP_I] -=
@@ -594,6 +602,10 @@ void UpdateVelocityAndPositionGP(GaussPoint MPM_Mesh,
       GP_I = GP_Connect[j];
       /* Evaluate the GP function in the node */
       N_I_GP = N_GP.nV[j];
+      /* If this node has a null Value of the SHF continue */
+      if(N_I_GP == 0){
+	continue;
+      }
       /* Get the nodal mass */
       mass_I = Nodal_MASS.nV[GP_I];
       /* Update GP cuantities with nodal values */

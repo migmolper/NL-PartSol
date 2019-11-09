@@ -219,8 +219,6 @@ void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 			       lp,FEM_Mesh);
 	MPM_Mesh.NumberNodes[i] = LenghtChain(MPM_Mesh.ListNodes[i]);
       }
-
-      printList(MPM_Mesh.ListNodes[i]);
             
       /* Active those nodes that interact with the GP */
       ListNodes_I = MPM_Mesh.ListNodes[i];

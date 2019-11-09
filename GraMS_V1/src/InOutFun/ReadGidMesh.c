@@ -78,9 +78,9 @@ Mesh ReadGidMesh(char * MeshName)
 
   /* CHANGES THISSSS */
   /* GID_Mesh.DeltaX = 0.0002666; */
-  GID_Mesh.DeltaX = 1;
+  /* GID_Mesh.DeltaX = 1; */
   /* GID_Mesh.DeltaX = 0.851851852; */
-  /* GID_Mesh.DeltaX = 0.1; */
+  GID_Mesh.DeltaX = 0.1;
   
   /* Element properties of the mesh */
   if ( strcmp(words[0],"MESH") == 0 ){
