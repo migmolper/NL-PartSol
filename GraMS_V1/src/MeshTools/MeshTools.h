@@ -59,3 +59,5 @@ Matrix GIMP_2D(Matrix, Matrix, double);
 Matrix dGIMP_2D(Matrix, Matrix, double);
 ChainPtr Tributary_Nodes_GIMP(Matrix, int,
 			      Matrix, Mesh);
+
+/* LME shape functions */

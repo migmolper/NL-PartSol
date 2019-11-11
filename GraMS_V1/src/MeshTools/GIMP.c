@@ -5,9 +5,15 @@
 #include "../MathTools/MathTools.h"
 #include "MeshTools.h"
 
-/***********************************************/
-/******* 2D cuadrilateral linear element *******/
-/***********************************************/
+/**************************************************/
+/* Uniform Geralized Interpolation Material Point */
+/**************************************************/
+
+/*
+  Shape functions based in : 
+  "" The Generalized Interpolation Material Point Method ""
+  by S.G.Bardenhagen and E.M.Kober, 2004
+*/
 
 /*            ^           */
 /*          __|__         */
