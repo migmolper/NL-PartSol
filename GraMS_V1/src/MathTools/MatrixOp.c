@@ -1130,6 +1130,13 @@ int InOut_Poligon(Matrix X_Point, Matrix Poligon)
 
 /*********************************************************************/
 
+double MinLenght_Poligon(Matrix Poligon){
+
+  
+}
+
+/*********************************************************************/
+
 Matrix Get_Lumped_Matrix(Matrix M_in){
   /*
     Get the lumped matrix in a vectorial shape of the input matrix 
