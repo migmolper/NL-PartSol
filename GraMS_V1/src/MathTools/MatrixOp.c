@@ -948,6 +948,16 @@ double Norm_Mat(Matrix In,int kind)
 
 /*********************************************************************/
 
+double Cond_Mat(Matrix In)
+/*
+  Return the conditioning number 
+*/
+{
+  
+}
+
+/*********************************************************************/
+
 double Area_Poligon(Matrix Poligon)
 /*
   Get the area of a poligon on n vertex using the 
