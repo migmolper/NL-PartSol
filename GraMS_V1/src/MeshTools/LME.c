@@ -20,15 +20,18 @@
 
 */
 
-Matrix LME_lambda(Matrix da, Matrix , double Beta, double h, double TOL_lambda)
+Matrix LME_lambda(Matrix da, Matrix lambda,
+		  double Beta, double h, double TOL_lambda)
 /*
   Especialized Newton-Rapson algorithm to get the lagrange multipliers lambda
   for a material point.
+  Input parameters :
+  -
+  -
+  -
 */
 {
-
-  Matrix lambda_n1;
-  Matrix lambda_n0;
+  /* Definition of some parameters */
   Matrix pa;
   Matrix r;
   Matrix J;
@@ -65,7 +68,7 @@ Matrix LME_lambda(Matrix da, Matrix , double Beta, double h, double TOL_lambda)
 
     /* Update value of lambda */
     Increment_lambda = Scalar_prod(Jm1,r);
-    lambda_n1 = Sub_Mat(lambda_n0,Increment_lambda);
+    lambda = Incr_Mat(lambda,Increment_lambda);
 
     /* Update the number of iterations */
     NumIter ++;
@@ -80,7 +83,11 @@ Matrix LME_lambda(Matrix da, Matrix , double Beta, double h, double TOL_lambda)
   return lambda;
 }
 
-double LME_fa(Matrix da, Matrix lambda, double Beta){
+double LME_fa(Matrix da, Matrix lambda, double Beta)
+/*
+
+*/
+{
 
   /* Get the scalar product the distance and the lagrange multipliers */
   Matrix Aux = Scalar_prod(lambda,da);
@@ -89,17 +96,24 @@ double LME_fa(Matrix da, Matrix lambda, double Beta){
   return -Beta*Norm_Mat(da,2) + Aux.n;
 }
 
-Matrix LME_pa(Matrix da, Matrix lambda, double Beta){
+Matrix LME_pa(Matrix da, Matrix lambda, double Beta)
+/*
+  Value of the shape function evaluated in the neibourhud;
+*/
+{
 
   Matrix pa = MatAlloc(da.N_rows,1);
+  Matrix da_i;
+  da_i.N_rows = da.N_cols;
+  da_i.N_cols = 1;
   int Size_pa = da.N_rows;
   double Z_a = 0;
   double Z_a_m1 = 0;
 
   /* Get Z and the numerator */
   for(int i = 0 ; i<Size_pa ; i++){
-    da = da.nM[i];
-    pa.nV[i] = exp(LME_fa(Matrix da,lambda,Beta));
+    da_i.nV = da.nM[i];
+    pa.nV[i] = exp(LME_fa(da_i,lambda,Beta));
     Z_a += pa.nV[i];
   }
 
@@ -111,20 +125,55 @@ Matrix LME_pa(Matrix da, Matrix lambda, double Beta){
     pa.nV[i] *= Z_a_m1;
   }
   
+  /* Return the value of the shape function */  
   return pa;
 }
 
-Matrix LME_r(Matrix da, Matrix pa){
-  Matrix r;
+Matrix LME_r(Matrix da, Matrix pa)
+/*
+  Gradient of the log(Z) function
+*/
+{
+  int N_dim = da.N_cols;
+  int N_neibourg = da.N_rows;
+  Matrix r = MatAllocZ(N_dim,1);
+  Matrix r_a;
+
+  /* Fill the ''r'' vector */
+  for(int i = 0 ; i<N_neibourg ; i++){
+    for(int j = 0 ; j<N_dim ; j++){
+      r.nV[j] += pa.nV[i]*da.nM[i][j];
+    }
+  }
+  
   return r;
 }
 
-Matrix LME_J(Matrix da, Matrix pa, Matrix r){
+Matrix LME_J(Matrix da, Matrix pa, Matrix r)
+/*
+  Hessian of the log(Z) function
+*/
+{
+  
   Matrix J;
+  Matrix J_I;
+  Matrix J_II;
+
+  /* Get the first component of the hessian */
+  for(){
+  }
+
+  /* Get the second component of the hessian */
+  J_II = Tensorial_prod(r,r);
+
+  /* Get the Hessian */
+  J = Sub_Mat(J_I,J_II);
+  
   return J;
 }
 
 double LME_dpa(){
+  
 }
 
 ChainPtr LME_Tributary_Nodes(Matrix, int,
