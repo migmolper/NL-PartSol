@@ -6,8 +6,6 @@ GCC_ROOT = /usr/bin
 # Name of the directories
 SRCDIR = src
 OBJDIR = obj
-# DEBDIR = bin/Debug
-# RELDIR = bin/Release
 TESTDIR = test
 INSTDIR = /usr/bin
 
@@ -47,7 +45,7 @@ DBFLAGS = -g -Wall -Wpedantic -Wextra
 
 #####################################################################
 
-# Debug recipie
+# Compile recipie
 # debug: $(DEBDIR)/$(EXE)
 debug: $(EXE)
 
@@ -64,26 +62,6 @@ $(EXE): $(OBJS)
 	@echo "****************** Debug mode *******************"
 	$(CC) -o $@ -c $(DBFLAGS) $<
 	@echo "\t Compiled "$<" successfully !!"
-
-#####################################################################
-
-# # Release recipie
-# # release: $(RELDIR)/$(EXE)
-# release: $(EXE)
-
-# # Link process
-# # $(RELDIR)/$(EXE): $(OBJS)
-# $(EXE): $(OBJS)
-# 	@echo "*************************************************"
-# 	$(CC) -o $@ $^ $(LDFLAGS)
-# 	@echo " "
-# 	@echo "*************  GeHoJerez compiled !! ************"
-# 	@echo " "
-# # Compile	
-# %.o: %.c
-# 	@echo "***************** Release mode ******************"
-# 	$(CC) -o $@ -c $(DBFLAGS) $<
-# 	@echo "\t Compiled "$<" successfully !!"
 
 #####################################################################
 # Rule for benchmarks

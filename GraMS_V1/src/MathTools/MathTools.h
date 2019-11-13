@@ -26,6 +26,7 @@ double StatsDouMatrix(double *, int, char *);
 double StatsIntMatrix(int *, int, char *);
 Matrix CopyMat(Matrix);
 double Norm_Mat(Matrix,int);
+double Cond_Mat(Matrix);
 double Get_Determinant(Matrix);
 Matrix Get_Inverse(Matrix);
 Matrix Transpose_Mat(Matrix);

@@ -61,3 +61,11 @@ ChainPtr Tributary_Nodes_GIMP(Matrix, int,
 			      Matrix, Mesh);
 
 /* LME shape functions */
+Matrix LME_lambda(Matrix, Matrix,
+		  double, double);
+double LME_fa(Matrix, Matrix, double);
+Matrix LME_pa(Matrix, Matrix, double);
+Matrix LME_r(Matrix, Matrix);
+Matrix LME_J(Matrix, Matrix, Matrix);
+Matrix LME_dpa(Matrix, Matrix);
+

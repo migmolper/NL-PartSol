@@ -1141,7 +1141,6 @@ int InOut_Poligon(Matrix X_Point, Matrix Poligon)
 /*********************************************************************/
 
 double MinLenght_Poligon(Matrix Poligon){
-
   
 }
 
