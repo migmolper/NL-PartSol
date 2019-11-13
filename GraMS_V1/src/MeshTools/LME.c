@@ -12,7 +12,7 @@
 
 /*
   Shape functions based in :
-  "" Local maximum-entropy approximation schemes : a seamless 
+  [1] : "" Local maximum-entropy approximation schemes : a seamless 
   bridge between finite elements and meshfree methods ""
   by M.Arroyo and M.Ortiz, 2006
 
@@ -100,7 +100,11 @@ Matrix LME_lambda(Matrix da, Matrix lambda,
 
 double LME_fa(Matrix da, Matrix lambda, double Beta)
 /*
-
+  Auxiliar function to calculate the function fa that appear in [1].
+  Input parameters :
+  - da : Matrix with the distance to the neighborhood node ''a'' (dim x 1).
+  - lambda : Initial value of the lagrange multipliers (1 x dim).
+  - Beta : Tunning parameter (scalar).
 */
 {
 
@@ -228,7 +232,34 @@ Matrix LME_J(Matrix da, Matrix pa, Matrix r)
   return J;
 }
 
-double LME_dpa(){
+double LME_dpa(Matrix da, Matrix pa){
+
+  Matrix r;
+  Matrix J; /* Hessian of log(Z) */
+  Matrix Jm1; /* Inverse of J */
+  
+  dpa = ;
+
+  /* Get the Gradient and the Hessian of log(Z) */
+  r = LME_r(da,pa);
+  J = LME_J(da,pa,r);
+
+  /* Check the conditioning number of the Hessian */
+  if (fabs(Cond_Mat(J)) < 1e-8){
+    printf(" %s : %s \n",
+	   "Error in LME_lambda",
+	   "The Hessian is near to singular matrix");      
+    exit(0);
+  }
+    
+  /* Inverse of the Hessian */
+  Jm1 = Get_Inverse(J);
+
+  /* Free memory */
+  FreeMat(r);
+  FreeMat(J);
+    
+  return dpa;
   
 }
 
