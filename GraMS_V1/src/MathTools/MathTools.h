@@ -20,6 +20,7 @@ void ** Allocate_Matrix(int,int,int);
 void ** Allocate_MatrixZ(int,int,int);
 Matrix MatAlloc(int,int);
 Matrix MatAllocZ(int,int);
+Matrix MatAssign(int,int,double,double *,double **);
 void FreeMat(Matrix);
 void PrintMatrix(Matrix, int, int);
 double StatsDouMatrix(double *, int, char *);
@@ -37,10 +38,11 @@ Matrix Incr_Mat(Matrix, Matrix);
 Matrix Add_Mat(Matrix,Matrix);
 Matrix Sub_Mat(Matrix,Matrix);
 Matrix Get_Lumped_Matrix(Matrix);
-double SignumFunct(double x);
 
 /* MATH */
 double Area_Poligon(Matrix);
 Matrix Centroid_Poligon(Matrix);
 int InOut_Poligon(Matrix, Matrix);
+double SignumFunct(double x);
+Matrix SolvePolynomial(Matrix);
 

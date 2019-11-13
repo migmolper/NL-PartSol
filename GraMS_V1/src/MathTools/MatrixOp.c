@@ -147,6 +147,25 @@ Matrix MatAllocZ(int NumberRows,int NumberColumns)
 }
 
 /*********************************************************************/
+Matrix MatAssign(int N_rows,int N_cols,
+		 double n, double * nV,
+		 double ** nM)
+/*
+  Define general parameters of a matrix for auxiliar
+  matrix.
+*/
+{
+  Matrix M;
+  M.N_rows = N_rows;
+  M.N_cols = N_cols;
+  M.nV = nV;
+  M.nM = nM;
+  M.n = n;
+  
+  return M;
+}
+
+/*********************************************************************/
 
 void FreeMat(Matrix Input){
 
@@ -948,199 +967,85 @@ double Norm_Mat(Matrix In,int kind)
 
 /*********************************************************************/
 
+Matrix Eigen_Mat(Matrix In){
+
+  /* Check if we dont have a null matrix */
+  if ( (In.nM == NULL) && (In.n != In.n) ){
+    if(In.nV != NULL){
+      puts("Error in Eigen_Mat() : An array does not have determinant !");
+      exit(0);
+    }
+    puts("Error in Eigen_Mat() : Input matrix = NULL !");    
+    exit(0);
+  }
+  
+  /* Check if the matrix is square */
+  if(In.N_cols != In.N_rows){
+    puts(" Error in Eigen_Mat() : Non square matrix !");
+    exit(0);
+  }
+
+  int Dim = In.N_cols;
+  Matrix Eigen = MatAssign(Dim,Dim,NAN,NULL,NULL);
+  Matrix Eigen_Vals;
+  Matrix Coeffs;
+
+  switch(Dim){
+
+  case 1 :
+    exit(0);
+    
+  case 2 :
+    /* Get the coefficients of the charasteristic pol */
+    Coeffs = MatAllocZ(1,3);
+    Coeffs.nV[0] = 1;
+    Coeffs.nV[1] = - In.nM[0][0] - In.nM[1][1];
+    Coeffs.nV[2] = In.nM[0][0]*In.nM[1][1] - In.nM[1][0]*In.nM[0][1];
+    /* Solve the charasteristic pol to the eigenvalues */
+    Eigen_Vals = SolvePolynomial(Coeffs);
+    FreeMat(Coeffs);
+    /* Assign the eigenvalues to the solution */
+    Eigen.nV = Eigen_Vals.nV;
+    break;
+
+  case 3 :
+    exit(0);
+
+  default :
+    exit(0);
+
+  }
+
+  return Eigen;
+}
+
+/*********************************************************************/
+
 double Cond_Mat(Matrix In)
 /*
   Return the conditioning number 
 */
 {
-  
-}
-
-/*********************************************************************/
-
-double Area_Poligon(Matrix Poligon)
-/*
-  Get the area of a poligon on n vertex using the 
-  Shoelace formula :
-  https://en.wikipedia.org/wiki/Shoelace_formula
-*/
-{
-  double A_Poligon;
-  int N_vertex;
-
-  /* Asign the number of vertex */
-  N_vertex = Poligon.N_rows;
-
-  /* Check the number of vertex */
-  if(N_vertex<3){
-    puts("Error in Area_Poligon : Wrong number of vertex !!!");
-    exit(0);
-  }
-  
-  /* Initialize the area value with the initial therm */
-  A_Poligon = Poligon.nM[0][1]*(Poligon.nM[N_vertex-1][0] - Poligon.nM[1][0]);
-
-  /* Addd the middle therm */
-  for(int i = 1 ; i<N_vertex-1 ; i++){
-    A_Poligon += Poligon.nM[i][1]*(Poligon.nM[i-1][0] - Poligon.nM[i+1][0]); 
-  }
-
-  /* Addd the final therm */
-  A_Poligon += Poligon.nM[N_vertex-1][1]*(Poligon.nM[N_vertex-2][0] -
-					  Poligon.nM[0][0]);
-
-  /* Get the area */
-  A_Poligon = 0.5*fabs(A_Poligon);
-    
-  return A_Poligon;
-}
-
-/*********************************************************************/
-
-Matrix Centroid_Poligon(Matrix Poligon)
-/*
-  Get the position of the centroid of a poligon, also return the value of the 
-  area
-*/
-{
-
-  Matrix C_Poligon;
-  double A_aux;
-  int N_vertex;
-  int N_dimensions;
-
-  /* Asign the number of vertex and check it  */
-  N_vertex = Poligon.N_rows; 
-  if(N_vertex<3){
-    puts("Error in Centroid_Poligon() : Wrong number of vertex !!!");
-    exit(0);
-  }
-
-  /* Asign the number of dimensions and check it */
-  N_dimensions = Poligon.N_cols;
-  if(N_dimensions != 2){
-    puts("Error in Centroid_Poligon() : Wrong number of dimensions !!!");
-    exit(0);
-  }
-  
-  /* Allocate the array for the centroid */
-  C_Poligon = MatAllocZ(1,N_dimensions);
-  
-  /* Initialize the area of the poligon */
-  C_Poligon.n = 0;
-  
-  /* Calcule the area and the centroid */
-  for(int i = 0 ; i<N_vertex-1 ; i++){
-
-    A_aux = Poligon.nM[i][0]*Poligon.nM[i+1][1] -
-      Poligon.nM[i+1][0]*Poligon.nM[i][1];
-
-    C_Poligon.nV[0] += (Poligon.nM[i][0] + Poligon.nM[i+1][0])*A_aux;
-    C_Poligon.nV[1] += (Poligon.nM[i][1] + Poligon.nM[i+1][1])*A_aux;
-    C_Poligon.n += A_aux;
-   
-  }
-
-  /* Addd the final therm */
-  A_aux = Poligon.nM[N_vertex-1][0]*Poligon.nM[0][1] -
-    Poligon.nM[0][0]*Poligon.nM[N_vertex-1][1];
-
-  C_Poligon.nV[0] += (Poligon.nM[N_vertex-1][0] + Poligon.nM[0][0])*A_aux;
-  C_Poligon.nV[1] += (Poligon.nM[N_vertex-1][1] + Poligon.nM[0][1])*A_aux;
-  C_Poligon.n += A_aux;
-
-  /* Fix the area */
-  C_Poligon.n *= 0.5;
-
-  /* Fix the centroid */
-  C_Poligon.nV[0] /= 6*C_Poligon.n;
-  C_Poligon.nV[1] /= 6*C_Poligon.n;
-
-  /* Fix the sign of the area */
-  C_Poligon.n = fabs(C_Poligon.n);
-
-  return C_Poligon;
-}
-
-
-/*********************************************************************/
-
-int InOut_Poligon(Matrix X_Point, Matrix Poligon)
-/*
-  Check if a point is or not (1/0) inside of a poligon.
-  Inputs :
-  - X_Point : Coordinates of the point 
-  - Poligon : Coordinates of the vertex 0,1,....,n,0
-*/
-{
-  /* By default, we suppose that the point is in the poligon */
-  int InOut = 1;
-
-  Matrix a = MatAllocZ(3,1);
-  Matrix b = MatAllocZ(3,1);
-  Matrix c;
-  Matrix n;
-  Matrix nxc;
-
-  /* Get the normal vector */
-  a.nV[0] = Poligon.nM[1][0] - Poligon.nM[0][0];
-  a.nV[1] = Poligon.nM[1][1] - Poligon.nM[0][1];
-  a.nV[2] = Poligon.nM[1][2] - Poligon.nM[0][2];
-  b.nV[0] = Poligon.nM[Poligon.N_rows-1][0] - Poligon.nM[0][0];
-  b.nV[1] = Poligon.nM[Poligon.N_rows-1][1] - Poligon.nM[0][1];
-  b.nV[2] = Poligon.nM[Poligon.N_rows-1][2] - Poligon.nM[0][2];
-  n = Vectorial_prod(a,b);
-  n.N_rows = 1;
-  n.N_cols = 3;
-
-  /* Fill a and b for the First search */
-  a.nV[0] = Poligon.nM[0][0] - Poligon.nM[Poligon.N_rows-1][0];
-  a.nV[1] = Poligon.nM[0][1] - Poligon.nM[Poligon.N_rows-1][1];
-  a.nV[2] = Poligon.nM[0][2] - Poligon.nM[Poligon.N_rows-1][2];
-
-  b.nV[0] = X_Point.nV[0] - Poligon.nM[Poligon.N_rows-1][0];
-  b.nV[1] = X_Point.nV[1] - Poligon.nM[Poligon.N_rows-1][1];
-  b.nV[2] = X_Point.nV[2] - Poligon.nM[Poligon.N_rows-1][2];
-  
-  for(int i = 0 ; i<Poligon.N_rows-1 ; i++){
-
-    c = Vectorial_prod(a,b);
-    nxc = Scalar_prod(n,c);
-    FreeMat(c);
-
-    if(nxc.n < 0){
-      InOut = 0;
-      break;
+  /* Check if we dont have a null matrix */
+  if ( (In.nM == NULL) && (In.n != In.n) ){
+    if(In.nV != NULL){
+      puts("Error in Cond_Mat() : An array does not have determinant !");
+      exit(0);
     }
-    
-    a.nV[0] = Poligon.nM[i+1][0] - Poligon.nM[i][0];
-    a.nV[1] = Poligon.nM[i+1][1] - Poligon.nM[i][1];
-    a.nV[2] = Poligon.nM[i+1][2] - Poligon.nM[i][2];
-
-    b.nV[0] = X_Point.nV[0] - Poligon.nM[i][0];
-    b.nV[1] = X_Point.nV[1] - Poligon.nM[i][1];
-    b.nV[2] = X_Point.nV[2] - Poligon.nM[i][2];
-    
+    puts("Error in Cond_Mat() : Input matrix = NULL !");    
+    exit(0);
   }
-
-  /* Last check */
-  c = Vectorial_prod(a,b);
-  nxc = Scalar_prod(n,c);
-  if(nxc.n < 0){
-    InOut = 0;
+  
+  /* Check if the matrix is square */
+  if(In.N_cols != In.N_rows){
+    puts(" Error in Cond_Mat() : Non square matrix !");
+    exit(0);
   }
+  
+  Matrix Eigen = Eigen_Mat(In);
+  int Dim_In = In.N_rows;
 
-  FreeMat(a);
-  FreeMat(b);
-  FreeMat(c);
-  FreeMat(n);
-
-  return InOut;
-}
-
-/*********************************************************************/
-
-double MinLenght_Poligon(Matrix Poligon){
+  return fabs((double)Eigen.nV[0]/Eigen.nV[Dim_In-1]);
   
 }
 
@@ -1166,22 +1071,5 @@ Matrix Get_Lumped_Matrix(Matrix M_in){
   }
   return M_out;  
 }
-
-/*********************************************************************/
-
-double SignumFunct(double x){
- 
-  if(x > 0){
-    return 1;
-  }
-  else if (x < 0) {
-    return -1;
-  }
-  else {
-    return 0;
-  }
-  
-}
-
 
 /*********************************************************************/
