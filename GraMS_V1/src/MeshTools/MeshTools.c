@@ -11,6 +11,55 @@
 
 /*********************************************************************/
 
+double GetMinElementSize(Mesh FEM_Mesh)
+/*
+  Function to get the minimum mesh size employing the FEM linear shape functions
+*/
+{
+
+  /* Auxiliar variables of the function */
+  int NumElemMesh = FEM_Mesh.NumElemMesh;
+  int NumNodesElem; /* Number of nodes of each element */
+  int * Connectivity; /* Connectivity of the element */
+  Matrix Coordinates; /* Coordinates of the element nodes */
+  double MinElementSize;
+
+  /* 1º Loop over the elements in the mesh */
+  for(int i = 0 ; i<NumElemMesh ; i++){
+
+    /* 2º Connectivity of the Poligon */
+    NumNodesElem = FEM_Mesh.NumNodesElem[j];
+    Connectivity =
+      ChainToArray(FEM_Mesh.Connectivity[j],NumNodesElem);
+    
+    /* 3º Allocate the polligon Matrix and fill it */
+    Coordinates = MatAllocZ(NumNodesElem,NumberDimensions);
+    for(int k = 0; k<NumNodesElem; k++){
+      for(int l = 0 ; l<NumberDimensions ; l++){
+	Poligon_Coordinates.nM[k][l] =
+	  FEM_Mesh.Coordinates.nM[Poligon_Connectivity[k]][l];
+      }
+    }
+
+    /* 4º Get the gradient of the element for each node */
+    if(strcmp(FEM_Mesh.TypeElem,"Quadrilateral") == 0){
+      
+    }
+    else if(strcmp(FEM_Mesh.TypeElem,"Triangle") == 0){
+      
+    }
+    else{
+      
+    }
+    
+  }
+
+  return MinElementSize;
+
+}
+
+/*********************************************************************/
+
 void GetNodalConnectivity(Mesh FEM_Mesh){
 
   /* Variable declaration */

@@ -182,8 +182,9 @@ Matrix Get_dNdX_Q4(Matrix X_EC_GP,Matrix Element)
 /* Global coordinates of the four nodes quadrilateral */
 Matrix Get_X_GC_Q4(Matrix X_NC_GP,Matrix X_GC_Nodes)
 /*
-This function evaluate the position of the GP in the element, and get it global coordiantes    
- */
+  This function evaluate the position of the GP in the element,
+  and get it global coordiantes    
+*/
 {
   /* 0º Variable declaration */
   Matrix N_ref;
