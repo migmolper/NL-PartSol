@@ -337,6 +337,9 @@ ChainPtr LME_Tributary_Nodes(Matrix X_GP, int Elem_GP,
   int NumNodesElem;
   double Ra;
 
+  /* CALL LIBRARIES */
+  MatLib MO = MatrixOperators();
+
   /* Get the search radius */
   Ra = FEM_Mesh.DeltaX*sqrt(-log(Tol0)/gamma);
 
@@ -382,10 +385,10 @@ ChainPtr LME_Tributary_Nodes(Matrix X_GP, int Elem_GP,
     X_I.nV = FEM_Mesh.Coordinates.nM[iPtr->I];
 
     /* Get a vector from the GP to the node */
-    Distance = Sub_Mat(X_GP,X_I);
+    Distance = MO.Sub(X_GP,X_I);
 
     /* If the node is not near the GP pop out of the chain */
-    if(Norm_Mat(Distance,2) > Ra){
+    if(MO.Norm(Distance,2) > Ra){
       /* If the node is the first in the chain */
       if(PrevPtr == NULL){
 	AuxPtr = iPtr->next;
@@ -402,7 +405,7 @@ ChainPtr LME_Tributary_Nodes(Matrix X_GP, int Elem_GP,
     }
 
     /* Free memory of the distrance vector */
-    FreeMat(Distance);
+    MO.FreeMat(Distance);
 
     /* The previous is the index */
     PrevPtr = iPtr;
