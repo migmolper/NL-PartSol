@@ -4,10 +4,10 @@
 #include <math.h>
 #include "../ToolsLib/TypeDefinitions.h"
 #include "../ToolsLib/GlobalVariables.h"
+#include "../ToolsLib/Utils.h"
 #include "../MathTools/MathTools.h"
 #include "../InOutFun/InOutFun.h"
 #include "../MeshTools/MeshTools.h"
-#include "../Constitutive/Constitutive.h"
 #include "../MPM_Subroutines/MPM_Subroutines.h"
 #include "GaussPointsTools.h"
 
@@ -155,7 +155,7 @@ GaussPoint Define_GP_Mesh(char * MPM_GID_MeshName,
   /* Density field (Scalar) */
   MPM_Mesh.Phi.rho = MatAllocZ(MPM_Mesh.NumGP,1);
   strcpy(MPM_Mesh.Phi.rho.Info,"Density field GP");
- 
+
   /* Fill geometrical properties of the GP mesh */
   for(int i = 0 ; i<MPM_Mesh.NumGP ; i++){
 
@@ -247,7 +247,7 @@ GaussPoint Define_GP_Mesh(char * MPM_GID_MeshName,
 
 /*********************************************************************/
 
-GaussPoint InitializeGP(char * GDF, Mesh FEM_Mesh, Matrix D){
+GaussPoint InitializeGP(char * GDF, Mesh FEM_Mesh){
 
   GaussPoint GP_Mesh;
 
@@ -256,8 +256,8 @@ GaussPoint InitializeGP(char * GDF, Mesh FEM_Mesh, Matrix D){
   puts(" \t Defining MPM mesh of GPs ...");
   GP_Mesh = Define_GP_Mesh(MPM_MeshFileName,Density);
   puts(" \t DONE !!!");
-  puts(" \t Constitutive law for the GPs ...");
-  GP_Mesh.D = D;
+  puts(" \t Constitutive library for GPs ...");
+  GP_Mesh.D = Contitutive();
   puts(" \t DONE !!!");
   puts(" \t Searching GPs in the FEM mesh ...");
   GlobalSearchGaussPoints(GP_Mesh,FEM_Mesh);

@@ -137,6 +137,71 @@ typedef struct {
 
 } LoadCase;
 
+
+/*******************************************************/
+
+
+/* Load case : multiple loads */
+typedef struct {
+
+  /* Elastic modulus */
+  double E;
+  /* Poisson ratio */
+  double mu;
+  
+} Material;
+
+/*******************************************************/
+
+/* Library definitions */
+typedef struct { /* Matrix operators */
+
+  /* Allocate matrix */
+  Matrix (* Alloc)(int,int);
+  /* Allocate matrix of zeros */
+  Matrix (* AllocZ)(int,int);
+  /* Asignation of properties */
+  Matrix (* Assign)(int,int,double,double *,double **);
+  /* Free matrix */
+  void (* FreeMat)(Matrix);
+  /* Print matrix */
+  void (* Print)(Matrix, int, int);
+  /* Copy matrix */
+  Matrix (* Copy)(Matrix);
+  /* Get the norm of a matrix */
+  double (* Norm)(Matrix,int);
+  /* Get the condition number */
+  double (* Cond)(Matrix);
+  /* Get the determinant of a matrix */
+  double (* Det)(Matrix);
+  /* Get the inverse of a matrix */
+  Matrix (* Inv)(Matrix);
+  /* Get the transpose of a matrix */
+  Matrix (* Trans)(Matrix);
+  /* Scalar product */
+  Matrix (* Sprod)(Matrix,Matrix);
+  /* Vectorial product */
+  Matrix (* Vprod)(Matrix a, Matrix b);
+  /* Tensorial product */
+  Matrix (* Tprod)(Matrix,Matrix);
+  /* Increment a matrix */
+  Matrix (* Incr)(Matrix, Matrix);
+  /* Add two matrix */
+  Matrix (* Add)(Matrix,Matrix);
+  /* Subtract two matrix */
+  Matrix (* Sub)(Matrix,Matrix);
+  /* Get the lumped matrix */
+  Matrix (* Lumped)(Matrix);
+  
+} MatLib;
+
+typedef struct { /* Constitutive models */
+
+  /* 2D linear elastic material */
+  Matrix (* LE2D)(Matrix,double,double);
+  
+} ConstLib;
+
 /*******************************************************/
 
 /* Physical fields */
@@ -183,7 +248,8 @@ typedef struct {
   Fields Phi; /* Values from the actual step */
   Fields Phi_n0; /* Values from the previous step */
   /* Constitutive response */
-  Matrix D;
+  int * MatIdx;
+  ConstLib D;
   /* External forces */
   LoadCase F;
   /* Body forces */
@@ -231,4 +297,3 @@ typedef struct {
   Matrix (* dNdX_ref)(Matrix );
     
 } Mesh;
-

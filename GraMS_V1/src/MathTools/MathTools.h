@@ -3,7 +3,6 @@
 #define TypeDefinitions
 #endif
 
-
 /* SOLVERS */
 /* Matrix Nelder_Mead(); */
 Matrix Newton_Rapson(Matrix(* Function)(Matrix, Matrix), Matrix,

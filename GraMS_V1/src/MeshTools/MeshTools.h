@@ -6,10 +6,11 @@
 #endif
 
 /* Initialize the backgraund mesh */
-Mesh InitializeMesh(char * GDF);
+Mesh InitializeMesh(char *);
 
 /* Functions definitions :*/
-void GetNodalConnectivity(Mesh FEM_Mesh);
+double GetMinElementSize(Mesh);
+void GetNodalConnectivity(Mesh);
 void GlobalSearchGaussPoints(GaussPoint, Mesh);
 void LocalSearchGaussPoints(GaussPoint, Mesh);
 Matrix Get_B_GP(Matrix);

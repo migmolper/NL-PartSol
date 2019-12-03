@@ -6,6 +6,4 @@
 #define TypeDefinitions
 #endif
 
-Matrix LinearElastic1D(double);
-
-Matrix LinearElastic2D(double,double);
+Matrix LinearElastic2D(Matrix,double,double);

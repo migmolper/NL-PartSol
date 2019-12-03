@@ -2,9 +2,9 @@
 #include <stdlib.h>
 #include <math.h>
 #include "../ToolsLib/TypeDefinitions.h"
-#include "../MathTools/MathTools.h"
+#include "../ToolsLib/GlobalVariables.h"
+#include "../ToolsLib/Utils.h"
 #include "MeshTools.h"
-
 
 /**************************************************/
 /************* Local Maximum-Entropy **************/
@@ -36,6 +36,9 @@ Matrix LME_lambda(Matrix da, Matrix lambda,
   -> TOL_lambda : Tolerance for the lambda calculations.
 */
 {
+  /* CALL LIBRARIES */
+  MatLib MO = MatrixOperators();
+  
   /* Definition of some parameters */
   Matrix pa; /* Shape function vector */
   Matrix r; /* Gradient of log(Z) */
@@ -55,13 +58,13 @@ Matrix LME_lambda(Matrix da, Matrix lambda,
     r = LME_r(da,pa);
 
     /* Get the norm of r for the stopping criteria porpouse */
-    norm_r = Norm_Mat(r,2);
+    norm_r = MO.Norm(r,2);
 
     /* Get the Hessian of log(Z) */    
     J = LME_J(da,pa,r);
 
     /* Check the conditioning number of the Hessian */
-    if (fabs(Cond_Mat(J)) < 1e-8){
+    if (fabs(MO.Cond(J)) < 1e-8){
       printf(" %s : %s \n",
 	     "Error in LME_lambda",
 	     "The Hessian is near to singular matrix");      
@@ -69,26 +72,26 @@ Matrix LME_lambda(Matrix da, Matrix lambda,
     }
 
     /* Free the distance matrix */
-    FreeMat(da);
+    MO.FreeMat(da);
     /* Free the shape function nodal values */
-    FreeMat(pa);
+    MO.FreeMat(pa);
     
     /* Inverse of the Hessian */
-    Jm1 = Get_Inverse(J);
+    Jm1 = MO.Inv(J);
 
     /* Get the increment for lambda */
-    Increment_lambda = Scalar_prod(Jm1,r);
+    Increment_lambda = MO.Sprod(Jm1,r);
 
     /* Free r, J, and the inverse of J */
-    FreeMat(r);
-    FreeMat(J);
-    FreeMat(Jm1);   
+    MO.FreeMat(r);
+    MO.FreeMat(J);
+    MO.FreeMat(Jm1);   
 
     /* Update the value of lambda with the use of the increment */
-    lambda = Incr_Mat(lambda,Increment_lambda);
+    lambda = MO.Incr(lambda,Increment_lambda);
 
     /* Free memory */
-    FreeMat(Increment_lambda);
+    MO.FreeMat(Increment_lambda);
 
     /* Update the number of iterations */
     NumIter ++;
@@ -115,10 +118,12 @@ double LME_fa(Matrix da, Matrix lambda, double Beta)
   -> Beta : Tunning parameter (scalar).
 */
 {
-
+  /* CALL LIBRARIES */
+  MatLib MO = MatrixOperators();
+  
   /* Get the scalar product the distance and the lagrange multipliers */
-  Matrix Aux = Scalar_prod(lambda,da);
-  double norm_dist = Norm_Mat(da,2);
+  Matrix Aux = MO.Sprod(lambda,da);
+  double norm_dist = MO.Norm(da,2);
 
   /* Return the value of f_a*/
   return -Beta*norm_dist*norm_dist + Aux.n;
@@ -136,17 +141,20 @@ Matrix LME_pa(Matrix da, Matrix lambda, double Beta)
   -> Beta : Tunning parameter (scalar).
 */
 {
+  /* CALL LIBRARIES */
+  MatLib MO = MatrixOperators();
+  
   /* Definition of some parameters */
   int N_dim = da.N_cols;
   int N_neibourg = da.N_rows;
-  Matrix pa = MatAlloc(1,N_neibourg);
+  Matrix pa = MO.Alloc(1,N_neibourg);
   Matrix da_i;
   double Z_a = 0;
   double Z_a_m1 = 0;
 
   /* Get Z and the numerator */
   for(int i = 0 ; i<N_neibourg ; i++){
-    da_i = MatAssign(N_dim,1,NAN,da.nM[i],NULL);
+    da_i = MO.Assign(N_dim,1,NAN,da.nM[i],NULL);
     pa.nV[i] = exp(LME_fa(da_i,lambda,Beta));
     Z_a += pa.nV[i];
   }
@@ -174,10 +182,13 @@ Matrix LME_r(Matrix da, Matrix pa)
   neighborhood nodes (1 x neighborhood).
 */
 {
+  /* CALL LIBRARIES */
+  MatLib MO = MatrixOperators();
+  
   /* Definition of some parameters */
   int N_dim = da.N_cols;
   int N_neibourg = da.N_rows;
-  Matrix r = MatAllocZ(N_dim,1);
+  Matrix r = MO.AllocZ(N_dim,1);
 
   /* Fill ''r'' */
   for(int i = 0 ; i<N_neibourg ; i++){
@@ -202,6 +213,9 @@ Matrix LME_J(Matrix da, Matrix pa, Matrix r)
   -> r : Gradient of log(Z) (dim x 1).
 */
 {
+  /* CALL LIBRARIES */
+  MatLib MO = MatrixOperators();
+  
   /* Definition of some parameters */
   int N_neibourg = da.N_rows;
   int N_dim = da.N_cols;
@@ -214,31 +228,31 @@ Matrix LME_J(Matrix da, Matrix pa, Matrix r)
   Matrix da_da; /* Tensorial product of da */
 
   /* Get the first component of the Hessian (J_I) */
-  J_I = MatAllocZ(N_dim,N_dim); 
+  J_I = MO.AllocZ(N_dim,N_dim); 
   for(int i = 0 ; i<N_neibourg ; i++){
     /* Get the tensorial product for each neighborhood. */
-    da_i = MatAssign(N_dim,1,NAN,da.nM[i],NULL);
-    da_iT = MatAssign(1,N_dim,NAN,da.nM[i],NULL);
-    da_da = Tensorial_prod(da_i,da_iT);
+    da_i = MO.Assign(N_dim,1,NAN,da.nM[i],NULL);
+    da_iT = MO.Assign(1,N_dim,NAN,da.nM[i],NULL);
+    da_da = MO.Tprod(da_i,da_iT);
     /* Fill the first component of the Hessian (J_I) */
     for(int j = 0 ; j<N_dim ; j++){
       for(int k = 0 ; k<N_dim ; k++){
 	J_I.nM[j][k] += pa.nV[i]*da_da.nM[j][k];
       }
     }
-    FreeMat(da_da);
+    MO.FreeMat(da_da);
   }
 
   /* Get the second component of the Hessian (J_II) */
-  r_T = MatAssign(1,N_dim,NAN,r.nV,NULL);
-  J_II = Tensorial_prod(r,r_T);
+  r_T = MO.Assign(1,N_dim,NAN,r.nV,NULL);
+  J_II = MO.Tprod(r,r_T);
 
   /* Get the Hessian */
-  J = Sub_Mat(J_I,J_II);
+  J = MO.Sub(J_I,J_II);
 
   /* Free the auxiliar components of the Hessian */
-  FreeMat(J_I);
-  FreeMat(J_II);
+  MO.FreeMat(J_I);
+  MO.FreeMat(J_II);
 
   /* Return the value of the Hessian */
   return J;
@@ -256,10 +270,14 @@ Matrix LME_dpa(Matrix da, Matrix pa)
   neighborhood nodes (neighborhood x 1).
 */
 {
+
+  /* CALL LIBRARIES */
+  MatLib MO = MatrixOperators();
+  
   /* Definition of some parameters */
   int N_neibourg = da.N_rows;
   int N_dim = da.N_cols;
-  Matrix dpa = MatAllocZ(N_dim,N_neibourg);
+  Matrix dpa = MO.AllocZ(N_dim,N_neibourg);
   Matrix r;
   Matrix J; /* Hessian of log(Z) */
   Matrix Jm1; /* Inverse of J */
@@ -271,7 +289,7 @@ Matrix LME_dpa(Matrix da, Matrix pa)
   J = LME_J(da,pa,r);
 
   /* Check the conditioning number of the Hessian */
-  if (fabs(Cond_Mat(J)) < 1e-8){
+  if (fabs(MO.Cond(J)) < 1e-8){
     printf(" %s : %s \n",
 	   "Error in LME_lambda",
 	   "The Hessian is near to singular matrix");      
@@ -279,301 +297,119 @@ Matrix LME_dpa(Matrix da, Matrix pa)
   }
     
   /* Inverse of the Hessian */
-  Jm1 = Get_Inverse(J);
+  Jm1 = MO.Inv(J);
 
   /* Free memory */
-  FreeMat(r);
-  FreeMat(J);
+  MO.FreeMat(r);
+  MO.FreeMat(J);
 
   /* Fill the gradient for each node */
   for(int i = 0 ; i<N_neibourg ; i++){
-    da_i = MatAssign(N_dim,1,NAN,da.nM[i],NULL); 
-    Jm1_da = Scalar_prod(Jm1,da_i);    
+    da_i = MO.Assign(N_dim,1,NAN,da.nM[i],NULL); 
+    Jm1_da = MO.Sprod(Jm1,da_i);    
     for(int j = 0 ; j<N_dim ; j++){
       dpa.nM[j][i] = pa.nV[i]*Jm1_da.nV[j];
     }
-    FreeMat(Jm1_da);
+    MO.FreeMat(Jm1_da);
   }
 
   /* Free memory */
-  FreeMat(Jm1);
+  MO.FreeMat(Jm1);
   
   /* Return the value of the shape function gradient */  
   return dpa;
   
 }
 
-/* ChainPtr LME_Tributary_Nodes(Matrix X_EC_GP, int Elem_GP, */
-/* 			     Mesh FEM_Mesh, double h, double Tol0){ */
+ChainPtr LME_Tributary_Nodes(Matrix X_GP, int Elem_GP,
+			     Mesh FEM_Mesh, double gamma, double Tol0){
 
-/*   ChainPtr Triburary_Nodes = NULL; */
-/*   ChainPtr ChainElements = NULL; */
-/*   int * Tributary_Elements; */
-/*   int * NodesElem; */
-/*   int Elem_i; */
-/*   int Num_Elem; */
+  Matrix Distance; /* Distance between node and GP */
+  Matrix X_I = MatAssign(NumberDimensions,1,NAN,NULL,NULL);
+  ChainPtr Triburary_Nodes = NULL;
+  ChainPtr Triburary_Elements = NULL;
+  ChainPtr iPtr = NULL;
+  ChainPtr PrevPtr = NULL;
+  ChainPtr AuxPtr;
+  int * List_Elements;
+  int * NodesElem;
+  int Num_Elem;
+  int NumNodesElem;
+  double Ra;
 
-/*   /\* Get the search radius *\/ */
-/*   double Ra = h*sqrt(-log(Tol0)); */
+  /* Get the search radius */
+  Ra = FEM_Mesh.DeltaX*sqrt(-log(Tol0)/gamma);
+
+  /* Number of nodes of the initial element and
+     list of nodes */
+  NumNodesElem = FEM_Mesh.NumNodesElem[Elem_GP];
+  NodesElem = ChainToArray(FEM_Mesh.Connectivity[Elem_GP],
+			   NumNodesElem);
+
+  /* Chain with the tributary elements, this is the list of element near the
+     gauss point, including where it is */
+  for(int i = 0 ; i<NumNodesElem ; i++){
+    Triburary_Elements =
+      ChainUnion(Triburary_Elements,FEM_Mesh.NodeNeighbour[NodesElem[i]]);
+  }
+
+  /* Free the array with the nodes of the initial element */
+  free(NodesElem);
+
+  /* List with the tributary nodes */
+  Num_Elem = LenghtChain(Triburary_Elements);
+  List_Elements = ChainToArray(Triburary_Elements,Num_Elem);
+
+  /* Free the chain wit the tributary elements */
+  FreeChain(Triburary_Elements);
   
-/*   /\* Check if I am in the central area *\/ */
-/*   if ((fabs(X_EC_GP.nV[0]) <= Dist[0]) && */
-/*       (fabs(X_EC_GP.nV[1]) <= Dist[1])){ */
-/*     Triburary_Nodes = CopyChain(FEM_Mesh.Connectivity[Elem_GP]); */
-/*   }     */
-/*   /\* Check if I am in the 1º Quadrant *\/ */
-/*   else if((X_EC_GP.nV[0]>=0) && */
-/* 	  (X_EC_GP.nV[1]>=0)){ */
-/*     /\* Create an array with the nodes of the element *\/ */
-/*     NodesElem = ChainToArray(FEM_Mesh.Connectivity[Elem_GP],4); */
-/*     if((fabs(X_EC_GP.nV[0]) >= Dist[0]) && */
-/*        (fabs(X_EC_GP.nV[1]) <= Dist[1])){ */
-/*       /\* Generate the list of Elements whose nodes contributes to the GP *\/        */
-/*       ChainElements = ChainIntersection(FEM_Mesh.NodeNeighbour[NodesElem[2]], */
-/* 					FEM_Mesh.NodeNeighbour[NodesElem[1]]); */
-/*       Num_Elem = LenghtChain(ChainElements); */
-/*       Tributary_Elements = ChainToArray(ChainElements,Num_Elem); */
-/*       FreeChain(ChainElements); */
+  /* Fill the chain with the preliminary tributary nodes */
+  for(int i = 0 ; i<Num_Elem ; i++){
+    Triburary_Nodes =
+      ChainUnion(Triburary_Nodes,FEM_Mesh.Connectivity[List_Elements[i]]);
+  }
 
-/*       /\* Iterate in the list and select the union of the sets of nodes *\/ */
-/*       for(int i = 0 ; i<Num_Elem ; i++){ */
-/* 	Elem_i = Tributary_Elements[i]; */
-/* 	Triburary_Nodes = */
-/* 	  ChainUnion(Triburary_Nodes,FEM_Mesh.Connectivity[Elem_i]); */
-/*       } */
-      
-/*     } */
-/*     else if((fabs(X_EC_GP.nV[0]) <= Dist[0]) && */
-/* 	    (fabs(X_EC_GP.nV[1]) >= Dist[1])){ */
-/*       /\* Generate the list of Elements whose nodes contributes to the GP *\/  */
-/*       ChainElements = ChainIntersection(FEM_Mesh.NodeNeighbour[NodesElem[2]], */
-/* 					FEM_Mesh.NodeNeighbour[NodesElem[3]]); */
-/*       Num_Elem = LenghtChain(ChainElements); */
-/*       Tributary_Elements = ChainToArray(ChainElements,Num_Elem); */
-/*       FreeChain(ChainElements); */
+  /* Free the array wit the list of tributary elements */
+  free(List_Elements);
 
-/*       /\* Iterate in the list and select the union of the sets of nodes *\/ */
-/*       for(int i = 0 ; i<Num_Elem ; i++){ */
-/* 	Elem_i = Tributary_Elements[i]; */
-/* 	Triburary_Nodes = */
-/* 	  ChainUnion(Triburary_Nodes,FEM_Mesh.Connectivity[Elem_i]); */
-/*       } */
-/*       /\* Free memory *\/ */
-/*       free(Tributary_Elements); */
-/*     } */
-/*     else if((fabs(X_EC_GP.nV[0]) >= Dist[0]) && */
-/* 	    (fabs(X_EC_GP.nV[1]) >= Dist[1])){ */
-/*       /\* Generate the list of Elements whose nodes contributes to the GP *\/  */
-/*       ChainElements = FEM_Mesh.NodeNeighbour[NodesElem[2]]; */
-/*       Num_Elem = LenghtChain(ChainElements); */
-/*       Tributary_Elements = ChainToArray(ChainElements,Num_Elem); */
+  /* Initialize the iterator to iterate over the list of tributary nodes */
+  iPtr = Triburary_Nodes;
 
-/*       /\* Iterate in the list and select the union of the sets of nodes *\/ */
-/*       for(int i = 0 ; i<Num_Elem ; i++){ */
-/* 	Elem_i = Tributary_Elements[i]; */
-/* 	Triburary_Nodes = */
-/* 	  ChainUnion(Triburary_Nodes,FEM_Mesh.Connectivity[Elem_i]); */
-/*       } */
-/*       /\* Free memory *\/ */
-/*       free(Tributary_Elements); */
-      
-/*     } */
-/*     /\* Free memory *\/ */
-/*     free(NodesElem);     */
-/*   }   */
-/*   /\* Check if I am in the 2º Quadrant *\/ */
-/*   else if((X_EC_GP.nV[0]<=0) && */
-/* 	  (X_EC_GP.nV[1]>=0)){ */
-/*     /\* Create an array with the nodes of the element *\/ */
-/*     NodesElem = ChainToArray(FEM_Mesh.Connectivity[Elem_GP],4); */
+  /* Loop over the chain with the tributary nodes */
+  while(iPtr != NULL){
 
-/*     if((fabs(X_EC_GP.nV[0]) <= Dist[0]) && */
-/*        (fabs(X_EC_GP.nV[1]) >= Dist[1])){ */
+    /* Assign to a pointer the coordinates of the nodes */
+    X_I.nV = FEM_Mesh.Coordinates.nM[iPtr->I];
 
-/*       /\* Generate the list of Elements whose nodes contributes to the GP *\/  */
-/*       ChainElements = ChainIntersection(FEM_Mesh.NodeNeighbour[NodesElem[2]], */
-/* 					FEM_Mesh.NodeNeighbour[NodesElem[3]]); */
-/*       Num_Elem = LenghtChain(ChainElements);       */
-/*       Tributary_Elements =  ChainToArray(ChainElements,Num_Elem); */
-/*       FreeChain(ChainElements); */
+    /* Get a vector from the GP to the node */
+    Distance = Sub_Mat(X_GP,X_I);
 
-/*       /\* Iterate in the list and select the union of the sets of nodes *\/ */
-/*       for(int i = 0 ; i<Num_Elem ; i++){ */
-/* 	Elem_i = Tributary_Elements[i]; */
-/* 	Triburary_Nodes = */
-/* 	  ChainUnion(Triburary_Nodes,FEM_Mesh.Connectivity[Elem_i]); */
-/*       } */
-/*       /\* Free memory *\/ */
-/*       free(Tributary_Elements); */
-/*     } */
-/*     else if((fabs(X_EC_GP.nV[0]) >= Dist[0]) && */
-/* 	    (fabs(X_EC_GP.nV[1]) <= Dist[1])){ */
-/*       /\* Generate the list of Elements whose nodes contributes to the GP *\/  */
-/*       ChainElements = ChainIntersection(FEM_Mesh.NodeNeighbour[NodesElem[3]], */
-/* 					FEM_Mesh.NodeNeighbour[NodesElem[0]]); */
-/*       Num_Elem = LenghtChain(ChainElements); */
-/*       Tributary_Elements = ChainToArray(ChainElements,Num_Elem); */
-/*       FreeChain(ChainElements); */
+    /* If the node is not near the GP pop out of the chain */
+    if(Norm_Mat(Distance,2) > Ra){
+      /* If the node is the first in the chain */
+      if(PrevPtr == NULL){
+	AuxPtr = iPtr->next;
+	free(iPtr);
+	Triburary_Nodes->next = AuxPtr;
+      }
+      /* If the node is in the middle or at the end */
+      else{
+	PrevPtr->next = iPtr->next;
+	free(iPtr);
+      }
+      /* Once the node is located, breack the loop */
+      break;
+    }
 
-/*       /\* Iterate in the list and select the union of the sets of nodes *\/ */
-/*       for(int i = 0 ; i<Num_Elem ; i++){ */
-/* 	Elem_i = Tributary_Elements[i]; */
-/* 	Triburary_Nodes = */
-/* 	  ChainUnion(Triburary_Nodes,FEM_Mesh.Connectivity[Elem_i]); */
-/*       } */
-/*       /\* Free memory *\/ */
-/*       free(Tributary_Elements); */
-/*     } */
-/*     else if((fabs(X_EC_GP.nV[0]) >= Dist[0]) && */
-/* 	    (fabs(X_EC_GP.nV[1]) >= Dist[1])){ */
-/*       /\* Generate the list of Elements whose nodes contributes to the GP *\/  */
-/*       ChainElements = FEM_Mesh.NodeNeighbour[NodesElem[3]]; */
-/*       Num_Elem = LenghtChain(ChainElements); */
-/*       Tributary_Elements =  ChainToArray(ChainElements,Num_Elem); */
+    /* Free memory of the distrance vector */
+    FreeMat(Distance);
 
-/*       /\* Iterate in the list and select the union of the sets of nodes *\/ */
-/*       for(int i = 0 ; i<Num_Elem ; i++){ */
-/* 	Elem_i = Tributary_Elements[i]; */
-/* 	Triburary_Nodes = */
-/* 	  ChainUnion(Triburary_Nodes,FEM_Mesh.Connectivity[Elem_i]); */
-/*       } */
-/*       /\* Free memory *\/ */
-/*       free(Tributary_Elements);       */
-/*     } */
+    /* The previous is the index */
+    PrevPtr = iPtr;
+    /* Update pointer index */
+    iPtr = iPtr->next;
+  }
 
-/*     /\* Free memory *\/ */
-/*     free(NodesElem); */
-    
-/*   }   */
-/*   /\* Check if I am in the 3º Quadrant *\/ */
-/*   else if((X_EC_GP.nV[0]<=0) && */
-/* 	  (X_EC_GP.nV[1]<=0)){ */
-/*     /\* Create an array with the nodes of the element *\/ */
-/*     NodesElem = ChainToArray(FEM_Mesh.Connectivity[Elem_GP],4);    */
-/*     if((fabs(X_EC_GP.nV[0]) >= Dist[0]) && */
-/*        (fabs(X_EC_GP.nV[1]) <= Dist[1])){ */
-/*       /\* Generate the list of Elements whose nodes contributes to the GP *\/  */
-/*       ChainElements = ChainIntersection(FEM_Mesh.NodeNeighbour[NodesElem[3]], */
-/* 					FEM_Mesh.NodeNeighbour[NodesElem[0]]); */
-/*       Num_Elem = LenghtChain(ChainElements); */
-/*       Tributary_Elements = ChainToArray(ChainElements,Num_Elem); */
-/*       FreeChain(ChainElements); */
+  return Triburary_Nodes;
+}
 
-/*       /\* Iterate in the list and select the union of the sets of nodes *\/ */
-/*       for(int i = 0 ; i<Num_Elem ; i++){ */
-/* 	Elem_i = Tributary_Elements[i]; */
-/* 	Triburary_Nodes = */
-/* 	  ChainUnion(Triburary_Nodes,FEM_Mesh.Connectivity[Elem_i]); */
-/*       } */
-/*       /\* Free memory *\/ */
-/*       free(Tributary_Elements); */
-/*     } */
-/*     else if((fabs(X_EC_GP.nV[0]) <= Dist[0]) && */
-/* 	    (fabs(X_EC_GP.nV[1]) >= Dist[1])){ */
-/*       /\* Generate the list of Elements whose nodes contributes to the GP *\/ */
-/*       ChainElements = ChainIntersection(FEM_Mesh.NodeNeighbour[NodesElem[0]], */
-/* 					FEM_Mesh.NodeNeighbour[NodesElem[1]]); */
-/*       Num_Elem = LenghtChain(ChainElements); */
-/*       Tributary_Elements = ChainToArray(ChainElements,Num_Elem); */
-/*       FreeChain(ChainElements); */
-/*       /\* Iterate in the list and select the union of the sets of nodes *\/ */
-/*       for(int i = 0 ; i<Num_Elem ; i++){ */
-/* 	Elem_i = Tributary_Elements[i]; */
-/* 	Triburary_Nodes = */
-/* 	  ChainUnion(Triburary_Nodes,FEM_Mesh.Connectivity[Elem_i]); */
-/*       } */
-/*       /\* Free memory *\/       */
-/*       free(Tributary_Elements); */
-/*     } */
-/*     else if((fabs(X_EC_GP.nV[1]) >= Dist[1]) && */
-/* 	    (fabs(X_EC_GP.nV[0]) >= Dist[0])){ */
-/*       /\* Generate the list of Elements whose nodes contributes to the GP *\/  */
-/*       ChainElements = FEM_Mesh.NodeNeighbour[NodesElem[0]]; */
-/*       Num_Elem = LenghtChain(ChainElements); */
-/*       Tributary_Elements = ChainToArray(ChainElements,Num_Elem); */
-
-/*       /\* Iterate in the list and select the union of the sets of nodes *\/ */
-/*       for(int i = 0 ; i<Num_Elem ; i++){ */
-/* 	Elem_i = Tributary_Elements[i]; */
-/* 	Triburary_Nodes = */
-/* 	  ChainUnion(Triburary_Nodes,FEM_Mesh.Connectivity[Elem_i]); */
-/*       } */
-/*       /\* Free memory *\/ */
-/*       free(Tributary_Elements);       */
-/*     } */
-/*     /\* Free memory *\/ */
-/*     free(NodesElem);     */
-/*   }   */
-/*   /\* Check if it I am the 4º Quadrant *\/ */
-/*   else if((X_EC_GP.nV[0]>=0) && */
-/* 	  (X_EC_GP.nV[1]<=0)){ */
-/*     /\* Create an array with the nodes of the element *\/ */
-/*     NodesElem = ChainToArray(FEM_Mesh.Connectivity[Elem_GP],4); */
-
-/*     if((fabs(X_EC_GP.nV[0]) <= Dist[0]) && */
-/*        (fabs(X_EC_GP.nV[1]) >= Dist[1])){ */
-/*       /\* Generate the list of Elements whose nodes contributes to the GP *\/  */
-/*       ChainElements = ChainIntersection(FEM_Mesh.NodeNeighbour[NodesElem[0]], */
-/* 					FEM_Mesh.NodeNeighbour[NodesElem[1]]); */
-/*       Num_Elem = LenghtChain(ChainElements); */
-/*       Tributary_Elements =  ChainToArray(ChainElements,Num_Elem); */
-/*       FreeChain(ChainElements); */
-
-/*       /\* Iterate in the list and select the union of the sets of nodes *\/ */
-/*       for(int i = 0 ; i<Num_Elem ; i++){ */
-/* 	Elem_i = Tributary_Elements[i]; */
-/* 	Triburary_Nodes = */
-/* 	  ChainUnion(Triburary_Nodes,FEM_Mesh.Connectivity[Elem_i]); */
-/*       } */
-/*       /\* Free memory *\/       */
-/*       free(Tributary_Elements); */
-/*     } */
-/*     else if((fabs(X_EC_GP.nV[0]) >= Dist[0]) && */
-/* 	    (fabs(X_EC_GP.nV[1]) <= Dist[1])){ */
-/*       /\* Generate the list of Elements whose nodes contributes to the GP *\/  */
-/*       ChainElements = ChainIntersection(FEM_Mesh.NodeNeighbour[NodesElem[2]], */
-/* 					FEM_Mesh.NodeNeighbour[NodesElem[1]]); */
-/*       Num_Elem = LenghtChain(ChainElements); */
-/*       Tributary_Elements = ChainToArray(ChainElements,Num_Elem); */
-/*       FreeChain(ChainElements); */
-
-/*       /\* Iterate in the list and select the union of the sets of nodes *\/ */
-/*       for(int i = 0 ; i<Num_Elem ; i++){ */
-/* 	Elem_i = Tributary_Elements[i]; */
-/* 	Triburary_Nodes = */
-/* 	  ChainUnion(Triburary_Nodes,FEM_Mesh.Connectivity[Elem_i]); */
-/*       } */
-/*       /\* Free memory *\/       */
-/*       free(Tributary_Elements); */
-/*     } */
-/*     else if((fabs(X_EC_GP.nV[0]) >= Dist[0]) && */
-/* 	    (fabs(X_EC_GP.nV[1]) >= Dist[1])){ */
-/*       /\* Generate the list of Elements whose nodes contributes to the GP *\/ */
-/*       ChainElements = FEM_Mesh.NodeNeighbour[NodesElem[1]]; */
-/*       Num_Elem = LenghtChain(ChainElements); */
-/*       Tributary_Elements = ChainToArray(ChainElements,Num_Elem); */
-/*       /\* Iterate in the list and select the union of the sets of nodes *\/ */
-/*       for(int i = 0 ; i<Num_Elem ; i++){ */
-/* 	Elem_i = Tributary_Elements[i]; */
-/* 	Triburary_Nodes = */
-/* 	  ChainUnion(Triburary_Nodes,FEM_Mesh.Connectivity[Elem_i]); */
-/*       } */
-/*       /\* Free memory *\/ */
-/*       free(Tributary_Elements);       */
-/*     } */
-/*     /\* Free memory *\/ */
-/*     free(NodesElem); */
-/*   } */
-/*   else{ */
-/*     printf("%s : %s \n", */
-/* 	   "Error in Tributary_Nodes_GIMP", */
-/* 	   "Unlocated GP in the element"); */
-/*     printf("%s : (%f;%f) \n", */
-/* 	   "Natural coordinates of the GP", */
-/* 	   X_EC_GP.nV[0],X_EC_GP.nV[1]); */
-/*     exit(0); */
-/*   } */
- 
-/*   return Triburary_Nodes; */
-/* } */
-/*  */

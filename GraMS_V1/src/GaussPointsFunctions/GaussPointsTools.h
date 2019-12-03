@@ -9,6 +9,6 @@
 
 GaussPoint Define_GP_Mesh(char *, double);
 
-GaussPoint InitializeGP(char *, Mesh, Matrix);
+GaussPoint InitializeGP(char *, Mesh);
 
 

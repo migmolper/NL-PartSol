@@ -75,12 +75,6 @@ Mesh ReadGidMesh(char * MeshName)
     printf("Error in ReadGidMesh() : during line %i !!! \n",Num_line);
     exit(0);
   }
-
-  /* CHANGES THISSSS */
-  /* GID_Mesh.DeltaX = 0.0002666; */
-  /* GID_Mesh.DeltaX = 1; */
-  /* GID_Mesh.DeltaX = 0.851851852; */
-  GID_Mesh.DeltaX = 0.1;
   
   /* Element properties of the mesh */
   if ( strcmp(words[0],"MESH") == 0 ){
@@ -285,6 +279,10 @@ Mesh ReadGidMesh(char * MeshName)
 
   /* Close mesh file */
   fclose(MeshFile);
+
+  /* Set the minimum mesh size */
+  GID_Mesh.DeltaX = GetMinElementSize(GID_Mesh);
+  
   printf(" * End of read mesh file \n");
 
   /***************************************************************************/
