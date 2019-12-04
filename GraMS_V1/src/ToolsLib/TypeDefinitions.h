@@ -30,7 +30,6 @@
 
 */
 
-
 /*******************************************************/
 
 /* Matrix definition */
@@ -195,12 +194,29 @@ typedef struct { /* Matrix operators */
   
 } MatLib;
 
+/*******************************************************/
+
 typedef struct { /* Constitutive models */
 
   /* 2D linear elastic material */
   Matrix (* LE2D)(Matrix,double,double);
   
 } ConstLib;
+
+/*******************************************************/
+
+/* LME library */
+typedef struct { 
+
+  Matrix (*lambda)(Matrix, Matrix,
+		   double, double);
+  double (*fa)(Matrix, Matrix, double);
+  Matrix (*pa)(Matrix, Matrix, double);
+  Matrix (*r)(Matrix, Matrix);
+  Matrix (*J)(Matrix, Matrix, Matrix);
+  Matrix (*dpa)(Matrix, Matrix);
+  
+} LME;
 
 /*******************************************************/
 
@@ -297,3 +313,6 @@ typedef struct {
   Matrix (* dNdX_ref)(Matrix );
     
 } Mesh;
+
+/*******************************************************/
+

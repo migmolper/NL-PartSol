@@ -7,30 +7,6 @@
 
 /*********************************************************************/
 
-/* Time measure function declaration */
-
-void TIC_toc(clock_t start_t){
-
-  /* Start of tic-toc */
-  start_t = clock();
-  printf("Starting of the program, start_t = %ld\n", start_t);
-  
-}
-
-void tic_TOC(clock_t start_t){
-
-  /* Define internal parameters */
-  clock_t end_t, total_t;
-
-  /* End of tic-toc */
-  end_t = clock();
-  printf("End of the big loop, end_t = %ld\n", end_t);
-  total_t = (double)(end_t - start_t) / CLOCKS_PER_SEC;
-  printf("Total time taken by CPU: %ld\n", total_t  );
-  
-}
-
-
 MatLib MatrixOperators(void){
   
 #include "../MathTools/MathTools.h"
@@ -62,6 +38,8 @@ MatLib MatrixOperators(void){
   return LibraryMatOp;
 }
 
+/*********************************************************************/
+
 ConstLib Contitutive(void){
 
 #include "../Constitutive/Constitutive.h"
@@ -73,3 +51,27 @@ ConstLib Contitutive(void){
   
   return CL;
 }
+
+/*********************************************************************/
+
+LME Load_LME(void){
+
+#include "../MeshTools/MeshTools.h"
+   
+  /* Define variable with the functions */
+  LME LME_shpf;
+
+  /* Asign functions to the library */
+  LME_shpf.lambda = LME_lambda;
+  LME_shpf.fa = LME_fa;
+  LME_shpf.pa = LME_pa;
+  LME_shpf.r= LME_r;
+  LME_shpf.J= LME_J;
+  LME_shpf.dpa = LME_dpa;
+  
+  /* Return the library */
+  return LME_shpf;
+}
+
+/*********************************************************************/
+
