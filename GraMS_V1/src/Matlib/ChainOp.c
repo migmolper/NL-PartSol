@@ -3,9 +3,8 @@
 #include <string.h>
 #include <math.h>
 #include <stdbool.h> 
-#include "../ToolsLib/TypeDefinitions.h"
-#include "../ToolsLib/GlobalVariables.h"
-#include "../Matlib/Matlib.h"
+#include "../GRAMS/TypeDefinitions.h"
+#include "../GRAMS/GlobalVariables.h"
 
 /*********************************************************************/
 

@@ -7,6 +7,9 @@
 #define TypeDefinitions
 #endif
 
+#ifndef Matlib
+#define Matlib
+#endif
 
 /* Define and initialize both mesh */
 GaussPoint Define_GP_Mesh(char *, double);

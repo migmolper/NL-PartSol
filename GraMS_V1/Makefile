@@ -19,7 +19,7 @@ CC = $(GCC_ROOT)/gcc
 
 # Source code
 SOURCES = \
-	$(wildcard src/*.c)\
+	$(wildcard src/GRAMS/*.c)\
 	$(wildcard src/ToolsLib/*.c)\
 	$(wildcard src/InOutFun/*.c)\
 	$(wildcard src/Constitutive/*.c)\

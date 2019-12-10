@@ -2,6 +2,10 @@
 #define GlobalVariables
 #endif
 
+#ifndef Matlib
+#define Matlib
+#endif
+
 #ifndef TypeDefinitions
 #define TypeDefinitions
 #endif

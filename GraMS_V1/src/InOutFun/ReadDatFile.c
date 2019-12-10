@@ -1,9 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "../ToolsLib/TypeDefinitions.h"
-#include "../ToolsLib/GlobalVariables.h"
-#include "../Matlib/Matlib.h"
+#include "../GRAMS/TypeDefinitions.h"
+#include "../GRAMS/GlobalVariables.h"
 #include "InOutFun.h"
 
 #define MAXVAL(A,B) ((A)>(B) ? (A) : (B))

@@ -4,8 +4,7 @@
 #include <time.h>
 #include <string.h>
 #include <stdbool.h> 
-#include "../ToolsLib/TypeDefinitions.h"
-#include "Matlib.h"
+#include "../GRAMS/TypeDefinitions.h"
 
 #define MAXVAL(A,B) ((A)>(B) ? (A) : (B))
 #define MINVAL(A,B) ((A)<(B) ? (A) : (B))

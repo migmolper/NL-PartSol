@@ -3,10 +3,9 @@
 #include <string.h>
 #include <math.h>
 #include <stdbool.h> 
-#include "../ToolsLib/TypeDefinitions.h"
-#include "../ToolsLib/GlobalVariables.h"
+#include "../GRAMS/TypeDefinitions.h"
+#include "../GRAMS/GlobalVariables.h"
 #include "../InOutFun/InOutFun.h"
-#include "../Matlib/Matlib.h"
 #include "../Constitutive/Constitutive.h"
 #include "../ShapeFun/ShapeFun.h"
 #include "MPM_Subroutines.h"

@@ -1,10 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "../ToolsLib/TypeDefinitions.h"
-#include "../ToolsLib/GlobalVariables.h"
-#include "../Matlib/Matlib.h"
-#include "../ToolsLib/Utils.h"
+#include "../GRAMS/TypeDefinitions.h"
+#include "../GRAMS/GlobalVariables.h"
+#include "../GRAMS/Utils.h"
 #include "ShapeFun.h"
 
 /**************************************************/

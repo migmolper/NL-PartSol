@@ -1,8 +1,11 @@
 #include <stdbool.h> 
-#include "../Matlib/Matlib.h"
 
 #ifndef TypeDefinitions
 #define TypeDefinitions
+#endif
+
+#ifndef Matlib
+#define Matlib
 #endif
 
 /* 1D of two nodes shape functions */
@@ -44,7 +47,17 @@ Matrix LME_r(Matrix, Matrix);
 Matrix LME_J(Matrix, Matrix, Matrix);
 Matrix LME_dpa(Matrix, Matrix);
 
+/*******************************************************/
 
+/* Library */
 
+typedef struct { 
+
+  Matrix (*N)(Matrix, Matrix, double);
+  Matrix (*dN)(Matrix, Matrix);
+  
+} SHPF;
+
+SHPF ShapeFunLib(void);
 
 

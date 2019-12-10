@@ -2,10 +2,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "../ToolsLib/TypeDefinitions.h"
-#include "../ToolsLib/GlobalVariables.h"
+#include "../GRAMS/TypeDefinitions.h"
+#include "../GRAMS/GlobalVariables.h"
 #include "../ShapeFun/ShapeFun.h"
-#include "../Matlib/Matlib.h"
 #include "InOutFun.h"
 
 void WriteVtk_MPM(char * Name_File, GaussPoint MPM_Mesh,

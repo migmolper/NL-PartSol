@@ -1,8 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "../ToolsLib/TypeDefinitions.h"
-#include "../Matlib/Matlib.h"
+#include "../GRAMS/TypeDefinitions.h"
 
 Matrix LinearElastic2D(Matrix Strain,
 		       double PoissonRatio_Mat,

@@ -2,15 +2,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-#include "ToolsLib/TypeDefinitions.h"
-#include "ToolsLib/Utils.h"
-#include "ToolsLib/GlobalVariables.h"
-#include "MathTools/MathTools.h"
-#include "InOutFun/InOutFun.h"
-#include "MeshTools/MeshTools.h"
-#include "GaussPointsFunctions/GaussPointsTool.h"
-#include "Constitutive/Constitutive.h"
-#include "Formulations/Formulations.h"
+#include "TypeDefinitions.h"
+#include "Utils.h"
+#include "GlobalVariables.h"
+#include "../InOutFun/InOutFun.h"
+#include "../ShapeFun/ShapeFun.h"
+#include "../MPM_Subroutines/MPM_Subroutines.h"
+#include "../Formulations/Formulations.h"
 
 int main(int argc, char * argv[])
 /*
@@ -39,11 +37,6 @@ int main(int argc, char * argv[])
   Read_GeneralParameters(argv[1]);
 
   /*********************************************************************/
-  /******************* DEFINE CONSTITUTIVE MODEL ***********************/
-  /*********************************************************************/
-  Matrix D_e = LinearElastic2D(PoissonModulus,ElasticModulus);
-
-  /*********************************************************************/
   /********************* DEFINE CALCULUS MESH **************************/
   /*********************************************************************/
   Mesh FEM_Mesh = InitializeMesh(argv[1]);
@@ -51,7 +44,7 @@ int main(int argc, char * argv[])
   /*********************************************************************/
   /******************* DEFINE GAUSS-POINT MESH *************************/
   /*********************************************************************/
-  GaussPoint GP_Mesh = InitializeGP(argv[1], FEM_Mesh, D_e);
+  GaussPoint GP_Mesh = InitializeGP(argv[1], FEM_Mesh);
 
   /*********************************************************************/
   /********************** RUN THE MPM CALCULUS *************************/

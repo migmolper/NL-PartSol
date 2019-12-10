@@ -3,7 +3,7 @@
 #include <stddef.h>
 #include <string.h>
 #include <ctype.h>
-#include "../ToolsLib/TypeDefinitions.h"
+#include "../GRAMS/TypeDefinitions.h"
 #include "InOutFun.h"
 
 /***************************************************************************/

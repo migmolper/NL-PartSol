@@ -1,8 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "../ToolsLib/TypeDefinitions.h"
-#include "../Matlib/Matlib.h"
+#include "../GRAMS/TypeDefinitions.h"
 
 /* List of solver implemented :
    - Newton_Rapson
