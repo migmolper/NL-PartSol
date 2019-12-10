@@ -86,11 +86,6 @@ GaussPoint Define_GP_Mesh(char * MPM_GID_MeshName,
     /* Natural coordinates (Vectorial) */
     MPM_Mesh.Phi.x_EC = MatAllocZ(MPM_Mesh.NumGP,1);
     strcpy(MPM_Mesh.Phi.x_EC.Info,"Element Coordinates GP");
-    /* Lenght of the Voxel (Only GIMP) */
-    if(strcmp(MPM_Mesh.ShapeFunctionGP,"uGIMP2D") == 0){
-      MPM_Mesh.Phi.lp = MatAllocZ(MPM_Mesh.NumGP,1);
-      strcpy(MPM_Mesh.Phi.lp.Info,"Voxel lenght GP");
-    }      
     /* Displacement field (Vectorial) */
     MPM_Mesh.Phi.dis = MatAllocZ(MPM_Mesh.NumGP,1);
     strcpy(MPM_Mesh.Phi.dis.Info,"Displacement field GP");
@@ -106,16 +101,21 @@ GaussPoint Define_GP_Mesh(char * MPM_GID_MeshName,
     /* Stress field (Tensor) */
     MPM_Mesh.Phi.Stress = MatAllocZ(MPM_Mesh.NumGP,1);
     strcpy(MPM_Mesh.Phi.Stress.Info,"Stress field GP");
+    /* Lenght of the Voxel (Only GIMP) */
+    if(strcmp(MPM_Mesh.ShapeFunctionGP,"uGIMP2D") == 0){
+      MPM_Mesh.lp = MatAllocZ(MPM_Mesh.NumGP,1);
+      strcpy(MPM_Mesh.lp.Info,"Voxel lenght GP");
+    }
+    /* Lagrange Multipliers (Only LME ) */
+    if(strcmp(MPM_Mesh.ShapeFunctionGP,"LME") == 0){
+      MPM_Mesh.lambda = MatAllocZ(MPM_Mesh.NumGP,1);
+      strcpy(MPM_Mesh.lambda.Info,"Lagrange Multiplier");
+    }
     break;
   case 2 :
     /* Natural coordinates (Vectorial) */
     MPM_Mesh.Phi.x_EC = MatAllocZ(MPM_Mesh.NumGP,2);
-    strcpy(MPM_Mesh.Phi.x_EC.Info,"Element Coordinates GP");
-    /* Lenght of the Voxel (Only GIMP) */
-    if(strcmp(MPM_Mesh.ShapeFunctionGP,"uGIMP2D") == 0){
-      MPM_Mesh.Phi.lp = MatAllocZ(MPM_Mesh.NumGP,2);
-      strcpy(MPM_Mesh.Phi.lp.Info,"Voxel lenght GP");
-    }      
+    strcpy(MPM_Mesh.Phi.x_EC.Info,"Element Coordinates GP");    
     /* Displacement field (Vectorial) */
     MPM_Mesh.Phi.dis = MatAllocZ(MPM_Mesh.NumGP,2);
     strcpy(MPM_Mesh.Phi.dis.Info,"Displacement field GP");
@@ -131,16 +131,21 @@ GaussPoint Define_GP_Mesh(char * MPM_GID_MeshName,
     /* Stress field (Tensor) */
     MPM_Mesh.Phi.Stress = MatAllocZ(MPM_Mesh.NumGP,3);
     strcpy(MPM_Mesh.Phi.Stress.Info,"Stress field GP");
+    /* Lenght of the Voxel (Only GIMP) */
+    if(strcmp(MPM_Mesh.ShapeFunctionGP,"uGIMP2D") == 0){
+      MPM_Mesh.lp = MatAllocZ(MPM_Mesh.NumGP,2);
+      strcpy(MPM_Mesh.lp.Info,"Voxel lenght GP");
+    }  
+    /* Lagrange Multipliers (Only LME ) */
+    if(strcmp(MPM_Mesh.ShapeFunctionGP,"LME") == 0){
+      MPM_Mesh.lambda = MatAllocZ(MPM_Mesh.NumGP,2);
+      strcpy(MPM_Mesh.lambda.Info,"Lagrange Multiplier");
+    }
     break;
   case 3:
     /* Natural coordinates (Vectorial) */
     MPM_Mesh.Phi.x_EC = MatAllocZ(MPM_Mesh.NumGP,3);
-    strcpy(MPM_Mesh.Phi.x_EC.Info,"Element Coordinates GP");
-    /* Lenght of the Voxel (Only GIMP) */
-    if(strcmp(MPM_Mesh.ShapeFunctionGP,"uGIMP2D") == 0){
-      MPM_Mesh.Phi.lp = MatAllocZ(MPM_Mesh.NumGP,3);
-      strcpy(MPM_Mesh.Phi.lp.Info,"Voxel lenght GP");
-    }      
+    strcpy(MPM_Mesh.Phi.x_EC.Info,"Element Coordinates GP");   
     /* Displacement field (Vectorial) */
     MPM_Mesh.Phi.dis = MatAllocZ(MPM_Mesh.NumGP,3);
     strcpy(MPM_Mesh.Phi.dis.Info,"Displacement field GP");
@@ -156,6 +161,16 @@ GaussPoint Define_GP_Mesh(char * MPM_GID_MeshName,
     /* Stress field (Tensor) */
     MPM_Mesh.Phi.Stress = MatAllocZ(MPM_Mesh.NumGP,9);
     strcpy(MPM_Mesh.Phi.Stress.Info,"Stress field GP");
+    /* Lenght of the Voxel (Only GIMP) */
+    if(strcmp(MPM_Mesh.ShapeFunctionGP,"uGIMP2D") == 0){
+      MPM_Mesh.lp = MatAllocZ(MPM_Mesh.NumGP,3);
+      strcpy(MPM_Mesh.lp.Info,"Voxel lenght GP");
+    }   
+    /* Lagrange Multipliers (Only LME ) */
+    if(strcmp(MPM_Mesh.ShapeFunctionGP,"LME") == 0){
+      MPM_Mesh.lambda = MatAllocZ(MPM_Mesh.NumGP,3);
+      strcpy(MPM_Mesh.lambda.Info,"Lagrange Multiplier");
+    }
     break;
   default:
     puts("Error in Initialize_GP_Mesh() : Wrong number of dimensions");
@@ -197,7 +212,6 @@ GaussPoint Define_GP_Mesh(char * MPM_GID_MeshName,
     /* Get the area (Poligon_Centroid.n) 
        and the position of the centroid (Poligon_Centroid.nV) */
     Poligon_Centroid = Centroid_Poligon(Poligon_Coordinates);
-
     /* Free data */
     FreeMat(Poligon_Coordinates);
     
@@ -208,19 +222,10 @@ GaussPoint Define_GP_Mesh(char * MPM_GID_MeshName,
     /* Get the coordinates of the centre */
     MPM_Mesh.Phi.x_GC.nM[i][0] = Poligon_Centroid.nV[0];
     MPM_Mesh.Phi.x_GC.nM[i][1] = Poligon_Centroid.nV[1];
-    MPM_Mesh.Phi.x_GC.nM[i][2] = 0.0;
-    /* Voxel lenght */
-    if(strcmp(MPM_Mesh.ShapeFunctionGP,"uGIMP2D") == 0){
-      MPM_Mesh.Phi.lp.nM[i][0] = 0.5*pow(Poligon_Centroid.n,0.5);
-      MPM_Mesh.Phi.lp.nM[i][1] = 0.5*pow(Poligon_Centroid.n,0.5);
-    }   
-    /* Free data */
-    FreeMat(Poligon_Centroid);
-      
+    MPM_Mesh.Phi.x_GC.nM[i][2] = 0.0;         
     /* Local coordinates of the element */
     MPM_Mesh.Element_id[i] = -999;
     MPM_Mesh.NumberNodes[i] = 4;
-
     /* Location in the natural coordinates
        of the element (Init to zero) */
     MPM_Mesh.Phi.x_EC.nM[i][0] = 0.0;
@@ -241,7 +246,24 @@ GaussPoint Define_GP_Mesh(char * MPM_GID_MeshName,
     /* Initial Strain */
     MPM_Mesh.Phi.Strain.nM[i][0] = 0.0;
     MPM_Mesh.Phi.Strain.nM[i][1] = 0.0;
-    MPM_Mesh.Phi.Strain.nM[i][2] = 0.0;      
+    MPM_Mesh.Phi.Strain.nM[i][2] = 0.0;
+
+    /* Voxel lenght (GIMP) */
+    if(strcmp(MPM_Mesh.ShapeFunctionGP,"uGIMP2D") == 0){
+      for(int j =0 ; j<NumberDimensions ; j++){
+	MPM_Mesh.lp.nM[i][j] =
+	  0.5*pow(Poligon_Centroid.n,(double)1/NumberDimensions);
+      }
+    }
+    /* Lagrange Multipliers (Only LME ) */
+    if(strcmp(MPM_Mesh.ShapeFunctionGP,"LME") == 0){
+      for(int j =0 ; j<NumberDimensions ; j++){
+	MPM_Mesh.lambda.nM[i][j] = 0.0;
+      }
+    }
+
+    /* Free data */
+    FreeMat(Poligon_Centroid);
     
   }
 

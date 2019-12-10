@@ -34,6 +34,7 @@ void UpdateGaussPointStrain(GaussPoint MPM_Mesh,
   
   /* Mesh variables */
   Matrix Elem_Vel; /* Array with the nodal velocities */
+  Matrix N_GP; /* Matrix with the nodal shape functions */
   Matrix dNdx_GP; /* Matrix with the nodal derivatives */
   Matrix B; /* B marix to get the deformation */
   Matrix Increment_Strain_GP; /* Vectoriced Strain tensor */
@@ -77,11 +78,29 @@ void UpdateGaussPointStrain(GaussPoint MPM_Mesh,
     	}
       }
       /* Get the GP voxel */
-      lp.nV = MPM_Mesh.Phi.lp.nM[i];
+      lp.nV = MPM_Mesh.lp.nM[i];
       /* Evaluate the shape function gradient */
       dNdx_GP = dGIMP_2D(Delta_Xip,lp,FEM_Mesh.DeltaX);
       /* Free memory */
       FreeMat(Delta_Xip);
+    }
+    else if(strcmp(MPM_Mesh.ShapeFunctionGP,"LME") == 0){
+      /* Get the distance of the GP to the nodes */
+      Delta_Xip = MatAlloc(GP_NumNodes,2);
+      for(int k = 0 ; k<GP_NumNodes ; k++){
+    	GP_I = GP_Connect[k];
+    	for(int l = 0 ; l<NumberDimensions ; l++){
+    	  Delta_Xip.nM[k][l] =
+    	    MPM_Mesh.Phi.x_GC.nM[i][l]-
+    	    FEM_Mesh.Coordinates.nM[GP_I][l];
+    	}
+      }
+      /* Evaluate the shape function and it gradient */
+      N_GP = LME_pa(Delta_Xip, MPM_Mesh.lambda, MPM_Mesh.Beta);
+      dNdx_GP = LME_dpa(Delta_Xip, N_GP);
+      /* Free memory */
+      FreeMat(Delta_Xip);
+      FreeMat(N_GP);
     }
 	    
     /* Calcule the B matrix */

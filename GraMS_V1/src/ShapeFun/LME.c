@@ -18,8 +18,7 @@
 
 */
 
-Matrix LME_lambda(Matrix da, Matrix lambda,
-		  double Beta, double TOL_lambda)
+Matrix LME_lambda(Matrix da, Matrix lambda,double Beta)
 /*
   Output: 
   -> lambda : Lagrange multipliers lambda for
@@ -31,7 +30,7 @@ Matrix LME_lambda(Matrix da, Matrix lambda,
   lagrange multipliers (1 x dim).
   -> Beta : Tunning parameter (scalar).
   -> h : Grid spacing (scalar).
-  -> TOL_lambda : Tolerance for the lambda calculations.
+  -> TOL_zero : Tolerance for Newton-Rapson.
 */
 {
   /* CALL LIBRARIES */
@@ -47,7 +46,7 @@ Matrix LME_lambda(Matrix da, Matrix lambda,
   int NumIter = 0; /* Iterator counter */
 
   /* Start with the Newton-Rapson method */
-  while(norm_r > TOL_lambda){
+  while(norm_r > TOL_zero){
   
     /* Get vector with the shape functions evaluated in the nodes */
     pa = LME_pa(da,lambda,Beta);
@@ -320,7 +319,7 @@ Matrix LME_dpa(Matrix da, Matrix pa)
 }
 
 ChainPtr LME_Tributary_Nodes(Matrix X_GP, int Elem_GP,
-			     Mesh FEM_Mesh, double gamma, double Tol0){
+			     Mesh FEM_Mesh, double Beta){
 
   Matrix Distance; /* Distance between node and GP */
   Matrix X_I = MatAssign(NumberDimensions,1,NAN,NULL,NULL);
@@ -333,13 +332,17 @@ ChainPtr LME_Tributary_Nodes(Matrix X_GP, int Elem_GP,
   int * NodesElem;
   int Num_Elem;
   int NumNodesElem;
+  double gamma;
   double Ra;
 
   /* CALL LIBRARIES */
   MatLib MO = MatrixOperators();
 
+  /* Get gamma -> tricky implementation for the NM algorithm */
+  gamma = Beta*FEM_Mesh.DeltaX*FEM_Mesh.DeltaX;
+
   /* Get the search radius */
-  Ra = FEM_Mesh.DeltaX*sqrt(-log(Tol0)/gamma);
+  Ra = FEM_Mesh.DeltaX*sqrt(-log(TOL_lambda)/gamma);
 
   /* Number of nodes of the initial element and
      list of nodes */

@@ -76,11 +76,15 @@ void Read_GeneralParameters(char * Name_File)
 	      /* First parameter of KIND_ANALYSIS : FEM/MPM */
 	      if( strcmp(KIND_ANALYSIS[0],"uGIMP2D") == 0 ){
 		ShapeFunctionGP = KIND_ANALYSIS[0];
-		puts("\t -> Uniform GIMP 2D"); 
+		puts("\t -> S.Bardenhagen Uniform GIMP 2D"); 
 	      }
 	      if(strcmp(KIND_ANALYSIS[0],"MPMQ4") == 0){
 		ShapeFunctionGP = KIND_ANALYSIS[0];
-		puts("\t -> Linear Quadrilateral"); 
+		puts("\t -> D.Sulsky MPM Linear Quadrilateral"); 
+	      }
+	      if(strcmp(KIND_ANALYSIS[0],"LME") == 0){
+		ShapeFunctionGP = KIND_ANALYSIS[0];
+		puts("\t -> M.Ortiz & M.Arroyo Local-maximum Entropy "); 
 	      }
 	      /*************************************************************/
 	      /* Second parameter of KIND_ANALYSIS : U/SIGMA_V */

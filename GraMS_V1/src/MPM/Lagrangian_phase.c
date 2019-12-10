@@ -55,12 +55,29 @@ void UpdateVelocityAndPositionGP(GaussPoint MPM_Mesh,
     	}
       }
       /* Get the GP voxel */
-      lp.nV = MPM_Mesh.Phi.lp.nM[i];
+      lp.nV = MPM_Mesh.lp.nM[i];
       /* Evaluate shape function */
       N_GP = GIMP_2D(Delta_Xip,lp,FEM_Mesh.DeltaX);
       /* Free memory */
       FreeMat(Delta_Xip);
     }
+    else if(strcmp(MPM_Mesh.ShapeFunctionGP,"LME") == 0){
+      /* Get the distance of the GP to the nodes */
+      Delta_Xip = MatAlloc(GP_NumNodes,2);
+      for(int k = 0 ; k<GP_NumNodes ; k++){
+    	GP_I = GP_Connect[k];
+    	for(int l = 0 ; l<NumberDimensions ; l++){
+    	  Delta_Xip.nM[k][l] =
+    	    MPM_Mesh.Phi.x_GC.nM[i][l]-
+    	    FEM_Mesh.Coordinates.nM[GP_I][l];
+    	}
+      }
+      /* Evaluate the shape function and it gradient */
+      N_GP = LME_pa(Delta_Xip, MPM_Mesh.lambda, MPM_Mesh.Beta);
+      /* Free memory */
+      FreeMat(Delta_Xip);
+    }
+    
     /* 5º Iterate over the nodes of the element */
     for(int j = 0; j<GP_NumNodes; j++){
       /* Node of the GP */

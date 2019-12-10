@@ -3,7 +3,6 @@
 #include <math.h>
 #include "../GRAMS/grams.h"
 
-
 /*********************************************************************/
 
 SHPF ShapeFunLib(void){

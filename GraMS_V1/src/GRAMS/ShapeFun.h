@@ -35,19 +35,20 @@ ChainPtr Tributary_Nodes_GIMP(Matrix, int,
 			      Matrix, Mesh);
 
 /* LME shape functions */
-Matrix LME_lambda(Matrix, Matrix,
-		  double, double);
+Matrix LME_lambda(Matrix, Matrix,double);
 double LME_fa(Matrix, Matrix, double);
 Matrix LME_pa(Matrix, Matrix, double);
 Matrix LME_r(Matrix, Matrix);
 Matrix LME_J(Matrix, Matrix, Matrix);
 Matrix LME_dpa(Matrix, Matrix);
+ChainPtr LME_Tributary_Nodes(Matrix, int,
+			     Mesh, double);
 
 /*******************************************************/
 
 /* Library */
 
-typedef struct { 
+typedef struct {
 
   Matrix (*N)(Matrix, Matrix, double);
   Matrix (*dN)(Matrix, Matrix);

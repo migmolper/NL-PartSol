@@ -31,6 +31,11 @@
 */
 
 /***************************************/
+/************* Word Parser *************/
+/***************************************/
+enum { MAXW = 100, MAXC = 1000 };
+
+/***************************************/
 /******** Name of inputs files *********/
 /***************************************/
 
@@ -39,7 +44,7 @@ char * MPM_MeshFileName;
 char * OutputDir;
 
 /***************************************/
-/*********** Find of analysis **********/
+/*********** Kind of analysis **********/
 /***************************************/
 
 char * ShapeFunctionGP;
@@ -55,6 +60,12 @@ char * TimeIntegration;
 double DeltaTimeStep;
 int NumTimeStep;
 int ResultsTimeStep;
+
+/***************************************/
+/********* Numeric Tolerances **********/
+/***************************************/
+double TOL_lambda = 10e-6;
+double TOL_zero = 10e-6;
 
 /***************************************/
 /******* Constitutive parameters *******/
