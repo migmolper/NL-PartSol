@@ -23,9 +23,8 @@ SOURCES = \
 	$(wildcard src/ToolsLib/*.c)\
 	$(wildcard src/InOutFun/*.c)\
 	$(wildcard src/Constitutive/*.c)\
-	$(wildcard src/MathTools/*.c)\
-	$(wildcard src/MeshTools/*.c)\
-	$(wildcard src/GaussPointsFunctions/*.c)\
+	$(wildcard src/Matlib/*.c)\
+	$(wildcard src/ShapeFun/*.c)\
 	$(wildcard src/MPM_Subroutines/*.c)\
 	$(wildcard src/Boundary_Conditions/*.c)\
 	$(wildcard src/Formulations/*.c)

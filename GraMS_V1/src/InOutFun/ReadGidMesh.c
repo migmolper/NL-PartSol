@@ -3,8 +3,9 @@
 #include <string.h>
 #include "../ToolsLib/TypeDefinitions.h"
 #include "../ToolsLib/GlobalVariables.h"
-#include "../MeshTools/MeshTools.h"
-#include "../MathTools/MathTools.h"
+#include "../ShapeFun/ShapeFun.h"
+#include "../MPM_Subroutines/MPM_Subroutines.h"
+#include "../Matlib/Matlib.h"
 #include "InOutFun.h"
 
 Mesh ReadGidMesh(char * MeshName)

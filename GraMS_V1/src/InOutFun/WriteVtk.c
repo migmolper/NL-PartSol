@@ -4,8 +4,8 @@
 #include <string.h>
 #include "../ToolsLib/TypeDefinitions.h"
 #include "../ToolsLib/GlobalVariables.h"
-#include "../MeshTools/MeshTools.h"
-#include "../MathTools/MathTools.h"
+#include "../ShapeFun/ShapeFun.h"
+#include "../Matlib/Matlib.h"
 #include "InOutFun.h"
 
 void WriteVtk_MPM(char * Name_File, GaussPoint MPM_Mesh,

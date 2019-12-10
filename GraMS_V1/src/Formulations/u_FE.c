@@ -3,10 +3,10 @@
 #include <string.h>
 #include <math.h>
 #include "../ToolsLib/TypeDefinitions.h"
-#include "../MathTools/MathTools.h"
+#include "../Matlib/Matlib.h"
 #include "../ToolsLib/GlobalVariables.h"
 #include "../InOutFun/InOutFun.h"
-#include "../MeshTools/MeshTools.h"
+#include "../ShapeFun/ShapeFun.h"
 #include "../MPM_Subroutines/MPM_Subroutines.h"
 
 

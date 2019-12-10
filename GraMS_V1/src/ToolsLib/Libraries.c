@@ -9,7 +9,7 @@
 
 MatLib MatrixOperators(void){
   
-#include "../MathTools/MathTools.h"
+#include "../Matlib/Matlib.h"
   
   /* Define variable with the functions */
   MatLib LibraryMatOp;
@@ -56,7 +56,7 @@ ConstLib Contitutive(void){
 
 LME Load_LME(void){
 
-#include "../MeshTools/MeshTools.h"
+#include "../ShapeFun/ShapeFun.h"
    
   /* Define variable with the functions */
   LME LME_shpf;

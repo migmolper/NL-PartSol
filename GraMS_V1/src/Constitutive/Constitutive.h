@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "../MathTools/MathTools.h"
+#include "../Matlib/Matlib.h"
 
 #ifndef TypeDefinitions
 #define TypeDefinitions

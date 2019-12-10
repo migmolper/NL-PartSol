@@ -5,10 +5,9 @@
 #include "ToolsLib/TypeDefinitions.h"
 #include "ToolsLib/Utils.h"
 #include "ToolsLib/GlobalVariables.h"
-#include "MathTools/MathTools.h"
 #include "InOutFun/InOutFun.h"
-#include "MeshTools/MeshTools.h"
-#include "GaussPointsFunctions/GaussPointsTools.h"
+#include "ShapeFun/ShapeFun.h"
+#include "MPM_Subroutines/MPM_Subroutines.h"
 #include "Formulations/Formulations.h"
 
 int main(int argc, char * argv[])
