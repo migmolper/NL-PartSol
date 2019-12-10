@@ -2,8 +2,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include "../GRAMS/TypeDefinitions.h"
-#include "InOutFun.h"
-
 
 /***************************************************************************/
 

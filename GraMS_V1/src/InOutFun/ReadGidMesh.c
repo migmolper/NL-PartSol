@@ -2,10 +2,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include "../GRAMS/TypeDefinitions.h"
-#include "../GRAMS/GlobalVariables.h"
-#include "../ShapeFun/ShapeFun.h"
-#include "../MPM_Subroutines/MPM_Subroutines.h"
-#include "InOutFun.h"
 
 Mesh ReadGidMesh(char * MeshName)
 /*

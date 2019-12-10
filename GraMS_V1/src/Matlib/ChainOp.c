@@ -4,7 +4,6 @@
 #include <math.h>
 #include <stdbool.h> 
 #include "../GRAMS/TypeDefinitions.h"
-#include "../GRAMS/GlobalVariables.h"
 
 /*********************************************************************/
 

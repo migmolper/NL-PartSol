@@ -3,8 +3,6 @@
 #include <string.h>
 #include <math.h>
 #include "../GRAMS/TypeDefinitions.h"
-#include "../GRAMS/GlobalVariables.h"
-#include "InOutFun.h"
 
 
 Curve ReadCurve(char * Name_File)

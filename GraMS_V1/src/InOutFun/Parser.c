@@ -4,7 +4,6 @@
 #include <string.h>
 #include <ctype.h>
 #include "../GRAMS/TypeDefinitions.h"
-#include "InOutFun.h"
 
 /***************************************************************************/
 

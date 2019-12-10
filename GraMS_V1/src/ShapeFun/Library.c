@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <math.h>
 #include "../GRAMS/TypeDefinitions.h"
-#include "ShapeFun.h"
 
 
 /*********************************************************************/

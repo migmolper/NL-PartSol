@@ -1,10 +1,21 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "Utils.h"
 
-#ifndef "TypeDefinitions.h"
-#define "TypeDefinitions.h"
-
-Matrix LinearElastic(double,double);
-
+#ifndef TypeDefinitions
+#define TypeDefinitions
 #endif
+
+Matrix LinearElastic2D(Matrix,double,double);
+
+/*******************************************************/
+
+/* Library */
+
+typedef struct { /* Constitutive models */
+
+  /* 2D linear elastic material */
+  Matrix (* LE2D)(Matrix,double,double);
+  
+} ConstLib;
+
+ConstLib Contitutive(void);

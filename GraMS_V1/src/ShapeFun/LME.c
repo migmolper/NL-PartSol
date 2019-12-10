@@ -2,9 +2,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include "../GRAMS/TypeDefinitions.h"
-#include "../GRAMS/GlobalVariables.h"
 #include "../GRAMS/Utils.h"
-#include "ShapeFun.h"
 
 /**************************************************/
 /************* Local Maximum-Entropy **************/

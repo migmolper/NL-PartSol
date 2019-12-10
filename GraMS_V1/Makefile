@@ -25,7 +25,7 @@ SOURCES = \
 	$(wildcard src/Constitutive/*.c)\
 	$(wildcard src/Matlib/*.c)\
 	$(wildcard src/ShapeFun/*.c)\
-	$(wildcard src/MPM_Subroutines/*.c)\
+	$(wildcard src/MPM/*.c)\
 	$(wildcard src/Boundary_Conditions/*.c)\
 	$(wildcard src/Formulations/*.c)
 

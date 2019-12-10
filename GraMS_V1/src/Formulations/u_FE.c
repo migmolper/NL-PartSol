@@ -3,11 +3,6 @@
 #include <string.h>
 #include <math.h>
 #include "../GRAMS/TypeDefinitions.h"
-#include "../GRAMS/GlobalVariables.h"
-#include "../InOutFun/InOutFun.h"
-#include "../ShapeFun/ShapeFun.h"
-#include "../MPM_Subroutines/MPM_Subroutines.h"
-
 
 void u_ForwardEuler(Mesh FEM_Mesh, GaussPoint GP_Mesh)
 /*

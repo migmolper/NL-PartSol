@@ -4,11 +4,6 @@
 #include <math.h>
 #include "TypeDefinitions.h"
 #include "Utils.h"
-#include "GlobalVariables.h"
-#include "../InOutFun/InOutFun.h"
-#include "../ShapeFun/ShapeFun.h"
-#include "../MPM_Subroutines/MPM_Subroutines.h"
-#include "../Formulations/Formulations.h"
 
 int main(int argc, char * argv[])
 /*
