@@ -3,7 +3,7 @@
 #include <math.h>
 #include <time.h>
 #include <string.h>
-#include "TypeDefinitions.h"
+#include "grams.h"
 
 /*********************************************************************/
 

@@ -1,4 +1,4 @@
-# Makefile for the GeHoJerez
+# Makefile for the GraMS
 
 # Compiler root
 GCC_ROOT = /usr/bin

@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "../GRAMS/TypeDefinitions.h"
+#include "../GRAMS/grams.h"
 
 void WriteGnuplot(Matrix X, Matrix Y,
 		  double X_0, double X_n,

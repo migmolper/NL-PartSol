@@ -3,7 +3,7 @@
 #include <stddef.h>
 #include <string.h>
 #include <ctype.h>
-#include "../GRAMS/TypeDefinitions.h"
+#include "../GRAMS/grams.h"
 
 /***************************************************************************/
 

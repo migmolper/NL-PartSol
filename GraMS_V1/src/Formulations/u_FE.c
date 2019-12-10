@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-#include "../GRAMS/TypeDefinitions.h"
+#include "../GRAMS/grams.h"
 
 void u_ForwardEuler(Mesh FEM_Mesh, GaussPoint GP_Mesh)
 /*

@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "../GRAMS/TypeDefinitions.h"
+#include "../GRAMS/grams.h"
 
 /*********************************************************************/
 

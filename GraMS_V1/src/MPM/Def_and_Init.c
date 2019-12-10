@@ -2,8 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-#include "../GRAMS/TypeDefinitions.h"
-#include "../GRAMS/Utils.h"
+#include "../GRAMS/grams.h"
 
 /*********************************************************************/
 

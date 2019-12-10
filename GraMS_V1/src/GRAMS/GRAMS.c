@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-#include "TypeDefinitions.h"
+#include "grams.h"
 #include "Utils.h"
 
 int main(int argc, char * argv[])
