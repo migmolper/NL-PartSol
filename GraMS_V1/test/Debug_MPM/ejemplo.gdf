@@ -1,7 +1,7 @@
 /***************************************/
 /********** GENERAL PARAMETERS *********/
 /***************************************/
-KIND_ANALYSIS=uGIMP2D%U%2D%VerletLF
+KIND_ANALYSIS=LME%U%2D%VerletLF
 DENSITY=20
 POISSON_MODULUS=0.3
 ELASTIC_MODULUS=1.e5

@@ -38,7 +38,6 @@ enum { MAXW = 100, MAXC = 1000 };
 /***************************************/
 /******** Name of inputs files *********/
 /***************************************/
-
 char * FEM_MeshFileName;
 char * MPM_MeshFileName;
 char * OutputDir;
@@ -46,7 +45,6 @@ char * OutputDir;
 /***************************************/
 /*********** Kind of analysis **********/
 /***************************************/
-
 char * ShapeFunctionGP;
 char * Formulation;
 int NumberDimensions;
@@ -56,7 +54,6 @@ char * TimeIntegration;
 /***************************************/
 /********* Time integration ************/
 /***************************************/
-
 double DeltaTimeStep;
 int NumTimeStep;
 int ResultsTimeStep;
@@ -64,8 +61,8 @@ int ResultsTimeStep;
 /***************************************/
 /********* Numeric Tolerances **********/
 /***************************************/
-double TOL_lambda = 10e-6;
-double TOL_zero = 10e-6;
+#define TOL_lambda 10e-6
+#define TOL_zero 10e-6
 
 /***************************************/
 /******* Constitutive parameters *******/
@@ -77,7 +74,6 @@ double Density;
 /***************************************/
 /******** Boundary conditions **********/
 /***************************************/
-
 char Field[10];
 int * Node;
 double * Value;
@@ -85,7 +81,6 @@ double * Value;
 /***************************************/
 /************ Matrix Library ***********/
 /***************************************/
-
 #ifndef Matlib
 #define Matlib
 #include "Matlib.h"
@@ -94,7 +89,6 @@ double * Value;
 /***************************************/
 /******* Constitutive Library **********/
 /***************************************/
-
 #ifndef Constitutive
 #define Constitutive
 #include "Constitutive.h"
@@ -103,7 +97,6 @@ double * Value;
 /***************************************/
 /********** MPM functions **************/
 /***************************************/
-
 #ifndef MPM
 #define MPM
 #include "MPM.h"
@@ -112,7 +105,6 @@ double * Value;
 /***************************************/
 /******* Shape functions Library *******/
 /***************************************/
-
 #ifndef ShapeFun
 #define ShapeFun
 #include "ShapeFun.h"
@@ -121,7 +113,6 @@ double * Value;
 /***************************************/
 /******** Input Output Library *********/
 /***************************************/
-
 #ifndef InOutFun
 #define InOutFun
 #include "InOutFun.h"
@@ -130,7 +121,6 @@ double * Value;
 /***************************************/
 /***************************************/
 /***************************************/
-
 #ifndef Formulations
 #define Formulations
 #include "Formulations.h"

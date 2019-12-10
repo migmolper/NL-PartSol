@@ -64,7 +64,7 @@ $(EXE): $(OBJS)
 
 #####################################################################
 # Rule for benchmarks
-.PHONY: Debug_MPM Sulsky_MPM Sulsky_GIMP Cuadrado_MPM Disco_MPM Disco_GIMP Traccion_MPM Traccion_GIMP Dyka_MPM Dyka_GIMP
+.PHONY: Debug_MPM Sulsky_MPM Sulsky_GIMP Sulsky_LME Cuadrado_MPM Disco_MPM Disco_GIMP Traccion_MPM Traccion_GIMP Dyka_MPM Dyka_GIMP
 
 # Caso para debugear
 Debug_MPM:
@@ -84,6 +84,12 @@ Sulsky_GIMP:
 	$ ./$(EXE) $(TESTDIR)/Sulsky_GIMP/ejemplo.gdf
 	@echo " "
 	@echo "*************** Test case passed ****************"
+Sulsky_LME:
+	@echo "**************** Run test case ******************"
+	$ ./$(EXE) $(TESTDIR)/Sulsky_LME/ejemplo.gdf
+	@echo " "
+	@echo "*************** Test case passed ****************"
+
 
 
 # Caso cuadrado caida

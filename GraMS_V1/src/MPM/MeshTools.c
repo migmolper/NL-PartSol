@@ -228,13 +228,13 @@ void GlobalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh){
 	  /* Calculate connectivity */
 	  MPM_Mesh.ListNodes[i] =
 	    LME_Tributary_Nodes(X_GC_GP,MPM_Mesh.Element_id[i],
-				FEM_Mesh,MPM_Mesh.Beta);
+				FEM_Mesh,MPM_Mesh.Gamma);
 	  /* Calculate number of nodes */
 	  MPM_Mesh.NumberNodes[i] = LenghtChain(MPM_Mesh.ListNodes[i]);
 	  /* Generate nodal distance list */
 	  NumNodes = MPM_Mesh.NumberNodes[i];
 	  ListNodes = ChainToArray(MPM_Mesh.ListNodes[i],NumNodes);
-	  Delta_Xip = MatAlloc(NumNodes,2);
+	  Delta_Xip = MatAlloc(NumNodes,NumberDimensions);
 	  for(int k = 0 ; k<NumNodes ; k++){
 	    GP_I = ListNodes[k];
 	    for(int l = 0 ; l<NumberDimensions ; l++){
@@ -244,9 +244,10 @@ void GlobalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh){
 	    }
 	  }
 	  free(ListNodes);
-	  /* Calculate lagrange multipliers */	  
+	  /* Calculate lagrange multipliers */
 	  MPM_Mesh.lambda =
-	    LME_lambda(Delta_Xip, MPM_Mesh.lambda, MPM_Mesh.Beta);
+	    LME_lambda(Delta_Xip, MPM_Mesh.lambda,
+		       FEM_Mesh.DeltaX, MPM_Mesh.Gamma);
 	  /* Free memory */
 	  FreeMat(Delta_Xip);
 	}
@@ -368,7 +369,7 @@ void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 	/* Calculate connectivity */
 	MPM_Mesh.ListNodes[i] =
 	  LME_Tributary_Nodes(X_GC_GP,MPM_Mesh.Element_id[i],
-			      FEM_Mesh,MPM_Mesh.Beta);
+			      FEM_Mesh,MPM_Mesh.Gamma);
 	/* Calculate number of nodes */
 	MPM_Mesh.NumberNodes[i] = LenghtChain(MPM_Mesh.ListNodes[i]);
 	/* Generate nodal distance list */
@@ -386,7 +387,8 @@ void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 	free(ListNodes);
 	/* Calculate lagrange multipliers */	  
 	MPM_Mesh.lambda =
-	  LME_lambda(Delta_Xip, MPM_Mesh.lambda, MPM_Mesh.Beta);
+	  LME_lambda(Delta_Xip, MPM_Mesh.lambda,
+		     FEM_Mesh.DeltaX, MPM_Mesh.Gamma);
 	/* Free memory */
 	FreeMat(Delta_Xip);
       }
@@ -528,7 +530,7 @@ void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 	    /* Calculate connectivity */
 	    MPM_Mesh.ListNodes[i] =
 	      LME_Tributary_Nodes(X_GC_GP,MPM_Mesh.Element_id[i],
-				  FEM_Mesh,MPM_Mesh.Beta);
+				  FEM_Mesh,MPM_Mesh.Gamma);
 	    /* Calculate number of nodes */
 	    MPM_Mesh.NumberNodes[i] = LenghtChain(MPM_Mesh.ListNodes[i]);
 	    /* Generate nodal distance list */
@@ -546,7 +548,8 @@ void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 	    free(ListNodes);
 	    /* Calculate lagrange multipliers */	  
 	    MPM_Mesh.lambda =
-	      LME_lambda(Delta_Xip, MPM_Mesh.lambda, MPM_Mesh.Beta);
+	      LME_lambda(Delta_Xip, MPM_Mesh.lambda,
+			 FEM_Mesh.DeltaX, MPM_Mesh.Gamma);
 	    /* Free memory */
 	    FreeMat(Delta_Xip);
 	  }

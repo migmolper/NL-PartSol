@@ -226,21 +226,35 @@ Matrix SolvePolynomial(Matrix Coeffs)
   
 */
 {
+  if( (Coeffs.N_rows > 1) && (Coeffs.N_cols > 1) ){
+    printf("%s : %s \n","Error in SolvePolynomial",
+	   "I am not able to solve a system !!!");
+    exit(0);
+  }
+  
   Matrix Solution;
-  int N_Coeffs = Coeffs.n;
+  int N_Coeffs = Coeffs.N_rows*Coeffs.N_cols;
   double a = Coeffs.nV[0];
   double b = Coeffs.nV[1];
   double c = Coeffs.nV[2];
 
   switch(N_Coeffs){
-    
+
   case 1 :
+    printf(" %s : %s \n ",
+	   "Error in SolvePolynomial()",
+	   "Dummy polynomial of order 0");
+    exit(0);
+    break;
+    
+  case 2 :
     printf(" %s : %s \n ",
 	   "Error in SolvePolynomial()",
 	   "Dummy polynomial of order 1");
     exit(0);
-
-  case 2 :
+    break;
+    
+  case 3 :
     Solution = MatAlloc(2,1);
     if((b*b - 4*a*c)<0){
       printf("%s : %s \n",

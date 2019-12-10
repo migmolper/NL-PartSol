@@ -261,7 +261,7 @@ GaussPoint Define_GP_Mesh(char * MPM_GID_MeshName,
 	MPM_Mesh.lambda.nM[i][j] = 0.0;
       }
     }
-
+    MPM_Mesh.Gamma = 1.8;
     /* Free data */
     FreeMat(Poligon_Centroid);
     

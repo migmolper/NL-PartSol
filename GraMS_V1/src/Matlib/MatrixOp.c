@@ -993,7 +993,7 @@ Matrix Eigen_Mat(Matrix In){
 
   case 1 :
     exit(0);
-    
+    break;
   case 2 :
     /* Get the coefficients of the charasteristic pol */
     Coeffs = MatAllocZ(1,3);
@@ -1009,10 +1009,10 @@ Matrix Eigen_Mat(Matrix In){
 
   case 3 :
     exit(0);
-
+    break;
+    
   default :
     exit(0);
-
   }
 
   return Eigen;

@@ -47,7 +47,7 @@ void Read_GeneralParameters(char * Name_File)
 
   /* Initial message */
   printf("************************************************* \n");
-  printf(" \t * Begin of read general parameters in : \n\t %s !!! \n",
+  printf(" * Begin of read general parameters in : \n\t %s !!! \n",
 	 Name_File);
   
   /* Open and check .dat file */
@@ -76,49 +76,49 @@ void Read_GeneralParameters(char * Name_File)
 	      /* First parameter of KIND_ANALYSIS : FEM/MPM */
 	      if( strcmp(KIND_ANALYSIS[0],"uGIMP2D") == 0 ){
 		ShapeFunctionGP = KIND_ANALYSIS[0];
-		puts("\t -> S.Bardenhagen Uniform GIMP 2D"); 
+		puts("\t -> Shape functions : Uniform GIMP"); 
 	      }
 	      if(strcmp(KIND_ANALYSIS[0],"MPMQ4") == 0){
 		ShapeFunctionGP = KIND_ANALYSIS[0];
-		puts("\t -> D.Sulsky MPM Linear Quadrilateral"); 
+		puts("\t -> Shape functions : Linear Quadrilateral"); 
 	      }
 	      if(strcmp(KIND_ANALYSIS[0],"LME") == 0){
 		ShapeFunctionGP = KIND_ANALYSIS[0];
-		puts("\t -> M.Ortiz & M.Arroyo Local-maximum Entropy "); 
+		puts("\t -> Shape functions : Local-maximum Entropy "); 
 	      }
 	      /*************************************************************/
 	      /* Second parameter of KIND_ANALYSIS : U/SIGMA_V */
 	      if( strcmp(KIND_ANALYSIS[1],"SIGMA_V") == 0 ){
 		Formulation = KIND_ANALYSIS[1];
-		printf("\t -> %s : Stress-Velocity \n",Formulation); 
+		puts("\t -> Formulation : Sigma-V"); 
 	      }
 	      if( strcmp(KIND_ANALYSIS[1],"U") == 0 ){
 		Formulation = KIND_ANALYSIS[1];
-		printf("\t -> %s : Displacement \n",Formulation);
+		puts("\t -> Formulation : U");
 	      }
 	      /*************************************************************/
 	      /* Third parameter of KIND_ANALYSIS : 1D/2D/3D */
 	      if( strcmp(KIND_ANALYSIS[2],"1D") == 0 ){
 		NumberDimensions = 1;
-		printf("\t -> 1D \n");
+		puts("\t -> Number of dimensions : 1D");
 	      }
 	      if( strcmp(KIND_ANALYSIS[2],"2D") == 0 ){
 		NumberDimensions = 2;
-		printf("\t -> 2D \n");
+		puts("\t -> Number of dimensions : 2D");
 	      }
 	      if( strcmp(KIND_ANALYSIS[2],"3D") == 0 ){
 		NumberDimensions = 3;
-		printf("\t -> 3D \n");
+		puts("\t -> Number of dimensions : 3D");
 	      }
 	      /*************************************************************/
 	      /* Third parameter of KIND_ANALYSIS : 2STG/VerletLF */
 	      if( strcmp(KIND_ANALYSIS[3],"2STG") == 0 ){
 		TimeIntegration = KIND_ANALYSIS[3];
-		printf("\t -> %s : Two-Steps Taylor Galerkin \n",TimeIntegration); 
+		puts("\t -> Integration scheme : Two-Steps Taylor Galerkin");
 	      }
 	      if( strcmp(KIND_ANALYSIS[3],"VerletLF") == 0 ){
 		TimeIntegration = KIND_ANALYSIS[3];
-		printf("\t -> %s : Leapfrog Verlet \n",TimeIntegration); 
+		puts("\t -> Integration scheme : Forward Euler");
 	      }
 	      /*************************************************************/
 	    }

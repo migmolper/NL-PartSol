@@ -18,7 +18,8 @@
 
 */
 
-Matrix LME_lambda(Matrix da, Matrix lambda,double Beta)
+Matrix LME_lambda(Matrix da, Matrix lambda,
+		  double DeltaX, double Gamma)
 /*
   Output: 
   -> lambda : Lagrange multipliers lambda for
@@ -49,7 +50,7 @@ Matrix LME_lambda(Matrix da, Matrix lambda,double Beta)
   while(norm_r > TOL_zero){
   
     /* Get vector with the shape functions evaluated in the nodes */
-    pa = LME_pa(da,lambda,Beta);
+    pa = LME_pa(da,lambda,DeltaX,Gamma);
 
     /* Get the gradient of log(Z) */
     r = LME_r(da,pa);
@@ -105,18 +106,21 @@ Matrix LME_lambda(Matrix da, Matrix lambda,double Beta)
   return lambda;
 }
 
-double LME_fa(Matrix da, Matrix lambda, double Beta)
+double LME_fa(Matrix da, Matrix lambda, double DeltaX, double Gamma)
 /*
   Output :
   -> fa : the function fa that appear in [1] (scalar).
   Input parameters :
   -> da : Matrix with the distance to the neighborhood node ''a'' (dim x 1).
   -> lambda : Initial value of the lagrange multipliers (1 x dim).
-  -> Beta : Tunning parameter (scalar).
+  -> Gamma : Tunning parameter (scalar).
 */
 {
   /* CALL LIBRARIES */
   MatLib MO = MatrixOperators();
+
+  /* Get Beta */
+  double Beta = Gamma/(DeltaX*DeltaX);
   
   /* Get the scalar product the distance and the lagrange multipliers */
   Matrix Aux = MO.Sprod(lambda,da);
@@ -126,7 +130,7 @@ double LME_fa(Matrix da, Matrix lambda, double Beta)
   return -Beta*norm_dist*norm_dist + Aux.n;
 }
 
-Matrix LME_pa(Matrix da, Matrix lambda, double Beta)
+Matrix LME_pa(Matrix da, Matrix lambda, double DeltaX, double Gamma)
 /*
   Output :
   -> pa : Value of the shape function in the
@@ -152,7 +156,7 @@ Matrix LME_pa(Matrix da, Matrix lambda, double Beta)
   /* Get Z and the numerator */
   for(int i = 0 ; i<N_neibourg ; i++){
     da_i = MO.Assign(N_dim,1,NAN,da.nM[i],NULL);
-    pa.nV[i] = exp(LME_fa(da_i,lambda,Beta));
+    pa.nV[i] = exp(LME_fa(da_i,lambda,DeltaX,Gamma));
     Z_a += pa.nV[i];
   }
 
@@ -319,7 +323,7 @@ Matrix LME_dpa(Matrix da, Matrix pa)
 }
 
 ChainPtr LME_Tributary_Nodes(Matrix X_GP, int Elem_GP,
-			     Mesh FEM_Mesh, double Beta){
+			     Mesh FEM_Mesh, double Gamma){
 
   Matrix Distance; /* Distance between node and GP */
   Matrix X_I = MatAssign(NumberDimensions,1,NAN,NULL,NULL);
@@ -332,17 +336,13 @@ ChainPtr LME_Tributary_Nodes(Matrix X_GP, int Elem_GP,
   int * NodesElem;
   int Num_Elem;
   int NumNodesElem;
-  double gamma;
   double Ra;
 
   /* CALL LIBRARIES */
   MatLib MO = MatrixOperators();
 
-  /* Get gamma -> tricky implementation for the NM algorithm */
-  gamma = Beta*FEM_Mesh.DeltaX*FEM_Mesh.DeltaX;
-
   /* Get the search radius */
-  Ra = FEM_Mesh.DeltaX*sqrt(-log(TOL_lambda)/gamma);
+  Ra = FEM_Mesh.DeltaX*sqrt(-log(TOL_lambda)/Gamma);
 
   /* Number of nodes of the initial element and
      list of nodes */

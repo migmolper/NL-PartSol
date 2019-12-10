@@ -121,7 +121,7 @@ typedef struct {
   Matrix lp; /* Voxel shape  */
   /* LME */
   Matrix lambda; /* Lagrange multiplier */
-  double Beta;
+  double Gamma;
 
 } GaussPoint;
 
