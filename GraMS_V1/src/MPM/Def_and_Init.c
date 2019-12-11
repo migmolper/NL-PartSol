@@ -185,6 +185,10 @@ GaussPoint Define_GP_Mesh(char * MPM_GID_MeshName,
   MPM_Mesh.Phi.rho = MatAllocZ(MPM_Mesh.NumGP,1);
   strcpy(MPM_Mesh.Phi.rho.Info,"Density field GP");
 
+  /* Deformation Energy (Scalar) */
+  MPM_Mesh.Phi.W = MatAllocZ(MPM_Mesh.NumGP,1);
+  strcpy(MPM_Mesh.Phi.W.Info,"Deformation Energy GP");
+
   /* Fill geometrical properties of the GP mesh */
   for(int i = 0 ; i<MPM_Mesh.NumGP ; i++){
 
@@ -247,6 +251,8 @@ GaussPoint Define_GP_Mesh(char * MPM_GID_MeshName,
     MPM_Mesh.Phi.Strain.nM[i][0] = 0.0;
     MPM_Mesh.Phi.Strain.nM[i][1] = 0.0;
     MPM_Mesh.Phi.Strain.nM[i][2] = 0.0;
+    /* Initial Energy of deformation */
+    MPM_Mesh.Phi.W.nV[i] = 0.0;
 
     /* Voxel lenght (GIMP) */
     if(strcmp(MPM_Mesh.ShapeFunctionGP,"uGIMP2D") == 0){

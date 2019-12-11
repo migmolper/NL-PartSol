@@ -18,7 +18,9 @@ typedef struct {
 
 /*******************************************************/
 
-Matrix LinearElastic2D(Matrix,double,double);
+/* Material Linear elastic */
+Matrix LinearElastic(Matrix,Matrix,double,double);
+double W_LinearElastic(Matrix,Matrix);
 
 /*******************************************************/
 
@@ -26,8 +28,8 @@ Matrix LinearElastic2D(Matrix,double,double);
 
 typedef struct { /* Constitutive models */
 
-  /* 2D linear elastic material */
-  Matrix (* LE2D)(Matrix,double,double);
+  /* Linear elastic material */
+  Matrix (* LE)(Matrix,Matrix,double,double);
   
 } ConstLib;
 

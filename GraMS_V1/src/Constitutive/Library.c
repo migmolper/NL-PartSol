@@ -10,7 +10,7 @@ ConstLib Contitutive(void){
   /* Define variable with the functions */
   ConstLib CL;
 
-  CL.LE2D = LinearElastic2D;
+  CL.LE = LinearElastic;
   
   return CL;
 }

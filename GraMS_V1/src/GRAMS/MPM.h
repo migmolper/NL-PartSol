@@ -86,6 +86,8 @@ typedef struct {
   Matrix Stress;
   /* Strain field */
   Matrix Strain;
+  /* Deformation Energy */
+  Matrix W;
   
 } Fields;
 

@@ -8,40 +8,22 @@
 
 void UpdateGaussPointStress(GaussPoint MPM_Mesh){
 
-  /* 0º Variable declaration  */
-  Matrix StrainTensor_GP;
-  Matrix StressTensor_GP;
-
-  /* 1º Switch the dimensions of the aulixiar strain tensor */
-  switch(NumberDimensions){
-  case 1:
-    StrainTensor_GP = MatAssign(1,1,NAN,NULL,NULL);
-    break;
-  case 2:
-    StrainTensor_GP = MatAssign(3,1,NAN,NULL,NULL);
-    break;
-  case 3:
-    StrainTensor_GP = MatAssign(6,1,NAN,NULL,NULL);
-    break;
-  default :
-    printf("%s : %s \n","Error in UpdateGaussPointStress()",
-	   "Wrong number of dimensions !!! ");
-    exit(0);
-  }
+  /* 1º Variable declaration  */
+  Matrix Strain_k1;
+  Matrix Stress_k0;
+  Matrix Stress_k1;
 
   /* 2º Iterate over the Gauss-Points */
   for(int i = 0 ; i<MPM_Mesh.NumGP ; i++){
-    /* 3º Store in an auxiliar variable the strain tensor in the GP */
-    StrainTensor_GP.nV = MPM_Mesh.Phi.Strain.nM[i];
+    /* 3º Use pointers to memory manage */
+    Strain_k1.nV = MPM_Mesh.Phi.Strain.nM[i];
+    Stress_k0.nV = MPM_Mesh.Phi.Stress.nM[i];
+    Stress_k1.nV = MPM_Mesh.Phi.Stress.nM[i];
     /* 4º Get the new stress tensor (2D Linear elastic) */
-    StressTensor_GP =
-      MPM_Mesh.D.LE2D(StrainTensor_GP,PoissonModulus,ElasticModulus);
-    /* 5º Update the stress tensor with the new-one */
-    for(int j = 0 ; j<StrainTensor_GP.N_rows ; j++){
-      MPM_Mesh.Phi.Stress.nM[i][j] = StressTensor_GP.nV[j];
-    }
-    /* 6º Free memory */
-    FreeMat(StressTensor_GP);
+    Stress_k1 =
+      MPM_Mesh.D.LE(Strain_k1,Stress_k0,PoissonModulus,ElasticModulus);
+    /* 5º Get the deformation energy */
+    MPM_Mesh.Phi.W.nV[i] = W_LinearElastic(Strain_k1,Stress_k1);
   }
   
 }

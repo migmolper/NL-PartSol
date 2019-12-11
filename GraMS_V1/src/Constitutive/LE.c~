@@ -3,7 +3,7 @@
 #include <string.h>
 #include "../GRAMS/grams.h"
 
-Matrix LinearElastic2D(Matrix Strain,
+Matrix LinearElastic(Matrix Strain,
 		       double PoissonRatio_Mat,
 		       double ElasticModulus_Mat){
 
