@@ -358,7 +358,12 @@ void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 
     /* 7º Check if the GP is in the same element */
     if(InOut_Poligon(X_GC_GP,Poligon_Coordinates) == 1){
-           
+
+      if(strcmp(MPM_Mesh.ShapeFunctionGP,"MPMQ4") == 0){
+	/* If the GP is in the element, get its natural coordinates */
+	X_EC_GP.nV = MPM_Mesh.Phi.x_EC.nM[i];     
+	Get_X_EC_Q4(X_EC_GP,X_GC_GP,Poligon_Coordinates);
+      }           
       /* Assign the new connectivity of the GP */
       if(strcmp(MPM_Mesh.ShapeFunctionGP,"uGIMP2D") == 0){
 	/* If the GP is in the element, get its natural coordinates */
