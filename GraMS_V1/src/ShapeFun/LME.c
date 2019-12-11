@@ -23,12 +23,12 @@ Matrix LME_lambda(Matrix da, Matrix lambda,
 /*
   Output: 
   -> lambda : Lagrange multipliers lambda for
-  a material point (1 x dim).
+  all the material point (N_GP x dim).
   Input parameters :
   -> da : Matrix with the distances to the
   neighborhood nodes (neighborhood x dim).
   -> lambda : Initial value of the
-  lagrange multipliers (1 x dim).
+  lagrange multipliers (N_GP x dim).
   -> Beta : Tunning parameter (scalar).
   -> h : Grid spacing (scalar).
   -> TOL_zero : Tolerance for Newton-Rapson.
@@ -42,63 +42,82 @@ Matrix LME_lambda(Matrix da, Matrix lambda,
   Matrix r; /* Gradient of log(Z) */
   Matrix J; /* Hessian of log(Z) */
   Matrix Jm1; /* Inverse of J */
+  Matrix lambda_GP; /* Lagrange multiplier for the GP */
   Matrix Increment_lambda;
-  double norm_r = 10; /* Initial value of the norm */
-  int NumIter = 0; /* Iterator counter */
+  int NumGP = lambda.N_rows;
+  int NumIter; /* Iterator counter */
+  double norm_r; /* Value of the norm */
 
-  /* Start with the Newton-Rapson method */
-  while(norm_r > TOL_zero){
-  
-    /* Get vector with the shape functions evaluated in the nodes */
-    pa = LME_pa(da,lambda,DeltaX,Gamma);
+  /* Assign some properties for the auxiliar variable */
+  lambda_GP = MO.Assign(NumberDimensions,1,NAN,NULL,NULL);
 
-    /* Get the gradient of log(Z) */
-    r = LME_r(da,pa);
+  for(int i = 0 ; i<NumGP ; i++){
 
-    /* Get the norm of r for the stopping criteria porpouse */
-    norm_r = MO.Norm(r,2);
+    /*  Set a initial value for the norm of r
+	and the number of interations */
+    norm_r = 10; 
+    NumIter = 0;
 
-    /* Get the Hessian of log(Z) */    
-    J = LME_J(da,pa,r);
-
-    /* Check the conditioning number of the Hessian */
-    if (fabs(MO.Cond(J)) < 1e-8){
-      printf(" %s : %s \n",
-	     "Error in LME_lambda",
-	     "The Hessian is near to singular matrix");      
-      exit(0);
-    }
-
-    /* Free the distance matrix */
-    MO.FreeMat(da);
-    /* Free the shape function nodal values */
-    MO.FreeMat(pa);
+    /* Asign to the auxiliar variable the value of
+       the lagrange multiplier */
+    lambda_GP.nV = lambda.nM[i];
     
-    /* Inverse of the Hessian */
-    Jm1 = MO.Inv(J);
+    /* Start with the Newton-Rapson method */
+    while(norm_r > TOL_zero){
+      
+      /* Get vector with the shape functions evaluated in the nodes */
+      pa = LME_pa(da,lambda_GP,DeltaX,Gamma);
 
-    /* Get the increment for lambda */
-    Increment_lambda = MO.Sprod(Jm1,r);
+      /* Get the gradient of log(Z) */
 
-    /* Free r, J, and the inverse of J */
-    MO.FreeMat(r);
-    MO.FreeMat(J);
-    MO.FreeMat(Jm1);   
+      r = LME_r(da,pa);
 
-    /* Update the value of lambda with the use of the increment */
-    lambda = MO.Incr(lambda,Increment_lambda);
+      /* Get the norm of r for the stopping criteria porpouse */
+      norm_r = MO.Norm(r,2);
 
-    /* Free memory */
-    MO.FreeMat(Increment_lambda);
+      /* Get the Hessian of log(Z) */    
+      J = LME_J(da,pa,r);
 
-    /* Update the number of iterations */
-    NumIter ++;
-    if(NumIter > 100){
-      printf(" %s : %s \n",
-	     "Error in LME_lambda",
-	     "No convergence in 100 iterations");
-    }
+      /* Check the conditioning number of the Hessian */
+      if (fabs(MO.Cond(J)) < 1e-8){
+	printf(" %s : %s \n",
+	       "Error in LME_lambda",
+	       "The Hessian is near to singular matrix");      
+	exit(0);
+      }
+
+      /* Free the distance matrix */
+      MO.FreeMat(da);
+      /* Free the shape function nodal values */
+      MO.FreeMat(pa);
+    
+      /* Inverse of the Hessian */
+      Jm1 = MO.Inv(J);
+
+      /* Get the increment for lambda */
+      Increment_lambda = MO.Sprod(Jm1,r);
+
+      /* Free r, J, and the inverse of J */
+      MO.FreeMat(r);
+      MO.FreeMat(J);
+      MO.FreeMat(Jm1);   
+
+      /* Update the value of lambda with the use of the increment */
+      lambda_GP = MO.Incr(lambda_GP,Increment_lambda);
+
+      /* Free memory */
+      MO.FreeMat(Increment_lambda);
+
+      /* Update the number of iterations */
+      NumIter ++;
+      if(NumIter > 100){
+	printf(" %s : %s \n",
+	       "Error in LME_lambda",
+	       "No convergence in 100 iterations");
+      }
   
+    }
+
   }
 
   /* Once the stopping criteria is reached, 
@@ -111,8 +130,8 @@ double LME_fa(Matrix da, Matrix lambda, double DeltaX, double Gamma)
   Output :
   -> fa : the function fa that appear in [1] (scalar).
   Input parameters :
-  -> da : Matrix with the distance to the neighborhood node ''a'' (dim x 1).
-  -> lambda : Initial value of the lagrange multipliers (1 x dim).
+  -> da : Matrix with the distance to the neighborhood node ''a'' (1 x dim).
+  -> lambda : Initial value of the lagrange multipliers (dim x 1).
   -> Gamma : Tunning parameter (scalar).
 */
 {
@@ -155,7 +174,7 @@ Matrix LME_pa(Matrix da, Matrix lambda, double DeltaX, double Gamma)
 
   /* Get Z and the numerator */
   for(int i = 0 ; i<N_neibourg ; i++){
-    da_i = MO.Assign(N_dim,1,NAN,da.nM[i],NULL);
+    da_i = MO.Assign(1,N_dim,NAN,da.nM[i],NULL);
     pa.nV[i] = exp(LME_fa(da_i,lambda,DeltaX,Gamma));
     Z_a += pa.nV[i];
   }
@@ -356,7 +375,7 @@ ChainPtr LME_Tributary_Nodes(Matrix X_GP, int Elem_GP,
     Triburary_Elements =
       ChainUnion(Triburary_Elements,FEM_Mesh.NodeNeighbour[NodesElem[i]]);
   }
-
+  
   /* Free the array with the nodes of the initial element */
   free(NodesElem);
 
@@ -372,7 +391,7 @@ ChainPtr LME_Tributary_Nodes(Matrix X_GP, int Elem_GP,
     Triburary_Nodes =
       ChainUnion(Triburary_Nodes,FEM_Mesh.Connectivity[List_Elements[i]]);
   }
-
+  
   /* Free the array wit the list of tributary elements */
   free(List_Elements);
 
@@ -413,7 +432,6 @@ ChainPtr LME_Tributary_Nodes(Matrix X_GP, int Elem_GP,
     /* Update pointer index */
     iPtr = iPtr->next;
   }
-
   return Triburary_Nodes;
 }
 

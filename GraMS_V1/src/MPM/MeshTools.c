@@ -231,6 +231,7 @@ void GlobalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh){
 				FEM_Mesh,MPM_Mesh.Gamma);
 	  /* Calculate number of nodes */
 	  MPM_Mesh.NumberNodes[i] = LenghtChain(MPM_Mesh.ListNodes[i]);
+
 	  /* Generate nodal distance list */
 	  NumNodes = MPM_Mesh.NumberNodes[i];
 	  ListNodes = ChainToArray(MPM_Mesh.ListNodes[i],NumNodes);
@@ -239,11 +240,12 @@ void GlobalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh){
 	    GP_I = ListNodes[k];
 	    for(int l = 0 ; l<NumberDimensions ; l++){
 	      Delta_Xip.nM[k][l] =
-		MPM_Mesh.Phi.x_GC.nM[i][l]-
+		X_GC_GP.nV[l]-
 		FEM_Mesh.Coordinates.nM[GP_I][l];
 	    }
 	  }
 	  free(ListNodes);
+
 	  /* Calculate lagrange multipliers */
 	  MPM_Mesh.lambda =
 	    LME_lambda(Delta_Xip, MPM_Mesh.lambda,
