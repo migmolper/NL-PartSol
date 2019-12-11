@@ -1042,9 +1042,15 @@ double Cond_Mat(Matrix In)
   }
   
   Matrix Eigen = Eigen_Mat(In);
-  int Dim_In = In.N_rows;
+  double max_Eigen = 0;
+  double min_Eigen = 10e6;
+    
+  for(int i = 0 ; i<Eigen.N_rows ; i++){
+    max_Eigen = MAXVAL(max_Eigen,fabs(Eigen.nV[i]));
+    min_Eigen = MINVAL(min_Eigen,fabs(Eigen.nV[i]));
+  }
 
-  return fabs((double)Eigen.nV[0]/Eigen.nV[Dim_In-1]);
+  return (double)max_Eigen/min_Eigen;
   
 }
 

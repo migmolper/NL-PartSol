@@ -163,10 +163,14 @@ void GlobalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh){
   Matrix Poligon_Coordinates;
   ChainPtr ListNodes_I;
   Matrix lp; /* Particle voxel (GIMP) */
+  Matrix lambda_GP;   /* Lagrange multiplier for the GP */
   Matrix Delta_Xip; /* Distance from GP to the nodes (LME) */
   int NumNodes; /* Number of neibourghs (LME) */
   int * ListNodes; /* List of nodes (LME) */
   int GP_I; /* Iterator for the neibourghs (LME) */
+
+  /* Usefull values */
+  lambda_GP = MatAssign(NumberDimensions,1,NAN,NULL,NULL); 
 
   /* 1º Set to zero the active/non-active elements */
   for(int i = 0 ; i<FEM_Mesh.NumNodesMesh ; i++){
@@ -245,11 +249,12 @@ void GlobalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh){
 	    }
 	  }
 	  free(ListNodes);
-
+	  
+	  /* Auxiliar lambda to update it */
+	  lambda_GP.nV = MPM_Mesh.lambda.nM[i];
 	  /* Calculate lagrange multipliers */
-	  MPM_Mesh.lambda =
-	    LME_lambda(Delta_Xip, MPM_Mesh.lambda,
-		       FEM_Mesh.DeltaX, MPM_Mesh.Gamma);
+	  lambda_GP = LME_lambda(Delta_Xip, lambda_GP,
+				 FEM_Mesh.DeltaX, MPM_Mesh.Gamma);
 	  /* Free memory */
 	  FreeMat(Delta_Xip);
 	}

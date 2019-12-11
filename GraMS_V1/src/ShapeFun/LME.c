@@ -22,13 +22,12 @@ Matrix LME_lambda(Matrix da, Matrix lambda,
 		  double DeltaX, double Gamma)
 /*
   Output: 
-  -> lambda : Lagrange multipliers lambda for
-  all the material point (N_GP x dim).
+  -> lambda : Lagrange multipliers lambda (1 x dim).
   Input parameters :
   -> da : Matrix with the distances to the
   neighborhood nodes (neighborhood x dim).
   -> lambda : Initial value of the
-  lagrange multipliers (N_GP x dim).
+  lagrange multipliers (1 x dim).
   -> Beta : Tunning parameter (scalar).
   -> h : Grid spacing (scalar).
   -> TOL_zero : Tolerance for Newton-Rapson.
@@ -42,84 +41,66 @@ Matrix LME_lambda(Matrix da, Matrix lambda,
   Matrix r; /* Gradient of log(Z) */
   Matrix J; /* Hessian of log(Z) */
   Matrix Jm1; /* Inverse of J */
-  Matrix lambda_GP; /* Lagrange multiplier for the GP */
   Matrix Increment_lambda;
-  int NumGP = lambda.N_rows;
-  int NumIter; /* Iterator counter */
-  double norm_r; /* Value of the norm */
-
-  /* Assign some properties for the auxiliar variable */
-  lambda_GP = MO.Assign(NumberDimensions,1,NAN,NULL,NULL);
-
-  for(int i = 0 ; i<NumGP ; i++){
-
-    /*  Set a initial value for the norm of r
-	and the number of interations */
-    norm_r = 10; 
-    NumIter = 0;
-
-    /* Asign to the auxiliar variable the value of
-       the lagrange multiplier */
-    lambda_GP.nV = lambda.nM[i];
+  int NumIter = 0; /* Iterator counter */
+  double norm_r = 10; /* Value of the norm */
     
-    /* Start with the Newton-Rapson method */
-    while(norm_r > TOL_zero){
-      
-      /* Get vector with the shape functions evaluated in the nodes */
-      pa = LME_pa(da,lambda_GP,DeltaX,Gamma);
-
-      /* Get the gradient of log(Z) */
-
-      r = LME_r(da,pa);
-
-      /* Get the norm of r for the stopping criteria porpouse */
-      norm_r = MO.Norm(r,2);
-
-      /* Get the Hessian of log(Z) */    
-      J = LME_J(da,pa,r);
-
-      /* Check the conditioning number of the Hessian */
-      if (fabs(MO.Cond(J)) < 1e-8){
-	printf(" %s : %s \n",
-	       "Error in LME_lambda",
-	       "The Hessian is near to singular matrix");      
-	exit(0);
-      }
-
-      /* Free the distance matrix */
-      MO.FreeMat(da);
-      /* Free the shape function nodal values */
-      MO.FreeMat(pa);
+  /* Start with the Newton-Rapson method */
+  while(norm_r > TOL_zero){
     
-      /* Inverse of the Hessian */
-      Jm1 = MO.Inv(J);
+    /* Get vector with the shape functions evaluated in the nodes */
+    pa = LME_pa(da,lambda,DeltaX,Gamma);
 
-      /* Get the increment for lambda */
-      Increment_lambda = MO.Sprod(Jm1,r);
+    /* Get the gradient of log(Z) */
+    r = LME_r(da,pa);
 
-      /* Free r, J, and the inverse of J */
-      MO.FreeMat(r);
-      MO.FreeMat(J);
-      MO.FreeMat(Jm1);   
+    /* Get the norm of r for the stopping criteria porpouse */
+    norm_r = MO.Norm(r,2);
 
-      /* Update the value of lambda with the use of the increment */
-      lambda_GP = MO.Incr(lambda_GP,Increment_lambda);
+    /* Get the Hessian of log(Z) */    
+    J = LME_J(da,pa,r);
 
-      /* Free memory */
-      MO.FreeMat(Increment_lambda);
-
-      /* Update the number of iterations */
-      NumIter ++;
-      if(NumIter > 100){
-	printf(" %s : %s \n",
-	       "Error in LME_lambda",
-	       "No convergence in 100 iterations");
-      }
-  
+    /* Check the conditioning number of the Hessian */
+    if (fabs(MO.Cond(J)) > 10){
+      printf(" %s : %s \n",
+	     "Error in LME_lambda",
+	     "The Hessian is near to singular matrix");      
+      exit(0);
     }
 
-  }
+    /* Free the shape function nodal values */
+    MO.FreeMat(pa);
+    
+    /* Inverse of the Hessian */
+    Jm1 = MO.Inv(J);
+    
+    /* Get the increment for lambda */
+    Increment_lambda = MO.Sprod(Jm1,r);
 
+    /* Free r, J, and the inverse of J */
+    MO.FreeMat(r);
+    MO.FreeMat(J);
+    MO.FreeMat(Jm1);
+
+    /* Update the value of lambda */
+    for(int i = 0 ; i<NumberDimensions ; i++){
+      lambda.nV[i] -= Increment_lambda.nV[i];
+    }
+
+    /* Free memory */
+    MO.FreeMat(Increment_lambda);
+
+    /* Update the number of iterations */
+    NumIter ++;
+    if(NumIter > 100){
+      printf(" %s : %s \n",
+	     "Error in LME_lambda",
+	     "No convergence in 100 iterations");
+    }
+
+  
+  }
+  
   /* Once the stopping criteria is reached, 
      return the lagrange multipliers value */
   return lambda;
