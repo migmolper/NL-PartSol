@@ -43,26 +43,33 @@ Matrix LinearElastic(Matrix Strain_k1,
 }
 
 double W_LinearElastic(Matrix Strain,
-		       Matrix Stress){
+		       Matrix Stress,
+		       double Damage){
 
   double W = 0; /* Internal energy for the GP */
     
   /* Calcule the internal work */
   switch(NumberDimensions){
   case 1 :
-    W = 0.5*Strain.n*Stress.n;
+    if(Damage < 1){
+      W = 0.5*Strain.n*Stress.n;
+    }
     return W;
   case 2 :
-    for(int i = 0 ; i<3 ; i++){
-      W += Strain.nV[i]*Stress.nV[i];
+    if(Damage < 1){
+      for(int i = 0 ; i<3 ; i++){
+	W += Strain.nV[i]*Stress.nV[i];
+      }
+      W *= 0.5;
     }
-    W *= 0.5;
     return W;
   case 3 :
-    for(int i = 0 ; i<6 ; i++){
-      W += Strain.nV[i]*Stress.nV[i];
+    if(Damage < 1){
+      for(int i = 0 ; i<6 ; i++){
+	W += Strain.nV[i]*Stress.nV[i];
+      }
+      W *= 0.5;
     }
-    W *= 0.5;
     return W; 
   default :
     printf("%s : %s \n",

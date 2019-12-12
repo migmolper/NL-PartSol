@@ -145,6 +145,7 @@ void GetNodalConnectivity(Mesh FEM_Mesh){
 
 /*********************************************************************/
 
+
 void GlobalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh){
 
   /* Variables for the GP coordinates */

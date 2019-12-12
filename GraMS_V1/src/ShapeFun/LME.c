@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <math.h>
 #include "../GRAMS/grams.h"
-#include "../GRAMS/Utils.h"
 
 /**************************************************/
 /************* Local Maximum-Entropy **************/

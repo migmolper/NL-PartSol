@@ -149,8 +149,8 @@ void UpdateGaussPointStrain(GaussPoint MPM_Mesh,
     FreeMat(Increment_Strain_GP);
 
     /* 8º Update the density of the GP */
-    MPM_Mesh.Phi.rho.nV[i] =
-      UpdateGaussPointDensity(MPM_Mesh.Phi.rho.nV[i],
+    MPM_Mesh.Mat.rho.nV[i] =
+      UpdateGaussPointDensity(MPM_Mesh.Mat.rho.nV[i],
 			      Incr_TraceStrain);    
   }
 }

@@ -82,7 +82,7 @@ Matrix GetNodalMassMomentum(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
     }
    
     /* 5º Get the mass of the GP */
-    GP_mass = MPM_Mesh.Phi.mass.nV[i];
+    GP_mass = MPM_Mesh.Mat.mass.nV[i];
 
     /* 6º Get the nodal mass and mommentum */
     for(int k = 0 ; k<GP_NumNodes ; k++){

@@ -61,7 +61,6 @@ GaussPoint Define_GP_Mesh(char * MPM_GID_MeshName,
   /* A list with the number of tributary nodes of the GP */
   MPM_Mesh.NumberNodes =
     (int *)Allocate_ArrayZ(MPM_Mesh.NumGP,sizeof(int));
-
   /* A table of chains with the nodal connectivity of the GP */
   MPM_Mesh.ListNodes =
     (ChainPtr *)malloc(MPM_Mesh.NumGP*sizeof(ChainPtr));
@@ -80,6 +79,26 @@ GaussPoint Define_GP_Mesh(char * MPM_GID_MeshName,
   MPM_Mesh.Phi.x_GC = MatAllocZ(MPM_Mesh.NumGP,3);
   strcpy(MPM_Mesh.Phi.x_GC.Info,"Global Coordinates");
 
+  /* Material parameters */
+  /* Mass */
+  MPM_Mesh.Mat.mass = MatAllocZ(MPM_Mesh.NumGP,1);
+  strcpy(MPM_Mesh.Mat.mass.Info,"Mass GP");
+  /* Density */
+  MPM_Mesh.Mat.rho = MatAllocZ(MPM_Mesh.NumGP,1);
+  strcpy(MPM_Mesh.Mat.rho.Info,"Density GP");
+  /* Elastic Modulus */
+  MPM_Mesh.Mat.E = MatAllocZ(MPM_Mesh.NumGP,1);
+  strcpy(MPM_Mesh.Mat.E.Info,"Elastic modulus GP");  
+  /* Poisson ratio */
+  MPM_Mesh.Mat.mu = MatAllocZ(MPM_Mesh.NumGP,1);
+  strcpy(MPM_Mesh.Mat.mu.Info,"Poisson ratio GP");
+  /* Damage parameter (fracture) */
+  MPM_Mesh.Mat.ji = MatAllocZ(MPM_Mesh.NumGP,1);
+  strcpy(MPM_Mesh.Mat.ji.Info,"Damage parameter GP");
+  /* Normalizing constant (fracture) */
+  MPM_Mesh.Mat.Ceps = MatAllocZ(MPM_Mesh.NumGP,1);
+  strcpy(MPM_Mesh.Mat.Ceps.Info,"Ceps fracture GP");
+  
   /* Allocate vectorial/tensorial fields */
   switch(NumberDimensions){
   case 1 :
@@ -101,6 +120,9 @@ GaussPoint Define_GP_Mesh(char * MPM_GID_MeshName,
     /* Stress field (Tensor) */
     MPM_Mesh.Phi.Stress = MatAllocZ(MPM_Mesh.NumGP,1);
     strcpy(MPM_Mesh.Phi.Stress.Info,"Stress field GP");
+    /* Deformation Energy (Scalar) */
+    MPM_Mesh.Phi.W = MatAllocZ(MPM_Mesh.NumGP,1);
+    strcpy(MPM_Mesh.Phi.W.Info,"Deformation Energy GP");
     /* Lenght of the Voxel (Only GIMP) */
     if(strcmp(MPM_Mesh.ShapeFunctionGP,"uGIMP2D") == 0){
       MPM_Mesh.lp = MatAllocZ(MPM_Mesh.NumGP,1);
@@ -131,6 +153,9 @@ GaussPoint Define_GP_Mesh(char * MPM_GID_MeshName,
     /* Stress field (Tensor) */
     MPM_Mesh.Phi.Stress = MatAllocZ(MPM_Mesh.NumGP,3);
     strcpy(MPM_Mesh.Phi.Stress.Info,"Stress field GP");
+    /* Deformation Energy (Scalar) */
+    MPM_Mesh.Phi.W = MatAllocZ(MPM_Mesh.NumGP,1);
+    strcpy(MPM_Mesh.Phi.W.Info,"Deformation Energy GP");
     /* Lenght of the Voxel (Only GIMP) */
     if(strcmp(MPM_Mesh.ShapeFunctionGP,"uGIMP2D") == 0){
       MPM_Mesh.lp = MatAllocZ(MPM_Mesh.NumGP,2);
@@ -161,6 +186,9 @@ GaussPoint Define_GP_Mesh(char * MPM_GID_MeshName,
     /* Stress field (Tensor) */
     MPM_Mesh.Phi.Stress = MatAllocZ(MPM_Mesh.NumGP,9);
     strcpy(MPM_Mesh.Phi.Stress.Info,"Stress field GP");
+    /* Deformation Energy (Scalar) */
+    MPM_Mesh.Phi.W = MatAllocZ(MPM_Mesh.NumGP,1);
+    strcpy(MPM_Mesh.Phi.W.Info,"Deformation Energy GP");
     /* Lenght of the Voxel (Only GIMP) */
     if(strcmp(MPM_Mesh.ShapeFunctionGP,"uGIMP2D") == 0){
       MPM_Mesh.lp = MatAllocZ(MPM_Mesh.NumGP,3);
@@ -176,18 +204,6 @@ GaussPoint Define_GP_Mesh(char * MPM_GID_MeshName,
     puts("Error in Initialize_GP_Mesh() : Wrong number of dimensions");
     exit(0);
   }
-
-  /* Mass field (Scalar) */
-  MPM_Mesh.Phi.mass = MatAllocZ(MPM_Mesh.NumGP,1);
-  strcpy(MPM_Mesh.Phi.mass.Info,"Mass field GP");
- 
-  /* Density field (Scalar) */
-  MPM_Mesh.Phi.rho = MatAllocZ(MPM_Mesh.NumGP,1);
-  strcpy(MPM_Mesh.Phi.rho.Info,"Density field GP");
-
-  /* Deformation Energy (Scalar) */
-  MPM_Mesh.Phi.W = MatAllocZ(MPM_Mesh.NumGP,1);
-  strcpy(MPM_Mesh.Phi.W.Info,"Deformation Energy GP");
 
   /* Fill geometrical properties of the GP mesh */
   for(int i = 0 ; i<MPM_Mesh.NumGP ; i++){
@@ -220,9 +236,18 @@ GaussPoint Define_GP_Mesh(char * MPM_GID_MeshName,
     FreeMat(Poligon_Coordinates);
     
     /* Assign the mass parameter */
-    MPM_Mesh.Phi.mass.nV[i] = Poligon_Centroid.n*Density;
+    MPM_Mesh.Mat.mass.nV[i] = Poligon_Centroid.n*Density;
     /* Set the initial density */
-    MPM_Mesh.Phi.rho.nV[i] = Density;
+    MPM_Mesh.Mat.rho.nV[i] = Density;
+    /* Set the elastic modulus */
+    MPM_Mesh.Mat.E.nV[i] = ElasticModulus;
+    /* Set the poisson ratio */
+    MPM_Mesh.Mat.mu.nV[i] = PoissonModulus;
+    /* Damage parameter */
+    MPM_Mesh.Mat.ji.nV[i] = 0.0;
+
+    
+    
     /* Get the coordinates of the centre */
     MPM_Mesh.Phi.x_GC.nM[i][0] = Poligon_Centroid.nV[0];
     MPM_Mesh.Phi.x_GC.nM[i][1] = Poligon_Centroid.nV[1];

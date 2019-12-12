@@ -72,10 +72,6 @@ typedef struct {
   Matrix x_GC;  
   /* Position in element coordiantes */
   Matrix x_EC;
-  /* Density field */
-  Matrix rho;
-  /* Mass field */
-  Matrix mass;
   /* Displacement field */
   Matrix dis;
   /* Velocity field */
@@ -104,7 +100,7 @@ typedef struct {
   /* Tributary nodes variables */
   int * NumberNodes;
   ChainPtr * ListNodes;
-  
+
   /* List of Fields */
   Fields Phi; /* Values from the actual step */
   Fields Phi_n0; /* Values from the previous step */
@@ -112,6 +108,7 @@ typedef struct {
   /* Constitutive response */
   int * MatIdx;
   ConstLib D;
+  Material Mat;
 
   /* Forces over the GP */
   LoadCase F; /* External forces */
@@ -192,4 +189,5 @@ void GetNodalConnectivity(Mesh);
 double GetMinElementSize(Mesh);
 void GlobalSearchGaussPoints(GaussPoint, Mesh);
 void LocalSearchGaussPoints(GaussPoint, Mesh);
+ChainPtr * GP_Neighbours(GaussPoint, Mesh, double);
 Matrix Get_B_GP(Matrix);
