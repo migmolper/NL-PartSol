@@ -189,5 +189,5 @@ void GetNodalConnectivity(Mesh);
 double GetMinElementSize(Mesh);
 void GlobalSearchGaussPoints(GaussPoint, Mesh);
 void LocalSearchGaussPoints(GaussPoint, Mesh);
-ChainPtr * GP_Neighbours(GaussPoint, Mesh, double);
+ChainPtr GPinCell(ChainPtr *,ChainPtr,int *, int)
 Matrix Get_B_GP(Matrix);

@@ -614,8 +614,7 @@ ChainPtr * GP_Neighbours(GaussPoint MPM_Mesh, Mesh FEM_Mesh, double epsilon){
   int * Element_id = MPM_Mesh.Element_id;
   int * ListElements;
   ChainPtr * ListNeighbours;
-  ChainPtr SearchGP = RangeChain(0,NumGP-1); /* Not implemented */
-  ChainPtr iSearchGP;
+  ChainPtr SearchGP;
   Matrix X_GPi = MatAssign(1,NumberDimensions,NAN,NULL,NULL);
   Matrix X_GP  = MatAssign(1,NumberDimensions,NAN,NULL,NULL);
   
@@ -635,41 +634,69 @@ ChainPtr * GP_Neighbours(GaussPoint MPM_Mesh, Mesh FEM_Mesh, double epsilon){
     /* Get the coordenates of the search GP */
     X_GPi.nV = MPM_Mesh.Phi.x_GC.nM[i];
 
-    /* Get the elements near to the GP */
+    /* Create a list with the  */
+    SearchGP = RangeChain(0,NumGP-1); 
+
+    /* Number of nodes of the initial element and
+       list of nodes */
+    NumNodesElem = FEM_Mesh.NumNodesElem[Elem_GP];
 
     /* Set to NULL the list of each GP */
     ListNeighbours[i] = NULL;
 
-    /* Search in the elements near to each GP */
+    /* First search : In elements near to each GP */
     for(int k = 0 ; k<9 ; k++){
 
       /* Element index */
       iElement = ListElements[k];
       
-      /* Search index */
-      iSearchGP = SearchGP;
+      /*
+	Search in the cell and return the total search list modified 
+	without those GP inside of the cell and
+	include in ListNeighbours[i] the GP inside of the cell 
+      */
+      SearchGP = GPinCell(&ListNeighbours[i],SearchGP,
+			  Element_id, iElement);
       
-      while(iSearchGP != NULL){
-
-	/* Search in the sourrounding elements */
-	if(iElement == Element_id[iSearchGP->I]){
-	  /* Check if is inside of the tolerance */
-	  X_GP.nV = MPM_Mesh.Phi.x_GC.nM[iSearchGP->I];
-	  if(PointDistance(X_GP,X_I) < epsilon){
-	    PushNodeTop(&ListNeighbours[i],iSearchGP->I);
-	  }
-	}
-      }
+    }
+    
+    /* /\* Second search : GP inside of the circle *\/ */
+    /* if(PointDistance(X_GP,X_I) < epsilon){ */
       
-      /* Update search index */
-      iSearchGP = iSearchGP->next;
-    }    
+    /* }       */
+    
     
   }
 
 
   return ListNeighbours;
   
+}
+
+/*********************************************************************/
+
+ChainPtr GPinCell(ChainPtr * ListInCELL,
+		  ChainPtr GlobalList_0,
+		  int * Element_id, int i_Cell)
+{
+    ChainPtr GlobalList_1;
+    /* Found the tail */
+    if (GlobalList_0 == NULL) { 
+      return NULL;
+    }
+    /* Found one to delete */
+    else if (Element_id[GlobalList_0->I] == i_Cell) {
+      PushNodeTop (ListInCELL, GlobalList_0->I);
+      GlobalList_1 = GlobalList_0->next;
+      free(GlobalList_0);
+      return GlobalList_1;
+    }
+    /* Just keep going */
+    else { 
+      GlobalList_0->next =
+	GPinCell(ListInCELL,GlobalList_0->next,Element_id,i_Cell);
+      return GlobalList_0;
+    }
 }
 
 /*********************************************************************/
