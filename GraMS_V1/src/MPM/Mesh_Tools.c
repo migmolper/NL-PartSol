@@ -607,69 +607,88 @@ void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 
 /*********************************************************************/
 
-ChainPtr * GP_Neighbours(GaussPoint MPM_Mesh, Mesh FEM_Mesh, double epsilon){
+void UpdateBeps(GaussPoint MPM_Mesh, Mesh FEM_Mesh, double epsilon)
+/*
 
-  int NumGP = MPM_Mesh.NumGP;
-  int iElement;
-  int * Element_id = MPM_Mesh.Element_id;
-  int * ListElements;
-  ChainPtr * ListNeighbours;
-  ChainPtr SearchGP;
-  Matrix X_GPi = MatAssign(1,NumberDimensions,NAN,NULL,NULL);
-  Matrix X_GP  = MatAssign(1,NumberDimensions,NAN,NULL,NULL);
+*/
+{
+  /* Global chain table with the list of GP near to a GP */
+  ChainPtr * Beps = MPM_Mesh.Beps;
   
-  /* List of GP near to each GP */
-  ListNeighbours =
-    (ChainPtr *)malloc(NumGP*sizeof(ChainPtr));
-  if(ListNeighbours == NULL){
-    printf("%s : %s \n",
-	   "Error in GP_Neighbours",
-	   "Memory error");
-    exit(0);
-  }
+  /* Number of GP and array with the element where it is each GP */
+  int NumGP = MPM_Mesh.NumGP;
+  int * Element_id = MPM_Mesh.Element_id;
+  
+  /* List wit the nodes of the initial element */
+  int Elem_GP; /* Element of the GP (search) */
+  int NumNodesElem;
+  int * NodesElem;  
+
+  /* Chain with a list of elements near the initial element,
+   and interator chain */
+  ChainPtr ListElements;
+  ChainPtr iListElements;
+
+  /* Auxiliar chain */
+  ChainPtr SearchGP;
+  
+  /* Matrix X_GPi = MatAssign(1,NumberDimensions,NAN,NULL,NULL); */
+  /* Matrix X_GP  = MatAssign(1,NumberDimensions,NAN,NULL,NULL); */
 
   /* Loop over the GP's and generate the list */
   for(int i = 0 ; i<NumGP ; i++){
 
-    /* Get the coordenates of the search GP */
-    X_GPi.nV = MPM_Mesh.Phi.x_GC.nM[i];
+    /* Free the previous list and set to NULL */
+    FreeChain(Beps[i]);
+    Beps[i] = NULL;
+    
+    /* /\* Get the coordenates of the search GP *\/ */
+    /* X_GPi.nV = MPM_Mesh.Phi.x_GC.nM[i]; */
 
     /* Create a list with the  */
-    SearchGP = RangeChain(0,NumGP-1); 
-
+    SearchGP = RangeChain(0,NumGP-1);
+    
     /* Number of nodes of the initial element and
        list of nodes */
+    Elem_GP = Element_id[i];
     NumNodesElem = FEM_Mesh.NumNodesElem[Elem_GP];
-
-    /* Set to NULL the list of each GP */
-    ListNeighbours[i] = NULL;
+    NodesElem = ChainToArray(FEM_Mesh.Connectivity[Elem_GP],
+			     NumNodesElem);
+    
+    /* Chain with the tributary elements, this is the list of element near the
+       gauss point, including where it is */
+    ListElements = NULL;
+    for(int i = 0 ; i<NumNodesElem ; i++){
+      ListElements =
+	ChainUnion(ListElements,FEM_Mesh.NodeNeighbour[NodesElem[i]]);
+    }
+    /* Free the array with the nodes of the initial element */
+    free(NodesElem);
 
     /* First search : In elements near to each GP */
-    for(int k = 0 ; k<9 ; k++){
-
-      /* Element index */
-      iElement = ListElements[k];
-      
-      /*
-	Search in the cell and return the total search list modified 
+    iListElements = ListElements;
+    while(iListElements != NULL){
+      /* Search in the cell and return the total search list modified 
 	without those GP inside of the cell and
-	include in ListNeighbours[i] the GP inside of the cell 
-      */
-      SearchGP = GPinCell(&ListNeighbours[i],SearchGP,
-			  Element_id, iElement);
-      
+	include in Beps[i] the GP inside of the cell */
+      SearchGP = GPinCell(&Beps[i],SearchGP,
+			  Element_id, iListElements->I);
+      /* Update interator */
+      iListElements = iListElements->next; 
     }
+
+    /* Free chain */
+    FreeChain(ListElements);
+    FreeChain(SearchGP);
     
     /* /\* Second search : GP inside of the circle *\/ */
     /* if(PointDistance(X_GP,X_I) < epsilon){ */
       
     /* }       */
     
-    
   }
 
-
-  return ListNeighbours;
+  
   
 }
 
@@ -678,83 +697,30 @@ ChainPtr * GP_Neighbours(GaussPoint MPM_Mesh, Mesh FEM_Mesh, double epsilon){
 ChainPtr GPinCell(ChainPtr * ListInCELL,
 		  ChainPtr GlobalList_0,
 		  int * Element_id, int i_Cell)
-{
-    ChainPtr GlobalList_1;
-    /* Found the tail */
-    if (GlobalList_0 == NULL) { 
-      return NULL;
-    }
-    /* Found one to delete */
-    else if (Element_id[GlobalList_0->I] == i_Cell) {
-      PushNodeTop (ListInCELL, GlobalList_0->I);
-      GlobalList_1 = GlobalList_0->next;
-      free(GlobalList_0);
-      return GlobalList_1;
-    }
-    /* Just keep going */
-    else { 
-      GlobalList_0->next =
-	GPinCell(ListInCELL,GlobalList_0->next,Element_id,i_Cell);
-      return GlobalList_0;
-    }
-}
-
-/*********************************************************************/
-
-Matrix Get_B_GP(Matrix dNdX_GP)
 /*
-   Get the B matrix (Usual in the classical formulation of 
-   the finite element method )
-   Inputs:
-   - Matrix X_NC_GP : Element coordinates
-   - Matrix Element : Coordinates of the element 
-   (NumNodesElem x NumberDimensions)
-
-   Outputs : Matrix B
+  Search recursively the GP inside of a cell
 */
-{
-
-  /* 0º Define variables */
-  /* Declaration of the output matrix (NdimVecStrain x Nnodes*Ndim) */
-  Matrix B_GP;
-
-  /* 1º Select the case to solve */
-  switch(NumberDimensions){
-    
-  case 1:  /* 1D stress tensor */
-    
-    puts("Error in Get_dNdi_matrix() : 1D cases not implemented yet");
-    exit(0);
-    
-  case 2: /* 2D stress tensor */
-    
-    /* 2º Allocate the output */
-    B_GP = MatAlloc(3,2*dNdX_GP.N_cols);
-    
-    /* 4º Fill the array with the nodal partial derivation 
-       of the reference element */    
-    for(int i = 0 ; i<dNdX_GP.N_cols ; i++){
-      B_GP.nM[0][2*i] = dNdX_GP.nM[0][i];
-      B_GP.nM[1][2*i] = 0;
-      B_GP.nM[2][2*i] = dNdX_GP.nM[1][i];
-      
-      B_GP.nM[0][2*i + 1] = 0;
-      B_GP.nM[1][2*i + 1] = dNdX_GP.nM[1][i];
-      B_GP.nM[2][2*i + 1] = dNdX_GP.nM[0][i];      
-    }
-
-    break;
-    
-  case 3: /* 3D stress tensor */
-    puts("Error in Get_dNdi_matrix() : 3D cases not implemented yet");
-    exit(0);
-    
-  default :
-    puts("Error in Get_dNdi_matrix() : Wrong case select");
-    exit(0);
+{  
+  ChainPtr GlobalList_1;
+  /* Found the tail */
+  if (GlobalList_0 == NULL) { 
+    return NULL;
   }
-  
-  return B_GP;
+  /* Found one to delete */
+  else if (Element_id[GlobalList_0->I] == i_Cell) {
+   PushNodeTop (ListInCELL, GlobalList_0->I);
+   GlobalList_1 = GlobalList_0->next;
+   free(GlobalList_0);
+   GlobalList_1 =
+     GPinCell(ListInCELL,GlobalList_1,Element_id,i_Cell);
+   return GlobalList_1;
+ }
+/* Just keep going */
+ else{
+   GlobalList_0->next =
+     GPinCell(ListInCELL,GlobalList_0->next,Element_id,i_Cell);
+   return GlobalList_0;
+ }
 }
 
 /*********************************************************************/

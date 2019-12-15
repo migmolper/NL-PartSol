@@ -14,7 +14,6 @@ void UpdateGaussPointStress(GaussPoint MPM_Mesh){
   Matrix Stress_k1;
   double mu;
   double E;
-  double Damage;
   int N_GP = MPM_Mesh.NumGP;
 
   /* 2º Iterate over the Gauss-Points */
@@ -32,17 +31,7 @@ void UpdateGaussPointStress(GaussPoint MPM_Mesh){
     /* 5º Get the new stress tensor (2D Linear elastic) */
     Stress_k1 =
       MPM_Mesh.D.LE(Strain_k1,Stress_k0,mu,E);
-    
-    /* 6º Get the deformation energy */
-    Damage = MPM_Mesh.Mat.ji.nV[i];
-    MPM_Mesh.Phi.W.nV[i] = W_LinearElastic(Strain_k1,Stress_k1,Damage);
-    
   }
-
-  /* /\* 7º Calcule damage parameter *\/ */
-  /* MPM_Mesh.Mat.ji = EigenerosionAlgorithm(MPM_Mesh.Mat.ji, MPM_Mesh.Mat.mass, */
-  /* 					  MPM_Mesh.Phi.W, MPM_Mesh.Mat.Ceps, */
-  /* 					  double G_F, MPM_Mesh.ListNeighbours); */
   
 }
 

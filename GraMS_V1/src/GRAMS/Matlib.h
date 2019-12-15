@@ -101,6 +101,7 @@ Matrix SolvePolynomial(Matrix);
 
 /* Chain library */
 ChainPtr ArrayToChain(int *, int);
+ChainPtr RangeChain(int, int);
 int * ChainToArray(ChainPtr, int);
 void FreeChain(ChainPtr);
 int LenghtChain(ChainPtr);

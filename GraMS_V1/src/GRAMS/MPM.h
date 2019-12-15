@@ -101,6 +101,9 @@ typedef struct {
   int * NumberNodes;
   ChainPtr * ListNodes;
 
+  /* GPs near to each GP */
+  ChainPtr * Beps;
+
   /* List of Fields */
   Fields Phi; /* Values from the actual step */
   Fields Phi_n0; /* Values from the previous step */
@@ -189,5 +192,5 @@ void GetNodalConnectivity(Mesh);
 double GetMinElementSize(Mesh);
 void GlobalSearchGaussPoints(GaussPoint, Mesh);
 void LocalSearchGaussPoints(GaussPoint, Mesh);
-ChainPtr GPinCell(ChainPtr *,ChainPtr,int *, int)
-Matrix Get_B_GP(Matrix);
+void UpdateBeps(GaussPoint, Mesh, double);
+ChainPtr GPinCell(ChainPtr *,ChainPtr,int *, int);

@@ -23,6 +23,30 @@ ChainPtr ArrayToChain(int * A_array, int NumNodes){
 
 /*********************************************************************/
 
+ChainPtr RangeChain(int Init, int End){
+
+  if(Init > End){
+    printf("%s : %s \n",
+	   "Error in RangeChain",
+	   "Init > End !!!");
+    exit(0);
+  }
+
+  /* Variable declaration */
+  ChainPtr A = NULL;
+  int NumNodes = End-Init;
+
+  /* Fill chain */
+  for(int i = 0; i <= NumNodes ; i++){
+    PushNodeTop(&A,End-i);    
+  }
+
+  /* Return chain */
+  return A;  
+}
+
+/*********************************************************************/
+
 int * ChainToArray(ChainPtr A_chain, int NumNodes){
 
   /* Variable declaration */
@@ -61,7 +85,6 @@ void FreeChain(ChainPtr A){
     free(INode);
     INode = NextNode;    
    }
-
 }
 
 /*********************************************************************/

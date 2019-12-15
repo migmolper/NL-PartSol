@@ -19,6 +19,8 @@ typedef struct {
   Matrix mu;
   /* Normalizing constant (Fracture) */
   Matrix Ceps;
+  /* Failure energy (Fracture)  */
+  Matrix Gf;
   /* Damage parameter (Fracture) */
   Matrix ji;
   
@@ -34,7 +36,8 @@ double W_LinearElastic(Matrix,Matrix,double);
 /* Fracture */
 Matrix EigenerosionAlgorithm(Matrix, Matrix,
 			     Matrix, Matrix,
-			     double, ChainPtr *);
+			     Matrix, ChainPtr *);
+Matrix ComputeDamage(Matrix, Material, ChainPtr *);
 
 /*******************************************************/
 

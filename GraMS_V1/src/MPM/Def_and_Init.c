@@ -65,11 +65,25 @@ GaussPoint Define_GP_Mesh(char * MPM_GID_MeshName,
   MPM_Mesh.ListNodes =
     (ChainPtr *)malloc(MPM_Mesh.NumGP*sizeof(ChainPtr));
   if(MPM_Mesh.ListNodes == NULL){
-    puts("Error in Chain declaration");
+    printf("%s : %s \n",
+	   "Define_GP_Mesh",
+	   "Memory error for ListNodes");
     exit(0);
   }
   for(int i = 0 ; i<MPM_Mesh.NumGP ; i++){
     MPM_Mesh.ListNodes[i] = NULL;  
+  }
+  /* Table with */
+  MPM_Mesh.Beps =
+    (ChainPtr *)malloc(MPM_Mesh.NumGP*sizeof(ChainPtr));
+  if(MPM_Mesh.Beps == NULL){
+    printf("%s : %s \n",
+	   "Define_GP_Mesh",
+	   "Memory error for Beps");
+    exit(0);
+  }
+  for(int i = 0 ; i<MPM_Mesh.NumGP ; i++){
+    MPM_Mesh.Beps[i] = NULL;  
   }
   
   /* Define the shapefunction employed by the GP */
@@ -98,6 +112,9 @@ GaussPoint Define_GP_Mesh(char * MPM_GID_MeshName,
   /* Normalizing constant (fracture) */
   MPM_Mesh.Mat.Ceps = MatAllocZ(MPM_Mesh.NumGP,1);
   strcpy(MPM_Mesh.Mat.Ceps.Info,"Ceps fracture GP");
+  /* Limit energy (fracture) */
+  MPM_Mesh.Mat.Gf = MatAllocZ(MPM_Mesh.NumGP,1);
+  strcpy(MPM_Mesh.Mat.Gf.Info,"Gf fracture GP");
   
   /* Allocate vectorial/tensorial fields */
   switch(NumberDimensions){
@@ -245,8 +262,8 @@ GaussPoint Define_GP_Mesh(char * MPM_GID_MeshName,
     MPM_Mesh.Mat.mu.nV[i] = PoissonModulus;
     /* Damage parameter */
     MPM_Mesh.Mat.ji.nV[i] = 0.0;
-
-    
+    /* Limit energy */
+    MPM_Mesh.Mat.Gf.nV[i] = 0.0;
     
     /* Get the coordinates of the centre */
     MPM_Mesh.Phi.x_GC.nM[i][0] = Poligon_Centroid.nV[0];
@@ -316,27 +333,28 @@ GaussPoint Define_GP_Mesh(char * MPM_GID_MeshName,
 
 GaussPoint InitializeGP(char * GDF, Mesh FEM_Mesh){
 
-  GaussPoint GP_Mesh;
+  GaussPoint MPM_Mesh;
 
   puts("*************************************************");
   puts(" Generate the MPM mesh");
   puts(" \t Defining MPM mesh of GPs ...");
-  GP_Mesh = Define_GP_Mesh(MPM_MeshFileName,Density);
+  MPM_Mesh = Define_GP_Mesh(MPM_MeshFileName,Density);
   puts(" \t DONE !!!");
   puts(" \t Constitutive library for GPs ...");
-  GP_Mesh.D = Contitutive();
+  MPM_Mesh.D = Contitutive();
   puts(" \t DONE !!!");
   puts(" \t Searching GPs in the FEM mesh ...");
-  GlobalSearchGaussPoints(GP_Mesh,FEM_Mesh);
+  GlobalSearchGaussPoints(MPM_Mesh,FEM_Mesh);
+  UpdateBeps(MPM_Mesh,FEM_Mesh,FEM_Mesh.DeltaX);
   puts(" \t DONE !!!");
   puts(" \t Reading MPM load cases ...");
-  GP_Mesh.F = Read_MPM_LoadCase_ExtForces(GDF,GP_Mesh);
-  GP_Mesh.B = Read_MPM_LoadCase_BodyForces(GDF,GP_Mesh);
+  MPM_Mesh.F = Read_MPM_LoadCase_ExtForces(GDF,MPM_Mesh);
+  MPM_Mesh.B = Read_MPM_LoadCase_BodyForces(GDF,MPM_Mesh);
   puts(" \t DONE !!!");
   puts(" \t Reading MPM initial conditions ...");  
-  Read_MPM_InitVal(GDF,GP_Mesh);
+  Read_MPM_InitVal(GDF,MPM_Mesh);
   puts(" \t DONE !!!");
 
-  return GP_Mesh;
+  return MPM_Mesh;
 
 }

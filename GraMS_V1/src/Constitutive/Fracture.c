@@ -4,9 +4,12 @@
 #include <math.h>
 #include "../GRAMS/grams.h"
 
-Matrix EigenerosionAlgorithm(Matrix Ji_k0, Matrix Mass,
-			     Matrix W, Matrix Ceps,
-			     double G_F, ChainPtr * Beps)
+Matrix EigenerosionAlgorithm(Matrix Ji_k0,
+			     Matrix Mass,
+			     Matrix W,
+			     Matrix Ceps,
+			     Matrix G_F,
+			     ChainPtr * Beps)
 /*
   A.Pandolfi & M.Ortiz.
   An eigenerosion approach to brittle fracture. 
@@ -43,7 +46,7 @@ Matrix EigenerosionAlgorithm(Matrix Ji_k0, Matrix Mass,
       sum_p = Mass.nV[p]*W.nV[p];
 
       /* neighbours */
-      Neps_p = Neps[p];
+      Neps_p = LenghtChain(Beps[p]);
       Beps_p = ChainToArray(Beps[p],Neps_p);
 
       /* Loop over the neighbours */
@@ -65,7 +68,7 @@ Matrix EigenerosionAlgorithm(Matrix Ji_k0, Matrix Mass,
       G_p = (Ceps_p/m_p)*sum_p;
 
       /* Fracture criterium */
-      if(G_p > G_F){
+      if(G_p > G_F.nV[p]){
 	Ji_k1.nV[p] = 1.0;
       }
       
@@ -74,3 +77,25 @@ Matrix EigenerosionAlgorithm(Matrix Ji_k0, Matrix Mass,
   
   return Ji_k1;
 }
+
+/*******************************************************/
+
+Matrix ComputeDamage(Matrix W,
+		     Material Properties, 
+		     ChainPtr * Beps){
+
+  /* Variable definition */
+  Matrix Damage_n0 = Properties.ji;
+  Matrix Damage_n1;
+  Matrix Mass = Properties.mass;
+  Matrix Ceps = Properties.Ceps;
+  Matrix Gf = Properties.Gf;
+  
+  /* Choose the damage model */
+  Damage_n1 = EigenerosionAlgorithm(Damage_n0, Mass, W,
+				    Ceps, Gf, Beps);
+  
+  return Damage_n1;
+}
+
+/*******************************************************/
