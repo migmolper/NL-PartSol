@@ -99,7 +99,7 @@ void u_ForwardEuler(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
     puts(" \t DONE !!!");
     /* c) Update the particle stress state */
     puts(" \t c) Update the particle stress state ... WORKING");
-    UpdateGaussPointStress(MPM_Mesh);
+    UpdateGaussPointStress(MPM_Mesh,FEM_Mesh);
     puts(" \t DONE !!!");
 
     /* Five step : Calculate total forces */
@@ -132,7 +132,6 @@ void u_ForwardEuler(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
     puts(" Eight step : Search the GP in the mesh");
     puts(" \t WORKING ...");
     LocalSearchGaussPoints(MPM_Mesh,FEM_Mesh);
-    UpdateBeps(MPM_Mesh,FEM_Mesh,FEM_Mesh.DeltaX);
     puts(" DONE !!!");
 
     /* Nine step : Print nodal values */

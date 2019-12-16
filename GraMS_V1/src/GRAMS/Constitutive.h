@@ -9,20 +9,16 @@
 
 typedef struct {
 
-  /* Density field */
-  Matrix rho;
-  /* Mass field */
-  Matrix mass;
   /* Elastic modulus */
-  Matrix E;
+  double E;
   /* Poisson ratio */
-  Matrix mu;
+  double mu;
   /* Normalizing constant (Fracture) */
-  Matrix Ceps;
+  double Ceps;
   /* Failure energy (Fracture)  */
-  Matrix Gf;
-  /* Damage parameter (Fracture) */
-  Matrix ji;
+  double Gf;
+  /* Aditional information */
+  char Info [100];
   
 } Material;
 
@@ -34,10 +30,12 @@ Matrix LinearElastic(Matrix,Matrix,
 double W_LinearElastic(Matrix,Matrix,double);
 
 /* Fracture */
-Matrix EigenerosionAlgorithm(Matrix, Matrix,
-			     Matrix, Matrix,
-			     Matrix, ChainPtr *);
-Matrix ComputeDamage(Matrix, Material, ChainPtr *);
+Matrix EigenerosionAlgorithm(Matrix, Matrix, Matrix,
+			     int *, Material *,
+			     ChainPtr *, double);
+Matrix ComputeDamage(Matrix, Matrix, Matrix,
+		     int *, Material *,
+		     ChainPtr *, double);
 
 /*******************************************************/
 

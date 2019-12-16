@@ -68,6 +68,10 @@ typedef struct {
 /* Physical fields */
 typedef struct {
 
+  /* Density field */
+  Matrix rho;
+  /* Mass field */
+  Matrix mass;
   /* Position in global coordinates */
   Matrix x_GC;  
   /* Position in element coordiantes */
@@ -84,6 +88,8 @@ typedef struct {
   Matrix Strain;
   /* Deformation Energy */
   Matrix W;
+  /* Damage parameter (Fracture) */
+  Matrix ji;
   
 } Fields;
 
@@ -109,9 +115,10 @@ typedef struct {
   Fields Phi_n0; /* Values from the previous step */
   
   /* Constitutive response */
-  int * MatIdx;
-  ConstLib D;
-  Material Mat;
+  int NumMat; /* Number of diferents materials */
+  int * MatIdx; /* Index of the material for each GP */
+  Material * Mat; /* Array wit the number of materials */
+  ConstLib D; /* Library with the constitutive responses */
 
   /* Forces over the GP */
   LoadCase F; /* External forces */
@@ -182,7 +189,7 @@ Matrix GetNodalVelocity(Mesh, Matrix, Matrix);
 void BCC_Nod_VALUE(Mesh, Matrix, int);
 void UpdateGaussPointStrain(GaussPoint, Mesh, Matrix);
 double UpdateGaussPointDensity(double, double);
-void UpdateGaussPointStress(GaussPoint);
+void UpdateGaussPointStress(GaussPoint, Mesh);
 Matrix GetNodalForces(GaussPoint, Mesh, int);
 void UpdateGridNodalMomentum(Mesh, Matrix, Matrix);
 void UpdateVelocityAndPositionGP(GaussPoint, Mesh,
@@ -192,5 +199,7 @@ void GetNodalConnectivity(Mesh);
 double GetMinElementSize(Mesh);
 void GlobalSearchGaussPoints(GaussPoint, Mesh);
 void LocalSearchGaussPoints(GaussPoint, Mesh);
-void UpdateBeps(GaussPoint, Mesh, double);
-ChainPtr GPinCell(ChainPtr *,ChainPtr,int *, int);
+void UpdateBeps(GaussPoint, Mesh);
+ChainPtr GPinCell(ChainPtr *, ChainPtr,
+		  int *,int, int,
+		  Matrix, double);

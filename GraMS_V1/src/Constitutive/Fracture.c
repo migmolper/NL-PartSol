@@ -4,12 +4,10 @@
 #include <math.h>
 #include "../GRAMS/grams.h"
 
-Matrix EigenerosionAlgorithm(Matrix Ji_k0,
-			     Matrix Mass,
-			     Matrix W,
-			     Matrix Ceps,
-			     Matrix G_F,
-			     ChainPtr * Beps)
+Matrix EigenerosionAlgorithm(Matrix ji, Matrix W, Matrix Mass,
+			     int * MatIdx,
+			     Material * MatPro,
+			     ChainPtr * Beps, double DeltaX)
 /*
   A.Pandolfi & M.Ortiz.
   An eigenerosion approach to brittle fracture. 
@@ -22,7 +20,7 @@ Matrix EigenerosionAlgorithm(Matrix Ji_k0,
   -> Mass : Matrix with the mass of the GP.
   -> W : Incremental free-energy density per unit mass. 
   -> Ceps : Matrix with the normalizing parameter.
-  -> G_F : Failure value for the energy-release rate.
+  -> Gf : Failure value for the energy-release rate.
   -> Beps : Table with the list of neighbours per GP.
   -> Neps : Number of neighbours per GP
   -> Num_GP : Number of GP of the mesh.
@@ -30,16 +28,24 @@ Matrix EigenerosionAlgorithm(Matrix Ji_k0,
 {
   /* Define auxiliar variable */
   int Num_GP = W.N_rows*W.N_cols;
-  Matrix Ji_k1 = MatAssign(Num_GP,1,NAN,Ji_k0.nV,NULL);
-  double Ceps_p, m_p, sum_p, G_p;
+  
+  double Ceps_p, m_p, sum_p, G_p, Gf_p;
   double m_q, W_q;
   int * Beps_p;
   int Neps_p;
   int q;
+  int Mat_p;
   
   for(int p = 0 ; p < Num_GP ; p++){
     /* Calcule damage if the GP is not broken */
-    if(Ji_k0.nV[p] < 1){
+    if(ji.nV[p] < 1){
+
+      /* Kind of material */
+      Mat_p = MatIdx[p];
+      /* Normalizing constant */
+      Ceps_p = MatPro[Mat_p].Ceps;
+      /* Normalizing constant */
+      Gf_p = MatPro[Mat_p].Gf;
 
       /* Include the main GP in the calculus */
       m_p = Mass.nV[p];
@@ -61,40 +67,31 @@ Matrix EigenerosionAlgorithm(Matrix Ji_k0,
 	sum_p += m_q*W_q;
       }
 
-      /* Normalizing constant */
-      Ceps_p = Ceps.nV[p];
-
       /* Compute energy-release rate for the GP */
-      G_p = (Ceps_p/m_p)*sum_p;
+      G_p = (Ceps_p*DeltaX/m_p)*sum_p;
 
       /* Fracture criterium */
-      if(G_p > G_F.nV[p]){
-	Ji_k1.nV[p] = 1.0;
+      if(G_p > Gf_p){
+	ji.nV[p] = 1.0;
       }
       
     }    
   }
   
-  return Ji_k1;
+  return ji;
 }
 
 /*******************************************************/
 
-Matrix ComputeDamage(Matrix W,
-		     Material Properties, 
-		     ChainPtr * Beps){
+Matrix ComputeDamage(Matrix ji, Matrix W, Matrix Mass,
+		     int * MatIdx, Material * MatProp,
+		     ChainPtr * Beps, double DeltaX){
 
-  /* Variable definition */
-  Matrix Damage_n0 = Properties.ji;
-  Matrix Damage_n1;
-  Matrix Mass = Properties.mass;
-  Matrix Ceps = Properties.Ceps;
-  Matrix Gf = Properties.Gf;
-  
   /* Choose the damage model */
-  Damage_n1 = EigenerosionAlgorithm(Damage_n0, Mass, W,
-				    Ceps, Gf, Beps);
-  
+  Matrix Damage_n1 = EigenerosionAlgorithm(ji, W, Mass,
+					   MatIdx, MatProp,
+					   Beps, DeltaX);
+
   return Damage_n1;
 }
 

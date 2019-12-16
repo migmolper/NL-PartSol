@@ -280,3 +280,31 @@ Matrix SolvePolynomial(Matrix Coeffs)
 }
 
 /*********************************************************************/
+
+double Distance(Matrix End, Matrix Init)
+/*
+  Distance between two points.
+*/
+{
+
+  if((End.N_rows != Init.N_rows) ||
+     (End.N_cols != Init.N_cols)){
+    printf("%s : %s \n",
+	   "Error in Distance",
+	   "Inputs arrays are not equal");
+    exit(0);
+  }
+
+  double DIST = 0;
+
+  for(int i = 0 ; i<NumberDimensions ; i++){
+
+    DIST += pow(End.nV[i] - Init.nV[i],2);
+
+  }
+
+  DIST = sqrt(DIST);
+  
+
+  return DIST;
+}

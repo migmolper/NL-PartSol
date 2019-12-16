@@ -64,7 +64,7 @@ $(EXE): $(OBJS)
 
 #####################################################################
 # Rule for benchmarks
-.PHONY: Debug_MPM Sulsky_MPM Sulsky_GIMP Sulsky_LME Cuadrado_MPM Disco_MPM Disco_GIMP Traccion_MPM Traccion_GIMP Dyka_MPM Dyka_GIMP
+.PHONY: Debug_MPM Sulsky_MPM Sulsky_GIMP Sulsky_LME Cuadrado_MPM Disco_MPM Disco_GIMP Traccion_MPM Traccion_GIMP Dyka_MPM Dyka_GIMP Brazilian_MPM
 
 # Caso para debugear
 Debug_MPM:
@@ -134,6 +134,13 @@ Dyka_GIMP:
 	$ ./$(EXE) $(TESTDIR)/Dyka_GIMP/ejemplo.gdf
 	@echo " "
 	@echo "*************** Test case passed ****************"
+
+# Brazilian test for fracture
+Brazilian_MPM:
+	@echo "**************** Run test case ******************"
+	$ ./$(EXE) $(TESTDIR)/Brazilian_MPM/ejemplo.gdf
+	@echo " "
+	@echo "*************** Test case passed ****************"	
 
 #####################################################################
 # Rule for installing GeHoJerez

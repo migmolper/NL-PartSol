@@ -607,17 +607,21 @@ void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 
 /*********************************************************************/
 
-void UpdateBeps(GaussPoint MPM_Mesh, Mesh FEM_Mesh, double epsilon)
+void UpdateBeps(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 /*
 
 */
 {
   /* Global chain table with the list of GP near to a GP */
   ChainPtr * Beps = MPM_Mesh.Beps;
+
+  /* Search radious */
+  double epsilon;
   
   /* Number of GP and array with the element where it is each GP */
   int NumGP = MPM_Mesh.NumGP;
   int * Element_id = MPM_Mesh.Element_id;
+  int Mat_GP;
   
   /* List wit the nodes of the initial element */
   int Elem_GP; /* Element of the GP (search) */
@@ -631,12 +635,13 @@ void UpdateBeps(GaussPoint MPM_Mesh, Mesh FEM_Mesh, double epsilon)
 
   /* Auxiliar chain */
   ChainPtr SearchGP;
-  
-  /* Matrix X_GPi = MatAssign(1,NumberDimensions,NAN,NULL,NULL); */
-  /* Matrix X_GP  = MatAssign(1,NumberDimensions,NAN,NULL,NULL); */
 
   /* Loop over the GP's and generate the list */
   for(int i = 0 ; i<NumGP ; i++){
+
+    /* Get the search radious */
+    Mat_GP = MPM_Mesh.MatIdx[i];
+    epsilon = MPM_Mesh.Mat[Mat_GP].Ceps*FEM_Mesh.DeltaX;
 
     /* Free the previous list and set to NULL */
     FreeChain(Beps[i]);
@@ -672,7 +677,8 @@ void UpdateBeps(GaussPoint MPM_Mesh, Mesh FEM_Mesh, double epsilon)
 	without those GP inside of the cell and
 	include in Beps[i] the GP inside of the cell */
       SearchGP = GPinCell(&Beps[i],SearchGP,
-			  Element_id, iListElements->I);
+			  Element_id, iListElements->I,i,
+			  MPM_Mesh.Phi.x_GC,epsilon);
       /* Update interator */
       iListElements = iListElements->next; 
     }
@@ -680,11 +686,6 @@ void UpdateBeps(GaussPoint MPM_Mesh, Mesh FEM_Mesh, double epsilon)
     /* Free chain */
     FreeChain(ListElements);
     FreeChain(SearchGP);
-    
-    /* /\* Second search : GP inside of the circle *\/ */
-    /* if(PointDistance(X_GP,X_I) < epsilon){ */
-      
-    /* }       */
     
   }
 
@@ -696,31 +697,44 @@ void UpdateBeps(GaussPoint MPM_Mesh, Mesh FEM_Mesh, double epsilon)
 
 ChainPtr GPinCell(ChainPtr * ListInCELL,
 		  ChainPtr GlobalList_0,
-		  int * Element_id, int i_Cell)
+		  int * Element_id,
+		  int i_Cell, int i_GP,
+		  Matrix x_GC,
+		  double epsilon)
 /*
-  Search recursively the GP inside of a cell
+  Search recursively the GP inside of a cell and if inside of a circle of
+  radious epsilon  
 */
 {  
   ChainPtr GlobalList_1;
+  Matrix X0 = MatAssign(NumberDimensions,1,NAN,x_GC.nM[i_GP],NULL);
+  Matrix X1 = MatAssign(NumberDimensions,1,NAN,NULL,NULL);
+  
   /* Found the tail */
   if (GlobalList_0 == NULL) { 
     return NULL;
   }
   /* Found one to delete */
-  else if (Element_id[GlobalList_0->I] == i_Cell) {
-   PushNodeTop (ListInCELL, GlobalList_0->I);
-   GlobalList_1 = GlobalList_0->next;
-   free(GlobalList_0);
-   GlobalList_1 =
-     GPinCell(ListInCELL,GlobalList_1,Element_id,i_Cell);
-   return GlobalList_1;
- }
-/* Just keep going */
- else{
-   GlobalList_0->next =
-     GPinCell(ListInCELL,GlobalList_0->next,Element_id,i_Cell);
-   return GlobalList_0;
- }
+  else if (Element_id[GlobalList_0->I] == i_Cell){
+    X1.nV = x_GC.nM[GlobalList_0->I];
+    if(Distance(X1,X0) < epsilon){
+      PushNodeTop (ListInCELL, GlobalList_0->I);
+    }
+    GlobalList_1 = GlobalList_0->next;
+    free(GlobalList_0);
+    GlobalList_1 =
+      GPinCell(ListInCELL,GlobalList_1,
+	       Element_id,i_Cell,i_GP,
+	       x_GC,epsilon);
+    return GlobalList_1;
+  }
+  /* Just keep going */
+  else{
+    GlobalList_0->next =
+      GPinCell(ListInCELL,GlobalList_0->next,Element_id,i_Cell,i_GP,
+	       x_GC,epsilon);
+    return GlobalList_0;
+  }
 }
 
 /*********************************************************************/

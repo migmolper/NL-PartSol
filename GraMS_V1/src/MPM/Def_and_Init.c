@@ -94,27 +94,31 @@ GaussPoint Define_GP_Mesh(char * MPM_GID_MeshName,
   strcpy(MPM_Mesh.Phi.x_GC.Info,"Global Coordinates");
 
   /* Material parameters */
-  /* Mass */
-  MPM_Mesh.Mat.mass = MatAllocZ(MPM_Mesh.NumGP,1);
-  strcpy(MPM_Mesh.Mat.mass.Info,"Mass GP");
-  /* Density */
-  MPM_Mesh.Mat.rho = MatAllocZ(MPM_Mesh.NumGP,1);
-  strcpy(MPM_Mesh.Mat.rho.Info,"Density GP");
+  /* Number of materials */
+  MPM_Mesh.NumMat = 1;
+  MPM_Mesh.Mat =
+    (Material *)malloc(MPM_Mesh.NumMat*sizeof(Material));
+  if(MPM_Mesh.Mat == NULL){
+    printf("%s : %s \n",
+	   "Define_GP_Mesh",
+	   "Memory error for Mat");
+    exit(0);
+  }
+  MPM_Mesh.MatIdx = (int *)malloc(MPM_Mesh.NumGP*sizeof(int));
+
+  for(int i = 0 ; i<MPM_Mesh.NumGP ; i++){
+    MPM_Mesh.MatIdx[i] = 0;
+  }
+  
   /* Elastic Modulus */
-  MPM_Mesh.Mat.E = MatAllocZ(MPM_Mesh.NumGP,1);
-  strcpy(MPM_Mesh.Mat.E.Info,"Elastic modulus GP");  
+  MPM_Mesh.Mat[0].E = ElasticModulus;
   /* Poisson ratio */
-  MPM_Mesh.Mat.mu = MatAllocZ(MPM_Mesh.NumGP,1);
-  strcpy(MPM_Mesh.Mat.mu.Info,"Poisson ratio GP");
-  /* Damage parameter (fracture) */
-  MPM_Mesh.Mat.ji = MatAllocZ(MPM_Mesh.NumGP,1);
-  strcpy(MPM_Mesh.Mat.ji.Info,"Damage parameter GP");
+  MPM_Mesh.Mat[0].mu = PoissonModulus;
   /* Normalizing constant (fracture) */
-  MPM_Mesh.Mat.Ceps = MatAllocZ(MPM_Mesh.NumGP,1);
-  strcpy(MPM_Mesh.Mat.Ceps.Info,"Ceps fracture GP");
+  MPM_Mesh.Mat[0].Ceps = 1.5;
   /* Limit energy (fracture) */
-  MPM_Mesh.Mat.Gf = MatAllocZ(MPM_Mesh.NumGP,1);
-  strcpy(MPM_Mesh.Mat.Gf.Info,"Gf fracture GP");
+  MPM_Mesh.Mat[0].Gf = 141;
+  strcpy(MPM_Mesh.Mat[0].Info,"LEF");
   
   /* Allocate vectorial/tensorial fields */
   switch(NumberDimensions){
@@ -140,6 +144,15 @@ GaussPoint Define_GP_Mesh(char * MPM_GID_MeshName,
     /* Deformation Energy (Scalar) */
     MPM_Mesh.Phi.W = MatAllocZ(MPM_Mesh.NumGP,1);
     strcpy(MPM_Mesh.Phi.W.Info,"Deformation Energy GP");
+    /* Damage parameter (fracture) */
+    MPM_Mesh.Phi.ji = MatAllocZ(MPM_Mesh.NumGP,1);
+    strcpy(MPM_Mesh.Phi.ji.Info,"Damage parameter GP");
+    /* Mass */
+    MPM_Mesh.Phi.mass = MatAllocZ(MPM_Mesh.NumGP,1);
+    strcpy(MPM_Mesh.Phi.mass.Info,"Mass GP");
+    /* Density */
+    MPM_Mesh.Phi.rho = MatAllocZ(MPM_Mesh.NumGP,1);
+    strcpy(MPM_Mesh.Phi.rho.Info,"Density GP");
     /* Lenght of the Voxel (Only GIMP) */
     if(strcmp(MPM_Mesh.ShapeFunctionGP,"uGIMP2D") == 0){
       MPM_Mesh.lp = MatAllocZ(MPM_Mesh.NumGP,1);
@@ -173,6 +186,15 @@ GaussPoint Define_GP_Mesh(char * MPM_GID_MeshName,
     /* Deformation Energy (Scalar) */
     MPM_Mesh.Phi.W = MatAllocZ(MPM_Mesh.NumGP,1);
     strcpy(MPM_Mesh.Phi.W.Info,"Deformation Energy GP");
+    /* Damage parameter (fracture) */
+    MPM_Mesh.Phi.ji = MatAllocZ(MPM_Mesh.NumGP,1);
+    strcpy(MPM_Mesh.Phi.ji.Info,"Damage parameter GP");
+    /* Mass */
+    MPM_Mesh.Phi.mass = MatAllocZ(MPM_Mesh.NumGP,1);
+    strcpy(MPM_Mesh.Phi.mass.Info,"Mass GP");
+    /* Density */
+    MPM_Mesh.Phi.rho = MatAllocZ(MPM_Mesh.NumGP,1);
+    strcpy(MPM_Mesh.Phi.rho.Info,"Density GP");
     /* Lenght of the Voxel (Only GIMP) */
     if(strcmp(MPM_Mesh.ShapeFunctionGP,"uGIMP2D") == 0){
       MPM_Mesh.lp = MatAllocZ(MPM_Mesh.NumGP,2);
@@ -206,6 +228,15 @@ GaussPoint Define_GP_Mesh(char * MPM_GID_MeshName,
     /* Deformation Energy (Scalar) */
     MPM_Mesh.Phi.W = MatAllocZ(MPM_Mesh.NumGP,1);
     strcpy(MPM_Mesh.Phi.W.Info,"Deformation Energy GP");
+    /* Damage parameter (fracture) */
+    MPM_Mesh.Phi.ji = MatAllocZ(MPM_Mesh.NumGP,1);
+    strcpy(MPM_Mesh.Phi.ji.Info,"Damage parameter GP");
+    /* Mass */
+    MPM_Mesh.Phi.mass = MatAllocZ(MPM_Mesh.NumGP,1);
+    strcpy(MPM_Mesh.Phi.mass.Info,"Mass GP");
+    /* Density */
+    MPM_Mesh.Phi.rho = MatAllocZ(MPM_Mesh.NumGP,1);
+    strcpy(MPM_Mesh.Phi.rho.Info,"Density GP");
     /* Lenght of the Voxel (Only GIMP) */
     if(strcmp(MPM_Mesh.ShapeFunctionGP,"uGIMP2D") == 0){
       MPM_Mesh.lp = MatAllocZ(MPM_Mesh.NumGP,3);
@@ -253,17 +284,11 @@ GaussPoint Define_GP_Mesh(char * MPM_GID_MeshName,
     FreeMat(Poligon_Coordinates);
     
     /* Assign the mass parameter */
-    MPM_Mesh.Mat.mass.nV[i] = Poligon_Centroid.n*Density;
+    MPM_Mesh.Phi.mass.nV[i] = Poligon_Centroid.n*Density;
     /* Set the initial density */
-    MPM_Mesh.Mat.rho.nV[i] = Density;
-    /* Set the elastic modulus */
-    MPM_Mesh.Mat.E.nV[i] = ElasticModulus;
-    /* Set the poisson ratio */
-    MPM_Mesh.Mat.mu.nV[i] = PoissonModulus;
+    MPM_Mesh.Phi.rho.nV[i] = Density;
     /* Damage parameter */
-    MPM_Mesh.Mat.ji.nV[i] = 0.0;
-    /* Limit energy */
-    MPM_Mesh.Mat.Gf.nV[i] = 0.0;
+    MPM_Mesh.Phi.ji.nV[i] = 0.0; 
     
     /* Get the coordinates of the centre */
     MPM_Mesh.Phi.x_GC.nM[i][0] = Poligon_Centroid.nV[0];
@@ -345,7 +370,6 @@ GaussPoint InitializeGP(char * GDF, Mesh FEM_Mesh){
   puts(" \t DONE !!!");
   puts(" \t Searching GPs in the FEM mesh ...");
   GlobalSearchGaussPoints(MPM_Mesh,FEM_Mesh);
-  UpdateBeps(MPM_Mesh,FEM_Mesh,FEM_Mesh.DeltaX);
   puts(" \t DONE !!!");
   puts(" \t Reading MPM load cases ...");
   MPM_Mesh.F = Read_MPM_LoadCase_ExtForces(GDF,MPM_Mesh);

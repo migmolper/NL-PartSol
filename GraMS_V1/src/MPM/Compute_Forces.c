@@ -182,11 +182,11 @@ Matrix GetNodalForces(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int TimeStep)
     FreeMat(B_T);
     
     /* 9º Calcule the volumen of the Gauss-Point */
-    GP_mass = MPM_Mesh.Mat.mass.nV[i];
-    Vol_GP = GP_mass/MPM_Mesh.Mat.rho.nV[i];
+    GP_mass = MPM_Mesh.Phi.mass.nV[i];
+    Vol_GP = GP_mass/MPM_Mesh.Phi.rho.nV[i];
 
     /* Damage parameter for the Gauss-point (fracture) */
-    ji_GP = MPM_Mesh.Mat.ji.nV[i];
+    ji_GP = MPM_Mesh.Phi.ji.nV[i];
 
     /* 10º Acumulate this forces to the total array with the internal forces */  
     for(int k = 0; k<GP_NumNodes; k++){

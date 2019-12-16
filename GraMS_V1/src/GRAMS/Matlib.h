@@ -96,6 +96,7 @@ Matrix Centroid_Poligon(Matrix);
 int InOut_Poligon(Matrix, Matrix);
 double SignumFunct(double x);
 Matrix SolvePolynomial(Matrix);
+double Distance(Matrix, Matrix);
 
 /*******************************************************/
 
