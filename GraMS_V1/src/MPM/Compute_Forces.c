@@ -215,17 +215,18 @@ Matrix GetNodalForces(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int TimeStep)
 	  Vol_GP;	
       }      
     }
-	
+    
     /* 10dº Free memory */
-    free(GP_Connect);
+    free(GP_Connect);    
     FreeMat(Div_Stress_Tensor);
     FreeMat(N_GP);
+
 
   }
 
   /* 11º Free memory */
   FreeMat(Contact_Forces_t);
-  FreeMat(Body_Forces_t);  
+  FreeMat(Body_Forces_t);
   
   return Nodal_TOT_FORCES;
   

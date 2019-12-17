@@ -158,6 +158,9 @@ typedef struct {
   int * NumNeighbour;
   ChainPtr * NodeNeighbour;
 
+  /* List of GPs in a element */
+  ChainPtr * GPsElements;
+
   /*** BOUNDARIES ***/
   Boundaries Bounds;
   
@@ -197,11 +200,10 @@ void UpdateVelocityAndPositionGP(GaussPoint, Mesh,
 
 void GetNodalConnectivity(Mesh);
 double GetMinElementSize(Mesh);
-Matrix ElemCoordinates(Mesh,int);
+Matrix ElemCoordinates(Mesh, int *, int);
 void GlobalSearchGaussPoints(GaussPoint, Mesh);
 ChainPtr DiscardElements(ChainPtr, Matrix, Matrix, Mesh);
 void LocalSearchGaussPoints(GaussPoint, Mesh);
 void UpdateBeps(GaussPoint, Mesh);
-ChainPtr GPinCell(ChainPtr *, ChainPtr,
-		  int *,int, int,
-		  Matrix, double);
+ChainPtr GPinCell(ChainPtr *, ChainPtr, ChainPtr,
+		  Matrix, int, double);

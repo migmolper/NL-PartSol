@@ -8,21 +8,34 @@
 
 Mesh InitializeMesh(char * GDF){
 
-  Mesh Back_Mesh;
+  Mesh FEM_Mesh;
 
   puts("*************************************************");
   puts(" Generate the MPM mesh");
   puts(" \t Defining background FEM mesh ...");
-  Back_Mesh = ReadGidMesh(FEM_MeshFileName);
-  puts(" \t DONE !!!");
+  FEM_Mesh = ReadGidMesh(FEM_MeshFileName);
+  puts(" \t DONE !!!");  
   puts(" \t Searching neighbours elements for each node ...");
-  GetNodalConnectivity(Back_Mesh);
+  GetNodalConnectivity(FEM_Mesh);
   puts(" \t DONE !!!");
   puts(" \t Reading FEM boundary conditions ...");
-  Back_Mesh.Bounds = Set_FEM_BCC(GDF, Back_Mesh);
+  FEM_Mesh.Bounds = Set_FEM_BCC(GDF, FEM_Mesh);
   puts(" \t DONE !!! ");
 
-  return Back_Mesh;
+  /* GPs connectivity of each element */
+  FEM_Mesh.GPsElements =
+    (ChainPtr *)malloc(FEM_Mesh.NumElemMesh*sizeof(ChainPtr));
+  if(FEM_Mesh.GPsElements == NULL){
+    printf("%s : %s \n",
+	   "GetNodalConnectivity",
+	   "Memory error for GPsElements");
+    exit(0);
+  }
+  for(int i = 0 ; i<FEM_Mesh.NumElemMesh ; i++){
+    FEM_Mesh.GPsElements[i] = NULL;
+  }  
+
+  return FEM_Mesh;
 }
 
 /*********************************************************************/
