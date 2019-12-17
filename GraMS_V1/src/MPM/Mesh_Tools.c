@@ -115,6 +115,114 @@ double GetMinElementSize(Mesh FEM_Mesh)
 
 /*********************************************************************/
 
+Matrix ElemCoordinates(Mesh FEM_Mesh, int Elem_i)
+/*
+  Get the matrix with the coordinates of an element
+*/
+{
+
+  Matrix Poligon_Coordinates;
+  int NumVertex;
+  int * Poligon_Connectivity;
+  
+  /* 1º Connectivity of the Poligon */
+  NumVertex = FEM_Mesh.NumNodesElem[Elem_i];
+  Poligon_Connectivity =
+    ChainToArray(FEM_Mesh.Connectivity[Elem_i],NumVertex);
+  
+  /* 2º Allocate the polligon Matrix and fill it */
+  Poligon_Coordinates = MatAllocZ(NumVertex,NumberDimensions);
+  for(int k = 0; k<NumVertex; k++){
+    for(int l = 0 ; l<NumberDimensions ; l++){
+      Poligon_Coordinates.nM[k][l] =
+	FEM_Mesh.Coordinates.nM[Poligon_Connectivity[k]][l];
+    }
+  }
+
+  /* 3º Free memory */
+  free(Poligon_Connectivity);
+  
+  return Poligon_Coordinates;
+}
+
+/*********************************************************************/
+
+void GetListNodesGP(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int iGP){
+
+  int IdxElement = MPM_Mesh.Element_id[iGP];
+  
+  /* 6º Assign the new connectivity of the GP */
+  if(strcmp(MPM_Mesh.ShapeFunctionGP,"MPMQ4") == 0){
+    /* Asign connectivity */
+    MPM_Mesh.ListNodes[iGP] = CopyChain(FEM_Mesh.Connectivity[IdxElement]);
+  }
+  else if(strcmp(MPM_Mesh.ShapeFunctionGP,"uGIMP2D") == 0){
+
+    /* Auxiliar variables for GIMP */
+    Matrix lp; /* Particle voxel */
+    Matrix X_EC_GP = /* Element coordinates */
+      MatAssign(NumberDimensions,1,NAN,MPM_Mesh.Phi.x_EC.nM[iGP],NULL);
+    
+    /* Calculate connectivity */
+    lp.nV = MPM_Mesh.lp.nM[iGP];
+    MPM_Mesh.ListNodes[iGP] =
+      Tributary_Nodes_GIMP(X_EC_GP,IdxElement,
+			   lp,FEM_Mesh);
+    
+    /* Calculate number of nodes */
+    MPM_Mesh.NumberNodes[iGP] = LenghtChain(MPM_Mesh.ListNodes[iGP]);
+    
+  }
+  else if(strcmp(MPM_Mesh.ShapeFunctionGP,"LME") == 0){
+    
+    /* Auxiliar variables for LME */
+    Matrix X_GC_GP = /* Global coordinates */
+      MatAssign(NumberDimensions,1,NAN,MPM_Mesh.Phi.x_GC.nM[iGP],NULL);
+    Matrix lambda_GP = /* Lagrange multipliers */
+      MatAssign(NumberDimensions,1,NAN,NULL,NULL);
+    Matrix Delta_Xip; /* Distance from GP to the nodes */
+    int NumNodes; /* Number of neibourghs */
+    int * ListNodes; /* List of nodes */
+    int I_iGP; /* Iterator for the neibourghs */
+  
+    /* Calculate connectivity */
+    MPM_Mesh.ListNodes[iGP] =
+      LME_Tributary_Nodes(X_GC_GP,IdxElement,
+			  FEM_Mesh,MPM_Mesh.Gamma);
+    
+    /* Calculate number of nodes */
+    MPM_Mesh.NumberNodes[iGP] = LenghtChain(MPM_Mesh.ListNodes[iGP]);
+
+    /* Generate nodal distance list */
+    NumNodes = MPM_Mesh.NumberNodes[iGP];
+    ListNodes = ChainToArray(MPM_Mesh.ListNodes[iGP],NumNodes);
+    Delta_Xip = MatAlloc(NumNodes,NumberDimensions);
+    for(int k = 0 ; k<NumNodes ; k++){
+      I_iGP = ListNodes[k];
+      for(int l = 0 ; l<NumberDimensions ; l++){
+	Delta_Xip.nM[k][l] =
+	  X_GC_GP.nV[l]-
+	  FEM_Mesh.Coordinates.nM[I_iGP][l];
+      }
+    }
+    free(ListNodes);
+	  
+    /* Auxiliar lambda to update it */
+    lambda_GP.nV = MPM_Mesh.lambda.nM[iGP];
+    
+    /* Calculate lagrange multipliers */
+    lambda_GP = LME_lambda(Delta_Xip, lambda_GP,
+			   FEM_Mesh.DeltaX, MPM_Mesh.Gamma);
+    
+    /* Free memory */
+    FreeMat(Delta_Xip);
+  }
+
+}
+
+
+/*********************************************************************/
+
 void GetNodalConnectivity(Mesh FEM_Mesh){
 
   /* Variable declaration */
@@ -149,29 +257,13 @@ void GetNodalConnectivity(Mesh FEM_Mesh){
 void GlobalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh){
 
   /* Variables for the GP coordinates */
-  Matrix X_GC_GP;
-  X_GC_GP.N_rows = NumberDimensions;
-  X_GC_GP.N_cols = 1;  
-  X_GC_GP.n = NAN;
-  Matrix X_EC_GP;
-  X_EC_GP.N_rows = NumberDimensions;
-  X_EC_GP.N_cols = 1;  
-  X_EC_GP.n = NAN;
+  
+  Matrix X_GC_GP = MatAssign(NumberDimensions,1,NAN,NULL,NULL);
+  Matrix X_EC_GP = MatAssign(NumberDimensions,1,NAN,NULL,NULL);
 
   /* Variables for the poligon */
-  int NumVertex;
-  int * Poligon_Connectivity;
   Matrix Poligon_Coordinates;
   ChainPtr ListNodes_I;
-  Matrix lp; /* Particle voxel (GIMP) */
-  Matrix lambda_GP;   /* Lagrange multiplier for the GP */
-  Matrix Delta_Xip; /* Distance from GP to the nodes (LME) */
-  int NumNodes; /* Number of neibourghs (LME) */
-  int * ListNodes; /* List of nodes (LME) */
-  int GP_I; /* Iterator for the neibourghs (LME) */
-
-  /* Usefull values */
-  lambda_GP = MatAssign(NumberDimensions,1,NAN,NULL,NULL); 
 
   /* 1º Set to zero the active/non-active node */
   for(int i = 0 ; i<FEM_Mesh.NumNodesMesh ; i++){
@@ -185,82 +277,24 @@ void GlobalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh){
 
     for(int j = 0 ; j<FEM_Mesh.NumElemMesh ; j++){
 
-      /* 3º Connectivity of the Poligon */
-      NumVertex = FEM_Mesh.NumNodesElem[j];
-      Poligon_Connectivity =
-	ChainToArray(FEM_Mesh.Connectivity[j],NumVertex);
-     
-      /* 4º Allocate the polligon Matrix and fill it */
-      Poligon_Coordinates = MatAllocZ(NumVertex,NumberDimensions);
-      for(int k = 0; k<NumVertex; k++){
-	for(int l = 0 ; l<NumberDimensions ; l++){
-	  Poligon_Coordinates.nM[k][l] =
-	    FEM_Mesh.Coordinates.nM[Poligon_Connectivity[k]][l];
-	}
-      }
-
-      /* 5º Free memory */
-      free(Poligon_Connectivity);
+      /* 3º Get the coordinates of the element */
+      Poligon_Coordinates = ElemCoordinates(FEM_Mesh,j);
       
-      /* 6º Check out if the GP is in the Element */
+      /* 4º Check out if the GP is in the Element */
       if(InOut_Poligon(X_GC_GP,Poligon_Coordinates) == 1){
 
-	/* 7º Asign to the GP a element in the background mesh, just for 
+	/* 5º Asign to the GP a element in the background mesh, just for 
 	   searching porpuses */
 	MPM_Mesh.Element_id[i] = j;
-	
-	/* 9º Assign the new connectivity of the GP */
-	if(strcmp(MPM_Mesh.ShapeFunctionGP,"MPMQ4") == 0){
-	  /* If the GP is in the element, get its natural coordinates */
-	  X_EC_GP.nV = MPM_Mesh.Phi.x_EC.nM[i];
-	  Get_X_EC_Q4(X_EC_GP,X_GC_GP,Poligon_Coordinates);
-	  /* Asign connectivity */
-	  MPM_Mesh.ListNodes[i] = CopyChain(FEM_Mesh.Connectivity[j]);
-	}
-	else if(strcmp(MPM_Mesh.ShapeFunctionGP,"uGIMP2D") == 0){
-	  /* If the GP is in the element, get its natural coordinates */
-	  X_EC_GP.nV = MPM_Mesh.Phi.x_EC.nM[i];
-	  Get_X_EC_Q4(X_EC_GP,X_GC_GP,Poligon_Coordinates);
-	  /* Calculate connectivity */
-	  lp.nV = MPM_Mesh.lp.nM[i];
-	  MPM_Mesh.ListNodes[i] =
-	    Tributary_Nodes_GIMP(X_EC_GP,MPM_Mesh.Element_id[i],
-	  			 lp,FEM_Mesh);
-	  /* Calculate number of nodes */
-	  MPM_Mesh.NumberNodes[i] = LenghtChain(MPM_Mesh.ListNodes[i]);
-	}
-	else if(strcmp(MPM_Mesh.ShapeFunctionGP,"LME") == 0){
-	  /* Calculate connectivity */
-	  MPM_Mesh.ListNodes[i] =
-	    LME_Tributary_Nodes(X_GC_GP,MPM_Mesh.Element_id[i],
-				FEM_Mesh,MPM_Mesh.Gamma);
-	  /* Calculate number of nodes */
-	  MPM_Mesh.NumberNodes[i] = LenghtChain(MPM_Mesh.ListNodes[i]);
 
-	  /* Generate nodal distance list */
-	  NumNodes = MPM_Mesh.NumberNodes[i];
-	  ListNodes = ChainToArray(MPM_Mesh.ListNodes[i],NumNodes);
-	  Delta_Xip = MatAlloc(NumNodes,NumberDimensions);
-	  for(int k = 0 ; k<NumNodes ; k++){
-	    GP_I = ListNodes[k];
-	    for(int l = 0 ; l<NumberDimensions ; l++){
-	      Delta_Xip.nM[k][l] =
-		X_GC_GP.nV[l]-
-		FEM_Mesh.Coordinates.nM[GP_I][l];
-	    }
-	  }
-	  free(ListNodes);
-	  
-	  /* Auxiliar lambda to update it */
-	  lambda_GP.nV = MPM_Mesh.lambda.nM[i];
-	  /* Calculate lagrange multipliers */
-	  lambda_GP = LME_lambda(Delta_Xip, lambda_GP,
-				 FEM_Mesh.DeltaX, MPM_Mesh.Gamma);
-	  /* Free memory */
-	  FreeMat(Delta_Xip);
-	}
+	/* If the GP is in the element, get its natural coordinates */
+	X_EC_GP.nV = MPM_Mesh.Phi.x_EC.nM[i];
+	Get_X_EC_Q4(X_EC_GP,X_GC_GP,Poligon_Coordinates);
+
+	/* Get list of nodes near to the GP */
+	GetListNodesGP(MPM_Mesh,FEM_Mesh,i);
 	
-	/* 10º Active those nodes that interact with the GP */
+	/* 7º Active those nodes that interact with the GP */
 	ListNodes_I = MPM_Mesh.ListNodes[i];
 	while(ListNodes_I != NULL){
 	  FEM_Mesh.ActiveNode[ListNodes_I->I] += 1;
@@ -269,7 +303,7 @@ void GlobalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh){
 	
       }
       
-      /* 11º Free memory */
+      /* 8º Free memory */
       FreeMat(Poligon_Coordinates);
       
     } 
@@ -287,7 +321,7 @@ ChainPtr DiscardElements(ChainPtr SearchElem_0,
 /*
   Auxiliary function to increase the computational accuracy in the
   GlobalSearchGaussPoints() function. We discard the elements where we can't have
-  GPs because its vertex coordinates.
+  GPs because its vertex coordinates. 
 */
 {   
   /* Found the tail */
@@ -306,7 +340,7 @@ ChainPtr DiscardElements(ChainPtr SearchElem_0,
   NumNodes = FEM_Mesh.NumNodesElem[Idx_Elem];
   Conect_Elem = ChainToArray(FEM_Mesh.Connectivity[Idx_Elem],NumNodes);
 
-  /* Init */
+  /* Init Corner_MAX and Corner_MIN */
   Xmax_E = FEM_Mesh.Coordinates.nM[Conect_Elem[0]][0];
   Ymax_E = FEM_Mesh.Coordinates.nM[Conect_Elem[0]][1];
   Xmin_E = FEM_Mesh.Coordinates.nM[Conect_Elem[0]][0];
@@ -316,7 +350,7 @@ ChainPtr DiscardElements(ChainPtr SearchElem_0,
     /* Corner_MAX */
     Xmax_E = MAXVAL(Xmax_E, FEM_Mesh.Coordinates.nM[Conect_Elem[i]][0]);
     Ymax_E = MAXVAL(Ymax_E, FEM_Mesh.Coordinates.nM[Conect_Elem[i]][1]);
-    /* Corner_MIN*/
+    /* Corner_MIN */
     Xmin_E = MINVAL(Xmin_E, FEM_Mesh.Coordinates.nM[Conect_Elem[i]][0]);
     Ymin_E = MINVAL(Ymin_E, FEM_Mesh.Coordinates.nM[Conect_Elem[i]][1]);
   }
