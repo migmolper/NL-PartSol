@@ -280,6 +280,84 @@ void GlobalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh){
 
 /*********************************************************************/
 
+ChainPtr DiscardElements(ChainPtr SearchElem_0,
+			 Matrix Corner_MAX,
+			 Matrix Corner_MIN,
+			 Mesh FEM_Mesh)
+/*
+  Auxiliary function to increase the computational accuracy in the
+  GlobalSearchGaussPoints() function. We discard the elements where we can't have
+  GPs because its vertex coordinates.
+*/
+{   
+  /* Found the tail */
+  if (SearchElem_0 == NULL) {
+    return NULL;
+  }
+
+  ChainPtr SearchElem_1;
+  double Xmax_E, Ymax_E;
+  double Xmin_E, Ymin_E;
+  int Idx_Elem; /* Index of the element */
+  int NumNodes; /* Num nodes of the element */
+  int * Conect_Elem; /* Conectivity of the element */
+
+  Idx_Elem = SearchElem_0->I;
+  NumNodes = FEM_Mesh.NumNodesElem[Idx_Elem];
+  Conect_Elem = ChainToArray(FEM_Mesh.Connectivity[Idx_Elem],NumNodes);
+
+  /* Init */
+  Xmax_E = FEM_Mesh.Coordinates.nM[Conect_Elem[0]][0];
+  Ymax_E = FEM_Mesh.Coordinates.nM[Conect_Elem[0]][1];
+  Xmin_E = FEM_Mesh.Coordinates.nM[Conect_Elem[0]][0];
+  Ymin_E = FEM_Mesh.Coordinates.nM[Conect_Elem[0]][1];
+  
+  for(int i = 1 ; i<NumNodes ; i++){
+    /* Corner_MAX */
+    Xmax_E = MAXVAL(Xmax_E, FEM_Mesh.Coordinates.nM[Conect_Elem[i]][0]);
+    Ymax_E = MAXVAL(Ymax_E, FEM_Mesh.Coordinates.nM[Conect_Elem[i]][1]);
+    /* Corner_MIN*/
+    Xmin_E = MINVAL(Xmin_E, FEM_Mesh.Coordinates.nM[Conect_Elem[i]][0]);
+    Ymin_E = MINVAL(Ymin_E, FEM_Mesh.Coordinates.nM[Conect_Elem[i]][1]);
+  }
+
+  /* Free */
+  free(Conect_Elem);
+  
+  /* Test inferior limit */
+  if ((Xmin_E<Corner_MIN.nV[0]) &&
+      (Ymin_E<Corner_MIN.nV[1])){ 
+    SearchElem_1 = SearchElem_0->next;
+    free(SearchElem_0);
+    SearchElem_1->next =
+      DiscardElements(SearchElem_1->next,
+		      Corner_MAX,Corner_MIN,
+		      FEM_Mesh);
+    return SearchElem_1;
+  }
+  /* Test superior limit */
+  else if ((Xmax_E>Corner_MAX.nV[0]) &&
+	   (Ymax_E>Corner_MAX.nV[1])){
+    SearchElem_1 = SearchElem_0->next;
+    free(SearchElem_0);
+    SearchElem_1->next =
+      DiscardElements(SearchElem_1->next,
+		      Corner_MAX,Corner_MIN,
+		      FEM_Mesh);
+    return SearchElem_1;
+  }
+  /* Just keep going */
+  else{
+    SearchElem_0->next =
+      DiscardElements(SearchElem_0->next,
+		      Corner_MAX,Corner_MIN,
+		      FEM_Mesh);
+    return SearchElem_0;
+  }
+}
+
+/*********************************************************************/
+
 void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 /*
   Local search algorithm based on the velocity of the particle
@@ -711,7 +789,7 @@ ChainPtr GPinCell(ChainPtr * ListInCELL,
   Matrix X1 = MatAssign(NumberDimensions,1,NAN,NULL,NULL);
   
   /* Found the tail */
-  if (GlobalList_0 == NULL) { 
+  if (GlobalList_0 == NULL) {
     return NULL;
   }
   /* Found one to delete */
@@ -731,7 +809,8 @@ ChainPtr GPinCell(ChainPtr * ListInCELL,
   /* Just keep going */
   else{
     GlobalList_0->next =
-      GPinCell(ListInCELL,GlobalList_0->next,Element_id,i_Cell,i_GP,
+      GPinCell(ListInCELL,GlobalList_0->next,
+	       Element_id,i_Cell,i_GP,
 	       x_GC,epsilon);
     return GlobalList_0;
   }

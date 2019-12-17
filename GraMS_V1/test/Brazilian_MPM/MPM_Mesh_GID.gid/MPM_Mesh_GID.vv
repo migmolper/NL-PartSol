@@ -1,12 +1,12 @@
 BeginZE /home/miguelmolinos/GraMS/GraMS_V1/test/Brazilian_MPM/MPM_Mesh_GID.gid/MPM_Mesh_GID.vv
-   x -0.694417238235473633 0.773008108139038086
-   y 0.40767553448677063 -0.470769375562667847
-   z -0.363617956638336182 0.363617956638336182
-   e 0.363241583108901978
+   x -0.0439702495932579041 0.0412595868110656738
+   y 0.0417842641472816467 -0.00923690944910049438
+   z -0.0398097746074199677 0.0398097746074199677
+   e 0.0291666667908430099
    v 0 0 0
    r 1
    m 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1
-   c -0.000246700918069109321 -0.000284257024759426713 0
+   c -0.00011886182619491592 0.0106424428522586823 0
    pd 0
    pno 0
    pfo 0
@@ -30,4 +30,8 @@ BeginZE /home/miguelmolinos/GraMS/GraMS_V1/test/Brazilian_MPM/MPM_Mesh_GID.gid/M
    OGLStereo(LeftEyeDistance) 1 0 0 1
    OGLStereo(RightEyeDistance) 0 1 1 1
 EndZE /home/miguelmolinos/GraMS/GraMS_V1/test/Brazilian_MPM/MPM_Mesh_GID.gid/MPM_Mesh_GID.vv
+
+BeginMirror
+   Mirror 0 Angle 0.0 AngleFake -15.0 SizeFactor 2.0 HeightOffset 0.25 Color #d9e5f24d Backlight Off EdgeStyle No Type Scene DrawMode Mirror
+EndMirror
 

@@ -198,6 +198,7 @@ void UpdateVelocityAndPositionGP(GaussPoint, Mesh,
 void GetNodalConnectivity(Mesh);
 double GetMinElementSize(Mesh);
 void GlobalSearchGaussPoints(GaussPoint, Mesh);
+ChainPtr DiscardElements(ChainPtr, Matrix, Matrix, Mesh);
 void LocalSearchGaussPoints(GaussPoint, Mesh);
 void UpdateBeps(GaussPoint, Mesh);
 ChainPtr GPinCell(ChainPtr *, ChainPtr,
