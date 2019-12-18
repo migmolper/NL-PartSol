@@ -74,16 +74,15 @@ int * ChainToArray(ChainPtr A_chain, int NumNodes){
 
 /*********************************************************************/
 
-void FreeChain(ChainPtr A){
+void FreeChain(ChainPtr * Head){
 
   /* Loop index */
-  ChainPtr INode = A;
   ChainPtr NextNode = NULL;
   
-  while (INode != NULL){
-    NextNode = INode->next;
-    free(INode);
-    INode = NextNode;    
+  while ((*Head) != NULL){
+    NextNode = (*Head);
+    (*Head) = (*Head)->next;
+    free(NextNode);
    }
 }
 
@@ -137,7 +136,7 @@ void PushNodeTop (ChainPtr * TopNodePtr, int I_new)
   ChainPtr NewNodePtr;
   
   /* Allocate node */
-  NewNodePtr = (ChainPtr)malloc(sizeof(Chain));
+  NewNodePtr = malloc(sizeof(ChainPtr));
 
   /* Insert the node at the list top (stack) */
   if(NewNodePtr != NULL){
@@ -220,7 +219,7 @@ ChainPtr CopyChain(ChainPtr start1){
 
   while(start1!=NULL){
   
-    ChainPtr temp = (ChainPtr) malloc (sizeof(Chain));
+    ChainPtr temp = malloc(sizeof(ChainPtr));
     temp->I=start1->I;
     temp->next=NULL;
 
@@ -243,31 +242,26 @@ ChainPtr CopyChain(ChainPtr start1){
 
 /* Function to get union of two linked lists
    A and B */
-ChainPtr ChainUnion(ChainPtr A, ChainPtr B) 
+ChainPtr ChainUnion(ChainPtr * Table, int NumTable) 
 { 
-    ChainPtr C = NULL; 
-    ChainPtr iPtrA = A, iPtrB = B; 
-  
-    /* Insert all elements of A to the result list */
-    while (iPtrA != NULL){
-      /* Introduce a new element in the new chain */
-      PushNodeTop(&C, iPtrA->I);
-      /* Updtate the interator index */
-      iPtrA = iPtrA->next; 
-    }
+    ChainPtr A = NULL; 
+    ChainPtr iTable; 
     
-    /* Insert those elements of B which are not  */
-    /* present in result list */ 
-    while (iPtrB != NULL){
-      /* Introduce a new element in the new chain */      
-      if (!IsPresentNode(C, iPtrB->I)){
-	PushNodeTop(&C, iPtrB->I);
+    /* Loop in the table */
+    for(int i = 0 ; i<NumTable ; i++ ){
+      iTable = Table[i];
+      while (iTable != NULL){
+	/* Introduce a new element in the new chain */      
+	if (!IsPresentNode(A, iTable->I)){
+	  PushNodeTop(&A, iTable->I);
+	}
+	/* Updtate the interator index */
+	iTable = iTable->next; 
       }
-      /* Updtate the interator index */
-      iPtrB = iPtrB->next; 
+      
     }
 
-    return C; 
+    return A; 
 }
 
 /*********************************************************************/

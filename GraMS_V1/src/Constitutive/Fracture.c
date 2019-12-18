@@ -52,6 +52,14 @@ Matrix EigenerosionAlgorithm(Matrix ji, Matrix W, Matrix Mass,
       sum_p = Mass.nV[p]*W.nV[p];
 
       /* neighbours */
+          
+      /* Check for GPs without neighbours */
+      if(Beps[p] == NULL){
+	printf("%s : %s %i\n",
+	       "Error in EigenerosionAlgorithm",
+	       "Empty Beps for GP ",p);
+	exit(0);
+      }
       Neps_p = LenghtChain(Beps[p]);
       Beps_p = ChainToArray(Beps[p],Neps_p);
 
