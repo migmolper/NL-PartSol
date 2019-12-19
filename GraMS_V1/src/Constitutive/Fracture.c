@@ -35,9 +35,8 @@ Matrix EigenerosionAlgorithm(Matrix ji, Matrix W, Matrix Mass,
   int Neps_p;
   int q;
   int Mat_p;
-
-
-  for(int p = 0 ; p<Num_GP ; p++){
+  
+  for(int p = 0 ; p < Num_GP ; p++){
     /* Calcule damage if the GP is not broken */
     if(ji.nV[p] < 1){
 
@@ -53,13 +52,6 @@ Matrix EigenerosionAlgorithm(Matrix ji, Matrix W, Matrix Mass,
       sum_p = Mass.nV[p]*W.nV[p];
 
       /* neighbours */
-      /* Check for GPs without neighbours */
-      if(Beps[p] == NULL){
-	printf("%s : %s %i\n",
-	       "Error in EigenerosionAlgorithm",
-	       "Empty Beps for GP ",p);
-	exit(0);
-      }
       Neps_p = LenghtChain(Beps[p]);
       Beps_p = ChainToArray(Beps[p],Neps_p);
 
