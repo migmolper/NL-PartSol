@@ -326,9 +326,7 @@ ChainPtr LME_Tributary_Nodes(Matrix X_GP, int Elem_GP,
 
   Matrix Distance; /* Distance between node and GP */
   Matrix X_I = MatAssign(NumberDimensions,1,NAN,NULL,NULL);
-  ChainPtr * Table_Elem = NULL;
   ChainPtr Triburary_Nodes = NULL;
-  ChainPtr * Table_ElemNodes = NULL;
   ChainPtr Triburary_Elements = NULL;
   ChainPtr iPtr = NULL;
   ChainPtr PrevPtr = NULL;
@@ -353,40 +351,30 @@ ChainPtr LME_Tributary_Nodes(Matrix X_GP, int Elem_GP,
 
   /* Chain with the tributary elements, this is the list of element near the
      gauss point, including where it is */
-
-  /* Iterate in the list and select the union of the sets of nodes */
-  Table_Elem = malloc(NumNodesElem*sizeof(ChainPtr));
   for(int i = 0 ; i<NumNodesElem ; i++){
-    Table_Elem[i] = FEM_Mesh.NodeNeighbour[NodesElem[i]];
+    Triburary_Elements =
+      ChainUnion(Triburary_Elements,FEM_Mesh.NodeNeighbour[NodesElem[i]]);
   }
-  Triburary_Elements = ChainUnion(Table_Elem,NumNodesElem);
-  /* Free memory */
-  free(NodesElem);
-  free(Table_Elem);
-  Table_Elem = NULL;
   
+  /* Free the array with the nodes of the initial element */
+  free(NodesElem);
+
   /* List with the tributary nodes */
   Num_Elem = LenghtChain(Triburary_Elements);
   List_Elements = ChainToArray(Triburary_Elements,Num_Elem);
 
   /* Free the chain wit the tributary elements */
-  FreeChain(&Triburary_Elements);
+  FreeChain(Triburary_Elements);
   
   /* Fill the chain with the preliminary tributary nodes */
-  Table_ElemNodes = malloc(Num_Elem*sizeof(ChainPtr));
   for(int i = 0 ; i<Num_Elem ; i++){
-    Table_ElemNodes[i] = FEM_Mesh.Connectivity[List_Elements[i]];
+    Triburary_Nodes =
+      ChainUnion(Triburary_Nodes,FEM_Mesh.Connectivity[List_Elements[i]]);
   }
-
-  Triburary_Nodes = ChainUnion(Table_ElemNodes,Num_Elem);
   
   /* Free the array wit the list of tributary elements */
   free(List_Elements);
-  free(Table_ElemNodes);
-  Table_ElemNodes = NULL;
-  
 
-  
   /* Initialize the iterator to iterate over the list of tributary nodes */
   iPtr = Triburary_Nodes;
 

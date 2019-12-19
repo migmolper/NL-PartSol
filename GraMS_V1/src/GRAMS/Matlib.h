@@ -104,13 +104,13 @@ double Distance(Matrix, Matrix);
 ChainPtr ArrayToChain(int *, int);
 ChainPtr RangeChain(int, int);
 int * ChainToArray(ChainPtr, int);
-void FreeChain(ChainPtr *);
+void FreeChain(ChainPtr);
 int LenghtChain(ChainPtr);
 bool IsPresentNode (ChainPtr, int);
 void PushNodeTop (ChainPtr *, int);
 void PopNode (ChainPtr *, int);
 ChainPtr CopyChain(ChainPtr);
-ChainPtr ChainUnion(ChainPtr *, int);
+ChainPtr ChainUnion(ChainPtr, ChainPtr);
 ChainPtr ChainIntersection(ChainPtr, ChainPtr);
 void printList (ChainPtr);
 

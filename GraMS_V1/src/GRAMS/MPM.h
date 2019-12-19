@@ -192,7 +192,7 @@ Matrix GetNodalVelocity(Mesh, Matrix, Matrix);
 void BCC_Nod_VALUE(Mesh, Matrix, int);
 void UpdateGaussPointStrain(GaussPoint, Mesh, Matrix);
 double UpdateGaussPointDensity(double, double);
-void UpdateGaussPointStress(GaussPoint);
+void UpdateGaussPointStress(GaussPoint, Mesh);
 Matrix GetNodalForces(GaussPoint, Mesh, int);
 void UpdateGridNodalMomentum(Mesh, Matrix, Matrix);
 void UpdateVelocityAndPositionGP(GaussPoint, Mesh,
@@ -205,5 +205,5 @@ void GlobalSearchGaussPoints(GaussPoint, Mesh);
 ChainPtr DiscardElements(ChainPtr, Matrix, Matrix, Mesh);
 void LocalSearchGaussPoints(GaussPoint, Mesh);
 void UpdateBeps(GaussPoint, Mesh);
-void GPinCell(ChainPtr *, ChainPtr *,
-	      Matrix, int, double);
+ChainPtr GPinCell(ChainPtr *, ChainPtr, ChainPtr,
+		  Matrix, int, double);

@@ -130,7 +130,7 @@ GaussPoint Define_GP_Mesh(char * MPM_GID_MeshName,
   /* Normalizing constant (fracture) */
   MPM_Mesh.Mat[0].Ceps = 1.5;
   /* Limit energy (fracture) */
-  MPM_Mesh.Mat[0].Gf = 100;
+  MPM_Mesh.Mat[0].Gf = 10;
   strcpy(MPM_Mesh.Mat[0].Info,"LEF");
   
   /* Allocate vectorial/tensorial fields */
@@ -288,7 +288,7 @@ GaussPoint Define_GP_Mesh(char * MPM_GID_MeshName,
     }
 
     /* Free data */
-    FreeChain(&MPM_GID_Mesh.Connectivity[i]);
+    FreeChain(MPM_GID_Mesh.Connectivity[i]);
 
     /* Get the area (Poligon_Centroid.n) 
        and the position of the centroid (Poligon_Centroid.nV) */

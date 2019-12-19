@@ -74,15 +74,16 @@ int * ChainToArray(ChainPtr A_chain, int NumNodes){
 
 /*********************************************************************/
 
-void FreeChain(ChainPtr * Head){
+void FreeChain(ChainPtr A){
 
   /* Loop index */
+  ChainPtr INode = A;
   ChainPtr NextNode = NULL;
   
-  while ((*Head) != NULL){
-    NextNode = (*Head);
-    (*Head) = (*Head)->next;
-    free(NextNode);
+  while (INode != NULL){
+    NextNode = INode->next;
+    free(INode);
+    INode = NextNode;    
    }
 }
 
@@ -136,7 +137,7 @@ void PushNodeTop (ChainPtr * TopNodePtr, int I_new)
   ChainPtr NewNodePtr;
   
   /* Allocate node */
-  NewNodePtr = malloc(sizeof(ChainPtr));
+  NewNodePtr = (ChainPtr)malloc(sizeof(Chain));
 
   /* Insert the node at the list top (stack) */
   if(NewNodePtr != NULL){
@@ -194,6 +195,24 @@ void PopNode (ChainPtr * TopNodePtr, int I_trash)
 
 /*********************************************************************/
 
+/* /\* Function to copy the chain A in to the chain B *\/ */
+/* ChainPtr CopyChain(ChainPtr A) */
+/* { */
+
+/*   ChainPtr B = NULL; */
+/*   ChainPtr iPtrA = A; */
+
+/*   /\* Insert all elements of A to the result list *\/ */
+/*   while (iPtrA != NULL){ */
+/*     /\* Introduce a new element in the new chain *\/ */
+/*     PushNodeTop(&B, iPtrA->I); */
+/*     /\* Updtate the interator index *\/ */
+/*       iPtrA = iPtrA->next;  */
+/*   } */
+  
+/*   return B; */
+/* } */
+
 ChainPtr CopyChain(ChainPtr start1){
   
   ChainPtr start2=NULL;
@@ -201,7 +220,7 @@ ChainPtr CopyChain(ChainPtr start1){
 
   while(start1!=NULL){
   
-    ChainPtr temp = malloc(sizeof(ChainPtr));
+    ChainPtr temp = (ChainPtr) malloc (sizeof(Chain));
     temp->I=start1->I;
     temp->next=NULL;
 
@@ -224,26 +243,31 @@ ChainPtr CopyChain(ChainPtr start1){
 
 /* Function to get union of two linked lists
    A and B */
-ChainPtr ChainUnion(ChainPtr * Table, int NumTable) 
+ChainPtr ChainUnion(ChainPtr A, ChainPtr B) 
 { 
-    ChainPtr A = NULL; 
-    ChainPtr iTable = NULL; 
+    ChainPtr C = NULL; 
+    ChainPtr iPtrA = A, iPtrB = B; 
+  
+    /* Insert all elements of A to the result list */
+    while (iPtrA != NULL){
+      /* Introduce a new element in the new chain */
+      PushNodeTop(&C, iPtrA->I);
+      /* Updtate the interator index */
+      iPtrA = iPtrA->next; 
+    }
     
-    /* Loop in the table */
-    for(int i = 0 ; i<NumTable ; i++ ){
-      iTable = Table[i];
-      while (iTable != NULL){
-	/* Introduce a new element in the new chain */      
-	if (!IsPresentNode(A, iTable->I)){
-	  PushNodeTop(&A, iTable->I);
-	}
-	/* Updtate the interator index */
-	iTable = iTable->next; 
+    /* Insert those elements of B which are not  */
+    /* present in result list */ 
+    while (iPtrB != NULL){
+      /* Introduce a new element in the new chain */      
+      if (!IsPresentNode(C, iPtrB->I)){
+	PushNodeTop(&C, iPtrB->I);
       }
-      
+      /* Updtate the interator index */
+      iPtrB = iPtrB->next; 
     }
 
-    return A; 
+    return C; 
 }
 
 /*********************************************************************/

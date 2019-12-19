@@ -6,7 +6,7 @@
 
 /*******************************************************/
 
-void UpdateGaussPointStress(GaussPoint MPM_Mesh){
+void UpdateGaussPointStress(GaussPoint MPM_Mesh, Mesh FEM_Mesh){
 
   /* 1º Variable declaration  */
   Matrix Strain_k1;
@@ -40,6 +40,12 @@ void UpdateGaussPointStress(GaussPoint MPM_Mesh){
 					   MPM_Mesh.Phi.ji.nV[i]);
     
   }
+  
+  /* 6º Calcule fracture */
+  /* UpdateBeps(MPM_Mesh,FEM_Mesh); */
+  /* MPM_Mesh.Phi.ji = ComputeDamage(MPM_Mesh.Phi.ji, MPM_Mesh.Phi.W, MPM_Mesh.Phi.mass, */
+  /* 				  MPM_Mesh.MatIdx, MPM_Mesh.Mat, */
+  /* 				  MPM_Mesh.Beps, FEM_Mesh.DeltaX); */
 }
 
 /*******************************************************/
