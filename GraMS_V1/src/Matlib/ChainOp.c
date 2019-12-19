@@ -194,24 +194,6 @@ void PopNode (ChainPtr * TopNodePtr, int I_trash)
 
 /*********************************************************************/
 
-/* /\* Function to copy the chain A in to the chain B *\/ */
-/* ChainPtr CopyChain(ChainPtr A) */
-/* { */
-
-/*   ChainPtr B = NULL; */
-/*   ChainPtr iPtrA = A; */
-
-/*   /\* Insert all elements of A to the result list *\/ */
-/*   while (iPtrA != NULL){ */
-/*     /\* Introduce a new element in the new chain *\/ */
-/*     PushNodeTop(&B, iPtrA->I); */
-/*     /\* Updtate the interator index *\/ */
-/*       iPtrA = iPtrA->next;  */
-/*   } */
-  
-/*   return B; */
-/* } */
-
 ChainPtr CopyChain(ChainPtr start1){
   
   ChainPtr start2=NULL;
@@ -245,7 +227,7 @@ ChainPtr CopyChain(ChainPtr start1){
 ChainPtr ChainUnion(ChainPtr * Table, int NumTable) 
 { 
     ChainPtr A = NULL; 
-    ChainPtr iTable; 
+    ChainPtr iTable = NULL; 
     
     /* Loop in the table */
     for(int i = 0 ; i<NumTable ; i++ ){
