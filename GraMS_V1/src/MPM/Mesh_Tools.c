@@ -641,9 +641,7 @@ void UpdateBeps(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 
 */
 {
-  /* Global chain table with the list of GP near to a GP */
-  ChainPtr * Beps = MPM_Mesh.Beps;
-
+  
   /* Search radious */
   double epsilon;
   
@@ -659,12 +657,27 @@ void UpdateBeps(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 
   /* Chain with a list of elements near the initial element,
    and interator chain */
+  ChainPtr * TableElements = NULL;
   ChainPtr ListElements;
-  ChainPtr iListElements;
+  int NumElems;
+  int * ArrayElements;
 
   /* Auxiliar chain */
+  ChainPtr * TableGP = NULL;
   ChainPtr SearchGP;
-  ChainPtr iSearchGP;
+  int * ArraySearchGP;
+  int NumSearchGP;
+
+  /* Distance */
+  Matrix X0 = MatAssign(NumberDimensions,1,NAN,NULL,NULL);
+  Matrix X1 = MatAssign(NumberDimensions,1,NAN,NULL,NULL);
+  double Dist;
+
+  /* Free the previous list and set to NULL */
+  for(int i = 0 ; i<NumGP ; i++){
+    FreeChain(MPM_Mesh.Beps[i]);
+    MPM_Mesh.Beps[i] = NULL;
+  }
 
   /* Loop over the GP's and generate the list */
   for(int i = 0 ; i<NumGP ; i++){
@@ -672,10 +685,6 @@ void UpdateBeps(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
     /* Get the search radious */
     Mat_GP = MPM_Mesh.MatIdx[i];
     epsilon = MPM_Mesh.Mat[Mat_GP].Ceps*FEM_Mesh.DeltaX;
-
-    /* Free the previous list and set to NULL */
-    FreeChain(Beps[i]);
-    Beps[i] = NULL;
         
     /* Number of nodes of the initial element and
        list of nodes */
@@ -686,86 +695,93 @@ void UpdateBeps(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
     
     /* Chain with the tributary elements, this is the list of element near the
        gauss point, including where it is */
+    TableElements = malloc(NumNodesElem*sizeof(ChainPtr));
     ListElements = NULL;
-    for(int i = 0 ; i<NumNodesElem ; i++){
-      ListElements =
-	ChainUnion(ListElements,FEM_Mesh.NodeNeighbour[NodesElem[i]]);
+    for(int j = 0 ; j<NumNodesElem ; j++){
+      TableElements[j] = FEM_Mesh.NodeNeighbour[NodesElem[j]];
     }
-    
-    /* Free the array with the nodes of the initial element */
+    ListElements = ChainUnion(TableElements,NumNodesElem);
+    /* Free memory */
     free(NodesElem);
-
+    free(TableElements);
+    TableElements = NULL;
+    
     /* First search : In elements near to each GP */
-    /* SearchGP = NULL; */
-    /* iListElements = ListElements; */
-    /* while(iListElements != NULL){ */
-    /*   SearchGP = */
-    /* 	ChainUnion(SearchGP,FEM_Mesh.GPsElements[iListElements->I]); */
-    /*   /\* Update interator *\/ */
-    /*   iListElements = iListElements->next;  */
-    /* } */
-
+    NumElems = LenghtChain(ListElements);
+    ArrayElements = ChainToArray(ListElements, NumElems);
+    TableGP = malloc(NumElems*sizeof(ChainPtr));
+    SearchGP = NULL;
+    for(int j = 0 ; j<NumElems ; j++){
+      TableGP[j] = FEM_Mesh.GPsElements[ArrayElements[j]];
+    }
+    SearchGP = ChainUnion(TableGP,NumElems);
+    
+    /* Free memory */
+    FreeChain(ListElements);
+    ListElements = NULL;
+    free(ArrayElements);
+    free(TableGP);
+    TableElements = NULL;
+    
     /* /\* Search in the cell and return the total search list modified  */
     /*    without those GP inside of the cell and */
     /*    include in Beps[i] the GP inside of the cell *\/ */
-    /* iSearchGP = SearchGP; */
-    /* iSearchGP = GPinCell(&Beps[i],SearchGP,iSearchGP, */
-    /* 			 MPM_Mesh.Phi.x_GC, */
-    /* 			 i,epsilon); */
-
+    /* Beps = &(MPM_Mesh.Beps[i]); */
+    /* GPinCell(Beps,&SearchGP,MPM_Mesh.Phi.x_GC,i,epsilon); */
+    NumSearchGP = LenghtChain(SearchGP);
+    ArraySearchGP = ChainToArray(SearchGP,NumSearchGP);
+    X0.nV = MPM_Mesh.Phi.x_GC.nM[i];
+    for(int j = 0 ; j<NumSearchGP ; j++){
+      X1.nV = MPM_Mesh.Phi.x_GC.nM[ArraySearchGP[j]];
+      Dist = Distance(X1,X0);
+       if (Dist < epsilon){
+	 PushNodeTop(&MPM_Mesh.Beps[i],ArraySearchGP[j]);
+       }
+    }
     /* Free chain */
-    /* FreeChain(SearchGP); */
-    FreeChain(ListElements);
+    FreeChain(SearchGP);
+    SearchGP = NULL;
+    free(ArraySearchGP);
   }
-  
 }
 
 /*********************************************************************/
 
-ChainPtr GPinCell(ChainPtr * ListInCELL,
-		  ChainPtr GlobalList_H,
-		  ChainPtr GlobalList_0,
-		  Matrix x_GC, int iGP,
-		  double epsilon)
+void GPinCell(ChainPtr * ListInCELL,
+	      ChainPtr * GlobalList,
+	      Matrix x_GC, int iGP,
+	      double epsilon)
 /*
   Search recursively the GP inside of a cell and if inside of a circle of
   radious epsilon  
 */
-{   
-  /* Found the tail */
-  if (GlobalList_0 == NULL) {
-    return NULL;
-  }
+{
 
-  ChainPtr GlobalList_1;
-  Matrix X0 = MatAssign(NumberDimensions,1,NAN,x_GC.nM[iGP],NULL);
-  Matrix X1 = MatAssign(NumberDimensions,1,NAN,x_GC.nM[GlobalList_0->I],NULL);
-  
-  /* Found one to delete */
-  if (Distance(X1,X0) < epsilon){
-    PushNodeTop (ListInCELL, GlobalList_0->I);
-    GlobalList_1 = GlobalList_0->next;
-    /* Update head if it is necessary */
-    if(GlobalList_H == GlobalList_0){
-      GlobalList_H = GlobalList_0->next;
+  ChainPtr iPtr = (* GlobalList);
+  ChainPtr AuxPtr;
+  Matrix X0, X1;
+  double Dist;
+  if(iPtr != NULL){
+    X0 = MatAssign(NumberDimensions,1,NAN,x_GC.nM[iGP],NULL);
+    X1 = MatAssign(NumberDimensions,1,NAN,x_GC.nM[iPtr->I],NULL);
+    Dist = Distance(X1,X0);
+
+    /* Found one to delete */
+    if (Dist < epsilon){
+      PushNodeTop (ListInCELL,iPtr->I);
+      AuxPtr = iPtr;
+      iPtr = iPtr->next;
+      free(AuxPtr);
+      GPinCell(ListInCELL,&iPtr,
+	       x_GC,iGP,epsilon);
     }
-    free(GlobalList_0);
-    GlobalList_1 =
-      GPinCell(ListInCELL,
-	       GlobalList_H,GlobalList_1,
+    /* Just keep going */
+    else{
+      iPtr = iPtr->next;
+      GPinCell(ListInCELL,&iPtr,
 	       x_GC,iGP,epsilon);
-    return GlobalList_1;
-  }
-  /* Just keep going */
-  else{
-    GlobalList_0->next =
-      GPinCell(ListInCELL,
-	       GlobalList_H,GlobalList_0->next,
-	       x_GC,iGP,epsilon);
-    return GlobalList_0;
+    }
   }
 }
 
 /*********************************************************************/
-
-

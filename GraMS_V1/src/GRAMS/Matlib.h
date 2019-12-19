@@ -110,7 +110,7 @@ bool IsPresentNode (ChainPtr, int);
 void PushNodeTop (ChainPtr *, int);
 void PopNode (ChainPtr *, int);
 ChainPtr CopyChain(ChainPtr);
-ChainPtr ChainUnion(ChainPtr, ChainPtr);
+ChainPtr ChainUnion(ChainPtr *, int);
 ChainPtr ChainIntersection(ChainPtr, ChainPtr);
 void printList (ChainPtr);
 

@@ -130,7 +130,7 @@ GaussPoint Define_GP_Mesh(char * MPM_GID_MeshName,
   /* Normalizing constant (fracture) */
   MPM_Mesh.Mat[0].Ceps = 1.5;
   /* Limit energy (fracture) */
-  MPM_Mesh.Mat[0].Gf = 10;
+  MPM_Mesh.Mat[0].Gf = 0.00001;
   strcpy(MPM_Mesh.Mat[0].Info,"LEF");
   
   /* Allocate vectorial/tensorial fields */

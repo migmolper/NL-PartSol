@@ -67,6 +67,9 @@ Matrix EigenerosionAlgorithm(Matrix ji, Matrix W, Matrix Mass,
 	sum_p += m_q*W_q;
       }
 
+      /* Free memory */
+      free(Beps_p);
+
       /* Compute energy-release rate for the GP */
       G_p = (Ceps_p*DeltaX/m_p)*sum_p;
 

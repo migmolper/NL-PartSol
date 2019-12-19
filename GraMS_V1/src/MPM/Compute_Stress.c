@@ -19,6 +19,7 @@ void UpdateGaussPointStress(GaussPoint MPM_Mesh){
 
   /* 2º Iterate over the Gauss-Points */
   for(int i = 0 ; i<N_GP ; i++){
+    if(MPM_Mesh.Phi.ji.nV[i] != 1.0){
 
     Mat_GP = MPM_Mesh.MatIdx[i];
     
@@ -38,7 +39,7 @@ void UpdateGaussPointStress(GaussPoint MPM_Mesh){
     /* 6º Get the deformation energy */
     MPM_Mesh.Phi.W.nV[i] = W_LinearElastic(Strain_k1,Stress_k1,
 					   MPM_Mesh.Phi.ji.nV[i]);
-    
+    }    
   }
 }
 
