@@ -23,14 +23,12 @@ void u_ForwardEuler(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
   /* Auxiliar variable for the mass and momentum */
   Matrix Nodal_MASS_MOMENTUM;
 
-  /* Nodal mass */
   Matrix Nodal_MASS; 
   Nodal_MASS.N_rows = 1;
   Nodal_MASS.N_cols = FEM_Mesh.NumNodesMesh;
   Nodal_MASS.nM = NULL;
   strcpy(Nodal_MASS.Info,"MASS");
 
-  /* Nodal momentum */
   Matrix Nodal_MOMENTUM; 
   Nodal_MOMENTUM.N_rows = NumberDimensions;
   Nodal_MOMENTUM.N_cols = FEM_Mesh.NumNodesMesh;
@@ -39,10 +37,7 @@ void u_ForwardEuler(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
     (double **)malloc((unsigned)NumberDimensions*sizeof(double*));
   strcpy(Nodal_MOMENTUM.Info,"MOMENTUM");
 
-  /* Nodal velocities */
   Matrix Nodal_VELOCITY;
-  
-  /* Nodal total forces */
   Matrix Nodal_TOT_FORCES;
   
   /*********************************************************************/
@@ -54,7 +49,6 @@ void u_ForwardEuler(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
     printf("********************** STEP : %i \n",TimeStep);
     puts("*************************************************");
     
-    /* First step : Output Gauss-Points values to Paraview */
     if(TimeStep % ResultsTimeStep == 0){
       puts("*************************************************");
       puts(" First step : Output Gauss-Points values to Paraview");
@@ -64,7 +58,6 @@ void u_ForwardEuler(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
       printf(" \t DONE !!! \n");
     }
     
-    /* Second step : Get the nodal mass and the momentum */
     puts("*************************************************");
     puts(" Second step : Get the nodal mass and the momentum");
     puts(" \t WORKING ...");
@@ -74,43 +67,41 @@ void u_ForwardEuler(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
     Nodal_MOMENTUM.nM[1] = Nodal_MASS_MOMENTUM.nM[2];
     printf(" \t DONE !!! \n");
 
-    /* Third step : Set the essential boundary conditions (over p)*/
     puts("*************************************************");
     puts(" Third step : Set the essential BCC (over P)");
     puts(" \t WORKING ...");
     BCC_Nod_VALUE(FEM_Mesh,Nodal_MOMENTUM,TimeStep);
     puts(" DONE !!!");
 
-    /* Four step : Update the particle stress state */
     puts("*************************************************");
     puts(" Four step : Update the particle stress state");
-  
-    /* a) Get the grid nodal velocity */
     puts(" \t a) Get the grid nodal velocity ... WORKING");
     Nodal_VELOCITY = GetNodalVelocity(FEM_Mesh,
 				      Nodal_MOMENTUM,
 				      Nodal_MASS);
     puts(" \t DONE !!!");
-    /* b) Calculate the strain increment */
     puts(" \t b) Calculate the strain increment ... WORKING");
     UpdateGaussPointStrain(MPM_Mesh,
 			   FEM_Mesh,
 			   Nodal_VELOCITY);
     puts(" \t DONE !!!");
-    /* c) Update the particle stress state */
     puts(" \t c) Update the particle stress state ... WORKING");
-    UpdateGaussPointStress(MPM_Mesh,FEM_Mesh);
+    UpdateGaussPointStress(MPM_Mesh);
     puts(" \t DONE !!!");
+    /* puts(" \t d) Update the particle tatus ... WORKING"); */
+    /* UpdateBeps(MPM_Mesh,FEM_Mesh); */
+    /* MPM_Mesh.Phi.ji = ComputeDamage(MPM_Mesh.Phi.ji, MPM_Mesh.Phi.W, */
+    /* 				    MPM_Mesh.Phi.mass,MPM_Mesh.MatIdx, */
+    /* 				    MPM_Mesh.Mat,MPM_Mesh.Beps, */
+    /* 				    FEM_Mesh.DeltaX); */
+    /* puts(" \t DONE !!!"); */
 
-    /* Five step : Calculate total forces */
     puts("*************************************************");
     puts(" Five step : Calculate total forces forces");
     puts(" \t WORKING ...");
-    /* BCC_GP_Forces(MPM_Mesh, BCC_Loads, TimeStep); */
     Nodal_TOT_FORCES = GetNodalForces(MPM_Mesh,FEM_Mesh,TimeStep);
     puts(" DONE !!!");    
 
-    /* Six step : Integrate the grid nodal momentum equation */
     puts("*************************************************");
     puts(" Six step : Integrate the grid nodal momentum equation");
     puts(" \t WORKING ...");
@@ -118,7 +109,6 @@ void u_ForwardEuler(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
     BCC_Nod_VALUE(FEM_Mesh,Nodal_TOT_FORCES,TimeStep);
     puts(" DONE !!!");
 
-    /* Seven step : Update the particle velocity and position */
     puts("*************************************************");
     puts(" Seven step : Update the particle velocity and position");
     puts(" \t WORKING ...");
@@ -126,15 +116,12 @@ void u_ForwardEuler(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
 				Nodal_MOMENTUM,Nodal_TOT_FORCES);
     puts(" DONE !!!");
 
-    
-    /* Eight step : Search the GP in the mesh */
     puts("*************************************************");
     puts(" Eight step : Search the GP in the mesh");
     puts(" \t WORKING ...");
     LocalSearchGaussPoints(MPM_Mesh,FEM_Mesh);
     puts(" DONE !!!");
 
-    /* Nine step : Print nodal values */
     if(TimeStep % ResultsTimeStep == 0){
       puts("*************************************************");
       puts(" Nine step : Print nodal values");
@@ -143,12 +130,9 @@ void u_ForwardEuler(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
       puts(" DONE !!!");
     }
     
-    /* Ten step : Store all the material properties in the particles
-       so that the deformed grid can be discarted */
     puts("*************************************************");
     puts(" Ten step : Reset nodal values of the mesh");
     puts(" \t WORKING ...");
-    /* Reset nodal values */
     FreeMat(Nodal_MASS_MOMENTUM);
     FreeMat(Nodal_VELOCITY);
     FreeMat(Nodal_TOT_FORCES);

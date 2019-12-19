@@ -195,24 +195,6 @@ void PopNode (ChainPtr * TopNodePtr, int I_trash)
 
 /*********************************************************************/
 
-/* /\* Function to copy the chain A in to the chain B *\/ */
-/* ChainPtr CopyChain(ChainPtr A) */
-/* { */
-
-/*   ChainPtr B = NULL; */
-/*   ChainPtr iPtrA = A; */
-
-/*   /\* Insert all elements of A to the result list *\/ */
-/*   while (iPtrA != NULL){ */
-/*     /\* Introduce a new element in the new chain *\/ */
-/*     PushNodeTop(&B, iPtrA->I); */
-/*     /\* Updtate the interator index *\/ */
-/*       iPtrA = iPtrA->next;  */
-/*   } */
-  
-/*   return B; */
-/* } */
-
 ChainPtr CopyChain(ChainPtr start1){
   
   ChainPtr start2=NULL;
@@ -240,6 +222,30 @@ ChainPtr CopyChain(ChainPtr start1){
 }
 
 /*********************************************************************/
+
+/* /\* Function to get union of two linked lists */
+/*    A and B *\/ */
+/* ChainPtr ChainUnion(ChainPtr * Table, int NumTable)  */
+/* {  */
+/*     ChainPtr A = NULL;  */
+/*     ChainPtr iTable;  */
+    
+/*     /\* Loop in the table *\/ */
+/*     for(int i = 0 ; i<NumTable ; i++ ){ */
+/*       iTable = Table[i]; */
+/*       while (iTable != NULL){ */
+/* 	/\* Introduce a new element in the new chain *\/       */
+/* 	if (!IsPresentNode(A, iTable->I)){ */
+/* 	  PushNodeTop(&A, iTable->I); */
+/* 	} */
+/* 	/\* Updtate the iterator index *\/ */
+/* 	iTable = iTable->next;  */
+/*       } */
+      
+/*     } */
+
+/*     return A;  */
+/* } */
 
 /* Function to get union of two linked lists
    A and B */

@@ -439,15 +439,11 @@ void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
   /* 2º Loop over the GP */
   for(int i = 0 ; i<MPM_Mesh.NumGP ; i++){
 
-    /* 3º Get the global coordinate of the GP */
+    /* Get the velocity vector of the GP */
+   
+    /* 3º Get the global coordinates and velocity of the GP */
     X_GC_GP.nV = MPM_Mesh.Phi.x_GC.nM[i];
-
-    /* 4º Get the velocity vector of the GP and if the norm of the velocity 
-     vector is zero, cicle */
     V_GP.nV = MPM_Mesh.Phi.vel.nM[i];
-    if(Norm_Mat(V_GP,2) == 0){
-      continue;
-    }
 
     /* 4º Get the index of the initial element */
     Elem_i = MPM_Mesh.Element_id[i];
@@ -472,10 +468,13 @@ void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
       /* Asign GP to the element */
       PushNodeTop(&FEM_Mesh.GPsElements[Elem_i],i);
 
-      /* If the GP is in the element, get its natural coordinates */
-      X_EC_GP.nV = MPM_Mesh.Phi.x_EC.nM[i];
-      Get_X_EC_Q4(X_EC_GP,X_GC_GP,Poligon_Coordinates);
-
+      /* If the norm of the velocity
+	 vector is zero get its natural coordinates */
+      if(Norm_Mat(V_GP,2) > 0){
+	X_EC_GP.nV = MPM_Mesh.Phi.x_EC.nM[i];
+	Get_X_EC_Q4(X_EC_GP,X_GC_GP,Poligon_Coordinates);
+      }
+	      
       /* Get list of nodes near to the GP */
       GetListNodesGP(MPM_Mesh,FEM_Mesh,i);
             
