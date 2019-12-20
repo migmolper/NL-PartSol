@@ -11,6 +11,18 @@ NUM_STEP=6000
 
 
 /***************************************/
+/********** MATERIAL PROPERTIES ********/
+/***************************************/
+MATERIALS_NUM 1
+MATERIALS_DEF (ID=0) {
+E=6.e9;
+mu=0.2;
+Ceps=1.5;
+Gf=0.00001;
+Info="Elastic";
+}
+
+/***************************************/
 /******* SIMULATION FILES AND DIR ******/
 /***************************************/
 FEM_FILE_NAME=test/Brazilian_MPM/FEM_Mesh.msh

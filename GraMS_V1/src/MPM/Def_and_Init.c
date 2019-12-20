@@ -109,29 +109,21 @@ GaussPoint Define_GP_Mesh(char * MPM_GID_MeshName,
   /* Material parameters */
   /* Number of materials */
   MPM_Mesh.NumMat = 1;
-  MPM_Mesh.Mat =
-    (Material *)malloc(MPM_Mesh.NumMat*sizeof(Material));
-  if(MPM_Mesh.Mat == NULL){
-    printf("%s : %s \n",
-	   "Define_GP_Mesh",
-	   "Memory error for Mat");
-    exit(0);
-  }
+  
   MPM_Mesh.MatIdx = (int *)malloc(MPM_Mesh.NumGP*sizeof(int));
-
   for(int i = 0 ; i<MPM_Mesh.NumGP ; i++){
     MPM_Mesh.MatIdx[i] = 0;
   }
   
-  /* Elastic Modulus */
-  MPM_Mesh.Mat[0].E = ElasticModulus;
-  /* Poisson ratio */
-  MPM_Mesh.Mat[0].mu = PoissonModulus;
-  /* Normalizing constant (fracture) */
-  MPM_Mesh.Mat[0].Ceps = 1.5;
-  /* Limit energy (fracture) */
-  MPM_Mesh.Mat[0].Gf = 0.00001;
-  strcpy(MPM_Mesh.Mat[0].Info,"LEF");
+  /* /\* Elastic Modulus *\/ */
+  /* MPM_Mesh.Mat[0].E = ElasticModulus; */
+  /* /\* Poisson ratio *\/ */
+  /* MPM_Mesh.Mat[0].mu = PoissonModulus; */
+  /* /\* Normalizing constant (fracture) *\/ */
+  /* MPM_Mesh.Mat[0].Ceps = 1.5; */
+  /* /\* Limit energy (fracture) *\/ */
+  /* MPM_Mesh.Mat[0].Gf = 0.00001; */
+  /* strcpy(MPM_Mesh.Mat[0].Info,"LEF"); */
   
   /* Allocate vectorial/tensorial fields */
   switch(NumberDimensions){
@@ -377,6 +369,9 @@ GaussPoint InitializeGP(char * GDF, Mesh FEM_Mesh){
   puts(" Generate the MPM mesh");
   puts(" \t Defining MPM mesh of GPs ...");
   MPM_Mesh = Define_GP_Mesh(MPM_MeshFileName,Density);
+  puts(" \t DONE !!!");
+  puts(" \t Material properties for GPs ...");
+  MPM_Mesh.Mat = Read_MPM_Materials(GDF,MPM_Mesh);
   puts(" \t DONE !!!");
   puts(" \t Constitutive library for GPs ...");
   MPM_Mesh.D = Contitutive();

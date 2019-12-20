@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 #include "../GRAMS/grams.h"
 
 #define MAXVAL(A,B) ((A)>(B) ? (A) : (B))
@@ -46,8 +47,9 @@ void Read_GeneralParameters(char * Name_File)
   char * KIND_ANALYSIS[MAXW] = {NULL};
 
   /* Initial message */
-  printf("************************************************* \n");
-  printf(" * Begin of read general parameters in : \n\t %s !!! \n",
+  puts("*************************************************");
+  printf("%s : \n \t %s !!! \n",
+	 "* Begin of read general parameters in",
 	 Name_File);
   
   /* Open and check .dat file */
@@ -429,7 +431,9 @@ Boundaries Set_FEM_BCC(char * Name_File, Mesh FEM_Mesh)
       
     } /* Quadrilateral elements */
     if(NumNodesElem == 3){ /* Triangular elements */
-      puts("Error in Set_FEM_BCC() : Boundary nodes localization for T3 not implemented yet !");
+      printf("%s : %s \n",
+	     "Error in Set_FEM_BCC()",
+	     "Boundary nodes localization for T3 not implemented yet !");
     } /* Triangular elements */
     
     /* Free data */ 
@@ -438,22 +442,28 @@ Boundaries Set_FEM_BCC(char * Name_File, Mesh FEM_Mesh)
     break; /******************** 2D mesh ********************/
     
   case 3: /******************** 3D mesh ********************/
-    printf("************************************************* \n");
-    puts("Error in Set_FEM_BCC() : 3D cases not implemented yet !");
-    printf("************************************************* \n");
+    puts("*************************************************");
+    printf("%s : %s \n",
+	   "Error in Set_FEM_BCC()",
+	   "3D cases not implemented yet !");
+    puts("*************************************************");
     exit(0);
     break; /******************** 2D mesh ********************/
     
   default :
-    printf("************************************************* \n");
-    puts("Error in Set_FEM_BCC() : Wrong number of dimensions !");
-    printf("************************************************* \n");
+    puts("*************************************************");
+    printf("%s : %s \n",
+	   "Error in Set_FEM_BCC()",
+	   "Wrong number of dimensions !");
+    puts("*************************************************");
     exit(0);
   }
 
 
   /* Initial message */  
-  printf(" \t -> Begin of read boundary conditions in : \n\t %s \n",Name_File);
+  printf(" \t %s : \n\t %s \n",
+	 "-> Begin of read boundary conditions in",
+	 Name_File);
   
   /* Open and check .bcc file */
   File_BCC = fopen(Name_File,"r");  
@@ -492,7 +502,9 @@ Boundaries Set_FEM_BCC(char * Name_File, Mesh FEM_Mesh)
 	    }
 	  }
 	  else{
-	    puts("Error in Read_FEM_BCC() : Wrong format !!!");
+	    printf("%s : %s \n",
+		   "Error in Set_FEM_BCC()",
+		   "Wrong format !!!");
 	    exit(0);
 	  }
 
@@ -503,7 +515,9 @@ Boundaries Set_FEM_BCC(char * Name_File, Mesh FEM_Mesh)
 	    strcpy(FEM_BCC.BCC_i[IndexBoundary].Info,param[1]);
 	  }
 	  else{
-	    puts("Error in Set_FEM_BCC() : Wrong format !!!");
+	    printf("%s : %s \n",
+		   "Error in Set_FEM_BCC()",
+		   "Wrong format !!!");
 	    exit(0);
 	  }
 
@@ -521,7 +535,9 @@ Boundaries Set_FEM_BCC(char * Name_File, Mesh FEM_Mesh)
 	    }	    
 	  }
 	  else{
-	    puts("Error in Set_FEM_BCC() : Wrong format !!!");
+	    printf("%s : %s \n",
+		   "Error in Set_FEM_BCC()",
+		   "Wrong format !!!");
 	    exit(0);
 	  }
 
@@ -539,14 +555,18 @@ Boundaries Set_FEM_BCC(char * Name_File, Mesh FEM_Mesh)
 	    }    
 	  }
 	  else{
-	    puts("Error in Set_FEM_BCC() : Wrong format !!!");
+	    printf("%s : %s \n",
+		   "Error in Set_FEM_BCC()",
+		   "Wrong format !!!");
 	    exit(0);
 	  }
       
 	} /* End of read BC */
 	else{
-	  puts("Error in Set_FEM_BCC() : Wrong format of BCC !!!");
-	  exit(0);
+	    printf("%s : %s \n",
+		   "Error in Set_FEM_BCC()",
+		   "Wrong format !!!");
+	    exit(0);
 	}
 	
       }
@@ -554,7 +574,8 @@ Boundaries Set_FEM_BCC(char * Name_File, Mesh FEM_Mesh)
     } /* End of if(strcmp(kwords[0],"BCC_NUM") == 0 ) */
     
   }  /* End of while */
-  printf("\t -> End of read boundary conditions file !!! \n");
+  printf("\t %s \n",
+       "-> End of read boundary conditions file !!!");
   fclose(File_BCC);
 
   return FEM_BCC;
@@ -707,14 +728,17 @@ LoadCase Read_MPM_LoadCase_ExtForces(char * Name_File,GaussPoint GP_Mesh)
 		GP_Loads.Load_i[i].Nodes[j] = atoi(param[0]);
 	      }
 	      else{
-		puts("Error in Read_MPM_LoadCase_ExtForces() : Check the list of nodes ");
+		printf("%s : %s \n",
+		       "Error in Read_MPM_LoadCase_ExtForces()",
+		       "Check the list of nodes ");
 		exit(0);
 	      }
 	    }
 	  }
 	}
 	else{
-	  puts("Error in Read_MPM_LoadCase_ExtForces() : Wrong format NUM_NODES !!!");
+	  printf("%s : %s \n","Error in Read_MPM_LoadCase_ExtForces()",
+		 "Wrong format NUM_NODES !!!");
 	  exit(0);
 	}
       }
@@ -724,7 +748,8 @@ LoadCase Read_MPM_LoadCase_ExtForces(char * Name_File,GaussPoint GP_Mesh)
 
   /* Close .dat file */
   /* Final message */
-  printf("\t -> End of read data file !!! \n");
+  printf("\t %s \n",
+	 "-> End of read data file !!!");
   fclose(Sim_dat);
 
   return GP_Loads;
@@ -776,14 +801,16 @@ LoadCase Read_MPM_LoadCase_BodyForces(char * Name_File,GaussPoint GP_Mesh)
   GP_Loads.NumLoads = 0;
 
   /* Initial message */  
-  printf("************************************************* \n");
-  printf(" \t * Begin of read body forces in : \n\t %s \n",
+  puts("*************************************************");
+  printf(" \t %s : \n\t %s \n",
+	 "* Begin of read body forces in",
 	 Name_File);
   
   /* Open and check .bcc file */
   Sim_dat = fopen(Name_File,"r");  
   if (Sim_dat==NULL){
-    printf("Error in Read_MPM_LoadCase_BodyForces() during the lecture of : \n\t %s",
+    printf("%s : \n\t %s",
+	   "Error in Read_MPM_LoadCase_BodyForces() during the lecture of",
 	   Name_File);
     exit(0);
   }
@@ -811,7 +838,9 @@ LoadCase Read_MPM_LoadCase_BodyForces(char * Name_File,GaussPoint GP_Mesh)
 	fgets(line, sizeof line, Sim_dat);
 	nkwords = parse (kwords, line," \n\t");
 	if( (nkwords != 4) || (strcmp(kwords[0],"B_LOAD_GP") != 0) ){
-	  puts("Error in Read_MPM_LoadCase_BodyForces() : Wrong format !!!");
+	  printf("%s : %s \n",
+		 "Error in Read_MPM_LoadCase_BodyForces()",
+		 "Wrong format !!!");
 	  exit(0);
 	}
 
@@ -829,7 +858,9 @@ LoadCase Read_MPM_LoadCase_BodyForces(char * Name_File,GaussPoint GP_Mesh)
 	  }
 	}
 	else{
-	  puts("Error in Read_MPM_LoadCase_BodyForces() : Wrong format direction !!!");
+	  printf("%s : %s \n",
+		 "Error in Read_MPM_LoadCase_BodyForces()",
+		 "Wrong format direction !!!");
 	  exit(0);
 	}
 
@@ -846,7 +877,9 @@ LoadCase Read_MPM_LoadCase_BodyForces(char * Name_File,GaussPoint GP_Mesh)
 	  }
 	}
 	else{
-	  puts("Error in Read_MPM_LoadCase_BodyForces() : Wrong format curve !!!");
+	  printf("%s : %s \n",
+		 "Error in Read_MPM_LoadCase_BodyForces()",
+		 "Wrong format curve !!!");
 	  exit(0);
 	}
 
@@ -875,14 +908,18 @@ LoadCase Read_MPM_LoadCase_BodyForces(char * Name_File,GaussPoint GP_Mesh)
 		GP_Loads.Load_i[i].Nodes[j] = atoi(param[0]);
 	      }
 	      else{
-		puts("Error in Read_MPM_LoadCase_BodyForces() : Check the list of nodes ");
+		printf("%s : %s \n",
+		       "Error in Read_MPM_LoadCase_BodyForces()",
+		       "Check the list of nodes ");
 		exit(0);
 	      }
 	    }
 	  }
 	}
 	else{
-	  puts("Error in Read_MPM_LoadCase_BodyForces() : Wrong format num nodes !!!");
+	  printf("%s : %s \n",
+		 "Error in Read_MPM_LoadCase_BodyForces()",
+		 "Wrong format num nodes !!!");
 	  exit(0);
 	}
       }
@@ -940,13 +977,17 @@ void Read_MPM_InitVal(char * Name_File, GaussPoint GP_Mesh)
   char * READ_NODES[MAXW] = {NULL}; /* Variable to store the parser */
 
   /* Initial message */  
-  printf("************************************************* \n");
-  printf(" \t * Begin of read initial conditions in : \n\t %s \n",Name_File);
+  puts("*************************************************");
+  printf(" \t * %s : \n\t %s \n",
+	 "Begin of read initial conditions in",
+	 Name_File);
   
   /* Open and check .bcc file */
   Sim_dat = fopen(Name_File,"r");  
   if (Sim_dat==NULL){
-    printf("Error in Read_MPM_InitVal() during the lecture of : %s",Name_File);
+    printf("%s : %s",
+	   "Error in Read_MPM_InitVal() during the lecture of",
+	   Name_File);
     exit(0);
   }
 
@@ -956,7 +997,8 @@ void Read_MPM_InitVal(char * Name_File, GaussPoint GP_Mesh)
     /* Read the line with the space as separators */
     nkwords = parse (kwords, line," \n\t");
 
-    /* When the parser find the keyword INIT_NUM : start reading initial conditions */
+    /* When the parser find the keyword INIT_NUM : 
+       start reading initial conditions */
     if(strcmp(kwords[0],"INIT_NUM") == 0 ){
 
       /* Get the number of initial conditions in the problem */
@@ -970,7 +1012,9 @@ void Read_MPM_InitVal(char * Name_File, GaussPoint GP_Mesh)
 	/* Read the line with the space as separators */
 	nkwords = parse (kwords, line," \n\t");
 	if(nkwords != 4){
-	  puts("Error in Read_MPM_InitVal() : Wrong format !!!");
+	  printf("%s : %s \n",
+		 "Error in Read_MPM_InitVal()",
+		 "Wrong format !!!");
 	  exit(0);
 	}
       
@@ -986,7 +1030,9 @@ void Read_MPM_InitVal(char * Name_File, GaussPoint GP_Mesh)
 	    }
 	  }
 	  else{
-	    puts("Error in Read_MPM_InitVal() : Wrong format !!!");
+	    printf("%s : %s \n",
+		 "Error in Read_MPM_InitVal()",
+		 "Wrong format !!!");
 	    exit(0);
 	  }
       
@@ -1001,19 +1047,25 @@ void Read_MPM_InitVal(char * Name_File, GaussPoint GP_Mesh)
 	      }
 	    }
 	    else{
-	      printf("Error in Read_MPM_InitVal() : Wrong number of dimensions for VALUE={,}");
+	      printf("%s : %s \n",
+		     "Error in Read_MPM_InitVal()",
+		     "Wrong number of dimensions for VALUE={,}");
 	      exit(0);
 	    }
 	  }
 	  else{
-	    puts("Error in Read_MPM_InitVal() : Wrong format !!!");
+	    printf("%s : %s \n",
+		 "Error in Read_MPM_InitVal()",
+		 "Wrong format !!!");
 	    exit(0);
 	  }
 
 	  /* Read the number of nodes associated to this initial condition */
 	  nparam = parse (param,kwords[3],"=\n");
 	  if(nparam != 2){
-	    puts("Error in Read_MPM_InitVal() : Wrong format !!!");
+	    printf("%s : %s \n",
+		   "Error in Read_MPM_InitVal()",
+		   "Wrong format !!!");
 	    exit(0);
 	  }
 	  if(strcmp(param[0],"NUM_NODES") == 0){
@@ -1039,14 +1091,18 @@ void Read_MPM_InitVal(char * Name_File, GaussPoint GP_Mesh)
 		  
 		}
 		else{
-		  puts("Error in ReadLoads_GP() : Check the list of nodes ");
+		  printf("%s : %s \n",
+			 "Error in ReadLoads_GP()",
+			 "Check the list of nodes");
 		  exit(0);
 		}
 	      }
 	    }
 	  }
 	  else{
-	    puts("Error in Read_MPM_InitVal() : Wrong format of INIT_GP !!!");
+	    printf("%s : %s \n",
+		   "Error in Read_MPM_InitVal()",
+		   "Wrong format of INIT_GP !!!");
 	    exit(0);
 	  }
 
@@ -1062,52 +1118,198 @@ void Read_MPM_InitVal(char * Name_File, GaussPoint GP_Mesh)
   
     /* Close .dat file */
   /* Final message */
-  printf("\t * End of read data file !!! \n");
+  printf("\t %s \n",
+	 "* End of read data file !!!");
   fclose(Sim_dat);
   
 }
 
-
-
 /**********************************************************************/
 
-/* void BCC_GP_Forces(GaussPoint MeshGP, Load * LoadsGP, int NumLoadsGP, int TimeStep) */
-/* /\* */
-/*   Forces defined in the Gauss Points : */
-/*   Inputs */
-/* *\/ */
-/* { */
-/*   /\* 0º Loop over the loads *\/ */
-/*   for(int i = 0 ; i<NumLoadsGP ; i++){ */
-  
-/*     /\* 1º  Check the time step *\/ */
-/*     if( (TimeStep < 0) || */
-/* 	(TimeStep > LoadsGP[i].Value.Num)){ */
-/*       puts("Error in BCC_GP_Forces() : The time step is out of the curve !!"); */
-/*       exit(0); */
-/*     } */
-  
-/*     /\* 2º Fill the matrix with the local forces *\/ */
-/*     for(int j = 0 ; j<Loads[i].NumNodes ; j++){ */
-      
-/*       /\* 3º Check if this GP has a force applied *\/ */
-/*       if( (Loads[i].Nodes[j] > GP_Mesh.NumGP) || */
-/* 	  (Loads[i].Nodes[j] < 0)){ */
-/* 	puts("Error in BCC_GP_Forces() : This GP does not exist !!"); */
-/* 	exit(0); */
-/*       } */
-      
-/*       /\* 4º Loop over the dimensions *\/ */
-/*       for(int k = 0 ; k<NumberDimensions ; k++){ */
-/* 	/\* 5º Apply the force in the node *\/ */
-/* 	GP_Mesh.Phi.F.nM[Loads[i].Nodes[j]][k] += */
-/* 	  Loads[i].Value.Fx[TimeStep][k]; */
-/*       } */
-      
-/*     } */
+Material * Read_MPM_Materials(char * Name_File, GaussPoint GP_Mesh)
+/*
+  Read list of materials :
+  - Examples :
 
-/*   } */
+  MATERIALS_NUM number
+  MATERIALS_DEF (ID=integer) {
+  E=6.e9;
+  mu=0.2;
+  Ceps=1.5;
+  Gf=0.00001;
+  Info="Elastic";
+  } 
+*/
+{
+  /* Asign material library to an auxiliar variable */
+  Material Mat_GP;
 
-/* } */
+  /* Simulation file */
+  FILE * Sim_dat;
+
+  /* Index of the material */
+  int Aux_Mat_id;
+  char * Parse_Mat_id[MAXW] = {NULL};
+  int Mat_id;
+
+  /* Material properties */
+  char Line_Material_Prop[MAXC] = {0};
+  char * Parse_Mat_Prop[MAXW] = {NULL};
+
+  /* Special variables for line-reading */
+  char line[MAXC] = {0}; /* Variable for reading the lines in the files */
+  char * kwords[MAXW] = {NULL}; /* Variable to store the parser of a line */
+  int nkwords; /* Number of element in the line , just for check */
+
+  /* Auxiliar variable for status */
+  char * STATUS_LINE;
+  int CountMaterials = 0;
+
+  /* Initial message */  
+  puts("*************************************************");
+  printf(" \t %s : \n\t %s \n",
+	 "* Begin of materials properties in",
+	 Name_File);
+  
+  /* Open and check file */
+  Sim_dat = fopen(Name_File,"r");  
+  if (Sim_dat==NULL){
+    printf("%s : \n\t %s %s",
+	   "Error in Read_MPM_Materials()",
+	   "Incorrect lecture of",
+	   Name_File);
+    exit(0);
+  }
+
+  /* Allocate table with the material */
+  GP_Mesh.Mat = malloc(GP_Mesh.NumMat*sizeof(Material));
+  if(GP_Mesh.Mat == NULL){
+    printf("%s : %s \n",
+	   "Error in Read_MPM_Materials()",
+	   "Memory error for Mat");
+    exit(0);
+  }
+  
+  /* Read the file line by line */
+  while( fgets(line, sizeof line, Sim_dat) != NULL ){
+
+    /* Read the line with the space as separators */
+    nkwords = parse (kwords, line," \n\t");
+    if (nkwords < 0){
+      printf("%s : %s \n",
+	     "Error in Read_MPM_Materials()",
+	     "Parser failed");
+      exit(0);
+    }
+
+    if (strcmp(kwords[0],"MATERIALS_DEF") == 0 ){
+
+      /* Count the number of materials */
+      ++CountMaterials;
+
+      /* Read the index of the material */
+      Aux_Mat_id = parse (Parse_Mat_id, kwords[1],"(=)");
+      Mat_id = atoi(Parse_Mat_id[1]);
+      if( (Aux_Mat_id != 2) ||
+	  (strcmp(Parse_Mat_id[0],"ID") != 0) ||
+	  (Mat_id<0 || Mat_id> GP_Mesh.NumMat-1) ){
+	printf("%s : %s \n",
+	       "Error in Read_MPM_Materials()",
+	       "Use this format -> (ID=Integer) !!!");
+	exit(0);
+      }
+
+      /* Set to NAN all it properties */
+      
+      Mat_GP.E = NAN;
+      Mat_GP.mu = NAN;
+      Mat_GP.Ceps = NAN;
+      Mat_GP.Gf = NAN;
+      GP_Mesh.Mat[Mat_id] = Mat_GP;
+
+      /* Look for the curly brace { */
+      if(strcmp(kwords[2],"{") == 0){
+	/* Initial line */
+	STATUS_LINE = fgets(Line_Material_Prop,
+			    sizeof(Line_Material_Prop),
+			    Sim_dat);
+	if(STATUS_LINE == NULL){
+	    printf("%s : %s \n",
+		   "Error in Read_MPM_Materials()",
+		   "Unspected EOF !!!");
+	    exit(0);	  
+	}
+	Aux_Mat_id = parse(Parse_Mat_Prop,Line_Material_Prop," =\n");
+	while(STATUS_LINE != NULL){
+
+	  if(Aux_Mat_id != 2){
+	    printf("%s : %s \n",
+		   "Error in Read_MPM_Materials()",
+		   "Use this format -> E = double !!!");
+	    exit(0);
+	  }
+
+	  if(strcmp(Parse_Mat_Prop[0],"E") == 0){
+	    GP_Mesh.Mat[Mat_id].E = atof(Parse_Mat_Prop[1]);
+	  }
+	  else if(strcmp(Parse_Mat_Prop[0],"mu") == 0){
+	    GP_Mesh.Mat[Mat_id].mu = atof(Parse_Mat_Prop[1]);
+	  }
+	  else if(strcmp(Parse_Mat_Prop[0],"Ceps") == 0){
+	    GP_Mesh.Mat[Mat_id].Ceps = atof(Parse_Mat_Prop[1]);
+	  }
+	  else if(strcmp(Parse_Mat_Prop[0],"Gf") == 0){
+	    GP_Mesh.Mat[Mat_id].Gf = atof(Parse_Mat_Prop[1]);
+	  }
+	  else if(strcmp(Parse_Mat_Prop[0],"Info") == 0){
+	    strcpy(GP_Mesh.Mat[Mat_id].Info,Parse_Mat_Prop[1]);
+	  }
+	  
+	  /* Read next line and check */
+	  STATUS_LINE = fgets(Line_Material_Prop,
+			      sizeof(Line_Material_Prop),
+			      Sim_dat);
+	  Aux_Mat_id = parse(Parse_Mat_Prop,Line_Material_Prop," =\n");
+	  if(strcmp(Parse_Mat_Prop[0],"}") == 0){
+	    break;
+	  }
+	}
+	if(STATUS_LINE == NULL){
+	printf("%s : %s \n",
+	       "Error in Read_MPM_Materials()",
+	       "you forget to put a } !!!");
+	exit(0);	  
+	}
+
+	if(strcmp(Parse_Mat_Prop[0],"}") == 0){
+	  break;
+	}
+      }
+      else{
+	printf("%s : %s \n",
+	       "Error in Read_MPM_Materials()",
+	       "Use this format -> MATERIALS_DEF (ID=integer)  !!!");
+	exit(0);
+      }
+
+    }
+  }
+
+  /* Check the number of materials */
+  if(CountMaterials != GP_Mesh.NumMat){
+    printf("%s : %s %i %s %i %s \n",
+	   "Error in Read_MPM_Materials()",
+	   "Spected",GP_Mesh.NumMat, "materials, but",
+	   CountMaterials,"where defined !!!");
+    exit(0);
+  }
+
+  /* Close .dat file */
+  /* Final message */
+  printf("\t * End of read data file !!! \n");
+  fclose(Sim_dat);
+
+  return GP_Mesh.Mat;
+}
 
 /**********************************************************************/

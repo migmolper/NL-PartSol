@@ -726,8 +726,6 @@ void UpdateBeps(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
     /* /\* Search in the cell and return the total search list modified  */
     /*    without those GP inside of the cell and */
     /*    include in Beps[i] the GP inside of the cell *\/ */
-    /* Beps = &(MPM_Mesh.Beps[i]); */
-    /* GPinCell(Beps,&SearchGP,MPM_Mesh.Phi.x_GC,i,epsilon); */
     NumSearchGP = LenghtChain(SearchGP);
     ArraySearchGP = ChainToArray(SearchGP,NumSearchGP);
     X0.nV = MPM_Mesh.Phi.x_GC.nM[i];
