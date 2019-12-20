@@ -39,7 +39,12 @@ void UpdateGaussPointStress(GaussPoint MPM_Mesh){
     /* 6º Get the deformation energy */
     MPM_Mesh.Phi.W.nV[i] = W_LinearElastic(Strain_k1,Stress_k1,
 					   MPM_Mesh.Phi.ji.nV[i]);
-    }    
+    }
+    else{
+      for(int j = 0 ; j<MPM_Mesh.Phi.Stress.N_cols ; j++){
+	MPM_Mesh.Phi.Stress.nM[i][j] = 0.0;
+      }
+    }
   }
 }
 
