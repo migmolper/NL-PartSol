@@ -8,17 +8,19 @@
 /*******************************************************/
 
 typedef struct {
-
+  
+  /* Constitutive model */
+  char Type [100];
   /* Elastic modulus */
   double E;
   /* Poisson ratio */
   double mu;
+  /* Activate fracture modulus */
+  bool Fracture;
   /* Normalizing constant (Fracture) */
   double Ceps;
   /* Failure energy (Fracture)  */
   double Gf;
-  /* Aditional information */
-  char Info [100];
   
 } Material;
 

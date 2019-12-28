@@ -31,6 +31,10 @@ LoadCase Read_MPM_LoadCase_BodyForces(char *,GaussPoint);
 void Read_MPM_InitVal(char *, GaussPoint);
 Material * Read_MPM_Materials(char *, GaussPoint);
 
+
+/* GraMS Interface */
+Material * InitializeMaterials(char *, GaussPoint);
+
 /* ReadGidMesh.c */
 Mesh ReadGidMesh(char *);
 

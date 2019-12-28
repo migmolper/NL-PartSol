@@ -1,21 +1,29 @@
 /***************************************/
-/********** GENERAL PARAMETERS *********/
-/***************************************/
-KIND_ANALYSIS=MPMQ4%U%2D%VerletLF
-DENSITY=20
-POISSON_MODULUS=0.3
-ELASTIC_MODULUS=1.e5
-TIME_STEP=0.00005
-RESULT_STEP=100
-NUM_STEP=4000
-
-
-/***************************************/
 /******* SIMULATION FILES AND DIR ******/
 /***************************************/
 FEM_FILE_NAME=test/Sulsky_MPM/FEM_Mesh.msh
 MPM_FILE_NAME=test/Sulsky_MPM/MPM_Mesh.msh
 OUTPUT_DIR=test/Sulsky_MPM
+
+/***************************************/
+/********** GENERAL PARAMETERS *********/
+/***************************************/
+KIND_ANALYSIS=MPMQ4%U%2D%VerletLF
+DENSITY=20
+TIME_STEP=0.00005
+RESULT_STEP=100
+NUM_STEP=4000
+
+/***************************************/
+/********** MATERIAL PROPERTIES ********/
+/***************************************/
+MATERIALS_NUM 1
+GramsMaterials (id=0) {
+               Type=LE
+	       E=1.e5
+	       mu=0.3
+	       Fracture=FALSE
+}
 
 /***************************************/
 /********* BOUNDARY CONDITIONS *********/

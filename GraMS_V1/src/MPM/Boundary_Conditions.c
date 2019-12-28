@@ -6,6 +6,20 @@
 
 /**********************************************************************/
 
+Curve BcDirichlet(char * Expresion)
+/*
+ BcDirichlet V 0 
+*/
+{
+  Curve BcDir;
+
+  BcDir = ReadCurve(Expresion);
+  
+  return BcDir;
+}
+
+/**********************************************************************/
+
 void BCC_Nod_VALUE(Mesh FEM_Mesh, Matrix Nodal_VALUE, int TimeStep)
 /*
   Apply the boundary conditions over the nodes 

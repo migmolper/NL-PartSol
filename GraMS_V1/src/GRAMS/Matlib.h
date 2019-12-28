@@ -41,20 +41,6 @@ typedef struct{
 
 /*******************************************************/
 
-/* Curve definition */
-typedef struct{
-
-  /* Number of items in the curve */
-  int Num; 
-  /* Values for each time */
-  double * Fx; 
-  /* Aditional information */
-  char Info [100];
-  
-} Curve;
-
-/*******************************************************/
-
 /* Solvers library */
 /* Matrix Nelder_Mead(); */
 Matrix Newton_Rapson(Matrix(* Function)(Matrix, Matrix), Matrix,

@@ -19,7 +19,9 @@ Matrix GetNodalMassMomentum(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
   X_GP.N_rows = NumberDimensions;
   X_GP.N_cols = 1;
   Matrix lp; /* Just for GIMP -> Particle voxel */
-  Matrix Delta_Xip; /* Just for GIMP -> Distance from GP to the nodes */
+  Matrix lambda_GP = /* Just for LME -> Lagrange multipliers */
+    MatAssign(NumberDimensions,1,NAN,NULL,NULL);
+  Matrix Delta_Xip; /* Just for GIMP/LME -> Distance from GP to the nodes */
   Matrix N_GP; /* Value of the shape-function */
   double N_GP_I; /* Evaluation of the GP in the node */
   double GP_mass; /* Mass of the GP */
@@ -46,7 +48,7 @@ Matrix GetNodalMassMomentum(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
     }
     else if(strcmp(MPM_Mesh.ShapeFunctionGP,"uGIMP2D") == 0){
       /* Fill the poligon */
-      Delta_Xip = MatAlloc(GP_NumNodes,2);
+      Delta_Xip = MatAlloc(GP_NumNodes,NumberDimensions);
       for(int k = 0 ; k<GP_NumNodes ; k++){
     	/* Get the node for the GP */
     	GP_I = GP_Connect[k];
@@ -65,7 +67,7 @@ Matrix GetNodalMassMomentum(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
     }
     else if(strcmp(MPM_Mesh.ShapeFunctionGP,"LME") == 0){
       /* Get the distance of the GP to the nodes */
-      Delta_Xip = MatAlloc(GP_NumNodes,2);
+      Delta_Xip = MatAlloc(GP_NumNodes,NumberDimensions);
       for(int k = 0 ; k<GP_NumNodes ; k++){
     	GP_I = GP_Connect[k];
     	for(int l = 0 ; l<NumberDimensions ; l++){
@@ -74,8 +76,10 @@ Matrix GetNodalMassMomentum(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
     	    FEM_Mesh.Coordinates.nM[GP_I][l];
     	}
       }
+       /* Asign lambda to GP */
+      lambda_GP.nV = MPM_Mesh.lambda.nM[i];
       /* Evaluate the shape function and it gradient */
-      N_GP = LME_pa(Delta_Xip, MPM_Mesh.lambda,
+      N_GP = LME_pa(Delta_Xip, lambda_GP,
 		    FEM_Mesh.DeltaX, MPM_Mesh.Gamma);
       /* Free memory */
       FreeMat(Delta_Xip);

@@ -67,8 +67,6 @@ int ResultsTimeStep;
 /***************************************/
 /******* Constitutive parameters *******/
 /***************************************/
-double ElasticModulus;
-double PoissonModulus;
 double Density;
 
 /***************************************/

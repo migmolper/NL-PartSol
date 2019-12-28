@@ -25,6 +25,8 @@ void UpdateGaussPointStrain(GaussPoint MPM_Mesh,
   X_GP.N_cols = 1;
   Matrix lp; /* Just for GIMP -> Particle voxel */
   Matrix Delta_Xip; /* Just for GIMP -> Distance from GP to the nodes */
+  Matrix lambda_GP = /* Just for LME/LME -> Lagrange multipliers */
+    MatAssign(NumberDimensions,1,NAN,NULL,NULL);
   
   /* Element for each Gauss-Point */
   int GP_NumNodes; /* Number of nodes */
@@ -67,7 +69,7 @@ void UpdateGaussPointStrain(GaussPoint MPM_Mesh,
     }
     else if(strcmp(MPM_Mesh.ShapeFunctionGP,"uGIMP2D") == 0){
       /* Generate a matrix with the distances to the nodes */
-      Delta_Xip = MatAlloc(GP_NumNodes,2);
+      Delta_Xip = MatAlloc(GP_NumNodes,NumberDimensions);
       for(int k = 0 ; k<GP_NumNodes ; k++){
     	/* Get the node for the GP */
     	GP_I = GP_Connect[k];
@@ -86,7 +88,7 @@ void UpdateGaussPointStrain(GaussPoint MPM_Mesh,
     }
     else if(strcmp(MPM_Mesh.ShapeFunctionGP,"LME") == 0){
       /* Get the distance of the GP to the nodes */
-      Delta_Xip = MatAlloc(GP_NumNodes,2);
+      Delta_Xip = MatAlloc(GP_NumNodes,NumberDimensions);
       for(int k = 0 ; k<GP_NumNodes ; k++){
     	GP_I = GP_Connect[k];
     	for(int l = 0 ; l<NumberDimensions ; l++){
@@ -94,9 +96,11 @@ void UpdateGaussPointStrain(GaussPoint MPM_Mesh,
     	    MPM_Mesh.Phi.x_GC.nM[i][l]-
     	    FEM_Mesh.Coordinates.nM[GP_I][l];
     	}
-      }
+      }      
+       /* Asign lambda to GP */
+      lambda_GP.nV = MPM_Mesh.lambda.nM[i];
       /* Evaluate the shape function and it gradient */
-      N_GP = LME_pa(Delta_Xip, MPM_Mesh.lambda,
+      N_GP = LME_pa(Delta_Xip, lambda_GP,
 		    FEM_Mesh.DeltaX, MPM_Mesh.Gamma);
       dNdx_GP = LME_dpa(Delta_Xip, N_GP);
       /* Free memory */

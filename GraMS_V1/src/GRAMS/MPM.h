@@ -15,6 +15,21 @@
  a value, a list of nodes/GPs where it is applied,... So it's
  a good idea to use this structure for both porpouses.
 */
+
+/* Curve definition */
+typedef struct{
+
+  /* Number of items in the curve */
+  int Num; 
+  /* Values for each time */
+  double * Fx; 
+  /* Aditional information */
+  char Info [100];
+  
+} Curve;
+
+/*******************************************************/
+
 typedef struct {
 
   /* Number of nodes/GP with this load */
@@ -189,7 +204,11 @@ Mesh InitializeMesh(char *);
 Matrix GetNodalMassMomentum(GaussPoint, Mesh);
 Matrix GetNodalVelocity(Mesh, Matrix, Matrix);
 
+/* Boundary conditions */
+Curve BcDirichlet(char *);
 void BCC_Nod_VALUE(Mesh, Matrix, int);
+
+/* MPM functions  */
 void UpdateGaussPointStrain(GaussPoint, Mesh, Matrix);
 double UpdateGaussPointDensity(double, double);
 void UpdateGaussPointStress(GaussPoint);
@@ -198,8 +217,9 @@ void UpdateGridNodalMomentum(Mesh, Matrix, Matrix);
 void UpdateVelocityAndPositionGP(GaussPoint, Mesh,
 				 Matrix, Matrix, Matrix);
 
-void GetNodalConnectivity(Mesh);
+Boundaries GetBoundaryBox(Mesh);
 double GetMinElementSize(Mesh);
+void GetNodalConnectivity(Mesh);
 Matrix ElemCoordinates(Mesh, int *, int);
 void GlobalSearchGaussPoints(GaussPoint, Mesh);
 ChainPtr DiscardElements(ChainPtr, Matrix, Matrix, Mesh);

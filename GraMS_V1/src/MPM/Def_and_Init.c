@@ -114,17 +114,7 @@ GaussPoint Define_GP_Mesh(char * MPM_GID_MeshName,
   for(int i = 0 ; i<MPM_Mesh.NumGP ; i++){
     MPM_Mesh.MatIdx[i] = 0;
   }
-  
-  /* /\* Elastic Modulus *\/ */
-  /* MPM_Mesh.Mat[0].E = ElasticModulus; */
-  /* /\* Poisson ratio *\/ */
-  /* MPM_Mesh.Mat[0].mu = PoissonModulus; */
-  /* /\* Normalizing constant (fracture) *\/ */
-  /* MPM_Mesh.Mat[0].Ceps = 1.5; */
-  /* /\* Limit energy (fracture) *\/ */
-  /* MPM_Mesh.Mat[0].Gf = 0.00001; */
-  /* strcpy(MPM_Mesh.Mat[0].Info,"LEF"); */
-  
+    
   /* Allocate vectorial/tensorial fields */
   switch(NumberDimensions){
   case 1 :
@@ -339,7 +329,9 @@ GaussPoint Define_GP_Mesh(char * MPM_GID_MeshName,
 	MPM_Mesh.lambda.nM[i][j] = 0.0;
       }
     }
-    MPM_Mesh.Gamma = 1.8;
+    /* Tunning parameter (Only LME) */
+    MPM_Mesh.Gamma = 6.8;
+    
     /* Free data */
     FreeMat(Poligon_Centroid);
     
@@ -358,7 +350,6 @@ GaussPoint Define_GP_Mesh(char * MPM_GID_MeshName,
   return MPM_Mesh;
 }
 
-
 /*********************************************************************/
 
 GaussPoint InitializeGP(char * GDF, Mesh FEM_Mesh){
@@ -371,7 +362,8 @@ GaussPoint InitializeGP(char * GDF, Mesh FEM_Mesh){
   MPM_Mesh = Define_GP_Mesh(MPM_MeshFileName,Density);
   puts(" \t DONE !!!");
   puts(" \t Material properties for GPs ...");
-  MPM_Mesh.Mat = Read_MPM_Materials(GDF,MPM_Mesh);
+  MPM_Mesh.Mat = InitializeMaterials(GDF,MPM_Mesh);
+  /* MPM_Mesh.Mat = Read_MPM_Materials(GDF,MPM_Mesh); */
   puts(" \t DONE !!!");
   puts(" \t Constitutive library for GPs ...");
   MPM_Mesh.D = Contitutive();

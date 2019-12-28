@@ -171,6 +171,7 @@ Matrix LME_pa(Matrix da, Matrix lambda, double DeltaX, double Gamma)
   return pa;
 }
 
+
 Matrix LME_r(Matrix da, Matrix pa)
 /*
   Output :
@@ -328,11 +329,10 @@ ChainPtr LME_Tributary_Nodes(Matrix X_GP, int Elem_GP,
   Matrix X_I = MatAssign(NumberDimensions,1,NAN,NULL,NULL);
   ChainPtr * Table_Elem = NULL;
   ChainPtr Triburary_Nodes = NULL;
+  ChainPtr List_Nodes = NULL;
   ChainPtr * Table_ElemNodes = NULL;
   ChainPtr Triburary_Elements = NULL;
   ChainPtr iPtr = NULL;
-  ChainPtr PrevPtr = NULL;
-  ChainPtr AuxPtr;
   int * List_Elements;
   int * NodesElem;
   int Num_Elem;
@@ -369,7 +369,7 @@ ChainPtr LME_Tributary_Nodes(Matrix X_GP, int Elem_GP,
   Num_Elem = LenghtChain(Triburary_Elements);
   List_Elements = ChainToArray(Triburary_Elements,Num_Elem);
 
-  /* Free the chain wit the tributary elements */
+  /* Free the chain with the tributary elements */
   FreeChain(Triburary_Elements);
   
   /* Fill the chain with the preliminary tributary nodes */
@@ -378,17 +378,15 @@ ChainPtr LME_Tributary_Nodes(Matrix X_GP, int Elem_GP,
     Table_ElemNodes[i] = FEM_Mesh.Connectivity[List_Elements[i]];
   }
 
-  Triburary_Nodes = ChainUnion(Table_ElemNodes,Num_Elem);
+  List_Nodes = ChainUnion(Table_ElemNodes,Num_Elem);
   
   /* Free the array wit the list of tributary elements */
   free(List_Elements);
   free(Table_ElemNodes);
   Table_ElemNodes = NULL;
   
-
-  
   /* Initialize the iterator to iterate over the list of tributary nodes */
-  iPtr = Triburary_Nodes;
+  iPtr = List_Nodes;
 
   /* Loop over the chain with the tributary nodes */
   while(iPtr != NULL){
@@ -400,30 +398,19 @@ ChainPtr LME_Tributary_Nodes(Matrix X_GP, int Elem_GP,
     Distance = MO.Sub(X_GP,X_I);
 
     /* If the node is not near the GP pop out of the chain */
-    if(MO.Norm(Distance,2) > Ra){
-      /* If the node is the first in the chain */
-      if(PrevPtr == NULL){
-	AuxPtr = iPtr->next;
-	free(iPtr);
-	Triburary_Nodes->next = AuxPtr;
-      }
-      /* If the node is in the middle or at the end */
-      else{
-	PrevPtr->next = iPtr->next;
-	free(iPtr);
-      }
-      /* Once the node is located, breack the loop */
-      break;
+    if(MO.Norm(Distance,2) <= Ra){
+      PushNodeTop(&Triburary_Nodes,iPtr->I);
     }
 
     /* Free memory of the distrance vector */
     MO.FreeMat(Distance);
 
-    /* The previous is the index */
-    PrevPtr = iPtr;
     /* Update pointer index */
     iPtr = iPtr->next;
   }
+  /* Free memory */
+  FreeChain(List_Nodes);
+
   return Triburary_Nodes;
 }
 
