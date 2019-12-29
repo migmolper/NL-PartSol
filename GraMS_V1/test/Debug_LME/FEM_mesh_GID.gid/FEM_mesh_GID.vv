@@ -1,12 +1,12 @@
 BeginZE /home/migmolper2/GraMS/GraMS_V1/test/Debug_LME/FEM_mesh_GID.gid/FEM_mesh_GID.vv
-   x -8.39816951751708984 8.39816951751708984
-   y 5 -5
-   z -8.71779823303222656 8.71779823303222656
+   x -2.76135802268981934 3.39386320114135742
+   y 1.5230938196182251 -2.14152836799621582
+   z -3.40593266487121582 3.40593266487121582
    e 2.90593266487121582
    v 0 0 0
    r 1
    m 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1
-   c 0 0 0
+   c 0 -0.5 0
    pd 0
    pno 0
    pfo 0
@@ -30,4 +30,8 @@ BeginZE /home/migmolper2/GraMS/GraMS_V1/test/Debug_LME/FEM_mesh_GID.gid/FEM_mesh
    OGLStereo(LeftEyeDistance) 1 0 0 1
    OGLStereo(RightEyeDistance) 0 1 1 1
 EndZE /home/migmolper2/GraMS/GraMS_V1/test/Debug_LME/FEM_mesh_GID.gid/FEM_mesh_GID.vv
+
+BeginMirror
+   Mirror 0 Angle 0.0 AngleFake -15.0 SizeFactor 2.0 HeightOffset 0.25 Color #d9e5f24d Backlight Off EdgeStyle No Type Scene DrawMode Mirror
+EndMirror
 

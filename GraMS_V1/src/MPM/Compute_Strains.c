@@ -24,6 +24,7 @@ void UpdateGaussPointStrain(GaussPoint MPM_Mesh,
   X_GP.N_rows = NumberDimensions;
   X_GP.N_cols = 1;
   Matrix lp; /* Just for GIMP -> Particle voxel */
+  double Beta; /* Tunning parameter for LME */
   Matrix Delta_Xip; /* Just for GIMP -> Distance from GP to the nodes */
   Matrix lambda_GP = /* Just for LME/LME -> Lagrange multipliers */
     MatAssign(NumberDimensions,1,NAN,NULL,NULL);
@@ -100,8 +101,8 @@ void UpdateGaussPointStrain(GaussPoint MPM_Mesh,
        /* Asign lambda to GP */
       lambda_GP.nV = MPM_Mesh.lambda.nM[i];
       /* Evaluate the shape function and it gradient */
-      N_GP = LME_pa(Delta_Xip, lambda_GP,
-		    FEM_Mesh.DeltaX, MPM_Mesh.Gamma);
+      Beta = MPM_Mesh.Gamma/(FEM_Mesh.DeltaX*FEM_Mesh.DeltaX);
+      N_GP = LME_pa(Delta_Xip, lambda_GP,Beta);
       dNdx_GP = LME_dpa(Delta_Xip, N_GP);
       /* Free memory */
       FreeMat(Delta_Xip);

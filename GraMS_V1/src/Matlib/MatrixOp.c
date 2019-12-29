@@ -15,7 +15,8 @@
 void * Allocate_Array(int SizeArray, int SizeType)
 /*
   Function for array declaration
-  Inputs : Number of rows, number of columns and kind of element (double, integer, ...)
+  Inputs : Number of rows, number of columns and kind of element 
+  (double, integer, ...)
   Outpus : Matrix
 */
 {
@@ -34,7 +35,8 @@ void * Allocate_Array(int SizeArray, int SizeType)
 void * Allocate_ArrayZ(int SizeArray, int SizeType)
 /*
   Function for array of zeros declaration (double)
-  Inputs : Number of rows, number of columns and kind of element (double, integer, ...)
+  Inputs : Number of rows, number of columns and kind of element 
+  (double, integer, ...)
   Outpus : Matrix
 */
 {
@@ -51,7 +53,8 @@ void * Allocate_ArrayZ(int SizeArray, int SizeType)
 void ** Allocate_Matrix(int NumberRows,int NumberColumns, int SizeType)
 /*
   Function for matrix declaration
-  Inputs : Number of rows, number of columns and kind of element (double, integer, ...)
+  Inputs : Number of rows, number of columns and kind of element 
+  (double, integer, ...)
   Outpus : Matrix
  */
 {
@@ -997,9 +1000,9 @@ Matrix Eigen_Mat(Matrix In){
   case 2 :
     /* Get the coefficients of the charasteristic pol */
     Coeffs = MatAllocZ(1,3);
-    Coeffs.nV[0] = 1;
-    Coeffs.nV[1] = - In.nM[0][0] - In.nM[1][1];
-    Coeffs.nV[2] = In.nM[0][0]*In.nM[1][1] - In.nM[1][0]*In.nM[0][1];
+    Coeffs.nV[0] = 1; /* a*x^2 */
+    Coeffs.nV[1] = - In.nM[0][0] - In.nM[1][1]; /* b*x */
+    Coeffs.nV[2] = In.nM[0][0]*In.nM[1][1] - In.nM[1][0]*In.nM[0][1]; /* c */
     /* Solve the charasteristic pol to the eigenvalues */
     Eigen_Vals = SolvePolynomial(Coeffs);
     FreeMat(Coeffs);
@@ -1042,10 +1045,10 @@ double Cond_Mat(Matrix In)
   }
   
   Matrix Eigen = Eigen_Mat(In);
-  double max_Eigen = 0;
-  double min_Eigen = 10e6;
+  double max_Eigen = fabs(Eigen.nV[0]);
+  double min_Eigen = fabs(Eigen.nV[0]);
     
-  for(int i = 0 ; i<Eigen.N_rows ; i++){
+  for(int i = 1 ; i<Eigen.N_rows ; i++){
     max_Eigen = MAXVAL(max_Eigen,fabs(Eigen.nV[i]));
     min_Eigen = MINVAL(min_Eigen,fabs(Eigen.nV[i]));
   }

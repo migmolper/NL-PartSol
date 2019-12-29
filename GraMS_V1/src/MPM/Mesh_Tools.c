@@ -323,6 +323,7 @@ void GetListNodesGP(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int iGP){
     Matrix lambda_GP = /* Lagrange multipliers */
       MatAssign(NumberDimensions,1,NAN,NULL,NULL);
     Matrix Delta_Xip; /* Distance from GP to the nodes */
+    double Beta; /* Tunning parameter */
     int NumNodes; /* Number of neibourghs */
     int * ListNodes; /* List of nodes */
     int I_iGP; /* Iterator for the neibourghs */
@@ -352,9 +353,9 @@ void GetListNodesGP(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int iGP){
     /* Auxiliar lambda to update it */
     lambda_GP.nV = MPM_Mesh.lambda.nM[iGP];
     
-    /* Calculate lagrange multipliers */
-    lambda_GP = LME_lambda(Delta_Xip, lambda_GP,
-			   FEM_Mesh.DeltaX, MPM_Mesh.Gamma);
+    /* Calculate lagrange multipliers with Newton-Rapson */
+    Beta = MPM_Mesh.Gamma/(FEM_Mesh.DeltaX*FEM_Mesh.DeltaX);
+    lambda_GP = LME_lambda_NR(Delta_Xip, lambda_GP, Beta);
     
     /* Free memory */
     FreeMat(Delta_Xip);

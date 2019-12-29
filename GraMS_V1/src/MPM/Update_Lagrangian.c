@@ -19,6 +19,7 @@ void UpdateVelocityAndPositionGP(GaussPoint MPM_Mesh,
   X_GP.N_rows = NumberDimensions;
   X_GP.N_cols = 1;
   Matrix lp; /* Just for GIMP -> Particle voxel */
+  double Beta; /* Tunning parameter for LME */
   Matrix lambda_GP = /* Just for LME -> Lagrange multipliers */
     MatAssign(NumberDimensions,1,NAN,NULL,NULL);
   Matrix Delta_Xip; /* Just for GIMP/LME -> Distance from GP to the nodes */
@@ -77,8 +78,8 @@ void UpdateVelocityAndPositionGP(GaussPoint MPM_Mesh,
       /* Asign lambda to GP */
       lambda_GP.nV = MPM_Mesh.lambda.nM[i];
       /* Evaluate the shape function and it gradient */
-      N_GP = LME_pa(Delta_Xip, lambda_GP,
-		    FEM_Mesh.DeltaX, MPM_Mesh.Gamma);
+      Beta = MPM_Mesh.Gamma/(FEM_Mesh.DeltaX*FEM_Mesh.DeltaX);
+      N_GP = LME_pa(Delta_Xip, lambda_GP,Beta);
       /* Free memory */
       FreeMat(Delta_Xip);
     }

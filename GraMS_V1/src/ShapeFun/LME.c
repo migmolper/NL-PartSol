@@ -17,8 +17,7 @@
 
 */
 
-Matrix LME_lambda(Matrix da, Matrix lambda,
-		  double DeltaX, double Gamma)
+Matrix LME_lambda_NR(Matrix da, Matrix lambda, double Beta)
 /*
   Output: 
   -> lambda : Lagrange multipliers lambda (1 x dim).
@@ -31,55 +30,49 @@ Matrix LME_lambda(Matrix da, Matrix lambda,
   -> h : Grid spacing (scalar).
   -> TOL_zero : Tolerance for Newton-Rapson.
 */
-{
-  /* CALL LIBRARIES */
-  MatLib MO = MatrixOperators();
-  
+{  
   /* Definition of some parameters */
   Matrix pa; /* Shape function vector */
   Matrix r; /* Gradient of log(Z) */
   Matrix J; /* Hessian of log(Z) */
   Matrix Jm1; /* Inverse of J */
   Matrix Increment_lambda;
-  int NumIter = 0; /* Iterator counter */
   double norm_r = 10; /* Value of the norm */
-    
+  int NumIter = 0; /* Iterator counter */
+
   /* Start with the Newton-Rapson method */
-  while(norm_r > TOL_zero){
+  while(norm_r > TOL_NR){
     
     /* Get vector with the shape functions evaluated in the nodes */
-    pa = LME_pa(da,lambda,DeltaX,Gamma);
-
+    pa = LME_pa(da,lambda,Beta);
     /* Get the gradient of log(Z) */
     r = LME_r(da,pa);
-
     /* Get the norm of r for the stopping criteria porpouse */
-    norm_r = MO.Norm(r,2);
-
+    norm_r = Norm_Mat(r,2);
     /* Get the Hessian of log(Z) */    
     J = LME_J(da,pa,r);
 
     /* Check the conditioning number of the Hessian */
-    if (fabs(MO.Cond(J)) > 10){
+    if (fabs(Cond_Mat(J)) > 10){
       printf(" %s : %s \n",
-	     "Error in LME_lambda",
-	     "The Hessian is near to singular matrix");      
+    	     "Error in LME_lambda",
+    	     "The Hessian is near to singular matrix");
       exit(0);
     }
 
     /* Free the shape function nodal values */
-    MO.FreeMat(pa);
+    FreeMat(pa);
     
     /* Inverse of the Hessian */
-    Jm1 = MO.Inv(J);
+    Jm1 = Get_Inverse(J);
     
     /* Get the increment for lambda */
-    Increment_lambda = MO.Sprod(Jm1,r);
+    Increment_lambda = Scalar_prod(Jm1,r);
 
     /* Free r, J, and the inverse of J */
-    MO.FreeMat(r);
-    MO.FreeMat(J);
-    MO.FreeMat(Jm1);
+    FreeMat(r);
+    FreeMat(J);
+    FreeMat(Jm1);
 
     /* Update the value of lambda */
     for(int i = 0 ; i<NumberDimensions ; i++){
@@ -87,7 +80,7 @@ Matrix LME_lambda(Matrix da, Matrix lambda,
     }
 
     /* Free memory */
-    MO.FreeMat(Increment_lambda);
+    FreeMat(Increment_lambda);
 
     /* Update the number of iterations */
     NumIter ++;
@@ -96,7 +89,6 @@ Matrix LME_lambda(Matrix da, Matrix lambda,
 	     "Error in LME_lambda",
 	     "No convergence in 100 iterations");
     }
-
   
   }
   
@@ -105,7 +97,7 @@ Matrix LME_lambda(Matrix da, Matrix lambda,
   return lambda;
 }
 
-double LME_fa(Matrix da, Matrix lambda, double DeltaX, double Gamma)
+double LME_fa(Matrix da, Matrix lambda, double Beta)
 /*
   Output :
   -> fa : the function fa that appear in [1] (scalar).
@@ -114,22 +106,16 @@ double LME_fa(Matrix da, Matrix lambda, double DeltaX, double Gamma)
   -> lambda : Initial value of the lagrange multipliers (dim x 1).
   -> Gamma : Tunning parameter (scalar).
 */
-{
-  /* CALL LIBRARIES */
-  MatLib MO = MatrixOperators();
-
-  /* Get Beta */
-  double Beta = Gamma/(DeltaX*DeltaX);
-  
+{  
   /* Get the scalar product the distance and the lagrange multipliers */
-  Matrix Aux = MO.Sprod(lambda,da);
-  double norm_dist = MO.Norm(da,2);
+  Matrix Aux = Scalar_prod(lambda,da);
+  double norm_dist = Norm_Mat(da,2);
 
   /* Return the value of f_a*/
   return -Beta*norm_dist*norm_dist + Aux.n;
 }
 
-Matrix LME_pa(Matrix da, Matrix lambda, double DeltaX, double Gamma)
+Matrix LME_pa(Matrix da, Matrix lambda, double Beta)
 /*
   Output :
   -> pa : Value of the shape function in the
@@ -141,21 +127,19 @@ Matrix LME_pa(Matrix da, Matrix lambda, double DeltaX, double Gamma)
   -> Beta : Tunning parameter (scalar).
 */
 {
-  /* CALL LIBRARIES */
-  MatLib MO = MatrixOperators();
   
   /* Definition of some parameters */
   int N_dim = da.N_cols;
   int N_neibourg = da.N_rows;
-  Matrix pa = MO.Alloc(1,N_neibourg);
+  Matrix pa = MatAlloc(1,N_neibourg);
   Matrix da_i;
   double Z_a = 0;
   double Z_a_m1 = 0;
 
   /* Get Z and the numerator */
   for(int i = 0 ; i<N_neibourg ; i++){
-    da_i = MO.Assign(1,N_dim,NAN,da.nM[i],NULL);
-    pa.nV[i] = exp(LME_fa(da_i,lambda,DeltaX,Gamma));
+    da_i = MatAssign(1,N_dim,NAN,da.nM[i],NULL);
+    pa.nV[i] = exp(LME_fa(da_i,lambda,Beta));
     Z_a += pa.nV[i];
   }
 
@@ -182,14 +166,11 @@ Matrix LME_r(Matrix da, Matrix pa)
   -> pa : Shape function value in the
   neighborhood nodes (1 x neighborhood).
 */
-{
-  /* CALL LIBRARIES */
-  MatLib MO = MatrixOperators();
-  
+{  
   /* Definition of some parameters */
   int N_dim = da.N_cols;
   int N_neibourg = da.N_rows;
-  Matrix r = MO.AllocZ(N_dim,1);
+  Matrix r = MatAllocZ(N_dim,1);
 
   /* Fill ''r'' */
   for(int i = 0 ; i<N_neibourg ; i++){
@@ -213,47 +194,40 @@ Matrix LME_J(Matrix da, Matrix pa, Matrix r)
   neighborhood nodes (neighborhood x 1).
   -> r : Gradient of log(Z) (dim x 1).
 */
-{
-  /* CALL LIBRARIES */
-  MatLib MO = MatrixOperators();
-  
+{  
   /* Definition of some parameters */
   int N_neibourg = da.N_rows;
   int N_dim = da.N_cols;
-  Matrix J;
-  Matrix J_I;
-  Matrix J_II;
-  Matrix da_i;
-  Matrix da_iT;
-  Matrix r_T;
+  Matrix J; /* Hessian definition */
+  Matrix J_I; /* First component of the Hessian */
+  Matrix J_II; /* Second component of the Hessian */
   Matrix da_da; /* Tensorial product of da */
 
   /* Get the first component of the Hessian (J_I) */
-  J_I = MO.AllocZ(N_dim,N_dim); 
+  J_I = MatAllocZ(N_dim,N_dim); 
   for(int i = 0 ; i<N_neibourg ; i++){
     /* Get the tensorial product for each neighborhood. */
-    da_i = MO.Assign(N_dim,1,NAN,da.nM[i],NULL);
-    da_iT = MO.Assign(1,N_dim,NAN,da.nM[i],NULL);
-    da_da = MO.Tprod(da_i,da_iT);
+    da_da = Tensorial_prod(MatAssign(N_dim,1,NAN,da.nM[i],NULL),
+			   MatAssign(1,N_dim,NAN,da.nM[i],NULL));
     /* Fill the first component of the Hessian (J_I) */
     for(int j = 0 ; j<N_dim ; j++){
       for(int k = 0 ; k<N_dim ; k++){
 	J_I.nM[j][k] += pa.nV[i]*da_da.nM[j][k];
       }
     }
-    MO.FreeMat(da_da);
+    /* Free tensorial product */
+    FreeMat(da_da);
   }
 
   /* Get the second component of the Hessian (J_II) */
-  r_T = MO.Assign(1,N_dim,NAN,r.nV,NULL);
-  J_II = MO.Tprod(r,r_T);
+  J_II = Tensorial_prod(r,MatAssign(1,N_dim,NAN,r.nV,NULL));
 
   /* Get the Hessian */
-  J = MO.Sub(J_I,J_II);
+  J = Sub_Mat(J_I,J_II);
 
   /* Free the auxiliar components of the Hessian */
-  MO.FreeMat(J_I);
-  MO.FreeMat(J_II);
+  FreeMat(J_I);
+  FreeMat(J_II);
 
   /* Return the value of the Hessian */
   return J;
@@ -270,15 +244,11 @@ Matrix LME_dpa(Matrix da, Matrix pa)
   -> pa : Shape function value in the
   neighborhood nodes (neighborhood x 1).
 */
-{
-
-  /* CALL LIBRARIES */
-  MatLib MO = MatrixOperators();
-  
+{  
   /* Definition of some parameters */
   int N_neibourg = da.N_rows;
   int N_dim = da.N_cols;
-  Matrix dpa = MO.AllocZ(N_dim,N_neibourg);
+  Matrix dpa = MatAllocZ(N_dim,N_neibourg);
   Matrix r;
   Matrix J; /* Hessian of log(Z) */
   Matrix Jm1; /* Inverse of J */
@@ -290,32 +260,32 @@ Matrix LME_dpa(Matrix da, Matrix pa)
   J = LME_J(da,pa,r);
 
   /* Check the conditioning number of the Hessian */
-  if (fabs(MO.Cond(J)) < 1e-8){
+  if (fabs(Cond_Mat(J)) > 10){
     printf(" %s : %s \n",
-	   "Error in LME_lambda",
-	   "The Hessian is near to singular matrix");      
+  	   "Error in LME_lambda",
+  	   "The Hessian is near to singular matrix");
     exit(0);
   }
     
   /* Inverse of the Hessian */
-  Jm1 = MO.Inv(J);
+  Jm1 = Get_Inverse(J);
 
   /* Free memory */
-  MO.FreeMat(r);
-  MO.FreeMat(J);
+  FreeMat(r);
+  FreeMat(J);
 
   /* Fill the gradient for each node */
   for(int i = 0 ; i<N_neibourg ; i++){
-    da_i = MO.Assign(N_dim,1,NAN,da.nM[i],NULL); 
-    Jm1_da = MO.Sprod(Jm1,da_i);    
+    da_i = MatAssign(N_dim,1,NAN,da.nM[i],NULL); 
+    Jm1_da = Scalar_prod(Jm1,da_i);    
     for(int j = 0 ; j<N_dim ; j++){
       dpa.nM[j][i] = pa.nV[i]*Jm1_da.nV[j];
     }
-    MO.FreeMat(Jm1_da);
+    FreeMat(Jm1_da);
   }
 
   /* Free memory */
-  MO.FreeMat(Jm1);
+  FreeMat(Jm1);
   
   /* Return the value of the shape function gradient */  
   return dpa;
@@ -338,9 +308,6 @@ ChainPtr LME_Tributary_Nodes(Matrix X_GP, int Elem_GP,
   int Num_Elem;
   int NumNodesElem;
   double Ra;
-
-  /* CALL LIBRARIES */
-  MatLib MO = MatrixOperators();
 
   /* Get the search radius */
   Ra = FEM_Mesh.DeltaX*sqrt(-log(TOL_lambda)/Gamma);
@@ -395,15 +362,15 @@ ChainPtr LME_Tributary_Nodes(Matrix X_GP, int Elem_GP,
     X_I.nV = FEM_Mesh.Coordinates.nM[iPtr->I];
 
     /* Get a vector from the GP to the node */
-    Distance = MO.Sub(X_GP,X_I);
+    Distance = Sub_Mat(X_GP,X_I);
 
     /* If the node is not near the GP pop out of the chain */
-    if(MO.Norm(Distance,2) <= Ra){
+    if(Norm_Mat(Distance,2) <= Ra){
       PushNodeTop(&Triburary_Nodes,iPtr->I);
     }
 
     /* Free memory of the distrance vector */
-    MO.FreeMat(Distance);
+    FreeMat(Distance);
 
     /* Update pointer index */
     iPtr = iPtr->next;

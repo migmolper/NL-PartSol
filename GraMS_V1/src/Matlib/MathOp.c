@@ -223,7 +223,13 @@ double SignumFunct(double x)
 
 Matrix SolvePolynomial(Matrix Coeffs)
 /*
-  
+  Solve this kind of polinom : 
+  a*x^2  + b*x + c = 0
+
+  Inputs :
+  Coeffs.nV[0] ->  a
+  Coeffs.nV[1] ->  b
+  Coeffs.nV[2] ->  c 
 */
 {
   if( (Coeffs.N_rows > 1) && (Coeffs.N_cols > 1) ){
@@ -234,38 +240,43 @@ Matrix SolvePolynomial(Matrix Coeffs)
   
   Matrix Solution;
   int N_Coeffs = Coeffs.N_rows*Coeffs.N_cols;
-  double a = Coeffs.nV[0];
-  double b = Coeffs.nV[1];
-  double c = Coeffs.nV[2];
 
-  switch(N_Coeffs){
-
-  case 1 :
+  if(N_Coeffs == 1){
     printf(" %s : %s \n ",
 	   "Error in SolvePolynomial()",
 	   "Dummy polynomial of order 0");
     exit(0);
-    break;
-    
-  case 2 :
+  }
+  if(N_Coeffs == 2){
     printf(" %s : %s \n ",
 	   "Error in SolvePolynomial()",
 	   "Dummy polynomial of order 1");
     exit(0);
-    break;
-    
+  }
+
+  double a, b, c;
+  double aux;
+
+  switch(N_Coeffs){
   case 3 :
+    /* Coeficients */
+    a = Coeffs.nV[0];
+    b = Coeffs.nV[1];
+    c = Coeffs.nV[2];
+    
     Solution = MatAlloc(2,1);
-    if((b*b - 4*a*c)<0){
-      printf("%s : %s \n",
+    aux = b*b - 4*a*c; 
+    if(aux<(double)0){
+      printf("%s : %s -> %f \n",
 	     "Error in SolvePolynomial()",
-	     "Imaginary solutions not implemented");
+	     "Imaginary solutions not implemented",
+	     aux);
       exit(0);
     }
     Solution.nV[0] =
-      (- b + sqrt(b*b - 4*a*c))/(2*a);
+      0.5*(- b + sqrt(aux))/a;
     Solution.nV[1] =
-      (- b - sqrt(b*b - 4*a*c))/(2*a);
+      0.5*(- b - sqrt(aux))/a;
     break;
        
   default :
