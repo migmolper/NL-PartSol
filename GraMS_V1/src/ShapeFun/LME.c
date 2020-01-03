@@ -9,20 +9,51 @@
 
 /*
   Shape functions based in :
-  [1] : "" Local maximum-entropy approximation schemes : a seamless 
+  "" Local maximum-entropy approximation schemes : a seamless 
   bridge between finite elements and meshfree methods ""
-  by M.Arroyo and M.Ortiz, 2006
+  by M.Arroyo and M.Ortiz, 2006.
 
-  The employed nomenclature is the same 
-
+  Here the employed nomenclature for the code is the same as in the paper
 */
 
-Matrix LME_lambda_NR(Matrix da, Matrix lambda, double Beta)
+/****************************************************************************/
+
+Matrix Initialize_lambda(Matrix d, Matrix lambda, double Beta)
+{
+  int Ndim = NumberDimensions;;
+  Matrix A = MatAlloc(Ndim,Ndim);
+  Matrix B = MatAlloc(Ndim,1);
+
+  /* Fill A */
+  A.nM[1][1] = d.nM[2][1] - d.nM[1][1]; 
+  A.nM[1][2] = d.nM[2][2] - d.nM[1][2]; 
+  A.nM[2][1] = d.nM[3][1] - d.nM[1][1]; 
+  A.nM[2][2] = d.nM[3][2] - d.nM[1][2];
+    
+  /* Fill B */
+  B.nV[1] = -Beta*(d.nM[1][1]*d.nM[1][1] + d.nM[1][2]*d.nM[1][2] -
+		   (d.nM[2][1]*d.nM[2][1] + d.nM[2][2]*d.nM[2][2]));
+  B.nV[2] = -Beta*(d.nM[1][1]*d.nM[1][1] + d.nM[1][2]*d.nM[1][2] -
+		   (d.nM[3][1]*d.nM[3][1] + d.nM[3][2]*d.nM[3][2]));
+
+  /* Update the value of lambda */
+  lambda = Conjugate_Gradient_Method(A,B,lambda);
+
+  /* Free memory */
+  FreeMat(A), FreeMat(B);
+
+  return lambda;
+}
+
+/****************************************************************************/
+
+Matrix LME_lambda_NR(Matrix l, Matrix lambda, double Beta)
 /*
-  Output: 
-  -> lambda : Lagrange multipliers lambda (1 x dim).
+  Get the lagrange multipliers "lambda" (1 x dim) for the LME 
+  shape function. The numerical method for that is the Newton-Rapson.
+
   Input parameters :
-  -> da : Matrix with the distances to the
+  -> l : Matrix with the distances to the
   neighborhood nodes (neighborhood x dim).
   -> lambda : Initial value of the
   lagrange multipliers (1 x dim).
@@ -32,64 +63,52 @@ Matrix LME_lambda_NR(Matrix da, Matrix lambda, double Beta)
 */
 {  
   /* Definition of some parameters */
-  Matrix pa; /* Shape function vector */
+  int Ndim = NumberDimensions;
+  int NumIter = 0; /* Iterator counter */
+  double norm_r = 10; /* Value of the norm */
+  Matrix p; /* Shape function vector */
   Matrix r; /* Gradient of log(Z) */
   Matrix J; /* Hessian of log(Z) */
-  Matrix Jm1; /* Inverse of J */
-  Matrix Increment_lambda;
-  double norm_r = 10; /* Value of the norm */
-  int NumIter = 0; /* Iterator counter */
+  Matrix D_lambda; /* Increment of lambda */
 
   /* Start with the Newton-Rapson method */
   while(norm_r > TOL_NR){
-    
+	
     /* Get vector with the shape functions evaluated in the nodes */
-    pa = LME_pa(da,lambda,Beta);
-    /* Get the gradient of log(Z) */
-    r = LME_r(da,pa);
-    /* Get the norm of r for the stopping criteria porpouse */
-    norm_r = Norm_Mat(r,2);
+    p = LME_p(l,lambda,Beta);    
+
+    /* Get the gradient of log(Z) and its norm */
+    r = LME_r(l,p), norm_r = Norm_Mat(r,2);
+
     /* Get the Hessian of log(Z) */    
-    J = LME_J(da,pa,r);
-
-    /* Check the conditioning number of the Hessian */
-    if (fabs(Cond_Mat(J)) > 10){
-      printf(" %s : %s \n",
-    	     "Error in LME_lambda",
-    	     "The Hessian is near to singular matrix");
-      exit(0);
-    }
-
-    /* Free the shape function nodal values */
-    FreeMat(pa);
+    J = LME_J(l,p,r);
     
-    /* Inverse of the Hessian */
-    Jm1 = Get_Inverse(J);
-    
-    /* Get the increment for lambda */
-    Increment_lambda = Scalar_prod(Jm1,r);
-
-    /* Free r, J, and the inverse of J */
-    FreeMat(r);
-    FreeMat(J);
-    FreeMat(Jm1);
+    /* Get the increment of lambda */
+    D_lambda = Solve_Linear_Sistem(J,r,MatAllocZ(Ndim,1));
 
     /* Update the value of lambda */
     for(int i = 0 ; i<NumberDimensions ; i++){
-      lambda.nV[i] -= Increment_lambda.nV[i];
+      lambda.nV[i] -= D_lambda.nV[i];
     }
-
-    /* Free memory */
-    FreeMat(Increment_lambda);
-
+    
     /* Update the number of iterations */
     NumIter ++;
     if(NumIter > 100){
-      printf(" %s : %s \n",
+      printf("%s : %s \n",
 	     "Error in LME_lambda",
 	     "No convergence in 100 iterations");
+      exit(0);
     }
+
+    /* Free memory */
+    FreeMat(p), FreeMat(r), FreeMat(J), FreeMat(D_lambda);
   
+  }
+  if(NumIter > 100){
+    printf("%s %i %s -> %s -> %f \n",
+	   "Convergence reached after",
+	   NumIter,"iterations",
+	   "Error",norm_r);
   }
   
   /* Once the stopping criteria is reached, 
@@ -97,85 +116,86 @@ Matrix LME_lambda_NR(Matrix da, Matrix lambda, double Beta)
   return lambda;
 }
 
-double LME_fa(Matrix da, Matrix lambda, double Beta)
+/****************************************************************************/
+
+double LME_fa(Matrix la, Matrix lambda, double Beta)
 /*
   Output :
   -> fa : the function fa that appear in [1] (scalar).
   Input parameters :
-  -> da : Matrix with the distance to the neighborhood node ''a'' (1 x dim).
+  -> la : Matrix with the distance to the neighborhood node ''a'' (1 x dim).
   -> lambda : Initial value of the lagrange multipliers (dim x 1).
   -> Gamma : Tunning parameter (scalar).
 */
 {  
   /* Get the scalar product the distance and the lagrange multipliers */
-  Matrix Aux = Scalar_prod(lambda,da);
-  double norm_dist = Norm_Mat(da,2);
+  Matrix Aux = Scalar_prod(lambda,la);
+  double norm_dist = Norm_Mat(la,2);
 
-  /* Return the value of f_a*/
+  /* Return the value of fa */
   return -Beta*norm_dist*norm_dist + Aux.n;
 }
 
-Matrix LME_pa(Matrix da, Matrix lambda, double Beta)
+Matrix LME_p(Matrix l, Matrix lambda, double Beta)
 /*
-  Output :
-  -> pa : Value of the shape function in the
-  neibourhud nodes (1 x neighborhood).
+  Get the value of the shape function "pa" (1 x neighborhood) in the
+  neighborhood nodes.
+
   Input parameters :
-  -> da : Matrix with the distances to the
-  neighborhood nodes (neighborhood x dim).
+  -> l : Matrix with the distances to the
+  neighborhood nodes (neiborghood x dim).
   -> lambda : Initial value of the lagrange multipliers (1 x dim).
   -> Beta : Tunning parameter (scalar).
 */
 {
   
   /* Definition of some parameters */
-  int N_dim = da.N_cols;
-  int N_neibourg = da.N_rows;
-  Matrix pa = MatAlloc(1,N_neibourg);
-  Matrix da_i;
-  double Z_a = 0;
-  double Z_a_m1 = 0;
+  int N_a = l.N_rows, N_dim = NumberDimensions;
+  double Z = 0, Z_m1 = 0;
+  Matrix p = /* Vector with the values of the shape-function in the nodes */
+    MatAlloc(1,N_a); 
+  Matrix la = /* Distance to the neighbour (x-x_a) */
+    MatAssign(1,N_dim,NAN,NULL,NULL);
 
   /* Get Z and the numerator */
-  for(int i = 0 ; i<N_neibourg ; i++){
-    da_i = MatAssign(1,N_dim,NAN,da.nM[i],NULL);
-    pa.nV[i] = exp(LME_fa(da_i,lambda,Beta));
-    Z_a += pa.nV[i];
+  for(int a = 0 ; a<N_a ; a++){
+    la.nV = l.nM[a];
+    p.nV[a] = exp(LME_fa(la,lambda,Beta));
+    Z += p.nV[a];
   }
 
   /* Get the inverse of Z */
-  Z_a_m1 = (double)1/Z_a;
+  Z_m1 = (double)1/Z;
 
   /* Divide by Z and get the final value */
-  for(int i = 0 ; i<N_neibourg ; i++){
-    pa.nV[i] *= Z_a_m1;
+  for(int a = 0 ; a<N_a ; a++){
+    p.nV[a] *= Z_m1;
   }
   
   /* Return the value of the shape function */  
-  return pa;
+  return p;
 }
 
-
-Matrix LME_r(Matrix da, Matrix pa)
+Matrix LME_r(Matrix l, Matrix p)
 /*
-  Output :
-  -> r : Gradient of the log(Z) function (dim x 1).
+  Get the gradient "r" (dim x 1) of the function log(Z) = 0.
+
   Input parameters :
-  -> da : Matrix with the distances to the 
+  -> l : Matrix with the distances to the 
   neighborhood nodes (neighborhood x dim).
-  -> pa : Shape function value in the
+  -> p : Shape function value in the
   neighborhood nodes (1 x neighborhood).
 */
 {  
   /* Definition of some parameters */
-  int N_dim = da.N_cols;
-  int N_neibourg = da.N_rows;
-  Matrix r = MatAllocZ(N_dim,1);
+  int N_a = l.N_rows, N_dim = NumberDimensions;
+  Matrix r /* Value of the gradient */
+    = MatAllocZ(NumberDimensions,1);
 
   /* Fill ''r'' */
-  for(int i = 0 ; i<N_neibourg ; i++){
-    for(int j = 0 ; j<N_dim ; j++){
-      r.nV[j] += pa.nV[i]*da.nM[i][j];
+  for(int i = 0 ; i<N_dim ; i++){
+    for(int a = 0 ; a<N_a ; a++){
+      r.nV[i] += p.nV[a]*l.nM[a][i];
     }
   }
 
@@ -183,81 +203,75 @@ Matrix LME_r(Matrix da, Matrix pa)
   return r;
 }
 
-Matrix LME_J(Matrix da, Matrix pa, Matrix r)
+Matrix LME_J(Matrix l, Matrix p, Matrix r)
 /*
-  Output :
-  -> J : Hessian of the log(Z) function (dim x dim).
+  Get the Hessian "J" (dim x dim) of the function log(Z) = 0.
+
   Input parameters :
-  -> da : Matrix with the distances to the
+  -> l : Matrix with the distances to the
   neighborhood nodes (neighborhood x dim).
-  -> pa : Shape function value in the
+  -> p : Shape function value in the
   neighborhood nodes (neighborhood x 1).
   -> r : Gradient of log(Z) (dim x 1).
 */
 {  
   /* Definition of some parameters */
-  int N_neibourg = da.N_rows;
-  int N_dim = da.N_cols;
+  int N_a = l.N_rows;
+  int N_dim = NumberDimensions;
   Matrix J; /* Hessian definition */
-  Matrix J_I; /* First component of the Hessian */
-  Matrix J_II; /* Second component of the Hessian */
-  Matrix da_da; /* Tensorial product of da */
 
-  /* Get the first component of the Hessian (J_I) */
-  J_I = MatAllocZ(N_dim,N_dim); 
-  for(int i = 0 ; i<N_neibourg ; i++){
-    /* Get the tensorial product for each neighborhood. */
-    da_da = Tensorial_prod(MatAssign(N_dim,1,NAN,da.nM[i],NULL),
-			   MatAssign(1,N_dim,NAN,da.nM[i],NULL));
-    /* Fill the first component of the Hessian (J_I) */
+  /* Allocate Hessian */
+  J = MatAllocZ(N_dim,N_dim);
+
+  /* Fill the Hessian */
+  for(int i = 0 ; i<N_dim ; i++){
     for(int j = 0 ; j<N_dim ; j++){
-      for(int k = 0 ; k<N_dim ; k++){
-	J_I.nM[j][k] += pa.nV[i]*da_da.nM[j][k];
+      for(int a = 0 ; a<N_a ; a++){
+	/* Get the first component of the Hessian looping
+	   over the neighborhood nodes. */
+	J.nM[i][j] += p.nV[a]*l.nM[a][i]*l.nM[a][j];
       }
+      /* Get the second value of the Hessian */
+      J.nM[i][j] -= r.nV[i]*r.nV[j];
     }
-    /* Free tensorial product */
-    FreeMat(da_da);
   }
-
-  /* Get the second component of the Hessian (J_II) */
-  J_II = Tensorial_prod(r,MatAssign(1,N_dim,NAN,r.nV,NULL));
-
-  /* Get the Hessian */
-  J = Sub_Mat(J_I,J_II);
-
-  /* Free the auxiliar components of the Hessian */
-  FreeMat(J_I);
-  FreeMat(J_II);
+  
+  /* Check the conditioning number of the Hessian */
+  if (fabs(Cond_Mat(J)) > 10){
+      printf(" %s : %s \n",
+    	     "Error in LME_J",
+    	     "The Hessian is near to singular matrix");
+      exit(0);
+  }
 
   /* Return the value of the Hessian */
   return J;
 }
 
-Matrix LME_dpa(Matrix da, Matrix pa)
+Matrix LME_dp(Matrix l, Matrix p)
 /*
-  Output :
-  -> dpa : Value of the shape function gradient in 
-  the neighborhood nodes (dim x neighborhood).
+  Value of the shape function gradient "dp" (dim x neighborhood) in 
+  the neighborhood nodes.
+
   Input parameters :
-  -> da : Matrix with the distances to the
+  -> l : Matrix with the distances to the
   neighborhood nodes (neighborhood x dim).
-  -> pa : Shape function value in the
+  -> p : Shape function value in the
   neighborhood nodes (neighborhood x 1).
 */
 {  
   /* Definition of some parameters */
-  int N_neibourg = da.N_rows;
-  int N_dim = da.N_cols;
-  Matrix dpa = MatAllocZ(N_dim,N_neibourg);
-  Matrix r;
+  int N_a = l.N_rows, N_dim = NumberDimensions;
+  Matrix dp = MatAllocZ(N_dim,N_a);
+  Matrix r; /* Gradient of log(Z) */
   Matrix J; /* Hessian of log(Z) */
   Matrix Jm1; /* Inverse of J */
-  Matrix da_i; /* Distance to the node */
-  Matrix Jm1_da; /* Auxiliar vector */
+  Matrix Jm1_la; /* Auxiliar vector */
+  Matrix la = /* Distance to the neighbour (x-x_a) */
+    MatAssign(N_dim,1,NAN,NULL,NULL); 
   
   /* Get the Gradient and the Hessian of log(Z) */
-  r = LME_r(da,pa);
-  J = LME_J(da,pa,r);
+  r = LME_r(l,p), J = LME_J(l,p,r);
 
   /* Check the conditioning number of the Hessian */
   if (fabs(Cond_Mat(J)) > 10){
@@ -269,26 +283,24 @@ Matrix LME_dpa(Matrix da, Matrix pa)
     
   /* Inverse of the Hessian */
   Jm1 = Get_Inverse(J);
-
   /* Free memory */
-  FreeMat(r);
-  FreeMat(J);
+  FreeMat(r), FreeMat(J);
 
   /* Fill the gradient for each node */
-  for(int i = 0 ; i<N_neibourg ; i++){
-    da_i = MatAssign(N_dim,1,NAN,da.nM[i],NULL); 
-    Jm1_da = Scalar_prod(Jm1,da_i);    
-    for(int j = 0 ; j<N_dim ; j++){
-      dpa.nM[j][i] = pa.nV[i]*Jm1_da.nV[j];
+  for(int a = 0 ; a<N_a ; a++){
+    la.nV = l.nM[a]; 
+    Jm1_la = Scalar_prod(Jm1,la);    
+    for(int i = 0 ; i<N_dim ; i++){
+      dp.nM[i][a] = - p.nV[a]*Jm1_la.nV[i];
     }
-    FreeMat(Jm1_da);
+    FreeMat(Jm1_la);
   }
 
   /* Free memory */
   FreeMat(Jm1);
   
   /* Return the value of the shape function gradient */  
-  return dpa;
+  return dp;
   
 }
 
@@ -364,7 +376,7 @@ ChainPtr LME_Tributary_Nodes(Matrix X_GP, int Elem_GP,
     /* Get a vector from the GP to the node */
     Distance = Sub_Mat(X_GP,X_I);
 
-    /* If the node is not near the GP pop out of the chain */
+    /* If the node is near the GP push in the chain */
     if(Norm_Mat(Distance,2) <= Ra){
       PushNodeTop(&Triburary_Nodes,iPtr->I);
     }

@@ -11,8 +11,8 @@ SHPF ShapeFunLib(void){
   SHPF shpf;
 
   /* Asign functions to the library */
-  shpf.N = LME_pa;
-  shpf.dN = LME_dpa;
+  shpf.N = LME_p;
+  shpf.dN = LME_dp;
   
   /* Return the library */
   return shpf;

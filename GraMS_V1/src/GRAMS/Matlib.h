@@ -46,6 +46,7 @@ typedef struct{
 Matrix Newton_Rapson(Matrix(* Function)(Matrix, Matrix), Matrix,
 		     Matrix(* Jacobian)(Matrix, Matrix), Matrix,
 		     Matrix,Matrix);
+Matrix Solve_Linear_Sistem(Matrix, Matrix, Matrix);
 Matrix Conjugate_Gradient_Method(Matrix,Matrix,Matrix);
 Matrix Jacobi_Conjugate_Gradient_Method(Matrix,Matrix,Matrix);
 Matrix One_Iteration_Lumped(Matrix, Matrix, Matrix);

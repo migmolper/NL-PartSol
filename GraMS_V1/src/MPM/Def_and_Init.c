@@ -330,7 +330,7 @@ GaussPoint Define_GP_Mesh(char * MPM_GID_MeshName,
       }
     }
     /* Tunning parameter (Only LME) */
-    MPM_Mesh.Gamma = 0.8;
+    MPM_Mesh.Gamma = 6.8;
     
     /* Free data */
     FreeMat(Poligon_Centroid);

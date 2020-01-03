@@ -495,47 +495,47 @@ Matrix Get_Inverse(Matrix M_in)
     puts("Error in Get_Inverse() : Determinant null !");
     exit(0);
   }
+  double Det_m1 = (double)1/Det;
 
   /* Allocate the output */
   Matrix M_out = MatAlloc(M_in.N_rows,M_in.N_cols);
  
-
   /* Do in a different fashion if it is 2D or 3D */
   if(M_in.N_cols == 2){
-    M_out.nM[0][0] = (double)1/(Det)*M_in.nM[1][1];
+    M_out.nM[0][0] = Det_m1*M_in.nM[1][1];
 
-    M_out.nM[0][1] = -(double)1/(Det)*M_in.nM[0][1];
+    M_out.nM[0][1] = - Det_m1*M_in.nM[0][1];
 
-    M_out.nM[1][0] = -(double)1/(Det)*M_in.nM[1][0];
+    M_out.nM[1][0] = - Det_m1*M_in.nM[1][0];
 
-    M_out.nM[1][1] = (double)1/(Det)*M_in.nM[0][0];
+    M_out.nM[1][1] = Det_m1*M_in.nM[0][0];
   }
   else if(M_in.N_cols == 3){
-    M_out.nM[0][0] = 1/(Det)*(M_in.nM[1][1]*M_in.nM[2][2] -
+    M_out.nM[0][0] = Det_m1*(M_in.nM[1][1]*M_in.nM[2][2] -
 			     M_in.nM[1][2]*M_in.nM[2][1]);
     
-    M_out.nM[0][1] = -1/(Det)*(M_in.nM[0][1]*M_in.nM[2][2] -
+    M_out.nM[0][1] = -Det_m1*(M_in.nM[0][1]*M_in.nM[2][2] -
 			      M_in.nM[0][2]*M_in.nM[2][1]);
     
-    M_out.nM[0][2] = 1/(Det)*(M_in.nM[0][1]*M_in.nM[1][2] -
+    M_out.nM[0][2] = Det_m1*(M_in.nM[0][1]*M_in.nM[1][2] -
 			     M_in.nM[0][2]*M_in.nM[1][1]);
     
-    M_out.nM[1][0] = -1/(Det)*(M_in.nM[1][0]*M_in.nM[2][2] -
+    M_out.nM[1][0] = -Det_m1*(M_in.nM[1][0]*M_in.nM[2][2] -
 			      M_in.nM[1][2]*M_in.nM[2][0]);
     
-    M_out.nM[1][1] = 1/(Det)*(M_in.nM[0][0]*M_in.nM[2][2] -
+    M_out.nM[1][1] = Det_m1*(M_in.nM[0][0]*M_in.nM[2][2] -
 			     M_in.nM[0][2]*M_in.nM[2][0]);
     
-    M_out.nM[1][2] = -1/(Det)*(M_in.nM[0][0]*M_in.nM[1][2] -
+    M_out.nM[1][2] = -Det_m1*(M_in.nM[0][0]*M_in.nM[1][2] -
 			      M_in.nM[0][2]*M_in.nM[1][0]);
     
-    M_out.nM[2][0] = 1/(Det)*(M_in.nM[1][0]*M_in.nM[2][1] -
+    M_out.nM[2][0] = Det_m1*(M_in.nM[1][0]*M_in.nM[2][1] -
 			     M_in.nM[1][1]*M_in.nM[2][0]);
     
-    M_out.nM[2][1] = -1/(Det)*(M_in.nM[0][0]*M_in.nM[2][1] -
+    M_out.nM[2][1] = -Det_m1*(M_in.nM[0][0]*M_in.nM[2][1] -
 			      M_in.nM[0][1]*M_in.nM[2][0]);
     
-    M_out.nM[2][2] = 1/(Det)*(M_in.nM[0][0]*M_in.nM[1][1] -
+    M_out.nM[2][2] = Det_m1*(M_in.nM[0][0]*M_in.nM[1][1] -
 			     M_in.nM[0][1]*M_in.nM[1][0]);
   }
   

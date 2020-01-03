@@ -79,7 +79,7 @@ void UpdateVelocityAndPositionGP(GaussPoint MPM_Mesh,
       lambda_GP.nV = MPM_Mesh.lambda.nM[i];
       /* Evaluate the shape function and it gradient */
       Beta = MPM_Mesh.Gamma/(FEM_Mesh.DeltaX*FEM_Mesh.DeltaX);
-      N_GP = LME_pa(Delta_Xip, lambda_GP,Beta);
+      N_GP = LME_p(Delta_Xip, lambda_GP,Beta);
       /* Free memory */
       FreeMat(Delta_Xip);
     }

@@ -166,8 +166,8 @@ Matrix GetNodalForces(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int TimeStep)
       lambda_GP.nV = MPM_Mesh.lambda.nM[i];
       /* Evaluate the shape function and it gradient */
       Beta = MPM_Mesh.Gamma/(FEM_Mesh.DeltaX*FEM_Mesh.DeltaX);
-      N_GP = LME_pa(Delta_Xip, lambda_GP,Beta);
-      dNdx_GP = LME_dpa(Delta_Xip, N_GP);
+      N_GP = LME_p(Delta_Xip, lambda_GP,Beta);
+      dNdx_GP = LME_dp(Delta_Xip, N_GP);
       /* Free memory */
       FreeMat(Delta_Xip);
     }

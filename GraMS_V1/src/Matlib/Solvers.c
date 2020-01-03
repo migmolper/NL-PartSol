@@ -100,6 +100,32 @@ Matrix Newton_Rapson(Matrix(* Function)(Matrix, Matrix),Matrix Parameter_F,
 
 /*********************************************************************/
 
+Matrix Solve_Linear_Sistem(Matrix K, Matrix F, Matrix U)
+/*
+
+ */
+{
+  int Bool = K.N_cols>3;
+  Matrix Km1;
+  
+  switch(Bool){
+  case 0 : 
+    Km1 = Get_Inverse(K);
+    U = Scalar_prod(Km1,F);
+    FreeMat(Km1);
+    return U; 
+  case 1 : 
+    U = Conjugate_Gradient_Method(K,F,U);
+    /* U = Jacobi_Conjugate_Gradient_Method(K,F,U); */
+    return U;
+  default :
+    exit(0);
+  }
+
+}
+
+/*********************************************************************/
+
 Matrix Conjugate_Gradient_Method(Matrix K, Matrix F, Matrix U0)
 /*
 
