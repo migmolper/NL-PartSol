@@ -65,3 +65,79 @@ void BCC_Nod_VALUE(Mesh FEM_Mesh, Matrix Nodal_VALUE, int TimeStep)
 }
 
 /*********************************************************************/
+
+Matrix Eval_Body_Forces(LoadCase B, int NumGP, int TimeStep)
+/*
+  Evaluate body forces in a time step.
+*/
+{
+  Matrix Body_Forces_t =
+    MatAllocZ(NumberDimensions,NumGP);
+  int GP_Force;
+  
+  if(B.NumLoads>0){
+    for(int i = 0 ; i<B.NumLoads; i++){
+      for(int j = 0 ; j<B.Load_i[i].NumNodes ; j++){
+	GP_Force = B.Load_i[i].Nodes[j];
+	for(int k = 0 ; k<B.Load_i[i].Dim ; k++){
+	  if( (B.Load_i[i].Dir[k] == 1) ||
+	      (B.Load_i[i].Dir[k] == -1)){
+	    if( (TimeStep < 0) ||
+		(TimeStep > B.Load_i[i].Value[k].Num)){
+	      printf("%s : %s\n",
+		     "Error in GetNodalForces()",
+		     "The time step is out of the curve !!");
+	      exit(0);
+	    }
+	    Body_Forces_t.nM[k][GP_Force] +=
+	      B.Load_i[i].Value[k].Fx[TimeStep]*
+	      (double)B.Load_i[i].Dir[k];
+	  }
+	}
+      }
+    }
+  }
+
+  return Body_Forces_t;
+
+}
+
+
+/*********************************************************************/
+
+Matrix Eval_Contact_Forces(LoadCase F, int NumGP, int TimeStep)
+/*
+  Evaluate contact forces in a time step
+ */
+{
+  int GP_Force;
+  Matrix Contact_Forces_t = 
+    MatAllocZ(NumberDimensions,NumGP);
+  
+  if(F.NumLoads>0){
+    for(int i = 0 ; i<F.NumLoads; i++){
+      for(int j = 0 ; j<F.Load_i[i].NumNodes ; j++){
+	GP_Force = F.Load_i[i].Nodes[j];
+	for(int k = 0 ; k<F.Load_i[i].Dim ; k++){
+	  if( (F.Load_i[i].Dir[k] == 1) ||
+	      (F.Load_i[i].Dir[k] == -1)){
+	    if( (TimeStep < 0) ||
+		(TimeStep > F.Load_i[i].Value[k].Num)){
+	      printf("%s : %s \n",
+		     "Error in GetNodalForces()",
+		     "The time step is out of the curve !!");
+	      exit(0);
+	    }
+	    Contact_Forces_t.nM[k][GP_Force] +=
+	      F.Load_i[i].Value[k].Fx[TimeStep]*
+	      (double)F.Load_i[i].Dir[k];
+	  }
+	}
+      }
+    }
+  }
+
+  return Contact_Forces_t;
+}
+
+/*********************************************************************/

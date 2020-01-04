@@ -11,7 +11,7 @@ OUTPUT_DIR=test/Debug_LME
 KIND_ANALYSIS=LME%U%2D%VerletLF
 DENSITY=20
 TIME_STEP=0.00005
-RESULT_STEP=1
+RESULT_STEP=100
 NUM_STEP=4000
 
 /***************************************/

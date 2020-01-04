@@ -62,7 +62,7 @@ int ResultsTimeStep;
 /********* Numeric Tolerances **********/
 /***************************************/
 #define TOL_lambda 10E-6
-#define TOL_NR 10E-5
+#define TOL_NR 10E-6
 #define TOL_zero 10E-10
 
 /***************************************/

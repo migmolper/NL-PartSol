@@ -207,6 +207,8 @@ Matrix GetNodalVelocity(Mesh, Matrix, Matrix);
 /* Boundary conditions */
 Curve BcDirichlet(char *);
 void BCC_Nod_VALUE(Mesh, Matrix, int);
+Matrix Eval_Body_Forces(LoadCase, int, int);
+Matrix Eval_Contact_Forces(LoadCase, int, int);
 
 /* MPM functions  */
 void UpdateGaussPointStrain(GaussPoint, Mesh, Matrix);

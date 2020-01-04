@@ -13,7 +13,7 @@
   bridge between finite elements and meshfree methods ""
   by M.Arroyo and M.Ortiz, 2006.
 
-  Here the employed nomenclature for the code is the same as in the paper
+  Here the employed nomenclature for the code is the same as in the paper.
 */
 
 /****************************************************************************/
@@ -25,10 +25,10 @@ Matrix Initialize_lambda(Matrix d, Matrix lambda, double Beta)
   Matrix B = MatAlloc(Ndim,1);
 
   /* Fill A */
-  A.nM[1][1] = d.nM[2][1] - d.nM[1][1]; 
-  A.nM[1][2] = d.nM[2][2] - d.nM[1][2]; 
-  A.nM[2][1] = d.nM[3][1] - d.nM[1][1]; 
-  A.nM[2][2] = d.nM[3][2] - d.nM[1][2];
+  A.nM[0][0] = d.nM[1][0] - d.nM[0][0]; 
+  A.nM[0][1] = d.nM[1][1] - d.nM[0][1]; 
+  A.nM[1][0] = d.nM[2][0] - d.nM[0][0]; 
+  A.nM[1][1] = d.nM[2][1] - d.nM[0][1];
     
   /* Fill B */
   B.nV[1] = -Beta*(d.nM[1][1]*d.nM[1][1] + d.nM[1][2]*d.nM[1][2] -
@@ -42,6 +42,7 @@ Matrix Initialize_lambda(Matrix d, Matrix lambda, double Beta)
   /* Free memory */
   FreeMat(A), FreeMat(B);
 
+  /* Return lambda */
   return lambda;
 }
 
@@ -61,8 +62,9 @@ Matrix LME_lambda_NR(Matrix l, Matrix lambda, double Beta)
   -> h : Grid spacing (scalar).
   -> TOL_zero : Tolerance for Newton-Rapson.
 */
-{  
+{
   /* Definition of some parameters */
+  int MaxIter = 300;
   int Ndim = NumberDimensions;
   int NumIter = 0; /* Iterator counter */
   double norm_r = 10; /* Value of the norm */
@@ -70,45 +72,53 @@ Matrix LME_lambda_NR(Matrix l, Matrix lambda, double Beta)
   Matrix r; /* Gradient of log(Z) */
   Matrix J; /* Hessian of log(Z) */
   Matrix D_lambda; /* Increment of lambda */
-
+ 
   /* Start with the Newton-Rapson method */
   while(norm_r > TOL_NR){
 	
     /* Get vector with the shape functions evaluated in the nodes */
-    p = LME_p(l,lambda,Beta);    
+    p = LME_p(l,lambda,Beta);
 
     /* Get the gradient of log(Z) and its norm */
     r = LME_r(l,p), norm_r = Norm_Mat(r,2);
 
     /* Get the Hessian of log(Z) */    
     J = LME_J(l,p,r);
+
+    /* /\* Check the conditioning number of the Hessian *\/ */
+    /* if (fabs(Cond_Mat(J)) > 10){ */
+    /*   printf(" %s : %s \n", */
+    /* 	     "Error in LME_lambda_NR", */
+    /* 	     "The Hessian is near to singular matrix"); */
+    /*   exit(0); */
+    /* } */
     
     /* Get the increment of lambda */
     D_lambda = Solve_Linear_Sistem(J,r,MatAllocZ(Ndim,1));
 
     /* Update the value of lambda */
     for(int i = 0 ; i<NumberDimensions ; i++){
+      if(fabs(D_lambda.nV[i])<TOL_NR) continue;
       lambda.nV[i] -= D_lambda.nV[i];
-    }
-    
-    /* Update the number of iterations */
-    NumIter ++;
-    if(NumIter > 100){
-      printf("%s : %s \n",
-	     "Error in LME_lambda",
-	     "No convergence in 100 iterations");
-      exit(0);
     }
 
     /* Free memory */
     FreeMat(p), FreeMat(r), FreeMat(J), FreeMat(D_lambda);
+    
+    /* Update the number of iterations */
+    NumIter ++;
+    if(NumIter >= MaxIter){
+      printf("%s : %s %i/%i %s \n",
+	     "Error in LME_lambda",
+	     "No convergence in",NumIter,MaxIter,"iterations");
+      break;
+    }
   
   }
-  if(NumIter > 100){
-    printf("%s %i %s -> %s -> %f \n",
-	   "Convergence reached after",
-	   NumIter,"iterations",
-	   "Error",norm_r);
+  if(NumIter >= 300){
+    printf("%s %i %s : %f \n",
+	   "Error after",NumIter,
+	   "iterations",norm_r);
   }
   
   /* Once the stopping criteria is reached, 
@@ -219,7 +229,7 @@ Matrix LME_J(Matrix l, Matrix p, Matrix r)
   int N_a = l.N_rows;
   int N_dim = NumberDimensions;
   Matrix J; /* Hessian definition */
-
+  
   /* Allocate Hessian */
   J = MatAllocZ(N_dim,N_dim);
 
@@ -234,14 +244,6 @@ Matrix LME_J(Matrix l, Matrix p, Matrix r)
       /* Get the second value of the Hessian */
       J.nM[i][j] -= r.nV[i]*r.nV[j];
     }
-  }
-  
-  /* Check the conditioning number of the Hessian */
-  if (fabs(Cond_Mat(J)) > 10){
-      printf(" %s : %s \n",
-    	     "Error in LME_J",
-    	     "The Hessian is near to singular matrix");
-      exit(0);
   }
 
   /* Return the value of the Hessian */
@@ -271,18 +273,12 @@ Matrix LME_dp(Matrix l, Matrix p)
     MatAssign(N_dim,1,NAN,NULL,NULL); 
   
   /* Get the Gradient and the Hessian of log(Z) */
-  r = LME_r(l,p), J = LME_J(l,p,r);
-
-  /* Check the conditioning number of the Hessian */
-  if (fabs(Cond_Mat(J)) > 10){
-    printf(" %s : %s \n",
-  	   "Error in LME_lambda",
-  	   "The Hessian is near to singular matrix");
-    exit(0);
-  }
-    
+  r = LME_r(l,p);
+  J = LME_J(l,p,r);
+  
   /* Inverse of the Hessian */
   Jm1 = Get_Inverse(J);
+  
   /* Free memory */
   FreeMat(r), FreeMat(J);
 
@@ -300,8 +296,7 @@ Matrix LME_dp(Matrix l, Matrix p)
   FreeMat(Jm1);
   
   /* Return the value of the shape function gradient */  
-  return dp;
-  
+  return dp;  
 }
 
 ChainPtr LME_Tributary_Nodes(Matrix X_GP, int Elem_GP,
