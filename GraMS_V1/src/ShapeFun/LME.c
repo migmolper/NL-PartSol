@@ -85,20 +85,19 @@ Matrix LME_lambda_NR(Matrix l, Matrix lambda, double Beta)
     /* Get the Hessian of log(Z) */    
     J = LME_J(l,p,r);
 
-    /* /\* Check the conditioning number of the Hessian *\/ */
-    /* if (fabs(Cond_Mat(J)) > 10){ */
-    /*   printf(" %s : %s \n", */
-    /* 	     "Error in LME_lambda_NR", */
-    /* 	     "The Hessian is near to singular matrix"); */
-    /*   exit(0); */
-    /* } */
+    /* Check the conditioning number of the Hessian */
+    if (fabs(Cond_Mat(J,TOL_NR)) > 10){
+      printf(" %s : %s \n",
+    	     "Error in LME_lambda_NR",
+    	     "The Hessian is near to singular matrix");
+      exit(0);
+    }
     
     /* Get the increment of lambda */
     D_lambda = Solve_Linear_Sistem(J,r,MatAllocZ(Ndim,1));
 
     /* Update the value of lambda */
     for(int i = 0 ; i<NumberDimensions ; i++){
-      if(fabs(D_lambda.nV[i])<TOL_NR) continue;
       lambda.nV[i] -= D_lambda.nV[i];
     }
 

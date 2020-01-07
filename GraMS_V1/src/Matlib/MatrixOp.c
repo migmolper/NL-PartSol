@@ -1000,7 +1000,7 @@ Matrix Eigen_Mat(Matrix In){
   case 2 :
     /* Get the coefficients of the charasteristic pol */
     Coeffs = MatAllocZ(1,3);
-    Coeffs.nV[0] = 1; /* a*x^2 */
+    Coeffs.nV[0] = 1.0; /* a*x^2 */
     Coeffs.nV[1] = - In.nM[0][0] - In.nM[1][1]; /* b*x */
     Coeffs.nV[2] = In.nM[0][0]*In.nM[1][1] - In.nM[1][0]*In.nM[0][1]; /* c */
     /* Solve the charasteristic pol to the eigenvalues */
@@ -1023,7 +1023,7 @@ Matrix Eigen_Mat(Matrix In){
 
 /*********************************************************************/
 
-double Cond_Mat(Matrix In)
+double Cond_Mat(Matrix In, double TOL)
 /*
   Return the conditioning number 
 */
@@ -1042,6 +1042,15 @@ double Cond_Mat(Matrix In)
   if(In.N_cols != In.N_rows){
     puts(" Error in Cond_Mat() : Non square matrix !");
     exit(0);
+  }
+
+  /* Remove numerical zeros */
+  for(int i = 0 ; i<In.N_rows ; i++){
+    for(int j = 0 ; j<In.N_cols ; j++){
+      if(fabs(In.nM[i][j])<TOL){
+	In.nM[i][j] = 0;
+      }
+    }
   }
   
   Matrix Eigen = Eigen_Mat(In);

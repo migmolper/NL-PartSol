@@ -266,7 +266,10 @@ Matrix SolvePolynomial(Matrix Coeffs)
     
     Solution = MatAlloc(2,1);
     aux = b*b - 4*a*c; 
-    if(aux<(double)0){
+    if(fabs(aux)<TOL_zero){
+      aux = 0.0;
+    }
+    else if(aux<TOL_zero){
       printf("%s : %s -> %f \n",
 	     "Error in SolvePolynomial()",
 	     "Imaginary solutions not implemented",
