@@ -8,16 +8,6 @@
 
 Matrix GetNodalForces(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int TimeStep)
 {
- 
-  /* Properties of each Gauss-Point */
-  Matrix X_GP = /* Coordinate for each Gauss-Point */
-    MatAssign(NumberDimensions,1,NAN,NULL,NULL); 
-  Matrix lp; /* Just for GIMP -> Particle voxel */
-  double Beta; /* Tunning parameter for LME */
-  Matrix lambda_GP = /* Just for LME -> Lagrange multipliers */
-    MatAssign(NumberDimensions,1,NAN,NULL,NULL);
-  Matrix Delta_Xip; /* Just for GIMP/LME -> Distance from GP to the nodes */
-
   /* Mass of the GP */
   double GP_mass; 
   /* Gauss-Point volumen */
@@ -29,12 +19,13 @@ Matrix GetNodalForces(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int TimeStep)
   Matrix N_GP; /* Matrix with the nodal shape functions */
   double N_GP_I; /* Evaluation of the GP in the node */
   Matrix dNdx_GP; /* Matrix with the nodal derivatives */
+  Matrix N_dNdx_GP; /* Operator Matrix */
   Matrix B, B_T;
 
   /* Element for each Gauss-Point */
   int GP_NumNodes; /* Number of nodes */
   int * GP_Connect; /* Connectivity of the element */
-  Matrix GP_ElemCoord; /* Coordinates of the nodes */
+  /* Matrix GP_ElemCoord; /\* Coordinates of the nodes *\/ */
   int GP_I; /* Node of the GP */
 
   /* Stress tensor of a Gauss-Point and its divergence */
@@ -62,65 +53,16 @@ Matrix GetNodalForces(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int TimeStep)
     GP_NumNodes = MPM_Mesh.NumberNodes[i];
     GP_Connect = ChainToArray(MPM_Mesh.ListNodes[i],GP_NumNodes);
 
-    /* 5º Evaluate the shape function in the GP */
-    if(strcmp(MPM_Mesh.ShapeFunctionGP,"MPMQ4") == 0){
-      /* Get the coordinates of the element */
-      GP_ElemCoord = MatAllocZ(GP_NumNodes,NumberDimensions);
-      for(int k = 0; k<GP_NumNodes; k++){
-    	GP_I = GP_Connect[k];
-    	for(int l = 0 ; l<NumberDimensions ; l++){
-    	  GP_ElemCoord.nM[k][l] =
-    	    FEM_Mesh.Coordinates.nM[GP_I][l];
-    	}
-      }
-      /* Get the natural coordinates of the GP */
-      X_GP.nV = MPM_Mesh.Phi.x_EC.nM[i];
-      /* Evaluate the shape function and it gradient */
-      N_GP = Q4(X_GP);
-      dNdx_GP = Get_dNdX_Q4(X_GP,GP_ElemCoord);
-      /* Free memory */
-      FreeMat(GP_ElemCoord);
-    }
-    else if(strcmp(MPM_Mesh.ShapeFunctionGP,"uGIMP2D") == 0){
-      /* Get the distance of the GP to the nodes */
-      Delta_Xip = MatAlloc(GP_NumNodes,NumberDimensions);
-      for(int k = 0 ; k<GP_NumNodes ; k++){
-    	GP_I = GP_Connect[k];
-    	for(int l = 0 ; l<NumberDimensions ; l++){
-    	  Delta_Xip.nM[k][l] =
-    	    MPM_Mesh.Phi.x_GC.nM[i][l]-
-    	    FEM_Mesh.Coordinates.nM[GP_I][l];
-    	}
-      }
-      /* Get the voxel of the GP */
-      lp.nV = MPM_Mesh.lp.nM[i];
-      /* Evaluate the shape function and it gradient */
-      N_GP = GIMP_2D(Delta_Xip,lp,FEM_Mesh.DeltaX);
-      dNdx_GP = dGIMP_2D(Delta_Xip,lp,FEM_Mesh.DeltaX);
-      /* Free memory */
-      FreeMat(Delta_Xip);
-    }
-    else if(strcmp(MPM_Mesh.ShapeFunctionGP,"LME") == 0){
-      /* Get the distance of the GP to the nodes */
-      Delta_Xip = MatAlloc(GP_NumNodes,NumberDimensions);
-      for(int k = 0 ; k<GP_NumNodes ; k++){
-    	GP_I = GP_Connect[k];
-    	for(int l = 0 ; l<NumberDimensions ; l++){
-    	  Delta_Xip.nM[k][l] =
-    	    MPM_Mesh.Phi.x_GC.nM[i][l]-
-    	    FEM_Mesh.Coordinates.nM[GP_I][l];
-    	}
-      }
-      /* Asign lambda to GP */
-      lambda_GP.nV = MPM_Mesh.lambda.nM[i];
-      /* Evaluate the shape function and it gradient */
-      Beta = MPM_Mesh.Gamma/(FEM_Mesh.DeltaX*FEM_Mesh.DeltaX);
-      N_GP = LME_p(Delta_Xip, lambda_GP,Beta);
-      dNdx_GP = LME_dp(Delta_Xip, N_GP);
-      /* Free memory */
-      FreeMat(Delta_Xip);
-    }
-       
+    /* 5º Evaluate the shape function and its gradient in the GP */
+    N_dNdx_GP = Get_Operator("N_dNdx",i,GP_Connect,GP_NumNodes,
+			     MPM_Mesh,FEM_Mesh);
+    N_GP = MatAssign(1,N_dNdx_GP.N_cols,NAN,N_dNdx_GP.nM[0],NULL);
+    dNdx_GP = MatAssign(2,N_dNdx_GP.N_cols,NAN,NULL,
+			(double **)malloc(2*sizeof(double *)));
+    dNdx_GP.nM[0] = N_dNdx_GP.nM[1];
+    dNdx_GP.nM[1] = N_dNdx_GP.nM[2];
+    free(N_dNdx_GP.nM);
+           
     /* 6º Get the B_T matrix for the derivates */
     B = Get_B_GP(dNdx_GP), FreeMat(dNdx_GP);
     B_T = Transpose_Mat(B), FreeMat(B);

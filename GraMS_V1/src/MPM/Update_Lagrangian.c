@@ -32,7 +32,7 @@ void UpdateVelocityAndPositionGP(GaussPoint MPM_Mesh,
     GP_Connect = ChainToArray(MPM_Mesh.ListNodes[i],GP_NumNodes);
 
     /* 3º Evaluate shape function in the GP i */
-    N_GP = Get_N_GP(MPM_Mesh, FEM_Mesh, GP_Connect, GP_NumNodes, i);
+    N_GP = Get_Operator("N",i,GP_Connect,GP_NumNodes,MPM_Mesh,FEM_Mesh);
     
     /* 4º Iterate over the nodes of the element */
     for(int j = 0; j<GP_NumNodes; j++){

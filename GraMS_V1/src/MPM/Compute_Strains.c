@@ -38,7 +38,7 @@ void UpdateGaussPointStrain(GaussPoint MPM_Mesh,
     GP_Connect = ChainToArray(MPM_Mesh.ListNodes[i],GP_NumNodes);
     
     /* 2º Get the element gradient */
-    dNdx_GP = Get_dN_GP(MPM_Mesh,FEM_Mesh,GP_Connect,GP_NumNodes,i);
+    dNdx_GP = Get_Operator("dNdx",i,GP_Connect,GP_NumNodes,MPM_Mesh,FEM_Mesh);
 	    
     /* 3º Calcule the B matrix and free the gradient */
     B = Get_B_GP(dNdx_GP), FreeMat(dNdx_GP);

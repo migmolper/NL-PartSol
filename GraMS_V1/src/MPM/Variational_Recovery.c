@@ -34,7 +34,7 @@ Matrix GetNodalMassMomentum(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
     GP_Connect = ChainToArray(MPM_Mesh.ListNodes[i],GP_NumNodes);
 
     /* 4º Evaluate the shape function in the coordinates of the GP */
-    N_GP = Get_N_GP(MPM_Mesh,FEM_Mesh,GP_Connect,GP_NumNodes, i);
+    N_GP = Get_Operator("N",i,GP_Connect,GP_NumNodes,MPM_Mesh,FEM_Mesh);
    
     /* 5º Get the mass of the GP */
     GP_mass = MPM_Mesh.Phi.mass.nV[i];
