@@ -45,7 +45,7 @@ ChainPtr Tributary_Nodes_GIMP(Matrix, int,
 /*******************************************************/
 
 /* LME shape functions */
-Matrix Initialize_lambda(Matrix, Matrix, double);
+Matrix LME_Init_lambda(Matrix, Matrix, double);
 Matrix LME_lambda_NR(Matrix, Matrix, double);
 double LME_fa(Matrix, Matrix, double);
 Matrix LME_p(Matrix, Matrix, double);
@@ -58,8 +58,6 @@ ChainPtr LME_Tributary_Nodes(Matrix, int,
 /*******************************************************/
 
 /* Operators */
-Matrix Get_N_GP(GaussPoint, Mesh, int *, int, int);
-Matrix Get_dN_GP(GaussPoint, Mesh, int *, int, int);
 Matrix Get_Operator(char *, int, int *,
 		    int,GaussPoint, Mesh); 
 Matrix Get_B_GP(Matrix);

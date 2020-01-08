@@ -41,7 +41,7 @@ void UpdateVelocityAndPositionGP(GaussPoint MPM_Mesh,
       /* Evaluate the GP function in the node */
       N_I_GP = N_GP.nV[j];
       /* If this node has a null Value of the SHF continue */
-      if(N_I_GP == 0){
+      if(fabs(N_I_GP) <= TOL_zero){
 	continue;
       }
       /* Get the nodal mass */

@@ -13,14 +13,26 @@
   bridge between finite elements and meshfree methods ""
   by M.Arroyo and M.Ortiz, 2006.
 
-  Here the employed nomenclature for the code is the same as in the paper.
+  Here we employ the same nomenclature as in the paper. With the single
+  different of the "l" variable wich represents the distances between the
+  evaluation point and the neighborhood nodes.
+
+  List of functions :
+  - LME_Init_lambda
+  - LME_lambda_NR
+  - LME_fa
+  - LME_p
+  - LME_r
+  - LME_J
+  - LME_dp
+  - LME_Tributary_Nodes
 */
 
 /****************************************************************************/
 
-Matrix Initialize_lambda(Matrix d, Matrix lambda, double Beta)
+Matrix LME_Init_lambda(Matrix d, Matrix lambda, double Beta)
 {
-  int Ndim = NumberDimensions;;
+  int Ndim = NumberDimensions;
   Matrix A = MatAlloc(Ndim,Ndim);
   Matrix B = MatAlloc(Ndim,1);
 
@@ -145,6 +157,8 @@ double LME_fa(Matrix la, Matrix lambda, double Beta)
   return -Beta*norm_dist*norm_dist + Aux.n;
 }
 
+/****************************************************************************/
+
 Matrix LME_p(Matrix l, Matrix lambda, double Beta)
 /*
   Get the value of the shape function "pa" (1 x neighborhood) in the
@@ -185,6 +199,8 @@ Matrix LME_p(Matrix l, Matrix lambda, double Beta)
   return p;
 }
 
+/****************************************************************************/
+
 Matrix LME_r(Matrix l, Matrix p)
 /*
   Get the gradient "r" (dim x 1) of the function log(Z) = 0.
@@ -211,6 +227,8 @@ Matrix LME_r(Matrix l, Matrix p)
   /* Return the value of the gradient */
   return r;
 }
+
+/****************************************************************************/
 
 Matrix LME_J(Matrix l, Matrix p, Matrix r)
 /*
@@ -248,6 +266,8 @@ Matrix LME_J(Matrix l, Matrix p, Matrix r)
   /* Return the value of the Hessian */
   return J;
 }
+
+/****************************************************************************/
 
 Matrix LME_dp(Matrix l, Matrix p)
 /*
@@ -297,6 +317,8 @@ Matrix LME_dp(Matrix l, Matrix p)
   /* Return the value of the shape function gradient */  
   return dp;  
 }
+
+/****************************************************************************/
 
 ChainPtr LME_Tributary_Nodes(Matrix X_GP, int Elem_GP,
 			     Mesh FEM_Mesh, double Gamma){

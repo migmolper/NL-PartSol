@@ -56,11 +56,13 @@ Matrix GetNodalForces(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int TimeStep)
     /* 5º Evaluate the shape function and its gradient in the GP */
     N_dNdx_GP = Get_Operator("N_dNdx",i,GP_Connect,GP_NumNodes,
 			     MPM_Mesh,FEM_Mesh);
+    /* Asign values to the pointer structures */
     N_GP = MatAssign(1,N_dNdx_GP.N_cols,NAN,N_dNdx_GP.nM[0],NULL);
     dNdx_GP = MatAssign(2,N_dNdx_GP.N_cols,NAN,NULL,
 			(double **)malloc(2*sizeof(double *)));
     dNdx_GP.nM[0] = N_dNdx_GP.nM[1];
     dNdx_GP.nM[1] = N_dNdx_GP.nM[2];
+    /* Free the original table container */
     free(N_dNdx_GP.nM);
            
     /* 6º Get the B_T matrix for the derivates */
@@ -88,7 +90,7 @@ Matrix GetNodalForces(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int TimeStep)
       /* Evaluate the GP function in the node */
       N_GP_I = N_GP.nV[k];
       /* If this node has a null Value of the SHF continue */
-      if(N_GP_I == 0) continue;
+      if(fabs(N_GP_I) <= TOL_zero) continue;
       /* Loop in the dimensions */
       for(int l = 0; l<NumberDimensions; l++){
 	/* 10aº Add the internal forces with 
