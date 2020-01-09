@@ -18,7 +18,7 @@ Matrix Get_Operator(char * Type, int i_GP,
   Matrix X_GP = /* Element coordinates of the Gauss-Point */
     MatAssign(NumberDimensions,1,NAN,NULL,NULL); 
   Matrix lp; /* Just for GIMP -> Particle voxel */
-  double Beta; /* Tunning parameter for LME */
+  Matrix Beta; /* Tunning parameter for LME */
   Matrix Delta_Xip; /* Just for GIMP -> Distance from GP to the nodes */
   Matrix lambda_GP = /* Just for LME/LME -> Lagrange multipliers */
     MatAssign(NumberDimensions,1,NAN,NULL,NULL);
@@ -142,7 +142,7 @@ Matrix Get_Operator(char * Type, int i_GP,
     /* Asign lambda to GP */
     lambda_GP.nV = MPM_Mesh.lambda.nM[i_GP];
     /* Evaluate the shape function and it gradient */
-    Beta = MPM_Mesh.Gamma/(FEM_Mesh.DeltaX*FEM_Mesh.DeltaX);
+    Beta = LME_Beta(Beta, Delta_Xip, MPM_Mesh.Gamma);
     
     /* Eval choises */
     if(strcmp(Type,"N") == 0){

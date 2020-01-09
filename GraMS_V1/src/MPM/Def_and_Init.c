@@ -125,7 +125,7 @@ GaussPoint Define_GP_Mesh(char * FileName, double Density)
     strcpy(MPM_Mesh.lambda.Info,"Lagrange Multiplier");
   }
   /* Tunning parameter (Only LME) */
-  MPM_Mesh.Gamma = 0.8;
+  MPM_Mesh.Gamma = 6.8;
     
   /* Allocate vectorial/tensorial fields */
   switch(NumberDimensions){

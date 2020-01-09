@@ -1,14 +1,14 @@
 /***************************************/
 /******* SIMULATION FILES AND DIR ******/
 /***************************************/
-FEM_FILE_NAME=test/Dyka_GIMP/FEM_Mesh.msh
-MPM_FILE_NAME=test/Dyka_GIMP/MPM_Mesh.msh
-OUTPUT_DIR=test/Dyka_GIMP
+FEM_FILE_NAME=test/Dyka_LME/FEM_Mesh.msh
+MPM_FILE_NAME=test/Dyka_LME/MPM_Mesh.msh
+OUTPUT_DIR=test/Dyka_LME
 
 /***************************************/
 /********** GENERAL PARAMETERS *********/
 /***************************************/
-KIND_ANALYSIS=uGIMP2D%U%2D%VerletLF
+KIND_ANALYSIS=LME%U%2D%VerletLF
 DENSITY=7833
 TIME_STEP=1.e-9
 RESULT_STEP=500
@@ -32,7 +32,7 @@ BCC_NUM 4
 BCC LABEL=BOTTOM FIELD=V DIR={0,0} CURVE={NULL,NULL}
 BCC LABEL=RIGHT FIELD=V DIR={0,0} CURVE={NULL,NULL}
 BCC LABEL=TOP FIELD=V DIR={0,0} CURVE={NULL,NULL}
-BCC LABEL=LEFT FIELD=V DIR={-1,0} CURVE={test/Dyka_GIMP/CurveConstat.txt,NULL}
+BCC LABEL=LEFT FIELD=V DIR={-1,0} CURVE={test/Dyka_LME/CurveConstat.txt,NULL}
 
 /***************************************/
 /**** INITIAL CONDITIONS FOR THE GPs ***/

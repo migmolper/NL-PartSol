@@ -51,8 +51,7 @@ void LME_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
     MatAssign(N_dim,1,NAN,NULL,NULL);
   Matrix Delta_Xip; /* Distance from GP to the nodes */
   Matrix Dist;
-  double Beta = /* Tunning parameter */
-    MPM_Mesh.Gamma/(FEM_Mesh.DeltaX*FEM_Mesh.DeltaX);
+  Matrix Beta; /* Tunning parameter */
   int NumNodes_GP; /* Number of neibourghs */
   int * ListNodes; /* List of nodes */
   int I_iGP; /* Iterator for the neibourghs */
@@ -136,6 +135,9 @@ void LME_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 	}
 	free(ListNodes);
 
+	/* Get the value of beta */
+	Beta = LME_Beta(Beta, Delta_Xip, MPM_Mesh.Gamma);
+
 	/* Ordenate distances  */
 	List_Ord = NULL, List_Dis = NULL;
 	List_Dis = RangeChain(0,NumNodes_GP-1);
@@ -151,21 +153,20 @@ void LME_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 	A.nM[1][1] = Delta_Xip.nM[List[2]][1] - Delta_Xip.nM[List[0]][1];
   
 	/* Fill B */
-	B.nV[0] = -Beta*(pow(Delta_Xip.nM[List[0]][0],2) +
-			 pow(Delta_Xip.nM[List[0]][1],2) -
-			 (pow(Delta_Xip.nM[List[1]][0],2) +
-			  pow(Delta_Xip.nM[List[1]][1],2)));
-	B.nV[1] = -Beta*(pow(Delta_Xip.nM[List[0]][0],2) +
-			 pow(Delta_Xip.nM[List[0]][1],2) -
-			 (pow(Delta_Xip.nM[List[2]][0],2) +
-			  pow(Delta_Xip.nM[List[2]][1],2)));
-
+	B.nV[0] = -Beta.n*(pow(Delta_Xip.nM[List[0]][0],2) +
+			   pow(Delta_Xip.nM[List[0]][1],2) -
+			   (pow(Delta_Xip.nM[List[1]][0],2) +
+			    pow(Delta_Xip.nM[List[1]][1],2)));
+	B.nV[1] = -Beta.n*(pow(Delta_Xip.nM[List[0]][0],2) +
+			   pow(Delta_Xip.nM[List[0]][1],2) -
+			   (pow(Delta_Xip.nM[List[2]][0],2) +
+			    pow(Delta_Xip.nM[List[2]][1],2)));
+	
 	/* Initialize lambda */
 	lambda_GP.nV = MPM_Mesh.lambda.nM[i];
 	lambda_GP = Solve_Linear_Sistem(A,B,lambda_GP);
 	
 	/* Calculate lagrange multipliers with Newton-Rapson */
-	Beta = MPM_Mesh.Gamma/(FEM_Mesh.DeltaX*FEM_Mesh.DeltaX);
 	lambda_GP = LME_lambda_NR(Delta_Xip, lambda_GP, Beta);
 
 	/* Free memory */
@@ -200,7 +201,35 @@ void LME_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 
 /****************************************************************************/
 
-Matrix LME_lambda_NR(Matrix l, Matrix lambda, double Beta)
+Matrix LME_Beta(Matrix Beta, Matrix l, double Gamma)
+/*
+  Function to update the value of beta
+*/
+{
+
+  int N_dim = NumberDimensions;
+  int NumNodes_GP = l.N_rows;
+  double h_aux;
+  double h = 0;
+  
+  /* Get the mean distande */
+  for(int i = 0 ; i<NumNodes_GP ; i++){
+    h_aux = 0;
+    for(int j = 0 ; j<N_dim ; j++){
+      h_aux += l.nM[i][j]*l.nM[i][j];
+    }
+    h += pow(h_aux,0.5);
+  }
+  h = h/NumNodes_GP;
+
+  Beta.n = Gamma/(h*h);
+
+  return Beta;
+}
+
+/****************************************************************************/
+
+Matrix LME_lambda_NR(Matrix l, Matrix lambda, Matrix Beta)
 /*
   Get the lagrange multipliers "lambda" (1 x dim) for the LME 
   shape function. The numerical method for that is the Newton-Rapson.
@@ -216,7 +245,7 @@ Matrix LME_lambda_NR(Matrix l, Matrix lambda, double Beta)
 */
 {
   /* Definition of some parameters */
-  int MaxIter = 300;
+  int MaxIter = 100;
   int Ndim = NumberDimensions;
   int NumIter = 0; /* Iterator counter */
   double norm_r = 10; /* Value of the norm */
@@ -234,8 +263,12 @@ Matrix LME_lambda_NR(Matrix l, Matrix lambda, double Beta)
     /* Get the gradient of log(Z) and its norm */
     r = LME_r(l,p), norm_r = Norm_Mat(r,2);
 
-    /* Get the Hessian of log(Z) */    
+    /* Get the Hessian of log(Z) and update it with +||r||*I 
+       according with Kumar et al. 2019 (CEMAME) */    
     J = LME_J(l,p,r);
+    for(int i = 0 ; i<Ndim ; i++){
+      J.nM[i][i] += norm_r;
+    }
 
     /* Check the conditioning number of the Hessian */
     if (fabs(Cond_Mat(J,TOL_NR)) > 10){
@@ -276,7 +309,7 @@ Matrix LME_lambda_NR(Matrix l, Matrix lambda, double Beta)
 
 /****************************************************************************/
 
-double LME_fa(Matrix la, Matrix lambda, double Beta)
+double LME_fa(Matrix la, Matrix lambda, Matrix Beta)
 /*
   Output :
   -> fa : the function fa that appear in [1] (scalar).
@@ -291,12 +324,12 @@ double LME_fa(Matrix la, Matrix lambda, double Beta)
   double norm_dist = Norm_Mat(la,2);
 
   /* Return the value of fa */
-  return -Beta*norm_dist*norm_dist + Aux.n;
+  return -Beta.n*norm_dist*norm_dist + Aux.n;
 }
 
 /****************************************************************************/
 
-Matrix LME_p(Matrix l, Matrix lambda, double Beta)
+Matrix LME_p(Matrix l, Matrix lambda, Matrix Beta)
 /*
   Get the value of the shape function "pa" (1 x neighborhood) in the
   neighborhood nodes.

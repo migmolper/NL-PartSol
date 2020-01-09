@@ -48,9 +48,10 @@ ChainPtr Tributary_Nodes_GIMP(Matrix, int,
 
 /* LME shape functions */
 void LME_Initialize(GaussPoint, Mesh);
-Matrix LME_lambda_NR(Matrix, Matrix, double);
-double LME_fa(Matrix, Matrix, double);
-Matrix LME_p(Matrix, Matrix, double);
+Matrix LME_Beta(Matrix, Matrix, double);
+Matrix LME_lambda_NR(Matrix, Matrix, Matrix);
+double LME_fa(Matrix, Matrix, Matrix);
+Matrix LME_p(Matrix, Matrix, Matrix);
 Matrix LME_r(Matrix, Matrix);
 Matrix LME_J(Matrix, Matrix, Matrix);
 Matrix LME_dp(Matrix, Matrix);
