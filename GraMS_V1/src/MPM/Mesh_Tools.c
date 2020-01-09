@@ -398,79 +398,78 @@ void GetNodalConnectivity(Mesh FEM_Mesh){
 /*********************************************************************/
 
 
-void GlobalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh){
+/* void GlobalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh){ */
 
-  /* Variables for the GP coordinates */  
-  Matrix X_GC_GP = MatAssign(NumberDimensions,1,NAN,NULL,NULL);
-  Matrix X_EC_GP = MatAssign(NumberDimensions,1,NAN,NULL,NULL);
+/*   /\* Variables for the GP coordinates *\/   */
+/*   Matrix X_GC_GP = MatAssign(NumberDimensions,1,NAN,NULL,NULL); */
+/*   Matrix X_EC_GP = MatAssign(NumberDimensions,1,NAN,NULL,NULL); */
 
-  /* Variables for the poligon */
-  int NumVertex;
-  int * Poligon_Connectivity;
-  Matrix Poligon_Coordinates;
-  ChainPtr ListNodes_I;
+/*   /\* Variables for the poligon *\/ */
+/*   int NumVertex; */
+/*   int * Poligon_Connectivity; */
+/*   Matrix Poligon_Coordinates; */
+/*   ChainPtr ListNodes_I; */
 
-
-  /* 1º Set to zero the active/non-active node, and the GPs in each 
-   element */
-  for(int i = 0 ; i<FEM_Mesh.NumNodesMesh ; i++){
-    FEM_Mesh.ActiveNode[i] = 0;
-  }
+/*   /\* 1º Set to zero the active/non-active node, and the GPs in each  */
+/*    element *\/ */
+/*   for(int i = 0 ; i<FEM_Mesh.NumNodesMesh ; i++){ */
+/*     FEM_Mesh.ActiveNode[i] = 0; */
+/*   } */
   
-  for(int i = 0 ; i<FEM_Mesh.NumElemMesh ; i++){
-    FreeChain(FEM_Mesh.GPsElements[i]);
-    FEM_Mesh.GPsElements[i] = NULL;
-  }
+/*   for(int i = 0 ; i<FEM_Mesh.NumElemMesh ; i++){ */
+/*     FreeChain(FEM_Mesh.GPsElements[i]); */
+/*     FEM_Mesh.GPsElements[i] = NULL; */
+/*   } */
 
-  for(int i = 0 ; i<MPM_Mesh.NumGP ; i++){
+/*   for(int i = 0 ; i<MPM_Mesh.NumGP ; i++){ */
 
-    /* 2º Assign the value to this auxiliar pointer */ 
-    X_GC_GP.nV = MPM_Mesh.Phi.x_GC.nM[i];
+/*     /\* 2º Assign the value to this auxiliar pointer *\/  */
+/*     X_GC_GP.nV = MPM_Mesh.Phi.x_GC.nM[i]; */
 
-    for(int j = 0 ; j<FEM_Mesh.NumElemMesh ; j++){
+/*     for(int j = 0 ; j<FEM_Mesh.NumElemMesh ; j++){ */
 
-      /* 3º Connectivity of the Poligon */
-      NumVertex = FEM_Mesh.NumNodesElem[j];
-      Poligon_Connectivity =
-	ChainToArray(FEM_Mesh.Connectivity[j],NumVertex);
+/*       /\* 3º Connectivity of the Poligon *\/ */
+/*       NumVertex = FEM_Mesh.NumNodesElem[j]; */
+/*       Poligon_Connectivity = */
+/* 	ChainToArray(FEM_Mesh.Connectivity[j],NumVertex); */
 
-      /* 4º Get the coordinates of the element */
-      Poligon_Coordinates =
-	ElemCoordinates(FEM_Mesh,Poligon_Connectivity,NumVertex);
+/*       /\* 4º Get the coordinates of the element *\/ */
+/*       Poligon_Coordinates = */
+/* 	ElemCoordinates(FEM_Mesh,Poligon_Connectivity,NumVertex); */
       
-      /* 5º Check out if the GP is in the Element */
-      if(InOut_Poligon(X_GC_GP,Poligon_Coordinates) == 1){
+/*       /\* 5º Check out if the GP is in the Element *\/ */
+/*       if(InOut_Poligon(X_GC_GP,Poligon_Coordinates) == 1){ */
 
-	/* 6º Asign to the GP a element in the background mesh, just for 
-	   searching porpuses */
-	MPM_Mesh.Element_id[i] = j;
-	PushNodeTop(&FEM_Mesh.GPsElements[j],i);
+/* 	/\* 6º Asign to the GP a element in the background mesh, just for  */
+/* 	   searching porpuses *\/ */
+/* 	MPM_Mesh.Element_id[i] = j; */
+/* 	PushNodeTop(&FEM_Mesh.GPsElements[j],i); */
 
-	/* 7º If the GP is in the element, get its natural coordinates */
-	X_EC_GP.nV = MPM_Mesh.Phi.x_EC.nM[i];
-	Get_X_EC_Q4(X_EC_GP,X_GC_GP,Poligon_Coordinates);
+/* 	/\* 7º If the GP is in the element, get its natural coordinates *\/ */
+/* 	X_EC_GP.nV = MPM_Mesh.Phi.x_EC.nM[i]; */
+/* 	Get_X_EC_Q4(X_EC_GP,X_GC_GP,Poligon_Coordinates); */
 
-	/* 8º Get list of nodes near to the GP */
-	GetListNodesGP(MPM_Mesh,FEM_Mesh,i);
+/* 	/\* 8º Get list of nodes near to the GP *\/ */
+/* 	GetListNodesGP(MPM_Mesh,FEM_Mesh,i); */
 	
-	/* 9º Active those nodes that interact with the GP */
-	ListNodes_I = MPM_Mesh.ListNodes[i];
-	while(ListNodes_I != NULL){
-	  FEM_Mesh.ActiveNode[ListNodes_I->I] += 1;
-	  ListNodes_I = ListNodes_I->next; 
-	}
+/* 	/\* 9º Active those nodes that interact with the GP *\/ */
+/* 	ListNodes_I = MPM_Mesh.ListNodes[i]; */
+/* 	while(ListNodes_I != NULL){ */
+/* 	  FEM_Mesh.ActiveNode[ListNodes_I->I] += 1; */
+/* 	  ListNodes_I = ListNodes_I->next;  */
+/* 	} */
 	
-      }
+/*       } */
       
-      /* 10º Free memory */
-      free(Poligon_Connectivity);
-      FreeMat(Poligon_Coordinates);
+/*       /\* 10º Free memory *\/ */
+/*       free(Poligon_Connectivity); */
+/*       FreeMat(Poligon_Coordinates); */
       
-    } 
+/*     }  */
 
-  }
+/*   } */
   
-}
+/* } */
 
 /*********************************************************************/
 

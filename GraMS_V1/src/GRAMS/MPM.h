@@ -223,7 +223,7 @@ Boundaries GetBoundaryBox(Mesh);
 double GetMinElementSize(Mesh);
 void GetNodalConnectivity(Mesh);
 Matrix ElemCoordinates(Mesh, int *, int);
-void GlobalSearchGaussPoints(GaussPoint, Mesh);
+/* void GlobalSearchGaussPoints(GaussPoint, Mesh); */
 ChainPtr DiscardElements(ChainPtr, Matrix, Matrix, Mesh);
 void LocalSearchGaussPoints(GaussPoint, Mesh);
 void UpdateBeps(GaussPoint, Mesh);

@@ -89,6 +89,7 @@ Matrix Get_Operator(char * Type, int i_GP,
 	  FEM_Mesh.Coordinates.nM[GP_I][l];
       }
     }
+    
     /* Get the GP voxel */
     lp.nV = MPM_Mesh.lp.nM[i_GP];
 

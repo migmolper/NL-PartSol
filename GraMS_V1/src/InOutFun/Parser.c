@@ -23,15 +23,18 @@ int parse(char ** words, char * str, char * delims)
   /* string pointer */
   char * p;
   
-  for (p = strtok (str, delims); p; p = strtok (NULL, delims)) 
-    {
-      words[n++] = strdup (p);    /* allocate/copy */
-      
-      if (n == MAXW) { /* limit reached - realloc/break */
-	fprintf (stderr, "warning: MAXW reached.\n");
-            break;
-      }
-    }
+  for (p = strtok (str, delims); p; p = strtok (NULL, delims))  {
 
+    /* allocate/copy */
+    words[n++] = strdup (p);
+    
+    /* limit reached - realloc/break */    
+    if (n == MAXW) { 
+      fprintf (stderr, "warning: MAXW reached.\n");
+      break;
+    }
+    
+  }
+  
   return n;
 }

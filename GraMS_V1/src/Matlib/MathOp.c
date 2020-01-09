@@ -322,3 +322,42 @@ double Distance(Matrix End, Matrix Init)
 
   return DIST;
 }
+
+/*********************************************************************/
+
+void OrderList(ChainPtr * List1, ChainPtr * List0, Matrix Dist)
+/*
+  Ordenate recursively and array with distances and get a chain 
+  with the positions in orden
+*/
+{
+	
+  /* Iterate while List0 is full of numbers */
+  if((*List0) != NULL){
+    
+    ChainPtr INode = (* List0);
+    double DistMax = 0.0;
+    int I_DistMax;
+
+    /* Loop over the chain */
+    while(INode != NULL){
+      /* Get the max distance of the matrix */
+      if(Dist.nV[INode->I] > DistMax){
+	DistMax = Dist.nV[INode->I];
+	I_DistMax = INode->I;
+      }
+      /* Continue iterating */      
+      INode = INode->next; 
+    }
+    
+    /* Push and Pop node */
+    PushNodeTop(List1,I_DistMax);
+    PopNode(List0,I_DistMax);
+    
+    /* Recursive */
+    OrderList(List1,List0,Dist);
+  }
+  
+}
+
+/*********************************************************************/

@@ -174,7 +174,7 @@ void PopNode (ChainPtr * TopNodePtr, int I_trash)
       if(PrevPtr == NULL){
 	AuxPtr = iPtr->next;
 	free(iPtr);
-	(* TopNodePtr)->next = AuxPtr;
+	(* TopNodePtr) = AuxPtr;
       }
       /* If the node is in the middle or at the end */
       else{
@@ -273,12 +273,12 @@ ChainPtr ChainIntersection(ChainPtr A,ChainPtr B)
 /* A utility function to print a linked list */
 void printList (ChainPtr A) 
 {
-  if(A == NULL){
-      printf(" %s : %s \n",
-	     "Error in printList",
-	     "The chain is empty");
-      exit(0);
-  }
+  /* if(A == NULL){ */
+  /*     printf(" %s : %s \n", */
+  /* 	     "Error in printList", */
+  /* 	     "The chain is empty"); */
+  /*     exit(0); */
+  /* } */
   
   while (A != NULL){ 
     printf ("%d \n", A->I); 

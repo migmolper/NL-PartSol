@@ -1,9 +1,9 @@
 /***************************************/
 /******* SIMULATION FILES AND DIR ******/
 /***************************************/
-FEM_FILE_NAME=test/Sulsky_MPM/FEM_Mesh.msh
-MPM_FILE_NAME=test/Sulsky_MPM/MPM_Mesh.msh
-OUTPUT_DIR=test/Sulsky_MPM
+FEM_FILE_NAME=test/Sulsky_LME/FEM_Mesh.msh
+MPM_FILE_NAME=test/Sulsky_LME/MPM_Mesh.msh
+OUTPUT_DIR=test/Sulsky_LME
 
 /***************************************/
 /********** GENERAL PARAMETERS *********/

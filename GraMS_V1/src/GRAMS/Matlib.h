@@ -84,6 +84,7 @@ int InOut_Poligon(Matrix, Matrix);
 double SignumFunct(double x);
 Matrix SolvePolynomial(Matrix);
 double Distance(Matrix, Matrix);
+void OrderList(ChainPtr *, ChainPtr *, Matrix);
 
 /*******************************************************/
 
