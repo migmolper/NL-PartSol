@@ -1,14 +1,14 @@
 /***************************************/
 /******* SIMULATION FILES AND DIR ******/
 /***************************************/
-FEM_FILE_NAME=test/Traccion_GIMP/FEM_Mesh.msh
-MPM_FILE_NAME=test/Traccion_GIMP/MPM_Mesh.msh
-OUTPUT_DIR=test/Traccion_GIMP
+FEM_FILE_NAME=test/Traccion_LME/FEM_Mesh.msh
+MPM_FILE_NAME=test/Traccion_LME/MPM_Mesh.msh
+OUTPUT_DIR=test/Traccion_LME
 
 /***************************************/
 /********** GENERAL PARAMETERS *********/
 /***************************************/
-KIND_ANALYSIS=uGIMP2D%U%2D%VerletLF
+KIND_ANALYSIS=LME%U%2D%VerletLF
 DENSITY=20
 TIME_STEP=0.000005
 RESULT_STEP=500
@@ -43,7 +43,7 @@ INIT_NUM 0
 /********** LOADS OVER THE GPs *********/
 /***************************************/
 F_LOAD_NUM 2
-F_LOAD_GP DIR={0,1} CURVE={NULL,test/Traccion_GIMP/Load.txt} NUM_NODES=10
+F_LOAD_GP DIR={0,1} CURVE={NULL,test/Traccion_LME/Load.txt} NUM_NODES=10
 199
 179
 159
@@ -54,7 +54,7 @@ F_LOAD_GP DIR={0,1} CURVE={NULL,test/Traccion_GIMP/Load.txt} NUM_NODES=10
 59
 39
 19
-F_LOAD_GP DIR={0,-1} CURVE={NULL,test/Traccion_GIMP/Load.txt} NUM_NODES=10
+F_LOAD_GP DIR={0,-1} CURVE={NULL,test/Traccion_LME/Load.txt} NUM_NODES=10
 180
 160
 140

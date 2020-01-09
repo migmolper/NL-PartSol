@@ -259,18 +259,15 @@ Matrix LME_lambda_NR(Matrix l, Matrix lambda, double Beta)
     /* Update the number of iterations */
     NumIter ++;
     if(NumIter >= MaxIter){
-      /* printf("%s : %s %i/%i %s \n", */
-      /* 	     "Error in LME_lambda", */
-      /* 	     "No convergence in",NumIter,MaxIter,"iterations"); */
-      break;
+      printf("%s : %s %i/%i %s \n",
+      	     "Warning in LME_lambda",
+      	     "No convergence in",NumIter,MaxIter,"iterations");
+      printf("%s : %f \n",
+	     "Error",norm_r);
+      exit(0);
     }
   
   }
-  /* if(NumIter >= 300){ */
-  /*   printf("%s %i %s : %f \n", */
-  /* 	   "Error after",NumIter, */
-  /* 	   "iterations",norm_r); */
-  /* } */
   
   /* Once the stopping criteria is reached, 
      return the lagrange multipliers value */

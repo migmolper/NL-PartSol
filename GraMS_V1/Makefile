@@ -64,7 +64,7 @@ $(EXE): $(OBJS)
 
 #####################################################################
 # Rule for benchmarks
-.PHONY: Debug_MPM Debug_LME Sulsky_MPM Sulsky_GIMP Sulsky_LME Cuadrado_MPM Disco_MPM Disco_GIMP Traccion_MPM Traccion_GIMP Dyka_MPM Dyka_GIMP Brazilian_MPM
+.PHONY: Debug_MPM Debug_LME Sulsky_MPM Sulsky_GIMP Sulsky_LME Cuadrado_MPM Disco_MPM Disco_GIMP Traccion_MPM Traccion_GIMP Traccion_LME Dyka_MPM Dyka_GIMP Brazilian_MPM
 
 # Caso para debugear
 Debug_MPM:
@@ -125,6 +125,11 @@ Traccion_MPM:
 Traccion_GIMP:
 	@echo "**************** Run test case ******************"
 	$ ./$(EXE) $(TESTDIR)/Traccion_GIMP/ejemplo.gdf
+	@echo " "
+	@echo "*************** Test case passed ****************"
+Traccion_LME:
+	@echo "**************** Run test case ******************"
+	$ ./$(EXE) $(TESTDIR)/Traccion_LME/ejemplo.gdf
 	@echo " "
 	@echo "*************** Test case passed ****************"
 
