@@ -145,6 +145,7 @@ typedef struct {
   Matrix lp; /* Voxel shape  */
   /* LME */
   Matrix lambda; /* Lagrange multiplier */
+  Matrix Beta; /* Norm parameter */
   double Gamma;
 
 } GaussPoint;

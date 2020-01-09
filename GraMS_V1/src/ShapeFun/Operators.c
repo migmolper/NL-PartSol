@@ -18,7 +18,8 @@ Matrix Get_Operator(char * Type, int i_GP,
   Matrix X_GP = /* Element coordinates of the Gauss-Point */
     MatAssign(NumberDimensions,1,NAN,NULL,NULL); 
   Matrix lp; /* Just for GIMP -> Particle voxel */
-  Matrix Beta; /* Tunning parameter for LME */
+  Matrix Beta_GP =  /* Tunning parameter for LME */
+    MatAssign(NumberDimensions,1,NAN,NULL,NULL);
   Matrix Delta_Xip; /* Just for GIMP -> Distance from GP to the nodes */
   Matrix lambda_GP = /* Just for LME/LME -> Lagrange multipliers */
     MatAssign(NumberDimensions,1,NAN,NULL,NULL);
@@ -142,18 +143,19 @@ Matrix Get_Operator(char * Type, int i_GP,
     /* Asign lambda to GP */
     lambda_GP.nV = MPM_Mesh.lambda.nM[i_GP];
     /* Evaluate the shape function and it gradient */
-    Beta = LME_Beta(Beta, Delta_Xip, MPM_Mesh.Gamma);
+    Beta_GP.nV = MPM_Mesh.Beta.nM[i_GP];
+    Beta_GP = LME_Beta(Beta_GP, Delta_Xip, MPM_Mesh.Gamma);
     
     /* Eval choises */
     if(strcmp(Type,"N") == 0){
       /* Evaluate the shape function */
-      N_GP = LME_p(Delta_Xip, lambda_GP,Beta);
+      N_GP = LME_p(Delta_Xip, lambda_GP,Beta_GP);
       /* Asign to Operator variable */
       Operator = N_GP;
     }
     else if(strcmp(Type,"dNdx") == 0){
       /* Evaluate the shape function gradient */
-      N_GP = LME_p(Delta_Xip, lambda_GP,Beta);
+      N_GP = LME_p(Delta_Xip, lambda_GP,Beta_GP);
       dNdx_GP = LME_dp(Delta_Xip, N_GP);
       FreeMat(N_GP);
       /* Asign to Operator variable */
@@ -161,7 +163,7 @@ Matrix Get_Operator(char * Type, int i_GP,
     }
     else if(strcmp(Type,"N_dNdx") == 0){
       /* Evaluate the shape function and its gradient */
-      N_GP = LME_p(Delta_Xip, lambda_GP,Beta);
+      N_GP = LME_p(Delta_Xip, lambda_GP,Beta_GP);
       dNdx_GP = LME_dp(Delta_Xip, N_GP);
       /* Asign to Operator variable */
       Operator = MatAssign(3,N_GP.N_cols,NAN,NULL,

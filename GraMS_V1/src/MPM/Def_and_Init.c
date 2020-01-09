@@ -119,10 +119,12 @@ GaussPoint Define_GP_Mesh(char * FileName, double Density)
     MPM_Mesh.lp = MatAllocZ(MPM_Mesh.NumGP,NumberDimensions);
     strcpy(MPM_Mesh.lp.Info,"Voxel lenght GP");
   }
-  /* Lagrange Multipliers (Only LME ) */
+  /* Lagrange Multipliers / Beta (Only LME ) */
   if(strcmp(MPM_Mesh.ShapeFunctionGP,"LME") == 0){
     MPM_Mesh.lambda = MatAllocZ(MPM_Mesh.NumGP,NumberDimensions);
     strcpy(MPM_Mesh.lambda.Info,"Lagrange Multiplier");
+    MPM_Mesh.Beta = MatAllocZ(MPM_Mesh.NumGP,NumberDimensions);
+    strcpy(MPM_Mesh.Beta.Info,"Beta parameter");
   }
   /* Tunning parameter (Only LME) */
   MPM_Mesh.Gamma = 6.8;

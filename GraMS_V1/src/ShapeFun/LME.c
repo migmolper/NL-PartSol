@@ -51,7 +51,8 @@ void LME_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
     MatAssign(N_dim,1,NAN,NULL,NULL);
   Matrix Delta_Xip; /* Distance from GP to the nodes */
   Matrix Dist;
-  Matrix Beta; /* Tunning parameter */
+  Matrix Beta_GP = /* Tunning parameter */
+      MatAssign(N_dim,1,NAN,NULL,NULL);
   int NumNodes_GP; /* Number of neibourghs */
   int * ListNodes; /* List of nodes */
   int I_iGP; /* Iterator for the neibourghs */
@@ -136,7 +137,8 @@ void LME_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 	free(ListNodes);
 
 	/* Get the value of beta */
-	Beta = LME_Beta(Beta, Delta_Xip, MPM_Mesh.Gamma);
+	Beta_GP.nV = MPM_Mesh.Beta.nM[i];
+	Beta_GP = LME_Beta(Beta_GP, Delta_Xip, MPM_Mesh.Gamma);
 
 	/* Ordenate distances  */
 	List_Ord = NULL, List_Dis = NULL;
@@ -153,21 +155,21 @@ void LME_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 	A.nM[1][1] = Delta_Xip.nM[List[2]][1] - Delta_Xip.nM[List[0]][1];
   
 	/* Fill B */
-	B.nV[0] = -Beta.n*(pow(Delta_Xip.nM[List[0]][0],2) +
-			   pow(Delta_Xip.nM[List[0]][1],2) -
-			   (pow(Delta_Xip.nM[List[1]][0],2) +
-			    pow(Delta_Xip.nM[List[1]][1],2)));
-	B.nV[1] = -Beta.n*(pow(Delta_Xip.nM[List[0]][0],2) +
-			   pow(Delta_Xip.nM[List[0]][1],2) -
-			   (pow(Delta_Xip.nM[List[2]][0],2) +
-			    pow(Delta_Xip.nM[List[2]][1],2)));
+	B.nV[0] = -Beta_GP.nV[0]*(pow(Delta_Xip.nM[List[0]][0],2) +
+				 pow(Delta_Xip.nM[List[0]][1],2) -
+				 (pow(Delta_Xip.nM[List[1]][0],2) +
+				  pow(Delta_Xip.nM[List[1]][1],2)));
+	B.nV[1] = -Beta_GP.nV[1]*(pow(Delta_Xip.nM[List[0]][0],2) +
+				  pow(Delta_Xip.nM[List[0]][1],2) -
+				  (pow(Delta_Xip.nM[List[2]][0],2) +
+				   pow(Delta_Xip.nM[List[2]][1],2)));
 	
 	/* Initialize lambda */
 	lambda_GP.nV = MPM_Mesh.lambda.nM[i];
 	lambda_GP = Solve_Linear_Sistem(A,B,lambda_GP);
 	
 	/* Calculate lagrange multipliers with Newton-Rapson */
-	lambda_GP = LME_lambda_NR(Delta_Xip, lambda_GP, Beta);
+	lambda_GP = LME_lambda_NR(Delta_Xip, lambda_GP, Beta_GP);
 
 	/* Free memory */
 	FreeMat(Delta_Xip), FreeChain(List_Ord), free(List);
@@ -222,7 +224,10 @@ Matrix LME_Beta(Matrix Beta, Matrix l, double Gamma)
   }
   h = h/NumNodes_GP;
 
-  Beta.n = Gamma/(h*h);
+  /* Fill Beta */
+  for(int j = 0 ; j<N_dim ; j++){
+    Beta.nV[j] = Gamma/(h*h);
+  }
 
   return Beta;
 }
@@ -319,12 +324,15 @@ double LME_fa(Matrix la, Matrix lambda, Matrix Beta)
   -> Gamma : Tunning parameter (scalar).
 */
 {  
-  /* Get the scalar product the distance and the lagrange multipliers */
-  Matrix Aux = Scalar_prod(lambda,la);
-  double norm_dist = Norm_Mat(la,2);
+  int N_dim = NumberDimensions;
+  double fa = 0;
 
+  for(int i = 0 ; i<N_dim ; i++){
+    fa += - Beta.nV[i]*la.nV[i]*la.nV[i] + la.nV[i]*lambda.nV[i];
+  }
+    
   /* Return the value of fa */
-  return -Beta.n*norm_dist*norm_dist + Aux.n;
+  return fa;
 }
 
 /****************************************************************************/
