@@ -321,18 +321,17 @@ void GetListNodesGP(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int iGP){
     Matrix X_GC_GP = /* Global coordinates */
       MatAssign(NumberDimensions,1,NAN,MPM_Mesh.Phi.x_GC.nM[iGP],NULL);
     Matrix lambda_GP = /* Lagrange multipliers */
-      MatAssign(NumberDimensions,1,NAN,NULL,NULL);
+      MatAssign(NumberDimensions,1,NAN,MPM_Mesh.lambda.nM[iGP],NULL);
     Matrix Delta_Xip; /* Distance from GP to the nodes */
     Matrix Beta_GP = /* Tunning parameter */
-      MatAssign(NumberDimensions,1,NAN,NULL,NULL);
+      MatAssign(NumberDimensions,1,NAN,MPM_Mesh.Beta.nM[iGP],NULL);
     int NumNodes; /* Number of neibourghs */
     int * ListNodes; /* List of nodes */
     int I_iGP; /* Iterator for the neibourghs */
-  
-    /* Calculate connectivity */
+	
+    /* Calculate connectivity with the previous value of beta */
     MPM_Mesh.ListNodes[iGP] =
-      LME_Tributary_Nodes(X_GC_GP,IdxElement,
-			  FEM_Mesh,MPM_Mesh.Gamma);
+      LME_Tributary_Nodes(X_GC_GP,Beta_GP,IdxElement,FEM_Mesh);
     
     /* Calculate number of nodes */
     MPM_Mesh.NumberNodes[iGP] = LenghtChain(MPM_Mesh.ListNodes[iGP]);
@@ -350,12 +349,8 @@ void GetListNodesGP(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int iGP){
       }
     }
     free(ListNodes);
-	  
-    /* Auxiliar lambda to update it */
-    lambda_GP.nV = MPM_Mesh.lambda.nM[iGP];
-    
-    /* Calculate lagrange multipliers with Newton-Rapson */
-    Beta_GP.nV = MPM_Mesh.Beta.nM[iGP];
+	      
+    /* Update Beta and Lambda for each GP */
     Beta_GP = LME_Beta(Beta_GP, Delta_Xip, MPM_Mesh.Gamma);
     lambda_GP = LME_lambda_NR(Delta_Xip, lambda_GP, Beta_GP);
     

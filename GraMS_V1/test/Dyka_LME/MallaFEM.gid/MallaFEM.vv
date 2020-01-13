@@ -1,18 +1,18 @@
-BeginZE /home/migmolper2/Documentos/PHD/PROGRAMACION/CODIGOS/GeHoJerez/GeHoJerez_Beta/test/CasoDyka_Pastor_Blanc/MallaFEM.gid/MallaFEM.vv
-   x -0.00781362969428300858 0.0157481059432029724
-   y 0.00705909309908747673 -0.00696880463510751724
-   z -0.140334397554397583 0.140334397554397583
-   e 0.0736843496561050415
+BeginZE /home/miguelmolinos/GraMS/GraMS_V1/test/Dyka_LME/MallaFEM.gid/MallaFEM.vv
+   x -0.343763679265975952 1.51216387748718262
+   y 0.855323314666748047 -0.255691498517990112
+   z -1.65831232070922852 1.65831232070922852
+   e 0.552770793437957764
    v 0 0 0
    r 1
    m 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1
-   c 0 0 0
+   c 0.5 0 0
    pd 0
    pno 0
    pfo 0
    pf 4
    pv 0
-   NowUse 0
+   NowUse 1
    DrawingType 0
    LightVector 90 90 150 0
    OGLShadow(UseShadows) 0
@@ -29,5 +29,9 @@ BeginZE /home/migmolper2/Documentos/PHD/PROGRAMACION/CODIGOS/GeHoJerez/GeHoJerez
    OGLStereo(EyeDistance) 0.075
    OGLStereo(LeftEyeDistance) 1 0 0 1
    OGLStereo(RightEyeDistance) 0 1 1 1
-EndZE /home/migmolper2/Documentos/PHD/PROGRAMACION/CODIGOS/GeHoJerez/GeHoJerez_Beta/test/CasoDyka_Pastor_Blanc/MallaFEM.gid/MallaFEM.vv
+EndZE /home/miguelmolinos/GraMS/GraMS_V1/test/Dyka_LME/MallaFEM.gid/MallaFEM.vv
+
+BeginMirror
+   Mirror 0 Angle 0.0 AngleFake -15.0 SizeFactor 2.0 HeightOffset 0.25 Color #d9e5f24d Backlight Off EdgeStyle No Type Scene DrawMode Mirror
+EndMirror
 

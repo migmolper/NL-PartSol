@@ -55,7 +55,7 @@ Matrix LME_p(Matrix, Matrix, Matrix);
 Matrix LME_r(Matrix, Matrix);
 Matrix LME_J(Matrix, Matrix, Matrix);
 Matrix LME_dp(Matrix, Matrix);
-ChainPtr LME_Tributary_Nodes(Matrix, int, Mesh, double);
+ChainPtr LME_Tributary_Nodes(Matrix, Matrix, int, Mesh);
 
 /*******************************************************/
 

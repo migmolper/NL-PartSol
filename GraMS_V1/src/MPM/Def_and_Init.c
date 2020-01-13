@@ -127,7 +127,7 @@ GaussPoint Define_GP_Mesh(char * FileName, double Density)
     strcpy(MPM_Mesh.Beta.Info,"Beta parameter");
   }
   /* Tunning parameter (Only LME) */
-  MPM_Mesh.Gamma = 6.8;
+  MPM_Mesh.Gamma = 2;
     
   /* Allocate vectorial/tensorial fields */
   switch(NumberDimensions){

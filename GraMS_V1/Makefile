@@ -155,7 +155,12 @@ Brazilian_MPM:
 	@echo "**************** Run test case ******************"
 	$ ./$(EXE) $(TESTDIR)/Brazilian_MPM/ejemplo.gdf
 	@echo " "
-	@echo "*************** Test case passed ****************"	
+	@echo "*************** Test case passed ****************"
+Brazilian_LME:
+	@echo "**************** Run test case ******************"
+	$ ./$(EXE) $(TESTDIR)/Brazilian_LME/ejemplo.gdf
+	@echo " "
+	@echo "*************** Test case passed ****************"
 
 #####################################################################
 # Rule for installing GeHoJerez

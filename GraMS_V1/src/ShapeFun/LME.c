@@ -81,39 +81,47 @@ void LME_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
     /* 2º Assign the value to this auxiliar pointer */ 
     X_GC_GP.nV = MPM_Mesh.Phi.x_GC.nM[i];
 
+    /* 3º Initialize Beta and assign to an auxiliar pointer */
+    for(int j = 0 ; j<N_dim ; j++){
+      MPM_Mesh.Beta.nM[i][j] =
+	MPM_Mesh.Gamma/(FEM_Mesh.DeltaX*FEM_Mesh.DeltaX);
+    }
+    Beta_GP.nV = MPM_Mesh.Beta.nM[i];
+
+
     for(int j = 0 ; j<FEM_Mesh.NumElemMesh ; j++){
 
-      /* 3º Connectivity of the Poligon */
+      /* 4º Connectivity of the Poligon */
       NumVertex = FEM_Mesh.NumNodesElem[j];
       Poligon_Connectivity =
 	ChainToArray(FEM_Mesh.Connectivity[j],NumVertex);
 
-      /* 4º Get the coordinates of the element */
+      /* 5º Get the coordinates of the element */
       Poligon_Coordinates =
 	ElemCoordinates(FEM_Mesh,Poligon_Connectivity,NumVertex);
       
-      /* 5º Check out if the GP is in the Element */
+      /* 6º Check out if the GP is in the Element */
       if(InOut_Poligon(X_GC_GP,Poligon_Coordinates) == 1){
 
-	/* 6º Asign to the GP a element in the background mesh, just for 
+	/* 7º Asign to the GP a element in the background mesh, just for 
 	   searching porpuses */
 	MPM_Mesh.Element_id[i] = j;
 	PushNodeTop(&FEM_Mesh.GPsElements[j],i);
 
-	/* 7º If the GP is in the element, get its natural coordinates */
+	/* 8º If the GP is in the element, get its natural coordinates */
 	X_EC_GP.nV = MPM_Mesh.Phi.x_EC.nM[i];
 	Get_X_EC_Q4(X_EC_GP,X_GC_GP,Poligon_Coordinates);
 
-	/* 8º Get list of nodes near to the GP */
+	/* 9º Get list of nodes near to the GP */
 	FreeChain(MPM_Mesh.ListNodes[i]);
 	MPM_Mesh.ListNodes[i] = NULL;
  
-	/* Calculate connectivity */
+	/* 10º Calculate connectivity */
 	MPM_Mesh.ListNodes[i] =
-	  LME_Tributary_Nodes(X_GC_GP,MPM_Mesh.Element_id[i],
-			      FEM_Mesh,MPM_Mesh.Gamma);
+	  LME_Tributary_Nodes(X_GC_GP,Beta_GP,
+			      MPM_Mesh.Element_id[i],FEM_Mesh);
     
-	/* Calculate number of nodes */
+	/* 11º Calculate number of nodes */
 	MPM_Mesh.NumberNodes[i] = LenghtChain(MPM_Mesh.ListNodes[i]);
 
 	/* Generate nodal distance list */
@@ -136,8 +144,7 @@ void LME_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 	}
 	free(ListNodes);
 
-	/* Get the value of beta */
-	Beta_GP.nV = MPM_Mesh.Beta.nM[i];
+	/* Update the value of beta */
 	Beta_GP = LME_Beta(Beta_GP, Delta_Xip, MPM_Mesh.Gamma);
 
 	/* Ordenate distances  */
@@ -155,14 +162,10 @@ void LME_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 	A.nM[1][1] = Delta_Xip.nM[List[2]][1] - Delta_Xip.nM[List[0]][1];
   
 	/* Fill B */
-	B.nV[0] = -Beta_GP.nV[0]*(pow(Delta_Xip.nM[List[0]][0],2) +
-				 pow(Delta_Xip.nM[List[0]][1],2) -
-				 (pow(Delta_Xip.nM[List[1]][0],2) +
-				  pow(Delta_Xip.nM[List[1]][1],2)));
-	B.nV[1] = -Beta_GP.nV[1]*(pow(Delta_Xip.nM[List[0]][0],2) +
-				  pow(Delta_Xip.nM[List[0]][1],2) -
-				  (pow(Delta_Xip.nM[List[2]][0],2) +
-				   pow(Delta_Xip.nM[List[2]][1],2)));
+	B.nV[0] = -Beta_GP.nV[0]*(pow(Dist.nV[List[0]],2) -
+				  pow(Dist.nV[List[1]],2));
+	B.nV[1] = -Beta_GP.nV[1]*(pow(Dist.nV[List[0]],2) -
+				  pow(Dist.nV[List[2]],2));
 	
 	/* Initialize lambda */
 	lambda_GP.nV = MPM_Mesh.lambda.nM[i];
@@ -269,7 +272,7 @@ Matrix LME_lambda_NR(Matrix l, Matrix lambda, Matrix Beta)
     r = LME_r(l,p), norm_r = Norm_Mat(r,2);
 
     /* Get the Hessian of log(Z) and update it with +||r||*I 
-       according with Kumar et al. 2019 (CEMAME) */    
+       according with Dennis M.Kochmann et al. 2019 (CMAME) */    
     J = LME_J(l,p,r);
     for(int i = 0 ; i<Ndim ; i++){
       J.nM[i][i] += norm_r;
@@ -498,8 +501,8 @@ Matrix LME_dp(Matrix l, Matrix p)
 
 /****************************************************************************/
 
-ChainPtr LME_Tributary_Nodes(Matrix X_GP, int Elem_GP,
-			     Mesh FEM_Mesh, double Gamma){
+ChainPtr LME_Tributary_Nodes(Matrix X_GP, Matrix Beta,
+			     int Elem_GP, Mesh FEM_Mesh){
 
   Matrix Distance; /* Distance between node and GP */
   Matrix X_I = MatAssign(NumberDimensions,1,NAN,NULL,NULL);
@@ -509,20 +512,15 @@ ChainPtr LME_Tributary_Nodes(Matrix X_GP, int Elem_GP,
   ChainPtr * Table_ElemNodes = NULL;
   ChainPtr Triburary_Elements = NULL;
   ChainPtr iPtr = NULL;
-  int * List_Elements;
-  int * NodesElem;
+  int NumNodesElem = /* Number of nodes of the element */
+    FEM_Mesh.NumNodesElem[Elem_GP];
   int Num_Elem;
-  int NumNodesElem;
-  double Ra;
+  int * List_Elements;
+  int * NodesElem = /* List of nodes of the element */
+    ChainToArray(FEM_Mesh.Connectivity[Elem_GP],NumNodesElem);
+  double Ra = /* Get the search radius */
+    sqrt(-log(TOL_lambda)/Beta.nV[0]);
 
-  /* Get the search radius */
-  Ra = FEM_Mesh.DeltaX*sqrt(-log(TOL_lambda)/Gamma);
-
-  /* Number of nodes of the initial element and
-     list of nodes */
-  NumNodesElem = FEM_Mesh.NumNodesElem[Elem_GP];
-  NodesElem = ChainToArray(FEM_Mesh.Connectivity[Elem_GP],
-			   NumNodesElem);
 
   /* Chain with the tributary elements, this is the list of element near the
      gauss point, including where it is */
