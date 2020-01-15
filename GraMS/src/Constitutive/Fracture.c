@@ -5,8 +5,7 @@
 #include "../GRAMS/grams.h"
 
 Matrix EigenerosionAlgorithm(Matrix ji, Matrix W, Matrix Mass,
-			     int * MatIdx,
-			     Material * MatPro,
+			     int * MatIdx, Material * MatPro,
 			     ChainPtr * Beps, double DeltaX)
 /*
   A.Pandolfi & M.Ortiz.
@@ -14,7 +13,6 @@ Matrix EigenerosionAlgorithm(Matrix ji, Matrix W, Matrix Mass,
   International Journal for Numerical Methods in Enginnering.
   92:694-714, 2012.
   NOTE : Here the notation is the same as in the paper.
-
   Inputs :
   -> Ji_k0 : Matrix with the value of the damage parameter.
   -> Mass : Matrix with the mass of the GP.
@@ -99,3 +97,4 @@ Matrix ComputeDamage(Matrix ji, Matrix W, Matrix Mass,
 }
 
 /*******************************************************/
+

@@ -753,7 +753,7 @@ void UpdateBeps(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
   /* Loop over the GP's and generate the list */
   for(int i = 0 ; i<NumGP ; i++){
     
-    /* Get the search radious */
+    /* Get the search rad */
     Mat_GP = MPM_Mesh.MatIdx[i];
     epsilon = MPM_Mesh.Mat[Mat_GP].Ceps*FEM_Mesh.DeltaX;
         
