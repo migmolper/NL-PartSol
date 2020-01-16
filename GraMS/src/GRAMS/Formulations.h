@@ -3,6 +3,10 @@
 #define TypeDefinitions
 #endif
 
+
+/* Dourant condition */
+double DeltaT_CFL(GaussPoint MPM_Mesh, double h);
+
 /*
   Displacement formulation with a Forward-Euler 
   integration scheme.

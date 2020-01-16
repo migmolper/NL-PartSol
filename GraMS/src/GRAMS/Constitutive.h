@@ -8,9 +8,19 @@
 /*******************************************************/
 
 typedef struct {
+
+  /* Linear elastic material */
+  Matrix (* LE)(Matrix,Matrix,double,double);
   
+} ConstLib;
+
+typedef struct {
+
   /* Constitutive model */
+  ConstLib D; /* Constitutive response */
   char Type [100];
+  /* Initial density */
+  double rho;
   /* Elastic modulus */
   double E;
   /* Poisson ratio */
@@ -43,11 +53,4 @@ Matrix ComputeDamage(Matrix, Matrix, Matrix,
 
 /* Library */
 
-typedef struct { /* Constitutive models */
-
-  /* Linear elastic material */
-  Matrix (* LE)(Matrix,Matrix,double,double);
-  
-} ConstLib;
-
-ConstLib Contitutive(void);
+ConstLib Contitutive(char *);

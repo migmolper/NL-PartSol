@@ -50,25 +50,25 @@ char * Formulation;
 int NumberDimensions;
 int NumberDOF;
 char * TimeIntegration;
+#define NumberMaterials 1
 
 /***************************************/
 /********* Time integration ************/
 /***************************************/
+double CEL; /* Physical celerity */
+double CFL; /* Courant number (0-1) */
 double DeltaTimeStep;
 int NumTimeStep;
 int ResultsTimeStep;
 
+
 /***************************************/
 /********* Numeric Tolerances **********/
 /***************************************/
-#define TOL_lambda 10E-6
+double gamma_LME;
+double TOL_lambda;
 #define TOL_NR 10E-6
 #define TOL_zero 10E-10
-
-/***************************************/
-/******* Constitutive parameters *******/
-/***************************************/
-double Density;
 
 /***************************************/
 /******** Boundary conditions **********/

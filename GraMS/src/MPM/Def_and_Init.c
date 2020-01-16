@@ -40,7 +40,7 @@ Mesh InitializeMesh(char * GDF){
 
 /*********************************************************************/
 
-GaussPoint Define_GP_Mesh(char * FileName, double Density)
+GaussPoint Define_GP_Mesh(char * GDF, char * FileName)
 /*
   
 */
@@ -98,36 +98,32 @@ GaussPoint Define_GP_Mesh(char * FileName, double Density)
     MPM_Mesh.Beps[i] = NULL;  
   }
   
-  /* Define the shapefunction employed by the GP */
-  strcpy(MPM_Mesh.ShapeFunctionGP,ShapeFunctionGP);
-
   /* Coordinates of the GP (Global/Local)*/
   MPM_Mesh.Phi.x_GC = MatAllocZ(MPM_Mesh.NumGP,3);
   strcpy(MPM_Mesh.Phi.x_GC.Info,"Global Coordinates");
 
-  /* Material parameters */
-  /* Number of materials */
-  MPM_Mesh.NumMat = 1;
-  
+  /* Read Material parameters */
+  MPM_Mesh.Mat = GramsMaterials(GDF,MPM_Mesh);
   MPM_Mesh.MatIdx = (int *)malloc(MPM_Mesh.NumGP*sizeof(int));
   for(int i = 0 ; i<MPM_Mesh.NumGP ; i++){
     MPM_Mesh.MatIdx[i] = 0;
   }
 
+  /* Read Shape functions parameters */
+  GramsShapeFun(GDF);
+
   /* Lenght of the Voxel (Only GIMP) */
-  if(strcmp(MPM_Mesh.ShapeFunctionGP,"uGIMP2D") == 0){
+  if(strcmp(ShapeFunctionGP,"uGIMP") == 0){
     MPM_Mesh.lp = MatAllocZ(MPM_Mesh.NumGP,NumberDimensions);
     strcpy(MPM_Mesh.lp.Info,"Voxel lenght GP");
   }
   /* Lagrange Multipliers / Beta (Only LME ) */
-  if(strcmp(MPM_Mesh.ShapeFunctionGP,"LME") == 0){
+  if(strcmp(ShapeFunctionGP,"LME") == 0){
     MPM_Mesh.lambda = MatAllocZ(MPM_Mesh.NumGP,NumberDimensions);
     strcpy(MPM_Mesh.lambda.Info,"Lagrange Multiplier");
     MPM_Mesh.Beta = MatAllocZ(MPM_Mesh.NumGP,NumberDimensions);
     strcpy(MPM_Mesh.Beta.Info,"Beta parameter");
   }
-  /* Tunning parameter (Only LME) */
-  MPM_Mesh.Gamma = 2;
     
   /* Allocate vectorial/tensorial fields */
   switch(NumberDimensions){
@@ -263,9 +259,9 @@ GaussPoint Define_GP_Mesh(char * FileName, double Density)
     FreeMat(Poligon_Coordinates);
     
     /* Assign the mass parameter */
-    MPM_Mesh.Phi.mass.nV[i] = Poligon_Centroid.n*Density;
+    MPM_Mesh.Phi.mass.nV[i] = Poligon_Centroid.n*MPM_Mesh.Mat[0].rho;
     /* Set the initial density */
-    MPM_Mesh.Phi.rho.nV[i] = Density;
+    MPM_Mesh.Phi.rho.nV[i] = MPM_Mesh.Mat[0].rho;
     
     /* Get the coordinates of the centre */
     MPM_Mesh.Phi.x_GC.nM[i][0] = Poligon_Centroid.nV[0];
@@ -302,25 +298,7 @@ GaussPoint InitializeGP(char * GDF, Mesh FEM_Mesh){
   puts("*************************************************");
   puts(" Generate the MPM mesh");
   puts(" \t Defining MPM mesh of GPs ...");
-  MPM_Mesh = Define_GP_Mesh(MPM_MeshFileName,Density);
-  puts(" \t DONE !!!");
-  puts(" \t Initialize shape-functions parameters ...");
-  if(strcmp(MPM_Mesh.ShapeFunctionGP,"MPMQ4") == 0){
-    Q4_Initialize(MPM_Mesh, FEM_Mesh);
-  }
-  if(strcmp(MPM_Mesh.ShapeFunctionGP,"uGIMP2D") == 0){
-    GIMP_Initialize(MPM_Mesh,FEM_Mesh);
-  }
-  if(strcmp(MPM_Mesh.ShapeFunctionGP,"LME") == 0){
-    LME_Initialize(MPM_Mesh,FEM_Mesh);
-  }
-  puts(" \t DONE !!!");
-  puts(" \t Material properties for GPs ...");
-  MPM_Mesh.Mat = InitializeMaterials(GDF,MPM_Mesh);
-  /* MPM_Mesh.Mat = Read_MPM_Materials(GDF,MPM_Mesh); */
-  puts(" \t DONE !!!");
-  puts(" \t Constitutive library for GPs ...");
-  MPM_Mesh.D = Contitutive();
+  MPM_Mesh = Define_GP_Mesh(GDF,MPM_MeshFileName);
   puts(" \t DONE !!!");
   puts(" \t Reading MPM load cases ...");
   MPM_Mesh.F = Read_MPM_LoadCase_ExtForces(GDF,MPM_Mesh);
@@ -328,6 +306,17 @@ GaussPoint InitializeGP(char * GDF, Mesh FEM_Mesh){
   puts(" \t DONE !!!");
   puts(" \t Reading MPM initial conditions ...");  
   Read_MPM_InitVal(GDF,MPM_Mesh);
+  puts(" \t DONE !!!");
+  puts(" \t Initialize shape-functions parameters ...");
+  if(strcmp(ShapeFunctionGP,"MPMQ4") == 0){
+    Q4_Initialize(MPM_Mesh, FEM_Mesh);
+  }
+  if(strcmp(ShapeFunctionGP,"uGIMP") == 0){
+    GIMP_Initialize(MPM_Mesh,FEM_Mesh);
+  }
+  if(strcmp(ShapeFunctionGP,"LME") == 0){
+    LME_Initialize(MPM_Mesh,FEM_Mesh);
+  }
   puts(" \t DONE !!!");
 
   return MPM_Mesh;

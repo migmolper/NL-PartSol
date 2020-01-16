@@ -8,21 +8,23 @@ OUTPUT_DIR=test/Sulsky_GIMP
 /***************************************/
 /********** GENERAL PARAMETERS *********/
 /***************************************/
-KIND_ANALYSIS=uGIMP2D%U%2D%VerletLF
-DENSITY=20
-TIME_STEP=0.00005
+KIND_ANALYSIS=U%2D
 RESULT_STEP=100
-NUM_STEP=4000
 
-/***************************************/
-/********** MATERIAL PROPERTIES ********/
-/***************************************/
-MATERIALS_NUM 1
+GramsShapeFun (Type=uGIMP) {
+}
+
+GramsTime (Type=FE) {
+	CEL=70.71
+	CFL=0.01
+	N=4000
+}
+
 GramsMaterials (id=0) {
                Type=LE
+	       rho=20
 	       E=1.e5
 	       mu=0.3
-	       Fracture=FALSE
 }
 
 /***************************************/

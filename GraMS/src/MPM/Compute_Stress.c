@@ -34,7 +34,7 @@ void UpdateGaussPointStress(GaussPoint MPM_Mesh){
     
     /* 5º Get the new stress tensor (2D Linear elastic) */
     Stress_k1 =
-      MPM_Mesh.D.LE(Strain_k1,Stress_k0,mu,E);
+      MPM_Mesh.Mat[Mat_GP].D.LE(Strain_k1,Stress_k0,mu,E);
 
     /* 6º Get the deformation energy */
     MPM_Mesh.Phi.W.nV[i] =

@@ -46,7 +46,9 @@ void u_ForwardEuler(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
   for(TimeStep = 0 ; TimeStep<NumTimeStep ; TimeStep++ ){
 
     puts("*************************************************");
-    printf("********************** STEP : %i \n",TimeStep);
+    DeltaTimeStep = DeltaT_CFL(MPM_Mesh, FEM_Mesh.DeltaX);
+    printf("***************** STEP : %i , DeltaT : %f \n",
+	   TimeStep,DeltaTimeStep);
     puts("*************************************************");
     
     if(TimeStep % ResultsTimeStep == 0){
@@ -55,7 +57,7 @@ void u_ForwardEuler(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
       puts(" \t WORKING ...");
       WriteVtk_MPM("MPM_VALUES",MPM_Mesh,List_Fields,
 		   (int)TimeStep/ResultsTimeStep);
-      printf(" \t DONE !!! \n");
+      puts(" \t DONE !!! \n");
     }
     
     puts("*************************************************");
@@ -65,13 +67,13 @@ void u_ForwardEuler(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
     Nodal_MASS.nV = Nodal_MASS_MOMENTUM.nM[0];
     Nodal_MOMENTUM.nM[0] = Nodal_MASS_MOMENTUM.nM[1];
     Nodal_MOMENTUM.nM[1] = Nodal_MASS_MOMENTUM.nM[2];
-    printf(" \t DONE !!! \n");
+    puts(" \t DONE !!! \n");
 
     puts("*************************************************");
     puts(" Third step : Set the essential BCC (over P)");
     puts(" \t WORKING ...");
     BCC_Nod_VALUE(FEM_Mesh,Nodal_MOMENTUM,TimeStep);
-    puts(" DONE !!!");
+    puts(" \t DONE !!!");
 
     puts("*************************************************");
     puts(" Four step : Update the particle stress state");

@@ -73,54 +73,31 @@ void Read_GeneralParameters(char * Name_File)
 	  if( strcmp(SimParameter[0],"KIND_ANALYSIS") == 0 ){
 	    nKindAnalysis = parse (KIND_ANALYSIS, SimParameter[1],"%\n");
 
-	    if(nKindAnalysis == 4){
+	    if(nKindAnalysis == 2){
 	      printf(" * Kind of analysis : \n");
-	      /* First parameter of KIND_ANALYSIS : FEM/MPM */
-	      if( strcmp(KIND_ANALYSIS[0],"uGIMP2D") == 0 ){
-		ShapeFunctionGP = KIND_ANALYSIS[0];
-		puts("\t -> Shape functions : Uniform GIMP"); 
-	      }
-	      if(strcmp(KIND_ANALYSIS[0],"MPMQ4") == 0){
-		ShapeFunctionGP = KIND_ANALYSIS[0];
-		puts("\t -> Shape functions : Linear Quadrilateral"); 
-	      }
-	      if(strcmp(KIND_ANALYSIS[0],"LME") == 0){
-		ShapeFunctionGP = KIND_ANALYSIS[0];
-		puts("\t -> Shape functions : Local-maximum Entropy "); 
-	      }
 	      /*************************************************************/
 	      /* Second parameter of KIND_ANALYSIS : U/SIGMA_V */
-	      if( strcmp(KIND_ANALYSIS[1],"SIGMA_V") == 0 ){
-		Formulation = KIND_ANALYSIS[1];
+	      if( strcmp(KIND_ANALYSIS[0],"SIGMA_V") == 0 ){
+		Formulation = KIND_ANALYSIS[0];
 		puts("\t -> Formulation : Sigma-V"); 
 	      }
-	      if( strcmp(KIND_ANALYSIS[1],"U") == 0 ){
-		Formulation = KIND_ANALYSIS[1];
+	      if( strcmp(KIND_ANALYSIS[0],"U") == 0 ){
+		Formulation = KIND_ANALYSIS[0];
 		puts("\t -> Formulation : U");
 	      }
 	      /*************************************************************/
 	      /* Third parameter of KIND_ANALYSIS : 1D/2D/3D */
-	      if( strcmp(KIND_ANALYSIS[2],"1D") == 0 ){
+	      if( strcmp(KIND_ANALYSIS[1],"1D") == 0 ){
 		NumberDimensions = 1;
 		puts("\t -> Number of dimensions : 1D");
 	      }
-	      if( strcmp(KIND_ANALYSIS[2],"2D") == 0 ){
+	      if( strcmp(KIND_ANALYSIS[1],"2D") == 0 ){
 		NumberDimensions = 2;
 		puts("\t -> Number of dimensions : 2D");
 	      }
-	      if( strcmp(KIND_ANALYSIS[2],"3D") == 0 ){
+	      if( strcmp(KIND_ANALYSIS[1],"3D") == 0 ){
 		NumberDimensions = 3;
 		puts("\t -> Number of dimensions : 3D");
-	      }
-	      /*************************************************************/
-	      /* Third parameter of KIND_ANALYSIS : 2STG/VerletLF */
-	      if( strcmp(KIND_ANALYSIS[3],"2STG") == 0 ){
-		TimeIntegration = KIND_ANALYSIS[3];
-		puts("\t -> Integration scheme : Two-Steps Taylor Galerkin");
-	      }
-	      if( strcmp(KIND_ANALYSIS[3],"VerletLF") == 0 ){
-		TimeIntegration = KIND_ANALYSIS[3];
-		puts("\t -> Integration scheme : Forward Euler");
 	      }
 	      /*************************************************************/
 	    }
@@ -128,23 +105,6 @@ void Read_GeneralParameters(char * Name_File)
 	      printf("Error in ReadDatFile() : KIND_ANALYSIS !!! \n");
 	      exit(0);
 	    }
-	  }
-	  /***********************************************************************/
-	  if( strcmp(SimParameter[0],"DENSITY") == 0 ){
-	    Density = atof(SimParameter[1]);
-	    printf(" * Set the value of the density : %f \n",Density);
-	  }
-	  /***********************************************************************/
-	  if( strcmp(SimParameter[0],"TIME_STEP") == 0 ){
-	    DeltaTimeStep = atof(SimParameter[1]);
-	    printf(" * Set increment of time step to : %f \n"
-		   ,DeltaTimeStep);
-	  }
-	  /***********************************************************************/
-	  if( strcmp(SimParameter[0],"NUM_STEP") == 0 ){
-	    NumTimeStep = atoi(SimParameter[1]);
-	    printf(" * Set number of time steps to : %i \n",
-		   NumTimeStep);
 	  }
 	  /***********************************************************************/
 	  if( strcmp(SimParameter[0],"RESULT_STEP") == 0 ){

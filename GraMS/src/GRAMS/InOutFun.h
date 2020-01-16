@@ -29,11 +29,11 @@ Boundaries Set_FEM_BCC(char *, Mesh);
 LoadCase Read_MPM_LoadCase_ExtForces(char *,GaussPoint);
 LoadCase Read_MPM_LoadCase_BodyForces(char *,GaussPoint);
 void Read_MPM_InitVal(char *, GaussPoint);
-Material * Read_MPM_Materials(char *, GaussPoint);
-
 
 /* GraMS Interface */
-Material * InitializeMaterials(char *, GaussPoint);
+void GramsTime(char * );
+Material * GramsMaterials(char *, GaussPoint);
+void GramsShapeFun(char * );
 
 /* ReadGidMesh.c */
 Mesh ReadGidMesh(char *);

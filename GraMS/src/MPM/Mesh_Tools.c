@@ -294,11 +294,11 @@ void GetListNodesGP(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int iGP){
   MPM_Mesh.ListNodes[iGP] = NULL;
   
   /* 6º Assign the new connectivity of the GP */
-  if(strcmp(MPM_Mesh.ShapeFunctionGP,"MPMQ4") == 0){
+  if(strcmp(ShapeFunctionGP,"MPMQ4") == 0){
     /* Asign connectivity */
     MPM_Mesh.ListNodes[iGP] = CopyChain(FEM_Mesh.Connectivity[IdxElement]);
   }
-  else if(strcmp(MPM_Mesh.ShapeFunctionGP,"uGIMP2D") == 0){
+  else if(strcmp(ShapeFunctionGP,"uGIMP") == 0){
 
     /* Auxiliar variables for GIMP */
     Matrix lp; /* Particle voxel */
@@ -315,7 +315,7 @@ void GetListNodesGP(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int iGP){
     MPM_Mesh.NumberNodes[iGP] = LenghtChain(MPM_Mesh.ListNodes[iGP]);
     
   }
-  else if(strcmp(MPM_Mesh.ShapeFunctionGP,"LME") == 0){
+  else if(strcmp(ShapeFunctionGP,"LME") == 0){
     
     /* Auxiliar variables for LME */
     Matrix X_GC_GP = /* Global coordinates */
@@ -351,7 +351,7 @@ void GetListNodesGP(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int iGP){
     free(ListNodes);
 	      
     /* Update Beta and Lambda for each GP */
-    Beta_GP = LME_Beta(Beta_GP, Delta_Xip, MPM_Mesh.Gamma);
+    Beta_GP = LME_Beta(Beta_GP, Delta_Xip, gamma_LME);
     lambda_GP = LME_lambda_NR(Delta_Xip, lambda_GP, Beta_GP);
     
     /* Free memory */

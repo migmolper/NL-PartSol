@@ -31,6 +31,9 @@ int main(int argc, char * argv[])
   /* Read the .gdf file */
   Read_GeneralParameters(argv[1]);
 
+  /* Read time parameters */
+  GramsTime(argv[1]);
+
   /*********************************************************************/
   /********************* DEFINE CALCULUS MESH **************************/
   /*********************************************************************/

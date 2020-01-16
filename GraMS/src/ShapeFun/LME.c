@@ -84,7 +84,7 @@ void LME_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
     /* 3º Initialize Beta and assign to an auxiliar pointer */
     for(int j = 0 ; j<N_dim ; j++){
       MPM_Mesh.Beta.nM[i][j] =
-	MPM_Mesh.Gamma/(FEM_Mesh.DeltaX*FEM_Mesh.DeltaX);
+	gamma_LME/(FEM_Mesh.DeltaX*FEM_Mesh.DeltaX);
     }
     Beta_GP.nV = MPM_Mesh.Beta.nM[i];
 
@@ -145,7 +145,7 @@ void LME_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 	free(ListNodes);
 
 	/* Update the value of beta */
-	Beta_GP = LME_Beta(Beta_GP, Delta_Xip, MPM_Mesh.Gamma);
+	Beta_GP = LME_Beta(Beta_GP, Delta_Xip, gamma_LME);
 
 	/* Ordenate distances  */
 	List_Ord = NULL, List_Dis = NULL;

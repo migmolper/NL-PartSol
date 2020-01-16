@@ -29,7 +29,7 @@ Matrix Get_Operator(char * Type, int i_GP,
   Matrix Operator; /* Matrix with the nodal values of the shape fun 
 		      and its derivatives */
   
-  if(strcmp(MPM_Mesh.ShapeFunctionGP,"MPMQ4") == 0){
+  if(strcmp(ShapeFunctionGP,"MPMQ4") == 0){
     /* Fill the poligon */
     GP_ElemCoord = MatAllocZ(GP_NumNodes,NumberDimensions);
     for(int k = 0; k<GP_NumNodes ; k++){
@@ -78,7 +78,7 @@ Matrix Get_Operator(char * Type, int i_GP,
     /* Free memory */
     FreeMat(GP_ElemCoord);
   }
-  else if(strcmp(MPM_Mesh.ShapeFunctionGP,"uGIMP2D") == 0){
+  else if(strcmp(ShapeFunctionGP,"uGIMP") == 0){
     /* Generate a matrix with the distances to the nodes */
     Delta_Xip = MatAlloc(GP_NumNodes,NumberDimensions);
     for(int k = 0 ; k<GP_NumNodes ; k++){
@@ -129,7 +129,7 @@ Matrix Get_Operator(char * Type, int i_GP,
     /* Free memory */
     FreeMat(Delta_Xip);
   }
-  else if(strcmp(MPM_Mesh.ShapeFunctionGP,"LME") == 0){
+  else if(strcmp(ShapeFunctionGP,"LME") == 0){
     /* Get the distance of the GP to the nodes */
     Delta_Xip = MatAlloc(GP_NumNodes,NumberDimensions);
     for(int k = 0 ; k<GP_NumNodes ; k++){
@@ -144,7 +144,7 @@ Matrix Get_Operator(char * Type, int i_GP,
     lambda_GP.nV = MPM_Mesh.lambda.nM[i_GP];
     /* Evaluate the shape function and it gradient */
     Beta_GP.nV = MPM_Mesh.Beta.nM[i_GP];
-    Beta_GP = LME_Beta(Beta_GP, Delta_Xip, MPM_Mesh.Gamma);
+    Beta_GP = LME_Beta(Beta_GP, Delta_Xip, gamma_LME);
     
     /* Eval choises */
     if(strcmp(Type,"N") == 0){
@@ -187,7 +187,7 @@ Matrix Get_Operator(char * Type, int i_GP,
     printf("%s : %s %s %s \n",
 	   "Error in Get_Operator()",
 	   "The shape-function ",
-	   MPM_Mesh.ShapeFunctionGP,
+	   ShapeFunctionGP,
 	   "is not implemented");      
     exit(0);
   }

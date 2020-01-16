@@ -130,23 +130,19 @@ typedef struct {
   Fields Phi_n0; /* Values from the previous step */
   
   /* Constitutive response */
-  int NumMat; /* Number of diferents materials */
   int * MatIdx; /* Index of the material for each GP */
   Material * Mat; /* Array wit the number of materials */
-  ConstLib D; /* Library with the constitutive responses */
 
   /* Forces over the GP */
   LoadCase F; /* External forces */
   LoadCase B; /* Body forces */
 
   /* Shape functions variables */
-  char ShapeFunctionGP [20];
   /* GIMP */
   Matrix lp; /* Voxel shape  */
   /* LME */
   Matrix lambda; /* Lagrange multiplier */
   Matrix Beta; /* Norm parameter */
-  double Gamma;
 
 } GaussPoint;
 
@@ -183,7 +179,7 @@ typedef struct {
   /*** ELEMENT PROPERTIES ***/
   /* Number of dimensions of the element */
   int Dimension;
-  /* Size of the element (COURANT) */
+  /* Size of the element */
   double DeltaX;
   /* Name of the element */
   char TypeElem [20];
@@ -197,7 +193,7 @@ typedef struct {
 /*******************************************************/
 
 /* Define and initialize both mesh */
-GaussPoint Define_GP_Mesh(char *, double);
+GaussPoint Define_GP_Mesh(char *, char *);
 GaussPoint InitializeGP(char *, Mesh);
 Mesh InitializeMesh(char *);
 
