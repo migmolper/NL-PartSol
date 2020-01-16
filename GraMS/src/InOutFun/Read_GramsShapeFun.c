@@ -87,6 +87,19 @@ void GramsShapeFun(char * Name_File)
 
       /* Look for the curly brace { */
       if(strcmp(kwords[2],"{") == 0){
+	if(strcmp(kwords[3],"}") == 0){
+	  /* Check gamma */
+	  if((strcmp(ShapeFunctionGP,"LME") == 0) &&
+	     (gamma_LME == 0)){
+	    fprintf(stderr,"%s : %s \n",
+		    "Error in GramsShapeFun()",
+		    "gamma parameter required for LME !!!");
+	    exit(0);
+	  }
+	  /* Check number of time steps */
+	  break;
+	}
+	
 	/* Initial line */
 	STATUS_LINE = fgets(Line_Shf_Prop,
 			    sizeof(Line_Shf_Prop),

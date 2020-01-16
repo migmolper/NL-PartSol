@@ -106,28 +106,10 @@ void Read_GeneralParameters(char * Name_File)
 	      exit(0);
 	    }
 	  }
-	  /***********************************************************************/
-	  if( strcmp(SimParameter[0],"RESULT_STEP") == 0 ){
-	    ResultsTimeStep = atoi(SimParameter[1]);
-	    printf(" * Set time steps to generate outputs : %i \n",
-		   ResultsTimeStep);
-	  }
-	  /***********************************************************************/
-	  if( strcmp(SimParameter[0],"FEM_FILE_NAME") == 0 ){
-	    FEM_MeshFileName = SimParameter[1];
-	    printf(" * Set name of the mesh file : \n");
-	    printf("\t -> %s \n",FEM_MeshFileName);
-	  }
 	  if( strcmp(SimParameter[0],"MPM_FILE_NAME") == 0 ){
 	    MPM_MeshFileName = SimParameter[1];
 	    printf(" * Set name of the mesh file : \n");
 	    printf("\t -> %s \n",MPM_MeshFileName);
-	  }
-	  /***********************************************************************/
-	  if( strcmp(SimParameter[0],"OUTPUT_DIR") == 0 ){
-	    OutputDir = SimParameter[1];
-	    printf(" * Set route for the outputs  : \n");
-	    printf("\t -> %s \n",OutputDir); 
 	  }
 	  /***********************************************************************/
 	} /* End if nSimParameter */     

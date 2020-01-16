@@ -23,6 +23,9 @@ Matrix Read_CSV(char *, int);
 /* ReadCurve.c */
 Curve ReadCurve(char *);
 
+/* ReadGidMesh.c */
+Mesh ReadGidMesh(char *);
+
 /* ReadDatFile.c */
 void Read_GeneralParameters(char *);
 Boundaries Set_FEM_BCC(char *, Mesh);
@@ -34,9 +37,8 @@ void Read_MPM_InitVal(char *, GaussPoint);
 void GramsTime(char * );
 Material * GramsMaterials(char *, GaussPoint);
 void GramsShapeFun(char * );
-
-/* ReadGidMesh.c */
-Mesh ReadGidMesh(char *);
+void GramsOutputs(char * );
+Mesh GramsBox(char *);
 
 /* WriteVtk.c */
 void WriteVtk_MPM(char *, GaussPoint, Matrix, int);

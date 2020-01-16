@@ -8,21 +8,24 @@ OUTPUT_DIR=test/Dyka_LME
 /***************************************/
 /********** GENERAL PARAMETERS *********/
 /***************************************/
-KIND_ANALYSIS=LME%U%2D%VerletLF
-DENSITY=7833
-TIME_STEP=1.e-10
+KIND_ANALYSIS=U%2D
 RESULT_STEP=10000
-NUM_STEP=800000
 
-/***************************************/
-/********** MATERIAL PROPERTIES ********/
-/***************************************/
-MATERIALS_NUM 1
+GramsShapeFun (Type=LME) {
+	      gamma=2
+}
+
+GramsTime (Type=FE) {
+	CEL=5053.02
+	CFL=0.6
+	N=800000
+}
+
 GramsMaterials (id=0) {
                Type=LE
+	       rho=7833
 	       E=200.e9
 	       mu=0.0
-	       Fracture=FALSE
 }
 
 /***************************************/
@@ -32,7 +35,7 @@ BCC_NUM 4
 BCC LABEL=BOTTOM FIELD=V DIR={0,0} CURVE={NULL,NULL}
 BCC LABEL=RIGHT FIELD=V DIR={0,0} CURVE={NULL,NULL}
 BCC LABEL=TOP FIELD=V DIR={0,0} CURVE={NULL,NULL}
-BCC LABEL=LEFT FIELD=V DIR={-1,0} CURVE={test/Dyka_LME/CurveConstat.txt,NULL}
+BCC LABEL=LEFT FIELD=V DIR={-1,0} CURVE={test/Dyka_MPM/CurveConstat.txt,NULL}
 
 /***************************************/
 /**** INITIAL CONDITIONS FOR THE GPs ***/

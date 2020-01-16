@@ -108,6 +108,7 @@ GramsMaterials (id=0) {
 
       /* Look for the curly brace { */
       if(strcmp(kwords[2],"{") == 0){
+
 	/* Initial line */
 	STATUS_LINE = fgets(Line_Material_Prop,
 			    sizeof(Line_Material_Prop),

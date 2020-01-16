@@ -8,21 +8,23 @@ OUTPUT_DIR=test/Dyka_MPM
 /***************************************/
 /********** GENERAL PARAMETERS *********/
 /***************************************/
-KIND_ANALYSIS=MPMQ4%U%2D%VerletLF
-DENSITY=7833
-TIME_STEP=1.e-10
+KIND_ANALYSIS=U%2D
 RESULT_STEP=10000
-NUM_STEP=800000
 
-/***************************************/
-/********** MATERIAL PROPERTIES ********/
-/***************************************/
-MATERIALS_NUM 1
+GramsShapeFun (Type=MPMQ4) {
+}
+
+GramsTime (Type=FE) {
+	CEL=5053.02
+	CFL=0.6
+	N=800000
+}
+
 GramsMaterials (id=0) {
                Type=LE
+	       rho=7833
 	       E=200.e9
 	       mu=0.0
-	       Fracture=FALSE
 }
 
 /***************************************/

@@ -19,7 +19,7 @@ Mesh InitializeMesh(char * GDF){
   GetNodalConnectivity(FEM_Mesh);
   puts(" \t DONE !!!");
   puts(" \t Reading FEM boundary conditions ...");
-  FEM_Mesh.Bounds = Set_FEM_BCC(GDF, FEM_Mesh);
+  /* FEM_Mesh.Bounds = Set_FEM_BCC(GDF, FEM_Mesh); */
   puts(" \t DONE !!! ");
 
   /* GPs connectivity of each element */
@@ -318,7 +318,7 @@ GaussPoint InitializeGP(char * GDF, Mesh FEM_Mesh){
     LME_Initialize(MPM_Mesh,FEM_Mesh);
   }
   puts(" \t DONE !!!");
-
+  
   return MPM_Mesh;
 
 }
