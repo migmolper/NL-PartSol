@@ -1,41 +1,55 @@
 /***************************************/
 /******* SIMULATION FILES AND DIR ******/
 /***************************************/
-WORD_DIR=test/Brazilian_MPM
-FEM_FILE_NAME=test/Brazilian_MPM/FEM_Mesh.msh
 MPM_FILE_NAME=test/Brazilian_MPM/MPM_Mesh.msh
-OUTPUT_DIR=test/Brazilian_MPM
 
 /***************************************/
 /********** GENERAL PARAMETERS *********/
 /***************************************/
-KIND_ANALYSIS=uGIMP2D%U%2D%VerletLF
-DENSITY=1540
-TIME_STEP=2e-8
-RESULT_STEP=25
-NUM_STEP=6000
+KIND_ANALYSIS=Velocity%2D
 
-/***************************************/
-/********** MATERIAL PROPERTIES ********/
-/***************************************/
-MATERIALS_NUM 1
-GramsMaterials (id=0) {
-               Type=LE
-	       E=6.e9
-	       mu=0.2
-	       Fracture=TRUE	
-	       Ceps=1.5
-	       Gf=0.00001
+GramsShapeFun (Type=MPMQ4) {
 }
 
-/***************************************/
-/******** COMPUTATIONAL DOMAIN *********/
-/***************************************/
-BCC_NUM 4
-BCC LABEL=TOP FIELD=V DIR={0,0} CURVE={NULL,NULL}
-BCC LABEL=BOTTOM FIELD=V DIR={0,1} CURVE={NULL,test/Brazilian_MPM/CurveConstat.txt}
-BCC LABEL=RIGHT FIELD=V DIR={0,0} CURVE={NULL,NULL}
-BCC LABEL=LEFT FIELD=V DIR={0,0} CURVE={NULL,NULL}
+GramsTime (Type=FE) {
+	CEL=1973.9
+	CFL=0.6
+	N=6000
+}
+
+GramsMaterials (id=0) {
+    Type=LE
+    rho=1540
+    E=6.e9
+    mu=0.2
+    Fracture=TRUE	
+    Ceps=1.5
+    Gf=0.00001
+}
+
+GramsOutputs (i=25) {
+	     DIR=test/Brazilian_MPM	
+}
+
+GramsBox (Type=GID,File=FEM_Mesh.msh) {
+    left = GramsBoundary {
+        BcDirichlet U NULL
+ 	BcDirichlet V NULL	
+    }
+    right = GramsBoundary {
+  	BcDirichlet U NULL
+   	BcDirichlet V NULL	
+    }
+    top = GramsBoundary {
+      	BcDirichlet U NULL
+    	BcDirichlet V NULL
+    }
+    bottom = GramsBoundary {
+  	BcDirichlet U NULL
+    	BcDirichlet V test/Brazilian_MPM/CurveConstat.txt
+    }
+}
+
 
 /***************************************/
 /**** INITIAL CONDITIONS FOR THE GPs ***/

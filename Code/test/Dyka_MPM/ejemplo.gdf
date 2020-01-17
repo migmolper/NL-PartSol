@@ -1,69 +1,62 @@
-/***************************************/
-/******* SIMULATION FILES AND DIR ******/
-/***************************************/
-FEM_FILE_NAME=test/Dyka_MPM/FEM_Mesh.msh
-MPM_FILE_NAME=test/Dyka_MPM/MPM_Mesh.msh
-OUTPUT_DIR=test/Dyka_MPM
 
-/***************************************/
-/********** GENERAL PARAMETERS *********/
-/***************************************/
-KIND_ANALYSIS=U%2D
-RESULT_STEP=10000
 
-GramsShapeFun (Type=MPMQ4) {
+# Background mesh definition
+GramsBox (Type=GID,File=FEM_Mesh.msh) {
+    left=GramsBoundary {
+        BcDirichlet V.x test/Dyka_MPM/CurveConstat.txt
+ 	BcDirichlet V.y NULL	
+    }
+    right=GramsBoundary {
+  	BcDirichlet V.x NULL
+   	BcDirichlet V.y NULL	
+    }
+    top=GramsBoundary {
+      	BcDirichlet V.x NULL
+    	BcDirichlet V.y NULL
+    }
+    bottom=GramsBoundary {
+  	BcDirichlet V.x NULL
+    	BcDirichlet V.y NULL
+    }
 }
 
+# Material points definitions
+GramsSolid2D V (File=MPM_Mesh.msh) {
+
+    # Shape function definition
+    GramsShapeFun (Type=MPMQ4) {
+    }
+
+    # List of materials for the GPs
+    GramsMaterials (id=0) {
+	Type=LE
+	rho=7833
+	E=200.e9
+	mu=0.0
+    }
+
+    # Initial conditions for the GPs
+    GramsInitials (id=0) {
+	Value={5.0,0.0}
+	Nodes=test/Dyka_MPM/ListInit.txt
+    }
+
+    # Loads over the GPs
+    GramsBodyForces (id=0) {}
+    GramsContactForces (id=0) {}
+  
+}
+
+# Outputs 
+GramsOutputs (i=10000) {
+	     DIR=test/Dyka_MPM	
+}
+
+# Time integration
 GramsTime (Type=FE) {
-	CEL=5053.02
-	CFL=0.6
-	N=800000
+    CEL=5053.02
+    CFL=0.6
+    N=800000
 }
 
-GramsMaterials (id=0) {
-               Type=LE
-	       rho=7833
-	       E=200.e9
-	       mu=0.0
-}
 
-/***************************************/
-/********* BOUNDARY CONDITIONS *********/
-/***************************************/
-BCC_NUM 4
-BCC LABEL=BOTTOM FIELD=V DIR={0,0} CURVE={NULL,NULL}
-BCC LABEL=RIGHT FIELD=V DIR={0,0} CURVE={NULL,NULL}
-BCC LABEL=TOP FIELD=V DIR={0,0} CURVE={NULL,NULL}
-BCC LABEL=LEFT FIELD=V DIR={-1,0} CURVE={test/Dyka_MPM/CurveConstat.txt,NULL}
-
-/***************************************/
-/**** INITIAL CONDITIONS FOR THE GPs ***/
-/***************************************/
-INIT_NUM 1
-INIT_GP FIELD=V VALUE={5.0,0.0} NUM_NODES=20
-0
-1
-2
-3
-4
-5
-6
-7
-8
-9
-40
-41
-42
-43
-44
-45
-46
-47
-48
-49
-
-/***************************************/
-/********** LOADS OVER THE GPs *********/
-/***************************************/
-F_LOAD_NUM 0
-B_LOAD_NUM 0

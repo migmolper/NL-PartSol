@@ -11,8 +11,7 @@
 /**********************************************************************/
 
 Mesh GramsBox(char * Name_File)
-/*
-    
+/*    
          top = 2
          *-----*
          |     |
@@ -46,8 +45,6 @@ GramsBox (Type=GID,File=FEM_Mesh.msh) {
 
   /* Simulation file */
   FILE * Sim_dat;
-
-  int Num_Name;
   char * Name_File_Copy = malloc(strlen(Name_File)); 
   char * Name_Parse[MAXW] = {NULL};
   char Route_Mesh[MAXC] = {0};
@@ -55,7 +52,6 @@ GramsBox (Type=GID,File=FEM_Mesh.msh) {
   /* Index of the material */
   int Aux_Mesh_id;
   char * Parse_Mesh_id[MAXW] = {NULL};
-  int Mesh_id;
 
   /* Parser num chars */
   int Num_words_line;
@@ -72,16 +68,11 @@ GramsBox (Type=GID,File=FEM_Mesh.msh) {
   char Line_BCC[MAXC] = {0};
   char * Parse_BCC[MAXW] = {NULL};
 
-  /* Special variables for line-reading */
-  char line[MAXC] = {0}; /* Variable for reading the lines in the files */
-  char * kwords[MAXW] = {NULL}; /* Variable to store the parser of a line */
-  int nkwords; /* Number of element in the line , just for check */
-
   /* Auxiliar variable for status */
   char * STATUS_LINE;
 
   /* Auxiliar table to store the boundaries */
-  int * NodesBound_aux;
+  int * ListNodesBound;
   int * CounterNodesBound;
   int NumNodesBound = 0;
   
@@ -98,6 +89,7 @@ GramsBox (Type=GID,File=FEM_Mesh.msh) {
   
   /* Boundaries labels */
   char * BoundLabels [4] = {"BOTTOM", "RIGHT", "TOP", "LEFT"};
+  int IndexBoundary;
   
 
   /* Initial message */
@@ -116,11 +108,12 @@ GramsBox (Type=GID,File=FEM_Mesh.msh) {
     exit(0);
   }
 
-  /* Read the file line by line */
+  /* Read next line and check GramsBoundary  */
   while( fgets(Line_GramsBox, sizeof(Line_GramsBox), Sim_dat) != NULL ){
-
+    
     /* Read the line with the space as separators */
     Num_words_line = parse (Parse_GramsBox, Line_GramsBox," \n\t");
+    
     if (Num_words_line < 0){
       fprintf(stderr,"%s : %s \n",
 	     "Error in GramsBox ()",
@@ -131,8 +124,9 @@ GramsBox (Type=GID,File=FEM_Mesh.msh) {
     if (strcmp(Parse_GramsBox[0],"GramsBox") == 0 ){
 
       /* Read the index of the material */
+      printf("%s %s %s \n",
+	     Parse_GramsBox[0],Parse_GramsBox[1],Parse_GramsBox[2]);
       Num_words_line = parse (Parse_Mesh_id, Parse_GramsBox[1],"(=,)");
-      Mesh_id = atoi(Parse_Mesh_id[1]);
       if( (Num_words_line != 4) ||
 	  (strcmp(Parse_Mesh_id[0],"Type") != 0) ||
 	  (strcmp(Parse_Mesh_id[2],"File") != 0) ){
@@ -153,7 +147,6 @@ GramsBox (Type=GID,File=FEM_Mesh.msh) {
 	strcat(Route_Mesh,FEM_MeshFileName);
 	free(Name_File_Copy);	  
 	FEM_Mesh = ReadGidMesh(Route_Mesh);
-	exit(0);
       }
       else{
 	fprintf(stderr,"%s : %s %s \n",
@@ -186,7 +179,7 @@ GramsBox (Type=GID,File=FEM_Mesh.msh) {
   
       /* Asign the number of boundaries for a square domain */
       FEM_Mesh.Bounds.NumBounds = 4;
-      FEM_Mesh.Bounds.BCC_i = (Load *)Allocate_Array(1,sizeof(Load));
+      FEM_Mesh.Bounds.BCC_i = (Load *)Allocate_Array(4,sizeof(Load));
 
       /* Fill some parameters */
       for(int i = 0 ; i<FEM_Mesh.Bounds.NumBounds ; i++){
@@ -197,10 +190,8 @@ GramsBox (Type=GID,File=FEM_Mesh.msh) {
       }
 
       /* Allocate an array of zeros to assign a 1 to those nodes in the boundary */
-      NodesBound_aux =
-	(int *)Allocate_ArrayZ(FEM_Mesh.NumNodesMesh,sizeof(int));
-      CounterNodesBound =
-	(int *)Allocate_ArrayZ(4,sizeof(int));
+      CounterNodesBound = (int *)Allocate_ArrayZ(4,sizeof(int));
+      ListNodesBound = (int *)Allocate_ArrayZ(FEM_Mesh.NumNodesMesh,sizeof(int));
   
       /* Iterate over the nodes to fin the nodes in the boundary */
 
@@ -234,14 +225,14 @@ GramsBox (Type=GID,File=FEM_Mesh.msh) {
 	
 	/* Add this element to the boundary */
 	if (Repeat_Nod < 4){
-	  NodesBound_aux[i] = 1;
+	  ListNodesBound[i] = 1;
 	  NumNodesBound++;
 	}
       }
       
-      /* Count the number of nodes in each boundarie */
+      /* Count the number of nodes in each boundary */
       for(int i = 0 ; i<FEM_Mesh.NumNodesMesh ; i++){
-	if(NodesBound_aux[i] == 1){
+	if(ListNodesBound[i] == 1){
 
 	  if(FEM_Mesh.Coordinates.nM[i][1] == MIN_Y){
 	    /* Count number of nodes in the bottom */
@@ -265,7 +256,9 @@ GramsBox (Type=GID,File=FEM_Mesh.msh) {
       
       /* Allocate the arrays with the boundary nodes */
       for(int i = 0 ; i<FEM_Mesh.Bounds.NumBounds ; i++){
+	/* Number of nodes in each boundary */
 	FEM_Mesh.Bounds.BCC_i[i].NumNodes = CounterNodesBound[i];
+	/* List of nodes of each boundary */
 	FEM_Mesh.Bounds.BCC_i[i].Nodes =
 	  (int *)Allocate_ArrayZ(CounterNodesBound[i],sizeof(int));
       }
@@ -273,9 +266,9 @@ GramsBox (Type=GID,File=FEM_Mesh.msh) {
       /* Free data */
       free(CounterNodesBound);
       
-      /* Fill the arrays  */
+      /* Fill the arrays with the nodes */
       for(int i = 0 ; i<FEM_Mesh.NumNodesMesh ; i++){
-	if(NodesBound_aux[i] == 1){
+	if(ListNodesBound[i] == 1){
 
 	  if(FEM_Mesh.Coordinates.nM[i][1] == MIN_Y){
 	    FEM_Mesh.Bounds.BCC_i[0].Nodes[aux_BOTTOM] = i;
@@ -297,13 +290,32 @@ GramsBox (Type=GID,File=FEM_Mesh.msh) {
       }
     
       /* Free data */ 
-      free(NodesBound_aux);
+      free(ListNodesBound);
 
-      /* Keep reading */
-      exit(0);
-      
-      /* Look for the curly brace { */
+      /* Allocate variable for the BCCs */
+      if(strcmp(Formulation,"Velocity") == 0){
+	for(int i = 0 ; i<FEM_Mesh.Bounds.NumBounds ; i++){
+	  /* Curve for each dimension */
+	  FEM_Mesh.Bounds.BCC_i[i].Value =
+	    (Curve *)Allocate_Array(NumberDOF,sizeof(Curve));
+	  /* Name of the BCC */
+	  strcpy(FEM_Mesh.Bounds.BCC_i[i].Info,"Velocity");
+	  /* Number of dimensions of the BCC */
+	  FEM_Mesh.Bounds.BCC_i[i].Dim = NumberDOF;
+	  /* Direction of the BCC */
+	  FEM_Mesh.Bounds.BCC_i[i].Dir =
+	    (int *)Allocate_ArrayZ(NumberDOF,sizeof(int));
+	}
+      }
+
+      /* Fill boundary conditions */
       if(strcmp(Parse_GramsBox[2],"{") == 0){
+	
+	if((Num_words_line == 4) &&
+	   (strcmp(Parse_GramsBox[3],"}") != 0)){  
+	  /* No boundary conditions applied */
+	  break;
+	}
 
 	/* Initial line */
 	STATUS_LINE =
@@ -313,23 +325,39 @@ GramsBox (Type=GID,File=FEM_Mesh.msh) {
 		   "Error in GramsBox()",
 		   "Unspected EOF !!!");
 	    exit(0);	
-	}
+	}	
 	Num_words_line =
 	  parse(Parse_GramsBoundary,Line_GramsBoundary," =\t\n");
-	if((strcmp(Parse_GramsBox[3],"}") == 0) ||
-	   (strcmp(Parse_GramsBoundary[0],"}") == 0)){
+	if(strcmp(Parse_GramsBoundary[0],"}") == 0){  
 	  /* No boundary conditions applied */
+	  exit(0);
 	  break;
 	}
+
 	while(STATUS_LINE != NULL){
 
-	  if((Num_words_line == 4) &&
-	     (strcmp(Parse_GramsBox[1],"GramsBoundary") == 0)){ 
-	  }
-
- 	  if((strcmp(Parse_GramsBoundary[0],"left") == 0) &&
-	     (strcmp(Parse_GramsBoundary[1],"GramsBoundary") == 0) &&
+ 	  if((strcmp(Parse_GramsBoundary[1],"GramsBoundary") == 0) &&
 	     (strcmp(Parse_GramsBoundary[2],"{") == 0)){
+    
+	    /* Asign index for the boundary label */
+	    if (strcmp(Parse_GramsBoundary[0],"left") == 0){
+	      IndexBoundary = 3;
+	    }
+	    else if (strcmp(Parse_GramsBoundary[0],"top") == 0){
+	      IndexBoundary = 2;
+	    }
+	    else if (strcmp(Parse_GramsBoundary[0],"right") == 0){
+	      IndexBoundary = 1;
+	    }
+	    else if (strcmp(Parse_GramsBoundary[0],"bottom") == 0){
+	      IndexBoundary = 0;
+	    }
+	    else {
+	      fprintf(stderr,"%s : %s \n",
+		      "Error in GramsBox()",
+		      "Invalid boundary label (left, right, top, bottom) !!!");
+	      exit(0);
+	    }
 
 	    STATUS_LINE =
 	      fgets(Line_BCC,sizeof(Line_BCC),Sim_dat);
@@ -340,52 +368,81 @@ GramsBox (Type=GID,File=FEM_Mesh.msh) {
 	      exit(0);	
 	    }
 	    Aux_Mesh_id = parse(Parse_BCC,Line_BCC," =\t\n");
-
-	    strcpy(FEM_Mesh.Bounds.BCC_i[3].Info,Parse_BCC[1]);
-
-	    nparam = parse (param,kwords[3],"={,}\n");
-	    if( (strcmp(param[0],"DIR") == 0 ) && (nparam >= 2) ){
-	      /* Number of dimensions of the BCC */
-	      FEM_BCC.BCC_i[IndexBoundary].Dim = nparam - 1;
-	      /* Direction of the BCC */
-	      FEM_BCC.BCC_i[IndexBoundary].Dir =
-		(int *)Allocate_Array(FEM_BCC.BCC_i[IndexBoundary].Dim,sizeof(int));
-	      /* Fill the direction of the BCC */
-	      for(int j = 0 ; j<FEM_BCC.BCC_i[IndexBoundary].Dim ; j++){
-		FEM_BCC.BCC_i[IndexBoundary].Dir[j] = atoi(param[j+1]);
-	      }
+	    if(Aux_Mesh_id != 3){
+	      fprintf(stderr,"%s : %s \n",
+		      "Error in GramsBox()",
+		      "Invalid format for the BCCs !!!");
+	      exit(0);	
 	    }
 
-	    /* Read the curve to impose the boundary condition */
-	    nparam = parse (param,kwords[4],"={,}\n");
-	    if( (strcmp(param[0],"CURVE") == 0) || (nparam >= 2) ){
+	    while(STATUS_LINE != NULL){
 
-	      /* Alocate the table of curves */
-	      FEM_BCC.BCC_i[IndexBoundary].Value =
-		(Curve *)Allocate_Array(FEM_BCC.BCC_i[IndexBoundary].Dim,
-					sizeof(Curve));
-	      /* Fill the curve table */
-	      for(int j = 0 ; j<FEM_BCC.BCC_i[IndexBoundary].Dim ; j++){
-		if(strcmp(param[j+1],"NULL") != 0)
-		  FEM_BCC.BCC_i[IndexBoundary].Value[j] = ReadCurve(param[j+1]);
+	      /* Velocity boundary condition */
+	      if(strcmp(Formulation,"Velocity") == 0){
+		if(strcmp(Parse_BCC[1],"V.x") == 0){
+		  /* Fill the direction of the BCC */
+		  FEM_Mesh.Bounds.BCC_i[IndexBoundary].Dir[0] = 1;
+		  /* Read the curve to impose the boundary condition */
+		  if(strcmp(Parse_BCC[2],"NULL") != 0){
+		    FEM_Mesh.Bounds.BCC_i[IndexBoundary].Value[0] =
+		      ReadCurve(Parse_BCC[2]);
+		  }
+		  else{
+		    FEM_Mesh.Bounds.BCC_i[IndexBoundary].Dir[0] = 0;
+		  }
+		}
+		else if(strcmp(Parse_BCC[1],"V.y") == 0){
+		  /* Fill the direction of the BCC */
+		  FEM_Mesh.Bounds.BCC_i[IndexBoundary].Dir[1] = 1;
+		  /* Read the curve to impose the boundary condition */
+		  if(strcmp(Parse_BCC[2],"NULL") != 0){
+		    FEM_Mesh.Bounds.BCC_i[IndexBoundary].Value[1] =
+		      ReadCurve(Parse_BCC[2]);
+		  }
+		  else{
+		    FEM_Mesh.Bounds.BCC_i[IndexBoundary].Dir[1] = 0;
+		  }
+		}
+		else if(strcmp(Parse_BCC[1],"V.z") == 0){
+		  /* Fill the direction of the BCC */
+		  FEM_Mesh.Bounds.BCC_i[IndexBoundary].Dir[2] = 1;
+		  /* Read the curve to impose the boundary condition */
+		  if(strcmp(Parse_BCC[2],"NULL") != 0){
+		    FEM_Mesh.Bounds.BCC_i[IndexBoundary].Value[2] =
+		      ReadCurve(Parse_BCC[2]);
+		  }
+		  else{
+		    FEM_Mesh.Bounds.BCC_i[IndexBoundary].Dir[2] = 0;
+		  }
+		}
+		else{
+		  fprintf(stderr,"%s : %s \n",
+			  "Error in GramsBox()", "Velocity BCC -> U, V, W");
+		  exit(0);
+		}
 	      }
+	      else{
+		fprintf(stderr,"%s : %s \n",
+			"Error in GramsBox()",
+			"Non formulation defined");
+		exit(0);
+	      }
+
+	      /* Read next line and check BCC */
+	      /* Initalize parser */
+	      for(int i = 0 ; i<MAXW ; i++){
+		Parse_BCC[i] = "\0";
+	      }
+	      STATUS_LINE = fgets(Line_BCC,
+				  sizeof(Line_BCC),
+				  Sim_dat);
+	      Aux_Mesh_id = parse(Parse_BCC,Line_BCC," =\t\n");
+	      if(strcmp(Parse_BCC[0],"}") == 0){
+		break;
+	      }
+
 	    }
 	    
-	  }
-	  else if((strcmp(Parse_GramsBoundary[0],"right") == 0) &&
-		  (strcmp(Parse_GramsBoundary[1],"GramsBoundary") == 0) &&
-		  (strcmp(Parse_GramsBoundary[2],"{") == 0)){
-	    exit(0);
-	  }
-	  else if((strcmp(Parse_GramsBoundary[0],"top") == 0) &&
-		  (strcmp(Parse_GramsBoundary[1],"GramsBoundary") == 0) &&
-		  (strcmp(Parse_GramsBoundary[2],"{") == 0)){
-	    exit(0);
-	  }
-	  else if((strcmp(Parse_GramsBoundary[0],"bottom") == 0) &&
-		  (strcmp(Parse_GramsBoundary[1],"GramsBoundary") == 0) &&
-		  (strcmp(Parse_GramsBoundary[2],"{") == 0)){
-	    exit(0);
 	  }
 	  else{
 	    fprintf(stderr,"%s : %s \n",
@@ -401,36 +458,47 @@ GramsBox (Type=GID,File=FEM_Mesh.msh) {
 		    "}");
 	    exit(0);
 	  }
-	  /* Read next line and check */
-	  STATUS_LINE = fgets(Line_GramsBox,
-			      sizeof(Line_GramsBox),
+
+	  /* Read next line and check GramsBoundary */
+	  /* Initalize parser */
+	  for(int i = 0 ; i<MAXW ; i++){
+	    Parse_GramsBoundary[i] = "\0";
+	  }
+	  STATUS_LINE = fgets(Line_GramsBoundary,
+			      sizeof(Line_GramsBoundary),
 			      Sim_dat);
-	  Aux_Mesh_id = parse(Parse_GramsBox,Line_GramsBox," =\t\n");
-	  if(strcmp(Parse_GramsBox[0],"}") == 0){
+	  Aux_Mesh_id = parse(Parse_GramsBoundary,Line_GramsBoundary," =\t\n");
+	  if(strcmp(Parse_GramsBoundary[0],"}") == 0){
 	    break;
 	  }
+	  
 	}
 	if(STATUS_LINE == NULL){
-	fprintf(stderr,"%s : %s \n",
-	       "Error in GramsBox()",
-	       "you forget to put a } !!!");
-	exit(0);	  
+	  fprintf(stderr,"%s : %s \n",
+		  "Error in GramsBox()",
+		  "you forget to put a } !!!");
+	  exit(0);	  
 	}
 
 	if(strcmp(Parse_GramsBox[0],"}") == 0){
-
 	  /* Check boundary conditions properties */	  
-	  break;
-	  
+	  break;	  
 	}
+	
       }
       else{
 	fprintf(stderr,"%s : %s \n",
 	       "Error in GramsBox()",
-	       "Use this format -> GramsBox (Type=srt,File=str)  { !!!");
+	       "No boundary conditions readed !!!");
 	exit(0);
       }
     }
+
+    /* Initalize parser */
+    for(int i = 0 ; i<MAXW ; i++){
+      Parse_GramsBox[i] = "\0";
+    }
+    
   }
     
   /* Close .dat file */

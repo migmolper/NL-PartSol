@@ -1,15 +1,12 @@
 /***************************************/
 /******* SIMULATION FILES AND DIR ******/
 /***************************************/
-FEM_FILE_NAME=test/Dyka_LME/FEM_Mesh.msh
 MPM_FILE_NAME=test/Dyka_LME/MPM_Mesh.msh
-OUTPUT_DIR=test/Dyka_LME
 
 /***************************************/
 /********** GENERAL PARAMETERS *********/
 /***************************************/
-KIND_ANALYSIS=U%2D
-RESULT_STEP=10000
+KIND_ANALYSIS=Velocity%2D
 
 GramsShapeFun (Type=LME) {
 	      gamma=2
@@ -28,14 +25,28 @@ GramsMaterials (id=0) {
 	       mu=0.0
 }
 
-/***************************************/
-/********* BOUNDARY CONDITIONS *********/
-/***************************************/
-BCC_NUM 4
-BCC LABEL=BOTTOM FIELD=V DIR={0,0} CURVE={NULL,NULL}
-BCC LABEL=RIGHT FIELD=V DIR={0,0} CURVE={NULL,NULL}
-BCC LABEL=TOP FIELD=V DIR={0,0} CURVE={NULL,NULL}
-BCC LABEL=LEFT FIELD=V DIR={-1,0} CURVE={test/Dyka_MPM/CurveConstat.txt,NULL}
+GramsOutputs (i=10000) {
+	     DIR=test/Dyka_LME	
+}
+
+GramsBox (Type=GID,File=FEM_Mesh.msh) {
+    left = GramsBoundary {
+        BcDirichlet V.x test/Dyka_LME/CurveConstat.txt
+ 	BcDirichlet V.y NULL	
+    }
+    right = GramsBoundary {
+  	BcDirichlet V.x NULL
+   	BcDirichlet V.y NULL	
+    }
+    top = GramsBoundary {
+      	BcDirichlet V.x NULL
+    	BcDirichlet V.y NULL
+    }
+    bottom = GramsBoundary {
+  	BcDirichlet V.x NULL
+    	BcDirichlet V.y NULL
+    }
+}
 
 /***************************************/
 /**** INITIAL CONDITIONS FOR THE GPs ***/

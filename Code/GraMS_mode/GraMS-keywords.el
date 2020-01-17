@@ -1,23 +1,26 @@
-(defvar GraMS-abbrevs '(
-		      "GramsShapeFun"
-		      "GramsTime"
-		      "GramsMaterials"
-		      "GramsOutputs"
-		      "GramsBox"
-		      "GramsBoundary"
-		      "BcDirichlet"
-		      "left"
-		      "right"
-		      "top"
-		      "bottom"
-		      "MPMQ4"
-		      "LME"
-		      "uGIMP"
-		      )
-  "GraMS keywords.")
+(defvar GraMS-functions '(
+			"GramsShapeFun"
+			"GramsTime"
+			"GramsMaterials"
+			"GramsBoundary"
+			"GramsBodyForces"
+			"GramsContactForces"
+			"GramsInitials"
+			)
+  "GraMS functions.")
 (defvar GraMS-modules '(
-		      "Velocity"
-		      "Stress-Velocity"
-		      )
+			"GramsSolid2D"
+			"GramsSolid3D"
+			"GramsBox"
+			"GramsTime"
+			"GramsOutputs"
+			)
   "GraMS modules.")
+(defvar GraMS-formulations '(
+			     "V"
+			     "V-P"
+			     "V-Pw"
+			     "Sigma-V"
+			     )
+  "GraMS formulations.")
 (provide 'GraMS-keywords)

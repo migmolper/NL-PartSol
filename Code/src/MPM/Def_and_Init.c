@@ -6,41 +6,7 @@
 
 /*********************************************************************/
 
-Mesh InitializeMesh(char * GDF){
-
-  Mesh FEM_Mesh;
-
-  puts("*************************************************");
-  puts(" Generate the MPM mesh");
-  puts(" \t Defining background FEM mesh ...");
-  FEM_Mesh = ReadGidMesh(FEM_MeshFileName);
-  puts(" \t DONE !!!");  
-  puts(" \t Searching neighbours elements for each node ...");
-  GetNodalConnectivity(FEM_Mesh);
-  puts(" \t DONE !!!");
-  puts(" \t Reading FEM boundary conditions ...");
-  /* FEM_Mesh.Bounds = Set_FEM_BCC(GDF, FEM_Mesh); */
-  puts(" \t DONE !!! ");
-
-  /* GPs connectivity of each element */
-  FEM_Mesh.GPsElements =
-    (ChainPtr *)malloc(FEM_Mesh.NumElemMesh*sizeof(ChainPtr));
-  if(FEM_Mesh.GPsElements == NULL){
-    printf("%s : %s \n",
-	   "GetNodalConnectivity",
-	   "Memory error for GPsElements");
-    exit(0);
-  }
-  for(int i = 0 ; i<FEM_Mesh.NumElemMesh ; i++){
-    FEM_Mesh.GPsElements[i] = NULL;
-  }  
-
-  return FEM_Mesh;
-}
-
-/*********************************************************************/
-
-GaussPoint Define_GP_Mesh(char * GDF, char * FileName)
+GaussPoint GramsSolid2D(char * GDF, char * FileName)
 /*
   
 */
@@ -276,6 +242,15 @@ GaussPoint Define_GP_Mesh(char * GDF, char * FileName)
   }
 
 
+  /* Read initial values */
+  Read_MPM_InitVal(GDF,MPM_Mesh);
+
+
+  /* Read external and internal forces */
+  MPM_Mesh.F = Read_MPM_LoadCase_ExtForces(GDF,MPM_Mesh);
+  MPM_Mesh.B = Read_MPM_LoadCase_BodyForces(GDF,MPM_Mesh);
+
+
   /* Free the input data */
   FreeMat(MPM_GID_Mesh.Coordinates);
   free(MPM_GID_Mesh.Connectivity);
@@ -289,36 +264,36 @@ GaussPoint Define_GP_Mesh(char * GDF, char * FileName)
   return MPM_Mesh;
 }
 
-/*********************************************************************/
+/* /\*********************************************************************\/ */
 
-GaussPoint InitializeGP(char * GDF, Mesh FEM_Mesh){
+/* GaussPoint InitializeGP(char * GDF, Mesh FEM_Mesh){ */
 
-  GaussPoint MPM_Mesh;
+/*   GaussPoint MPM_Mesh; */
   
-  puts("*************************************************");
-  puts(" Generate the MPM mesh");
-  puts(" \t Defining MPM mesh of GPs ...");
-  MPM_Mesh = Define_GP_Mesh(GDF,MPM_MeshFileName);
-  puts(" \t DONE !!!");
-  puts(" \t Reading MPM load cases ...");
-  MPM_Mesh.F = Read_MPM_LoadCase_ExtForces(GDF,MPM_Mesh);
-  MPM_Mesh.B = Read_MPM_LoadCase_BodyForces(GDF,MPM_Mesh);
-  puts(" \t DONE !!!");
-  puts(" \t Reading MPM initial conditions ...");  
-  Read_MPM_InitVal(GDF,MPM_Mesh);
-  puts(" \t DONE !!!");
-  puts(" \t Initialize shape-functions parameters ...");
-  if(strcmp(ShapeFunctionGP,"MPMQ4") == 0){
-    Q4_Initialize(MPM_Mesh, FEM_Mesh);
-  }
-  if(strcmp(ShapeFunctionGP,"uGIMP") == 0){
-    GIMP_Initialize(MPM_Mesh,FEM_Mesh);
-  }
-  if(strcmp(ShapeFunctionGP,"LME") == 0){
-    LME_Initialize(MPM_Mesh,FEM_Mesh);
-  }
-  puts(" \t DONE !!!");
+/*   puts("*************************************************"); */
+/*   puts(" Generate the MPM mesh"); */
+/*   puts(" \t Defining MPM mesh of GPs ..."); */
+/*   MPM_Mesh = GramsSolid2D(GDF,MPM_MeshFileName); */
+/*   puts(" \t DONE !!!"); */
+/*   /\* puts(" \t Reading MPM load cases ..."); *\/ */
+/*   /\* MPM_Mesh.F = Read_MPM_LoadCase_ExtForces(GDF,MPM_Mesh); *\/ */
+/*   /\* MPM_Mesh.B = Read_MPM_LoadCase_BodyForces(GDF,MPM_Mesh); *\/ */
+/*   /\* puts(" \t DONE !!!"); *\/ */
+/*   /\* puts(" \t Reading MPM initial conditions ...");   *\/ */
+/*   /\* Read_MPM_InitVal(GDF,MPM_Mesh); *\/ */
+/*   /\* puts(" \t DONE !!!"); *\/ */
+/*   puts(" \t Initialize shape-functions parameters ..."); */
+/*   if(strcmp(ShapeFunctionGP,"MPMQ4") == 0){ */
+/*     Q4_Initialize(MPM_Mesh, FEM_Mesh); */
+/*   } */
+/*   if(strcmp(ShapeFunctionGP,"uGIMP") == 0){ */
+/*     GIMP_Initialize(MPM_Mesh,FEM_Mesh); */
+/*   } */
+/*   if(strcmp(ShapeFunctionGP,"LME") == 0){ */
+/*     LME_Initialize(MPM_Mesh,FEM_Mesh); */
+/*   } */
+/*   puts(" \t DONE !!!"); */
   
-  return MPM_Mesh;
+/*   return MPM_Mesh; */
 
-}
+/* } */

@@ -7,9 +7,7 @@
 #define MAXVAL(A,B) ((A)>(B) ? (A) : (B))
 #define MINVAL(A,B) ((A)<(B) ? (A) : (B))
 
-
 /***************************************************************************/
-
 
 void Read_GeneralParameters(char * Name_File)
 /*
@@ -81,9 +79,9 @@ void Read_GeneralParameters(char * Name_File)
 		Formulation = KIND_ANALYSIS[0];
 		puts("\t -> Formulation : Sigma-V"); 
 	      }
-	      if( strcmp(KIND_ANALYSIS[0],"U") == 0 ){
+	      if( strcmp(KIND_ANALYSIS[0],"Velocity") == 0 ){
 		Formulation = KIND_ANALYSIS[0];
-		puts("\t -> Formulation : U");
+		puts("\t -> Formulation : Velocity");
 	      }
 	      /*************************************************************/
 	      /* Third parameter of KIND_ANALYSIS : 1D/2D/3D */
@@ -118,7 +116,7 @@ void Read_GeneralParameters(char * Name_File)
   } /* End while */
 
   /* Set the number of DOFs for each node depending of the kind of analysis */
-  if( strcmp(Formulation,"U") == 0 ){
+  if( strcmp(Formulation,"Velocity") == 0 ){
     if(NumberDimensions == 1)
       NumberDOF = 1;
     if(NumberDimensions == 2)

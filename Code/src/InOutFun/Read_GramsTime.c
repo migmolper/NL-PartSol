@@ -76,8 +76,8 @@ GramsTime(Scheme=FE){
 	       "Use this format -> (Type=string) !!!");
 	exit(0);
       }
-      Formulation = Parse_Temp_id[1];
-      printf("\t -> %s : %s \n","Time integrator",Formulation);
+      TimeIntegration = Parse_Temp_id[1];
+      printf("\t -> %s : %s \n","Time integrator",TimeIntegration);
 
       /* Set to default all it properties */
       CFL=0.8;

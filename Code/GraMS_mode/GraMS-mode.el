@@ -27,13 +27,20 @@
   
   (require 'GraMS-keywords)
 
+  ;; Define variables ;;
+
   (defvar GraMS-browse-base "http://gdf.sourceforge.net/wiki/index.php/"
     "First part of URL used to display documentation on the GraMS website.")
 
-  (defvar GraMS-ref-regexp
+  (defvar GraMS-functions-regexp
     (eval-when-compile
-      (concat "\\<" (regexp-opt GraMS-abbrevs t) "\\>"))
+      (concat "\\<" (regexp-opt GraMS-functions t) "\\>"))
     "Regular expression compiled GraMS keywords.")
+
+  (defvar GraMS-formulations-regexp
+    (eval-when-compile
+      (concat "\\<" (regexp-opt GraMS-formulations t) "\\>"))
+    "Regular expression compiled GraMS formulations.")
 
   (defvar GraMS-modules-regexp
     (eval-when-compile
@@ -43,15 +50,28 @@
   (define-key GraMS-mode-map [mouse-2] 'GraMS-mode-mouse-2)
   (define-key GraMS-mode-map [follow-link] 'mouse-face)
 
+  ;; Define functions ;;
+
   (defun GraMS-clickable-refs (limit)
     "Font-lock function which finds GraMS keywords and makes them clickable."
-    (if	(re-search-forward (eval GraMS-ref-regexp) limit t)
+    (if	(re-search-forward (eval GraMS-functions-regexp) limit t)
 	(progn
 	  (add-text-properties (match-beginning 0) (match-end 0)
 			       (list 'mouse-face 'highlight
 				     'GraMS-keyword (match-string 0)
 				     'help-echo "mouse-2: documentation"
-				     'rear-nonsticky '(mouse-face GraMS-keyword help-echo)))
+				     'rear-nonsticky '(mouse-face GraMS-functions help-echo)))
+	  t)))
+
+  (defun GraMS-clickable-formulations (limit)
+    "Font-lock function which finds GraMS formulations and makes them clickable."
+    (if	(re-search-forward (eval GraMS-formulations-regexp) limit t)
+	(progn
+	  (add-text-properties (match-beginning 0) (match-end 0)
+			       (list 'mouse-face 'highlight
+				     'GraMS-formulations (match-string 0)
+				     'help-echo "mouse-2: documentation"
+				     'rear-nonsticky '(mouse-face GraMS-formulations help-echo)))
 	  t)))
 
   (defun GraMS-clickable-modules (limit)
@@ -60,9 +80,9 @@
 	(progn
 	  (add-text-properties (match-beginning 0) (match-end 0)
 			       (list 'mouse-face 'highlight
-				     'GraMS-module (match-string 0)
+				     'GraMS-modules (match-string 0)
 				     'help-echo "mouse-2: documentation"
-				     'rear-nonsticky '(mouse-face GraMS-module help-echo)))
+				     'rear-nonsticky '(mouse-face GraMS-modules help-echo)))
 	  t)))
 
   (defun GraMS-comments (limit)
@@ -72,54 +92,55 @@
   (defconst GraMS-font-lock-keywords
     (list 
      '(GraMS-clickable-refs (0 'font-lock-function-name-face t))
+     '(GraMS-clickable-formulations (0 'font-lock-type-face t))
      '(GraMS-clickable-modules (0 'font-lock-type-face t))
      '(GraMS-comments (0 'font-lock-comment-face t)))
     "Font-lock-keywords to be added when GraMS-mode is active.")
 
-  (defun GraMS-url-create (ref-string module)
-    "Returns REF-STRING without carriage returns and with spaces converted
-to + signs, useful when creating a URL to lookup on the GraMS website."
-    (with-temp-buffer
-      (insert GraMS-browse-base)
-      (if module
-	  (progn 
-	    (insert "Object_hierarchy#")
-	    (insert (capitalize ref-string)))
-	(progn 
-	  (unless (string= (substring ref-string 0 3) "GraMS")
-	    (insert "GraMS"))
-	  (insert ref-string)))
-      (buffer-string)))
+;;   (defun GraMS-url-create (ref-string module)
+;;     "Returns REF-STRING without carriage returns and with spaces converted
+;; to + signs, useful when creating a URL to lookup on the GraMS website."
+;;     (with-temp-buffer
+;;       (insert GraMS-browse-base)
+;;       (if module
+;; 	  (progn 
+;; 	    (insert "Object_hierarchy#")
+;; 	    (insert (capitalize ref-string)))
+;; 	(progn 
+;; 	  (unless (string= (substring ref-string 0 3) "GraMS")
+;; 	    (insert "GraMS"))
+;; 	  (insert ref-string)))
+;;       (buffer-string)))
 
-  (defun GraMS-browse-reference (reference &optional module)
-    "Wrapper function to call standard Emacs browser function for REFERENCE."
-    (message "Linking to GraMS website for %s..." reference)
-    (browse-url (GraMS-url-create reference module)))
+;;   (defun GraMS-browse-reference (reference &optional module)
+;;     "Wrapper function to call standard Emacs browser function for REFERENCE."
+;;     (message "Linking to GraMS website for %s..." reference)
+;;     (browse-url (GraMS-url-create reference module)))
   
-  (defun GraMS-mode-mouse-2 (event arg)
-    "Fetch documentation for keyword under the mouse click."
-    (interactive "e\nP")
-    (let (my-keyword)
-      (save-excursion
-	(set-buffer (window-buffer (posn-window (event-end event))))
-	(goto-char (posn-point (event-end event)))
-	(setq my-keyword (get-text-property (point) 'GraMS-keyword)))
-      (if my-keyword
-	  (progn
-	    (select-window (posn-window (event-end event)))
-	    (GraMS-browse-reference my-keyword))
-	(progn
-	  (setq my-keyword (get-text-property (point) 'GraMS-module))
-	  (if my-keyword
-	      (progn
-		(select-window (posn-window (event-end event)))
-		(GraMS-browse-reference my-keyword t))
-	    (mouse-yank-at-click event arg)
-	    )))))
+;;   (defun GraMS-mode-mouse-2 (event arg)
+;;     "Fetch documentation for keyword under the mouse click."
+;;     (interactive "e\nP")
+;;     (let (my-keyword)
+;;       (save-excursion
+;; 	(set-buffer (window-buffer (posn-window (event-end event))))
+;; 	(goto-char (posn-point (event-end event)))
+;; 	(setq my-keyword (get-text-property (point) 'GraMS-keyword)))
+;;       (if my-keyword
+;; 	  (progn
+;; 	    (select-window (posn-window (event-end event)))
+;; 	    (GraMS-browse-reference my-keyword))
+;; 	(progn
+;; 	  (setq my-keyword (get-text-property (point) 'GraMS-module))
+;; 	  (if my-keyword
+;; 	      (progn
+;; 		(select-window (posn-window (event-end event)))
+;; 		(GraMS-browse-reference my-keyword t))
+;; 	    (mouse-yank-at-click event arg)
+;; 	    )))))
 
   (font-lock-add-keywords nil GraMS-font-lock-keywords)
 
-  ;; load keywords for autocompletion with dabbrev
+  ;; load keywords for autocompletion with dabbrev ;;
   (find-file-noselect (locate-file "GraMS-keywords.el" load-path) t)
   (setq case-fold-search nil)
 

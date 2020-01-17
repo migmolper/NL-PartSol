@@ -35,17 +35,29 @@ int main(int argc, char * argv[])
   GramsTime(argv[1]);
 
   /*********************************************************************/
-  /********************* DEFINE CALCULUS MESH **************************/
+  /**************** DEFINE CALCULUS MESH and BCCs **********************/
   /*********************************************************************/
   Mesh FEM_Mesh = GramsBox(argv[1]);
-  /* Mesh FEM_Mesh = InitializeMesh(argv[1]); */
-
-  exit(0);
 
   /*********************************************************************/
   /******************* DEFINE GAUSS-POINT MESH *************************/
   /*********************************************************************/
-  GaussPoint GP_Mesh = InitializeGP(argv[1], FEM_Mesh);
+  GaussPoint MPM_Mesh = GramsSolid2D(argv[1],MPM_MeshFileName);
+  /* GaussPoint GP_Mesh = InitializeGP(argv[1], FEM_Mesh); */
+
+
+  /*********************************************************************/
+  /****************** INITIALIZE SHAPE FUNCTIONS ***********************/
+  /*********************************************************************/
+  if(strcmp(ShapeFunctionGP,"MPMQ4") == 0){
+    Q4_Initialize(MPM_Mesh, FEM_Mesh);
+  }
+  if(strcmp(ShapeFunctionGP,"uGIMP") == 0){
+    GIMP_Initialize(MPM_Mesh,FEM_Mesh);
+  }
+  if(strcmp(ShapeFunctionGP,"LME") == 0){
+    LME_Initialize(MPM_Mesh,FEM_Mesh);
+  }
 
   /*********************************************************************/
   /*********************** OUTPUT VARIABLES ****************************/
@@ -55,7 +67,7 @@ int main(int argc, char * argv[])
   /*********************************************************************/
   /********************** RUN THE MPM CALCULUS *************************/
   /*********************************************************************/
-  u_ForwardEuler(FEM_Mesh, GP_Mesh);
+  u_ForwardEuler(FEM_Mesh, MPM_Mesh);
 
   /*********************************************************************/
   /******************** CRONOGRAPH CALCULUS : END **********************/

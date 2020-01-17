@@ -193,9 +193,8 @@ typedef struct {
 /*******************************************************/
 
 /* Define and initialize both mesh */
-GaussPoint Define_GP_Mesh(char *, char *);
-GaussPoint InitializeGP(char *, Mesh);
-Mesh InitializeMesh(char *);
+GaussPoint GramsSolid2D(char *, char *);
+/* GaussPoint InitializeGP(char *, Mesh); */
 
 /* int SearchGaussPoint(int, Matrix, Matrix, Mesh); */
 Matrix GetNodalMassMomentum(GaussPoint, Mesh);
@@ -216,7 +215,6 @@ void UpdateGridNodalMomentum(Mesh, Matrix, Matrix);
 void UpdateVelocityAndPositionGP(GaussPoint, Mesh,
 				 Matrix, Matrix, Matrix);
 
-Boundaries GetBoundaryBox(Mesh);
 double GetMinElementSize(Mesh);
 void GetNodalConnectivity(Mesh);
 Matrix ElemCoordinates(Mesh, int *, int);

@@ -1,7 +1,6 @@
 /***************************************/
 /******* SIMULATION FILES AND DIR ******/
 /***************************************/
-FEM_FILE_NAME=test/Sulsky_MPM/FEM_Mesh.msh
 MPM_FILE_NAME=test/Sulsky_MPM/MPM_Mesh.msh
 
 /***************************************/
@@ -28,29 +27,24 @@ GramsOutputs (i=100) {
 	     DIR=test/Sulsky_MPM	
 }
 
-GramsBox (Type=GID,File=FEM_Mesh.msh) { 
-  left = GramsBoundary {
-        BcDirichlet U NULL
- 	BcDirichlet V NULL	
-  }
-  right = GramsBoundary {
-  	BcDirichlet U NULL
-   	BcDirichlet V NULL	
-  }
-  top = GramsBoundary {
-      	BcDirichlet U NULL
-    	BcDirichlet V NULL
-  }
-  bottom = GramsBoundary {
-  	BcDirichlet U NULL
-    	BcDirichlet V NULL
-  }
+GramsBox (Type=GID,File=FEM_Mesh.msh) {
+    left = GramsBoundary {
+        BcDirichlet V.x NULL
+ 	BcDirichlet V.y NULL	
+    }
+    right = GramsBoundary {
+  	BcDirichlet V.x NULL
+   	BcDirichlet V.y NULL	
+    }
+    top = GramsBoundary {
+      	BcDirichlet V.x NULL
+    	BcDirichlet V.y NULL
+    }
+    bottom = GramsBoundary {
+  	BcDirichlet V.x NULL
+    	BcDirichlet V.y NULL
+    }
 }
-
-BCC LABEL=TOP FIELD=V DIR={0,0} CURVE={NULL,NULL}
-BCC LABEL=BOTTOM FIELD=V DIR={0,0} CURVE={NULL,NULL}
-BCC LABEL=RIGHT FIELD=V DIR={0,0} CURVE={NULL,NULL}
-BCC LABEL=LEFT FIELD=V DIR={0,0} CURVE={NULL,NULL}
 
 /***************************************/
 /**** INITIAL CONDITIONS FOR THE GPs ***/
