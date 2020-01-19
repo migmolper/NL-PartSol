@@ -62,22 +62,6 @@ typedef struct {
   
 } Boundaries;
 
-
-/*******************************************************/
-
-/* Load case : multiple loads */
-typedef struct {
-
-  /* Number of nodes/GP with this load */
-  int NumLoads;
-  /* List of loads */
-  Load * Load_i;
-  /* Some information about this load */
-  char Info [100];
-
-} LoadCase;
-
-
 /*******************************************************/
 
 /* Physical fields */
@@ -130,12 +114,17 @@ typedef struct {
   Fields Phi_n0; /* Values from the previous step */
   
   /* Constitutive response */
+  int NumberMaterials;
   int * MatIdx; /* Index of the material for each GP */
   Material * Mat; /* Array wit the number of materials */
 
   /* Forces over the GP */
-  LoadCase F; /* External forces */
-  LoadCase B; /* Body forces */
+  int NumberContactForces;
+  int NumberBodyForces;
+  Load * F; /* Contact forces */
+  Load * B; /* Body forces */
+  /* LoadCase F; /\* Contact forces *\/ */
+  /* LoadCase B; /\* Body forces *\/ */
 
   /* Shape functions variables */
   /* GIMP */
@@ -192,10 +181,6 @@ typedef struct {
 
 /*******************************************************/
 
-/* Define and initialize both mesh */
-GaussPoint GramsSolid2D(char *, char *);
-/* GaussPoint InitializeGP(char *, Mesh); */
-
 /* int SearchGaussPoint(int, Matrix, Matrix, Mesh); */
 Matrix GetNodalMassMomentum(GaussPoint, Mesh);
 Matrix GetNodalVelocity(Mesh, Matrix, Matrix);
@@ -203,8 +188,8 @@ Matrix GetNodalVelocity(Mesh, Matrix, Matrix);
 /* Boundary conditions */
 Curve BcDirichlet(char *);
 void BCC_Nod_VALUE(Mesh, Matrix, int);
-Matrix Eval_Body_Forces(LoadCase, int, int);
-Matrix Eval_Contact_Forces(LoadCase, int, int);
+Matrix Eval_Body_Forces(Load *, int, int, int);
+Matrix Eval_Contact_Forces(Load *, int, int, int);
 
 /* MPM functions  */
 void UpdateGaussPointStrain(GaussPoint, Mesh, Matrix);

@@ -22,7 +22,8 @@ GramsMaterials (id=0) {
 {
   /* Asign material library to an auxiliar variable */
   Material Mat_GP;
-
+  Material * Mat_Table;
+  
   /* Simulation file */
   FILE * Sim_dat;
 
@@ -61,8 +62,8 @@ GramsMaterials (id=0) {
   }
 
   /* Allocate table with the material */
-  GP_Mesh.Mat = malloc(NumberMaterials*sizeof(Material));
-  if(GP_Mesh.Mat == NULL){
+  Mat_Table = (Material * )malloc(GP_Mesh.NumberMaterials*sizeof(Material));
+  if(Mat_Table == NULL){
     fprintf(stderr,"%s : %s \n",
 	   "Error in GramsMaterials()",
 	   "Memory error for Mat");
@@ -81,7 +82,8 @@ GramsMaterials (id=0) {
       exit(0);
     }
 
-    if (strcmp(kwords[0],"GramsMaterials") == 0 ){
+    if ((nkwords>0) &&
+	(strcmp(kwords[0],"GramsMaterials") == 0 )){
 
       /* Count the number of materials */
       ++CountMaterials;
@@ -91,7 +93,7 @@ GramsMaterials (id=0) {
       Mat_id = atoi(Parse_Mat_id[1]);
       if( (Aux_Mat_id != 2) ||
 	  (strcmp(Parse_Mat_id[0],"id") != 0) ||
-	  (Mat_id<0 || Mat_id> NumberMaterials-1) ){
+	  (Mat_id<0 || Mat_id> GP_Mesh.NumberMaterials-1) ){
 	fprintf(stderr,"%s : %s \n",
 	       "Error in GramsMaterials()",
 	       "Use this format -> (id=Integer) !!!");
@@ -139,7 +141,7 @@ GramsMaterials (id=0) {
 	  }
 	  
 	  /* Transfere information */
-	  GP_Mesh.Mat[Mat_id] = Mat_GP;
+	  Mat_Table[Mat_id] = Mat_GP;
 	  
 	  break;
 	}
@@ -155,23 +157,34 @@ GramsMaterials (id=0) {
  	  if(strcmp(Parse_Mat_Prop[0],"Type") == 0){
 	    strcpy(Mat_GP.Type,Parse_Mat_Prop[1]);
 	    Mat_GP.D = Contitutive(Mat_GP.Type);
-	    puts(" \t DONE !!!");
+	    printf("\t -> %s : %s \n",
+		   "Law",Parse_Mat_Prop[1]);
 	  }
 	  else if( strcmp(Parse_Mat_Prop[0],"rho") == 0 ){
 	    Mat_GP.rho = atof(Parse_Mat_Prop[1]);
+	    printf("\t -> %s : %f \n",
+		   "Density",Mat_GP.rho);
 	  }
 	  else if(strcmp(Parse_Mat_Prop[0],"E") == 0){
 	    Mat_GP.E = atof(Parse_Mat_Prop[1]);
+	    printf("\t -> %s : %f \n",
+		   "Elastic modulus",Mat_GP.E);
 	  }
 	  else if(strcmp(Parse_Mat_Prop[0],"mu") == 0){
 	    Mat_GP.mu = atof(Parse_Mat_Prop[1]);
+	    printf("\t -> %s : %f \n",
+		   "Poisson modulus",Mat_GP.mu);
 	  }
 	  else if(strcmp(Parse_Mat_Prop[0],"Fracture") == 0){
 	    if (strcmp(Parse_Mat_Prop[1],"TRUE") == 0){
-	      Mat_GP.Fracture=true;	      
+	      Mat_GP.Fracture=true;
+	      printf("\t -> %s : %s \n",
+		     "Fracture","ON");
 	    }
 	    else if (strcmp(Parse_Mat_Prop[1],"FALSE") == 0){
 	      Mat_GP.Fracture=false;
+	      printf("\t -> %s : %s \n",
+		     "Fracture","OFF");
 	    }
 	    else{
 	      fprintf(stderr,"%s : %s \n",
@@ -228,7 +241,7 @@ GramsMaterials (id=0) {
 	  }
 	  
 	  /* Transfere information */
-	  GP_Mesh.Mat[Mat_id] = Mat_GP;
+	  Mat_Table[Mat_id] = Mat_GP;
 	  
 	  break;
 	}
@@ -243,10 +256,10 @@ GramsMaterials (id=0) {
   }
     
   /* Check the number of materials */
-  if(CountMaterials != NumberMaterials){
+  if(CountMaterials != GP_Mesh.NumberMaterials){
     fprintf(stderr,"%s : %s %i %s %i %s \n",
 	   "Error in GramsMaterials()",
-	   "Spected",NumberMaterials, "materials, but",
+	   "Spected",GP_Mesh.NumberMaterials, "materials, but",
 	   CountMaterials,"where defined !!!");
     exit(0);
   }
@@ -256,7 +269,7 @@ GramsMaterials (id=0) {
   printf("\t * End of read data file !!! \n");
   fclose(Sim_dat);
 
-  return GP_Mesh.Mat;
+  return Mat_Table;
 }
 
 /**********************************************************************/

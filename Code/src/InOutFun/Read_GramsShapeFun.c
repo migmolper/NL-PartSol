@@ -67,7 +67,8 @@ void GramsShapeFun(char * Name_File)
       exit(0);
     }
 
-    if (strcmp(kwords[0],"GramsShapeFun") == 0 ){
+    if ((nkwords > 0) &&
+	(strcmp(kwords[0],"GramsShapeFun") == 0)){
 
       /* Read temporal integrator scheme */
       Aux_Shf_id = parse (Parse_Shf_id, kwords[1],"(=)");

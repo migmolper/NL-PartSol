@@ -36,13 +36,6 @@ Mesh ReadGidMesh(char * MeshName)
   /* Variables to fill the Connectivity */
   int NumNodesElem;
   int * ConnectivityElem;
-
-  /* Screen message */
-  printf("************************************************* \n");
-  printf("Begin of set mesh properties !!! \n");
-
-  printf(" * Begin of read mesh file : %s \n",MeshName);
-  printf("\t -> Reading mesh ...\n");
    
   /***************************************************************************/ 
   /*     Read line and store in a char array (max 80 characters) and         */ 
@@ -275,12 +268,7 @@ Mesh ReadGidMesh(char * MeshName)
 
   /* Close mesh file */
   fclose(MeshFile);
-
-  /* Set the minimum mesh size */
-  GID_Mesh.DeltaX = GetMinElementSize(GID_Mesh);
   
-  printf(" * End of read mesh file \n");
-
   /***************************************************************************/
   /***************************************************************************/
   /***************************************************************************/

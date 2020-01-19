@@ -38,6 +38,7 @@ enum { MAXW = 100, MAXC = 1000 };
 /***************************************/
 /******** Name of inputs files *********/
 /***************************************/
+char * SimulationFile;
 char * FEM_MeshFileName;
 char * MPM_MeshFileName;
 char * OutputDir;
@@ -45,12 +46,11 @@ char * OutputDir;
 /***************************************/
 /*********** Kind of analysis **********/
 /***************************************/
+char * TimeIntegration;
 char * ShapeFunctionGP;
 char * Formulation;
 int NumberDimensions;
 int NumberDOF;
-char * TimeIntegration;
-#define NumberMaterials 1
 
 /***************************************/
 /********* Time integration ************/

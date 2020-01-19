@@ -69,29 +69,29 @@ $(EXE): $(OBJS)
 # Caso para debugear
 Debug_MPM:
 	@echo "**************** Run test case ******************"
-	$ ./$(EXE) $(TESTDIR)/Debug_MPM/ejemplo.gdf
+	$ ./$(EXE) -2D -V $(TESTDIR)/Debug_MPM/ejemplo.gdf 
 	@echo " "
 	@echo "*************** Test case passed ****************"
 Debug_LME:
 	@echo "**************** Run test case ******************"
-	$ ./$(EXE) $(TESTDIR)/Debug_LME/ejemplo.gdf
+	$ ./$(EXE) -2D -V $(TESTDIR)/Debug_LME/ejemplo.gdf
 	@echo " "
 	@echo "*************** Test case passed ****************"
 
 # Caso impacto elastico discos Sulsky
 Sulsky_MPM:
 	@echo "**************** Run test case ******************"
-	$ ./$(EXE) $(TESTDIR)/Sulsky_MPM/ejemplo.gdf
+	$ ./$(EXE) -2D -V $(TESTDIR)/Sulsky_MPM/ejemplo.gdf
 	@echo " "
 	@echo "*************** Test case passed ****************"
 Sulsky_GIMP:
 	@echo "**************** Run test case ******************"
-	$ ./$(EXE) $(TESTDIR)/Sulsky_GIMP/ejemplo.gdf
+	$ ./$(EXE) -2D -V $(TESTDIR)/Sulsky_GIMP/ejemplo.gdf
 	@echo " "
 	@echo "*************** Test case passed ****************"
 Sulsky_LME:
 	@echo "**************** Run test case ******************"
-	$ ./$(EXE) $(TESTDIR)/Sulsky_LME/ejemplo.gdf
+	$ ./$(EXE) -2D -V $(TESTDIR)/Sulsky_LME/ejemplo.gdf
 	@echo " "
 	@echo "*************** Test case passed ****************"
 
@@ -100,65 +100,65 @@ Sulsky_LME:
 # Caso cuadrado caida
 Cuadrado_MPM:
 	@echo "**************** Run test case ******************"
-	$ ./$(EXE) $(TESTDIR)/Cuadrado_MPM/ejemplo.gdf
+	$ ./$(EXE) -2D -V $(TESTDIR)/Cuadrado_MPM/ejemplo.gdf
 	@echo " "
 	@echo "*************** Test case passed ****************"
 
 # Caso disco caida
 Disco_MPM:
 	@echo "**************** Run test case ******************"
-	$ ./$(EXE) $(TESTDIR)/Disco_MPM/ejemplo.gdf
+	$ ./$(EXE) -2D -V $(TESTDIR)/Disco_MPM/ejemplo.gdf
 	@echo " "
 	@echo "*************** Test case passed ****************"
 Disco_GIMP:
 	@echo "**************** Run test case ******************"
-	$ ./$(EXE) $(TESTDIR)/Disco_GIMP/ejemplo.gdf
+	$ ./$(EXE) -2D -V $(TESTDIR)/Disco_GIMP/ejemplo.gdf
 	@echo " "
 	@echo "*************** Test case passed ****************"
 
 # Caso barra traccion
 Traccion_MPM:
 	@echo "**************** Run test case ******************"
-	$ ./$(EXE) $(TESTDIR)/Traccion_MPM/ejemplo.gdf
+	$ ./$(EXE) -2D -V $(TESTDIR)/Traccion_MPM/ejemplo.gdf
 	@echo " "
 	@echo "*************** Test case passed ****************"
 Traccion_GIMP:
 	@echo "**************** Run test case ******************"
-	$ ./$(EXE) $(TESTDIR)/Traccion_GIMP/ejemplo.gdf
+	$ ./$(EXE) -2D -V $(TESTDIR)/Traccion_GIMP/ejemplo.gdf
 	@echo " "
 	@echo "*************** Test case passed ****************"
 Traccion_LME:
 	@echo "**************** Run test case ******************"
-	$ ./$(EXE) $(TESTDIR)/Traccion_LME/ejemplo.gdf
+	$ ./$(EXE) -2D -V $(TESTDIR)/Traccion_LME/ejemplo.gdf
 	@echo " "
 	@echo "*************** Test case passed ****************"
 
 # Caso barra Dyka Thomas Blanc thesis
 Dyka_MPM:
 	@echo "**************** Run test case ******************"
-	$ ./$(EXE) $(TESTDIR)/Dyka_MPM/ejemplo.gdf
+	$ ./$(EXE) -2D -V $(TESTDIR)/Dyka_MPM/ejemplo.gdf
 	@echo " "
 	@echo "*************** Test case passed ****************"
 Dyka_GIMP:
 	@echo "**************** Run test case ******************"
-	$ ./$(EXE) $(TESTDIR)/Dyka_GIMP/ejemplo.gdf
+	$ ./$(EXE) -2D -V $(TESTDIR)/Dyka_GIMP/ejemplo.gdf
 	@echo " "
 	@echo "*************** Test case passed ****************"
 Dyka_LME:
 	@echo "**************** Run test case ******************"
-	$ ./$(EXE) $(TESTDIR)/Dyka_LME/ejemplo.gdf
+	$ ./$(EXE) -2D -V $(TESTDIR)/Dyka_LME/ejemplo.gdf
 	@echo " "
 	@echo "*************** Test case passed ****************"
 
 # Brazilian test for fracture
 Brazilian_MPM:
 	@echo "**************** Run test case ******************"
-	$ ./$(EXE) $(TESTDIR)/Brazilian_MPM/ejemplo.gdf
+	$ ./$(EXE) -2D -V $(TESTDIR)/Brazilian_MPM/ejemplo.gdf
 	@echo " "
 	@echo "*************** Test case passed ****************"
 Brazilian_LME:
 	@echo "**************** Run test case ******************"
-	$ ./$(EXE) $(TESTDIR)/Brazilian_LME/ejemplo.gdf
+	$ ./$(EXE) -2D -V $(TESTDIR)/Brazilian_LME/ejemplo.gdf
 	@echo " "
 	@echo "*************** Test case passed ****************"
 

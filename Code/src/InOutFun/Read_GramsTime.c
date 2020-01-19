@@ -65,7 +65,8 @@ GramsTime(Scheme=FE){
       exit(0);
     }
 
-    if (strcmp(kwords[0],"GramsTime") == 0 ){
+    if ((nkwords > 0) &&
+	(strcmp(kwords[0],"GramsTime") == 0)){
 
       /* Read temporal integrator scheme */
       Aux_Temp_id = parse (Parse_Temp_id, kwords[1],"(=)");

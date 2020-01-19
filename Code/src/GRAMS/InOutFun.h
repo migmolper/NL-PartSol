@@ -11,39 +11,30 @@
 #endif
 
 
-/* GnuPlotOutput.c */
-void WriteGnuplot(Matrix, Matrix, double, double, int, int, char[20]);
-
-/* Parse.c */
-int parse(char **words, char *str, char *delims);
-
-/* ReadCSV.c */
+/* Auxiliar functions */
+int parse(char **, char *, char *);
 Matrix Read_CSV(char *, int);
-
-/* ReadCurve.c */
 Curve ReadCurve(char *);
-
-/* ReadGidMesh.c */
 Mesh ReadGidMesh(char *);
+ChainPtr File2Chain(char *);
 
-/* ReadDatFile.c */
-void Read_GeneralParameters(char *);
-Boundaries Set_FEM_BCC(char *, Mesh);
-LoadCase Read_MPM_LoadCase_ExtForces(char *,GaussPoint);
-LoadCase Read_MPM_LoadCase_BodyForces(char *,GaussPoint);
-void Read_MPM_InitVal(char *, GaussPoint);
-
-/* GraMS Interface */
+/* Read .gfd format */
+GaussPoint GramsSolid2D(char *);
 void GramsTime(char * );
 Material * GramsMaterials(char *, GaussPoint);
+void GramsInitials(char *, GaussPoint);
 void GramsShapeFun(char * );
 void GramsOutputs(char * );
 Mesh GramsBox(char *);
+Load * GramsContactForces(char *,GaussPoint);
+Load * GramsBodyForces(char *,GaussPoint);
 
-/* WriteVtk.c */
+/* Print .vtk format */
 void WriteVtk_MPM(char *, GaussPoint, Matrix, int);
 void WriteVtk_FEM(char *, Mesh, Matrix, int);
 void WriteVtk_Float_Scalar(char *, Matrix);
 void WriteVtk_Float_Vector(char *, Matrix);
 void WriteVtk_Float_Tensor(char *, Matrix);
 
+/* Print Gnuplot */
+void WriteGnuplot(Matrix, Matrix, double, double, int, int, char[20]);

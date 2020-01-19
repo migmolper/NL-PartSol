@@ -90,14 +90,7 @@ GramsBox (Type=GID,File=FEM_Mesh.msh) {
   /* Boundaries labels */
   char * BoundLabels [4] = {"BOTTOM", "RIGHT", "TOP", "LEFT"};
   int IndexBoundary;
-  
-
-  /* Initial message */
-  puts("*************************************************");
-  puts(" Generate the MPM mesh");
-  printf(" \t %s : \n\t %s \n",
-	 "* Begin of read mesh from in",Name_File);
-  
+    
   /* Open and check file */
   Sim_dat = fopen(Name_File,"r");  
   if (Sim_dat==NULL){
@@ -121,11 +114,13 @@ GramsBox (Type=GID,File=FEM_Mesh.msh) {
       exit(0);
     }
 
-    if (strcmp(Parse_GramsBox[0],"GramsBox") == 0 ){
+    if ((Num_words_line > 0) &&
+    	(strcmp(Parse_GramsBox[0],"GramsBox") == 0 )){
+
+      /* Bidimensional mesh */
+      NumberDimensions = 2;
 
       /* Read the index of the material */
-      printf("%s %s %s \n",
-	     Parse_GramsBox[0],Parse_GramsBox[1],Parse_GramsBox[2]);
       Num_words_line = parse (Parse_Mesh_id, Parse_GramsBox[1],"(=,)");
       if( (Num_words_line != 4) ||
 	  (strcmp(Parse_Mesh_id[0],"Type") != 0) ||
@@ -145,7 +140,10 @@ GramsBox (Type=GID,File=FEM_Mesh.msh) {
 	  strcat(Route_Mesh,"/");
 	}
 	strcat(Route_Mesh,FEM_MeshFileName);
-	free(Name_File_Copy);	  
+	free(Name_File_Copy);
+	puts("*************************************************");
+	printf(" \t %s : \n \t %s \n",
+	       "* Read GID mesh in",SimulationFile);
 	FEM_Mesh = ReadGidMesh(Route_Mesh);
       }
       else{
@@ -155,6 +153,9 @@ GramsBox (Type=GID,File=FEM_Mesh.msh) {
 		Parse_Mesh_id[1]);
       }
 
+      /* Set the minimum mesh size */
+      FEM_Mesh.DeltaX = GetMinElementSize(FEM_Mesh);
+  
       /* Generate nodal connectivity of the mesh :
        list of elements near to a node */
       GetNodalConnectivity(FEM_Mesh);
@@ -293,7 +294,7 @@ GramsBox (Type=GID,File=FEM_Mesh.msh) {
       free(ListNodesBound);
 
       /* Allocate variable for the BCCs */
-      if(strcmp(Formulation,"Velocity") == 0){
+      if(strcmp(Formulation,"-V") == 0){
 	for(int i = 0 ; i<FEM_Mesh.Bounds.NumBounds ; i++){
 	  /* Curve for each dimension */
 	  FEM_Mesh.Bounds.BCC_i[i].Value =
@@ -307,6 +308,11 @@ GramsBox (Type=GID,File=FEM_Mesh.msh) {
 	    (int *)Allocate_ArrayZ(NumberDOF,sizeof(int));
 	}
       }
+
+      /* Print info */
+      puts("*************************************************");
+      printf(" \t %s : \n",
+	     "* Boundary conditions");
 
       /* Fill boundary conditions */
       if(strcmp(Parse_GramsBox[2],"{") == 0){
@@ -378,7 +384,7 @@ GramsBox (Type=GID,File=FEM_Mesh.msh) {
 	    while(STATUS_LINE != NULL){
 
 	      /* Velocity boundary condition */
-	      if(strcmp(Formulation,"Velocity") == 0){
+	      if(strcmp(Formulation,"-V") == 0){
 		if(strcmp(Parse_BCC[1],"V.x") == 0){
 		  /* Fill the direction of the BCC */
 		  FEM_Mesh.Bounds.BCC_i[IndexBoundary].Dir[0] = 1;
@@ -420,6 +426,13 @@ GramsBox (Type=GID,File=FEM_Mesh.msh) {
 			  "Error in GramsBox()", "Velocity BCC -> U, V, W");
 		  exit(0);
 		}
+
+		/* Print info */
+		printf("\t -> %s : %s \n",
+		       "For boundary",Parse_GramsBoundary[0]);
+		printf("\t    %s : %s = %s \n",
+		       Parse_BCC[0],Parse_BCC[1],Parse_BCC[2]);
+		
 	      }
 	      else{
 		fprintf(stderr,"%s : %s \n",
@@ -493,7 +506,7 @@ GramsBox (Type=GID,File=FEM_Mesh.msh) {
 	exit(0);
       }
     }
-
+    
     /* Initalize parser */
     for(int i = 0 ; i<MAXW ; i++){
       Parse_GramsBox[i] = "\0";
@@ -503,7 +516,6 @@ GramsBox (Type=GID,File=FEM_Mesh.msh) {
     
   /* Close .dat file */
   /* Final message */
-  printf("\t * End of read data file !!! \n");
   fclose(Sim_dat);
 
   return FEM_Mesh;

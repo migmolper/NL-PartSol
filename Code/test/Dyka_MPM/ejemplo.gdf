@@ -21,10 +21,13 @@ GramsBox (Type=GID,File=FEM_Mesh.msh) {
 }
 
 # Material points definitions
-GramsSolid2D V (File=MPM_Mesh.msh) {
+GramsSolid2D (File=MPM_Mesh.msh) {
 
-    # Shape function definition
-    GramsShapeFun (Type=MPMQ4) {
+    # Time integration
+    GramsTime (Type=FE) {
+	CEL=5053.02
+	CFL=0.6
+	N=800000
     }
 
     # List of materials for the GPs
@@ -34,29 +37,25 @@ GramsSolid2D V (File=MPM_Mesh.msh) {
 	E=200.e9
 	mu=0.0
     }
+    
+    # Shape function definition
+    GramsShapeFun (Type=MPMQ4) {
+    }
 
     # Initial conditions for the GPs
-    GramsInitials (id=0) {
-	Value={5.0,0.0}
-	Nodes=test/Dyka_MPM/ListInit.txt
+    GramsInitials (Nodes=ListInit.txt) {
+	Value=[5.0,0.0]
     }
 
     # Loads over the GPs
-    GramsBodyForces (id=0) {}
-    GramsContactForces (id=0) {}
+    GramsBodyForces (Nodes=) {}
+    GramsContactForces (Nodes=) {}
   
 }
 
 # Outputs 
 GramsOutputs (i=10000) {
 	     DIR=test/Dyka_MPM	
-}
-
-# Time integration
-GramsTime (Type=FE) {
-    CEL=5053.02
-    CFL=0.6
-    N=800000
 }
 
 

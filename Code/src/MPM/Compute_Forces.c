@@ -40,11 +40,13 @@ Matrix GetNodalForces(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int TimeStep)
 
   /* 1º Fill matrix with the body forces for TimeStep */
   Matrix Body_Forces_t =
-    Eval_Body_Forces(MPM_Mesh.B,MPM_Mesh.NumGP,TimeStep);
+    Eval_Body_Forces(MPM_Mesh.B,MPM_Mesh.NumberBodyForces,
+		     MPM_Mesh.NumGP,TimeStep);
   
   /* 2º Fill matrix with the contact forces for TimeStep */
   Matrix Contact_Forces_t =
-    Eval_Contact_Forces(MPM_Mesh.F,MPM_Mesh.NumGP,TimeStep);
+    Eval_Contact_Forces(MPM_Mesh.F,MPM_Mesh.NumberContactForces,
+			MPM_Mesh.NumGP,TimeStep);
 
   /* 3º Iterate over all the GP to get the nodal values */
   for(int i = 0 ; i<MPM_Mesh.NumGP ; i++){

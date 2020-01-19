@@ -14,9 +14,18 @@ int main(int argc, char * argv[])
   /*********************************************************************/
   /******************* Check command-line arguments ********************/
   /*********************************************************************/
-  if(argc == 1){
-    perror("Error in main(), insuficient number of input files !");
-    exit(0);
+  if(argc == 4){
+    SimulationFile = argv[3];
+    Formulation = argv[2];
+    if(strcmp(argv[1],"-2D") == 0){
+      NumberDimensions = 2;
+    }
+  }
+
+  /* Assign degree of freedom */
+  if((strcmp(Formulation,"-V") == 0) &&
+     (NumberDimensions == 2)){
+    NumberDOF = 2;
   }
 
   /*********************************************************************/
@@ -26,25 +35,19 @@ int main(int argc, char * argv[])
   TIC_toc(start_t);
   
   /*********************************************************************/
-  /******************* DEFINE GENERAL VARIABLES ************************/
-  /*********************************************************************/
-  /* Read the .gdf file */
-  Read_GeneralParameters(argv[1]);
-
-  /* Read time parameters */
-  GramsTime(argv[1]);
-
-  /*********************************************************************/
   /**************** DEFINE CALCULUS MESH and BCCs **********************/
   /*********************************************************************/
-  Mesh FEM_Mesh = GramsBox(argv[1]);
+  puts("*************************************************");
+  puts("Generating the background mesh ...");
+  Mesh FEM_Mesh = GramsBox(SimulationFile);
 
   /*********************************************************************/
   /******************* DEFINE GAUSS-POINT MESH *************************/
   /*********************************************************************/
-  GaussPoint MPM_Mesh = GramsSolid2D(argv[1],MPM_MeshFileName);
-  /* GaussPoint GP_Mesh = InitializeGP(argv[1], FEM_Mesh); */
-
+  puts("*************************************************");
+  puts("Generating MPM mesh ...");
+  GaussPoint MPM_Mesh = GramsSolid2D(SimulationFile);
+  exit(0);
 
   /*********************************************************************/
   /****************** INITIALIZE SHAPE FUNCTIONS ***********************/
@@ -62,7 +65,7 @@ int main(int argc, char * argv[])
   /*********************************************************************/
   /*********************** OUTPUT VARIABLES ****************************/
   /*********************************************************************/  
-  GramsOutputs(argv[1]);
+  GramsOutputs(SimulationFile);
 
   /*********************************************************************/
   /********************** RUN THE MPM CALCULUS *************************/

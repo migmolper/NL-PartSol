@@ -20,10 +20,6 @@ Matrix Read_CSV(char * Name_File, int NumData){
   /* Outputs */
   Matrix Mat_Out;
 
-  printf("************************************************* \n");
-  printf("Begin of read CSV file !!! \n");
-  printf(" * Name of the file : %s  \n",Name_File);
-
   /* Simulation file */
   CSV_file  = fopen(Name_File,"r");
 
@@ -54,13 +50,18 @@ Matrix Read_CSV(char * Name_File, int NumData){
     if(Aux_line != NULL){
       int_aux = parse (Field, line, ";\n");
       if(int_aux != NumFields){
-	printf("Error in Read_CSV() : Incorrect number of fields : %i ! \n",int_aux);
+	fprintf(stderr,"%s : %s -> %i ! \n",
+		"Error in Read_CSV()",
+		"Incorrect number of fields",
+		int_aux);
 	exit(0);
       }
       Num_line++;
     }
     else{
-      printf("Error in Read_CSV() : during line %i !!! \n",Num_line);
+      fprintf(stderr,"%s : %s %i !! \n",
+	      "Error in Read_CSV()",
+	      "during line",Num_line);
       exit(0);
     }
     for(int i = 0 ; i<NumFields ; i++){      
@@ -73,13 +74,17 @@ Matrix Read_CSV(char * Name_File, int NumData){
       if(Aux_line != NULL){
 	int_aux = parse (Field, line, ";\n");
 	if(int_aux != 1){
-	  printf("Error in Read_CSV() : Incorrect number of fields in line %i ! \n",i);
+	  fprintf(stderr,"%s : %s %i !! \n",
+		  "Error in Read_CSV()",
+		  "Incorrect number of fields in line",i);
 	  exit(0);
 	}
 	Num_line++;
       }
       else{
-	printf("Error in Read_CSV() : during line %i !!! \n",Num_line);
+	fprintf(stderr,"%s : %s %i !!! \n",
+		"Error in Read_CSV()",
+		"during line",Num_line);
 	exit(0);
       }
       Mat_Out.nV[i] = atof(Field[0]);
@@ -91,20 +96,26 @@ Matrix Read_CSV(char * Name_File, int NumData){
       if(Aux_line != NULL){
 	int_aux = parse (Field, line, ";\n");
 	if(int_aux != NumFields){
-	  printf("Error in Read_CSV() : Incorrect number of fields : %i ! \n",int_aux);
-	  printf("Error detected in line %i \n",i);
+	  fprintf(stderr,"%s : %s : %i !! \n",
+		  "Error in Read_CSV()",
+		  "Incorrect number of fields",int_aux);
+	  fprintf(stderr,"%s %i \n",
+		  "Error detected in line",i);
 	  exit(0);
 	}
 	Num_line++;
       }
       else{
-	printf("Error in Read_CSV() : during line %i !!! \n",Num_line);
+	fprintf(stderr,"%s : %s %i !!! \n",
+		"Error in Read_CSV()",
+		"during line",Num_line);
 	exit(0);
       }
       for(int j = 0 ; j<NumFields ; j++){
 	Mat_Out.nM[j][i] = atof(Field[j]);	
-	/* Note that the information is stored in a matrix with as rows as fields and 
-	 as columns as data lines, this is because the matrix is stored in memory as rows arrays 
+	/* Note that the information is stored in a matrix
+	   with as rows as fields and as columns as data lines,
+	   this is because the matrix is stored in memory as rows arrays 
 	 and for future computations this storage system is more eficient */
       }
     }
@@ -112,8 +123,6 @@ Matrix Read_CSV(char * Name_File, int NumData){
 
   /* Once we have read the file, we close it */
   fclose(CSV_file);
-
-  puts("End of read CSV");
   
   return Mat_Out;
 }
