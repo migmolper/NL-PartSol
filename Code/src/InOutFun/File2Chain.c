@@ -20,7 +20,7 @@ ChainPtr File2Chain(char * Name_File){
   /* Open and check file */
   Sim_dat = fopen(Name_File,"r");  
   if (Sim_dat==NULL){
-    fprintf(stderr,"%s : \n\t %s %s",
+    fprintf(stderr,"%s : \n\t %s %s \n",
 	    "Error in File2Chain()",
 	    "Incorrect lecture of",
 	    Name_File);

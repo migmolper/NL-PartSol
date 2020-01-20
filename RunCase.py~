@@ -6,6 +6,8 @@ import os
 import sys
 import PyGrams as PyGrm
 
+# Clear previous files
+os.system('rm *.gdf')
 
 ValuesBCC = (['test/Dyka_MPM/CurveConstat.txt', 'NULL'],
              ['NULL', 'NULL'],

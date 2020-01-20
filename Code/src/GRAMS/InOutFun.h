@@ -20,6 +20,7 @@ ChainPtr File2Chain(char *);
 
 /* Read .gfd format */
 Mesh GramsBox(char *);
+Boundaries GramsBoundary(char *,int);
 GaussPoint GramsSolid2D(char *,Mesh);
 void GramsTime(char * );
 Material * GramsMaterials(char *, GaussPoint);

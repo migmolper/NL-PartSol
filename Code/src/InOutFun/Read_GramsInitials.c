@@ -63,6 +63,7 @@ void GramsInitials(char * Name_File, GaussPoint GP_Mesh)
   /* Generate route */
   strcpy(Name_File_Copy, Name_File);
   Num_words_parse = parse(Name_Parse,Name_File_Copy,"(/)");
+  strcat(Route_Nodes,".");
   for(int i = 0 ; i<Num_words_parse-1 ; i++){
     strcat(Route_Nodes, Name_Parse[i]);
     strcat(Route_Nodes,"/");

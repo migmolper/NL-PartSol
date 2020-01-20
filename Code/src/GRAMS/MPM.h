@@ -57,8 +57,6 @@ typedef struct {
   int NumBounds;
   /* Table with all the boundaries and its values */
   Load * BCC_i;
-  /* Some information about the boundaries */
-  char Info [100];
   
 } Boundaries;
 

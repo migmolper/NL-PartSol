@@ -2,21 +2,10 @@
 
 # Background mesh definition
 GramsBox (Type=GID,File=FEM_Mesh.msh) {
-    left=GramsBoundary {
-        BcDirichlet V.x test/Dyka_MPM/CurveConstat.txt
+    
+    GramsBoundary (File=left.txt) {
+        BcDirichlet V.x CurveConstat.txt
  	BcDirichlet V.y NULL	
-    }
-    right=GramsBoundary {
-  	BcDirichlet V.x NULL
-   	BcDirichlet V.y NULL	
-    }
-    top=GramsBoundary {
-      	BcDirichlet V.x NULL
-    	BcDirichlet V.y NULL
-    }
-    bottom=GramsBoundary {
-  	BcDirichlet V.x NULL
-    	BcDirichlet V.y NULL
     }
 }
 
@@ -26,7 +15,7 @@ GramsSolid2D (File=MPM_Mesh.msh) {
     # Time integration
     GramsTime (Type=FE) {
 	CEL=5053.02
-	CFL=0.01
+	CFL=0.0002
 	N=800000
     }
 
@@ -54,7 +43,7 @@ GramsSolid2D (File=MPM_Mesh.msh) {
 }
 
 # Outputs 
-GramsOutputs (i=1) {
+GramsOutputs (i=10000) {
 	     DIR=test/Dyka_MPM	
 }
 
