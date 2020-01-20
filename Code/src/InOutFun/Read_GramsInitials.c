@@ -27,6 +27,7 @@ void GramsInitials(char * Name_File, GaussPoint GP_Mesh)
   char * Name_File_Copy = malloc(strlen(Name_File)); 
   char * Name_Parse[MAXW] = {NULL};
   char Route_Nodes[MAXC] = {0};
+  char FileNodesRoute[MAXC];
 
   /* Array */
   int Num_Nodes;
@@ -58,7 +59,15 @@ void GramsInitials(char * Name_File, GaussPoint GP_Mesh)
 	    Name_File);
     exit(0);
   }
-  
+
+  /* Generate route */
+  strcpy(Name_File_Copy, Name_File);
+  Num_words_parse = parse(Name_Parse,Name_File_Copy,"(/)");
+  for(int i = 0 ; i<Num_words_parse-1 ; i++){
+    strcat(Route_Nodes, Name_Parse[i]);
+    strcat(Route_Nodes,"/");
+  }
+ 
   /* Read the file line by line */
   while(fgets(Line_GramsInitials,sizeof(Line_GramsInitials),Sim_dat) != NULL){
 
@@ -85,17 +94,10 @@ void GramsInitials(char * Name_File, GaussPoint GP_Mesh)
       }
 
       /* Read file with the nodes */
-      strcpy(Name_File_Copy, Name_File);
-      Num_words_parse = parse(Name_Parse,Name_File_Copy,"(/)");
-      for(int i = 0 ; i<Num_words_parse-1 ; i++){
-	strcat(Route_Nodes, Name_Parse[i]);
-	strcat(Route_Nodes,"/");
-      }
-      strcat(Route_Nodes,Parse_Init_Nodes[1]);
-      free(Name_File_Copy);
+      sprintf(FileNodesRoute,"%s/%s",Route_Nodes,Parse_Init_Nodes[1]);
 
       /* Get an array with the nodes */
-      Chain_Nodes = File2Chain(Route_Nodes);
+      Chain_Nodes = File2Chain(FileNodesRoute);
       Num_Nodes = LenghtChain(Chain_Nodes);
       Array_Nodes = ChainToArray(Chain_Nodes,Num_Nodes);
       FreeChain(Chain_Nodes);
@@ -132,7 +134,7 @@ void GramsInitials(char * Name_File, GaussPoint GP_Mesh)
  	  if(strcmp(Parse_Init_Prop[0],"Value") == 0){
 
 	    printf("\t -> %s : %s \n",
-		   "For nodes in",Route_Nodes);
+		   "For nodes in",FileNodesRoute);
 	    printf("\t    %s : %s = %s \n",
 		   "Initial conditions",
 		   Formulation,Parse_Init_Prop[1]);
@@ -172,10 +174,6 @@ void GramsInitials(char * Name_File, GaussPoint GP_Mesh)
 		  "you forget to put a } !!!");
 	  exit(0);	  
 	}
-
-	if(strcmp(Parse_Init_Prop[0],"}") == 0){
-	  break;
-	}
       }
       else{
 	fprintf(stderr,"%s : %s \n",
@@ -185,6 +183,9 @@ void GramsInitials(char * Name_File, GaussPoint GP_Mesh)
       }
     }
   }
+
+  /* Free data */
+  free(Name_File_Copy);
 
   /* Close .dat file */
   fclose(Sim_dat);

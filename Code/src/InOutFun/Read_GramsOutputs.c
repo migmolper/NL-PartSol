@@ -62,7 +62,8 @@ void GramsOutputs(char * Name_File)
       exit(0);
     }
 
-    if (strcmp(kwords[0],"GramsOutputs") == 0 ){
+    if ((nkwords > 0) &&
+	(strcmp(kwords[0],"GramsOutputs") == 0 )){
 
       /* Read temporal integrator scheme */
       Aux_Out_id = parse (Parse_Out_id, kwords[1],"(=)");

@@ -19,13 +19,13 @@ Mesh ReadGidMesh(char *);
 ChainPtr File2Chain(char *);
 
 /* Read .gfd format */
-GaussPoint GramsSolid2D(char *);
+Mesh GramsBox(char *);
+GaussPoint GramsSolid2D(char *,Mesh);
 void GramsTime(char * );
 Material * GramsMaterials(char *, GaussPoint);
 void GramsInitials(char *, GaussPoint);
 void GramsShapeFun(char * );
 void GramsOutputs(char * );
-Mesh GramsBox(char *);
 Load * GramsContactForces(char *,GaussPoint);
 Load * GramsBodyForces(char *,GaussPoint);
 

@@ -10,7 +10,7 @@
 
 /*********************************************************************/
 
-GaussPoint GramsSolid2D(char * Name_File)
+GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
 /*
   
  */
@@ -384,10 +384,10 @@ GaussPoint GramsSolid2D(char * Name_File)
       MPM_Mesh.F = GramsContactForces(Name_File,MPM_Mesh);
     }
     else{
-      fprintf(stderr,"%s : %s \n",
-	      "Error in GramsSolid2D()",
-	      "GramsContactForces no defined");
-      exit(0);
+      puts("*************************************************");
+      printf(" \t %s : \n\t %s \n",
+	     "* No contact forces defined in",
+	     Name_File);
     }
     /**************************************************/    
     /*************** Read body forces *****************/
@@ -397,11 +397,27 @@ GaussPoint GramsSolid2D(char * Name_File)
       MPM_Mesh.B = GramsBodyForces(Name_File,MPM_Mesh); 
     }
     else{
-      fprintf(stderr,"%s : %s \n",
-	      "Error in GramsSolid2D()",
-	      "GramsBodyForces no defined");
-      exit(0);
+      puts("*************************************************");
+      printf(" \t %s : \n\t %s \n",
+	 "* No body forces defined in",
+	     Name_File);
     }
+    /**************************************************/
+    /******** INITIALIZE SHAPE FUNCTIONS **************/
+    /**************************************************/ 
+    puts("*************************************************");
+    printf("\t * %s \n",
+	   "Initialize shape functions ...");
+    if(strcmp(ShapeFunctionGP,"MPMQ4") == 0){
+      Q4_Initialize(MPM_Mesh, FEM_Mesh);
+    }
+    else if(strcmp(ShapeFunctionGP,"uGIMP") == 0){
+      GIMP_Initialize(MPM_Mesh,FEM_Mesh);
+    }
+    else if(strcmp(ShapeFunctionGP,"LME") == 0){
+      LME_Initialize(MPM_Mesh,FEM_Mesh);
+    }
+    
     /**************************************************/    
     /************* Free the input data ****************/
     /**************************************************/    

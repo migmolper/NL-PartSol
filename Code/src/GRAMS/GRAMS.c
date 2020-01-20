@@ -46,31 +46,23 @@ int main(int argc, char * argv[])
   /*********************************************************************/
   puts("*************************************************");
   puts("Generating MPM mesh ...");
-  GaussPoint MPM_Mesh = GramsSolid2D(SimulationFile);
-  exit(0);
-
-  /*********************************************************************/
-  /****************** INITIALIZE SHAPE FUNCTIONS ***********************/
-  /*********************************************************************/
-  if(strcmp(ShapeFunctionGP,"MPMQ4") == 0){
-    Q4_Initialize(MPM_Mesh, FEM_Mesh);
-  }
-  if(strcmp(ShapeFunctionGP,"uGIMP") == 0){
-    GIMP_Initialize(MPM_Mesh,FEM_Mesh);
-  }
-  if(strcmp(ShapeFunctionGP,"LME") == 0){
-    LME_Initialize(MPM_Mesh,FEM_Mesh);
-  }
+  GaussPoint MPM_Mesh = GramsSolid2D(SimulationFile,FEM_Mesh);
 
   /*********************************************************************/
   /*********************** OUTPUT VARIABLES ****************************/
-  /*********************************************************************/  
+  /*********************************************************************/
+  puts("*************************************************");
+  puts("Read outputs ...");
   GramsOutputs(SimulationFile);
 
   /*********************************************************************/
   /********************** RUN THE MPM CALCULUS *************************/
   /*********************************************************************/
-  u_ForwardEuler(FEM_Mesh, MPM_Mesh);
+  puts("*************************************************");
+  puts("Run simulation ...");
+  if(strcmp(TimeIntegration,"FE")==0 ){
+    u_ForwardEuler(FEM_Mesh, MPM_Mesh);
+  }
 
   /*********************************************************************/
   /******************** CRONOGRAPH CALCULUS : END **********************/

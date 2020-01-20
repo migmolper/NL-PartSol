@@ -26,7 +26,7 @@ GramsSolid2D (File=MPM_Mesh.msh) {
     # Time integration
     GramsTime (Type=FE) {
 	CEL=5053.02
-	CFL=0.6
+	CFL=0.01
 	N=800000
     }
 
@@ -48,13 +48,13 @@ GramsSolid2D (File=MPM_Mesh.msh) {
     }
 
     # Loads over the GPs
-    GramsBodyForces (Nodes=) {}
-    GramsContactForces (Nodes=) {}
+    # GramsBodyForces (Nodes=) {}
+    # GramsContactForces (Nodes=) {}
   
 }
 
 # Outputs 
-GramsOutputs (i=10000) {
+GramsOutputs (i=1) {
 	     DIR=test/Dyka_MPM	
 }
 

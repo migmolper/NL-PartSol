@@ -43,8 +43,7 @@ void BCC_Nod_VALUE(Mesh FEM_Mesh, Matrix Nodal_VALUE, int TimeStep)
       /* 6º Loop over the dimensions of the boundary condition */
       for(int k = 0 ; k<NumDimBound ; k++){
 	/* 7º Apply only if the direction is active (1) */
-	if( (FEM_Mesh.Bounds.BCC_i[i].Dir[k] == 1) ||
-	    (FEM_Mesh.Bounds.BCC_i[i].Dir[k] == -1)){
+	if(FEM_Mesh.Bounds.BCC_i[i].Dir[k] == 1){
 	  /* 8º Check if the curve it is on time */
 	  if( (TimeStep < 0) ||
 	      (TimeStep > FEM_Mesh.Bounds.BCC_i[i].Value[k].Num)){
@@ -60,7 +59,7 @@ void BCC_Nod_VALUE(Mesh FEM_Mesh, Matrix Nodal_VALUE, int TimeStep)
 	}
       }
     }    
-  } 
+  }
 
 }
 
