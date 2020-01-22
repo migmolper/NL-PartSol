@@ -9,11 +9,11 @@
 Matrix GetNodalForces(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int TimeStep)
 {
   /* Mass of the GP */
-  double GP_mass; 
+  double GP_mass;
   /* Gauss-Point volumen */
-  double Vol_GP; 
+  double Vol_GP;
   /* Damage parameter */
-  double ji_GP; 
+  double ji_GP;
 
   /* Mesh properties evaluated in Gauss-Point coords */
   Matrix N_GP; /* Matrix with the nodal shape functions */
@@ -68,8 +68,10 @@ Matrix GetNodalForces(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int TimeStep)
     free(N_dNdx_GP.nM);
            
     /* 6º Get the B_T matrix for the derivates */
-    B = Get_B_GP(dNdx_GP), FreeMat(dNdx_GP);
-    B_T = Transpose_Mat(B), FreeMat(B);
+    B = Get_B_GP(dNdx_GP);
+    FreeMat(dNdx_GP);
+    B_T = Transpose_Mat(B);
+    FreeMat(B);
     
     /* 7º Asign to an auxiliar variable the value of the stress tensor */
     Stress_GP.nV = MPM_Mesh.Phi.Stress.nM[i];
@@ -101,10 +103,10 @@ Matrix GetNodalForces(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int TimeStep)
 	  D_Stress_GP.nV[k*NumberDimensions+l]*Vol_GP;
 	/* 10bº Add the body forces */
 	Nodal_TOT_FORCES.nM[l][GP_I] +=
-	  N_GP_I*Body_Forces_t.nM[l][i]*GP_mass;	
+	  N_GP_I*Body_Forces_t.nM[l][i]*GP_mass;
 	/* 10cº Add the contact forces */
 	Nodal_TOT_FORCES.nM[l][GP_I] +=
-	  N_GP_I*Contact_Forces_t.nM[l][i]*Vol_GP;	
+	  N_GP_I*Contact_Forces_t.nM[l][i]*Vol_GP;
       }      
     }
     

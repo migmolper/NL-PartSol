@@ -1,11 +1,15 @@
 
-# Background mesh definition
-GramsBox (Type=GID,File=FEM_Mesh.msh) {
-    
-    GramsBoundary (File=left.txt) {
+GramsBox (Type=GID,File=*gendata(Background_mesh_name)) {
+
+*loop nodes *OnlyInCond
+GramsBoundary (File=left.txt) {
         BcDirichlet V.x CurveConstat.txt
  	BcDirichlet V.y NULL	
     }
+*NodesNum *cond(Temperature,real)
+*end
+
+    
 }
 
 # Material points definitions
@@ -45,5 +49,6 @@ GramsSolid2D (File=MPM_Mesh.msh) {
 GramsOutputs (i=10000) {
 	     DIR=Resultados	
 }
+
 
 

@@ -49,18 +49,16 @@ Mesh GramsBox(char * Name_File)
   char * Name_Parse[MAXW] = {NULL};
   char Route_Mesh[MAXC] = {0};
   char FileMeshRoute[MAXC];
-
-  /* Index of the material */
-  char * Parse_Mesh_id[MAXW] = {NULL};
-
-  /* Parser num chars */
-  int Num_words_line;
-  
+   
   /* Parse line of GramsBox */
+  int Num_GramsBox;
   char Line_GramsBox[MAXC] = {0};
   char * Parse_GramsBox[MAXW] = {NULL};
+  int Num_GramsBox_Prop;
+  char * Parse_Mesh_id[MAXW] = {NULL};
 
   /* Parse lines of GramsBoundary */
+  int Num_GramsBoundary;
   char Line_GramsBoundary[MAXC] = {0};
   char * Parse_GramsBoundary[MAXW] = {NULL};
   int NumBounds;
@@ -80,9 +78,9 @@ Mesh GramsBox(char * Name_File)
 
   /* Generate route */
   strcpy(Name_File_Copy, Name_File);
-  Num_words_line = parse(Name_Parse,Name_File_Copy,"(/)");
+  Num_GramsBox = parse(Name_Parse,Name_File_Copy,"(/)");
   strcat(Route_Mesh,"./");
-  for(int i = 0 ; i<Num_words_line-1 ; i++){
+  for(int i = 0 ; i<Num_GramsBox-1 ; i++){
     strcat(Route_Mesh, Name_Parse[i]);
     strcat(Route_Mesh,"/");
   }
@@ -91,9 +89,9 @@ Mesh GramsBox(char * Name_File)
   while( fgets(Line_GramsBox, sizeof(Line_GramsBox), Sim_dat) != NULL ){
     
     /* Read the line with the space as separators */
-    Num_words_line = parse (Parse_GramsBox, Line_GramsBox," \n\t");
+    Num_GramsBox = parse (Parse_GramsBox, Line_GramsBox," \n\t");
     
-    if (Num_words_line < 0){
+    if (Num_GramsBox < 0){
       fprintf(stderr,"%s : %s \n",
 	      "Error in GramsBox ()",
 	      "Parser failed");
@@ -101,7 +99,7 @@ Mesh GramsBox(char * Name_File)
     }
 
     /* Find GramsBox line */
-    if ((Num_words_line > 0) &&
+    if ((Num_GramsBox > 0) &&
     	(strcmp(Parse_GramsBox[0],"GramsBox") == 0 ) &&
 	((strcmp(Parse_GramsBox[2],"{") == 0))){
 
@@ -109,8 +107,8 @@ Mesh GramsBox(char * Name_File)
       NumberDimensions = 2;
 
       /* Read the type of the mesh and the name of the file */
-      Num_words_line = parse (Parse_Mesh_id, Parse_GramsBox[1],"(=,)");
-      if( (Num_words_line != 4) ||
+      Num_GramsBox_Prop = parse (Parse_Mesh_id, Parse_GramsBox[1],"(=,)");
+      if( (Num_GramsBox_Prop != 4) ||
 	  (strcmp(Parse_Mesh_id[0],"Type") != 0) ||
 	  (strcmp(Parse_Mesh_id[2],"File") != 0) ){
 	fprintf(stderr,"%s : %s \n",
@@ -140,7 +138,7 @@ Mesh GramsBox(char * Name_File)
       NumBounds = 0;
 
       /* Check format GramsBox (Type=,File=) { } */
-      if((Num_words_line == 4) &&
+      if((Num_GramsBox == 4) &&
 	 (strcmp(Parse_GramsBox[3],"}") == 0)){
 	puts("*************************************************");
 	printf(" \t %s : \n \t %i \n",
@@ -157,12 +155,12 @@ Mesh GramsBox(char * Name_File)
 		"Unspected EOF !!!");
 	exit(0);
       }
-      Num_words_line = parse(Parse_GramsBoundary,Line_GramsBoundary," =\t\n");
+      Num_GramsBoundary = parse(Parse_GramsBoundary,Line_GramsBoundary," =\t\n");
 
       /* Check format GramsBox (Type=,File=) { 
 	 }
       */
-      if((Num_words_line > 1) &&
+      if((Num_GramsBoundary > 0) &&
 	 (strcmp(Parse_GramsBoundary[0],"}") == 0)){
 	puts("*************************************************");
 	printf(" \t %s : \n \t %i \n",
@@ -172,13 +170,15 @@ Mesh GramsBox(char * Name_File)
 
       /* Loop to count the number of boundaries */
       while(STATUS_LINE != NULL){
-	if((Num_words_line > 1) &&
+	if((Num_GramsBoundary > 0) &&
 	   (strcmp(Parse_GramsBoundary[0],"GramsBoundary") == 0)){
 	  NumBounds++;
 	}
 	/* Continue reading to the end*/
-	STATUS_LINE = fgets(Line_GramsBoundary,sizeof(Line_GramsBoundary),Sim_dat);
-	Num_words_line = parse(Parse_GramsBoundary,Line_GramsBoundary," =\t\n");	
+	STATUS_LINE = fgets(Line_GramsBoundary,
+			    sizeof(Line_GramsBoundary),Sim_dat);
+	Num_GramsBoundary = parse(Parse_GramsBoundary,
+			       Line_GramsBoundary," =\t\n");	
       }
       
     }
@@ -217,10 +217,11 @@ Mesh GramsBox(char * Name_File)
   /******** Allocate array with the boundaries ******/
   /**************************************************/
   if(NumBounds > 0){
-    FEM_Mesh.Bounds = GramsBoundary(Name_File,NumBounds);
     puts("*************************************************");
     printf(" \t %s : \n \t %i \n",
-	   "* Number of boundaries",FEM_Mesh.Bounds.NumBounds);
+	   "* Number of boundaries",NumBounds);
+    FEM_Mesh.Bounds.NumBounds = NumBounds;
+    FEM_Mesh.Bounds = GramsBoundary(Name_File,NumBounds);
   }
 
   /* Free data */

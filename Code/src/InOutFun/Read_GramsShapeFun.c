@@ -24,17 +24,18 @@ void GramsShapeFun(char * Name_File)
   FILE * Sim_dat;
 
   /* Temporal integator */
-  int Aux_Shf_id;
-  char * Parse_Shf_id[MAXW] = {NULL};
+  int Num_GramsShapefun_Type;
+  char * Parse_GramsShapefun_Type[MAXW] = {NULL};
 
   /* Temporal integrator properties */
+  int Num_ShapeFun_Prop;
   char Line_Shf_Prop[MAXC] = {0};
   char * Parse_Shf_Prop[MAXW] = {NULL};
 
-  /* Special variables for line-reading */
-  char line[MAXC] = {0}; /* Variable for reading the lines in the files */
-  char * kwords[MAXW] = {NULL}; /* Variable to store the parser of a line */
-  int nkwords; /* Number of element in the line , just for check */
+  /* Special variables for GramsShapeFun */
+  int Num_GramsShapeFun;
+  char Line_GramsShapeFun[MAXC] = {0}; 
+  char * Parse_GramsShapeFun[MAXW] = {NULL};
 
   /* Auxiliar variable for status */
   char * STATUS_LINE;
@@ -56,30 +57,32 @@ void GramsShapeFun(char * Name_File)
   }
   
   /* Read the file line by line */
-  while( fgets(line, sizeof line, Sim_dat) != NULL ){
+  while( fgets(Line_GramsShapeFun, sizeof Line_GramsShapeFun, Sim_dat) != NULL ){
 
     /* Read the line with the space as separators */
-    nkwords = parse (kwords, line," \n\t");
-    if (nkwords < 0){
+    Num_GramsShapeFun = parse (Parse_GramsShapeFun, Line_GramsShapeFun," \n\t");
+    if (Num_GramsShapeFun < 0){
       fprintf(stderr,"%s : %s \n",
 	     "Error in GramsShapeFun()",
 	     "Parser failed");
       exit(0);
     }
 
-    if ((nkwords > 0) &&
-	(strcmp(kwords[0],"GramsShapeFun") == 0)){
+    if ((Num_GramsShapeFun > 0) &&
+	(strcmp(Parse_GramsShapeFun[0],"GramsShapeFun") == 0)){
 
-      /* Read temporal integrator scheme */
-      Aux_Shf_id = parse (Parse_Shf_id, kwords[1],"(=)");
-      if( (Aux_Shf_id != 2) ||
-	  (strcmp(Parse_Shf_id[0],"Type") != 0)){
+      /* Read Type of shape function */
+      Num_GramsShapefun_Type =
+	parse(Parse_GramsShapefun_Type, Parse_GramsShapeFun[1],"(=)");
+      if( (Num_GramsShapefun_Type != 2) ||
+	  (strcmp(Parse_GramsShapefun_Type[0],"Type") != 0)){
 	fprintf(stderr,"%s : %s \n",
 	       "Error in GramsShapeFun()",
 	       "Use this format -> (Type=string) !!!");
 	exit(0);
       }
-      ShapeFunctionGP = Parse_Shf_id[1];
+      
+      ShapeFunctionGP = Parse_GramsShapefun_Type[1];
       printf("\t -> %s : %s \n","Type of shape function",ShapeFunctionGP);
 
       /* Set to default all it properties */
@@ -87,8 +90,12 @@ void GramsShapeFun(char * Name_File)
       TOL_lambda=10e-6;
 
       /* Look for the curly brace { */
-      if(strcmp(kwords[2],"{") == 0){
-	if(strcmp(kwords[3],"}") == 0){
+      if((Num_GramsShapeFun>=3) &&
+	 (strcmp(Parse_GramsShapeFun[2],"{") == 0)){
+
+	/* In case GramsShapeFun (Type=*) {} */
+	if((Num_GramsShapeFun == 4) &&
+	   (strcmp(Parse_GramsShapeFun[3],"}") == 0)){
 	  /* Check gamma */
 	  if((strcmp(ShapeFunctionGP,"LME") == 0) &&
 	     (gamma_LME == 0)){
@@ -102,16 +109,17 @@ void GramsShapeFun(char * Name_File)
 	}
 	
 	/* Initial line */
-	STATUS_LINE = fgets(Line_Shf_Prop,
-			    sizeof(Line_Shf_Prop),
-			    Sim_dat);
+	STATUS_LINE = fgets(Line_Shf_Prop,sizeof(Line_Shf_Prop),Sim_dat);
 	if(STATUS_LINE == NULL){
 	  fprintf(stderr,"%s : %s \n",
 		  "Error in GramsShapeFun()",
 		  "Unspected EOF !!!");
 	  exit(0);	
 	}
-	Aux_Shf_id = parse(Parse_Shf_Prop,Line_Shf_Prop," =\t\n");
+	Num_ShapeFun_Prop = parse(Parse_Shf_Prop,Line_Shf_Prop," =\t\n");
+
+	/* In case GramsShapeFun (Type=*) {
+	   } */
 	if(strcmp(Parse_Shf_Prop[0],"}") == 0){
 	  /* Check gamma */
 	  if((strcmp(ShapeFunctionGP,"LME") == 0) &&
@@ -124,9 +132,11 @@ void GramsShapeFun(char * Name_File)
 	  /* Check number of time steps */
 	  break;
 	}
+
+	/* Loop */
 	while(STATUS_LINE != NULL){
 	  
-	  if(Aux_Shf_id != 2){
+	  if(Num_ShapeFun_Prop != 2){
 	    fprintf(stderr,"%s : %s \n",
 		   "Error in GramsShapeFun()",
 		   "Use this format -> Propertie = value !!!");
@@ -149,8 +159,9 @@ void GramsShapeFun(char * Name_File)
 	  STATUS_LINE = fgets(Line_Shf_Prop,
 			      sizeof(Line_Shf_Prop),
 			      Sim_dat);
-	  Aux_Shf_id = parse(Parse_Shf_Prop,Line_Shf_Prop," =\t\n");
-	  if(strcmp(Parse_Shf_Prop[0],"}") == 0){
+	  Num_ShapeFun_Prop = parse(Parse_Shf_Prop,Line_Shf_Prop," =\t\n");
+	  if((Num_ShapeFun_Prop>0) &&
+	     (strcmp(Parse_Shf_Prop[0],"}") == 0)){
 	    break;
 	  }
 	}
@@ -161,7 +172,8 @@ void GramsShapeFun(char * Name_File)
 	exit(0);	  
 	}
 
-	if(strcmp(Parse_Shf_Prop[0],"}") == 0){
+	if((Num_ShapeFun_Prop>0) &&
+	   (strcmp(Parse_Shf_Prop[0],"}") == 0)){
 	  /* Check gamma */
 	  if((strcmp(ShapeFunctionGP,"LME") == 0) &&
 	     (gamma_LME == 0)){

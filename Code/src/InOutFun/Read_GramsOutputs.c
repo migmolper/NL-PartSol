@@ -26,6 +26,12 @@ void GramsOutputs(char * Name_File)
   char Line_Out_Prop[MAXC] = {0};
   char * Parse_Out_Prop[MAXW] = {NULL};
 
+  /* Parse file for the route */
+  int Num_words_route;
+  char * Name_File_Copy = malloc(strlen(Name_File)); 
+  char * Name_Parse[MAXW] = {NULL};
+  char Route_Outs[MAXC] = {0};
+
   /* Special variables for line-reading */
   char line[MAXC] = {0}; /* Variable for reading the lines in the files */
   char * kwords[MAXW] = {NULL}; /* Variable to store the parser of a line */
@@ -48,6 +54,15 @@ void GramsOutputs(char * Name_File)
 	   "Incorrect lecture of",
 	   Name_File);
     exit(0);
+  }
+
+  /* Generate route */
+  strcpy(Name_File_Copy, Name_File);
+  Num_words_route = parse(Name_Parse,Name_File_Copy,"(/)");
+  strcat(Route_Outs,"./");
+  for(int i = 0 ; i<Num_words_route-1 ; i++){
+    strcat(Route_Outs, Name_Parse[i]);
+    strcat(Route_Outs,"/");
   }
   
   /* Read the file line by line */
@@ -83,9 +98,6 @@ void GramsOutputs(char * Name_File)
       }
       printf("\t -> %s : %i \n","Output values each",ResultsTimeStep);
 
-      /* Set to default all it properties */
-      OutputDir = NULL;
-
       /* Look for the curly brace { */
       if(strcmp(kwords[2],"{") == 0){
 	/* Initial line */
@@ -119,7 +131,8 @@ void GramsOutputs(char * Name_File)
 	  }
 
  	  if(strcmp(Parse_Out_Prop[0],"DIR") == 0){
-	    OutputDir = Parse_Out_Prop[1];
+	    sprintf(OutputDir,"%s%s",Route_Outs,Parse_Out_Prop[1]);
+	    printf("\t -> %s : %s \n","Output directory",OutputDir);
 	  }
 	  else{
 	    fprintf(stderr,"%s : %s %s \n",

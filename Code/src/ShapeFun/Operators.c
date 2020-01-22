@@ -10,6 +10,9 @@ Matrix Get_Operator(char * Type, int i_GP,
 		    int * GP_Connect, int GP_NumNodes,
 		    GaussPoint MPM_Mesh,Mesh FEM_Mesh) 
 {
+
+
+  int Ndim = NumberDimensions;
   
   Matrix GP_ElemCoord; /* Coordinates of the nodes */
   int GP_I; /* Get the node for the GP */
@@ -61,11 +64,13 @@ Matrix Get_Operator(char * Type, int i_GP,
       N_GP = Q4(X_GP);
       dNdx_GP = Get_dNdX_Q4(X_GP,GP_ElemCoord);
       /* Asign to Operator variable */
-      Operator = MatAssign(3,N_GP.N_cols,NAN,NULL,
-			   (double **)malloc(3*sizeof(double *)));
+      Operator = MatAssign((Ndim+1),N_GP.N_cols,NAN,NULL,
+			   (double **)malloc((Ndim+1)*sizeof(double *)));
       Operator.nM[0] = N_GP.nV;
       Operator.nM[1] = dNdx_GP.nM[0];
       Operator.nM[2] = dNdx_GP.nM[1];
+      /* Free double pointer table */
+      free(dNdx_GP.nM);
     }
     else{
       printf("%s : %s %s %s \n",
@@ -112,11 +117,13 @@ Matrix Get_Operator(char * Type, int i_GP,
       N_GP = GIMP_2D(Delta_Xip,lp,FEM_Mesh.DeltaX);
       dNdx_GP = dGIMP_2D(Delta_Xip,lp,FEM_Mesh.DeltaX);
       /* Asign to Operator variable */
-      Operator = MatAssign(3,N_GP.N_cols,NAN,NULL,
-			   (double **)malloc(3*sizeof(double *)));
+      Operator = MatAssign((Ndim+1),N_GP.N_cols,NAN,NULL,
+			   (double **)malloc((Ndim+1)*sizeof(double *)));
       Operator.nM[0] = N_GP.nV;
       Operator.nM[1] = dNdx_GP.nM[0];
       Operator.nM[2] = dNdx_GP.nM[1];
+      /* Free double pointer table */
+      free(dNdx_GP.nM);
     }
     else{
       printf("%s : %s %s %s \n",
@@ -166,11 +173,13 @@ Matrix Get_Operator(char * Type, int i_GP,
       N_GP = LME_p(Delta_Xip, lambda_GP,Beta_GP);
       dNdx_GP = LME_dp(Delta_Xip, N_GP);
       /* Asign to Operator variable */
-      Operator = MatAssign(3,N_GP.N_cols,NAN,NULL,
-			   (double **)malloc(3*sizeof(double *)));
+      Operator = MatAssign((Ndim+1),N_GP.N_cols,NAN,NULL,
+			   (double **)malloc((Ndim+1)*sizeof(double *)));
       Operator.nM[0] = N_GP.nV;
       Operator.nM[1] = dNdx_GP.nM[0];
       Operator.nM[2] = dNdx_GP.nM[1];
+      /* Free double pointer table */
+      free(dNdx_GP.nM);
     }
     else{
       printf("%s : %s %s %s \n",

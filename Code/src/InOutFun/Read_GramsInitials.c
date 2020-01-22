@@ -63,7 +63,7 @@ void GramsInitials(char * Name_File, GaussPoint GP_Mesh)
   /* Generate route */
   strcpy(Name_File_Copy, Name_File);
   Num_words_parse = parse(Name_Parse,Name_File_Copy,"(/)");
-  strcat(Route_Nodes,".");
+  strcat(Route_Nodes,"./");
   for(int i = 0 ; i<Num_words_parse-1 ; i++){
     strcat(Route_Nodes, Name_Parse[i]);
     strcat(Route_Nodes,"/");
@@ -95,7 +95,7 @@ void GramsInitials(char * Name_File, GaussPoint GP_Mesh)
       }
 
       /* Read file with the nodes */
-      sprintf(FileNodesRoute,"%s/%s",Route_Nodes,Parse_Init_Nodes[1]);
+      sprintf(FileNodesRoute,"%s%s",Route_Nodes,Parse_Init_Nodes[1]);
 
       /* Get an array with the nodes */
       Chain_Nodes = File2Chain(FileNodesRoute);

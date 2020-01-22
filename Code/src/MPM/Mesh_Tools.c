@@ -55,7 +55,8 @@ double GetMinElementSize(Mesh FEM_Mesh)
       /* Get the minimum minimum height of the triangle */
       for(int j = 0 ; j<3 ; j++){
 	MinElementSize_aux =
-	  1/pow(dNdx.nM[0][j]*dNdx.nM[0][j] + dNdx.nM[1][j]*dNdx.nM[1][j],0.5);
+	  1/pow(dNdx.nM[0][j]*dNdx.nM[0][j] +
+		dNdx.nM[1][j]*dNdx.nM[1][j],0.5);
 	MinElementSize = MINVAL(MinElementSize,MinElementSize_aux);
       }
       /* Free memory */
@@ -145,7 +146,8 @@ void GetListNodesGP(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int iGP){
   /* 6º Assign the new connectivity of the GP */
   if(strcmp(ShapeFunctionGP,"MPMQ4") == 0){
     /* Asign connectivity */
-    MPM_Mesh.ListNodes[iGP] = CopyChain(FEM_Mesh.Connectivity[IdxElement]);
+    MPM_Mesh.ListNodes[iGP] =
+      CopyChain(FEM_Mesh.Connectivity[IdxElement]);
   }
   else if(strcmp(ShapeFunctionGP,"uGIMP") == 0){
 

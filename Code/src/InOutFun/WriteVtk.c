@@ -55,7 +55,7 @@ void WriteVtk_MPM(char * Name_File, GaussPoint MPM_Mesh,
 	    MPM_Mesh.Phi.x_EC.nM[i][0],
 	    MPM_Mesh.Phi.x_EC.nM[i][1],
 	    MPM_Mesh.Phi.x_EC.nM[i][2]);
-  } 
+  }
 
   /* Cell data */  
   fprintf(Vtk_file,"CELL_DATA %i \n",MPM_Mesh.NumGP);

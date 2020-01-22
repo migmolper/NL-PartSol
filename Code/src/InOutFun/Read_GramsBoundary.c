@@ -134,9 +134,14 @@ Boundaries GramsBoundary(char * Name_File,int NumBounds){
 		Bounds.BCC_i[IndexBoundary].Dir[0] = 1;
 		/* Read the curve to impose the boundary condition */
 		if(strcmp(Parse_Properties[2],"NULL") != 0){
-		  sprintf(FileLoadRoute,"%s/%s",Route_Nodes,Parse_Properties[2]);
+		  sprintf(FileLoadRoute,"%s%s",Route_Nodes,Parse_Properties[2]);
 		  Bounds.BCC_i[IndexBoundary].Value[0] =
 		    ReadCurve(FileLoadRoute);
+		  puts("*************************************************");
+		  printf(" \t %s (%i) : \n \t %s %s \n",
+			 "* BcDirichlet",
+			 Bounds.BCC_i[IndexBoundary].NumNodes,
+			 Parse_Properties[1],FileLoadRoute);
 		}
 		else{
 		  Bounds.BCC_i[IndexBoundary].Dir[0] = 0;
@@ -147,9 +152,14 @@ Boundaries GramsBoundary(char * Name_File,int NumBounds){
 		Bounds.BCC_i[IndexBoundary].Dir[1] = 1;
 		/* Read the curve to impose the boundary condition */
 		if(strcmp(Parse_Properties[2],"NULL") != 0){
-		  sprintf(FileLoadRoute,"%s/%s",Route_Nodes,Parse_Properties[2]);
+		  sprintf(FileLoadRoute,"%s%s",Route_Nodes,Parse_Properties[2]);
 		  Bounds.BCC_i[IndexBoundary].Value[1] =
 		    ReadCurve(FileLoadRoute);
+		  puts("*************************************************");
+		  printf(" \t %s (%i) : \n \t %s %s \n",
+			 "* BcDirichlet",
+			 Bounds.BCC_i[IndexBoundary].NumNodes,
+			 Parse_Properties[1],FileLoadRoute);
 		}
 		else{
 		  Bounds.BCC_i[IndexBoundary].Dir[1] = 0;
@@ -160,9 +170,14 @@ Boundaries GramsBoundary(char * Name_File,int NumBounds){
 		Bounds.BCC_i[IndexBoundary].Dir[2] = 1;
 		/* Read the curve to impose the boundary condition */
 		if(strcmp(Parse_Properties[2],"NULL") != 0){
-		  sprintf(FileLoadRoute,"%s/%s",Route_Nodes,Parse_Properties[2]);
+		  sprintf(FileLoadRoute,"%s%s",Route_Nodes,Parse_Properties[2]);
 		  Bounds.BCC_i[IndexBoundary].Value[2] =
 		    ReadCurve(FileLoadRoute);
+		  puts("*************************************************");
+		  printf(" \t %s (%i) : \n \t %s %s \n",
+			 "* BcDirichlet",
+			 Bounds.BCC_i[IndexBoundary].NumNodes,
+			 Parse_Properties[1],FileLoadRoute);
 		}
 		else{
 		  Bounds.BCC_i[IndexBoundary].Dir[2] = 0;

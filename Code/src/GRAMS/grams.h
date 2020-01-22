@@ -41,7 +41,7 @@ enum { MAXW = 100, MAXC = 1000 };
 char * SimulationFile;
 char * FEM_MeshFileName;
 char * MPM_MeshFileName;
-char * OutputDir;
+char OutputDir[MAXC];
 
 /***************************************/
 /*********** Kind of analysis **********/

@@ -384,6 +384,7 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
       MPM_Mesh.F = GramsContactForces(Name_File,MPM_Mesh);
     }
     else{
+      MPM_Mesh.NumberContactForces = Counter_ContactForces;
       puts("*************************************************");
       printf(" \t %s : \n\t %s \n",
 	     "* No contact forces defined in",
@@ -397,6 +398,7 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
       MPM_Mesh.B = GramsBodyForces(Name_File,MPM_Mesh); 
     }
     else{
+      MPM_Mesh.NumberBodyForces = Counter_BodyForces;
       puts("*************************************************");
       printf(" \t %s : \n\t %s \n",
 	 "* No body forces defined in",
