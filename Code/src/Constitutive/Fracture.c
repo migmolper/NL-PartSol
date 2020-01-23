@@ -4,7 +4,8 @@
 #include <math.h>
 #include "../GRAMS/grams.h"
 
-Matrix EigenerosionAlgorithm(Matrix ji, Matrix W, Matrix Mass,
+Matrix EigenerosionAlgorithm(Matrix ji, Matrix W,
+			     Matrix Mass, Matrix Stress,
 			     int * MatIdx, Material * MatPro,
 			     ChainPtr * Beps, double DeltaX)
 /*
@@ -35,8 +36,8 @@ Matrix EigenerosionAlgorithm(Matrix ji, Matrix W, Matrix Mass,
   int Mat_p;
   
   for(int p = 0 ; p < Num_GP ; p++){
-    /* Calcule damage if the GP is not broken */
-    if(ji.nV[p] < 1){
+    if((ji.nV[p] < 1) && /* Non broken GP */
+       (Stress.nM[p][0]>0) && (Stress.nM[p][1]>0)){ /* Only traction */
 
       /* Kind of material */
       Mat_p = MatIdx[p];
@@ -84,14 +85,15 @@ Matrix EigenerosionAlgorithm(Matrix ji, Matrix W, Matrix Mass,
 
 /*******************************************************/
 
-Matrix ComputeDamage(Matrix ji, Matrix W, Matrix Mass,
+Matrix ComputeDamage(Matrix ji, Matrix W,
+		     Matrix Mass, Matrix Stress,
 		     int * MatIdx, Material * MatProp,
 		     ChainPtr * Beps, double DeltaX){
 
   /* Choose the damage model */
-  Matrix Damage_n1 = EigenerosionAlgorithm(ji, W, Mass,
-					   MatIdx, MatProp,
-					   Beps, DeltaX);
+  Matrix Damage_n1 =
+    EigenerosionAlgorithm(ji, W, Mass, Stress,
+			  MatIdx, MatProp, Beps, DeltaX);
 
   return Damage_n1;
 }

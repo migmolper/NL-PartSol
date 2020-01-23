@@ -42,10 +42,12 @@ Matrix LinearElastic(Matrix,Matrix,
 double W_LinearElastic(Matrix,Matrix,double);
 
 /* Fracture */
-Matrix EigenerosionAlgorithm(Matrix, Matrix, Matrix,
+Matrix EigenerosionAlgorithm(Matrix, Matrix,
+			     Matrix, Matrix,
 			     int *, Material *,
 			     ChainPtr *, double);
-Matrix ComputeDamage(Matrix, Matrix, Matrix,
+Matrix ComputeDamage(Matrix, Matrix,
+		     Matrix, Matrix,
 		     int *, Material *,
 		     ChainPtr *, double);
 
