@@ -117,12 +117,10 @@ typedef struct {
   Material * Mat; /* Array wit the number of materials */
 
   /* Forces over the GP */
-  int NumberContactForces;
+  int NumNeumannBC;
   int NumberBodyForces;
-  Load * F; /* Contact forces */
+  Load * F; /* Neumann boundary conditions */
   Load * B; /* Body forces */
-  /* LoadCase F; /\* Contact forces *\/ */
-  /* LoadCase B; /\* Body forces *\/ */
 
   /* Shape functions variables */
   /* GIMP */

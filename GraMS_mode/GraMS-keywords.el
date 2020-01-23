@@ -5,7 +5,7 @@
 			  "GramsMaterials"
 			  "GramsBoundary"
 			  "GramsBodyForces"
-			  "GramsContactForces"
+			  "GramsNeumannBC"
 			  "GramsInitials"
 			  )
   "GraMS functions.")

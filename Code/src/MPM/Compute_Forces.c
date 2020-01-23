@@ -45,7 +45,7 @@ Matrix GetNodalForces(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int TimeStep)
   
   /* 2º Fill matrix with the contact forces for TimeStep */
   Matrix Contact_Forces_t =
-    Eval_Contact_Forces(MPM_Mesh.F,MPM_Mesh.NumberContactForces,
+    Eval_Contact_Forces(MPM_Mesh.F,MPM_Mesh.NumNeumannBC,
 			MPM_Mesh.NumGP,TimeStep);
 
   /* 3º Iterate over all the GP to get the nodal values */

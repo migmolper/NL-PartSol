@@ -48,12 +48,12 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
   bool Is_GramsMaterials = false; 
   bool Is_GramsInitials = false;
   bool Is_GramsBodyForces = false;
-  bool Is_GramsContactForces = false;
+  bool Is_GramsNeumannBC = false;
 
   /* Initialize counters */
   int Counter_Materials = 0;
   int Counter_BodyForces = 0;
-  int Counter_ContactForces = 0;
+  int Counter_GramsNeumannBC = 0;
   
   /* Open and check file */
   Sim_dat = fopen(Name_File,"r");  
@@ -116,9 +116,9 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
       Counter_BodyForces++;
     }
     if ((Num_words_parse > 0) &&
-	(strcmp(Parse_GramsSolid2D[0],"GramsContactForces") == 0)){
-      Is_GramsContactForces = true;
-      Counter_ContactForces++;
+	(strcmp(Parse_GramsSolid2D[0],"GramsNeumannBC") == 0)){
+      Is_GramsNeumannBC = true;
+      Counter_GramsNeumannBC++;
     }    
   }
 
@@ -371,23 +371,21 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
       GramsInitials(Name_File,MPM_Mesh);
     }
     else{
-      fprintf(stderr,"%s : %s \n",
-	      "Error in GramsSolid2D()",
-	      "GramsInitials no defined");
-      exit(0);
+      puts("*************************************************");
+      puts(" No initial conditions defined ");  
     }
     /**************************************************/    
     /************** Read external forces **************/
     /**************************************************/    
-    if(Is_GramsContactForces){
-      MPM_Mesh.NumberContactForces = Counter_ContactForces;
-      MPM_Mesh.F = GramsContactForces(Name_File,MPM_Mesh);
+    if(Is_GramsNeumannBC){
+      MPM_Mesh.NumNeumannBC = Counter_GramsNeumannBC;
+      MPM_Mesh.F = GramsNeumannBC(Name_File, Counter_GramsNeumannBC);
     }
     else{
-      MPM_Mesh.NumberContactForces = Counter_ContactForces;
+      MPM_Mesh.NumNeumannBC = Counter_GramsNeumannBC;
       puts("*************************************************");
       printf(" \t %s : \n\t %s \n",
-	     "* No contact forces defined in",
+	     "* No Neumann boundary conditions defined in",
 	     Name_File);
     }
     /**************************************************/    

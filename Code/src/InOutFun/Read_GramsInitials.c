@@ -9,7 +9,11 @@
 
 
 void GramsInitials(char * Name_File, GaussPoint GP_Mesh)
-
+/*
+  GramsInitials (Nodes=ListInit.txt) {
+  Value=[5.0,0.0]
+  }
+*/
 {
 
   /* Simulation file */

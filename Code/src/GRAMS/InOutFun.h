@@ -27,7 +27,7 @@ Material * GramsMaterials(char *, GaussPoint);
 void GramsInitials(char *, GaussPoint);
 void GramsShapeFun(char * );
 void GramsOutputs(char * );
-Load * GramsContactForces(char *,GaussPoint);
+Load * GramsNeumannBC(char *, int);
 Load * GramsBodyForces(char *,GaussPoint);
 
 /* Print .vtk format */
