@@ -1089,4 +1089,18 @@ Matrix Get_Lumped_Matrix(Matrix M_in){
   return M_out;  
 }
 
-/*********************************************************************/
+/* /\*********************************************************************\/ */
+
+/* Matrix Matrix_x_Scalar(Matrix A, double a){ */
+
+  
+
+/*   for(int j = 0 ; j<MPM_Mesh.Phi.Strain.N_cols ; j++){ */
+/*     Increment_Strain_GP.nV[j] *= DeltaTimeStep; */
+/*   } */
+
+/*   return A; */
+/* } */
+
+
+/* /\*********************************************************************\/ */

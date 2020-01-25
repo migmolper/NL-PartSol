@@ -4,7 +4,6 @@ GramsBox (Type=GID,File=FEM_Mesh.msh) {
     
     GramsBoundary (File=left.txt) {
         BcDirichlet V.x CurveConstat.txt
- 	BcDirichlet V.y NULL	
     }
 }
 

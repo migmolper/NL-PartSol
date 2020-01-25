@@ -705,3 +705,46 @@ void GPinCell(ChainPtr * ListInCELL,
 }
 
 /*********************************************************************/
+
+Matrix GetElementField(Matrix Nodal_Field,
+		       int * Element_Connectivity,
+		       int Number_Nodes_Element){
+
+  Matrix Element_Field;
+  int Field_Dimensions = Nodal_Field.N_rows;
+  int Node;
+
+  /* Allocate a matrix to store the nodal quatities in the element */
+  Element_Field = MatAlloc(Number_Nodes_Element*Field_Dimensions,1);
+
+  /* Loop over the nodes of the element */
+  for(int k = 0; k<Number_Nodes_Element; k++){
+    /* Get the node of the element */
+    Node = Element_Connectivity[k];
+    /* Fill each dimension of the nodal quantitie */
+    for(int l = 0 ; l<Field_Dimensions ; l++){
+      Element_Field.nV[k*Field_Dimensions + l] = Nodal_Field.nM[l][Node];
+    }
+  }
+  
+  return Element_Field;
+}
+
+
+/* /\*********************************************************************\/ */
+
+/* Element GetElementGP(int GP_I, ChainPtr ListNodes, int NumNodes){ */
+
+/*   /\* Define new element *\/ */
+/*   Element GP_Element; */
+
+/*   /\* Fill element *\/ */
+/*   GP_Element.GP_I = GP_I; */
+/*   GP_Element.NumberNodes = NumNodes; */
+/*   GP_Element.Connectivity = ChainToArray(ListNodes,NumNodes); */
+
+/*   return GP_Element; */
+/* } */
+
+
+/* /\*********************************************************************\/ */
