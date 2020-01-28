@@ -1089,18 +1089,53 @@ Matrix Get_Lumped_Matrix(Matrix M_in){
   return M_out;  
 }
 
-/* /\*********************************************************************\/ */
+/*********************************************************************/
 
-/* Matrix Matrix_x_Scalar(Matrix A, double a){ */
+Matrix Matrix_x_Scalar(Matrix A, double a)
+/*!
+ * \brief Brief description of Matrix_x_Scalar.
+ *        Function to multiply a Matrix with a scalar. 
+ *
+ *  The parameters for this functions are  :
+ * @param A : Input Matrix
+ * @param a : Input scalar 
+*/
+{
 
-  
+  bool Is_Matrix = false;
+  bool Is_Vector = false;
+  int N_rows = A.N_rows;
+  int N_cols = A.N_cols;
 
-/*   for(int j = 0 ; j<MPM_Mesh.Phi.Strain.N_cols ; j++){ */
-/*     Increment_Strain_GP.nV[j] *= DeltaTimeStep; */
-/*   } */
+  /* Check if its matrix or array */
+  if((N_rows > 1) && (N_cols > 1)){
+    Is_Matrix = true;
+  }
+  else if((N_rows == 1) || (N_cols == 1) ){
+    Is_Vector = true;
+  }
 
-/*   return A; */
-/* } */
+  if(Is_Matrix){ /* Multiply matrix by an scalar */
+    for(int i = 0 ; i<N_rows ; i++){
+      for(int j = 0 ; j<N_cols ; j++){
+	A.nM[i][j] *= a;
+      }
+    }
+  }
+  else if(Is_Vector){ /* Multiply vector by an scalar */
+    for(int i = 0 ; i<N_cols*N_rows ; i++){
+      A.nV[i] *= a;
+    }
+  }
+  else{
+        fprintf(stderr,"%s : %s \n",
+	    "Error in Matrix_x_Scalar(*,)",
+	    "Not a matrix or a vector");
+    exit(0);    
+  }
+
+  return A;
+}
 
 
-/* /\*********************************************************************\/ */
+/*********************************************************************/

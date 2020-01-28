@@ -9,15 +9,6 @@
 
 typedef struct {
 
-  /* Linear elastic material */
-  Matrix (* LE)(Matrix,Matrix,double,double);
-  
-} ConstLib;
-
-typedef struct {
-
-  /* Constitutive model */
-  ConstLib D; /* Constitutive response */
   char Type [100];
   /* Initial density */
   double rho;
@@ -37,9 +28,8 @@ typedef struct {
 /*******************************************************/
 
 /* Material Linear-Elastic */
-Matrix LinearElastic(Matrix,Matrix,
-		     double,double);
-double W_LinearElastic(Matrix,Matrix,double);
+Matrix LinearElastic(Matrix, Matrix, Material);
+double W_LinearElastic(Matrix, Matrix, double);
 
 /* Fracture */
 Matrix EigenerosionAlgorithm(Matrix, Matrix,
@@ -52,7 +42,3 @@ Matrix ComputeDamage(Matrix, Matrix,
 		     ChainPtr *, double);
 
 /*******************************************************/
-
-/* Library */
-
-ConstLib Contitutive(char *);

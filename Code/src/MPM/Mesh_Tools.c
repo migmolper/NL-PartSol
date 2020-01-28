@@ -706,10 +706,25 @@ void GPinCell(ChainPtr * ListInCELL,
 
 /*********************************************************************/
 
-Matrix GetElementField(Matrix Nodal_Field,
-		       int * Element_Connectivity,
-		       int Number_Nodes_Element){
+Element GetElementGP(int i_GP, ChainPtr ListNodes, int NumNodes){
 
+  /* Define new element */
+  Element GP_Element;
+
+  /* Fill element */
+  GP_Element.i_GP = i_GP;
+  GP_Element.NumberNodes = NumNodes;
+  GP_Element.Connectivity = ChainToArray(ListNodes,NumNodes);
+
+  return GP_Element;
+}
+
+/*********************************************************************/
+
+Matrix GetElementField(Matrix Nodal_Field, Element GP_Element){
+
+  int * Element_Connectivity = GP_Element.Connectivity;
+  int Number_Nodes_Element = GP_Element.NumberNodes;
   Matrix Element_Field;
   int Field_Dimensions = Nodal_Field.N_rows;
   int Node;
@@ -730,21 +745,4 @@ Matrix GetElementField(Matrix Nodal_Field,
   return Element_Field;
 }
 
-
-/* /\*********************************************************************\/ */
-
-/* Element GetElementGP(int GP_I, ChainPtr ListNodes, int NumNodes){ */
-
-/*   /\* Define new element *\/ */
-/*   Element GP_Element; */
-
-/*   /\* Fill element *\/ */
-/*   GP_Element.GP_I = GP_I; */
-/*   GP_Element.NumberNodes = NumNodes; */
-/*   GP_Element.Connectivity = ChainToArray(ListNodes,NumNodes); */
-
-/*   return GP_Element; */
-/* } */
-
-
-/* /\*********************************************************************\/ */
+/*********************************************************************/

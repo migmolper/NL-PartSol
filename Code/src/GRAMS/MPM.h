@@ -1,4 +1,9 @@
 
+/*! \file MPM.h
+ * Definitions of structures
+ */
+
+
 #ifndef GlobalVariables
 #define GlobalVariables
 #endif
@@ -7,127 +12,138 @@
 #define TypeDefinitions
 #endif
 
-/* Loads definition :
- An important aclaration about this code, a force is a load,
- or even a boundary condition is defined as a load from the
- point of view of the code (as a structure). The idea is
- a force and a boundary condition both of them has a direction, 
- a value, a list of nodes/GPs where it is applied,... So it's
- a good idea to use this structure for both porpouses.
-*/
 
-/* Curve definition */
+/*! \struct Curve
+ *  Curve definition
+ */
 typedef struct{
 
-  /* Number of items in the curve */
+  /*! Number of items in the curve */
   int Num; 
-  /* Values for each time */
+  /*! Values for each time */
   double * Fx; 
-  /* Aditional information */
+  /*! Aditional information */
   char Info [100];
   
 } Curve;
 
 /*******************************************************/
 
+/*! \struct Load
+ *   An important aclaration about this code, a force is a load,
+ * or even a boundary condition is defined as a load from the
+ * point of view of the code (as a structure). The idea is
+ * a force and a boundary condition both of them has a direction, 
+ * a value, a list of nodes/GPs where it is applied,... So it's
+ * a good idea to use this structure for both porpouses.
+ */
 typedef struct {
 
-  /* Number of nodes/GP with this load */
+  /*! Number of nodes/GP with this load */
   int NumNodes;
-  /* Number of dimensions of the load */
+  /*! Number of dimensions of the load */
   int Dim;
-  /* Direction of the load {0,0} {1,0} {0,1} {1,1} */
+  /*! Direction of the load {0,0} {1,0} {0,1} {1,1} */
   int * Dir;
-  /* List of nodes with this load */
+  /*! List of nodes with this load */
   int * Nodes;
-  /* Curve for each dimension with the evolution
+  /*! Curve for each dimension with the evolution
      value with the time */
   Curve * Value;
-  /* Some information about this load */
+  /*! Some information about this load */
   char Info [100];
 
 } Load;
 
 /*******************************************************/
 
-/* Boundary conditions definition */
+/*! \struct Boundaries
+ * Boundary conditions definition 
+ */
 typedef struct {
 
-  /* Number of boundaries of the domain */
+  /*! Number of boundaries of the domain */
   int NumBounds;
-  /* Table with all the boundaries and its values */
+  /*! Table with all the boundaries and its values */
   Load * BCC_i;
   
 } Boundaries;
 
 /*******************************************************/
 
-/* Physical fields */
+/*! \struct Fields
+ * Physical fields 
+*/
 typedef struct {
 
-  /* Density field */
+  /*! Density field */
   Matrix rho;
-  /* Mass field */
+  /*! Mass field */
   Matrix mass;
-  /* Position in global coordinates */
+  /*! Position in global coordinates */
   Matrix x_GC;  
-  /* Position in element coordiantes */
+  /*! Position in element coordiantes */
   Matrix x_EC;
-  /* Displacement field */
+  /*! Displacement field */
   Matrix dis;
-  /* Velocity field */
+  /*! Velocity field */
   Matrix vel;
-  /* Acceleration field */
+  /*! Acceleration field */
   Matrix acc;
-  /* Stress field */
+  /*! Stress field */
   Matrix Stress;
-  /* Strain field */
+  /*! Strain field */
   Matrix Strain;
-  /* Deformation Energy */
+  /*! Deformation Energy */
   Matrix W;
-  /* Damage parameter (Fracture) */
+  /*! Damage parameter (Fracture) */
   Matrix ji;
   
 } Fields;
 
 /*******************************************************/
 
-/* Gauss points definitions */
+/*! \struct GaussPoint
+ * Gauss points definitions
+ */
 typedef struct {
 
-  /* Total number of the GP */
+  /*! Total number of the GP */
   int NumGP;
-  /* Identification of the element where it is */
+  /*! Identification of the element where it is */
   int * Element_id;
 
-  /* Tributary nodes variables */
+  /*! Tributary nodes variables */
   int * NumberNodes;
   ChainPtr * ListNodes;
 
-  /* GPs near to each GP */
+  /*! GPs near to each GP */
   ChainPtr * Beps;
 
-  /* List of Fields */
-  Fields Phi; /* Values from the actual step */
-  Fields Phi_n0; /* Values from the previous step */
+  /*! Values from the actual step */
+  Fields Phi;
+  /*! Values from the previous step */
+  Fields Phi_n0; 
   
-  /* Constitutive response */
+  /*! Number of materials */
   int NumberMaterials;
-  int * MatIdx; /* Index of the material for each GP */
-  Material * Mat; /* Array wit the number of materials */
+  /*! Index of the material for each GP */
+  int * MatIdx;
+  /*! Array wit the number of materials */
+  Material * Mat;
 
-  /* Forces over the GP */
+  /*! Neumann boundary conditions */
   int NumNeumannBC;
-  int NumberBodyForces;
-  Load * F; /* Neumann boundary conditions */
-  Load * B; /* Body forces */
+  Load * F;
 
-  /* Shape functions variables */
-  /* GIMP */
-  Matrix lp; /* Voxel shape  */
-  /* LME */
-  Matrix lambda; /* Lagrange multiplier */
-  Matrix Beta; /* Norm parameter */
+  /*! Body forces */
+  int NumberBodyForces;
+  Load * B; 
+
+  /*! Shape functions variables */
+  Matrix lp; /*! Voxel shape  */
+  Matrix lambda; /*! Lagrange multiplier */
+  Matrix Beta; /*! Norm parameter */
 
 } GaussPoint;
 
@@ -177,7 +193,23 @@ typedef struct {
 
 /*******************************************************/
 
-/* int SearchGaussPoint(int, Matrix, Matrix, Mesh); */
+/*! \struct Element
+ *  Individual mesh properties of a GPs
+ */
+typedef struct{
+
+  /*! Index of the GP */ 
+  int i_GP;
+  /*! Number of nodes near to the GP */
+  int NumberNodes;
+  /*! Nodal connectivity of the GP */ 
+  int * Connectivity;
+  
+} Element;
+
+/*******************************************************/
+
+
 Matrix GetNodalMassMomentum(GaussPoint, Mesh);
 Matrix GetNodalVelocity(Mesh, Matrix, Matrix);
 
@@ -203,4 +235,5 @@ ChainPtr DiscardElements(ChainPtr, Matrix, Matrix, Mesh);
 void LocalSearchGaussPoints(GaussPoint, Mesh);
 void UpdateBeps(GaussPoint, Mesh);
 void GPinCell(ChainPtr *, ChainPtr *, Matrix, int, double);
-Matrix GetElementField(Matrix, int *, int);
+Element GetElementGP(int, ChainPtr, int);
+Matrix GetElementField(Matrix, Element);

@@ -13,11 +13,11 @@
 /*********************************************************************/
 
 double Area_Poligon(Matrix Poligon)
-/*
-  Get the area of a poligon on n vertex using the 
-  Shoelace formula :
-  https://en.wikipedia.org/wiki/Shoelace_formula
-*/
+/*! 
+ * This function returns the the area of a \a Poligon using the 
+ * Shoelace formula :
+ * https://en.wikipedia.org/wiki/Shoelace_formula
+ */
 {
   double A_Poligon;
   int N_vertex;
@@ -52,10 +52,9 @@ double Area_Poligon(Matrix Poligon)
 /*********************************************************************/
 
 Matrix Centroid_Poligon(Matrix Poligon)
-/*
-  Get the position of the centroid of a poligon, also return the value of the 
-  area
-*/
+/*! 
+ * This function returns the centroid of a \a Poligon and the area.
+ */
 {
 
   Matrix C_Poligon;
@@ -120,12 +119,12 @@ Matrix Centroid_Poligon(Matrix Poligon)
 /*********************************************************************/
 
 int InOut_Poligon(Matrix X_Point, Matrix Poligon)
-/*
-  Check if a point is or not (1/0) inside of a poligon.
-  Inputs :
-  - X_Point : Coordinates of the point 
-  - Poligon : Coordinates of the vertex 0,1,....,n,0
-*/
+/*! 
+ * Check if a point is or not (1/0) inside of a Poligon.
+ * Inputs :
+ * - \a X_Point : Coordinates of the point 
+ * - \a Poligon : Coordinates of the vertex 0,1,....,n,0
+ */
 {
   /* By default, we suppose that the point is in the poligon */
   int InOut = 1;
@@ -191,13 +190,6 @@ int InOut_Poligon(Matrix X_Point, Matrix Poligon)
 
   return InOut;
 }
-
-/*********************************************************************/
-
-/* double MinLenght_Poligon(Matrix Poligon){ */
-
-  
-/* } */
 
 /*********************************************************************/
 

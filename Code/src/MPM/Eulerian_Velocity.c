@@ -9,126 +9,141 @@
 void UpdateGaussPointStrain(GaussPoint MPM_Mesh,
 			    Mesh FEM_Mesh,
 			    Matrix Mesh_Vel)
-/*
-  Calcule the particle stress increment :
-
-  \Delta\Epsilon_{ij,p}^{k-1/2} = 
-  \frac{\Delta t}{2} \cdot
-  \sum_{I=0}^{Nn}(N^{k}_{Ip,j} \cdot
-  v_{iI}^{k-1/2} + N^{k}_{Ip,i} \cdot 
-  v_{jI}^{k-1/2})
+/*!
+ * \brief Brief description of UpdateGaussPointStrain.
+ *        Update the strain state of the body with the
+ *        infinetesimal strain tensor. 
+ *
+ * \f[ 
+ \Delta\Epsilon_{ij,p}^{k-1/2} = 
+ \frac{\Delta t}{2} \cdot \sum_{I=0}^{Nn}(N^{k}_{Ip,j}
+ \cdot v_{iI}^{k-1/2} + N^{k}_{Ip,i} \cdot v_{jI}^{k-1/2})
+  \f]
+ *
+ *  The parameters for this functions are  :
+ * @param MPM_Mesh : Mesh with the material points.
+ * @param FEM_Mesh : Background mesh for calculations.
+ * @param Mesh_Vel : Nodal values of the velocity field.
+ *
 */
-{ 
-  /* Element for each Gauss-Point */
-  int GP_NumNodes; /* Number of nodes */
-  int * GP_Connect; /* Connectivity of the element */
+{
   
-  /* Mesh variables */
-  Matrix Elem_Vel; /* Array with the nodal velocities */
-  Matrix dNdx_GP; /* Matrix with the nodal derivatives */
+  /* Variable definition */
+  Element GP_Element; /* Element for each Gauss-Point */
+  Matrix Element_Velocity; /* Array with the nodal velocities */
+  Matrix dNdx_GP; /*  Matrix with the nodal derivatives */
   Matrix B; /* B matrix to get the deformation */
-  Matrix Increment_Strain_GP; /* Vectoriced Strain tensor */
-  double Incr_TraceStrain; /* Increment of the trace of the Stress tensor */
+  Matrix Delta_Strain_GP; /* Vectoriced Strain tensor */
+  double Delta_TraceStrain_GP; /* Increment of the trace of the Stress tensor */
  
   for(int i = 0 ; i<MPM_Mesh.NumGP ; i++){
    
     /* 1º Define element of the GP */
-    GP_NumNodes = MPM_Mesh.NumberNodes[i];
-    GP_Connect = ChainToArray(MPM_Mesh.ListNodes[i],GP_NumNodes);
+    GP_Element = GetElementGP(i, MPM_Mesh.ListNodes[i],
+			      MPM_Mesh.NumberNodes[i]);
     
     /* 2º Get the element gradient */
-    dNdx_GP = Get_Operator("dNdx",i,GP_Connect,GP_NumNodes,MPM_Mesh,FEM_Mesh);
+    dNdx_GP = Get_Operator("dNdx", GP_Element,
+			   MPM_Mesh, FEM_Mesh);
 	    
     /* 3º Calcule the B matrix and free the gradient */
     B = Get_B_GP(dNdx_GP);
     FreeMat(dNdx_GP);
 
-    /* 4º Get the nodal velocities in the element */
-    Elem_Vel = GetElementField(Mesh_Vel, GP_Connect, GP_NumNodes);
-    /* Free data */
-    free(GP_Connect);
+    /* 4º Get the nodal velocities in the element and free connectivity */
+    Element_Velocity = GetElementField(Mesh_Vel, GP_Element);
+    free(GP_Element.Connectivity);
    
     /* 5º Multiply B by the velocity array and by the time step to get
        the increment stress tensor */
-    Increment_Strain_GP = Scalar_prod(B,Elem_Vel);
-    /* Matrix Matrix_x_Scalar(Increment_Strain_GP, DeltaTimeStep); */
-    for(int j = 0 ; j<MPM_Mesh.Phi.Strain.N_cols ; j++){
-      Increment_Strain_GP.nV[j] *= DeltaTimeStep;
-    }
+    Delta_Strain_GP = Scalar_prod(B,Element_Velocity);
+    Delta_Strain_GP = Matrix_x_Scalar(Delta_Strain_GP,
+					  DeltaTimeStep);
 
-    /* Free memory */
-    FreeMat(Elem_Vel);
+    /* 6º Free the array with the nodal velocity of the element and the B matrix */
+    FreeMat(Element_Velocity);
     FreeMat(B);
 
-    /* 6º Udate the Gauss-Point strain tensor */
-    Incr_TraceStrain = 0; /* Set to zero the trace increment */
+    /* 7º Udate the Gauss-Point strain tensor */
+    Delta_TraceStrain_GP = 0; /* Set to zero the trace increment */
     for(int j = 0 ; j<MPM_Mesh.Phi.Strain.N_cols ; j++){
-      MPM_Mesh.Phi.Strain.nM[i][j] += Increment_Strain_GP.nV[j];
+      MPM_Mesh.Phi.Strain.nM[i][j] += Delta_Strain_GP.nV[j];
       /* Get the trace of the stress tensor */
       if(j<NumberDimensions){
-	Incr_TraceStrain += Increment_Strain_GP.nV[j];
+	Delta_TraceStrain_GP += Delta_Strain_GP.nV[j];
       }
     }
-    FreeMat(Increment_Strain_GP);
+    FreeMat(Delta_Strain_GP);
 
-    /* 7º Update the density of the GP */
-    MPM_Mesh.Phi.rho.nV[i] =
-      UpdateGaussPointDensity(MPM_Mesh.Phi.rho.nV[i],Incr_TraceStrain);    
+    /* 8º Update the density of the GP */
+    MPM_Mesh.Phi.rho.nV[i] = UpdateGaussPointDensity(MPM_Mesh.Phi.rho.nV[i],
+						     Delta_TraceStrain_GP);    
   }
 }
 
 /*******************************************************/
 
 
-double UpdateGaussPointDensity(double rho_n,
-			       double Incr_TraceStrain){
+double UpdateGaussPointDensity(double rho_n_GP,
+			       double Delta_TraceStrain_GP)
+/*!
+ * \brief Brief description of UpdateGaussPointDensity.
+ *        Update the density field of the Gauss Point . 
+ *
+ *  The parameters for this functions are  :
+ * @param rho_n_GP : Density of the previous step.
+ * @param Delta_TraceStrain_GP : Increment of the trace of the strain tensor.
+ *
+*/
+{
+  double rho_n1_GP; /* Density for the next step */
 
-  /* 1º Density for the next step */
-  double rho_n1;
+  /* Update the density */
+  rho_n1_GP = (double)rho_n_GP/(1 + Delta_TraceStrain_GP);
 
-  /* 2º Update the density */
-  rho_n1 = (double)rho_n/(1 + Incr_TraceStrain);
-
-  /* 3º Return density updated */
-  return rho_n1;  
+  return rho_n1_GP;  
 }
 
 /*******************************************************/
 
 
-void UpdateGaussPointStress(GaussPoint MPM_Mesh){
-
-  /* 1º Variable declaration  */
-  Matrix Strain_k1;
-  Matrix Stress_k0;
-  Matrix Stress_k1;
-  double mu;
-  double E;
+void UpdateGaussPointStress(GaussPoint MPM_Mesh)
+/*!
+ * 
+*/
+{
+  /* Variable definition  */
+  Matrix Strain_n1; /* Strain tensor of the GP in the next step */
+  Matrix Stress_n; /* Stress tensor of the GP in the previous step */
+  Matrix Stress_n1; /* Stress tensor of the GP in the next step */
+  Material Material_GP; /* Material properties of the GP */
   int N_GP = MPM_Mesh.NumGP;
   int Mat_GP;
 
   /* 2º Iterate over the Gauss-Points */
   for(int i = 0 ; i<N_GP ; i++){
     if(MPM_Mesh.Phi.ji.nV[i] != 1.0){
-
-    Mat_GP = MPM_Mesh.MatIdx[i];
+      
+      /* 3º Asign materials of the GP */
+      Mat_GP = MPM_Mesh.MatIdx[i];
+      Material_GP = MPM_Mesh.Mat[Mat_GP]; 
+      
+      /* 4º Use pointers to memory manage */
+      Strain_n1.nV = MPM_Mesh.Phi.Strain.nM[i];
+      Stress_n.nV = MPM_Mesh.Phi.Stress.nM[i];
+      Stress_n1.nV = MPM_Mesh.Phi.Stress.nM[i];
     
-    /* 3º Asign materials of the GP */
-    mu = MPM_Mesh.Mat[Mat_GP].mu; /* Elastic modulus */
-    E =  MPM_Mesh.Mat[Mat_GP].E; /* Poisson ratio */
-    
-    /* 4º Use pointers to memory manage */
-    Strain_k1.nV = MPM_Mesh.Phi.Strain.nM[i];
-    Stress_k0.nV = MPM_Mesh.Phi.Stress.nM[i];
-    Stress_k1.nV = MPM_Mesh.Phi.Stress.nM[i];
-    
-    /* 5º Get the new stress tensor (2D Linear elastic) */
-    Stress_k1 =
-      MPM_Mesh.Mat[Mat_GP].D.LE(Strain_k1,Stress_k0,mu,E);
-
-    /* 6º Get the deformation energy */
-    MPM_Mesh.Phi.W.nV[i] =
-      W_LinearElastic(Strain_k1,Stress_k1,MPM_Mesh.Phi.ji.nV[i]);
+      /* 5º Get the new stress tensor */
+      if(strcmp(Material_GP.Type,"LE") == 0){
+	Stress_n1 = LinearElastic(Strain_n1,Stress_n,Material_GP);
+      }
+      else{
+	exit(0);
+      }
+      
+      /* 6º Get the deformation energy */
+      MPM_Mesh.Phi.W.nV[i] =
+	W_LinearElastic(Strain_n1,Stress_n1,MPM_Mesh.Phi.ji.nV[i]);
     }
     else{
       for(int j = 0 ; j<MPM_Mesh.Phi.Stress.N_cols ; j++){
@@ -155,11 +170,7 @@ Matrix GetNodalForces(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int TimeStep)
   Matrix dNdx_GP; /* Matrix with the nodal derivatives */
   Matrix N_dNdx_GP; /* Operator Matrix */
   Matrix B, B_T;
-
-  /* Element for each Gauss-Point */
-  int GP_NumNodes; /* Number of nodes */
-  int * GP_Connect; /* Connectivity of the element */
-  /* Matrix GP_ElemCoord; /\* Coordinates of the nodes *\/ */
+  Element GP_Element; /* Element for each Gauss-Point */
   int GP_I; /* Node of the GP */
 
   /* Stress tensor of a Gauss-Point and its divergence */
@@ -186,12 +197,11 @@ Matrix GetNodalForces(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int TimeStep)
   for(int i = 0 ; i<MPM_Mesh.NumGP ; i++){
 
     /* 4º Define element of the GP */
-    GP_NumNodes = MPM_Mesh.NumberNodes[i];
-    GP_Connect = ChainToArray(MPM_Mesh.ListNodes[i],GP_NumNodes);
+    GP_Element = GetElementGP(i, MPM_Mesh.ListNodes[i], MPM_Mesh.NumberNodes[i]);
 
     /* 5º Evaluate the shape function and its gradient in the GP */
-    N_dNdx_GP = Get_Operator("N_dNdx",i,GP_Connect,GP_NumNodes,
-			     MPM_Mesh,FEM_Mesh);
+    N_dNdx_GP = Get_Operator("N_dNdx", GP_Element,
+			     MPM_Mesh, FEM_Mesh);
     /* Asign values to the pointer structures */
     N_GP = MatAssign(1,N_dNdx_GP.N_cols,NAN,N_dNdx_GP.nM[0],NULL);
     dNdx_GP = MatAssign(2,N_dNdx_GP.N_cols,NAN,NULL,
@@ -222,9 +232,9 @@ Matrix GetNodalForces(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int TimeStep)
     ji_GP = MPM_Mesh.Phi.ji.nV[i];
 
     /* 11º Acumulate this forces to the total array with the internal forces */  
-    for(int k = 0; k<GP_NumNodes; k++){
+    for(int k = 0; k<GP_Element.NumberNodes; k++){
       /* Get the node for the GP */
-      GP_I = GP_Connect[k];
+      GP_I = GP_Element.Connectivity[k];
       /* Evaluate the GP function in the node */
       N_GP_I = N_GP.nV[k];
       /* If this node has a null Value of the SHF continue */
@@ -245,7 +255,7 @@ Matrix GetNodalForces(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int TimeStep)
     }
     
     /* 12 º Free memory */
-    free(GP_Connect), FreeMat(D_Stress_GP), FreeMat(N_GP);
+    free(GP_Element.Connectivity), FreeMat(D_Stress_GP), FreeMat(N_GP);
 
   }
 

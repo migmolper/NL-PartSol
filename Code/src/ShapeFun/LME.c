@@ -4,11 +4,11 @@
 #include <string.h>
 #include "../GRAMS/grams.h"
 
-/**************************************************/
-/************* Local Maximum-Entropy **************/
+/***********************************************//**
+************* Local Maximum-Entropy **************
 /**************************************************/
 
-/*
+/*!
   Shape functions based in :
   "" Local maximum-entropy approximation schemes : a seamless 
   bridge between finite elements and meshfree methods ""
@@ -207,7 +207,7 @@ void LME_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 /****************************************************************************/
 
 Matrix LME_Beta(Matrix Beta, Matrix l, double Gamma)
-/*
+/*!
   Function to update the value of beta
 */
 {
@@ -238,7 +238,7 @@ Matrix LME_Beta(Matrix Beta, Matrix l, double Gamma)
 /****************************************************************************/
 
 Matrix LME_lambda_NR(Matrix l, Matrix lambda, Matrix Beta)
-/*
+/*!
   Get the lagrange multipliers "lambda" (1 x dim) for the LME 
   shape function. The numerical method for that is the Newton-Rapson.
 
@@ -318,7 +318,7 @@ Matrix LME_lambda_NR(Matrix l, Matrix lambda, Matrix Beta)
 /****************************************************************************/
 
 double LME_fa(Matrix la, Matrix lambda, Matrix Beta)
-/*
+/*!
   Output :
   -> fa : the function fa that appear in [1] (scalar).
   Input parameters :
@@ -341,7 +341,7 @@ double LME_fa(Matrix la, Matrix lambda, Matrix Beta)
 /****************************************************************************/
 
 Matrix LME_p(Matrix l, Matrix lambda, Matrix Beta)
-/*
+/*!
   Get the value of the shape function "pa" (1 x neighborhood) in the
   neighborhood nodes.
 
@@ -383,9 +383,8 @@ Matrix LME_p(Matrix l, Matrix lambda, Matrix Beta)
 /****************************************************************************/
 
 Matrix LME_r(Matrix l, Matrix p)
-/*
+/*!
   Get the gradient "r" (dim x 1) of the function log(Z) = 0.
-
   Input parameters :
   -> l : Matrix with the distances to the 
   neighborhood nodes (neighborhood x dim).
@@ -412,9 +411,8 @@ Matrix LME_r(Matrix l, Matrix p)
 /****************************************************************************/
 
 Matrix LME_J(Matrix l, Matrix p, Matrix r)
-/*
+/*!
   Get the Hessian "J" (dim x dim) of the function log(Z) = 0.
-
   Input parameters :
   -> l : Matrix with the distances to the
   neighborhood nodes (neighborhood x dim).
@@ -451,10 +449,9 @@ Matrix LME_J(Matrix l, Matrix p, Matrix r)
 /****************************************************************************/
 
 Matrix LME_dp(Matrix l, Matrix p)
-/*
+/*!
   Value of the shape function gradient "dp" (dim x neighborhood) in 
   the neighborhood nodes.
-
   Input parameters :
   -> l : Matrix with the distances to the
   neighborhood nodes (neighborhood x dim).

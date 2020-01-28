@@ -11,16 +11,10 @@ Matrix GetNodalMassMomentum(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 
   /* Output */
   Matrix Nodal_FIELDS;
-  /* Value of the shape-function */
-  Matrix N_GP;
-  /* Evaluation of the GP in the node */
-  double N_GP_I;
-  /* Mass of the GP */
-  double GP_mass; 
-  /* Number of nodes */
-  int GP_NumNodes;
-  /* Connectivity of the element */
-  int * GP_Connect; 
+  Matrix N_GP;  /* Value of the shape-function */
+  double N_GP_I; /* Evaluation of the GP in the node */
+  double GP_mass; /* Mass of the GP */ 
+  Element GP_Element; /* Element for each Gauss-Point */
   int GP_I;
 
   /* 1º Allocate the output list of fields */
@@ -30,19 +24,20 @@ Matrix GetNodalMassMomentum(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
   for(int i = 0 ; i<MPM_Mesh.NumGP ; i++){
 
     /* 3º Define element of the GP */
-    GP_NumNodes = MPM_Mesh.NumberNodes[i];
-    GP_Connect = ChainToArray(MPM_Mesh.ListNodes[i],GP_NumNodes);
+    GP_Element = GetElementGP(i, MPM_Mesh.ListNodes[i],
+			      MPM_Mesh.NumberNodes[i]);
     
     /* 4º Evaluate the shape function in the coordinates of the GP */
-    N_GP = Get_Operator("N",i,GP_Connect,GP_NumNodes,MPM_Mesh,FEM_Mesh);
+    N_GP = Get_Operator("N",GP_Element,
+			MPM_Mesh,FEM_Mesh);
    
     /* 5º Get the mass of the GP */
     GP_mass = MPM_Mesh.Phi.mass.nV[i];
 
     /* 6º Get the nodal mass and mommentum */
-    for(int k = 0 ; k<GP_NumNodes ; k++){
+    for(int k = 0 ; k<GP_Element.NumberNodes ; k++){
       /* Get the node for the GP */
-      GP_I = GP_Connect[k];
+      GP_I = GP_Element.Connectivity[k];
       /* Evaluate the GP function in the node */
       N_GP_I = N_GP.nV[k];
       /* If this node has a null Value of the SHF continue */
@@ -59,7 +54,7 @@ Matrix GetNodalMassMomentum(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
     }
 
     /* 7º Free the value of the shape functions */
-    FreeMat(N_GP), free(GP_Connect);
+    FreeMat(N_GP), free(GP_Element.Connectivity);
   }
  
   return Nodal_FIELDS;

@@ -156,7 +156,6 @@ GramsMaterials (id=0) {
 
  	  if(strcmp(Parse_Mat_Prop[0],"Type") == 0){
 	    strcpy(Mat_GP.Type,Parse_Mat_Prop[1]);
-	    Mat_GP.D = Contitutive(Mat_GP.Type);
 	    printf("\t -> %s : %s \n",
 		   "Law",Parse_Mat_Prop[1]);
 	  }

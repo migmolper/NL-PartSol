@@ -60,8 +60,7 @@ ChainPtr LME_Tributary_Nodes(Matrix, Matrix, int, Mesh);
 /*******************************************************/
 
 /* Operators */
-Matrix Get_Operator(char *, int, int *,
-		    int,GaussPoint, Mesh); 
+Matrix Get_Operator(char *, Element, GaussPoint, Mesh); 
 Matrix Get_B_GP(Matrix);
 
 /*******************************************************/

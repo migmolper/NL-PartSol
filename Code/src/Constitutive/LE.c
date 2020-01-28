@@ -3,31 +3,31 @@
 #include <string.h>
 #include "../GRAMS/grams.h"
 
-Matrix LinearElastic(Matrix Strain_k1,
-		     Matrix Stress_k0,
-		     double PoissonRatio_Mat,
-		     double ElasticModulus_Mat){
+Matrix LinearElastic(Matrix Strain_n1,
+		     Matrix Stress_n,
+		     Material Material_GP){
 
-  Matrix Stress_k1;
-  
+  double mu = Material_GP.mu; /* Poisson ratio */
+  double E = Material_GP.E; /* Elastic modulus */ 
+  Matrix Stress_n1;  
   double LameFirstParam = /* Lambda */
-    PoissonRatio_Mat*ElasticModulus_Mat/((1-PoissonRatio_Mat*2)*(1+PoissonRatio_Mat));
+    mu*E/((1-mu*2)*(1+mu));
   double LameSecondParam = /* G */
-    ElasticModulus_Mat/(2*(1+PoissonRatio_Mat));
+    E/(2*(1+mu));
 
   /* Assign memory position */
-  Stress_k1.nV = Stress_k0.nV;
+  Stress_n1.nV = Stress_n.nV;
 
   switch(NumberDimensions){
   case 1 :
     puts("Not implemented");
     break;
   case 2 :
-    Stress_k1.nV[0] = (LameFirstParam + 2*LameSecondParam)*Strain_k1.nV[0] +
-      LameFirstParam*Strain_k1.nV[1];
-    Stress_k1.nV[1] = (LameFirstParam + 2*LameSecondParam)*Strain_k1.nV[1] +
-      LameFirstParam*Strain_k1.nV[0];
-    Stress_k1.nV[2] = 2*LameSecondParam*Strain_k1.nV[2];
+    Stress_n1.nV[0] = (LameFirstParam + 2*LameSecondParam)*Strain_n1.nV[0] +
+      LameFirstParam*Strain_n1.nV[1];
+    Stress_n1.nV[1] = (LameFirstParam + 2*LameSecondParam)*Strain_n1.nV[1] +
+      LameFirstParam*Strain_n1.nV[0];
+    Stress_n1.nV[2] = 2*LameSecondParam*Strain_n1.nV[2];
     break;
   case 3 :
     puts("Not implemented");
@@ -39,7 +39,7 @@ Matrix LinearElastic(Matrix Strain_k1,
     exit(0);
   }
     
-  return Stress_k1; 
+  return Stress_n1; 
 }
 
 double W_LinearElastic(Matrix Strain,

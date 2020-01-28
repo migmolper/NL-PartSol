@@ -78,6 +78,7 @@ Matrix Incr_Mat(Matrix, Matrix);
 Matrix Add_Mat(Matrix, Matrix);
 Matrix Sub_Mat(Matrix, Matrix);
 Matrix Get_Lumped_Matrix(Matrix);
+Matrix Matrix_x_Scalar(Matrix, double);
 double Area_Poligon(Matrix);
 Matrix Centroid_Poligon(Matrix);
 int InOut_Poligon(Matrix, Matrix);

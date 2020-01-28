@@ -6,11 +6,12 @@
 
 /*********************************************************************/
 
-Matrix Get_Operator(char * Type, int i_GP,
-		    int * GP_Connect, int GP_NumNodes,
-		    GaussPoint MPM_Mesh,Mesh FEM_Mesh) 
-{
-
+Matrix Get_Operator(char * Type, Element GP_Element,
+		    GaussPoint MPM_Mesh, Mesh FEM_Mesh) 
+{ 
+  int i_GP = GP_Element.i_GP;
+  int GP_NumNodes = GP_Element.NumberNodes;
+  int * GP_Connect = GP_Element.Connectivity;
 
   int Ndim = NumberDimensions;
   
