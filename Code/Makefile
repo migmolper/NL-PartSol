@@ -39,7 +39,8 @@ OBJS = $(SOURCES:.c=.c.o)
 
 # List of libraries required during linking
 LDFLAGS = -lm
-DBFLAGS = -g -Wall -Wpedantic -Wextra 
+DBFLAGS = -g -Wall -Wpedantic -Wextra
+DIRFLAG = -Isrc/GRAMS
 # RLFLAGS = -O2
 
 #####################################################################
@@ -59,7 +60,7 @@ $(EXE): $(OBJS)
 # Compile	
 %.c.o: %.c
 	@echo "****************** Debug mode *******************"
-	$(CC) -o $@ -c $(DBFLAGS) $<
+	$(CC) -o $@ -c $(DIRFLAG) $(DBFLAGS) $<
 	@echo "\t Compiled "$<" successfully !!"
 
 #####################################################################

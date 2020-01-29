@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-#include "../GRAMS/grams.h"
+#include "grams.h"
 
 /*******************************************************/
 

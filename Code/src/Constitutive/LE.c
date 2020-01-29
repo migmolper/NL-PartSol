@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "../GRAMS/grams.h"
+#include "grams.h"
 
 Matrix LinearElastic(Matrix Strain_n1,
 		     Matrix Stress_n,

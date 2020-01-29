@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "../GRAMS/grams.h"
+#include "grams.h"
 
 void WriteVtk_MPM(char * Name_File, GaussPoint MPM_Mesh,
 		  Matrix List_Fields, int TimeStep_i){

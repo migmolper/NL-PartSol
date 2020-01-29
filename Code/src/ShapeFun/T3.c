@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "../GRAMS/grams.h"
+#include "grams.h"
 
 /***********************************************/
 /********* 2D triangle linear element **********/

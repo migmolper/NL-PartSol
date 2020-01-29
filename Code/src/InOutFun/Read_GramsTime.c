@@ -3,7 +3,7 @@
 #include <string.h>
 #include <math.h>
 #include <stdbool.h> 
-#include "../GRAMS/grams.h"
+#include "grams.h"
 
 /**********************************************************************/
 

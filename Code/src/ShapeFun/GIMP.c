@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
-#include "../GRAMS/grams.h"
+#include "grams.h"
 
 /**************************************************/
 /* Uniform Geralized Interpolation Material Point */
