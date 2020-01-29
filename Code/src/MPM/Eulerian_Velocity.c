@@ -21,11 +21,11 @@ void UpdateGaussPointStrain(GaussPoint MPM_Mesh,
   \f]
  *
  *  The parameters for this functions are  :
- * @param MPM_Mesh : Mesh with the material points.
- * @param FEM_Mesh : Background mesh for calculations.
- * @param Mesh_Vel : Nodal values of the velocity field.
+ *  @param MPM_Mesh : Mesh with the material points.
+ *  @param FEM_Mesh : Background mesh for calculations.
+ *  @param Mesh_Vel : Nodal values of the velocity field.
  *
-*/
+ */
 {
   
   /* Variable definition */
@@ -91,10 +91,10 @@ double UpdateGaussPointDensity(double rho_n_GP,
  *        Update the density field of the Gauss Point . 
  *
  *  The parameters for this functions are  :
- * @param rho_n_GP : Density of the previous step.
- * @param Delta_TraceStrain_GP : Increment of the trace of the strain tensor.
+ *  @param rho_n_GP : Density of the previous step.
+ *  @param Delta_TraceStrain_GP : Increment of the trace of the strain tensor.
  *
-*/
+ */
 {
   double rho_n1_GP; /* Density for the next step */
 
@@ -109,8 +109,14 @@ double UpdateGaussPointDensity(double rho_n_GP,
 
 void UpdateGaussPointStress(GaussPoint MPM_Mesh)
 /*!
- * 
-*/
+ * \brief Brief description of UpdateGaussPointStress.
+ *        Update the stress state of the body evaluating the
+ *        strains in each Gauss-Point to get the stress state.
+ *
+ *  The parameters for this functions are  :
+ *  @param MPM_Mesh : Mesh with the material points.
+ *
+ */
 {
   /* Variable definition  */
   Matrix Strain_n1; /* Strain tensor of the GP in the next step */
@@ -156,82 +162,75 @@ void UpdateGaussPointStress(GaussPoint MPM_Mesh)
 /*******************************************************/
 
 Matrix GetNodalForces(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int TimeStep)
+/*!
+ * \brief Brief description of GetNodalForces.
+ *        Compute the nodal contribution of each GP to the total forces. 
+ *
+ *  The parameters for this functions are  :
+ *  @param MPM_Mesh : Mesh with the material points.
+ *  @param FEM_Mesh : Background mesh for calculations.
+ *  @param TimeStep : Parameter to evaluate the loads curve.
+ *
+ */
 {
-  /* Mass of the GP */
-  double GP_mass;
-  /* Gauss-Point volumen */
-  double Vol_GP;
-  /* Damage parameter */
-  double ji_GP;
-
-  /* Mesh properties evaluated in Gauss-Point coords */
+  double GP_mass; /* Mass of the GP */
+  double Vol_GP; /* Gauss-Point volumen */
+  double ji_GP; /* Damage parameter */
   Matrix N_GP; /* Matrix with the nodal shape functions */
   double N_GP_I; /* Evaluation of the GP in the node */
   Matrix dNdx_GP; /* Matrix with the nodal derivatives */
   Matrix N_dNdx_GP; /* Operator Matrix */
-  Matrix B, B_T;
+  Matrix B, B_T; /* B matrix */
   Element GP_Element; /* Element for each Gauss-Point */
   int GP_I; /* Node of the GP */
-
-  /* Stress tensor of a Gauss-Point and its divergence */
-  Matrix Stress_GP =
+  Matrix Stress_GP = /* Stress tensor of a Gauss-Point */
     MatAssign(MPM_Mesh.Phi.Stress.N_cols,1,NAN,NULL,NULL);
-  Matrix D_Stress_GP;
-
-  /* Total forces */
-  Matrix Nodal_TOT_FORCES =
+  Matrix D_Stress_GP; /* Divergence of the stress tensor */
+  Matrix Nodal_TOT_FORCES = /* Total forces */
     MatAllocZ(NumberDimensions,FEM_Mesh.NumNodesMesh);
   strcpy(Nodal_TOT_FORCES.Info,"Nodal_TOT_FORCES");
+  Matrix Body_Forces_t = /* Matrix with the body forces for TimeStep */
+    Eval_Body_Forces(MPM_Mesh.B,MPM_Mesh.NumberBodyForces,MPM_Mesh.NumGP,TimeStep);
+  Matrix Contact_Forces_t = /* Matrix with the contact forces for TimeStep */
+    Eval_Contact_Forces(MPM_Mesh.F,MPM_Mesh.NumNeumannBC,MPM_Mesh.NumGP,TimeStep);
 
-  /* 1º Fill matrix with the body forces for TimeStep */
-  Matrix Body_Forces_t =
-    Eval_Body_Forces(MPM_Mesh.B,MPM_Mesh.NumberBodyForces,
-		     MPM_Mesh.NumGP,TimeStep);
-  
-  /* 2º Fill matrix with the contact forces for TimeStep */
-  Matrix Contact_Forces_t =
-    Eval_Contact_Forces(MPM_Mesh.F,MPM_Mesh.NumNeumannBC,
-			MPM_Mesh.NumGP,TimeStep);
-
-  /* 3º Iterate over all the GP to get the nodal values */
   for(int i = 0 ; i<MPM_Mesh.NumGP ; i++){
 
-    /* 4º Define element of the GP */
+    /* 1º Define element of the GP */
     GP_Element = GetElementGP(i, MPM_Mesh.ListNodes[i], MPM_Mesh.NumberNodes[i]);
 
-    /* 5º Evaluate the shape function and its gradient in the GP */
+    /* 2º Evaluate the shape function and its gradient in the GP */
     N_dNdx_GP = Get_Operator("N_dNdx", GP_Element,
 			     MPM_Mesh, FEM_Mesh);
-    /* Asign values to the pointer structures */
+    /* 3º Asign values to the pointer structures */
     N_GP = MatAssign(1,N_dNdx_GP.N_cols,NAN,N_dNdx_GP.nM[0],NULL);
     dNdx_GP = MatAssign(2,N_dNdx_GP.N_cols,NAN,NULL,
 			(double **)malloc(2*sizeof(double *)));
     dNdx_GP.nM[0] = N_dNdx_GP.nM[1];
     dNdx_GP.nM[1] = N_dNdx_GP.nM[2];
-    /* Free the original table container */
     free(N_dNdx_GP.nM);
            
-    /* 6º Get the B_T matrix for the derivates */
+    /* 4º Get the B_T matrix for the derivates */
     B = Get_B_GP(dNdx_GP);
     FreeMat(dNdx_GP);
     B_T = Transpose_Mat(B);
     FreeMat(B);
     
-    /* 7º Asign to an auxiliar variable the value of the stress tensor */
+    /* 5º Asign to an auxiliar variable the value of the stress tensor */
     Stress_GP.nV = MPM_Mesh.Phi.Stress.nM[i];
 
-    /* 8º Get the divergence stress tensor evaluates in the Gauss-Point 
+    /* 6º Get the divergence stress tensor evaluates in the Gauss-Point 
      and free the B_T matrix */
     D_Stress_GP = Scalar_prod(B_T,Stress_GP), FreeMat(B_T);
     
-    /* 9º Calcule the volumen of the Gauss-Point */
+    /* 7º Calcule the volumen of the Gauss-Point */
     GP_mass = MPM_Mesh.Phi.mass.nV[i];
     Vol_GP = GP_mass/MPM_Mesh.Phi.rho.nV[i];
 
-    /* 10º Damage parameter for the Gauss-point (fracture) */
+    /* 8º Damage parameter for the Gauss-point (fracture) */
     ji_GP = MPM_Mesh.Phi.ji.nV[i];
 
-    /* 11º Acumulate this forces to the total array with the internal forces */  
+    /* 9º Acumulate this forces to the total array with the internal forces */  
     for(int k = 0; k<GP_Element.NumberNodes; k++){
       /* Get the node for the GP */
       GP_I = GP_Element.Connectivity[k];
@@ -241,26 +240,29 @@ Matrix GetNodalForces(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int TimeStep)
       if(fabs(N_GP_I) <= TOL_zero) continue;
       /* Loop in the dimensions */
       for(int l = 0; l<NumberDimensions; l++){
-	/* 10aº Add the internal forces with 
+	/* Add the internal forces with 
 	 damage variable option */
 	Nodal_TOT_FORCES.nM[l][GP_I] -= (1-ji_GP)* 
 	  D_Stress_GP.nV[k*NumberDimensions+l]*Vol_GP;
-	/* 10bº Add the body forces */
+	/* Add the body forces */
 	Nodal_TOT_FORCES.nM[l][GP_I] +=
 	  N_GP_I*Body_Forces_t.nM[l][i]*GP_mass;
-	/* 10cº Add the contact forces */
+	/* Add the contact forces */
 	Nodal_TOT_FORCES.nM[l][GP_I] +=
 	  N_GP_I*Contact_Forces_t.nM[l][i]*Vol_GP;
       }      
     }
     
-    /* 12 º Free memory */
-    free(GP_Element.Connectivity), FreeMat(D_Stress_GP), FreeMat(N_GP);
+    /* 10 º Free memory */
+    free(GP_Element.Connectivity);
+    FreeMat(D_Stress_GP);
+    FreeMat(N_GP);
 
   }
 
-  /* 13º Free memory */
-  FreeMat(Contact_Forces_t), FreeMat(Body_Forces_t);
+  /* 11º Free memory */
+  FreeMat(Contact_Forces_t);
+  FreeMat(Body_Forces_t);
   
   return Nodal_TOT_FORCES;
   
@@ -271,6 +273,16 @@ Matrix GetNodalForces(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int TimeStep)
 void UpdateGridNodalMomentum(Mesh FEM_Mesh,
 			     Matrix Nodal_MOMENTUM,
 			     Matrix Nodal_TOT_FORCES)
+/*!
+ * \brief Brief description of UpdateGridNodalMomentum.
+ *        Compute the nodal contribution of each GP to the total forces.
+ *
+ *  The parameters for this functions are  :
+ *  @param MPM_Mesh : Mesh with the material points.
+ *  @param Nodal_MOMENTUM : Nodal value of the momentum.
+ *  @param Nodal_TOT_FORCES : Nodal value of the total forces.
+ *
+ */
 {
   /* Update the grid nodal momentum */
   for(int i = 0 ; i<FEM_Mesh.NumNodesMesh ; i++){
