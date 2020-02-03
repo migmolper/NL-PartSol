@@ -166,10 +166,18 @@ void LME_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 				  pow(Dist.nV[List[1]],2));
 	B.nV[1] = -Beta_GP.nV[1]*(pow(Dist.nV[List[0]],2) -
 				  pow(Dist.nV[List[2]],2));
+
+	/* /\* Check the conditioning number of A *\/ */
+	/* if (fabs(Cond_Mat(A,TOL_NR)) > 10){ */
+	/*   printf(" %s (%s %i) : %s \n", */
+	/* 	 "Error in LME_Initialize","GP",i, */
+	/* 	 "A is near to singular matrix"); */
+	/*   exit(0); */
+	/* } */
 	
 	/* Initialize lambda */
 	lambda_GP.nV = MPM_Mesh.lambda.nM[i];
-	lambda_GP = Solve_Linear_Sistem(A,B,lambda_GP);
+	/* lambda_GP = Solve_Linear_Sistem(A,B,lambda_GP); */
 	
 	/* Calculate lagrange multipliers with Newton-Rapson */
 	lambda_GP = LME_lambda_NR(Delta_Xip, lambda_GP, Beta_GP);

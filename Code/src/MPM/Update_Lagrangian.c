@@ -17,6 +17,7 @@ void UpdateVelocityAndPositionGP(GaussPoint MPM_Mesh,
   int GP_I; /* Index of each tributary node for the GP */
   double mass_I; /* Value of the nodal mass */
   double N_I_GP; /* Nodal value for the GP */
+  double Incr_Displacement_k; /* Incremental displacement in the k dimension */
 
   /* 1º iterate over the Gauss-Points */
   for(int i = 0 ; i<MPM_Mesh.NumGP ; i++){
@@ -46,11 +47,14 @@ void UpdateVelocityAndPositionGP(GaussPoint MPM_Mesh,
 	/* Update the GP velocities */
 	MPM_Mesh.Phi.vel.nM[i][k] +=
 	  DeltaTimeStep*N_I_GP*
-	  Nodal_TOT_FORCES.nM[k][GP_I]/mass_I;	
-	/* Update the GP position */
-	MPM_Mesh.Phi.x_GC.nM[i][k] +=
-	  DeltaTimeStep*N_I_GP*
+	  Nodal_TOT_FORCES.nM[k][GP_I]/mass_I;
+	/* Get displacement increment */
+	Incr_Displacement_k = DeltaTimeStep*N_I_GP*
 	  Nodal_MOMENTUM.nM[k][GP_I]/mass_I;
+	/* Update the GP displacement */
+	MPM_Mesh.Phi.dis.nM[i][k] += Incr_Displacement_k;
+	/* Update the GP position */
+	MPM_Mesh.Phi.x_GC.nM[i][k] += Incr_Displacement_k;	  
       } 
     }
     

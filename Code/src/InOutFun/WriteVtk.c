@@ -110,6 +110,14 @@ void WriteVtk_MPM(char * Name_File, GaussPoint MPM_Mesh,
     fprintf(Vtk_file,"\n");
   }
 
+  fprintf(Vtk_file,"VECTORS DISPLACEMENT float \n");
+  for(int i =  0 ; i<MPM_Mesh.NumGP ; i++){
+    for(int j = 0 ; j<3 ; j++){
+      fprintf(Vtk_file,"%f ",MPM_Mesh.Phi.dis.nM[i][j]);
+    }
+    fprintf(Vtk_file,"\n");
+  }
+
   fprintf(Vtk_file,"TENSORS STRESS float \n");
   for(int i =  0 ; i<MPM_Mesh.NumGP ; i++){
     for(int j = 0 ; j<3 ; j++){
