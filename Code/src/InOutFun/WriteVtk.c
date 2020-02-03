@@ -8,6 +8,7 @@ void WriteVtk_MPM(char * Name_File, GaussPoint MPM_Mesh,
 
   FILE * Vtk_file;
   char Name_file_t[80];
+  double P_GP; /* Trace of the stress tensor (volumetric) */
 
   sprintf(Name_file_t,"%s/MPM_%s_%i.vtk",OutputDir,Name_File,TimeStep_i);
   
@@ -70,6 +71,16 @@ void WriteVtk_MPM(char * Name_File, GaussPoint MPM_Mesh,
   fprintf(Vtk_file,"LOOKUP_TABLE default \n");
   for(int i =  0 ; i<MPM_Mesh.NumGP ; i++){
     fprintf(Vtk_file,"%f \n",MPM_Mesh.Phi.rho.nV[i]); 
+  }
+
+  fprintf(Vtk_file,"SCALARS P float \n");
+  fprintf(Vtk_file,"LOOKUP_TABLE default \n");
+  for(int i =  0 ; i<MPM_Mesh.NumGP ; i++){
+    P_GP = 0;
+    for(int j = 0 ; j<NumberDimensions ; j++ ){
+      P_GP += MPM_Mesh.Phi.Stress.nM[i][j];
+    }    
+    fprintf(Vtk_file,"%f ",P_GP/3);
   }
 
   fprintf(Vtk_file,"SCALARS W float \n");
