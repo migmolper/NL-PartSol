@@ -88,3 +88,7 @@ Matrix GetNodalVelocity(Mesh FEM_Mesh,
 }
 
 /*******************************************************/
+
+/* Matrix GetNodalKinetics(GaussPoint MPM_Mesh, Mesh FEM_Mesh){ */
+
+/* } */

@@ -209,9 +209,23 @@ typedef struct{
 
 /*******************************************************/
 
+/*! \struct Time_Int_Params
+ */
+typedef struct {
 
+  /*! Generalized alpha parameters */
+  double GA_alpha;
+  double GA_beta;
+  double GA_gamma;
+  
+} Time_Int_Params;
+
+/*******************************************************/
+
+/* Variational recovery process */
 Matrix GetNodalMassMomentum(GaussPoint, Mesh);
 Matrix GetNodalVelocity(Mesh, Matrix, Matrix);
+Matrix GetNodalKinetics(GaussPoint, Mesh);
 
 /* Boundary conditions */
 Curve BcDirichlet(char *);
@@ -224,9 +238,15 @@ void UpdateGaussPointStrain(GaussPoint, Mesh, Matrix);
 double UpdateGaussPointDensity(double, double);
 void UpdateGaussPointStress(GaussPoint);
 Matrix GetNodalForces(GaussPoint, Mesh, int);
+
+
 void UpdateGridNodalMomentum(Mesh, Matrix, Matrix);
-void UpdateVelocityAndPositionGP(GaussPoint, Mesh,
-				 Matrix, Matrix, Matrix);
+void GA_UpdateNodalKinetics(Mesh, Matrix, Matrix, Time_Int_Params);
+void UpdateVelocityAndPositionGP(GaussPoint,
+				 Mesh, Matrix,
+				 Matrix, Matrix);
+void GA_AdvectionKinetics(GaussPoint, Mesh, Matrix, Time_Int_Params);
+
 
 double GetMinElementSize(Mesh);
 void GetNodalConnectivity(Mesh);

@@ -58,6 +58,7 @@ int NumberDOF;
 double CEL; /* Physical celerity */
 double CFL; /* Courant number (0-1) */
 double DeltaTimeStep;
+double SpectralRadius;
 int NumTimeStep;
 int ResultsTimeStep;
 
