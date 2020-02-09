@@ -60,9 +60,13 @@ int main(int argc, char * argv[])
   /*********************************************************************/
   puts("*************************************************");
   puts("Run simulation ...");
-  if(strcmp(TimeIntegration,"FE")==0 ){
+  if(strcmp(TimeIntegration,"FE") == 0 ){
     u_ForwardEuler(FEM_Mesh, MPM_Mesh);
   }
+  if(strcmp(TimeIntegration,"GA") == 0 ){
+    u_GeneralizedAlpha(FEM_Mesh, MPM_Mesh);
+  }
+  
 
   /*********************************************************************/
   /******************** CRONOGRAPH CALCULUS : END **********************/
