@@ -305,8 +305,10 @@ void GA_UpdateNodalKinetics(Mesh FEM_Mesh,
  * \brief Brief description of Update_Nodal_Acceleration_Velocity.
  *
  *  The parameters for this functions are  :
- * Nodal_Kinetics = {m, a0, a1, v}
- *
+ *  @param FEM_Mesh
+ *  @param Nodal_Kinetics = {m, a0, a1, v}
+ *  @param Nodal_Forces
+ *  @param Params
  */
 {
   int N_Nodes = FEM_Mesh.NumNodesMesh;
@@ -321,41 +323,41 @@ void GA_UpdateNodalKinetics(Mesh FEM_Mesh,
   /* Asign forces to an auxiliar variable */
   Matrix F = Nodal_Forces;
   
-  /* Asign Kinetics values to matricial tables */
-  Matrix a_t0 =
+  /* Nodal values the fields */
+  Matrix Nodal_Acceleration_t0 =
     MatAssign(N_dim,N_Nodes,NAN,NULL,(double**)malloc(SizeTable));
-  Matrix a_t1 =
+  Matrix Nodal_Acceleration_t1 =
     MatAssign(N_dim,N_Nodes,NAN,NULL,(double**)malloc(SizeTable));
-  Matrix v =
+  Matrix Nodal_Velocity =
     MatAssign(N_dim,N_Nodes,NAN,NULL,(double**)malloc(SizeTable));
+
+  /* 1º Asign Kinetics values to matricial tables */
   for(int i = 0 ; i<N_dim ; i++){
-    a_t0.nM[i] = Nodal_Kinetics.nM[1+i];
-    a_t1.nM[i] = Nodal_Kinetics.nM[1+N_dim+i];
-    v.nM[i] = Nodal_Kinetics.nM[1+2*N_dim+i];
+    Nodal_Acceleration_t0.nM[i] = Nodal_Kinetics.nM[1+i];
+    Nodal_Acceleration_t1.nM[i] = Nodal_Kinetics.nM[1+N_dim+i];
+    Nodal_Velocity.nM[i] = Nodal_Kinetics.nM[1+2*N_dim+i];
   }
   
-  /* Update the grid nodal momentum */
+  /* 2º Update the grid nodal variales */
   for(int i = 0 ; i<N_Nodes ; i++){
     Mass_I = Nodal_Kinetics.nM[0][i];
     if(Mass_I > 0){
       for(int j = 0 ; j<N_dim ; j++){
-	/* Get nodal value of the force for the dimension j */
-	F.nM[j][i];
-	/* Update nodal acceleration t0 */
-	a_t0.nM[j][i] = a_t1.nM[j][i];
-	/* Update nodal acceleration t1 */
-	a_t1.nM[j][i] = (F.nM[j][i]/Mass_I - alpha*a_t0.nM[j][i])/(1-alpha);
+	/* Get the nodal acceleration t1 */
+	Nodal_Acceleration_t1.nM[j][i] =
+	  (F.nM[j][i]/Mass_I - alpha*Nodal_Acceleration_t0.nM[j][i])/(1-alpha);
 	/* Update nodal velocity */
-	v.nM[j][i] += ((1-gamma)*a_t0.nM[j][i] + gamma*a_t1.nM[j][i])*DeltaTimeStep;
+	Nodal_Velocity.nM[j][i] +=
+	  ((1-gamma)*Nodal_Acceleration_t0.nM[j][i] +
+	   gamma*Nodal_Acceleration_t1.nM[j][i])*DeltaTimeStep;
       }
     }
   }
 
-
-  /* Free tables */
-  free(a_t0.nM);
-  free(a_t1.nM);
-  free(v.nM);
+  /* 3º Free tables */
+  free(Nodal_Acceleration_t0.nM);
+  free(Nodal_Acceleration_t1.nM);
+  free(Nodal_Velocity.nM);
   
 }
 
