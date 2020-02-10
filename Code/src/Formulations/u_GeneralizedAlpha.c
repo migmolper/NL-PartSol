@@ -44,18 +44,6 @@ void u_GeneralizedAlpha(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
   /* Nodal forces for the balance */
   Matrix Nodal_Forces = MatAssign(N_dim,N_Nodes,NAN,NULL,NULL);
 
-
-  puts("*************************************************");
-  puts(" First step : Get the nodal kinetics");
-  puts(" \t WORKING ...");
-  Nodal_Kinetics = GetNodalKinetics(MPM_Mesh,FEM_Mesh);
-  Nodal_Velocity =
-    MatAssign(N_dim,N_Nodes,NAN,NULL,
-	      (double**)malloc(NumberDimensions*sizeof(double *)));
-  for(int i = 0 ; i<NumberDimensions ; i++){
-    Nodal_Velocity.nM[i] = Nodal_Kinetics.nM[1+2*N_dim+i];
-  }
-  puts(" \t DONE !!! \n");
   
   /*********************************************************************/
   /*********************************************************************/
@@ -66,6 +54,18 @@ void u_GeneralizedAlpha(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
     DeltaTimeStep = DeltaT_CFL(MPM_Mesh, FEM_Mesh.DeltaX);
     printf("***************** STEP : %i , DeltaT : %f \n",
 	   TimeStep,DeltaTimeStep);
+
+    puts("*************************************************");
+    puts(" First step : Get the nodal kinetics");
+    puts(" \t WORKING ...");
+    Nodal_Kinetics = GetNodalKinetics(MPM_Mesh,FEM_Mesh);
+    Nodal_Velocity =
+      MatAssign(N_dim,N_Nodes,NAN,NULL,
+		(double**)malloc(NumberDimensions*sizeof(double *)));
+    for(int i = 0 ; i<NumberDimensions ; i++){
+      Nodal_Velocity.nM[i] = Nodal_Kinetics.nM[1+2*N_dim+i];
+    }
+    puts(" \t DONE !!! \n");
     
     puts("*************************************************");
     puts(" Second step : Set the essential BCC (over P)");
@@ -117,28 +117,15 @@ void u_GeneralizedAlpha(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
     puts(" \t WORKING ...");
     LocalSearchGaussPoints(MPM_Mesh, FEM_Mesh);
     puts(" DONE !!!");
-
-    puts("*************************************************");
-    puts(" Eight step : Update mass matrix ");
-    puts(" \t WORKING ...");
-    UpdateNodalMass(MPM_Mesh, FEM_Mesh, Nodal_Kinetics);
-    puts(" DONE !!!");
     
     puts("*************************************************");
     puts(" Nine step : Reset nodal forces");
     puts(" \t WORKING ...");
     FreeMat(Nodal_Forces);
+    free(Nodal_Velocity.nM);
+    FreeMat(Nodal_Kinetics);
     puts(" DONE !!!");
 
   } /* End of temporal integration */
-
-  puts("*************************************************");
-  puts("************* End of the time loop **************");
-  puts("*************************************************");
-  puts(" Reset nodal variables ");
-  puts(" \t WORKING ...");
-  free(Nodal_Velocity.nM);
-  FreeMat(Nodal_Kinetics);
-  puts(" DONE !!!");
-
+  
 }

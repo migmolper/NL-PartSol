@@ -226,7 +226,6 @@ typedef struct {
 Matrix GetNodalMassMomentum(GaussPoint, Mesh);
 Matrix GetNodalVelocity(Mesh, Matrix, Matrix);
 Matrix GetNodalKinetics(GaussPoint, Mesh);
-void UpdateNodalMass(GaussPoint, Mesh, Matrix);
 
 /* Boundary conditions */
 Curve BcDirichlet(char *);

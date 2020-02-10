@@ -85,7 +85,7 @@ void GA_AdvectionKinetics(GaussPoint MPM_Mesh,
 
   /* Time integration parameters */
   double beta = GA_Params.GA_beta;
-  /* double gamma = GA_Params.GA_gamma; */
+  double gamma = GA_Params.GA_gamma;
 
   /* Asign Kinetics values to matricial tables */
   Matrix  Nodal_Acceleration_t0 =
@@ -115,7 +115,6 @@ void GA_AdvectionKinetics(GaussPoint MPM_Mesh,
     /* 4º Set to zero the GPs acceleration and velocity of the previous step */
     for(int k = 0 ; k<N_dim ; k++){
       MPM_Mesh.Phi.acc.nM[i][k] = 0.0;
-      MPM_Mesh.Phi.vel.nM[i][k] = 0.0;
     }
     
     /* 5º Iterate over the nodes of the element */
@@ -134,9 +133,12 @@ void GA_AdvectionKinetics(GaussPoint MPM_Mesh,
 	   Nodal_Kinetics = {m, a0, a1, v}
 	 */
 	/* Get the GP accelerations */
-	MPM_Mesh.Phi.acc.nM[i][k] += N_I_GP*Nodal_Acceleration_t1.nM[k][GP_I];
+	MPM_Mesh.Phi.acc.nM[i][k] +=
+	  N_I_GP*Nodal_Acceleration_t1.nM[k][GP_I];
 	/* Update the GP velocities */
-	MPM_Mesh.Phi.vel.nM[i][k] += N_I_GP*Nodal_Velocity.nM[k][GP_I];
+	MPM_Mesh.Phi.vel.nM[i][k] +=
+	  N_I_GP*((1-gamma)*Nodal_Acceleration_t0.nM[k][GP_I] +
+		  gamma*Nodal_Acceleration_t1.nM[k][GP_I])*DeltaTimeStep;
 	/* Update the GP position I */
 	MPM_Mesh.Phi.x_GC.nM[i][k] +=
 	  N_I_GP*(Nodal_Velocity.nM[k][GP_I]*DeltaTimeStep +
@@ -145,21 +147,10 @@ void GA_AdvectionKinetics(GaussPoint MPM_Mesh,
 		  DeltaTimeStep*DeltaTimeStep);
       } 
     }
-    /* Update the GP position II */
-    for(int k = 0 ; k<N_dim ; k++){
-      MPM_Mesh.Phi.x_GC.nM[i][k] += MPM_Mesh.Phi.vel.nM[i][k]*DeltaTimeStep;
-    }
     
     /* 6º Free memory */
     free(GP_Element.Connectivity);
     FreeMat(N_GP);
-  }
-
-  /* 7º Update acceleration */
-  for(int i = 0 ; i<N_Nodes ; i++){
-    for(int j = 0 ; j<N_dim ; j++){
-      Nodal_Acceleration_t0.nM[j][i] = Nodal_Acceleration_t1.nM[j][i];
-    }
   }
 
   /* Free tables */
