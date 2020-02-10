@@ -18,8 +18,6 @@ void u_GeneralizedAlpha(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
   /* Time step */
   int TimeStep;
 
-  double SpectralRadius = 1;
-
   /* Control parameters of the generalized-alpha algorithm 
    all the parameters are controled by a simple parameter :
    SpectralRadius */
@@ -30,6 +28,8 @@ void u_GeneralizedAlpha(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
     (5-3*SpectralRadius)/(pow(1+SpectralRadius,2.0)*(2-SpectralRadius));
   Params.GA_gamma =
     3/2 - Params.GA_alpha;
+
+  puts("paso");
 
   /*********************************************************************/
   /***** INITIALIZE AUXILIAR STRUCTURES TO STORE NODAL INFORMATION *****/
@@ -69,7 +69,7 @@ void u_GeneralizedAlpha(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
       MatAssign(N_dim,N_Nodes,NAN,NULL,
 		(double**)malloc(NumberDimensions*sizeof(double *)));
     for(int i = 0 ; i<NumberDimensions ; i++){
-      Nodal_Kinetics.nM[i] = Nodal_Kinetics.nM[1+2*N_dim+i];
+      Nodal_Velocity.nM[i] = Nodal_Kinetics.nM[1+2*N_dim+i];
     }
     BCC_Nod_VALUE(FEM_Mesh,Nodal_Velocity,TimeStep);
     puts(" \t DONE !!!");
@@ -83,7 +83,6 @@ void u_GeneralizedAlpha(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
       WriteVtk_MPM("MPM_VALUES",MPM_Mesh,List_Fields,
       		   (int)TimeStep/ResultsTimeStep);
     }
-    free(Nodal_Velocity.nM);
     
     puts("*************************************************");
     puts(" Third step : Update the particle stress state");
@@ -123,6 +122,7 @@ void u_GeneralizedAlpha(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
     puts("*************************************************");
     puts(" Eight step : Reset nodal values");
     puts(" \t WORKING ...");
+    free(Nodal_Velocity.nM);
     FreeMat(Nodal_Kinetics);
     FreeMat(Nodal_Forces);
     puts(" DONE !!!");

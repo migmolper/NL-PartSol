@@ -11,7 +11,7 @@ GramsBox (Type=GID,File=FEM_Mesh.msh) {
 GramsSolid2D (File=MPM_Mesh.msh) {
 
     # Time integration
-    GramsTime (Type=GA) {
+    GramsTime (Type=FE) {
 	CEL=5053.02
 	CFL=0.0002
 	N=800000

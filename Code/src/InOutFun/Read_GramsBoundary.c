@@ -90,7 +90,7 @@ Boundaries GramsBoundary(char * Name_File,int NumBounds){
       }
       
       /* Read file with the nodes */
-      sprintf(FileNodesRoute,"%s/%s",Route_Nodes,Parse_Nodes[1]);
+      sprintf(FileNodesRoute,"%s%s",Route_Nodes,Parse_Nodes[1]);
 
       /* Get an array with the nodes */
       Chain_Nodes = File2Chain(FileNodesRoute);
