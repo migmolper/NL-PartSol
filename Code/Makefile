@@ -137,19 +137,25 @@ Traccion_LME:
 # Caso barra Dyka Thomas Blanc thesis
 Dyka_MPM:
 	@echo "**************** Run test case ******************"
-	$ rm $(TESTDIR)/Dyka_MPM/Resultados/*.vtk
 	$ ./$(EXE) -2D -V $(TESTDIR)/Dyka_MPM/ejemplo.gdf
 	$ python $(TESTDIR)/Dyka_MPM/Velocity.py
 	@echo " "
 	@echo "*************** Test case passed ****************"
 Dyka_GIMP:
 	@echo "**************** Run test case ******************"
+	$ rm $(TESTDIR)/Dyka_GIMP/Resultados/*.vtk
 	$ ./$(EXE) -2D -V $(TESTDIR)/Dyka_GIMP/ejemplo.gdf
 	@echo " "
 	@echo "*************** Test case passed ****************"
 Dyka_LME:
 	@echo "**************** Run test case ******************"
 	$ ./$(EXE) -2D -V $(TESTDIR)/Dyka_LME/ejemplo.gdf
+	@echo " "
+	@echo "*************** Test case passed ****************"
+Dyka_GenAlpha:
+	@echo "**************** Run test case ******************"
+	$ ./$(EXE) -2D -V $(TESTDIR)/Dyka_GenAlpha/ejemplo.gdf
+	$ python $(TESTDIR)/Dyka_GenAlpha/Velocity.py
 	@echo " "
 	@echo "*************** Test case passed ****************"
 
