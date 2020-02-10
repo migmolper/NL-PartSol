@@ -1,12 +1,12 @@
-BeginZE /home/DiscoInterno/Documentos/Universidad/PHD/TRABAJOS_EN_CURSO/2020/LME_MPM/Resultados/MPM_Dyka/CASE_MESH_001/Geometry.gid/Geometry.vv
-   x -0.231120690703392029 1.16519176959991455
-   y 1.19571459293365479 -1.24503993988037109
-   z -1.05277085304260254 1.05277085304260254
-   e 0.552770793437957764
+BeginZE /home/miguelmolinos/GraMS/Code/test/Dyka_2STG/Geometry.gid/Geometry.vv
+   x -1.71122324466705322 12.7952098846435547
+   y 7.13026809692382812 -12.4433250427246094
+   z -10.5277080535888672 10.5277080535888672
+   e 5.52770805358886719
    v 0 0 0
    r 1
    m 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1
-   c 0.5 0 0
+   c 5 0 0
    pd 0
    pno 0
    pfo 0
@@ -29,7 +29,7 @@ BeginZE /home/DiscoInterno/Documentos/Universidad/PHD/TRABAJOS_EN_CURSO/2020/LME
    OGLStereo(EyeDistance) 0.075
    OGLStereo(LeftEyeDistance) 1 0 0 1
    OGLStereo(RightEyeDistance) 0 1 1 1
-EndZE /home/DiscoInterno/Documentos/Universidad/PHD/TRABAJOS_EN_CURSO/2020/LME_MPM/Resultados/MPM_Dyka/CASE_MESH_001/Geometry.gid/Geometry.vv
+EndZE /home/miguelmolinos/GraMS/Code/test/Dyka_2STG/Geometry.gid/Geometry.vv
 
 BeginMirror
    Mirror 0 Angle 0.0 AngleFake -15.0 SizeFactor 2.0 HeightOffset 0.25 Color #d9e5f24d Backlight Off EdgeStyle No Type Scene DrawMode Mirror

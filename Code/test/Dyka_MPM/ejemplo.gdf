@@ -1,48 +1,26 @@
-
-# Background mesh definition
-GramsBox (Type=GID,File=FEM_Mesh.msh) {
-    
-    GramsBoundary (File=left.txt) {
-        BcDirichlet V.x CurveConstat.txt
-    }
-}
-
-# Material points definitions
-GramsSolid2D (File=MPM_Mesh.msh) {
-
-    # Time integration
-    GramsTime (Type=GA) {
-	CEL=5053.02
-	CFL=0.0002
-	N=800000
-    }
-
-    # List of materials for the GPs
-    GramsMaterials (id=0) {
-	Type=LE
-	rho=7833
-	E=200.e9
-	mu=0.0
-    }
-    
-    # Shape function definition
-    GramsShapeFun (Type=MPMQ4) {
-    }
-
-    # Initial conditions for the GPs
-    GramsInitials (Nodes=ListInit.txt) {
-	Value=[5.0,0.0]
-    }
-
-    # Loads over the GPs
-    # GramsBodyForces (Nodes=) {}
-    # GramsContactForces (Nodes=) {}
-  
-}
-
-# Outputs 
-GramsOutputs (i=10000) {
-	     DIR=Resultados	
-}
-
-
+GramsBox (Type=GID,File=FEM_Mesh.msh) { 
+	 GramsBoundary (File=left.txt) { 
+	     BcDirichlet V.x CurveConstat.txt 
+	 }
+} 
+GramsSolid2D (File=MPM_Mesh.msh) { 
+	 GramsTime (Type=GA) { 
+	 	 CEL=1.0
+	 	 CFL=0.05
+	 	 N=1000
+	 } 
+	 GramsMaterials (id=0) { 
+	 	 Type=LE 
+	 	 rho=1.0 
+	 	 E=1.0 
+	 	 mu=0.0
+	 } 
+	 GramsShapeFun (Type=MPMQ4) { 
+	 } 
+	 GramsInitials (Nodes=ListInit.txt) { 
+	 	 Value=[0.001,0.0]
+	 } 
+} 
+GramsOutputs (i=1) { 
+	 DIR=Resultados 
+} 

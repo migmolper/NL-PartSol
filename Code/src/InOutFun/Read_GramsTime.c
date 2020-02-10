@@ -84,7 +84,7 @@ GramsTime(Scheme=FE){
       CFL=0.8;
       CEL=NAN;
       NumTimeStep=0;
-      SpectralRadius=0.818;
+      SpectralRadius=0.6;
 
       /* Look for the curly brace { */
       if(strcmp(kwords[2],"{") == 0){
