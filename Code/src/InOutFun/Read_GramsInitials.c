@@ -72,7 +72,7 @@ void GramsInitials(char * Name_File, GaussPoint GP_Mesh)
     strcat(Route_Nodes, Name_Parse[i]);
     strcat(Route_Nodes,"/");
   }
- 
+
   /* Read the file line by line */
   while(fgets(Line_GramsInitials,sizeof(Line_GramsInitials),Sim_dat) != NULL){
 

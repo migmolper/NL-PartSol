@@ -65,7 +65,7 @@ $(EXE): $(OBJS)
 
 #####################################################################
 # Rule for benchmarks
-.PHONY: Debug_MPM Debug_LME Sulsky_MPM Sulsky_GIMP Sulsky_LME Cuadrado_MPM Disco_MPM Disco_GIMP Traccion_MPM Traccion_GIMP Traccion_LME Dyka_MPM Dyka_GIMP Dyka_LME Brazilian_MPM
+.PHONY: Debug_MPM Debug_LME Sulsky_MPM Sulsky_GIMP Sulsky_LME Cuadrado_MPM Disco_MPM Disco_GIMP Traccion_MPM Traccion_GIMP Traccion_LME Dyka_MPM Dyka_GIMP Dyka_LME Dyka_GA Brazilian_MPM
 
 # Caso para debugear
 Debug_MPM:
@@ -138,16 +138,24 @@ Traccion_LME:
 Dyka_MPM:
 	@echo "**************** Run test case ******************"
 	$ ./$(EXE) -2D -V $(TESTDIR)/Dyka_MPM/ejemplo.gdf
+	$ python $(TESTDIR)/Dyka_MPM/Velocity.py
 	@echo " "
 	@echo "*************** Test case passed ****************"
 Dyka_GIMP:
 	@echo "**************** Run test case ******************"
+	$ rm $(TESTDIR)/Dyka_GIMP/Resultados/*.vtk
 	$ ./$(EXE) -2D -V $(TESTDIR)/Dyka_GIMP/ejemplo.gdf
 	@echo " "
 	@echo "*************** Test case passed ****************"
 Dyka_LME:
 	@echo "**************** Run test case ******************"
 	$ ./$(EXE) -2D -V $(TESTDIR)/Dyka_LME/ejemplo.gdf
+	@echo " "
+	@echo "*************** Test case passed ****************"
+Dyka_GenAlpha:
+	@echo "**************** Run test case ******************"
+	$ ./$(EXE) -2D -V $(TESTDIR)/Dyka_GenAlpha/ejemplo.gdf
+	$ python $(TESTDIR)/Dyka_GenAlpha/Velocity.py
 	@echo " "
 	@echo "*************** Test case passed ****************"
 

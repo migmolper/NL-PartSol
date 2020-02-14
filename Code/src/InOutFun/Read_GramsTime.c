@@ -84,6 +84,7 @@ GramsTime(Scheme=FE){
       CFL=0.8;
       CEL=NAN;
       NumTimeStep=0;
+      SpectralRadius=0.6;
 
       /* Look for the curly brace { */
       if(strcmp(kwords[2],"{") == 0){
@@ -137,7 +138,11 @@ GramsTime(Scheme=FE){
 	  else if(strcmp(Parse_Temp_Prop[0],"N") == 0){
 	    NumTimeStep = atoi(Parse_Temp_Prop[1]);
 	    printf("\t -> %s : %i \n","Number of time-steps",NumTimeStep);
-	  }  
+	  }
+	  else if(strcmp(Parse_Temp_Prop[0],"rb") == 0){
+	    SpectralRadius = atof(Parse_Temp_Prop[1]);
+	    printf("\t -> %s : %f \n","Spectral radio",SpectralRadius);
+	  } 
 	  else{
 	    fprintf(stderr,"%s : %s %s \n",
 		   "Error in GramsTime()",

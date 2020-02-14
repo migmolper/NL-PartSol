@@ -2,29 +2,14 @@
 
 # Background mesh definition
 GramsBox (Type=GID,File=FEM_Mesh.msh) {
-    left=GramsBoundary {
-        BcDirichlet V.x NULL
- 	BcDirichlet V.y NULL	
-    }
-    right=GramsBoundary {
-  	BcDirichlet V.x NULL
-   	BcDirichlet V.y NULL	
-    }
-    top=GramsBoundary {
-      	BcDirichlet V.x NULL
-    	BcDirichlet V.y NULL
-    }
-    bottom=GramsBoundary {
-  	BcDirichlet V.x NULL
-    	BcDirichlet V.y NULL
-    }
+
 }
 
 # Material points definitions
 GramsSolid2D (File=MPM_Mesh.msh) {
 
     # Time integration
-    GramsTime (Type=FE) {
+    GramsTime (Type=GA) {
 	CEL=70.71
 	CFL=0.02
 	N=8000
@@ -58,5 +43,5 @@ GramsSolid2D (File=MPM_Mesh.msh) {
 
 # Outputs 
 GramsOutputs (i=100) {
-	     DIR=test/Sulsky_MPM
+	     DIR=Resultados
 }
