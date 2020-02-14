@@ -102,24 +102,13 @@ Matrix GetNodalKinetics(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
   int N_dim = NumberDimensions;
   int N_Acceleration_dim = N_dim;
   int N_Velocity_dim = N_dim;
-  int N_Kinetics_dim = 1 + 2*N_Acceleration_dim + N_Velocity_dim;
-  double SizeKinetics = N_Kinetics_dim*sizeof(double *);
 
   /* Nodal values the fields */
-  Matrix Nodal_Mass =
-    MatAllocZ(1,N_Nodes_Mesh);
-  Matrix Nodal_Acceleration_t0 =
-    MatAllocZ(N_Acceleration_dim,N_Nodes_Mesh);
-  Matrix Nodal_Acceleration_t1 =
-    MatAllocZ(N_Acceleration_dim,N_Nodes_Mesh);
-  Matrix Nodal_Velocity =
-    MatAllocZ(N_Velocity_dim,N_Nodes_Mesh);
-  Matrix Nodal_Kinetics =
-    MatAssign(N_Kinetics_dim,N_Nodes_Mesh,NAN,NULL,
-	      (double**)malloc(SizeKinetics));
-  strcpy(Nodal_Kinetics.Info,
-	 "MASS;ACCELERATION_t0;ACCELERATION_t1;VELOCITY");
-
+  Matrix Nodal_Mass = MatAllocZ(1,N_Nodes_Mesh);
+  Matrix Nodal_Acceleration_t0 = MatAllocZ(N_Acceleration_dim,N_Nodes_Mesh);
+  Matrix Nodal_Acceleration_t1 = MatAllocZ(N_Acceleration_dim,N_Nodes_Mesh);
+  Matrix Nodal_Velocity = MatAllocZ(N_Velocity_dim,N_Nodes_Mesh);
+ 
   /* GPs values of the fields */
   double Mass_GP; /* Mass of the GP */
   Matrix Vel_GP; /* Velocity of the GP */
@@ -132,31 +121,21 @@ Matrix GetNodalKinetics(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
   double Mass_GP_I; /* Nodal contribution of each GP */  
   int GP_I;
   
-  /* 1º Asign Kinetics values to matricial tables */
-  Nodal_Kinetics.nM[0] = Nodal_Mass.nV;
-  for(int i = 0 ; i<N_dim ; i++){
-    Nodal_Kinetics.nM[1+i] = Nodal_Acceleration_t0.nM[i];
-    Nodal_Kinetics.nM[1+N_dim+i] = Nodal_Acceleration_t1.nM[i];
-    Nodal_Kinetics.nM[1+2*N_dim+i] = Nodal_Velocity.nM[i];
-  }
-  
-  /* 2º Iterate over the GP to get the nodal values */
+  /* 1º Iterate over the GP to get the nodal values */
   for(int i = 0 ; i<N_GPs ; i++){
 
-    /* 3º Define element of the GP */
-    GP_Element = GetElementGP(i, MPM_Mesh.ListNodes[i],
-			      MPM_Mesh.NumberNodes[i]);
+    /* 2º Define element of the GP */
+    GP_Element = GetElementGP(i, MPM_Mesh.ListNodes[i], MPM_Mesh.NumberNodes[i]);
     
-    /* 4º Evaluate the shape function in the coordinates of the GP */
-    N_GP = Get_Operator("N",GP_Element,
-			MPM_Mesh,FEM_Mesh);
+    /* 3º Evaluate the shape function in the coordinates of the GP */
+    N_GP = Get_Operator("N",GP_Element, MPM_Mesh,FEM_Mesh);
    
-    /* 5º Get the properties of the GP */
+    /* 4º Get the properties of the GP */
     Mass_GP = MPM_Mesh.Phi.mass.nV[i];
     Acc_GP.nV = MPM_Mesh.Phi.acc.nM[i];
     Vel_GP.nV = MPM_Mesh.Phi.vel.nM[i];
 
-    /* 6º Get the nodal kinetics (I) */
+    /* 5º Get the nodal kinetics (I) */
     for(int k = 0 ; k<GP_Element.NumberNodes ; k++){
       /* Get the node for the GP */
       GP_I = GP_Element.Connectivity[k];
@@ -179,25 +158,43 @@ Matrix GetNodalKinetics(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 	Nodal_Velocity.nM[l][GP_I] += Vel_GP.nV[l]*Mass_GP_I;
       }
     }
-    /* 7º Free the value of the shape functions */
+    /* 6º Free the value of the shape functions */
     FreeMat(N_GP);
     free(GP_Element.Connectivity);
   }
 
-  /* 8º Get the nodal kinetics (II) */
+  /* 7º Get the nodal kinetics (II) */
   for(int i = 0 ; i<N_Nodes_Mesh ; i++){
     if(Nodal_Mass.nV[i] > 0){
       /* Get the nodal acceleration */
       for(int j = 0 ; j<N_Acceleration_dim ; j++){
 	Nodal_Acceleration_t0.nM[j][i] =
-	  Nodal_Acceleration_t0.nM[j][i]*(double)1/Nodal_Mass.nV[i];
+	  Nodal_Acceleration_t0.nM[j][i]/Nodal_Mass.nV[i];
       }
       /* Get the nodal velocity */    
       for(int j = 0 ; j<N_Velocity_dim ; j++){
 	Nodal_Velocity.nM[j][i] =
-	  Nodal_Velocity.nM[j][i]*(double)1/Nodal_Mass.nV[i];
+	  Nodal_Velocity.nM[j][i]/Nodal_Mass.nV[i];
       }
     }
+  }
+
+  /* 8º Asign Kinetics values to matricial tables */
+
+  int N_Kinetics_dim = 1 + 2*N_Acceleration_dim + N_Velocity_dim;
+  double SizeKinetics = N_Kinetics_dim*sizeof(double *);
+
+  Matrix Nodal_Kinetics =
+    MatAssign(N_Kinetics_dim,N_Nodes_Mesh,NAN,NULL,
+	      (double**)malloc(SizeKinetics));
+  strcpy(Nodal_Kinetics.Info,
+	 "MASS;ACCELERATION_t0;ACCELERATION_t1;VELOCITY");
+  
+  Nodal_Kinetics.nM[0] = Nodal_Mass.nV;
+  for(int i = 0 ; i<N_dim ; i++){
+    Nodal_Kinetics.nM[1+i] = Nodal_Acceleration_t0.nM[i];
+    Nodal_Kinetics.nM[1+N_dim+i] = Nodal_Acceleration_t1.nM[i];
+    Nodal_Kinetics.nM[1+2*N_dim+i] = Nodal_Velocity.nM[i];
   }
 
   /* Free table of pointers */

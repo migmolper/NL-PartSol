@@ -280,6 +280,42 @@ void WriteVtk_FEM(char * Name_File, Mesh ElementMesh,
 	i_Field += NumberDimensions ;
       }
 
+      if(strcmp(FieldsList[i],"ACCELERATION_t0") == 0){
+	fprintf(Vtk_file,"VECTORS %s float \n","ACCELERATION_t0");
+	for(int j =  0 ; j<ElementMesh.NumNodesMesh ; j++){
+	  /* Print the dimensions of the array */
+	  for(int k = 0 ; k<3 ; k++){
+
+	    if(k<NumberDimensions)
+	      fprintf(Vtk_file,"%f ",List_Nod_Fields.nM[i_Field+k][j]);
+	    else
+	      fprintf(Vtk_file,"%f ",0.0);
+	  
+	  }
+	  fprintf(Vtk_file,"\n");	
+	}
+	/* Update the index of the field */
+	i_Field += NumberDimensions ;
+      }
+
+      if(strcmp(FieldsList[i],"ACCELERATION_t1") == 0){
+	fprintf(Vtk_file,"VECTORS %s float \n","ACCELERATION_t1");
+	for(int j =  0 ; j<ElementMesh.NumNodesMesh ; j++){
+	  /* Print the dimensions of the array */
+	  for(int k = 0 ; k<3 ; k++){
+
+	    if(k<NumberDimensions)
+	      fprintf(Vtk_file,"%f ",List_Nod_Fields.nM[i_Field+k][j]);
+	    else
+	      fprintf(Vtk_file,"%f ",0.0);
+	  
+	  }
+	  fprintf(Vtk_file,"\n");	
+	}
+	/* Update the index of the field */
+	i_Field += NumberDimensions ;
+      }
+
       if(strcmp(FieldsList[i],"VELOCITY") == 0){
 	fprintf(Vtk_file,"VECTORS %s float \n","VELOCITY");
 	for(int j =  0 ; j<ElementMesh.NumNodesMesh ; j++){

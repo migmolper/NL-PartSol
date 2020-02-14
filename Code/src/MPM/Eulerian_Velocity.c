@@ -337,7 +337,6 @@ void GA_UpdateNodalKinetics(Mesh FEM_Mesh,
     Nodal_Acceleration_t1.nM[i] = Nodal_Kinetics.nM[1+N_dim+i];
     Nodal_Velocity.nM[i] = Nodal_Kinetics.nM[1+2*N_dim+i];
   }
-  
   /* 2º Update the grid nodal variales */
   for(int i = 0 ; i<N_Nodes ; i++){
     Mass_I = Nodal_Kinetics.nM[0][i];

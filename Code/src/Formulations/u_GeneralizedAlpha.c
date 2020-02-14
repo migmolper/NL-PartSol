@@ -44,6 +44,17 @@ void u_GeneralizedAlpha(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
   /* Nodal forces for the balance */
   Matrix Nodal_Forces = MatAssign(N_dim,N_Nodes,NAN,NULL,NULL);
 
+  puts("*************************************************");
+  puts(" First step : Get the nodal kinetics");
+  puts(" \t WORKING ...");
+  Nodal_Kinetics = GetNodalKinetics(MPM_Mesh,FEM_Mesh);
+  Nodal_Velocity =
+    MatAssign(N_dim,N_Nodes,NAN,NULL,
+	      (double**)malloc(NumberDimensions*sizeof(double *)));
+  for(int i = 0 ; i<NumberDimensions ; i++){
+    Nodal_Velocity.nM[i] = Nodal_Kinetics.nM[1+2*N_dim+i];
+  }
+  puts(" \t DONE !!! \n");
   
   /*********************************************************************/
   /*********************************************************************/
@@ -54,35 +65,12 @@ void u_GeneralizedAlpha(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
     DeltaTimeStep = DeltaT_CFL(MPM_Mesh, FEM_Mesh.DeltaX);
     printf("***************** STEP : %i , DeltaT : %f \n",
 	   TimeStep,DeltaTimeStep);
-
-    puts("*************************************************");
-    puts(" First step : Get the nodal kinetics");
-    puts(" \t WORKING ...");
-    Nodal_Kinetics = GetNodalKinetics(MPM_Mesh,FEM_Mesh);
-    Nodal_Velocity =
-      MatAssign(N_dim,N_Nodes,NAN,NULL,
-		(double**)malloc(NumberDimensions*sizeof(double *)));
-    for(int i = 0 ; i<NumberDimensions ; i++){
-      Nodal_Velocity.nM[i] = Nodal_Kinetics.nM[1+2*N_dim+i];
-    }
-    puts(" \t DONE !!! \n");
     
     puts("*************************************************");
     puts(" Second step : Set the essential BCC (over P)");
     puts(" \t WORKING ...");
     BCC_Nod_VALUE(FEM_Mesh,Nodal_Velocity,TimeStep);
-    puts(" \t DONE !!!");
-    
-    /* Print nodal and Gps values */
-    if(TimeStep % ResultsTimeStep == 0){
-      /* Print Nodal values after appling the BCCs */
-      WriteVtk_FEM("Mesh",FEM_Mesh,Nodal_Velocity,
-      		   (int)TimeStep/ResultsTimeStep);
-      /* Print GPs results */
-      WriteVtk_MPM("MPM_VALUES",MPM_Mesh,List_Fields,
-      		   (int)TimeStep/ResultsTimeStep);
-    }
-    
+    puts(" \t DONE !!!");    
     puts("*************************************************");
     puts(" Third step : Update the particle stress state");
     puts(" \t DONE !!!");
@@ -105,6 +93,16 @@ void u_GeneralizedAlpha(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
     GA_UpdateNodalKinetics(FEM_Mesh, Nodal_Kinetics, Nodal_Forces, Params);
     BCC_Nod_VALUE(FEM_Mesh, Nodal_Velocity, TimeStep);
     puts(" DONE !!!");
+
+    /* Print nodal and Gps values */
+    if(TimeStep % ResultsTimeStep == 0){
+      /* Print Nodal values after appling the BCCs */
+      WriteVtk_FEM("Mesh",FEM_Mesh,Nodal_Kinetics,
+      		   (int)TimeStep/ResultsTimeStep);
+      /* Print GPs results */
+      WriteVtk_MPM("MPM_VALUES",MPM_Mesh,List_Fields,
+      		   (int)TimeStep/ResultsTimeStep);
+    }
     
     puts("*************************************************");
     puts(" Six step : Update the particle kinetics");
@@ -122,8 +120,8 @@ void u_GeneralizedAlpha(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
     puts(" Nine step : Reset nodal forces");
     puts(" \t WORKING ...");
     FreeMat(Nodal_Forces);
-    free(Nodal_Velocity.nM);
-    FreeMat(Nodal_Kinetics);
+    /* free(Nodal_Velocity.nM); */
+    /* FreeMat(Nodal_Kinetics); */
     puts(" DONE !!!");
 
   } /* End of temporal integration */

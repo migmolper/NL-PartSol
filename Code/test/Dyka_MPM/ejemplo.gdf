@@ -7,7 +7,7 @@ GramsSolid2D (File=MPM_Mesh.msh) {
 	 GramsTime (Type=FE) { 
 	 	 CEL=1.0
 	 	 CFL=0.05
-	 	 N=1000
+	 	 N=2000
 	 } 
 	 GramsMaterials (id=0) { 
 	 	 Type=LE 
