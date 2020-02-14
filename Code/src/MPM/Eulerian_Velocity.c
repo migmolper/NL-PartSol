@@ -361,3 +361,124 @@ void GA_UpdateNodalKinetics(Mesh FEM_Mesh,
 }
 
 /*******************************************************/
+
+void PCE_Predictor(Mesh FEM_Mesh,
+		   Matrix Nodal_Kinetics,
+		   Time_Int_Params Params)
+/*!
+ *
+ */
+{
+  int N_Nodes = FEM_Mesh.NumNodesMesh;
+  int N_dim = NumberDimensions;
+  double SizeTable = N_dim*sizeof(double *);
+
+  /* Time integration parameters */
+  double gamma = Params.GA_gamma;
+  double beta = Params.GA_beta;
+ 
+  /* Nodal values the fields */
+  Matrix Nodal_Mass =
+    MatAssign(1,N_Nodes,NAN,Nodal_Kinetics.nM[0],NULL);
+  Matrix Nodal_Displacement =
+    MatAssign(N_dim,N_Nodes,NAN,NULL,(double**)malloc(SizeTable));
+  Matrix Nodal_Velocity =
+    MatAssign(N_dim,N_Nodes,NAN,NULL,(double**)malloc(SizeTable));
+  Matrix Nodal_Acceleration =
+    MatAssign(N_dim,N_Nodes,NAN,NULL,(double**)malloc(SizeTable));
+
+  /* 1º Asign Kinetics values to matricial tables */
+  for(int i = 0 ; i<N_dim ; i++){
+    Nodal_Displacement.nM[i] = Nodal_Kinetics.nM[1+i];
+    Nodal_Velocity.nM[i] = Nodal_Kinetics.nM[1+N_dim+i];
+    Nodal_Acceleration.nM[i] = Nodal_Kinetics.nM[1+2*N_dim+i];
+  }
+  /* 2º Update the grid nodal variales */
+  for(int i = 0 ; i<N_Nodes ; i++){
+    if(Nodal_Mass.nV[i] > 0){
+      for(int j = 0 ; j<N_dim ; j++){
+	/* Predict nodal displacement */
+	Nodal_Displacement.nM[j][i] +=
+	  DeltaTimeStep*Nodal_Velocity.nM[j][i] +
+	  (0.5-beta)*DeltaTimeStep*DeltaTimeStep*Nodal_Acceleration.nM[j][i];
+	
+	/* Predict nodal velocity */
+	Nodal_Velocity.nM[j][i] +=
+	  (1-gamma)*DeltaTimeStep*Nodal_Acceleration.nM[j][i];
+      }
+    }
+  }
+
+  /* 3º Free tables */
+  free(Nodal_Displacement.nM);
+  free(Nodal_Velocity.nM);
+  free(Nodal_Acceleration.nM);
+  
+}
+
+/*******************************************************/
+
+void PCE_Corrector(Mesh FEM_Mesh,
+		   Matrix Nodal_Kinetics, Matrix Nodal_Forces,
+		   Time_Int_Params Params)
+/*!
+ *
+ */
+{
+  int N_Nodes = FEM_Mesh.NumNodesMesh;
+  int N_dim = NumberDimensions;
+  double SizeTable = N_dim*sizeof(double *);
+
+  /* Time integration parameters */
+  double gamma = Params.GA_gamma;
+  double beta = Params.GA_beta;
+  
+  /* Nodal values the fields */
+  Matrix Nodal_Mass =
+    MatAssign(1,N_Nodes,NAN,Nodal_Kinetics.nM[0],NULL);
+  Matrix Nodal_Displacement =
+    MatAssign(N_dim,N_Nodes,NAN,NULL,(double**)malloc(SizeTable));
+  Matrix Nodal_Velocity =
+    MatAssign(N_dim,N_Nodes,NAN,NULL,(double**)malloc(SizeTable));
+  Matrix Nodal_Acceleration =
+    MatAssign(N_dim,N_Nodes,NAN,NULL,(double**)malloc(SizeTable));
+
+  /* 1º Asign Kinetics values to matricial tables */
+  for(int i = 0 ; i<N_dim ; i++){
+    Nodal_Displacement.nM[i] = Nodal_Kinetics.nM[1+i];
+    Nodal_Velocity.nM[i] = Nodal_Kinetics.nM[1+N_dim+i];
+    Nodal_Acceleration.nM[i] = Nodal_Kinetics.nM[1+2*N_dim+i];
+  }
+
+  /* 2º get nodal acceleration in t = n + 1 */
+  for(int i = 0 ; i<N_Nodes ; i++){
+    if(Nodal_Mass.nV[i]>0){
+      for(int j = 0 ; j<N_dim ; j++){
+	Nodal_Acceleration.nM[j][i] = Nodal_Forces.nM[j][i]/Nodal_Mass.nV[i];
+      }
+    }
+  }
+  
+  /* 3º Correct the grid nodal variales */
+  for(int i = 0 ; i<N_Nodes ; i++){
+    if(Nodal_Mass.nV[i]>0){
+      for(int j = 0 ; j<N_dim ; j++){
+	/* Correct nodal displacement */
+	Nodal_Displacement.nM[j][i] +=
+	  beta*DeltaTimeStep*DeltaTimeStep*Nodal_Acceleration.nM[j][i];
+	
+	/* Correct nodal velocity */
+	Nodal_Velocity.nM[j][i] +=
+	  gamma*DeltaTimeStep*Nodal_Acceleration.nM[j][i];
+      }
+    }
+  }
+
+  /* 3º Free tables */
+  free(Nodal_Displacement.nM);
+  free(Nodal_Velocity.nM);
+  free(Nodal_Acceleration.nM);
+  
+}
+
+/*******************************************************/

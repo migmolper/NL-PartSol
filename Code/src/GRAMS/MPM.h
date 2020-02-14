@@ -226,6 +226,8 @@ typedef struct {
 Matrix GetNodalMassMomentum(GaussPoint, Mesh);
 Matrix GetNodalVelocity(Mesh, Matrix, Matrix);
 Matrix GetNodalKinetics(GaussPoint, Mesh);
+Matrix GetNodalVelocityDisplacement(GaussPoint, Mesh);
+
 
 /* Boundary conditions */
 Curve BcDirichlet(char *);
@@ -239,6 +241,9 @@ double UpdateGaussPointDensity(double, double);
 void UpdateGaussPointStress(GaussPoint);
 Matrix GetNodalForces(GaussPoint, Mesh, int);
 
+void PCE_Predictor(Mesh, Matrix, Time_Int_Params);
+void PCE_Corrector(Mesh, Matrix, Matrix, Time_Int_Params);
+
 
 void UpdateGridNodalMomentum(Mesh, Matrix, Matrix);
 void GA_UpdateNodalKinetics(Mesh, Matrix, Matrix, Time_Int_Params);
@@ -246,6 +251,7 @@ void UpdateVelocityAndPositionGP(GaussPoint,
 				 Mesh, Matrix,
 				 Matrix, Matrix);
 void GA_AdvectionKinetics(GaussPoint, Mesh, Matrix, Time_Int_Params);
+void PCE_AdvectionKinetics(GaussPoint, Mesh, Matrix);
 
 
 double GetMinElementSize(Mesh);
