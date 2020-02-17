@@ -257,8 +257,6 @@ void PCE_Predictor(GaussPoint MPM_Mesh,
 	MPM_Mesh.Phi.x_GC.nM[i][k] +=
 	  N_I_GP*(DeltaTimeStep*Nodal_MOMENTUM.nM[k][GP_I] +
 		  0.5*pow(DeltaTimeStep,2)*Nodal_TOT_FORCES.nM[k][GP_I])/mass_I;
-	/* MPM_Mesh.Phi.x_GC.nM[i][k] += */
-	/*   N_I_GP*DeltaTimeStep*Nodal_MOMENTUM.nM[k][GP_I]/mass_I; */
       }
     }
     
