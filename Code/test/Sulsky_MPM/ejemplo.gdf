@@ -9,10 +9,10 @@ GramsBox (Type=GID,File=FEM_Mesh.msh) {
 GramsSolid2D (File=MPM_Mesh.msh) {
 
     # Time integration
-    GramsTime (Type=GA) {
+    GramsTime (Type=PCE) {
 	CEL=70.71
-	CFL=0.02
-	N=8000
+	CFL=0.01
+	N=15000
     }
 
     # List of materials for the GPs

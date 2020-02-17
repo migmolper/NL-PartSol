@@ -228,31 +228,32 @@ Matrix GetNodalVelocity(Mesh, Matrix, Matrix);
 Matrix GetNodalKinetics(GaussPoint, Mesh);
 Matrix GetNodalVelocityDisplacement(GaussPoint, Mesh);
 
-
 /* Boundary conditions */
 Curve BcDirichlet(char *);
 void BCC_Nod_VALUE(Mesh, Matrix, int);
 Matrix Eval_Body_Forces(Load *, int, int, int);
 Matrix Eval_Contact_Forces(Load *, int, int, int);
 
-/* MPM functions  */
+/* Eulerian functions  */
 void UpdateGaussPointStrain(GaussPoint, Mesh, Matrix);
 double UpdateGaussPointDensity(double, double);
 void UpdateGaussPointStress(GaussPoint);
 Matrix GetNodalForces(GaussPoint, Mesh, int);
-
-void PCE_Predictor(GaussPoint, Time_Int_Params);
-void PCE_Corrector(GaussPoint, Mesh, Matrix,
-		   Matrix, Matrix, Time_Int_Params);
-
-
 void UpdateGridNodalMomentum(Mesh, Matrix, Matrix);
+
+/* Forward Euler */
+void UpdateVelocityAndPositionGP(GaussPoint, Mesh, Matrix, Matrix, Matrix);
+
+/* Generalized-alpha */
 void GA_UpdateNodalKinetics(Mesh, Matrix, Matrix, Time_Int_Params);
-void UpdateVelocityAndPositionGP(GaussPoint,
-				 Mesh, Matrix,
-				 Matrix, Matrix);
 void GA_AdvectionKinetics(GaussPoint, Mesh, Matrix, Time_Int_Params);
-void PCE_AdvectionKinetics(GaussPoint, Mesh, Matrix);
+
+/* Predicto-corrector explicit */
+void PCE_Predictor(GaussPoint, Mesh, Matrix, Matrix,
+		   Matrix, Time_Int_Params);
+void PCE_Corrector(GaussPoint, Mesh, Matrix,
+		   Matrix, Time_Int_Params);
+
 
 
 double GetMinElementSize(Mesh);
