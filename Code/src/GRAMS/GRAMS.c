@@ -64,7 +64,7 @@ int main(int argc, char * argv[])
     u_ForwardEuler(FEM_Mesh, MPM_Mesh);
   }
   if(strcmp(TimeIntegration,"GA") == 0 ){
-    u_GeneralizedAlpha(FEM_Mesh, MPM_Mesh);
+    U_GA(FEM_Mesh, MPM_Mesh);
   }
   if(strcmp(TimeIntegration,"PCE") == 0 ){
     U_PCE(FEM_Mesh, MPM_Mesh);

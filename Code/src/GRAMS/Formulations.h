@@ -17,7 +17,7 @@ void u_ForwardEuler(Mesh, GaussPoint);
  * Displacement formulation with a Generalized-alpha
  * integration scheme.
  */
-void u_GeneralizedAlpha(Mesh, GaussPoint);
+void U_GA(Mesh, GaussPoint);
 
 
 /*!

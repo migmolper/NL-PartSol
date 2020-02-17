@@ -4,7 +4,7 @@
 #include <math.h>
 #include "grams.h"
 
-void u_GeneralizedAlpha(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
+void U_GA(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
 /*!
  * The generalized-alpha algorithm here implemented is analogous
  * to the one described in "Temporal and null-space filter for the
