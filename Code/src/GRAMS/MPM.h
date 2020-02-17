@@ -241,8 +241,9 @@ double UpdateGaussPointDensity(double, double);
 void UpdateGaussPointStress(GaussPoint);
 Matrix GetNodalForces(GaussPoint, Mesh, int);
 
-void PCE_Predictor(Mesh, Matrix, Time_Int_Params);
-void PCE_Corrector(Mesh, Matrix, Matrix, Time_Int_Params);
+void PCE_Predictor(GaussPoint, Time_Int_Params);
+void PCE_Corrector(GaussPoint, Mesh, Matrix,
+		   Matrix, Matrix, Time_Int_Params);
 
 
 void UpdateGridNodalMomentum(Mesh, Matrix, Matrix);
