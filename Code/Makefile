@@ -150,6 +150,7 @@ Dyka_GIMP:
 Dyka_LME:
 	@echo "**************** Run test case ******************"
 	$ ./$(EXE) -2D -V $(TESTDIR)/Dyka_LME/ejemplo.gdf
+	$ python $(TESTDIR)/Dyka_LME/Velocity.py
 	@echo " "
 	@echo "*************** Test case passed ****************"
 Dyka_GenAlpha:
