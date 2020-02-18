@@ -100,13 +100,13 @@ void U_PCE(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
     puts(" Five step : Calculate total forces forces");
     puts(" \t WORKING ...");
     Nodal_TOT_FORCES = GetNodalForces(MPM_Mesh,FEM_Mesh,TimeStep);
+    BCC_Nod_VALUE(FEM_Mesh,Nodal_TOT_FORCES,TimeStep);
     puts(" DONE !!!");
     
     puts("*************************************************");
     puts(" Six step : Integrate the grid nodal momentum equation");
     puts(" \t WORKING ...");
     UpdateGridNodalMomentum(FEM_Mesh,Nodal_MOMENTUM,Nodal_TOT_FORCES);
-    BCC_Nod_VALUE(FEM_Mesh,Nodal_TOT_FORCES,TimeStep);
     puts(" DONE !!!");
     
     puts("*************************************************");
