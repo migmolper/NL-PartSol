@@ -359,5 +359,3 @@ void GA_UpdateNodalKinetics(Mesh FEM_Mesh,
   free(Nodal_Velocity.nM);
   
 }
-
-/*******************************************************/
