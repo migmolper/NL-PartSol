@@ -58,45 +58,26 @@ int main(int argc, char * argv[])
     puts("Read outputs ...");
     GramsOutputs(SimulationFile);
 
-<<<<<<< HEAD
+    
     /*********************************************************************/
     /********************** RUN THE MPM CALCULUS *************************/
     /*********************************************************************/
     puts("*************************************************");
     puts("Run simulation ...");
-    if(strcmp(TimeIntegration,"FE") == 0 ){
+    if(strcmp(TimeIntegration,"FE") == 0 ){ /* Forward Euler */
       u_ForwardEuler(FEM_Mesh, MPM_Mesh);
     }
-    if(strcmp(TimeIntegration,"GA") == 0 ){
-      u_GeneralizedAlpha(FEM_Mesh, MPM_Mesh);
+    if(strcmp(TimeIntegration,"GA") == 0 ){ /* Generalized-alpha */
+      U_GA(FEM_Mesh, MPM_Mesh);
+    }
+    if(strcmp(TimeIntegration,"PCE") == 0 ){ /* Explicit predictor-corrector */
+      U_PCE(FEM_Mesh, MPM_Mesh);
     }
   
-
     /*********************************************************************/
     /******************** CRONOGRAPH CALCULUS : END **********************/
     /*********************************************************************/
     tic_TOC(start_t);
-=======
-  /*********************************************************************/
-  /********************** RUN THE MPM CALCULUS *************************/
-  /*********************************************************************/
-  puts("*************************************************");
-  puts("Run simulation ...");
-  if(strcmp(TimeIntegration,"FE") == 0 ){
-    u_ForwardEuler(FEM_Mesh, MPM_Mesh);
-  }
-  if(strcmp(TimeIntegration,"GA") == 0 ){
-    U_GA(FEM_Mesh, MPM_Mesh);
-  }
-  if(strcmp(TimeIntegration,"PCE") == 0 ){
-    U_PCE(FEM_Mesh, MPM_Mesh);
-  }
-  
-  /*********************************************************************/
-  /******************** CRONOGRAPH CALCULUS : END **********************/
-  /*********************************************************************/
-  tic_TOC(start_t);
->>>>>>> Newmark-explicit
          
     /*********************************************************************/
     /************************ CLOSE THE PROGRAM **************************/
