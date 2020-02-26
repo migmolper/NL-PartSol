@@ -10,6 +10,101 @@
 
 /*********************************************************************/
 
+Matrix GetInitialGaussPointPosition(Mesh FEM_Mesh, int GPxElement)
+/*
+ * 
+ */
+{
+
+  int NumElemMesh = FEM_Mesh.NumElemMesh;
+  Matrix N_GP;
+  Matrix X_GC = MatAllocZ(GPxElement*NumElemMesh,3);
+  strcpy(X_GC.Info,"Global Coordinates");
+  Matrix X_EC = MatAllocZ(GPxElement,NumberDimensions);
+  Matrix X_EC_j;
+  Element Element;
+  int Node;
+
+  switch(GPxElement){
+
+  case 1 :
+    if(strcmp(FEM_Mesh.TypeElem,"Quadrilateral") == 0){
+      /* Centred GP */
+      X_EC.nV[0] = 0.0;
+      X_EC.nV[1] = 0.0;
+      /* Evaluate the shape function */
+      N_GP = Q4(X_EC);
+      /* Get the coordinate of the center */
+      for(int i = 0 ; i<NumElemMesh ; i++){
+	Element = GetElementGP(i, FEM_Mesh.Connectivity[i],
+			       FEM_Mesh.NumNodesElem[i]);
+	for(int k = 0 ; k<4 ; k++){
+	  Node = Element.Connectivity[k];
+	  for(int l = 0 ; l<NumberDimensions ; l++){
+	    X_GC.nM[i][l] +=
+	      N_GP.nV[k]*FEM_Mesh.Coordinates.nM[Node][l];
+	  }
+	}
+	free(Element.Connectivity);
+      }
+      /* Free auxiliar matrix with the coordinates */
+      FreeMat(X_EC);
+      /* Free value of the shape function in the GP */
+      FreeMat(N_GP);
+    }
+    /* if(strcmp(FEM_Mesh.TypeElem,"Triangle") == 0){ */
+    /*   /\* Evaluate the shape function *\/ */
+    /*   N_GP = T3(X_GP); */
+    /* }     */
+    break;
+  case 4:
+    if(strcmp(FEM_Mesh.TypeElem,"Quadrilateral") == 0){
+      /* Centred GP */
+      X_EC.nM[0][0] =  1/pow(3,0.5);
+      X_EC.nM[0][1] =  1/pow(3,0.5);
+      X_EC.nM[1][0] =  1/pow(3,0.5);
+      X_EC.nM[1][1] = -1/pow(3,0.5);
+      X_EC.nM[2][0] = -1/pow(3,0.5);
+      X_EC.nM[2][1] =  1/pow(3,0.5);
+      X_EC.nM[3][0] = -1/pow(3,0.5);
+      X_EC.nM[3][1] = -1/pow(3,0.5);
+      /* Get the coordinate of the center */
+      for(int i = 0 ; i<NumElemMesh ; i++){
+	Element = GetElementGP(i, FEM_Mesh.Connectivity[i],
+			       FEM_Mesh.NumNodesElem[i]);
+	for(int j = 0 ; j<GPxElement ; j++){
+	  /* Evaluate the shape function in the GP position */
+	  X_EC_j.nV = X_EC.nM[j]; 
+	  N_GP = Q4(X_EC_j);
+	  for(int k = 0 ; k<4 ; k++){
+	    /* Connectivity of each element */
+	    Node = Element.Connectivity[k];
+	    for(int l = 0 ; l<NumberDimensions ; l++){
+	      X_GC.nM[i*GPxElement+j][l] +=
+		N_GP.nV[k]*FEM_Mesh.Coordinates.nM[Node][l];
+	    }
+	  }
+	  /* Free value of the shape function in the GP */
+	  FreeMat(N_GP);
+	}
+	free(Element.Connectivity);
+      }
+      /* Free auxiliar matrix with the coordinates */
+      FreeMat(X_EC);
+    }
+    break;
+  default :
+    fprintf(stderr,"%s : %s \n",
+	    "Error in GetInitialGaussPointPosition()",
+	    "Wrong number of gauss point per element");
+    exit(1);
+  }
+  
+  return X_GC;
+}
+
+/*********************************************************************/
+
 double GetMinElementSize(Mesh FEM_Mesh)
 /*
   Function to get the minimum mesh size.

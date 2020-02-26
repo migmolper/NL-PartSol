@@ -24,7 +24,7 @@ Boundaries GramsBoundary(char *,int);
 GaussPoint GramsSolid2D(char *,Mesh);
 void GramsTime(char * );
 Material * GramsMaterials(char *, GaussPoint);
-void GramsInitials(char *, GaussPoint);
+void GramsInitials(char *, GaussPoint, int);
 void GramsShapeFun(char * );
 void GramsOutputs(char * );
 Load * GramsNeumannBC(char *, int);

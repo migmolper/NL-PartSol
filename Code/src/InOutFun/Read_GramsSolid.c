@@ -39,7 +39,8 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
   ChainPtr Poligon_Connectivity;
   ChainPtr Vertex;
   int NumVertex;
-  Matrix Poligon_Centroid;
+  int GPxElement = 4;
+  double Area_Element;
 
   /* Set to false check variables */
   bool Is_GramsSolid2D = false;
@@ -133,18 +134,17 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
 
     /* The number of Gauss-Points is the same as the number of elements
        in the input mesh, because we set a GP in the middle of each element */
-    MPM_Mesh.NumGP = MPM_GID_Mesh.NumElemMesh;
+    MPM_Mesh.NumGP = GPxElement*MPM_GID_Mesh.NumElemMesh;
  
     /* Allocate fields */
     MPM_Mesh.Element_id = /* Index of the Element */
       (int *)Allocate_ArrayZ(MPM_Mesh.NumGP,sizeof(int));  
     MPM_Mesh.NumberNodes = /* Number of tributary nodes for each GP */
       (int *)Allocate_ArrayZ(MPM_Mesh.NumGP,sizeof(int));
-    MPM_Mesh.ListNodes =   /* Nodal connectivity of each GP */
+    MPM_Mesh.ListNodes = /* Nodal connectivity of each GP */
       (ChainPtr *)malloc(MPM_Mesh.NumGP*sizeof(ChainPtr));
     if(MPM_Mesh.ListNodes == NULL){
-      printf("%s : %s \n",
-	     "Define_GP_Mesh",
+      printf("%s : %s \n", "Define_GP_Mesh",
 	     "Memory error for ListNodes");
       exit(0);
     }
@@ -162,11 +162,11 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
     for(int i = 0 ; i<MPM_Mesh.NumGP ; i++){
       MPM_Mesh.Beps[i] = NULL;  
     }
-  
-    MPM_Mesh.Phi.x_GC = /* Coordinates of the GP (Global/Local)*/
-      MatAllocZ(MPM_Mesh.NumGP,3);
-    strcpy(MPM_Mesh.Phi.x_GC.Info,"Global Coordinates");
 
+    /* Generate the initial GP mesh */
+    MPM_Mesh.Phi.x_GC =
+      GetInitialGaussPointPosition(MPM_GID_Mesh,GPxElement);
+    
     /**************************************************/
     /* Read parameters of the time-integration scheme */
     /**************************************************/
@@ -220,6 +220,7 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
 	      "GramsShapeFun no defined");
       exit(0);
     }
+
     /**************************************************/    
     /****** Allocate vectorial/tensorial fields *******/
     /**************************************************/
@@ -326,7 +327,7 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
     }
 
     /* Fill geometrical properties of the GP mesh */
-    for(int i = 0 ; i<MPM_Mesh.NumGP ; i++){
+    for(int i = 0 ; i<MPM_GID_Mesh.NumElemMesh ; i++){
       /* Get the connectivity of the elements vertex */
       Poligon_Connectivity = MPM_GID_Mesh.Connectivity[i];    
       /* Generate a matrix with the poligon coordinates */
@@ -340,35 +341,35 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
 	  k++, Vertex = Vertex->next){
 	I_Vertex = Vertex->I;
 	for(int l = 0 ; l<NumberDimensions ; l++){
-	  Poligon_Coordinates.nM[k][l] = MPM_GID_Mesh.Coordinates.nM[I_Vertex][l];
+	  Poligon_Coordinates.nM[k][l] =
+	    MPM_GID_Mesh.Coordinates.nM[I_Vertex][l];
 	}
       }
       /* Free data */
       FreeChain(MPM_GID_Mesh.Connectivity[i]);
       /* Get the area (Poligon_Centroid.n) 
 	 and the position of the centroid (Poligon_Centroid.nV) */
-      Poligon_Centroid = Centroid_Poligon(Poligon_Coordinates);
+      Area_Element = Area_Poligon(Poligon_Coordinates);
       /* Free data */
-      FreeMat(Poligon_Coordinates);    
-      /* Assign the mass parameter */
-      MPM_Mesh.Phi.mass.nV[i] = Poligon_Centroid.n*MPM_Mesh.Mat[0].rho;
-      /* Set the initial density */
-      MPM_Mesh.Phi.rho.nV[i] = MPM_Mesh.Mat[0].rho;
-      /* Get the coordinates of the centre */
-      MPM_Mesh.Phi.x_GC.nM[i][0] = Poligon_Centroid.nV[0];
-      MPM_Mesh.Phi.x_GC.nM[i][1] = Poligon_Centroid.nV[1];
-      MPM_Mesh.Phi.x_GC.nM[i][2] = 0.0;         
-      /* Local coordinates of the element */
-      MPM_Mesh.Element_id[i] = -999;
-      MPM_Mesh.NumberNodes[i] = 4;
-      /* Free data */
-      FreeMat(Poligon_Centroid);    
+      FreeMat(Poligon_Coordinates);
+      
+      for(int j = 0 ; j<GPxElement ; j++){
+	/* Set the initial density */
+	MPM_Mesh.Phi.rho.nV[i*GPxElement+j] = MPM_Mesh.Mat[0].rho;
+	/* Assign the mass parameter */
+	MPM_Mesh.Phi.mass.nV[i*GPxElement+j] =
+	  (Area_Element/GPxElement)* MPM_Mesh.Mat[0].rho;
+	/* Local coordinates of the element */
+	MPM_Mesh.Element_id[i*GPxElement+j] = -999;
+	MPM_Mesh.NumberNodes[i*GPxElement+j] = 4;
+      }
     }
+
     /**************************************************/    
     /************** Read initial values ***************/
     /**************************************************/    
     if(Is_GramsInitials){
-      GramsInitials(Name_File,MPM_Mesh);
+      GramsInitials(Name_File,MPM_Mesh,GPxElement);
     }
     else{
       puts("*************************************************");
@@ -404,7 +405,7 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
     }
     /**************************************************/
     /******** INITIALIZE SHAPE FUNCTIONS **************/
-    /**************************************************/ 
+    /**************************************************/
     puts("*************************************************");
     printf("\t * %s \n",
 	   "Initialize shape functions ...");

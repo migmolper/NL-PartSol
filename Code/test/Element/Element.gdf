@@ -1,0 +1,23 @@
+GramsBox (Type=GID,File=Mesh.msh) { 
+} 
+GramsSolid2D (File=Mesh.msh) { 
+    GramsTime (Type=FE) { 
+	CEL=1.0
+	CFL=1
+	N=10
+    } 
+    GramsMaterials (id=0) { 
+	Type=LE 
+	rho=1.0 
+	E=1.0 
+	mu=0.0
+    } 
+    GramsShapeFun (Type=MPMQ4) { 
+    }
+    GramsInitials (Nodes=ListInit.txt) { 
+	Value=[0.0,0.0]
+    } 
+} 
+GramsOutputs (i=1) { 
+    DIR=Resultados 
+} 

@@ -8,7 +8,7 @@
 #define MINVAL(A,B) ((A)<(B) ? (A) : (B))
 
 
-void GramsInitials(char * Name_File, GaussPoint GP_Mesh)
+void GramsInitials(char * Name_File, GaussPoint GP_Mesh, int GPxElement)
 /*
   GramsInitials (Nodes=ListInit.txt) {
   Value=[5.0,0.0]
@@ -150,9 +150,11 @@ void GramsInitials(char * Name_File, GaussPoint GP_Mesh)
 	    if((strcmp(Formulation,"-V") == 0) &&
 	       (Num_words_parse == NumberDimensions)){
 	      for(int i = 0 ; i<Num_Nodes ; i++){
-		for(int j = 0 ; j<NumberDimensions ; j++){
-		  GP_Mesh.Phi.vel.nM[Array_Nodes[i]][j] =
-		    atof(IC_value[j]);
+		for(int j = 0 ; j<GPxElement ; j++){
+		  for(int k = 0 ; k<NumberDimensions ; k++){
+		    GP_Mesh.Phi.vel.nM[Array_Nodes[i]*GPxElement+j][k] =
+		    atof(IC_value[k]);
+		  }
 		}
 	      }
 	    }
