@@ -222,16 +222,13 @@ Matrix LME_Beta(Matrix Beta, Matrix l, double Gamma)
 
   int N_dim = NumberDimensions;
   int NumNodes_GP = l.N_rows;
-  double h_aux;
   double h = 0;
+  Matrix l_GP_I = MatAssign(NumberDimensions,1,NAN,NULL,NULL);
   
   /* Get the mean distande */
   for(int i = 0 ; i<NumNodes_GP ; i++){
-    h_aux = 0;
-    for(int j = 0 ; j<N_dim ; j++){
-      h_aux += l.nM[i][j]*l.nM[i][j];
-    }
-    h += pow(h_aux,0.5);
+    l_GP_I.nV = l.nM[i];
+    h += Norm_Mat(l_GP_I,2);
   }
   h = h/NumNodes_GP;
 

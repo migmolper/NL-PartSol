@@ -407,15 +407,19 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
     /******** INITIALIZE SHAPE FUNCTIONS **************/
     /**************************************************/
     puts("*************************************************");
-    printf("\t * %s \n",
-	   "Initialize shape functions ...");
     if(strcmp(ShapeFunctionGP,"MPMQ4") == 0){
+      printf("\t * %s \n",
+	     "Initialize MPMQ4 shape functions ...");
       Q4_Initialize(MPM_Mesh, FEM_Mesh);
     }
     else if(strcmp(ShapeFunctionGP,"uGIMP") == 0){
+      printf("\t * %s \n",
+	     "Initialize uGIMP shape functions ...");      
       GIMP_Initialize(MPM_Mesh,FEM_Mesh);
     }
     else if(strcmp(ShapeFunctionGP,"LME") == 0){
+      printf("\t * %s \n",
+	     "Initialize LME shape functions ...");
       LME_Initialize(MPM_Mesh,FEM_Mesh);
     }
     
