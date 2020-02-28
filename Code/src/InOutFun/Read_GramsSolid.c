@@ -167,11 +167,8 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
     /**************************************************/
     if(Is_GramsMaterials){
       MPM_Mesh.NumberMaterials = Counter_Materials;
-      MPM_Mesh.Mat = GramsMaterials(Name_File,MPM_Mesh);
       MPM_Mesh.MatIdx = (int *)malloc(MPM_Mesh.NumGP*sizeof(int));
-      for(int i = 0 ; i<MPM_Mesh.NumGP ; i++){
-	MPM_Mesh.MatIdx[i] = 0;
-      }
+      MPM_Mesh.Mat = GramsMaterials(Name_File,MPM_Mesh,GPxElement);
     }
     else{
       fprintf(stderr,"%s : %s \n",
@@ -405,6 +402,7 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
 	     "Initialize LME shape functions ...");
       LME_Initialize(MPM_Mesh,FEM_Mesh);
     }
+    printf("\t %s \n","DONE !!");
     
     /**************************************************/    
     /************* Free the input data ****************/

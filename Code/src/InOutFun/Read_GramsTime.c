@@ -201,7 +201,6 @@ GramsTime(Scheme=FE){
     }
   }
 
-
   if(Is_GramsTime == false){
     fprintf(stderr,"%s : %s \n",
 	    "Error in GramsSolid2D()",

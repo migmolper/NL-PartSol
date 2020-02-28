@@ -12,12 +12,13 @@ GramsTime (Type=PCE) {
 }
 
 GramsSolid2D (File=MPM_Mesh.msh) { 
-    GramsMaterials (id=0) { 
+    GramsMaterials (Particles=Material0.txt) { 
 	Type=LE 
 	rho=1.0 
 	E=1.0 
 	mu=0.0
-    } 
+	Id=0
+    }
     GramsShapeFun (Type=MPMQ4) { 
     } 
     GramsInitials (Nodes=ListInit.txt) { 

@@ -63,9 +63,10 @@ void Q4_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 	MPM_Mesh.Element_id[i] = j;
 	PushNodeTop(&FEM_Mesh.GPsElements[j],i);
 
-	/* 7º If the GP is in the element, get its natural coordinates */
+	/* 7º If the GP is in the element, get its natural coordinates */	
 	X_EC_GP.nV = MPM_Mesh.Phi.x_EC.nM[i];
 	Get_X_EC_Q4(X_EC_GP,X_GC_GP,Poligon_Coordinates);
+	puts("paso");
 
 	/* 8º Get list of nodes near to the GP */
 	FreeChain(MPM_Mesh.ListNodes[i]);

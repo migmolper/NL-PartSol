@@ -9,6 +9,8 @@
 
 typedef struct {
 
+  /* Name and id of the material */
+  int Id;
   char Type [100];
   /* Initial density */
   double rho;
