@@ -44,7 +44,6 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
 
   /* Set to false check variables */
   bool Is_GramsSolid2D = false;
-  bool Is_GramsTime = false;
   bool Is_GramsShapeFun = false;
   bool Is_GramsMaterials = false; 
   bool Is_GramsInitials = false;
@@ -93,10 +92,6 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
       }
       strcat(Route_Mesh,MPM_MeshFileName);
       free(Name_File_Copy);	  
-    }
-    if ((Num_words_parse > 0) &&
-	(strcmp(Parse_GramsSolid2D[0],"GramsTime") == 0)){
-      Is_GramsTime = true;
     }
     if ((Num_words_parse > 0) &&
 	(strcmp(Parse_GramsSolid2D[0],"GramsShapeFun") == 0)){
@@ -167,18 +162,6 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
     MPM_Mesh.Phi.x_GC =
       GetInitialGaussPointPosition(MPM_GID_Mesh,GPxElement);
     
-    /**************************************************/
-    /* Read parameters of the time-integration scheme */
-    /**************************************************/
-    if(Is_GramsTime){
-      GramsTime(Name_File);
-    }
-    else{
-      fprintf(stderr,"%s : %s \n",
-	      "Error in GramsSolid2D()",
-	      "GramsTime no defined");
-      exit(0);
-    }
     /**************************************************/
     /*********** Read Material parameters *************/
     /**************************************************/

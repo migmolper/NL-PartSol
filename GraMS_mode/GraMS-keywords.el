@@ -1,7 +1,6 @@
 (defvar GraMS-functions '(
 			  "GramsTime"
 			  "GramsShapeFun"
-			  "GramsTime"
 			  "GramsMaterials"
 			  "GramsBoundary"
 			  "GramsBodyForces"
@@ -14,6 +13,7 @@
 			"GramsSolid3D"
 			"GramsBox"
 			"GramsOutputs"
+			"GramsTime"
 			)
   "GraMS modules.")
 (defvar GraMS-formulations '(
