@@ -11,8 +11,8 @@ typedef struct{
   int N_rows; /* Number of rows */
   int N_cols; /* Number of columns */
   double n; /* Value if is an scalar */
-  double * nV; /* Value if is a vector */
-  double ** nM; /* Value if is a matrix */
+  double * nV; /* Pointer for a vector */
+  double ** nM; /* Table of pointers for a matrix */
   char Info [100]; /* Aditional information */
 } Matrix;
 
@@ -72,7 +72,7 @@ double Get_Determinant(Matrix);
 Matrix Get_Inverse(Matrix);
 Matrix Transpose_Mat(Matrix);
 Matrix Scalar_prod(Matrix, Matrix);
-Matrix Vectorial_prod(Matrix a, Matrix b);
+Matrix Vectorial_prod(Matrix, Matrix);
 Matrix Tensorial_prod(Matrix,Matrix);
 Matrix Incr_Mat(Matrix, Matrix);
 Matrix Add_Mat(Matrix, Matrix);
