@@ -2,281 +2,6 @@
 #include <stdlib.h>
 #include <math.h>
 
-/* /\*********************************************************************\/ */
-
-/* Matrix Incr_Mat(Matrix A, Matrix Incr) */
-/* /\* */
-/*   Increment term by term the Matrix A with Incr */
-/* *\/ */
-/* { */
-
-/*   int Bool; */
-
-/*   Bool = Incr.N_cols*Incr.N_rows == 1; */
-
-/*   switch(Bool){ */
-    
-/*   case 0: /\* Incr is a matrix or an array *\/ */
-
-/*     if( (A.N_cols != Incr.N_cols) || */
-/* 	(A.N_rows != Incr.N_rows) ){ /\* Check the size of the input *\/ */
-/*       printf("Error in Incr_Mat() : A is incompatible with the Incr !! \n"); */
-/*        exit(EXIT_FAILURE); */
-/*     } */
-
-/*     if(Incr.N_cols == Incr.N_rows){ /\* Matrix *\/ */
-/*       for(int i = 0 ; i<Incr.N_rows ; i++){ */
-/* 	for(int j = 0 ; j<Incr.N_cols ; j++){ */
-/* 	  A.nM[i][j] += Incr.nM[i][j]; */
-/* 	} */
-/*       }	 */
-/*     } */
-    
-/*     if( (Incr.N_cols == 1) || */
-/* 	(Incr.N_rows == 1) ){ /\* Array *\/ */
-/*       for(int i = 0 ; i<Incr.N_cols*Incr.N_rows ; i++){ */
-/* 	A.nV[i] += Incr.nV[i]; */
-/*       } */
-/*     } */
-    
-/*     break; */
-    
-/*   case 1: /\* Incr is a scalar *\/ */
-    
-/*     if( (A.N_cols == 1) || */
-/* 	(A.N_rows == 1) ){ /\* A is an array *\/ */
-/*       for(int i = 0 ; i<A.N_cols*A.N_rows ; i++){ */
-/* 	A.nV[i] += Incr.n; */
-/*       } */
-/*     } */
-    
-/*     if( (A.N_cols != 1) && */
-/* 	(A.N_rows != 1) ){ */
-/*       for(int i = 0 ; i<A.N_rows ; i++){ */
-/* 	for(int j = 0 ; j<A.N_cols ; j++){ */
-/* 	  A.nM[i][j] += Incr.n; */
-/* 	} */
-/*       }	 */
-/*     } */
-    
-/*     break; */
-
-    
-/*   default : */
-/*      exit(EXIT_FAILURE); */
-/*   } */
-
-/*   return A; */
-/* }   */
-
-
-/* /\*********************************************************************\/ */
-
-/* Matrix Add_Mat(Matrix A,Matrix B) */
-/* /\* */
-
-/*   Sum two matrix A and B, and return the result C  */
-
-/*   C = A + B */
-   
-/*  *\/ */
-/* { */
-
-/*   /\* Variable declaration *\/ */
-/*   Matrix C; */
-  
-/*   /\* Check if it is possible to do the addition *\/ */
-/*   if((A.N_cols != B.N_cols)||(A.N_rows != B.N_rows)){ */
-/*     puts("Error in Add_Mat() : Your are trying to add incompatible matrix"); */
-/*      exit(EXIT_FAILURE); */
-/*   } */
-
-/*   /\* Allocate output matrix *\/ */
-/*   C = MatAlloc(A.N_rows,A.N_cols); */
-
-/*   /\* Difference if we are doing an addition of two matrix or two vectors *\/ */
-/*   if( (A.nV != NULL) && (B.nV != NULL) ){ /\* two array addition *\/ */
-    
-/*     for(int i = 0 ; i<C.N_rows*C.N_cols ; i++){   */
-/* 	C.nV[i] = A.nV[i] + B.nV[i]; */
-/*     } */
-    
-/*   } */
-/*   else if( (A.nM != NULL) && (B.nM != NULL) ){ /\* two matrix addition *\/ */
-    
-/*     for(int i = 0 ; i < C.N_rows ; i++){ */
-/*       for(int j = 0 ; j < C.N_cols ; j++){ */
-/* 	C.nM[i][j] = A.nM[i][j] + B.nM[i][j]; */
-/*       } */
-/*     } */
-  
-/*   } */
-/*   else{ */
-/*     puts("Error in Add_Mat() : Inputs must be of the same range !"); */
-/*      exit(EXIT_FAILURE); */
-/*   }   */
-
-
-/*   return C; */
-/* } */
-
-/* /\*********************************************************************\/ */
-
-/* Matrix Sub_Mat(Matrix A,Matrix B) */
-/* /\* */
-
-/*   Substract two matrix A and B, and return the result C  */
-
-/*   C = A - B */
-   
-/*  *\/ */
-/* { */
-
-/*   /\* Variable declaration *\/ */
-/*   Matrix C; */
-  
-/*   /\* Check if it is possible to do the substraction *\/ */
-/*   if((A.N_cols != B.N_cols)||(A.N_rows != B.N_rows)){ */
-/*     puts("Error in Sub_Mat() : Your are trying to add incompatible matrix"); */
-/*      exit(EXIT_FAILURE); */
-/*   } */
-
-/*   /\* Allocate output matrix *\/ */
-/*   C = MatAlloc(A.N_rows,A.N_cols); */
-
-/*   /\* Difference if we are doing an substraction of two matrix */
-/*      or two vectors *\/ */
-/*   if( (A.nV != NULL) && (B.nV != NULL) ){ /\* two array substraction *\/ */
-    
-/*     for(int i = 0 ; i<C.N_rows*C.N_cols ; i++){   */
-/* 	C.nV[i] = A.nV[i] - B.nV[i]; */
-/*     } */
-    
-/*   } */
-/*   else if( (A.nM != NULL) && (B.nM != NULL) ){ /\* two matrix substraction *\/ */
-    
-/*     for(int i = 0 ; i < C.N_rows ; i++){ */
-/*       for(int j = 0 ; j < C.N_cols ; j++){ */
-/* 	C.nM[i][j] = A.nM[i][j] - B.nM[i][j]; */
-/*       } */
-/*     } */
-    
-/*   } */
-/*   else{ */
-/*     puts("Error in Sub_Mat() : Inputs must be of the same range !"); */
-/*      exit(EXIT_FAILURE); */
-/*   }   */
-
-
-/*   return C; */
-/* } */
-
-
-/* /\*********************************************************************\/ */
-
-/* Matrix Eigen_Mat(Matrix In){ */
-
-/*   /\* Check if we dont have a null matrix *\/ */
-/*   if ( (In.nM == NULL) && (In.n != In.n) ){ */
-/*     if(In.nV != NULL){ */
-/*       puts("Error in Eigen_Mat() : An array does not have determinant !"); */
-/*        exit(EXIT_FAILURE); */
-/*     } */
-/*     puts("Error in Eigen_Mat() : Input matrix = NULL !");     */
-/*      exit(EXIT_FAILURE); */
-/*   } */
-  
-/*   /\* Check if the matrix is square *\/ */
-/*   if(In.N_cols != In.N_rows){ */
-/*     puts(" Error in Eigen_Mat() : Non square matrix !"); */
-/*      exit(EXIT_FAILURE); */
-/*   } */
-
-/*   int Dim = In.N_cols; */
-/*   Matrix Eigen = MatAssign(Dim,Dim,NAN,NULL,NULL); */
-/*   Matrix Eigen_Vals; */
-/*   Matrix Coeffs; */
-
-/*   switch(Dim){ */
-
-/*   case 1 : */
-/*      exit(EXIT_FAILURE); */
-/*     break; */
-/*   case 2 : */
-/*     /\* Get the coefficients of the charasteristic pol *\/ */
-/*     Coeffs = MatAllocZ(1,3); */
-/*     Coeffs.nV[0] = 1.0; /\* a*x^2 *\/ */
-/*     Coeffs.nV[1] = - In.nM[0][0] - In.nM[1][1]; /\* b*x *\/ */
-/*     Coeffs.nV[2] = In.nM[0][0]*In.nM[1][1] - In.nM[1][0]*In.nM[0][1]; /\* c *\/ */
-/*     /\* Solve the charasteristic pol to the eigenvalues *\/ */
-/*     Eigen_Vals = SolvePolynomial(Coeffs); */
-/*     FreeMat(Coeffs); */
-/*     /\* Assign the eigenvalues to the solution *\/ */
-/*     Eigen.nV = Eigen_Vals.nV; */
-/*     break; */
-
-/*   case 3 : */
-/*      exit(EXIT_FAILURE); */
-/*     break; */
-    
-/*   default : */
-/*      exit(EXIT_FAILURE); */
-/*   } */
-
-/*   return Eigen; */
-/* } */
-
-
-/* Matrix Matrix_x_Scalar(Matrix A, double a) */
-/* /\*! */
-/*  * \brief Brief description of Matrix_x_Scalar. */
-/*  *        Function to multiply a Matrix with a scalar.  */
-/*  * */
-/*  *  The parameters for this functions are  : */
-/*  * @param A : Input Matrix */
-/*  * @param a : Input scalar  */
-/* *\/ */
-/* { */
-
-/*   bool Is_Matrix = false; */
-/*   bool Is_Vector = false; */
-/*   int N_rows = A.N_rows; */
-/*   int N_cols = A.N_cols; */
-
-/*   /\* Check if its matrix or array *\/ */
-/*   if((N_rows > 1) && (N_cols > 1)){ */
-/*     Is_Matrix = true; */
-/*   } */
-/*   else if((N_rows == 1) || (N_cols == 1) ){ */
-/*     Is_Vector = true; */
-/*   } */
-
-/*   if(Is_Matrix){ /\* Multiply matrix by an scalar *\/ */
-/*     for(int i = 0 ; i<N_rows ; i++){ */
-/*       for(int j = 0 ; j<N_cols ; j++){ */
-/* 	A.nM[i][j] *= a; */
-/*       } */
-/*     } */
-/*   } */
-/*   else if(Is_Vector){ /\* Multiply vector by an scalar *\/ */
-/*     for(int i = 0 ; i<N_cols*N_rows ; i++){ */
-/*       A.nV[i] *= a; */
-/*     } */
-/*   } */
-/*   else{ */
-/*         fprintf(stderr,"%s : %s \n", */
-/* 	    "Error in Matrix_x_Scalar(*,)", */
-/* 	    "Not a matrix or a vector"); */
-/*      exit(EXIT_FAILURE);     */
-/*   } */
-
-/*   return A; */
-/* } */
-
-
-/* /\*********************************************************************\/ */
-
-
 /*************************************************************/
 
 /* Matrix definition */
@@ -295,7 +20,7 @@ typedef struct{
 typedef struct{
   int Order; /* Order of the tensor */
   double *n; /* First order tensor */
-  double (*N) [3]; /* Second order tensor */
+  double *N[3]; /* Second order tensor */
   char Info [100]; /* Aditional information */
 } Tensor;
 
@@ -317,7 +42,9 @@ Tensor alloc_Tensor(int Order){
       break;
     case 2:
       A.Order = 2;
-      A.N = malloc(sizeof(double[3][3]));  
+      A.N[0] = malloc(sizeof(double[3]));
+      A.N[1] = malloc(sizeof(double[3]));
+      A.N[2] = malloc(sizeof(double[3]));  
       break;
     default :
       fprintf(stderr,"%s : %s \n",
@@ -346,7 +73,9 @@ Tensor memory_to_Tensor(double * A_mem, int Order){
     break;
   case 2:
     A_tens.Order = 2;
-    A_tens.N = A_mem;
+    A_tens.N[0] = A_mem;
+    A_tens.N[1] = A_mem+3;
+    A_tens.N[2] = A_mem+6;
     break;
   default :
     fprintf(stderr,"%s : %s \n",
@@ -371,7 +100,9 @@ void free_Tensor(Tensor A){
       free(A.n);
       break;
     case 2:
-      free(A.N);
+      free(A.N[0]);
+      free(A.N[1]);
+      free(A.N[2]);
       break;
     default :
       fprintf(stderr,"%s : %s \n",
@@ -730,7 +461,7 @@ Tensor get_firstOrderContraction_Of(Tensor A, Tensor b)
 
 /*************************************************************/
 
-Tensor compute_IncrementStrain(Matrix Nodal_Velocity,
+Tensor compute_IncrementStrain(Matrix Velocity,
 			       Matrix Gradient,
 			       double DeltaTimeStep)
 {
@@ -753,7 +484,7 @@ Tensor compute_IncrementStrain(Matrix Nodal_Velocity,
     for(int i = 0 ; i<3 ; i++){
       for(int j = 0 ; j<3 ; j++){
 	Increment_Strain.N[i][j] +=
-	  0.5*(vog_I.N[i][j] + vog_I.N[j][i]); 
+	  0.5*(vog_I.N[i][j] + vog_I.N[j][i]);
       }
     }
     /* Free memory */
@@ -764,134 +495,134 @@ Tensor compute_IncrementStrain(Matrix Nodal_Velocity,
   for(int i = 0 ; i<3 ; i++){
     for(int j = 0 ; j<3 ; j++){
       Increment_Strain.N[i][j] =
-	Increment_Strain.N[i][j]*DeltaTimeStep; 
+	Increment_Strain.N[i][j]*DeltaTimeStep;
     }
   }
   
   return Increment_Strain;
 }
 
-/*************************************************************/
+/* /\*************************************************************\/ */
 
-Tensor compute_Stress(Tensor Strain, Tensor Stress, Material Mat)
-{
-  /* Variable definition  */
-  Tensor Strain_n1; 
+/* Tensor compute_Stress(Tensor Strain, Tensor Stress, Material Mat) */
+/* { */
+/*   /\* Variable definition  *\/ */
+/*   Tensor Strain_n1;  */
     
-  /* Select the constitutive model */
-  if(strcmp(Mat.Type,"LE") == 0){
-    Stress = LinearElastic(Strain,Stress,Mat);
-  }
-  else{
-    exit(0);
-  }
+/*   /\* Select the constitutive model *\/ */
+/*   if(strcmp(Mat.Type,"LE") == 0){ */
+/*     Stress = LinearElastic(Strain,Stress,Mat); */
+/*   } */
+/*   else{ */
+/*     exit(0); */
+/*   } */
   
-  /* Return the stress tensor */
-  return Stress;
-}
+/*   /\* Return the stress tensor *\/ */
+/*   return Stress; */
+/* } */
 
 
-/*************************************************************/
+/* /\*************************************************************\/ */
 
-void compute_InternalForces(Matrix F_I, Matrix V_I,
-			    GaussPoint MPM_Mesh,
-			    Mesh FEM_Mesh){
+/* void compute_InternalForces(Matrix F_I, Matrix V_I, */
+/* 			    GaussPoint MPM_Mesh, */
+/* 			    Mesh FEM_Mesh){ */
 
-  Element Nodes_p; /* Element for each Gauss-Point */
-  Matrix Gradient_p; /* Shape functions gradients */
-  Matrix Nodal_Velocity_p; /* Velocity of the element nodes */
-  Material Material_p; /* Properties of the Gauss-Point material */
-  Tensor Increment_Strain_p; /* Increment of strain tensor */
-  Tensor Strain_p; /*  Strain tensor */
-  Tensor Stress_p; /* Stress tensor */
-  Tensor Gradient_pI;
-  Tensor InternalForcesDensity_Ip;
-  double W_p; /* Internal energy of the Gauss-Point */
-  double m_p; /* Mass of the Gauss-Point */
-  double rho_p; /* Density of the Gauss-Point */
-  double V_p; /* Volumen of the Gauss-Point */
-  int Ip;
-  int Nn, Np;
+/*   Element Nodes_p; /\* Element for each Gauss-Point *\/ */
+/*   Matrix Gradient_p; /\* Shape functions gradients *\/ */
+/*   Matrix Nodal_Velocity_p; /\* Velocity of the element nodes *\/ */
+/*   Material Material_p; /\* Properties of the Gauss-Point material *\/ */
+/*   Tensor Increment_Strain_p; /\* Increment of strain tensor *\/ */
+/*   Tensor Strain_p; /\*  Strain tensor *\/ */
+/*   Tensor Stress_p; /\* Stress tensor *\/ */
+/*   Tensor Gradient_pI; */
+/*   Tensor InternalForcesDensity_Ip; */
+/*   double W_p; /\* Internal energy of the Gauss-Point *\/ */
+/*   double m_p; /\* Mass of the Gauss-Point *\/ */
+/*   double rho_p; /\* Density of the Gauss-Point *\/ */
+/*   double V_p; /\* Volumen of the Gauss-Point *\/ */
+/*   int Ip; */
+/*   int Nn, Np; */
 
-  /* Loop in the GPs */
-  for(int p = 0 ; p<Np ; p++){
+/*   /\* Loop in the GPs *\/ */
+/*   for(int p = 0 ; p<Np ; p++){ */
 
-    /* Get the value of the density */
-    rho_p = MPM_Mesh.Phi.rho.nV[i];
+/*     /\* Get the value of the density *\/ */
+/*     rho_p = MPM_Mesh.Phi.rho.nV[i]; */
 
-    /* Get the value of the mass */
-    m_p = MPM_Mesh.Phi.mass.nV[i];
+/*     /\* Get the value of the mass *\/ */
+/*     m_p = MPM_Mesh.Phi.mass.nV[i]; */
 
-    /* Asign memory to tensors */
-    Strain_p = memory_to_Tensor(MPM_Mesh.Phi.Strain.nM[I], 2);
-    Stress_p = memory_to_Tensor(MPM_Mesh.Phi.Stress.nM[I], 2);
+/*     /\* Asign memory to tensors *\/ */
+/*     Strain_p = memory_to_Tensor(MPM_Mesh.Phi.Strain.nM[I], 2); */
+/*     Stress_p = memory_to_Tensor(MPM_Mesh.Phi.Stress.nM[I], 2); */
 
-    /* Define element for each GP */
-    Nodes_p =
-      get_Element(p, MPM_Mesh.ListNodes[p], MPM_Mesh.NumberNodes[p]);
+/*     /\* Define element for each GP *\/ */
+/*     Nodes_p = */
+/*       get_Element(p, MPM_Mesh.ListNodes[p], MPM_Mesh.NumberNodes[p]); */
 
-    /* Get the velocity of the nodes of the element */
-    Nodal_Velocity_p = get_Element_velocity(Nodes_p, V_I);
+/*     /\* Get the velocity of the nodes of the element *\/ */
+/*     Nodal_Velocity_p = get_Element_velocity(Nodes_p, V_I); */
 
-    /* Compute gradient of the shape function in each node */
-    Gradient_p =
-      compute_ShapeFunction_Gradient(Nodes_p, MPM_Mesh, FEM_Mesh);
+/*     /\* Compute gradient of the shape function in each node *\/ */
+/*     Gradient_p = */
+/*       compute_ShapeFunction_Gradient(Nodes_p, MPM_Mesh, FEM_Mesh); */
 
-    /* Get the material properties */
-    Idx_Mat_p = MPM_Mesh.MatIdx[p];
-    Material_p = MPM_Mesh.Mat[Idx_Mat_p]; 
+/*     /\* Get the material properties *\/ */
+/*     Idx_Mat_p = MPM_Mesh.MatIdx[p]; */
+/*     Material_p = MPM_Mesh.Mat[Idx_Mat_p];  */
 
-    /* Compute Strain tensor */
-    Increment_Strain_p =
-      compute_IncrementStrain(Nodal_Velocity_p,dNdx_p,DeltaTimeStep);
-    for(int i = 0 ; i<3 ; i++){
-      for(int j = 0 ; j<3 ; j++){
-	Strain_p.N[i][j] += Increment_Strain_p.N[i][j];
-      }
-    }
+/*     /\* Compute Strain tensor *\/ */
+/*     Increment_Strain_p = */
+/*       compute_IncrementStrain(Nodal_Velocity_p,dNdx_p,DeltaTimeStep); */
+/*     for(int i = 0 ; i<3 ; i++){ */
+/*       for(int j = 0 ; j<3 ; j++){ */
+/* 	Strain_p.N[i][j] += Increment_Strain_p.N[i][j]; */
+/*       } */
+/*     } */
 
-    /* Update density field */
-    rho_p = rho_p/(1 + get_I1_Of(Increment_Strain_p));
+/*     /\* Update density field *\/ */
+/*     rho_p = rho_p/(1 + get_I1_Of(Increment_Strain_p)); */
 
-    /* Compute stress tensor */
-    Stress_p = compute_Stress(Strain_p,Stress_p,Material_p);
+/*     /\* Compute stress tensor *\/ */
+/*     Stress_p = compute_Stress(Strain_p,Stress_p,Material_p); */
 
-    /* Compute deformation energy */
-    W_p = 0.5*get_innerProduct_Of(Strain_p, Stress_p);
+/*     /\* Compute deformation energy *\/ */
+/*     W_p = 0.5*get_innerProduct_Of(Strain_p, Stress_p); */
 
-    /* Compute the volume of the Gauss-Point */
-    V_p = m_p/rho_p;
+/*     /\* Compute the volume of the Gauss-Point *\/ */
+/*     V_p = m_p/rho_p; */
 
-    /* Compute nodal forces */
-    for(int I = 0 ; I<Nn ; I++){
-      /* Pass by reference the nodal gradient to the tensor */
-      Gradient_pI = memory_to_Tensor(Gradient_p.nM[I], 1);
-      /* Compute the nodal forces of the Gauss-Point */
-      InternalForcesDensity_Ip =
-	get_firstOrderContraction_Of(Stress_p, Gradient_pI);
-      /* Get the node of the mesh for the contribution */      
-      Ip = Nodes_p.Connectivity[I];
-      /* Asign the nodal forces contribution to the node */
-      for(int i = 0 ; i<3 ; i++){
-	F_I.nM[Ip][i] += InternalForcesDensity_Ip.n[i]*V_p;
-      }
-      /* Free the internal forces density */
-      free_Tensor(InternalForcesDensity_Ip);
-    }
+/*     /\* Compute nodal forces *\/ */
+/*     for(int I = 0 ; I<Nn ; I++){ */
+/*       /\* Pass by reference the nodal gradient to the tensor *\/ */
+/*       Gradient_pI = memory_to_Tensor(Gradient_p.nM[I], 1); */
+/*       /\* Compute the nodal forces of the Gauss-Point *\/ */
+/*       InternalForcesDensity_Ip = */
+/* 	get_firstOrderContraction_Of(Stress_p, Gradient_pI); */
+/*       /\* Get the node of the mesh for the contribution *\/       */
+/*       Ip = Nodes_p.Connectivity[I]; */
+/*       /\* Asign the nodal forces contribution to the node *\/ */
+/*       for(int i = 0 ; i<3 ; i++){ */
+/* 	F_I.nM[Ip][i] += InternalForcesDensity_Ip.n[i]*V_p; */
+/*       } */
+/*       /\* Free the internal forces density *\/ */
+/*       free_Tensor(InternalForcesDensity_Ip); */
+/*     } */
 
-    /* Update memory */
-    MPM_Mesh.Phi.rho.nV[i] = rho_p;
+/*     /\* Update memory *\/ */
+/*     MPM_Mesh.Phi.rho.nV[i] = rho_p; */
     
     
-    /* Free the matrix with the nodal velocity of the element */
-    FreeMat(Nodal_Velocity_p);
+/*     /\* Free the matrix with the nodal velocity of the element *\/ */
+/*     FreeMat(Nodal_Velocity_p); */
     
-    /* Free the matrix with the nodal gradient of the element */
-    FreeMat(Gradient_p);
+/*     /\* Free the matrix with the nodal gradient of the element *\/ */
+/*     FreeMat(Gradient_p); */
     
-  }  
+/*   }   */
   
-}
+/* } */
 
 /*************************************************************/
 
