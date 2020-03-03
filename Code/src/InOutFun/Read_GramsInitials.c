@@ -11,7 +11,7 @@
 void GramsInitials(char * Name_File, GaussPoint GP_Mesh, int GPxElement)
 /*
   GramsInitials (Nodes=ListInit.txt) {
-  Value=[5.0,0.0]
+  Value=[5.0,0.0,0.0]
   }
 */
 {
@@ -148,10 +148,10 @@ void GramsInitials(char * Name_File, GaussPoint GP_Mesh, int GPxElement)
 
 	    /* Fill it IC for velocity formulation */
 	    if((strcmp(Formulation,"-V") == 0) &&
-	       (Num_words_parse == NumberDimensions)){
+	       (Num_words_parse == 3)){
 	      for(int i = 0 ; i<Num_Nodes ; i++){
 		for(int j = 0 ; j<GPxElement ; j++){
-		  for(int k = 0 ; k<NumberDimensions ; k++){
+		  for(int k = 0 ; k<3 ; k++){
 		    GP_Mesh.Phi.vel.nM[Array_Nodes[i]*GPxElement+j][k] =
 		    atof(IC_value[k]);
 		  }

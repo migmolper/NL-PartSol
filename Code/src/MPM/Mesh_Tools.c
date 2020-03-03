@@ -36,7 +36,7 @@ Matrix GetInitialGaussPointPosition(Mesh FEM_Mesh, int GPxElement)
       N_GP = Q4(X_EC);
       /* Get the coordinate of the center */
       for(int i = 0 ; i<NumElemMesh ; i++){
-	Element = GetElementGP(i, FEM_Mesh.Connectivity[i],
+	Element = get_Element(i, FEM_Mesh.Connectivity[i],
 			       FEM_Mesh.NumNodesElem[i]);
 	for(int k = 0 ; k<4 ; k++){
 	  Node = Element.Connectivity[k];
@@ -78,8 +78,8 @@ Matrix GetInitialGaussPointPosition(Mesh FEM_Mesh, int GPxElement)
       X_EC.nM[3][1] = -1/pow(3,0.5);
       /* Get the coordinate of the center */
       for(int i = 0 ; i<NumElemMesh ; i++){
-	Element = GetElementGP(i, FEM_Mesh.Connectivity[i],
-			       FEM_Mesh.NumNodesElem[i]);
+	Element = get_Element(i, FEM_Mesh.Connectivity[i],
+			      FEM_Mesh.NumNodesElem[i]);
 	for(int j = 0 ; j<GPxElement ; j++){
 	  /* Evaluate the shape function in the GP position */
 	  X_EC_j.nV = X_EC.nM[j]; 
@@ -807,7 +807,7 @@ void GPinCell(ChainPtr * ListInCELL,
 
 /*********************************************************************/
 
-Element GetElementGP(int i_GP, ChainPtr ListNodes, int NumNodes){
+Element get_Element(int i_GP, ChainPtr ListNodes, int NumNodes){
 
   /* Define new element */
   Element GP_Element;
@@ -819,6 +819,22 @@ Element GetElementGP(int i_GP, ChainPtr ListNodes, int NumNodes){
 
   return GP_Element;
 }
+
+/*********************************************************************/
+
+/* Element GetElementGP(int i_GP, ChainPtr ListNodes, int NumNodes){ */
+
+/*   /\* Define new element *\/ */
+/*   Element GP_Element; */
+
+/*   /\* Fill element *\/ */
+/*   GP_Element.i_GP = i_GP; */
+/*   GP_Element.NumberNodes = NumNodes; */
+/*   GP_Element.Connectivity = ChainToArray(ListNodes,NumNodes); */
+
+/*   return GP_Element; */
+/* } */
+
 
 /*********************************************************************/
 

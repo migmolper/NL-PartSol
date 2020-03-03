@@ -6,21 +6,7 @@
 
 /**********************************************************************/
 
-Curve BcDirichlet(char * Expresion)
-/*
- BcDirichlet V 0 
-*/
-{
-  Curve BcDir;
-
-  BcDir = ReadCurve(Expresion);
-  
-  return BcDir;
-}
-
-/**********************************************************************/
-
-void BCC_Nod_VALUE(Mesh FEM_Mesh, Matrix Nodal_VALUE, int TimeStep)
+void imposse_NodalMomentum(Mesh FEM_Mesh, Matrix Phi_I, int TimeStep)
 /*
   Apply the boundary conditions over the nodes 
 */
@@ -48,12 +34,12 @@ void BCC_Nod_VALUE(Mesh FEM_Mesh, Matrix Nodal_VALUE, int TimeStep)
 	  if( (TimeStep < 0) ||
 	      (TimeStep > FEM_Mesh.Bounds.BCC_i[i].Value[k].Num)){
 	    printf("%s : %s \n",
-		   "Error in BCC_Nodal_VALUE()",
+		   "Error in imposse_NodalMomentum()",
 		   "The time step is out of the curve !!");
 	    exit(0);
 	  }
 	  /* 9º Assign the boundary condition */
-	  Nodal_VALUE.nM[k][Id_BCC] =
+	  Phi_I.nM[Id_BCC][k] =
 	    FEM_Mesh.Bounds.BCC_i[i].Value[k].Fx[TimeStep]*
 	    (double)FEM_Mesh.Bounds.BCC_i[i].Dir[k];
 	}
@@ -63,80 +49,5 @@ void BCC_Nod_VALUE(Mesh FEM_Mesh, Matrix Nodal_VALUE, int TimeStep)
 
 }
 
-/*********************************************************************/
+/**********************************************************************/
 
-Matrix Eval_Body_Forces(Load * B, int NumLoads, int NumGP, int TimeStep)
-/*
-  Evaluate body forces in a time step.
-*/
-{
-  Matrix Body_Forces_t =
-    MatAllocZ(NumberDimensions,NumGP);
-  int GP_Force;
-  
-  if(NumLoads>0){
-    for(int i = 0 ; i<NumLoads; i++){
-      for(int j = 0 ; j<B[i].NumNodes ; j++){
-	GP_Force = B[i].Nodes[j];
-	for(int k = 0 ; k<B[i].Dim ; k++){
-	  if( (B[i].Dir[k] == 1) ||
-	      (B[i].Dir[k] == -1)){
-	    if( (TimeStep < 0) ||
-		(TimeStep > B[i].Value[k].Num)){
-	      printf("%s : %s\n",
-		     "Error in GetNodalForces()",
-		     "The time step is out of the curve !!");
-	      exit(0);
-	    }
-	    Body_Forces_t.nM[k][GP_Force] +=
-	      B[i].Value[k].Fx[TimeStep]*
-	      (double)B[i].Dir[k];
-	  }
-	}
-      }
-    }
-  }
-
-  return Body_Forces_t;
-
-}
-
-
-/*********************************************************************/
-
-Matrix Eval_Contact_Forces(Load * F, int NumLoads, int NumGP, int TimeStep)
-/*
-  Evaluate contact forces in a time step
- */
-{
-  int GP_Force;
-  Matrix Contact_Forces_t = 
-    MatAllocZ(NumberDimensions,NumGP);
-  
-  if(NumLoads>0){
-    for(int i = 0 ; i<NumLoads; i++){
-      for(int j = 0 ; j<F[i].NumNodes ; j++){
-	GP_Force = F[i].Nodes[j];
-	for(int k = 0 ; k<F[i].Dim ; k++){
-	  if( (F[i].Dir[k] == 1) ||
-	      (F[i].Dir[k] == -1)){
-	    if( (TimeStep < 0) ||
-		(TimeStep > F[i].Value[k].Num)){
-	      printf("%s : %s \n",
-		     "Error in GetNodalForces()",
-		     "The time step is out of the curve !!");
-	      exit(0);
-	    }
-	    Contact_Forces_t.nM[k][GP_Force] +=
-	      F[i].Value[k].Fx[TimeStep]*
-	      (double)F[i].Dir[k];
-	  }
-	}
-      }
-    }
-  }
-
-  return Contact_Forces_t;
-}
-
-/*********************************************************************/

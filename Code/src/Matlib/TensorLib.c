@@ -1,32 +1,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <time.h>
+#include <string.h>
+#include <stdbool.h> 
+#include "grams.h"
 
 /*************************************************************/
 
-/* Matrix definition */
-typedef struct{
-  int N_rows; /* Number of rows */
-  int N_cols; /* Number of columns */
-  double n; /* Value if is an scalar */
-  double * nV; /* Pointer for a vector */
-  double ** nM; /* Table of pointers for a matrix */
-  char Info [100]; /* Aditional information */
-} Matrix;
-
-/*************************************************************/
-
-/* Tensor definition */
-typedef struct{
-  int Order; /* Order of the tensor */
-  double *n; /* First order tensor */
-  double *N[3]; /* Second order tensor */
-  char Info [100]; /* Aditional information */
-} Tensor;
-
-/*************************************************************/
-
-Tensor alloc_Tensor(int Order){
+Tensor alloc_Tensor(int Order)
+{
   /* Define output */
   Tensor A;
   /* Swith cases */
@@ -57,7 +40,8 @@ Tensor alloc_Tensor(int Order){
 
 /*************************************************************/
 
-Tensor memory_to_Tensor(double * A_mem, int Order){
+Tensor memory_to_Tensor(double * A_mem, int Order)
+{
   /* Define output */
   Tensor A_tens;
   /* Swith cases */
@@ -89,7 +73,8 @@ Tensor memory_to_Tensor(double * A_mem, int Order){
 
 /*************************************************************/
 
-void free_Tensor(Tensor A){
+void free_Tensor(Tensor A)
+{
   switch(A.Order){
     case 0:
       fprintf(stderr,"%s : %s !!! \n",
@@ -270,7 +255,8 @@ double get_EuclideanNorm_Of(Tensor A)
 
 /*************************************************************/
 
-Tensor get_I(){
+Tensor get_I()
+{
   Tensor I = alloc_Tensor(2);
   for(int i = 0 ; i<3 ; i++){
     I.N[i][i] = 1;
@@ -385,7 +371,8 @@ double get_innerProduct_Of(Tensor A, Tensor B)
 
 /*************************************************************/
 
-Tensor get_vectorProduct_Of(Tensor a, Tensor b){
+Tensor get_vectorProduct_Of(Tensor a, Tensor b)
+{
   /* Allocate output */
   Tensor axb = alloc_Tensor(1);
   /* Check if the input are a first order tensor */
@@ -459,220 +446,7 @@ Tensor get_firstOrderContraction_Of(Tensor A, Tensor b)
   return Adotb;
 }
 
-/*************************************************************/
-
-Tensor compute_StrainIncrement(Matrix Velocity,
-			       Matrix Gradient,
-			       double DeltaTimeStep)
-{
-  Tensor Strain_Increment = alloc_Tensor(2);
-  Tensor Velocity_I;
-  Tensor Gradient_I;
-  Tensor VoG_I;
-
-  int NodesElem = Gradient.N_rows;
-
-  /* Compute rate of strain */
-  for(int I = 0 ; I<NodesElem ; I++){
-    /* Assign from matrix to tensor */
-    Velocity_I = memory_to_Tensor(Velocity.nM[I], 1);
-    Gradient_I = memory_to_Tensor(Gradient.nM[I], 1);
-    /* Compute the dyadic product of the nodal velocity and the
-       gradient of the shape functions */
-    VoG_I = get_dyadicProduct_Of(Velocity_I, Gradient_I);
-    /* Ad the nodal contribution to the train tensor */
-    for(int i = 0 ; i<3 ; i++){
-      for(int j = 0 ; j<3 ; j++){
-	Strain_Increment.N[i][j] +=
-	  0.5*(VoG_I.N[i][j] + VoG_I.N[j][i]);
-      }
-    }
-    /* Free memory */
-    free_Tensor(VoG_I);
-  }
-
-  /* Compute increment of strain */
-  for(int i = 0 ; i<3 ; i++){
-    for(int j = 0 ; j<3 ; j++){
-      Strain_Increment.N[i][j] =
-	Strain_Increment.N[i][j]*DeltaTimeStep;
-    }
-  }
-  
-  return Increment_Strain;
-}
-
-/* /\*************************************************************\/ */
-
-/* Tensor compute_Stress(Tensor Strain, Tensor Stress, Material Mat) */
-/* { */
-/*   /\* Variable definition  *\/ */
-/*   Tensor Strain_n1;  */
-    
-/*   /\* Select the constitutive model *\/ */
-/*   if(strcmp(Mat.Type,"LE") == 0){ */
-/*     Stress = LinearElastic(Strain,Stress,Mat); */
-/*   } */
-/*   else{ */
-/*     exit(0); */
-/*   } */
-  
-/*   /\* Return the stress tensor *\/ */
-/*   return Stress; */
-/* } */
 
 
-/* /\*************************************************************\/ */
 
-/* void compute_InternalForces(Matrix F_I, Matrix V_I, */
-/* 			    GaussPoint MPM_Mesh, */
-/* 			    Mesh FEM_Mesh){ */
 
-/*   Element Nodes_p; /\* Element for each Gauss-Point *\/ */
-/*   Matrix Gradient_p; /\* Shape functions gradients *\/ */
-/*   Matrix Nodal_Velocity_p; /\* Velocity of the element nodes *\/ */
-/*   Material Material_p; /\* Properties of the Gauss-Point material *\/ */
-/*   Tensor Increment_Strain_p; /\* Increment of strain tensor *\/ */
-/*   Tensor Strain_p; /\*  Strain tensor *\/ */
-/*   Tensor Stress_p; /\* Stress tensor *\/ */
-/*   Tensor Gradient_pI; */
-/*   Tensor InternalForcesDensity_Ip; */
-/*   double W_p; /\* Internal energy of the Gauss-Point *\/ */
-/*   double m_p; /\* Mass of the Gauss-Point *\/ */
-/*   double rho_p; /\* Density of the Gauss-Point *\/ */
-/*   double V_p; /\* Volumen of the Gauss-Point *\/ */
-/*   int Ip; */
-/*   int Nn, Np; */
-
-/*   /\* Loop in the GPs *\/ */
-/*   for(int p = 0 ; p<Np ; p++){ */
-
-/*     /\* Get the value of the density *\/ */
-/*     rho_p = MPM_Mesh.Phi.rho.nV[i]; */
-
-/*     /\* Get the value of the mass *\/ */
-/*     m_p = MPM_Mesh.Phi.mass.nV[i]; */
-
-/*     /\* Asign memory to tensors *\/ */
-/*     Strain_p = memory_to_Tensor(MPM_Mesh.Phi.Strain.nM[I], 2); */
-/*     Stress_p = memory_to_Tensor(MPM_Mesh.Phi.Stress.nM[I], 2); */
-
-/*     /\* Define element for each GP *\/ */
-/*     Nodes_p = */
-/*       get_Element(p, MPM_Mesh.ListNodes[p], MPM_Mesh.NumberNodes[p]); */
-
-/*     /\* Get the velocity of the nodes of the element *\/ */
-/*     Nodal_Velocity_p = get_Element_velocity(Nodes_p, V_I); */
-
-/*     /\* Compute gradient of the shape function in each node *\/ */
-/*     Gradient_p = */
-/*       compute_ShapeFunction_Gradient(Nodes_p, MPM_Mesh, FEM_Mesh); */
-
-/*     /\* Get the material properties *\/ */
-/*     Idx_Mat_p = MPM_Mesh.MatIdx[p]; */
-/*     Material_p = MPM_Mesh.Mat[Idx_Mat_p];  */
-
-/*     /\* Compute Strain tensor *\/ */
-/*     Increment_Strain_p = */
-/*       compute_IncrementStrain(Nodal_Velocity_p,dNdx_p,DeltaTimeStep); */
-/*     for(int i = 0 ; i<3 ; i++){ */
-/*       for(int j = 0 ; j<3 ; j++){ */
-/* 	Strain_p.N[i][j] += Increment_Strain_p.N[i][j]; */
-/*       } */
-/*     } */
-
-/*     /\* Update density field *\/ */
-/*     rho_p = rho_p/(1 + get_I1_Of(Increment_Strain_p)); */
-
-/*     /\* Compute stress tensor *\/ */
-/*     Stress_p = compute_Stress(Strain_p,Stress_p,Material_p); */
-
-/*     /\* Compute deformation energy *\/ */
-/*     W_p = 0.5*get_innerProduct_Of(Strain_p, Stress_p); */
-
-/*     /\* Compute the volume of the Gauss-Point *\/ */
-/*     V_p = m_p/rho_p; */
-
-/*     /\* Compute nodal forces *\/ */
-/*     for(int I = 0 ; I<Nn ; I++){ */
-/*       /\* Pass by reference the nodal gradient to the tensor *\/ */
-/*       Gradient_pI = memory_to_Tensor(Gradient_p.nM[I], 1); */
-/*       /\* Compute the nodal forces of the Gauss-Point *\/ */
-/*       InternalForcesDensity_Ip = */
-/* 	get_firstOrderContraction_Of(Stress_p, Gradient_pI); */
-/*       /\* Get the node of the mesh for the contribution *\/       */
-/*       Ip = Nodes_p.Connectivity[I]; */
-/*       /\* Asign the nodal forces contribution to the node *\/ */
-/*       for(int i = 0 ; i<3 ; i++){ */
-/* 	F_I.nM[Ip][i] += InternalForcesDensity_Ip.n[i]*V_p; */
-/*       } */
-/*       /\* Free the internal forces density *\/ */
-/*       free_Tensor(InternalForcesDensity_Ip); */
-/*     } */
-
-/*     /\* Update memory *\/ */
-/*     MPM_Mesh.Phi.rho.nV[i] = rho_p; */
-    
-    
-/*     /\* Free the matrix with the nodal velocity of the element *\/ */
-/*     FreeMat(Nodal_Velocity_p); */
-    
-/*     /\* Free the matrix with the nodal gradient of the element *\/ */
-/*     FreeMat(Gradient_p); */
-    
-/*   }   */
-  
-/* } */
-
-/*************************************************************/
-
-void main(){
-  int X = 10;
-  int Y = 10;
-  Tensor A = alloc_Tensor(2);
-  Tensor v = alloc_Tensor(1);
-  v.n[0] = 1;
-  v.n[1] = 1;
-  v.n[2] = 1;
-  Tensor w = alloc_Tensor(1);
-  w.n[0] = 1;
-  w.n[1] = 1;
-  w.n[2] = 1;
-  Tensor I = get_I();
-  Tensor Im1 = get_Inverse_Of(I);
-  double * B_mem = malloc(9*sizeof(double));
-  B_mem[0] = 1;
-  B_mem[4] = 1;
-  B_mem[8] = 1;
-  Tensor B_tens = memory_to_Tensor(B_mem, 2);
-  Tensor vow = get_dyadicProduct_Of(v,w);
-  printf("%f %f \n",get_I3_Of(A),get_I3_Of(I));
-  printf("Im1\n");
-  for(int i = 0 ; i<3 ; i++){
-    for(int j = 0 ; j<3 ; j++){
-      printf("%f ",Im1.N[i][j]);
-    }
-    printf("\n");
-  }
-  printf("B\n");
-  for(int i = 0 ; i<3 ; i++){
-    for(int j = 0 ; j<3 ; j++){
-      printf("%f ",B_tens.N[i][j]);
-    }
-    printf("\n");
-  }
-  printf("vow \n");
-  for(int i = 0 ; i<3 ; i++){
-    for(int j = 0 ; j<3 ; j++){
-      printf("%f ",vow.N[i][j]);
-    }
-    printf("\n");
-  }
-  free(B_mem);
-  free_Tensor(A);
-  free_Tensor(v);
-  free_Tensor(w);
-  free_Tensor(vow);
-  free_Tensor(I);
-  free_Tensor(Im1);  
-}

@@ -41,6 +41,16 @@ typedef struct{
 
 /*******************************************************/
 
+/* Tensor definition */
+typedef struct{
+  int Order; /* Order of the tensor */
+  double *n; /* First order tensor */
+  double *N[3]; /* Second order tensor */
+  char Info [100]; /* Aditional information */
+} Tensor;
+
+/*******************************************************/
+
 /* Solvers library */
 /* Matrix Nelder_Mead(); */
 Matrix Newton_Rapson(Matrix(* Function)(Matrix, Matrix), Matrix,
@@ -102,6 +112,27 @@ ChainPtr CopyChain(ChainPtr);
 ChainPtr ChainUnion(ChainPtr *, int);
 ChainPtr ChainIntersection(ChainPtr, ChainPtr);
 void printList (ChainPtr);
+
+/*******************************************************/
+
+/* Tensor libray */
+Tensor alloc_Tensor(int Order);
+Tensor memory_to_Tensor(double * A_mem, int Order);
+void free_Tensor(Tensor A);
+double get_I1_Of(Tensor A);
+double get_I2_Of(Tensor A);
+double get_I3_Of(Tensor A);
+double get_J1_Of(Tensor A);
+double get_J2_Of(Tensor A);
+double get_J3_Of(Tensor A);
+double get_EuclideanNorm_Of(Tensor A);
+Tensor get_I();
+Tensor get_Inverse_Of(Tensor A);
+Tensor get_Transpose_Of(Tensor A);
+double get_innerProduct_Of(Tensor A, Tensor B);
+Tensor get_vectorProduct_Of(Tensor a, Tensor b);
+Tensor get_dyadicProduct_Of(Tensor a, Tensor b);
+Tensor get_firstOrderContraction_Of(Tensor A, Tensor b);
 
 /*******************************************************/
 

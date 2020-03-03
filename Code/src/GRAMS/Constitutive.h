@@ -28,8 +28,8 @@ typedef struct {
 /*******************************************************/
 
 /* Material Linear-Elastic */
-Matrix LinearElastic(Matrix, Matrix, Material);
-double W_LinearElastic(Matrix, Matrix, double);
+/* Matrix LinearElastic(Matrix, Matrix, Material); */
+Tensor LinearElastic(Tensor, Tensor, Material);
 
 /* Fracture */
 Matrix EigenerosionAlgorithm(Matrix, Matrix,

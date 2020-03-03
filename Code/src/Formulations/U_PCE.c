@@ -26,18 +26,18 @@ void U_PCE(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
   /*********************************************************************/
 
   /* Auxiliar variable for the mass and momentum */
-  Matrix Nodal_MASS_MOMENTUM;
+  Matrix Phi_I;
 
-  Matrix Nodal_MASS = MatAssign(1, FEM_Mesh.NumNodesMesh, NAN, NULL, NULL);
-  strcpy(Nodal_MASS.Info,"MASS");
+  Matrix M_I = MatAssign(1, FEM_Mesh.NumNodesMesh, NAN, NULL, NULL);
+  strcpy(M_I.Info,"MASS");
 
-  Matrix Nodal_MOMENTUM =
+  Matrix P_I =
     MatAssign(N_dim,FEM_Mesh.NumNodesMesh,
 	      NAN, NULL, (double **)malloc((unsigned)N_dim*sizeof(double*)));
-  strcpy(Nodal_MOMENTUM.Info,"MOMENTUM");
+  strcpy(P_I.Info,"MOMENTUM");
 
-  Matrix Nodal_VELOCITY;
-  Matrix Nodal_TOT_FORCES;
+  Matrix V_I;
+  Matrix F_I;
   
   /*********************************************************************/
   /*********************************************************************/
@@ -53,31 +53,31 @@ void U_PCE(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
       puts("*************************************************");
       puts(" First step : Predictor stage");
       puts(" \t WORKING ...");
-      PCE_Predictor(MPM_Mesh, FEM_Mesh, Nodal_MASS,
-		    Nodal_MOMENTUM, Nodal_TOT_FORCES,Params);
+      PCE_Predictor(MPM_Mesh, FEM_Mesh, M_I,
+		    P_I, F_I,Params);
       LocalSearchGaussPoints(MPM_Mesh,FEM_Mesh);
       puts(" Second step : Reset nodal values");
       puts(" \t WORKING ...");
-      FreeMat(Nodal_MASS_MOMENTUM);
-      FreeMat(Nodal_VELOCITY);
-      FreeMat(Nodal_TOT_FORCES);
+      FreeMat(Phi_I);
+      FreeMat(V_I);
+      FreeMat(F_I);
       puts(" DONE !!!");
       puts("*************************************************");
     }
     
     puts(" Third step : Get the nodal mass and the momentum");
     puts(" \t WORKING ...");
-    Nodal_MASS_MOMENTUM = GetNodalMassMomentum(MPM_Mesh,FEM_Mesh);
-    Nodal_MASS.nV = Nodal_MASS_MOMENTUM.nM[0];
-    Nodal_MOMENTUM.nM[0] = Nodal_MASS_MOMENTUM.nM[1];
-    Nodal_MOMENTUM.nM[1] = Nodal_MASS_MOMENTUM.nM[2];
-    BCC_Nod_VALUE(FEM_Mesh,Nodal_MOMENTUM,TimeStep);
+    Phi_I = GetNodalMassMomentum(MPM_Mesh,FEM_Mesh);
+    M_I.nV = Phi_I.nM[0];
+    P_I.nM[0] = Phi_I.nM[1];
+    P_I.nM[1] = Phi_I.nM[2];
+    BCC_Nod_VALUE(FEM_Mesh,P_I,TimeStep);
     puts(" \t DONE !!! \n");
     puts("*************************************************");
     
     if(TimeStep % ResultsTimeStep == 0){
       /* Print Nodal values after appling the BCCs */
-      WriteVtk_FEM("Mesh",FEM_Mesh,Nodal_MOMENTUM,
+      WriteVtk_FEM("Mesh",FEM_Mesh,P_I,
       		   (int)TimeStep/ResultsTimeStep);
       /* Print GPs results */
       WriteVtk_MPM("MPM_VALUES",MPM_Mesh,List_Fields,
@@ -87,10 +87,10 @@ void U_PCE(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
     puts("*************************************************");
     puts(" Four step : Update the particle stress state");
     puts(" \t a) Get the grid nodal velocity ... WORKING");
-    Nodal_VELOCITY = GetNodalVelocity(FEM_Mesh, Nodal_MOMENTUM, Nodal_MASS);
+    V_I = GetNodalVelocity(FEM_Mesh, P_I, M_I);
     puts(" \t DONE !!!");
     puts(" \t b) Calculate the strain increment ... WORKING");
-    UpdateGaussPointStrain(MPM_Mesh, FEM_Mesh, Nodal_VELOCITY);
+    UpdateGaussPointStrain(MPM_Mesh, FEM_Mesh, V_I);
     puts(" \t DONE !!!");
     puts(" \t c) Update the particle stress state ... WORKING");
     UpdateGaussPointStress(MPM_Mesh);
@@ -99,20 +99,20 @@ void U_PCE(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
     puts("*************************************************");
     puts(" Five step : Calculate total forces forces");
     puts(" \t WORKING ...");
-    Nodal_TOT_FORCES = GetNodalForces(MPM_Mesh,FEM_Mesh,TimeStep);
-    BCC_Nod_VALUE(FEM_Mesh,Nodal_TOT_FORCES,TimeStep);
+    F_I = GetNodalForces(MPM_Mesh,FEM_Mesh,TimeStep);
+    BCC_Nod_VALUE(FEM_Mesh,F_I,TimeStep);
     puts(" DONE !!!");
     
     puts("*************************************************");
     puts(" Six step : Integrate the grid nodal momentum equation");
     puts(" \t WORKING ...");
-    UpdateGridNodalMomentum(FEM_Mesh,Nodal_MOMENTUM,Nodal_TOT_FORCES);
+    UpdateGridNodalMomentum(FEM_Mesh,P_I,F_I);
     puts(" DONE !!!");
     
     puts("*************************************************");
     puts(" Seven step : Corrector stage");
     puts(" \t WORKING ...");
-    PCE_Corrector(MPM_Mesh, FEM_Mesh, Nodal_MASS, Nodal_TOT_FORCES, Params);
+    PCE_Corrector(MPM_Mesh, FEM_Mesh, M_I, F_I, Params);
     puts(" DONE !!!");
 
   } /* End of temporal integration */

@@ -203,14 +203,14 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
       GramsShapeFun(Name_File);
       /* Lenght of the Voxel (Only GIMP) */
       if(strcmp(ShapeFunctionGP,"uGIMP") == 0){
-	MPM_Mesh.lp = MatAllocZ(MPM_Mesh.NumGP,NumberDimensions);
+	MPM_Mesh.lp = MatAllocZ(MPM_Mesh.NumGP,3);
 	strcpy(MPM_Mesh.lp.Info,"Voxel lenght GP");
       }
       /* Lagrange Multipliers / Beta (Only LME ) */
       if(strcmp(ShapeFunctionGP,"LME") == 0){
-	MPM_Mesh.lambda = MatAllocZ(MPM_Mesh.NumGP,NumberDimensions);
+	MPM_Mesh.lambda = MatAllocZ(MPM_Mesh.NumGP,3);
 	strcpy(MPM_Mesh.lambda.Info,"Lagrange Multiplier");
-	MPM_Mesh.Beta = MatAllocZ(MPM_Mesh.NumGP,NumberDimensions);
+	MPM_Mesh.Beta = MatAllocZ(MPM_Mesh.NumGP,3);
 	strcpy(MPM_Mesh.Beta.Info,"Beta parameter");
       }
     }
@@ -224,144 +224,75 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
     /**************************************************/    
     /****** Allocate vectorial/tensorial fields *******/
     /**************************************************/
-    switch(NumberDimensions){
-    case 1 :
-      /* Natural coordinates (Vectorial) */
-      MPM_Mesh.Phi.x_EC = MatAllocZ(MPM_Mesh.NumGP,1);
-      strcpy(MPM_Mesh.Phi.x_EC.Info,"Element Coordinates GP");
-      /* Displacement field (Vectorial) */
-      MPM_Mesh.Phi.dis = MatAllocZ(MPM_Mesh.NumGP,1);
-      strcpy(MPM_Mesh.Phi.dis.Info,"Displacement field GP");
-      /* Velocity field (Vectorial) */
-      MPM_Mesh.Phi.vel = MatAllocZ(MPM_Mesh.NumGP,1);
-      strcpy(MPM_Mesh.Phi.vel.Info,"Velocity field GP");
-      /* Acceleration field (Vectorial) */
-      MPM_Mesh.Phi.acc = MatAllocZ(MPM_Mesh.NumGP,1);
-      strcpy(MPM_Mesh.Phi.acc.Info,"Acceleration field GP");
-      /* Strain field (Tensor) */
-      MPM_Mesh.Phi.Strain = MatAllocZ(MPM_Mesh.NumGP,1);
-      strcpy(MPM_Mesh.Phi.Strain.Info,"Strain field GP");
-      /* Stress field (Tensor) */
-      MPM_Mesh.Phi.Stress = MatAllocZ(MPM_Mesh.NumGP,1);
-      strcpy(MPM_Mesh.Phi.Stress.Info,"Stress field GP");
-      /* Deformation Energy (Scalar) */
-      MPM_Mesh.Phi.W = MatAllocZ(MPM_Mesh.NumGP,1);
-      strcpy(MPM_Mesh.Phi.W.Info,"Deformation Energy GP");
-      /* Damage parameter (fracture) */
-      MPM_Mesh.Phi.ji = MatAllocZ(MPM_Mesh.NumGP,1);
-      strcpy(MPM_Mesh.Phi.ji.Info,"Damage parameter GP");
-      /* Mass */
-      MPM_Mesh.Phi.mass = MatAllocZ(MPM_Mesh.NumGP,1);
-      strcpy(MPM_Mesh.Phi.mass.Info,"Mass GP");
-      /* Density */
-      MPM_Mesh.Phi.rho = MatAllocZ(MPM_Mesh.NumGP,1);
-      strcpy(MPM_Mesh.Phi.rho.Info,"Density GP");
-      break;
-    case 2 :
-      /* Natural coordinates (Vectorial) */
-      MPM_Mesh.Phi.x_EC = MatAllocZ(MPM_Mesh.NumGP,2);
-      strcpy(MPM_Mesh.Phi.x_EC.Info,"Element Coordinates GP");    
-      /* Displacement field (Vectorial) */
-      MPM_Mesh.Phi.dis = MatAllocZ(MPM_Mesh.NumGP,2);
-      strcpy(MPM_Mesh.Phi.dis.Info,"Displacement field GP");
-      /* Velocity field (Vectorial) */
-      MPM_Mesh.Phi.vel = MatAllocZ(MPM_Mesh.NumGP,2);
-      strcpy(MPM_Mesh.Phi.vel.Info,"Velocity field GP");
-      /* Acceleration field (Vectorial) */
-      MPM_Mesh.Phi.acc = MatAllocZ(MPM_Mesh.NumGP,2);
-      strcpy(MPM_Mesh.Phi.acc.Info,"Acceleration field GP");
-      /* Strain field (Tensor) */
-      MPM_Mesh.Phi.Strain = MatAllocZ(MPM_Mesh.NumGP,3);
-      strcpy(MPM_Mesh.Phi.Strain.Info,"Strain field GP");
-      /* Stress field (Tensor) */
-      MPM_Mesh.Phi.Stress = MatAllocZ(MPM_Mesh.NumGP,3);
-      strcpy(MPM_Mesh.Phi.Stress.Info,"Stress field GP");
-      /* Deformation Energy (Scalar) */
-      MPM_Mesh.Phi.W = MatAllocZ(MPM_Mesh.NumGP,1);
-      strcpy(MPM_Mesh.Phi.W.Info,"Deformation Energy GP");
-      /* Damage parameter (fracture) */
-      MPM_Mesh.Phi.ji = MatAllocZ(MPM_Mesh.NumGP,1);
-      strcpy(MPM_Mesh.Phi.ji.Info,"Damage parameter GP");
-      /* Mass */
-      MPM_Mesh.Phi.mass = MatAllocZ(MPM_Mesh.NumGP,1);
-      strcpy(MPM_Mesh.Phi.mass.Info,"Mass GP");
-      /* Density */
-      MPM_Mesh.Phi.rho = MatAllocZ(MPM_Mesh.NumGP,1);
-      strcpy(MPM_Mesh.Phi.rho.Info,"Density GP");
-      break;
-    case 3:
-      /* Natural coordinates (Vectorial) */
-      MPM_Mesh.Phi.x_EC = MatAllocZ(MPM_Mesh.NumGP,3);
-      strcpy(MPM_Mesh.Phi.x_EC.Info,"Element Coordinates GP");   
-      /* Displacement field (Vectorial) */
-      MPM_Mesh.Phi.dis = MatAllocZ(MPM_Mesh.NumGP,3);
-      strcpy(MPM_Mesh.Phi.dis.Info,"Displacement field GP");
-      /* Velocity field (Vectorial) */
-      MPM_Mesh.Phi.vel = MatAllocZ(MPM_Mesh.NumGP,3);
-      strcpy(MPM_Mesh.Phi.vel.Info,"Velocity field GP");
-      /* Acceleration field (Vectorial) */
-      MPM_Mesh.Phi.acc = MatAllocZ(MPM_Mesh.NumGP,3);
-      strcpy(MPM_Mesh.Phi.acc.Info,"Acceleration field GP");
-      /* Strain field (Tensor) */
-      MPM_Mesh.Phi.Strain = MatAllocZ(MPM_Mesh.NumGP,9);
-      strcpy(MPM_Mesh.Phi.Strain.Info,"Strain field GP");
-      /* Stress field (Tensor) */
-      MPM_Mesh.Phi.Stress = MatAllocZ(MPM_Mesh.NumGP,9);
-      strcpy(MPM_Mesh.Phi.Stress.Info,"Stress field GP");
-      /* Deformation Energy (Scalar) */
-      MPM_Mesh.Phi.W = MatAllocZ(MPM_Mesh.NumGP,1);
-      strcpy(MPM_Mesh.Phi.W.Info,"Deformation Energy GP");
-      /* Damage parameter (fracture) */
-      MPM_Mesh.Phi.ji = MatAllocZ(MPM_Mesh.NumGP,1);
-      strcpy(MPM_Mesh.Phi.ji.Info,"Damage parameter GP");
-      /* Mass */
-      MPM_Mesh.Phi.mass = MatAllocZ(MPM_Mesh.NumGP,1);
-      strcpy(MPM_Mesh.Phi.mass.Info,"Mass GP");
-      /* Density */
-      MPM_Mesh.Phi.rho = MatAllocZ(MPM_Mesh.NumGP,1);
-      strcpy(MPM_Mesh.Phi.rho.Info,"Density GP");
-      break;
-    default:
-      puts("Error in Initialize_GP_Mesh() : Wrong number of dimensions");
-      exit(0);
-    }
+    /* Natural coordinates (Vectorial) */
+    MPM_Mesh.Phi.x_EC = MatAllocZ(MPM_Mesh.NumGP,3);
+    strcpy(MPM_Mesh.Phi.x_EC.Info,"Element Coordinates GP");   
+    /* Displacement field (Vectorial) */
+    MPM_Mesh.Phi.dis = MatAllocZ(MPM_Mesh.NumGP,3);
+    strcpy(MPM_Mesh.Phi.dis.Info,"Displacement field GP");
+    /* Velocity field (Vectorial) */
+    MPM_Mesh.Phi.vel = MatAllocZ(MPM_Mesh.NumGP,3);
+    strcpy(MPM_Mesh.Phi.vel.Info,"Velocity field GP");
+    /* Acceleration field (Vectorial) */
+    MPM_Mesh.Phi.acc = MatAllocZ(MPM_Mesh.NumGP,3);
+    strcpy(MPM_Mesh.Phi.acc.Info,"Acceleration field GP");
+    /* Strain field (Tensor) */
+    MPM_Mesh.Phi.Strain = MatAllocZ(MPM_Mesh.NumGP,9);
+    strcpy(MPM_Mesh.Phi.Strain.Info,"Strain field GP");
+    /* Stress field (Tensor) */
+    MPM_Mesh.Phi.Stress = MatAllocZ(MPM_Mesh.NumGP,9);
+    strcpy(MPM_Mesh.Phi.Stress.Info,"Stress field GP");
+    /* Deformation Energy (Scalar) */
+    MPM_Mesh.Phi.W = MatAllocZ(MPM_Mesh.NumGP,1);
+    strcpy(MPM_Mesh.Phi.W.Info,"Deformation Energy GP");
+    /* Damage parameter (fracture) */
+    MPM_Mesh.Phi.ji = MatAllocZ(MPM_Mesh.NumGP,1);
+    strcpy(MPM_Mesh.Phi.ji.Info,"Damage parameter GP");
+    /* Mass */
+    MPM_Mesh.Phi.mass = MatAllocZ(MPM_Mesh.NumGP,1);
+    strcpy(MPM_Mesh.Phi.mass.Info,"Mass GP");
+    /* Density */
+    MPM_Mesh.Phi.rho = MatAllocZ(MPM_Mesh.NumGP,1);
+    strcpy(MPM_Mesh.Phi.rho.Info,"Density GP");
 
     /* Fill geometrical properties of the GP mesh */
-    for(int i = 0 ; i<MPM_GID_Mesh.NumElemMesh ; i++){
-      /* Get the connectivity of the elements vertex */
-      Poligon_Connectivity = MPM_GID_Mesh.Connectivity[i];    
-      /* Generate a matrix with the poligon coordinates */
-      NumVertex = MPM_GID_Mesh.NumNodesElem[i];
-      Poligon_Coordinates = MatAllocZ(NumVertex,NumberDimensions); 
-      /* Initialize chain interator */
-      Vertex = Poligon_Connectivity;
-      /* Loop in the chain to fill the poligon */
-      for(int k = 0, I_Vertex = 0;
-	  (k<NumVertex) || (Vertex != NULL);
-	  k++, Vertex = Vertex->next){
-	I_Vertex = Vertex->I;
-	for(int l = 0 ; l<NumberDimensions ; l++){
-	  Poligon_Coordinates.nM[k][l] =
-	    MPM_GID_Mesh.Coordinates.nM[I_Vertex][l];
+    if(NumberDimensions == 2){
+      for(int i = 0 ; i<MPM_GID_Mesh.NumElemMesh ; i++){
+	/* Get the connectivity of the elements vertex */
+	Poligon_Connectivity = MPM_GID_Mesh.Connectivity[i];    
+	/* Generate a matrix with the poligon coordinates */
+	NumVertex = MPM_GID_Mesh.NumNodesElem[i];
+	Poligon_Coordinates = MatAllocZ(NumVertex,2); 
+	/* Initialize chain interator */
+	Vertex = Poligon_Connectivity;
+	/* Loop in the chain to fill the poligon */
+	for(int k = 0, I_Vertex = 0;
+	    (k<NumVertex) || (Vertex != NULL);
+	    k++, Vertex = Vertex->next){
+	  I_Vertex = Vertex->I;
+	  for(int l = 0 ; l<3 ; l++){
+	    Poligon_Coordinates.nM[k][l] =
+	      MPM_GID_Mesh.Coordinates.nM[I_Vertex][l];
+	  }
 	}
-      }
-      /* Free data */
-      FreeChain(MPM_GID_Mesh.Connectivity[i]);
-      /* Get the area (Poligon_Centroid.n) 
-	 and the position of the centroid (Poligon_Centroid.nV) */
-      Area_Element = Area_Poligon(Poligon_Coordinates);
-      /* Free data */
-      FreeMat(Poligon_Coordinates);
+	/* Free data */
+	FreeChain(MPM_GID_Mesh.Connectivity[i]);
+	/* Get the area (Poligon_Centroid.n) 
+	   and the position of the centroid (Poligon_Centroid.nV) */
+	Area_Element = Area_Poligon(Poligon_Coordinates);
+	/* Free data */
+	FreeMat(Poligon_Coordinates);
       
-      for(int j = 0 ; j<GPxElement ; j++){
-	/* Set the initial density */
-	MPM_Mesh.Phi.rho.nV[i*GPxElement+j] = MPM_Mesh.Mat[0].rho;
-	/* Assign the mass parameter */
-	MPM_Mesh.Phi.mass.nV[i*GPxElement+j] =
-	  (Area_Element/GPxElement)* MPM_Mesh.Mat[0].rho;
-	/* Local coordinates of the element */
-	MPM_Mesh.Element_id[i*GPxElement+j] = -999;
-	MPM_Mesh.NumberNodes[i*GPxElement+j] = 4;
+	for(int j = 0 ; j<GPxElement ; j++){
+	  /* Set the initial density */
+	  MPM_Mesh.Phi.rho.nV[i*GPxElement+j] = MPM_Mesh.Mat[0].rho;
+	  /* Assign the mass parameter */
+	  MPM_Mesh.Phi.mass.nV[i*GPxElement+j] =
+	    (Area_Element/GPxElement)* MPM_Mesh.Mat[0].rho;
+	  /* Local coordinates of the element */
+	  MPM_Mesh.Element_id[i*GPxElement+j] = -999;
+	  MPM_Mesh.NumberNodes[i*GPxElement+j] = 4;
+	}
       }
     }
 
@@ -400,7 +331,7 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
       MPM_Mesh.NumberBodyForces = Counter_BodyForces;
       puts("*************************************************");
       printf(" \t %s : \n\t %s \n",
-	 "* No body forces defined in",
+	     "* No body forces defined in",
 	     Name_File);
     }
     /**************************************************/

@@ -108,13 +108,13 @@ Load * GramsNeumannBC(char * Name_File, int NumNeumannBC)
       FreeChain(Chain_Nodes);
 
       /* Number of dimensions of the BCC */
-      F[IndexLoad].Dim = NumberDOF;
+      F[IndexLoad].Dim = 3;
       /* Direction of the BCC */
       F[IndexLoad].Dir =
-	(int *)Allocate_ArrayZ(NumberDOF,sizeof(int));
+	(int *)Allocate_ArrayZ(3,sizeof(int));
       /* Curve for each dimension */
       F[IndexLoad].Value =
-	(Curve *)Allocate_Array(NumberDOF,sizeof(Curve));
+	(Curve *)Allocate_Array(3,sizeof(Curve));
       /* Information of the BCC */
       if(strcmp(Formulation,"-V") == 0){
   	/* Name of the BCC */
