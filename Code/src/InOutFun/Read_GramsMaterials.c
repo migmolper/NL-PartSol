@@ -133,7 +133,7 @@ GramsMaterials (Particles=route.txt) {
       FreeChain(Chain_Nodes);
 
       /* Set to default all it properties */
-      Mat_GP.Id=0;      
+      Mat_GP.Id=-1;      
       Mat_GP.Fracture=false;
       Mat_GP.rho = NAN;
       Mat_GP.E = NAN;
@@ -174,7 +174,7 @@ GramsMaterials (Particles=route.txt) {
 	  }
 	  
 	  /* Transfere information */
-	  Mat_Table[Mat_GP.Id] = Mat_GP;
+	  Mat_Table[0] = Mat_GP;
 	  
 	  break;
 	}
@@ -201,8 +201,11 @@ GramsMaterials (Particles=route.txt) {
 
 	    for(int i = 0 ; i<Num_Nodes ; i++){
 	      for(int j = 0 ; j<GPxElement ; j++){
-		GP_Mesh.MatIdx[Array_Nodes[i]*GPxElement+j] = Mat_GP.Id;
+	    	GP_Mesh.MatIdx[Array_Nodes[i]*GPxElement+j] = Mat_GP.Id;
 	      }
+	    }
+	    for(int i = 0 ; i<Num_Nodes ; i++){
+		GP_Mesh.MatIdx[Array_Nodes[i]] = Mat_GP.Id;
 	    }
 	  }
  	  else if(strcmp(Parse_Mat_Prop[0],"Type") == 0){
@@ -304,8 +307,8 @@ GramsMaterials (Particles=route.txt) {
       }
     }
 
-    /* Free array nodes */
-    free(Array_Nodes);
+    /* /\* Free array nodes *\/ */
+    /* free(Array_Nodes); */
   }
     
   /* Check the number of materials */

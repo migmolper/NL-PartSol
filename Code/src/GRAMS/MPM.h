@@ -256,7 +256,7 @@ void PCE_Corrector(GaussPoint, Mesh, Matrix,
 
 
 
-Matrix GetInitialGaussPointPosition(Mesh, int);
+Matrix GetInitialGaussPointPosition(Matrix, Mesh, int);
 double GetMinElementSize(Mesh);
 void GetNodalConnectivity(Mesh);
 Matrix ElemCoordinates(Mesh, int *, int);
