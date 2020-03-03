@@ -161,7 +161,7 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
     /* Generate the initial GP mesh */
     MPM_Mesh.Phi.x_GC =
       GetInitialGaussPointPosition(MPM_GID_Mesh,GPxElement);
-    
+
     /**************************************************/
     /*********** Read Material parameters *************/
     /**************************************************/
@@ -176,6 +176,7 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
 	      "GramsMaterials no defined");
       exit(0);
     }
+
     /**************************************************/
     /********* Read Shape functions parameters ********/
     /**************************************************/

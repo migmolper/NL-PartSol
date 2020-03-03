@@ -64,6 +64,7 @@ void u_ForwardEuler(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
     puts(" \t DONE !!!");
     
     if(TimeStep % ResultsTimeStep == 0){
+      printf(" Print results at \n");
       /* Print Nodal values after appling the BCCs */
       WriteVtk_FEM("Mesh",FEM_Mesh,Nodal_MOMENTUM,
       		   (int)TimeStep/ResultsTimeStep);

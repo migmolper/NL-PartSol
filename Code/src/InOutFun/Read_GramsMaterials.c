@@ -123,6 +123,8 @@ GramsMaterials (Particles=route.txt) {
 
       /* Read file with the nodes */
       sprintf(FileNodesRoute,"%s%s",Route_Nodes,Parse_Mat_id[1]);
+      printf("\t -> %s : %s \n",
+	     "Material points",FileNodesRoute);
 
       /* Get an array with the nodes */
       Chain_Nodes = File2Chain(FileNodesRoute);
