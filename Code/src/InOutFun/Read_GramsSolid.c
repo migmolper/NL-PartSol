@@ -38,7 +38,7 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
   ChainPtr Poligon_Connectivity;
   ChainPtr Vertex;
   int NumVertex;
-  int GPxElement = 4;
+  int GPxElement = 1;
   double Area_Element;
 
   /* Set to false check variables */
