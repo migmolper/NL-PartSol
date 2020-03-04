@@ -261,11 +261,13 @@ Matrix compute_BodyForces(Matrix, GaussPoint, Mesh, int);
 Matrix compute_ContacForces(Matrix, GaussPoint, Mesh, int);
 
 
-void UpdateGridNodalMomentum(Mesh, Matrix, Matrix);
-
+/* void UpdateGridNodalMomentum(Mesh, Matrix, Matrix); */
+void update_NodalMomentum(Mesh, Matrix, Matrix);
 
 /* Forward Euler */
-void UpdateVelocityAndPositionGP(GaussPoint, Mesh, Matrix, Matrix, Matrix);
+/* void UpdateVelocityAndPositionGP(GaussPoint, Mesh, Matrix, Matrix, Matrix); */
+void update_Langrangians(GaussPoint, Mesh, Matrix, Matrix, double);
+
 
 /* Generalized-alpha */
 void GA_UpdateNodalKinetics(Mesh, Matrix, Matrix, Time_Int_Params);
@@ -293,4 +295,5 @@ void GPinCell(ChainPtr *, ChainPtr *, Matrix, int, double);
 Element get_Element(int, ChainPtr, int);
 
 
-Matrix GetElementField(Matrix, Element);
+/* Matrix GetElementField(Matrix, Element); */
+Matrix get_Element_Field(Matrix, Element);

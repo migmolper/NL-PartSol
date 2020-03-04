@@ -68,7 +68,7 @@ void U_GA(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
     
     puts("*************************************************");
     puts(" First step : Essential BCC in P ... WORKING");
-    BCC_Nod_VALUE(FEM_Mesh,V_I,TimeStep);
+    /* BCC_Nod_VALUE(FEM_Mesh,V_I,TimeStep); */
     puts(" \t DONE !!!");
 
     /* Print nodal and Gps values */
@@ -97,7 +97,7 @@ void U_GA(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
     puts("*************************************************");
     puts(" Third step : Update nodal momentum ... WORKING");
     GA_UpdateNodalKinetics(FEM_Mesh, Nodal_Kinetics, F_I, Params);
-    BCC_Nod_VALUE(FEM_Mesh, V_I, TimeStep);
+    /* BCC_Nod_VALUE(FEM_Mesh, V_I, TimeStep); */
     puts(" DONE !!!");
     
     puts("*************************************************");

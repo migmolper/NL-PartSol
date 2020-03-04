@@ -13,7 +13,8 @@ void U_PCE(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
   /* Some auxiliar variables for the outputs */
   Matrix List_Fields;
 
-  int N_dim = NumberDimensions;
+  int Ndim = NumberDimensions;
+  int Nnodes = FEM_Mesh.NumNodesMesh;
 
   /* Control parameters of the generalized-alpha algorithm 
      all the parameters are controled by a simple parameter :
@@ -28,12 +29,12 @@ void U_PCE(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
   /* Auxiliar variable for the mass and momentum */
   Matrix Phi_I;
 
-  Matrix M_I = MatAssign(1, FEM_Mesh.NumNodesMesh, NAN, NULL, NULL);
+  Matrix M_I = MatAssign(1, Nnodes, NAN, NULL, NULL);
   strcpy(M_I.Info,"MASS");
 
   Matrix P_I =
-    MatAssign(N_dim,FEM_Mesh.NumNodesMesh,
-	      NAN, NULL, (double **)malloc((unsigned)N_dim*sizeof(double*)));
+    MatAssign(Ndim,Nnodes,
+	      NAN, NULL, (double **)malloc((unsigned)Ndim*sizeof(double*)));
   strcpy(P_I.Info,"MOMENTUM");
 
   Matrix V_I;
@@ -67,11 +68,8 @@ void U_PCE(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
     
     puts(" Third step : Get the nodal mass and the momentum");
     puts(" \t WORKING ...");
-    Phi_I = GetNodalMassMomentum(MPM_Mesh,FEM_Mesh);
-    M_I.nV = Phi_I.nM[0];
-    P_I.nM[0] = Phi_I.nM[1];
-    P_I.nM[1] = Phi_I.nM[2];
-    BCC_Nod_VALUE(FEM_Mesh,P_I,TimeStep);
+    Phi_I = compute_NodalFields(MPM_Mesh,FEM_Mesh);
+    imposse_NodalMomentum(FEM_Mesh,Phi_I,TimeStep);
     puts(" \t DONE !!! \n");
     puts("*************************************************");
     
@@ -85,34 +83,29 @@ void U_PCE(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
     }
     
     puts("*************************************************");
-    puts(" Four step : Update the particle stress state");
-    puts(" \t a) Get the grid nodal velocity ... WORKING");
-    V_I = GetNodalVelocity(FEM_Mesh, P_I, M_I);
+    puts(" Second step : Compute internal forces ... WORKING");
+    F_I = MatAllocZ(Nnodes,Ndim);
+    puts(" \t Compute internal forces");
+    F_I = compute_InternalForces(F_I, V_I, MPM_Mesh, FEM_Mesh, DeltaTimeStep);
     puts(" \t DONE !!!");
-    puts(" \t b) Calculate the strain increment ... WORKING");
-    UpdateGaussPointStrain(MPM_Mesh, FEM_Mesh, V_I);
+    puts(" \t Compute body forces");
+    F_I = compute_BodyForces(F_I, MPM_Mesh, FEM_Mesh, TimeStep);
     puts(" \t DONE !!!");
-    puts(" \t c) Update the particle stress state ... WORKING");
-    UpdateGaussPointStress(MPM_Mesh);
+    puts(" \t Compute contact forces");
+    F_I = compute_ContacForces(F_I, MPM_Mesh, FEM_Mesh, TimeStep);
+    imposse_NodalMomentum(FEM_Mesh,F_I,TimeStep);
     puts(" \t DONE !!!");
-
-    puts("*************************************************");
-    puts(" Five step : Calculate total forces forces");
-    puts(" \t WORKING ...");
-    F_I = GetNodalForces(MPM_Mesh,FEM_Mesh,TimeStep);
-    BCC_Nod_VALUE(FEM_Mesh,F_I,TimeStep);
-    puts(" DONE !!!");
     
     puts("*************************************************");
-    puts(" Six step : Integrate the grid nodal momentum equation");
-    puts(" \t WORKING ...");
-    UpdateGridNodalMomentum(FEM_Mesh,P_I,F_I);
+    puts(" Third step : Update nodal momentum ... WORKING");
+    update_NodalMomentum(FEM_Mesh,Phi_I,F_I);
     puts(" DONE !!!");
     
     puts("*************************************************");
     puts(" Seven step : Corrector stage");
     puts(" \t WORKING ...");
     PCE_Corrector(MPM_Mesh, FEM_Mesh, M_I, F_I, Params);
+    LocalSearchGaussPoints(MPM_Mesh,FEM_Mesh);
     puts(" DONE !!!");
 
   } /* End of temporal integration */

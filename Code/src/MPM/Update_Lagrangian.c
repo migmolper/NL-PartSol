@@ -6,62 +6,113 @@
 
 /*******************************************************/
 
-void UpdateVelocityAndPositionGP(GaussPoint MPM_Mesh,
-				 Mesh FEM_Mesh,
-				 Matrix Nodal_MASS,
-				 Matrix Nodal_MOMENTUM,
-				 Matrix Nodal_TOT_FORCES){
+void update_Langrangians(GaussPoint MPM_Mesh, Mesh FEM_Mesh,
+			 Matrix Phi_I, Matrix F_I, double Dt){
 
-  Matrix N_GP; /* Value of the shape-function in the GP */
-  Element GP_Element; /* Element for each Gauss-Point */
-  int GP_I; /* Index of each tributary node for the GP */
-  double mass_I; /* Value of the nodal mass */
-  double N_I_GP; /* Nodal value for the GP */
-  double Incr_Displacement_k; /* Incremental displacement in the k dimension */
+  Element Nodes_p; /* Element for each Gauss-Point */
+  Matrix N_p; /* Value of the shape-function in the GP */
+  double N_pI; /* Nodal value for the GP */
+  double M_I; /* Value of the nodal mass */
+  int Np = MPM_Mesh.NumGP;
+  int Nnodes;
+  int Ip; /* Index of each tributary node for the GP */
+  int Ndim = 3;
 
   /* 1º iterate over the Gauss-Points */
-  for(int i = 0 ; i<MPM_Mesh.NumGP ; i++){
+  for(int p = 0 ; p<Np ; p++){
 
     /* 2º Define element of the GP */
-    GP_Element = GetElementGP(i, MPM_Mesh.ListNodes[i],
-			      MPM_Mesh.NumberNodes[i]);
+    Nnodes = MPM_Mesh.NumberNodes[p];
+    Nodes_p = get_Element(p, MPM_Mesh.ListNodes[p], Nnodes);
 
     /* 3º Evaluate shape function in the GP i */
-    N_GP = Get_Operator("N",GP_Element,
-			MPM_Mesh,FEM_Mesh);
+    N_p = compute_ShapeFunction(Nodes_p, MPM_Mesh, FEM_Mesh);
     
     /* 4º Iterate over the nodes of the element */
-    for(int j = 0; j<GP_Element.NumberNodes; j++){
+    for(int I = 0; I<Nnodes; I++){
       /* Node of the GP */
-      GP_I = GP_Element.Connectivity[j];
+      Ip = Nodes_p.Connectivity[I];
       /* Evaluate the GP function in the node */
-      N_I_GP = N_GP.nV[j];
+      N_pI = N_p.nV[I];
       /* If this node has a null Value of the SHF continue */
-      if(fabs(N_I_GP) <= TOL_zero){
+      if(fabs(N_pI) <= TOL_zero){
 	continue;
       }
       /* Get the nodal mass */
-      mass_I = Nodal_MASS.nV[GP_I];
+      M_I = Phi_I.nM[Ip][Ndim];
       /* Update GP cuantities with nodal values */
-      for(int k = 0 ; k<NumberDimensions ; k++){
+      for(int i = 0 ; i<Ndim ; i++){
 	/* Update the GP velocities */
-	MPM_Mesh.Phi.vel.nM[i][k] +=
-	  DeltaTimeStep*N_I_GP*
-	  Nodal_TOT_FORCES.nM[k][GP_I]/mass_I;
-	/* Get displacement increment */
-	Incr_Displacement_k = DeltaTimeStep*N_I_GP*
-	  Nodal_MOMENTUM.nM[k][GP_I]/mass_I;
-	/* Update the GP displacement */
-	MPM_Mesh.Phi.dis.nM[i][k] += Incr_Displacement_k;
+	MPM_Mesh.Phi.vel.nM[p][i] += Dt*N_pI*F_I.nM[i][Ip]/M_I;
 	/* Update the GP position */
-	MPM_Mesh.Phi.x_GC.nM[i][k] += Incr_Displacement_k;	  
+	MPM_Mesh.Phi.x_GC.nM[p][i] += Dt*N_pI*Phi_I.nM[i][Ip]/M_I;	  
       } 
     }
     
     /* 5º Free memory */
-    free(GP_Element.Connectivity), FreeMat(N_GP);
+    free(Nodes_p.Connectivity);
+    FreeMat(N_p);
   }  
 }
+
+/*******************************************************/
+
+/* void UpdateVelocityAndPositionGP(GaussPoint MPM_Mesh, */
+/* 				 Mesh FEM_Mesh, */
+/* 				 Matrix Nodal_MASS, */
+/* 				 Matrix Nodal_MOMENTUM, */
+/* 				 Matrix Nodal_TOT_FORCES){ */
+
+/*   Matrix N_GP; /\* Value of the shape-function in the GP *\/ */
+/*   Element GP_Element; /\* Element for each Gauss-Point *\/ */
+/*   int GP_I; /\* Index of each tributary node for the GP *\/ */
+/*   double mass_I; /\* Value of the nodal mass *\/ */
+/*   double N_I_GP; /\* Nodal value for the GP *\/ */
+/*   double Incr_Displacement_k; /\* Incremental displacement in the k dimension *\/ */
+
+/*   /\* 1º iterate over the Gauss-Points *\/ */
+/*   for(int i = 0 ; i<MPM_Mesh.NumGP ; i++){ */
+
+/*     /\* 2º Define element of the GP *\/ */
+/*     GP_Element = GetElementGP(i, MPM_Mesh.ListNodes[i], */
+/* 			      MPM_Mesh.NumberNodes[i]); */
+
+/*     /\* 3º Evaluate shape function in the GP i *\/ */
+/*     N_GP = Get_Operator("N",GP_Element, */
+/* 			MPM_Mesh,FEM_Mesh); */
+    
+/*     /\* 4º Iterate over the nodes of the element *\/ */
+/*     for(int j = 0; j<GP_Element.NumberNodes; j++){ */
+/*       /\* Node of the GP *\/ */
+/*       GP_I = GP_Element.Connectivity[j]; */
+/*       /\* Evaluate the GP function in the node *\/ */
+/*       N_I_GP = N_GP.nV[j]; */
+/*       /\* If this node has a null Value of the SHF continue *\/ */
+/*       if(fabs(N_I_GP) <= TOL_zero){ */
+/* 	continue; */
+/*       } */
+/*       /\* Get the nodal mass *\/ */
+/*       mass_I = Nodal_MASS.nV[GP_I]; */
+/*       /\* Update GP cuantities with nodal values *\/ */
+/*       for(int k = 0 ; k<NumberDimensions ; k++){ */
+/* 	/\* Update the GP velocities *\/ */
+/* 	MPM_Mesh.Phi.vel.nM[i][k] += */
+/* 	  DeltaTimeStep*N_I_GP* */
+/* 	  Nodal_TOT_FORCES.nM[k][GP_I]/mass_I; */
+/* 	/\* Get displacement increment *\/ */
+/* 	Incr_Displacement_k = DeltaTimeStep*N_I_GP* */
+/* 	  Nodal_MOMENTUM.nM[k][GP_I]/mass_I; */
+/* 	/\* Update the GP displacement *\/ */
+/* 	MPM_Mesh.Phi.dis.nM[i][k] += Incr_Displacement_k; */
+/* 	/\* Update the GP position *\/ */
+/* 	MPM_Mesh.Phi.x_GC.nM[i][k] += Incr_Displacement_k;	   */
+/*       }  */
+/*     } */
+    
+/*     /\* 5º Free memory *\/ */
+/*     free(GP_Element.Connectivity), FreeMat(N_GP); */
+/*   }   */
+/* } */
 
 
 /*******************************************************/
@@ -104,12 +155,10 @@ void GA_AdvectionKinetics(GaussPoint MPM_Mesh,
   for(int i = 0 ; i<MPM_Mesh.NumGP ; i++){
 
     /* 2º Define element of the GP */
-    GP_Element = GetElementGP(i, MPM_Mesh.ListNodes[i],
-			      MPM_Mesh.NumberNodes[i]);
+    GP_Element = get_Element(i, MPM_Mesh.ListNodes[i],MPM_Mesh.NumberNodes[i]);
 
     /* 3º Evaluate shape function in the GP i */
-    N_GP = Get_Operator("N",GP_Element,
-			MPM_Mesh,FEM_Mesh);
+    N_GP = compute_ShapeFunction(GP_Element, MPM_Mesh, FEM_Mesh);
 
 
     /* 4º Set to zero the GPs acceleration and velocity of the previous step */
@@ -228,12 +277,10 @@ void PCE_Predictor(GaussPoint MPM_Mesh,
   for(int i = 0 ; i<MPM_Mesh.NumGP ; i++){
 
     /* 2º Define element of the GP */
-    GP_Element = GetElementGP(i, MPM_Mesh.ListNodes[i],
-			      MPM_Mesh.NumberNodes[i]);
+    GP_Element = get_Element(i, MPM_Mesh.ListNodes[i],MPM_Mesh.NumberNodes[i]);
 
     /* 3º Evaluate shape function in the GP i */
-    N_GP = Get_Operator("N",GP_Element,
-			MPM_Mesh,FEM_Mesh);
+    N_GP = compute_ShapeFunction(GP_Element, MPM_Mesh, FEM_Mesh);
     
     /* 4º Iterate over the nodes of the element */
     for(int j = 0; j<GP_Element.NumberNodes; j++){
@@ -287,12 +334,10 @@ void PCE_Corrector(GaussPoint MPM_Mesh,
   for(int i = 0 ; i<MPM_Mesh.NumGP ; i++){
 
     /* 2º Define element of the GP */
-    GP_Element = GetElementGP(i, MPM_Mesh.ListNodes[i],
-			      MPM_Mesh.NumberNodes[i]);
+    GP_Element = get_Element(i, MPM_Mesh.ListNodes[i],MPM_Mesh.NumberNodes[i]);
 
     /* 3º Evaluate shape function in the GP i */
-    N_GP = Get_Operator("N",GP_Element,
-			MPM_Mesh,FEM_Mesh);
+    N_GP = compute_ShapeFunction(GP_Element, MPM_Mesh, FEM_Mesh);
     
     /* 4º Iterate over the nodes of the element */
     for(int j = 0; j<GP_Element.NumberNodes; j++){

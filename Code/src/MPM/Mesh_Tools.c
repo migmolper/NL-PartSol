@@ -838,24 +838,24 @@ Element get_Element(int i_GP, ChainPtr ListNodes, int NumNodes){
 
 /*********************************************************************/
 
-Matrix GetElementField(Matrix Nodal_Field, Element GP_Element){
+Matrix get_Element_Field(Matrix Nodal_Field, Element GP_Element){
 
   int * Element_Connectivity = GP_Element.Connectivity;
-  int Number_Nodes_Element = GP_Element.NumberNodes;
+  int NumNodes = GP_Element.NumberNodes;
   Matrix Element_Field;
-  int Field_Dimensions = Nodal_Field.N_rows;
-  int Node;
+  int Ndim = Nodal_Field.N_rows;
+  int Ie;
 
   /* Allocate a matrix to store the nodal quatities in the element */
-  Element_Field = MatAlloc(Number_Nodes_Element*Field_Dimensions,1);
+  Element_Field = MatAlloc(NumNodes,Ndim);
 
   /* Loop over the nodes of the element */
-  for(int k = 0; k<Number_Nodes_Element; k++){
+  for(int I = 0; I<NumNodes; I++){
     /* Get the node of the element */
-    Node = Element_Connectivity[k];
+    Ie = Element_Connectivity[I];
     /* Fill each dimension of the nodal quantitie */
-    for(int l = 0 ; l<Field_Dimensions ; l++){
-      Element_Field.nV[k*Field_Dimensions + l] = Nodal_Field.nM[l][Node];
+    for(int i = 0 ; i<Ndim ; i++){
+      Element_Field.nM[I][i] = Nodal_Field.nM[Ie][i];
     }
   }
   

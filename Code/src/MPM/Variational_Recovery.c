@@ -146,10 +146,10 @@ Matrix GetNodalKinetics(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
   for(int i = 0 ; i<N_GPs ; i++){
 
     /* 2º Define element of the GP */
-    GP_Element = GetElementGP(i, MPM_Mesh.ListNodes[i], MPM_Mesh.NumberNodes[i]);
+    GP_Element = get_Element(i, MPM_Mesh.ListNodes[i], MPM_Mesh.NumberNodes[i]);
     
     /* 3º Evaluate the shape function in the coordinates of the GP */
-    N_GP = Get_Operator("N",GP_Element, MPM_Mesh,FEM_Mesh);
+    N_GP = compute_ShapeFunction(GP_Element, MPM_Mesh,FEM_Mesh);
    
     /* 4º Get the properties of the GP */
     Mass_GP = MPM_Mesh.Phi.mass.nV[i];
@@ -265,10 +265,10 @@ Matrix GetNodalVelocityDisplacement(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
   for(int i = 0 ; i<N_GPs ; i++){
 
     /* 2º Define element of the GP */
-    GP_Element = GetElementGP(i, MPM_Mesh.ListNodes[i], MPM_Mesh.NumberNodes[i]);
+    GP_Element = get_Element(i, MPM_Mesh.ListNodes[i], MPM_Mesh.NumberNodes[i]);
     
     /* 3º Evaluate the shape function in the coordinates of the GP */
-    N_GP = Get_Operator("N",GP_Element, MPM_Mesh,FEM_Mesh);
+    N_GP = compute_ShapeFunction(GP_Element, MPM_Mesh,FEM_Mesh);
    
     /* 4º Get the properties of the GP */
     Mass_GP = MPM_Mesh.Phi.mass.nV[i];

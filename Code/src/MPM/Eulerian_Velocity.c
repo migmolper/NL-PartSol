@@ -5,31 +5,58 @@
 #include "grams.h"
 
 /*******************************************************/
-
-void UpdateGridNodalMomentum(Mesh FEM_Mesh,
-			     Matrix Nodal_MOMENTUM,
-			     Matrix Nodal_TOT_FORCES)
+void update_NodalMomentum(Mesh FEM_Mesh, Matrix Phi_I, Matrix F_I)
 /*!
  * \brief Brief description of UpdateGridNodalMomentum.
  *        Compute the nodal contribution of each GP to the total forces.
  *
  *  The parameters for this functions are  :
  *  @param MPM_Mesh : Mesh with the material points.
- *  @param Nodal_MOMENTUM : Nodal value of the momentum.
- *  @param Nodal_TOT_FORCES : Nodal value of the total forces.
+ *  @param Phi_I : Nodal value of the momentum.
+ *  @param F_I : Nodal value of the total forces.
  *
  */
 {
+  int Nnodes = FEM_Mesh.NumNodesMesh;
+  int Ndim = 3;
+  
   /* Update the grid nodal momentum */
-  for(int i = 0 ; i<FEM_Mesh.NumNodesMesh ; i++){
-    for(int j = 0 ; j<3 ; j++){
+  for(int i = 0 ; i<Nnodes ; i++){
+    for(int j = 0 ; j<Ndim ; j++){
       if(FEM_Mesh.ActiveNode[i] > 0){
-	Nodal_MOMENTUM.nM[j][i] +=
-	  DeltaTimeStep*Nodal_TOT_FORCES.nM[j][i];
+	Phi_I.nM[j][i] +=
+	  DeltaTimeStep*F_I.nM[j][i];
       }
     }
   }  
 }
+
+/*******************************************************/
+
+/* void UpdateGridNodalMomentum(Mesh FEM_Mesh, */
+/* 			     Matrix Nodal_MOMENTUM, */
+/* 			     Matrix Nodal_TOT_FORCES) */
+/* /\*! */
+/*  * \brief Brief description of UpdateGridNodalMomentum. */
+/*  *        Compute the nodal contribution of each GP to the total forces. */
+/*  * */
+/*  *  The parameters for this functions are  : */
+/*  *  @param MPM_Mesh : Mesh with the material points. */
+/*  *  @param Nodal_MOMENTUM : Nodal value of the momentum. */
+/*  *  @param Nodal_TOT_FORCES : Nodal value of the total forces. */
+/*  * */
+/*  *\/ */
+/* { */
+/*   /\* Update the grid nodal momentum *\/ */
+/*   for(int i = 0 ; i<FEM_Mesh.NumNodesMesh ; i++){ */
+/*     for(int j = 0 ; j<3 ; j++){ */
+/*       if(FEM_Mesh.ActiveNode[i] > 0){ */
+/* 	Nodal_MOMENTUM.nM[j][i] += */
+/* 	  DeltaTimeStep*Nodal_TOT_FORCES.nM[j][i]; */
+/*       } */
+/*     } */
+/*   }   */
+/* } */
 
 /*******************************************************/
 

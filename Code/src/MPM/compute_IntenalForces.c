@@ -42,11 +42,11 @@ Matrix compute_InternalForces(Matrix F_I, Matrix V_I,
     Stress_p = memory_to_Tensor(MPM_Mesh.Phi.Stress.nM[p], 2);
 
     /* Define element for each GP */
-    Nodes_p =
-      get_Element(p, MPM_Mesh.ListNodes[p], MPM_Mesh.NumberNodes[p]);
+    Nn = MPM_Mesh.NumberNodes[p];
+    Nodes_p = get_Element(p, MPM_Mesh.ListNodes[p], Nn);
 
     /* Get the velocity of the nodes of the element */
-    Nodal_Velocity_p = get_Element_velocity(Nodes_p, V_I);
+    Nodal_Velocity_p = get_Element_Field(V_I, Nodes_p);
 
     /* Compute gradient of the shape function in each node */
     Gradient_p =

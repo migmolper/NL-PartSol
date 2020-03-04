@@ -72,6 +72,7 @@ void u_ForwardEuler(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
     puts(" \t DONE !!!");
     puts(" \t Compute contact forces");
     F_I = compute_ContacForces(F_I, MPM_Mesh, FEM_Mesh, TimeStep);
+    imposse_NodalMomentum(FEM_Mesh,F_I,TimeStep);
     puts(" \t DONE !!!");
 
     /* if(MPM_Mesh.Mat[0].Fracture){ */
@@ -90,12 +91,11 @@ void u_ForwardEuler(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
     puts("*************************************************");
     puts(" Third step : Update nodal momentum ... WORKING");
     update_NodalMomentum(FEM_Mesh,Phi_I,F_I);
-    BCC_Nod_VALUE(FEM_Mesh,F_I,TimeStep);
     puts(" DONE !!!");
     
     puts("*************************************************");
     puts(" Four step : Update lagrangian ... WORKING");
-    UpdateVelocityAndPositionGP(MPM_Mesh, FEM_Mesh, Phi_I, F_I);
+    update_Langrangians(MPM_Mesh, FEM_Mesh, Phi_I, F_I, DeltaTimeStep);
     LocalSearchGaussPoints(MPM_Mesh,FEM_Mesh);
     puts(" DONE !!!");
     
