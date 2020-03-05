@@ -26,18 +26,9 @@ void U_PCE(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
   /*********************************************************************/
 
   /* Auxiliar variable for the mass and momentum */
-  Matrix Nodal_MASS_MOMENTUM;
-
-  Matrix Nodal_MASS = MatAssign(1, FEM_Mesh.NumNodesMesh, NAN, NULL, NULL);
-  strcpy(Nodal_MASS.Info,"MASS");
-
-  Matrix Nodal_MOMENTUM =
-    MatAssign(N_dim,FEM_Mesh.NumNodesMesh,
-	      NAN, NULL, (double **)malloc((unsigned)N_dim*sizeof(double*)));
-  strcpy(Nodal_MOMENTUM.Info,"MOMENTUM");
-
-  Matrix Nodal_VELOCITY;
-  Matrix Nodal_TOT_FORCES;
+  Matrix Nodal_MASS;
+  Matrix Nodal_VELOCITY = initialize_NodalVelocity(MPM_Mesh, FEM_Mesh);
+  Matrix Nodal_TOT_FORCES = MatAllocZ(N_dim,FEM_Mesh.NumNodesMesh);
   
   /*********************************************************************/
   /*********************************************************************/
@@ -49,45 +40,29 @@ void U_PCE(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
     printf("***************** STEP : %i , DeltaT : %f \n",
 	   TimeStep,DeltaTimeStep);
     
-    if(TimeStep > 0){
-      puts("*************************************************");
-      puts(" First step : Predictor stage");
-      puts(" \t WORKING ...");
-      PCE_Predictor(MPM_Mesh, FEM_Mesh, Nodal_MASS,
-		    Nodal_MOMENTUM, Nodal_TOT_FORCES,Params);
-      LocalSearchGaussPoints(MPM_Mesh,FEM_Mesh);
-      puts(" Second step : Reset nodal values");
-      puts(" \t WORKING ...");
-      FreeMat(Nodal_MASS_MOMENTUM);
-      FreeMat(Nodal_VELOCITY);
-      FreeMat(Nodal_TOT_FORCES);
-      puts(" DONE !!!");
-      puts("*************************************************");
-    }
-    
-    puts(" Third step : Get the nodal mass and the momentum");
+    puts("*************************************************");
+    puts(" First step : Predictor stage");
     puts(" \t WORKING ...");
-    Nodal_MASS_MOMENTUM = GetNodalMassMomentum(MPM_Mesh,FEM_Mesh);
-    Nodal_MASS.nV = Nodal_MASS_MOMENTUM.nM[0];
-    Nodal_MOMENTUM.nM[0] = Nodal_MASS_MOMENTUM.nM[1];
-    Nodal_MOMENTUM.nM[1] = Nodal_MASS_MOMENTUM.nM[2];
-    BCC_Nod_VALUE(FEM_Mesh,Nodal_MOMENTUM,TimeStep);
-    puts(" \t DONE !!! \n");
+    Nodal_MASS = GetNodalMass(MPM_Mesh, FEM_Mesh);
+    Nodal_VELOCITY = PredictorNodalVelocity(FEM_Mesh, Nodal_VELOCITY,
+					    Nodal_TOT_FORCES,
+					    Nodal_MASS, Params,
+					    DeltaTimeStep);
+    BCC_Nod_VALUE(FEM_Mesh,Nodal_VELOCITY,TimeStep);
+    FreeMat(Nodal_TOT_FORCES);
+    
+    puts(" DONE !!!");
     puts("*************************************************");
     
     if(TimeStep % ResultsTimeStep == 0){
       /* Print Nodal values after appling the BCCs */
-      WriteVtk_FEM("Mesh",FEM_Mesh,Nodal_MOMENTUM,
+      WriteVtk_FEM("Mesh",FEM_Mesh,Nodal_VELOCITY,
       		   (int)TimeStep/ResultsTimeStep);
       /* Print GPs results */
       WriteVtk_MPM("MPM_VALUES",MPM_Mesh,List_Fields,
       		   (int)TimeStep/ResultsTimeStep);
     }
     
-    puts("*************************************************");
-    puts(" Four step : Update the particle stress state");
-    puts(" \t a) Get the grid nodal velocity ... WORKING");
-    Nodal_VELOCITY = GetNodalVelocity(FEM_Mesh, Nodal_MOMENTUM, Nodal_MASS);
     puts(" \t DONE !!!");
     puts(" \t b) Calculate the strain increment ... WORKING");
     UpdateGaussPointStrain(MPM_Mesh, FEM_Mesh, Nodal_VELOCITY);
@@ -104,15 +79,17 @@ void U_PCE(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
     puts(" DONE !!!");
     
     puts("*************************************************");
-    puts(" Six step : Integrate the grid nodal momentum equation");
-    puts(" \t WORKING ...");
-    UpdateGridNodalMomentum(FEM_Mesh,Nodal_MOMENTUM,Nodal_TOT_FORCES);
-    puts(" DONE !!!");
-    
-    puts("*************************************************");
     puts(" Seven step : Corrector stage");
     puts(" \t WORKING ...");
-    PCE_Corrector(MPM_Mesh, FEM_Mesh, Nodal_MASS, Nodal_TOT_FORCES, Params);
+    Nodal_VELOCITY = CorrectorNodalVelocity(FEM_Mesh,Nodal_VELOCITY,
+					    Nodal_TOT_FORCES,
+					    Nodal_MASS,Params,
+					    DeltaTimeStep);    
+    Update_Lagrangian_PCE(MPM_Mesh, FEM_Mesh,
+			  Nodal_MASS, Nodal_VELOCITY,
+			  Nodal_TOT_FORCES);
+    LocalSearchGaussPoints(MPM_Mesh,FEM_Mesh);
+    FreeMat(Nodal_MASS);
     puts(" DONE !!!");
 
   } /* End of temporal integration */
