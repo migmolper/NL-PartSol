@@ -7,7 +7,7 @@
 
 int main(int argc, char * argv[])
 /*
-  Inputs parameters : Data file .gdf
+  GraMS V2.3
 */
 {
   
