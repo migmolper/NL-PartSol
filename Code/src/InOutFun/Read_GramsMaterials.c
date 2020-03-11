@@ -7,9 +7,10 @@
 
 /**********************************************************************/
 
-Material * GramsMaterials(char * Name_File, GaussPoint GP_Mesh)
+Material * GramsMaterials(char * Name_File, GaussPoint GP_Mesh, int GPxElement)
 /*
-GramsMaterials (id=0) {
+GramsMaterials (Particles=route.txt) {
+               Id=0
                Type=LE
 	       rho=20
 	       E=6.e9
@@ -27,14 +28,27 @@ GramsMaterials (id=0) {
   /* Simulation file */
   FILE * Sim_dat;
 
+  /* Parser num chars */
+  int Num_words_parse;
+
   /* Index of the material */
   int Aux_Mat_id;
   char * Parse_Mat_id[MAXW] = {NULL};
-  int Mat_id;
 
   /* Material properties */
   char Line_Material_Prop[MAXC] = {0};
   char * Parse_Mat_Prop[MAXW] = {NULL};
+
+  /* Parse file name with the list of nodes */
+  char * Name_File_Copy = malloc(strlen(Name_File)); 
+  char * Name_Parse[MAXW] = {NULL};
+  char Route_Nodes[MAXC] = {0};
+  char FileNodesRoute[MAXC];
+
+  /* Array */
+  int Num_Nodes;
+  ChainPtr Chain_Nodes = NULL;
+  int * Array_Nodes;
 
   /* Special variables for line-reading */
   char line[MAXC] = {0}; /* Variable for reading the lines in the files */
@@ -59,6 +73,15 @@ GramsMaterials (id=0) {
 	   "Incorrect lecture of",
 	   Name_File);
     exit(0);
+  }
+
+  /* Generate route */
+  strcpy(Name_File_Copy, Name_File);
+  Num_words_parse = parse(Name_Parse,Name_File_Copy,"(/)");
+  strcat(Route_Nodes,"./");
+  for(int i = 0 ; i<Num_words_parse-1 ; i++){
+    strcat(Route_Nodes, Name_Parse[i]);
+    strcat(Route_Nodes,"/");
   }
 
   /* Allocate table with the material */
@@ -90,17 +113,27 @@ GramsMaterials (id=0) {
 
       /* Read the index of the material */
       Aux_Mat_id = parse (Parse_Mat_id, kwords[1],"(=)");
-      Mat_id = atoi(Parse_Mat_id[1]);
       if( (Aux_Mat_id != 2) ||
-	  (strcmp(Parse_Mat_id[0],"id") != 0) ||
-	  (Mat_id<0 || Mat_id> GP_Mesh.NumberMaterials-1) ){
+	  (strcmp(Parse_Mat_id[0],"Particles") != 0)){
 	fprintf(stderr,"%s : %s \n",
 	       "Error in GramsMaterials()",
-	       "Use this format -> (id=Integer) !!!");
+	       "Use this format -> (Particles=route.txt) !!!");
 	exit(0);
       }
 
+      /* Read file with the nodes */
+      sprintf(FileNodesRoute,"%s%s",Route_Nodes,Parse_Mat_id[1]);
+      printf("\t -> %s : %s \n",
+	     "Material points",FileNodesRoute);
+
+      /* Get an array with the nodes */
+      Chain_Nodes = File2Chain(FileNodesRoute);
+      Num_Nodes = LenghtChain(Chain_Nodes);
+      Array_Nodes = ChainToArray(Chain_Nodes,Num_Nodes);
+      FreeChain(Chain_Nodes);
+
       /* Set to default all it properties */
+      Mat_GP.Id=-1;      
       Mat_GP.Fracture=false;
       Mat_GP.rho = NAN;
       Mat_GP.E = NAN;
@@ -141,7 +174,7 @@ GramsMaterials (id=0) {
 	  }
 	  
 	  /* Transfere information */
-	  Mat_Table[Mat_id] = Mat_GP;
+	  Mat_Table[0] = Mat_GP;
 	  
 	  break;
 	}
@@ -154,7 +187,28 @@ GramsMaterials (id=0) {
 	    exit(0);
 	  }
 
- 	  if(strcmp(Parse_Mat_Prop[0],"Type") == 0){
+	  if(strcmp(Parse_Mat_Prop[0],"Id") == 0){
+	    Mat_GP.Id = atoi(Parse_Mat_Prop[1]);
+	    if(Mat_GP.Id >= GP_Mesh.NumberMaterials){
+	      fprintf(stderr,"%s : %s %i !!! \n",
+		      "Error in GramsMaterials()",
+		      "Id should go from 0 to",
+		      GP_Mesh.NumberMaterials-1);
+	      exit(1);
+	    }
+	    printf("\t -> %s : %i \n",
+		   "Index of the material",Mat_GP.Id);
+
+	    for(int i = 0 ; i<Num_Nodes ; i++){
+	      for(int j = 0 ; j<GPxElement ; j++){
+	    	GP_Mesh.MatIdx[Array_Nodes[i]*GPxElement+j] = Mat_GP.Id;
+	      }
+	    }
+	    for(int i = 0 ; i<Num_Nodes ; i++){
+		GP_Mesh.MatIdx[Array_Nodes[i]] = Mat_GP.Id;
+	    }
+	  }
+ 	  else if(strcmp(Parse_Mat_Prop[0],"Type") == 0){
 	    strcpy(Mat_GP.Type,Parse_Mat_Prop[1]);
 	    printf("\t -> %s : %s \n",
 		   "Law",Parse_Mat_Prop[1]);
@@ -240,7 +294,7 @@ GramsMaterials (id=0) {
 	  }
 	  
 	  /* Transfere information */
-	  Mat_Table[Mat_id] = Mat_GP;
+	  Mat_Table[Mat_GP.Id] = Mat_GP;
 	  
 	  break;
 	}
@@ -248,10 +302,13 @@ GramsMaterials (id=0) {
       else{
 	fprintf(stderr,"%s : %s \n",
 	       "Error in GramsMaterials()",
-	       "Use this format -> GramsMaterials (id=integer) { !!!");
+	       "Use this format -> (Particles=route.txt) { !!!");
 	exit(0);
       }
     }
+
+    /* /\* Free array nodes *\/ */
+    /* free(Array_Nodes); */
   }
     
   /* Check the number of materials */

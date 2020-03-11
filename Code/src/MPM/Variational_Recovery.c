@@ -61,6 +61,126 @@ Matrix GetNodalMassMomentum(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
   
 }
 
+/*********************************************************************/
+
+Matrix initialize_NodalVelocity(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
+{
+
+  /* Output */
+  Matrix Nodal_VEL;
+  Matrix Nodal_MASS;
+  Matrix N_GP;  /* Value of the shape-function */
+  double N_GP_I; /* Evaluation of the GP in the node */
+  double GP_mass; /* Mass of the GP */ 
+  Element GP_Element; /* Element for each Gauss-Point */
+  int GP_I;
+
+  /* 1º Allocate the output list of fields */
+  Nodal_VEL = MatAllocZ(NumberDimensions,FEM_Mesh.NumNodesMesh);
+  Nodal_MASS = MatAllocZ(1,FEM_Mesh.NumNodesMesh);
+  
+  /* 2º Iterate over the GP to get the nodal values */
+  for(int i = 0 ; i<MPM_Mesh.NumGP ; i++){
+
+    /* 3º Define element of the GP */
+    GP_Element = GetElementGP(i, MPM_Mesh.ListNodes[i],
+			      MPM_Mesh.NumberNodes[i]);
+    
+    /* 4º Evaluate the shape function in the coordinates of the GP */
+    N_GP = Get_Operator("N",GP_Element,
+			MPM_Mesh,FEM_Mesh);
+   
+    /* 5º Get the mass of the GP */
+    GP_mass = MPM_Mesh.Phi.mass.nV[i];
+
+    /* 6º Get the nodal mass and mommentum */
+    for(int k = 0 ; k<GP_Element.NumberNodes ; k++){
+      /* Get the node for the GP */
+      GP_I = GP_Element.Connectivity[k];
+      /* Evaluate the GP function in the node */
+      N_GP_I = N_GP.nV[k];
+      /* If this node has a null Value of the SHF continue */
+      if(N_GP_I == 0){
+	continue;
+      }
+      /* Nodal mass */
+      Nodal_MASS.nV[GP_I] += GP_mass*N_GP_I;
+      /* Nodal momentum */
+      for(int l = 0 ; l<NumberDimensions ; l++){
+	Nodal_VEL.nM[l][GP_I] +=
+	  GP_mass*MPM_Mesh.Phi.vel.nM[i][l]*N_GP_I;
+      }   
+    }
+
+    /* 7º Free the value of the shape functions */
+    FreeMat(N_GP), free(GP_Element.Connectivity);
+  }
+
+  /* 1º Get nodal values of the velocity */
+  for(int i = 0 ; i<FEM_Mesh.NumNodesMesh ; i++){
+    for(int j = 0 ; j<NumberDimensions ; j++){
+      if(Nodal_MASS.nV[i] > 0){
+	Nodal_VEL.nM[j][i] = (double)Nodal_VEL.nM[j][i]/Nodal_MASS.nV[i];
+      }
+    }    
+  }
+ 
+  return Nodal_VEL;
+  
+}
+
+/*******************************************************/
+
+Matrix GetNodalMass(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
+{
+
+  /* Output */
+  Matrix Nodal_MASS;
+  Matrix N_GP;  /* Value of the shape-function */
+  double N_GP_I; /* Evaluation of the GP in the node */
+  double GP_mass; /* Mass of the GP */ 
+  Element GP_Element; /* Element for each Gauss-Point */
+  int GP_I;
+
+  /* 1º Allocate the output list of fields */
+  Nodal_MASS = MatAllocZ(1,FEM_Mesh.NumNodesMesh);
+  
+  /* 2º Iterate over the GP to get the nodal values */
+  for(int i = 0 ; i<MPM_Mesh.NumGP ; i++){
+
+    /* 3º Define element of the GP */
+    GP_Element = GetElementGP(i, MPM_Mesh.ListNodes[i],
+			      MPM_Mesh.NumberNodes[i]);
+    
+    /* 4º Evaluate the shape function in the coordinates of the GP */
+    N_GP = Get_Operator("N",GP_Element,
+			MPM_Mesh,FEM_Mesh);
+   
+    /* 5º Get the mass of the GP */
+    GP_mass = MPM_Mesh.Phi.mass.nV[i];
+
+    /* 6º Get the nodal mass and mommentum */
+    for(int k = 0 ; k<GP_Element.NumberNodes ; k++){
+      /* Get the node for the GP */
+      GP_I = GP_Element.Connectivity[k];
+      /* Evaluate the GP function in the node */
+      N_GP_I = N_GP.nV[k];
+      /* If this node has a null Value of the SHF continue */
+      if(N_GP_I == 0){
+	continue;
+      }
+      /* Nodal mass */
+      Nodal_MASS.nV[GP_I] += GP_mass*N_GP_I;
+    }
+
+    /* 7º Free the value of the shape functions */
+    FreeMat(N_GP), free(GP_Element.Connectivity);
+  }
+ 
+  return Nodal_MASS;
+  
+}
+
 /*******************************************************/
 
 Matrix GetNodalVelocity(Mesh FEM_Mesh,
@@ -85,6 +205,75 @@ Matrix GetNodalVelocity(Mesh FEM_Mesh,
   }
   
   return Vel_Mesh;
+}
+
+/*******************************************************/
+
+Matrix PredictorNodalVelocity(Mesh FEM_Mesh,
+			      Matrix Nodal_VEL,
+			      Matrix Nodal_TOT_FORCES,
+			      Matrix Nodal_MASS,
+			      Time_Int_Params Params,
+			      double DeltaTimeStep){
+  /*
+    Get the nodal velocity using : 
+    v_{i,I}^{k-1/2} = \frac{p_{i,I}^{k-1/2}}{m_I^{k}}
+    Initialize nodal velocities 
+  */
+
+  /* Time integration parameters */
+  double gamma = Params.GA_gamma;
+  
+  /* Matrix Vel_Mesh */
+  /*   = MatAllocZ(NumberDimensions,FEM_Mesh.NumNodesMesh); */
+  /* strcpy(Vel_Mesh.Info,"VELOCITY"); */
+  
+  /* 1º Get nodal values of the velocity */
+  for(int i = 0 ; i<FEM_Mesh.NumNodesMesh ; i++){
+    for(int j = 0 ; j<NumberDimensions ; j++){
+      if(Nodal_MASS.nV[i] > 0){
+	Nodal_VEL.nM[j][i] +=
+	  (1-gamma)*DeltaTimeStep*Nodal_TOT_FORCES.nM[j][i]/Nodal_MASS.nV[i];
+      }
+    }    
+  }
+  
+  return Nodal_VEL;
+}
+
+/*******************************************************/
+
+Matrix CorrectorNodalVelocity(Mesh FEM_Mesh,
+			      Matrix Nodal_VEL,
+			      Matrix Nodal_TOT_FORCES,
+			      Matrix Nodal_MASS,
+			      Time_Int_Params Params,
+			      double DeltaTimeStep){
+  /*
+    Get the nodal velocity using : 
+    v_{i,I}^{k-1/2} = \frac{p_{i,I}^{k-1/2}}{m_I^{k}}
+    Initialize nodal velocities 
+  */
+
+  /* Time integration parameters */
+  double gamma = Params.GA_gamma;
+  
+  /* Matrix Vel_Mesh */
+  /*   = MatAllocZ(NumberDimensions,FEM_Mesh.NumNodesMesh); */
+  /* strcpy(Vel_Mesh.Info,"VELOCITY"); */
+  
+  /* 1º Get nodal values of the velocity */
+  for(int i = 0 ; i<FEM_Mesh.NumNodesMesh ; i++){
+    for(int j = 0 ; j<NumberDimensions ; j++){
+      if(Nodal_MASS.nV[i] > 0){
+	Nodal_VEL.nM[j][i] =
+	  Nodal_VEL.nM[j][i] +
+	  gamma*DeltaTimeStep*Nodal_TOT_FORCES.nM[j][i]/Nodal_MASS.nV[i];
+      }
+    }    
+  }
+  
+  return Nodal_VEL;
 }
 
 /*******************************************************/

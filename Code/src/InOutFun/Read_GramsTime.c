@@ -17,6 +17,9 @@ GramsTime(Scheme=FE){
 }
 */
 {
+  /* Check the number of GramsTime calls */
+  bool Is_GramsTime = false;
+  int Counter_GramsTime = 0;
 
   /* Simulation file */
   FILE * Sim_dat;
@@ -67,6 +70,10 @@ GramsTime(Scheme=FE){
 
     if ((nkwords > 0) &&
 	(strcmp(kwords[0],"GramsTime") == 0)){
+
+      /* Set to true the boolean flag */
+      Is_GramsTime = true;
+      Counter_GramsTime++;
 
       /* Read temporal integrator scheme */
       Aux_Temp_id = parse (Parse_Temp_id, kwords[1],"(=)");
@@ -192,6 +199,19 @@ GramsTime(Scheme=FE){
 	exit(0);
       }
     }
+  }
+
+  if(Is_GramsTime == false){
+    fprintf(stderr,"%s : %s \n",
+	    "Error in GramsSolid2D()",
+	    "GramsTime no defined");
+    exit(0);
+  }
+  if(Counter_GramsTime != 1){
+    fprintf(stderr,"%s : %s \n",
+	    "Error in GramsSolid2D()",
+	    "More than one call to GramsTime");
+    exit(0);
   }
 
   /* Close .dat file */

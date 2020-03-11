@@ -16,7 +16,6 @@ Load * GramsNeumannBC(char * Name_File, int NumNeumannBC)
   V.x Load_x.txt
   V.y Load_x.txt
 }
-
 */
 {
 

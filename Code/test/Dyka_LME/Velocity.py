@@ -29,7 +29,7 @@ for i in range(0,Num_Files-1):
     reader.Update()
     data = reader.GetOutput()
     V = VN.vtk_to_numpy(data.GetCellData().GetArray('VELOCITY'))
-    i_GP = 9
+    i_GP = 0
     Velocity_GP[i] = V[i_GP,0]
 
 ax.plot(Velocity_GP)    

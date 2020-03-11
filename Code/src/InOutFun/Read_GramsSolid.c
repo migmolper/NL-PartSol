@@ -12,7 +12,6 @@
 
 GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
 /*
-  
  */
 {
 
@@ -44,7 +43,6 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
 
   /* Set to false check variables */
   bool Is_GramsSolid2D = false;
-  bool Is_GramsTime = false;
   bool Is_GramsShapeFun = false;
   bool Is_GramsMaterials = false; 
   bool Is_GramsInitials = false;
@@ -95,10 +93,6 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
       free(Name_File_Copy);	  
     }
     if ((Num_words_parse > 0) &&
-	(strcmp(Parse_GramsSolid2D[0],"GramsTime") == 0)){
-      Is_GramsTime = true;
-    }
-    if ((Num_words_parse > 0) &&
 	(strcmp(Parse_GramsSolid2D[0],"GramsShapeFun") == 0)){
       Is_GramsShapeFun = true;
     }
@@ -134,6 +128,7 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
 
     /* The number of Gauss-Points is the same as the number of elements
        in the input mesh, because we set a GP in the middle of each element */
+    /* MPM_Mesh.NumGP = MPM_GID_Mesh.NumElemMesh; */
     MPM_Mesh.NumGP = GPxElement*MPM_GID_Mesh.NumElemMesh;
  
     /* Allocate fields */
@@ -163,69 +158,13 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
       MPM_Mesh.Beps[i] = NULL;  
     }
 
-    /* Generate the initial GP mesh */
-    MPM_Mesh.Phi.x_GC =
-      GetInitialGaussPointPosition(MPM_GID_Mesh,GPxElement);
-    
-    /**************************************************/
-    /* Read parameters of the time-integration scheme */
-    /**************************************************/
-    if(Is_GramsTime){
-      GramsTime(Name_File);
-    }
-    else{
-      fprintf(stderr,"%s : %s \n",
-	      "Error in GramsSolid2D()",
-	      "GramsTime no defined");
-      exit(0);
-    }
-    /**************************************************/
-    /*********** Read Material parameters *************/
-    /**************************************************/
-    if(Is_GramsMaterials){
-      MPM_Mesh.NumberMaterials = Counter_Materials;
-      MPM_Mesh.Mat = GramsMaterials(Name_File,MPM_Mesh);
-      MPM_Mesh.MatIdx = (int *)malloc(MPM_Mesh.NumGP*sizeof(int));
-      for(int i = 0 ; i<MPM_Mesh.NumGP ; i++){
-	MPM_Mesh.MatIdx[i] = 0;
-      }
-    }
-    else{
-      fprintf(stderr,"%s : %s \n",
-	      "Error in GramsSolid2D()",
-	      "GramsMaterials no defined");
-      exit(0);
-    }
-    /**************************************************/
-    /********* Read Shape functions parameters ********/
-    /**************************************************/
-    if(Is_GramsShapeFun){
-      GramsShapeFun(Name_File);
-      /* Lenght of the Voxel (Only GIMP) */
-      if(strcmp(ShapeFunctionGP,"uGIMP") == 0){
-	MPM_Mesh.lp = MatAllocZ(MPM_Mesh.NumGP,NumberDimensions);
-	strcpy(MPM_Mesh.lp.Info,"Voxel lenght GP");
-      }
-      /* Lagrange Multipliers / Beta (Only LME ) */
-      if(strcmp(ShapeFunctionGP,"LME") == 0){
-	MPM_Mesh.lambda = MatAllocZ(MPM_Mesh.NumGP,NumberDimensions);
-	strcpy(MPM_Mesh.lambda.Info,"Lagrange Multiplier");
-	MPM_Mesh.Beta = MatAllocZ(MPM_Mesh.NumGP,NumberDimensions);
-	strcpy(MPM_Mesh.Beta.Info,"Beta parameter");
-      }
-    }
-    else{
-      fprintf(stderr,"%s : %s \n",
-	      "Error in GramsSolid2D()",
-	      "GramsShapeFun no defined");
-      exit(0);
-    }
-
     /**************************************************/    
     /****** Allocate vectorial/tensorial fields *******/
     /**************************************************/
     switch(NumberDimensions){
     case 1 :
+      /* Global coordinates */
+      MPM_Mesh.Phi.x_GC = MatAllocZ(MPM_Mesh.NumGP,3);
       /* Natural coordinates (Vectorial) */
       MPM_Mesh.Phi.x_EC = MatAllocZ(MPM_Mesh.NumGP,1);
       strcpy(MPM_Mesh.Phi.x_EC.Info,"Element Coordinates GP");
@@ -258,6 +197,8 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
       strcpy(MPM_Mesh.Phi.rho.Info,"Density GP");
       break;
     case 2 :
+      /* Global coordinates */
+      MPM_Mesh.Phi.x_GC = MatAllocZ(MPM_Mesh.NumGP,3);
       /* Natural coordinates (Vectorial) */
       MPM_Mesh.Phi.x_EC = MatAllocZ(MPM_Mesh.NumGP,2);
       strcpy(MPM_Mesh.Phi.x_EC.Info,"Element Coordinates GP");    
@@ -290,6 +231,8 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
       strcpy(MPM_Mesh.Phi.rho.Info,"Density GP");
       break;
     case 3:
+      /* Global coordinates */
+      MPM_Mesh.Phi.x_GC = MatAllocZ(MPM_Mesh.NumGP,3);
       /* Natural coordinates (Vectorial) */
       MPM_Mesh.Phi.x_EC = MatAllocZ(MPM_Mesh.NumGP,3);
       strcpy(MPM_Mesh.Phi.x_EC.Info,"Element Coordinates GP");   
@@ -326,6 +269,53 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
       exit(0);
     }
 
+    /**************************************************/
+    /********* Generate the initial GP mesh ***********/
+    /**************************************************/
+    MPM_Mesh.Phi.x_GC =
+      GetInitialGaussPointPosition(MPM_Mesh.Phi.x_GC, MPM_GID_Mesh, GPxElement);
+
+    /**************************************************/
+    /*********** Read Material parameters *************/
+    /**************************************************/
+    if(Is_GramsMaterials){
+      /* MPM_Mesh.NumberMaterials = Counter_Materials; */
+      MPM_Mesh.NumberMaterials = 1;
+      MPM_Mesh.MatIdx = (int *)malloc(MPM_Mesh.NumGP*sizeof(int));
+      MPM_Mesh.Mat = GramsMaterials(Name_File,MPM_Mesh,GPxElement);
+    }
+    else{
+      fprintf(stderr,"%s : %s \n",
+	      "Error in GramsSolid2D()",
+	      "GramsMaterials no defined");
+      exit(0);
+    }
+
+    /**************************************************/
+    /********* Read Shape functions parameters ********/
+    /**************************************************/
+    if(Is_GramsShapeFun){
+      GramsShapeFun(Name_File);
+      /* Lenght of the Voxel (Only GIMP) */
+      if(strcmp(ShapeFunctionGP,"uGIMP") == 0){
+	MPM_Mesh.lp = MatAllocZ(MPM_Mesh.NumGP,NumberDimensions);
+	strcpy(MPM_Mesh.lp.Info,"Voxel lenght GP");
+      }
+      /* Lagrange Multipliers / Beta (Only LME ) */
+      if(strcmp(ShapeFunctionGP,"LME") == 0){
+	MPM_Mesh.lambda = MatAllocZ(MPM_Mesh.NumGP,NumberDimensions);
+	strcpy(MPM_Mesh.lambda.Info,"Lagrange Multiplier");
+	MPM_Mesh.Beta = MatAllocZ(MPM_Mesh.NumGP,NumberDimensions);
+	strcpy(MPM_Mesh.Beta.Info,"Beta parameter");
+      }
+    }
+    else{
+      fprintf(stderr,"%s : %s \n",
+	      "Error in GramsSolid2D()",
+	      "GramsShapeFun no defined");
+      exit(0);
+    }
+
     /* Fill geometrical properties of the GP mesh */
     for(int i = 0 ; i<MPM_GID_Mesh.NumElemMesh ; i++){
       /* Get the connectivity of the elements vertex */
@@ -354,15 +344,18 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
       FreeMat(Poligon_Coordinates);
       
       for(int j = 0 ; j<GPxElement ; j++){
-	/* Set the initial density */
-	MPM_Mesh.Phi.rho.nV[i*GPxElement+j] = MPM_Mesh.Mat[0].rho;
-	/* Assign the mass parameter */
-	MPM_Mesh.Phi.mass.nV[i*GPxElement+j] =
-	  (Area_Element/GPxElement)* MPM_Mesh.Mat[0].rho;
-	/* Local coordinates of the element */
-	MPM_Mesh.Element_id[i*GPxElement+j] = -999;
-	MPM_Mesh.NumberNodes[i*GPxElement+j] = 4;
+      	/* Set the initial density */
+      	MPM_Mesh.Phi.rho.nV[i*GPxElement+j] =
+      	  MPM_Mesh.Mat[MPM_Mesh.MatIdx[i*GPxElement+j]].rho;
+      	/* Assign the mass parameter */
+      	MPM_Mesh.Phi.mass.nV[i*GPxElement+j] =
+      	  (Area_Element/GPxElement)*
+      	  MPM_Mesh.Mat[MPM_Mesh.MatIdx[i*GPxElement+j]].rho;
+      	/* Local coordinates of the element */
+      	MPM_Mesh.Element_id[i*GPxElement+j] = -999;
+      	MPM_Mesh.NumberNodes[i*GPxElement+j] = 4;
       }
+      
     }
 
     /**************************************************/    
@@ -373,7 +366,7 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
     }
     else{
       puts("*************************************************");
-      puts(" No initial conditions defined ");  
+      puts(" No initial conditions defined ");
     }
     /**************************************************/    
     /************** Read external forces **************/
@@ -422,6 +415,7 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
 	     "Initialize LME shape functions ...");
       LME_Initialize(MPM_Mesh,FEM_Mesh);
     }
+    printf("\t %s \n","DONE !!");
     
     /**************************************************/    
     /************* Free the input data ****************/

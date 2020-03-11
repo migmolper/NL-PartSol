@@ -1,12 +1,12 @@
-BeginZE /home/miguelmolinos/GraMS/GraMS_V1/test/Dyka_LME/MallaMPM.gid/MallaMPM.vv
-   x -0.448510140180587769 1.34501183032989502
-   y 0.385346502065658569 -0.688310623168945312
-   z -1.65831232070922852 1.65831232070922852
-   e 0.552770793437957764
+BeginZE /mnt/d529e3a1-c4f4-4848-b84b-e4f2f87271d8/Documentos/Universidad/PhD/TRABAJOS_EN_CURSO/2020/EPC+LME-MPM/Dyka_MPM/Mesh_GPs/Mesh_1.gid/Mesh_1.vv
+   x -13.8835287094116211 173.03802490234375
+   y 110.021255493164062 -111.135993957519531
+   z -140.3343505859375 140.3343505859375
+   e 73.6843490600585938
    v 0 0 0
    r 1
    m 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1
-   c 0.5 0.0250000003725290298 0
+   c 66.6500015258789062 0 0
    pd 0
    pno 0
    pfo 0
@@ -19,7 +19,7 @@ BeginZE /home/miguelmolinos/GraMS/GraMS_V1/test/Dyka_LME/MallaMPM.gid/MallaMPM.v
    OGLShadow(RenderMode) RenderNice
    OGLShadow(ShadowBias) -0.002
    OGLShadow(AmbientShadows) 1
-   OGLShadow(UseFBO) 0
+   OGLShadow(UseFBO) 1
    OGLShadow(FBOSize) 2048
    OGLShadow(DimmedLightFactor) 0.02
    OGLStereo(UseStereo) 0
@@ -29,9 +29,5 @@ BeginZE /home/miguelmolinos/GraMS/GraMS_V1/test/Dyka_LME/MallaMPM.gid/MallaMPM.v
    OGLStereo(EyeDistance) 0.075
    OGLStereo(LeftEyeDistance) 1 0 0 1
    OGLStereo(RightEyeDistance) 0 1 1 1
-EndZE /home/miguelmolinos/GraMS/GraMS_V1/test/Dyka_LME/MallaMPM.gid/MallaMPM.vv
-
-BeginMirror
-   Mirror 0 Angle 0.0 AngleFake -15.0 SizeFactor 2.0 HeightOffset 0.25 Color #d9e5f24d Backlight Off EdgeStyle No Type Scene DrawMode Mirror
-EndMirror
+EndZE /mnt/d529e3a1-c4f4-4848-b84b-e4f2f87271d8/Documentos/Universidad/PhD/TRABAJOS_EN_CURSO/2020/EPC+LME-MPM/Dyka_MPM/Mesh_GPs/Mesh_1.gid/Mesh_1.vv
 

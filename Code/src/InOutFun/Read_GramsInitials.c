@@ -191,6 +191,9 @@ void GramsInitials(char * Name_File, GaussPoint GP_Mesh, int GPxElement)
     }
   }
 
+  /* Free array nodes */
+  free(Array_Nodes);
+
   /* Free data */
   free(Name_File_Copy);
 

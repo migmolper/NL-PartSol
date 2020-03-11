@@ -56,7 +56,7 @@ Curve ReadCurve(char * Name_File)
   }
 
   while( fgets(line, sizeof line, Sim_dat) != NULL ){
-
+    
     /* Read the line with the space as separators */
     nkwords = parse (kwords, line," \n\t");
 
@@ -71,12 +71,21 @@ Curve ReadCurve(char * Name_File)
 	  if(strcmp(param[0],"NUM") == 0){
 	    DatCurve.Num = atoi(param[1]);
 	  }
-	}	
+	}
       }
       /* ALLOCATE FX MATRIX */
-      DatCurve.Fx = (double *)Allocate_ArrayZ(DatCurve.Num,sizeof(double));
+      DatCurve.Fx = (double *)Allocate_ArrayZ(DatCurve.Num,sizeof(double));      
     }
     /*********************************************************************/
+    
+    if (strcmp(kwords[0],"CUSTOM_CURVE") == 0){
+      /* Fill the values of the curve */
+      for(int i = 0 ; i<DatCurve.Num ; i++){
+	fgets(line, sizeof line, Sim_dat);
+	nkwords = parse (kwords, line," \n\t");
+	DatCurve.Fx[i] = atof(kwords[0]);
+      }
+    }
         
     /* CONSTANT_CURVE SCALE#double  */
     /*********************************************************************/
