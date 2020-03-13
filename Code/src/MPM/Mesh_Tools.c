@@ -58,22 +58,22 @@ Matrix GetInitialGaussPointPosition(Matrix X_GC, Mesh FEM_Mesh, int GPxElement)
   case 4:
     if(strcmp(FEM_Mesh.TypeElem,"Quadrilateral") == 0){
       /* Centred GP */
-      X_EC.nM[0][0] =  0.5;
-      X_EC.nM[0][1] =  0.5;
-      X_EC.nM[1][0] =  0.5;
-      X_EC.nM[1][1] = -0.5;
-      X_EC.nM[2][0] = -0.5;
-      X_EC.nM[2][1] =  0.5;
-      X_EC.nM[3][0] = -0.5;
-      X_EC.nM[3][1] = -0.5;
-      /* X_EC.nM[0][0] =  1/pow(3,0.5); */
-      /* X_EC.nM[0][1] =  1/pow(3,0.5); */
-      /* X_EC.nM[1][0] =  1/pow(3,0.5); */
-      /* X_EC.nM[1][1] = -1/pow(3,0.5); */
-      /* X_EC.nM[2][0] = -1/pow(3,0.5); */
-      /* X_EC.nM[2][1] =  1/pow(3,0.5); */
-      /* X_EC.nM[3][0] = -1/pow(3,0.5); */
-      /* X_EC.nM[3][1] = -1/pow(3,0.5); */
+      /* X_EC.nM[0][0] =  0.5; */
+      /* X_EC.nM[0][1] =  0.5; */
+      /* X_EC.nM[1][0] =  0.5; */
+      /* X_EC.nM[1][1] = -0.5; */
+      /* X_EC.nM[2][0] = -0.5; */
+      /* X_EC.nM[2][1] =  0.5; */
+      /* X_EC.nM[3][0] = -0.5; */
+      /* X_EC.nM[3][1] = -0.5; */
+      X_EC.nM[0][0] =  1/pow(3,0.5);
+      X_EC.nM[0][1] =  1/pow(3,0.5);
+      X_EC.nM[1][0] =  1/pow(3,0.5);
+      X_EC.nM[1][1] = -1/pow(3,0.5);
+      X_EC.nM[2][0] = -1/pow(3,0.5);
+      X_EC.nM[2][1] =  1/pow(3,0.5);
+      X_EC.nM[3][0] = -1/pow(3,0.5);
+      X_EC.nM[3][1] = -1/pow(3,0.5);
       /* Get the coordinate of the center */
       for(int i = 0 ; i<NumElemMesh ; i++){
 	Element = GetElementGP(i, FEM_Mesh.Connectivity[i],
