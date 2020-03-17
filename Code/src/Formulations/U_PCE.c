@@ -28,6 +28,7 @@ void U_PCE(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
   /* Auxiliar variable for the mass and momentum */
   Matrix Nodal_MASS;
   Matrix Nodal_VELOCITY = initialize_NodalVelocity(MPM_Mesh, FEM_Mesh);
+  strcpy(Nodal_VELOCITY.Info,"VELOCITY");
   Matrix Nodal_TOT_FORCES = MatAllocZ(N_dim,FEM_Mesh.NumNodesMesh);
   
   /*********************************************************************/
