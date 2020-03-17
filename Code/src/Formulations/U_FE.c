@@ -38,6 +38,7 @@ void u_ForwardEuler(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
   strcpy(Nodal_MOMENTUM.Info,"MOMENTUM");
 
   Matrix Nodal_VELOCITY;
+  strcpy(Nodal_VELOCITY.Info,"VELOCITY");
   Matrix Nodal_TOT_FORCES;
   
   /*********************************************************************/
@@ -63,20 +64,22 @@ void u_ForwardEuler(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
     BCC_Nod_VALUE(FEM_Mesh,Nodal_MOMENTUM,TimeStep);
     puts(" \t DONE !!!");
     
-    if(TimeStep % ResultsTimeStep == 0){
-      /* Print Nodal values after appling the BCCs */
-      WriteVtk_FEM("Mesh",FEM_Mesh,Nodal_MOMENTUM,
-      		   (int)TimeStep/ResultsTimeStep);
-      /* Print GPs results */
-      WriteVtk_MPM("MPM_VALUES",MPM_Mesh,List_Fields,
-      		   (int)TimeStep/ResultsTimeStep);
-    }
     puts("*************************************************");
     puts(" Third step : Update the particle stress state");
     puts(" \t a) Get the grid nodal velocity ... WORKING");
     Nodal_VELOCITY = GetNodalVelocity(FEM_Mesh,
 				      Nodal_MOMENTUM,
 				      Nodal_MASS);
+
+    if(TimeStep % ResultsTimeStep == 0){
+      /* Print Nodal values after appling the BCCs */
+      WriteVtk_FEM("Mesh",FEM_Mesh,Nodal_VELOCITY,
+      		   (int)TimeStep/ResultsTimeStep);
+      /* Print GPs results */
+      WriteVtk_MPM("MPM_VALUES",MPM_Mesh,List_Fields,
+      		   (int)TimeStep/ResultsTimeStep);
+    }
+    
     puts(" \t DONE !!!");
     puts(" \t b) Calculate the strain increment ... WORKING");
     UpdateGaussPointStrain(MPM_Mesh,

@@ -36,6 +36,16 @@ void U_PCE(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
 
   for(int TimeStep = 0 ; TimeStep<NumTimeStep ; TimeStep++ ){
 
+
+    if(TimeStep % ResultsTimeStep == 0){
+      /* Print Nodal values after appling the BCCs */
+      WriteVtk_FEM("Mesh",FEM_Mesh,Nodal_VELOCITY,
+      		   (int)TimeStep/ResultsTimeStep);
+      /* Print GPs results */
+      WriteVtk_MPM("MPM_VALUES",MPM_Mesh,List_Fields,
+      		   (int)TimeStep/ResultsTimeStep);
+    }
+
     puts("*************************************************");
     DeltaTimeStep = DeltaT_CFL(MPM_Mesh, FEM_Mesh.DeltaX);
     printf("***************** STEP : %i , DeltaT : %f \n",
@@ -54,16 +64,7 @@ void U_PCE(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
     
     puts(" DONE !!!");
     puts("*************************************************");
-    
-    if(TimeStep % ResultsTimeStep == 0){
-      /* Print Nodal values after appling the BCCs */
-      WriteVtk_FEM("Mesh",FEM_Mesh,Nodal_VELOCITY,
-      		   (int)TimeStep/ResultsTimeStep);
-      /* Print GPs results */
-      WriteVtk_MPM("MPM_VALUES",MPM_Mesh,List_Fields,
-      		   (int)TimeStep/ResultsTimeStep);
-    }
-    
+        
     puts(" \t DONE !!!");
     puts(" \t b) Calculate the strain increment ... WORKING");
     UpdateGaussPointStrain(MPM_Mesh, FEM_Mesh, Nodal_VELOCITY);
