@@ -230,12 +230,20 @@ Matrix PredictorNodalVelocity(Mesh FEM_Mesh,
   
   /* 1º Get nodal values of the velocity */
   for(int i = 0 ; i<FEM_Mesh.NumNodesMesh ; i++){
-    for(int j = 0 ; j<NumberDimensions ; j++){
-      if(Nodal_MASS.nV[i] > 0){
-	Nodal_VEL.nM[j][i] +=
-	  (1-gamma)*DeltaTimeStep*Nodal_TOT_FORCES.nM[j][i]/Nodal_MASS.nV[i];
+    if(FEM_Mesh.ActiveNode[i] > 0){
+      for(int j = 0 ; j<NumberDimensions ; j++){
+	if(Nodal_MASS.nV[i] > 0){
+	  Nodal_VEL.nM[j][i] +=
+	    (1-gamma)*DeltaTimeStep*Nodal_TOT_FORCES.nM[j][i]/Nodal_MASS.nV[i];
+	}
       }
-    }    
+    }
+    /* Set to zero the velocity of those inactive nodes */
+    else{
+      for(int j = 0 ; j<NumberDimensions ; j++){
+	Nodal_VEL.nM[j][i] = 0;
+      }
+    }
   }
   
   return Nodal_VEL;
