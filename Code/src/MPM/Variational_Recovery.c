@@ -106,10 +106,12 @@ Matrix initialize_NodalVelocity(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
       /* Nodal mass */
       Nodal_MASS.nV[GP_I] += GP_mass*N_GP_I;
       /* Nodal momentum */
-      for(int l = 0 ; l<NumberDimensions ; l++){
-	Nodal_VEL.nM[l][GP_I] +=
-	  GP_mass*MPM_Mesh.Phi.vel.nM[i][l]*N_GP_I;
-      }   
+      if(Nodal_MASS.nV[GP_I] > 0){
+	for(int l = 0 ; l<NumberDimensions ; l++){
+	  Nodal_VEL.nM[l][GP_I] +=
+	    GP_mass*MPM_Mesh.Phi.vel.nM[i][l]*N_GP_I;
+	}
+      }
     }
 
     /* 7º Free the value of the shape functions */
@@ -197,8 +199,8 @@ Matrix GetNodalVelocity(Mesh FEM_Mesh,
   
   /* 1º Get nodal values of the velocity */
   for(int i = 0 ; i<FEM_Mesh.NumNodesMesh ; i++){
-    for(int j = 0 ; j<NumberDimensions ; j++){
-      if(Nodal_MASS.nV[i] > 0){
+    if(Nodal_MASS.nV[i] > 0){
+      for(int j = 0 ; j<NumberDimensions ; j++){
 	Vel_Mesh.nM[j][i] = (double)Nodal_MOMENTUM.nM[j][i]/Nodal_MASS.nV[i];
       }
     }    
@@ -230,13 +232,11 @@ Matrix PredictorNodalVelocity(Mesh FEM_Mesh,
   
   /* 1º Get nodal values of the velocity */
   for(int i = 0 ; i<FEM_Mesh.NumNodesMesh ; i++){
-    if(FEM_Mesh.ActiveNode[i] > 0){
+    if((FEM_Mesh.ActiveNode[i] > 0) && (Nodal_MASS.nV[i] > 0)){
       for(int j = 0 ; j<NumberDimensions ; j++){
-	if(Nodal_MASS.nV[i] > 0){
-	  Nodal_VEL.nM[j][i] +=
-	    (1-gamma)*DeltaTimeStep*Nodal_TOT_FORCES.nM[j][i]/Nodal_MASS.nV[i];
-	}
-      }
+	Nodal_VEL.nM[j][i] +=
+	  (1-gamma)*DeltaTimeStep*Nodal_TOT_FORCES.nM[j][i]/Nodal_MASS.nV[i];
+      } 
     }
     /* Set to zero the velocity of those inactive nodes */
     else{
@@ -272,13 +272,18 @@ Matrix CorrectorNodalVelocity(Mesh FEM_Mesh,
   
   /* 1º Get nodal values of the velocity */
   for(int i = 0 ; i<FEM_Mesh.NumNodesMesh ; i++){
-    for(int j = 0 ; j<NumberDimensions ; j++){
-      if(Nodal_MASS.nV[i] > 0){
+    if((FEM_Mesh.ActiveNode[i] > 0) && (Nodal_MASS.nV[i] > 0)){
+      for(int j = 0 ; j<NumberDimensions ; j++){
 	Nodal_VEL.nM[j][i] =
 	  Nodal_VEL.nM[j][i] +
 	  gamma*DeltaTimeStep*Nodal_TOT_FORCES.nM[j][i]/Nodal_MASS.nV[i];
       }
-    }    
+    }
+    else{
+      for(int j = 0 ; j<NumberDimensions ; j++){
+	Nodal_VEL.nM[j][i] = 0;
+      }
+    }
   }
   
   return Nodal_VEL;

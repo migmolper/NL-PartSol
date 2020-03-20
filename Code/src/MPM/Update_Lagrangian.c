@@ -244,14 +244,16 @@ void Update_Lagrangian_PCE(GaussPoint MPM_Mesh,
       /* Get the nodal mass */
       mass_I = Nodal_MASS.nV[GP_I];
       /* Update GP cuantities with nodal values */
-      for(int k = 0 ; k<NumberDimensions ; k++){
-	/* Update the GP velocities */
-	MPM_Mesh.Phi.vel.nM[i][k] +=
-	  DeltaTimeStep*N_I_GP*Nodal_TOT_FORCES.nM[k][GP_I]/mass_I;
-	/* Update the GP displacement */
-	MPM_Mesh.Phi.x_GC.nM[i][k] +=
-	  N_I_GP*DeltaTimeStep*Nodal_VELOCITY.nM[k][GP_I] +
-	  N_I_GP*0.5*pow(DeltaTimeStep,2)*Nodal_TOT_FORCES.nM[k][GP_I]/mass_I;
+      if(mass_I>0){
+	for(int k = 0 ; k<NumberDimensions ; k++){
+	  /* Update the GP velocities */
+	  MPM_Mesh.Phi.vel.nM[i][k] +=
+	    DeltaTimeStep*N_I_GP*Nodal_TOT_FORCES.nM[k][GP_I]/mass_I;
+	  /* Update the GP displacement */
+	  MPM_Mesh.Phi.x_GC.nM[i][k] +=
+	    N_I_GP*DeltaTimeStep*Nodal_VELOCITY.nM[k][GP_I] +
+	    N_I_GP*0.5*pow(DeltaTimeStep,2)*Nodal_TOT_FORCES.nM[k][GP_I]/mass_I;
+	}
       } 
     }
     
