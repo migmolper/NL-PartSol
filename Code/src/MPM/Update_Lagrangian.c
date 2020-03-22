@@ -212,7 +212,8 @@ void Update_Lagrangian_PCE(GaussPoint MPM_Mesh,
 			   Mesh FEM_Mesh,
 			   Matrix Nodal_MASS,
 			   Matrix Nodal_VELOCITY,
-			   Matrix Nodal_TOT_FORCES){
+			   Matrix Nodal_TOT_FORCES,
+			   double DeltaTimeStep){
 
   Matrix N_GP; /* Value of the shape-function in the GP */
   Element GP_Element; /* Element for each Gauss-Point */
@@ -230,6 +231,10 @@ void Update_Lagrangian_PCE(GaussPoint MPM_Mesh,
     /* 3º Evaluate shape function in the GP i */
     N_GP = Get_Operator("N",GP_Element,
 			MPM_Mesh,FEM_Mesh);
+
+    for(int k = 0 ; k<NumberDimensions ; k++){
+      MPM_Mesh.Phi.acc.nM[i][k] = 0.0;
+    }
     
     /* 4º Iterate over the nodes of the element */
     for(int j = 0; j<GP_Element.NumberNodes; j++){
@@ -247,8 +252,11 @@ void Update_Lagrangian_PCE(GaussPoint MPM_Mesh,
       if(mass_I>0){
 	for(int k = 0 ; k<NumberDimensions ; k++){
 	  /* Update the GP velocities */
+	  MPM_Mesh.Phi.acc.nM[i][k] +=
+	    N_I_GP*Nodal_TOT_FORCES.nM[k][GP_I]/mass_I;
+	  /* Update the GP velocities */
 	  MPM_Mesh.Phi.vel.nM[i][k] +=
-	    DeltaTimeStep*N_I_GP*Nodal_TOT_FORCES.nM[k][GP_I]/mass_I;
+	    N_I_GP*DeltaTimeStep*Nodal_TOT_FORCES.nM[k][GP_I]/mass_I;
 	  /* Update the GP displacement */
 	  MPM_Mesh.Phi.x_GC.nM[i][k] +=
 	    N_I_GP*DeltaTimeStep*Nodal_VELOCITY.nM[k][GP_I] +

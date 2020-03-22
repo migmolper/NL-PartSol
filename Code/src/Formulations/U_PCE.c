@@ -27,24 +27,13 @@ void U_PCE(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
 
   /* Auxiliar variable for the mass and momentum */
   Matrix Nodal_MASS;
-  Matrix Nodal_VELOCITY = initialize_NodalVelocity(MPM_Mesh, FEM_Mesh);
-  strcpy(Nodal_VELOCITY.Info,"VELOCITY");
+  Matrix Nodal_VELOCITY;
   Matrix Nodal_TOT_FORCES = MatAllocZ(N_dim,FEM_Mesh.NumNodesMesh);
   
   /*********************************************************************/
   /*********************************************************************/
 
   for(int TimeStep = 0 ; TimeStep<NumTimeStep ; TimeStep++ ){
-
-
-    if(TimeStep % ResultsTimeStep == 0){
-      /* Print Nodal values after appling the BCCs */
-      WriteVtk_FEM("Mesh",FEM_Mesh,Nodal_VELOCITY,
-      		   (int)TimeStep/ResultsTimeStep);
-      /* Print GPs results */
-      WriteVtk_MPM("MPM_VALUES",MPM_Mesh,List_Fields,
-      		   (int)TimeStep/ResultsTimeStep);
-    }
 
     puts("*************************************************");
     DeltaTimeStep = DeltaT_CFL(MPM_Mesh, FEM_Mesh.DeltaX);
@@ -55,12 +44,20 @@ void U_PCE(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
     puts(" First step : Predictor stage");
     puts(" \t WORKING ...");
     Nodal_MASS = GetNodalMass(MPM_Mesh, FEM_Mesh);
-    Nodal_VELOCITY = PredictorNodalVelocity(FEM_Mesh, Nodal_VELOCITY,
-					    Nodal_TOT_FORCES,
+    Nodal_VELOCITY = PredictorNodalVelocity(MPM_Mesh,FEM_Mesh,
+					    Nodal_VELOCITY,
 					    Nodal_MASS, Params,
 					    DeltaTimeStep);
     BCC_Nod_VALUE(FEM_Mesh,Nodal_VELOCITY,TimeStep);
-    FreeMat(Nodal_TOT_FORCES);
+   
+    if(TimeStep % ResultsTimeStep == 0){
+      /* Print Nodal values after appling the BCCs */
+      WriteVtk_FEM("Mesh",FEM_Mesh,Nodal_VELOCITY,
+      		   (int)TimeStep/ResultsTimeStep);
+      /* Print GPs results */
+      WriteVtk_MPM("MPM_VALUES",MPM_Mesh,List_Fields,
+      		   (int)TimeStep/ResultsTimeStep);
+    }
     
     puts(" DONE !!!");
     puts("*************************************************");
@@ -84,14 +81,17 @@ void U_PCE(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
     puts(" Seven step : Corrector stage");
     puts(" \t WORKING ...");
     Nodal_VELOCITY = CorrectorNodalVelocity(FEM_Mesh,Nodal_VELOCITY,
-					    Nodal_TOT_FORCES,
-					    Nodal_MASS,Params,
-					    DeltaTimeStep);    
+    					    Nodal_TOT_FORCES,
+    					    Nodal_MASS,Params,
+    					    DeltaTimeStep);
     Update_Lagrangian_PCE(MPM_Mesh, FEM_Mesh,
-			  Nodal_MASS, Nodal_VELOCITY,
-			  Nodal_TOT_FORCES);
+    			  Nodal_MASS, Nodal_VELOCITY,
+    			  Nodal_TOT_FORCES,DeltaTimeStep);
     LocalSearchGaussPoints(MPM_Mesh,FEM_Mesh);
+    
     FreeMat(Nodal_MASS);
+    FreeMat(Nodal_VELOCITY);
+    FreeMat(Nodal_TOT_FORCES);
     puts(" DONE !!!");
 
   } /* End of temporal integration */

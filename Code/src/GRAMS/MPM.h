@@ -251,13 +251,14 @@ void GA_AdvectionKinetics(GaussPoint, Mesh, Matrix, Time_Int_Params);
 
 Matrix initialize_NodalVelocity(GaussPoint, Mesh);
 Matrix GetNodalMass(GaussPoint, Mesh);
-Matrix PredictorNodalVelocity(Mesh, Matrix, Matrix,
+Matrix PredictorNodalVelocity(GaussPoint, Mesh, Matrix,
 			      Matrix, Time_Int_Params,double);
 Matrix CorrectorNodalVelocity(Mesh, Matrix, Matrix,
 			      Matrix, Time_Int_Params,double);
 void Update_Lagrangian_PCE(GaussPoint,
 			   Mesh, Matrix,
-			   Matrix, Matrix);
+			   Matrix, Matrix,
+			   double);
 
 /* Predicto-corrector explicit */
 void PCE_Predictor(GaussPoint, Mesh, Matrix, Matrix,

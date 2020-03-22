@@ -211,9 +211,9 @@ Matrix GetNodalVelocity(Mesh FEM_Mesh,
 
 /*******************************************************/
 
-Matrix PredictorNodalVelocity(Mesh FEM_Mesh,
+Matrix PredictorNodalVelocity(GaussPoint MPM_Mesh,
+			      Mesh FEM_Mesh,
 			      Matrix Nodal_VEL,
-			      Matrix Nodal_TOT_FORCES,
 			      Matrix Nodal_MASS,
 			      Time_Int_Params Params,
 			      double DeltaTimeStep){
@@ -225,25 +225,63 @@ Matrix PredictorNodalVelocity(Mesh FEM_Mesh,
 
   /* Time integration parameters */
   double gamma = Params.GA_gamma;
+
+  Matrix N_GP;  /* Value of the shape-function */
+  double N_GP_I; /* Evaluation of the GP in the node */
+  double GP_mass; /* Mass of the GP */ 
+  Element GP_Element; /* Element for each Gauss-Point */
+  int GP_I;
   
   /* Matrix Vel_Mesh */
-  /*   = MatAllocZ(NumberDimensions,FEM_Mesh.NumNodesMesh); */
-  /* strcpy(Vel_Mesh.Info,"VELOCITY"); */
-  
-  /* 1º Get nodal values of the velocity */
-  for(int i = 0 ; i<FEM_Mesh.NumNodesMesh ; i++){
-    if((FEM_Mesh.ActiveNode[i] > 0) && (Nodal_MASS.nV[i] > 0)){
-      for(int j = 0 ; j<NumberDimensions ; j++){
-	Nodal_VEL.nM[j][i] +=
-	  (1-gamma)*DeltaTimeStep*Nodal_TOT_FORCES.nM[j][i]/Nodal_MASS.nV[i];
-      } 
-    }
-    /* Set to zero the velocity of those inactive nodes */
-    else{
-      for(int j = 0 ; j<NumberDimensions ; j++){
-	Nodal_VEL.nM[j][i] = 0;
+  Nodal_VEL = MatAllocZ(NumberDimensions,FEM_Mesh.NumNodesMesh);
+  strcpy(Nodal_VEL.Info,"VELOCITY");
+ 
+  /* 2º Iterate over the GP to get the nodal values */
+  for(int i = 0 ; i<MPM_Mesh.NumGP ; i++){
+
+    /* 3º Define element of the GP */
+    GP_Element = GetElementGP(i, MPM_Mesh.ListNodes[i],
+			      MPM_Mesh.NumberNodes[i]);
+    
+    /* 4º Evaluate the shape function in the coordinates of the GP */
+    N_GP = Get_Operator("N",GP_Element,
+			MPM_Mesh,FEM_Mesh);
+   
+    /* 5º Get the mass of the GP */
+    GP_mass = MPM_Mesh.Phi.mass.nV[i];
+
+    /* 6º Get the nodal mass and mommentum */
+    for(int k = 0 ; k<GP_Element.NumberNodes ; k++){
+      /* Get the node for the GP */
+      GP_I = GP_Element.Connectivity[k];
+      /* Evaluate the GP function in the node */
+      N_GP_I = N_GP.nV[k];
+      /* If this node has a null Value of the SHF continue */
+      if(N_GP_I == 0){
+	continue;
+      }
+      /* Nodal momentum */
+      if(Nodal_MASS.nV[GP_I] > 0){
+	for(int l = 0 ; l<NumberDimensions ; l++){
+	  Nodal_VEL.nM[l][GP_I] +=
+	    GP_mass*N_GP_I*
+	    (MPM_Mesh.Phi.vel.nM[i][l] +
+	     MPM_Mesh.Phi.acc.nM[i][l]*(1-gamma)*DeltaTimeStep);
+	}
       }
     }
+
+    /* 7º Free the value of the shape functions */
+    FreeMat(N_GP), free(GP_Element.Connectivity);
+  }
+
+  /* 1º Get nodal values of the velocity */
+  for(int i = 0 ; i<FEM_Mesh.NumNodesMesh ; i++){
+    if(Nodal_MASS.nV[i] > 0){
+      for(int j = 0 ; j<NumberDimensions ; j++){
+	Nodal_VEL.nM[j][i] = (double)Nodal_VEL.nM[j][i]/Nodal_MASS.nV[i];
+      }
+    }    
   }
   
   return Nodal_VEL;
@@ -274,14 +312,9 @@ Matrix CorrectorNodalVelocity(Mesh FEM_Mesh,
   for(int i = 0 ; i<FEM_Mesh.NumNodesMesh ; i++){
     if((FEM_Mesh.ActiveNode[i] > 0) && (Nodal_MASS.nV[i] > 0)){
       for(int j = 0 ; j<NumberDimensions ; j++){
-	Nodal_VEL.nM[j][i] =
-	  Nodal_VEL.nM[j][i] +
-	  gamma*DeltaTimeStep*Nodal_TOT_FORCES.nM[j][i]/Nodal_MASS.nV[i];
-      }
-    }
-    else{
-      for(int j = 0 ; j<NumberDimensions ; j++){
-	Nodal_VEL.nM[j][i] = 0;
+	Nodal_VEL.nM[j][i] +=
+	  gamma*DeltaTimeStep*
+	  Nodal_TOT_FORCES.nM[j][i]/Nodal_MASS.nV[i];
       }
     }
   }
@@ -497,15 +530,18 @@ Matrix GetNodalVelocityDisplacement(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
     if(Nodal_Mass.nV[i] > 0){
       /* Get the nodal displacement */
       for(int j = 0 ; j<N_dim ; j++){
-	Nodal_Displacement.nM[j][i] = Nodal_Displacement.nM[j][i]/Nodal_Mass.nV[i];
+	Nodal_Displacement.nM[j][i] =
+	  Nodal_Displacement.nM[j][i]/Nodal_Mass.nV[i];
       }
       /* Get the nodal velocity */    
       for(int j = 0 ; j<N_dim ; j++){
-	Nodal_Velocity.nM[j][i] = Nodal_Velocity.nM[j][i]/Nodal_Mass.nV[i];
+	Nodal_Velocity.nM[j][i] =
+	  Nodal_Velocity.nM[j][i]/Nodal_Mass.nV[i];
       }
       /* Get the nodal acceleration */    
       for(int j = 0 ; j<N_dim ; j++){
-	Nodal_Acceleration.nM[j][i] = Nodal_Acceleration.nM[j][i]/Nodal_Mass.nV[i];
+	Nodal_Acceleration.nM[j][i] =
+	  Nodal_Acceleration.nM[j][i]/Nodal_Mass.nV[i];
       }
     }
   }
