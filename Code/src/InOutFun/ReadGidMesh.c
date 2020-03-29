@@ -87,8 +87,8 @@ Mesh ReadGidMesh(char * MeshName)
       if( (strcmp(GID_Mesh.TypeElem,"Quadrilateral") == 0) &&
 	  (NumNodesElem == 4) ){
 	GID_Mesh.Dimension = 2;
-	GID_Mesh.N_ref = Q4;
-	GID_Mesh.dNdX_ref = dQ4;
+	GID_Mesh.N_ref = Q4_N;
+	GID_Mesh.dNdX_ref = Q4_dN_Ref;
       }
       if( (strcmp(GID_Mesh.TypeElem,"Triangle") == 0) &&
 	  (NumNodesElem == 3) ){

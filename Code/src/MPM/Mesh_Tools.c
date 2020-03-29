@@ -33,7 +33,7 @@ Matrix GetInitialGaussPointPosition(Mesh FEM_Mesh, int GPxElement)
       X_EC.nV[0] = 0.0;
       X_EC.nV[1] = 0.0;
       /* Evaluate the shape function */
-      N_GP = Q4(X_EC);
+      N_GP = Q4_N(X_EC);
       /* Get the coordinate of the center */
       for(int i = 0 ; i<NumElemMesh ; i++){
 	Element = get_Element(i, FEM_Mesh.Connectivity[i],
@@ -83,7 +83,7 @@ Matrix GetInitialGaussPointPosition(Mesh FEM_Mesh, int GPxElement)
 	for(int j = 0 ; j<GPxElement ; j++){
 	  /* Evaluate the shape function in the GP position */
 	  X_EC_j.nV = X_EC.nM[j]; 
-	  N_GP = Q4(X_EC_j);
+	  N_GP = Q4_N(X_EC_j);
 	  for(int k = 0 ; k<4 ; k++){
 	    /* Connectivity of each element */
 	    Node = Element.Connectivity[k];
@@ -495,7 +495,7 @@ void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 	 vector is zero get its natural coordinates */
       if(Norm_Mat(V_GP,2) > 0){
 	X_EC_GP.nV = MPM_Mesh.Phi.x_EC.nM[i];
-	Get_X_EC_Q4(X_EC_GP,X_GC_GP,Poligon_Coordinates);
+	Q4_X_to_Xi(X_EC_GP,X_GC_GP,Poligon_Coordinates);
       }
 	      
       /* Get list of nodes near to the GP */
@@ -614,7 +614,7 @@ void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 
 	  /* If the GP is in the element, get its natural coordinates */
 	  X_EC_GP.nV = MPM_Mesh.Phi.x_EC.nM[i];
-	  Get_X_EC_Q4(X_EC_GP,X_GC_GP,Poligon_Coordinates);
+	  Q4_X_to_Xi(X_EC_GP,X_GC_GP,Poligon_Coordinates);
 	  
 	  /* Get list of nodes near to the GP */
 	  GetListNodesGP(MPM_Mesh,FEM_Mesh,i);
@@ -819,22 +819,6 @@ Element get_Element(int i_GP, ChainPtr ListNodes, int NumNodes){
 
   return GP_Element;
 }
-
-/*********************************************************************/
-
-/* Element GetElementGP(int i_GP, ChainPtr ListNodes, int NumNodes){ */
-
-/*   /\* Define new element *\/ */
-/*   Element GP_Element; */
-
-/*   /\* Fill element *\/ */
-/*   GP_Element.i_GP = i_GP; */
-/*   GP_Element.NumberNodes = NumNodes; */
-/*   GP_Element.Connectivity = ChainToArray(ListNodes,NumNodes); */
-
-/*   return GP_Element; */
-/* } */
-
 
 /*********************************************************************/
 

@@ -83,7 +83,7 @@ void GIMP_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh){
 
 	/* 7º If the GP is in the element, get its natural coordinates */
 	X_EC_GP.nV = MPM_Mesh.Phi.x_EC.nM[i];
-	Get_X_EC_Q4(X_EC_GP,X_GC_GP,Poligon_Coordinates);
+	Q4_X_to_Xi(X_EC_GP,X_GC_GP,Poligon_Coordinates);
 
 	/* 8º Get list of nodes near to the GP */
 	FreeChain(MPM_Mesh.ListNodes[i]);

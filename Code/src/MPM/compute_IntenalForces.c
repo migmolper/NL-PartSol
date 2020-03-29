@@ -49,8 +49,7 @@ Matrix compute_InternalForces(Matrix F_I, Matrix V_I,
     Nodal_Velocity_p = get_Element_Field(V_I, Nodes_p);
 
     /* Compute gradient of the shape function in each node */
-    Gradient_p =
-      compute_ShapeFunction_Gradient(Nodes_p, MPM_Mesh, FEM_Mesh);
+    Gradient_p = compute_ShapeFunction_Gradient(Nodes_p, MPM_Mesh, FEM_Mesh);
 
     /* Get the material properties */
     Idx_Mat_p = MPM_Mesh.MatIdx[p];

@@ -26,12 +26,12 @@ void Get_X_EC_T3(Matrix,Matrix,Matrix);
 
 /* Quadrilateral of four nodes shape functions */
 void Q4_Initialize(GaussPoint, Mesh);
-Matrix Q4(Matrix);
-Matrix dQ4(Matrix);
-Matrix Get_F_Ref_Q4(Matrix,Matrix);
-Matrix Get_dNdX_Q4(Matrix,Matrix);
-Matrix Get_X_GC_Q4(Matrix,Matrix);
-void Get_X_EC_Q4(Matrix,Matrix,Matrix);
+Matrix Q4_N(Matrix);
+Matrix Q4_dN_Ref(Matrix);
+Matrix Q4_F_Ref(Matrix,Matrix);
+Matrix Q4_dN(Matrix,Matrix);
+Matrix Q4_Xi_to_X(Matrix,Matrix);
+void Q4_X_to_Xi(Matrix,Matrix,Matrix);
 
 /*******************************************************/
 
