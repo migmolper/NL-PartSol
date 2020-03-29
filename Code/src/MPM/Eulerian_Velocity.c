@@ -270,9 +270,9 @@ Matrix GetNodalForces(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int TimeStep)
 
 /*******************************************************/
 
-void UpdateGridNodalMomentum(Mesh FEM_Mesh,
-			     Matrix Nodal_MOMENTUM,
-			     Matrix Nodal_TOT_FORCES)
+void FE_Update_Momentum(Mesh FEM_Mesh,
+			Matrix Nodal_MOMENTUM,
+			Matrix Nodal_TOT_FORCES)
 /*!
  * \brief Brief description of UpdateGridNodalMomentum.
  *        Compute the nodal contribution of each GP to the total forces.

@@ -239,32 +239,23 @@ void UpdateGaussPointStrain(GaussPoint, Mesh, Matrix);
 double UpdateGaussPointDensity(double, double);
 void UpdateGaussPointStress(GaussPoint);
 Matrix GetNodalForces(GaussPoint, Mesh, int);
-void UpdateGridNodalMomentum(Mesh, Matrix, Matrix);
+Matrix GetNodalMass(GaussPoint, Mesh);
 
 /* Forward Euler */
-void UpdateVelocityAndPositionGP(GaussPoint, Mesh, Matrix, Matrix, Matrix);
+void FE_Update_Lagrangian(GaussPoint, Mesh, Matrix, Matrix, Matrix);
+void FE_Update_Momentum(Mesh, Matrix, Matrix);
 
 /* Generalized-alpha */
 void GA_UpdateNodalKinetics(Mesh, Matrix, Matrix, Time_Int_Params);
-void GA_AdvectionKinetics(GaussPoint, Mesh, Matrix, Time_Int_Params);
-
-
-Matrix initialize_NodalVelocity(GaussPoint, Mesh);
-Matrix GetNodalMass(GaussPoint, Mesh);
-Matrix PredictorNodalVelocity(GaussPoint, Mesh, Matrix,
-			      Matrix, Time_Int_Params,double);
-Matrix CorrectorNodalVelocity(Mesh, Matrix, Matrix,
-			      Matrix, Time_Int_Params,double);
-void Update_Lagrangian_PCE(GaussPoint,
-			   Mesh, Matrix,
-			   Matrix, Matrix,
-			   double);
+void GA_Update_Lagrangian(GaussPoint, Mesh, Matrix, Time_Int_Params);
 
 /* Predicto-corrector explicit */
-void PCE_Predictor(GaussPoint, Mesh, Matrix, Matrix,
-		   Matrix, Time_Int_Params);
-void PCE_Corrector(GaussPoint, Mesh, Matrix,
-		   Matrix, Time_Int_Params);
+Matrix PCE_Predictor(GaussPoint, Mesh, Matrix,
+		     Matrix, Time_Int_Params,double);
+Matrix PCE_Corrector(Mesh, Matrix, Matrix,
+		     Matrix, Time_Int_Params,double);
+void PCE_Update_Lagrangian(GaussPoint, Mesh, Matrix,
+			   Matrix, Matrix, double);
 
 
 

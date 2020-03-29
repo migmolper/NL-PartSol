@@ -108,7 +108,7 @@ void U_GA(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
     puts("*************************************************");
     puts(" Six step : Update the particle kinetics");
     puts(" \t WORKING ...");
-    GA_AdvectionKinetics(MPM_Mesh, FEM_Mesh, Nodal_Kinetics, Params);
+    GA_Update_Lagrangian(MPM_Mesh, FEM_Mesh, Nodal_Kinetics, Params);
     puts(" DONE !!!");
     
     puts("*************************************************");

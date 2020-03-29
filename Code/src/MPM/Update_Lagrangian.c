@@ -6,12 +6,12 @@
 
 /*******************************************************/
 
-void UpdateVelocityAndPositionGP(GaussPoint MPM_Mesh,
-				 Mesh FEM_Mesh,
-				 Matrix Nodal_MASS,
-				 Matrix Nodal_MOMENTUM,
-				 Matrix Nodal_TOT_FORCES){
-
+void FE_Update_Lagrangian(GaussPoint MPM_Mesh,
+			  Mesh FEM_Mesh,
+			  Matrix Nodal_MASS,
+			  Matrix Nodal_MOMENTUM,
+			  Matrix Nodal_TOT_FORCES){
+  
   Matrix N_GP; /* Value of the shape-function in the GP */
   Element GP_Element; /* Element for each Gauss-Point */
   int GP_I; /* Index of each tributary node for the GP */
@@ -66,10 +66,10 @@ void UpdateVelocityAndPositionGP(GaussPoint MPM_Mesh,
 
 /*******************************************************/
 
-void GA_AdvectionKinetics(GaussPoint MPM_Mesh,
-			  Mesh FEM_Mesh,
-			  Matrix Nodal_Kinetics,
-			  Time_Int_Params GA_Params){
+void GA_Update_Lagrangian(GaussPoint MPM_Mesh,
+			   Mesh FEM_Mesh,
+			   Matrix Nodal_Kinetics,
+			   Time_Int_Params GA_Params){
 
 
   
@@ -208,7 +208,7 @@ void GA_AdvectionKinetics(GaussPoint MPM_Mesh,
 
 /*******************************************************/
 
-void Update_Lagrangian_PCE(GaussPoint MPM_Mesh,
+void PCE_Update_Lagrangian(GaussPoint MPM_Mesh,
 			   Mesh FEM_Mesh,
 			   Matrix Nodal_MASS,
 			   Matrix Nodal_VELOCITY,
