@@ -133,8 +133,9 @@ GramsMaterials (Particles=route.txt) {
       FreeChain(Chain_Nodes);
 
       /* Set to default all it properties */
-      Mat_GP.Id=-1;      
-      Mat_GP.Fracture=false;
+      Mat_GP.Id=-1;
+      Mat_GP.Eigenerosion = false;
+      Mat_GP.Eigensoftening = false;
       Mat_GP.rho = NAN;
       Mat_GP.E = NAN;
       Mat_GP.mu = NAN;
@@ -158,14 +159,14 @@ GramsMaterials (Particles=route.txt) {
 	if(strcmp(Parse_Mat_Prop[0],"}") == 0){
 
 	  /* Check fracture properties */
-	  if( (Mat_GP.Fracture == true) &&
+	  if( (Mat_GP.Eigenerosion == true) &&
 	      (Mat_GP.Ceps != Mat_GP.Ceps)){
 	    fprintf(stderr,"%s : %s \n",
 		   "Error in GramsMaterials()",
 		   "Ceps is required for fracture !!!");
 	    exit(0);
 	  }
-	  if( (Mat_GP.Fracture == true) &&
+	  if( (Mat_GP.Eigenerosion == true) &&
 	      (Mat_GP.Gf != Mat_GP.Gf)){
 	    fprintf(stderr,"%s : %s \n",
 	   "Error in GramsMaterials()",
@@ -230,12 +231,12 @@ GramsMaterials (Particles=route.txt) {
 	  }
 	  else if(strcmp(Parse_Mat_Prop[0],"Fracture") == 0){
 	    if (strcmp(Parse_Mat_Prop[1],"TRUE") == 0){
-	      Mat_GP.Fracture=true;
+	      Mat_GP.Eigenerosion=true;
 	      printf("\t -> %s : %s \n",
 		     "Fracture","ON");
 	    }
 	    else if (strcmp(Parse_Mat_Prop[1],"FALSE") == 0){
-	      Mat_GP.Fracture=false;
+	      Mat_GP.Eigenerosion=false;
 	      printf("\t -> %s : %s \n",
 		     "Fracture","OFF");
 	    }
@@ -278,14 +279,14 @@ GramsMaterials (Particles=route.txt) {
 	if(strcmp(Parse_Mat_Prop[0],"}") == 0){
 
 	  /* Check fracture properties */
-	  if( (Mat_GP.Fracture == true) &&
+	  if( (Mat_GP.Eigenerosion == true) &&
 	      (Mat_GP.Ceps != Mat_GP.Ceps)){
 	    fprintf(stderr,"%s : %s \n",
 		   "Error in GramsMaterials()",
 		   "Ceps is required for fracture !!!");
 	    exit(0);
 	  }
-	  if( (Mat_GP.Fracture == true) &&
+	  if( (Mat_GP.Eigenerosion == true) &&
 	      (Mat_GP.Gf != Mat_GP.Gf)){
 	    fprintf(stderr,"%s : %s \n",
 	   "Error in GramsMaterials()",

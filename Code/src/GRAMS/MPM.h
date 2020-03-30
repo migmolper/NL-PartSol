@@ -94,6 +94,8 @@ typedef struct {
   Matrix Stress;
   /*! Strain field */
   Matrix Strain;
+  /*! Rate of Strain field */
+  Matrix RateStrain;
   /*! Deformation Energy */
   Matrix W;
   /*! Damage parameter (Fracture) */
@@ -238,6 +240,7 @@ Matrix Eval_Contact_Forces(Load *, int, int, int);
 void UpdateGaussPointStrain(GaussPoint, Mesh, Matrix);
 double UpdateGaussPointDensity(double, double);
 void UpdateGaussPointStress(GaussPoint);
+void ComputeDamage(GaussPoint, Mesh, double);
 Matrix GetNodalForces(GaussPoint, Mesh, int);
 Matrix GetNodalMass(GaussPoint, Mesh);
 

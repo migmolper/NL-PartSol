@@ -57,8 +57,14 @@ void UpdateGaussPointStrain(GaussPoint MPM_Mesh,
     /* 5º Multiply B by the velocity array and by the time step to get
        the increment stress tensor */
     Delta_Strain_GP = Scalar_prod(B,Element_Velocity);
-    Delta_Strain_GP = Matrix_x_Scalar(Delta_Strain_GP,
-					  DeltaTimeStep);
+
+    /* Fill the rate of Strain field (Tensor) */
+    for(int j = 0 ; j<MPM_Mesh.Phi.RateStrain.N_cols ; j++){
+      MPM_Mesh.Phi.RateStrain.nM[i][j] = Delta_Strain_GP.nV[j];
+    }
+
+    /* Get the increment of the strain tensor */
+    Delta_Strain_GP = Matrix_x_Scalar(Delta_Strain_GP, DeltaTimeStep);
 
     /* 6º Free the array with the nodal velocity of the element and the B matrix */
     FreeMat(Element_Velocity);
@@ -157,6 +163,33 @@ void UpdateGaussPointStress(GaussPoint MPM_Mesh)
       }
     }
   }
+}
+
+/*******************************************************/
+
+void ComputeDamage(GaussPoint MPM_Mesh, Mesh FEM_Mesh, double DeltaT){
+
+  double DeltaX = FEM_Mesh.DeltaX;
+  Matrix ji = MPM_Mesh.Phi.ji;
+  Matrix W = MPM_Mesh.Phi.W;
+  Matrix Mass = MPM_Mesh.Phi.mass;
+  Matrix Stress = MPM_Mesh.Phi.Stress;
+  Matrix RateStrain = MPM_Mesh.Phi.RateStrain;
+  int * MatIdx = MPM_Mesh.MatIdx;
+  Material * MatProp = MPM_Mesh.Mat; 
+  ChainPtr * Beps = MPM_Mesh.Beps;
+
+  if(MPM_Mesh.Mat[0].Eigenerosion){
+    UpdateBeps(MPM_Mesh,FEM_Mesh);
+    EigenerosionAlgorithm(ji, W, Mass, Stress,
+			  MatIdx, MatProp, Beps, DeltaX);
+  }
+
+  if(MPM_Mesh.Mat[0].Eigensoftening){
+    UpdateBeps(MPM_Mesh,FEM_Mesh);
+    EigensofteningAlgorithm(ji, RateStrain, Mass, Stress,
+			    MatIdx, MatProp, Beps, DeltaT);    
+  }  
 }
 
 /*******************************************************/

@@ -89,18 +89,10 @@ void u_ForwardEuler(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
     puts(" \t c) Update the particle stress state ... WORKING");
     UpdateGaussPointStress(MPM_Mesh);
     puts(" \t DONE !!!");
-    
-    /* if(MPM_Mesh.Mat[0].Fracture){ */
-    /*   printf(" \t d) %s %i %s \n", */
-    /* 	     "Update particle status for material",0, */
-    /* 	     "... WORKING"); */
-    /*   UpdateBeps(MPM_Mesh,FEM_Mesh); */
-    /*   MPM_Mesh.Phi.ji = */
-    /* 	ComputeDamage(MPM_Mesh.Phi.ji, MPM_Mesh.Phi.W, MPM_Mesh.Phi.mass, */
-    /* 		      MPM_Mesh.Phi.Stress, MPM_Mesh.MatIdx,MPM_Mesh.Mat, */
-    /* 		      MPM_Mesh.Beps,FEM_Mesh.DeltaX); */
-    /*   puts(" \t DONE !!!"); */
-    /* } */
+
+    puts(" \t d) Check particle damage status ... WORKING");
+    ComputeDamage(MPM_Mesh,FEM_Mesh,TimeStep);
+    puts(" \t DONE !!!");
     
     puts("*************************************************");
     puts(" Four step : Calculate total forces forces");
