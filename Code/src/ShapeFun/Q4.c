@@ -18,9 +18,10 @@
 void Q4_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 
 {
-  /* Variables for the GP coordinates */  
-  Matrix X_GC_GP = MatAssign(NumberDimensions,1,NAN,NULL,NULL);
-  Matrix X_EC_GP = MatAssign(NumberDimensions,1,NAN,NULL,NULL);
+  /* Variables for the GP coordinates */
+  int N_dim = 3;
+  Matrix X_GC_GP = MatAssign(N_dim,1,NAN,NULL,NULL);
+  Matrix X_EC_GP = MatAssign(N_dim,1,NAN,NULL,NULL);
 
   /* Variables for the poligon */
   int NumVertex;
@@ -191,15 +192,16 @@ Matrix Q4_F_Ref(Matrix X_NC_GP, Matrix X_GC_Nodes)
     F_Ref_I = get_dyadicProduct_Of(X_I,dNdx_I);
 
     /* 5º Increment the reference deformation gradient */
-    for(int i = 0 ; i<3 ; i++){
-      for(int j = 0 ; j<3 ; j++){
+    for(int i = 0 ; i<2 ; i++){
+      for(int j = 0 ; j<2 ; j++){
 	F_Ref.nM[i][j] += F_Ref_I.N[i][j];
       }
     }
-
     /* 6º Free data of the nodal contribution */
     free_Tensor(F_Ref_I);    
   }
+
+  F_Ref.nM[2][2] = 1;
   
   /* 7º Free memory */
   FreeMat(dNdX_Ref_GP);

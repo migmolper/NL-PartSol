@@ -145,6 +145,12 @@ void GramsInitials(char * Name_File, GaussPoint GP_Mesh, int GPxElement)
 		   Formulation,Parse_Init_Prop[1]);
 	    
 	    Num_words_parse = parse(IC_value,Parse_Init_Prop[1],"[,]");
+	    if(Num_words_parse != 3){
+	      fprintf(stderr,"%s : %s \n",
+		      "Error in GramsInitials()",
+		      "Insuficient number of dimensions, 3 is required");
+	      exit(0);
+	    }
 
 	    /* Fill it IC for velocity formulation */
 	    if((strcmp(Formulation,"-V") == 0) &&

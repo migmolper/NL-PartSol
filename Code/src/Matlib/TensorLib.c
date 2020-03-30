@@ -13,22 +13,30 @@ Tensor alloc_Tensor(int Order)
   /* Define output */
   Tensor A;
   /* Swith cases */
-    switch(Order){
-    case 0:
-      fprintf(stderr,"%s : %s !!! \n",
-	      "Error in alloc_Tensor()",
-	      "Not posible to allocate a scalar");
-      exit(EXIT_FAILURE);       
-    case 1:
-      A.Order = 1;
-      A.n = malloc(sizeof(double[3]));  
-      break;
-    case 2:
-      A.Order = 2;
-      A.N[0] = malloc(sizeof(double[3]));
-      A.N[1] = malloc(sizeof(double[3]));
-      A.N[2] = malloc(sizeof(double[3]));  
-      break;
+  switch(Order){
+  case 0:
+    fprintf(stderr,"%s : %s !!! \n",
+	    "Error in alloc_Tensor()",
+	    "Not posible to allocate a scalar");
+    exit(EXIT_FAILURE);       
+  case 1:
+    A.Order = 1;
+    A.n = malloc(sizeof(double[3]));
+    for(int i = 0 ; i<3 ; i++){
+      A.n[i] = 0.0;
+    }
+    break;
+  case 2:
+    A.Order = 2;
+    A.N[0] = malloc(sizeof(double[3]));
+    A.N[1] = malloc(sizeof(double[3]));
+    A.N[2] = malloc(sizeof(double[3]));
+    for(int i = 0 ; i<3 ; i++){
+      for(int j = 0 ; j<3 ; j++){
+	A.N[i][j] = 0.0;
+      }
+    }
+    break;
     default :
       fprintf(stderr,"%s : %s \n",
 	      "Error in alloc_Tensor()",

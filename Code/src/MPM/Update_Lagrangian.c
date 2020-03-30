@@ -43,9 +43,9 @@ void update_Langrangians(GaussPoint MPM_Mesh, Mesh FEM_Mesh,
       /* Update GP cuantities with nodal values */
       for(int i = 0 ; i<Ndim ; i++){
 	/* Update the GP velocities */
-	MPM_Mesh.Phi.vel.nM[p][i] += Dt*N_pI*F_I.nM[i][Ip]/M_I;
+	MPM_Mesh.Phi.vel.nM[p][i] += Dt*N_pI*F_I.nM[Ip][i]/M_I;
 	/* Update the GP position */
-	MPM_Mesh.Phi.x_GC.nM[p][i] += Dt*N_pI*Phi_I.nM[i][Ip]/M_I;	  
+	MPM_Mesh.Phi.x_GC.nM[p][i] += Dt*N_pI*Phi_I.nM[Ip][i]/M_I;	  
       } 
     }
     

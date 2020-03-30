@@ -292,6 +292,7 @@ double Distance(Matrix End, Matrix Init)
   Distance between two points.
 */
 {
+  int N_dim = 3;
 
   if((End.N_rows != Init.N_rows) ||
      (End.N_cols != Init.N_cols)){
@@ -303,7 +304,7 @@ double Distance(Matrix End, Matrix Init)
 
   double DIST = 0;
 
-  for(int i = 0 ; i<NumberDimensions ; i++){
+  for(int i = 0 ; i<N_dim ; i++){
 
     DIST += pow(End.nV[i] - Init.nV[i],2);
 

@@ -591,8 +591,12 @@ Matrix Scalar_prod(Matrix A,Matrix B)
 
     /* Check if the input matrix are not compatible */
     if(A.N_cols != B.N_rows){
-      puts("Error in Scalar_prod() : Your are trying to multiply incompatible matrix");
-       exit(EXIT_FAILURE);
+      printf("%s : %s -> [%i , %i] x [%i , %i] \n",
+	   "Error in Scalar_prod()",
+	   "Incompatible matrix",
+	   A.N_rows,A.N_cols,
+	   B.N_rows,B.N_cols);
+      exit(EXIT_FAILURE);
     }
      
     /* The result is a matrix */
@@ -613,8 +617,12 @@ Matrix Scalar_prod(Matrix A,Matrix B)
 
     /* Check if the input matrix are not compatible */
     if(A.N_cols != B.N_rows){
-      puts("Error in Scalar_prod() : Your are trying to multiply incompatible matrix");
-       exit(EXIT_FAILURE);
+      printf("%s : %s -> [%i , %i] x [%i , %i] \n",
+	     "Error in Scalar_prod()",
+	     "Incompatible matrix",
+	     A.N_rows,A.N_cols,
+	     B.N_rows,B.N_cols);
+      exit(EXIT_FAILURE);
     }
 
     /* The result is an scalar */
@@ -631,8 +639,12 @@ Matrix Scalar_prod(Matrix A,Matrix B)
 
     /* Check if the input matrix are not compatible */
     if(A.N_cols != B.N_rows){
-      puts("Error in Scalar_prod() : Your are trying to multiply incompatible matrix");
-       exit(EXIT_FAILURE);
+      printf("%s : %s -> [%i , %i] x [%i , %i] \n",
+	     "Error in Scalar_prod()",
+	     "Incompatible matrix",
+	     A.N_rows,A.N_cols,
+	     B.N_rows,B.N_cols);
+      exit(EXIT_FAILURE);
     }
       
     /* The result is an array */

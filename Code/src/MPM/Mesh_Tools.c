@@ -16,11 +16,12 @@ Matrix GetInitialGaussPointPosition(Mesh FEM_Mesh, int GPxElement)
  */
 {
 
+  int N_dim = 3;
   int NumElemMesh = FEM_Mesh.NumElemMesh;
   Matrix N_GP;
-  Matrix X_GC = MatAllocZ(GPxElement*NumElemMesh,3);
+  Matrix X_GC = MatAllocZ(GPxElement*NumElemMesh,N_dim);
   strcpy(X_GC.Info,"Global Coordinates");
-  Matrix X_EC = MatAllocZ(GPxElement,NumberDimensions);
+  Matrix X_EC = MatAllocZ(GPxElement,N_dim);
   Matrix X_EC_j;
   Element Element;
   int Node;
@@ -225,11 +226,12 @@ Matrix ElemCoordinates(Mesh FEM_Mesh, int * Connectivity, int NumVertex)
 {
 
   Matrix Coordinates;
+  int N_dim = 3;
    
   /* 2º Allocate the polligon Matrix and fill it */
-  Coordinates = MatAllocZ(NumVertex,NumberDimensions);
+  Coordinates = MatAllocZ(NumVertex,N_dim);
   for(int k = 0; k<NumVertex; k++){
-    for(int l = 0 ; l<NumberDimensions ; l++){
+    for(int l = 0 ; l<N_dim ; l++){
       Coordinates.nM[k][l] =
 	FEM_Mesh.Coordinates.nM[Connectivity[k]][l];
     }
@@ -431,8 +433,9 @@ void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 {
 
   /* Variables for the GP coordinates */
-  Matrix X_GC_GP = MatAssign(NumberDimensions,1,NAN,NULL,NULL);
-  Matrix X_EC_GP = MatAssign(NumberDimensions,1,NAN,NULL,NULL);
+  int N_dim = 3;
+  Matrix X_GC_GP = MatAssign(N_dim,1,NAN,NULL,NULL);
+  Matrix X_EC_GP = MatAssign(N_dim,1,NAN,NULL,NULL);
 
   /* Variables for the poligon description */
   Matrix Poligon_Coordinates;
@@ -441,10 +444,10 @@ void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
   
   int Elem_i; /* Element of the GP i */
   Matrix V_GP = /* Velocity array */
-    MatAssign(NumberDimensions,1,NAN,NULL,NULL); 
+    MatAssign(N_dim,1,NAN,NULL,NULL); 
   double Search_Direction ; 
   Matrix V_GP_n;
-  V_GP_n = MatAllocZ(1,NumberDimensions);
+  V_GP_n = MatAllocZ(1,N_dim);
   int SearchVertex; /* Index to start the search */
   int * SearchList; /* Pointer to store the search list */
   ChainPtr ListNodes_I;
@@ -477,9 +480,9 @@ void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
       ChainToArray(FEM_Mesh.Connectivity[Elem_i],NumVertex);
       
     /* 6º Allocate the poligon Matrix and fill it */
-    Poligon_Coordinates = MatAllocZ(NumVertex,NumberDimensions);
+    Poligon_Coordinates = MatAllocZ(NumVertex,N_dim);
     for(int k = 0; k<NumVertex; k++){
-      for(int l = 0 ; l<NumberDimensions ; l++){
+      for(int l = 0 ; l<N_dim ; l++){
 	Poligon_Coordinates.nM[k][l] =
 	  FEM_Mesh.Coordinates.nM[Poligon_Connectivity[k]][l];
       }
@@ -518,7 +521,7 @@ void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
     
       /* 7aº As we are in a new element we set to zero the element coordinates
        and reset the chain with the nodal connectivity of the GP */
-      for(int j = 0 ; j<NumberDimensions ; j++){
+      for(int j = 0 ; j<N_dim ; j++){
 	MPM_Mesh.Phi.x_EC.nM[i][j] = 0;
       }
       
@@ -530,7 +533,7 @@ void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
       for(int j = 0 ; j<NumVertex ; j++){
 	/* First vertex */
 	if(j == 0){ 
-	  for(int k = 0 ; k<NumberDimensions ; k++){
+	  for(int k = 0 ; k<N_dim ; k++){
 	    Search_Direction =
 	      2*Poligon_Coordinates.nM[0][k] -
 	      Poligon_Coordinates.nM[1][k] -
@@ -541,7 +544,7 @@ void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 	}
 	/* Last vertex */
 	else if(j == (NumVertex - 1)){ 
-	  for(int k = 0 ; k<NumberDimensions ; k++){
+	  for(int k = 0 ; k<N_dim ; k++){
 	    Search_Direction =
 	      2*Poligon_Coordinates.nM[NumVertex-1][k] -
 	      Poligon_Coordinates.nM[0][k] -
@@ -552,7 +555,7 @@ void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 	}
 	/* The rest of the elements */
 	else{ 
-	  for(int k = 0 ; k<NumberDimensions ; k++){
+	  for(int k = 0 ; k<N_dim ; k++){
 	    Search_Direction =
 	      2*Poligon_Coordinates.nM[j][k] -
 	      Poligon_Coordinates.nM[j+1][k] -
@@ -594,9 +597,9 @@ void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 					    NumVertex);
       
 	/* Allocate the polligon Matrix and fill it */
-	Poligon_Coordinates = MatAllocZ(NumVertex,NumberDimensions);
+	Poligon_Coordinates = MatAllocZ(NumVertex,N_dim);
 	for(int k = 0; k<NumVertex; k++){
-	  for(int l = 0 ; l<NumberDimensions ; l++){
+	  for(int l = 0 ; l<N_dim ; l++){
 	    Poligon_Coordinates.nM[k][l] =
 	      FEM_Mesh.Coordinates.nM[Poligon_Connectivity[k]][l];
 	  }
@@ -664,6 +667,8 @@ void UpdateBeps(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 
 */
 {
+
+  int N_dim = 3;
   
   /* Search radious */
   double epsilon;
@@ -692,8 +697,8 @@ void UpdateBeps(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
   int NumSearchGP;
 
   /* Distance */
-  Matrix X0 = MatAssign(NumberDimensions,1,NAN,NULL,NULL);
-  Matrix X1 = MatAssign(NumberDimensions,1,NAN,NULL,NULL);
+  Matrix X0 = MatAssign(N_dim,1,NAN,NULL,NULL);
+  Matrix X1 = MatAssign(N_dim,1,NAN,NULL,NULL);
   double Dist;
 
   /* Free the previous list and set to NULL */
@@ -778,13 +783,14 @@ void GPinCell(ChainPtr * ListInCELL,
 */
 {
 
+  int N_dim = 3;
   ChainPtr iPtr = (* GlobalList);
   ChainPtr AuxPtr;
   Matrix X0, X1;
   double Dist;
   if(iPtr != NULL){
-    X0 = MatAssign(NumberDimensions,1,NAN,x_GC.nM[iGP],NULL);
-    X1 = MatAssign(NumberDimensions,1,NAN,x_GC.nM[iPtr->I],NULL);
+    X0 = MatAssign(N_dim,1,NAN,x_GC.nM[iGP],NULL);
+    X1 = MatAssign(N_dim,1,NAN,x_GC.nM[iPtr->I],NULL);
     Dist = Distance(X1,X0);
 
     /* Found one to delete */
@@ -827,7 +833,7 @@ Matrix get_Element_Field(Matrix Nodal_Field, Element GP_Element){
   int * Element_Connectivity = GP_Element.Connectivity;
   int NumNodes = GP_Element.NumberNodes;
   Matrix Element_Field;
-  int Ndim = Nodal_Field.N_rows;
+  int Ndim = 3;
   int Ie;
 
   /* Allocate a matrix to store the nodal quatities in the element */

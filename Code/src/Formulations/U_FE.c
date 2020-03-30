@@ -4,7 +4,7 @@
 #include <math.h>
 #include "grams.h"
 
-void u_ForwardEuler(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
+void U_FE(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
 /*
   Displacement formulation of the MPM with a Forward Euler as 
   time integrator scheme
@@ -45,12 +45,11 @@ void u_ForwardEuler(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
     Phi_I = compute_NodalFields(MPM_Mesh,FEM_Mesh);
     puts(" \t DONE !!!");
     puts(" \t Essential boundary conditions over P");
-    imposse_NodalMomentum(FEM_Mesh,Phi_I,TimeStep);
+    imposse_NodalMomentum(FEM_Mesh,Phi_I,TimeStep);    
     puts(" \t DONE !!!");
     puts(" \t Compute nodal velocity");
     V_I = compute_NodalVelocity(FEM_Mesh, Phi_I);
     puts(" \t DONE !!!");
-
     
     if(TimeStep % ResultsTimeStep == 0){
       /* Print Nodal values after appling the BCCs */
@@ -63,9 +62,9 @@ void u_ForwardEuler(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
     
     puts("*************************************************");
     puts(" Second step : Compute internal forces ... WORKING");
-    F_I = MatAllocZ(Nnodes,Ndim);
+    F_I = MatAllocZ(Nnodes,Ndim);    
     puts(" \t Compute internal forces");
-    F_I = compute_InternalForces(F_I, V_I, MPM_Mesh, FEM_Mesh, DeltaTimeStep);
+    F_I = compute_InternalForces(F_I, V_I, MPM_Mesh, FEM_Mesh, DeltaTimeStep);    
     puts(" \t DONE !!!");
     puts(" \t Compute body forces");
     F_I = compute_BodyForces(F_I, MPM_Mesh, FEM_Mesh, TimeStep);
@@ -86,13 +85,11 @@ void u_ForwardEuler(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
     /* 		      MPM_Mesh.Beps,FEM_Mesh.DeltaX); */
     /*   puts(" \t DONE !!!"); */
     /* } */
-
     
     puts("*************************************************");
     puts(" Third step : Update nodal momentum ... WORKING");
     update_NodalMomentum(FEM_Mesh,Phi_I,F_I);
-    puts(" DONE !!!");
-    
+    puts(" DONE !!!");    
     puts("*************************************************");
     puts(" Four step : Update lagrangian ... WORKING");
     update_Langrangians(MPM_Mesh, FEM_Mesh, Phi_I, F_I, DeltaTimeStep);

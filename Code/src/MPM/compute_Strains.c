@@ -20,9 +20,11 @@ Tensor compute_RateOfStrain(Matrix Velocity, Matrix Gradient)
     /* Assign from matrix to tensor */
     Velocity_I = memory_to_Tensor(Velocity.nM[I], 1);
     Gradient_I = memory_to_Tensor(Gradient.nM[I], 1);
+   
     /* Compute the dyadic product of the nodal velocity and the
        gradient of the shape functions */
     VoG_I = get_dyadicProduct_Of(Velocity_I, Gradient_I);
+    
     /* Ad the nodal contribution to the train tensor */
     for(int i = 0 ; i<3 ; i++){
       for(int j = 0 ; j<3 ; j++){

@@ -57,7 +57,6 @@ int main(int argc, char * argv[])
     puts("*************************************************");
     puts("Read outputs ...");
     GramsOutputs(SimulationFile);
-
     
     /*********************************************************************/
     /********************** RUN THE MPM CALCULUS *************************/
@@ -65,7 +64,7 @@ int main(int argc, char * argv[])
     puts("*************************************************");
     puts("Run simulation ...");
     if(strcmp(TimeIntegration,"FE") == 0 ){ /* Forward Euler */
-      u_ForwardEuler(FEM_Mesh, MPM_Mesh);
+      U_FE(FEM_Mesh, MPM_Mesh);
     }
     if(strcmp(TimeIntegration,"GA") == 0 ){ /* Generalized-alpha */
       U_GA(FEM_Mesh, MPM_Mesh);
