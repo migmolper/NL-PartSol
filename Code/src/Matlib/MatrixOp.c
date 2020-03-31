@@ -1023,7 +1023,8 @@ Matrix Eigen_Mat(Matrix In){
     break;
 
   case 3 :
-     exit(EXIT_FAILURE);
+    puts("Error in Eigen_Mat() : 3D case not defined !");        
+    exit(EXIT_FAILURE);
     break;
     
   default :

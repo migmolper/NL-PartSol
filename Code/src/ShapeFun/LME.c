@@ -34,7 +34,7 @@
 void LME_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 {
 
-  int N_dim = NumberDimensions;
+  int N_dim = 3;
 
   /* Variables for the GP coordinates */  
   Matrix X_GC_GP = MatAssign(N_dim,1,NAN,NULL,NULL);
@@ -174,7 +174,6 @@ void LME_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 	/* 	 "A is near to singular matrix"); */
 	/*   exit(0); */
 	/* } */
-	
 	/* Initialize lambda */
 	lambda_GP.nV = MPM_Mesh.lambda.nM[i];
 	/* lambda_GP = Solve_Linear_Sistem(A,B,lambda_GP); */
@@ -220,10 +219,10 @@ Matrix LME_Beta(Matrix Beta, Matrix l, double Gamma)
 */
 {
 
-  int N_dim = NumberDimensions;
+  int N_dim = 3;
   int NumNodes_GP = l.N_rows;
   double h = 0;
-  Matrix l_GP_I = MatAssign(NumberDimensions,1,NAN,NULL,NULL);
+  Matrix l_GP_I = MatAssign(N_dim,1,NAN,NULL,NULL);
   
   /* Get the mean distande */
   for(int i = 0 ; i<NumNodes_GP ; i++){
@@ -259,7 +258,7 @@ Matrix LME_lambda_NR(Matrix l, Matrix lambda, Matrix Beta)
 {
   /* Definition of some parameters */
   int MaxIter = 100;
-  int Ndim = NumberDimensions;
+  int N_dim = 3;
   int NumIter = 0; /* Iterator counter */
   double norm_r = 10; /* Value of the norm */
   Matrix p; /* Shape function vector */
@@ -279,7 +278,7 @@ Matrix LME_lambda_NR(Matrix l, Matrix lambda, Matrix Beta)
     /* Get the Hessian of log(Z) and update it with +||r||*I 
        according with Dennis M.Kochmann et al. 2019 (CMAME) */    
     J = LME_J(l,p,r);
-    for(int i = 0 ; i<Ndim ; i++){
+    for(int i = 0 ; i<N_dim ; i++){
       J.nM[i][i] += norm_r;
     }
 
@@ -292,10 +291,10 @@ Matrix LME_lambda_NR(Matrix l, Matrix lambda, Matrix Beta)
     }
     
     /* Get the increment of lambda */
-    D_lambda = Solve_Linear_Sistem(J,r,MatAllocZ(Ndim,1));
+    D_lambda = Solve_Linear_Sistem(J,r,MatAllocZ(N_dim,1));
 
     /* Update the value of lambda */
-    for(int i = 0 ; i<NumberDimensions ; i++){
+    for(int i = 0 ; i<N_dim ; i++){
       lambda.nV[i] -= D_lambda.nV[i];
     }
 
@@ -332,7 +331,7 @@ double LME_fa(Matrix la, Matrix lambda, Matrix Beta)
   -> Gamma : Tunning parameter (scalar).
 */
 {  
-  int N_dim = NumberDimensions;
+  int N_dim = 3;
   double fa = 0;
 
   for(int i = 0 ; i<N_dim ; i++){
@@ -359,7 +358,8 @@ Matrix LME_p(Matrix l, Matrix lambda, Matrix Beta)
 {
   
   /* Definition of some parameters */
-  int N_a = l.N_rows, N_dim = NumberDimensions;
+  int N_a = l.N_rows;
+  int N_dim = 3;
   double Z = 0, Z_m1 = 0;
   Matrix p = /* Vector with the values of the shape-function in the nodes */
     MatAlloc(1,N_a); 
@@ -398,9 +398,10 @@ Matrix LME_r(Matrix l, Matrix p)
 */
 {  
   /* Definition of some parameters */
-  int N_a = l.N_rows, N_dim = NumberDimensions;
+  int N_a = l.N_rows;
+  int N_dim = 3;
   Matrix r /* Value of the gradient */
-    = MatAllocZ(NumberDimensions,1);
+    = MatAllocZ(N_dim,1);
 
   /* Fill ''r'' */
   for(int i = 0 ; i<N_dim ; i++){
@@ -428,7 +429,7 @@ Matrix LME_J(Matrix l, Matrix p, Matrix r)
 {  
   /* Definition of some parameters */
   int N_a = l.N_rows;
-  int N_dim = NumberDimensions;
+  int N_dim = 3;
   Matrix J; /* Hessian definition */
   
   /* Allocate Hessian */
@@ -465,8 +466,9 @@ Matrix LME_dp(Matrix l, Matrix p)
 */
 {  
   /* Definition of some parameters */
-  int N_a = l.N_rows, N_dim = NumberDimensions;
-  Matrix dp = MatAllocZ(N_dim,N_a);
+  int N_a = l.N_rows;
+  int N_dim = 3;
+  Matrix dp = MatAllocZ(N_a,N_dim);
   Matrix r; /* Gradient of log(Z) */
   Matrix J; /* Hessian of log(Z) */
   Matrix Jm1; /* Inverse of J */
@@ -489,7 +491,7 @@ Matrix LME_dp(Matrix l, Matrix p)
     la.nV = l.nM[a]; 
     Jm1_la = Scalar_prod(Jm1,la);    
     for(int i = 0 ; i<N_dim ; i++){
-      dp.nM[i][a] = - p.nV[a]*Jm1_la.nV[i];
+      dp.nM[a][i] = - p.nV[a]*Jm1_la.nV[i];
     }
     FreeMat(Jm1_la);
   }
@@ -506,8 +508,9 @@ Matrix LME_dp(Matrix l, Matrix p)
 ChainPtr LME_Tributary_Nodes(Matrix X_GP, Matrix Beta,
 			     int Elem_GP, Mesh FEM_Mesh){
 
+  int N_dim = 3;
   Matrix Distance; /* Distance between node and GP */
-  Matrix X_I = MatAssign(NumberDimensions,1,NAN,NULL,NULL);
+  Matrix X_I = MatAssign(N_dim,1,NAN,NULL,NULL);
   ChainPtr * Table_Elem = NULL;
   ChainPtr Triburary_Nodes = NULL;
   ChainPtr List_Nodes = NULL;

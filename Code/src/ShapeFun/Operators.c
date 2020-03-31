@@ -217,5 +217,3 @@ Matrix compute_ShapeFunction_Gradient(Element GP_Element,
 
   return Gradient_p;
 }
-
-
