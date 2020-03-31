@@ -53,8 +53,8 @@ void Q4_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 	ChainToArray(FEM_Mesh.Connectivity[j],NumVertex);
 
       /* 4º Get the coordinates of the element */
-      Poligon_Coordinates =
-	ElemCoordinates(FEM_Mesh,Poligon_Connectivity,NumVertex);
+      Poligon_Coordinates = ElemCoordinates(FEM_Mesh,Poligon_Connectivity,
+					    NumVertex);
       
       /* 5º Check out if the GP is in the Element */
       if(InOut_Poligon(X_GC_GP,Poligon_Coordinates) == 1){
@@ -72,7 +72,6 @@ void Q4_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 	FreeChain(MPM_Mesh.ListNodes[i]);
 	MPM_Mesh.ListNodes[i] = NULL;
 	MPM_Mesh.ListNodes[i] = CopyChain(FEM_Mesh.Connectivity[j]);
-	
 	/* 9º Active those nodes that interact with the GP */
 	ListNodes_I = MPM_Mesh.ListNodes[i];
 	while(ListNodes_I != NULL){
@@ -101,7 +100,7 @@ void Q4_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 Matrix Q4_N(Matrix X_e){
 
   /* Error check */
-  if( (fabs(X_e.nV[0]) > 1 ) || (fabs(X_e.nV[1]) > 1 ) ){
+  if( (fabs(X_e.nV[0]) > 1+TOL_zero ) || (fabs(X_e.nV[1]) > 1+TOL_zero ) ){
     printf("Error in Q4() : Out of the element bounds !!! \n");
     exit(0);
   }    
@@ -124,7 +123,7 @@ Matrix Q4_N(Matrix X_e){
 Matrix Q4_dN_Ref(Matrix X_e){
 
   /* Error check */
-  if( (fabs(X_e.nV[0]) > 1 ) || (fabs(X_e.nV[1]) > 1 ) ){
+  if( (fabs(X_e.nV[0]) > 1+TOL_zero ) || (fabs(X_e.nV[1]) > 1+TOL_zero ) ){
     printf("Error in dQ4() : Out of the element bounds !!! \n");
     exit(0);
   }    

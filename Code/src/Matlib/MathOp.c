@@ -138,7 +138,7 @@ int InOut_Poligon(Matrix X_Point, Matrix Poligon)
   /* Get the normal vector */
   a.nV[0] = Poligon.nM[1][0] - Poligon.nM[0][0];
   a.nV[1] = Poligon.nM[1][1] - Poligon.nM[0][1];
-  a.nV[2] = Poligon.nM[1][2] - Poligon.nM[0][2];
+  a.nV[2] = Poligon.nM[1][2] - Poligon.nM[0][2];  
   b.nV[0] = Poligon.nM[Poligon.N_rows-1][0] - Poligon.nM[0][0];
   b.nV[1] = Poligon.nM[Poligon.N_rows-1][1] - Poligon.nM[0][1];
   b.nV[2] = Poligon.nM[Poligon.N_rows-1][2] - Poligon.nM[0][2];

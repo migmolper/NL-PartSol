@@ -27,7 +27,6 @@ Matrix GetInitialGaussPointPosition(Mesh FEM_Mesh, int GPxElement)
   int Node;
 
   switch(GPxElement){
-
   case 1 :
     if(strcmp(FEM_Mesh.TypeElem,"Quadrilateral") == 0){
       /* Centred GP */
@@ -38,12 +37,11 @@ Matrix GetInitialGaussPointPosition(Mesh FEM_Mesh, int GPxElement)
       /* Get the coordinate of the center */
       for(int i = 0 ; i<NumElemMesh ; i++){
 	Element = get_Element(i, FEM_Mesh.Connectivity[i],
-			       FEM_Mesh.NumNodesElem[i]);
+			      FEM_Mesh.NumNodesElem[i]);
 	for(int k = 0 ; k<4 ; k++){
 	  Node = Element.Connectivity[k];
-	  for(int l = 0 ; l<NumberDimensions ; l++){
-	    X_GC.nM[i][l] +=
-	      N_GP.nV[k]*FEM_Mesh.Coordinates.nM[Node][l];
+	  for(int l = 0 ; l<2 ; l++){
+	    X_GC.nM[i][l] += N_GP.nV[k]*FEM_Mesh.Coordinates.nM[Node][l];
 	  }
 	}
 	free(Element.Connectivity);
@@ -53,10 +51,28 @@ Matrix GetInitialGaussPointPosition(Mesh FEM_Mesh, int GPxElement)
       /* Free value of the shape function in the GP */
       FreeMat(N_GP);
     }
-    /* if(strcmp(FEM_Mesh.TypeElem,"Triangle") == 0){ */
-    /*   /\* Evaluate the shape function *\/ */
-    /*   N_GP = T3(X_GP); */
-    /* }     */
+    else if(strcmp(FEM_Mesh.TypeElem,"Triangle") == 0){
+      X_EC.nV[0] = (double)1/3;
+      X_EC.nV[1] = (double)1/3;
+      /* Evaluate the shape function */
+      N_GP = T3(X_EC);
+      /* Get the coordinate of the center */
+      for(int i = 0 ; i<NumElemMesh ; i++){
+	Element = get_Element(i, FEM_Mesh.Connectivity[i],
+			      FEM_Mesh.NumNodesElem[i]);
+	for(int k = 0 ; k<3 ; k++){
+	  Node = Element.Connectivity[k];
+	  for(int l = 0 ; l<2 ; l++){
+	    X_GC.nM[i][l] += N_GP.nV[k]*FEM_Mesh.Coordinates.nM[Node][l];
+	  }
+	}
+	free(Element.Connectivity);
+      }
+      /* Free auxiliar matrix with the coordinates */
+      FreeMat(X_EC);
+      /* Free value of the shape function in the GP */
+      FreeMat(N_GP);
+    }
     break;
   case 4:
     if(strcmp(FEM_Mesh.TypeElem,"Quadrilateral") == 0){
@@ -69,14 +85,14 @@ Matrix GetInitialGaussPointPosition(Mesh FEM_Mesh, int GPxElement)
       /* X_EC.nM[2][1] =  0.5; */
       /* X_EC.nM[3][0] = -0.5; */
       /* X_EC.nM[3][1] = -0.5; */
-      X_EC.nM[0][0] =  1/pow(3,0.5);
-      X_EC.nM[0][1] =  1/pow(3,0.5);
-      X_EC.nM[1][0] =  1/pow(3,0.5);
-      X_EC.nM[1][1] = -1/pow(3,0.5);
-      X_EC.nM[2][0] = -1/pow(3,0.5);
-      X_EC.nM[2][1] =  1/pow(3,0.5);
-      X_EC.nM[3][0] = -1/pow(3,0.5);
-      X_EC.nM[3][1] = -1/pow(3,0.5);
+      X_EC.nM[0][0] = (double)1/pow(3,0.5);
+      X_EC.nM[0][1] = (double)1/pow(3,0.5);
+      X_EC.nM[1][0] = (double)1/pow(3,0.5);
+      X_EC.nM[1][1] = (double)-1/pow(3,0.5);
+      X_EC.nM[2][0] = (double)-1/pow(3,0.5);
+      X_EC.nM[2][1] = (double)1/pow(3,0.5);
+      X_EC.nM[3][0] = (double)-1/pow(3,0.5);
+      X_EC.nM[3][1] = (double)-1/pow(3,0.5);
       /* Get the coordinate of the center */
       for(int i = 0 ; i<NumElemMesh ; i++){
 	Element = get_Element(i, FEM_Mesh.Connectivity[i],
@@ -232,8 +248,7 @@ Matrix ElemCoordinates(Mesh FEM_Mesh, int * Connectivity, int NumVertex)
   Coordinates = MatAllocZ(NumVertex,N_dim);
   for(int k = 0; k<NumVertex; k++){
     for(int l = 0 ; l<N_dim ; l++){
-      Coordinates.nM[k][l] =
-	FEM_Mesh.Coordinates.nM[Connectivity[k]][l];
+      Coordinates.nM[k][l] = FEM_Mesh.Coordinates.nM[Connectivity[k]][l];
     }
   }
   

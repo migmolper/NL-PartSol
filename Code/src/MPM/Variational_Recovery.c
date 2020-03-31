@@ -32,7 +32,7 @@ Matrix compute_NodalFields(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 
     /* Define element of the GP */
     Nodes_p = get_Element(p, MPM_Mesh.ListNodes[p], MPM_Mesh.NumberNodes[p]);
-    
+
     /* Evaluate the shape function in the coordinates of the GP */
     ShapeFunction_p = compute_ShapeFunction(Nodes_p, MPM_Mesh, FEM_Mesh);
    
