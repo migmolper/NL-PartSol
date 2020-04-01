@@ -65,7 +65,7 @@ $(EXE): $(OBJS)
 
 #####################################################################
 # Rule for benchmarks
-.PHONY: Debug_MPM Debug_LME Sulsky_MPM Sulsky_GIMP Sulsky_LME Cuadrado_MPM Disco_MPM Disco_GIMP Traccion_MPM Traccion_GIMP Traccion_LME Dyka_MPM Dyka_GIMP Dyka_LME Dyka_GA Brazilian_MPM
+.PHONY: Debug_MPM Debug_LME Sulsky_MPM Sulsky_GIMP Sulsky_LME Cuadrado_MPM Disco_MPM Disco_GIMP Traccion_MPM Traccion_GIMP Traccion_LME Dyka_MPM Dyka_GIMP Dyka_LME Dyka_GA Brazilian_MPM Three_Point_Bar
 
 # Caso para debugear
 Debug_MPM:
@@ -169,6 +169,12 @@ Brazilian_MPM:
 Brazilian_LME:
 	@echo "**************** Run test case ******************"
 	$ ./$(EXE) -2D -V $(TESTDIR)/Brazilian_LME/ejemplo.gdf
+	@echo " "
+	@echo "*************** Test case passed ****************"
+# Three point test fracture 
+Three_Point_Bar:
+	@echo "**************** Run test case ******************"
+	$ ./$(EXE) -2D -V $(TESTDIR)/Three_Point_Bar/ejemplo.gdf
 	@echo " "
 	@echo "*************** Test case passed ****************"
 

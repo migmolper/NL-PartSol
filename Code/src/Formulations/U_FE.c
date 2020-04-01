@@ -65,11 +65,8 @@ void u_ForwardEuler(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
     puts("*************************************************");
     puts(" Third step : Update the particle stress state");
     puts(" \t a) Get the grid nodal velocity ... WORKING");
-    Nodal_Velocity = GetNodalVelocity(FEM_Mesh,
-				      Nodal_MOMENTUM,
-				      Nodal_MASS);
+    Nodal_Velocity = GetNodalVelocity(FEM_Mesh,Nodal_MOMENTUM,Nodal_MASS);
     puts(" \t DONE !!!");
-
     
     if(TimeStep % ResultsTimeStep == 0){
       /* Print Nodal values after appling the BCCs */
@@ -81,9 +78,7 @@ void u_ForwardEuler(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
     } 
     
     puts(" \t b) Calculate the strain increment ... WORKING");
-    UpdateGaussPointStrain(MPM_Mesh,
-			   FEM_Mesh,
-			   Nodal_Velocity);
+    UpdateGaussPointStrain(MPM_Mesh,FEM_Mesh,Nodal_Velocity);
     puts(" \t DONE !!!");
     
     puts(" \t c) Update the particle stress state ... WORKING");
