@@ -11,7 +11,7 @@ CFL = 0.7
 
 fig, ax = plt.subplots()
 
-Route_Results = '%s/%s/%s/%s*.vtk'%('test','Dyka_LME','Resultados','MPM_MPM_VALUES_')
+Route_Results = '%s/%s/%s/%s*.vtk'%('test','Dyka_MPM','Resultados','MPM_MPM_VALUES_')
 Files = sorted(glob.glob(Route_Results),key=os.path.getmtime)
 Num_Files = len(Files)
 DeltaX = 1

@@ -19,9 +19,9 @@ void Q4_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 
 {
   /* Variables for the GP coordinates */
-  int N_dim = 3;
-  Matrix X_GC_GP = MatAssign(N_dim,1,NAN,NULL,NULL);
-  Matrix X_EC_GP = MatAssign(N_dim,1,NAN,NULL,NULL);
+  int Ndim = 3;
+  Matrix X_GC_GP = MatAssign(Ndim,1,NAN,NULL,NULL);
+  Matrix X_EC_GP = MatAssign(Ndim,1,NAN,NULL,NULL);
 
   /* Variables for the poligon */
   int NumVertex;
@@ -126,10 +126,12 @@ Matrix Q4_dN_Ref(Matrix X_e){
   if( (fabs(X_e.nV[0]) > 1+TOL_zero ) || (fabs(X_e.nV[1]) > 1+TOL_zero ) ){
     printf("Error in dQ4() : Out of the element bounds !!! \n");
     exit(0);
-  }    
+  }
+
+  int Ndim = 3;
   
   /* Definition and allocation */
-  Matrix dNdX_ref = MatAllocZ(4,3);
+  Matrix dNdX_ref = MatAllocZ(4,Ndim);
   
   /* Fill the matrix */
 
@@ -170,12 +172,13 @@ Matrix Q4_F_Ref(Matrix X_NC_GP, Matrix X_GC_Nodes)
   evaluated in the GP
 */
 {
+  int Ndim = 3;
   /* Variable declaration */
   Matrix dNdX_Ref_GP;
   Tensor X_I;
   Tensor dNdx_I;
   Tensor F_Ref_I;
-  Matrix F_Ref = MatAllocZ(3,3);
+  Matrix F_Ref = MatAllocZ(Ndim,Ndim);
 
   /* 1º Evaluate the derivarive of the shape function in the GP */
   dNdX_Ref_GP = Q4_dN_Ref(X_NC_GP); 
@@ -215,15 +218,15 @@ Matrix Q4_F_Ref(Matrix X_NC_GP, Matrix X_GC_Nodes)
 Matrix Q4_dN(Matrix X_EC, Matrix Element)
 /*
   - Matrix X_EC_GP : Element coordinates of the gauss point
-  - Matrix Element : Coordinates of the element (4 x 3)
+  - Matrix Element : Coordinates of the element (4 x Ndim)
 */
 {
   
-  /* Derivatives of the shape function evaluates in the GP (4x3) */
+  /* Derivatives of the shape function evaluates in the GP (4 x Ndim) */
   Matrix dNdX;
   Matrix dNdX_T;
 
-  /* 1º Evaluate the gradient of the shape function in the GP (4x3) */
+  /* 1º Evaluate the gradient of the shape function in the GP (4 x Ndim) */
   Matrix dNdX_Ref = Q4_dN_Ref(X_EC);
   
   /* 2º Get the Jacobian of the transformation evaluated in the GP */
@@ -259,12 +262,12 @@ Matrix Q4_Xi_to_X(Matrix Xi, Matrix Element)
   and get it global coordiantes    
 */
 {
-
+  int Ndim = 3;
   /* 1º Evaluate the Q4 element in the element coordinates */
   Matrix N = Q4_N(Xi);
 
   /* 2º Allocate the output coordinates */
-  Matrix X = MatAllocZ(3,1);
+  Matrix X = MatAllocZ(Ndim,1);
 
   /* 3º Get the global coordinates for this element coordiantes in this element */
   for(int I = 0 ; I<4 ; I++){

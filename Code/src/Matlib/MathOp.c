@@ -246,7 +246,7 @@ Matrix SolvePolynomial(Matrix Coeffs)
     exit(0);
   }
 
-  double a, b, c;
+  double a, b, c, d;
   double aux;
 
   switch(N_Coeffs){
@@ -273,7 +273,14 @@ Matrix SolvePolynomial(Matrix Coeffs)
     Solution.nV[1] =
       0.5*(- b - sqrt(aux))/a;
     break;
-       
+
+  case 4 :
+    /* Coeficients */
+    a = Coeffs.nV[0];
+    b = Coeffs.nV[1];
+    c = Coeffs.nV[2];
+    d = Coeffs.nV[3];
+    break;
   default :
     printf(" %s : %s \n ",
 	   "Error in SolvePolynomial() ",

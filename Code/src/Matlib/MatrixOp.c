@@ -1023,8 +1023,33 @@ Matrix Eigen_Mat(Matrix In){
     break;
 
   case 3 :
-    puts("Error in Eigen_Mat() : 3D case not defined !");        
-    exit(EXIT_FAILURE);
+    /* Get the coefficients of the charasteristic pol */
+    Coeffs = MatAllocZ(1,4);
+    Coeffs.nV[0] = /* a*x^3 */
+      + 1.0; 
+    Coeffs.nV[1] = /* b*x^2 */
+      - In.nM[0][0]
+      - In.nM[1][1]
+      - In.nM[2][2]; 
+    Coeffs.nV[2] = /* c*x */
+      + In.nM[0][0]*In.nM[2][2]
+      + In.nM[1][1]*In.nM[2][2]
+      + In.nM[0][0]*In.nM[1][1]
+      - In.nM[1][0]*In.nM[0][1]
+      - In.nM[2][1]*In.nM[1][2]
+      - In.nM[2][0]*In.nM[0][2]; 
+    Coeffs.nV[2] = /* d */
+      - In.nM[0][0]*In.nM[1][1]*In.nM[2][2]
+      - In.nM[0][1]*In.nM[1][2]*In.nM[2][0]
+      - In.nM[0][2]*In.nM[1][0]*In.nM[2][1]
+      + In.nM[1][0]*In.nM[0][1]*In.nM[2][2]
+      + In.nM[2][1]*In.nM[1][2]*In.nM[0][0]
+      + In.nM[2][0]*In.nM[0][2]*In.nM[1][1]; 
+    /* Solve the charasteristic pol to the eigenvalues */
+    Eigen_Vals = SolvePolynomial(Coeffs);
+    FreeMat(Coeffs);
+    /* Assign the eigenvalues to the solution */
+    Eigen.nV = Eigen_Vals.nV;
     break;
     
   default :

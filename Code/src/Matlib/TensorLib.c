@@ -10,6 +10,7 @@
 
 Tensor alloc_Tensor(int Order)
 {
+  int Ndim = 3;
   /* Define output */
   Tensor A;
   /* Swith cases */
@@ -21,18 +22,16 @@ Tensor alloc_Tensor(int Order)
     exit(EXIT_FAILURE);       
   case 1:
     A.Order = 1;
-    A.n = malloc(sizeof(double[3]));
-    for(int i = 0 ; i<3 ; i++){
+    A.n = malloc(sizeof(double[Ndim]));
+    for(int i = 0 ; i<Ndim ; i++){
       A.n[i] = 0.0;
     }
     break;
   case 2:
     A.Order = 2;
-    A.N[0] = malloc(sizeof(double[3]));
-    A.N[1] = malloc(sizeof(double[3]));
-    A.N[2] = malloc(sizeof(double[3]));
-    for(int i = 0 ; i<3 ; i++){
-      for(int j = 0 ; j<3 ; j++){
+    for(int i = 0 ; i<Ndim ; i++){
+      A.N[i] = malloc(sizeof(double[Ndim]));
+      for(int j = 0 ; j<Ndim ; j++){
 	A.N[i][j] = 0.0;
       }
     }
@@ -50,6 +49,7 @@ Tensor alloc_Tensor(int Order)
 
 Tensor memory_to_Tensor(double * A_mem, int Order)
 {
+  int Ndim = 3;
   /* Define output */
   Tensor A_tens;
   /* Swith cases */
@@ -65,9 +65,9 @@ Tensor memory_to_Tensor(double * A_mem, int Order)
     break;
   case 2:
     A_tens.Order = 2;
-    A_tens.N[0] = A_mem;
-    A_tens.N[1] = A_mem+3;
-    A_tens.N[2] = A_mem+6;
+    for(int i = 0 ; i<Ndim ; i++){
+      A_tens.N[i] = A_mem+i*Ndim;
+    }
     break;
   default :
     fprintf(stderr,"%s : %s \n",
@@ -109,12 +109,14 @@ void free_Tensor(Tensor A)
 
 double get_I1_Of(Tensor A)
 {
+  int Ndim = 3;
   /* Define output */
-  double I1;
+  double I1 = 0;
   /* Check if is the order is order 2 */
-  if(A.Order == 2){  
-    I1 =
-      A.N[0][0] + A.N[1][1] + A.N[2][2];
+  if(A.Order == 2){
+    for(int i = 0 ; i<Ndim ; i++){
+      I1 += A.N[i][i];
+    }
   }
   else{
     fprintf(stderr,"%s : %s !!! \n",
@@ -134,12 +136,8 @@ double get_I2_Of(Tensor A)
   /* Check if is the order is order 2 */
   if(A.Order == 2){  
     I2 =
-      A.N[0][0]*A.N[1][1] +
-      A.N[1][1]*A.N[2][2] +
-      A.N[0][0]*A.N[2][2] -
-      A.N[0][1]*A.N[1][0] -
-      A.N[1][2]*A.N[2][3] -
-      A.N[0][2]*A.N[2][0];
+      A.N[0][0]*A.N[1][1] + A.N[1][1]*A.N[2][2] + A.N[0][0]*A.N[2][2] -
+      A.N[0][1]*A.N[1][0] - A.N[1][2]*A.N[2][1] - A.N[2][0]*A.N[0][2];
   }
   else{
     fprintf(stderr,"%s : %s !!! \n",
@@ -241,13 +239,14 @@ double get_J3_Of(Tensor A)
 
 double get_EuclideanNorm_Of(Tensor A)
 {
+  int Ndim = 3;
   /* Define output */
   double Out;
   /* Check if the input is a first order tensor */
   if(A.Order == 1){
     /* Compute norm */    
     double Aux = 0;
-    for(int i = 0 ; i<3 ; i++){
+    for(int i = 0 ; i<Ndim ; i++){
       Aux += A.n[i]*A.n[i] ;
     }
     Out = pow(Aux,0.5);
@@ -265,15 +264,15 @@ double get_EuclideanNorm_Of(Tensor A)
 
 Tensor get_I()
 {
+  int Ndim = 3;
   Tensor I = alloc_Tensor(2);
-  for(int i = 0 ; i<3 ; i++){
+  for(int i = 0 ; i<Ndim ; i++){
     I.N[i][i] = 1;
   }
   return I;
 }
 
 /*************************************************************/
-
 
 Tensor get_Inverse_Of(Tensor A)
 {
@@ -323,13 +322,14 @@ Tensor get_Inverse_Of(Tensor A)
 
 Tensor get_Transpose_Of(Tensor A)
 {
+  int Ndim = 3;
   /* Allocate the output */
   Tensor AT = alloc_Tensor(2);  
   /* Check if the input is a second order tensor */
   if (A.Order == 2){
     /* Get the transpose */
-    for(int i = 0 ; i < 3 ; i++){
-      for(int j = 0 ; j < 3 ; j++){
+    for(int i = 0 ; i < Ndim ; i++){
+      for(int j = 0 ; j < Ndim ; j++){
 	AT.N[i][j] = A.N[j][i];
       }
     }
@@ -349,20 +349,20 @@ Tensor get_Transpose_Of(Tensor A)
 double get_innerProduct_Of(Tensor A, Tensor B)
 {
 
+  int Ndim = 3;
   /* Variable declaration output matrix */
   double AdotB = 0;
-
   /* Inner product of second order tensors */
   if ( (A.Order == 2) && (B.Order == 2) ) { 
-    for(int i = 0 ; i < 3 ; i++){
-      for(int j = 0 ; j < 3 ; j++){
+    for(int i = 0 ; i < Ndim ; i++){
+      for(int j = 0 ; j < Ndim ; j++){
 	  AdotB += A.N[i][j]*B.N[i][j];
       }
     }
   }
   /* Inner product of first order tensors */
   else if( (A.Order == 1) && (B.Order == 1) ){
-    for(int i = 0 ; i < 3 ; i++){
+    for(int i = 0 ; i < Ndim ; i++){
       AdotB += A.n[i]*B.n[i];
     }
   }
@@ -404,13 +404,14 @@ Tensor get_vectorProduct_Of(Tensor a, Tensor b)
 
 Tensor get_dyadicProduct_Of(Tensor a, Tensor b)
 {
+  int Ndim = 3;
   /* Tensor declaration */
   Tensor aob = alloc_Tensor(2);
   /* Check if the input are a first order tensor */
   if ((a.Order == 1) && (b.Order == 1)){
     /* Operate tensor product */
-    for(int i = 0 ; i<3 ; i++){
-      for(int j = 0 ; j<3 ; j++){
+    for(int i = 0 ; i<Ndim ; i++){
+      for(int j = 0 ; j<Ndim ; j++){
 	aob.N[i][j] = a.n[i]*b.n[j];
       } 
     }
@@ -429,6 +430,7 @@ Tensor get_dyadicProduct_Of(Tensor a, Tensor b)
 
 Tensor get_firstOrderContraction_Of(Tensor A, Tensor b)
 {
+  int Ndim = 3;
   /* Tensor declaration */
   Tensor Adotb = alloc_Tensor(1);
   /* Check in the input its is ok */
@@ -436,9 +438,9 @@ Tensor get_firstOrderContraction_Of(Tensor A, Tensor b)
     /* Auxiliar variable */
     double Aux;
     /* Operate tensors */
-    for(int i = 0 ; i<3 ; i++){
+    for(int i = 0 ; i<Ndim ; i++){
       Aux = 0;
-      for(int j = 0 ; j<3 ; j++){
+      for(int j = 0 ; j<Ndim ; j++){
 	Aux += A.N[i][j]*b.n[j];
       }
       Adotb.n[i] = Aux;

@@ -9,6 +9,7 @@
 Matrix compute_BodyForces(Matrix F_I, GaussPoint MPM_Mesh,
 			  Mesh FEM_Mesh, int TimeStep)
 {
+  int Ndim = 3;
   Load * B = MPM_Mesh.B;
   Element Nodes_p; /* Element for each Gauss-Point */
   Matrix ShapeFunction_p; /* Nodal values of the sahpe function */
@@ -41,7 +42,7 @@ Matrix compute_BodyForces(Matrix F_I, GaussPoint MPM_Mesh,
       ShapeFunction_p = compute_ShapeFunction(Nodes_p, MPM_Mesh, FEM_Mesh);
 
       /* Fill vector of body forces */
-      for(int k = 0 ; k<3 ; k++){
+      for(int k = 0 ; k<Ndim ; k++){
 	if( (TimeStep < 0) || (TimeStep > B[i].Value[k].Num)){
 	  printf("%s : %s\n",
 		 "Error in compute_BodyForces()",
@@ -61,7 +62,7 @@ Matrix compute_BodyForces(Matrix F_I, GaussPoint MPM_Mesh,
 	ShapeFunction_pI = ShapeFunction_p.nV[I];
 	
 	/* Compute External forces */
-	for(int k = 0 ; k<3 ; k++){
+	for(int k = 0 ; k<Ndim ; k++){
 	  F_I.nM[Ip][k] += ShapeFunction_pI*b.n[k]*m_p;
 	}
 	
@@ -78,52 +79,12 @@ Matrix compute_BodyForces(Matrix F_I, GaussPoint MPM_Mesh,
 
 }
 
-
 /*********************************************************************/
-
-/* Matrix Eval_Body_Forces(Load * B, int NumLoads, int NumGP, int TimeStep) */
-/* /\* */
-/*   Evaluate body forces in a time step. */
-/* *\/ */
-/* { */
-/*   Matrix Body_Forces_t = */
-/*     MatAllocZ(NumberDimensions,NumGP); */
-/*   int GP_Force; */
-  
-/*   if(NumLoads>0){ */
-/*     for(int i = 0 ; i<NumLoads; i++){ */
-/*       for(int j = 0 ; j<B[i].NumNodes ; j++){ */
-/* 	GP_Force = B[i].Nodes[j]; */
-/* 	for(int k = 0 ; k<B[i].Dim ; k++){ */
-/* 	  if( (B[i].Dir[k] == 1) || */
-/* 	      (B[i].Dir[k] == -1)){ */
-/* 	    if( (TimeStep < 0) || */
-/* 		(TimeStep > B[i].Value[k].Num)){ */
-/* 	      printf("%s : %s\n", */
-/* 		     "Error in GetNodalForces()", */
-/* 		     "The time step is out of the curve !!"); */
-/* 	      exit(0); */
-/* 	    } */
-/* 	    Body_Forces_t.nM[k][GP_Force] += */
-/* 	      B[i].Value[k].Fx[TimeStep]* */
-/* 	      (double)B[i].Dir[k]; */
-/* 	  } */
-/* 	} */
-/*       } */
-/*     } */
-/*   } */
-
-/*   return Body_Forces_t; */
-
-/* } */
-
-
-
-/*************************************************************/
 
 Matrix compute_ContacForces(Matrix F_I, GaussPoint MPM_Mesh,
 			    Mesh FEM_Mesh, int TimeStep)
 {
+  int Ndim = 3;
   Load * F = MPM_Mesh.F;
   Element Nodes_p; /* Element for each Gauss-Point */
   Matrix ShapeFunction_p; /* Nodal values of the sahpe function */
@@ -164,7 +125,7 @@ Matrix compute_ContacForces(Matrix F_I, GaussPoint MPM_Mesh,
       ShapeFunction_p = compute_ShapeFunction(Nodes_p, MPM_Mesh, FEM_Mesh);
 
       /* Fill vector of body forces */
-      for(int k = 0 ; k<3 ; k++){
+      for(int k = 0 ; k<Ndim ; k++){
 	if( (TimeStep < 0) || (TimeStep > F[i].Value[k].Num)){
 	  printf("%s : %s\n",
 		 "Error in compute_ContacForces()",
@@ -184,7 +145,7 @@ Matrix compute_ContacForces(Matrix F_I, GaussPoint MPM_Mesh,
 	ShapeFunction_pI = ShapeFunction_p.nV[I];
 	
 	/* Compute Contact forces */
-	for(int k = 0 ; k<3 ; k++){
+	for(int k = 0 ; k<Ndim ; k++){
 	  F_I.nM[Ip][k] += ShapeFunction_pI*t.n[k]*V_p;
 	}
 	

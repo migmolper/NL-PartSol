@@ -57,10 +57,10 @@ Matrix compute_NodalFields(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
       M_Ip = m_p*ShapeFunction_pI;
 
       /* Nodal mass */
-      Phi_I.nM[Ip][3] += M_Ip;
+      Phi_I.nM[Ip][Ndim] += M_Ip;
       
       /* Nodal momentum */
-      for(int i = 0 ; i<3 ; i++){
+      for(int i = 0 ; i<Ndim ; i++){
 	Phi_I.nM[Ip][i] += M_Ip*MPM_Mesh.Phi.vel.nM[p][i];
       }   
     }
@@ -89,7 +89,7 @@ Matrix compute_NodalVelocity(Mesh FEM_Mesh, Matrix Phi_I)
   int Nnodes = FEM_Mesh.NumNodesMesh;
 
   /* Define output */
-  Matrix V_I = MatAllocZ(Nnodes,3);
+  Matrix V_I = MatAllocZ(Nnodes,Ndim);
   strcpy(V_I.Info,"VELOCITY");
 
   /* Value of the nodal mass */
@@ -97,7 +97,7 @@ Matrix compute_NodalVelocity(Mesh FEM_Mesh, Matrix Phi_I)
   
   /* 1º Get nodal values of the velocity */
   for(int i = 0 ; i<Nnodes ; i++){
-    M_I = Phi_I.nM[i][3];
+    M_I = Phi_I.nM[i][Ndim];
     if(M_I > 0){
       for(int j = 0 ; j<Ndim ; j++){      
 	V_I.nM[i][j] = Phi_I.nM[i][j]/M_I;

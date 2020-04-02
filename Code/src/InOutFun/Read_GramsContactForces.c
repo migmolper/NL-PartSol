@@ -20,6 +20,9 @@ Load * GramsNeumannBC(char * Name_File, int NumNeumannBC)
 */
 {
 
+  /* Number of dimensions */
+  int Ndim = 3;
+  
   /* Define new load case for the contact forces */
   Load * F = (Load *)Allocate_Array(NumNeumannBC,sizeof(Load));
 
@@ -108,13 +111,13 @@ Load * GramsNeumannBC(char * Name_File, int NumNeumannBC)
       FreeChain(Chain_Nodes);
 
       /* Number of dimensions of the BCC */
-      F[IndexLoad].Dim = 3;
+      F[IndexLoad].Dim = Ndim;
       /* Direction of the BCC */
       F[IndexLoad].Dir =
-	(int *)Allocate_ArrayZ(3,sizeof(int));
+	(int *)Allocate_ArrayZ(Ndim,sizeof(int));
       /* Curve for each dimension */
       F[IndexLoad].Value =
-	(Curve *)Allocate_Array(3,sizeof(Curve));
+	(Curve *)Allocate_Array(Ndim,sizeof(Curve));
       /* Information of the BCC */
       if(strcmp(Formulation,"-V") == 0){
   	/* Name of the BCC */

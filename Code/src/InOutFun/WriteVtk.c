@@ -6,6 +6,9 @@
 void WriteVtk_MPM(char * Name_File, GaussPoint MPM_Mesh,
 		  Matrix List_Fields, int TimeStep_i){
 
+  /* Number of dimensions */
+  int Ndim = 3;
+
   FILE * Vtk_file;
   char Name_file_t[80];
   double P_GP; /* Trace of the stress tensor (volumetric) */
@@ -77,10 +80,10 @@ void WriteVtk_MPM(char * Name_File, GaussPoint MPM_Mesh,
   fprintf(Vtk_file,"LOOKUP_TABLE default \n");
   for(int i =  0 ; i<MPM_Mesh.NumGP ; i++){
     P_GP = 0;
-    for(int j = 0 ; j<3 ; j++ ){
+    for(int j = 0 ; j<Ndim ; j++ ){
       P_GP += MPM_Mesh.Phi.Stress.nM[i][j];
     }    
-    fprintf(Vtk_file,"%f ",P_GP/3);
+    fprintf(Vtk_file,"%f ",P_GP/Ndim);
   }
 
   fprintf(Vtk_file,"SCALARS W float \n");
@@ -104,7 +107,7 @@ void WriteVtk_MPM(char * Name_File, GaussPoint MPM_Mesh,
 
   fprintf(Vtk_file,"VECTORS VELOCITY float \n");
   for(int i =  0 ; i<MPM_Mesh.NumGP ; i++){
-    for(int j = 0 ; j<3 ; j++){
+    for(int j = 0 ; j<Ndim ; j++){
       fprintf(Vtk_file,"%f ",MPM_Mesh.Phi.vel.nM[i][j]);
     }
     fprintf(Vtk_file,"\n");
@@ -112,7 +115,7 @@ void WriteVtk_MPM(char * Name_File, GaussPoint MPM_Mesh,
 
   fprintf(Vtk_file,"VECTORS DISPLACEMENT float \n");
   for(int i =  0 ; i<MPM_Mesh.NumGP ; i++){
-    for(int j = 0 ; j<3 ; j++){
+    for(int j = 0 ; j<Ndim ; j++){
       fprintf(Vtk_file,"%f ",MPM_Mesh.Phi.dis.nM[i][j]);
     }
     fprintf(Vtk_file,"\n");
@@ -120,9 +123,9 @@ void WriteVtk_MPM(char * Name_File, GaussPoint MPM_Mesh,
 
   fprintf(Vtk_file,"TENSORS STRESS float \n");
   for(int i =  0 ; i<MPM_Mesh.NumGP ; i++){
-    for(int j = 0 ; j<3 ; j++){
-      for(int k = 0 ; k<3 ; k++){
-	fprintf(Vtk_file,"%f ",MPM_Mesh.Phi.Stress.nM[i][j*3+k]);
+    for(int j = 0 ; j<Ndim ; j++){
+      for(int k = 0 ; k<Ndim ; k++){
+	fprintf(Vtk_file,"%f ",MPM_Mesh.Phi.Stress.nM[i][j*Ndim+k]);
       }
       fprintf(Vtk_file,"\n");
     }
@@ -131,9 +134,9 @@ void WriteVtk_MPM(char * Name_File, GaussPoint MPM_Mesh,
 
   fprintf(Vtk_file,"TENSORS STRAIN float \n");
   for(int i =  0 ; i<MPM_Mesh.NumGP ; i++){
-    for(int j = 0 ; j<3 ; j++){
-      for(int k = 0 ; k<3 ; k++){
-	fprintf(Vtk_file,"%f ",MPM_Mesh.Phi.Strain.nM[i][j*3+k]);
+    for(int j = 0 ; j<Ndim ; j++){
+      for(int k = 0 ; k<Ndim ; k++){
+	fprintf(Vtk_file,"%f ",MPM_Mesh.Phi.Strain.nM[i][j*Ndim+k]);
       }
       fprintf(Vtk_file,"\n");
     }
@@ -150,6 +153,8 @@ void WriteVtk_MPM(char * Name_File, GaussPoint MPM_Mesh,
 void WriteVtk_FEM(char * Name_File, Mesh ElementMesh,
 		  Matrix List_Nod_Fields, int TimeStep_i){
 
+  /* Number of dimensions */
+  int Ndim = 3;
   FILE * Vtk_file;
   char Name_file_t[80];
   int NumberFields;
@@ -242,52 +247,52 @@ void WriteVtk_FEM(char * Name_File, Mesh ElementMesh,
 	fprintf(Vtk_file,"VECTORS %s float \n","MOMENTUM");
 	for(int j =  0 ; j<ElementMesh.NumNodesMesh ; j++){
 	  /* Print the dimensions of the array */
-	  for(int k = 0 ; k<3 ; k++){
+	  for(int k = 0 ; k<Ndim ; k++){
 	    fprintf(Vtk_file,"%f ",List_Nod_Fields.nM[j][i_Field+k]);
 	  }
 	  fprintf(Vtk_file,"\n");	
 	}
 	/* Update the index of the field */
-	i_Field += 3;
+	i_Field += Ndim;
       }
 
       if(strcmp(FieldsList[i],"ACCELERATION_t0") == 0){
 	fprintf(Vtk_file,"VECTORS %s float \n","ACCELERATION_t0");
 	for(int j =  0 ; j<ElementMesh.NumNodesMesh ; j++){
 	  /* Print the dimensions of the array */
-	  for(int k = 0 ; k<3 ; k++){
+	  for(int k = 0 ; k<Ndim ; k++){
 	      fprintf(Vtk_file,"%f ",List_Nod_Fields.nM[j][i_Field+k]);
 	  }
 	  fprintf(Vtk_file,"\n");	
 	}
 	/* Update the index of the field */
-	i_Field += 3;
+	i_Field += Ndim;
       }
 
       if(strcmp(FieldsList[i],"ACCELERATION_t1") == 0){
 	fprintf(Vtk_file,"VECTORS %s float \n","ACCELERATION_t1");
 	for(int j =  0 ; j<ElementMesh.NumNodesMesh ; j++){
 	  /* Print the dimensions of the array */
-	  for(int k = 0 ; k<3 ; k++){
+	  for(int k = 0 ; k<Ndim ; k++){
 	    fprintf(Vtk_file,"%f ",List_Nod_Fields.nM[j][i_Field+k]);	  
 	  }
 	  fprintf(Vtk_file,"\n");	
 	}
 	/* Update the index of the field */
-	i_Field += 3;
+	i_Field += Ndim;
       }
 
       if(strcmp(FieldsList[i],"VELOCITY") == 0){
 	fprintf(Vtk_file,"VECTORS %s float \n","VELOCITY");
 	for(int j =  0 ; j<ElementMesh.NumNodesMesh ; j++){
 	  /* Print the dimensions of the array */
-	  for(int k = 0 ; k<3 ; k++){
+	  for(int k = 0 ; k<Ndim ; k++){
 	    fprintf(Vtk_file,"%f ",List_Nod_Fields.nM[j][i_Field+k]);
 	  }
 	  fprintf(Vtk_file,"\n");	
 	}
 	/* Update the index of the field */
-	i_Field += 3;
+	i_Field += Ndim;
       }
 
 
@@ -295,13 +300,13 @@ void WriteVtk_FEM(char * Name_File, Mesh ElementMesh,
 	fprintf(Vtk_file,"VECTORS %s float \n","F_INT");
 	for(int j =  0 ; j<ElementMesh.NumNodesMesh ; j++){
 	  /* Print the dimensions of the array */
-	  for(int k = 0 ; k<3 ; k++){
+	  for(int k = 0 ; k<Ndim ; k++){
 	    fprintf(Vtk_file,"%f ",List_Nod_Fields.nM[j][i_Field+k]);
 	  }
 	  fprintf(Vtk_file,"\n");	
 	}
 	/* Update the index of the field */
-	i_Field += 3;
+	i_Field += Ndim;
       }
 
 
@@ -309,26 +314,26 @@ void WriteVtk_FEM(char * Name_File, Mesh ElementMesh,
 	fprintf(Vtk_file,"VECTORS %s float \n","F_GRAV");
 	for(int j =  0 ; j<ElementMesh.NumNodesMesh ; j++){
 	  /* Print the dimensions of the array */
-	  for(int k = 0 ; k<3 ; k++){
+	  for(int k = 0 ; k<Ndim ; k++){
 	    fprintf(Vtk_file,"%f ",List_Nod_Fields.nM[j][i_Field+k]);
 	  }
 	  fprintf(Vtk_file,"\n");	
 	}
 	/* Update the index of the field */
-	i_Field += 3;
+	i_Field += Ndim;
       }
 
       if(strcmp(FieldsList[i],"F_TOT") == 0){
 	fprintf(Vtk_file,"VECTORS %s float \n","F_TOT");
 	for(int j =  0 ; j<ElementMesh.NumNodesMesh ; j++){
 	  /* Print the dimensions of the array */
-	  for(int k = 0 ; k<3 ; k++){
+	  for(int k = 0 ; k<Ndim ; k++){
 	    fprintf(Vtk_file,"%f ",List_Nod_Fields.nM[j][i_Field+k]);
 	  }
 	  fprintf(Vtk_file,"\n");	
 	}
 	/* Update the index of the field */
-	i_Field += 3;
+	i_Field += Ndim;
       }       
 
     }
@@ -365,13 +370,14 @@ void WriteVtk_Float_Scalar(char * Name_File, Matrix Field){
 
 void WriteVtk_Float_Vector(char * Name_File, Matrix Field){  
 
+  int Ndim = 3;
   FILE * Vtk_file; 
   Vtk_file = fopen(Name_File,"a");
   
   fprintf(Vtk_file,"VECTORS %s float \n",Field.Info);
   for(int i =  0 ; i<Field.N_cols ; i++){
     /* Print the dimensions of the array */
-    for(int j = 0 ; j<3 ; j++){
+    for(int j = 0 ; j<Ndim ; j++){
       fprintf(Vtk_file,"%f ",Field.nM[j][i]);
     }
     fprintf(Vtk_file,"\n");	
@@ -386,14 +392,15 @@ void WriteVtk_Float_Vector(char * Name_File, Matrix Field){
 
 void WriteVtk_Float_Tensor(char * Name_File, Matrix Field){  
 
+  int Ndim = 3;
   FILE * Vtk_file; 
   Vtk_file = fopen(Name_File,"a");
   
   fprintf(Vtk_file,"TENSORS %s float \n",Field.Info);
   for(int i =  0 ; i<Field.N_cols ; i++){
-    for(int j = 0 ; j<3 ; j++){
-      for(int k = 0 ; k<3 ; k++){
-	fprintf(Vtk_file,"%f ",Field.nM[i][j*3+k]);
+    for(int j = 0 ; j<Ndim ; j++){
+      for(int k = 0 ; k<Ndim ; k++){
+	fprintf(Vtk_file,"%f ",Field.nM[i][j*Ndim+k]);
       }
       fprintf(Vtk_file,"\n");
     }

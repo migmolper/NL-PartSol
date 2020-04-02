@@ -27,25 +27,3 @@ double update_Density(double rho_n, double TimeStep,
 }
 
 /*******************************************************/ 
-
-/* double UpdateGaussPointDensity(double rho_n_GP, */
-/* 			       double Delta_TraceStrain_GP) */
-/* /\*! */
-/*  * \brief Brief description of UpdateGaussPointDensity. */
-/*  *        Update the density field of the Gauss Point .  */
-/*  * */
-/*  *  The parameters for this functions are  : */
-/*  *  @param rho_n_GP : Density of the previous step. */
-/*  *  @param Delta_TraceStrain_GP : Increment of the trace of the strain tensor. */
-/*  * */
-/*  *\/ */
-/* { */
-/*   double rho_n1_GP; /\* Density for the next step *\/ */
-
-/*   /\* Update the density *\/ */
-/*   rho_n1_GP = (double)rho_n_GP/(1 + Delta_TraceStrain_GP); */
-
-/*   return rho_n1_GP;   */
-/* } */
-
-/*******************************************************/

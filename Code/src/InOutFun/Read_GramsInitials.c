@@ -16,6 +16,9 @@ void GramsInitials(char * Name_File, GaussPoint GP_Mesh, int GPxElement)
 */
 {
 
+  /* Number of dimensions */
+  int Ndim = 3;
+  
   /* Simulation file */
   FILE * Sim_dat;
   
@@ -145,19 +148,20 @@ void GramsInitials(char * Name_File, GaussPoint GP_Mesh, int GPxElement)
 		   Formulation,Parse_Init_Prop[1]);
 	    
 	    Num_words_parse = parse(IC_value,Parse_Init_Prop[1],"[,]");
-	    if(Num_words_parse != 3){
-	      fprintf(stderr,"%s : %s \n",
+
+	    /* Check the number of dimensions */
+	    if(Num_words_parse != Ndim){
+	      fprintf(stderr,"%s : %s %i-D %s\n",
 		      "Error in GramsInitials()",
-		      "Insuficient number of dimensions, 3 is required");
+		      "This is a",Ndim,"problem");
 	      exit(0);
 	    }
 
 	    /* Fill it IC for velocity formulation */
-	    if((strcmp(Formulation,"-V") == 0) &&
-	       (Num_words_parse == 3)){
+	    if(strcmp(Formulation,"-V") == 0){
 	      for(int i = 0 ; i<Num_Nodes ; i++){
 		for(int j = 0 ; j<GPxElement ; j++){
-		  for(int k = 0 ; k<3 ; k++){
+		  for(int k = 0 ; k<Ndim ; k++){
 		    GP_Mesh.Phi.vel.nM[Array_Nodes[i]*GPxElement+j][k] =
 		    atof(IC_value[k]);
 		  }
