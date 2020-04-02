@@ -83,10 +83,7 @@ void u_ForwardEuler(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
     
     puts(" \t c) Update the particle stress state ... WORKING");
     UpdateGaussPointStress(MPM_Mesh);
-    puts(" \t DONE !!!");
-
-    puts(" \t d) Check particle damage status ... WORKING");
-    ComputeDamage(MPM_Mesh,FEM_Mesh,TimeStep);
+    ComputeDamage(MPM_Mesh,FEM_Mesh);
     puts(" \t DONE !!!");
     
     puts("*************************************************");

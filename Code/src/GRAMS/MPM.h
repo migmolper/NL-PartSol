@@ -240,7 +240,7 @@ Matrix Eval_Contact_Forces(Load *, int, int, int);
 void UpdateGaussPointStrain(GaussPoint, Mesh, Matrix);
 double UpdateGaussPointDensity(double, double);
 void UpdateGaussPointStress(GaussPoint);
-void ComputeDamage(GaussPoint, Mesh, double);
+void ComputeDamage(GaussPoint, Mesh);
 Matrix GetNodalForces(GaussPoint, Mesh, int);
 Matrix GetNodalMass(GaussPoint, Mesh);
 

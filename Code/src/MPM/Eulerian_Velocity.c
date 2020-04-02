@@ -146,22 +146,25 @@ void UpdateGaussPointStress(GaussPoint MPM_Mesh)
       else{
 	exit(0);
       }
-      
-      /* 6º Get the deformation energy */
-      MPM_Mesh.Phi.W.nV[i] =
-	W_LinearElastic(Strain_n1,Stress_n1,MPM_Mesh.Phi.ji.nV[i]);
     }
     else{
+      /* The stress field is zero */
       for(int j = 0 ; j<MPM_Mesh.Phi.Stress.N_cols ; j++){
 	MPM_Mesh.Phi.Stress.nM[i][j] = 0.0;
       }
     }
+    
+    /* Get the deformation energy */
+    MPM_Mesh.Phi.W.nV[i] =
+      W_LinearElastic(Strain_n1,Stress_n1,MPM_Mesh.Phi.ji.nV[i]);
+    
   }
+  
 }
 
 /*******************************************************/
 
-void ComputeDamage(GaussPoint MPM_Mesh, Mesh FEM_Mesh, double DeltaT){
+void ComputeDamage(GaussPoint MPM_Mesh, Mesh FEM_Mesh){
 
   double DeltaX = FEM_Mesh.DeltaX;
   Matrix ji = MPM_Mesh.Phi.ji;

@@ -66,6 +66,7 @@ void U_PCE(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
     puts("**********************************************************");        
     puts(" Third step : Update the particle stress state ... WORKING");
     UpdateGaussPointStress(MPM_Mesh);
+    ComputeDamage(MPM_Mesh,FEM_Mesh);
     puts(" DONE !!!");
 
     puts("******************************************************");

@@ -26,7 +26,7 @@ GramsSolid2D (File=MPM_Mesh.msh) {
 	Ceps=1.5
 	ft=5.4
 	heps=36
-	Wc=1	
+	Wc=0.1
     }
     GramsShapeFun (Type=MPMQ4) { 
     }
