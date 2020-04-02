@@ -180,9 +180,9 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
       /* Strain field (Tensor) */
       MPM_Mesh.Phi.Strain = MatAllocZ(MPM_Mesh.NumGP,1);
       strcpy(MPM_Mesh.Phi.Strain.Info,"Strain field GP");
-      /* Rate of Strain field (Tensor) */
-      MPM_Mesh.Phi.RateStrain = MatAllocZ(MPM_Mesh.NumGP,1);
-      strcpy(MPM_Mesh.Phi.RateStrain.Info,"Rate of Strain field GP");
+      /* Initial value of E_1 scalar */
+      MPM_Mesh.Phi.StrainF = MatAllocZ(MPM_Mesh.NumGP,1);
+      strcpy(MPM_Mesh.Phi.StrainF.Info,"Strain init crack");
       /* Stress field (Tensor) */
       MPM_Mesh.Phi.Stress = MatAllocZ(MPM_Mesh.NumGP,1);
       strcpy(MPM_Mesh.Phi.Stress.Info,"Stress field GP");
@@ -217,9 +217,9 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
       /* Strain field (Tensor) */
       MPM_Mesh.Phi.Strain = MatAllocZ(MPM_Mesh.NumGP,3);
       strcpy(MPM_Mesh.Phi.Strain.Info,"Strain field GP");
-      /* Rate of Strain field (Tensor) */
-      MPM_Mesh.Phi.RateStrain = MatAllocZ(MPM_Mesh.NumGP,3);
-      strcpy(MPM_Mesh.Phi.RateStrain.Info,"Rate of Strain field GP");
+      /* Initial value of E_1 scalar */
+      MPM_Mesh.Phi.StrainF = MatAllocZ(MPM_Mesh.NumGP,1);
+      strcpy(MPM_Mesh.Phi.StrainF.Info,"Strain init crack");
       /* Stress field (Tensor) */
       MPM_Mesh.Phi.Stress = MatAllocZ(MPM_Mesh.NumGP,3);
       strcpy(MPM_Mesh.Phi.Stress.Info,"Stress field GP");
@@ -254,9 +254,9 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
       /* Strain field (Tensor) */
       MPM_Mesh.Phi.Strain = MatAllocZ(MPM_Mesh.NumGP,9);
       strcpy(MPM_Mesh.Phi.Strain.Info,"Strain field GP");
-      /* Rate of Strain field (Tensor) */
-      MPM_Mesh.Phi.RateStrain = MatAllocZ(MPM_Mesh.NumGP,9);
-      strcpy(MPM_Mesh.Phi.RateStrain.Info,"Rate of Strain field GP");
+      /* Initial value of E_1 scalar */
+      MPM_Mesh.Phi.StrainF = MatAllocZ(MPM_Mesh.NumGP,1);
+      strcpy(MPM_Mesh.Phi.StrainF.Info,"Strain init crack");
       /* Stress field (Tensor) */
       MPM_Mesh.Phi.Stress = MatAllocZ(MPM_Mesh.NumGP,9);
       strcpy(MPM_Mesh.Phi.Stress.Info,"Stress field GP");
@@ -382,7 +382,7 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
     /**************************************************/    
     if(Is_GramsNeumannBC){
       MPM_Mesh.NumNeumannBC = Counter_GramsNeumannBC;
-      MPM_Mesh.F = GramsNeumannBC(Name_File, Counter_GramsNeumannBC);
+      MPM_Mesh.F = GramsNeumannBC(Name_File, Counter_GramsNeumannBC,GPxElement);
     }
     else{
       MPM_Mesh.NumNeumannBC = Counter_GramsNeumannBC;

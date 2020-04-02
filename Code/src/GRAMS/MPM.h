@@ -94,8 +94,8 @@ typedef struct {
   Matrix Stress;
   /*! Strain field */
   Matrix Strain;
-  /*! Rate of Strain field */
-  Matrix RateStrain;
+  /*! Strain during crack */
+  Matrix StrainF;
   /*! Deformation Energy */
   Matrix W;
   /*! Damage parameter (Fracture) */

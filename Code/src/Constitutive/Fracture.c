@@ -27,8 +27,9 @@ void EigenerosionAlgorithm(Matrix ji, Matrix W,
 {
   /* Define auxiliar variable */
   int Num_GP = W.N_rows*W.N_cols;
-  
-  double Ceps_p, m_p, sum_p, G_p, Gf_p;
+
+  double Stress_I, Stress_II;
+  double Ceps_p, m_p, sum_p, G_p, Gf_p, Stress_1p;
   double m_q, W_q;
   int * Beps_p;
   int Neps_p;
@@ -36,8 +37,14 @@ void EigenerosionAlgorithm(Matrix ji, Matrix W,
   int Mat_p;
   
   for(int p = 0 ; p < Num_GP ; p++){
+    
+    Stress_I = Stress.nM[p][0]+Stress.nM[p][1];
+    Stress_II = Stress.nM[p][2]*Stress.nM[p][2];
+    Stress_1p = 0.5*(- Stress_I + sqrt(Stress_I*Stress_I +
+				       4*Stress_II*Stress_II));
+    
     if((ji.nV[p] < 1) && /* Non broken GP */
-       (Stress.nM[p][0]>0) && (Stress.nM[p][1]>0)){ /* Only traction */
+       (Stress_1p>0)){ /* Only traction */
 
       /* Kind of material */
       Mat_p = MatIdx[p];
@@ -84,10 +91,10 @@ void EigenerosionAlgorithm(Matrix ji, Matrix W,
 
 /*******************************************************/
 
-void EigensofteningAlgorithm(Matrix ji, Matrix RateStrain,
-			     Matrix Mass, Matrix Stress,
-			     int * MatIdx, Material * MatPro,
-			     ChainPtr * Beps, double DeltaT)
+void EigensofteningAlgorithm(Matrix ji, Matrix Strain,
+			     Matrix StrainF, Matrix Mass,
+			     Matrix Stress, int * MatIdx,
+			     Material * MatPro, ChainPtr * Beps)
 /*
   Pedro Navas, Rena C. Yu, Bo Li & Gonzalo Ruiz.
   Modeling the dynamic fracture in concrete: 
@@ -107,16 +114,16 @@ void EigensofteningAlgorithm(Matrix ji, Matrix RateStrain,
 */
 {
   /* Define auxiliar variable */
-  int Num_GP = RateStrain.N_rows;
+  int Num_GP = Strain.N_rows;
   
   
   /* Material properties of the eigensoftening algorithm */
   double ft_p, Wc_p, heps_p;
 
   /* Invariants for stress and rate of strain */
-  double Stress_I, Stress_II, RateStrain_I, RateStrain_II;
+  double Stress_I, Stress_II, Strain_I, Strain_II;
     
-  double m_p, Stress_1p, sum_p, Seps_p, RateStrain_1p;
+  double m_p, Stress_1p, sum_p, Seps_p, Strain_1p;
   double m_q, Stress_1q;
   int * Beps_p;
   int Neps_p;
@@ -135,58 +142,81 @@ void EigensofteningAlgorithm(Matrix ji, Matrix RateStrain,
     Wc_p = MatPro[Mat_p].Wc;
 
     /* Only for intact particles */
-    if(ji.nV[p] == 0){
-          
-      /* For the current particle get the mass and first principal stress */
-      m_p = Mass.nV[p];
-      Stress_I = Stress.nM[p][0]+Stress.nM[p][1];
-      Stress_II = Stress.nM[p][2]*Stress.nM[p][2];
-      Stress_1p = 0.5*(- Stress_I + sqrt(Stress_I*Stress_I +
-					 4*Stress_II*Stress_II));
+    if((ji.nV[p] == 0) && (StrainF.nV[p] == 0)){
 
-      /* Add the first term to the sumation */
-      sum_p = m_p*Stress_1p;
-
-      /* Get the neighbours */
+      /* Get the number of neighbours */
       Neps_p = LenghtChain(Beps[p]);
-      Beps_p = ChainToArray(Beps[p],Neps_p);    
+      if(Neps_p > 0){
 
-      /* Loop over the neighbours */
-      for(int j = 0; j < Neps_p ; j++){
-
-	/* Get the indedx of each particle q close to p */
-	q = Beps_p[j];
-
-	/* For the current particle get the mass and first principal stress */
-	m_q = Mass.nV[q];      
-	Stress_I = Stress.nM[q][0]+Stress.nM[q][1];
-	Stress_II = Stress.nM[q][2]*Stress.nM[q][2];
-	Stress_1q = 0.5*(- Stress_I + sqrt(Stress_I*Stress_I +
-					   4*Stress_II*Stress_II));
+	/* Get the neighbours */      
+	Beps_p = ChainToArray(Beps[p],Neps_p);    
       
-	/* Get sum_p */
-	sum_p += m_q*Stress_1q;
-	m_p += m_q;
-      }
-    
-      /* Free memory */
-      free(Beps_p);
+	/* For the current particle get the mass and first principal stress */
+	m_p = Mass.nV[p];
+	Stress_I =
+	  Stress.nM[q][0]+Stress.nM[q][1];
+	Stress_II =
+	  Stress.nM[q][0]*Stress.nM[q][1]-Stress.nM[q][2]*Stress.nM[q][2];
+	Stress_1p =
+	  0.5*(- Stress_I + sqrt(Stress_I*Stress_I + 4*Stress_II));
+      
+	/* Add the first term to the sumation */
+	sum_p = m_p*Stress_1p;
 
-      /* Get the equivalent critical stress */
-      Seps_p = sum_p/m_p;
+	/* Loop over the neighbours */
+	for(int j = 0; j < Neps_p ; j++){
+
+	  /* Get the indedx of each particle q close to p */
+	  q = Beps_p[j];
+
+	  /* For the current particle get the mass and first principal stress */
+	  m_q = Mass.nV[q];      
+	  Stress_I =
+	    Stress.nM[q][0]+Stress.nM[q][1];
+	  Stress_II =
+	    Stress.nM[q][0]*Stress.nM[q][1]-Stress.nM[q][2]*Stress.nM[q][2];
+	  Stress_1q =
+	    0.5*(- Stress_I + sqrt(Stress_I*Stress_I + 4*Stress_II));
+      
+	  /* Get sum_p */
+	  sum_p += m_q*Stress_1q;
+	  m_p += m_q;
+	}
+    
+	/* Free memory */
+	free(Beps_p);
+
+	/* Get the equivalent critical stress */
+	Seps_p = sum_p/m_p;
+
+	/* Store the principal strain when crack start */
+	if(Seps_p>ft_p){	
+	  Strain_I =
+	    Strain.nM[p][0]+Strain.nM[p][1];
+	  Strain_II =
+	    Strain.nM[p][0]*Strain.nM[p][1]-0.25*Strain.nM[p][2]*Strain.nM[p][2];
+	  Strain_1p =
+	    0.5*(- Strain_I + sqrt(Strain_I*Strain_I + 4*Strain_II));
+	  StrainF.nV[p] = Strain_1p;
+	}
+	
+      }
+      
     }
     
     /* Compute the damage parameter if the particle is damaged */
-    if((ji.nV[p] > 0.0) || (Seps_p > ft_p )){ 
+    if((ji.nV[p] > 0.0) || (StrainF.nV[p] > 0 )){ 
 
       /* Get the principal rate of strain */
-      RateStrain_I = RateStrain.nM[p][0]+RateStrain.nM[p][1];
-      RateStrain_II = RateStrain.nM[p][2]*RateStrain.nM[p][2];
-      RateStrain_1p = 0.5*(- RateStrain_I + sqrt(RateStrain_I*RateStrain_I +
-						 RateStrain_II*RateStrain_II));
-            
+      Strain_I =
+	Strain.nM[p][0]+Strain.nM[p][1];
+      Strain_II =
+	Strain.nM[p][0]*Strain.nM[p][1]-0.25*Strain.nM[p][2]*Strain.nM[p][2];
+      Strain_1p =
+	0.5*(- Strain_I + sqrt(Strain_I*Strain_I + 4*Strain_II));
+      
       /* Fracture criterium */
-      ji.nV[p] = RateStrain_1p*DeltaT*heps_p/Wc_p;
+      ji.nV[p] = (Strain_1p-StrainF.nV[p])*heps_p/Wc_p;
       
     }    
   }

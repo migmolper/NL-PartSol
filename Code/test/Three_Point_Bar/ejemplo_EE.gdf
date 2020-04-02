@@ -22,11 +22,9 @@ GramsSolid2D (File=MPM_Mesh.msh) {
 	rho=2.368e-9
 	E=31000
 	mu=0.2
-	Fracture=Eigensoftening
+	Fracture=Eigenerosion
+	Gf=141e-6
 	Ceps=1.5
-	ft=5.4
-	heps=36
-	Wc=1	
     }
     GramsShapeFun (Type=MPMQ4) { 
     }

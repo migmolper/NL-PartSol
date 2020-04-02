@@ -338,8 +338,9 @@ GramsMaterials (Particles=route.txt) {
 	  }
 	  /**************************************************/ 
 	  if(Mat_GP.Eigensoftening){ /* Check eigensoftening properties */
-	    if(Is_ft || Is_heps || Is_Wc){
+	    if(Is_Ceps && Is_ft && Is_heps && Is_Wc){
 	      printf("\t -> %s : %s \n","Fracture","Eigensoftening");
+	      printf("\t -> %s : %f \n","Normalizing constant",Mat_GP.Ceps);
 	      printf("\t -> %s : %f \n","Tensile strengt",Mat_GP.ft);
 	      printf("\t -> %s : %f \n","Bandwidth Bazant",Mat_GP.heps);
 	      printf("\t -> %s : %f \n","Critical opening",Mat_GP.Wc);

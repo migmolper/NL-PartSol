@@ -21,7 +21,7 @@ typedef struct {
   /* Activate fracture modulus */
   bool Eigenerosion;
   bool Eigensoftening;
-  /* Normalizing constant (Eigenerosion) */
+  /*Normalizing constant (Eigenerosion/Eigensoftening) */
   double Ceps;
   /* Failure energy (Eigenerosion)  */
   double Gf;
@@ -47,7 +47,7 @@ void EigenerosionAlgorithm(Matrix, Matrix,
 			   ChainPtr *, double);
 void EigensofteningAlgorithm(Matrix, Matrix,
 			     Matrix, Matrix,
-			     int *, Material *,
-			     ChainPtr *, double);
+			     Matrix, int *,
+			     Material *, ChainPtr *);
 
 /*******************************************************/
