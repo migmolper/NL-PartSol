@@ -46,7 +46,7 @@ void GIMP_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh){
   }
   
   for(int i = 0 ; i<FEM_Mesh.NumElemMesh ; i++){
-    FreeChain(FEM_Mesh.GPsElements[i]);
+    free_Set(FEM_Mesh.GPsElements[i]);
     FEM_Mesh.GPsElements[i] = NULL;
   }
 
@@ -67,7 +67,7 @@ void GIMP_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh){
       /* 3º Connectivity of the Poligon */
       NumVertex = FEM_Mesh.NumNodesElem[j];
       Poligon_Connectivity =
-	ChainToArray(FEM_Mesh.Connectivity[j],NumVertex);
+	Set_to_Pointer(FEM_Mesh.Connectivity[j],NumVertex);
 
       /* 4º Get the coordinates of the element */
       Poligon_Coordinates =
@@ -79,20 +79,20 @@ void GIMP_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh){
 	/* 6º Asign to the GP a element in the background mesh, just for 
 	   searching porpuses */
 	MPM_Mesh.Element_id[i] = j;
-	PushNodeTop(&FEM_Mesh.GPsElements[j],i);
+	push_to_Set(&FEM_Mesh.GPsElements[j],i);
 
 	/* 7º If the GP is in the element, get its natural coordinates */
 	X_EC_GP.nV = MPM_Mesh.Phi.x_EC.nM[i];
 	Q4_X_to_Xi(X_EC_GP,X_GC_GP,Poligon_Coordinates);
 
 	/* 8º Get list of nodes near to the GP */
-	FreeChain(MPM_Mesh.ListNodes[i]);
+	free_Set(MPM_Mesh.ListNodes[i]);
 	MPM_Mesh.ListNodes[i] = NULL;
 	MPM_Mesh.ListNodes[i] =
 	  Tributary_Nodes_GIMP(X_GC_GP,MPM_Mesh.Element_id[i],lp,FEM_Mesh);
 	/* MPM_Mesh.ListNodes[i] = */
 	/*   Tributary_Nodes_GIMP(X_EC_GP,MPM_Mesh.Element_id[i],lp,FEM_Mesh); */
-	MPM_Mesh.NumberNodes[i] = LenghtChain(MPM_Mesh.ListNodes[i]);
+	MPM_Mesh.NumberNodes[i] = get_Lenght_Set(MPM_Mesh.ListNodes[i]);
 	/* 9º Active those nodes that interact with the GP */
 	ListNodes_I = MPM_Mesh.ListNodes[i];
 	while(ListNodes_I != NULL){
@@ -229,7 +229,7 @@ ChainPtr Tributary_Nodes_GIMP(Matrix X_GP, int Elem_GP,
   int Num_Elem;
   int * List_Elements;
   int * NodesElem = /* List of nodes of the element */
-    ChainToArray(FEM_Mesh.Connectivity[Elem_GP],NumNodesElem);
+    Set_to_Pointer(FEM_Mesh.Connectivity[Elem_GP],NumNodesElem);
   double Ra = /* Get the search radius */
     FEM_Mesh.DeltaX + lp.nV[0];
   
@@ -241,18 +241,18 @@ ChainPtr Tributary_Nodes_GIMP(Matrix X_GP, int Elem_GP,
   for(int i = 0 ; i<NumNodesElem ; i++){
     Table_Elem[i] = FEM_Mesh.NodeNeighbour[NodesElem[i]];
   }
-  Triburary_Elements = ChainUnion(Table_Elem,NumNodesElem);
+  Triburary_Elements = get_Union_Of(Table_Elem,NumNodesElem);
   /* Free memory */
   free(NodesElem);
   free(Table_Elem);
   Table_Elem = NULL;
   
   /* List with the tributary nodes */
-  Num_Elem = LenghtChain(Triburary_Elements);
-  List_Elements = ChainToArray(Triburary_Elements,Num_Elem);
+  Num_Elem = get_Lenght_Set(Triburary_Elements);
+  List_Elements = Set_to_Pointer(Triburary_Elements,Num_Elem);
 
   /* Free the chain with the tributary elements */
-  FreeChain(Triburary_Elements);
+  free_Set(Triburary_Elements);
   
   /* Fill the chain with the preliminary tributary nodes */
   Table_ElemNodes = malloc(Num_Elem*sizeof(ChainPtr));
@@ -260,7 +260,7 @@ ChainPtr Tributary_Nodes_GIMP(Matrix X_GP, int Elem_GP,
     Table_ElemNodes[i] = FEM_Mesh.Connectivity[List_Elements[i]];
   }
   
-  List_Nodes = ChainUnion(Table_ElemNodes,Num_Elem);
+  List_Nodes = get_Union_Of(Table_ElemNodes,Num_Elem);
   
   /* Free the array wit the list of tributary elements */
   free(List_Elements);
@@ -281,7 +281,7 @@ ChainPtr Tributary_Nodes_GIMP(Matrix X_GP, int Elem_GP,
 
     /* If the node is near the GP push in the chain */
     if(Norm_Mat(Distance,2) <= Ra){
-      PushNodeTop(&Triburary_Nodes,iPtr->I);
+      push_to_Set(&Triburary_Nodes,iPtr->I);
     }
 
     /* Free memory of the distrance vector */
@@ -291,7 +291,7 @@ ChainPtr Tributary_Nodes_GIMP(Matrix X_GP, int Elem_GP,
     iPtr = iPtr->next;
   }
   /* Free memory */
-  FreeChain(List_Nodes);
+  free_Set(List_Nodes);
   
   return Triburary_Nodes;
 }

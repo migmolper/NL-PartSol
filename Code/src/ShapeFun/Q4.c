@@ -19,7 +19,7 @@ void Q4_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 
 {
   /* Variables for the GP coordinates */
-  int Ndim = 3;
+  int Ndim = NumberDimensions;
   Matrix X_GC_GP = MatAssign(Ndim,1,NAN,NULL,NULL);
   Matrix X_EC_GP = MatAssign(Ndim,1,NAN,NULL,NULL);
 
@@ -36,7 +36,7 @@ void Q4_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
   }
   
   for(int i = 0 ; i<FEM_Mesh.NumElemMesh ; i++){
-    FreeChain(FEM_Mesh.GPsElements[i]);
+    free_Set(FEM_Mesh.GPsElements[i]);
     FEM_Mesh.GPsElements[i] = NULL;
   }
 
@@ -50,7 +50,7 @@ void Q4_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
       /* 3º Connectivity of the Poligon */
       NumVertex = FEM_Mesh.NumNodesElem[j];
       Poligon_Connectivity =
-	ChainToArray(FEM_Mesh.Connectivity[j],NumVertex);
+	Set_to_Pointer(FEM_Mesh.Connectivity[j],NumVertex);
 
       /* 4º Get the coordinates of the element */
       Poligon_Coordinates = ElemCoordinates(FEM_Mesh,Poligon_Connectivity,
@@ -62,14 +62,14 @@ void Q4_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 	/* 6º Asign to the GP a element in the background mesh, just for 
 	   searching porpuses */
 	MPM_Mesh.Element_id[i] = j;
-	PushNodeTop(&FEM_Mesh.GPsElements[j],i);
+	push_to_Set(&FEM_Mesh.GPsElements[j],i);
 
 	/* 7º If the GP is in the element, get its natural coordinates */
 	X_EC_GP.nV = MPM_Mesh.Phi.x_EC.nM[i];
 	Q4_X_to_Xi(X_EC_GP,X_GC_GP,Poligon_Coordinates);
 
 	/* 8º Get list of nodes near to the GP */
-	FreeChain(MPM_Mesh.ListNodes[i]);
+	free_Set(MPM_Mesh.ListNodes[i]);
 	MPM_Mesh.ListNodes[i] = NULL;
 	MPM_Mesh.ListNodes[i] = CopyChain(FEM_Mesh.Connectivity[j]);
 	/* 9º Active those nodes that interact with the GP */
@@ -128,7 +128,7 @@ Matrix Q4_dN_Ref(Matrix X_e){
     exit(0);
   }
 
-  int Ndim = 3;
+  int Ndim = NumberDimensions;
   
   /* Definition and allocation */
   Matrix dNdX_ref = MatAllocZ(4,Ndim);
@@ -172,7 +172,7 @@ Matrix Q4_F_Ref(Matrix X_NC_GP, Matrix X_GC_Nodes)
   evaluated in the GP
 */
 {
-  int Ndim = 3;
+  int Ndim = NumberDimensions;
   /* Variable declaration */
   Matrix dNdX_Ref_GP;
   Tensor X_I;
@@ -194,16 +194,14 @@ Matrix Q4_F_Ref(Matrix X_NC_GP, Matrix X_GC_Nodes)
     F_Ref_I = get_dyadicProduct_Of(X_I,dNdx_I);
 
     /* 5º Increment the reference deformation gradient */
-    for(int i = 0 ; i<2 ; i++){
-      for(int j = 0 ; j<2 ; j++){
+    for(int i = 0 ; i<Ndim ; i++){
+      for(int j = 0 ; j<Ndim ; j++){
 	F_Ref.nM[i][j] += F_Ref_I.N[i][j];
       }
     }
     /* 6º Free data of the nodal contribution */
     free_Tensor(F_Ref_I);    
   }
-
-  F_Ref.nM[2][2] = 1;
   
   /* 7º Free memory */
   FreeMat(dNdX_Ref_GP);
@@ -262,7 +260,7 @@ Matrix Q4_Xi_to_X(Matrix Xi, Matrix Element)
   and get it global coordiantes    
 */
 {
-  int Ndim = 3;
+  int Ndim = NumberDimensions;
   /* 1º Evaluate the Q4 element in the element coordinates */
   Matrix N = Q4_N(Xi);
 

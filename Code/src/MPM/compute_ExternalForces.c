@@ -9,7 +9,7 @@
 Matrix compute_BodyForces(Matrix F_I, GaussPoint MPM_Mesh,
 			  Mesh FEM_Mesh, int TimeStep)
 {
-  int Ndim = 3;
+  int Ndim = NumberDimensions;
   Load * B = MPM_Mesh.B;
   Element Nodes_p; /* Element for each Gauss-Point */
   Matrix ShapeFunction_p; /* Nodal values of the sahpe function */
@@ -84,7 +84,7 @@ Matrix compute_BodyForces(Matrix F_I, GaussPoint MPM_Mesh,
 Matrix compute_ContacForces(Matrix F_I, GaussPoint MPM_Mesh,
 			    Mesh FEM_Mesh, int TimeStep)
 {
-  int Ndim = 3;
+  int Ndim = NumberDimensions;
   Load * F = MPM_Mesh.F;
   Element Nodes_p; /* Element for each Gauss-Point */
   Matrix ShapeFunction_p; /* Nodal values of the sahpe function */

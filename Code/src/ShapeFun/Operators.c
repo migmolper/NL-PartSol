@@ -17,7 +17,7 @@ Matrix compute_ShapeFunction(Element GP_Element,
   Matrix GP_ElemCoord; /* Coordinates of the nodes */
   int GP_I; /* Get the node for the GP */
 
-  int Ndim = 3;
+  int Ndim = NumberDimensions;
   
   /* Gauss-Point properties */
   Matrix X_GP = /* Element coordinates of the Gauss-Point */
@@ -121,7 +121,7 @@ Matrix compute_ShapeFunction_Gradient(Element GP_Element,
   int GP_NumNodes = GP_Element.NumberNodes;
   int * GP_Connect = GP_Element.Connectivity;
 
-  int Ndim = 3;
+  int Ndim = NumberDimensions;
   
   Matrix GP_ElemCoord; /* Coordinates of the nodes */
   int GP_I; /* Get the node for the GP */

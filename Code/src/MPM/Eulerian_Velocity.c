@@ -18,7 +18,7 @@ void update_NodalMomentum(Mesh FEM_Mesh, Matrix Phi_I, Matrix F_I)
  */
 {
   int Nnodes = FEM_Mesh.NumNodesMesh;
-  int Ndim = 3;
+  int Ndim = NumberDimensions;
   
   /* Update the grid nodal momentum */
   for(int i = 0 ; i<Nnodes ; i++){
@@ -47,8 +47,8 @@ void GA_UpdateNodalKinetics(Mesh FEM_Mesh,
  */
 {
   int N_Nodes = FEM_Mesh.NumNodesMesh;
-  int N_dim = 3;
-  double SizeTable = N_dim*sizeof(double *);
+  int Ndim = NumberDimensions;
+  double SizeTable = Ndim*sizeof(double *);
   double Mass_I;
 
   /* Time integration parameters */
@@ -60,23 +60,23 @@ void GA_UpdateNodalKinetics(Mesh FEM_Mesh,
   
   /* Nodal values the fields */
   Matrix Nodal_Acceleration_t0 =
-    MatAssign(N_dim,N_Nodes,NAN,NULL,(double**)malloc(SizeTable));
+    MatAssign(Ndim,N_Nodes,NAN,NULL,(double**)malloc(SizeTable));
   Matrix Nodal_Acceleration_t1 =
-    MatAssign(N_dim,N_Nodes,NAN,NULL,(double**)malloc(SizeTable));
+    MatAssign(Ndim,N_Nodes,NAN,NULL,(double**)malloc(SizeTable));
   Matrix Nodal_Velocity =
-    MatAssign(N_dim,N_Nodes,NAN,NULL,(double**)malloc(SizeTable));
+    MatAssign(Ndim,N_Nodes,NAN,NULL,(double**)malloc(SizeTable));
 
   /* 1º Asign Kinetics values to matricial tables */
-  for(int i = 0 ; i<N_dim ; i++){
+  for(int i = 0 ; i<Ndim ; i++){
     Nodal_Acceleration_t0.nM[i] = Nodal_Kinetics.nM[1+i];
-    Nodal_Acceleration_t1.nM[i] = Nodal_Kinetics.nM[1+N_dim+i];
-    Nodal_Velocity.nM[i] = Nodal_Kinetics.nM[1+2*N_dim+i];
+    Nodal_Acceleration_t1.nM[i] = Nodal_Kinetics.nM[1+Ndim+i];
+    Nodal_Velocity.nM[i] = Nodal_Kinetics.nM[1+2*Ndim+i];
   }
   /* 2º Update the grid nodal variales */
   for(int i = 0 ; i<N_Nodes ; i++){
     Mass_I = Nodal_Kinetics.nM[0][i];
     if(Mass_I > 0){
-      for(int j = 0 ; j<N_dim ; j++){
+      for(int j = 0 ; j<Ndim ; j++){
 	/* Get the nodal acceleration t1 */
 	Nodal_Acceleration_t1.nM[j][i] =
 	  (F.nM[j][i]/Mass_I - alpha*Nodal_Acceleration_t0.nM[j][i])/(1-alpha);

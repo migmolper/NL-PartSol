@@ -51,8 +51,8 @@ Matrix EigenerosionAlgorithm(Matrix ji, Matrix W,
       sum_p = Mass.nV[p]*W.nV[p];
 
       /* neighbours */
-      Neps_p = LenghtChain(Beps[p]);
-      Beps_p = ChainToArray(Beps[p],Neps_p);
+      Neps_p = get_Lenght_Set(Beps[p]);
+      Beps_p = Set_to_Pointer(Beps[p],Neps_p);
 
       /* Loop over the neighbours */
       for(int j = 0; j < Neps_p ; j++){

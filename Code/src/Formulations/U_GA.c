@@ -37,7 +37,7 @@ void U_GA(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
      Nodal_Kinetics = {mass, a0, a1, v}
    */
   int Nnodes = FEM_Mesh.NumNodesMesh;
-  int Ndim = 3;
+  int Ndim = NumberDimensions;
   Matrix V_I;
   Matrix Nodal_Kinetics;
 

@@ -10,7 +10,7 @@
 
 Tensor alloc_Tensor(int Order)
 {
-  int Ndim = 3;
+  int Ndim = NumberDimensions;
   /* Define output */
   Tensor A;
   /* Swith cases */
@@ -49,7 +49,7 @@ Tensor alloc_Tensor(int Order)
 
 Tensor memory_to_Tensor(double * A_mem, int Order)
 {
-  int Ndim = 3;
+  int Ndim = NumberDimensions;
   /* Define output */
   Tensor A_tens;
   /* Swith cases */
@@ -83,6 +83,8 @@ Tensor memory_to_Tensor(double * A_mem, int Order)
 
 void free_Tensor(Tensor A)
 {
+  int Ndim = NumberDimensions;
+  
   switch(A.Order){
     case 0:
       fprintf(stderr,"%s : %s !!! \n",
@@ -93,9 +95,9 @@ void free_Tensor(Tensor A)
       free(A.n);
       break;
     case 2:
-      free(A.N[0]);
-      free(A.N[1]);
-      free(A.N[2]);
+      for(int i = 0 ; i<Ndim ; i++){
+	free(A.N[i]);
+      }
       break;
     default :
       fprintf(stderr,"%s : %s \n",
@@ -109,7 +111,7 @@ void free_Tensor(Tensor A)
 
 double get_I1_Of(Tensor A)
 {
-  int Ndim = 3;
+  int Ndim = NumberDimensions;
   /* Define output */
   double I1 = 0;
   /* Check if is the order is order 2 */
@@ -131,13 +133,21 @@ double get_I1_Of(Tensor A)
 
 double get_I2_Of(Tensor A)
 {
+  int Ndim = NumberDimensions;  
   /* Define output */
-  double I2;
+  double I2 = 0;
   /* Check if is the order is order 2 */
-  if(A.Order == 2){  
-    I2 =
-      A.N[0][0]*A.N[1][1] + A.N[1][1]*A.N[2][2] + A.N[0][0]*A.N[2][2] -
-      A.N[0][1]*A.N[1][0] - A.N[1][2]*A.N[2][1] - A.N[2][0]*A.N[0][2];
+  if(A.Order == 2){
+    if(Ndim == 3){
+      I2 =
+	A.N[0][0]*A.N[1][1] - A.N[0][1]*A.N[1][0] +
+	A.N[1][1]*A.N[2][2] - A.N[1][2]*A.N[2][1] +
+	A.N[0][0]*A.N[2][2] - A.N[2][0]*A.N[0][2];
+    }
+    if(Ndim == 2){
+      I2 =
+	A.N[0][0]*A.N[1][1] - A.N[0][1]*A.N[1][0];
+    }
   }
   else{
     fprintf(stderr,"%s : %s !!! \n",
@@ -152,17 +162,24 @@ double get_I2_Of(Tensor A)
 
 double get_I3_Of(Tensor A)
 {
+  int Ndim = NumberDimensions;  
   /* Define output */
   double I3;
   /* Check if is the order is order 2 */
-  if(A.Order == 2){  
-    I3 =
-      A.N[0][0]*A.N[1][1]*A.N[2][2] - 
-      A.N[0][0]*A.N[1][2]*A.N[2][1] + 
-      A.N[0][1]*A.N[1][2]*A.N[2][0] - 
-      A.N[0][1]*A.N[1][0]*A.N[2][2] + 
-      A.N[0][2]*A.N[1][0]*A.N[2][1] - 
-      A.N[0][2]*A.N[1][1]*A.N[2][0] ; 
+  if(A.Order == 2){
+    if(Ndim == 3){
+      I3 =
+	A.N[0][0]*A.N[1][1]*A.N[2][2] - 
+	A.N[0][0]*A.N[1][2]*A.N[2][1] + 
+	A.N[0][1]*A.N[1][2]*A.N[2][0] - 
+	A.N[0][1]*A.N[1][0]*A.N[2][2] + 
+	A.N[0][2]*A.N[1][0]*A.N[2][1] - 
+	A.N[0][2]*A.N[1][1]*A.N[2][0] ; 
+    }
+    if(Ndim == 2){
+      I3 =
+	A.N[0][0]*A.N[1][1] - A.N[0][1]*A.N[1][0];
+    }
   }
   else{
     fprintf(stderr,"%s : %s !!! \n",
@@ -239,7 +256,7 @@ double get_J3_Of(Tensor A)
 
 double get_EuclideanNorm_Of(Tensor A)
 {
-  int Ndim = 3;
+  int Ndim = NumberDimensions;
   /* Define output */
   double Out;
   /* Check if the input is a first order tensor */
@@ -247,7 +264,7 @@ double get_EuclideanNorm_Of(Tensor A)
     /* Compute norm */    
     double Aux = 0;
     for(int i = 0 ; i<Ndim ; i++){
-      Aux += A.n[i]*A.n[i] ;
+      Aux += DSQR(A.n[i]);
     }
     Out = pow(Aux,0.5);
   }
@@ -264,7 +281,7 @@ double get_EuclideanNorm_Of(Tensor A)
 
 Tensor get_I()
 {
-  int Ndim = 3;
+  int Ndim = NumberDimensions;
   Tensor I = alloc_Tensor(2);
   for(int i = 0 ; i<Ndim ; i++){
     I.N[i][i] = 1;
@@ -276,6 +293,7 @@ Tensor get_I()
 
 Tensor get_Inverse_Of(Tensor A)
 {
+  int Ndim = NumberDimensions;
   /* Allocate the output */
   Tensor Am1 = alloc_Tensor(2);
   /* Check if the input is a second order tensor */
@@ -288,25 +306,24 @@ Tensor get_Inverse_Of(Tensor A)
 	      "Determinant null");
       exit(EXIT_FAILURE);    
     }
-    /* Compute each component  */
-    Am1.N[0][0] =
-      (double)1/detA*(A.N[1][1]*A.N[2][2] - A.N[1][2]*A.N[2][1]);
-    Am1.N[0][1] =
-      -(double)1/detA*(A.N[0][1]*A.N[2][2] - A.N[0][2]*A.N[2][1]);
-    Am1.N[0][2] =
-      (double)1/detA*(A.N[0][1]*A.N[1][2] - A.N[0][2]*A.N[1][1]);
-    Am1.N[1][0] =
-      -(double)1/detA*(A.N[1][0]*A.N[2][2] - A.N[1][2]*A.N[2][0]);
-    Am1.N[1][1] =
-      (double)1/detA*(A.N[0][0]*A.N[2][2] - A.N[0][2]*A.N[2][0]);
-    Am1.N[1][2] =
-      -(double)1/detA*(A.N[0][0]*A.N[1][2] - A.N[0][2]*A.N[1][0]);
-    Am1.N[2][0] =
-      (double)1/detA*(A.N[1][0]*A.N[2][1] - A.N[1][1]*A.N[2][0]);
-    Am1.N[2][1] =
-      -(double)1/detA*(A.N[0][0]*A.N[2][1] - A.N[0][1]*A.N[2][0]);
-    Am1.N[2][2] =
-      (double)1/detA*(A.N[0][0]*A.N[1][1] - A.N[0][1]*A.N[1][0]);
+    if(Ndim == 3){
+      /* Compute each component  */
+      Am1.N[0][0] = + (double)1/detA*(A.N[1][1]*A.N[2][2] - A.N[1][2]*A.N[2][1]);
+      Am1.N[0][1] = - (double)1/detA*(A.N[0][1]*A.N[2][2] - A.N[0][2]*A.N[2][1]);
+      Am1.N[0][2] = + (double)1/detA*(A.N[0][1]*A.N[1][2] - A.N[0][2]*A.N[1][1]);
+      Am1.N[1][0] = - (double)1/detA*(A.N[1][0]*A.N[2][2] - A.N[1][2]*A.N[2][0]);
+      Am1.N[1][1] = + (double)1/detA*(A.N[0][0]*A.N[2][2] - A.N[0][2]*A.N[2][0]);
+      Am1.N[1][2] = - (double)1/detA*(A.N[0][0]*A.N[1][2] - A.N[0][2]*A.N[1][0]);
+      Am1.N[2][0] = + (double)1/detA*(A.N[1][0]*A.N[2][1] - A.N[1][1]*A.N[2][0]);
+      Am1.N[2][1] = - (double)1/detA*(A.N[0][0]*A.N[2][1] - A.N[0][1]*A.N[2][0]);
+      Am1.N[2][2] = + (double)1/detA*(A.N[0][0]*A.N[1][1] - A.N[0][1]*A.N[1][0]);
+    }
+    if(Ndim == 2){
+      Am1.N[0][0] = + (double)1/detA*A.N[1][1];
+      Am1.N[0][1] = - (double)1/detA*A.N[1][0];
+      Am1.N[1][0] = - (double)1/detA*A.N[0][1];
+      Am1.N[1][1] = + (double)1/detA*A.N[0][0]; 
+    }    
   }
   else{
     fprintf(stderr,"%s : %s !!! \n",
@@ -322,7 +339,7 @@ Tensor get_Inverse_Of(Tensor A)
 
 Tensor get_Transpose_Of(Tensor A)
 {
-  int Ndim = 3;
+  int Ndim = NumberDimensions;
   /* Allocate the output */
   Tensor AT = alloc_Tensor(2);  
   /* Check if the input is a second order tensor */
@@ -349,7 +366,7 @@ Tensor get_Transpose_Of(Tensor A)
 double get_innerProduct_Of(Tensor A, Tensor B)
 {
 
-  int Ndim = 3;
+  int Ndim = NumberDimensions;
   /* Variable declaration output matrix */
   double AdotB = 0;
   /* Inner product of second order tensors */
@@ -404,7 +421,7 @@ Tensor get_vectorProduct_Of(Tensor a, Tensor b)
 
 Tensor get_dyadicProduct_Of(Tensor a, Tensor b)
 {
-  int Ndim = 3;
+  int Ndim = NumberDimensions;
   /* Tensor declaration */
   Tensor aob = alloc_Tensor(2);
   /* Check if the input are a first order tensor */
@@ -430,7 +447,7 @@ Tensor get_dyadicProduct_Of(Tensor a, Tensor b)
 
 Tensor get_firstOrderContraction_Of(Tensor A, Tensor b)
 {
-  int Ndim = 3;
+  int Ndim = NumberDimensions;
   /* Tensor declaration */
   Tensor Adotb = alloc_Tensor(1);
   /* Check in the input its is ok */
@@ -456,7 +473,7 @@ Tensor get_firstOrderContraction_Of(Tensor A, Tensor b)
   return Adotb;
 }
 
-
+/*************************************************************/
 
 
 

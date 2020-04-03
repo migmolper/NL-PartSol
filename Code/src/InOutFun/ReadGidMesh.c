@@ -252,7 +252,7 @@ Mesh ReadGidMesh(char * MeshName)
   	for(int j = 0 ; j<NumNodesElem ; j++){
   	  ConnectivityElem[j] = atoi(read_connectivity[j+1]) - 1;
   	}
-	GID_Mesh.Connectivity[i] = ArrayToChain(ConnectivityElem,NumNodesElem);
+	GID_Mesh.Connectivity[i] = Pointer_to_Set(ConnectivityElem,NumNodesElem);
       }
       else{
   	printf("Check the element : %i \n", atoi(read_connectivity[0]) - 1);

@@ -154,7 +154,7 @@ void WriteVtk_FEM(char * Name_File, Mesh ElementMesh,
 		  Matrix List_Nod_Fields, int TimeStep_i){
 
   /* Number of dimensions */
-  int Ndim = 3;
+  int Ndim = NumberDimensions;
   FILE * Vtk_file;
   char Name_file_t[80];
   int NumberFields;
@@ -370,7 +370,7 @@ void WriteVtk_Float_Scalar(char * Name_File, Matrix Field){
 
 void WriteVtk_Float_Vector(char * Name_File, Matrix Field){  
 
-  int Ndim = 3;
+  int Ndim = NumberDimensions;
   FILE * Vtk_file; 
   Vtk_file = fopen(Name_File,"a");
   
@@ -392,7 +392,7 @@ void WriteVtk_Float_Vector(char * Name_File, Matrix Field){
 
 void WriteVtk_Float_Tensor(char * Name_File, Matrix Field){  
 
-  int Ndim = 3;
+  int Ndim = NumberDimensions;
   FILE * Vtk_file; 
   Vtk_file = fopen(Name_File,"a");
   

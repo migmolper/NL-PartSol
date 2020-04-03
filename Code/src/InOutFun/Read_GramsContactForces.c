@@ -21,7 +21,7 @@ Load * GramsNeumannBC(char * Name_File, int NumNeumannBC)
 {
 
   /* Number of dimensions */
-  int Ndim = 3;
+  int Ndim = NumberDimensions;
   
   /* Define new load case for the contact forces */
   Load * F = (Load *)Allocate_Array(NumNeumannBC,sizeof(Load));
@@ -105,10 +105,10 @@ Load * GramsNeumannBC(char * Name_File, int NumNeumannBC)
       /* Get an array with the nodes */
       Chain_Nodes = File2Chain(FileNodesRoute);
       F[IndexLoad].NumNodes =
-	LenghtChain(Chain_Nodes);
+	get_Lenght_Set(Chain_Nodes);
       F[IndexLoad].Nodes =
-	ChainToArray(Chain_Nodes,F[IndexLoad].NumNodes);
-      FreeChain(Chain_Nodes);
+	Set_to_Pointer(Chain_Nodes,F[IndexLoad].NumNodes);
+      free_Set(Chain_Nodes);
 
       /* Number of dimensions of the BCC */
       F[IndexLoad].Dim = Ndim;

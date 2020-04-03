@@ -9,6 +9,7 @@
 void update_Langrangians(GaussPoint MPM_Mesh, Mesh FEM_Mesh,
 			 Matrix Phi_I, Matrix F_I, double Dt){
 
+  int Ndim = NumberDimensions;
   Element Nodes_p; /* Element for each Gauss-Point */
   Matrix N_p; /* Value of the shape-function in the GP */
   double N_pI; /* Nodal value for the GP */
@@ -16,7 +17,6 @@ void update_Langrangians(GaussPoint MPM_Mesh, Mesh FEM_Mesh,
   int Np = MPM_Mesh.NumGP;
   int Nnodes;
   int Ip; /* Index of each tributary node for the GP */
-  int Ndim = 3;
 
   /* 1º iterate over the Gauss-Points */
   for(int p = 0 ; p<Np ; p++){

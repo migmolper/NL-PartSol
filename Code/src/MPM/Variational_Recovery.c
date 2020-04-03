@@ -9,7 +9,7 @@
 Matrix compute_NodalFields(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 {
   /* Define some dimensions */
-  int Ndim = 3;
+  int Ndim = NumberDimensions;
   int Nnodes = FEM_Mesh.NumNodesMesh;
   int Np = MPM_Mesh.NumGP;
   int Ip;
@@ -85,7 +85,7 @@ Matrix compute_NodalVelocity(Mesh FEM_Mesh, Matrix Phi_I)
   */
 
   /* Define some dimensions */
-  int Ndim = 3;
+  int Ndim = NumberDimensions;
   int Nnodes = FEM_Mesh.NumNodesMesh;
 
   /* Define output */
@@ -120,9 +120,9 @@ Matrix GetNodalKinetics(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
   int N_GPs = MPM_Mesh.NumGP;
   
   /* Sizes */
-  int N_dim = 3;
-  int N_Acceleration_dim = N_dim;
-  int N_Velocity_dim = N_dim;
+  int Ndim = NumberDimensions;
+  int N_Acceleration_dim = Ndim;
+  int N_Velocity_dim = Ndim;
 
   /* Nodal values the fields */
   Matrix Nodal_Mass = MatAllocZ(1,N_Nodes_Mesh);
@@ -212,10 +212,10 @@ Matrix GetNodalKinetics(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 	 "MASS;ACCELERATION_t0;ACCELERATION_t1;VELOCITY");
   
   Nodal_Kinetics.nM[0] = Nodal_Mass.nV;
-  for(int i = 0 ; i<N_dim ; i++){
+  for(int i = 0 ; i<Ndim ; i++){
     Nodal_Kinetics.nM[1+i] = Nodal_Acceleration_t0.nM[i];
-    Nodal_Kinetics.nM[1+N_dim+i] = Nodal_Acceleration_t1.nM[i];
-    Nodal_Kinetics.nM[1+2*N_dim+i] = Nodal_Velocity.nM[i];
+    Nodal_Kinetics.nM[1+Ndim+i] = Nodal_Acceleration_t1.nM[i];
+    Nodal_Kinetics.nM[1+2*Ndim+i] = Nodal_Velocity.nM[i];
   }
 
   /* Free table of pointers */
@@ -240,13 +240,13 @@ Matrix GetNodalVelocityDisplacement(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
   int N_GPs = MPM_Mesh.NumGP;
   
   /* Sizes */
-  int N_dim = 3;
+  int Ndim = NumberDimensions;
 
   /* Nodal values the fields */
   Matrix Nodal_Mass = MatAllocZ(1,N_Nodes_Mesh);
-  Matrix Nodal_Displacement = MatAllocZ(N_dim,N_Nodes_Mesh);
-  Matrix Nodal_Velocity = MatAllocZ(N_dim,N_Nodes_Mesh);
-  Matrix Nodal_Acceleration = MatAllocZ(N_dim,N_Nodes_Mesh);
+  Matrix Nodal_Displacement = MatAllocZ(Ndim,N_Nodes_Mesh);
+  Matrix Nodal_Velocity = MatAllocZ(Ndim,N_Nodes_Mesh);
+  Matrix Nodal_Acceleration = MatAllocZ(Ndim,N_Nodes_Mesh);
  
   /* GPs values of the fields */
   double Mass_GP; /* Mass of the GP */
@@ -296,7 +296,7 @@ Matrix GetNodalVelocityDisplacement(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
       /* Nodal mass */
       Nodal_Mass.nV[GP_I] += Mass_GP_I;
 
-      for(int l = 0 ; l<N_dim ; l++){
+      for(int l = 0 ; l<Ndim ; l++){
 	/* Nodal displacement */
 	Nodal_Displacement.nM[l][GP_I] += Disp_GP.nV[l]*Mass_GP_I;
 	/* Nodal velocity */
@@ -315,15 +315,15 @@ Matrix GetNodalVelocityDisplacement(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
   for(int i = 0 ; i<N_Nodes_Mesh ; i++){
     if(Nodal_Mass.nV[i] > 0){
       /* Get the nodal displacement */
-      for(int j = 0 ; j<N_dim ; j++){
+      for(int j = 0 ; j<Ndim ; j++){
 	Nodal_Displacement.nM[j][i] = Nodal_Displacement.nM[j][i]/Nodal_Mass.nV[i];
       }
       /* Get the nodal velocity */    
-      for(int j = 0 ; j<N_dim ; j++){
+      for(int j = 0 ; j<Ndim ; j++){
 	Nodal_Velocity.nM[j][i] = Nodal_Velocity.nM[j][i]/Nodal_Mass.nV[i];
       }
       /* Get the nodal acceleration */    
-      for(int j = 0 ; j<N_dim ; j++){
+      for(int j = 0 ; j<Ndim ; j++){
 	Nodal_Acceleration.nM[j][i] = Nodal_Acceleration.nM[j][i]/Nodal_Mass.nV[i];
       }
     }
@@ -331,7 +331,7 @@ Matrix GetNodalVelocityDisplacement(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 
   /* 8º Asign Kinetics values to matricial tables */
 
-  int N_Kinetics_dim = 1 + 3*N_dim;
+  int N_Kinetics_dim = 1 + 3*Ndim;
   double SizeKinetics = N_Kinetics_dim*sizeof(double *);
 
   Matrix Nodal_Kinetics =
@@ -341,10 +341,10 @@ Matrix GetNodalVelocityDisplacement(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 	 "MASS;DISPLACEMENT;VELOCITY;ACCELERATION");
   
   Nodal_Kinetics.nM[0] = Nodal_Mass.nV;
-  for(int i = 0 ; i<N_dim ; i++){
+  for(int i = 0 ; i<Ndim ; i++){
     Nodal_Kinetics.nM[1+i] = Nodal_Displacement.nM[i];
-    Nodal_Kinetics.nM[1+N_dim+i] = Nodal_Velocity.nM[i];
-    Nodal_Kinetics.nM[1+2*N_dim+i] = Nodal_Acceleration.nM[i];
+    Nodal_Kinetics.nM[1+Ndim+i] = Nodal_Velocity.nM[i];
+    Nodal_Kinetics.nM[1+2*Ndim+i] = Nodal_Acceleration.nM[i];
   }
 
   /* Free table of pointers */

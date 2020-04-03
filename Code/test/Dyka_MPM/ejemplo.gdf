@@ -18,7 +18,7 @@ GramsSolid2D (File=MPM_Mesh.msh) {
 	 GramsShapeFun (Type=MPMQ4) { 
 	 } 
 	 GramsInitials (Nodes=ListInit.txt) { 
-	 	 Value=[0.001,0.0,0.0]
+	 	 Value=[0.001,0.0]
 	 } 
 } 
 GramsOutputs (i=1) { 

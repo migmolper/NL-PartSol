@@ -95,10 +95,10 @@ Boundaries GramsBoundary(char * Name_File,int NumBounds){
       /* Get an array with the nodes */
       Chain_Nodes = File2Chain(FileNodesRoute);
       Bounds.BCC_i[IndexBoundary].NumNodes =
-	LenghtChain(Chain_Nodes);
+	get_Lenght_Set(Chain_Nodes);
       Bounds.BCC_i[IndexBoundary].Nodes =
-	ChainToArray(Chain_Nodes,Bounds.BCC_i[IndexBoundary].NumNodes);
-      FreeChain(Chain_Nodes);
+	Set_to_Pointer(Chain_Nodes,Bounds.BCC_i[IndexBoundary].NumNodes);
+      free_Set(Chain_Nodes);
 
       /* Number of dimensions of the BCC */
       Bounds.BCC_i[IndexBoundary].Dim = NumberDOF;

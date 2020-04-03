@@ -30,7 +30,7 @@ ChainPtr File2Chain(char * Name_File){
   /* Read file line by line */
   while(fgets(Line_File,sizeof(Line_File),Sim_dat) != NULL){
     Numers_Line = parse(Parse_File,Line_File," \n\t");
-    PushNodeTop(&File_Chain,atoi(Parse_File[0]));    
+    push_to_Set(&File_Chain,atoi(Parse_File[0]));    
   }
 
   /* Close file */

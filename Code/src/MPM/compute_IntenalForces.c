@@ -10,7 +10,7 @@ Matrix compute_InternalForces(Matrix F_I, Matrix V_I,
 			      GaussPoint MPM_Mesh,
 			      Mesh FEM_Mesh, double TimeStep)
 {
-  int Ndim = 3;
+  int Ndim = NumberDimensions;
   Element Nodes_p; /* Element for each Gauss-Point */
   Matrix Gradient_p; /* Shape functions gradients */
   Matrix Nodal_Velocity_p; /* Velocity of the element nodes */

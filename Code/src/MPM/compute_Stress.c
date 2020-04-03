@@ -8,10 +8,7 @@
 /*************************************************************/
 
 Tensor compute_Stress(Tensor Strain, Tensor Stress, Material Mat)
-{
-  /* Variable definition  */
-  Tensor Strain_n1;
-    
+{   
   /* Select the constitutive model */
   if(strcmp(Mat.Type,"LE") == 0){
     Stress = LinearElastic(Strain,Stress,Mat);

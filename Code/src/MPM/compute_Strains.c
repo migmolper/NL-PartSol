@@ -8,7 +8,7 @@
 
 Tensor compute_RateOfStrain(Matrix Velocity, Matrix Gradient)
 {
-  int Ndim = 3;
+  int Ndim = NumberDimensions;
   Tensor Rate_Strain = alloc_Tensor(2);
   Tensor Velocity_I;
   Tensor Gradient_I;
@@ -44,7 +44,7 @@ Tensor compute_RateOfStrain(Matrix Velocity, Matrix Gradient)
 
 Tensor update_Strain(Tensor Strain, Tensor Rate_Strain, double TimeStep)
 {
-  int Ndim = 3;
+  int Ndim = NumberDimensions;
   /* Check in the input its is ok */
   if ((Strain.Order == 2) && (Rate_Strain.Order == 2)){
     /* Update strain tensor with the rate of strain tensor */

@@ -16,7 +16,7 @@ void U_FE(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
   /* Time step */
   int TimeStep;
 
-  int Ndim = 3;
+  int Ndim = NumberDimensions;
   int Nnodes = FEM_Mesh.NumNodesMesh;
 
   /*********************************************************************/
@@ -73,7 +73,7 @@ void U_FE(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
     F_I = compute_ContacForces(F_I, MPM_Mesh, FEM_Mesh, TimeStep);
     imposse_NodalMomentum(FEM_Mesh,F_I,TimeStep);
     puts(" \t DONE !!!");
-
+	
     /* if(MPM_Mesh.Mat[0].Fracture){ */
     /*   printf(" \t d) %s %i %s \n", */
     /* 	     "Update particle status for material",0, */

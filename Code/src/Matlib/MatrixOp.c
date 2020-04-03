@@ -6,9 +6,6 @@
 #include <stdbool.h> 
 #include "grams.h"
 
-#define MAXVAL(A,B) ((A)>(B) ? (A) : (B))
-#define MINVAL(A,B) ((A)<(B) ? (A) : (B))
-
 /*********************************************************************/
 
 /* Function for arrays declaration */
@@ -207,7 +204,7 @@ void PrintMatrix(Matrix In, int NumCols, int NumRows)
   
   if( In.nV != NULL ){
     Nvalues = In.N_cols*In.N_rows;
-    Nvalues = MINVAL(NumRows,Nvalues);
+    Nvalues = IMIN(NumRows,Nvalues);
     printf("%s : \n",In.Info);
     for(int i = 0 ; i<Nvalues ; i++){
       printf("%f \n",In.nV[i]);
@@ -217,8 +214,8 @@ void PrintMatrix(Matrix In, int NumCols, int NumRows)
   if( In.nM != NULL ){
     
     printf("%s : \n",In.Info);
-    for(int i = 0 ; i<MAXVAL(In.N_cols,In.N_rows) ; i++){
-      for(int j = 0 ; j<MINVAL(In.N_cols,In.N_rows) ; j++){
+    for(int i = 0 ; i<IMAX(In.N_cols,In.N_rows) ; i++){
+      for(int j = 0 ; j<IMIN(In.N_cols,In.N_rows) ; j++){
 	if(In.N_cols<In.N_rows)
 	  printf(" %f ",In.nM[i][j]);
 	else
@@ -256,8 +253,8 @@ double StatsDouMatrix(double * In, int NumElems, char * OutChar)
 
     /* Get the MaxVal, the MinVal and the MeanVal */
     for(int i = 0 ; i<NumElems ; i++){
-      MaxVal = MAXVAL(MaxVal,In[i]);
-      MinVal = MINVAL(MinVal,In[i]);
+      MaxVal = DMAX(MaxVal,In[i]);
+      MinVal = DMIN(MinVal,In[i]);
       SumVal += In[i];      
     }
     MeanVal = (double)SumVal/NumElems;
@@ -324,8 +321,8 @@ double StatsIntMatrix(int * In, int NumElems, char * OutChar)
 
     /* Get the MaxVal, the MinVal and the MeanVal */
     for(int i = 0 ; i<NumElems ; i++){
-      MaxVal = MAXVAL(MaxVal,(double)In[i]);
-      MinVal = MINVAL(MinVal,(double)In[i]);
+      MaxVal = DMAX(MaxVal,(double)In[i]);
+      MinVal = DMIN(MinVal,(double)In[i]);
       SumVal += (double)In[i];      
     }
     MeanVal = (double)SumVal/NumElems;
@@ -971,7 +968,7 @@ double Norm_Mat(Matrix In,int kind)
 
     aux = 0;
     for(int i = 0 ; i< In.N_rows*In.N_cols ; i++){
-      aux += In.nV[i]*In.nV[i] ;
+      aux += DSQR(In.nV[i]);
     }
     Out = pow(aux,0.5);
   }
@@ -1096,8 +1093,8 @@ double Cond_Mat(Matrix In, double TOL)
   double min_Eigen = fabs(Eigen.nV[0]);
     
   for(int i = 1 ; i<Eigen.N_rows ; i++){
-    max_Eigen = MAXVAL(max_Eigen,fabs(Eigen.nV[i]));
-    min_Eigen = MINVAL(min_Eigen,fabs(Eigen.nV[i]));
+    max_Eigen = DMAX(max_Eigen,fabs(Eigen.nV[i]));
+    min_Eigen = DMIN(min_Eigen,fabs(Eigen.nV[i]));
   }
 
   return (double)max_Eigen/min_Eigen;
@@ -1174,6 +1171,39 @@ Matrix Matrix_x_Scalar(Matrix A, double a)
 
   return A;
 }
+
+
+/*********************************************************************/
+
+void get_SVD_Of(Matrix A, Matrix W, Matrix V)
+/*
+  This routine was adapted from the "Numerical recipies in C".
+  Given a matrix A [m x n], this routine computes
+  its singular value decomposition, A = U*W*VT. 
+  Outputs :
+  The matrix U [m x n] replaces A on output. 
+  The matrix of singular values W [n x n]. 
+  The matrix V (not the transpose VT) is output as V [n x n].   
+*/
+{
+  
+}
+
+float pythag(float a, float b)
+/*  
+    Computes (a^2 + b^2)^0.5 without destructive underflow or overflow. 
+*/  
+{
+  /* Compute the absolute value of "a" and "b" */
+  float absa=fabs(a);
+  float absb=fabs(b);
+  
+  if (absa > absb)
+    return absa*sqrt(1.0+SQR(absb/absa));
+  else
+    return (absb == 0.0 ? 0.0 : absb*sqrt(1.0+SQR(absa/absb)));
+}
+
 
 
 /*********************************************************************/

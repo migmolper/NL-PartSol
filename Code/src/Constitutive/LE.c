@@ -6,6 +6,8 @@
 
 Tensor LinearElastic(Tensor Strain, Tensor Stress, Material Mat){
 
+  int Ndim = NumberDimensions;
+  
   /*Check in the input its is ok */
   if ((Strain.Order == 2) && (Stress.Order == 2)){
     /* Define material and other properties */
@@ -16,9 +18,9 @@ Tensor LinearElastic(Tensor Strain, Tensor Stress, Material Mat){
     double traceStrain = get_I1_Of(Strain);
     Tensor I = get_I();
 
-    for(int i = 0 ; i<3 ; i++){
+    for(int i = 0 ; i<Ndim ; i++){
       /* Add first component */
-      for(int j = 0 ; j<3 ; j++){
+      for(int j = 0 ; j<Ndim ; j++){
 	Stress.N[i][j] = 2*G*Strain.N[i][j];
       }
       /* Add diagonal component */

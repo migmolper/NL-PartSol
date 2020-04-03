@@ -6,10 +6,6 @@
 #include <stdbool.h> 
 #include "grams.h"
 
-#define MAXVAL(A,B) ((A)>(B) ? (A) : (B))
-#define MINVAL(A,B) ((A)<(B) ? (A) : (B))
-
-
 /*********************************************************************/
 
 double Area_Poligon(Matrix Poligon)
@@ -299,7 +295,7 @@ double Distance(Matrix End, Matrix Init)
   Distance between two points.
 */
 {
-  int N_dim = 3;
+  int Ndim = NumberDimensions;
 
   if((End.N_rows != Init.N_rows) ||
      (End.N_cols != Init.N_cols)){
@@ -311,7 +307,7 @@ double Distance(Matrix End, Matrix Init)
 
   double DIST = 0;
 
-  for(int i = 0 ; i<N_dim ; i++){
+  for(int i = 0 ; i<Ndim ; i++){
 
     DIST += pow(End.nV[i] - Init.nV[i],2);
 
@@ -323,41 +319,5 @@ double Distance(Matrix End, Matrix Init)
   return DIST;
 }
 
-/*********************************************************************/
-
-void OrderList(ChainPtr * List1, ChainPtr * List0, Matrix Dist)
-/*
-  Ordenate recursively and array with distances and get a chain 
-  with the positions in orden
-*/
-{
-	
-  /* Iterate while List0 is full of numbers */
-  if((*List0) != NULL){
-    
-    ChainPtr INode = (* List0);
-    double DistMax = 0.0;
-    int I_DistMax;
-
-    /* Loop over the chain */
-    while(INode != NULL){
-      /* Get the max distance of the matrix */
-      if(Dist.nV[INode->I] > DistMax){
-	DistMax = Dist.nV[INode->I];
-	I_DistMax = INode->I;
-      }
-      /* Continue iterating */      
-      INode = INode->next; 
-    }
-    
-    /* Push and Pop node */
-    PushNodeTop(List1,I_DistMax);
-    PopNode(List0,I_DistMax);
-    
-    /* Recursive */
-    OrderList(List1,List0,Dist);
-  }
-  
-}
 
 /*********************************************************************/

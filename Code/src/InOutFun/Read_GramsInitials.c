@@ -17,7 +17,7 @@ void GramsInitials(char * Name_File, GaussPoint GP_Mesh, int GPxElement)
 {
 
   /* Number of dimensions */
-  int Ndim = 3;
+  int Ndim = NumberDimensions;
   
   /* Simulation file */
   FILE * Sim_dat;
@@ -106,9 +106,9 @@ void GramsInitials(char * Name_File, GaussPoint GP_Mesh, int GPxElement)
 
       /* Get an array with the nodes */
       Chain_Nodes = File2Chain(FileNodesRoute);
-      Num_Nodes = LenghtChain(Chain_Nodes);
-      Array_Nodes = ChainToArray(Chain_Nodes,Num_Nodes);
-      FreeChain(Chain_Nodes);
+      Num_Nodes = get_Lenght_Set(Chain_Nodes);
+      Array_Nodes = Set_to_Pointer(Chain_Nodes,Num_Nodes);
+      free_Set(Chain_Nodes);
 	
       /* Look for the curly brace { */
       if(strcmp(Parse_GramsInitials[2],"{") == 0){
