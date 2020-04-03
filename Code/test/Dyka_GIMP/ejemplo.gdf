@@ -1,80 +1,26 @@
-/***************************************/
-/******* SIMULATION FILES AND DIR ******/
-/***************************************/
-MPM_FILE_NAME=test/Dyka_GIMP/MPM_Mesh.msh
-
-/***************************************/
-/********** GENERAL PARAMETERS *********/
-/***************************************/
-KIND_ANALYSIS=Velocity%2D
-
-GramsShapeFun (Type=uGIMP) {
-}
-
-GramsTime (Type=FE) {
-	CEL=5053.02
-	CFL=0.6
-	N=800000
-}
-
-GramsMaterials (id=0) {
-               Type=LE
-	       rho=7833
-	       E=200.e9
-	       mu=0.0
-}
-
-GramsOutputs (i=10000) {
-	     DIR=test/Dyka_GIMP	
-}
-
-GramsBox (Type=GID,File=FEM_Mesh.msh) {
-    left = GramsBoundary {
-        BcDirichlet V.x test/Dyka_GIMP/CurveConstat.txt
- 	BcDirichlet V.y NULL	
-    }
-    right = GramsBoundary {
-  	BcDirichlet V.x NULL
-   	BcDirichlet V.y NULL	
-    }
-    top = GramsBoundary {
-      	BcDirichlet V.x NULL
-    	BcDirichlet V.y NULL
-    }
-    bottom = GramsBoundary {
-  	BcDirichlet V.x NULL
-    	BcDirichlet V.y NULL
-    }
-}
-
-/***************************************/
-/**** INITIAL CONDITIONS FOR THE GPs ***/
-/***************************************/
-INIT_NUM 1
-INIT_GP FIELD=V VALUE={5.0,0.0} NUM_NODES=20
-0
-1
-2
-3
-4
-5
-6
-7
-8
-9
-40
-41
-42
-43
-44
-45
-46
-47
-48
-49
-
-/***************************************/
-/********** LOADS OVER THE GPs *********/
-/***************************************/
-F_LOAD_NUM 0
-B_LOAD_NUM 0
+GramsBox (Type=GID,File=FEM_Mesh.msh) { 
+	 GramsBoundary (File=left.txt) { 
+	     BcDirichlet V.x CurveConstat.txt 
+	 }
+} 
+GramsSolid2D (File=MPM_Mesh.msh) { 
+	 GramsTime (Type=FE) { 
+	 	 CEL=1.0
+	 	 CFL=0.05
+	 	 N=2000
+	 } 
+	 GramsMaterials (id=0) { 
+	 	 Type=LE 
+	 	 rho=1.0 
+	 	 E=1.0 
+	 	 mu=0.0
+	 } 
+	 GramsShapeFun (Type=uGIMP) { 
+	 } 
+	 GramsInitials (Nodes=ListInit.txt) { 
+	 	 Value=[0.001,0.0]
+	 } 
+} 
+GramsOutputs (i=1) { 
+	 DIR=Resultados 
+} 

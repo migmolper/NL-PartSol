@@ -345,7 +345,7 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
     else if(strcmp(ShapeFunctionGP,"uGIMP") == 0){
       printf("\t * %s \n",
 	     "Initialize uGIMP shape functions ...");      
-      GIMP_Initialize(MPM_Mesh,FEM_Mesh);
+      uGIMP_Initialize(MPM_Mesh,FEM_Mesh);
     }
     else if(strcmp(ShapeFunctionGP,"LME") == 0){
       printf("\t * %s \n",

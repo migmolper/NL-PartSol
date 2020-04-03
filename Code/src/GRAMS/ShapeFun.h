@@ -36,13 +36,13 @@ void Q4_X_to_Xi(Matrix,Matrix,Matrix);
 /*******************************************************/
 
 /* GIMP shape functions */
-void GIMP_Initialize(GaussPoint, Mesh);
-double uGIMP(double, double, double);
-double d_uGIMP(double, double, double);
-Matrix GIMP_2D(Matrix, Matrix, double);
-Matrix dGIMP_2D(Matrix, Matrix, double);
-ChainPtr Tributary_Nodes_GIMP(Matrix, int,
-			      Matrix, Mesh);
+void uGIMP_Initialize(GaussPoint, Mesh);
+double uGIMP_Sip(double, double, double);
+double uGIMP_dSip(double, double, double);
+Matrix uGIMP_N(Matrix, Matrix, double);
+Matrix uGIMP_dN(Matrix, Matrix, double);
+ChainPtr uGIMP_Tributary_Nodes(Matrix, int,
+			       Matrix, Mesh);
 
 /*******************************************************/
 
@@ -62,7 +62,5 @@ ChainPtr LME_Tributary_Nodes(Matrix, Matrix, int, Mesh);
 /* Operators */
 Matrix compute_ShapeFunction(Element, GaussPoint, Mesh );
 Matrix compute_ShapeFunction_Gradient(Element, GaussPoint, Mesh);
-/* Matrix Get_Operator(char *, Element, GaussPoint, Mesh);  */
-/* Matrix Get_B_GP(Matrix); */
 
 /*******************************************************/

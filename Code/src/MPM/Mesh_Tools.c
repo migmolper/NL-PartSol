@@ -278,8 +278,7 @@ void GetListNodesGP(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int iGP){
     /* Calculate connectivity */
     lp.nV = MPM_Mesh.lp.nM[iGP];
     MPM_Mesh.ListNodes[iGP] =
-      Tributary_Nodes_GIMP(X_GC_GP,IdxElement,
-			   lp,FEM_Mesh);    
+      uGIMP_Tributary_Nodes(X_GC_GP,IdxElement,lp,FEM_Mesh);    
     /* Calculate number of nodes */
     MPM_Mesh.NumberNodes[iGP] = get_Lenght_Set(MPM_Mesh.ListNodes[iGP]);
     

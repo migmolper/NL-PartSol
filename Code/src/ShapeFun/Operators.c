@@ -70,7 +70,7 @@ Matrix compute_ShapeFunction(Element GP_Element,
     lp.nV = MPM_Mesh.lp.nM[i_GP];
 
     /* Evaluate the shape function */
-    ShapeFunction_p = GIMP_2D(Delta_Xip,lp,FEM_Mesh.DeltaX);
+    ShapeFunction_p = uGIMP_N(Delta_Xip,lp,FEM_Mesh.DeltaX);
 
     /* Free memory */
     FreeMat(Delta_Xip);
@@ -176,7 +176,7 @@ Matrix compute_ShapeFunction_Gradient(Element GP_Element,
     lp.nV = MPM_Mesh.lp.nM[i_GP];
     
     /* Evaluate the shape function gradient */
-    Gradient_p = dGIMP_2D(Delta_Xip,lp,FEM_Mesh.DeltaX);
+    Gradient_p = uGIMP_dN(Delta_Xip,lp,FEM_Mesh.DeltaX);
 
     /* Free memory */
     FreeMat(Delta_Xip);

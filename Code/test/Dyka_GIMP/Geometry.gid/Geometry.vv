@@ -1,12 +1,12 @@
-BeginZE /home/miguelmolinos/GraMS/GraMS_V1/test/Dyka_LME/MallaMPM.gid/MallaMPM.vv
-   x -0.448510140180587769 1.34501183032989502
-   y 0.385346502065658569 -0.688310623168945312
-   z -1.65831232070922852 1.65831232070922852
-   e 0.552770793437957764
+BeginZE /home/miguelmolinos/GraMS/Code/test/Dyka_2STG/Geometry.gid/Geometry.vv
+   x -1.71122324466705322 12.7952098846435547
+   y 7.13026809692382812 -12.4433250427246094
+   z -10.5277080535888672 10.5277080535888672
+   e 5.52770805358886719
    v 0 0 0
    r 1
    m 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1
-   c 0.5 0.0250000003725290298 0
+   c 5 0 0
    pd 0
    pno 0
    pfo 0
@@ -29,7 +29,7 @@ BeginZE /home/miguelmolinos/GraMS/GraMS_V1/test/Dyka_LME/MallaMPM.gid/MallaMPM.v
    OGLStereo(EyeDistance) 0.075
    OGLStereo(LeftEyeDistance) 1 0 0 1
    OGLStereo(RightEyeDistance) 0 1 1 1
-EndZE /home/miguelmolinos/GraMS/GraMS_V1/test/Dyka_LME/MallaMPM.gid/MallaMPM.vv
+EndZE /home/miguelmolinos/GraMS/Code/test/Dyka_2STG/Geometry.gid/Geometry.vv
 
 BeginMirror
    Mirror 0 Angle 0.0 AngleFake -15.0 SizeFactor 2.0 HeightOffset 0.25 Color #d9e5f24d Backlight Off EdgeStyle No Type Scene DrawMode Mirror
