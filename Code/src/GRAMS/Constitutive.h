@@ -18,6 +18,8 @@ typedef struct {
   double E;
   /* Poisson ratio */
   double mu;
+  /* Thickness of the Material */
+  double thickness;
   /* Activate fracture modulus */
   bool Eigenerosion;
   bool Eigensoftening;

@@ -207,6 +207,8 @@ Matrix GetNodalForces(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int TimeStep)
   double GP_mass; /* Mass of the GP */
   double Vol_GP; /* Gauss-Point volumen */
   double ji_GP; /* Damage parameter */
+  double thickness_GP; /* Thickness of the GP */
+  int Mat_GP; /* Index of tha material for each GP */
   Matrix N_GP; /* Matrix with the nodal shape functions */
   double N_GP_I; /* Evaluation of the GP in the node */
   Matrix dNdx_GP; /* Matrix with the nodal derivatives */
@@ -258,6 +260,10 @@ Matrix GetNodalForces(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int TimeStep)
     GP_mass = MPM_Mesh.Phi.mass.nV[i];
     Vol_GP = GP_mass/MPM_Mesh.Phi.rho.nV[i];
 
+    /* Get the thickness of the material point */
+    Mat_GP = MPM_Mesh.MatIdx[i];
+    thickness_GP = MPM_Mesh.Mat[Mat_GP].thickness;
+
     /* 8º Damage parameter for the Gauss-point (fracture) */
     ji_GP = MPM_Mesh.Phi.ji.nV[i];
 
@@ -279,8 +285,10 @@ Matrix GetNodalForces(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int TimeStep)
 	Nodal_TOT_FORCES.nM[l][GP_I] +=
 	  N_GP_I*Body_Forces_t.nM[l][i]*GP_mass;
 	/* Add the contact forces */
-	Nodal_TOT_FORCES.nM[l][GP_I] +=
-	  N_GP_I*Contact_Forces_t.nM[l][i]*Vol_GP;
+	if(NumberDimensions == 2){
+	  Nodal_TOT_FORCES.nM[l][GP_I] +=
+	    N_GP_I*Contact_Forces_t.nM[l][i]*Vol_GP/thickness_GP;
+	}
       }      
     }
     

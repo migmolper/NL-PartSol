@@ -24,7 +24,7 @@ GramsMaterials (Particles=route.txt) {
   /* Asign material library to an auxiliar variable */
   Material Mat_GP;
   Material * Mat_Table;
-  
+  int Ndim = NumberDimensions;
   /* Simulation file */
   FILE * Sim_dat;
 
@@ -64,6 +64,7 @@ GramsMaterials (Particles=route.txt) {
   bool Is_rho;
   bool Is_E;
   bool Is_mu;
+  bool Is_thickness;
   bool Is_Ceps;
   bool Is_Gf;
   bool Is_ft;
@@ -154,7 +155,10 @@ GramsMaterials (Particles=route.txt) {
       Mat_GP.E = NAN;
       Is_mu = false;
       Mat_GP.mu = NAN;
-      /* Fracture module */      
+      /* Thickness of the mateial (2D) */
+      Is_thickness = false;
+      Mat_GP.thickness = 1;
+      /* Fracture module */
       Mat_GP.Eigenerosion = false;
       Mat_GP.Eigensoftening = false;
       /* Parameters for Eigenerosion */
@@ -229,6 +233,11 @@ GramsMaterials (Particles=route.txt) {
 	  else if(strcmp(Parse_Mat_Prop[0],"mu") == 0){
 	    Is_mu = true;
 	    Mat_GP.mu = atof(Parse_Mat_Prop[1]);
+	  }
+	  /**************************************************/	    
+	  else if(strcmp(Parse_Mat_Prop[0],"thickness") == 0){
+	    Is_thickness = true;
+	    Mat_GP.thickness = atof(Parse_Mat_Prop[1]);
 	  }
 	  /**************************************************/	    
 	  else if(strcmp(Parse_Mat_Prop[0],"Fracture") == 0){
@@ -321,6 +330,19 @@ GramsMaterials (Particles=route.txt) {
 		      "E and mu required for LE materials");
 	      exit(0);
 	    }
+	  }
+	  /**************************************************/
+	  if(Is_thickness){
+	    if(Ndim != 2){
+	      fprintf(stderr,"%s : %s\n",
+		      "Error in GramsMaterials()",
+		      "thickness is only for plain strain cases");
+	      exit(0);
+	    }
+	    printf("\t -> %s : %f \n","thickness",Mat_GP.thickness);
+	  }
+	  else{
+	    printf("\t -> %s : %f \n","thickness",Mat_GP.thickness);
 	  }
 	  /**************************************************/
 	  if(Mat_GP.Eigenerosion){ /* Check eigenerosion properties */	  
