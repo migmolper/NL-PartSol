@@ -287,7 +287,7 @@ Matrix GetNodalForces(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int TimeStep)
 	/* Add the contact forces */
 	if(NumberDimensions == 2){
 	  Nodal_TOT_FORCES.nM[l][GP_I] +=
-	    N_GP_I*Contact_Forces_t.nM[l][i]*Vol_GP/thickness_GP;
+	    N_GP_I*(Contact_Forces_t.nM[l][i]/thickness_GP)*Vol_GP;
 	}
       }      
     }
