@@ -11,7 +11,7 @@ GramsSolid2D (File=MPM_Mesh.msh) {
     GramsTime (Type=FE) {
 	CEL=70.71
 	CFL=0.01
-	N=8000
+	N=15000
     }
 
     # List of materials for the GPs
@@ -24,7 +24,7 @@ GramsSolid2D (File=MPM_Mesh.msh) {
     
     # Shape function definition
     GramsShapeFun (Type=LME) {
-	gamma=3.8
+	gamma=6
     }
 
     # Initial conditions for the GPs

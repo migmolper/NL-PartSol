@@ -52,7 +52,6 @@ typedef struct{
 /*******************************************************/
 
 /* Math macros from numerical recipies */
-
 static float sqr_arg;
 #define SQR(a) ((sqr_arg=(a)) == 0.0 ? 0.0 : sqr_arg*sqr_arg)
 static double dsqr_arg;

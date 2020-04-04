@@ -282,13 +282,13 @@ Matrix LME_lambda_NR(Matrix l, Matrix lambda, Matrix Beta)
       J.nM[i][i] += norm_r;
     }
 
-    /* Check the conditioning number of the Hessian */
-    if (fabs(Cond_Mat(J,TOL_NR)) > 10){
-      printf(" %s (%s %i) : %s \n",
-    	     "Error in LME_lambda_NR","Iter",NumIter,
-    	     "The Hessian is near to singular matrix");
-      exit(0);
-    }
+    /* /\* Check the conditioning number of the Hessian *\/ */
+    /* if (fabs(Cond_Mat(J,TOL_NR)) > 10){ */
+    /*   printf(" %s (%s %i) : %s \n", */
+    /* 	     "Error in LME_lambda_NR","Iter",NumIter, */
+    /* 	     "The Hessian is near to singular matrix"); */
+    /*   exit(0); */
+    /* } */
     
     /* Get the increment of lambda */
     D_lambda = Solve_Linear_Sistem(J,r,MatAllocZ(Ndim,1));
@@ -574,7 +574,8 @@ ChainPtr LME_Tributary_Nodes(Matrix X_GP, Matrix Beta,
     Distance = Sub_Mat(X_GP,X_I);
 
     /* If the node is near the GP push in the chain */
-    if(Norm_Mat(Distance,2) <= Ra){
+    if((Norm_Mat(Distance,2) <= Ra) ||
+       is_in_Set(FEM_Mesh.Connectivity[Elem_GP], iPtr->I)){
       push_to_Set(&Triburary_Nodes,iPtr->I);
     }
 
