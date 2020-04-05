@@ -65,11 +65,8 @@ void u_ForwardEuler(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
     puts("*************************************************");
     puts(" Third step : Update the particle stress state");
     puts(" \t a) Get the grid nodal velocity ... WORKING");
-    Nodal_Velocity = GetNodalVelocity(FEM_Mesh,
-				      Nodal_MOMENTUM,
-				      Nodal_MASS);
+    Nodal_Velocity = GetNodalVelocity(FEM_Mesh,Nodal_MOMENTUM,Nodal_MASS);
     puts(" \t DONE !!!");
-
     
     if(TimeStep % ResultsTimeStep == 0){
       /* Print Nodal values after appling the BCCs */
@@ -81,32 +78,19 @@ void u_ForwardEuler(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
     } 
     
     puts(" \t b) Calculate the strain increment ... WORKING");
-    UpdateGaussPointStrain(MPM_Mesh,
-			   FEM_Mesh,
-			   Nodal_Velocity);
+    UpdateGaussPointStrain(MPM_Mesh,FEM_Mesh,Nodal_Velocity);
     puts(" \t DONE !!!");
     
     puts(" \t c) Update the particle stress state ... WORKING");
     UpdateGaussPointStress(MPM_Mesh);
+    ComputeDamage(MPM_Mesh,FEM_Mesh);
     puts(" \t DONE !!!");
-    
-    /* if(MPM_Mesh.Mat[0].Fracture){ */
-    /*   printf(" \t d) %s %i %s \n", */
-    /* 	     "Update particle status for material",0, */
-    /* 	     "... WORKING"); */
-    /*   UpdateBeps(MPM_Mesh,FEM_Mesh); */
-    /*   MPM_Mesh.Phi.ji = */
-    /* 	ComputeDamage(MPM_Mesh.Phi.ji, MPM_Mesh.Phi.W, MPM_Mesh.Phi.mass, */
-    /* 		      MPM_Mesh.Phi.Stress, MPM_Mesh.MatIdx,MPM_Mesh.Mat, */
-    /* 		      MPM_Mesh.Beps,FEM_Mesh.DeltaX); */
-    /*   puts(" \t DONE !!!"); */
-    /* } */
     
     puts("*************************************************");
     puts(" Four step : Calculate total forces forces");
     puts(" \t WORKING ...");
     Nodal_Forces = GetNodalForces(MPM_Mesh,FEM_Mesh,TimeStep);
-    BCC_Nod_VALUE(FEM_Mesh,Nodal_Forces,TimeStep);
+    CorrectAccelerationBoundary(FEM_Mesh,Nodal_Forces);
     puts(" DONE !!!");
     
     puts("*************************************************");

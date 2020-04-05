@@ -18,12 +18,21 @@ typedef struct {
   double E;
   /* Poisson ratio */
   double mu;
+  /* Thickness of the Material */
+  double thickness;
   /* Activate fracture modulus */
-  bool Fracture;
-  /* Normalizing constant (Fracture) */
+  bool Eigenerosion;
+  bool Eigensoftening;
+  /*Normalizing constant (Eigenerosion/Eigensoftening) */
   double Ceps;
-  /* Failure energy (Fracture)  */
+  /* Failure energy (Eigenerosion)  */
   double Gf;
+  /* Tensile strengt of the material (Eigensoftening) */
+  double ft;
+  /* Bandwidth of the cohesive fracture (Eigensoftening) */
+  double heps;
+  /* Critical opening displacement */
+  double Wc;
   
 } Material;
 
@@ -34,13 +43,13 @@ Matrix LinearElastic(Matrix, Matrix, Material);
 double W_LinearElastic(Matrix, Matrix, double);
 
 /* Fracture */
-Matrix EigenerosionAlgorithm(Matrix, Matrix,
+void EigenerosionAlgorithm(Matrix, Matrix,
+			   Matrix, Matrix,
+			   int *, Material *,
+			   ChainPtr *, double);
+void EigensofteningAlgorithm(Matrix, Matrix,
 			     Matrix, Matrix,
-			     int *, Material *,
-			     ChainPtr *, double);
-Matrix ComputeDamage(Matrix, Matrix,
-		     Matrix, Matrix,
-		     int *, Material *,
-		     ChainPtr *, double);
+			     Matrix, int *,
+			     Material *, ChainPtr *);
 
 /*******************************************************/

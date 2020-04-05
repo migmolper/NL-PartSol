@@ -10,7 +10,7 @@
 
 /**********************************************************************/
 
-Load * GramsNeumannBC(char * Name_File, int NumNeumannBC)
+Load * GramsNeumannBC(char * Name_File, int NumNeumannBC, int GPxElement)
 /*
   GramsNeumannBC (Nodes=ListNodes.txt) {
   V.x Load_x.txt
@@ -42,7 +42,11 @@ Load * GramsNeumannBC(char * Name_File, int NumNeumannBC)
   char * Name_Parse[MAXW] = {NULL};
   char Route_Nodes[MAXC] = {0};
   char FileNodesRoute[MAXC];
+  
+  /* Array */
+  int Num_Nodes;
   ChainPtr Chain_Nodes = NULL;
+  int * Array_Nodes;
 
   /* Parse GramsNeumannBC properties */
   char Line_Properties[MAXC] = {0};
@@ -100,11 +104,22 @@ Load * GramsNeumannBC(char * Name_File, int NumNeumannBC)
 
       /* Get an array with the nodes */
       Chain_Nodes = File2Chain(FileNodesRoute);
-      F[IndexLoad].NumNodes =
-	LenghtChain(Chain_Nodes);
-      F[IndexLoad].Nodes =
-	ChainToArray(Chain_Nodes,F[IndexLoad].NumNodes);
+      Num_Nodes = LenghtChain(Chain_Nodes);
+      Array_Nodes = ChainToArray(Chain_Nodes,Num_Nodes);
       FreeChain(Chain_Nodes);
+      
+      F[IndexLoad].NumNodes = GPxElement*Num_Nodes;
+      F[IndexLoad].Nodes =
+	(int *)Allocate_ArrayZ(F[IndexLoad].NumNodes,sizeof(int));
+
+      for(int i = 0 ; i<Num_Nodes ; i++){
+	for(int j = 0 ; j<GPxElement ; j++){
+	  F[IndexLoad].Nodes[i*GPxElement+j] = Array_Nodes[i]*GPxElement+j;
+	}
+      }
+
+      /* Free array nodes */
+      free(Array_Nodes);
 
       /* Number of dimensions of the BCC */
       F[IndexLoad].Dim = NumberDOF;
@@ -140,8 +155,7 @@ Load * GramsNeumannBC(char * Name_File, int NumNeumannBC)
 		/* Read the curve to impose the boundary condition */
 		if(strcmp(Parse_Properties[1],"NULL") != 0){
 		  sprintf(FileLoadRoute,"%s%s",Route_Nodes,Parse_Properties[1]);
-		  F[IndexLoad].Value[0] =
-		    ReadCurve(FileLoadRoute);
+		  F[IndexLoad].Value[0] = ReadCurve(FileLoadRoute);
 		  puts("*************************************************");
 		  printf(" \t %s (%i) : \n \t %s %s \n",
 			 "* Neumann BC",

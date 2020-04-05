@@ -90,23 +90,20 @@ void FreeChain(ChainPtr A){
 /*********************************************************************/
 
 int LenghtChain(ChainPtr A){
-  
-  if(A == NULL){
-    printf(" %s : %s \n",
-	   "Error in LenghtChain",
-	   "The chain is empty");
-    exit(0);
-  }
-  
+    
   int NumElem = 0;
   ChainPtr INode = A;
 
-  while(INode != NULL){
-    NumElem ++;
-    INode = INode->next;
+  if(A == NULL){
+    return NumElem;
   }
-
-  return NumElem;
+  else{
+    while(INode != NULL){
+      NumElem ++;
+      INode = INode->next;
+    }
+    return NumElem;
+  }
 }
 
 /*********************************************************************/

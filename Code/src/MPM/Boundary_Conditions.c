@@ -65,6 +65,41 @@ void BCC_Nod_VALUE(Mesh FEM_Mesh, Matrix Nodal_VALUE, int TimeStep)
 
 /*********************************************************************/
 
+void CorrectAccelerationBoundary(Mesh FEM_Mesh, Matrix Nodal_Forces)
+/*
+  Apply the boundary conditions over the nodes 
+*/
+{
+
+  /* 1º Define auxilar variables */
+  int NumNodesBound; /* Number of nodes of the bound */
+  int NumDimBound; /* Number of dimensions */
+  int Id_BCC; /* Index of the node where we apply the BCC */
+
+  /* 2º Loop over the the boundaries */
+  for(int i = 0 ; i<FEM_Mesh.Bounds.NumBounds ; i++){
+    /* 3º Get the number of nodes of this boundarie */
+    NumNodesBound = FEM_Mesh.Bounds.BCC_i[i].NumNodes;
+    /* 4º Get the number of dimensions where the BCC it is applied */
+    NumDimBound = FEM_Mesh.Bounds.BCC_i[i].Dim;
+    for(int j = 0 ; j<NumNodesBound ; j++){
+      /* 5º Get the index of the node */
+      Id_BCC = FEM_Mesh.Bounds.BCC_i[i].Nodes[j];
+      /* 6º Loop over the dimensions of the boundary condition */
+      for(int k = 0 ; k<NumDimBound ; k++){
+	/* 7º Apply only if the direction is active (1) */
+	if(FEM_Mesh.Bounds.BCC_i[i].Dir[k] == 1){
+	  /* 8º Set to zero the forces in the nodes where velocity is fixed */
+	  Nodal_Forces.nM[k][Id_BCC] = 0;
+	}
+      }
+    }    
+  }
+
+}
+
+/*********************************************************************/
+
 Matrix Eval_Body_Forces(Load * B, int NumLoads, int NumGP, int TimeStep)
 /*
   Evaluate body forces in a time step.
@@ -138,5 +173,3 @@ Matrix Eval_Contact_Forces(Load * F, int NumLoads, int NumGP, int TimeStep)
 
   return Contact_Forces_t;
 }
-
-/*********************************************************************/

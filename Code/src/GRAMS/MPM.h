@@ -94,6 +94,8 @@ typedef struct {
   Matrix Stress;
   /*! Strain field */
   Matrix Strain;
+  /*! Strain during crack */
+  Matrix StrainF;
   /*! Deformation Energy */
   Matrix W;
   /*! Damage parameter (Fracture) */
@@ -231,6 +233,7 @@ Matrix GetNodalVelocityDisplacement(GaussPoint, Mesh);
 /* Boundary conditions */
 Curve BcDirichlet(char *);
 void BCC_Nod_VALUE(Mesh, Matrix, int);
+void CorrectAccelerationBoundary(Mesh, Matrix);
 Matrix Eval_Body_Forces(Load *, int, int, int);
 Matrix Eval_Contact_Forces(Load *, int, int, int);
 
@@ -238,6 +241,7 @@ Matrix Eval_Contact_Forces(Load *, int, int, int);
 void UpdateGaussPointStrain(GaussPoint, Mesh, Matrix);
 double UpdateGaussPointDensity(double, double);
 void UpdateGaussPointStress(GaussPoint);
+void ComputeDamage(GaussPoint, Mesh);
 Matrix GetNodalForces(GaussPoint, Mesh, int);
 Matrix GetNodalMass(GaussPoint, Mesh);
 

@@ -57,8 +57,8 @@ void UpdateGaussPointStrain(GaussPoint MPM_Mesh,
     /* 5º Multiply B by the velocity array and by the time step to get
        the increment stress tensor */
     Delta_Strain_GP = Scalar_prod(B,Element_Velocity);
-    Delta_Strain_GP = Matrix_x_Scalar(Delta_Strain_GP,
-					  DeltaTimeStep);
+    /* Get the increment of the strain tensor */
+    Delta_Strain_GP = Matrix_x_Scalar(Delta_Strain_GP, DeltaTimeStep);
 
     /* 6º Free the array with the nodal velocity of the element and the B matrix */
     FreeMat(Element_Velocity);
@@ -146,17 +146,48 @@ void UpdateGaussPointStress(GaussPoint MPM_Mesh)
       else{
 	exit(0);
       }
-      
-      /* 6º Get the deformation energy */
-      MPM_Mesh.Phi.W.nV[i] =
-	W_LinearElastic(Strain_n1,Stress_n1,MPM_Mesh.Phi.ji.nV[i]);
     }
     else{
+      /* The stress field is zero */
       for(int j = 0 ; j<MPM_Mesh.Phi.Stress.N_cols ; j++){
 	MPM_Mesh.Phi.Stress.nM[i][j] = 0.0;
       }
     }
+    
+    /* Get the deformation energy */
+    MPM_Mesh.Phi.W.nV[i] =
+      W_LinearElastic(Strain_n1,Stress_n1,MPM_Mesh.Phi.ji.nV[i]);
+    
   }
+  
+}
+
+/*******************************************************/
+
+void ComputeDamage(GaussPoint MPM_Mesh, Mesh FEM_Mesh){
+
+  double DeltaX = FEM_Mesh.DeltaX;
+  Matrix ji = MPM_Mesh.Phi.ji;
+  Matrix W = MPM_Mesh.Phi.W;
+  Matrix Mass = MPM_Mesh.Phi.mass;
+  Matrix Stress = MPM_Mesh.Phi.Stress;
+  Matrix Strain = MPM_Mesh.Phi.Strain;
+  Matrix StrainF = MPM_Mesh.Phi.StrainF;
+  int * MatIdx = MPM_Mesh.MatIdx;
+  Material * MatProp = MPM_Mesh.Mat; 
+  ChainPtr * Beps = MPM_Mesh.Beps;
+
+  if(MPM_Mesh.Mat[0].Eigenerosion){
+    UpdateBeps(MPM_Mesh,FEM_Mesh);
+    EigenerosionAlgorithm(ji, W, Mass, Stress,
+			  MatIdx, MatProp, Beps, DeltaX);
+  }
+
+  if(MPM_Mesh.Mat[0].Eigensoftening){
+    UpdateBeps(MPM_Mesh,FEM_Mesh);
+    EigensofteningAlgorithm(ji, Strain, StrainF, Mass, Stress,
+			    MatIdx, MatProp, Beps);    
+  }  
 }
 
 /*******************************************************/
@@ -176,6 +207,8 @@ Matrix GetNodalForces(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int TimeStep)
   double GP_mass; /* Mass of the GP */
   double Vol_GP; /* Gauss-Point volumen */
   double ji_GP; /* Damage parameter */
+  double thickness_GP; /* Thickness of the GP */
+  int Mat_GP; /* Index of tha material for each GP */
   Matrix N_GP; /* Matrix with the nodal shape functions */
   double N_GP_I; /* Evaluation of the GP in the node */
   Matrix dNdx_GP; /* Matrix with the nodal derivatives */
@@ -227,6 +260,10 @@ Matrix GetNodalForces(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int TimeStep)
     GP_mass = MPM_Mesh.Phi.mass.nV[i];
     Vol_GP = GP_mass/MPM_Mesh.Phi.rho.nV[i];
 
+    /* Get the thickness of the material point */
+    Mat_GP = MPM_Mesh.MatIdx[i];
+    thickness_GP = MPM_Mesh.Mat[Mat_GP].thickness;
+
     /* 8º Damage parameter for the Gauss-point (fracture) */
     ji_GP = MPM_Mesh.Phi.ji.nV[i];
 
@@ -248,8 +285,10 @@ Matrix GetNodalForces(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int TimeStep)
 	Nodal_TOT_FORCES.nM[l][GP_I] +=
 	  N_GP_I*Body_Forces_t.nM[l][i]*GP_mass;
 	/* Add the contact forces */
-	Nodal_TOT_FORCES.nM[l][GP_I] +=
-	  N_GP_I*Contact_Forces_t.nM[l][i]*Vol_GP;
+	if(NumberDimensions == 2){
+	  Nodal_TOT_FORCES.nM[l][GP_I] +=
+	    N_GP_I*(Contact_Forces_t.nM[l][i]/thickness_GP)*Vol_GP;
+	}
       }      
     }
     
