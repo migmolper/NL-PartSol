@@ -72,7 +72,7 @@ void U_PCE(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
     puts("******************************************************");
     puts(" Four step : Calculate total forces forces ... WORKING");
     Nodal_Forces = GetNodalForces(MPM_Mesh,FEM_Mesh,TimeStep);
-    BCC_Nod_VALUE(FEM_Mesh,Nodal_Forces,TimeStep);
+    CorrectAccelerationBoundary(FEM_Mesh,Nodal_Forces);
     puts(" DONE !!!");
     
     puts("****************************************");
