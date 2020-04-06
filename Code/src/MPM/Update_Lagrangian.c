@@ -206,6 +206,7 @@ void PCE_Update_Lagrangian(GaussPoint MPM_Mesh,
 
   Matrix N_GP; /* Value of the shape-function in the GP */
   Element GP_Element; /* Element for each Gauss-Point */
+  int Nnodes;
   int GP_I; /* Index of each tributary node for the GP */
   double mass_I; /* Value of the nodal mass */
   double N_I_GP; /* Nodal value for the GP */
@@ -214,11 +215,11 @@ void PCE_Update_Lagrangian(GaussPoint MPM_Mesh,
   for(int i = 0 ; i<MPM_Mesh.NumGP ; i++){
 
     /* 2º Define element of the GP */
-    GP_Element = get_Element(i, MPM_Mesh.ListNodes[i],MPM_Mesh.NumberNodes[i]);
+    Nnodes = MPM_Mesh.NumberNodes[i];
+    GP_Element = get_Element(i, MPM_Mesh.ListNodes[i], Nnodes);
 
     /* 3º Evaluate shape function in the GP i */
-    N_GP = Get_Operator("N",GP_Element,
-			MPM_Mesh,FEM_Mesh);
+    N_GP = compute_ShapeFunction(GP_Element, MPM_Mesh, FEM_Mesh);
 
     for(int k = 0 ; k<NumberDimensions ; k++){
       MPM_Mesh.Phi.acc.nM[i][k] = 0.0;

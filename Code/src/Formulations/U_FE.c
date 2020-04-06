@@ -15,8 +15,6 @@ void U_FE(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
   Matrix List_Fields;
   /* Time step */
   int TimeStep;
-  int N_Nodes = FEM_Mesh.NumNodesMesh;
-  int N_dim = NumberDimensions;
 
   int Ndim = NumberDimensions;
   int Nnodes = FEM_Mesh.NumNodesMesh;
@@ -30,9 +28,7 @@ void U_FE(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
   strcpy(Phi_I.Info,"MOMENTUM;MASS");
   Matrix V_I;
   Matrix F_I;
-  
-  Matrix Nodal_Forces;
-  Matrix Nodal_Reactions;
+  Matrix R_I;
   
   /*********************************************************************/
   /*********************************************************************/
@@ -55,13 +51,7 @@ void U_FE(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
     puts(" \t Compute nodal velocity");
     V_I = compute_NodalVelocity(FEM_Mesh, Phi_I);
     puts(" \t DONE !!!");
-    
-    puts("*************************************************");
-    puts(" Third step : Update the particle stress state");
-    puts(" \t a) Get the grid nodal velocity ... WORKING");
-    Nodal_Velocity = GetNodalVelocity(FEM_Mesh,Nodal_MOMENTUM,Nodal_MASS);
-    puts(" \t DONE !!!");
-    
+
     if(TimeStep % ResultsTimeStep == 0){
       /* Print Nodal values after appling the BCCs */
       WriteVtk_FEM("Mesh",FEM_Mesh,Phi_I,

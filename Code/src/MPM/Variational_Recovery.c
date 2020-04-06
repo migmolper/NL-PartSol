@@ -137,14 +137,12 @@ Matrix PCE_Predictor(GaussPoint MPM_Mesh,
  
   /* 2º Iterate over the GP to get the nodal values */
   for(int i = 0 ; i<MPM_Mesh.NumGP ; i++){
-
-    /* 3º Define element of the GP */
-    GP_Element = GetElementGP(i, MPM_Mesh.ListNodes[i],
-			      MPM_Mesh.NumberNodes[i]);
     
+    /* 3º Define element of the GP */
+    GP_Element = get_Element(i, MPM_Mesh.ListNodes[i], MPM_Mesh.NumberNodes[i]);
+
     /* 4º Evaluate the shape function in the coordinates of the GP */
-    N_GP = Get_Operator("N",GP_Element,
-			MPM_Mesh,FEM_Mesh);
+    N_GP = compute_ShapeFunction(GP_Element, MPM_Mesh, FEM_Mesh);
    
     /* 5º Get the mass of the GP */
     GP_mass = MPM_Mesh.Phi.mass.nV[i];

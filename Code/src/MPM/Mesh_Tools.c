@@ -10,7 +10,7 @@
 
 /*********************************************************************/
 
-Matrix GetInitialGaussPointPosition(Matrix X_GC, Mesh FEM_Mesh, int GPxElement)
+Matrix GetInitialGaussPointPosition(Mesh FEM_Mesh, int GPxElement)
 /*
  * 
  */

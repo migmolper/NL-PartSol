@@ -100,9 +100,9 @@ Load * GramsBodyForces(char * Name_File,GaussPoint GP_Mesh)
 
       /* Get an array with the nodes */
       Chain_Nodes = File2Chain(FileNodesRoute);
-      B[IndexLoad].NumNodes = LenghtChain(Chain_Nodes);
-      B[IndexLoad].Nodes = ChainToArray(Chain_Nodes,B[IndexLoad].NumNodes);
-      FreeChain(Chain_Nodes);
+      B[IndexLoad].NumNodes = get_Lenght_Set(Chain_Nodes);
+      B[IndexLoad].Nodes = Set_to_Pointer(Chain_Nodes,B[IndexLoad].NumNodes);
+      free_Set(Chain_Nodes);
 
       /* Number of dimensions of the BCC */
       B[IndexLoad].Dim = NumberDOF;

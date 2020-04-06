@@ -93,6 +93,8 @@ Matrix compute_ContacForces(Matrix F_I, GaussPoint MPM_Mesh,
   double m_p; /* Mass of the Gauss-Point */
   double rho_p; /* Density of the Gauss-Point */
   double V_p; /* Volumen of the Gauss-Point */
+  double thickness_p; /* Thickness of the Gauss-Point */
+  int Mat_p; /* Index of tha material for each Gauss-Point */
   int NumContactForces = MPM_Mesh.NumNeumannBC;
   int NumNodesLoad;
   int p;
@@ -116,6 +118,10 @@ Matrix compute_ContacForces(Matrix F_I, GaussPoint MPM_Mesh,
 
       /* Get the value of the volum */
       V_p = m_p/rho_p;
+
+      /* Get the thickness of the material point */
+      Mat_p = MPM_Mesh.MatIdx[p];
+      thickness_p = MPM_Mesh.Mat[Mat_p].thickness;
 
       /* Define element for each GP */
       Nn = MPM_Mesh.NumberNodes[p];
@@ -146,7 +152,7 @@ Matrix compute_ContacForces(Matrix F_I, GaussPoint MPM_Mesh,
 	
 	/* Compute Contact forces */
 	for(int k = 0 ; k<Ndim ; k++){
-	  F_I.nM[Ip][k] += ShapeFunction_pI*t.n[k]*V_p;
+	  F_I.nM[Ip][k] += ShapeFunction_pI*(t.n[k]/thickness_p)*V_p;
 	}
 	
       }

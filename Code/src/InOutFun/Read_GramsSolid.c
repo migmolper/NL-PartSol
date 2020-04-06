@@ -49,6 +49,7 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
   bool Is_GramsInitials = false;
   bool Is_GramsBodyForces = false;
   bool Is_GramsNeumannBC = false;
+  bool Is_GramsTime = false;
 
   /* Initialize counters */
   int Counter_Materials = 0;
@@ -159,7 +160,10 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
       MPM_Mesh.Beps[i] = NULL;  
     }
 
-    /* Generate the initial GP mesh */
+
+    /**************************************************/
+    /********* Generate the initial GP mesh ***********/
+    /**************************************************/
     MPM_Mesh.Phi.x_GC =
       GetInitialGaussPointPosition(MPM_GID_Mesh,GPxElement);
     
@@ -180,11 +184,7 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
     /**************************************************/
     if(Is_GramsMaterials){
       MPM_Mesh.NumberMaterials = Counter_Materials;
-      MPM_Mesh.Mat = GramsMaterials(Name_File,MPM_Mesh);
-      MPM_Mesh.MatIdx = (int *)malloc(MPM_Mesh.NumGP*sizeof(int));
-      for(int i = 0 ; i<MPM_Mesh.NumGP ; i++){
-	MPM_Mesh.MatIdx[i] = 0;
-      }
+      MPM_Mesh.Mat = GramsMaterials(Name_File,MPM_Mesh,GPxElement);
     }
     else{
       fprintf(stderr,"%s : %s \n",
@@ -250,12 +250,6 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
     /* Density */
     MPM_Mesh.Phi.rho = MatAllocZ(MPM_Mesh.NumGP,1);
     strcpy(MPM_Mesh.Phi.rho.Info,"Density GP");
-
-    /**************************************************/
-    /********* Generate the initial GP mesh ***********/
-    /**************************************************/
-    MPM_Mesh.Phi.x_GC =
-      GetInitialGaussPointPosition(MPM_Mesh.Phi.x_GC, MPM_GID_Mesh, GPxElement);
 
     /**************************************************/
     /*********** Read Material parameters *************/

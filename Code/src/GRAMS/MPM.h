@@ -236,7 +236,7 @@ Matrix GetNodalVelocityDisplacement(GaussPoint, Mesh);
 
 /* Boundary conditions */
 Curve BcDirichlet(char *);
-void BCC_Nod_VALUE(Mesh, Matrix, int);
+void imposse_NodalMomentum(Mesh, Matrix, int);
 Matrix GetNodalReactions(Mesh, Matrix);
 Matrix Eval_Body_Forces(Load *, int, int, int);
 Matrix Eval_Contact_Forces(Load *, int, int, int);
@@ -294,7 +294,7 @@ void PCE_Update_Lagrangian(GaussPoint, Mesh, Matrix,
 
 
 
-Matrix GetInitialGaussPointPosition(Matrix, Mesh, int);
+Matrix GetInitialGaussPointPosition(Mesh, int);
 double GetMinElementSize(Mesh);
 void GetNodalConnectivity(Mesh);
 Matrix ElemCoordinates(Mesh, int *, int);

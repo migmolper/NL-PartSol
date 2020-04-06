@@ -145,12 +145,12 @@ void EigensofteningAlgorithm(Matrix ji, Matrix Strain,
     if((ji.nV[p] == 0.0) && (StrainF.nV[p] == 0.0)){
 
       /* Get the number of neighbours */
-      Neps_p = LenghtChain(Beps[p]);
+      Neps_p = get_Lenght_Set(Beps[p]);
       
       if(Neps_p > 0){
 
 	/* Get the neighbours */      
-	Beps_p = ChainToArray(Beps[p],Neps_p);    
+	Beps_p = Set_to_Pointer(Beps[p],Neps_p);    
       
 	/* For the current particle get the mass and first principal stress */
 	m_p = Mass.nV[p];

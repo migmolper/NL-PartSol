@@ -27,10 +27,10 @@ void U_PCE(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
   /*********************************************************************/
 
   /* Auxiliar variable for the mass and momentum */
-  Matrix Nodal_Mass;
-  Matrix Nodal_Velocity;
-  Matrix Nodal_Forces = MatAllocZ(N_dim,FEM_Mesh.NumNodesMesh);
-  Matrix Nodal_Reactions;
+  Matrix M_I;
+  Matrix V_I;
+  Matrix F_I = MatAllocZ(Ndim,FEM_Mesh.NumNodesMesh);
+  Matrix R_I;
   
   /*********************************************************************/
   /*********************************************************************/
@@ -44,48 +44,44 @@ void U_PCE(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
     
     puts("*****************************************");
     puts(" First step : Predictor stage ... WORKING");
-    Nodal_Mass = GetNodalMass(MPM_Mesh, FEM_Mesh);
-    Nodal_Velocity = PCE_Predictor(MPM_Mesh,FEM_Mesh,
-				   Nodal_Velocity, Nodal_Mass,
+    M_I = GetNodalMass(MPM_Mesh, FEM_Mesh);
+    V_I = PCE_Predictor(MPM_Mesh,FEM_Mesh,
+				   V_I, M_I,
 				   Params, DeltaTimeStep);
-    BCC_Nod_VALUE(FEM_Mesh,Nodal_Velocity,TimeStep);
+    imposse_NodalMomentum(FEM_Mesh,V_I,TimeStep);   
     puts(" DONE !!!");
        
-    puts("*********************************************************");        
-    puts(" Second step : Calculate the strain increment ... WORKING");
-    UpdateGaussPointStrain(MPM_Mesh, FEM_Mesh, Nodal_Velocity);
-    puts(" DONE !!!");
+    puts("*************************************************");
+    puts(" Second step : Compute internal forces ... WORKING");
+    F_I = MatAllocZ(Nnodes,Ndim);    
+    puts(" \t Compute internal forces");
+    F_I = compute_InternalForces(F_I, V_I, MPM_Mesh, FEM_Mesh, DeltaTimeStep);    
+    puts(" \t DONE !!!");
+    puts(" \t Compute body forces");
+    F_I = compute_BodyForces(F_I, MPM_Mesh, FEM_Mesh, TimeStep);
+    puts(" \t DONE !!!");
+    puts(" \t Compute contact forces");
+    F_I = compute_ContacForces(F_I, MPM_Mesh, FEM_Mesh, TimeStep);
+    puts(" \t DONE !!!");
+    puts(" \t Compute reactions");
+    R_I = GetNodalReactions(FEM_Mesh, F_I);
+    puts(" \t DONE !!!");
 
-    puts("**********************************************************");        
-    puts(" Third step : Update the particle stress state ... WORKING");
-    UpdateGaussPointStress(MPM_Mesh);
-    ComputeDamage(MPM_Mesh,FEM_Mesh);
-    puts(" DONE !!!");
-
-    puts("******************************************************");
-    puts(" Four step : Calculate total forces forces ... WORKING");
-    Nodal_Forces = GetNodalForces(MPM_Mesh,FEM_Mesh,TimeStep);
-    Nodal_Reactions = GetNodalReactions(FEM_Mesh,Nodal_Forces);
-    puts(" DONE !!!");
     
     puts("****************************************");
-    puts(" Five step : Corrector stage ... WORKING");
-    Nodal_Velocity = PCE_Corrector(FEM_Mesh,Nodal_Velocity,
-				   Nodal_Forces, Nodal_Mass,
-				   Params, DeltaTimeStep);
+    puts(" Third step : Corrector stage ... WORKING");
+    V_I = PCE_Corrector(FEM_Mesh,V_I,F_I, M_I,Params,DeltaTimeStep);
     puts(" DONE !!!"); 
 
     puts("***************************************************");
-    puts(" Six step : Update particles lagrangian ... WORKING");
-    PCE_Update_Lagrangian(MPM_Mesh, FEM_Mesh,
-   			  Nodal_Mass, Nodal_Velocity,
-    			  Nodal_Forces,DeltaTimeStep);
+    puts(" Four step : Update particles lagrangian ... WORKING");
+    PCE_Update_Lagrangian(MPM_Mesh, FEM_Mesh, M_I, V_I, F_I,DeltaTimeStep);
     LocalSearchGaussPoints(MPM_Mesh,FEM_Mesh);
     puts(" DONE !!!");
 
     if(TimeStep % ResultsTimeStep == 0){
       /* Print Nodal values after appling the BCCs */
-      WriteVtk_FEM("Mesh",FEM_Mesh,Nodal_Reactions,
+      WriteVtk_FEM("Mesh",FEM_Mesh,R_I,
       		   (int)TimeStep/ResultsTimeStep);
       /* Print GPs results */
       WriteVtk_MPM("MPM_VALUES",MPM_Mesh,List_Fields,
@@ -93,11 +89,11 @@ void U_PCE(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
     }
 
     puts("********************************************************");
-    puts(" Seven step : Reset nodal values of the mesh ... WORKING");
-    FreeMat(Nodal_Mass);
-    FreeMat(Nodal_Velocity);
-    FreeMat(Nodal_Forces);
-    FreeMat(Nodal_Reactions);
+    puts(" Five step : Reset nodal values of the mesh ... WORKING");
+    FreeMat(M_I);
+    FreeMat(V_I);
+    FreeMat(F_I);
+    FreeMat(R_I);
     puts(" DONE !!!");
 
   } /* End of temporal integration */
