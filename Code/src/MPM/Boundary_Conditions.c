@@ -65,16 +65,19 @@ void BCC_Nod_VALUE(Mesh FEM_Mesh, Matrix Nodal_VALUE, int TimeStep)
 
 /*********************************************************************/
 
-void CorrectAccelerationBoundary(Mesh FEM_Mesh, Matrix Nodal_Forces)
+Matrix GetNodalReactions(Mesh FEM_Mesh, Matrix Nodal_Forces)
 /*
-  Apply the boundary conditions over the nodes 
+  Compute the nodal reactions
 */
 {
-
   /* 1º Define auxilar variables */
   int NumNodesBound; /* Number of nodes of the bound */
   int NumDimBound; /* Number of dimensions */
   int Id_BCC; /* Index of the node where we apply the BCC */
+  int Ndim = NumberDimensions;
+
+  Matrix Nodal_Reactions = MatAllocZ(Ndim,FEM_Mesh.NumNodesMesh);
+  strcpy(Nodal_Reactions.Info,"REACTIONS");
 
   /* 2º Loop over the the boundaries */
   for(int i = 0 ; i<FEM_Mesh.Bounds.NumBounds ; i++){
@@ -90,11 +93,15 @@ void CorrectAccelerationBoundary(Mesh FEM_Mesh, Matrix Nodal_Forces)
 	/* 7º Apply only if the direction is active (1) */
 	if(FEM_Mesh.Bounds.BCC_i[i].Dir[k] == 1){
 	  /* 8º Set to zero the forces in the nodes where velocity is fixed */
+	  Nodal_Reactions.nM[k][Id_BCC] = Nodal_Forces.nM[k][Id_BCC];
 	  Nodal_Forces.nM[k][Id_BCC] = 0;
 	}
       }
     }    
   }
+
+
+  return Nodal_Reactions;
 
 }
 

@@ -36,6 +36,7 @@ void u_ForwardEuler(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
   strcpy(Nodal_Velocity.Info,"VELOCITY");
   
   Matrix Nodal_Forces;
+  Matrix Nodal_Reactions;
   
   /*********************************************************************/
   /*********************************************************************/
@@ -90,7 +91,7 @@ void u_ForwardEuler(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
     puts(" Four step : Calculate total forces forces");
     puts(" \t WORKING ...");
     Nodal_Forces = GetNodalForces(MPM_Mesh,FEM_Mesh,TimeStep);
-    CorrectAccelerationBoundary(FEM_Mesh,Nodal_Forces);
+    Nodal_Reactions = GetNodalReactions(FEM_Mesh,Nodal_Forces);
     puts(" DONE !!!");
     
     puts("*************************************************");
@@ -118,6 +119,7 @@ void u_ForwardEuler(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
     FreeMat(Nodal_MASS_MOMENTUM);
     FreeMat(Nodal_Velocity);
     FreeMat(Nodal_Forces);
+    FreeMat(Nodal_Reactions);
     puts(" DONE !!!");
 
   } /* End of temporal integration */

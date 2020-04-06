@@ -384,7 +384,25 @@ void WriteVtk_FEM(char * Name_File, Mesh ElementMesh,
 	}
 	/* Update the index of the field */
 	i_Field += NumberDimensions ;
-      }       
+      }
+
+      
+      if(strcmp(FieldsList[i],"REACTIONS") == 0){
+	fprintf(Vtk_file,"VECTORS %s float \n","REACTIONS");
+	for(int j =  0 ; j<ElementMesh.NumNodesMesh ; j++){
+	  /* Print the dimensions of the array */
+	  for(int k = 0 ; k<NumberDimensions ; k++){
+	    fprintf(Vtk_file,"%f ",List_Nod_Fields.nM[i_Field+k][j]);
+	  }
+	  /* Add the rest of the coordinates : is compulsary to add 3 */
+	  for(int k = 0 ; k<(3-NumberDimensions) ; k++){
+	    fprintf(Vtk_file,"%f ",0.0);
+	  }
+	  fprintf(Vtk_file,"\n");	
+	}
+	/* Update the index of the field */
+	i_Field += NumberDimensions ;
+      }
 
     }
 
