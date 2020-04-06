@@ -58,10 +58,9 @@ void update_Langrangians(GaussPoint MPM_Mesh, Mesh FEM_Mesh,
 /*******************************************************/
 
 void GA_Update_Lagrangian(GaussPoint MPM_Mesh,
-			   Mesh FEM_Mesh,
-			   Matrix Nodal_Kinetics,
-			   Time_Int_Params GA_Params){
-
+			  Mesh FEM_Mesh,
+			  Matrix Nodal_Kinetics,
+			  Time_Int_Params GA_Params){
 
   
   int N_Nodes = FEM_Mesh.NumNodesMesh;
