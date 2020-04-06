@@ -249,6 +249,7 @@ void ComputeDamage(GaussPoint, Mesh);
 Matrix GetNodalForces(GaussPoint, Mesh, int);
 Matrix GetNodalMass(GaussPoint, Mesh);
 
+
 /* void UpdateGaussPointStrain(GaussPoint, Mesh, Matrix); */
 Tensor compute_RateOfStrain(Matrix, Matrix);
 Tensor update_Strain(Tensor, Tensor, double);
