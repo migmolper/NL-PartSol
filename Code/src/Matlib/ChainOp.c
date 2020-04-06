@@ -7,14 +7,14 @@
 
 /*********************************************************************/
 
-ChainPtr ArrayToChain(int * A_array, int NumNodes){
+ChainPtr Pointer_to_Set(int * A_array, int NumNodes){
 
   /* Variable declaration */
   ChainPtr A_chain = NULL;
 
   /* Loop over the array to generate a chain */
   for(int i = NumNodes-1; i > -1 ; i--){
-    PushNodeTop(&A_chain, A_array[i]);    
+    push_to_Set(&A_chain, A_array[i]);    
   }
 
   /* Return the chain */
@@ -38,7 +38,7 @@ ChainPtr RangeChain(int Init, int End){
 
   /* Fill chain */
   for(int i = 0; i <= NumNodes ; i++){
-    PushNodeTop(&A,End-i);    
+    push_to_Set(&A,End-i);    
   }
 
   /* Return chain */
@@ -47,7 +47,7 @@ ChainPtr RangeChain(int Init, int End){
 
 /*********************************************************************/
 
-int * ChainToArray(ChainPtr A_chain, int NumNodes){
+int * Set_to_Pointer(ChainPtr A_chain, int NumNodes){
 
   /* Variable declaration */
   ChainPtr iChain;
@@ -55,7 +55,7 @@ int * ChainToArray(ChainPtr A_chain, int NumNodes){
 
   if(A_chain == NULL){
     printf(" %s : %s \n",
-	   "Error in ChainToArray",
+	   "Error in Set_to_Pointer",
 	   "The chain is empty");
     exit(0);
   }
@@ -74,7 +74,7 @@ int * ChainToArray(ChainPtr A_chain, int NumNodes){
 
 /*********************************************************************/
 
-void FreeChain(ChainPtr A){
+void free_Set(ChainPtr A){
 
   /* Loop index */
   ChainPtr INode = A;
@@ -89,7 +89,7 @@ void FreeChain(ChainPtr A){
 
 /*********************************************************************/
 
-int LenghtChain(ChainPtr A){
+int get_Lenght_Set(ChainPtr A){
     
   int NumElem = 0;
   ChainPtr INode = A;
@@ -110,7 +110,7 @@ int LenghtChain(ChainPtr A){
 
 /* A utility function that returns true if data is  
    present in linked list else return false */
-bool IsPresentNode (ChainPtr Node, int I) 
+bool is_in_Set(ChainPtr Node, int I) 
 {
   /* Search index */
   ChainPtr INode = Node;
@@ -128,7 +128,7 @@ bool IsPresentNode (ChainPtr Node, int I)
 /*********************************************************************/
 
 /* A utility function to insert a node at the top of a linked list */
-void PushNodeTop (ChainPtr * TopNodePtr, int I_new) 
+void push_to_Set (ChainPtr * TopNodePtr, int I_new) 
 {
   /* Pointer to the new node of the chain */
   ChainPtr NewNodePtr;
@@ -157,7 +157,7 @@ void PushNodeTop (ChainPtr * TopNodePtr, int I_new)
 /*********************************************************************/
 
 /* A utility function to extract a node of a linked list */
-void PopNode (ChainPtr * TopNodePtr, int I_trash) 
+void pop_from_Set (ChainPtr * TopNodePtr, int I_trash) 
 {
   ChainPtr iPtr = (*TopNodePtr);
   ChainPtr PrevPtr = NULL;
@@ -222,7 +222,7 @@ ChainPtr CopyChain(ChainPtr start1){
 
 /* Function to get union of two linked lists
    A and B */
-ChainPtr ChainUnion(ChainPtr * Table, int NumTable)
+ChainPtr get_Union_Of(ChainPtr * Table, int NumTable)
 {
     ChainPtr A = NULL;
     ChainPtr iTable;
@@ -232,8 +232,8 @@ ChainPtr ChainUnion(ChainPtr * Table, int NumTable)
       iTable = Table[i];
       while (iTable != NULL){
 	/* Introduce a new element in the new chain */
-	if (!IsPresentNode(A, iTable->I)){
-	  PushNodeTop(&A, iTable->I);
+	if (!is_in_Set(A, iTable->I)){
+	  push_to_Set(&A, iTable->I);
 	}
 	/* Updtate the iterator index */
 	iTable = iTable->next;
@@ -248,7 +248,7 @@ ChainPtr ChainUnion(ChainPtr * Table, int NumTable)
   
 /* Function to get intersection of two linked lists 
    A and B */
-ChainPtr ChainIntersection(ChainPtr A,ChainPtr B) 
+ChainPtr get_Intersection_Of(ChainPtr A,ChainPtr B) 
 { 
     ChainPtr C = NULL; 
     ChainPtr iPtrA = A; 
@@ -257,8 +257,8 @@ ChainPtr ChainIntersection(ChainPtr A,ChainPtr B)
     /* B. If the element is present in B, then  */
     /* insert the element to result  */
     while (iPtrA != NULL){ 
-      if (IsPresentNode(B, iPtrA->I)) 
-	PushNodeTop(&C, iPtrA->I); 
+      if (is_in_Set(B, iPtrA->I)) 
+	push_to_Set(&C, iPtrA->I); 
       iPtrA = iPtrA->next; 
     }
     
@@ -268,19 +268,49 @@ ChainPtr ChainIntersection(ChainPtr A,ChainPtr B)
 /*********************************************************************/
 
 /* A utility function to print a linked list */
-void printList (ChainPtr A) 
-{
-  /* if(A == NULL){ */
-  /*     printf(" %s : %s \n", */
-  /* 	     "Error in printList", */
-  /* 	     "The chain is empty"); */
-  /*     exit(0); */
-  /* } */
-  
+void print_Set(ChainPtr A) 
+{  
   while (A != NULL){ 
     printf ("%d \n", A->I); 
     A = A->next; 
   } 
 } 
+
+/*********************************************************************/
+
+void OrderList(ChainPtr * List1, ChainPtr * List0, Matrix Dist)
+/*
+  Ordenate recursively and array with distances and get a chain 
+  with the positions in orden
+*/
+{
+	
+  /* Iterate while List0 is full of numbers */
+  if((*List0) != NULL){
+    
+    ChainPtr INode = (* List0);
+    double DistMax = 0.0;
+    int I_DistMax;
+
+    /* Loop over the chain */
+    while(INode != NULL){
+      /* Get the max distance of the matrix */
+      if(Dist.nV[INode->I] > DistMax){
+	DistMax = Dist.nV[INode->I];
+	I_DistMax = INode->I;
+      }
+      /* Continue iterating */      
+      INode = INode->next; 
+    }
+    
+    /* Push and Pop node */
+    push_to_Set(List1,I_DistMax);
+    pop_from_Set(List0,I_DistMax);
+    
+    /* Recursive */
+    OrderList(List1,List0,Dist);
+  }
+  
+}
 
 /*********************************************************************/

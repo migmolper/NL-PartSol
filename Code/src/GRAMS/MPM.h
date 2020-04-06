@@ -225,8 +225,12 @@ typedef struct {
 /*******************************************************/
 
 /* Variational recovery process */
-Matrix GetNodalMassMomentum(GaussPoint, Mesh);
-Matrix GetNodalVelocity(Mesh, Matrix, Matrix);
+/* Matrix GetNodalMassMomentum(GaussPoint, Mesh); */
+Matrix compute_NodalFields(GaussPoint, Mesh);
+
+/* Matrix GetNodalVelocity(Mesh, Matrix, Matrix); */
+Matrix compute_NodalVelocity(Mesh, Matrix);
+
 Matrix GetNodalKinetics(GaussPoint, Mesh);
 Matrix GetNodalVelocityDisplacement(GaussPoint, Mesh);
 
@@ -245,9 +249,36 @@ void ComputeDamage(GaussPoint, Mesh);
 Matrix GetNodalForces(GaussPoint, Mesh, int);
 Matrix GetNodalMass(GaussPoint, Mesh);
 
+/* void UpdateGaussPointStrain(GaussPoint, Mesh, Matrix); */
+Tensor compute_RateOfStrain(Matrix, Matrix);
+Tensor update_Strain(Tensor, Tensor, double);
+
+/* double UpdateGaussPointDensity(double, double); */
+double update_Density(double, double, Tensor);
+
+/* void UpdateGaussPointStress(GaussPoint); */
+Tensor compute_Stress(Tensor, Tensor, Material);
+
+/* double W_LinearElastic(Matrix, Matrix, double); */
+double compute_InternalEnergy(Tensor, Tensor);
+
+/* Matrix GetNodalForces(GaussPoint, Mesh, int); */
+Matrix compute_InternalForces(Matrix, Matrix, GaussPoint,
+			      Mesh, double);
+
+/* Matrix Eval_Body_Forces(Load *, int, int, int); */
+Matrix compute_BodyForces(Matrix, GaussPoint, Mesh, int);
+
+/* Matrix Eval_Contact_Forces(Load *, int, int, int); */
+Matrix compute_ContacForces(Matrix, GaussPoint, Mesh, int);
+
+
+/* void UpdateGridNodalMomentum(Mesh, Matrix, Matrix); */
+void update_NodalMomentum(Mesh, Matrix, Matrix);
+
 /* Forward Euler */
-void FE_Update_Lagrangian(GaussPoint, Mesh, Matrix, Matrix, Matrix);
-void FE_Update_Momentum(Mesh, Matrix, Matrix);
+void update_Langrangians(GaussPoint, Mesh, Matrix, Matrix, double);
+
 
 /* Generalized-alpha */
 void GA_UpdateNodalKinetics(Mesh, Matrix, Matrix, Time_Int_Params);
@@ -271,5 +302,11 @@ ChainPtr DiscardElements(ChainPtr, Matrix, Matrix, Mesh);
 void LocalSearchGaussPoints(GaussPoint, Mesh);
 void UpdateBeps(GaussPoint, Mesh);
 void GPinCell(ChainPtr *, ChainPtr *, Matrix, int, double);
-Element GetElementGP(int, ChainPtr, int);
-Matrix GetElementField(Matrix, Element);
+
+
+/* Element GetElementGP(int, ChainPtr, int); */
+Element get_Element(int, ChainPtr, int);
+
+
+/* Matrix GetElementField(Matrix, Element); */
+Matrix get_Element_Field(Matrix, Element);

@@ -11,8 +11,8 @@ typedef struct{
   int N_rows; /* Number of rows */
   int N_cols; /* Number of columns */
   double n; /* Value if is an scalar */
-  double * nV; /* Value if is a vector */
-  double ** nM; /* Value if is a matrix */
+  double * nV; /* Pointer for a vector */
+  double ** nM; /* Table of pointers for a matrix */
   char Info [100]; /* Aditional information */
 } Matrix;
 
@@ -38,6 +38,50 @@ typedef struct{
   int ** nM; /* 2D list */
   char Info [100]; /* Aditional information */
 } Table;
+
+/*******************************************************/
+
+/* Tensor definition */
+typedef struct{
+  int Order; /* Order of the tensor */
+  double *n; /* First order tensor */
+  double *N[3]; /* Second order tensor */
+  char Info [100]; /* Aditional information */
+} Tensor;
+
+/*******************************************************/
+
+/* Math macros from numerical recipies */
+static float sqr_arg;
+#define SQR(a) ((sqr_arg=(a)) == 0.0 ? 0.0 : sqr_arg*sqr_arg)
+static double dsqr_arg;
+#define DSQR(a) ((dsqr_arg=(a)) == 0.0 ? 0.0 : dsqr_arg*dsqr_arg)
+static double dmax_arg1, dmax_arg2;
+#define DMAX(a,b) (dmax_arg1=(a),dmax_arg2=(b),(dmax_arg1) > (dmax_arg2) ? \
+		   (dmax_arg1) : (dmax_arg2))
+static double dmin_arg1, dmin_arg2;
+#define DMIN(a,b) (dmin_arg1=(a),dmin_arg2=(b),(dmin_arg1) < (dmin_arg2) ? \
+		   (dmin_arg1) : (dmin_arg2))
+static float max_arg1, max_arg2;
+#define FMAX(a,b) (max_arg1=(a),max_arg2=(b),(max_arg1) > (max_arg2) ? \
+		   (max_arg1) : (max_arg2))
+static float min_arg1, min_arg2;
+#define FMIN(a,b) (min_arg1=(a),min_arg2=(b),(min_arg1) < (min_arg2) ? \
+		   (min_arg1) : (min_arg2))
+static long lmax_arg1, lmax_arg2;
+#define LMAX(a,b) (lmax_arg1=(a),lmax_arg2=(b),(lmax_arg1) > (lmax_arg2) ? \
+		   (lmax_arg1) : (lmax_arg2))
+static long lmin_arg1, lmin_arg2;
+#define LMIN(a,b) (lmin_arg1=(a),lmin_arg2=(b),(lmin_arg1) < (lmin_arg2) ? \
+		   (lmin_arg1) : (lmin_arg2))
+static int imax_arg1, imax_arg2;
+#define IMAX(a,b) (imax_arg1=(a),imax_arg2=(b),(imax_arg1) > (imax_arg2) ?	\
+		   (imax_arg1) : (imax_arg2))
+static int imin_arg1, imin_arg2;
+#define IMIN(a,b) (imin_arg1=(a),imin_arg2=(b),(imin_arg1) < (imin_arg2) ?	\
+		   (imin_arg1) : (imin_arg2))
+#define SIGN(a,b) ((b) >= 0.0 ? fabs(a) : -fabs(a))
+
 
 /*******************************************************/
 
@@ -72,7 +116,7 @@ double Get_Determinant(Matrix);
 Matrix Get_Inverse(Matrix);
 Matrix Transpose_Mat(Matrix);
 Matrix Scalar_prod(Matrix, Matrix);
-Matrix Vectorial_prod(Matrix a, Matrix b);
+Matrix Vectorial_prod(Matrix, Matrix);
 Matrix Tensorial_prod(Matrix,Matrix);
 Matrix Incr_Mat(Matrix, Matrix);
 Matrix Add_Mat(Matrix, Matrix);
@@ -85,67 +129,45 @@ int InOut_Poligon(Matrix, Matrix);
 double SignumFunct(double x);
 Matrix SolvePolynomial(Matrix);
 double Distance(Matrix, Matrix);
-void OrderList(ChainPtr *, ChainPtr *, Matrix);
+
+void get_SVD_Of(Matrix A, Matrix W, Matrix V);
 
 /*******************************************************/
 
 /* Chain library */
-ChainPtr ArrayToChain(int *, int);
+ChainPtr Pointer_to_Set(int *, int);
+int * Set_to_Pointer(ChainPtr, int);
 ChainPtr RangeChain(int, int);
-int * ChainToArray(ChainPtr, int);
-void FreeChain(ChainPtr);
-int LenghtChain(ChainPtr);
-bool IsPresentNode (ChainPtr, int);
-void PushNodeTop (ChainPtr *, int);
-void PopNode (ChainPtr *, int);
+void free_Set(ChainPtr);
+bool is_in_Set(ChainPtr, int);
+void push_to_Set(ChainPtr *, int);
+void pop_from_Set(ChainPtr *, int);
 ChainPtr CopyChain(ChainPtr);
-ChainPtr ChainUnion(ChainPtr *, int);
-ChainPtr ChainIntersection(ChainPtr, ChainPtr);
-void printList (ChainPtr);
+int get_Lenght_Set(ChainPtr);
+ChainPtr get_Union_Of(ChainPtr *, int);
+ChainPtr get_Intersection_Of(ChainPtr, ChainPtr);
+void print_Set(ChainPtr);
+void OrderList(ChainPtr *, ChainPtr *, Matrix);
 
 /*******************************************************/
 
-/* Library */
+/* Tensor libray */
+Tensor alloc_Tensor(int Order);
+Tensor memory_to_Tensor(double * A_mem, int Order);
+void free_Tensor(Tensor A);
+double get_I1_Of(Tensor A);
+double get_I2_Of(Tensor A);
+double get_I3_Of(Tensor A);
+double get_J1_Of(Tensor A);
+double get_J2_Of(Tensor A);
+double get_J3_Of(Tensor A);
+double get_EuclideanNorm_Of(Tensor A);
+Tensor get_I();
+Tensor get_Inverse_Of(Tensor A);
+Tensor get_Transpose_Of(Tensor A);
+double get_innerProduct_Of(Tensor A, Tensor B);
+Tensor get_vectorProduct_Of(Tensor a, Tensor b);
+Tensor get_dyadicProduct_Of(Tensor a, Tensor b);
+Tensor get_firstOrderContraction_Of(Tensor A, Tensor b);
 
-typedef struct { /* Matrix operators */
-
-  /* Allocate matrix */
-  Matrix (* Alloc)(int,int);
-  /* Allocate matrix of zeros */
-  Matrix (* AllocZ)(int,int);
-  /* Asignation of properties */
-  Matrix (* Assign)(int,int,double,double *,double **);
-  /* Free matrix */
-  void (* FreeMat)(Matrix);
-  /* Print matrix */
-  void (* Print)(Matrix, int, int);
-  /* Copy matrix */
-  Matrix (* Copy)(Matrix);
-  /* Get the norm of a matrix */
-  double (* Norm)(Matrix,int);
-  /* Get the condition number */
-  double (* Cond)(Matrix);
-  /* Get the determinant of a matrix */
-  double (* Det)(Matrix);
-  /* Get the inverse of a matrix */
-  Matrix (* Inv)(Matrix);
-  /* Get the transpose of a matrix */
-  Matrix (* Trans)(Matrix);
-  /* Scalar product */
-  Matrix (* Sprod)(Matrix,Matrix);
-  /* Vectorial product */
-  Matrix (* Vprod)(Matrix a, Matrix b);
-  /* Tensorial product */
-  Matrix (* Tprod)(Matrix,Matrix);
-  /* Increment a matrix */
-  Matrix (* Incr)(Matrix, Matrix);
-  /* Add two matrix */
-  Matrix (* Add)(Matrix,Matrix);
-  /* Subtract two matrix */
-  Matrix (* Sub)(Matrix,Matrix);
-  /* Get the lumped matrix */
-  Matrix (* Lumped)(Matrix);
-  
-} MatLib;
-
-MatLib MatrixOperators(void);
+/*******************************************************/

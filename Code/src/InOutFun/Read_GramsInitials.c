@@ -11,11 +11,14 @@
 void GramsInitials(char * Name_File, GaussPoint GP_Mesh, int GPxElement)
 /*
   GramsInitials (Nodes=ListInit.txt) {
-  Value=[5.0,0.0]
+  Value=[5.0,0.0,0.0]
   }
 */
 {
 
+  /* Number of dimensions */
+  int Ndim = NumberDimensions;
+  
   /* Simulation file */
   FILE * Sim_dat;
   
@@ -103,9 +106,9 @@ void GramsInitials(char * Name_File, GaussPoint GP_Mesh, int GPxElement)
 
       /* Get an array with the nodes */
       Chain_Nodes = File2Chain(FileNodesRoute);
-      Num_Nodes = LenghtChain(Chain_Nodes);
-      Array_Nodes = ChainToArray(Chain_Nodes,Num_Nodes);
-      FreeChain(Chain_Nodes);
+      Num_Nodes = get_Lenght_Set(Chain_Nodes);
+      Array_Nodes = Set_to_Pointer(Chain_Nodes,Num_Nodes);
+      free_Set(Chain_Nodes);
 	
       /* Look for the curly brace { */
       if(strcmp(Parse_GramsInitials[2],"{") == 0){
@@ -146,12 +149,19 @@ void GramsInitials(char * Name_File, GaussPoint GP_Mesh, int GPxElement)
 	    
 	    Num_words_parse = parse(IC_value,Parse_Init_Prop[1],"[,]");
 
+	    /* Check the number of dimensions */
+	    if(Num_words_parse != Ndim){
+	      fprintf(stderr,"%s : %s %i-D %s\n",
+		      "Error in GramsInitials()",
+		      "This is a",Ndim,"problem");
+	      exit(0);
+	    }
+
 	    /* Fill it IC for velocity formulation */
-	    if((strcmp(Formulation,"-V") == 0) &&
-	       (Num_words_parse == NumberDimensions)){
+	    if(strcmp(Formulation,"-V") == 0){
 	      for(int i = 0 ; i<Num_Nodes ; i++){
 		for(int j = 0 ; j<GPxElement ; j++){
-		  for(int k = 0 ; k<NumberDimensions ; k++){
+		  for(int k = 0 ; k<Ndim ; k++){
 		    GP_Mesh.Phi.vel.nM[Array_Nodes[i]*GPxElement+j][k] =
 		    atof(IC_value[k]);
 		  }

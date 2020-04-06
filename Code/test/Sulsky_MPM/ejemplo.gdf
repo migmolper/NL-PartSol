@@ -9,7 +9,7 @@ GramsBox (Type=GID,File=FEM_Mesh.msh) {
 GramsSolid2D (File=MPM_Mesh.msh) {
 
     # Time integration
-    GramsTime (Type=PCE) {
+    GramsTime (Type=FE) {
 	CEL=70.71
 	CFL=0.01
 	N=15000
@@ -34,10 +34,6 @@ GramsSolid2D (File=MPM_Mesh.msh) {
     GramsInitials (Nodes=Disc2.txt) {
 	Value=[-1.0,-1.0]
     }
-    
-    # Loads over the GPs
-    # GramsBodyForces (Nodes=) {}
-    # GramsContactForces (Nodes=) {}
   
 }
 

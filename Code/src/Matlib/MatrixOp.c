@@ -6,9 +6,6 @@
 #include <stdbool.h> 
 #include "grams.h"
 
-#define MAXVAL(A,B) ((A)>(B) ? (A) : (B))
-#define MINVAL(A,B) ((A)<(B) ? (A) : (B))
-
 /*********************************************************************/
 
 /* Function for arrays declaration */
@@ -23,7 +20,7 @@ void * Allocate_Array(int SizeArray, int SizeType)
   
   void * V;  
   V = (void *)malloc(SizeArray*SizeType);  
-  if (V == NULL){puts("Error in the array declaration"); exit(0);}  
+  if (V == NULL){puts("Error in the array declaration");  exit(EXIT_FAILURE);}  
   return V;
   
 }
@@ -43,7 +40,8 @@ void * Allocate_ArrayZ(int SizeArray, int SizeType)
   
   void * V;
   V = (void*)calloc(SizeArray, SizeType);
-  if (V == NULL){puts("Error in the array declaration"); exit(0);}  
+  if (V == NULL){puts("Error in the array declaration");
+    exit(EXIT_FAILURE);}  
   return V;
   
 }
@@ -61,10 +59,10 @@ void ** Allocate_Matrix(int NumberRows,int NumberColumns, int SizeType)
 
   void ** M;
   M = (void **)malloc((unsigned) NumberRows * sizeof(void *));
-  if (M == NULL){puts("Error in matrix declaration"); exit(0);}
+  if (M == NULL){puts("Error in matrix declaration");  exit(EXIT_FAILURE);}
   for(int i = 0 ; i<NumberRows ; i++){
     M[i] = malloc((unsigned) NumberColumns*SizeType);
-    if (M[i] == NULL){puts("Error in matrix declaration"); exit(0);}
+    if (M[i] == NULL){puts("Error in matrix declaration");  exit(EXIT_FAILURE);}
   }
   return M;
   
@@ -83,10 +81,10 @@ void ** Allocate_MatrixZ(int NumberRows,int NumberColumns, int SizeType)
 
   void ** M;
   M = (void **)calloc(NumberRows,sizeof(void *));
-  if (M == NULL){puts("Error in matrix declaration"); exit(0);}
+  if (M == NULL){puts("Error in matrix declaration");  exit(EXIT_FAILURE);}
   for(int i = 0 ; i<NumberRows ; i++){
     M[i] = (void *)calloc(NumberColumns,SizeType);
-    if (M[i] == NULL){puts("Error in matrix declaration"); exit(0);}
+    if (M[i] == NULL){puts("Error in matrix declaration");  exit(EXIT_FAILURE);}
   }
   return M;
   
@@ -102,15 +100,12 @@ Matrix MatAlloc(int NumberRows,int NumberColumns){
   M.N_cols = NumberColumns;
 
   if( (NumberRows == 1) || (NumberColumns == 1) ){ /* It is an array */
-    M.nV = (double *)Allocate_Array(NumberRows*NumberColumns,
-				     sizeof(double));
+    M.nV = (double *)Allocate_Array(NumberRows*NumberColumns,sizeof(double));
     M.nM = NULL;
     M.n = NAN;
   }
   else if( (NumberRows != 1) && (NumberColumns != 1)  ){ /* It is a matrix */
-    M.nM = (double **)Allocate_Matrix(NumberRows,
-				      NumberColumns,
-				      sizeof(double));
+    M.nM = (double **)Allocate_Matrix(NumberRows,NumberColumns,sizeof(double));
     M.nV = NULL;
     M.n = NAN;
   }
@@ -175,14 +170,14 @@ void FreeMat(Matrix Input){
       ((Input.N_cols > 1) && (Input.N_rows == 1)) ){ /* It is a vector */
     if(Input.nV == NULL){
       printf("Error in FreeMat() : This vector is NULL");
-      exit(0);
+       exit(EXIT_FAILURE);
     }
     free(Input.nV);
   }
   else if( (Input.N_cols > 1) && (Input.N_rows > 1) ){ /* It is a matrix */
     if(Input.nM == NULL){
       printf("Error in FreeMat() : This matrix is NULL !!! \n");
-      exit(0);
+       exit(EXIT_FAILURE);
     }
     for(int i = 0 ; i<Input.N_rows ; i++){
       free(Input.nM[i]);
@@ -191,7 +186,7 @@ void FreeMat(Matrix Input){
   }
   else{
     printf("Error in FreeMat() : You are trying to free a scalar !!! \n");
-    exit(0);
+     exit(EXIT_FAILURE);
   }
   
 }
@@ -209,7 +204,7 @@ void PrintMatrix(Matrix In, int NumCols, int NumRows)
   
   if( In.nV != NULL ){
     Nvalues = In.N_cols*In.N_rows;
-    Nvalues = MINVAL(NumRows,Nvalues);
+    Nvalues = IMIN(NumRows,Nvalues);
     printf("%s : \n",In.Info);
     for(int i = 0 ; i<Nvalues ; i++){
       printf("%f \n",In.nV[i]);
@@ -219,8 +214,8 @@ void PrintMatrix(Matrix In, int NumCols, int NumRows)
   if( In.nM != NULL ){
     
     printf("%s : \n",In.Info);
-    for(int i = 0 ; i<MAXVAL(In.N_cols,In.N_rows) ; i++){
-      for(int j = 0 ; j<MINVAL(In.N_cols,In.N_rows) ; j++){
+    for(int i = 0 ; i<IMAX(In.N_cols,In.N_rows) ; i++){
+      for(int j = 0 ; j<IMIN(In.N_cols,In.N_rows) ; j++){
 	if(In.N_cols<In.N_rows)
 	  printf(" %f ",In.nM[i][j]);
 	else
@@ -258,8 +253,8 @@ double StatsDouMatrix(double * In, int NumElems, char * OutChar)
 
     /* Get the MaxVal, the MinVal and the MeanVal */
     for(int i = 0 ; i<NumElems ; i++){
-      MaxVal = MAXVAL(MaxVal,In[i]);
-      MinVal = MINVAL(MinVal,In[i]);
+      MaxVal = DMAX(MaxVal,In[i]);
+      MinVal = DMIN(MinVal,In[i]);
       SumVal += In[i];      
     }
     MeanVal = (double)SumVal/NumElems;
@@ -326,8 +321,8 @@ double StatsIntMatrix(int * In, int NumElems, char * OutChar)
 
     /* Get the MaxVal, the MinVal and the MeanVal */
     for(int i = 0 ; i<NumElems ; i++){
-      MaxVal = MAXVAL(MaxVal,(double)In[i]);
-      MinVal = MINVAL(MinVal,(double)In[i]);
+      MaxVal = DMAX(MaxVal,(double)In[i]);
+      MinVal = DMIN(MinVal,(double)In[i]);
       SumVal += (double)In[i];      
     }
     MeanVal = (double)SumVal/NumElems;
@@ -378,7 +373,7 @@ Matrix CopyMat(Matrix In)
 {
   if( (In.N_rows==0) || (In.N_cols==0)){
     puts("Error in CopyMat() : Input matrix has 0 dimensions !");
-    exit(0);
+     exit(EXIT_FAILURE);
   }
   Matrix Out = MatAlloc(In.N_rows,In.N_cols);
 
@@ -414,16 +409,16 @@ double Get_Determinant(Matrix M_in)
   if ( (M_in.nM == NULL) && (M_in.n != M_in.n) ){
     if(M_in.nV != NULL){
       puts("Error in Get_Determinant() : An array does not have determinant !");
-      exit(0);
+       exit(EXIT_FAILURE);
     }
     puts("Error in Get_Determinant() : Input matrix = NULL !");    
-    exit(0);
+     exit(EXIT_FAILURE);
   }
   
   /* Check if the matrix is square */
   if(M_in.N_cols != M_in.N_rows){
     puts(" Error in Get_Determinant() : Non square matrix !");
-    exit(0);
+     exit(EXIT_FAILURE);
   }
    
   double Det_out;
@@ -452,8 +447,10 @@ double Get_Determinant(Matrix M_in)
     break;
 
   default :
-    puts("Error in Get_Determinant() : I am only able to get the determinat of a 3x3 matrix ! ");
-    exit(0); 
+    fprintf(stderr,"%s : %s \n",
+	    "Error in Get_Determinant()",
+	    "I am only able to get the determinat of a 3x3 matrix !");
+     exit(EXIT_FAILURE); 
   }
   
   return Det_out;
@@ -473,11 +470,11 @@ Matrix Get_Inverse(Matrix M_in)
   if (M_in.nM == NULL){
     if(M_in.nV != NULL){
       puts("Error in Get_Inverse : An array does not have inverse !");
-      exit(0);
+       exit(EXIT_FAILURE);
     }
     else{
       puts("Error in Get_Inverse : Input matrix = NULL !");    
-      exit(0);
+       exit(EXIT_FAILURE);
     }
   }
 
@@ -486,14 +483,14 @@ Matrix Get_Inverse(Matrix M_in)
   /* Is the matrix square ? */
   if(M_in.N_cols != M_in.N_rows){
     puts(" Error in Get_Inverse() : Non square matrix !");
-    exit(0);
+     exit(EXIT_FAILURE);
   }
   
   /* Get the determinant of the matrix */
   double Det = Get_Determinant(M_in);
   if(Det == 0){
     puts("Error in Get_Inverse() : Determinant null !");
-    exit(0);
+     exit(EXIT_FAILURE);
   }
   double Det_m1 = (double)1/Det;
 
@@ -591,8 +588,12 @@ Matrix Scalar_prod(Matrix A,Matrix B)
 
     /* Check if the input matrix are not compatible */
     if(A.N_cols != B.N_rows){
-      puts("Error in Scalar_prod() : Your are trying to multiply incompatible matrix");
-      exit(0);
+      printf("%s : %s -> [%i , %i] x [%i , %i] \n",
+	   "Error in Scalar_prod()",
+	   "Incompatible matrix",
+	   A.N_rows,A.N_cols,
+	   B.N_rows,B.N_cols);
+      exit(EXIT_FAILURE);
     }
      
     /* The result is a matrix */
@@ -613,8 +614,12 @@ Matrix Scalar_prod(Matrix A,Matrix B)
 
     /* Check if the input matrix are not compatible */
     if(A.N_cols != B.N_rows){
-      puts("Error in Scalar_prod() : Your are trying to multiply incompatible matrix");
-      exit(0);
+      printf("%s : %s -> [%i , %i] x [%i , %i] \n",
+	     "Error in Scalar_prod()",
+	     "Incompatible matrix",
+	     A.N_rows,A.N_cols,
+	     B.N_rows,B.N_cols);
+      exit(EXIT_FAILURE);
     }
 
     /* The result is an scalar */
@@ -631,8 +636,12 @@ Matrix Scalar_prod(Matrix A,Matrix B)
 
     /* Check if the input matrix are not compatible */
     if(A.N_cols != B.N_rows){
-      puts("Error in Scalar_prod() : Your are trying to multiply incompatible matrix");
-      exit(0);
+      printf("%s : %s -> [%i , %i] x [%i , %i] \n",
+	     "Error in Scalar_prod()",
+	     "Incompatible matrix",
+	     A.N_rows,A.N_cols,
+	     B.N_rows,B.N_cols);
+      exit(EXIT_FAILURE);
     }
       
     /* The result is an array */
@@ -719,7 +728,7 @@ Matrix Vectorial_prod(Matrix a, Matrix b){
   else{
     puts("Error in Vectorial_prod() : Incompatible shape of arrays !! ");
     puts("Remember that it should be : (3x1) x (3x1)  ");
-    exit(0);
+     exit(EXIT_FAILURE);
   }
   
   return c;
@@ -741,7 +750,7 @@ Matrix Tensorial_prod(Matrix A,Matrix B)
     if( (A.N_cols != 1) || (B.N_rows !=1) ){
       puts("Error in Tensorial_prod() : Incompatible shape of arrays ");
       puts("Remember that it should be : (nx1) · (1xn)  ");
-      exit(0);
+       exit(EXIT_FAILURE);
     }
     
     /* Allocate matrix */
@@ -757,11 +766,11 @@ Matrix Tensorial_prod(Matrix A,Matrix B)
   else if( ((A.nM != NULL)&&(B.nV != NULL)) ||
 	   ((A.nV != NULL)&&(B.nM != NULL))){
     puts(" Tensorial producto between a matrix and a array is not already defined");
-    exit(0);
+     exit(EXIT_FAILURE);
   }
   else if((A.nM != NULL)&&(B.nM != NULL)){
     puts(" Tensorial producto between a matrix and a matrix is not already defined ");
-    exit(0);
+     exit(EXIT_FAILURE);
   }
   
   return C;
@@ -787,7 +796,7 @@ Matrix Incr_Mat(Matrix A, Matrix Incr)
     if( (A.N_cols != Incr.N_cols) ||
 	(A.N_rows != Incr.N_rows) ){ /* Check the size of the input */
       printf("Error in Incr_Mat() : A is incompatible with the Incr !! \n");
-      exit(0);
+       exit(EXIT_FAILURE);
     }
 
     if(Incr.N_cols == Incr.N_rows){ /* Matrix */
@@ -829,7 +838,7 @@ Matrix Incr_Mat(Matrix A, Matrix Incr)
 
     
   default :
-    exit(0);
+     exit(EXIT_FAILURE);
   }
 
   return A;
@@ -854,7 +863,7 @@ Matrix Add_Mat(Matrix A,Matrix B)
   /* Check if it is possible to do the addition */
   if((A.N_cols != B.N_cols)||(A.N_rows != B.N_rows)){
     puts("Error in Add_Mat() : Your are trying to add incompatible matrix");
-    exit(0);
+     exit(EXIT_FAILURE);
   }
 
   /* Allocate output matrix */
@@ -879,7 +888,7 @@ Matrix Add_Mat(Matrix A,Matrix B)
   }
   else{
     puts("Error in Add_Mat() : Inputs must be of the same range !");
-    exit(0);
+     exit(EXIT_FAILURE);
   }  
 
 
@@ -904,7 +913,7 @@ Matrix Sub_Mat(Matrix A,Matrix B)
   /* Check if it is possible to do the substraction */
   if((A.N_cols != B.N_cols)||(A.N_rows != B.N_rows)){
     puts("Error in Sub_Mat() : Your are trying to add incompatible matrix");
-    exit(0);
+     exit(EXIT_FAILURE);
   }
 
   /* Allocate output matrix */
@@ -930,7 +939,7 @@ Matrix Sub_Mat(Matrix A,Matrix B)
   }
   else{
     puts("Error in Sub_Mat() : Inputs must be of the same range !");
-    exit(0);
+     exit(EXIT_FAILURE);
   }  
 
 
@@ -948,7 +957,7 @@ double Norm_Mat(Matrix In,int kind)
   /* Check */
   if( (In.nM != NULL) || (In.n == In.n)){
     puts("Error in Norm_Mat() : The input data is not a vector ! ");
-    exit(0);
+     exit(EXIT_FAILURE);
   }
     
   double Out;
@@ -959,7 +968,7 @@ double Norm_Mat(Matrix In,int kind)
 
     aux = 0;
     for(int i = 0 ; i< In.N_rows*In.N_cols ; i++){
-      aux += In.nV[i]*In.nV[i] ;
+      aux += DSQR(In.nV[i]);
     }
     Out = pow(aux,0.5);
   }
@@ -975,16 +984,16 @@ Matrix Eigen_Mat(Matrix In){
   if ( (In.nM == NULL) && (In.n != In.n) ){
     if(In.nV != NULL){
       puts("Error in Eigen_Mat() : An array does not have determinant !");
-      exit(0);
+       exit(EXIT_FAILURE);
     }
     puts("Error in Eigen_Mat() : Input matrix = NULL !");    
-    exit(0);
+     exit(EXIT_FAILURE);
   }
   
   /* Check if the matrix is square */
   if(In.N_cols != In.N_rows){
     puts(" Error in Eigen_Mat() : Non square matrix !");
-    exit(0);
+     exit(EXIT_FAILURE);
   }
 
   int Dim = In.N_cols;
@@ -995,7 +1004,7 @@ Matrix Eigen_Mat(Matrix In){
   switch(Dim){
 
   case 1 :
-    exit(0);
+     exit(EXIT_FAILURE);
     break;
   case 2 :
     /* Get the coefficients of the charasteristic pol */
@@ -1011,11 +1020,37 @@ Matrix Eigen_Mat(Matrix In){
     break;
 
   case 3 :
-    exit(0);
+    /* Get the coefficients of the charasteristic pol */
+    Coeffs = MatAllocZ(1,4);
+    Coeffs.nV[0] = /* a*x^3 */
+      + 1.0; 
+    Coeffs.nV[1] = /* b*x^2 */
+      - In.nM[0][0]
+      - In.nM[1][1]
+      - In.nM[2][2]; 
+    Coeffs.nV[2] = /* c*x */
+      + In.nM[0][0]*In.nM[2][2]
+      + In.nM[1][1]*In.nM[2][2]
+      + In.nM[0][0]*In.nM[1][1]
+      - In.nM[1][0]*In.nM[0][1]
+      - In.nM[2][1]*In.nM[1][2]
+      - In.nM[2][0]*In.nM[0][2]; 
+    Coeffs.nV[2] = /* d */
+      - In.nM[0][0]*In.nM[1][1]*In.nM[2][2]
+      - In.nM[0][1]*In.nM[1][2]*In.nM[2][0]
+      - In.nM[0][2]*In.nM[1][0]*In.nM[2][1]
+      + In.nM[1][0]*In.nM[0][1]*In.nM[2][2]
+      + In.nM[2][1]*In.nM[1][2]*In.nM[0][0]
+      + In.nM[2][0]*In.nM[0][2]*In.nM[1][1]; 
+    /* Solve the charasteristic pol to the eigenvalues */
+    Eigen_Vals = SolvePolynomial(Coeffs);
+    FreeMat(Coeffs);
+    /* Assign the eigenvalues to the solution */
+    Eigen.nV = Eigen_Vals.nV;
     break;
     
   default :
-    exit(0);
+     exit(EXIT_FAILURE);
   }
 
   return Eigen;
@@ -1032,16 +1067,16 @@ double Cond_Mat(Matrix In, double TOL)
   if ( (In.nM == NULL) && (In.n != In.n) ){
     if(In.nV != NULL){
       puts("Error in Cond_Mat() : An array does not have determinant !");
-      exit(0);
+       exit(EXIT_FAILURE);
     }
     puts("Error in Cond_Mat() : Input matrix = NULL !");    
-    exit(0);
+     exit(EXIT_FAILURE);
   }
   
   /* Check if the matrix is square */
   if(In.N_cols != In.N_rows){
     puts(" Error in Cond_Mat() : Non square matrix !");
-    exit(0);
+     exit(EXIT_FAILURE);
   }
 
   /* Remove numerical zeros */
@@ -1058,8 +1093,8 @@ double Cond_Mat(Matrix In, double TOL)
   double min_Eigen = fabs(Eigen.nV[0]);
     
   for(int i = 1 ; i<Eigen.N_rows ; i++){
-    max_Eigen = MAXVAL(max_Eigen,fabs(Eigen.nV[i]));
-    min_Eigen = MINVAL(min_Eigen,fabs(Eigen.nV[i]));
+    max_Eigen = DMAX(max_Eigen,fabs(Eigen.nV[i]));
+    min_Eigen = DMIN(min_Eigen,fabs(Eigen.nV[i]));
   }
 
   return (double)max_Eigen/min_Eigen;
@@ -1075,7 +1110,7 @@ Matrix Get_Lumped_Matrix(Matrix M_in){
 
   if(M_in.N_cols != M_in.N_rows){
     puts("Error in Get_Lumped_Matrix() : The input matrix is not square ! ");
-    exit(0);
+     exit(EXIT_FAILURE);
   }
   
   Matrix M_out;
@@ -1131,11 +1166,44 @@ Matrix Matrix_x_Scalar(Matrix A, double a)
         fprintf(stderr,"%s : %s \n",
 	    "Error in Matrix_x_Scalar(*,)",
 	    "Not a matrix or a vector");
-    exit(0);    
+     exit(EXIT_FAILURE);    
   }
 
   return A;
 }
+
+
+/*********************************************************************/
+
+void get_SVD_Of(Matrix A, Matrix W, Matrix V)
+/*
+  This routine was adapted from the "Numerical recipies in C".
+  Given a matrix A [m x n], this routine computes
+  its singular value decomposition, A = U*W*VT. 
+  Outputs :
+  The matrix U [m x n] replaces A on output. 
+  The matrix of singular values W [n x n]. 
+  The matrix V (not the transpose VT) is output as V [n x n].   
+*/
+{
+  
+}
+
+float pythag(float a, float b)
+/*  
+    Computes (a^2 + b^2)^0.5 without destructive underflow or overflow. 
+*/  
+{
+  /* Compute the absolute value of "a" and "b" */
+  float absa=fabs(a);
+  float absb=fabs(b);
+  
+  if (absa > absb)
+    return absa*sqrt(1.0+SQR(absb/absa));
+  else
+    return (absb == 0.0 ? 0.0 : absb*sqrt(1.0+SQR(absa/absb)));
+}
+
 
 
 /*********************************************************************/

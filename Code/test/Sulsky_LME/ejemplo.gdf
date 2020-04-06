@@ -1,22 +1,7 @@
 
 # Background mesh definition
 GramsBox (Type=GID,File=FEM_Mesh.msh) {
-    left=GramsBoundary {
-        BcDirichlet V.x NULL
- 	BcDirichlet V.y NULL	
-    }
-    right=GramsBoundary {
-  	BcDirichlet V.x NULL
-   	BcDirichlet V.y NULL	
-    }
-    top=GramsBoundary {
-      	BcDirichlet V.x NULL
-    	BcDirichlet V.y NULL
-    }
-    bottom=GramsBoundary {
-  	BcDirichlet V.x NULL
-    	BcDirichlet V.y NULL
-    }
+
 }
 
 # Material points definitions
@@ -26,7 +11,7 @@ GramsSolid2D (File=MPM_Mesh.msh) {
     GramsTime (Type=FE) {
 	CEL=70.71
 	CFL=0.01
-	N=8000
+	N=15000
     }
 
     # List of materials for the GPs
@@ -39,7 +24,7 @@ GramsSolid2D (File=MPM_Mesh.msh) {
     
     # Shape function definition
     GramsShapeFun (Type=LME) {
-	gamma=2
+	gamma=6
     }
 
     # Initial conditions for the GPs
@@ -49,14 +34,10 @@ GramsSolid2D (File=MPM_Mesh.msh) {
     GramsInitials (Nodes=Disc2.txt) {
 	Value=[-1.0,-1.0]
     }
-    
-    # Loads over the GPs
-    # GramsBodyForces (Nodes=) {}
-    # GramsContactForces (Nodes=) {}
   
 }
 
 # Outputs 
 GramsOutputs (i=100) {
-	     DIR=test/Sulsky_LME
+	     DIR=Resultados
 }

@@ -13,7 +13,8 @@ void U_PCE(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
   /* Some auxiliar variables for the outputs */
   Matrix List_Fields;
 
-  int N_dim = NumberDimensions;
+  int Ndim = NumberDimensions;
+  int Nnodes = FEM_Mesh.NumNodesMesh;
 
   /* Control parameters of the generalized-alpha algorithm 
      all the parameters are controled by a simple parameter :

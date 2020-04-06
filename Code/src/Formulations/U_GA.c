@@ -36,24 +36,23 @@ void U_GA(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
   /* Auxiliar variable for the nodal kinetics
      Nodal_Kinetics = {mass, a0, a1, v}
    */
-  int N_Nodes = FEM_Mesh.NumNodesMesh;
-  int N_dim = NumberDimensions;
-  Matrix Nodal_Velocity;
+  int Nnodes = FEM_Mesh.NumNodesMesh;
+  int Ndim = NumberDimensions;
+  Matrix V_I;
   Matrix Nodal_Kinetics;
 
   /* Nodal forces for the balance */
-  Matrix Nodal_Forces = MatAssign(N_dim,N_Nodes,NAN,NULL,NULL);
+  Matrix F_I = MatAssign(Ndim,Nnodes,NAN,NULL,NULL);
 
   
   puts("*************************************************");
   puts(" First step : Get the nodal kinetics");
   puts(" \t WORKING ...");
   Nodal_Kinetics = GetNodalKinetics(MPM_Mesh,FEM_Mesh);
-  Nodal_Velocity =
-    MatAssign(N_dim,N_Nodes,NAN,NULL,
-	      (double**)malloc(NumberDimensions*sizeof(double *)));
-  for(int i = 0 ; i<NumberDimensions ; i++){
-    Nodal_Velocity.nM[i] = Nodal_Kinetics.nM[1+2*N_dim+i];
+  V_I =  MatAssign(Nnodes,Ndim,NAN,NULL,
+		   (double**)malloc(Nnodes*sizeof(double *)));
+  for(int i = 0 ; i<Ndim ; i++){
+    V_I.nM[i] = Nodal_Kinetics.nM[1+2*Ndim+i];
   }
   puts(" \t DONE !!! \n");
   
@@ -68,32 +67,9 @@ void U_GA(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
 	   TimeStep,DeltaTimeStep);
     
     puts("*************************************************");
-    puts(" Second step : Set the essential BCC (over P)");
-    puts(" \t WORKING ...");
-    BCC_Nod_VALUE(FEM_Mesh,Nodal_Velocity,TimeStep);
-    puts(" \t DONE !!!");    
-    puts("*************************************************");
-    puts(" Third step : Update the particle stress state");
+    puts(" First step : Essential BCC in P ... WORKING");
+    /* BCC_Nod_VALUE(FEM_Mesh,V_I,TimeStep); */
     puts(" \t DONE !!!");
-    puts(" \t a) Calculate the strain increment ... WORKING");
-    UpdateGaussPointStrain(MPM_Mesh, FEM_Mesh, Nodal_Velocity);
-    puts(" \t DONE !!!");
-    puts(" \t b) Update the particle stress state ... WORKING");
-    UpdateGaussPointStress(MPM_Mesh);
-    puts(" \t DONE !!!");
-    
-    puts("*************************************************");
-    puts(" Four step : Calculate total forces forces");
-    puts(" \t WORKING ...");
-    Nodal_Forces = GetNodalForces(MPM_Mesh, FEM_Mesh, TimeStep);
-    puts(" DONE !!!");
-    
-    puts("*************************************************");
-    puts(" Five step : Integrate the grid nodal momentum equation");
-    puts(" \t WORKING ...");
-    GA_UpdateNodalKinetics(FEM_Mesh, Nodal_Kinetics, Nodal_Forces, Params);
-    BCC_Nod_VALUE(FEM_Mesh, Nodal_Velocity, TimeStep);
-    puts(" DONE !!!");
 
     /* Print nodal and Gps values */
     if(TimeStep % ResultsTimeStep == 0){
@@ -106,23 +82,33 @@ void U_GA(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
     }
     
     puts("*************************************************");
-    puts(" Six step : Update the particle kinetics");
-    puts(" \t WORKING ...");
-    GA_Update_Lagrangian(MPM_Mesh, FEM_Mesh, Nodal_Kinetics, Params);
+    puts(" Second step : Compute internal forces ... WORKING");
+    F_I = MatAllocZ(Nnodes,Ndim);
+    puts(" \t Compute internal forces");
+    F_I = compute_InternalForces(F_I, V_I, MPM_Mesh, FEM_Mesh, DeltaTimeStep);
+    puts(" \t DONE !!!");
+    puts(" \t Compute body forces");
+    F_I = compute_BodyForces(F_I, MPM_Mesh, FEM_Mesh, TimeStep);
+    puts(" \t DONE !!!");
+    puts(" \t Compute contact forces");
+    F_I = compute_ContacForces(F_I, MPM_Mesh, FEM_Mesh, TimeStep);
+    puts(" \t DONE !!!");
+    
+    puts("*************************************************");
+    puts(" Third step : Update nodal momentum ... WORKING");
+    GA_UpdateNodalKinetics(FEM_Mesh, Nodal_Kinetics, F_I, Params);
+    /* BCC_Nod_VALUE(FEM_Mesh, V_I, TimeStep); */
     puts(" DONE !!!");
     
     puts("*************************************************");
-    puts(" Seven step : Search the GP in the mesh");
-    puts(" \t WORKING ...");
+    puts(" Four step : Update lagrangian ... WORKING");
+    GA_AdvectionKinetics(MPM_Mesh, FEM_Mesh, Nodal_Kinetics, Params);
     LocalSearchGaussPoints(MPM_Mesh, FEM_Mesh);
     puts(" DONE !!!");
-    
+        
     puts("*************************************************");
-    puts(" Nine step : Reset nodal forces");
-    puts(" \t WORKING ...");
-    FreeMat(Nodal_Forces);
-    /* free(Nodal_Velocity.nM); */
-    /* FreeMat(Nodal_Kinetics); */
+    puts(" Five step : Reset nodal forces ... WORKING");
+    FreeMat(F_I);
     puts(" DONE !!!");
 
   } /* End of temporal integration */

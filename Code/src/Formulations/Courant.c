@@ -18,17 +18,18 @@ double DeltaT_CFL(GaussPoint MPM_Mesh, double h)
 
   double DeltaT;
   double C[3] = {0,0,0};
+  int Ndim = NumberDimensions;
 
   /* Get the maximum wave speed */
   for(int i = 0 ; i<MPM_Mesh.NumGP ; i++){
-    for(int j = 0 ; j<NumberDimensions ; j++){
+    for(int j = 0 ; j<Ndim ; j++){
       C[j] = MAXVAL(C[j],CEL+MPM_Mesh.Phi.vel.nM[i][j]);
     }
   }
 
   /* Get the minimum value of the time step */
   DeltaT = h/C[0];
-  for(int j = 1 ; j<NumberDimensions ; j++){
+  for(int j = 1 ; j<Ndim ; j++){
     DeltaT = MINVAL(DeltaT,h/C[j]);
   }
 

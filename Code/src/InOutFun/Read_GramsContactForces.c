@@ -19,6 +19,9 @@ Load * GramsNeumannBC(char * Name_File, int NumNeumannBC, int GPxElement)
 */
 {
 
+  /* Number of dimensions */
+  int Ndim = NumberDimensions;
+  
   /* Define new load case for the contact forces */
   Load * F = (Load *)Allocate_Array(NumNeumannBC,sizeof(Load));
 
@@ -104,13 +107,11 @@ Load * GramsNeumannBC(char * Name_File, int NumNeumannBC, int GPxElement)
 
       /* Get an array with the nodes */
       Chain_Nodes = File2Chain(FileNodesRoute);
-      Num_Nodes = LenghtChain(Chain_Nodes);
-      Array_Nodes = ChainToArray(Chain_Nodes,Num_Nodes);
-      FreeChain(Chain_Nodes);
-      
-      F[IndexLoad].NumNodes = GPxElement*Num_Nodes;
+      F[IndexLoad].NumNodes =
+	get_Lenght_Set(Chain_Nodes);
       F[IndexLoad].Nodes =
-	(int *)Allocate_ArrayZ(F[IndexLoad].NumNodes,sizeof(int));
+	Set_to_Pointer(Chain_Nodes,F[IndexLoad].NumNodes);
+      free_Set(Chain_Nodes);
 
       for(int i = 0 ; i<Num_Nodes ; i++){
 	for(int j = 0 ; j<GPxElement ; j++){
@@ -122,13 +123,13 @@ Load * GramsNeumannBC(char * Name_File, int NumNeumannBC, int GPxElement)
       free(Array_Nodes);
 
       /* Number of dimensions of the BCC */
-      F[IndexLoad].Dim = NumberDOF;
+      F[IndexLoad].Dim = Ndim;
       /* Direction of the BCC */
       F[IndexLoad].Dir =
-	(int *)Allocate_ArrayZ(NumberDOF,sizeof(int));
+	(int *)Allocate_ArrayZ(Ndim,sizeof(int));
       /* Curve for each dimension */
       F[IndexLoad].Value =
-	(Curve *)Allocate_Array(NumberDOF,sizeof(Curve));
+	(Curve *)Allocate_Array(Ndim,sizeof(Curve));
       /* Information of the BCC */
       if(strcmp(Formulation,"-V") == 0){
   	/* Name of the BCC */

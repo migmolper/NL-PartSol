@@ -18,9 +18,10 @@
 void Q4_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 
 {
-  /* Variables for the GP coordinates */  
-  Matrix X_GC_GP = MatAssign(NumberDimensions,1,NAN,NULL,NULL);
-  Matrix X_EC_GP = MatAssign(NumberDimensions,1,NAN,NULL,NULL);
+  /* Variables for the GP coordinates */
+  int Ndim = NumberDimensions;
+  Matrix X_GC_GP = MatAssign(Ndim,1,NAN,NULL,NULL);
+  Matrix X_EC_GP = MatAssign(Ndim,1,NAN,NULL,NULL);
 
   /* Variables for the poligon */
   int NumVertex;
@@ -35,7 +36,7 @@ void Q4_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
   }
   
   for(int i = 0 ; i<FEM_Mesh.NumElemMesh ; i++){
-    FreeChain(FEM_Mesh.GPsElements[i]);
+    free_Set(FEM_Mesh.GPsElements[i]);
     FEM_Mesh.GPsElements[i] = NULL;
   }
 
@@ -49,11 +50,11 @@ void Q4_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
       /* 3º Connectivity of the Poligon */
       NumVertex = FEM_Mesh.NumNodesElem[j];
       Poligon_Connectivity =
-	ChainToArray(FEM_Mesh.Connectivity[j],NumVertex);
+	Set_to_Pointer(FEM_Mesh.Connectivity[j],NumVertex);
 
       /* 4º Get the coordinates of the element */
-      Poligon_Coordinates =
-	ElemCoordinates(FEM_Mesh,Poligon_Connectivity,NumVertex);
+      Poligon_Coordinates = ElemCoordinates(FEM_Mesh,Poligon_Connectivity,
+					    NumVertex);
       
       /* 5º Check out if the GP is in the Element */
       if(InOut_Poligon(X_GC_GP,Poligon_Coordinates) == 1){
@@ -61,17 +62,16 @@ void Q4_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 	/* 6º Asign to the GP a element in the background mesh, just for 
 	   searching porpuses */
 	MPM_Mesh.Element_id[i] = j;
-	PushNodeTop(&FEM_Mesh.GPsElements[j],i);
+	push_to_Set(&FEM_Mesh.GPsElements[j],i);
 
 	/* 7º If the GP is in the element, get its natural coordinates */	
 	X_EC_GP.nV = MPM_Mesh.Phi.x_EC.nM[i];
-	Get_X_EC_Q4(X_EC_GP,X_GC_GP,Poligon_Coordinates);
+	Q4_X_to_Xi(X_EC_GP,X_GC_GP,Poligon_Coordinates);
 
 	/* 8º Get list of nodes near to the GP */
-	FreeChain(MPM_Mesh.ListNodes[i]);
+	free_Set(MPM_Mesh.ListNodes[i]);
 	MPM_Mesh.ListNodes[i] = NULL;
 	MPM_Mesh.ListNodes[i] = CopyChain(FEM_Mesh.Connectivity[j]);
-	
 	/* 9º Active those nodes that interact with the GP */
 	ListNodes_I = MPM_Mesh.ListNodes[i];
 	while(ListNodes_I != NULL){
@@ -97,10 +97,10 @@ void Q4_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 }
 
 /* Shape functions */
-Matrix Q4(Matrix X_e){
+Matrix Q4_N(Matrix X_e){
 
   /* Error check */
-  if( (fabs(X_e.nV[0]) > 1 ) || (fabs(X_e.nV[1]) > 1 ) ){
+  if( (fabs(X_e.nV[0]) > 1+TOL_zero ) || (fabs(X_e.nV[1]) > 1+TOL_zero ) ){
     printf("Error in Q4() : Out of the element bounds !!! \n");
     exit(0);
   }    
@@ -120,42 +120,36 @@ Matrix Q4(Matrix X_e){
 /*********************************************************************/
 
 /* Derivatives of the shape functions */
-Matrix dQ4(Matrix X_e){
+Matrix Q4_dN_Ref(Matrix X_e){
 
   /* Error check */
-  if( (fabs(X_e.nV[0]) > 1 ) || (fabs(X_e.nV[1]) > 1 ) ){
+  if( (fabs(X_e.nV[0]) > 1+TOL_zero ) || (fabs(X_e.nV[1]) > 1+TOL_zero ) ){
     printf("Error in dQ4() : Out of the element bounds !!! \n");
     exit(0);
-  }    
+  }
+
+  int Ndim = NumberDimensions;
   
   /* Definition and allocation */
-  Matrix dNdX_ref = MatAlloc(2,4);
+  Matrix dNdX_ref = MatAllocZ(4,Ndim);
   
   /* Fill the matrix */
 
   /* Node 1 */
-  /* \frac{\partial N0}{\partial \xi} */
   dNdX_ref.nM[0][0] = -0.25*(1-X_e.nV[1]);
-  /* \frac{\partial N0}{\partial \eta} */
-  dNdX_ref.nM[1][0] = -0.25*(1-X_e.nV[0]); 
+  dNdX_ref.nM[0][1] = -0.25*(1-X_e.nV[0]); 
 
   /* Node 2 */
-  /* \frac{\partial N1}{\partial \xi} */
-  dNdX_ref.nM[0][1] = +0.25*(1-X_e.nV[1]);
-  /* \frac{\partial N1}{\partial \eta} */
+  dNdX_ref.nM[1][0] = +0.25*(1-X_e.nV[1]);
   dNdX_ref.nM[1][1] = -0.25*(1+X_e.nV[0]);
   
   /* Node 3 */
-  /* \frac{\partial N2}{\partial \xi} */
-  dNdX_ref.nM[0][2] = +0.25*(1+X_e.nV[1]);
-  /* \frac{\partial N2}{\partial \eta} */
-  dNdX_ref.nM[1][2] = +0.25*(1+X_e.nV[0]);
+  dNdX_ref.nM[2][0] = +0.25*(1+X_e.nV[1]);
+  dNdX_ref.nM[2][1] = +0.25*(1+X_e.nV[0]);
   
   /* Node 4 */
-  /* \frac{\partial N3}{\partial \xi} */
-  dNdX_ref.nM[0][3] = -0.25*(1+X_e.nV[1]);
-  /* \frac{\partial N3}{\partial \eta} */
-  dNdX_ref.nM[1][3] = +0.25*(1-X_e.nV[0]); 
+  dNdX_ref.nM[3][0] = -0.25*(1+X_e.nV[1]);
+  dNdX_ref.nM[3][1] = +0.25*(1-X_e.nV[0]); 
   
   return dNdX_ref;
 }
@@ -163,7 +157,7 @@ Matrix dQ4(Matrix X_e){
 /*********************************************************************/
 
 /* Jacobian of the transformation for the four-nodes quadrilateral */
-Matrix Get_F_Ref_Q4(Matrix X_NC_GP,Matrix X_GC_Nodes)
+Matrix Q4_F_Ref(Matrix X_NC_GP, Matrix X_GC_Nodes)
 /*
   Get the jacobian of the transformation of the reference element :
 
@@ -178,40 +172,39 @@ Matrix Get_F_Ref_Q4(Matrix X_NC_GP,Matrix X_GC_Nodes)
   evaluated in the GP
 */
 {
+  int Ndim = NumberDimensions;
   /* Variable declaration */
   Matrix dNdX_Ref_GP;
-  Matrix X_alpha = MatAlloc(2,1);
-  Matrix dNdx_alpha = MatAlloc(1,2);
-  Matrix F_Ref_alpha;
-  Matrix F_Ref = MatAllocZ(2,2);
+  Tensor X_I;
+  Tensor dNdx_I;
+  Tensor F_Ref_I;
+  Matrix F_Ref = MatAllocZ(Ndim,Ndim);
 
   /* 1º Evaluate the derivarive of the shape function in the GP */
-  dNdX_Ref_GP = dQ4(X_NC_GP); 
+  dNdX_Ref_GP = Q4_dN_Ref(X_NC_GP); 
 
   /* 2º Get the F_Ref doing a loop over the nodes of the element */
-  for(int i = 0 ; i<4 ; i++){
+  for(int I = 0 ; I<4 ; I++){
 
     /* 3º Fill arrays for the tensorial product */
-    for(int j = 0 ; j<2 ; j++){
-      X_alpha.nV[j] = X_GC_Nodes.nM[i][j];
-      dNdx_alpha.nV[j] = dNdX_Ref_GP.nM[j][i];
-    }
+    X_I = memory_to_Tensor(X_GC_Nodes.nM[I], 1);
+    dNdx_I = memory_to_Tensor(dNdX_Ref_GP.nM[I], 1);
 
     /* 4º Get the nodal contribution */
-    F_Ref_alpha = Tensorial_prod(X_alpha,dNdx_alpha);
+    F_Ref_I = get_dyadicProduct_Of(X_I,dNdx_I);
 
     /* 5º Increment the reference deformation gradient */
-    F_Ref = Incr_Mat(F_Ref, F_Ref_alpha);
-
+    for(int i = 0 ; i<Ndim ; i++){
+      for(int j = 0 ; j<Ndim ; j++){
+	F_Ref.nM[i][j] += F_Ref_I.N[i][j];
+      }
+    }
     /* 6º Free data of the nodal contribution */
-    FreeMat(F_Ref_alpha);
-    
+    free_Tensor(F_Ref_I);    
   }
   
   /* 7º Free memory */
   FreeMat(dNdX_Ref_GP);
-  FreeMat(X_alpha);
-  FreeMat(dNdx_alpha);
 
   /* 8º Output */
   return F_Ref;
@@ -220,88 +213,77 @@ Matrix Get_F_Ref_Q4(Matrix X_NC_GP,Matrix X_GC_Nodes)
 /*********************************************************************/
 
 /* Element gradient in the real element */
-Matrix Get_dNdX_Q4(Matrix X_EC_GP,Matrix Element)
+Matrix Q4_dN(Matrix X_EC, Matrix Element)
 /*
   - Matrix X_EC_GP : Element coordinates of the gauss point
-  - Matrix Element : Coordinates of the element (NumNodesElem x NumberDimensions)
+  - Matrix Element : Coordinates of the element (4 x Ndim)
 */
 {
   
-  /* 0º Definition and allocation */
-  Matrix dNdX_Ref_GP; /* Derivative of the shape function evaluated in the GP (Ndim x Nnodes) */
-  Matrix F_GP; /* Jacobian of the transformation evaluated in the GP (Ndim x Ndim) */
-  Matrix F_GP_m1; /* Inverse of the Jacobian */
-  Matrix F_GP_Tm1; /* Transpose of the inverse Jacobian */
-  Matrix dNdx_GP; /* Derivatives of the shape function evaluates in the GP (Ndim x Ndim) */
+  /* Derivatives of the shape function evaluates in the GP (4 x Ndim) */
+  Matrix dNdX;
+  Matrix dNdX_T;
 
-  /* 1º Evaluate the gradient of the shape function in the GP */
-  dNdX_Ref_GP = dQ4(X_EC_GP);
+  /* 1º Evaluate the gradient of the shape function in the GP (4 x Ndim) */
+  Matrix dNdX_Ref = Q4_dN_Ref(X_EC);
   
   /* 2º Get the Jacobian of the transformation evaluated in the GP */
-  F_GP = Get_F_Ref_Q4(X_EC_GP,Element);
-    
-  /* 3º Get the inverse of the deformation gradient */
-  F_GP_m1 = Get_Inverse(F_GP);
-  FreeMat(F_GP);
-  
-  /* 4º Get the transpose of the inverse of the Jacobian */
-  F_GP_Tm1 = Transpose_Mat(F_GP_m1);
-  FreeMat(F_GP_m1);
+  Matrix F = Q4_F_Ref(X_EC,Element);
+  Matrix F_m1 = Get_Inverse(F);
+  Matrix F_Tm1 = Transpose_Mat(F_m1);
+  FreeMat(F);
+  FreeMat(F_m1);
+  Matrix dNdX_Ref_T = Transpose_Mat(dNdX_Ref);
+  FreeMat(dNdX_Ref);
   
   /* 5º Get the gradient of the shape functions in global coordinates */
-  dNdx_GP = Scalar_prod(F_GP_Tm1,dNdX_Ref_GP);
-  FreeMat(F_GP_Tm1);
-  FreeMat(dNdX_Ref_GP);
+  dNdX_T = Scalar_prod(F_Tm1, dNdX_Ref_T);
 
+  /* Free memory */
+  FreeMat(F_Tm1);  
+  FreeMat(dNdX_Ref_T);
+
+  dNdX = Transpose_Mat(dNdX_T);
+  FreeMat(dNdX_T);  
+
+  
   /* 6º Return result */
-  return dNdx_GP;
+  return dNdX;
 }
 
 /*********************************************************************/
 
 /* Global coordinates of the four nodes quadrilateral */
-Matrix Get_X_GC_Q4(Matrix X_NC_GP,Matrix X_GC_Nodes)
+Matrix Q4_Xi_to_X(Matrix Xi, Matrix Element)
 /*
   This function evaluate the position of the GP in the element,
   and get it global coordiantes    
 */
 {
-  /* 0º Variable declaration */
-  Matrix N_ref;
-  Matrix X_GC_GP;
-
+  int Ndim = NumberDimensions;
   /* 1º Evaluate the Q4 element in the element coordinates */
-  N_ref = Q4(X_NC_GP);
+  Matrix N = Q4_N(Xi);
 
   /* 2º Allocate the output coordinates */
-  X_GC_GP = MatAlloc(2,1);
+  Matrix X = MatAllocZ(Ndim,1);
 
   /* 3º Get the global coordinates for this element coordiantes in this element */
-  X_GC_GP.nV[0] =
-    N_ref.nV[0]*X_GC_Nodes.nM[0][0] +
-    N_ref.nV[1]*X_GC_Nodes.nM[1][0] +
-    N_ref.nV[2]*X_GC_Nodes.nM[2][0] +
-    N_ref.nV[3]*X_GC_Nodes.nM[3][0];
-  
-  X_GC_GP.nV[1] =
-    N_ref.nV[0]*X_GC_Nodes.nM[0][1] +
-    N_ref.nV[1]*X_GC_Nodes.nM[1][1] +
-    N_ref.nV[2]*X_GC_Nodes.nM[2][1] +
-    N_ref.nV[3]*X_GC_Nodes.nM[3][1];
+  for(int I = 0 ; I<4 ; I++){
+    X.nV[0] += N.nV[I]*Element.nM[I][0];
+    X.nV[1] += N.nV[I]*Element.nM[I][1];
+  }
 
   /* 4º Free memory */
-  FreeMat(N_ref);
+  FreeMat(N);
 
   /* 5º Output */
-  return X_GC_GP;
+  return X;
  
 }
 
 /*********************************************************************/
 
-void Get_X_EC_Q4(Matrix X_EC_GP,
-		 Matrix X_GC_GP,
-		 Matrix Element_GC_Nod)
+void Q4_X_to_Xi(Matrix Xi, Matrix X, Matrix Element)
 /* 
    The function return the natural coordinates of a point 
    inside of the element.
@@ -316,9 +298,8 @@ void Get_X_EC_Q4(Matrix X_EC_GP,
 */
 {
   
-  X_EC_GP = Newton_Rapson(Get_X_GC_Q4,Element_GC_Nod,
-			  Get_F_Ref_Q4,Element_GC_Nod,
-			  X_GC_GP,X_EC_GP);
+  Xi = Newton_Rapson(Q4_Xi_to_X, Element, Q4_F_Ref, Element, X, Xi);
+  
 }
 
 /*********************************************************************/

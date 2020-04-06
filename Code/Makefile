@@ -138,12 +138,10 @@ Traccion_LME:
 Dyka_MPM:
 	@echo "**************** Run test case ******************"
 	$ ./$(EXE) -2D -V $(TESTDIR)/Dyka_MPM/ejemplo.gdf
-	$ python $(TESTDIR)/Dyka_MPM/Velocity.py
 	@echo " "
 	@echo "*************** Test case passed ****************"
 Dyka_GIMP:
 	@echo "**************** Run test case ******************"
-	$ rm $(TESTDIR)/Dyka_GIMP/Resultados/*.vtk
 	$ ./$(EXE) -2D -V $(TESTDIR)/Dyka_GIMP/ejemplo.gdf
 	@echo " "
 	@echo "*************** Test case passed ****************"

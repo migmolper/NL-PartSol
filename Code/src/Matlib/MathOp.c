@@ -6,10 +6,6 @@
 #include <stdbool.h> 
 #include "grams.h"
 
-#define MAXVAL(A,B) ((A)>(B) ? (A) : (B))
-#define MINVAL(A,B) ((A)<(B) ? (A) : (B))
-
-
 /*********************************************************************/
 
 double Area_Poligon(Matrix Poligon)
@@ -138,7 +134,7 @@ int InOut_Poligon(Matrix X_Point, Matrix Poligon)
   /* Get the normal vector */
   a.nV[0] = Poligon.nM[1][0] - Poligon.nM[0][0];
   a.nV[1] = Poligon.nM[1][1] - Poligon.nM[0][1];
-  a.nV[2] = Poligon.nM[1][2] - Poligon.nM[0][2];
+  a.nV[2] = Poligon.nM[1][2] - Poligon.nM[0][2];  
   b.nV[0] = Poligon.nM[Poligon.N_rows-1][0] - Poligon.nM[0][0];
   b.nV[1] = Poligon.nM[Poligon.N_rows-1][1] - Poligon.nM[0][1];
   b.nV[2] = Poligon.nM[Poligon.N_rows-1][2] - Poligon.nM[0][2];
@@ -246,7 +242,7 @@ Matrix SolvePolynomial(Matrix Coeffs)
     exit(0);
   }
 
-  double a, b, c;
+  double a, b, c, d;
   double aux;
 
   switch(N_Coeffs){
@@ -273,7 +269,14 @@ Matrix SolvePolynomial(Matrix Coeffs)
     Solution.nV[1] =
       0.5*(- b - sqrt(aux))/a;
     break;
-       
+
+  case 4 :
+    /* Coeficients */
+    a = Coeffs.nV[0];
+    b = Coeffs.nV[1];
+    c = Coeffs.nV[2];
+    d = Coeffs.nV[3];
+    break;
   default :
     printf(" %s : %s \n ",
 	   "Error in SolvePolynomial() ",
@@ -292,6 +295,7 @@ double Distance(Matrix End, Matrix Init)
   Distance between two points.
 */
 {
+  int Ndim = NumberDimensions;
 
   if((End.N_rows != Init.N_rows) ||
      (End.N_cols != Init.N_cols)){
@@ -303,7 +307,7 @@ double Distance(Matrix End, Matrix Init)
 
   double DIST = 0;
 
-  for(int i = 0 ; i<NumberDimensions ; i++){
+  for(int i = 0 ; i<Ndim ; i++){
 
     DIST += pow(End.nV[i] - Init.nV[i],2);
 
@@ -315,41 +319,5 @@ double Distance(Matrix End, Matrix Init)
   return DIST;
 }
 
-/*********************************************************************/
-
-void OrderList(ChainPtr * List1, ChainPtr * List0, Matrix Dist)
-/*
-  Ordenate recursively and array with distances and get a chain 
-  with the positions in orden
-*/
-{
-	
-  /* Iterate while List0 is full of numbers */
-  if((*List0) != NULL){
-    
-    ChainPtr INode = (* List0);
-    double DistMax = 0.0;
-    int I_DistMax;
-
-    /* Loop over the chain */
-    while(INode != NULL){
-      /* Get the max distance of the matrix */
-      if(Dist.nV[INode->I] > DistMax){
-	DistMax = Dist.nV[INode->I];
-	I_DistMax = INode->I;
-      }
-      /* Continue iterating */      
-      INode = INode->next; 
-    }
-    
-    /* Push and Pop node */
-    PushNodeTop(List1,I_DistMax);
-    PopNode(List0,I_DistMax);
-    
-    /* Recursive */
-    OrderList(List1,List0,Dist);
-  }
-  
-}
 
 /*********************************************************************/

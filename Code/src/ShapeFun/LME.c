@@ -34,11 +34,11 @@
 void LME_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 {
 
-  int N_dim = NumberDimensions;
+  int Ndim = NumberDimensions;
 
   /* Variables for the GP coordinates */  
-  Matrix X_GC_GP = MatAssign(N_dim,1,NAN,NULL,NULL);
-  Matrix X_EC_GP = MatAssign(N_dim,1,NAN,NULL,NULL);
+  Matrix X_GC_GP = MatAssign(Ndim,1,NAN,NULL,NULL);
+  Matrix X_EC_GP = MatAssign(Ndim,1,NAN,NULL,NULL);
 
   /* Variables for the poligon */
   int NumVertex;
@@ -48,11 +48,11 @@ void LME_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 
   /* Auxiliar variables for LME */
   Matrix lambda_GP = /* Lagrange multipliers */
-    MatAssign(N_dim,1,NAN,NULL,NULL);
+    MatAssign(Ndim,1,NAN,NULL,NULL);
   Matrix Delta_Xip; /* Distance from GP to the nodes */
   Matrix Dist;
   Matrix Beta_GP = /* Tunning parameter */
-      MatAssign(N_dim,1,NAN,NULL,NULL);
+      MatAssign(Ndim,1,NAN,NULL,NULL);
   int NumNodes_GP; /* Number of neibourghs */
   int * ListNodes; /* List of nodes */
   int I_iGP; /* Iterator for the neibourghs */
@@ -62,8 +62,8 @@ void LME_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
   int * List;
 
   /* Auxiliar variables to initialize lambda */
-  Matrix A = MatAlloc(N_dim,N_dim);
-  Matrix B = MatAlloc(N_dim,1);
+  Matrix A = MatAlloc(Ndim,Ndim);
+  Matrix B = MatAlloc(Ndim,1);
 
   /* 1º Set to zero the active/non-active node, and the GPs in each 
    element */
@@ -72,7 +72,7 @@ void LME_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
   }
   
   for(int i = 0 ; i<FEM_Mesh.NumElemMesh ; i++){
-    FreeChain(FEM_Mesh.GPsElements[i]);
+    free_Set(FEM_Mesh.GPsElements[i]);
     FEM_Mesh.GPsElements[i] = NULL;
   }
 
@@ -82,7 +82,7 @@ void LME_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
     X_GC_GP.nV = MPM_Mesh.Phi.x_GC.nM[i];
 
     /* 3º Initialize Beta and assign to an auxiliar pointer */
-    for(int j = 0 ; j<N_dim ; j++){
+    for(int j = 0 ; j<Ndim ; j++){
       MPM_Mesh.Beta.nM[i][j] =
 	gamma_LME/(FEM_Mesh.DeltaX*FEM_Mesh.DeltaX);
     }
@@ -94,7 +94,7 @@ void LME_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
       /* 4º Connectivity of the Poligon */
       NumVertex = FEM_Mesh.NumNodesElem[j];
       Poligon_Connectivity =
-	ChainToArray(FEM_Mesh.Connectivity[j],NumVertex);
+	Set_to_Pointer(FEM_Mesh.Connectivity[j],NumVertex);
 
       /* 5º Get the coordinates of the element */
       Poligon_Coordinates =
@@ -106,14 +106,14 @@ void LME_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 	/* 7º Asign to the GP a element in the background mesh, just for 
 	   searching porpuses */
 	MPM_Mesh.Element_id[i] = j;
-	PushNodeTop(&FEM_Mesh.GPsElements[j],i);
+	push_to_Set(&FEM_Mesh.GPsElements[j],i);
 
 	/* 8º If the GP is in the element, get its natural coordinates */
 	X_EC_GP.nV = MPM_Mesh.Phi.x_EC.nM[i];
-	Get_X_EC_Q4(X_EC_GP,X_GC_GP,Poligon_Coordinates);
+	Q4_X_to_Xi(X_EC_GP,X_GC_GP,Poligon_Coordinates);
 
 	/* 9º Get list of nodes near to the GP */
-	FreeChain(MPM_Mesh.ListNodes[i]);
+	free_Set(MPM_Mesh.ListNodes[i]);
 	MPM_Mesh.ListNodes[i] = NULL;
  
 	/* 10º Calculate connectivity */
@@ -122,18 +122,18 @@ void LME_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 			      MPM_Mesh.Element_id[i],FEM_Mesh);
     
 	/* 11º Calculate number of nodes */
-	MPM_Mesh.NumberNodes[i] = LenghtChain(MPM_Mesh.ListNodes[i]);
+	MPM_Mesh.NumberNodes[i] = get_Lenght_Set(MPM_Mesh.ListNodes[i]);
 
 	/* Generate nodal distance list */
 	NumNodes_GP = MPM_Mesh.NumberNodes[i];
-	ListNodes = ChainToArray(MPM_Mesh.ListNodes[i],NumNodes_GP);
-	Delta_Xip = MatAlloc(NumNodes_GP,N_dim);
+	ListNodes = Set_to_Pointer(MPM_Mesh.ListNodes[i],NumNodes_GP);
+	Delta_Xip = MatAlloc(NumNodes_GP,Ndim);
 	/* Allocate the distance vector of each node */
 	Dist = MatAllocZ(NumNodes_GP,1);
 	/* Fill both vectors */
 	for(int k = 0 ; k<NumNodes_GP ; k++){
 	  I_iGP = ListNodes[k];
-	  for(int l = 0 ; l<N_dim ; l++){
+	  for(int l = 0 ; l<Ndim ; l++){
 	    Delta_Xip.nM[k][l] =
 	      X_GC_GP.nV[l]-
 	      FEM_Mesh.Coordinates.nM[I_iGP][l];
@@ -153,7 +153,7 @@ void LME_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 	OrderList(&List_Ord,&List_Dis,Dist);
 
 	/* Transform the list in to an array */
-	List = ChainToArray(List_Ord,NumNodes_GP);
+	List = Set_to_Pointer(List_Ord,NumNodes_GP);
 
 	/* Fill A */
 	A.nM[0][0] = Delta_Xip.nM[List[1]][0] - Delta_Xip.nM[List[0]][0];
@@ -174,7 +174,6 @@ void LME_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 	/* 	 "A is near to singular matrix"); */
 	/*   exit(0); */
 	/* } */
-	
 	/* Initialize lambda */
 	lambda_GP.nV = MPM_Mesh.lambda.nM[i];
 	/* lambda_GP = Solve_Linear_Sistem(A,B,lambda_GP); */
@@ -183,7 +182,7 @@ void LME_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 	lambda_GP = LME_lambda_NR(Delta_Xip, lambda_GP, Beta_GP);
 
 	/* Free memory */
-	FreeMat(Delta_Xip), FreeChain(List_Ord), free(List);
+	FreeMat(Delta_Xip), free_Set(List_Ord), free(List);
 	
 	/* 9º Active those nodes that interact with the GP */
 	ListNodes_I = MPM_Mesh.ListNodes[i];
@@ -220,10 +219,10 @@ Matrix LME_Beta(Matrix Beta, Matrix l, double Gamma)
 */
 {
 
-  int N_dim = NumberDimensions;
+  int Ndim = NumberDimensions;
   int NumNodes_GP = l.N_rows;
   double h = 0;
-  Matrix l_GP_I = MatAssign(NumberDimensions,1,NAN,NULL,NULL);
+  Matrix l_GP_I = MatAssign(Ndim,1,NAN,NULL,NULL);
   
   /* Get the mean distande */
   for(int i = 0 ; i<NumNodes_GP ; i++){
@@ -233,7 +232,7 @@ Matrix LME_Beta(Matrix Beta, Matrix l, double Gamma)
   h = h/NumNodes_GP;
 
   /* Fill Beta */
-  for(int j = 0 ; j<N_dim ; j++){
+  for(int j = 0 ; j<Ndim ; j++){
     Beta.nV[j] = Gamma/(h*h);
   }
 
@@ -283,19 +282,19 @@ Matrix LME_lambda_NR(Matrix l, Matrix lambda, Matrix Beta)
       J.nM[i][i] += norm_r;
     }
 
-    /* Check the conditioning number of the Hessian */
-    if (fabs(Cond_Mat(J,TOL_NR)) > 10){
-      printf(" %s (%s %i) : %s \n",
-    	     "Error in LME_lambda_NR","Iter",NumIter,
-    	     "The Hessian is near to singular matrix");
-      exit(0);
-    }
+    /* /\* Check the conditioning number of the Hessian *\/ */
+    /* if (fabs(Cond_Mat(J,TOL_NR)) > 10){ */
+    /*   printf(" %s (%s %i) : %s \n", */
+    /* 	     "Error in LME_lambda_NR","Iter",NumIter, */
+    /* 	     "The Hessian is near to singular matrix"); */
+    /*   exit(0); */
+    /* } */
     
     /* Get the increment of lambda */
     D_lambda = Solve_Linear_Sistem(J,r,MatAllocZ(Ndim,1));
 
     /* Update the value of lambda */
-    for(int i = 0 ; i<NumberDimensions ; i++){
+    for(int i = 0 ; i<Ndim ; i++){
       lambda.nV[i] -= D_lambda.nV[i];
     }
 
@@ -332,10 +331,10 @@ double LME_fa(Matrix la, Matrix lambda, Matrix Beta)
   -> Gamma : Tunning parameter (scalar).
 */
 {  
-  int N_dim = NumberDimensions;
+  int Ndim = NumberDimensions;
   double fa = 0;
 
-  for(int i = 0 ; i<N_dim ; i++){
+  for(int i = 0 ; i<Ndim ; i++){
     fa += - Beta.nV[i]*la.nV[i]*la.nV[i] + la.nV[i]*lambda.nV[i];
   }
     
@@ -359,12 +358,13 @@ Matrix LME_p(Matrix l, Matrix lambda, Matrix Beta)
 {
   
   /* Definition of some parameters */
-  int N_a = l.N_rows, N_dim = NumberDimensions;
+  int N_a = l.N_rows;
+  int Ndim = NumberDimensions;
   double Z = 0, Z_m1 = 0;
   Matrix p = /* Vector with the values of the shape-function in the nodes */
     MatAlloc(1,N_a); 
   Matrix la = /* Distance to the neighbour (x-x_a) */
-    MatAssign(1,N_dim,NAN,NULL,NULL);
+    MatAssign(1,Ndim,NAN,NULL,NULL);
 
   /* Get Z and the numerator */
   for(int a = 0 ; a<N_a ; a++){
@@ -398,12 +398,13 @@ Matrix LME_r(Matrix l, Matrix p)
 */
 {  
   /* Definition of some parameters */
-  int N_a = l.N_rows, N_dim = NumberDimensions;
+  int N_a = l.N_rows;
+  int Ndim = NumberDimensions;
   Matrix r /* Value of the gradient */
-    = MatAllocZ(NumberDimensions,1);
+    = MatAllocZ(Ndim,1);
 
   /* Fill ''r'' */
-  for(int i = 0 ; i<N_dim ; i++){
+  for(int i = 0 ; i<Ndim ; i++){
     for(int a = 0 ; a<N_a ; a++){
       r.nV[i] += p.nV[a]*l.nM[a][i];
     }
@@ -428,15 +429,15 @@ Matrix LME_J(Matrix l, Matrix p, Matrix r)
 {  
   /* Definition of some parameters */
   int N_a = l.N_rows;
-  int N_dim = NumberDimensions;
+  int Ndim = NumberDimensions;
   Matrix J; /* Hessian definition */
   
   /* Allocate Hessian */
-  J = MatAllocZ(N_dim,N_dim);
+  J = MatAllocZ(Ndim,Ndim);
 
   /* Fill the Hessian */
-  for(int i = 0 ; i<N_dim ; i++){
-    for(int j = 0 ; j<N_dim ; j++){
+  for(int i = 0 ; i<Ndim ; i++){
+    for(int j = 0 ; j<Ndim ; j++){
       for(int a = 0 ; a<N_a ; a++){
 	/* Get the first component of the Hessian looping
 	   over the neighborhood nodes. */
@@ -465,14 +466,15 @@ Matrix LME_dp(Matrix l, Matrix p)
 */
 {  
   /* Definition of some parameters */
-  int N_a = l.N_rows, N_dim = NumberDimensions;
-  Matrix dp = MatAllocZ(N_dim,N_a);
+  int N_a = l.N_rows;
+  int Ndim = NumberDimensions;
+  Matrix dp = MatAllocZ(N_a,Ndim);
   Matrix r; /* Gradient of log(Z) */
   Matrix J; /* Hessian of log(Z) */
   Matrix Jm1; /* Inverse of J */
   Matrix Jm1_la; /* Auxiliar vector */
   Matrix la = /* Distance to the neighbour (x-x_a) */
-    MatAssign(N_dim,1,NAN,NULL,NULL); 
+    MatAssign(Ndim,1,NAN,NULL,NULL); 
   
   /* Get the Gradient and the Hessian of log(Z) */
   r = LME_r(l,p);
@@ -488,8 +490,8 @@ Matrix LME_dp(Matrix l, Matrix p)
   for(int a = 0 ; a<N_a ; a++){
     la.nV = l.nM[a]; 
     Jm1_la = Scalar_prod(Jm1,la);    
-    for(int i = 0 ; i<N_dim ; i++){
-      dp.nM[i][a] = - p.nV[a]*Jm1_la.nV[i];
+    for(int i = 0 ; i<Ndim ; i++){
+      dp.nM[a][i] = - p.nV[a]*Jm1_la.nV[i];
     }
     FreeMat(Jm1_la);
   }
@@ -506,8 +508,9 @@ Matrix LME_dp(Matrix l, Matrix p)
 ChainPtr LME_Tributary_Nodes(Matrix X_GP, Matrix Beta,
 			     int Elem_GP, Mesh FEM_Mesh){
 
+  int Ndim = NumberDimensions;
   Matrix Distance; /* Distance between node and GP */
-  Matrix X_I = MatAssign(NumberDimensions,1,NAN,NULL,NULL);
+  Matrix X_I = MatAssign(Ndim,1,NAN,NULL,NULL);
   ChainPtr * Table_Elem = NULL;
   ChainPtr Triburary_Nodes = NULL;
   ChainPtr List_Nodes = NULL;
@@ -519,7 +522,7 @@ ChainPtr LME_Tributary_Nodes(Matrix X_GP, Matrix Beta,
   int Num_Elem;
   int * List_Elements;
   int * NodesElem = /* List of nodes of the element */
-    ChainToArray(FEM_Mesh.Connectivity[Elem_GP],NumNodesElem);
+    Set_to_Pointer(FEM_Mesh.Connectivity[Elem_GP],NumNodesElem);
   double Ra = /* Get the search radius */
     sqrt(-log(TOL_lambda)/Beta.nV[0]);
 
@@ -532,18 +535,18 @@ ChainPtr LME_Tributary_Nodes(Matrix X_GP, Matrix Beta,
   for(int i = 0 ; i<NumNodesElem ; i++){
     Table_Elem[i] = FEM_Mesh.NodeNeighbour[NodesElem[i]];
   }
-  Triburary_Elements = ChainUnion(Table_Elem,NumNodesElem);
+  Triburary_Elements = get_Union_Of(Table_Elem,NumNodesElem);
   /* Free memory */
   free(NodesElem);
   free(Table_Elem);
   Table_Elem = NULL;
   
   /* List with the tributary nodes */
-  Num_Elem = LenghtChain(Triburary_Elements);
-  List_Elements = ChainToArray(Triburary_Elements,Num_Elem);
+  Num_Elem = get_Lenght_Set(Triburary_Elements);
+  List_Elements = Set_to_Pointer(Triburary_Elements,Num_Elem);
 
   /* Free the chain with the tributary elements */
-  FreeChain(Triburary_Elements);
+  free_Set(Triburary_Elements);
   
   /* Fill the chain with the preliminary tributary nodes */
   Table_ElemNodes = malloc(Num_Elem*sizeof(ChainPtr));
@@ -551,7 +554,7 @@ ChainPtr LME_Tributary_Nodes(Matrix X_GP, Matrix Beta,
     Table_ElemNodes[i] = FEM_Mesh.Connectivity[List_Elements[i]];
   }
 
-  List_Nodes = ChainUnion(Table_ElemNodes,Num_Elem);
+  List_Nodes = get_Union_Of(Table_ElemNodes,Num_Elem);
   
   /* Free the array wit the list of tributary elements */
   free(List_Elements);
@@ -571,8 +574,9 @@ ChainPtr LME_Tributary_Nodes(Matrix X_GP, Matrix Beta,
     Distance = Sub_Mat(X_GP,X_I);
 
     /* If the node is near the GP push in the chain */
-    if(Norm_Mat(Distance,2) <= Ra){
-      PushNodeTop(&Triburary_Nodes,iPtr->I);
+    if((Norm_Mat(Distance,2) <= Ra) ||
+       is_in_Set(FEM_Mesh.Connectivity[Elem_GP], iPtr->I)){
+      push_to_Set(&Triburary_Nodes,iPtr->I);
     }
 
     /* Free memory of the distrance vector */
@@ -582,7 +586,7 @@ ChainPtr LME_Tributary_Nodes(Matrix X_GP, Matrix Beta,
     iPtr = iPtr->next;
   }
   /* Free memory */
-  FreeChain(List_Nodes);
+  free_Set(List_Nodes);
 
   return Triburary_Nodes;
 }

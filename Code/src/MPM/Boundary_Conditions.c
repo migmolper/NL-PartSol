@@ -6,21 +6,7 @@
 
 /**********************************************************************/
 
-Curve BcDirichlet(char * Expresion)
-/*
- BcDirichlet V 0 
-*/
-{
-  Curve BcDir;
-
-  BcDir = ReadCurve(Expresion);
-  
-  return BcDir;
-}
-
-/**********************************************************************/
-
-void BCC_Nod_VALUE(Mesh FEM_Mesh, Matrix Nodal_VALUE, int TimeStep)
+void imposse_NodalMomentum(Mesh FEM_Mesh, Matrix Phi_I, int TimeStep)
 /*
   Apply the boundary conditions over the nodes 
 */
@@ -48,12 +34,12 @@ void BCC_Nod_VALUE(Mesh FEM_Mesh, Matrix Nodal_VALUE, int TimeStep)
 	  if( (TimeStep < 0) ||
 	      (TimeStep > FEM_Mesh.Bounds.BCC_i[i].Value[k].Num)){
 	    printf("%s : %s \n",
-		   "Error in BCC_Nodal_VALUE()",
+		   "Error in imposse_NodalMomentum()",
 		   "The time step is out of the curve !!");
 	    exit(0);
 	  }
 	  /* 9º Assign the boundary condition */
-	  Nodal_VALUE.nM[k][Id_BCC] =
+	  Phi_I.nM[Id_BCC][k] =
 	    FEM_Mesh.Bounds.BCC_i[i].Value[k].Fx[TimeStep]*
 	    (double)FEM_Mesh.Bounds.BCC_i[i].Dir[k];
 	}
@@ -63,7 +49,7 @@ void BCC_Nod_VALUE(Mesh FEM_Mesh, Matrix Nodal_VALUE, int TimeStep)
 
 }
 
-/*********************************************************************/
+/**********************************************************************/
 
 Matrix GetNodalReactions(Mesh FEM_Mesh, Matrix Nodal_Forces)
 /*

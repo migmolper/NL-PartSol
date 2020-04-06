@@ -26,23 +26,23 @@ void Get_X_EC_T3(Matrix,Matrix,Matrix);
 
 /* Quadrilateral of four nodes shape functions */
 void Q4_Initialize(GaussPoint, Mesh);
-Matrix Q4(Matrix);
-Matrix dQ4(Matrix);
-Matrix Get_F_Ref_Q4(Matrix,Matrix);
-Matrix Get_dNdX_Q4(Matrix,Matrix);
-Matrix Get_X_GC_Q4(Matrix,Matrix);
-void Get_X_EC_Q4(Matrix,Matrix,Matrix);
+Matrix Q4_N(Matrix);
+Matrix Q4_dN_Ref(Matrix);
+Matrix Q4_F_Ref(Matrix,Matrix);
+Matrix Q4_dN(Matrix,Matrix);
+Matrix Q4_Xi_to_X(Matrix,Matrix);
+void Q4_X_to_Xi(Matrix,Matrix,Matrix);
 
 /*******************************************************/
 
 /* GIMP shape functions */
-void GIMP_Initialize(GaussPoint, Mesh);
-double uGIMP(double, double, double);
-double d_uGIMP(double, double, double);
-Matrix GIMP_2D(Matrix, Matrix, double);
-Matrix dGIMP_2D(Matrix, Matrix, double);
-ChainPtr Tributary_Nodes_GIMP(Matrix, int,
-			      Matrix, Mesh);
+void uGIMP_Initialize(GaussPoint, Mesh);
+double uGIMP_Sip(double, double, double);
+double uGIMP_dSip(double, double, double);
+Matrix uGIMP_N(Matrix, Matrix, double);
+Matrix uGIMP_dN(Matrix, Matrix, double);
+ChainPtr uGIMP_Tributary_Nodes(Matrix, int,
+			       Matrix, Mesh);
 
 /*******************************************************/
 
@@ -60,7 +60,7 @@ ChainPtr LME_Tributary_Nodes(Matrix, Matrix, int, Mesh);
 /*******************************************************/
 
 /* Operators */
-Matrix Get_Operator(char *, Element, GaussPoint, Mesh); 
-Matrix Get_B_GP(Matrix);
+Matrix compute_ShapeFunction(Element, GaussPoint, Mesh );
+Matrix compute_ShapeFunction_Gradient(Element, GaussPoint, Mesh);
 
 /*******************************************************/
