@@ -168,7 +168,9 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
     /*********** Read Material parameters *************/
     /**************************************************/
     if(Is_GramsMaterials){
-      MPM_Mesh.NumberMaterials = Counter_Materials;
+      /* MPM_Mesh.NumberMaterials = Counter_Materials; */
+      MPM_Mesh.NumberMaterials = 1;
+      MPM_Mesh.MatIdx = (int *)malloc(MPM_Mesh.NumGP*sizeof(int));
       MPM_Mesh.Mat = GramsMaterials(Name_File,MPM_Mesh,GPxElement);
     }
     else{
