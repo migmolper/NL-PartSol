@@ -227,6 +227,7 @@ typedef struct {
 /* Boundary conditions */
 Curve BcDirichlet(char *);
 void imposse_NodalMomentum(Mesh, Matrix, int);
+void imposse_NodalVelocity(Mesh, Matrix, int);
 Matrix Eval_Body_Forces(Load *, int, int, int);
 Matrix Eval_Contact_Forces(Load *, int, int, int);
 Matrix compute_Reactions(Mesh, Matrix);

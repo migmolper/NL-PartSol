@@ -29,7 +29,7 @@ void U_PCE(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
   /* Auxiliar variable for the mass and momentum */
   Matrix M_I;
   Matrix V_I;
-  Matrix F_I = MatAllocZ(Ndim,FEM_Mesh.NumNodesMesh);
+  Matrix F_I = MatAllocZ(Nnodes,Ndim);
   Matrix R_I;
   
   /*********************************************************************/
@@ -47,8 +47,7 @@ void U_PCE(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
     M_I = compute_NodalMass(MPM_Mesh, FEM_Mesh);
     V_I = compute_VelocityPredictor(MPM_Mesh,FEM_Mesh,V_I, M_I,
 				    Params, DeltaTimeStep);
-    imposse_NodalMomentum(FEM_Mesh,V_I,TimeStep);
-    /* imposse_NodalVelocity(FEM_Mesh,V_I,TimeStep);    */
+    imposse_NodalVelocity(FEM_Mesh,V_I,TimeStep);
     puts(" DONE !!!");
        
     puts("*************************************************");
@@ -66,7 +65,6 @@ void U_PCE(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
     puts(" \t Compute reactions");
     R_I = compute_Reactions(FEM_Mesh, F_I);
     puts(" \t DONE !!!");
-
     
     puts("****************************************");
     puts(" Third step : Corrector stage ... WORKING");
