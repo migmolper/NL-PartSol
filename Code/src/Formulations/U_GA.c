@@ -85,7 +85,7 @@ void U_GA(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
     puts(" Second step : Compute internal forces ... WORKING");
     F_I = MatAllocZ(Nnodes,Ndim);
     puts(" \t Compute internal forces");
-    F_I = compute_InternalForces(F_I, V_I, MPM_Mesh, FEM_Mesh, DeltaTimeStep);
+    F_I = compute_InternalForces(F_I, MPM_Mesh, FEM_Mesh);
     puts(" \t DONE !!!");
     puts(" \t Compute body forces");
     F_I = compute_BodyForces(F_I, MPM_Mesh, FEM_Mesh, TimeStep);

@@ -254,6 +254,43 @@ double get_J3_Of(Tensor A)
 
 /*************************************************************/
 
+Tensor get_Eigenvalues_Of(Tensor A)
+{
+  /* Auxiliar variables */
+  int Ndim = NumberDimensions;
+  double I1, I2, I3;
+  /* Define output */
+  Tensor w = alloc_Tensor(1);
+  /* Check if is the order is order 2 */
+  if(A.Order == 2){  
+    if(Ndim == 2){      
+      I1 = get_I1_Of(A);
+      I2 = get_I2_Of(A);
+      w.n[0] = 0.5*(I1+sqrt(DMAX(0,I1*I1-4*I2)));
+      w.n[1] = 0.5*(I1-sqrt(DMAX(0,I1*I1-4*I2)));
+    }
+    if(Ndim == 3){      
+      I1 = get_I1_Of(A);
+      I2 = get_I2_Of(A);
+      I3 = get_I3_Of(A);
+      fprintf(stderr,"%s : %s !!! \n",
+	      "Error in get_Eigenvalues_Of()",
+	      "3D cases are not implemented");
+      exit(EXIT_FAILURE);          
+    }
+  }
+  else{
+    fprintf(stderr,"%s : %s !!! \n",
+	    "Error in get_Eigenvalues_Of()",
+	    "The input should be of order 2");
+    exit(EXIT_FAILURE);    
+  }
+
+  return w;
+}
+
+/*************************************************************/
+
 double get_EuclideanNorm_Of(Tensor A)
 {
   int Ndim = NumberDimensions;

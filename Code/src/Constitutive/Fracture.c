@@ -115,16 +115,15 @@ void EigensofteningAlgorithm(Matrix ji, Matrix Strain,
 {
   /* Define auxiliar variable */
   int Num_GP = Strain.N_rows;
-  
+
+  Tensor Stress_p, Stress_q, EV_Stress_p, EV_Stress_q; /* Stress tensor */
+  Tensor Strain_p, EV_Strain_p; /* Stress tensor */
   
   /* Material properties of the eigensoftening algorithm */
   double ft_p, Wc_p, heps_p;
-
-  /* Invariants for stress and rate of strain */
-  double Stress_I, Stress_II, Strain_I, Strain_II;
     
-  double m_p, Stress_1p, sum_p, Seps_p, Strain_1p, ji_p;
-  double m_q, Stress_1q;
+  double m_p, sum_p, Seps_p, ji_p;
+  double m_q;
   int * Beps_p;
   int Neps_p;
   int q;
@@ -140,7 +139,7 @@ void EigensofteningAlgorithm(Matrix ji, Matrix Strain,
     heps_p = MatPro[Mat_p].heps;
     /* Get the critical opening displacement */
     Wc_p = MatPro[Mat_p].Wc;
-
+    
     /* Only for intact particles */
     if((ji.nV[p] == 0.0) && (StrainF.nV[p] == 0.0)){
 
@@ -152,15 +151,18 @@ void EigensofteningAlgorithm(Matrix ji, Matrix Strain,
 	/* Get the neighbours */      
 	Beps_p = Set_to_Pointer(Beps[p],Neps_p);    
       
-	/* For the current particle get the mass and first principal stress */
+	/* For the current particle get the mass */
 	m_p = Mass.nV[p];
-	Stress_I = Stress.nM[p][0]+Stress.nM[p][1];
-	Stress_II = Stress.nM[p][0]*Stress.nM[p][1]-
-	  Stress.nM[p][2]*Stress.nM[p][2];
-	Stress_1p = 0.5*(Stress_I+sqrt(MAXVAL(0,Stress_I*Stress_I-4*Stress_II)));
+
+	/* For the current particle get first principal stress */	
+	Stress_p = memory_to_Tensor(Stress.nM[p], 2);
+	EV_Stress_p = get_Eigenvalues_Of(Stress_p);
       
 	/* Add the first term to the sumation */
-	sum_p = m_p*Stress_1p;
+	sum_p = m_p*EV_Stress_p.n[0];
+
+	/* Free eigenvalues */
+	free_Tensor(EV_Stress_p);
 
 	/* Loop over the neighbours */
 	for(int j = 0; j < Neps_p ; j++){
@@ -170,14 +172,16 @@ void EigensofteningAlgorithm(Matrix ji, Matrix Strain,
   
 	  if(ji.nV[q] < 1.0){
 	    /* For the current particle get the mass and first principal stress */
-	    m_q = Mass.nV[q];      
-	    Stress_I = Stress.nM[q][0]+Stress.nM[q][1];
-	    Stress_II = Stress.nM[q][0]*Stress.nM[q][1]-
-	      Stress.nM[q][2]*Stress.nM[q][2];
-	    Stress_1q =
-	      0.5*(Stress_I+sqrt(MAXVAL(0,Stress_I*Stress_I-4*Stress_II)));
+	    m_q = Mass.nV[q];
+
+	    Stress_q = memory_to_Tensor(Stress.nM[q], 2);
+	    EV_Stress_q = get_Eigenvalues_Of(Stress_q);
+	    
 	    /* Get sum_p */
-	    sum_p += m_q*Stress_1q;
+	    sum_p += m_q*EV_Stress_q.n[0];
+
+	    /* Free eigenvalues */
+	    free_Tensor(EV_Stress_q);	    
 	  }
 	  /* Add mass contribution */
 	  m_p += m_q;
@@ -190,29 +194,34 @@ void EigensofteningAlgorithm(Matrix ji, Matrix Strain,
 	Seps_p = sum_p/m_p;
 
 	/* Store the principal strain when crack start */
-	if(Seps_p>ft_p){	
-	  Strain_I = Strain.nM[p][0]+Strain.nM[p][1];
-	  Strain_II = Strain.nM[p][0]*Strain.nM[p][1]-
-	    0.25*Strain.nM[p][2]*Strain.nM[p][2];
-	  Strain_1p =
-	    0.5*(Strain_I+sqrt(MAXVAL(0,Strain_I*Strain_I-4*Strain_II)));
+	if(Seps_p>ft_p){
+
+	  Strain_p = memory_to_Tensor(Strain.nM[p], 2);
+	  EV_Strain_p = get_Eigenvalues_Of(Strain_p);
+	  	  
 	  /* Strain during fracture */
-	  StrainF.nV[p] = Strain_1p;
+	  StrainF.nV[p] = EV_Strain_p.n[0];
+
+	  /* Free eigenvalues */
+	  free_Tensor(EV_Strain_p);	    	  
 	}
 	
       }
       
     }    
     /* Compute the damage parameter if the particle is damaged */
-    else if((ji.nV[p] != 1.0) && (StrainF.nV[p] > 0 )){ 
-      /* Get the principal rate of strain */
-      Strain_I = Strain.nM[p][0]+Strain.nM[p][1];
-      Strain_II = Strain.nM[p][0]*Strain.nM[p][1]-
-	0.25*Strain.nM[p][2]*Strain.nM[p][2];
-      Strain_1p = 0.5*(Strain_I+sqrt(MAXVAL(0,Strain_I*Strain_I-4*Strain_II)));   
+    else if((ji.nV[p] != 1.0) && (StrainF.nV[p] > 0 )){
+
+      Strain_p = memory_to_Tensor(Strain.nM[p], 2);
+      EV_Strain_p = get_Eigenvalues_Of(Strain_p);
+	  	  
       /* Fracture criterium */
-      ji_p = (Strain_1p-StrainF.nV[p])*heps_p/Wc_p;
+      ji_p = (EV_Strain_p.n[0]-StrainF.nV[p])*heps_p/Wc_p;
       ji.nV[p] = MINVAL(1,MAXVAL(ji_p,ji.nV[p]));       
+
+      /* Free eigenvalues */
+      free_Tensor(EV_Strain_p);	    	  
+      
     }
   }
  

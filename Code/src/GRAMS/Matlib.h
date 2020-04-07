@@ -161,6 +161,7 @@ double get_I3_Of(Tensor A);
 double get_J1_Of(Tensor A);
 double get_J2_Of(Tensor A);
 double get_J3_Of(Tensor A);
+Tensor get_Eigenvalues_Of(Tensor);
 double get_EuclideanNorm_Of(Tensor A);
 Tensor get_I();
 Tensor get_Inverse_Of(Tensor A);
