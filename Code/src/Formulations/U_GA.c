@@ -102,7 +102,7 @@ void U_GA(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
     
     puts("*************************************************");
     puts(" Four step : Update lagrangian ... WORKING");
-    GA_Update_Lagrangian(MPM_Mesh, FEM_Mesh, Nodal_Kinetics, Params);
+    update_Particles_GA(MPM_Mesh, FEM_Mesh, Nodal_Kinetics, Params);
     LocalSearchGaussPoints(MPM_Mesh, FEM_Mesh);
     puts(" DONE !!!");
         

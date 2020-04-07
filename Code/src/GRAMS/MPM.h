@@ -224,77 +224,47 @@ typedef struct {
 
 /*******************************************************/
 
-/* Variational recovery process */
-/* Matrix GetNodalMassMomentum(GaussPoint, Mesh); */
-Matrix compute_NodalFields(GaussPoint, Mesh);
-
-/* Matrix GetNodalVelocity(Mesh, Matrix, Matrix); */
-Matrix compute_NodalVelocity(Mesh, Matrix);
-
-Matrix GetNodalKinetics(GaussPoint, Mesh);
-Matrix GetNodalVelocityDisplacement(GaussPoint, Mesh);
-
 /* Boundary conditions */
 Curve BcDirichlet(char *);
 void imposse_NodalMomentum(Mesh, Matrix, int);
-Matrix GetNodalReactions(Mesh, Matrix);
 Matrix Eval_Body_Forces(Load *, int, int, int);
 Matrix Eval_Contact_Forces(Load *, int, int, int);
+Matrix compute_Reactions(Mesh, Matrix);
 
-/* Eulerian functions  */
-void UpdateGaussPointStrain(GaussPoint, Mesh, Matrix);
-double UpdateGaussPointDensity(double, double);
-void UpdateGaussPointStress(GaussPoint);
+/* Forces-stress-strain functions */
 void ComputeDamage(GaussPoint, Mesh);
-Matrix GetNodalForces(GaussPoint, Mesh, int);
-Matrix GetNodalMass(GaussPoint, Mesh);
-
-
-/* void UpdateGaussPointStrain(GaussPoint, Mesh, Matrix); */
 Tensor compute_RateOfStrain(Matrix, Matrix);
 Tensor update_Strain(Tensor, Tensor, double);
-
-/* double UpdateGaussPointDensity(double, double); */
 double update_Density(double, double, Tensor);
-
-/* void UpdateGaussPointStress(GaussPoint); */
 Tensor compute_Stress(Tensor, Tensor, Material);
-
-/* double W_LinearElastic(Matrix, Matrix, double); */
 double compute_InternalEnergy(Tensor, Tensor);
-
-/* Matrix GetNodalForces(GaussPoint, Mesh, int); */
-Matrix compute_InternalForces(Matrix, Matrix, GaussPoint,
-			      Mesh, double);
-
-/* Matrix Eval_Body_Forces(Load *, int, int, int); */
+Matrix compute_InternalForces(Matrix, Matrix, GaussPoint,Mesh, double);
 Matrix compute_BodyForces(Matrix, GaussPoint, Mesh, int);
-
-/* Matrix Eval_Contact_Forces(Load *, int, int, int); */
 Matrix compute_ContacForces(Matrix, GaussPoint, Mesh, int);
 
-
-/* void UpdateGridNodalMomentum(Mesh, Matrix, Matrix); */
+/* Forward-Euler */
+Matrix compute_NodalMomentumMass(GaussPoint, Mesh);
+Matrix compute_NodalVelocity(Mesh, Matrix);
 void update_NodalMomentum(Mesh, Matrix, Matrix);
+void update_Particles_FE(GaussPoint, Mesh, Matrix, Matrix, double);
 
-/* Forward Euler */
-void update_Langrangians(GaussPoint, Mesh, Matrix, Matrix, double);
-
+/* Explicit Predictor-Corrector */
+Matrix compute_NodalMass(GaussPoint, Mesh);
+Matrix compute_VelocityPredictor(GaussPoint, Mesh, Matrix,
+				 Matrix, Time_Int_Params,double);
+Matrix compute_VelocityCorrector(Mesh, Matrix, Matrix,
+				 Matrix, Time_Int_Params,double);
+void update_Particles_PCE(GaussPoint, Mesh, Matrix,
+			  Matrix, Matrix, double);
 
 /* Generalized-alpha */
 void GA_UpdateNodalKinetics(Mesh, Matrix, Matrix, Time_Int_Params);
-void GA_Update_Lagrangian(GaussPoint, Mesh, Matrix, Time_Int_Params);
-
-/* Predicto-corrector explicit */
-Matrix PCE_Predictor(GaussPoint, Mesh, Matrix,
-		     Matrix, Time_Int_Params,double);
-Matrix PCE_Corrector(Mesh, Matrix, Matrix,
-		     Matrix, Time_Int_Params,double);
-void PCE_Update_Lagrangian(GaussPoint, Mesh, Matrix,
-			   Matrix, Matrix, double);
+Matrix GetNodalKinetics(GaussPoint, Mesh);
+Matrix GetNodalVelocityDisplacement(GaussPoint, Mesh);
+void update_Particles_GA(GaussPoint, Mesh, Matrix, Time_Int_Params);
 
 
-
+/* Mesh utilities */
 Matrix GetInitialGaussPointPosition(Mesh, int);
 double GetMinElementSize(Mesh);
 void GetNodalConnectivity(Mesh);
@@ -303,11 +273,5 @@ ChainPtr DiscardElements(ChainPtr, Matrix, Matrix, Mesh);
 void LocalSearchGaussPoints(GaussPoint, Mesh);
 void UpdateBeps(GaussPoint, Mesh);
 void GPinCell(ChainPtr *, ChainPtr *, Matrix, int, double);
-
-
-/* Element GetElementGP(int, ChainPtr, int); */
 Element get_Element(int, ChainPtr, int);
-
-
-/* Matrix GetElementField(Matrix, Element); */
 Matrix get_Element_Field(Matrix, Element);

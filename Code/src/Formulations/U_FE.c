@@ -43,7 +43,7 @@ void U_FE(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
     puts("*************************************************");
     puts(" First step : Get the nodal fields ... WORKING");
     puts(" \t Nodal mass and momentum");    
-    Phi_I = compute_NodalFields(MPM_Mesh,FEM_Mesh);
+    Phi_I = compute_NodalMomentumMass(MPM_Mesh,FEM_Mesh);
     puts(" \t DONE !!!");
     puts(" \t Essential boundary conditions over P");
     imposse_NodalMomentum(FEM_Mesh,Phi_I,TimeStep);    
@@ -74,7 +74,7 @@ void U_FE(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
     F_I = compute_ContacForces(F_I, MPM_Mesh, FEM_Mesh, TimeStep);
     puts(" \t DONE !!!");
     puts(" \t Compute reactions");
-    R_I = GetNodalReactions(FEM_Mesh, F_I);
+    R_I = compute_Reactions(FEM_Mesh, F_I);
     puts(" \t DONE !!!");
 
     puts("*************************************************");
@@ -83,7 +83,7 @@ void U_FE(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
     puts(" DONE !!!");    
     puts("*************************************************");
     puts(" Four step : Update lagrangian ... WORKING");
-    update_Langrangians(MPM_Mesh, FEM_Mesh, Phi_I, F_I, DeltaTimeStep);
+    update_Particles_FE(MPM_Mesh, FEM_Mesh, Phi_I, F_I, DeltaTimeStep);
     LocalSearchGaussPoints(MPM_Mesh,FEM_Mesh);
     puts(" DONE !!!");
     

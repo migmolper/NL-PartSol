@@ -5,13 +5,14 @@ GramsBox (Type=GID,File=FEM_Mesh.msh) {
     }
 }
 
-GramsTime (Type=PCE) { 
+GramsTime (Type=FE) { 
     CEL=1.0
     CFL=0.05
     N=2000
 }
 
-GramsSolid2D (File=MPM_Mesh.msh) { 
+GramsSolid2D (File=MPM_Mesh.msh) {
+    
     GramsMaterials (Particles=Material0.txt) { 
 	Type=LE 
 	rho=1.0 
@@ -19,11 +20,14 @@ GramsSolid2D (File=MPM_Mesh.msh) {
 	mu=0.0
 	Id=0
     }
+    
     GramsShapeFun (Type=MPMQ4) { 
-    } 
+    }
+    
     GramsInitials (Nodes=ListInit.txt) { 
 	Value=[0.001,0.0]
     }
+    
 }
 
 GramsOutputs (i=1) { 

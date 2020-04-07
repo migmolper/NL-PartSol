@@ -49,48 +49,6 @@ void imposse_NodalMomentum(Mesh FEM_Mesh, Matrix Phi_I, int TimeStep)
 
 }
 
-/**********************************************************************/
-
-Matrix GetNodalReactions(Mesh FEM_Mesh, Matrix Nodal_Forces)
-/*
-  Compute the nodal reactions
-*/
-{
-  /* 1º Define auxilar variables */
-  int NumNodesBound; /* Number of nodes of the bound */
-  int NumDimBound; /* Number of dimensions */
-  int Id_BCC; /* Index of the node where we apply the BCC */
-  int Ndim = NumberDimensions;
-
-  Matrix Nodal_Reactions = MatAllocZ(Ndim,FEM_Mesh.NumNodesMesh);
-  strcpy(Nodal_Reactions.Info,"REACTIONS");
-
-  /* 2º Loop over the the boundaries */
-  for(int i = 0 ; i<FEM_Mesh.Bounds.NumBounds ; i++){
-    /* 3º Get the number of nodes of this boundarie */
-    NumNodesBound = FEM_Mesh.Bounds.BCC_i[i].NumNodes;
-    /* 4º Get the number of dimensions where the BCC it is applied */
-    NumDimBound = FEM_Mesh.Bounds.BCC_i[i].Dim;
-    for(int j = 0 ; j<NumNodesBound ; j++){
-      /* 5º Get the index of the node */
-      Id_BCC = FEM_Mesh.Bounds.BCC_i[i].Nodes[j];
-      /* 6º Loop over the dimensions of the boundary condition */
-      for(int k = 0 ; k<NumDimBound ; k++){
-	/* 7º Apply only if the direction is active (1) */
-	if(FEM_Mesh.Bounds.BCC_i[i].Dir[k] == 1){
-	  /* 8º Set to zero the forces in the nodes where velocity is fixed */
-	  Nodal_Reactions.nM[k][Id_BCC] = Nodal_Forces.nM[k][Id_BCC];
-	  Nodal_Forces.nM[k][Id_BCC] = 0;
-	}
-      }
-    }    
-  }
-
-
-  return Nodal_Reactions;
-
-}
-
 /*********************************************************************/
 
 Matrix Eval_Body_Forces(Load * B, int NumLoads, int NumGP, int TimeStep)
@@ -112,7 +70,7 @@ Matrix Eval_Body_Forces(Load * B, int NumLoads, int NumGP, int TimeStep)
 	    if( (TimeStep < 0) ||
 		(TimeStep > B[i].Value[k].Num)){
 	      printf("%s : %s\n",
-		     "Error in GetNodalForces()",
+		     "Error in Eval_Body_Forces()",
 		     "The time step is out of the curve !!");
 	      exit(0);
 	    }
@@ -128,7 +86,6 @@ Matrix Eval_Body_Forces(Load * B, int NumLoads, int NumGP, int TimeStep)
   return Body_Forces_t;
 
 }
-
 
 /*********************************************************************/
 
@@ -151,7 +108,7 @@ Matrix Eval_Contact_Forces(Load * F, int NumLoads, int NumGP, int TimeStep)
 	    if( (TimeStep < 0) ||
 		(TimeStep > F[i].Value[k].Num)){
 	      printf("%s : %s \n",
-		     "Error in GetNodalForces()",
+		     "Error in Eval_Contact_Forces()",
 		     "The time step is out of the curve !!");
 	      exit(0);
 	    }
@@ -166,3 +123,45 @@ Matrix Eval_Contact_Forces(Load * F, int NumLoads, int NumGP, int TimeStep)
 
   return Contact_Forces_t;
 }
+
+/**********************************************************************/
+
+Matrix compute_Reactions(Mesh FEM_Mesh, Matrix F_I)
+/*
+  Compute the nodal reactions
+*/
+{
+  /* 1º Define auxilar variables */
+  int NumNodesBound; /* Number of nodes of the bound */
+  int NumDimBound; /* Number of dimensions */
+  int Id_BCC; /* Index of the node where we apply the BCC */
+  int Ndim = NumberDimensions;
+
+  Matrix R_I = MatAllocZ(FEM_Mesh.NumNodesMesh,Ndim);
+  strcpy(R_I.Info,"REACTIONS");
+
+  /* 2º Loop over the the boundaries */
+  for(int i = 0 ; i<FEM_Mesh.Bounds.NumBounds ; i++){
+    /* 3º Get the number of nodes of this boundarie */
+    NumNodesBound = FEM_Mesh.Bounds.BCC_i[i].NumNodes;
+    /* 4º Get the number of dimensions where the BCC it is applied */
+    NumDimBound = FEM_Mesh.Bounds.BCC_i[i].Dim;
+    for(int j = 0 ; j<NumNodesBound ; j++){
+      /* 5º Get the index of the node */
+      Id_BCC = FEM_Mesh.Bounds.BCC_i[i].Nodes[j];
+      /* 6º Loop over the dimensions of the boundary condition */
+      for(int k = 0 ; k<NumDimBound ; k++){
+	/* 7º Apply only if the direction is active (1) */
+	if(FEM_Mesh.Bounds.BCC_i[i].Dir[k] == 1){
+	  /* 8º Set to zero the forces in the nodes where velocity is fixed */
+	  R_I.nM[Id_BCC][k] = F_I.nM[Id_BCC][k];
+	  F_I.nM[Id_BCC][k] = 0;
+	}
+      }
+    }    
+  }
+
+  return R_I;
+}
+
+/**********************************************************************/

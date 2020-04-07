@@ -44,11 +44,11 @@ void U_PCE(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
     
     puts("*****************************************");
     puts(" First step : Predictor stage ... WORKING");
-    M_I = GetNodalMass(MPM_Mesh, FEM_Mesh);
-    V_I = PCE_Predictor(MPM_Mesh,FEM_Mesh,
-				   V_I, M_I,
-				   Params, DeltaTimeStep);
-    imposse_NodalMomentum(FEM_Mesh,V_I,TimeStep);   
+    M_I = compute_NodalMass(MPM_Mesh, FEM_Mesh);
+    V_I = compute_VelocityPredictor(MPM_Mesh,FEM_Mesh,V_I, M_I,
+				    Params, DeltaTimeStep);
+    imposse_NodalMomentum(FEM_Mesh,V_I,TimeStep);
+    /* imposse_NodalVelocity(FEM_Mesh,V_I,TimeStep);    */
     puts(" DONE !!!");
        
     puts("*************************************************");
@@ -64,18 +64,18 @@ void U_PCE(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
     F_I = compute_ContacForces(F_I, MPM_Mesh, FEM_Mesh, TimeStep);
     puts(" \t DONE !!!");
     puts(" \t Compute reactions");
-    R_I = GetNodalReactions(FEM_Mesh, F_I);
+    R_I = compute_Reactions(FEM_Mesh, F_I);
     puts(" \t DONE !!!");
 
     
     puts("****************************************");
     puts(" Third step : Corrector stage ... WORKING");
-    V_I = PCE_Corrector(FEM_Mesh,V_I,F_I, M_I,Params,DeltaTimeStep);
+    V_I = compute_VelocityCorrector(FEM_Mesh,V_I,F_I, M_I,Params,DeltaTimeStep);
     puts(" DONE !!!"); 
 
     puts("***************************************************");
     puts(" Four step : Update particles lagrangian ... WORKING");
-    PCE_Update_Lagrangian(MPM_Mesh, FEM_Mesh, M_I, V_I, F_I,DeltaTimeStep);
+    update_Particles_PCE(MPM_Mesh, FEM_Mesh, M_I, V_I, F_I,DeltaTimeStep);
     LocalSearchGaussPoints(MPM_Mesh,FEM_Mesh);
     puts(" DONE !!!");
 

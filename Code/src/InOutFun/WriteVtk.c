@@ -367,7 +367,7 @@ void WriteVtk_FEM(char * Name_File, Mesh ElementMesh,
 	for(int j =  0 ; j<ElementMesh.NumNodesMesh ; j++){
 	  /* Print the dimensions of the array */
 	  for(int k = 0 ; k<NumberDimensions ; k++){
-	    fprintf(Vtk_file,"%f ",List_Nod_Fields.nM[i_Field+k][j]);
+	    fprintf(Vtk_file,"%f ",List_Nod_Fields.nM[j][i_Field+k]);
 	  }
 	  /* Add the rest of the coordinates : is compulsary to add 3 */
 	  for(int k = 0 ; k<(3-NumberDimensions) ; k++){
