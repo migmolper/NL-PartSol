@@ -222,6 +222,9 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
     /* Strain field (Tensor) */
     MPM_Mesh.Phi.Strain = MatAllocZ(MPM_Mesh.NumGP,Ndim*Ndim);
     strcpy(MPM_Mesh.Phi.Strain.Info,"Strain field GP");
+    /* StrainF field (Scalar) */
+    MPM_Mesh.Phi.StrainF = MatAllocZ(MPM_Mesh.NumGP,1);
+    strcpy(MPM_Mesh.Phi.StrainF.Info,"Strain in fracture GP");
     /* Stress field (Tensor) */
     MPM_Mesh.Phi.Stress = MatAllocZ(MPM_Mesh.NumGP,Ndim*Ndim);
     strcpy(MPM_Mesh.Phi.Stress.Info,"Stress field GP");
