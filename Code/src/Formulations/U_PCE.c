@@ -49,12 +49,18 @@ void U_PCE(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
 				    Params, DeltaTimeStep);
     imposse_NodalVelocity(FEM_Mesh,V_I,TimeStep);
     puts(" DONE !!!");
+    
+
+    puts("*************************************************");
+    puts(" Second step : Update local state ... WORKING");
+    update_LocalState(V_I, MPM_Mesh, FEM_Mesh, DeltaTimeStep);
+    puts(" DONE !!!");
        
     puts("*************************************************");
-    puts(" Second step : Compute internal forces ... WORKING");
+    puts(" Third step : Compute forces ... WORKING");
     F_I = MatAllocZ(Nnodes,Ndim);    
     puts(" \t Compute internal forces");
-    F_I = compute_InternalForces(F_I, V_I, MPM_Mesh, FEM_Mesh, DeltaTimeStep);    
+    F_I = compute_InternalForces(F_I, MPM_Mesh, FEM_Mesh);    
     puts(" \t DONE !!!");
     puts(" \t Compute body forces");
     F_I = compute_BodyForces(F_I, MPM_Mesh, FEM_Mesh, TimeStep);
@@ -67,12 +73,12 @@ void U_PCE(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
     puts(" \t DONE !!!");
     
     puts("****************************************");
-    puts(" Third step : Corrector stage ... WORKING");
+    puts(" Four step : Corrector stage ... WORKING");
     V_I = compute_VelocityCorrector(FEM_Mesh,V_I,F_I, M_I,Params,DeltaTimeStep);
     puts(" DONE !!!"); 
 
     puts("***************************************************");
-    puts(" Four step : Update particles lagrangian ... WORKING");
+    puts(" Five step : Update particles lagrangian ... WORKING");
     update_Particles_PCE(MPM_Mesh, FEM_Mesh, M_I, V_I, F_I,DeltaTimeStep);
     LocalSearchGaussPoints(MPM_Mesh,FEM_Mesh);
     puts(" DONE !!!");
@@ -87,7 +93,7 @@ void U_PCE(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
     }
 
     puts("********************************************************");
-    puts(" Five step : Reset nodal values of the mesh ... WORKING");
+    puts(" Six step : Reset nodal values of the mesh ... WORKING");
     FreeMat(M_I);
     FreeMat(V_I);
     FreeMat(F_I);

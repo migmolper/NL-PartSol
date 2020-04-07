@@ -238,8 +238,9 @@ Tensor compute_RateOfStrain(Matrix, Matrix);
 Tensor update_Strain(Tensor, Tensor, double);
 double update_Density(double, double, Tensor);
 Tensor compute_Stress(Tensor, Tensor, Material);
+void update_LocalState(Matrix, GaussPoint, Mesh, double);
 double compute_InternalEnergy(Tensor, Tensor);
-Matrix compute_InternalForces(Matrix, Matrix, GaussPoint,Mesh, double);
+Matrix compute_InternalForces(Matrix, GaussPoint,Mesh);
 Matrix compute_BodyForces(Matrix, GaussPoint, Mesh, int);
 Matrix compute_ContacForces(Matrix, GaussPoint, Mesh, int);
 
