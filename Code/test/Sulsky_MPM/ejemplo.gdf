@@ -6,7 +6,7 @@ GramsBox (Type=GID,File=FEM_Mesh.msh) {
 }
 
 # Time integration
-GramsTime (Type=FE) {
+GramsTime (Type=PCE) {
     CEL=70.71
     CFL=0.01
     N=15000

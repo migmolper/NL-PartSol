@@ -5,7 +5,7 @@ GramsBox (Type=GID,File=FEM_Mesh.msh) {
     }
 }
 
-GramsTime (Type=FE) { 
+GramsTime (Type=PCE) { 
     CEL=1.0
     CFL=0.05
     N=2000
