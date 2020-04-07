@@ -30,9 +30,8 @@ void EigenerosionAlgorithm(Matrix ji, Matrix W,
 {
   /* Define auxiliar variable */
   int Num_GP = W.N_rows*W.N_cols;
-
-  double Stress_I, Stress_II;
-  double Ceps_p, m_p, sum_p, G_p, Gf_p, Stress_1p;
+  Tensor Stress_p, EV_Stress_p; /* Stress tensor */
+  double Ceps_p, m_p, sum_p, G_p, Gf_p;
   double m_q, W_q;
   int * Beps_p;
   int Neps_p;
@@ -41,12 +40,12 @@ void EigenerosionAlgorithm(Matrix ji, Matrix W,
   
   for(int p = 0 ; p < Num_GP ; p++){
 
-    Stress_I = Stress.nM[p][0]+Stress.nM[p][1];
-    Stress_II = Stress.nM[p][0]*Stress.nM[p][1]-Stress.nM[p][2]*Stress.nM[p][2];
-    Stress_1p = 0.5*(Stress_I + sqrt(MAXVAL(0,Stress_I*Stress_I - 4*Stress_II)));
+    /* For the current particle get first principal stress */	
+    Stress_p = memory_to_Tensor(Stress.nM[p], 2);
+    EV_Stress_p = get_Eigenvalues_Of(Stress_p);
 
     /* Non broken GP Only traction */ 
-    if((ji.nV[p] < 1) && (Stress_1p>0)){ 
+    if((ji.nV[p] < 1) && (EV_Stress_p.n[0]>0)){ 
 
       /* Kind of material */
       Mat_p = MatIdx[p];
@@ -86,7 +85,11 @@ void EigenerosionAlgorithm(Matrix ji, Matrix W,
 	ji.nV[p] = 1.0;
       }
       
-    }    
+    }
+
+    /* Free eigenvalues */
+    free_Tensor(EV_Stress_p);
+    
   }
   
 }
