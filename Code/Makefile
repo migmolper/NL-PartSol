@@ -10,7 +10,7 @@ TESTDIR = test
 INSTDIR = /usr/bin
 
 # Name of the program
-EXE = GraMS
+EXE = GraMS	
 
 # Compiler and preprocesor
 CC = $(GCC_ROOT)/gcc
