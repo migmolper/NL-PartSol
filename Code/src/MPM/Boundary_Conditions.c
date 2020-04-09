@@ -112,8 +112,7 @@ Matrix Eval_Body_Forces(Load * B, int NumLoads, int NumGP, int TimeStep)
 	for(int k = 0 ; k<B[i].Dim ; k++){
 	  if( (B[i].Dir[k] == 1) ||
 	      (B[i].Dir[k] == -1)){
-	    if( (TimeStep < 0) ||
-		(TimeStep > B[i].Value[k].Num)){
+	    if( (TimeStep < 0) || (TimeStep > B[i].Value[k].Num)){
 	      printf("%s : %s\n",
 		     "Error in Eval_Body_Forces()",
 		     "The time step is out of the curve !!");
@@ -150,8 +149,7 @@ Matrix Eval_Contact_Forces(Load * F, int NumLoads, int NumGP, int TimeStep)
 	for(int k = 0 ; k<F[i].Dim ; k++){
 	  if( (F[i].Dir[k] == 1) ||
 	      (F[i].Dir[k] == -1)){
-	    if( (TimeStep < 0) ||
-		(TimeStep > F[i].Value[k].Num)){
+	    if( (TimeStep < 0) || (TimeStep > F[i].Value[k].Num)){
 	      printf("%s : %s \n",
 		     "Error in Eval_Contact_Forces()",
 		     "The time step is out of the curve !!");
