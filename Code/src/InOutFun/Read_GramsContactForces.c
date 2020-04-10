@@ -107,12 +107,14 @@ Load * GramsNeumannBC(char * Name_File, int NumNeumannBC, int GPxElement)
 
       /* Get an array with the nodes */
       Chain_Nodes = File2Chain(FileNodesRoute);
-      F[IndexLoad].NumNodes =
-	get_Lenght_Set(Chain_Nodes);
-      F[IndexLoad].Nodes =
-	Set_to_Pointer(Chain_Nodes,F[IndexLoad].NumNodes);
+      Num_Nodes = get_Lenght_Set(Chain_Nodes);
+      Array_Nodes = Set_to_Pointer(Chain_Nodes,Num_Nodes);
       free_Set(Chain_Nodes);
 
+      /* Fill GPs */
+      F[IndexLoad].NumNodes = Num_Nodes*GPxElement;      
+      F[IndexLoad].Nodes =
+	(int *)Allocate_ArrayZ(F[IndexLoad].NumNodes,sizeof(int));      
       for(int i = 0 ; i<Num_Nodes ; i++){
 	for(int j = 0 ; j<GPxElement ; j++){
 	  F[IndexLoad].Nodes[i*GPxElement+j] = Array_Nodes[i]*GPxElement+j;

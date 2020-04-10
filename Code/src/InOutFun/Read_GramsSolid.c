@@ -165,21 +165,6 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
     MPM_Mesh.Phi.x_GC = GetInitialGaussPointPosition(MPM_GID_Mesh,GPxElement);
 
     /**************************************************/
-    /*********** Read Material parameters *************/
-    /**************************************************/
-    if(Is_GramsMaterials){
-      /* MPM_Mesh.NumberMaterials = Counter_Materials; */
-      MPM_Mesh.NumberMaterials = 1;
-      MPM_Mesh.MatIdx = (int *)malloc(MPM_Mesh.NumGP*sizeof(int));
-      MPM_Mesh.Mat = GramsMaterials(Name_File,MPM_Mesh,GPxElement);
-    }
-    else{
-      fprintf(stderr,"%s : %s \n",
-	      "Error in GramsSolid2D()",
-	      "GramsMaterials no defined");
-      exit(0);
-    }
-    /**************************************************/
     /********* Read Shape functions parameters ********/
     /**************************************************/
     if(Is_GramsShapeFun){
@@ -245,8 +230,7 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
     /*********** Read Material parameters *************/
     /**************************************************/
     if(Is_GramsMaterials){
-      /* MPM_Mesh.NumberMaterials = Counter_Materials; */
-      MPM_Mesh.NumberMaterials = 1;
+      MPM_Mesh.NumberMaterials = Counter_Materials;
       MPM_Mesh.MatIdx = (int *)malloc(MPM_Mesh.NumGP*sizeof(int));
       MPM_Mesh.Mat = GramsMaterials(Name_File,MPM_Mesh,GPxElement);
     }
@@ -339,7 +323,7 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
     /**************************************************/    
     if(Is_GramsNeumannBC){
       MPM_Mesh.NumNeumannBC = Counter_GramsNeumannBC;
-      MPM_Mesh.F = GramsNeumannBC(Name_File, Counter_GramsNeumannBC,GPxElement);
+      MPM_Mesh.F = GramsNeumannBC(Name_File, Counter_GramsNeumannBC, GPxElement);
     }
     else{
       MPM_Mesh.NumNeumannBC = Counter_GramsNeumannBC;
@@ -353,7 +337,7 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
     /**************************************************/    
     if(Is_GramsBodyForces){
       MPM_Mesh.NumberBodyForces = Counter_BodyForces;
-      MPM_Mesh.B = GramsBodyForces(Name_File,MPM_Mesh); 
+      MPM_Mesh.B = GramsBodyForces(Name_File, Counter_BodyForces, GPxElement); 
     }
     else{
       MPM_Mesh.NumberBodyForces = Counter_BodyForces;

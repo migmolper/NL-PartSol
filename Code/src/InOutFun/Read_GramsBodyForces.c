@@ -10,7 +10,7 @@
 
 /**********************************************************************/
 
-Load * GramsBodyForces(char * Name_File,GaussPoint GP_Mesh)
+Load * GramsBodyForces(char * Name_File, int NumBodyForces, int GPxElement)
 /*
   GramsBodyForces (Nodes=ListNodes.txt) {
   b.x Load_x.txt
@@ -19,8 +19,7 @@ Load * GramsBodyForces(char * Name_File,GaussPoint GP_Mesh)
 */
 {
   /* Define new load case for the body forces */
-  Load * B = (Load *)Allocate_Array(GP_Mesh.NumberBodyForces,
-				    sizeof(Load));
+  Load * B = (Load *)Allocate_Array(NumBodyForces, sizeof(Load));
   
   /* Simulation file */
   FILE * Sim_dat;
@@ -42,8 +41,12 @@ Load * GramsBodyForces(char * Name_File,GaussPoint GP_Mesh)
   char * Name_Parse[MAXW] = {NULL};
   char Route_Nodes[MAXC] = {0};
   char FileNodesRoute[MAXC];
-  ChainPtr Chain_Nodes = NULL;
 
+  /* Array */
+  int Num_Nodes;
+  ChainPtr Chain_Nodes = NULL;
+  int * Array_Nodes;
+  
   /* Parse GramsBodyForces properties */
   char Line_Properties[MAXC] = {0};
   char * Parse_Properties[MAXW] = {NULL};
@@ -100,9 +103,19 @@ Load * GramsBodyForces(char * Name_File,GaussPoint GP_Mesh)
 
       /* Get an array with the nodes */
       Chain_Nodes = File2Chain(FileNodesRoute);
-      B[IndexLoad].NumNodes = get_Lenght_Set(Chain_Nodes);
-      B[IndexLoad].Nodes = Set_to_Pointer(Chain_Nodes,B[IndexLoad].NumNodes);
+      Num_Nodes = get_Lenght_Set(Chain_Nodes);
+      Array_Nodes = Set_to_Pointer(Chain_Nodes,Num_Nodes);
       free_Set(Chain_Nodes);
+
+      /* Fill GPs */
+      B[IndexLoad].NumNodes = Num_Nodes*GPxElement; 
+      B[IndexLoad].Nodes =
+	(int *)Allocate_ArrayZ(B[IndexLoad].NumNodes,sizeof(int));
+      for(int i = 0 ; i<Num_Nodes ; i++){
+	for(int j = 0 ; j<GPxElement ; j++){
+	  B[IndexLoad].Nodes[i*GPxElement+j] = Array_Nodes[i]*GPxElement+j;
+	}
+      }
 
       /* Number of dimensions of the BCC */
       B[IndexLoad].Dim = NumberDOF;

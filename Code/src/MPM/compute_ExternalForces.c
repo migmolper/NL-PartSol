@@ -43,13 +43,15 @@ Matrix compute_BodyForces(Matrix F_I, GaussPoint MPM_Mesh,
 
       /* Fill vector of body forces */
       for(int k = 0 ; k<Ndim ; k++){
-	if( (TimeStep < 0) || (TimeStep > B[i].Value[k].Num)){
-	  printf("%s : %s\n",
-		 "Error in compute_BodyForces()",
-		 "The time step is out of the curve !!");
-	  exit(0);
+	if(B[i].Dir[k]){
+	  if( (TimeStep < 0) || (TimeStep > B[i].Value[k].Num)){
+	    printf("%s : %s\n",
+		   "Error in compute_BodyForces()",
+		   "The time step is out of the curve !!");
+	    exit(0);
+	  }
+	  b.n[k] = B[i].Value[k].Fx[TimeStep];
 	}
-	b.n[k] = B[i].Value[k].Fx[TimeStep]*(double)B[i].Dir[k];
       }
 
       /* Get the node of the mesh for the contribution */
@@ -132,13 +134,14 @@ Matrix compute_ContacForces(Matrix F_I, GaussPoint MPM_Mesh,
 
       /* Fill vector of body forces */
       for(int k = 0 ; k<Ndim ; k++){
-	if( (TimeStep < 0) || (TimeStep > F[i].Value[k].Num)){
-	  printf("%s : %s\n",
-		 "Error in compute_ContacForces()",
-		 "The time step is out of the curve !!");
-	  exit(0);
+	if(F[i].Dir[k]){
+	  if( (TimeStep < 0) || (TimeStep > F[i].Value[k].Num)){
+	    printf("%s : %s\n",
+		   "Error in compute_ContacForces()",
+		   "The time step is out of the curve !!");
+	  }
+	  t.n[k] = F[i].Value[k].Fx[TimeStep];
 	}
-	t.n[k] = F[i].Value[k].Fx[TimeStep]*(double)F[i].Dir[k];
       }
 
       /* Get the node of the mesh for the contribution */

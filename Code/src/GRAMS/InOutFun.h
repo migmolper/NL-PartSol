@@ -28,7 +28,7 @@ void GramsInitials(char *, GaussPoint, int);
 void GramsShapeFun(char * );
 void GramsOutputs(char * );
 Load * GramsNeumannBC(char *, int, int);
-Load * GramsBodyForces(char *,GaussPoint);
+Load * GramsBodyForces(char *, int, int);
 
 /* Print .vtk format */
 void WriteVtk_MPM(char *, GaussPoint, Matrix, int);
