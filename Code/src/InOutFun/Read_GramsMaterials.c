@@ -320,8 +320,17 @@ GramsMaterials (Particles=route.txt) {
 	  }
 	  /**************************************************/
 	  if(strcmp(Mat_GP.Type,"SR") == 0){ /* Solid rigid material */
-	    Mat_GP.Cel = 0;
-	    printf("\t -> %s \n","Solid rigid material");
+	    if(Is_rho){
+	      Mat_GP.Cel = 0;
+	      printf("\t -> %s \n","Solid rigid material");
+	      printf("\t \t -> %s : %f \n","Density",Mat_GP.rho);
+	    }
+	    else{
+	      fprintf(stderr,"%s : %s \n",
+		      "Error in GramsMaterials()",
+		      "Density is required for LE materials");
+	      exit(0);
+	    }
 	  }
 	  else if(strcmp(Mat_GP.Type,"LE") == 0){ /* Linear elastic parameters */
 	    if(Is_rho & Is_Cel && Is_E && Is_mu){
@@ -334,7 +343,7 @@ GramsMaterials (Particles=route.txt) {
 	    else{
 	      fprintf(stderr,"%s : %s \n",
 		      "Error in GramsMaterials()",
-		      "Cel, E and mu required for LE materials");
+		      "Rho, Cel, E and mu required for LE materials");
 	      exit(0);
 	    }
 	  }
