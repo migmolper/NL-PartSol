@@ -328,7 +328,12 @@ GramsMaterials (Particles=route.txt) {
 	    exit(0);
 	  }
 	  /**************************************************/
-	  if(strcmp(Mat_GP.Type,"LE") == 0){ /* Linear elastic parameters */
+	  if(strcmp(Mat_GP.Type,"SR") == 0){ /* Solid rigid material */
+	    Mat_GP.Cel = 0;
+	    printf("\t -> %s \n","Solid rigid material");
+	    printf("\t \t -> %s : %f \n","Celerity",Mat_GP.Cel);
+	  }
+	  else if(strcmp(Mat_GP.Type,"LE") == 0){ /* Linear elastic parameters */
 	    if(Is_Cel && Is_E && Is_mu){
 	      printf("\t -> %s \n","Linear elastic material");
 	      printf("\t \t -> %s : %f \n","Elastic modulus",Mat_GP.E);
@@ -341,12 +346,12 @@ GramsMaterials (Particles=route.txt) {
 	      exit(0);
 	    }
 	  }
-	  /**************************************************/
-	  if(strcmp(Mat_GP.Type,"SR") == 0){ /* Linear elastic parameters */
-	    Mat_GP.Cel = 0;
-	    printf("\t -> %s \n","Solid rigid material");
-	    printf("\t \t -> %s : %f \n","Celerity",Mat_GP.Cel);
+	  else{
+	    fprintf(stderr,"%s : %s \n",
+		    "Error in GramsMaterials()","Unrecognized kind of material");
+	    exit(0);
 	  }
+
 	  /**************************************************/
 	  if(Is_thickness){
 	    if(Ndim != 2){
