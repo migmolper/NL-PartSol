@@ -12,6 +12,7 @@ Material * GramsMaterials(char * Name_File, GaussPoint GP_Mesh, int GPxElement)
 GramsMaterials (Particles=route.txt) {
                Id=0
                Type=LE
+	       Cel=1
 	       rho=20
 	       E=6.e9
 	       mu=0.2
@@ -61,6 +62,7 @@ GramsMaterials (Particles=route.txt) {
 
 
   bool Is_Id;
+  bool Is_Cel;
   bool Is_rho;
   bool Is_E;
   bool Is_mu;
@@ -147,7 +149,10 @@ GramsMaterials (Particles=route.txt) {
       /* Id of the material */
       Is_Id = false;
       Mat_GP.Id=-1;
-      /* Set to default all it properties */
+      /* Celerity */
+      Is_Cel = false;
+      Mat_GP.Cel = NAN;
+      /* Density */      
       Is_rho = false;
       Mat_GP.rho = NAN;
       /* Linear elastic parameters */
@@ -218,6 +223,11 @@ GramsMaterials (Particles=route.txt) {
 	  /**************************************************/
  	  else if(strcmp(Parse_Mat_Prop[0],"Type") == 0){
 	    strcpy(Mat_GP.Type,Parse_Mat_Prop[1]);
+	  }
+	  /**************************************************/
+	  else if(strcmp(Parse_Mat_Prop[0],"Cel") == 0){
+	    Is_Cel = true;
+	    Mat_GP.Cel = atof(Parse_Mat_Prop[1]);
 	  }
 	  /**************************************************/
 	  else if(strcmp(Parse_Mat_Prop[0],"rho") == 0){
@@ -307,6 +317,15 @@ GramsMaterials (Particles=route.txt) {
 	  /**************************************************/
 	  if(Is_Id){
 	    printf("\t \t -> %s : %i \n","Index of the material",Mat_GP.Id);
+	  }
+	  /**************************************************/
+	  if(Is_Cel){
+	    printf("\t \t -> %s : %f \n","Celerity",Mat_GP.Cel);
+	  }
+	  else{
+	    fprintf(stderr,"%s : %s \n",
+		    "Error in GramsMaterials()","Celerity is required");
+	    exit(0);
 	  }
 	  /**************************************************/
 	  if(Is_rho){

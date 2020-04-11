@@ -12,6 +12,8 @@ typedef struct {
   /* Name and id of the material */
   int Id;
   char Type [100];
+  /* Material celerity */
+  double Cel;
   /* Initial density */
   double rho;
   /* Elastic modulus */

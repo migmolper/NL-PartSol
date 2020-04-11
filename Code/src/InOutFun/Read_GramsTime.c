@@ -11,7 +11,6 @@ void GramsTime(char * Name_File)
 /*
 Example : 
 GramsTime(Scheme=FE){
-	CEL=70.71
 	CFL=0.6
 	N=4000
 }
@@ -89,7 +88,6 @@ GramsTime(Scheme=FE){
 
       /* Set to default all it properties */
       CFL=0.8;
-      CEL=NAN;
       NumTimeStep=0;
       SpectralRadius=0.6;
 
@@ -108,15 +106,7 @@ GramsTime(Scheme=FE){
 	Aux_Temp_id = parse(Parse_Temp_Prop,Line_Temp_Prop," =\t\n");
 	if(strcmp(Parse_Temp_Prop[0],"}") == 0){
 
-	  /* Check celerity */
-	  if(CEL != CEL){
-	    fprintf(stderr,"%s : %s \n",
-		   "Error in GramsTime()",
-		   "Celerity parameter required !!!");
-	    exit(0);
-	  }
-	  /* Check number of time steps */
-	  
+	  /* Check number of time steps */	  
 	  if(NumTimeStep == 0){
 	    fprintf(stderr,"%s : %s \n",
 	   "Error in GramsTime()",
@@ -134,11 +124,7 @@ GramsTime(Scheme=FE){
 	    exit(0);
 	  }
 
- 	  if(strcmp(Parse_Temp_Prop[0],"CEL") == 0){
-	    CEL = atof(Parse_Temp_Prop[1]);
-	    printf("\t -> %s : %f \n","Celerity",CEL);
-	  }
-	  else if(strcmp(Parse_Temp_Prop[0],"CFL") == 0){
+	  if(strcmp(Parse_Temp_Prop[0],"CFL") == 0){
 	    CFL = atof(Parse_Temp_Prop[1]);
 	    printf("\t -> %s : %f \n","CFL condition",CFL);
 	  }
@@ -174,15 +160,7 @@ GramsTime(Scheme=FE){
 
 	if(strcmp(Parse_Temp_Prop[0],"}") == 0){
 
-	  /* Check celerity */
-	  if(CEL != CEL){
-	    fprintf(stderr,"%s : %s \n",
-		   "Error in GramsTime()",
-		   "Celerity parameter required !!!");
-	    exit(0);
-	  }
-	  /* Check number of time steps */
-	  
+	  /* Check number of time steps */	  
 	  if(NumTimeStep == 0){
 	    fprintf(stderr,"%s : %s \n",
 	   "Error in GramsTime()",

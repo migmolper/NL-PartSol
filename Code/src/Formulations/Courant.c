@@ -17,13 +17,19 @@ double DeltaT_CFL(GaussPoint MPM_Mesh, double h)
 {
 
   double DeltaT;
+  double CEL_MAX = 0;
   double C[3] = {0,0,0};
   int Ndim = NumberDimensions;
+  int Nmat = MPM_Mesh.NumberMaterials;
 
+  for(int i = 0 ; i<Nmat ; i++){
+    CEL_MAX = MAXVAL(MPM_Mesh.Mat[i].Cel,CEL_MAX);
+  }
+  
   /* Get the maximum wave speed */
   for(int i = 0 ; i<MPM_Mesh.NumGP ; i++){
     for(int j = 0 ; j<Ndim ; j++){
-      C[j] = MAXVAL(C[j],CEL+MPM_Mesh.Phi.vel.nM[i][j]);
+      C[j] = MAXVAL(C[j],CEL_MAX+MPM_Mesh.Phi.vel.nM[i][j]);
     }
   }
 
