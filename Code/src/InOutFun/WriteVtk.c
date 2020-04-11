@@ -104,10 +104,16 @@ void WriteVtk_MPM(char * Name_File, GaussPoint MPM_Mesh,
   }
 
   /* float -> integer */
-  fprintf(Vtk_file,"SCALARS ELEM_i float \n");
+  fprintf(Vtk_file,"SCALARS ELEM_i integer \n");
   fprintf(Vtk_file,"LOOKUP_TABLE default \n");
   for(int i =  0 ; i<MPM_Mesh.NumGP ; i++){
     fprintf(Vtk_file,"%i \n",MPM_Mesh.Element_id[i]);
+  }
+
+  fprintf(Vtk_file,"SCALARS MatIdx integer \n");
+  fprintf(Vtk_file,"LOOKUP_TABLE default \n");
+  for(int i =  0 ; i<MPM_Mesh.NumGP ; i++){
+    fprintf(Vtk_file,"%i \n",MPM_Mesh.MatIdx[i]);
   }
 
   fprintf(Vtk_file,"VECTORS VELOCITY float \n");
