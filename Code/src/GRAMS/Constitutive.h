@@ -40,9 +40,12 @@ typedef struct {
 
 /*******************************************************/
 
+/* Solid rigid */
+Tensor SolidRigid(Tensor);
+
 /* Material Linear-Elastic */
-/* Matrix LinearElastic(Matrix, Matrix, Material); */
 Tensor LinearElastic(Tensor, Tensor, Material);
+
 
 /* Fracture */
 void EigenerosionAlgorithm(Matrix, Matrix,
