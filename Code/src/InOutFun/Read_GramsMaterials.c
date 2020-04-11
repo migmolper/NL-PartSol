@@ -319,23 +319,15 @@ GramsMaterials (Particles=route.txt) {
 	    printf("\t \t -> %s : %i \n","Index of the material",Mat_GP.Id);
 	  }
 	  /**************************************************/
-	  if(Is_rho){
-	    printf("\t \t -> %s : %f \n","Density",Mat_GP.rho);
-	  }
-	  else{
-	    fprintf(stderr,"%s : %s \n",
-		    "Error in GramsMaterials()","Density is required");
-	    exit(0);
-	  }
-	  /**************************************************/
 	  if(strcmp(Mat_GP.Type,"SR") == 0){ /* Solid rigid material */
 	    Mat_GP.Cel = 0;
 	    printf("\t -> %s \n","Solid rigid material");
-	    printf("\t \t -> %s : %f \n","Celerity",Mat_GP.Cel);
 	  }
 	  else if(strcmp(Mat_GP.Type,"LE") == 0){ /* Linear elastic parameters */
-	    if(Is_Cel && Is_E && Is_mu){
+	    if(Is_rho & Is_Cel && Is_E && Is_mu){
 	      printf("\t -> %s \n","Linear elastic material");
+	      printf("\t \t -> %s : %f \n","Celerity",Mat_GP.Cel);
+	      printf("\t \t -> %s : %f \n","Density",Mat_GP.rho);
 	      printf("\t \t -> %s : %f \n","Elastic modulus",Mat_GP.E);
 	      printf("\t \t -> %s : %f \n","Poisson modulus",Mat_GP.mu);
 	    }
