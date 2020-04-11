@@ -97,7 +97,7 @@ GramsMaterials (Particles=route.txt) {
   }
 
   /* Allocate table with the material */
-  Mat_Table = (Material * )malloc(GP_Mesh.NumberMaterials*sizeof(Material));
+  Mat_Table = (Material *)malloc(GP_Mesh.NumberMaterials*sizeof(Material));
   if(Mat_Table == NULL){
     fprintf(stderr,"%s : %s \n",
 	   "Error in GramsMaterials()",
@@ -306,11 +306,11 @@ GramsMaterials (Particles=route.txt) {
 	if(strcmp(Parse_Mat_Prop[0],"}") == 0){
 	  /**************************************************/
 	  if(Is_Id){
-	    printf("\t -> %s : %i \n","Index of the material",Mat_GP.Id);
+	    printf("\t \t -> %s : %i \n","Index of the material",Mat_GP.Id);
 	  }
 	  /**************************************************/
 	  if(Is_rho){
-	    printf("\t -> %s : %f \n","Density",Mat_GP.rho);
+	    printf("\t \t -> %s : %f \n","Density",Mat_GP.rho);
 	  }
 	  else{
 	    fprintf(stderr,"%s : %s \n",
@@ -320,9 +320,9 @@ GramsMaterials (Particles=route.txt) {
 	  /**************************************************/
 	  if(strcmp(Mat_GP.Type,"LE") == 0){ /* Linear elastic parameters */
 	    if(Is_E && Is_mu){
-	      printf("\t -> %s : %s \n","Law",Parse_Mat_Prop[1]);
-	      printf("\t -> %s : %f \n","Elastic modulus",Mat_GP.E);
-	      printf("\t -> %s : %f \n","Poisson modulus",Mat_GP.mu);
+	      printf("\t \t -> %s : %s \n","Law",Parse_Mat_Prop[1]);
+	      printf("\t \t -> %s : %f \n","Elastic modulus",Mat_GP.E);
+	      printf("\t \t -> %s : %f \n","Poisson modulus",Mat_GP.mu);
 	    }
 	    else{
 	      fprintf(stderr,"%s : %s \n",
@@ -339,17 +339,17 @@ GramsMaterials (Particles=route.txt) {
 		      "thickness is only for plain strain cases");
 	      exit(0);
 	    }
-	    printf("\t -> %s : %f \n","thickness",Mat_GP.thickness);
+	    printf("\t \t -> %s : %f \n","thickness",Mat_GP.thickness);
 	  }
 	  else{
-	    printf("\t -> %s : %f \n","thickness",Mat_GP.thickness);
+	    printf("\t \t -> %s : %f \n","thickness",Mat_GP.thickness);
 	  }
 	  /**************************************************/
 	  if(Mat_GP.Eigenerosion){ /* Check eigenerosion properties */	  
 	    if(Is_Ceps && Is_Gf){
-	      printf("\t -> %s : %s \n","Fracture","Eigenerosion");
-	      printf("\t -> %s : %f \n","Normalizing constant",Mat_GP.Ceps);
-	      printf("\t -> %s : %f \n","Failure energy",Mat_GP.Gf);
+	      printf("\t \t -> %s : %s \n","Fracture","Eigenerosion");
+	      printf("\t \t -> %s : %f \n","Normalizing constant",Mat_GP.Ceps);
+	      printf("\t \t -> %s : %f \n","Failure energy",Mat_GP.Gf);
 	    }
 	    else{
 	      fprintf(stderr,"%s : %s \n",
@@ -361,11 +361,11 @@ GramsMaterials (Particles=route.txt) {
 	  /**************************************************/ 
 	  if(Mat_GP.Eigensoftening){ /* Check eigensoftening properties */
 	    if(Is_Ceps && Is_ft && Is_heps && Is_Wc){
-	      printf("\t -> %s : %s \n","Fracture","Eigensoftening");
-	      printf("\t -> %s : %f \n","Normalizing constant",Mat_GP.Ceps);
-	      printf("\t -> %s : %f \n","Tensile strengt",Mat_GP.ft);
-	      printf("\t -> %s : %f \n","Bandwidth Bazant",Mat_GP.heps);
-	      printf("\t -> %s : %f \n","Critical opening",Mat_GP.Wc);
+	      printf("\t \t -> %s : %s \n","Fracture","Eigensoftening");
+	      printf("\t \t -> %s : %f \n","Normalizing constant",Mat_GP.Ceps);
+	      printf("\t \t -> %s : %f \n","Tensile strengt",Mat_GP.ft);
+	      printf("\t \t -> %s : %f \n","Bandwidth Bazant",Mat_GP.heps);
+	      printf("\t \t -> %s : %f \n","Critical opening",Mat_GP.Wc);
 	    }
 	    else{
 	      fprintf(stderr,"%s : %s\n",
@@ -379,7 +379,7 @@ GramsMaterials (Particles=route.txt) {
 	  /* Transfere information */
 	  Mat_Table[Mat_GP.Id] = Mat_GP;
 	  
-	  break;
+	  /* break; */
 	}
       }
       else{
