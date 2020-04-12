@@ -29,6 +29,7 @@ void EigenerosionAlgorithm(Matrix ji, Matrix W,
 */
 {
   /* Define auxiliar variable */
+  int Ndim = NumberDimensions;
   int Num_GP = W.N_rows*W.N_cols;
   Tensor Stress_p, EV_Stress_p; /* Stress tensor */
   double Ceps_p, m_p, sum_p, G_p, Gf_p;
@@ -86,6 +87,11 @@ void EigenerosionAlgorithm(Matrix ji, Matrix W,
       }
       
     }
+    else if(ji.nV[p] == 1.0){
+      for(int i = 0 ; i<Ndim*Ndim ; i++){
+	Stress.nM[p][i] = 0.0;
+      }
+    }
 
     /* Free eigenvalues */
     free_Tensor(EV_Stress_p);
@@ -117,6 +123,7 @@ void EigensofteningAlgorithm(Matrix ji, Matrix Strain,
 */
 {
   /* Define auxiliar variable */
+  int Ndim = NumberDimensions;
   int Num_GP = Strain.N_rows;
 
   Tensor Stress_p, Stress_q, EV_Stress_p, EV_Stress_q; /* Stress tensor */
@@ -225,6 +232,11 @@ void EigensofteningAlgorithm(Matrix ji, Matrix Strain,
       /* Free eigenvalues */
       free_Tensor(EV_Strain_p);	    	  
       
+    }
+    else if(ji.nV[p] == 1.0){
+      for(int i = 0 ; i<Ndim*Ndim ; i++){
+	Stress.nM[p][i] = 0.0;
+      }
     }
   }
  

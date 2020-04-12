@@ -98,21 +98,15 @@ void Q4_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 
 /* Shape functions */
 Matrix Q4_N(Matrix X_e){
-
-  /* Error check */
-  if( (fabs(X_e.nV[0]) > 1+TOL_zero ) || (fabs(X_e.nV[1]) > 1+TOL_zero ) ){
-    printf("Error in Q4() : Out of the element bounds !!! \n");
-    exit(0);
-  }    
   
   /* Definition and allocation */
   Matrix N_ref =  MatAlloc(1,4);
 
   /* Fill the array */
-  N_ref.nV[0] = 0.25*(1-X_e.nV[0])*(1-X_e.nV[1]);
-  N_ref.nV[1] = 0.25*(1+X_e.nV[0])*(1-X_e.nV[1]);
-  N_ref.nV[2] = 0.25*(1+X_e.nV[0])*(1+X_e.nV[1]);
-  N_ref.nV[3] = 0.25*(1-X_e.nV[0])*(1+X_e.nV[1]);
+  N_ref.nV[0] = 0.25*DMIN(4,DMAX(0,(1-X_e.nV[0])*(1-X_e.nV[1])));
+  N_ref.nV[1] = 0.25*DMIN(4,DMAX(0,(1+X_e.nV[0])*(1-X_e.nV[1])));
+  N_ref.nV[2] = 0.25*DMIN(4,DMAX(0,(1+X_e.nV[0])*(1+X_e.nV[1])));
+  N_ref.nV[3] = 0.25*DMIN(4,DMAX(0,(1-X_e.nV[0])*(1+X_e.nV[1])));
   
   return N_ref;
 }
@@ -122,12 +116,6 @@ Matrix Q4_N(Matrix X_e){
 /* Derivatives of the shape functions */
 Matrix Q4_dN_Ref(Matrix X_e){
 
-  /* Error check */
-  if( (fabs(X_e.nV[0]) > 1+TOL_zero ) || (fabs(X_e.nV[1]) > 1+TOL_zero ) ){
-    printf("Error in dQ4() : Out of the element bounds !!! \n");
-    exit(0);
-  }
-
   int Ndim = NumberDimensions;
   
   /* Definition and allocation */
@@ -136,20 +124,20 @@ Matrix Q4_dN_Ref(Matrix X_e){
   /* Fill the matrix */
 
   /* Node 1 */
-  dNdX_ref.nM[0][0] = -0.25*(1-X_e.nV[1]);
-  dNdX_ref.nM[0][1] = -0.25*(1-X_e.nV[0]); 
+  dNdX_ref.nM[0][0] = -0.25*DMIN(2,DMAX(0,(1-X_e.nV[1])));
+  dNdX_ref.nM[0][1] = -0.25*DMIN(2,DMAX(0,(1-X_e.nV[0]))); 
 
   /* Node 2 */
-  dNdX_ref.nM[1][0] = +0.25*(1-X_e.nV[1]);
-  dNdX_ref.nM[1][1] = -0.25*(1+X_e.nV[0]);
+  dNdX_ref.nM[1][0] = +0.25*DMIN(2,DMAX(0,(1-X_e.nV[1])));
+  dNdX_ref.nM[1][1] = -0.25*DMIN(2,DMAX(0,(1+X_e.nV[0])));
   
   /* Node 3 */
-  dNdX_ref.nM[2][0] = +0.25*(1+X_e.nV[1]);
-  dNdX_ref.nM[2][1] = +0.25*(1+X_e.nV[0]);
+  dNdX_ref.nM[2][0] = +0.25*DMIN(2,DMAX(0,(1+X_e.nV[1])));
+  dNdX_ref.nM[2][1] = +0.25*DMIN(2,DMAX(0,(1+X_e.nV[0])));
   
   /* Node 4 */
-  dNdX_ref.nM[3][0] = -0.25*(1+X_e.nV[1]);
-  dNdX_ref.nM[3][1] = +0.25*(1-X_e.nV[0]); 
+  dNdX_ref.nM[3][0] = -0.25*DMIN(2,DMAX(0,(1+X_e.nV[1])));
+  dNdX_ref.nM[3][1] = +0.25*DMIN(2,DMAX(0,(1-X_e.nV[0]))); 
   
   return dNdX_ref;
 }
