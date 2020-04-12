@@ -682,7 +682,7 @@ void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 
 /*********************************************************************/
 
-void UpdateBeps(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
+void ComputeBeps(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 /*
 
 */

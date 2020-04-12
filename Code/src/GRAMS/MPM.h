@@ -273,7 +273,7 @@ void GetNodalConnectivity(Mesh);
 Matrix ElemCoordinates(Mesh, int *, int);
 ChainPtr DiscardElements(ChainPtr, Matrix, Matrix, Mesh);
 void LocalSearchGaussPoints(GaussPoint, Mesh);
-void UpdateBeps(GaussPoint, Mesh);
+void ComputeBeps(GaussPoint, Mesh);
 void GPinCell(ChainPtr *, ChainPtr *, Matrix, int, double);
 Element get_Element(int, ChainPtr, int);
 Matrix get_Element_Field(Matrix, Element);

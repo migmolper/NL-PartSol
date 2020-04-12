@@ -87,14 +87,14 @@ void ComputeDamage(GaussPoint MPM_Mesh, Mesh FEM_Mesh){
   ChainPtr * Beps = MPM_Mesh.Beps;
 
   if(MPM_Mesh.Mat[0].Eigenerosion){
-    UpdateBeps(MPM_Mesh,FEM_Mesh);
+    ComputeBeps(MPM_Mesh,FEM_Mesh);
     EigenerosionAlgorithm(ji, W, Mass, Stress,
 			  MatIdx, MatProp,
 			  Beps, DeltaX);
   }
 
   if(MPM_Mesh.Mat[0].Eigensoftening){
-    UpdateBeps(MPM_Mesh,FEM_Mesh);
+    ComputeBeps(MPM_Mesh,FEM_Mesh);
     EigensofteningAlgorithm(ji, Strain, StrainF,
 			    Mass, Stress, MatIdx,
 			    MatProp, Beps);
