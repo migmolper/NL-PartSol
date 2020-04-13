@@ -461,168 +461,78 @@ Tensor get_firstOrderContraction_Of(Tensor A, Tensor b)
 
 /*************************************************************/
 
-Tensor compute_StrainIncrement(Matrix Velocity,
-			       Matrix Gradient,
-			       double DeltaTimeStep)
+int InOut_Poligon(Matrix X_Point, Matrix Poligon)
+/*! 
+ * Check if a point is or not (1/0) inside of a Poligon.
+ * Inputs :
+ * - \a X_Point : Coordinates of the point 
+ * - \a Poligon : Coordinates of the vertex 0,1,....,n,0
+ */
 {
-  Tensor Strain_Increment = alloc_Tensor(2);
-  Tensor Velocity_I;
-  Tensor Gradient_I;
-  Tensor VoG_I;
+  /* By default, we suppose that the point is in the poligon */
+  int InOut = 1;
 
-  int NodesElem = Gradient.N_rows;
+  Matrix a = MatAllocZ(3,1);
+  Matrix b = MatAllocZ(3,1);
+  Matrix c;
+  Matrix n;
+  Matrix nxc;
 
-  /* Compute rate of strain */
-  for(int I = 0 ; I<NodesElem ; I++){
-    /* Assign from matrix to tensor */
-    Velocity_I = memory_to_Tensor(Velocity.nM[I], 1);
-    Gradient_I = memory_to_Tensor(Gradient.nM[I], 1);
-    /* Compute the dyadic product of the nodal velocity and the
-       gradient of the shape functions */
-    VoG_I = get_dyadicProduct_Of(Velocity_I, Gradient_I);
-    /* Ad the nodal contribution to the train tensor */
-    for(int i = 0 ; i<3 ; i++){
-      for(int j = 0 ; j<3 ; j++){
-	Strain_Increment.N[i][j] +=
-	  0.5*(VoG_I.N[i][j] + VoG_I.N[j][i]);
-      }
-    }
-    /* Free memory */
-    free_Tensor(VoG_I);
-  }
+  /* Get the normal vector */
+  a.nV[0] = Poligon.nM[1][0] - Poligon.nM[0][0];
+  a.nV[1] = Poligon.nM[1][1] - Poligon.nM[0][1];
+  a.nV[2] = Poligon.nM[1][2] - Poligon.nM[0][2];  
+  b.nV[0] = Poligon.nM[Poligon.N_rows-1][0] - Poligon.nM[0][0];
+  b.nV[1] = Poligon.nM[Poligon.N_rows-1][1] - Poligon.nM[0][1];
+  b.nV[2] = Poligon.nM[Poligon.N_rows-1][2] - Poligon.nM[0][2];
+  n = Vectorial_prod(a,b);
+  n.N_rows = 1;
+  n.N_cols = 3;
 
-  /* Compute increment of strain */
-  for(int i = 0 ; i<3 ; i++){
-    for(int j = 0 ; j<3 ; j++){
-      Strain_Increment.N[i][j] =
-	Strain_Increment.N[i][j]*DeltaTimeStep;
-    }
-  }
+  /* Fill a and b for the First search */
+  a.nV[0] = Poligon.nM[0][0] - Poligon.nM[Poligon.N_rows-1][0];
+  a.nV[1] = Poligon.nM[0][1] - Poligon.nM[Poligon.N_rows-1][1];
+  a.nV[2] = Poligon.nM[0][2] - Poligon.nM[Poligon.N_rows-1][2];
+
+  b.nV[0] = X_Point.nV[0] - Poligon.nM[Poligon.N_rows-1][0];
+  b.nV[1] = X_Point.nV[1] - Poligon.nM[Poligon.N_rows-1][1];
+  b.nV[2] = X_Point.nV[2] - Poligon.nM[Poligon.N_rows-1][2];
   
-  return Increment_Strain;
+  for(int i = 0 ; i<Poligon.N_rows-1 ; i++){
+
+    c = Vectorial_prod(a,b);
+    nxc = Scalar_prod(n,c);
+    FreeMat(c);
+
+    if(nxc.n < 0){
+      InOut = 0;
+      break;
+    }
+    
+    a.nV[0] = Poligon.nM[i+1][0] - Poligon.nM[i][0];
+    a.nV[1] = Poligon.nM[i+1][1] - Poligon.nM[i][1];
+    a.nV[2] = Poligon.nM[i+1][2] - Poligon.nM[i][2];
+
+    b.nV[0] = X_Point.nV[0] - Poligon.nM[i][0];
+    b.nV[1] = X_Point.nV[1] - Poligon.nM[i][1];
+    b.nV[2] = X_Point.nV[2] - Poligon.nM[i][2];
+    
+  }
+
+  /* Last check */
+  c = Vectorial_prod(a,b);
+  nxc = Scalar_prod(n,c);
+  if(nxc.n < 0){
+    InOut = 0;
+  }
+
+  FreeMat(a);
+  FreeMat(b);
+  FreeMat(c);
+  FreeMat(n);
+
+  return InOut;
 }
-
-/* /\*************************************************************\/ */
-
-/* Tensor compute_Stress(Tensor Strain, Tensor Stress, Material Mat) */
-/* { */
-/*   /\* Variable definition  *\/ */
-/*   Tensor Strain_n1;  */
-    
-/*   /\* Select the constitutive model *\/ */
-/*   if(strcmp(Mat.Type,"LE") == 0){ */
-/*     Stress = LinearElastic(Strain,Stress,Mat); */
-/*   } */
-/*   else{ */
-/*     exit(0); */
-/*   } */
-  
-/*   /\* Return the stress tensor *\/ */
-/*   return Stress; */
-/* } */
-
-
-/* /\*************************************************************\/ */
-
-/* void compute_InternalForces(Matrix F_I, Matrix V_I, */
-/* 			    GaussPoint MPM_Mesh, */
-/* 			    Mesh FEM_Mesh){ */
-
-/*   Element Nodes_p; /\* Element for each Gauss-Point *\/ */
-/*   Matrix Gradient_p; /\* Shape functions gradients *\/ */
-/*   Matrix Nodal_Velocity_p; /\* Velocity of the element nodes *\/ */
-/*   Material Material_p; /\* Properties of the Gauss-Point material *\/ */
-/*   Tensor Increment_Strain_p; /\* Increment of strain tensor *\/ */
-/*   Tensor Strain_p; /\*  Strain tensor *\/ */
-/*   Tensor Stress_p; /\* Stress tensor *\/ */
-/*   Tensor Gradient_pI; */
-/*   Tensor InternalForcesDensity_Ip; */
-/*   double W_p; /\* Internal energy of the Gauss-Point *\/ */
-/*   double m_p; /\* Mass of the Gauss-Point *\/ */
-/*   double rho_p; /\* Density of the Gauss-Point *\/ */
-/*   double V_p; /\* Volumen of the Gauss-Point *\/ */
-/*   int Ip; */
-/*   int Nn, Np; */
-
-/*   /\* Loop in the GPs *\/ */
-/*   for(int p = 0 ; p<Np ; p++){ */
-
-/*     /\* Get the value of the density *\/ */
-/*     rho_p = MPM_Mesh.Phi.rho.nV[i]; */
-
-/*     /\* Get the value of the mass *\/ */
-/*     m_p = MPM_Mesh.Phi.mass.nV[i]; */
-
-/*     /\* Asign memory to tensors *\/ */
-/*     Strain_p = memory_to_Tensor(MPM_Mesh.Phi.Strain.nM[I], 2); */
-/*     Stress_p = memory_to_Tensor(MPM_Mesh.Phi.Stress.nM[I], 2); */
-
-/*     /\* Define element for each GP *\/ */
-/*     Nodes_p = */
-/*       get_Element(p, MPM_Mesh.ListNodes[p], MPM_Mesh.NumberNodes[p]); */
-
-/*     /\* Get the velocity of the nodes of the element *\/ */
-/*     Nodal_Velocity_p = get_Element_velocity(Nodes_p, V_I); */
-
-/*     /\* Compute gradient of the shape function in each node *\/ */
-/*     Gradient_p = */
-/*       compute_ShapeFunction_Gradient(Nodes_p, MPM_Mesh, FEM_Mesh); */
-
-/*     /\* Get the material properties *\/ */
-/*     Idx_Mat_p = MPM_Mesh.MatIdx[p]; */
-/*     Material_p = MPM_Mesh.Mat[Idx_Mat_p];  */
-
-/*     /\* Compute Strain tensor *\/ */
-/*     Increment_Strain_p = */
-/*       compute_IncrementStrain(Nodal_Velocity_p,dNdx_p,DeltaTimeStep); */
-/*     for(int i = 0 ; i<3 ; i++){ */
-/*       for(int j = 0 ; j<3 ; j++){ */
-/* 	Strain_p.N[i][j] += Increment_Strain_p.N[i][j]; */
-/*       } */
-/*     } */
-
-/*     /\* Update density field *\/ */
-/*     rho_p = rho_p/(1 + get_I1_Of(Increment_Strain_p)); */
-
-/*     /\* Compute stress tensor *\/ */
-/*     Stress_p = compute_Stress(Strain_p,Stress_p,Material_p); */
-
-/*     /\* Compute deformation energy *\/ */
-/*     W_p = 0.5*get_innerProduct_Of(Strain_p, Stress_p); */
-
-/*     /\* Compute the volume of the Gauss-Point *\/ */
-/*     V_p = m_p/rho_p; */
-
-/*     /\* Compute nodal forces *\/ */
-/*     for(int I = 0 ; I<Nn ; I++){ */
-/*       /\* Pass by reference the nodal gradient to the tensor *\/ */
-/*       Gradient_pI = memory_to_Tensor(Gradient_p.nM[I], 1); */
-/*       /\* Compute the nodal forces of the Gauss-Point *\/ */
-/*       InternalForcesDensity_Ip = */
-/* 	get_firstOrderContraction_Of(Stress_p, Gradient_pI); */
-/*       /\* Get the node of the mesh for the contribution *\/       */
-/*       Ip = Nodes_p.Connectivity[I]; */
-/*       /\* Asign the nodal forces contribution to the node *\/ */
-/*       for(int i = 0 ; i<3 ; i++){ */
-/* 	F_I.nM[Ip][i] += InternalForcesDensity_Ip.n[i]*V_p; */
-/*       } */
-/*       /\* Free the internal forces density *\/ */
-/*       free_Tensor(InternalForcesDensity_Ip); */
-/*     } */
-
-/*     /\* Update memory *\/ */
-/*     MPM_Mesh.Phi.rho.nV[i] = rho_p; */
-    
-    
-/*     /\* Free the matrix with the nodal velocity of the element *\/ */
-/*     FreeMat(Nodal_Velocity_p); */
-    
-/*     /\* Free the matrix with the nodal gradient of the element *\/ */
-/*     FreeMat(Gradient_p); */
-    
-/*   }   */
-  
-/* } */
 
 /*************************************************************/
 

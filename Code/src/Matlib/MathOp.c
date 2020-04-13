@@ -157,7 +157,7 @@ int InOut_Poligon(Matrix X_Point, Matrix Poligon)
     nxc = Scalar_prod(n,c);
     FreeMat(c);
 
-    if(nxc.n < 0){
+    if(nxc.n < -TOL_InOut){
       InOut = 0;
       break;
     }
@@ -175,7 +175,7 @@ int InOut_Poligon(Matrix X_Point, Matrix Poligon)
   /* Last check */
   c = Vectorial_prod(a,b);
   nxc = Scalar_prod(n,c);
-  if(nxc.n < 0){
+  if(nxc.n < -TOL_InOut){
     InOut = 0;
   }
 
