@@ -259,7 +259,8 @@ Matrix compute_VelocityPredictor(GaussPoint MPM_Mesh,Mesh FEM_Mesh,
     }
 
     /* 7º Free the value of the shape functions */
-    FreeMat(ShapeFunction_p), free(Nodes_p.Connectivity);
+    FreeMat(ShapeFunction_p);
+    free(Nodes_p.Connectivity);
   }
 
   /* 1º Get nodal values of the velocity */

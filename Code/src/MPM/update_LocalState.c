@@ -40,7 +40,7 @@ void update_LocalState(Matrix V_I, GaussPoint MPM_Mesh,
 
     /* Compute gradient of the shape function in each node */
     Gradient_p = compute_ShapeFunction_Gradient(Nodes_p, MPM_Mesh, FEM_Mesh);
-
+    
     /* Get the material properties */
     Idx_Mat_p = MPM_Mesh.MatIdx[p];
     Material_p = MPM_Mesh.Mat[Idx_Mat_p];
@@ -51,6 +51,7 @@ void update_LocalState(Matrix V_I, GaussPoint MPM_Mesh,
 
     /* Update density field */
     MPM_Mesh.Phi.rho.nV[p] = update_Density(rho_p, TimeStep, Rate_Strain_p);
+    free_Tensor(Rate_Strain_p);
 
     /* Compute stress tensor */
     Stress_p = compute_Stress(Strain_p,Stress_p,Material_p);
@@ -63,6 +64,7 @@ void update_LocalState(Matrix V_I, GaussPoint MPM_Mesh,
     
     /* Free the matrix with the nodal gradient of the element */
     FreeMat(Gradient_p);
+    free(Nodes_p.Connectivity);
     
   }
 

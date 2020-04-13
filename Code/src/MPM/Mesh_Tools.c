@@ -36,8 +36,7 @@ Matrix GetInitialGaussPointPosition(Mesh FEM_Mesh, int GPxElement)
       N_GP = Q4_N(X_EC);
       /* Get the coordinate of the center */
       for(int i = 0 ; i<NumElemMesh ; i++){
-	Element = get_Element(i, FEM_Mesh.Connectivity[i],
-			      FEM_Mesh.NumNodesElem[i]);
+	Element = get_Element(i, FEM_Mesh.Connectivity[i],FEM_Mesh.NumNodesElem[i]);
 	for(int k = 0 ; k<4 ; k++){
 	  Node = Element.Connectivity[k];
 	  for(int l = 0 ; l<2 ; l++){

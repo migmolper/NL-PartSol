@@ -70,7 +70,7 @@ Matrix compute_InternalForces(Matrix F_I, GaussPoint MPM_Mesh, Mesh FEM_Mesh)
         
     /* Free the matrix with the nodal gradient of the element */
     FreeMat(Gradient_p);
-    
+    free(Nodes_p.Connectivity);
   }
 
   return F_I;
