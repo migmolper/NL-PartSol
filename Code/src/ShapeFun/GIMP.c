@@ -33,7 +33,15 @@ void uGIMP_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh){
   Matrix X_EC_GP = MatAssign(Ndim,1,NAN,NULL,NULL);
 
   Matrix lp; /* Particle voxel */
-  double Vol_GP; /* Volumen of the GP */
+
+  
+  double V_p; /* Volumen of the GP */
+  double A_p;
+  double rho_p;
+  double th_p;
+  double m_p;
+  double l_p;
+  int Mat_p;
 
   /* Variables for the poligon */
   int NumVertex;
@@ -55,11 +63,20 @@ void uGIMP_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh){
   for(int i = 0 ; i<MPM_Mesh.NumGP ; i++){
 
     /* 1º Get the voxel lenght */
-    Vol_GP = MPM_Mesh.Phi.mass.nV[i]/MPM_Mesh.Phi.rho.nV[i];
-    for(int j =0 ; j<Ndim ; j++){
-      MPM_Mesh.lp.nM[i][j] = 0.5*pow(Vol_GP,(double)1/Ndim);
+    Mat_p = MPM_Mesh.MatIdx[i];
+    rho_p = MPM_Mesh.Phi.rho.nV[i];
+    m_p = MPM_Mesh.Phi.mass.nV[i];
+    V_p = m_p/rho_p;
+    th_p = MPM_Mesh.Mat[Mat_p].thickness;
+    A_p = V_p/th_p;
+    
+    if(Ndim == 2){
+      l_p = 0.5*pow(A_p,0.5);
     }
-    lp.nV = MPM_Mesh.lp.nM[i];
+    for(int j =0 ; j<Ndim ; j++){
+      MPM_Mesh.lp.nM[i][j] = l_p;
+      lp.nV[j] = l_p;
+    }
 
     /* 2º Assign the value to this auxiliar pointer */ 
     X_GC_GP.nV = MPM_Mesh.Phi.x_GC.nM[i];

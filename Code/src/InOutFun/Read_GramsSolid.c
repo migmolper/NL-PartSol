@@ -39,8 +39,14 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
   ChainPtr Poligon_Connectivity;
   ChainPtr Vertex;
   int NumVertex;
-  int GPxElement = 4;
+
   double Area_Element;
+  double A_p;
+  double th_p;
+  double m_p;
+  double rho_p;
+  int GPxElement = 4;
+  int i_p;
 
   /* Set to false check variables */
   bool Is_GramsSolid2D = false;
@@ -295,16 +301,24 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
       FreeMat(Poligon_Coordinates);
       
       for(int j = 0 ; j<GPxElement ; j++){
+
+	/* Get the index of the material point */
+	i_p = i*GPxElement+j;
+
+	/* Get material properties */
+	A_p = Area_Element/GPxElement;
+	rho_p = MPM_Mesh.Mat[MPM_Mesh.MatIdx[i_p]].rho;
+	th_p = MPM_Mesh.Mat[MPM_Mesh.MatIdx[i_p]].thickness;
+	m_p = th_p*A_p*rho_p;
+	
       	/* Set the initial density */
-      	MPM_Mesh.Phi.rho.nV[i*GPxElement+j] =
-      	  MPM_Mesh.Mat[MPM_Mesh.MatIdx[i*GPxElement+j]].rho;
+      	MPM_Mesh.Phi.rho.nV[i_p] = rho_p;	
       	/* Assign the mass parameter */
-      	MPM_Mesh.Phi.mass.nV[i*GPxElement+j] =
-      	  (Area_Element/GPxElement)*
-      	  MPM_Mesh.Mat[MPM_Mesh.MatIdx[i*GPxElement+j]].rho;
+      	MPM_Mesh.Phi.mass.nV[i_p] = m_p;
+	
       	/* Local coordinates of the element */
-      	MPM_Mesh.Element_id[i*GPxElement+j] = -999;
-      	MPM_Mesh.NumberNodes[i*GPxElement+j] = 4;
+      	MPM_Mesh.Element_id[i_p] = -999;
+      	MPM_Mesh.NumberNodes[i_p] = 4;
       }
       
     }
