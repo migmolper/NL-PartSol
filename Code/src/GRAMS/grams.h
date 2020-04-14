@@ -67,7 +67,7 @@ int ResultsTimeStep;
 /***************************************/
 double gamma_LME;
 double TOL_lambda;
-#define TOL_InOut 10E-6
+#define TOL_InOut 10E-10
 #define TOL_NR 10E-6
 #define TOL_zero 10E-10
 

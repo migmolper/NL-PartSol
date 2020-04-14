@@ -6,7 +6,6 @@ GramsBox (Type=GID,File=FEM_Mesh.msh) {
 }
 
 GramsTime (Type=PCE) { 
-    CEL=1.0
     CFL=0.05
     N=2000
 }
@@ -14,7 +13,8 @@ GramsTime (Type=PCE) {
 GramsSolid2D (File=MPM_Mesh.msh) {
     
     GramsMaterials (Particles=Material0.txt) { 
-	Type=LE 
+	Type=LE
+	Cel=1.0
 	rho=1.0 
 	E=1.0 
 	mu=0.0
