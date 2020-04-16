@@ -258,7 +258,7 @@ Matrix ElemCoordinates(Mesh FEM_Mesh, int * Connectivity, int NumVertex)
 
 void GetListNodesGP(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int iGP){
 
-  int IdxElement = MPM_Mesh.Element_id[iGP];
+  int IdxElement = MPM_Mesh.I0[iGP];
   free_Set(MPM_Mesh.ListNodes[iGP]);
   MPM_Mesh.ListNodes[iGP] = NULL;
   
@@ -327,7 +327,6 @@ void GetListNodesGP(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int iGP){
   }
 
 }
-
 
 /*********************************************************************/
 
@@ -486,7 +485,7 @@ void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
     V_GP.nV = MPM_Mesh.Phi.vel.nM[i];
 
     /* 4º Get the index of the initial element */
-    Elem_i = MPM_Mesh.Element_id[i];
+    Elem_i = MPM_Mesh.I0[i];
 
     /* 5º Connectivity of the Poligon */
     NumVertex = FEM_Mesh.NumNodesElem[Elem_i];
@@ -628,7 +627,7 @@ void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 
 	  /* Asign to the GP a element in the background mesh, just for 
 	     searching porpuses */
-	  MPM_Mesh.Element_id[i] = SearchList[j];
+	  MPM_Mesh.I0[i] = SearchList[j];
 	  push_to_Set(&FEM_Mesh.GPsElements[SearchList[j]],i);
 
 	  /* If the GP is in the element, get its natural coordinates */
@@ -661,7 +660,7 @@ void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
       /* Free memory */
       free(SearchList);
 
-      if(MPM_Mesh.Element_id[i] == Elem_i){
+      if(MPM_Mesh.I0[i] == Elem_i){
 	printf(" %s %i %s %i !!! \n",
 	       "Error in LocalSearchGaussPoints() : GP",i,
 	       "is not in the neighbours of",Elem_i);
@@ -691,7 +690,7 @@ void ComputeBeps(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
   
   /* Number of GP and array with the element where it is each GP */
   int NumGP = MPM_Mesh.NumGP;
-  int * Element_id = MPM_Mesh.Element_id;
+  int * I0 = MPM_Mesh.I0;
   int Mat_GP;
   
   /* List wit the nodes of the initial element */
@@ -732,7 +731,7 @@ void ComputeBeps(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
         
     /* Number of nodes of the initial element and
        list of nodes */
-    Elem_GP = Element_id[i];
+    Elem_GP = I0[i];
     NumNodesElem = FEM_Mesh.NumNodesElem[Elem_GP];
     NodesElem = Set_to_Pointer(FEM_Mesh.Connectivity[Elem_GP],
 			     NumNodesElem);
@@ -866,6 +865,33 @@ Matrix get_Element_Field(Matrix Nodal_Field, Element GP_Element){
   }
   
   return Element_Field;
+}
+
+/*********************************************************************/
+
+ChainPtr get_NodesClose_toNode(int I, Mesh FEM_Mesh){
+
+  /* Define output */
+  ChainPtr Nodes = NULL;
+
+  /* Number of elements close to to the node */
+  int NumNeighbour = FEM_Mesh.NumNeighbour[I];
+  /* Index of the elements close to the node */
+  int * NodeNeighbour = Set_to_Pointer(FEM_Mesh.NodeNeighbour[I],NumNeighbour);
+  /* Table with the nodes of each element */
+  ChainPtr * Table_ElemNodes = malloc(NumNeighbour*sizeof(ChainPtr));  
+  for(int i = 0 ; i<NumNeighbour ; i++){
+    Table_ElemNodes[i] = FEM_Mesh.Connectivity[NodeNeighbour[i]];
+  }
+  /* Free table with elements */
+  free(NodeNeighbour);
+  /* Get the union of this nodes */
+  Nodes = get_Union_Of(Table_ElemNodes,NumNeighbour);
+  /* Free table with the nodes of each elements */
+  free(Table_ElemNodes);
+
+  /* Return nodes close to the node I */
+  return Nodes;
 }
 
 /*********************************************************************/

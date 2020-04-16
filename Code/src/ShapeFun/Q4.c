@@ -61,7 +61,7 @@ void Q4_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 
 	/* 6º Asign to the GP a element in the background mesh, just for 
 	   searching porpuses */
-	MPM_Mesh.Element_id[i] = j;
+	MPM_Mesh.I0[i] = j;
 	push_to_Set(&FEM_Mesh.GPsElements[j],i);
 
 	/* 7º If the GP is in the element, get its natural coordinates */	

@@ -113,7 +113,7 @@ typedef struct {
   /*! Total number of the GP */
   int NumGP;
   /*! Identification of the element where it is */
-  int * Element_id;
+  int * I0;
 
   /*! Tributary nodes variables */
   int * NumberNodes;
@@ -277,3 +277,4 @@ void ComputeBeps(GaussPoint, Mesh);
 void GPinCell(ChainPtr *, ChainPtr *, Matrix, int, double);
 Element get_Element(int, ChainPtr, int);
 Matrix get_Element_Field(Matrix, Element);
+ChainPtr get_NodesClose_toNode(int, Mesh);

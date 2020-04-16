@@ -97,7 +97,7 @@ void uGIMP_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh){
 
 	/* 6º Asign to the GP a element in the background mesh, just for 
 	   searching porpuses */
-	MPM_Mesh.Element_id[i] = j;
+	MPM_Mesh.I0[i] = j;
 	push_to_Set(&FEM_Mesh.GPsElements[j],i);
 
 	/* 7º If the GP is in the element, get its natural coordinates */
@@ -107,12 +107,8 @@ void uGIMP_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh){
 	/* 8º Get list of nodes near to the GP */
 	free_Set(MPM_Mesh.ListNodes[i]);
 	MPM_Mesh.ListNodes[i] = NULL;
-	/* MPM_Mesh.ListNodes[i] = */
-	/*   Tributary_Nodes_GIMP(X_GC_GP,MPM_Mesh.Element_id[i],lp,FEM_Mesh); */
 	MPM_Mesh.ListNodes[i] =
-	  uGIMP_Tributary_Nodes(X_GC_GP,MPM_Mesh.Element_id[i],lp,FEM_Mesh);
-	/* MPM_Mesh.ListNodes[i] = */
-	/*   Tributary_Nodes_GIMP(X_EC_GP,MPM_Mesh.Element_id[i],lp,FEM_Mesh); */
+	  uGIMP_Tributary_Nodes(X_GC_GP,MPM_Mesh.I0[i],lp,FEM_Mesh);
 	MPM_Mesh.NumberNodes[i] = get_Lenght_Set(MPM_Mesh.ListNodes[i]);
 	/* 9º Active those nodes that interact with the GP */
 	ListNodes_I = MPM_Mesh.ListNodes[i];
