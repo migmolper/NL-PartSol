@@ -596,7 +596,9 @@ void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
      
       /* 7eº Check for errors */
       if (SearchVertex<0 || SearchVertex>=FEM_Mesh.NumNodesMesh){
-	puts("Error in LocalSearchGaussPoints() : Search algorithm fails !!! ");
+	printf("%s(%i) : %s !!!",
+	       "Error in LocalSearchGaussPoints",
+	       SearchVertex,"Search algorithm fails");
 	exit(0);
       }
 
