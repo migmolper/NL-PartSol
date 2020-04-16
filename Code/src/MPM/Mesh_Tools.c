@@ -272,15 +272,10 @@ void GetListNodesGP(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int iGP){
 
     /* Auxiliar variables for GIMP */
     Matrix lp; /* Particle voxel */
-    /* Matrix X_GC_GP = /\* Global coordinates *\/ */
-    /*   MatAssign(NumberDimensions,1,NAN,MPM_Mesh.Phi.x_GC.nM[iGP],NULL);     */
     Matrix X_EC_GP = /* Element coordinates */
       MatAssign(NumberDimensions,1,NAN,MPM_Mesh.Phi.x_EC.nM[iGP],NULL);    
     /* Calculate connectivity */
     lp.nV = MPM_Mesh.lp.nM[iGP];
-    /* MPM_Mesh.ListNodes[iGP] = */
-    /*   Tributary_Nodes_GIMP(X_GC_GP,IdxElement, */
-    /* 			   lp,FEM_Mesh);     */
     MPM_Mesh.ListNodes[iGP] =
      uGIMP_Tributary_Nodes(X_EC_GP,IdxElement,
 			   lp,FEM_Mesh);    

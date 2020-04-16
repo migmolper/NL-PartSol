@@ -201,7 +201,9 @@ GramsMaterials (Particles=route.txt) {
 
 	  if(Aux_Mat_id != 2){
 	    fprintf(stderr,"%s : %s \n",
-		   "Error in GramsMaterials()","Format -> Propertie = value");
+		   "Error in GramsMaterials()","Format -> Propertie=value");
+	    fprintf(stderr,"%s (%i) : %s , %s\n",
+		    "Printed",Aux_Mat_id,Parse_Mat_Prop[0],Parse_Mat_Prop[1]);
 	    exit(0);
 	  }
 	  /**************************************************/
