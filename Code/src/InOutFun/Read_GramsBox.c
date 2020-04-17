@@ -202,16 +202,16 @@ Mesh GramsBox(char * Name_File)
   /**************************************************/	
   /*** Initialize GPs connectivity of each element **/
   /**************************************************/	
-  FEM_Mesh.GPsElements =
+  FEM_Mesh.I_particles =
     (ChainPtr *)malloc(FEM_Mesh.NumElemMesh*sizeof(ChainPtr));
-  if(FEM_Mesh.GPsElements == NULL){
+  if(FEM_Mesh.I_particles == NULL){
     printf("%s : %s \n",
 	   "GetNodalConnectivity",
-	   "Memory error for GPsElements");
+	   "Memory error for I_particles");
     exit(0);
   }
   for(int i = 0 ; i<FEM_Mesh.NumElemMesh ; i++){
-    FEM_Mesh.GPsElements[i] = NULL;
+    FEM_Mesh.I_particles[i] = NULL;
   }
   /**************************************************/  
   /******** Allocate array with the boundaries ******/

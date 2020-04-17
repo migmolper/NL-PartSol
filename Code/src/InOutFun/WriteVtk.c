@@ -252,7 +252,7 @@ void WriteVtk_FEM(char * Name_File, Mesh ElementMesh,
   fprintf(Vtk_file,"LOOKUP_TABLE default \n");
   for(int i = 0 ; i<ElementMesh.NumNodesMesh ; i++){
     fprintf(Vtk_file,"%i\n",
-	    ElementMesh.ActiveNode[i]);
+	    ElementMesh.NumParticles[i]);
   } 
 
   if(List_Nod_Fields.nM != NULL){

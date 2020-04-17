@@ -196,7 +196,7 @@ Mesh ReadGidMesh(char * MeshName)
   GID_Mesh.NumNodesElem =  (int *)
     Allocate_ArrayZ(GID_Mesh.NumElemMesh,sizeof(int));
 
-  GID_Mesh.ActiveNode = (int *)
+  GID_Mesh.NumParticles = (int *)
     Allocate_ArrayZ(GID_Mesh.NumNodesMesh,sizeof(int));
 
    GID_Mesh.NumNeighbour =  (int *)

@@ -404,7 +404,7 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
     /**************************************************/    
     FreeMat(MPM_GID_Mesh.Coordinates);
     free(MPM_GID_Mesh.Connectivity);
-    free(MPM_GID_Mesh.ActiveNode);
+    free(MPM_GID_Mesh.NumParticles);
     free(MPM_GID_Mesh.NumNeighbour);
     free(MPM_GID_Mesh.NodeNeighbour);
 

@@ -128,9 +128,8 @@ Matrix Centroid_Poligon(Matrix);
 int InOut_Poligon(Matrix, Matrix);
 double SignumFunct(double x);
 Matrix SolvePolynomial(Matrix);
-
+Matrix get_nurbs_distance(Matrix);
 double Distance(Matrix, Matrix);
-
 void get_SVD_Of(Matrix A, Matrix W, Matrix V);
 
 /*******************************************************/
@@ -149,7 +148,7 @@ ChainPtr get_Union_Of(ChainPtr *, int);
 ChainPtr get_Intersection_Of(ChainPtr, ChainPtr);
 void print_Set(ChainPtr);
 Matrix get_set_Coordinates(ChainPtr, Matrix, Matrix);
-void OrderList(ChainPtr *, ChainPtr *, Matrix);
+void order_Set(ChainPtr *, ChainPtr *, Matrix);
 
 /*******************************************************/
 

@@ -165,16 +165,15 @@ typedef struct {
   /* List of nodes for each element (Connectivity) */
   int * NumNodesElem;
   ChainPtr * Connectivity;
-  /* Active node : 
-     Boolean variable that set the node ative (1>) or not (0) */
-  int * ActiveNode;
   /* Number of elements that shares a node and list 
      of elements that share a node */
   int * NumNeighbour;
   ChainPtr * NodeNeighbour;
 
-  /* List of GPs in a element */
-  ChainPtr * GPsElements;
+  /* Number of particles close to this node */
+  int * NumParticles;
+  /* List of particles in a node */
+  ChainPtr * I_particles;
 
   /*** BOUNDARIES ***/
   Boundaries Bounds;
@@ -270,11 +269,23 @@ void update_Particles_GA(GaussPoint, Mesh, Matrix, Time_Int_Params);
 Matrix GetInitialGaussPointPosition(Mesh, int);
 double GetMinElementSize(Mesh);
 void GetNodalConnectivity(Mesh);
-Matrix ElemCoordinates(Mesh, int *, int);
+
+Matrix ElemCoordinates(ChainPtr, Mesh);
+
 ChainPtr DiscardElements(ChainPtr, Matrix, Matrix, Mesh);
+
 void LocalSearchGaussPoints(GaussPoint, Mesh);
+
 void ComputeBeps(GaussPoint, Mesh);
+
 void GPinCell(ChainPtr *, ChainPtr *, Matrix, int, double);
+
 Element get_Element(int, ChainPtr, int);
+
 Matrix get_Element_Field(Matrix, Element);
+
 ChainPtr get_NodesClose_toNode(int, Mesh);
+
+
+
+int search_particle_in(int, Matrix, ChainPtr, Mesh);

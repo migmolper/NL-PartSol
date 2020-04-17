@@ -290,6 +290,25 @@ Matrix SolvePolynomial(Matrix Coeffs)
 
 /*********************************************************************/
 
+Matrix get_nurbs_distance(Matrix NURBS){
+
+  int Ndim = NumberDimensions;
+  int Nnodes = NURBS.N_rows;  
+  Matrix Distance = MatAllocZ(Nnodes,1);
+  double aux;
+
+  for(int i = 0 ; i<Nnodes ; i++){
+    aux = 0;
+    for(int j = 0 ; j<Ndim ; j++){
+      aux += DSQR(NURBS.nM[i][j]);
+    }
+    Distance.nV[i] = pow(aux,0.5);
+  }
+  return Distance;
+}
+
+/*********************************************************************/
+
 double Distance(Matrix End, Matrix Init)
 /*
   Distance between two points.

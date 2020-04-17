@@ -32,12 +32,12 @@ void Q4_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
   /* 1º Set to zero the active/non-active node, and the GPs in each 
      element */
   for(int i = 0 ; i<FEM_Mesh.NumNodesMesh ; i++){
-    FEM_Mesh.ActiveNode[i] = 0;
+    FEM_Mesh.NumParticles[i] = 0;
   }
   
   for(int i = 0 ; i<FEM_Mesh.NumElemMesh ; i++){
-    free_Set(FEM_Mesh.GPsElements[i]);
-    FEM_Mesh.GPsElements[i] = NULL;
+    free_Set(FEM_Mesh.I_particles[i]);
+    FEM_Mesh.I_particles[i] = NULL;
   }
 
   for(int i = 0 ; i<MPM_Mesh.NumGP ; i++){
@@ -62,7 +62,7 @@ void Q4_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 	/* 6º Asign to the GP a element in the background mesh, just for 
 	   searching porpuses */
 	MPM_Mesh.I0[i] = j;
-	push_to_Set(&FEM_Mesh.GPsElements[j],i);
+	push_to_Set(&FEM_Mesh.I_particles[j],i);
 
 	/* 7º If the GP is in the element, get its natural coordinates */	
 	X_EC_GP.nV = MPM_Mesh.Phi.x_EC.nM[i];
@@ -75,7 +75,7 @@ void Q4_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 	/* 9º Active those nodes that interact with the GP */
 	ListNodes_I = MPM_Mesh.ListNodes[i];
 	while(ListNodes_I != NULL){
-	  FEM_Mesh.ActiveNode[ListNodes_I->I] += 1;
+	  FEM_Mesh.NumParticles[ListNodes_I->I] += 1;
 	  ListNodes_I = ListNodes_I->next; 
 	}
 

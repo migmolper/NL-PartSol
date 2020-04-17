@@ -54,10 +54,16 @@ void LME_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 
   int Ndim = NumberDimensions;
   int Np = MPM_Mesh.NumGP;
+  int Nelem = FEM_Mesh.NumElemMesh;
 
   /* Variables for the GP coordinates */  
-  Matrix X_GC_GP = MatAssign(Ndim,1,NAN,NULL,NULL);
-  Matrix X_EC_GP = MatAssign(Ndim,1,NAN,NULL,NULL);
+  Matrix X_p = MatAssign(Ndim,1,NAN,NULL,NULL);
+
+
+  Element Elem_p;
+  
+  ChainPtr Nodes_p;
+  int I_p;
 
   /* Variables for the poligon */
   int NumVertex;
@@ -66,129 +72,80 @@ void LME_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
   ChainPtr ListNodes_I;
 
   /* Auxiliar variables for LME */
-  Matrix lambda_GP = /* Lagrange multipliers */
+  Matrix lambda_p = /* Lagrange multipliers */
     MatAssign(Ndim,1,NAN,NULL,NULL);
-  Matrix Delta_Xip; /* Distance from GP to the nodes */
-  Matrix Dist;
-  Matrix Beta_GP = /* Tunning parameter */
+
+  /* Distance from GP to the nodes */
+  Matrix Delta_Xip; 
+  Matrix Distance_Xip;
+  
+  Matrix Beta_p = /* Tunning parameter */
       MatAssign(Ndim,1,NAN,NULL,NULL);
   int NumNodes_GP; /* Number of neibourghs */
-  int * ListNodes; /* List of nodes */
-  int I_iGP; /* Iterator for the neibourghs */
 
   /* */
-  ChainPtr List_Ord, List_Dis;
   int * List;
 
-  /* Auxiliar variables to initialize lambda */
-  Matrix A = MatAlloc(Ndim,Ndim);
-  Matrix B = MatAlloc(Ndim,1);
-
-  /* 1º Set to zero the active/non-active node, and the GPs in each 
-   element */
-  for(int i = 0 ; i<FEM_Mesh.NumNodesMesh ; i++){
-    FEM_Mesh.ActiveNode[i] = 0;
-  }
-  
-  for(int i = 0 ; i<FEM_Mesh.NumElemMesh ; i++){
-    free_Set(FEM_Mesh.GPsElements[i]);
-    FEM_Mesh.GPsElements[i] = NULL;
-  }
-
-  /* 2º Initialize Beta */
+  /* Initialize Beta */
   LME_Initialize_Beta(MPM_Mesh.Beta, FEM_Mesh.DeltaX, Np);
 
-  for(int i = 0 ; i<Np ; i++){
+  /* Loop over the particle mesh */
+  for(int p = 0 ; p<Np ; p++){
 
-    /* 2º Assign the value to this auxiliar pointer */ 
-    X_GC_GP.nV = MPM_Mesh.Phi.x_GC.nM[i];
-    Beta_GP.nV = MPM_Mesh.Beta.nM[i];
+    /* Get some properties for each particle */ 
+    X_p.nV = MPM_Mesh.Phi.x_GC.nM[p];
+    Beta_p.nV = MPM_Mesh.Beta.nM[p];
+    /* Initialize lambda */
+    lambda_p.nV = MPM_Mesh.lambda.nM[p];
 
-    for(int j = 0 ; j<FEM_Mesh.NumElemMesh ; j++){
+    /* Loop over the element mesh */
+    for(int i = 0 ; i<Nelem ; i++){
 
-      /* 4º Connectivity of the Poligon */
-      NumVertex = FEM_Mesh.NumNodesElem[j];
-      Poligon_Connectivity = Set_to_Pointer(FEM_Mesh.Connectivity[j],NumVertex);
-
-      /* 5º Get the coordinates of the element */
-      Poligon_Coordinates =
-	ElemCoordinates(FEM_Mesh,Poligon_Connectivity,NumVertex);
+      /* Get the element properties */
+      Elem_p = get_Element(p,FEM_Mesh.Connectivity[i],FEM_Mesh.NumNodesElem[i]);
       
       /* 6º Check out if the GP is in the Element */
-      if(InOut_Poligon(X_GC_GP,Poligon_Coordinates) == 1){
+      if(InOut_Element(X_p, Elem_p, FEM_Mesh.Coordinates)){
 
-	/* 9º Get list of nodes near to the GP */
-	free_Set(MPM_Mesh.ListNodes[i]);
-	MPM_Mesh.ListNodes[i] = NULL;
- 
-	/* 10º Calculate connectivity */
-	MPM_Mesh.ListNodes[i] =
-	  LME_Tributary_Nodes(X_GC_GP,Beta_GP,MPM_Mesh.I0[i],FEM_Mesh);
-	MPM_Mesh.NumberNodes[i] = get_Lenght_Set(MPM_Mesh.ListNodes[i]);
+	/* Define initial list of nodes */
+	Delta_Xip = get_set_Coordinates(Elem_p.Connectivity,
+					X_p, FEM_Mesh.Coordinates);
 
-	
-	/* Calculate distance from particle to each node in the neigbourhood */
-	Delta_Xip = get_set_Coordinates(MPM_Mesh.ListNodes[i], X_GC_GP,
-					FEM_Mesh.Coordinates);
+	/*  */
+	I_p = get_node_near_to(Delta_Xip,);
+
+	/* Get the initial connectivity of the particle */
+	MPM_Mesh.ListNodes[p] = LME_Tributary_Nodes(X_p,Beta_p,I_p,FEM_Mesh);
+
+	/* Measure the size of the connectivity */
+	MPM_Mesh.NumberNodes[p] = get_Lenght_Set(MPM_Mesh.ListNodes[p]);
+       	
+	/* Calculate distance from particle to each node in the neibourhood */
+	Delta_Xip = get_set_Coordinates(MPM_Mesh.ListNodes[p],
+					X_p, FEM_Mesh.Coordinates);
+	Distance_Xip = get_nurbs_distance(Delta_Xip);
 
 	/* Update the value of beta */
-	Beta_GP = LME_Beta(Beta_GP, Delta_Xip, gamma_LME);
-
-	/* Allocate the distance vector of each node */
-	Dist = MatAllocZ(NumNodes_GP,1);
-
-	/* Ordenate distances  */
-	List_Ord = NULL, List_Dis = NULL;
-	List_Dis = RangeChain(0,NumNodes_GP-1);
-	OrderList(&List_Ord,&List_Dis,Dist);
-
-	/* Transform the list in to an array */
-	List = Set_to_Pointer(List_Ord,NumNodes_GP);
+	Beta_p = LME_Beta(Beta_p, Delta_Xip, gamma_LME);
 	
-	/* 7º Asign to the GP a element in the background mesh, just for 
-	   searching porpuses */
-	MPM_Mesh.I0[i] = List[0];
-	push_to_Set(&FEM_Mesh.GPsElements[j],i);
+	/* Asign to each particle the closest node in the mesh
+	 and to this node asign the particle */
+	MPM_Mesh.I0[p] = get_node_near_to(Delta_Xip,);
+	push_to_Set(&FEM_Mesh.I_particles[MPM_Mesh.I0[p]],p);
 
-	/* Fill A */
-	A.nM[0][0] = Delta_Xip.nM[List[1]][0] - Delta_Xip.nM[List[0]][0];
-	A.nM[0][1] = Delta_Xip.nM[List[1]][1] - Delta_Xip.nM[List[0]][1];
-	A.nM[1][0] = Delta_Xip.nM[List[2]][0] - Delta_Xip.nM[List[0]][0];
-	A.nM[1][1] = Delta_Xip.nM[List[2]][1] - Delta_Xip.nM[List[0]][1];
-  
-	/* Fill B */
-	B.nV[0] = -Beta_GP.nV[0]*(pow(Dist.nV[List[0]],2) -
-				  pow(Dist.nV[List[1]],2));
-	B.nV[1] = -Beta_GP.nV[1]*(pow(Dist.nV[List[0]],2) -
-				  pow(Dist.nV[List[2]],2));
-
-	/* /\* Check the conditioning number of A *\/ */
-	/* if (fabs(Cond_Mat(A,TOL_NR)) > 10){ */
-	/*   printf(" %s (%s %i) : %s \n", */
-	/* 	 "Error in LME_Initialize","GP",i, */
-	/* 	 "A is near to singular matrix"); */
-	/*   exit(0); */
-	/* } */
-	/* Initialize lambda */
-	lambda_GP.nV = MPM_Mesh.lambda.nM[i];
-	/* lambda_GP = Solve_Linear_Sistem(A,B,lambda_GP); */
-	
-	/* Calculate lagrange multipliers with Newton-Rapson */
-	lambda_GP = LME_lambda_NR(Delta_Xip, lambda_GP, Beta_GP);
-
-	/* Free memory */
-	FreeMat(Delta_Xip), free_Set(List_Ord), free(List);
-	
-	/* 9º Active those nodes that interact with the GP */
-	ListNodes_I = MPM_Mesh.ListNodes[i];
+	/* Active those nodes that interact with the GP */
+	ListNodes_I = MPM_Mesh.ListNodes[p];
 	while(ListNodes_I != NULL){
-	  FEM_Mesh.ActiveNode[ListNodes_I->I] += 1;
+	  FEM_Mesh.NumParticles[ListNodes_I->I] += 1;
 	  ListNodes_I = ListNodes_I->next; 
 	}
+		
+	/* Update lagrange multipliers with Newton-Rapson */
+	lambda_p = LME_lambda_NR(Delta_Xip, lambda_p, Beta_p);
 
-	/* 10º Free memory and go for the next GP */
-	free(Poligon_Connectivity);
-	FreeMat(Poligon_Coordinates);
+	/* Free memory */
+	FreeMat(Delta_Xip);
+
 	break;
 	
       }
@@ -201,9 +158,6 @@ void LME_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 
   }
 
-  /* 12º Free memory */
-  FreeMat(A), FreeMat(B);
-  
 }
 
 /****************************************************************************/
