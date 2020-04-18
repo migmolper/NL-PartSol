@@ -19,10 +19,10 @@ Matrix GetInitialGaussPointPosition(Mesh FEM_Mesh, int GPxElement)
   int Ndim = NumberDimensions;
   int NumElemMesh = FEM_Mesh.NumElemMesh;
   Matrix N_GP;
-  Matrix X_GC = MatAllocZ(GPxElement*NumElemMesh,Ndim);
-  strcpy(X_GC.Info,"Global Coordinates");
-  Matrix X_EC = MatAllocZ(GPxElement,Ndim);
-  Matrix X_EC_j;
+  Matrix X_p = MatAllocZ(GPxElement*NumElemMesh,Ndim);
+  strcpy(X_p.Info,"Global Coordinates");
+  Matrix Xi_p = MatAllocZ(GPxElement,Ndim);
+  Matrix Xi_p_j;
   Element Element;
   int Node;
 
@@ -30,31 +30,31 @@ Matrix GetInitialGaussPointPosition(Mesh FEM_Mesh, int GPxElement)
   case 1 :
     if(strcmp(FEM_Mesh.TypeElem,"Quadrilateral") == 0){
       /* Centred GP */
-      X_EC.nV[0] = 0.0;
-      X_EC.nV[1] = 0.0;
+      Xi_p.nV[0] = 0.0;
+      Xi_p.nV[1] = 0.0;
       /* Evaluate the shape function */
-      N_GP = Q4_N(X_EC);
+      N_GP = Q4_N(Xi_p);
       /* Get the coordinate of the center */
       for(int i = 0 ; i<NumElemMesh ; i++){
-	Element = get_Element(i, FEM_Mesh.Connectivity[i],FEM_Mesh.NumNodesElem[i]);
+	Element = get_Element(i,FEM_Mesh.Connectivity[i],FEM_Mesh.NumNodesElem[i]);
 	for(int k = 0 ; k<4 ; k++){
 	  Node = Element.Connectivity[k];
 	  for(int l = 0 ; l<2 ; l++){
-	    X_GC.nM[i][l] += N_GP.nV[k]*FEM_Mesh.Coordinates.nM[Node][l];
+	    X_p.nM[i][l] += N_GP.nV[k]*FEM_Mesh.Coordinates.nM[Node][l];
 	  }
 	}
 	free(Element.Connectivity);
       }
       /* Free auxiliar matrix with the coordinates */
-      FreeMat(X_EC);
+      FreeMat(Xi_p);
       /* Free value of the shape function in the GP */
       FreeMat(N_GP);
     }
     else if(strcmp(FEM_Mesh.TypeElem,"Triangle") == 0){
-      X_EC.nV[0] = (double)1/3;
-      X_EC.nV[1] = (double)1/3;
+      Xi_p.nV[0] = (double)1/3;
+      Xi_p.nV[1] = (double)1/3;
       /* Evaluate the shape function */
-      N_GP = T3(X_EC);
+      N_GP = T3(Xi_p);
       /* Get the coordinate of the center */
       for(int i = 0 ; i<NumElemMesh ; i++){
 	Element = get_Element(i, FEM_Mesh.Connectivity[i],
@@ -62,13 +62,13 @@ Matrix GetInitialGaussPointPosition(Mesh FEM_Mesh, int GPxElement)
 	for(int k = 0 ; k<3 ; k++){
 	  Node = Element.Connectivity[k];
 	  for(int l = 0 ; l<2 ; l++){
-	    X_GC.nM[i][l] += N_GP.nV[k]*FEM_Mesh.Coordinates.nM[Node][l];
+	    X_p.nM[i][l] += N_GP.nV[k]*FEM_Mesh.Coordinates.nM[Node][l];
 	  }
 	}
 	free(Element.Connectivity);
       }
       /* Free auxiliar matrix with the coordinates */
-      FreeMat(X_EC);
+      FreeMat(Xi_p);
       /* Free value of the shape function in the GP */
       FreeMat(N_GP);
     }
@@ -76,35 +76,35 @@ Matrix GetInitialGaussPointPosition(Mesh FEM_Mesh, int GPxElement)
   case 4:
     if(strcmp(FEM_Mesh.TypeElem,"Quadrilateral") == 0){
       /* Centred GP */
-      X_EC.nM[0][0] =  0.5;
-      X_EC.nM[0][1] =  0.5;
-      X_EC.nM[1][0] =  0.5;
-      X_EC.nM[1][1] = -0.5;
-      X_EC.nM[2][0] = -0.5;
-      X_EC.nM[2][1] =  0.5;
-      X_EC.nM[3][0] = -0.5;
-      X_EC.nM[3][1] = -0.5;
-      /* X_EC.nM[0][0] = (double)1/pow(3,0.5); */
-      /* X_EC.nM[0][1] = (double)1/pow(3,0.5); */
-      /* X_EC.nM[1][0] = (double)1/pow(3,0.5); */
-      /* X_EC.nM[1][1] = (double)-1/pow(3,0.5); */
-      /* X_EC.nM[2][0] = (double)-1/pow(3,0.5); */
-      /* X_EC.nM[2][1] = (double)1/pow(3,0.5); */
-      /* X_EC.nM[3][0] = (double)-1/pow(3,0.5); */
-      /* X_EC.nM[3][1] = (double)-1/pow(3,0.5); */
+      Xi_p.nM[0][0] =  0.5;
+      Xi_p.nM[0][1] =  0.5;
+      Xi_p.nM[1][0] =  0.5;
+      Xi_p.nM[1][1] = -0.5;
+      Xi_p.nM[2][0] = -0.5;
+      Xi_p.nM[2][1] =  0.5;
+      Xi_p.nM[3][0] = -0.5;
+      Xi_p.nM[3][1] = -0.5;
+      /* Xi_p.nM[0][0] = (double)1/pow(3,0.5); */
+      /* Xi_p.nM[0][1] = (double)1/pow(3,0.5); */
+      /* Xi_p.nM[1][0] = (double)1/pow(3,0.5); */
+      /* Xi_p.nM[1][1] = (double)-1/pow(3,0.5); */
+      /* Xi_p.nM[2][0] = (double)-1/pow(3,0.5); */
+      /* Xi_p.nM[2][1] = (double)1/pow(3,0.5); */
+      /* Xi_p.nM[3][0] = (double)-1/pow(3,0.5); */
+      /* Xi_p.nM[3][1] = (double)-1/pow(3,0.5); */
       /* Get the coordinate of the center */
       for(int i = 0 ; i<NumElemMesh ; i++){
 	Element = get_Element(i, FEM_Mesh.Connectivity[i],
 			      FEM_Mesh.NumNodesElem[i]);
 	for(int j = 0 ; j<GPxElement ; j++){
 	  /* Evaluate the shape function in the GP position */
-	  X_EC_j.nV = X_EC.nM[j]; 
-	  N_GP = Q4_N(X_EC_j);
+	  Xi_p_j.nV = Xi_p.nM[j]; 
+	  N_GP = Q4_N(Xi_p_j);
 	  for(int k = 0 ; k<4 ; k++){
 	    /* Connectivity of each element */
 	    Node = Element.Connectivity[k];
 	    for(int l = 0 ; l<NumberDimensions ; l++){
-	      X_GC.nM[i*GPxElement+j][l] +=
+	      X_p.nM[i*GPxElement+j][l] +=
 		N_GP.nV[k]*FEM_Mesh.Coordinates.nM[Node][l];
 	    }
 	  }
@@ -114,7 +114,7 @@ Matrix GetInitialGaussPointPosition(Mesh FEM_Mesh, int GPxElement)
 	free(Element.Connectivity);
       }
       /* Free auxiliar matrix with the coordinates */
-      FreeMat(X_EC);
+      FreeMat(Xi_p);
     }
     break;
   default :
@@ -124,7 +124,7 @@ Matrix GetInitialGaussPointPosition(Mesh FEM_Mesh, int GPxElement)
     exit(1);
   }
   
-  return X_GC;
+  return X_p;
 }
 
 /*********************************************************************/
@@ -152,8 +152,7 @@ double GetMinElementSize(Mesh FEM_Mesh)
 
     /* 2º Connectivity of the Poligon */
     NumNodesElem = FEM_Mesh.NumNodesElem[i];
-    Connectivity =
-      Set_to_Pointer(FEM_Mesh.Connectivity[i],NumNodesElem);
+    Connectivity = Set_to_Pointer(FEM_Mesh.Connectivity[i],NumNodesElem);
     
     /* 4º Get the gradient of the element for each node */
     if((NumNodesElem == 3) &&
@@ -163,8 +162,7 @@ double GetMinElementSize(Mesh FEM_Mesh)
       /* Fill the triangle */
       for(int k = 0; k<3; k++){
 	for(int l = 0 ; l<2 ; l++){
-	  Poligon.nM[k][l] =
-	    FEM_Mesh.Coordinates.nM[Connectivity[k]][l];
+	  Poligon.nM[k][l] = FEM_Mesh.Coordinates.nM[Connectivity[k]][l];
 	}
       }
       /* Get the gradient of the triangle */
@@ -327,6 +325,7 @@ void get_particle_tributary_nodes(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int p){
   /* Coordinates of the nodes of the Element */
   Matrix CoordElement;
 
+  
   /* Free previous list of tributary nodes to the particle */
   free_Set(MPM_Mesh.ListNodes[p]);
   
@@ -356,7 +355,7 @@ void get_particle_tributary_nodes(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int p){
     /* Compute local coordinates of the particle in this element */
     Q4_X_to_Xi(Xi_p,X_p,CoordElement);
     /* Asign connectivity */
-    MPM_Mesh.ListNodes[p] = uGIMP_Tributary_Nodes(Xi_p,IdxElement,lp,FEM_Mesh);    
+    MPM_Mesh.ListNodes[p] = uGIMP_Tributary_Nodes(Xi_p,IdxElement,lp,FEM_Mesh);  
     /* Calculate number of nodes */
     MPM_Mesh.NumberNodes[p] = get_Lenght_Set(MPM_Mesh.ListNodes[p]);
     
@@ -507,8 +506,8 @@ void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 
   /* Variables for the GP coordinates */
   int Ndim = NumberDimensions;
-  Matrix X_GC_GP = MatAssign(Ndim,1,NAN,NULL,NULL);
-  Matrix X_EC_GP = MatAssign(Ndim,1,NAN,NULL,NULL);
+  Matrix X_p;
+  Matrix V_p;
 
   /* Variables for the poligon description */
   Matrix Poligon_Coordinates;
@@ -516,17 +515,21 @@ void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
   int NumVertex;
   
   int Elem_i; /* Element of the GP i */
-  Matrix V_GP = /* Velocity array */
-    MatAssign(Ndim,1,NAN,NULL,NULL); 
-  double Search_Direction ; 
-  Matrix V_GP_n;
-  V_GP_n = MatAllocZ(1,Ndim);
+
   int SearchVertex; /* Index to start the search */
   int * SearchList; /* Pointer to store the search list */
   ChainPtr ListNodes_I;
+
+
+  /* */
+  int I0_p;
+
+  ChainPtr Neighbour_Nodes;
+
+  /* Matrix with the distance from the particle to the nodes */
+  Matrix X_Ip;
   
-  /* 1º Set to zero the active/non-active node, and the GPs in each 
-     element */
+  /* Set to zero the active/non-active node, and the GPs in each element */
   for(int i = 0 ; i<FEM_Mesh.NumNodesMesh ; i++){
     FEM_Mesh.NumParticles[i] = 0;
   }
@@ -535,204 +538,49 @@ void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
     FEM_Mesh.I_particles[i] = NULL;
   }
 
-  /* 2º Loop over the GP */
-  for(int i = 0 ; i<MPM_Mesh.NumGP ; i++){
+  /* Loop over the particles */
+  for(int p = 0 ; p<MPM_Mesh.NumGP ; p++){
 
-    /* Get the velocity vector of the GP */
-   
-    /* 3º Get the global coordinates and velocity of the GP */
-    X_GC_GP.nV = MPM_Mesh.Phi.x_GC.nM[i];
-    V_GP.nV = MPM_Mesh.Phi.vel.nM[i];
+    /* Get the global coordinates and velocity of the particle */
+    X_p = MatAssign(Ndim,1,NAN,MPM_Mesh.Phi.x_GC.nM[p],NULL);
+    V_p = MatAssign(Ndim,1,NAN,MPM_Mesh.Phi.vel.nM[p],NULL);
 
-    /* 4º Get the index of the initial element */
-    Elem_i = MPM_Mesh.I0[i];
+    /* Check if the particle is static or is in movement */
+    if(Norm_Mat(V_p,2) > 0){
 
-    /* 5º Connectivity of the Poligon */
-    NumVertex = FEM_Mesh.NumNodesElem[Elem_i];
-    Poligon_Connectivity =
-      Set_to_Pointer(FEM_Mesh.Connectivity[Elem_i],NumVertex);
-      
-    /* 6º Allocate the poligon Matrix and fill it */
-    Poligon_Coordinates = MatAllocZ(NumVertex,Ndim);
-    for(int k = 0; k<NumVertex; k++){
-      for(int l = 0 ; l<Ndim ; l++){
-	Poligon_Coordinates.nM[k][l] =
-	  FEM_Mesh.Coordinates.nM[Poligon_Connectivity[k]][l];
+      /* Get the index of the node close to the particle */
+      I0_p = MPM_Mesh.I0[p];
+
+      /* Get nodes close to the node I0_p */
+      Neighbour_Nodes = get_NodesClose_toNode(I0_p, FEM_Mesh);
+
+      /* Compute matrix with vectors from the particle to the nodes */
+      X_Ip = get_set_Coordinates(Neighbour_Nodes,X_p,FEM_Mesh.Coordinates);
+
+      /* Update the index of the node close to the particle */
+      MPM_Mesh.I0[p] = get_node_near_to(X_Ip,);
+
+      /* Update the tributary nodes of each particle */
+      get_particle_tributary_nodes(MPM_Mesh,FEM_Mesh,p);
+
+      /* Active those nodes that interact with the particle */
+      ListNodes_p = MPM_Mesh.ListNodes[p];
+      while(ListNodes_p != NULL){
+	FEM_Mesh.NumParticles[ListNodes_p->I] += 1;
+	push_to_Set(FEM_Mesh.I_particles[ListNodes_p->I],p);
+	ListNodes_p = ListNodes_p->next; 
       }
-    }
-
-    /* 7º Check if the GP is in the same element */
-    if(InOut_Poligon(X_GC_GP,Poligon_Coordinates) == 1){
-
-      /* Asign GP to the element */
-      push_to_Set(&FEM_Mesh.I_particles[Elem_i],i);
-
-      /* If the norm of the velocity
-	 vector is zero get its natural coordinates */
-      if(Norm_Mat(V_GP,2) > 0){
-	X_EC_GP.nV = MPM_Mesh.Phi.x_EC.nM[i];
-	Q4_X_to_Xi(X_EC_GP,X_GC_GP,Poligon_Coordinates);
-      }
-	      
-      /* Get list of nodes near to the GP */
-      get_particle_tributary_nodes(MPM_Mesh,FEM_Mesh,i);
-            
-      /* Active those nodes that interact with the GP */
-      ListNodes_I = MPM_Mesh.ListNodes[i];
-      while(ListNodes_I != NULL){
-	FEM_Mesh.NumParticles[ListNodes_I->I] += 1;
-	ListNodes_I = ListNodes_I->next; 
-      }
-
-      /* Free memory */
-      free(Poligon_Connectivity);
-      FreeMat(Poligon_Coordinates);
       
     }
-    /* 7º If the GP is not in the same element, search in the neighbour */
     else{
-    
-      /* 7aº As we are in a new element we set to zero the element coordinates
-       and reset the chain with the nodal connectivity of the GP */
-      for(int j = 0 ; j<Ndim ; j++){
-	MPM_Mesh.Phi.x_EC.nM[i][j] = 0;
-      }
-      
-      /* 7bº Set to a NAN the SearchVertex in order to avoid bugs */
-      SearchVertex = -999;
-
-      /* 7dº Get the search direction for the vertex of the element
-	 and check the search direction */
-      for(int j = 0 ; j<NumVertex ; j++){
-	/* First vertex */
-	if(j == 0){ 
-	  for(int k = 0 ; k<Ndim ; k++){
-	    Search_Direction =
-	      2*Poligon_Coordinates.nM[0][k] -
-	      Poligon_Coordinates.nM[1][k] -
-	      Poligon_Coordinates.nM[NumVertex-1][k];
-	    /* Get the velocity proyection in the search direction */
-	    V_GP_n.nV[k] = V_GP.nV[k]*Search_Direction;
-	  }
-	}
-	/* Last vertex */
-	else if(j == (NumVertex - 1)){ 
-	  for(int k = 0 ; k<Ndim ; k++){
-	    Search_Direction =
-	      2*Poligon_Coordinates.nM[NumVertex-1][k] -
-	      Poligon_Coordinates.nM[0][k] -
-	      Poligon_Coordinates.nM[NumVertex-2][k];
-	    /* Get the velocity proyection in the search direction */
-	    V_GP_n.nV[k] = V_GP.nV[k]*Search_Direction;
-	  }
-	}
-	/* The rest of the elements */
-	else{ 
-	  for(int k = 0 ; k<Ndim ; k++){
-	    Search_Direction =
-	      2*Poligon_Coordinates.nM[j][k] -
-	      Poligon_Coordinates.nM[j+1][k] -
-	      Poligon_Coordinates.nM[j-1][k];
-	    /* Get the velocity proyection in the search direction */
-	    V_GP_n.nV[k] = V_GP.nV[k]*Search_Direction;
-	  }
-	}
-	/* Check the projection of the velocity vector */
-	if( (V_GP_n.nV[0] >= 0) && (V_GP_n.nV[1] >= 0)){
-	  SearchVertex = Poligon_Connectivity[j];
-	  break;
-	}	  
-      }
-
-      /* Free memory */
-      FreeMat(Poligon_Coordinates);
-      free(Poligon_Connectivity);
-     
-      /* 7eº Check for errors */
-      if (SearchVertex<0 || SearchVertex>=FEM_Mesh.NumNodesMesh){
-	printf("%s(%i) : %s !!!",
-	       "Error in LocalSearchGaussPoints",
-	       SearchVertex,"Search algorithm fails");
-	exit(0);
-      }
-
-      /* 7fº Create the search list of this vertex */
-      SearchList = Set_to_Pointer(FEM_Mesh.NodeNeighbour[SearchVertex],
-				FEM_Mesh.NumNeighbour[SearchVertex]);
-
-      /* 7gº Search in the search list */
-      for(int j = 0 ; j<FEM_Mesh.NumNeighbour[SearchVertex] ; j++){
-	
-	/* Discard the initial element for the search */
-	if(SearchList[j] == Elem_i) continue;
-
-	/* Connectivity of the Poligon */
-	NumVertex = FEM_Mesh.NumNodesElem[SearchList[j]];
-	Poligon_Connectivity = Set_to_Pointer(FEM_Mesh.Connectivity[SearchList[j]],
-					    NumVertex);
-      
-	/* Allocate the polligon Matrix and fill it */
-	Poligon_Coordinates = MatAllocZ(NumVertex,Ndim);
-	for(int k = 0; k<NumVertex; k++){
-	  for(int l = 0 ; l<Ndim ; l++){
-	    Poligon_Coordinates.nM[k][l] =
-	      FEM_Mesh.Coordinates.nM[Poligon_Connectivity[k]][l];
-	  }
-	}
-
-	/* Free poligon connectivity */
-	free(Poligon_Connectivity);
-
-	if(InOut_Poligon(X_GC_GP,Poligon_Coordinates) == 1){
-
-	  /* Asign to the GP a element in the background mesh, just for 
-	     searching porpuses */
-	  MPM_Mesh.I0[i] = SearchList[j];
-	  push_to_Set(&FEM_Mesh.I_particles[SearchList[j]],i);
-
-	  /* If the GP is in the element, get its natural coordinates */
-	  X_EC_GP.nV = MPM_Mesh.Phi.x_EC.nM[i];
-	  Q4_X_to_Xi(X_EC_GP,X_GC_GP,Poligon_Coordinates);
-	  
-	  /* Get list of nodes near to the GP */
-	  get_particle_tributary_nodes(MPM_Mesh,FEM_Mesh,i);
-
-	  /* Free memory */
-	  FreeMat(Poligon_Coordinates);
-	  
-	  /* Active those nodes that interact with the GP */
-	  ListNodes_I = MPM_Mesh.ListNodes[i];
-	  while(ListNodes_I != NULL){
-	    FEM_Mesh.NumParticles[ListNodes_I->I] += 1;
-	    ListNodes_I = ListNodes_I->next; 
-	  }
-
-	  /* If this is true, stop the search */
-	  break;
-	}
-	else{
-	  /* Free memory */
-	  FreeMat(Poligon_Coordinates);
-	}
-	
-      }
-
-      /* Free memory */
-      free(SearchList);
-
-      if(MPM_Mesh.I0[i] == Elem_i){
-	printf(" %s %i %s %i !!! \n",
-	       "Error in LocalSearchGaussPoints() : GP",i,
-	       "is not in the neighbours of",Elem_i);
-	/* exit(0); */
-      }
-      
+      /* Active those nodes that interact with the particle */
+      ListNodes_p = MPM_Mesh.ListNodes[p];
+      while(ListNodes_p != NULL){
+	FEM_Mesh.NumParticles[ListNodes_p->I] += 1;
+	push_to_Set(FEM_Mesh.I_particles[ListNodes_p->I],p);
+	ListNodes_p = ListNodes_p->next; 
+      }       
     }
-  } /* Loop over the GP */
-  
-  /* 8º Free memory */
-  FreeMat(V_GP_n);
-
 }
 
 /*********************************************************************/

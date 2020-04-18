@@ -24,7 +24,7 @@ void push_to_Set(SetPtr * TopNodePtr, int I_new)
   SetPtr NewNodePtr;
   
   /* Allocate node */
-  NewNodePtr = malloc(sizeof(SetPtr));
+  NewNodePtr = (SetPtr *)malloc(1*sizeof(SetPtr));
 
   /* Insert the node at the list top (stack) */
   if(NewNodePtr != NULL){
@@ -37,9 +37,7 @@ void push_to_Set(SetPtr * TopNodePtr, int I_new)
   }
   else{
     printf("%s %i : %s \n",
-	   "Unable to insert node",
-	   I_new,
-	   "No memory available.");
+	   "Unable to insert node",I_new,"No memory available.");
   }
     
 }
@@ -224,7 +222,7 @@ SetPtr copy_Set(SetPtr start1)
 
   while(start1!=NULL){
   
-    SetPtr temp = malloc (sizeof(SetPtr));
+    SetPtr temp = malloc(sizeof(SetPtr));
     temp->I=start1->I;
     temp->next=NULL;
 
@@ -309,10 +307,21 @@ void print_Set(SetPtr A)
 
 void main(){
   SetPtr A = RangeSet(0, 10);
-  SetPtr B = RangeSet(5, 15);
-  SetPtr C = get_Intersection_Set(A,B);
-  print_Set(C);
+  /* SetPtr B = RangeSet(5, 15); */
+  /* SetPtr C = get_Intersection_Set(A,B); */
+  /* SetPtr * Table = malloc(2*sizeof(SetPtr)); */
+  /* Table[0] = A; */
+  /* Table[1] = B; */
+  /* SetPtr D = get_Union_Set(Table, 2); */
+  /* SetPtr E = copy_Set(D); */
+  /* puts("C"); */
+  /* print_Set(C); */
+  /* puts("D"); */
+  /* print_Set(D); */
   free_Set(A);
-  free_Set(B);
-  free_Set(C);    
+  /* free_Set(B); */
+  /* free_Set(C); */
+  /* free_Set(D); */
+  /* free_Set(E); */
+  /* free(Table); */
 }

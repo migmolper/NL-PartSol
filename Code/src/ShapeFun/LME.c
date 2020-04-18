@@ -222,7 +222,8 @@ Matrix LME_lambda_NR(Matrix l, Matrix lambda, Matrix Beta)
     p = LME_p(l,lambda,Beta);
 
     /* Get the gradient of log(Z) and its norm */
-    r = LME_r(l,p), norm_r = Norm_Mat(r,2);
+    r = LME_r(l,p);
+    norm_r = Norm_Mat(r,2);
 
     /* Get the Hessian of log(Z) and update it with +||r||*I 
        according with Dennis M.Kochmann et al. 2019 (CMAME) */    
@@ -240,7 +241,7 @@ Matrix LME_lambda_NR(Matrix l, Matrix lambda, Matrix Beta)
     /* } */
     
     /* Get the increment of lambda */
-    D_lambda = Solve_Linear_Sistem(J,r,MatAllocZ(Ndim,1));
+    D_lambda = Solve_Linear_Sistem(J,r);
 
     /* Update the value of lambda */
     for(int i = 0 ; i<Ndim ; i++){
@@ -248,7 +249,10 @@ Matrix LME_lambda_NR(Matrix l, Matrix lambda, Matrix Beta)
     }
 
     /* Free memory */
-    FreeMat(p), FreeMat(r), FreeMat(J), FreeMat(D_lambda);
+    FreeMat(p);
+    FreeMat(r);
+    FreeMat(J);
+    FreeMat(D_lambda);
     
     /* Update the number of iterations */
     NumIter ++;

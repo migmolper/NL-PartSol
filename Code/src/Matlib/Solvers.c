@@ -101,13 +101,14 @@ Matrix Newton_Rapson(Matrix(* Function)(Matrix, Matrix),Matrix Parameter_F,
 
 /*********************************************************************/
 
-Matrix Solve_Linear_Sistem(Matrix K, Matrix F, Matrix U)
+Matrix Solve_Linear_Sistem(Matrix K, Matrix F)
 /*
 
  */
 {
   int Bool = K.N_cols>3;
   Matrix Km1;
+  Matrix U;
   
   switch(Bool){
   case 0 : 
@@ -115,9 +116,10 @@ Matrix Solve_Linear_Sistem(Matrix K, Matrix F, Matrix U)
     U = Scalar_prod(Km1,F);
     FreeMat(Km1);
     return U; 
-  case 1 : 
+  case 1 :
+    puts("fix U");
+    exit(0);
     U = Conjugate_Gradient_Method(K,F,U);
-    /* U = Jacobi_Conjugate_Gradient_Method(K,F,U); */
     return U;
   default :
     exit(0);
