@@ -258,7 +258,7 @@ Matrix ElemCoordinates(ChainPtr Element_p, Matrix Coordinates)
     I_Idx++;
   }
   
-  return Coordinates;
+  return Element_Coordinates;
 }
 
 /*********************************************************************/
@@ -544,12 +544,7 @@ void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
       get_particle_tributary_nodes(MPM_Mesh,FEM_Mesh,p);
 
       /* Active those nodes that interact with the particle */
-      ListNodes_p = MPM_Mesh.ListNodes[p];
-      while(ListNodes_p != NULL){
-	FEM_Mesh.NumParticles[ListNodes_p->I] += 1;
-	push_to_Set(&FEM_Mesh.I_particles[ListNodes_p->I],p);
-	ListNodes_p = ListNodes_p->next; 
-      }
+      asign_particle_to_nodes(p, MPM_Mesh.ListNodes[p], FEM_Mesh);
 
       /* Free memory */
       free_Set(Locality_I0);
@@ -557,12 +552,7 @@ void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
     }
     else{
       /* Active those nodes that interact with the particle */
-      ListNodes_p = MPM_Mesh.ListNodes[p];
-      while(ListNodes_p != NULL){
-	FEM_Mesh.NumParticles[ListNodes_p->I] += 1;
-	push_to_Set(&FEM_Mesh.I_particles[ListNodes_p->I],p);
-	ListNodes_p = ListNodes_p->next; 
-      }       
+      asign_particle_to_nodes(p, MPM_Mesh.ListNodes[p], FEM_Mesh);
     }
 
   }
@@ -738,9 +728,9 @@ bool InOut_Element(Matrix X_p, ChainPtr Elem_p, Matrix Coordinates){
 
   bool Is_In_Element = false;
   Matrix Element_Coordinates;
-
+  
   Element_Coordinates = ElemCoordinates(Elem_p, Coordinates);
-
+  
   if (InOut_Poligon(X_p, Element_Coordinates) == 1){
     Is_In_Element = true;
   }
@@ -901,6 +891,22 @@ int get_closest_node_to(Matrix X_p, ChainPtr Nodes, Matrix Coordinates)
   }
    
   return I_DistMin;
+}
+
+/*********************************************************************/
+
+void asign_particle_to_nodes(int p, ChainPtr ListNodes_p, Mesh FEM_Mesh){
+  
+  /* Auxiliar variable to loop in the list of tributary nodes of the particle */
+  ChainPtr Nodes_p = NULL;
+  
+  Nodes_p = ListNodes_p;
+  while(Nodes_p != NULL){
+    FEM_Mesh.NumParticles[Nodes_p->I] += 1;
+    push_to_Set(&FEM_Mesh.I_particles[Nodes_p->I],p);
+    Nodes_p = Nodes_p->next; 
+  }
+
 }
 
 /*********************************************************************/

@@ -286,4 +286,4 @@ int get_closest_node_to(Matrix, ChainPtr, Matrix);
 bool InOut_Element(Matrix, ChainPtr, Matrix);
 int search_particle_in(int, Matrix, ChainPtr, Mesh);
 Matrix ElemCoordinates(ChainPtr, Matrix);
-
+void asign_particle_to_nodes(int, ChainPtr, Mesh);
