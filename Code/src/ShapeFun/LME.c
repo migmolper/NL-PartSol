@@ -56,35 +56,21 @@ void LME_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
   int Np = MPM_Mesh.NumGP;
   int Nelem = FEM_Mesh.NumElemMesh;
 
-  /* Variables for the GP coordinates */  
-  Matrix X_p = MatAssign(Ndim,1,NAN,NULL,NULL);
-
-
+  /* Particle coordinates */  
+  Matrix X_p;
+  /* Lagrange multipliers */
+  Matrix lambda_p;
+  /* Tunning parameter */
+  Matrix Beta_p; 
+  
   Element Elem_p;
   
   ChainPtr Nodes_p;
   int I_p;
-
-  /* Variables for the poligon */
-  int NumVertex;
-  int * Poligon_Connectivity;
-  Matrix Poligon_Coordinates;
-  ChainPtr ListNodes_I;
-
-  /* Auxiliar variables for LME */
-  Matrix lambda_p = /* Lagrange multipliers */
-    MatAssign(Ndim,1,NAN,NULL,NULL);
+  ChainPtr ListNodes_p;
 
   /* Distance from GP to the nodes */
   Matrix Delta_Xip; 
-  Matrix Distance_Xip;
-  
-  Matrix Beta_p = /* Tunning parameter */
-      MatAssign(Ndim,1,NAN,NULL,NULL);
-  int NumNodes_GP; /* Number of neibourghs */
-
-  /* */
-  int * List;
 
   /* Initialize Beta */
   LME_Initialize_Beta(MPM_Mesh.Beta, FEM_Mesh.DeltaX, Np);
@@ -93,10 +79,9 @@ void LME_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
   for(int p = 0 ; p<Np ; p++){
 
     /* Get some properties for each particle */ 
-    X_p.nV = MPM_Mesh.Phi.x_GC.nM[p];
-    Beta_p.nV = MPM_Mesh.Beta.nM[p];
-    /* Initialize lambda */
-    lambda_p.nV = MPM_Mesh.lambda.nM[p];
+    X_p = MatAssign(Ndim,1,NAN,MPM_Mesh.Phi.x_GC.nM[p],NULL);
+    Beta_p = MatAssign(Ndim,1,NAN,MPM_Mesh.Beta.nM[p],NULL);
+    lambda_p = MatAssign(Ndim,1,NAN,MPM_Mesh.lambda.nM[p],NULL);
 
     /* Loop over the element mesh */
     for(int i = 0 ; i<Nelem ; i++){
@@ -107,39 +92,35 @@ void LME_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
       /* 6º Check out if the GP is in the Element */
       if(InOut_Element(X_p, Elem_p, FEM_Mesh.Coordinates)){
 
-	/* Define initial list of nodes */
-	Delta_Xip = get_set_Coordinates(Elem_p.Connectivity,
-					X_p, FEM_Mesh.Coordinates);
-
-	/*  */
-	I_p = get_node_near_to(Delta_Xip,);
+	/* With the element connectivity get the node close to the particle */
+	I_p = get_closest_node_to(X_p,Elem_p.Connectivity,FEM_Mesh.Coordinates);
 
 	/* Get the initial connectivity of the particle */
 	MPM_Mesh.ListNodes[p] = LME_Tributary_Nodes(X_p,Beta_p,I_p,FEM_Mesh);
 
 	/* Measure the size of the connectivity */
 	MPM_Mesh.NumberNodes[p] = get_Lenght_Set(MPM_Mesh.ListNodes[p]);
+
+	/* Asign to each particle the closest node in the mesh
+	   and to this node asign the particle */
+	MPM_Mesh.I0[p] = get_closest_node_to(X_p,MPM_Mesh.ListNodes[p],
+					     FEM_Mesh.Coordinates);
+	
+	/* Active those nodes that interact with the particle */
+	ListNodes_p = MPM_Mesh.ListNodes[p];
+	while(ListNodes_p != NULL){
+	  FEM_Mesh.NumParticles[ListNodes_p->I] += 1;
+	  push_to_Set(&FEM_Mesh.I_particles[ListNodes_p->I],p);
+	  ListNodes_p = ListNodes_p->next; 
+	}
        	
 	/* Calculate distance from particle to each node in the neibourhood */
-	Delta_Xip = get_set_Coordinates(MPM_Mesh.ListNodes[p],
-					X_p, FEM_Mesh.Coordinates);
-	Distance_Xip = get_nurbs_distance(Delta_Xip);
+	Delta_Xip = get_set_Coordinates(MPM_Mesh.ListNodes[p],X_p,
+					FEM_Mesh.Coordinates);
 
 	/* Update the value of beta */
 	Beta_p = LME_Beta(Beta_p, Delta_Xip, gamma_LME);
-	
-	/* Asign to each particle the closest node in the mesh
-	 and to this node asign the particle */
-	MPM_Mesh.I0[p] = get_node_near_to(Delta_Xip,);
-	push_to_Set(&FEM_Mesh.I_particles[MPM_Mesh.I0[p]],p);
-
-	/* Active those nodes that interact with the GP */
-	ListNodes_I = MPM_Mesh.ListNodes[p];
-	while(ListNodes_I != NULL){
-	  FEM_Mesh.NumParticles[ListNodes_I->I] += 1;
-	  ListNodes_I = ListNodes_I->next; 
-	}
-		
+			
 	/* Update lagrange multipliers with Newton-Rapson */
 	lambda_p = LME_lambda_NR(Delta_Xip, lambda_p, Beta_p);
 
@@ -147,13 +128,7 @@ void LME_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 	FreeMat(Delta_Xip);
 
 	break;
-	
-      }
-      
-      /* 11º Free memory */
-      free(Poligon_Connectivity);
-      FreeMat(Poligon_Coordinates);
-      
+      }      
     }
 
   }
@@ -477,7 +452,7 @@ ChainPtr LME_Tributary_Nodes(Matrix X_GP, Matrix Beta, int I0, Mesh FEM_Mesh){
   double Ra = sqrt(-log(TOL_lambda)/Beta.nV[0]);
 
   /* Get nodes close to the GP */
-  Set_Nodes0 = get_NodesClose_toNode(I0, FEM_Mesh);
+  Set_Nodes0 = get_locality_of_node(I0, FEM_Mesh);
   NumNodes0 = get_Lenght_Set(Set_Nodes0);
   Array_Nodes0 = Set_to_Pointer(Set_Nodes0,NumNodes0);
   free_Set(Set_Nodes0);

@@ -278,33 +278,6 @@ void print_Set(ChainPtr A)
 
 /*********************************************************************/
 
-Matrix get_set_Coordinates(ChainPtr Set, Matrix X0, Matrix Coordinates)
-{
-  int Ndim = NumberDimensions;
-  int SizeSet = get_Lenght_Set(Set);
-  int I = 0;
-
-  /* Allocate output */
-  Matrix Set_Coordinates = MatAlloc(SizeSet,Ndim);
-
-  /* Loop in the set */
-  ChainPtr Aux_Set = Set;
-  while (Aux_Set != NULL){ 
-    /* Get coordinates local coodinates of each node in the set */
-    for(int i = 0 ; i<Ndim ; i++){
-      Set_Coordinates.nM[I][i] =  X0.nV[i] - Coordinates.nM[Aux_Set->I][i];
-    }
-    /* Update index */
-    I++;	
-    Aux_Set = Aux_Set->next; 
-  }
-  
-  return Set_Coordinates;
-}
-
-
-/*********************************************************************/
-
 void order_Set(ChainPtr * List1, ChainPtr * List0, Matrix Dist)
 /*
   Ordenate recursively and array with distances and get a chain 

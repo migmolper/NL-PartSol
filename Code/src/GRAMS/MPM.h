@@ -270,8 +270,6 @@ Matrix GetInitialGaussPointPosition(Mesh, int);
 double GetMinElementSize(Mesh);
 void GetNodalConnectivity(Mesh);
 
-Matrix ElemCoordinates(ChainPtr, Mesh);
-
 ChainPtr DiscardElements(ChainPtr, Matrix, Matrix, Mesh);
 
 void LocalSearchGaussPoints(GaussPoint, Mesh);
@@ -281,11 +279,11 @@ void ComputeBeps(GaussPoint, Mesh);
 void GPinCell(ChainPtr *, ChainPtr *, Matrix, int, double);
 
 Element get_Element(int, ChainPtr, int);
-
+Matrix get_set_Coordinates(ChainPtr, Matrix, Matrix);
 Matrix get_Element_Field(Matrix, Element);
-
-ChainPtr get_NodesClose_toNode(int, Mesh);
-
-
-
+ChainPtr get_locality_of_node(int, Mesh);
+int get_closest_node_to(Matrix, ChainPtr, Matrix);
+bool InOut_Element(Matrix, Element, Matrix);
 int search_particle_in(int, Matrix, ChainPtr, Mesh);
+Matrix ElemCoordinates(ChainPtr, Mesh);
+

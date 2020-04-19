@@ -147,7 +147,6 @@ int get_Lenght_Set(ChainPtr);
 ChainPtr get_Union_Of(ChainPtr *, int);
 ChainPtr get_Intersection_Of(ChainPtr, ChainPtr);
 void print_Set(ChainPtr);
-Matrix get_set_Coordinates(ChainPtr, Matrix, Matrix);
 void order_Set(ChainPtr *, ChainPtr *, Matrix);
 
 /*******************************************************/

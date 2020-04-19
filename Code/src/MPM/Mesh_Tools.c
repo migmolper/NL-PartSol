@@ -232,7 +232,7 @@ double GetMinElementSize(Mesh FEM_Mesh)
 
 /*********************************************************************/
 
-Matrix ElemCoordinates(Mesh FEM_Mesh, ChainPtr Element_p)
+Matrix ElemCoordinates(ChainPtr Element_p, Mesh FEM_Mesh)
 /*
   Get the matrix with the coordinates of an element
 */
@@ -254,7 +254,7 @@ Matrix ElemCoordinates(Mesh FEM_Mesh, ChainPtr Element_p)
     }
     
     /* Cycle */
-    Ixd = Ixd->next;
+    Idx = Idx->next;
     I_Idx++;
   }
   
@@ -278,7 +278,7 @@ int search_particle_in(int p, Matrix X_p, ChainPtr ListElement, Mesh FEM_Mesh)
   
   while(Ixd!=NULL){
 
-    Nn = FEM_Mesh.NumNodesElem.nV[Ixd->I];
+    Nn = FEM_Mesh.NumNodesElem[Ixd->I];
     Nodes = FEM_Mesh.Connectivity[Ixd->I];
     Element_i = get_Element(p, Nodes, Nn);
 
@@ -315,9 +315,7 @@ void get_particle_tributary_nodes(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int p){
 
   /* Define auxiliar matrix for local/global coordinates */
   Matrix X_p = MatAssign(Ndim,1,NAN,MPM_Mesh.Phi.x_GC.nM[p],NULL);
-  Matrix Xi_p = MatAssign(Ndim,1,NAN,MPM_Mesh.Phi.x_EC.nM[i],NULL);
-  /* Number of nodes near the particle */
-  int Num_Elements_Near_I0 = FEM_Mesh.NumNeighbour[I0];
+  Matrix Xi_p = MatAssign(Ndim,1,NAN,MPM_Mesh.Phi.x_EC.nM[p],NULL);
   /* Lis of elements near the particle */
   ChainPtr Elements_Near_I0 = FEM_Mesh.NodeNeighbour[I0];
   /* Index of the element (Q4/uGIMP) */
@@ -333,11 +331,11 @@ void get_particle_tributary_nodes(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int p){
   if(strcmp(ShapeFunctionGP,"MPMQ4") == 0){
 
     /* Get the index of the element */
-    IdxElement = search_particle_in_(p,X_p,Elements_Near_I0,FEM_Mesh);
+    IdxElement = search_particle_in(p,X_p,Elements_Near_I0,FEM_Mesh);
     /* Asign connectivity */
     MPM_Mesh.ListNodes[p] = CopyChain(FEM_Mesh.Connectivity[IdxElement]);
     /* Get the coordinates of the element vertex */
-    CoordElement = ElemCoordinates(FEM_Mesh,MPM_Mesh.ListNodes[p]);
+    CoordElement = ElemCoordinates(MPM_Mesh.ListNodes[p],FEM_Mesh);
     /* Compute local coordinates of the particle in this element */
     Q4_X_to_Xi(Xi_p,X_p,CoordElement);
     /* Free coordinates of the element */
@@ -349,9 +347,9 @@ void get_particle_tributary_nodes(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int p){
     /* Auxiliar variables for GIMP */
     Matrix lp = MatAssign(Ndim,1,NAN,MPM_Mesh.lp.nM[p],NULL);
     /* Get the index of the element */
-    IdxElement = search_particle_in_(p,X_p,Elements_Near_I0,FEM_Mesh);
+    IdxElement = search_particle_in(p,X_p,Elements_Near_I0,FEM_Mesh);
     /* Get the coordinates of the element vertex */
-    CoordElement = ElemCoordinates(FEM_Mesh,MPM_Mesh.ListNodes[p]);
+    CoordElement = ElemCoordinates(MPM_Mesh.ListNodes[p],FEM_Mesh);
     /* Compute local coordinates of the particle in this element */
     Q4_X_to_Xi(Xi_p,X_p,CoordElement);
     /* Asign connectivity */
@@ -500,35 +498,22 @@ ChainPtr DiscardElements(ChainPtr SearchElem_0,
 
 void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 /*
-  Local search algorithm based on the velocity of the particle.
+  Search the closest node to the particle based in its previous position.
 */
 {
 
-  /* Variables for the GP coordinates */
+  /* Number of dimensions */
   int Ndim = NumberDimensions;
+  /* Velocity and position of the particle */
   Matrix X_p;
   Matrix V_p;
-
-  /* Variables for the poligon description */
-  Matrix Poligon_Coordinates;
-  int * Poligon_Connectivity;
-  int NumVertex;
-  
-  int Elem_i; /* Element of the GP i */
-
-  int SearchVertex; /* Index to start the search */
-  int * SearchList; /* Pointer to store the search list */
-  ChainPtr ListNodes_I;
-
-
-  /* */
+  /* Previous closest node to the particle */
   int I0_p;
+  /* List of nodes close to the node I0_p */
+  ChainPtr Locality_I0;
+  /* Iterator pointer */
+  ChainPtr ListNodes_p = NULL;
 
-  ChainPtr Neighbour_Nodes;
-
-  /* Matrix with the distance from the particle to the nodes */
-  Matrix X_Ip;
-  
   /* Set to zero the active/non-active node, and the GPs in each element */
   for(int i = 0 ; i<FEM_Mesh.NumNodesMesh ; i++){
     FEM_Mesh.NumParticles[i] = 0;
@@ -552,13 +537,11 @@ void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
       I0_p = MPM_Mesh.I0[p];
 
       /* Get nodes close to the node I0_p */
-      Neighbour_Nodes = get_NodesClose_toNode(I0_p, FEM_Mesh);
-
-      /* Compute matrix with vectors from the particle to the nodes */
-      X_Ip = get_set_Coordinates(Neighbour_Nodes,X_p,FEM_Mesh.Coordinates);
+      Locality_I0 = get_locality_of_node(I0_p,FEM_Mesh);
 
       /* Update the index of the node close to the particle */
-      MPM_Mesh.I0[p] = get_node_near_to(X_Ip,);
+      MPM_Mesh.I0[p] = get_closest_node_to(X_p,Locality_I0,
+					   FEM_Mesh.Coordinates);
 
       /* Update the tributary nodes of each particle */
       get_particle_tributary_nodes(MPM_Mesh,FEM_Mesh,p);
@@ -567,9 +550,12 @@ void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
       ListNodes_p = MPM_Mesh.ListNodes[p];
       while(ListNodes_p != NULL){
 	FEM_Mesh.NumParticles[ListNodes_p->I] += 1;
-	push_to_Set(FEM_Mesh.I_particles[ListNodes_p->I],p);
+	push_to_Set(&FEM_Mesh.I_particles[ListNodes_p->I],p);
 	ListNodes_p = ListNodes_p->next; 
       }
+
+      /* Free memory */
+      free_Set(Locality_I0);
       
     }
     else{
@@ -577,10 +563,12 @@ void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
       ListNodes_p = MPM_Mesh.ListNodes[p];
       while(ListNodes_p != NULL){
 	FEM_Mesh.NumParticles[ListNodes_p->I] += 1;
-	push_to_Set(FEM_Mesh.I_particles[ListNodes_p->I],p);
+	push_to_Set(&FEM_Mesh.I_particles[ListNodes_p->I],p);
 	ListNodes_p = ListNodes_p->next; 
       }       
     }
+
+  }
 }
 
 /*********************************************************************/
@@ -604,7 +592,7 @@ void ComputeBeps(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
   /* List wit the nodes of the initial element */
   int Elem_GP; /* Element of the GP (search) */
   int NumNodesElem;
-  int * NodesElem;  
+  int * NodesElem;
 
   /* Chain with a list of elements near the initial element,
    and interator chain */
@@ -696,13 +684,11 @@ void ComputeBeps(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 
 /*********************************************************************/
 
-void GPinCell(ChainPtr * ListInCELL,
-	      ChainPtr * GlobalList,
-	      Matrix x_GC, int iGP,
-	      double epsilon)
+void GPinCell(ChainPtr * ListInCELL, ChainPtr * GlobalList,
+	      Matrix x_GC, int iGP, double epsilon)
 /*
   Search recursively the GP inside of a cell and if inside of a circle of
-  radious epsilon  
+  radious epsilon
 */
 {
 
@@ -757,7 +743,6 @@ bool InOut_Element(Matrix X_p, Element Elem_p, Matrix Coordinates){
   int * Element_Connectivity;
   Matrix Element_Coordinates;
 
-
   free(Element_Connectivity);
   FreeMat(Element_Coordinates);
 
@@ -792,62 +777,129 @@ Matrix get_Element_Field(Matrix Nodal_Field, Element GP_Element){
 
 /*********************************************************************/
 
-ChainPtr get_NodesClose_toNode(int I, Mesh FEM_Mesh){
+ChainPtr get_locality_of_node(int I, Mesh FEM_Mesh){
 
   /* Define output */
   ChainPtr Nodes = NULL;
 
-  /* Number of elements close to to the node */
+  /* Number of elements sourronding the node */
   int NumNeighbour = FEM_Mesh.NumNeighbour[I];
-  /* Index of the elements close to the node */
-  int * NodeNeighbour = Set_to_Pointer(FEM_Mesh.NodeNeighbour[I],NumNeighbour);
+  
+  /* Index of the elements sourronding the node */
+  int * NodeNeighbour =
+    Set_to_Pointer(FEM_Mesh.NodeNeighbour[I],NumNeighbour);
+  
   /* Table with the nodes of each element */
-  ChainPtr * Table_ElemNodes = malloc(NumNeighbour*sizeof(ChainPtr));  
+  ChainPtr * Table_ElemNodes = malloc(NumNeighbour*sizeof(ChainPtr));
+
+  /* Fill each position of the table with a list of nodes in the element */
   for(int i = 0 ; i<NumNeighbour ; i++){
     Table_ElemNodes[i] = FEM_Mesh.Connectivity[NodeNeighbour[i]];
   }
+  
   /* Free table with elements */
   free(NodeNeighbour);
+  
   /* Get the union of this nodes */
   Nodes = get_Union_Of(Table_ElemNodes,NumNeighbour);
+  
   /* Free table with the nodes of each elements */
   free(Table_ElemNodes);
 
   /* Return nodes close to the node I */
   return Nodes;
 }
+ 
+/*********************************************************************/
+
+Matrix get_set_Coordinates(ChainPtr Set, Matrix X0, Matrix Coordinates)
+{
+  int Ndim = NumberDimensions;
+  int SizeSet = get_Lenght_Set(Set);
+  int I = 0;
+
+  /* Allocate output */
+  Matrix Set_Coordinates = MatAllocZ(SizeSet,Ndim);
+
+  /* Loop in the set */
+  ChainPtr Aux_Set = Set;
+  while (Aux_Set != NULL){ 
+    /* Get coordinates local coodinates of each node in the set */
+    for(int i = 0 ; i<Ndim ; i++){
+      Set_Coordinates.nM[I][i] =  X0.nV[i] - Coordinates.nM[Aux_Set->I][i];
+    }
+    /* Update index */
+    I++;	
+    Aux_Set = Aux_Set->next; 
+  }
+  
+  return Set_Coordinates;
+}
 
 /*********************************************************************/
 
-int get_node_near_to(Matrix Vector_to_Point){
+int get_closest_node_to(Matrix X_p, ChainPtr Nodes, Matrix Coordinates)
+/*
+  Ordenate recursively and array with distances and get a chain 
+  with the positions in orden
+*/
+{
+  /* Number of dimensions */
+  int Ndim = NumberDimensions;
+  /* Index of the current node */
+  int I;
+  /* Corrdinates of the current node */
+  Matrix X_I;
+  /* Distance from the particle to the node */
+  double Distance_I;
+  /* Interator pointer */
+  ChainPtr Node_I = NULL;
+  /* Get the value of the maximum distance from the particle to the pointer */
+  double DistMin;
+  int I_DistMin;
 
-  int Nnodes = Vector_to_Point.N_rows;
-  ChainPtr List_Ord = NULL;
-  ChainPtr List_Dis = RangeChain(0,Nnodes-1);
-  Matrix Distance_to_Point;
-  int Node;
+  /* Initialize interator with the first node */
+  Node_I = Nodes;
 
-  /* Get the modulus of the distance for each vector */
-  Distance_to_Point = get_nurbs_distance(Vector_to_Point);
+  /* Get the index of the first node */
+  I = Node_I->I;
   
-  /* Ordenate distances  */  
-  order_Set(&List_Ord,&List_Dis,Distance_Xip);
+  /* Get the coordinates of the first node */
+  X_I = MatAssign(Ndim,1,NAN,Coordinates.nM[I],NULL);
 
-  FreeMat(Distance_to_Point);
+  /* Get the distance from the node to the particle */
+  Distance_I = Distance(X_p, X_I);
+      
+  /* Get the distance from the node to the particle */
+  DistMin = Distance_I;
+  I_DistMin = Node_I->I;
+      
+  /* Search in the reamaining nodes */      
+  Node_I = Node_I->next;
+  
+  while(Node_I != NULL){
 
-  /* Transform the list in to an array */
-  List = Set_to_Pointer(List_Ord,NumNodes_GP);
+    /* Get the index of the node */
+    I = Node_I->I;
 
-  /* Free set in order */
-  free_Set(List_Ord);
+    /* Get the coordinates of the node */
+    X_I = MatAssign(Ndim,1,NAN,Coordinates.nM[I],NULL);
 
-  /* Get the node near to the point */
-  Node = List[0];
-
-  /* Free the list */
-  free(List);
-
-  return Node;
+    /* Get the distance from the node to the particle */
+    Distance_I = Distance(X_p, X_I);
+      
+    /* Get the max distance of the matrix */
+    if(Distance_I < DistMin){
+      DistMin = Distance_I;
+      I_DistMin = Node_I->I;
+    }
+      
+    /* Continue iterating */      
+    Node_I = Node_I->next;
+      
+  }
+   
+  return I_DistMin;
 }
 
 /*********************************************************************/

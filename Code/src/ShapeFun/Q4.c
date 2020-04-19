@@ -53,8 +53,7 @@ void Q4_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 	Set_to_Pointer(FEM_Mesh.Connectivity[j],NumVertex);
 
       /* 4º Get the coordinates of the element */
-      Poligon_Coordinates = ElemCoordinates(FEM_Mesh,Poligon_Connectivity,
-					    NumVertex);
+      Poligon_Coordinates = ElemCoordinates(Poligon_Connectivity,FEM_Mesh);
       
       /* 5º Check out if the GP is in the Element */
       if(InOut_Poligon(X_GC_GP,Poligon_Coordinates) == 1){
