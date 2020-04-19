@@ -63,7 +63,7 @@ void LME_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
   /* Tunning parameter */
   Matrix Beta_p; 
   
-  Element Elem_p;
+  ChainPtr Elem_p;
   
   ChainPtr Nodes_p;
   int I_p;
@@ -87,13 +87,13 @@ void LME_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
     for(int i = 0 ; i<Nelem ; i++){
 
       /* Get the element properties */
-      Elem_p = get_Element(p,FEM_Mesh.Connectivity[i],FEM_Mesh.NumNodesElem[i]);
+      Elem_p = FEM_Mesh.Connectivity[i];
       
       /* 6º Check out if the GP is in the Element */
       if(InOut_Element(X_p, Elem_p, FEM_Mesh.Coordinates)){
 
 	/* With the element connectivity get the node close to the particle */
-	I_p = get_closest_node_to(X_p,Elem_p.Connectivity,FEM_Mesh.Coordinates);
+	I_p = get_closest_node_to(X_p,Elem_p,FEM_Mesh.Coordinates);
 
 	/* Get the initial connectivity of the particle */
 	MPM_Mesh.ListNodes[p] = LME_Tributary_Nodes(X_p,Beta_p,I_p,FEM_Mesh);

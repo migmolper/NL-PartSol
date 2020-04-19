@@ -232,7 +232,7 @@ double GetMinElementSize(Mesh FEM_Mesh)
 
 /*********************************************************************/
 
-Matrix ElemCoordinates(ChainPtr Element_p, Mesh FEM_Mesh)
+Matrix ElemCoordinates(ChainPtr Element_p, Matrix Coordinates)
 /*
   Get the matrix with the coordinates of an element
 */
@@ -240,7 +240,7 @@ Matrix ElemCoordinates(ChainPtr Element_p, Mesh FEM_Mesh)
 
   int Ndim = NumberDimensions;
   int NumVertex = get_Lenght_Set(Element_p);
-  Matrix Coordinates = MatAllocZ(NumVertex,Ndim);
+  Matrix Element_Coordinates = MatAllocZ(NumVertex,Ndim);
   ChainPtr Idx = NULL;
   int I_Idx = 0;
 
@@ -250,7 +250,7 @@ Matrix ElemCoordinates(ChainPtr Element_p, Mesh FEM_Mesh)
 
     /* Fill the elelemtn coordinates */
     for(int l = 0 ; l<Ndim ; l++){
-      Coordinates.nM[I_Idx][l] = FEM_Mesh.Coordinates.nM[Idx->I][l];
+      Element_Coordinates.nM[I_Idx][l] = Coordinates.nM[Idx->I][l];
     }
     
     /* Cycle */
@@ -269,7 +269,6 @@ int search_particle_in(int p, Matrix X_p, ChainPtr ListElement, Mesh FEM_Mesh)
 */
 {
   ChainPtr Ixd = NULL;
-  Element Element_i;
   int I_element = -999;
   int Nn; /* Numver of nodes of the element */
   ChainPtr Nodes;
@@ -280,10 +279,9 @@ int search_particle_in(int p, Matrix X_p, ChainPtr ListElement, Mesh FEM_Mesh)
 
     Nn = FEM_Mesh.NumNodesElem[Ixd->I];
     Nodes = FEM_Mesh.Connectivity[Ixd->I];
-    Element_i = get_Element(p, Nodes, Nn);
 
     /* Check if the particle is in the element */
-    if(InOut_Element(X_p, Element_i, FEM_Mesh.Coordinates)){
+    if(InOut_Element(X_p, Nodes, FEM_Mesh.Coordinates)){
       I_element = Ixd->I;
       break;
     }
@@ -335,7 +333,7 @@ void get_particle_tributary_nodes(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int p){
     /* Asign connectivity */
     MPM_Mesh.ListNodes[p] = CopyChain(FEM_Mesh.Connectivity[IdxElement]);
     /* Get the coordinates of the element vertex */
-    CoordElement = ElemCoordinates(MPM_Mesh.ListNodes[p],FEM_Mesh);
+    CoordElement = ElemCoordinates(MPM_Mesh.ListNodes[p],FEM_Mesh.Coordinates);
     /* Compute local coordinates of the particle in this element */
     Q4_X_to_Xi(Xi_p,X_p,CoordElement);
     /* Free coordinates of the element */
@@ -349,7 +347,7 @@ void get_particle_tributary_nodes(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int p){
     /* Get the index of the element */
     IdxElement = search_particle_in(p,X_p,Elements_Near_I0,FEM_Mesh);
     /* Get the coordinates of the element vertex */
-    CoordElement = ElemCoordinates(MPM_Mesh.ListNodes[p],FEM_Mesh);
+    CoordElement = ElemCoordinates(MPM_Mesh.ListNodes[p],FEM_Mesh.Coordinates);
     /* Compute local coordinates of the particle in this element */
     Q4_X_to_Xi(Xi_p,X_p,CoordElement);
     /* Asign connectivity */
@@ -540,8 +538,7 @@ void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
       Locality_I0 = get_locality_of_node(I0_p,FEM_Mesh);
 
       /* Update the index of the node close to the particle */
-      MPM_Mesh.I0[p] = get_closest_node_to(X_p,Locality_I0,
-					   FEM_Mesh.Coordinates);
+      MPM_Mesh.I0[p] = get_closest_node_to(X_p,Locality_I0,FEM_Mesh.Coordinates);
 
       /* Update the tributary nodes of each particle */
       get_particle_tributary_nodes(MPM_Mesh,FEM_Mesh,p);
@@ -737,13 +734,17 @@ Element get_Element(int i_GP, ChainPtr ListNodes, int NumNodes){
 
 /*********************************************************************/
 
-bool InOut_Element(Matrix X_p, Element Elem_p, Matrix Coordinates){
+bool InOut_Element(Matrix X_p, ChainPtr Elem_p, Matrix Coordinates){
 
   bool Is_In_Element = false;
-  int * Element_Connectivity;
   Matrix Element_Coordinates;
 
-  free(Element_Connectivity);
+  Element_Coordinates = ElemCoordinates(Elem_p, Coordinates);
+
+  if (InOut_Poligon(X_p, Element_Coordinates) == 1){
+    Is_In_Element = true;
+  }
+
   FreeMat(Element_Coordinates);
 
   return Is_In_Element;

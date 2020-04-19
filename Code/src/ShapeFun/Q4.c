@@ -20,80 +20,67 @@ void Q4_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 {
   /* Variables for the GP coordinates */
   int Ndim = NumberDimensions;
-  Matrix X_GC_GP = MatAssign(Ndim,1,NAN,NULL,NULL);
-  Matrix X_EC_GP = MatAssign(Ndim,1,NAN,NULL,NULL);
-
-  /* Variables for the poligon */
-  int NumVertex;
-  int * Poligon_Connectivity;
-  Matrix Poligon_Coordinates;
-  ChainPtr ListNodes_I;
-
-  /* 1º Set to zero the active/non-active node, and the GPs in each 
-     element */
-  for(int i = 0 ; i<FEM_Mesh.NumNodesMesh ; i++){
-    FEM_Mesh.NumParticles[i] = 0;
-  }
+  int Np = MPM_Mesh.NumGP;
+  int Nelem = FEM_Mesh.NumElemMesh;
   
-  for(int i = 0 ; i<FEM_Mesh.NumElemMesh ; i++){
-    free_Set(FEM_Mesh.I_particles[i]);
-    FEM_Mesh.I_particles[i] = NULL;
-  }
+  Matrix X_p;
+  Matrix Xi_p;
 
-  for(int i = 0 ; i<MPM_Mesh.NumGP ; i++){
 
-    /* 2º Assign the value to this auxiliar pointer */ 
-    X_GC_GP.nV = MPM_Mesh.Phi.x_GC.nM[i];
+  ChainPtr Elem_p;
+  ChainPtr ListNodes_p;
 
-    for(int j = 0 ; j<FEM_Mesh.NumElemMesh ; j++){
+  Matrix CoordElement;
+ 
+  /* Loop over the particles to initialize them */
+  for(int p = 0 ; p<Np ; p++){
 
-      /* 3º Connectivity of the Poligon */
-      NumVertex = FEM_Mesh.NumNodesElem[j];
-      Poligon_Connectivity =
-	Set_to_Pointer(FEM_Mesh.Connectivity[j],NumVertex);
+    /* Get the globa coodinate of the particle */ 
+    X_p = MatAssign(Ndim,1,NAN,MPM_Mesh.Phi.x_GC.nM[p],NULL);
 
-      /* 4º Get the coordinates of the element */
-      Poligon_Coordinates = ElemCoordinates(Poligon_Connectivity,FEM_Mesh);
+    /* Check for each element of the mesh */
+    for(int i = 0 ; i<Nelem ; i++){
+
+      /* Get connectivity of the element */
+      Elem_p = FEM_Mesh.Connectivity[i];
       
       /* 5º Check out if the GP is in the Element */
-      if(InOut_Poligon(X_GC_GP,Poligon_Coordinates) == 1){
+      if(InOut_Element(X_p, Elem_p, FEM_Mesh.Coordinates)){
 
-	/* 6º Asign to the GP a element in the background mesh, just for 
-	   searching porpuses */
-	MPM_Mesh.I0[i] = j;
-	push_to_Set(&FEM_Mesh.I_particles[j],i);
+	/* With the element connectivity get the node close to the particle */
+	MPM_Mesh.I0[p] = get_closest_node_to(X_p,Elem_p,FEM_Mesh.Coordinates);
 
-	/* 7º If the GP is in the element, get its natural coordinates */	
-	X_EC_GP.nV = MPM_Mesh.Phi.x_EC.nM[i];
-	Q4_X_to_Xi(X_EC_GP,X_GC_GP,Poligon_Coordinates);
+	/* Asign connectivity */
+	MPM_Mesh.ListNodes[p] = CopyChain(Elem_p);
 
-	/* 8º Get list of nodes near to the GP */
-	free_Set(MPM_Mesh.ListNodes[i]);
-	MPM_Mesh.ListNodes[i] = NULL;
-	MPM_Mesh.ListNodes[i] = CopyChain(FEM_Mesh.Connectivity[j]);
-	/* 9º Active those nodes that interact with the GP */
-	ListNodes_I = MPM_Mesh.ListNodes[i];
-	while(ListNodes_I != NULL){
-	  FEM_Mesh.NumParticles[ListNodes_I->I] += 1;
-	  ListNodes_I = ListNodes_I->next; 
+	/* Active those nodes that interact with the particle */
+	ListNodes_p = MPM_Mesh.ListNodes[p];
+	while(ListNodes_p != NULL){
+	  FEM_Mesh.NumParticles[ListNodes_p->I] += 1;
+	  push_to_Set(&FEM_Mesh.I_particles[ListNodes_p->I],p);
+	  ListNodes_p = ListNodes_p->next; 
 	}
 
-	/* 10º Free memory and go for the next GP */
-	free(Poligon_Connectivity);
-	FreeMat(Poligon_Coordinates);
+	/* Get the coordinates of the element vertex */
+	CoordElement = ElemCoordinates(MPM_Mesh.ListNodes[p],FEM_Mesh.Coordinates);
+
+	/* Compute local coordinates of the particle in this element */
+	Q4_X_to_Xi(Xi_p,X_p,CoordElement);
+	
+	/* Free coordinates of the element */
+	FreeMat(CoordElement);
+
 	break;
 	
       }
-      
-      /* 11º Free memory */
-      free(Poligon_Connectivity);
-      FreeMat(Poligon_Coordinates);
       
     } 
 
   }
   
 }
+
+/*********************************************************************/
 
 /* Shape functions */
 Matrix Q4_N(Matrix X_e){

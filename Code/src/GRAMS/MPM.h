@@ -283,7 +283,7 @@ Matrix get_set_Coordinates(ChainPtr, Matrix, Matrix);
 Matrix get_Element_Field(Matrix, Element);
 ChainPtr get_locality_of_node(int, Mesh);
 int get_closest_node_to(Matrix, ChainPtr, Matrix);
-bool InOut_Element(Matrix, Element, Matrix);
+bool InOut_Element(Matrix, ChainPtr, Matrix);
 int search_particle_in(int, Matrix, ChainPtr, Mesh);
-Matrix ElemCoordinates(ChainPtr, Mesh);
+Matrix ElemCoordinates(ChainPtr, Matrix);
 
