@@ -67,7 +67,6 @@ void LME_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
   
   ChainPtr Nodes_p;
   int I_p;
-  ChainPtr ListNodes_p;
 
   /* Distance from GP to the nodes */
   Matrix Delta_Xip; 
@@ -107,12 +106,7 @@ void LME_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 					     FEM_Mesh.Coordinates);
 	
 	/* Active those nodes that interact with the particle */
-	ListNodes_p = MPM_Mesh.ListNodes[p];
-	while(ListNodes_p != NULL){
-	  FEM_Mesh.NumParticles[ListNodes_p->I] += 1;
-	  push_to_Set(&FEM_Mesh.I_particles[ListNodes_p->I],p);
-	  ListNodes_p = ListNodes_p->next; 
-	}
+	asign_particle_to_nodes(p, MPM_Mesh.ListNodes[p], FEM_Mesh);
        	
 	/* Calculate distance from particle to each node in the neibourhood */
 	Delta_Xip = get_set_Coordinates(MPM_Mesh.ListNodes[p],X_p,
