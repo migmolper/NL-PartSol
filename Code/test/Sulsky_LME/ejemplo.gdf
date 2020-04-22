@@ -5,8 +5,7 @@ GramsBox (Type=GID,File=FEM_Mesh.msh) {
 }
 
 # Time integration
-GramsTime (Type=FE) {
-    CEL=70.71
+GramsTime (Type=PCE) {
     CFL=0.01
     N=15000
 }
@@ -14,9 +13,10 @@ GramsTime (Type=FE) {
 # Material points definitions
 GramsSolid2D (File=MPM_Mesh.msh) {
     
-    # List of materials for the GPs
+   # List of materials for the GPs
     GramsMaterials (Particles=Material.txt) {
 	Type=LE
+	Cel=70.71
 	rho=20
 	E=1.e5
 	mu=0.3
@@ -25,7 +25,7 @@ GramsSolid2D (File=MPM_Mesh.msh) {
     
     # Shape function definition
     GramsShapeFun (Type=LME) {
-	gamma=6
+	gamma=4
     }
 
     # Initial conditions for the GPs

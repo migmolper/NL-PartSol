@@ -52,12 +52,12 @@ void uGIMP_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh){
   /* 1º Set to zero the active/non-active node, and the GPs in each 
      element */
   for(int i = 0 ; i<FEM_Mesh.NumNodesMesh ; i++){
-    FEM_Mesh.ActiveNode[i] = 0;
+    FEM_Mesh.NumParticles[i] = 0;
   }
   
   for(int i = 0 ; i<FEM_Mesh.NumElemMesh ; i++){
-    free_Set(FEM_Mesh.GPsElements[i]);
-    FEM_Mesh.GPsElements[i] = NULL;
+    free_Set(FEM_Mesh.I_particles[i]);
+    FEM_Mesh.I_particles[i] = NULL;
   }
 
   for(int i = 0 ; i<MPM_Mesh.NumGP ; i++){
@@ -89,16 +89,16 @@ void uGIMP_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh){
 	Set_to_Pointer(FEM_Mesh.Connectivity[j],NumVertex);
 
       /* 4º Get the coordinates of the element */
-      Poligon_Coordinates =
-	ElemCoordinates(FEM_Mesh,Poligon_Connectivity,NumVertex);
+      Poligon_Coordinates = ElemCoordinates(Poligon_Connectivity,
+	FEM_Mesh.Coordinates);
       
       /* 5º Check out if the GP is in the Element */
       if(InOut_Poligon(X_GC_GP,Poligon_Coordinates) == 1){
 
 	/* 6º Asign to the GP a element in the background mesh, just for 
 	   searching porpuses */
-	MPM_Mesh.Element_id[i] = j;
-	push_to_Set(&FEM_Mesh.GPsElements[j],i);
+	MPM_Mesh.I0[i] = j;
+	push_to_Set(&FEM_Mesh.I_particles[j],i);
 
 	/* 7º If the GP is in the element, get its natural coordinates */
 	X_EC_GP.nV = MPM_Mesh.Phi.x_EC.nM[i];
@@ -107,17 +107,13 @@ void uGIMP_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh){
 	/* 8º Get list of nodes near to the GP */
 	free_Set(MPM_Mesh.ListNodes[i]);
 	MPM_Mesh.ListNodes[i] = NULL;
-	/* MPM_Mesh.ListNodes[i] = */
-	/*   Tributary_Nodes_GIMP(X_GC_GP,MPM_Mesh.Element_id[i],lp,FEM_Mesh); */
 	MPM_Mesh.ListNodes[i] =
-	  uGIMP_Tributary_Nodes(X_GC_GP,MPM_Mesh.Element_id[i],lp,FEM_Mesh);
-	/* MPM_Mesh.ListNodes[i] = */
-	/*   Tributary_Nodes_GIMP(X_EC_GP,MPM_Mesh.Element_id[i],lp,FEM_Mesh); */
+	  uGIMP_Tributary_Nodes(X_GC_GP,MPM_Mesh.I0[i],lp,FEM_Mesh);
 	MPM_Mesh.NumberNodes[i] = get_Lenght_Set(MPM_Mesh.ListNodes[i]);
 	/* 9º Active those nodes that interact with the GP */
 	ListNodes_I = MPM_Mesh.ListNodes[i];
 	while(ListNodes_I != NULL){
-	  FEM_Mesh.ActiveNode[ListNodes_I->I] += 1;
+	  FEM_Mesh.NumParticles[ListNodes_I->I] += 1;
 	  ListNodes_I = ListNodes_I->next; 
 	}
 

@@ -278,7 +278,7 @@ void print_Set(ChainPtr A)
 
 /*********************************************************************/
 
-void OrderList(ChainPtr * List1, ChainPtr * List0, Matrix Dist)
+void order_Set(ChainPtr * List1, ChainPtr * List0, Matrix Dist)
 /*
   Ordenate recursively and array with distances and get a chain 
   with the positions in orden
@@ -308,7 +308,7 @@ void OrderList(ChainPtr * List1, ChainPtr * List0, Matrix Dist)
     pop_from_Set(List0,I_DistMax);
     
     /* Recursive */
-    OrderList(List1,List0,Dist);
+    order_Set(List1,List0,Dist);
   }
   
 }

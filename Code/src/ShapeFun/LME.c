@@ -29,186 +29,104 @@
   - LME_Tributary_Nodes
 */
 
+
+/****************************************************************************/
+
+void LME_Initialize_Beta(Matrix Beta, double DeltaX, int Np)
+/*!
+  Function to get a initial value of Beta
+*/
+{
+  int Ndim = NumberDimensions;
+  
+  for(int p = 0 ; p<Np ; p++){
+    for(int i = 0 ; i<Ndim ; i++){
+      Beta.nM[p][i] = gamma_LME/(DeltaX*DeltaX);
+    }
+  }
+  
+}
+
 /****************************************************************************/
 
 void LME_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 {
 
   int Ndim = NumberDimensions;
+  int Np = MPM_Mesh.NumGP;
+  int Nelem = FEM_Mesh.NumElemMesh;
 
-  /* Variables for the GP coordinates */  
-  Matrix X_GC_GP = MatAssign(Ndim,1,NAN,NULL,NULL);
-  Matrix X_EC_GP = MatAssign(Ndim,1,NAN,NULL,NULL);
-
-  /* Variables for the poligon */
-  int NumVertex;
-  int * Poligon_Connectivity;
-  Matrix Poligon_Coordinates;
-  ChainPtr ListNodes_I;
-
-  /* Auxiliar variables for LME */
-  Matrix lambda_GP = /* Lagrange multipliers */
-    MatAssign(Ndim,1,NAN,NULL,NULL);
-  Matrix Delta_Xip; /* Distance from GP to the nodes */
-  Matrix Dist;
-  Matrix Beta_GP = /* Tunning parameter */
-      MatAssign(Ndim,1,NAN,NULL,NULL);
-  int NumNodes_GP; /* Number of neibourghs */
-  int * ListNodes; /* List of nodes */
-  int I_iGP; /* Iterator for the neibourghs */
-
-  /* */
-  ChainPtr List_Ord, List_Dis;
-  int * List;
-
-  /* Auxiliar variables to initialize lambda */
-  Matrix A = MatAlloc(Ndim,Ndim);
-  Matrix B = MatAlloc(Ndim,1);
-
-  /* 1º Set to zero the active/non-active node, and the GPs in each 
-   element */
-  for(int i = 0 ; i<FEM_Mesh.NumNodesMesh ; i++){
-    FEM_Mesh.ActiveNode[i] = 0;
-  }
+  /* Particle coordinates */  
+  Matrix X_p;
+  /* Lagrange multipliers */
+  Matrix lambda_p;
+  /* Tunning parameter */
+  Matrix Beta_p; 
   
-  for(int i = 0 ; i<FEM_Mesh.NumElemMesh ; i++){
-    free_Set(FEM_Mesh.GPsElements[i]);
-    FEM_Mesh.GPsElements[i] = NULL;
-  }
+  ChainPtr Elem_p;
+  
+  ChainPtr Nodes_p;
+  int I_p;
 
-  for(int i = 0 ; i<MPM_Mesh.NumGP ; i++){
+  /* Distance from GP to the nodes */
+  Matrix Delta_Xip; 
 
-    /* 2º Assign the value to this auxiliar pointer */ 
-    X_GC_GP.nV = MPM_Mesh.Phi.x_GC.nM[i];
+  /* Initialize Beta */
+  LME_Initialize_Beta(MPM_Mesh.Beta, FEM_Mesh.DeltaX, Np);
 
-    /* 3º Initialize Beta and assign to an auxiliar pointer */
-    for(int j = 0 ; j<Ndim ; j++){
-      MPM_Mesh.Beta.nM[i][j] =
-	gamma_LME/(FEM_Mesh.DeltaX*FEM_Mesh.DeltaX);
-    }
-    Beta_GP.nV = MPM_Mesh.Beta.nM[i];
+  /* Loop over the particle mesh */
+  for(int p = 0 ; p<Np ; p++){
 
+    /* Get some properties for each particle */ 
+    X_p = MatAssign(Ndim,1,NAN,MPM_Mesh.Phi.x_GC.nM[p],NULL);
+    Beta_p = MatAssign(Ndim,1,NAN,MPM_Mesh.Beta.nM[p],NULL);
+    lambda_p = MatAssign(Ndim,1,NAN,MPM_Mesh.lambda.nM[p],NULL);
 
-    for(int j = 0 ; j<FEM_Mesh.NumElemMesh ; j++){
+    /* Loop over the element mesh */
+    for(int i = 0 ; i<Nelem ; i++){
 
-      /* 4º Connectivity of the Poligon */
-      NumVertex = FEM_Mesh.NumNodesElem[j];
-      Poligon_Connectivity =
-	Set_to_Pointer(FEM_Mesh.Connectivity[j],NumVertex);
-
-      /* 5º Get the coordinates of the element */
-      Poligon_Coordinates =
-	ElemCoordinates(FEM_Mesh,Poligon_Connectivity,NumVertex);
+      /* Get the element properties */
+      Elem_p = FEM_Mesh.Connectivity[i];
       
       /* 6º Check out if the GP is in the Element */
-      if(InOut_Poligon(X_GC_GP,Poligon_Coordinates) == 1){
+      if(InOut_Element(X_p, Elem_p, FEM_Mesh.Coordinates)){
 
-	/* 7º Asign to the GP a element in the background mesh, just for 
-	   searching porpuses */
-	MPM_Mesh.Element_id[i] = j;
-	push_to_Set(&FEM_Mesh.GPsElements[j],i);
+	/* With the element connectivity get the node close to the particle */
+	I_p = get_closest_node_to(X_p,Elem_p,FEM_Mesh.Coordinates);
 
-	/* 8º If the GP is in the element, get its natural coordinates */
-	X_EC_GP.nV = MPM_Mesh.Phi.x_EC.nM[i];
-	Q4_X_to_Xi(X_EC_GP,X_GC_GP,Poligon_Coordinates);
+	/* Get the initial connectivity of the particle */
+	MPM_Mesh.ListNodes[p] = LME_Tributary_Nodes(X_p,Beta_p,I_p,FEM_Mesh);
 
-	/* 9º Get list of nodes near to the GP */
-	free_Set(MPM_Mesh.ListNodes[i]);
-	MPM_Mesh.ListNodes[i] = NULL;
- 
-	/* 10º Calculate connectivity */
-	MPM_Mesh.ListNodes[i] =
-	  LME_Tributary_Nodes(X_GC_GP,Beta_GP,
-			      MPM_Mesh.Element_id[i],FEM_Mesh);
-    
-	/* 11º Calculate number of nodes */
-	MPM_Mesh.NumberNodes[i] = get_Lenght_Set(MPM_Mesh.ListNodes[i]);
+	/* Measure the size of the connectivity */
+	MPM_Mesh.NumberNodes[p] = get_Lenght_Set(MPM_Mesh.ListNodes[p]);
 
-	/* Generate nodal distance list */
-	NumNodes_GP = MPM_Mesh.NumberNodes[i];
-	ListNodes = Set_to_Pointer(MPM_Mesh.ListNodes[i],NumNodes_GP);
-	Delta_Xip = MatAlloc(NumNodes_GP,Ndim);
-	/* Allocate the distance vector of each node */
-	Dist = MatAllocZ(NumNodes_GP,1);
-	/* Fill both vectors */
-	for(int k = 0 ; k<NumNodes_GP ; k++){
-	  I_iGP = ListNodes[k];
-	  for(int l = 0 ; l<Ndim ; l++){
-	    Delta_Xip.nM[k][l] =
-	      X_GC_GP.nV[l]-
-	      FEM_Mesh.Coordinates.nM[I_iGP][l];
-	    /* Distance modulus */
-	    Dist.nV[k] += Delta_Xip.nM[k][l]*Delta_Xip.nM[k][l];
-	  }
-	  Dist.nV[k] = pow(Dist.nV[k],0.5);
-	}
-	free(ListNodes);
+	/* Asign to each particle the closest node in the mesh
+	   and to this node asign the particle */
+	MPM_Mesh.I0[p] = get_closest_node_to(X_p,MPM_Mesh.ListNodes[p],
+					     FEM_Mesh.Coordinates);
+	
+	/* Active those nodes that interact with the particle */
+	asign_particle_to_nodes(p, MPM_Mesh.ListNodes[p], FEM_Mesh);
+       	
+	/* Calculate distance from particle to each node in the neibourhood */
+	Delta_Xip = get_set_Coordinates(MPM_Mesh.ListNodes[p],X_p,
+					FEM_Mesh.Coordinates);
 
 	/* Update the value of beta */
-	Beta_GP = LME_Beta(Beta_GP, Delta_Xip, gamma_LME);
-
-	/* Ordenate distances  */
-	List_Ord = NULL, List_Dis = NULL;
-	List_Dis = RangeChain(0,NumNodes_GP-1);
-	OrderList(&List_Ord,&List_Dis,Dist);
-
-	/* Transform the list in to an array */
-	List = Set_to_Pointer(List_Ord,NumNodes_GP);
-
-	/* Fill A */
-	A.nM[0][0] = Delta_Xip.nM[List[1]][0] - Delta_Xip.nM[List[0]][0];
-	A.nM[0][1] = Delta_Xip.nM[List[1]][1] - Delta_Xip.nM[List[0]][1];
-	A.nM[1][0] = Delta_Xip.nM[List[2]][0] - Delta_Xip.nM[List[0]][0];
-	A.nM[1][1] = Delta_Xip.nM[List[2]][1] - Delta_Xip.nM[List[0]][1];
-  
-	/* Fill B */
-	B.nV[0] = -Beta_GP.nV[0]*(pow(Dist.nV[List[0]],2) -
-				  pow(Dist.nV[List[1]],2));
-	B.nV[1] = -Beta_GP.nV[1]*(pow(Dist.nV[List[0]],2) -
-				  pow(Dist.nV[List[2]],2));
-
-	/* /\* Check the conditioning number of A *\/ */
-	/* if (fabs(Cond_Mat(A,TOL_NR)) > 10){ */
-	/*   printf(" %s (%s %i) : %s \n", */
-	/* 	 "Error in LME_Initialize","GP",i, */
-	/* 	 "A is near to singular matrix"); */
-	/*   exit(0); */
-	/* } */
-	/* Initialize lambda */
-	lambda_GP.nV = MPM_Mesh.lambda.nM[i];
-	/* lambda_GP = Solve_Linear_Sistem(A,B,lambda_GP); */
-	
-	/* Calculate lagrange multipliers with Newton-Rapson */
-	lambda_GP = LME_lambda_NR(Delta_Xip, lambda_GP, Beta_GP);
+	Beta_p = LME_Beta(Beta_p, Delta_Xip, gamma_LME);
+			
+	/* Update lagrange multipliers with Newton-Rapson */
+	lambda_p = LME_lambda_NR(Delta_Xip, lambda_p, Beta_p);
 
 	/* Free memory */
-	FreeMat(Delta_Xip), free_Set(List_Ord), free(List);
-	
-	/* 9º Active those nodes that interact with the GP */
-	ListNodes_I = MPM_Mesh.ListNodes[i];
-	while(ListNodes_I != NULL){
-	  FEM_Mesh.ActiveNode[ListNodes_I->I] += 1;
-	  ListNodes_I = ListNodes_I->next; 
-	}
+	FreeMat(Delta_Xip);
 
-	/* 10º Free memory and go for the next GP */
-	free(Poligon_Connectivity);
-	FreeMat(Poligon_Coordinates);
 	break;
-	
-      }
-      
-      /* 11º Free memory */
-      free(Poligon_Connectivity);
-      FreeMat(Poligon_Coordinates);
-      
+      }      
     }
 
   }
 
-  /* 12º Free memory */
-  FreeMat(A), FreeMat(B);
-  
 }
 
 /****************************************************************************/
@@ -273,7 +191,8 @@ Matrix LME_lambda_NR(Matrix l, Matrix lambda, Matrix Beta)
     p = LME_p(l,lambda,Beta);
 
     /* Get the gradient of log(Z) and its norm */
-    r = LME_r(l,p), norm_r = Norm_Mat(r,2);
+    r = LME_r(l,p);
+    norm_r = Norm_Mat(r,2);
 
     /* Get the Hessian of log(Z) and update it with +||r||*I 
        according with Dennis M.Kochmann et al. 2019 (CMAME) */    
@@ -291,7 +210,7 @@ Matrix LME_lambda_NR(Matrix l, Matrix lambda, Matrix Beta)
     /* } */
     
     /* Get the increment of lambda */
-    D_lambda = Solve_Linear_Sistem(J,r,MatAllocZ(Ndim,1));
+    D_lambda = Solve_Linear_Sistem(J,r);
 
     /* Update the value of lambda */
     for(int i = 0 ; i<Ndim ; i++){
@@ -299,7 +218,10 @@ Matrix LME_lambda_NR(Matrix l, Matrix lambda, Matrix Beta)
     }
 
     /* Free memory */
-    FreeMat(p), FreeMat(r), FreeMat(J), FreeMat(D_lambda);
+    FreeMat(p);
+    FreeMat(r);
+    FreeMat(J);
+    FreeMat(D_lambda);
     
     /* Update the number of iterations */
     NumIter ++;
@@ -505,88 +427,53 @@ Matrix LME_dp(Matrix l, Matrix p)
 
 /****************************************************************************/
 
-ChainPtr LME_Tributary_Nodes(Matrix X_GP, Matrix Beta,
-			     int Elem_GP, Mesh FEM_Mesh){
+ChainPtr LME_Tributary_Nodes(Matrix X_GP, Matrix Beta, int I0, Mesh FEM_Mesh){
 
+  /* Define output */
+  ChainPtr Triburary_Nodes = NULL;
+  /* Number of dimensionws of the problem */
   int Ndim = NumberDimensions;
+
   Matrix Distance; /* Distance between node and GP */
   Matrix X_I = MatAssign(Ndim,1,NAN,NULL,NULL);
-  ChainPtr * Table_Elem = NULL;
-  ChainPtr Triburary_Nodes = NULL;
-  ChainPtr List_Nodes = NULL;
-  ChainPtr * Table_ElemNodes = NULL;
-  ChainPtr Triburary_Elements = NULL;
-  ChainPtr iPtr = NULL;
-  int NumNodesElem = /* Number of nodes of the element */
-    FEM_Mesh.NumNodesElem[Elem_GP];
-  int Num_Elem;
-  int * List_Elements;
-  int * NodesElem = /* List of nodes of the element */
-    Set_to_Pointer(FEM_Mesh.Connectivity[Elem_GP],NumNodesElem);
-  double Ra = /* Get the search radius */
-    sqrt(-log(TOL_lambda)/Beta.nV[0]);
-
-
-  /* Chain with the tributary elements, this is the list of element near the
-     gauss point, including where it is */
-
-  /* Iterate in the list and select the union of the sets of nodes */
-  Table_Elem = malloc(NumNodesElem*sizeof(ChainPtr));
-  for(int i = 0 ; i<NumNodesElem ; i++){
-    Table_Elem[i] = FEM_Mesh.NodeNeighbour[NodesElem[i]];
-  }
-  Triburary_Elements = get_Union_Of(Table_Elem,NumNodesElem);
-  /* Free memory */
-  free(NodesElem);
-  free(Table_Elem);
-  Table_Elem = NULL;
   
-  /* List with the tributary nodes */
-  Num_Elem = get_Lenght_Set(Triburary_Elements);
-  List_Elements = Set_to_Pointer(Triburary_Elements,Num_Elem);
+  ChainPtr Set_Nodes0 = NULL;
+  int * Array_Nodes0;
+  int NumNodes0;
+  int Node0;
 
-  /* Free the chain with the tributary elements */
-  free_Set(Triburary_Elements);
-  
-  /* Fill the chain with the preliminary tributary nodes */
-  Table_ElemNodes = malloc(Num_Elem*sizeof(ChainPtr));
-  for(int i = 0 ; i<Num_Elem ; i++){
-    Table_ElemNodes[i] = FEM_Mesh.Connectivity[List_Elements[i]];
-  }
+  /* Get the search radius */
+  double Ra = sqrt(-log(TOL_lambda)/Beta.nV[0]);
 
-  List_Nodes = get_Union_Of(Table_ElemNodes,Num_Elem);
-  
-  /* Free the array wit the list of tributary elements */
-  free(List_Elements);
-  free(Table_ElemNodes);
-  Table_ElemNodes = NULL;
-  
-  /* Initialize the iterator to iterate over the list of tributary nodes */
-  iPtr = List_Nodes;
-
+  /* Get nodes close to the GP */
+  Set_Nodes0 = get_locality_of_node(I0, FEM_Mesh);
+  NumNodes0 = get_Lenght_Set(Set_Nodes0);
+  Array_Nodes0 = Set_to_Pointer(Set_Nodes0,NumNodes0);
+  free_Set(Set_Nodes0);
+     
   /* Loop over the chain with the tributary nodes */
-  while(iPtr != NULL){
+  for(int i = 0 ; i<NumNodes0 ; i++){
+
+    Node0 = Array_Nodes0[i];
 
     /* Assign to a pointer the coordinates of the nodes */
-    X_I.nV = FEM_Mesh.Coordinates.nM[iPtr->I];
+    X_I.nV = FEM_Mesh.Coordinates.nM[Node0];
 
     /* Get a vector from the GP to the node */
     Distance = Sub_Mat(X_GP,X_I);
 
     /* If the node is near the GP push in the chain */
-    if((Norm_Mat(Distance,2) <= Ra) ||
-       is_in_Set(FEM_Mesh.Connectivity[Elem_GP], iPtr->I)){
-      push_to_Set(&Triburary_Nodes,iPtr->I);
+    if(Norm_Mat(Distance,2) <= Ra){
+      push_to_Set(&Triburary_Nodes,Node0);
     }
 
     /* Free memory of the distrance vector */
     FreeMat(Distance);
 
-    /* Update pointer index */
-    iPtr = iPtr->next;
   }
+  
   /* Free memory */
-  free_Set(List_Nodes);
+  free(Array_Nodes0);
 
   return Triburary_Nodes;
 }

@@ -90,7 +90,7 @@ static int imin_arg1, imin_arg2;
 Matrix Newton_Rapson(Matrix(* Function)(Matrix, Matrix), Matrix,
 		     Matrix(* Jacobian)(Matrix, Matrix), Matrix,
 		     Matrix,Matrix);
-Matrix Solve_Linear_Sistem(Matrix, Matrix, Matrix);
+Matrix Solve_Linear_Sistem(Matrix, Matrix);
 Matrix Conjugate_Gradient_Method(Matrix,Matrix,Matrix);
 Matrix Jacobi_Conjugate_Gradient_Method(Matrix,Matrix,Matrix);
 Matrix One_Iteration_Lumped(Matrix, Matrix, Matrix);
@@ -128,8 +128,8 @@ Matrix Centroid_Poligon(Matrix);
 int InOut_Poligon(Matrix, Matrix);
 double SignumFunct(double x);
 Matrix SolvePolynomial(Matrix);
+Matrix get_nurbs_distance(Matrix);
 double Distance(Matrix, Matrix);
-
 void get_SVD_Of(Matrix A, Matrix W, Matrix V);
 
 /*******************************************************/
@@ -147,7 +147,7 @@ int get_Lenght_Set(ChainPtr);
 ChainPtr get_Union_Of(ChainPtr *, int);
 ChainPtr get_Intersection_Of(ChainPtr, ChainPtr);
 void print_Set(ChainPtr);
-void OrderList(ChainPtr *, ChainPtr *, Matrix);
+void order_Set(ChainPtr *, ChainPtr *, Matrix);
 
 /*******************************************************/
 

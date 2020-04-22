@@ -45,7 +45,7 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
   double th_p;
   double m_p;
   double rho_p;
-  int GPxElement = 4;
+  int GPxElement = 1;
   int i_p;
 
   /* Set to false check variables */
@@ -140,7 +140,7 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
     MPM_Mesh.NumGP = GPxElement*MPM_GID_Mesh.NumElemMesh;
  
     /* Allocate fields */
-    MPM_Mesh.Element_id = /* Index of the Element */
+    MPM_Mesh.I0 = /* Index of the Element */
       (int *)Allocate_ArrayZ(MPM_Mesh.NumGP,sizeof(int));  
     MPM_Mesh.NumberNodes = /* Number of tributary nodes for each GP */
       (int *)Allocate_ArrayZ(MPM_Mesh.NumGP,sizeof(int));
@@ -317,7 +317,7 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
       	MPM_Mesh.Phi.mass.nV[i_p] = m_p;
 	
       	/* Local coordinates of the element */
-      	MPM_Mesh.Element_id[i_p] = -999;
+      	MPM_Mesh.I0[i_p] = -999;
       	MPM_Mesh.NumberNodes[i_p] = 4;
       }
       
@@ -404,7 +404,7 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
     /**************************************************/    
     FreeMat(MPM_GID_Mesh.Coordinates);
     free(MPM_GID_Mesh.Connectivity);
-    free(MPM_GID_Mesh.ActiveNode);
+    free(MPM_GID_Mesh.NumParticles);
     free(MPM_GID_Mesh.NumNeighbour);
     free(MPM_GID_Mesh.NodeNeighbour);
 

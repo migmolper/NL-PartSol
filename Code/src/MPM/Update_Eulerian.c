@@ -134,7 +134,7 @@ void update_NodalMomentum(Mesh FEM_Mesh, Matrix Phi_I, Matrix F_I)
   /* Update the grid nodal momentum */
   for(int i = 0 ; i<Nnodes ; i++){
     for(int j = 0 ; j<Ndim ; j++){
-      if(FEM_Mesh.ActiveNode[i] > 0){
+      if(FEM_Mesh.NumParticles[i] > 0){
 	Phi_I.nM[i][j] += DeltaTimeStep*F_I.nM[i][j];
       }
     }
@@ -295,7 +295,7 @@ Matrix compute_VelocityCorrector(Mesh FEM_Mesh,Matrix V_I,
   
   /* 1º Get nodal values of the velocity */
   for(int I = 0 ; I<Nnodes ; I++){
-    if((FEM_Mesh.ActiveNode[I] > 0) && (M_I.nV[I] > 0)){
+    if((FEM_Mesh.NumParticles[I] > 0) && (M_I.nV[I] > 0)){
       for(int i = 0 ; i<Ndim ; i++){
 	V_I.nM[I][i] += gamma*DeltaTimeStep*F_I.nM[I][i]/M_I.nV[I];
       }

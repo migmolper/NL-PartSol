@@ -47,6 +47,7 @@ ChainPtr uGIMP_Tributary_Nodes(Matrix, int,
 /*******************************************************/
 
 /* LME shape functions */
+void LME_Initialize_Beta(Matrix, double, int);
 void LME_Initialize(GaussPoint, Mesh);
 Matrix LME_Beta(Matrix, Matrix, double);
 Matrix LME_lambda_NR(Matrix, Matrix, Matrix);
