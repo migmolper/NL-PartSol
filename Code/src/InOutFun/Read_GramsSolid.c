@@ -52,7 +52,6 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
   bool Is_GramsSolid2D = false;
   bool Is_GramsShapeFun = false;
   bool Is_GramsMaterials = false;
-  bool Is_Fracture = false;
   bool Is_GramsInitials = false;
   bool Is_GramsBodyForces = false;
   bool Is_GramsNeumannBC = false;
@@ -382,23 +381,7 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
     }
     printf("\t %s \n","DONE !!");
 
-    /**************************************************/
-    /********* COMPUTE Beps FOR FRACTURE **************/
-    /**************************************************/
-    for(int i = 0 ; i<Counter_Materials ; i++){
-      if(MPM_Mesh.Mat[i].Eigenerosion ||
-	 MPM_Mesh.Mat[i].Eigensoftening){
-	Is_Fracture = true;
-      }
-    }
-    if(Is_Fracture){
-      puts("*************************************************");
-      printf("\t * %s \n",
-	     "Compute Beps ...");
-      ComputeBeps(MPM_Mesh,FEM_Mesh);
-      printf("\t %s \n","DONE !!");
-    }
-    
+   
     /**************************************************/    
     /************* Free the input data ****************/
     /**************************************************/    

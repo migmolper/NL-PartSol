@@ -232,7 +232,7 @@ Matrix Eval_Contact_Forces(Load *, int, int, int);
 Matrix compute_Reactions(Mesh, Matrix);
 
 /* Forces-stress-strain functions */
-void ComputeDamage(GaussPoint, Mesh);
+void ComputeDamage(int, GaussPoint, Mesh);
 Tensor compute_RateOfStrain(Matrix, Matrix);
 Tensor update_Strain(Tensor, Tensor, double);
 double update_Density(double, double, Tensor);
@@ -274,7 +274,7 @@ ChainPtr DiscardElements(ChainPtr, Matrix, Matrix, Mesh);
 
 void LocalSearchGaussPoints(GaussPoint, Mesh);
 
-void ComputeBeps(GaussPoint, Mesh);
+void ComputeBeps(int, GaussPoint, Mesh);
 
 void GPinCell(ChainPtr *, ChainPtr *, Matrix, int, double);
 

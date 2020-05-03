@@ -67,40 +67,66 @@ void update_LocalState(Matrix V_I, GaussPoint MPM_Mesh,
     free(Nodes_p.Connectivity);
     
   }
-
-  /* Compute damage of the particles */
-  ComputeDamage(MPM_Mesh, FEM_Mesh);
-
+  
+  /* Loop in the particles to compute the damage */
+  for(int p = 0 ; p<Np ; p++){
+    /* Compute damage of the particles */
+    ComputeDamage(p, MPM_Mesh, FEM_Mesh);
+  }
+  
 }
 
 /*******************************************************/
 
-void ComputeDamage(GaussPoint MPM_Mesh, Mesh FEM_Mesh){
+void ComputeDamage(int p, GaussPoint MPM_Mesh, Mesh FEM_Mesh){
 
+  int Ndim = NumberDimensions;
+  int Mat_p = MPM_Mesh.MatIdx[p];  
   double DeltaX = FEM_Mesh.DeltaX;
+
+  /* Get the required fields */
   Matrix ji = MPM_Mesh.Phi.ji;
   Matrix W = MPM_Mesh.Phi.W;
   Matrix Mass = MPM_Mesh.Phi.mass;
+  Matrix Rho = MPM_Mesh.Phi.rho;
   Matrix Stress = MPM_Mesh.Phi.Stress;
   Matrix Strain = MPM_Mesh.Phi.Strain;
   Matrix StrainF = MPM_Mesh.Phi.StrainF;
-  int * MatIdx = MPM_Mesh.MatIdx;
-  Material * MatProp = MPM_Mesh.Mat;
+  Material MatProp = MPM_Mesh.Mat[Mat_p];
+
+  /* Beps of all the particles */
   ChainPtr * Beps = MPM_Mesh.Beps;
 
-  if(MPM_Mesh.Mat[0].Eigenerosion){
-    /* ComputeBeps(MPM_Mesh,FEM_Mesh); */
-    EigenerosionAlgorithm(ji, W, Mass, Stress,
-			  MatIdx, MatProp,
-			  Beps, DeltaX);
+  /* Select the eigenerosion algorithm */
+  if(MatProp.Eigenerosion){
+
+    /* Update Beps of each particle p */
+    ComputeBeps(p, MPM_Mesh, FEM_Mesh);
+
+    /* Update the damage variable of the particle */
+    EigenerosionAlgorithm(p, ji, W, Mass, Rho, Stress,
+			  MatProp, Beps, DeltaX);    
   }
 
-  if(MPM_Mesh.Mat[0].Eigensoftening){
-    /* ComputeBeps(MPM_Mesh,FEM_Mesh); */
-    EigensofteningAlgorithm(ji, Strain, StrainF,
-			    Mass, Stress, MatIdx,
-			    MatProp, Beps);
+  /* Select the eigensoftening algorithm */
+  if(MatProp.Eigensoftening){
+
+    /* Update Beps of each particle p */
+    ComputeBeps(p, MPM_Mesh, FEM_Mesh);
+
+    /* Update the damage variable of the particle */
+    EigensofteningAlgorithm(p, ji, Strain, StrainF, Mass,
+			    Stress, MatProp, Beps);
+   
   }
+
+  /* If the particle is damaged set the stress tensor null */      
+  if(ji.nV[p] == 1.0){
+    for(int i = 0 ; i<Ndim*Ndim ; i++){
+      Stress.nM[p][i] = 0.0;
+    }
+  }
+  
 }
 
 /*******************************************************/

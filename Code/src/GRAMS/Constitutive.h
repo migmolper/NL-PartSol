@@ -48,13 +48,11 @@ Tensor LinearElastic(Tensor, Tensor, Material);
 
 
 /* Fracture */
-void EigenerosionAlgorithm(Matrix, Matrix,
-			   Matrix, Matrix,
-			   int *, Material *,
-			   ChainPtr *, double);
-void EigensofteningAlgorithm(Matrix, Matrix,
-			     Matrix, Matrix,
-			     Matrix, int *,
-			     Material *, ChainPtr *);
+void EigenerosionAlgorithm(int, Matrix, Matrix,
+			   Matrix, Matrix, Matrix,
+			   Material, ChainPtr *, double);
+void EigensofteningAlgorithm(int, Matrix, Matrix,
+			     Matrix, Matrix, Matrix,
+			     Material, ChainPtr *);
 
 /*******************************************************/

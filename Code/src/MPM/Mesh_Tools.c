@@ -560,113 +560,93 @@ void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 
 /*********************************************************************/
 
-void ComputeBeps(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
+void ComputeBeps(int p, GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 /*
 
-*/
+ */
 {
 
   int Ndim = NumberDimensions;
+  int Mat_p = MPM_Mesh.MatIdx[p];
+  int I0 = MPM_Mesh.I0[p];
   
   /* Search radious */
-  double epsilon;
+  double epsilon = MPM_Mesh.Mat[Mat_p].Ceps*FEM_Mesh.DeltaX;
+
+  ChainPtr Set_NodesBeps = NULL;
+  int * NodesBeps;
+  int NumNodesBeps;
+  int Node0;
+
+  /* Index of each node close to the particle */
+  int I_Beps;
+  /* Interator pointer in Beps */
+  ChainPtr Particles_Beps = NULL; 
+  /* Index of a particle close to the particle p */
+  int q_Beps;
   
-  /* Number of GP and array with the element where it is each GP */
-  int NumGP = MPM_Mesh.NumGP;
-  int * I0 = MPM_Mesh.I0;
-  int Mat_GP;
-  
-  /* List wit the nodes of the initial element */
-  int Elem_GP; /* Element of the GP (search) */
-  int NumNodesElem;
-  int * NodesElem;
-
-  /* Chain with a list of elements near the initial element,
-   and interator chain */
-  ChainPtr * TableElements = NULL;
-  ChainPtr ListElements;
-  int NumElems;
-  int * ArrayElements;
-
-  /* Auxiliar chain */
-  ChainPtr * TableGP = NULL;
-  ChainPtr SearchGP;
-  int * ArraySearchGP;
-  int NumSearchGP;
-
   /* Distance */
-  Matrix X0 = MatAssign(Ndim,1,NAN,NULL,NULL);
-  Matrix X1 = MatAssign(Ndim,1,NAN,NULL,NULL);
-  double Dist;
+  Matrix x_GC = MPM_Mesh.Phi.x_GC;
+  Matrix X_p = MatAssign(Ndim,1,NAN,x_GC.nM[p],NULL);
+  Matrix X_q = MatAssign(Ndim,1,NAN,NULL,NULL);
+  Matrix Distance;
 
   /* Free the previous list and set to NULL */
-  for(int i = 0 ; i<NumGP ; i++){
-    free_Set(MPM_Mesh.Beps[i]);
-    MPM_Mesh.Beps[i] = NULL;
+  free_Set(MPM_Mesh.Beps[p]);
+  MPM_Mesh.Beps[p] = NULL;
+
+  /* Get nodes close to the particle */
+  Set_NodesBeps = get_locality_of_node(I0, FEM_Mesh);
+  NumNodesBeps = get_Lenght_Set(Set_NodesBeps);
+  NodesBeps = Set_to_Pointer(Set_NodesBeps,NumNodesBeps);
+  free_Set(Set_NodesBeps);
+
+  /* Loop in the nodes close to the particle */
+  for(int i = 0 ; i<NumNodesBeps ; i++){
+
+    /* Get the index of nodes close to the particle */
+    I_Beps = NodesBeps[i];
+
+    /* List of particles close to the node */
+    Particles_Beps = FEM_Mesh.I_particles[I_Beps];
+    
+    while(Particles_Beps != NULL){
+
+      /* Get the index of each particle */
+      q_Beps = Particles_Beps->I;
+
+      /* In Beps only those particles of the same material */
+      if(Mat_p == MPM_Mesh.MatIdx[q_Beps]){
+
+	/* Get the vector with the coordinates of each particle */
+	X_q.nV = x_GC.nM[q_Beps];
+
+	/* Get a vector from the GP to the node */
+	Distance = Sub_Mat(X_p,X_q);
+
+	/* Asign to p only those particles in Beps */
+	if (Norm_Mat(Distance,2) < epsilon){
+	  push_to_Set(&MPM_Mesh.Beps[p],q_Beps);
+	}
+
+	/* Free distance vector */
+	FreeMat(Distance);
+
+	/* Go to the next set of particles */
+	Particles_Beps = Particles_Beps->next;
+
+      }
+      
+    }
+
+    /* Set to NULL the interator */
+    Particles_Beps = NULL;
+    
   }
 
-  /* Loop over the GP's and generate the list */
-  for(int i = 0 ; i<NumGP ; i++){
-    
-    /* Get the search rad */
-    Mat_GP = MPM_Mesh.MatIdx[i];
-    epsilon = MPM_Mesh.Mat[Mat_GP].Ceps*FEM_Mesh.DeltaX;
-        
-    /* Number of nodes of the initial element and
-       list of nodes */
-    Elem_GP = I0[i];
-    NumNodesElem = FEM_Mesh.NumNodesElem[Elem_GP];
-    NodesElem = Set_to_Pointer(FEM_Mesh.Connectivity[Elem_GP],
-			     NumNodesElem);
-    
-    /* Chain with the tributary elements, this is the list of element near the
-       gauss point, including where it is */
-    TableElements = malloc(NumNodesElem*sizeof(ChainPtr));
-    ListElements = NULL;
-    for(int j = 0 ; j<NumNodesElem ; j++){
-      TableElements[j] = FEM_Mesh.NodeNeighbour[NodesElem[j]];
-    }
-    ListElements = get_Union_Of(TableElements,NumNodesElem);
-    /* Free memory */
-    free(NodesElem);
-    free(TableElements);
-    TableElements = NULL;
-    
-    /* First search : In elements near to each GP */
-    NumElems = get_Lenght_Set(ListElements);
-    ArrayElements = Set_to_Pointer(ListElements, NumElems);
-    TableGP = malloc(NumElems*sizeof(ChainPtr));
-    SearchGP = NULL;
-    for(int j = 0 ; j<NumElems ; j++){
-      TableGP[j] = FEM_Mesh.I_particles[ArrayElements[j]];
-    }
-    SearchGP = get_Union_Of(TableGP,NumElems);
-    
-    /* Free memory */
-    free_Set(ListElements);
-    ListElements = NULL;
-    free(ArrayElements);
-    free(TableGP);
-    TableElements = NULL;
-    
-    /* Search in the cell and return the total search list modified  */
-    /* without those GP inside of the cell and */
-    /* include in Beps[i] the GP inside of the cell */
-    NumSearchGP = get_Lenght_Set(SearchGP);
-    ArraySearchGP = Set_to_Pointer(SearchGP,NumSearchGP);
-    X0.nV = MPM_Mesh.Phi.x_GC.nM[i];
-    for(int j = 0 ; j<NumSearchGP ; j++){
-      X1.nV = MPM_Mesh.Phi.x_GC.nM[ArraySearchGP[j]];
-      Dist = Distance(X1,X0);
-       if (Dist < epsilon){
-	 push_to_Set(&MPM_Mesh.Beps[i],ArraySearchGP[j]);
-       }
-    }
-    /* Free chain */
-    free_Set(SearchGP);
-    SearchGP = NULL;
-    free(ArraySearchGP);
-  }
+  /* Free pointer with the list of nodes close to the particle */
+  free(NodesBeps);    
+ 
 }
 
 /*********************************************************************/
