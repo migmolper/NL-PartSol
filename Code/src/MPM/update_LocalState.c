@@ -69,7 +69,7 @@ void update_LocalState(Matrix V_I, GaussPoint MPM_Mesh,
   }
   
   /* Loop in the particles to compute the damage */
-  for(int p = 0 ; p<Np ; p++){
+  for(int p = 0 ; p<Np ; p++){    
     /* Compute damage of the particles */
     ComputeDamage(p, MPM_Mesh, FEM_Mesh);
   }
@@ -100,23 +100,29 @@ void ComputeDamage(int p, GaussPoint MPM_Mesh, Mesh FEM_Mesh){
   /* Select the eigenerosion algorithm */
   if(MatProp.Eigenerosion){
 
+    /* Free the previous list and set to NULL */
+    free_Set(MPM_Mesh.Beps[p]);
+    MPM_Mesh.Beps[p] = NULL;
+
     /* Update Beps of each particle p */
     ComputeBeps(p, MPM_Mesh, FEM_Mesh);
 
     /* Update the damage variable of the particle */
-    EigenerosionAlgorithm(p, ji, W, Mass, Rho, Stress,
-			  MatProp, Beps, DeltaX);    
+    EigenerosionAlgorithm(p,ji,W,Mass,Rho,Stress,MatProp,Beps,DeltaX);
   }
 
   /* Select the eigensoftening algorithm */
   if(MatProp.Eigensoftening){
 
+    /* Free the previous list and set to NULL */
+    free_Set(MPM_Mesh.Beps[p]);
+    MPM_Mesh.Beps[p] = NULL;
+
     /* Update Beps of each particle p */
     ComputeBeps(p, MPM_Mesh, FEM_Mesh);
 
     /* Update the damage variable of the particle */
-    EigensofteningAlgorithm(p, ji, Strain, StrainF, Mass,
-			    Stress, MatProp, Beps);
+    EigensofteningAlgorithm(p,ji,Strain,StrainF,Mass,Stress,MatProp,Beps);
    
   }
 

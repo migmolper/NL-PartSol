@@ -509,8 +509,6 @@ void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
   int I0_p;
   /* List of nodes close to the node I0_p */
   ChainPtr Locality_I0;
-  /* Iterator pointer */
-  ChainPtr ListNodes_p = NULL;
 
   /* Set to zero the active/non-active node, and the GPs in each element */
   for(int i = 0 ; i<FEM_Mesh.NumNodesMesh ; i++){
@@ -573,7 +571,6 @@ void ComputeBeps(int p, GaussPoint MPM_Mesh, Mesh FEM_Mesh)
   ChainPtr Set_NodesBeps = NULL;
   int * NodesBeps;
   int NumNodesBeps;
-  int Node0;
 
   /* Index of each node close to the particle */
   int I_Beps;
@@ -587,10 +584,6 @@ void ComputeBeps(int p, GaussPoint MPM_Mesh, Mesh FEM_Mesh)
   Matrix X_p = MatAssign(Ndim,1,NAN,x_GC.nM[p],NULL);
   Matrix X_q = MatAssign(Ndim,1,NAN,NULL,NULL);
   Matrix Distance;
-
-  /* Free the previous list and set to NULL */
-  free_Set(MPM_Mesh.Beps[p]);
-  MPM_Mesh.Beps[p] = NULL;
 
   /* Get nodes close to the particle */
   Set_NodesBeps = FEM_Mesh.NodalLocality[I0];
@@ -628,15 +621,12 @@ void ComputeBeps(int p, GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 	/* Free distance vector */
 	FreeMat(Distance);
 
-	/* Go to the next set of particles */
-	Particles_Beps = Particles_Beps->next;
-
       }
+
+      /* Go to the next set of particles */
+      Particles_Beps = Particles_Beps->next;
       
     }
-
-    /* Set to NULL the interator */
-    Particles_Beps = NULL;
     
   }
 
