@@ -535,7 +535,7 @@ void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
       I0_p = MPM_Mesh.I0[p];
 
       /* Get nodes close to the node I0_p */
-      Locality_I0 = get_locality_of_node(I0_p,FEM_Mesh);
+      Locality_I0 = FEM_Mesh.NodalLocality[I0_p];
 
       /* Update the index of the node close to the particle */
       MPM_Mesh.I0[p] = get_closest_node_to(X_p,Locality_I0,FEM_Mesh.Coordinates);
@@ -545,9 +545,6 @@ void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 
       /* Active those nodes that interact with the particle */
       asign_particle_to_nodes(p, MPM_Mesh.ListNodes[p], FEM_Mesh);
-
-      /* Free memory */
-      free_Set(Locality_I0);
       
     }
     else{
@@ -596,10 +593,9 @@ void ComputeBeps(int p, GaussPoint MPM_Mesh, Mesh FEM_Mesh)
   MPM_Mesh.Beps[p] = NULL;
 
   /* Get nodes close to the particle */
-  Set_NodesBeps = get_locality_of_node(I0, FEM_Mesh);
-  NumNodesBeps = get_Lenght_Set(Set_NodesBeps);
+  Set_NodesBeps = FEM_Mesh.NodalLocality[I0];
+  NumNodesBeps = FEM_Mesh.SizeNodalLocality[I0];
   NodesBeps = Set_to_Pointer(Set_NodesBeps,NumNodesBeps);
-  free_Set(Set_NodesBeps);
 
   /* Loop in the nodes close to the particle */
   for(int i = 0 ; i<NumNodesBeps ; i++){

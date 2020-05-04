@@ -198,7 +198,25 @@ Mesh GramsBox(char * Name_File)
   /*** Generate nodal connectivity of the mesh : ****/
   /******* list of elements near to a node ***********/
   /**************************************************/
-  GetNodalConnectivity(FEM_Mesh);  
+  GetNodalConnectivity(FEM_Mesh);
+  
+  /**************************************************/	
+  /***** Initialize nodal locality of each node *****/
+  /**************************************************/
+  /* Pointer with the number of nodes close to each node */
+  FEM_Mesh.SizeNodalLocality =
+    (int *)Allocate_ArrayZ(FEM_Mesh.NumNodesMesh,sizeof(int));
+
+  /* Table of sets with the list of nodes close to a node */
+  FEM_Mesh.NodalLocality =
+    (ChainPtr *)malloc(FEM_Mesh.NumNodesMesh*sizeof(ChainPtr));
+
+  /* Fill the table with the nodal locality */
+  for(int i = 0 ; i<FEM_Mesh.NumNodesMesh ; i++){
+    FEM_Mesh.NodalLocality[i] = get_locality_of_node(i, FEM_Mesh);
+    FEM_Mesh.SizeNodalLocality[i] = get_Lenght_Set(FEM_Mesh.NodalLocality[i]);
+  }
+  
   /**************************************************/	
   /** Initialize particle connectivity of each node */
   /**************************************************/

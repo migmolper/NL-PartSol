@@ -446,10 +446,9 @@ ChainPtr LME_Tributary_Nodes(Matrix X_GP, Matrix Beta, int I0, Mesh FEM_Mesh){
   double Ra = sqrt(-log(TOL_lambda)/Beta.nV[0]);
 
   /* Get nodes close to the particle */
-  Set_Nodes0 = get_locality_of_node(I0, FEM_Mesh);
-  NumNodes0 = get_Lenght_Set(Set_Nodes0);
+  Set_Nodes0 = FEM_Mesh.NodalLocality[I0];
+  NumNodes0 = FEM_Mesh.SizeNodalLocality[I0];
   Array_Nodes0 = Set_to_Pointer(Set_Nodes0,NumNodes0);
-  free_Set(Set_Nodes0);
      
   /* Loop over the chain with the tributary nodes */
   for(int i = 0 ; i<NumNodes0 ; i++){

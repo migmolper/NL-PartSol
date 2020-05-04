@@ -170,6 +170,10 @@ typedef struct {
   int * NumNeighbour;
   ChainPtr * NodeNeighbour;
 
+  /* List of nodes close to a node */
+  int * SizeNodalLocality;
+  ChainPtr * NodalLocality;
+
   /* Number of particles close to this node */
   int * NumParticles;
   /* List of particles in a node */
