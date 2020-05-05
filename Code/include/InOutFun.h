@@ -4,6 +4,7 @@
 
 /* Auxiliar functions */
 int parse(char **, char *, char *);
+void generate_route(char *, char *);
 Matrix Read_CSV(char *, int);
 Curve ReadCurve(char *);
 Mesh ReadGidMesh(char *);

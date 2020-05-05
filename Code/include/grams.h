@@ -83,6 +83,7 @@ double * Value;
 /***************************************/
 /********** External libraries *********/
 /***************************************/
+#ifdef linux
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -91,6 +92,19 @@ double * Value;
 #include <math.h>
 #include <stddef.h>
 #include <ctype.h>
+#endif
+
+#ifdef _WIN32
+#include <windows.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
+#include <string.h>
+#include <time.h>
+#include <math.h>
+#include <stddef.h>
+#include <ctype.h>
+#endif
 
 /***************************************/
 /********** GRAMS's libraries **********/

@@ -28,7 +28,6 @@ void GramsInitials(char * Name_File, GaussPoint GP_Mesh, int GPxElement)
   /* Parse file name with the list of nodes */
   char * Parse_Init_Nodes[MAXW] = {NULL};
   char * Name_File_Copy = malloc(strlen(Name_File)); 
-  char * Name_Parse[MAXW] = {NULL};
   char Route_Nodes[MAXC] = {0};
   char FileNodesRoute[MAXC];
 
@@ -64,13 +63,7 @@ void GramsInitials(char * Name_File, GaussPoint GP_Mesh, int GPxElement)
   }
 
   /* Generate route */
-  strcpy(Name_File_Copy, Name_File);
-  Num_words_parse = parse(Name_Parse,Name_File_Copy,"(/)");
-  strcat(Route_Nodes,"./");
-  for(int i = 0 ; i<Num_words_parse-1 ; i++){
-    strcat(Route_Nodes, Name_Parse[i]);
-    strcat(Route_Nodes,"/");
-  }
+  generate_route(Route_Nodes,Name_File);
 
   /* Read the file line by line */
   while(fgets(Line_GramsInitials,sizeof(Line_GramsInitials),Sim_dat) != NULL){
