@@ -1,8 +1,4 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <math.h>
 #include "grams.h"
-
 
 /***********************************************/
 /******* 2D cuadrilateral linear element *******/

@@ -1,7 +1,3 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <math.h>
 #include "grams.h"
 
 void U_FE(Mesh FEM_Mesh, GaussPoint MPM_Mesh)

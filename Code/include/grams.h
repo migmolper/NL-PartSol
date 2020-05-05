@@ -33,7 +33,8 @@
 /***************************************/
 /************* Word Parser *************/
 /***************************************/
-enum { MAXW = 100, MAXC = 1000 };
+#define MAXW 100
+#define MAXC 1000
 
 /***************************************/
 /******** Name of inputs files *********/
@@ -78,50 +79,26 @@ char Field[10];
 int * Node;
 double * Value;
 
+
 /***************************************/
-/************ Matrix Library ***********/
+/********** External libraries *********/
 /***************************************/
-#ifndef Matlib
-#define Matlib
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
+#include <string.h>
+#include <time.h>
+#include <math.h>
+#include <stddef.h>
+#include <ctype.h>
+
+/***************************************/
+/********** GRAMS's libraries **********/
+/***************************************/
 #include "Matlib.h"
-#endif
-
-/***************************************/
-/******* Constitutive Library **********/
-/***************************************/
-#ifndef Constitutive
-#define Constitutive
+#include "Domain.h"
 #include "Constitutive.h"
-#endif
-
-/***************************************/
-/********** MPM functions **************/
-/***************************************/
-#ifndef MPM
-#define MPM
 #include "MPM.h"
-#endif
-
-/***************************************/
-/******* Shape functions Library *******/
-/***************************************/
-#ifndef ShapeFun
-#define ShapeFun
 #include "ShapeFun.h"
-#endif
-
-/***************************************/
-/******** Input Output Library *********/
-/***************************************/
-#ifndef InOutFun
-#define InOutFun
 #include "InOutFun.h"
-#endif
-
-/***************************************/
-/***************************************/
-/***************************************/
-#ifndef Formulations
-#define Formulations
 #include "Formulations.h"
-#endif

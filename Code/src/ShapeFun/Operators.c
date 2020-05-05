@@ -1,14 +1,8 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <math.h>
 #include "grams.h"
 
 /*********************************************************************/
 
-Matrix compute_ShapeFunction(Element GP_Element,
-			     GaussPoint MPM_Mesh,
-			     Mesh FEM_Mesh) 
+Matrix compute_ShapeFunction(Element GP_Element,GaussPoint MPM_Mesh,Mesh FEM_Mesh) 
 { 
   int i_GP = GP_Element.i_GP;
   int GP_NumNodes = GP_Element.NumberNodes;
@@ -113,8 +107,7 @@ Matrix compute_ShapeFunction(Element GP_Element,
 
 /*********************************************************************/
 
-Matrix compute_ShapeFunction_Gradient(Element GP_Element,
-				      GaussPoint MPM_Mesh,
+Matrix compute_ShapeFunction_Gradient(Element GP_Element,GaussPoint MPM_Mesh,
 				      Mesh FEM_Mesh) 
 { 
   int i_GP = GP_Element.i_GP;

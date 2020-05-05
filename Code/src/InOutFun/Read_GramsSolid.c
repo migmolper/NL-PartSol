@@ -1,8 +1,3 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <math.h>
-#include <stdbool.h>
 #include "grams.h"
 
 #define MAXVAL(A,B) ((A)>(B) ? (A) : (B))
@@ -45,7 +40,7 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
   double th_p;
   double m_p;
   double rho_p;
-  int GPxElement = 4;
+  int GPxElement = 1;
   int i_p;
 
   /* Set to false check variables */

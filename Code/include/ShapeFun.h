@@ -1,8 +1,5 @@
-#include <stdbool.h> 
-
-#ifndef TypeDefinitions
-#define TypeDefinitions
-#endif
+#ifndef _SHAPEFUN_H_
+#define _SHAPEFUN_H_
 
 /*******************************************************/
 
@@ -65,3 +62,6 @@ Matrix compute_ShapeFunction(Element, GaussPoint, Mesh );
 Matrix compute_ShapeFunction_Gradient(Element, GaussPoint, Mesh);
 
 /*******************************************************/
+
+
+#endif

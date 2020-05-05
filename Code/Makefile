@@ -20,13 +20,11 @@ CC = $(GCC_ROOT)/gcc
 # Source code
 SOURCES = \
 	$(wildcard src/GRAMS/*.c)\
-	$(wildcard src/ToolsLib/*.c)\
 	$(wildcard src/InOutFun/*.c)\
 	$(wildcard src/Constitutive/*.c)\
 	$(wildcard src/Matlib/*.c)\
 	$(wildcard src/ShapeFun/*.c)\
 	$(wildcard src/MPM/*.c)\
-	$(wildcard src/Boundary_Conditions/*.c)\
 	$(wildcard src/Formulations/*.c)
 
 #####################################################################
@@ -40,7 +38,7 @@ OBJS = $(SOURCES:.c=.c.o)
 # List of libraries required during linking
 LDFLAGS = -lm
 DBFLAGS = -g -Wall -Wpedantic -Wextra
-DIRFLAG = -Isrc/GRAMS
+DIRFLAG = -Iinclude
 # RLFLAGS = -O2
 
 #####################################################################

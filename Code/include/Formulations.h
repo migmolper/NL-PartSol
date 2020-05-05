@@ -1,8 +1,5 @@
-
-#ifndef TypeDefinitions
-#define TypeDefinitions
-#endif
-
+#ifndef _FORMULATIONS_H_
+#define _FORMULATIONS_H_
 
 /* Dourant condition */
 double DeltaT_CFL(GaussPoint, double);
@@ -24,3 +21,7 @@ void U_GA(Mesh, GaussPoint);
  * Explicit predictor corrector 
  */ 
 void U_PCE(Mesh, GaussPoint);
+
+
+
+#endif

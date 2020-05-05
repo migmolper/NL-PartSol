@@ -1,14 +1,5 @@
-#ifndef GlobalVariables
-#define GlobalVariables
-#endif
-
-#ifndef Matlib
-#define Matlib
-#endif
-
-#ifndef TypeDefinitions
-#define TypeDefinitions
-#endif
+#ifndef _INOUTFUN_H_
+#define _INOUTFUN_H_
 
 
 /* Auxiliar functions */
@@ -39,3 +30,6 @@ void WriteVtk_Float_Tensor(char *, Matrix);
 
 /* Print Gnuplot */
 void WriteGnuplot(Matrix, Matrix, double, double, int, int, char[20]);
+
+
+#endif

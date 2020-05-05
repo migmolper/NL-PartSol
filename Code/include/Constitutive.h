@@ -1,9 +1,5 @@
-#include <stdio.h>
-#include <stdlib.h>
-
-#ifndef TypeDefinitions
-#define TypeDefinitions
-#endif
+#ifndef _CONSTITUTIVE_H_
+#define _CONSTITUTIVE_H_
 
 /*******************************************************/
 
@@ -56,3 +52,6 @@ void EigensofteningAlgorithm(int, Matrix, Matrix,
 			     Material, ChainPtr *);
 
 /*******************************************************/
+
+
+#endif

@@ -1,6 +1,3 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include "grams.h"
 
 void WriteVtk_MPM(char * Name_File, GaussPoint MPM_Mesh,

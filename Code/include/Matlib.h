@@ -1,11 +1,6 @@
-#include <stdbool.h>
+#ifndef _MATLIB_H_
+#define _MATLIB_H_
   
-#ifndef TypeDefinitions
-#define TypeDefinitions
-#endif
-
-/*******************************************************/
-
 /* Matrix definition */
 typedef struct{
   int N_rows; /* Number of rows */
@@ -16,8 +11,6 @@ typedef struct{
   char Info [100]; /* Aditional information */
 } Matrix;
 
-/*******************************************************/
-
 /* Chain of nodes */
 typedef struct Chain { 
   int I; /* Index of the node */
@@ -26,8 +19,6 @@ typedef struct Chain {
 
 /* Pointer to a chain */
 typedef Chain * ChainPtr;
-
-/*******************************************************/
 
 /* Table definition */
 typedef struct{
@@ -39,7 +30,19 @@ typedef struct{
   char Info [100]; /* Aditional information */
 } Table;
 
-/*******************************************************/
+/*! \struct Curve
+ *  Curve definition
+ */
+typedef struct{
+
+  /*! Number of items in the curve */
+  int Num; 
+  /*! Values for each time */
+  double * Fx; 
+  /*! Aditional information */
+  char Info [100];
+  
+} Curve;
 
 /* Tensor definition */
 typedef struct{
@@ -48,8 +51,6 @@ typedef struct{
   double *N[3]; /* Second order tensor */
   char Info [100]; /* Aditional information */
 } Tensor;
-
-/*******************************************************/
 
 /* Math macros from numerical recipies */
 static float sqr_arg;
@@ -172,3 +173,6 @@ Tensor get_dyadicProduct_Of(Tensor a, Tensor b);
 Tensor get_firstOrderContraction_Of(Tensor A, Tensor b);
 
 /*******************************************************/
+
+
+#endif
