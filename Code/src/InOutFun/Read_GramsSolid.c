@@ -10,6 +10,7 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
  */
 {
   int Ndim = NumberDimensions;
+  int NumParticles;
 
   /* Simulation file */
   FILE * Sim_dat;
@@ -23,8 +24,6 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
   char * Parse_Mesh_id[MAXW] = {NULL};
 
   /* Parse file name with the list of nodes */
-  char * Name_File_Copy = malloc(strlen(Name_File)); 
-  char * Name_Parse[MAXW] = {NULL};
   char Route_Mesh[MAXC] = {0};
   
   /* Material point mesh (Gauss-Points) */
@@ -35,11 +34,7 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
   ChainPtr Vertex;
   int NumVertex;
 
-  double Area_Element;
-  double A_p;
-  double th_p;
-  double m_p;
-  double rho_p;
+  double Area_Element, A_p, th_p, m_p, rho_p;
   int GPxElement = 1;
   int i_p;
 
@@ -84,15 +79,9 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
 	(strcmp(Parse_GramsSolid2D[0],"GramsSolid2D") == 0)){
       Is_GramsSolid2D = true;
       Num_words_parse = parse(Parse_Mesh_id, Parse_GramsSolid2D[1],"(=)");
-      strcpy(Name_File_Copy, Name_File);
       MPM_MeshFileName = Parse_Mesh_id[1];
-      Num_words_parse = parse(Name_Parse,Name_File_Copy,"(/)");
-      for(int i = 0 ; i<Num_words_parse-1 ; i++){
-	strcat(Route_Mesh, Name_Parse[i]);
-	strcat(Route_Mesh,"/");
-      }
-      strcat(Route_Mesh,MPM_MeshFileName);
-      free(Name_File_Copy);	  
+      generate_route(Route_Mesh,Name_File);
+      strcat(Route_Mesh,MPM_MeshFileName);      
     }
     if ((Num_words_parse > 0) &&
 	(strcmp(Parse_GramsSolid2D[0],"GramsShapeFun") == 0)){
@@ -131,39 +120,35 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
     /* The number of Gauss-Points is the same as the number of elements
        in the input mesh, because we set a GP in the middle of each element */
     /* MPM_Mesh.NumGP = MPM_GID_Mesh.NumElemMesh; */
-    MPM_Mesh.NumGP = GPxElement*MPM_GID_Mesh.NumElemMesh;
- 
+    NumParticles = GPxElement*MPM_GID_Mesh.NumElemMesh;
+    MPM_Mesh.NumGP = NumParticles;
+
     /* Allocate fields */
     MPM_Mesh.I0 = /* Index of the Element */
-      (int *)Allocate_ArrayZ(MPM_Mesh.NumGP,sizeof(int));  
+      (int *)Allocate_ArrayZ(NumParticles,sizeof(int));  
     MPM_Mesh.NumberNodes = /* Number of tributary nodes for each GP */
-      (int *)Allocate_ArrayZ(MPM_Mesh.NumGP,sizeof(int));
+      (int *)Allocate_ArrayZ(NumParticles,sizeof(int));
     MPM_Mesh.ListNodes = /* Nodal connectivity of each GP */
-      (ChainPtr *)malloc(MPM_Mesh.NumGP*sizeof(ChainPtr));
+      (ChainPtr *)malloc(NumParticles*sizeof(ChainPtr));
     if(MPM_Mesh.ListNodes == NULL){
       printf("%s : %s \n", "Define_GP_Mesh",
 	     "Memory error for ListNodes");
       exit(0);
     }
-    for(int i = 0 ; i<MPM_Mesh.NumGP ; i++){
+    for(int i = 0 ; i<NumParticles ; i++){
       MPM_Mesh.ListNodes[i] = NULL;  
     }
     MPM_Mesh.Beps =  /* GPs near to each GP */
-      (ChainPtr *)malloc(MPM_Mesh.NumGP*sizeof(ChainPtr));
+      (ChainPtr *)malloc(NumParticles*sizeof(ChainPtr));
     if(MPM_Mesh.Beps == NULL){
       printf("%s : %s \n",
 	     "Define_GP_Mesh",
 	     "Memory error for Beps");
       exit(0);
     }
-    for(int i = 0 ; i<MPM_Mesh.NumGP ; i++){
+    for(int i = 0 ; i<NumParticles ; i++){
       MPM_Mesh.Beps[i] = NULL;  
     }
-
-    /**************************************************/
-    /********* Generate the initial GP mesh ***********/
-    /**************************************************/
-    MPM_Mesh.Phi.x_GC = GetInitialGaussPointPosition(MPM_GID_Mesh,GPxElement);
 
     /**************************************************/
     /********* Read Shape functions parameters ********/
@@ -172,14 +157,14 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
       GramsShapeFun(Name_File);
       /* Lenght of the Voxel (Only GIMP) */
       if(strcmp(ShapeFunctionGP,"uGIMP") == 0){
-	MPM_Mesh.lp = MatAllocZ(MPM_Mesh.NumGP,Ndim);
+	MPM_Mesh.lp = MatAllocZ(NumParticles,Ndim);
 	strcpy(MPM_Mesh.lp.Info,"Voxel lenght GP");
       }
       /* Lagrange Multipliers / Beta (Only LME ) */
       if(strcmp(ShapeFunctionGP,"LME") == 0){
-	MPM_Mesh.lambda = MatAllocZ(MPM_Mesh.NumGP,Ndim);
+	MPM_Mesh.lambda = MatAllocZ(NumParticles,Ndim);
 	strcpy(MPM_Mesh.lambda.Info,"Lagrange Multiplier");
-	MPM_Mesh.Beta = MatAllocZ(MPM_Mesh.NumGP,Ndim);
+	MPM_Mesh.Beta = MatAllocZ(NumParticles,Ndim);
 	strcpy(MPM_Mesh.Beta.Info,"Beta parameter");
       }
     }
@@ -189,50 +174,23 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
 	      "GramsShapeFun no defined");
       exit(0);
     }
-
+    
     /**************************************************/    
     /****** Allocate vectorial/tensorial fields *******/
     /**************************************************/
-    /* Natural coordinates (Vectorial) */
-    MPM_Mesh.Phi.x_EC = MatAllocZ(MPM_Mesh.NumGP,Ndim);
-    strcpy(MPM_Mesh.Phi.x_EC.Info,"Element Coordinates GP");   
-    /* Displacement field (Vectorial) */
-    MPM_Mesh.Phi.dis = MatAllocZ(MPM_Mesh.NumGP,Ndim);
-    strcpy(MPM_Mesh.Phi.dis.Info,"Displacement field GP");
-    /* Velocity field (Vectorial) */
-    MPM_Mesh.Phi.vel = MatAllocZ(MPM_Mesh.NumGP,Ndim);
-    strcpy(MPM_Mesh.Phi.vel.Info,"Velocity field GP");
-    /* Acceleration field (Vectorial) */
-    MPM_Mesh.Phi.acc = MatAllocZ(MPM_Mesh.NumGP,Ndim);
-    strcpy(MPM_Mesh.Phi.acc.Info,"Acceleration field GP");
-    /* Strain field (Tensor) */
-    MPM_Mesh.Phi.Strain = MatAllocZ(MPM_Mesh.NumGP,Ndim*Ndim);
-    strcpy(MPM_Mesh.Phi.Strain.Info,"Strain field GP");
-    /* StrainF field (Scalar) */
-    MPM_Mesh.Phi.StrainF = MatAllocZ(MPM_Mesh.NumGP,1);
-    strcpy(MPM_Mesh.Phi.StrainF.Info,"Strain in fracture GP");
-    /* Stress field (Tensor) */
-    MPM_Mesh.Phi.Stress = MatAllocZ(MPM_Mesh.NumGP,Ndim*Ndim);
-    strcpy(MPM_Mesh.Phi.Stress.Info,"Stress field GP");
-    /* Deformation Energy (Scalar) */
-    MPM_Mesh.Phi.W = MatAllocZ(MPM_Mesh.NumGP,1);
-    strcpy(MPM_Mesh.Phi.W.Info,"Deformation Energy GP");
-    /* Damage parameter (fracture) */
-    MPM_Mesh.Phi.ji = MatAllocZ(MPM_Mesh.NumGP,1);
-    strcpy(MPM_Mesh.Phi.ji.Info,"Damage parameter GP");
-    /* Mass */
-    MPM_Mesh.Phi.mass = MatAllocZ(MPM_Mesh.NumGP,1);
-    strcpy(MPM_Mesh.Phi.mass.Info,"Mass GP");
-    /* Density */
-    MPM_Mesh.Phi.rho = MatAllocZ(MPM_Mesh.NumGP,1);
-    strcpy(MPM_Mesh.Phi.rho.Info,"Density GP");
+    MPM_Mesh.Phi = allocate_Fields(NumParticles);
+
+    /**************************************************/
+    /********** Generate the initial layout ***********/
+    /**************************************************/
+    GetInitialGaussPointPosition(MPM_Mesh.Phi.x_GC,MPM_GID_Mesh,GPxElement);
 
     /**************************************************/
     /*********** Read Material parameters *************/
     /**************************************************/
     if(Is_GramsMaterials){
       MPM_Mesh.NumberMaterials = Counter_Materials;
-      MPM_Mesh.MatIdx = (int *)malloc(MPM_Mesh.NumGP*sizeof(int));
+      MPM_Mesh.MatIdx = (int *)malloc(NumParticles*sizeof(int));
       MPM_Mesh.Mat = GramsMaterials(Name_File,MPM_Mesh,GPxElement);
     }
     else{
@@ -249,14 +207,14 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
       GramsShapeFun(Name_File);
       /* Lenght of the Voxel (Only GIMP) */
       if(strcmp(ShapeFunctionGP,"uGIMP") == 0){
-	MPM_Mesh.lp = MatAllocZ(MPM_Mesh.NumGP,NumberDimensions);
+	MPM_Mesh.lp = MatAllocZ(NumParticles,NumberDimensions);
 	strcpy(MPM_Mesh.lp.Info,"Voxel lenght GP");
       }
       /* Lagrange Multipliers / Beta (Only LME ) */
       if(strcmp(ShapeFunctionGP,"LME") == 0){
-	MPM_Mesh.lambda = MatAllocZ(MPM_Mesh.NumGP,NumberDimensions);
+	MPM_Mesh.lambda = MatAllocZ(NumParticles,NumberDimensions);
 	strcpy(MPM_Mesh.lambda.Info,"Lagrange Multiplier");
-	MPM_Mesh.Beta = MatAllocZ(MPM_Mesh.NumGP,NumberDimensions);
+	MPM_Mesh.Beta = MatAllocZ(NumParticles,NumberDimensions);
 	strcpy(MPM_Mesh.Beta.Info,"Beta parameter");
       }
     }

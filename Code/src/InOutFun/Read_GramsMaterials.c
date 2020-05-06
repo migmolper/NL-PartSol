@@ -24,9 +24,6 @@ GramsMaterials (Particles=route.txt) {
   /* Simulation file */
   FILE * Sim_dat;
 
-  /* Parser num chars */
-  int Num_words_parse;
-
   /* Index of the material */
   int Aux_Mat_id;
   char * Parse_Mat_id[MAXW] = {NULL};
@@ -36,8 +33,6 @@ GramsMaterials (Particles=route.txt) {
   char * Parse_Mat_Prop[MAXW] = {NULL};
 
   /* Parse file name with the list of nodes */
-  char * Name_File_Copy = malloc(strlen(Name_File)); 
-  char * Name_Parse[MAXW] = {NULL};
   char Route_Nodes[MAXC] = {0};
   char FileNodesRoute[MAXC];
 
@@ -85,14 +80,8 @@ GramsMaterials (Particles=route.txt) {
   }
 
   /* Generate route */
-  strcpy(Name_File_Copy, Name_File);
-  Num_words_parse = parse(Name_Parse,Name_File_Copy,"(/)");
-  strcat(Route_Nodes,"./");
-  for(int i = 0 ; i<Num_words_parse-1 ; i++){
-    strcat(Route_Nodes, Name_Parse[i]);
-    strcat(Route_Nodes,"/");
-  }
-
+  generate_route(Route_Nodes,Name_File);
+   
   /* Allocate table with the material */
   Mat_Table = (Material *)malloc(GP_Mesh.NumberMaterials*sizeof(Material));
   if(Mat_Table == NULL){

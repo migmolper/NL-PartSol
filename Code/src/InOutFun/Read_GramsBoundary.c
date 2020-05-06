@@ -10,7 +10,6 @@ Boundaries GramsBoundary(char * Name_File,int NumBounds){
 
   /* Number of words */
   int Num_words_line;
-  int Num_words_route;
 
   /* Parse lines of GramsBoundary */
   char Line_GramsBoundary[MAXC] = {0};
@@ -21,8 +20,6 @@ Boundaries GramsBoundary(char * Name_File,int NumBounds){
   int IndexBoundary = 0;
 
   /* Parse file name with the list of nodes */
-  char * Name_File_Copy = malloc(strlen(Name_File)); 
-  char * Name_Parse[MAXW] = {NULL};
   char Route_Nodes[MAXC] = {0};
   char FileNodesRoute[MAXC];
   ChainPtr Chain_Nodes = NULL;
@@ -49,13 +46,7 @@ Boundaries GramsBoundary(char * Name_File,int NumBounds){
   }
 
   /* Generate route */
-  strcpy(Name_File_Copy, Name_File);
-  Num_words_route = parse(Name_Parse,Name_File_Copy,"(/)");
-  strcat(Route_Nodes,"./");
-  for(int i = 0 ; i<Num_words_route-1 ; i++){
-    strcat(Route_Nodes, Name_Parse[i]);
-    strcat(Route_Nodes,"/");
-  }
+  generate_route(Route_Nodes,Name_File);
 
   /* Read GramsBoundary line  */
   while( fgets(Line_GramsBoundary, sizeof(Line_GramsBoundary), Sim_dat) != NULL ){

@@ -1,0 +1,22 @@
+#include "grams.h"
+
+/*********************************************************************/
+
+void free_Fields(Fields Phi){
+
+  FreeMat(Phi.rho);
+  FreeMat(Phi.mass);
+  FreeMat(Phi.x_GC);  
+  FreeMat(Phi.x_EC);
+  FreeMat(Phi.dis);
+  FreeMat(Phi.vel);
+  FreeMat(Phi.acc);
+  FreeMat(Phi.Stress);
+  FreeMat(Phi.Strain);
+  FreeMat(Phi.StrainF);
+  FreeMat(Phi.W);
+  FreeMat(Phi.ji);
+  
+}
+
+/*********************************************************************/

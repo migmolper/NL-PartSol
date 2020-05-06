@@ -109,8 +109,9 @@ double * Value;
 /***************************************/
 /********** GRAMS's libraries **********/
 /***************************************/
+#include "Variables.h"
 #include "Matlib.h"
-#include "Domain.h"
+#include "Fields.h"
 #include "Constitutive.h"
 #include "MPM.h"
 #include "ShapeFun.h"

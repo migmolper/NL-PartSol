@@ -1,57 +1,6 @@
 #ifndef _MATLIB_H_
 #define _MATLIB_H_
   
-/* Matrix definition */
-typedef struct{
-  int N_rows; /* Number of rows */
-  int N_cols; /* Number of columns */
-  double n; /* Value if is an scalar */
-  double * nV; /* Pointer for a vector */
-  double ** nM; /* Table of pointers for a matrix */
-  char Info [100]; /* Aditional information */
-} Matrix;
-
-/* Chain of nodes */
-typedef struct Chain { 
-  int I; /* Index of the node */
-  struct Chain * next;  /* Pointer to the next element */
-} Chain; 
-
-/* Pointer to a chain */
-typedef Chain * ChainPtr;
-
-/* Table definition */
-typedef struct{
-  int N_rows; /* Number of rows */
-  int N_cols; /* Number of columns */
-  int n; /* Scalar*/
-  int * nV; /* 1D list */
-  int ** nM; /* 2D list */
-  char Info [100]; /* Aditional information */
-} Table;
-
-/*! \struct Curve
- *  Curve definition
- */
-typedef struct{
-
-  /*! Number of items in the curve */
-  int Num; 
-  /*! Values for each time */
-  double * Fx; 
-  /*! Aditional information */
-  char Info [100];
-  
-} Curve;
-
-/* Tensor definition */
-typedef struct{
-  int Order; /* Order of the tensor */
-  double *n; /* First order tensor */
-  double *N[3]; /* Second order tensor */
-  char Info [100]; /* Aditional information */
-} Tensor;
-
 /* Math macros from numerical recipies */
 static float sqr_arg;
 #define SQR(a) ((sqr_arg=(a)) == 0.0 ? 0.0 : sqr_arg*sqr_arg)
@@ -140,6 +89,7 @@ ChainPtr Pointer_to_Set(int *, int);
 int * Set_to_Pointer(ChainPtr, int);
 ChainPtr RangeChain(int, int);
 void free_Set(ChainPtr);
+void free_SetTable(ChainPtr *, int);
 bool is_in_Set(ChainPtr, int);
 void push_to_Set(ChainPtr *, int);
 void pop_from_Set(ChainPtr *, int);

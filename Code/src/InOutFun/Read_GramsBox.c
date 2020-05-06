@@ -40,8 +40,6 @@ Mesh GramsBox(char * Name_File)
 
   /* Simulation file */
   FILE * Sim_dat;
-  char * Name_File_Copy = malloc(strlen(Name_File)); 
-  char * Name_Parse[MAXW] = {NULL};
   char Route_Mesh[MAXC] = {0};
   char FileMeshRoute[MAXC];
    
@@ -72,13 +70,7 @@ Mesh GramsBox(char * Name_File)
   }
 
   /* Generate route */
-  strcpy(Name_File_Copy, Name_File);
-  Num_GramsBox = parse(Name_Parse,Name_File_Copy,"(/)");
-  strcat(Route_Mesh,"./");
-  for(int i = 0 ; i<Num_GramsBox-1 ; i++){
-    strcat(Route_Mesh, Name_Parse[i]);
-    strcat(Route_Mesh,"/");
-  }
+  generate_route(Route_Mesh,Name_File); 
 
   /* Read GramsBox line  */
   while( fgets(Line_GramsBox, sizeof(Line_GramsBox), Sim_dat) != NULL ){
@@ -238,9 +230,6 @@ Mesh GramsBox(char * Name_File)
     FEM_Mesh.Bounds.NumBounds = NumBounds;
     FEM_Mesh.Bounds = GramsBoundary(Name_File,NumBounds);
   }
-
-  /* Free data */
-  free(Name_File_Copy);
 
   return FEM_Mesh;
 }

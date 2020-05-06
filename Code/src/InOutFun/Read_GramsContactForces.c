@@ -26,7 +26,6 @@ Load * GramsNeumannBC(char * Name_File, int NumNeumannBC, int GPxElement)
 
   /* Number of words */
   int Num_words_line;
-  int Num_words_route;
 
   /* Parse lines of GramsNeumannBC */
   char Line_GramsNeumannBC[MAXC] = {0};
@@ -37,8 +36,6 @@ Load * GramsNeumannBC(char * Name_File, int NumNeumannBC, int GPxElement)
   int IndexLoad = 0;
 
   /* Parse file name with the list of nodes */
-  char * Name_File_Copy = malloc(strlen(Name_File)); 
-  char * Name_Parse[MAXW] = {NULL};
   char Route_Nodes[MAXC] = {0};
   char FileNodesRoute[MAXC];
   
@@ -63,14 +60,8 @@ Load * GramsNeumannBC(char * Name_File, int NumNeumannBC, int GPxElement)
   }
 
   /* Generate route */
-  strcpy(Name_File_Copy, Name_File);
-  Num_words_route = parse(Name_Parse,Name_File_Copy,"(/)");
-  strcat(Route_Nodes,"./");
-  for(int i = 0 ; i<Num_words_route-1 ; i++){
-    strcat(Route_Nodes, Name_Parse[i]);
-    strcat(Route_Nodes,"/");
-  }
-
+  generate_route(Route_Nodes,Name_File);
+  
   /* Read GramsNeumannBC line  */
   while( fgets(Line_GramsNeumannBC, sizeof(Line_GramsNeumannBC), Sim_dat) != NULL ){
 

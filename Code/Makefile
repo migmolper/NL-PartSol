@@ -20,9 +20,10 @@ CC = $(GCC_ROOT)/gcc
 # Source code
 SOURCES = \
 	$(wildcard src/GRAMS/*.c)\
+	$(wildcard src/Matlib/*.c)\
+	$(wildcard src/Fields/*.c)\
 	$(wildcard src/InOutFun/*.c)\
 	$(wildcard src/Constitutive/*.c)\
-	$(wildcard src/Matlib/*.c)\
 	$(wildcard src/ShapeFun/*.c)\
 	$(wildcard src/MPM/*.c)\
 	$(wildcard src/Formulations/*.c)

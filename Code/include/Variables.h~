@@ -68,4 +68,8 @@ typedef struct {
   
 } Boundaries;
 
+
+/* Prototype fields */
+void free_Fields(Fields);
+
 #endif

@@ -22,9 +22,6 @@ void GramsOutputs(char * Name_File)
   char * Parse_Out_Prop[MAXW] = {NULL};
 
   /* Parse file for the route */
-  int Num_words_route;
-  char * Name_File_Copy = malloc(strlen(Name_File)); 
-  char * Name_Parse[MAXW] = {NULL};
   char Route_Outs[MAXC] = {0};
 
   /* Special variables for line-reading */
@@ -52,14 +49,8 @@ void GramsOutputs(char * Name_File)
   }
 
   /* Generate route */
-  strcpy(Name_File_Copy, Name_File);
-  Num_words_route = parse(Name_Parse,Name_File_Copy,"(/)");
-  strcat(Route_Outs,"./");
-  for(int i = 0 ; i<Num_words_route-1 ; i++){
-    strcat(Route_Outs, Name_Parse[i]);
-    strcat(Route_Outs,"/");
-  }
-  
+  generate_route(Route_Outs,Name_File);
+    
   /* Read the file line by line */
   while( fgets(line, sizeof line, Sim_dat) != NULL ){
 

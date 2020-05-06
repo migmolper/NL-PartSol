@@ -84,6 +84,21 @@ void free_Set(ChainPtr A){
 
 /*********************************************************************/
 
+void free_SetTable(ChainPtr * A, int SizeTable){
+
+  /* Loop in the table to free each set */
+  for(int i = 0 ; i<SizeTable ; i++){
+    free_Set(A[i]);
+  }
+
+  /* free the table */
+  free(A);  
+
+}
+
+
+/*********************************************************************/
+
 int get_Lenght_Set(ChainPtr A){
     
   int NumElem = 0;

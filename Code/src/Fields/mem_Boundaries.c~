@@ -1,0 +1,18 @@
+#include "grams.h"
+
+void free_Load(Load F){
+
+  free(F.Nodes);
+
+}
+
+void free_LoadTable(Load * Table){
+
+}
+
+
+void free_Boundaries(Boundaries Bounds){
+
+  
+
+}

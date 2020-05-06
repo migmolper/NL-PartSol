@@ -5,17 +5,14 @@
 
 /*********************************************************************/
 
-Matrix GetInitialGaussPointPosition(Mesh FEM_Mesh, int GPxElement)
+void GetInitialGaussPointPosition(Matrix X_p, Mesh FEM_Mesh, int GPxElement)
 /*
  * 
  */
 {
-
   int Ndim = NumberDimensions;
   int NumElemMesh = FEM_Mesh.NumElemMesh;
   Matrix N_GP;
-  Matrix X_p = MatAllocZ(GPxElement*NumElemMesh,Ndim);
-  strcpy(X_p.Info,"Global Coordinates");
   Matrix Xi_p = MatAllocZ(GPxElement,Ndim);
   Matrix Xi_p_j;
   Element Element;
@@ -119,7 +116,6 @@ Matrix GetInitialGaussPointPosition(Mesh FEM_Mesh, int GPxElement)
     exit(1);
   }
   
-  return X_p;
 }
 
 /*********************************************************************/

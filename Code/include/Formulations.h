@@ -22,6 +22,4 @@ void U_GA(Mesh, GaussPoint);
  */ 
 void U_PCE(Mesh, GaussPoint);
 
-
-
 #endif
