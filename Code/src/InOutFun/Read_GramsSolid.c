@@ -55,8 +55,7 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
   Sim_dat = fopen(Name_File,"r");  
   if (Sim_dat==NULL){
     fprintf(stderr,"%s : \n\t %s %s",
-	    "Error in GramsInitials()",
-	    "Incorrect lecture of",
+	    "Error in GramsInitials()","Incorrect lecture of",
 	    Name_File);
     exit(0);
   }
@@ -117,33 +116,32 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
     /* Read GP mesh */
     MPM_GID_Mesh = ReadGidMesh(Route_Mesh);
 
-    /* The number of Gauss-Points is the same as the number of elements
-       in the input mesh, because we set a GP in the middle of each element */
-    /* MPM_Mesh.NumGP = MPM_GID_Mesh.NumElemMesh; */
+    /* Define the number of particles */
     NumParticles = GPxElement*MPM_GID_Mesh.NumElemMesh;
     MPM_Mesh.NumGP = NumParticles;
 
-    /* Allocate fields */
-    MPM_Mesh.I0 = /* Index of the Element */
-      (int *)Allocate_ArrayZ(NumParticles,sizeof(int));  
-    MPM_Mesh.NumberNodes = /* Number of tributary nodes for each GP */
-      (int *)Allocate_ArrayZ(NumParticles,sizeof(int));
-    MPM_Mesh.ListNodes = /* Nodal connectivity of each GP */
-      (ChainPtr *)malloc(NumParticles*sizeof(ChainPtr));
+    /* Closest node to the particle */
+    MPM_Mesh.I0 = (int *)Allocate_ArrayZ(NumParticles,sizeof(int));
+
+    /* Number of tributary nodes for each particle */
+    MPM_Mesh.NumberNodes = (int *)Allocate_ArrayZ(NumParticles,sizeof(int));
+
+    /* Tributary nodes for each particle */
+    MPM_Mesh.ListNodes = (ChainPtr *)malloc(NumParticles*sizeof(ChainPtr));
     if(MPM_Mesh.ListNodes == NULL){
-      printf("%s : %s \n", "Define_GP_Mesh",
-	     "Memory error for ListNodes");
+      printf("%s : %s \n",
+	     "Define_GP_Mesh","Memory error for ListNodes");
       exit(0);
     }
     for(int i = 0 ; i<NumParticles ; i++){
       MPM_Mesh.ListNodes[i] = NULL;  
     }
-    MPM_Mesh.Beps =  /* GPs near to each GP */
-      (ChainPtr *)malloc(NumParticles*sizeof(ChainPtr));
+
+    /* List of particles close to each particle */
+    MPM_Mesh.Beps = (ChainPtr *)malloc(NumParticles*sizeof(ChainPtr));
     if(MPM_Mesh.Beps == NULL){
       printf("%s : %s \n",
-	     "Define_GP_Mesh",
-	     "Memory error for Beps");
+	     "Define_GP_Mesh","Memory error for Beps");
       exit(0);
     }
     for(int i = 0 ; i<NumParticles ; i++){
@@ -170,8 +168,7 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
     }
     else{
       fprintf(stderr,"%s : %s \n",
-	      "Error in GramsSolid2D()",
-	      "GramsShapeFun no defined");
+	      "Error in GramsSolid2D()","GramsShapeFun no defined");
       exit(0);
     }
     
@@ -195,8 +192,7 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
     }
     else{
       fprintf(stderr,"%s : %s \n",
-	      "Error in GramsSolid2D()",
-	      "GramsMaterials no defined");
+	      "Error in GramsSolid2D()","GramsMaterials no defined");
       exit(0);
     }
 
@@ -220,8 +216,7 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
     }
     else{
       fprintf(stderr,"%s : %s \n",
-	      "Error in GramsSolid2D()",
-	      "GramsShapeFun no defined");
+	      "Error in GramsSolid2D()","GramsShapeFun no defined");
       exit(0);
     }
 
@@ -290,7 +285,7 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
     /**************************************************/    
     if(Is_GramsNeumannBC){
       MPM_Mesh.NumNeumannBC = Counter_GramsNeumannBC;
-      MPM_Mesh.F = GramsNeumannBC(Name_File, Counter_GramsNeumannBC, GPxElement);
+      MPM_Mesh.F = GramsNeumannBC(Name_File,Counter_GramsNeumannBC,GPxElement);
     }
     else{
       MPM_Mesh.NumNeumannBC = Counter_GramsNeumannBC;
@@ -304,32 +299,28 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
     /**************************************************/    
     if(Is_GramsBodyForces){
       MPM_Mesh.NumberBodyForces = Counter_BodyForces;
-      MPM_Mesh.B = GramsBodyForces(Name_File, Counter_BodyForces, GPxElement); 
+      MPM_Mesh.B = GramsBodyForces(Name_File,Counter_BodyForces,GPxElement); 
     }
     else{
       MPM_Mesh.NumberBodyForces = Counter_BodyForces;
       puts("*************************************************");
       printf(" \t %s : \n\t %s \n",
-	     "* No body forces defined in",
-	     Name_File);
+	     "* No body forces defined in",Name_File);
     }
     /**************************************************/
     /******** INITIALIZE SHAPE FUNCTIONS **************/
     /**************************************************/
     puts("*************************************************");
     if(strcmp(ShapeFunctionGP,"MPMQ4") == 0){
-      printf("\t * %s \n",
-	     "Initialize MPMQ4 shape functions ...");
+      printf("\t * %s \n","Initialize MPMQ4 shape functions ...");
       Q4_Initialize(MPM_Mesh, FEM_Mesh);
     }
     else if(strcmp(ShapeFunctionGP,"uGIMP") == 0){
-      printf("\t * %s \n",
-	     "Initialize uGIMP shape functions ...");      
+      printf("\t * %s \n","Initialize uGIMP shape functions ...");      
       uGIMP_Initialize(MPM_Mesh,FEM_Mesh);
     }
     else if(strcmp(ShapeFunctionGP,"LME") == 0){
-      printf("\t * %s \n",
-	     "Initialize LME shape functions ...");
+      printf("\t * %s \n","Initialize LME shape functions ...");
       LME_Initialize(MPM_Mesh,FEM_Mesh);
     }
     printf("\t %s \n","DONE !!");
@@ -347,8 +338,7 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
   } 
   else{
     fprintf(stderr,"%s : %s \n",
-	    "Error in GramsSolid2D()",
-	    "GramsBodyForces no defined");
+	    "Error in GramsSolid2D()","GramsBodyForces no defined");
     exit(0);
   }
   
