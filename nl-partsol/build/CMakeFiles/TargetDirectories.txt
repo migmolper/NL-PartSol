@@ -1,3 +1,5 @@
 /home/migmolper2/GraMS/nl-partsol/build/CMakeFiles/rebuild_cache.dir
-/home/migmolper2/GraMS/nl-partsol/build/CMakeFiles/nl-partsol.dir
 /home/migmolper2/GraMS/nl-partsol/build/CMakeFiles/edit_cache.dir
+/home/migmolper2/GraMS/nl-partsol/build/CMakeFiles/release.dir
+/home/migmolper2/GraMS/nl-partsol/build/CMakeFiles/nl-partsol.dir
+/home/migmolper2/GraMS/nl-partsol/build/CMakeFiles/debug.dir

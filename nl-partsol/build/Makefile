@@ -111,6 +111,19 @@ depend:
 .PHONY : depend
 
 #=============================================================================
+# Target rules for targets named release
+
+# Build rule for target.
+release: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 release
+.PHONY : release
+
+# fast build rule for target.
+release/fast:
+	$(MAKE) -f CMakeFiles/release.dir/build.make CMakeFiles/release.dir/build
+.PHONY : release/fast
+
+#=============================================================================
 # Target rules for targets named nl-partsol
 
 # Build rule for target.
@@ -122,6 +135,19 @@ nl-partsol: cmake_check_build_system
 nl-partsol/fast:
 	$(MAKE) -f CMakeFiles/nl-partsol.dir/build.make CMakeFiles/nl-partsol.dir/build
 .PHONY : nl-partsol/fast
+
+#=============================================================================
+# Target rules for targets named debug
+
+# Build rule for target.
+debug: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 debug
+.PHONY : debug
+
+# fast build rule for target.
+debug/fast:
+	$(MAKE) -f CMakeFiles/debug.dir/build.make CMakeFiles/debug.dir/build
+.PHONY : debug/fast
 
 src/Constitutive/Fracture.o: src/Constitutive/Fracture.c.o
 
@@ -1426,8 +1452,10 @@ help:
 	@echo "... clean"
 	@echo "... depend"
 	@echo "... rebuild_cache"
-	@echo "... nl-partsol"
 	@echo "... edit_cache"
+	@echo "... release"
+	@echo "... nl-partsol"
+	@echo "... debug"
 	@echo "... src/Constitutive/Fracture.o"
 	@echo "... src/Constitutive/Fracture.i"
 	@echo "... src/Constitutive/Fracture.s"
