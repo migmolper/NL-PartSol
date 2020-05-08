@@ -16,7 +16,7 @@ Tensor alloc_Tensor(int Order)
     exit(EXIT_FAILURE);       
   case 1:
     A.Order = 1;
-    A.n = (double *)malloc(sizeof(double[Ndim]));
+    A.n = (double *)malloc(sizeof(double[2]));
     for(int i = 0 ; i<Ndim ; i++){
       A.n[i] = 0.0;
     }
@@ -24,7 +24,7 @@ Tensor alloc_Tensor(int Order)
   case 2:
     A.Order = 2;
     for(int i = 0 ; i<Ndim ; i++){
-      A.N[i] = (double *)malloc(sizeof(double[Ndim]));
+      A.N[i] = (double *)malloc(sizeof(double[2]));
       for(int j = 0 ; j<Ndim ; j++){
 	A.N[i][j] = 0.0;
       }
@@ -43,7 +43,7 @@ Tensor alloc_Tensor(int Order)
 
 Tensor memory_to_Tensor(double * A_mem, int Order)
 {
-  int Ndim = NumberDimensions;
+  long Ndim = NumberDimensions;
   /* Define output */
   Tensor A_tens;
   /* Swith cases */
@@ -59,7 +59,7 @@ Tensor memory_to_Tensor(double * A_mem, int Order)
     break;
   case 2:
     A_tens.Order = 2;
-    for(int i = 0 ; i<Ndim ; i++){
+    for(long i = 0 ; i<Ndim ; i++){
       A_tens.N[i] = A_mem+i*Ndim;
     }
     break;
@@ -158,7 +158,7 @@ double get_I3_Of(Tensor A)
 {
   int Ndim = NumberDimensions;  
   /* Define output */
-  double I3;
+  double I3 = 0;
   /* Check if is the order is order 2 */
   if(A.Order == 2){
     if(Ndim == 3){

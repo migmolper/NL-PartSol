@@ -1,0 +1,11 @@
+{
+  "ExpandedNodes": [
+    "",
+    "\\build",
+    "\\build\\Win32",
+    "\\src",
+    "\\src\\Matlib"
+  ],
+  "SelectedNode": "\\src\\Matlib\\MatrixOp.c",
+  "PreviewInSolutionExplorer": false
+}

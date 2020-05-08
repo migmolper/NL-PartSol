@@ -228,12 +228,12 @@ double StatsDouMatrix(double * In, int NumElems, char * OutChar)
   Print some stats of the input matrix
  */
 {
-  double MaxVal;
-  double MinVal;
-  double MeanVal;
-  double SumVal;
-  double StdDesvVal;
-  double OutVal;
+	double MaxVal = NAN;
+	double MinVal = NAN;
+	double MeanVal = NAN;
+	double SumVal = NAN;
+	double StdDesvVal = NAN;
+	double OutVal = NAN;
 
   /* Do the stats for an array */
   if(In != NULL){
@@ -288,18 +288,17 @@ double StatsDouMatrix(double * In, int NumElems, char * OutChar)
 }
 
 /*********************************************************************/
-
 double StatsIntMatrix(int * In, int NumElems, char * OutChar)
 /*
   Print some stats of the input matrix
  */
 {
-  double MaxVal;
-  double MinVal;
-  double MeanVal;
-  double SumVal;
-  double StdDesvVal;
-  double OutVal;
+  double MaxVal = NAN;
+  double MinVal = NAN;
+  double MeanVal = NAN;
+  double SumVal = NAN;
+  double StdDesvVal = NAN;
+  double OutVal = NAN;
 
   printf("OutChar : %s\n",OutChar);
 
@@ -355,7 +354,6 @@ double StatsIntMatrix(int * In, int NumElems, char * OutChar)
   return OutVal;
   
 }
-
 
 /*********************************************************************/
 
@@ -573,7 +571,7 @@ Matrix Scalar_prod(Matrix A,Matrix B)
 {
 
   /* Variable declaration output matrix */
-  Matrix C;
+Matrix C;
   double C_aux;
 
   /* If it is array or matrix, allocate and operate in a different fashion */
@@ -589,10 +587,10 @@ Matrix Scalar_prod(Matrix A,Matrix B)
 	   B.N_rows,B.N_cols);
       exit(EXIT_FAILURE);
     }
+	
+   /* The result is a matrix */
+   C = MatAllocZ(A.N_rows,B.N_cols);  
      
-    /* The result is a matrix */
-    C = MatAlloc(A.N_rows,B.N_cols);   
-    
     /* Multiply */
     for(int i = 0 ; i < C.N_rows ; i++){
       for(int j = 0 ; j < C.N_cols ; j++){
@@ -639,7 +637,7 @@ Matrix Scalar_prod(Matrix A,Matrix B)
     }
       
     /* The result is an array */
-    C = MatAlloc(A.N_rows,B.N_cols);
+    C = MatAllocZ(A.N_rows,B.N_cols);
       
     if( (A.nV != NULL)&&(B.nM != NULL) ){ /* Row array */
       for(int i = 0 ; i<B.N_cols ; i++){
@@ -666,7 +664,7 @@ Matrix Scalar_prod(Matrix A,Matrix B)
   
     if(A.nM != NULL){ /* A is a matrix and B a scalar */
       /* The result is a matrix */
-      C = MatAlloc(A.N_rows,A.N_cols);
+      C = MatAllocZ(A.N_rows,A.N_cols);
       for(int i = 0 ; i<A.N_rows ; i++){
 	for(int j = 0 ; j<A.N_cols ; j++){
 	  C.nM[i][j] = A.nM[i][j]*B.n;
@@ -675,7 +673,7 @@ Matrix Scalar_prod(Matrix A,Matrix B)
     }
     if(B.nM != NULL){ /* A is a scalar and B a matrix */
       /* The result is a matrix */
-      C = MatAlloc(B.N_rows,B.N_cols);
+      C = MatAllocZ(B.N_rows,B.N_cols);
       for(int i = 0 ; i<B.N_rows ; i++){
 	for(int j = 0 ; j<B.N_cols ; j++){
 	  C.nM[i][j] = A.n*B.nM[i][j];
@@ -689,14 +687,14 @@ Matrix Scalar_prod(Matrix A,Matrix B)
   
     if(A.nV != NULL){ /* A is an array and B a scalar */
       /* The result is a matrix */
-      C = MatAlloc(A.N_rows,A.N_cols);
+      C = MatAllocZ(A.N_rows,A.N_cols);
       for(int i = 0 ; i<A.N_rows*A.N_cols ; i++){
 	C.nV[i] = A.nV[i]*B.n;
       }
     }
     if(B.nM != NULL){ /* A is a scalar and B an array */
       /* The result is a matrix */
-      C = MatAlloc(B.N_rows,B.N_cols);
+      C = MatAllocZ(B.N_rows,B.N_cols);
       for(int i = 0 ; i<B.N_rows*B.N_cols ; i++){
 	C.nV[i] = A.n*B.nV[i];
       }
@@ -704,8 +702,7 @@ Matrix Scalar_prod(Matrix A,Matrix B)
   
   }
 
-  return C;
-    
+  return C;    
 }
 
 /*********************************************************************/
