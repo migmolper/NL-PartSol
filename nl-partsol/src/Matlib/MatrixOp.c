@@ -14,7 +14,10 @@ void * Allocate_Array(int SizeArray, int SizeType)
   
   void * V;  
   V = (void *)malloc(SizeArray*SizeType);  
-  if (V == NULL){puts("Error in the array declaration");  exit(EXIT_FAILURE);}  
+  if (V == NULL){
+    puts("Error in the array declaration");
+    exit(EXIT_FAILURE);
+  }  
   return V;
   
 }
@@ -53,10 +56,20 @@ void ** Allocate_Matrix(int NumberRows,int NumberColumns, int SizeType)
 
   void ** M;
   M = (void **)malloc((unsigned) NumberRows * sizeof(void *));
-  if (M == NULL){puts("Error in matrix declaration");  exit(EXIT_FAILURE);}
+
+  if (M == NULL){
+    puts("Error in matrix declaration");
+    exit(EXIT_FAILURE);
+  }
+  
   for(int i = 0 ; i<NumberRows ; i++){
     M[i] = malloc((unsigned) NumberColumns*SizeType);
-    if (M[i] == NULL){puts("Error in matrix declaration");  exit(EXIT_FAILURE);}
+    
+    if (M[i] == NULL){
+      puts("Error in matrix declaration");
+      exit(EXIT_FAILURE);
+    }
+    
   }
   return M;
   
@@ -218,141 +231,6 @@ void PrintMatrix(Matrix In, int NumCols, int NumRows)
       printf("\n");
     }
   }
-}
-
-/*********************************************************************/
-
-
-double StatsDouMatrix(double * In, int NumElems, char * OutChar)
-/*
-  Print some stats of the input matrix
- */
-{
-	double MaxVal = NAN;
-	double MinVal = NAN;
-	double MeanVal = NAN;
-	double SumVal = NAN;
-	double StdDesvVal = NAN;
-	double OutVal = NAN;
-
-  /* Do the stats for an array */
-  if(In != NULL){
-
-    /* Initialice the stats */
-    MaxVal = In[0];
-    MinVal = In[0];
-    MeanVal = In[0];
-    StdDesvVal = 0;
-    SumVal = 0;
-
-    /* Get the MaxVal, the MinVal and the MeanVal */
-    for(int i = 0 ; i<NumElems ; i++){
-      MaxVal = DMAX(MaxVal,In[i]);
-      MinVal = DMIN(MinVal,In[i]);
-      SumVal += In[i];      
-    }
-    MeanVal = (double)SumVal/NumElems;
-
-    /* Get the standard desviation */
-    for(int i = 0 ; i<NumElems ; i++){
-      StdDesvVal += (In[i] - MeanVal)*(In[i] - MeanVal);
-    }
-    StdDesvVal *= (double)1/(NumElems-1);
-    StdDesvVal = pow(StdDesvVal,0.5);
-  }
-  else{
-    puts("Error in StatMatrix() : The input pointer is empty !! \n");
-  }
-
-
-  if(strcmp(OutChar,"PrintStats") == 0){
-    printf("The stats are : \n");
-    printf("\t Maximum : %f \n",MaxVal);
-    printf("\t Minimum : %f \n",MinVal);
-    printf("\t The sum of all the terms : %f \n",SumVal);
-    printf("\t Mean : %f \n",MeanVal);
-    printf("\t Standard deviation : %f \n",StdDesvVal);
-    OutVal = 0;
-  }
-  else if(strcmp(OutChar,"MaxVal") == 0) OutVal = MaxVal;
-  else if(strcmp(OutChar,"MinVal") == 0) OutVal = MinVal;
-  else if(strcmp(OutChar,"SumVal") == 0) OutVal = SumVal;
-  else if(strcmp(OutChar,"MeanVal") == 0) OutVal = MeanVal;
-  else if(strcmp(OutChar,"StdDesvVal") == 0) OutVal = StdDesvVal;
-  else{
-    printf("Error in StatsIntMatrix() : Wrong imput parameters !!! \n");
-    OutVal = NAN;
-  }
-  
-  return OutVal;
-}
-
-/*********************************************************************/
-double StatsIntMatrix(int * In, int NumElems, char * OutChar)
-/*
-  Print some stats of the input matrix
- */
-{
-  double MaxVal = NAN;
-  double MinVal = NAN;
-  double MeanVal = NAN;
-  double SumVal = NAN;
-  double StdDesvVal = NAN;
-  double OutVal = NAN;
-
-  printf("OutChar : %s\n",OutChar);
-
-  /* Do the stats for an array */
-  if(In != NULL){
-
-    /* Initialice the stats */
-    MaxVal = (double)In[0];
-    MinVal = (double)In[0];
-    MeanVal = (double)In[0];
-    StdDesvVal = 0.0;
-    SumVal = 0.0;
-
-    /* Get the MaxVal, the MinVal and the MeanVal */
-    for(int i = 0 ; i<NumElems ; i++){
-      MaxVal = DMAX(MaxVal,(double)In[i]);
-      MinVal = DMIN(MinVal,(double)In[i]);
-      SumVal += (double)In[i];      
-    }
-    MeanVal = (double)SumVal/NumElems;
-
-    /* Get the standard desviation */
-    for(int i = 0 ; i<NumElems ; i++){
-      StdDesvVal += ((double)In[i] - MeanVal)*
-	((double)In[i] - MeanVal);
-    }
-    StdDesvVal *= (double)1/(NumElems-1);
-    StdDesvVal = pow(StdDesvVal,0.5);
-  }
-  else{
-    puts("Error in StatMatrix() : The input pointer is empty !! \n");
-  }
-
-  if(strcmp(OutChar,"PrintStats") == 0){
-    printf("The stats are : \n");
-    printf("\t Maximum : %f \n",MaxVal);
-    printf("\t Minimum : %f \n",MinVal);
-    printf("\t The sum of all the terms : %f \n",SumVal);
-    printf("\t Mean : %f \n",MeanVal);
-    printf("\t Standard deviation : %f \n",StdDesvVal);
-    OutVal = 0;
-  }
-  else if(strcmp(OutChar,"MaxVal") == 0) OutVal = MaxVal;
-  else if(strcmp(OutChar,"MinVal") == 0) OutVal = MinVal;
-  else if(strcmp(OutChar,"SumVal") == 0) OutVal = SumVal;
-  else if(strcmp(OutChar,"MeanVal") == 0) OutVal = MeanVal;
-  else if(strcmp(OutChar,"StdDesvVal") == 0) OutVal = StdDesvVal;
-  else{
-    printf("Error in StatsIntMatrix() : Wrong imput parameters !!! \n");
-    OutVal = NAN;
-  }
-  
-  return OutVal;
-  
 }
 
 /*********************************************************************/
@@ -571,138 +449,142 @@ Matrix Scalar_prod(Matrix A,Matrix B)
 {
 
   /* Variable declaration output matrix */
-Matrix C;
+  Matrix C;
   double C_aux;
 
   /* If it is array or matrix, allocate and operate in a different fashion */
 
-  if ( (A.nM != NULL) && (B.nM != NULL) ) { /* Scalar product of two matrix */
+  /* Scalar product of two matrix */
+  if ((A.N_cols == B.N_rows) && (A.N_rows >= 1) && (B.N_cols >= 1))
+    {      
+      C = get_A_dot_B_Mat(A,B);
+    }
+  
+  /* Scalar product of an array by an array */
+  else if ((A.N_cols == B.N_rows) && (A.N_rows == 1) && (B.N_cols == 1))
+    {      
+      C = get_a_dot_b_Mat(A,B);
+    }
+  
+  /* Scalar product of a matrix by an array */
+  else if ((A.N_cols == B.N_rows) && (A.N_rows >= 1) && (B.N_cols == 1))
+    {       
+      C = get_A_dot_b_Mat(A, B);
+    }
 
-    /* Check if the input matrix are not compatible */
-    if(A.N_cols != B.N_rows){
+  /* Scalar product of an array by a matrix */
+  else if ((A.N_cols == B.N_rows) && (A.N_rows == 1) && (B.N_cols >= 1))
+    {
+      C = get_a_dot_B_Mat(A, B);
+    }
+
+  /* Scalar product of a matrix/array by a scalar */
+  else if ((B.N_rows == 1) && (B.N_cols == 1))
+    {       
+      C = Matrix_x_Scalar(A, B.n);
+    }
+  
+  /* Scalar product of a scalar by a matrix/array */
+  else if ((A.N_rows == 1) && (A.N_cols == 1))
+    {       
+      C = Matrix_x_Scalar(B, A.n);  
+    }
+  
+  else
+    {
       printf("%s : %s -> [%i , %i] x [%i , %i] \n",
-	   "Error in Scalar_prod()",
-	   "Incompatible matrix",
-	   A.N_rows,A.N_cols,
-	   B.N_rows,B.N_cols);
+	     "Error in Scalar_prod()","Incompatible product",
+	     A.N_rows,A.N_cols,B.N_rows,B.N_cols);
       exit(EXIT_FAILURE);
     }
-	
-   /* The result is a matrix */
-   C = MatAllocZ(A.N_rows,B.N_cols);  
+  
+  return C;
+  
+}
+
+/*********************************************************************/
+
+Matrix get_A_dot_B_Mat(Matrix A, Matrix B)
+/* 
+   Compute the scalar product of two matrix 
+*/
+{
+
+  /* The result is a matrix */
+  Matrix A_dot_B = MatAllocZ(A.N_rows,B.N_cols);
+  int Rows = A.N_rows;
+  int Columns = B.N_cols;
+  int Aux = B.N_rows;
      
-    /* Multiply */
-    for(int i = 0 ; i < C.N_rows ; i++){
-      for(int j = 0 ; j < C.N_cols ; j++){
-	C_aux = 0;
-	for(int k = 0 ; k < B.N_rows ; k++){
-	  C_aux += A.nM[i][k]*B.nM[k][j];
-	}
-	C.nM[i][j] = C_aux;
-      } /* for j */
-    } /* for i */    
-  }
-  else if( (A.nV != NULL) && (B.nV != NULL) ){ /* Scalar product of an array by an array */
-
-    /* Check if the input matrix are not compatible */
-    if(A.N_cols != B.N_rows){
-      printf("%s : %s -> [%i , %i] x [%i , %i] \n",
-	     "Error in Scalar_prod()",
-	     "Incompatible matrix",
-	     A.N_rows,A.N_cols,
-	     B.N_rows,B.N_cols);
-      exit(EXIT_FAILURE);
-    }
-
-    /* The result is an scalar */
-    /* puts("Warning : You have a scalar in a matrix type (Not eficient) ! "); */
-    /* Multiply */
-    C_aux = 0;
-    for(int k = 0 ; k < A.N_cols ; k++){
-      C_aux += A.nV[k]*B.nV[k];
-    }
-    C.n = C_aux;
-  }
-  else if (( (A.nV != NULL)&&(B.nM != NULL) ) ||
-	   ( (A.nM != NULL)&&(B.nV != NULL) )){ /* Scalar product of an array by a matrix */
-
-    /* Check if the input matrix are not compatible */
-    if(A.N_cols != B.N_rows){
-      printf("%s : %s -> [%i , %i] x [%i , %i] \n",
-	     "Error in Scalar_prod()",
-	     "Incompatible matrix",
-	     A.N_rows,A.N_cols,
-	     B.N_rows,B.N_cols);
-      exit(EXIT_FAILURE);
-    }
-      
-    /* The result is an array */
-    C = MatAllocZ(A.N_rows,B.N_cols);
-      
-    if( (A.nV != NULL)&&(B.nM != NULL) ){ /* Row array */
-      for(int i = 0 ; i<B.N_cols ; i++){
-	C_aux = 0;
-	for(int j = 0 ; j<B.N_rows ; j++){
-	  C_aux += A.nV[j]*B.nM[j][i];
-	}
-	C.nV[i] = C_aux;
+  /* Multiply */
+  for(int i = 0 ; i < Rows  ; i++){
+    for(int j = 0 ; j < Columns  ; j++){
+      for(int k = 0 ; k < Aux  ; k++){
+	A_dot_B.nM[i][j] += A.nM[i][k]*B.nM[k][j];
       }
+    } /* for j */
+  } /* for i */ 
+
+  return A_dot_B;  
+}
+
+/*********************************************************************/
+
+Matrix get_a_dot_b_Mat(Matrix a, Matrix b)
+/* 
+   Compute the scalar product of two vectors
+*/
+{
+  Matrix a_dot_b = MatAssign(1,1,0,NULL,NULL);
+  int Size = a.N_cols;
+
+  for(int i = 0 ; i < Size ; i++){
+    a_dot_b.n += a.nV[i]*b.nV[i];
+  }
+
+  return a_dot_b;  
+}
+
+/*********************************************************************/
+
+Matrix get_A_dot_b_Mat(Matrix A, Matrix b)
+/* 
+   Compute the scalar product of a matrix by an array
+*/
+{
+  /* The result is an array */
+  Matrix A_dot_b = MatAllocZ(A.N_rows,b.N_cols);
+  int Rows = A.N_rows;
+  int Columns = A.N_cols;
+  
+  for(int i = 0 ; i<Rows ; i++){
+    for(int j = 0 ; j<Columns ; j++){
+      A_dot_b.nV[i] += A.nM[i][j]*b.nV[j];
     }
-    if( (A.nM != NULL)&&(B.nV != NULL) ){ /* Column array */
-      for(int i = 0 ; i<A.N_rows ; i++){
-	C_aux = 0;
-	for(int j = 0 ; j<A.N_cols ; j++){
-	  C_aux += A.nM[i][j]*B.nV[j];
-	}
-	C.nV[i] = C_aux;
-      }
-    }
+  }
     
-  }
-  else if( ( (A.nM != NULL)&&(B.n == B.n) ) ||
-	   ( (A.n == A.n)&&(B.nM != NULL) )){ /* Scalar product of a scalar by a matrix */
-  
-    if(A.nM != NULL){ /* A is a matrix and B a scalar */
-      /* The result is a matrix */
-      C = MatAllocZ(A.N_rows,A.N_cols);
-      for(int i = 0 ; i<A.N_rows ; i++){
-	for(int j = 0 ; j<A.N_cols ; j++){
-	  C.nM[i][j] = A.nM[i][j]*B.n;
-	}
-      }
-    }
-    if(B.nM != NULL){ /* A is a scalar and B a matrix */
-      /* The result is a matrix */
-      C = MatAllocZ(B.N_rows,B.N_cols);
-      for(int i = 0 ; i<B.N_rows ; i++){
-	for(int j = 0 ; j<B.N_cols ; j++){
-	  C.nM[i][j] = A.n*B.nM[i][j];
-	}
-      }
-    }
-      
-  }
-  else if( ( (A.nV != NULL)&&(B.n == B.n) ) ||
-	   ( (A.n == A.n)&&(B.nV != NULL) )){ /* Scalar product of a scalar by a array */
-  
-    if(A.nV != NULL){ /* A is an array and B a scalar */
-      /* The result is a matrix */
-      C = MatAllocZ(A.N_rows,A.N_cols);
-      for(int i = 0 ; i<A.N_rows*A.N_cols ; i++){
-	C.nV[i] = A.nV[i]*B.n;
-      }
-    }
-    if(B.nM != NULL){ /* A is a scalar and B an array */
-      /* The result is a matrix */
-      C = MatAllocZ(B.N_rows,B.N_cols);
-      for(int i = 0 ; i<B.N_rows*B.N_cols ; i++){
-	C.nV[i] = A.n*B.nV[i];
-      }
-    }
-  
-  }
+  return A_dot_b;  
+}
 
-  return C;    
+/*********************************************************************/
+
+Matrix get_a_dot_B_Mat(Matrix a, Matrix B)
+/* 
+   Compute the scalar product of a matrix by an array
+*/
+{
+  /* The result is an array */
+  Matrix a_dot_B = MatAllocZ(a.N_rows,B.N_cols);
+  int Rows = B.N_rows;
+  int Columns = B.N_cols;
+  
+  for(int i = 0 ; i<Columns ; i++){
+    for(int j = 0 ; j<Rows ; j++){
+      a_dot_B.nV[i] += a.nV[j]*B.nM[j][i];
+    }
+  }
+    
+  return a_dot_B;  
 }
 
 /*********************************************************************/
@@ -937,6 +819,7 @@ Matrix Sub_Mat(Matrix A,Matrix B)
   return C;
 }
 
+/*********************************************************************/
 
 double Norm_Mat(Matrix In,int kind)
 /*

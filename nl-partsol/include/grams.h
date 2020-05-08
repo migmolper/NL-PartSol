@@ -50,7 +50,7 @@ char OutputDir[MAXC];
 char * TimeIntegration;
 char * ShapeFunctionGP;
 char * Formulation;
-int NumberDimensions = 2;
+int NumberDimensions;
 int NumberDOF;
 
 /***************************************/

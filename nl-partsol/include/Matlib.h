@@ -65,14 +65,20 @@ double Cond_Mat(Matrix, double);
 double Get_Determinant(Matrix);
 Matrix Get_Inverse(Matrix);
 Matrix Transpose_Mat(Matrix);
+
 Matrix Scalar_prod(Matrix, Matrix);
+Matrix get_A_dot_B_Mat(Matrix, Matrix);
+Matrix get_a_dot_b_Mat(Matrix, Matrix);
+Matrix get_A_dot_b_Mat(Matrix, Matrix);
+Matrix get_a_dot_B_Mat(Matrix, Matrix);
+Matrix Matrix_x_Scalar(Matrix, double);
+
 Matrix Vectorial_prod(Matrix, Matrix);
 Matrix Tensorial_prod(Matrix,Matrix);
 Matrix Incr_Mat(Matrix, Matrix);
 Matrix Add_Mat(Matrix, Matrix);
 Matrix Sub_Mat(Matrix, Matrix);
 Matrix Get_Lumped_Matrix(Matrix);
-Matrix Matrix_x_Scalar(Matrix, double);
 double Area_Poligon(Matrix);
 Matrix Centroid_Poligon(Matrix);
 int InOut_Poligon(Matrix, Matrix);
