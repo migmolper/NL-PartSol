@@ -1,1 +1,1 @@
-# Granular Mechanics Solver #
+# Non-Linear Particle Solver #
