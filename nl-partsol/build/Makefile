@@ -1094,6 +1094,33 @@ src/MPM/compute_Stress.c.s:
 	$(MAKE) -f CMakeFiles/nl-partsol.dir/build.make CMakeFiles/nl-partsol.dir/src/MPM/compute_Stress.c.s
 .PHONY : src/MPM/compute_Stress.c.s
 
+src/MPM/compute_equilibrium.o: src/MPM/compute_equilibrium.c.o
+
+.PHONY : src/MPM/compute_equilibrium.o
+
+# target to build an object file
+src/MPM/compute_equilibrium.c.o:
+	$(MAKE) -f CMakeFiles/nl-partsol.dir/build.make CMakeFiles/nl-partsol.dir/src/MPM/compute_equilibrium.c.o
+.PHONY : src/MPM/compute_equilibrium.c.o
+
+src/MPM/compute_equilibrium.i: src/MPM/compute_equilibrium.c.i
+
+.PHONY : src/MPM/compute_equilibrium.i
+
+# target to preprocess a source file
+src/MPM/compute_equilibrium.c.i:
+	$(MAKE) -f CMakeFiles/nl-partsol.dir/build.make CMakeFiles/nl-partsol.dir/src/MPM/compute_equilibrium.c.i
+.PHONY : src/MPM/compute_equilibrium.c.i
+
+src/MPM/compute_equilibrium.s: src/MPM/compute_equilibrium.c.s
+
+.PHONY : src/MPM/compute_equilibrium.s
+
+# target to generate assembly for a file
+src/MPM/compute_equilibrium.c.s:
+	$(MAKE) -f CMakeFiles/nl-partsol.dir/build.make CMakeFiles/nl-partsol.dir/src/MPM/compute_equilibrium.c.s
+.PHONY : src/MPM/compute_equilibrium.c.s
+
 src/MPM/update_LocalState.o: src/MPM/update_LocalState.c.o
 
 .PHONY : src/MPM/update_LocalState.o
@@ -1561,6 +1588,9 @@ help:
 	@echo "... src/MPM/compute_Stress.o"
 	@echo "... src/MPM/compute_Stress.i"
 	@echo "... src/MPM/compute_Stress.s"
+	@echo "... src/MPM/compute_equilibrium.o"
+	@echo "... src/MPM/compute_equilibrium.i"
+	@echo "... src/MPM/compute_equilibrium.s"
 	@echo "... src/MPM/update_LocalState.o"
 	@echo "... src/MPM/update_LocalState.i"
 	@echo "... src/MPM/update_LocalState.s"

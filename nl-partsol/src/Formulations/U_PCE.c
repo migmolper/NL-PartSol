@@ -48,33 +48,18 @@ void U_PCE(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
     
 
     puts("*************************************************");
-    puts(" Second step : Update local state ... WORKING");
-    update_LocalState(V_I, MPM_Mesh, FEM_Mesh, DeltaTimeStep);
-    puts(" DONE !!!");
-       
-    puts("*************************************************");
-    puts(" Third step : Compute forces ... WORKING");
-    F_I = MatAllocZ(Nnodes,Ndim);    
-    puts(" \t Compute internal forces");
-    F_I = compute_InternalForces(F_I, MPM_Mesh, FEM_Mesh);    
-    puts(" \t DONE !!!");
-    puts(" \t Compute body forces");
-    F_I = compute_BodyForces(F_I, MPM_Mesh, FEM_Mesh, TimeStep);
-    puts(" \t DONE !!!");
-    puts(" \t Compute contact forces");
-    F_I = compute_ContacForces(F_I, MPM_Mesh, FEM_Mesh, TimeStep);
-    puts(" \t DONE !!!");
-    puts(" \t Compute reactions");
+    puts(" Second step : Compute equilibrium ... WORKING");
+    F_I = compute_equilibrium_U(V_I,MPM_Mesh,FEM_Mesh,TimeStep); 
     R_I = compute_Reactions(FEM_Mesh, F_I);
     puts(" \t DONE !!!");
     
     puts("****************************************");
-    puts(" Four step : Corrector stage ... WORKING");
+    puts(" Third step : Corrector stage ... WORKING");
     V_I = compute_VelocityCorrector(FEM_Mesh,V_I,F_I, M_I,Params,DeltaTimeStep);
     puts(" DONE !!!"); 
 
     puts("***************************************************");
-    puts(" Five step : Update particles lagrangian ... WORKING");
+    puts(" Four step : Update particles lagrangian ... WORKING");
     update_Particles_PCE(MPM_Mesh, FEM_Mesh, M_I, V_I, F_I,DeltaTimeStep);
     LocalSearchGaussPoints(MPM_Mesh,FEM_Mesh);
     puts(" DONE !!!");
@@ -89,7 +74,7 @@ void U_PCE(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
     }
 
     puts("********************************************************");
-    puts(" Six step : Reset nodal values of the mesh ... WORKING");
+    puts(" Five step : Reset nodal values of the mesh ... WORKING");
     FreeMat(M_I);
     FreeMat(V_I);
     FreeMat(F_I);

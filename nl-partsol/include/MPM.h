@@ -30,6 +30,11 @@ Matrix compute_ContacForces(Matrix, GaussPoint, Mesh, int);
 
 /*******************************************************/
 
+/* Equilibrium scheme */
+Matrix compute_equilibrium_U(Matrix,GaussPoint,Mesh,double);
+
+/*******************************************************/
+
 /* Forward-Euler */
 Matrix compute_NodalMomentumMass(GaussPoint, Mesh);
 Matrix compute_NodalVelocity(Mesh, Matrix);
