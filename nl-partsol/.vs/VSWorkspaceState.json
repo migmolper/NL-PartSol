@@ -2,10 +2,9 @@
   "ExpandedNodes": [
     "",
     "\\build",
-    "\\build\\Win32",
     "\\src",
-    "\\src\\Matlib"
+    "\\src\\InOutFun"
   ],
-  "SelectedNode": "\\src\\Matlib\\MatrixOp.c",
+  "SelectedNode": "\\src\\driver-nl-partsol.c",
   "PreviewInSolutionExplorer": false
 }

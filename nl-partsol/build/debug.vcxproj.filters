@@ -1,0 +1,17 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="16.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\lab02\Desktop\NL-PartSol\nl-partsol\build\CMakeFiles\584beb01897ac9797823adebca04cfd1\debug.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\lab02\Desktop\NL-PartSol\nl-partsol\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="C:\Users\lab02\Desktop\NL-PartSol\nl-partsol\build\CMakeFiles\debug" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="CMake Rules">
+      <UniqueIdentifier>{3C214517-578A-380F-892E-F6341974D173}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
