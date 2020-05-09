@@ -22,12 +22,7 @@
   diferent properties. Ie : water, soil, air.
   -> Mesh : Structure created for store general properties of a FEM*** 
   mesh, this allows to generate differents mesh for diferents sets of 
-  GPs*.
-
-  Note* : GPs -> Gauss Points
-  Note** : MPM -> Material Point Method
-  Note*** : FEM -> Finite Element Method
-
+  GPs*
 */
 
 /***************************************/
@@ -50,7 +45,9 @@ char OutputDir[MAXC];
 char * TimeIntegration;
 char * ShapeFunctionGP;
 char * Formulation;
-int NumberDimensions;
+
+#define NumberDimensions 2
+
 int NumberDOF;
 
 /***************************************/

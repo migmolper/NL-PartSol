@@ -1,7 +1,6 @@
 #include "grams.h"
 
-void TIC_toc(clock_t);
-void tic_TOC(clock_t);
+
 void globalfree(Mesh,GaussPoint);
 
 int main(int argc, char * argv[])
@@ -16,9 +15,9 @@ int main(int argc, char * argv[])
   if(argc == 4){
 
     /* Assign Number of dimensions */
-    if(strcmp(argv[1],"-2D") == 0){
-      NumberDimensions = 2;
-    }
+    /* if(strcmp(argv[1],"-2D") == 0){ */
+    /*   NumberDimensions = 2; */
+    /* } */
     
     /* Read simulation file and kind of simulation */
     SimulationFile = argv[3];
@@ -29,12 +28,6 @@ int main(int argc, char * argv[])
        (NumberDimensions == 2)){
       NumberDOF = 2;
     }
-
-    /*********************************************************************/
-    /******************* CRONOGRAPH CALCULUS : INIT **********************/
-    /*********************************************************************/
-    clock_t start_t;
-    TIC_toc(start_t);
   
     /*********************************************************************/
     /**************** DEFINE CALCULUS MESH and BCCs **********************/
@@ -90,7 +83,7 @@ int main(int argc, char * argv[])
     /*********************************************************************/
     /******************** CRONOGRAPH CALCULUS : END **********************/
     /*********************************************************************/
-    tic_TOC(start_t);
+    printf("Computation finished at : %s",__TIME__);   
          
     /*********************************************************************/
     /************************ CLOSE THE PROGRAM **************************/
@@ -105,18 +98,6 @@ int main(int argc, char * argv[])
     
     /* Read simulation file and kind of simulation */
     SimulationFile = argv[2];
-
-    /*********************************************************************/
-    /******************* CRONOGRAPH CALCULUS : INIT **********************/
-    /*********************************************************************/
-    clock_t start_t;
-    TIC_toc(start_t);
-
-
-    /*********************************************************************/
-    /******************** CRONOGRAPH CALCULUS : END **********************/
-    /*********************************************************************/
-    tic_TOC(start_t);
              
     /*********************************************************************/
     /************************ CLOSE THE PROGRAM **************************/
@@ -134,34 +115,6 @@ int main(int argc, char * argv[])
   
 }
 
-
-
-/*********************************************************************/
-
-/* Time measure function declaration */
-
-void TIC_toc(clock_t start_t){
-
-  /* Start of tic-toc */
-  start_t = clock();
-  printf("Starting of the program, start_t = %ld\n", start_t);
-  
-}
-
-/*********************************************************************/
-
-void tic_TOC(clock_t start_t){
-
-  /* Define internal parameters */
-  clock_t end_t, total_t;
-
-  /* End of tic-toc */
-  end_t = clock();
-  printf("End of the big loop, end_t = %ld\n", end_t);
-  total_t = (double)(end_t - start_t) / CLOCKS_PER_SEC;
-  printf("Total time taken by CPU: %ld\n", total_t  );
-  
-}
 
 /*********************************************************************/
 

@@ -90,9 +90,6 @@ Mesh GramsBox(char * Name_File)
     	(strcmp(Parse_GramsBox[0],"GramsBox") == 0 ) &&
 	((strcmp(Parse_GramsBox[2],"{") == 0))){
 
-      /* Bidimensional mesh */
-      NumberDimensions = 2;
-
       /* Read the type of the mesh and the name of the file */
       Num_GramsBox_Prop = parse (Parse_Mesh_id, Parse_GramsBox[1],"(=,)");
       if( (Num_GramsBox_Prop != 4) ||
