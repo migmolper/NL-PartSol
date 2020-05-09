@@ -62,7 +62,6 @@ void generate_route(char * Route_Nodes, char * Name_File)
   #ifdef _WIN32 
   strcpy(Name_File_cpy, Name_File);
   Num_words_route = parse(Name_Parse,Name_File_cpy,"\\");
-  strcat(Route_Nodes,"\\");
   for(int i = 0 ; i<Num_words_route-1 ; i++){
      strcat(Route_Nodes, Name_Parse[i]);
 	 strcat(Route_Nodes, "\\");

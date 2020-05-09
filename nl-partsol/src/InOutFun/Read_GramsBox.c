@@ -70,7 +70,8 @@ Mesh GramsBox(char * Name_File)
   }
 
   /* Generate route */
-  generate_route(Route_Mesh,Name_File); 
+  generate_route(Route_Mesh,Name_File);
+  printf("%s : %s \n","Read mesh from", Route_Mesh);
 
   /* Read GramsBox line  */
   while( fgets(Line_GramsBox, sizeof(Line_GramsBox), Sim_dat) != NULL ){
