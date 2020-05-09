@@ -192,14 +192,16 @@ Matrix Q4_dN(Matrix X_EC, Matrix Element)
   /* Derivatives of the shape function evaluates in the GP (4 x Ndim) */
   Matrix dNdX;
   Matrix dNdX_T;
-
+    
   /* 1º Evaluate the gradient of the shape function in the GP (4 x Ndim) */
   Matrix dNdX_Ref = Q4_dN_Ref(X_EC);
-  
+
   /* 2º Get the Jacobian of the transformation evaluated in the GP */
   Matrix F = Q4_F_Ref(X_EC,Element);
+  
   Matrix F_m1 = Get_Inverse(F);
   Matrix F_Tm1 = Transpose_Mat(F_m1);
+ 
   FreeMat(F);
   FreeMat(F_m1);
   Matrix dNdX_Ref_T = Transpose_Mat(dNdX_Ref);
@@ -207,7 +209,7 @@ Matrix Q4_dN(Matrix X_EC, Matrix Element)
   
   /* 5º Get the gradient of the shape functions in global coordinates */
   dNdX_T = Scalar_prod(F_Tm1, dNdX_Ref_T);
-
+  
   /* Free memory */
   FreeMat(F_Tm1);  
   FreeMat(dNdX_Ref_T);

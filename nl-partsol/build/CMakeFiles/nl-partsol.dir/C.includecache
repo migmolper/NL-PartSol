@@ -74,7 +74,7 @@ InOutFun.h
 Formulations.h
 ../include/Formulations.h
 
-/home/migmolper2/NL-PartSol/nl-partsol/src/Matlib/MatrixOp.c
+/home/migmolper2/NL-PartSol/nl-partsol/src/driver-nl-partsol.c
 grams.h
-/home/migmolper2/NL-PartSol/nl-partsol/src/Matlib/grams.h
+/home/migmolper2/NL-PartSol/nl-partsol/src/grams.h
 

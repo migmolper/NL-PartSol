@@ -16,7 +16,7 @@ Tensor alloc_Tensor(int Order)
     exit(EXIT_FAILURE);       
   case 1:
     A.Order = 1;
-    A.n = (double *)malloc(sizeof(double[2]));
+    A.n = (double *)malloc(sizeof(double[Ndim]));
     for(int i = 0 ; i<Ndim ; i++){
       A.n[i] = 0.0;
     }
@@ -24,7 +24,7 @@ Tensor alloc_Tensor(int Order)
   case 2:
     A.Order = 2;
     for(int i = 0 ; i<Ndim ; i++){
-      A.N[i] = (double *)malloc(sizeof(double[2]));
+      A.N[i] = (double *)malloc(sizeof(double[Ndim]));
       for(int j = 0 ; j<Ndim ; j++){
 	A.N[i][j] = 0.0;
       }

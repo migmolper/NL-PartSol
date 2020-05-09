@@ -360,15 +360,15 @@ double Get_Determinant(Matrix In)
 
       default :
 	fprintf(stderr,"%s : %s \n",
-		"Error in Get_Determinant()",
-		"I am only able to get the determinat of a 3x3 matrix !");
+		"Error in Get_Determinant()","Max size allowded 3x3 !");
 	exit(EXIT_FAILURE); 
       }
 
     }
   else
     {
-      puts("Error in Get_Determinant() : The input should be a square matrix !");
+      fprintf(stderr,"%s : %s \n",
+	      "Error in Get_Determinant()","Should be a square matrix !");
       exit(EXIT_FAILURE);
     }
   
@@ -400,7 +400,8 @@ Matrix Get_Inverse(Matrix A)
   
       if(DetA < TOL_zero)
 	{
-	  puts("Error in Get_Inverse() : Determinant null !");
+	  fprintf(stderr,"%s : %s \n",
+		  "Error in Get_Inverse()","Determinant null !");
 	  exit(EXIT_FAILURE);
 	}
 
@@ -436,15 +437,18 @@ Matrix Get_Inverse(Matrix A)
       /* Fail */
       else
 	{
-	  puts("Error in Get_Determinant() : Max size 3 !");
-	  exit(EXIT_FAILURE);	  
+	  fprintf(stderr,"%s : %s \n",
+		  "Error in Get_Determinant()",
+		  "Max size 3 !");
+	  exit(EXIT_FAILURE);
 	}
     }
 
   /* Fail */
   else
     {
-      puts("Error in Get_Determinant() : The input should be a square matrix !");
+      fprintf(stderr,"%s : %s \n",
+	      "Error in Get_Determinant()","Should be a square matrix !");
       exit(EXIT_FAILURE);
     }
   
@@ -468,10 +472,17 @@ Matrix Transpose_Mat(Matrix M)
 
   /* It is a matrix */
   if((Columns > 1) && (Rows > 1))
-    { 
-      for(int i = 0 ; i < Rows ; i++)
+    {
+      if(M.nM == NULL)
 	{
-	  for(int j = 0 ; j < Columns ; j++)
+	  fprintf(stderr,"%s : %s \n",
+		  "Error in Transpose_Mat()","NULL input !");
+	  exit(EXIT_FAILURE);    
+	}
+      
+      for(int i = 0 ; i < Columns  ; i++)
+	{	  
+	  for(int j = 0 ; j < Rows ; j++)
 	    {
 	      M_T.nM[i][j] = M.nM[j][i];
 	    }
@@ -481,6 +492,13 @@ Matrix Transpose_Mat(Matrix M)
   /* It is an array */
   else if(((Columns == 1) && (Rows > 1)) || ((Columns > 1) && (Rows == 1)))
     {
+      if(M.nV == NULL)
+	{
+	  fprintf(stderr,"%s : %s \n",
+		  "Error in Transpose_Mat()","NULL input !");
+	  exit(EXIT_FAILURE);    
+	}
+	  
       for(int i = 0 ; i < Rows*Columns ; i++)
 	{
 	  M_T.nV[i] = M.nV[i];
@@ -490,12 +508,30 @@ Matrix Transpose_Mat(Matrix M)
   /* Fail */
   else
     {
-      puts("Error in Transpose_Mat() : Wrong input !");
-      exit(EXIT_FAILURE);
+      fprintf(stderr,"%s : %s \n",
+	      "Error in Transpose_Mat()","Wrong input !");
+      exit(EXIT_FAILURE);      
     }
   
   return M_T;
 }
+
+/*********************************************************************/
+
+/* Matrix matrix_compute(Matrix A,char operator,Matrix B) */
+/* /\* */
+/*   C = matrix_compute(A,"·",B); */
+/*   C = matrix_compute(A,"@",B); */
+/*   C = matrix_compute(A,"x",B); */
+/*   C = matrix_compute(A,"+",B); */
+/*   C = matrix_compute(A,"-",B); */
+/*   C = matrix_compute(A,"/",B); */
+/*   C = matrix_compute(A,"\",B); */
+/*   C = matrix_compute(A,"^",B); */
+/* *\/ */
+/* { */
+
+/* } */
 
 /*********************************************************************/
 
@@ -582,8 +618,8 @@ Matrix get_A_dot_B_Mat(Matrix A, Matrix B)
 	    {
 	      A_dot_B.nM[i][j] += A.nM[i][k]*B.nM[k][j];
 	    }
-	} /* for j */
-    } /* for i */ 
+	}
+    } 
 
   return A_dot_B;  
 }
@@ -668,8 +704,8 @@ Matrix Vectorial_prod(Matrix a, Matrix b){
     }
   else
     {
-      puts("Error in Vectorial_prod() : Incompatible shape of arrays !! ");
-      puts("Remember that it should be : (3x1) x (3x1)  ");
+      fprintf(stderr,"%s : %s \n",
+	      "Error in Vectorial_prod()","Incompatible shape of arrays !");
       exit(EXIT_FAILURE);
     }
   
@@ -690,7 +726,8 @@ Matrix Tensorial_prod(Matrix A,Matrix B)
   int Columns = B.N_cols;
 
   /* Tensorial product between two arrays */
-  if((A.nV != NULL) && (B.nV != NULL))
+  if (((Columns == 1) && (Rows > 1)) ||
+      (Columns > 1) && (Rows == 1))
     {
  
       /* Allocate matrix */
@@ -710,7 +747,8 @@ Matrix Tensorial_prod(Matrix A,Matrix B)
   /* Fail */
   else
     {
-      puts("Error in Tensorial_prod() : Wrong input matrix !!");
+      fprintf(stderr,"%s : %s \n",
+	      "Error in Tensorial_prod()","Wrong input matrix !");
       exit(EXIT_FAILURE);
     }
   
@@ -724,113 +762,113 @@ Matrix Incr_Mat(Matrix A, Matrix Incr)
   Increment term by term the Matrix A with Incr
 */
 {
+  
+  /* Check if the dimensions mismach */
+  if((A.N_cols == Incr.N_cols) && (A.N_rows == Incr.N_rows)){
 
-  int Bool;
+    int Columns = Incr.N_cols;
+    int Rows = Incr.N_rows;
 
-  Bool = Incr.N_cols*Incr.N_rows == 1;
-
-  switch(Bool){
-    
-  case 0: /* Incr is a matrix or an array */
-
-    if( (A.N_cols != Incr.N_cols) ||
-	(A.N_rows != Incr.N_rows) ){ /* Check the size of the input */
-      printf("Error in Incr_Mat() : A is incompatible with the Incr !! \n");
-       exit(EXIT_FAILURE);
-    }
-
-    if(Incr.N_cols == Incr.N_rows){ /* Matrix */
-      for(int i = 0 ; i<Incr.N_rows ; i++){
-	for(int j = 0 ; j<Incr.N_cols ; j++){
-	  A.nM[i][j] += Incr.nM[i][j];
-	}
-      }	
-    }
-    
-    if( (Incr.N_cols == 1) ||
-	(Incr.N_rows == 1) ){ /* Array */
-      for(int i = 0 ; i<Incr.N_cols*Incr.N_rows ; i++){
-	A.nV[i] += Incr.nV[i];
+    /* Is a matrix */
+    if ((Columns > 1) && (Rows > 1))
+      {
+	for(int i = 0 ; i<Incr.N_rows ; i++)
+	  {
+	    for(int j = 0 ; j<Incr.N_cols ; j++)
+	      {
+		A.nM[i][j] += Incr.nM[i][j];
+	      }
+	  }
       }
-    }
-    
-    break;
-    
-  case 1: /* Incr is a scalar */
-    
-    if( (A.N_cols == 1) ||
-	(A.N_rows == 1) ){ /* A is an array */
-      for(int i = 0 ; i<A.N_cols*A.N_rows ; i++){
-	A.nV[i] += Incr.n;
-      }
-    }
-    
-    if( (A.N_cols != 1) &&
-	(A.N_rows != 1) ){
-      for(int i = 0 ; i<A.N_rows ; i++){
-	for(int j = 0 ; j<A.N_cols ; j++){
-	  A.nM[i][j] += Incr.n;
-	}
-      }	
-    }
-    
-    break;
 
-    
-  default :
-     exit(EXIT_FAILURE);
+    /* Is an array */
+    else if (((Columns == 1) && (Rows > 1)) ||
+	     (Columns > 1) && (Rows == 1))
+      {
+	for(int i = 0 ; i<Columns*Rows ; i++)
+	  {
+	  A.nV[i] += Incr.nV[i];
+	  }	
+      }
+
+    /* Fail */
+    else
+      {	
+	fprintf(stderr,"%s : %s \n",
+		"Error in Incr_Mat()","Wrong input matrix!");
+	exit(EXIT_FAILURE);
+      }
+
   }
 
-  return A;
-}  
+  /* Fail */
+  else
+    {
+	fprintf(stderr,"%s : %s \n",
+		"Error in Incr_Mat()","Wrong input matrix!");
+	exit(EXIT_FAILURE);
+    }
 
+  return A;
+}
 
 /*********************************************************************/
 
 Matrix Add_Mat(Matrix A,Matrix B)
 /*
-
   Sum two matrix A and B, and return the result C 
-
-  C = A + B
-   
- */
+  C = A + B   
+*/
 {
-
   /* Variable declaration */
-  Matrix C;
-  
+  int Rows = A.N_rows;
+  int Columns = A.N_cols;
+  Matrix C = MatAllocZ(Rows,Columns);
+ 
   /* Check if it is possible to do the addition */
-  if((A.N_cols != B.N_cols)||(A.N_rows != B.N_rows)){
-    puts("Error in Add_Mat() : Your are trying to add incompatible matrix");
-     exit(EXIT_FAILURE);
-  }
+  if((A.N_cols == B.N_cols) && (A.N_rows == B.N_rows))
+    {
+      Rows = A.N_rows;
+      Columns = A.N_cols;
+      C = MatAllocZ(Rows,Columns);
 
-  /* Allocate output matrix */
-  C = MatAllocZ(A.N_rows,A.N_cols);
+      /* Two array addition */
+      if (((Columns == 1) && (Rows > 1)) ||
+	  (Columns > 1) && (Rows == 1))
+	{    
+	  for(int i = 0 ; i<C.N_rows*C.N_cols ; i++)
+	    {  
+	      C.nV[i] = A.nV[i] + B.nV[i];
+	    }
+	}
 
-  /* Difference if we are doing an addition of two matrix or two vectors */
-  if( (A.nV != NULL) && (B.nV != NULL) ){ /* two array addition */
-    
-    for(int i = 0 ; i<C.N_rows*C.N_cols ; i++){  
-	C.nV[i] = A.nV[i] + B.nV[i];
-    }
-    
-  }
-  else if( (A.nM != NULL) && (B.nM != NULL) ){ /* two matrix addition */
-    
-    for(int i = 0 ; i < C.N_rows ; i++){
-      for(int j = 0 ; j < C.N_cols ; j++){
-	C.nM[i][j] = A.nM[i][j] + B.nM[i][j];
+      /* Two matrix addition */
+      else if ((Columns > 1) && (Rows > 1))
+	{    
+	  for(int i = 0 ; i < C.N_rows ; i++)
+	    {
+	      for(int j = 0 ; j < C.N_cols ; j++)
+		{
+		  C.nM[i][j] = A.nM[i][j] + B.nM[i][j];
+		}
+	    }
+	}
+
+      /* Fail */
+      else{
+	fprintf(stderr,"%s : %s \n",
+		"Error in Add_Mat()","Wrong input matrix!");
+	exit(EXIT_FAILURE);
       }
+      
     }
-  
-  }
-  else{
-    puts("Error in Add_Mat() : Inputs must be of the same range !");
-     exit(EXIT_FAILURE);
-  }  
 
+  /* Fail */
+  else{
+    fprintf(stderr,"%s : %s \n",
+	    "Error in Add_Mat()","Wrong input matrix!");
+    exit(EXIT_FAILURE);
+  }
 
   return C;
 }
@@ -846,42 +884,55 @@ Matrix Sub_Mat(Matrix A,Matrix B)
    
  */
 {
-
   /* Variable declaration */
-  Matrix C;
-  
-  /* Check if it is possible to do the substraction */
-  if((A.N_cols != B.N_cols)||(A.N_rows != B.N_rows)){
-    puts("Error in Sub_Mat() : Your are trying to add incompatible matrix");
-     exit(EXIT_FAILURE);
-  }
+  int Rows = A.N_rows;
+  int Columns = A.N_cols;
+  Matrix C = MatAllocZ(Rows,Columns);
+ 
+  /* Check if it is possible to do the addition */
+  if((A.N_cols == B.N_cols) && (A.N_rows == B.N_rows))
+    {
+      Rows = A.N_rows;
+      Columns = A.N_cols;
+      C = MatAllocZ(Rows,Columns);
 
-  /* Allocate output matrix */
-  C = MatAllocZ(A.N_rows,A.N_cols);
+      /* Two array addition */
+      if (((Columns == 1) && (Rows > 1)) ||
+	  (Columns > 1) && (Rows == 1))
+	{    
+	  for(int i = 0 ; i<C.N_rows*C.N_cols ; i++)
+	    {  
+	      C.nV[i] = A.nV[i] - B.nV[i];
+	    }
+	}
 
-  /* Difference if we are doing an substraction of two matrix
-     or two vectors */
-  if( (A.nV != NULL) && (B.nV != NULL) ){ /* two array substraction */
-    
-    for(int i = 0 ; i<C.N_rows*C.N_cols ; i++){  
-	C.nV[i] = A.nV[i] - B.nV[i];
-    }
-    
-  }
-  else if( (A.nM != NULL) && (B.nM != NULL) ){ /* two matrix substraction */
-    
-    for(int i = 0 ; i < C.N_rows ; i++){
-      for(int j = 0 ; j < C.N_cols ; j++){
-	C.nM[i][j] = A.nM[i][j] - B.nM[i][j];
+      /* Two matrix addition */
+      else if ((Columns > 1) && (Rows > 1))
+	{    
+	  for(int i = 0 ; i < C.N_rows ; i++)
+	    {
+	      for(int j = 0 ; j < C.N_cols ; j++)
+		{
+		  C.nM[i][j] = A.nM[i][j] - B.nM[i][j];
+		}
+	    }
+	}
+
+      /* Fail */
+      else{
+	fprintf(stderr,"%s : %s \n",
+		"Error in Sub_Mat()","Wrong input matrix!");
+	exit(EXIT_FAILURE);
       }
+      
     }
-    
-  }
-  else{
-    puts("Error in Sub_Mat() : Inputs must be of the same range !");
-     exit(EXIT_FAILURE);
-  }  
 
+  /* Fail */
+  else{
+    fprintf(stderr,"%s : %s \n",
+	    "Error in Sub_Mat()","Wrong input matrix!");
+    exit(EXIT_FAILURE);
+  }
 
   return C;
 }
@@ -895,25 +946,31 @@ double Norm_Mat(Matrix In,int kind)
 */
 {
 
-  /* Check */
-  if( (In.nM != NULL) || (In.n == In.n)){
-    puts("Error in Norm_Mat() : The input data is not a vector ! ");
-     exit(EXIT_FAILURE);
-  }
-    
   double Out;
-  double aux;
-
-  /* Euclidean norm */
-  if(kind == 2){
-
-    aux = 0;
-    for(int i = 0 ; i< In.N_rows*In.N_cols ; i++){
-      aux += DSQR(In.nV[i]);
+  double aux = 0;
+  int Columns = In.N_cols;
+  int Rows = In.N_rows;
+  
+  /* Check */
+  if (((Columns == 1) && (Rows > 1)) ||
+      (Columns > 1) && (Rows == 1))
+    {
+      /* Euclidean norm */
+      if(kind == 2)
+	{
+	  for(int i = 0 ; i< Rows*Columns ; i++)
+	    {
+	      aux += DSQR(In.nV[i]);
+	    }
+	  Out = pow(aux,0.5);
+	}
+      
     }
-    Out = pow(aux,0.5);
-  }
-
+  else
+    {
+      puts("Error in Norm_Mat() : The input data is not a vector ! ");
+      exit(EXIT_FAILURE);     
+    }
   return Out;  
 }
 
@@ -1116,24 +1173,26 @@ Matrix Matrix_x_Scalar(Matrix A, double a)
 
 /*********************************************************************/
 
-void get_SVD_Of(Matrix A, Matrix W, Matrix V)
-/*
-  This routine was adapted from the "Numerical recipies in C".
-  Given a matrix A [m x n], this routine computes
-  its singular value decomposition, A = U*W*VT. 
-  Outputs :
-  The matrix U [m x n] replaces A on output. 
-  The matrix of singular values W [n x n]. 
-  The matrix V (not the transpose VT) is output as V [n x n].   
-*/
-{
+/* void get_SVD_Of(Matrix A, Matrix W, Matrix V) */
+/* /\* */
+/*   This routine was adapted from the "Numerical recipies in C". */
+/*   Given a matrix A [m x n], this routine computes */
+/*   its singular value decomposition, A = U*W*VT.  */
+/*   Outputs : */
+/*   The matrix U [m x n] replaces A on output.  */
+/*   The matrix of singular values W [n x n].  */
+/*   The matrix V (not the transpose VT) is output as V [n x n].    */
+/* *\/ */
+/* { */
   
-}
+/* } */
+
+/*********************************************************************/
 
 float pythag(float a, float b)
-/*  
-    Computes (a^2 + b^2)^0.5 without destructive underflow or overflow. 
-*/  
+/*
+    Computes (a^2 + b^2)^0.5 without destructive underflow or overflow.
+*/
 {
   /* Compute the absolute value of "a" and "b" */
   float absa=fabs(a);
