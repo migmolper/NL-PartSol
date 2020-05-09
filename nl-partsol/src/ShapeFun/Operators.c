@@ -135,6 +135,7 @@ Matrix compute_ShapeFunction_Gradient(Element GP_Element,GaussPoint MPM_Mesh,
   if(strcmp(ShapeFunctionGP,"MPMQ4") == 0){
     /* Fill the poligon */
     GP_ElemCoord = MatAllocZ(GP_NumNodes,Ndim);
+    
     for(int k = 0; k<GP_NumNodes ; k++){
       /* Get the node for the GP */
       GP_I = GP_Connect[k];
@@ -143,6 +144,7 @@ Matrix compute_ShapeFunction_Gradient(Element GP_Element,GaussPoint MPM_Mesh,
 	  FEM_Mesh.Coordinates.nM[GP_I][l];
       }
     }
+    
     /* Get the element coordinates of the GP */
     X_GP.nV = MPM_Mesh.Phi.x_EC.nM[i_GP];
 
