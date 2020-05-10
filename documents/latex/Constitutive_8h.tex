@@ -2,8 +2,7 @@
 \label{Constitutive_8h}\index{/home/migmolper2/NL-\/PartSol/nl-\/partsol/include/Constitutive.h@{/home/migmolper2/NL-\/PartSol/nl-\/partsol/include/Constitutive.h}}
 
 
-A Documented file. ~\newline
- Details.  
+File with the prototype of the contitutive models.  
 
 
 \doxysubsection*{Functions}
@@ -20,8 +19,7 @@ void \mbox{\hyperlink{Constitutive_8h_ab6983caa41d71400a64545a9da5e5c98}{Eigenso
 
 
 \doxysubsection{Detailed Description}
-A Documented file. ~\newline
- Details. 
+File with the prototype of the contitutive models. 
 
 
 
@@ -57,6 +55,10 @@ Inputs \+:
 {\em DeltaX} & \+: \mbox{\hyperlink{structMesh}{Mesh}} size \\
 \hline
 \end{DoxyParams}
+
+
+Definition at line 6 of file Fracture.\+c.
+
 \mbox{\Hypertarget{Constitutive_8h_ab6983caa41d71400a64545a9da5e5c98}\label{Constitutive_8h_ab6983caa41d71400a64545a9da5e5c98}} 
 \index{Constitutive.h@{Constitutive.h}!EigensofteningAlgorithm@{EigensofteningAlgorithm}}
 \index{EigensofteningAlgorithm@{EigensofteningAlgorithm}!Constitutive.h@{Constitutive.h}}
@@ -82,6 +84,22 @@ Yu, Bo Li \& Gonzalo Ruiz. Modeling the dynamic fracture in concrete\+: an eigen
 {\em Num\+\_\+\+GP} & \+: Number of GP of the mesh. \\
 \hline
 \end{DoxyParams}
+Define auxiliar variable
+
+\mbox{\hyperlink{structMaterial}{Material}} properties of the eigensoftening algorithm
+
+Get the tensile strengt of the material
+
+Get the bandwidth of the cohesive fracture (Bazant)
+
+Get the critical opening displacement
+
+Only for intact particles
+
+Get the number of neighbours
+
+Definition at line 85 of file Fracture.\+c.
+
 \mbox{\Hypertarget{Constitutive_8h_a0b82ce48b68b1c4f1afabdb692244a1a}\label{Constitutive_8h_a0b82ce48b68b1c4f1afabdb692244a1a}} 
 \index{Constitutive.h@{Constitutive.h}!LinearElastic@{LinearElastic}}
 \index{LinearElastic@{LinearElastic}!Constitutive.h@{Constitutive.h}}
@@ -101,6 +119,10 @@ This function is devoted to make a material point behaves as a linear elastic ma
 {\em Mat} & \\
 \hline
 \end{DoxyParams}
+
+
+Definition at line 4 of file L\+E.\+c.
+
 \mbox{\Hypertarget{Constitutive_8h_a3a89fbc5a976f29f78c21d7b3db46334}\label{Constitutive_8h_a3a89fbc5a976f29f78c21d7b3db46334}} 
 \index{Constitutive.h@{Constitutive.h}!SolidRigid@{SolidRigid}}
 \index{SolidRigid@{SolidRigid}!Constitutive.h@{Constitutive.h}}
@@ -116,3 +138,7 @@ This function is devoted to make a material point behaves as a solid rigid.
 {\em Strain} & \\
 \hline
 \end{DoxyParams}
+
+
+Definition at line 3 of file Solid\+Rigid.\+c.
+

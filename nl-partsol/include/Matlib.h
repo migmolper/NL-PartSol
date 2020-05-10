@@ -1,3 +1,7 @@
+/*! \file Matlib.h
+    \brief File with the prototype of math library
+*/
+
 #ifndef _MATLIB_H_
 #define _MATLIB_H_
   

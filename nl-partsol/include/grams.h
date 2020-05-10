@@ -1,28 +1,11 @@
-/*
+//  Non-Linear Particle Solver
+//
+//
+//  Main author:    Miguel Molinos Perez
+//
 
-  Library with all the structures adopted in the code to extend the
-  basic functionalities of C with them : 
-
-  -> Matrix : Usefull structure to deal with algebraic operations.
-  -> Chain and ChainPtr : Chain of nodes and pointer to a chain of nodes.
-  -> Table : Table of integers.
-  -> Curve : Structure created for dealing with complex boundary
-  conditions and loads.
-  -> BoundaryConditions : Structure that store all the information
-  of a boundary condition and allow to me and others programers to
-  programe/imposse easily new ones.
-  -> Load : Structure that the store all the information about 
-  one kind of load over the GPs*.
-  -> LoadCase : Structure created to join multiple kind of loads in
-  one single structure to deal with complex load cases.
-  -> Fields : Structure that store all the physical variables of
-  the MPM** simulation related with the GPs*.
-  -> GaussPoint : Structure created for store general properties of
-  a set of GPs*, this allows to generate several groups of them, with
-  diferent properties. Ie : water, soil, air.
-  -> Mesh : Structure created for store general properties of a FEM*** 
-  mesh, this allows to generate differents mesh for diferents sets of 
-  GPs*
+/*! \file grams.h
+    \brief File that controls the nl-partsol
 */
 
 /***************************************/

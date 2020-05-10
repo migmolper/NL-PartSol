@@ -1,0 +1,210 @@
+\hypertarget{MPM_8h}{}\doxysection{/home/migmolper2/\+N\+L-\/\+Part\+Sol/nl-\/partsol/include/\+M\+PM.h File Reference}
+\label{MPM_8h}\index{/home/migmolper2/NL-\/PartSol/nl-\/partsol/include/MPM.h@{/home/migmolper2/NL-\/PartSol/nl-\/partsol/include/MPM.h}}
+
+
+File with the prototype of the material point functions/utilities.  
+
+
+\doxysubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{MPM_8h_aba01f70a55208ef36eaee0cff753c004}\label{MPM_8h_aba01f70a55208ef36eaee0cff753c004}} 
+\mbox{\hyperlink{structCurve}{Curve}} {\bfseries Bc\+Dirichlet} (char $\ast$)
+\item 
+\mbox{\Hypertarget{MPM_8h_a043cae0a3d81c3e3288bd3b282f1ec5e}\label{MPM_8h_a043cae0a3d81c3e3288bd3b282f1ec5e}} 
+void {\bfseries imposse\+\_\+\+Nodal\+Momentum} (\mbox{\hyperlink{structMesh}{Mesh}}, \mbox{\hyperlink{structMatrix}{Matrix}}, int)
+\item 
+\mbox{\Hypertarget{MPM_8h_a3a4f5ffd4df1a25b16755604595ce871}\label{MPM_8h_a3a4f5ffd4df1a25b16755604595ce871}} 
+void {\bfseries imposse\+\_\+\+Nodal\+Velocity} (\mbox{\hyperlink{structMesh}{Mesh}}, \mbox{\hyperlink{structMatrix}{Matrix}}, int)
+\item 
+\mbox{\Hypertarget{MPM_8h_a7b0224a61900ebd31192b30509b4b611}\label{MPM_8h_a7b0224a61900ebd31192b30509b4b611}} 
+\mbox{\hyperlink{structMatrix}{Matrix}} {\bfseries Eval\+\_\+\+Body\+\_\+\+Forces} (\mbox{\hyperlink{structLoad}{Load}} $\ast$, int, int, int)
+\item 
+\mbox{\Hypertarget{MPM_8h_a3634aec889025a043a385b8e57168b4d}\label{MPM_8h_a3634aec889025a043a385b8e57168b4d}} 
+\mbox{\hyperlink{structMatrix}{Matrix}} {\bfseries Eval\+\_\+\+Contact\+\_\+\+Forces} (\mbox{\hyperlink{structLoad}{Load}} $\ast$, int, int, int)
+\item 
+\mbox{\Hypertarget{MPM_8h_aa67b96312cbe5536327cd794651c9353}\label{MPM_8h_aa67b96312cbe5536327cd794651c9353}} 
+\mbox{\hyperlink{structMatrix}{Matrix}} {\bfseries compute\+\_\+\+Reactions} (\mbox{\hyperlink{structMesh}{Mesh}}, \mbox{\hyperlink{structMatrix}{Matrix}})
+\item 
+\mbox{\Hypertarget{MPM_8h_aef54188ca056834c1df14dd1fd110d76}\label{MPM_8h_aef54188ca056834c1df14dd1fd110d76}} 
+void {\bfseries free\+\_\+\+Load} (\mbox{\hyperlink{structLoad}{Load}})
+\item 
+\mbox{\Hypertarget{MPM_8h_a668210a0954886a89460b2c8951d18ce}\label{MPM_8h_a668210a0954886a89460b2c8951d18ce}} 
+void {\bfseries free\+\_\+\+Load\+Table} (\mbox{\hyperlink{structLoad}{Load}} $\ast$)
+\item 
+\mbox{\Hypertarget{MPM_8h_a21f4dc7f2cd7f518012ba20581241273}\label{MPM_8h_a21f4dc7f2cd7f518012ba20581241273}} 
+void {\bfseries free\+\_\+\+Boundaries} (\mbox{\hyperlink{structBoundaries}{Boundaries}})
+\item 
+\mbox{\Hypertarget{MPM_8h_aa2454c086d0ba62971bd4142131ee454}\label{MPM_8h_aa2454c086d0ba62971bd4142131ee454}} 
+void {\bfseries Compute\+Damage} (int, \mbox{\hyperlink{structGaussPoint}{Gauss\+Point}}, \mbox{\hyperlink{structMesh}{Mesh}})
+\item 
+\mbox{\Hypertarget{MPM_8h_a26b7caa946625d07ad1678f6c7deb513}\label{MPM_8h_a26b7caa946625d07ad1678f6c7deb513}} 
+\mbox{\hyperlink{structTensor}{Tensor}} {\bfseries compute\+\_\+\+Rate\+Of\+Strain} (\mbox{\hyperlink{structMatrix}{Matrix}}, \mbox{\hyperlink{structMatrix}{Matrix}})
+\item 
+\mbox{\Hypertarget{MPM_8h_a97551d68feda10453ac54f418932a457}\label{MPM_8h_a97551d68feda10453ac54f418932a457}} 
+\mbox{\hyperlink{structTensor}{Tensor}} {\bfseries update\+\_\+\+Strain} (\mbox{\hyperlink{structTensor}{Tensor}}, \mbox{\hyperlink{structTensor}{Tensor}}, double)
+\item 
+\mbox{\Hypertarget{MPM_8h_abe79f84272949ab237579e549d7cb9d7}\label{MPM_8h_abe79f84272949ab237579e549d7cb9d7}} 
+double {\bfseries update\+\_\+\+Density} (double, double, \mbox{\hyperlink{structTensor}{Tensor}})
+\item 
+\mbox{\Hypertarget{MPM_8h_ae9b276ddd65e3407a10159f31288f01f}\label{MPM_8h_ae9b276ddd65e3407a10159f31288f01f}} 
+\mbox{\hyperlink{structTensor}{Tensor}} {\bfseries compute\+\_\+\+Stress} (\mbox{\hyperlink{structTensor}{Tensor}}, \mbox{\hyperlink{structTensor}{Tensor}}, \mbox{\hyperlink{structMaterial}{Material}})
+\item 
+\mbox{\Hypertarget{MPM_8h_a3696aa8add2a94a83666e900334cfd96}\label{MPM_8h_a3696aa8add2a94a83666e900334cfd96}} 
+void {\bfseries update\+\_\+\+Local\+State} (\mbox{\hyperlink{structMatrix}{Matrix}}, \mbox{\hyperlink{structGaussPoint}{Gauss\+Point}}, \mbox{\hyperlink{structMesh}{Mesh}}, double)
+\item 
+\mbox{\Hypertarget{MPM_8h_a38a0e23aac21ca6bd0d87d732906a1c7}\label{MPM_8h_a38a0e23aac21ca6bd0d87d732906a1c7}} 
+double {\bfseries compute\+\_\+\+Internal\+Energy} (\mbox{\hyperlink{structTensor}{Tensor}}, \mbox{\hyperlink{structTensor}{Tensor}})
+\item 
+\mbox{\Hypertarget{MPM_8h_abf7f13510d38c0f5de02c8c0d99b5d59}\label{MPM_8h_abf7f13510d38c0f5de02c8c0d99b5d59}} 
+\mbox{\hyperlink{structMatrix}{Matrix}} {\bfseries compute\+\_\+\+Internal\+Forces} (\mbox{\hyperlink{structMatrix}{Matrix}}, \mbox{\hyperlink{structGaussPoint}{Gauss\+Point}}, \mbox{\hyperlink{structMesh}{Mesh}})
+\item 
+\mbox{\Hypertarget{MPM_8h_a6b348d4810f58f8d60773fcdbefded40}\label{MPM_8h_a6b348d4810f58f8d60773fcdbefded40}} 
+\mbox{\hyperlink{structMatrix}{Matrix}} {\bfseries compute\+\_\+\+Body\+Forces} (\mbox{\hyperlink{structMatrix}{Matrix}}, \mbox{\hyperlink{structGaussPoint}{Gauss\+Point}}, \mbox{\hyperlink{structMesh}{Mesh}}, int)
+\item 
+\mbox{\Hypertarget{MPM_8h_a7edecfe84ccf83ba14fb41e233bccbb1}\label{MPM_8h_a7edecfe84ccf83ba14fb41e233bccbb1}} 
+\mbox{\hyperlink{structMatrix}{Matrix}} {\bfseries compute\+\_\+\+Contac\+Forces} (\mbox{\hyperlink{structMatrix}{Matrix}}, \mbox{\hyperlink{structGaussPoint}{Gauss\+Point}}, \mbox{\hyperlink{structMesh}{Mesh}}, int)
+\item 
+\mbox{\Hypertarget{MPM_8h_ab6f20fc1bd29f16337fe68d5beec4392}\label{MPM_8h_ab6f20fc1bd29f16337fe68d5beec4392}} 
+\mbox{\hyperlink{structMatrix}{Matrix}} {\bfseries compute\+\_\+equilibrium\+\_\+U} (\mbox{\hyperlink{structMatrix}{Matrix}}, \mbox{\hyperlink{structGaussPoint}{Gauss\+Point}}, \mbox{\hyperlink{structMesh}{Mesh}}, double)
+\item 
+\mbox{\Hypertarget{MPM_8h_aa4496b461f6a72320ada179cfe7669c0}\label{MPM_8h_aa4496b461f6a72320ada179cfe7669c0}} 
+\mbox{\hyperlink{structMatrix}{Matrix}} {\bfseries compute\+\_\+\+Nodal\+Momentum\+Mass} (\mbox{\hyperlink{structGaussPoint}{Gauss\+Point}}, \mbox{\hyperlink{structMesh}{Mesh}})
+\item 
+\mbox{\Hypertarget{MPM_8h_a8c9cbb7e7a7e427d4cf12a34dcb48525}\label{MPM_8h_a8c9cbb7e7a7e427d4cf12a34dcb48525}} 
+\mbox{\hyperlink{structMatrix}{Matrix}} {\bfseries compute\+\_\+\+Nodal\+Velocity} (\mbox{\hyperlink{structMesh}{Mesh}}, \mbox{\hyperlink{structMatrix}{Matrix}})
+\item 
+void \mbox{\hyperlink{MPM_8h_a88607c0f25295bb93d2cdd0ff3527396}{update\+\_\+\+Nodal\+Momentum}} (\mbox{\hyperlink{structMesh}{Mesh}}, \mbox{\hyperlink{structMatrix}{Matrix}}, \mbox{\hyperlink{structMatrix}{Matrix}})
+\begin{DoxyCompactList}\small\item\em Brief description of Update\+Grid\+Nodal\+Momentum. \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{MPM_8h_a5e33bb3dc2a4cdf8e58eee6791eea124}\label{MPM_8h_a5e33bb3dc2a4cdf8e58eee6791eea124}} 
+void {\bfseries update\+\_\+\+Particles\+\_\+\+FE} (\mbox{\hyperlink{structGaussPoint}{Gauss\+Point}}, \mbox{\hyperlink{structMesh}{Mesh}}, \mbox{\hyperlink{structMatrix}{Matrix}}, \mbox{\hyperlink{structMatrix}{Matrix}}, double)
+\item 
+\mbox{\Hypertarget{MPM_8h_a4f84c7c2ae910fe4530fcf70a7088a61}\label{MPM_8h_a4f84c7c2ae910fe4530fcf70a7088a61}} 
+\mbox{\hyperlink{structMatrix}{Matrix}} {\bfseries compute\+\_\+\+Nodal\+Mass} (\mbox{\hyperlink{structGaussPoint}{Gauss\+Point}}, \mbox{\hyperlink{structMesh}{Mesh}})
+\item 
+\mbox{\Hypertarget{MPM_8h_afbc7fe6a40d00a9cb63ef19bfe75e44b}\label{MPM_8h_afbc7fe6a40d00a9cb63ef19bfe75e44b}} 
+\mbox{\hyperlink{structMatrix}{Matrix}} {\bfseries compute\+\_\+\+Velocity\+Predictor} (\mbox{\hyperlink{structGaussPoint}{Gauss\+Point}}, \mbox{\hyperlink{structMesh}{Mesh}}, \mbox{\hyperlink{structMatrix}{Matrix}}, \mbox{\hyperlink{structMatrix}{Matrix}}, \mbox{\hyperlink{structTime__Int__Params}{Time\+\_\+\+Int\+\_\+\+Params}}, double)
+\item 
+\mbox{\Hypertarget{MPM_8h_a4d6e2b5937ffd3eb6bacac6bd359e76c}\label{MPM_8h_a4d6e2b5937ffd3eb6bacac6bd359e76c}} 
+\mbox{\hyperlink{structMatrix}{Matrix}} {\bfseries compute\+\_\+\+Velocity\+Corrector} (\mbox{\hyperlink{structMesh}{Mesh}}, \mbox{\hyperlink{structMatrix}{Matrix}}, \mbox{\hyperlink{structMatrix}{Matrix}}, \mbox{\hyperlink{structMatrix}{Matrix}}, \mbox{\hyperlink{structTime__Int__Params}{Time\+\_\+\+Int\+\_\+\+Params}}, double)
+\item 
+\mbox{\Hypertarget{MPM_8h_a87c7a167262fd21bc242df9247b873d4}\label{MPM_8h_a87c7a167262fd21bc242df9247b873d4}} 
+void {\bfseries update\+\_\+\+Particles\+\_\+\+P\+CE} (\mbox{\hyperlink{structGaussPoint}{Gauss\+Point}}, \mbox{\hyperlink{structMesh}{Mesh}}, \mbox{\hyperlink{structMatrix}{Matrix}}, \mbox{\hyperlink{structMatrix}{Matrix}}, \mbox{\hyperlink{structMatrix}{Matrix}}, double)
+\item 
+void \mbox{\hyperlink{MPM_8h_a7ae9b5acadb3326fab4b292f544cb819}{G\+A\+\_\+\+Update\+Nodal\+Kinetics}} (\mbox{\hyperlink{structMesh}{Mesh}}, \mbox{\hyperlink{structMatrix}{Matrix}}, \mbox{\hyperlink{structMatrix}{Matrix}}, \mbox{\hyperlink{structTime__Int__Params}{Time\+\_\+\+Int\+\_\+\+Params}})
+\begin{DoxyCompactList}\small\item\em Brief description of Update\+\_\+\+Nodal\+\_\+\+Acceleration\+\_\+\+Velocity. \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{MPM_8h_a4c6ecc477ead7cb823d3bb6077728e8f}\label{MPM_8h_a4c6ecc477ead7cb823d3bb6077728e8f}} 
+\mbox{\hyperlink{structMatrix}{Matrix}} \mbox{\hyperlink{MPM_8h_a4c6ecc477ead7cb823d3bb6077728e8f}{Get\+Nodal\+Kinetics}} (\mbox{\hyperlink{structGaussPoint}{Gauss\+Point}}, \mbox{\hyperlink{structMesh}{Mesh}})
+\begin{DoxyCompactList}\small\item\em Nodal\+\_\+\+Kinetics = \{mass, a0, a1, v\}. \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{MPM_8h_a8fa9c05225bcaa81b70b9b49c3d05d1c}\label{MPM_8h_a8fa9c05225bcaa81b70b9b49c3d05d1c}} 
+\mbox{\hyperlink{structMatrix}{Matrix}} \mbox{\hyperlink{MPM_8h_a8fa9c05225bcaa81b70b9b49c3d05d1c}{Get\+Nodal\+Velocity\+Displacement}} (\mbox{\hyperlink{structGaussPoint}{Gauss\+Point}}, \mbox{\hyperlink{structMesh}{Mesh}})
+\begin{DoxyCompactList}\small\item\em Nodal\+\_\+\+Kinetics = \{m, d, v\}. \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{MPM_8h_a02a7a6ffb165e4cdd653d731c1564f63}\label{MPM_8h_a02a7a6ffb165e4cdd653d731c1564f63}} 
+void {\bfseries update\+\_\+\+Particles\+\_\+\+GA} (\mbox{\hyperlink{structGaussPoint}{Gauss\+Point}}, \mbox{\hyperlink{structMesh}{Mesh}}, \mbox{\hyperlink{structMatrix}{Matrix}}, \mbox{\hyperlink{structTime__Int__Params}{Time\+\_\+\+Int\+\_\+\+Params}})
+\item 
+\mbox{\Hypertarget{MPM_8h_adf67b3d7e7c1062a52aa171d9bfb4894}\label{MPM_8h_adf67b3d7e7c1062a52aa171d9bfb4894}} 
+void {\bfseries Get\+Initial\+Gauss\+Point\+Position} (\mbox{\hyperlink{structMatrix}{Matrix}}, \mbox{\hyperlink{structMesh}{Mesh}}, int)
+\item 
+\mbox{\Hypertarget{MPM_8h_a147fc0639d1619bc9facfa54404c732e}\label{MPM_8h_a147fc0639d1619bc9facfa54404c732e}} 
+double {\bfseries Get\+Min\+Element\+Size} (\mbox{\hyperlink{structMesh}{Mesh}})
+\item 
+\mbox{\Hypertarget{MPM_8h_a78ca1329fa55420fae27e69a7c5c0e86}\label{MPM_8h_a78ca1329fa55420fae27e69a7c5c0e86}} 
+void {\bfseries Get\+Nodal\+Connectivity} (\mbox{\hyperlink{structMesh}{Mesh}})
+\item 
+\mbox{\Hypertarget{MPM_8h_ad6c05e5f2b7281f0a6665ee5f1e1af51}\label{MPM_8h_ad6c05e5f2b7281f0a6665ee5f1e1af51}} 
+\mbox{\hyperlink{structChainPtr}{Chain\+Ptr}} {\bfseries Discard\+Elements} (\mbox{\hyperlink{structChainPtr}{Chain\+Ptr}}, \mbox{\hyperlink{structMatrix}{Matrix}}, \mbox{\hyperlink{structMatrix}{Matrix}}, \mbox{\hyperlink{structMesh}{Mesh}})
+\item 
+\mbox{\Hypertarget{MPM_8h_abe6ac3a16983f06b5bfa9d544fefa7ef}\label{MPM_8h_abe6ac3a16983f06b5bfa9d544fefa7ef}} 
+void {\bfseries Local\+Search\+Gauss\+Points} (\mbox{\hyperlink{structGaussPoint}{Gauss\+Point}}, \mbox{\hyperlink{structMesh}{Mesh}})
+\item 
+\mbox{\Hypertarget{MPM_8h_aba9569c7cb56e94f5f7dff9ce929ca02}\label{MPM_8h_aba9569c7cb56e94f5f7dff9ce929ca02}} 
+void {\bfseries Compute\+Beps} (int, \mbox{\hyperlink{structGaussPoint}{Gauss\+Point}}, \mbox{\hyperlink{structMesh}{Mesh}})
+\item 
+\mbox{\Hypertarget{MPM_8h_aba7af193d6329c536eabb506690f4c12}\label{MPM_8h_aba7af193d6329c536eabb506690f4c12}} 
+void {\bfseries G\+Pin\+Cell} (\mbox{\hyperlink{structChainPtr}{Chain\+Ptr}} $\ast$, \mbox{\hyperlink{structChainPtr}{Chain\+Ptr}} $\ast$, \mbox{\hyperlink{structMatrix}{Matrix}}, int, double)
+\item 
+\mbox{\Hypertarget{MPM_8h_a6d8194b05d68f8fd58d043907ad51b79}\label{MPM_8h_a6d8194b05d68f8fd58d043907ad51b79}} 
+\mbox{\hyperlink{structElement}{Element}} {\bfseries get\+\_\+\+Element} (int, \mbox{\hyperlink{structChainPtr}{Chain\+Ptr}}, int)
+\item 
+\mbox{\Hypertarget{MPM_8h_a0ed88248e32350dce97fa05f6bc6ee54}\label{MPM_8h_a0ed88248e32350dce97fa05f6bc6ee54}} 
+\mbox{\hyperlink{structMatrix}{Matrix}} {\bfseries get\+\_\+set\+\_\+\+Coordinates} (\mbox{\hyperlink{structChainPtr}{Chain\+Ptr}}, \mbox{\hyperlink{structMatrix}{Matrix}}, \mbox{\hyperlink{structMatrix}{Matrix}})
+\item 
+\mbox{\Hypertarget{MPM_8h_abe21cee0ecfbeb3182cd609aca916d4a}\label{MPM_8h_abe21cee0ecfbeb3182cd609aca916d4a}} 
+\mbox{\hyperlink{structMatrix}{Matrix}} {\bfseries get\+\_\+\+Element\+\_\+\+Field} (\mbox{\hyperlink{structMatrix}{Matrix}}, \mbox{\hyperlink{structElement}{Element}})
+\item 
+\mbox{\Hypertarget{MPM_8h_ac8205ed75c03b97eb402e274c759f92b}\label{MPM_8h_ac8205ed75c03b97eb402e274c759f92b}} 
+\mbox{\hyperlink{structChainPtr}{Chain\+Ptr}} {\bfseries get\+\_\+locality\+\_\+of\+\_\+node} (int, \mbox{\hyperlink{structMesh}{Mesh}})
+\item 
+\mbox{\Hypertarget{MPM_8h_a83a0d4252ae8692a5dd5be6c641c0749}\label{MPM_8h_a83a0d4252ae8692a5dd5be6c641c0749}} 
+int {\bfseries get\+\_\+closest\+\_\+node\+\_\+to} (\mbox{\hyperlink{structMatrix}{Matrix}}, \mbox{\hyperlink{structChainPtr}{Chain\+Ptr}}, \mbox{\hyperlink{structMatrix}{Matrix}})
+\item 
+\mbox{\Hypertarget{MPM_8h_a8790d1e6986f875a67b05cfd2a914762}\label{MPM_8h_a8790d1e6986f875a67b05cfd2a914762}} 
+bool {\bfseries In\+Out\+\_\+\+Element} (\mbox{\hyperlink{structMatrix}{Matrix}}, \mbox{\hyperlink{structChainPtr}{Chain\+Ptr}}, \mbox{\hyperlink{structMatrix}{Matrix}})
+\item 
+\mbox{\Hypertarget{MPM_8h_a9d0670d438c37c78e473df8dc190172d}\label{MPM_8h_a9d0670d438c37c78e473df8dc190172d}} 
+int {\bfseries search\+\_\+particle\+\_\+in} (int, \mbox{\hyperlink{structMatrix}{Matrix}}, \mbox{\hyperlink{structChainPtr}{Chain\+Ptr}}, \mbox{\hyperlink{structMesh}{Mesh}})
+\item 
+\mbox{\Hypertarget{MPM_8h_ac84d8095c5d3def9234898bfc23de02b}\label{MPM_8h_ac84d8095c5d3def9234898bfc23de02b}} 
+\mbox{\hyperlink{structMatrix}{Matrix}} {\bfseries Elem\+Coordinates} (\mbox{\hyperlink{structChainPtr}{Chain\+Ptr}}, \mbox{\hyperlink{structMatrix}{Matrix}})
+\item 
+\mbox{\Hypertarget{MPM_8h_ae41942be9adaab1c40d5d82eedb7f79a}\label{MPM_8h_ae41942be9adaab1c40d5d82eedb7f79a}} 
+void {\bfseries asign\+\_\+particle\+\_\+to\+\_\+nodes} (int, \mbox{\hyperlink{structChainPtr}{Chain\+Ptr}}, \mbox{\hyperlink{structMesh}{Mesh}})
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+File with the prototype of the material point functions/utilities. 
+
+
+
+\doxysubsection{Function Documentation}
+\mbox{\Hypertarget{MPM_8h_a7ae9b5acadb3326fab4b292f544cb819}\label{MPM_8h_a7ae9b5acadb3326fab4b292f544cb819}} 
+\index{MPM.h@{MPM.h}!GA\_UpdateNodalKinetics@{GA\_UpdateNodalKinetics}}
+\index{GA\_UpdateNodalKinetics@{GA\_UpdateNodalKinetics}!MPM.h@{MPM.h}}
+\doxysubsubsection{\texorpdfstring{GA\_UpdateNodalKinetics()}{GA\_UpdateNodalKinetics()}}
+{\footnotesize\ttfamily void G\+A\+\_\+\+Update\+Nodal\+Kinetics (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structMesh}{Mesh}}}]{F\+E\+M\+\_\+\+Mesh,  }\item[{\mbox{\hyperlink{structMatrix}{Matrix}}}]{Nodal\+\_\+\+Kinetics,  }\item[{\mbox{\hyperlink{structMatrix}{Matrix}}}]{Nodal\+\_\+\+Forces,  }\item[{\mbox{\hyperlink{structTime__Int__Params}{Time\+\_\+\+Int\+\_\+\+Params}}}]{Params }\end{DoxyParamCaption})}
+
+
+
+Brief description of Update\+\_\+\+Nodal\+\_\+\+Acceleration\+\_\+\+Velocity. 
+
+The parameters for this functions are \+: 
+\begin{DoxyParams}{Parameters}
+{\em F\+E\+M\+\_\+\+Mesh} & \\
+\hline
+{\em Nodal\+\_\+\+Kinetics} & = \{m, a0, a1, v\} \\
+\hline
+{\em Nodal\+\_\+\+Forces} & \\
+\hline
+{\em Params} & \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 306 of file Update\+\_\+\+Eulerian.\+c.
+
+\mbox{\Hypertarget{MPM_8h_a88607c0f25295bb93d2cdd0ff3527396}\label{MPM_8h_a88607c0f25295bb93d2cdd0ff3527396}} 
+\index{MPM.h@{MPM.h}!update\_NodalMomentum@{update\_NodalMomentum}}
+\index{update\_NodalMomentum@{update\_NodalMomentum}!MPM.h@{MPM.h}}
+\doxysubsubsection{\texorpdfstring{update\_NodalMomentum()}{update\_NodalMomentum()}}
+{\footnotesize\ttfamily void update\+\_\+\+Nodal\+Momentum (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structMesh}{Mesh}}}]{F\+E\+M\+\_\+\+Mesh,  }\item[{\mbox{\hyperlink{structMatrix}{Matrix}}}]{Phi\+\_\+I,  }\item[{\mbox{\hyperlink{structMatrix}{Matrix}}}]{F\+\_\+I }\end{DoxyParamCaption})}
+
+
+
+Brief description of Update\+Grid\+Nodal\+Momentum. 
+
+Compute the nodal contribution of each GP to the total forces.
+
+The parameters for this functions are \+: 
+\begin{DoxyParams}{Parameters}
+{\em M\+P\+M\+\_\+\+Mesh} & \+: \mbox{\hyperlink{structMesh}{Mesh}} with the material points. \\
+\hline
+{\em Phi\+\_\+I} & \{P\+\_\+I $\vert$ M\+\_\+I\} \\
+\hline
+{\em F\+\_\+I} & \+: Nodal value of the total forces. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 115 of file Update\+\_\+\+Eulerian.\+c.
+

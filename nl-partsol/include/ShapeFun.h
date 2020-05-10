@@ -1,3 +1,7 @@
+/*! \file ShapeFun.h
+    \brief File with the prototype of the interpolation techniques here adopted
+*/
+
 #ifndef _SHAPEFUN_H_
 #define _SHAPEFUN_H_
 

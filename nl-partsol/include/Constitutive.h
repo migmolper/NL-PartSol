@@ -1,6 +1,5 @@
 /*! \file Constitutive.h
-    \brief A Documented file.    
-    Details.
+    \brief File with the prototype of the contitutive models
 */
 
 

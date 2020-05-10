@@ -823,7 +823,7 @@ WARN_LOGFILE           =
 # spaces. See also FILE_PATTERNS and EXTENSION_MAPPING
 # Note: If this tag is empty the current directory is searched.
 
-INPUT                  = ../nl-partsol/include ../nl-partsol/src
+INPUT                  = ../nl-partsol/include ../nl-partsol/src ../nl-partsol/src/Constitutive ../nl-partsol/src/Fields ../nl-partsol/src/Formulations ../nl-partsol/src/InOutFun ../nl-partsol/src/MPM ../nl-partsol/src/Matlib ../nl-partsol/src/ShapeFun
 
 # This tag can be used to specify the character encoding of the source files
 # that doxygen parses. Internally doxygen uses the UTF-8 encoding. Doxygen uses
@@ -1033,7 +1033,7 @@ USE_MDFILE_AS_MAINPAGE =
 # also VERBATIM_HEADERS is set to NO.
 # The default value is: NO.
 
-SOURCE_BROWSER         = NO
+SOURCE_BROWSER         = YES
 
 # Setting the INLINE_SOURCES tag to YES will include the body of functions,
 # classes and enums directly into the documentation.

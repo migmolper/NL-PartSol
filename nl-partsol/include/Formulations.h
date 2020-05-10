@@ -1,3 +1,7 @@
+/*! \file Formulations.h
+    \brief File with the prototype of time integration scheme
+*/
+
 #ifndef _FORMULATIONS_H_
 #define _FORMULATIONS_H_
 

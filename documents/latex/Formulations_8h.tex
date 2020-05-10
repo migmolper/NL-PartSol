@@ -1,0 +1,58 @@
+\hypertarget{Formulations_8h}{}\doxysection{/home/migmolper2/\+N\+L-\/\+Part\+Sol/nl-\/partsol/include/\+Formulations.h File Reference}
+\label{Formulations_8h}\index{/home/migmolper2/NL-\/PartSol/nl-\/partsol/include/Formulations.h@{/home/migmolper2/NL-\/PartSol/nl-\/partsol/include/Formulations.h}}
+
+
+File with the prototype of time integration scheme.  
+
+
+\doxysubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{Formulations_8h_a53b0d36e9224a553640ca29d3c70909a}\label{Formulations_8h_a53b0d36e9224a553640ca29d3c70909a}} 
+double {\bfseries Delta\+T\+\_\+\+C\+FL} (\mbox{\hyperlink{structGaussPoint}{Gauss\+Point}}, double)
+\item 
+\mbox{\Hypertarget{Formulations_8h_a20620839b3f65363a5bc8cc68f7daf0b}\label{Formulations_8h_a20620839b3f65363a5bc8cc68f7daf0b}} 
+void \mbox{\hyperlink{Formulations_8h_a20620839b3f65363a5bc8cc68f7daf0b}{U\+\_\+\+FE}} (\mbox{\hyperlink{structMesh}{Mesh}}, \mbox{\hyperlink{structGaussPoint}{Gauss\+Point}})
+\begin{DoxyCompactList}\small\item\em Displacement formulation with a Forward-\/\+Euler integration scheme. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{Formulations_8h_ad3a25bf7d04446c1f44a08e3246fc56d}{U\+\_\+\+GA}} (\mbox{\hyperlink{structMesh}{Mesh}}, \mbox{\hyperlink{structGaussPoint}{Gauss\+Point}})
+\begin{DoxyCompactList}\small\item\em Displacement formulation with a Generalized-\/alpha integration scheme. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{Formulations_8h_ab6f90a35dcd7c1f01d5ccc635079eea8}{U\+\_\+\+P\+CE}} (\mbox{\hyperlink{structMesh}{Mesh}}, \mbox{\hyperlink{structGaussPoint}{Gauss\+Point}})
+\begin{DoxyCompactList}\small\item\em Explicit predictor corrector. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+File with the prototype of time integration scheme. 
+
+
+
+\doxysubsection{Function Documentation}
+\mbox{\Hypertarget{Formulations_8h_ad3a25bf7d04446c1f44a08e3246fc56d}\label{Formulations_8h_ad3a25bf7d04446c1f44a08e3246fc56d}} 
+\index{Formulations.h@{Formulations.h}!U\_GA@{U\_GA}}
+\index{U\_GA@{U\_GA}!Formulations.h@{Formulations.h}}
+\doxysubsubsection{\texorpdfstring{U\_GA()}{U\_GA()}}
+{\footnotesize\ttfamily void U\+\_\+\+GA (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structMesh}{Mesh}}}]{F\+E\+M\+\_\+\+Mesh,  }\item[{\mbox{\hyperlink{structGaussPoint}{Gauss\+Point}}}]{M\+P\+M\+\_\+\+Mesh }\end{DoxyParamCaption})}
+
+
+
+Displacement formulation with a Generalized-\/alpha integration scheme. 
+
+Displacement formulation with a Generalized-\/alpha integration scheme.
+
+D\+OI \+: 10.\+1002/nme.6138. Tran and Solowski 
+
+Definition at line 3 of file U\+\_\+\+G\+A.\+c.
+
+\mbox{\Hypertarget{Formulations_8h_ab6f90a35dcd7c1f01d5ccc635079eea8}\label{Formulations_8h_ab6f90a35dcd7c1f01d5ccc635079eea8}} 
+\index{Formulations.h@{Formulations.h}!U\_PCE@{U\_PCE}}
+\index{U\_PCE@{U\_PCE}!Formulations.h@{Formulations.h}}
+\doxysubsubsection{\texorpdfstring{U\_PCE()}{U\_PCE()}}
+{\footnotesize\ttfamily void U\+\_\+\+P\+CE (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structMesh}{Mesh}}}]{F\+E\+M\+\_\+\+Mesh,  }\item[{\mbox{\hyperlink{structGaussPoint}{Gauss\+Point}}}]{M\+P\+M\+\_\+\+Mesh }\end{DoxyParamCaption})}
+
+
+
+Explicit predictor corrector. 
+
+Explicit predictor corrector. 
+
+Definition at line 3 of file U\+\_\+\+P\+C\+E.\+c.
+

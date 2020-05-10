@@ -1,0 +1,96 @@
+\hypertarget{InOutFun_8h}{}\doxysection{/home/migmolper2/\+N\+L-\/\+Part\+Sol/nl-\/partsol/include/\+In\+Out\+Fun.h File Reference}
+\label{InOutFun_8h}\index{/home/migmolper2/NL-\/PartSol/nl-\/partsol/include/InOutFun.h@{/home/migmolper2/NL-\/PartSol/nl-\/partsol/include/InOutFun.h}}
+
+
+File with the prototype in/out functions.  
+
+
+\doxysubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{InOutFun_8h_ac3c43634944460fa3abeafb00f39fc27}\label{InOutFun_8h_ac3c43634944460fa3abeafb00f39fc27}} 
+int {\bfseries parse} (char $\ast$$\ast$, char $\ast$, char $\ast$)
+\item 
+\mbox{\Hypertarget{InOutFun_8h_ae28af187330e5d3effa81af7e2d4e632}\label{InOutFun_8h_ae28af187330e5d3effa81af7e2d4e632}} 
+void {\bfseries generate\+\_\+route} (char $\ast$, char $\ast$)
+\item 
+\mbox{\Hypertarget{InOutFun_8h_a16f8accfb64c205366cada1013f34027}\label{InOutFun_8h_a16f8accfb64c205366cada1013f34027}} 
+\mbox{\hyperlink{structMatrix}{Matrix}} {\bfseries Read\+\_\+\+C\+SV} (char $\ast$, int)
+\item 
+\mbox{\Hypertarget{InOutFun_8h_a5673895a49869f39ff62de6c1d09d6db}\label{InOutFun_8h_a5673895a49869f39ff62de6c1d09d6db}} 
+\mbox{\hyperlink{structCurve}{Curve}} {\bfseries Read\+Curve} (char $\ast$)
+\item 
+\mbox{\Hypertarget{InOutFun_8h_a3e6a250ebb8e364cfb9544df66881944}\label{InOutFun_8h_a3e6a250ebb8e364cfb9544df66881944}} 
+void {\bfseries free\+\_\+\+Curve} (\mbox{\hyperlink{structCurve}{Curve}})
+\item 
+\mbox{\Hypertarget{InOutFun_8h_ad7c796c5a2b4a13b54861e74a4784a19}\label{InOutFun_8h_ad7c796c5a2b4a13b54861e74a4784a19}} 
+\mbox{\hyperlink{structMesh}{Mesh}} {\bfseries Read\+Gid\+Mesh} (char $\ast$)
+\item 
+\mbox{\Hypertarget{InOutFun_8h_aab55479f621a8611b8131cfaabb6d9c9}\label{InOutFun_8h_aab55479f621a8611b8131cfaabb6d9c9}} 
+\mbox{\hyperlink{structChainPtr}{Chain\+Ptr}} {\bfseries File2\+Chain} (char $\ast$)
+\item 
+\mbox{\hyperlink{structMesh}{Mesh}} \mbox{\hyperlink{InOutFun_8h_a381e2e0982807eef5ffcdbca74206878}{Grams\+Box}} (char $\ast$)
+\item 
+\mbox{\Hypertarget{InOutFun_8h_a85a24f36ae52fbda06673f8a279b0f18}\label{InOutFun_8h_a85a24f36ae52fbda06673f8a279b0f18}} 
+\mbox{\hyperlink{structBoundaries}{Boundaries}} {\bfseries Grams\+Boundary} (char $\ast$, int)
+\item 
+\mbox{\Hypertarget{InOutFun_8h_a58053a28a1a6ce425adfea9a2446e987}\label{InOutFun_8h_a58053a28a1a6ce425adfea9a2446e987}} 
+\mbox{\hyperlink{structGaussPoint}{Gauss\+Point}} {\bfseries Grams\+Solid2D} (char $\ast$, \mbox{\hyperlink{structMesh}{Mesh}})
+\item 
+\mbox{\Hypertarget{InOutFun_8h_a6e5e0d0f164e266f56b5031039629121}\label{InOutFun_8h_a6e5e0d0f164e266f56b5031039629121}} 
+void {\bfseries Grams\+Time} (char $\ast$)
+\item 
+\mbox{\Hypertarget{InOutFun_8h_a7ce9f2670981f42d765649ac28c4341f}\label{InOutFun_8h_a7ce9f2670981f42d765649ac28c4341f}} 
+\mbox{\hyperlink{structMaterial}{Material}} $\ast$ {\bfseries Grams\+Materials} (char $\ast$, \mbox{\hyperlink{structGaussPoint}{Gauss\+Point}}, int)
+\item 
+\mbox{\Hypertarget{InOutFun_8h_ae997e9a16f357a02889c3f03fbe59ac8}\label{InOutFun_8h_ae997e9a16f357a02889c3f03fbe59ac8}} 
+void {\bfseries Grams\+Initials} (char $\ast$, \mbox{\hyperlink{structGaussPoint}{Gauss\+Point}}, int)
+\item 
+\mbox{\Hypertarget{InOutFun_8h_abf2b29c1209f68e37612c7d9170910e1}\label{InOutFun_8h_abf2b29c1209f68e37612c7d9170910e1}} 
+void {\bfseries Grams\+Shape\+Fun} (char $\ast$)
+\item 
+\mbox{\Hypertarget{InOutFun_8h_adb3b176b0088e7df0a80c741231ce0c0}\label{InOutFun_8h_adb3b176b0088e7df0a80c741231ce0c0}} 
+void {\bfseries Grams\+Outputs} (char $\ast$)
+\item 
+\mbox{\Hypertarget{InOutFun_8h_a059d3fe89f3cb5621591853beecc6a59}\label{InOutFun_8h_a059d3fe89f3cb5621591853beecc6a59}} 
+\mbox{\hyperlink{structLoad}{Load}} $\ast$ {\bfseries Grams\+Neumann\+BC} (char $\ast$, int, int)
+\item 
+\mbox{\Hypertarget{InOutFun_8h_a2f594d3191783510f2c4a30731d956d4}\label{InOutFun_8h_a2f594d3191783510f2c4a30731d956d4}} 
+\mbox{\hyperlink{structLoad}{Load}} $\ast$ {\bfseries Grams\+Body\+Forces} (char $\ast$, int, int)
+\item 
+\mbox{\Hypertarget{InOutFun_8h_a99ac8e1f7d6e4b7509ba72dcba37e50c}\label{InOutFun_8h_a99ac8e1f7d6e4b7509ba72dcba37e50c}} 
+void {\bfseries Write\+Vtk\+\_\+\+M\+PM} (char $\ast$, \mbox{\hyperlink{structGaussPoint}{Gauss\+Point}}, \mbox{\hyperlink{structMatrix}{Matrix}}, int)
+\item 
+\mbox{\Hypertarget{InOutFun_8h_abdc76f82e280d6c40f5acab336924272}\label{InOutFun_8h_abdc76f82e280d6c40f5acab336924272}} 
+void {\bfseries Write\+Vtk\+\_\+\+F\+EM} (char $\ast$, \mbox{\hyperlink{structMesh}{Mesh}}, \mbox{\hyperlink{structMatrix}{Matrix}}, int)
+\item 
+\mbox{\Hypertarget{InOutFun_8h_ab3f550de6fa4a6f2659e13441c1a52d7}\label{InOutFun_8h_ab3f550de6fa4a6f2659e13441c1a52d7}} 
+void {\bfseries Write\+Vtk\+\_\+\+Float\+\_\+\+Scalar} (char $\ast$, \mbox{\hyperlink{structMatrix}{Matrix}})
+\item 
+\mbox{\Hypertarget{InOutFun_8h_a862bea79c7ff619f95f8c162d3b9f4f6}\label{InOutFun_8h_a862bea79c7ff619f95f8c162d3b9f4f6}} 
+void {\bfseries Write\+Vtk\+\_\+\+Float\+\_\+\+Vector} (char $\ast$, \mbox{\hyperlink{structMatrix}{Matrix}})
+\item 
+\mbox{\Hypertarget{InOutFun_8h_aa79e0ec90ca4fd0d07c3d12459331a54}\label{InOutFun_8h_aa79e0ec90ca4fd0d07c3d12459331a54}} 
+void {\bfseries Write\+Vtk\+\_\+\+Float\+\_\+\+Tensor} (char $\ast$, \mbox{\hyperlink{structMatrix}{Matrix}})
+\item 
+\mbox{\Hypertarget{InOutFun_8h_a7d532249193c0775d6b4a071dd29ff8a}\label{InOutFun_8h_a7d532249193c0775d6b4a071dd29ff8a}} 
+void {\bfseries Write\+Gnuplot} (\mbox{\hyperlink{structMatrix}{Matrix}}, \mbox{\hyperlink{structMatrix}{Matrix}}, double, double, int, int, char\mbox{[}20\mbox{]})
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+File with the prototype in/out functions. 
+
+
+
+\doxysubsection{Function Documentation}
+\mbox{\Hypertarget{InOutFun_8h_a381e2e0982807eef5ffcdbca74206878}\label{InOutFun_8h_a381e2e0982807eef5ffcdbca74206878}} 
+\index{InOutFun.h@{InOutFun.h}!GramsBox@{GramsBox}}
+\index{GramsBox@{GramsBox}!InOutFun.h@{InOutFun.h}}
+\doxysubsubsection{\texorpdfstring{GramsBox()}{GramsBox()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{structMesh}{Mesh}} Grams\+Box (\begin{DoxyParamCaption}\item[{char $\ast$}]{ }\end{DoxyParamCaption})}
+
+Initialize particle connectivity of each node
+
+Definition at line 8 of file Read\+\_\+\+Grams\+Box.\+c.
+

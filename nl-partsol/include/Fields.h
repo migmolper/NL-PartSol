@@ -1,3 +1,7 @@
+/*! \file Fields.h
+    \brief File with the prototype with the function to free memory
+*/
+
 #ifndef _FIELDS_H_
 #define _FIELDS_H_
 

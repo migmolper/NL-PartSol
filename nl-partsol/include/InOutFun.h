@@ -1,3 +1,7 @@
+/*! \file InOutFun.h
+    \brief File with the prototype in/out functions
+*/
+
 #ifndef _INOUTFUN_H_
 #define _INOUTFUN_H_
 

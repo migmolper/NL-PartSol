@@ -1,3 +1,7 @@
+/*! \file MPM.h
+    \brief File with the prototype of the material point functions/utilities
+*/
+
 #ifndef _MPM_H_
 #define _MPM_H_
 

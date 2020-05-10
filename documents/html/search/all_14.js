@@ -1,5 +1,5 @@
 var searchData=
 [
-  ['x_5fec_99',['x_EC',['../structFields.html#a14a9690bedb9a6953aaf54189b61be56',1,'Fields']]],
-  ['x_5fgc_100',['x_GC',['../structFields.html#a20a6cb686104012788c62ffeb7e95f7e',1,'Fields']]]
+  ['w_126',['W',['../structFields.html#abc4d1ab0f6885b91c156790fb5859b5c',1,'Fields']]],
+  ['wc_127',['Wc',['../structMaterial.html#a93dfa9579994e028dbc78e5c94f2afc3',1,'Material']]]
 ];
