@@ -1,0 +1,81 @@
+\hypertarget{structGaussPoint}{}\doxysection{Gauss\+Point Struct Reference}
+\label{structGaussPoint}\index{GaussPoint@{GaussPoint}}
+
+
+{\ttfamily \#include $<$Variables.\+h$>$}
+
+\doxysubsection*{Data Fields}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{structGaussPoint_a85679b33aeb502a22dab7fce37af7b0a}\label{structGaussPoint_a85679b33aeb502a22dab7fce37af7b0a}} 
+int \mbox{\hyperlink{structGaussPoint_a85679b33aeb502a22dab7fce37af7b0a}{Num\+GP}}
+\begin{DoxyCompactList}\small\item\em Number of particles ~\newline
+ \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{structGaussPoint_a92de359c806da69b5b799b9818cde574}\label{structGaussPoint_a92de359c806da69b5b799b9818cde574}} 
+int $\ast$ \mbox{\hyperlink{structGaussPoint_a92de359c806da69b5b799b9818cde574}{I0}}
+\begin{DoxyCompactList}\small\item\em Index with the closest node to each particle. \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{structGaussPoint_adb643e0e7e0d5eb80f6000614432e47e}\label{structGaussPoint_adb643e0e7e0d5eb80f6000614432e47e}} 
+int $\ast$ \mbox{\hyperlink{structGaussPoint_adb643e0e7e0d5eb80f6000614432e47e}{Number\+Nodes}}
+\begin{DoxyCompactList}\small\item\em Tributary nodes variables. \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{structGaussPoint_a489fc82e304c878f5fbef53be945fb7e}\label{structGaussPoint_a489fc82e304c878f5fbef53be945fb7e}} 
+\mbox{\hyperlink{structChainPtr}{Chain\+Ptr}} $\ast$ {\bfseries List\+Nodes}
+\item 
+\mbox{\Hypertarget{structGaussPoint_a67d7f9e6ec6f3577aaa603ef370d9284}\label{structGaussPoint_a67d7f9e6ec6f3577aaa603ef370d9284}} 
+\mbox{\hyperlink{structChainPtr}{Chain\+Ptr}} $\ast$ \mbox{\hyperlink{structGaussPoint_a67d7f9e6ec6f3577aaa603ef370d9284}{Beps}}
+\begin{DoxyCompactList}\small\item\em Set of particles close to each particle. \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{structGaussPoint_a335c0fc25cd3b0d3a4388a91197a4950}\label{structGaussPoint_a335c0fc25cd3b0d3a4388a91197a4950}} 
+\mbox{\hyperlink{structFields}{Fields}} \mbox{\hyperlink{structGaussPoint_a335c0fc25cd3b0d3a4388a91197a4950}{Phi}}
+\begin{DoxyCompactList}\small\item\em Store the values of each field in the current time step. \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{structGaussPoint_ab57ba53352127c260ec90133cb8e4218}\label{structGaussPoint_ab57ba53352127c260ec90133cb8e4218}} 
+\mbox{\hyperlink{structFields}{Fields}} \mbox{\hyperlink{structGaussPoint_ab57ba53352127c260ec90133cb8e4218}{Phi\+\_\+n0}}
+\begin{DoxyCompactList}\small\item\em Values from the previous step. \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{structGaussPoint_acfacbe6086c5de9daf132578fbaf67b8}\label{structGaussPoint_acfacbe6086c5de9daf132578fbaf67b8}} 
+int \mbox{\hyperlink{structGaussPoint_acfacbe6086c5de9daf132578fbaf67b8}{Number\+Materials}}
+\begin{DoxyCompactList}\small\item\em Number of materials. \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{structGaussPoint_a87cbe92e96fa34091b768a453ad68a16}\label{structGaussPoint_a87cbe92e96fa34091b768a453ad68a16}} 
+int $\ast$ \mbox{\hyperlink{structGaussPoint_a87cbe92e96fa34091b768a453ad68a16}{Mat\+Idx}}
+\begin{DoxyCompactList}\small\item\em Index of the material for each particle. \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{structGaussPoint_a0016e16cee500c29cd75cdeb28b413cf}\label{structGaussPoint_a0016e16cee500c29cd75cdeb28b413cf}} 
+\mbox{\hyperlink{structMaterial}{Material}} $\ast$ \mbox{\hyperlink{structGaussPoint_a0016e16cee500c29cd75cdeb28b413cf}{Mat}}
+\begin{DoxyCompactList}\small\item\em Library of materials. \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{structGaussPoint_a3c9562efc8e6714ee80d8293b3d7b53f}\label{structGaussPoint_a3c9562efc8e6714ee80d8293b3d7b53f}} 
+int \mbox{\hyperlink{structGaussPoint_a3c9562efc8e6714ee80d8293b3d7b53f}{Num\+Neumann\+BC}}
+\begin{DoxyCompactList}\small\item\em Number of Neumann boundary conditions. \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{structGaussPoint_a6c35e14226d047ceaa75122e691d1886}\label{structGaussPoint_a6c35e14226d047ceaa75122e691d1886}} 
+\mbox{\hyperlink{structLoad}{Load}} $\ast$ \mbox{\hyperlink{structGaussPoint_a6c35e14226d047ceaa75122e691d1886}{F}}
+\begin{DoxyCompactList}\small\item\em \mbox{\hyperlink{structLoad}{Load}} case of Neumann boundary conditions. \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{structGaussPoint_a7385d4c4600d7ef98a403be537988a88}\label{structGaussPoint_a7385d4c4600d7ef98a403be537988a88}} 
+int \mbox{\hyperlink{structGaussPoint_a7385d4c4600d7ef98a403be537988a88}{Number\+Body\+Forces}}
+\begin{DoxyCompactList}\small\item\em Number of body forces. \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{structGaussPoint_ab7d71757dd4cf98d2dd1655eb77b1ba2}\label{structGaussPoint_ab7d71757dd4cf98d2dd1655eb77b1ba2}} 
+\mbox{\hyperlink{structLoad}{Load}} $\ast$ \mbox{\hyperlink{structGaussPoint_ab7d71757dd4cf98d2dd1655eb77b1ba2}{B}}
+\begin{DoxyCompactList}\small\item\em \mbox{\hyperlink{structLoad}{Load}} case for the body forces. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{structMatrix}{Matrix}} \mbox{\hyperlink{structGaussPoint_ad04e2ec0573d9e458dccfe96ee163952}{lp}}
+\begin{DoxyCompactList}\small\item\em Size of the voxel for each particle. \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{structGaussPoint_a9b78a6dfd2bdf3250a235665d224817e}\label{structGaussPoint_a9b78a6dfd2bdf3250a235665d224817e}} 
+\mbox{\hyperlink{structMatrix}{Matrix}} \mbox{\hyperlink{structGaussPoint_a9b78a6dfd2bdf3250a235665d224817e}{lambda}}
+\begin{DoxyCompactList}\small\item\em Lagrange multiplier for the L\+ME shape functions. \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{structGaussPoint_a8e3afacbe4bd3ef7582687bebbcf2633}\label{structGaussPoint_a8e3afacbe4bd3ef7582687bebbcf2633}} 
+\mbox{\hyperlink{structMatrix}{Matrix}} \mbox{\hyperlink{structGaussPoint_a8e3afacbe4bd3ef7582687bebbcf2633}{Beta}}
+\begin{DoxyCompactList}\small\item\em Thermalization or regularization parameter for the L\+ME shape functions. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+This structure is devoted to store all the information of a list of particles 
+
+\doxysubsection{Field Documentation}
+\mbox{\Hypertarget{structGaussPoint_ad04e2ec0573d9e458dccfe96ee163952}\label{structGaussPoint_ad04e2ec0573d9e458dccfe96ee163952}} 
+\index{GaussPoint@{GaussPoint}!lp@{lp}}
+\index{lp@{lp}!GaussPoint@{GaussPoint}}
+\doxysubsubsection{\texorpdfstring{lp}{lp}}
+{\footnotesize\ttfamily \mbox{\hyperlink{structMatrix}{Matrix}} Gauss\+Point\+::lp}
+
+
+
+Size of the voxel for each particle. 
+
+Variable for the u\+G\+I\+MP shape function 
+
+The documentation for this struct was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+/home/migmolper2/\+N\+L-\/\+Part\+Sol/nl-\/partsol/include/\mbox{\hyperlink{Variables_8h}{Variables.\+h}}\end{DoxyCompactItemize}

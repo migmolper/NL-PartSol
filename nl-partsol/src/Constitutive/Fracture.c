@@ -6,22 +6,6 @@
 void EigenerosionAlgorithm(int p, Matrix ji, Matrix W,  Matrix Mass,
 			   Matrix Rho, Matrix Stress,
 			   Material MatPro, ChainPtr * Beps, double DeltaX)
-/*
-  A.Pandolfi & M.Ortiz.
-  An eigenerosion approach to brittle fracture. 
-  International Journal for Numerical Methods in Enginnering.
-  92:694-714, 2012.
-  NOTE : Here the notation is the same as in the paper.
-  Inputs :
-  -> Ji_k0 : Matrix with the value of the damage parameter.
-  -> Mass : Matrix with the mass of the GP.
-  -> W : Incremental free-energy density per unit mass. 
-  -> Ceps : Matrix with the normalizing parameter.
-  -> Gf : Failure value for the energy-release rate.
-  -> Beps : Table with the list of neighbours per GP.
-  -> Neps : Number of neighbours per GP
-  -> Num_GP : Number of GP of the mesh.
-*/
 {
   
   /* Define auxiliar variable */
@@ -102,28 +86,16 @@ void EigensofteningAlgorithm(int p, Matrix ji, Matrix Strain,
 			     Matrix StrainF, Matrix Mass,
 			     Matrix Stress, Material MatPro,
 			     ChainPtr * Beps)
-/*
-  Pedro Navas, Rena C. Yu, Bo Li & Gonzalo Ruiz.
-  Modeling the dynamic fracture in concrete: 
-  an eigensoftening meshfree approach.
-  International Journal of Impact Engineering.
-  113 (2018) 9-20
-  NOTE : Here notation is the same as in the paper.
-  Inputs :
-  -> Ji_k0 : Matrix with the value of the damage parameter.
-  -> Mass : Matrix with the mass of the GP.
-  -> StrainF : Value of the strain field at the failure init. 
-  -> Beps : Table with the list of neighbours per GP.
-  -> Neps : Number of neighbours per GP
-  -> Num_GP : Number of GP of the mesh.
-*/
 {
-  /* Define auxiliar variable */
-
-  Tensor Stress_p, Stress_q, EV_Stress_p, EV_Stress_q; /* Stress tensor */
-  Tensor Strain_p, EV_Strain_p; /* Stress tensor */
+  /*! 
+   *  Define auxiliar variable
+   */
+  Tensor Stress_p, Stress_q, EV_Stress_p, EV_Stress_q; 
+  Tensor Strain_p, EV_Strain_p; 
   
-  /* Material properties of the eigensoftening algorithm */
+  /*!
+   *  Material properties of the eigensoftening algorithm 
+   */
   double ft_p, Wc_p, heps_p;
     
   double m_p, sum_p, Seps_p, ji_p;
@@ -132,17 +104,29 @@ void EigensofteningAlgorithm(int p, Matrix ji, Matrix Strain,
   int NumBeps_p;
   int q;
 
-  /* Get the tensile strengt of the material */
+  /*! 
+   * Get the tensile strengt of the material 
+   */
   ft_p = MatPro.ft;
-  /* Get the bandwidth of the cohesive fracture (Bazant) */
+  
+  /*!
+   * Get the bandwidth of the cohesive fracture (Bazant)
+   */
   heps_p = MatPro.heps;
-  /* Get the critical opening displacement */
+  
+  /*! 
+   *Get the critical opening displacement 
+   */
   Wc_p = MatPro.Wc;
     
-  /* Only for intact particles */
+  /*!
+   * Only for intact particles 
+   */
   if((ji.nV[p] == 0.0) && (StrainF.nV[p] == 0.0)){
 
-    /* Get the number of neighbours */
+    /*!
+     * Get the number of neighbours 
+     */
     NumBeps_p = get_Lenght_Set(Beps[p]);
       
     if(NumBeps_p > 0){

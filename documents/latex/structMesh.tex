@@ -1,0 +1,68 @@
+\hypertarget{structMesh}{}\doxysection{Mesh Struct Reference}
+\label{structMesh}\index{Mesh@{Mesh}}
+
+
+{\ttfamily \#include $<$Variables.\+h$>$}
+
+\doxysubsection*{Data Fields}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{structMesh_a004c1256fad786d2511c456604d539f1}\label{structMesh_a004c1256fad786d2511c456604d539f1}} 
+int \mbox{\hyperlink{structMesh_a004c1256fad786d2511c456604d539f1}{Num\+Nodes\+Mesh}}
+\begin{DoxyCompactList}\small\item\em Number of nodes in the mesh. \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{structMesh_a9e4cca5a354d1affd68decdc3801aea2}\label{structMesh_a9e4cca5a354d1affd68decdc3801aea2}} 
+int \mbox{\hyperlink{structMesh_a9e4cca5a354d1affd68decdc3801aea2}{Num\+Elem\+Mesh}}
+\begin{DoxyCompactList}\small\item\em Number of elements in the mesh. \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{structMesh_a626d583362518eabbcb1776ba5075146}\label{structMesh_a626d583362518eabbcb1776ba5075146}} 
+\mbox{\hyperlink{structMatrix}{Matrix}} \mbox{\hyperlink{structMesh_a626d583362518eabbcb1776ba5075146}{Coordinates}}
+\begin{DoxyCompactList}\small\item\em \mbox{\hyperlink{structTable}{Table}} with the coordinates of the nodes of the mesh. \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{structMesh_adbbf6c57a503756f8ab1534e729c83cc}\label{structMesh_adbbf6c57a503756f8ab1534e729c83cc}} 
+int $\ast$ \mbox{\hyperlink{structMesh_adbbf6c57a503756f8ab1534e729c83cc}{Num\+Nodes\+Elem}}
+\begin{DoxyCompactList}\small\item\em Number of nodes in a element. \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{structMesh_a2932dc26dac3d0387f6ad693f049e593}\label{structMesh_a2932dc26dac3d0387f6ad693f049e593}} 
+\mbox{\hyperlink{structChainPtr}{Chain\+Ptr}} $\ast$ \mbox{\hyperlink{structMesh_a2932dc26dac3d0387f6ad693f049e593}{Connectivity}}
+\begin{DoxyCompactList}\small\item\em List of nodes for each element (Connectivity) \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{structMesh_a3170990221ed859dd60848e8952a7308}\label{structMesh_a3170990221ed859dd60848e8952a7308}} 
+int $\ast$ \mbox{\hyperlink{structMesh_a3170990221ed859dd60848e8952a7308}{Num\+Neighbour}}
+\begin{DoxyCompactList}\small\item\em Number of elements close to each node. \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{structMesh_ad43290ff6256fa561988761a93e04ccf}\label{structMesh_ad43290ff6256fa561988761a93e04ccf}} 
+\mbox{\hyperlink{structChainPtr}{Chain\+Ptr}} $\ast$ \mbox{\hyperlink{structMesh_ad43290ff6256fa561988761a93e04ccf}{Node\+Neighbour}}
+\begin{DoxyCompactList}\small\item\em List of elements close to each node. \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{structMesh_a4a8762f3c24f5d80b0c34d9eeb6ae8ce}\label{structMesh_a4a8762f3c24f5d80b0c34d9eeb6ae8ce}} 
+int $\ast$ \mbox{\hyperlink{structMesh_a4a8762f3c24f5d80b0c34d9eeb6ae8ce}{Size\+Nodal\+Locality}}
+\begin{DoxyCompactList}\small\item\em Number of nodes close to a node. \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{structMesh_a0ebcb6d93fb66f6580c82c9fa9505903}\label{structMesh_a0ebcb6d93fb66f6580c82c9fa9505903}} 
+\mbox{\hyperlink{structChainPtr}{Chain\+Ptr}} $\ast$ \mbox{\hyperlink{structMesh_a0ebcb6d93fb66f6580c82c9fa9505903}{Nodal\+Locality}}
+\begin{DoxyCompactList}\small\item\em List of nodes close to a node. \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{structMesh_a1df78f547921b825d62b681318f566e6}\label{structMesh_a1df78f547921b825d62b681318f566e6}} 
+int $\ast$ \mbox{\hyperlink{structMesh_a1df78f547921b825d62b681318f566e6}{Num\+Particles}}
+\begin{DoxyCompactList}\small\item\em List with the number of particles close to a node. \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{structMesh_ac7265c44e1c73697825a773e2e434592}\label{structMesh_ac7265c44e1c73697825a773e2e434592}} 
+\mbox{\hyperlink{structChainPtr}{Chain\+Ptr}} $\ast$ \mbox{\hyperlink{structMesh_ac7265c44e1c73697825a773e2e434592}{I\+\_\+particles}}
+\begin{DoxyCompactList}\small\item\em List of particles in a node. \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{structMesh_a343202d4e6b5236f9743be556ab01784}\label{structMesh_a343202d4e6b5236f9743be556ab01784}} 
+\mbox{\hyperlink{structBoundaries}{Boundaries}} \mbox{\hyperlink{structMesh_a343202d4e6b5236f9743be556ab01784}{Bounds}}
+\begin{DoxyCompactList}\small\item\em List of boundaries of the domain. \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{structMesh_a9d6a3cd2bd041f9c987d9e05fa525a57}\label{structMesh_a9d6a3cd2bd041f9c987d9e05fa525a57}} 
+int \mbox{\hyperlink{structMesh_a9d6a3cd2bd041f9c987d9e05fa525a57}{Dimension}}
+\begin{DoxyCompactList}\small\item\em Number of dimensions of the element (O\+LD) \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{structMesh_a75963f339ff31279466ea9606582dd1e}\label{structMesh_a75963f339ff31279466ea9606582dd1e}} 
+double \mbox{\hyperlink{structMesh_a75963f339ff31279466ea9606582dd1e}{DeltaX}}
+\begin{DoxyCompactList}\small\item\em Minimum distance between nodes. \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{structMesh_adbfe39faac31856e521f4421fdd20df2}\label{structMesh_adbfe39faac31856e521f4421fdd20df2}} 
+char \mbox{\hyperlink{structMesh_adbfe39faac31856e521f4421fdd20df2}{Type\+Elem}} \mbox{[}20\mbox{]}
+\begin{DoxyCompactList}\small\item\em Name of the element (O\+LD) \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{structMesh_a54acb2051903d09d8f3a214153fb2f05}\label{structMesh_a54acb2051903d09d8f3a214153fb2f05}} 
+\mbox{\hyperlink{structMatrix}{Matrix}}($\ast$ \mbox{\hyperlink{structMesh_a54acb2051903d09d8f3a214153fb2f05}{N\+\_\+ref}} )(\mbox{\hyperlink{structMatrix}{Matrix}})
+\begin{DoxyCompactList}\small\item\em Function with the interpolation technique. \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{structMesh_ac09d5bed4572e0216c61f3d3941afcd9}\label{structMesh_ac09d5bed4572e0216c61f3d3941afcd9}} 
+\mbox{\hyperlink{structMatrix}{Matrix}}($\ast$ \mbox{\hyperlink{structMesh_ac09d5bed4572e0216c61f3d3941afcd9}{d\+Nd\+X\+\_\+ref}} )(\mbox{\hyperlink{structMatrix}{Matrix}})
+\begin{DoxyCompactList}\small\item\em Function with the gradient of the interpolation technique. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+This structure is devoted to store all the information of a list of nodes 
+
+The documentation for this struct was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+/home/migmolper2/\+N\+L-\/\+Part\+Sol/nl-\/partsol/include/\mbox{\hyperlink{Variables_8h}{Variables.\+h}}\end{DoxyCompactItemize}
