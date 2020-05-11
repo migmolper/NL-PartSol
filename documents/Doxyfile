@@ -823,7 +823,7 @@ WARN_LOGFILE           =
 # spaces. See also FILE_PATTERNS and EXTENSION_MAPPING
 # Note: If this tag is empty the current directory is searched.
 
-INPUT                  = ../nl-partsol/include ../nl-partsol/src ../nl-partsol/src/Constitutive ../nl-partsol/src/Fields ../nl-partsol/src/Formulations ../nl-partsol/src/InOutFun ../nl-partsol/src/MPM ../nl-partsol/src/Matlib ../nl-partsol/src/ShapeFun
+INPUT                  = ../nl-partsol/include ../nl-partsol/src ../nl-partsol/src/Constitutive ../nl-partsol/src/Fields ../nl-partsol/src/Time_Integration ../nl-partsol/src/InOutFun ../nl-partsol/src/MPM ../nl-partsol/src/Matlib ../nl-partsol/src/ShapeFun
 
 # This tag can be used to specify the character encoding of the source files
 # that doxygen parses. Internally doxygen uses the UTF-8 encoding. Doxygen uses

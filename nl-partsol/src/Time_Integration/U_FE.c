@@ -1,27 +1,28 @@
 #include "nl-partsol.h"
 
 void U_FE(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
-/*
-  Displacement formulation of the MPM with a Forward Euler as 
-  time integrator scheme
-*/
 {
 
-  /* Some auxiliar variables for the outputs */
+  /*!
+    Some auxiliar variables for the outputs 
+  */
   Matrix List_Fields;
 
-  /* Integer variables */
+  /*!
+    Integer variables 
+  */
   int Ndim = NumberDimensions;
   int Nnodes = FEM_Mesh.NumNodesMesh;
 
-  /* Auxiliar variable for the mass and momentum */
+  /*!
+    Auxiliar variable for the mass and momentum 
+  */
   Matrix Phi_I;
   strcpy(Phi_I.Info,"MOMENTUM;MASS");
   Matrix V_I;
   Matrix F_I;
   Matrix R_I;
   
-  /*********************************************************************/
 
   for(int TimeStep = 0 ; TimeStep<NumTimeStep ; TimeStep++ )
     {
@@ -39,8 +40,14 @@ void U_FE(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
 
       if(TimeStep % ResultsTimeStep == 0)
 	{
+	  /*!
+	    Print Nodal values after appling the BCCs
+	  */
 	  WriteVtk_FEM("Mesh",FEM_Mesh,Phi_I,
 		       (int)TimeStep/ResultsTimeStep);
+	  /*!
+	    Print particle results 
+	  */
 	  WriteVtk_MPM("MPM_VALUES",MPM_Mesh,List_Fields,
 		       (int)TimeStep/ResultsTimeStep);
 	}

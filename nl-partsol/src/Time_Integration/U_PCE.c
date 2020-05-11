@@ -1,24 +1,26 @@
 #include "nl-partsol.h"
 
 void U_PCE(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
-/*!
- * Explicit predictor-corrector gamma = 0.5 and beta = 0.25
- */
 {
-
-  /* Some auxiliar variables for the outputs */
+  /*!
+    Some auxiliar variables for the outputs 
+  */
   Matrix List_Fields;
 
   int Ndim = NumberDimensions;
   int Nnodes = FEM_Mesh.NumNodesMesh;
 
-  /* Control parameters of the generalized-alpha algorithm 
-     all the parameters are controled by a simple parameter :
-     SpectralRadius */
+  /*!
+    Control parameters of the generalized-alpha algorithm 
+    all the parameters are controled by a simple parameter :
+    SpectralRadius 
+  */
   Time_Int_Params Params;
   Params.GA_gamma = 0.5;
 
-  /* Auxiliar variable for the mass and momentum */
+  /*!
+    Auxiliar variable for the mass and momentum 
+  */
   Matrix M_I;
   Matrix V_I;
   Matrix F_I = MatAllocZ(Nnodes,Ndim);
@@ -58,10 +60,14 @@ void U_PCE(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
 
       if(TimeStep % ResultsTimeStep == 0)
 	{
-	  /* Print Nodal values after appling the BCCs */
+	  /*!
+	    Print Nodal values after appling the BCCs
+	  */
 	  WriteVtk_FEM("Mesh",FEM_Mesh,R_I,
 		       (int)TimeStep/ResultsTimeStep);
-	  /* Print GPs results */
+	  /*!
+	    Print particle results 
+	  */
 	  WriteVtk_MPM("MPM_VALUES",MPM_Mesh,List_Fields,
 		       (int)TimeStep/ResultsTimeStep);
 	}
