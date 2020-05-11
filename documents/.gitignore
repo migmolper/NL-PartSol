@@ -2,6 +2,7 @@
 *
 # But not these files...
 !Doxyfile
+!Biblio.bib
 !.gitignore
 
 # ...even if they are in subdirectories
