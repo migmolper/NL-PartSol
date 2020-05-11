@@ -1,39 +1,67 @@
-/*! \file InOutFun.h
-    \brief File with the prototype in/out functions
+/*! 
+  \file InOutFun.h
+  \brief File with the prototype in/out functions
 */
 
 #ifndef _INOUTFUN_H_
 #define _INOUTFUN_H_
 
+/*! 
+  \fn int parse(char ** Words, char * String, char * Delimiters)
+  
+  \brief Parse string in to its components 
+  
+  \param String : Input string
+  \param Delimiters : parser symbol o list of symbols
+  \param Words : Output string with the words parsed
 
-/* Auxiliar functions */
+*/
 int parse(char **, char *, char *);
+
+/*****************************************************************/
+
+/*
+  \def void generate_route(char * Route, char * File)
+
+  \brief Generate the relative route to a file
+
+  \param : Route
+  \param : File symbol o list of symbols
+
+*/
 void generate_route(char *, char *);
+
+/*****************************************************************/
+
 Matrix Read_CSV(char *, int);
 Curve ReadCurve(char *);
 void free_Curve(Curve);
 Mesh ReadGidMesh(char *);
 ChainPtr File2Chain(char *);
 
-/*! \fn void print_Status(char Message,int Time)
- *
- * \brief Print screen message in a safety way.
- *
- * Inputs :
- * \param Message : Message to print
- * \param Time : Current step of the simulation 
- */
+/*! 
+  \fn void print_Status(char Message,int Time)
+  
+  \brief Print screen message in a safety way.
+  
+  \param Message : Message to print
+  \param Time : Current step of the simulation 
+*/
 void print_Status(char *,int);
 
-/*! \fn void print_step(int Time,double DeltaTimeStep)
- *
- * \brief Print current step in a safety way.
- *
- * Inputs :
- * \param Time : Current step of the simulation 
- * \param DeltaTimeStep : Current time step
+/*****************************************************************/
+
+/*! 
+  \fn void print_step(int Time,double DeltaTimeStep)
+ 
+  \brief Print current step in a safety way.
+ 
+  \param Time : Current step of the simulation 
+  \param DeltaTimeStep : Current time step
  */
 void print_step(int,double);
+
+/*****************************************************************/
 
 /* Read .gfd format */
 Mesh GramsBox(char *);

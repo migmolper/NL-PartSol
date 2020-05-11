@@ -15,7 +15,6 @@
   \brief This function is devoted to make a material point behaves as a
   solid rigid.
 
-  Inputs :
   \param Strain : Strain field of each particle 
 */
 Tensor SolidRigid(Tensor Strain);
@@ -29,7 +28,6 @@ Tensor SolidRigid(Tensor Strain);
   \brief This function is devoted to make a material point behaves as a
   linear elastic material.
   
-  Inputs :
   \param Strain : Strain field of each particle 
   \param Stress : Stress field of each particle
   \param Properties : Define the material properties of the particle
@@ -52,7 +50,6 @@ Tensor LinearElastic(Tensor, Tensor, Material);
   \brief Function to compute is a material point is or not eroded. 
   Here the notation is the same as in \cite Pandolfi_2012
 
-  Inputs :
   \param p : Index of the particle
   \param ji : Damage status 
   \param W : Internal work 
@@ -84,7 +81,6 @@ void EigenerosionAlgorithm(int, Matrix, Matrix,
   \brief Function to compute is a material point is or not eroded. 
   Here the notation is the same as in \cite Navas_2017_ES
 
-  Inputs :
   \param p : Index of the particle
   \param ji : Matrix with the value of the damage parameter.
   \param Strain : Strain field of each particle. 
