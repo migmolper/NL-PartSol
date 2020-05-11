@@ -1,4 +1,4 @@
-#include "grams.h"
+#include "nl-partsol.h"
 
 void WriteGnuplot(Matrix X, Matrix Y,
 		  double X_0, double X_n,

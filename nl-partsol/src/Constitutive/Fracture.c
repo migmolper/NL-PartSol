@@ -1,4 +1,4 @@
-#include "grams.h"
+#include "nl-partsol.h"
 
 #define MAXVAL(A,B) ((A)>(B) ? (A) : (B))
 #define MINVAL(A,B) ((A)<(B) ? (A) : (B))

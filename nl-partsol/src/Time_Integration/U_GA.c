@@ -1,4 +1,4 @@
-#include "grams.h"
+#include "nl-partsol.h"
 
 void U_GA(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
 /*!

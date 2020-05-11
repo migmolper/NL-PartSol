@@ -1,4 +1,4 @@
-#include "grams.h"
+#include "nl-partsol.h"
 
 /* List of solver implemented :
    - Newton_Rapson

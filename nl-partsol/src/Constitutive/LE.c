@@ -1,5 +1,4 @@
-#include "grams.h"
-
+#include "nl-partsol.h"
 
 Tensor LinearElastic(Tensor Strain, Tensor Stress, Material Mat){
 

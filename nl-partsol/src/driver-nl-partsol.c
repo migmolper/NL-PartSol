@@ -1,18 +1,17 @@
-/*! \mainpage My Personal Index Page
+/*! \mainpage NL-PartSol page
  *
- * \section intro_sec Introduction
+ * \section Introduction
+ * This code is devoted to solve non-linear elastodynamic problems
+ * using the MPM approach. It is coded and mantained by
+ * Miguel Molinos Pérez (m.molinos@alumnos.upm.es)
+ * 
+ * \section Installation
  *
- * This is the introduction.
- *
- * \section install_sec Installation
- *
- * \subsection step1 Step 1: Opening the box
- *
- * etc...
+ * 
+ * \section Usage
  */
 
-#include "grams.h"
-
+#include "nl-partsol.h"
 
 void globalfree(Mesh,GaussPoint);
 
@@ -87,13 +86,19 @@ int main(int argc, char * argv[])
     /*********************************************************************/
     puts("*************************************************");
     puts("Run simulation ...");
-    if(strcmp(TimeIntegration,"FE") == 0 ){ /* Forward Euler */
+
+    /* Forward Euler */
+    if(strcmp(TimeIntegrationScheme,"FE") == 0 ){ 
       U_FE(FEM_Mesh, MPM_Mesh);
     }
-    if(strcmp(TimeIntegration,"GA") == 0 ){ /* Generalized-alpha */
+
+    /* Generalized-alpha */
+    if(strcmp(TimeIntegrationScheme,"GA") == 0 ){ 
       U_GA(FEM_Mesh, MPM_Mesh);
     }
-    if(strcmp(TimeIntegration,"PCE") == 0 ){ /* Explicit predictor-corrector */
+    
+    /* Explicit predictor-corrector */
+    if(strcmp(TimeIntegrationScheme,"PCE") == 0 ){ 
       U_PCE(FEM_Mesh, MPM_Mesh);
     }
 

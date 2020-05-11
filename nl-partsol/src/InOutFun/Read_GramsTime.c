@@ -1,4 +1,4 @@
-#include "grams.h"
+#include "nl-partsol.h"
 
 /**********************************************************************/
 
@@ -78,8 +78,8 @@ GramsTime(Scheme=FE){
 	       "Use this format -> (Type=string) !!!");
 	exit(0);
       }
-      TimeIntegration = Parse_Temp_id[1];
-      printf("\t -> %s : %s \n","Time integrator",TimeIntegration);
+      TimeIntegrationScheme = Parse_Temp_id[1];
+      printf("\t -> %s : %s \n","Time integrator",TimeIntegrationScheme);
 
       /* Set to default all it properties */
       CFL=0.8;

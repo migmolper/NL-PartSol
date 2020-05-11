@@ -5,7 +5,7 @@ project("nl-partsol")
 include_directories(include)
  
 # Wildcard additions
-file(GLOB_RECURSE SOURCES "src/*.c" )
+file(GLOB_RECURSE SOURCES "src/*.c")
 
 add_executable(${PROJECT_NAME} ${SOURCES})
 

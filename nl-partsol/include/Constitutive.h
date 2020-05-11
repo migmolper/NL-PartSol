@@ -1,5 +1,5 @@
 /*! \file Constitutive.h
-    \brief File with the prototype of the contitutive models
+  \brief File with the prototype of the contitutive models
 */
 
 
@@ -10,27 +10,36 @@
 
 
 /*!
- * This function is devoted to make a material point behaves as a
- * solid rigid.
- * @param Strain 
- */
+  \fn Tensor SolidRigid(Tensor Strain)
+
+  \brief This function is devoted to make a material point behaves as a
+  solid rigid.
+
+  Inputs :
+  \param Strain : Strain field of each particle 
+*/
 Tensor SolidRigid(Tensor Strain);
 
 /*******************************************************/
 
 
 /*!
- * This function is devoted to make a material point behaves as a
- * linear elastic material.
- * @param Strain 
- * @param Stress 
- * @param Mat 
- */
-Tensor LinearElastic(Tensor Strain, Tensor Stress, Material Mat);
+  \fn Tensor LinearElastic(Tensor Strain, Tensor Stress, Material Properties)
+  
+  \brief This function is devoted to make a material point behaves as a
+  linear elastic material.
+  
+  Inputs :
+  \param Strain : Strain field of each particle 
+  \param Stress : Stress field of each particle
+  \param Properties : Define the material properties of the particle
+*/
+Tensor LinearElastic(Tensor, Tensor, Material);
 
 /*******************************************************/
 
-/*! \fn void EigenerosionAlgorithm(int p,
+/*! 
+  \fn void EigenerosionAlgorithm(int p,
   Matrix ji,
   Matrix W,
   Matrix Mass,
@@ -41,11 +50,7 @@ Tensor LinearElastic(Tensor Strain, Tensor Stress, Material Mat);
   double DeltaX)
 
   \brief Function to compute is a material point is or not eroded. 
-  Here the notation is the same as in the paper : 
-  A.Pandolfi & M.Ortiz.
-  An eigenerosion approach to brittle fracture. 
-  International Journal for Numerical Methods in Enginnering.
-  92:694-714, 2012.
+  Here the notation is the same as in \cite Pandolfi_2012
 
   Inputs :
   \param p : Index of the particle
@@ -59,28 +64,36 @@ Tensor LinearElastic(Tensor Strain, Tensor Stress, Material Mat);
   \param DeltaX : Mesh size
 */
 
-void EigenerosionAlgorithm(int p, Matrix ji, Matrix W,
-			   Matrix Mass, Matrix Rho,
-			   Matrix Stress, Material MatPro,
-			   ChainPtr * Beps, double DeltaX);
+void EigenerosionAlgorithm(int, Matrix, Matrix,
+			   Matrix, Matrix,
+			   Matrix, Material,
+			   ChainPtr *, double);
 
 /*******************************************************/
 
 /*!
- *  Pedro Navas, Rena C. Yu, Bo Li & Gonzalo Ruiz.
- *  Modeling the dynamic fracture in concrete: 
- *  an eigensoftening meshfree approach.
- *  International Journal of Impact Engineering.
- *  113 (2018) 9-20
- *  NOTE : Here notation is the same as in the paper.
- *  Inputs :
- *  @param Ji_k0 : Matrix with the value of the damage parameter.
- *  @param Mass : Matrix with the mass of the GP.
- *  @param StrainF : Value of the strain field at the failure init. 
- *  @param Beps : Table with the list of neighbours per GP.
- *  @param Neps : Number of neighbours per GP
- *  @param Num_GP : Number of GP of the mesh.
- */
+  \fn void EigensofteningAlgorithm(int p,
+  Matrix ji,
+  Matrix Strain,
+  Matrix StrainF,
+  Matrix Mass,
+  Matrix Stress,
+  Material Properties,
+  ChainPtr * Beps)
+
+  \brief Function to compute is a material point is or not eroded. 
+  Here the notation is the same as in \cite Navas_2017_ES
+
+  Inputs :
+  \param p : Index of the particle
+  \param ji : Matrix with the value of the damage parameter.
+  \param Strain : Strain field of each particle. 
+  \param StrainF : Value of the strain field at the failure init. 
+  \param Mass : Matrix with the mass of the particle.
+  \param Stress : Stress field of each particle
+  \param Properties : Define the material properties of the particle
+  \param Beps : Table with the list of neighbours per particle.
+*/
 void EigensofteningAlgorithm(int, Matrix, Matrix,
 			     Matrix, Matrix, Matrix,
 			     Material, ChainPtr *);

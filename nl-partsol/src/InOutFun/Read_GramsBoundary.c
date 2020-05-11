@@ -1,4 +1,4 @@
-#include "grams.h"
+#include "nl-partsol.h"
 
 Boundaries GramsBoundary(char * Name_File,int NumBounds){
 

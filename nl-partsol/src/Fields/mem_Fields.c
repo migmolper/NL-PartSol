@@ -1,6 +1,5 @@
-#include "grams.h"
+#include "nl-partsol.h"
 
-/*********************************************************************/
 
 Fields allocate_Fields(int NumParticles)
 {

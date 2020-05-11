@@ -4,7 +4,7 @@
 //  Main author:    Miguel Molinos Perez
 //
 
-/*! \file grams.h
+/*! \file nl-partsol.h
     \brief File that controls the nl-partsol
 */
 
@@ -25,7 +25,7 @@ char OutputDir[MAXC];
 /***************************************/
 /*********** Kind of analysis **********/
 /***************************************/
-char * TimeIntegration;
+char * TimeIntegrationScheme;
 char * ShapeFunctionGP;
 char * Formulation;
 

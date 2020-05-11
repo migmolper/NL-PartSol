@@ -1,4 +1,4 @@
-#include "grams.h"
+#include "nl-partsol.h"
 
 /***********************************************/
 /********* 2D triangle linear element **********/
