@@ -1,0 +1,10 @@
+# Ignore everything
+*
+# But not these files...
+!Doxyfile
+!.gitignore
+
+# ...even if they are in subdirectories
+!*/
+html/*
+latex/*
