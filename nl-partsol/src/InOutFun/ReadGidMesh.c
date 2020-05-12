@@ -180,23 +180,27 @@ Mesh ReadGidMesh(char * MeshName)
   				  GID_Mesh.Dimension);
   GID_Mesh.Connectivity = (ChainPtr *)
     malloc(GID_Mesh.NumElemMesh*sizeof(ChainPtr));
-  if(GID_Mesh.Connectivity == NULL){
-    puts("Error in Chain declaration");
-    exit(0);
-  }
-  for(int i = 0 ; i<GID_Mesh.NumElemMesh ; i++){
-    GID_Mesh.Connectivity[i] = NULL;  
-  }
+  if(GID_Mesh.Connectivity == NULL)
+    {
+      puts("Error in Chain declaration");
+      exit(0);
+    }
+  for(int i = 0 ; i<GID_Mesh.NumElemMesh ; i++)
+    {
+      GID_Mesh.Connectivity[i] = NULL;  
+    }
 
   GID_Mesh.NodeNeighbour = (ChainPtr *)
     malloc(GID_Mesh.NumNodesMesh*sizeof(ChainPtr));
-  if(GID_Mesh.NodeNeighbour == NULL){
-    puts("Error in Chain declaration");
-    exit(0);
-  }
-  for(int i = 0 ; i<GID_Mesh.NumNodesMesh ; i++){
-    GID_Mesh.NodeNeighbour[i] = NULL;  
-  }
+  if(GID_Mesh.NodeNeighbour == NULL)
+    {
+      puts("Error in Chain declaration");
+      exit(0);
+    }
+  for(int i = 0 ; i<GID_Mesh.NumNodesMesh ; i++)
+    {
+      GID_Mesh.NodeNeighbour[i] = NULL;  
+    }
   
   GID_Mesh.NumNodesElem =  (int *)
     Allocate_ArrayZ(GID_Mesh.NumElemMesh,sizeof(int));
@@ -222,22 +226,27 @@ Mesh ReadGidMesh(char * MeshName)
   fgets(line, sizeof line, MeshFile);
   /* Split the line in word using the space character as a delimiter */
   nwords = parse(words, line, " \n\t");
-  if(strcmp(words[0],"Coordinates") == 0){
-    for(int i = 0 ; i<GID_Mesh.NumNodesMesh ; i++){
-      fgets(line_coords, sizeof line_coords, MeshFile);
-      ncoords = parse(read_coords, line_coords," \n\t");
-      if(ncoords == 4){
-  	for(int j = 0 ; j<GID_Mesh.Dimension ; j++){
-  	  GID_Mesh.Coordinates.nM[i][j] = atof(read_coords[j+1]);
-  	}
-      }
-      else{
-  	printf("Check the node : %i \n", atoi(read_coords[0]) - 1);
-  	puts("Error in ReadGidMesh() : Format error in the input mesh !!!");
-  	exit(0);
-      }
+  if(strcmp(words[0],"Coordinates") == 0)
+    {
+      for(int i = 0 ; i<GID_Mesh.NumNodesMesh ; i++)
+	{
+	  fgets(line_coords, sizeof line_coords, MeshFile);
+	  ncoords = parse(read_coords, line_coords," \n\t");
+	  if(ncoords == 4)
+	    {
+	      for(int j = 0 ; j<GID_Mesh.Dimension ; j++)
+		{
+		  GID_Mesh.Coordinates.nM[i][j] = atof(read_coords[j+1]);
+		}
+	    }
+	  else
+	    {
+	      printf("Check the node : %i \n", atoi(read_coords[0]) - 1);
+	      puts("Error in ReadGidMesh() : Format error in the input mesh !!!");
+	      exit(0);
+	    }
+	}
     }
-  }
   
   /* End Coordinates */
   fgets(line, sizeof line, MeshFile);
@@ -248,25 +257,30 @@ Mesh ReadGidMesh(char * MeshName)
   fgets(line, sizeof line, MeshFile);
   /* Split the line in word using the space character as a delimiter */
   nwords = parse(words, line, " \n\t");
-  if(strcmp(words[0],"Elements") == 0){
-    for(int i = 0 ; i<GID_Mesh.NumElemMesh ; i++){
-      GID_Mesh.NumNodesElem[i] = NumNodesElem;
-      fgets(line_connectivity, sizeof line_connectivity, MeshFile);
-      nconnectivity = parse(read_connectivity, line_connectivity," \n\t");
-      if(nconnectivity == 1 + NumNodesElem){
-  	for(int j = 0 ; j<NumNodesElem ; j++){
-  	  ConnectivityElem[j] = atoi(read_connectivity[j+1]) - 1;
-  	}
-	GID_Mesh.Connectivity[i] = Pointer_to_Set(ConnectivityElem,NumNodesElem);
-      }
-      else{
-  	printf("Check the element : %i \n", atoi(read_connectivity[0]) - 1);
-  	puts("Error in ReadGidMesh() : Format error in the input mesh !!!");
-  	exit(0);
-      }
+  if(strcmp(words[0],"Elements") == 0)
+    {
+      for(int i = 0 ; i<GID_Mesh.NumElemMesh ; i++)
+	{
+	  GID_Mesh.NumNodesElem[i] = NumNodesElem;
+	  fgets(line_connectivity, sizeof line_connectivity, MeshFile);
+	  nconnectivity = parse(read_connectivity, line_connectivity," \n\t");
+	  if(nconnectivity == 1 + NumNodesElem)
+	    {
+	      for(int j = 0 ; j<NumNodesElem ; j++)
+		{
+		  ConnectivityElem[j] = atoi(read_connectivity[j+1]) - 1;
+		}
+	      GID_Mesh.Connectivity[i] = Pointer_to_Set(ConnectivityElem,NumNodesElem);
+	    }
+	  else
+	    {
+	      printf("Check the element : %i \n", atoi(read_connectivity[0]) - 1);
+	      puts("Error in ReadGidMesh() : Format error in the input mesh !!!");
+	      exit(0);
+	    }
+	}
+      free(ConnectivityElem);
     }
-    free(ConnectivityElem);
-  }
 
   /* End Elements */
   fgets(line, sizeof line, MeshFile);

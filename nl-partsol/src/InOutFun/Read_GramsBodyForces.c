@@ -7,12 +7,6 @@
 /**********************************************************************/
 
 Load * GramsBodyForces(char * Name_File, int NumBodyForces, int GPxElement)
-/*
-  GramsBodyForces (Nodes=ListNodes.txt) {
-  b.x Load_x.txt
-  b.y Load_x.txt
-  }
-*/
 {
   /* Define new load case for the body forces */
   Load * B = (Load *)Allocate_Array(NumBodyForces, sizeof(Load));

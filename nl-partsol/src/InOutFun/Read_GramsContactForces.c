@@ -7,12 +7,6 @@
 /**********************************************************************/
 
 Load * GramsNeumannBC(char * Name_File, int NumNeumannBC, int GPxElement)
-/*
-  GramsNeumannBC (Nodes=ListNodes.txt) {
-  V.x Load_x.txt
-  V.y Load_x.txt
-}
-*/
 {
 
   /* Number of dimensions */
