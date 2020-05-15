@@ -21,6 +21,9 @@ set_target_properties("${PROJECT_NAME}" PROPERTIES
 # Add math library
 target_link_libraries("${PROJECT_NAME}" m)
 
+# Add LAPACK
+target_link_libraries("${PROJECT_NAME}" lapack)
+
 add_custom_target(debug
   COMMAND ${CMAKE_COMMAND} -DCMAKE_BUILD_TYPE=Debug ${CMAKE_SOURCE_DIR}
   COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target all

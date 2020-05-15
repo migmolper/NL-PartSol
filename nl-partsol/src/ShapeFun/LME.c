@@ -181,7 +181,7 @@ Matrix LME_lambda_NR(Matrix l, Matrix lambda, Matrix Beta)
   Matrix D_lambda; /* Increment of lambda */
  
   /* Start with the Newton-Rapson method */
-  while(norm_r > TOL_NR){
+  while(NumIter <= MaxIter){
 	
     /* Get vector with the shape functions evaluated in the nodes */
     p = LME_p(l,lambda,Beta);
@@ -213,23 +213,30 @@ Matrix LME_lambda_NR(Matrix l, Matrix lambda, Matrix Beta)
       lambda.nV[i] -= D_lambda.nV[i];
     }
 
-    /* Free memory */
-    FreeMat(p);
-    FreeMat(r);
-    FreeMat(J);
-    FreeMat(D_lambda);
-    
-    /* Update the number of iterations */
-    NumIter ++;
-    if(NumIter >= MaxIter){
-      printf("%s : %s %i/%i %s \n",
-      	     "Warning in LME_lambda",
-      	     "No convergence in",NumIter,MaxIter,"iterations");
-      printf("%s : %f \n",
-	     "Error",norm_r);
-      exit(0);
+    if(norm_r > TOL_NR){
+      /* Free memory and update the iteration */
+      FreeMat(p);
+      FreeMat(r);
+      FreeMat(J);
+      FreeMat(D_lambda);
+      NumIter ++;
     }
-  
+    else{
+      /* Free memory and break the loop */
+      FreeMat(p);
+      FreeMat(r);
+      FreeMat(J);
+      FreeMat(D_lambda);
+      break;
+    } 
+  }
+
+  if(NumIter == MaxIter){
+    printf("%s : %s %i/%i %s \n",
+	   "Warning in LME_lambda",
+	   "No convergence in",NumIter,MaxIter,"iterations");
+    printf("%s : %f \n",
+	   "Error",norm_r);
   }
   
   /* Once the stopping criteria is reached, 
@@ -402,7 +409,8 @@ Matrix LME_dp(Matrix l, Matrix p)
   Jm1 = Get_Inverse(J);
   
   /* Free memory */
-  FreeMat(r), FreeMat(J);
+  FreeMat(r);
+  FreeMat(J);
 
   /* Fill the gradient for each node */
   for(int a = 0 ; a<N_a ; a++){

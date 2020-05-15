@@ -135,4 +135,8 @@ Tensor get_firstOrderContraction_Of(Tensor A, Tensor b);
 /*******************************************************/
 
 
+/* LAPACK interfase of the program */
+Matrix solve_system_LAPACK(Matrix,Matrix);
+
+
 #endif

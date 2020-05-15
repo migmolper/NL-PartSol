@@ -196,9 +196,9 @@ Matrix compute_ShapeFunction_Gradient(Element GP_Element,GaussPoint MPM_Mesh,
     /* Evaluate the shape function gradient */
     ShapeFunction_p = LME_p(Delta_Xip, lambda_GP,Beta_GP);
     Gradient_p = LME_dp(Delta_Xip, ShapeFunction_p);
-    FreeMat(ShapeFunction_p);
-    
+   
     /* Free memory */
+    FreeMat(ShapeFunction_p);
     FreeMat(Delta_Xip);
   }
   else{
