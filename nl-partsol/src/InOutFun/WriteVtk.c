@@ -23,10 +23,15 @@ void WriteVtk_MPM(char * Name_File, GaussPoint MPM_Mesh,
   /* Coordinates */
   fprintf(Vtk_file,"POINTS %i float \n",MPM_Mesh.NumGP);
   for(int i = 0 ; i<MPM_Mesh.NumGP ; i++){
-    fprintf(Vtk_file,"%f %f %f \n",
-	    MPM_Mesh.Phi.x_GC.nM[i][0],
-	    MPM_Mesh.Phi.x_GC.nM[i][1],
-	    MPM_Mesh.Phi.x_GC.nM[i][2]);
+    for(int j = 0 ; j<3 ; j++){
+      if(j<Ndim){
+	fprintf(Vtk_file,"%f ",MPM_Mesh.Phi.x_GC.nM[i][j]);
+      }
+      else{
+	fprintf(Vtk_file,"%f ",0.0);
+      }
+    }
+    fprintf(Vtk_file,"\n");
   }
 
   /* Connectivity */
@@ -45,17 +50,27 @@ void WriteVtk_MPM(char * Name_File, GaussPoint MPM_Mesh,
   fprintf(Vtk_file,"POINT_DATA %i \n",MPM_Mesh.NumGP);
   fprintf(Vtk_file,"VECTORS %s float \n","X_GC");
   for(int i =  0 ; i<MPM_Mesh.NumGP ; i++){
-    fprintf(Vtk_file,"%f %f %f \n",
-	    MPM_Mesh.Phi.x_GC.nM[i][0],
-	    MPM_Mesh.Phi.x_GC.nM[i][1],
-	    MPM_Mesh.Phi.x_GC.nM[i][2]);
+    for(int j = 0 ; j<3 ; j++){
+      if(j<Ndim){
+	fprintf(Vtk_file,"%f ",MPM_Mesh.Phi.x_GC.nM[i][j]);
+      }
+      else{
+	fprintf(Vtk_file,"%f ",0.0);
+      }
+    }
+    fprintf(Vtk_file,"\n");
   }
   fprintf(Vtk_file,"VECTORS %s float \n","X_EC");
   for(int i =  0 ; i<MPM_Mesh.NumGP ; i++){
-    fprintf(Vtk_file,"%f %f %f \n",
-	    MPM_Mesh.Phi.x_EC.nM[i][0],
-	    MPM_Mesh.Phi.x_EC.nM[i][1],
-	    MPM_Mesh.Phi.x_EC.nM[i][2]);
+    for(int j = 0 ; j<3 ; j++){
+      if(j<Ndim){
+	fprintf(Vtk_file,"%f ",MPM_Mesh.Phi.x_EC.nM[i][j]);
+      }
+      else{
+	fprintf(Vtk_file,"%f ",0.0);
+      }
+    }
+    fprintf(Vtk_file,"\n");
   }
 
   /* Cell data */  

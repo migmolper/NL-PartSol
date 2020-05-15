@@ -1,16 +1,19 @@
+
+
 # Background mesh definition
 GramsBox (Type=GID,File=FEM_Mesh.msh) {
 }
 
+# Time integration
+GramsTime (Type=FE) {
+CEL=50
+CFL=0.000005
+N=60000
+}				
+
+
 # Material points definitions
 GramsSolid2D (File=MPM_Mesh.msh) {
-
-    # Time integration
-    GramsTime (Type=FE) {
-	CEL=50
-	CFL=0.000005
-	N=60000
-    }
 
     # List of materials for the GPs
     GramsMaterials (id=0) {

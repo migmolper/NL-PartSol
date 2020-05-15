@@ -67,7 +67,7 @@ Matrix Newton_Rapson(Matrix(* Function)(Matrix, Matrix),Matrix Parameter_F,
     case 0 : /* If the size of the Jacobian is less than 4, use analitical */
       dY_dX_m1 = Get_Inverse(dY_dX);
       FreeMat(dY_dX);
-      DeltaX = Scalar_prod(dY_dX_m1,F_x);
+      DeltaX = Scalar_prod(dY_dX_m1,F_x);      
       FreeMat(dY_dX_m1);
       break;
     case 1 : /* If the size of the Jacobian is great than 4, use numerical */

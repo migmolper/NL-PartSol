@@ -37,7 +37,7 @@ void Q4_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
     /* Get the global and local coodinates of the particle */ 
     X_p = get_RowFrom(Ndim,1,MPM_Mesh.Phi.x_GC.nM[p]);
     Xi_p = get_RowFrom(Ndim,1,MPM_Mesh.Phi.x_EC.nM[p]);
-
+    
     /* Check for each element of the mesh */
     for(int i = 0 ; i<Nelem ; i++){
 
@@ -69,7 +69,7 @@ void Q4_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 	
       }
       
-    } 
+    }
 
   }
   
@@ -81,7 +81,7 @@ void Q4_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 Matrix Q4_N(Matrix X_e){
   
   /* Definition and allocation */
-  Matrix N_ref =  MatAlloc(1,4);
+  Matrix N_ref =  MatAllocZ(1,4);
 
   /* Fill the array */
   N_ref.nV[0] = 0.25*DMIN(4,DMAX(0,(1-X_e.nV[0])*(1-X_e.nV[1])));
@@ -150,14 +150,14 @@ Matrix Q4_F_Ref(Matrix X_NC_GP, Matrix X_GC_Nodes)
   Matrix F_Ref = MatAllocZ(Ndim,Ndim);
 
   /* 1º Evaluate the derivarive of the shape function in the GP */
-  dNdX_Ref_GP = Q4_dN_Ref(X_NC_GP); 
+  dNdX_Ref_GP = Q4_dN_Ref(X_NC_GP);
 
   /* 2º Get the F_Ref doing a loop over the nodes of the element */
   for(int I = 0 ; I<4 ; I++){
 
     /* 3º Fill arrays for the tensorial product */
-    X_I = memory_to_Tensor(X_GC_Nodes.nM[I], 1);
-    dNdx_I = memory_to_Tensor(dNdX_Ref_GP.nM[I], 1);
+    X_I = memory_to_Tensor(X_GC_Nodes.nM[I],1);
+    dNdx_I = memory_to_Tensor(dNdX_Ref_GP.nM[I],1);
 
     /* 4º Get the nodal contribution */
     F_Ref_I = get_dyadicProduct_Of(X_I,dNdx_I);

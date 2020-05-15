@@ -115,7 +115,7 @@ void ** Allocate_MatrixZ(int NumberRows,int NumberColumns,int SizeType)
 	  exit(EXIT_FAILURE);
 	}
       
-  }
+    }
   
   return M;  
 }
@@ -127,48 +127,44 @@ Matrix MatAlloc(int NumberRows,int NumberColumns)
 {
 
       
-  /* Matrix M; */
-  /* M.N_rows = NumberRows; */
-  /* M.N_cols = NumberColumns; */
-
-  /* /\* Reservar memoria consecutiva *\/ */
-  /* M.nV = (double *)malloc(NumberRows*NumberColumns*sizeof(double)); */
-
-  /* if (M.nV == NULL) */
-  /*   { */
-  /*     puts("Error in MatAllocZ : Out of memory"); */
-  /*     exit(EXIT_FAILURE); */
-  /*   } */
-
-  /* /\* It is a matrix generate a table *\/ */
-  /* if((NumberRows > 1) && (NumberColumns > 1)) */
-  /*   { */
-  /*     M.nM = (double **)malloc(NumberRows*sizeof(double *)); */
-  /*     for(int i = 0 ; i<NumberRows ; i++) */
-  /* 	{ */
-  /* 	  M.nM[i] = M.nV + i*NumberColumns;   */
-  /* 	} */
-  /*   } */
-  
   Matrix M;
   M.N_rows = NumberRows;
   M.N_cols = NumberColumns;
 
-  /* It is an array */
-  if((NumberRows == 1) || (NumberColumns == 1))
+  /* Reservar memoria consecutiva */
+  M.nV = (double *)malloc(NumberRows*NumberColumns*sizeof(double));
+
+  if (M.nV == NULL)
     {
-      M.nV = (double *)Allocate_Array(NumberRows*NumberColumns,sizeof(double));
-      /* M.nM = NULL; */
-      /* M.n = NAN; */
+      puts("Error in MatAllocZ : Out of memory");
+      exit(EXIT_FAILURE);
     }
 
-  /* It is a matrix */
-  else if((NumberRows != 1) && (NumberColumns != 1))
+  /* It is a matrix generate a table */
+  if((NumberRows > 1) && (NumberColumns > 1))
     {
-      M.nM = (double **)Allocate_Matrix(NumberRows,NumberColumns,sizeof(double));
-      /* M.nV = NULL; */
-      /* M.n = NAN; */
+      M.nM = (double **)malloc(NumberRows*sizeof(double *));
+      for(int i = 0 ; i<NumberRows ; i++)
+  	{
+  	  M.nM[i] = M.nV + i*NumberColumns;
+  	}
     }
+  
+  /* Matrix M; */
+  /* M.N_rows = NumberRows; */
+  /* M.N_cols = NumberColumns; */
+
+  /* /\* It is an array *\/ */
+  /* if((NumberRows == 1) || (NumberColumns == 1)) */
+  /*   { */
+  /*     M.nV = (double *)Allocate_Array(NumberRows*NumberColumns,sizeof(double)); */
+  /*   } */
+
+  /* /\* It is a matrix *\/ */
+  /* else if((NumberRows != 1) && (NumberColumns != 1)) */
+  /*   { */
+  /*     M.nM = (double **)Allocate_Matrix(NumberRows,NumberColumns,sizeof(double)); */
+  /*   } */
   
   return M;
 }
@@ -180,49 +176,45 @@ Matrix MatAllocZ(int NumberRows,int NumberColumns)
 */
 {
     
-  /* Matrix M; */
-  /* M.N_rows = NumberRows; */
-  /* M.N_cols = NumberColumns; */
-
-  /* /\* Reservar memoria consecutiva *\/ */
-  /* M.nV = (double *)calloc(NumberRows*NumberColumns,sizeof(double)); */
-
-  /* if (M.nV == NULL) */
-  /*   { */
-  /*     puts("Error in MatAllocZ : Out of memory"); */
-  /*     exit(EXIT_FAILURE); */
-  /*   } */
-
-  /* /\* It is a matrix generate a table *\/ */
-  /* if((NumberRows > 1) && (NumberColumns > 1)) */
-  /*   { */
-  /*     M.nM = (double **)malloc(NumberRows*sizeof(double *)); */
-  /*     for(int i = 0 ; i<NumberRows ; i++) */
-  /* 	{ */
-  /* 	  M.nM[i] = M.nV + i*NumberColumns;   */
-  /* 	} */
-  /*   } */
-  
-  
   Matrix M;
   M.N_rows = NumberRows;
   M.N_cols = NumberColumns;
 
-  /* It is an array */
-  if((NumberRows == 1) || (NumberColumns == 1))
+  /* Reservar memoria consecutiva */
+  M.nV = (double *)calloc(NumberRows*NumberColumns,sizeof(double));
+
+  if (M.nV == NULL)
     {
-      M.nV = (double *)Allocate_ArrayZ(NumberRows*NumberColumns,sizeof(double));
-      /* M.nM = NULL; */
-      /* M.n = NAN; */
+      puts("Error in MatAllocZ : Out of memory");
+      exit(EXIT_FAILURE);
     }
 
-  /* It is a matrix */
-  else if((NumberRows != 1) && (NumberColumns != 1))
+  /* It is a matrix generate a table */
+  if((NumberRows > 1) && (NumberColumns > 1))
     {
-      M.nM = (double **)Allocate_MatrixZ(NumberRows,NumberColumns,sizeof(double));
-      /* M.nV = NULL; */
-      /* M.n = NAN; */
+      M.nM = (double **)malloc(NumberRows*sizeof(double *));
+      for(int i = 0 ; i<NumberRows ; i++)
+  	{
+  	  M.nM[i] = M.nV + i*NumberColumns;
+  	}
     }
+  
+  
+  /* Matrix M; */
+  /* M.N_rows = NumberRows; */
+  /* M.N_cols = NumberColumns; */
+
+  /* /\* It is an array *\/ */
+  /* if((NumberRows == 1) || (NumberColumns == 1)) */
+  /*   { */
+  /*     M.nV = (double *)Allocate_ArrayZ(NumberRows*NumberColumns,sizeof(double)); */
+  /*   } */
+
+  /* /\* It is a matrix *\/ */
+  /* else if((NumberRows != 1) && (NumberColumns != 1)) */
+  /*   { */
+  /*     M.nM = (double **)Allocate_MatrixZ(NumberRows,NumberColumns,sizeof(double)); */
+  /*   } */
   
   return M;
 }
@@ -250,51 +242,51 @@ void FreeMat(Matrix Input)
 */
 {
 
-  /* int Columns = Input.N_cols; */
-  /* int Rows = Input.N_rows; */
-
-  /* /\* Free consecutive memory *\/ */
-  /* free(Input.nV);  */
-
-  /* /\* If it is a matrix, free the pointer table *\/ */
-  /* if((Columns > 1) && (Rows > 1)) */
-  /*   {        */
-  /*     free(Input.nM); */
-  /*   } */
-
-
   int Columns = Input.N_cols;
   int Rows = Input.N_rows;
 
-  /* It is a vector */
-  if(((Columns == 1) && (Rows > 1)) || ((Columns > 1) && (Rows == 1)))
-    {
-      free(Input.nV);
-    }
+  /* Free consecutive memory */
+  free(Input.nV);
 
-  /* It is a matrix */
-  else if((Columns > 1) && (Rows > 1))
+  /* If it is a matrix, free the pointer table */
+  if((Columns > 1) && (Rows > 1))
     {
-      for(int i = 0 ; i<Rows ; i++)
-  	{
-  	  free(Input.nM[i]);
-  	}
       free(Input.nM);
     }
+
+
+  /* int Columns = Input.N_cols; */
+  /* int Rows = Input.N_rows; */
+
+  /* /\* It is a vector *\/ */
+  /* if(((Columns == 1) && (Rows > 1)) || ((Columns > 1) && (Rows == 1))) */
+  /*   { */
+  /*     free(Input.nV); */
+  /*   } */
+
+  /* /\* It is a matrix *\/ */
+  /* else if((Columns > 1) && (Rows > 1)) */
+  /*   { */
+  /*     for(int i = 0 ; i<Rows ; i++) */
+  /* 	{ */
+  /* 	  free(Input.nM[i]); */
+  /* 	} */
+  /*     free(Input.nM); */
+  /*   } */
   
-  /* Other case */
-  else
-    {
-      printf("Error in FreeMat() : You are trying to free a scalar !!! \n");
-      exit(EXIT_FAILURE);
-    }
+  /* /\* Other case *\/ */
+  /* else */
+  /*   { */
+  /*     printf("Error in FreeMat() : You are trying to free a scalar !!! \n"); */
+  /*     exit(EXIT_FAILURE); */
+  /*   } */
   
 }
 
 
 /*********************************************************************/
 
-void PrintMatrix(Matrix In, int PrintColumns, int PrintRows)
+void PrintMatrix(Matrix In, int PrintRows, int PrintColumns)
 /*
   Print term by term the input matrix
 */
