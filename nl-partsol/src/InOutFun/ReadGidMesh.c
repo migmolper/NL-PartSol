@@ -176,8 +176,7 @@ Mesh ReadGidMesh(char * MeshName)
   /***************************************************************************/
   
   /* Allocate the mesh data */
-  GID_Mesh.Coordinates = MatAlloc(GID_Mesh.NumNodesMesh,
-  				  GID_Mesh.Dimension);
+  GID_Mesh.Coordinates = MatAlloc(GID_Mesh.NumNodesMesh,GID_Mesh.Dimension);
   GID_Mesh.Connectivity = (ChainPtr *)
     malloc(GID_Mesh.NumElemMesh*sizeof(ChainPtr));
   if(GID_Mesh.Connectivity == NULL)

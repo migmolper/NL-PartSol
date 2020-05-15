@@ -38,16 +38,16 @@ void U_GA(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
   /*!
     Nodal forces for the balance 
   */
-  Matrix F_I = MatAssign(Ndim,Nnodes,NAN,NULL,NULL);
-  Matrix R_I = MatAssign(Ndim,Nnodes,NAN,NULL,NULL);
+  Matrix F_I = get_RowFrom(Ndim,Nnodes,NULL);
+  Matrix R_I = get_RowFrom(Ndim,Nnodes,NULL);
 
   
   puts("*************************************************");
   puts(" First step : Get the nodal kinetics");
   puts(" \t WORKING ...");
   Nodal_Kinetics = GetNodalKinetics(MPM_Mesh,FEM_Mesh);
-  V_I =  MatAssign(Nnodes,Ndim,NAN,NULL,
-		   (double**)malloc(Nnodes*sizeof(double *)));
+  /* V_I =  MatAssign(Nnodes,Ndim,NAN,NULL, */
+  /* 		   (double**)malloc(Nnodes*sizeof(double *))); */
   for(int i = 0 ; i<Ndim ; i++)
     {
       V_I.nM[i] = Nodal_Kinetics.nM[1+2*Ndim+i];

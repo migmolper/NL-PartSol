@@ -15,13 +15,13 @@ Matrix compute_ShapeFunction(Element GP_Element,GaussPoint MPM_Mesh,Mesh FEM_Mes
   
   /* Gauss-Point properties */
   Matrix X_GP = /* Element coordinates of the Gauss-Point */
-    MatAssign(Ndim,1,NAN,NULL,NULL); 
+    get_RowFrom(Ndim,1,NULL); 
   Matrix lp; /* Just for GIMP -> Particle voxel */
   Matrix Beta_GP =  /* Tunning parameter for LME */
-    MatAssign(Ndim,1,NAN,NULL,NULL);
+    get_RowFrom(Ndim,1,NULL);
   Matrix Delta_Xip; /* Just for GIMP -> Distance from GP to the nodes */
   Matrix lambda_GP = /* Just for LME/LME -> Lagrange multipliers */
-    MatAssign(Ndim,1,NAN,NULL,NULL);
+    get_RowFrom(Ndim,1,NULL);
   
   Matrix ShapeFunction_p; /* Matrix with the nodal shape functions */
   
@@ -121,13 +121,13 @@ Matrix compute_ShapeFunction_Gradient(Element GP_Element,GaussPoint MPM_Mesh,
   
   /* Gauss-Point properties */
   Matrix X_GP = /* Element coordinates of the Gauss-Point */
-    MatAssign(Ndim,1,NAN,NULL,NULL); 
+    get_RowFrom(Ndim,1,NULL); 
   Matrix lp; /* Just for GIMP -> Particle voxel */
   Matrix Beta_GP =  /* Tunning parameter for LME */
-    MatAssign(Ndim,1,NAN,NULL,NULL);
+    get_RowFrom(Ndim,1,NULL);
   Matrix Delta_Xip; /* Just for GIMP -> Distance from GP to the nodes */
   Matrix lambda_GP = /* Just for LME/LME -> Lagrange multipliers */
-    MatAssign(Ndim,1,NAN,NULL,NULL);
+    get_RowFrom(Ndim,1,NULL);
   
   Matrix ShapeFunction_p; /* Matrix with the nodal shape functions */
   Matrix Gradient_p; /* Matrix with the nodal derivatives */

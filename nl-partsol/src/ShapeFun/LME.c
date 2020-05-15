@@ -74,9 +74,9 @@ void LME_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
   for(int p = 0 ; p<Np ; p++){
 
     /* Get some properties for each particle */ 
-    X_p = MatAssign(Ndim,1,NAN,MPM_Mesh.Phi.x_GC.nM[p],NULL);
-    Beta_p = MatAssign(Ndim,1,NAN,MPM_Mesh.Beta.nM[p],NULL);
-    lambda_p = MatAssign(Ndim,1,NAN,MPM_Mesh.lambda.nM[p],NULL);
+    X_p = get_RowFrom(Ndim,1,MPM_Mesh.Phi.x_GC.nM[p]);
+    Beta_p = get_RowFrom(Ndim,1,MPM_Mesh.Beta.nM[p]);
+    lambda_p = get_RowFrom(Ndim,1,MPM_Mesh.lambda.nM[p]);
 
     /* Loop over the element mesh */
     for(int i = 0 ; i<Nelem ; i++){
@@ -136,7 +136,7 @@ Matrix LME_Beta(Matrix Beta, Matrix l, double Gamma)
   int Ndim = NumberDimensions;
   int NumNodes_GP = l.N_rows;
   double h = 0;
-  Matrix l_GP_I = MatAssign(Ndim,1,NAN,NULL,NULL);
+  Matrix l_GP_I = get_RowFrom(Ndim,1,NULL);
   
   /* Get the mean distande */
   for(int i = 0 ; i<NumNodes_GP ; i++){
@@ -282,7 +282,7 @@ Matrix LME_p(Matrix l, Matrix lambda, Matrix Beta)
   Matrix p = /* Vector with the values of the shape-function in the nodes */
     MatAlloc(1,N_a); 
   Matrix la = /* Distance to the neighbour (x-x_a) */
-    MatAssign(1,Ndim,NAN,NULL,NULL);
+    get_RowFrom(1,Ndim,NULL);
 
   /* Get Z and the numerator */
   for(int a = 0 ; a<N_a ; a++){
@@ -392,7 +392,7 @@ Matrix LME_dp(Matrix l, Matrix p)
   Matrix Jm1; /* Inverse of J */
   Matrix Jm1_la; /* Auxiliar vector */
   Matrix la = /* Distance to the neighbour (x-x_a) */
-    MatAssign(Ndim,1,NAN,NULL,NULL); 
+    get_RowFrom(Ndim,1,NULL); 
   
   /* Get the Gradient and the Hessian of log(Z) */
   r = LME_r(l,p);
@@ -431,7 +431,7 @@ ChainPtr LME_Tributary_Nodes(Matrix X_GP, Matrix Beta, int I0, Mesh FEM_Mesh){
   int Ndim = NumberDimensions;
 
   Matrix Distance; /* Distance between node and GP */
-  Matrix X_I = MatAssign(Ndim,1,NAN,NULL,NULL);
+  Matrix X_I = get_RowFrom(Ndim,1,NULL);
   
   ChainPtr Set_Nodes0 = NULL;
   int * Array_Nodes0;

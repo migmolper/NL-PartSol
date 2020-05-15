@@ -330,12 +330,12 @@ void GA_UpdateNodalKinetics(Mesh FEM_Mesh,
   Matrix F = Nodal_Forces;
   
   /* Nodal values the fields */
-  Matrix Nodal_Acceleration_t0 =
-    MatAssign(Ndim,N_Nodes,NAN,NULL,(double**)malloc(SizeTable));
-  Matrix Nodal_Acceleration_t1 =
-    MatAssign(Ndim,N_Nodes,NAN,NULL,(double**)malloc(SizeTable));
-  Matrix Nodal_Velocity =
-    MatAssign(Ndim,N_Nodes,NAN,NULL,(double**)malloc(SizeTable));
+  Matrix Nodal_Acceleration_t0;
+    /* MatAssign(Ndim,N_Nodes,NAN,NULL,(double**)malloc(SizeTable)); */
+  Matrix Nodal_Acceleration_t1;
+    /* MatAssign(Ndim,N_Nodes,NAN,NULL,(double**)malloc(SizeTable)); */
+  Matrix Nodal_Velocity;
+    /* MatAssign(Ndim,N_Nodes,NAN,NULL,(double**)malloc(SizeTable)); */
 
   /* 1º Asign Kinetics values to matricial tables */
   for(int i = 0 ; i<Ndim ; i++){
@@ -464,11 +464,11 @@ Matrix GetNodalKinetics(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
   int N_Kinetics_dim = 1 + 2*N_Acceleration_dim + N_Velocity_dim;
   double SizeKinetics = N_Kinetics_dim*sizeof(double *);
 
-  Matrix Nodal_Kinetics =
-    MatAssign(N_Kinetics_dim,N_Nodes_Mesh,NAN,NULL,
-	      (double**)malloc(SizeKinetics));
-  strcpy(Nodal_Kinetics.Info,
-	 "MASS;ACCELERATION_t0;ACCELERATION_t1;VELOCITY");
+  Matrix Nodal_Kinetics;
+  /*   MatAssign(N_Kinetics_dim,N_Nodes_Mesh,NAN,NULL, */
+  /* 	      (double**)malloc(SizeKinetics)); */
+  /* strcpy(Nodal_Kinetics.Info, */
+  /* 	 "MASS;ACCELERATION_t0;ACCELERATION_t1;VELOCITY"); */
   
   Nodal_Kinetics.nM[0] = Nodal_Mass.nV;
   for(int i = 0 ; i<Ndim ; i++){
@@ -593,11 +593,11 @@ Matrix GetNodalVelocityDisplacement(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
   int N_Kinetics_dim = 1 + 3*Ndim;
   double SizeKinetics = N_Kinetics_dim*sizeof(double *);
 
-  Matrix Nodal_Kinetics =
-    MatAssign(N_Kinetics_dim,N_Nodes_Mesh,NAN,NULL,
-	      (double**)malloc(SizeKinetics));
-  strcpy(Nodal_Kinetics.Info,
-	 "MASS;DISPLACEMENT;VELOCITY;ACCELERATION");
+  Matrix Nodal_Kinetics;
+  /*   MatAssign(N_Kinetics_dim,N_Nodes_Mesh,NAN,NULL, */
+  /* 	      (double**)malloc(SizeKinetics)); */
+  /* strcpy(Nodal_Kinetics.Info, */
+  /* 	 "MASS;DISPLACEMENT;VELOCITY;ACCELERATION"); */
   
   Nodal_Kinetics.nM[0] = Nodal_Mass.nV;
   for(int i = 0 ; i<Ndim ; i++){

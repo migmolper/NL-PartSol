@@ -35,8 +35,8 @@ void Q4_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
   for(int p = 0 ; p<Np ; p++){
 
     /* Get the global and local coodinates of the particle */ 
-    X_p = MatAssign(Ndim,1,NAN,MPM_Mesh.Phi.x_GC.nM[p],NULL);
-    Xi_p = MatAssign(Ndim,1,NAN,MPM_Mesh.Phi.x_EC.nM[p],NULL);
+    X_p = get_RowFrom(Ndim,1,MPM_Mesh.Phi.x_GC.nM[p]);
+    Xi_p = get_RowFrom(Ndim,1,MPM_Mesh.Phi.x_EC.nM[p]);
 
     /* Check for each element of the mesh */
     for(int i = 0 ; i<Nelem ; i++){

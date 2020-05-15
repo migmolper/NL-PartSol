@@ -139,12 +139,12 @@ void update_Particles_GA(GaussPoint MPM_Mesh,Mesh FEM_Mesh,
   double gamma = GA_Params.GA_gamma;
 
   /* Asign Kinetics values to matricial tables */
-  Matrix  Nodal_Acceleration_t0 =
-    MatAssign(N_dim,N_Nodes,NAN,NULL,(double**)malloc(SizeTable));
-  Matrix Nodal_Acceleration_t1 =
-    MatAssign(N_dim,N_Nodes,NAN,NULL,(double**)malloc(SizeTable));
-  Matrix Nodal_Velocity =
-    MatAssign(N_dim,N_Nodes,NAN,NULL,(double**)malloc(SizeTable));
+  Matrix  Nodal_Acceleration_t0;
+  /* = MatAssign(N_dim,N_Nodes,NAN,NULL,(double**)malloc(SizeTable)); */
+  Matrix Nodal_Acceleration_t1;
+  /* = MatAssign(N_dim,N_Nodes,NAN,NULL,(double**)malloc(SizeTable)); */
+  Matrix Nodal_Velocity;
+   /* = MatAssign(N_dim,N_Nodes,NAN,NULL,(double**)malloc(SizeTable)); */
   for(int i = 0 ; i<N_dim ; i++){
     Nodal_Acceleration_t0.nM[i] = Nodal_Kinetics.nM[1+i];
     Nodal_Acceleration_t1.nM[i] = Nodal_Kinetics.nM[1+N_dim+i];

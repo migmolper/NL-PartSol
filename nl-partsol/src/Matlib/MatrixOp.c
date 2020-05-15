@@ -126,24 +126,48 @@ void ** Allocate_MatrixZ(int NumberRows,int NumberColumns,int SizeType)
 Matrix MatAlloc(int NumberRows,int NumberColumns)
 {
 
+      
+  /* Matrix M; */
+  /* M.N_rows = NumberRows; */
+  /* M.N_cols = NumberColumns; */
+
+  /* /\* Reservar memoria consecutiva *\/ */
+  /* M.nV = (double *)malloc(NumberRows*NumberColumns*sizeof(double)); */
+
+  /* if (M.nV == NULL) */
+  /*   { */
+  /*     puts("Error in MatAllocZ : Out of memory"); */
+  /*     exit(EXIT_FAILURE); */
+  /*   } */
+
+  /* /\* It is a matrix generate a table *\/ */
+  /* if((NumberRows > 1) && (NumberColumns > 1)) */
+  /*   { */
+  /*     M.nM = (double **)malloc(NumberRows*sizeof(double *)); */
+  /*     for(int i = 0 ; i<NumberRows ; i++) */
+  /* 	{ */
+  /* 	  M.nM[i] = M.nV + i*NumberColumns;   */
+  /* 	} */
+  /*   } */
+  
   Matrix M;
   M.N_rows = NumberRows;
   M.N_cols = NumberColumns;
 
   /* It is an array */
   if((NumberRows == 1) || (NumberColumns == 1))
-    { 
+    {
       M.nV = (double *)Allocate_Array(NumberRows*NumberColumns,sizeof(double));
-      M.nM = NULL;
-      M.n = NAN;
+      /* M.nM = NULL; */
+      /* M.n = NAN; */
     }
 
   /* It is a matrix */
   else if((NumberRows != 1) && (NumberColumns != 1))
     {
       M.nM = (double **)Allocate_Matrix(NumberRows,NumberColumns,sizeof(double));
-      M.nV = NULL;
-      M.n = NAN;
+      /* M.nV = NULL; */
+      /* M.n = NAN; */
     }
   
   return M;
@@ -155,7 +179,31 @@ Matrix MatAllocZ(int NumberRows,int NumberColumns)
   Allocate the matrix structure with zeros 
 */
 {
+    
+  /* Matrix M; */
+  /* M.N_rows = NumberRows; */
+  /* M.N_cols = NumberColumns; */
 
+  /* /\* Reservar memoria consecutiva *\/ */
+  /* M.nV = (double *)calloc(NumberRows*NumberColumns,sizeof(double)); */
+
+  /* if (M.nV == NULL) */
+  /*   { */
+  /*     puts("Error in MatAllocZ : Out of memory"); */
+  /*     exit(EXIT_FAILURE); */
+  /*   } */
+
+  /* /\* It is a matrix generate a table *\/ */
+  /* if((NumberRows > 1) && (NumberColumns > 1)) */
+  /*   { */
+  /*     M.nM = (double **)malloc(NumberRows*sizeof(double *)); */
+  /*     for(int i = 0 ; i<NumberRows ; i++) */
+  /* 	{ */
+  /* 	  M.nM[i] = M.nV + i*NumberColumns;   */
+  /* 	} */
+  /*   } */
+  
+  
   Matrix M;
   M.N_rows = NumberRows;
   M.N_cols = NumberColumns;
@@ -164,23 +212,23 @@ Matrix MatAllocZ(int NumberRows,int NumberColumns)
   if((NumberRows == 1) || (NumberColumns == 1))
     {
       M.nV = (double *)Allocate_ArrayZ(NumberRows*NumberColumns,sizeof(double));
-      M.nM = NULL;
-      M.n = NAN;
+      /* M.nM = NULL; */
+      /* M.n = NAN; */
     }
 
   /* It is a matrix */
   else if((NumberRows != 1) && (NumberColumns != 1))
     {
       M.nM = (double **)Allocate_MatrixZ(NumberRows,NumberColumns,sizeof(double));
-      M.nV = NULL;
-      M.n = NAN;
+      /* M.nV = NULL; */
+      /* M.n = NAN; */
     }
   
   return M;
 }
 
 /*********************************************************************/
-Matrix MatAssign(int N_rows,int N_cols,double n,double * nV,double ** nM)
+Matrix get_RowFrom(int N_rows,int N_cols,double * nV)
 /*
   Define general parameters of a matrix for auxiliar
   matrix.
@@ -190,8 +238,6 @@ Matrix MatAssign(int N_rows,int N_cols,double n,double * nV,double ** nM)
   M.N_rows = N_rows;
   M.N_cols = N_cols;
   M.nV = nV;
-  M.nM = nM;
-  M.n = n;
   
   return M;
 }
@@ -204,22 +250,35 @@ void FreeMat(Matrix Input)
 */
 {
 
+  /* int Columns = Input.N_cols; */
+  /* int Rows = Input.N_rows; */
+
+  /* /\* Free consecutive memory *\/ */
+  /* free(Input.nV);  */
+
+  /* /\* If it is a matrix, free the pointer table *\/ */
+  /* if((Columns > 1) && (Rows > 1)) */
+  /*   {        */
+  /*     free(Input.nM); */
+  /*   } */
+
+
   int Columns = Input.N_cols;
   int Rows = Input.N_rows;
 
   /* It is a vector */
   if(((Columns == 1) && (Rows > 1)) || ((Columns > 1) && (Rows == 1)))
-    {            
-      free(Input.nV); 
+    {
+      free(Input.nV);
     }
 
   /* It is a matrix */
   else if((Columns > 1) && (Rows > 1))
-    {       
+    {
       for(int i = 0 ; i<Rows ; i++)
-	{
-	  free(Input.nM[i]);
-	}
+  	{
+  	  free(Input.nM[i]);
+  	}
       free(Input.nM);
     }
   
@@ -631,7 +690,11 @@ Matrix get_a_dot_b_Mat(Matrix a, Matrix b)
    Compute the scalar product of two vectors
 */
 {
-  Matrix a_dot_b = MatAssign(1,1,0,NULL,NULL);
+  Matrix a_dot_b;
+  a_dot_b.N_rows = 1;
+  a_dot_b.N_cols = 1;
+  a_dot_b.n = 0;
+  
   int Size = a.N_cols;
 
   for(int i = 0 ; i < Size ; i++)
@@ -981,7 +1044,7 @@ Matrix Eigen_Mat(Matrix In)
 
   int Rows = In.N_rows;
   int Columns = In.N_cols;  
-  Matrix Eigen = MatAssign(Rows,Columns,NAN,NULL,NULL);
+  Matrix Eigen = get_RowFrom(Rows,Columns,NULL);
   Matrix Eigen_Vals;
   Matrix Coeffs;
   

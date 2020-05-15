@@ -68,22 +68,22 @@ void GetInitialGaussPointPosition(Matrix X_p, Mesh FEM_Mesh, int GPxElement)
   case 4:
     if(strcmp(FEM_Mesh.TypeElem,"Quadrilateral") == 0){
       /* Centred GP */
-      Xi_p.nM[0][0] =  0.5;
-      Xi_p.nM[0][1] =  0.5;
-      Xi_p.nM[1][0] =  0.5;
-      Xi_p.nM[1][1] = -0.5;
-      Xi_p.nM[2][0] = -0.5;
-      Xi_p.nM[2][1] =  0.5;
-      Xi_p.nM[3][0] = -0.5;
-      Xi_p.nM[3][1] = -0.5;
-      /* Xi_p.nM[0][0] = (double)1/pow(3,0.5); */
-      /* Xi_p.nM[0][1] = (double)1/pow(3,0.5); */
-      /* Xi_p.nM[1][0] = (double)1/pow(3,0.5); */
-      /* Xi_p.nM[1][1] = (double)-1/pow(3,0.5); */
-      /* Xi_p.nM[2][0] = (double)-1/pow(3,0.5); */
-      /* Xi_p.nM[2][1] = (double)1/pow(3,0.5); */
-      /* Xi_p.nM[3][0] = (double)-1/pow(3,0.5); */
-      /* Xi_p.nM[3][1] = (double)-1/pow(3,0.5); */
+      /* Xi_p.nM[0][0] =  0.5; */
+      /* Xi_p.nM[0][1] =  0.5; */
+      /* Xi_p.nM[1][0] =  0.5; */
+      /* Xi_p.nM[1][1] = -0.5; */
+      /* Xi_p.nM[2][0] = -0.5; */
+      /* Xi_p.nM[2][1] =  0.5; */
+      /* Xi_p.nM[3][0] = -0.5; */
+      /* Xi_p.nM[3][1] = -0.5; */
+      Xi_p.nM[0][0] = (double)1/pow(3,0.5);
+      Xi_p.nM[0][1] = (double)1/pow(3,0.5);
+      Xi_p.nM[1][0] = (double)1/pow(3,0.5);
+      Xi_p.nM[1][1] = (double)-1/pow(3,0.5);
+      Xi_p.nM[2][0] = (double)-1/pow(3,0.5);
+      Xi_p.nM[2][1] = (double)1/pow(3,0.5);
+      Xi_p.nM[3][0] = (double)-1/pow(3,0.5);
+      Xi_p.nM[3][1] = (double)-1/pow(3,0.5);
       /* Get the coordinate of the center */
       for(int i = 0 ; i<NumElemMesh ; i++){
 	Element = get_Element(i, FEM_Mesh.Connectivity[i],
@@ -303,8 +303,8 @@ void get_particle_tributary_nodes(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int p){
   int I0 = MPM_Mesh.I0[p];
 
   /* Define auxiliar matrix for local/global coordinates */
-  Matrix X_p = MatAssign(Ndim,1,NAN,MPM_Mesh.Phi.x_GC.nM[p],NULL);
-  Matrix Xi_p = MatAssign(Ndim,1,NAN,MPM_Mesh.Phi.x_EC.nM[p],NULL);
+  Matrix X_p  = get_RowFrom(Ndim,1,MPM_Mesh.Phi.x_GC.nM[p]);
+  Matrix Xi_p = get_RowFrom(Ndim,1,MPM_Mesh.Phi.x_EC.nM[p]);
   /* Lis of elements near the particle */
   ChainPtr Elements_Near_I0 = FEM_Mesh.NodeNeighbour[I0];
   /* Index of the element (Q4/uGIMP) */
@@ -334,7 +334,7 @@ void get_particle_tributary_nodes(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int p){
   else if(strcmp(ShapeFunctionGP,"uGIMP") == 0){
 
     /* Auxiliar variables for GIMP */
-    Matrix lp = MatAssign(Ndim,1,NAN,MPM_Mesh.lp.nM[p],NULL);
+    Matrix lp = get_RowFrom(Ndim,1,MPM_Mesh.lp.nM[p]);
     /* Get the index of the element */
     IdxElement = search_particle_in(p,X_p,Elements_Near_I0,FEM_Mesh);
     /* Get the coordinates of the element vertex */
@@ -350,9 +350,9 @@ void get_particle_tributary_nodes(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int p){
   else if(strcmp(ShapeFunctionGP,"LME") == 0){
     
     /* Auxiliar variables for LME */
-    Matrix lambda_p = MatAssign(Ndim,1,NAN,MPM_Mesh.lambda.nM[p],NULL);
+    Matrix lambda_p = get_RowFrom(Ndim,1,MPM_Mesh.lambda.nM[p]);
     Matrix Delta_Xip; /* Distance from particles to the nodes */
-    Matrix Beta_p = MatAssign(Ndim,1,NAN,MPM_Mesh.Beta.nM[p],NULL);
+    Matrix Beta_p = get_RowFrom(Ndim,1,MPM_Mesh.Beta.nM[p]);
 	
     /* Calculate connectivity with the previous value of beta */
     MPM_Mesh.ListNodes[p] = LME_Tributary_Nodes(X_p,Beta_p,I0,FEM_Mesh);
@@ -514,8 +514,8 @@ void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
   for(int p = 0 ; p<MPM_Mesh.NumGP ; p++){
 
     /* Get the global coordinates and velocity of the particle */
-    X_p = MatAssign(Ndim,1,NAN,MPM_Mesh.Phi.x_GC.nM[p],NULL);
-    V_p = MatAssign(Ndim,1,NAN,MPM_Mesh.Phi.vel.nM[p],NULL);
+    X_p = get_RowFrom(Ndim,1,MPM_Mesh.Phi.x_GC.nM[p]);
+    V_p = get_RowFrom(Ndim,1,MPM_Mesh.Phi.vel.nM[p]);
 
     /* Check if the particle is static or is in movement */
     if(Norm_Mat(V_p,2) > 0){
@@ -572,8 +572,8 @@ void ComputeBeps(int p, GaussPoint MPM_Mesh, Mesh FEM_Mesh)
   
   /* Distance */
   Matrix x_GC = MPM_Mesh.Phi.x_GC;
-  Matrix X_p = MatAssign(Ndim,1,NAN,x_GC.nM[p],NULL);
-  Matrix X_q = MatAssign(Ndim,1,NAN,NULL,NULL);
+  Matrix X_p = get_RowFrom(Ndim,1,x_GC.nM[p]);
+  Matrix X_q = get_RowFrom(Ndim,1,NULL);
   Matrix Distance;
 
   /* Get nodes close to the particle */
@@ -642,8 +642,8 @@ void GPinCell(ChainPtr * ListInCELL, ChainPtr * GlobalList,
   Matrix X0, X1;
   double Dist;
   if(iPtr != NULL){
-    X0 = MatAssign(Ndim,1,NAN,x_GC.nM[iGP],NULL);
-    X1 = MatAssign(Ndim,1,NAN,x_GC.nM[iPtr->I],NULL);
+    X0 = get_RowFrom(Ndim,1,x_GC.nM[iGP]);
+    X1 = get_RowFrom(Ndim,1,x_GC.nM[iPtr->I]);
     Dist = Distance(X1,X0);
 
     /* Found one to delete */
@@ -813,7 +813,7 @@ int get_closest_node_to(Matrix X_p, ChainPtr Nodes, Matrix Coordinates)
   I = Node_I->I;
   
   /* Get the coordinates of the first node */
-  X_I = MatAssign(Ndim,1,NAN,Coordinates.nM[I],NULL);
+  X_I = get_RowFrom(Ndim,1,Coordinates.nM[I]);
 
   /* Get the distance from the node to the particle */
   Distance_I = Distance(X_p, X_I);
@@ -831,7 +831,7 @@ int get_closest_node_to(Matrix X_p, ChainPtr Nodes, Matrix Coordinates)
     I = Node_I->I;
 
     /* Get the coordinates of the node */
-    X_I = MatAssign(Ndim,1,NAN,Coordinates.nM[I],NULL);
+    X_I = get_RowFrom(Ndim,1,Coordinates.nM[I]);
 
     /* Get the distance from the node to the particle */
     Distance_I = Distance(X_p, X_I);

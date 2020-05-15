@@ -307,6 +307,7 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
       printf(" \t %s : \n\t %s \n",
 	     "* No body forces defined in",Name_File);
     }
+    
     /**************************************************/
     /******** INITIALIZE SHAPE FUNCTIONS **************/
     /**************************************************/
@@ -324,7 +325,6 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
       LME_Initialize(MPM_Mesh,FEM_Mesh);
     }
     printf("\t %s \n","DONE !!");
-
    
     /**************************************************/    
     /************* Free the input data ****************/

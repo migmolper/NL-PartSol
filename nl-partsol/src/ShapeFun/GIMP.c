@@ -25,8 +25,8 @@ void uGIMP_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh){
   int Ndim = NumberDimensions;
 
   /* Variables for the GP coordinates */  
-  Matrix X_GC_GP = MatAssign(Ndim,1,NAN,NULL,NULL);
-  Matrix X_EC_GP = MatAssign(Ndim,1,NAN,NULL,NULL);
+  Matrix X_GC_GP = get_RowFrom(Ndim,1,NULL);
+  Matrix X_EC_GP = get_RowFrom(Ndim,1,NULL);
 
   Matrix lp; /* Particle voxel */
 

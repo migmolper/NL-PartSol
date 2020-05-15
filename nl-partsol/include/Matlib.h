@@ -58,7 +58,7 @@ void ** Allocate_Matrix(int,int,int);
 void ** Allocate_MatrixZ(int,int,int);
 Matrix MatAlloc(int,int);
 Matrix MatAllocZ(int,int);
-Matrix MatAssign(int,int,double,double *,double **);
+Matrix get_RowFrom(int,int,double *);
 void FreeMat(Matrix);
 void PrintMatrix(Matrix, int, int);
 double StatsDouMatrix(double *, int, char *);
