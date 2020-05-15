@@ -3,10 +3,16 @@
 #define MAXVAL(A,B) ((A)>(B) ? (A) : (B))
 #define MINVAL(A,B) ((A)<(B) ? (A) : (B))
 
-void EigenerosionAlgorithm(int p, Matrix ji, Matrix W,  Matrix Mass,
-			   Matrix Rho, Matrix Stress,
-			   Material MatPro, ChainPtr * Beps, double DeltaX)
+void EigenerosionAlgorithm(int p,Fields Phi,Material MatPro,
+			   ChainPtr * Beps,double DeltaX)
 {
+
+  /* Read the required fields */
+  Matrix ji = Phi.ji;
+  Matrix W = Phi.W;
+  Matrix Mass = Phi.mass;
+  Matrix Rho = Phi.rho;
+  Matrix Stress = Phi.Stress;
   
   /*!
     Define auxiliar variable 
@@ -121,20 +127,22 @@ void EigenerosionAlgorithm(int p, Matrix ji, Matrix W,  Matrix Mass,
 
 /*******************************************************/
 
-void EigensofteningAlgorithm(int p, Matrix ji, Matrix Strain,
-			     Matrix StrainF, Matrix Mass,
-			     Matrix Stress, Material MatPro,
+void EigensofteningAlgorithm(int p,Fields Phi,Material MatPro,
 			     ChainPtr * Beps)
 {
-  /*! 
-    Define auxiliar variable
-  */
+
+  /* Read the required fields */
+  Matrix ji = Phi.ji;
+  Matrix Mass = Phi.mass;
+  Matrix Stress = Phi.Stress;
+  Matrix Strain = Phi.Strain;
+  Matrix StrainF = Phi.StrainF;
+  
+  /* Define auxiliar variable */
   Tensor Stress_p, Stress_q, EV_Stress_p, EV_Stress_q; 
   Tensor Strain_p, EV_Strain_p; 
   
-  /*!
-    Material properties of the eigensoftening algorithm 
-  */
+  /* Material properties of the eigensoftening algorithm */
   double ft_p, Wc_p, heps_p;
     
   double m_p, sum_p, Seps_p, ji_p;
@@ -143,24 +151,16 @@ void EigensofteningAlgorithm(int p, Matrix ji, Matrix Strain,
   int NumBeps_p;
   int q;
 
-  /*! 
-    Get the tensile strengt of the material 
-  */
+  /* Get the tensile strengt of the material */
   ft_p = MatPro.ft;
   
-  /*!
-    Get the bandwidth of the cohesive fracture (Bazant)
-  */
+  /* Get the bandwidth of the cohesive fracture (Bazant) */
   heps_p = MatPro.heps;
   
-  /*! 
-    Get the critical opening displacement 
-  */
+  /* Get the critical opening displacement */
   Wc_p = MatPro.Wc;
     
-  /*!
-    Only for intact particles 
-  */
+  /* Only for intact particles */
   if((ji.nV[p] == 0.0) && (StrainF.nV[p] == 0.0))
     {
 
@@ -224,9 +224,7 @@ void EigensofteningAlgorithm(int p, Matrix ji, Matrix Strain,
 		  */
 		  sum_p += m_q*EV_Stress_q.n[0];
 
-		  /*!
-		    Free eigenvalues 
-		  */
+		  /* Free eigenvalues */
 		  free_Tensor(EV_Stress_q);	    
 		}
 	
@@ -236,9 +234,7 @@ void EigensofteningAlgorithm(int p, Matrix ji, Matrix Strain,
 	      m_p += m_q;
 	    }
     
-	  /*!
-	    Free memory 
-	  */
+	  /* Free memory */
 	  free(Beps_p);
 
 	  /*!
@@ -260,9 +256,7 @@ void EigensofteningAlgorithm(int p, Matrix ji, Matrix Strain,
 	      */
 	      StrainF.nV[p] = EV_Strain_p.n[0];
 
-	      /*! 
-		Free eigenvalues 
-	      */
+	      /* Free eigenvalues */
 	      free_Tensor(EV_Strain_p);	    	  
 	    }
 	
@@ -285,9 +279,7 @@ void EigensofteningAlgorithm(int p, Matrix ji, Matrix Strain,
       ji_p = (EV_Strain_p.n[0]-StrainF.nV[p])*heps_p/Wc_p;
       ji.nV[p] = MINVAL(1,MAXVAL(ji_p,ji.nV[p]));       
 
-      /*! 
-	Free eigenvalues 
-      */
+      /* Free eigenvalues */
       free_Tensor(EV_Strain_p);	    	  
       
     }
