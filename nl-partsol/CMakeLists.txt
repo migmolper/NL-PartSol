@@ -3,9 +3,11 @@ project("nl-partsol")
  
 #Bring the headers
 include_directories(include)
- 
+
+
 # Wildcard additions
-file(GLOB_RECURSE SOURCES "src/*.c")
+# file(GLOB_RECURSE SOURCES "src/*.c")
+file(GLOB_RECURSE SOURCES RELATIVE ${CMAKE_SOURCE_DIR} "src/*.c")
 
 add_executable(${PROJECT_NAME} ${SOURCES})
 

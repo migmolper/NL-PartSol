@@ -976,80 +976,76 @@ double Norm_Mat(Matrix In,int kind)
 
 /*********************************************************************/
 
-Matrix Eigen_Mat(Matrix In){
+Matrix Eigen_Mat(Matrix In)
+{
 
-  /* Check if we dont have a null matrix */
-  if ( (In.nM == NULL) && (In.n != In.n) ){
-    if(In.nV != NULL){
-      puts("Error in Eigen_Mat() : An array does not have determinant !");
-       exit(EXIT_FAILURE);
-    }
-    puts("Error in Eigen_Mat() : Input matrix = NULL !");    
-     exit(EXIT_FAILURE);
-  }
-  
-  /* Check if the matrix is square */
-  if(In.N_cols != In.N_rows){
-    puts(" Error in Eigen_Mat() : Non square matrix !");
-     exit(EXIT_FAILURE);
-  }
-
-  int Dim = In.N_cols;
-  Matrix Eigen = MatAssign(Dim,Dim,NAN,NULL,NULL);
+  int Rows = In.N_rows;
+  int Columns = In.N_cols;  
+  Matrix Eigen = MatAssign(Rows,Columns,NAN,NULL,NULL);
   Matrix Eigen_Vals;
   Matrix Coeffs;
+  
+  if((Rows == Columns) && (Columns > 1) && (Rows > 1))
+    {
+  
+      switch(Columns)
+	{
 
-  switch(Dim){
+	case 1 :
+	  exit(EXIT_FAILURE);
+	  break;
+	case 2 :
+	  /* Get the coefficients of the charasteristic pol */
+	  Coeffs = MatAllocZ(1,3);
+	  Coeffs.nV[0] = 1.0; /* a*x^2 */
+	  Coeffs.nV[1] = - In.nM[0][0] - In.nM[1][1]; /* b*x */
+	  Coeffs.nV[2] = In.nM[0][0]*In.nM[1][1] - In.nM[1][0]*In.nM[0][1]; /* c */
+	  /* Solve the charasteristic pol to the eigenvalues */
+	  Eigen_Vals = SolvePolynomial(Coeffs);
+	  FreeMat(Coeffs);
+	  /* Assign the eigenvalues to the solution */
+	  Eigen.nV = Eigen_Vals.nV;
+	  break;
 
-  case 1 :
-     exit(EXIT_FAILURE);
-    break;
-  case 2 :
-    /* Get the coefficients of the charasteristic pol */
-    Coeffs = MatAllocZ(1,3);
-    Coeffs.nV[0] = 1.0; /* a*x^2 */
-    Coeffs.nV[1] = - In.nM[0][0] - In.nM[1][1]; /* b*x */
-    Coeffs.nV[2] = In.nM[0][0]*In.nM[1][1] - In.nM[1][0]*In.nM[0][1]; /* c */
-    /* Solve the charasteristic pol to the eigenvalues */
-    Eigen_Vals = SolvePolynomial(Coeffs);
-    FreeMat(Coeffs);
-    /* Assign the eigenvalues to the solution */
-    Eigen.nV = Eigen_Vals.nV;
-    break;
-
-  case 3 :
-    /* Get the coefficients of the charasteristic pol */
-    Coeffs = MatAllocZ(1,4);
-    Coeffs.nV[0] = /* a*x^3 */
-      + 1.0; 
-    Coeffs.nV[1] = /* b*x^2 */
-      - In.nM[0][0]
-      - In.nM[1][1]
-      - In.nM[2][2]; 
-    Coeffs.nV[2] = /* c*x */
-      + In.nM[0][0]*In.nM[2][2]
-      + In.nM[1][1]*In.nM[2][2]
-      + In.nM[0][0]*In.nM[1][1]
-      - In.nM[1][0]*In.nM[0][1]
-      - In.nM[2][1]*In.nM[1][2]
-      - In.nM[2][0]*In.nM[0][2]; 
-    Coeffs.nV[2] = /* d */
-      - In.nM[0][0]*In.nM[1][1]*In.nM[2][2]
-      - In.nM[0][1]*In.nM[1][2]*In.nM[2][0]
-      - In.nM[0][2]*In.nM[1][0]*In.nM[2][1]
-      + In.nM[1][0]*In.nM[0][1]*In.nM[2][2]
-      + In.nM[2][1]*In.nM[1][2]*In.nM[0][0]
-      + In.nM[2][0]*In.nM[0][2]*In.nM[1][1]; 
-    /* Solve the charasteristic pol to the eigenvalues */
-    Eigen_Vals = SolvePolynomial(Coeffs);
-    FreeMat(Coeffs);
-    /* Assign the eigenvalues to the solution */
-    Eigen.nV = Eigen_Vals.nV;
-    break;
+	case 3 :
+	  /* Get the coefficients of the charasteristic pol */
+	  Coeffs = MatAllocZ(1,4);
+	  Coeffs.nV[0] = /* a*x^3 */
+	    + 1.0; 
+	  Coeffs.nV[1] = /* b*x^2 */
+	    - In.nM[0][0]
+	    - In.nM[1][1]
+	    - In.nM[2][2]; 
+	  Coeffs.nV[2] = /* c*x */
+	    + In.nM[0][0]*In.nM[2][2]
+	    + In.nM[1][1]*In.nM[2][2]
+	    + In.nM[0][0]*In.nM[1][1]
+	    - In.nM[1][0]*In.nM[0][1]
+	    - In.nM[2][1]*In.nM[1][2]
+	    - In.nM[2][0]*In.nM[0][2]; 
+	  Coeffs.nV[2] = /* d */
+	    - In.nM[0][0]*In.nM[1][1]*In.nM[2][2]
+	    - In.nM[0][1]*In.nM[1][2]*In.nM[2][0]
+	    - In.nM[0][2]*In.nM[1][0]*In.nM[2][1]
+	    + In.nM[1][0]*In.nM[0][1]*In.nM[2][2]
+	    + In.nM[2][1]*In.nM[1][2]*In.nM[0][0]
+	    + In.nM[2][0]*In.nM[0][2]*In.nM[1][1]; 
+	  /* Solve the charasteristic pol to the eigenvalues */
+	  Eigen_Vals = SolvePolynomial(Coeffs);
+	  FreeMat(Coeffs);
+	  /* Assign the eigenvalues to the solution */
+	  Eigen.nV = Eigen_Vals.nV;
+	  break;
     
-  default :
-     exit(EXIT_FAILURE);
-  }
+	default :
+	  exit(EXIT_FAILURE);
+	}
+    }
+  else
+    {
+      puts("Error in Eigen_Mat() : The input should be a square matrix !");    
+      exit(EXIT_FAILURE);
+    }
 
   return Eigen;
 }
@@ -1061,39 +1057,44 @@ double Cond_Mat(Matrix In, double TOL)
   Return the conditioning number 
 */
 {
-  /* Check if we dont have a null matrix */
-  if ( (In.nM == NULL) && (In.n != In.n) ){
-    if(In.nV != NULL){
-      puts("Error in Cond_Mat() : An array does not have determinant !");
-       exit(EXIT_FAILURE);
-    }
-    puts("Error in Cond_Mat() : Input matrix = NULL !");    
-     exit(EXIT_FAILURE);
+  int Rows = In.N_rows;
+  int Columns = In.N_cols;  
+  Matrix Eigen;
+  double max_Eigen;
+  double min_Eigen;
+      
+  /* Check if the matrix is square */
+  if(Columns != Rows){
+    puts(" Error in Cond_Mat() : Non square matrix !");
+    exit(EXIT_FAILURE);
   }
   
-  /* Check if the matrix is square */
-  if(In.N_cols != In.N_rows){
-    puts(" Error in Cond_Mat() : Non square matrix !");
-     exit(EXIT_FAILURE);
-  }
-
-  /* Remove numerical zeros */
-  for(int i = 0 ; i<In.N_rows ; i++){
-    for(int j = 0 ; j<In.N_cols ; j++){
-      if(fabs(In.nM[i][j])<TOL){
-	In.nM[i][j] = 0;
+  if((Rows == Columns) && (Columns > 1) && (Rows > 1))
+    {
+      
+      /* Remove numerical zeros */
+      for(int i = 0 ; i<In.N_rows ; i++){
+	for(int j = 0 ; j<In.N_cols ; j++){
+	  if(fabs(In.nM[i][j])<TOL){
+	    In.nM[i][j] = 0;
+	  }
+	}
+      }
+  
+      Eigen = Eigen_Mat(In);
+      max_Eigen = fabs(Eigen.nV[0]);
+      min_Eigen = fabs(Eigen.nV[0]);
+    
+      for(int i = 1 ; i<Eigen.N_rows ; i++){
+	max_Eigen = DMAX(max_Eigen,fabs(Eigen.nV[i]));
+	min_Eigen = DMIN(min_Eigen,fabs(Eigen.nV[i]));
       }
     }
-  }
-  
-  Matrix Eigen = Eigen_Mat(In);
-  double max_Eigen = fabs(Eigen.nV[0]);
-  double min_Eigen = fabs(Eigen.nV[0]);
-    
-  for(int i = 1 ; i<Eigen.N_rows ; i++){
-    max_Eigen = DMAX(max_Eigen,fabs(Eigen.nV[i]));
-    min_Eigen = DMIN(min_Eigen,fabs(Eigen.nV[i]));
-  }
+  else
+    {
+      puts(" Error in Cond_Mat() : the input should be a square matrix !");
+      exit(EXIT_FAILURE);
+    }
 
   return (double)max_Eigen/min_Eigen;
   
@@ -1101,24 +1102,28 @@ double Cond_Mat(Matrix In, double TOL)
 
 /*********************************************************************/
 
-Matrix Get_Lumped_Matrix(Matrix M_in){
+Matrix Get_Lumped_Matrix(Matrix M_in)
+{
   /*
     Get the lumped matrix in a vectorial shape of the input matrix 
-   */
+  */
 
-  if(M_in.N_cols != M_in.N_rows){
-    puts("Error in Get_Lumped_Matrix() : The input matrix is not square ! ");
-     exit(EXIT_FAILURE);
-  }
+  if(M_in.N_cols != M_in.N_rows)
+    {
+      puts("Error in Get_Lumped_Matrix() : The input matrix is not square ! ");
+      exit(EXIT_FAILURE);
+    }
   
   Matrix M_out;
   M_out = MatAllocZ(M_in.N_rows,1);
 
-  for(int i = 0 ; i<M_in.N_cols ; i++){
-    for(int j = 0 ; j<M_in.N_rows ; j++){
-      M_out.nV[i] += M_in.nM[j][i];
+  for(int i = 0 ; i<M_in.N_cols ; i++)
+    {
+      for(int j = 0 ; j<M_in.N_rows ; j++)
+	{
+	  M_out.nV[i] += M_in.nM[j][i];
+	}
     }
-  }
   return M_out;  
 }
 
@@ -1191,7 +1196,7 @@ Matrix Matrix_x_Scalar(Matrix A, double a)
 
 float pythag(float a, float b)
 /*
-    Computes (a^2 + b^2)^0.5 without destructive underflow or overflow.
+  Computes (a^2 + b^2)^0.5 without destructive underflow or overflow.
 */
 {
   /* Compute the absolute value of "a" and "b" */
@@ -1199,9 +1204,13 @@ float pythag(float a, float b)
   float absb=fabs(b);
   
   if (absa > absb)
-    return absa*sqrt(1.0+SQR(absb/absa));
+    {
+      return absa*sqrt(1.0+SQR(absb/absa));
+    }
   else
-    return (absb == 0.0 ? 0.0 : absb*sqrt(1.0+SQR(absa/absb)));
+    {
+      return (absb == 0.0 ? 0.0 : absb*sqrt(1.0+SQR(absa/absb)));
+    }
 }
 
 
