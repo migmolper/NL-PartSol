@@ -3,17 +3,56 @@
 
 Matrix solve_system_LAPACK(Matrix A,Matrix B)
 {
-  // note, to understand this part take a look in the MAN pages, at section of parameters.
-  char    TRANS = 'N';
-  int     INFO= 3;
-  int     LDA = 3;
-  int     LDB = 3;
-  int     N = 3;
-  int     NRHS = 1;
-  int     IPIV[3] ;
+  /* 
+     note, to understand this part take a look in the MAN pages, 
+     at section of parameters.
+   */
+
+  int NumColumns = A.N_cols;
+  int NumRows = A.N_rows;
+
+  int Order;
+  int LDA;
+  if(NumColumns == NumRows)
+    {
+      Order = NumRows;
+      LDA = Order;
+    }
+  else
+    {
+      puts("an error occured : ");
+      exit(0);
+    }
+
+  int NRHS;
+  if(B.N_cols == 1)
+    {
+      NRHS = B.N_cols;
+    }
+  else
+    {
+      puts("an error occured : ");
+      exit(0);
+    }
+
+  int LDB;
+  if(B.N_rows == A.N_rows)
+    {
+      LDB = Order;
+    }
+  else
+    {
+      puts("an error occured : ");
+      exit(0);
+    }  
+  
+  char  TRANS = 'N'; /* (No transpose) */
+  int   INFO= 3;
+
+  int * IPIV = (int *)Allocate_Array(Order,sizeof(int));
  
   /* Compute the LU factorization */
-  LAPACK_dgetrf(&N,&N,A.nV,&LDA,IPIV,&INFO);
+  LAPACK_dgetrf(&Order,&Order,A.nV,&LDA,IPIV,&INFO);
  
   /* 
      checks INFO, if INFO != 0 something goes wrong.
@@ -26,7 +65,7 @@ Matrix solve_system_LAPACK(Matrix A,Matrix B)
   else
     {
       /* Solve the sistem */
-      dgetrs_(&TRANS,&N,&NRHS,A.nV,&LDA,IPIV,A.nV,&LDB,&INFO);
+      dgetrs_(&TRANS,&Order,&NRHS,A.nV,&LDA,IPIV,B.nV,&LDB,&INFO);
 
       /* 
 	 checks INFO, if INFO != 0 something goes wrong.
