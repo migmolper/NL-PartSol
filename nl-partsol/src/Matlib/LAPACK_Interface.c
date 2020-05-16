@@ -20,7 +20,9 @@ Matrix solve_system_LAPACK(Matrix A,Matrix B)
     }
   else
     {
-      puts("an error occured : ");
+      fprintf(stderr,"%s : %s !!\n",
+	      "Error in solve_system_LAPACK",
+	      "The input matrix should be square");
       exit(EXIT_FAILURE);
     }
 
@@ -31,7 +33,9 @@ Matrix solve_system_LAPACK(Matrix A,Matrix B)
     }
   else
     {
-      puts("an error occured : ");
+      fprintf(stderr,"%s : %s !!\n",
+	      "Error in solve_system_LAPACK",
+	      "The RHS should have one column");
       exit(EXIT_FAILURE);
     }
 
@@ -42,7 +46,9 @@ Matrix solve_system_LAPACK(Matrix A,Matrix B)
     }
   else
     {
-      puts("an error occured : ");
+      fprintf(stderr,"%s : %s !!\n",
+	      "Error in solve_system_LAPACK",
+	      "The dimension of the matrix and the RHS mismatch");
       exit(EXIT_FAILURE);
     }  
   
@@ -60,7 +66,12 @@ Matrix solve_system_LAPACK(Matrix A,Matrix B)
   */
   if(INFO)
     {
-      puts("an error occured : ");
+      fprintf(stderr,"%s : %s %s %s \n",
+	      "Error in solve_system_LAPACK",
+	      "The function",
+	      "LAPACK_dgetrf",
+	      "returned an error message !!!" );
+      exit(EXIT_FAILURE);
     }
   else
     {
@@ -73,7 +84,11 @@ Matrix solve_system_LAPACK(Matrix A,Matrix B)
       */
       if(INFO)
         {
-	  puts("an error occured : ");
+	  fprintf(stderr,"%s : %s %s %s \n",
+		  "Error in solve_system_LAPACK",
+		  "The function",
+		  "dgetrs_",
+		  "returned an error message !!!" );
 	  exit(EXIT_FAILURE);
         }
     }
