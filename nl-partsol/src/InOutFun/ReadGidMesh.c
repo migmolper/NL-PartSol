@@ -53,7 +53,7 @@ Mesh ReadGidMesh(char * MeshName)
   else
     {
       printf("Error in ReadGidMesh() : during line %i !!! \n",Num_line);
-      exit(0);
+      exit(EXIT_FAILURE);
     }
   
   /* Element properties of the mesh */
@@ -96,7 +96,7 @@ Mesh ReadGidMesh(char * MeshName)
 	{
 	  perror("Error in ReadGidMesh()");
 	  printf("Wrong number of mesh properties : %i ! \n",nwords);
-	  exit(0);
+	  exit(EXIT_FAILURE);
 	}
     }
   
@@ -108,14 +108,14 @@ Mesh ReadGidMesh(char * MeshName)
       if(strcmp(words[0],"Coordinates") != 0)
 	{
 	  puts("Error in ReadGidMesh() : Format error in the input mesh !!!");
-	  exit(0);
+	  exit(EXIT_FAILURE);
 	}
       Num_line++;
     }
   else
     {
       printf("Error in ReadGidMesh() : during line %i !!! \n",Num_line);
-      exit(0);
+      exit(EXIT_FAILURE);
     }
   
   /* Count number of nodes */
@@ -128,7 +128,7 @@ Mesh ReadGidMesh(char * MeshName)
   else
     {
       printf("Error in ReadGidMesh() : during line %i !!! \n",Num_line);
-      exit(0);
+      exit(EXIT_FAILURE);
     }
 
   for( ; strcmp(words[1],"Coordinates") != 0;
@@ -143,7 +143,7 @@ Mesh ReadGidMesh(char * MeshName)
       else
 	{
 	  printf("Error in ReadGidMesh() : during line %i !!! \n",Num_line);
-	  exit(0);
+	  exit(EXIT_FAILURE);
 	}
     }
 
@@ -155,7 +155,7 @@ Mesh ReadGidMesh(char * MeshName)
   nwords = parse (words, line, " \n\t");
   if(strcmp(words[0],"Elements") != 0){
     puts("Error in ReadGidMesh() : Format error in the input mesh !!!");
-    exit(0);
+    exit(EXIT_FAILURE);
   }
 
   /* Count number of elements */
@@ -182,7 +182,7 @@ Mesh ReadGidMesh(char * MeshName)
   if(GID_Mesh.Connectivity == NULL)
     {
       puts("Error in Chain declaration");
-      exit(0);
+      exit(EXIT_FAILURE);
     }
   for(int i = 0 ; i<GID_Mesh.NumElemMesh ; i++)
     {
@@ -194,7 +194,7 @@ Mesh ReadGidMesh(char * MeshName)
   if(GID_Mesh.NodeNeighbour == NULL)
     {
       puts("Error in Chain declaration");
-      exit(0);
+      exit(EXIT_FAILURE);
     }
   for(int i = 0 ; i<GID_Mesh.NumNodesMesh ; i++)
     {
@@ -242,7 +242,7 @@ Mesh ReadGidMesh(char * MeshName)
 	    {
 	      printf("Check the node : %i \n", atoi(read_coords[0]) - 1);
 	      puts("Error in ReadGidMesh() : Format error in the input mesh !!!");
-	      exit(0);
+	      exit(EXIT_FAILURE);
 	    }
 	}
     }
@@ -275,7 +275,7 @@ Mesh ReadGidMesh(char * MeshName)
 	    {
 	      printf("Check the element : %i \n", atoi(read_connectivity[0]) - 1);
 	      puts("Error in ReadGidMesh() : Format error in the input mesh !!!");
-	      exit(0);
+	      exit(EXIT_FAILURE);
 	    }
 	}
       free(ConnectivityElem);

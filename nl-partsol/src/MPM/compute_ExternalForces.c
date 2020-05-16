@@ -44,7 +44,7 @@ Matrix compute_BodyForces(Matrix F_I, GaussPoint MPM_Mesh,
 	    printf("%s : %s\n",
 		   "Error in compute_BodyForces()",
 		   "The time step is out of the curve !!");
-	    exit(0);
+	    exit(EXIT_FAILURE);
 	  }
 	  b.n[k] = B[i].Value[k].Fx[TimeStep];
 	}

@@ -113,7 +113,7 @@ void GetInitialGaussPointPosition(Matrix X_p, Mesh FEM_Mesh, int GPxElement)
     fprintf(stderr,"%s : %s \n",
 	    "Error in GetInitialGaussPointPosition()",
 	    "Wrong number of gauss point per element");
-    exit(1);
+    exit(EXIT_FAILURE);
   }
   
 }
@@ -206,7 +206,7 @@ double GetMinElementSize(Mesh FEM_Mesh)
 	     "Element with ",
 	     NumNodesElem,
 	     "nodes is not implemented !!!" );
-      exit(0); 
+      exit(EXIT_FAILURE);
     }
 
     /* Free memory */

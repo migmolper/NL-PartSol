@@ -57,7 +57,7 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
     fprintf(stderr,"%s : \n\t %s %s",
 	    "Error in GramsInitials()","Incorrect lecture of",
 	    Name_File);
-    exit(0);
+    exit(EXIT_FAILURE);
   }
   
   /**************************************************/
@@ -71,7 +71,7 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
       fprintf(stderr,"%s : %s \n",
 	      "Error in GramsSolid2D()",
 	      "Parser failed");
-      exit(0);
+      exit(EXIT_FAILURE);
     }
 
     if ((Num_words_parse > 0) &&
@@ -131,7 +131,7 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
     if(MPM_Mesh.ListNodes == NULL){
       printf("%s : %s \n",
 	     "Define_GP_Mesh","Memory error for ListNodes");
-      exit(0);
+      exit(EXIT_FAILURE);
     }
     for(int i = 0 ; i<NumParticles ; i++){
       MPM_Mesh.ListNodes[i] = NULL;  
@@ -142,7 +142,7 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
     if(MPM_Mesh.Beps == NULL){
       printf("%s : %s \n",
 	     "Define_GP_Mesh","Memory error for Beps");
-      exit(0);
+      exit(EXIT_FAILURE);
     }
     for(int i = 0 ; i<NumParticles ; i++){
       MPM_Mesh.Beps[i] = NULL;  
@@ -169,7 +169,7 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
     else{
       fprintf(stderr,"%s : %s \n",
 	      "Error in GramsSolid2D()","GramsShapeFun no defined");
-      exit(0);
+      exit(EXIT_FAILURE);
     }
     
     /**************************************************/    
@@ -193,7 +193,7 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
     else{
       fprintf(stderr,"%s : %s \n",
 	      "Error in GramsSolid2D()","GramsMaterials no defined");
-      exit(0);
+      exit(EXIT_FAILURE);
     }
 
     /**************************************************/
@@ -217,7 +217,7 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
     else{
       fprintf(stderr,"%s : %s \n",
 	      "Error in GramsSolid2D()","GramsShapeFun no defined");
-      exit(0);
+      exit(EXIT_FAILURE);
     }
 
     /* Fill geometrical properties of the GP mesh */
@@ -339,7 +339,7 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
   else{
     fprintf(stderr,"%s : %s \n",
 	    "Error in GramsSolid2D()","GramsBodyForces no defined");
-    exit(0);
+    exit(EXIT_FAILURE);
   }
   
   return MPM_Mesh;

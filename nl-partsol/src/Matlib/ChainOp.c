@@ -24,7 +24,7 @@ ChainPtr RangeChain(int Init, int End){
     printf("%s : %s \n",
 	   "Error in RangeChain",
 	   "Init > End !!!");
-    exit(0);
+    exit(EXIT_FAILURE);
   }
 
   /* Variable declaration */
@@ -52,7 +52,7 @@ int * Set_to_Pointer(ChainPtr A_chain, int NumNodes){
     printf(" %s : %s \n",
 	   "Error in Set_to_Pointer",
 	   "The chain is empty");
-    exit(0);
+    exit(EXIT_FAILURE);
   }
 
   /* Loop over the chain to generate an array */

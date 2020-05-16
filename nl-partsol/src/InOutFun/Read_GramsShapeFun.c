@@ -48,7 +48,7 @@ void GramsShapeFun(char * Name_File)
 	   "Error in GramsShapeFun()",
 	   "Incorrect lecture of",
 	   Name_File);
-    exit(0);
+    exit(EXIT_FAILURE);
   }
   
   /* Read the file line by line */
@@ -60,7 +60,7 @@ void GramsShapeFun(char * Name_File)
       fprintf(stderr,"%s : %s \n",
 	     "Error in GramsShapeFun()",
 	     "Parser failed");
-      exit(0);
+      exit(EXIT_FAILURE);
     }
 
     if ((Num_GramsShapeFun > 0) &&
@@ -74,7 +74,7 @@ void GramsShapeFun(char * Name_File)
 	fprintf(stderr,"%s : %s \n",
 	       "Error in GramsShapeFun()",
 	       "Use this format -> (Type=string) !!!");
-	exit(0);
+	exit(EXIT_FAILURE);
       }
       
       ShapeFunctionGP = Parse_GramsShapefun_Type[1];
@@ -97,7 +97,7 @@ void GramsShapeFun(char * Name_File)
 	    fprintf(stderr,"%s : %s \n",
 		    "Error in GramsShapeFun()",
 		    "gamma parameter required for LME !!!");
-	    exit(0);
+	    exit(EXIT_FAILURE);
 	  }
 	  /* Check number of time steps */
 	  break;
@@ -109,7 +109,7 @@ void GramsShapeFun(char * Name_File)
 	  fprintf(stderr,"%s : %s \n",
 		  "Error in GramsShapeFun()",
 		  "Unspected EOF !!!");
-	  exit(0);	
+	  exit(EXIT_FAILURE);	
 	}
 	Num_ShapeFun_Prop = parse(Parse_Shf_Prop,Line_Shf_Prop," =\t\n");
 
@@ -122,7 +122,7 @@ void GramsShapeFun(char * Name_File)
 	    fprintf(stderr,"%s : %s \n",
 		    "Error in GramsShapeFun()",
 		    "gamma parameter required for LME !!!");
-	    exit(0);
+	    exit(EXIT_FAILURE);
 	  }
 	  /* Check number of time steps */
 	  break;
@@ -135,7 +135,7 @@ void GramsShapeFun(char * Name_File)
 	    fprintf(stderr,"%s : %s \n",
 		   "Error in GramsShapeFun()",
 		   "Use this format -> Propertie = value !!!");
-	    exit(0);
+	    exit(EXIT_FAILURE);
 	  }
 
  	  if(strcmp(Parse_Shf_Prop[0],"gamma") == 0){
@@ -148,7 +148,7 @@ void GramsShapeFun(char * Name_File)
 	    fprintf(stderr,"%s : %s %s \n",
 		   "Error in GramsShapeFun()",
 		   "Undefined",Parse_Shf_Prop[0]);
-	    exit(0);
+	    exit(EXIT_FAILURE);
 	  }
 	  /* Read next line and check */
 	  STATUS_LINE = fgets(Line_Shf_Prop,
@@ -164,7 +164,7 @@ void GramsShapeFun(char * Name_File)
 	fprintf(stderr,"%s : %s \n",
 	       "Error in GramsShapeFun()",
 	       "you forget to put a } !!!");
-	exit(0);	  
+	exit(EXIT_FAILURE);	  
 	}
 
 	if((Num_ShapeFun_Prop>0) &&
@@ -175,7 +175,7 @@ void GramsShapeFun(char * Name_File)
 	    fprintf(stderr,"%s : %s \n",
 		   "Error in GramsShapeFun()",
 		   "gamma parameter required for LME !!!");
-	    exit(0);
+	    exit(EXIT_FAILURE);
 	  }
 	  /* Check number of time steps */
 	  break;
@@ -185,7 +185,7 @@ void GramsShapeFun(char * Name_File)
 	fprintf(stderr,"%s : %s \n",
 	       "Error in GramsShapeFun()",
 	       "Use this format -> GramsShapeFun (Type=string) { !!!");
-	exit(0);
+	exit(EXIT_FAILURE);
       }
     }
   }

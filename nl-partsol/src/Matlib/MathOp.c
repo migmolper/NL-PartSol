@@ -18,7 +18,7 @@ double Area_Poligon(Matrix Poligon)
   /* Check the number of vertex */
   if(N_vertex<3){
     puts("Error in Area_Poligon : Wrong number of vertex !!!");
-    exit(0);
+    exit(EXIT_FAILURE);
   }
   
   /* Initialize the area value with the initial therm */
@@ -56,14 +56,14 @@ Matrix Centroid_Poligon(Matrix Poligon)
   N_vertex = Poligon.N_rows; 
   if(N_vertex<3){
     puts("Error in Centroid_Poligon() : Wrong number of vertex !!!");
-    exit(0);
+    exit(EXIT_FAILURE);
   }
 
   /* Asign the number of dimensions and check it */
   N_dimensions = Poligon.N_cols;
   if(N_dimensions != 2){
     puts("Error in Centroid_Poligon() : Wrong number of dimensions !!!");
-    exit(0);
+    exit(EXIT_FAILURE);
   }
   
   /* Allocate the array for the centroid */
@@ -217,7 +217,7 @@ Matrix SolvePolynomial(Matrix Coeffs)
   if( (Coeffs.N_rows > 1) && (Coeffs.N_cols > 1) ){
     printf("%s : %s \n","Error in SolvePolynomial",
 	   "I am not able to solve a system !!!");
-    exit(0);
+    exit(EXIT_FAILURE);
   }
   
   Matrix Solution;
@@ -227,13 +227,13 @@ Matrix SolvePolynomial(Matrix Coeffs)
     printf(" %s : %s \n ",
 	   "Error in SolvePolynomial()",
 	   "Dummy polynomial of order 0");
-    exit(0);
+    exit(EXIT_FAILURE);
   }
   if(N_Coeffs == 2){
     printf(" %s : %s \n ",
 	   "Error in SolvePolynomial()",
 	   "Dummy polynomial of order 1");
-    exit(0);
+    exit(EXIT_FAILURE);
   }
 
   double a, b, c, d;
@@ -256,7 +256,7 @@ Matrix SolvePolynomial(Matrix Coeffs)
 	     "Error in SolvePolynomial()",
 	     "Imaginary solutions not implemented",
 	     aux);
-      exit(0);
+      exit(EXIT_FAILURE);
     }
     Solution.nV[0] =
       0.5*(- b + sqrt(aux))/a;
@@ -275,7 +275,7 @@ Matrix SolvePolynomial(Matrix Coeffs)
     printf(" %s : %s \n ",
 	   "Error in SolvePolynomial() ",
 	   "I am only able to solve 2 order polynomials !");
-    exit(0); 
+    exit(EXIT_FAILURE);
   }
 
   return Solution;
@@ -315,7 +315,7 @@ double Distance(Matrix End, Matrix Init)
     printf("%s : %s \n",
 	   "Error in Distance",
 	   "Inputs arrays are not equal");
-    exit(0);
+    exit(EXIT_FAILURE);
   }
 
   double DIST = 0;

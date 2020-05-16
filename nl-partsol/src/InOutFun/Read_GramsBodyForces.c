@@ -46,7 +46,7 @@ Load * GramsBodyForces(char * Name_File, int NumBodyForces, int GPxElement)
 	    "Error in GramsBodyForces()",
 	    "Incorrect lecture of",
 	    Name_File);
-    exit(0);
+    exit(EXIT_FAILURE);
   }
 
   /* Generate route */
@@ -61,7 +61,7 @@ Load * GramsBodyForces(char * Name_File, int NumBodyForces, int GPxElement)
       fprintf(stderr,"%s : %s \n",
 	      "Error in GramsBodyForces ()",
 	      "Parser failed");
-      exit(0);
+      exit(EXIT_FAILURE);
     }
 
     /* Find GramsBodyForces line */
@@ -76,7 +76,7 @@ Load * GramsBodyForces(char * Name_File, int NumBodyForces, int GPxElement)
 	fprintf(stderr,"%s : %s \n",
 		"Error in GramsBodyForces()",
 		"Use this format -> (Nodes=str) !!!");
-	exit(0);
+	exit(EXIT_FAILURE);
       }
       
       /* Read file with the nodes */
@@ -121,7 +121,7 @@ Load * GramsBodyForces(char * Name_File, int NumBodyForces, int GPxElement)
 	  fprintf(stderr,"%s : %s \n",
 		  "Error in GramsBodyForces ()",
 		  "Parser failed");
-	  exit(0);
+	  exit(EXIT_FAILURE);
 	}
 	if((Num_words_line > 0) &&
 	   (strcmp(Parse_Properties[0],"}") != 0 )){
@@ -181,7 +181,7 @@ Load * GramsBodyForces(char * Name_File, int NumBodyForces, int GPxElement)
 	      else{
 		fprintf(stderr,"%s : %s \n",
 			"Error in GramsBodyForces()", "Use -> b.x, b.y, b.z");
-		exit(0);
+		exit(EXIT_FAILURE);
 	      }
 	    }
 	}

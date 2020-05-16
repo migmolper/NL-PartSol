@@ -50,7 +50,7 @@ Load * GramsNeumannBC(char * Name_File, int NumNeumannBC, int GPxElement)
 	    "Error in GramsNeumannBC()",
 	    "Incorrect lecture of",
 	    Name_File);
-    exit(0);
+    exit(EXIT_FAILURE);
   }
 
   /* Generate route */
@@ -65,7 +65,7 @@ Load * GramsNeumannBC(char * Name_File, int NumNeumannBC, int GPxElement)
       fprintf(stderr,"%s : %s \n",
 	      "Error in GramsNeumannBC ()",
 	      "Parser failed");
-      exit(0);
+      exit(EXIT_FAILURE);
     }
 
     /* Find GramsNeumannBC line */
@@ -80,7 +80,7 @@ Load * GramsNeumannBC(char * Name_File, int NumNeumannBC, int GPxElement)
 	fprintf(stderr,"%s : %s \n",
 		"Error in GramsNeumannBC()",
 		"Use this format -> (Nodes=str) !!!");
-	exit(0);
+	exit(EXIT_FAILURE);
       }
       
       /* Read file with the nodes */
@@ -128,7 +128,7 @@ Load * GramsNeumannBC(char * Name_File, int NumNeumannBC, int GPxElement)
 	  fprintf(stderr,"%s : %s \n",
 		  "Error in GramsNeumannBC ()",
 		  "Parser failed");
-	  exit(0);
+	  exit(EXIT_FAILURE);
 	}
 	if((Num_words_line > 0) &&
 	   (strcmp(Parse_Properties[0],"}") != 0 )){
@@ -189,7 +189,7 @@ Load * GramsNeumannBC(char * Name_File, int NumNeumannBC, int GPxElement)
 	      else{
 		fprintf(stderr,"%s : %s \n",
 			"Error in GramsNeumannBC()", "Velocity BCC -> U, V, W");
-		exit(0);
+		exit(EXIT_FAILURE);
 	      }
 	    }
 	}

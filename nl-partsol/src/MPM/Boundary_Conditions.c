@@ -32,7 +32,7 @@ void imposse_NodalMomentum(Mesh FEM_Mesh, Matrix Phi_I, int TimeStep)
 	    printf("%s : %s \n",
 		   "Error in imposse_NodalMomentum()",
 		   "The time step is out of the curve !!");
-	    exit(0);
+	    exit(EXIT_FAILURE);
 	  }
 	  /* 9º Assign the boundary condition */
 	  Phi_I.nM[Id_BCC][k] =
@@ -77,7 +77,7 @@ void imposse_NodalVelocity(Mesh FEM_Mesh, Matrix V_I, int TimeStep)
 	    printf("%s : %s \n",
 		   "Error in imposse_NodalMomentum()",
 		   "The time step is out of the curve !!");
-	    exit(0);
+	    exit(EXIT_FAILURE);
 	  }
 	  /* 9º Assign the boundary condition */
 	  V_I.nM[Id_BCC][k] =
@@ -112,7 +112,7 @@ Matrix Eval_Body_Forces(Load * B, int NumLoads, int NumGP, int TimeStep)
 	      printf("%s : %s\n",
 		     "Error in Eval_Body_Forces()",
 		     "The time step is out of the curve !!");
-	      exit(0);
+	      exit(EXIT_FAILURE);
 	    }
 	    Body_Forces_t.nM[k][GP_Force] +=
 	      B[i].Value[k].Fx[TimeStep]*
@@ -149,7 +149,7 @@ Matrix Eval_Contact_Forces(Load * F, int NumLoads, int NumGP, int TimeStep)
 	      printf("%s : %s \n",
 		     "Error in Eval_Contact_Forces()",
 		     "The time step is out of the curve !!");
-	      exit(0);
+	      exit(EXIT_FAILURE);
 	    }
 	    Contact_Forces_t.nM[k][GP_Force] +=
 	      F[i].Value[k].Fx[TimeStep]*

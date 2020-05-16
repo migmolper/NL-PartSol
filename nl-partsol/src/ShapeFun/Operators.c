@@ -98,7 +98,7 @@ Matrix compute_ShapeFunction(Element GP_Element,GaussPoint MPM_Mesh,Mesh FEM_Mes
 	   "The shape-function ",
 	   ShapeFunctionGP,
 	   "is not implemented");      
-    exit(0);
+    exit(EXIT_FAILURE);
   }
 
   return ShapeFunction_p;
@@ -207,7 +207,7 @@ Matrix compute_ShapeFunction_Gradient(Element GP_Element,GaussPoint MPM_Mesh,
 	   "The shape-function ",
 	   ShapeFunctionGP,
 	   "is not implemented");      
-    exit(0);
+    exit(EXIT_FAILURE);
   }
 
   return Gradient_p;

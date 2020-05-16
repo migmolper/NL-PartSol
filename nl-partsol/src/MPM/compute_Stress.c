@@ -12,7 +12,7 @@ Tensor compute_Stress(Tensor Strain, Tensor Stress, Material Mat)
     Stress = LinearElastic(Strain,Stress,Mat);
   }
   else{
-    exit(0);
+    exit(EXIT_FAILURE);
   }
   
   /* Return the stress tensor */

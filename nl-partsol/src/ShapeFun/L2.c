@@ -12,7 +12,7 @@ Matrix L2(Matrix X_e){
 
   if( (X_e.n > 1 ) || (X_e.n < 0 ) ){
     printf("Error in L2() : Out of the element bounds !!! \n");
-    exit(0);
+    exit(EXIT_FAILURE);
   }    
 
   /* Definition and allocation */
@@ -29,7 +29,7 @@ Matrix dL2(Matrix X_e){
 
   if( (X_e.n > 1 ) || (X_e.n < 0 ) ){
     printf("Error in dL2() : Out of the element bounds !!! \n");
-    exit(0);
+    exit(EXIT_FAILURE);
   }    
 
   /* Definition and allocation */

@@ -54,7 +54,7 @@ Matrix Read_CSV(char * Name_File, int NumData)
     {
       fprintf(stderr,"%s : %s %i !!! \n",
 	      "Error in Read_CSV()","during line",Num_line);
-      exit(0);
+      exit(EXIT_FAILURE);
     }
     
   /*!
@@ -76,7 +76,7 @@ Matrix Read_CSV(char * Name_File, int NumData)
 	    {
 	      fprintf(stderr,"%s : %s -> %i ! \n",
 		      "Error in Read_CSV()","Incorrect number of fields",int_aux);
-	      exit(0);
+	      exit(EXIT_FAILURE);
 	    }
 	  Num_line++;
 	}
@@ -84,7 +84,7 @@ Matrix Read_CSV(char * Name_File, int NumData)
 	{
 	  fprintf(stderr,"%s : %s %i !! \n",
 		  "Error in Read_CSV()","during line",Num_line);
-	  exit(0);
+	  exit(EXIT_FAILURE);
 	}
       for(int i = 0 ; i<NumFields ; i++)
 	{      
@@ -108,7 +108,7 @@ Matrix Read_CSV(char * Name_File, int NumData)
 		  fprintf(stderr,"%s : %s %i !! \n",
 			  "Error in Read_CSV()",
 			  "Incorrect number of fields in line",i);
-		  exit(0);
+		  exit(EXIT_FAILURE);
 		}
 	      Num_line++;
 	    }
@@ -116,7 +116,7 @@ Matrix Read_CSV(char * Name_File, int NumData)
 	    {
 	      fprintf(stderr,"%s : %s %i !!! \n",
 		      "Error in Read_CSV()","during line",Num_line);
-	      exit(0);
+	      exit(EXIT_FAILURE);
 	    }
 	  Mat_Out.nV[i] = atof(Field[0]);
 	}
@@ -139,7 +139,7 @@ Matrix Read_CSV(char * Name_File, int NumData)
 			"Incorrect number of fields",int_aux);
 		fprintf(stderr,"%s %i \n",
 			"Error detected in line",i);
-		exit(0);
+		exit(EXIT_FAILURE);
 	      }
 	    Num_line++;
 	  }
@@ -148,7 +148,7 @@ Matrix Read_CSV(char * Name_File, int NumData)
 	    fprintf(stderr,"%s : %s %i !!! \n",
 		    "Error in Read_CSV()",
 		    "during line",Num_line);
-	    exit(0);
+	    exit(EXIT_FAILURE);
 	  }
 	for(int j = 0 ; j<NumFields ; j++)
 	  {

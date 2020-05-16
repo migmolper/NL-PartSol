@@ -21,7 +21,7 @@ Matrix solve_system_LAPACK(Matrix A,Matrix B)
   else
     {
       puts("an error occured : ");
-      exit(0);
+      exit(EXIT_FAILURE);
     }
 
   int NRHS;
@@ -32,7 +32,7 @@ Matrix solve_system_LAPACK(Matrix A,Matrix B)
   else
     {
       puts("an error occured : ");
-      exit(0);
+      exit(EXIT_FAILURE);
     }
 
   int LDB;
@@ -43,7 +43,7 @@ Matrix solve_system_LAPACK(Matrix A,Matrix B)
   else
     {
       puts("an error occured : ");
-      exit(0);
+      exit(EXIT_FAILURE);
     }  
   
   char  TRANS = 'N'; /* (No transpose) */
@@ -74,6 +74,7 @@ Matrix solve_system_LAPACK(Matrix A,Matrix B)
       if(INFO)
         {
 	  puts("an error occured : ");
+	  exit(EXIT_FAILURE);
         }
     }
  

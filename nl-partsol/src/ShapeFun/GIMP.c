@@ -581,7 +581,7 @@ ChainPtr uGIMP_Tributary_Nodes(Matrix X_EC_GP,
     printf("%s : (%f;%f) \n",
 	   "Natural coordinates of the GP",
 	   X_EC_GP.nV[0],X_EC_GP.nV[1]);
-    exit(0);
+    exit(EXIT_FAILURE);
   }
  
   return Triburary_Nodes;

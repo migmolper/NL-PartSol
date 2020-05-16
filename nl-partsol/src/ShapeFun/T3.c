@@ -19,7 +19,7 @@ Matrix T3(Matrix X_e){
       (fabs(X_e.nV[1]) > 1 ) ||
       (1 - X_e.nV[0] - X_e.nV[1] < 0)){
     printf("Error in T3() : Out of the element bounds !!! \n");
-    exit(0);
+    exit(EXIT_FAILURE);
   }    
   
   /* Definition and allocation */
@@ -43,7 +43,7 @@ Matrix dT3(Matrix X_e){
       (fabs(X_e.nV[1]) > 1 ) ||
       (1 - X_e.nV[0] - X_e.nV[1] < 0)){
     printf("Error in T3() : Out of the element bounds !!! \n");
-    exit(0);
+    exit(EXIT_FAILURE);
   }
   
   /* Definition and allocation */

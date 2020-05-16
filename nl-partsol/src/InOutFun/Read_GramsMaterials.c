@@ -76,7 +76,7 @@ GramsMaterials (Particles=route.txt) {
 	   "Error in GramsMaterials()",
 	   "Incorrect lecture of",
 	   Name_File);
-    exit(0);
+    exit(EXIT_FAILURE);
   }
 
   /* Generate route */
@@ -88,7 +88,7 @@ GramsMaterials (Particles=route.txt) {
     fprintf(stderr,"%s : %s \n",
 	   "Error in GramsMaterials()",
 	   "Memory error for Mat");
-    exit(0);
+    exit(EXIT_FAILURE);
   }
   
   /* Read the file line by line */
@@ -100,7 +100,7 @@ GramsMaterials (Particles=route.txt) {
       fprintf(stderr,"%s : %s \n",
 	     "Error in GramsMaterials ()",
 	     "Parser failed");
-      exit(0);
+      exit(EXIT_FAILURE);
     }
 
     if ((nkwords>0) &&
@@ -116,7 +116,7 @@ GramsMaterials (Particles=route.txt) {
 	fprintf(stderr,"%s : %s \n",
 	       "Error in GramsMaterials()",
 	       "Use this format -> (Particles=route.txt) !!!");
-	exit(0);
+	exit(EXIT_FAILURE);
       }
 
       /* Read file with the nodes */
@@ -173,13 +173,13 @@ GramsMaterials (Particles=route.txt) {
 	if(STATUS_LINE == NULL){
 	    fprintf(stderr,"%s : %s \n",
 		   "Error in GramsMaterials()","Unspected EOF !!!");
-	    exit(0);	
+	    exit(EXIT_FAILURE);	
 	}
 	Aux_Mat_id = parse(Parse_Mat_Prop,Line_Material_Prop," =\t\n");
 	if(strcmp(Parse_Mat_Prop[0],"}") == 0){
 	  fprintf(stderr,"%s : %s \n",
 		  "Error in GramsMaterials()","Undefined material");
-	  exit(0);
+	  exit(EXIT_FAILURE);
 	}
 	while(STATUS_LINE != NULL){
 
@@ -188,7 +188,7 @@ GramsMaterials (Particles=route.txt) {
 		   "Error in GramsMaterials()","Format -> Propertie=value");
 	    fprintf(stderr,"%s (%i) : %s , %s\n",
 		    "Printed",Aux_Mat_id,Parse_Mat_Prop[0],Parse_Mat_Prop[1]);
-	    exit(0);
+	    exit(EXIT_FAILURE);
 	  }
 	  /**************************************************/
 	  if(strcmp(Parse_Mat_Prop[0],"Id") == 0){
@@ -247,7 +247,7 @@ GramsMaterials (Particles=route.txt) {
 	      fprintf(stderr,"%s : %s \n",
 		     "Error in GramsMaterials()",
 		     "Options -> Eigenerosion/Eigensoftening");
-	      exit(0);
+	      exit(EXIT_FAILURE);
 	    }
 	  }
 	  /**************************************************/
@@ -281,7 +281,7 @@ GramsMaterials (Particles=route.txt) {
 		   "Error in GramsMaterials()",
 		   "Undefined",Parse_Mat_Prop[0]);
 	    printf("%s \n","Check the list of properties");
-	    exit(0);
+	    exit(EXIT_FAILURE);
 	  }
 	  /* Read next line and check */
 	  STATUS_LINE = fgets(Line_Material_Prop,
@@ -296,7 +296,7 @@ GramsMaterials (Particles=route.txt) {
 	fprintf(stderr,"%s : %s \n",
 	       "Error in GramsMaterials()",
 	       "you forget to put a } !!!");
-	exit(0);	  
+	exit(EXIT_FAILURE);	  
 	}
 
 	if(strcmp(Parse_Mat_Prop[0],"}") == 0){
@@ -315,7 +315,7 @@ GramsMaterials (Particles=route.txt) {
 	      fprintf(stderr,"%s : %s \n",
 		      "Error in GramsMaterials()",
 		      "Density is required for LE materials");
-	      exit(0);
+	      exit(EXIT_FAILURE);
 	    }
 	  }
 	  else if(strcmp(Mat_GP.Type,"LE") == 0){ /* Linear elastic parameters */
@@ -330,13 +330,13 @@ GramsMaterials (Particles=route.txt) {
 	      fprintf(stderr,"%s : %s \n",
 		      "Error in GramsMaterials()",
 		      "Rho, Cel, E and mu required for LE materials");
-	      exit(0);
+	      exit(EXIT_FAILURE);
 	    }
 	  }
 	  else{
 	    fprintf(stderr,"%s : %s \n",
 		    "Error in GramsMaterials()","Unrecognized kind of material");
-	    exit(0);
+	    exit(EXIT_FAILURE);
 	  }
 
 	  /**************************************************/
@@ -345,7 +345,7 @@ GramsMaterials (Particles=route.txt) {
 	      fprintf(stderr,"%s : %s\n",
 		      "Error in GramsMaterials()",
 		      "thickness is only for plain strain cases");
-	      exit(0);
+	      exit(EXIT_FAILURE);
 	    }
 	    printf("\t \t -> %s : %f \n","thickness",Mat_GP.thickness);
 	  }
@@ -363,7 +363,7 @@ GramsMaterials (Particles=route.txt) {
 	      fprintf(stderr,"%s : %s \n",
 		      "Error in GramsMaterials()",
 		      "Ceps and Gf required for Eigenerosion");
-	      exit(0);
+	      exit(EXIT_FAILURE);
 	    }
 	  }
 	  /**************************************************/ 
@@ -379,7 +379,7 @@ GramsMaterials (Particles=route.txt) {
 	      fprintf(stderr,"%s : %s\n",
 		      "Error in GramsMaterials()",
 		      "ft, heps and Wc required for Eigensoftening");
-	      exit(0);
+	      exit(EXIT_FAILURE);
 	    }
 	  }
 	  /**************************************************/
@@ -394,7 +394,7 @@ GramsMaterials (Particles=route.txt) {
 	fprintf(stderr,"%s : %s \n",
 	       "Error in GramsMaterials()",
 	       "Use this format -> (Particles=route.txt) { !!!");
-	exit(0);
+	exit(EXIT_FAILURE);
       }
     }
 
@@ -408,7 +408,7 @@ GramsMaterials (Particles=route.txt) {
 	   "Error in GramsMaterials()",
 	   "Spected",GP_Mesh.NumberMaterials, "materials, but",
 	   CountMaterials,"where defined !!!");
-    exit(0);
+    exit(EXIT_FAILURE);
   }
 
   /* Close .dat file */

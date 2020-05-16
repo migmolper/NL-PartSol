@@ -75,7 +75,7 @@ Matrix Newton_Rapson(Matrix(* Function)(Matrix, Matrix),Matrix Parameter_F,
       FreeMat(dY_dX);
       break;
     default :
-      exit(0);
+      exit(EXIT_FAILURE);
     }
 
     /* 4º Update the variables of the convergence criterium */
@@ -115,11 +115,11 @@ Matrix Solve_Linear_Sistem(Matrix K, Matrix F)
     return U; 
   case 1 :
     puts("fix U");
-    exit(0);
+    exit(EXIT_FAILURE);
     U = Conjugate_Gradient_Method(K,F,U);
     return U;
   default :
-    exit(0);
+    exit(EXIT_FAILURE);
   }
 
 }
@@ -197,7 +197,7 @@ Matrix Conjugate_Gradient_Method(Matrix K, Matrix F, Matrix U0)
       printf("%s : %s \n",
 	     "Error in Conjugate_Gradient_Method()",
 	     "Wrong input data !");
-      exit(0);
+      exit(EXIT_FAILURE);
     }
 
   int N = K.N_rows;
@@ -366,7 +366,7 @@ Matrix Jacobi_Conjugate_Gradient_Method(Matrix K, Matrix F, Matrix U0)
       printf("%s : %s \n",
 	     "Error in Jacobi_Conjugate_Gradient_Method()",
 	     "Wrong input data !");
-      exit(0);
+      exit(EXIT_FAILURE);
     }
   
   int N = K.N_rows;
@@ -522,7 +522,7 @@ Matrix One_Iteration_Lumped(Matrix K_l, Matrix F, Matrix U0){
     printf("%s : %s \n",
 	   "Error in One_Iteration_Lumped()",
 	   "Wrong input data !");
-    exit(0);
+    exit(EXIT_FAILURE);
   }
 
   /* 1º Initialice the solution array */

@@ -45,7 +45,7 @@ void GramsOutputs(char * Name_File)
 	   "Error in GramsOutputs()",
 	   "Incorrect lecture of",
 	   Name_File);
-    exit(0);
+    exit(EXIT_FAILURE);
   }
 
   /* Generate route */
@@ -60,7 +60,7 @@ void GramsOutputs(char * Name_File)
       fprintf(stderr,"%s : %s \n",
 	     "Error in GramsOutputs()",
 	     "Parser failed");
-      exit(0);
+      exit(EXIT_FAILURE);
     }
 
     if ((nkwords > 0) &&
@@ -73,14 +73,14 @@ void GramsOutputs(char * Name_File)
 	fprintf(stderr,"%s : %s \n",
 	       "Error in GramsOutputs()",
 	       "Use this format -> (i=int) !!!");
-	exit(0);
+	exit(EXIT_FAILURE);
       }
       ResultsTimeStep = atoi(Parse_Out_id[1]);
       if(ResultsTimeStep > NumTimeStep){
 	fprintf(stderr,"%s : %s \n",
 	       "Error in GramsOutputs()",
 	       "The result time step should be less than the total time steps !!!");
-	exit(0);	
+	exit(EXIT_FAILURE);	
       }
       printf("\t -> %s : %i \n","Output values each",ResultsTimeStep);
 
@@ -94,7 +94,7 @@ void GramsOutputs(char * Name_File)
 	  fprintf(stderr,"%s : %s \n",
 		  "Error in GramsOutputs()",
 		  "Unspected EOF !!!");
-	  exit(0);	
+	  exit(EXIT_FAILURE);	
 	}
 	Aux_Out_id = parse(Parse_Out_Prop,Line_Out_Prop," =\t\n");
 	if(strcmp(Parse_Out_Prop[0],"}") == 0){
@@ -103,7 +103,7 @@ void GramsOutputs(char * Name_File)
 	    fprintf(stderr,"%s : %s \n",
 		    "Error in GramsOutputs()",
 		    "Non output dir defined !!!");
-	    exit(0);
+	    exit(EXIT_FAILURE);
 	  }
 	  break;
 	}
@@ -113,7 +113,7 @@ void GramsOutputs(char * Name_File)
 	    fprintf(stderr,"%s : %s \n",
 		   "Error in GramsOutputs()",
 		   "Use this format -> Propertie = value !!!");
-	    exit(0);
+	    exit(EXIT_FAILURE);
 	  }
 
  	  if(strcmp(Parse_Out_Prop[0],"DIR") == 0){
@@ -124,7 +124,7 @@ void GramsOutputs(char * Name_File)
 	    fprintf(stderr,"%s : %s %s \n",
 		   "Error in GramsOutputs()",
 		   "Undefined",Parse_Out_Prop[0]);
-	    exit(0);
+	    exit(EXIT_FAILURE);
 	  }
 	  /* Read next line and check */
 	  STATUS_LINE = fgets(Line_Out_Prop,
@@ -139,7 +139,7 @@ void GramsOutputs(char * Name_File)
 	fprintf(stderr,"%s : %s \n",
 	       "Error in GramsOutputs()",
 	       "you forget to put a } !!!");
-	exit(0);	  
+	exit(EXIT_FAILURE);	  
 	}
 
 	if(strcmp(Parse_Out_Prop[0],"}") == 0){
@@ -148,7 +148,7 @@ void GramsOutputs(char * Name_File)
 	    fprintf(stderr,"%s : %s \n",
 		    "Error in GramsOutputs()",
 		    "Non output dir defined !!!");
-	    exit(0);
+	    exit(EXIT_FAILURE);
 	  }
 	  break;
 	}
@@ -157,7 +157,7 @@ void GramsOutputs(char * Name_File)
 	fprintf(stderr,"%s : %s \n",
 	       "Error in GramsOutputs()",
 	       "Use this format -> GramsOutputs (Type=string) { !!!");
-	exit(0);
+	exit(EXIT_FAILURE);
       }
     }
   }

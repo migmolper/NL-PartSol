@@ -47,7 +47,7 @@ GramsTime(Scheme=FE){
 	   "Error in GramsTime()",
 	   "Incorrect lecture of",
 	   Name_File);
-    exit(0);
+    exit(EXIT_FAILURE);
   }
   
   /* Read the file line by line */
@@ -59,7 +59,7 @@ GramsTime(Scheme=FE){
       fprintf(stderr,"%s : %s \n",
 	     "Error in GramsTime()",
 	     "Parser failed");
-      exit(0);
+      exit(EXIT_FAILURE);
     }
 
     if ((nkwords > 0) &&
@@ -76,7 +76,7 @@ GramsTime(Scheme=FE){
 	fprintf(stderr,"%s : %s \n",
 	       "Error in GramsTime()",
 	       "Use this format -> (Type=string) !!!");
-	exit(0);
+	exit(EXIT_FAILURE);
       }
       TimeIntegrationScheme = Parse_Temp_id[1];
       printf("\t -> %s : %s \n","Time integrator",TimeIntegrationScheme);
@@ -96,7 +96,7 @@ GramsTime(Scheme=FE){
 	    fprintf(stderr,"%s : %s \n",
 		   "Error in GramsTime()",
 		   "Unspected EOF !!!");
-	    exit(0);	
+	    exit(EXIT_FAILURE);
 	}
 	Aux_Temp_id = parse(Parse_Temp_Prop,Line_Temp_Prop," =\t\n");
 	if(strcmp(Parse_Temp_Prop[0],"}") == 0){
@@ -106,7 +106,7 @@ GramsTime(Scheme=FE){
 	    fprintf(stderr,"%s : %s \n",
 	   "Error in GramsTime()",
 		   "Number of time steps <= 0 !!!");
-	    exit(0);
+	    exit(EXIT_FAILURE);
 	  }
 	  break;
 	}
@@ -116,7 +116,7 @@ GramsTime(Scheme=FE){
 	    fprintf(stderr,"%s : %s \n",
 		   "Error in GramsTime()",
 		   "Use this format -> Propertie = value !!!");
-	    exit(0);
+	    exit(EXIT_FAILURE);
 	  }
 
 	  if(strcmp(Parse_Temp_Prop[0],"CFL") == 0){
@@ -135,7 +135,7 @@ GramsTime(Scheme=FE){
 	    fprintf(stderr,"%s : %s %s \n",
 		   "Error in GramsTime()",
 		   "Undefined",Parse_Temp_Prop[0]);
-	    exit(0);
+	    exit(EXIT_FAILURE);
 	  }
 	  /* Read next line and check */
 	  STATUS_LINE = fgets(Line_Temp_Prop,
@@ -150,7 +150,7 @@ GramsTime(Scheme=FE){
 	fprintf(stderr,"%s : %s \n",
 	       "Error in GramsTime()",
 	       "you forget to put a } !!!");
-	exit(0);	  
+	exit(EXIT_FAILURE);	  
 	}
 
 	if(strcmp(Parse_Temp_Prop[0],"}") == 0){
@@ -160,7 +160,7 @@ GramsTime(Scheme=FE){
 	    fprintf(stderr,"%s : %s \n",
 	   "Error in GramsTime()",
 		   "Number of time steps <= 0 !!!");
-	    exit(0);
+	    exit(EXIT_FAILURE);
 	  }
 	  break;
 	}
@@ -169,7 +169,7 @@ GramsTime(Scheme=FE){
 	fprintf(stderr,"%s : %s \n",
 	       "Error in GramsTime()",
 	       "Use this format -> GramsTime (Type=string) { !!!");
-	exit(0);
+	exit(EXIT_FAILURE);
       }
     }
   }
@@ -178,13 +178,13 @@ GramsTime(Scheme=FE){
     fprintf(stderr,"%s : %s \n",
 	    "Error in GramsSolid2D()",
 	    "GramsTime no defined");
-    exit(0);
+    exit(EXIT_FAILURE);
   }
   if(Counter_GramsTime != 1){
     fprintf(stderr,"%s : %s \n",
 	    "Error in GramsSolid2D()",
 	    "More than one call to GramsTime");
-    exit(0);
+    exit(EXIT_FAILURE);
   }
 
   /* Close .dat file */

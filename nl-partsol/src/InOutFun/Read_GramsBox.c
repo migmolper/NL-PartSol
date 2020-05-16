@@ -66,7 +66,7 @@ Mesh GramsBox(char * Name_File)
 	    "Error in GramsBox()",
 	    "Incorrect lecture of",
 	    Name_File);
-    exit(0);
+    exit(EXIT_FAILURE);
   }
 
   /* Generate route */
@@ -83,7 +83,7 @@ Mesh GramsBox(char * Name_File)
       fprintf(stderr,"%s : %s \n",
 	      "Error in GramsBox ()",
 	      "Parser failed");
-      exit(0);
+      exit(EXIT_FAILURE);
     }
 
     /* Find GramsBox line */
@@ -99,7 +99,7 @@ Mesh GramsBox(char * Name_File)
 	fprintf(stderr,"%s : %s \n",
 		"Error in GramsBox()",
 		"Use this format -> (Type=str,File=str) !!!");
-	exit(0);
+	exit(EXIT_FAILURE);
       }
 
       /* Read GID-type mesh */
@@ -138,7 +138,7 @@ Mesh GramsBox(char * Name_File)
 	fprintf(stderr,"%s : %s \n",
 		"Error in GramsBox()",
 		"Unspected EOF !!!");
-	exit(0);
+	exit(EXIT_FAILURE);
       }
       Num_GramsBoundary = parse(Parse_GramsBoundary,Line_GramsBoundary," =\t\n");
 
@@ -213,7 +213,7 @@ Mesh GramsBox(char * Name_File)
     printf("%s : %s \n",
 	   "GetNodalConnectivity",
 	   "Memory error for I_particles");
-    exit(0);
+    exit(EXIT_FAILURE);
   }
   for(int i = 0 ; i<FEM_Mesh.NumNodesMesh ; i++){
     FEM_Mesh.I_particles[i] = NULL;

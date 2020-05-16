@@ -38,7 +38,7 @@ Curve ReadCurve(char * Name_File)
     {
       fprintf(stderr,"%s : %s %s \n",
 	      "Error in ReadCurve()","during the lecture of",Name_File);
-      exit(0);     
+      exit(EXIT_FAILURE);
     }
 
   while(fgets(line, sizeof line, Sim_dat) != NULL)
@@ -138,7 +138,7 @@ Curve ReadCurve(char * Name_File)
 	{
 	  fprintf(stderr,"%s : %s %s \n",
 		  "Error in ReadCurve()","Invalid keyword",kwords[0]);
-	  exit(0);     
+	  exit(EXIT_FAILURE);
 	}
     
     }
@@ -196,7 +196,7 @@ void fill_ConstantCurve(Curve DatCurve,
     {
       fprintf(stderr,"%s : %s !!! \n",
 	      "Error in fill_ConstantCurve()","Wrong parameters");
-      exit(0);
+      exit(EXIT_FAILURE);
 
     }
   
@@ -247,7 +247,7 @@ void fill_RampCurve(Curve DatCurve,
     {
       fprintf(stderr,"%s : %s !!! \n",
 	      "Error in fill_RampCurve()","Wrong parameters");
-      exit(0);
+      exit(EXIT_FAILURE);
 
     }  
 }
@@ -303,7 +303,7 @@ void fill_HeavisideCurve(Curve DatCurve,
 	{	  
 	  fprintf(stderr,"%s : %s !!! \n",
 		  "Error in fill_HeavisideCurve()","Tc is not in [0,Sizecurve]");
-	  exit(0);	  
+	  exit(EXIT_FAILURE); 
 	}
 
       /*!
@@ -325,7 +325,7 @@ void fill_HeavisideCurve(Curve DatCurve,
   else{
     fprintf(stderr,"%s : %s !!! \n",
 	    "Error in fill_HeavisideCurve()","Wrong parameters");
-    exit(0);
+    exit(EXIT_FAILURE);
   }
 
 }
@@ -386,7 +386,7 @@ void fill_DeltaCurve(Curve DatCurve,
 	{	  
 	  fprintf(stderr,"%s : %s !!! \n",
 		  "Error in fill_DeltaCurve()","Tc is not in [0,Sizecurve]");
-	  exit(0);	  
+	  exit(EXIT_FAILURE);	  
 	}
 
       /*!
@@ -407,7 +407,7 @@ void fill_DeltaCurve(Curve DatCurve,
   else{
     fprintf(stderr,"%s : %s !!! \n",
 	    "Error in fill_DeltaCurve()","Wrong parameters");
-    exit(0);
+    exit(EXIT_FAILURE);
   }
       
   
@@ -480,19 +480,19 @@ void fill_HatCurve(Curve DatCurve,
 	{
 	  fprintf(stderr,"%s : %s !!! \n",
 		  "Error in fill_HatCurve()","T0 > T1");
-	  exit(0);
+	  exit(EXIT_FAILURE);
 	}
       if(T1 > DatCurve.Num)
 	{
 	  fprintf(stderr,"%s : %s !!! \n",
 		  "Error in fill_HatCurve()","T1 > DatCurve.Num");
-	  exit(0);
+	  exit(EXIT_FAILURE);
 	}
       if(T0 < 0)
 	{
 	  fprintf(stderr,"%s : %s !!! \n",
 		  "Error in fill_HatCurve()","T0 < 0");
-	  exit(0);
+	  exit(EXIT_FAILURE);
 	}
 
       /* Fill the values of the curve */
@@ -517,7 +517,7 @@ void fill_HatCurve(Curve DatCurve,
     {
       fprintf(stderr,"%s : %s !!! \n",
 	      "Error in fill_HatCurve()","Wrong parameters");
-      exit(0);
+      exit(EXIT_FAILURE);
     }
   
 }

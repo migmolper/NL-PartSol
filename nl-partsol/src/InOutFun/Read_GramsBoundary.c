@@ -42,7 +42,7 @@ Boundaries GramsBoundary(char * Name_File,int NumBounds){
 	    "Error in GramsBoundary()",
 	    "Incorrect lecture of",
 	    Name_File);
-    exit(0);
+    exit(EXIT_FAILURE);
   }
 
   /* Generate route */
@@ -57,7 +57,7 @@ Boundaries GramsBoundary(char * Name_File,int NumBounds){
       fprintf(stderr,"%s : %s \n",
 	      "Error in GramsBoundary ()",
 	      "Parser failed");
-      exit(0);
+      exit(EXIT_FAILURE);
     }
 
     /* Find GramsBoundary line */
@@ -72,7 +72,7 @@ Boundaries GramsBoundary(char * Name_File,int NumBounds){
 	fprintf(stderr,"%s : %s \n",
 		"Error in GramsBoundary()",
 		"Use this format -> (File=str) !!!");
-	exit(0);
+	exit(EXIT_FAILURE);
       }
       
       /* Read file with the nodes */
@@ -109,7 +109,7 @@ Boundaries GramsBoundary(char * Name_File,int NumBounds){
 	  fprintf(stderr,"%s : %s \n",
 		  "Error in GramsBoundary ()",
 		  "Parser failed");
-	  exit(0);
+	  exit(EXIT_FAILURE);
 	}
 	if((Num_words_line > 0) &&
 	   (strcmp(Parse_Properties[0],"}") != 0 )){
@@ -172,7 +172,7 @@ Boundaries GramsBoundary(char * Name_File,int NumBounds){
 	      else{
 		fprintf(stderr,"%s : %s \n",
 			"Error in GramsBox()", "Velocity BCC -> U, V, W");
-		exit(0);
+		exit(EXIT_FAILURE);
 	      }
 	    }
 	  }

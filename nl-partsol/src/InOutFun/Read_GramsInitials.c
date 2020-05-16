@@ -59,7 +59,7 @@ void GramsInitials(char * Name_File, GaussPoint GP_Mesh, int GPxElement)
 	    "Error in GramsInitials()",
 	    "Incorrect lecture of",
 	    Name_File);
-    exit(0);
+    exit(EXIT_FAILURE);
   }
 
   /* Generate route */
@@ -74,7 +74,7 @@ void GramsInitials(char * Name_File, GaussPoint GP_Mesh, int GPxElement)
       fprintf(stderr,"%s : %s \n",
 	      "Error in GramsInitials()",
 	      "Parser failed");
-      exit(0);
+      exit(EXIT_FAILURE);
     }
 
     if ((Num_words_parse > 0) &&
@@ -87,7 +87,7 @@ void GramsInitials(char * Name_File, GaussPoint GP_Mesh, int GPxElement)
 	fprintf(stderr,"%s : %s \n",
 		"Error in GramsInitials()",
 		"Use this format -> (Nodes=str) !!!");
-	exit(0);
+	exit(EXIT_FAILURE);
       }
 
       /* Read file with the nodes */
@@ -109,14 +109,14 @@ void GramsInitials(char * Name_File, GaussPoint GP_Mesh, int GPxElement)
 	  fprintf(stderr,"%s : %s \n",
 		  "Error in GramsInitials()",
 		  "Unspected EOF !!!");
-	  exit(0);	
+	  exit(EXIT_FAILURE);	
 	}
 	Num_words_parse = parse(Parse_Init_Prop,Line_Init_Prop," =\t\n");
 	if(strcmp(Parse_Init_Prop[0],"}") == 0){
 	  fprintf(stderr,"%s : %s \n",
 		  "Error in GramsInitials()",
 		  "No initial value defined !!!");
-	  exit(0);
+	  exit(EXIT_FAILURE);
 	}
 	while(STATUS_LINE != NULL){
 	  
@@ -124,7 +124,7 @@ void GramsInitials(char * Name_File, GaussPoint GP_Mesh, int GPxElement)
 	    fprintf(stderr,"%s : %s \n",
 		    "Error in GramsInitials()",
 		    "Use this format -> Value = [,] !!!");
-	    exit(0);
+	    exit(EXIT_FAILURE);
 	  }
 
 	  /* Fill the initial conditions */
@@ -143,7 +143,7 @@ void GramsInitials(char * Name_File, GaussPoint GP_Mesh, int GPxElement)
 	      fprintf(stderr,"%s : %s %i-D %s\n",
 		      "Error in GramsInitials()",
 		      "This is a",Ndim,"problem");
-	      exit(0);
+	      exit(EXIT_FAILURE);
 	    }
 
 	    /* Fill it IC for velocity formulation */
@@ -163,7 +163,7 @@ void GramsInitials(char * Name_File, GaussPoint GP_Mesh, int GPxElement)
 	    fprintf(stderr,"%s : %s %s \n",
 		    "Error in GramsInitials()",
 		    "Undefined",Parse_Init_Prop[0]);
-	    exit(0);
+	    exit(EXIT_FAILURE);
 	  }
 	  /* Read next line and check */
 	  STATUS_LINE = fgets(Line_Init_Prop,
@@ -178,14 +178,14 @@ void GramsInitials(char * Name_File, GaussPoint GP_Mesh, int GPxElement)
 	  fprintf(stderr,"%s : %s \n",
 		  "Error in GramsInitials()",
 		  "you forget to put a } !!!");
-	  exit(0);	  
+	  exit(EXIT_FAILURE);	  
 	}
       }
       else{
 	fprintf(stderr,"%s : %s \n",
 		"Error in GramsInitials()",
 		"Use this format -> GramsInitials (Type=string) { !!!");
-	exit(0);
+	exit(EXIT_FAILURE);
       }
     }
   }
