@@ -213,22 +213,21 @@ Matrix LME_lambda_NR(Matrix l, Matrix lambda, Matrix Beta)
       lambda.nV[i] -= D_lambda.nV[i];
     }
 
+    /* Free memory */
+    FreeMat(p);
+    FreeMat(r);
+    FreeMat(J);
+    FreeMat(D_lambda);
+    
     if(norm_r > TOL_NR){
-      /* Free memory and update the iteration */
-      FreeMat(p);
-      FreeMat(r);
-      FreeMat(J);
-      FreeMat(D_lambda);
+      /* Update the iteration */
       NumIter ++;
     }
     else{
-      /* Free memory and break the loop */
-      FreeMat(p);
-      FreeMat(r);
-      FreeMat(J);
-      FreeMat(D_lambda);
+      /* Break the loop */
       break;
-    } 
+    }
+    
   }
 
   if(NumIter == MaxIter){

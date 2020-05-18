@@ -29,10 +29,10 @@ void update_LocalState(Matrix V_I, GaussPoint MPM_Mesh,
 
     /* Define element for each GP */
     Nn = MPM_Mesh.NumberNodes[p];
-    Nodes_p = get_Element(p, MPM_Mesh.ListNodes[p], Nn);
+    Nodes_p = get_particle_Set(p, MPM_Mesh.ListNodes[p], Nn);
 
     /* Get the velocity of the nodes of the element */
-    Nodal_Velocity_p = get_Element_Field(V_I, Nodes_p);
+    Nodal_Velocity_p = get_set_Field(V_I, Nodes_p);
 
     /* Compute gradient of the shape function in each node */
     Gradient_p = compute_ShapeFunction_Gradient(Nodes_p, MPM_Mesh, FEM_Mesh);

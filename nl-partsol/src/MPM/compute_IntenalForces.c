@@ -32,7 +32,7 @@ Matrix compute_InternalForces(Matrix F_I, GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 
     /* Define element for each GP */
     Nn = MPM_Mesh.NumberNodes[p];
-    Nodes_p = get_Element(p, MPM_Mesh.ListNodes[p], Nn);
+    Nodes_p = get_particle_Set(p, MPM_Mesh.ListNodes[p], Nn);
 
     /* Compute gradient of the shape function in each node */
     Gradient_p = compute_ShapeFunction_Gradient(Nodes_p, MPM_Mesh, FEM_Mesh);

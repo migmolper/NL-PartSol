@@ -74,9 +74,11 @@ ChainPtr DiscardElements(ChainPtr, Matrix, Matrix, Mesh);
 void LocalSearchGaussPoints(GaussPoint, Mesh);
 void ComputeBeps(int, GaussPoint, Mesh);
 void GPinCell(ChainPtr *, ChainPtr *, Matrix, int, double);
-Element get_Element(int, ChainPtr, int);
+
+Element get_particle_Set(int, ChainPtr, int);
 Matrix get_set_Coordinates(ChainPtr, Matrix, Matrix);
-Matrix get_Element_Field(Matrix, Element);
+Matrix get_set_Field(Matrix, Element);
+
 ChainPtr get_locality_of_node(int, Mesh);
 int get_closest_node_to(Matrix, ChainPtr, Matrix);
 bool InOut_Element(Matrix, ChainPtr, Matrix);

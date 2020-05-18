@@ -19,7 +19,7 @@ void update_Particles_FE(GaussPoint MPM_Mesh, Mesh FEM_Mesh,
 
     /* 2º Define element of the GP */
     Nnodes = MPM_Mesh.NumberNodes[p];
-    Nodes_p = get_Element(p, MPM_Mesh.ListNodes[p], Nnodes);
+    Nodes_p = get_particle_Set(p, MPM_Mesh.ListNodes[p], Nnodes);
 
     /* 3º Evaluate shape function in the GP i */
     N_p = compute_ShapeFunction(Nodes_p, MPM_Mesh, FEM_Mesh);
@@ -72,7 +72,7 @@ void update_Particles_PCE(GaussPoint MPM_Mesh,Mesh FEM_Mesh,
 
     /* 2º Define element of the GP */
     Nnodes = MPM_Mesh.NumberNodes[p];
-    Nodes_p = get_Element(p, MPM_Mesh.ListNodes[p], Nnodes);
+    Nodes_p = get_particle_Set(p, MPM_Mesh.ListNodes[p], Nnodes);
 
     /* 3º Evaluate shape function in the GP i */
     ShapeFunction_p = compute_ShapeFunction(Nodes_p, MPM_Mesh, FEM_Mesh);
@@ -155,7 +155,7 @@ void update_Particles_GA(GaussPoint MPM_Mesh,Mesh FEM_Mesh,
   for(int i = 0 ; i<MPM_Mesh.NumGP ; i++){
 
     /* 2º Define element of the GP */
-    GP_Element = get_Element(i, MPM_Mesh.ListNodes[i],MPM_Mesh.NumberNodes[i]);
+    GP_Element = get_particle_Set(i, MPM_Mesh.ListNodes[i],MPM_Mesh.NumberNodes[i]);
 
     /* 3º Evaluate shape function in the GP i */
     N_GP = compute_ShapeFunction(GP_Element, MPM_Mesh, FEM_Mesh);

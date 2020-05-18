@@ -28,13 +28,16 @@ void GetInitialGaussPointPosition(Matrix X_p, Mesh FEM_Mesh, int GPxElement)
       N_GP = Q4_N(Xi_p);
       /* Get the coordinate of the center */
       for(int i = 0 ; i<NumElemMesh ; i++){
-	Element = get_Element(i,FEM_Mesh.Connectivity[i],FEM_Mesh.NumNodesElem[i]);
+	Element = get_particle_Set(i,FEM_Mesh.Connectivity[i],
+				   FEM_Mesh.NumNodesElem[i]);
+	
 	for(int k = 0 ; k<4 ; k++){
 	  Node = Element.Connectivity[k];
 	  for(int l = 0 ; l<2 ; l++){
 	    X_p.nM[i][l] += N_GP.nV[k]*FEM_Mesh.Coordinates.nM[Node][l];
 	  }
 	}
+	
 	free(Element.Connectivity);
       }
       /* Free auxiliar matrix with the coordinates */
@@ -49,14 +52,16 @@ void GetInitialGaussPointPosition(Matrix X_p, Mesh FEM_Mesh, int GPxElement)
       N_GP = T3(Xi_p);
       /* Get the coordinate of the center */
       for(int i = 0 ; i<NumElemMesh ; i++){
-	Element = get_Element(i, FEM_Mesh.Connectivity[i],
-			      FEM_Mesh.NumNodesElem[i]);
+	
+	Element = get_particle_Set(i, FEM_Mesh.Connectivity[i],
+				   FEM_Mesh.NumNodesElem[i]);
 	for(int k = 0 ; k<3 ; k++){
 	  Node = Element.Connectivity[k];
 	  for(int l = 0 ; l<2 ; l++){
 	    X_p.nM[i][l] += N_GP.nV[k]*FEM_Mesh.Coordinates.nM[Node][l];
 	  }
 	}
+	
 	free(Element.Connectivity);
       }
       /* Free auxiliar matrix with the coordinates */
@@ -86,7 +91,8 @@ void GetInitialGaussPointPosition(Matrix X_p, Mesh FEM_Mesh, int GPxElement)
       Xi_p.nM[3][1] = (double)-1/pow(3,0.5);
       /* Get the coordinate of the center */
       for(int i = 0 ; i<NumElemMesh ; i++){
-	Element = get_Element(i, FEM_Mesh.Connectivity[i],
+	
+	Element = get_particle_Set(i, FEM_Mesh.Connectivity[i],
 			      FEM_Mesh.NumNodesElem[i]);
 	for(int j = 0 ; j<GPxElement ; j++){
 	  /* Evaluate the shape function in the GP position */
@@ -100,6 +106,7 @@ void GetInitialGaussPointPosition(Matrix X_p, Mesh FEM_Mesh, int GPxElement)
 		N_GP.nV[k]*FEM_Mesh.Coordinates.nM[Node][l];
 	    }
 	  }
+	  
 	  /* Free value of the shape function in the GP */
 	  FreeMat(N_GP);
 	}
@@ -312,9 +319,9 @@ void get_particle_tributary_nodes(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int p){
   /* Coordinates of the nodes of the Element */
   Matrix CoordElement;
 
-  
   /* Free previous list of tributary nodes to the particle */
   free_Set(MPM_Mesh.ListNodes[p]);
+  MPM_Mesh.ListNodes[p] = NULL;
   
   /* 6º Assign the new connectivity of the GP */
   if(strcmp(ShapeFunctionGP,"MPMQ4") == 0){
@@ -353,7 +360,7 @@ void get_particle_tributary_nodes(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int p){
     Matrix lambda_p = get_RowFrom(Ndim,1,MPM_Mesh.lambda.nM[p]);
     Matrix Delta_Xip; /* Distance from particles to the nodes */
     Matrix Beta_p = get_RowFrom(Ndim,1,MPM_Mesh.Beta.nM[p]);
-	
+
     /* Calculate connectivity with the previous value of beta */
     MPM_Mesh.ListNodes[p] = LME_Tributary_Nodes(X_p,Beta_p,I0,FEM_Mesh);
     
@@ -666,7 +673,7 @@ void GPinCell(ChainPtr * ListInCELL, ChainPtr * GlobalList,
 
 /*********************************************************************/
 
-Element get_Element(int i_GP, ChainPtr ListNodes, int NumNodes){
+Element get_particle_Set(int i_GP, ChainPtr ListNodes, int NumNodes){
 
   /* Define new element */
   Element GP_Element;
@@ -699,7 +706,7 @@ bool InOut_Element(Matrix X_p, ChainPtr Elem_p, Matrix Coordinates){
 
 /*********************************************************************/
 
-Matrix get_Element_Field(Matrix Nodal_Field, Element GP_Element){
+Matrix get_set_Field(Matrix Nodal_Field, Element GP_Element){
 
   int * Element_Connectivity = GP_Element.Connectivity;
   int NumNodes = GP_Element.NumberNodes;
