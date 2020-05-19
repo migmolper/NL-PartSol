@@ -198,8 +198,7 @@ Matrix Q4_dN(Matrix X_EC, Matrix Element)
 
   /* 2º Get the Jacobian of the transformation evaluated in the GP */
   Matrix F = Q4_F_Ref(X_EC,Element);
-  
-  Matrix F_m1 = Get_Inverse(F);
+  Matrix F_m1 = Get_Inverse(F);  
   Matrix F_Tm1 = Transpose_Mat(F_m1);
  
   FreeMat(F);

@@ -219,34 +219,7 @@ void FreeMat(Matrix Input)
   if((Columns > 1) && (Rows > 1))
     {
       free(Input.nM);
-    }
-
-  /* int Columns = Input.N_cols; */
-  /* int Rows = Input.N_rows; */
-
-  /* /\* It is a vector *\/ */
-  /* if(((Columns == 1) && (Rows > 1)) || ((Columns > 1) && (Rows == 1))) */
-  /*   { */
-  /*     free(Input.nV); */
-  /*   } */
-
-  /* /\* It is a matrix *\/ */
-  /* else if((Columns > 1) && (Rows > 1)) */
-  /*   { */
-  /*     for(int i = 0 ; i<Rows ; i++) */
-  /* 	{ */
-  /* 	  free(Input.nM[i]); */
-  /* 	} */
-  /*     free(Input.nM); */
-  /*   } */
-  
-  /* /\* Other case *\/ */
-  /* else */
-  /*   { */
-  /*     printf("Error in FreeMat() : You are trying to free a scalar !!! \n"); */
-  /*     exit(EXIT_FAILURE); */
-  /*   } */
-  
+    }  
 }
 
 
@@ -320,7 +293,6 @@ Matrix CopyMat(Matrix In)
 	{
 	  memcpy(&Out.nV[i], &In.nV[i], sizeof(In.nV[0]));
 	}
-      
     }
 
   /* Fail */
@@ -414,8 +386,8 @@ Matrix Get_Inverse(Matrix A)
   
       /* Get the determinant of the matrix */
       DetA = Get_Determinant(A);
-  
-      if(DetA < TOL_zero)
+
+      if(fabs(DetA) < TOL_zero)
 	{
 	  fprintf(stderr,"%s : %s \n",
 		  "Error in Get_Inverse()","Determinant null !");

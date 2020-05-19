@@ -150,22 +150,6 @@ Matrix MatAlloc(int NumberRows,int NumberColumns)
   	}
     }
   
-  /* Matrix M; */
-  /* M.N_rows = NumberRows; */
-  /* M.N_cols = NumberColumns; */
-
-  /* /\* It is an array *\/ */
-  /* if((NumberRows == 1) || (NumberColumns == 1)) */
-  /*   { */
-  /*     M.nV = (double *)Allocate_Array(NumberRows*NumberColumns,sizeof(double)); */
-  /*   } */
-
-  /* /\* It is a matrix *\/ */
-  /* else if((NumberRows != 1) && (NumberColumns != 1)) */
-  /*   { */
-  /*     M.nM = (double **)Allocate_Matrix(NumberRows,NumberColumns,sizeof(double)); */
-  /*   } */
-  
   return M;
 }
 
@@ -198,24 +182,7 @@ Matrix MatAllocZ(int NumberRows,int NumberColumns)
   	  M.nM[i] = M.nV + i*NumberColumns;
   	}
     }
-  
-  
-  /* Matrix M; */
-  /* M.N_rows = NumberRows; */
-  /* M.N_cols = NumberColumns; */
-
-  /* /\* It is an array *\/ */
-  /* if((NumberRows == 1) || (NumberColumns == 1)) */
-  /*   { */
-  /*     M.nV = (double *)Allocate_ArrayZ(NumberRows*NumberColumns,sizeof(double)); */
-  /*   } */
-
-  /* /\* It is a matrix *\/ */
-  /* else if((NumberRows != 1) && (NumberColumns != 1)) */
-  /*   { */
-  /*     M.nM = (double **)Allocate_MatrixZ(NumberRows,NumberColumns,sizeof(double)); */
-  /*   } */
-  
+    
   return M;
 }
 
@@ -253,7 +220,6 @@ void FreeMat(Matrix Input)
     {
       free(Input.nM);
     }
-
 
   /* int Columns = Input.N_cols; */
   /* int Rows = Input.N_rows; */
@@ -949,7 +915,6 @@ Matrix Sub_Mat(Matrix A,Matrix B)
     {
       Rows = A.N_rows;
       Columns = A.N_cols;
-      C = MatAllocZ(Rows,Columns);
 
       /* Two array addition */
       if (((Columns == 1) && (Rows > 1)) ||

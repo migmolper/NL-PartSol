@@ -131,15 +131,15 @@ Curve ReadCurve(char * Name_File)
 	  fill_HatCurve(DatCurve,kwords[1],kwords[2],kwords[3]);
 	}
 
-      /*!
-	Error
-      */
-      else
-	{
-	  fprintf(stderr,"%s : %s %s \n",
-		  "Error in ReadCurve()","Invalid keyword",kwords[0]);
-	  exit(EXIT_FAILURE);
-	}
+      /* /\*! */
+      /* 	Error */
+      /* *\/ */
+      /* else */
+      /* 	{ */
+      /* 	  fprintf(stderr,"%s : %s %s \n", */
+      /* 		  "Error in ReadCurve()","Invalid keyword",kwords[0]); */
+      /* 	  exit(EXIT_FAILURE); */
+      /* 	} */
     
     }
   
