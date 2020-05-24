@@ -158,7 +158,7 @@ void WriteVtk_MPM(char * Name_File, GaussPoint MPM_Mesh,
   for(int i =  0 ; i<MPM_Mesh.NumGP ; i++){
     for(int j = 0 ; j<3 ; j++){
       for(int k = 0 ; k<3 ; k++){
-	if((j<Ndim) || (k<Ndim)){
+	if((j<Ndim) && (k<Ndim)){
 	  fprintf(Vtk_file,"%f ",MPM_Mesh.Phi.Stress.nM[i][j*Ndim+k]);
 	}
 	else{
@@ -174,7 +174,7 @@ void WriteVtk_MPM(char * Name_File, GaussPoint MPM_Mesh,
   for(int i =  0 ; i<MPM_Mesh.NumGP ; i++){
     for(int j = 0 ; j<3 ; j++){
       for(int k = 0 ; k<3 ; k++){
-	if((j<Ndim) || (k<Ndim)){
+	if((j<Ndim) && (k<Ndim)){
 	  fprintf(Vtk_file,"%f ",MPM_Mesh.Phi.Strain.nM[i][j*Ndim+k]);
 	}
 	else{
@@ -216,14 +216,20 @@ void WriteVtk_FEM(char * Name_File, Mesh ElementMesh,
   fprintf(Vtk_file,"ASCII \n");
   fprintf(Vtk_file,"DATASET UNSTRUCTURED_GRID \n");
 
-   /* Coordinates */
+  /* Coordinates */
   fprintf(Vtk_file,"POINTS %i float \n",ElementMesh.NumNodesMesh);
   for(int i = 0 ; i<ElementMesh.NumNodesMesh ; i++){
-    fprintf(Vtk_file,"%f %f %f \n",
-	    ElementMesh.Coordinates.nM[i][0],
-	    ElementMesh.Coordinates.nM[i][1],
-	    ElementMesh.Coordinates.nM[i][2]);
+    for(int j = 0 ; j<3 ; j++){
+      if(j<Ndim){
+	fprintf(Vtk_file,"%f ",ElementMesh.Coordinates.nM[i][j]);
+      }
+      else{
+	fprintf(Vtk_file,"%f ",0.0);
+      }
+    }
+    fprintf(Vtk_file,"\n");
   }
+
 
   /* TEMPORARY --> FIX IT*/
   NumNodesElem = ElementMesh.NumNodesElem[0];
@@ -241,8 +247,6 @@ void WriteVtk_FEM(char * Name_File, Mesh ElementMesh,
     fprintf(Vtk_file,"\n");
   }
 
-
-
   /* Type of element */
   fprintf(Vtk_file,"CELL_TYPES %i \n",ElementMesh.NumElemMesh);
   for(int i = 0 ; i<ElementMesh.NumElemMesh ; i++){
@@ -253,10 +257,15 @@ void WriteVtk_FEM(char * Name_File, Mesh ElementMesh,
   fprintf(Vtk_file,"POINT_DATA %i \n",ElementMesh.NumNodesMesh);
   fprintf(Vtk_file,"VECTORS %s float \n","X_GC");
   for(int i =  0 ; i<ElementMesh.NumNodesMesh ; i++){
-    fprintf(Vtk_file,"%f %f %f \n",
-	    ElementMesh.Coordinates.nM[i][0],
-	    ElementMesh.Coordinates.nM[i][1],
-	    ElementMesh.Coordinates.nM[i][2]);
+    for(int j = 0 ; j<3 ; j++){
+      if(j<Ndim){
+	fprintf(Vtk_file,"%f ",ElementMesh.Coordinates.nM[i][j]);
+      }
+      else{
+	fprintf(Vtk_file,"%f ",0.0);
+      }
+    }
+    fprintf(Vtk_file,"\n");
   }
 
   /* Active nodes */
@@ -288,10 +297,16 @@ void WriteVtk_FEM(char * Name_File, Mesh ElementMesh,
 
       if(strcmp(FieldsList[i],"MOMENTUM") == 0){
 	fprintf(Vtk_file,"VECTORS %s float \n","MOMENTUM");
-	for(int j =  0 ; j<ElementMesh.NumNodesMesh ; j++){
+	for(int j =  0 ; j<ElementMesh.NumNodesMesh ; j++){  
 	  /* Print the dimensions of the array */
 	  for(int k = 0 ; k<Ndim ; k++){
-	    fprintf(Vtk_file,"%f ",List_Nod_Fields.nM[j][i_Field+k]);
+	    if(k<Ndim){
+	      fprintf(Vtk_file,"%f ",List_Nod_Fields.nM[j][i_Field+k]);
+	    }
+	    else{
+	      fprintf(Vtk_file,"%f ",0.0);
+	    }
+
 	  }
 	  fprintf(Vtk_file,"\n");	
 	}
@@ -304,7 +319,12 @@ void WriteVtk_FEM(char * Name_File, Mesh ElementMesh,
 	for(int j =  0 ; j<ElementMesh.NumNodesMesh ; j++){
 	  /* Print the dimensions of the array */
 	  for(int k = 0 ; k<Ndim ; k++){
+	    if(k<Ndim){
 	      fprintf(Vtk_file,"%f ",List_Nod_Fields.nM[j][i_Field+k]);
+	    }
+	    else{
+	      fprintf(Vtk_file,"%f ",0.0);
+	    }    
 	  }
 	  fprintf(Vtk_file,"\n");	
 	}
@@ -317,7 +337,12 @@ void WriteVtk_FEM(char * Name_File, Mesh ElementMesh,
 	for(int j =  0 ; j<ElementMesh.NumNodesMesh ; j++){
 	  /* Print the dimensions of the array */
 	  for(int k = 0 ; k<Ndim ; k++){
-	    fprintf(Vtk_file,"%f ",List_Nod_Fields.nM[j][i_Field+k]);	  
+	    if(k<Ndim){
+	      fprintf(Vtk_file,"%f ",List_Nod_Fields.nM[j][i_Field+k]);
+	    }
+	    else{
+	      fprintf(Vtk_file,"%f ",0.0);
+	    }    
 	  }
 	  fprintf(Vtk_file,"\n");	
 	}
@@ -330,7 +355,12 @@ void WriteVtk_FEM(char * Name_File, Mesh ElementMesh,
 	for(int j =  0 ; j<ElementMesh.NumNodesMesh ; j++){
 	  /* Print the dimensions of the array */
 	  for(int k = 0 ; k<Ndim ; k++){
-	    fprintf(Vtk_file,"%f ",List_Nod_Fields.nM[j][i_Field+k]);
+	    if(k<Ndim){
+	      fprintf(Vtk_file,"%f ",List_Nod_Fields.nM[j][i_Field+k]);
+	    }
+	    else{
+	      fprintf(Vtk_file,"%f ",0.0);
+	    }    
 	  }
 	  fprintf(Vtk_file,"\n");	
 	}
@@ -344,7 +374,12 @@ void WriteVtk_FEM(char * Name_File, Mesh ElementMesh,
 	for(int j =  0 ; j<ElementMesh.NumNodesMesh ; j++){
 	  /* Print the dimensions of the array */
 	  for(int k = 0 ; k<Ndim ; k++){
-	    fprintf(Vtk_file,"%f ",List_Nod_Fields.nM[j][i_Field+k]);
+	    if(k<Ndim){
+	      fprintf(Vtk_file,"%f ",List_Nod_Fields.nM[j][i_Field+k]);
+	    }
+	    else{
+	      fprintf(Vtk_file,"%f ",0.0);
+	    }    
 	  }
 	  fprintf(Vtk_file,"\n");	
 	}
@@ -358,7 +393,12 @@ void WriteVtk_FEM(char * Name_File, Mesh ElementMesh,
 	for(int j =  0 ; j<ElementMesh.NumNodesMesh ; j++){
 	  /* Print the dimensions of the array */
 	  for(int k = 0 ; k<Ndim ; k++){
-	    fprintf(Vtk_file,"%f ",List_Nod_Fields.nM[j][i_Field+k]);
+	    if(k<Ndim){
+	      fprintf(Vtk_file,"%f ",List_Nod_Fields.nM[j][i_Field+k]);
+	    }
+	    else{
+	      fprintf(Vtk_file,"%f ",0.0);
+	    }    
 	  }
 	  fprintf(Vtk_file,"\n");	
 	}
@@ -371,7 +411,12 @@ void WriteVtk_FEM(char * Name_File, Mesh ElementMesh,
 	for(int j =  0 ; j<ElementMesh.NumNodesMesh ; j++){
 	  /* Print the dimensions of the array */
 	  for(int k = 0 ; k<Ndim ; k++){
-	    fprintf(Vtk_file,"%f ",List_Nod_Fields.nM[j][i_Field+k]);
+	    if(k<Ndim){
+	      fprintf(Vtk_file,"%f ",List_Nod_Fields.nM[j][i_Field+k]);
+	    }
+	    else{
+	      fprintf(Vtk_file,"%f ",0.0);
+	    }    
 	  }
 	  fprintf(Vtk_file,"\n");	
 	}
@@ -384,12 +429,13 @@ void WriteVtk_FEM(char * Name_File, Mesh ElementMesh,
 	fprintf(Vtk_file,"VECTORS %s float \n","REACTIONS");
 	for(int j =  0 ; j<ElementMesh.NumNodesMesh ; j++){
 	  /* Print the dimensions of the array */
-	  for(int k = 0 ; k<NumberDimensions ; k++){
-	    fprintf(Vtk_file,"%f ",List_Nod_Fields.nM[j][i_Field+k]);
-	  }
-	  /* Add the rest of the coordinates : is compulsary to add 3 */
-	  for(int k = 0 ; k<(3-NumberDimensions) ; k++){
-	    fprintf(Vtk_file,"%f ",0.0);
+	  for(int k = 0 ; k<Ndim ; k++){
+	    if(k<Ndim){
+	      fprintf(Vtk_file,"%f ",List_Nod_Fields.nM[j][i_Field+k]);
+	    }
+	    else{
+	      fprintf(Vtk_file,"%f ",0.0);
+	    }    
 	  }
 	  fprintf(Vtk_file,"\n");	
 	}
