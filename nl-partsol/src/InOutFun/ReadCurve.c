@@ -87,7 +87,7 @@ Curve ReadCurve(char * Name_File)
 	    {
 	      fgets(line, sizeof line, Sim_dat);
 	      nkwords = parse (kwords, line," \n\t");
-	      DatCurve.Fx[i] = atof(kwords[0]);
+	      DatCurve.Fx[i] += atof(kwords[0]);
 	    }
 	}
         
