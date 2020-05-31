@@ -18,7 +18,6 @@
   \param Strain : Strain field of each particle 
 */
 Tensor SolidRigid(Tensor Strain);
-
 /*******************************************************/
 
 
@@ -33,45 +32,19 @@ Tensor SolidRigid(Tensor Strain);
   \param Properties : Define the material properties of the particle
 */
 Tensor LinearElastic(Tensor, Tensor, Material);
-
-/*******************************************************/
-
-/*! 
-  \fn void EigenerosionAlgorithm(int p,Fields Phi,Material MatPro,
-  ChainPtr * Beps,double DeltaX)
-
-  \brief Function to compute is a material point is or not eroded. 
-  Here the notation is the same as in \cite Pandolfi_2012
-
-  \param p : Index of the particle
-  \param Phi : Particles fields
-  \param Properties : Define the material properties of the particle
-  \param B_eps : Define the particles close to each particle
-  \param DeltaX : Mesh size
-*/
-
-void EigenerosionAlgorithm(int,Fields,Material,ChainPtr *,double);
-
 /*******************************************************/
 
 /*!
-  \fn void EigensofteningAlgorithm(int p,
-  Fields Phi,
-  Material Properties,
-  ChainPtr * Beps)
+  \fn void compute_particle_Damage(int p, GaussPoint Particles, Mesh Nodes)
 
-  \brief Function to compute is a material point is or not eroded. 
-  Here the notation is the same as in \cite Navas_2017_ES
+  \brief Compute if a particle is damaged and update it damage parameter chi
 
-  \param p : Index of the particle
-  \param Phi : Particles fields
-  \param Properties : Define the material properties of the particle
-  \param Beps : Table with the list of neighbours per particle.
+  \param p : Particle
+  \param Particles : Information of the particle mesh
+  \param Nodes : Informaction with the set of nodes
 */
-void EigensofteningAlgorithm(int,Fields,Material,ChainPtr *);
-
+void compute_particle_Damage(int, GaussPoint, Mesh);
 /*******************************************************/
-
 
 #endif
 

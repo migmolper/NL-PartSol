@@ -21,7 +21,6 @@ void free_Boundaries(Boundaries);
 /*******************************************************/
 
 /* Forces-stress-strain functions */
-void ComputeDamage(int, GaussPoint, Mesh);
 Tensor compute_RateOfStrain(Matrix, Matrix);
 Tensor update_Strain(Tensor, Tensor, double);
 double update_Density(double, double, Tensor);
@@ -72,7 +71,6 @@ double GetMinElementSize(Mesh);
 void GetNodalConnectivity(Mesh);
 ChainPtr DiscardElements(ChainPtr, Matrix, Matrix, Mesh);
 void LocalSearchGaussPoints(GaussPoint, Mesh);
-void ComputeBeps(int, GaussPoint, Mesh);
 void GPinCell(ChainPtr *, ChainPtr *, Matrix, int, double);
 
 Element get_particle_Set(int, ChainPtr, int);
