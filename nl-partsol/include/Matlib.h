@@ -99,6 +99,7 @@ ChainPtr Pointer_to_Set(int *, int);
 int * Set_to_Pointer(ChainPtr, int);
 ChainPtr RangeChain(int, int);
 void free_Set(ChainPtr);
+ChainPtr * allocate_SetTable(int);
 void free_SetTable(ChainPtr *, int);
 bool is_in_Set(ChainPtr, int);
 void push_to_Set(ChainPtr *, int);

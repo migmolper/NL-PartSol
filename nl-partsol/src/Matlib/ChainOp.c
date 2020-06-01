@@ -84,6 +84,29 @@ void free_Set(ChainPtr A){
 
 /*********************************************************************/
 
+ChainPtr * allocate_SetTable(int SizeTable)
+{
+
+  ChainPtr * SetTable;
+  
+  /* Tributary nodes for each particle */
+  SetTable = (ChainPtr *)malloc(SizeTable*sizeof(ChainPtr));
+  if(SetTable == NULL)
+    {
+      printf("%s : %s \n",
+	     "allocate_SetTable","Memory error");
+      exit(EXIT_FAILURE);
+    }
+  for(int i = 0 ; i<SizeTable ; i++){
+    SetTable[i] = NULL;  
+  }
+
+  
+  return SetTable;
+}
+
+/*********************************************************************/
+
 void free_SetTable(ChainPtr * A, int SizeTable){
 
   /* Loop in the table to free each set */

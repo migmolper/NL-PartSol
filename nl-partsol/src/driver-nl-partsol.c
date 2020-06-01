@@ -16,133 +16,122 @@
 void globalfree(Mesh,GaussPoint);
 
 int main(int argc, char * argv[])
-/*
-  GraMS V2.3
-*/
-{
-  
-  /*********************************************************************/
-  /******************* Check command-line arguments ********************/
-  /*********************************************************************/
-  if(argc == 4){
+{  
+  /* Read kind of system */
+  puts("*************************************************\n");
+#ifdef linux
+  puts("UNIX system");
+#endif		
 
-    /* Assign Number of dimensions */
-    /* if(strcmp(argv[1],"-2D") == 0){ */
-    /*   NumberDimensions = 2; */
-    /* } */
-    
-    /* Read simulation file and kind of simulation */
-    SimulationFile = argv[3];
-    Formulation = argv[2];
-    
-    /* Assign degree of freedom */
-    if((strcmp(Formulation,"-V") == 0) &&
-       (NumberDimensions == 2)){
-      NumberDOF = 2;
+#ifdef _WIN32 
+  puts("WIN32 system");	
+#endif
+
+  bool Is_New_Simulation;
+  bool Is_Restart_Simulation;
+  
+  /* Read simulation file and kind of simulation */
+  if(argc == 3)
+    {      
+      Formulation = argv[1];
+      SimulationFile = argv[2];
+      Is_New_Simulation = true;
+      Is_Restart_Simulation = false;
     }
-
-	/*********************************************************************/
-	/********************** PRINT KIND OF SYSTEM *************************/
-	/*********************************************************************/
-	puts("*************************************************\n");
-	#ifdef linux
-		puts("UNIX system");
-	#endif		
-
-	#ifdef _WIN32 
-		puts("WIN32 system");	
-	#endif 
-  
-    /*********************************************************************/
-    /**************** DEFINE CALCULUS MESH and BCCs **********************/
-    /*********************************************************************/
-    puts("*************************************************");
-    puts("Generating the background mesh ...");
-    Mesh FEM_Mesh = GramsBox(SimulationFile);
-
-    /*********************************************************************/
-    /******************* TIME INTEGRATION SCHEME *************************/
-    /*********************************************************************/
-    puts("*************************************************");
-    puts("Read time integration scheme ...");
-    GramsTime(SimulationFile);
-
-    /*********************************************************************/
-    /******************* DEFINE GAUSS-POINT MESH *************************/
-    /*********************************************************************/
-    puts("*************************************************");
-    puts("Generating MPM mesh ...");
-    GaussPoint MPM_Mesh = GramsSolid2D(SimulationFile,FEM_Mesh);
-
-    /*********************************************************************/
-    /*********************** OUTPUT VARIABLES ****************************/
-    /*********************************************************************/
-    puts("*************************************************");
-    puts("Read outputs ...");
-    GramsOutputs(SimulationFile);
+  if(argc == 4)
+    {      
+      Formulation = argv[1];
+      SimulationFile = argv[2];
+      RestartFile = argv[3];
+      Is_New_Simulation = false;
+      Is_Restart_Simulation = true;
+    }
     
-    /*********************************************************************/
-    /********************** RUN THE MPM CALCULUS *************************/
-    /*********************************************************************/
-    puts("*************************************************");
-    puts("Run simulation ...");
+  /* Assign degree of freedom */
+  if((strcmp(Formulation,"-V") == 0) &&
+     (NumberDimensions == 2)){
+    NumberDOF = 2;
+  }
+  
+  /*********************************************************************/
+  /**************** DEFINE CALCULUS MESH and BCCs **********************/
+  /*********************************************************************/
+  puts("*************************************************");
+  puts("Generating the background mesh ...");
+  Mesh FEM_Mesh = GramsBox(SimulationFile);
 
-    /* Forward Euler */
-    if(strcmp(TimeIntegrationScheme,"FE") == 0 ){ 
+  /*********************************************************************/
+  /******************* TIME INTEGRATION SCHEME *************************/
+  /*********************************************************************/
+  puts("*************************************************");
+  puts("Read time integration scheme ...");
+  GramsTime(SimulationFile);
+
+  /*********************************************************************/
+  /******************* DEFINE GAUSS-POINT MESH *************************/
+  /*********************************************************************/
+  puts("*************************************************");
+  puts("Generating MPM mesh ...");
+  GaussPoint MPM_Mesh;
+  if(Is_New_Simulation)
+    {
+      MPM_Mesh = GramsSolid2D(SimulationFile,FEM_Mesh);
+    }
+  if(Is_Restart_Simulation)
+    {
+      MPM_Mesh = restart_Simulation(SimulationFile,RestartFile,FEM_Mesh);
+    }
+    
+  /*********************************************************************/
+  /*********************** OUTPUT VARIABLES ****************************/
+  /*********************************************************************/
+  puts("*************************************************");
+  puts("Read outputs ...");
+  GramsOutputs(SimulationFile);
+    
+  /*********************************************************************/
+  /********************** RUN THE MPM CALCULUS *************************/
+  /*********************************************************************/
+  puts("*************************************************");
+  puts("Run simulation ...");
+
+  /* Forward Euler */
+  if(strcmp(TimeIntegrationScheme,"FE") == 0 )
+    { 
       U_FE(FEM_Mesh, MPM_Mesh);
     }
 
-    /* Generalized-alpha */
-    if(strcmp(TimeIntegrationScheme,"GA") == 0 ){ 
+  /* Generalized-alpha */
+  if(strcmp(TimeIntegrationScheme,"GA") == 0 )
+    { 
       U_GA(FEM_Mesh, MPM_Mesh);
     }
     
-    /* Explicit predictor-corrector */
-    if(strcmp(TimeIntegrationScheme,"PCE") == 0 ){ 
+  /* Explicit predictor-corrector */
+  if(strcmp(TimeIntegrationScheme,"PCE") == 0 )
+    { 
       U_PCE(FEM_Mesh, MPM_Mesh);
     }
-
         
-    /*********************************************************************/
-    /************************* FREE ALL FIELDS ***************************/
-    /*********************************************************************/
-    puts("*************************************************");
-    puts("Free memory ...");
-    globalfree(FEM_Mesh, MPM_Mesh);
+  /*********************************************************************/
+  /************************* FREE ALL FIELDS ***************************/
+  /*********************************************************************/
+  puts("*************************************************");
+  puts("Free memory ...");
+  globalfree(FEM_Mesh, MPM_Mesh);
   
-    /*********************************************************************/
-    /******************** CRONOGRAPH CALCULUS : END **********************/
-    /*********************************************************************/
-    printf("Computation finished at : %s \n",__TIME__);   
+  /*********************************************************************/
+  /******************** CRONOGRAPH CALCULUS : END **********************/
+  /*********************************************************************/
+  printf("Computation finished at : %s \n",__TIME__);   
          
-    /*********************************************************************/
-    /************************ CLOSE THE PROGRAM **************************/
-    /*********************************************************************/
-    puts("Exiting of the program...");
-    exit(EXIT_SUCCESS);
-    
-  }
-  /* Gauss Point analysis */
-  else if((argc == 3) &&
-	  (strcmp(argv[1],"-GPA") == 0)){
-    
-    /* Read simulation file and kind of simulation */
-    SimulationFile = argv[2];
-             
-    /*********************************************************************/
-    /************************ CLOSE THE PROGRAM **************************/
-    /*********************************************************************/
-    puts("Exiting of the program...");
-    exit(EXIT_SUCCESS);
-  }
-  /* Non-defined simulation */
-  else{
-    
-    puts("Undefined kind of simulation");
-    exit(EXIT_FAILURE);
-    
-  }
-  
+  /*********************************************************************/
+  /************************ CLOSE THE PROGRAM **************************/
+  /*********************************************************************/
+  puts("Exiting of the program...");
+  exit(EXIT_SUCCESS);
+   
+   
 }
 
 

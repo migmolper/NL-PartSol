@@ -1,10 +1,22 @@
 #include "nl-partsol.h"
 
-#define MAXVAL(A,B) ((A)>(B) ? (A) : (B))
-#define MINVAL(A,B) ((A)<(B) ? (A) : (B))
+/*******************************************************/
 
-void EigenerosionAlgorithm(int p,Fields Phi,Material MatPro,
-			   ChainPtr * Beps,double DeltaX)
+/*! 
+  \fn static void Eigenerosion(int p,Fields Phi,Material MatPro,
+  ChainPtr * Beps,double DeltaX)
+
+  \brief Function to compute is a material point is or not eroded. 
+  Here the notation is the same as in \cite Pandolfi_2012
+
+  \param p : Index of the particle
+  \param Phi : Particles fields
+  \param Properties : Define the material properties of the particle
+  \param B_eps : Define the particles close to each particle
+  \param DeltaX : Mesh size
+*/
+static void Eigenerosion(int p, Fields Phi, Material MatPro,
+			 ChainPtr * Beps, double DeltaX)
 {
 
   /* Read the required fields */
@@ -127,8 +139,21 @@ void EigenerosionAlgorithm(int p,Fields Phi,Material MatPro,
 
 /*******************************************************/
 
-void EigensofteningAlgorithm(int p,Fields Phi,Material MatPro,
-			     ChainPtr * Beps)
+/*!
+  \fn static void Eigensoftening(int p,
+  Fields Phi,
+  Material Properties,
+  ChainPtr * Beps)
+
+  \brief Function to compute is a material point is or not eroded. 
+  Here the notation is the same as in \cite Navas_2017_ES
+
+  \param p : Index of the particle
+  \param Phi : Particles fields
+  \param Properties : Define the material properties of the particle
+  \param Beps : Table with the list of neighbours per particle.
+*/
+static void Eigensoftening(int p, Fields Phi, Material MatPro, ChainPtr * Beps)
 {
 
   /* Read the required fields */
@@ -277,7 +302,7 @@ void EigensofteningAlgorithm(int p,Fields Phi,Material MatPro,
 	Fracture criterium 
       */
       ji_p = (EV_Strain_p.n[0]-StrainF.nV[p])*heps_p/Wc_p;
-      ji.nV[p] = MINVAL(1,MAXVAL(ji_p,ji.nV[p]));       
+      ji.nV[p] = DMIN(1,DMAX(ji_p,ji.nV[p]));       
 
       /* Free eigenvalues */
       free_Tensor(EV_Strain_p);	    	  
@@ -288,3 +313,147 @@ void EigensofteningAlgorithm(int p,Fields Phi,Material MatPro,
 
 /*******************************************************/
 
+/*
+  \fn static void ComputeBeps(int p, GaussPoint Particles, Mesh Nodes)
+  
+  \param Generate the B$_{\epsilon}$ neibourhood of each particle
+
+  \param p : Particle
+  \param Particles : Information of the particle mesh
+  \param Nodes : Informaction with the set of nodes
+ */
+static void ComputeBeps(int p, GaussPoint MPM_Mesh, Mesh FEM_Mesh)
+{
+
+  int Ndim = NumberDimensions;
+  int Mat_p = MPM_Mesh.MatIdx[p];
+  int I0 = MPM_Mesh.I0[p];
+  
+  /* Search radious */
+  double epsilon = MPM_Mesh.Mat[Mat_p].Ceps*FEM_Mesh.DeltaX;
+
+  ChainPtr Set_NodesBeps = NULL;
+  int * NodesBeps;
+  int NumNodesBeps;
+
+  /* Index of each node close to the particle */
+  int I_Beps;
+  /* Interator pointer in Beps */
+  ChainPtr Particles_Beps = NULL; 
+  /* Index of a particle close to the particle p */
+  int q_Beps;
+  
+  /* Distance */
+  Matrix x_GC = MPM_Mesh.Phi.x_GC;
+  Matrix X_p = get_RowFrom(Ndim,1,x_GC.nM[p]);
+  Matrix X_q = get_RowFrom(Ndim,1,NULL);
+  Matrix Distance;
+
+  /* Get nodes close to the particle */
+  Set_NodesBeps = FEM_Mesh.NodalLocality[I0];
+  NumNodesBeps = FEM_Mesh.SizeNodalLocality[I0];
+  NodesBeps = Set_to_Pointer(Set_NodesBeps,NumNodesBeps);
+
+  /* Loop in the nodes close to the particle */
+  for(int i = 0 ; i<NumNodesBeps ; i++){
+
+    /* Get the index of nodes close to the particle */
+    I_Beps = NodesBeps[i];
+
+    /* List of particles close to the node */
+    Particles_Beps = FEM_Mesh.I_particles[I_Beps];
+    
+    while(Particles_Beps != NULL){
+
+      /* Get the index of each particle */
+      q_Beps = Particles_Beps->I;
+
+      /* In Beps only those particles of the same material */
+      if(Mat_p == MPM_Mesh.MatIdx[q_Beps]){
+
+	/* Get the vector with the coordinates of each particle */
+	X_q.nV = x_GC.nM[q_Beps];
+
+	/* Get a vector from the GP to the node */
+	Distance = Sub_Mat(X_p,X_q);
+
+	/* Asign to p only those particles in Beps */
+	if (Norm_Mat(Distance,2) < epsilon){
+	  push_to_Set(&MPM_Mesh.Beps[p],q_Beps);
+	}
+
+	/* Free distance vector */
+	FreeMat(Distance);
+
+      }
+
+      /* Go to the next set of particles */
+      Particles_Beps = Particles_Beps->next;
+      
+    }
+    
+  }
+
+  /* Free pointer with the list of nodes close to the particle */
+  free(NodesBeps);    
+ 
+}
+
+/*********************************************************************/
+
+void compute_particle_Damage(int p, GaussPoint MPM_Mesh, Mesh FEM_Mesh)
+{
+
+  int Ndim = NumberDimensions;
+  int Mat_p = MPM_Mesh.MatIdx[p];  
+  double DeltaX = FEM_Mesh.DeltaX;
+  
+  /* Get the material properties of the particle */
+  Material MatProp = MPM_Mesh.Mat[Mat_p];
+
+  /* Beps of all the particles */
+  ChainPtr * Beps = MPM_Mesh.Beps;
+
+  /* Select the eigenerosion algorithm */
+  if(MatProp.Eigenerosion)
+    {
+
+      /* Free the previous list and set to NULL */
+      free_Set(MPM_Mesh.Beps[p]);
+      MPM_Mesh.Beps[p] = NULL;
+
+      /* Update Beps of each particle p */
+      ComputeBeps(p, MPM_Mesh, FEM_Mesh);
+
+      /* Update the damage variable of the particle */
+      Eigenerosion(p,MPM_Mesh.Phi,MatProp,Beps,DeltaX);
+    }
+
+  /* Select the eigensoftening algorithm */
+  if(MatProp.Eigensoftening)
+    {
+
+      /* Free the previous list and set to NULL */
+      free_Set(MPM_Mesh.Beps[p]);
+      MPM_Mesh.Beps[p] = NULL;
+
+      /* Update Beps of each particle p */
+      ComputeBeps(p, MPM_Mesh, FEM_Mesh);
+
+      /* Update the damage variable of the particle */
+      Eigensoftening(p,MPM_Mesh.Phi,MatProp,Beps);
+   
+    }
+
+  /* If the particle is damaged set the stress tensor null */      
+  if(MPM_Mesh.Phi.ji.nV[p] == 1.0)
+    {
+      for(int i = 0 ; i<Ndim*Ndim ; i++)
+	{
+	  MPM_Mesh.Phi.Stress.nM[p][i] = 0.0;
+	}
+    }
+  
+}
+
+/*******************************************************/

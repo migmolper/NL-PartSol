@@ -4,11 +4,6 @@ void U_GA(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
 {
 
   /*!
-    Some auxiliar variables for the outputs
-  */
-  Matrix List_Fields;
-
-  /*!
     Time step 
   */
   int TimeStep;
@@ -77,7 +72,7 @@ void U_GA(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
 	  /*!
 	    Print GPs results
 	  */
-	  WriteVtk_MPM("MPM_VALUES",MPM_Mesh,List_Fields,
+	  WriteVtk_MPM("MPM_VALUES",MPM_Mesh,"ALL",
 		       (int)TimeStep/ResultsTimeStep);
 	}
       

@@ -215,7 +215,7 @@ typedef struct {
   /*!
    * Strain during crack 
    */
-  Matrix StrainF;
+  Matrix Strain_If;
   
   /*!
    * Deformation Energy 
@@ -606,6 +606,50 @@ typedef struct {
   double GA_gamma;
   
 } Time_Int_Params;
+
+/*******************************************************/
+
+/*! \struct Event
+  Structure with output control
+ */
+typedef struct {
+
+  /*!
+    Physical time to start the event. Default = 0.0
+   */
+  double start;
+
+  /*!
+    Numerical step to start the event. Default = 0
+   */
+  int k_start;
+
+  /*!
+    Physical time step
+   */
+  double step;
+
+  /*!
+    Numerical time step
+   */
+  int k_step;
+
+  /*!
+    Physical time to finish the event    
+   */
+  double end;
+
+  /*!
+    Numerical step to finish the event
+   */  
+  int k_end;
+
+  /*!
+    Name of the output file
+   */
+  char * File;
+
+} Event;
 
 /*******************************************************/
 

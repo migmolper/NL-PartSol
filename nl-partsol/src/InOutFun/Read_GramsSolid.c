@@ -35,7 +35,7 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
   int NumVertex;
 
   double Area_Element, A_p, th_p, m_p, rho_p;
-  int GPxElement = 4;
+  int GPxElement = 1;
   int i_p;
 
   /* Set to false check variables */
@@ -193,30 +193,6 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
     else{
       fprintf(stderr,"%s : %s \n",
 	      "Error in GramsSolid2D()","GramsMaterials no defined");
-      exit(EXIT_FAILURE);
-    }
-
-    /**************************************************/
-    /********* Read Shape functions parameters ********/
-    /**************************************************/
-    if(Is_GramsShapeFun){
-      GramsShapeFun(Name_File);
-      /* Lenght of the Voxel (Only GIMP) */
-      if(strcmp(ShapeFunctionGP,"uGIMP") == 0){
-	MPM_Mesh.lp = MatAllocZ(NumParticles,NumberDimensions);
-	strcpy(MPM_Mesh.lp.Info,"Voxel lenght GP");
-      }
-      /* Lagrange Multipliers / Beta (Only LME ) */
-      if(strcmp(ShapeFunctionGP,"LME") == 0){
-	MPM_Mesh.lambda = MatAllocZ(NumParticles,NumberDimensions);
-	strcpy(MPM_Mesh.lambda.Info,"Lagrange Multiplier");
-	MPM_Mesh.Beta = MatAllocZ(NumParticles,NumberDimensions);
-	strcpy(MPM_Mesh.Beta.Info,"Beta parameter");
-      }
-    }
-    else{
-      fprintf(stderr,"%s : %s \n",
-	      "Error in GramsSolid2D()","GramsShapeFun no defined");
       exit(EXIT_FAILURE);
     }
 

@@ -324,6 +324,21 @@ void GramsOutputs(char * );
 /*****************************************************************/
 
 /*!
+  \fn void OutputSimulation(GaussPoint Set_Particles,int Numerical_T,double Physical_T,
+  double DeltaT,Event Parameters)
+ 
+  \brief Generate backup copy
+  
+  \param Set_Particles
+  \param Numerical_T
+  \param Physical_T
+  \param DeltaT
+  \param Parameters
+*/
+void OutputSimulation(GaussPoint,int,double,double,Event);
+/*****************************************************************/
+
+/*!
 
   \fn Load * GramsNeumannBC(char * File, int NumNeumannBC, int GPxElement)
   
@@ -365,7 +380,7 @@ Load * GramsBodyForces(char *, int, int);
 
 /*****************************************************************/
 
-void WriteVtk_MPM(char *, GaussPoint, Matrix, int);
+void WriteVtk_MPM(char *, GaussPoint, char *, int);
 
 /*****************************************************************/
 

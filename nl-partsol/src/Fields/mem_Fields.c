@@ -43,10 +43,10 @@ Fields allocate_Fields(int NumParticles)
   strcpy(Phi.Strain.Info,"Strain field GP");
 
   /*!
-    StrainF field (Scalar) 
+    Strain_If field (Scalar) 
   */
-  Phi.StrainF = MatAllocZ(NumParticles,1);
-  strcpy(Phi.StrainF.Info,"Strain in fracture GP");
+  Phi.Strain_If = MatAllocZ(NumParticles,1);
+  strcpy(Phi.Strain_If.Info,"Strain in fracture GP");
 
   /*!
     Stress field (Tensor)
@@ -96,7 +96,7 @@ void free_Fields(Fields Phi)
   FreeMat(Phi.acc);
   FreeMat(Phi.Stress);
   FreeMat(Phi.Strain);
-  FreeMat(Phi.StrainF);
+  FreeMat(Phi.Strain_If);
   FreeMat(Phi.W);
   FreeMat(Phi.ji);
   

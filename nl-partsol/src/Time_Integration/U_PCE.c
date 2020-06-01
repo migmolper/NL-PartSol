@@ -2,10 +2,6 @@
 
 void U_PCE(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
 {
-  /*!
-    Some auxiliar variables for the outputs 
-  */
-  Matrix List_Fields;
 
   int Ndim = NumberDimensions;
   int Nnodes = FEM_Mesh.NumNodesMesh;
@@ -68,7 +64,7 @@ void U_PCE(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
 	  /*!
 	    Print particle results 
 	  */
-	  WriteVtk_MPM("MPM_VALUES",MPM_Mesh,List_Fields,
+	  WriteVtk_MPM("MPM_VALUES",MPM_Mesh,"ALL",
 		       (int)TimeStep/ResultsTimeStep);
 	}
 

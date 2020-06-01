@@ -1,7 +1,7 @@
 #include "nl-partsol.h"
 
 void WriteVtk_MPM(char * Name_File, GaussPoint MPM_Mesh,
-		  Matrix List_Fields, int TimeStep_i){
+		  char * List_Fields, int TimeStep_i){
 
   /* Number of dimensions */
   int Ndim = NumberDimensions;
@@ -35,7 +35,7 @@ void WriteVtk_MPM(char * Name_File, GaussPoint MPM_Mesh,
   }
 
   /* Connectivity */
-  fprintf(Vtk_file,"CELLS %i %i \n",MPM_Mesh.NumGP,2*MPM_Mesh.NumGP);
+  fprintf(Vtk_file,"CELLS %i %i \n",MPM_Mesh.NumGP,Ndim*MPM_Mesh.NumGP);
   for(int i = 0 ; i<MPM_Mesh.NumGP ; i++){
     fprintf(Vtk_file,"%i %i \n",1,i);
   }
