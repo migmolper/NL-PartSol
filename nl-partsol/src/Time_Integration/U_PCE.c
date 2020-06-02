@@ -1,6 +1,6 @@
 #include "nl-partsol.h"
 
-void U_PCE(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
+void U_PCE(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int InitialStep)
 {
 
   int Ndim = NumberDimensions;
@@ -21,8 +21,10 @@ void U_PCE(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
   Matrix V_I;
   Matrix F_I = MatAllocZ(Nnodes,Ndim);
   Matrix R_I;
+
+  printf("%i \n",InitialStep);
   
-  for(int TimeStep = 0 ; TimeStep<NumTimeStep ; TimeStep++ )
+  for(int TimeStep = InitialStep ; TimeStep<NumTimeStep ; TimeStep++ )
     {
 
       print_Status("*************************************************",TimeStep);

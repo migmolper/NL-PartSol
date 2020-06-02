@@ -27,38 +27,53 @@ int main(int argc, char * argv[])
   puts("WIN32 system");	
 #endif
 
+  int InitialStep;
   bool Is_New_Simulation;
   bool Is_Restart_Simulation;
-  
-  /* Read simulation file and kind of simulation */
+  Mesh FEM_Mesh;
+  GaussPoint MPM_Mesh;
+
+  /*********************************************************************/
+  /************ Read simulation file and kind of simulation ************/
+  /*********************************************************************/
   if(argc == 3)
     {      
       Formulation = argv[1];
       SimulationFile = argv[2];
       Is_New_Simulation = true;
       Is_Restart_Simulation = false;
+      InitialStep = 0;
     }
-  if(argc == 4)
+  else if(argc == 4)
     {      
       Formulation = argv[1];
       SimulationFile = argv[2];
       RestartFile = argv[3];
       Is_New_Simulation = false;
       Is_Restart_Simulation = true;
+      InitialStep = get_ResultStep(RestartFile);
+    }
+  else
+    {
+      fprintf(stderr,"%s : %s \n",
+	      "Error in nl-partsol",
+	      "Wrong inputs");
+      exit(EXIT_FAILURE);
     }
     
   /* Assign degree of freedom */
   if((strcmp(Formulation,"-V") == 0) &&
-     (NumberDimensions == 2)){
-    NumberDOF = 2;
-  }
+     (NumberDimensions == 2))
+    {
+      NumberDOF = 2;
+    }
   
   /*********************************************************************/
   /**************** DEFINE CALCULUS MESH and BCCs **********************/
   /*********************************************************************/
   puts("*************************************************");
   puts("Generating the background mesh ...");
-  Mesh FEM_Mesh = GramsBox(SimulationFile);
+  FEM_Mesh = GramsBox(SimulationFile);
 
   /*********************************************************************/
   /******************* TIME INTEGRATION SCHEME *************************/
@@ -72,7 +87,6 @@ int main(int argc, char * argv[])
   /*********************************************************************/
   puts("*************************************************");
   puts("Generating MPM mesh ...");
-  GaussPoint MPM_Mesh;
   if(Is_New_Simulation)
     {
       MPM_Mesh = GramsSolid2D(SimulationFile,FEM_Mesh);
@@ -98,19 +112,19 @@ int main(int argc, char * argv[])
   /* Forward Euler */
   if(strcmp(TimeIntegrationScheme,"FE") == 0 )
     { 
-      U_FE(FEM_Mesh, MPM_Mesh);
+      U_FE(FEM_Mesh, MPM_Mesh, InitialStep);
     }
 
   /* Generalized-alpha */
   if(strcmp(TimeIntegrationScheme,"GA") == 0 )
     { 
-      U_GA(FEM_Mesh, MPM_Mesh);
+      U_GA(FEM_Mesh, MPM_Mesh, InitialStep);
     }
     
   /* Explicit predictor-corrector */
   if(strcmp(TimeIntegrationScheme,"PCE") == 0 )
     { 
-      U_PCE(FEM_Mesh, MPM_Mesh);
+      U_PCE(FEM_Mesh, MPM_Mesh, InitialStep);
     }
         
   /*********************************************************************/

@@ -3,13 +3,12 @@
 /*
   List of auxiliar functions for the main function : restart_Simulation
 */
-static Fields restart_Fields(char *);
+static Fields restart_Fields(char *,int);
 static int    restart_ReadVtk_Points(char *);
-static Matrix restart_ReadVtk_Scalars(char *,char *);
-static int *  restart_ReadVtk_I0(char *,char *);
-static int *  restart_ReadVtk_MatIdx(char *,char *);
-static Matrix restart_ReadVtk_Vectors(char *,char *);
-static Matrix restart_ReadVtk_Tensors(char *,char *);
+static Matrix restart_ReadVtk_Scalars(char *,char *,int);
+static int *  restart_ReadVtk_I0(char *,int);
+static Matrix restart_ReadVtk_Vectors(char *,char *,int);
+static Matrix restart_ReadVtk_Tensors(char *,char *,int);
 
 /**********************************************************************/
 
@@ -21,9 +20,6 @@ GaussPoint restart_Simulation(char * File_Parameters,
   int Ndim = NumberDimensions;
   int Np;
 
-  /* Simulation file */
-  FILE * Sim_dat;
- 
   GaussPoint Set_Particles;
 
   /* Set to false check variables */
@@ -34,17 +30,34 @@ GaussPoint restart_Simulation(char * File_Parameters,
   bool Is_GramsBodyForces = false;
   bool Is_GramsNeumannBC = false;
 
+  int GPxElement = 1;
+
   /* Initialize counters */
   int Counter_Materials = 0;
   int Counter_BodyForces = 0;
   int Counter_GramsNeumannBC = 0;
 
-  while(fgets(Line_GramsSolid2D,sizeof(Line_GramsSolid2D),Sim_dat) != NULL)
+  /* Open and check file */
+  FILE * Simulation_Ptr = fopen(File_Parameters,"r");  
+  if (Simulation_Ptr == NULL)
+    {
+      fprintf(stderr,"%s : \n\t %s %s",
+	      "Error in GramsInitials()",
+	      "Incorrect lecture of",File_Parameters);
+      exit(EXIT_FAILURE);
+    }
+
+  /* Variable to read a file */
+  char Line[MAXC] = {0}; 
+  char * Parse_Line[MAXW] = {NULL};
+  int Num_Words;
+
+  while(fgets(Line,sizeof(Line),Simulation_Ptr) != NULL)
     {
     
       /* Read the line with the space as separators */
-      Num_words_parse = parse(Parse_GramsSolid2D,Line_GramsSolid2D," \n\t");
-      if (Num_words_parse < 0)
+      Num_Words = parse(Parse_Line,Line," \n\t");
+      if (Num_Words < 0)
 	{
 	  fprintf(stderr,"%s : %s \n",
 		  "Error in GramsSolid2D()",
@@ -52,40 +65,43 @@ GaussPoint restart_Simulation(char * File_Parameters,
 	  exit(EXIT_FAILURE);
 	}
     
-      if ((Num_words_parse > 0) &&
-	  (strcmp(Parse_GramsSolid2D[0],"GramsSolid2D") == 0))
+      if ((Num_Words > 0) &&
+	  (strcmp(Parse_Line[0],"GramsSolid2D") == 0))
 	{
 	  Is_GramsSolid2D = true;    
 	}
-      if ((Num_words_parse > 0) &&
-	  (strcmp(Parse_GramsSolid2D[0],"GramsShapeFun") == 0))
+      if ((Num_Words > 0) &&
+	  (strcmp(Parse_Line[0],"GramsShapeFun") == 0))
 	{
 	  Is_GramsShapeFun = true;
 	}
-      if ((Num_words_parse > 0) &&
-	  (strcmp(Parse_GramsSolid2D[0],"GramsMaterials") == 0))
+      if ((Num_Words > 0) &&
+	  (strcmp(Parse_Line[0],"GramsMaterials") == 0))
 	{
 	  Is_GramsMaterials = true;
 	  Counter_Materials++;
 	}
-      if ((Num_words_parse > 0) &&
-	  (strcmp(Parse_GramsSolid2D[0],"GramsInitials") == 0))
+      if ((Num_Words > 0) &&
+	  (strcmp(Parse_Line[0],"GramsInitials") == 0))
 	{
 	  Is_GramsInitials = true;
 	}
-      if ((Num_words_parse > 0) &&
-	  (strcmp(Parse_GramsSolid2D[0],"GramsBodyForces") == 0))
+      if ((Num_Words > 0) &&
+	  (strcmp(Parse_Line[0],"GramsBodyForces") == 0))
 	{
 	  Is_GramsBodyForces = true;
 	  Counter_BodyForces++;
 	}
-      if ((Num_words_parse > 0) &&
-	  (strcmp(Parse_GramsSolid2D[0],"GramsNeumannBC") == 0))
+      if ((Num_Words > 0) &&
+	  (strcmp(Parse_Line[0],"GramsNeumannBC") == 0))
 	{
 	  Is_GramsNeumannBC = true;
 	  Counter_GramsNeumannBC++;
 	}    
     }
+
+  /* Close the file */
+  fclose(Simulation_Ptr);
   
   /* Read particle mesh properties */
   if(Is_GramsSolid2D)
@@ -101,7 +117,7 @@ GaussPoint restart_Simulation(char * File_Parameters,
       Set_Particles.NumberNodes = (int *)Allocate_ArrayZ(Np,sizeof(int));
       
       /* Tributary nodes for each particle */
-      Set_Particles.ListNodes =  allocate_SetTable(Np);
+      Set_Particles.ListNodes = allocate_SetTable(Np);
       
       /* List of particles close to each particle */
       Set_Particles.Beps =  allocate_SetTable(Np);
@@ -109,47 +125,61 @@ GaussPoint restart_Simulation(char * File_Parameters,
       /* Read list of fields */
       Set_Particles.Phi = restart_Fields(File_Restart,Np);
     }
+
   
-  /* Read Material parameters */
   if(Is_GramsMaterials)
     {
+      puts("*************************************************");
+      printf(" \t %s \n","* Read materials properties");
       Set_Particles.NumberMaterials = Counter_Materials;
-      Set_Particles.MatIdx = (int *)malloc(NumParticles*sizeof(int));
-      Set_Particles.Mat = GramsMaterials(Name_File,MPM_Mesh,GPxElement);
+      Set_Particles.MatIdx = (int *)malloc(Np*sizeof(int));
+      Set_Particles.Mat = GramsMaterials(File_Parameters,Set_Particles,GPxElement);
     }
-  
+
   /* Read external forces */
   if(Is_GramsNeumannBC)
     {
-      MPM_Mesh.NumNeumannBC = Counter_GramsNeumannBC;
-      MPM_Mesh.F = GramsNeumannBC(Name_File,Counter_GramsNeumannBC,GPxElement);
+      puts("*************************************************");
+      printf(" \t %s \n","* Read Neumann boundary conditions");
+      Set_Particles.NumNeumannBC = Counter_GramsNeumannBC;
+      Set_Particles.F = GramsNeumannBC(File_Parameters,
+				       Counter_GramsNeumannBC,
+				       GPxElement);
     }
   
   /* Read body forces */    
   if(Is_GramsBodyForces)
     {
-      MPM_Mesh.NumberBodyForces = Counter_BodyForces;
-      MPM_Mesh.B = GramsBodyForces(Name_File,Counter_BodyForces,GPxElement); 
+      puts("*************************************************");
+      printf(" \t %s \n","* Read body forces");
+      Set_Particles.NumberBodyForces = Counter_BodyForces;
+      Set_Particles.B = GramsBodyForces(File_Parameters,
+					Counter_BodyForces,
+					GPxElement); 
     }
   
   /* Initialize shape functions */
+  puts("*************************************************");
+  printf(" \t %s \n","* Read shape functions");
+  GramsShapeFun(File_Parameters);
+  
   if(strcmp(ShapeFunctionGP,"MPMQ4") == 0)
     {
-      Q4_Initialize(MPM_Mesh, FEM_Mesh);
+      Q4_Initialize(Set_Particles, FEM_Mesh);
     }
   else if(strcmp(ShapeFunctionGP,"uGIMP") == 0)
     {
-      Set_Particles.lp = MatAllocZ(NumParticles,Ndim);
+      Set_Particles.lp = MatAllocZ(Np,Ndim);
       strcpy(Set_Particles.lp.Info,"Voxel lenght GP");
-      uGIMP_Initialize(MPM_Mesh,FEM_Mesh);
+      uGIMP_Initialize(Set_Particles,FEM_Mesh);
     }
   else if(strcmp(ShapeFunctionGP,"LME") == 0)
     {
-      Set_Particles.lambda = MatAllocZ(NumParticles,Ndim);
+      Set_Particles.lambda = MatAllocZ(Np,Ndim);
       strcpy(Set_Particles.lambda.Info,"Lagrange Multiplier");
-      Set_Particles.Beta = MatAllocZ(NumParticles,Ndim);
+      Set_Particles.Beta = MatAllocZ(Np,Ndim);
       strcpy(Set_Particles.Beta.Info,"Beta parameter");
-      LME_Initialize(MPM_Mesh,FEM_Mesh);
+      LME_Initialize(Set_Particles,FEM_Mesh);
     } 
   
   return Set_Particles;
@@ -177,10 +207,10 @@ static Fields restart_Fields(char * File_Restart,int Np)
   Phi.ji = restart_ReadVtk_Scalars(File_Restart,"Ji",Np);
 
   /* Position in global coordinates */
-  Phi.x_GC = restart_ReadVtk_Vectors(File_Restart,"X_GC",Np); 
+  Phi.x_GC = restart_ReadVtk_Vectors(File_Restart,"X_GC",Np);
   
   /* Position in element coordiantes */
-  Phi.x_EC = restart_ReadVtk_Vectors(File_Restart,"X_EC",Np); 
+  Phi.x_EC = restart_ReadVtk_Vectors(File_Restart,"X_EC",Np);
  
   /* Displacement field */
   Phi.dis = restart_ReadVtk_Vectors(File_Restart,"DISPLACEMENT",Np);
@@ -208,19 +238,20 @@ static Fields restart_Fields(char * File_Restart,int Np)
   \brief Read the number of particles from a .vtk file
 
 */
-static int restart_ReadVtk_Points(char * Simulation_File)
+static int restart_ReadVtk_Points(char * File)
 {
   int Np = 0;
   bool Is_POINTS = false;
   
   /* Open and check file */
-  FILE * Simulation_Ptr = fopen(Simulation_File,"r");  
-  if (Sim_dat==NULL){
-    fprintf(stderr,"%s : \n\t %s %s",
-	    "Error in GramsInitials()","Incorrect lecture of",
-	    Name_File);
-    exit(EXIT_FAILURE);
-  }
+  FILE * Simulation_Ptr = fopen(File,"r");  
+  if (Simulation_Ptr == NULL)
+    {
+      fprintf(stderr,"%s : \n\t %s %s",
+	      "Error in GramsInitials()","Incorrect lecture of",
+	      File);
+      exit(EXIT_FAILURE);
+    }
 
   /* Variable to read a file */
   char Line[MAXC] = {0}; 
@@ -232,7 +263,7 @@ static int restart_ReadVtk_Points(char * Simulation_File)
     {
       Num_Words = parse(Parse_Line,Line," \n\t");
 
-      if ((Num_words == 3) &&
+      if ((Num_Words == 3) &&
 	  (strcmp(Parse_Line[0],"POINTS") == 0) &&
 	  (strcmp(Parse_Line[2],"float") == 0))
 	{
@@ -244,33 +275,41 @@ static int restart_ReadVtk_Points(char * Simulation_File)
     }
   
   /* If there is not POINTS keyword in the file */
-  if(!Is_POINTS)
+  if(Is_POINTS)
     {
+      /* Close the file */
+      fclose(Simulation_Ptr);
+      /* Number of particles */
+      return Np;
+    }
+  else
+    {
+      /* Close the file */
+      fclose(Simulation_Ptr);
+      /* Error message */      
       fprintf(stderr,"Error in restart_ReadVtk_Points(%s) : %s \n",
-	      Simulation_File,"Not keyword POINTS");
+	      File,"Not keyword POINTS");
       exit(EXIT_FAILURE);
     }
-  
-  return Np;
-
 }
 
 /**********************************************************************/
 
-static Matrix restart_ReadVtk_Scalars(char * Simulation_File,char * Parameter,int Np)
+static Matrix restart_ReadVtk_Scalars(char * File,char * Parameter,int Np)
 {
 
   bool Is_SCALAR = false;
   Matrix Scalar;
 
   /* Open and check file */
-  FILE * Simulation_Ptr = fopen(Simulation_File,"r");  
-  if (Sim_dat==NULL){
-    fprintf(stderr,"%s : \n\t %s %s",
-	    "Error in GramsInitials()","Incorrect lecture of",
-	    Name_File);
-    exit(EXIT_FAILURE);
-  }
+  FILE * Simulation_Ptr = fopen(File,"r");  
+  if (Simulation_Ptr == NULL)
+    {
+      fprintf(stderr,"%s : \n\t %s %s",
+	      "Error in GramsInitials()","Incorrect lecture of",
+	      File);
+      exit(EXIT_FAILURE);
+    }
 
   /* Variable to read a file */
   char Line[MAXC] = {0}; 
@@ -282,7 +321,7 @@ static Matrix restart_ReadVtk_Scalars(char * Simulation_File,char * Parameter,in
     {
       Num_Words = parse(Parse_Line,Line," \n\t");
 
-      if ((Num_words == 3) &&
+      if ((Num_Words == 3) &&
 	  (strcmp(Parse_Line[0],"SCALARS") == 0) &&
 	  (strcmp(Parse_Line[1],Parameter) == 0) &&
 	  (strcmp(Parse_Line[2],"float") == 0))
@@ -313,25 +352,30 @@ static Matrix restart_ReadVtk_Scalars(char * Simulation_File,char * Parameter,in
       
     }
 
+  /* Close the file */
+  fclose(Simulation_Ptr);
+
+
   return Scalar; 
 }
 
 /**********************************************************************/
 
-static int * restart_ReadVtk_I0(char * Simulation_File,int Np)
+static int * restart_ReadVtk_I0(char * File,int Np)
 {
 
   bool Is_I0 = false;
-  Matrix I0;
+  int * I0;
   
   /* Open and check file */
-  FILE * Simulation_Ptr = fopen(Simulation_File,"r");  
-  if (Sim_dat==NULL){
-    fprintf(stderr,"%s : \n\t %s %s",
+  FILE * Simulation_Ptr = fopen(File,"r");  
+  if (Simulation_Ptr == NULL)
+    {
+      fprintf(stderr,"%s : \n\t %s %s",
 	    "Error in GramsInitials()","Incorrect lecture of",
-	    Name_File);
-    exit(EXIT_FAILURE);
-  }
+	      File);
+      exit(EXIT_FAILURE);
+    }
 
   /* Variable to read a file */
   char Line[MAXC] = {0}; 
@@ -343,7 +387,7 @@ static int * restart_ReadVtk_I0(char * Simulation_File,int Np)
     {
       Num_Words = parse(Parse_Line,Line," \n\t");
 
-      if ((Num_words == 3) &&
+      if ((Num_Words == 3) &&
 	  (strcmp(Parse_Line[0],"SCALARS") == 0) &&
 	  (strcmp(Parse_Line[1],"ELEM_i") == 0) &&
 	  (strcmp(Parse_Line[2],"integer") == 0))
@@ -357,7 +401,7 @@ static int * restart_ReadVtk_I0(char * Simulation_File,int Np)
   /* Read scalar variable */
   if(Is_I0)
     {
-      Scalar = (int *)Allocate_ArrayZ(Np,sizeof(int));
+      I0 = (int *)Allocate_ArrayZ(Np,sizeof(int));
 
       for(int p = -1 ; p<Np ; p++)
 	{
@@ -374,68 +418,10 @@ static int * restart_ReadVtk_I0(char * Simulation_File,int Np)
       
     }
 
+  /* Close the file */
+  fclose(Simulation_Ptr);
+
   return I0; 
-}
-
-/**********************************************************************/
-
-static int * restart_ReadVtk_MatIdx(char * File,char * Parameter,int Np)
-{
-
-  bool Is_MatIdx = false;
-  Matrix MatIdx;
-
-  /* Open and check file */
-  FILE * Simulation_Ptr = fopen(Simulation_File,"r");  
-  if (Sim_dat==NULL){
-    fprintf(stderr,"%s : \n\t %s %s",
-	    "Error in GramsInitials()","Incorrect lecture of",
-	    Name_File);
-    exit(EXIT_FAILURE);
-  }
-
-  /* Variable to read a file */
-  char Line[MAXC] = {0}; 
-  char * Parse_Line[MAXW] = {NULL};
-  int Num_Words;
-  
-  /* Search "MatIdx" keyword in the .vtk file */
-  while(fgets(Line,sizeof(Line),Simulation_Ptr) != NULL)
-    {
-      Num_Words = parse(Parse_Line,Line," \n\t");
-
-      if ((Num_words == 3) &&
-	  (strcmp(Parse_Line[0],"SCALARS") == 0) &&
-	  (strcmp(Parse_Line[1],"MatIdx") == 0) &&
-	  (strcmp(Parse_Line[2],"integer") == 0))
-	{
-	  Is_MatIdx = true;
-	  break;
-	}
-      
-    }
-  
-  /* Read scalar variable */
-  if(Is_MatIdx)
-    {
-      Scalar = (int *)Allocate_ArrayZ(Np,sizeof(int));
-
-      for(int p = -1 ; p<Np ; p++)
-	{
-
-	  fgets(Line,sizeof(Line),Simulation_Ptr);
-	  Num_Words = parse(Parse_Line,Line," \n\t");
-	
-	  if(p >= 0)
-	    {
-	      MatIdx[p] = atoi(Parse_Line[0]);
-	    }
-	
-	}
-      
-    }
-
-  return MatIdx; 
 }
 
 /**********************************************************************/
@@ -445,16 +431,16 @@ static Matrix restart_ReadVtk_Vectors(char * File,char * Parameter,int Np)
   
   int Ndim = NumberDimensions;
   bool Is_Vector = false;
-  Matrix Vector;
+  Matrix Vector_Field;
 
   /* Open and check file */
-  FILE * Simulation_Ptr = fopen(Simulation_File,"r");  
-  if (Sim_dat==NULL){
-    fprintf(stderr,"%s : \n\t %s %s",
-	    "Error in GramsInitials()","Incorrect lecture of",
-	    Name_File);
-    exit(EXIT_FAILURE);
-  }
+  FILE * Simulation_Ptr = fopen(File,"r");  
+  if (Simulation_Ptr == NULL)
+    {
+      fprintf(stderr,"%s : \n\t %s %s",
+	      "Error in GramsInitials()","Incorrect lecture of",File);
+      exit(EXIT_FAILURE);
+    }
 
   /* Variable to read a file */
   char Line[MAXC] = {0}; 
@@ -466,7 +452,7 @@ static Matrix restart_ReadVtk_Vectors(char * File,char * Parameter,int Np)
     {
       Num_Words = parse(Parse_Line,Line," \n\t");
 
-      if ((Num_words == 3) &&
+      if ((Num_Words == 3) &&
 	  (strcmp(Parse_Line[0],"VECTORS") == 0) &&
 	  (strcmp(Parse_Line[1],Parameter) == 0) &&
 	  (strcmp(Parse_Line[2],"float") == 0))
@@ -481,7 +467,7 @@ static Matrix restart_ReadVtk_Vectors(char * File,char * Parameter,int Np)
   if(Is_Vector)
     {
       /* Allocate coordinates */
-      Vector = MatAllocZ(Np,Ndim);
+      Vector_Field = MatAllocZ(Np,Ndim);
 
       /* Fill coordinates matrix */
       for(int p = 0 ; p<Np ; p++)
@@ -493,33 +479,34 @@ static Matrix restart_ReadVtk_Vectors(char * File,char * Parameter,int Np)
 	  /* Fill coordinates */
 	  for(int i = 0 ; i<Ndim ; i++)
 	    {
-	      Vector.nM[p][i] = atof(Parse_Line[i]);
+	      Vector_Field.nM[p][i] = atof(Parse_Line[i]);
 	    }
 	}
-
-      /* Close the file */
-      fclose(Simulation_Ptr);
-
     }
+
+  /* Close the file */
+  fclose(Simulation_Ptr);
+  
+  return Vector_Field;  
 }
 
 /**********************************************************************/
 
-static Matrix restart_ReadVtk_Tensors(char * File,char * Parameter)
+static Matrix restart_ReadVtk_Tensors(char * File,char * Parameter,int Np)
 {
 
   int Ndim = NumberDimensions;
   bool Is_Tensor = false;
-  Matrix Tensor;
+  Matrix Tensor_Field;
 
   /* Open and check file */
-  FILE * Simulation_Ptr = fopen(Simulation_File,"r");  
-  if (Sim_dat==NULL){
-    fprintf(stderr,"%s : \n\t %s %s",
-	    "Error in GramsInitials()","Incorrect lecture of",
-	    Name_File);
-    exit(EXIT_FAILURE);
-  }
+  FILE * Simulation_Ptr = fopen(File,"r");  
+  if (Simulation_Ptr == NULL)
+    {
+      fprintf(stderr,"%s : \n\t %s %s",
+	      "Error in GramsInitials()","Incorrect lecture of",File);
+      exit(EXIT_FAILURE);
+    }
 
   /* Variable to read a file */
   char Line[MAXC] = {0}; 
@@ -531,7 +518,7 @@ static Matrix restart_ReadVtk_Tensors(char * File,char * Parameter)
     {
       Num_Words = parse(Parse_Line,Line," \n\t");
 
-      if ((Num_words == 3) &&
+      if ((Num_Words == 3) &&
 	  (strcmp(Parse_Line[0],"TENSORS") == 0) &&
 	  (strcmp(Parse_Line[1],Parameter) == 0) &&
 	  (strcmp(Parse_Line[2],"float") == 0))
@@ -546,7 +533,7 @@ static Matrix restart_ReadVtk_Tensors(char * File,char * Parameter)
   if(Is_Tensor)
     {
       /* Allocate coordinates */
-      Tensor = MatAllocZ(Np,Ndim*Ndim);
+      Tensor_Field = MatAllocZ(Np,Ndim*Ndim);
 
       /* Fill coordinates matrix */
       for(int p = 0 ; p<Np ; p++)
@@ -558,20 +545,21 @@ static Matrix restart_ReadVtk_Tensors(char * File,char * Parameter)
 	      fgets(Line,sizeof(Line),Simulation_Ptr);
 	      Num_Words = parse(Parse_Line,Line," \n\t");
 
-	      for(int j = 0 ; j<Ndim ; j++){	      
-		Tensor.nM[p][i*j] = atof(Parse_Line[j]);
-	      }
+	      for(int j = 0 ; j<Ndim ; j++)
+		{	      
+		  Tensor_Field.nM[p][i*j] = atof(Parse_Line[j]);
+		}
 	    }
 	  
 	  /* Read white line at the end of each tensor */
 	  fgets(Line,sizeof(Line),Simulation_Ptr);
 	}
-
-      /* Close the file */
-      fclose(Simulation_Ptr);
-
     }
+
+  /* Close the file */
+  fclose(Simulation_Ptr);
   
+  return Tensor_Field;  
 }
 
 /**********************************************************************/

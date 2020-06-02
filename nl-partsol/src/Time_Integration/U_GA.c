@@ -1,6 +1,6 @@
 #include "nl-partsol.h"
 
-void U_GA(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
+void U_GA(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int InitialStep)
 {
 
   /*!
@@ -50,7 +50,7 @@ void U_GA(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
   puts(" \t DONE !!! \n");
 
 
-  for(TimeStep = 0 ; TimeStep<NumTimeStep ; TimeStep++ )
+  for(TimeStep = InitialStep ; TimeStep<NumTimeStep ; TimeStep++ )
     {
 
       print_Status("*************************************************",TimeStep);

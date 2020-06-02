@@ -31,6 +31,20 @@ int parse(char **, char *, char *);
 */
 void generate_route(char *, char *);
 
+
+/*****************************************************************/
+
+
+/*
+  \fn int get_ResultStep(char * File_Result);
+
+  \brief Read the step of the file
+
+  \param File_Result : Route to the file
+
+*/
+int get_ResultStep(char *);
+
 /*****************************************************************/
 
 /*! 
@@ -401,6 +415,19 @@ void WriteVtk_Float_Tensor(char *, Matrix);
 /*****************************************************************/
 
 void WriteGnuplot(Matrix, Matrix, double, double, int, int, char[20]);
+
+/*****************************************************************/
+
+/*!
+\fn GaussPoint restart_Simulation(char * Parameters,char * Restart,Mesh Nodes)
+
+\brief Generate simulation structure from previous results
+
+\param Parameters
+\param Restart
+\param Nodes
+*/
+GaussPoint restart_Simulation(char *,char *,Mesh);
 
 /*****************************************************************/
 #endif

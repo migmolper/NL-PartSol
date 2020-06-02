@@ -17,36 +17,39 @@
 double DeltaT_CFL(GaussPoint, double);
 
 /*!
-  \fn void U_FE(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
+  \fn void U_FE(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int InitialStep)
 
   \brief Displacement formulation of the MPM with a Forward Euler as 
   time integrator scheme. The algorithm was taken from \cite Zhang_book_2016
 
   \param Mesh FEM_Mesh : Variable with the nodal information
   \param GaussPoint MPM_Mesh : Variable with the particle information
+  \param InitialStep
  */
-void U_FE(Mesh, GaussPoint);
+void U_FE(Mesh, GaussPoint, int);
 
 
 /*!
-  \fn void U_GA(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
+  \fn void U_GA(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int InitialStep)
 
   \brief The generalized-alpha algorithm here implemented is analogous
   to the one described in \cite Tran2019e
 
   \param Mesh FEM_Mesh : Variable with the nodal information
   \param GaussPoint MPM_Mesh : Variable with the particle information
+  \param InitialStep
  */
-void U_GA(Mesh, GaussPoint);
+void U_GA(Mesh, GaussPoint, int);
 
 /*!
-  \fn void U_PCE(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
+  \fn void U_PCE(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int InitialStep)
 
   \brief Explicit predictor-corrector gamma = 0.5 and beta = 0.25
  
   \param Mesh FEM_Mesh : Variable with the nodal information
   \param GaussPoint MPM_Mesh : Variable with the particle information
+  \param InitialStep
  */
-void U_PCE(Mesh, GaussPoint);
+void U_PCE(Mesh, GaussPoint, int);
 
 #endif

@@ -1,6 +1,6 @@
 #include "nl-partsol.h"
 
-void U_FE(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
+void U_FE(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int InitialStep)
 {
 
   /*!
@@ -19,7 +19,7 @@ void U_FE(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
   Matrix R_I;
   
 
-  for(int TimeStep = 0 ; TimeStep<NumTimeStep ; TimeStep++ )
+  for(int TimeStep = InitialStep ; TimeStep<NumTimeStep ; TimeStep++ )
     {
 
       print_Status("*************************************************",TimeStep);

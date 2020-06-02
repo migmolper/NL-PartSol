@@ -100,7 +100,7 @@ void WriteVtk_MPM(char * Name_File, GaussPoint MPM_Mesh,
 	P_GP = 0;
       }
     }    
-    fprintf(Vtk_file,"%f ",P_GP/Ndim);
+    fprintf(Vtk_file,"%f \n",P_GP/Ndim);
   }
 
   fprintf(Vtk_file,"SCALARS W float \n");
