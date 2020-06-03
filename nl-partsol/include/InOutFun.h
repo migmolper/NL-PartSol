@@ -31,6 +31,20 @@ int parse(char **, char *, char *);
 */
 void generate_route(char *, char *);
 
+
+/*****************************************************************/
+
+
+/*
+  \fn int get_ResultStep(char * File_Result);
+
+  \brief Read the step of the file
+
+  \param File_Result : Route to the file
+
+*/
+int get_ResultStep(char *);
+
 /*****************************************************************/
 
 /*! 
@@ -324,6 +338,21 @@ void GramsOutputs(char * );
 /*****************************************************************/
 
 /*!
+  \fn void OutputSimulation(GaussPoint Set_Particles,int Numerical_T,double Physical_T,
+  double DeltaT,Event Parameters)
+ 
+  \brief Generate backup copy
+  
+  \param Set_Particles
+  \param Numerical_T
+  \param Physical_T
+  \param DeltaT
+  \param Parameters
+*/
+void OutputSimulation(GaussPoint,int,double,double,Event);
+/*****************************************************************/
+
+/*!
 
   \fn Load * GramsNeumannBC(char * File, int NumNeumannBC, int GPxElement)
   
@@ -365,7 +394,7 @@ Load * GramsBodyForces(char *, int, int);
 
 /*****************************************************************/
 
-void WriteVtk_MPM(char *, GaussPoint, Matrix, int);
+void WriteVtk_MPM(char *, GaussPoint, char *, int, int);
 
 /*****************************************************************/
 
@@ -386,6 +415,19 @@ void WriteVtk_Float_Tensor(char *, Matrix);
 /*****************************************************************/
 
 void WriteGnuplot(Matrix, Matrix, double, double, int, int, char[20]);
+
+/*****************************************************************/
+
+/*!
+\fn GaussPoint restart_Simulation(char * Parameters,char * Restart,Mesh Nodes)
+
+\brief Generate simulation structure from previous results
+
+\param Parameters
+\param Restart
+\param Nodes
+*/
+GaussPoint restart_Simulation(char *,char *,Mesh);
 
 /*****************************************************************/
 #endif

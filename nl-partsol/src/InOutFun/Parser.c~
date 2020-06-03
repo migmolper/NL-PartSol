@@ -1,90 +1,108 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <stddef.h>
-#include <string.h>
-#include <ctype.h>
+#include "nl-partsol.h"
 
-ParserDictionary InitParserDictionary(void){
+/***************************************************************************/
 
-  ParserDictionary Dict;
+int parse(char ** words, char * str, char * delims)
+{
+  /*!
+    Set to zero the number of words 
+  */
+  int n = 0;
   
-  char *hashtag = "#";
-  int ascii_hashtag = (int)*hashtag;
-  char *equal = "=";
-  int ascii_equal = (int)*equal;  
-  char *at = "@";
-  int ascii_at = (int)*at;
-  char *ampersand = "&";
-  int ascii_ampersand = (int)*ampersand;  
-  char *semicolon = ";";
-  int ascii_semicolon = (int)*semicolon;  
-  char *comma = ",";
-  int ascii_comma = (int)*comma; 
-  char *white = " ";
-  int ascii_white = (int)*white;
-
-  int ascii_sep [7] =
-    {ascii_hashtag,
-     ascii_equal,
-     ascii_at,
-     ascii_ampersand,
-     ascii_semicolon,
-     ascii_comma,
-     ascii_white};
-
-  char * KeyWords [14] =
-    {"NumberNodes",
-     "NumberGaussPoints",
-     "ElemType",
-     "DegreeFreedom",
-     "KindOfAnalisys",
-     "U",
-     "U_P",
-     "Sigma_V",
-     "Gravity",
-     "Density",
-     "Materials",
-     "Air",
-     "Water",
-     "Soil"};
-
-  Dict.ascii_sep = ascii_sep;
-  Dict.KeyWords = KeyWords;
+  /*!
+    string pointer 
+  */
+  char * p;
   
-  return Dict;
-}
-
-/*******************************************************/
-
-
-int GetWords(char *line, char *words[], int separator ,int maxwords)
-{  
- 
-  char *p = line;
-  int nwords = 0;    
- 
-
-  while(1)
+  for (p = strtok (str, delims); p; p = strtok (NULL, delims))
     {
-      while( isspace(*p) ){
-	p++;
-      }
-	  
-      if(*p == '\0') return nwords;
-	  
-      words[nwords++] = p;
-	  
-      while( ((int)*p != separator ) &&
-	     (*p != '\0') ){
-	p++;
-      }
-	  
-      if(*p == '\0') return nwords;
-	  
-      *p++ = '\0';
-	  
-      if(nwords >= maxwords)
-	return nwords;
+
+      /*!
+	allocate/copy 
+      */
+      words[n++] = strdup (p);
+    
+      /*!
+	limit reached - realloc/break
+      */    
+      if (n == MAXW)
+	{ 
+	  fprintf (stderr, "warning: MAXW reached.\n");
+	  break;
+	}
+    
     }
+  
+  return n;
 }
 
+/***************************************************************************/
+
+
+void generate_route(char * Route_Nodes, char * Name_File)
+{
+
+  char * Name_File_cpy = malloc(strlen(Name_File));
+  int Num_words_route;
+  char * Name_Parse[MAXW] = {NULL};
+
+  /*!
+    Copy the file name to avoid lost data 
+  */
+  strcpy(Name_File_cpy, Name_File);  
+
+#ifdef linux
+  Num_words_route = parse(Name_Parse,Name_File_cpy,"(/)") - 1;
+  strcat(Route_Nodes,"./");
+  for(int i = 0 ; i<Num_words_route ; i++)
+    {
+      strcat(Route_Nodes, Name_Parse[i]);
+      strcat(Route_Nodes,"/");
+    }
+#endif
+
+#ifdef _WIN32 
+  strcpy(Name_File_cpy, Name_File);
+  Num_words_route = parse(Name_Parse,Name_File_cpy,"\\");
+  for(int i = 0 ; i<Num_words_route-1 ; i++)
+    {
+      strcat(Route_Nodes, Name_Parse[i]);
+      strcat(Route_Nodes, "\\");
+    }
+#endif 
+
+  /*!
+    Free auxiliar table 
+  */
+  free(Name_File_cpy);
+
+}
+
+/***************************************************************************/
+
+int get_ResultStep(char * File_Result)
+{
+  char File_Result_Copy[80];
+  char * Parse_Line_1[MAXW] = {NULL};
+  char * Parse_Line_2[MAXW] = {NULL};
+  int n_words;
+  int step;
+  
+  strcpy(File_Result_Copy,File_Result);
+
+#ifdef linux
+  n_words = parse(Parse_Line_1, File_Result_Copy, "_\n");
+  n_words = parse(Parse_Line_2, Parse_Line_1[n_words-1], ".\n");
+#endif
+
+#ifdef _WIN32
+  n_words = parse(Parse_Line_1, File_Result_Copy, "_\r\n");
+  n_words = parse(Parse_Line_2, Parse_Line_1[n_words-1], ".\r\n");
+#endif
+
+  step = atoi(Parse_Line_2[0]) + 100;
+
+  return step;
+}
+
+/***************************************************************************/

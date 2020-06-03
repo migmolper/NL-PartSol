@@ -1,12 +1,7 @@
 #include "nl-partsol.h"
 
-void U_GA(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
+void U_GA(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int InitialStep)
 {
-
-  /*!
-    Some auxiliar variables for the outputs
-  */
-  Matrix List_Fields;
 
   /*!
     Time step 
@@ -55,7 +50,7 @@ void U_GA(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
   puts(" \t DONE !!! \n");
 
 
-  for(TimeStep = 0 ; TimeStep<NumTimeStep ; TimeStep++ )
+  for(TimeStep = InitialStep ; TimeStep<NumTimeStep ; TimeStep++ )
     {
 
       print_Status("*************************************************",TimeStep);
@@ -77,8 +72,8 @@ void U_GA(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
 	  /*!
 	    Print GPs results
 	  */
-	  WriteVtk_MPM("MPM_VALUES",MPM_Mesh,List_Fields,
-		       (int)TimeStep/ResultsTimeStep);
+	  WriteVtk_MPM("MPM_VALUES",MPM_Mesh,"ALL",
+		       (int)TimeStep/ResultsTimeStep,ResultsTimeStep);
 	}
       
       print_Status("*************************************************",TimeStep);

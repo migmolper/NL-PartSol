@@ -161,7 +161,7 @@ static void Eigensoftening(int p, Fields Phi, Material MatPro, ChainPtr * Beps)
   Matrix Mass = Phi.mass;
   Matrix Stress = Phi.Stress;
   Matrix Strain = Phi.Strain;
-  Matrix StrainF = Phi.StrainF;
+  Matrix Strain_If = Phi.Strain_If;
   
   /* Define auxiliar variable */
   Tensor Stress_p, Stress_q, EV_Stress_p, EV_Stress_q; 
@@ -186,7 +186,7 @@ static void Eigensoftening(int p, Fields Phi, Material MatPro, ChainPtr * Beps)
   Wc_p = MatPro.Wc;
     
   /* Only for intact particles */
-  if((ji.nV[p] == 0.0) && (StrainF.nV[p] == 0.0))
+  if((ji.nV[p] == 0.0) && (Strain_If.nV[p] == 0.0))
     {
 
       /*!
@@ -279,7 +279,7 @@ static void Eigensoftening(int p, Fields Phi, Material MatPro, ChainPtr * Beps)
 	      /*!
 		Strain during fracture 
 	      */
-	      StrainF.nV[p] = EV_Strain_p.n[0];
+	      Strain_If.nV[p] = EV_Strain_p.n[0];
 
 	      /* Free eigenvalues */
 	      free_Tensor(EV_Strain_p);	    	  
@@ -292,7 +292,7 @@ static void Eigensoftening(int p, Fields Phi, Material MatPro, ChainPtr * Beps)
   /*!
     Compute the damage parameter if the particle is damaged 
   */
-  else if((ji.nV[p] != 1.0) && (StrainF.nV[p] > 0 ))
+  else if((ji.nV[p] != 1.0) && (Strain_If.nV[p] > 0 ))
     {
 
       Strain_p = memory_to_Tensor(Strain.nM[p], 2);
@@ -301,7 +301,7 @@ static void Eigensoftening(int p, Fields Phi, Material MatPro, ChainPtr * Beps)
       /*!
 	Fracture criterium 
       */
-      ji_p = (EV_Strain_p.n[0]-StrainF.nV[p])*heps_p/Wc_p;
+      ji_p = (EV_Strain_p.n[0]-Strain_If.nV[p])*heps_p/Wc_p;
       ji.nV[p] = DMIN(1,DMAX(ji_p,ji.nV[p]));       
 
       /* Free eigenvalues */

@@ -1,12 +1,7 @@
 #include "nl-partsol.h"
 
-void U_FE(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
+void U_FE(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int InitialStep)
 {
-
-  /*!
-    Some auxiliar variables for the outputs 
-  */
-  Matrix List_Fields;
 
   /*!
     Integer variables 
@@ -24,7 +19,7 @@ void U_FE(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
   Matrix R_I;
   
 
-  for(int TimeStep = 0 ; TimeStep<NumTimeStep ; TimeStep++ )
+  for(int TimeStep = InitialStep ; TimeStep<NumTimeStep ; TimeStep++ )
     {
 
       print_Status("*************************************************",TimeStep);
@@ -48,8 +43,8 @@ void U_FE(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
 	  /*!
 	    Print particle results 
 	  */
-	  WriteVtk_MPM("MPM_VALUES",MPM_Mesh,List_Fields,
-		       (int)TimeStep/ResultsTimeStep);
+	  WriteVtk_MPM("MPM_VALUES",MPM_Mesh,"ALL",
+		       (int)TimeStep/ResultsTimeStep,ResultsTimeStep);
 	}
 
       print_Status("*************************************************",TimeStep);

@@ -18,6 +18,7 @@
 /******** Name of inputs files *********/
 /***************************************/
 char * SimulationFile;
+char * RestartFile;
 char * FEM_MeshFileName;
 char * MPM_MeshFileName;
 char OutputDir[MAXC];

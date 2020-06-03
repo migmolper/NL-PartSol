@@ -12,7 +12,6 @@
 /* (0)     (1)  */
 
 void Q4_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
-
 {
   /* Variables for the GP coordinates */
   int Ndim = NumberDimensions;
@@ -34,6 +33,9 @@ void Q4_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
   /* Loop over the particles to initialize them */
   for(int p = 0 ; p<Np ; p++){
 
+    /* Asign the number of nodes */
+    MPM_Mesh.NumberNodes[p] = 4;
+    
     /* Get the global and local coodinates of the particle */ 
     X_p = get_RowFrom(Ndim,1,MPM_Mesh.Phi.x_GC.nM[p]);
     Xi_p = get_RowFrom(Ndim,1,MPM_Mesh.Phi.x_EC.nM[p]);
@@ -46,13 +48,13 @@ void Q4_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
       
       /* 5º Check out if the GP is in the Element */
       if(InOut_Element(X_p, Elem_p, FEM_Mesh.Coordinates)){
-	
+
 	/* With the element connectivity get the node close to the particle */
 	MPM_Mesh.I0[p] = get_closest_node_to(X_p,Elem_p,FEM_Mesh.Coordinates);
-
+	
 	/* Asign connectivity */
 	MPM_Mesh.ListNodes[p] = CopyChain(Elem_p);
-
+	
 	/* Active those nodes that interact with the particle */
 	asign_particle_to_nodes(p, MPM_Mesh.ListNodes[p], FEM_Mesh);
 	
