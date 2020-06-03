@@ -105,7 +105,10 @@ GaussPoint restart_Simulation(char * File_Parameters,
   
   /* Read particle mesh properties */
   if(Is_GramsSolid2D)
-    {    
+    {
+      puts("*************************************************");
+      printf(" \t %s \n","* Read particles properties");
+      
       /* Read the number of particles */
       Np = restart_ReadVtk_Points(File_Restart);
       Set_Particles.NumGP = Np;
@@ -190,43 +193,43 @@ GaussPoint restart_Simulation(char * File_Parameters,
 static Fields restart_Fields(char * File_Restart,int Np)
 {
   Fields Phi;
-  
-  /* Density field */
-  Phi.rho = restart_ReadVtk_Scalars(File_Restart,"DENSITY",Np);
-  
-  /* Mass field */
-  Phi.mass = restart_ReadVtk_Scalars(File_Restart,"MASS",Np);
-  
-  /* Deformation Energy */
-  Phi.W = restart_ReadVtk_Scalars(File_Restart,"W",Np);
-
-  /* Strain during crack */
-  Phi.Strain_If = restart_ReadVtk_Scalars(File_Restart,"STRAIN_IF",Np);
-  
-  /* Damage parameter (Fracture) */
-  Phi.ji = restart_ReadVtk_Scalars(File_Restart,"Ji",Np);
 
   /* Position in global coordinates */
   Phi.x_GC = restart_ReadVtk_Vectors(File_Restart,"X_GC",Np);
   
   /* Position in element coordiantes */
   Phi.x_EC = restart_ReadVtk_Vectors(File_Restart,"X_EC",Np);
- 
+
   /* Displacement field */
   Phi.dis = restart_ReadVtk_Vectors(File_Restart,"DISPLACEMENT",Np);
   
   /* Velocity field */
   Phi.vel = restart_ReadVtk_Vectors(File_Restart,"VELOCITY",Np);
-    
+
   /* Acceleration field */
   Phi.acc = restart_ReadVtk_Vectors(File_Restart,"ACCELERATION",Np);
-  
-  /* Stress field */
-  Phi.Stress = restart_ReadVtk_Tensors(File_Restart,"STRESS",Np);
-  
+
   /* Strain field */
   Phi.Strain = restart_ReadVtk_Tensors(File_Restart,"STRAIN",Np);
+
+  /* Strain during crack */
+  Phi.Strain_If = restart_ReadVtk_Scalars(File_Restart,"STRAIN_IF",Np);
+
+  /* Stress field */
+  Phi.Stress = restart_ReadVtk_Tensors(File_Restart,"STRESS",Np);
+
+  /* Deformation Energy */
+  Phi.W = restart_ReadVtk_Scalars(File_Restart,"W",Np);
   
+  /* Damage parameter (Fracture) */
+  Phi.ji = restart_ReadVtk_Scalars(File_Restart,"Ji",Np);
+
+  /* Mass field */
+  Phi.mass = restart_ReadVtk_Scalars(File_Restart,"MASS",Np);
+  
+  /* Density field */
+  Phi.rho = restart_ReadVtk_Scalars(File_Restart,"DENSITY",Np);   
+           
   return Phi;
 }
 
@@ -331,12 +334,13 @@ static Matrix restart_ReadVtk_Scalars(char * File,char * Parameter,int Np)
 	}
       
     }
-  
-  /* Read scalar variable */
-  if(Is_SCALAR)
-    {
-      Scalar = MatAllocZ(Np,1);
 
+  /* Allocate variable */
+  Scalar = MatAllocZ(Np,1);
+  
+  /* Fill with the previous data */
+  if(Is_SCALAR)
+    {      
       for(int p = -1 ; p<Np ; p++)
 	{
 
@@ -397,12 +401,13 @@ static int * restart_ReadVtk_I0(char * File,int Np)
 	}
       
     }
+
+  /* Allocate variable */
+  I0 = (int *)Allocate_ArrayZ(Np,sizeof(int));
   
-  /* Read scalar variable */
+  /* Fill with previous data */
   if(Is_I0)
     {
-      I0 = (int *)Allocate_ArrayZ(Np,sizeof(int));
-
       for(int p = -1 ; p<Np ; p++)
 	{
 
@@ -462,12 +467,13 @@ static Matrix restart_ReadVtk_Vectors(char * File,char * Parameter,int Np)
 	}
       
     }
+
+  /* Allocate variable */
+  Vector_Field = MatAllocZ(Np,Ndim);
     
-  /* Generate the matrix and fill it */
+  /* Fill with previous data */
   if(Is_Vector)
     {
-      /* Allocate coordinates */
-      Vector_Field = MatAllocZ(Np,Ndim);
 
       /* Fill coordinates matrix */
       for(int p = 0 ; p<Np ; p++)
@@ -529,11 +535,12 @@ static Matrix restart_ReadVtk_Tensors(char * File,char * Parameter,int Np)
       
     }
 
-  /* Generate the matrix and fill it */
+  /* Allocate variable */
+  Tensor_Field = MatAllocZ(Np,Ndim*Ndim);
+  
+  /* Fill with prrevious data */
   if(Is_Tensor)
     {
-      /* Allocate coordinates */
-      Tensor_Field = MatAllocZ(Np,Ndim*Ndim);
 
       /* Fill coordinates matrix */
       for(int p = 0 ; p<Np ; p++)

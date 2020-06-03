@@ -44,7 +44,7 @@ void U_FE(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int InitialStep)
 	    Print particle results 
 	  */
 	  WriteVtk_MPM("MPM_VALUES",MPM_Mesh,"ALL",
-		       (int)TimeStep/ResultsTimeStep);
+		       (int)TimeStep/ResultsTimeStep,ResultsTimeStep);
 	}
 
       print_Status("*************************************************",TimeStep);

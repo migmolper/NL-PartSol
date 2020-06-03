@@ -394,7 +394,7 @@ Load * GramsBodyForces(char *, int, int);
 
 /*****************************************************************/
 
-void WriteVtk_MPM(char *, GaussPoint, char *, int);
+void WriteVtk_MPM(char *, GaussPoint, char *, int, int);
 
 /*****************************************************************/
 

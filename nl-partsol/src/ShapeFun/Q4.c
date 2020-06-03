@@ -12,7 +12,6 @@
 /* (0)     (1)  */
 
 void Q4_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
-
 {
   /* Variables for the GP coordinates */
   int Ndim = NumberDimensions;
@@ -34,6 +33,8 @@ void Q4_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
   /* Loop over the particles to initialize them */
   for(int p = 0 ; p<Np ; p++){
 
+    /* Asign the number of nodes */
+    MPM_Mesh.NumberNodes[p] = 4;
     
     /* Get the global and local coodinates of the particle */ 
     X_p = get_RowFrom(Ndim,1,MPM_Mesh.Phi.x_GC.nM[p]);

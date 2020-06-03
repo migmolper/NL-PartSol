@@ -22,18 +22,16 @@ void U_PCE(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int InitialStep)
   Matrix F_I = MatAllocZ(Nnodes,Ndim);
   Matrix R_I;
 
-  printf("%i \n",InitialStep);
   
   for(int TimeStep = InitialStep ; TimeStep<NumTimeStep ; TimeStep++ )
     {
-
       print_Status("*************************************************",TimeStep);
       DeltaTimeStep = DeltaT_CFL(MPM_Mesh, FEM_Mesh.DeltaX);
       print_step(TimeStep,DeltaTimeStep);
 
       print_Status("*************************************************",TimeStep);
       print_Status("First step : Predictor stage ... WORKING",TimeStep);
-      M_I = compute_NodalMass(MPM_Mesh, FEM_Mesh);
+      M_I = compute_NodalMass(MPM_Mesh, FEM_Mesh);      
       V_I = compute_VelocityPredictor(MPM_Mesh,FEM_Mesh,V_I, M_I,
 				      Params, DeltaTimeStep);
       imposse_NodalVelocity(FEM_Mesh,V_I,TimeStep);
@@ -61,13 +59,11 @@ void U_PCE(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int InitialStep)
 	  /*!
 	    Print Nodal values after appling the BCCs
 	  */
-	  WriteVtk_FEM("Mesh",FEM_Mesh,R_I,
-		       (int)TimeStep/ResultsTimeStep);
+	  WriteVtk_FEM("Mesh",FEM_Mesh,R_I,TimeStep);
 	  /*!
 	    Print particle results 
 	  */
-	  WriteVtk_MPM("MPM_VALUES",MPM_Mesh,"ALL",
-		       (int)TimeStep/ResultsTimeStep);
+	  WriteVtk_MPM("MPM_VALUES",MPM_Mesh,"ALL",TimeStep,ResultsTimeStep);
 	}
 
       print_Status("*************************************************",TimeStep);

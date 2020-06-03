@@ -86,13 +86,14 @@ int main(int argc, char * argv[])
   /******************* DEFINE GAUSS-POINT MESH *************************/
   /*********************************************************************/
   puts("*************************************************");
-  puts("Generating MPM mesh ...");
   if(Is_New_Simulation)
     {
+      puts("Generating new MPM simulation ...");
       MPM_Mesh = GramsSolid2D(SimulationFile,FEM_Mesh);
     }
   if(Is_Restart_Simulation)
     {
+      puts("Restarting old MPM simulation ...");
       MPM_Mesh = restart_Simulation(SimulationFile,RestartFile,FEM_Mesh);
     }
     

@@ -1,7 +1,8 @@
 #include "nl-partsol.h"
 
 void WriteVtk_MPM(char * Name_File, GaussPoint MPM_Mesh,
-		  char * List_Fields, int TimeStep_i){
+		  char * List_Fields, int TimeStep_i, int ResultsTimeStep)
+{
 
   /* Number of dimensions */
   int Ndim = NumberDimensions;
@@ -16,7 +17,7 @@ void WriteVtk_MPM(char * Name_File, GaussPoint MPM_Mesh,
 
   /* Header */
   fprintf(Vtk_file,"# vtk DataFile Version 3.0 \n");
-  fprintf(Vtk_file,"vtk output \n");
+  fprintf(Vtk_file,"Results time step %i \n",ResultsTimeStep);
   fprintf(Vtk_file,"ASCII \n");
   fprintf(Vtk_file,"DATASET UNSTRUCTURED_GRID \n");
 
@@ -133,6 +134,19 @@ void WriteVtk_MPM(char * Name_File, GaussPoint MPM_Mesh,
     for(int j = 0 ; j<3 ; j++){
       if(j<Ndim){
 	fprintf(Vtk_file,"%f ",MPM_Mesh.Phi.vel.nM[i][j]);
+      }
+      else{
+	fprintf(Vtk_file,"%f ",0.0);
+      }
+    }
+    fprintf(Vtk_file,"\n");
+  }
+
+  fprintf(Vtk_file,"VECTORS ACCELERATION float \n");
+  for(int i =  0 ; i<MPM_Mesh.NumGP ; i++){
+    for(int j = 0 ; j<3 ; j++){
+      if(j<Ndim){
+	fprintf(Vtk_file,"%f ",MPM_Mesh.Phi.acc.nM[i][j]);
       }
       else{
 	fprintf(Vtk_file,"%f ",0.0);
