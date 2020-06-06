@@ -19,7 +19,7 @@ void U_PCE(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int InitialStep)
   */
   Matrix M_I;
   Matrix V_I;
-  Matrix F_I = MatAllocZ(Nnodes,Ndim);
+  Matrix F_I;
   Matrix R_I;
 
   
