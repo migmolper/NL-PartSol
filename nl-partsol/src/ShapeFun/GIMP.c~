@@ -1,4 +1,4 @@
-#include "grams.h"
+#include "nl-partsol.h"
 
 /**************************************************/
 /* Uniform Geralized Interpolation Material Point */
@@ -25,8 +25,8 @@ void uGIMP_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh){
   int Ndim = NumberDimensions;
 
   /* Variables for the GP coordinates */  
-  Matrix X_GC_GP = MatAssign(Ndim,1,NAN,NULL,NULL);
-  Matrix X_EC_GP = MatAssign(Ndim,1,NAN,NULL,NULL);
+  Matrix X_GC_GP = get_RowFrom(Ndim,1,NULL);
+  Matrix X_EC_GP = get_RowFrom(Ndim,1,NULL);
 
   Matrix lp; /* Particle voxel */
 
@@ -79,14 +79,8 @@ void uGIMP_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh){
 
     for(int j = 0 ; j<FEM_Mesh.NumElemMesh ; j++){
 
-      /* 3º Connectivity of the Poligon */
-      NumVertex = FEM_Mesh.NumNodesElem[j];
-      Poligon_Connectivity =
-	Set_to_Pointer(FEM_Mesh.Connectivity[j],NumVertex);
-
       /* 4º Get the coordinates of the element */
-      Poligon_Coordinates = ElemCoordinates(Poligon_Connectivity,
-	FEM_Mesh.Coordinates);
+      Poligon_Coordinates = ElemCoordinates(FEM_Mesh.Connectivity[j],FEM_Mesh.Coordinates);
       
       /* 5º Check out if the GP is in the Element */
       if(InOut_Poligon(X_GC_GP,Poligon_Coordinates) == 1){
@@ -587,7 +581,7 @@ ChainPtr uGIMP_Tributary_Nodes(Matrix X_EC_GP,
     printf("%s : (%f;%f) \n",
 	   "Natural coordinates of the GP",
 	   X_EC_GP.nV[0],X_EC_GP.nV[1]);
-    exit(0);
+    exit(EXIT_FAILURE);
   }
  
   return Triburary_Nodes;

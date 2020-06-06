@@ -62,12 +62,6 @@ GramsMaterials (Particles=route.txt) {
   bool Is_ft;
   bool Is_heps;
   bool Is_Wc;
-
-  /* Initial message */  
-  puts("*************************************************");
-  printf(" \t %s : \n\t %s \n",
-	 "* Begin of materials properties in",
-	 Name_File);
   
   /* Open and check file */
   Sim_dat = fopen(Name_File,"r");  
@@ -413,8 +407,9 @@ GramsMaterials (Particles=route.txt) {
 
   /* Close .dat file */
   /* Final message */
-  printf("\t * End of read data file !!! \n");
   fclose(Sim_dat);
+
+  printf("\t * End of read data file !!! \n");
 
   return Mat_Table;
 }

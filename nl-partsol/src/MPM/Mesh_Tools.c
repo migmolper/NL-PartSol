@@ -356,7 +356,7 @@ void get_particle_tributary_nodes(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int p){
     IdxElement = search_particle_in(p,X_p,Elements_Near_I0,FEM_Mesh);
     if(IdxElement != -999){
       /* Free previous list of tributary nodes to the particle */
-      free_Set(MPM_Mesh.ListNodes[p]);
+      free_Set(&MPM_Mesh.ListNodes[p]);
       MPM_Mesh.ListNodes[p] = NULL;    
       /* Asign new connectivity */
       MPM_Mesh.ListNodes[p] = CopyChain(FEM_Mesh.Connectivity[IdxElement]);
@@ -388,7 +388,7 @@ void get_particle_tributary_nodes(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int p){
     /* Compute local coordinates of the particle in this element */
     Q4_X_to_Xi(Xi_p,X_p,CoordElement);
     /* Free previous list of tributary nodes to the particle */
-    free_Set(MPM_Mesh.ListNodes[p]);
+    free_Set(&MPM_Mesh.ListNodes[p]);
     MPM_Mesh.ListNodes[p] = NULL;
     /* Asign new connectivity */
     MPM_Mesh.ListNodes[p] = uGIMP_Tributary_Nodes(Xi_p,IdxElement,lp,FEM_Mesh);  
@@ -404,7 +404,7 @@ void get_particle_tributary_nodes(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int p){
     Matrix Beta_p = get_RowFrom(Ndim,1,MPM_Mesh.Beta.nM[p]);
 
     /* Free previous list of tributary nodes to the particle */
-    free_Set(MPM_Mesh.ListNodes[p]);
+    free_Set(&MPM_Mesh.ListNodes[p]);
     MPM_Mesh.ListNodes[p] = NULL;
     /* Calculate the new connectivity with the previous value of beta */
     MPM_Mesh.ListNodes[p] = LME_Tributary_Nodes(X_p,Beta_p,I0,FEM_Mesh);
@@ -554,9 +554,8 @@ void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
   for(int i = 0 ; i<FEM_Mesh.NumNodesMesh ; i++){
     FEM_Mesh.NumParticles[i] = 0;
   }
-  for(int i = 0 ; i<FEM_Mesh.NumElemMesh ; i++){
-    free_Set(FEM_Mesh.I_particles[i]);
-    FEM_Mesh.I_particles[i] = NULL;
+  for(int i = 0 ; i<FEM_Mesh.NumNodesMesh ; i++){
+    free_Set(&FEM_Mesh.I_particles[i]);
   }
 
   /* Loop over the particles */

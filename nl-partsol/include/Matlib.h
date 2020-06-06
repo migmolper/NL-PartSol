@@ -98,7 +98,7 @@ void get_SVD_Of(Matrix A, Matrix W, Matrix V);
 ChainPtr Pointer_to_Set(int *, int);
 int * Set_to_Pointer(ChainPtr, int);
 ChainPtr RangeChain(int, int);
-void free_Set(ChainPtr);
+void free_Set(ChainPtr *);
 ChainPtr * allocate_SetTable(int);
 void free_SetTable(ChainPtr *, int);
 bool is_in_Set(ChainPtr, int);

@@ -216,7 +216,7 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
 	}
       }
       /* Free data */
-      free_Set(MPM_GID_Mesh.Connectivity[i]);
+      free_Set(&MPM_GID_Mesh.Connectivity[i]);
       /* Get the area (Poligon_Centroid.n) 
 	 and the position of the centroid (Poligon_Centroid.nV) */
       Area_Element = Area_Poligon(Poligon_Coordinates);

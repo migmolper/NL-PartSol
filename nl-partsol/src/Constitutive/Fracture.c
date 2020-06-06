@@ -417,32 +417,27 @@ void compute_particle_Damage(int p, GaussPoint MPM_Mesh, Mesh FEM_Mesh)
   /* Select the eigenerosion algorithm */
   if(MatProp.Eigenerosion)
     {
-
-      /* Free the previous list and set to NULL */
-      free_Set(MPM_Mesh.Beps[p]);
-      MPM_Mesh.Beps[p] = NULL;
-
       /* Update Beps of each particle p */
       ComputeBeps(p, MPM_Mesh, FEM_Mesh);
-
+      
       /* Update the damage variable of the particle */
       Eigenerosion(p,MPM_Mesh.Phi,MatProp,Beps,DeltaX);
+
+      /* Free the previous list and set to NULL */
+      free_Set(&MPM_Mesh.Beps[p]);
     }
 
   /* Select the eigensoftening algorithm */
   if(MatProp.Eigensoftening)
     {
-
-      /* Free the previous list and set to NULL */
-      free_Set(MPM_Mesh.Beps[p]);
-      MPM_Mesh.Beps[p] = NULL;
-
       /* Update Beps of each particle p */
       ComputeBeps(p, MPM_Mesh, FEM_Mesh);
 
       /* Update the damage variable of the particle */
       Eigensoftening(p,MPM_Mesh.Phi,MatProp,Beps);
-   
+
+      /* Free the previous list and set to NULL */
+      free_Set(&MPM_Mesh.Beps[p]);   
     }
 
   /* If the particle is damaged set the stress tensor null */      

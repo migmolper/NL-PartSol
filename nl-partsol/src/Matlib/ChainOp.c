@@ -69,10 +69,10 @@ int * Set_to_Pointer(ChainPtr A_chain, int NumNodes){
 
 /*********************************************************************/
 
-void free_Set(ChainPtr A){
+void free_Set(ChainPtr * A){
 
   /* Loop index */
-  ChainPtr INode = A;
+  ChainPtr INode = (*A);
   ChainPtr NextNode = NULL;
   
   while (INode != NULL){
@@ -80,7 +80,27 @@ void free_Set(ChainPtr A){
     free(INode);
     INode = NextNode;    
    }
+  
+  (*A) = NULL;
 }
+
+/* void free_Set(struct Node** head_ref) */
+/* { */
+/*   /\* deref head_ref to get the real head *\/ */
+/*   struct Node* current = *head_ref; */
+/*   struct Node* next; */
+  
+/*   while (current != NULL) */
+/*     { */
+/*       next = current->next; */
+/*       free(current); */
+/*       current = next; */
+/*     } */
+    
+/*   /\* deref head_ref to affect the real head back */
+/*      in the caller. *\/ */
+/*   *head_ref = NULL; */
+/* } */
 
 /*********************************************************************/
 
@@ -111,7 +131,7 @@ void free_SetTable(ChainPtr * A, int SizeTable){
 
   /* Loop in the table to free each set */
   for(int i = 0 ; i<SizeTable ; i++){
-    free_Set(A[i]);
+    free_Set(&A[i]);
   }
 
   /* free the table */
