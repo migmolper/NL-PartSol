@@ -35,7 +35,7 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
   int NumVertex;
 
   double Area_Element, A_p, th_p, m_p, rho_p;
-  int GPxElement = 3;
+  int GPxElement = 4;
   int i_p;
 
   /* Set to false check variables */

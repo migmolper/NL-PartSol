@@ -445,6 +445,9 @@ ChainPtr LME_Tributary_Nodes(Matrix X_GP, Matrix Beta, int I0, Mesh FEM_Mesh){
   int NumNodes0;
   int Node0;
 
+  /* Counter */
+  int NumTributaryNodes = 0;
+
   /* Get the search radius */
   double Ra = sqrt(-log(TOL_lambda)/Beta.nV[0]);
 
@@ -467,12 +470,21 @@ ChainPtr LME_Tributary_Nodes(Matrix X_GP, Matrix Beta, int I0, Mesh FEM_Mesh){
     /* If the node is near the GP push in the chain */
     if(Norm_Mat(Distance,2) <= Ra){
       push_to_Set(&Triburary_Nodes,Node0);
+      NumTributaryNodes++;
     }
 
     /* Free memory of the distrance vector */
     FreeMat(Distance);
 
   }
+
+  /* If the Triburary_Nodes chain is empty assign al the node */
+  if(NumTributaryNodes == 0)
+    {
+      for(int i = 0 ; i<NumNodes0 ; i++){
+	push_to_Set(&Triburary_Nodes,Array_Nodes0[i]);
+      }
+    }
   
   /* Free memory */
   free(Array_Nodes0);
