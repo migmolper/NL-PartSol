@@ -478,12 +478,17 @@ ChainPtr LME_Tributary_Nodes(Matrix X_GP, Matrix Beta, int I0, Mesh FEM_Mesh){
 
   }
 
-  /* If the Triburary_Nodes chain is empty assign al the node */
-  if(NumTributaryNodes == 0)
+  /* If the Triburary_Nodes chain lenght is less than 3 assign al the node */
+  if(NumTributaryNodes < Ndim + 1)
     {
-      for(int i = 0 ; i<NumNodes0 ; i++){
-	push_to_Set(&Triburary_Nodes,Array_Nodes0[i]);
-      }
+      for(int i = 0 ; i<NumNodes0 ; i++)
+	{
+	  Node0 = Array_Nodes0[i];
+	  if(!is_in_Set(Triburary_Nodes,Node0))
+	    {
+	      push_to_Set(&Triburary_Nodes,Node0);
+	    }
+	}
     }
   
   /* Free memory */
