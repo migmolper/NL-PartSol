@@ -67,8 +67,8 @@ void LME_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
   /* Distance from GP to the nodes */
   Matrix Delta_Xip; 
 
-  /* Initialize Beta */
-  LME_Initialize_Beta(MPM_Mesh.Beta, FEM_Mesh.DeltaX, Np);
+  /* /\* Initialize Beta *\/ */
+  /* LME_Initialize_Beta(MPM_Mesh.Beta, FEM_Mesh.DeltaX, Np); */
 
   /* Loop over the particle mesh */
   for(int p = 0 ; p<Np ; p++){
@@ -89,6 +89,13 @@ void LME_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 
 	/* With the element connectivity get the node close to the particle */
 	I_p = get_closest_node_to(X_p,Elem_p,FEM_Mesh.Coordinates);
+
+	/* Calculate distance from particle to each node in the neibourhood */
+	MPM_Mesh.ListNodes[p] = CopyChain(Elem_p);
+	Delta_Xip = get_set_Coordinates(MPM_Mesh.ListNodes[p],X_p,FEM_Mesh.Coordinates);
+
+	/* Initialize Beta */
+	Beta_p = LME_Beta(Beta_p, Delta_Xip, gamma_LME);
 
 	/* Get the initial connectivity of the particle */
 	MPM_Mesh.ListNodes[p] = LME_Tributary_Nodes(X_p,Beta_p,I_p,FEM_Mesh);
