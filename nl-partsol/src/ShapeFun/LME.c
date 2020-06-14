@@ -25,24 +25,6 @@
   - LME_Tributary_Nodes
 */
 
-
-/****************************************************************************/
-
-void LME_Initialize_Beta(Matrix Beta, double DeltaX, int Np)
-/*!
-  Function to get a initial value of Beta
-*/
-{
-  int Ndim = NumberDimensions;
-  
-  for(int p = 0 ; p<Np ; p++){
-    for(int i = 0 ; i<Ndim ; i++){
-      Beta.nM[p][i] = gamma_LME/(DeltaX*DeltaX);
-    }
-  }
-  
-}
-
 /****************************************************************************/
 
 void LME_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
@@ -66,9 +48,6 @@ void LME_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 
   /* Distance from GP to the nodes */
   Matrix Delta_Xip; 
-
-  /* /\* Initialize Beta *\/ */
-  /* LME_Initialize_Beta(MPM_Mesh.Beta, FEM_Mesh.DeltaX, Np); */
 
   /* Loop over the particle mesh */
   for(int p = 0 ; p<Np ; p++){

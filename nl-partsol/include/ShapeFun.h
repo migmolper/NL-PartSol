@@ -42,13 +42,11 @@ double uGIMP_Sip(double, double, double);
 double uGIMP_dSip(double, double, double);
 Matrix uGIMP_N(Matrix, Matrix, double);
 Matrix uGIMP_dN(Matrix, Matrix, double);
-ChainPtr uGIMP_Tributary_Nodes(Matrix, int,
-			       Matrix, Mesh);
+ChainPtr uGIMP_Tributary_Nodes(Matrix, int,Matrix, Mesh);
 
 /*******************************************************/
 
 /* LME shape functions */
-void LME_Initialize_Beta(Matrix, double, int);
 void LME_Initialize(GaussPoint, Mesh);
 Matrix LME_Beta(Matrix, Matrix, double);
 Matrix LME_lambda_NR(Matrix, Matrix, Matrix);
