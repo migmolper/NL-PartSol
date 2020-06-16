@@ -20,14 +20,15 @@ double DeltaT_CFL(GaussPoint MPM_Mesh, double h)
     }
   
   /*!
-    Get the maximum wave speed 
+    Get the maximum wave speed
   */
   for(int i = 0 ; i<MPM_Mesh.NumGP ; i++)
     {
       for(int j = 0 ; j<Ndim ; j++)
-	{
-	  C[j] = MAXVAL(C[j],CEL_MAX+MPM_Mesh.Phi.vel.nM[i][j]);
-	}
+  	{
+  	  /* C[j] = MAXVAL(C[j],CEL_MAX+MPM_Mesh.Phi.vel.nM[i][j]); */
+	  C[j] = MAXVAL(C[j],CEL_MAX);
+  	}
     }
 
   /*! 
