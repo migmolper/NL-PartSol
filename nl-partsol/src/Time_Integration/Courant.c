@@ -14,7 +14,7 @@ double DeltaT_CFL(GaussPoint MPM_Mesh, double h)
   double C[3] = {0,0,0};
   int Ndim = NumberDimensions;
   int Nmat = MPM_Mesh.NumberMaterials;
-  bool DynamicTimeStep = true;
+  bool DynamicTimeStep = false;
 
   /*
     Get the maximum material celerity
