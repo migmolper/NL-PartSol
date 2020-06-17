@@ -222,7 +222,7 @@ static Fields restart_Fields(char * File_Restart,int Np)
   Phi.W = restart_ReadVtk_Scalars(File_Restart,"W",Np);
   
   /* Damage parameter (Fracture) */
-  Phi.ji = restart_ReadVtk_Scalars(File_Restart,"Ji",Np);
+  Phi.chi = restart_ReadVtk_Scalars(File_Restart,"Chi",Np);
 
   /* Mass field */
   Phi.mass = restart_ReadVtk_Scalars(File_Restart,"MASS",Np);

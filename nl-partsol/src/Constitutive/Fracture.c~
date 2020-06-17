@@ -156,6 +156,7 @@ static void Eigenerosion(int p, Fields Phi, Material MatPro,
 static void Eigensoftening(int p, Fields Phi, Material MatPro, ChainPtr * Beps)
 {
 
+  int Ndim = NumberDimensions;
   /* Read the required fields */
   Matrix ji = Phi.ji;
   Matrix Mass = Phi.mass;
@@ -292,7 +293,7 @@ static void Eigensoftening(int p, Fields Phi, Material MatPro, ChainPtr * Beps)
   /*!
     Compute the damage parameter if the particle is damaged 
   */
-  else if((ji.nV[p] != 1.0) && (Strain_If.nV[p] > 0 ))
+  else if(ji.nV[p] != 1.0)
     {
 
       Strain_p = memory_to_Tensor(Strain.nM[p], 2);
@@ -302,11 +303,30 @@ static void Eigensoftening(int p, Fields Phi, Material MatPro, ChainPtr * Beps)
 	Fracture criterium 
       */
       ji_p = (EV_Strain_p.n[0]-Strain_If.nV[p])*heps_p/Wc_p;
-      ji.nV[p] = DMIN(1,DMAX(ji_p,ji.nV[p]));       
+      ji.nV[p] = DMIN(1,DMAX(ji_p,ji.nV[p]));
+
+
+      /*!
+	Update stress
+       */
+      for(int i = 0 ; i<Ndim*Ndim ; i++)
+	{
+	  Stress.nM[p][i] = (1-ji.nV[p])*Stress.nM[p][i];
+	}
 
       /* Free eigenvalues */
       free_Tensor(EV_Strain_p);	    	  
       
+    }
+  /*!
+    The particle is broken chi == 1.0
+  */
+  else
+    {
+      for(int i = 0 ; i<Ndim*Ndim ; i++)
+	{
+	  Stress.nM[p][i] = 0.0;
+	}
     }
  
 }
@@ -417,41 +437,27 @@ void compute_particle_Damage(int p, GaussPoint MPM_Mesh, Mesh FEM_Mesh)
   /* Select the eigenerosion algorithm */
   if(MatProp.Eigenerosion)
     {
-
-      /* Free the previous list and set to NULL */
-      free_Set(MPM_Mesh.Beps[p]);
-      MPM_Mesh.Beps[p] = NULL;
-
       /* Update Beps of each particle p */
       ComputeBeps(p, MPM_Mesh, FEM_Mesh);
-
+      
       /* Update the damage variable of the particle */
       Eigenerosion(p,MPM_Mesh.Phi,MatProp,Beps,DeltaX);
+
+      /* Free the previous list and set to NULL */
+      free_Set(&MPM_Mesh.Beps[p]);
     }
 
   /* Select the eigensoftening algorithm */
   if(MatProp.Eigensoftening)
     {
-
-      /* Free the previous list and set to NULL */
-      free_Set(MPM_Mesh.Beps[p]);
-      MPM_Mesh.Beps[p] = NULL;
-
       /* Update Beps of each particle p */
       ComputeBeps(p, MPM_Mesh, FEM_Mesh);
 
       /* Update the damage variable of the particle */
       Eigensoftening(p,MPM_Mesh.Phi,MatProp,Beps);
-   
-    }
 
-  /* If the particle is damaged set the stress tensor null */      
-  if(MPM_Mesh.Phi.ji.nV[p] == 1.0)
-    {
-      for(int i = 0 ; i<Ndim*Ndim ; i++)
-	{
-	  MPM_Mesh.Phi.Stress.nM[p][i] = 0.0;
-	}
+      /* Free the previous list and set to NULL */
+      free_Set(&MPM_Mesh.Beps[p]);   
     }
   
 }

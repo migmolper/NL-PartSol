@@ -110,10 +110,10 @@ void WriteVtk_MPM(char * Name_File, GaussPoint MPM_Mesh,
     fprintf(Vtk_file,"%f \n",MPM_Mesh.Phi.W.nV[i]); 
   }
 
-  fprintf(Vtk_file,"SCALARS Ji float \n");
+  fprintf(Vtk_file,"SCALARS Chi float \n");
   fprintf(Vtk_file,"LOOKUP_TABLE default \n");
   for(int i =  0 ; i<MPM_Mesh.NumGP ; i++){
-    fprintf(Vtk_file,"%f \n",MPM_Mesh.Phi.ji.nV[i]); 
+    fprintf(Vtk_file,"%f \n",MPM_Mesh.Phi.chi.nV[i]); 
   }
 
   /* float -> integer */

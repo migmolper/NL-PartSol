@@ -225,7 +225,7 @@ typedef struct {
   /*! 
    * Damage parameter (Fracture) 
    */
-  Matrix ji;
+  Matrix chi;
   
 } Fields;
 

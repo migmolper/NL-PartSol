@@ -20,7 +20,7 @@ static void Eigenerosion(int p, Fields Phi, Material MatPro,
 {
 
   /* Read the required fields */
-  Matrix ji = Phi.ji;
+  Matrix chi = Phi.chi;
   Matrix W = Phi.W;
   Matrix Mass = Phi.mass;
   Matrix Rho = Phi.rho;
@@ -45,7 +45,7 @@ static void Eigenerosion(int p, Fields Phi, Material MatPro,
   /*!
     Non broken GP Only traction 
   */ 
-  if((ji.nV[p] < 1) && (EV_Stress_p.n[0]>0))
+  if((chi.nV[p] < 1) && (EV_Stress_p.n[0]>0))
     { 
 
       /*!
@@ -95,7 +95,7 @@ static void Eigenerosion(int p, Fields Phi, Material MatPro,
 	  */
 	  V_p += V_q;
 
-	  if(ji.nV[q] < 1)
+	  if(chi.nV[q] < 1)
 	    {
 	      /*!
 		Get internal work of particle q 
@@ -124,7 +124,7 @@ static void Eigenerosion(int p, Fields Phi, Material MatPro,
       */
       if(G_p > Gf_p)
 	{
-	  ji.nV[p] = 1.0;
+	  chi.nV[p] = 1.0;
 	}
       
     }
@@ -156,8 +156,9 @@ static void Eigenerosion(int p, Fields Phi, Material MatPro,
 static void Eigensoftening(int p, Fields Phi, Material MatPro, ChainPtr * Beps)
 {
 
+  int Ndim = NumberDimensions;
   /* Read the required fields */
-  Matrix ji = Phi.ji;
+  Matrix chi = Phi.chi;
   Matrix Mass = Phi.mass;
   Matrix Stress = Phi.Stress;
   Matrix Strain = Phi.Strain;
@@ -170,7 +171,7 @@ static void Eigensoftening(int p, Fields Phi, Material MatPro, ChainPtr * Beps)
   /* Material properties of the eigensoftening algorithm */
   double ft_p, Wc_p, heps_p;
     
-  double m_p, sum_p, Seps_p, ji_p;
+  double m_p, sum_p, Seps_p, chi_p;
   double m_q;
   int * Beps_p;
   int NumBeps_p;
@@ -186,7 +187,7 @@ static void Eigensoftening(int p, Fields Phi, Material MatPro, ChainPtr * Beps)
   Wc_p = MatPro.Wc;
     
   /* Only for intact particles */
-  if((ji.nV[p] == 0.0) && (Strain_If.nV[p] == 0.0))
+  if((chi.nV[p] == 0.0) && (Strain_If.nV[p] == 0.0))
     {
 
       /*!
@@ -234,7 +235,7 @@ static void Eigensoftening(int p, Fields Phi, Material MatPro, ChainPtr * Beps)
 	      */
 	      q = Beps_p[j];
   
-	      if(ji.nV[q] < 1.0)
+	      if(chi.nV[q] < 1.0)
 		{
 		  /*!
 		    For the current particle get the mass
@@ -292,7 +293,7 @@ static void Eigensoftening(int p, Fields Phi, Material MatPro, ChainPtr * Beps)
   /*!
     Compute the damage parameter if the particle is damaged 
   */
-  else if((ji.nV[p] != 1.0) && (Strain_If.nV[p] > 0 ))
+  else if(chi.nV[p] != 1.0)
     {
 
       Strain_p = memory_to_Tensor(Strain.nM[p], 2);
@@ -301,12 +302,31 @@ static void Eigensoftening(int p, Fields Phi, Material MatPro, ChainPtr * Beps)
       /*!
 	Fracture criterium 
       */
-      ji_p = (EV_Strain_p.n[0]-Strain_If.nV[p])*heps_p/Wc_p;
-      ji.nV[p] = DMIN(1,DMAX(ji_p,ji.nV[p]));       
+      chi_p = (EV_Strain_p.n[0]-Strain_If.nV[p])*heps_p/Wc_p;
+      chi.nV[p] = DMIN(1,DMAX(chi_p,chi.nV[p]));
+
+
+      /*!
+	Update stress
+       */
+      for(int i = 0 ; i<Ndim*Ndim ; i++)
+	{
+	  Stress.nM[p][i] = (1-chi.nV[p])*Stress.nM[p][i];
+	}
 
       /* Free eigenvalues */
       free_Tensor(EV_Strain_p);	    	  
       
+    }
+  /*!
+    The particle is broken chi == 1.0
+  */
+  else
+    {
+      for(int i = 0 ; i<Ndim*Ndim ; i++)
+	{
+	  Stress.nM[p][i] = 0.0;
+	}
     }
  
 }
@@ -438,15 +458,6 @@ void compute_particle_Damage(int p, GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 
       /* Free the previous list and set to NULL */
       free_Set(&MPM_Mesh.Beps[p]);   
-    }
-
-  /* If the particle is damaged set the stress tensor null */      
-  if(MPM_Mesh.Phi.ji.nV[p] == 1.0)
-    {
-      for(int i = 0 ; i<Ndim*Ndim ; i++)
-	{
-	  MPM_Mesh.Phi.Stress.nM[p][i] = 0.0;
-	}
     }
   
 }

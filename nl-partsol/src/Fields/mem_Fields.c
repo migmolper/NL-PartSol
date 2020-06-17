@@ -63,8 +63,8 @@ Fields allocate_Fields(int NumParticles)
   /*!
     Damage parameter (fracture) 
   */
-  Phi.ji = MatAllocZ(NumParticles,1);
-  strcpy(Phi.ji.Info,"Damage parameter GP");
+  Phi.chi = MatAllocZ(NumParticles,1);
+  strcpy(Phi.chi.Info,"Damage parameter GP");
 
   /*!
     Mass 
@@ -98,7 +98,7 @@ void free_Fields(Fields Phi)
   FreeMat(Phi.Strain);
   FreeMat(Phi.Strain_If);
   FreeMat(Phi.W);
-  FreeMat(Phi.ji);
+  FreeMat(Phi.chi);
   
 }
 
