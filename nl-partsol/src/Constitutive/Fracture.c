@@ -237,16 +237,17 @@ static void Eigensoftening(int p, Fields Phi, Material MatPro, ChainPtr * Beps)
 		Get the indedx of each particle q close to p 
 	      */
 	      q = Beps_p[j];
-  
-	      if(chi.nV[q] < 1.0)
+
+	      /*!
+		For the current particle get the volume
+		and first principal stress 
+	      */
+	      m_q = Mass.nV[q];
+	      rho_q = Rho.nV[q];
+	      V_q = m_q/rho_q;
+	      
+	      if(chi.nV[q] > 0.0)
 		{
-		  /*!
-		    For the current particle get the volume
-		    and first principal stress 
-		  */
-		  m_q = Mass.nV[q];
-		  rho_q = Rho.nV[q];
-		  V_q = m_q/rho_q;
 		  Stress_q = memory_to_Tensor(Stress.nM[q], 2);
 		  EV_Stress_q = get_Eigenvalues_Of(Stress_q);
 	    
