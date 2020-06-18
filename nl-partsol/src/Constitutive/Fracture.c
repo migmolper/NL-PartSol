@@ -172,7 +172,7 @@ static void Eigensoftening(int p, Fields Phi, Material MatPro, ChainPtr * Beps)
   /* Material properties of the eigensoftening algorithm */
   double ft_p, Wc_p, heps_p;
     
-  double m_p, rho_p, V_p, sum_p, Seps_p, chi_p;
+  double m_p, rho_p, V_p, sum_p, Stress_eps_p, chi_p, Strain_eps_f_p;
   double m_q, rho_q, V_q;
   int * Beps_p;
   int NumBeps_p;
@@ -272,12 +272,12 @@ static void Eigensoftening(int p, Fields Phi, Material MatPro, ChainPtr * Beps)
 	  /*!
 	    Get the equivalent critical stress 
 	  */
-	  Seps_p = sum_p/V_p;
+	  Stress_eps_p = sum_p/V_p;
 
 	  /*!
 	    Store the principal strain when crack start 
 	  */
-	  if(Seps_p>ft_p)
+	  if(Stress_eps_p>ft_p)
 	    {
 
 	      Strain_p = memory_to_Tensor(Strain.nM[p], 2);
@@ -308,7 +308,8 @@ static void Eigensoftening(int p, Fields Phi, Material MatPro, ChainPtr * Beps)
       /*!
 	Fracture criterium 
       */
-      chi_p = (EV_Strain_p.n[0]-Strain_If.nV[p])*heps_p/Wc_p;
+      Strain_eps_f_p = EV_Strain_p.n[0]-Strain_If.nV[p];
+      chi_p = Strain_eps_f_p*heps_p/Wc_p;
       chi.nV[p] = DMIN(1,DMAX(chi_p,chi.nV[p]));
 
 
