@@ -172,8 +172,8 @@ static void Eigensoftening(int p, Fields Phi, Material MatPro, ChainPtr * Beps)
   /* Material properties of the eigensoftening algorithm */
   double ft_p, Wc_p, heps_p;
     
-  double m_p, rho_p, V_p, sum_p, Stress_eps_p, chi_p, Strain_eps_f_p;
-  double m_q, rho_q, V_q;
+  double m_p, sum_p, Stress_eps_p, chi_p, Strain_eps_f_p;
+  double m_q;
   int * Beps_p;
   int NumBeps_p;
   int q;
@@ -208,8 +208,6 @@ static void Eigensoftening(int p, Fields Phi, Material MatPro, ChainPtr * Beps)
 	    For the current particle get the volume 
 	  */
 	  m_p = Mass.nV[p];
-	  rho_p = Rho.nV[p];
-	  V_p = m_p/rho_p;
 
 	  /*!
 	    For the current particle get first principal stress 
@@ -220,7 +218,7 @@ static void Eigensoftening(int p, Fields Phi, Material MatPro, ChainPtr * Beps)
 	  /*!
 	    Add the first term to the sumation 
 	  */
-	  sum_p = V_p*EV_Stress_p.n[0];
+	  sum_p = m_p*EV_Stress_p.n[0];
 
 	  /*!
 	    Free eigenvalues 
@@ -243,8 +241,6 @@ static void Eigensoftening(int p, Fields Phi, Material MatPro, ChainPtr * Beps)
 		and first principal stress 
 	      */
 	      m_q = Mass.nV[q];
-	      rho_q = Rho.nV[q];
-	      V_q = m_q/rho_q;
 	      
 	      if(chi.nV[q] > 0.0)
 		{
@@ -254,7 +250,7 @@ static void Eigensoftening(int p, Fields Phi, Material MatPro, ChainPtr * Beps)
 		  /*!
 		    Get sum_p 
 		  */
-		  sum_p += V_q*EV_Stress_q.n[0];
+		  sum_p += m_q*EV_Stress_q.n[0];
 
 		  /* Free eigenvalues */
 		  free_Tensor(EV_Stress_q);	    
@@ -263,7 +259,7 @@ static void Eigensoftening(int p, Fields Phi, Material MatPro, ChainPtr * Beps)
 	      /*!
 		Add volumen contribution 
 	      */
-	      V_p += V_q;
+	      m_p += m_q;
 	    }
     
 	  /* Free memory */
@@ -272,7 +268,7 @@ static void Eigensoftening(int p, Fields Phi, Material MatPro, ChainPtr * Beps)
 	  /*!
 	    Get the equivalent critical stress 
 	  */
-	  Stress_eps_p = sum_p/V_p;
+	  Stress_eps_p = sum_p/m_p;
 
 	  /*!
 	    Store the principal strain when crack start 

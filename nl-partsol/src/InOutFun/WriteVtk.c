@@ -10,6 +10,8 @@ void WriteVtk_MPM(char * Name_File, GaussPoint MPM_Mesh,
   FILE * Vtk_file;
   char Name_file_t[80];
   double P_GP; /* Trace of the stress tensor (volumetric) */
+  Tensor Stress_p, EV_Stress_p; 
+  Tensor Strain_p, EV_Strain_p; 
 
   sprintf(Name_file_t,"%s/MPM_%s_%i.vtk",OutputDir,Name_File,TimeStep_i);
   
@@ -184,6 +186,22 @@ void WriteVtk_MPM(char * Name_File, GaussPoint MPM_Mesh,
     fprintf(Vtk_file,"\n");
   }
 
+  fprintf(Vtk_file,"VECTORS STRESS_EV float \n");
+  for(int i =  0 ; i<MPM_Mesh.NumGP ; i++){
+    Stress_p = memory_to_Tensor(MPM_Mesh.Phi.Stress.nM[i], 2);
+    EV_Stress_p = get_Eigenvalues_Of(Stress_p);
+    for(int j = 0 ; j<3 ; j++){
+      if(j<Ndim){
+	fprintf(Vtk_file,"%f ",EV_Stress_p.n[j]);
+      }
+      else{
+	fprintf(Vtk_file,"%f ",0.0);
+      }
+    }
+    fprintf(Vtk_file,"\n");
+    free_Tensor(EV_Stress_p);
+  }
+
   fprintf(Vtk_file,"TENSORS STRAIN float \n");
   for(int i =  0 ; i<MPM_Mesh.NumGP ; i++){
     for(int j = 0 ; j<3 ; j++){
@@ -198,6 +216,22 @@ void WriteVtk_MPM(char * Name_File, GaussPoint MPM_Mesh,
       fprintf(Vtk_file,"\n");
     }
     fprintf(Vtk_file,"\n");
+  }
+
+  fprintf(Vtk_file,"VECTORS STRAIN_EV float \n");
+  for(int i =  0 ; i<MPM_Mesh.NumGP ; i++){
+    Strain_p = memory_to_Tensor(MPM_Mesh.Phi.Strain.nM[i], 2);
+    EV_Strain_p = get_Eigenvalues_Of(Strain_p);
+    for(int j = 0 ; j<3 ; j++){
+      if(j<Ndim){
+	fprintf(Vtk_file,"%f ",EV_Strain_p.n[j]);
+      }
+      else{
+	fprintf(Vtk_file,"%f ",0.0);
+      }
+    }
+    fprintf(Vtk_file,"\n");
+    free_Tensor(EV_Stress_p);
   }
 
   /* Close the file */

@@ -176,15 +176,11 @@ Matrix LME_lambda_NR(Matrix l, Matrix lambda, Matrix Beta)
     r = LME_r(l,p);
     norm_r = Norm_Mat(r,2);
 
-    /* Get the Hessian of log(Z) and update it with +||r||*I 
-       according with Dennis M.Kochmann et al. 2019 (CMAME) */    
+    /* Get the Hessian of log(Z) */    
     J = LME_J(l,p,r);
-    for(int i = 0 ; i<Ndim ; i++){
-      J.nM[i][i] += norm_r;
-    }
 
     /* /\* Check the conditioning number of the Hessian *\/ */
-    /* if (fabs(Cond_Mat(J,TOL_NR)) > 10){ */
+    /* if (fabs(Cond_Mat(J,TOL_lambda)) > 10){ */
     /*   printf(" %s (%s %i) : %s \n", */
     /* 	     "Error in LME_lambda_NR","Iter",NumIter, */
     /* 	     "The Hessian is near to singular matrix"); */
@@ -205,7 +201,7 @@ Matrix LME_lambda_NR(Matrix l, Matrix lambda, Matrix Beta)
     FreeMat(J);
     FreeMat(D_lambda);
     
-    if(norm_r > TOL_NR){
+    if(norm_r > TOL_lambda){
       /* Update the iteration */
       NumIter ++;
     }
