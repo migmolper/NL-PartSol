@@ -242,7 +242,7 @@ static void Eigensoftening(int p, Fields Phi, Material MatPro, ChainPtr * Beps)
 	      */
 	      m_q = Mass.nV[q];
 	      
-	      if(chi.nV[q] > 0.0)
+	      if(chi.nV[q] != 1.0)
 		{
 		  Stress_q = memory_to_Tensor(Stress.nM[q], 2);
 		  EV_Stress_q = get_Eigenvalues_Of(Stress_q);
