@@ -25,11 +25,9 @@ void uGIMP_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh){
   int Ndim = NumberDimensions;
 
   /* Variables for the GP coordinates */  
-  Matrix X_GC_GP = get_RowFrom(Ndim,1,NULL);
-  Matrix X_EC_GP = get_RowFrom(Ndim,1,NULL);
-
-  Matrix lp; /* Particle voxel */
-
+  Matrix X_p;
+  Matrix Xi_p;
+  Matrix l_p;
   
   double V_p; /* Volumen of the GP */
   double A_p;
@@ -41,85 +39,82 @@ void uGIMP_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh){
 
   /* Variables for the poligon */
   int NumVertex;
-  int * Poligon_Connectivity;
   Matrix Poligon_Coordinates;
   ChainPtr ListNodes_I;
 
-  /* 1º Set to zero the active/non-active node, and the GPs in each 
-     element */
-  for(int i = 0 ; i<FEM_Mesh.NumNodesMesh ; i++){
-    FEM_Mesh.NumParticles[i] = 0;
-  }
-  
-  for(int i = 0 ; i<FEM_Mesh.NumElemMesh ; i++){
-    free_Set(&FEM_Mesh.I_particles[i]);
-    FEM_Mesh.I_particles[i] = NULL;
-  }
-
   for(int i = 0 ; i<MPM_Mesh.NumGP ; i++){
-
-    /* 1º Get the voxel lenght */
-    Mat_p = MPM_Mesh.MatIdx[i];
-    rho_p = MPM_Mesh.Phi.rho.nV[i];
-    m_p = MPM_Mesh.Phi.mass.nV[i];
-    V_p = m_p/rho_p;
-    th_p = MPM_Mesh.Mat[Mat_p].thickness;
-    A_p = V_p/th_p;
-    
-    if(Ndim == 2){
-      l_p = 0.5*pow(A_p,0.5);
-    }
-    for(int j =0 ; j<Ndim ; j++){
-      MPM_Mesh.lp.nM[i][j] = l_p;
-      lp.nV[j] = l_p;
-    }
-
-    /* 2º Assign the value to this auxiliar pointer */ 
-    X_GC_GP.nV = MPM_Mesh.Phi.x_GC.nM[i];
+   
+  /* Get some properties for each particle */ 
+  X_p = get_RowFrom(Ndim,1,MPM_Mesh.Phi.x_GC.nM[i]);
+  Xi_p = get_RowFrom(Ndim,1,MPM_Mesh.Phi.x_EC.nM[i]);
+  l_p = get_RowFrom(Ndim,1,MPM_Mesh.lp.nM[i]);
 
     for(int j = 0 ; j<FEM_Mesh.NumElemMesh ; j++){
 
-      /* 4º Get the coordinates of the element */
-      Poligon_Coordinates = ElemCoordinates(FEM_Mesh.Connectivity[j],FEM_Mesh.Coordinates);
+      /* Get the element properties */
+      Elem_p = FEM_Mesh.Connectivity[j];
       
       /* 5º Check out if the GP is in the Element */
-      if(InOut_Poligon(X_GC_GP,Poligon_Coordinates) == 1){
-
+      if(InOut_Element(X_p, Elem_p, FEM_Mesh.Coordinates)){
+	
 	/* 6º Asign to the GP a element in the background mesh, just for 
 	   searching porpuses */
 	MPM_Mesh.I0[i] = j;
 	push_to_Set(&FEM_Mesh.I_particles[j],i);
 
+	/* 4º Get the coordinates of the element */
+	Poligon_Coordinates = ElemCoordinates(FEM_Mesh.Connectivity[j],
+					      FEM_Mesh.Coordinates);
+
+
 	/* 7º If the GP is in the element, get its natural coordinates */
-	X_EC_GP.nV = MPM_Mesh.Phi.x_EC.nM[i];
-	Q4_X_to_Xi(X_EC_GP,X_GC_GP,Poligon_Coordinates);
+	Xi_p.nV = MPM_Mesh.Phi.x_EC.nM[i];
+	Q4_X_to_Xi(Xi_p,X_p,Poligon_Coordinates);
 
-	/* 8º Get list of nodes near to the GP */
-	free_Set(&MPM_Mesh.ListNodes[i]);
-	MPM_Mesh.ListNodes[i] = NULL;
-	MPM_Mesh.ListNodes[i] =
-	  uGIMP_Tributary_Nodes(X_GC_GP,MPM_Mesh.I0[i],lp,FEM_Mesh);
+	/* Initialize the voxel lenght */
+	l_p = uGIMP_Initilise_Voxel(l_p, V_p);
+
+	/* Get the initial connectivity of the particle */
+	MPM_Mesh.ListNodes[i] = uGIMP_Tributary_Nodes(Xi_p,j,lp,FEM_Mesh);
+
+	/* Measure the size of the connectivity */
 	MPM_Mesh.NumberNodes[i] = get_Lenght_Set(MPM_Mesh.ListNodes[i]);
-	/* 9º Active those nodes that interact with the GP */
-	ListNodes_I = MPM_Mesh.ListNodes[i];
-	while(ListNodes_I != NULL){
-	  FEM_Mesh.NumParticles[ListNodes_I->I] += 1;
-	  ListNodes_I = ListNodes_I->next; 
-	}
+	
+	/* Active those nodes that interact with the particle */
+	asign_particle_to_nodes(i, MPM_Mesh.ListNodes[i], FEM_Mesh);
 
-	/* 10º Free memory and go for the next GP */
-	free(Poligon_Connectivity);
+	/* Free memory */
 	FreeMat(Poligon_Coordinates);
+	
 	break;
       }
       
-      /* 11º Free memory */
-      free(Poligon_Connectivity);
-      FreeMat(Poligon_Coordinates);
       
     } 
 
   }
+  
+}
+
+/*********************************************************************/
+
+Matrix uGIMP_Initilise_Voxel(Matrix l_p, double Volume_p)
+/*!
+  Get the initial voxel lenght
+  Clarify that the volume measure depends if the problem is 2D (area)
+  or 3D (volume).
+*/
+{
+
+  int Ndim = NumberDimensions; 
+
+  /* Fill Voxel */  
+  for(int j =0 ; j<Ndim ; j++)
+    {
+      l_p.nV[j] = 0.5*pow(Volume_p,(double)1/Ndim);
+    }
+
+  return l_p;
   
 }
 
@@ -258,7 +253,7 @@ Matrix uGIMP_dN(Matrix Delta_xp, Matrix lp, double L){
 
 /*********************************************************************/
 
-ChainPtr uGIMP_Tributary_Nodes(Matrix X_EC_GP,
+ChainPtr uGIMP_Tributary_Nodes(Matrix Xi_p,
 			      int Elem_GP,Matrix lp,
 			      Mesh FEM_Mesh){
 
@@ -277,17 +272,17 @@ ChainPtr uGIMP_Tributary_Nodes(Matrix X_EC_GP,
   }
 
   /* Check if I am in the central area */
-  if ((fabs(X_EC_GP.nV[0]) <= Dist[0]) &&
-      (fabs(X_EC_GP.nV[1]) <= Dist[1])){
+  if ((fabs(Xi_p.nV[0]) <= Dist[0]) &&
+      (fabs(Xi_p.nV[1]) <= Dist[1])){
     Triburary_Nodes = CopyChain(FEM_Mesh.Connectivity[Elem_GP]);
   }    
   /* Check if I am in the 1º Quadrant */
-  else if((X_EC_GP.nV[0]>=0) &&
-	  (X_EC_GP.nV[1]>=0)){
+  else if((Xi_p.nV[0]>=0) &&
+	  (Xi_p.nV[1]>=0)){
     /* Create an array with the nodes of the element */
     NodesElem = Set_to_Pointer(FEM_Mesh.Connectivity[Elem_GP],4);
-    if((fabs(X_EC_GP.nV[0]) >= Dist[0]) &&
-       (fabs(X_EC_GP.nV[1]) <= Dist[1])){
+    if((fabs(Xi_p.nV[0]) >= Dist[0]) &&
+       (fabs(Xi_p.nV[1]) <= Dist[1])){
       /* Generate the list of Elements whose nodes contributes to the GP */       
       ChainElements = get_Intersection_Of(FEM_Mesh.NodeNeighbour[NodesElem[2]],
 					  FEM_Mesh.NodeNeighbour[NodesElem[1]]);
@@ -308,8 +303,8 @@ ChainPtr uGIMP_Tributary_Nodes(Matrix X_EC_GP,
       Table_Nodes = NULL;
       
     }
-    else if((fabs(X_EC_GP.nV[0]) <= Dist[0]) &&
-	    (fabs(X_EC_GP.nV[1]) >= Dist[1])){
+    else if((fabs(Xi_p.nV[0]) <= Dist[0]) &&
+	    (fabs(Xi_p.nV[1]) >= Dist[1])){
       /* Generate the list of Elements whose nodes contributes to the GP */ 
       ChainElements = get_Intersection_Of(FEM_Mesh.NodeNeighbour[NodesElem[2]],
 					  FEM_Mesh.NodeNeighbour[NodesElem[3]]);
@@ -330,8 +325,8 @@ ChainPtr uGIMP_Tributary_Nodes(Matrix X_EC_GP,
       Table_Nodes = NULL;
       
     }
-    else if((fabs(X_EC_GP.nV[0]) >= Dist[0]) &&
-	    (fabs(X_EC_GP.nV[1]) >= Dist[1])){
+    else if((fabs(Xi_p.nV[0]) >= Dist[0]) &&
+	    (fabs(Xi_p.nV[1]) >= Dist[1])){
       /* Generate the list of Elements whose nodes contributes to the GP */ 
       ChainElements = FEM_Mesh.NodeNeighbour[NodesElem[2]];
       Num_Elem = get_Lenght_Set(ChainElements);
@@ -354,13 +349,13 @@ ChainPtr uGIMP_Tributary_Nodes(Matrix X_EC_GP,
     free(NodesElem);    
   }  
   /* Check if I am in the 2º Quadrant */
-  else if((X_EC_GP.nV[0]<=0) &&
-	  (X_EC_GP.nV[1]>=0)){
+  else if((Xi_p.nV[0]<=0) &&
+	  (Xi_p.nV[1]>=0)){
     /* Create an array with the nodes of the element */
     NodesElem = Set_to_Pointer(FEM_Mesh.Connectivity[Elem_GP],4);
 
-    if((fabs(X_EC_GP.nV[0]) <= Dist[0]) &&
-       (fabs(X_EC_GP.nV[1]) >= Dist[1])){
+    if((fabs(Xi_p.nV[0]) <= Dist[0]) &&
+       (fabs(Xi_p.nV[1]) >= Dist[1])){
 
       /* Generate the list of Elements whose nodes contributes to the GP */ 
       ChainElements = get_Intersection_Of(FEM_Mesh.NodeNeighbour[NodesElem[2]],
@@ -382,8 +377,8 @@ ChainPtr uGIMP_Tributary_Nodes(Matrix X_EC_GP,
       Table_Nodes = NULL;
       
     }
-    else if((fabs(X_EC_GP.nV[0]) >= Dist[0]) &&
-	    (fabs(X_EC_GP.nV[1]) <= Dist[1])){
+    else if((fabs(Xi_p.nV[0]) >= Dist[0]) &&
+	    (fabs(Xi_p.nV[1]) <= Dist[1])){
       /* Generate the list of Elements whose nodes contributes to the GP */ 
       ChainElements = get_Intersection_Of(FEM_Mesh.NodeNeighbour[NodesElem[3]],
 					FEM_Mesh.NodeNeighbour[NodesElem[0]]);
@@ -404,8 +399,8 @@ ChainPtr uGIMP_Tributary_Nodes(Matrix X_EC_GP,
       Table_Nodes = NULL;
       
     }
-    else if((fabs(X_EC_GP.nV[0]) >= Dist[0]) &&
-	    (fabs(X_EC_GP.nV[1]) >= Dist[1])){
+    else if((fabs(Xi_p.nV[0]) >= Dist[0]) &&
+	    (fabs(Xi_p.nV[1]) >= Dist[1])){
       /* Generate the list of Elements whose nodes contributes to the GP */ 
       ChainElements = FEM_Mesh.NodeNeighbour[NodesElem[3]];
       Num_Elem = get_Lenght_Set(ChainElements);
@@ -430,12 +425,12 @@ ChainPtr uGIMP_Tributary_Nodes(Matrix X_EC_GP,
     
   }  
   /* Check if I am in the 3º Quadrant */
-  else if((X_EC_GP.nV[0]<=0) &&
-	  (X_EC_GP.nV[1]<=0)){
+  else if((Xi_p.nV[0]<=0) &&
+	  (Xi_p.nV[1]<=0)){
     /* Create an array with the nodes of the element */
     NodesElem = Set_to_Pointer(FEM_Mesh.Connectivity[Elem_GP],4);   
-    if((fabs(X_EC_GP.nV[0]) >= Dist[0]) &&
-       (fabs(X_EC_GP.nV[1]) <= Dist[1])){
+    if((fabs(Xi_p.nV[0]) >= Dist[0]) &&
+       (fabs(Xi_p.nV[1]) <= Dist[1])){
       /* Generate the list of Elements whose nodes contributes to the GP */ 
       ChainElements = get_Intersection_Of(FEM_Mesh.NodeNeighbour[NodesElem[3]],
 					FEM_Mesh.NodeNeighbour[NodesElem[0]]);
@@ -456,8 +451,8 @@ ChainPtr uGIMP_Tributary_Nodes(Matrix X_EC_GP,
       Table_Nodes = NULL;
       
     }
-    else if((fabs(X_EC_GP.nV[0]) <= Dist[0]) &&
-	    (fabs(X_EC_GP.nV[1]) >= Dist[1])){
+    else if((fabs(Xi_p.nV[0]) <= Dist[0]) &&
+	    (fabs(Xi_p.nV[1]) >= Dist[1])){
       /* Generate the list of Elements whose nodes contributes to the GP */
       ChainElements = get_Intersection_Of(FEM_Mesh.NodeNeighbour[NodesElem[0]],
 					FEM_Mesh.NodeNeighbour[NodesElem[1]]);
@@ -478,8 +473,8 @@ ChainPtr uGIMP_Tributary_Nodes(Matrix X_EC_GP,
       Table_Nodes = NULL;
       
     }
-    else if((fabs(X_EC_GP.nV[1]) >= Dist[1]) &&
-	    (fabs(X_EC_GP.nV[0]) >= Dist[0])){
+    else if((fabs(Xi_p.nV[1]) >= Dist[1]) &&
+	    (fabs(Xi_p.nV[0]) >= Dist[0])){
       /* Generate the list of Elements whose nodes contributes to the GP */ 
       ChainElements = FEM_Mesh.NodeNeighbour[NodesElem[0]];
       Num_Elem = get_Lenght_Set(ChainElements);
@@ -502,13 +497,13 @@ ChainPtr uGIMP_Tributary_Nodes(Matrix X_EC_GP,
     free(NodesElem);    
   }  
   /* Check if it I am the 4º Quadrant */
-  else if((X_EC_GP.nV[0]>=0) &&
-	  (X_EC_GP.nV[1]<=0)){
+  else if((Xi_p.nV[0]>=0) &&
+	  (Xi_p.nV[1]<=0)){
     /* Create an array with the nodes of the element */
     NodesElem = Set_to_Pointer(FEM_Mesh.Connectivity[Elem_GP],4);
 
-    if((fabs(X_EC_GP.nV[0]) <= Dist[0]) &&
-       (fabs(X_EC_GP.nV[1]) >= Dist[1])){
+    if((fabs(Xi_p.nV[0]) <= Dist[0]) &&
+       (fabs(Xi_p.nV[1]) >= Dist[1])){
       /* Generate the list of Elements whose nodes contributes to the GP */ 
       ChainElements = get_Intersection_Of(FEM_Mesh.NodeNeighbour[NodesElem[0]],
 					FEM_Mesh.NodeNeighbour[NodesElem[1]]);
@@ -529,8 +524,8 @@ ChainPtr uGIMP_Tributary_Nodes(Matrix X_EC_GP,
       Table_Nodes = NULL;
       
     }
-    else if((fabs(X_EC_GP.nV[0]) >= Dist[0]) &&
-	    (fabs(X_EC_GP.nV[1]) <= Dist[1])){
+    else if((fabs(Xi_p.nV[0]) >= Dist[0]) &&
+	    (fabs(Xi_p.nV[1]) <= Dist[1])){
       /* Generate the list of Elements whose nodes contributes to the GP */ 
       ChainElements = get_Intersection_Of(FEM_Mesh.NodeNeighbour[NodesElem[2]],
 					  FEM_Mesh.NodeNeighbour[NodesElem[1]]);
@@ -551,8 +546,8 @@ ChainPtr uGIMP_Tributary_Nodes(Matrix X_EC_GP,
       Table_Nodes = NULL;
       
     }
-    else if((fabs(X_EC_GP.nV[0]) >= Dist[0]) &&
-	    (fabs(X_EC_GP.nV[1]) >= Dist[1])){
+    else if((fabs(Xi_p.nV[0]) >= Dist[0]) &&
+	    (fabs(Xi_p.nV[1]) >= Dist[1])){
       /* Generate the list of Elements whose nodes contributes to the GP */
       ChainElements = FEM_Mesh.NodeNeighbour[NodesElem[1]];
       Num_Elem = get_Lenght_Set(ChainElements);
@@ -580,7 +575,7 @@ ChainPtr uGIMP_Tributary_Nodes(Matrix X_EC_GP,
 	   "Unlocated GP in the element");
     printf("%s : (%f;%f) \n",
 	   "Natural coordinates of the GP",
-	   X_EC_GP.nV[0],X_EC_GP.nV[1]);
+	   Xi_p.nV[0],Xi_p.nV[1]);
     exit(EXIT_FAILURE);
   }
  

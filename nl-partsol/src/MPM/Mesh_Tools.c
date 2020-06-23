@@ -381,19 +381,32 @@ void get_particle_tributary_nodes(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int p){
 
     /* Auxiliar variables for GIMP */
     Matrix lp = get_RowFrom(Ndim,1,MPM_Mesh.lp.nM[p]);
+    
     /* Get the index of the element */
     IdxElement = search_particle_in(p,X_p,Elements_Near_I0,FEM_Mesh);
-    /* Get the coordinates of the element vertex */
-    CoordElement = ElemCoordinates(MPM_Mesh.ListNodes[p],FEM_Mesh.Coordinates);
-    /* Compute local coordinates of the particle in this element */
-    Q4_X_to_Xi(Xi_p,X_p,CoordElement);
-    /* Free previous list of tributary nodes to the particle */
-    free_Set(&MPM_Mesh.ListNodes[p]);
-    MPM_Mesh.ListNodes[p] = NULL;
-    /* Asign new connectivity */
-    MPM_Mesh.ListNodes[p] = uGIMP_Tributary_Nodes(Xi_p,IdxElement,lp,FEM_Mesh);  
-    /* Calculate number of nodes */
-    MPM_Mesh.NumberNodes[p] = get_Lenght_Set(MPM_Mesh.ListNodes[p]);
+
+    if(IdxElement != -999){
+      /* Get the coordinates of the element vertex */
+      CoordElement = ElemCoordinates(MPM_Mesh.ListNodes[p],FEM_Mesh.Coordinates);
+      /* Compute local coordinates of the particle in this element */
+      Q4_X_to_Xi(Xi_p,X_p,CoordElement);
+      /* Free coordinates of the element */
+      FreeMat(CoordElement);   
+      /* Free previous list of tributary nodes to the particle */
+      free_Set(&MPM_Mesh.ListNodes[p]);
+      /* Asign new connectivity */
+      MPM_Mesh.ListNodes[p] = uGIMP_Tributary_Nodes(Xi_p,IdxElement,lp,FEM_Mesh);  
+      /* Calculate number of nodes */
+      MPM_Mesh.NumberNodes[p] = get_Lenght_Set(MPM_Mesh.ListNodes[p]);
+    }
+    else{
+      /* Get the coordinates of the element vertex */
+      CoordElement = ElemCoordinates(MPM_Mesh.ListNodes[p],FEM_Mesh.Coordinates);
+      /* Compute local coordinates of the particle in this element */
+      Q4_X_to_Xi(Xi_p,X_p,CoordElement);
+      /* Free coordinates of the element */
+      FreeMat(CoordElement);      
+    }
     
   }
   else if(strcmp(ShapeFunctionGP,"LME") == 0){

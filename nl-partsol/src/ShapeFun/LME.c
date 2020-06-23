@@ -71,7 +71,8 @@ void LME_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 
 	/* Calculate distance from particle to each node in the neibourhood */
 	MPM_Mesh.ListNodes[p] = CopyChain(Elem_p);
-	Delta_Xip = get_set_Coordinates(MPM_Mesh.ListNodes[p],X_p,FEM_Mesh.Coordinates);
+	Delta_Xip = get_set_Coordinates(MPM_Mesh.ListNodes[p],X_p,
+					FEM_Mesh.Coordinates);
 
 	/* Initialize Beta */
 	Beta_p = LME_Beta(Beta_p, Delta_Xip, gamma_LME);

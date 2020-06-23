@@ -52,7 +52,7 @@ void uGIMP_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh){
   }
   
   for(int i = 0 ; i<FEM_Mesh.NumElemMesh ; i++){
-    free_Set(FEM_Mesh.I_particles[i]);
+    free_Set(&FEM_Mesh.I_particles[i]);
     FEM_Mesh.I_particles[i] = NULL;
   }
 
@@ -95,7 +95,7 @@ void uGIMP_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh){
 	Q4_X_to_Xi(X_EC_GP,X_GC_GP,Poligon_Coordinates);
 
 	/* 8º Get list of nodes near to the GP */
-	free_Set(MPM_Mesh.ListNodes[i]);
+	free_Set(&MPM_Mesh.ListNodes[i]);
 	MPM_Mesh.ListNodes[i] = NULL;
 	MPM_Mesh.ListNodes[i] =
 	  uGIMP_Tributary_Nodes(X_GC_GP,MPM_Mesh.I0[i],lp,FEM_Mesh);
@@ -293,7 +293,7 @@ ChainPtr uGIMP_Tributary_Nodes(Matrix X_EC_GP,
 					  FEM_Mesh.NodeNeighbour[NodesElem[1]]);
       Num_Elem = get_Lenght_Set(ChainElements);
       Tributary_Elements = Set_to_Pointer(ChainElements,Num_Elem);
-      free_Set(ChainElements);
+      free_Set(&ChainElements);
 
        /* Iterate in the list and select the union of the sets of nodes */
       Table_Nodes = malloc(Num_Elem*sizeof(ChainPtr));
@@ -315,7 +315,7 @@ ChainPtr uGIMP_Tributary_Nodes(Matrix X_EC_GP,
 					  FEM_Mesh.NodeNeighbour[NodesElem[3]]);
       Num_Elem = get_Lenght_Set(ChainElements);
       Tributary_Elements = Set_to_Pointer(ChainElements,Num_Elem);
-      free_Set(ChainElements);
+      free_Set(&ChainElements);
 
       /* Iterate in the list and select the union of the sets of nodes */
       Table_Nodes = malloc(Num_Elem*sizeof(ChainPtr));
@@ -367,7 +367,7 @@ ChainPtr uGIMP_Tributary_Nodes(Matrix X_EC_GP,
 					FEM_Mesh.NodeNeighbour[NodesElem[3]]);
       Num_Elem = get_Lenght_Set(ChainElements);      
       Tributary_Elements =  Set_to_Pointer(ChainElements,Num_Elem);
-      free_Set(ChainElements);
+      free_Set(&ChainElements);
 
       /* Iterate in the list and select the union of the sets of nodes */
       Table_Nodes = malloc(Num_Elem*sizeof(ChainPtr));
@@ -389,7 +389,7 @@ ChainPtr uGIMP_Tributary_Nodes(Matrix X_EC_GP,
 					FEM_Mesh.NodeNeighbour[NodesElem[0]]);
       Num_Elem = get_Lenght_Set(ChainElements);
       Tributary_Elements = Set_to_Pointer(ChainElements,Num_Elem);
-      free_Set(ChainElements);
+      free_Set(&ChainElements);
 
       /* Iterate in the list and select the union of the sets of nodes */
       Table_Nodes = malloc(Num_Elem*sizeof(ChainPtr));
@@ -441,7 +441,7 @@ ChainPtr uGIMP_Tributary_Nodes(Matrix X_EC_GP,
 					FEM_Mesh.NodeNeighbour[NodesElem[0]]);
       Num_Elem = get_Lenght_Set(ChainElements);
       Tributary_Elements = Set_to_Pointer(ChainElements,Num_Elem);
-      free_Set(ChainElements);
+      free_Set(&ChainElements);
 
       /* Iterate in the list and select the union of the sets of nodes */
       Table_Nodes = malloc(Num_Elem*sizeof(ChainPtr));
@@ -463,7 +463,7 @@ ChainPtr uGIMP_Tributary_Nodes(Matrix X_EC_GP,
 					FEM_Mesh.NodeNeighbour[NodesElem[1]]);
       Num_Elem = get_Lenght_Set(ChainElements);
       Tributary_Elements = Set_to_Pointer(ChainElements,Num_Elem);
-      free_Set(ChainElements);
+      free_Set(&ChainElements);
       
       /* Iterate in the list and select the union of the sets of nodes */
       Table_Nodes = malloc(Num_Elem*sizeof(ChainPtr));
@@ -514,7 +514,7 @@ ChainPtr uGIMP_Tributary_Nodes(Matrix X_EC_GP,
 					FEM_Mesh.NodeNeighbour[NodesElem[1]]);
       Num_Elem = get_Lenght_Set(ChainElements);
       Tributary_Elements =  Set_to_Pointer(ChainElements,Num_Elem);
-      free_Set(ChainElements);
+      free_Set(&ChainElements);
 
       /* Iterate in the list and select the union of the sets of nodes */
       Table_Nodes = malloc(Num_Elem*sizeof(ChainPtr));
@@ -536,7 +536,7 @@ ChainPtr uGIMP_Tributary_Nodes(Matrix X_EC_GP,
 					  FEM_Mesh.NodeNeighbour[NodesElem[1]]);
       Num_Elem = get_Lenght_Set(ChainElements);
       Tributary_Elements = Set_to_Pointer(ChainElements,Num_Elem);
-      free_Set(ChainElements);
+      free_Set(&ChainElements);
 
       /* Iterate in the list and select the union of the sets of nodes */
       Table_Nodes = malloc(Num_Elem*sizeof(ChainPtr));
@@ -646,7 +646,7 @@ ChainPtr uGIMP_Tributary_Nodes(Matrix X_EC_GP,
 /*     iPtr = iPtr->next; */
 /*   } */
 /*   /\* Free memory *\/ */
-/*   free_Set(List_Nodes); */
+/*   free_Set(&List_Nodes); */
   
 /*   return Triburary_Nodes; */
 /* } */
