@@ -17,38 +17,38 @@
 /***************************************/
 /******** Name of inputs files *********/
 /***************************************/
-char * SimulationFile;
-char * RestartFile;
-char * FEM_MeshFileName;
-char * MPM_MeshFileName;
-char OutputDir[MAXC];
+extern char * SimulationFile;
+extern char * RestartFile;
+extern char * FEM_MeshFileName;
+extern char * MPM_MeshFileName;
+extern char OutputDir[MAXC];
 
 /***************************************/
 /*********** Kind of analysis **********/
 /***************************************/
-char * TimeIntegrationScheme;
-char * ShapeFunctionGP;
-char * Formulation;
+extern char * TimeIntegrationScheme;
+extern char * ShapeFunctionGP;
+extern char * Formulation;
 
 #define NumberDimensions 2
 
-int NumberDOF;
+extern int NumberDOF;
 
 /***************************************/
 /********* Time integration ************/
 /***************************************/
-double CFL; /* Courant number (0-1) */
-double DeltaTimeStep;
-double SpectralRadius;
-int NumTimeStep;
-int ResultsTimeStep;
+extern double CFL; /* Courant number (0-1) */
+extern double DeltaTimeStep;
+extern double SpectralRadius;
+extern int NumTimeStep;
+extern int ResultsTimeStep;
 
 
 /***************************************/
 /********* Numeric Tolerances **********/
 /***************************************/
-double gamma_LME;
-double TOL_lambda;
+extern double gamma_LME;
+extern double TOL_lambda;
 #define TOL_InOut 10E-23
 #define TOL_NR 10E-6
 #define TOL_zero 10E-10
@@ -56,9 +56,9 @@ double TOL_lambda;
 /***************************************/
 /******** Boundary conditions **********/
 /***************************************/
-char Field[10];
-int * Node;
-double * Value;
+extern char Field[10];
+extern int * Node;
+extern double * Value;
 
 
 /***************************************/

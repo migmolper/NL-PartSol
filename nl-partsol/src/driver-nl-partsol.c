@@ -13,6 +13,14 @@
 
 #include "nl-partsol.h"
 
+/*
+  Call global variables 
+*/
+char * SimulationFile;
+char * RestartFile;
+char * TimeIntegrationScheme;
+char * Formulation;
+
 void globalfree(Mesh,GaussPoint);
 
 int main(int argc, char * argv[])

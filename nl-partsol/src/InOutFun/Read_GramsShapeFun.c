@@ -1,5 +1,12 @@
 #include "nl-partsol.h"
 
+/*
+  Call global variables 
+*/
+char * ShapeFunctionGP;
+double gamma_LME;
+double TOL_lambda;
+
 /**********************************************************************/
 
 void GramsShapeFun(char * Name_File)

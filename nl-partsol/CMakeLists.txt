@@ -1,9 +1,8 @@
-cmake_minimum_required(VERSION 3.13.4)
+cmake_minimum_required(VERSION 3.17.3)
 project("nl-partsol")
  
 #Bring the headers
 include_directories(include)
-
 
 # Wildcard additions
 # file(GLOB_RECURSE SOURCES "src/*.c")

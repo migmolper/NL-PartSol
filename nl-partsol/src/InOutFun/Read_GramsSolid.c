@@ -3,6 +3,11 @@
 #define MAXVAL(A,B) ((A)>(B) ? (A) : (B))
 #define MINVAL(A,B) ((A)<(B) ? (A) : (B))
 
+/*
+  Call global variables 
+*/
+char * MPM_MeshFileName;
+
 /*********************************************************************/
 
 GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)

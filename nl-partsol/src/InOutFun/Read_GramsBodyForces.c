@@ -3,6 +3,10 @@
 #define MAXVAL(A,B) ((A)>(B) ? (A) : (B))
 #define MINVAL(A,B) ((A)<(B) ? (A) : (B))
 
+/*
+  Call global functions
+*/
+int NumberDOF;
 
 /**********************************************************************/
 

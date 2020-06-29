@@ -21,17 +21,17 @@ Debug_LME:
 # Caso impacto elastico discos Sulsky
 Sulsky_MPM:
 	@echo "**************** Run test case ******************"
-	$(ROUTE_EXE) -2D -V Unix/Sulsky_MPM/ejemplo.gdf
+	$(ROUTE_EXE) -V Unix/Sulsky_MPM/ejemplo.gdf
 	@echo " "
 	@echo "*************** Test case passed ****************"
 Sulsky_GIMP:
 	@echo "**************** Run test case ******************"
-	$(ROUTE_EXE) -2D -V Unix/Sulsky_GIMP/ejemplo.gdf
+	$(ROUTE_EXE) -V Unix/Sulsky_GIMP/ejemplo.gdf
 	@echo " "
 	@echo "*************** Test case passed ****************"
 Sulsky_LME:
 	@echo "**************** Run test case ******************"
-	$(ROUTE_EXE) -2D -V Unix/Sulsky_LME/ejemplo.gdf
+	$(ROUTE_EXE) -V Unix/Sulsky_LME/ejemplo.gdf
 	@echo " "
 	@echo "*************** Test case passed ****************"
 
