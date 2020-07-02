@@ -1,5 +1,12 @@
 #include "nl-partsol.h"
 
+/*
+  Call global variables
+*/
+int ResultsTimeStep;
+int NumTimeStep;
+char OutputDir[MAXC];
+
 /**********************************************************************/
 
 void GramsOutputs(char * Name_File)

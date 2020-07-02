@@ -29,18 +29,18 @@ void uGIMP_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh){
   Matrix Xi_p;
   Matrix l_p;
   
-  double V_p; /* Volumen of the GP */
   double A_p;
   double rho_p;
   double th_p;
   double m_p;
-  double l_p;
   int Mat_p;
+  bool Init_p;
 
-  /* Variables for the poligon */
-  int NumVertex;
+  /* Variable with stores the conectivity of the element of the particle */
+  ChainPtr Elem_p;
+  
+  /* Variable with stores the coordinates of the element of the particle */
   Matrix Poligon_Coordinates;
-  ChainPtr ListNodes_I;
 
   for(int i = 0 ; i<MPM_Mesh.NumGP ; i++){
    
@@ -48,49 +48,63 @@ void uGIMP_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh){
   X_p = get_RowFrom(Ndim,1,MPM_Mesh.Phi.x_GC.nM[i]);
   Xi_p = get_RowFrom(Ndim,1,MPM_Mesh.Phi.x_EC.nM[i]);
   l_p = get_RowFrom(Ndim,1,MPM_Mesh.lp.nM[i]);
+  rho_p = MPM_Mesh.Phi.rho.nV[i];
+  m_p = MPM_Mesh.Phi.mass.nV[i];
+  th_p = MPM_Mesh.Mat[MPM_Mesh.MatIdx[i]].thickness;
+  A_p = m_p/(rho_p*th_p);
 
-    for(int j = 0 ; j<FEM_Mesh.NumElemMesh ; j++){
+  /* Supose that the particle was not initilise */
+  Init_p = false;
 
-      /* Get the element properties */
-      Elem_p = FEM_Mesh.Connectivity[j];
+  for(int j = 0 ; j<FEM_Mesh.NumElemMesh ; j++){
+
+    /* Get the element properties */
+    Elem_p = FEM_Mesh.Connectivity[j];
       
-      /* 5º Check out if the GP is in the Element */
-      if(InOut_Element(X_p, Elem_p, FEM_Mesh.Coordinates)){
+    /* 5º Check out if the GP is in the Element */
+    if(InOut_Element(X_p, Elem_p, FEM_Mesh.Coordinates)){
+
+      /* Particle will be initilise */
+      Init_p = true;
 	
-	/* 6º Asign to the GP a element in the background mesh, just for 
-	   searching porpuses */
-	MPM_Mesh.I0[i] = j;
-	push_to_Set(&FEM_Mesh.I_particles[j],i);
+      /* With the element connectivity get the node close to the particle */
+      MPM_Mesh.I0[i] = get_closest_node_to(X_p,Elem_p,FEM_Mesh.Coordinates);
 
-	/* 4º Get the coordinates of the element */
-	Poligon_Coordinates = ElemCoordinates(FEM_Mesh.Connectivity[j],
-					      FEM_Mesh.Coordinates);
+      /* Get the coordinates of the element */
+      Poligon_Coordinates = ElemCoordinates(FEM_Mesh.Connectivity[j],
+					    FEM_Mesh.Coordinates);
 
+      /* If the GP is in the element, get its natural coordinates */
+      Xi_p.nV = MPM_Mesh.Phi.x_EC.nM[i];
+      Q4_X_to_Xi(Xi_p,X_p,Poligon_Coordinates);
 
-	/* 7º If the GP is in the element, get its natural coordinates */
-	Xi_p.nV = MPM_Mesh.Phi.x_EC.nM[i];
-	Q4_X_to_Xi(Xi_p,X_p,Poligon_Coordinates);
+      /* Initialize the voxel lenght */
+      l_p = uGIMP_Voxel(l_p, A_p);
 
-	/* Initialize the voxel lenght */
-	l_p = uGIMP_Initilise_Voxel(l_p, V_p);
+      /* Get the initial connectivity of the particle */
+      MPM_Mesh.ListNodes[i] = uGIMP_Tributary_Nodes(Xi_p,j,l_p,FEM_Mesh);
 
-	/* Get the initial connectivity of the particle */
-	MPM_Mesh.ListNodes[i] = uGIMP_Tributary_Nodes(Xi_p,j,lp,FEM_Mesh);
-
-	/* Measure the size of the connectivity */
-	MPM_Mesh.NumberNodes[i] = get_Lenght_Set(MPM_Mesh.ListNodes[i]);
+      /* Measure the size of the connectivity */
+      MPM_Mesh.NumberNodes[i] = get_Lenght_Set(MPM_Mesh.ListNodes[i]);
 	
-	/* Active those nodes that interact with the particle */
-	asign_particle_to_nodes(i, MPM_Mesh.ListNodes[i], FEM_Mesh);
+      /* Active those nodes that interact with the particle */
+      asign_particle_to_nodes(i, MPM_Mesh.ListNodes[i], FEM_Mesh);
 
-	/* Free memory */
-	FreeMat(Poligon_Coordinates);
+      /* Free memory */
+      FreeMat(Poligon_Coordinates);
 	
-	break;
-      }
+      break;
+    }
       
       
-    } 
+  }
+  if(!Init_p)
+    {
+      fprintf(stderr,"%s : %s %i %s \n",
+	      "Error in uGIMP_Initialize",
+	      "Particle",i,"Was not initialise");
+      exit(EXIT_FAILURE);
+    }
 
   }
   
@@ -98,7 +112,7 @@ void uGIMP_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh){
 
 /*********************************************************************/
 
-Matrix uGIMP_Initilise_Voxel(Matrix l_p, double Volume_p)
+Matrix uGIMP_Voxel(Matrix l_p, double Volume_p)
 /*!
   Get the initial voxel lenght
   Clarify that the volume measure depends if the problem is 2D (area)
@@ -253,9 +267,8 @@ Matrix uGIMP_dN(Matrix Delta_xp, Matrix lp, double L){
 
 /*********************************************************************/
 
-ChainPtr uGIMP_Tributary_Nodes(Matrix Xi_p,
-			      int Elem_GP,Matrix lp,
-			      Mesh FEM_Mesh){
+ChainPtr uGIMP_Tributary_Nodes(Matrix Xi_p,int Elem_GP,Matrix lp,Mesh FEM_Mesh)
+{
 
   ChainPtr * Table_Nodes = NULL;
   ChainPtr Triburary_Nodes = NULL;

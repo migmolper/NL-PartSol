@@ -1,5 +1,13 @@
 #include "nl-partsol.h"
 
+
+/*
+  Call global variables
+*/
+char * TimeIntegrationScheme;
+double CFL;
+double SpectralRadius;
+
 /**********************************************************************/
 
 void GramsTime(char * Name_File)

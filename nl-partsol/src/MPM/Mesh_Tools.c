@@ -110,14 +110,22 @@ void GetInitialGaussPointPosition(Matrix X_p, Mesh FEM_Mesh, int GPxElement)
     
   case 4:
     if(strcmp(FEM_Mesh.TypeElem,"Quadrilateral") == 0){
-      Xi_p.nM[0][0] = (double)1/pow(3,0.5);
-      Xi_p.nM[0][1] = (double)1/pow(3,0.5);
-      Xi_p.nM[1][0] = (double)1/pow(3,0.5);
-      Xi_p.nM[1][1] = (double)-1/pow(3,0.5);
-      Xi_p.nM[2][0] = (double)-1/pow(3,0.5);
-      Xi_p.nM[2][1] = (double)1/pow(3,0.5);
-      Xi_p.nM[3][0] = (double)-1/pow(3,0.5);
-      Xi_p.nM[3][1] = (double)-1/pow(3,0.5);
+      /* Xi_p.nM[0][0] = (double)1/pow(3,0.5); */
+      /* Xi_p.nM[0][1] = (double)1/pow(3,0.5); */
+      /* Xi_p.nM[1][0] = (double)1/pow(3,0.5); */
+      /* Xi_p.nM[1][1] = (double)-1/pow(3,0.5); */
+      /* Xi_p.nM[2][0] = (double)-1/pow(3,0.5); */
+      /* Xi_p.nM[2][1] = (double)1/pow(3,0.5); */
+      /* Xi_p.nM[3][0] = (double)-1/pow(3,0.5); */
+      /* Xi_p.nM[3][1] = (double)-1/pow(3,0.5); */
+      Xi_p.nM[0][0] =   0.5;
+      Xi_p.nM[0][1] =   0.5;
+      Xi_p.nM[1][0] =   0.5;
+      Xi_p.nM[1][1] = - 0.5;
+      Xi_p.nM[2][0] = - 0.5;
+      Xi_p.nM[2][1] =   0.5;
+      Xi_p.nM[3][0] = - 0.5;
+      Xi_p.nM[3][1] = - 0.5;
       /* Get the coordinate of the center */
       for(int i = 0 ; i<NumElemMesh ; i++){
 	
@@ -387,7 +395,7 @@ void get_particle_tributary_nodes(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int p){
 
     if(IdxElement != -999){
       /* Get the coordinates of the element vertex */
-      CoordElement = ElemCoordinates(MPM_Mesh.ListNodes[p],FEM_Mesh.Coordinates);
+      CoordElement = ElemCoordinates(FEM_Mesh.Connectivity[IdxElement],FEM_Mesh.Coordinates);
       /* Compute local coordinates of the particle in this element */
       Q4_X_to_Xi(Xi_p,X_p,CoordElement);
       /* Free coordinates of the element */
@@ -399,14 +407,14 @@ void get_particle_tributary_nodes(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int p){
       /* Calculate number of nodes */
       MPM_Mesh.NumberNodes[p] = get_Lenght_Set(MPM_Mesh.ListNodes[p]);
     }
-    else{
-      /* Get the coordinates of the element vertex */
-      CoordElement = ElemCoordinates(MPM_Mesh.ListNodes[p],FEM_Mesh.Coordinates);
-      /* Compute local coordinates of the particle in this element */
-      Q4_X_to_Xi(Xi_p,X_p,CoordElement);
-      /* Free coordinates of the element */
-      FreeMat(CoordElement);      
-    }
+    /* else{ */
+    /*   /\* Get the coordinates of the element vertex *\/ */
+    /*   CoordElement = ElemCoordinates(MPM_Mesh.ListNodes[p],FEM_Mesh.Coordinates); */
+    /*   /\* Compute local coordinates of the particle in this element *\/ */
+    /*   Q4_X_to_Xi(Xi_p,X_p,CoordElement); */
+    /*   /\* Free coordinates of the element *\/ */
+    /*   FreeMat(CoordElement);       */
+    /* } */
     
   }
   else if(strcmp(ShapeFunctionGP,"LME") == 0){

@@ -32,7 +32,7 @@ Matrix compute_NodalMomentumMass(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
   for(int p = 0 ; p<Np ; p++){
 
     /* Define element of the GP */
-    Nodes_p = get_Element(p, MPM_Mesh.ListNodes[p], MPM_Mesh.NumberNodes[p]);
+    Nodes_p = get_particle_Set(p, MPM_Mesh.ListNodes[p], MPM_Mesh.NumberNodes[p]);
 
     /* Evaluate the shape function in the coordinates of the GP */
     ShapeFunction_p = compute_ShapeFunction(Nodes_p, MPM_Mesh, FEM_Mesh);
@@ -161,7 +161,7 @@ Matrix compute_NodalMass(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
   for(int p = 0 ; p<Np ; p++){
 
     /* 3º Define element of the GP */
-    Nodes_p = get_Element(p, MPM_Mesh.ListNodes[p], MPM_Mesh.NumberNodes[p]);
+    Nodes_p = get_particle_Set(p, MPM_Mesh.ListNodes[p], MPM_Mesh.NumberNodes[p]);
 
     /* 4º Evaluate the shape function in the coordinates of the GP */
     ShapeFunction_p = compute_ShapeFunction(Nodes_p, MPM_Mesh, FEM_Mesh);
@@ -225,7 +225,7 @@ Matrix compute_VelocityPredictor(GaussPoint MPM_Mesh,Mesh FEM_Mesh,
   for(int p = 0 ; p<Np ; p++){
     
     /* 3º Define element of the GP */
-    Nodes_p = get_Element(p, MPM_Mesh.ListNodes[p], MPM_Mesh.NumberNodes[p]);
+    Nodes_p = get_particle_Set(p, MPM_Mesh.ListNodes[p], MPM_Mesh.NumberNodes[p]);
 
     /* 4º Evaluate the shape function in the coordinates of the GP */
     ShapeFunction_p = compute_ShapeFunction(Nodes_p, MPM_Mesh, FEM_Mesh);
@@ -405,7 +405,7 @@ Matrix GetNodalKinetics(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
   for(int i = 0 ; i<N_GPs ; i++){
 
     /* 2º Define element of the GP */
-    Nodes_p = get_Element(i, MPM_Mesh.ListNodes[i], MPM_Mesh.NumberNodes[i]);
+    Nodes_p = get_particle_Set(i, MPM_Mesh.ListNodes[i], MPM_Mesh.NumberNodes[i]);
     
     /* 3º Evaluate the shape function in the coordinates of the GP */
     N_GP = compute_ShapeFunction(Nodes_p, MPM_Mesh,FEM_Mesh);
@@ -524,7 +524,7 @@ Matrix GetNodalVelocityDisplacement(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
   for(int i = 0 ; i<N_GPs ; i++){
 
     /* 2º Define element of the GP */
-    Nodes_p = get_Element(i, MPM_Mesh.ListNodes[i], MPM_Mesh.NumberNodes[i]);
+    Nodes_p = get_particle_Set(i, MPM_Mesh.ListNodes[i], MPM_Mesh.NumberNodes[i]);
     
     /* 3º Evaluate the shape function in the coordinates of the GP */
     N_GP = compute_ShapeFunction(Nodes_p, MPM_Mesh,FEM_Mesh);

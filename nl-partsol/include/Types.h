@@ -1,8 +1,8 @@
-#ifndef _VARIABLES_H_
-#define _VARIABLES_H_
+#ifndef _TYPES_H_
+#define _TYPES_H_
 
 
-/*! \file Variables.h
+/*! \file Types.h
  *  \brief File with the definitions of the user-defined variables.    
  */
 

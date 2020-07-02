@@ -1,5 +1,10 @@
 #include "nl-partsol.h"
 
+/*
+  Call global variables
+*/
+double DeltaTimeStep;
+
 /*******************************************************/
 
 Matrix compute_NodalMomentumMass(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
