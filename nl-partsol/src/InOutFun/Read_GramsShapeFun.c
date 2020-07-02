@@ -1,7 +1,7 @@
 #include "nl-partsol.h"
 
 /*
-  Call global variables 
+  Call global variables
 */
 char * ShapeFunctionGP;
 double gamma_LME;

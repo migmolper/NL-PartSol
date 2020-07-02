@@ -38,6 +38,7 @@ void Q4_X_to_Xi(Matrix,Matrix,Matrix);
 
 /* GIMP shape functions */
 void uGIMP_Initialize(GaussPoint, Mesh);
+Matrix uGIMP_Voxel(Matrix, double);
 double uGIMP_Sip(double, double, double);
 double uGIMP_dSip(double, double, double);
 Matrix uGIMP_N(Matrix, Matrix, double);

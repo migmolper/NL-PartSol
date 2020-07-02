@@ -80,12 +80,10 @@ Matrix compute_ShapeFunction(Element GP_Element,GaussPoint MPM_Mesh,Mesh FEM_Mes
 	  FEM_Mesh.Coordinates.nM[GP_I][l];
       }
     }      
-    /* Asign lambda to GP */
+    /* Asign lambda and beta */
     lambda_GP.nV = MPM_Mesh.lambda.nM[i_GP];
-    /* Evaluate the shape function and it gradient */
     Beta_GP.nV = MPM_Mesh.Beta.nM[i_GP];
-    Beta_GP = LME_Beta(Beta_GP, Delta_Xip, gamma_LME);
-    
+   
     /* Evaluate the shape function */
     ShapeFunction_p = LME_p(Delta_Xip, lambda_GP,Beta_GP);
     
@@ -126,6 +124,7 @@ Matrix compute_ShapeFunction_Gradient(Element GP_Element,GaussPoint MPM_Mesh,
   Matrix Beta_GP =  /* Tunning parameter for LME */
     get_RowFrom(Ndim,1,NULL);
   Matrix Delta_Xip; /* Just for GIMP -> Distance from GP to the nodes */
+  
   Matrix lambda_GP = /* Just for LME/LME -> Lagrange multipliers */
     get_RowFrom(Ndim,1,NULL);
   
@@ -187,11 +186,9 @@ Matrix compute_ShapeFunction_Gradient(Element GP_Element,GaussPoint MPM_Mesh,
 	  FEM_Mesh.Coordinates.nM[GP_I][l];
       }
     }      
-    /* Asign lambda to GP */
+    /* Asign lambda and beta */
     lambda_GP.nV = MPM_Mesh.lambda.nM[i_GP];
-    /* Evaluate the shape function and it gradient */
     Beta_GP.nV = MPM_Mesh.Beta.nM[i_GP];
-    Beta_GP = LME_Beta(Beta_GP, Delta_Xip, gamma_LME);
     
     /* Evaluate the shape function gradient */
     ShapeFunction_p = LME_p(Delta_Xip, lambda_GP,Beta_GP);

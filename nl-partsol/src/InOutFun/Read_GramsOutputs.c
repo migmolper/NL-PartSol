@@ -1,10 +1,10 @@
 #include "nl-partsol.h"
 
-
 /*
-  Call global variables 
+  Call global variables
 */
 int ResultsTimeStep;
+int NumTimeStep;
 char OutputDir[MAXC];
 
 /**********************************************************************/
