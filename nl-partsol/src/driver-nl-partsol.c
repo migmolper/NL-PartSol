@@ -135,6 +135,12 @@ int main(int argc, char * argv[])
     { 
       U_PCE(FEM_Mesh, MPM_Mesh, InitialStep);
     }
+
+  /* Discrete energy momentum method */
+  if(strcmp(TimeIntegrationScheme,"Discrete-Energy-Momentum") == 0 )
+    { 
+      U_Discrete_Energy_Momentum(FEM_Mesh, MPM_Mesh, InitialStep);
+    }
         
   /*********************************************************************/
   /************************* FREE ALL FIELDS ***************************/

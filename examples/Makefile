@@ -4,9 +4,18 @@ ROUTE_EXE = ../nl-partsol/build/./$(EXE)
 TESTDIR = test
 
 # Rule for benchmarks
-.PHONY: Debug_MPM Debug_LME Sulsky_MPM Sulsky_GIMP Sulsky_LME Cuadrado_MPM Disco_MPM Disco_GIMP Traccion_MPM Traccion_GIMP Traccion_LME Dyka_MPM Dyka_GIMP Dyka_LME Dyka_GA Brazilian_MPM Three_Point_Bar
+.PHONY: Element Debug_MPM Debug_LME Sulsky_MPM Sulsky_GIMP Sulsky_LME Cuadrado_MPM Disco_MPM Disco_GIMP Traccion_MPM Traccion_GIMP Traccion_LME Dyka_MPM Dyka_GIMP Dyka_LME Dyka_GA Brazilian_MPM Three_Point_Bar
 
-# Caso para debugear
+
+
+# Caso para debugear I
+Element:
+	@echo "**************** Run test case ******************"
+	$(ROUTE_EXE) -V Unix/Element/Element.gdf 
+	@echo " "
+	@echo "*************** Test case passed ****************"
+
+# Caso para debugear II
 Debug_MPM:
 	@echo "**************** Run test case ******************"
 	$(ROUTE_EXE) -2D -V Unix/Debug_MPM/ejemplo.gdf 

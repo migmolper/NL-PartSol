@@ -1,77 +1,195 @@
 #include "nl-partsol.h"
 
-void U_FE(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int InitialStep)
+/*
+  Auxiliar functions 
+*/
+static Matrix compute_Effective_MassMatrix(GaussPoint, Mesh, Mask, double);
+static Mask generate_NodalMask(Mesh FEM_Mesh);
+
+/**************************************************************/
+
+void U_Discrete_Energy_Momentum(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int InitialStep)
 {
 
   /*!
     Integer variables 
   */
   int Ndim = NumberDimensions;
-  int Nnodes = FEM_Mesh.NumNodesMesh;
+
+  double epsilon = 1;
 
   /*!
     Auxiliar variable for the mass and momentum 
   */
-  Matrix Phi_I;
-  strcpy(Phi_I.Info,"MOMENTUM;MASS");
-  Matrix V_I;
-  Matrix F_I;
-  Matrix R_I;
-  
+  Matrix Effective_MassMatrix;
+  strcpy(Effective_MassMatrix.Info,"Effective-Mass-Matrix");
 
-  for(int TimeStep = InitialStep ; TimeStep<NumTimeStep ; TimeStep++ )
+  Mask ActiveNodes = generate_NodalMask(FEM_Mesh);
+  
+  Effective_MassMatrix = compute_Effective_MassMatrix(MPM_Mesh,FEM_Mesh,
+						      ActiveNodes, epsilon);
+
+  PrintMatrix(Effective_MassMatrix, ActiveNodes.Nactivenodes, ActiveNodes.Nactivenodes);
+  
+  /*!
+    Free memory.
+   */
+  FreeMat(Effective_MassMatrix);
+  
+}
+
+/**************************************************************/
+
+static Matrix compute_Effective_MassMatrix(GaussPoint MPM_Mesh, Mesh FEM_Mesh,
+					   Mask ActiveNodes, double epsilon)
+/*
+  This function computes the consistent mass matrix 
+ */
+{
+
+  int Nnodes = ActiveNodes.Nactivenodes;
+  int Np = MPM_Mesh.NumGP;
+  int Ip, Jp, I_mask, J_mask;
+
+  /* Value of the shape-function */
+  Matrix ShapeFunction_p;  
+
+  /* Evaluation of the particle in the node */
+  double ShapeFunction_pI, ShapeFunction_pJ;
+  /* Mass of the particle */
+  double m_p;
+  /* Element for each particle */
+  Element Nodes_p;
+
+  /* Define and allocate the consistent mass matrix */
+  Matrix Consistent_MassMatrix = MatAllocZ(Nnodes, Nnodes);
+
+  /* Define and allocate the lumped mass matrix */
+  Matrix Lumped_MassMatrix = MatAllocZ(Nnodes, 1);
+
+  /* Define the effective mass matrix */
+  Matrix Effective_MassMatrix;
+  /*
+    Iterate over the particles to get the nodal values 
+  */
+  for(int p = 0 ; p<Np ; p++)
     {
 
-      print_Status("*************************************************",TimeStep);
-      DeltaTimeStep = DeltaT_CFL(MPM_Mesh, FEM_Mesh.DeltaX);
-      print_step(TimeStep,DeltaTimeStep);
+      /*
+	Define tributary nodes of the particle 
+      */
+      Nodes_p = get_particle_Set(p, MPM_Mesh.ListNodes[p], MPM_Mesh.NumberNodes[p]);
 
-      print_Status("*************************************************",TimeStep);
-      print_Status(" First step : Get the nodal fields ... WORKING",TimeStep);
-      Phi_I = compute_NodalMomentumMass(MPM_Mesh,FEM_Mesh);
-      imposse_NodalMomentum(FEM_Mesh,Phi_I,TimeStep);    
-      V_I = compute_NodalVelocity(FEM_Mesh, Phi_I);
-      print_Status("DONE !!!",TimeStep);
+      /* 
+	 Evaluate the shape function in the coordinates of the particle
+       */
+      ShapeFunction_p = compute_ShapeFunction(Nodes_p, MPM_Mesh, FEM_Mesh);
+   
+      /*
+	Get the mass of the particle 
+      */
+      m_p = MPM_Mesh.Phi.mass.nV[p];
+      
 
-      if(TimeStep % ResultsTimeStep == 0)
+      for(int I = 0 ; I<Nodes_p.NumberNodes ; I++)
 	{
-	  /*!
-	    Print Nodal values after appling the BCCs
+
+	  /* 
+	     Get the node in the mass matrix with the mask
 	  */
-	  WriteVtk_FEM("Mesh",FEM_Mesh,Phi_I,
-		       (int)TimeStep/ResultsTimeStep);
-	  /*!
-	    Print particle results 
+	  Ip = Nodes_p.Connectivity[I];
+	  I_mask = ActiveNodes.Nodes2Mask[Ip];
+
+	  /* Get the value of the shape function */
+	  ShapeFunction_pI = ShapeFunction_p.nV[I];
+
+	  /*
+	    Get the lumped mass matrix
 	  */
-	  WriteVtk_MPM("MPM_VALUES",MPM_Mesh,"ALL",
-		       (int)TimeStep/ResultsTimeStep,ResultsTimeStep);
+	  Lumped_MassMatrix.nV[I_mask] += m_p*ShapeFunction_pI;
+	  	  
+	  for(int J = 0 ; J<Nodes_p.NumberNodes ; J++)
+	    {
+	      
+	      /* 
+		 Get the node in the mass matrix with the mask
+	      */
+	      Jp = Nodes_p.Connectivity[J];
+	      J_mask = ActiveNodes.Nodes2Mask[Jp];
+	  
+	      /* 
+		 Get the consistent mass matrix 
+	      */
+	      Consistent_MassMatrix.nM[I_mask][J_mask] +=
+		m_p*ShapeFunction_pI*ShapeFunction_pJ;
+	  
+	    }
 	}
 
-      print_Status("*************************************************",TimeStep);
-      print_Status("Second step : Compute equilibrium ... WORKING",TimeStep);
-      F_I = compute_equilibrium_U(V_I,MPM_Mesh,FEM_Mesh,TimeStep); 
-      R_I = compute_Reactions(FEM_Mesh, F_I);
-      print_Status("DONE !!!",TimeStep);
+      /* Free the value of the shape functions */
+      FreeMat(ShapeFunction_p);
+      free(Nodes_p.Connectivity);      
+      
+    }
 
-      print_Status("*************************************************",TimeStep);
-      print_Status(" Third step : Update nodal momentum ... WORKING",TimeStep);
-      update_NodalMomentum(FEM_Mesh,Phi_I,F_I);
-      print_Status("DONE !!!",TimeStep);
-    
-      print_Status("*************************************************",TimeStep);
-      print_Status(" Four step : Update lagrangian ... WORKING",TimeStep);
-      update_Particles_FE(MPM_Mesh, FEM_Mesh, Phi_I, F_I, DeltaTimeStep);
-      LocalSearchGaussPoints(MPM_Mesh,FEM_Mesh);
-      print_Status("DONE !!!",TimeStep);
-    
-      print_Status("*************************************************",TimeStep);
-      print_Status(" Five step : Reset nodal values ... WORKING",TimeStep);
-      FreeMat(Phi_I);
-      FreeMat(V_I);
-      FreeMat(F_I);
-      FreeMat(R_I);
-      print_Status("DONE !!!",TimeStep);
+  /*
+    Compute the effective mass matrix as : 
+    a CONVEX combination of the consistent and lumped mass matrix
+   */
+  Effective_MassMatrix = Consistent_MassMatrix;
+  for(int I = 0 ; I<Nnodes ; I++)
+    {
+      for(int J = 0 ; J<Nnodes ; J++)
+	{
+	  if(I != J){
+	    Effective_MassMatrix.nM[I][J] = (1-epsilon)*Effective_MassMatrix.nM[I][J];
+	  }
+	  else{
+	    Effective_MassMatrix.nM[I][J] =
+	      (1-epsilon)*Effective_MassMatrix.nM[I][J] + epsilon*Lumped_MassMatrix.nV[I];
+	  }
+	}
+    }
 
-    } 
+  /*
+    Free lumped mass matrix.
+   */
+  FreeMat(Lumped_MassMatrix);
+  
 
+  return Effective_MassMatrix; 
 }
+
+/**************************************************************/
+
+static Mask generate_NodalMask(Mesh FEM_Mesh)
+{
+  int Nnodes = FEM_Mesh.NumNodesMesh;
+  int Nactivenodes = 0;
+  int * Nodes2Mask = (int *)Allocate_ArrayZ(Nnodes,sizeof(int));;
+  ChainPtr Mask2Nodes = NULL;
+  Mask M;
+
+  for(int I = 0 ; I<Nnodes ; I++)
+    {
+      if(FEM_Mesh.NumParticles[I] > 0)
+	{
+	  Nodes2Mask[I] = Nactivenodes;
+	  push_to_Set(&Mask2Nodes,I);
+	  Nactivenodes++;
+	}
+      else
+	{
+	  Nodes2Mask[I] = -1;
+	}
+    }
+
+  M.Nactivenodes = Nactivenodes;
+  M.Mask2Nodes = Set_to_Pointer(Mask2Nodes,Nactivenodes);
+  M.Nodes2Mask = Nodes2Mask;  
+ 
+  return M;
+}
+
+/**************************************************************/
+

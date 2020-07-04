@@ -463,6 +463,7 @@ typedef struct {
 
 } GaussPoint;
 
+
 /*******************************************************/
 
 /*! \struct Mesh
@@ -558,6 +559,21 @@ typedef struct {
   Matrix (* dNdX_ref)(Matrix );
     
 } Mesh;
+
+/*******************************************************/
+
+/*! \struct Mask
+ *  Structure with the current "element" of the particle
+ */
+typedef struct{
+
+  int Nactivenodes;
+      
+  int * Mask2Nodes;
+
+  int * Nodes2Mask;
+  
+} Mask;
 
 /*******************************************************/
 

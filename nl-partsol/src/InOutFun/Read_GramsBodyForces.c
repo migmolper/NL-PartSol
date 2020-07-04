@@ -4,7 +4,6 @@
   Call global variables
 */
 int NumberDOF;
-char * Formulation;
 
 /**********************************************************************/
 
