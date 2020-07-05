@@ -4,9 +4,10 @@
   Auxiliar functions 
 */
 static Mask generate_NodalMask(Mesh);
-static Matrix compute_Effective_MassMatrix(GaussPoint, Mesh, Mask, double);
-static Matrix compute_Momentum(GaussPoint, Mesh, Mask);
-static Matrix compute_velocity(Matrix Mass, Matrix Momentum);
+static Matrix compute_Nodal_Effective_Mass(GaussPoint, Mesh, Mask, double);
+static Matrix compute_Nodal_Momentum(GaussPoint, Mesh, Mask);
+static Matrix compute_Nodal_Velocity(Matrix, Matrix);
+static void update_Local_State(Matrix,Mask,GaussPoint,Mesh,double);
 
 /**************************************************************/
 
@@ -18,35 +19,73 @@ void U_Discrete_Energy_Momentum(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int InitialS
   */
   int Ndim = NumberDimensions;
 
-  double epsilon = 0.9;
-
   /*!
-    Auxiliar variable for the mass and momentum 
+    Auxiliar variables for the solver
   */
-  Matrix Effective_MassMatrix;
+  Matrix Effective_Mass;
+  Matrix Stiffness;
+  Matrix Forces;
   Matrix Momentum;
   Matrix Velocity;
+  Matrix DeltaU;
+  Matrix Residual;
   Mask ActiveNodes;
+  double NormResidual;
+  double TOL;
+  double epsilon = 0.9;
+  bool Convergence;
+  int Iter;
+  int MaxIter;
   
   ActiveNodes = generate_NodalMask(FEM_Mesh);
   
-  Effective_MassMatrix = compute_Effective_MassMatrix(MPM_Mesh,FEM_Mesh,ActiveNodes,epsilon);
+  Effective_Mass = compute_Nodal_Effective_Mass(MPM_Mesh,FEM_Mesh,ActiveNodes,epsilon);
 
-  PrintMatrix(Effective_MassMatrix,ActiveNodes.Nactivenodes,ActiveNodes.Nactivenodes);
+  Momentum = compute_Nodal_Momentum(MPM_Mesh, FEM_Mesh, ActiveNodes);
 
-  Momentum = compute_Momentum(MPM_Mesh, FEM_Mesh, ActiveNodes);
+  Velocity = compute_Nodal_Velocity(Effective_Mass, Momentum);
 
-  PrintMatrix(Momentum,Ndim,ActiveNodes.Nactivenodes);
+  DeltaU = MatAllocZ(2,ActiveNodes.Nactivenodes);
 
-  Velocity = compute_velocity(Effective_MassMatrix, Momentum);
+  Not_Convergence = false;
 
-  PrintMatrix(Velocity,Ndim,ActiveNodes.Nactivenodes);
+  /* while(Not_Convergence) */
+  /*   { */
+      
+  /*     update_Local_State(DeltaU,ActiveNodes,FEM_Mesh,MPM_Mesh,TimeStep); */
+      
+  /*     Forces = compute_Nodal_Forces(); */
+      
+  /*     Residual = compute_Nodal_Residual(Velocity,Forces,DeltaU,Effective_Mass,TimeStep); */
+
+  /*     Not_Convergence = check_convergence(Residual,TOL,Iter,MaxIter); */
+
+  /*     if(Not_Convergence) */
+  /* 	{ */
+  /* 	  Stiffness = compute_Nodal_Tangent_Stiffness(TimeStep); */
+	  
+  /* 	  update_DeltaU(DeltaU,Stiffness,Residual,TimeStep); */
+	  
+  /* 	  Iter++; */
+
+  /* 	  FreeMat(Forces); */
+  /* 	  FreeMat(Stiffness); */
+  /* 	  FreeMat(Residual); */
+  /* 	} */
+  /*     else */
+  /* 	{ */
+  /* 	  FreeMat(Residual);	   */
+  /* 	} */
+            
+  /*   } */
   
   /*!
     Free memory.
    */
-  FreeMat(Effective_MassMatrix);
+  FreeMat(Effective_Mass); 
   FreeMat(Momentum);
+  FreeMat(DeltaU);
+  FreeMat(Forces);
   
 }
 
@@ -83,7 +122,7 @@ static Mask generate_NodalMask(Mesh FEM_Mesh)
 
 /**************************************************************/
 
-static Matrix compute_Effective_MassMatrix(GaussPoint MPM_Mesh, Mesh FEM_Mesh,
+static Matrix compute_Nodal_Effective_Mass(GaussPoint MPM_Mesh, Mesh FEM_Mesh,
 					   Mask ActiveNodes, double epsilon)
 /*
   This function computes the consistent mass matrix 
@@ -212,7 +251,7 @@ static Matrix compute_Effective_MassMatrix(GaussPoint MPM_Mesh, Mesh FEM_Mesh,
 
 /**************************************************************/
 
-static Matrix compute_Momentum(GaussPoint MPM_Mesh,Mesh FEM_Mesh, Mask ActiveNodes)
+static Matrix compute_Nodal_Momentum(GaussPoint MPM_Mesh,Mesh FEM_Mesh, Mask ActiveNodes)
 /*
 
 */
@@ -220,7 +259,8 @@ static Matrix compute_Momentum(GaussPoint MPM_Mesh,Mesh FEM_Mesh, Mask ActiveNod
   int Ndim = NumberDimensions;
   int Nnodes = ActiveNodes.Nactivenodes;
   int Np = MPM_Mesh.NumGP;
-  int Ip, I_mask;
+  int Ip;
+  int I_mask;
 
   /* Value of the shape-function */
   Matrix ShapeFunction_p;
@@ -283,7 +323,7 @@ static Matrix compute_Momentum(GaussPoint MPM_Mesh,Mesh FEM_Mesh, Mask ActiveNod
 
 /**************************************************************/
 
-static Matrix compute_velocity(Matrix Mass, Matrix Momentum)
+static Matrix compute_Nodal_Velocity(Matrix Mass, Matrix Momentum)
 /* 
    Call the LAPACK solver to compute the nodal velocity
 */
@@ -316,4 +356,77 @@ static Matrix compute_velocity(Matrix Mass, Matrix Momentum)
   strcpy(Velocity.Info,"Nodal-Velocity");
 
   return Velocity;
+}
+
+/**************************************************************/
+
+static void update_Local_State(Matrix DeltaU, Mask ActiveNodes,
+			       GaussPoint MPM_Mesh, Mesh FEM_Mesh,
+			       double TimeStep)
+{
+
+  /*
+    Auxiliar variables
+   */
+  int Ndim = NumberDimensions;
+  int Np = MPM_Mesh.NumGP;
+  int Nnodes = ActiveNodes.Nactivenodes;
+  int MatIndx_p;
+  int Nnodes_p;
+  double J_p;  
+  Element Nodes_p;
+  Material MatProp_p;
+  Matrix gradient_p;
+  Tensor F_n_p;
+  Tensor F_n12_p;
+  Tensor F_n1_p;
+  Tensor C_n_p;
+  Tensor C_n1_p;
+  Tensor PK2_p;
+  
+  /* Loop in the material point set */
+  for(int p = 0 ; p<Np ; p++)
+    {
+      /*
+	Define tributary nodes of the particle 
+      */
+      Nodes_p = get_particle_Set(p, MPM_Mesh.ListNodes[p], MPM_Mesh.NumberNodes[p]);
+
+      /* 
+	 Evaluate the shape function gradient in the coordinates of the particle
+       */
+      gradient_p = compute_ShapeFunction_gradient(Nodes_p,MPM_Mesh,FEM_Mesh);
+	  
+      /*
+	Take the values of the deformation gradient from the previous step 
+      */
+      F_n_p  = memory_to_Tensor(MPM_Mesh.Phi.F_n.nM[p],2); 
+      F_n1_p = memory_to_Tensor(MPM_Mesh.Phi.F_n1.nM[p],2);
+
+      /*
+	Compute the value of the deformation gradient at t = n+1 
+      */
+      update_DeformationGradient(F_n1_p,F_n_p,DeltaU,gradient_p);
+
+      /*
+	Compute the right Cauchy-Green tensor
+      */
+      C_n_p  = compute_RightCauchyGreen(F_n_p);
+      C_n1_p = compute_RightCauchyGreen(F_n1_p);
+
+      /*
+	Update the second Piola-Kirchhoff stress tensor (S)
+      */
+      PK2_p = memory_to_Tensor(MPM_Mesh.Phi.PK2.nM[p],2);
+      MatIndx_p = MPM_Mesh.MatIdx[p];
+      MatProp_p = MPM_Mesh.Mat[MatIndx_p];
+      update_PK2_StressTensor_Avg(PK2_p,C_n_p,C_n1_p,MatProp_p); 
+      
+      /* Free the gradient */
+      FreeMat(gradient_p);
+      free_Tensor(C_n_p);
+      free_Tensor(C_n1_p);
+	  
+    }
+  
 }
