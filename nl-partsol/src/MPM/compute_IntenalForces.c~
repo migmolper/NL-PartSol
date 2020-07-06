@@ -13,7 +13,6 @@ Matrix compute_InternalForces(Matrix F_I, GaussPoint MPM_Mesh, Mesh FEM_Mesh)
   double m_p; /* Mass of the Gauss-Point */
   double rho_p; /* Density of the Gauss-Point */
   double V_p; /* Volume of the Gauss-Point */
-  double ji_p; /* Damage parameter */
   int Np = MPM_Mesh.NumGP;
   int Ip;
   int Nn;
@@ -32,13 +31,10 @@ Matrix compute_InternalForces(Matrix F_I, GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 
     /* Define element for each GP */
     Nn = MPM_Mesh.NumberNodes[p];
-    Nodes_p = get_Element(p, MPM_Mesh.ListNodes[p], Nn);
+    Nodes_p = get_particle_Set(p, MPM_Mesh.ListNodes[p], Nn);
 
     /* Compute gradient of the shape function in each node */
     Gradient_p = compute_ShapeFunction_Gradient(Nodes_p, MPM_Mesh, FEM_Mesh);
-
-    /* Damage parameter for the Gauss-point (fracture) */
-    ji_p = MPM_Mesh.Phi.ji.nV[p];
 
     /* Compute the volume of the Gauss-Point */
     V_p = m_p/rho_p;
@@ -57,7 +53,7 @@ Matrix compute_InternalForces(Matrix F_I, GaussPoint MPM_Mesh, Mesh FEM_Mesh)
       
       /* Asign the nodal forces contribution to the node */
       for(int i = 0 ; i<Ndim ; i++){
-	F_I.nM[Ip][i] -= (1-ji_p)*InternalForcesDensity_Ip.n[i]*V_p;
+	F_I.nM[Ip][i] -= InternalForcesDensity_Ip.n[i]*V_p;
       }
 
       /* Free the internal forces density */

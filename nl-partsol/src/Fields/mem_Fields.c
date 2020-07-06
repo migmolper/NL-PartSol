@@ -43,6 +43,14 @@ Fields allocate_Fields(int NumParticles)
   strcpy(Phi.Strain.Info,"Strain field GP");
 
   /*!
+    Deformation gradient field (Tensor)
+  */  
+  Phi.F_n = MatAllocZ(NumParticles,Ndim*Ndim);
+  strcpy(Phi.F_n.Info,"Deformation gradient at t = n");
+  Phi.F_n1 = MatAllocZ(NumParticles,Ndim*Ndim);
+  strcpy(Phi.F_n1.Info,"Deformation gradient at t = n + 1");
+  
+  /*!
     Strain_If field (Scalar) 
   */
   Phi.Strain_If = MatAllocZ(NumParticles,1);

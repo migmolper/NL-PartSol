@@ -72,8 +72,6 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
   /**************************************************/
   while(fgets(Line_GramsSolid2D,sizeof(Line_GramsSolid2D),Sim_dat) != NULL){
 
-    printf("%s \n",Line_GramsSolid2D);
-    
     /* Read the line with the space as separators */
     Num_words_parse = parse(Parse_GramsSolid2D,Line_GramsSolid2D," \n\t");
     if (Num_words_parse < 0){
@@ -88,12 +86,8 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
       Is_GramsSolid2D = true;
       Num_words_parse = parse(Parse_Mesh_id, Parse_GramsSolid2D[1],"(=)");
       MPM_MeshFileName = Parse_Mesh_id[1];
-      puts("paso");
-      printf("%s %i\n",Name_File, strlen(Name_File));
       generate_route(Route_Mesh,Name_File);
-      puts("paso");
       strcat(Route_Mesh,MPM_MeshFileName);
-      puts("paso");
     }
     if ((Num_words_parse > 0) &&
 	(strcmp(Parse_GramsSolid2D[0],"GramsShapeFun") == 0)){

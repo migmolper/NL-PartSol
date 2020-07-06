@@ -105,7 +105,7 @@ Matrix compute_ShapeFunction(Element GP_Element,GaussPoint MPM_Mesh,Mesh FEM_Mes
 
 /*********************************************************************/
 
-Matrix compute_ShapeFunction_Gradient(Element GP_Element,GaussPoint MPM_Mesh,
+Matrix compute_ShapeFunction_gradient(Element GP_Element,GaussPoint MPM_Mesh,
 				      Mesh FEM_Mesh) 
 { 
   int i_GP = GP_Element.i_GP;

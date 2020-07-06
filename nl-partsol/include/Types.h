@@ -211,6 +211,12 @@ typedef struct {
    * Strain field 
    */
   Matrix Strain;
+
+  /*!
+   * Deformation gradient at t = n and t = n + 1
+   */
+  Matrix F_n;
+  Matrix F_n1;
   
   /*!
    * Strain during crack 

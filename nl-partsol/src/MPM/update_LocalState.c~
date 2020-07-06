@@ -67,7 +67,7 @@ void update_LocalState(Matrix V_I, GaussPoint MPM_Mesh,
   /* Loop in the particles to compute the damage */
   for(int p = 0 ; p<Np ; p++){    
     /* Compute damage of the particles */
-    compute_Damage(p, MPM_Mesh, FEM_Mesh);
+    compute_particle_Damage(p, MPM_Mesh, FEM_Mesh);
   }
   
 }

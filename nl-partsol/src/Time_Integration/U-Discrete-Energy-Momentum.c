@@ -4,6 +4,7 @@
   Auxiliar functions 
 */
 static Mask generate_NodalMask(Mesh);
+static Matrix get_Nodal_Values_for_Particle(Matrix, Element, Mask);
 static Matrix compute_Nodal_Effective_Mass(GaussPoint, Mesh, Mask, double);
 static Matrix compute_Nodal_Momentum(GaussPoint, Mesh, Mask);
 static Matrix compute_Nodal_Velocity(Matrix, Matrix);
@@ -33,7 +34,7 @@ void U_Discrete_Energy_Momentum(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int InitialS
   double NormResidual;
   double TOL;
   double epsilon = 0.9;
-  bool Convergence;
+  bool Not_Convergence;
   int Iter;
   int MaxIter;
   
@@ -52,7 +53,7 @@ void U_Discrete_Energy_Momentum(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int InitialS
   /* while(Not_Convergence) */
   /*   { */
       
-  /*     update_Local_State(DeltaU,ActiveNodes,FEM_Mesh,MPM_Mesh,TimeStep); */
+  update_Local_State(DeltaU,ActiveNodes,MPM_Mesh,FEM_Mesh,DeltaTimeStep);
       
   /*     Forces = compute_Nodal_Forces(); */
       
@@ -83,9 +84,8 @@ void U_Discrete_Energy_Momentum(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int InitialS
     Free memory.
    */
   FreeMat(Effective_Mass); 
-  FreeMat(Momentum);
+  FreeMat(Velocity);
   FreeMat(DeltaU);
-  FreeMat(Forces);
   
 }
 
@@ -119,6 +119,57 @@ static Mask generate_NodalMask(Mesh FEM_Mesh)
  
   return M;
 }
+
+/**************************************************************/
+
+static Matrix get_Nodal_Values_for_Particle(Matrix Field, Element Nodes_p, Mask ActiveNodes)
+/*
+  This function performs two operations. First takes the nodal connectivity of the particle, 
+  and translate it to the mask numeration. Second, generate a Matrix with the nodal values.
+  To help in the future computations. Nodal data is substracted in the shape (nodesxndofs).
+ */
+  {
+    int Nnodes = Nodes_p.NumberNodes;
+    int Ndof = Field.N_rows;
+    Matrix Field_Ip = MatAllocZ(Nnodes,Ndof);
+    int Ip;
+    int I_mask;
+
+    if(Ndof > 2)
+      {
+	for(int I = 0 ; I<Nnodes ; I++)
+	  {
+	    
+	    /* 
+	       Get the node in the mass matrix with the mask
+	    */
+	    Ip = Nodes_p.Connectivity[I];
+	    I_mask = ActiveNodes.Nodes2Mask[Ip];
+	
+	    for(int i = 0 ; i<Ndof ; i++)
+	      {
+		Field_Ip.nM[I][i] = Field.nM[i][I_mask];
+	      }
+	  }
+      }
+    else
+      {
+	for(int I = 0 ; I<Nnodes ; I++)
+	  {
+
+	    /* 
+	       Get the node in the mass matrix with the mask
+	    */
+	    Ip = Nodes_p.Connectivity[I];
+	    I_mask = ActiveNodes.Nodes2Mask[Ip];
+	    
+	    Field_Ip.nV[I] = Field.nV[I_mask];
+	  }
+      }
+    
+    return Field_Ip;
+  }
+
 
 /**************************************************************/
 
@@ -377,6 +428,7 @@ static void update_Local_State(Matrix DeltaU, Mask ActiveNodes,
   Element Nodes_p;
   Material MatProp_p;
   Matrix gradient_p;
+  Matrix DeltaU_Ip;
   Tensor F_n_p;
   Tensor F_n12_p;
   Tensor F_n1_p;
@@ -391,38 +443,46 @@ static void update_Local_State(Matrix DeltaU, Mask ActiveNodes,
 	Define tributary nodes of the particle 
       */
       Nodes_p = get_particle_Set(p, MPM_Mesh.ListNodes[p], MPM_Mesh.NumberNodes[p]);
+      
+      /*
+	Get the nodal increment of displacement using the mask
+       */
+      DeltaU_Ip = get_Nodal_Values_for_Particle(DeltaU, Nodes_p, ActiveNodes);
 
-      /* 
-	 Evaluate the shape function gradient in the coordinates of the particle
+      PrintMatrix(DeltaU_Ip, DeltaU_Ip.N_rows, DeltaU_Ip.N_cols);
+
+      /*
+      	 Evaluate the shape function gradient in the coordinates of the particle
        */
       gradient_p = compute_ShapeFunction_gradient(Nodes_p,MPM_Mesh,FEM_Mesh);
 	  
       /*
-	Take the values of the deformation gradient from the previous step 
+      	Take the values of the deformation gradient from the previous step
       */
-      F_n_p  = memory_to_Tensor(MPM_Mesh.Phi.F_n.nM[p],2); 
+      F_n_p  = memory_to_Tensor(MPM_Mesh.Phi.F_n.nM[p],2);
       F_n1_p = memory_to_Tensor(MPM_Mesh.Phi.F_n1.nM[p],2);
 
       /*
-	Compute the value of the deformation gradient at t = n+1 
+      	Compute the value of the deformation gradient at t = n+1
       */
-      update_DeformationGradient(F_n1_p,F_n_p,DeltaU,gradient_p);
+      compute_Strain_Deformation_Gradient_n1(F_n1_p,F_n_p,DeltaU_Ip,gradient_p);
 
       /*
-	Compute the right Cauchy-Green tensor
+      	Compute the right Cauchy-Green tensor
       */
       C_n_p  = compute_RightCauchyGreen(F_n_p);
       C_n1_p = compute_RightCauchyGreen(F_n1_p);
 
-      /*
-	Update the second Piola-Kirchhoff stress tensor (S)
-      */
-      PK2_p = memory_to_Tensor(MPM_Mesh.Phi.PK2.nM[p],2);
-      MatIndx_p = MPM_Mesh.MatIdx[p];
-      MatProp_p = MPM_Mesh.Mat[MatIndx_p];
-      update_PK2_StressTensor_Avg(PK2_p,C_n_p,C_n1_p,MatProp_p); 
+      /* /\* */
+      /* 	Update the second Piola-Kirchhoff stress tensor (S) */
+      /* *\/ */
+      /* PK2_p = memory_to_Tensor(MPM_Mesh.Phi.PK2.nM[p],2); */
+      /* MatIndx_p = MPM_Mesh.MatIdx[p]; */
+      /* MatProp_p = MPM_Mesh.Mat[MatIndx_p]; */
+      /* update_PK2_StressTensor_Avg(PK2_p,C_n_p,C_n1_p,MatProp_p);  */
       
       /* Free the gradient */
+      FreeMat(DeltaU_Ip);
       FreeMat(gradient_p);
       free_Tensor(C_n_p);
       free_Tensor(C_n1_p);

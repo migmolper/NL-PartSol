@@ -63,3 +63,130 @@ Tensor update_Strain(Tensor Strain, Tensor Rate_Strain, double TimeStep)
 
 /*******************************************************/
 
+void compute_Strain_Deformation_Gradient_n1(Tensor F_n1, Tensor F_n,
+					    Matrix DeltaU, Matrix gradient_p)
+{
+
+  /* Variable definition */
+  int Ndim = NumberDimensions;
+  int Nnodes_p = DeltaU.N_rows;  
+  Tensor f_n1;
+  Tensor DeltaU_I;
+  Tensor gradient_I;
+  Tensor gradient_DeltaU_I;
+
+
+  /*
+    Initialize the deformation gradient F_n1
+   */
+  for(int i = 0 ; i<Ndim  ; i++)
+    {
+      for(int j = 0 ; j<Ndim  ; j++)
+	{
+	  F_n1.N[i][j] = 0.0;
+	}
+    }
+  
+  /*
+    Compute increment of the deformation gradient 
+    f_n1 = I + Delta_u 0 gradient_N
+  */
+
+  /* Add identity tensor */
+  f_n1 = get_I();
+  
+  for(int I = 0 ; I<Nnodes_p ; I++)
+    {
+
+      /* Assign from matrix to tensor */
+      DeltaU_I = memory_to_Tensor(DeltaU.nM[I], 1);
+      gradient_I = memory_to_Tensor(gradient_p.nM[I], 1);
+      
+      /* Compute the dyadic product of the nodal velocity and the
+	 gradient of the shape functions */
+      gradient_DeltaU_I = get_dyadicProduct_Of(DeltaU_I, gradient_I);
+      
+      /* Ad the nodal contribution to the train tensor */
+      for(int i = 0 ; i<Ndim ; i++)
+	{
+	  for(int j = 0 ; j<Ndim ; j++)
+	    {
+	      f_n1.N[i][j] += gradient_DeltaU_I.N[i][j];
+	    }
+	}
+      
+      /* Free memory */
+      free_Tensor(gradient_DeltaU_I);
+    }
+  
+  /*
+    Compute F_n1 = Incr_F F 
+  */
+  
+  for(int i = 0 ; i < Ndim  ; i++)
+    {
+      for(int j = 0 ; j < Ndim  ; j++)
+	{
+	  for(int k = 0 ; k < Ndim  ; k++)
+	    {
+	      F_n1.N[i][j] += f_n1.N[i][k]*F_n.N[k][j];
+	    }
+	}
+    }
+
+  /* Free memory */
+  free_Tensor(f_n1);
+
+}
+
+/*******************************************************/
+
+Tensor compute_RightCauchyGreen(Tensor F)
+{
+  /* Define output */
+  Tensor C = alloc_Tensor(2);
+  /* Define the number of dimensions */
+  int Ndim = NumberDimensions;
+
+  /* Compute C = F^T F */
+  for(int i = 0 ; i < Ndim  ; i++)
+    {
+      for(int j = 0 ; j < Ndim  ; j++)
+	{
+	  for(int k = 0 ; k < Ndim  ; k++)
+	    {
+	      C.N[i][j] += F.N[k][i]*F.N[k][j];
+	    }
+	}
+    }
+
+  return C;
+}
+
+
+/*******************************************************/
+
+Tensor compute_LagrangianStrain(Tensor C)
+{
+  /* Define output */
+  Tensor E = alloc_Tensor(2);
+  /* Define eye tensor */
+  Tensor I = get_I();
+  /* Define the number of dimensions */
+  int Ndim = NumberDimensions;
+
+  /* Compute E = 1/2 * [ C - I]  */
+  for(int i = 0 ; i < Ndim  ; i++)
+    {
+      for(int j = 0 ; j < Ndim  ; j++)
+	{
+	  E.N[i][j] = 0.5 * (C.N[i][j] - I.N[i][j]);
+	}
+    }
+
+  free_Tensor(I);
+
+  return E;
+}
+
+/*******************************************************/

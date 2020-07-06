@@ -506,5 +506,24 @@ Tensor get_firstOrderContraction_Of(Tensor A, Tensor b)
 
 /*************************************************************/
 
+Tensor compute_midpoint_Tensor(Tensor F_n1,Tensor F_n,double alpha)
+{
+  /* Define output */
+  Tensor F_alpha = alloc_Tensor(2);
+  /* Define the number of dimensions */
+  int Ndim = NumberDimensions;
+
+  for(int i = 0 ; i < Ndim  ; i++)
+    {
+      for(int j = 0 ; j < Ndim  ; j++)
+	{
+	  F_alpha.N[i][j] = alpha*F_n1.N[i][j] + (1-alpha)*F_n.N[i][j];
+	}
+    }
+
+  return F_alpha;
+}
+
+/*************************************************************/
 
 
