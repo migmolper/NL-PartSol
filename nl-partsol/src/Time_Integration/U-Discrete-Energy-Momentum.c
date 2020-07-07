@@ -432,9 +432,7 @@ static void update_Local_State(Matrix DeltaU, Mask ActiveNodes,
   Tensor F_n_p;
   Tensor F_n12_p;
   Tensor F_n1_p;
-  Tensor C_n_p;
-  Tensor C_n1_p;
-  Tensor PK2_p;
+  Tensor S_p;
   
   /* Loop in the material point set */
   for(int p = 0 ; p<Np ; p++)
@@ -466,26 +464,19 @@ static void update_Local_State(Matrix DeltaU, Mask ActiveNodes,
       	Compute the value of the deformation gradient at t = n+1
       */
       compute_Strain_Deformation_Gradient_n1(F_n1_p,F_n_p,DeltaU_Ip,gradient_p);
-
+      
       /*
-      	Compute the right Cauchy-Green tensor
+      	Update the second Piola-Kirchhoff stress tensor (S) with an apropiate
+	intgration rule.
       */
-      C_n_p  = compute_RightCauchyGreen(F_n_p);
-      C_n1_p = compute_RightCauchyGreen(F_n1_p);
-
-      /* /\* */
-      /* 	Update the second Piola-Kirchhoff stress tensor (S) */
-      /* *\/ */
-      /* PK2_p = memory_to_Tensor(MPM_Mesh.Phi.PK2.nM[p],2); */
-      /* MatIndx_p = MPM_Mesh.MatIdx[p]; */
-      /* MatProp_p = MPM_Mesh.Mat[MatIndx_p]; */
-      /* update_PK2_StressTensor_Avg(PK2_p,C_n_p,C_n1_p,MatProp_p);  */
+      MatIndx_p = MPM_Mesh.MatIdx[p];
+      MatProp_p = MPM_Mesh.Mat[MatIndx_p];
+      S_p = memory_to_Tensor(MPM_Mesh.Phi.Stress.nM[p],2);      
+      S_p = Itegration_Stress_Average_Strain(S_p,F_n1_p,F_n_p,MatProp_p);
       
       /* Free the gradient */
       FreeMat(DeltaU_Ip);
       FreeMat(gradient_p);
-      free_Tensor(C_n_p);
-      free_Tensor(C_n1_p);
 	  
     }
   
