@@ -506,6 +506,37 @@ Tensor get_firstOrderContraction_Of(Tensor A, Tensor b)
 
 /*************************************************************/
 
+Tensor get_matrixProduct_Of(Tensor A, Tensor B)
+{
+  int Ndim = NumberDimensions;  
+  Tensor AB = alloc_Tensor(2);
+
+  if ( (A.Order == 2) && (B.Order == 2) )
+    { 
+    for(int i = 0 ; i < Ndim  ; i++)
+      {
+	for(int j = 0 ; j < Ndim  ; j++)
+	  {
+	    for(int k = 0 ; k < Ndim  ; k++)
+	      {
+		AB.N[i][j] += A.N[i][k]*B.N[k][j];
+	      }
+	  }
+      }
+  }
+  else
+    {
+      fprintf(stderr,"%s : %s !!! \n",
+	      "Error in get_matrixProduct_Of()",
+	      "The input should be two second order tensors");
+      exit(EXIT_FAILURE);        
+    }
+  
+  return AB;
+}
+
+/*************************************************************/
+
 Tensor compute_midpoint_Tensor(Tensor F_n1,Tensor F_n,double alpha)
 {
   /* Define output */

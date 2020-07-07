@@ -7,8 +7,9 @@ static Mask generate_NodalMask(Mesh);
 static Matrix get_Nodal_Values_for_Particle(Matrix, Element, Mask);
 static Matrix compute_Nodal_Effective_Mass(GaussPoint, Mesh, Mask, double);
 static Matrix compute_Nodal_Momentum(GaussPoint, Mesh, Mask);
-static Matrix compute_Nodal_Velocity(Matrix, Matrix);
 static void update_Local_State(Matrix,Mask,GaussPoint,Mesh,double);
+static Matrix compute_Nodal_Internal_Forces(Matrix, Matrix,Mask,GaussPoint, Mesh);
+static Matrix compute_Nodal_Velocity(Matrix, Matrix);
 
 /**************************************************************/
 
@@ -54,10 +55,12 @@ void U_Discrete_Energy_Momentum(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int InitialS
   /*   { */
       
   update_Local_State(DeltaU,ActiveNodes,MPM_Mesh,FEM_Mesh,DeltaTimeStep);
+
+  Forces = MatAllocZ(2,ActiveNodes.Nactivenodes);
       
-  /*     Forces = compute_Nodal_Forces(); */
+  Forces = compute_Nodal_Internal_Forces(Forces,DeltaU,ActiveNodes,MPM_Mesh,FEM_Mesh);
       
-  /*     Residual = compute_Nodal_Residual(Velocity,Forces,DeltaU,Effective_Mass,TimeStep); */
+  /* Residual = compute_Nodal_Residual(Velocity,Forces,DeltaU,Effective_Mass,TimeStep); */
 
   /*     Not_Convergence = check_convergence(Residual,TOL,Iter,MaxIter); */
 
@@ -69,9 +72,9 @@ void U_Discrete_Energy_Momentum(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int InitialS
 	  
   /* 	  Iter++; */
 
-  /* 	  FreeMat(Forces); */
+  FreeMat(Forces);
+  /* FreeMat(Residual); */
   /* 	  FreeMat(Stiffness); */
-  /* 	  FreeMat(Residual); */
   /* 	} */
   /*     else */
   /* 	{ */
@@ -374,43 +377,6 @@ static Matrix compute_Nodal_Momentum(GaussPoint MPM_Mesh,Mesh FEM_Mesh, Mask Act
 
 /**************************************************************/
 
-static Matrix compute_Nodal_Velocity(Matrix Mass, Matrix Momentum)
-/* 
-   Call the LAPACK solver to compute the nodal velocity
-*/
-{
-
-#include "lapacke.h"
-
-  Matrix Velocity;
-
-  int Ndim = NumberDimensions;
-  int Nnodes = Mass.N_rows;
-  int Order = Nnodes;
-  int LDA   = Nnodes;
-  int LDB = Nnodes;
-  char  TRANS = 'N'; /* (No transpose) */
-  int   INFO= 3;
-  int * IPIV = (int *)Allocate_Array(Order,sizeof(int));
-  int NRHS = Ndim;
-
-  /* Compute the LU factorization */
-  LAPACK_dgetrf(&Order,&Order,Mass.nV,&LDA,IPIV,&INFO);
-
-  dgetrs_(&TRANS,&Order,&NRHS,Mass.nV,&LDA,IPIV,Momentum.nV,&LDB,&INFO);
-
-  Velocity = Momentum;
-
-  /*
-    Add some usefulll info
-  */
-  strcpy(Velocity.Info,"Nodal-Velocity");
-
-  return Velocity;
-}
-
-/**************************************************************/
-
 static void update_Local_State(Matrix DeltaU, Mask ActiveNodes,
 			       GaussPoint MPM_Mesh, Mesh FEM_Mesh,
 			       double TimeStep)
@@ -481,3 +447,170 @@ static void update_Local_State(Matrix DeltaU, Mask ActiveNodes,
     }
   
 }
+
+/**************************************************************/
+
+static Matrix compute_Nodal_Internal_Forces(Matrix Forces, Matrix DeltaU,
+					    Mask ActiveNodes,
+					    GaussPoint MPM_Mesh, Mesh FEM_Mesh)
+{
+
+  int Ndim = NumberDimensions;
+  int Np = MPM_Mesh.NumGP;
+  int Ip;
+  int I_mask;
+  int Nn;
+
+  Tensor P_p; /* First Piola-Kirchhoff Stress tensor */
+  Tensor S_p; /* Second Piola-Kirchhoff Stress tensor */
+  Tensor InternalForcesDensity_Ip;
+
+  Element Nodes_p; /* List of nodes for particle */
+  Matrix gradient_p; /* Shape functions gradients */
+  Tensor gradient_pI;
+  Tensor GRADIENT_pI;
+  Tensor F_n_p;
+  Tensor F_n1_p;
+  Tensor F_n12_p;
+  Tensor transpose_F_n_p;
+  
+  double m_p; /* Mass of the Gauss-Point */
+  double rho_p; /* Density of the Gauss-Point */
+  double V0_p; /* Volume of the Gauss-Point */
+  double J_p; /* Jacobian of the deformation gradient */
+
+  /*
+    Loop in the particles 
+  */
+  for(int p = 0 ; p<Np ; p++)
+    {
+      
+      /*
+	Get the value of the density 
+      */
+      rho_p = MPM_Mesh.Phi.rho.nV[p];
+
+      /*
+	Get the value of the mass 
+      */
+      m_p = MPM_Mesh.Phi.mass.nV[p];
+
+      /*
+	Define nodes for each particle
+      */
+      Nn = MPM_Mesh.NumberNodes[p];
+      Nodes_p = get_particle_Set(p, MPM_Mesh.ListNodes[p], Nn);
+
+      /*
+	Compute gradient of the shape function in each node 
+      */
+      gradient_p = compute_ShapeFunction_gradient(Nodes_p, MPM_Mesh, FEM_Mesh);
+    	  
+      /*
+	Take the values of the deformation gradient ant t = n and t = n + 1. 
+	Later compute the midpoint deformation gradient and 
+	the transpose of the deformation gradient.
+      */
+      F_n_p  = memory_to_Tensor(MPM_Mesh.Phi.F_n.nM[p],2);
+      F_n1_p = memory_to_Tensor(MPM_Mesh.Phi.F_n1.nM[p],2);
+      F_n12_p = compute_midpoint_Tensor(F_n1_p,F_n_p,0.5);
+      transpose_F_n_p = get_Transpose_Of(F_n_p);
+
+      /*
+	Compute the first Piola-Kirchhoff stress tensor
+      */
+      S_p = memory_to_Tensor(MPM_Mesh.Phi.Stress.nM[p], 2);
+      P_p = get_matrixProduct_Of(F_n12_p, S_p);
+
+      /*
+	Compute the volume of the particle in the reference configuration 
+      */
+      J_p = get_I3_Of(F_n_p);
+      V0_p = (1/J_p)*(m_p/rho_p);
+    
+      for(int I = 0 ; I<Nn ; I++)
+	{
+      
+	  /*
+	    Compute the gradient in the reference configuration 
+	  */
+	  gradient_pI = memory_to_Tensor(gradient_p.nM[I], 1);
+	  GRADIENT_pI = get_firstOrderContraction_Of(transpose_F_n_p,gradient_pI);
+      
+	  /*
+	    Compute the nodal forces of the particle 
+	  */
+	  InternalForcesDensity_Ip = get_firstOrderContraction_Of(P_p, GRADIENT_pI);
+      
+	  /*
+	    Get the node of the mesh for the contribution 
+	  */
+	  Ip = Nodes_p.Connectivity[I];
+	  I_mask = ActiveNodes.Nodes2Mask[Ip];
+      
+	  /*
+	    Asign the nodal forces contribution to the node 
+	  */
+	  for(int i = 0 ; i<Ndim ; i++)
+	    {
+	      Forces.nM[i][I_mask] -= InternalForcesDensity_Ip.n[i]*V0_p;
+	    }
+
+	  /*
+	    Free memory 
+	  */
+	  free_Tensor(InternalForcesDensity_Ip);
+	  free_Tensor(GRADIENT_pI);
+	}
+        
+      /* 
+	 Free memory 
+      */
+      free_Tensor(F_n12_p);
+      free_Tensor(transpose_F_n_p);
+      free_Tensor(P_p);
+      FreeMat(gradient_p);
+      free(Nodes_p.Connectivity);
+    }
+
+  return Forces;
+    
+}
+/**************************************************************/
+
+static Matrix compute_Nodal_Velocity(Matrix Mass, Matrix Momentum)
+/* 
+   Call the LAPACK solver to compute the nodal velocity
+*/
+{
+
+#include "lapacke.h"
+
+  Matrix Velocity;
+
+  int Ndim = NumberDimensions;
+  int Nnodes = Mass.N_rows;
+  int Order = Nnodes;
+  int LDA   = Nnodes;
+  int LDB = Nnodes;
+  char  TRANS = 'N'; /* (No transpose) */
+  int   INFO= 3;
+  int * IPIV = (int *)Allocate_Array(Order,sizeof(int));
+  int NRHS = Ndim;
+
+  /* Compute the LU factorization */
+  LAPACK_dgetrf(&Order,&Order,Mass.nV,&LDA,IPIV,&INFO);
+
+  dgetrs_(&TRANS,&Order,&NRHS,Mass.nV,&LDA,IPIV,Momentum.nV,&LDB,&INFO);
+
+  Velocity = Momentum;
+
+  /*
+    Add some usefulll info
+  */
+  strcpy(Velocity.Info,"Nodal-Velocity");
+
+  return Velocity;
+}
+
+/**************************************************************/

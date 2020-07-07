@@ -132,6 +132,7 @@ double get_innerProduct_Of(Tensor A, Tensor B);
 Tensor get_vectorProduct_Of(Tensor a, Tensor b);
 Tensor get_dyadicProduct_Of(Tensor a, Tensor b);
 Tensor get_firstOrderContraction_Of(Tensor A, Tensor b);
+Tensor get_matrixProduct_Of(Tensor, Tensor);
 Tensor compute_midpoint_Tensor(Tensor,Tensor,double);
 /*******************************************************/
 
