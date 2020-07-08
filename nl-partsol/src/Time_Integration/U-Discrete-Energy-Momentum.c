@@ -12,6 +12,13 @@ static Matrix compute_Nodal_Velocity(Matrix, Matrix);
 static void   update_Local_State(Matrix,Mask,GaussPoint,Mesh,double);
 static Matrix compute_Nodal_Internal_Forces(Matrix, Matrix,Mask,GaussPoint, Mesh);
 static Matrix compute_Nodal_Residual(Matrix, Matrix, Matrix, Matrix, double);
+static void compute_Nodal_Tangent_Stiffness_2D(Matrix, Matrix, Matrix, Matrix,
+					       Mask, GaussPoint, Mesh);
+static void compute_Nodal_Tangent_Stiffness_Geometric_2D(Matrix, Matrix,
+							 Mask, GaussPoint, Mesh);
+static void compute_Nodal_Tangent_Stiffness_Material_2D(Matrix, Matrix, Matrix, Matrix,
+							Mask, GaussPoint, Mesh);
+static Tensor assemble_Nodal_Tangent_Stiffness_Material(Tensor,Tensor,Tensor);
 
 /**************************************************************/
 
@@ -27,7 +34,10 @@ void U_Discrete_Energy_Momentum(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int InitialS
     Auxiliar variables for the solver
   */
   Matrix Effective_Mass;
-  Matrix Stiffness;
+  Matrix Stiffness_Uxx;
+  Matrix Stiffness_Uyy;
+  Matrix Stiffness_Uxy;
+  Matrix Stiffness_Uyx;
   Matrix Forces;
   Matrix Momentum;
   Matrix Velocity;
@@ -69,7 +79,9 @@ void U_Discrete_Energy_Momentum(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int InitialS
 
   /*     if(Not_Convergence) */
   /* 	{ */
-  /* 	  Stiffness = compute_Nodal_Tangent_Stiffness(TimeStep); */
+  compute_Nodal_Tangent_Stiffness_2D(Stiffness_Uxx,Stiffness_Uxy,
+				     Stiffness_Uyy,Stiffness_Uyx,
+				     ActiveNodes,MPM_Mesh,FEM_Mesh);
 	  
   /* 	  update_DeltaU(DeltaU,Stiffness,Residual,TimeStep); */
 	  
@@ -77,7 +89,10 @@ void U_Discrete_Energy_Momentum(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int InitialS
 
   FreeMat(Forces);
   FreeMat(Residual);
-  /* 	  FreeMat(Stiffness); */
+  FreeMat(Stiffness_Uxx);
+  FreeMat(Stiffness_Uxy);
+  FreeMat(Stiffness_Uyx);
+  FreeMat(Stiffness_Uyy);
   /* 	} */
   /*     else */
   /* 	{ */
@@ -194,7 +209,7 @@ static Matrix compute_Nodal_Effective_Mass(GaussPoint MPM_Mesh, Mesh FEM_Mesh,
   Matrix ShapeFunction_p;  
 
   /* Evaluation of the particle in the node */
-  double ShapeFunction_pI, ShapeFunction_pJ;
+  double ShapeFunction_pA, ShapeFunction_pB;
   /* Mass of the particle */
   double m_p;
   /* Element for each particle */
@@ -240,12 +255,12 @@ static Matrix compute_Nodal_Effective_Mass(GaussPoint MPM_Mesh, Mesh FEM_Mesh,
 	  A_mask = ActiveNodes.Nodes2Mask[Ap];
 
 	  /* Get the value of the shape function */
-	  ShapeFunction_pI = ShapeFunction_p.nV[A];
+	  ShapeFunction_pA = ShapeFunction_p.nV[A];
 
 	  /*
 	    Get the lumped mass matrix
 	  */
-	  Lumped_MassMatrix.nV[A_mask] += m_p*ShapeFunction_pI;
+	  Lumped_MassMatrix.nV[A_mask] += m_p*ShapeFunction_pA;
 	  	  
 	  for(int B = 0 ; B<Nodes_p.NumberNodes ; B++)
 	    {
@@ -257,13 +272,13 @@ static Matrix compute_Nodal_Effective_Mass(GaussPoint MPM_Mesh, Mesh FEM_Mesh,
 	      B_mask = ActiveNodes.Nodes2Mask[Bp];
 
 	      /* Get the value of the shape function */
-	      ShapeFunction_pJ = ShapeFunction_p.nV[B];
+	      ShapeFunction_pB = ShapeFunction_p.nV[B];
 	  
 	      /* 
 		 Get the consistent mass matrix 
 	      */
 	      Consistent_MassMatrix.nM[A_mask][B_mask] +=
-		m_p*ShapeFunction_pI*ShapeFunction_pJ;
+		m_p*ShapeFunction_pA*ShapeFunction_pB;
 	  
 	    }
 	}
@@ -323,7 +338,7 @@ static Matrix compute_Nodal_Momentum(GaussPoint MPM_Mesh,Mesh FEM_Mesh, Mask Act
   Matrix ShapeFunction_p;
 
   /* Evaluation of the particle in the node */
-  double ShapeFunction_pI;
+  double ShapeFunction_pA;
   /* Mass of the particle */
   double m_p;
   /* Element for each particle */
@@ -356,12 +371,12 @@ static Matrix compute_Nodal_Momentum(GaussPoint MPM_Mesh,Mesh FEM_Mesh, Mask Act
 	  A_mask = ActiveNodes.Nodes2Mask[Ap];
       
 	  /* Evaluate the GP function in the node */
-	  ShapeFunction_pI = ShapeFunction_p.nV[A];
+	  ShapeFunction_pA = ShapeFunction_p.nV[A];
       
 	  /* Nodal momentum */
 	  for(int i = 0 ; i<Ndim ; i++)
 	    {
-	      Momentum.nM[i][A_mask] += m_p*ShapeFunction_pI*MPM_Mesh.Phi.vel.nM[p][i];
+	      Momentum.nM[i][A_mask] += m_p*ShapeFunction_pA*MPM_Mesh.Phi.vel.nM[p][i];
 	    }
 	}
 
@@ -505,8 +520,8 @@ static Matrix compute_Nodal_Internal_Forces(Matrix Forces, Matrix DeltaU,
 
   Element Nodes_p; /* List of nodes for particle */
   Matrix gradient_p; /* Shape functions gradients */
-  Tensor gradient_pI;
-  Tensor GRADIENT_pI;
+  Tensor gradient_pA;
+  Tensor GRADIENT_pA;
   Tensor F_n_p;
   Tensor F_n1_p;
   Tensor F_n12_p;
@@ -572,13 +587,13 @@ static Matrix compute_Nodal_Internal_Forces(Matrix Forces, Matrix DeltaU,
 	  /*
 	    Compute the gradient in the reference configuration 
 	  */
-	  gradient_pI = memory_to_Tensor(gradient_p.nM[A], 1);
-	  GRADIENT_pI = get_firstOrderContraction_Of(transpose_F_n_p,gradient_pI);
+	  gradient_pA = memory_to_Tensor(gradient_p.nM[A], 1);
+	  GRADIENT_pA = get_firstOrderContraction_Of(transpose_F_n_p,gradient_pA);
       
 	  /*
 	    Compute the nodal forces of the particle 
 	  */
-	  InternalForcesDensity_Ap = get_firstOrderContraction_Of(P_p, GRADIENT_pI);
+	  InternalForcesDensity_Ap = get_firstOrderContraction_Of(P_p, GRADIENT_pA);
       
 	  /*
 	    Get the node of the mesh for the contribution 
@@ -598,7 +613,7 @@ static Matrix compute_Nodal_Internal_Forces(Matrix Forces, Matrix DeltaU,
 	    Free memory 
 	  */
 	  free_Tensor(InternalForcesDensity_Ap);
-	  free_Tensor(GRADIENT_pI);
+	  free_Tensor(GRADIENT_pA);
 	}
         
       /* 
@@ -643,7 +658,7 @@ static Matrix compute_Nodal_Residual(Matrix Velocity, Matrix Forces,
     }
 
   /*
-    Compute inertial forces 
+    Compute inertial forces (Vectorized)
   */
   for(int i = 0 ; i<Ndim ; i++)
     {
@@ -683,3 +698,373 @@ static Matrix compute_Nodal_Residual(Matrix Velocity, Matrix Forces,
 
 /**************************************************************/
 
+static void compute_Nodal_Tangent_Stiffness_2D(Matrix Stiffness_Uxx,
+					       Matrix Stiffness_Uxy,
+					       Matrix Stiffness_Uyy,
+					       Matrix Stiffness_Uyx,
+					       Mask ActiveNodes,
+					       GaussPoint MPM_Mesh,
+					       Mesh FEM_Mesh)
+{
+
+  int Nnodes = ActiveNodes.Nactivenodes;
+
+  /*
+    Allocate tangent stiffness matrix in both dof
+  */
+  Stiffness_Uxx = MatAllocZ(Nnodes, Nnodes);
+  Stiffness_Uxy = MatAllocZ(Nnodes, Nnodes);
+  Stiffness_Uyy = MatAllocZ(Nnodes, Nnodes);
+  Stiffness_Uyx = MatAllocZ(Nnodes, Nnodes);
+
+  /*
+    Compute term related to the geometric non-linearities
+   */  
+  compute_Nodal_Tangent_Stiffness_Geometric_2D(Stiffness_Uxx,Stiffness_Uyy,
+					       ActiveNodes, 
+					       MPM_Mesh,FEM_Mesh);
+
+  /* /\* */
+  /*   Compute term related to the material non-linearities */
+  /*  *\/ */
+  /* compute_Nodal_Tangent_Stiffness_Material_2D(Stiffness_Ux,Stiffness_Uy, */
+  /* 					    ActiveNodes, */
+  /* 					    MPM_Mesh,FEM_Mesh); */
+
+}
+
+
+/**************************************************************/
+
+static void compute_Nodal_Tangent_Stiffness_Geometric_2D(Matrix Stiffness_Uxx,
+							 Matrix Stiffness_Uyy,
+							 Mask ActiveNodes,
+							 GaussPoint MPM_Mesh,
+							 Mesh FEM_Mesh)
+/*
+  Introduce the geometric contribution G_AB to the full stiffness matrix K_AB
+*/
+{
+  int Ndim = NumberDimensions;
+  int Np = MPM_Mesh.NumGP;
+  int Ap;
+  int A_mask;
+  int Bp;
+  int B_mask;
+  int Nn;
+
+  Tensor S_p; /* Second Piola-Kirchhoff Stress tensor */
+
+  Element Nodes_p; /* List of nodes for particle */
+  Matrix gradient_p; /* Shape functions gradients */
+  Tensor gradient_pA;
+  Tensor GRADIENT_pA;
+  Tensor gradient_pB;
+  Tensor GRADIENT_pB;
+  Tensor F_n_p;
+  Tensor transpose_F_n_p;
+  Tensor GRADIENT_pA_o_GRADIENT_pB;
+  
+  double m_p; /* Mass of the Gauss-Point */
+  double rho_p; /* Density of the Gauss-Point */
+  double V0_p; /* Volume of the Gauss-Point */
+  double J_p; /* Jacobian of the deformation gradient */
+  double Geometric_AB_p; /* Geometric contribution */
+
+  /*
+    Loop in the particles 
+  */
+  for(int p = 0 ; p<Np ; p++)
+    {
+
+      /*
+      	Get the value of the density 
+      */
+      rho_p = MPM_Mesh.Phi.rho.nV[p];
+
+      /*
+	Get the value of the mass 
+      */
+      m_p = MPM_Mesh.Phi.mass.nV[p];
+
+      /*
+	Define nodes for each particle
+      */
+      Nn = MPM_Mesh.NumberNodes[p];
+      Nodes_p = get_particle_Set(p, MPM_Mesh.ListNodes[p], Nn);
+
+      /*
+	Compute gradient of the shape function in each node 
+      */
+      gradient_p = compute_ShapeFunction_gradient(Nodes_p, MPM_Mesh, FEM_Mesh);
+    	  
+      /*
+	Take the values of the deformation gradient ant t = n and  
+	the transpose of the deformation gradient.
+      */
+      F_n_p  = memory_to_Tensor(MPM_Mesh.Phi.F_n.nM[p],2);
+      transpose_F_n_p = get_Transpose_Of(F_n_p);
+
+      /*
+	Compute the first Piola-Kirchhoff stress tensor
+      */
+      S_p = memory_to_Tensor(MPM_Mesh.Phi.Stress.nM[p], 2);
+
+      /*
+	Compute the volume of the particle in the reference configuration 
+      */
+      J_p = get_I3_Of(F_n_p);
+      V0_p = (1/J_p)*(m_p/rho_p);
+
+      for(int A = 0 ; A<Nn ; A++)
+	{
+	  /*
+	    Compute the gradient in the reference configuration 
+	  */
+	  gradient_pA = memory_to_Tensor(gradient_p.nM[A], 1);
+	  GRADIENT_pA = get_firstOrderContraction_Of(transpose_F_n_p,gradient_pA);
+
+	  /*
+	    Get the node of the mesh for the contribution 
+	  */
+	  Ap = Nodes_p.Connectivity[A];
+	  A_mask = ActiveNodes.Nodes2Mask[Ap];
+
+	  
+	  for(int B = 0 ; B<Nn ; B++)
+	    {
+
+	      /*
+		Compute the gradient in the reference configuration 
+	      */
+	      gradient_pB = memory_to_Tensor(gradient_p.nM[B], 1);
+	      GRADIENT_pB = get_firstOrderContraction_Of(transpose_F_n_p,gradient_pB);
+
+	      /*
+		Get the node of the mesh for the contribution 
+	      */
+	      Bp = Nodes_p.Connectivity[B];
+	      B_mask = ActiveNodes.Nodes2Mask[Bp];
+
+
+	      /*
+		Compute the dyadic product of both gradients 
+	       */
+	      GRADIENT_pA_o_GRADIENT_pB = get_dyadicProduct_Of(GRADIENT_pA,GRADIENT_pB);
+
+	      /*
+		Get the nodal contribution
+	       */
+	      Geometric_AB_p= get_dotProduct_Of(S_p, GRADIENT_pA_o_GRADIENT_pB);
+
+	      /*
+		Add the geometric contribution
+	       */
+	      Stiffness_Uxx.nM[A_mask][B_mask] += Geometric_AB_p*V0_p;
+	      Stiffness_Uyy.nM[A_mask][B_mask] += Geometric_AB_p*V0_p;
+
+	      /*
+		Free memory 
+	      */
+	      free_Tensor(GRADIENT_pB);
+	      free_Tensor(GRADIENT_pA_o_GRADIENT_pB);
+	    }
+
+	  /*
+	    Free memory 
+	  */
+	  free_Tensor(GRADIENT_pA);	  
+	}
+      
+
+      /* 
+	 Free memory 
+      */
+      free_Tensor(transpose_F_n_p);
+      FreeMat(gradient_p);
+      free(Nodes_p.Connectivity);
+    }
+}
+
+
+/**************************************************************/
+static void compute_Nodal_Tangent_Stiffness_Material_2D(Matrix Stiffness_Uxx,
+							Matrix Stiffness_Uxy,
+							Matrix Stiffness_Uyy,
+							Matrix Stiffness_Uyx,
+							Mask ActiveNodes,
+							GaussPoint MPM_Mesh,
+							Mesh FEM_Mesh)
+{
+
+  int Ndim = NumberDimensions;
+  int Np = MPM_Mesh.NumGP;
+  int Ap;
+  int A_mask;
+  int Bp;
+  int B_mask;
+  int Nn;
+  int MatIndx_p;
+
+  Element Nodes_p; /* List of nodes for particle */
+  Matrix gradient_p; /* Shape functions gradients */
+  Tensor gradient_pA;
+  Tensor GRADIENT_pA;
+  Tensor gradient_pB;
+  Tensor GRADIENT_pB;
+  Tensor F_n_p;
+  Tensor F_n1_p;
+  Tensor F_n12_p;
+  Tensor transpose_F_n_p;
+  Tensor transpose_F_n12_p;
+  Tensor C_AB;
+  Tensor Material_AB;
+
+  Material MatProp_p;
+  double m_p; /* Mass of the Gauss-Point */
+  double rho_p; /* Density of the Gauss-Point */
+  double V0_p; /* Volume of the Gauss-Point */
+  double J_p; /* Jacobian of the deformation gradient */
+  double Geometric_AB_p; /* Geometric contribution */
+
+  /*
+    Loop in the particles 
+  */
+  for(int p = 0 ; p<Np ; p++)
+    {
+      /*
+      	Get the value of the density 
+      */
+      rho_p = MPM_Mesh.Phi.rho.nV[p];
+
+      /*
+	Get the value of the mass 
+      */
+      m_p = MPM_Mesh.Phi.mass.nV[p];
+
+      
+      MatIndx_p = MPM_Mesh.MatIdx[p];
+      MatProp_p = MPM_Mesh.Mat[MatIndx_p];
+
+      /*
+	Define nodes for each particle
+      */
+      Nn = MPM_Mesh.NumberNodes[p];
+      Nodes_p = get_particle_Set(p, MPM_Mesh.ListNodes[p], Nn);
+
+      /*
+	Compute gradient of the shape function in each node 
+      */
+      gradient_p = compute_ShapeFunction_gradient(Nodes_p, MPM_Mesh, FEM_Mesh);
+      
+      /*
+	Take the values of the deformation gradient ant t = n and t = n + 1. 
+	Later compute the midpoint deformation gradient and 
+	the transpose of the deformation gradient at the midpoint.
+      */
+      F_n_p  = memory_to_Tensor(MPM_Mesh.Phi.F_n.nM[p],2);
+      F_n1_p = memory_to_Tensor(MPM_Mesh.Phi.F_n1.nM[p],2);
+      F_n12_p = compute_midpoint_Tensor(F_n1_p,F_n_p,0.5);
+      transpose_F_n_p = get_Transpose_Of(F_n_p);
+      transpose_F_n12_p = get_Transpose_Of(F_n12_p);
+
+      /*
+	Compute the volume of the particle in the reference configuration 
+      */
+      J_p = get_I3_Of(F_n_p);
+      V0_p = (1/J_p)*(m_p/rho_p);
+
+      for(int A = 0 ; A<Nn ; A++)
+	{
+	  /*
+	    Compute the gradient in the reference configuration 
+	  */
+	  gradient_pA = memory_to_Tensor(gradient_p.nM[A], 1);
+	  GRADIENT_pA = get_firstOrderContraction_Of(transpose_F_n_p,gradient_pA);
+
+	  /*
+	    Get the node of the mesh for the contribution 
+	  */
+	  Ap = Nodes_p.Connectivity[A];
+	  A_mask = ActiveNodes.Nodes2Mask[Ap];
+
+	  
+	  for(int B = 0 ; B<Nn ; B++)
+	    {
+
+	      /*
+		Compute the gradient in the reference configuration 
+	      */
+	      gradient_pB = memory_to_Tensor(gradient_p.nM[B], 1);
+	      GRADIENT_pB = get_firstOrderContraction_Of(transpose_F_n_p,gradient_pB);
+
+	      /*
+		Get the node of the mesh for the contribution 
+	      */
+	      Bp = Nodes_p.Connectivity[B];
+	      B_mask = ActiveNodes.Nodes2Mask[Bp];
+
+
+	      /*
+		Get the nodal contribution of the material mass matrix
+	       */
+	      C_AB = compute_stiffness_density_Saint_Venant_Kirchhoff(GRADIENT_pA,
+								      GRADIENT_pB,
+								      MatProp_p);
+
+	      /*
+		Assemble the nodal matrix with the contribution to each degree of freedom
+	       */
+	      Material_AB =
+		assemble_Nodal_Tangent_Stiffness_Material(F_n12_p,C_AB,transpose_F_n12_p);
+	      
+	      /*
+		Add the geometric contribution
+	       */
+	      Stiffness_Uxx.nM[A_mask][B_mask] += Material_AB.N[0][0]*V0_p;
+	      Stiffness_Uxy.nM[A_mask][B_mask] += Material_AB.N[0][1]*V0_p;
+	      Stiffness_Uyy.nM[A_mask][B_mask] += Material_AB.N[1][1]*V0_p;
+	      Stiffness_Uyx.nM[A_mask][B_mask] += Material_AB.N[1][0]*V0_p;
+
+	      /*
+		Free memory 
+	      */
+	      free_Tensor(GRADIENT_pB);
+	      free_Tensor(C_AB);
+	      free_Tensor(Material_AB);
+	    }
+
+	  /*
+	    Free memory 
+	  */
+	  free_Tensor(GRADIENT_pA);	  
+	}
+      
+
+      /* 
+	 Free memory 
+      */
+      free_Tensor(F_n12_p);
+      free_Tensor(transpose_F_n12_p);
+      free_Tensor(transpose_F_n_p);
+      FreeMat(gradient_p);
+      free(Nodes_p.Connectivity);
+
+    }
+
+}
+
+/**************************************************************/
+
+static Tensor assemble_Nodal_Tangent_Stiffness_Material(Tensor F_n12_p,
+							Tensor C_AB,
+							Tensor transpose_F_beta_p)
+{
+
+  Tensor Material_AB;
+
+  return Material_AB;
+  
+}
+
+/**************************************************************/

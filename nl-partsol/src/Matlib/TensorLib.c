@@ -394,7 +394,7 @@ Tensor get_Transpose_Of(Tensor A)
 
 /*************************************************************/
 
-double get_innerProduct_Of(Tensor A, Tensor B)
+double get_dotProduct_Of(Tensor A, Tensor B)
 {
 
   int Ndim = NumberDimensions;
@@ -416,7 +416,7 @@ double get_innerProduct_Of(Tensor A, Tensor B)
   }
   else{
     fprintf(stderr,"%s : %s !!! \n",
-	    "Error in get_innerProduct_Of()",
+	    "Error in get_dotProduct_Of()",
 	    "The input should be two tensors or equal order");
     exit(EXIT_FAILURE);        
   }

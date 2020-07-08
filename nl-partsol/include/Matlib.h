@@ -128,7 +128,7 @@ double get_EuclideanNorm_Of(Tensor A);
 Tensor get_I();
 Tensor get_Inverse_Of(Tensor A);
 Tensor get_Transpose_Of(Tensor A);
-double get_innerProduct_Of(Tensor A, Tensor B);
+double get_dotProduct_Of(Tensor A, Tensor B);
 Tensor get_vectorProduct_Of(Tensor a, Tensor b);
 Tensor get_dyadicProduct_Of(Tensor a, Tensor b);
 Tensor get_firstOrderContraction_Of(Tensor A, Tensor b);
