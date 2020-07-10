@@ -394,7 +394,7 @@ Tensor get_Transpose_Of(Tensor A)
 
 /*************************************************************/
 
-double get_innerProduct_Of(Tensor A, Tensor B)
+double get_dotProduct_Of(Tensor A, Tensor B)
 {
 
   int Ndim = NumberDimensions;
@@ -416,7 +416,7 @@ double get_innerProduct_Of(Tensor A, Tensor B)
   }
   else{
     fprintf(stderr,"%s : %s !!! \n",
-	    "Error in get_innerProduct_Of()",
+	    "Error in get_dotProduct_Of()",
 	    "The input should be two tensors or equal order");
     exit(EXIT_FAILURE);        
   }
@@ -506,7 +506,7 @@ Tensor get_firstOrderContraction_Of(Tensor A, Tensor b)
 
 /*************************************************************/
 
-Tensor get_matrixProduct_Of(Tensor A, Tensor B)
+Tensor A_x_B__TensorLib__(Tensor A, Tensor B)
 {
   int Ndim = NumberDimensions;  
   Tensor AB = alloc_Tensor(2);
@@ -527,7 +527,7 @@ Tensor get_matrixProduct_Of(Tensor A, Tensor B)
   else
     {
       fprintf(stderr,"%s : %s !!! \n",
-	      "Error in get_matrixProduct_Of()",
+	      "Error in A_x_B__TensorLib__()",
 	      "The input should be two second order tensors");
       exit(EXIT_FAILURE);        
     }
@@ -536,6 +536,76 @@ Tensor get_matrixProduct_Of(Tensor A, Tensor B)
 }
 
 /*************************************************************/
+
+Tensor A_x_Bt__TensorLib__(Tensor A, Tensor B)
+/*
+  Compute A x B^t -> A_{ik} (B_{jk})^t
+ */
+{
+  int Ndim = NumberDimensions;  
+  Tensor A_x_Bt = alloc_Tensor(2);
+
+  if ( (A.Order == 2) && (B.Order == 2) )
+    { 
+    for(int i = 0 ; i < Ndim  ; i++)
+      {
+	for(int j = 0 ; j < Ndim  ; j++)
+	  {
+	    for(int k = 0 ; k < Ndim  ; k++)
+	      {
+		A_x_Bt.N[i][j] += A.N[i][k]*B.N[j][k];
+	      }
+	  }
+      }
+  }
+  else
+    {
+      fprintf(stderr,"%s : %s !!! \n",
+	      "Error in A_x_Bt__TensorLib__()",
+	      "The input should be two second order tensors");
+      exit(EXIT_FAILURE);        
+    }
+  
+  return A_x_Bt;
+}
+
+/*************************************************************/
+
+Tensor At_x_B__TensorLib__(Tensor A, Tensor B)
+/*
+  Compute A^t x B -> (A_{ki})^t (B_{kj})
+ */
+{
+  int Ndim = NumberDimensions;  
+  Tensor ABt = alloc_Tensor(2);
+
+  if ( (A.Order == 2) && (B.Order == 2) )
+    { 
+    for(int i = 0 ; i < Ndim  ; i++)
+      {
+	for(int j = 0 ; j < Ndim  ; j++)
+	  {
+	    for(int k = 0 ; k < Ndim  ; k++)
+	      {
+		ABt.N[i][j] += A.N[k][i]*B.N[k][j];
+	      }
+	  }
+      }
+  }
+  else
+    {
+      fprintf(stderr,"%s : %s !!! \n",
+	      "Error in At_x_B__TensorLib__()",
+	      "The input should be two second order tensors");
+      exit(EXIT_FAILURE);        
+    }
+  
+  return AB;
+}
+
+
+/*************************************************************/
+
 
 Tensor compute_midpoint_Tensor(Tensor F_n1,Tensor F_n,double alpha)
 {

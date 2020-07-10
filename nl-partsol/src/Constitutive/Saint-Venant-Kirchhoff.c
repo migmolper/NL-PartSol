@@ -6,8 +6,8 @@ double energy_Saint_Venant_Kirchhoff(Tensor E, Material MatProp_p)
 {
   
   /* Material parameters */
-  double trE = get_I1_Of(E);
-  double EE = get_dotProduct_Of(E,E);
+  double trE = I1__TensorLib__(E);
+  double EE = inner_product__TensorLib__(E,E);
   double ElasticModulus = MatProp_p.E;
   double mu = MatProp_p.mu;
   double lambda = mu*ElasticModulus/((1-mu*2)*(1+mu));
@@ -28,9 +28,9 @@ Tensor grad_energy_Saint_Venant_Kirchhoff(Tensor grad_e, Tensor E, Material MatP
   double mu = MatProp_p.mu;
   double lambda = mu*ElasticModulus/((1-mu*2)*(1+mu));
   double G = ElasticModulus/(2*(1+mu));
-  double trE = get_I1_Of(E);
+  double trE = I1__TensorLib__(E);
 
-  Tensor I = get_I();
+  Tensor I = Identity__TensorLib__();
 
   for(int i = 0 ; i < Ndim ; i++)
     {
@@ -41,7 +41,7 @@ Tensor grad_energy_Saint_Venant_Kirchhoff(Tensor grad_e, Tensor E, Material MatP
     }
   
   /* Free identity */
-  free_Tensor(I);
+  free__TensorLib__(I);
 
   return grad_e;
 }
@@ -69,11 +69,11 @@ Tensor compute_stiffness_density_Saint_Venant_Kirchhoff(Tensor v, Tensor w, Mate
    */  
   double v_dot_w;
   Tensor v_o_w;
-  Tensor C_AB = alloc_Tensor(2);
+  Tensor C_AB = alloc__TensorLib__(2);
 
   
-  v_o_w = get_dyadicProduct_Of(v,w);
-  v_dot_w = get_dotProduct_Of(v,w);
+  v_o_w = dyadic_Product__TensorLib__(v,w);
+  v_dot_w = inner_product__TensorLib__(v,w);
 
   for(int A = 0 ; A<Ndim ; A++)
     {
@@ -91,7 +91,7 @@ Tensor compute_stiffness_density_Saint_Venant_Kirchhoff(Tensor v, Tensor w, Mate
   /*
     Free memory
    */
-  free_Tensor(v_o_w);
+  free__TensorLib__(v_o_w);
 
 
   return C_AB;

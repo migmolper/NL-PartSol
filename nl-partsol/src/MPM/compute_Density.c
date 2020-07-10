@@ -10,7 +10,7 @@ double update_Density(double rho_n, double TimeStep,
   /* Check if the input is ok*/
   if ((Rate_Strain.Order == 2)){
     /* Update the density */
-    rho_n1 = rho_n/(1 + TimeStep*get_I1_Of(Rate_Strain));
+    rho_n1 = rho_n/(1 + TimeStep*I1__TensorLib__(Rate_Strain));
   }
   else{
     fprintf(stderr,"%s : %s %s !!! \n",

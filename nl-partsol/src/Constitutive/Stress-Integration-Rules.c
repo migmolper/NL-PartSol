@@ -14,7 +14,7 @@ Tensor Itegration_Stress_Configurational_Midpoint(Tensor S_p,
   /*
     Compute the midpoint deformation gradient 
    */
-  F_n12_p = compute_midpoint_Tensor(F_n1_p,F_n_p,0.5);
+  F_n12_p = Convex_combination__TensorLib__(F_n1_p,F_n_p,0.5);
 
   /*
     Compute the right Cauchy Green tensor
@@ -34,9 +34,9 @@ Tensor Itegration_Stress_Configurational_Midpoint(Tensor S_p,
   /*
     Free auxiliar variables
    */
-  free_Tensor(F_n12_p);
-  free_Tensor(C_n12_p);
-  free_Tensor(E_n12_p);
+  free__TensorLib__(F_n12_p);
+  free__TensorLib__(C_n12_p);
+  free__TensorLib__(E_n12_p);
 
   return S_p;  
   
@@ -60,7 +60,7 @@ Tensor Itegration_Stress_Average_Strain(Tensor S_p,
   */
   C_n_p  = compute_RightCauchyGreen(F_n_p);
   C_n1_p = compute_RightCauchyGreen(F_n1_p);
-  C_n12_p = compute_midpoint_Tensor(C_n1_p,C_n_p,0.5);
+  C_n12_p = Convex_combination__TensorLib__(C_n1_p,C_n_p,0.5);
   
   /*
     Compute the lagrangian strain tensor
@@ -75,10 +75,10 @@ Tensor Itegration_Stress_Average_Strain(Tensor S_p,
   /*
     Free auxiliar variables
    */
-  free_Tensor(C_n_p);
-  free_Tensor(C_n1_p);
-  free_Tensor(C_n12_p);
-  free_Tensor(E_n12_p);
+  free__TensorLib__(C_n_p);
+  free__TensorLib__(C_n1_p);
+  free__TensorLib__(C_n12_p);
+  free__TensorLib__(E_n12_p);
 
   return S_p;
 }
@@ -114,11 +114,11 @@ Tensor Itegration_Stress_Average(Tensor S_p,
   /*
     Compute the Stress tensor
   */
-  S_n_p = alloc_Tensor(2);
-  S_n1_p = alloc_Tensor(2);
+  S_n_p = alloc__TensorLib__(2);
+  S_n1_p = alloc__TensorLib__(2);
   S_n_p = grad_energy_Saint_Venant_Kirchhoff(S_n_p, E_n_p, MatProp_p);
   S_n1_p = grad_energy_Saint_Venant_Kirchhoff(S_n1_p, E_n1_p, MatProp_p);
-  S_n12_p = compute_midpoint_Tensor(S_n1_p,S_n_p,0.5);
+  S_n12_p = Convex_combination__TensorLib__(S_n1_p,S_n_p,0.5);
 
   for(int i = 0 ; i<Ndim ; i++)
     {
@@ -131,13 +131,13 @@ Tensor Itegration_Stress_Average(Tensor S_p,
   /*
     Free auxiliar variables
   */
-  free_Tensor(C_n_p);
-  free_Tensor(C_n1_p);
-  free_Tensor(E_n_p);
-  free_Tensor(E_n1_p);
-  free_Tensor(S_n_p);
-  free_Tensor(S_n1_p);
-  free_Tensor(S_n12_p);
+  free__TensorLib__(C_n_p);
+  free__TensorLib__(C_n1_p);
+  free__TensorLib__(E_n_p);
+  free__TensorLib__(E_n1_p);
+  free__TensorLib__(S_n_p);
+  free__TensorLib__(S_n1_p);
+  free__TensorLib__(S_n12_p);
 
   return S_p;  
 }

@@ -17,8 +17,8 @@ Tensor LinearElastic(Tensor Strain, Tensor Stress, Material Mat)
       double E = Mat.E;
       double lambda = mu*E/((1-mu*2)*(1+mu));
       double G = E/(2*(1+mu));
-      double traceStrain = get_I1_Of(Strain);
-      Tensor I = get_I();
+      double traceStrain = I1__TensorLib__(Strain);
+      Tensor I = Identity__TensorLib__();
 
       for(int i = 0 ; i<Ndim ; i++)
 	{
@@ -35,7 +35,7 @@ Tensor LinearElastic(Tensor Strain, Tensor Stress, Material Mat)
 	  Stress.N[i][i] += lambda*traceStrain*I.N[i][i];
 	}
 
-      free_Tensor(I);
+      free__TensorLib__(I);
     }
   else
     {

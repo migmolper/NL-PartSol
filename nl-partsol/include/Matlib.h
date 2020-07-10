@@ -114,26 +114,27 @@ void order_Set(ChainPtr *, ChainPtr *, Matrix);
 /*******************************************************/
 
 /* Tensor libray */
-Tensor alloc_Tensor(int Order);
-Tensor memory_to_Tensor(double * A_mem, int Order);
-void free_Tensor(Tensor A);
-double get_I1_Of(Tensor A);
-double get_I2_Of(Tensor A);
-double get_I3_Of(Tensor A);
-double get_J1_Of(Tensor A);
-double get_J2_Of(Tensor A);
-double get_J3_Of(Tensor A);
-Tensor get_Eigenvalues_Of(Tensor);
-double get_EuclideanNorm_Of(Tensor A);
-Tensor get_I();
-Tensor get_Inverse_Of(Tensor A);
-Tensor get_Transpose_Of(Tensor A);
-double get_dotProduct_Of(Tensor A, Tensor B);
-Tensor get_vectorProduct_Of(Tensor a, Tensor b);
-Tensor get_dyadicProduct_Of(Tensor a, Tensor b);
-Tensor get_firstOrderContraction_Of(Tensor A, Tensor b);
-Tensor get_matrixProduct_Of(Tensor, Tensor);
-Tensor compute_midpoint_Tensor(Tensor,Tensor,double);
+Tensor alloc__TensorLib__(int Order);
+Tensor memory_to_tensor__TensorLib__(double * A_mem, int Order);
+void   free__TensorLib__(Tensor A);
+double I1__TensorLib__(Tensor A);
+double I2__TensorLib__(Tensor A);
+double I3__TensorLib__(Tensor A);
+double J1__TensorLib__(Tensor A);
+double J2__TensorLib__(Tensor A);
+double J3__TensorLib__(Tensor A);
+Tensor Eigenvalues__TensorLib__(Tensor);
+double EuclideanNorm__TensorLib__(Tensor A);
+Tensor Identity__TensorLib__();
+Tensor Inverse__TensorLib__(Tensor A);
+
+Tensor transpose__TensorLib__(Tensor A);
+double inner_product__TensorLib__(Tensor A, Tensor B);
+Tensor vector_product__TensorLib__(Tensor a, Tensor b);
+Tensor dyadic_Product__TensorLib__(Tensor a, Tensor b);
+Tensor vector_linear_mapping__TensorLib__(Tensor A, Tensor b);
+Tensor matrix_product__TensorLib__(Tensor, Tensor);
+Tensor Convex_combination__TensorLib__(Tensor,Tensor,double);
 /*******************************************************/
 
 

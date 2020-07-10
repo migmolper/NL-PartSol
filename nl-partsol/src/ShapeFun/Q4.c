@@ -158,11 +158,11 @@ Matrix Q4_F_Ref(Matrix X_NC_GP, Matrix X_GC_Nodes)
   for(int I = 0 ; I<4 ; I++){
 
     /* 3º Fill arrays for the tensorial product */
-    X_I = memory_to_Tensor(X_GC_Nodes.nM[I],1);
-    dNdx_I = memory_to_Tensor(dNdX_Ref_GP.nM[I],1);
+    X_I = memory_to_tensor__TensorLib__(X_GC_Nodes.nM[I],1);
+    dNdx_I = memory_to_tensor__TensorLib__(dNdX_Ref_GP.nM[I],1);
 
     /* 4º Get the nodal contribution */
-    F_Ref_I = get_dyadicProduct_Of(X_I,dNdx_I);
+    F_Ref_I = dyadic_Product__TensorLib__(X_I,dNdx_I);
 
     /* 5º Increment the reference deformation gradient */
     for(int i = 0 ; i<Ndim ; i++){
@@ -171,7 +171,7 @@ Matrix Q4_F_Ref(Matrix X_NC_GP, Matrix X_GC_Nodes)
       }
     }
     /* 6º Free data of the nodal contribution */
-    free_Tensor(F_Ref_I);    
+    free__TensorLib__(F_Ref_I);    
   }
   
   /* 7º Free memory */

@@ -5,7 +5,7 @@
 Tensor compute_RateOfStrain(Matrix Velocity, Matrix Gradient)
 {
   int Ndim = NumberDimensions;
-  Tensor Rate_Strain = alloc_Tensor(2);
+  Tensor Rate_Strain = alloc__TensorLib__(2);
   Tensor Velocity_I;
   Tensor Gradient_I;
   Tensor VoG_I;
@@ -15,12 +15,12 @@ Tensor compute_RateOfStrain(Matrix Velocity, Matrix Gradient)
   /* Compute rate of strain */
   for(int I = 0 ; I<NodesElem ; I++){
     /* Assign from matrix to tensor */
-    Velocity_I = memory_to_Tensor(Velocity.nM[I], 1);
-    Gradient_I = memory_to_Tensor(Gradient.nM[I], 1);
+    Velocity_I = memory_to_tensor__TensorLib__(Velocity.nM[I], 1);
+    Gradient_I = memory_to_tensor__TensorLib__(Gradient.nM[I], 1);
    
     /* Compute the dyadic product of the nodal velocity and the
        gradient of the shape functions */
-    VoG_I = get_dyadicProduct_Of(Velocity_I, Gradient_I);
+    VoG_I = dyadic_Product__TensorLib__(Velocity_I, Gradient_I);
     
     /* Ad the nodal contribution to the train tensor */
     for(int i = 0 ; i<Ndim ; i++){
@@ -30,7 +30,7 @@ Tensor compute_RateOfStrain(Matrix Velocity, Matrix Gradient)
       }
     }
     /* Free memory */
-    free_Tensor(VoG_I);
+    free__TensorLib__(VoG_I);
   }
   
   return Rate_Strain;
@@ -93,18 +93,18 @@ void compute_Strain_Deformation_Gradient_n1(Tensor F_n1, Tensor F_n,
   */
 
   /* Add identity tensor */
-  f_n1 = get_I();
+  f_n1 = Identity__TensorLib__();
   
   for(int I = 0 ; I<Nnodes_p ; I++)
     {
 
       /* Assign from matrix to tensor */
-      DeltaU_I = memory_to_Tensor(DeltaU.nM[I], 1);
-      gradient_I = memory_to_Tensor(gradient_p.nM[I], 1);
+      DeltaU_I = memory_to_tensor__TensorLib__(DeltaU.nM[I], 1);
+      gradient_I = memory_to_tensor__TensorLib__(gradient_p.nM[I], 1);
       
       /* Compute the dyadic product of the nodal velocity and the
 	 gradient of the shape functions */
-      gradient_DeltaU_I = get_dyadicProduct_Of(DeltaU_I, gradient_I);
+      gradient_DeltaU_I = dyadic_Product__TensorLib__(DeltaU_I, gradient_I);
       
       /* Ad the nodal contribution to the train tensor */
       for(int i = 0 ; i<Ndim ; i++)
@@ -116,7 +116,7 @@ void compute_Strain_Deformation_Gradient_n1(Tensor F_n1, Tensor F_n,
 	}
       
       /* Free memory */
-      free_Tensor(gradient_DeltaU_I);
+      free__TensorLib__(gradient_DeltaU_I);
     }
   
   /*
@@ -135,7 +135,7 @@ void compute_Strain_Deformation_Gradient_n1(Tensor F_n1, Tensor F_n,
     }
 
   /* Free memory */
-  free_Tensor(f_n1);
+  free__TensorLib__(f_n1);
 
 }
 
@@ -144,7 +144,7 @@ void compute_Strain_Deformation_Gradient_n1(Tensor F_n1, Tensor F_n,
 Tensor compute_RightCauchyGreen(Tensor F)
 {
   /* Define output */
-  Tensor C = alloc_Tensor(2);
+  Tensor C = alloc__TensorLib__(2);
   /* Define the number of dimensions */
   int Ndim = NumberDimensions;
 
@@ -169,9 +169,9 @@ Tensor compute_RightCauchyGreen(Tensor F)
 Tensor compute_LagrangianStrain(Tensor C)
 {
   /* Define output */
-  Tensor E = alloc_Tensor(2);
+  Tensor E = alloc__TensorLib__(2);
   /* Define eye tensor */
-  Tensor I = get_I();
+  Tensor I = Identity__TensorLib__();
   /* Define the number of dimensions */
   int Ndim = NumberDimensions;
 
@@ -184,7 +184,7 @@ Tensor compute_LagrangianStrain(Tensor C)
 	}
     }
 
-  free_Tensor(I);
+  free__TensorLib__(I);
 
   return E;
 }

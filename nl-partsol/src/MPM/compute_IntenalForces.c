@@ -27,7 +27,7 @@ Matrix compute_InternalForces(Matrix F_I, GaussPoint MPM_Mesh, Mesh FEM_Mesh)
     m_p = MPM_Mesh.Phi.mass.nV[p];
 
     /* Asign memory to tensors */
-    Stress_p = memory_to_Tensor(MPM_Mesh.Phi.Stress.nM[p], 2);
+    Stress_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.Stress.nM[p], 2);
 
     /* Define element for each GP */
     Nn = MPM_Mesh.NumberNodes[p];
@@ -42,11 +42,11 @@ Matrix compute_InternalForces(Matrix F_I, GaussPoint MPM_Mesh, Mesh FEM_Mesh)
     /* Compute nodal forces */
     for(int I = 0 ; I<Nn ; I++){
       /* Pass by reference the nodal gradient to the tensor */
-      Gradient_pI = memory_to_Tensor(Gradient_p.nM[I], 1);
+      Gradient_pI = memory_to_tensor__TensorLib__(Gradient_p.nM[I], 1);
       
       /* Compute the nodal forces of the Gauss-Point */
       InternalForcesDensity_Ip =
-	get_firstOrderContraction_Of(Stress_p, Gradient_pI);
+	vector_linear_mapping__TensorLib__(Stress_p, Gradient_pI);
       
       /* Get the node of the mesh for the contribution */
       Ip = Nodes_p.Connectivity[I];
@@ -57,7 +57,7 @@ Matrix compute_InternalForces(Matrix F_I, GaussPoint MPM_Mesh, Mesh FEM_Mesh)
       }
 
       /* Free the internal forces density */
-      free_Tensor(InternalForcesDensity_Ip);
+      free__TensorLib__(InternalForcesDensity_Ip);
     }
         
     /* Free the matrix with the nodal gradient of the element */

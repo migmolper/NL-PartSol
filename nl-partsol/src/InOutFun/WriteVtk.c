@@ -188,8 +188,8 @@ void WriteVtk_MPM(char * Name_File, GaussPoint MPM_Mesh,
 
   fprintf(Vtk_file,"VECTORS STRESS_EV double \n");
   for(int i =  0 ; i<MPM_Mesh.NumGP ; i++){
-    Stress_p = memory_to_Tensor(MPM_Mesh.Phi.Stress.nM[i], 2);
-    EV_Stress_p = get_Eigenvalues_Of(Stress_p);
+    Stress_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.Stress.nM[i], 2);
+    EV_Stress_p = Eigenvalues__TensorLib__(Stress_p);
     for(int j = 0 ; j<3 ; j++){
       if(j<Ndim){
 	fprintf(Vtk_file,"%lf ",EV_Stress_p.n[j]);
@@ -199,7 +199,7 @@ void WriteVtk_MPM(char * Name_File, GaussPoint MPM_Mesh,
       }
     }
     fprintf(Vtk_file,"\n");
-    free_Tensor(EV_Stress_p);
+    free__TensorLib__(EV_Stress_p);
   }
 
   fprintf(Vtk_file,"TENSORS STRAIN double \n");
@@ -220,8 +220,8 @@ void WriteVtk_MPM(char * Name_File, GaussPoint MPM_Mesh,
 
   fprintf(Vtk_file,"VECTORS STRAIN_EV double \n");
   for(int i =  0 ; i<MPM_Mesh.NumGP ; i++){
-    Strain_p = memory_to_Tensor(MPM_Mesh.Phi.Strain.nM[i], 2);
-    EV_Strain_p = get_Eigenvalues_Of(Strain_p);
+    Strain_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.Strain.nM[i], 2);
+    EV_Strain_p = Eigenvalues__TensorLib__(Strain_p);
     for(int j = 0 ; j<3 ; j++){
       if(j<Ndim){
 	fprintf(Vtk_file,"%lf ",EV_Strain_p.n[j]);
@@ -231,7 +231,7 @@ void WriteVtk_MPM(char * Name_File, GaussPoint MPM_Mesh,
       }
     }
     fprintf(Vtk_file,"\n");
-    free_Tensor(EV_Stress_p);
+    free__TensorLib__(EV_Stress_p);
   }
 
   /* Close the file */
