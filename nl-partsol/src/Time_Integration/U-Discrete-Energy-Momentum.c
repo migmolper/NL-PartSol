@@ -20,6 +20,7 @@ static void assemble_Nodal_Tangent_Stiffness_Geometric_2D(Matrix, Matrix,
 static void assemble_Nodal_Tangent_Stiffness_Material_2D(Matrix, Matrix, Matrix, Matrix,
 							Mask, GaussPoint, Mesh);
 static Tensor compute_Nodal_Tangent_Stiffness_Material(Tensor,Tensor,Tensor);
+static Matrix Compute_DeltaU(Matrix, Matrix, Matrix, Matrix, Matrix, Matrix, double);
 
 /**************************************************************/
 
@@ -45,7 +46,6 @@ void U_Discrete_Energy_Momentum(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int InitialS
   Matrix DeltaU;
   Matrix Residual;
   Mask ActiveNodes;
-  double NormResidual;
   double TOL = 0.0001;
   double epsilon = 0.9;
   double DeltaTimeStep = 1;
@@ -67,48 +67,53 @@ void U_Discrete_Energy_Momentum(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int InitialS
 
   Not_Convergence = false;
 
-  /* while(Not_Convergence) */
-  /*   { */
-      
-  update_Local_State(DeltaU,ActiveNodes,MPM_Mesh,FEM_Mesh,DeltaTimeStep);
-
-  Forces = MatAllocZ(Ndim,Nactivenodes);
-      
-  Forces = compute_Nodal_Internal_Forces(Forces,DeltaU,ActiveNodes,MPM_Mesh,FEM_Mesh);
-      
-  Residual = compute_Nodal_Residual(Velocity,Forces,DeltaU,Effective_Mass,DeltaTimeStep);
-
-  Not_Convergence = check_convergence(Residual,TOL,Iter,MaxIter);
-
-  if(Not_Convergence)
+  while(Not_Convergence)
     {
+      
+      update_Local_State(DeltaU,ActiveNodes,MPM_Mesh,FEM_Mesh,DeltaTimeStep);
 
-      Stiffness_Uxx = MatAllocZ(Nactivenodes, Nactivenodes);
-      Stiffness_Uxy = MatAllocZ(Nactivenodes, Nactivenodes);
-      Stiffness_Uyy = MatAllocZ(Nactivenodes, Nactivenodes);
-      Stiffness_Uyx = MatAllocZ(Nactivenodes, Nactivenodes);
+      Forces = MatAllocZ(Ndim,Nactivenodes);
+      
+      Forces = compute_Nodal_Internal_Forces(Forces,DeltaU,ActiveNodes,MPM_Mesh,FEM_Mesh);
+      
+      Residual = compute_Nodal_Residual(Velocity,Forces,DeltaU,Effective_Mass,DeltaTimeStep);
+
+      Not_Convergence = check_convergence(Residual,TOL,Iter,MaxIter);
+
+      if(Not_Convergence)
+	{
+
+	  FreeMat(DeltaU);
+
+	  Stiffness_Uxx = MatAllocZ(Nactivenodes, Nactivenodes);
+	  Stiffness_Uxy = MatAllocZ(Nactivenodes, Nactivenodes);
+	  Stiffness_Uyy = MatAllocZ(Nactivenodes, Nactivenodes);
+	  Stiffness_Uyx = MatAllocZ(Nactivenodes, Nactivenodes);
   
-      assemble_Nodal_Tangent_Stiffness_2D(Stiffness_Uxx,Stiffness_Uxy,
-					  Stiffness_Uyy,Stiffness_Uyx,
-					  ActiveNodes,MPM_Mesh,FEM_Mesh);
+	  assemble_Nodal_Tangent_Stiffness_2D(Stiffness_Uxx,Stiffness_Uxy,
+					      Stiffness_Uyy,Stiffness_Uyx,
+					      ActiveNodes,MPM_Mesh,FEM_Mesh);
 	  
-      /* update_DeltaU(DeltaU,Stiffness,Residual,TimeStep); */
+	  DeltaU = Compute_DeltaU(Stiffness_Uxx, Stiffness_Uxy,
+				  Stiffness_Uyy, Stiffness_Uyx,
+				  Effective_Mass, Residual,
+				  DeltaTimeStep);
 	  
-      Iter++;
+	  Iter++;
 
-      FreeMat(Forces);
-      FreeMat(Residual);
-      FreeMat(Stiffness_Uxx);
-      FreeMat(Stiffness_Uxy);
-      FreeMat(Stiffness_Uyx);
-      FreeMat(Stiffness_Uyy);
-    }
-  else
-    {
-      FreeMat(Residual);
-    }
+	  FreeMat(Forces);
+	  FreeMat(Stiffness_Uxx);
+	  FreeMat(Stiffness_Uxy);
+	  FreeMat(Stiffness_Uyx);
+	  FreeMat(Stiffness_Uyy);
+	}
             
-  /*   } */
+    }
+
+
+  /*!
+    Update Lagrangians with DeltaU
+   */
   
   /*!
     Free memory.
@@ -422,9 +427,14 @@ static Matrix compute_Nodal_Velocity(Matrix Mass, Matrix Momentum)
   int * IPIV = (int *)Allocate_Array(Order,sizeof(int));
   int NRHS = Ndim;
 
-  /* Compute the LU factorization */
+  /*
+    Compute the LU factorization 
+  */
   LAPACK_dgetrf(&Order,&Order,Mass.nV,&LDA,IPIV,&INFO);
 
+  /*
+    Solve
+  */
   dgetrs_(&TRANS,&Order,&NRHS,Mass.nV,&LDA,IPIV,Momentum.nV,&LDB,&INFO);
 
   Velocity = Momentum;
@@ -684,14 +694,15 @@ static Matrix compute_Nodal_Residual(Matrix Velocity, Matrix Forces,
     }
 
   /*
-    Compute residual (Vectorized)
+    Compute (-) residual (Vectorized). The minus symbol is due to
+    solver purposes. See Compute_DeltaU
   */
   for(int i = 0 ; i<Ndim ; i++)
     {
       for(int A = 0 ; A < Nnodes ; A++)
 	{
 	  idx_A = A + i*Nnodes;
-	  Residual.nV[idx_A] = Inertial_Forces.nV[idx_A] + Forces.nV[idx_A];
+	  Residual.nV[idx_A] = - Inertial_Forces.nV[idx_A] - Forces.nV[idx_A];
 	}
     }
 
@@ -1112,5 +1123,100 @@ static Tensor compute_Nodal_Tangent_Stiffness_Material(Tensor F_n12_p,
   return F_x_C_x_Ft;
   
 }
+
+/**************************************************************/
+
+static Matrix Compute_DeltaU(Matrix Stiffness_Uxx,
+			     Matrix Stiffness_Uxy,
+			     Matrix Stiffness_Uyy,
+			     Matrix Stiffness_Uyx,
+			     Matrix Effective_Mass,
+			     Matrix Residual,
+			     double Dt)
+{
+  int Nnodes = Residual.N_cols;
+  int Ndof = Residual.N_rows;
+  int Order = Nnodes*Ndof;
+  int LDA   = Nnodes*Ndof;
+  int LDB = Nnodes*Ndof;
+  char  TRANS = 'N'; /* (No transpose) */
+  int   INFO= 3;
+  int * IPIV = (int *)Allocate_Array(Order,sizeof(int));
+  int NRHS = 1;
+  int idx_AB;
+  int idx_AB_ij;
+  
+  Matrix DeltaU;  
+  Matrix Global_Matrix = MatAllocZ(Nnodes*Ndof,Nnodes*Ndof);
+
+  for(int A = 0 ; A < Nnodes ; A++)
+    {
+
+      for(int i = 0 ; i<Ndof ; i++)
+	{
+	  
+	  for(int B = 0 ; B < Nnodes ; B++)
+	    {
+	      
+	      idx_AB = A + B*Nnodes;
+	      
+	      for(int j = 0 ; j<Ndof ; j++)
+		{
+		  
+		  idx_AB_ij = A + idx_AB*Ndof;
+		  
+		  if((i == 0) && (j == 0))
+		    {
+		      Global_Matrix.nV[idx_AB_ij] =
+			(2/DSQR(Dt))*Effective_Mass.nV[idx_AB] +
+			Stiffness_Uxx.nV[idx_AB];
+		    }
+		  
+		  else if((i == 0) && (j == 1))
+		    {
+		      Global_Matrix.nV[idx_AB_ij] =
+			Stiffness_Uxy.nV[idx_AB];
+		    }
+
+		  else if((i == 1) && (j == 0))
+		    {
+		      Global_Matrix.nV[idx_AB_ij] =
+			Stiffness_Uyx.nV[idx_AB];
+		    }
+
+		  else if((i == 1) && (j == 1))
+		    {
+		      Global_Matrix.nV[idx_AB_ij] =
+			(2/DSQR(Dt))*Effective_Mass.nV[idx_AB] +
+			Stiffness_Uyy.nV[idx_AB];
+		    }
+		  
+		}
+	    }
+	}
+    }
+
+
+  /*
+    Compute the LU factorization 
+  */
+  LAPACK_dgetrf(&Order,&Order,Global_Matrix.nV,&LDA,IPIV,&INFO);
+
+  /*
+    Solve
+  */
+  dgetrs_(&TRANS,&Order,&NRHS,Global_Matrix.nV,&LDA,IPIV,Residual.nV,&LDB,&INFO);
+
+  DeltaU = Residual;
+
+  /*
+    Add some usefulll info
+  */
+  strcpy(DeltaU.Info,"Nodal-DeltaU");
+
+  return DeltaU; 
+  
+}
+
 
 /**************************************************************/
