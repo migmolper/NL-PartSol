@@ -12,14 +12,14 @@ static Matrix compute_Nodal_Velocity(Matrix, Matrix);
 static void   update_Local_State(Matrix,Mask,GaussPoint,Mesh,double);
 static Matrix compute_Nodal_Internal_Forces(Matrix,Mask,GaussPoint, Mesh);
 static Matrix compute_Nodal_Residual(Matrix, Matrix, Matrix, Matrix, double);
-static bool check_convergence(Matrix,double,int,int);
+static bool   check_convergence(Matrix,double,int,int);
 static Matrix assemble_Nodal_Tangent_Stiffness_2D(Mask, GaussPoint, Mesh);
-static void assemble_Nodal_Tangent_Stiffness_Geometric_2D(Matrix,  Mask, GaussPoint, Mesh);
-static void assemble_Nodal_Tangent_Stiffness_Material_2D(Matrix, Mask, GaussPoint, Mesh);
+static void   assemble_Nodal_Tangent_Stiffness_Geometric_2D(Matrix,  Mask, GaussPoint, Mesh);
+static void   assemble_Nodal_Tangent_Stiffness_Material_2D(Matrix, Mask, GaussPoint, Mesh);
 static Tensor compute_Nodal_Tangent_Stiffness_Material(Tensor,Tensor,Tensor);
-static void update_D_Displacement(Matrix, Matrix, Matrix, Matrix, double);
+static void   update_D_Displacement(Matrix, Matrix, Matrix, Matrix, double);
 static Matrix compute_D_Velocity(Matrix, Matrix,double);
-static void update_Particles(Matrix, Matrix, GaussPoint, Mesh, Mask, double);
+static void   update_Particles(Matrix, Matrix, GaussPoint, Mesh, Mask, double);
 
 /**************************************************************/
 
@@ -446,20 +446,20 @@ static Matrix compute_Nodal_Momentum(GaussPoint MPM_Mesh,Mesh FEM_Mesh, Mask Act
  /* Define and allocate the momentum vector */
   Matrix Momentum = MatAllocZ(Ndim,Nnodes);
     
-  /* Iterate over the GP to get the nodal values */
+  /* Iterate over the particles to get the nodal values */
   for(int p = 0 ; p<Np ; p++)
     {
 
-      /* Define element of the GP */
+      /* Define element of the particle */
       Nodes_p = get_particle_Set(p, MPM_Mesh.ListNodes[p], MPM_Mesh.NumberNodes[p]);
 
-      /* Evaluate the shape function in the coordinates of the GP */
+      /* Evaluate the shape function in the coordinates of the particle */
       ShapeFunction_p = compute_ShapeFunction(Nodes_p, MPM_Mesh, FEM_Mesh);
 
       /* Get the mass of the GP */
       m_p = MPM_Mesh.Phi.mass.nV[p];
 
-      /* Get the nodal mass and mommentum */
+      /* Get the nodal mommentum */
       for(int A = 0 ; A<Nodes_p.NumberNodes ; A++)
 	{
       
@@ -763,7 +763,7 @@ static Matrix compute_Nodal_Residual(Matrix Velocity, Matrix Forces,
     {
       for(int idx_B = 0 ; idx_B<Ndim*Nnodes ; idx_B++)
 	{
-	  idx_AB = idx_A +  idx_B*Ndim*Nnodes;
+	  idx_AB = idx_A + idx_B*Ndim*Nnodes;
 	  Inertial_Forces.nV[idx_A] += Mass.nV[idx_AB]*Acceleration.nV[idx_B];
 	}
     }
@@ -1283,5 +1283,57 @@ static void update_Particles(Matrix D_Displacement, Matrix D_Velocity,
 			     GaussPoint MPM_Mesh,Mesh FEM_Mesh,
 			     Mask ActiveNodes, double DeltaTimeStep)
 {
-  
+  int Ndim = NumberDimensions;
+  int Np = MPM_Mesh.NumGP;
+  int Nnodes = ActiveNodes.Nactivenodes;
+  int Ap;
+  int A_mask;
+  int idx_A_mask_i;
+  Matrix ShapeFunction_p; /* Value of the shape-function in the particle */
+  double ShapeFunction_pI; /* Nodal value for the particle */
+  Element Nodes_p; /* Element for each particle */
+
+  /* iterate over the particles */
+  for(int p = 0 ; p<Np ; p++)
+    {
+      
+      /* Define element of the particle */
+      Nodes_p = get_particle_Set(p, MPM_Mesh.ListNodes[p], MPM_Mesh.NumberNodes[p]);
+      
+      /* Evaluate the shape function in the coordinates of the particle */
+      ShapeFunction_p = compute_ShapeFunction(Nodes_p, MPM_Mesh, FEM_Mesh);
+      
+      /* Iterate over the nodes of the particle */
+      for(int A = 0; A<Nodes_p.NumberNodes; A++)
+	{
+
+	  /*
+	    Get the node in the nodal momentum with the mask
+	  */
+	  Ap = Nodes_p.Connectivity[A];
+	  A_mask = ActiveNodes.Nodes2Mask[Ap];
+	  
+	  /* Evaluate the GP function in the node */
+	  ShapeFunction_pI = ShapeFunction_p.nV[A_mask];
+	  /* If this node has a null Value of the SHF continue */
+	  if(fabs(ShapeFunction_pI) <= TOL_zero){
+	    continue;
+	  }
+
+	  /*
+	    Update velocity and position of the particles
+	   */
+	  for(int i = 0 ; i<Ndim ; i++)
+	    {
+	      idx_A_mask_i = A_mask + i*Nnodes;
+	      MPM_Mesh.Phi.vel.nM[p][i] += ShapeFunction_pI*D_Velocity.nV[idx_A_mask_i];
+	      MPM_Mesh.Phi.x_GC.nM[p][i] += ShapeFunction_pI*D_Displacement.nV[idx_A_mask_i];
+	    } 
+	}
+      
+      free(Nodes_p.Connectivity);
+      FreeMat(ShapeFunction_p);
+    }  
 }
+
+/**************************************************************/
