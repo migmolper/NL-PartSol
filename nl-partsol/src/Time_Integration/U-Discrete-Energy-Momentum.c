@@ -10,12 +10,14 @@ static Matrix compute_Nodal_Effective_Mass(GaussPoint, Mesh, Mask, double);
 static Matrix compute_Nodal_Momentum(GaussPoint, Mesh, Mask);
 static Matrix compute_Nodal_Velocity(Matrix, Matrix);
 static void   update_Local_State(Matrix,Mask,GaussPoint,Mesh,double);
-static Matrix compute_Nodal_Internal_Forces(Matrix,Mask,GaussPoint, Mesh);
+static Matrix compute_Nodal_Forces(Matrix, Mask, GaussPoint, Mesh);
+static void   compute_Nodal_Internal_Forces(Matrix,Matrix,Mask,GaussPoint, Mesh);
 static Matrix compute_Nodal_Residual(Matrix, Matrix, Matrix, Matrix, double);
 static bool   check_convergence(Matrix,double,int,int);
-static Matrix assemble_Nodal_Tangent_Stiffness_2D(Mask, GaussPoint, Mesh);
-static void   assemble_Nodal_Tangent_Stiffness_Geometric_2D(Matrix,  Mask, GaussPoint, Mesh);
-static void   assemble_Nodal_Tangent_Stiffness_Material_2D(Matrix, Mask, GaussPoint, Mesh);
+static Matrix assemble_Nodal_Tangent_Stiffness(Mask, GaussPoint, Mesh);
+static void   assemble_Nodal_Tangent_Stiffness_Geometric(Matrix,  Mask, GaussPoint, Mesh);
+static void   assemble_Nodal_Tangent_Stiffness_Material(Matrix, Mask, GaussPoint, Mesh);
+static Tensor compute_stiffness_density(Tensor, Tensor, Material);
 static Tensor compute_Nodal_Tangent_Stiffness_Material(Tensor,Tensor,Tensor);
 static void   update_D_Displacement(Matrix, Matrix, Matrix, Matrix, double);
 static Matrix compute_D_Velocity(Matrix, Matrix,double);
@@ -45,13 +47,28 @@ void U_Discrete_Energy_Momentum(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int InitialS
   Mask ActiveNodes;
   double TOL = 0.0001;
   double epsilon = 1.0;
-  double DeltaTimeStep = 1;
-  bool Not_Convergence;
+  double DeltaTimeStep;
+  bool Convergence;
   int Iter = 0;
-  int MaxIter = 100;
+  int MaxIter = 500;
+
+  /*
+    Time step is defined at the init of the simulation throught the
+    CFL condition. Notice that for this kind of solver, CFL confition is
+    not required to be satisfied. The only purpose of it is to use the existing
+    software interfase.
+   */
+  DeltaTimeStep = DeltaT_CFL(MPM_Mesh, FEM_Mesh.DeltaX);
 
   for(int TimeStep = InitialStep ; TimeStep<NumTimeStep ; TimeStep++ )
     {
+
+      print_Status("*************************************************",TimeStep);
+      print_step(TimeStep,DeltaTimeStep);
+
+
+      print_Status("*************************************************",TimeStep);
+      print_Status("First step : Generate Mask ... WORKING",TimeStep);
       /*
 	With the active set of nodes generate a mask to help the algorithm to compute
 	the equilibrium only in the active nodes
@@ -59,18 +76,25 @@ void U_Discrete_Energy_Momentum(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int InitialS
       ActiveNodes = generate_NodalMask(FEM_Mesh);
       Nactivenodes = ActiveNodes.Nactivenodes;
 
+      print_Status("*************************************************",TimeStep);
+      print_Status("Second step : Compute effective mass ... WORKING",TimeStep);
       /*
 	Compute the effective mass matrix as a convex combination of the consistent mass
 	matrix and the lumped mass matrix.
       */
       Effective_Mass = compute_Nodal_Effective_Mass(MPM_Mesh,FEM_Mesh,
 						    ActiveNodes,epsilon);
-
+      
+      print_Status("*************************************************",TimeStep);
+      print_Status("Third step : Compute nodal momentum ... WORKING",TimeStep);
       /*
 	Compute the nodal value of the momentum
       */
       Momentum = compute_Nodal_Momentum(MPM_Mesh, FEM_Mesh, ActiveNodes);
 
+      
+      print_Status("*************************************************",TimeStep);
+      print_Status("Four step : Compute nodal velocity ... WORKING",TimeStep);
       /*
 	Compute the nodal valocities with the effective mass matrix and the nodal momentum
       */
@@ -82,56 +106,57 @@ void U_Discrete_Energy_Momentum(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int InitialS
       D_Displacement = MatAllocZ(Ndim,Nactivenodes);  
       D_Velocity = MatAllocZ(Ndim,Nactivenodes);
 
+      print_Status("*************************************************",TimeStep);
+      print_Status("Five step : Compute equilibrium ... WORKING",TimeStep);
       /*
 	Set the convergence false by default and start the iterations to compute
 	the incement of velocity and displacement in the nodes of the mesh
       */
-      Not_Convergence = false;
-      while(Not_Convergence)
+      Convergence = false;
+      Iter = 0;
+      while(Convergence == false)
 	{
-
 	  /*
 	    Compute the stress-strain state for each particle
 	  */
-	  update_Local_State(D_Displacement,ActiveNodes,
-			     MPM_Mesh,FEM_Mesh,DeltaTimeStep);
+	  update_Local_State(D_Displacement,ActiveNodes,MPM_Mesh,FEM_Mesh,DeltaTimeStep);
 
 	  /*
 	    Compute the nodal forces
 	  */
-	  Forces = compute_Nodal_Internal_Forces(D_Displacement,ActiveNodes,
-						 MPM_Mesh,FEM_Mesh);
-
+	  Forces = compute_Nodal_Forces(D_Displacement,ActiveNodes,MPM_Mesh,FEM_Mesh);
+	  
 	  /*
 	    Compute the numerical residual to check the equilibrium
 	  */
 	  Residual = compute_Nodal_Residual(Velocity,Forces,D_Displacement,
 					    Effective_Mass,DeltaTimeStep);
-
 	  /*
 	    If the norm of the residual for each nodal value is below a tolerace
 	    skip
 	  */
-	  Not_Convergence = check_convergence(Residual,TOL,Iter,MaxIter);
+	  Convergence = check_convergence(Residual,TOL,Iter,MaxIter);
 
 	  /*
 	    If not, solve the linearized equilibrium to compute the next step
 	  */
-	  if(Not_Convergence)
+	  if(Convergence == false)
 	    {
 
 	      /*
 		Assemble the tangent stiffness matrix as a sum of the material tangent
 		stiffness and the geometrical tangent stiffness.
 	      */
-	      Tangent_Stiffness = assemble_Nodal_Tangent_Stiffness_2D(ActiveNodes,
-								      MPM_Mesh,FEM_Mesh);
-
+	      Tangent_Stiffness = assemble_Nodal_Tangent_Stiffness(ActiveNodes,
+								   MPM_Mesh,FEM_Mesh);
+	      
 	      /*
 		Solve the resulting equation 
 	      */
 	      update_D_Displacement(D_Displacement,Tangent_Stiffness,
 				    Effective_Mass,Residual,DeltaTimeStep);
+
+	      /* PrintMatrix(Residual,Ndim,Nactivenodes); */
 
 	      /*
 		Update the iteration number
@@ -144,17 +169,23 @@ void U_Discrete_Energy_Momentum(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int InitialS
 	    }
             
 	}
+      
+      print_iteration(TimeStep,Iter);
 
+      print_Status("*************************************************",TimeStep);
+      print_Status("Six step : Compute increment of velocity ... WORKING",TimeStep);
       /*
 	Once the equilibrium is reached, obtain the increment of nodal velocity
       */
       D_Velocity = compute_D_Velocity(Velocity,D_Displacement,DeltaTimeStep);
 
+      
+      print_Status("*************************************************",TimeStep);
+      print_Status("Seven step : Update particles lagrangian ... WORKING",TimeStep);
       /*
 	Update Lagrangians with D_Displacement
       */
       update_Particles(D_Displacement,D_Velocity,MPM_Mesh,FEM_Mesh,ActiveNodes,DeltaTimeStep);
-
       /*
 	Reload the connectivity information for each particle
       */
@@ -168,7 +199,9 @@ void U_Discrete_Energy_Momentum(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int InitialS
 	  /* WriteVtk_FEM("Mesh",FEM_Mesh,R_I,TimeStep); */
 	  WriteVtk_MPM("MPM_VALUES",MPM_Mesh,"ALL",TimeStep,ResultsTimeStep);
 	}
-  
+
+      print_Status("*************************************************",TimeStep);
+      print_Status("Eight step : Reset nodal values ... WORKING",TimeStep);
       /*
 	Free memory.
       */
@@ -192,6 +225,7 @@ static Mask generate_NodalMask(Mesh FEM_Mesh)
 
   for(int A = 0 ; A<Nnodes ; A++)
     {
+      
       if(FEM_Mesh.NumParticles[A] > 0)
 	{
 	  Nodes2Mask[A] = Nactivenodes;
@@ -267,8 +301,17 @@ static Matrix get_Nodal_Values_for_Particle(Matrix Field, Element Nodes_p, Mask 
 static Matrix compute_Nodal_Effective_Mass(GaussPoint MPM_Mesh, Mesh FEM_Mesh,
 					   Mask ActiveNodes, double epsilon)
 /*
-  This function computes the effective mass matrix 
- */
+  This function computes the effective mass matrix as a convex combination
+  of the lumped mass matrix and the consistent mass matrix. Later assemble
+  a total mass matrix with the contribution of each degree of freedom.
+
+  |***     |   |*       |   |***     |
+  |***  0  |   | *   0  |   |***  0  |
+  |***     | = |  *     | + |***     |
+  |     ***|   |     *  |   |     ***|
+  | 0   ***|   | 0    * |   | 0   ***|
+  |     ***|   |       *|   |     ***|
+*/
 {
 
   int Nnodes = ActiveNodes.Nactivenodes;
@@ -496,7 +539,10 @@ static Matrix compute_Nodal_Momentum(GaussPoint MPM_Mesh,Mesh FEM_Mesh, Mask Act
 
 static Matrix compute_Nodal_Velocity(Matrix Mass, Matrix Momentum)
 /* 
-   Call the LAPACK solver to compute the nodal velocity
+   Call the LAPACK solver to compute the nodal velocity. The operation is linearized and
+   all the dof split the velocity array in n components like :
+   | M 0 |   |V.x|   | p.x |
+   | 0 M | * |V.y| = | p.y |
 */
 {
 
@@ -605,9 +651,29 @@ static void update_Local_State(Matrix D_Displacement, Mask ActiveNodes,
 
 /**************************************************************/
 
-static Matrix compute_Nodal_Internal_Forces(Matrix D_Displacement,
-					    Mask ActiveNodes,
-					    GaussPoint MPM_Mesh, Mesh FEM_Mesh)
+static Matrix compute_Nodal_Forces(Matrix D_Displacement,
+				   Mask ActiveNodes,
+				   GaussPoint MPM_Mesh, Mesh FEM_Mesh)
+{
+  int Ndim = NumberDimensions;
+  int Nactivenodes = ActiveNodes.Nactivenodes;
+  Matrix Forces = MatAllocZ(Ndim,Nactivenodes);
+
+  /*
+    Add internal forces contribution
+  */
+  compute_Nodal_Internal_Forces(Forces, D_Displacement, ActiveNodes, MPM_Mesh, FEM_Mesh);
+  
+  return Forces;
+}
+
+
+/**************************************************************/
+
+static void compute_Nodal_Internal_Forces(Matrix Forces,
+					  Matrix D_Displacement,
+					  Mask ActiveNodes,
+					  GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 {
 
   int Ndim = NumberDimensions;
@@ -634,8 +700,6 @@ static Matrix compute_Nodal_Internal_Forces(Matrix D_Displacement,
   double rho_p; /* Density of the Gauss-Point */
   double V0_p; /* Volume of the Gauss-Point */
   double J_p; /* Jacobian of the deformation gradient */
-
-  Matrix Forces = MatAllocZ(Ndim,Nactivenodes);
 
   /*
     Loop in the particles 
@@ -730,9 +794,7 @@ static Matrix compute_Nodal_Internal_Forces(Matrix D_Displacement,
       FreeMat(gradient_p);
       free(Nodes_p.Connectivity);
     }
-
-  return Forces;
-    
+   
 }
 
 /**************************************************************/
@@ -742,7 +804,7 @@ static Matrix compute_Nodal_Residual(Matrix Velocity, Matrix Forces,
 				     double Dt)
 {
   int Ndim = NumberDimensions;
-  int Nnodes = Mass.N_rows;
+  int Nnodes = Velocity.N_cols;
   Matrix Acceleration = MatAllocZ(Ndim,Nnodes);
   Matrix Inertial_Forces = MatAllocZ(Ndim,Nnodes);
   Matrix Residual = MatAllocZ(Ndim,Nnodes);
@@ -753,9 +815,8 @@ static Matrix compute_Nodal_Residual(Matrix Velocity, Matrix Forces,
   */
   for(int idx_B = 0 ; idx_B<Ndim*Nnodes ; idx_B++)
     {
-      Acceleration.nV[idx_B] = (2/Dt*Dt)*(D_Displacement.nV[idx_B] - Dt*Velocity.nV[idx_B]);
+      Acceleration.nV[idx_B] = (2/DSQR(Dt))*(D_Displacement.nV[idx_B] - Dt*Velocity.nV[idx_B]);
     }
-
   /*
     Compute inertial forces (Vectorized)
   */
@@ -763,7 +824,7 @@ static Matrix compute_Nodal_Residual(Matrix Velocity, Matrix Forces,
     {
       for(int idx_B = 0 ; idx_B<Ndim*Nnodes ; idx_B++)
 	{
-	  idx_AB = idx_A + idx_B*Ndim*Nnodes;
+	  idx_AB = idx_A*Ndim*Nnodes + idx_B;
 	  Inertial_Forces.nV[idx_A] += Mass.nV[idx_AB]*Acceleration.nV[idx_B];
 	}
     }
@@ -824,9 +885,19 @@ static bool check_convergence(Matrix Residual,double TOL,int Iter,int MaxIter)
 
 /**************************************************************/
 
-static Matrix assemble_Nodal_Tangent_Stiffness_2D(Mask ActiveNodes,
-						  GaussPoint MPM_Mesh,
-						  Mesh FEM_Mesh)
+static Matrix assemble_Nodal_Tangent_Stiffness(Mask ActiveNodes,
+					       GaussPoint MPM_Mesh,
+					       Mesh FEM_Mesh)
+
+/*
+  This function computes the tangent stiffness matrix as a combination
+  of the geometrical stiffness matrix and the material stiffness matrix. 
+
+  | K_xx |  K_xy |   | K_geom_xx |    0      |     | K_mat_xx | K_mat_xy |
+  ---------------- = -------------------------  +  ----------------------- 
+  | K_yx |  K_yy |   |	   0	 | K_geom_yy |	   | K_mat_yx | K_mat_y  |
+
+*/
 {
 
   int Nnodes = ActiveNodes.Nactivenodes;
@@ -835,16 +906,14 @@ static Matrix assemble_Nodal_Tangent_Stiffness_2D(Mask ActiveNodes,
   Matrix Tangent_Stiffness = MatAllocZ(Ndof*Nnodes, Ndof*Nnodes);
   
   /*
-    Compute term related to the geometric non-linearities
+    Compute terms related to the geometric non-linearities. 
   */  
-  assemble_Nodal_Tangent_Stiffness_Geometric_2D(Tangent_Stiffness,ActiveNodes,
-  						MPM_Mesh,FEM_Mesh);
+  assemble_Nodal_Tangent_Stiffness_Geometric(Tangent_Stiffness,ActiveNodes,MPM_Mesh,FEM_Mesh);
   
   /*
     Compute term related to the material non-linearities
    */
-  assemble_Nodal_Tangent_Stiffness_Material_2D(Tangent_Stiffness,ActiveNodes,
-  					       MPM_Mesh,FEM_Mesh);
+  assemble_Nodal_Tangent_Stiffness_Material(Tangent_Stiffness,ActiveNodes,MPM_Mesh,FEM_Mesh);
 
   return Tangent_Stiffness;
 }
@@ -852,10 +921,10 @@ static Matrix assemble_Nodal_Tangent_Stiffness_2D(Mask ActiveNodes,
 
 /**************************************************************/
 
-static void assemble_Nodal_Tangent_Stiffness_Geometric_2D(Matrix Tangent_Stiffness,
-							  Mask ActiveNodes,
-							  GaussPoint MPM_Mesh,
-							  Mesh FEM_Mesh)
+static void assemble_Nodal_Tangent_Stiffness_Geometric(Matrix Tangent_Stiffness,
+						       Mask ActiveNodes,
+						       GaussPoint MPM_Mesh,
+						       Mesh FEM_Mesh)
 /*
   Introduce the geometric contribution G_AB to the full stiffness matrix K_AB
 */
@@ -973,9 +1042,8 @@ static void assemble_Nodal_Tangent_Stiffness_Geometric_2D(Matrix Tangent_Stiffne
 	       */
 	      Geometric_AB_p = inner_product__TensorLib__(S_p, GRADIENT_pA_o_GRADIENT_pB);
 
-
 	      /*
-		Add the geometric contribution of the term .xx and .yy
+		Add the geometric contribution
 	      */
 	      for(int i = 0 ; i<Ndim ; i++)
 		{
@@ -1013,10 +1081,10 @@ static void assemble_Nodal_Tangent_Stiffness_Geometric_2D(Matrix Tangent_Stiffne
 
 
 /**************************************************************/
-static void assemble_Nodal_Tangent_Stiffness_Material_2D(Matrix Tangent_Stiffness,
-							 Mask ActiveNodes,
-							 GaussPoint MPM_Mesh,
-							 Mesh FEM_Mesh)
+static void assemble_Nodal_Tangent_Stiffness_Material(Matrix Tangent_Stiffness,
+						      Mask ActiveNodes,
+						      GaussPoint MPM_Mesh,
+						      Mesh FEM_Mesh)
 {
 
   int Ndim = NumberDimensions;
@@ -1131,16 +1199,14 @@ static void assemble_Nodal_Tangent_Stiffness_Material_2D(Matrix Tangent_Stiffnes
 
 	      /*
 		Get the nodal contribution of the material mass matrix
-	       */
-	      C_AB = compute_stiffness_density_Saint_Venant_Kirchhoff(GRADIENT_pA,
-								      GRADIENT_pB,
-								      MatProp_p);
-
+	      */
+	      C_AB = compute_stiffness_density(GRADIENT_pA,GRADIENT_pB,MatProp_p);
+	      
 	      /*
 		Compute the nodal matrix with the contribution to each degree of freedom
 	       */
-	      Material_AB =
-		compute_Nodal_Tangent_Stiffness_Material(F_n12_p,C_AB,transpose_F_n12_p);
+	      Material_AB = compute_Nodal_Tangent_Stiffness_Material(F_n12_p,C_AB,
+								     transpose_F_n12_p);
 	      
 	      /*
 		Add the geometric contribution to each dof for the assembling process
@@ -1185,6 +1251,32 @@ static void assemble_Nodal_Tangent_Stiffness_Material_2D(Matrix Tangent_Stiffnes
 
 /**************************************************************/
 
+static Tensor compute_stiffness_density(Tensor GRADIENT_pA,
+					Tensor GRADIENT_pB,
+					Material MatProp_p)
+{
+
+  Tensor C_AB;
+
+  if(strcmp(MatProp_p.Type,"Saint-Venant-Kirchhoff") == 0)
+    {
+      C_AB = compute_stiffness_density_Saint_Venant_Kirchhoff(GRADIENT_pA,
+							      GRADIENT_pB,
+							      MatProp_p);
+    }
+  else
+    {
+      fprintf(stderr,"%s : %s %s \n",
+	      "Error in compute_stiffness_density()",
+	      "The material",MatProp_p.Type,"has not been yet implemnented");
+      exit(EXIT_FAILURE);
+    }
+
+  return C_AB;
+}
+
+/**************************************************************/
+
 static Tensor compute_Nodal_Tangent_Stiffness_Material(Tensor F_n12_p,
 						       Tensor C_AB,
 						       Tensor Ft_beta_p)
@@ -1210,6 +1302,13 @@ static void update_D_Displacement(Matrix D_Displacement,
 				  Matrix Effective_Mass,
 				  Matrix Residual,
 				  double Dt)
+/*
+  This function is deboted to update the vector with the nodal displacement by
+  solving :
+  
+  ((2/Dt^2)*M_AB + K_AB)*delta_B + R_A = 0_A 
+  
+*/
 {
   int Nnodes = Residual.N_cols;
   int Ndof = Residual.N_rows;
@@ -1223,14 +1322,14 @@ static void update_D_Displacement(Matrix D_Displacement,
   
   Matrix Global_Matrix = MatAllocZ(Nnodes*Ndof,Nnodes*Ndof);
 
-
+  /*
+    Compute the adition of the mass matrix and the tangent stifness matrix
+   */
   for(int idx_AB_ij ; idx_AB_ij<Nnodes*Ndof*Nnodes*Ndof ; idx_AB_ij++)
     {
       Global_Matrix.nV[idx_AB_ij] =
-	(2/DSQR(Dt))*Effective_Mass.nV[idx_AB_ij] +
-	Tangent_Stiffness.nV[idx_AB_ij];
-    }
-  
+	(2/DSQR(Dt))*Effective_Mass.nV[idx_AB_ij] + Tangent_Stiffness.nV[idx_AB_ij];
+    }  
 
   /*
     Compute the LU factorization 
@@ -1245,12 +1344,11 @@ static void update_D_Displacement(Matrix D_Displacement,
   /*
     Update 
    */
-    for(int idx_A_i = 0 ; idx_A_i < Nnodes*Ndof ; idx_A_i++)
-      {
-	
-	D_Displacement.nV[idx_A_i] += Residual.nV[idx_A_i];
-      }
-    
+  for(int idx_A_i = 0 ; idx_A_i < Nnodes*Ndof ; idx_A_i++)
+    {	
+      D_Displacement.nV[idx_A_i] += Residual.nV[idx_A_i];
+    }
+  
 }
 
 
@@ -1289,6 +1387,7 @@ static void update_Particles(Matrix D_Displacement, Matrix D_Velocity,
   int Ap;
   int A_mask;
   int idx_A_mask_i;
+  int idx_ij;
   Matrix ShapeFunction_p; /* Value of the shape-function in the particle */
   double ShapeFunction_pI; /* Nodal value for the particle */
   Element Nodes_p; /* Element for each particle */
@@ -1314,20 +1413,27 @@ static void update_Particles(Matrix D_Displacement, Matrix D_Velocity,
 	  A_mask = ActiveNodes.Nodes2Mask[Ap];
 	  
 	  /* Evaluate the GP function in the node */
-	  ShapeFunction_pI = ShapeFunction_p.nV[A_mask];
+	  ShapeFunction_pI = ShapeFunction_p.nV[A];
 	  /* If this node has a null Value of the SHF continue */
-	  if(fabs(ShapeFunction_pI) <= TOL_zero){
-	    continue;
-	  }
+	  if(fabs(ShapeFunction_pI) <= TOL_zero)
+	    {
+	      continue;
+	    }
 
 	  /*
-	    Update velocity and position of the particles
+	    Update velocity position and deformation gradient of the particles
 	   */
 	  for(int i = 0 ; i<Ndim ; i++)
 	    {
 	      idx_A_mask_i = A_mask + i*Nnodes;
 	      MPM_Mesh.Phi.vel.nM[p][i] += ShapeFunction_pI*D_Velocity.nV[idx_A_mask_i];
 	      MPM_Mesh.Phi.x_GC.nM[p][i] += ShapeFunction_pI*D_Displacement.nV[idx_A_mask_i];
+
+	      for(int j = 0 ; j<Ndim ; j++)
+		{
+		  idx_ij = i + j*Ndim;
+		  MPM_Mesh.Phi.F_n.nM[p][idx_ij] = MPM_Mesh.Phi.F_n1.nM[p][idx_ij];
+		}
 	    } 
 	}
       

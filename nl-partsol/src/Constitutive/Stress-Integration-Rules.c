@@ -69,8 +69,18 @@ Tensor Itegration_Stress_Average_Strain(Tensor S_p,
   
   /*
     Compute the Stress tensor
-   */
-  S_p = grad_energy_Saint_Venant_Kirchhoff(S_p, E_n12_p, MatProp_p);
+  */
+  if(strcmp(MatProp_p.Type,"Saint-Venant-Kirchhoff") == 0)
+    {
+      S_p = grad_energy_Saint_Venant_Kirchhoff(S_p, E_n12_p, MatProp_p);
+    }
+  else
+    {
+      fprintf(stderr,"%s : %s %s \n",
+	      "Error in Itegration_Stress_Average_Strain()",
+	      "The material",MatProp_p.Type,"has not been yet implemnented");
+      exit(EXIT_FAILURE);
+    }
   
   /*
     Free auxiliar variables
