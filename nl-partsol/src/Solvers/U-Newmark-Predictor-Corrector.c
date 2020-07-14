@@ -68,10 +68,10 @@ void U_PCE(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int InitialStep)
 
       print_Status("*************************************************",TimeStep);
       print_Status("Five step : Reset nodal values ... WORKING",TimeStep);
-      FreeMat(M_I);
-      FreeMat(V_I);
-      FreeMat(F_I);
-      FreeMat(R_I);
+      free__MatrixLib__(M_I);
+      free__MatrixLib__(V_I);
+      free__MatrixLib__(F_I);
+      free__MatrixLib__(R_I);
       print_Status("DONE !!!",TimeStep);
 
     } 

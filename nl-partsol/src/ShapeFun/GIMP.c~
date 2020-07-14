@@ -281,7 +281,7 @@ ChainPtr uGIMP_Tributary_Nodes(Matrix Xi_p,int Elem_GP,Matrix lp,Mesh FEM_Mesh)
 
   /* Get the reference distance measured from the center of the element */
   for(int i = 0 ; i<2; i++){
-    Dist[i] = 1 - lp.nV[i]/FEM_Mesh.DeltaX;
+    Dist[i] = 1 - 2*lp.nV[i]/FEM_Mesh.DeltaX;
   }
 
   /* Check if I am in the central area */

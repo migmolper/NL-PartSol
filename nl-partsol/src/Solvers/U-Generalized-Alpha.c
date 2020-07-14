@@ -33,8 +33,8 @@ void U_GA(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int InitialStep)
   /*!
     Nodal forces for the balance 
   */
-  Matrix F_I = get_RowFrom(Ndim,Nnodes,NULL);
-  Matrix R_I = get_RowFrom(Ndim,Nnodes,NULL);
+  Matrix F_I = memory_to_matrix__MatrixLib__(Ndim,Nnodes,NULL);
+  Matrix R_I = memory_to_matrix__MatrixLib__(Ndim,Nnodes,NULL);
 
   
   puts("*************************************************");
@@ -95,7 +95,7 @@ void U_GA(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int InitialStep)
       
       print_Status("*************************************************",TimeStep);
       print_Status("Five step : Reset nodal values ... WORKING",TimeStep);
-      FreeMat(F_I);
+      free__MatrixLib__(F_I);
       print_Status("DONE !!!",TimeStep);
 
     }

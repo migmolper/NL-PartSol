@@ -15,20 +15,20 @@ Matrix compute_ShapeFunction(Element GP_Element,GaussPoint MPM_Mesh,Mesh FEM_Mes
   
   /* Gauss-Point properties */
   Matrix X_GP = /* Element coordinates of the Gauss-Point */
-    get_RowFrom(Ndim,1,NULL); 
+    memory_to_matrix__MatrixLib__(Ndim,1,NULL); 
   Matrix lp; /* Just for GIMP -> Particle voxel */
   Matrix Beta_GP =  /* Tunning parameter for LME */
-    get_RowFrom(Ndim,1,NULL);
+    memory_to_matrix__MatrixLib__(Ndim,1,NULL);
   Matrix Delta_Xip; /* Just for GIMP -> Distance from GP to the nodes */
   Matrix lambda_GP = /* Just for LME/LME -> Lagrange multipliers */
-    get_RowFrom(Ndim,1,NULL);
+    memory_to_matrix__MatrixLib__(Ndim,1,NULL);
   
   Matrix ShapeFunction_p; /* Matrix with the nodal shape functions */
   
   if(strcmp(ShapeFunctionGP,"MPMQ4") == 0){
 
     /* Fill the poligon */
-    GP_ElemCoord = MatAllocZ(GP_NumNodes,Ndim);
+    GP_ElemCoord = allocZ__MatrixLib__(GP_NumNodes,Ndim);
     for(int k = 0; k<GP_NumNodes ; k++){
       /* Get the node for the GP */
       GP_I = GP_Connect[k];
@@ -45,11 +45,11 @@ Matrix compute_ShapeFunction(Element GP_Element,GaussPoint MPM_Mesh,Mesh FEM_Mes
     ShapeFunction_p = Q4_N(X_GP);
     
     /* Free memory */
-    FreeMat(GP_ElemCoord);
+    free__MatrixLib__(GP_ElemCoord);
   }
   else if(strcmp(ShapeFunctionGP,"uGIMP") == 0){
     /* Generate a matrix with the distances to the nodes */
-    Delta_Xip = MatAlloc(GP_NumNodes,Ndim);
+    Delta_Xip = alloc__MatrixLib__(GP_NumNodes,Ndim);
     for(int k = 0 ; k<GP_NumNodes ; k++){
       /* Get the node for the GP */
       GP_I = GP_Connect[k];
@@ -67,11 +67,11 @@ Matrix compute_ShapeFunction(Element GP_Element,GaussPoint MPM_Mesh,Mesh FEM_Mes
     ShapeFunction_p = uGIMP_N(Delta_Xip,lp,FEM_Mesh.DeltaX);
 
     /* Free memory */
-    FreeMat(Delta_Xip);
+    free__MatrixLib__(Delta_Xip);
   }
   else if(strcmp(ShapeFunctionGP,"LME") == 0){
     /* Get the distance of the GP to the nodes */
-    Delta_Xip = MatAlloc(GP_NumNodes,Ndim);
+    Delta_Xip = alloc__MatrixLib__(GP_NumNodes,Ndim);
     for(int k = 0 ; k<GP_NumNodes ; k++){
       GP_I = GP_Connect[k];
       for(int l = 0 ; l<Ndim ; l++){
@@ -88,7 +88,7 @@ Matrix compute_ShapeFunction(Element GP_Element,GaussPoint MPM_Mesh,Mesh FEM_Mes
     ShapeFunction_p = LME_p(Delta_Xip, lambda_GP,Beta_GP);
     
     /* Free memory */
-    FreeMat(Delta_Xip);
+    free__MatrixLib__(Delta_Xip);
   }
   else{
     printf("%s : %s %s %s \n",
@@ -119,21 +119,21 @@ Matrix compute_ShapeFunction_gradient(Element GP_Element,GaussPoint MPM_Mesh,
   
   /* Gauss-Point properties */
   Matrix X_GP = /* Element coordinates of the Gauss-Point */
-    get_RowFrom(Ndim,1,NULL); 
+    memory_to_matrix__MatrixLib__(Ndim,1,NULL); 
   Matrix lp; /* Just for GIMP -> Particle voxel */
   Matrix Beta_GP =  /* Tunning parameter for LME */
-    get_RowFrom(Ndim,1,NULL);
+    memory_to_matrix__MatrixLib__(Ndim,1,NULL);
   Matrix Delta_Xip; /* Just for GIMP -> Distance from GP to the nodes */
   
   Matrix lambda_GP = /* Just for LME/LME -> Lagrange multipliers */
-    get_RowFrom(Ndim,1,NULL);
+    memory_to_matrix__MatrixLib__(Ndim,1,NULL);
   
   Matrix ShapeFunction_p; /* Matrix with the nodal shape functions */
   Matrix Gradient_p; /* Matrix with the nodal derivatives */
   
   if(strcmp(ShapeFunctionGP,"MPMQ4") == 0){
     /* Fill the poligon */
-    GP_ElemCoord = MatAllocZ(GP_NumNodes,Ndim);
+    GP_ElemCoord = allocZ__MatrixLib__(GP_NumNodes,Ndim);
     
     for(int k = 0; k<GP_NumNodes ; k++){
       /* Get the node for the GP */
@@ -151,11 +151,11 @@ Matrix compute_ShapeFunction_gradient(Element GP_Element,GaussPoint MPM_Mesh,
     Gradient_p = Q4_dN(X_GP,GP_ElemCoord);
     
     /* Free memory */
-    FreeMat(GP_ElemCoord);
+    free__MatrixLib__(GP_ElemCoord);
   }
   else if(strcmp(ShapeFunctionGP,"uGIMP") == 0){
     /* Generate a matrix with the distances to the nodes */
-    Delta_Xip = MatAlloc(GP_NumNodes,Ndim);
+    Delta_Xip = alloc__MatrixLib__(GP_NumNodes,Ndim);
     for(int k = 0 ; k<GP_NumNodes ; k++){
       /* Get the node for the GP */
       GP_I = GP_Connect[k];
@@ -173,11 +173,11 @@ Matrix compute_ShapeFunction_gradient(Element GP_Element,GaussPoint MPM_Mesh,
     Gradient_p = uGIMP_dN(Delta_Xip,lp,FEM_Mesh.DeltaX);
 
     /* Free memory */
-    FreeMat(Delta_Xip);
+    free__MatrixLib__(Delta_Xip);
   }
   else if(strcmp(ShapeFunctionGP,"LME") == 0){
     /* Get the distance of the GP to the nodes */
-    Delta_Xip = MatAlloc(GP_NumNodes,Ndim);
+    Delta_Xip = alloc__MatrixLib__(GP_NumNodes,Ndim);
     for(int k = 0 ; k<GP_NumNodes ; k++){
       GP_I = GP_Connect[k];
       for(int l = 0 ; l<Ndim ; l++){
@@ -195,8 +195,8 @@ Matrix compute_ShapeFunction_gradient(Element GP_Element,GaussPoint MPM_Mesh,
     Gradient_p = LME_dp(Delta_Xip, ShapeFunction_p);
    
     /* Free memory */
-    FreeMat(ShapeFunction_p);
-    FreeMat(Delta_Xip);
+    free__MatrixLib__(ShapeFunction_p);
+    free__MatrixLib__(Delta_Xip);
   }
   else{
     printf("%s : %s %s %s \n",

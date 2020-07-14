@@ -97,8 +97,7 @@ Matrix Eval_Body_Forces(Load * B, int NumLoads, int NumGP, int TimeStep)
   Evaluate body forces in a time step.
 */
 {
-  Matrix Body_Forces_t =
-    MatAllocZ(NumberDimensions,NumGP);
+  Matrix Body_Forces_t = allocZ__MatrixLib__(NumberDimensions,NumGP);
   int GP_Force;
   
   if(NumLoads>0){
@@ -135,8 +134,7 @@ Matrix Eval_Contact_Forces(Load * F, int NumLoads, int NumGP, int TimeStep)
  */
 {
   int GP_Force;
-  Matrix Contact_Forces_t = 
-    MatAllocZ(NumberDimensions,NumGP);
+  Matrix Contact_Forces_t = allocZ__MatrixLib__(NumberDimensions,NumGP);
   
   if(NumLoads>0){
     for(int i = 0 ; i<NumLoads; i++){
@@ -176,7 +174,7 @@ Matrix compute_Reactions(Mesh FEM_Mesh, Matrix F_I)
   int Id_BCC; /* Index of the node where we apply the BCC */
   int Ndim = NumberDimensions;
 
-  Matrix R_I = MatAllocZ(FEM_Mesh.NumNodesMesh,Ndim);
+  Matrix R_I = allocZ__MatrixLib__(FEM_Mesh.NumNodesMesh,Ndim);
   strcpy(R_I.Info,"REACTIONS");
 
   /* 2º Loop over the the boundaries */

@@ -47,7 +47,7 @@ void update_Particles_FE(GaussPoint MPM_Mesh, Mesh FEM_Mesh,
     
     /* 5º Free memory */
     free(Nodes_p.Connectivity);
-    FreeMat(N_p);
+    free__MatrixLib__(N_p);
   }  
 }
 
@@ -112,7 +112,7 @@ void update_Particles_PCE(GaussPoint MPM_Mesh,Mesh FEM_Mesh,
     
     /* 5º Free memory */
     free(Nodes_p.Connectivity);
-    FreeMat(ShapeFunction_p);
+    free__MatrixLib__(ShapeFunction_p);
   }  
 }
 
@@ -236,7 +236,7 @@ void update_Particles_GA(GaussPoint MPM_Mesh,Mesh FEM_Mesh,
     
     /* 6º Free memory */
     free(GP_Element.Connectivity);
-    FreeMat(N_GP);
+    free__MatrixLib__(N_GP);
   }
 
   /* Update the grid nodal variales */

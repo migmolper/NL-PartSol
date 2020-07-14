@@ -23,7 +23,7 @@ Matrix T3(Matrix X_e){
   }    
   
   /* Definition and allocation */
-  Matrix N_ref =  MatAlloc(1,3);
+  Matrix N_ref =  alloc__MatrixLib__(1,3);
 
   /* Fill the array */
   N_ref.nV[0] = 1 - X_e.nV[0] - X_e.nV[1]; 
@@ -47,7 +47,7 @@ Matrix dT3(Matrix X_e){
   }
   
   /* Definition and allocation */
-  Matrix dNdX_ref = MatAlloc(2,3);
+  Matrix dNdX_ref = alloc__MatrixLib__(2,3);
   
   /* Fill the matrix */
   /* Node 0 */
@@ -84,10 +84,10 @@ Matrix Get_F_Ref_T3(Matrix X_NC_GP,Matrix X_GC_Nodes)
 {
   /* Variable declaration */
   Matrix dNdX_Ref_GP;
-  Matrix X_alpha = MatAlloc(2,1);
-  Matrix dNdx_alpha = MatAlloc(1,2);
+  Matrix X_alpha = alloc__MatrixLib__(2,1);
+  Matrix dNdx_alpha = alloc__MatrixLib__(1,2);
   Matrix F_Ref_alpha;
-  Matrix F_Ref = MatAllocZ(2,2);
+  Matrix F_Ref = allocZ__MatrixLib__(2,2);
 
   /* 1º Evaluate the derivarive of the shape function in the GP */
   dNdX_Ref_GP = dT3(X_NC_GP); 
@@ -102,20 +102,20 @@ Matrix Get_F_Ref_T3(Matrix X_NC_GP,Matrix X_GC_Nodes)
     }
 
     /* 4º Get the nodal contribution */
-    F_Ref_alpha = Tensorial_prod(X_alpha,dNdx_alpha);
+    F_Ref_alpha = dyadic_product__MatrixLib__(X_alpha,dNdx_alpha);
 
     /* 5º Increment the reference deformation gradient */
-    F_Ref = Incr_Mat(F_Ref, F_Ref_alpha);
+    F_Ref = increment__MatrixLib__(F_Ref, F_Ref_alpha);
 
     /* 6º Free data of the nodal contribution */
-    FreeMat(F_Ref_alpha);
+    free__MatrixLib__(F_Ref_alpha);
     
   }
   
   /* 7º Free memory */
-  FreeMat(dNdX_Ref_GP);
-  FreeMat(X_alpha);
-  FreeMat(dNdx_alpha);
+  free__MatrixLib__(dNdX_Ref_GP);
+  free__MatrixLib__(X_alpha);
+  free__MatrixLib__(dNdx_alpha);
 
   /* 8º Output */
   return F_Ref;
@@ -145,17 +145,17 @@ Matrix Get_dNdX_T3(Matrix X_EC_GP,Matrix Element)
   F_GP = Get_F_Ref_T3(X_EC_GP,Element);
     
   /* 3º Get the inverse of the deformation gradient */
-  F_GP_m1 = Get_Inverse(F_GP);
-  FreeMat(F_GP);
+  F_GP_m1 = inverse__MatrixLib__(F_GP);
+  free__MatrixLib__(F_GP);
   
   /* 4º Get the transpose of the inverse of the deformation gradient */
-  F_GP_Tm1 = Transpose_Mat(F_GP_m1);
-  FreeMat(F_GP_m1);
+  F_GP_Tm1 = transpose__MatrixLib__(F_GP_m1);
+  free__MatrixLib__(F_GP_m1);
   
   /* 5º Get the gradient of the shape functions in global coordinates */
-  dNdx_GP = Scalar_prod(F_GP_Tm1,dNdX_Ref_GP);
-  FreeMat(F_GP_Tm1);
-  FreeMat(dNdX_Ref_GP);
+  dNdx_GP = scalar_product__MatrixLib__(F_GP_Tm1,dNdX_Ref_GP);
+  free__MatrixLib__(F_GP_Tm1);
+  free__MatrixLib__(dNdX_Ref_GP);
 
   /* 6º Return result */
   return dNdx_GP;
@@ -177,7 +177,7 @@ This function evaluate the position of the GP in the element, and get it global 
   N_ref = T3(X_NC_GP);
 
   /* 2º Allocate the output coordinates */
-  X_GC_GP = MatAlloc(2,1);
+  X_GC_GP = alloc__MatrixLib__(2,1);
 
   /* 3º Get the global coordinates for this element coordiantes in this element */
   X_GC_GP.nV[0] =
@@ -191,7 +191,7 @@ This function evaluate the position of the GP in the element, and get it global 
     N_ref.nV[2]*X_GC_Nodes.nM[2][1];
 
   /* 4º Free memory */
-  FreeMat(N_ref);
+  free__MatrixLib__(N_ref);
 
   /* 5º Output */
   return X_GC_GP;

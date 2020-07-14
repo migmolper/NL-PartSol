@@ -172,7 +172,7 @@ void globalfree(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
 */
 {
   /* Free malloc in FEM_Mesh */
-  FreeMat(FEM_Mesh.Coordinates);
+  free__MatrixLib__(FEM_Mesh.Coordinates);
   free(FEM_Mesh.NumNodesElem);
   free_SetTable(FEM_Mesh.Connectivity,FEM_Mesh.NumElemMesh);
   free(FEM_Mesh.NumNeighbour);
@@ -199,12 +199,12 @@ void globalfree(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
   /* Load * B; */
 
   if(strcmp(ShapeFunctionGP,"uGIMP") == 0){
-    FreeMat(MPM_Mesh.lp);
+    free__MatrixLib__(MPM_Mesh.lp);
   }
   /* Lagrange Multipliers / Beta (Only LME ) */
   if(strcmp(ShapeFunctionGP,"LME") == 0){
-    FreeMat(MPM_Mesh.lambda);
-    FreeMat(MPM_Mesh.Beta);
+    free__MatrixLib__(MPM_Mesh.lambda);
+    free__MatrixLib__(MPM_Mesh.Beta);
   }
       
 }
