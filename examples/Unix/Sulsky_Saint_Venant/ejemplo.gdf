@@ -6,7 +6,7 @@ GramsBox (Type=GID,File=FEM_Mesh.msh) {
 
 # Time integration
 GramsTime (Type=Discrete-Energy-Momentum) {
-    CFL=1.0
+    CFL=0.1
     N=15000
 }
 
@@ -38,6 +38,6 @@ GramsSolid2D (File=MPM_Mesh.msh) {
 }
 
 # Outputs 
-GramsOutputs (i=100) {
+GramsOutputs (i=1) {
 	     DIR=Resultados
 }

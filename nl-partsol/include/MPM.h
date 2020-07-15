@@ -24,7 +24,8 @@ void free_Boundaries(Boundaries);
 Tensor compute_RateOfStrain(Matrix, Matrix);
 Tensor update_Strain(Tensor, Tensor, double);
 
-void compute_Strain_Deformation_Gradient_n1(Tensor, Tensor, Matrix, Matrix);
+Tensor compute_increment_Deformation_Gradient(Matrix, Matrix);
+void update_Deformation_Gradient_n1(Tensor, Tensor, Tensor);
 Tensor compute_RightCauchyGreen(Tensor);
 Tensor compute_LagrangianStrain(Tensor);
   

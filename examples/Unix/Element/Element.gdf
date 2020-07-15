@@ -2,14 +2,14 @@ GramsBox (Type=GID,File=FEM_Mesh.msh) {
 }
 
 GramsTime (Type=Discrete-Energy-Momentum) { 
-    CFL=1
+    CFL=0.05
     N=10
 } 
 
 GramsSolid2D (File=MPM_Mesh.msh) {
 
     GramsMaterials (Particles=ListInit.txt) {
-	Type=LE
+	Type=Saint-Venant-Kirchhoff
 	Cel=1.0
 	rho=1.0 
 	E=1.0 
@@ -21,7 +21,7 @@ GramsSolid2D (File=MPM_Mesh.msh) {
     }
     
     GramsInitials (Nodes=ListInit.txt) { 
-	Value=[1.0,1.5]
+	Value=[0,1]
     } 
 }
 

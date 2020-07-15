@@ -234,6 +234,22 @@ void WriteVtk_MPM(char * Name_File, GaussPoint MPM_Mesh,
     free__TensorLib__(EV_Stress_p);
   }
 
+  fprintf(Vtk_file,"TENSORS DEFORMATION-GRADIENT double \n");
+  for(int i =  0 ; i<MPM_Mesh.NumGP ; i++){
+    for(int j = 0 ; j<3 ; j++){
+      for(int k = 0 ; k<3 ; k++){
+	if((j<Ndim) && (k<Ndim)){
+	  fprintf(Vtk_file,"%lf ",MPM_Mesh.Phi.F_n.nM[i][j*Ndim+k]);
+	}
+	else{
+	  fprintf(Vtk_file,"%lf ",0.0);
+	}
+      }
+      fprintf(Vtk_file,"\n");
+    }
+    fprintf(Vtk_file,"\n");
+  }
+
   /* Close the file */
   fclose(Vtk_file);
   

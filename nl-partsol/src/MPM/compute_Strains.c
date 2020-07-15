@@ -63,8 +63,7 @@ Tensor update_Strain(Tensor Strain, Tensor Rate_Strain, double TimeStep)
 
 /*******************************************************/
 
-void compute_Strain_Deformation_Gradient_n1(Tensor F_n1, Tensor F_n,
-					    Matrix DeltaU, Matrix gradient_p)
+Tensor compute_increment_Deformation_Gradient(Matrix DeltaU, Matrix gradient_p)
 {
 
   /* Variable definition */
@@ -74,24 +73,12 @@ void compute_Strain_Deformation_Gradient_n1(Tensor F_n1, Tensor F_n,
   Tensor DeltaU_I;
   Tensor gradient_I;
   Tensor gradient_DeltaU_I;
-
-
-  /*
-    Initialize the deformation gradient F_n1
-   */
-  for(int i = 0 ; i<Ndim  ; i++)
-    {
-      for(int j = 0 ; j<Ndim  ; j++)
-	{
-	  F_n1.N[i][j] = 0.0;
-	}
-    }
   
   /*
     Compute increment of the deformation gradient 
     f_n1 = I + Delta_u 0 gradient_N
   */
-
+  
   /* Add identity tensor */
   f_n1 = Identity__TensorLib__();
   
@@ -119,25 +106,42 @@ void compute_Strain_Deformation_Gradient_n1(Tensor F_n1, Tensor F_n,
       free__TensorLib__(gradient_DeltaU_I);
     }
   
-  /*
-    Compute F_n1 = Incr_F F 
-  */
-  
+  return f_n1;
+}
+
+/*******************************************************/
+
+void update_Deformation_Gradient_n1(Tensor F_n1, Tensor F_n, Tensor f_n1)
+{
+  int Ndim = NumberDimensions;
+  double aux;
+    
   for(int i = 0 ; i < Ndim  ; i++)
     {
       for(int j = 0 ; j < Ndim  ; j++)
 	{
+	  /*
+	    Set to zero the deformation gradient at t = n + 1 
+	   */
+	  F_n1.N[i][j] = 0;
+
+	  /*
+	    Compute row-column multiplication
+	   */
+	  aux = 0;
 	  for(int k = 0 ; k < Ndim  ; k++)
 	    {
-	      F_n1.N[i][j] += f_n1.N[i][k]*F_n.N[k][j];
+	      aux += f_n1.N[i][k]*F_n.N[k][j];
 	    }
+
+	  /*
+	    New value
+	   */
+	  F_n1.N[i][j] = aux;
 	}
     }
-
-  /* Free memory */
-  free__TensorLib__(f_n1);
-
 }
+
 
 /*******************************************************/
 

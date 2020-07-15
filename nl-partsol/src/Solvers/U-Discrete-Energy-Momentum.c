@@ -20,6 +20,7 @@ static void   assemble_Nodal_Tangent_Stiffness_Material(Matrix, Mask, GaussPoint
 static Tensor compute_stiffness_density(Tensor, Tensor, Material);
 static Tensor compute_Nodal_Tangent_Stiffness_Material(Tensor,Tensor,Tensor);
 static void   update_D_Displacement(Matrix, Matrix, Matrix, Matrix, double);
+static void   imposed_displacements(Matrix, Mask, Mesh, int);
 static Matrix compute_D_Velocity(Matrix, Matrix,double);
 static void   update_Particles(Matrix, Matrix, GaussPoint, Mesh, Mask, double);
 
@@ -46,7 +47,7 @@ void U_Discrete_Energy_Momentum(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int InitialS
   Matrix Residual;
   Mask ActiveNodes;
   double TOL = 0.00000001;
-  double epsilon = 1.0;
+  double epsilon = 1;
   double DeltaTimeStep;
   bool Convergence;
   int Iter = 0;
@@ -101,6 +102,7 @@ void U_Discrete_Energy_Momentum(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int InitialS
 	Compute the nodal valocities with the effective mass matrix and the nodal momentum
       */
       Velocity = compute_Nodal_Velocity(Effective_Mass, Momentum);
+      /* imposed_velocty(); */
       print_Status("DONE !!!",TimeStep);
 
       print_Status("*************************************************",TimeStep);
@@ -119,6 +121,7 @@ void U_Discrete_Energy_Momentum(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int InitialS
       Iter = 0;
       while(Convergence == false)
 	{
+	  
 	  /*
 	    Compute the stress-strain state for each particle
 	  */
@@ -134,6 +137,7 @@ void U_Discrete_Energy_Momentum(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int InitialS
 	  */
 	  Residual = compute_Nodal_Residual(Velocity,Forces,D_Displacement,
 					    Effective_Mass,DeltaTimeStep);
+	  
 	  /*
 	    If the norm of the residual for each nodal value is below a tolerace
 	    skip
@@ -158,6 +162,12 @@ void U_Discrete_Energy_Momentum(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int InitialS
 	      */
 	      update_D_Displacement(D_Displacement,Tangent_Stiffness,
 				    Effective_Mass,Residual,DeltaTimeStep);
+
+	      /*
+		Impose dirichlet boundary conditions over the increment of
+		displacement
+	      */
+	      imposed_displacements(D_Displacement, ActiveNodes, FEM_Mesh, TimeStep);
 
 	      /* PrintMatrix(Residual,Ndim,Nactivenodes); */
 
@@ -424,7 +434,7 @@ static Matrix compute_Nodal_Effective_Mass(GaussPoint MPM_Mesh, Mesh FEM_Mesh,
 		  /*
 		    Compute the vectorized index
 		   */
-		  idx_AB_mask_i = A_mask + i*Nnodes + (B_mask + i*Nnodes)*Ndof*Nnodes;
+		  idx_AB_mask_i = B_mask + (i*Ndof*Nnodes + i)*Nnodes + A_mask*Ndof*Nnodes;
 		  
 		  Effective_MassMatrix.nV[idx_AB_mask_i] += m_AB_p;
 		}
@@ -448,7 +458,7 @@ static Matrix compute_Nodal_Effective_Mass(GaussPoint MPM_Mesh, Mesh FEM_Mesh,
 	{
 	  for(int i = 0 ; i<Ndof ; i++)
 	    {
-	      idx_AB_mask_i = A + i*Nnodes + (B + i*Nnodes)*Ndof*Nnodes;
+	      idx_AB_mask_i = B + (i*Ndof*Nnodes + i)*Nnodes + A*Ndof*Nnodes;
 	      idx_A_mask_i = A + i*Nnodes;
 	      
 	      Effective_MassMatrix.nV[idx_AB_mask_i] =
@@ -609,6 +619,7 @@ static void update_Local_State(Matrix D_Displacement, Mask ActiveNodes,
   Tensor F_n_p;
   Tensor F_n12_p;
   Tensor F_n1_p;
+  Tensor f_n1_p;
   Tensor S_p;
   
   /* Loop in the material point set */
@@ -634,11 +645,16 @@ static void update_Local_State(Matrix D_Displacement, Mask ActiveNodes,
       */
       F_n_p  = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n.nM[p],2);
       F_n1_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n1.nM[p],2);
+      
+      /*
+      	Compute the increment of the deformation gradient
+      */
+      f_n1_p = compute_increment_Deformation_Gradient(D_Displacement_Ap,gradient_p);
 
       /*
-      	Compute the value of the deformation gradient at t = n+1
-      */
-      compute_Strain_Deformation_Gradient_n1(F_n1_p,F_n_p,D_Displacement_Ap,gradient_p);
+	Update the deformation gradient in t = n + 1
+      */  
+      update_Deformation_Gradient_n1(F_n1_p, F_n_p, f_n1_p);
       
       /*
       	Update the second Piola-Kirchhoff stress tensor (S) with an apropiate
@@ -649,7 +665,10 @@ static void update_Local_State(Matrix D_Displacement, Mask ActiveNodes,
       S_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.Stress.nM[p],2);      
       S_p = Itegration_Stress_Average_Strain(S_p,F_n1_p,F_n_p,MatProp_p);
       
-      /* Free the gradient */
+      /*
+	Free memory 
+      */
+      free__TensorLib__(f_n1_p);
       free__MatrixLib__(D_Displacement_Ap);
       free__MatrixLib__(gradient_p);
 	  
@@ -689,7 +708,7 @@ static void compute_Nodal_Internal_Forces(Matrix Forces,
   int Np = MPM_Mesh.NumGP;
   int Ap;
   int A_mask;
-  int Nn;
+  int NumNodes_p;
 
   Tensor P_p; /* First Piola-Kirchhoff Stress tensor */
   Tensor S_p; /* Second Piola-Kirchhoff Stress tensor */
@@ -728,8 +747,8 @@ static void compute_Nodal_Internal_Forces(Matrix Forces,
       /*
 	Define nodes for each particle
       */
-      Nn = MPM_Mesh.NumberNodes[p];
-      Nodes_p = get_particle_Set(p, MPM_Mesh.ListNodes[p], Nn);
+      NumNodes_p = MPM_Mesh.NumberNodes[p];
+      Nodes_p = get_particle_Set(p, MPM_Mesh.ListNodes[p], NumNodes_p);
 
       /*
 	Compute gradient of the shape function in each node 
@@ -758,7 +777,7 @@ static void compute_Nodal_Internal_Forces(Matrix Forces,
       J_p = I3__TensorLib__(F_n_p);
       V0_p = (1/J_p)*(m_p/rho_p);
     
-      for(int A = 0 ; A<Nn ; A++)
+      for(int A = 0 ; A<NumNodes_p ; A++)
 	{
       
 	  /*
@@ -914,8 +933,8 @@ static Matrix assemble_Nodal_Tangent_Stiffness(Mask ActiveNodes,
   Matrix Tangent_Stiffness = allocZ__MatrixLib__(Ndof*Nnodes, Ndof*Nnodes);
   
   /*
-    Compute terms related to the geometric non-linearities. 
-  */  
+    Compute terms related to the geometric non-linearities.
+  */
   assemble_Nodal_Tangent_Stiffness_Geometric(Tangent_Stiffness,ActiveNodes,MPM_Mesh,FEM_Mesh);
   
   /*
@@ -944,7 +963,7 @@ static void assemble_Nodal_Tangent_Stiffness_Geometric(Matrix Tangent_Stiffness,
   int A_mask;
   int Bp;
   int B_mask;
-  int Nn;
+  int NumNodes_p;
   int idx_AB_mask_i;
 
   Tensor S_p; /* Second Piola-Kirchhoff Stress tensor */
@@ -984,8 +1003,8 @@ static void assemble_Nodal_Tangent_Stiffness_Geometric(Matrix Tangent_Stiffness,
       /*
 	Define nodes for each particle
       */
-      Nn = MPM_Mesh.NumberNodes[p];
-      Nodes_p = get_particle_Set(p, MPM_Mesh.ListNodes[p], Nn);
+      NumNodes_p = MPM_Mesh.NumberNodes[p];
+      Nodes_p = get_particle_Set(p, MPM_Mesh.ListNodes[p], NumNodes_p);
 
       /*
 	Compute gradient of the shape function in each node 
@@ -1010,7 +1029,7 @@ static void assemble_Nodal_Tangent_Stiffness_Geometric(Matrix Tangent_Stiffness,
       J_p = I3__TensorLib__(F_n_p);
       V0_p = (1/J_p)*(m_p/rho_p);
 
-      for(int A = 0 ; A<Nn ; A++)
+      for(int A = 0 ; A<NumNodes_p ; A++)
 	{
 	  /*
 	    Compute the gradient in the reference configuration 
@@ -1025,7 +1044,7 @@ static void assemble_Nodal_Tangent_Stiffness_Geometric(Matrix Tangent_Stiffness,
 	  A_mask = ActiveNodes.Nodes2Mask[Ap];
 
 	  
-	  for(int B = 0 ; B<Nn ; B++)
+	  for(int B = 0 ; B<NumNodes_p ; B++)
 	    {
 
 	      /*
@@ -1058,7 +1077,7 @@ static void assemble_Nodal_Tangent_Stiffness_Geometric(Matrix Tangent_Stiffness,
 		  /*
 		    Compute the vectorized index
 		  */
-		  idx_AB_mask_i = B_mask + (i + i*Nnodes)*Nnodes + A_mask*Ndim*Nnodes;
+		  idx_AB_mask_i = B_mask + (i*Ndim*Nnodes + i)*Nnodes + A_mask*Ndim*Nnodes;
 
 		  Tangent_Stiffness.nV[idx_AB_mask_i] += Geometric_AB_p*V0_p;
 		}
@@ -1102,7 +1121,7 @@ static void assemble_Nodal_Tangent_Stiffness_Material(Matrix Tangent_Stiffness,
   int A_mask;
   int Bp;
   int B_mask;
-  int Nn;
+  int NumNodes_p;
   int MatIndx_p;
   int idx_AB_mask_ij;
 
@@ -1149,8 +1168,8 @@ static void assemble_Nodal_Tangent_Stiffness_Material(Matrix Tangent_Stiffness,
       /*
 	Define nodes for each particle
       */
-      Nn = MPM_Mesh.NumberNodes[p];
-      Nodes_p = get_particle_Set(p, MPM_Mesh.ListNodes[p], Nn);
+      NumNodes_p = MPM_Mesh.NumberNodes[p];
+      Nodes_p = get_particle_Set(p, MPM_Mesh.ListNodes[p], NumNodes_p);
 
       /*
 	Compute gradient of the shape function in each node 
@@ -1174,7 +1193,7 @@ static void assemble_Nodal_Tangent_Stiffness_Material(Matrix Tangent_Stiffness,
       J_p = I3__TensorLib__(F_n_p);
       V0_p = (1/J_p)*(m_p/rho_p);
 
-      for(int A = 0 ; A<Nn ; A++)
+      for(int A = 0 ; A<NumNodes_p ; A++)
 	{
 	  /*
 	    Compute the gradient in the reference configuration 
@@ -1189,7 +1208,7 @@ static void assemble_Nodal_Tangent_Stiffness_Material(Matrix Tangent_Stiffness,
 	  A_mask = ActiveNodes.Nodes2Mask[Ap];
 
 	  
-	  for(int B = 0 ; B<Nn ; B++)
+	  for(int B = 0 ; B<NumNodes_p ; B++)
 	    {
 
 	      /*
@@ -1209,7 +1228,7 @@ static void assemble_Nodal_Tangent_Stiffness_Material(Matrix Tangent_Stiffness,
 		Get the nodal contribution of the material mass matrix
 	      */
 	      C_AB = compute_stiffness_density(GRADIENT_pA,GRADIENT_pB,MatProp_p);
-	      
+
 	      /*
 		Compute the nodal matrix with the contribution to each degree of freedom
 	       */
@@ -1223,7 +1242,7 @@ static void assemble_Nodal_Tangent_Stiffness_Material(Matrix Tangent_Stiffness,
 		{
 		  for(int j = 0 ; j<Ndim ; j++)
 		    {
-		      idx_AB_mask_ij = B_mask + (i + j*Nnodes)*Nnodes + A_mask*Ndim*Nnodes;
+		      idx_AB_mask_ij = B_mask + (i*Ndim*Nnodes + j)*Nnodes + A_mask*Ndim*Nnodes;
 		      
 		      Tangent_Stiffness.nV[idx_AB_mask_ij] += Material_AB.N[i][j]*V0_p;
 		    }
@@ -1345,9 +1364,35 @@ static void update_D_Displacement(Matrix D_Displacement,
   LAPACK_dgetrf(&Order,&Order,Global_Matrix.nV,&LDA,IPIV,&INFO);
 
   /*
+    Check error messages in the LAPACK LU descompistion  
+   */
+  if(INFO)
+    {
+      fprintf(stderr,"%s : %s %s %s \n",
+	      "Error in update_D_Displacement",
+	      "The function",
+	      "LAPACK_dgetrf",
+	      "returned an error message !!!" );
+      exit(EXIT_FAILURE);
+    }
+
+  /*
     Solve
   */
   dgetrs_(&TRANS,&Order,&NRHS,Global_Matrix.nV,&LDA,IPIV,Residual.nV,&LDB,&INFO);
+  
+  /*
+    Check error messages in the LAPACK solver  
+  */
+  if(INFO)
+    {
+      fprintf(stderr,"%s : %s %s %s \n",
+	      "Error in update_D_Displacement",
+	      "The function",
+	      "dgetrs_",
+	      "returned an error message !!!" );
+      exit(EXIT_FAILURE);
+    }
 
   /*
     Update 
@@ -1359,6 +1404,71 @@ static void update_D_Displacement(Matrix D_Displacement,
   
 }
 
+
+/**************************************************************/
+
+static void imposed_displacements(Matrix D_Displacement, Mask ActiveNodes,
+				  Mesh FEM_Mesh, int TimeStep)
+/*
+  Apply the boundary conditions over the nodes 
+*/
+{
+
+  /* Define auxilar variables */
+  int NumBoundaryConditions = FEM_Mesh.Bounds.NumBounds;
+  int NumNodesBound; /* Number of nodes of the bound */
+  int NumDimBound; /* Number of dimensions */
+  int A_BCC; /* Index of the node where we apply the BCC */
+  int A_mask_BCC; /* Index of the node where we apply the BCC */
+  
+  for(int i_boundary = 0 ; i_boundary<NumBoundaryConditions ; i_boundary++)
+    {
+      
+      /*
+	Get the number of nodes of this boundary and 
+	the number of dimensions where it is applied
+      */
+    NumNodesBound = FEM_Mesh.Bounds.BCC_i[i_boundary].NumNodes;
+    NumDimBound = FEM_Mesh.Bounds.BCC_i[i_boundary].Dim;
+    
+    for(int A = 0 ; A<NumNodesBound ; A++)
+      {
+	
+      /* 
+	 Get the index of the node and get the mask node value 
+      */
+      A_BCC = FEM_Mesh.Bounds.BCC_i[i_boundary].Nodes[A];
+      A_mask_BCC = ActiveNodes.Nodes2Mask[A_BCC];
+
+      for(int i_dim = 0 ; i_dim<NumDimBound ; i_dim++)
+	{
+	  
+	if(FEM_Mesh.Bounds.BCC_i[i_boundary].Dir[i_dim] == 1)
+	  {
+	  /*
+	    Check if the curve it is on time 
+	  */
+	  if( (TimeStep < 0) ||
+	      (TimeStep > FEM_Mesh.Bounds.BCC_i[i_boundary].Value[i_dim].Num))
+	    {
+	      printf("%s : %s \n",
+		     "Error in imposed_displacements()",
+		     "The time step is out of the curve !!");
+	      exit(EXIT_FAILURE);
+	    }
+	  /* 
+	     Assign the boundary condition 
+	  */
+	  D_Displacement.nM[i_dim][A_mask_BCC] =
+	    FEM_Mesh.Bounds.BCC_i[i_boundary].Value[i_dim].Fx[TimeStep]*
+	    (double)FEM_Mesh.Bounds.BCC_i[i_boundary].Dir[i_dim];
+	  
+	  }
+	}
+      }    
+    }
+  
+}
 
 /**************************************************************/
 
@@ -1396,8 +1506,14 @@ static void update_Particles(Matrix D_Displacement, Matrix D_Velocity,
   int A_mask;
   int idx_A_mask_i;
   int idx_ij;
+  Matrix D_Displacement_Ap;
   Matrix ShapeFunction_p; /* Value of the shape-function in the particle */
+  Matrix gradient_p;
   double ShapeFunction_pI; /* Nodal value for the particle */
+  Tensor F_n_p;
+  Tensor F_n1_p;
+  Tensor f_n1_p;
+  double J_p;
   Element Nodes_p; /* Element for each particle */
 
   /* iterate over the particles */
@@ -1407,8 +1523,49 @@ static void update_Particles(Matrix D_Displacement, Matrix D_Velocity,
       /* Define element of the particle */
       Nodes_p = get_particle_Set(p, MPM_Mesh.ListNodes[p], MPM_Mesh.NumberNodes[p]);
       
-      /* Evaluate the shape function in the coordinates of the particle */
+      /*
+	Get the nodal increment of displacement using the mask
+      */
+      D_Displacement_Ap = get_Nodal_Values_for_Particle(D_Displacement, Nodes_p, ActiveNodes);
+      
+      /*
+	Evaluate the shape function and gradient in the coordinates of the particle 
+      */
       ShapeFunction_p = compute_ShapeFunction(Nodes_p, MPM_Mesh, FEM_Mesh);
+      gradient_p      = compute_ShapeFunction_gradient(Nodes_p,MPM_Mesh,FEM_Mesh);
+
+      /*
+      	Take the values of the deformation gradient from the previous step
+      */
+      F_n_p  = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n.nM[p],2);
+      F_n1_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n1.nM[p],2);
+
+      /*
+      	Compute the increment of the deformation gradient
+      */
+      f_n1_p = compute_increment_Deformation_Gradient(D_Displacement_Ap,gradient_p);
+
+      /*
+	Update the deformation gradient in t = n + 1
+      */  
+      update_Deformation_Gradient_n1(F_n1_p, F_n_p, f_n1_p);
+
+      /*
+	Update density with the jacobian of the increment deformation gradient
+       */
+      J_p = I3__TensorLib__(f_n1_p);
+      MPM_Mesh.Phi.rho.nV[p] = MPM_Mesh.Phi.rho.nV[p]/J_p;
+
+      /*
+	Replace the deformation gradient at t = n with the converged deformation gradient
+      */
+      for(int i = 0 ; i<Ndim  ; i++)
+	{
+	  for(int j = 0 ; j<Ndim  ; j++)
+	    {
+	      F_n_p.N[i][j] = F_n1_p.N[i][j];
+	    }
+	}      
       
       /* Iterate over the nodes of the particle */
       for(int A = 0; A<Nodes_p.NumberNodes; A++)
@@ -1420,33 +1577,28 @@ static void update_Particles(Matrix D_Displacement, Matrix D_Velocity,
 	  Ap = Nodes_p.Connectivity[A];
 	  A_mask = ActiveNodes.Nodes2Mask[Ap];
 	  
-	  /* Evaluate the GP function in the node */
+	  /*
+	    Evaluate the GP function in the node 
+	  */
 	  ShapeFunction_pI = ShapeFunction_p.nV[A];
-	  /* If this node has a null Value of the SHF continue */
-	  if(fabs(ShapeFunction_pI) <= TOL_zero)
-	    {
-	      continue;
-	    }
-
+	  
 	  /*
 	    Update velocity position and deformation gradient of the particles
 	   */
 	  for(int i = 0 ; i<Ndim ; i++)
 	    {
 	      idx_A_mask_i = A_mask + i*Nnodes;
-	      MPM_Mesh.Phi.vel.nM[p][i] += ShapeFunction_pI*D_Velocity.nV[idx_A_mask_i];
+	      MPM_Mesh.Phi.vel.nM[p][i]  += ShapeFunction_pI*D_Velocity.nV[idx_A_mask_i];
 	      MPM_Mesh.Phi.x_GC.nM[p][i] += ShapeFunction_pI*D_Displacement.nV[idx_A_mask_i];
-
-	      for(int j = 0 ; j<Ndim ; j++)
-		{
-		  idx_ij = i + j*Ndim;
-		  MPM_Mesh.Phi.F_n.nM[p][idx_ij] = MPM_Mesh.Phi.F_n1.nM[p][idx_ij];
-		}
 	    } 
 	}
-      
+
+      /*
+	Free memory
+       */
       free(Nodes_p.Connectivity);
       free__MatrixLib__(ShapeFunction_p);
+      free__TensorLib__(f_n1_p);
     }  
 }
 
