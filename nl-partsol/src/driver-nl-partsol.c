@@ -3,7 +3,7 @@
  
   \section Introduction
   This code is devoted to solve non-linear elastodynamic problems
-  using the MPM approach. It is coded and mantained by
+  using the MPM approach. It is programed and mantained by
   Miguel Molinos Pérez (m.molinos@alumnos.upm.es)
   
   \section Installation

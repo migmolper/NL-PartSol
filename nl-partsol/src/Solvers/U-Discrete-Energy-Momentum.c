@@ -46,8 +46,8 @@ void U_Discrete_Energy_Momentum(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int InitialS
   Matrix D_Velocity;
   Matrix Residual;
   Mask ActiveNodes;
-  double TOL = 0.00000001;
-  double epsilon = 1;
+  double TOL = 0.000000000001;
+  double epsilon = 1.0;
   double DeltaTimeStep;
   bool Convergence;
   int Iter = 0;
@@ -94,7 +94,6 @@ void U_Discrete_Energy_Momentum(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int InitialS
       */
       Momentum = compute_Nodal_Momentum(MPM_Mesh, FEM_Mesh, ActiveNodes);
       print_Status("DONE !!!",TimeStep);
-
       
       print_Status("*************************************************",TimeStep);
       print_Status("Four step : Compute nodal velocity ... WORKING",TimeStep);
@@ -131,7 +130,8 @@ void U_Discrete_Energy_Momentum(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int InitialS
 	    Compute the nodal forces
 	  */
 	  Forces = compute_Nodal_Forces(D_Displacement,ActiveNodes,MPM_Mesh,FEM_Mesh);
-	  
+
+	 	  
 	  /*
 	    Compute the numerical residual to check the equilibrium
 	  */
@@ -227,6 +227,7 @@ void U_Discrete_Energy_Momentum(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int InitialS
       free__MatrixLib__(D_Velocity);
       free__MatrixLib__(D_Displacement);
       print_Status("DONE !!!",TimeStep);
+
     }
   
 }
@@ -273,12 +274,12 @@ static Matrix get_Nodal_Values_for_Particle(Matrix Field, Element Nodes_p, Mask 
  */
   {
     int Nnodes = Nodes_p.NumberNodes;
-    int Ndof = Field.N_rows;
-    Matrix Field_Ap = allocZ__MatrixLib__(Nnodes,Ndof);
+    int Ndim = NumberDimensions;
+    Matrix Field_Ap = allocZ__MatrixLib__(Nnodes,Ndim);
     int Ap;
     int A_mask;
 
-    if(Ndof > 2)
+    if(Ndim > 1)
       {
 	for(int A = 0 ; A<Nnodes ; A++)
 	  {
@@ -289,7 +290,7 @@ static Matrix get_Nodal_Values_for_Particle(Matrix Field, Element Nodes_p, Mask 
 	    Ap = Nodes_p.Connectivity[A];
 	    A_mask = ActiveNodes.Nodes2Mask[Ap];
 	
-	    for(int i = 0 ; i<Ndof ; i++)
+	    for(int i = 0 ; i<Ndim ; i++)
 	      {
 		Field_Ap.nM[A][i] = Field.nM[i][A_mask];
 	      }
@@ -332,7 +333,7 @@ static Matrix compute_Nodal_Effective_Mass(GaussPoint MPM_Mesh, Mesh FEM_Mesh,
 */
 {
 
-  int Nnodes = ActiveNodes.Nactivenodes;
+  int Nnodes_mask = ActiveNodes.Nactivenodes;
   int Ndof = NumberDOF;
   int Np = MPM_Mesh.NumGP;
   int Ap;
@@ -357,10 +358,10 @@ static Matrix compute_Nodal_Effective_Mass(GaussPoint MPM_Mesh, Mesh FEM_Mesh,
   Element Nodes_p;
 
   /* Define and allocate the effective mass matrix */
-  Matrix Effective_MassMatrix = allocZ__MatrixLib__(Nnodes*Ndof, Nnodes*Ndof);
+  Matrix Effective_MassMatrix = allocZ__MatrixLib__(Nnodes_mask*Ndof, Nnodes_mask*Ndof);
 
   /* Define and allocate the lumped mass matrix */
-  Matrix Lumped_MassMatrix = allocZ__MatrixLib__(Nnodes*Ndof, 1);
+  Matrix Lumped_MassMatrix = allocZ__MatrixLib__(Nnodes_mask*Ndof, 1);
 
   /*
     Iterate over the particles to get the nodal values 
@@ -406,7 +407,7 @@ static Matrix compute_Nodal_Effective_Mass(GaussPoint MPM_Mesh, Mesh FEM_Mesh,
 	  */
 	  for(int i = 0 ; i<Ndof ; i++)
 	    {
-	      idx_A_mask_i = A_mask + i*Nnodes;
+	      idx_A_mask_i = A_mask + i*Nnodes_mask;
 	      Lumped_MassMatrix.nV[idx_A_mask_i] += m_A_p;	      
 	    }
 	  	  
@@ -434,7 +435,7 @@ static Matrix compute_Nodal_Effective_Mass(GaussPoint MPM_Mesh, Mesh FEM_Mesh,
 		  /*
 		    Compute the vectorized index
 		   */
-		  idx_AB_mask_i = B_mask + (i*Ndof*Nnodes + i)*Nnodes + A_mask*Ndof*Nnodes;
+		  idx_AB_mask_i = B_mask + (i*Ndof*Nnodes_mask + i)*Nnodes_mask + A_mask*Ndof*Nnodes_mask;
 		  
 		  Effective_MassMatrix.nV[idx_AB_mask_i] += m_AB_p;
 		}
@@ -452,14 +453,14 @@ static Matrix compute_Nodal_Effective_Mass(GaussPoint MPM_Mesh, Mesh FEM_Mesh,
     At this point the effective mass matrix coincides with the consistent mass
     matrix. We can tune it by a convecx combination with the lumped mass matrix
   */
-  for(int A = 0 ; A<Nnodes ; A++)
+  for(int A = 0 ; A<Nnodes_mask ; A++)
     {
-      for(int B = 0 ; B<Nnodes ; B++)
+      for(int B = 0 ; B<Nnodes_mask ; B++)
 	{
 	  for(int i = 0 ; i<Ndof ; i++)
 	    {
-	      idx_AB_mask_i = B + (i*Ndof*Nnodes + i)*Nnodes + A*Ndof*Nnodes;
-	      idx_A_mask_i = A + i*Nnodes;
+	      idx_AB_mask_i = B + (i*Ndof*Nnodes_mask + i)*Nnodes_mask + A*Ndof*Nnodes_mask;
+	      idx_A_mask_i = A + i*Nnodes_mask;
 	      
 	      Effective_MassMatrix.nV[idx_AB_mask_i] =
 		(1-epsilon)*Effective_MassMatrix.nV[idx_AB_mask_i] +
@@ -489,10 +490,11 @@ static Matrix compute_Nodal_Momentum(GaussPoint MPM_Mesh,Mesh FEM_Mesh, Mask Act
 */
 {
   int Ndim = NumberDimensions;
-  int Nnodes = ActiveNodes.Nactivenodes;
+  int Nnodes_mask = ActiveNodes.Nactivenodes;
   int Np = MPM_Mesh.NumGP;
   int Ap;
   int A_mask;
+  int idx_A_mask_i;
 
   /* Value of the shape-function */
   Matrix ShapeFunction_p;
@@ -505,7 +507,7 @@ static Matrix compute_Nodal_Momentum(GaussPoint MPM_Mesh,Mesh FEM_Mesh, Mask Act
   Element Nodes_p;
 
  /* Define and allocate the momentum vector */
-  Matrix Momentum = allocZ__MatrixLib__(Ndim,Nnodes);
+  Matrix Momentum = allocZ__MatrixLib__(Ndim,Nnodes_mask);
     
   /* Iterate over the particles to get the nodal values */
   for(int p = 0 ; p<Np ; p++)
@@ -536,7 +538,8 @@ static Matrix compute_Nodal_Momentum(GaussPoint MPM_Mesh,Mesh FEM_Mesh, Mask Act
 	  /* Nodal momentum */
 	  for(int i = 0 ; i<Ndim ; i++)
 	    {
-	      Momentum.nM[i][A_mask] += m_p*ShapeFunction_pA*MPM_Mesh.Phi.vel.nM[p][i];
+	      idx_A_mask_i = A_mask + i*Nnodes_mask;
+	      Momentum.nV[idx_A_mask_i] += m_p*ShapeFunction_pA*MPM_Mesh.Phi.vel.nM[p][i];
 	    }
 	}
 
@@ -608,7 +611,7 @@ static void update_Local_State(Matrix D_Displacement, Mask ActiveNodes,
    */
   int Ndim = NumberDimensions;
   int Np = MPM_Mesh.NumGP;
-  int Nnodes = ActiveNodes.Nactivenodes;
+  int Nnodes_mask = ActiveNodes.Nactivenodes;
   int MatIndx_p;
   int Nnodes_p;
   double J_p;  
@@ -683,8 +686,8 @@ static Matrix compute_Nodal_Forces(Matrix D_Displacement,
 				   GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 {
   int Ndim = NumberDimensions;
-  int Nactivenodes = ActiveNodes.Nactivenodes;
-  Matrix Forces = allocZ__MatrixLib__(Ndim,Nactivenodes);
+  int Nnodes_mask = ActiveNodes.Nactivenodes;
+  Matrix Forces = allocZ__MatrixLib__(Ndim,Nnodes_mask);
 
   /*
     Add internal forces contribution
@@ -704,11 +707,12 @@ static void compute_Nodal_Internal_Forces(Matrix Forces,
 {
 
   int Ndim = NumberDimensions;
-  int Nactivenodes = ActiveNodes.Nactivenodes;
+  int Nnodes_mask = ActiveNodes.Nactivenodes;
   int Np = MPM_Mesh.NumGP;
   int Ap;
   int A_mask;
   int NumNodes_p;
+  int idx_A_mask_i;
 
   Tensor P_p; /* First Piola-Kirchhoff Stress tensor */
   Tensor S_p; /* Second Piola-Kirchhoff Stress tensor */
@@ -802,7 +806,8 @@ static void compute_Nodal_Internal_Forces(Matrix Forces,
 	  */
 	  for(int i = 0 ; i<Ndim ; i++)
 	    {
-	      Forces.nM[i][A_mask] += InternalForcesDensity_Ap.n[i]*V0_p;
+	      idx_A_mask_i = A_mask + i*Nnodes_mask;
+	      Forces.nV[idx_A_mask_i] += InternalForcesDensity_Ap.n[i]*V0_p;
 	    }
 
 	  /*
@@ -831,27 +836,28 @@ static Matrix compute_Nodal_Residual(Matrix Velocity, Matrix Forces,
 				     double Dt)
 {
   int Ndim = NumberDimensions;
-  int Nnodes = Velocity.N_cols;
-  Matrix Acceleration = allocZ__MatrixLib__(Ndim,Nnodes);
-  Matrix Inertial_Forces = allocZ__MatrixLib__(Ndim,Nnodes);
-  Matrix Residual = allocZ__MatrixLib__(Ndim,Nnodes);
+  int Nnodes_mask = Velocity.N_cols;
+  int Order = Ndim*Nnodes_mask;
+  Matrix Acceleration = allocZ__MatrixLib__(Ndim,Nnodes_mask);
+  Matrix Inertial_Forces = allocZ__MatrixLib__(Ndim,Nnodes_mask);
+  Matrix Residual = allocZ__MatrixLib__(Ndim,Nnodes_mask);
   int idx_AB;
 
   /*
     Compute nodal acceleration (Vectorized)
   */
-  for(int idx_B = 0 ; idx_B<Ndim*Nnodes ; idx_B++)
+  for(int idx_B = 0 ; idx_B<Order ; idx_B++)
     {
       Acceleration.nV[idx_B] = (2/DSQR(Dt))*(D_Displacement.nV[idx_B] - Dt*Velocity.nV[idx_B]);
     }
   /*
     Compute inertial forces (Vectorized)
   */
-  for(int idx_A = 0 ; idx_A<Ndim*Nnodes ; idx_A++)
+  for(int idx_A = 0 ; idx_A<Order ; idx_A++)
     {
-      for(int idx_B = 0 ; idx_B<Ndim*Nnodes ; idx_B++)
+      for(int idx_B = 0 ; idx_B<Order ; idx_B++)
 	{
-	  idx_AB = idx_A*Ndim*Nnodes + idx_B;
+	  idx_AB = idx_A*Order + idx_B;
 	  Inertial_Forces.nV[idx_A] += Mass.nV[idx_AB]*Acceleration.nV[idx_B];
 	}
     }
@@ -860,9 +866,9 @@ static Matrix compute_Nodal_Residual(Matrix Velocity, Matrix Forces,
     Compute (-) residual (Vectorized). The minus symbol is due to
     solver purposes. See compute_D_Displacement
   */
-  for(int idx_A = 0 ; idx_A<Ndim*Nnodes ; idx_A++)
+  for(int idx_A = 0 ; idx_A<Order ; idx_A++)
     {
-      Residual.nV[idx_A] = - Inertial_Forces.nV[idx_A] - Forces.nV[idx_A];
+      Residual.nV[idx_A] = Inertial_Forces.nV[idx_A] + Forces.nV[idx_A];
     }
 
   /*
@@ -880,7 +886,7 @@ static bool check_convergence(Matrix Residual,double TOL,int Iter,int MaxIter)
 {
   bool convergence;
   int Ndim = NumberDimensions;
-  int Nnodes = Residual.N_cols;
+  int Nnodes_mask = Residual.N_cols;
   double Error_A;
 
   if(Iter > MaxIter)
@@ -892,7 +898,7 @@ static bool check_convergence(Matrix Residual,double TOL,int Iter,int MaxIter)
     }
   else
     {
-      for(int A = 0 ; A<Nnodes ; A++)
+      for(int A = 0 ; A<Nnodes_mask ; A++)
 	{
 	  Error_A = 0;
 	  for(int i = 0 ; i<Ndim ; i++)
@@ -927,10 +933,11 @@ static Matrix assemble_Nodal_Tangent_Stiffness(Mask ActiveNodes,
 */
 {
 
-  int Nnodes = ActiveNodes.Nactivenodes;
+  int Nnodes_mask = ActiveNodes.Nactivenodes;
   int Ndof = NumberDOF;
+  int Order = Ndof*Nnodes_mask;
 
-  Matrix Tangent_Stiffness = allocZ__MatrixLib__(Ndof*Nnodes, Ndof*Nnodes);
+  Matrix Tangent_Stiffness = allocZ__MatrixLib__(Order, Order);
   
   /*
     Compute terms related to the geometric non-linearities.
@@ -957,7 +964,8 @@ static void assemble_Nodal_Tangent_Stiffness_Geometric(Matrix Tangent_Stiffness,
 */
 {
   int Ndim = NumberDimensions;
-  int Nnodes = ActiveNodes.Nactivenodes;
+  int Nnodes_mask = ActiveNodes.Nactivenodes;
+  int Order = Ndim*Nnodes_mask;
   int Np = MPM_Mesh.NumGP;
   int Ap;
   int A_mask;
@@ -1077,7 +1085,7 @@ static void assemble_Nodal_Tangent_Stiffness_Geometric(Matrix Tangent_Stiffness,
 		  /*
 		    Compute the vectorized index
 		  */
-		  idx_AB_mask_i = B_mask + (i*Ndim*Nnodes + i)*Nnodes + A_mask*Ndim*Nnodes;
+		  idx_AB_mask_i = B_mask + (i*Order + i)*Nnodes_mask + A_mask*Order;
 
 		  Tangent_Stiffness.nV[idx_AB_mask_i] += Geometric_AB_p*V0_p;
 		}
@@ -1115,7 +1123,8 @@ static void assemble_Nodal_Tangent_Stiffness_Material(Matrix Tangent_Stiffness,
 {
 
   int Ndim = NumberDimensions;
-  int Nnodes = ActiveNodes.Nactivenodes;
+  int Nnodes_mask = ActiveNodes.Nactivenodes;
+  int Order = Ndim*Nnodes_mask;
   int Np = MPM_Mesh.NumGP;
   int Ap;
   int A_mask;
@@ -1242,7 +1251,7 @@ static void assemble_Nodal_Tangent_Stiffness_Material(Matrix Tangent_Stiffness,
 		{
 		  for(int j = 0 ; j<Ndim ; j++)
 		    {
-		      idx_AB_mask_ij = B_mask + (i*Ndim*Nnodes + j)*Nnodes + A_mask*Ndim*Nnodes;
+		      idx_AB_mask_ij = B_mask + (i*Order + j)*Nnodes_mask + A_mask*Order;
 		      
 		      Tangent_Stiffness.nV[idx_AB_mask_ij] += Material_AB.N[i][j]*V0_p;
 		    }
@@ -1337,22 +1346,22 @@ static void update_D_Displacement(Matrix D_Displacement,
   
 */
 {
-  int Nnodes = Residual.N_cols;
+  int Nnodes_mask = Residual.N_cols;
   int Ndof = Residual.N_rows;
-  int Order = Nnodes*Ndof;
-  int LDA   = Nnodes*Ndof;
-  int LDB = Nnodes*Ndof;
+  int Order = Nnodes_mask*Ndof;
+  int LDA   = Nnodes_mask*Ndof;
+  int LDB = Nnodes_mask*Ndof;
   char  TRANS = 'N'; /* (No transpose) */
   int   INFO= 3;
   int * IPIV = (int *)Allocate_Array(Order,sizeof(int));
   int NRHS = 1;
   
-  Matrix Global_Matrix = allocZ__MatrixLib__(Nnodes*Ndof,Nnodes*Ndof);
+  Matrix Global_Matrix = allocZ__MatrixLib__(Order,Order);
 
   /*
     Compute the adition of the mass matrix and the tangent stifness matrix
    */
-  for(int idx_AB_ij ; idx_AB_ij<Nnodes*Ndof*Nnodes*Ndof ; idx_AB_ij++)
+  for(int idx_AB_ij ; idx_AB_ij<Order*Order ; idx_AB_ij++)
     {
       Global_Matrix.nV[idx_AB_ij] =
 	(2/DSQR(Dt))*Effective_Mass.nV[idx_AB_ij] + Tangent_Stiffness.nV[idx_AB_ij];
@@ -1397,9 +1406,9 @@ static void update_D_Displacement(Matrix D_Displacement,
   /*
     Update 
    */
-  for(int idx_A_i = 0 ; idx_A_i < Nnodes*Ndof ; idx_A_i++)
+  for(int idx_A_i = 0 ; idx_A_i < Order ; idx_A_i++)
     {	
-      D_Displacement.nV[idx_A_i] += Residual.nV[idx_A_i];
+      D_Displacement.nV[idx_A_i] -= Residual.nV[idx_A_i];
     }
   
 }
@@ -1475,15 +1484,15 @@ static void imposed_displacements(Matrix D_Displacement, Mask ActiveNodes,
 
 static Matrix compute_D_Velocity(Matrix Velocity, Matrix D_Displacement, double Dt)
 {
-  int Nnodes = Velocity.N_cols;
+  int Nnodes_mask = Velocity.N_cols;
   int Ndim = NumberDimensions;
   
-  Matrix D_Velocity = allocZ__MatrixLib__(Ndim,Nnodes);
+  Matrix D_Velocity = allocZ__MatrixLib__(Ndim,Nnodes_mask);
 
   /*
     Compute the velocity in the midd-point 
    */
-  for(int idx_A_i = 0 ; idx_A_i < Nnodes*Ndim ; idx_A_i++)
+  for(int idx_A_i = 0 ; idx_A_i < Nnodes_mask*Ndim ; idx_A_i++)
     {	
       D_Velocity.nV[idx_A_i] = 2*(D_Displacement.nV[idx_A_i]/Dt - Velocity.nV[idx_A_i]);
     }
@@ -1501,7 +1510,7 @@ static void update_Particles(Matrix D_Displacement, Matrix D_Velocity,
 {
   int Ndim = NumberDimensions;
   int Np = MPM_Mesh.NumGP;
-  int Nnodes = ActiveNodes.Nactivenodes;
+  int Nnodes_mask = ActiveNodes.Nactivenodes;
   int Ap;
   int A_mask;
   int idx_A_mask_i;
@@ -1587,7 +1596,7 @@ static void update_Particles(Matrix D_Displacement, Matrix D_Velocity,
 	   */
 	  for(int i = 0 ; i<Ndim ; i++)
 	    {
-	      idx_A_mask_i = A_mask + i*Nnodes;
+	      idx_A_mask_i = A_mask + i*Nnodes_mask;
 	      MPM_Mesh.Phi.vel.nM[p][i]  += ShapeFunction_pI*D_Velocity.nV[idx_A_mask_i];
 	      MPM_Mesh.Phi.x_GC.nM[p][i] += ShapeFunction_pI*D_Displacement.nV[idx_A_mask_i];
 	    } 

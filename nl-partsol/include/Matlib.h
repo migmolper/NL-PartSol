@@ -136,6 +136,7 @@ Tensor dyadic_Product__TensorLib__(Tensor, Tensor);
 Tensor vector_linear_mapping__TensorLib__(Tensor, Tensor);
 Tensor matrix_product__TensorLib__(Tensor, Tensor);
 Tensor Convex_combination__TensorLib__(Tensor,Tensor,double);
+void   print__TensorLib__(Tensor);
 /*******************************************************/
 
 

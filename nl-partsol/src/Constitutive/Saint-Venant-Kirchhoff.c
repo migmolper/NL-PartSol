@@ -69,10 +69,11 @@ Tensor compute_stiffness_density_Saint_Venant_Kirchhoff(Tensor v, Tensor w, Mate
    */  
   double v_dot_w;
   Tensor v_o_w;
+  Tensor w_o_v;
   Tensor C_AB = alloc__TensorLib__(2);
 
   
-  v_o_w = dyadic_Product__TensorLib__(v,w);
+  v_o_w  = dyadic_Product__TensorLib__(v,w);
   v_dot_w = inner_product__TensorLib__(v,w);
 
   for(int A = 0 ; A<Ndim ; A++)
@@ -80,7 +81,6 @@ Tensor compute_stiffness_density_Saint_Venant_Kirchhoff(Tensor v, Tensor w, Mate
       for(int B = 0 ; B<Ndim ; B++)
 	{
 	  C_AB.N[A][B] += lambda*v_o_w.N[A][B];
-
 	  if(A == B)
 	    {
 	      C_AB.N[A][B] += 2*G*v_dot_w;	      

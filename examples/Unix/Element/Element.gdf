@@ -21,7 +21,7 @@ GramsSolid2D (File=MPM_Mesh.msh) {
     }
     
     GramsInitials (Nodes=ListInit.txt) { 
-	Value=[0,1]
+	Value=[0.1,0.1]
     } 
 }
 

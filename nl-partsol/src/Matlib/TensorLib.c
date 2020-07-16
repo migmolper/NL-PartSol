@@ -559,4 +559,29 @@ Tensor Convex_combination__TensorLib__(Tensor F_n1,Tensor F_n,double alpha)
 
 /*************************************************************/
 
+void print__TensorLib__(Tensor A)
+{
+  int Ndim = NumberDimensions;
+  
+  if(A.Order == 2)
+    {  
+      for(int i = 0 ; i < Ndim  ; i++)
+	{
+	  for(int j = 0 ; j < Ndim  ; j++)
+	    {
+	      printf("%f ",A.N[i][j]);
+	    }
+	  printf("\n");
+	}
+    }
+  else if(A.Order == 2)
+    {
+      for(int i = 0 ; i < Ndim  ; i++)
+	{
+	  printf("%f ",A.n[i]);
+	}
+      printf("\n");      
+    }
+}
 
+/*************************************************************/
