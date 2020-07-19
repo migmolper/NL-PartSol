@@ -2,7 +2,7 @@
 
 /*********************************************************************/
 
-Matrix compute_ShapeFunction(Element GP_Element,GaussPoint MPM_Mesh,Mesh FEM_Mesh) 
+Matrix compute_N__ShapeFun__(Element GP_Element,GaussPoint MPM_Mesh,Mesh FEM_Mesh) 
 { 
   int i_GP = GP_Element.i_GP;
   int GP_NumNodes = GP_Element.NumberNodes;
@@ -105,8 +105,8 @@ Matrix compute_ShapeFunction(Element GP_Element,GaussPoint MPM_Mesh,Mesh FEM_Mes
 
 /*********************************************************************/
 
-Matrix compute_ShapeFunction_gradient(Element GP_Element,GaussPoint MPM_Mesh,
-				      Mesh FEM_Mesh) 
+Matrix compute_dN__ShapeFun__(Element GP_Element,GaussPoint MPM_Mesh,
+			      Mesh FEM_Mesh) 
 { 
   int i_GP = GP_Element.i_GP;
   int GP_NumNodes = GP_Element.NumberNodes;

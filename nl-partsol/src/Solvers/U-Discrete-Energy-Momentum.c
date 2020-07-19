@@ -248,7 +248,7 @@ static Mask generate_NodalMask(Mesh FEM_Mesh)
       if(FEM_Mesh.NumParticles[A] > 0)
 	{
 	  Nodes2Mask[A] = Nactivenodes;
-	  push_to_Set(&Mask2Nodes,I);
+	  push__SetLib__(&Mask2Nodes,I);
 	  Nactivenodes++;
 	}
       else
@@ -258,7 +258,7 @@ static Mask generate_NodalMask(Mesh FEM_Mesh)
     }
 
   M.Nactivenodes = Nactivenodes;
-  M.Mask2Nodes = Set_to_Pointer(Mask2Nodes,Nactivenodes);
+  M.Mask2Nodes = set_to_memory__SetLib__(Mask2Nodes,Nactivenodes);
   M.Nodes2Mask = Nodes2Mask;  
  
   return M;
@@ -314,7 +314,6 @@ static Matrix get_Nodal_Values_for_Particle(Matrix Field, Element Nodes_p, Mask 
     return Field_Ap;
   }
 
-
 /**************************************************************/
 
 static Matrix compute_Nodal_Effective_Mass(GaussPoint MPM_Mesh, Mesh FEM_Mesh,
@@ -336,6 +335,7 @@ static Matrix compute_Nodal_Effective_Mass(GaussPoint MPM_Mesh, Mesh FEM_Mesh,
   int Nnodes_mask = ActiveNodes.Nactivenodes;
   int Ndof = NumberDOF;
   int Np = MPM_Mesh.NumGP;
+  int Order = Ndof*Nnodes_mask;
   int Ap;
   int Bp;
   int A_mask;
@@ -377,7 +377,7 @@ static Matrix compute_Nodal_Effective_Mass(GaussPoint MPM_Mesh, Mesh FEM_Mesh,
       /* 
 	 Evaluate the shape function in the coordinates of the particle
        */
-      ShapeFunction_p = compute_ShapeFunction(Nodes_p, MPM_Mesh, FEM_Mesh);
+      ShapeFunction_p = compute_N__ShapeFun__(Nodes_p, MPM_Mesh, FEM_Mesh);
    
       /*
 	Get the mass of the particle 
@@ -435,7 +435,7 @@ static Matrix compute_Nodal_Effective_Mass(GaussPoint MPM_Mesh, Mesh FEM_Mesh,
 		  /*
 		    Compute the vectorized index
 		   */
-		  idx_AB_mask_i = B_mask + (i*Ndof*Nnodes_mask + i)*Nnodes_mask + A_mask*Ndof*Nnodes_mask;
+		  idx_AB_mask_i = B_mask + (i*Order + i)*Nnodes_mask + A_mask*Order;
 		  
 		  Effective_MassMatrix.nV[idx_AB_mask_i] += m_AB_p;
 		}
@@ -517,7 +517,7 @@ static Matrix compute_Nodal_Momentum(GaussPoint MPM_Mesh,Mesh FEM_Mesh, Mask Act
       Nodes_p = get_particle_Set(p, MPM_Mesh.ListNodes[p], MPM_Mesh.NumberNodes[p]);
 
       /* Evaluate the shape function in the coordinates of the particle */
-      ShapeFunction_p = compute_ShapeFunction(Nodes_p, MPM_Mesh, FEM_Mesh);
+      ShapeFunction_p = compute_N__ShapeFun__(Nodes_p, MPM_Mesh, FEM_Mesh);
 
       /* Get the mass of the GP */
       m_p = MPM_Mesh.Phi.mass.nV[p];
@@ -641,7 +641,7 @@ static void update_Local_State(Matrix D_Displacement, Mask ActiveNodes,
       /*
       	 Evaluate the shape function gradient in the coordinates of the particle
        */
-      gradient_p = compute_ShapeFunction_gradient(Nodes_p,MPM_Mesh,FEM_Mesh);
+      gradient_p = compute_dN__ShapeFun__(Nodes_p,MPM_Mesh,FEM_Mesh);
 	  
       /*
       	Take the values of the deformation gradient from the previous step
@@ -757,7 +757,7 @@ static void compute_Nodal_Internal_Forces(Matrix Forces,
       /*
 	Compute gradient of the shape function in each node 
       */
-      gradient_p = compute_ShapeFunction_gradient(Nodes_p, MPM_Mesh, FEM_Mesh);
+      gradient_p = compute_dN__ShapeFun__(Nodes_p, MPM_Mesh, FEM_Mesh);
     	  
       /*
 	Take the values of the deformation gradient ant t = n and t = n + 1. 
@@ -1017,7 +1017,7 @@ static void assemble_Nodal_Tangent_Stiffness_Geometric(Matrix Tangent_Stiffness,
       /*
 	Compute gradient of the shape function in each node 
       */
-      gradient_p = compute_ShapeFunction_gradient(Nodes_p, MPM_Mesh, FEM_Mesh);
+      gradient_p = compute_dN__ShapeFun__(Nodes_p, MPM_Mesh, FEM_Mesh);
     	  
       /*
 	Take the values of the deformation gradient ant t = n and  
@@ -1183,7 +1183,7 @@ static void assemble_Nodal_Tangent_Stiffness_Material(Matrix Tangent_Stiffness,
       /*
 	Compute gradient of the shape function in each node 
       */
-      gradient_p = compute_ShapeFunction_gradient(Nodes_p, MPM_Mesh, FEM_Mesh);
+      gradient_p = compute_dN__ShapeFun__(Nodes_p, MPM_Mesh, FEM_Mesh);
       
       /*
 	Take the values of the deformation gradient ant t = n and t = n + 1. 
@@ -1540,8 +1540,8 @@ static void update_Particles(Matrix D_Displacement, Matrix D_Velocity,
       /*
 	Evaluate the shape function and gradient in the coordinates of the particle 
       */
-      ShapeFunction_p = compute_ShapeFunction(Nodes_p, MPM_Mesh, FEM_Mesh);
-      gradient_p      = compute_ShapeFunction_gradient(Nodes_p,MPM_Mesh,FEM_Mesh);
+      ShapeFunction_p = compute_N__ShapeFun__(Nodes_p, MPM_Mesh, FEM_Mesh);
+      gradient_p      = compute_dN__ShapeFun__(Nodes_p,MPM_Mesh,FEM_Mesh);
 
       /*
       	Take the values of the deformation gradient from the previous step

@@ -53,7 +53,7 @@ void Q4_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 	MPM_Mesh.I0[p] = get_closest_node_to(X_p,Elem_p,FEM_Mesh.Coordinates);
 	
 	/* Asign connectivity */
-	MPM_Mesh.ListNodes[p] = CopyChain(Elem_p);
+	MPM_Mesh.ListNodes[p] = copy__SetLib__(Elem_p);
 	
 	/* Active those nodes that interact with the particle */
 	asign_particle_to_nodes(p, MPM_Mesh.ListNodes[p], FEM_Mesh);

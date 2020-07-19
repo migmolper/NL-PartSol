@@ -45,9 +45,9 @@ void uGIMP_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh){
   for(int i = 0 ; i<MPM_Mesh.NumGP ; i++){
    
   /* Get some properties for each particle */ 
-  X_p = get_RowFrom(Ndim,1,MPM_Mesh.Phi.x_GC.nM[i]);
-  Xi_p = get_RowFrom(Ndim,1,MPM_Mesh.Phi.x_EC.nM[i]);
-  l_p = get_RowFrom(Ndim,1,MPM_Mesh.lp.nM[i]);
+  X_p = memory_to_matrix__MatrixLib__(Ndim,1,MPM_Mesh.Phi.x_GC.nM[i]);
+  Xi_p = memory_to_matrix__MatrixLib__(Ndim,1,MPM_Mesh.Phi.x_EC.nM[i]);
+  l_p = memory_to_matrix__MatrixLib__(Ndim,1,MPM_Mesh.lp.nM[i]);
   rho_p = MPM_Mesh.Phi.rho.nV[i];
   m_p = MPM_Mesh.Phi.mass.nV[i];
   th_p = MPM_Mesh.Mat[MPM_Mesh.MatIdx[i]].thickness;
@@ -91,7 +91,7 @@ void uGIMP_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh){
       asign_particle_to_nodes(i, MPM_Mesh.ListNodes[i], FEM_Mesh);
 
       /* Free memory */
-      FreeMat(Poligon_Coordinates);
+      free__MatrixLib__(Poligon_Coordinates);
 	
       break;
     }
@@ -193,7 +193,7 @@ Matrix uGIMP_N(Matrix Delta_Xp, Matrix lp, double L){
   /* 1º Variable declaration */
   int Ndim = NumberDimensions;
   int Nnodes = Delta_Xp.N_rows;
-  Matrix S_Ip = MatAllocZ(1,Nnodes);
+  Matrix S_Ip = allocZ__MatrixLib__(1,Nnodes);
 
   /* 2º Fill the shape function array */
   switch(Ndim){
@@ -228,7 +228,7 @@ Matrix uGIMP_dN(Matrix Delta_xp, Matrix lp, double L){
   /* 1º Variable declaration */
   int Ndim = NumberDimensions;
   int Nnodes = Delta_xp.N_rows;
-  Matrix dS_Ip = MatAllocZ(Nnodes,Ndim); 
+  Matrix dS_Ip = allocZ__MatrixLib__(Nnodes,Ndim); 
   
   /* 2º Fill the shape function array */
   switch(Ndim){    
@@ -640,15 +640,15 @@ ChainPtr uGIMP_Tributary_Nodes(Matrix Xi_p,int Elem_GP,Matrix lp,Mesh FEM_Mesh)
 /*     X_I.nV = FEM_Mesh.Coordinates.nM[iPtr->I]; */
 
 /*     /\* Get a vector from the GP to the node *\/ */
-/*     Distance = Sub_Mat(X_GP,X_I); */
+/*     Distance = substraction__MatrixLib__(X_GP,X_I); */
 
 /*     /\* If the node is near the GP push in the chain *\/ */
-/*     if(Norm_Mat(Distance,2) <= Ra){ */
+/*     if(norm__MatrixLib__(Distance,2) <= Ra){ */
 /*       PushNodeTop(&Triburary_Nodes,iPtr->I); */
 /*     } */
 
 /*     /\* Free memory of the distrance vector *\/ */
-/*     FreeMat(Distance); */
+/*     free__MatrixLib__(Distance); */
 
 /*     /\* Update pointer index *\/ */
 /*     iPtr = iPtr->next; */

@@ -85,7 +85,7 @@ void uGIMP_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh){
       MPM_Mesh.ListNodes[i] = uGIMP_Tributary_Nodes(Xi_p,j,l_p,FEM_Mesh);
 
       /* Measure the size of the connectivity */
-      MPM_Mesh.NumberNodes[i] = get_Lenght_Set(MPM_Mesh.ListNodes[i]);
+      MPM_Mesh.NumberNodes[i] = lenght__SetLib__(MPM_Mesh.ListNodes[i]);
 	
       /* Active those nodes that interact with the particle */
       asign_particle_to_nodes(i, MPM_Mesh.ListNodes[i], FEM_Mesh);
@@ -287,21 +287,21 @@ ChainPtr uGIMP_Tributary_Nodes(Matrix Xi_p,int Elem_GP,Matrix lp,Mesh FEM_Mesh)
   /* Check if I am in the central area */
   if ((fabs(Xi_p.nV[0]) <= Dist[0]) &&
       (fabs(Xi_p.nV[1]) <= Dist[1])){
-    Triburary_Nodes = CopyChain(FEM_Mesh.Connectivity[Elem_GP]);
+    Triburary_Nodes = copy__SetLib__(FEM_Mesh.Connectivity[Elem_GP]);
   }    
   /* Check if I am in the 1º Quadrant */
   else if((Xi_p.nV[0]>=0) &&
 	  (Xi_p.nV[1]>=0)){
     /* Create an array with the nodes of the element */
-    NodesElem = Set_to_Pointer(FEM_Mesh.Connectivity[Elem_GP],4);
+    NodesElem = set_to_memory__SetLib__(FEM_Mesh.Connectivity[Elem_GP],4);
     if((fabs(Xi_p.nV[0]) >= Dist[0]) &&
        (fabs(Xi_p.nV[1]) <= Dist[1])){
       /* Generate the list of Elements whose nodes contributes to the GP */       
-      ChainElements = get_Intersection_Of(FEM_Mesh.NodeNeighbour[NodesElem[2]],
-					  FEM_Mesh.NodeNeighbour[NodesElem[1]]);
-      Num_Elem = get_Lenght_Set(ChainElements);
-      Tributary_Elements = Set_to_Pointer(ChainElements,Num_Elem);
-      free_Set(&ChainElements);
+      ChainElements = intersection__SetLib__(FEM_Mesh.NodeNeighbour[NodesElem[2]],
+					     FEM_Mesh.NodeNeighbour[NodesElem[1]]);
+      Num_Elem = lenght__SetLib__(ChainElements);
+      Tributary_Elements = set_to_memory__SetLib__(ChainElements,Num_Elem);
+      free__SetLib__(&ChainElements);
 
        /* Iterate in the list and select the union of the sets of nodes */
       Table_Nodes = malloc(Num_Elem*sizeof(ChainPtr));
@@ -309,7 +309,7 @@ ChainPtr uGIMP_Tributary_Nodes(Matrix Xi_p,int Elem_GP,Matrix lp,Mesh FEM_Mesh)
 	Elem_i = Tributary_Elements[i];
 	Table_Nodes[i] = FEM_Mesh.Connectivity[Elem_i];
       }
-      Triburary_Nodes = get_Union_Of(Table_Nodes,Num_Elem);
+      Triburary_Nodes = union__SetLib__(Table_Nodes,Num_Elem);
       /* Free memory */
       free(Tributary_Elements);
       free(Table_Nodes);
@@ -319,11 +319,11 @@ ChainPtr uGIMP_Tributary_Nodes(Matrix Xi_p,int Elem_GP,Matrix lp,Mesh FEM_Mesh)
     else if((fabs(Xi_p.nV[0]) <= Dist[0]) &&
 	    (fabs(Xi_p.nV[1]) >= Dist[1])){
       /* Generate the list of Elements whose nodes contributes to the GP */ 
-      ChainElements = get_Intersection_Of(FEM_Mesh.NodeNeighbour[NodesElem[2]],
-					  FEM_Mesh.NodeNeighbour[NodesElem[3]]);
-      Num_Elem = get_Lenght_Set(ChainElements);
-      Tributary_Elements = Set_to_Pointer(ChainElements,Num_Elem);
-      free_Set(&ChainElements);
+      ChainElements = intersection__SetLib__(FEM_Mesh.NodeNeighbour[NodesElem[2]],
+					     FEM_Mesh.NodeNeighbour[NodesElem[3]]);
+      Num_Elem = lenght__SetLib__(ChainElements);
+      Tributary_Elements = set_to_memory__SetLib__(ChainElements,Num_Elem);
+      free__SetLib__(&ChainElements);
 
       /* Iterate in the list and select the union of the sets of nodes */
       Table_Nodes = malloc(Num_Elem*sizeof(ChainPtr));
@@ -331,7 +331,7 @@ ChainPtr uGIMP_Tributary_Nodes(Matrix Xi_p,int Elem_GP,Matrix lp,Mesh FEM_Mesh)
 	Elem_i = Tributary_Elements[i];
 	Table_Nodes[i] = FEM_Mesh.Connectivity[Elem_i];
       }
-      Triburary_Nodes = get_Union_Of(Table_Nodes,Num_Elem);
+      Triburary_Nodes = union__SetLib__(Table_Nodes,Num_Elem);
       /* Free memory */
       free(Tributary_Elements);
       free(Table_Nodes);
@@ -342,8 +342,8 @@ ChainPtr uGIMP_Tributary_Nodes(Matrix Xi_p,int Elem_GP,Matrix lp,Mesh FEM_Mesh)
 	    (fabs(Xi_p.nV[1]) >= Dist[1])){
       /* Generate the list of Elements whose nodes contributes to the GP */ 
       ChainElements = FEM_Mesh.NodeNeighbour[NodesElem[2]];
-      Num_Elem = get_Lenght_Set(ChainElements);
-      Tributary_Elements = Set_to_Pointer(ChainElements,Num_Elem);
+      Num_Elem = lenght__SetLib__(ChainElements);
+      Tributary_Elements = set_to_memory__SetLib__(ChainElements,Num_Elem);
 
       /* Iterate in the list and select the union of the sets of nodes */
       Table_Nodes = malloc(Num_Elem*sizeof(ChainPtr));
@@ -351,7 +351,7 @@ ChainPtr uGIMP_Tributary_Nodes(Matrix Xi_p,int Elem_GP,Matrix lp,Mesh FEM_Mesh)
 	Elem_i = Tributary_Elements[i];
 	Table_Nodes[i] = FEM_Mesh.Connectivity[Elem_i];
       }
-      Triburary_Nodes = get_Union_Of(Table_Nodes,Num_Elem);
+      Triburary_Nodes = union__SetLib__(Table_Nodes,Num_Elem);
       /* Free memory */
       free(Tributary_Elements);
       free(Table_Nodes);
@@ -365,17 +365,17 @@ ChainPtr uGIMP_Tributary_Nodes(Matrix Xi_p,int Elem_GP,Matrix lp,Mesh FEM_Mesh)
   else if((Xi_p.nV[0]<=0) &&
 	  (Xi_p.nV[1]>=0)){
     /* Create an array with the nodes of the element */
-    NodesElem = Set_to_Pointer(FEM_Mesh.Connectivity[Elem_GP],4);
+    NodesElem = set_to_memory__SetLib__(FEM_Mesh.Connectivity[Elem_GP],4);
 
     if((fabs(Xi_p.nV[0]) <= Dist[0]) &&
        (fabs(Xi_p.nV[1]) >= Dist[1])){
 
       /* Generate the list of Elements whose nodes contributes to the GP */ 
-      ChainElements = get_Intersection_Of(FEM_Mesh.NodeNeighbour[NodesElem[2]],
-					FEM_Mesh.NodeNeighbour[NodesElem[3]]);
-      Num_Elem = get_Lenght_Set(ChainElements);      
-      Tributary_Elements =  Set_to_Pointer(ChainElements,Num_Elem);
-      free_Set(&ChainElements);
+      ChainElements = intersection__SetLib__(FEM_Mesh.NodeNeighbour[NodesElem[2]],
+					     FEM_Mesh.NodeNeighbour[NodesElem[3]]);
+      Num_Elem = lenght__SetLib__(ChainElements);      
+      Tributary_Elements =  set_to_memory__SetLib__(ChainElements,Num_Elem);
+      free__SetLib__(&ChainElements);
 
       /* Iterate in the list and select the union of the sets of nodes */
       Table_Nodes = malloc(Num_Elem*sizeof(ChainPtr));
@@ -383,7 +383,7 @@ ChainPtr uGIMP_Tributary_Nodes(Matrix Xi_p,int Elem_GP,Matrix lp,Mesh FEM_Mesh)
 	Elem_i = Tributary_Elements[i];
 	Table_Nodes[i] = FEM_Mesh.Connectivity[Elem_i];
       }
-      Triburary_Nodes = get_Union_Of(Table_Nodes,Num_Elem);
+      Triburary_Nodes = union__SetLib__(Table_Nodes,Num_Elem);
       /* Free memory */
       free(Tributary_Elements);
       free(Table_Nodes);
@@ -393,11 +393,11 @@ ChainPtr uGIMP_Tributary_Nodes(Matrix Xi_p,int Elem_GP,Matrix lp,Mesh FEM_Mesh)
     else if((fabs(Xi_p.nV[0]) >= Dist[0]) &&
 	    (fabs(Xi_p.nV[1]) <= Dist[1])){
       /* Generate the list of Elements whose nodes contributes to the GP */ 
-      ChainElements = get_Intersection_Of(FEM_Mesh.NodeNeighbour[NodesElem[3]],
-					FEM_Mesh.NodeNeighbour[NodesElem[0]]);
-      Num_Elem = get_Lenght_Set(ChainElements);
-      Tributary_Elements = Set_to_Pointer(ChainElements,Num_Elem);
-      free_Set(&ChainElements);
+      ChainElements = intersection__SetLib__(FEM_Mesh.NodeNeighbour[NodesElem[3]],
+					     FEM_Mesh.NodeNeighbour[NodesElem[0]]);
+      Num_Elem = lenght__SetLib__(ChainElements);
+      Tributary_Elements = set_to_memory__SetLib__(ChainElements,Num_Elem);
+      free__SetLib__(&ChainElements);
 
       /* Iterate in the list and select the union of the sets of nodes */
       Table_Nodes = malloc(Num_Elem*sizeof(ChainPtr));
@@ -405,7 +405,7 @@ ChainPtr uGIMP_Tributary_Nodes(Matrix Xi_p,int Elem_GP,Matrix lp,Mesh FEM_Mesh)
 	Elem_i = Tributary_Elements[i];
 	Table_Nodes[i] = FEM_Mesh.Connectivity[Elem_i];
       }
-      Triburary_Nodes = get_Union_Of(Table_Nodes,Num_Elem);
+      Triburary_Nodes = union__SetLib__(Table_Nodes,Num_Elem);
       /* Free memory */
       free(Tributary_Elements);
       free(Table_Nodes);
@@ -416,8 +416,8 @@ ChainPtr uGIMP_Tributary_Nodes(Matrix Xi_p,int Elem_GP,Matrix lp,Mesh FEM_Mesh)
 	    (fabs(Xi_p.nV[1]) >= Dist[1])){
       /* Generate the list of Elements whose nodes contributes to the GP */ 
       ChainElements = FEM_Mesh.NodeNeighbour[NodesElem[3]];
-      Num_Elem = get_Lenght_Set(ChainElements);
-      Tributary_Elements =  Set_to_Pointer(ChainElements,Num_Elem);
+      Num_Elem = lenght__SetLib__(ChainElements);
+      Tributary_Elements =  set_to_memory__SetLib__(ChainElements,Num_Elem);
 
       /* Iterate in the list and select the union of the sets of nodes */
       Table_Nodes = malloc(Num_Elem*sizeof(ChainPtr));
@@ -425,7 +425,7 @@ ChainPtr uGIMP_Tributary_Nodes(Matrix Xi_p,int Elem_GP,Matrix lp,Mesh FEM_Mesh)
 	Elem_i = Tributary_Elements[i];
 	Table_Nodes[i] = FEM_Mesh.Connectivity[Elem_i];
       }
-      Triburary_Nodes = get_Union_Of(Table_Nodes,Num_Elem);
+      Triburary_Nodes = union__SetLib__(Table_Nodes,Num_Elem);
       /* Free memory */
       free(Tributary_Elements);
       free(Table_Nodes);
@@ -441,15 +441,15 @@ ChainPtr uGIMP_Tributary_Nodes(Matrix Xi_p,int Elem_GP,Matrix lp,Mesh FEM_Mesh)
   else if((Xi_p.nV[0]<=0) &&
 	  (Xi_p.nV[1]<=0)){
     /* Create an array with the nodes of the element */
-    NodesElem = Set_to_Pointer(FEM_Mesh.Connectivity[Elem_GP],4);   
+    NodesElem = set_to_memory__SetLib__(FEM_Mesh.Connectivity[Elem_GP],4);   
     if((fabs(Xi_p.nV[0]) >= Dist[0]) &&
        (fabs(Xi_p.nV[1]) <= Dist[1])){
       /* Generate the list of Elements whose nodes contributes to the GP */ 
-      ChainElements = get_Intersection_Of(FEM_Mesh.NodeNeighbour[NodesElem[3]],
-					FEM_Mesh.NodeNeighbour[NodesElem[0]]);
-      Num_Elem = get_Lenght_Set(ChainElements);
-      Tributary_Elements = Set_to_Pointer(ChainElements,Num_Elem);
-      free_Set(&ChainElements);
+      ChainElements = intersection__SetLib__(FEM_Mesh.NodeNeighbour[NodesElem[3]],
+					     FEM_Mesh.NodeNeighbour[NodesElem[0]]);
+      Num_Elem = lenght__SetLib__(ChainElements);
+      Tributary_Elements = set_to_memory__SetLib__(ChainElements,Num_Elem);
+      free__SetLib__(&ChainElements);
 
       /* Iterate in the list and select the union of the sets of nodes */
       Table_Nodes = malloc(Num_Elem*sizeof(ChainPtr));
@@ -457,7 +457,7 @@ ChainPtr uGIMP_Tributary_Nodes(Matrix Xi_p,int Elem_GP,Matrix lp,Mesh FEM_Mesh)
 	Elem_i = Tributary_Elements[i];
 	Table_Nodes[i] = FEM_Mesh.Connectivity[Elem_i];
       }
-      Triburary_Nodes = get_Union_Of(Table_Nodes,Num_Elem);
+      Triburary_Nodes = union__SetLib__(Table_Nodes,Num_Elem);
       /* Free memory */
       free(Tributary_Elements);
       free(Table_Nodes);
@@ -467,11 +467,11 @@ ChainPtr uGIMP_Tributary_Nodes(Matrix Xi_p,int Elem_GP,Matrix lp,Mesh FEM_Mesh)
     else if((fabs(Xi_p.nV[0]) <= Dist[0]) &&
 	    (fabs(Xi_p.nV[1]) >= Dist[1])){
       /* Generate the list of Elements whose nodes contributes to the GP */
-      ChainElements = get_Intersection_Of(FEM_Mesh.NodeNeighbour[NodesElem[0]],
-					FEM_Mesh.NodeNeighbour[NodesElem[1]]);
-      Num_Elem = get_Lenght_Set(ChainElements);
-      Tributary_Elements = Set_to_Pointer(ChainElements,Num_Elem);
-      free_Set(&ChainElements);
+      ChainElements = intersection__SetLib__(FEM_Mesh.NodeNeighbour[NodesElem[0]],
+					     FEM_Mesh.NodeNeighbour[NodesElem[1]]);
+      Num_Elem = lenght__SetLib__(ChainElements);
+      Tributary_Elements = set_to_memory__SetLib__(ChainElements,Num_Elem);
+      free__SetLib__(&ChainElements);
       
       /* Iterate in the list and select the union of the sets of nodes */
       Table_Nodes = malloc(Num_Elem*sizeof(ChainPtr));
@@ -479,7 +479,7 @@ ChainPtr uGIMP_Tributary_Nodes(Matrix Xi_p,int Elem_GP,Matrix lp,Mesh FEM_Mesh)
 	Elem_i = Tributary_Elements[i];
 	Table_Nodes[i] = FEM_Mesh.Connectivity[Elem_i];
       }
-      Triburary_Nodes = get_Union_Of(Table_Nodes,Num_Elem);
+      Triburary_Nodes = union__SetLib__(Table_Nodes,Num_Elem);
       /* Free memory */
       free(Tributary_Elements);
       free(Table_Nodes);
@@ -490,8 +490,8 @@ ChainPtr uGIMP_Tributary_Nodes(Matrix Xi_p,int Elem_GP,Matrix lp,Mesh FEM_Mesh)
 	    (fabs(Xi_p.nV[0]) >= Dist[0])){
       /* Generate the list of Elements whose nodes contributes to the GP */ 
       ChainElements = FEM_Mesh.NodeNeighbour[NodesElem[0]];
-      Num_Elem = get_Lenght_Set(ChainElements);
-      Tributary_Elements = Set_to_Pointer(ChainElements,Num_Elem);
+      Num_Elem = lenght__SetLib__(ChainElements);
+      Tributary_Elements = set_to_memory__SetLib__(ChainElements,Num_Elem);
 
       /* Iterate in the list and select the union of the sets of nodes */
       Table_Nodes = malloc(Num_Elem*sizeof(ChainPtr));
@@ -499,7 +499,7 @@ ChainPtr uGIMP_Tributary_Nodes(Matrix Xi_p,int Elem_GP,Matrix lp,Mesh FEM_Mesh)
 	Elem_i = Tributary_Elements[i];
 	Table_Nodes[i] = FEM_Mesh.Connectivity[Elem_i];
       }
-      Triburary_Nodes = get_Union_Of(Table_Nodes,Num_Elem);
+      Triburary_Nodes = union__SetLib__(Table_Nodes,Num_Elem);
       /* Free memory */
       free(Tributary_Elements);
       free(Table_Nodes);
@@ -513,16 +513,16 @@ ChainPtr uGIMP_Tributary_Nodes(Matrix Xi_p,int Elem_GP,Matrix lp,Mesh FEM_Mesh)
   else if((Xi_p.nV[0]>=0) &&
 	  (Xi_p.nV[1]<=0)){
     /* Create an array with the nodes of the element */
-    NodesElem = Set_to_Pointer(FEM_Mesh.Connectivity[Elem_GP],4);
+    NodesElem = set_to_memory__SetLib__(FEM_Mesh.Connectivity[Elem_GP],4);
 
     if((fabs(Xi_p.nV[0]) <= Dist[0]) &&
        (fabs(Xi_p.nV[1]) >= Dist[1])){
       /* Generate the list of Elements whose nodes contributes to the GP */ 
-      ChainElements = get_Intersection_Of(FEM_Mesh.NodeNeighbour[NodesElem[0]],
-					FEM_Mesh.NodeNeighbour[NodesElem[1]]);
-      Num_Elem = get_Lenght_Set(ChainElements);
-      Tributary_Elements =  Set_to_Pointer(ChainElements,Num_Elem);
-      free_Set(&ChainElements);
+      ChainElements = intersection__SetLib__(FEM_Mesh.NodeNeighbour[NodesElem[0]],
+					     FEM_Mesh.NodeNeighbour[NodesElem[1]]);
+      Num_Elem = lenght__SetLib__(ChainElements);
+      Tributary_Elements =  set_to_memory__SetLib__(ChainElements,Num_Elem);
+      free__SetLib__(&ChainElements);
 
       /* Iterate in the list and select the union of the sets of nodes */
       Table_Nodes = malloc(Num_Elem*sizeof(ChainPtr));
@@ -530,7 +530,7 @@ ChainPtr uGIMP_Tributary_Nodes(Matrix Xi_p,int Elem_GP,Matrix lp,Mesh FEM_Mesh)
 	Elem_i = Tributary_Elements[i];
 	Table_Nodes[i] = FEM_Mesh.Connectivity[Elem_i];
       }
-      Triburary_Nodes = get_Union_Of(Table_Nodes,Num_Elem);
+      Triburary_Nodes = union__SetLib__(Table_Nodes,Num_Elem);
       /* Free memory */
       free(Tributary_Elements);
       free(Table_Nodes);
@@ -540,11 +540,11 @@ ChainPtr uGIMP_Tributary_Nodes(Matrix Xi_p,int Elem_GP,Matrix lp,Mesh FEM_Mesh)
     else if((fabs(Xi_p.nV[0]) >= Dist[0]) &&
 	    (fabs(Xi_p.nV[1]) <= Dist[1])){
       /* Generate the list of Elements whose nodes contributes to the GP */ 
-      ChainElements = get_Intersection_Of(FEM_Mesh.NodeNeighbour[NodesElem[2]],
-					  FEM_Mesh.NodeNeighbour[NodesElem[1]]);
-      Num_Elem = get_Lenght_Set(ChainElements);
-      Tributary_Elements = Set_to_Pointer(ChainElements,Num_Elem);
-      free_Set(&ChainElements);
+      ChainElements = intersection__SetLib__(FEM_Mesh.NodeNeighbour[NodesElem[2]],
+					     FEM_Mesh.NodeNeighbour[NodesElem[1]]);
+      Num_Elem = lenght__SetLib__(ChainElements);
+      Tributary_Elements = set_to_memory__SetLib__(ChainElements,Num_Elem);
+      free__SetLib__(&ChainElements);
 
       /* Iterate in the list and select the union of the sets of nodes */
       Table_Nodes = malloc(Num_Elem*sizeof(ChainPtr));
@@ -552,7 +552,7 @@ ChainPtr uGIMP_Tributary_Nodes(Matrix Xi_p,int Elem_GP,Matrix lp,Mesh FEM_Mesh)
 	Elem_i = Tributary_Elements[i];
 	Table_Nodes[i] = FEM_Mesh.Connectivity[Elem_i];
       }
-      Triburary_Nodes = get_Union_Of(Table_Nodes,Num_Elem);
+      Triburary_Nodes = union__SetLib__(Table_Nodes,Num_Elem);
       /* Free memory */
       free(Tributary_Elements);
       free(Table_Nodes);
@@ -563,8 +563,8 @@ ChainPtr uGIMP_Tributary_Nodes(Matrix Xi_p,int Elem_GP,Matrix lp,Mesh FEM_Mesh)
 	    (fabs(Xi_p.nV[1]) >= Dist[1])){
       /* Generate the list of Elements whose nodes contributes to the GP */
       ChainElements = FEM_Mesh.NodeNeighbour[NodesElem[1]];
-      Num_Elem = get_Lenght_Set(ChainElements);
-      Tributary_Elements = Set_to_Pointer(ChainElements,Num_Elem);
+      Num_Elem = lenght__SetLib__(ChainElements);
+      Tributary_Elements = set_to_memory__SetLib__(ChainElements,Num_Elem);
       
       /* Iterate in the list and select the union of the sets of nodes */
       Table_Nodes = malloc(Num_Elem*sizeof(ChainPtr));
@@ -572,7 +572,7 @@ ChainPtr uGIMP_Tributary_Nodes(Matrix Xi_p,int Elem_GP,Matrix lp,Mesh FEM_Mesh)
 	Elem_i = Tributary_Elements[i];
 	Table_Nodes[i] = FEM_Mesh.Connectivity[Elem_i];
       }
-      Triburary_Nodes = get_Union_Of(Table_Nodes,Num_Elem);
+      Triburary_Nodes = union__SetLib__(Table_Nodes,Num_Elem);
       /* Free memory */
       free(Tributary_Elements);
       free(Table_Nodes);
@@ -604,18 +604,18 @@ ChainPtr uGIMP_Tributary_Nodes(Matrix Xi_p,int Elem_GP,Matrix lp,Mesh FEM_Mesh)
 /*   for(int i = 0 ; i<NumNodesElem ; i++){ */
 /*     Table_Elem[i] = FEM_Mesh.NodeNeighbour[NodesElem[i]]; */
 /*   } */
-/*   Triburary_Elements = get_Union_Of(Table_Elem,NumNodesElem); */
+/*   Triburary_Elements = union__SetLib__(Table_Elem,NumNodesElem); */
 /*   /\* Free memory *\/ */
 /*   free(NodesElem); */
 /*   free(Table_Elem); */
 /*   Table_Elem = NULL; */
   
 /*   /\* List with the tributary nodes *\/ */
-/*   Num_Elem = get_Lenght_Set(Triburary_Elements); */
-/*   List_Elements = Set_to_Pointer(Triburary_Elements,Num_Elem); */
+/*   Num_Elem = lenght__SetLib__(Triburary_Elements); */
+/*   List_Elements = set_to_memory__SetLib__(Triburary_Elements,Num_Elem); */
 
 /*   /\* Free the chain with the tributary elements *\/ */
-/*   free_Set(Triburary_Elements); */
+/*   free__SetLib__(Triburary_Elements); */
   
 /*   /\* Fill the chain with the preliminary tributary nodes *\/ */
 /*   Table_ElemNodes = malloc(Num_Elem*sizeof(ChainPtr)); */
@@ -623,7 +623,7 @@ ChainPtr uGIMP_Tributary_Nodes(Matrix Xi_p,int Elem_GP,Matrix lp,Mesh FEM_Mesh)
 /*     Table_ElemNodes[i] = FEM_Mesh.Connectivity[List_Elements[i]]; */
 /*   } */
   
-/*   List_Nodes = get_Union_Of(Table_ElemNodes,Num_Elem); */
+/*   List_Nodes = union__SetLib__(Table_ElemNodes,Num_Elem); */
   
 /*   /\* Free the array wit the list of tributary elements *\/ */
 /*   free(List_Elements); */
@@ -654,7 +654,7 @@ ChainPtr uGIMP_Tributary_Nodes(Matrix Xi_p,int Elem_GP,Matrix lp,Mesh FEM_Mesh)
 /*     iPtr = iPtr->next; */
 /*   } */
 /*   /\* Free memory *\/ */
-/*   free_Set(&List_Nodes); */
+/*   free__SetLib__(&List_Nodes); */
   
 /*   return Triburary_Nodes; */
 /* } */

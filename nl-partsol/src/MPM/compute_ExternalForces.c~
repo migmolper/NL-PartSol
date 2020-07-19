@@ -67,7 +67,7 @@ Matrix compute_BodyForces(Matrix F_I, GaussPoint MPM_Mesh,
       }
 
       /* Free the matrix with the nodal gradient of the element */
-      FreeMat(ShapeFunction_p);
+      free__MatrixLib__(ShapeFunction_p);
       free(Nodes_p.Connectivity);
 	
     }
@@ -161,7 +161,7 @@ Matrix compute_ContacForces(Matrix F_I, GaussPoint MPM_Mesh,
       }
 
       /* Free the matrix with the nodal gradient of the element */
-      FreeMat(ShapeFunction_p);
+      free__MatrixLib__(ShapeFunction_p);
       free(Nodes_p.Connectivity);
 	
     }

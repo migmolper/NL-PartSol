@@ -2,14 +2,14 @@
 
 /*********************************************************************/
 
-ChainPtr Pointer_to_Set(int * A_array, int NumNodes){
+ChainPtr memory_to_set__SetLib__(int * A_array, int NumNodes){
 
   /* Variable declaration */
   ChainPtr A_chain = NULL;
 
   /* Loop over the array to generate a chain */
   for(int i = NumNodes-1; i > -1 ; i--){
-    push_to_Set(&A_chain, A_array[i]);    
+    push__SetLib__(&A_chain, A_array[i]);    
   }
 
   /* Return the chain */
@@ -18,11 +18,11 @@ ChainPtr Pointer_to_Set(int * A_array, int NumNodes){
 
 /*********************************************************************/
 
-ChainPtr RangeChain(int Init, int End){
+ChainPtr range__SetLib__(int Init, int End){
 
   if(Init > End){
     printf("%s : %s \n",
-	   "Error in RangeChain",
+	   "Error in range__SetLib__",
 	   "Init > End !!!");
     exit(EXIT_FAILURE);
   }
@@ -33,7 +33,7 @@ ChainPtr RangeChain(int Init, int End){
 
   /* Fill chain */
   for(int i = 0; i <= NumNodes ; i++){
-    push_to_Set(&A,End-i);    
+    push__SetLib__(&A,End-i);    
   }
 
   /* Return chain */
@@ -42,7 +42,7 @@ ChainPtr RangeChain(int Init, int End){
 
 /*********************************************************************/
 
-int * Set_to_Pointer(ChainPtr A_chain, int NumNodes){
+int * set_to_memory__SetLib__(ChainPtr A_chain, int NumNodes){
 
   /* Variable declaration */
   ChainPtr iChain;
@@ -50,7 +50,7 @@ int * Set_to_Pointer(ChainPtr A_chain, int NumNodes){
 
   if(A_chain == NULL){
     printf(" %s : %s \n",
-	   "Error in Set_to_Pointer",
+	   "Error in set_to_memory__SetLib__",
 	   "The chain is empty");
     exit(EXIT_FAILURE);
   }
@@ -69,7 +69,7 @@ int * Set_to_Pointer(ChainPtr A_chain, int NumNodes){
 
 /*********************************************************************/
 
-void free_Set(ChainPtr * A){
+void free__SetLib__(ChainPtr * A){
 
   /* Loop index */
   ChainPtr INode = (*A);
@@ -84,7 +84,7 @@ void free_Set(ChainPtr * A){
   (*A) = NULL;
 }
 
-/* void free_Set(struct Node** head_ref) */
+/* void free__SetLib__(struct Node** head_ref) */
 /* { */
 /*   /\* deref head_ref to get the real head *\/ */
 /*   struct Node* current = *head_ref; */
@@ -104,7 +104,7 @@ void free_Set(ChainPtr * A){
 
 /*********************************************************************/
 
-ChainPtr * allocate_SetTable(int SizeTable)
+ChainPtr * alloc_table__SetLib__(int SizeTable)
 {
 
   ChainPtr * SetTable;
@@ -114,7 +114,7 @@ ChainPtr * allocate_SetTable(int SizeTable)
   if(SetTable == NULL)
     {
       printf("%s : %s \n",
-	     "allocate_SetTable","Memory error");
+	     "alloc_table__SetLib__","Memory error");
       exit(EXIT_FAILURE);
     }
   for(int i = 0 ; i<SizeTable ; i++){
@@ -127,11 +127,11 @@ ChainPtr * allocate_SetTable(int SizeTable)
 
 /*********************************************************************/
 
-void free_SetTable(ChainPtr * A, int SizeTable){
+void free_table__SetLib__(ChainPtr * A, int SizeTable){
 
   /* Loop in the table to free each set */
   for(int i = 0 ; i<SizeTable ; i++){
-    free_Set(&A[i]);
+    free__SetLib__(&A[i]);
   }
 
   /* free the table */
@@ -139,14 +139,14 @@ void free_SetTable(ChainPtr * A, int SizeTable){
 
 }
 
-
 /*********************************************************************/
 
-int get_Lenght_Set(ChainPtr A){
-    
+int lenght__SetLib__(ChainPtr A)
+{
+  
   int NumElem = 0;
   ChainPtr INode = A;
-
+  
   if(A == NULL){
     return NumElem;
   }
@@ -163,7 +163,7 @@ int get_Lenght_Set(ChainPtr A){
 
 /* A utility function that returns true if data is  
    present in linked list else return false */
-bool is_in_Set(ChainPtr Node, int I) 
+bool inout__SetLib__(ChainPtr Node, int I) 
 {
   /* Search index */
   ChainPtr INode = Node;
@@ -181,7 +181,7 @@ bool is_in_Set(ChainPtr Node, int I)
 /*********************************************************************/
 
 /* A utility function to insert a node at the top of a linked list */
-void push_to_Set (ChainPtr * TopNodePtr, int I_new) 
+void push__SetLib__ (ChainPtr * TopNodePtr, int I_new) 
 {
   /* Pointer to the new node of the chain */
   ChainPtr NewNodePtr;
@@ -210,7 +210,7 @@ void push_to_Set (ChainPtr * TopNodePtr, int I_new)
 /*********************************************************************/
 
 /* A utility function to extract a node of a linked list */
-void pop_from_Set (ChainPtr * TopNodePtr, int I_trash) 
+void pop__SetLib__(ChainPtr * TopNodePtr, int I_trash) 
 {
   ChainPtr iPtr = (*TopNodePtr);
   ChainPtr PrevPtr = NULL;
@@ -245,7 +245,7 @@ void pop_from_Set (ChainPtr * TopNodePtr, int I_trash)
 
 /*********************************************************************/
 
-ChainPtr CopyChain(ChainPtr start1){
+ChainPtr copy__SetLib__(ChainPtr start1){
   
   ChainPtr start2=NULL;
   ChainPtr previous=NULL;
@@ -275,7 +275,7 @@ ChainPtr CopyChain(ChainPtr start1){
 
 /* Function to get union of two linked lists
    A and B */
-ChainPtr get_Union_Of(ChainPtr * Table, int NumTable)
+ChainPtr union__SetLib__(ChainPtr * Table, int NumTable)
 {
     ChainPtr A = NULL;
     ChainPtr iTable;
@@ -285,8 +285,8 @@ ChainPtr get_Union_Of(ChainPtr * Table, int NumTable)
       iTable = Table[i];
       while (iTable != NULL){
 	/* Introduce a new element in the new chain */
-	if (!is_in_Set(A, iTable->I)){
-	  push_to_Set(&A, iTable->I);
+	if (!inout__SetLib__(A, iTable->I)){
+	  push__SetLib__(&A, iTable->I);
 	}
 	/* Updtate the iterator index */
 	iTable = iTable->next;
@@ -301,7 +301,7 @@ ChainPtr get_Union_Of(ChainPtr * Table, int NumTable)
   
 /* Function to get intersection of two linked lists 
    A and B */
-ChainPtr get_Intersection_Of(ChainPtr A,ChainPtr B) 
+ChainPtr intersection__SetLib__(ChainPtr A,ChainPtr B) 
 { 
     ChainPtr C = NULL; 
     ChainPtr iPtrA = A; 
@@ -310,8 +310,8 @@ ChainPtr get_Intersection_Of(ChainPtr A,ChainPtr B)
     /* B. If the element is present in B, then  */
     /* insert the element to result  */
     while (iPtrA != NULL){ 
-      if (is_in_Set(B, iPtrA->I)) 
-	push_to_Set(&C, iPtrA->I); 
+      if (inout__SetLib__(B, iPtrA->I)) 
+	push__SetLib__(&C, iPtrA->I); 
       iPtrA = iPtrA->next; 
     }
     
@@ -321,7 +321,7 @@ ChainPtr get_Intersection_Of(ChainPtr A,ChainPtr B)
 /*********************************************************************/
 
 /* A utility function to print a linked list */
-void print_Set(ChainPtr A) 
+void print__SetLib__(ChainPtr A) 
 {  
   while (A != NULL){ 
     printf ("%d \n", A->I); 
@@ -331,7 +331,7 @@ void print_Set(ChainPtr A)
 
 /*********************************************************************/
 
-void order_Set(ChainPtr * List1, ChainPtr * List0, Matrix Dist)
+void order__SetLib__(ChainPtr * List1, ChainPtr * List0, Matrix Dist)
 /*
   Ordenate recursively and array with distances and get a chain 
   with the positions in orden
@@ -357,11 +357,11 @@ void order_Set(ChainPtr * List1, ChainPtr * List0, Matrix Dist)
     }
     
     /* Push and Pop node */
-    push_to_Set(List1,I_DistMax);
-    pop_from_Set(List0,I_DistMax);
+    push__SetLib__(List1,I_DistMax);
+    pop__SetLib__(List0,I_DistMax);
     
     /* Recursive */
-    order_Set(List1,List0,Dist);
+    order__SetLib__(List1,List0,Dist);
   }
   
 }

@@ -199,7 +199,7 @@ Mesh GramsBox(char * Name_File)
   /* Fill the table with the nodal locality */
   for(int i = 0 ; i<FEM_Mesh.NumNodesMesh ; i++){
     FEM_Mesh.NodalLocality[i] = get_locality_of_node(i, FEM_Mesh);
-    FEM_Mesh.SizeNodalLocality[i] = get_Lenght_Set(FEM_Mesh.NodalLocality[i]);
+    FEM_Mesh.SizeNodalLocality[i] = lenght__SetLib__(FEM_Mesh.NodalLocality[i]);
   }
   
   /**************************************************/	

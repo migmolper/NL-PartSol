@@ -84,7 +84,7 @@ Boundaries GramsBoundary(char * Name_File,int NumBounds){
 	get_Lenght_Set(Chain_Nodes);
       Bounds.BCC_i[IndexBoundary].Nodes =
 	Set_to_Pointer(Chain_Nodes,Bounds.BCC_i[IndexBoundary].NumNodes);
-      free_Set(Chain_Nodes);
+      free_Set(&Chain_Nodes);
 
       /* Number of dimensions of the BCC */
       Bounds.BCC_i[IndexBoundary].Dim = NumberDOF;

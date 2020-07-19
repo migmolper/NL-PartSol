@@ -31,7 +31,7 @@ Matrix compute_NodalMomentumMass(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
   Matrix Phi_I;
 
   /* Allocate the output list of fields */
-  Phi_I = MatAllocZ(Nnodes, Ndim + 1);
+  Phi_I = allocZ__MatrixLib__(Nnodes, Ndim + 1);
   
   /* Iterate over the GP to get the nodal values */
   for(int p = 0 ; p<Np ; p++){
@@ -72,7 +72,7 @@ Matrix compute_NodalMomentumMass(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
     }
 
     /* Free the value of the shape functions */
-    FreeMat(ShapeFunction_p);
+    free__MatrixLib__(ShapeFunction_p);
     free(Nodes_p.Connectivity);
   }
  
@@ -95,7 +95,7 @@ Matrix compute_NodalVelocity(Mesh FEM_Mesh, Matrix Phi_I)
   int Nnodes = FEM_Mesh.NumNodesMesh;
 
   /* Define output */
-  Matrix V_I = MatAllocZ(Nnodes,Ndim);
+  Matrix V_I = allocZ__MatrixLib__(Nnodes,Ndim);
   strcpy(V_I.Info,"VELOCITY");
 
   /* Value of the nodal mass */
@@ -160,7 +160,7 @@ Matrix compute_NodalMass(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
   Matrix M_I;
 
   /* 1º Allocate the output list of fields */
-  M_I = MatAllocZ(Nnodes,1);
+  M_I = allocZ__MatrixLib__(Nnodes,1);
   
   /* 2º Iterate over the GP to get the nodal values */
   for(int p = 0 ; p<Np ; p++){
@@ -189,7 +189,7 @@ Matrix compute_NodalMass(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
     }
 
     /* 7º Free the value of the shape functions */
-    FreeMat(ShapeFunction_p);
+    free__MatrixLib__(ShapeFunction_p);
     free(Nodes_p.Connectivity);
   }
  
@@ -223,7 +223,7 @@ Matrix compute_VelocityPredictor(GaussPoint MPM_Mesh,Mesh FEM_Mesh,
   int Ip;
   
   /* Matrix Vel_Mesh */
-  V_I = MatAllocZ(Nnodes,Ndim);
+  V_I = allocZ__MatrixLib__(Nnodes,Ndim);
   strcpy(V_I.Info,"VELOCITY");
  
   /* 2º Iterate over the GP to get the nodal values */
@@ -260,7 +260,7 @@ Matrix compute_VelocityPredictor(GaussPoint MPM_Mesh,Mesh FEM_Mesh,
     }
 
     /* 7º Free the value of the shape functions */
-    FreeMat(ShapeFunction_p);
+    free__MatrixLib__(ShapeFunction_p);
     free(Nodes_p.Connectivity);
   }
 
@@ -389,10 +389,10 @@ Matrix GetNodalKinetics(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
   int N_Velocity_dim = Ndim;
 
   /* Nodal values the fields */
-  Matrix Nodal_Mass = MatAllocZ(1,N_Nodes_Mesh);
-  Matrix Nodal_Acceleration_t0 = MatAllocZ(N_Acceleration_dim,N_Nodes_Mesh);
-  Matrix Nodal_Acceleration_t1 = MatAllocZ(N_Acceleration_dim,N_Nodes_Mesh);
-  Matrix Nodal_Velocity = MatAllocZ(N_Velocity_dim,N_Nodes_Mesh);
+  Matrix Nodal_Mass = allocZ__MatrixLib__(1,N_Nodes_Mesh);
+  Matrix Nodal_Acceleration_t0 = allocZ__MatrixLib__(N_Acceleration_dim,N_Nodes_Mesh);
+  Matrix Nodal_Acceleration_t1 = allocZ__MatrixLib__(N_Acceleration_dim,N_Nodes_Mesh);
+  Matrix Nodal_Velocity = allocZ__MatrixLib__(N_Velocity_dim,N_Nodes_Mesh);
  
   /* GPs values of the fields */
   double Mass_GP; /* Mass of the GP */
@@ -444,7 +444,7 @@ Matrix GetNodalKinetics(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
       }
     }
     /* 6º Free the value of the shape functions */
-    FreeMat(N_GP);
+    free__MatrixLib__(N_GP);
     free(Nodes_p.Connectivity);
   }
 
@@ -507,10 +507,10 @@ Matrix GetNodalVelocityDisplacement(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
   int Ndim = NumberDimensions;
 
   /* Nodal values the fields */
-  Matrix Nodal_Mass = MatAllocZ(1,N_Nodes_Mesh);
-  Matrix Nodal_Displacement = MatAllocZ(Ndim,N_Nodes_Mesh);
-  Matrix Nodal_Velocity = MatAllocZ(Ndim,N_Nodes_Mesh);
-  Matrix Nodal_Acceleration = MatAllocZ(Ndim,N_Nodes_Mesh);
+  Matrix Nodal_Mass = allocZ__MatrixLib__(1,N_Nodes_Mesh);
+  Matrix Nodal_Displacement = allocZ__MatrixLib__(Ndim,N_Nodes_Mesh);
+  Matrix Nodal_Velocity = allocZ__MatrixLib__(Ndim,N_Nodes_Mesh);
+  Matrix Nodal_Acceleration = allocZ__MatrixLib__(Ndim,N_Nodes_Mesh);
  
   /* GPs values of the fields */
   double Mass_GP; /* Mass of the GP */
@@ -571,7 +571,7 @@ Matrix GetNodalVelocityDisplacement(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
       
     }
     /* 6º Free the value of the shape functions */
-    FreeMat(N_GP);
+    free__MatrixLib__(N_GP);
     free(Nodes_p.Connectivity);
   }
 

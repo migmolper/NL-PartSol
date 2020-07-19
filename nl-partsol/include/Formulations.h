@@ -17,7 +17,7 @@
 double DeltaT_CFL(GaussPoint, double);
 
 /*!
-  \fn void U_FE(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int InitialStep)
+  \fn void U_Forward_Euler(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int InitialStep)
 
   \brief Displacement formulation of the MPM with a Forward Euler as 
   time integrator scheme. The algorithm was taken from \cite Zhang_book_2016
@@ -26,7 +26,7 @@ double DeltaT_CFL(GaussPoint, double);
   \param GaussPoint MPM_Mesh : Variable with the particle information
   \param InitialStep
  */
-void U_FE(Mesh, GaussPoint, int);
+void U_Forward_Euler(Mesh, GaussPoint, int);
 
 
 /*!
@@ -42,7 +42,7 @@ void U_FE(Mesh, GaussPoint, int);
 void U_GA(Mesh, GaussPoint, int);
 
 /*!
-  \fn void U_PCE(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int InitialStep)
+  \fn void U_Newmark_Predictor_Corrector(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int InitialStep)
 
   \brief Explicit predictor-corrector gamma = 0.5 and beta = 0.25
  
@@ -50,7 +50,7 @@ void U_GA(Mesh, GaussPoint, int);
   \param GaussPoint MPM_Mesh : Variable with the particle information
   \param InitialStep
  */
-void U_PCE(Mesh, GaussPoint, int);
+void U_Newmark_Predictor_Corrector(Mesh, GaussPoint, int);
 
 /*
   \fn void U_Discrete_Energy_Momentum(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int InitialStep)

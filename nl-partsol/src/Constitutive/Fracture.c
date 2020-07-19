@@ -70,8 +70,8 @@ static void Eigenerosion(int p, Fields Phi, Material MatPro,
       /*!
 	Get a pointer with the list of neighbours
       */
-      NumBeps_p = get_Lenght_Set(Beps[p]);
-      Beps_p = Set_to_Pointer(Beps[p],NumBeps_p);
+      NumBeps_p = lenght__SetLib__(Beps[p]);
+      Beps_p = set_to_memory__SetLib__(Beps[p],NumBeps_p);
 
       /*!
 	Loop over the neighbours 
@@ -194,7 +194,7 @@ static void Eigensoftening(int p, Fields Phi, Material MatPro, ChainPtr * Beps)
       /*!
 	Get the number of neighbours 
       */
-      NumBeps_p = get_Lenght_Set(Beps[p]);
+      NumBeps_p = lenght__SetLib__(Beps[p]);
       
       if(NumBeps_p > 0)
 	{
@@ -202,7 +202,7 @@ static void Eigensoftening(int p, Fields Phi, Material MatPro, ChainPtr * Beps)
 	  /*!
 	    Get the neighbours 
 	  */      
-	  Beps_p = Set_to_Pointer(Beps[p],NumBeps_p);    
+	  Beps_p = set_to_memory__SetLib__(Beps[p],NumBeps_p);    
       
 	  /*!
 	    For the current particle get the volume 
@@ -375,7 +375,7 @@ static void ComputeBeps(int p, GaussPoint MPM_Mesh, Mesh FEM_Mesh)
   /* Get nodes close to the particle */
   Set_NodesBeps = FEM_Mesh.NodalLocality[I0];
   NumNodesBeps = FEM_Mesh.SizeNodalLocality[I0];
-  NodesBeps = Set_to_Pointer(Set_NodesBeps,NumNodesBeps);
+  NodesBeps = set_to_memory__SetLib__(Set_NodesBeps,NumNodesBeps);
 
   /* Loop in the nodes close to the particle */
   for(int i = 0 ; i<NumNodesBeps ; i++){
@@ -402,7 +402,7 @@ static void ComputeBeps(int p, GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 
 	/* Asign to p only those particles in Beps */
 	if (norm__MatrixLib__(Distance,2) < epsilon){
-	  push_to_Set(&MPM_Mesh.Beps[p],q_Beps);
+	  push__SetLib__(&MPM_Mesh.Beps[p],q_Beps);
 	}
 
 	/* Free distance vector */
@@ -447,7 +447,7 @@ void compute_particle_Damage(int p, GaussPoint MPM_Mesh, Mesh FEM_Mesh)
       Eigenerosion(p,MPM_Mesh.Phi,MatProp,Beps,DeltaX);
 
       /* Free the previous list and set to NULL */
-      free_Set(&MPM_Mesh.Beps[p]);
+      free__SetLib__(&MPM_Mesh.Beps[p]);
     }
 
   /* Select the eigensoftening algorithm */
@@ -460,7 +460,7 @@ void compute_particle_Damage(int p, GaussPoint MPM_Mesh, Mesh FEM_Mesh)
       Eigensoftening(p,MPM_Mesh.Phi,MatProp,Beps);
 
       /* Free the previous list and set to NULL */
-      free_Set(&MPM_Mesh.Beps[p]);   
+      free__SetLib__(&MPM_Mesh.Beps[p]);   
     }
   
 }

@@ -269,7 +269,7 @@ Mesh ReadGidMesh(char * MeshName)
 		{
 		  ConnectivityElem[j] = atoi(read_connectivity[j+1]) - 1;
 		}
-	      GID_Mesh.Connectivity[i] = Pointer_to_Set(ConnectivityElem,NumNodesElem);
+	      GID_Mesh.Connectivity[i] = memory_to_set__SetLib__(ConnectivityElem,NumNodesElem);
 	    }
 	  else
 	    {

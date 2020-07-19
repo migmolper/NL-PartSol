@@ -70,7 +70,7 @@ void LME_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 	I_p = get_closest_node_to(X_p,Elem_p,FEM_Mesh.Coordinates);
 
 	/* Calculate distance from particle to each node in the neibourhood */
-	MPM_Mesh.ListNodes[p] = CopyChain(Elem_p);
+	MPM_Mesh.ListNodes[p] = copy__SetLib__(Elem_p);
 	Delta_Xip = get_set_Coordinates(MPM_Mesh.ListNodes[p],X_p,
 					FEM_Mesh.Coordinates);
 
@@ -81,7 +81,7 @@ void LME_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 	MPM_Mesh.ListNodes[p] = LME_Tributary_Nodes(X_p,Beta_p,I_p,FEM_Mesh);
 
 	/* Measure the size of the connectivity */
-	MPM_Mesh.NumberNodes[p] = get_Lenght_Set(MPM_Mesh.ListNodes[p]);
+	MPM_Mesh.NumberNodes[p] = lenght__SetLib__(MPM_Mesh.ListNodes[p]);
 
 	/* Asign to each particle the closest node in the mesh
 	   and to this node asign the particle */
@@ -437,7 +437,7 @@ ChainPtr LME_Tributary_Nodes(Matrix X_GP, Matrix Beta, int I0, Mesh FEM_Mesh){
   /* Get nodes close to the particle */
   Set_Nodes0 = FEM_Mesh.NodalLocality[I0];
   NumNodes0 = FEM_Mesh.SizeNodalLocality[I0];
-  Array_Nodes0 = Set_to_Pointer(Set_Nodes0,NumNodes0);
+  Array_Nodes0 = set_to_memory__SetLib__(Set_Nodes0,NumNodes0);
      
   /* Loop over the chain with the tributary nodes */
   for(int i = 0 ; i<NumNodes0 ; i++){
@@ -452,7 +452,7 @@ ChainPtr LME_Tributary_Nodes(Matrix X_GP, Matrix Beta, int I0, Mesh FEM_Mesh){
 
     /* If the node is near the GP push in the chain */
     if(norm__MatrixLib__(Distance,2) <= Ra){
-      push_to_Set(&Triburary_Nodes,Node0);
+      push__SetLib__(&Triburary_Nodes,Node0);
       NumTributaryNodes++;
     }
 
@@ -467,9 +467,9 @@ ChainPtr LME_Tributary_Nodes(Matrix X_GP, Matrix Beta, int I0, Mesh FEM_Mesh){
       for(int i = 0 ; i<NumNodes0 ; i++)
 	{
 	  Node0 = Array_Nodes0[i];
-	  if(!is_in_Set(Triburary_Nodes,Node0))
+	  if(!inout__SetLib__(Triburary_Nodes,Node0))
 	    {
-	      push_to_Set(&Triburary_Nodes,Node0);
+	      push__SetLib__(&Triburary_Nodes,Node0);
 	    }
 	}
     }

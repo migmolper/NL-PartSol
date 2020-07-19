@@ -187,7 +187,7 @@ double GetMinElementSize(Mesh FEM_Mesh)
 
     /* 2º Connectivity of the Poligon */
     NumNodesElem = FEM_Mesh.NumNodesElem[i];
-    Connectivity = Set_to_Pointer(FEM_Mesh.Connectivity[i],NumNodesElem);
+    Connectivity = set_to_memory__SetLib__(FEM_Mesh.Connectivity[i],NumNodesElem);
     
     /* 4º Get the gradient of the element for each node */
     if((NumNodesElem == 3) &&
@@ -274,7 +274,7 @@ Matrix ElemCoordinates(ChainPtr Element_p, Matrix Coordinates)
 {
 
   int Ndim = NumberDimensions;
-  int NumVertex = get_Lenght_Set(Element_p);
+  int NumVertex = lenght__SetLib__(Element_p);
   Matrix Element_Coordinates = allocZ__MatrixLib__(NumVertex,Ndim);
   ChainPtr Idx = NULL;
   int I_Idx = 0;
@@ -364,10 +364,10 @@ void get_particle_tributary_nodes(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int p){
     IdxElement = search_particle_in(p,X_p,Elements_Near_I0,FEM_Mesh);
     if(IdxElement != -999){
       /* Free previous list of tributary nodes to the particle */
-      free_Set(&MPM_Mesh.ListNodes[p]);
+      free__SetLib__(&MPM_Mesh.ListNodes[p]);
       MPM_Mesh.ListNodes[p] = NULL;    
       /* Asign new connectivity */
-      MPM_Mesh.ListNodes[p] = CopyChain(FEM_Mesh.Connectivity[IdxElement]);
+      MPM_Mesh.ListNodes[p] = copy__SetLib__(FEM_Mesh.Connectivity[IdxElement]);
       /* Get the coordinates of the element vertex */
       CoordElement = ElemCoordinates(MPM_Mesh.ListNodes[p],FEM_Mesh.Coordinates);
       /* Compute local coordinates of the particle in this element */
@@ -401,11 +401,11 @@ void get_particle_tributary_nodes(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int p){
       /* Free coordinates of the element */
       free__MatrixLib__(CoordElement);   
       /* Free previous list of tributary nodes to the particle */
-      free_Set(&MPM_Mesh.ListNodes[p]);
+      free__SetLib__(&MPM_Mesh.ListNodes[p]);
       /* Asign new connectivity */
       MPM_Mesh.ListNodes[p] = uGIMP_Tributary_Nodes(Xi_p,IdxElement,lp,FEM_Mesh);  
       /* Calculate number of nodes */
-      MPM_Mesh.NumberNodes[p] = get_Lenght_Set(MPM_Mesh.ListNodes[p]);
+      MPM_Mesh.NumberNodes[p] = lenght__SetLib__(MPM_Mesh.ListNodes[p]);
     }
     /* else{ */
     /*   /\* Get the coordinates of the element vertex *\/ */
@@ -425,12 +425,12 @@ void get_particle_tributary_nodes(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int p){
     Matrix Beta_p = memory_to_matrix__MatrixLib__(Ndim,1,MPM_Mesh.Beta.nM[p]);
 
     /* Free previous list of tributary nodes to the particle */
-    free_Set(&MPM_Mesh.ListNodes[p]);
+    free__SetLib__(&MPM_Mesh.ListNodes[p]);
     MPM_Mesh.ListNodes[p] = NULL;
     /* Calculate the new connectivity with the previous value of beta */
     MPM_Mesh.ListNodes[p] = LME_Tributary_Nodes(X_p,Beta_p,I0,FEM_Mesh);
     /* Calculate number of nodes */
-    MPM_Mesh.NumberNodes[p] = get_Lenght_Set(MPM_Mesh.ListNodes[p]);
+    MPM_Mesh.NumberNodes[p] = lenght__SetLib__(MPM_Mesh.ListNodes[p]);
     /* Generate nodal distance list */
     Delta_Xip = get_set_Coordinates(MPM_Mesh.ListNodes[p],
 				    X_p, FEM_Mesh.Coordinates);    	      
@@ -457,13 +457,13 @@ void GetNodalConnectivity(Mesh FEM_Mesh){
     /* 2º Loop over all the elements in the mesh */
     for(int j = 0 ; j<FEM_Mesh.NumElemMesh ; j++){
       NumNodesElem = FEM_Mesh.NumNodesElem[j];
-      Element_Connectivity = Set_to_Pointer(FEM_Mesh.Connectivity[j],NumNodesElem);
+      Element_Connectivity = set_to_memory__SetLib__(FEM_Mesh.Connectivity[j],NumNodesElem);
       /* 3º Loop over the all the node in an element */
       for(int k = 0 ; k<NumNodesElem ; k++){
 	/* 4º If my node belong to the element */
 	if(Element_Connectivity[k] == i){
 	  /* 5º Introduce the element in the chain */
-	  push_to_Set(&FEM_Mesh.NodeNeighbour[i], j);
+	  push__SetLib__(&FEM_Mesh.NodeNeighbour[i], j);
 	  /* 6º Update the counter */
 	  FEM_Mesh.NumNeighbour[i] += 1;	  
 	}
@@ -501,7 +501,7 @@ ChainPtr DiscardElements(ChainPtr SearchElem_0,
 
   Idx_Elem = SearchElem_0->I;
   NumNodes = FEM_Mesh.NumNodesElem[Idx_Elem];
-  Conect_Elem = Set_to_Pointer(FEM_Mesh.Connectivity[Idx_Elem],NumNodes);
+  Conect_Elem = set_to_memory__SetLib__(FEM_Mesh.Connectivity[Idx_Elem],NumNodes);
 
   /* Init Corner_MAX and Corner_MIN */
   Xmax_E = FEM_Mesh.Coordinates.nM[Conect_Elem[0]][0];
@@ -576,7 +576,7 @@ void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
     FEM_Mesh.NumParticles[i] = 0;
   }
   for(int i = 0 ; i<FEM_Mesh.NumNodesMesh ; i++){
-    free_Set(&FEM_Mesh.I_particles[i]);
+    free__SetLib__(&FEM_Mesh.I_particles[i]);
   }
 
   /* Loop over the particles */
@@ -636,7 +636,7 @@ void GPinCell(ChainPtr * ListInCELL, ChainPtr * GlobalList,
 
     /* Found one to delete */
     if (Dist < epsilon){
-      push_to_Set (ListInCELL,iPtr->I);
+      push__SetLib__(ListInCELL,iPtr->I);
       AuxPtr = iPtr;
       iPtr = iPtr->next;
       free(AuxPtr);
@@ -662,7 +662,7 @@ Element get_particle_Set(int i_GP, ChainPtr ListNodes, int NumNodes){
   /* Fill element */
   GP_Element.i_GP = i_GP;
   GP_Element.NumberNodes = NumNodes;
-  GP_Element.Connectivity = Set_to_Pointer(ListNodes,NumNodes);
+  GP_Element.Connectivity = set_to_memory__SetLib__(ListNodes,NumNodes);
 
   return GP_Element;
 }
@@ -723,7 +723,7 @@ ChainPtr get_locality_of_node(int I, Mesh FEM_Mesh){
   
   /* Index of the elements sourronding the node */
   int * NodeNeighbour =
-    Set_to_Pointer(FEM_Mesh.NodeNeighbour[I],NumNeighbour);
+    set_to_memory__SetLib__(FEM_Mesh.NodeNeighbour[I],NumNeighbour);
   
   /* Table with the nodes of each element */
   ChainPtr * Table_ElemNodes = malloc(NumNeighbour*sizeof(ChainPtr));
@@ -737,7 +737,7 @@ ChainPtr get_locality_of_node(int I, Mesh FEM_Mesh){
   free(NodeNeighbour);
   
   /* Get the union of this nodes */
-  Nodes = get_Union_Of(Table_ElemNodes,NumNeighbour);
+  Nodes = union__SetLib__(Table_ElemNodes,NumNeighbour);
   
   /* Free table with the nodes of each elements */
   free(Table_ElemNodes);
@@ -751,7 +751,7 @@ ChainPtr get_locality_of_node(int I, Mesh FEM_Mesh){
 Matrix get_set_Coordinates(ChainPtr Set, Matrix X0, Matrix Coordinates)
 {
   int Ndim = NumberDimensions;
-  int SizeSet = get_Lenght_Set(Set);
+  int SizeSet = lenght__SetLib__(Set);
   int I = 0;
 
   /* Allocate output */
@@ -850,7 +850,7 @@ void asign_particle_to_nodes(int p, ChainPtr ListNodes_p, Mesh FEM_Mesh)
   while(Nodes_p != NULL)
     {
       FEM_Mesh.NumParticles[Nodes_p->I] += 1;
-      push_to_Set(&FEM_Mesh.I_particles[Nodes_p->I],p);
+      push__SetLib__(&FEM_Mesh.I_particles[Nodes_p->I],p);
       Nodes_p = Nodes_p->next; 
     }
 

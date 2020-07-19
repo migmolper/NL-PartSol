@@ -120,10 +120,10 @@ GaussPoint restart_Simulation(char * File_Parameters,
       Set_Particles.NumberNodes = (int *)Allocate_ArrayZ(Np,sizeof(int));
       
       /* Tributary nodes for each particle */
-      Set_Particles.ListNodes = allocate_SetTable(Np);
+      Set_Particles.ListNodes = alloc_table__SetLib__(Np);
       
       /* List of particles close to each particle */
-      Set_Particles.Beps =  allocate_SetTable(Np);
+      Set_Particles.Beps = alloc_table__SetLib__(Np);
       
       /* Read list of fields */
       Set_Particles.Phi = restart_Fields(File_Restart,Np);

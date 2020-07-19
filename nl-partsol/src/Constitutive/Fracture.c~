@@ -368,8 +368,8 @@ static void ComputeBeps(int p, GaussPoint MPM_Mesh, Mesh FEM_Mesh)
   
   /* Distance */
   Matrix x_GC = MPM_Mesh.Phi.x_GC;
-  Matrix X_p = get_RowFrom(Ndim,1,x_GC.nM[p]);
-  Matrix X_q = get_RowFrom(Ndim,1,NULL);
+  Matrix X_p = memory_to_matrix__MatrixLib__(Ndim,1,x_GC.nM[p]);
+  Matrix X_q = memory_to_matrix__MatrixLib__(Ndim,1,NULL);
   Matrix Distance;
 
   /* Get nodes close to the particle */
@@ -398,15 +398,15 @@ static void ComputeBeps(int p, GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 	X_q.nV = x_GC.nM[q_Beps];
 
 	/* Get a vector from the GP to the node */
-	Distance = Sub_Mat(X_p,X_q);
+	Distance = substraction__MatrixLib__(X_p,X_q);
 
 	/* Asign to p only those particles in Beps */
-	if (Norm_Mat(Distance,2) < epsilon){
+	if (norm__MatrixLib__(Distance,2) < epsilon){
 	  push_to_Set(&MPM_Mesh.Beps[p],q_Beps);
 	}
 
 	/* Free distance vector */
-	FreeMat(Distance);
+	free__MatrixLib__(Distance);
 
       }
 

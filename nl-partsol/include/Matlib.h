@@ -93,23 +93,23 @@ void   single_value_descomposition__MatrixLib__(Matrix,Matrix,Matrix);
 /*******************************************************/
 
 /*
-  Chain library 
+  Set library 
 */
-ChainPtr Pointer_to_Set(int *, int);
-int * Set_to_Pointer(ChainPtr, int);
-ChainPtr RangeChain(int, int);
-void free_Set(ChainPtr *);
-ChainPtr * allocate_SetTable(int);
-void free_SetTable(ChainPtr *, int);
-bool is_in_Set(ChainPtr, int);
-void push_to_Set(ChainPtr *, int);
-void pop_from_Set(ChainPtr *, int);
-ChainPtr CopyChain(ChainPtr);
-int get_Lenght_Set(ChainPtr);
-ChainPtr get_Union_Of(ChainPtr *, int);
-ChainPtr get_Intersection_Of(ChainPtr, ChainPtr);
-void print_Set(ChainPtr);
-void order_Set(ChainPtr *, ChainPtr *, Matrix);
+ChainPtr memory_to_set__SetLib__(int *, int);
+int * set_to_memory__SetLib__(ChainPtr, int);
+ChainPtr range__SetLib__(int, int);
+void free__SetLib__(ChainPtr *);
+ChainPtr * alloc_table__SetLib__(int);
+void free_table__SetLib__(ChainPtr *, int);
+bool inout__SetLib__(ChainPtr, int);
+void push__SetLib__(ChainPtr *, int);
+void pop__SetLib__(ChainPtr *, int);
+ChainPtr copy__SetLib__(ChainPtr);
+int lenght__SetLib__(ChainPtr);
+ChainPtr union__SetLib__(ChainPtr *, int);
+ChainPtr intersection__SetLib__(ChainPtr, ChainPtr);
+void print__SetLib__(ChainPtr);
+void order__SetLib__(ChainPtr *, ChainPtr *, Matrix);
 
 /*******************************************************/
 

@@ -121,7 +121,7 @@ int main(int argc, char * argv[])
   /* Forward Euler */
   if(strcmp(TimeIntegrationScheme,"FE") == 0 )
     { 
-      U_FE(FEM_Mesh, MPM_Mesh, InitialStep);
+      U_Forward_Euler(FEM_Mesh, MPM_Mesh, InitialStep);
     }
 
   /* Generalized-alpha */
@@ -133,7 +133,7 @@ int main(int argc, char * argv[])
   /* Explicit predictor-corrector */
   if(strcmp(TimeIntegrationScheme,"PCE") == 0 )
     { 
-      U_PCE(FEM_Mesh, MPM_Mesh, InitialStep);
+      U_Newmark_Predictor_Corrector(FEM_Mesh, MPM_Mesh, InitialStep);
     }
 
   /* Discrete energy momentum method */
@@ -174,21 +174,21 @@ void globalfree(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
   /* Free malloc in FEM_Mesh */
   free__MatrixLib__(FEM_Mesh.Coordinates);
   free(FEM_Mesh.NumNodesElem);
-  free_SetTable(FEM_Mesh.Connectivity,FEM_Mesh.NumElemMesh);
+  free_table__SetLib__(FEM_Mesh.Connectivity,FEM_Mesh.NumElemMesh);
   free(FEM_Mesh.NumNeighbour);
-  free_SetTable(FEM_Mesh.NodeNeighbour,FEM_Mesh.NumNodesMesh);
+  free_table__SetLib__(FEM_Mesh.NodeNeighbour,FEM_Mesh.NumNodesMesh);
   free(FEM_Mesh.SizeNodalLocality);
-  free_SetTable(FEM_Mesh.NodalLocality,FEM_Mesh.NumNodesMesh);
+  free_table__SetLib__(FEM_Mesh.NodalLocality,FEM_Mesh.NumNodesMesh);
   free(FEM_Mesh.NumParticles);
-  free_SetTable(FEM_Mesh.I_particles,FEM_Mesh.NumNodesMesh);
+  free_table__SetLib__(FEM_Mesh.I_particles,FEM_Mesh.NumNodesMesh);
   
   /* FEM_Mesh.Bounds */
 
   /* Free malloc in MPM_Mesh */
   free(MPM_Mesh.I0);
   free(MPM_Mesh.NumberNodes);
-  free_SetTable(MPM_Mesh.ListNodes,MPM_Mesh.NumGP);
-  free_SetTable(MPM_Mesh.Beps,MPM_Mesh.NumGP);
+  free_table__SetLib__(MPM_Mesh.ListNodes,MPM_Mesh.NumGP);
+  free_table__SetLib__(MPM_Mesh.Beps,MPM_Mesh.NumGP);
   free_Fields(MPM_Mesh.Phi);
   /* free_Fields(MPM_Mesh.Phi_n0);   */
   free(MPM_Mesh.MatIdx);

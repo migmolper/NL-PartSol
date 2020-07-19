@@ -95,9 +95,9 @@ void GramsInitials(char * Name_File, GaussPoint GP_Mesh, int GPxElement)
 
       /* Get an array with the nodes */
       Chain_Nodes = File2Chain(FileNodesRoute);
-      Num_Nodes = get_Lenght_Set(Chain_Nodes);
-      Array_Nodes = Set_to_Pointer(Chain_Nodes,Num_Nodes);
-      free_Set(&Chain_Nodes);
+      Num_Nodes = lenght__SetLib__(Chain_Nodes);
+      Array_Nodes = set_to_memory__SetLib__(Chain_Nodes,Num_Nodes);
+      free__SetLib__(&Chain_Nodes);
 	
       /* Look for the curly brace { */
       if(strcmp(Parse_GramsInitials[2],"{") == 0){

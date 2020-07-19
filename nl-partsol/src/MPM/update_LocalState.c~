@@ -56,10 +56,10 @@ void update_LocalState(Matrix V_I, GaussPoint MPM_Mesh,
     MPM_Mesh.Phi.W.nV[p] = 0.5*inner_product__TensorLib__(Strain_p, Stress_p);
         
     /* Free the matrix with the nodal velocity of the element */
-    FreeMat(Nodal_Velocity_p);
+    free__MatrixLib__(Nodal_Velocity_p);
     
     /* Free the matrix with the nodal gradient of the element */
-    FreeMat(Gradient_p);
+    free__MatrixLib__(Gradient_p);
     free(Nodes_p.Connectivity);
     
   }

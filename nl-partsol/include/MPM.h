@@ -9,8 +9,6 @@
 
 /* Boundary conditions */
 Curve BcDirichlet(char *);
-void imposse_NodalMomentum(Mesh, Matrix, int);
-void imposse_NodalVelocity(Mesh, Matrix, int);
 Matrix Eval_Body_Forces(Load *, int, int, int);
 Matrix Eval_Contact_Forces(Load *, int, int, int);
 Matrix compute_Reactions(Mesh, Matrix);
@@ -25,13 +23,13 @@ Tensor compute_RateOfStrain(Matrix, Matrix);
 Tensor update_Strain(Tensor, Tensor, double);
 
 Tensor compute_increment_Deformation_Gradient(Matrix, Matrix);
-void update_Deformation_Gradient_n1(Tensor, Tensor, Tensor);
+void   update_Deformation_Gradient_n1(Tensor, Tensor, Tensor);
 Tensor compute_RightCauchyGreen(Tensor);
 Tensor compute_LagrangianStrain(Tensor);
   
 double update_Density(double, double, Tensor);
 Tensor compute_Stress(Tensor, Tensor, Material);
-void update_LocalState(Matrix, GaussPoint, Mesh, double);
+void   update_LocalState(Matrix, GaussPoint, Mesh, double);
 double compute_InternalEnergy(Tensor, Tensor);
 Matrix compute_InternalForces(Matrix, GaussPoint,Mesh);
 Matrix compute_BodyForces(Matrix, GaussPoint, Mesh, int);
@@ -41,33 +39,6 @@ Matrix compute_ContacForces(Matrix, GaussPoint, Mesh, int);
 
 /* Equilibrium scheme */
 Matrix compute_equilibrium_U(Matrix,GaussPoint,Mesh,double);
-
-/*******************************************************/
-
-/* Forward-Euler */
-Matrix compute_NodalMomentumMass(GaussPoint, Mesh);
-Matrix compute_NodalVelocity(Mesh, Matrix);
-void update_NodalMomentum(Mesh, Matrix, Matrix);
-void update_Particles_FE(GaussPoint, Mesh, Matrix, Matrix, double);
-
-/*******************************************************/
-
-/* Explicit Predictor-Corrector */
-Matrix compute_NodalMass(GaussPoint, Mesh);
-Matrix compute_VelocityPredictor(GaussPoint, Mesh, Matrix,
-				 Matrix, Time_Int_Params,double);
-Matrix compute_VelocityCorrector(Mesh, Matrix, Matrix,
-				 Matrix, Time_Int_Params,double);
-void update_Particles_PCE(GaussPoint, Mesh, Matrix,
-			  Matrix, Matrix, double);
-
-/*******************************************************/
-
-/* Generalized-alpha */
-void GA_UpdateNodalKinetics(Mesh, Matrix, Matrix, Time_Int_Params);
-Matrix GetNodalKinetics(GaussPoint, Mesh);
-Matrix GetNodalVelocityDisplacement(GaussPoint, Mesh);
-void update_Particles_GA(GaussPoint, Mesh, Matrix, Time_Int_Params);
 
 /*******************************************************/
 
