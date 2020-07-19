@@ -83,24 +83,55 @@ void generate_route(char * Route_Nodes, char * Name_File)
 int get_ResultStep(char * File_Result)
 {
   char File_Result_Copy[80];
-  char * Parse_Line_1[MAXW] = {NULL};
-  char * Parse_Line_2[MAXW] = {NULL};
+  char * Parse_1[MAXW] = {NULL};
+  char * Parse_2[MAXW] = {NULL};
+  FILE * Ptr_File_Result;
+  char Line[MAXC] = {0};
+  char * kwords[MAXW] = {NULL};
   int n_words;
   int step;
   
   strcpy(File_Result_Copy,File_Result);
 
 #ifdef linux
-  n_words = parse(Parse_Line_1, File_Result_Copy, "_\n");
-  n_words = parse(Parse_Line_2, Parse_Line_1[n_words-1], ".\n");
+  n_words = parse(Parse_1, File_Result_Copy, "_\n");
+  n_words = parse(Parse_2, Parse_1[n_words-1], ".\n");
 #endif
 
 #ifdef _WIN32
-  n_words = parse(Parse_Line_1, File_Result_Copy, "_\r\n");
-  n_words = parse(Parse_Line_2, Parse_Line_1[n_words-1], ".\r\n");
+  n_words = parse(Parse_1, File_Result_Copy, "_\r\n");
+  n_words = parse(Parse_2, Parse_1[n_words-1], ".\r\n");
 #endif
+ 
+  step = atoi(Parse_2[0]);
 
-  step = atoi(Parse_Line_2[0]) + 100;
+  /* Open and check file */
+  Ptr_File_Result = fopen(File_Result,"r");  
+  if (Ptr_File_Result == NULL){
+    fprintf(stderr,"%s : \n\t %s %s",
+	    "Error in get_ResultStep()",
+	    "Incorrect lecture of",File_Result);
+    exit(EXIT_FAILURE);
+  }
+
+  /* Read the first line */
+  fgets(Line, sizeof Line, Ptr_File_Result);
+  /* Read the second line */
+  fgets(Line, sizeof Line, Ptr_File_Result);
+  
+  /* Read the line with the space as separators */
+  n_words = parse (kwords, Line," \n\t");
+
+  if ((n_words == 4) &&
+      (strcmp(kwords[0],"Results") == 0) &&
+      (strcmp(kwords[1],"time") == 0) &&
+      (strcmp(kwords[2],"step") == 0))
+    {
+      step += atoi(kwords[3]);
+    }
+
+  /* Close file */
+  fclose(Ptr_File_Result);
 
   return step;
 }

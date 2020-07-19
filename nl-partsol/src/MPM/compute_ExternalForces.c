@@ -10,7 +10,7 @@ Matrix compute_BodyForces(Matrix F_I, GaussPoint MPM_Mesh,
   Element Nodes_p; /* Element for each Gauss-Point */
   Matrix ShapeFunction_p; /* Nodal values of the sahpe function */
   double ShapeFunction_pI;
-  Tensor b = alloc_Tensor(1); /* Body forces vector */
+  Tensor b = alloc__TensorLib__(1); /* Body forces vector */
   double m_p; /* Mass of the Gauss-Point */
   int NumBodyForces = MPM_Mesh.NumberBodyForces;
   int NumNodesLoad;
@@ -67,7 +67,7 @@ Matrix compute_BodyForces(Matrix F_I, GaussPoint MPM_Mesh,
       }
 
       /* Free the matrix with the nodal gradient of the element */
-      FreeMat(ShapeFunction_p);
+      free__MatrixLib__(ShapeFunction_p);
       free(Nodes_p.Connectivity);
 	
     }
@@ -75,7 +75,7 @@ Matrix compute_BodyForces(Matrix F_I, GaussPoint MPM_Mesh,
       
   }
 
-  free_Tensor(b);
+  free__TensorLib__(b);
   
   return F_I;
 
@@ -91,7 +91,7 @@ Matrix compute_ContacForces(Matrix F_I, GaussPoint MPM_Mesh,
   Element Nodes_p; /* Element for each Gauss-Point */
   Matrix ShapeFunction_p; /* Nodal values of the sahpe function */
   double ShapeFunction_pI;
-  Tensor t = alloc_Tensor(1); /* Body forces vector */
+  Tensor t = alloc__TensorLib__(1); /* Body forces vector */
   double m_p; /* Mass of the Gauss-Point */
   double rho_p; /* Density of the Gauss-Point */
   double V_p; /* Volumen of the Gauss-Point */
@@ -161,7 +161,7 @@ Matrix compute_ContacForces(Matrix F_I, GaussPoint MPM_Mesh,
       }
 
       /* Free the matrix with the nodal gradient of the element */
-      FreeMat(ShapeFunction_p);
+      free__MatrixLib__(ShapeFunction_p);
       free(Nodes_p.Connectivity);
 	
     }
@@ -169,7 +169,7 @@ Matrix compute_ContacForces(Matrix F_I, GaussPoint MPM_Mesh,
       
   }
 
-  free_Tensor(t);
+  free__TensorLib__(t);
   
   return F_I;
 

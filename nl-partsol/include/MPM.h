@@ -23,6 +23,12 @@ void free_Boundaries(Boundaries);
 /* Forces-stress-strain functions */
 Tensor compute_RateOfStrain(Matrix, Matrix);
 Tensor update_Strain(Tensor, Tensor, double);
+
+Tensor compute_increment_Deformation_Gradient(Matrix, Matrix);
+void update_Deformation_Gradient_n1(Tensor, Tensor, Tensor);
+Tensor compute_RightCauchyGreen(Tensor);
+Tensor compute_LagrangianStrain(Tensor);
+  
 double update_Density(double, double, Tensor);
 Tensor compute_Stress(Tensor, Tensor, Material);
 void update_LocalState(Matrix, GaussPoint, Mesh, double);

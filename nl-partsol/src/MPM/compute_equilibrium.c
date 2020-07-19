@@ -13,7 +13,7 @@ Matrix compute_equilibrium_U(Matrix V_I, GaussPoint MPM_Mesh,
   
   update_LocalState(V_I, MPM_Mesh, FEM_Mesh, DeltaTimeStep);
        
-  Matrix F_I = MatAllocZ(Nnodes,Ndim);    
+  Matrix F_I = allocZ__MatrixLib__(Nnodes,Ndim);    
 
   F_I = compute_InternalForces(F_I, MPM_Mesh, FEM_Mesh);    
 

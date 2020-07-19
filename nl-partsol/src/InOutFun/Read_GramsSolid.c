@@ -42,7 +42,7 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
   int NumVertex;
 
   double Area_Element, A_p, th_p, m_p, rho_p;
-  int GPxElement = 4;
+  int GPxElement = 1;
   int i_p;
 
   /* Set to false check variables */
@@ -71,7 +71,7 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
   /********* Read and check GramsSolid2D ************/
   /**************************************************/
   while(fgets(Line_GramsSolid2D,sizeof(Line_GramsSolid2D),Sim_dat) != NULL){
-    
+
     /* Read the line with the space as separators */
     Num_words_parse = parse(Parse_GramsSolid2D,Line_GramsSolid2D," \n\t");
     if (Num_words_parse < 0){
@@ -87,7 +87,7 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
       Num_words_parse = parse(Parse_Mesh_id, Parse_GramsSolid2D[1],"(=)");
       MPM_MeshFileName = Parse_Mesh_id[1];
       generate_route(Route_Mesh,Name_File);
-      strcat(Route_Mesh,MPM_MeshFileName);      
+      strcat(Route_Mesh,MPM_MeshFileName);
     }
     if ((Num_words_parse > 0) &&
 	(strcmp(Parse_GramsSolid2D[0],"GramsShapeFun") == 0)){
@@ -113,7 +113,7 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
       Counter_GramsNeumannBC++;
     }    
   }
-
+  
   /**************************************************/
   /***************** Define MPM Mesh ****************/
   /**************************************************/
@@ -162,14 +162,14 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
       GramsShapeFun(Name_File);
       /* Lenght of the Voxel (Only GIMP) */
       if(strcmp(ShapeFunctionGP,"uGIMP") == 0){
-	MPM_Mesh.lp = MatAllocZ(NumParticles,Ndim);
+	MPM_Mesh.lp = allocZ__MatrixLib__(NumParticles,Ndim);
 	strcpy(MPM_Mesh.lp.Info,"Voxel lenght GP");
       }
       /* Lagrange Multipliers / Beta (Only LME ) */
       if(strcmp(ShapeFunctionGP,"LME") == 0){
-	MPM_Mesh.lambda = MatAllocZ(NumParticles,Ndim);
+	MPM_Mesh.lambda = allocZ__MatrixLib__(NumParticles,Ndim);
 	strcpy(MPM_Mesh.lambda.Info,"Lagrange Multiplier");
-	MPM_Mesh.Beta = MatAllocZ(NumParticles,Ndim);
+	MPM_Mesh.Beta = allocZ__MatrixLib__(NumParticles,Ndim);
 	strcpy(MPM_Mesh.Beta.Info,"Beta parameter");
       }
     }
@@ -209,7 +209,7 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
       Poligon_Connectivity = MPM_GID_Mesh.Connectivity[i];    
       /* Generate a matrix with the poligon coordinates */
       NumVertex = MPM_GID_Mesh.NumNodesElem[i];
-      Poligon_Coordinates = MatAllocZ(NumVertex,2); 
+      Poligon_Coordinates = allocZ__MatrixLib__(NumVertex,2); 
       /* Initialize chain interator */
       Vertex = Poligon_Connectivity;
       /* Loop in the chain to fill the poligon */
@@ -226,9 +226,9 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
       free_Set(&MPM_GID_Mesh.Connectivity[i]);
       /* Get the area (Poligon_Centroid.n) 
 	 and the position of the centroid (Poligon_Centroid.nV) */
-      Area_Element = Area_Poligon(Poligon_Coordinates);
+      Area_Element = area__MatrixLib__(Poligon_Coordinates);
       /* Free data */
-      FreeMat(Poligon_Coordinates);
+      free__MatrixLib__(Poligon_Coordinates);
       
       for(int j = 0 ; j<GPxElement ; j++){
 
@@ -312,7 +312,7 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
     /**************************************************/    
     /************* Free the input data ****************/
     /**************************************************/    
-    FreeMat(MPM_GID_Mesh.Coordinates);
+    free__MatrixLib__(MPM_GID_Mesh.Coordinates);
     free(MPM_GID_Mesh.Connectivity);
     free(MPM_GID_Mesh.NumParticles);
     free(MPM_GID_Mesh.NumNeighbour);

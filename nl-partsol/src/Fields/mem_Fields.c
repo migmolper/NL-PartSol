@@ -9,73 +9,92 @@ Fields allocate_Fields(int NumParticles)
   /*!
     Global coordinates 
   */
-  Phi.x_GC = MatAllocZ(NumParticles,Ndim);
+  Phi.x_GC = allocZ__MatrixLib__(NumParticles,Ndim);
   strcpy(Phi.x_GC.Info,"Global Coordinates");
   
   /*!
     Natural coordinates (Vectorial) 
   */
-  Phi.x_EC = MatAllocZ(NumParticles,Ndim);
+  Phi.x_EC = allocZ__MatrixLib__(NumParticles,Ndim);
   strcpy(Phi.x_EC.Info,"Element Coordinates GP");
   
   /*!
     Displacement field (Vectorial) 
   */
-  Phi.dis = MatAllocZ(NumParticles,Ndim);
+  Phi.dis = allocZ__MatrixLib__(NumParticles,Ndim);
   strcpy(Phi.dis.Info,"Displacement field GP");
   
   /*!
     Velocity field (Vectorial) 
   */
-  Phi.vel = MatAllocZ(NumParticles,Ndim);
+  Phi.vel = allocZ__MatrixLib__(NumParticles,Ndim);
   strcpy(Phi.vel.Info,"Velocity field GP");
   
   /*!
     Acceleration field (Vectorial) 
   */
-  Phi.acc = MatAllocZ(NumParticles,Ndim);
+  Phi.acc = allocZ__MatrixLib__(NumParticles,Ndim);
   strcpy(Phi.acc.Info,"Acceleration field GP");
   
   /*!
     Strain field (Tensor)
   */
-  Phi.Strain = MatAllocZ(NumParticles,Ndim*Ndim);
+  Phi.Strain = allocZ__MatrixLib__(NumParticles,Ndim*Ndim);
   strcpy(Phi.Strain.Info,"Strain field GP");
 
   /*!
+    Deformation gradient field (Tensor)
+  */  
+  Phi.F_n = allocZ__MatrixLib__(NumParticles,Ndim*Ndim);
+  strcpy(Phi.F_n.Info,"Deformation gradient at t = n");
+  Phi.F_n1 = allocZ__MatrixLib__(NumParticles,Ndim*Ndim);
+  strcpy(Phi.F_n1.Info,"Deformation gradient at t = n + 1");
+
+  /* Initialize the deformation gradient with the identity */
+  for(int p = 0 ; p<NumParticles ; p++)
+    {
+      for(int i = 0 ; i<Ndim ; i++)
+	{
+	  Phi.F_n.nM[p][i + i*Ndim] = 1.0;	  
+	}
+      
+    }
+  
+  
+  /*!
     Strain_If field (Scalar) 
   */
-  Phi.Strain_If = MatAllocZ(NumParticles,1);
+  Phi.Strain_If = allocZ__MatrixLib__(NumParticles,1);
   strcpy(Phi.Strain_If.Info,"Strain in fracture GP");
 
   /*!
     Stress field (Tensor)
   */
-  Phi.Stress = MatAllocZ(NumParticles,Ndim*Ndim);
+  Phi.Stress = allocZ__MatrixLib__(NumParticles,Ndim*Ndim);
   strcpy(Phi.Stress.Info,"Stress field GP");
 
   /*!
     Deformation Energy (Scalar) 
   */
-  Phi.W = MatAllocZ(NumParticles,1);
+  Phi.W = allocZ__MatrixLib__(NumParticles,1);
   strcpy(Phi.W.Info,"Deformation Energy GP");
 
   /*!
     Damage parameter (fracture) 
   */
-  Phi.chi = MatAllocZ(NumParticles,1);
+  Phi.chi = allocZ__MatrixLib__(NumParticles,1);
   strcpy(Phi.chi.Info,"Damage parameter GP");
 
   /*!
     Mass 
   */
-  Phi.mass = MatAllocZ(NumParticles,1);
+  Phi.mass = allocZ__MatrixLib__(NumParticles,1);
   strcpy(Phi.mass.Info,"Mass GP");
 
   /*!
     Density 
   */
-  Phi.rho = MatAllocZ(NumParticles,1);
+  Phi.rho = allocZ__MatrixLib__(NumParticles,1);
   strcpy(Phi.rho.Info,"Density GP"); 
 
   return Phi;
@@ -87,18 +106,18 @@ Fields allocate_Fields(int NumParticles)
 void free_Fields(Fields Phi)
 {
 
-  FreeMat(Phi.rho);
-  FreeMat(Phi.mass);
-  FreeMat(Phi.x_GC);  
-  FreeMat(Phi.x_EC);
-  FreeMat(Phi.dis);
-  FreeMat(Phi.vel);
-  FreeMat(Phi.acc);
-  FreeMat(Phi.Stress);
-  FreeMat(Phi.Strain);
-  FreeMat(Phi.Strain_If);
-  FreeMat(Phi.W);
-  FreeMat(Phi.chi);
+  free__MatrixLib__(Phi.rho);
+  free__MatrixLib__(Phi.mass);
+  free__MatrixLib__(Phi.x_GC);  
+  free__MatrixLib__(Phi.x_EC);
+  free__MatrixLib__(Phi.dis);
+  free__MatrixLib__(Phi.vel);
+  free__MatrixLib__(Phi.acc);
+  free__MatrixLib__(Phi.Stress);
+  free__MatrixLib__(Phi.Strain);
+  free__MatrixLib__(Phi.Strain_If);
+  free__MatrixLib__(Phi.W);
+  free__MatrixLib__(Phi.chi);
   
 }
 

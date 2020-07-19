@@ -108,7 +108,7 @@ Matrix Solve_Linear_Sistem(Matrix K, Matrix F)
   Matrix U;
   
   switch(Bool){
-  case 0 : 
+  case 0 :
     Km1 = Get_Inverse(K);
     U = Scalar_prod(Km1,F);
     FreeMat(Km1);

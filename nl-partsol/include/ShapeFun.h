@@ -62,7 +62,7 @@ ChainPtr LME_Tributary_Nodes(Matrix, Matrix, int, Mesh);
 
 /* Operators */
 Matrix compute_ShapeFunction(Element, GaussPoint, Mesh );
-Matrix compute_ShapeFunction_Gradient(Element, GaussPoint, Mesh);
+Matrix compute_ShapeFunction_gradient(Element, GaussPoint, Mesh);
 
 /*******************************************************/
 

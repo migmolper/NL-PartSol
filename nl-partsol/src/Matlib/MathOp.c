@@ -2,7 +2,7 @@
 
 /*********************************************************************/
 
-double Area_Poligon(Matrix Poligon)
+double area__MatrixLib__(Matrix Poligon)
 /*! 
  * This function returns the the area of a \a Poligon using the 
  * Shoelace formula :
@@ -17,7 +17,7 @@ double Area_Poligon(Matrix Poligon)
 
   /* Check the number of vertex */
   if(N_vertex<3){
-    puts("Error in Area_Poligon : Wrong number of vertex !!!");
+    puts("Error in area__MatrixLib__ : Wrong number of vertex !!!");
     exit(EXIT_FAILURE);
   }
   
@@ -41,7 +41,7 @@ double Area_Poligon(Matrix Poligon)
 
 /*********************************************************************/
 
-Matrix Centroid_Poligon(Matrix Poligon)
+Matrix centroid__MatrixLib__(Matrix Poligon)
 /*! 
  * This function returns the centroid of a \a Poligon and the area.
  */
@@ -55,19 +55,19 @@ Matrix Centroid_Poligon(Matrix Poligon)
   /* Asign the number of vertex and check it  */
   N_vertex = Poligon.N_rows; 
   if(N_vertex<3){
-    puts("Error in Centroid_Poligon() : Wrong number of vertex !!!");
+    puts("Error in centroid__MatrixLib__() : Wrong number of vertex !!!");
     exit(EXIT_FAILURE);
   }
 
   /* Asign the number of dimensions and check it */
   N_dimensions = Poligon.N_cols;
   if(N_dimensions != 2){
-    puts("Error in Centroid_Poligon() : Wrong number of dimensions !!!");
+    puts("Error in centroid__MatrixLib__() : Wrong number of dimensions !!!");
     exit(EXIT_FAILURE);
   }
   
   /* Allocate the array for the centroid */
-  C_Poligon = MatAllocZ(1,N_dimensions);
+  C_Poligon = allocZ__MatrixLib__(1,N_dimensions);
   
   /* Initialize the area of the poligon */
   C_Poligon.n = 0;
@@ -108,7 +108,7 @@ Matrix Centroid_Poligon(Matrix Poligon)
 
 /*********************************************************************/
 
-int InOut_Poligon(Matrix X_Point, Matrix Poligon)
+int inout__MatrixLib__(Matrix X_Point, Matrix Poligon)
 /*! 
  * Check if a point is or not (1/0) inside of a Poligon.
  * Inputs :
@@ -119,8 +119,8 @@ int InOut_Poligon(Matrix X_Point, Matrix Poligon)
   /* By default, we suppose that the point is in the poligon */
   int InOut = 1;
 
-  Matrix a = MatAllocZ(3,1);
-  Matrix b = MatAllocZ(3,1);
+  Matrix a = allocZ__MatrixLib__(3,1);
+  Matrix b = allocZ__MatrixLib__(3,1);
   Matrix c;
   Matrix n;
   Matrix nxc;
@@ -132,7 +132,7 @@ int InOut_Poligon(Matrix X_Point, Matrix Poligon)
   b.nV[0] = Poligon.nM[Poligon.N_rows-1][0] - Poligon.nM[0][0];
   b.nV[1] = Poligon.nM[Poligon.N_rows-1][1] - Poligon.nM[0][1];
   b.nV[2] = 0;
-  n = Vectorial_prod(a,b);
+  n = vectorial_product__MatrixLib__(a,b);
   n.N_rows = 1;
   n.N_cols = 3;
 
@@ -147,9 +147,9 @@ int InOut_Poligon(Matrix X_Point, Matrix Poligon)
   
   for(int i = 0 ; i<Poligon.N_rows-1 ; i++){
 
-    c = Vectorial_prod(a,b);
-    nxc = Scalar_prod(n,c);
-    FreeMat(c);
+    c = vectorial_product__MatrixLib__(a,b);
+    nxc = scalar_product__MatrixLib__(n,c);
+    free__MatrixLib__(c);
 
     if(nxc.n < -TOL_InOut){
       InOut = 0;
@@ -167,43 +167,23 @@ int InOut_Poligon(Matrix X_Point, Matrix Poligon)
   }
 
   /* Last check */
-  c = Vectorial_prod(a,b);
-  nxc = Scalar_prod(n,c);
+  c = vectorial_product__MatrixLib__(a,b);
+  nxc = scalar_product__MatrixLib__(n,c);
   if(nxc.n < -TOL_InOut){
     InOut = 0;
   }
 
-  FreeMat(a);
-  FreeMat(b);
-  FreeMat(c);
-  FreeMat(n);
+  free__MatrixLib__(a);
+  free__MatrixLib__(b);
+  free__MatrixLib__(c);
+  free__MatrixLib__(n);
 
   return InOut;
 }
 
 /*********************************************************************/
 
-double SignumFunct(double x)
-/*
-  
-*/
-{
- 
-  if(x > 0){
-    return 1;
-  }
-  else if (x < 0) {
-    return -1;
-  }
-  else {
-    return 0;
-  }
-  
-}
-
-/*********************************************************************/
-
-Matrix SolvePolynomial(Matrix Coeffs)
+Matrix solve_polynomial__MatrixLib__(Matrix Coeffs)
 /*
   Solve this kind of polinom : 
   a*x^2  + b*x + c = 0
@@ -215,7 +195,7 @@ Matrix SolvePolynomial(Matrix Coeffs)
 */
 {
   if( (Coeffs.N_rows > 1) && (Coeffs.N_cols > 1) ){
-    printf("%s : %s \n","Error in SolvePolynomial",
+    printf("%s : %s \n","Error in solve_polynomial__MatrixLib__",
 	   "I am not able to solve a system !!!");
     exit(EXIT_FAILURE);
   }
@@ -225,13 +205,13 @@ Matrix SolvePolynomial(Matrix Coeffs)
 
   if(N_Coeffs == 1){
     printf(" %s : %s \n ",
-	   "Error in SolvePolynomial()",
+	   "Error in solve_polynomial__MatrixLib__()",
 	   "Dummy polynomial of order 0");
     exit(EXIT_FAILURE);
   }
   if(N_Coeffs == 2){
     printf(" %s : %s \n ",
-	   "Error in SolvePolynomial()",
+	   "Error in solve_polynomial__MatrixLib__()",
 	   "Dummy polynomial of order 1");
     exit(EXIT_FAILURE);
   }
@@ -246,14 +226,14 @@ Matrix SolvePolynomial(Matrix Coeffs)
     b = Coeffs.nV[1];
     c = Coeffs.nV[2];
     
-    Solution = MatAlloc(2,1);
+    Solution = alloc__MatrixLib__(2,1);
     aux = b*b - 4*a*c; 
     if(fabs(aux)<TOL_zero){
       aux = 0.0;
     }
     else if(aux<TOL_zero){
       printf("%s : %s -> %f \n",
-	     "Error in SolvePolynomial()",
+	     "Error in solve_polynomial__MatrixLib__()",
 	     "Imaginary solutions not implemented",
 	     aux);
       exit(EXIT_FAILURE);
@@ -273,7 +253,7 @@ Matrix SolvePolynomial(Matrix Coeffs)
     break;
   default :
     printf(" %s : %s \n ",
-	   "Error in SolvePolynomial() ",
+	   "Error in solve_polynomial__MatrixLib__() ",
 	   "I am only able to solve 2 order polynomials !");
     exit(EXIT_FAILURE);
   }
@@ -284,11 +264,11 @@ Matrix SolvePolynomial(Matrix Coeffs)
 
 /*********************************************************************/
 
-Matrix get_nurbs_distance(Matrix NURBS){
+Matrix nurbs_distance__MatrixLib__(Matrix NURBS){
 
   int Ndim = NumberDimensions;
   int Nnodes = NURBS.N_rows;  
-  Matrix Distance = MatAllocZ(Nnodes,1);
+  Matrix Distance = allocZ__MatrixLib__(Nnodes,1);
   double aux;
 
   for(int i = 0 ; i<Nnodes ; i++){
@@ -303,7 +283,7 @@ Matrix get_nurbs_distance(Matrix NURBS){
 
 /*********************************************************************/
 
-double Distance(Matrix End, Matrix Init)
+double point_distance__MatrixLib__(Matrix End, Matrix Init)
 /*
   Distance between two points.
 */
@@ -313,7 +293,7 @@ double Distance(Matrix End, Matrix Init)
   if((End.N_rows != Init.N_rows) ||
      (End.N_cols != Init.N_cols)){
     printf("%s : %s \n",
-	   "Error in Distance",
+	   "Error in point_distance__MatrixLib__",
 	   "Inputs arrays are not equal");
     exit(EXIT_FAILURE);
   }

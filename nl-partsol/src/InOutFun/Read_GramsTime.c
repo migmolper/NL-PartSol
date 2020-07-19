@@ -4,9 +4,6 @@
 /*
   Call global variables
 */
-char * TimeIntegrationScheme;
-int NumTimeStep;
-double DeltaTimeStep;
 double SpectralRadius;
 double CFL; 
 /**********************************************************************/

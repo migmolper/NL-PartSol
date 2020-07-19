@@ -1,33 +1,38 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <math.h>
+#include "nl-partsol.h"
 
 /*************************************************************/
 
-Tensor alloc_Tensor(int Order)
+Tensor alloc__TensorLib__(int Order)
 {
+  int Ndim = NumberDimensions;
   /* Define output */
   Tensor A;
   /* Swith cases */
-    switch(Order){
-    case 0:
-      fprintf(stderr,"%s : %s !!! \n",
-	      "Error in alloc_Tensor()",
-	      "Not posible to allocate a scalar");
-      exit(EXIT_FAILURE);       
-    case 1:
-      A.Order = 1;
-      A.n = malloc(sizeof(double[3]));  
-      break;
-    case 2:
-      A.Order = 2;
-      A.N[0] = malloc(sizeof(double[3]));
-      A.N[1] = malloc(sizeof(double[3]));
-      A.N[2] = malloc(sizeof(double[3]));  
-      break;
+  switch(Order){
+  case 0:
+    fprintf(stderr,"%s : %s !!! \n",
+	    "Error in alloc__TensorLib__()",
+	    "Not posible to allocate a scalar");
+    exit(EXIT_FAILURE);       
+  case 1:
+    A.Order = 1;
+    A.n = (double *)malloc(sizeof(double[Ndim]));
+    for(int i = 0 ; i<Ndim ; i++){
+      A.n[i] = 0.0;
+    }
+    break;
+  case 2:
+    A.Order = 2;
+    for(int i = 0 ; i<Ndim ; i++){
+      A.N[i] = (double *)malloc(sizeof(double[Ndim]));
+      for(int j = 0 ; j<Ndim ; j++){
+	A.N[i][j] = 0.0;
+      }
+    }
+    break;
     default :
       fprintf(stderr,"%s : %s \n",
-	      "Error in alloc_Tensor()",
+	      "Error in alloc__TensorLib__()",
 	      "Invalird order of the tensor");
       exit(EXIT_FAILURE); 
     }
@@ -36,15 +41,16 @@ Tensor alloc_Tensor(int Order)
 
 /*************************************************************/
 
-Tensor memory_to_Tensor(double * A_mem, int Order)
+Tensor memory_to_tensor__TensorLib__(double * A_mem, int Order)
 {
+  long Ndim = NumberDimensions;
   /* Define output */
   Tensor A_tens;
   /* Swith cases */
   switch(Order){
   case 0:
     fprintf(stderr,"%s : %s !!! \n",
-	    "Error in memory_to_Tensor()",
+	    "Error in memory_to_tensor__TensorLib__()",
 	    "Tensor type not include scalar properties");
     exit(EXIT_FAILURE);       
   case 1:
@@ -53,13 +59,13 @@ Tensor memory_to_Tensor(double * A_mem, int Order)
     break;
   case 2:
     A_tens.Order = 2;
-    A_tens.N[0] = A_mem;
-    A_tens.N[1] = A_mem+3;
-    A_tens.N[2] = A_mem+6;
+    for(long i = 0 ; i<Ndim ; i++){
+      A_tens.N[i] = A_mem+i*Ndim;
+    }
     break;
   default :
     fprintf(stderr,"%s : %s \n",
-	    "Error in memory_to_Tensor()",
+	    "Error in memory_to_tensor__TensorLib__()",
 	    "Invalird order of the tensor");
     exit(EXIT_FAILURE); 
   }
@@ -69,25 +75,27 @@ Tensor memory_to_Tensor(double * A_mem, int Order)
 
 /*************************************************************/
 
-void free_Tensor(Tensor A)
+void free__TensorLib__(Tensor A)
 {
+  int Ndim = NumberDimensions;
+  
   switch(A.Order){
     case 0:
       fprintf(stderr,"%s : %s !!! \n",
-	      "Error in free_Tensor()",
+	      "Error in free__TensorLib__()",
 	      "Not posible to free a scalar");
       exit(EXIT_FAILURE);       
     case 1:
       free(A.n);
       break;
     case 2:
-      free(A.N[0]);
-      free(A.N[1]);
-      free(A.N[2]);
+      for(int i = 0 ; i<Ndim ; i++){
+	free(A.N[i]);
+      }
       break;
     default :
       fprintf(stderr,"%s : %s \n",
-	      "Error in free_Tensor()",
+	      "Error in free__TensorLib__()",
 	      "Invalird order of the tensor");
       exit(EXIT_FAILURE); 
     }
@@ -95,18 +103,20 @@ void free_Tensor(Tensor A)
 
 /*************************************************************/
 
-double get_I1_Of(Tensor A)
+double I1__TensorLib__(Tensor A)
 {
+  int Ndim = NumberDimensions;
   /* Define output */
-  double I1;
+  double I1 = 0;
   /* Check if is the order is order 2 */
-  if(A.Order == 2){  
-    I1 =
-      A.N[0][0] + A.N[1][1] + A.N[2][2];
+  if(A.Order == 2){
+    for(int i = 0 ; i<Ndim ; i++){
+      I1 += A.N[i][i];
+    }
   }
   else{
     fprintf(stderr,"%s : %s !!! \n",
-	    "Error in get_I1_Of()",
+	    "Error in I1__TensorLib__()",
 	    "The input should be of order 2");
     exit(EXIT_FAILURE);    
   }
@@ -115,23 +125,27 @@ double get_I1_Of(Tensor A)
 
 /*************************************************************/
 
-double get_I2_Of(Tensor A)
+double I2__TensorLib__(Tensor A)
 {
+  int Ndim = NumberDimensions;  
   /* Define output */
-  double I2;
+  double I2 = 0;
   /* Check if is the order is order 2 */
-  if(A.Order == 2){  
-    I2 =
-      A.N[0][0]*A.N[1][1] +
-      A.N[1][1]*A.N[2][2] +
-      A.N[0][0]*A.N[2][2] -
-      A.N[0][1]*A.N[1][0] -
-      A.N[1][2]*A.N[2][3] -
-      A.N[0][2]*A.N[2][0];
+  if(A.Order == 2){
+    if(Ndim == 3){
+      I2 =
+	A.N[0][0]*A.N[1][1] - A.N[0][1]*A.N[1][0] +
+	A.N[1][1]*A.N[2][2] - A.N[1][2]*A.N[2][1] +
+	A.N[0][0]*A.N[2][2] - A.N[2][0]*A.N[0][2];
+    }
+    if(Ndim == 2){
+      I2 =
+	A.N[0][0]*A.N[1][1] - A.N[0][1]*A.N[1][0];
+    }
   }
   else{
     fprintf(stderr,"%s : %s !!! \n",
-	    "Error in get_I2_Of()",
+	    "Error in I2__TensorLib__()",
 	    "The input should be of order 2");
     exit(EXIT_FAILURE);    
   }
@@ -140,23 +154,30 @@ double get_I2_Of(Tensor A)
 
 /*************************************************************/
 
-double get_I3_Of(Tensor A)
+double I3__TensorLib__(Tensor A)
 {
+  int Ndim = NumberDimensions;  
   /* Define output */
-  double I3;
+  double I3 = 0;
   /* Check if is the order is order 2 */
-  if(A.Order == 2){  
-    I3 =
-      A.N[0][0]*A.N[1][1]*A.N[2][2] - 
-      A.N[0][0]*A.N[1][2]*A.N[2][1] + 
-      A.N[0][1]*A.N[1][2]*A.N[2][0] - 
-      A.N[0][1]*A.N[1][0]*A.N[2][2] + 
-      A.N[0][2]*A.N[1][0]*A.N[2][1] - 
-      A.N[0][2]*A.N[1][1]*A.N[2][0] ; 
+  if(A.Order == 2){
+    if(Ndim == 3){
+      I3 =
+	A.N[0][0]*A.N[1][1]*A.N[2][2] - 
+	A.N[0][0]*A.N[1][2]*A.N[2][1] + 
+	A.N[0][1]*A.N[1][2]*A.N[2][0] - 
+	A.N[0][1]*A.N[1][0]*A.N[2][2] + 
+	A.N[0][2]*A.N[1][0]*A.N[2][1] - 
+	A.N[0][2]*A.N[1][1]*A.N[2][0] ; 
+    }
+    if(Ndim == 2){
+      I3 =
+	A.N[0][0]*A.N[1][1] - A.N[0][1]*A.N[1][0];
+    }
   }
   else{
     fprintf(stderr,"%s : %s !!! \n",
-	    "Error in get_I3_Of()",
+	    "Error in I3__TensorLib__()",
 	    "The input should be of order 2");
     exit(EXIT_FAILURE);    
   }
@@ -165,17 +186,17 @@ double get_I3_Of(Tensor A)
 
 /*************************************************************/
 
-double get_J1_Of(Tensor A)
+double J1__TensorLib__(Tensor A)
 {
   /* Define output */
   double J1;
   /* Check if is the order is order 2 */
   if(A.Order == 2){  
-    J1 = get_I1_Of(A);
+    J1 = I1__TensorLib__(A);
   }
   else{
     fprintf(stderr,"%s : %s !!! \n",
-	    "Error in get_J1_Of()",
+	    "Error in J1__TensorLib__()",
 	    "The input should be of order 2");
     exit(EXIT_FAILURE);    
   }
@@ -184,19 +205,19 @@ double get_J1_Of(Tensor A)
 
 /*************************************************************/
 
-double get_J2_Of(Tensor A)
+double J2__TensorLib__(Tensor A)
 {
   /* Define output */
   double J2;
   /* Check if is the order is order 2 */
   if(A.Order == 2){  
-    double I1 = get_I1_Of(A);
-    double I2 = get_I2_Of(A);
+    double I1 = I1__TensorLib__(A);
+    double I2 = I2__TensorLib__(A);
     J2 = pow(I1,2) - 2*I2;
   }
   else{
     fprintf(stderr,"%s : %s !!! \n",
-	    "Error in get_J2_Of()",
+	    "Error in J2__TensorLib__()",
 	    "The input should be of order 2");
     exit(EXIT_FAILURE);    
   }
@@ -205,20 +226,20 @@ double get_J2_Of(Tensor A)
 
 /*************************************************************/
 
-double get_J3_Of(Tensor A)
+double J3__TensorLib__(Tensor A)
 {
   /* Define output */
   double J3;
   /* Check if is the order is order 2 */
   if(A.Order == 2){  
-    double I1 = get_I1_Of(A);
-    double I2 = get_I2_Of(A);
-    double I3 = get_I3_Of(A);
+    double I1 = I1__TensorLib__(A);
+    double I2 = I2__TensorLib__(A);
+    double I3 = I3__TensorLib__(A);
     J3 = pow(I1,3) - 3*I1*I2 + 3*I3;
   }
   else{
     fprintf(stderr,"%s : %s !!! \n",
-	    "Error in get_J3_Of()",
+	    "Error in J3__TensorLib__()",
 	    "The input should be of order 2");
     exit(EXIT_FAILURE);    
   }
@@ -227,22 +248,60 @@ double get_J3_Of(Tensor A)
 
 /*************************************************************/
 
-double get_EuclideanNorm_Of(Tensor A)
+Tensor Eigenvalues__TensorLib__(Tensor A)
 {
+  /* Auxiliar variables */
+  int Ndim = NumberDimensions;
+  double I1, I2, I3;
+  /* Define output */
+  Tensor w = alloc__TensorLib__(1);
+  /* Check if is the order is order 2 */
+  if(A.Order == 2){  
+    if(Ndim == 2){      
+      I1 = I1__TensorLib__(A);
+      I2 = I2__TensorLib__(A);
+      w.n[0] = 0.5*(I1+sqrt(DMAX(0,I1*I1-4*I2)));
+      w.n[1] = 0.5*(I1-sqrt(DMAX(0,I1*I1-4*I2)));
+    }
+    if(Ndim == 3){      
+      I1 = I1__TensorLib__(A);
+      I2 = I2__TensorLib__(A);
+      I3 = I3__TensorLib__(A);
+      fprintf(stderr,"%s : %s !!! \n",
+	      "Error in Eigenvalues__TensorLib__()",
+	      "3D cases are not implemented");
+      exit(EXIT_FAILURE);          
+    }
+  }
+  else{
+    fprintf(stderr,"%s : %s !!! \n",
+	    "Error in Eigenvalues__TensorLib__()",
+	    "The input should be of order 2");
+    exit(EXIT_FAILURE);    
+  }
+
+  return w;
+}
+
+/*************************************************************/
+
+double EuclideanNorm__TensorLib__(Tensor A)
+{
+  int Ndim = NumberDimensions;
   /* Define output */
   double Out;
   /* Check if the input is a first order tensor */
   if(A.Order == 1){
     /* Compute norm */    
     double Aux = 0;
-    for(int i = 0 ; i<3 ; i++){
-      Aux += A.n[i]*A.n[i] ;
+    for(int i = 0 ; i<Ndim ; i++){
+      Aux += DSQR(A.n[i]);
     }
     Out = pow(Aux,0.5);
   }
   else{
     fprintf(stderr,"%s : %s !!! \n",
-	    "Error in get_EuclideanNorm_Of()",
+	    "Error in EuclideanNorm__TensorLib__()",
 	    "The input should be of order 1");
     exit(EXIT_FAILURE);    
   }
@@ -251,10 +310,11 @@ double get_EuclideanNorm_Of(Tensor A)
 
 /*************************************************************/
 
-Tensor get_I()
+Tensor Identity__TensorLib__()
 {
-  Tensor I = alloc_Tensor(2);
-  for(int i = 0 ; i<3 ; i++){
+  int Ndim = NumberDimensions;
+  Tensor I = alloc__TensorLib__(2);
+  for(int i = 0 ; i<Ndim ; i++){
     I.N[i][i] = 1;
   }
   return I;
@@ -262,44 +322,43 @@ Tensor get_I()
 
 /*************************************************************/
 
-
-Tensor get_Inverse_Of(Tensor A)
+Tensor Inverse__TensorLib__(Tensor A)
 {
+  int Ndim = NumberDimensions;
   /* Allocate the output */
-  Tensor Am1 = alloc_Tensor(2);
+  Tensor Am1 = alloc__TensorLib__(2);
   /* Check if the input is a second order tensor */
   if (A.Order == 2){  
     /* Get the determinant of the matrix */
-    double detA = get_I3_Of(A);
+    double detA = I3__TensorLib__(A);
     if(detA == 0){
       fprintf(stderr,"%s : %s !!! \n",
-	      "Error in get_Inverse_Of()",
+	      "Error in Inverse__TensorLib__()",
 	      "Determinant null");
       exit(EXIT_FAILURE);    
     }
-    /* Compute each component  */
-    Am1.N[0][0] =
-      (double)1/detA*(A.N[1][1]*A.N[2][2] - A.N[1][2]*A.N[2][1]);
-    Am1.N[0][1] =
-      -(double)1/detA*(A.N[0][1]*A.N[2][2] - A.N[0][2]*A.N[2][1]);
-    Am1.N[0][2] =
-      (double)1/detA*(A.N[0][1]*A.N[1][2] - A.N[0][2]*A.N[1][1]);
-    Am1.N[1][0] =
-      -(double)1/detA*(A.N[1][0]*A.N[2][2] - A.N[1][2]*A.N[2][0]);
-    Am1.N[1][1] =
-      (double)1/detA*(A.N[0][0]*A.N[2][2] - A.N[0][2]*A.N[2][0]);
-    Am1.N[1][2] =
-      -(double)1/detA*(A.N[0][0]*A.N[1][2] - A.N[0][2]*A.N[1][0]);
-    Am1.N[2][0] =
-      (double)1/detA*(A.N[1][0]*A.N[2][1] - A.N[1][1]*A.N[2][0]);
-    Am1.N[2][1] =
-      -(double)1/detA*(A.N[0][0]*A.N[2][1] - A.N[0][1]*A.N[2][0]);
-    Am1.N[2][2] =
-      (double)1/detA*(A.N[0][0]*A.N[1][1] - A.N[0][1]*A.N[1][0]);
+    if(Ndim == 3){
+      /* Compute each component  */
+      Am1.N[0][0] = + (double)1/detA*(A.N[1][1]*A.N[2][2] - A.N[1][2]*A.N[2][1]);
+      Am1.N[0][1] = - (double)1/detA*(A.N[0][1]*A.N[2][2] - A.N[0][2]*A.N[2][1]);
+      Am1.N[0][2] = + (double)1/detA*(A.N[0][1]*A.N[1][2] - A.N[0][2]*A.N[1][1]);
+      Am1.N[1][0] = - (double)1/detA*(A.N[1][0]*A.N[2][2] - A.N[1][2]*A.N[2][0]);
+      Am1.N[1][1] = + (double)1/detA*(A.N[0][0]*A.N[2][2] - A.N[0][2]*A.N[2][0]);
+      Am1.N[1][2] = - (double)1/detA*(A.N[0][0]*A.N[1][2] - A.N[0][2]*A.N[1][0]);
+      Am1.N[2][0] = + (double)1/detA*(A.N[1][0]*A.N[2][1] - A.N[1][1]*A.N[2][0]);
+      Am1.N[2][1] = - (double)1/detA*(A.N[0][0]*A.N[2][1] - A.N[0][1]*A.N[2][0]);
+      Am1.N[2][2] = + (double)1/detA*(A.N[0][0]*A.N[1][1] - A.N[0][1]*A.N[1][0]);
+    }
+    if(Ndim == 2){
+      Am1.N[0][0] = + (double)1/detA*A.N[1][1];
+      Am1.N[0][1] = - (double)1/detA*A.N[1][0];
+      Am1.N[1][0] = - (double)1/detA*A.N[0][1];
+      Am1.N[1][1] = + (double)1/detA*A.N[0][0]; 
+    }    
   }
   else{
     fprintf(stderr,"%s : %s !!! \n",
-	    "Error in get_Inverse_Of()",
+	    "Error in Inverse__TensorLib__()",
 	    "The input should be of order 2");
     exit(EXIT_FAILURE);    
   }  
@@ -309,22 +368,23 @@ Tensor get_Inverse_Of(Tensor A)
 
 /*************************************************************/
 
-Tensor get_Transpose_Of(Tensor A)
+Tensor transpose__TensorLib__(Tensor A)
 {
+  int Ndim = NumberDimensions;
   /* Allocate the output */
-  Tensor AT = alloc_Tensor(2);  
+  Tensor AT = alloc__TensorLib__(2);  
   /* Check if the input is a second order tensor */
   if (A.Order == 2){
     /* Get the transpose */
-    for(int i = 0 ; i < 3 ; i++){
-      for(int j = 0 ; j < 3 ; j++){
+    for(int i = 0 ; i < Ndim ; i++){
+      for(int j = 0 ; j < Ndim ; j++){
 	AT.N[i][j] = A.N[j][i];
       }
     }
   }
   else{
     fprintf(stderr,"%s : %s !!! \n",
-	    "Error in get_Transpose_Of()",
+	    "Error in transpose__TensorLib__()",
 	    "The input should be of order 2");
     exit(EXIT_FAILURE);    
   }  
@@ -334,29 +394,29 @@ Tensor get_Transpose_Of(Tensor A)
 
 /*************************************************************/
 
-double get_innerProduct_Of(Tensor A, Tensor B)
+double inner_product__TensorLib__(Tensor A, Tensor B)
 {
 
+  int Ndim = NumberDimensions;
   /* Variable declaration output matrix */
   double AdotB = 0;
-
   /* Inner product of second order tensors */
   if ( (A.Order == 2) && (B.Order == 2) ) { 
-    for(int i = 0 ; i < 3 ; i++){
-      for(int j = 0 ; j < 3 ; j++){
+    for(int i = 0 ; i < Ndim ; i++){
+      for(int j = 0 ; j < Ndim ; j++){
 	  AdotB += A.N[i][j]*B.N[i][j];
       }
     }
   }
   /* Inner product of first order tensors */
   else if( (A.Order == 1) && (B.Order == 1) ){
-    for(int i = 0 ; i < 3 ; i++){
+    for(int i = 0 ; i < Ndim ; i++){
       AdotB += A.n[i]*B.n[i];
     }
   }
   else{
     fprintf(stderr,"%s : %s !!! \n",
-	    "Error in get_innerProduct_Of()",
+	    "Error in inner_product__TensorLib__()",
 	    "The input should be two tensors or equal order");
     exit(EXIT_FAILURE);        
   }
@@ -367,10 +427,10 @@ double get_innerProduct_Of(Tensor A, Tensor B)
 
 /*************************************************************/
 
-Tensor get_vectorProduct_Of(Tensor a, Tensor b)
+Tensor vector_product__TensorLib__(Tensor a, Tensor b)
 {
   /* Allocate output */
-  Tensor axb = alloc_Tensor(1);
+  Tensor axb = alloc__TensorLib__(1);
   /* Check if the input are a first order tensor */
   if ((a.Order == 1) && (b.Order == 1)){
     /* Operate vetor product */
@@ -380,7 +440,7 @@ Tensor get_vectorProduct_Of(Tensor a, Tensor b)
   }
   else{
     fprintf(stderr,"%s : %s !!! \n",
-	    "Error in get_vectorProduct_Of()",
+	    "Error in vector_product__TensorLib__()",
 	    "The input should be two tensors of first order");
     exit(EXIT_FAILURE);    
   }
@@ -390,22 +450,23 @@ Tensor get_vectorProduct_Of(Tensor a, Tensor b)
 
 /*************************************************************/
 
-Tensor get_dyadicProduct_Of(Tensor a, Tensor b)
+Tensor dyadic_Product__TensorLib__(Tensor a, Tensor b)
 {
+  int Ndim = NumberDimensions;
   /* Tensor declaration */
-  Tensor aob = alloc_Tensor(2);
+  Tensor aob = alloc__TensorLib__(2);
   /* Check if the input are a first order tensor */
   if ((a.Order == 1) && (b.Order == 1)){
     /* Operate tensor product */
-    for(int i = 0 ; i<3 ; i++){
-      for(int j = 0 ; j<3 ; j++){
+    for(int i = 0 ; i<Ndim ; i++){
+      for(int j = 0 ; j<Ndim ; j++){
 	aob.N[i][j] = a.n[i]*b.n[j];
       } 
     }
   }
   else{
     fprintf(stderr,"%s : %s !!! \n",
-	    "Error in get_dyadicProduct_Of()",
+	    "Error in dyadic_Product__TensorLib__()",
 	    "The input should be two tensors of first order");
     exit(EXIT_FAILURE);    
   }
@@ -415,18 +476,19 @@ Tensor get_dyadicProduct_Of(Tensor a, Tensor b)
 
 /*************************************************************/
 
-Tensor get_firstOrderContraction_Of(Tensor A, Tensor b)
+Tensor vector_linear_mapping__TensorLib__(Tensor A, Tensor b)
 {
+  int Ndim = NumberDimensions;
   /* Tensor declaration */
-  Tensor Adotb = alloc_Tensor(1);
+  Tensor Adotb = alloc__TensorLib__(1);
   /* Check in the input its is ok */
   if ((A.Order == 2) && (b.Order == 1)){
     /* Auxiliar variable */
     double Aux;
     /* Operate tensors */
-    for(int i = 0 ; i<3 ; i++){
+    for(int i = 0 ; i<Ndim ; i++){
       Aux = 0;
-      for(int j = 0 ; j<3 ; j++){
+      for(int j = 0 ; j<Ndim ; j++){
 	Aux += A.N[i][j]*b.n[j];
       }
       Adotb.n[i] = Aux;
@@ -434,7 +496,7 @@ Tensor get_firstOrderContraction_Of(Tensor A, Tensor b)
   }
   else{
     fprintf(stderr,"%s : %s !!! \n",
-	    "Error in get_firstOrderContraction_Of()",
+	    "Error in vector_linear_mapping__TensorLib__()",
 	    "The input should be 2ord tensor and a 1rd tensor");
     exit(EXIT_FAILURE);
   }
@@ -442,7 +504,59 @@ Tensor get_firstOrderContraction_Of(Tensor A, Tensor b)
   return Adotb;
 }
 
+/*************************************************************/
+
+Tensor matrix_product__TensorLib__(Tensor A, Tensor B)
+{
+  int Ndim = NumberDimensions;  
+  Tensor A_x_B = alloc__TensorLib__(2);
+
+  if ( (A.Order == 2) && (B.Order == 2) )
+    { 
+    for(int i = 0 ; i < Ndim  ; i++)
+      {
+	for(int j = 0 ; j < Ndim  ; j++)
+	  {
+	    for(int k = 0 ; k < Ndim  ; k++)
+	      {
+		A_x_B.N[i][j] += A.N[i][k]*B.N[k][j];
+	      }
+	  }
+      }
+  }
+  else
+    {
+      fprintf(stderr,"%s : %s !!! \n",
+	      "Error in matrix_product__TensorLib__()",
+	      "The input should be two second order tensors");
+      exit(EXIT_FAILURE);        
+    }
+  
+  return A_x_B;
+}
 
 
+/*************************************************************/
+
+
+Tensor Convex_combination__TensorLib__(Tensor F_n1,Tensor F_n,double alpha)
+{
+  /* Define output */
+  Tensor F_alpha = alloc__TensorLib__(2);
+  /* Define the number of dimensions */
+  int Ndim = NumberDimensions;
+
+  for(int i = 0 ; i < Ndim  ; i++)
+    {
+      for(int j = 0 ; j < Ndim  ; j++)
+	{
+	  F_alpha.N[i][j] = alpha*F_n1.N[i][j] + (1-alpha)*F_n.N[i][j];
+	}
+    }
+
+  return F_alpha;
+}
+
+/*************************************************************/
 
 

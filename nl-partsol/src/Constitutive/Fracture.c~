@@ -20,7 +20,7 @@ static void Eigenerosion(int p, Fields Phi, Material MatPro,
 {
 
   /* Read the required fields */
-  Matrix ji = Phi.ji;
+  Matrix chi = Phi.chi;
   Matrix W = Phi.W;
   Matrix Mass = Phi.mass;
   Matrix Rho = Phi.rho;
@@ -39,13 +39,13 @@ static void Eigenerosion(int p, Fields Phi, Material MatPro,
   /*!
     For the current particle get first principal stress 
   */	
-  Stress_p = memory_to_Tensor(Stress.nM[p], 2);
-  EV_Stress_p = get_Eigenvalues_Of(Stress_p);
+  Stress_p = memory_to_tensor__TensorLib__(Stress.nM[p], 2);
+  EV_Stress_p = Eigenvalues__TensorLib__(Stress_p);
 
   /*!
     Non broken GP Only traction 
   */ 
-  if((ji.nV[p] < 1) && (EV_Stress_p.n[0]>0))
+  if((chi.nV[p] < 1) && (EV_Stress_p.n[0]>0))
     { 
 
       /*!
@@ -95,7 +95,7 @@ static void Eigenerosion(int p, Fields Phi, Material MatPro,
 	  */
 	  V_p += V_q;
 
-	  if(ji.nV[q] < 1)
+	  if(chi.nV[q] < 1)
 	    {
 	      /*!
 		Get internal work of particle q 
@@ -124,7 +124,7 @@ static void Eigenerosion(int p, Fields Phi, Material MatPro,
       */
       if(G_p > Gf_p)
 	{
-	  ji.nV[p] = 1.0;
+	  chi.nV[p] = 1.0;
 	}
       
     }
@@ -132,7 +132,7 @@ static void Eigenerosion(int p, Fields Phi, Material MatPro,
   /*!
     Free eigenvalues 
   */
-  free_Tensor(EV_Stress_p);
+  free__TensorLib__(EV_Stress_p);
     
   
 }
@@ -158,8 +158,9 @@ static void Eigensoftening(int p, Fields Phi, Material MatPro, ChainPtr * Beps)
 
   int Ndim = NumberDimensions;
   /* Read the required fields */
-  Matrix ji = Phi.ji;
+  Matrix chi = Phi.chi;
   Matrix Mass = Phi.mass;
+  Matrix Rho = Phi.rho;
   Matrix Stress = Phi.Stress;
   Matrix Strain = Phi.Strain;
   Matrix Strain_If = Phi.Strain_If;
@@ -171,7 +172,7 @@ static void Eigensoftening(int p, Fields Phi, Material MatPro, ChainPtr * Beps)
   /* Material properties of the eigensoftening algorithm */
   double ft_p, Wc_p, heps_p;
     
-  double m_p, sum_p, Seps_p, ji_p;
+  double m_p, sum_p, Stress_eps_p, chi_p, Strain_eps_f_p;
   double m_q;
   int * Beps_p;
   int NumBeps_p;
@@ -187,7 +188,7 @@ static void Eigensoftening(int p, Fields Phi, Material MatPro, ChainPtr * Beps)
   Wc_p = MatPro.Wc;
     
   /* Only for intact particles */
-  if((ji.nV[p] == 0.0) && (Strain_If.nV[p] == 0.0))
+  if((chi.nV[p] == 0.0) && (Strain_If.nV[p] == 0.0))
     {
 
       /*!
@@ -204,15 +205,15 @@ static void Eigensoftening(int p, Fields Phi, Material MatPro, ChainPtr * Beps)
 	  Beps_p = Set_to_Pointer(Beps[p],NumBeps_p);    
       
 	  /*!
-	    For the current particle get the mass 
+	    For the current particle get the volume 
 	  */
 	  m_p = Mass.nV[p];
 
 	  /*!
 	    For the current particle get first principal stress 
 	  */	
-	  Stress_p = memory_to_Tensor(Stress.nM[p], 2);
-	  EV_Stress_p = get_Eigenvalues_Of(Stress_p);
+	  Stress_p = memory_to_tensor__TensorLib__(Stress.nM[p], 2);
+	  EV_Stress_p = Eigenvalues__TensorLib__(Stress_p);
       
 	  /*!
 	    Add the first term to the sumation 
@@ -222,7 +223,7 @@ static void Eigensoftening(int p, Fields Phi, Material MatPro, ChainPtr * Beps)
 	  /*!
 	    Free eigenvalues 
 	  */
-	  free_Tensor(EV_Stress_p);
+	  free__TensorLib__(EV_Stress_p);
 
 	  /*!
 	    Loop over the neighbours 
@@ -234,16 +235,17 @@ static void Eigensoftening(int p, Fields Phi, Material MatPro, ChainPtr * Beps)
 		Get the indedx of each particle q close to p 
 	      */
 	      q = Beps_p[j];
-  
-	      if(ji.nV[q] < 1.0)
+
+	      /*!
+		For the current particle get the volume
+		and first principal stress 
+	      */
+	      m_q = Mass.nV[q];
+	      
+	      if(chi.nV[q] != 1.0)
 		{
-		  /*!
-		    For the current particle get the mass
-		    and first principal stress 
-		  */
-		  m_q = Mass.nV[q];
-		  Stress_q = memory_to_Tensor(Stress.nM[q], 2);
-		  EV_Stress_q = get_Eigenvalues_Of(Stress_q);
+		  Stress_q = memory_to_tensor__TensorLib__(Stress.nM[q], 2);
+		  EV_Stress_q = Eigenvalues__TensorLib__(Stress_q);
 	    
 		  /*!
 		    Get sum_p 
@@ -251,11 +253,11 @@ static void Eigensoftening(int p, Fields Phi, Material MatPro, ChainPtr * Beps)
 		  sum_p += m_q*EV_Stress_q.n[0];
 
 		  /* Free eigenvalues */
-		  free_Tensor(EV_Stress_q);	    
+		  free__TensorLib__(EV_Stress_q);	    
 		}
 	
 	      /*!
-		Add mass contribution 
+		Add volumen contribution 
 	      */
 	      m_p += m_q;
 	    }
@@ -266,16 +268,16 @@ static void Eigensoftening(int p, Fields Phi, Material MatPro, ChainPtr * Beps)
 	  /*!
 	    Get the equivalent critical stress 
 	  */
-	  Seps_p = sum_p/m_p;
+	  Stress_eps_p = sum_p/m_p;
 
 	  /*!
 	    Store the principal strain when crack start 
 	  */
-	  if(Seps_p>ft_p)
+	  if(Stress_eps_p>ft_p)
 	    {
 
-	      Strain_p = memory_to_Tensor(Strain.nM[p], 2);
-	      EV_Strain_p = get_Eigenvalues_Of(Strain_p);
+	      Strain_p = memory_to_tensor__TensorLib__(Strain.nM[p], 2);
+	      EV_Strain_p = Eigenvalues__TensorLib__(Strain_p);
 	  	  
 	      /*!
 		Strain during fracture 
@@ -283,7 +285,7 @@ static void Eigensoftening(int p, Fields Phi, Material MatPro, ChainPtr * Beps)
 	      Strain_If.nV[p] = EV_Strain_p.n[0];
 
 	      /* Free eigenvalues */
-	      free_Tensor(EV_Strain_p);	    	  
+	      free__TensorLib__(EV_Strain_p);	    	  
 	    }
 	
 	}
@@ -293,17 +295,18 @@ static void Eigensoftening(int p, Fields Phi, Material MatPro, ChainPtr * Beps)
   /*!
     Compute the damage parameter if the particle is damaged 
   */
-  else if(ji.nV[p] != 1.0)
+  else if(chi.nV[p] != 1.0)
     {
 
-      Strain_p = memory_to_Tensor(Strain.nM[p], 2);
-      EV_Strain_p = get_Eigenvalues_Of(Strain_p);
+      Strain_p = memory_to_tensor__TensorLib__(Strain.nM[p], 2);
+      EV_Strain_p = Eigenvalues__TensorLib__(Strain_p);
 	  	  
       /*!
 	Fracture criterium 
       */
-      ji_p = (EV_Strain_p.n[0]-Strain_If.nV[p])*heps_p/Wc_p;
-      ji.nV[p] = DMIN(1,DMAX(ji_p,ji.nV[p]));
+      Strain_eps_f_p = EV_Strain_p.n[0]-Strain_If.nV[p];
+      chi_p = Strain_eps_f_p*heps_p/Wc_p;
+      chi.nV[p] = DMIN(1,DMAX(chi_p,chi.nV[p]));
 
 
       /*!
@@ -311,11 +314,11 @@ static void Eigensoftening(int p, Fields Phi, Material MatPro, ChainPtr * Beps)
        */
       for(int i = 0 ; i<Ndim*Ndim ; i++)
 	{
-	  Stress.nM[p][i] = (1-ji.nV[p])*Stress.nM[p][i];
+	  Stress.nM[p][i] = (1-chi.nV[p])*Stress.nM[p][i];
 	}
 
       /* Free eigenvalues */
-      free_Tensor(EV_Strain_p);	    	  
+      free__TensorLib__(EV_Strain_p);	    	  
       
     }
   /*!

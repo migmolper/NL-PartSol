@@ -16,7 +16,7 @@ Matrix L2(Matrix X_e){
   }    
 
   /* Definition and allocation */
-  Matrix N_ref =  MatAlloc(1,2);
+  Matrix N_ref =  alloc__MatrixLib__(1,2);
 
   N_ref.nV[0] = 1-X_e.n;
   N_ref.nV[1] = X_e.n;
@@ -33,7 +33,7 @@ Matrix dL2(Matrix X_e){
   }    
 
   /* Definition and allocation */
-  Matrix dNdX_ref = MatAlloc(1,2);
+  Matrix dNdX_ref = alloc__MatrixLib__(1,2);
 
   /* Fill the matrix */
   dNdX_ref.nV[0] = -1;
@@ -57,7 +57,7 @@ This function evaluate the position of the GP in the element, and get it global 
   X_GC_GP.n = N_ref.nV[0]*X_GC_Nodes.nM[0][0] +
     N_ref.nV[1]*X_GC_Nodes.nM[1][0];
 
-  FreeMat(N_ref);
+  free__MatrixLib__(N_ref);
 
   return X_GC_GP;
  
@@ -92,7 +92,7 @@ Matrix Get_F_Ref_L2(Matrix X_NC_GP,Matrix X_GC_Nodes)
     dNdX_Ref_GP.nV[1]*X_GC_Nodes.nM[1][0];
     
   /* 3º Free memory */
-  FreeMat(dNdX_Ref_GP);
+  free__MatrixLib__(dNdX_Ref_GP);
     
 
   return F_Ref;

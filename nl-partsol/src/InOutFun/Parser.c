@@ -42,7 +42,7 @@ int parse(char ** words, char * str, char * delims)
 void generate_route(char * Route_Nodes, char * Name_File)
 {
 
-  char * Name_File_cpy = malloc(strlen(Name_File));
+  char * Name_File_cpy = (char *)malloc((strlen(Name_File) + 1)*sizeof(char));
   int Num_words_route;
   char * Name_Parse[MAXW] = {NULL};
 

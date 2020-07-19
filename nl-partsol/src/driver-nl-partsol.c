@@ -3,7 +3,7 @@
  
   \section Introduction
   This code is devoted to solve non-linear elastodynamic problems
-  using the MPM approach. It is coded and mantained by
+  using the MPM approach. It is programed and mantained by
   Miguel Molinos Pérez (m.molinos@alumnos.upm.es)
   
   \section Installation
@@ -135,6 +135,12 @@ int main(int argc, char * argv[])
     { 
       U_PCE(FEM_Mesh, MPM_Mesh, InitialStep);
     }
+
+  /* Discrete energy momentum method */
+  if(strcmp(TimeIntegrationScheme,"Discrete-Energy-Momentum") == 0 )
+    { 
+      U_Discrete_Energy_Momentum(FEM_Mesh, MPM_Mesh, InitialStep);
+    }
         
   /*********************************************************************/
   /************************* FREE ALL FIELDS ***************************/
@@ -166,7 +172,7 @@ void globalfree(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
 */
 {
   /* Free malloc in FEM_Mesh */
-  FreeMat(FEM_Mesh.Coordinates);
+  free__MatrixLib__(FEM_Mesh.Coordinates);
   free(FEM_Mesh.NumNodesElem);
   free_SetTable(FEM_Mesh.Connectivity,FEM_Mesh.NumElemMesh);
   free(FEM_Mesh.NumNeighbour);
@@ -193,12 +199,12 @@ void globalfree(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
   /* Load * B; */
 
   if(strcmp(ShapeFunctionGP,"uGIMP") == 0){
-    FreeMat(MPM_Mesh.lp);
+    free__MatrixLib__(MPM_Mesh.lp);
   }
   /* Lagrange Multipliers / Beta (Only LME ) */
   if(strcmp(ShapeFunctionGP,"LME") == 0){
-    FreeMat(MPM_Mesh.lambda);
-    FreeMat(MPM_Mesh.Beta);
+    free__MatrixLib__(MPM_Mesh.lambda);
+    free__MatrixLib__(MPM_Mesh.Beta);
   }
       
 }

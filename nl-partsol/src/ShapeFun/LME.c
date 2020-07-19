@@ -53,9 +53,9 @@ void LME_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
   for(int p = 0 ; p<Np ; p++){
 
     /* Get some properties for each particle */ 
-    X_p = get_RowFrom(Ndim,1,MPM_Mesh.Phi.x_GC.nM[p]);
-    Beta_p = get_RowFrom(Ndim,1,MPM_Mesh.Beta.nM[p]);
-    lambda_p = get_RowFrom(Ndim,1,MPM_Mesh.lambda.nM[p]);
+    X_p = memory_to_matrix__MatrixLib__(Ndim,1,MPM_Mesh.Phi.x_GC.nM[p]);
+    Beta_p = memory_to_matrix__MatrixLib__(Ndim,1,MPM_Mesh.Beta.nM[p]);
+    lambda_p = memory_to_matrix__MatrixLib__(Ndim,1,MPM_Mesh.lambda.nM[p]);
 
     /* Loop over the element mesh */
     for(int i = 0 ; i<Nelem ; i++){
@@ -102,7 +102,7 @@ void LME_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 	lambda_p = LME_lambda_NR(Delta_Xip, lambda_p, Beta_p);
 
 	/* Free memory */
-	FreeMat(Delta_Xip);
+	free__MatrixLib__(Delta_Xip);
 
 	break;
       }      
@@ -123,12 +123,12 @@ Matrix LME_Beta(Matrix Beta, Matrix l, double Gamma)
   int Ndim = NumberDimensions;
   int NumNodes_GP = l.N_rows;
   double h = 0;
-  Matrix l_GP_I = get_RowFrom(Ndim,1,NULL);
+  Matrix l_GP_I = memory_to_matrix__MatrixLib__(Ndim,1,NULL);
   
   /* Get the mean distande */
   for(int i = 0 ; i<NumNodes_GP ; i++){
     l_GP_I.nV = l.nM[i];
-    h += Norm_Mat(l_GP_I,2);
+    h += norm__MatrixLib__(l_GP_I,2);
   }
   h = h/NumNodes_GP;
 
@@ -175,13 +175,13 @@ Matrix LME_lambda_NR(Matrix l, Matrix lambda, Matrix Beta)
 
     /* Get the gradient of log(Z) and its norm */
     r = LME_r(l,p);
-    norm_r = Norm_Mat(r,2);
+    norm_r = norm__MatrixLib__(r,2);
 
     /* Get the Hessian of log(Z) */    
     J = LME_J(l,p,r);
 
     /* /\* Check the conditioning number of the Hessian *\/ */
-    /* if (fabs(Cond_Mat(J,TOL_lambda)) > 10){ */
+    /* if (fabs(conditioning__MatrixLib__(J,TOL_lambda)) > 10){ */
     /*   printf(" %s (%s %i) : %s \n", */
     /* 	     "Error in LME_lambda_NR","Iter",NumIter, */
     /* 	     "The Hessian is near to singular matrix"); */
@@ -197,10 +197,10 @@ Matrix LME_lambda_NR(Matrix l, Matrix lambda, Matrix Beta)
     }
 
     /* Free memory */
-    FreeMat(p);
-    FreeMat(r);
-    FreeMat(J);
-    FreeMat(D_lambda);
+    free__MatrixLib__(p);
+    free__MatrixLib__(r);
+    free__MatrixLib__(J);
+    free__MatrixLib__(D_lambda);
     
     if(norm_r > TOL_lambda){
       /* Update the iteration */
@@ -269,9 +269,9 @@ Matrix LME_p(Matrix l, Matrix lambda, Matrix Beta)
   int Ndim = NumberDimensions;
   double Z = 0, Z_m1 = 0;
   Matrix p = /* Vector with the values of the shape-function in the nodes */
-    MatAlloc(1,N_a); 
+    alloc__MatrixLib__(1,N_a); 
   Matrix la = /* Distance to the neighbour (x-x_a) */
-    get_RowFrom(1,Ndim,NULL);
+    memory_to_matrix__MatrixLib__(1,Ndim,NULL);
 
   /* Get Z and the numerator */
   for(int a = 0 ; a<N_a ; a++){
@@ -308,7 +308,7 @@ Matrix LME_r(Matrix l, Matrix p)
   int N_a = l.N_rows;
   int Ndim = NumberDimensions;
   Matrix r /* Value of the gradient */
-    = MatAllocZ(Ndim,1);
+    = allocZ__MatrixLib__(Ndim,1);
 
   /* Fill ''r'' */
   for(int i = 0 ; i<Ndim ; i++){
@@ -340,7 +340,7 @@ Matrix LME_J(Matrix l, Matrix p, Matrix r)
   Matrix J; /* Hessian definition */
   
   /* Allocate Hessian */
-  J = MatAllocZ(Ndim,Ndim);
+  J = allocZ__MatrixLib__(Ndim,Ndim);
 
   /* Fill the Hessian */
   for(int i = 0 ; i<Ndim ; i++){
@@ -375,37 +375,37 @@ Matrix LME_dp(Matrix l, Matrix p)
   /* Definition of some parameters */
   int N_a = l.N_rows;
   int Ndim = NumberDimensions;
-  Matrix dp = MatAllocZ(N_a,Ndim);
+  Matrix dp = allocZ__MatrixLib__(N_a,Ndim);
   Matrix r; /* Gradient of log(Z) */
   Matrix J; /* Hessian of log(Z) */
   Matrix Jm1; /* Inverse of J */
   Matrix Jm1_la; /* Auxiliar vector */
   Matrix la = /* Distance to the neighbour (x-x_a) */
-    get_RowFrom(Ndim,1,NULL); 
+    memory_to_matrix__MatrixLib__(Ndim,1,NULL); 
   
   /* Get the Gradient and the Hessian of log(Z) */
   r = LME_r(l,p);
   J = LME_J(l,p,r);
   
   /* Inverse of the Hessian */
-  Jm1 = Get_Inverse(J);
+  Jm1 = inverse__MatrixLib__(J);
   
   /* Free memory */
-  FreeMat(r);
-  FreeMat(J);
+  free__MatrixLib__(r);
+  free__MatrixLib__(J);
 
   /* Fill the gradient for each node */
   for(int a = 0 ; a<N_a ; a++){
     la.nV = l.nM[a]; 
-    Jm1_la = Scalar_prod(Jm1,la);    
+    Jm1_la = scalar_product__MatrixLib__(Jm1,la);    
     for(int i = 0 ; i<Ndim ; i++){
       dp.nM[a][i] = - p.nV[a]*Jm1_la.nV[i];
     }
-    FreeMat(Jm1_la);
+    free__MatrixLib__(Jm1_la);
   }
 
   /* Free memory */
-  FreeMat(Jm1);
+  free__MatrixLib__(Jm1);
   
   /* Return the value of the shape function gradient */  
   return dp;  
@@ -421,7 +421,7 @@ ChainPtr LME_Tributary_Nodes(Matrix X_GP, Matrix Beta, int I0, Mesh FEM_Mesh){
   int Ndim = NumberDimensions;
 
   Matrix Distance; /* Distance between node and GP */
-  Matrix X_I = get_RowFrom(Ndim,1,NULL);
+  Matrix X_I = memory_to_matrix__MatrixLib__(Ndim,1,NULL);
   
   ChainPtr Set_Nodes0 = NULL;
   int * Array_Nodes0;
@@ -448,16 +448,16 @@ ChainPtr LME_Tributary_Nodes(Matrix X_GP, Matrix Beta, int I0, Mesh FEM_Mesh){
     X_I.nV = FEM_Mesh.Coordinates.nM[Node0];
 
     /* Get a vector from the GP to the node */
-    Distance = Sub_Mat(X_GP,X_I);
+    Distance = substraction__MatrixLib__(X_GP,X_I);
 
     /* If the node is near the GP push in the chain */
-    if(Norm_Mat(Distance,2) <= Ra){
+    if(norm__MatrixLib__(Distance,2) <= Ra){
       push_to_Set(&Triburary_Nodes,Node0);
       NumTributaryNodes++;
     }
 
     /* Free memory of the distrance vector */
-    FreeMat(Distance);
+    free__MatrixLib__(Distance);
 
   }
 

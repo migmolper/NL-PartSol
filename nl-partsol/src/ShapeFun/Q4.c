@@ -37,8 +37,8 @@ void Q4_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
     MPM_Mesh.NumberNodes[p] = 4;
     
     /* Get the global and local coodinates of the particle */ 
-    X_p = get_RowFrom(Ndim,1,MPM_Mesh.Phi.x_GC.nM[p]);
-    Xi_p = get_RowFrom(Ndim,1,MPM_Mesh.Phi.x_EC.nM[p]);
+    X_p = memory_to_matrix__MatrixLib__(Ndim,1,MPM_Mesh.Phi.x_GC.nM[p]);
+    Xi_p = memory_to_matrix__MatrixLib__(Ndim,1,MPM_Mesh.Phi.x_EC.nM[p]);
     
     /* Check for each element of the mesh */
     for(int i = 0 ; i<Nelem ; i++){
@@ -65,7 +65,7 @@ void Q4_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 	Q4_X_to_Xi(Xi_p,X_p,CoordElement);
 	
 	/* Free coordinates of the element */
-	FreeMat(CoordElement);
+	free__MatrixLib__(CoordElement);
 
 	break;
 	
@@ -83,7 +83,7 @@ void Q4_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 Matrix Q4_N(Matrix X_e){
   
   /* Definition and allocation */
-  Matrix N_ref =  MatAllocZ(1,4);
+  Matrix N_ref =  allocZ__MatrixLib__(1,4);
 
   /* Fill the array */
   N_ref.nV[0] = 0.25*DMIN(4,DMAX(0,(1-X_e.nV[0])*(1-X_e.nV[1])));
@@ -102,7 +102,7 @@ Matrix Q4_dN_Ref(Matrix X_e){
   int Ndim = NumberDimensions;
   
   /* Definition and allocation */
-  Matrix dNdX_ref = MatAllocZ(4,Ndim);
+  Matrix dNdX_ref = allocZ__MatrixLib__(4,Ndim);
   
   /* Fill the matrix */
 
@@ -149,7 +149,7 @@ Matrix Q4_F_Ref(Matrix X_NC_GP, Matrix X_GC_Nodes)
   Tensor X_I;
   Tensor dNdx_I;
   Tensor F_Ref_I;
-  Matrix F_Ref = MatAllocZ(Ndim,Ndim);
+  Matrix F_Ref = allocZ__MatrixLib__(Ndim,Ndim);
 
   /* 1º Evaluate the derivarive of the shape function in the GP */
   dNdX_Ref_GP = Q4_dN_Ref(X_NC_GP);
@@ -158,11 +158,11 @@ Matrix Q4_F_Ref(Matrix X_NC_GP, Matrix X_GC_Nodes)
   for(int I = 0 ; I<4 ; I++){
 
     /* 3º Fill arrays for the tensorial product */
-    X_I = memory_to_Tensor(X_GC_Nodes.nM[I],1);
-    dNdx_I = memory_to_Tensor(dNdX_Ref_GP.nM[I],1);
+    X_I = memory_to_tensor__TensorLib__(X_GC_Nodes.nM[I],1);
+    dNdx_I = memory_to_tensor__TensorLib__(dNdX_Ref_GP.nM[I],1);
 
     /* 4º Get the nodal contribution */
-    F_Ref_I = get_dyadicProduct_Of(X_I,dNdx_I);
+    F_Ref_I = dyadic_Product__TensorLib__(X_I,dNdx_I);
 
     /* 5º Increment the reference deformation gradient */
     for(int i = 0 ; i<Ndim ; i++){
@@ -171,11 +171,11 @@ Matrix Q4_F_Ref(Matrix X_NC_GP, Matrix X_GC_Nodes)
       }
     }
     /* 6º Free data of the nodal contribution */
-    free_Tensor(F_Ref_I);    
+    free__TensorLib__(F_Ref_I);    
   }
   
   /* 7º Free memory */
-  FreeMat(dNdX_Ref_GP);
+  free__MatrixLib__(dNdX_Ref_GP);
 
   /* 8º Output */
   return F_Ref;
@@ -200,23 +200,23 @@ Matrix Q4_dN(Matrix X_EC, Matrix Element)
 
   /* 2º Get the Jacobian of the transformation evaluated in the GP */
   Matrix F = Q4_F_Ref(X_EC,Element);
-  Matrix F_m1 = Get_Inverse(F);  
-  Matrix F_Tm1 = Transpose_Mat(F_m1);
+  Matrix F_m1 = inverse__MatrixLib__(F);  
+  Matrix F_Tm1 = transpose__MatrixLib__(F_m1);
  
-  FreeMat(F);
-  FreeMat(F_m1);
-  Matrix dNdX_Ref_T = Transpose_Mat(dNdX_Ref);
-  FreeMat(dNdX_Ref);
+  free__MatrixLib__(F);
+  free__MatrixLib__(F_m1);
+  Matrix dNdX_Ref_T = transpose__MatrixLib__(dNdX_Ref);
+  free__MatrixLib__(dNdX_Ref);
   
   /* 5º Get the gradient of the shape functions in global coordinates */
-  dNdX_T = Scalar_prod(F_Tm1, dNdX_Ref_T);
+  dNdX_T = scalar_product__MatrixLib__(F_Tm1, dNdX_Ref_T);
   
   /* Free memory */
-  FreeMat(F_Tm1);  
-  FreeMat(dNdX_Ref_T);
+  free__MatrixLib__(F_Tm1);  
+  free__MatrixLib__(dNdX_Ref_T);
 
-  dNdX = Transpose_Mat(dNdX_T);
-  FreeMat(dNdX_T);  
+  dNdX = transpose__MatrixLib__(dNdX_T);
+  free__MatrixLib__(dNdX_T);  
 
   
   /* 6º Return result */
@@ -237,7 +237,7 @@ Matrix Q4_Xi_to_X(Matrix Xi, Matrix Element)
   Matrix N = Q4_N(Xi);
 
   /* 2º Allocate the output coordinates */
-  Matrix X = MatAllocZ(Ndim,1);
+  Matrix X = allocZ__MatrixLib__(Ndim,1);
 
   /* 3º Get the global coordinates for this element coordiantes in this element */
   for(int I = 0 ; I<4 ; I++){
@@ -246,7 +246,7 @@ Matrix Q4_Xi_to_X(Matrix Xi, Matrix Element)
   }
 
   /* 4º Free memory */
-  FreeMat(N);
+  free__MatrixLib__(N);
 
   /* 5º Output */
   return X;

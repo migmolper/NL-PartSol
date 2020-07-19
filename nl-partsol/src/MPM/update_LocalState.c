@@ -24,8 +24,8 @@ void update_LocalState(Matrix V_I, GaussPoint MPM_Mesh,
     rho_p = MPM_Mesh.Phi.rho.nV[p];
 
     /* Asign memory to tensors */
-    Strain_p = memory_to_Tensor(MPM_Mesh.Phi.Strain.nM[p], 2);
-    Stress_p = memory_to_Tensor(MPM_Mesh.Phi.Stress.nM[p], 2);
+    Strain_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.Strain.nM[p], 2);
+    Stress_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.Stress.nM[p], 2);
 
     /* Define element for each GP */
     Nn = MPM_Mesh.NumberNodes[p];
@@ -35,7 +35,7 @@ void update_LocalState(Matrix V_I, GaussPoint MPM_Mesh,
     Nodal_Velocity_p = get_set_Field(V_I, Nodes_p);
 
     /* Compute gradient of the shape function in each node */
-    Gradient_p = compute_ShapeFunction_Gradient(Nodes_p, MPM_Mesh, FEM_Mesh);
+    Gradient_p = compute_ShapeFunction_gradient(Nodes_p, MPM_Mesh, FEM_Mesh);
     
     /* Get the material properties */
     Idx_Mat_p = MPM_Mesh.MatIdx[p];
@@ -47,19 +47,19 @@ void update_LocalState(Matrix V_I, GaussPoint MPM_Mesh,
 
     /* Update density field */
     MPM_Mesh.Phi.rho.nV[p] = update_Density(rho_p, TimeStep, Rate_Strain_p);
-    free_Tensor(Rate_Strain_p);
+    free__TensorLib__(Rate_Strain_p);
 
     /* Compute stress tensor */
     Stress_p = compute_Stress(Strain_p,Stress_p,Material_p);
 
     /* Compute deformation energy */
-    MPM_Mesh.Phi.W.nV[p] = 0.5*get_innerProduct_Of(Strain_p, Stress_p);
+    MPM_Mesh.Phi.W.nV[p] = 0.5*inner_product__TensorLib__(Strain_p, Stress_p);
         
     /* Free the matrix with the nodal velocity of the element */
-    FreeMat(Nodal_Velocity_p);
+    free__MatrixLib__(Nodal_Velocity_p);
     
     /* Free the matrix with the nodal gradient of the element */
-    FreeMat(Gradient_p);
+    free__MatrixLib__(Gradient_p);
     free(Nodes_p.Connectivity);
     
   }

@@ -60,7 +60,7 @@ Matrix Read_CSV(char * Name_File, int NumData)
   /*!
     Allocate data  
   */
-  Mat_Out = MatAlloc(NumFields,NumData);
+  Mat_Out = alloc__MatrixLib__(NumFields,NumData);
   strcpy(Mat_Out.Info,Info);  
 
   /*!

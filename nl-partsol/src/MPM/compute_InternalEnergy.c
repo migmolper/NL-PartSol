@@ -7,7 +7,7 @@ double compute_InternalEnergy(Tensor Strain, Tensor Stress){
   /*Check in the input its is ok */
   if ((Strain.Order == 2) && (Stress.Order == 2)){    
     /* Calcule the internal work */
-    W = 0.5*get_innerProduct_Of(Strain, Stress);
+    W = 0.5*inner_product__TensorLib__(Strain, Stress);
   }
   else{
     fprintf(stderr,"%s : %s !!! \n",

@@ -52,4 +52,16 @@ void U_GA(Mesh, GaussPoint, int);
  */
 void U_PCE(Mesh, GaussPoint, int);
 
+/*
+  \fn void U_Discrete_Energy_Momentum(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int InitialStep)
+
+  \brief J.C.Simo and N.Tarnow discrete energy-momentum method. A conserving algorithm
+  for nonlinear elastodynamics.
+ 
+  \param Mesh FEM_Mesh : Variable with the nodal information
+  \param GaussPoint MPM_Mesh : Variable with the particle information
+  \param InitialStep  
+*/
+void U_Discrete_Energy_Momentum(Mesh, GaussPoint, int);
+
 #endif

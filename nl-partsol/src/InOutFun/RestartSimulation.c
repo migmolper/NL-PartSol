@@ -172,15 +172,15 @@ GaussPoint restart_Simulation(char * File_Parameters,
     }
   else if(strcmp(ShapeFunctionGP,"uGIMP") == 0)
     {
-      Set_Particles.lp = MatAllocZ(Np,Ndim);
+      Set_Particles.lp = allocZ__MatrixLib__(Np,Ndim);
       strcpy(Set_Particles.lp.Info,"Voxel lenght GP");
       uGIMP_Initialize(Set_Particles,FEM_Mesh);
     }
   else if(strcmp(ShapeFunctionGP,"LME") == 0)
     {
-      Set_Particles.lambda = MatAllocZ(Np,Ndim);
+      Set_Particles.lambda = allocZ__MatrixLib__(Np,Ndim);
       strcpy(Set_Particles.lambda.Info,"Lagrange Multiplier");
-      Set_Particles.Beta = MatAllocZ(Np,Ndim);
+      Set_Particles.Beta = allocZ__MatrixLib__(Np,Ndim);
       strcpy(Set_Particles.Beta.Info,"Beta parameter");
       LME_Initialize(Set_Particles,FEM_Mesh);
     } 
@@ -336,7 +336,7 @@ static Matrix restart_ReadVtk_Scalars(char * File,char * Parameter,int Np)
     }
 
   /* Allocate variable */
-  Scalar = MatAllocZ(Np,1);
+  Scalar = allocZ__MatrixLib__(Np,1);
   
   /* Fill with the previous data */
   if(Is_SCALAR)
@@ -469,7 +469,7 @@ static Matrix restart_ReadVtk_Vectors(char * File,char * Parameter,int Np)
     }
 
   /* Allocate variable */
-  Vector_Field = MatAllocZ(Np,Ndim);
+  Vector_Field = allocZ__MatrixLib__(Np,Ndim);
     
   /* Fill with previous data */
   if(Is_Vector)
@@ -536,7 +536,7 @@ static Matrix restart_ReadVtk_Tensors(char * File,char * Parameter,int Np)
     }
 
   /* Allocate variable */
-  Tensor_Field = MatAllocZ(Np,Ndim*Ndim);
+  Tensor_Field = allocZ__MatrixLib__(Np,Ndim*Ndim);
   
   /* Fill with prrevious data */
   if(Is_Tensor)

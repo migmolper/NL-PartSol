@@ -13,7 +13,7 @@ void GetInitialGaussPointPosition(Matrix X_p, Mesh FEM_Mesh, int GPxElement)
   int Ndim = NumberDimensions;
   int NumElemMesh = FEM_Mesh.NumElemMesh;
   Matrix N_GP;
-  Matrix Xi_p = MatAllocZ(GPxElement,Ndim);
+  Matrix Xi_p = allocZ__MatrixLib__(GPxElement,Ndim);
   Matrix Xi_p_j;
   Element Element;
   int Node;
@@ -41,9 +41,9 @@ void GetInitialGaussPointPosition(Matrix X_p, Mesh FEM_Mesh, int GPxElement)
 	free(Element.Connectivity);
       }
       /* Free auxiliar matrix with the coordinates */
-      FreeMat(Xi_p);
+      free__MatrixLib__(Xi_p);
       /* Free value of the shape function in the GP */
-      FreeMat(N_GP);
+      free__MatrixLib__(N_GP);
     }
     else if(strcmp(FEM_Mesh.TypeElem,"Triangle") == 0){
       Xi_p.nV[0] = (double)1/3;
@@ -65,9 +65,9 @@ void GetInitialGaussPointPosition(Matrix X_p, Mesh FEM_Mesh, int GPxElement)
 	free(Element.Connectivity);
       }
       /* Free auxiliar matrix with the coordinates */
-      FreeMat(Xi_p);
+      free__MatrixLib__(Xi_p);
       /* Free value of the shape function in the GP */
-      FreeMat(N_GP);
+      free__MatrixLib__(N_GP);
     }
     break;
 
@@ -99,33 +99,33 @@ void GetInitialGaussPointPosition(Matrix X_p, Mesh FEM_Mesh, int GPxElement)
 	  }
 	  
 	  /* Free value of the shape function in the GP */
-	  FreeMat(N_GP);
+	  free__MatrixLib__(N_GP);
 	}
 	free(Element.Connectivity);
       }
       /* Free auxiliar matrix with the coordinates */
-      FreeMat(Xi_p);
+      free__MatrixLib__(Xi_p);
     }
     break;
     
   case 4:
     if(strcmp(FEM_Mesh.TypeElem,"Quadrilateral") == 0){
-      /* Xi_p.nM[0][0] = (double)1/pow(3,0.5); */
-      /* Xi_p.nM[0][1] = (double)1/pow(3,0.5); */
-      /* Xi_p.nM[1][0] = (double)1/pow(3,0.5); */
-      /* Xi_p.nM[1][1] = (double)-1/pow(3,0.5); */
-      /* Xi_p.nM[2][0] = (double)-1/pow(3,0.5); */
-      /* Xi_p.nM[2][1] = (double)1/pow(3,0.5); */
-      /* Xi_p.nM[3][0] = (double)-1/pow(3,0.5); */
-      /* Xi_p.nM[3][1] = (double)-1/pow(3,0.5); */
-      Xi_p.nM[0][0] =   0.5;
-      Xi_p.nM[0][1] =   0.5;
-      Xi_p.nM[1][0] =   0.5;
-      Xi_p.nM[1][1] = - 0.5;
-      Xi_p.nM[2][0] = - 0.5;
-      Xi_p.nM[2][1] =   0.5;
-      Xi_p.nM[3][0] = - 0.5;
-      Xi_p.nM[3][1] = - 0.5;
+      Xi_p.nM[0][0] = (double)1/pow(3,0.5);
+      Xi_p.nM[0][1] = (double)1/pow(3,0.5);
+      Xi_p.nM[1][0] = (double)1/pow(3,0.5);
+      Xi_p.nM[1][1] = (double)-1/pow(3,0.5);
+      Xi_p.nM[2][0] = (double)-1/pow(3,0.5);
+      Xi_p.nM[2][1] = (double)1/pow(3,0.5);
+      Xi_p.nM[3][0] = (double)-1/pow(3,0.5);
+      Xi_p.nM[3][1] = (double)-1/pow(3,0.5);
+      /* Xi_p.nM[0][0] =   0.5; */
+      /* Xi_p.nM[0][1] =   0.5; */
+      /* Xi_p.nM[1][0] =   0.5; */
+      /* Xi_p.nM[1][1] = - 0.5; */
+      /* Xi_p.nM[2][0] = - 0.5; */
+      /* Xi_p.nM[2][1] =   0.5; */
+      /* Xi_p.nM[3][0] = - 0.5; */
+      /* Xi_p.nM[3][1] = - 0.5; */
       /* Get the coordinate of the center */
       for(int i = 0 ; i<NumElemMesh ; i++){
 	
@@ -145,12 +145,12 @@ void GetInitialGaussPointPosition(Matrix X_p, Mesh FEM_Mesh, int GPxElement)
 	  }
 	  
 	  /* Free value of the shape function in the GP */
-	  FreeMat(N_GP);
+	  free__MatrixLib__(N_GP);
 	}
 	free(Element.Connectivity);
       }
       /* Free auxiliar matrix with the coordinates */
-      FreeMat(Xi_p);
+      free__MatrixLib__(Xi_p);
     }
     break;
   default :
@@ -175,7 +175,7 @@ double GetMinElementSize(Mesh FEM_Mesh)
   int NumNodesElem; /* Number of nodes of each element */
   int * Connectivity; /* Connectivity of the element */
   Matrix Poligon; /* Element Poligon */
-  Matrix X_eval = MatAllocZ(1,2); /* Where to evaluate the shape function */
+  Matrix X_eval = allocZ__MatrixLib__(1,2); /* Where to evaluate the shape function */
   X_eval.nV[0] = 0;
   X_eval.nV[1] = 0;
   Matrix dNdx; /* Gradient of the shapefunction for each node */
@@ -193,7 +193,7 @@ double GetMinElementSize(Mesh FEM_Mesh)
     if((NumNodesElem == 3) &&
        (NumberDimensions == 2)){ /* Triangular element */
       /* The poligon is a triangle */
-      Poligon = MatAllocZ(3,2);
+      Poligon = allocZ__MatrixLib__(3,2);
       /* Fill the triangle */
       for(int k = 0; k<3; k++){
 	for(int l = 0 ; l<2 ; l++){
@@ -202,7 +202,7 @@ double GetMinElementSize(Mesh FEM_Mesh)
       }
       /* Get the gradient of the triangle */
       dNdx = Get_dNdX_T3(X_eval,Poligon);
-      FreeMat(Poligon);
+      free__MatrixLib__(Poligon);
       
       /* Get the minimum minimum height of the triangle */
       for(int j = 0 ; j<3 ; j++){
@@ -212,13 +212,13 @@ double GetMinElementSize(Mesh FEM_Mesh)
 	MinElementSize = MINVAL(MinElementSize,MinElementSize_aux);
       }
       /* Free memory */
-      FreeMat(dNdx);
+      free__MatrixLib__(dNdx);
       
     }
     else if((NumNodesElem == 4) &&
 	    (NumberDimensions == 2)){ /* Quadrilateral element */
       /* The poligon is a quadrilateral */
-      Poligon = MatAllocZ(4,2);
+      Poligon = allocZ__MatrixLib__(4,2);
 
       /* Fill the poligon with vectors */
       for(int k = 0; k<3; k++){
@@ -241,7 +241,7 @@ double GetMinElementSize(Mesh FEM_Mesh)
       }
 
       /* Free memory */
-      FreeMat(Poligon);
+      free__MatrixLib__(Poligon);
 
     }
     else{
@@ -259,7 +259,7 @@ double GetMinElementSize(Mesh FEM_Mesh)
   }
 
   /* Free memory */
-  FreeMat(X_eval);
+  free__MatrixLib__(X_eval);
 
   return MinElementSize;
 
@@ -275,7 +275,7 @@ Matrix ElemCoordinates(ChainPtr Element_p, Matrix Coordinates)
 
   int Ndim = NumberDimensions;
   int NumVertex = get_Lenght_Set(Element_p);
-  Matrix Element_Coordinates = MatAllocZ(NumVertex,Ndim);
+  Matrix Element_Coordinates = allocZ__MatrixLib__(NumVertex,Ndim);
   ChainPtr Idx = NULL;
   int I_Idx = 0;
 
@@ -348,8 +348,8 @@ void get_particle_tributary_nodes(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int p){
   int I0 = MPM_Mesh.I0[p];
 
   /* Define auxiliar matrix for local/global coordinates */
-  Matrix X_p  = get_RowFrom(Ndim,1,MPM_Mesh.Phi.x_GC.nM[p]);
-  Matrix Xi_p = get_RowFrom(Ndim,1,MPM_Mesh.Phi.x_EC.nM[p]);
+  Matrix X_p  = memory_to_matrix__MatrixLib__(Ndim,1,MPM_Mesh.Phi.x_GC.nM[p]);
+  Matrix Xi_p = memory_to_matrix__MatrixLib__(Ndim,1,MPM_Mesh.Phi.x_EC.nM[p]);
   /* Lis of elements near the particle */
   ChainPtr Elements_Near_I0 = FEM_Mesh.NodeNeighbour[I0];
   /* Index of the element (Q4/uGIMP) */
@@ -373,7 +373,7 @@ void get_particle_tributary_nodes(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int p){
       /* Compute local coordinates of the particle in this element */
       Q4_X_to_Xi(Xi_p,X_p,CoordElement);
       /* Free coordinates of the element */
-      FreeMat(CoordElement);
+      free__MatrixLib__(CoordElement);
     }
     else{
       /* Get the coordinates of the element vertex */
@@ -381,14 +381,14 @@ void get_particle_tributary_nodes(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int p){
       /* Compute local coordinates of the particle in this element */
       Q4_X_to_Xi(Xi_p,X_p,CoordElement);
       /* Free coordinates of the element */
-      FreeMat(CoordElement);      
+      free__MatrixLib__(CoordElement);      
     }
     
   }
   else if(strcmp(ShapeFunctionGP,"uGIMP") == 0){
 
     /* Auxiliar variables for GIMP */
-    Matrix lp = get_RowFrom(Ndim,1,MPM_Mesh.lp.nM[p]);
+    Matrix lp = memory_to_matrix__MatrixLib__(Ndim,1,MPM_Mesh.lp.nM[p]);
     
     /* Get the index of the element */
     IdxElement = search_particle_in(p,X_p,Elements_Near_I0,FEM_Mesh);
@@ -399,7 +399,7 @@ void get_particle_tributary_nodes(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int p){
       /* Compute local coordinates of the particle in this element */
       Q4_X_to_Xi(Xi_p,X_p,CoordElement);
       /* Free coordinates of the element */
-      FreeMat(CoordElement);   
+      free__MatrixLib__(CoordElement);   
       /* Free previous list of tributary nodes to the particle */
       free_Set(&MPM_Mesh.ListNodes[p]);
       /* Asign new connectivity */
@@ -413,16 +413,16 @@ void get_particle_tributary_nodes(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int p){
     /*   /\* Compute local coordinates of the particle in this element *\/ */
     /*   Q4_X_to_Xi(Xi_p,X_p,CoordElement); */
     /*   /\* Free coordinates of the element *\/ */
-    /*   FreeMat(CoordElement);       */
+    /*   free__MatrixLib__(CoordElement);       */
     /* } */
     
   }
   else if(strcmp(ShapeFunctionGP,"LME") == 0){
     
     /* Auxiliar variables for LME */
-    Matrix lambda_p = get_RowFrom(Ndim,1,MPM_Mesh.lambda.nM[p]);
+    Matrix lambda_p = memory_to_matrix__MatrixLib__(Ndim,1,MPM_Mesh.lambda.nM[p]);
     Matrix Delta_Xip; /* Distance from particles to the nodes */
-    Matrix Beta_p = get_RowFrom(Ndim,1,MPM_Mesh.Beta.nM[p]);
+    Matrix Beta_p = memory_to_matrix__MatrixLib__(Ndim,1,MPM_Mesh.Beta.nM[p]);
 
     /* Free previous list of tributary nodes to the particle */
     free_Set(&MPM_Mesh.ListNodes[p]);
@@ -439,7 +439,7 @@ void get_particle_tributary_nodes(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int p){
     lambda_p = LME_lambda_NR(Delta_Xip, lambda_p, Beta_p);
     
     /* Free memory */
-    FreeMat(Delta_Xip);
+    free__MatrixLib__(Delta_Xip);
   }
 
 }
@@ -583,11 +583,11 @@ void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
   for(int p = 0 ; p<MPM_Mesh.NumGP ; p++){
 
     /* Get the global coordinates and velocity of the particle */
-    X_p = get_RowFrom(Ndim,1,MPM_Mesh.Phi.x_GC.nM[p]);
-    V_p = get_RowFrom(Ndim,1,MPM_Mesh.Phi.vel.nM[p]);
+    X_p = memory_to_matrix__MatrixLib__(Ndim,1,MPM_Mesh.Phi.x_GC.nM[p]);
+    V_p = memory_to_matrix__MatrixLib__(Ndim,1,MPM_Mesh.Phi.vel.nM[p]);
 
     /* Check if the particle is static or is in movement */
-    if(Norm_Mat(V_p,2) > 0){
+    if(norm__MatrixLib__(V_p,2) > 0){
 
       /* Get the index of the node close to the particle */
       I0_p = MPM_Mesh.I0[p];
@@ -630,9 +630,9 @@ void GPinCell(ChainPtr * ListInCELL, ChainPtr * GlobalList,
   Matrix X0, X1;
   double Dist;
   if(iPtr != NULL){
-    X0 = get_RowFrom(Ndim,1,x_GC.nM[iGP]);
-    X1 = get_RowFrom(Ndim,1,x_GC.nM[iPtr->I]);
-    Dist = Distance(X1,X0);
+    X0 = memory_to_matrix__MatrixLib__(Ndim,1,x_GC.nM[iGP]);
+    X1 = memory_to_matrix__MatrixLib__(Ndim,1,x_GC.nM[iPtr->I]);
+    Dist = point_distance__MatrixLib__(X1,X0);
 
     /* Found one to delete */
     if (Dist < epsilon){
@@ -676,11 +676,11 @@ bool InOut_Element(Matrix X_p, ChainPtr Elem_p, Matrix Coordinates){
   
   Element_Coordinates = ElemCoordinates(Elem_p, Coordinates);
   
-  if (InOut_Poligon(X_p, Element_Coordinates) == 1){
+  if (inout__MatrixLib__(X_p, Element_Coordinates) == 1){
     Is_In_Element = true;
   }
 
-  FreeMat(Element_Coordinates);
+  free__MatrixLib__(Element_Coordinates);
 
   return Is_In_Element;
 }
@@ -696,7 +696,7 @@ Matrix get_set_Field(Matrix Nodal_Field, Element GP_Element){
   int Ie;
 
   /* Allocate a matrix to store the nodal quatities in the element */
-  Element_Field = MatAlloc(NumNodes,Ndim);
+  Element_Field = alloc__MatrixLib__(NumNodes,Ndim);
 
   /* Loop over the nodes of the element */
   for(int I = 0; I<NumNodes; I++){
@@ -755,7 +755,7 @@ Matrix get_set_Coordinates(ChainPtr Set, Matrix X0, Matrix Coordinates)
   int I = 0;
 
   /* Allocate output */
-  Matrix Set_Coordinates = MatAllocZ(SizeSet,Ndim);
+  Matrix Set_Coordinates = allocZ__MatrixLib__(SizeSet,Ndim);
 
   /* Loop in the set */
   ChainPtr Aux_Set = Set;
@@ -801,10 +801,10 @@ int get_closest_node_to(Matrix X_p, ChainPtr Nodes, Matrix Coordinates)
   I = Node_I->I;
   
   /* Get the coordinates of the first node */
-  X_I = get_RowFrom(Ndim,1,Coordinates.nM[I]);
+  X_I = memory_to_matrix__MatrixLib__(Ndim,1,Coordinates.nM[I]);
 
   /* Get the distance from the node to the particle */
-  Distance_I = Distance(X_p, X_I);
+  Distance_I = point_distance__MatrixLib__(X_p, X_I);
       
   /* Get the distance from the node to the particle */
   DistMin = Distance_I;
@@ -819,10 +819,10 @@ int get_closest_node_to(Matrix X_p, ChainPtr Nodes, Matrix Coordinates)
     I = Node_I->I;
 
     /* Get the coordinates of the node */
-    X_I = get_RowFrom(Ndim,1,Coordinates.nM[I]);
+    X_I = memory_to_matrix__MatrixLib__(Ndim,1,Coordinates.nM[I]);
 
     /* Get the distance from the node to the particle */
-    Distance_I = Distance(X_p, X_I);
+    Distance_I = point_distance__MatrixLib__(X_p, X_I);
       
     /* Get the max distance of the matrix */
     if(Distance_I < DistMin){

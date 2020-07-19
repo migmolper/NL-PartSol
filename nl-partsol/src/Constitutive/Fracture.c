@@ -39,8 +39,8 @@ static void Eigenerosion(int p, Fields Phi, Material MatPro,
   /*!
     For the current particle get first principal stress 
   */	
-  Stress_p = memory_to_Tensor(Stress.nM[p], 2);
-  EV_Stress_p = get_Eigenvalues_Of(Stress_p);
+  Stress_p = memory_to_tensor__TensorLib__(Stress.nM[p], 2);
+  EV_Stress_p = Eigenvalues__TensorLib__(Stress_p);
 
   /*!
     Non broken GP Only traction 
@@ -132,7 +132,7 @@ static void Eigenerosion(int p, Fields Phi, Material MatPro,
   /*!
     Free eigenvalues 
   */
-  free_Tensor(EV_Stress_p);
+  free__TensorLib__(EV_Stress_p);
     
   
 }
@@ -212,8 +212,8 @@ static void Eigensoftening(int p, Fields Phi, Material MatPro, ChainPtr * Beps)
 	  /*!
 	    For the current particle get first principal stress 
 	  */	
-	  Stress_p = memory_to_Tensor(Stress.nM[p], 2);
-	  EV_Stress_p = get_Eigenvalues_Of(Stress_p);
+	  Stress_p = memory_to_tensor__TensorLib__(Stress.nM[p], 2);
+	  EV_Stress_p = Eigenvalues__TensorLib__(Stress_p);
       
 	  /*!
 	    Add the first term to the sumation 
@@ -223,7 +223,7 @@ static void Eigensoftening(int p, Fields Phi, Material MatPro, ChainPtr * Beps)
 	  /*!
 	    Free eigenvalues 
 	  */
-	  free_Tensor(EV_Stress_p);
+	  free__TensorLib__(EV_Stress_p);
 
 	  /*!
 	    Loop over the neighbours 
@@ -244,8 +244,8 @@ static void Eigensoftening(int p, Fields Phi, Material MatPro, ChainPtr * Beps)
 	      
 	      if(chi.nV[q] != 1.0)
 		{
-		  Stress_q = memory_to_Tensor(Stress.nM[q], 2);
-		  EV_Stress_q = get_Eigenvalues_Of(Stress_q);
+		  Stress_q = memory_to_tensor__TensorLib__(Stress.nM[q], 2);
+		  EV_Stress_q = Eigenvalues__TensorLib__(Stress_q);
 	    
 		  /*!
 		    Get sum_p 
@@ -253,7 +253,7 @@ static void Eigensoftening(int p, Fields Phi, Material MatPro, ChainPtr * Beps)
 		  sum_p += m_q*EV_Stress_q.n[0];
 
 		  /* Free eigenvalues */
-		  free_Tensor(EV_Stress_q);	    
+		  free__TensorLib__(EV_Stress_q);	    
 		}
 	
 	      /*!
@@ -276,8 +276,8 @@ static void Eigensoftening(int p, Fields Phi, Material MatPro, ChainPtr * Beps)
 	  if(Stress_eps_p>ft_p)
 	    {
 
-	      Strain_p = memory_to_Tensor(Strain.nM[p], 2);
-	      EV_Strain_p = get_Eigenvalues_Of(Strain_p);
+	      Strain_p = memory_to_tensor__TensorLib__(Strain.nM[p], 2);
+	      EV_Strain_p = Eigenvalues__TensorLib__(Strain_p);
 	  	  
 	      /*!
 		Strain during fracture 
@@ -285,7 +285,7 @@ static void Eigensoftening(int p, Fields Phi, Material MatPro, ChainPtr * Beps)
 	      Strain_If.nV[p] = EV_Strain_p.n[0];
 
 	      /* Free eigenvalues */
-	      free_Tensor(EV_Strain_p);	    	  
+	      free__TensorLib__(EV_Strain_p);	    	  
 	    }
 	
 	}
@@ -298,8 +298,8 @@ static void Eigensoftening(int p, Fields Phi, Material MatPro, ChainPtr * Beps)
   else if(chi.nV[p] != 1.0)
     {
 
-      Strain_p = memory_to_Tensor(Strain.nM[p], 2);
-      EV_Strain_p = get_Eigenvalues_Of(Strain_p);
+      Strain_p = memory_to_tensor__TensorLib__(Strain.nM[p], 2);
+      EV_Strain_p = Eigenvalues__TensorLib__(Strain_p);
 	  	  
       /*!
 	Fracture criterium 
@@ -318,7 +318,7 @@ static void Eigensoftening(int p, Fields Phi, Material MatPro, ChainPtr * Beps)
 	}
 
       /* Free eigenvalues */
-      free_Tensor(EV_Strain_p);	    	  
+      free__TensorLib__(EV_Strain_p);	    	  
       
     }
   /*!
@@ -368,8 +368,8 @@ static void ComputeBeps(int p, GaussPoint MPM_Mesh, Mesh FEM_Mesh)
   
   /* Distance */
   Matrix x_GC = MPM_Mesh.Phi.x_GC;
-  Matrix X_p = get_RowFrom(Ndim,1,x_GC.nM[p]);
-  Matrix X_q = get_RowFrom(Ndim,1,NULL);
+  Matrix X_p = memory_to_matrix__MatrixLib__(Ndim,1,x_GC.nM[p]);
+  Matrix X_q = memory_to_matrix__MatrixLib__(Ndim,1,NULL);
   Matrix Distance;
 
   /* Get nodes close to the particle */
@@ -398,15 +398,15 @@ static void ComputeBeps(int p, GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 	X_q.nV = x_GC.nM[q_Beps];
 
 	/* Get a vector from the GP to the node */
-	Distance = Sub_Mat(X_p,X_q);
+	Distance = substraction__MatrixLib__(X_p,X_q);
 
 	/* Asign to p only those particles in Beps */
-	if (Norm_Mat(Distance,2) < epsilon){
+	if (norm__MatrixLib__(Distance,2) < epsilon){
 	  push_to_Set(&MPM_Mesh.Beps[p],q_Beps);
 	}
 
 	/* Free distance vector */
-	FreeMat(Distance);
+	free__MatrixLib__(Distance);
 
       }
 

@@ -43,6 +43,25 @@ Fields allocate_Fields(int NumParticles)
   strcpy(Phi.Strain.Info,"Strain field GP");
 
   /*!
+    Deformation gradient field (Tensor)
+  */  
+  Phi.F_n = MatAllocZ(NumParticles,Ndim*Ndim);
+  strcpy(Phi.F_n.Info,"Deformation gradient at t = n");
+  Phi.F_n1 = MatAllocZ(NumParticles,Ndim*Ndim);
+  strcpy(Phi.F_n1.Info,"Deformation gradient at t = n + 1");
+
+  /* Initialize the deformation gradient with the identity */
+  for(int p = 0 ; p<NumParticles ; p++)
+    {
+      for(int i = 0 ; i<Ndim ; i++)
+	{
+	  Phi.F_n.nM[p][i + i*Ndim] = 1.0;	  
+	}
+      
+    }
+  
+  
+  /*!
     Strain_If field (Scalar) 
   */
   Phi.Strain_If = MatAllocZ(NumParticles,1);
@@ -63,8 +82,8 @@ Fields allocate_Fields(int NumParticles)
   /*!
     Damage parameter (fracture) 
   */
-  Phi.ji = MatAllocZ(NumParticles,1);
-  strcpy(Phi.ji.Info,"Damage parameter GP");
+  Phi.chi = MatAllocZ(NumParticles,1);
+  strcpy(Phi.chi.Info,"Damage parameter GP");
 
   /*!
     Mass 
@@ -98,7 +117,7 @@ void free_Fields(Fields Phi)
   FreeMat(Phi.Strain);
   FreeMat(Phi.Strain_If);
   FreeMat(Phi.W);
-  FreeMat(Phi.ji);
+  FreeMat(Phi.chi);
   
 }
 

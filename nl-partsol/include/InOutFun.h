@@ -216,6 +216,20 @@ void print_step(int,double);
 
 /*****************************************************************/
 
+/*! 
+
+  \fn void print_iteration(int TimeStep,int Iter)
+ 
+  \brief Print number of iterations required.
+ 
+  \param Time : Current step of the simulation 
+  \param Iter : Number of iterations required
+
+ */
+void print_iteration(int,int);
+
+/*****************************************************************/
+
 /*!
 
   \fn Mesh GramsBox(char * File)

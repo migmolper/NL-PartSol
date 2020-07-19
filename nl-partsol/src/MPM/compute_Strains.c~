@@ -1,139 +1,180 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <math.h>
-#include "../GRAMS/TypeDefinitions.h"
-#include "../GRAMS/GlobalVariables.h"
+#include "nl-partsol.h"
+
+/*************************************************************/
+
+Tensor compute_RateOfStrain(Matrix Velocity, Matrix Gradient)
+{
+  int Ndim = NumberDimensions;
+  Tensor Rate_Strain = alloc__TensorLib__(2);
+  Tensor Velocity_I;
+  Tensor Gradient_I;
+  Tensor VoG_I;
+
+  int NodesElem = Gradient.N_rows;
+
+  /* Compute rate of strain */
+  for(int I = 0 ; I<NodesElem ; I++){
+    /* Assign from matrix to tensor */
+    Velocity_I = memory_to_tensor__TensorLib__(Velocity.nM[I], 1);
+    Gradient_I = memory_to_tensor__TensorLib__(Gradient.nM[I], 1);
+   
+    /* Compute the dyadic product of the nodal velocity and the
+       gradient of the shape functions */
+    VoG_I = dyadic_Product__TensorLib__(Velocity_I, Gradient_I);
+    
+    /* Ad the nodal contribution to the train tensor */
+    for(int i = 0 ; i<Ndim ; i++){
+      for(int j = 0 ; j<Ndim ; j++){
+	Rate_Strain.N[i][j] +=
+	  0.5*(VoG_I.N[i][j] + VoG_I.N[j][i]);
+      }
+    }
+    /* Free memory */
+    free__TensorLib__(VoG_I);
+  }
+  
+  return Rate_Strain;
+}
 
 /*******************************************************/
 
-void UpdateGaussPointStrain(GaussPoint MPM_Mesh,
-			    Mesh FEM_Mesh,
-			    Matrix Mesh_Vel)
-/*
-  Calcule the particle stress increment :
-
-  \Delta\Epsilon_{ij,p}^{k-1/2} = 
-  \frac{\Delta t}{2} \cdot
-  \sum_{I=0}^{Nn}(N^{k}_{Ip,j} \cdot
-  v_{iI}^{k-1/2} + N^{k}_{Ip,i} \cdot 
-  v_{jI}^{k-1/2})
-*/
+Tensor update_Strain(Tensor Strain, Tensor Rate_Strain, double TimeStep)
 {
-  /* Gauss-Point properties */
-  Matrix X_GP; /* Element coordinates of the Gauss-Point */
-  X_GP.N_rows = NumberDimensions;
-  X_GP.N_cols = 1;
-  Matrix lp; /* Just for GIMP -> Particle voxel */
-  Matrix Delta_Xip; /* Just for GIMP -> Distance from GP to the nodes */
-  
-  /* Element for each Gauss-Point */
-  int GP_NumNodes; /* Number of nodes */
-  int * GP_Connect; /* Connectivity of the element */
-  Matrix GP_ElemCoord; /* Coordinates of the nodes */
-  int GP_I; /* Get the node for the GP */
-  
-  /* Mesh variables */
-  Matrix Elem_Vel; /* Array with the nodal velocities */
-  Matrix dNdx_GP; /* Matrix with the nodal derivatives */
-  Matrix B; /* B marix to get the deformation */
-  Matrix Increment_Strain_GP; /* Vectoriced Strain tensor */
-  double Incr_TraceStrain; /* Increment of the trace of the Stress tensor */
- 
-  for(int i = 0 ; i<MPM_Mesh.NumGP ; i++){
-   
-    /* 1º Define element of the GP */
-    GP_NumNodes = MPM_Mesh.NumberNodes[i];
-    GP_Connect = ChainToArray(MPM_Mesh.ListNodes[i],GP_NumNodes);
-    
-    /* 2º Get the element gradient */
-    if(strcmp(MPM_Mesh.ShapeFunctionGP,"MPMQ4") == 0){
-      /* Fill the poligon */
-      GP_ElemCoord = MatAllocZ(GP_NumNodes,NumberDimensions);
-      for(int k = 0; k<GP_NumNodes ; k++){
-    	/* Get the node for the GP */
-    	GP_I = GP_Connect[k];
-    	for(int l = 0 ; l<NumberDimensions ; l++){
-    	  GP_ElemCoord.nM[k][l] =
-    	    FEM_Mesh.Coordinates.nM[GP_I][l];
-    	}
-      }
-      /* Get the element coordinates of the GP */
-      X_GP.nV = MPM_Mesh.Phi.x_EC.nM[i];
-      /* Evaluate the shape function gradient */
-      dNdx_GP = Get_dNdX_Q4(X_GP,GP_ElemCoord);
-      /* Free memory */
-      FreeMat(GP_ElemCoord);
-    }
-    else if(strcmp(MPM_Mesh.ShapeFunctionGP,"uGIMP2D") == 0){
-      /* Generate a matrix with the distances to the nodes */
-      Delta_Xip = MatAlloc(GP_NumNodes,2);
-      for(int k = 0 ; k<GP_NumNodes ; k++){
-    	/* Get the node for the GP */
-    	GP_I = GP_Connect[k];
-    	for(int l = 0 ; l<NumberDimensions ; l++){
-    	  Delta_Xip.nM[k][l] =
-    	    MPM_Mesh.Phi.x_GC.nM[i][l]-
-    	    FEM_Mesh.Coordinates.nM[GP_I][l];
-    	}
-      }
-      /* Get the GP voxel */
-      lp.nV = MPM_Mesh.Phi.lp.nM[i];
-      /* Evaluate the shape function gradient */
-      dNdx_GP = dGIMP_2D(Delta_Xip,lp,FEM_Mesh.DeltaX);
-      /* Free memory */
-      FreeMat(Delta_Xip);
-    }
-	    
-    /* Calcule the B matrix */
-    B = Get_B_GP(dNdx_GP);
-    /* Free shape-function derivatives */
-    FreeMat(dNdx_GP);
-
-    /* 3º Allocate and array with the velocities of the element */
-    Elem_Vel = MatAllocZ(GP_NumNodes*NumberDimensions,1);
-
-    /* 4º Get the nodal velocities in the element */
-    for(int k = 0; k<GP_NumNodes; k++){
-      /* Get the node for the GP */
-      GP_I = GP_Connect[k];
-      for(int l = 0 ; l<NumberDimensions ; l++){
-	Elem_Vel.nV[k*NumberDimensions + l] =
-	  Mesh_Vel.nM[l][GP_I];
+  int Ndim = NumberDimensions;
+  /* Check in the input its is ok */
+  if ((Strain.Order == 2) && (Rate_Strain.Order == 2)){
+    /* Update strain tensor with the rate of strain tensor */
+    for(int i = 0 ; i<Ndim ; i++){
+      for(int j = 0 ; j<Ndim ; j++){
+	Strain.N[i][j] += TimeStep*Rate_Strain.N[i][j];
       }
     }
-    /* Free data */
-    free(GP_Connect);
-   
-    /* 5º Multiply B by the velocity array and by the time step to get
-       the increment stress tensor */
-    Increment_Strain_GP = Scalar_prod(B,Elem_Vel);    
-    for(int j = 0 ; j<MPM_Mesh.Phi.Strain.N_cols ; j++){
-      Increment_Strain_GP.nV[j] *= DeltaTimeStep;
-    }
-
-    /* Free memory */
-    FreeMat(Elem_Vel);
-    FreeMat(B);
-
-    /* 6º Set to zero the trace of the stress tensor */
-    Incr_TraceStrain = 0;
-
-    /* 7º Udate the Gauss-Point strain tensor */
-    for(int j = 0 ; j<MPM_Mesh.Phi.Strain.N_cols ; j++){
-      MPM_Mesh.Phi.Strain.nM[i][j] += Increment_Strain_GP.nV[j];
-      /* 7º Get the trace of the stress tensor */
-      if(j<NumberDimensions){
-	Incr_TraceStrain += Increment_Strain_GP.nV[j];
-      }
-    }
-    FreeMat(Increment_Strain_GP);
-
-    /* 8º Update the density of the GP */
-    MPM_Mesh.Phi.rho.nV[i] =
-      UpdateGaussPointDensity(MPM_Mesh.Phi.rho.nV[i],
-			      Incr_TraceStrain);    
   }
+  else{
+    fprintf(stderr,"%s : %s %s !!! \n",
+	    "Error in update_Strain()",
+	    "The input should be",
+	    "two tensors of 2nd order and a scalar");
+    exit(EXIT_FAILURE);    
+  }
+
+  return Strain;
+}
+
+/*******************************************************/
+
+void compute_Strain_Deformation_Gradient_n1(Tensor F_n1, Tensor F_n,
+					    Matrix DeltaU, Matrix gradient_p)
+{
+
+  /* Variable definition */
+  int Ndim = NumberDimensions;
+  int Nnodes_p = DeltaU.N_rows;  
+  Tensor f_n1;
+  Tensor DeltaU_I;
+  Tensor gradient_I;
+  Tensor gradient_DeltaU_I;
+  
+  /*
+    Compute increment of the deformation gradient 
+    f_n1 = I + Delta_u 0 gradient_N
+  */
+
+  /* Add identity tensor */
+  f_n1 = Identity__TensorLib__();
+  
+  for(int I = 0 ; I<Nnodes_p ; I++)
+    {
+
+      /* Assign from matrix to tensor */
+      DeltaU_I = memory_to_tensor__TensorLib__(DeltaU.nM[I], 1);
+      gradient_I = memory_to_tensor__TensorLib__(gradient_p.nM[I], 1);
+      
+      /* Compute the dyadic product of the nodal velocity and the
+	 gradient of the shape functions */
+      gradient_DeltaU_I = dyadic_Product__TensorLib__(DeltaU_I, gradient_I);
+      
+      /* Ad the nodal contribution to the train tensor */
+      for(int i = 0 ; i<Ndim ; i++)
+	{
+	  for(int j = 0 ; j<Ndim ; j++)
+	    {
+	      f_n1.N[i][j] += gradient_DeltaU_I.N[i][j];
+	    }
+	}
+      
+      /* Free memory */
+      free__TensorLib__(gradient_DeltaU_I);
+    }
+  
+  /*
+    Compute F_n1 = Incr_F F 
+  */
+  
+  for(int i = 0 ; i < Ndim  ; i++)
+    {
+      for(int j = 0 ; j < Ndim  ; j++)
+	{
+	  for(int k = 0 ; k < Ndim  ; k++)
+	    {
+	      F_n1.N[i][j] += f_n1.N[i][k]*F_n.N[k][j];
+	    }
+	}
+    }
+
+  /* Free memory */
+  free__TensorLib__(f_n1);
+
+}
+
+/*******************************************************/
+
+Tensor compute_RightCauchyGreen(Tensor F)
+{
+  /* Define output */
+  Tensor C = alloc__TensorLib__(2);
+  /* Define the number of dimensions */
+  int Ndim = NumberDimensions;
+
+  /* Compute C = F^T F */
+  for(int i = 0 ; i < Ndim  ; i++)
+    {
+      for(int j = 0 ; j < Ndim  ; j++)
+	{
+	  for(int k = 0 ; k < Ndim  ; k++)
+	    {
+	      C.N[i][j] += F.N[k][i]*F.N[k][j];
+	    }
+	}
+    }
+
+  return C;
+}
+
+
+/*******************************************************/
+
+Tensor compute_LagrangianStrain(Tensor C)
+{
+  /* Define output */
+  Tensor E = alloc__TensorLib__(2);
+  /* Define eye tensor */
+  Tensor I = Identity__TensorLib__();
+  /* Define the number of dimensions */
+  int Ndim = NumberDimensions;
+
+  /* Compute E = 1/2 * [ C - I]  */
+  for(int i = 0 ; i < Ndim  ; i++)
+    {
+      for(int j = 0 ; j < Ndim  ; j++)
+	{
+	  E.N[i][j] = 0.5 * (C.N[i][j] - I.N[i][j]);
+	}
+    }
+
+  free__TensorLib__(I);
+
+  return E;
 }
 
 /*******************************************************/

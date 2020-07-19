@@ -211,6 +211,12 @@ typedef struct {
    * Strain field 
    */
   Matrix Strain;
+
+  /*!
+   * Deformation gradient at t = n and t = n + 1
+   */
+  Matrix F_n;
+  Matrix F_n1;
   
   /*!
    * Strain during crack 
@@ -463,6 +469,7 @@ typedef struct {
 
 } GaussPoint;
 
+
 /*******************************************************/
 
 /*! \struct Mesh
@@ -558,6 +565,21 @@ typedef struct {
   Matrix (* dNdX_ref)(Matrix );
     
 } Mesh;
+
+/*******************************************************/
+
+/*! \struct Mask
+ *  Structure with the current "element" of the particle
+ */
+typedef struct{
+
+  int Nactivenodes;
+      
+  int * Mask2Nodes;
+
+  int * Nodes2Mask;
+  
+} Mask;
 
 /*******************************************************/
 
