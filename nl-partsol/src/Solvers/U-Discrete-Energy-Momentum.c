@@ -323,12 +323,9 @@ static Matrix compute_Nodal_Effective_Mass(GaussPoint MPM_Mesh, Mesh FEM_Mesh,
   of the lumped mass matrix and the consistent mass matrix. Later assemble
   a total mass matrix with the contribution of each degree of freedom.
 
-  |***     |   |*       |   |***     |
-  |***  0  |   | *   0  |   |***  0  |
-  |***     | = |  *     | + |***     |
-  |     ***|   |     *  |   |     ***|
-  | 0   ***|   | 0    * |   | 0   ***|
-  |     ***|   |       *|   |     ***|
+  | M_eff |   0   |              | M_cons |   0    |          | M_lump |   0    |
+  -----------------  = (1-eps) * -------------------  + eps * -------------------
+  |    0  | M_eff |	         |   0    | M_cons |	      |   0    | M_lump |
 */
 {
 
