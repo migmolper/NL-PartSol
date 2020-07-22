@@ -1,26 +1,16 @@
 #include "nl-partsol.h"
 
-/**************************************************/
-/* Uniform Geralized Interpolation Material Point */
-/**************************************************/
-
 /*
-  Shape functions based in : 
-  "" The Generalized Interpolation Material Point Method ""
-  by S.G.Bardenhagen and E.M.Kober, 2004
-*/
-
-/*            ^           */
-/*          __|__         */
-/*        _/  |  \_       */
-/*      _/    |    \_     */
-/*   __/      |      \__  */
-/*  --o-------o-------o-- */
-/*   (-1)    (0)     (1)  */
+  Auxiliar functions
+ */
+static Matrix   voxel__GIMP__(Matrix, double);
+static double   Sip__GIMP__(double, double, double);
+static double   dSip__GIMP__(double, double, double);
 
 /*********************************************************************/
 
-void uGIMP_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh){
+
+void initialize__GIMP__(GaussPoint MPM_Mesh, Mesh FEM_Mesh){
 
   int Ndim = NumberDimensions;
 
@@ -76,13 +66,13 @@ void uGIMP_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh){
 
       /* If the GP is in the element, get its natural coordinates */
       Xi_p.nV = MPM_Mesh.Phi.x_EC.nM[i];
-      Q4_X_to_Xi(Xi_p,X_p,Poligon_Coordinates);
+      X_to_Xi__Q4__(Xi_p,X_p,Poligon_Coordinates);
 
       /* Initialize the voxel lenght */
-      l_p = uGIMP_Voxel(l_p, A_p);
+      l_p = voxel__GIMP__(l_p, A_p);
 
       /* Get the initial connectivity of the particle */
-      MPM_Mesh.ListNodes[i] = uGIMP_Tributary_Nodes(Xi_p,j,l_p,FEM_Mesh);
+      MPM_Mesh.ListNodes[i] = tributary__GIMP__(Xi_p,j,l_p,FEM_Mesh);
 
       /* Measure the size of the connectivity */
       MPM_Mesh.NumberNodes[i] = lenght__SetLib__(MPM_Mesh.ListNodes[i]);
@@ -101,7 +91,7 @@ void uGIMP_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh){
   if(!Init_p)
     {
       fprintf(stderr,"%s : %s %i %s \n",
-	      "Error in uGIMP_Initialize",
+	      "Error in initialize__GIMP__",
 	      "Particle",i,"Was not initialise");
       exit(EXIT_FAILURE);
     }
@@ -112,7 +102,7 @@ void uGIMP_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh){
 
 /*********************************************************************/
 
-Matrix uGIMP_Voxel(Matrix l_p, double Volume_p)
+static Matrix voxel__GIMP__(Matrix l_p, double Volume_p)
 /*!
   Get the initial voxel lenght
   Clarify that the volume measure depends if the problem is 2D (area)
@@ -135,7 +125,7 @@ Matrix uGIMP_Voxel(Matrix l_p, double Volume_p)
 /*********************************************************************/
 
 /* Uniform GIMP shape function */
-double uGIMP_Sip(double L, double lp, double Delta_xp){
+static double Sip__GIMP__(double L, double lp, double Delta_xp){
 
   /* Evaluation of the shape function */
 
@@ -162,7 +152,7 @@ double uGIMP_Sip(double L, double lp, double Delta_xp){
 /*********************************************************************/
 
 /* Uniform GIMP derivative shape function */
-double uGIMP_dSip(double L, double lp, double Delta_xp){
+static double dSip__GIMP__(double L, double lp, double Delta_xp){
 
   /* Evaluation of the shape function */
   if (((-L-lp) < Delta_xp) && (Delta_xp <= (-L+lp))){
@@ -188,7 +178,7 @@ double uGIMP_dSip(double L, double lp, double Delta_xp){
 /*********************************************************************/
 
 /* Uniform GIMP shape function 2D */
-Matrix uGIMP_N(Matrix Delta_Xp, Matrix lp, double L){
+Matrix N__GIMP__(Matrix Delta_Xp, Matrix lp, double L){
 
   /* 1º Variable declaration */
   int Ndim = NumberDimensions;
@@ -201,17 +191,17 @@ Matrix uGIMP_N(Matrix Delta_Xp, Matrix lp, double L){
     for(int i = 0 ; i<Nnodes ; i++){
       /* 3º Shape function in this node */
       S_Ip.nV[i] =
-	uGIMP_Sip(L, lp.nV[0], Delta_Xp.nM[i][0])*
-	uGIMP_Sip(L, lp.nV[1], Delta_Xp.nM[i][1]);
+	Sip__GIMP__(L, lp.nV[0], Delta_Xp.nM[i][0])*
+	Sip__GIMP__(L, lp.nV[1], Delta_Xp.nM[i][1]);
     }
     break;
   case 3:
     for(int i = 0 ; i<Nnodes ; i++){
       /* 3º Shape function in this node */
       S_Ip.nV[i] =
-	uGIMP_Sip(L, lp.nV[0], Delta_Xp.nM[i][0])*
-	uGIMP_Sip(L, lp.nV[1], Delta_Xp.nM[i][1])*
-	uGIMP_Sip(L, lp.nV[2], Delta_Xp.nM[i][2]);
+	Sip__GIMP__(L, lp.nV[0], Delta_Xp.nM[i][0])*
+	Sip__GIMP__(L, lp.nV[1], Delta_Xp.nM[i][1])*
+	Sip__GIMP__(L, lp.nV[2], Delta_Xp.nM[i][2]);
     }
     break;
   }
@@ -223,7 +213,7 @@ Matrix uGIMP_N(Matrix Delta_Xp, Matrix lp, double L){
 /*********************************************************************/
 
 /* Uniform GIMP derivative shape function 2D */
-Matrix uGIMP_dN(Matrix Delta_xp, Matrix lp, double L){
+Matrix dN__GIMP__(Matrix Delta_xp, Matrix lp, double L){
 
   /* 1º Variable declaration */
   int Ndim = NumberDimensions;
@@ -236,28 +226,28 @@ Matrix uGIMP_dN(Matrix Delta_xp, Matrix lp, double L){
     for(int i = 0 ; i<Nnodes ; i++){
       /* 3º Gradient of the shape function for each node*/
       dS_Ip.nM[i][0] =
-	uGIMP_dSip(L, lp.nV[0], Delta_xp.nM[i][0])*
-	uGIMP_Sip(L, lp.nV[1], Delta_xp.nM[i][1]);
+	dSip__GIMP__(L, lp.nV[0], Delta_xp.nM[i][0])*
+	Sip__GIMP__(L, lp.nV[1], Delta_xp.nM[i][1]);
       dS_Ip.nM[i][1] =
-	uGIMP_Sip(L, lp.nV[0], Delta_xp.nM[i][0])*
-	uGIMP_dSip(L, lp.nV[1], Delta_xp.nM[i][1]);
+	Sip__GIMP__(L, lp.nV[0], Delta_xp.nM[i][0])*
+	dSip__GIMP__(L, lp.nV[1], Delta_xp.nM[i][1]);
     }
     break;
   case 3 :
     for(int i = 0 ; i<Nnodes ; i++){
       /* 3º Gradient of the shape function for each node*/
       dS_Ip.nM[i][0] =
-	uGIMP_dSip(L, lp.nV[0], Delta_xp.nM[i][0])*
-	uGIMP_Sip(L, lp.nV[1], Delta_xp.nM[i][1])*
-	uGIMP_Sip(L, lp.nV[2], Delta_xp.nM[i][2]);
+	dSip__GIMP__(L, lp.nV[0], Delta_xp.nM[i][0])*
+	Sip__GIMP__(L, lp.nV[1], Delta_xp.nM[i][1])*
+	Sip__GIMP__(L, lp.nV[2], Delta_xp.nM[i][2]);
       dS_Ip.nM[i][1] =
-	uGIMP_Sip(L, lp.nV[0], Delta_xp.nM[i][0])*
-	uGIMP_dSip(L, lp.nV[1], Delta_xp.nM[i][1])*
-	uGIMP_Sip(L, lp.nV[2], Delta_xp.nM[i][2]);
+	Sip__GIMP__(L, lp.nV[0], Delta_xp.nM[i][0])*
+	dSip__GIMP__(L, lp.nV[1], Delta_xp.nM[i][1])*
+	Sip__GIMP__(L, lp.nV[2], Delta_xp.nM[i][2]);
       dS_Ip.nM[i][2] =
-	uGIMP_Sip(L, lp.nV[0], Delta_xp.nM[i][0])*
-	uGIMP_Sip(L, lp.nV[1], Delta_xp.nM[i][1])*
-	uGIMP_dSip(L, lp.nV[2], Delta_xp.nM[i][2]);      
+	Sip__GIMP__(L, lp.nV[0], Delta_xp.nM[i][0])*
+	Sip__GIMP__(L, lp.nV[1], Delta_xp.nM[i][1])*
+	dSip__GIMP__(L, lp.nV[2], Delta_xp.nM[i][2]);      
     }
     break;
   }
@@ -267,7 +257,7 @@ Matrix uGIMP_dN(Matrix Delta_xp, Matrix lp, double L){
 
 /*********************************************************************/
 
-ChainPtr uGIMP_Tributary_Nodes(Matrix Xi_p,int Elem_GP,Matrix lp,Mesh FEM_Mesh)
+ChainPtr tributary__GIMP__(Matrix Xi_p,int Elem_GP,Matrix lp,Mesh FEM_Mesh)
 {
 
   ChainPtr * Table_Nodes = NULL;

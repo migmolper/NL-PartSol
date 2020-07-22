@@ -1,24 +1,25 @@
 #include "nl-partsol.h"
 
-/***********************************************/
-/********* 2D triangle linear element **********/
-/***********************************************/
+/*
+  Auxiliar functions
+ */
+static Matrix F_Ref__T3__(Matrix,Matrix);
+static Matrix dN_Ref__T3__(Matrix);
+static Matrix Xi_to_X__T3__(Matrix,Matrix);
+static void   X_to_Xi__T3__(Matrix,Matrix,Matrix);
 
-/* (2)     */
-/*  o      */
-/*  |\     */
-/*  | \    */
-/*  o--o   */
-/* (0) (1) */
+/*********************************************************************/
 
-/* Shape functions */
-Matrix T3(Matrix X_e){
+/*
+  Shape functions 
+*/
+Matrix N__T3__(Matrix X_e){
 
   /* Error check */
   if( (fabs(X_e.nV[0]) > 1 ) ||
       (fabs(X_e.nV[1]) > 1 ) ||
       (1 - X_e.nV[0] - X_e.nV[1] < 0)){
-    printf("Error in T3() : Out of the element bounds !!! \n");
+    printf("Error in N__T3__() : Out of the element bounds !!! \n");
     exit(EXIT_FAILURE);
   }    
   
@@ -35,14 +36,14 @@ Matrix T3(Matrix X_e){
 
 /*********************************************************************/
 
-/* Derivatives of the shape functions */
-Matrix dT3(Matrix X_e){
-
+static Matrix dN_Ref__T3__(Matrix X_e)
+{
+  
   /* Error check */
   if( (fabs(X_e.nV[0]) > 1 ) ||
       (fabs(X_e.nV[1]) > 1 ) ||
       (1 - X_e.nV[0] - X_e.nV[1] < 0)){
-    printf("Error in T3() : Out of the element bounds !!! \n");
+    printf("Error in dN_Ref__T3__() : Out of the element bounds !!! \n");
     exit(EXIT_FAILURE);
   }
   
@@ -67,7 +68,7 @@ Matrix dT3(Matrix X_e){
 /*********************************************************************/
 
 /* Deformation gradient of the reference element for the three-nodes triangle */
-Matrix Get_F_Ref_T3(Matrix X_NC_GP,Matrix X_GC_Nodes)
+Matrix F_Ref__T3__(Matrix X_NC_GP,Matrix X_GC_Nodes)
 /*
   Get the deformation gradient of the transformation of the reference element :
 
@@ -90,7 +91,7 @@ Matrix Get_F_Ref_T3(Matrix X_NC_GP,Matrix X_GC_Nodes)
   Matrix F_Ref = allocZ__MatrixLib__(2,2);
 
   /* 1º Evaluate the derivarive of the shape function in the GP */
-  dNdX_Ref_GP = dT3(X_NC_GP); 
+  dNdX_Ref_GP = dN_Ref__T3__(X_NC_GP); 
 
   /* 2º Get the F_Ref doing a loop over the nodes of the element */
   for(int i = 0 ; i<3 ; i++){
@@ -124,7 +125,7 @@ Matrix Get_F_Ref_T3(Matrix X_NC_GP,Matrix X_GC_Nodes)
 /*********************************************************************/
 
 /* Element gradient in the real element */
-Matrix Get_dNdX_T3(Matrix X_EC_GP,Matrix Element)
+Matrix dN__T3__(Matrix X_EC_GP,Matrix Element)
 /*
   - Matrix X_EC_GP : Element coordinates of the gauss point
   - Matrix Element : Coordinates of the element (NumNodesElem x NumberDimensions)
@@ -139,10 +140,10 @@ Matrix Get_dNdX_T3(Matrix X_EC_GP,Matrix Element)
   Matrix dNdx_GP; /* Derivatives of the shape function evaluates in the GP (Ndim x Ndim) */
 
   /* 1º Evaluate the gradient of the shape function in the GP */
-  dNdX_Ref_GP = dT3(X_EC_GP);
+  dNdX_Ref_GP = dN_Ref__T3__(X_EC_GP);
   
   /* 2º Get the deformation gradient of the transformation evaluated in the GP */
-  F_GP = Get_F_Ref_T3(X_EC_GP,Element);
+  F_GP = F_Ref__T3__(X_EC_GP,Element);
     
   /* 3º Get the inverse of the deformation gradient */
   F_GP_m1 = inverse__MatrixLib__(F_GP);
@@ -153,7 +154,7 @@ Matrix Get_dNdX_T3(Matrix X_EC_GP,Matrix Element)
   free__MatrixLib__(F_GP_m1);
   
   /* 5º Get the gradient of the shape functions in global coordinates */
-  dNdx_GP = scalar_product__MatrixLib__(F_GP_Tm1,dNdX_Ref_GP);
+  dNdx_GP = matrix_product__MatrixLib__(F_GP_Tm1,dNdX_Ref_GP);
   free__MatrixLib__(F_GP_Tm1);
   free__MatrixLib__(dNdX_Ref_GP);
 
@@ -164,7 +165,7 @@ Matrix Get_dNdX_T3(Matrix X_EC_GP,Matrix Element)
 /*********************************************************************/
 
 /* Global coordinates of the four nodes quadrilateral */
-Matrix Get_X_GC_T3(Matrix X_NC_GP,Matrix X_GC_Nodes)
+static Matrix Xi_to_X__T3__(Matrix X_NC_GP,Matrix X_GC_Nodes)
 /*
 This function evaluate the position of the GP in the element, and get it global coordiantes    
  */
@@ -174,7 +175,7 @@ This function evaluate the position of the GP in the element, and get it global 
   Matrix X_GC_GP;
 
   /* 1º Evaluate the Q4 element in the element coordinates */
-  N_ref = T3(X_NC_GP);
+  N_ref = N__T3__(X_NC_GP);
 
   /* 2º Allocate the output coordinates */
   X_GC_GP = alloc__MatrixLib__(2,1);
@@ -200,9 +201,9 @@ This function evaluate the position of the GP in the element, and get it global 
 
 /*********************************************************************/
 
-void Get_X_EC_T3(Matrix X_EC_GP,
-		 Matrix X_GC_GP,
-		 Matrix Element_GC_Nod)
+void X_to_Xi__T3__(Matrix X_EC_GP,
+		   Matrix X_GC_GP,
+		   Matrix Element_GC_Nod)
 /* 
    The function return the natural coordinates of a point 
    inside of the element.
@@ -217,8 +218,8 @@ void Get_X_EC_T3(Matrix X_EC_GP,
 */
 {
   
-  X_EC_GP = Newton_Rapson(Get_X_GC_T3,Element_GC_Nod,
-			  Get_F_Ref_T3,Element_GC_Nod,
+  X_EC_GP = Newton_Rapson(Xi_to_X__T3__,Element_GC_Nod,
+			  F_Ref__T3__,Element_GC_Nod,
 			  X_GC_GP,X_EC_GP);
 }
 

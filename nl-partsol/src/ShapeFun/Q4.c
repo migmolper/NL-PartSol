@@ -1,17 +1,14 @@
 #include "nl-partsol.h"
 
-/***********************************************/
-/******* 2D cuadrilateral linear element *******/
-/***********************************************/
+/*
+  Auxiliar functions
+*/
+static Matrix F_Ref__Q4__(Matrix,Matrix);
+static Matrix Xi_to_X__Q4__(Matrix,Matrix);
 
-/* (3)     (2)  */
-/*  o-------o   */
-/*  |       |   */
-/*  |       |   */
-/*  o-------o   */
-/* (0)     (1)  */
+/*********************************************************************/
 
-void Q4_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
+void initialize__Q4__(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 {
   /* Variables for the GP coordinates */
   int Ndim = NumberDimensions;
@@ -62,7 +59,7 @@ void Q4_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 	CoordElement = ElemCoordinates(MPM_Mesh.ListNodes[p],FEM_Mesh.Coordinates);
 
 	/* Compute local coordinates of the particle in this element */
-	Q4_X_to_Xi(Xi_p,X_p,CoordElement);
+	X_to_Xi__Q4__(Xi_p,X_p,CoordElement);
 	
 	/* Free coordinates of the element */
 	free__MatrixLib__(CoordElement);
@@ -80,7 +77,7 @@ void Q4_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 /*********************************************************************/
 
 /* Shape functions */
-Matrix Q4_N(Matrix X_e){
+Matrix N__Q4__(Matrix X_e){
   
   /* Definition and allocation */
   Matrix N_ref =  allocZ__MatrixLib__(1,4);
@@ -97,7 +94,7 @@ Matrix Q4_N(Matrix X_e){
 /*********************************************************************/
 
 /* Derivatives of the shape functions */
-Matrix Q4_dN_Ref(Matrix X_e){
+Matrix dN_Ref__Q4__(Matrix X_e){
 
   int Ndim = NumberDimensions;
   
@@ -128,7 +125,7 @@ Matrix Q4_dN_Ref(Matrix X_e){
 /*********************************************************************/
 
 /* Jacobian of the transformation for the four-nodes quadrilateral */
-Matrix Q4_F_Ref(Matrix X_NC_GP, Matrix X_GC_Nodes)
+static Matrix F_Ref__Q4__(Matrix X_NC_GP, Matrix X_GC_Nodes)
 /*
   Get the jacobian of the transformation of the reference element :
 
@@ -152,7 +149,7 @@ Matrix Q4_F_Ref(Matrix X_NC_GP, Matrix X_GC_Nodes)
   Matrix F_Ref = allocZ__MatrixLib__(Ndim,Ndim);
 
   /* 1º Evaluate the derivarive of the shape function in the GP */
-  dNdX_Ref_GP = Q4_dN_Ref(X_NC_GP);
+  dNdX_Ref_GP = dN_Ref__Q4__(X_NC_GP);
 
   /* 2º Get the F_Ref doing a loop over the nodes of the element */
   for(int I = 0 ; I<4 ; I++){
@@ -184,7 +181,7 @@ Matrix Q4_F_Ref(Matrix X_NC_GP, Matrix X_GC_Nodes)
 /*********************************************************************/
 
 /* Element gradient in the real element */
-Matrix Q4_dN(Matrix X_EC, Matrix Element)
+Matrix dN__Q4__(Matrix X_EC, Matrix Element)
 /*
   - Matrix X_EC_GP : Element coordinates of the gauss point
   - Matrix Element : Coordinates of the element (4 x Ndim)
@@ -196,10 +193,10 @@ Matrix Q4_dN(Matrix X_EC, Matrix Element)
   Matrix dNdX_T;
     
   /* 1º Evaluate the gradient of the shape function in the GP (4 x Ndim) */
-  Matrix dNdX_Ref = Q4_dN_Ref(X_EC);
+  Matrix dNdX_Ref = dN_Ref__Q4__(X_EC);
 
   /* 2º Get the Jacobian of the transformation evaluated in the GP */
-  Matrix F = Q4_F_Ref(X_EC,Element);
+  Matrix F = F_Ref__Q4__(X_EC,Element);
   Matrix F_m1 = inverse__MatrixLib__(F);  
   Matrix F_Tm1 = transpose__MatrixLib__(F_m1);
  
@@ -209,7 +206,7 @@ Matrix Q4_dN(Matrix X_EC, Matrix Element)
   free__MatrixLib__(dNdX_Ref);
   
   /* 5º Get the gradient of the shape functions in global coordinates */
-  dNdX_T = scalar_product__MatrixLib__(F_Tm1, dNdX_Ref_T);
+  dNdX_T = matrix_product__MatrixLib__(F_Tm1, dNdX_Ref_T);
   
   /* Free memory */
   free__MatrixLib__(F_Tm1);  
@@ -226,7 +223,7 @@ Matrix Q4_dN(Matrix X_EC, Matrix Element)
 /*********************************************************************/
 
 /* Global coordinates of the four nodes quadrilateral */
-Matrix Q4_Xi_to_X(Matrix Xi, Matrix Element)
+Matrix Xi_to_X__Q4__(Matrix Xi, Matrix Element)
 /*
   This function evaluate the position of the GP in the element,
   and get it global coordiantes    
@@ -234,7 +231,7 @@ Matrix Q4_Xi_to_X(Matrix Xi, Matrix Element)
 {
   int Ndim = NumberDimensions;
   /* 1º Evaluate the Q4 element in the element coordinates */
-  Matrix N = Q4_N(Xi);
+  Matrix N = N__Q4__(Xi);
 
   /* 2º Allocate the output coordinates */
   Matrix X = allocZ__MatrixLib__(Ndim,1);
@@ -255,7 +252,7 @@ Matrix Q4_Xi_to_X(Matrix Xi, Matrix Element)
 
 /*********************************************************************/
 
-void Q4_X_to_Xi(Matrix Xi, Matrix X, Matrix Element)
+void X_to_Xi__Q4__(Matrix Xi, Matrix X, Matrix Element)
 /* 
    The function return the natural coordinates of a point 
    inside of the element.
@@ -268,10 +265,8 @@ void Q4_X_to_Xi(Matrix Xi, Matrix X, Matrix Element)
    Depending of the kind of element, we employ differents types
    of shape functions
 */
-{
-  
-  Xi = Newton_Rapson(Q4_Xi_to_X, Element, Q4_F_Ref, Element, X, Xi);
-  
+{  
+  Xi = Newton_Rapson(Xi_to_X__Q4__, Element, F_Ref__Q4__, Element, X, Xi);  
 }
 
 /*********************************************************************/

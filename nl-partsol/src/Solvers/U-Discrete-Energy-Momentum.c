@@ -374,7 +374,7 @@ static Matrix compute_Nodal_Effective_Mass(GaussPoint MPM_Mesh, Mesh FEM_Mesh,
       /* 
 	 Evaluate the shape function in the coordinates of the particle
        */
-      ShapeFunction_p = compute_N__ShapeFun__(Nodes_p, MPM_Mesh, FEM_Mesh);
+      ShapeFunction_p = compute_N__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
    
       /*
 	Get the mass of the particle 
@@ -514,7 +514,7 @@ static Matrix compute_Nodal_Momentum(GaussPoint MPM_Mesh,Mesh FEM_Mesh, Mask Act
       Nodes_p = get_particle_Set(p, MPM_Mesh.ListNodes[p], MPM_Mesh.NumberNodes[p]);
 
       /* Evaluate the shape function in the coordinates of the particle */
-      ShapeFunction_p = compute_N__ShapeFun__(Nodes_p, MPM_Mesh, FEM_Mesh);
+      ShapeFunction_p = compute_N__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
 
       /* Get the mass of the GP */
       m_p = MPM_Mesh.Phi.mass.nV[p];
@@ -638,7 +638,7 @@ static void update_Local_State(Matrix D_Displacement, Mask ActiveNodes,
       /*
       	 Evaluate the shape function gradient in the coordinates of the particle
        */
-      gradient_p = compute_dN__ShapeFun__(Nodes_p,MPM_Mesh,FEM_Mesh);
+      gradient_p = compute_dN__MeshTools__(Nodes_p,MPM_Mesh,FEM_Mesh);
 	  
       /*
       	Take the values of the deformation gradient from the previous step
@@ -754,7 +754,7 @@ static void compute_Nodal_Internal_Forces(Matrix Forces,
       /*
 	Compute gradient of the shape function in each node 
       */
-      gradient_p = compute_dN__ShapeFun__(Nodes_p, MPM_Mesh, FEM_Mesh);
+      gradient_p = compute_dN__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
     	  
       /*
 	Take the values of the deformation gradient ant t = n and t = n + 1. 
@@ -1014,7 +1014,7 @@ static void assemble_Nodal_Tangent_Stiffness_Geometric(Matrix Tangent_Stiffness,
       /*
 	Compute gradient of the shape function in each node 
       */
-      gradient_p = compute_dN__ShapeFun__(Nodes_p, MPM_Mesh, FEM_Mesh);
+      gradient_p = compute_dN__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
     	  
       /*
 	Take the values of the deformation gradient ant t = n and  
@@ -1180,7 +1180,7 @@ static void assemble_Nodal_Tangent_Stiffness_Material(Matrix Tangent_Stiffness,
       /*
 	Compute gradient of the shape function in each node 
       */
-      gradient_p = compute_dN__ShapeFun__(Nodes_p, MPM_Mesh, FEM_Mesh);
+      gradient_p = compute_dN__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
       
       /*
 	Take the values of the deformation gradient ant t = n and t = n + 1. 
@@ -1537,8 +1537,8 @@ static void update_Particles(Matrix D_Displacement, Matrix D_Velocity,
       /*
 	Evaluate the shape function and gradient in the coordinates of the particle 
       */
-      ShapeFunction_p = compute_N__ShapeFun__(Nodes_p, MPM_Mesh, FEM_Mesh);
-      gradient_p      = compute_dN__ShapeFun__(Nodes_p,MPM_Mesh,FEM_Mesh);
+      ShapeFunction_p = compute_N__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
+      gradient_p      = compute_dN__MeshTools__(Nodes_p,MPM_Mesh,FEM_Mesh);
 
       /*
       	Take the values of the deformation gradient from the previous step

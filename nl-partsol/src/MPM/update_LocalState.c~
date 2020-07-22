@@ -35,7 +35,7 @@ void update_LocalState(Matrix V_I, GaussPoint MPM_Mesh,
     Nodal_Velocity_p = get_set_Field(V_I, Nodes_p);
 
     /* Compute gradient of the shape function in each node */
-    Gradient_p = compute_ShapeFunction_gradient(Nodes_p, MPM_Mesh, FEM_Mesh);
+    Gradient_p = compute_dN__ShapeFun__(Nodes_p, MPM_Mesh, FEM_Mesh);
     
     /* Get the material properties */
     Idx_Mat_p = MPM_Mesh.MatIdx[p];

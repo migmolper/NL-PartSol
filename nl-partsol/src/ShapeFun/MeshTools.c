@@ -380,3 +380,249 @@ double mesh_size__MeshTools__(Mesh FEM_Mesh)
 }
 
 /*********************************************************************/
+
+Matrix ElemCoordinates(ChainPtr Element_p, Matrix Coordinates)
+/*
+  Get the matrix with the coordinates of an element
+*/
+{
+
+  int Ndim = NumberDimensions;
+  int NumVertex = lenght__SetLib__(Element_p);
+  Matrix Element_Coordinates = allocZ__MatrixLib__(NumVertex,Ndim);
+  ChainPtr Idx = NULL;
+  int I_Idx = 0;
+
+  Idx = Element_p;
+
+  while(Idx != NULL){
+
+    /* Fill the elelemtn coordinates */
+    for(int l = 0 ; l<Ndim ; l++){
+      Element_Coordinates.nM[I_Idx][l] = Coordinates.nM[Idx->I][l];
+    }
+    
+    /* Cycle */
+    Idx = Idx->next;
+    I_Idx++;
+  }
+  
+  return Element_Coordinates;
+}
+
+/*********************************************************************/
+
+ChainPtr DiscardElements(ChainPtr SearchElem_0,
+			 Matrix Corner_MAX,
+			 Matrix Corner_MIN,
+			 Mesh FEM_Mesh)
+/*
+  Auxiliary function to increase the computational accuracy in the
+  GlobalSearchGaussPoints() function. We discard the elements where we can't have
+  GPs because its vertex coordinates. 
+*/
+{   
+  /* Found the tail */
+  if (SearchElem_0 == NULL) {
+    return NULL;
+  }
+
+  ChainPtr SearchElem_1;
+  double Xmax_E, Ymax_E;
+  double Xmin_E, Ymin_E;
+  int Idx_Elem; /* Index of the element */
+  int NumNodes; /* Num nodes of the element */
+  int * Conect_Elem; /* Conectivity of the element */
+
+  Idx_Elem = SearchElem_0->I;
+  NumNodes = FEM_Mesh.NumNodesElem[Idx_Elem];
+  Conect_Elem = set_to_memory__SetLib__(FEM_Mesh.Connectivity[Idx_Elem],NumNodes);
+
+  /* Init Corner_MAX and Corner_MIN */
+  Xmax_E = FEM_Mesh.Coordinates.nM[Conect_Elem[0]][0];
+  Ymax_E = FEM_Mesh.Coordinates.nM[Conect_Elem[0]][1];
+  Xmin_E = FEM_Mesh.Coordinates.nM[Conect_Elem[0]][0];
+  Ymin_E = FEM_Mesh.Coordinates.nM[Conect_Elem[0]][1];
+  
+  for(int i = 1 ; i<NumNodes ; i++){
+    /* Corner_MAX */
+    Xmax_E = DMAX(Xmax_E, FEM_Mesh.Coordinates.nM[Conect_Elem[i]][0]);
+    Ymax_E = DMAX(Ymax_E, FEM_Mesh.Coordinates.nM[Conect_Elem[i]][1]);
+    /* Corner_MIN */
+    Xmin_E = DMIN(Xmin_E, FEM_Mesh.Coordinates.nM[Conect_Elem[i]][0]);
+    Ymin_E = DMIN(Ymin_E, FEM_Mesh.Coordinates.nM[Conect_Elem[i]][1]);
+  }
+
+  /* Free */
+  free(Conect_Elem);
+  
+  /* Test inferior limit */
+  if ((Xmin_E<Corner_MIN.nV[0]) &&
+      (Ymin_E<Corner_MIN.nV[1])){ 
+    SearchElem_1 = SearchElem_0->next;
+    free(SearchElem_0);
+    SearchElem_1->next =
+      DiscardElements(SearchElem_1->next,
+		      Corner_MAX,Corner_MIN,
+		      FEM_Mesh);
+    return SearchElem_1;
+  }
+  /* Test superior limit */
+  else if ((Xmax_E>Corner_MAX.nV[0]) &&
+	   (Ymax_E>Corner_MAX.nV[1])){
+    SearchElem_1 = SearchElem_0->next;
+    free(SearchElem_0);
+    SearchElem_1->next =
+      DiscardElements(SearchElem_1->next,
+		      Corner_MAX,Corner_MIN,
+		      FEM_Mesh);
+    return SearchElem_1;
+  }
+  /* Just keep going */
+  else{
+    SearchElem_0->next =
+      DiscardElements(SearchElem_0->next,
+		      Corner_MAX,Corner_MIN,
+		      FEM_Mesh);
+    return SearchElem_0;
+  }
+}
+
+/*********************************************************************/
+
+
+Matrix get_set_Coordinates(ChainPtr Set, Matrix X0, Matrix Coordinates)
+{
+  int Ndim = NumberDimensions;
+  int SizeSet = lenght__SetLib__(Set);
+  int I = 0;
+
+  /* Allocate output */
+  Matrix Set_Coordinates = allocZ__MatrixLib__(SizeSet,Ndim);
+
+  /* Loop in the set */
+  ChainPtr Aux_Set = Set;
+  while (Aux_Set != NULL){ 
+    /* Get coordinates local coodinates of each node in the set */
+    for(int i = 0 ; i<Ndim ; i++){
+      Set_Coordinates.nM[I][i] =  X0.nV[i] - Coordinates.nM[Aux_Set->I][i];
+    }
+    /* Update index */
+    I++;	
+    Aux_Set = Aux_Set->next; 
+  }
+  
+  return Set_Coordinates;
+}
+
+/*********************************************************************/
+
+Matrix get_set_Field(Matrix Nodal_Field, Element GP_Element){
+
+  int * Element_Connectivity = GP_Element.Connectivity;
+  int NumNodes = GP_Element.NumberNodes;
+  Matrix Element_Field;
+  int Ndim = NumberDimensions;
+  int Ie;
+
+  /* Allocate a matrix to store the nodal quatities in the element */
+  Element_Field = alloc__MatrixLib__(NumNodes,Ndim);
+
+  /* Loop over the nodes of the element */
+  for(int I = 0; I<NumNodes; I++){
+    /* Get the node of the element */
+    Ie = Element_Connectivity[I];
+    /* Fill each dimension of the nodal quantitie */
+    for(int i = 0 ; i<Ndim ; i++){
+      Element_Field.nM[I][i] = Nodal_Field.nM[Ie][i];
+    }
+  }
+  
+  return Element_Field;
+}
+ 
+/*********************************************************************/
+
+int get_closest_node_to(Matrix X_p, ChainPtr Nodes, Matrix Coordinates)
+/*
+  Ordenate recursively and array with distances and get a chain 
+  with the positions in orden
+*/
+{
+  /* Number of dimensions */
+  int Ndim = NumberDimensions;
+  /* Index of the current node */
+  int I;
+  /* Corrdinates of the current node */
+  Matrix X_I;
+  /* Distance from the particle to the node */
+  double Distance_I;
+  /* Interator pointer */
+  ChainPtr Node_I = NULL;
+  /* Get the value of the maximum distance from the particle to the pointer */
+  double DistMin;
+  int I_DistMin;
+
+  /* Initialize interator with the first node */
+  Node_I = Nodes;
+
+  /* Get the index of the first node */
+  I = Node_I->I;
+  
+  /* Get the coordinates of the first node */
+  X_I = memory_to_matrix__MatrixLib__(Ndim,1,Coordinates.nM[I]);
+
+  /* Get the distance from the node to the particle */
+  Distance_I = point_distance__MatrixLib__(X_p, X_I);
+      
+  /* Get the distance from the node to the particle */
+  DistMin = Distance_I;
+  I_DistMin = Node_I->I;
+      
+  /* Search in the reamaining nodes */      
+  Node_I = Node_I->next;
+  
+  while(Node_I != NULL){
+
+    /* Get the index of the node */
+    I = Node_I->I;
+
+    /* Get the coordinates of the node */
+    X_I = memory_to_matrix__MatrixLib__(Ndim,1,Coordinates.nM[I]);
+
+    /* Get the distance from the node to the particle */
+    Distance_I = point_distance__MatrixLib__(X_p, X_I);
+      
+    /* Get the max distance of the matrix */
+    if(Distance_I < DistMin){
+      DistMin = Distance_I;
+      I_DistMin = Node_I->I;
+    }
+      
+    /* Continue iterating */      
+    Node_I = Node_I->next;
+      
+  }
+   
+  return I_DistMin;
+}
+
+/*********************************************************************/
+
+bool InOut_Element(Matrix X_p, ChainPtr Elem_p, Matrix Coordinates){
+
+  bool Is_In_Element = false;
+  Matrix Element_Coordinates;
+  
+  Element_Coordinates = ElemCoordinates(Elem_p, Coordinates);
+  
+  if (inout__MatrixLib__(X_p, Element_Coordinates) == 1){
+    Is_In_Element = true;
+  }
+
+  free__MatrixLib__(Element_Coordinates);
+
+  return Is_In_Element;
+}
+
+/*********************************************************************/

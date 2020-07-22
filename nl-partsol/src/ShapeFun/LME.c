@@ -1,33 +1,15 @@
 #include "nl-partsol.h"
 
-/***********************************************/
-/************* Local Maximum-Entropy **************/
-/**************************************************/
-
-/*!
-  Shape functions based in :
-  "" Local maximum-entropy approximation schemes : a seamless 
-  bridge between finite elements and meshfree methods ""
-  by M.Arroyo and M.Ortiz, 2006.
-
-  Here we employ the same nomenclature as in the paper. With the single
-  different of the "l" variable wich represents the distances between the
-  evaluation point and the neighborhood nodes.
-
-  List of functions :
-  - LME_Init_lambda
-  - LME_lambda_NR
-  - LME_fa
-  - LME_p
-  - LME_r
-  - LME_J
-  - LME_dp
-  - LME_Tributary_Nodes
-*/
+/*
+  Auxiliar functions 
+ */
+static double fa__LME__(Matrix, Matrix, Matrix);
+static Matrix r__LME__(Matrix, Matrix);
+static Matrix J__LME__(Matrix, Matrix, Matrix);
 
 /****************************************************************************/
 
-void LME_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
+void initialize__LME__(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 {
 
   int Ndim = NumberDimensions;
@@ -75,10 +57,10 @@ void LME_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 					FEM_Mesh.Coordinates);
 
 	/* Initialize Beta */
-	Beta_p = LME_Beta(Beta_p, Delta_Xip, gamma_LME);
+	Beta_p = beta_isotropic__LME__(Beta_p, Delta_Xip, gamma_LME);
 
 	/* Get the initial connectivity of the particle */
-	MPM_Mesh.ListNodes[p] = LME_Tributary_Nodes(X_p,Beta_p,I_p,FEM_Mesh);
+	MPM_Mesh.ListNodes[p] = tributary__LME__(X_p,Beta_p,I_p,FEM_Mesh);
 
 	/* Measure the size of the connectivity */
 	MPM_Mesh.NumberNodes[p] = lenght__SetLib__(MPM_Mesh.ListNodes[p]);
@@ -96,10 +78,10 @@ void LME_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 					FEM_Mesh.Coordinates);
 
 	/* Update the value of beta */
-	Beta_p = LME_Beta(Beta_p, Delta_Xip, gamma_LME);
+	Beta_p = beta_isotropic__LME__(Beta_p, Delta_Xip, gamma_LME);
 			
 	/* Update lagrange multipliers with Newton-Rapson */
-	lambda_p = LME_lambda_NR(Delta_Xip, lambda_p, Beta_p);
+	lambda_p = lambda__LME__(Delta_Xip, lambda_p, Beta_p);
 
 	/* Free memory */
 	free__MatrixLib__(Delta_Xip);
@@ -114,7 +96,7 @@ void LME_Initialize(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 
 /****************************************************************************/
 
-Matrix LME_Beta(Matrix Beta, Matrix l, double Gamma)
+Matrix beta_isotropic__LME__(Matrix Beta, Matrix l, double Gamma)
 /*!
   Function to update the value of beta
 */
@@ -142,7 +124,58 @@ Matrix LME_Beta(Matrix Beta, Matrix l, double Gamma)
 
 /****************************************************************************/
 
-Matrix LME_lambda_NR(Matrix l, Matrix lambda, Matrix Beta)
+Matrix beta_anisotropic__LME__(Matrix Beta, Matrix f)
+/*!
+  Function to update the value of beta with the increment
+  of the deformation gradient
+*/
+{
+
+  int Ndim = NumberDimensions;
+
+  Matrix f_m1 = inverse__MatrixLib__(f);
+
+  Matrix Beta_x_f_m1 = matrix_product__MatrixLib__(Beta, f_m1);
+  
+  double f_m1T_x_Beta_x_f_m1;
+
+  /*
+    Compute and update :
+    Beta = f_m1T_x_Beta_x_f_m1
+   */
+  for(int i = 0 ; i<Ndim ; i++)
+    {
+      for(int j = 0 ; j<Ndim ; j++)
+	{
+
+	  f_m1T_x_Beta_x_f_m1 = 0;
+	  
+	  for(int k = 0 ; k<Ndim ; k++)
+	    {
+	      f_m1T_x_Beta_x_f_m1 += f_m1.nM[k][i]*Beta_x_f_m1.nM[k][j];
+	    }
+	  
+	  /*
+	    Update value of beta
+	  */
+	  Beta.nM[i][j] = f_m1T_x_Beta_x_f_m1;
+	  
+	}
+    }
+
+  /*
+    Free memory
+   */
+  free__MatrixLib__(Beta_x_f_m1);
+  free__MatrixLib__(f_m1);
+    
+  
+  return Beta;
+}
+
+/****************************************************************************/
+
+Matrix lambda__LME__(Matrix l, Matrix lambda, Matrix Beta)
 /*!
   Get the lagrange multipliers "lambda" (1 x dim) for the LME 
   shape function. The numerical method for that is the Newton-Rapson.
@@ -171,19 +204,19 @@ Matrix LME_lambda_NR(Matrix l, Matrix lambda, Matrix Beta)
   while(NumIter <= MaxIter){
 	
     /* Get vector with the shape functions evaluated in the nodes */
-    p = LME_p(l,lambda,Beta);
+    p = p__LME__(l,lambda,Beta);
 
     /* Get the gradient of log(Z) and its norm */
-    r = LME_r(l,p);
+    r = r__LME__(l,p);
     norm_r = norm__MatrixLib__(r,2);
 
     /* Get the Hessian of log(Z) */    
-    J = LME_J(l,p,r);
+    J = J__LME__(l,p,r);
 
     /* /\* Check the conditioning number of the Hessian *\/ */
     /* if (fabs(conditioning__MatrixLib__(J,TOL_lambda)) > 10){ */
     /*   printf(" %s (%s %i) : %s \n", */
-    /* 	     "Error in LME_lambda_NR","Iter",NumIter, */
+    /* 	     "Error in lambda__LME__","Iter",NumIter, */
     /* 	     "The Hessian is near to singular matrix"); */
     /*   exit(0); */
     /* } */
@@ -228,7 +261,7 @@ Matrix LME_lambda_NR(Matrix l, Matrix lambda, Matrix Beta)
 
 /****************************************************************************/
 
-double LME_fa(Matrix la, Matrix lambda, Matrix Beta)
+static double fa__LME__(Matrix la, Matrix lambda, Matrix Beta)
 /*!
   Output :
   -> fa : the function fa that appear in [1] (scalar).
@@ -251,7 +284,7 @@ double LME_fa(Matrix la, Matrix lambda, Matrix Beta)
 
 /****************************************************************************/
 
-Matrix LME_p(Matrix l, Matrix lambda, Matrix Beta)
+Matrix p__LME__(Matrix l, Matrix lambda, Matrix Beta)
 /*!
   Get the value of the shape function "pa" (1 x neighborhood) in the
   neighborhood nodes.
@@ -276,7 +309,7 @@ Matrix LME_p(Matrix l, Matrix lambda, Matrix Beta)
   /* Get Z and the numerator */
   for(int a = 0 ; a<N_a ; a++){
     la.nV = l.nM[a];
-    p.nV[a] = exp(LME_fa(la,lambda,Beta));
+    p.nV[a] = exp(fa__LME__(la,lambda,Beta));
     Z += p.nV[a];
   }
 
@@ -294,7 +327,7 @@ Matrix LME_p(Matrix l, Matrix lambda, Matrix Beta)
 
 /****************************************************************************/
 
-Matrix LME_r(Matrix l, Matrix p)
+static Matrix r__LME__(Matrix l, Matrix p)
 /*!
   Get the gradient "r" (dim x 1) of the function log(Z) = 0.
   Input parameters :
@@ -323,7 +356,7 @@ Matrix LME_r(Matrix l, Matrix p)
 
 /****************************************************************************/
 
-Matrix LME_J(Matrix l, Matrix p, Matrix r)
+static Matrix J__LME__(Matrix l, Matrix p, Matrix r)
 /*!
   Get the Hessian "J" (dim x dim) of the function log(Z) = 0.
   Input parameters :
@@ -361,7 +394,7 @@ Matrix LME_J(Matrix l, Matrix p, Matrix r)
 
 /****************************************************************************/
 
-Matrix LME_dp(Matrix l, Matrix p)
+Matrix dp__LME__(Matrix l, Matrix p)
 /*!
   Value of the shape function gradient "dp" (dim x neighborhood) in 
   the neighborhood nodes.
@@ -384,8 +417,8 @@ Matrix LME_dp(Matrix l, Matrix p)
     memory_to_matrix__MatrixLib__(Ndim,1,NULL); 
   
   /* Get the Gradient and the Hessian of log(Z) */
-  r = LME_r(l,p);
-  J = LME_J(l,p,r);
+  r = r__LME__(l,p);
+  J = J__LME__(l,p,r);
   
   /* Inverse of the Hessian */
   Jm1 = inverse__MatrixLib__(J);
@@ -397,7 +430,7 @@ Matrix LME_dp(Matrix l, Matrix p)
   /* Fill the gradient for each node */
   for(int a = 0 ; a<N_a ; a++){
     la.nV = l.nM[a]; 
-    Jm1_la = scalar_product__MatrixLib__(Jm1,la);    
+    Jm1_la = matrix_product__MatrixLib__(Jm1,la);    
     for(int i = 0 ; i<Ndim ; i++){
       dp.nM[a][i] = - p.nV[a]*Jm1_la.nV[i];
     }
@@ -413,7 +446,7 @@ Matrix LME_dp(Matrix l, Matrix p)
 
 /****************************************************************************/
 
-ChainPtr LME_Tributary_Nodes(Matrix X_GP, Matrix Beta, int I0, Mesh FEM_Mesh){
+ChainPtr tributary__LME__(Matrix X_GP, Matrix Beta, int I0, Mesh FEM_Mesh){
 
   /* Define output */
   ChainPtr Triburary_Nodes = NULL;

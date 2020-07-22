@@ -35,7 +35,7 @@ Matrix compute_BodyForces(Matrix F_I, GaussPoint MPM_Mesh,
       Nodes_p = get_particle_Set(p, MPM_Mesh.ListNodes[p], Nn);
 
       /* Compute shape functions */
-      ShapeFunction_p = compute_ShapeFunction(Nodes_p, MPM_Mesh, FEM_Mesh);
+      ShapeFunction_p = compute_N__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
 
       /* Fill vector of body forces */
       for(int k = 0 ; k<Ndim ; k++){
@@ -130,7 +130,7 @@ Matrix compute_ContacForces(Matrix F_I, GaussPoint MPM_Mesh,
       Nodes_p = get_particle_Set(p, MPM_Mesh.ListNodes[p], Nn);
 
       /* Compute shape functions */
-      ShapeFunction_p = compute_ShapeFunction(Nodes_p, MPM_Mesh, FEM_Mesh);
+      ShapeFunction_p = compute_N__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
 
       /* Fill vector of body forces */
       for(int k = 0 ; k<Ndim ; k++){

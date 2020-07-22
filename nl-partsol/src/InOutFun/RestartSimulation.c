@@ -168,13 +168,13 @@ GaussPoint restart_Simulation(char * File_Parameters,
   
   if(strcmp(ShapeFunctionGP,"MPMQ4") == 0)
     {
-      Q4_Initialize(Set_Particles, FEM_Mesh);
+      initialize__Q4__(Set_Particles, FEM_Mesh);
     }
   else if(strcmp(ShapeFunctionGP,"uGIMP") == 0)
     {
       Set_Particles.lp = allocZ__MatrixLib__(Np,Ndim);
       strcpy(Set_Particles.lp.Info,"Voxel lenght GP");
-      uGIMP_Initialize(Set_Particles,FEM_Mesh);
+      initialize__GIMP__(Set_Particles,FEM_Mesh);
     }
   else if(strcmp(ShapeFunctionGP,"LME") == 0)
     {
@@ -182,7 +182,7 @@ GaussPoint restart_Simulation(char * File_Parameters,
       strcpy(Set_Particles.lambda.Info,"Lagrange Multiplier");
       Set_Particles.Beta = allocZ__MatrixLib__(Np,Ndim);
       strcpy(Set_Particles.Beta.Info,"Beta parameter");
-      LME_Initialize(Set_Particles,FEM_Mesh);
+      initialize__LME__(Set_Particles,FEM_Mesh);
     } 
   
   return Set_Particles;

@@ -34,7 +34,7 @@ Matrix compute_InternalForces(Matrix F_I, GaussPoint MPM_Mesh, Mesh FEM_Mesh)
     Nodes_p = get_particle_Set(p, MPM_Mesh.ListNodes[p], Nn);
 
     /* Compute gradient of the shape function in each node */
-    Gradient_p = compute_ShapeFunction_gradient(Nodes_p, MPM_Mesh, FEM_Mesh);
+    Gradient_p = compute_dN__ShapeFun__(Nodes_p, MPM_Mesh, FEM_Mesh);
 
     /* Compute the volume of the Gauss-Point */
     V_p = m_p/rho_p;
