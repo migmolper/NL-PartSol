@@ -71,26 +71,20 @@ Mesh ReadGidMesh(char * MeshName)
 	     Here we only pass by reference the function, the output Matrix
 	     is allocated insede of N_ref() and dNdX_ref(), we also set the
 	     number of dimensions */
-	  if((strcmp(GID_Mesh.TypeElem,"Linear") == 0) &&
-	     (NumNodesElem == 2))
-	    {
-	      GID_Mesh.Dimension = 1;
-	      GID_Mesh.N_ref = L2;
-	      GID_Mesh.dNdX_ref = dL2;
-	    }
 	  if((strcmp(GID_Mesh.TypeElem,"Quadrilateral") == 0) &&
 	     (NumNodesElem == 4))
 	    {
 	      GID_Mesh.Dimension = 2;
-	      GID_Mesh.N_ref = Q4_N;
-	      GID_Mesh.dNdX_ref = Q4_dN_Ref;
+	      GID_Mesh.N_ref = N__Q4__;
+	      GID_Mesh.dNdX_ref = dN_Ref__Q4__;
 	    }
 	  if( (strcmp(GID_Mesh.TypeElem,"Triangle") == 0) &&
-	      (NumNodesElem == 3) ){
-	    GID_Mesh.Dimension = 2;
-	    GID_Mesh.N_ref = T3;
-	    GID_Mesh.dNdX_ref = dT3;
-	  }	
+	      (NumNodesElem == 3) )
+	    {
+	      GID_Mesh.Dimension = 2;
+	      GID_Mesh.N_ref = N__T3__;
+	      GID_Mesh.dNdX_ref = N__T3__;
+	    }	
 	}
       else
 	{

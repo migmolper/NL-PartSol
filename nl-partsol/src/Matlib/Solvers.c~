@@ -43,7 +43,7 @@ Matrix Newton_Rapson(Matrix(* Function)(Matrix, Matrix),Matrix Parameter_F,
   int Bool;
 
   /* Allocate matrix for the function */
-  F_x = MatAlloc(Y.N_rows,Y.N_cols);
+  F_x = alloc__MatrixLib__(Y.N_rows,Y.N_cols);
   
   /* 0º Check the convergence criterium */
   while( (NormDeltaX > TOL_NormDeltaX )
@@ -54,7 +54,7 @@ Matrix Newton_Rapson(Matrix(* Function)(Matrix, Matrix),Matrix Parameter_F,
     for(int i = 0 ; i<Y.N_rows*Y.N_cols ; i++){
       F_x.nV[i] = Y.nV[i] - Y_x.nV[i];
     }
-    FreeMat(Y_x);
+    free__MatrixLib__(Y_x);
     
     /* 2º Get the jacobian matrix in X0 DY_dX */
     /* Implement the numerical solution of the Jacobian for cases where the 
@@ -65,31 +65,31 @@ Matrix Newton_Rapson(Matrix(* Function)(Matrix, Matrix),Matrix Parameter_F,
     Bool = dY_dX.N_cols>3;
     switch(Bool){
     case 0 : /* If the size of the Jacobian is less than 4, use analitical */
-      dY_dX_m1 = Get_Inverse(dY_dX);
-      FreeMat(dY_dX);
-      DeltaX = Scalar_prod(dY_dX_m1,F_x);      
-      FreeMat(dY_dX_m1);
+      dY_dX_m1 = inverse__MatrixLib__(dY_dX);
+      free__MatrixLib__(dY_dX);
+      DeltaX = scalar_product__MatrixLib__(dY_dX_m1,F_x);      
+      free__MatrixLib__(dY_dX_m1);
       break;
     case 1 : /* If the size of the Jacobian is great than 4, use numerical */
       DeltaX = Jacobi_Conjugate_Gradient_Method(dY_dX,F_x,DeltaX);
-      FreeMat(dY_dX);
+      free__MatrixLib__(dY_dX);
       break;
     default :
       exit(EXIT_FAILURE);
     }
 
     /* 4º Update the variables of the convergence criterium */
-    NormDeltaX = Norm_Mat(DeltaX,2);
+    NormDeltaX = norm__MatrixLib__(DeltaX,2);
     Iter_i++;
 
     /* 4º Update the solution and free memory */
-    X = Incr_Mat(X,DeltaX);
-    FreeMat(DeltaX);
+    X = increment__MatrixLib__(X,DeltaX);
+    free__MatrixLib__(DeltaX);
         
   }
 
   /* Free array with the function value */
-  FreeMat(F_x);
+  free__MatrixLib__(F_x);
   
   /* 6º Return X */
   return X;
@@ -109,9 +109,9 @@ Matrix Solve_Linear_Sistem(Matrix K, Matrix F)
   
   switch(Bool){
   case 0 :
-    Km1 = Get_Inverse(K);
-    U = Scalar_prod(Km1,F);
-    FreeMat(Km1);
+    Km1 = inverse__MatrixLib__(K);
+    U = scalar_product__MatrixLib__(Km1,F);
+    free__MatrixLib__(Km1);
     return U; 
   case 1 :
     puts("fix U");
@@ -217,9 +217,9 @@ Matrix Conjugate_Gradient_Method(Matrix K, Matrix F, Matrix U0)
   Tol_r = 0.0001;
 
   /* Allocate the residual and the p basis arrays */
-  r_k = MatAlloc(N,1);
-  r_k1 = MatAlloc(N,1);
-  p = MatAlloc(N,1);
+  r_k = alloc__MatrixLib__(N,1);
+  r_k1 = alloc__MatrixLib__(N,1);
+  p = alloc__MatrixLib__(N,1);
   
   /* Set initial solution to the initial solution */
   U = U0;
@@ -239,7 +239,7 @@ Matrix Conjugate_Gradient_Method(Matrix K, Matrix F, Matrix U0)
   }
 
   /* Calcule the stopping criteria in the first step */
-  Norm_r = Norm_Mat(r_k,2);
+  Norm_r = norm__MatrixLib__(r_k,2);
   if( (Norm_r < Tol_r) ){
     STOP_CRITERIA = 1;
     puts("The initial solution was correct");   
@@ -277,7 +277,7 @@ Matrix Conjugate_Gradient_Method(Matrix K, Matrix F, Matrix U0)
     }
 
     /* Calcule the stopping criteria */
-    Norm_r = Norm_Mat(r_k1,2);
+    Norm_r = norm__MatrixLib__(r_k1,2);
     Num_Iter++;
     if( (Norm_r < Tol_r) ||
 	(Num_Iter >= Num_Iter_Max) ){
@@ -320,9 +320,9 @@ Matrix Conjugate_Gradient_Method(Matrix K, Matrix F, Matrix U0)
   }
 
   /* Free memory */
-  FreeMat(r_k);
-  FreeMat(r_k1);
-  FreeMat(p);
+  free__MatrixLib__(r_k);
+  free__MatrixLib__(r_k1);
+  free__MatrixLib__(p);
   
   return U;
   
@@ -388,11 +388,11 @@ Matrix Jacobi_Conjugate_Gradient_Method(Matrix K, Matrix F, Matrix U0)
   Tol_r = 0.0000001;
 
   /* Allocate the residual arrays and the basis p array */
-  r_k = MatAlloc(N,1);
-  r_k1 = MatAlloc(N,1);
-  z_k = MatAlloc(N,1);
-  z_k1 = MatAlloc(N,1);
-  p = MatAlloc(N,1);
+  r_k = alloc__MatrixLib__(N,1);
+  r_k1 = alloc__MatrixLib__(N,1);
+  z_k = alloc__MatrixLib__(N,1);
+  z_k1 = alloc__MatrixLib__(N,1);
+  p = alloc__MatrixLib__(N,1);
   
   
   /* Set initial solution to the initial solution */
@@ -416,14 +416,14 @@ Matrix Jacobi_Conjugate_Gradient_Method(Matrix K, Matrix F, Matrix U0)
   }
 
   /* Calcule the stopping criteria in the first step */
-  Norm_r = Norm_Mat(r_k,2);
+  Norm_r = norm__MatrixLib__(r_k,2);
   if( (Norm_r < Tol_r) ){
     STOP_CRITERIA = 1;
     puts("The initial solution was correct");   
   }
 
   /* Get the Lumped-Mass matrix */
-  K_l = Get_Lumped_Matrix(K);
+  K_l = lumped__MatrixLib__(K);
 
   /* iterate */
   while(STOP_CRITERIA == 0){
@@ -456,7 +456,7 @@ Matrix Jacobi_Conjugate_Gradient_Method(Matrix K, Matrix F, Matrix U0)
     }
 
     /* Calcule the stopping criteria */
-    Norm_r = Norm_Mat(r_k1,2);
+    Norm_r = norm__MatrixLib__(r_k1,2);
     Num_Iter++;
     if( (Norm_r < Tol_r) ||
 	(Num_Iter >= Num_Iter_Max) ){
@@ -502,12 +502,12 @@ Matrix Jacobi_Conjugate_Gradient_Method(Matrix K, Matrix F, Matrix U0)
   }
 
   /* Free memory */
-  FreeMat(r_k);
-  FreeMat(r_k1);
-  FreeMat(z_k);
-  FreeMat(z_k1);
-  FreeMat(p);
-  FreeMat(K_l);
+  free__MatrixLib__(r_k);
+  free__MatrixLib__(r_k1);
+  free__MatrixLib__(z_k);
+  free__MatrixLib__(z_k1);
+  free__MatrixLib__(p);
+  free__MatrixLib__(K_l);
    
   return U;
   

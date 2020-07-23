@@ -172,6 +172,12 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
 	MPM_Mesh.Beta = allocZ__MatrixLib__(NumParticles,Ndim);
 	strcpy(MPM_Mesh.Beta.Info,"Beta parameter");
       }
+      if(strcmp(ShapeFunctionGP,"LME-Anisotropic") == 0){
+	MPM_Mesh.lambda = allocZ__MatrixLib__(NumParticles,Ndim);
+	strcpy(MPM_Mesh.lambda.Info,"Lagrange Multiplier");
+	MPM_Mesh.Beta = allocZ__MatrixLib__(NumParticles,Ndim*Ndim);
+	strcpy(MPM_Mesh.Beta.Info,"Beta tensor");
+      }
     }
     else{
       fprintf(stderr,"%s : %s \n",
@@ -187,7 +193,7 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
     /**************************************************/
     /********** Generate the initial layout ***********/
     /**************************************************/
-    GetInitialGaussPointPosition(MPM_Mesh.Phi.x_GC,MPM_GID_Mesh,GPxElement);
+    initial_position__Particles__(MPM_Mesh.Phi.x_GC,MPM_GID_Mesh,GPxElement);
 
     
     puts("*************************************************");
@@ -297,15 +303,15 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
     puts("*************************************************");
     if(strcmp(ShapeFunctionGP,"MPMQ4") == 0){
       printf("\t * %s \n","Initialize MPMQ4 shape functions ...");
-      Q4_Initialize(MPM_Mesh, FEM_Mesh);
+      initialize__Q4__(MPM_Mesh, FEM_Mesh);
     }
     else if(strcmp(ShapeFunctionGP,"uGIMP") == 0){
       printf("\t * %s \n","Initialize uGIMP shape functions ...");      
-      uGIMP_Initialize(MPM_Mesh,FEM_Mesh);
+      initialize__GIMP__(MPM_Mesh,FEM_Mesh);
     }
     else if(strcmp(ShapeFunctionGP,"LME") == 0){
       printf("\t * %s \n","Initialize LME shape functions ...");
-      LME_Initialize(MPM_Mesh,FEM_Mesh);
+      initialize__LME__(MPM_Mesh,FEM_Mesh);
     }
     printf("\t %s \n","DONE !!");
    

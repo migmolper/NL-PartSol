@@ -148,7 +148,7 @@ int inout__MatrixLib__(Matrix X_Point, Matrix Poligon)
   for(int i = 0 ; i<Poligon.N_rows-1 ; i++){
 
     c = vectorial_product__MatrixLib__(a,b);
-    nxc = scalar_product__MatrixLib__(n,c);
+    nxc = matrix_product__MatrixLib__(n,c);
     free__MatrixLib__(c);
 
     if(nxc.n < -TOL_InOut){
@@ -168,7 +168,7 @@ int inout__MatrixLib__(Matrix X_Point, Matrix Poligon)
 
   /* Last check */
   c = vectorial_product__MatrixLib__(a,b);
-  nxc = scalar_product__MatrixLib__(n,c);
+  nxc = matrix_product__MatrixLib__(n,c);
   if(nxc.n < -TOL_InOut){
     InOut = 0;
   }

@@ -123,7 +123,7 @@ void ** Allocate_MatrixZ(int NumberRows,int NumberColumns,int SizeType)
 
 /*********************************************************************/
 
-Matrix MatAlloc(int NumberRows,int NumberColumns)
+Matrix alloc__MatrixLib__(int NumberRows,int NumberColumns)
 {
 
       
@@ -136,7 +136,7 @@ Matrix MatAlloc(int NumberRows,int NumberColumns)
 
   if (M.nV == NULL)
     {
-      puts("Error in MatAllocZ : Out of memory");
+      puts("Error in alloc__MatrixLib__ : Out of memory");
       exit(EXIT_FAILURE);
     }
 
@@ -154,7 +154,7 @@ Matrix MatAlloc(int NumberRows,int NumberColumns)
 }
 
 /*********************************************************************/
-Matrix MatAllocZ(int NumberRows,int NumberColumns)
+Matrix allocZ__MatrixLib__(int NumberRows,int NumberColumns)
 /*
   Allocate the matrix structure with zeros 
 */
@@ -169,7 +169,7 @@ Matrix MatAllocZ(int NumberRows,int NumberColumns)
 
   if (M.nV == NULL)
     {
-      puts("Error in MatAllocZ : Out of memory");
+      puts("Error in allocZ__MatrixLib__ : Out of memory");
       exit(EXIT_FAILURE);
     }
 
@@ -187,7 +187,7 @@ Matrix MatAllocZ(int NumberRows,int NumberColumns)
 }
 
 /*********************************************************************/
-Matrix get_RowFrom(int N_rows,int N_cols,double * nV)
+Matrix memory_to_matrix__MatrixLib__(int N_rows,int N_cols,double * nV)
 /*
   Define general parameters of a matrix for auxiliar
   matrix.
@@ -203,7 +203,7 @@ Matrix get_RowFrom(int N_rows,int N_cols,double * nV)
 
 /*********************************************************************/
 
-void FreeMat(Matrix Input)
+void free__MatrixLib__(Matrix Input)
 /*
   Free memory
 */
@@ -225,7 +225,7 @@ void FreeMat(Matrix Input)
 
 /*********************************************************************/
 
-void PrintMatrix(Matrix In, int PrintRows, int PrintColumns)
+void print__MatrixLib__(Matrix In, int PrintRows, int PrintColumns)
 /*
   Print term by term the input matrix
 */
@@ -266,7 +266,7 @@ void PrintMatrix(Matrix In, int PrintRows, int PrintColumns)
 
 /*********************************************************************/
 
-Matrix CopyMat(Matrix In)
+Matrix copy__MatrixLib__(Matrix In)
 /* 
    Copy the input matrix in a auxiliar matrix.
  */
@@ -275,7 +275,7 @@ Matrix CopyMat(Matrix In)
   int Rows = In.N_rows;
   int Columns = In.N_cols;
     
-  Matrix Out = MatAllocZ(Rows,Columns);
+  Matrix Out = allocZ__MatrixLib__(Rows,Columns);
 
   /* Is a matrix */
   if((Columns > 1) && (Rows > 1))
@@ -298,7 +298,7 @@ Matrix CopyMat(Matrix In)
   /* Fail */
   else
     {
-      puts("Error in CopyMat() : The input matrix is NULL !");
+      puts("Error in copy__MatrixLib__() : The input matrix is NULL !");
       exit(EXIT_FAILURE);
     }
 
@@ -308,7 +308,7 @@ Matrix CopyMat(Matrix In)
 
 /*********************************************************************/
 
-double Get_Determinant(Matrix In)
+double I3__MatrixLib__(Matrix In)
 /* 
    Function to get the determinant of a matrix (max 3x3) :
    Inputs : In Matrix (Tensor type)
@@ -349,7 +349,7 @@ double Get_Determinant(Matrix In)
 
       default :
 	fprintf(stderr,"%s : %s \n",
-		"Error in Get_Determinant()","Max size allowded 3x3 !");
+		"Error in I3__MatrixLib__()","Max size allowded 3x3 !");
 	exit(EXIT_FAILURE); 
       }
 
@@ -357,7 +357,7 @@ double Get_Determinant(Matrix In)
   else
     {
       fprintf(stderr,"%s : %s \n",
-	      "Error in Get_Determinant()","Should be a square matrix !");
+	      "Error in I3__MatrixLib__()","Should be a square matrix !");
       exit(EXIT_FAILURE);
     }
   
@@ -367,7 +367,7 @@ double Get_Determinant(Matrix In)
 
 /*********************************************************************/
 
-Matrix Get_Inverse(Matrix A)
+Matrix inverse__MatrixLib__(Matrix A)
 /* 
    Function to get the inverse of the matrix :
    Inputs : Matrix in, dimension os the matrix
@@ -385,12 +385,12 @@ Matrix Get_Inverse(Matrix A)
     {     
   
       /* Get the determinant of the matrix */
-      DetA = Get_Determinant(A);
+      DetA = I3__MatrixLib__(A);
 
       if(fabs(DetA) < TOL_zero)
 	{
 	  fprintf(stderr,"%s : %s \n",
-		  "Error in Get_Inverse()","Determinant null !");
+		  "Error in inverse__MatrixLib__()","Determinant null !");
 	  exit(EXIT_FAILURE);
 	}
 
@@ -398,7 +398,7 @@ Matrix Get_Inverse(Matrix A)
       DetAm1 = (double)1/DetA;
 
       /* Allocate the output */
-      Am1 = MatAllocZ(Rows,Columns);
+      Am1 = allocZ__MatrixLib__(Rows,Columns);
  
       /* Rank 2 */
       if(Columns == 2)
@@ -427,7 +427,7 @@ Matrix Get_Inverse(Matrix A)
       else
 	{
 	  fprintf(stderr,"%s : %s \n",
-		  "Error in Get_Determinant()",
+		  "Error in I3__MatrixLib__()",
 		  "Max size 3 !");
 	  exit(EXIT_FAILURE);
 	}
@@ -437,7 +437,7 @@ Matrix Get_Inverse(Matrix A)
   else
     {
       fprintf(stderr,"%s : %s \n",
-	      "Error in Get_Determinant()","Should be a square matrix !");
+	      "Error in I3__MatrixLib__()","Should be a square matrix !");
       exit(EXIT_FAILURE);
     }
   
@@ -447,7 +447,7 @@ Matrix Get_Inverse(Matrix A)
 
 /*********************************************************************/
 
-Matrix Transpose_Mat(Matrix M)
+Matrix transpose__MatrixLib__(Matrix M)
 /* 
    It gives to you the transpose of a matrix or an array matrix.
 */
@@ -457,7 +457,7 @@ Matrix Transpose_Mat(Matrix M)
   int Columns = M.N_cols;
   
   /* Define and allocate the output matrix */
-  Matrix M_T = MatAllocZ(Columns,Rows);  
+  Matrix M_T = allocZ__MatrixLib__(Columns,Rows);  
 
   /* It is a matrix */
   if((Columns > 1) && (Rows > 1))
@@ -465,7 +465,7 @@ Matrix Transpose_Mat(Matrix M)
       if(M.nM == NULL)
 	{
 	  fprintf(stderr,"%s : %s \n",
-		  "Error in Transpose_Mat()","NULL input !");
+		  "Error in transpose__MatrixLib__()","NULL input !");
 	  exit(EXIT_FAILURE);    
 	}
       
@@ -484,7 +484,7 @@ Matrix Transpose_Mat(Matrix M)
       if(M.nV == NULL)
 	{
 	  fprintf(stderr,"%s : %s \n",
-		  "Error in Transpose_Mat()","NULL input !");
+		  "Error in transpose__MatrixLib__()","NULL input !");
 	  exit(EXIT_FAILURE);    
 	}
 	  
@@ -498,7 +498,7 @@ Matrix Transpose_Mat(Matrix M)
   else
     {
       fprintf(stderr,"%s : %s \n",
-	      "Error in Transpose_Mat()","Wrong input !");
+	      "Error in transpose__MatrixLib__()","Wrong input !");
       exit(EXIT_FAILURE);      
     }
   
@@ -524,7 +524,152 @@ Matrix Transpose_Mat(Matrix M)
 
 /*********************************************************************/
 
-Matrix Scalar_prod(Matrix A,Matrix B)
+static Matrix get_A_dot_B_Mat(Matrix A, Matrix B)
+/* 
+   Compute the scalar product of two matrix 
+*/
+{
+
+  /* The result is a matrix */
+  Matrix A_dot_B = allocZ__MatrixLib__(A.N_rows,B.N_cols);
+  int Rows = A.N_rows;
+  int Columns = B.N_cols;
+  int Aux = B.N_rows;
+     
+  /* Multiply */
+  for(int i = 0 ; i < Rows  ; i++)
+    {
+      for(int j = 0 ; j < Columns  ; j++)
+	{
+	  for(int k = 0 ; k < Aux  ; k++)
+	    {
+	      A_dot_B.nM[i][j] += A.nM[i][k]*B.nM[k][j];
+	    }
+	}
+    } 
+
+  return A_dot_B;  
+}
+
+/*********************************************************************/
+
+static Matrix get_a_dot_b_Mat(Matrix a, Matrix b)
+/* 
+   Compute the scalar product of two vectors
+*/
+{
+  Matrix a_dot_b;
+  a_dot_b.N_rows = 1;
+  a_dot_b.N_cols = 1;
+  a_dot_b.n = 0;
+  
+  int Size = a.N_cols;
+
+  for(int i = 0 ; i < Size ; i++)
+    {
+      a_dot_b.n += a.nV[i]*b.nV[i];
+    }
+
+  return a_dot_b;  
+}
+
+/*********************************************************************/
+
+static Matrix get_A_dot_b_Mat(Matrix A, Matrix b)
+/* 
+   Compute the scalar product of a matrix by an array
+*/
+{
+  /* The result is an array */
+  Matrix A_dot_b = allocZ__MatrixLib__(A.N_rows,b.N_cols);
+  int Rows = A.N_rows;
+  int Columns = A.N_cols;
+  
+  for(int i = 0 ; i<Rows ; i++)
+    {
+      for(int j = 0 ; j<Columns ; j++)
+	{
+	  A_dot_b.nV[i] += A.nM[i][j]*b.nV[j];
+	}
+    }
+    
+  return A_dot_b;  
+}
+
+/*********************************************************************/
+
+static Matrix get_a_dot_B_Mat(Matrix a, Matrix B)
+/* 
+   Compute the scalar product of a matrix by an array
+*/
+{
+  /* The result is an array */
+  Matrix a_dot_B = allocZ__MatrixLib__(a.N_rows,B.N_cols);
+  int Rows = B.N_rows;
+  int Columns = B.N_cols;
+  
+  for(int i = 0 ; i<Columns ; i++){
+    for(int j = 0 ; j<Rows ; j++){
+      a_dot_B.nV[i] += a.nV[j]*B.nM[j][i];
+    }
+  }
+    
+  return a_dot_B;  
+}
+
+/*********************************************************************/
+
+static Matrix Matrix_x_Scalar(Matrix A, double a)
+/*!
+ * \brief Brief description of Matrix_x_Scalar.
+ *        Function to multiply a Matrix with a scalar. 
+ *
+ *  The parameters for this functions are  :
+ * @param A : Input Matrix
+ * @param a : Input scalar 
+*/
+{
+
+  bool Is_Matrix = false;
+  bool Is_Vector = false;
+  int N_rows = A.N_rows;
+  int N_cols = A.N_cols;
+
+  /* Check if its matrix or array */
+  if((N_rows > 1) && (N_cols > 1)){
+    Is_Matrix = true;
+  }
+  else if((N_rows == 1) || (N_cols == 1) ){
+    Is_Vector = true;
+  }
+
+  if(Is_Matrix){ /* Multiply matrix by an scalar */
+    for(int i = 0 ; i<N_rows ; i++){
+      for(int j = 0 ; j<N_cols ; j++){
+	A.nM[i][j] *= a;
+      }
+    }
+  }
+  else if(Is_Vector){ /* Multiply vector by an scalar */
+    for(int i = 0 ; i<N_cols*N_rows ; i++){
+      A.nV[i] *= a;
+    }
+  }
+  else{
+        fprintf(stderr,"%s : %s \n",
+	    "Error in Matrix_x_Scalar(*,)",
+	    "Not a matrix or a vector");
+     exit(EXIT_FAILURE);    
+  }
+
+  return A;
+}
+
+
+/*********************************************************************/
+
+
+Matrix matrix_product__MatrixLib__(Matrix A,Matrix B)
 /*
   Multiply two matrix A and B, and return the result C.
 */
@@ -575,7 +720,7 @@ Matrix Scalar_prod(Matrix A,Matrix B)
   else
     {
       printf("%s : %s -> [%i , %i] x [%i , %i] \n",
-	     "Error in Scalar_prod()","Incompatible product",
+	     "Error in matrix_product__MatrixLib__()","Incompatible product",
 	     A.N_rows,A.N_cols,B.N_rows,B.N_cols);
       exit(EXIT_FAILURE);
     }
@@ -586,102 +731,7 @@ Matrix Scalar_prod(Matrix A,Matrix B)
 
 /*********************************************************************/
 
-Matrix get_A_dot_B_Mat(Matrix A, Matrix B)
-/* 
-   Compute the scalar product of two matrix 
-*/
-{
-
-  /* The result is a matrix */
-  Matrix A_dot_B = MatAllocZ(A.N_rows,B.N_cols);
-  int Rows = A.N_rows;
-  int Columns = B.N_cols;
-  int Aux = B.N_rows;
-     
-  /* Multiply */
-  for(int i = 0 ; i < Rows  ; i++)
-    {
-      for(int j = 0 ; j < Columns  ; j++)
-	{
-	  for(int k = 0 ; k < Aux  ; k++)
-	    {
-	      A_dot_B.nM[i][j] += A.nM[i][k]*B.nM[k][j];
-	    }
-	}
-    } 
-
-  return A_dot_B;  
-}
-
-/*********************************************************************/
-
-Matrix get_a_dot_b_Mat(Matrix a, Matrix b)
-/* 
-   Compute the scalar product of two vectors
-*/
-{
-  Matrix a_dot_b;
-  a_dot_b.N_rows = 1;
-  a_dot_b.N_cols = 1;
-  a_dot_b.n = 0;
-  
-  int Size = a.N_cols;
-
-  for(int i = 0 ; i < Size ; i++)
-    {
-      a_dot_b.n += a.nV[i]*b.nV[i];
-    }
-
-  return a_dot_b;  
-}
-
-/*********************************************************************/
-
-Matrix get_A_dot_b_Mat(Matrix A, Matrix b)
-/* 
-   Compute the scalar product of a matrix by an array
-*/
-{
-  /* The result is an array */
-  Matrix A_dot_b = MatAllocZ(A.N_rows,b.N_cols);
-  int Rows = A.N_rows;
-  int Columns = A.N_cols;
-  
-  for(int i = 0 ; i<Rows ; i++)
-    {
-      for(int j = 0 ; j<Columns ; j++)
-	{
-	  A_dot_b.nV[i] += A.nM[i][j]*b.nV[j];
-	}
-    }
-    
-  return A_dot_b;  
-}
-
-/*********************************************************************/
-
-Matrix get_a_dot_B_Mat(Matrix a, Matrix B)
-/* 
-   Compute the scalar product of a matrix by an array
-*/
-{
-  /* The result is an array */
-  Matrix a_dot_B = MatAllocZ(a.N_rows,B.N_cols);
-  int Rows = B.N_rows;
-  int Columns = B.N_cols;
-  
-  for(int i = 0 ; i<Columns ; i++){
-    for(int j = 0 ; j<Rows ; j++){
-      a_dot_B.nV[i] += a.nV[j]*B.nM[j][i];
-    }
-  }
-    
-  return a_dot_B;  
-}
-
-/*********************************************************************/
-
-Matrix Vectorial_prod(Matrix a, Matrix b){
+Matrix vectorial_product__MatrixLib__(Matrix a, Matrix b){
   
   Matrix c;
 
@@ -690,7 +740,7 @@ Matrix Vectorial_prod(Matrix a, Matrix b){
      (a.N_cols == 1) &&
      (b.N_cols == 1))
     {
-      c = MatAllocZ(3,1);
+      c = allocZ__MatrixLib__(3,1);
       c.nV[0] = a.nV[1]*b.nV[2]-a.nV[2]*b.nV[1];
       c.nV[1] = a.nV[2]*b.nV[0]-a.nV[0]*b.nV[2];
       c.nV[2] = a.nV[0]*b.nV[1]-a.nV[1]*b.nV[0];
@@ -698,7 +748,7 @@ Matrix Vectorial_prod(Matrix a, Matrix b){
   else
     {
       fprintf(stderr,"%s : %s \n",
-	      "Error in Vectorial_prod()","Incompatible shape of arrays !");
+	      "Error in vectorial_product__MatrixLib__()","Incompatible shape of arrays !");
       exit(EXIT_FAILURE);
     }
   
@@ -708,7 +758,7 @@ Matrix Vectorial_prod(Matrix a, Matrix b){
 
 /*********************************************************************/
   
-Matrix Tensorial_prod(Matrix A,Matrix B)
+Matrix dyadic_product__MatrixLib__(Matrix A,Matrix B)
 /*
   Tensorial product between A and B.
 */
@@ -724,7 +774,7 @@ Matrix Tensorial_prod(Matrix A,Matrix B)
     {
  
       /* Allocate matrix */
-      C = MatAllocZ(Rows,Columns);
+      C = allocZ__MatrixLib__(Rows,Columns);
 
       /* Compute the tensorial product */
       for(int i = 0 ; i<Rows ; i++)
@@ -741,7 +791,7 @@ Matrix Tensorial_prod(Matrix A,Matrix B)
   else
     {
       fprintf(stderr,"%s : %s \n",
-	      "Error in Tensorial_prod()","Wrong input matrix !");
+	      "Error in dyadic_product__MatrixLib__()","Wrong input matrix !");
       exit(EXIT_FAILURE);
     }
   
@@ -750,7 +800,7 @@ Matrix Tensorial_prod(Matrix A,Matrix B)
  
 /*********************************************************************/
 
-Matrix Incr_Mat(Matrix A, Matrix Incr)
+Matrix increment__MatrixLib__(Matrix A, Matrix Incr)
 /*
   Increment term by term the Matrix A with Incr
 */
@@ -788,7 +838,7 @@ Matrix Incr_Mat(Matrix A, Matrix Incr)
     else
       {	
 	fprintf(stderr,"%s : %s \n",
-		"Error in Incr_Mat()","Wrong input matrix!");
+		"Error in increment__MatrixLib__()","Wrong input matrix!");
 	exit(EXIT_FAILURE);
       }
 
@@ -798,7 +848,7 @@ Matrix Incr_Mat(Matrix A, Matrix Incr)
   else
     {
 	fprintf(stderr,"%s : %s \n",
-		"Error in Incr_Mat()","Wrong input matrix!");
+		"Error in increment__MatrixLib__()","Wrong input matrix!");
 	exit(EXIT_FAILURE);
     }
 
@@ -807,7 +857,7 @@ Matrix Incr_Mat(Matrix A, Matrix Incr)
 
 /*********************************************************************/
 
-Matrix Add_Mat(Matrix A,Matrix B)
+Matrix addition__MatrixLib__(Matrix A,Matrix B)
 /*
   Sum two matrix A and B, and return the result C 
   C = A + B   
@@ -816,14 +866,14 @@ Matrix Add_Mat(Matrix A,Matrix B)
   /* Variable declaration */
   int Rows = A.N_rows;
   int Columns = A.N_cols;
-  Matrix C = MatAllocZ(Rows,Columns);
+  Matrix C = allocZ__MatrixLib__(Rows,Columns);
  
   /* Check if it is possible to do the addition */
   if((A.N_cols == B.N_cols) && (A.N_rows == B.N_rows))
     {
       Rows = A.N_rows;
       Columns = A.N_cols;
-      C = MatAllocZ(Rows,Columns);
+      C = allocZ__MatrixLib__(Rows,Columns);
 
       /* Two array addition */
       if (((Columns == 1) && (Rows > 1)) ||
@@ -850,7 +900,7 @@ Matrix Add_Mat(Matrix A,Matrix B)
       /* Fail */
       else{
 	fprintf(stderr,"%s : %s \n",
-		"Error in Add_Mat()","Wrong input matrix!");
+		"Error in addition__MatrixLib__()","Wrong input matrix!");
 	exit(EXIT_FAILURE);
       }
       
@@ -859,7 +909,7 @@ Matrix Add_Mat(Matrix A,Matrix B)
   /* Fail */
   else{
     fprintf(stderr,"%s : %s \n",
-	    "Error in Add_Mat()","Wrong input matrix!");
+	    "Error in addition__MatrixLib__()","Wrong input matrix!");
     exit(EXIT_FAILURE);
   }
 
@@ -868,7 +918,7 @@ Matrix Add_Mat(Matrix A,Matrix B)
 
 /*********************************************************************/
 
-Matrix Sub_Mat(Matrix A,Matrix B)
+Matrix substraction__MatrixLib__(Matrix A,Matrix B)
 /*
 
   Substract two matrix A and B, and return the result C 
@@ -880,7 +930,7 @@ Matrix Sub_Mat(Matrix A,Matrix B)
   /* Variable declaration */
   int Rows = A.N_rows;
   int Columns = A.N_cols;
-  Matrix C = MatAllocZ(Rows,Columns);
+  Matrix C = allocZ__MatrixLib__(Rows,Columns);
  
   /* Check if it is possible to do the addition */
   if((A.N_cols == B.N_cols) && (A.N_rows == B.N_rows))
@@ -913,7 +963,7 @@ Matrix Sub_Mat(Matrix A,Matrix B)
       /* Fail */
       else{
 	fprintf(stderr,"%s : %s \n",
-		"Error in Sub_Mat()","Wrong input matrix!");
+		"Error in substraction__MatrixLib__()","Wrong input matrix!");
 	exit(EXIT_FAILURE);
       }
       
@@ -922,7 +972,7 @@ Matrix Sub_Mat(Matrix A,Matrix B)
   /* Fail */
   else{
     fprintf(stderr,"%s : %s \n",
-	    "Error in Sub_Mat()","Wrong input matrix!");
+	    "Error in substraction__MatrixLib__()","Wrong input matrix!");
     exit(EXIT_FAILURE);
   }
 
@@ -931,7 +981,7 @@ Matrix Sub_Mat(Matrix A,Matrix B)
 
 /*********************************************************************/
 
-double Norm_Mat(Matrix In,int kind)
+double norm__MatrixLib__(Matrix In,int kind)
 /*
   Get the norm of a vector in a Euclidean space R2. Implemented norms :
   - Euclidean norm (kind == 2)
@@ -960,7 +1010,7 @@ double Norm_Mat(Matrix In,int kind)
     }
   else
     {
-      puts("Error in Norm_Mat() : The input data is not a vector ! ");
+      puts("Error in norm__MatrixLib__() : The input data is not a vector ! ");
       exit(EXIT_FAILURE);     
     }
   return Out;  
@@ -973,7 +1023,7 @@ Matrix Eigen_Mat(Matrix In)
 
   int Rows = In.N_rows;
   int Columns = In.N_cols;  
-  Matrix Eigen = get_RowFrom(Rows,Columns,NULL);
+  Matrix Eigen = memory_to_matrix__MatrixLib__(Rows,Columns,NULL);
   Matrix Eigen_Vals;
   Matrix Coeffs;
   
@@ -988,20 +1038,20 @@ Matrix Eigen_Mat(Matrix In)
 	  break;
 	case 2 :
 	  /* Get the coefficients of the charasteristic pol */
-	  Coeffs = MatAllocZ(1,3);
+	  Coeffs = allocZ__MatrixLib__(1,3);
 	  Coeffs.nV[0] = 1.0; /* a*x^2 */
 	  Coeffs.nV[1] = - In.nM[0][0] - In.nM[1][1]; /* b*x */
 	  Coeffs.nV[2] = In.nM[0][0]*In.nM[1][1] - In.nM[1][0]*In.nM[0][1]; /* c */
 	  /* Solve the charasteristic pol to the eigenvalues */
-	  Eigen_Vals = SolvePolynomial(Coeffs);
-	  FreeMat(Coeffs);
+	  Eigen_Vals = solve_polynomial__MatrixLib__(Coeffs);
+	  free__MatrixLib__(Coeffs);
 	  /* Assign the eigenvalues to the solution */
 	  Eigen.nV = Eigen_Vals.nV;
 	  break;
 
 	case 3 :
 	  /* Get the coefficients of the charasteristic pol */
-	  Coeffs = MatAllocZ(1,4);
+	  Coeffs = allocZ__MatrixLib__(1,4);
 	  Coeffs.nV[0] = /* a*x^3 */
 	    + 1.0; 
 	  Coeffs.nV[1] = /* b*x^2 */
@@ -1023,8 +1073,8 @@ Matrix Eigen_Mat(Matrix In)
 	    + In.nM[2][1]*In.nM[1][2]*In.nM[0][0]
 	    + In.nM[2][0]*In.nM[0][2]*In.nM[1][1]; 
 	  /* Solve the charasteristic pol to the eigenvalues */
-	  Eigen_Vals = SolvePolynomial(Coeffs);
-	  FreeMat(Coeffs);
+	  Eigen_Vals = solve_polynomial__MatrixLib__(Coeffs);
+	  free__MatrixLib__(Coeffs);
 	  /* Assign the eigenvalues to the solution */
 	  Eigen.nV = Eigen_Vals.nV;
 	  break;
@@ -1044,7 +1094,7 @@ Matrix Eigen_Mat(Matrix In)
 
 /*********************************************************************/
 
-double Cond_Mat(Matrix In, double TOL)
+double conditioning__MatrixLib__(Matrix In, double TOL)
 /*
   Return the conditioning number 
 */
@@ -1057,7 +1107,7 @@ double Cond_Mat(Matrix In, double TOL)
       
   /* Check if the matrix is square */
   if(Columns != Rows){
-    puts(" Error in Cond_Mat() : Non square matrix !");
+    puts(" Error in conditioning__MatrixLib__() : Non square matrix !");
     exit(EXIT_FAILURE);
   }
   
@@ -1084,7 +1134,7 @@ double Cond_Mat(Matrix In, double TOL)
     }
   else
     {
-      puts(" Error in Cond_Mat() : the input should be a square matrix !");
+      puts(" Error in conditioning__MatrixLib__() : the input should be a square matrix !");
       exit(EXIT_FAILURE);
     }
 
@@ -1094,7 +1144,7 @@ double Cond_Mat(Matrix In, double TOL)
 
 /*********************************************************************/
 
-Matrix Get_Lumped_Matrix(Matrix M_in)
+Matrix lumped__MatrixLib__(Matrix M_in)
 {
   /*
     Get the lumped matrix in a vectorial shape of the input matrix 
@@ -1102,12 +1152,12 @@ Matrix Get_Lumped_Matrix(Matrix M_in)
 
   if(M_in.N_cols != M_in.N_rows)
     {
-      puts("Error in Get_Lumped_Matrix() : The input matrix is not square ! ");
+      puts("Error in lumped__MatrixLib__() : The input matrix is not square ! ");
       exit(EXIT_FAILURE);
     }
   
   Matrix M_out;
-  M_out = MatAllocZ(M_in.N_rows,1);
+  M_out = allocZ__MatrixLib__(M_in.N_rows,1);
 
   for(int i = 0 ; i<M_in.N_cols ; i++)
     {
@@ -1121,56 +1171,8 @@ Matrix Get_Lumped_Matrix(Matrix M_in)
 
 /*********************************************************************/
 
-Matrix Matrix_x_Scalar(Matrix A, double a)
-/*!
- * \brief Brief description of Matrix_x_Scalar.
- *        Function to multiply a Matrix with a scalar. 
- *
- *  The parameters for this functions are  :
- * @param A : Input Matrix
- * @param a : Input scalar 
-*/
-{
 
-  bool Is_Matrix = false;
-  bool Is_Vector = false;
-  int N_rows = A.N_rows;
-  int N_cols = A.N_cols;
-
-  /* Check if its matrix or array */
-  if((N_rows > 1) && (N_cols > 1)){
-    Is_Matrix = true;
-  }
-  else if((N_rows == 1) || (N_cols == 1) ){
-    Is_Vector = true;
-  }
-
-  if(Is_Matrix){ /* Multiply matrix by an scalar */
-    for(int i = 0 ; i<N_rows ; i++){
-      for(int j = 0 ; j<N_cols ; j++){
-	A.nM[i][j] *= a;
-      }
-    }
-  }
-  else if(Is_Vector){ /* Multiply vector by an scalar */
-    for(int i = 0 ; i<N_cols*N_rows ; i++){
-      A.nV[i] *= a;
-    }
-  }
-  else{
-        fprintf(stderr,"%s : %s \n",
-	    "Error in Matrix_x_Scalar(*,)",
-	    "Not a matrix or a vector");
-     exit(EXIT_FAILURE);    
-  }
-
-  return A;
-}
-
-
-/*********************************************************************/
-
-/* void get_SVD_Of(Matrix A, Matrix W, Matrix V) */
+/* void single_value_descomposition__MatrixLib__(Matrix A, Matrix W, Matrix V) */
 /* /\* */
 /*   This routine was adapted from the "Numerical recipies in C". */
 /*   Given a matrix A [m x n], this routine computes */
@@ -1191,7 +1193,9 @@ float pythag(float a, float b)
   Computes (a^2 + b^2)^0.5 without destructive underflow or overflow.
 */
 {
-  /* Compute the absolute value of "a" and "b" */
+  /* 
+     Compute the absolute value of "a" and "b" 
+  */
   float absa=fabs(a);
   float absb=fabs(b);
   

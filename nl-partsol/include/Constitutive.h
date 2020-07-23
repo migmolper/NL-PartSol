@@ -62,24 +62,7 @@ Tensor grad_energy_Saint_Venant_Kirchhoff(Tensor, Tensor, Material);
 */
 Tensor compute_stiffness_density_Saint_Venant_Kirchhoff(Tensor, Tensor, Material);
 /*******************************************************/
-/*!
   
-*/
-Tensor Itegration_Stress_Configurational_Midpoint(Tensor,Tensor, Tensor, Material);
-/*******************************************************/
-
-/*!
-  
-*/
-Tensor Itegration_Stress_Average_Strain(Tensor, Tensor, Tensor, Material);
-/*******************************************************/
-
-/*!
-  
-*/
-Tensor Itegration_Stress_Average(Tensor, Tensor, Tensor, Material);
-/*******************************************************/
-
 
 #endif
 

@@ -67,7 +67,7 @@ Matrix Newton_Rapson(Matrix(* Function)(Matrix, Matrix),Matrix Parameter_F,
     case 0 : /* If the size of the Jacobian is less than 4, use analitical */
       dY_dX_m1 = inverse__MatrixLib__(dY_dX);
       free__MatrixLib__(dY_dX);
-      DeltaX = scalar_product__MatrixLib__(dY_dX_m1,F_x);      
+      DeltaX = matrix_product__MatrixLib__(dY_dX_m1,F_x);      
       free__MatrixLib__(dY_dX_m1);
       break;
     case 1 : /* If the size of the Jacobian is great than 4, use numerical */
@@ -110,7 +110,7 @@ Matrix Solve_Linear_Sistem(Matrix K, Matrix F)
   switch(Bool){
   case 0 :
     Km1 = inverse__MatrixLib__(K);
-    U = scalar_product__MatrixLib__(Km1,F);
+    U = matrix_product__MatrixLib__(Km1,F);
     free__MatrixLib__(Km1);
     return U; 
   case 1 :
