@@ -20,6 +20,8 @@ Matrix   beta_anisotropic__LME__(Matrix, Matrix);
 Matrix   lambda__LME__(Matrix, Matrix, Matrix);
 Matrix   p__LME__(Matrix, Matrix, Matrix);
 Matrix   dp__LME__(Matrix, Matrix);
-ChainPtr tributary__LME__(Matrix, Matrix, int, Mesh);
-
+ChainPtr isotropic_tributary__LME__(Matrix, Matrix, int, Mesh);
+ChainPtr anisotropic_tributary__LME__(Matrix, Matrix, Matrix, int, Mesh);
+Matrix   isotropic_cut_off(Matrix, Matrix);
+Matrix   anisotropic_cut_off(Matrix, Matrix);
 #endif

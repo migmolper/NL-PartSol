@@ -669,7 +669,7 @@ static Matrix Matrix_x_Scalar(Matrix A, double a)
 /*********************************************************************/
 
 
-Matrix scalar_product__MatrixLib__(Matrix A,Matrix B)
+Matrix matrix_product__MatrixLib__(Matrix A,Matrix B)
 /*
   Multiply two matrix A and B, and return the result C.
 */
@@ -720,7 +720,7 @@ Matrix scalar_product__MatrixLib__(Matrix A,Matrix B)
   else
     {
       printf("%s : %s -> [%i , %i] x [%i , %i] \n",
-	     "Error in scalar_product__MatrixLib__()","Incompatible product",
+	     "Error in matrix_product__MatrixLib__()","Incompatible product",
 	     A.N_rows,A.N_cols,B.N_rows,B.N_cols);
       exit(EXIT_FAILURE);
     }
@@ -1193,7 +1193,9 @@ float pythag(float a, float b)
   Computes (a^2 + b^2)^0.5 without destructive underflow or overflow.
 */
 {
-  /* Compute the absolute value of "a" and "b" */
+  /* 
+     Compute the absolute value of "a" and "b" 
+  */
   float absa=fabs(a);
   float absb=fabs(b);
   

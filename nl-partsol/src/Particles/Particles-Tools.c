@@ -5,7 +5,7 @@
 
 /*********************************************************************/
 
-void GetInitialGaussPointPosition(Matrix X_p, Mesh FEM_Mesh, int GPxElement)
+void initial_position__Particles__(Matrix X_p, Mesh FEM_Mesh, int GPxElement)
 /*
  * 
  */
@@ -28,8 +28,8 @@ void GetInitialGaussPointPosition(Matrix X_p, Mesh FEM_Mesh, int GPxElement)
       N_GP = N__Q4__(Xi_p);
       /* Get the coordinate of the center */
       for(int i = 0 ; i<NumElemMesh ; i++){
-	Element = get_particle_Set(i,FEM_Mesh.Connectivity[i],
-				   FEM_Mesh.NumNodesElem[i]);
+	Element = nodal_set__Particles__(i,FEM_Mesh.Connectivity[i],
+					 FEM_Mesh.NumNodesElem[i]);
 	
 	for(int k = 0 ; k<4 ; k++){
 	  Node = Element.Connectivity[k];
@@ -53,8 +53,8 @@ void GetInitialGaussPointPosition(Matrix X_p, Mesh FEM_Mesh, int GPxElement)
       /* Get the coordinate of the center */
       for(int i = 0 ; i<NumElemMesh ; i++){
 	
-	Element = get_particle_Set(i, FEM_Mesh.Connectivity[i],
-				   FEM_Mesh.NumNodesElem[i]);
+	Element = nodal_set__Particles__(i, FEM_Mesh.Connectivity[i],
+					 FEM_Mesh.NumNodesElem[i]);
 	for(int k = 0 ; k<3 ; k++){
 	  Node = Element.Connectivity[k];
 	  for(int l = 0 ; l<2 ; l++){
@@ -83,8 +83,8 @@ void GetInitialGaussPointPosition(Matrix X_p, Mesh FEM_Mesh, int GPxElement)
       /* Get the coordinate of the center */
       for(int i = 0 ; i<NumElemMesh ; i++){
 	
-	Element = get_particle_Set(i, FEM_Mesh.Connectivity[i],
-				   FEM_Mesh.NumNodesElem[i]);
+	Element = nodal_set__Particles__(i, FEM_Mesh.Connectivity[i],
+					 FEM_Mesh.NumNodesElem[i]);
 	for(int j = 0 ; j<GPxElement ; j++){
 	  /* Evaluate the shape function in the GP position */
 	  Xi_p_j.nV = Xi_p.nM[j]; 
@@ -129,8 +129,8 @@ void GetInitialGaussPointPosition(Matrix X_p, Mesh FEM_Mesh, int GPxElement)
       /* Get the coordinate of the center */
       for(int i = 0 ; i<NumElemMesh ; i++){
 	
-	Element = get_particle_Set(i, FEM_Mesh.Connectivity[i],
-			      FEM_Mesh.NumNodesElem[i]);
+	Element = nodal_set__Particles__(i, FEM_Mesh.Connectivity[i],
+					 FEM_Mesh.NumNodesElem[i]);
 	for(int j = 0 ; j<GPxElement ; j++){
 	  /* Evaluate the shape function in the GP position */
 	  Xi_p_j.nV = Xi_p.nM[j]; 
@@ -155,7 +155,7 @@ void GetInitialGaussPointPosition(Matrix X_p, Mesh FEM_Mesh, int GPxElement)
     break;
   default :
     fprintf(stderr,"%s : %s \n",
-	    "Error in GetInitialGaussPointPosition()",
+	    "Error in initial_position__Particles__()",
 	    "Wrong number of gauss point per element");
     exit(EXIT_FAILURE);
   }
@@ -164,14 +164,14 @@ void GetInitialGaussPointPosition(Matrix X_p, Mesh FEM_Mesh, int GPxElement)
 
 /*********************************************************************/
 
-int search_particle_in(int p, Matrix X_p, ChainPtr ListElement, Mesh FEM_Mesh)
+int inout_element__Particles__(int p, Matrix X_p, ChainPtr ListElement, Mesh FEM_Mesh)
 /*
 
 */
 {
   ChainPtr Ixd = NULL;
   int I_element = -999;
-  int Nn; /* Numver of nodes of the element */
+  int Nn; /* Number of nodes of the element */
   ChainPtr Nodes;
 
   Ixd = ListElement;
@@ -182,7 +182,7 @@ int search_particle_in(int p, Matrix X_p, ChainPtr ListElement, Mesh FEM_Mesh)
     Nodes = FEM_Mesh.Connectivity[Ixd->I];
 
     /* Check if the particle is in the element */
-    if(InOut_Element(X_p, Nodes, FEM_Mesh.Coordinates))
+    if(inout_convex_set__MeshTools__(X_p, Nodes, FEM_Mesh.Coordinates))
       {
 	I_element = Ixd->I;
 	break;
@@ -196,8 +196,8 @@ int search_particle_in(int p, Matrix X_p, ChainPtr ListElement, Mesh FEM_Mesh)
   if(I_element == -999)
     {
       fprintf(stderr,"%s : %s %i \n",
-	      "Error in search_particle_in()",
-	    "Not posible to find the particle",p);
+	      "Error in inout_element__Particles__()",
+	      "Not posible to find the particle",p);
     }
   
   
@@ -227,7 +227,7 @@ void get_particle_tributary_nodes(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int p){
   if(strcmp(ShapeFunctionGP,"MPMQ4") == 0){
 
     /* Get the index of the element */
-    IdxElement = search_particle_in(p,X_p,Elements_Near_I0,FEM_Mesh);
+    IdxElement = inout_element__Particles__(p,X_p,Elements_Near_I0,FEM_Mesh);
     if(IdxElement != -999){
       /* Free previous list of tributary nodes to the particle */
       free__SetLib__(&MPM_Mesh.ListNodes[p]);
@@ -235,7 +235,8 @@ void get_particle_tributary_nodes(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int p){
       /* Asign new connectivity */
       MPM_Mesh.ListNodes[p] = copy__SetLib__(FEM_Mesh.Connectivity[IdxElement]);
       /* Get the coordinates of the element vertex */
-      CoordElement = ElemCoordinates(MPM_Mesh.ListNodes[p],FEM_Mesh.Coordinates);
+      CoordElement = get_nodes_coordinates__MeshTools__(MPM_Mesh.ListNodes[p],
+							FEM_Mesh.Coordinates);
       /* Compute local coordinates of the particle in this element */
       X_to_Xi__Q4__(Xi_p,X_p,CoordElement);
       /* Free coordinates of the element */
@@ -243,7 +244,8 @@ void get_particle_tributary_nodes(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int p){
     }
     else{
       /* Get the coordinates of the element vertex */
-      CoordElement = ElemCoordinates(MPM_Mesh.ListNodes[p],FEM_Mesh.Coordinates);
+      CoordElement = get_nodes_coordinates__MeshTools__(MPM_Mesh.ListNodes[p],
+							FEM_Mesh.Coordinates);
       /* Compute local coordinates of the particle in this element */
       X_to_Xi__Q4__(Xi_p,X_p,CoordElement);
       /* Free coordinates of the element */
@@ -257,11 +259,12 @@ void get_particle_tributary_nodes(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int p){
     Matrix lp = memory_to_matrix__MatrixLib__(Ndim,1,MPM_Mesh.lp.nM[p]);
     
     /* Get the index of the element */
-    IdxElement = search_particle_in(p,X_p,Elements_Near_I0,FEM_Mesh);
+    IdxElement = inout_element__Particles__(p,X_p,Elements_Near_I0,FEM_Mesh);
 
     if(IdxElement != -999){
       /* Get the coordinates of the element vertex */
-      CoordElement = ElemCoordinates(FEM_Mesh.Connectivity[IdxElement],FEM_Mesh.Coordinates);
+      CoordElement = get_nodes_coordinates__MeshTools__(FEM_Mesh.Connectivity[IdxElement],
+							FEM_Mesh.Coordinates);
       /* Compute local coordinates of the particle in this element */
       X_to_Xi__Q4__(Xi_p,X_p,CoordElement);
       /* Free coordinates of the element */
@@ -275,7 +278,8 @@ void get_particle_tributary_nodes(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int p){
     }
     /* else{ */
     /*   /\* Get the coordinates of the element vertex *\/ */
-    /*   CoordElement = ElemCoordinates(MPM_Mesh.ListNodes[p],FEM_Mesh.Coordinates); */
+    /*   CoordElement = get_nodes_coordinates__MeshTools__(MPM_Mesh.ListNodes[p],
+	 FEM_Mesh.Coordinates); */
     /*   /\* Compute local coordinates of the particle in this element *\/ */
     /*   X_to_Xi__Q4__(Xi_p,X_p,CoordElement); */
     /*   /\* Free coordinates of the element *\/ */
@@ -294,12 +298,12 @@ void get_particle_tributary_nodes(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int p){
     free__SetLib__(&MPM_Mesh.ListNodes[p]);
     MPM_Mesh.ListNodes[p] = NULL;
     /* Calculate the new connectivity with the previous value of beta */
-    MPM_Mesh.ListNodes[p] = tributary__LME__(X_p,Beta_p,I0,FEM_Mesh);
+    MPM_Mesh.ListNodes[p] = isotropic_tributary__LME__(X_p,Beta_p,I0,FEM_Mesh);
     /* Calculate number of nodes */
     MPM_Mesh.NumberNodes[p] = lenght__SetLib__(MPM_Mesh.ListNodes[p]);
     /* Generate nodal distance list */
-    Delta_Xip = get_set_Coordinates(MPM_Mesh.ListNodes[p],
-				    X_p, FEM_Mesh.Coordinates);    	      
+    Delta_Xip = compute_distance__MeshTools__(MPM_Mesh.ListNodes[p],
+					      X_p, FEM_Mesh.Coordinates);    	      
     /* Update Beta and Lambda for each particle */
     Beta_p = beta_isotropic__LME__(Beta_p, Delta_Xip, gamma_LME);
     lambda_p = lambda__LME__(Delta_Xip, lambda_p, Beta_p);
@@ -326,7 +330,7 @@ void get_particle_tributary_nodes(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int p){
     /*
       Calculate the new connectivity with the updated value of beta
      */
-    MPM_Mesh.ListNodes[p] = tributary__LME__(X_p,Beta_p,I0,FEM_Mesh);
+    MPM_Mesh.ListNodes[p] = isotropic_tributary__LME__(X_p,Beta_p,I0,FEM_Mesh);
     
     /*
       Calculate number of nodes 
@@ -336,8 +340,8 @@ void get_particle_tributary_nodes(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int p){
     /*
       Generate nodal distance list 
     */
-    Delta_Xip = get_set_Coordinates(MPM_Mesh.ListNodes[p],
-				    X_p, FEM_Mesh.Coordinates);
+    Delta_Xip = compute_distance__MeshTools__(MPM_Mesh.ListNodes[p],
+					      X_p, FEM_Mesh.Coordinates);
     
     /* 
        Update lambda for each particle 
@@ -355,7 +359,7 @@ void get_particle_tributary_nodes(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int p){
 
 /*********************************************************************/
 
-void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
+void local_search__Particles__(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 /*
   Search the closest node to the particle based in its previous position.
 */
@@ -396,18 +400,18 @@ void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
       Locality_I0 = FEM_Mesh.NodalLocality[I0_p];
 
       /* Update the index of the node close to the particle */
-      MPM_Mesh.I0[p] = get_closest_node_to(X_p,Locality_I0,FEM_Mesh.Coordinates);
+      MPM_Mesh.I0[p] = get_closest_node__MeshTools__(X_p,Locality_I0,FEM_Mesh.Coordinates);
 
       /* Update the tributary nodes of each particle */
       get_particle_tributary_nodes(MPM_Mesh,FEM_Mesh,p);
 
       /* Active those nodes that interact with the particle */
-      asign_particle_to_nodes(p, MPM_Mesh.ListNodes[p], FEM_Mesh);
+      asign_to_nodes__Particles__(p, MPM_Mesh.ListNodes[p], FEM_Mesh);
       
     }
     else{
       /* Active those nodes that interact with the particle */
-      asign_particle_to_nodes(p, MPM_Mesh.ListNodes[p], FEM_Mesh);
+      asign_to_nodes__Particles__(p, MPM_Mesh.ListNodes[p], FEM_Mesh);
     }
 
   }
@@ -415,46 +419,8 @@ void LocalSearchGaussPoints(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 
 /*********************************************************************/
 
-
-void GPinCell(ChainPtr * ListInCELL, ChainPtr * GlobalList,
-	      Matrix x_GC, int iGP, double epsilon)
-/*
-  Search recursively the GP inside of a cell and if inside of a circle of
-  radious epsilon
-*/
+Element nodal_set__Particles__(int i_GP, ChainPtr ListNodes, int NumNodes)
 {
-
-  int Ndim = NumberDimensions;
-  ChainPtr iPtr = (* GlobalList);
-  ChainPtr AuxPtr;
-  Matrix X0, X1;
-  double Dist;
-  if(iPtr != NULL){
-    X0 = memory_to_matrix__MatrixLib__(Ndim,1,x_GC.nM[iGP]);
-    X1 = memory_to_matrix__MatrixLib__(Ndim,1,x_GC.nM[iPtr->I]);
-    Dist = point_distance__MatrixLib__(X1,X0);
-
-    /* Found one to delete */
-    if (Dist < epsilon){
-      push__SetLib__(ListInCELL,iPtr->I);
-      AuxPtr = iPtr;
-      iPtr = iPtr->next;
-      free(AuxPtr);
-      GPinCell(ListInCELL,&iPtr,
-	       x_GC,iGP,epsilon);
-    }
-    /* Just keep going */
-    else{
-      iPtr = iPtr->next;
-      GPinCell(ListInCELL,&iPtr,
-	       x_GC,iGP,epsilon);
-    }
-  }
-}
-
-/*********************************************************************/
-
-Element get_particle_Set(int i_GP, ChainPtr ListNodes, int NumNodes){
 
   /* Define new element */
   Element GP_Element;
@@ -469,7 +435,7 @@ Element get_particle_Set(int i_GP, ChainPtr ListNodes, int NumNodes){
 
 /*********************************************************************/
 
-void asign_particle_to_nodes(int p, ChainPtr ListNodes_p, Mesh FEM_Mesh)
+void asign_to_nodes__Particles__(int p, ChainPtr ListNodes_p, Mesh FEM_Mesh)
 {
   
   /* Auxiliar variable to loop in the list of tributary nodes of the particle */

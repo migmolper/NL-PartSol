@@ -183,7 +183,7 @@ Mesh GramsBox(char * Name_File)
   /*** Generate nodal connectivity of the mesh : ****/
   /******* list of elements near to a node ***********/
   /**************************************************/
-  GetNodalConnectivity(FEM_Mesh);
+  get_nodal_connectivity__MeshTools__(FEM_Mesh);
   
   /**************************************************/	
   /***** Initialize nodal locality of each node *****/
@@ -198,7 +198,7 @@ Mesh GramsBox(char * Name_File)
 
   /* Fill the table with the nodal locality */
   for(int i = 0 ; i<FEM_Mesh.NumNodesMesh ; i++){
-    FEM_Mesh.NodalLocality[i] = get_locality_of_node(i, FEM_Mesh);
+    FEM_Mesh.NodalLocality[i] = get_nodal_locality__MeshTools__(i, FEM_Mesh);
     FEM_Mesh.SizeNodalLocality[i] = lenght__SetLib__(FEM_Mesh.NodalLocality[i]);
   }
   
@@ -211,7 +211,7 @@ Mesh GramsBox(char * Name_File)
     (ChainPtr *)malloc(FEM_Mesh.NumNodesMesh*sizeof(ChainPtr));
   if(FEM_Mesh.I_particles == NULL){
     printf("%s : %s \n",
-	   "GetNodalConnectivity",
+	   "get_nodal_connectivity__MeshTools__",
 	   "Memory error for I_particles");
     exit(EXIT_FAILURE);
   }

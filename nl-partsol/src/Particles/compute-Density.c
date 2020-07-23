@@ -2,7 +2,7 @@
 
 /*******************************************************/
 
-double update_Density(double rho_n, double TimeStep,
+double update_density__Particles__(double rho_n, double TimeStep,
 		      Tensor Rate_Strain)
 {
   /* Define output variable */
@@ -14,7 +14,7 @@ double update_Density(double rho_n, double TimeStep,
   }
   else{
     fprintf(stderr,"%s : %s %s !!! \n",
-	    "Error in update_Density()",
+	    "Error in update_density__Particles__()",
 	    "The input should be",
 	    "a 2nd order tensor and a scalar");
     exit(EXIT_FAILURE);    

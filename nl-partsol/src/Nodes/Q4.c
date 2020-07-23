@@ -44,19 +44,20 @@ void initialize__Q4__(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
       Elem_p = FEM_Mesh.Connectivity[i];
       
       /* 5º Check out if the GP is in the Element */
-      if(InOut_Element(X_p, Elem_p, FEM_Mesh.Coordinates)){
+      if(inout_convex_set__MeshTools__(X_p, Elem_p, FEM_Mesh.Coordinates)){
 
 	/* With the element connectivity get the node close to the particle */
-	MPM_Mesh.I0[p] = get_closest_node_to(X_p,Elem_p,FEM_Mesh.Coordinates);
+	MPM_Mesh.I0[p] = get_closest_node__MeshTools__(X_p,Elem_p,FEM_Mesh.Coordinates);
 	
 	/* Asign connectivity */
 	MPM_Mesh.ListNodes[p] = copy__SetLib__(Elem_p);
 	
 	/* Active those nodes that interact with the particle */
-	asign_particle_to_nodes(p, MPM_Mesh.ListNodes[p], FEM_Mesh);
+	asign_to_nodes__Particles__(p, MPM_Mesh.ListNodes[p], FEM_Mesh);
 	
 	/* Get the coordinates of the element vertex */
-	CoordElement = ElemCoordinates(MPM_Mesh.ListNodes[p],FEM_Mesh.Coordinates);
+	CoordElement = get_nodes_coordinates__MeshTools__(MPM_Mesh.ListNodes[p],
+							  FEM_Mesh.Coordinates);
 
 	/* Compute local coordinates of the particle in this element */
 	X_to_Xi__Q4__(Xi_p,X_p,CoordElement);

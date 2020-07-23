@@ -175,7 +175,7 @@ Mesh GramsBox(char * Name_File)
   /**************************************************/
   /********** Set the minimum mesh size *************/
   /**************************************************/
-  FEM_Mesh.DeltaX = GetMinElementSize(FEM_Mesh);
+  FEM_Mesh.DeltaX = mesh_size__MeshTools__(FEM_Mesh);
   puts("*************************************************");
   printf(" \t %s : \n \t %f \n",
 	 "* Mesh size",FEM_Mesh.DeltaX);

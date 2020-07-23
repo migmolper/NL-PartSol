@@ -72,7 +72,7 @@ void U_Newmark_Predictor_Corrector(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int Initi
       print_Status("*************************************************",TimeStep);
       print_Status("Four step : Update particles lagrangian ... WORKING",TimeStep);
       update_Particles(MPM_Mesh, FEM_Mesh, Lumped_Mass, Velocity, Forces,DeltaTimeStep);
-      LocalSearchGaussPoints(MPM_Mesh,FEM_Mesh);
+      local_search__Particles__(MPM_Mesh,FEM_Mesh);
       print_Status("DONE !!!",TimeStep);
 
       if(TimeStep % ResultsTimeStep == 0)
@@ -122,7 +122,7 @@ static Matrix compute_Nodal_Mass(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
   for(int p = 0 ; p<Np ; p++){
 
     /* 3º Define element of the GP */
-    Nodes_p = get_particle_Set(p, MPM_Mesh.ListNodes[p], MPM_Mesh.NumberNodes[p]);
+    Nodes_p = nodal_set__Particles__(p, MPM_Mesh.ListNodes[p], MPM_Mesh.NumberNodes[p]);
 
     /* 4º Evaluate the shape function in the coordinates of the GP */
     ShapeFunction_p = compute_N__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
@@ -183,7 +183,7 @@ static Matrix compute_Velocity_Predictor(GaussPoint MPM_Mesh,Mesh FEM_Mesh,
   for(int p = 0 ; p<Np ; p++){
     
     /* 3º Define element of the GP */
-    Nodes_p = get_particle_Set(p, MPM_Mesh.ListNodes[p], MPM_Mesh.NumberNodes[p]);
+    Nodes_p = nodal_set__Particles__(p, MPM_Mesh.ListNodes[p], MPM_Mesh.NumberNodes[p]);
 
     /* 4º Evaluate the shape function in the coordinates of the GP */
     ShapeFunction_p = compute_N__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
@@ -324,7 +324,7 @@ static void update_Particles(GaussPoint MPM_Mesh,Mesh FEM_Mesh,
 
     /* 2º Define element of the GP */
     Nnodes = MPM_Mesh.NumberNodes[p];
-    Nodes_p = get_particle_Set(p, MPM_Mesh.ListNodes[p], Nnodes);
+    Nodes_p = nodal_set__Particles__(p, MPM_Mesh.ListNodes[p], Nnodes);
 
     /* 3º Evaluate shape function in the GP i */
     ShapeFunction_p = compute_N__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
@@ -396,10 +396,10 @@ static void update_LocalState(Matrix V_I, GaussPoint MPM_Mesh,Mesh FEM_Mesh, dou
 
     /* Define element for each GP */
     Nn = MPM_Mesh.NumberNodes[p];
-    Nodes_p = get_particle_Set(p, MPM_Mesh.ListNodes[p], Nn);
+    Nodes_p = nodal_set__Particles__(p, MPM_Mesh.ListNodes[p], Nn);
 
     /* Get the velocity of the nodes of the element */
-    Nodal_Velocity_p = get_set_Field(V_I, Nodes_p);
+    Nodal_Velocity_p = get_set_field_old__MeshTools__(V_I, Nodes_p);
 
     /* Compute gradient of the shape function in each node */
     Gradient_p = compute_dN__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
@@ -409,15 +409,15 @@ static void update_LocalState(Matrix V_I, GaussPoint MPM_Mesh,Mesh FEM_Mesh, dou
     Material_p = MPM_Mesh.Mat[Idx_Mat_p];
 
     /* Update Strain tensor */
-    Rate_Strain_p = compute_RateOfStrain(Nodal_Velocity_p,Gradient_p);
-    Strain_p = update_Strain(Strain_p, Rate_Strain_p, TimeStep);
+    Rate_Strain_p = rate_inifinitesimal_Strain__Particles__(Nodal_Velocity_p,Gradient_p);
+    Strain_p = infinitesimal_Strain__Particles__(Strain_p, Rate_Strain_p, TimeStep);
 
     /* Update density field */
-    MPM_Mesh.Phi.rho.nV[p] = update_Density(rho_p, TimeStep, Rate_Strain_p);
+    MPM_Mesh.Phi.rho.nV[p] = update_density__Particles__(rho_p, TimeStep, Rate_Strain_p);
     free__TensorLib__(Rate_Strain_p);
 
     /* Compute stress tensor */
-    Stress_p = compute_Stress(Strain_p,Stress_p,Material_p);
+    Stress_p = explicit_integration_stress__Particles__(Strain_p,Stress_p,Material_p);
 
     /* Compute deformation energy */
     MPM_Mesh.Phi.W.nV[p] = 0.5*inner_product__TensorLib__(Strain_p, Stress_p);
@@ -470,7 +470,7 @@ static Matrix compute_InternalForces(Matrix F_I, GaussPoint MPM_Mesh, Mesh FEM_M
 
     /* Define element for each GP */
     Nn = MPM_Mesh.NumberNodes[p];
-    Nodes_p = get_particle_Set(p, MPM_Mesh.ListNodes[p], Nn);
+    Nodes_p = nodal_set__Particles__(p, MPM_Mesh.ListNodes[p], Nn);
 
     /* Compute gradient of the shape function in each node */
     Gradient_p = compute_dN__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
@@ -540,7 +540,7 @@ static Matrix compute_BodyForces(Matrix F_I, GaussPoint MPM_Mesh,
 
       /* Define element for each GP */
       Nn = MPM_Mesh.NumberNodes[p];
-      Nodes_p = get_particle_Set(p, MPM_Mesh.ListNodes[p], Nn);
+      Nodes_p = nodal_set__Particles__(p, MPM_Mesh.ListNodes[p], Nn);
 
       /* Compute shape functions */
       ShapeFunction_p = compute_N__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
@@ -635,7 +635,7 @@ static Matrix compute_ContacForces(Matrix F_I, GaussPoint MPM_Mesh,
 
       /* Define element for each GP */
       Nn = MPM_Mesh.NumberNodes[p];
-      Nodes_p = get_particle_Set(p, MPM_Mesh.ListNodes[p], Nn);
+      Nodes_p = nodal_set__Particles__(p, MPM_Mesh.ListNodes[p], Nn);
 
       /* Compute shape functions */
       ShapeFunction_p = compute_N__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);

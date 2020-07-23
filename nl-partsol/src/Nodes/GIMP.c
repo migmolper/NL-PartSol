@@ -52,17 +52,17 @@ void initialize__GIMP__(GaussPoint MPM_Mesh, Mesh FEM_Mesh){
     Elem_p = FEM_Mesh.Connectivity[j];
       
     /* 5º Check out if the GP is in the Element */
-    if(InOut_Element(X_p, Elem_p, FEM_Mesh.Coordinates)){
+    if(inout_convex_set__MeshTools__(X_p, Elem_p, FEM_Mesh.Coordinates)){
 
       /* Particle will be initilise */
       Init_p = true;
 	
       /* With the element connectivity get the node close to the particle */
-      MPM_Mesh.I0[i] = get_closest_node_to(X_p,Elem_p,FEM_Mesh.Coordinates);
+      MPM_Mesh.I0[i] = get_closest_node__MeshTools__(X_p,Elem_p,FEM_Mesh.Coordinates);
 
       /* Get the coordinates of the element */
-      Poligon_Coordinates = ElemCoordinates(FEM_Mesh.Connectivity[j],
-					    FEM_Mesh.Coordinates);
+      Poligon_Coordinates = get_nodes_coordinates__MeshTools__(FEM_Mesh.Connectivity[j],
+							       FEM_Mesh.Coordinates);
 
       /* If the GP is in the element, get its natural coordinates */
       Xi_p.nV = MPM_Mesh.Phi.x_EC.nM[i];
@@ -78,7 +78,7 @@ void initialize__GIMP__(GaussPoint MPM_Mesh, Mesh FEM_Mesh){
       MPM_Mesh.NumberNodes[i] = lenght__SetLib__(MPM_Mesh.ListNodes[i]);
 	
       /* Active those nodes that interact with the particle */
-      asign_particle_to_nodes(i, MPM_Mesh.ListNodes[i], FEM_Mesh);
+      asign_to_nodes__Particles__(i, MPM_Mesh.ListNodes[i], FEM_Mesh);
 
       /* Free memory */
       free__MatrixLib__(Poligon_Coordinates);

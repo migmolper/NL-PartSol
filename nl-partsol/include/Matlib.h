@@ -76,6 +76,7 @@ Matrix inverse__MatrixLib__(Matrix);
 Matrix transpose__MatrixLib__(Matrix);
 double I3__MatrixLib__(Matrix);
 Matrix matrix_product__MatrixLib__(Matrix, Matrix);
+double scalar_product__MatrixLib__(Matrix, Matrix);
 Matrix vectorial_product__MatrixLib__(Matrix, Matrix);
 Matrix dyadic_product__MatrixLib__(Matrix,Matrix);
 Matrix increment__MatrixLib__(Matrix, Matrix);

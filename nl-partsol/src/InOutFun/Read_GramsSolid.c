@@ -193,7 +193,7 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
     /**************************************************/
     /********** Generate the initial layout ***********/
     /**************************************************/
-    GetInitialGaussPointPosition(MPM_Mesh.Phi.x_GC,MPM_GID_Mesh,GPxElement);
+    initial_position__Particles__(MPM_Mesh.Phi.x_GC,MPM_GID_Mesh,GPxElement);
 
     
     puts("*************************************************");

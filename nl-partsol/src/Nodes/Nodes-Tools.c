@@ -1,8 +1,91 @@
 #include "nl-partsol.h"
 
+
+/**************************************************************/
+
+Mask generate_NodalMask__MeshTools__(Mesh FEM_Mesh)
+{
+  int Nnodes = FEM_Mesh.NumNodesMesh;
+  int Nactivenodes = 0;
+  int * Nodes2Mask = (int *)Allocate_ArrayZ(Nnodes,sizeof(int));
+  ChainPtr Mask2Nodes = NULL;
+  Mask M;
+
+  for(int A = 0 ; A<Nnodes ; A++)
+    {
+      
+      if(FEM_Mesh.NumParticles[A] > 0)
+	{
+	  Nodes2Mask[A] = Nactivenodes;
+	  push__SetLib__(&Mask2Nodes,A);
+	  Nactivenodes++;
+	}
+      else
+	{
+	  Nodes2Mask[A] = - 1;
+	}
+    }
+
+  M.Nactivenodes = Nactivenodes;
+  M.Mask2Nodes = set_to_memory__SetLib__(Mask2Nodes,Nactivenodes);
+  M.Nodes2Mask = Nodes2Mask;  
+ 
+  return M;
+}
+
+/**************************************************************/
+
+Matrix get_set_field__MeshTools__(Matrix Field, Element Nodes_p, Mask ActiveNodes)
+/*
+  This function performs two operations. First takes the nodal connectivity of the particle, 
+  and translate it to the mask numeration. Second, generate a Matrix with the nodal values.
+  To help in the future computations. Nodal data is substracted in the shape (nodesxndofs).
+ */
+  {
+    int Nnodes = Nodes_p.NumberNodes;
+    int Ndim = NumberDimensions;
+    Matrix Field_Ap = allocZ__MatrixLib__(Nnodes,Ndim);
+    int Ap;
+    int A_mask;
+
+    if(Ndim > 1)
+      {
+	for(int A = 0 ; A<Nnodes ; A++)
+	  {
+	    
+	    /* 
+	       Get the node in the mass matrix with the mask
+	    */
+	    Ap = Nodes_p.Connectivity[A];
+	    A_mask = ActiveNodes.Nodes2Mask[Ap];
+	
+	    for(int i = 0 ; i<Ndim ; i++)
+	      {
+		Field_Ap.nM[A][i] = Field.nM[i][A_mask];
+	      }
+	  }
+      }
+    else
+      {
+	for(int A = 0 ; A<Nnodes ; A++)
+	  {
+
+	    /* 
+	       Get the node in the mass matrix with the mask
+	    */
+	    Ap = Nodes_p.Connectivity[A];
+	    A_mask = ActiveNodes.Nodes2Mask[Ap];
+	    
+	    Field_Ap.nV[A] = Field.nV[A_mask];
+	  }
+      }
+    
+    return Field_Ap;
+  }
+
 /*********************************************************************/
 
-ChainPtr get_locality_of_node(int I, Mesh FEM_Mesh){
+ChainPtr get_nodal_locality__MeshTools__(int I, Mesh FEM_Mesh){
 
   /* Define output */
   ChainPtr Nodes = NULL;
@@ -37,7 +120,7 @@ ChainPtr get_locality_of_node(int I, Mesh FEM_Mesh){
 
 /*********************************************************************/
 
-void GetNodalConnectivity(Mesh FEM_Mesh){
+void get_nodal_connectivity__MeshTools__(Mesh FEM_Mesh){
 
   /* Variable declaration */
   int * Element_Connectivity;
@@ -381,7 +464,7 @@ double mesh_size__MeshTools__(Mesh FEM_Mesh)
 
 /*********************************************************************/
 
-Matrix ElemCoordinates(ChainPtr Element_p, Matrix Coordinates)
+Matrix get_nodes_coordinates__MeshTools__(ChainPtr Element_p, Matrix Coordinates)
 /*
   Get the matrix with the coordinates of an element
 */
@@ -412,86 +495,8 @@ Matrix ElemCoordinates(ChainPtr Element_p, Matrix Coordinates)
 
 /*********************************************************************/
 
-ChainPtr DiscardElements(ChainPtr SearchElem_0,
-			 Matrix Corner_MAX,
-			 Matrix Corner_MIN,
-			 Mesh FEM_Mesh)
-/*
-  Auxiliary function to increase the computational accuracy in the
-  GlobalSearchGaussPoints() function. We discard the elements where we can't have
-  GPs because its vertex coordinates. 
-*/
-{   
-  /* Found the tail */
-  if (SearchElem_0 == NULL) {
-    return NULL;
-  }
 
-  ChainPtr SearchElem_1;
-  double Xmax_E, Ymax_E;
-  double Xmin_E, Ymin_E;
-  int Idx_Elem; /* Index of the element */
-  int NumNodes; /* Num nodes of the element */
-  int * Conect_Elem; /* Conectivity of the element */
-
-  Idx_Elem = SearchElem_0->I;
-  NumNodes = FEM_Mesh.NumNodesElem[Idx_Elem];
-  Conect_Elem = set_to_memory__SetLib__(FEM_Mesh.Connectivity[Idx_Elem],NumNodes);
-
-  /* Init Corner_MAX and Corner_MIN */
-  Xmax_E = FEM_Mesh.Coordinates.nM[Conect_Elem[0]][0];
-  Ymax_E = FEM_Mesh.Coordinates.nM[Conect_Elem[0]][1];
-  Xmin_E = FEM_Mesh.Coordinates.nM[Conect_Elem[0]][0];
-  Ymin_E = FEM_Mesh.Coordinates.nM[Conect_Elem[0]][1];
-  
-  for(int i = 1 ; i<NumNodes ; i++){
-    /* Corner_MAX */
-    Xmax_E = DMAX(Xmax_E, FEM_Mesh.Coordinates.nM[Conect_Elem[i]][0]);
-    Ymax_E = DMAX(Ymax_E, FEM_Mesh.Coordinates.nM[Conect_Elem[i]][1]);
-    /* Corner_MIN */
-    Xmin_E = DMIN(Xmin_E, FEM_Mesh.Coordinates.nM[Conect_Elem[i]][0]);
-    Ymin_E = DMIN(Ymin_E, FEM_Mesh.Coordinates.nM[Conect_Elem[i]][1]);
-  }
-
-  /* Free */
-  free(Conect_Elem);
-  
-  /* Test inferior limit */
-  if ((Xmin_E<Corner_MIN.nV[0]) &&
-      (Ymin_E<Corner_MIN.nV[1])){ 
-    SearchElem_1 = SearchElem_0->next;
-    free(SearchElem_0);
-    SearchElem_1->next =
-      DiscardElements(SearchElem_1->next,
-		      Corner_MAX,Corner_MIN,
-		      FEM_Mesh);
-    return SearchElem_1;
-  }
-  /* Test superior limit */
-  else if ((Xmax_E>Corner_MAX.nV[0]) &&
-	   (Ymax_E>Corner_MAX.nV[1])){
-    SearchElem_1 = SearchElem_0->next;
-    free(SearchElem_0);
-    SearchElem_1->next =
-      DiscardElements(SearchElem_1->next,
-		      Corner_MAX,Corner_MIN,
-		      FEM_Mesh);
-    return SearchElem_1;
-  }
-  /* Just keep going */
-  else{
-    SearchElem_0->next =
-      DiscardElements(SearchElem_0->next,
-		      Corner_MAX,Corner_MIN,
-		      FEM_Mesh);
-    return SearchElem_0;
-  }
-}
-
-/*********************************************************************/
-
-
-Matrix get_set_Coordinates(ChainPtr Set, Matrix X0, Matrix Coordinates)
+Matrix compute_distance__MeshTools__(ChainPtr Set, Matrix X0, Matrix Coordinates)
 {
   int Ndim = NumberDimensions;
   int SizeSet = lenght__SetLib__(Set);
@@ -517,7 +522,7 @@ Matrix get_set_Coordinates(ChainPtr Set, Matrix X0, Matrix Coordinates)
 
 /*********************************************************************/
 
-Matrix get_set_Field(Matrix Nodal_Field, Element GP_Element){
+Matrix get_set_field_old__MeshTools__(Matrix Nodal_Field, Element GP_Element){
 
   int * Element_Connectivity = GP_Element.Connectivity;
   int NumNodes = GP_Element.NumberNodes;
@@ -543,7 +548,7 @@ Matrix get_set_Field(Matrix Nodal_Field, Element GP_Element){
  
 /*********************************************************************/
 
-int get_closest_node_to(Matrix X_p, ChainPtr Nodes, Matrix Coordinates)
+int get_closest_node__MeshTools__(Matrix X_p, ChainPtr Nodes, Matrix Coordinates)
 /*
   Ordenate recursively and array with distances and get a chain 
   with the positions in orden
@@ -609,12 +614,12 @@ int get_closest_node_to(Matrix X_p, ChainPtr Nodes, Matrix Coordinates)
 
 /*********************************************************************/
 
-bool InOut_Element(Matrix X_p, ChainPtr Elem_p, Matrix Coordinates){
+bool inout_convex_set__MeshTools__(Matrix X_p, ChainPtr Elem_p, Matrix Coordinates){
 
   bool Is_In_Element = false;
   Matrix Element_Coordinates;
   
-  Element_Coordinates = ElemCoordinates(Elem_p, Coordinates);
+  Element_Coordinates = get_nodes_coordinates__MeshTools__(Elem_p, Coordinates);
   
   if (inout__MatrixLib__(X_p, Element_Coordinates) == 1){
     Is_In_Element = true;

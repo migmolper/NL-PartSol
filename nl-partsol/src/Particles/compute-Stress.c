@@ -1,10 +1,34 @@
 #include "nl-partsol.h"
 
+/*************************************************************/
+
+Tensor explicit_integration_stress__Particles__(Tensor Strain,
+						Tensor Stress,
+						Material Mat)
+{   
+  /*
+    Select the constitutive model 
+  */
+  if(strcmp(Mat.Type,"SR") == 0){
+    Stress = SolidRigid(Stress);
+  }  
+  else if(strcmp(Mat.Type,"LE") == 0){
+    Stress = LinearElastic(Strain,Stress,Mat);
+  }
+  else{
+    exit(EXIT_FAILURE);
+  }
+  
+  /* Return the stress tensor */
+  return Stress;
+}
+
 /**************************************************************/
 
-Tensor Itegration_Stress_Configurational_Midpoint(Tensor S_p,
-						  Tensor F_n1_p, Tensor F_n_p,
-						  Material MatProp_p)
+Tensor configurational_midpoint_integration_Stress__Particles__(Tensor S_p,
+								Tensor F_n1_p,
+								Tensor F_n_p,
+								Material MatProp_p)
 {
   /* Auxiliar variables */
   Tensor F_n12_p;
@@ -19,12 +43,12 @@ Tensor Itegration_Stress_Configurational_Midpoint(Tensor S_p,
   /*
     Compute the right Cauchy Green tensor
    */
-  C_n12_p = compute_RightCauchyGreen(F_n_p);
+  C_n12_p = right_Cauchy_Green__Particles__(F_n_p);
 
   /*
     Compute the lagrangian strain tensor
    */
-  E_n12_p =  compute_LagrangianStrain(C_n12_p);
+  E_n12_p =  strain_Green_Lagrange__Particles__(C_n12_p);
 
   /*
     Compute the Stress tensor
@@ -44,9 +68,10 @@ Tensor Itegration_Stress_Configurational_Midpoint(Tensor S_p,
 
 /**************************************************************/
 
-Tensor Itegration_Stress_Average_Strain(Tensor S_p,
-					Tensor F_n1_p, Tensor F_n_p,
-					Material MatProp_p)
+Tensor average_strain_integration_Stress__Particles__(Tensor S_p,
+						      Tensor F_n1_p,
+						      Tensor F_n_p,
+						      Material MatProp_p)
 {
 
   /* Auxiliar variables */
@@ -58,14 +83,14 @@ Tensor Itegration_Stress_Average_Strain(Tensor S_p,
   /*
     Compute the right Cauchy-Green tensor
   */
-  C_n_p  = compute_RightCauchyGreen(F_n_p);
-  C_n1_p = compute_RightCauchyGreen(F_n1_p);
+  C_n_p  = right_Cauchy_Green__Particles__(F_n_p);
+  C_n1_p = right_Cauchy_Green__Particles__(F_n1_p);
   C_n12_p = Convex_combination__TensorLib__(C_n1_p,C_n_p,0.5);
   
   /*
     Compute the lagrangian strain tensor
    */
-  E_n12_p =  compute_LagrangianStrain(C_n12_p);
+  E_n12_p =  strain_Green_Lagrange__Particles__(C_n12_p);
   
   /*
     Compute the Stress tensor
@@ -77,7 +102,7 @@ Tensor Itegration_Stress_Average_Strain(Tensor S_p,
   else
     {
       fprintf(stderr,"%s : %s %s \n",
-	      "Error in Itegration_Stress_Average_Strain()",
+	      "Error in average_strain_integration_Stress__Particles__()",
 	      "The material",MatProp_p.Type,"has not been yet implemnented");
       exit(EXIT_FAILURE);
     }
@@ -95,9 +120,10 @@ Tensor Itegration_Stress_Average_Strain(Tensor S_p,
 
 /**************************************************************/
 
-Tensor Itegration_Stress_Average(Tensor S_p,
-				 Tensor F_n1_p, Tensor F_n_p,
-				 Material MatProp_p)
+Tensor average_itegration_Stress__Particles__(Tensor S_p,
+					      Tensor F_n1_p,
+					      Tensor F_n_p,
+					      Material MatProp_p)
 {
 
   int Ndim = NumberDimensions;
@@ -112,14 +138,14 @@ Tensor Itegration_Stress_Average(Tensor S_p,
   /*
     Compute the right Cauchy-Green tensor
   */
-  C_n_p  = compute_RightCauchyGreen(F_n_p);
-  C_n1_p = compute_RightCauchyGreen(F_n1_p);
+  C_n_p  = right_Cauchy_Green__Particles__(F_n_p);
+  C_n1_p = right_Cauchy_Green__Particles__(F_n1_p);
 
   /*
     Compute the lagrangian strain tensor
   */
-  E_n_p =  compute_LagrangianStrain(C_n_p);
-  E_n1_p =  compute_LagrangianStrain(C_n1_p);
+  E_n_p =   strain_Green_Lagrange__Particles__(C_n_p);
+  E_n1_p =  strain_Green_Lagrange__Particles__(C_n1_p);
     
   /*
     Compute the Stress tensor
@@ -182,3 +208,4 @@ Tensor Itegration_Stress_Average(Tensor S_p,
 /* } */
 
 /**************************************************************/
+

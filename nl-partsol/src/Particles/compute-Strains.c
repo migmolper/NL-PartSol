@@ -2,7 +2,7 @@
 
 /*************************************************************/
 
-Tensor compute_RateOfStrain(Matrix Velocity, Matrix Gradient)
+Tensor rate_inifinitesimal_Strain__Particles__(Matrix Velocity, Matrix Gradient)
 {
   int Ndim = NumberDimensions;
   Tensor Rate_Strain = alloc__TensorLib__(2);
@@ -38,7 +38,7 @@ Tensor compute_RateOfStrain(Matrix Velocity, Matrix Gradient)
 
 /*******************************************************/
 
-Tensor update_Strain(Tensor Strain, Tensor Rate_Strain, double TimeStep)
+Tensor infinitesimal_Strain__Particles__(Tensor Strain, Tensor Rate_Strain, double TimeStep)
 {
   int Ndim = NumberDimensions;
   /* Check in the input its is ok */
@@ -52,7 +52,7 @@ Tensor update_Strain(Tensor Strain, Tensor Rate_Strain, double TimeStep)
   }
   else{
     fprintf(stderr,"%s : %s %s !!! \n",
-	    "Error in update_Strain()",
+	    "Error in infinitesimal_Strain__Particles__()",
 	    "The input should be",
 	    "two tensors of 2nd order and a scalar");
     exit(EXIT_FAILURE);    
@@ -63,7 +63,7 @@ Tensor update_Strain(Tensor Strain, Tensor Rate_Strain, double TimeStep)
 
 /*******************************************************/
 
-Tensor compute_increment_Deformation_Gradient(Matrix DeltaU, Matrix gradient_p)
+Tensor increment_Deformation_Gradient__Particles__(Matrix DeltaU, Matrix gradient_p)
 {
 
   /* Variable definition */
@@ -111,7 +111,7 @@ Tensor compute_increment_Deformation_Gradient(Matrix DeltaU, Matrix gradient_p)
 
 /*******************************************************/
 
-void update_Deformation_Gradient_n1(Tensor F_n1, Tensor F_n, Tensor f_n1)
+void update_Deformation_Gradient_n1__Particles__(Tensor F_n1, Tensor F_n, Tensor f_n1)
 {
   int Ndim = NumberDimensions;
   double aux;
@@ -145,7 +145,7 @@ void update_Deformation_Gradient_n1(Tensor F_n1, Tensor F_n, Tensor f_n1)
 
 /*******************************************************/
 
-Tensor compute_RightCauchyGreen(Tensor F)
+Tensor right_Cauchy_Green__Particles__(Tensor F)
 {
   /* Define output */
   Tensor C = alloc__TensorLib__(2);
@@ -170,7 +170,7 @@ Tensor compute_RightCauchyGreen(Tensor F)
 
 /*******************************************************/
 
-Tensor compute_LagrangianStrain(Tensor C)
+Tensor strain_Green_Lagrange__Particles__(Tensor C)
 {
   /* Define output */
   Tensor E = alloc__TensorLib__(2);

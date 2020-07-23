@@ -3,7 +3,7 @@
 
 /*********************************************************************/
 
-Matrix Eval_Body_Forces(Load * B, int NumLoads, int NumGP, int TimeStep)
+Matrix body_loads__Particles__(Load * B, int NumLoads, int NumGP, int TimeStep)
 /*
   Evaluate body forces in a time step.
 */
@@ -20,7 +20,7 @@ Matrix Eval_Body_Forces(Load * B, int NumLoads, int NumGP, int TimeStep)
 	      (B[i].Dir[k] == -1)){
 	    if( (TimeStep < 0) || (TimeStep > B[i].Value[k].Num)){
 	      printf("%s : %s\n",
-		     "Error in Eval_Body_Forces()",
+		     "Error in body_loads__Particles__()",
 		     "The time step is out of the curve !!");
 	      exit(EXIT_FAILURE);
 	    }
@@ -39,7 +39,7 @@ Matrix Eval_Body_Forces(Load * B, int NumLoads, int NumGP, int TimeStep)
 
 /*********************************************************************/
 
-Matrix Eval_Contact_Forces(Load * F, int NumLoads, int NumGP, int TimeStep)
+Matrix contact_loads__Particles__(Load * F, int NumLoads, int NumGP, int TimeStep)
 /*
   Evaluate contact forces in a time step
  */
@@ -56,7 +56,7 @@ Matrix Eval_Contact_Forces(Load * F, int NumLoads, int NumGP, int TimeStep)
 	      (F[i].Dir[k] == -1)){
 	    if( (TimeStep < 0) || (TimeStep > F[i].Value[k].Num)){
 	      printf("%s : %s \n",
-		     "Error in Eval_Contact_Forces()",
+		     "Error in contact_loads__Particles__()",
 		     "The time step is out of the curve !!");
 	      exit(EXIT_FAILURE);
 	    }
