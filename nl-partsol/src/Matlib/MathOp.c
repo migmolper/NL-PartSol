@@ -123,7 +123,7 @@ int inout__MatrixLib__(Matrix X_Point, Matrix Poligon)
   Matrix b = allocZ__MatrixLib__(3,1);
   Matrix c;
   Matrix n;
-  Matrix nxc;
+  double nxc;
 
   /* Get the normal vector */
   a.nV[0] = Poligon.nM[1][0] - Poligon.nM[0][0];
@@ -148,10 +148,10 @@ int inout__MatrixLib__(Matrix X_Point, Matrix Poligon)
   for(int i = 0 ; i<Poligon.N_rows-1 ; i++){
 
     c = vectorial_product__MatrixLib__(a,b);
-    nxc = matrix_product__MatrixLib__(n,c);
+    nxc = scalar_product__MatrixLib__(n,c);
     free__MatrixLib__(c);
 
-    if(nxc.n < -TOL_InOut){
+    if(nxc < -TOL_InOut){
       InOut = 0;
       break;
     }
@@ -168,8 +168,8 @@ int inout__MatrixLib__(Matrix X_Point, Matrix Poligon)
 
   /* Last check */
   c = vectorial_product__MatrixLib__(a,b);
-  nxc = matrix_product__MatrixLib__(n,c);
-  if(nxc.n < -TOL_InOut){
+  nxc = scalar_product__MatrixLib__(n,c);
+  if(nxc < -TOL_InOut){
     InOut = 0;
   }
 

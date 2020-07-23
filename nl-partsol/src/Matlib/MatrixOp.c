@@ -507,31 +507,14 @@ Matrix transpose__MatrixLib__(Matrix M)
 
 /*********************************************************************/
 
-/* Matrix matrix_compute(Matrix A,char operator,Matrix B) */
-/* /\* */
-/*   C = matrix_compute(A,"·",B); */
-/*   C = matrix_compute(A,"@",B); */
-/*   C = matrix_compute(A,"x",B); */
-/*   C = matrix_compute(A,"+",B); */
-/*   C = matrix_compute(A,"-",B); */
-/*   C = matrix_compute(A,"/",B); */
-/*   C = matrix_compute(A,"\",B); */
-/*   C = matrix_compute(A,"^",B); */
-/* *\/ */
-/* { */
-
-/* } */
-
-/*********************************************************************/
-
-static Matrix get_A_dot_B_Mat(Matrix A, Matrix B)
+static Matrix get_A_x_B_Mat(Matrix A, Matrix B)
 /* 
-   Compute the scalar product of two matrix 
+   Compute the matrix product of two matrix 
 */
 {
 
   /* The result is a matrix */
-  Matrix A_dot_B = allocZ__MatrixLib__(A.N_rows,B.N_cols);
+  Matrix A_x_B = allocZ__MatrixLib__(A.N_rows,B.N_cols);
   int Rows = A.N_rows;
   int Columns = B.N_cols;
   int Aux = B.N_rows;
@@ -543,45 +526,23 @@ static Matrix get_A_dot_B_Mat(Matrix A, Matrix B)
 	{
 	  for(int k = 0 ; k < Aux  ; k++)
 	    {
-	      A_dot_B.nM[i][j] += A.nM[i][k]*B.nM[k][j];
+	      A_x_B.nM[i][j] += A.nM[i][k]*B.nM[k][j];
 	    }
 	}
     } 
 
-  return A_dot_B;  
+  return A_x_B;  
 }
 
 /*********************************************************************/
 
-static Matrix get_a_dot_b_Mat(Matrix a, Matrix b)
+static Matrix get_A_x_b_Mat(Matrix A, Matrix b)
 /* 
-   Compute the scalar product of two vectors
-*/
-{
-  Matrix a_dot_b;
-  a_dot_b.N_rows = 1;
-  a_dot_b.N_cols = 1;
-  a_dot_b.n = 0;
-  
-  int Size = a.N_cols;
-
-  for(int i = 0 ; i < Size ; i++)
-    {
-      a_dot_b.n += a.nV[i]*b.nV[i];
-    }
-
-  return a_dot_b;  
-}
-
-/*********************************************************************/
-
-static Matrix get_A_dot_b_Mat(Matrix A, Matrix b)
-/* 
-   Compute the scalar product of a matrix by an array
+   Compute the matrix product of a matrix by an array
 */
 {
   /* The result is an array */
-  Matrix A_dot_b = allocZ__MatrixLib__(A.N_rows,b.N_cols);
+  Matrix A_x_b = allocZ__MatrixLib__(A.N_rows,b.N_cols);
   int Rows = A.N_rows;
   int Columns = A.N_cols;
   
@@ -589,32 +550,32 @@ static Matrix get_A_dot_b_Mat(Matrix A, Matrix b)
     {
       for(int j = 0 ; j<Columns ; j++)
 	{
-	  A_dot_b.nV[i] += A.nM[i][j]*b.nV[j];
+	  A_x_b.nV[i] += A.nM[i][j]*b.nV[j];
 	}
     }
     
-  return A_dot_b;  
+  return A_x_b;  
 }
 
 /*********************************************************************/
 
-static Matrix get_a_dot_B_Mat(Matrix a, Matrix B)
+static Matrix get_a_x_B_Mat(Matrix a, Matrix B)
 /* 
-   Compute the scalar product of a matrix by an array
+   Compute the matrix product of a matrix by an array
 */
 {
   /* The result is an array */
-  Matrix a_dot_B = allocZ__MatrixLib__(a.N_rows,B.N_cols);
+  Matrix a_x_B = allocZ__MatrixLib__(a.N_rows,B.N_cols);
   int Rows = B.N_rows;
   int Columns = B.N_cols;
   
   for(int i = 0 ; i<Columns ; i++){
     for(int j = 0 ; j<Rows ; j++){
-      a_dot_B.nV[i] += a.nV[j]*B.nM[j][i];
+      a_x_B.nV[i] += a.nV[j]*B.nM[j][i];
     }
   }
     
-  return a_dot_B;  
+  return a_x_B;  
 }
 
 /*********************************************************************/
@@ -684,25 +645,19 @@ Matrix matrix_product__MatrixLib__(Matrix A,Matrix B)
   /* Scalar product of two matrix */
   if ((A.N_cols == B.N_rows) && (A.N_rows > 1) && (B.N_cols > 1))
     {      
-      C = get_A_dot_B_Mat(A,B);
+      C = get_A_x_B_Mat(A,B);
     }
-  
-  /* Scalar product of an array by an array */
-  else if ((A.N_cols == B.N_rows) && (A.N_rows == 1) && (B.N_cols == 1))
-    {      
-      C = get_a_dot_b_Mat(A,B);
-    }
-  
+    
   /* Scalar product of a matrix by an array */
   else if ((A.N_cols == B.N_rows) && (A.N_rows > 1) && (B.N_cols == 1))
     {       
-      C = get_A_dot_b_Mat(A, B);
+      C = get_A_x_b_Mat(A, B);
     }
 
   /* Scalar product of an array by a matrix */
   else if ((A.N_cols == B.N_rows) && (A.N_rows == 1) && (B.N_cols > 1))
     {
-      C = get_a_dot_B_Mat(A, B);
+      C = get_a_x_B_Mat(A, B);
     }
 
   /* Scalar product of a matrix/array by a scalar */
@@ -732,6 +687,9 @@ Matrix matrix_product__MatrixLib__(Matrix A,Matrix B)
 /*********************************************************************/
 
 double scalar_product__MatrixLib__(Matrix a, Matrix b)
+/*
+  Scalar product of two arrays
+ */
 {
   double a_dot_b = 0;
   
@@ -748,7 +706,7 @@ double scalar_product__MatrixLib__(Matrix a, Matrix b)
     }
   else
     {
-      printf("%s : %s -> [%i , %i] x [%i , %i] \n",
+      printf("%s : %s -> <[%i , %i] , [%i , %i]> \n",
 	     "Error in scalar_product__MatrixLib__()","Incompatible product",
 	     a.N_rows,a.N_cols,b.N_rows,b.N_cols);
       exit(EXIT_FAILURE);

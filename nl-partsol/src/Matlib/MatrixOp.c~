@@ -731,6 +731,34 @@ Matrix matrix_product__MatrixLib__(Matrix A,Matrix B)
 
 /*********************************************************************/
 
+double scalar_product__MatrixLib__(Matrix a, Matrix b)
+{
+  double a_dot_b = 0;
+  
+  int Size_a = a.N_cols*a.N_rows;
+  int Size_b = b.N_cols*b.N_rows;
+
+  if(Size_a == Size_b)
+    {
+      for(int i = 0 ; i < Size_a ; i++)
+	{
+	  a_dot_b += a.nV[i]*b.nV[i];
+	}
+      
+    }
+  else
+    {
+      printf("%s : %s -> [%i , %i] x [%i , %i] \n",
+	     "Error in scalar_product__MatrixLib__()","Incompatible product",
+	     a.N_rows,a.N_cols,b.N_rows,b.N_cols);
+      exit(EXIT_FAILURE);
+    }
+
+  return a_dot_b;  
+}
+
+/*********************************************************************/
+
 Matrix vectorial_product__MatrixLib__(Matrix a, Matrix b){
   
   Matrix c;
