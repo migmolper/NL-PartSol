@@ -97,11 +97,7 @@ void initialize__LME__(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 /****************************************************************************/
 
 Matrix beta_isotropic__LME__(Matrix Beta, Matrix l, double Gamma)
-/*!
-  Function to update the value of beta
-*/
 {
-
   int Ndim = NumberDimensions;
   int NumNodes_GP = l.N_rows;
   double h = 0;
@@ -125,10 +121,6 @@ Matrix beta_isotropic__LME__(Matrix Beta, Matrix l, double Gamma)
 /****************************************************************************/
 
 Matrix beta_anisotropic__LME__(Matrix Beta, Matrix f)
-/*!
-  Function to update the value of beta with the increment
-  of the deformation gradient
-*/
 {
 
   int Ndim = NumberDimensions;
