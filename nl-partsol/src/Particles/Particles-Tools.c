@@ -110,22 +110,22 @@ void initial_position__Particles__(Matrix X_p, Mesh FEM_Mesh, int GPxElement)
     
   case 4:
     if(strcmp(FEM_Mesh.TypeElem,"Quadrilateral") == 0){
-      Xi_p.nM[0][0] = (double)1/pow(3,0.5);
-      Xi_p.nM[0][1] = (double)1/pow(3,0.5);
-      Xi_p.nM[1][0] = (double)1/pow(3,0.5);
-      Xi_p.nM[1][1] = (double)-1/pow(3,0.5);
-      Xi_p.nM[2][0] = (double)-1/pow(3,0.5);
-      Xi_p.nM[2][1] = (double)1/pow(3,0.5);
-      Xi_p.nM[3][0] = (double)-1/pow(3,0.5);
-      Xi_p.nM[3][1] = (double)-1/pow(3,0.5);
-      /* Xi_p.nM[0][0] =   0.5; */
-      /* Xi_p.nM[0][1] =   0.5; */
-      /* Xi_p.nM[1][0] =   0.5; */
-      /* Xi_p.nM[1][1] = - 0.5; */
-      /* Xi_p.nM[2][0] = - 0.5; */
-      /* Xi_p.nM[2][1] =   0.5; */
-      /* Xi_p.nM[3][0] = - 0.5; */
-      /* Xi_p.nM[3][1] = - 0.5; */
+      /* Xi_p.nM[0][0] = (double)1/pow(3,0.5); */
+      /* Xi_p.nM[0][1] = (double)1/pow(3,0.5); */
+      /* Xi_p.nM[1][0] = (double)1/pow(3,0.5); */
+      /* Xi_p.nM[1][1] = (double)-1/pow(3,0.5); */
+      /* Xi_p.nM[2][0] = (double)-1/pow(3,0.5); */
+      /* Xi_p.nM[2][1] = (double)1/pow(3,0.5); */
+      /* Xi_p.nM[3][0] = (double)-1/pow(3,0.5); */
+      /* Xi_p.nM[3][1] = (double)-1/pow(3,0.5); */
+      Xi_p.nM[0][0] =   0.5;
+      Xi_p.nM[0][1] =   0.5;
+      Xi_p.nM[1][0] =   0.5;
+      Xi_p.nM[1][1] = - 0.5;
+      Xi_p.nM[2][0] = - 0.5;
+      Xi_p.nM[2][1] =   0.5;
+      Xi_p.nM[3][0] = - 0.5;
+      Xi_p.nM[3][1] = - 0.5;
       /* Get the coordinate of the center */
       for(int i = 0 ; i<NumElemMesh ; i++){
 	
