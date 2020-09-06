@@ -29,6 +29,7 @@ void GramsOutputs(char * Name_File)
   char * Parse_Out_Prop[MAXW] = {NULL};
 
   /* Parse file for the route */
+  bool Is_OutputDir = false;
   char Route_Outs[MAXC] = {0};
 
   /* Special variables for line-reading */
@@ -106,7 +107,7 @@ void GramsOutputs(char * Name_File)
 	Aux_Out_id = parse(Parse_Out_Prop,Line_Out_Prop," =\t\n");
 	if(strcmp(Parse_Out_Prop[0],"}") == 0){
 	  /* Check output dir */
-	  if(OutputDir == NULL){
+	  if(!Is_OutputDir){
 	    fprintf(stderr,"%s : %s \n",
 		    "Error in GramsOutputs()",
 		    "Non output dir defined !!!");
@@ -126,6 +127,7 @@ void GramsOutputs(char * Name_File)
  	  if(strcmp(Parse_Out_Prop[0],"DIR") == 0){
 	    sprintf(OutputDir,"%s%s",Route_Outs,Parse_Out_Prop[1]);
 	    printf("\t -> %s : %s \n","Output directory",OutputDir);
+	    Is_OutputDir = true;
 	  }
 	  else{
 	    fprintf(stderr,"%s : %s %s \n",
@@ -151,7 +153,7 @@ void GramsOutputs(char * Name_File)
 
 	if(strcmp(Parse_Out_Prop[0],"}") == 0){
 	  /* Check output dir */
-	  if(OutputDir == NULL){
+	  if(!Is_OutputDir){
 	    fprintf(stderr,"%s : %s \n",
 		    "Error in GramsOutputs()",
 		    "Non output dir defined !!!");

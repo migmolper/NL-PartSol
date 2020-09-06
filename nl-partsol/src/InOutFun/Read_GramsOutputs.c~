@@ -1,5 +1,12 @@
 #include "nl-partsol.h"
 
+/*
+  Call global variables
+*/
+int ResultsTimeStep;
+int NumTimeStep;
+char OutputDir[MAXC];
+
 /**********************************************************************/
 
 void GramsOutputs(char * Name_File)
@@ -22,6 +29,7 @@ void GramsOutputs(char * Name_File)
   char * Parse_Out_Prop[MAXW] = {NULL};
 
   /* Parse file for the route */
+  bool Is_OutputDir = false;
   char Route_Outs[MAXC] = {0};
 
   /* Special variables for line-reading */
@@ -99,7 +107,7 @@ void GramsOutputs(char * Name_File)
 	Aux_Out_id = parse(Parse_Out_Prop,Line_Out_Prop," =\t\n");
 	if(strcmp(Parse_Out_Prop[0],"}") == 0){
 	  /* Check output dir */
-	  if(OutputDir == NULL){
+	  if(!Is_OutputDir){
 	    fprintf(stderr,"%s : %s \n",
 		    "Error in GramsOutputs()",
 		    "Non output dir defined !!!");
@@ -144,7 +152,7 @@ void GramsOutputs(char * Name_File)
 
 	if(strcmp(Parse_Out_Prop[0],"}") == 0){
 	  /* Check output dir */
-	  if(OutputDir == NULL){
+	  if(!Is_OutputDir){
 	    fprintf(stderr,"%s : %s \n",
 		    "Error in GramsOutputs()",
 		    "Non output dir defined !!!");
