@@ -1,12 +1,16 @@
 #include "nl-partsol.h"
-#include "lapacke.h"
+
+#ifdef __linux__
+#include <lapacke.h>
+
+#elif __APPLE__
+#include <Accelerate/Accelerate.h>
+
+#endif
+
 
 Matrix solve_system_LAPACK(Matrix A,Matrix B)
 {
-  /* 
-     note, to understand this part take a look in the MAN pages, 
-     at section of parameters.
-   */
 
   int NumColumns = A.N_cols;
   int NumRows = A.N_rows;
@@ -58,7 +62,8 @@ Matrix solve_system_LAPACK(Matrix A,Matrix B)
   int * IPIV = (int *)Allocate_Array(Order,sizeof(int));
  
   /* Compute the LU factorization */
-  LAPACK_dgetrf(&Order,&Order,A.nV,&LDA,IPIV,&INFO);
+  dgetrf_(&Order,&Order,A.nV,&LDA,IPIV,&INFO);
+  
  
   /* 
      checks INFO, if INFO != 0 something goes wrong.

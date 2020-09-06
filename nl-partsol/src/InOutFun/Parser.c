@@ -51,7 +51,17 @@ void generate_route(char * Route_Nodes, char * Name_File)
   */
   strcpy(Name_File_cpy, Name_File);  
 
-#ifdef linux
+#ifdef __linux__
+  Num_words_route = parse(Name_Parse,Name_File_cpy,"(/)") - 1;
+  strcat(Route_Nodes,"./");
+  for(int i = 0 ; i<Num_words_route ; i++)
+    {
+      strcat(Route_Nodes, Name_Parse[i]);
+      strcat(Route_Nodes,"/");
+    }
+#endif
+
+#ifdef __APPLE__
   Num_words_route = parse(Name_Parse,Name_File_cpy,"(/)") - 1;
   strcat(Route_Nodes,"./");
   for(int i = 0 ; i<Num_words_route ; i++)

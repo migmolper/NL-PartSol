@@ -101,7 +101,7 @@ Tensor average_strain_integration_Stress__Particles__(Tensor S_p,
     }
   else
     {
-      fprintf(stderr,"%s : %s %s \n",
+      fprintf(stderr,"%s : %s %s %s \n",
 	      "Error in average_strain_integration_Stress__Particles__()",
 	      "The material",MatProp_p.Type,"has not been yet implemnented");
       exit(EXIT_FAILURE);

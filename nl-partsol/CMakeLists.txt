@@ -21,7 +21,12 @@ set_target_properties("${PROJECT_NAME}" PROPERTIES
 target_link_libraries("${PROJECT_NAME}" m)
 
 # Add LAPACK
-target_link_libraries("${PROJECT_NAME}" lapack)
+if(APPLE)
+set(BLA_VENDOR Apple)
+endif()
+find_package(LAPACK)
+
+target_link_libraries("${PROJECT_NAME}" LAPACK)
 
 add_custom_target(debug
   COMMAND ${CMAKE_COMMAND} -DCMAKE_BUILD_TYPE=Debug ${CMAKE_SOURCE_DIR}

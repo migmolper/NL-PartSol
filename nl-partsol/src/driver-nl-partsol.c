@@ -27,10 +27,14 @@ int main(int argc, char * argv[])
 {  
   /* Read kind of system */
   puts("*************************************************\n");
-#ifdef linux
-  puts("UNIX system");
+#ifdef __linux__
+  puts("Linux system");
 #endif		
 
+#ifdef __APPLE__
+  puts("Mac OSX system");	
+#endif
+  
 #ifdef _WIN32 
   puts("WIN32 system");	
 #endif
