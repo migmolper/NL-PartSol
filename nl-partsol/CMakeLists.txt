@@ -22,11 +22,13 @@ target_link_libraries("${PROJECT_NAME}" m)
 
 # Add LAPACK
 if(APPLE)
-set(BLA_VENDOR Apple)
+  set(BLA_VENDOR Apple)
+  find_package(LAPACK)
+  target_link_libraries("${PROJECT_NAME}" LAPACK)
+elseif(UNIX)
+  target_link_libraries("${PROJECT_NAME}" lapack)
 endif()
-find_package(LAPACK)
 
-target_link_libraries("${PROJECT_NAME}" LAPACK)
 
 add_custom_target(debug
   COMMAND ${CMAKE_COMMAND} -DCMAKE_BUILD_TYPE=Debug ${CMAKE_SOURCE_DIR}
