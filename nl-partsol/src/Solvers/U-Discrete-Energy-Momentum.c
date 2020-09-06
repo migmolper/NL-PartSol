@@ -1,5 +1,12 @@
 #include "nl-partsol.h"
-#include "lapacke.h"
+
+#ifdef __linux__
+#include <lapacke.h>
+
+#elif __APPLE__
+#include <Accelerate/Accelerate.h>
+
+#endif
 
 /*
   Auxiliar functions 
@@ -500,7 +507,7 @@ static Matrix compute_Nodal_Velocity(Matrix Mass,
   /*
     Compute the LU factorization 
   */
-  LAPACK_dgetrf(&Order,&Order,Mass.nV,&LDA,IPIV,&INFO);
+  dgetrf_(&Order,&Order,Mass.nV,&LDA,IPIV,&INFO);
 
   /*
     Solve
@@ -1231,7 +1238,7 @@ static Tensor compute_stiffness_density(Tensor GRADIENT_pA,
     }
   else
     {
-      fprintf(stderr,"%s : %s %s \n",
+      fprintf(stderr,"%s : %s %s %s \n",
 	      "Error in compute_stiffness_density()",
 	      "The material",MatProp_p.Type,"has not been yet implemnented");
       exit(EXIT_FAILURE);
@@ -1299,7 +1306,7 @@ static void update_D_Displacement(Matrix D_Displacement,
   /*
     Compute the LU factorization 
   */
-  LAPACK_dgetrf(&Order,&Order,Global_Matrix.nV,&LDA,IPIV,&INFO);
+  dgetrf_(&Order,&Order,Global_Matrix.nV,&LDA,IPIV,&INFO);
 
   /*
     Check error messages in the LAPACK LU descompistion  

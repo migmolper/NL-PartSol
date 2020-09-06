@@ -8,7 +8,7 @@ double update_density__Particles__(double rho_n, double TimeStep,
   /* Define output variable */
   double rho_n1;  
   /* Check if the input is ok*/
-  if ((Rate_Strain.Order == 2)){
+  if (Rate_Strain.Order == 2){
     /* Update the density */
     rho_n1 = rho_n/(1 + TimeStep*I1__TensorLib__(Rate_Strain));
   }
