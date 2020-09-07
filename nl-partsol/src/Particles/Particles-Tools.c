@@ -92,7 +92,7 @@ void initial_position__Particles__(Matrix X_p, Mesh FEM_Mesh, int GPxElement)
 	  for(int k = 0 ; k<3 ; k++){
 	    /* Connectivity of each element */
 	    Node = Element.Connectivity[k];
-	    for(int l = 0 ; l<NumberDimensions ; l++){
+	    for(int l = 0 ; l<Ndim ; l++){
 	      X_p.nM[i*GPxElement+j][l] += 
 		N_GP.nV[k]*FEM_Mesh.Coordinates.nM[Node][l];
 	    }
@@ -138,7 +138,7 @@ void initial_position__Particles__(Matrix X_p, Mesh FEM_Mesh, int GPxElement)
 	  for(int k = 0 ; k<4 ; k++){
 	    /* Connectivity of each element */
 	    Node = Element.Connectivity[k];
-	    for(int l = 0 ; l<NumberDimensions ; l++){
+	    for(int l = 0 ; l<Ndim ; l++){
 	      X_p.nM[i*GPxElement+j][l] += 
 		N_GP.nV[k]*FEM_Mesh.Coordinates.nM[Node][l];
 	    }

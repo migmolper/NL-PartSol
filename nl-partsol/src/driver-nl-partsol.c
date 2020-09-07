@@ -108,7 +108,7 @@ int main(int argc, char * argv[])
       puts("Restarting old MPM simulation ...");
       MPM_Mesh = restart_Simulation(SimulationFile,RestartFile,FEM_Mesh);
     }
-    
+
   /*********************************************************************/
   /*********************** OUTPUT VARIABLES ****************************/
   /*********************************************************************/

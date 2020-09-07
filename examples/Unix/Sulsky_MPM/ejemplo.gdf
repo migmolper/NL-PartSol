@@ -12,7 +12,7 @@ GramsTime (Type=PCE) {
 }
 
 # Material points definitions
-GramsSolid2D (File=MPM_Mesh.msh) {
+GramsSolid2D (File=MPM_Mesh.msh,GPxElement=1) {
 
     # List of materials for the GPs
     GramsMaterials (Particles=Material.txt) {

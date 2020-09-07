@@ -29,6 +29,7 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
   char Line_GramsSolid2D[MAXC] = {0}; 
   char * Parse_GramsSolid2D[MAXW] = {NULL};
   char * Parse_Mesh_id[MAXW] = {NULL};
+  char * Parse_Mesh_Properties[MAXW] = {NULL};
 
   /* Parse file name with the list of nodes */
   char Route_Mesh[MAXC] = {0};
@@ -42,11 +43,13 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
   int NumVertex;
 
   double Area_Element, A_p, th_p, m_p, rho_p;
-  int GPxElement = 4;
+  int GPxElement = 1;
   int i_p;
 
   /* Set to false check variables */
   bool Is_GramsSolid2D = false;
+  bool Is_ParticlesMesh = false;
+  bool Is_GPxElement = false;
   bool Is_GramsShapeFun = false;
   bool Is_GramsMaterials = false;
   bool Is_GramsInitials = false;
@@ -81,13 +84,38 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
       exit(EXIT_FAILURE);
     }
 
+    /*
+      Read file mesh and number of material points per element
+    */
     if ((Num_words_parse > 0) &&
 	(strcmp(Parse_GramsSolid2D[0],"GramsSolid2D") == 0)){
       Is_GramsSolid2D = true;
-      Num_words_parse = parse(Parse_Mesh_id, Parse_GramsSolid2D[1],"(=)");
-      MPM_MeshFileName = Parse_Mesh_id[1];
-      generate_route(Route_Mesh,Name_File);
-      strcat(Route_Mesh,MPM_MeshFileName);
+      Num_words_parse = parse(Parse_Mesh_id, Parse_GramsSolid2D[1],"(,)");
+
+      /*
+	Propertie 1
+       */
+      Num_words_parse = parse(Parse_Mesh_Properties, Parse_Mesh_id[0],"=");
+      if((Num_words_parse == 2) &&
+	 (strcmp(Parse_Mesh_Properties[0],"File") == 0))
+	{
+	  MPM_MeshFileName = Parse_Mesh_Properties[1];
+	  generate_route(Route_Mesh,Name_File);
+	  strcat(Route_Mesh,MPM_MeshFileName);
+	  Is_ParticlesMesh = true;
+	}
+      
+      /*
+	Propertie 2
+      */
+      Num_words_parse = parse(Parse_Mesh_Properties,Parse_Mesh_id[1],"=");
+      if((Num_words_parse == 2) &&
+	 (strcmp(Parse_Mesh_Properties[0],"GPxElement") == 0))
+	{
+	  GPxElement = atoi(Parse_Mesh_Properties[1]);
+	  Is_GPxElement = true;
+	}
+      
     }
     if ((Num_words_parse > 0) &&
 	(strcmp(Parse_GramsSolid2D[0],"GramsShapeFun") == 0)){
@@ -118,7 +146,7 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
   /***************** Define MPM Mesh ****************/
   /**************************************************/
   /* Define GP Mesh */
-  if(Is_GramsSolid2D){
+  if(Is_GramsSolid2D && Is_GPxElement && Is_GPxElement){
     
     /* Read GP mesh */
     MPM_GID_Mesh = ReadGidMesh(Route_Mesh);
@@ -193,8 +221,7 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
     /**************************************************/
     /********** Generate the initial layout ***********/
     /**************************************************/
-    initial_position__Particles__(MPM_Mesh.Phi.x_GC,MPM_GID_Mesh,GPxElement);
-
+    initial_position__Particles__(MPM_Mesh.Phi.x_GC,MPM_GID_Mesh,GPxElement);	
     
     puts("*************************************************");
     printf(" \t %s \n","* Read materials properties");
@@ -327,7 +354,8 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
   } 
   else{
     fprintf(stderr,"%s : %s \n",
-	    "Error in GramsSolid2D()","GramsBodyForces no defined");
+	    "Error in GramsSolid2D()",
+	    "Mesh file name and number of particles are required");
     exit(EXIT_FAILURE);
   }
   
