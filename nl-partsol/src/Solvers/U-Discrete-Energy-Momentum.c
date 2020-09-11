@@ -231,6 +231,11 @@ void U_Discrete_Energy_Momentum(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int InitialS
       free__MatrixLib__(Velocity);
       free__MatrixLib__(D_Velocity);
       free__MatrixLib__(D_Displacement);
+      free__MatrixLib__(Forces);
+      free__MatrixLib__(Residual);
+      free(ActiveNodes.Mask2Nodes);
+      free(ActiveNodes.Nodes2Mask);
+      
       print_Status("DONE !!!",TimeStep);
 
     }
@@ -513,6 +518,7 @@ static Matrix compute_Nodal_Velocity(Matrix Mass,
     Solve
   */
   dgetrs_(&TRANS,&Order,&NRHS,Mass.nV,&LDA,IPIV,Momentum.nV,&LDB,&INFO);
+  free(IPIV);
 
   Velocity = Momentum;
 
@@ -603,6 +609,7 @@ static void update_Local_State(Matrix D_Displacement,
       free__TensorLib__(f_n1_p);
       free__MatrixLib__(D_Displacement_Ap);
       free__MatrixLib__(gradient_p);
+      free(Nodes_p.Connectivity);
 	  
     }
   
@@ -1325,6 +1332,7 @@ static void update_D_Displacement(Matrix D_Displacement,
     Solve
   */
   dgetrs_(&TRANS,&Order,&NRHS,Global_Matrix.nV,&LDA,IPIV,Residual.nV,&LDB,&INFO);
+  free(IPIV);
   
   /*
     Check error messages in the LAPACK solver  
