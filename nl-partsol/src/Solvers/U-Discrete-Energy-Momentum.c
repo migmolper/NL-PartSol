@@ -553,7 +553,6 @@ static void update_Local_State(Matrix D_Displacement,
   Matrix gradient_p;
   Matrix D_Displacement_Ap;
   Tensor F_n_p;
-  Tensor F_n12_p;
   Tensor F_n1_p;
   Tensor f_n1_p;
   Tensor S_p;
@@ -590,13 +589,14 @@ static void update_Local_State(Matrix D_Displacement,
       f_n1_p = increment_Deformation_Gradient__Particles__(D_Displacement_Ap,gradient_p);
 
       /*
-	Update the deformation gradient in t = n + 1
+	Update the deformation gradient in t = n + 1 with the information
+	from t = n and the increment of deformation gradient.
       */  
       update_Deformation_Gradient_n1__Particles__(F_n1_p, F_n_p, f_n1_p);
       
       /*
       	Update the second Piola-Kirchhoff stress tensor (S) with an apropiate
-	intgration rule.
+	integration rule.
       */
       MatIndx_p = MPM_Mesh.MatIdx[p];
       MatProp_p = MPM_Mesh.Mat[MatIndx_p];
@@ -1354,6 +1354,11 @@ static void update_D_Displacement(Matrix D_Displacement,
     {	
       D_Displacement.nV[idx_A_i] -= Residual.nV[idx_A_i];
     }
+
+  /*
+    Free auxiliar global matrix
+   */
+  free__MatrixLib__(Global_Matrix);
   
 }
 
@@ -1557,8 +1562,8 @@ static void update_Particles(Matrix D_Displacement,
 	Free memory
        */
       free(Nodes_p.Connectivity);
-      Free__MatrixLib__(ShapeFunction_p);
-      Free__MatrixLib__(gradient_p);
+      free__MatrixLib__(ShapeFunction_p);
+      free__MatrixLib__(gradient_p);
       free__TensorLib__(f_n1_p);
     }  
 }
