@@ -1295,7 +1295,7 @@ static void update_D_Displacement(Matrix D_Displacement,
   int LDA   = Nnodes_mask*Ndof;
   int LDB = Nnodes_mask*Ndof;
   char  TRANS = 'N'; /* (No transpose) */
-  int   INFO= 3;
+  int   INFO = 3;
   int * IPIV = (int *)Allocate_Array(Order,sizeof(int));
   int NRHS = 1;
   
@@ -1323,7 +1323,7 @@ static void update_D_Displacement(Matrix D_Displacement,
       fprintf(stderr,"%s : %s %s %s \n",
 	      "Error in update_D_Displacement",
 	      "The function",
-	      "LAPACK_dgetrf",
+	      "dgetrf_",
 	      "returned an error message !!!" );
       exit(EXIT_FAILURE);
     }
