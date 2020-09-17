@@ -18,7 +18,7 @@ double energy_Saint_Venant_Kirchhoff(Tensor E, Material MatProp_p)
 
 /**************************************************************/
 
-Tensor grad_energy_Saint_Venant_Kirchhoff(Tensor grad_e, Tensor E, Material MatProp_p)
+Tensor grad_energy_Saint_Venant_Kirchhoff(Tensor grad_e, Tensor C, Material MatProp_p)
 {
   /* Number of dimensions */
   int Ndim = NumberDimensions;
@@ -30,6 +30,10 @@ Tensor grad_energy_Saint_Venant_Kirchhoff(Tensor grad_e, Tensor E, Material MatP
   double G = ElasticModulus/(2*(1+mu));
   double trE = I1__TensorLib__(E);
 
+  /*
+    Compute auxiliar tensors
+  */
+  Tensor E = strain_Green_Lagrange__Particles__(C);
   Tensor I = Identity__TensorLib__();
 
   for(int i = 0 ; i < Ndim ; i++)
@@ -40,8 +44,11 @@ Tensor grad_energy_Saint_Venant_Kirchhoff(Tensor grad_e, Tensor E, Material MatP
 	}
     }
   
-  /* Free identity */
+  /*
+    Free
+  */
   free__TensorLib__(I);
+  free__TensorLib__(E);
 
   return grad_e;
 }
@@ -70,8 +77,7 @@ Tensor compute_stiffness_density_Saint_Venant_Kirchhoff(Tensor v, Tensor w, Mate
   double v_dot_w;
   Tensor v_o_w;
   Tensor w_o_v;
-  Tensor C_AB = alloc__TensorLib__(2);
-
+  Tensor C_mat = alloc__TensorLib__(2);
   
   v_o_w  = dyadic_Product__TensorLib__(v,w);
   v_dot_w = inner_product__TensorLib__(v,w);
@@ -80,10 +86,10 @@ Tensor compute_stiffness_density_Saint_Venant_Kirchhoff(Tensor v, Tensor w, Mate
     {
       for(int B = 0 ; B<Ndim ; B++)
 	{
-	  C_AB.N[A][B] += lambda*v_o_w.N[A][B];
+	  C_mat.N[A][B] += lambda*v_o_w.N[A][B];
 	  if(A == B)
 	    {
-	      C_AB.N[A][B] += 2*G*v_dot_w;	      
+	      C_mat.N[A][B] += 2*G*v_dot_w;	      
 	    }
 	}
     }
@@ -94,7 +100,7 @@ Tensor compute_stiffness_density_Saint_Venant_Kirchhoff(Tensor v, Tensor w, Mate
   free__TensorLib__(v_o_w);
 
 
-  return C_AB;
+  return C_mat;
 }   
 
 /**************************************************************/

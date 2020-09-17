@@ -17,10 +17,11 @@ static Matrix compute_Nodal_Velocity(Matrix, Matrix);
 static void   update_Local_State(Matrix,Mask,GaussPoint,Mesh,double);
 static Matrix compute_Nodal_Forces(Matrix, Mask, GaussPoint, Mesh);
 static void   compute_Nodal_Internal_Forces(Matrix,Matrix,Mask,GaussPoint, Mesh);
+/* static void   compute_Nodal_Body_Forces(Matrix,Mask,GaussPoint, Mesh, int); */
 static Matrix compute_Nodal_Residual(Matrix, Matrix, Matrix, Matrix, double);
 static bool   check_convergence(Matrix,double,int,int);
 static Matrix assemble_Nodal_Tangent_Stiffness(Mask, GaussPoint, Mesh);
-static void   assemble_Nodal_Tangent_Stiffness_Geometric(Matrix,  Mask, GaussPoint, Mesh);
+static void   assemble_Nodal_Tangent_Stiffness_Geometric(Matrix, Mask, GaussPoint, Mesh);
 static void   assemble_Nodal_Tangent_Stiffness_Material(Matrix, Mask, GaussPoint, Mesh);
 static Tensor compute_stiffness_density(Tensor, Tensor, Material);
 static Tensor compute_Nodal_Tangent_Stiffness_Material(Tensor,Tensor,Tensor);
@@ -630,6 +631,8 @@ static Matrix compute_Nodal_Forces(Matrix D_Displacement,
     Add internal forces contribution
   */
   compute_Nodal_Internal_Forces(Forces, D_Displacement, ActiveNodes, MPM_Mesh, FEM_Mesh);
+
+  /* compute_Nodal_Body_Forces(D_Displacement, ActiveNodes, MPM_Mesh, FEM_Mesh, TimeStep); */
   
   return Forces;
 }
@@ -766,6 +769,18 @@ static void compute_Nodal_Internal_Forces(Matrix Forces,
     }
    
 }
+
+/**************************************************************/
+
+/* static void compute_Nodal_Body_Forces(Matrix D_Displacement, */
+/* 				      Mask ActiveNodes, */
+/* 				      GaussPoint MPM_Mesh, */
+/* 				      Mesh FEM_Mesh, */
+/* 				      int TimeStep) */
+/* { */
+  
+/* } */
+
 
 /**************************************************************/
 

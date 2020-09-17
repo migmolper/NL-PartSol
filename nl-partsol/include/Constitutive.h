@@ -68,7 +68,36 @@ Tensor grad_energy_Saint_Venant_Kirchhoff(Tensor, Tensor, Material);
 */
 Tensor compute_stiffness_density_Saint_Venant_Kirchhoff(Tensor, Tensor, Material);
 /*******************************************************/
-  
+
+
+/*!
+
+*/
+double energy_Neo_Hookean(Tensor, Material);
+/*******************************************************/
+
+
+/*!
+
+*/
+Tensor grad_energy_Neo_Hookean(Tensor, Tensor, double, Material);
+/*******************************************************/
+
+
+/*!
+  \fn Tensor compute_stiffness_density_Neo_Hookean(Tensor v, Tensor w, Tensor C, double J, Material MatProp)
+
+  \brief Assemble the factorised material tensor 
+
+  \param Tensor v
+  \param Tensor w
+  \param Tensor C
+  \param double J
+  \param Material MatProp
+*/
+Tensor compute_stiffness_density_Neo_Hookean(Tensor, Tensor, Tensor,
+					     double, Material);
+/*******************************************************/  
 
 #endif
 
