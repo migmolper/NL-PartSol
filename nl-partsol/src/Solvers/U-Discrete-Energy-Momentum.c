@@ -23,7 +23,7 @@ static bool   check_convergence(Matrix,double,int,int);
 static Matrix assemble_Nodal_Tangent_Stiffness(Mask, GaussPoint, Mesh);
 static void   assemble_Nodal_Tangent_Stiffness_Geometric(Matrix, Mask, GaussPoint, Mesh);
 static void   assemble_Nodal_Tangent_Stiffness_Material(Matrix, Mask, GaussPoint, Mesh);
-static Tensor compute_stiffness_density(Tensor, Tensor, Material);
+static Tensor compute_stiffness_density(Tensor, Tensor, Tensor, double, Material);
 static Tensor compute_Nodal_Tangent_Stiffness_Material(Tensor,Tensor,Tensor);
 static void   update_D_Displacement(Matrix, Matrix, Matrix, Matrix, double);
 static void   imposed_displacements(Matrix, Mask, Mesh, int);
@@ -630,7 +630,8 @@ static Matrix compute_Nodal_Forces(Matrix D_Displacement,
   /*
     Add internal forces contribution
   */
-  compute_Nodal_Internal_Forces(Forces, D_Displacement, ActiveNodes, MPM_Mesh, FEM_Mesh);
+  compute_Nodal_Internal_Forces(Forces, D_Displacement,
+				ActiveNodes, MPM_Mesh, FEM_Mesh);
 
   /* compute_Nodal_Body_Forces(D_Displacement, ActiveNodes, MPM_Mesh, FEM_Mesh, TimeStep); */
   
@@ -803,7 +804,8 @@ static Matrix compute_Nodal_Residual(Matrix Velocity,
   */
   for(int idx_B = 0 ; idx_B<Order ; idx_B++)
     {
-      Acceleration.nV[idx_B] = (2/DSQR(Dt))*(D_Displacement.nV[idx_B] - Dt*Velocity.nV[idx_B]);
+      Acceleration.nV[idx_B] =
+	(2/DSQR(Dt))*(D_Displacement.nV[idx_B] - Dt*Velocity.nV[idx_B]);
     }
   /*
     Compute inertial forces (Vectorized)
@@ -1194,7 +1196,7 @@ static void assemble_Nodal_Tangent_Stiffness_Material(Matrix Tangent_Stiffness,
 	      /*
 		Get the nodal contribution of the material mass matrix
 	      */
-	      C_AB = compute_stiffness_density(GRADIENT_pA,GRADIENT_pB,MatProp_p);
+	      C_AB = compute_stiffness_density(GRADIENT_pA,GRADIENT_pB, F_n12_p, J_p, MatProp_p);
 
 	      /*
 		Compute the nodal matrix with the contribution to each degree of freedom
@@ -1247,6 +1249,7 @@ static void assemble_Nodal_Tangent_Stiffness_Material(Matrix Tangent_Stiffness,
 
 static Tensor compute_stiffness_density(Tensor GRADIENT_pA,
 					Tensor GRADIENT_pB,
+					Tensor F_p, double J_p,
 					Material MatProp_p)
 {
 
@@ -1257,6 +1260,17 @@ static Tensor compute_stiffness_density(Tensor GRADIENT_pA,
       C_AB = compute_stiffness_density_Saint_Venant_Kirchhoff(GRADIENT_pA,
 							      GRADIENT_pB,
 							      MatProp_p);
+    }
+  else if(strcmp(MatProp_p.Type,"Neo-Hookean") == 0)
+    {
+
+      Tensor C_p = right_Cauchy_Green__Particles__(F_p);
+      
+      C_AB = compute_stiffness_density_Neo_Hookean(GRADIENT_pA,
+						   GRADIENT_pB,
+						   C_p, J_p,
+						   MatProp_p);
+      free__TensorLib__(C_p);
     }
   else
     {
@@ -1276,13 +1290,9 @@ static Tensor compute_Nodal_Tangent_Stiffness_Material(Tensor F_n12_p,
 						       Tensor Ft_beta_p)
 {
   int Ndim = NumberDimensions;
-  Tensor F_x_C_x_Ft = alloc__TensorLib__(2);
-  Tensor C_x_Ft = alloc__TensorLib__(2);
+  Tensor C_x_Ft = matrix_product__TensorLib__(C_AB, Ft_beta_p);
+  Tensor F_x_C_x_Ft = matrix_product__TensorLib__(F_n12_p, C_x_Ft);
   
-  C_x_Ft = matrix_product__TensorLib__(C_AB, Ft_beta_p);
-
-  F_x_C_x_Ft = matrix_product__TensorLib__(F_n12_p, C_x_Ft);
-
   free__TensorLib__(C_x_Ft);
   
   return F_x_C_x_Ft;

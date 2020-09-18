@@ -2,22 +2,6 @@
 
 /**************************************************************/
 
-double energy_Neo_Hookean(Tensor E, Material MatProp_p)
-{
-  
-  /* Material parameters */
-  double trE = I1__TensorLib__(E);
-  double EE = inner_product__TensorLib__(E,E);
-  double ElasticModulus = MatProp_p.E;
-  double mu = MatProp_p.mu;
-  double lambda = mu*ElasticModulus/((1-mu*2)*(1+mu));
-  double G = ElasticModulus/(2*(1+mu));
-
-  return 0.5*lambda*DSQR(trE) + G*EE;
-}
-
-/**************************************************************/
-
 Tensor grad_energy_Neo_Hookean(Tensor grad_e, Tensor C, double J, Material MatProp_p)
 {
   /* Number of dimensions */
@@ -29,8 +13,11 @@ Tensor grad_energy_Neo_Hookean(Tensor grad_e, Tensor C, double J, Material MatPr
   double G = ElasticModulus/(2*(1+mu));
   double lambda = mu*ElasticModulus/((1-mu*2)*(1+mu));
   double J2 = J*J;
-
-  Tensor I = Identity__TensorLib__();
+  
+  /*
+    Auxiliar tensors
+  */
+  Tensor I    = Identity__TensorLib__();
   Tensor C_m1 = Inverse__TensorLib__(C);
 
   for(int i = 0 ; i < Ndim ; i++)
@@ -43,7 +30,9 @@ Tensor grad_energy_Neo_Hookean(Tensor grad_e, Tensor C, double J, Material MatPr
 	}
     }
   
-  /* Free identity */
+  /*
+    Free tensors 
+  */
   free__TensorLib__(I);
   free__TensorLib__(C_m1);
 
@@ -82,6 +71,7 @@ Tensor compute_stiffness_density_Neo_Hookean(Tensor v, Tensor w, Tensor C,
   Tensor Cm1T;
   Tensor Cm1_dot_v;
   Tensor Cm1_dot_w;
+  Tensor Cm1T_dot_v;
   Tensor Cm1_dot_v_o_Cm1_dot_w;
   Tensor Cm1_dot_w_o_Cm1T_dot_v;
   double Cm1_dot_w_dot_v;
@@ -114,7 +104,6 @@ Tensor compute_stiffness_density_Neo_Hookean(Tensor v, Tensor w, Tensor C,
   free__TensorLib__(Cm1_dot_w);
   free__TensorLib__(Cm1_dot_v);
   free__TensorLib__(Cm1T_dot_v);
-  free__TensorLib__(Cm1_dot_w_dot_v);
   free__TensorLib__(Cm1_dot_v_o_Cm1_dot_w);
   free__TensorLib__(Cm1_dot_w_o_Cm1T_dot_v);
   

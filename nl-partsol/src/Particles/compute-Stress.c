@@ -96,7 +96,7 @@ Tensor average_strain_integration_Stress__Particles__(Tensor S_p,
   else if(strcmp(MatProp_p.Type,"Neo-Hookean") == 0)
     {
       double J_n12_p = 0.5*(I3__TensorLib__(F_n_p) + I3__TensorLib__(F_n1_p));
-      S_p = grad_energy_Neo_Hookean(S_p, C_n12_p, J_p, MatProp_p);
+      S_p = grad_energy_Neo_Hookean(S_p, C_n12_p, J_n12_p, MatProp_p);
     }
   else
     {
