@@ -1261,15 +1261,15 @@ static Tensor compute_stiffness_density(Tensor GRADIENT_pA,
 							      GRADIENT_pB,
 							      MatProp_p);
     }
-  else if(strcmp(MatProp_p.Type,"Neo-Hookean") == 0)
+  else if(strcmp(MatProp_p.Type,"Neo-Hookean-Wriggers") == 0)
     {
 
       Tensor C_p = right_Cauchy_Green__Particles__(F_p);
       
-      C_AB = compute_stiffness_density_Neo_Hookean(GRADIENT_pA,
-						   GRADIENT_pB,
-						   C_p, J_p,
-						   MatProp_p);
+      C_AB = compute_stiffness_density_Neo_Hookean_Wriggers(GRADIENT_pA,
+							    GRADIENT_pB,
+							    C_p, J_p,
+							    MatProp_p);
       free__TensorLib__(C_p);
     }
   else

@@ -2,7 +2,8 @@
 
 /**************************************************************/
 
-Tensor grad_energy_Neo_Hookean(Tensor grad_e, Tensor C, double J, Material MatProp_p)
+Tensor grad_energy_Neo_Hookean_Wriggers(Tensor grad_e, Tensor C,
+					double J, Material MatProp_p)
 {
   /* Number of dimensions */
   int Ndim = NumberDimensions;
@@ -41,8 +42,9 @@ Tensor grad_energy_Neo_Hookean(Tensor grad_e, Tensor C, double J, Material MatPr
 
 /**************************************************************/
 
-Tensor compute_stiffness_density_Neo_Hookean(Tensor v, Tensor w, Tensor C,
-					     double J, Material MatProp)
+Tensor compute_stiffness_density_Neo_Hookean_Wriggers(Tensor v, Tensor w,
+						      Tensor C, double J,
+						      Material MatProp)
 {
 
   /*

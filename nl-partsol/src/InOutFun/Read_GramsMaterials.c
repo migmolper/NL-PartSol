@@ -342,19 +342,20 @@ GramsMaterials (Particles=route.txt) {
 		      "Rho, Cel, E and mu required for Saint-Venant-Kirchhoff material");
 	      exit(EXIT_FAILURE);
 	    }
-	    else if(strcmp(Mat_GP.Type,"Neo-Hookean") == 0){ 
-	      if(Is_rho & Is_Cel && Is_E && Is_mu){
-		printf("\t -> %s \n","Linear elastic material");
-		printf("\t \t -> %s : %f \n","Celerity",Mat_GP.Cel);
-		printf("\t \t -> %s : %f \n","Density",Mat_GP.rho);
-		printf("\t \t -> %s : %f \n","Elastic modulus",Mat_GP.E);
-		printf("\t \t -> %s : %f \n","Poisson modulus",Mat_GP.mu);
-	      }
-	      else{
-		fprintf(stderr,"%s : %s \n",
-			"Error in GramsMaterials()",
-			"Rho, Cel, E and mu required for Neo-Hookean material");
-		exit(EXIT_FAILURE);
+	  }
+	  else if(strcmp(Mat_GP.Type,"Neo-Hookean-Wriggers") == 0){ 
+	    if(Is_rho & Is_Cel && Is_E && Is_mu){
+	      printf("\t -> %s \n","Linear elastic material");
+	      printf("\t \t -> %s : %f \n","Celerity",Mat_GP.Cel);
+	      printf("\t \t -> %s : %f \n","Density",Mat_GP.rho);
+	      printf("\t \t -> %s : %f \n","Elastic modulus",Mat_GP.E);
+	      printf("\t \t -> %s : %f \n","Poisson modulus",Mat_GP.mu);
+	    }
+	    else{
+	      fprintf(stderr,"%s : %s \n",
+		      "Error in GramsMaterials()",
+		      "Rho, Cel, E and mu required for Neo-Hookean material");
+	      exit(EXIT_FAILURE);
 	      }	    
 	  }
 	  else{

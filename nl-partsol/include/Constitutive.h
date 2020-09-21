@@ -73,14 +73,14 @@ Tensor compute_stiffness_density_Saint_Venant_Kirchhoff(Tensor, Tensor, Material
 /*!
 
 */
-double energy_Neo_Hookean(Tensor, Material);
+double energy_Neo_Hookean_Wriggers(Tensor, Material);
 /*******************************************************/
 
 
 /*!
 
 */
-Tensor grad_energy_Neo_Hookean(Tensor, Tensor, double, Material);
+Tensor grad_energy_Neo_Hookean_Wriggers(Tensor, Tensor, double, Material);
 /*******************************************************/
 
 
@@ -95,8 +95,9 @@ Tensor grad_energy_Neo_Hookean(Tensor, Tensor, double, Material);
   \param double J
   \param Material MatProp
 */
-Tensor compute_stiffness_density_Neo_Hookean(Tensor, Tensor, Tensor,
-					     double, Material);
+Tensor compute_stiffness_density_Neo_Hookean_Wriggers(Tensor, Tensor,
+						      Tensor, double,
+						      Material);
 /*******************************************************/  
 
 #endif

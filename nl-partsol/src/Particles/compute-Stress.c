@@ -48,10 +48,10 @@ Tensor configurational_midpoint_integration_Stress__Particles__(Tensor S_p,
     {
       S_p = grad_energy_Saint_Venant_Kirchhoff(S_p, C_n12_p, MatProp_p);
     }
-  else if(strcmp(MatProp_p.Type,"Neo-Hookean") == 0)
+  else if(strcmp(MatProp_p.Type,"Neo-Hookean-Wriggers") == 0)
     {
       double J_n12_p = I3__TensorLib__(F_n12_p);
-      S_p = grad_energy_Neo_Hookean(S_p, C_n12_p, J_n12_p, MatProp_p);
+      S_p = grad_energy_Neo_Hookean_Wriggers(S_p, C_n12_p, J_n12_p, MatProp_p);
     }
   else
     {
@@ -93,10 +93,10 @@ Tensor average_strain_integration_Stress__Particles__(Tensor S_p,
     {
       S_p = grad_energy_Saint_Venant_Kirchhoff(S_p, C_n12_p, MatProp_p);
     }
-  else if(strcmp(MatProp_p.Type,"Neo-Hookean") == 0)
+  else if(strcmp(MatProp_p.Type,"Neo-Hookean-Wriggers") == 0)
     {
       double J_n12_p = 0.5*(I3__TensorLib__(F_n_p) + I3__TensorLib__(F_n1_p));
-      S_p = grad_energy_Neo_Hookean(S_p, C_n12_p, J_n12_p, MatProp_p);
+      S_p = grad_energy_Neo_Hookean_Wriggers(S_p, C_n12_p, J_n12_p, MatProp_p);
     }
   else
     {
@@ -149,12 +149,12 @@ Tensor average_itegration_Stress__Particles__(Tensor S_p,
       S_n1_p = grad_energy_Saint_Venant_Kirchhoff(S_n1_p, C_n1_p, MatProp_p);
       S_n12_p = Convex_combination__TensorLib__(S_n1_p,S_n_p,0.5);
     }
-  else if(strcmp(MatProp_p.Type,"Neo-Hookean") == 0)
+  else if(strcmp(MatProp_p.Type,"Neo-Hookean-Wriggers") == 0)
     {
       double J_n_p = I3__TensorLib__(F_n_p);
       double J_n1_p = I3__TensorLib__(F_n1_p);
-      S_n_p  = grad_energy_Neo_Hookean(S_n_p, C_n_p, J_n_p, MatProp_p);
-      S_n1_p = grad_energy_Neo_Hookean(S_n1_p, C_n1_p, J_n1_p, MatProp_p);
+      S_n_p  = grad_energy_Neo_Hookean_Wriggers(S_n_p, C_n_p, J_n_p, MatProp_p);
+      S_n1_p = grad_energy_Neo_Hookean_Wriggers(S_n1_p, C_n1_p, J_n1_p, MatProp_p);
       S_n_p = Convex_combination__TensorLib__(S_n1_p,S_n_p,0.5);
     }
   else
