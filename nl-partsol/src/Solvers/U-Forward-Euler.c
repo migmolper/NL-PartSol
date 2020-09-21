@@ -484,7 +484,7 @@ static Matrix compute_BodyForces(Matrix F_I, GaussPoint MPM_Mesh,
   Matrix ShapeFunction_p; /* Nodal values of the sahpe function */
   double ShapeFunction_pI;
   Tensor b = alloc__TensorLib__(1); /* Body forces vector */
-  double m_p; /* Mass of the Gauss-Point */
+  double m_p; /* Mass of the particle */
   int NumBodyForces = MPM_Mesh.NumberBodyForces;
   int NumNodesLoad;
   int p;
