@@ -176,8 +176,6 @@ void U_Discrete_Energy_Momentum(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int InitialS
 	      */
 	      imposed_displacements(D_Displacement, ActiveNodes, FEM_Mesh, TimeStep);
 
-	      /* PrintMatrix(Residual,Ndim,Nactivenodes); */
-
 	      /*
 		Update the iteration number
 	      */
