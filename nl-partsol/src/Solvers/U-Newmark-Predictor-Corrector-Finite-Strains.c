@@ -11,7 +11,7 @@
 /*
   Auxiliar functions 
 */
-static Matrix compute_Nodal_Lumped_Mass(GaussPoint,Mesh,Mask,double);
+static Matrix compute_Nodal_Lumped_Mass(GaussPoint,Mesh,Mask);
 static Matrix compute_Nodal_Momentum(GaussPoint,Mesh,Mask);
 static Matrix compute_Nodal_Velocity_Predicted(GaussPoint,Mesh,Mask,Matrix,double,double);
 static void   imposse_Velocity(Mesh,Matrix,Mask,int);
@@ -77,7 +77,7 @@ void U_Newmark_Predictor_Corrector_Finite_Strains(Mesh FEM_Mesh, GaussPoint MPM_
 	     Compute the effective mass matrix as a convex combination of the consistent mass
 	     matrix and the lumped mass matrix.
       */
-      Lumped_Mass = compute_Nodal_Lumped_Mass(MPM_Mesh,FEM_Mesh,ActiveNodes,epsilon);
+      Lumped_Mass = compute_Nodal_Lumped_Mass(MPM_Mesh,FEM_Mesh,ActiveNodes);
       print_Status("DONE !!!",TimeStep);
       
       /*
@@ -85,7 +85,7 @@ void U_Newmark_Predictor_Corrector_Finite_Strains(Mesh FEM_Mesh, GaussPoint MPM_
       */      
       print_Status("*************************************************",TimeStep);
       print_Status("Third step : Compute predicted nodal velocity ... WORKING",TimeStep);
-      Velocity = compute_Nodal_Velocity_Predicted(MPM_Mesh,FEM_Mesh,ActiveNodes
+      Velocity = compute_Nodal_Velocity_Predicted(MPM_Mesh,FEM_Mesh,ActiveNodes,
                                                   Lumped_Mass,gamma,DeltaTimeStep);
       /*
         Imposse velocity values in the boundary conditions nodes.
@@ -117,7 +117,7 @@ void U_Newmark_Predictor_Corrector_Finite_Strains(Mesh FEM_Mesh, GaussPoint MPM_
       /*
 	     Correct the predicted velocity
       */
-      compute_Nodal_Velocity_Corrected(Velocity, Lumped_Mass, gamma, DeltaTimeStep);
+      compute_Nodal_Velocity_Corrected(Velocity,Forces,Lumped_Mass,gamma,DeltaTimeStep);
       print_Status("DONE !!!",TimeStep);
       
       print_Status("*************************************************",TimeStep);
@@ -165,8 +165,7 @@ void U_Newmark_Predictor_Corrector_Finite_Strains(Mesh FEM_Mesh, GaussPoint MPM_
 
 static Matrix compute_Nodal_Lumped_Mass(GaussPoint MPM_Mesh,
 		                            			  Mesh FEM_Mesh,
-                          					    Mask ActiveNodes,
-                            					  double epsilon)
+                          					    Mask ActiveNodes)
 /*
   This function computes the lumped mass matrix.
 */
@@ -325,7 +324,7 @@ static Matrix compute_Nodal_Velocity_Predicted(GaussPoint MPM_Mesh,
   */
   for(int A = 0 ; A<Nnodes_mask ; A++)
     {
-      for(int i = 0 ; i<Ndof ; i++)
+      for(int i = 0 ; i<Ndim ; i++)
         {
 
         idx_A_mask_i = A + i*Nnodes_mask;
@@ -354,6 +353,7 @@ static void imposse_Velocity(Mesh FEM_Mesh,
 {
 
   /* 1º Define auxilar variables */
+  int Nnodes_mask = ActiveNodes.Nactivenodes;
   int NumNodesBound; /* Number of nodes of the bound */
   int NumDimBound; /* Number of dimensions */
   int Id_BCC; /* Index of the node where we apply the BCC */
@@ -471,7 +471,7 @@ static void update_Local_State(Matrix D_Displacement,
   Element Nodes_p;
   Material MatProp_p;
   Matrix gradient_p;
-  Matrix Velocity_Ap;
+  Matrix D_Displacement_Ap;
   Tensor F_n_p;
   Tensor F_n1_p;
   Tensor f_n1_p;
@@ -523,6 +523,24 @@ static void update_Local_State(Matrix D_Displacement,
       S_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.Stress.nM[p],2);      
       S_p = average_strain_integration_Stress__Particles__(S_p,F_n1_p,F_n_p,MatProp_p);
       
+
+      /*
+        Update density with the jacobian of the increment deformation gradient
+       */
+      J_p = I3__TensorLib__(f_n1_p);
+      MPM_Mesh.Phi.rho.nV[p] = MPM_Mesh.Phi.rho.nV[p]/J_p;
+
+      /*
+       Replace the deformation gradient at t = n with the converged deformation gradient
+      */
+      for(int i = 0 ; i<Ndim  ; i++)
+      {
+        for(int j = 0 ; j<Ndim  ; j++)
+        {
+          F_n_p.N[i][j] = F_n1_p.N[i][j];
+        }
+      }    
+
       /*
 	     Free memory 
       */
@@ -625,13 +643,13 @@ static void compute_Nodal_Internal_Forces(Matrix Forces,
 	      the transpose of the deformation gradient.
       */
       F_n1_p  = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n1.nM[p],2);
-      transpose_F_n_p = transpose__TensorLib__(F_n_p);
+      transpose_F_n1_p = transpose__TensorLib__(F_n1_p);
 
       /*
 	      Compute the first Piola-Kirchhoff stress tensor
       */
       S_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.Stress.nM[p], 2);
-      P_p = matrix_product__TensorLib__(F_n_p, S_p);
+      P_p = matrix_product__TensorLib__(F_n1_p, S_p);
 
       /*
       	Compute the volume of the particle in the reference configuration 
@@ -795,8 +813,10 @@ static Matrix compute_Reactions(Mesh FEM_Mesh, Matrix Forces, Mask ActiveNodes)
   int Ndim = NumberDimensions;
   int NumNodesBound; /* Number of nodes of the bound */
   int NumDimBound; /* Number of dimensions */
+  int Nnodes_mask = ActiveNodes.Nactivenodes;
   int Id_BCC; /* Index of the node where we apply the BCC */
   int Id_BCC_mask;
+  int Id_BCC_mask_k;
 
   Matrix Reactions = allocZ__MatrixLib__(FEM_Mesh.NumNodesMesh,Ndim);
   strcpy(Reactions.Info,"REACTIONS");
@@ -877,7 +897,6 @@ static void compute_Nodal_Velocity_Corrected(Matrix Velocity,
   for(int idx_A_i = 0 ; idx_A_i <Order ; idx_A_i++)
     {	
       Velocity.nV[idx_A_i] += gamma*Dt*Forces.nV[idx_A_i]/Lumped_Mass.nV[idx_A_i];
-      }
     }
 
 }
@@ -904,10 +923,6 @@ static void update_Particles(GaussPoint MPM_Mesh,
   Matrix gradient_p;
   double ShapeFunction_pI; /* Nodal value for the particle */
   double mass_I;
-  Tensor F_n_p;
-  Tensor F_n1_p;
-  Tensor f_n1_p;
-  double J_p;
   Element Nodes_p; /* Element for each particle */
 
   /* iterate over the particles */
@@ -918,40 +933,12 @@ static void update_Particles(GaussPoint MPM_Mesh,
         Define element of the particle 
       */
       Nodes_p = nodal_set__Particles__(p, MPM_Mesh.ListNodes[p], MPM_Mesh.NumberNodes[p]);
-      
-      /*
-	     Get the nodal increment of displacement using the mask
-      */
-      D_Displacement_Ap = get_set_field__MeshTools__(D_Displacement, Nodes_p, ActiveNodes);
-      
+
       /*
 	     Evaluate the shape function and gradient in the coordinates of the particle 
       */
       ShapeFunction_p = compute_N__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
       gradient_p      = compute_dN__MeshTools__(Nodes_p,MPM_Mesh,FEM_Mesh);
-
-      /*
-       Take the values of the deformation gradient from the previous step
-      */
-      F_n_p  = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n.nM[p],2);
-      F_n1_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n1.nM[p],2);
-
-      /*
-      	Update density with the jacobian of the increment deformation gradient
-       */
-      J_p = I3__TensorLib__(f_n1_p);
-      MPM_Mesh.Phi.rho.nV[p] = MPM_Mesh.Phi.rho.nV[p]/J_p;
-
-      /*
-	     Replace the deformation gradient at t = n with the converged deformation gradient
-      */
-      for(int i = 0 ; i<Ndim  ; i++)
-      {
-        for(int j = 0 ; j<Ndim  ; j++)
-        {
-          F_n_p.N[i][j] = F_n1_p.N[i][j];
-        }
-      }      
       
       /* 
         Iterate over the nodes of the particle 
