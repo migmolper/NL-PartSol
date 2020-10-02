@@ -210,4 +210,14 @@ int inout_element__Particles__(int, Matrix, ChainPtr, Mesh);
 void asign_to_nodes__Particles__(int, ChainPtr, Mesh);
 /*******************************************************/
 
+/*!
+
+*/
+void push_forward_tensor__Particles__(Tensor, Tensor, Tensor);
+/*******************************************************/
+
+/*!
+
+*/
+void push_backward_tensor__Particles__(Tensor, Tensor, Tensor);
 #endif

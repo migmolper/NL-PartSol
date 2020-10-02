@@ -452,3 +452,96 @@ void asign_to_nodes__Particles__(int p, ChainPtr ListNodes_p, Mesh FEM_Mesh)
 }
 
 /*********************************************************************/
+
+void push_forward_tensor__Particles__(Tensor a, Tensor A, Tensor F)
+/* 
+  Push forward operation for any tensor. From literature, this 
+  operation moves a tensor from the material description (A) to the
+  spatial description (a). 
+  a (out)
+  A (in)
+  F (in)
+*/
+{
+  int Ndim = NumberDimensions;
+
+  if (Ndim == 2)
+  {
+
+    double aux_1 = F.N[0][0]*A.N[0][0] + F.N[0][1]*A.N[0][1];
+    double aux_2 = F.N[0][0]*A.N[1][0] + F.N[0][1]*A.N[1][1];
+    double aux_3 = F.N[1][0]*A.N[0][0] + F.N[1][1]*A.N[0][1];
+    double aux_4 = F.N[1][0]*A.N[1][0] + F.N[1][1]*A.N[1][1];
+
+    a.N[0][0] = F.N[0][0]*aux_1 + F.N[0][1]*aux_2;
+    a.N[0][1] = F.N[0][0]*aux_3 + F.N[0][1]*aux_4;
+    a.N[1][0] = F.N[1][0]*aux_1 + F.N[1][1]*aux_2;
+    a.N[0][0] = F.N[1][0]*aux_3 + F.N[1][1]*aux_4;
+  }
+  else if(Ndim == 3)
+  {
+      fprintf(stderr,"%s : %s !!! \n",
+        "Error in push_forward_tensor__Particles__()",
+        "This operation it is not implemented for 3D");
+      exit(EXIT_FAILURE);  
+  }
+  else
+  {
+      fprintf(stderr,"%s : %s !!! \n",
+        "Error in push_forward_tensor__Particles__()",
+        "Wrong number of dimensions");
+      exit(EXIT_FAILURE);  
+  }
+
+}
+
+
+/*********************************************************************/
+
+void push_backward_tensor__Particles__(Tensor A, Tensor a, Tensor F)
+/* 
+  Push forward operation for any tensor. From literature, this 
+  operation moves a tensor from the material description (A) to the
+  spatial description (a).
+  A (out)
+  a (in)
+  F (int)
+*/
+{
+  int Ndim = NumberDimensions;
+  Tensor F_m1 = Inverse__TensorLib__(F);
+
+
+  if (Ndim == 2)
+  {
+
+    double aux_1 = F_m1.N[0][0]*a.N[0][0] + F_m1.N[0][1]*a.N[0][1];
+    double aux_2 = F_m1.N[0][0]*a.N[1][0] + F_m1.N[0][1]*a.N[1][1];
+    double aux_3 = F_m1.N[1][0]*a.N[0][0] + F_m1.N[1][1]*a.N[0][1];
+    double aux_4 = F_m1.N[1][0]*a.N[1][0] + F_m1.N[1][1]*a.N[1][1];
+
+    A.N[0][0] = F_m1.N[0][0]*aux_1 + F_m1.N[0][1]*aux_2;
+    A.N[0][1] = F_m1.N[0][0]*aux_3 + F_m1.N[0][1]*aux_4;
+    A.N[1][0] = F_m1.N[1][0]*aux_1 + F_m1.N[1][1]*aux_2;
+    A.N[0][0] = F_m1.N[1][0]*aux_3 + F_m1.N[1][1]*aux_4;
+  }
+    else if(Ndim == 3)
+  {
+      fprintf(stderr,"%s : %s !!! \n",
+        "Error in push_backward_tensor__Particles__()",
+        "This operation it is not implemented for 3D");
+      exit(EXIT_FAILURE);  
+  }
+  else
+  {
+      fprintf(stderr,"%s : %s !!! \n",
+        "Error in push_backward_tensor__Particles__()",
+        "Wrong number of dimensions");
+      exit(EXIT_FAILURE);  
+  }
+
+  free__TensorLib__(F_m1);
+}
+
+
+/*********************************************************************/
