@@ -140,6 +140,12 @@ int main(int argc, char * argv[])
       U_Newmark_Predictor_Corrector(FEM_Mesh, MPM_Mesh, InitialStep);
     }
 
+  /* Explicit predictor-corrector */
+  if(strcmp(TimeIntegrationScheme,"NPC-FE") == 0 )
+    { 
+      U_Newmark_Predictor_Corrector_Finite_Strains(FEM_Mesh, MPM_Mesh, InitialStep);
+    }
+
   /* Discrete energy momentum method */
   if(strcmp(TimeIntegrationScheme,"Discrete-Energy-Momentum") == 0 )
     { 

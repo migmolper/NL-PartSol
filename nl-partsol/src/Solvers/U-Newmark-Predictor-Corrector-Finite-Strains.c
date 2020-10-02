@@ -11,18 +11,18 @@
 /*
   Auxiliar functions 
 */
-static Matrix compute_Nodal_Lumped_Mass(GaussPoint, Mesh, Mask, double);
-static Matrix compute_Nodal_Momentum(GaussPoint, Mesh, Mask);
-static Matrix compute_Nodal_Velocity_Predicted(GaussPoint, Mesh, Mask, Matrix,double ,double);
-static void   imposse_Velocity(Mesh, Matrix, Mask, int);
-static Matrix compute_Nodal_D_Displacement(Matrix, Mask, double);
+static Matrix compute_Nodal_Lumped_Mass(GaussPoint,Mesh,Mask,double);
+static Matrix compute_Nodal_Momentum(GaussPoint,Mesh,Mask);
+static Matrix compute_Nodal_Velocity_Predicted(GaussPoint,Mesh,Mask,Matrix,double,double);
+static void   imposse_Velocity(Mesh,Matrix,Mask,int);
+static Matrix compute_Nodal_D_Displacement(Matrix,Mask,double);
 static void   update_Local_State(Matrix,Mask,GaussPoint,Mesh,double);
-static Matrix compute_Nodal_Forces(Mask, GaussPoint, Mesh, int);
-static void   compute_Nodal_Internal_Forces(Matrix,Mask,GaussPoint, Mesh);
-static void   compute_Nodal_Body_Forces(Matrix,Mask, GaussPoint, Mesh, int);
-static Matrix compute_Reactions(Mesh, Matrix, Mask);
-static void   compute_Nodal_Velocity_Corrected(Matrix, Matrix, Matrix, double, double);
-static void   update_Particles(Matrix, Matrix, GaussPoint, Mesh, Mask, double);
+static Matrix compute_Nodal_Forces(Mask,GaussPoint,Mesh,int);
+static void   compute_Nodal_Internal_Forces(Matrix,Mask,GaussPoint,Mesh);
+static void   compute_Nodal_Body_Forces(Matrix,Mask,GaussPoint,Mesh,int);
+static Matrix compute_Reactions(Mesh,Matrix,Mask);
+static void   compute_Nodal_Velocity_Corrected(Matrix,Matrix,Matrix,double,double);
+static void   update_Particles(GaussPoint,Mesh,Matrix,Matrix,Matrix,Mask,double);
 
 /**************************************************************/
 
@@ -125,7 +125,7 @@ void U_Newmark_Predictor_Corrector_Finite_Strains(Mesh FEM_Mesh, GaussPoint MPM_
       /*
 	      Update Lagrangians with D_Displacement
       */
-      update_Particles(D_Displacement,D_Velocity,MPM_Mesh,FEM_Mesh,ActiveNodes,DeltaTimeStep);
+      update_Particles(MPM_Mesh,FEM_Mesh,Lumped_Mass,Forces,Velocity,ActiveNodes,DeltaTimeStep);
       print_Status("DONE !!!",TimeStep);
       /*
 	     Reload the connectivity information for each particle
@@ -192,7 +192,6 @@ static Matrix compute_Nodal_Lumped_Mass(GaussPoint MPM_Mesh,
   double m_A_p;
   /* Element for each particle */
   Element Nodes_p;
-
 
   /* Define and allocate the lumped mass matrix */
   Matrix Lumped_MassMatrix = allocZ__MatrixLib__(Nnodes_mask*Ndof, 1);
@@ -886,12 +885,13 @@ static void compute_Nodal_Velocity_Corrected(Matrix Velocity,
 
 /**************************************************************/
 
-static void update_Particles(Matrix D_Displacement,
-			     Matrix D_Velocity,
-			     GaussPoint MPM_Mesh,
-			     Mesh FEM_Mesh,
-			     Mask ActiveNodes,
-			     double DeltaTimeStep)
+static void update_Particles(GaussPoint MPM_Mesh,
+                             Mesh FEM_Mesh,
+                             Matrix Lumped_Mass,
+                             Matrix Forces,
+                             Matrix Velocity,
+                             Mask ActiveNodes,
+                             double DeltaTimeStep)
 {
   int Ndim = NumberDimensions;
   int Np = MPM_Mesh.NumGP;
@@ -900,10 +900,10 @@ static void update_Particles(Matrix D_Displacement,
   int A_mask;
   int idx_A_mask_i;
   int idx_ij;
-  Matrix D_Displacement_Ap;
   Matrix ShapeFunction_p; /* Value of the shape-function in the particle */
   Matrix gradient_p;
   double ShapeFunction_pI; /* Nodal value for the particle */
+  double mass_I;
   Tensor F_n_p;
   Tensor F_n1_p;
   Tensor f_n1_p;
@@ -914,86 +914,90 @@ static void update_Particles(Matrix D_Displacement,
   for(int p = 0 ; p<Np ; p++)
     {
       
-      /* Define element of the particle */
+      /*
+        Define element of the particle 
+      */
       Nodes_p = nodal_set__Particles__(p, MPM_Mesh.ListNodes[p], MPM_Mesh.NumberNodes[p]);
       
       /*
-	Get the nodal increment of displacement using the mask
+	     Get the nodal increment of displacement using the mask
       */
       D_Displacement_Ap = get_set_field__MeshTools__(D_Displacement, Nodes_p, ActiveNodes);
       
       /*
-	Evaluate the shape function and gradient in the coordinates of the particle 
+	     Evaluate the shape function and gradient in the coordinates of the particle 
       */
       ShapeFunction_p = compute_N__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
       gradient_p      = compute_dN__MeshTools__(Nodes_p,MPM_Mesh,FEM_Mesh);
 
       /*
-      	Take the values of the deformation gradient from the previous step
+       Take the values of the deformation gradient from the previous step
       */
       F_n_p  = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n.nM[p],2);
       F_n1_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n1.nM[p],2);
 
       /*
-      	Compute the increment of the deformation gradient
-      */
-      f_n1_p = increment_Deformation_Gradient__Particles__(D_Displacement_Ap,gradient_p);
-
-      /*
-	Update the deformation gradient in t = n + 1
-      */  
-      update_Deformation_Gradient_n1__Particles__(F_n1_p, F_n_p, f_n1_p);
-
-      /*
-	Update density with the jacobian of the increment deformation gradient
+      	Update density with the jacobian of the increment deformation gradient
        */
       J_p = I3__TensorLib__(f_n1_p);
       MPM_Mesh.Phi.rho.nV[p] = MPM_Mesh.Phi.rho.nV[p]/J_p;
 
       /*
-	Replace the deformation gradient at t = n with the converged deformation gradient
+	     Replace the deformation gradient at t = n with the converged deformation gradient
       */
       for(int i = 0 ; i<Ndim  ; i++)
-	{
-	  for(int j = 0 ; j<Ndim  ; j++)
-	    {
-	      F_n_p.N[i][j] = F_n1_p.N[i][j];
-	    }
-	}      
+      {
+        for(int j = 0 ; j<Ndim  ; j++)
+        {
+          F_n_p.N[i][j] = F_n1_p.N[i][j];
+        }
+      }      
       
-      /* Iterate over the nodes of the particle */
+      /* 
+        Iterate over the nodes of the particle 
+      */
       for(int A = 0; A<Nodes_p.NumberNodes; A++)
-	{
+        {
 
-	  /*
-	    Get the node in the nodal momentum with the mask
-	  */
-	  Ap = Nodes_p.Connectivity[A];
-	  A_mask = ActiveNodes.Nodes2Mask[Ap];
+	       /*
+	         Get the node in the nodal momentum with the mask
+	       */
+	       Ap = Nodes_p.Connectivity[A];
+	       A_mask = ActiveNodes.Nodes2Mask[Ap];
 	  
-	  /*
-	    Evaluate the GP function in the node 
-	  */
-	  ShapeFunction_pI = ShapeFunction_p.nV[A];
+    	  /*
+	       Evaluate the GP function in the node 
+	      */
+	       ShapeFunction_pI = ShapeFunction_p.nV[A];
 	  
-	  /*
-	    Update velocity position and deformation gradient of the particles
-	   */
-	  for(int i = 0 ; i<Ndim ; i++)
-	    {
-	      idx_A_mask_i = A_mask + i*Nnodes_mask;
-	      MPM_Mesh.Phi.vel.nM[p][i]  += ShapeFunction_pI*D_Velocity.nV[idx_A_mask_i];
-	      MPM_Mesh.Phi.x_GC.nM[p][i] += ShapeFunction_pI*D_Displacement.nV[idx_A_mask_i];
-	    } 
-	}
+	     /*
+	       Update velocity position and deformation gradient of the particles
+	     */
+	      for(int i = 0 ; i<Ndim ; i++)
+	      {
+	       idx_A_mask_i = A_mask + i*Nnodes_mask;
+
+         /* Get the nodal mass */
+         mass_I = Lumped_Mass.nV[idx_A_mask_i];
+         /* Update the particles accelerations */
+         MPM_Mesh.Phi.acc.nM[p][i] += 
+             ShapeFunction_pI*Forces.nV[idx_A_mask_i]/mass_I;
+         /* Update the particles velocities */
+         MPM_Mesh.Phi.vel.nM[p][i] += 
+             ShapeFunction_pI*DeltaTimeStep*Forces.nV[idx_A_mask_i]/mass_I;
+         /* Update the particles displacement */
+         MPM_Mesh.Phi.x_GC.nM[p][i] +=
+             ShapeFunction_pI*DeltaTimeStep*Velocity.nV[idx_A_mask_i] +
+             ShapeFunction_pI*0.5*pow(DeltaTimeStep,2)*Forces.nV[idx_A_mask_i]/mass_I;
+	      } 
+    	}
 
       /*
-	Free memory
+	      Free memory
        */
       free(Nodes_p.Connectivity);
       free__MatrixLib__(ShapeFunction_p);
       free__MatrixLib__(gradient_p);
-      free__TensorLib__(f_n1_p);
     }  
 }
 

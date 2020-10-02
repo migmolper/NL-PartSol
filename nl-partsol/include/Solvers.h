@@ -44,13 +44,24 @@ void U_GA(Mesh, GaussPoint, int);
 /*!
   \fn void U_Newmark_Predictor_Corrector(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int InitialStep)
 
-  \brief Explicit predictor-corrector gamma = 0.5 and beta = 0.25
+  \brief Explicit predictor-corrector gamma = 0.5
  
   \param Mesh FEM_Mesh : Variable with the nodal information
   \param GaussPoint MPM_Mesh : Variable with the particle information
   \param InitialStep
  */
 void U_Newmark_Predictor_Corrector(Mesh, GaussPoint, int);
+
+/*!
+  \fn void U_Newmark_Predictor_Corrector_Finite_Strains(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int InitialStep)
+
+  \brief Finite strains explicit predictor-corrector gamma = 0.5
+ 
+  \param Mesh FEM_Mesh : Variable with the nodal information
+  \param GaussPoint MPM_Mesh : Variable with the particle information
+  \param InitialStep
+ */
+void U_Newmark_Predictor_Corrector_Finite_Strains(Mesh, GaussPoint, int);
 
 /*
   \fn void U_Discrete_Energy_Momentum(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int InitialStep)
