@@ -1677,6 +1677,7 @@ static void update_Particles(Matrix D_Displacement,
 	Free memory
        */
       free(Nodes_p.Connectivity);
+      free__MatrixLib__(D_Displacement_Ap);
       free__MatrixLib__(ShapeFunction_p);
       free__MatrixLib__(gradient_p);
       free__TensorLib__(f_n1_p);
