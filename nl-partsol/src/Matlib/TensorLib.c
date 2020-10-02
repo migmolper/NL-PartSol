@@ -599,14 +599,14 @@ void spectral_descomposition_symmetric__TensorLib__(Tensor Lambda,
   else if(Ndim == 3)
     {
       fprintf(stderr,"%s : %s !!! \n",
-        "Error in rotate__TensorLib__()",
+        "Error in spectral_descomposition_symmetric__TensorLib__()",
         "This operation it is not implemented for 3D");
       exit(EXIT_FAILURE);  
     }
   else
     {
       fprintf(stderr,"%s : %s !!! \n",
-        "Error in rotate__TensorLib__()",
+        "Error in spectral_descomposition_symmetric__TensorLib__()",
         "Wrong number of dimensions");
       exit(EXIT_FAILURE);  
     }
