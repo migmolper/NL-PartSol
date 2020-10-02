@@ -156,17 +156,64 @@ Tensor right_Cauchy_Green__Particles__(Tensor F)
   for(int i = 0 ; i < Ndim  ; i++)
     {
       for(int j = 0 ; j < Ndim  ; j++)
-	{
-	  for(int k = 0 ; k < Ndim  ; k++)
-	    {
-	      C.N[i][j] += F.N[k][i]*F.N[k][j];
-	    }
-	}
+      {
+        for(int k = 0 ; k < Ndim  ; k++)
+        {
+          C.N[i][j] += F.N[k][i]*F.N[k][j];
+        }
+      }
     }
 
   return C;
 }
 
+/*******************************************************/
+
+Tensor logarithmic_elastic_strains(Tensor C)
+{
+
+  int Ndim = NumberDimensions;
+  Tensor EigenVals_C;
+  Tensor EigenVects_C;
+  Tensor logC_spectral = alloc__TensorLib__(2);
+  Tensor logC;
+
+
+  /*
+    Compute the spectral descomposition of the tensor logC
+  */
+  spectral_descomposition_symmetric__TensorLib__(EigenVals_C, EigenVects_C, C);
+  
+  for(int i = 0 ; i < Ndim  ; i++)
+    {
+      logC_spectral.N[i][i] = log(EigenVals_C.n[i]);
+    }
+
+  /*
+    Rotate the spectral descomposition of the tensor logC
+  */
+  logC = rotate__TensorLib__(logC_spectral,EigenVects_C);
+
+  /*
+    Multiply by 1/2
+  */
+  for(int i = 0 ; i < Ndim  ; i++)
+    {
+      for(int j = 0 ; j < Ndim  ; j++)
+      { 
+        logC.N[i][j] *= 0.5;
+      }
+    }
+
+  /*
+    Free memory
+  */
+  free__TensorLib__(EigenVals_C);
+  free__TensorLib__(EigenVects_C);
+  free__TensorLib__(logC_spectral);
+
+  return logC; 
+}
 
 /*******************************************************/
 
@@ -183,9 +230,9 @@ Tensor strain_Green_Lagrange__Particles__(Tensor C)
   for(int i = 0 ; i < Ndim  ; i++)
     {
       for(int j = 0 ; j < Ndim  ; j++)
-	{
-	  E.N[i][j] = 0.5 * (C.N[i][j] - I.N[i][j]);
-	}
+      {
+        E.N[i][j] = 0.5 * (C.N[i][j] - I.N[i][j]);
+      }
     }
 
   free__TensorLib__(I);

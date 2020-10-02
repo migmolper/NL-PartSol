@@ -559,6 +559,106 @@ Tensor Convex_combination__TensorLib__(Tensor F_n1,Tensor F_n,double alpha)
 
 /*************************************************************/
 
+void spectral_descomposition_symmetric__TensorLib__(Tensor Lambda, 
+                                                    Tensor EigenVect, 
+                                                    Tensor A)
+{
+
+  int Ndim = NumberDimensions;
+
+  EigenVect = alloc__TensorLib__(2);
+
+  if (Ndim == 2)
+    {
+
+      if (A.N[0][1]*A.N[1][0] < 1e-15)
+        {
+          Lambda = alloc__TensorLib__(1);
+
+          EigenVect.N[0][0] = EigenVect.N[1][1] = 1.;
+          EigenVect.N[0][1] = EigenVect.N[1][0] = 0.;
+
+          Lambda.n[0] = A.N[0][0];
+          Lambda.n[1] = A.N[1][1];
+
+          return;
+        }
+
+      Lambda = Eigenvalues__TensorLib__(A);
+
+      for(int i = 0 ; i<Ndim ; i++)
+        {
+          double aux1 = (Lambda.n[i] - A.N[0][0])/A.N[0][1];
+          double aux2 = sqrt(1 + aux1*aux1);
+          EigenVect.N[0][i] = 1/aux2;
+          EigenVect.N[1][i] = aux1/aux2;
+        }
+
+
+    }
+  else if(Ndim == 3)
+    {
+      fprintf(stderr,"%s : %s !!! \n",
+        "Error in rotate__TensorLib__()",
+        "This operation it is not implemented for 3D");
+      exit(EXIT_FAILURE);  
+    }
+  else
+    {
+      fprintf(stderr,"%s : %s !!! \n",
+        "Error in rotate__TensorLib__()",
+        "Wrong number of dimensions");
+      exit(EXIT_FAILURE);  
+    }
+}
+
+/*************************************************************/
+
+
+Tensor rotate__TensorLib__(Tensor In, Tensor R)
+/* 
+  Return the rotated tensor of the imput using the
+  rotation matrix R.
+*/
+{
+  int Ndim = NumberDimensions;
+  Tensor Out = alloc__TensorLib__(2);
+
+  if (Ndim == 2)
+  {
+
+    double aux_1 = R.N[0][0]*In.N[0][0] + R.N[0][1]*In.N[0][1];
+    double aux_2 = R.N[0][0]*In.N[1][0] + R.N[0][1]*In.N[1][1];
+    double aux_3 = R.N[1][0]*In.N[0][0] + R.N[1][1]*In.N[0][1];
+    double aux_4 = R.N[1][0]*In.N[1][0] + R.N[1][1]*In.N[1][1];
+
+    Out.N[0][0] = R.N[0][0]*aux_1 + R.N[0][1]*aux_2;
+    Out.N[0][1] = R.N[0][0]*aux_3 + R.N[0][1]*aux_4;
+    Out.N[1][0] = R.N[1][0]*aux_1 + R.N[1][1]*aux_2;
+    Out.N[0][0] = R.N[1][0]*aux_3 + R.N[1][1]*aux_4;
+
+  }
+  else if(Ndim == 3)
+  {
+      fprintf(stderr,"%s : %s !!! \n",
+        "Error in rotate__TensorLib__()",
+        "This operation it is not implemented for 3D");
+      exit(EXIT_FAILURE);  
+  }
+  else
+  {
+      fprintf(stderr,"%s : %s !!! \n",
+        "Error in rotate__TensorLib__()",
+        "Wrong number of dimensions");
+      exit(EXIT_FAILURE);  
+  }
+
+  return Out;
+
+}
+
+/*************************************************************/
+
 void print__TensorLib__(Tensor A)
 {
   int Ndim = NumberDimensions;

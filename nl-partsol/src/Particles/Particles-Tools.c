@@ -501,8 +501,8 @@ void push_forward_tensor__Particles__(Tensor a, Tensor A, Tensor F)
 void push_backward_tensor__Particles__(Tensor A, Tensor a, Tensor F)
 /* 
   Push forward operation for any tensor. From literature, this 
-  operation moves a tensor from the material description (A) to the
-  spatial description (a).
+  operation moves a tensor from the spatial description (a) to the
+  material description (A).
   A (out)
   a (in)
   F (int)

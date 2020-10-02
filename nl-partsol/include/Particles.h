@@ -88,6 +88,21 @@ Tensor right_Cauchy_Green__Particles__(Tensor);
 /*******************************************************/
 
 /*!
+  \fn Tensor logarithmic_elastic_strains(Tensor C)
+  \brief Function to cumpute the small strains countrepart of the 
+  right Cauchy-Green tensor defined as
+  \f[
+  \varepsilon = 1/2*logC
+  \f]
+  
+  \param C : right Cauchy-Green
+
+  \return The logaritmic strain tensor
+*/
+Tensor logarithmic_elastic_strains(Tensor);
+/*******************************************************/
+
+/*!
   \fn Tensor strain_Green_Lagrange__Particles__(Tensor C)
   \brief Function to cumpute the Lagrangian Strain tensor defined as
   \f[
