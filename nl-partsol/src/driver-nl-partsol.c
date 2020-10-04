@@ -74,10 +74,14 @@ int main(int argc, char * argv[])
     }
     
   /* Assign degree of freedom */
-  if((strcmp(Formulation,"-V") == 0) &&
-     (NumberDimensions == 2))
+  if((strcmp(Formulation,"-V") == 0) && (NumberDimensions == 2))
     {
       NumberDOF = 2;
+    }
+
+  if((strcmp(Formulation,"-SV") == 0) && (NumberDimensions == 2))
+    {
+      NumberDOF = 6;
     }
   
   /*********************************************************************/
@@ -122,30 +126,50 @@ int main(int argc, char * argv[])
   puts("*************************************************");
   puts("Run simulation ...");
 
-  /* Forward Euler */
-  if(strcmp(TimeIntegrationScheme,"FE") == 0 )
-    { 
+  /* Velocity formulation with Forward Euler time integration scheme */
+  if((strcmp(Formulation,"-V") == 0) &&
+     (strcmp(TimeIntegrationScheme,"FE") == 0 ))
+    {
       U_Forward_Euler(FEM_Mesh, MPM_Mesh, InitialStep);
     }
 
-  /* Generalized-alpha */
-  if(strcmp(TimeIntegrationScheme,"GA") == 0 )
+  /* Stress-Velocity formulation with two steps Taylor Galerkin time integration scheme */
+  else if((strcmp(Formulation,"-SV") == 0) &&
+          (strcmp(TimeIntegrationScheme,"2STG") == 0 ))
+    {
+      SV_Two_Steps_Taylor_Galerkin(FEM_Mesh, MPM_Mesh, InitialStep);
+    }
+    
+  /* Velocity formulation with Generalized-alpha time integration scheme */
+  else if((strcmp(Formulation,"-V") == 0) && 
+          (strcmp(TimeIntegrationScheme,"GA") == 0 ))
     { 
       U_GA(FEM_Mesh, MPM_Mesh, InitialStep);
     }
     
-  /* Explicit predictor-corrector */
-  if(strcmp(TimeIntegrationScheme,"PCE") == 0 )
-    { 
+  /* Velocity formulation with Explicit predictor-corrector time integration scheme */
+  else if((strcmp(Formulation,"-V") == 0) && 
+          (strcmp(TimeIntegrationScheme,"PCE") == 0 ))
+    {  
       U_Newmark_Predictor_Corrector(FEM_Mesh, MPM_Mesh, InitialStep);
     }
 
-  /* Discrete energy momentum method */
-  if(strcmp(TimeIntegrationScheme,"Discrete-Energy-Momentum") == 0 )
+  /* Velocity formulation with Discrete energy momentum method time integration scheme */
+  else if((strcmp(Formulation,"-V") == 0) && 
+          (strcmp(TimeIntegrationScheme,"Discrete-Energy-Momentum") == 0 ))
     { 
       U_Discrete_Energy_Momentum(FEM_Mesh, MPM_Mesh, InitialStep);
     }
-        
+
+  /* Unrecognised time integration sheme */
+  else 
+    {
+      fprintf(stderr,"%s : %s \n",
+                  "Error in nl-partsol",
+                  "Unrecognised time integration sheme");
+      exit(EXIT_FAILURE);
+    }
+
   /*********************************************************************/
   /************************* FREE ALL FIELDS ***************************/
   /*********************************************************************/
