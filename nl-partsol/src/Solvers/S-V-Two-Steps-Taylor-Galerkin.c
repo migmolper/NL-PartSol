@@ -1,5 +1,12 @@
 #include "nl-partsol.h"
 
+#ifdef __linux__
+#include <lapacke.h>
+
+#elif __APPLE__
+#include <Accelerate/Accelerate.h>
+
+#endif
 
 /*
   Auxiliar functions 
@@ -7,9 +14,12 @@
 static void update_StressField_SV(Matrix,Matrix,Matrix,GaussPoint,Mesh,double);
 static void compute_NodalMagnitudes_SV(Matrix,Matrix,Matrix,GaussPoint,Mesh);
 static void update_VelocityField_SV(Matrix,Matrix,Matrix,GaussPoint,Mesh,double);
+static void update_Particles_SV(Matrix,Matrix,GaussPoint,Mesh,double);
 
 
-void SV_Two_Steps_Taylor_Galerkin(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
+/**************************************************************/
+
+void SV_Two_Steps_Taylor_Galerkin(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int InitialStep)
 {
 
   /* Some auxiliar variables for the outputs */
@@ -22,7 +32,7 @@ void SV_Two_Steps_Taylor_Galerkin(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
 
   Matrix V_I, S_I, Div_S_I, M_I;
 
-  for(TimeStep = 0 ; TimeStep<NumTimeStep ; TimeStep++ )
+  for(TimeStep = InitialStep ; TimeStep<NumTimeStep ; TimeStep++ )
     {
       print_Status("*************************************************",TimeStep);
       DeltaTimeStep = DeltaT_CFL(MPM_Mesh, FEM_Mesh.DeltaX);
@@ -373,3 +383,70 @@ static void update_VelocityField_SV(Matrix S_I,Matrix V_I,Matrix M_I,
 
 /*******************************************************/
 
+static void update_Particles_SV(Matrix S_I, Matrix V_I,
+       GaussPoint MPM_Mesh, Mesh FEM_Mesh,
+       double Dt)
+{
+
+  int Ndim = NumberDimensions;
+  Element Nodes_p; /* Element for each Gauss-Point */
+  Matrix N_p; /* Value of the shape-function in the GP */
+  double N_pI; /* Nodal value for the GP */
+  int Np = MPM_Mesh.NumGP;
+  int Nnodes;
+  int Ip; /* Index of each tributary node for the GP */
+
+  /* 1º iterate over the Gauss-Points */
+  for(int p = 0 ; p<Np ; p++)
+    {
+      /* 2º Define element of the GP */
+      Nnodes = MPM_Mesh.NumberNodes[p];
+      Nodes_p = get_Element(p, MPM_Mesh.ListNodes[p], Nnodes);
+
+      /* 3º Evaluate shape function in the GP i */
+      N_p = compute_ShapeFunction(Nodes_p, MPM_Mesh, FEM_Mesh);
+
+      /* Set to zero velocity for interpolation */
+      for(int i = 0 ; i<Ndim ; i++)
+  {
+    MPM_Mesh.Phi.vel.nM[p][i] = 0;
+  }
+      /* Set to zero velocity for interpolation */
+      for(int i = 0 ; i<Ndim*Ndim ; i++)
+  {
+    MPM_Mesh.Phi.Stress.nM[p][i] = 0;
+  }
+    
+      /* 4º Iterate over the nodes of the element */
+      for(int I = 0; I<Nnodes; I++)
+  {
+    /* Node of the GP */
+    Ip = Nodes_p.Connectivity[I];
+    /* Evaluate the GP function in the node */
+    N_pI = N_p.nV[I];
+    /* If this node has a null Value of the SHF continue */
+    if(fabs(N_pI) <= TOL_zero)
+      {
+        continue;
+      }
+    /* Update the particles velocities and position */
+    for(int i = 0 ; i<Ndim ; i++)
+      {
+        MPM_Mesh.Phi.vel.nM[p][i] += N_pI*V_I.nM[Ip][i];
+        MPM_Mesh.Phi.x_GC.nM[p][i] += Dt*N_pI*V_I.nM[Ip][i];    
+      }
+    /* Update partiucle stress */
+    for(int i = 0 ; i<Ndim*Ndim; i++)
+      {
+        MPM_Mesh.Phi.Stress.nM[p][i] += N_pI*S_I.nM[Ip][i];
+      }
+      
+  }
+    
+      /* 5º Free memory */
+      free(Nodes_p.Connectivity);
+      FreeMat(N_p);
+    }  
+}
+
+/*******************************************************/

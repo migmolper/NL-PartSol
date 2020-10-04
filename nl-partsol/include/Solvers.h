@@ -30,6 +30,17 @@ void U_Forward_Euler(Mesh, GaussPoint, int);
 
 
 /*!
+  \fn void SV_Two_Steps_Taylor_Galerkin(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int InitialStep)
+
+  \brief The stress-velocity formulation with a two steps Taylor Galerkin time intergration
+
+  \param Mesh FEM_Mesh : Variable with the nodal information
+  \param GaussPoint MPM_Mesh : Variable with the particle information
+  \param InitialStep
+ */
+void SV_Two_Steps_Taylor_Galerkin(Mesh, GaussPoint, int);
+
+/*!
   \fn void U_GA(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int InitialStep)
 
   \brief The generalized-alpha algorithm here implemented is analogous
