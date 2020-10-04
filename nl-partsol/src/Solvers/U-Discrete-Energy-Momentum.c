@@ -14,6 +14,7 @@
 static Matrix compute_Nodal_Effective_Mass(GaussPoint, Mesh, Mask, double);
 static Matrix compute_Nodal_Momentum(GaussPoint, Mesh, Mask);
 static Matrix compute_Nodal_Velocity(Matrix, Matrix);
+static void   imposse_Nodal_Velocity(Mesh,Matrix,Mask,int);
 static void   update_Local_State(Matrix,Mask,GaussPoint,Mesh,double);
 static Matrix compute_Nodal_Forces(Matrix, Mask, GaussPoint, Mesh, int);
 static void   compute_Nodal_Internal_Forces(Matrix,Matrix,Mask,GaussPoint, Mesh);
@@ -107,7 +108,7 @@ void U_Discrete_Energy_Momentum(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int InitialS
 	Compute the nodal valocities with the effective mass matrix and the nodal momentum
       */
       Velocity = compute_Nodal_Velocity(Effective_Mass, Momentum);
-      /* imposed_velocty(); */
+      imposse_Nodal_Velocity(FEM_Mesh,Velocity,ActiveNodes,TimeStep);
       print_Status("DONE !!!",TimeStep);
 
       print_Status("*************************************************",TimeStep);
@@ -528,6 +529,93 @@ static Matrix compute_Nodal_Velocity(Matrix Mass,
   strcpy(Velocity.Info,"Nodal-Velocity");
 
   return Velocity;
+}
+
+/**************************************************************/
+
+static void imposse_Nodal_Velocity(Mesh FEM_Mesh,
+                                  Matrix Velocity,
+                                  Mask ActiveNodes,
+                                  int TimeStep)
+/*
+  Apply the boundary conditions over the nodes 
+*/
+{
+
+  /* 1º Define auxilar variables */
+  int Nnodes_mask = ActiveNodes.Nactivenodes;
+  int NumNodesBound; /* Number of nodes of the bound */
+  int NumDimBound; /* Number of dimensions */
+  int Id_BCC; /* Index of the node where we apply the BCC */
+  int Id_BCC_mask;
+  int Id_BCC_mask_k;
+
+  /* 2º Loop over the the boundaries */
+  for(int i = 0 ; i<FEM_Mesh.Bounds.NumBounds ; i++)
+    {
+
+      /* 
+        Get the number of nodes of this boundarie 
+      */
+      NumNodesBound = FEM_Mesh.Bounds.BCC_i[i].NumNodes;
+
+      /* 
+        Get the number of dimensions where the BCC it is applied 
+      */
+      NumDimBound = FEM_Mesh.Bounds.BCC_i[i].Dim;
+
+      for(int j = 0 ; j<NumNodesBound ; j++)
+        {
+          /* 
+            Get the index of the node 
+          */
+          Id_BCC = FEM_Mesh.Bounds.BCC_i[i].Nodes[j];
+          Id_BCC_mask = ActiveNodes.Nodes2Mask[Id_BCC];
+
+          /*
+            The boundary condition is not affecting any active node,
+            continue interating
+          */
+          if(Id_BCC_mask == -1)
+          {
+            continue;
+          }
+
+          /* 
+            Loop over the dimensions of the boundary condition 
+          */
+          for(int k = 0 ; k<NumDimBound ; k++)
+            {
+
+              /* 
+                Apply only if the direction is active (1) 
+              */
+              if(FEM_Mesh.Bounds.BCC_i[i].Dir[k] == 1)
+                {
+    
+                  /* 
+                    Check if the curve it is on time 
+                  */
+                  if( (TimeStep < 0) ||
+                    (TimeStep > FEM_Mesh.Bounds.BCC_i[i].Value[k].Num))
+                    {
+                      printf("%s : %s \n",
+                             "Error in imposse_Nodal_Velocity()",
+                             "The time step is out of the curve !!");
+                      exit(EXIT_FAILURE);
+                    }
+
+                  /* 
+                    Assign the boundary condition 
+                  */
+                  Id_BCC_mask_k = Id_BCC_mask + k*Nnodes_mask; 
+                  Velocity.nV[Id_BCC_mask] = FEM_Mesh.Bounds.BCC_i[i].Value[k].Fx[TimeStep]*
+                                             (double)FEM_Mesh.Bounds.BCC_i[i].Dir[k];
+                }
+            }
+        }    
+    }
+
 }
 
 /**************************************************************/
