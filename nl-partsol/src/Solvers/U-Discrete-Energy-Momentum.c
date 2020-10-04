@@ -19,6 +19,7 @@ static void   update_Local_State(Matrix,Mask,GaussPoint,Mesh,double);
 static Matrix compute_Nodal_Forces(Matrix, Mask, GaussPoint, Mesh, int);
 static void   compute_Nodal_Internal_Forces(Matrix,Matrix,Mask,GaussPoint, Mesh);
 static void   compute_Nodal_Body_Forces(Matrix, Mask, GaussPoint, Mesh, int);
+static Matrix compute_Nodal_Reactions(Mesh, Matrix, Mask);
 static Matrix compute_Nodal_Residual(Matrix, Matrix, Matrix, Matrix, double);
 static bool   check_convergence(Matrix,double,int,int);
 static Matrix assemble_Nodal_Tangent_Stiffness(Mask, GaussPoint, Mesh);
@@ -26,9 +27,9 @@ static void   assemble_Nodal_Tangent_Stiffness_Geometric(Matrix, Mask, GaussPoin
 static void   assemble_Nodal_Tangent_Stiffness_Material(Matrix, Mask, GaussPoint, Mesh);
 static Tensor compute_stiffness_density(Tensor, Tensor, Tensor, double, Material);
 static Tensor compute_Nodal_Tangent_Stiffness_Material(Tensor,Tensor,Tensor);
-static void   update_D_Displacement(Matrix, Matrix, Matrix, Matrix, double);
-static void   imposed_displacements(Matrix, Mask, Mesh, int);
-static Matrix compute_D_Velocity(Matrix, Matrix,double);
+static void   update_Nodal_D_Displacements(Matrix, Matrix, Matrix, Matrix, double);
+static void   imposed_Nodal_Displacements(Matrix, Mask, Mesh, int);
+static Matrix compute_Nodal_D_Velocity(Matrix, Matrix,double);
 static void   update_Particles(Matrix, Matrix, GaussPoint, Mesh, Mask, double);
 
 /**************************************************************/
@@ -47,6 +48,7 @@ void U_Discrete_Energy_Momentum(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int InitialS
   Matrix Effective_Mass;
   Matrix Tangent_Stiffness;
   Matrix Forces;
+  Matrix Reactions;
   Matrix Momentum;
   Matrix Velocity;
   Matrix D_Displacement;
@@ -139,6 +141,12 @@ void U_Discrete_Energy_Momentum(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int InitialS
 	  Forces = compute_Nodal_Forces(D_Displacement,ActiveNodes,
 					MPM_Mesh,FEM_Mesh,TimeStep);
 
+    /*
+      Compute nodal reactions and set to zero those DOF of the
+      nodal forces with imposed displacements.
+    */
+    Reactions = compute_Nodal_Reactions(FEM_Mesh,Forces,ActiveNodes);
+
 	 	  
 	  /*
 	    Compute the numerical residual to check the equilibrium
@@ -168,14 +176,14 @@ void U_Discrete_Energy_Momentum(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int InitialS
 	      /*
 		Solve the resulting equation 
 	      */
-	      update_D_Displacement(D_Displacement,Tangent_Stiffness,
+	      update_Nodal_D_Displacements(D_Displacement,Tangent_Stiffness,
 				    Effective_Mass,Residual,DeltaTimeStep);
 
 	      /*
 		Impose dirichlet boundary conditions over the increment of
 		displacement
 	      */
-	      imposed_displacements(D_Displacement, ActiveNodes, FEM_Mesh, TimeStep);
+	      imposed_Nodal_Displacements(D_Displacement, ActiveNodes, FEM_Mesh, TimeStep);
 
 	      /*
 		Update the iteration number
@@ -183,6 +191,7 @@ void U_Discrete_Energy_Momentum(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int InitialS
 	      Iter++;
 
 	      free__MatrixLib__(Forces);
+        free__MatrixLib__(Reactions);
 	      free__MatrixLib__(Residual);
 	      free__MatrixLib__(Tangent_Stiffness);
 	    }
@@ -197,7 +206,7 @@ void U_Discrete_Energy_Momentum(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int InitialS
       /*
 	Once the equilibrium is reached, obtain the increment of nodal velocity
       */
-      D_Velocity = compute_D_Velocity(Velocity,D_Displacement,DeltaTimeStep);
+      D_Velocity = compute_Nodal_D_Velocity(Velocity,D_Displacement,DeltaTimeStep);
       print_Status("DONE !!!",TimeStep);
 
       
@@ -233,6 +242,7 @@ void U_Discrete_Energy_Momentum(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int InitialS
       free__MatrixLib__(D_Velocity);
       free__MatrixLib__(D_Displacement);
       free__MatrixLib__(Forces);
+      free__MatrixLib__(Reactions);
       free__MatrixLib__(Residual);
       free(ActiveNodes.Mask2Nodes);
       free(ActiveNodes.Nodes2Mask);
@@ -961,6 +971,82 @@ static void compute_Nodal_Body_Forces(Matrix Forces,
 }
 
 
+/**********************************************************************/
+
+static Matrix compute_Nodal_Reactions(Mesh FEM_Mesh, Matrix Forces, Mask ActiveNodes)
+/*
+  Compute the nodal reactions
+*/
+{
+  /* 1º Define auxilar variables */
+  int Ndim = NumberDimensions;
+  int NumNodesBound; /* Number of nodes of the bound */
+  int NumDimBound; /* Number of dimensions */
+  int Nnodes_mask = ActiveNodes.Nactivenodes;
+  int Id_BCC; /* Index of the node where we apply the BCC */
+  int Id_BCC_mask;
+  int Id_BCC_mask_k;
+
+  Matrix Reactions = allocZ__MatrixLib__(FEM_Mesh.NumNodesMesh,Ndim);
+  strcpy(Reactions.Info,"REACTIONS");
+
+  /*
+     Loop over the the boundaries 
+  */
+  for(int i = 0 ; i<FEM_Mesh.Bounds.NumBounds ; i++)
+    {
+    /* 
+      Get the number of nodes of this boundarie 
+    */
+    NumNodesBound = FEM_Mesh.Bounds.BCC_i[i].NumNodes;
+    
+    /* 
+      Get the number of dimensions where the BCC it is applied 
+    */
+    NumDimBound = FEM_Mesh.Bounds.BCC_i[i].Dim;
+    
+    for(int j = 0 ; j<NumNodesBound ; j++)
+      {
+        /* 
+         Get the index of the node 
+        */
+        Id_BCC = FEM_Mesh.Bounds.BCC_i[i].Nodes[j];
+        Id_BCC_mask = ActiveNodes.Nodes2Mask[Id_BCC];
+
+        /*
+          The boundary condition is not affecting any active node,
+          continue interating
+        */
+        if(Id_BCC_mask == -1)
+          {
+            continue;
+          }
+      
+        /* 
+          Loop over the dimensions of the boundary condition 
+        */
+        for(int k = 0 ; k<NumDimBound ; k++)
+          {
+
+            /* 
+              Apply only if the direction is active (1) 
+            */
+            if(FEM_Mesh.Bounds.BCC_i[i].Dir[k] == 1)
+              {
+                /* 
+                Set to zero the forces in the nodes where velocity is fixed 
+                */
+                Id_BCC_mask_k = Id_BCC_mask + k*Nnodes_mask; 
+                Reactions.nV[Id_BCC_mask_k] = Forces.nV[Id_BCC_mask_k];
+                Forces.nV[Id_BCC_mask_k] = 0;
+              }
+          }
+      }    
+  }
+
+  return Reactions;
+}
+
 /**************************************************************/
 
 static Matrix compute_Nodal_Residual(Matrix Velocity,
@@ -1479,7 +1565,7 @@ static Tensor compute_Nodal_Tangent_Stiffness_Material(Tensor F_n12_p,
 
 /**************************************************************/
 
-static void update_D_Displacement(Matrix D_Displacement,
+static void update_Nodal_D_Displacements(Matrix D_Displacement,
 				  Matrix Tangent_Stiffness,
 				  Matrix Effective_Mass,
 				  Matrix Residual,
@@ -1568,7 +1654,7 @@ static void update_D_Displacement(Matrix D_Displacement,
 
 /**************************************************************/
 
-static void imposed_displacements(Matrix D_Displacement,
+static void imposed_Nodal_Displacements(Matrix D_Displacement,
 				  Mask ActiveNodes,
 				  Mesh FEM_Mesh,
 				  int TimeStep)
@@ -1636,7 +1722,7 @@ static void imposed_displacements(Matrix D_Displacement,
 /**************************************************************/
 
 
-static Matrix compute_D_Velocity(Matrix Velocity,
+static Matrix compute_Nodal_D_Velocity(Matrix Velocity,
 				 Matrix D_Displacement,
 				 double Dt)
 {
