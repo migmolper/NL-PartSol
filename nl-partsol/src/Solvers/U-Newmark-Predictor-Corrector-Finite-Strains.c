@@ -467,7 +467,8 @@ static void update_Local_State(Matrix D_Displacement,
   int Nnodes_mask = ActiveNodes.Nactivenodes;
   int MatIndx_p;
   int Nnodes_p;
-  double J_p;  
+  double J_n1_p;  
+  double Delta_J_p;
   Element Nodes_p;
   Material MatProp_p;
   Matrix gradient_p;
@@ -513,6 +514,11 @@ static void update_Local_State(Matrix D_Displacement,
 	      from t = n and the increment of deformation gradient.
       */  
       update_Deformation_Gradient_n1__Particles__(F_n1_p, F_n_p, f_n1_p);
+
+      /*
+        Compute the right Cauchy Green tensor
+      */
+      Tensor C_n1_p = right_Cauchy_Green__Particles__(F_n1_p);
       
       /*
       	Update the second Piola-Kirchhoff stress tensor (S) with an apropiate
@@ -521,14 +527,30 @@ static void update_Local_State(Matrix D_Displacement,
       MatIndx_p = MPM_Mesh.MatIdx[p];
       MatProp_p = MPM_Mesh.Mat[MatIndx_p];
       S_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.Stress.nM[p],2);      
-      S_p = average_strain_integration_Stress__Particles__(S_p,F_n1_p,F_n_p,MatProp_p);
+
+      if(strcmp(MatProp_p.Type,"Saint-Venant-Kirchhoff") == 0)
+        {
+          S_p = grad_energy_Saint_Venant_Kirchhoff(S_p, C_n1_p, MatProp_p);
+        }
+      else if(strcmp(MatProp_p.Type,"Neo-Hookean-Wriggers") == 0)
+        {
+          J_n1_p = I3__TensorLib__(F_n1_p);
+          S_p = grad_energy_Neo_Hookean_Wriggers(S_p, C_n1_p, J_n1_p, MatProp_p);
+        }
+      else
+        {
+          fprintf(stderr,"%s : %s %s %s \n",
+            "Error in update_Local_State()",
+            "The material",MatProp_p.Type,"has not been yet implemnented");
+          exit(EXIT_FAILURE);
+        }
       
 
       /*
         Update density with the jacobian of the increment deformation gradient
        */
-      J_p = I3__TensorLib__(f_n1_p);
-      MPM_Mesh.Phi.rho.nV[p] = MPM_Mesh.Phi.rho.nV[p]/J_p;
+      Delta_J_p = I3__TensorLib__(f_n1_p);
+      MPM_Mesh.Phi.rho.nV[p] = MPM_Mesh.Phi.rho.nV[p]/Delta_J_p;
 
       /*
        Replace the deformation gradient at t = n with the converged deformation gradient
@@ -545,6 +567,7 @@ static void update_Local_State(Matrix D_Displacement,
 	     Free memory 
       */
       free__TensorLib__(f_n1_p);
+      free__TensorLib__(C_n1_p);
       free__MatrixLib__(D_Displacement_Ap);
       free__MatrixLib__(gradient_p);
       free(Nodes_p.Connectivity);
