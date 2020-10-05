@@ -248,30 +248,95 @@ double J3__TensorLib__(Tensor A)
 
 /*************************************************************/
 
+
 Tensor Eigenvalues__TensorLib__(Tensor A)
 {
   /* Auxiliar variables */
   int Ndim = NumberDimensions;
   double I1, I2, I3;
+  double b, c, m, n, t, x;
+
   /* Define output */
-  Tensor w = alloc__TensorLib__(1);
-  /* Check if is the order is order 2 */
-  if(A.Order == 2){  
-    if(Ndim == 2){      
-      I1 = I1__TensorLib__(A);
-      I2 = I2__TensorLib__(A);
-      w.n[0] = 0.5*(I1+sqrt(DMAX(0,I1*I1-4*I2)));
-      w.n[1] = 0.5*(I1-sqrt(DMAX(0,I1*I1-4*I2)));
-    }
-    if(Ndim == 3){      
-      I1 = I1__TensorLib__(A);
-      I2 = I2__TensorLib__(A);
-      I3 = I3__TensorLib__(A);
-      fprintf(stderr,"%s : %s !!! \n",
-	      "Error in Eigenvalues__TensorLib__()",
-	      "3D cases are not implemented");
-      exit(EXIT_FAILURE);          
-    }
+  Tensor lambda = alloc_Tensor(1);
+
+  /* Check the order of the input tensor */
+  if(A.Order == 2){
+
+    /*
+      Solve the second order equation
+      x² - I1*x + I2 = 0 
+     */
+    if(Ndim == 2)
+      {
+	I1 = get_I1_Of(A);
+	I2 = get_I2_Of(A);
+
+	b = I1*I1 - 4*I2;
+
+	if(b > TOL_zero)
+	  {
+	    
+	    lambda.n[0] = 0.5*(I1 + sqrt(b));
+	    lambda.n[1] = 0.5*(I1 - sqrt(b));
+
+	  }
+	else if(fabs(b) <= TOL_zero)
+	  {
+	    lambda.n[0] = 0.5*I1;
+	    lambda.n[1] = 0.5*I1;
+	  }
+
+	else
+	  {
+
+	    printf("%s : %s -> %f \n",
+		   "Error in Eigenvalues__TensorLib__()",
+		   "Input tensor should be Hermitian",root);
+	    exit(EXIT_FAILURE);
+
+	  }
+	
+           
+      }
+
+    /*
+      Solve the third order equation via Cardano
+    */
+    if(Ndim == 3)
+      {
+	I1 = get_I1_Of(A);
+	I2 = get_I2_Of(A);
+	I3 = get_I3_Of(A);
+
+	b = I2 - I1*I1/3;
+	c = -2/27*I1*I1*I1 + I1*I2/3 - I3;
+
+	if(fabs(b) <= TOL_zero)
+	  {
+	    
+	    lambda.n[0] = - pow(c,1/3.);
+	    lambda.n[1] = - pow(c,1/3.);
+	    lambda.n[2] = - pow(c,1/3.);
+	    
+	  }
+	else if(b > TOL_zero)
+	  {
+
+	    m = 2*sqrt(-b/3);
+	    
+	  }
+	else
+	  {
+
+	    printf("%s : %s -> %f \n",
+		   "Error in Eigenvalues__TensorLib__()",
+		   "Input tensor should be Hermitian",root);
+	    exit(EXIT_FAILURE);
+	    
+	  }
+
+	
+      }
   }
   else{
     fprintf(stderr,"%s : %s !!! \n",
@@ -280,7 +345,7 @@ Tensor Eigenvalues__TensorLib__(Tensor A)
     exit(EXIT_FAILURE);    
   }
 
-  return w;
+  return lambda;
 }
 
 /*************************************************************/
