@@ -257,7 +257,7 @@ Tensor Eigenvalues__TensorLib__(Tensor A)
   double b, c, m, n, t, x;
 
   /* Define output */
-  Tensor lambda = alloc_Tensor(1);
+  Tensor lambda = alloc__TensorLib__(1);
 
   /* Check the order of the input tensor */
   if(A.Order == 2){
@@ -268,8 +268,8 @@ Tensor Eigenvalues__TensorLib__(Tensor A)
      */
     if(Ndim == 2)
       {
-	I1 = get_I1_Of(A);
-	I2 = get_I2_Of(A);
+	I1 = I1__TensorLib__(A);
+	I2 = I2__TensorLib__(A);
 
 	b = I1*I1 - 4*I2;
 
@@ -291,7 +291,7 @@ Tensor Eigenvalues__TensorLib__(Tensor A)
 
 	    printf("%s : %s -> %f \n",
 		   "Error in Eigenvalues__TensorLib__()",
-		   "Input tensor should be Hermitian",root);
+		   "Input tensor should be Hermitian",b);
 	    exit(EXIT_FAILURE);
 
 	  }
@@ -304,9 +304,9 @@ Tensor Eigenvalues__TensorLib__(Tensor A)
     */
     if(Ndim == 3)
       {
-	I1 = get_I1_Of(A);
-	I2 = get_I2_Of(A);
-	I3 = get_I3_Of(A);
+	I1 = I1__TensorLib__(A);
+	I2 = I2__TensorLib__(A);
+	I3 = I3__TensorLib__(A);
 
 	b = I2 - I1*I1/3;
 	c = -2/27*I1*I1*I1 + I1*I2/3 - I3;
@@ -330,7 +330,7 @@ Tensor Eigenvalues__TensorLib__(Tensor A)
 
 	    printf("%s : %s -> %f \n",
 		   "Error in Eigenvalues__TensorLib__()",
-		   "Input tensor should be Hermitian",root);
+		   "Input tensor should be Hermitian",b);
 	    exit(EXIT_FAILURE);
 	    
 	  }
