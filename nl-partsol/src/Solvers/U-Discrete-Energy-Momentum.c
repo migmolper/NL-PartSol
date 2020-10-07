@@ -67,7 +67,7 @@ void U_Discrete_Energy_Momentum(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int InitialS
     CFL condition. Notice that for this kind of solver, CFL confition is
     not required to be satisfied. The only purpose of it is to use the existing
     software interfase.
-   */
+  */
   DeltaTimeStep = DeltaT_CFL(MPM_Mesh, FEM_Mesh.DeltaX);
 
   for(int TimeStep = InitialStep ; TimeStep<NumTimeStep ; TimeStep++ )
@@ -141,11 +141,11 @@ void U_Discrete_Energy_Momentum(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int InitialS
 	  Forces = compute_Nodal_Forces(D_Displacement,ActiveNodes,
 					MPM_Mesh,FEM_Mesh,TimeStep);
 
-    /*
-      Compute nodal reactions and set to zero those DOF of the
-      nodal forces with imposed displacements.
-    */
-    Reactions = compute_Nodal_Reactions(FEM_Mesh,Forces,ActiveNodes);
+	  /*
+	    Compute nodal reactions and set to zero those DOF of the
+	    nodal forces with imposed displacements.
+	  */
+	  Reactions = compute_Nodal_Reactions(FEM_Mesh,Forces,ActiveNodes);
 
 	 	  
 	  /*
@@ -177,7 +177,7 @@ void U_Discrete_Energy_Momentum(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int InitialS
 		Solve the resulting equation 
 	      */
 	      update_Nodal_D_Displacements(D_Displacement,Tangent_Stiffness,
-				    Effective_Mass,Residual,DeltaTimeStep);
+					   Effective_Mass,Residual,DeltaTimeStep);
 
 	      /*
 		Impose dirichlet boundary conditions over the increment of
@@ -191,7 +191,7 @@ void U_Discrete_Energy_Momentum(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int InitialS
 	      Iter++;
 
 	      free__MatrixLib__(Forces);
-        free__MatrixLib__(Reactions);
+	      free__MatrixLib__(Reactions);
 	      free__MatrixLib__(Residual);
 	      free__MatrixLib__(Tangent_Stiffness);
 	    }
@@ -314,7 +314,7 @@ static Matrix compute_Nodal_Effective_Mass(GaussPoint MPM_Mesh,
 
       /* 
 	 Evaluate the shape function in the coordinates of the particle
-       */
+      */
       ShapeFunction_p = compute_N__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
    
       /*
@@ -372,7 +372,7 @@ static Matrix compute_Nodal_Effective_Mass(GaussPoint MPM_Mesh,
 		{
 		  /*
 		    Compute the vectorized index
-		   */
+		  */
 		  idx_AB_mask_i = B_mask + (i*Order + i)*Nnodes_mask + A_mask*Order;
 		  
 		  Effective_MassMatrix.nV[idx_AB_mask_i] += m_AB_p;
@@ -409,7 +409,7 @@ static Matrix compute_Nodal_Effective_Mass(GaussPoint MPM_Mesh,
 
   /*
     Free lumped mass matrix.
-   */
+  */
   free__MatrixLib__(Lumped_MassMatrix);
 
   /* 
@@ -427,7 +427,7 @@ static Matrix compute_Nodal_Momentum(GaussPoint MPM_Mesh,
 				     Mask ActiveNodes)
 /*
 
-*/
+ */
 {
   int Ndim = NumberDimensions;
   int Nnodes_mask = ActiveNodes.Nactivenodes;
@@ -446,7 +446,7 @@ static Matrix compute_Nodal_Momentum(GaussPoint MPM_Mesh,
   /* Element for each particle */
   Element Nodes_p;
 
- /* Define and allocate the momentum vector */
+  /* Define and allocate the momentum vector */
   Matrix Momentum = allocZ__MatrixLib__(Ndim,Nnodes_mask);
     
   /* Iterate over the particles to get the nodal values */
@@ -467,7 +467,7 @@ static Matrix compute_Nodal_Momentum(GaussPoint MPM_Mesh,
 	{
       
 	  /*
-	     Get the node in the nodal momentum with the mask
+	    Get the node in the nodal momentum with the mask
 	  */
 	  Ap = Nodes_p.Connectivity[A];
 	  A_mask = ActiveNodes.Nodes2Mask[Ap];
@@ -489,7 +489,7 @@ static Matrix compute_Nodal_Momentum(GaussPoint MPM_Mesh,
     }
 
   /*
-     Add some usefulll info
+    Add some usefulll info
   */
   strcpy(Momentum.Info,"Nodal-Momentum");
  
@@ -544,9 +544,9 @@ static Matrix compute_Nodal_Velocity(Matrix Mass,
 /**************************************************************/
 
 static void imposse_Nodal_Velocity(Mesh FEM_Mesh,
-                                  Matrix Velocity,
-                                  Mask ActiveNodes,
-                                  int TimeStep)
+				   Matrix Velocity,
+				   Mask ActiveNodes,
+				   int TimeStep)
 /*
   Apply the boundary conditions over the nodes 
 */
@@ -565,19 +565,19 @@ static void imposse_Nodal_Velocity(Mesh FEM_Mesh,
     {
 
       /* 
-        Get the number of nodes of this boundarie 
+	 Get the number of nodes of this boundarie 
       */
       NumNodesBound = FEM_Mesh.Bounds.BCC_i[i].NumNodes;
 
       /* 
-        Get the number of dimensions where the BCC it is applied 
+	 Get the number of dimensions where the BCC it is applied 
       */
       NumDimBound = FEM_Mesh.Bounds.BCC_i[i].Dim;
 
       for(int j = 0 ; j<NumNodesBound ; j++)
         {
           /* 
-            Get the index of the node 
+	     Get the index of the node 
           */
           Id_BCC = FEM_Mesh.Bounds.BCC_i[i].Nodes[j];
           Id_BCC_mask = ActiveNodes.Nodes2Mask[Id_BCC];
@@ -587,27 +587,27 @@ static void imposse_Nodal_Velocity(Mesh FEM_Mesh,
             continue interating
           */
           if(Id_BCC_mask == -1)
-          {
-            continue;
-          }
+	    {
+	      continue;
+	    }
 
           /* 
-            Loop over the dimensions of the boundary condition 
+	     Loop over the dimensions of the boundary condition 
           */
           for(int k = 0 ; k<NumDimBound ; k++)
             {
 
               /* 
-                Apply only if the direction is active (1) 
+		 Apply only if the direction is active (1) 
               */
               if(FEM_Mesh.Bounds.BCC_i[i].Dir[k] == 1)
                 {
     
                   /* 
-                    Check if the curve it is on time 
+		     Check if the curve it is on time 
                   */
                   if( (TimeStep < 0) ||
-                    (TimeStep > FEM_Mesh.Bounds.BCC_i[i].Value[k].Num))
+		      (TimeStep > FEM_Mesh.Bounds.BCC_i[i].Value[k].Num))
                     {
                       printf("%s : %s \n",
                              "Error in imposse_Nodal_Velocity()",
@@ -616,11 +616,11 @@ static void imposse_Nodal_Velocity(Mesh FEM_Mesh,
                     }
 
                   /* 
-                    Assign the boundary condition 
+		     Assign the boundary condition 
                   */
                   Id_BCC_mask_k = Id_BCC_mask + k*Nnodes_mask; 
                   Velocity.nV[Id_BCC_mask] = FEM_Mesh.Bounds.BCC_i[i].Value[k].Fx[TimeStep]*
-                                             (double)FEM_Mesh.Bounds.BCC_i[i].Dir[k];
+		    (double)FEM_Mesh.Bounds.BCC_i[i].Dir[k];
                 }
             }
         }    
@@ -639,7 +639,7 @@ static void update_Local_State(Matrix D_Displacement,
 
   /*
     Auxiliar variables
-   */
+  */
   int Ndim = NumberDimensions;
   int Np = MPM_Mesh.NumGP;
   int Nnodes_mask = ActiveNodes.Nactivenodes;
@@ -667,12 +667,12 @@ static void update_Local_State(Matrix D_Displacement,
       
       /*
 	Get the nodal increment of displacement using the mask
-       */
+      */
       D_Displacement_Ap = get_set_field__MeshTools__(D_Displacement, Nodes_p, ActiveNodes);
 
       /*
-      	 Evaluate the shape function gradient in the coordinates of the particle
-       */
+	Evaluate the shape function gradient in the coordinates of the particle
+      */
       gradient_p = compute_dN__MeshTools__(Nodes_p,MPM_Mesh,FEM_Mesh);
 	  
       /*
@@ -964,7 +964,7 @@ static void compute_Nodal_Body_Forces(Matrix Forces,
 
   /*
     Free auxiliar tensor
-   */
+  */
   free__TensorLib__(b);
 
   
@@ -991,58 +991,58 @@ static Matrix compute_Nodal_Reactions(Mesh FEM_Mesh, Matrix Forces, Mask ActiveN
   strcpy(Reactions.Info,"REACTIONS");
 
   /*
-     Loop over the the boundaries 
+    Loop over the the boundaries 
   */
   for(int i = 0 ; i<FEM_Mesh.Bounds.NumBounds ; i++)
     {
-    /* 
-      Get the number of nodes of this boundarie 
-    */
-    NumNodesBound = FEM_Mesh.Bounds.BCC_i[i].NumNodes;
+      /* 
+	 Get the number of nodes of this boundarie 
+      */
+      NumNodesBound = FEM_Mesh.Bounds.BCC_i[i].NumNodes;
     
-    /* 
-      Get the number of dimensions where the BCC it is applied 
-    */
-    NumDimBound = FEM_Mesh.Bounds.BCC_i[i].Dim;
+      /* 
+	 Get the number of dimensions where the BCC it is applied 
+      */
+      NumDimBound = FEM_Mesh.Bounds.BCC_i[i].Dim;
     
-    for(int j = 0 ; j<NumNodesBound ; j++)
-      {
-        /* 
-         Get the index of the node 
-        */
-        Id_BCC = FEM_Mesh.Bounds.BCC_i[i].Nodes[j];
-        Id_BCC_mask = ActiveNodes.Nodes2Mask[Id_BCC];
+      for(int j = 0 ; j<NumNodesBound ; j++)
+	{
+	  /* 
+	     Get the index of the node 
+	  */
+	  Id_BCC = FEM_Mesh.Bounds.BCC_i[i].Nodes[j];
+	  Id_BCC_mask = ActiveNodes.Nodes2Mask[Id_BCC];
 
-        /*
-          The boundary condition is not affecting any active node,
-          continue interating
-        */
-        if(Id_BCC_mask == -1)
-          {
-            continue;
-          }
+	  /*
+	    The boundary condition is not affecting any active node,
+	    continue interating
+	  */
+	  if(Id_BCC_mask == -1)
+	    {
+	      continue;
+	    }
       
-        /* 
-          Loop over the dimensions of the boundary condition 
-        */
-        for(int k = 0 ; k<NumDimBound ; k++)
-          {
+	  /* 
+	     Loop over the dimensions of the boundary condition 
+	  */
+	  for(int k = 0 ; k<NumDimBound ; k++)
+	    {
 
-            /* 
-              Apply only if the direction is active (1) 
-            */
-            if(FEM_Mesh.Bounds.BCC_i[i].Dir[k] == 1)
-              {
-                /* 
-                Set to zero the forces in the nodes where velocity is fixed 
-                */
-                Id_BCC_mask_k = Id_BCC_mask + k*Nnodes_mask; 
-                Reactions.nV[Id_BCC_mask_k] = Forces.nV[Id_BCC_mask_k];
-                Forces.nV[Id_BCC_mask_k] = 0;
-              }
-          }
-      }    
-  }
+	      /* 
+		 Apply only if the direction is active (1) 
+	      */
+	      if(FEM_Mesh.Bounds.BCC_i[i].Dir[k] == 1)
+		{
+		  /* 
+		     Set to zero the forces in the nodes where velocity is fixed 
+		  */
+		  Id_BCC_mask_k = Id_BCC_mask + k*Nnodes_mask; 
+		  Reactions.nV[Id_BCC_mask_k] = Forces.nV[Id_BCC_mask_k];
+		  Forces.nV[Id_BCC_mask_k] = 0;
+		}
+	    }
+	}    
+    }
 
   return Reactions;
 }
@@ -1094,7 +1094,7 @@ static Matrix compute_Nodal_Residual(Matrix Velocity,
 
   /*
     Free Memory 
-   */
+  */
   free__MatrixLib__(Acceleration);
   free__MatrixLib__(Inertial_Forces);
 
@@ -1170,7 +1170,7 @@ static Matrix assemble_Nodal_Tangent_Stiffness(Mask ActiveNodes,
   
   /*
     Compute term related to the material non-linearities
-   */
+  */
   assemble_Nodal_Tangent_Stiffness_Material(Tangent_Stiffness,ActiveNodes,MPM_Mesh,FEM_Mesh);
 
   return Tangent_Stiffness;
@@ -1293,12 +1293,12 @@ static void assemble_Nodal_Tangent_Stiffness_Geometric(Matrix Tangent_Stiffness,
 
 	      /*
 		Compute the dyadic product of both gradients 
-	       */
+	      */
 	      GRADIENT_pA_o_GRADIENT_pB = dyadic_Product__TensorLib__(GRADIENT_pA,GRADIENT_pB);
 
 	      /*
 		Get the nodal contribution
-	       */
+	      */
 	      Geometric_AB_p = inner_product__TensorLib__(S_p, GRADIENT_pA_o_GRADIENT_pB);
 
 	      /*
@@ -1464,7 +1464,7 @@ static void assemble_Nodal_Tangent_Stiffness_Material(Matrix Tangent_Stiffness,
 
 	      /*
 		Compute the nodal matrix with the contribution to each degree of freedom
-	       */
+	      */
 	      Material_AB = compute_Nodal_Tangent_Stiffness_Material(F_n12_p,C_AB,
 								     transpose_F_n12_p);
 	      
@@ -1566,10 +1566,10 @@ static Tensor compute_Nodal_Tangent_Stiffness_Material(Tensor F_n12_p,
 /**************************************************************/
 
 static void update_Nodal_D_Displacements(Matrix D_Displacement,
-				  Matrix Tangent_Stiffness,
-				  Matrix Effective_Mass,
-				  Matrix Residual,
-				  double Dt)
+					 Matrix Tangent_Stiffness,
+					 Matrix Effective_Mass,
+					 Matrix Residual,
+					 double Dt)
 /*
   This function is deboted to update the vector with the nodal displacement by
   solving :
@@ -1592,7 +1592,7 @@ static void update_Nodal_D_Displacements(Matrix D_Displacement,
 
   /*
     Compute the adition of the mass matrix and the tangent stifness matrix
-   */
+  */
   for(int idx_AB_ij ; idx_AB_ij<Order*Order ; idx_AB_ij++)
     {
       Global_Matrix.nV[idx_AB_ij] =
@@ -1606,7 +1606,7 @@ static void update_Nodal_D_Displacements(Matrix D_Displacement,
 
   /*
     Check error messages in the LAPACK LU descompistion  
-   */
+  */
   if(INFO)
     {
       fprintf(stderr,"%s : %s %s %s \n",
@@ -1638,7 +1638,7 @@ static void update_Nodal_D_Displacements(Matrix D_Displacement,
 
   /*
     Update 
-   */
+  */
   for(int idx_A_i = 0 ; idx_A_i < Order ; idx_A_i++)
     {	
       D_Displacement.nV[idx_A_i] -= Residual.nV[idx_A_i];
@@ -1646,7 +1646,7 @@ static void update_Nodal_D_Displacements(Matrix D_Displacement,
 
   /*
     Free auxiliar global matrix
-   */
+  */
   free__MatrixLib__(Global_Matrix);
   
 }
@@ -1655,9 +1655,9 @@ static void update_Nodal_D_Displacements(Matrix D_Displacement,
 /**************************************************************/
 
 static void imposed_Nodal_Displacements(Matrix D_Displacement,
-				  Mask ActiveNodes,
-				  Mesh FEM_Mesh,
-				  int TimeStep)
+					Mask ActiveNodes,
+					Mesh FEM_Mesh,
+					int TimeStep)
 /*
   Apply the boundary conditions over the nodes 
 */
@@ -1677,44 +1677,44 @@ static void imposed_Nodal_Displacements(Matrix D_Displacement,
 	Get the number of nodes of this boundary and 
 	the number of dimensions where it is applied
       */
-    NumNodesBound = FEM_Mesh.Bounds.BCC_i[i_boundary].NumNodes;
-    NumDimBound = FEM_Mesh.Bounds.BCC_i[i_boundary].Dim;
+      NumNodesBound = FEM_Mesh.Bounds.BCC_i[i_boundary].NumNodes;
+      NumDimBound = FEM_Mesh.Bounds.BCC_i[i_boundary].Dim;
     
-    for(int A = 0 ; A<NumNodesBound ; A++)
-      {
-	
-      /* 
-	 Get the index of the node and get the mask node value 
-      */
-      A_BCC = FEM_Mesh.Bounds.BCC_i[i_boundary].Nodes[A];
-      A_mask_BCC = ActiveNodes.Nodes2Mask[A_BCC];
-
-      for(int i_dim = 0 ; i_dim<NumDimBound ; i_dim++)
+      for(int A = 0 ; A<NumNodesBound ; A++)
 	{
-	  
-	if(FEM_Mesh.Bounds.BCC_i[i_boundary].Dir[i_dim] == 1)
-	  {
-	  /*
-	    Check if the curve it is on time 
-	  */
-	  if( (TimeStep < 0) ||
-	      (TimeStep > FEM_Mesh.Bounds.BCC_i[i_boundary].Value[i_dim].Num))
-	    {
-	      printf("%s : %s \n",
-		     "Error in imposed_displacements()",
-		     "The time step is out of the curve !!");
-	      exit(EXIT_FAILURE);
-	    }
+	
 	  /* 
-	     Assign the boundary condition 
+	     Get the index of the node and get the mask node value 
 	  */
-	  D_Displacement.nM[i_dim][A_mask_BCC] =
-	    FEM_Mesh.Bounds.BCC_i[i_boundary].Value[i_dim].Fx[TimeStep]*
-	    (double)FEM_Mesh.Bounds.BCC_i[i_boundary].Dir[i_dim];
+	  A_BCC = FEM_Mesh.Bounds.BCC_i[i_boundary].Nodes[A];
+	  A_mask_BCC = ActiveNodes.Nodes2Mask[A_BCC];
+
+	  for(int i_dim = 0 ; i_dim<NumDimBound ; i_dim++)
+	    {
 	  
-	  }
-	}
-      }    
+	      if(FEM_Mesh.Bounds.BCC_i[i_boundary].Dir[i_dim] == 1)
+		{
+		  /*
+		    Check if the curve it is on time 
+		  */
+		  if( (TimeStep < 0) ||
+		      (TimeStep > FEM_Mesh.Bounds.BCC_i[i_boundary].Value[i_dim].Num))
+		    {
+		      printf("%s : %s \n",
+			     "Error in imposed_displacements()",
+			     "The time step is out of the curve !!");
+		      exit(EXIT_FAILURE);
+		    }
+		  /* 
+		     Assign the boundary condition 
+		  */
+		  D_Displacement.nM[i_dim][A_mask_BCC] =
+		    FEM_Mesh.Bounds.BCC_i[i_boundary].Value[i_dim].Fx[TimeStep]*
+		    (double)FEM_Mesh.Bounds.BCC_i[i_boundary].Dir[i_dim];
+	  
+		}
+	    }
+	}    
     }
   
 }
@@ -1723,8 +1723,8 @@ static void imposed_Nodal_Displacements(Matrix D_Displacement,
 
 
 static Matrix compute_Nodal_D_Velocity(Matrix Velocity,
-				 Matrix D_Displacement,
-				 double Dt)
+				       Matrix D_Displacement,
+				       double Dt)
 {
   int Nnodes_mask = Velocity.N_cols;
   int Ndim = NumberDimensions;
@@ -1733,7 +1733,7 @@ static Matrix compute_Nodal_D_Velocity(Matrix Velocity,
 
   /*
     Compute the velocity in the midd-point 
-   */
+  */
   for(int idx_A_i = 0 ; idx_A_i < Nnodes_mask*Ndim ; idx_A_i++)
     {	
       D_Velocity.nV[idx_A_i] = 2*(D_Displacement.nV[idx_A_i]/Dt - Velocity.nV[idx_A_i]);
@@ -1806,7 +1806,7 @@ static void update_Particles(Matrix D_Displacement,
 
       /*
 	Update density with the jacobian of the increment deformation gradient
-       */
+      */
       J_p = I3__TensorLib__(f_n1_p);
       MPM_Mesh.Phi.rho.nV[p] = MPM_Mesh.Phi.rho.nV[p]/J_p;
 
@@ -1838,7 +1838,7 @@ static void update_Particles(Matrix D_Displacement,
 	  
 	  /*
 	    Update velocity position and deformation gradient of the particles
-	   */
+	  */
 	  for(int i = 0 ; i<Ndim ; i++)
 	    {
 	      idx_A_mask_i = A_mask + i*Nnodes_mask;
@@ -1849,7 +1849,7 @@ static void update_Particles(Matrix D_Displacement,
 
       /*
 	Free memory
-       */
+      */
       free(Nodes_p.Connectivity);
       free__MatrixLib__(D_Displacement_Ap);
       free__MatrixLib__(ShapeFunction_p);

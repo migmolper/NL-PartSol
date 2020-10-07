@@ -25,9 +25,7 @@ Tensor grad_energy_Neo_Hookean_Wriggers(Tensor grad_e, Tensor C,
     {
       for(int j = 0 ; j < Ndim ; j++)
 	{
-	  grad_e.N[i][j] =
-	    lambda*0.5*(J2 - 1)*C_m1.N[i][j] +
-	    G*(I.N[i][j] - C_m1.N[i][j]);
+	  grad_e.N[i][j] = lambda*0.5*(J2 - 1)*C_m1.N[i][j] + G*(I.N[i][j] - C_m1.N[i][j]);
 	}
     }
   
@@ -76,8 +74,8 @@ Tensor compute_stiffness_density_Neo_Hookean_Wriggers(Tensor v, Tensor w,
   double Cm1_dot_w_dot_v;
   
   Cm1                     = Inverse__TensorLib__(C);
-  Cm1_dot_w               = vector_linear_mapping__TensorLib__(Cm1,w);
   Cm1_dot_v               = vector_linear_mapping__TensorLib__(Cm1,v);
+  Cm1_dot_w               = vector_linear_mapping__TensorLib__(Cm1,w);
   Cm1_dot_w_dot_v         = inner_product__TensorLib__(Cm1_dot_w,v);
   Cm1_dot_v_o_Cm1_dot_w   = dyadic_Product__TensorLib__(Cm1_dot_v,Cm1_dot_w);    
 
@@ -87,7 +85,7 @@ Tensor compute_stiffness_density_Neo_Hookean_Wriggers(Tensor v, Tensor w,
       for(int B = 0 ; B<Ndim ; B++)
       {
 	     C_mat.N[A][B] += lambda*J2*Cm1_dot_v_o_Cm1_dot_w.N[A][B] -
-                  	    (0.5*(J2 - 1) - G)*Cm1_dot_w_dot_v*Cm1.N[A][B] -
+                  	    (0.5*lambda*(J2 - 1) - G)*Cm1_dot_w_dot_v*Cm1.N[A][B] -
                   	    (0.5*lambda*(J2 - 1) - G)*Cm1_dot_v_o_Cm1_dot_w.N[B][A];
       }
     }
