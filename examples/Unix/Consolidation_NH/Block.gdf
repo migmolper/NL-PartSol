@@ -1,0 +1,38 @@
+
+GramsBox (Type=GID,File=Mesh.msh) { 
+
+	 GramsBoundary (File=RightBoundary.txt) { 
+	 	 BcDirichlet V.x CurveConstat.txt 
+	 	 BcDirichlet V.y NULL 
+	 } 
+
+} 
+
+GramsTime (Type=PCE) { 
+	 CEL=5053019.039000 
+	 CFL=0.800000 
+	 N=379 
+} 
+
+GramsSolid2D (File=Mesh.msh) { 
+
+	 GramsMaterials (Particles=Material.txt) { 
+	 	 Type=LE 
+	 	 rho=2.00E+03 
+	 	 E=2.00E+05 
+	 	 mu=0.000000 
+	 	 Id=0 
+	 } 
+
+	 GramsShapeFun (Type=LME) { 
+	 	 gamma=5.000000 
+	 } 
+
+	 GramsInitials (Nodes=Init.txt) { 
+	 	 Value=[-5000.000000,0.000000] 
+	 } 
+
+} 
+GramsOutputs (i=1) { 
+	 DIR=MPM_LME_PCE/Resultados_gamma_50_CFL_8 
+} 

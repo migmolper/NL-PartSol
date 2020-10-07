@@ -1,0 +1,41 @@
+
+# Background mesh definition
+GramsBox (Type=GID,File=FEM_Mesh.msh) {
+
+	 GramsBoundary (File=Bottom.txt) { 
+	 	 BcDirichlet V.x NULL
+	 	 BcDirichlet V.y CurveConstat.txt
+	 } 
+
+}
+
+# Time integration
+GramsTime (Type=Discrete-Energy-Momentum) {
+    CFL=26.26
+    N=50
+}
+
+# Material points definitions
+GramsSolid2D (File=MPM_Mesh.msh,GPxElement=4) {
+
+    # List of materials for the GPs
+    GramsMaterials (Particles=Material.txt) {
+	Type=Saint-Venant-Kirchhoff
+	Cel=38.82
+	rho=20
+	E=2.91e6
+	mu=0.45
+	Id=0
+    }
+    
+    # Shape function definition
+    GramsShapeFun (Type=MPMQ4) {
+    }
+
+  
+}
+
+# Outputs 
+GramsOutputs (i=1) {
+	     DIR=Resultados
+}
