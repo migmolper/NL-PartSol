@@ -200,7 +200,6 @@ void U_Discrete_Energy_Momentum(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int InitialS
 		Update the iteration number
 	      */
 	      Iter++;
-	      printf("%i \n",Iter);
 
 	      free__MatrixLib__(Forces);
 	      free__MatrixLib__(Reactions);
