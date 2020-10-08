@@ -35,7 +35,8 @@ Mask generate_NodalMask__MeshTools__(Mesh FEM_Mesh)
 
 /**************************************************************/
 
-Mask generate_Mask_for_static_condensation__MeshTools__(Mask ActiveNodes, MeshFEM_Mesh)
+Mask generate_Mask_for_static_condensation__MeshTools__(Mask ActiveNodes,
+                                                        Mesh FEM_Mesh)
 {
 
   /* 
@@ -43,6 +44,7 @@ Mask generate_Mask_for_static_condensation__MeshTools__(Mask ActiveNodes, MeshFE
   */
   int Ndof = NumberDOF;
   int Nnodes_mask = ActiveNodes.Nactivenodes;
+  int Order = Nnodes_mask*Ndof;
   int Number_of_BCC = FEM_Mesh.Bounds.NumBounds;
   int NumNodesBound; /* Number of nodes of the bound */
   int NumDimBound; /* Number of dimensions */
@@ -53,13 +55,13 @@ Mask generate_Mask_for_static_condensation__MeshTools__(Mask ActiveNodes, MeshFE
   /*
     Generate mask for the static condensation.
   */
-  int N_restricted_dofs = 0;
-  int * Nodes2Mask = (int *)Allocate_ArrayZ(Nnodes_mask*Ndof,sizeof(int));
+  int Nactivenodes = 0;
+  int * Nodes2Mask = (int *)Allocate_ArrayZ(Order,sizeof(int));
   ChainPtr Mask2Nodes = NULL;
   Mask Free_and_Restricted_Dofs;
 
   /* 
-    Loop over the the boundaries 
+    Loop over the the boundaries to find the constrained dofs
   */
   for(int i = 0 ; i<Number_of_BCC ; i++)
     {
@@ -99,8 +101,7 @@ Mask generate_Mask_for_static_condensation__MeshTools__(Mask ActiveNodes, MeshFE
                 if(FEM_Mesh.Bounds.BCC_i[i].Dir[k] == 1)
                   {
                     Id_BCC_mask_k = Id_BCC_mask + k*Nnodes_mask;
-                    Nodes2Mask[Id_BCC_mask_k] = 1;
-                    N_restricted_dofs++;
+                    Nodes2Mask[Id_BCC_mask_k] = -1;
                   }
               }
           }
@@ -108,14 +109,28 @@ Mask generate_Mask_for_static_condensation__MeshTools__(Mask ActiveNodes, MeshFE
         }    
     }
 
+  /* 
+    Generate mask using the location of the constrained dofs
+  */
+  for(int A_i = 0 ; A_i<Order ; A_i++)
+    {
+     if(Nodes2Mask[A_i] != -1)
+      {
+        Nodes2Mask[A_i] = Nactivenodes;
+        push__SetLib__(&Mask2Nodes,A_i);
+        Nactivenodes++;
+      } 
+    }
 
+
+  /*
+    Assign information to the output
+  */
   Free_and_Restricted_Dofs.Nactivenodes = Nactivenodes;
   Free_and_Restricted_Dofs.Mask2Nodes = set_to_memory__SetLib__(Mask2Nodes,Nactivenodes);
   Free_and_Restricted_Dofs.Nodes2Mask = Nodes2Mask;  
 
   return Free_and_Restricted_Dofs;
-
-
 }
 
 

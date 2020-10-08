@@ -16,7 +16,7 @@ static Matrix compute_Nodal_Momentum(GaussPoint, Mesh, Mask);
 static Matrix compute_Nodal_Velocity(Matrix, Matrix);
 static void   imposse_Nodal_Velocity(Mesh,Matrix,Mask,int);
 static void   solve_non_reducted_system(Matrix, Matrix, Matrix, Matrix, double);
-static void   solve_reducted_system(Matrix, Matrix, Matrix, Matrix, double);
+static void   solve_reducted_system(Mask,Matrix, Matrix, Matrix, Matrix, double);
 static void   update_Local_State(Matrix,Mask,GaussPoint,Mesh,double);
 static Matrix compute_Nodal_Forces(Matrix, Mask, GaussPoint, Mesh, int);
 static void   compute_Nodal_Internal_Forces(Matrix,Matrix,Mask,GaussPoint, Mesh);
@@ -56,6 +56,7 @@ void U_Discrete_Energy_Momentum(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int InitialS
   Matrix D_Velocity;
   Matrix Residual;
   Mask ActiveNodes;
+  Mask Free_and_Restricted_Dofs;
   double TOL = 0.000000000001;
   double epsilon = 1.0;
   double DeltaTimeStep;
@@ -85,7 +86,9 @@ void U_Discrete_Energy_Momentum(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int InitialS
 	the equilibrium only in the active nodes
       */
       ActiveNodes = generate_NodalMask__MeshTools__(FEM_Mesh);
-//    Free_and_Restricted_Dofs = generate_Mask_for_static_condensation__MeshTools__(ActiveNodes,FEM_Mesh);
+      Free_and_Restricted_Dofs = generate_Mask_for_static_condensation__MeshTools__(ActiveNodes,FEM_Mesh);
+
+      exit(0);
 
       Nactivenodes = ActiveNodes.Nactivenodes;
       print_Status("DONE !!!",TimeStep);
@@ -184,15 +187,16 @@ void U_Discrete_Energy_Momentum(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int InitialS
 	      /*
 		      Solve the resulting equation 
 	      */
-        if(Free_and_Restricted_Dofs.)
+        if((Free_and_Restricted_Dofs.Nactivenodes - Ndim*Nactivenodes) == 0)
           {
   	       solve_non_reducted_system(D_Displacement,Tangent_Stiffness, 
                                      Effective_Mass,Residual,DeltaTimeStep);
           }
         else
           {
-            solve_reducted_system(D_Displacement,Tangent_Stiffness, 
-                                  Effective_Mass,Residual,DeltaTimeStep);
+            solve_reducted_system(Free_and_Restricted_Dofs,D_Displacement,
+                                  Tangent_Stiffness, Effective_Mass,
+                                  Residual,DeltaTimeStep);
           } 
 
 	      /*
@@ -1155,10 +1159,10 @@ static Matrix compute_Nodal_Residual(Matrix Velocity,
   for(int idx_A = 0 ; idx_A<Order ; idx_A++)
     {
       for(int idx_B = 0 ; idx_B<Order ; idx_B++)
-	{
-	  idx_AB = idx_A*Order + idx_B;
-	  Inertial_Forces.nV[idx_A] += Mass.nV[idx_AB]*Acceleration.nV[idx_B];
-	}
+        {
+	         idx_AB = idx_A*Order + idx_B;
+	         Inertial_Forces.nV[idx_A] += Mass.nV[idx_AB]*Acceleration.nV[idx_B];
+	      }
     }
 
   /*
@@ -1731,11 +1735,12 @@ static void solve_non_reducted_system(Matrix D_Displacement,
 
 /**************************************************************/
 
-static void solve_reducted_system(Matrix D_Displacement,
-           Matrix Tangent_Stiffness,
-           Matrix Effective_Mass,
-           Matrix Residual,
-           double Dt)
+static void solve_reducted_system(Mask Free_and_Restricted_Dofs,
+                                  Matrix D_Displacement,
+                                  Matrix Tangent_Stiffness,
+                                  Matrix Effective_Mass,
+                                  Matrix Residual,
+                                  double Dt)
 /*
   This function is deboted to update the vector with the nodal displacement by
   solving :
@@ -1747,29 +1752,31 @@ static void solve_reducted_system(Matrix D_Displacement,
   int Nnodes_mask = Residual.N_cols;
   int Ndof = Residual.N_rows;
   int Order = Nnodes_mask*Ndof;
-  int Num_Restricted_dof = ;
-  int Num_Free_dofs = Order - Num_Restricted_dof; 
+  int Num_Free_dofs = Free_and_Restricted_Dofs.Nactivenodes;
+  int Num_Restricted_dof = Order - Num_Free_dofs;
   int LDA   = Nnodes_mask*Ndof;
   int LDB = Nnodes_mask*Ndof;
   char  TRANS = 'N'; /* (No transpose) */
   int   INFO = 3;
   int * IPIV = (int *)Allocate_Array(Order,sizeof(int));
   int NRHS = 1;
+
+  int Free_A_ij;
+  int idx_A_ij, idx_B_ij;
+  int Mask_idx_A_ij, Mask_idx_B_ij;
   
   /*
     Guyan reduction : static condensation
     Here, we will work directly with vectorized matrix
   */
   Matrix K_Global_FF = allocZ__MatrixLib__(Num_Free_dofs,Num_Free_dofs);
-  Matrix K_Global_FR = allocZ__MatrixLib__(Num_Free_dofs,Num_Restricted_dof);
   Matrix Residual_F  = allocZ__MatrixLib__(Num_Free_dofs,1);
-  Matrix RHS_F       = allocZ__MatrixLib__(Num_Free_dofs,1);
 
-for(int idx_A_ij = 0 ; idx_A_ij < Order ; idx_A_ij++)
+for(idx_A_ij = 0 ; idx_A_ij < Order ; idx_A_ij++)
   {
 
     /* Get the index mask of the dof */
-    Mask_idx_A_ij = Free_and_Restricted_Dofs.Nodes2Mask(idx_A_ij);
+    Mask_idx_A_ij = Free_and_Restricted_Dofs.Nodes2Mask[idx_A_ij];
 
     /*
       Get the Residual with the Free dofs
@@ -1780,11 +1787,11 @@ for(int idx_A_ij = 0 ; idx_A_ij < Order ; idx_A_ij++)
       } 
 
 
-    for(int idx_B_ij = 0 ; idx_B_ij < Order ; idx_A_ij++)
+    for(idx_B_ij = 0 ; idx_B_ij < Order ; idx_A_ij++)
     { 
 
       /* Get the index mask of the dof */
-      Mask_idx_B_ij = Free_and_Restricted_Dofs.Nodes2Mask(idx_B_ij);
+      Mask_idx_B_ij = Free_and_Restricted_Dofs.Nodes2Mask[idx_B_ij];
 
       /*
           Get the K matrix with the Free-Free dofs
@@ -1792,27 +1799,13 @@ for(int idx_A_ij = 0 ; idx_A_ij < Order ; idx_A_ij++)
       if((Mask_idx_A_ij != - 1) && (Mask_idx_B_ij != - 1))
       {
         K_Global_FF.nM[Mask_idx_A_ij][Mask_idx_B_ij] = 
-            (2/DSQR(Dt))*Effective_Mass.nM[idx_AB_ij][idx_B_ij] + 
-            Tangent_Stiffness.nM[idx_AB_ij][idx_B_ij];
-      }
-
-      /*
-        Get the K matrix with the Free-Restricted dofs
-      */
-      if((Mask_idx_A_ij != - 1) && (Mask_idx_B_ij == - 1))
-        K_Global_FR.nM[Mask_idx_A_ij][Mask_idx_B_ij] = 
-            (2/DSQR(Dt))*Effective_Mass.nM[idx_AB_ij][idx_B_ij] + 
-            Tangent_Stiffness.nM[idx_AB_ij][idx_B_ij];
+            (2/DSQR(Dt))*Effective_Mass.nM[idx_A_ij][idx_B_ij] + 
+            Tangent_Stiffness.nM[idx_A_ij][idx_B_ij];
       }
 
     }
 
   }
-
-  /*
-    Compute the RHS
-  */
-
 
   /*
     Compute the LU factorization 
@@ -1826,8 +1819,7 @@ for(int idx_A_ij = 0 ; idx_A_ij < Order ; idx_A_ij++)
     {
       fprintf(stderr,"%s : %s %s %s \n",
         "Error in solve_reducted_system",
-        "The function",
-        "dgetrf_",
+        "The function","dgetrf_",
         "returned an error message !!!" );
       exit(EXIT_FAILURE);
     }
@@ -1835,7 +1827,7 @@ for(int idx_A_ij = 0 ; idx_A_ij < Order ; idx_A_ij++)
   /*
     Solve
   */
-  dgetrs_(&TRANS,&Order,&NRHS,K_Global_FF.nV,&LDA,IPIV,RHS_F.nV,&LDB,&INFO);
+  dgetrs_(&TRANS,&Order,&NRHS,K_Global_FF.nV,&LDA,IPIV,Residual_F.nV,&LDB,&INFO);
   free(IPIV);
   
   /*
@@ -1845,8 +1837,7 @@ for(int idx_A_ij = 0 ; idx_A_ij < Order ; idx_A_ij++)
     {
       fprintf(stderr,"%s : %s %s %s \n",
         "Error in solve_reducted_system",
-        "The function",
-        "dgetrs_",
+        "The function","dgetrs_",
         "returned an error message !!!" );
       exit(EXIT_FAILURE);
     }
@@ -1854,18 +1845,18 @@ for(int idx_A_ij = 0 ; idx_A_ij < Order ; idx_A_ij++)
   /*
     Update 
   */
-  for(int idx_A_i = 0 ; idx_A_i < Num_Free_dofs ; idx_A_i++)
+  for(Free_A_ij = 0 ; Free_A_ij < Num_Free_dofs ; Free_A_ij++)
     { 
-      D_Displacement.nV[] -= RHS_F.nV[idx_A_i];
+      idx_A_ij = Free_and_Restricted_Dofs.Mask2Nodes[Free_A_ij];
+
+      D_Displacement.nV[idx_A_ij] -= Residual_F.nV[idx_A_ij];
     }
 
   /*
     Free auxiliar
   */
   free__MatrixLib__(K_Global_FF);
-  free__MatrixLib__(K_Global_FR);
   free__MatrixLib__(Residual_F);
-  free__MatrixLib__(RHS_F);
   
 }
 
