@@ -58,6 +58,8 @@ Tensor compute_stiffness_density_Neo_Hookean_Wriggers(Tensor v, Tensor w,
   double G = ElasticModulus/(2*(1+mu));
   double lambda = mu*ElasticModulus/((1-mu*2)*(1+mu));
   double J2 = J*J;
+  double alpha = lambda*J2;
+  double beta = 0.5*lambda*(J2 - 1) - G;
   
   /*
     Stifness density tensor
@@ -84,9 +86,9 @@ Tensor compute_stiffness_density_Neo_Hookean_Wriggers(Tensor v, Tensor w,
     {
       for(int B = 0 ; B<Ndim ; B++)
       {
-	     C_mat.N[A][B] += lambda*J2*Cm1_dot_v_o_Cm1_dot_w.N[A][B] -
-                  	    (0.5*lambda*(J2 - 1) - G)*Cm1_dot_w_dot_v*Cm1.N[A][B] -
-                  	    (0.5*lambda*(J2 - 1) - G)*Cm1_dot_v_o_Cm1_dot_w.N[B][A];
+	     C_mat.N[A][B] += alpha*Cm1_dot_v_o_Cm1_dot_w.N[A][B] -
+                  	    beta*Cm1_dot_w_dot_v*Cm1.N[A][B] -
+                  	    beta*Cm1_dot_v_o_Cm1_dot_w.N[B][A];
       }
     }
 

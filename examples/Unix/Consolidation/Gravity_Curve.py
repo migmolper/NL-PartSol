@@ -2,9 +2,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 g = -10
-DetalT = 0.2 # sg
-Tend = 10 # sg
-Nsteps = int(Tend/DetalT)
+DetalT = 0.169114 # sg
+Nsteps = 50
+Tend = DetalT*Nsteps
 
 Gravity = np.zeros(Nsteps)
 T = np.linspace(0,Tend,Nsteps)

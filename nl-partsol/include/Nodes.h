@@ -6,6 +6,7 @@
 #define _NODES_H_
 
 Mask     generate_NodalMask__MeshTools__(Mesh);
+Mask     generate_Mask_for_static_condensation__MeshTools__(Mask, Mesh);
 Matrix   get_set_field__MeshTools__(Matrix, Element, Mask);
 Matrix   get_set_field_old__MeshTools__(Matrix, Element);
 Matrix   compute_distance__MeshTools__(ChainPtr, Matrix, Matrix);
