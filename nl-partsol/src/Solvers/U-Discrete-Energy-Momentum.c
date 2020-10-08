@@ -15,6 +15,7 @@ static Matrix compute_Nodal_Effective_Mass(GaussPoint, Mesh, Mask, double);
 static Matrix compute_Nodal_Momentum(GaussPoint, Mesh, Mask);
 static Matrix compute_Nodal_Velocity(Matrix, Matrix);
 static void   imposse_Nodal_Velocity(Mesh,Matrix,Mask,int);
+static void   imposed_Nodal_Displacements(Matrix, Mask, Mesh, int);
 static void   solve_non_reducted_system(Matrix, Matrix, Matrix, Matrix, double);
 static void   solve_reducted_system(Mask,Matrix, Matrix, Matrix, Matrix, double);
 static void   update_Local_State(Matrix,Mask,GaussPoint,Mesh,double);
@@ -29,7 +30,6 @@ static void   assemble_Nodal_Tangent_Stiffness_Geometric(Matrix, Mask, GaussPoin
 static void   assemble_Nodal_Tangent_Stiffness_Material(Matrix, Mask, GaussPoint, Mesh);
 static Tensor compute_stiffness_density(Tensor, Tensor, Tensor, double, Material);
 static Tensor compute_Nodal_Tangent_Stiffness_Material(Tensor,Tensor,Tensor);
-static void   imposed_Nodal_Displacements(Matrix, Mask, Mesh, int);
 static Matrix compute_Nodal_D_Velocity(Matrix, Matrix,double);
 static void   update_Particles(Matrix, Matrix, GaussPoint, Mesh, Mask, double);
 
@@ -57,12 +57,12 @@ void U_Discrete_Energy_Momentum(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int InitialS
   Matrix Residual;
   Mask ActiveNodes;
   Mask Free_and_Restricted_Dofs;
-  double TOL = 0.000000000001;
+  double TOL = 0.00000000001;
   double epsilon = 1.0;
   double DeltaTimeStep;
   bool Convergence;
   int Iter = 0;
-  int MaxIter = 500;
+  int MaxIter = 100;
 
   /*
     Time step is defined at the init of the simulation throught the
@@ -87,8 +87,6 @@ void U_Discrete_Energy_Momentum(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int InitialS
       */
       ActiveNodes = generate_NodalMask__MeshTools__(FEM_Mesh);
       Free_and_Restricted_Dofs = generate_Mask_for_static_condensation__MeshTools__(ActiveNodes,FEM_Mesh);
-
-      exit(0);
 
       Nactivenodes = ActiveNodes.Nactivenodes;
       print_Status("DONE !!!",TimeStep);
@@ -122,19 +120,20 @@ void U_Discrete_Energy_Momentum(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int InitialS
       print_Status("*************************************************",TimeStep);
       print_Status("Five step : Compute equilibrium ... WORKING",TimeStep);
       /*
-	       Set to zero the increment of velocity and displacement for nodal values
+	Set to zero the increment of velocity and displacement for nodal values
       */
       D_Displacement = allocZ__MatrixLib__(Ndim,Nactivenodes);  
       D_Velocity = allocZ__MatrixLib__(Ndim,Nactivenodes);
+      
       /*
         Impose dirichlet boundary conditions over the increment of
         displacement
-        */
+      */
       imposed_Nodal_Displacements(D_Displacement, ActiveNodes, FEM_Mesh, TimeStep);
       
       /*
-	       Set the convergence false by default and start the iterations to compute
-	       the incement of velocity and displacement in the nodes of the mesh
+	Set the convergence false by default and start the iterations to compute
+	the incement of velocity and displacement in the nodes of the mesh
       */
       Convergence = false;
       Iter = 0;
@@ -181,35 +180,34 @@ void U_Discrete_Energy_Momentum(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int InitialS
 		Assemble the tangent stiffness matrix as a sum of the material tangent
 		stiffness and the geometrical tangent stiffness.
 	      */
-	      Tangent_Stiffness = assemble_Nodal_Tangent_Stiffness(ActiveNodes,
-								   MPM_Mesh,FEM_Mesh);
+	      Tangent_Stiffness = assemble_Nodal_Tangent_Stiffness(ActiveNodes,MPM_Mesh,FEM_Mesh);
 	      
 	      /*
-		      Solve the resulting equation 
+		Solve the resulting equation 
 	      */
-        if((Free_and_Restricted_Dofs.Nactivenodes - Ndim*Nactivenodes) == 0)
-          {
-  	       solve_non_reducted_system(D_Displacement,Tangent_Stiffness, 
-                                     Effective_Mass,Residual,DeltaTimeStep);
-          }
-        else
-          {
-            solve_reducted_system(Free_and_Restricted_Dofs,D_Displacement,
-                                  Tangent_Stiffness, Effective_Mass,
-                                  Residual,DeltaTimeStep);
-          } 
+	      if((Free_and_Restricted_Dofs.Nactivenodes - Ndim*Nactivenodes) == 0)
+		{
+		  solve_non_reducted_system(D_Displacement,Tangent_Stiffness,Effective_Mass,Residual,DeltaTimeStep);
+		}
+	      else
+		{
+		  solve_reducted_system(Free_and_Restricted_Dofs,D_Displacement,
+					Tangent_Stiffness, Effective_Mass,
+					Residual,DeltaTimeStep);
+		}
 
 	      /*
 		Update the iteration number
 	      */
 	      Iter++;
+	      printf("%i \n",Iter);
 
 	      free__MatrixLib__(Forces);
 	      free__MatrixLib__(Reactions);
 	      free__MatrixLib__(Residual);
 	      free__MatrixLib__(Tangent_Stiffness);
 	    }
-    }
+	}
       
       print_iteration(TimeStep,Iter);
       print_Status("DONE !!!",TimeStep);
@@ -259,6 +257,8 @@ void U_Discrete_Energy_Momentum(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int InitialS
       free__MatrixLib__(Residual);
       free(ActiveNodes.Mask2Nodes);
       free(ActiveNodes.Nodes2Mask);
+      free(Free_and_Restricted_Dofs.Mask2Nodes);
+      free(Free_and_Restricted_Dofs.Nodes2Mask);
       
       print_Status("DONE !!!",TimeStep);
 
@@ -1664,7 +1664,7 @@ static void solve_non_reducted_system(Matrix D_Displacement,
   int Ndof = Residual.N_rows;
   int Order = Nnodes_mask*Ndof;
   int LDA   = Nnodes_mask*Ndof;
-  int LDB = Nnodes_mask*Ndof;
+  int LDB   = Nnodes_mask*Ndof;
   char  TRANS = 'N'; /* (No transpose) */
   int   INFO = 3;
   int * IPIV = (int *)Allocate_Array(Order,sizeof(int));
@@ -1754,13 +1754,6 @@ static void solve_reducted_system(Mask Free_and_Restricted_Dofs,
   int Order = Nnodes_mask*Ndof;
   int Num_Free_dofs = Free_and_Restricted_Dofs.Nactivenodes;
   int Num_Restricted_dof = Order - Num_Free_dofs;
-  int LDA   = Nnodes_mask*Ndof;
-  int LDB = Nnodes_mask*Ndof;
-  char  TRANS = 'N'; /* (No transpose) */
-  int   INFO = 3;
-  int * IPIV = (int *)Allocate_Array(Order,sizeof(int));
-  int NRHS = 1;
-
   int Free_A_ij;
   int idx_A_ij, idx_B_ij;
   int Mask_idx_A_ij, Mask_idx_B_ij;
@@ -1777,7 +1770,7 @@ for(idx_A_ij = 0 ; idx_A_ij < Order ; idx_A_ij++)
 
     /* Get the index mask of the dof */
     Mask_idx_A_ij = Free_and_Restricted_Dofs.Nodes2Mask[idx_A_ij];
-
+    
     /*
       Get the Residual with the Free dofs
     */
@@ -1786,8 +1779,7 @@ for(idx_A_ij = 0 ; idx_A_ij < Order ; idx_A_ij++)
         Residual_F.nV[Mask_idx_A_ij] = Residual.nV[idx_A_ij];
       } 
 
-
-    for(idx_B_ij = 0 ; idx_B_ij < Order ; idx_A_ij++)
+    for(idx_B_ij = 0 ; idx_B_ij < Order ; idx_B_ij++)
     { 
 
       /* Get the index mask of the dof */
@@ -1798,8 +1790,8 @@ for(idx_A_ij = 0 ; idx_A_ij < Order ; idx_A_ij++)
       */
       if((Mask_idx_A_ij != - 1) && (Mask_idx_B_ij != - 1))
       {
-        K_Global_FF.nM[Mask_idx_A_ij][Mask_idx_B_ij] = 
-            (2/DSQR(Dt))*Effective_Mass.nM[idx_A_ij][idx_B_ij] + 
+        K_Global_FF.nM[Mask_idx_A_ij][Mask_idx_B_ij] =
+            (2/DSQR(Dt))*Effective_Mass.nM[idx_A_ij][idx_B_ij] +
             Tangent_Stiffness.nM[idx_A_ij][idx_B_ij];
       }
 
@@ -1807,10 +1799,21 @@ for(idx_A_ij = 0 ; idx_A_ij < Order ; idx_A_ij++)
 
   }
 
+/*
+  Parameters for the solver
+ */
+ int LDA   = Num_Free_dofs;
+ int LDB   = Num_Free_dofs;
+ int Order_FF = Num_Free_dofs;
+ char  TRANS = 'N'; /* (No transpose) */
+ int   INFO = 3;
+ int * IPIV = (int *)Allocate_Array(Num_Free_dofs,sizeof(int));
+ int NRHS = 1;
+
   /*
     Compute the LU factorization 
   */
-  dgetrf_(&Order,&Order,K_Global_FF.nV,&LDA,IPIV,&INFO);
+  dgetrf_(&Order_FF,&Order_FF,K_Global_FF.nV,&LDA,IPIV,&INFO);
 
   /*
     Check error messages in the LAPACK LU descompistion  
@@ -1827,7 +1830,7 @@ for(idx_A_ij = 0 ; idx_A_ij < Order ; idx_A_ij++)
   /*
     Solve
   */
-  dgetrs_(&TRANS,&Order,&NRHS,K_Global_FF.nV,&LDA,IPIV,Residual_F.nV,&LDB,&INFO);
+  dgetrs_(&TRANS,&Order_FF,&NRHS,K_Global_FF.nV,&LDA,IPIV,Residual_F.nV,&LDB,&INFO);
   free(IPIV);
   
   /*
@@ -1857,7 +1860,7 @@ for(idx_A_ij = 0 ; idx_A_ij < Order ; idx_A_ij++)
   */
   free__MatrixLib__(K_Global_FF);
   free__MatrixLib__(Residual_F);
-  
+
 }
 
 
