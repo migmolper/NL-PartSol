@@ -143,47 +143,47 @@ Matrix get_set_field__MeshTools__(Matrix Field, Element Nodes_p, Mask ActiveNode
   and translate it to the mask numeration. Second, generate a Matrix with the nodal values.
   To help in the future computations. Nodal data is substracted in the shape (nodesxndofs).
  */
+{
+  int Nnodes = Nodes_p.NumberNodes;
+  int Ndim = NumberDimensions;
+  Matrix Field_Ap = allocZ__MatrixLib__(Nnodes,Ndim);
+  int Ap;
+  int A_mask;
+
+  if(Ndim > 1)
   {
-    int Nnodes = Nodes_p.NumberNodes;
-    int Ndim = NumberDimensions;
-    Matrix Field_Ap = allocZ__MatrixLib__(Nnodes,Ndim);
-    int Ap;
-    int A_mask;
-
-    if(Ndim > 1)
-      {
-	for(int A = 0 ; A<Nnodes ; A++)
-	  {
-	    
+   for(int A = 0 ; A<Nnodes ; A++)
+   {
+     
 	    /* 
 	       Get the node in the mass matrix with the mask
 	    */
-	    Ap = Nodes_p.Connectivity[A];
-	    A_mask = ActiveNodes.Nodes2Mask[Ap];
-	
-	    for(int i = 0 ; i<Ndim ; i++)
-	      {
-		Field_Ap.nM[A][i] = Field.nM[i][A_mask];
-	      }
-	  }
-      }
-    else
-      {
-	for(int A = 0 ; A<Nnodes ; A++)
-	  {
-
-	    /* 
-	       Get the node in the mass matrix with the mask
-	    */
-	    Ap = Nodes_p.Connectivity[A];
-	    A_mask = ActiveNodes.Nodes2Mask[Ap];
-	    
-	    Field_Ap.nV[A] = Field.nV[A_mask];
-	  }
-      }
-    
-    return Field_Ap;
+     Ap = Nodes_p.Connectivity[A];
+     A_mask = ActiveNodes.Nodes2Mask[Ap];
+     
+     for(int i = 0 ; i<Ndim ; i++)
+     {
+      Field_Ap.nM[A][i] = Field.nM[A_mask][i];
+    }
   }
+}
+else
+{
+	for(int A = 0 ; A<Nnodes ; A++)
+ {
+
+	    /* 
+	       Get the node in the mass matrix with the mask
+	    */
+   Ap = Nodes_p.Connectivity[A];
+   A_mask = ActiveNodes.Nodes2Mask[Ap];
+   
+   Field_Ap.nV[A] = Field.nV[A_mask];
+ }
+}
+
+return Field_Ap;
+}
 
 /*********************************************************************/
 
