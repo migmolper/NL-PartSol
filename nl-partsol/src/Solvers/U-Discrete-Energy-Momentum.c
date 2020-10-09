@@ -57,7 +57,7 @@ void U_Discrete_Energy_Momentum(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int InitialS
   Matrix Residual;
   Mask ActiveNodes;
   Mask Free_and_Restricted_Dofs;
-  double TOL = 0.00000000001;
+  double TOL = 0.00000001;
   double epsilon = 1.0;
   double DeltaTimeStep;
   bool Convergence;
@@ -527,7 +527,7 @@ static Matrix compute_Nodal_Velocity(Matrix Mass,
   int Order = Nnodes;
   int LDA   = Nnodes;
   int LDB = Nnodes;
-  char  TRANS = 'N'; /* (No transpose) */
+  char  TRANS = 'T'; /* (Transpose) */
   int   INFO= 3;
   int * IPIV = (int *)Allocate_Array(Order,sizeof(int));
   int NRHS = 1;
@@ -1010,7 +1010,7 @@ static void compute_Nodal_Body_Forces(Matrix Forces,
 		     "The time step is out of the curve !!");
 	      exit(EXIT_FAILURE);
 	    }
-	    b.n[k] = B[i].Value[k].Fx[TimeStep];
+	    b.n[k] = 0.00001*B[i].Value[k].Fx[TimeStep];
 	  }
 	}
 
@@ -1030,7 +1030,7 @@ static void compute_Nodal_Body_Forces(Matrix Forces,
 	    for(int k = 0 ; k<Ndim ; k++)
 	      {
 		idx_A_mask_k = A_mask + k*Nnodes_mask;
-		Forces.nV[idx_A_mask_k] += ShapeFunction_pA*b.n[k]*m_p;
+		Forces.nV[idx_A_mask_k] -= ShapeFunction_pA*b.n[k]*m_p;
 	      } 
 	    
 	  }
@@ -1159,9 +1159,9 @@ static Matrix compute_Nodal_Residual(Matrix Velocity,
     {
       for(int idx_B = 0 ; idx_B<Order ; idx_B++)
         {
-	         idx_AB = idx_A*Order + idx_B;
-	         Inertial_Forces.nV[idx_A] += Mass.nV[idx_AB]*Acceleration.nV[idx_B];
-	      }
+	  idx_AB = idx_A*Order + idx_B;
+	  Inertial_Forces.nV[idx_A] += Mass.nV[idx_AB]*Acceleration.nV[idx_B];
+	}
     }
 
   /*
@@ -1170,7 +1170,7 @@ static Matrix compute_Nodal_Residual(Matrix Velocity,
   */
   for(int idx_A = 0 ; idx_A<Order ; idx_A++)
     {
-      Residual.nV[idx_A] = Inertial_Forces.nV[idx_A] + Forces.nV[idx_A];
+      Residual.nV[idx_A] = - Inertial_Forces.nV[idx_A] - Forces.nV[idx_A];
     }
 
   /*
@@ -1184,15 +1184,13 @@ static Matrix compute_Nodal_Residual(Matrix Velocity,
 }
 
 /**************************************************************/
-static bool check_convergence(Matrix Residual,
-			      double TOL,
-			      int Iter,
-			      int MaxIter)
+static bool check_convergence(Matrix Residual,double TOL,int Iter,int MaxIter)
 {
   bool convergence;
   int Ndim = NumberDimensions;
   int Nnodes_mask = Residual.N_cols;
-  double Error_A;
+  int Total_dof = Ndim*Nnodes_mask;
+  double Error = 0;
 
   if(Iter > MaxIter)
     {
@@ -1203,21 +1201,22 @@ static bool check_convergence(Matrix Residual,
     }
   else
     {
-      for(int A = 0 ; A<Nnodes_mask ; A++)
+      for(int A = 0 ; A<Total_dof ; A++)
 	{
-	  Error_A = 0;
-	  for(int i = 0 ; i<Ndim ; i++)
-	    {
-	      Error_A += DSQR(Residual.nM[i][A]);
-	    }
-	  Error_A = pow(Error_A,0.5);
-	  if(Error_A > TOL)
-	    {
-	      return false;
-	    }
+	  Error += DSQR(Residual.nV[A]);
 	}
-
-      return true; 
+      
+      Error = pow(Error,0.5);
+      printf("Error iter %i : %1.4e \n",Iter,Error);
+      
+      if(Error > TOL)
+	{
+	  return false;
+	}
+      else
+	{
+	  return true; 
+	}
     }
 }
 
@@ -1664,7 +1663,7 @@ static void solve_non_reducted_system(Matrix D_Displacement,
   int Order = Nnodes_mask*Ndof;
   int LDA   = Nnodes_mask*Ndof;
   int LDB   = Nnodes_mask*Ndof;
-  char  TRANS = 'N'; /* (No transpose) */
+  char  TRANS = 'T'; /* (Transpose) */
   int   INFO = 3;
   int * IPIV = (int *)Allocate_Array(Order,sizeof(int));
   int NRHS = 1;
@@ -1721,7 +1720,7 @@ static void solve_non_reducted_system(Matrix D_Displacement,
   */
   for(int idx_A_i = 0 ; idx_A_i < Order ; idx_A_i++)
     {	
-      D_Displacement.nV[idx_A_i] -= Residual.nV[idx_A_i];
+      D_Displacement.nV[idx_A_i] += Residual.nV[idx_A_i];
     }
 
   /*
@@ -1804,7 +1803,7 @@ for(idx_A_ij = 0 ; idx_A_ij < Order ; idx_A_ij++)
  int LDA   = Num_Free_dofs;
  int LDB   = Num_Free_dofs;
  int Order_FF = Num_Free_dofs;
- char  TRANS = 'N'; /* (No transpose) */
+ char  TRANS = 'T'; /* (Transpose) */
  int   INFO = 3;
  int * IPIV = (int *)Allocate_Array(Num_Free_dofs,sizeof(int));
  int NRHS = 1;
@@ -1851,7 +1850,7 @@ for(idx_A_ij = 0 ; idx_A_ij < Order ; idx_A_ij++)
     { 
       idx_A_ij = Free_and_Restricted_Dofs.Mask2Nodes[Free_A_ij];
 
-      D_Displacement.nV[idx_A_ij] -= Residual_F.nV[idx_A_ij];
+      D_Displacement.nV[idx_A_ij] += Residual_F.nV[idx_A_ij];
     }
 
   /*
