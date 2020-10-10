@@ -11,7 +11,7 @@ GramsBox (Type=GID,File=Nodes.msh) {
 
 # Time integration
 GramsTime (Type=Discrete-Energy-Momentum) {
-    CFL=0.1
+    CFL=1
     N=50
 }
 

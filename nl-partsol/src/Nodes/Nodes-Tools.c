@@ -8,7 +8,6 @@ Mask generate_NodalMask__MeshTools__(Mesh FEM_Mesh)
   int Nnodes = FEM_Mesh.NumNodesMesh;
   int Nactivenodes = 0;
   int * Nodes2Mask = (int *)Allocate_ArrayZ(Nnodes,sizeof(int));
-  ChainPtr Mask2Nodes = NULL;
   Mask M;
 
   for(int A = 0 ; A<Nnodes ; A++)
@@ -17,7 +16,6 @@ Mask generate_NodalMask__MeshTools__(Mesh FEM_Mesh)
       if(FEM_Mesh.NumParticles[A] > 0)
       {
         Nodes2Mask[A] = Nactivenodes;
-        push__SetLib__(&Mask2Nodes,A);
         Nactivenodes++;
       }
       else
@@ -27,7 +25,6 @@ Mask generate_NodalMask__MeshTools__(Mesh FEM_Mesh)
     }
 
   M.Nactivenodes = Nactivenodes;
-  M.Mask2Nodes = set_to_memory__SetLib__(Mask2Nodes,Nactivenodes);
   M.Nodes2Mask = Nodes2Mask;  
  
   return M;
@@ -35,8 +32,7 @@ Mask generate_NodalMask__MeshTools__(Mesh FEM_Mesh)
 
 /**************************************************************/
 
-Mask generate_Mask_for_static_condensation__MeshTools__(Mask ActiveNodes,
-                                                        Mesh FEM_Mesh)
+Mask generate_Mask_for_static_condensation__MeshTools__(Mask ActiveNodes, Mesh FEM_Mesh)
 {
 
   /* 
@@ -57,7 +53,6 @@ Mask generate_Mask_for_static_condensation__MeshTools__(Mask ActiveNodes,
   */
   int Nactivenodes = 0;
   int * Nodes2Mask = (int *)Allocate_ArrayZ(Order,sizeof(int));
-  ChainPtr Mask2Nodes = NULL;
   Mask Free_and_Restricted_Dofs;
 
   /* 
@@ -100,7 +95,7 @@ Mask generate_Mask_for_static_condensation__MeshTools__(Mask ActiveNodes,
                 */
                 if(FEM_Mesh.Bounds.BCC_i[i].Dir[k] == 1)
                   {
-                    Id_BCC_mask_k = Id_BCC_mask + k*Nnodes_mask;
+                    Id_BCC_mask_k = Id_BCC_mask*Ndof + k;
                     Nodes2Mask[Id_BCC_mask_k] = -1;
                   }
               }
@@ -117,7 +112,6 @@ Mask generate_Mask_for_static_condensation__MeshTools__(Mask ActiveNodes,
      if(Nodes2Mask[A_i] != -1)
       {
         Nodes2Mask[A_i] = Nactivenodes;
-        push__SetLib__(&Mask2Nodes,A_i);
         Nactivenodes++;
       } 
     }
@@ -127,7 +121,6 @@ Mask generate_Mask_for_static_condensation__MeshTools__(Mask ActiveNodes,
     Assign information to the output
   */
   Free_and_Restricted_Dofs.Nactivenodes = Nactivenodes;
-  Free_and_Restricted_Dofs.Mask2Nodes = set_to_memory__SetLib__(Mask2Nodes,Nactivenodes);
   Free_and_Restricted_Dofs.Nodes2Mask = Nodes2Mask;  
 
   return Free_and_Restricted_Dofs;
@@ -143,47 +136,47 @@ Matrix get_set_field__MeshTools__(Matrix Field, Element Nodes_p, Mask ActiveNode
   and translate it to the mask numeration. Second, generate a Matrix with the nodal values.
   To help in the future computations. Nodal data is substracted in the shape (nodesxndofs).
  */
+{
+  int Nnodes = Nodes_p.NumberNodes;
+  int Ndim = NumberDimensions;
+  Matrix Field_Ap = allocZ__MatrixLib__(Nnodes,Ndim);
+  int Ap;
+  int A_mask;
+
+  if(Ndim > 1)
   {
-    int Nnodes = Nodes_p.NumberNodes;
-    int Ndim = NumberDimensions;
-    Matrix Field_Ap = allocZ__MatrixLib__(Nnodes,Ndim);
-    int Ap;
-    int A_mask;
-
-    if(Ndim > 1)
-      {
-	for(int A = 0 ; A<Nnodes ; A++)
-	  {
-	    
+   for(int A = 0 ; A<Nnodes ; A++)
+   {
+     
 	    /* 
 	       Get the node in the mass matrix with the mask
 	    */
-	    Ap = Nodes_p.Connectivity[A];
-	    A_mask = ActiveNodes.Nodes2Mask[Ap];
-	
-	    for(int i = 0 ; i<Ndim ; i++)
-	      {
-		Field_Ap.nM[A][i] = Field.nM[i][A_mask];
-	      }
-	  }
-      }
-    else
-      {
-	for(int A = 0 ; A<Nnodes ; A++)
-	  {
-
-	    /* 
-	       Get the node in the mass matrix with the mask
-	    */
-	    Ap = Nodes_p.Connectivity[A];
-	    A_mask = ActiveNodes.Nodes2Mask[Ap];
-	    
-	    Field_Ap.nV[A] = Field.nV[A_mask];
-	  }
-      }
-    
-    return Field_Ap;
+     Ap = Nodes_p.Connectivity[A];
+     A_mask = ActiveNodes.Nodes2Mask[Ap];
+     
+     for(int i = 0 ; i<Ndim ; i++)
+     {
+      Field_Ap.nM[A][i] = Field.nM[A_mask][i];
+    }
   }
+}
+else
+{
+	for(int A = 0 ; A<Nnodes ; A++)
+ {
+
+	    /* 
+	       Get the node in the mass matrix with the mask
+	    */
+   Ap = Nodes_p.Connectivity[A];
+   A_mask = ActiveNodes.Nodes2Mask[Ap];
+   
+   Field_Ap.nV[A] = Field.nV[A_mask];
+ }
+}
+
+return Field_Ap;
+}
 
 /*********************************************************************/
 
