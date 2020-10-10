@@ -574,8 +574,6 @@ typedef struct {
 typedef struct{
 
   int Nactivenodes;
-      
-  int * Mask2Nodes;
 
   int * Nodes2Mask;
   

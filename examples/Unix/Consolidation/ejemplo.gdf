@@ -16,7 +16,7 @@ GramsTime (Type=Discrete-Energy-Momentum) {
 }
 
 
-GramsSolid2D (File=Particles.msh,GPxElement=1) {
+GramsSolid2D (File=Particles.msh,GPxElement=4) {
 
     GramsMaterials (Particles=Material.txt) {
 	Type=Neo-Hookean-Wriggers

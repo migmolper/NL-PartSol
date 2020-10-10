@@ -57,7 +57,7 @@ void U_Discrete_Energy_Momentum(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int InitialS
   Matrix Residual;
   Mask ActiveNodes;
   Mask Free_and_Restricted_Dofs;
-  double TOL = 0.0000000001;
+  double TOL = 0.000000001;
   double epsilon = 0.0;
   double DeltaTimeStep;
   bool Convergence;
@@ -250,9 +250,7 @@ void U_Discrete_Energy_Momentum(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int InitialS
  free__MatrixLib__(Forces);
  free__MatrixLib__(Reactions);
  free__MatrixLib__(Residual);
- free(ActiveNodes.Mask2Nodes);
  free(ActiveNodes.Nodes2Mask);
- free(Free_and_Restricted_Dofs.Mask2Nodes);
  free(Free_and_Restricted_Dofs.Nodes2Mask);
 
  print_Status("DONE !!!",TimeStep);
@@ -1628,6 +1626,7 @@ static void solve_non_reducted_system(Matrix D_Displacement,
       K_Global.nV[idx_AB_ij] = (2/DSQR(Dt))*Effective_Mass.nV[idx_AB_ij] + Tangent_Stiffness.nV[idx_AB_ij];
     }
 
+
   /*
     Compute the LU factorization 
   */
@@ -1651,6 +1650,7 @@ static void solve_non_reducted_system(Matrix D_Displacement,
   */
   dgetrs_(&TRANS,&Order,&NRHS,K_Global.nV,&LDA,IPIV,Residual.nV,&LDB,&INFO);
   free(IPIV);
+
   
   /*
     Check error messages in the LAPACK solver  
@@ -1701,7 +1701,6 @@ static void solve_reducted_system(Mask Free_and_Restricted_Dofs,
   int Ndof = NumberDOF;
   int Order = Nnodes_mask*Ndof;
   int Num_Free_dofs = Free_and_Restricted_Dofs.Nactivenodes;
-  int Num_Restricted_dof = Order - Num_Free_dofs;
   int Free_A_ij;
   int idx_A_ij, idx_B_ij;
   int Mask_idx_A_ij, Mask_idx_B_ij;
@@ -1744,7 +1743,6 @@ for(idx_A_ij = 0 ; idx_A_ij < Order ; idx_A_ij++)
     }
 
   }
-
 
 
 /*
@@ -1796,11 +1794,21 @@ for(idx_A_ij = 0 ; idx_A_ij < Order ; idx_A_ij++)
   /*
     Update 
   */
-  for(Free_A_ij = 0 ; Free_A_ij < Num_Free_dofs ; Free_A_ij++)
+  for(idx_A_ij =  0 ; idx_A_ij<Order ; idx_A_ij ++)
     { 
-      idx_A_ij = Free_and_Restricted_Dofs.Mask2Nodes[Free_A_ij];
 
-      D_Displacement.nV[idx_A_ij] -= Residual_F.nV[idx_A_ij];
+      /* Get the index mask of the dof */
+      Mask_idx_A_ij = Free_and_Restricted_Dofs.Nodes2Mask[idx_A_ij];
+
+    /*
+      Get the Residual with the Free dofs
+    */
+      if(Mask_idx_A_ij != - 1)
+      {
+
+        D_Displacement.nV[idx_A_ij] -= Residual_F.nV[Mask_idx_A_ij];
+      } 
+      
     }
 
   /*
