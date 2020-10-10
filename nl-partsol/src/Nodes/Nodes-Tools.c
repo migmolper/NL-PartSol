@@ -35,8 +35,7 @@ Mask generate_NodalMask__MeshTools__(Mesh FEM_Mesh)
 
 /**************************************************************/
 
-Mask generate_Mask_for_static_condensation__MeshTools__(Mask ActiveNodes,
-                                                        Mesh FEM_Mesh)
+Mask generate_Mask_for_static_condensation__MeshTools__(Mask ActiveNodes, Mesh FEM_Mesh)
 {
 
   /* 
@@ -100,7 +99,7 @@ Mask generate_Mask_for_static_condensation__MeshTools__(Mask ActiveNodes,
                 */
                 if(FEM_Mesh.Bounds.BCC_i[i].Dir[k] == 1)
                   {
-                    Id_BCC_mask_k = Id_BCC_mask + k*Nnodes_mask;
+                    Id_BCC_mask_k = Id_BCC_mask*Ndof + k;
                     Nodes2Mask[Id_BCC_mask_k] = -1;
                   }
               }

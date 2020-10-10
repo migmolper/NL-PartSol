@@ -128,7 +128,7 @@ void U_Discrete_Energy_Momentum(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int InitialS
         Impose dirichlet boundary conditions over the increment of
         displacement
       */
-    imposed_Nodal_Displacements(D_Displacement, ActiveNodes, FEM_Mesh, TimeStep);
+  imposed_Nodal_Displacements(D_Displacement, ActiveNodes, FEM_Mesh, TimeStep);
 
       /*
 	Set the convergence false by default and start the iterations to compute
@@ -647,6 +647,15 @@ static void imposed_Nodal_Displacements(Matrix D_Displacement, Mask ActiveNodes,
     A_BCC = FEM_Mesh.Bounds.BCC_i[i_boundary].Nodes[A];
     A_mask_BCC = ActiveNodes.Nodes2Mask[A_BCC];
 
+        /*
+      The boundary condition is not affecting any active node,
+      continue interating
+    */
+    if(A_mask_BCC == -1)
+      {
+        continue;
+      }
+
     for(int i_dim = 0 ; i_dim<NumDimBound ; i_dim++)
       {
     
@@ -765,6 +774,7 @@ static Matrix compute_Nodal_Forces(Matrix D_Displacement, Mask ActiveNodes, Gaus
   int Ndim = NumberDimensions;
   int Nnodes_mask = ActiveNodes.Nactivenodes;
   Matrix Forces = allocZ__MatrixLib__(Nnodes_mask,Ndim);
+
 
   /*
     Add internal forces contribution
@@ -983,7 +993,7 @@ static void compute_Nodal_Body_Forces(Matrix Forces, Mask ActiveNodes, GaussPoin
 	    /* Compute body forces */
 	    for(int k = 0 ; k<Ndim ; k++)
 	      {
-		Forces.nM[A_mask][k] -= ShapeFunction_pA*b.n[k]*m_p;
+          Forces.nM[A_mask][k] -= ShapeFunction_pA*b.n[k]*m_p;
 	      } 
 	    
 	  }
@@ -1117,7 +1127,7 @@ static Matrix compute_Nodal_Residual(Matrix Velocity, Matrix Forces, Matrix D_Di
   */
   for(int idx_A = 0 ; idx_A<Order ; idx_A++)
     {
-      Residual.nV[idx_A] = - Inertial_Forces.nV[idx_A] - Forces.nV[idx_A];
+      Residual.nV[idx_A] = Inertial_Forces.nV[idx_A] + Forces.nV[idx_A];
     }
 
   /*
@@ -1599,7 +1609,7 @@ static void solve_non_reducted_system(Matrix D_Displacement,
 */
 {
   int Nnodes_mask = Residual.N_rows;
-  int Ndof = Residual.N_cols;
+  int Ndof = NumberDOF;
   int Order = Nnodes_mask*Ndof;
   int LDA   = Nnodes_mask*Ndof;
   int LDB   = Nnodes_mask*Ndof;
@@ -1660,7 +1670,7 @@ static void solve_non_reducted_system(Matrix D_Displacement,
   */
   for(int idx_A_i = 0 ; idx_A_i < Order ; idx_A_i++)
     {	
-      D_Displacement.nV[idx_A_i] += Residual.nV[idx_A_i];
+      D_Displacement.nV[idx_A_i] -= Residual.nV[idx_A_i];
     }
 
   /*
@@ -1687,8 +1697,8 @@ static void solve_reducted_system(Mask Free_and_Restricted_Dofs,
   
 */
 {
-  int Nnodes_mask = Residual.N_cols;
-  int Ndof = Residual.N_rows;
+  int Nnodes_mask = Residual.N_rows;
+  int Ndof = NumberDOF;
   int Order = Nnodes_mask*Ndof;
   int Num_Free_dofs = Free_and_Restricted_Dofs.Nactivenodes;
   int Num_Restricted_dof = Order - Num_Free_dofs;
@@ -1728,14 +1738,14 @@ for(idx_A_ij = 0 ; idx_A_ij < Order ; idx_A_ij++)
       */
       if((Mask_idx_A_ij != - 1) && (Mask_idx_B_ij != - 1))
       {
-        K_Global_FF.nM[Mask_idx_A_ij][Mask_idx_B_ij] =
-            (2/DSQR(Dt))*Effective_Mass.nM[idx_A_ij][idx_B_ij] +
-            Tangent_Stiffness.nM[idx_A_ij][idx_B_ij];
+        K_Global_FF.nM[Mask_idx_A_ij][Mask_idx_B_ij] = (2/DSQR(Dt))*Effective_Mass.nM[idx_A_ij][idx_B_ij] + Tangent_Stiffness.nM[idx_A_ij][idx_B_ij];
       }
 
     }
 
   }
+
+
 
 /*
   Parameters for the solver
@@ -1790,7 +1800,7 @@ for(idx_A_ij = 0 ; idx_A_ij < Order ; idx_A_ij++)
     { 
       idx_A_ij = Free_and_Restricted_Dofs.Mask2Nodes[Free_A_ij];
 
-      D_Displacement.nV[idx_A_ij] += Residual_F.nV[idx_A_ij];
+      D_Displacement.nV[idx_A_ij] -= Residual_F.nV[idx_A_ij];
     }
 
   /*
