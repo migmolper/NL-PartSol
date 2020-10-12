@@ -134,13 +134,13 @@ int main(int argc, char * argv[])
       U_GA(FEM_Mesh, MPM_Mesh, InitialStep);
     }
     
-  /* Explicit predictor-corrector */
-  if(strcmp(TimeIntegrationScheme,"PCE") == 0 )
+  /* Explicit Newmark predictor-corrector with infinitesimal strains */
+  if(strcmp(TimeIntegrationScheme,"NPC") == 0 )
     { 
       U_Newmark_Predictor_Corrector(FEM_Mesh, MPM_Mesh, InitialStep);
     }
 
-  /* Explicit predictor-corrector */
+  /* Explicit Newmark predictor-corrector with finite strains */
   if(strcmp(TimeIntegrationScheme,"NPC-FS") == 0 )
     { 
       U_Newmark_Predictor_Corrector_Finite_Strains(FEM_Mesh, MPM_Mesh, InitialStep);
