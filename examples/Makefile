@@ -4,7 +4,7 @@ ROUTE_EXE = ../nl-partsol/build/./$(EXE)
 TESTDIR = test
 
 # Rule for benchmarks
-.PHONY: Element Debug_MPM Debug_LME Sulsky_MPM Sulsky_GIMP Sulsky_LME Sulsky_SV Cuadrado_MPM Disco_MPM Disco_GIMP Traccion_MPM Traccion_GIMP Traccion_LME Dyka_MPM Dyka_GIMP Dyka_LME Dyka_GA Brazilian_MPM Three_Point_Bar
+.PHONY: Element Debug_MPM Debug_LME Sulsky_MPM Sulsky_GIMP Sulsky_LME Sulsky_SV Sulsky_NPC_FS Cuadrado_MPM Disco_MPM Disco_GIMP Traccion_MPM Traccion_GIMP Traccion_LME Dyka_MPM Dyka_GIMP Dyka_LME Dyka_GA Brazilian_MPM Three_Point_Bar
 
 
 
@@ -48,7 +48,11 @@ Sulsky_SV:
 	$(ROUTE_EXE) -V Unix/Sulsky_Saint_Venant/ejemplo.gdf
 	@echo " "
 	@echo "*************** Test case passed ****************"
-
+Sulsky_NPC_FS:
+	@echo "**************** Run test case ******************"
+	$(ROUTE_EXE) -V Unix/Sulsky_NPC_FS/ejemplo.gdf
+	@echo " "
+	@echo "*************** Test case passed ****************"
 
 
 # Caso cuadrado caida

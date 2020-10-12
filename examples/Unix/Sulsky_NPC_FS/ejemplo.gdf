@@ -5,7 +5,7 @@ GramsBox (Type=GID,File=FEM_Mesh.msh) {
 }
 
 # Time integration
-GramsTime (Type=PCE) {
+GramsTime (Type=NPC-FS) {
     CFL=0.01
     N=15000
 }
@@ -15,7 +15,7 @@ GramsSolid2D (File=MPM_Mesh.msh,GPxElement=1) {
 
     # List of materials for the GPs
     GramsMaterials (Particles=Material.txt) {
-	Type=LE
+	Type=Saint-Venant-Kirchhoff
 	Cel=70.71
 	rho=20
 	E=1.e5

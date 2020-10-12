@@ -428,7 +428,7 @@ static Matrix compute_Nodal_D_Displacement(Matrix Velocity,
                                            double Dt)
 {
   int Ndim = NumberDimensions;
-  int Nnodes_mask = Velocity.N_cols;
+  int Nnodes_mask = Velocity.N_rows;
   int Order = Ndim*Nnodes_mask;
   Matrix D_Displacement = allocZ__MatrixLib__(Nnodes_mask,Ndim);
 
@@ -578,7 +578,7 @@ static Matrix compute_Nodal_Forces(Mask ActiveNodes,
 {
   int Ndim = NumberDimensions;
   int Nnodes_mask = ActiveNodes.Nactivenodes;
-  Matrix Forces = allocZ__MatrixLib__(Ndim,Nnodes_mask);
+  Matrix Forces = allocZ__MatrixLib__(Nnodes_mask,Ndim);
 
   /*
     Add internal forces contribution
@@ -699,7 +699,7 @@ static void compute_Nodal_Internal_Forces(Matrix Forces,
 	     for(int i = 0 ; i<Ndim ; i++)
        {
 	      idx_A_mask_i = A_mask*Ndim + i;
-	      Forces.nV[idx_A_mask_i] += InternalForcesDensity_Ap.n[i]*V0_p;
+	      Forces.nV[idx_A_mask_i] -= InternalForcesDensity_Ap.n[i]*V0_p;
 	     }
 
   	  /*
@@ -834,7 +834,7 @@ static Matrix compute_Reactions(Mesh FEM_Mesh, Matrix Forces, Mask ActiveNodes)
   int Id_BCC_mask;
   int Id_BCC_mask_k;
 
-  Matrix Reactions = allocZ__MatrixLib__(FEM_Mesh.NumNodesMesh,Ndim);
+  Matrix Reactions = allocZ__MatrixLib__(Nnodes_mask ,Ndim);
   strcpy(Reactions.Info,"REACTIONS");
 
   /*
@@ -903,7 +903,7 @@ static void compute_Nodal_Velocity_Corrected(Matrix Velocity,
                                              double gamma,
                                              double Dt)
 {
-  int Nnodes_mask = Velocity.N_cols;
+  int Nnodes_mask = Velocity.N_rows;
   int Ndim = NumberDimensions;
   int Order = Nnodes_mask*Ndim;
   

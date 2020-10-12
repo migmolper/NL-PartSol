@@ -141,7 +141,7 @@ int main(int argc, char * argv[])
     }
 
   /* Explicit predictor-corrector */
-  if(strcmp(TimeIntegrationScheme,"NPC-FE") == 0 )
+  if(strcmp(TimeIntegrationScheme,"NPC-FS") == 0 )
     { 
       U_Newmark_Predictor_Corrector_Finite_Strains(FEM_Mesh, MPM_Mesh, InitialStep);
     }
