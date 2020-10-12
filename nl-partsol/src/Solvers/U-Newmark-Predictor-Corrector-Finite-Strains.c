@@ -152,7 +152,6 @@ void U_Newmark_Predictor_Corrector_Finite_Strains(Mesh FEM_Mesh, GaussPoint MPM_
       free__MatrixLib__(D_Displacement);
       free__MatrixLib__(Forces);
       free__MatrixLib__(Reactions);
-      free(ActiveNodes.Mask2Nodes);
       free(ActiveNodes.Nodes2Mask);
       
       print_Status("DONE !!!",TimeStep);
