@@ -177,8 +177,6 @@ static Matrix compute_Nodal_Lumped_Mass(GaussPoint MPM_Mesh,
   int Order = Ndof*Nnodes_mask;
   int Ap;
   int A_mask;
-  int idx_AB_mask_i;
-  int idx_A_mask_i;
 
   /* Value of the shape-function */
   Matrix ShapeFunction_p;  
@@ -226,8 +224,7 @@ static Matrix compute_Nodal_Lumped_Mass(GaussPoint MPM_Mesh,
        /* Fill the Lumped mass matrix considering the number of dofs */
   	   for(int i = 0 ; i<Ndof ; i++)
 	     {
-	      idx_A_mask_i = A_mask + i*Nnodes_mask;
-	      Lumped_MassMatrix.nV[idx_A_mask_i] += m_A_p;	      
+	      Lumped_MassMatrix.nV[A_mask*Ndof + i] += m_A_p;	      
 	     }
 	  	  
 	    }
@@ -276,7 +273,7 @@ static Matrix compute_Nodal_Velocity_Predicted(GaussPoint MPM_Mesh,
   Element Nodes_p;
 
  /* Define and allocate the momentum vector */
-  Matrix Velocity = allocZ__MatrixLib__(Ndim,Nnodes_mask);
+  Matrix Velocity = allocZ__MatrixLib__(Nnodes_mask,Ndim);
     
   /* Iterate over the particles to get the nodal values */
   for(int p = 0 ; p<Np ; p++)
@@ -306,10 +303,8 @@ static Matrix compute_Nodal_Velocity_Predicted(GaussPoint MPM_Mesh,
         /* Nodal momentum */
         for(int i = 0 ; i<Ndim ; i++)
         {
-          idx_A_mask_i = A_mask + i*Nnodes_mask;
-
-          Velocity.nV[idx_A_mask_i] += m_p*ShapeFunction_pA*(MPM_Mesh.Phi.vel.nM[p][i]+
-            MPM_Mesh.Phi.acc.nM[p][i]*(1-gamma)*DeltaTimeStep);
+          idx_A_mask_i = A_mask*Ndim + i;
+          Velocity.nV[idx_A_mask_i] += m_p*ShapeFunction_pA*(MPM_Mesh.Phi.vel.nM[p][i] + MPM_Mesh.Phi.acc.nM[p][i]*(1-gamma)*DeltaTimeStep);
         }
       }
 
@@ -326,10 +321,8 @@ static Matrix compute_Nodal_Velocity_Predicted(GaussPoint MPM_Mesh,
     {
       for(int i = 0 ; i<Ndim ; i++)
         {
-
-        idx_A_mask_i = A + i*Nnodes_mask;
-
-        Velocity.nV[idx_A_mask_i] = Velocity.nV[idx_A_mask_i]/Lumped_Mass.nV[idx_A_mask_i];
+          idx_A_mask_i = A*Ndim + i;
+          Velocity.nV[idx_A_mask_i] = Velocity.nV[idx_A_mask_i]/Lumped_Mass.nV[idx_A_mask_i];
       }
     }
 
@@ -418,8 +411,8 @@ static void imposse_Velocity(Mesh FEM_Mesh,
                   /* 
                     Assign the boundary condition 
                   */
-                  Id_BCC_mask_k = Id_BCC_mask + k*Nnodes_mask; 
-                  Velocity.nV[Id_BCC_mask] = FEM_Mesh.Bounds.BCC_i[i].Value[k].Fx[TimeStep]*
+                  Id_BCC_mask_k = Id_BCC_mask*NumDimBound + k; 
+                  Velocity.nV[Id_BCC_mask_k] = FEM_Mesh.Bounds.BCC_i[i].Value[k].Fx[TimeStep]*
                                              (double)FEM_Mesh.Bounds.BCC_i[i].Dir[k];
                 }
             }
@@ -437,7 +430,7 @@ static Matrix compute_Nodal_D_Displacement(Matrix Velocity,
   int Ndim = NumberDimensions;
   int Nnodes_mask = Velocity.N_cols;
   int Order = Ndim*Nnodes_mask;
-  Matrix D_Displacement = allocZ__MatrixLib__(Ndim,Nnodes_mask);
+  Matrix D_Displacement = allocZ__MatrixLib__(Nnodes_mask,Ndim);
 
   /*
     Compute nodal displacement
@@ -705,7 +698,7 @@ static void compute_Nodal_Internal_Forces(Matrix Forces,
 	    */
 	     for(int i = 0 ; i<Ndim ; i++)
        {
-	      idx_A_mask_i = A_mask + i*Nnodes_mask;
+	      idx_A_mask_i = A_mask*Ndim + i;
 	      Forces.nV[idx_A_mask_i] += InternalForcesDensity_Ap.n[i]*V0_p;
 	     }
 
@@ -803,7 +796,7 @@ static void compute_Nodal_Body_Forces(Matrix Forces,
 	    /* Compute body forces */
 	    for(int k = 0 ; k<Ndim ; k++)
 	      {
-		idx_A_mask_k = A_mask + k*Nnodes_mask;
+		idx_A_mask_k = A_mask*Ndim + k;
 		Forces.nV[idx_A_mask_k] += ShapeFunction_pA*b.n[k]*m_p;
 	      } 
 	    
@@ -890,7 +883,7 @@ static Matrix compute_Reactions(Mesh FEM_Mesh, Matrix Forces, Mask ActiveNodes)
                 /* 
                 Set to zero the forces in the nodes where velocity is fixed 
                 */
-                Id_BCC_mask_k = Id_BCC_mask + k*Nnodes_mask; 
+                Id_BCC_mask_k = Id_BCC_mask*NumDimBound + k; 
                 Reactions.nV[Id_BCC_mask_k] = Forces.nV[Id_BCC_mask_k];
                 Forces.nV[Id_BCC_mask_k] = 0;
               }
@@ -985,7 +978,7 @@ static void update_Particles(GaussPoint MPM_Mesh,
 	     */
 	      for(int i = 0 ; i<Ndim ; i++)
 	      {
-	       idx_A_mask_i = A_mask + i*Nnodes_mask;
+	       idx_A_mask_i = A_mask*Ndim + i;
 
          /* Get the nodal mass */
          mass_I = Lumped_Mass.nV[idx_A_mask_i];

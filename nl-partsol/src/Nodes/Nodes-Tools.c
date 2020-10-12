@@ -61,7 +61,7 @@ Matrix get_set_field__MeshTools__(Matrix Field, Element Nodes_p, Mask ActiveNode
 	
 	    for(int i = 0 ; i<Ndim ; i++)
 	      {
-		Field_Ap.nM[A][i] = Field.nM[i][A_mask];
+		Field_Ap.nM[A][i] = Field.nM[A_mask][i];
 	      }
 	  }
       }
