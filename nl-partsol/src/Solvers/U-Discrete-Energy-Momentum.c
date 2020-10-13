@@ -9,6 +9,11 @@
 #endif
 
 /*
+  Call global variables
+*/
+double Error0;
+
+/*
   Auxiliar functions 
 */
 static Matrix compute_Nodal_Effective_Mass(GaussPoint, Mesh, Mask, double);
@@ -1146,6 +1151,7 @@ static bool check_convergence(Matrix Residual,double TOL,int Iter,int MaxIter)
   int Nnodes_mask = Residual.N_rows;
   int Total_dof = Ndim*Nnodes_mask;
   double Error = 0;
+  double Error_relative = 0;
 
   if(Iter > MaxIter)
     {
@@ -1156,22 +1162,41 @@ static bool check_convergence(Matrix Residual,double TOL,int Iter,int MaxIter)
     }
   else
     {
+      /*
+        Compute absolute error 
+      */
       for(int A = 0 ; A<Total_dof ; A++)
-	{
-	  Error += DSQR(Residual.nV[A]);
-	}
-      
+      {
+        Error += DSQR(Residual.nV[A]);
+      }
       Error = pow(Error,0.5);
-      printf("Error iter %i : %1.4e \n",Iter,Error);
-      
-      if(Error > TOL)
-	{
-	  return false;
-	}
+
+      /*
+        Compute relative error
+      */
+      if(Iter == 0)
+      {
+        Error0 = Error;
+        Error_relative = Error/Error0;
+        printf("Error iter %i : %1.4e ; %1.4e \n",Iter,Error,Error_relative);
+      }
       else
-	{
-	  return true; 
-	}
+      {
+        Error_relative = Error/Error0;
+        printf("Error iter %i : %1.4e ; %1.4e \n",Iter,Error,Error_relative);
+      }
+      
+      /*
+        Check convergence using the relative error
+      */
+      if(Error_relative > TOL)
+      {
+        return false;
+      }
+      else
+      {
+        return true;
+      }
     }
 }
 

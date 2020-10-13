@@ -21,6 +21,7 @@ extern double TOL_lambda;
 extern double CFL; /* Courant number (0-1) */
 extern double DeltaTimeStep;
 extern double SpectralRadius;
+extern double Error0;
 
 extern int NumTimeStep;
 extern int ResultsTimeStep;
