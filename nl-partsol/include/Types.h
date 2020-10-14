@@ -168,6 +168,11 @@ typedef struct{
 typedef struct {
 
   /*!
+   * Initial Volume
+   */
+  Matrix Vol_0;
+
+  /*!
    * Density field 
    */
   Matrix rho;

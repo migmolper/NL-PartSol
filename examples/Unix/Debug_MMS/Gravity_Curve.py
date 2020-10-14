@@ -1,12 +1,9 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-g = -10
-CFL = 0.1
-DeltaX  = 0.5
-Cel = np.sqrt(2.91e5/2700)
-DetalT = CFL*(DeltaX/Cel) # sg
-Nsteps = 50
+g = -9.81
+DetalT = 0.01 # sg
+Nsteps = 1000
 Tend = DetalT*Nsteps
 
 Gravity = np.zeros(Nsteps)

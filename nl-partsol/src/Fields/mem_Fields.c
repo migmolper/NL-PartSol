@@ -95,7 +95,13 @@ Fields allocate_Fields(int NumParticles)
     Density 
   */
   Phi.rho = allocZ__MatrixLib__(NumParticles,1);
-  strcpy(Phi.rho.Info,"Density GP"); 
+  strcpy(Phi.rho.Info,"Density GP");
+
+  /*!
+    Inital volume
+  */
+  Phi.Vol_0 = allocZ__MatrixLib__(NumParticles,1);
+  strcpy(Phi.Vol_0.Info,"Inital volume GP");
 
   return Phi;
 }
@@ -107,6 +113,7 @@ void free_Fields(Fields Phi)
 {
 
   free__MatrixLib__(Phi.rho);
+  free__MatrixLib__(Phi.Vol_0);
   free__MatrixLib__(Phi.mass);
   free__MatrixLib__(Phi.x_GC);  
   free__MatrixLib__(Phi.x_EC);

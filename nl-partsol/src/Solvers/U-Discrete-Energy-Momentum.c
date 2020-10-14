@@ -755,8 +755,8 @@ static void update_Local_State(Matrix D_Displacement, Mask ActiveNodes, GaussPoi
       */
       MatIndx_p = MPM_Mesh.MatIdx[p];
       MatProp_p = MPM_Mesh.Mat[MatIndx_p];
-      S_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.Stress.nM[p],2);      
-      S_p = average_strain_integration_Stress__Particles__(S_p,F_n1_p,F_n_p,MatProp_p);
+      S_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.Stress.nM[p],2);
+      S_p = configurational_midpoint_integration_Stress__Particles__(S_p,F_n1_p,F_n_p,MatProp_p);
       
       /*
 	Free memory 
@@ -822,11 +822,7 @@ static void compute_Nodal_Internal_Forces(Matrix Forces,
   Tensor F_n1_p;
   Tensor F_n12_p;
   Tensor transpose_F_n_p;
-  
-  double m_p; /* Mass of the Gauss-Point */
-  double rho_p; /* Density of the Gauss-Point */
-  double V0_p; /* Volume of the Gauss-Point */
-  double J_p; /* Jacobian of the deformation gradient */
+  double V0_p; /* Volume of the particle in the reference configuration */
 
   /*
     Loop in the particles 
@@ -835,14 +831,9 @@ static void compute_Nodal_Internal_Forces(Matrix Forces,
     {
       
       /*
-	Get the value of the density 
+	Get the volume of the particle in the reference configuration 
       */
-      rho_p = MPM_Mesh.Phi.rho.nV[p];
-
-      /*
-	Get the value of the mass 
-      */
-      m_p = MPM_Mesh.Phi.mass.nV[p];
+      V0_p = MPM_Mesh.Phi.Vol_0.nV[p];
 
       /*
 	Define nodes for each particle
@@ -870,12 +861,6 @@ static void compute_Nodal_Internal_Forces(Matrix Forces,
       */
       S_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.Stress.nM[p], 2);
       P_p = matrix_product__TensorLib__(F_n12_p, S_p);
-
-      /*
-	Compute the volume of the particle in the reference configuration 
-      */
-      J_p = I3__TensorLib__(F_n_p);
-      V0_p = (1/J_p)*(m_p/rho_p);
     
       for(int A = 0 ; A<NumNodes_p ; A++)
 	{
@@ -1266,11 +1251,8 @@ static void assemble_Nodal_Tangent_Stiffness_Geometric(Matrix Tangent_Stiffness,
   Tensor F_n_p;
   Tensor transpose_F_n_p;
   Tensor GRADIENT_pA_o_GRADIENT_pB;
-  
-  double m_p; /* Mass of the Gauss-Point */
-  double rho_p; /* Density of the Gauss-Point */
-  double V0_p; /* Volume of the Gauss-Point */
-  double J_p; /* Jacobian of the deformation gradient */
+
+  double V0_p; /* Volume of the particle in the reference configuration */
   double Geometric_AB_p; /* Geometric contribution */
 
   /*
@@ -1280,14 +1262,9 @@ static void assemble_Nodal_Tangent_Stiffness_Geometric(Matrix Tangent_Stiffness,
     {
 
       /*
-      	Get the value of the density 
-      */
-      rho_p = MPM_Mesh.Phi.rho.nV[p];
-
-      /*
-	Get the value of the mass 
-      */
-      m_p = MPM_Mesh.Phi.mass.nV[p];
+	Get the volume of the particle in the reference configuration
+       */
+      V0_p = MPM_Mesh.Phi.Vol_0.nV[p];
 
       /*
 	Define nodes for each particle
@@ -1311,12 +1288,7 @@ static void assemble_Nodal_Tangent_Stiffness_Geometric(Matrix Tangent_Stiffness,
 	Compute the first Piola-Kirchhoff stress tensor
       */
       S_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.Stress.nM[p], 2);
-
-      /*
-	Compute the volume of the particle in the reference configuration 
-      */
-      J_p = I3__TensorLib__(F_n_p);
-      V0_p = (1/J_p)*(m_p/rho_p);
+      
 
       for(int A = 0 ; A<NumNodes_p ; A++)
 	{
@@ -1428,9 +1400,7 @@ static void assemble_Nodal_Tangent_Stiffness_Material(Matrix Tangent_Stiffness,
   Tensor Material_AB;
 
   Material MatProp_p;
-  double m_p; /* Mass of the Gauss-Point */
-  double rho_p; /* Density of the Gauss-Point */
-  double V0_p; /* Volume of the Gauss-Point */
+  double V0_p; /* Volume of the particle in the reference configuration */
   double J_p; /* Jacobian of the deformation gradient */
   double Geometric_AB_p; /* Geometric contribution */
 
@@ -1439,17 +1409,15 @@ static void assemble_Nodal_Tangent_Stiffness_Material(Matrix Tangent_Stiffness,
   */
   for(int p = 0 ; p<Np ; p++)
     {
-      /*
-      	Get the value of the density 
-      */
-      rho_p = MPM_Mesh.Phi.rho.nV[p];
 
       /*
-	Get the value of the mass 
-      */
-      m_p = MPM_Mesh.Phi.mass.nV[p];
-
+	Get the volume of the particle in the reference configuration
+       */
+      V0_p = MPM_Mesh.Phi.Vol_0.nV[p];
       
+      /*
+	Material properties of the particle
+       */      
       MatIndx_p = MPM_Mesh.MatIdx[p];
       MatProp_p = MPM_Mesh.Mat[MatIndx_p];
 
@@ -1476,10 +1444,10 @@ static void assemble_Nodal_Tangent_Stiffness_Material(Matrix Tangent_Stiffness,
       transpose_F_n12_p = transpose__TensorLib__(F_n12_p);
 
       /*
-	Compute the volume of the particle in the reference configuration 
+	Compute the jacobian of the deformation gradient in the
+	intermediate configuration
       */
-      J_p = I3__TensorLib__(F_n_p);
-      V0_p = (1/J_p)*(m_p/rho_p);
+      J_p = I3__TensorLib__(F_n12_p);
 
       for(int A = 0 ; A<NumNodes_p ; A++)
 	{

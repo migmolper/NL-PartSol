@@ -268,7 +268,9 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
 	rho_p = MPM_Mesh.Mat[MPM_Mesh.MatIdx[i_p]].rho;
 	th_p = MPM_Mesh.Mat[MPM_Mesh.MatIdx[i_p]].thickness;
 	m_p = th_p*A_p*rho_p;
-	
+
+	/* Set the initial volume */
+	MPM_Mesh.Phi.Vol_0.nV[i_p] = A_p;
       	/* Set the initial density */
       	MPM_Mesh.Phi.rho.nV[i_p] = rho_p;	
       	/* Assign the mass parameter */
