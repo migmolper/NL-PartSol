@@ -75,7 +75,7 @@ void U_Newmark_beta_Finite_Strains(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int Initi
   Mask ActiveNodes;
   Mask Free_and_Restricted_Dofs;
   double TOL = 0.000000001;
-  double epsilon = 0.0;
+  double epsilon = 1.0;
   double beta = 0.25;
   double gamma = 0.5;
 
@@ -96,17 +96,17 @@ void U_Newmark_beta_Finite_Strains(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int Initi
     software interfase.
   */
   DeltaTimeStep = DeltaT_CFL(MPM_Mesh, FEM_Mesh.DeltaX);
+ 
+  /*
+    Compute alpha parameters
+  */
+  Params = compute_Newmark_parameters(beta, gamma, DeltaTimeStep);
 
   for(int TimeStep = InitialStep ; TimeStep<NumTimeStep ; TimeStep++ )
     {
 
       print_Status("*************************************************",TimeStep);
       print_step(TimeStep,DeltaTimeStep);
-
-      /*
-	Compute alpha parameters for each time step
-      */
-      Params = compute_Newmark_parameters(beta, gamma, DeltaTimeStep);
 
       print_Status("*************************************************",TimeStep);
       print_Status("First step : Generate Mask ... WORKING",TimeStep);
@@ -133,14 +133,16 @@ void U_Newmark_beta_Finite_Strains(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int Initi
       /*
 	Compute the nodal values of velocity and acceleration
       */
-      D_Displacement = allocZ__MatrixLib__(Nactivenodes,Ndim);
-      imposed_Nodal_Displacements(D_Displacement, ActiveNodes, FEM_Mesh, TimeStep);      
       Velocity = compute_Nodal_Velocity(Effective_Mass,MPM_Mesh,FEM_Mesh,ActiveNodes);
       Acceleration = compute_Nodal_Acceleration(Effective_Mass,MPM_Mesh,FEM_Mesh,ActiveNodes);
       imposse_Nodal_Kinetics(FEM_Mesh,Velocity,Acceleration,ActiveNodes,TimeStep);
       print_Status("DONE !!!",TimeStep);
+      
       print_Status("*************************************************",TimeStep);
       print_Status("Four step : Compute equilibrium ... WORKING",TimeStep);
+      
+      D_Displacement = allocZ__MatrixLib__(Nactivenodes,Ndim);
+      imposed_Nodal_Displacements(D_Displacement, ActiveNodes, FEM_Mesh, TimeStep);      
       /*
 	Set the convergence false by default and start the iterations to compute
 	the incement of velocity and displacement in the nodes of the mesh
@@ -640,7 +642,7 @@ static Matrix compute_Nodal_Acceleration(Matrix Mass,GaussPoint MPM_Mesh, Mesh F
 
   /*
     Transfer
-   */
+  */
   Acceleration = dt_Momentum;
  
   /*
