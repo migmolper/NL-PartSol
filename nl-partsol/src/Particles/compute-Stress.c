@@ -25,6 +25,46 @@ Tensor explicit_integration_stress__Particles__(Tensor Strain,
 
 /**************************************************************/
 
+Tensor forward_integration_Stress__Particles__(Tensor S_p,Tensor F_n1_p,Material MatProp_p)
+{
+
+
+  /*
+    Compute the right Cauchy Green tensor
+   */
+  Tensor C_n1_p = right_Cauchy_Green__Particles__(F_n1_p);
+
+  /*
+    Compute the Stress tensor
+   */
+  if(strcmp(MatProp_p.Type,"Saint-Venant-Kirchhoff") == 0)
+    {
+      S_p = grad_energy_Saint_Venant_Kirchhoff(S_p, C_n1_p, MatProp_p);
+    }
+  else if(strcmp(MatProp_p.Type,"Neo-Hookean-Wriggers") == 0)
+    {
+      double J_n1_p = I3__TensorLib__(F_n1_p);
+      S_p = grad_energy_Neo_Hookean_Wriggers(S_p, C_n1_p, J_n1_p, MatProp_p);
+    }
+  else
+    {
+      fprintf(stderr,"%s : %s %s %s \n",
+	      "Error in forward_integration_Stress__Particles__()",
+	      "The material",MatProp_p.Type,"has not been yet implemnented");
+      exit(EXIT_FAILURE);
+    }
+
+  /*
+    Free auxiliar variables
+   */
+  free__TensorLib__(C_n1_p);
+
+  return S_p; 
+  
+}
+
+/**************************************************************/
+
 Tensor configurational_midpoint_integration_Stress__Particles__(Tensor S_p,
 								Tensor F_n1_p,
 								Tensor F_n_p,

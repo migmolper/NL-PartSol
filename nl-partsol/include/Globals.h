@@ -27,6 +27,3 @@ extern int NumTimeStep;
 extern int ResultsTimeStep;
 extern int NumberDOF;
 
-
-/* int * Node; */
-/* double * Value; */

@@ -151,6 +151,12 @@ int main(int argc, char * argv[])
     { 
       U_Discrete_Energy_Momentum(FEM_Mesh, MPM_Mesh, InitialStep);
     }
+
+  /* Newmark-beta finite strains */
+  if(strcmp(TimeIntegrationScheme,"Newmark-beta-Finite-Strains") == 0 )
+    {
+      U_Newmark_beta_Finite_Strains(FEM_Mesh, MPM_Mesh, InitialStep);
+    }  
         
   /*********************************************************************/
   /************************* FREE ALL FIELDS ***************************/
