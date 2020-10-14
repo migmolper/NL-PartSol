@@ -29,7 +29,8 @@ typedef struct
 */
 static Newmark_parameters compute_Newmark_parameters(double, double, double);
 static Matrix compute_Nodal_Effective_Mass(GaussPoint, Mesh, Mask, double);
-static void   compute_Nodal_Kinetics(Matrix, Matrix, Matrix,GaussPoint, Mesh, Mask);
+static Matrix compute_Nodal_Velocity(Matrix,GaussPoint, Mesh, Mask);
+static Matrix compute_Nodal_Acceleration(Matrix,GaussPoint, Mesh, Mask);
 static void   imposse_Nodal_Kinetics(Mesh,Matrix,Matrix,Mask,int);
 static void   imposed_Nodal_Displacements(Matrix, Mask, Mesh, int);
 static void   update_Local_State(Matrix,Mask,GaussPoint,Mesh,double);
@@ -68,8 +69,8 @@ void U_Newmark_beta_Finite_Strains(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int Initi
   Matrix Reactions;
   Matrix Momentum;
   Matrix Velocity;
-  Matrix D_Displacement;
   Matrix Acceleration;
+  Matrix D_Displacement;
   Matrix Residual;
   Mask ActiveNodes;
   Mask Free_and_Restricted_Dofs;
@@ -133,14 +134,13 @@ void U_Newmark_beta_Finite_Strains(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int Initi
 	Compute the nodal values of velocity and acceleration
       */
       D_Displacement = allocZ__MatrixLib__(Nactivenodes,Ndim);
-      imposed_Nodal_Displacements(D_Displacement, ActiveNodes, FEM_Mesh, TimeStep);
-      compute_Nodal_Kinetics(Velocity,Acceleration,Effective_Mass,MPM_Mesh,FEM_Mesh,ActiveNodes);
+      imposed_Nodal_Displacements(D_Displacement, ActiveNodes, FEM_Mesh, TimeStep);      
+      Velocity = compute_Nodal_Velocity(Effective_Mass,MPM_Mesh,FEM_Mesh,ActiveNodes);
+      Acceleration = compute_Nodal_Acceleration(Effective_Mass,MPM_Mesh,FEM_Mesh,ActiveNodes);
       imposse_Nodal_Kinetics(FEM_Mesh,Velocity,Acceleration,ActiveNodes,TimeStep);
       print_Status("DONE !!!",TimeStep);
-
       print_Status("*************************************************",TimeStep);
       print_Status("Four step : Compute equilibrium ... WORKING",TimeStep);
-   
       /*
 	Set the convergence false by default and start the iterations to compute
 	the incement of velocity and displacement in the nodes of the mesh
@@ -442,18 +442,13 @@ static Matrix compute_Nodal_Effective_Mass(GaussPoint MPM_Mesh, Mesh FEM_Mesh, M
 
 /**************************************************************/
 
-static void compute_Nodal_Kinetics(Matrix Velocity, Matrix Acceleration, Matrix Mass,
-				   GaussPoint MPM_Mesh, Mesh FEM_Mesh, Mask ActiveNodes)
+static Matrix compute_Nodal_Velocity(Matrix Mass,GaussPoint MPM_Mesh, Mesh FEM_Mesh, Mask ActiveNodes)
 /*
   Call the LAPACK solver to compute the nodal velocity. The operation is linearized and
   all the dof split the velocity array in n components like :
   | M 0 |   |V.x|   | p.x |
   | 0 M | * |V.y| = | p.y |
 
-  Call the LAPACK solver to compute the nodal Acceleration. The operation is linearized and
-  all the dof split the acceleration array in n components like :
-  | M 0 |   |A.x|   | dt_p.x |
-  | 0 M | * |A.y| = | dt_p.y |
 */
 {
   int Ndim = NumberDimensions;
@@ -473,9 +468,9 @@ static void compute_Nodal_Kinetics(Matrix Velocity, Matrix Acceleration, Matrix 
   /* Element for each particle */
   Element Nodes_p;
 
-  /* Define and allocate the momentum vector and its temporal derivative */
+  /* Define and allocate the momentum vector */
+  Matrix Velocity;
   Matrix Momentum = allocZ__MatrixLib__(Nnodes_mask,Ndim);
-  Matrix dt_Momentum = allocZ__MatrixLib__(Nnodes_mask,Ndim);
 
   /* Iterate over the particles to get the nodal values */
   for(int p = 0 ; p<Np ; p++)
@@ -507,6 +502,110 @@ static void compute_Nodal_Kinetics(Matrix Velocity, Matrix Acceleration, Matrix 
 	  for(int i = 0 ; i<Ndim ; i++)
 	    {
 	      Momentum.nM[A_mask][i] += m_p*ShapeFunction_pA*MPM_Mesh.Phi.vel.nM[p][i];
+	    }
+	}
+
+      /* Free the value of the shape functions */
+      free__MatrixLib__(ShapeFunction_p);
+      free(Nodes_p.Connectivity);
+    }
+
+
+  /*
+    Call the LAPACK solver to compute the accelerations and velocities
+  */
+  int Order = Nnodes_mask*Ndim;
+  int LDA   = Order;
+  int LDB = Order;
+  char  TRANS = 'T'; /* (Transpose) */
+  int   INFO= 3;
+  int * IPIV = (int *)Allocate_Array(Order,sizeof(int));
+  int NRHS = 1;
+
+  /*
+    Compute the LU factorization for the mass matrix
+  */
+  dgetrf_(&Order,&Order,Mass.nV,&LDA,IPIV,&INFO);
+  /*
+    Solve for the velocity
+  */
+  dgetrs_(&TRANS,&Order,&NRHS,Mass.nV,&LDA,IPIV,Momentum.nV,&LDB,&INFO);
+  free(IPIV);
+
+  /*
+    Transfer
+   */
+  Velocity = Momentum;
+ 
+  /*
+    Add some usefulll info
+  */
+  strcpy(Velocity.Info,"Nodal-Velocity");
+
+  return Velocity;
+}
+
+
+/**************************************************************/
+
+static Matrix compute_Nodal_Acceleration(Matrix Mass,GaussPoint MPM_Mesh, Mesh FEM_Mesh, Mask ActiveNodes)
+/*
+  Call the LAPACK solver to compute the nodal Acceleration. The operation is linearized and
+  all the dof split the acceleration array in n components like :
+  | M 0 |   |A.x|   | dt_p.x |
+  | 0 M | * |A.y| = | dt_p.y |
+*/
+{
+  int Ndim = NumberDimensions;
+  int Nnodes_mask = ActiveNodes.Nactivenodes;
+  int Np = MPM_Mesh.NumGP;
+  int Ap;
+  int A_mask;
+  int idx_A_mask_i;
+
+  /* Value of the shape-function */
+  Matrix ShapeFunction_p;
+
+  /* Evaluation of the particle in the node */
+  double ShapeFunction_pA;
+  /* Mass of the particle */
+  double m_p;
+  /* Element for each particle */
+  Element Nodes_p;
+
+  /* Define and allocate the temporal derivative of the momentum vector */
+  Matrix Acceleration;
+  Matrix dt_Momentum = allocZ__MatrixLib__(Nnodes_mask,Ndim);
+
+  /* Iterate over the particles to get the nodal values */
+  for(int p = 0 ; p<Np ; p++)
+    {
+
+      /* Define element of the particle */
+      Nodes_p = nodal_set__Particles__(p, MPM_Mesh.ListNodes[p], MPM_Mesh.NumberNodes[p]);
+
+      /* Evaluate the shape function in the coordinates of the particle */
+      ShapeFunction_p = compute_N__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
+
+      /* Get the mass of the GP */
+      m_p = MPM_Mesh.Phi.mass.nV[p];
+
+      /* Get the nodal mommentum */
+      for(int A = 0 ; A<Nodes_p.NumberNodes ; A++)
+	{
+
+	  /*
+	    Get the node in the nodal momentum with the mask
+	  */
+	  Ap = Nodes_p.Connectivity[A];
+	  A_mask = ActiveNodes.Nodes2Mask[Ap];
+
+	  /* Evaluate the GP function in the node */
+	  ShapeFunction_pA = ShapeFunction_p.nV[A];
+
+	  /* Nodal velocity and acceleration  */
+	  for(int i = 0 ; i<Ndim ; i++)
+	    {
 	      dt_Momentum.nM[A_mask][i] += m_p*ShapeFunction_pA*MPM_Mesh.Phi.acc.nM[p][i];
 	    }
 	}
@@ -516,12 +615,13 @@ static void compute_Nodal_Kinetics(Matrix Velocity, Matrix Acceleration, Matrix 
       free(Nodes_p.Connectivity);
     }
 
+
   /*
     Call the LAPACK solver to compute the accelerations and velocities
   */
-  int Order = Nnodes_mask;
-  int LDA   = Nnodes_mask;
-  int LDB = Nnodes_mask;
+  int Order = Nnodes_mask*Ndim;
+  int LDA   = Order;
+  int LDB = Order;
   char  TRANS = 'T'; /* (Transpose) */
   int   INFO= 3;
   int * IPIV = (int *)Allocate_Array(Order,sizeof(int));
@@ -533,25 +633,22 @@ static void compute_Nodal_Kinetics(Matrix Velocity, Matrix Acceleration, Matrix 
   dgetrf_(&Order,&Order,Mass.nV,&LDA,IPIV,&INFO);
 
   /*
-    Solve
+    Solve for the acceleration
   */
-  dgetrs_(&TRANS,&Order,&NRHS,Mass.nV,&LDA,IPIV,Momentum.nV,&LDB,&INFO);
   dgetrs_(&TRANS,&Order,&NRHS,Mass.nV,&LDA,IPIV,dt_Momentum.nV,&LDB,&INFO);
   free(IPIV);
 
   /*
     Transfer
    */
-  Velocity = Momentum;
   Acceleration = dt_Momentum;
-  
+ 
   /*
     Add some usefulll info
   */
-  strcpy(Velocity.Info,"Nodal-Velocity");
   strcpy(Acceleration.Info,"Nodal-Acceleration");
 
- 
+  return Acceleration;
 }
 
 
@@ -629,7 +726,7 @@ static void imposse_Nodal_Kinetics(Mesh FEM_Mesh,Matrix Velocity,Matrix Accelera
   		     Assign the boundary condition 
 		  */
 		  Velocity.nM[Id_BCC_mask][k] = FEM_Mesh.Bounds.BCC_i[i].Value[k].Fx[TimeStep]*(double)FEM_Mesh.Bounds.BCC_i[i].Dir[k];
-		  Acceleration.nM[Id_BCC_mask][k] = 0;
+		  Acceleration.nM[Id_BCC_mask][k] = 0.0;
 		}
 	    }
 	}    
@@ -1140,13 +1237,13 @@ static Matrix compute_Nodal_Residual(Matrix Velocity,
   /*
     Compute inertial forces (Vectorized)
   */
-    for(int idx_A = 0 ; idx_A<Order ; idx_A++)
+  for(int idx_A = 0 ; idx_A<Order ; idx_A++)
     {
       for(int idx_B = 0 ; idx_B<Order ; idx_B++)
-      {
-        idx_AB = idx_A*Order + idx_B;
-        Inertial_Forces.nV[idx_A] += Mass.nV[idx_AB]*Acceleration_n1.nV[idx_B];
-      }
+	{
+	  idx_AB = idx_A*Order + idx_B;
+	  Inertial_Forces.nV[idx_A] += Mass.nV[idx_AB]*Acceleration_n1.nV[idx_B];
+	}
     }
 
   /*
@@ -1531,8 +1628,7 @@ static void assemble_Nodal_Tangent_Stiffness_Material(Matrix Tangent_Stiffness,
 	      /*
 		Compute the nodal matrix with the contribution to each degree of freedom
 	      */
-	      Material_AB = compute_Nodal_Tangent_Stiffness_Material(F_n1_p,C_AB,
-								     transpose_F_n1_p);
+	      Material_AB = compute_Nodal_Tangent_Stiffness_Material(F_n1_p,C_AB,transpose_F_n1_p);
 	      
 	      /*
 		Add the geometric contribution to each dof for the assembling process
