@@ -127,7 +127,11 @@ double update_density__Particles__(double, double, Tensor);
 */
 Tensor explicit_integration_stress__Particles__(Tensor, Tensor, Material);
 /*******************************************************/
-
+/*
+\fn Tensor forward_integration_Stress__Particles__(Tensor S_p,Tensor F_n1_p,Material MatProp_p)
+*/
+Tensor forward_integration_Stress__Particles__(Tensor,Tensor,Material);
+/*******************************************************/
 /*!
   \fn Tensor configurational_midpoint_integration_Stress__Particles__(Tensor T_n1,Tensor T_n,double alpha)
 

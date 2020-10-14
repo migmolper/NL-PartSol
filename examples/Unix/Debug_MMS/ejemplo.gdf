@@ -10,7 +10,7 @@ GramsBox (Type=GID,File=Nodes.msh) {
 }
 
 # Time integration
-GramsTime (Type=Discrete-Energy-Momentum) {
+GramsTime (Type=Newmark-beta-Finite-Strains) {
     CFL=0.216
     N=1000
 }
