@@ -2017,6 +2017,13 @@ static void update_Particles(Matrix D_Displacement,
   /* iterate over the particles */
   for(int p = 0 ; p<Np ; p++)
     {
+
+      /* Set to zero accelerations and velocity to update the particle field */
+      for(int i = 0 ; i<Ndim ; i++)
+	{
+	  MPM_Mesh.Phi.acc.nM[p][i]  = 0.0;
+	  MPM_Mesh.Phi.vel.nM[p][i]  = 0.0;
+	}
       
       /* Define element of the particle */
       Nodes_p = nodal_set__Particles__(p, MPM_Mesh.ListNodes[p], MPM_Mesh.NumberNodes[p]);
@@ -2085,8 +2092,8 @@ static void update_Particles(Matrix D_Displacement,
 	  */
 	  for(int i = 0 ; i<Ndim ; i++)
 	    {
-	      MPM_Mesh.Phi.acc.nM[p][i]  = ShapeFunction_pI*Acceleration.nM[A_mask][i];
-	      MPM_Mesh.Phi.vel.nM[p][i]  = ShapeFunction_pI*Velocity.nM[A_mask][i];
+	      MPM_Mesh.Phi.acc.nM[p][i]  += ShapeFunction_pI*Acceleration.nM[A_mask][i];
+	      MPM_Mesh.Phi.vel.nM[p][i]  += ShapeFunction_pI*Velocity.nM[A_mask][i];
 	      MPM_Mesh.Phi.x_GC.nM[p][i] += ShapeFunction_pI*D_Displacement.nM[A_mask][i];
 	    } 
 	}
