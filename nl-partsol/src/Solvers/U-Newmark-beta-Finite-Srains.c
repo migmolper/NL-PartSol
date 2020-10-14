@@ -171,8 +171,7 @@ void U_Newmark_beta_Finite_Strains(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int Initi
 	  /*
 	    Compute the numerical residual to check the equilibrium
 	  */
-	  Residual = compute_Nodal_Residual(Velocity,Acceleration,Forces,D_Displacement,
-					    Effective_Mass,Params);
+	  Residual = compute_Nodal_Residual(Velocity,Acceleration,Forces,D_Displacement,Effective_Mass,Params);
 
 	  /*
 	    If the norm of the residual for each nodal value is below a tolerace
@@ -868,14 +867,14 @@ static void update_Local_State(Matrix D_Displacement,
       f_n1_p = increment_Deformation_Gradient__Particles__(D_Displacement_Ap,gradient_p);
 
       /*
-	Update the deformation gradient in t = n + 1 with the information
-	from t = n and the increment of deformation gradient.
+      	Update the deformation gradient in t = n + 1 with the information
+      	from t = n and the increment of deformation gradient.
       */  
       update_Deformation_Gradient_n1__Particles__(F_n1_p, F_n_p, f_n1_p);
       
       /*
       	Update the second Piola-Kirchhoff stress tensor (S) with an apropiate
-	integration rule.
+	     integration rule.
       */
       MatIndx_p = MPM_Mesh.MatIdx[p];
       MatProp_p = MPM_Mesh.Mat[MatIndx_p];
@@ -883,7 +882,7 @@ static void update_Local_State(Matrix D_Displacement,
       S_p = forward_integration_Stress__Particles__(S_p,F_n1_p,MatProp_p);
       
       /*
-	Free memory 
+	       Free memory 
       */
       free__TensorLib__(f_n1_p);
       free__MatrixLib__(D_Displacement_Ap);
@@ -1976,7 +1975,7 @@ static void update_Nodal_Kinetics(Matrix Velocity,
   double alpha_6 = Params.alpha_6;
 
   /*
-    Compute the velocity in the midd-point 
+    Compute the velocity and the acceleration ussing newmark integration
   */
   for(int idx_A_i = 0 ; idx_A_i < Nnodes_mask*Ndim ; idx_A_i++)
     {
