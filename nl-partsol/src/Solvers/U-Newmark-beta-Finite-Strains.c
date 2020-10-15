@@ -75,7 +75,7 @@ void U_Newmark_beta_Finite_Strains(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int Initi
   Mask ActiveNodes;
   Mask Free_and_Restricted_Dofs;
   double TOL = 0.000000001;
-  double epsilon = 1.0;
+  double epsilon = 0.0;
   double beta = 0.25;
   double gamma = 0.5;
 
@@ -1979,8 +1979,8 @@ static void update_Nodal_Kinetics(Matrix Velocity,
   */
   for(int idx_A_i = 0 ; idx_A_i < Nnodes_mask*Ndim ; idx_A_i++)
     {
-      aux_Acceleration = alpha_1*D_Displacement.nV[idx_A_i] - alpha_2*Velocity.nV[idx_A_i] - alpha_3*Acceleration.nV[idx_A_i];
-      aux_Velocity = alpha_4*D_Displacement.nV[idx_A_i] + alpha_5*Velocity.nV[idx_A_i] + alpha_6*Acceleration.nV[idx_A_i];
+      aux_Acceleration = alpha_1*D_Displacement.nV[idx_A_i] - alpha_2*Velocity.nV[idx_A_i] - alpha_3*Acceleration.nV[idx_A_i] - Acceleration.nV[idx_A_i];
+      aux_Velocity = alpha_4*D_Displacement.nV[idx_A_i] + alpha_5*Velocity.nV[idx_A_i] + alpha_6*Acceleration.nV[idx_A_i] - Velocity.nV[idx_A_i];
       
       Acceleration.nV[idx_A_i] = aux_Acceleration;
       Velocity.nV[idx_A_i] = aux_Velocity;
@@ -2018,13 +2018,6 @@ static void update_Particles(Matrix D_Displacement,
   /* iterate over the particles */
   for(int p = 0 ; p<Np ; p++)
     {
-
-      /* Set to zero accelerations and velocity to update the particle field */
-      for(int i = 0 ; i<Ndim ; i++)
-	{
-	  MPM_Mesh.Phi.acc.nM[p][i]  = 0.0;
-	  MPM_Mesh.Phi.vel.nM[p][i]  = 0.0;
-	}
       
       /* Define element of the particle */
       Nodes_p = nodal_set__Particles__(p, MPM_Mesh.ListNodes[p], MPM_Mesh.NumberNodes[p]);

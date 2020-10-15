@@ -28,7 +28,7 @@ GramsSolid2D (File=Particles.msh,GPxElement=4) {
     }
     
     GramsShapeFun (Type=LME) {
-	gamma=3.0 
+	gamma=3.5
     }
 
     GramsBodyForces (Nodes=Material.txt) {
