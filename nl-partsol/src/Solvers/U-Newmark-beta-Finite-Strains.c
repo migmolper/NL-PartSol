@@ -48,7 +48,7 @@ static Tensor compute_Nodal_Tangent_Stiffness_Material(Tensor,Tensor,Tensor);
 static void   solve_non_reducted_system(Matrix, Matrix, Matrix, Matrix, Newmark_parameters);
 static void   solve_reducted_system(Mask,Matrix, Matrix, Matrix, Matrix, Newmark_parameters);
 static void   compute_increments_of_Nodal_Kinetics(Matrix, Matrix, Matrix, Newmark_parameters);
-static void   update_Particles(Matrix, Matrix, Matrix, GaussPoint, Mesh, Mask);
+static void   update_Particles(Matrix, Matrix, Matrix, GaussPoint, Mesh, Mask, Newmark_parameters);
 
 /**************************************************************/
 
@@ -75,7 +75,7 @@ void U_Newmark_beta_Finite_Strains(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int Initi
   Mask ActiveNodes;
   Mask Free_and_Restricted_Dofs;
   double TOL = 0.000000001;
-  double epsilon = 0.0;
+  double epsilon = 1.0;
   double beta = 0.25;
   double gamma = 0.5;
 
@@ -219,13 +219,13 @@ void U_Newmark_beta_Finite_Strains(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int Initi
       print_iteration(TimeStep,Iter);
       print_Status("DONE !!!",TimeStep);
 
-      print_Status("*************************************************",TimeStep);
-      print_Status("Six step : Compute increment of velocity ... WORKING",TimeStep);
-      /*
-	Once the equilibrium is reached, obtain the increment of nodal velocity
-      */
-      compute_increments_of_Nodal_Kinetics(Velocity, Acceleration, D_Displacement, Params);
-      print_Status("DONE !!!",TimeStep);
+      /* print_Status("*************************************************",TimeStep); */
+      /* print_Status("Six step : Compute increment of velocity ... WORKING",TimeStep); */
+      /* /\* */
+      /* 	Once the equilibrium is reached, obtain the increment of nodal velocity */
+      /* *\/ */
+      /* compute_increments_of_Nodal_Kinetics(Velocity, Acceleration, D_Displacement, Params); */
+      /* print_Status("DONE !!!",TimeStep); */
 
 
       print_Status("*************************************************",TimeStep);
@@ -233,7 +233,7 @@ void U_Newmark_beta_Finite_Strains(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int Initi
       /*
 	Update Lagrangians with D_Displacement
       */
-      update_Particles(D_Displacement,Velocity,Acceleration,MPM_Mesh,FEM_Mesh,ActiveNodes);
+      update_Particles(D_Displacement,Velocity,Acceleration,MPM_Mesh,FEM_Mesh,ActiveNodes, Params);
       print_Status("DONE !!!",TimeStep);
       
       /*
@@ -1957,16 +1957,17 @@ for(idx_A_ij = 0 ; idx_A_ij < Order ; idx_A_ij++)
 
 
 static void compute_increments_of_Nodal_Kinetics( Matrix Velocity,
-                                        				  Matrix Acceleration,
-                                        				  Matrix D_Displacement,
-                                        				  Newmark_parameters Params)
+						  Matrix Acceleration,
+						  Matrix D_Displacement,
+						  Newmark_parameters Params)
 {
   int Nnodes_mask = Velocity.N_rows;
   int Ndim = NumberDimensions;
 
-  double aux_Acceleration = 0;
-  double aux_Velocity = 0;
-  
+
+  double aux_Acceleration;
+  double aux_Velocity;
+	      
   double alpha_1 = Params.alpha_1;
   double alpha_2 = Params.alpha_2;
   double alpha_3 = Params.alpha_3;
@@ -1996,7 +1997,8 @@ static void update_Particles(Matrix D_Displacement,
 			     Matrix Acceleration,
 			     GaussPoint MPM_Mesh,
 			     Mesh FEM_Mesh,
-			     Mask ActiveNodes)
+			     Mask ActiveNodes,
+			     Newmark_parameters Params)
 {
   int Ndim = NumberDimensions;
   int Np = MPM_Mesh.NumGP;
@@ -2014,6 +2016,16 @@ static void update_Particles(Matrix D_Displacement,
   Tensor f_n1_p;
   double J_p;
   Element Nodes_p; /* Element for each particle */
+
+  double D_U_pI;
+  double V_pI;
+  double A_pI;
+  double alpha_1 = Params.alpha_1;
+  double alpha_2 = Params.alpha_2;
+  double alpha_3 = Params.alpha_3;
+  double alpha_4 = Params.alpha_4;
+  double alpha_5 = Params.alpha_5;
+  double alpha_6 = Params.alpha_6;
 
   /* iterate over the particles */
   for(int p = 0 ; p<Np ; p++)
@@ -2086,9 +2098,13 @@ static void update_Particles(Matrix D_Displacement,
 	  */
 	  for(int i = 0 ; i<Ndim ; i++)
 	    {
-	      MPM_Mesh.Phi.acc.nM[p][i]  += ShapeFunction_pI*Acceleration.nM[A_mask][i];
-	      MPM_Mesh.Phi.vel.nM[p][i]  += ShapeFunction_pI*Velocity.nM[A_mask][i];
-	      MPM_Mesh.Phi.x_GC.nM[p][i] += ShapeFunction_pI*D_Displacement.nM[A_mask][i];
+	      D_U_pI = ShapeFunction_pI*D_Displacement.nM[A_mask][i];
+	      V_pI = ShapeFunction_pI*Velocity.nM[A_mask][i];
+	      A_pI = ShapeFunction_pI*Acceleration.nM[A_mask][i];
+	      	      
+	      MPM_Mesh.Phi.acc.nM[p][i]  += alpha_1*D_U_pI - alpha_2*V_pI - (alpha_3 + 1)*A_pI;
+	      MPM_Mesh.Phi.vel.nM[p][i]  += alpha_4*D_U_pI + (alpha_5 - 1)*V_pI - alpha_6*A_pI;
+	      MPM_Mesh.Phi.x_GC.nM[p][i] += D_U_pI;
 	    } 
 	}
 
