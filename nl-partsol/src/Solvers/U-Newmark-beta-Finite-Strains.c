@@ -47,7 +47,7 @@ static Tensor compute_stiffness_density(Tensor, Tensor, Tensor, double, Material
 static Tensor compute_Nodal_Tangent_Stiffness_Material(Tensor,Tensor,Tensor);
 static void   solve_non_reducted_system(Matrix, Matrix, Matrix, Matrix, Newmark_parameters);
 static void   solve_reducted_system(Mask,Matrix, Matrix, Matrix, Matrix, Newmark_parameters);
-static void   update_Nodal_Kinetics(Matrix, Matrix, Matrix, Newmark_parameters);
+static void   compute_increments_of_Nodal_Kinetics(Matrix, Matrix, Matrix, Newmark_parameters);
 static void   update_Particles(Matrix, Matrix, Matrix, GaussPoint, Mesh, Mask);
 
 /**************************************************************/
@@ -224,7 +224,7 @@ void U_Newmark_beta_Finite_Strains(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int Initi
       /*
 	Once the equilibrium is reached, obtain the increment of nodal velocity
       */
-      update_Nodal_Kinetics(Velocity, Acceleration, D_Displacement, Params);
+      compute_increments_of_Nodal_Kinetics(Velocity, Acceleration, D_Displacement, Params);
       print_Status("DONE !!!",TimeStep);
 
 
@@ -1956,10 +1956,10 @@ for(idx_A_ij = 0 ; idx_A_ij < Order ; idx_A_ij++)
 /**************************************************************/
 
 
-static void update_Nodal_Kinetics(Matrix Velocity,
-				  Matrix Acceleration,
-				  Matrix D_Displacement,
-				  Newmark_parameters Params)
+static void compute_increments_of_Nodal_Kinetics( Matrix Velocity,
+                                        				  Matrix Acceleration,
+                                        				  Matrix D_Displacement,
+                                        				  Newmark_parameters Params)
 {
   int Nnodes_mask = Velocity.N_rows;
   int Ndim = NumberDimensions;
@@ -1979,8 +1979,8 @@ static void update_Nodal_Kinetics(Matrix Velocity,
   */
   for(int idx_A_i = 0 ; idx_A_i < Nnodes_mask*Ndim ; idx_A_i++)
     {
-      aux_Acceleration = alpha_1*D_Displacement.nV[idx_A_i] - alpha_2*Velocity.nV[idx_A_i] - alpha_3*Acceleration.nV[idx_A_i] - Acceleration.nV[idx_A_i];
-      aux_Velocity = alpha_4*D_Displacement.nV[idx_A_i] + alpha_5*Velocity.nV[idx_A_i] + alpha_6*Acceleration.nV[idx_A_i] - Velocity.nV[idx_A_i];
+      aux_Acceleration = alpha_1*D_Displacement.nV[idx_A_i] - alpha_2*Velocity.nV[idx_A_i] - (alpha_3 + 1)*Acceleration.nV[idx_A_i];
+      aux_Velocity = alpha_4*D_Displacement.nV[idx_A_i] + (alpha_5 - 1)*Velocity.nV[idx_A_i] + alpha_6*Acceleration.nV[idx_A_i];
       
       Acceleration.nV[idx_A_i] = aux_Acceleration;
       Velocity.nV[idx_A_i] = aux_Velocity;
