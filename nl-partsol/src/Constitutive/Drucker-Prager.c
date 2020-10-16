@@ -6,6 +6,7 @@
 static Tensor compute_small_strain_tensor(Tensor, Tensor);
 static void   compute_volumetric_deviatoric_stress_tensor(double *, Tensor, Tensor, Material);
 static double compute_yield_surface(Tensor, Tensor, Material);
+static double compute_hardening_modulus(double, double, double, double);
 
 /**************************************************************/
 
@@ -24,7 +25,11 @@ Tensor viscoplastic_Drucker_Prager_Sanavia(Tensor grad_e, Tensor C, Tensor F_pla
 	double p_lim;
 	double d_Phi;
 	Tensor sigma_k1;
-	Tensor Increment_E_plastic;
+	Tensor D_E_plastic;
+
+	double cohesion_reference = MatProp.cohesion_reference;
+	double cohesion_reference = MatProp.cohesion_reference;
+	double hardening_exp = MatProp.hardening_exp;
 
 	/*	
 		Calculation of the small strain tensor
@@ -62,7 +67,7 @@ Tensor viscoplastic_Drucker_Prager_Sanavia(Tensor grad_e, Tensor C, Tensor F_pla
 
 				c_k1 = compute_cohesion_modulus();
 
-				H = compute_hardening_modulus();
+				H = compute_hardening_modulus(EPS_k1, E_plastic_reference, cohesion_reference, hardening_exp);
 
 				Phi = compute_yield_surface_classical();
 
@@ -83,7 +88,7 @@ Tensor viscoplastic_Drucker_Prager_Sanavia(Tensor grad_e, Tensor C, Tensor F_pla
 			/*
 				update
 			*/
-			Increment_E_plastic = compute_increment_plastic_strain_classical();
+			D_E_plastic = compute_increment_plastic_strain_classical();
 			sigma_k1 = compute_finite_stress_tensor_classical();
 
 		}
@@ -122,7 +127,7 @@ Tensor viscoplastic_Drucker_Prager_Sanavia(Tensor grad_e, Tensor C, Tensor F_pla
 
 			EPS_k1 = compute_equivalent_plastic_strain_apex();
 
-			Increment_E_plastic = compute_increment_plastic_strain_apex();
+			D_E_plastic = compute_increment_plastic_strain_apex();
 
 			sigma_k1 = compute_finite_stress_tensor_apex();
 
@@ -133,7 +138,7 @@ Tensor viscoplastic_Drucker_Prager_Sanavia(Tensor grad_e, Tensor C, Tensor F_pla
 	/*
 		Step 
 	*/
-	update_plastic_deformation_gradient(Increment_E_plastic,F_plastic);
+	update_plastic_deformation_gradient(D_E_plastic,F_plastic);
 
 	/*
 		Get the stress tensor in the deformed configuration
@@ -190,9 +195,23 @@ static Tensor compute_small_strain_tensor(Tensor C, Tensor F_plastic)
 
 /**************************************************************/
 
-void compute_volumetric_deviatoric_stress_tensor(double * p_trial, Tensor s_tria, Tensor E_elastic, Material MatProp)
+static void compute_volumetric_deviatoric_stress_tensor(double * p_trial, Tensor s_tria, Tensor E_elastic, Material MatProp)
 {
 	volumetric_desviatoric_decomposition__TensorLib__(Eps_elastic,Eps_elastic_vol,Eps_elastic_dev);
+}
+
+/**************************************************************/
+
+static double compute_hardening_modulus(double Equiv_plastic_strain, double E_plastic_reference, double cohesion_reference, double hardening_exp)
+{
+	double c0 = cohesion_reference;
+	double N_eps = hardening_exp;
+	double EPS = Equiv_plastic_strain;
+	double E0 = E_plastic_reference;
+
+	double H = (c0/(N_eps*E0))*pow((1 + EPS/E0),(1/N_eps - 1));
+
+	return H;
 }
 
 /**************************************************************/
