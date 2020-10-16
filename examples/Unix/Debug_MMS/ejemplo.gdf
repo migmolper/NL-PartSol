@@ -11,10 +11,9 @@ GramsBox (Type=GID,File=Nodes.msh) {
 
 # Time integration
 GramsTime (Type=Newmark-beta-Finite-Strains) {
-    CFL=0.216
+    CFL=0.54
     N=1000
 }
-
 
 GramsSolid2D (File=Particles.msh,GPxElement=4) {
 
@@ -28,7 +27,7 @@ GramsSolid2D (File=Particles.msh,GPxElement=4) {
     }
     
     GramsShapeFun (Type=LME) {
-	gamma=4.0
+	gamma=3.0
     }
 
     GramsBodyForces (Nodes=Material.txt) {

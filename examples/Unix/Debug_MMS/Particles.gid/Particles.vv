@@ -1,6 +1,6 @@
 BeginZE /home/migmolper/GraMS/examples/Unix/Debug_MMS/Particles.gid/Particles.vv
-   x -0.965269625186920166 1.64065933227539062
-   y 2.05243444442749023 -1.41560709476470947
+   x -0.605012059211730957 1.43186402320861816
+   y 1.61210727691650391 -1.09862267971038818
    z -2.17944955825805664 2.17944955825805664
    e 0.726483166217803955
    v 0 0 0
@@ -30,4 +30,8 @@ BeginZE /home/migmolper/GraMS/examples/Unix/Debug_MMS/Particles.gid/Particles.vv
    OGLStereo(LeftEyeDistance) 1 0 0 1
    OGLStereo(RightEyeDistance) 0 1 1 1
 EndZE /home/migmolper/GraMS/examples/Unix/Debug_MMS/Particles.gid/Particles.vv
+
+BeginMirror
+   Mirror 0 Angle 0.0 AngleFake -15.0 SizeFactor 2.0 HeightOffset 0.25 Color #d9e5f24d Backlight Off EdgeStyle No Type Scene DrawMode Mirror
+EndMirror
 
