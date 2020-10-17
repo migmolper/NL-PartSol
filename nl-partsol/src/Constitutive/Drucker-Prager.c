@@ -13,6 +13,10 @@ static double compute_increment_plastic_strain(double, double, double);
 static double update_equivalent_plastic_strain_classical(double, double, Material);
 static double update_cohesion_modulus(double, Material);
 static double compute_yield_surface_classical(double, double, double, double, Material);
+static Tensor compute_increment_plastic_strain_classical(Tensor, double, double, Material);
+static Tensor compute_finite_stress_tensor_classical(Tensor, double, double, double, Material);
+static double compute_derivative_yield_surface_apex(double, double, double, Material);
+static double compute_yield_surface_apex(double, double, double, double, Material);
 
 /**************************************************************/
 
@@ -23,10 +27,12 @@ Tensor viscoplastic_Drucker_Prager_Sanavia(Tensor grad_e, Tensor C, Tensor F_pla
 	*/
 {
 
-	
+	int Ndim = NumberDimensions;
+
 	Tensor E_elastic;
 	double p_trial;
 	Tensor s_trial;
+	double delta_Gamma;
 	double s_trial_norm;
 	double Phi;
 	double d_Phi;	
@@ -35,8 +41,8 @@ Tensor viscoplastic_Drucker_Prager_Sanavia(Tensor grad_e, Tensor C, Tensor F_pla
 	Tensor sigma_k1;
 	Tensor D_E_plastic;
 
-	double c_0 = MatProp.cohesion_reference;
-	double H_exp = MatProp.hardening_exp;
+	double TOL_DP = MatProp.TOL_Drucker_Prager;
+	int iter_max_DP = MatProp.Max_Iterations_Drucker_Prager;
 
 	/*	
 		Calculation of the small strain tensor
@@ -53,10 +59,12 @@ Tensor viscoplastic_Drucker_Prager_Sanavia(Tensor grad_e, Tensor C, Tensor F_pla
 	/*
 		Yield condition : Starting from incremental plastic strain equal to zero
 	*/
+	delta_Gamma = 0;
 	Phi = compute_yield_surface(p_trial, s_trial_norm, c_k, MatProp);
+
 	if(Phi >= 0)
 	{
-		H = compute_hardening_modulus(*ptr_EPS_k, E_plastic_reference, c_0, H_exp);
+		H = compute_hardening_modulus(*ptr_EPS_k, MatProp);
 
 		p_lim = compute_limit_between_classic_apex_algorithm(s_trial_norm, *ptr_c_k, H, MatProp);
 
@@ -83,7 +91,7 @@ Tensor viscoplastic_Drucker_Prager_Sanavia(Tensor grad_e, Tensor C, Tensor F_pla
 				/*
 					Check convergence
 				*/
-				if(Phi < TOL_Drucker_Prager)
+				if(Phi < TOL_DP)
 				{
 					iter++;
 				}
@@ -97,8 +105,8 @@ Tensor viscoplastic_Drucker_Prager_Sanavia(Tensor grad_e, Tensor C, Tensor F_pla
 			/*
 				update
 			*/
-			D_E_plastic = compute_increment_plastic_strain_classical();
-			sigma_k1 = compute_finite_stress_tensor_classical();
+			D_E_plastic = compute_increment_plastic_strain_classical(s_trial, s_trial_norm, delta_Gamma, MatProp);
+			sigma_k1 = compute_finite_stress_tensor_classical(s_trial, p_trial, s_trial_norm, delta_Gamma, MatProp);
 
 		}
 		/*
@@ -110,16 +118,16 @@ Tensor viscoplastic_Drucker_Prager_Sanavia(Tensor grad_e, Tensor C, Tensor F_pla
 			while(iter < iter_max_DP)
 			{
 
-				d_Phi = compute_derivative_yield_surface_apex();
+				d_Phi = compute_derivative_yield_surface_apex(H, s_trial_norm, delta_Gamma, MatProp);
 
-				delta_Gamma = compute_increment_plastic_strain();
+				delta_Gamma = update_increment_plastic_strain(delta_Gamma, Phi, d_Phi);
 
-				Phi = compute_yield_surface_apex();
+				Phi = compute_yield_surface_apex(p_trial, H, delta_Gamma, *ptr_c_k, MatProp);
 
 				/*
 					Check convergence
 				*/
-				if(Phi < TOL_Drucker_Prager)
+				if(Phi < TOL_DP)
 				{
 					iter++;
 				}
@@ -207,6 +215,7 @@ static Tensor compute_small_strain_tensor(Tensor C, Tensor F_plastic)
 static void compute_volumetric_deviatoric_stress_tensor(double * p_trial, Tensor s_trial, Tensor E_elastic, Material MatProp)
 {
 
+	int Ndim = NumberDimensions;
 	double nu = Mat.nu; 
     double E = Mat.E;
 	double K = E/(3*(1-2*nu));
@@ -354,11 +363,107 @@ static double compute_yield_surface_classical(double s_trial_norm, double p_tria
 
 /**************************************************************/
 
+static Tensor compute_increment_plastic_strain_classical(Tensor s_trial, double s_trial_norm, double delta_Gamma, Material MatProp)
+{
 
+	int Ndim = NumberDimensions;
 
+	double alpha_Q = MatProp.alpha_Q_Drucker_Prager;
+	double aux1 = alpha_Q*delta_Gamma;
+	double aux2 = delta_Gamma/s_trial_norm;
 
+	Tensor D_E_plastic = alloc__TensorLib__(2);	
+	Tensor I = Identity__TensorLib__();
 
+	for(int i = 0 ; i<Ndim ; i++)
+	{
+		for(int j = 0 ; j<Ndim ; j++)
+		{
+			D_E_plastic.N[i][j] = aux1*I.N[i][j] + aux2*s_trial.N[i][j];
+		}
+	}
 
+	free__TensorLib__(I);
+
+	return D_E_plastic;
+}
+
+/**************************************************************/
+
+static Tensor compute_finite_stress_tensor_classical(Tensor s_trial, double p_trial, double s_trial_norm, double delta_Gamma, Material MatProp)
+{
+	int Ndim = NumberDimensions;
+
+	Tensor sigma_k1 = alloc__TensorLib__(2);
+	Tensor I = Identity__TensorLib__();
+
+	double alpha_Q = MatProp.alpha_Q_Drucker_Prager;
+	double beta = MatProp.beta_Drucker_Prager;
+	double nu = Mat.nu; /* Poisson modulus */
+	double mu = Mat.mu; /* Viscosity parameter */
+    double E = Mat.E; /* Elastic modulus */
+	double K = E/(3*(1-2*nu));
+	double G = E/(2*(1+nu));
+
+	double aux1 = p_trial - 3*K*alpha_Q*delta_Gamma;
+	double aux2 = 1 - 2*G*delta_Gamma/s_trial_norm;
+
+	for(int i = 0 ; i<Ndim ; i++)
+	{
+		for(int j = 0 ; j<Ndim ; j++)
+		{
+			sigma_k1.N[i][j] = aux1*I.N[i][j] + aux2*s_trial.N[i][j];
+		}
+	}
+
+	return sigma_k1;
+}
+
+/**************************************************************/
+
+static double compute_derivative_yield_surface_apex(double H, double s_trial_norm, double delta_Gamma2, Material MatProp)
+{
+	double alpha_F = MatProp.alpha_F_Drucker_Prager;
+	double alpha_Q = MatProp.alpha_Q_Drucker_Prager;
+	double beta = MatProp.beta_Drucker_Prager;
+	double nu = Mat.nu; /* Poisson modulus */
+	double mu = Mat.mu; /* Viscosity parameter */
+    double E = Mat.E; /* Elastic modulus */
+	double K = E/(3*(1-2*nu));
+	double G = E/(2*(1+nu));
+
+	double delta_Gamma1 = s_trial_norm/G
+	double aux1 = 3*alpha_Q*K;
+	double aux2 = 3*H*beta*DSQR(alpha_Q)*(delta_Gamma1 + delta_Gamma2);
+	double aux3 = 3*alpha_F*sqrt(DSQR(delta_Gamma1) + 3*DSQR(alpha_Q)*DSQR(delta_Gamma1 + delta_Gamma2));
+
+	double d_Phi = aux1 + aux2/aux3;
+
+	return d_Phi;
+}
+
+/**************************************************************/
+
+static double compute_yield_surface_apex(double p_trial, double H, double delta_Gamma2, double c_k, Material MatProp)
+{
+	double alpha_F = MatProp.alpha_F_Drucker_Prager;
+	double alpha_Q = MatProp.alpha_Q_Drucker_Prager;
+	double beta = MatProp.beta_Drucker_Prager;
+	double nu = Mat.nu; /* Poisson modulus */
+	double mu = Mat.mu; /* Viscosity parameter */
+    double E = Mat.E; /* Elastic modulus */
+	double K = E/(3*(1-2*nu));
+	double G = E/(2*(1+nu));
+
+	double delta_Gamma1 = s_trial_norm/G;
+	double aux1 = beta/(3*alpha_F);
+	double aux2 = H*sqrt(DSQR(delta_Gamma1) + 3*DSQR(alpha_Q)*DSQR(delta_Gamma1 + delta_Gamma2));
+	double aux3 = 3*K*alpha_Q*(delta_Gamma1 + delta_Gamma2);
+
+	double Phi = aux1*(c_k + aux2 - p_trial + aux3);
+
+	return Phi;
+}
 
 
 
