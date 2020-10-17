@@ -461,6 +461,8 @@ static void update_Local_State(Matrix D_Displacement,
   int Nnodes_p;
   double J_n1_p;  
   double Delta_J_p;
+  double * ptr_c_p;
+  double * ptr_EPS_p;
   Element Nodes_p;
   Material MatProp_p;
   Matrix gradient_p;
@@ -468,6 +470,7 @@ static void update_Local_State(Matrix D_Displacement,
   Tensor F_n_p;
   Tensor F_n1_p;
   Tensor f_n1_p;
+  Tensor F_plastic_p;
   Tensor S_p;
   
   /*
@@ -528,6 +531,14 @@ static void update_Local_State(Matrix D_Displacement,
         {
           J_n1_p = I3__TensorLib__(F_n1_p);
           S_p = grad_energy_Neo_Hookean_Wriggers(S_p, C_n1_p, J_n1_p, MatProp_p);
+        }
+      else if(strcmp(MatProp_p.Type,"Viscoplastic-Drucker-Prager-Sanavia") == 0)
+        {
+          J_n1_p = I3__TensorLib__(F_n1_p);
+          F_plastic_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_plastic.nM[p],2);
+          ptr_c_p = &MPM_Mesh.Phi.cohesion.nM[p];
+          ptr_EPS_p = &MPM_Mesh.Phi.cohesion.nM[p];
+          S_p = viscoplastic_Drucker_Prager_Sanavia(S_p, C_n1_p, F_plastic_p, F_n1_p, ptr_EPS_p, ptr_c_p, J_n1_p, MatProp_p);
         }
       else
         {
