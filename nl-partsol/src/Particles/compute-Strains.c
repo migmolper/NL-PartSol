@@ -119,26 +119,26 @@ void update_Deformation_Gradient_n1__Particles__(Tensor F_n1, Tensor F_n, Tensor
   for(int i = 0 ; i < Ndim  ; i++)
     {
       for(int j = 0 ; j < Ndim  ; j++)
-	{
-	  /*
-	    Set to zero the deformation gradient at t = n + 1 
-	   */
-	  F_n1.N[i][j] = 0;
+	     {
+       /*
+	      Set to zero the deformation gradient at t = n + 1 
+        */
+        F_n1.N[i][j] = 0;
 
-	  /*
-	    Compute row-column multiplication
-	   */
-	  aux = 0;
-	  for(int k = 0 ; k < Ndim  ; k++)
-	    {
-	      aux += f_n1.N[i][k]*F_n.N[k][j];
-	    }
+        /*
+        Compute row-column multiplication
+        */
+        aux = 0;
+        for(int k = 0 ; k < Ndim  ; k++)
+        {
+          aux += f_n1.N[i][k]*F_n.N[k][j];
+        }
 
-	  /*
-	    New value
-	   */
-	  F_n1.N[i][j] = aux;
-	}
+        /*
+          New value
+        */
+        F_n1.N[i][j] = aux;
+      }
     }
 }
 
@@ -169,7 +169,7 @@ Tensor right_Cauchy_Green__Particles__(Tensor F)
 
 /*******************************************************/
 
-Tensor logarithmic_elastic_strains(Tensor C)
+Tensor logarithmic_strains__Particles__(Tensor C)
 {
 
   int Ndim = NumberDimensions;
@@ -213,6 +213,43 @@ Tensor logarithmic_elastic_strains(Tensor C)
   free__TensorLib__(logC_spectral);
 
   return logC; 
+}
+
+/*******************************************************/
+
+Tensor increment_Deformation_Gradient_exponential_strains__Particles__(Tensor D_E)
+{
+
+  int Ndim = NumberDimensions;
+  Tensor EigenVals_D_E;
+  Tensor EigenVects_D_E;
+  Tensor exp_D_E_spectral = alloc__TensorLib__(2);
+  Tensor exp_D_E;
+
+
+  /*
+    Compute the spectral descomposition of the tensor exp(D_E)
+  */
+  spectral_descomposition_symmetric__TensorLib__(EigenVals_D_E, EigenVects_D_E, Tensor D_E);
+  
+  for(int i = 0 ; i < Ndim  ; i++)
+    {
+      exp_D_E_spectral.N[i][i] = exp(EigenVals_D_E.n[i]);
+    }
+
+  /*
+    Rotate the spectral descomposition of the tensor exp(D_E)
+  */
+  exp_D_E = rotate__TensorLib__(exp_D_E_spectral,EigenVects_D_E);
+
+  /*
+    Free memory
+  */
+  free__TensorLib__(EigenVals_D_E);
+  free__TensorLib__(EigenVects_D_E);
+  free__TensorLib__(exp_D_E_spectral);
+
+  return exp_D_E; 
 }
 
 /*******************************************************/

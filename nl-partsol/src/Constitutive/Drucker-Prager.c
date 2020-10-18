@@ -20,6 +20,7 @@ static double compute_yield_surface_apex(double, double, double, double, Materia
 static double update_equivalent_plastic_strain_apex(double, double, double, Material);
 static Tensor compute_increment_plastic_strain_apex(Tensor, double, double, Material);
 static Tensor compute_finite_stress_tensor_apex(double, double, Material);
+extern void   update_plastic_deformation_gradient(Tensor, Tensor);
 
 /**************************************************************/
 
@@ -57,7 +58,7 @@ Tensor viscoplastic_Drucker_Prager_Sanavia(Tensor grad_e, Tensor C, Tensor F_pla
 		the norm of the deviatoric tensor
 	*/
 	compute_volumetric_deviatoric_stress_tensor(&p_trial, s_trial, E_elastic, MatProp);
-	
+
 	s_trial_norm = EuclideanNorm__TensorLib__(s_trial);
 
 	/*
@@ -158,7 +159,7 @@ Tensor viscoplastic_Drucker_Prager_Sanavia(Tensor grad_e, Tensor C, Tensor F_pla
 	}
 
 	/*
-		Step 
+		Update plastic deformation gradient
 	*/
 	update_plastic_deformation_gradient(D_E_plastic,F_plastic);
 
@@ -204,7 +205,7 @@ static Tensor compute_small_strain_tensor(Tensor C, Tensor F_plastic)
 	/*
 		Use the approach of Ortiz and Camacho to compute the elastic infinitesimal strain tensor.
 	*/
-	Eps_elastic = logarithmic_elastic_strains(C_elastic);
+	Eps_elastic = logarithmic_strains__Particles__(C_elastic);
 
 	/*	
 		Free memory
@@ -544,12 +545,61 @@ static Tensor compute_finite_stress_tensor_apex(double p_trial, double delta_Gam
 
 /**************************************************************/
 
+extern void update_plastic_deformation_gradient(Tensor D_E_plastic, Tensor F_plastic)
+{
+	int Ndim = NumberDimensions;
+	double aux1;
 
+	Tensor D_F_plastic;
+	Tensor Aux_tensor = alloc__TensorLib__(2);
 
+	D_F_plastic = increment_Deformation_Gradient_exponential_strains__Particles__(D_E_plastic);
 
+    
+    /*
+    	Compute the new value of the plastic deformation gradient 
+    */
+  for(int i = 0 ; i < Ndim  ; i++)
+    {
+      for(int j = 0 ; j < Ndim  ; j++)
+	     {
 
+        /*
+        Compute row-column multiplication
+        */
+        aux1 = 0;
+        for(int k = 0 ; k < Ndim  ; k++)
+        {
+          aux1 += D_F_plastic.N[i][k]*F_plastic.N[k][j];
+        }
 
+        /*
+          New value
+        */
+        Aux_tensor.N[i][j] = aux1;
+      }
+    }
 
+	/*
+		Update value of the plastic deformation gradient
+	*/
+  for(int i = 0 ; i < Ndim  ; i++)
+    {
+      for(int j = 0 ; j < Ndim  ; j++)
+	     {
+			F_plastic.N[i][j] = Aux_tensor.N[i][j];
+	     }
+	 }
+
+	 /*
+	 	Free memory 
+	 */
+	free__TensorLib__(D_F_plastic);
+	free__TensorLib__(Aux_tensor);
+
+}
+
+/**************************************************************/
 
 
 
