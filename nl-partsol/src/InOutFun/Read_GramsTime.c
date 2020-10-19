@@ -5,7 +5,12 @@
   Call global variables
 */
 double SpectralRadius;
-double CFL; 
+double CFL;
+double epsilon_Mass_Matrix; 
+double beta_Newmark_beta;   
+double gamma_Newmark_beta;
+double TOL_Newmark_beta;
+
 /**********************************************************************/
 
 void GramsTime(char * Name_File)
@@ -86,11 +91,15 @@ GramsTime(Scheme=FE){
       }
       TimeIntegrationScheme = Parse_Temp_id[1];
       printf("\t -> %s : %s \n","Time integrator",TimeIntegrationScheme);
-
+     
       /* Set to default all it properties */
       CFL=0.8;
       NumTimeStep=0;
       SpectralRadius=0.6;
+      epsilon_Mass_Matrix = 0.0;
+      beta_Newmark_beta = 0.25;
+      gamma_Newmark_beta = 0.5;
+      TOL_Newmark_beta = 0.000000001;
 
       /* Look for the curly brace { */
       if(strcmp(kwords[2],"{") == 0){
@@ -136,6 +145,22 @@ GramsTime(Scheme=FE){
 	  else if(strcmp(Parse_Temp_Prop[0],"rb") == 0){
 	    SpectralRadius = atof(Parse_Temp_Prop[1]);
 	    printf("\t -> %s : %f \n","Spectral radio",SpectralRadius);
+	  }
+	  else if(strcmp(Parse_Temp_Prop[0],"Epsilon") == 0){
+	    epsilon_Mass_Matrix = atof(Parse_Temp_Prop[1]);
+	    printf("\t -> %s : %f \n","Epsilon",epsilon_Mass_Matrix);
+	  }
+	  else if(strcmp(Parse_Temp_Prop[0],"Beta-Newmark") == 0){
+	    beta_Newmark_beta = atof(Parse_Temp_Prop[1]);
+	    printf("\t -> %s : %f \n","Beta-Newmark",beta_Newmark_beta);
+	  }
+	  else if(strcmp(Parse_Temp_Prop[0],"Gamma-Newmark") == 0){
+	    gamma_Newmark_beta = atof(Parse_Temp_Prop[1]);
+	    printf("\t -> %s : %f \n","Gamma-Newmark",gamma_Newmark_beta);
+	  }
+	  else if(strcmp(Parse_Temp_Prop[0],"TOL-Newmark") == 0){
+	    TOL_Newmark_beta = atof(Parse_Temp_Prop[1]);
+	    printf("\t -> %s : %f \n","Tolerance Newmark",TOL_Newmark_beta);
 	  } 
 	  else{
 	    fprintf(stderr,"%s : %s %s \n",

@@ -20,8 +20,12 @@ extern double gamma_LME;
 extern double TOL_lambda;
 extern double CFL; /* Courant number (0-1) */
 extern double DeltaTimeStep;
-extern double SpectralRadius;
 extern double Error0;
+extern double SpectralRadius;
+extern double epsilon_Mass_Matrix;
+extern double beta_Newmark_beta;
+extern double gamma_Newmark_beta;
+extern double TOL_Newmark_beta;
 
 extern int NumTimeStep;
 extern int ResultsTimeStep;

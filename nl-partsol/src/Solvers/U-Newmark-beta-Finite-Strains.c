@@ -12,7 +12,10 @@
   Call global variables
 */
 double Error0;
-
+double epsilon_Mass_Matrix; 
+double beta_Newmark_beta;   
+double gamma_Newmark_beta;
+double TOL_Newmark_beta;
 
 typedef struct
 {
@@ -73,10 +76,10 @@ void U_Newmark_beta_Finite_Strains(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int Initi
   Matrix Residual;
   Mask ActiveNodes;
   Mask Free_and_Restricted_Dofs;
-  double TOL = 0.000000001;
-  double epsilon = 1.0;
-  double beta = 0.25;
-  double gamma = 0.5;
+  double TOL = TOL_Newmark_beta;
+  double epsilon = epsilon_Mass_Matrix;
+  double beta = beta_Newmark_beta;
+  double gamma = gamma_Newmark_beta;
 
   /*
     Alpha parameters for the Newmark-beta
