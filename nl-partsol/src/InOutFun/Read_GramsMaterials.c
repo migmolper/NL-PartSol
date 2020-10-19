@@ -10,7 +10,7 @@ GramsMaterials (Particles=route.txt) {
 	       Cel=1
 	       rho=20
 	       E=6.e9
-	       mu=0.2
+	       nu=0.2
 	       Fracture=TRUE
 	       Ceps=1.5
 	       Gf=0.00001
@@ -50,18 +50,24 @@ GramsMaterials (Particles=route.txt) {
   char * STATUS_LINE;
   int CountMaterials = 0;
 
-
   bool Is_Id;
   bool Is_Cel;
   bool Is_rho;
   bool Is_E;
-  bool Is_mu;
+  bool Is_nu;
   bool Is_thickness;
   bool Is_Ceps;
   bool Is_Gf;
   bool Is_ft;
   bool Is_heps;
   bool Is_Wc;
+  bool Is_yield_stress;
+  bool Is_cohesion;
+  bool Is_friction_angle;
+  bool Is_dilatancy_angle;
+
+  double rad_friction_angle;
+  double rad_dilatancy_angle;
   
   /* Open and check file */
   Sim_dat = fopen(Name_File,"r");  
@@ -136,8 +142,8 @@ GramsMaterials (Particles=route.txt) {
       /* Linear elastic parameters */
       Is_E = false;
       Mat_GP.E = NAN;
-      Is_mu = false;
-      Mat_GP.mu = NAN;
+      Is_nu = false;
+      Mat_GP.nu = NAN;
       /* Thickness of the mateial (2D) */
       Is_thickness = false;
       Mat_GP.thickness = 1;
@@ -155,7 +161,16 @@ GramsMaterials (Particles=route.txt) {
       Is_heps = false;
       Mat_GP.heps = NAN;
       Is_Wc = false;
-      Mat_GP.Wc = NAN;    
+      Mat_GP.Wc = NAN;
+      /* Parameters for plastic simulations */
+      Is_yield_stress = false;
+      Mat_GP.yield_stress = NAN;
+      Is_cohesion = false;
+      Mat_GP.cohesion_reference = NAN;
+      Is_friction_angle = false;
+      Mat_GP.friction_angle = NAN;
+      Is_dilatancy_angle = false;
+      Mat_GP.dilatancy_angle = NAN;
 
       /* Look for the curly brace { */
       if(strcmp(kwords[2],"{") == 0){
@@ -220,9 +235,9 @@ GramsMaterials (Particles=route.txt) {
 	    Mat_GP.E = atof(Parse_Mat_Prop[1]);
 	  }
 	  /**************************************************/
-	  else if(strcmp(Parse_Mat_Prop[0],"mu") == 0){
-	    Is_mu = true;
-	    Mat_GP.mu = atof(Parse_Mat_Prop[1]);
+	  else if(strcmp(Parse_Mat_Prop[0],"nu") == 0){
+	    Is_nu = true;
+	    Mat_GP.nu = atof(Parse_Mat_Prop[1]);
 	  }
 	  /**************************************************/	    
 	  else if(strcmp(Parse_Mat_Prop[0],"thickness") == 0){
@@ -313,50 +328,98 @@ GramsMaterials (Particles=route.txt) {
 	    }
 	  }
 	  else if(strcmp(Mat_GP.Type,"LE") == 0){ /* Linear elastic parameters */
-	    if(Is_rho & Is_Cel && Is_E && Is_mu){
+	    if(Is_rho & Is_Cel && Is_E && Is_nu){
 	      printf("\t -> %s \n","Linear elastic material");
 	      printf("\t \t -> %s : %f \n","Celerity",Mat_GP.Cel);
 	      printf("\t \t -> %s : %f \n","Density",Mat_GP.rho);
 	      printf("\t \t -> %s : %f \n","Elastic modulus",Mat_GP.E);
-	      printf("\t \t -> %s : %f \n","Poisson modulus",Mat_GP.mu);
+	      printf("\t \t -> %s : %f \n","Poisson modulus",Mat_GP.nu);
 	    }
 	    else{
 	      fprintf(stderr,"%s : %s \n",
 		      "Error in GramsMaterials()",
-		      "Rho, Cel, E and mu required for linear elastic material");
+		      "Rho, Cel, E and nu required for linear elastic material");
 	      exit(EXIT_FAILURE);
 	    }
 	  }
 	  /* Saint Venant Kirchhoff parameters */
 	  else if(strcmp(Mat_GP.Type,"Saint-Venant-Kirchhoff") == 0){ 
-	    if(Is_rho & Is_Cel && Is_E && Is_mu){
-	      printf("\t -> %s \n","Linear elastic material");
+	    if(Is_rho & Is_Cel && Is_E && Is_nu){
+	      printf("\t -> %s \n","Saint-Venant-Kirchhoff material");
 	      printf("\t \t -> %s : %f \n","Celerity",Mat_GP.Cel);
 	      printf("\t \t -> %s : %f \n","Density",Mat_GP.rho);
 	      printf("\t \t -> %s : %f \n","Elastic modulus",Mat_GP.E);
-	      printf("\t \t -> %s : %f \n","Poisson modulus",Mat_GP.mu);
+	      printf("\t \t -> %s : %f \n","Poisson modulus",Mat_GP.nu);
 	    }
 	    else{
 	      fprintf(stderr,"%s : %s \n",
 		      "Error in GramsMaterials()",
-		      "Rho, Cel, E and mu required for Saint-Venant-Kirchhoff material");
+		      "Rho, Cel, E and nu required for Saint-Venant-Kirchhoff material");
 	      exit(EXIT_FAILURE);
 	    }
 	  }
 	  else if(strcmp(Mat_GP.Type,"Neo-Hookean-Wriggers") == 0){ 
-	    if(Is_rho & Is_Cel && Is_E && Is_mu){
-	      printf("\t -> %s \n","Linear elastic material");
+	    if(Is_rho & Is_Cel && Is_E && Is_nu){
+	      printf("\t -> %s \n","Neo-Hookean material (Wriggers model)");
 	      printf("\t \t -> %s : %f \n","Celerity",Mat_GP.Cel);
 	      printf("\t \t -> %s : %f \n","Density",Mat_GP.rho);
 	      printf("\t \t -> %s : %f \n","Elastic modulus",Mat_GP.E);
-	      printf("\t \t -> %s : %f \n","Poisson modulus",Mat_GP.mu);
+	      printf("\t \t -> %s : %f \n","Poisson modulus",Mat_GP.nu);
 	    }
 	    else{
 	      fprintf(stderr,"%s : %s \n",
 		      "Error in GramsMaterials()",
-		      "Rho, Cel, E and mu required for Neo-Hookean material");
+		      "Rho, Cel, E and nu required for Neo-Hookean material");
 	      exit(EXIT_FAILURE);
-	      }	    
+	    }
+	    else if(strcmp(Mat_GP.Type,"Von-Mises") == 0){ 
+	      if(Is_rho & Is_Cel && Is_E && Is_nu && Is_yield_stress){
+		printf("\t -> %s \n","Von-Mises material");
+		printf("\t \t -> %s : %f \n","Celerity",Mat_GP.Cel);
+		printf("\t \t -> %s : %f \n","Density",Mat_GP.rho);
+		printf("\t \t -> %s : %f \n","Elastic modulus",Mat_GP.E);
+		printf("\t \t -> %s : %f \n","Poisson modulus",Mat_GP.nu);
+		printf("\t \t -> %s : %f \n","Yield stress",Mat_GP.yield_stress);
+
+		Mat_GP.cohesion_reference = Mat_GP.yield_stress;
+		Mat_GP.alpha_F_Drucker_Prager = 0;
+		Mat_GP.alpha_Q_Drucker_Prager = 0;
+		Mat_GP.beta_Drucker_Prager = sqrt(2/3.);
+	      }
+	      else{
+		fprintf(stderr,"%s : %s \n",
+			"Error in GramsMaterials()",
+			"Rho, Cel, E, nu and yield stress required for Von-Mises material");
+		exit(EXIT_FAILURE);
+	      }
+	      else if(strcmp(Mat_GP.Type,"Drucker-Prager-Plane-Strain") == 0){ 
+		if(Is_rho & Is_Cel && Is_E && Is_nu && Is_yield_stress){
+		  printf("\t -> %s \n","Drucker-Prager Plane Strain material");
+		  printf("\t \t -> %s : %f \n","Celerity",Mat_GP.Cel);
+		  printf("\t \t -> %s : %f \n","Density",Mat_GP.rho);
+		  printf("\t \t -> %s : %f \n","Elastic modulus",Mat_GP.E);
+		  printf("\t \t -> %s : %f \n","Poisson modulus",Mat_GP.nu);
+		  printf("\t \t -> %s : %f \n","Yield stress",Mat_GP.yield_stress);
+		  printf("\t \t -> %s : %f \n","Cohesion",Mat_GP.cohesion_reference);
+		  printf("\t \t -> %s : %f \n","Friction angle",Mat_GP.friction_angle);
+		  printf("\t \t -> %s : %f \n","Dilatancy angle",Mat_GP.dilatancy_angle);
+
+		  rad_friction_angle = (PI__MatrixLib__/180)*Mat_GP.friction_angle;
+		  rad_dilatancy_angle = (PI__MatrixLib__/180)*Mat_GP.dilatancy_angle;
+
+		  Mat_GP.alpha_F_Drucker_Prager =
+		    sqrt(2/3.)*tan(rad_friction_angle)/sqrt(3+4*DSQR(tan(rad_friction_angle)));
+		  Mat_GP.alpha_Q_Drucker_Prager =
+		    sqrt(2/3.)*tan(rad_dilatancy_angle)/sqrt(3+4*DSQR(tan(rad_dilatancy_angle)));
+		  Mat_GP.beta_Drucker_Prager =
+		    sqrt(2/3.)*3/sqrt(3+4*DSQR(tan(rad_friction_angle)));
+		}
+		else{
+		  fprintf(stderr,"%s : %s \n",
+			  "Error in GramsMaterials()",
+			  "Rho, Cel, E, nu and yield stress required for Drucker Prager Plane Strain material");
+		  exit(EXIT_FAILURE);
+		}	
 	  }
 	  else{
 	    fprintf(stderr,"%s : %s \n",

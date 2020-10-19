@@ -445,10 +445,10 @@ static Matrix compute_Nodal_D_Displacement(Matrix Velocity,
 /**************************************************************/
 
 static void update_Local_State(Matrix D_Displacement,
-                  			       Mask ActiveNodes,
-			                         GaussPoint MPM_Mesh,
-	                   		       Mesh FEM_Mesh,
-                  			       double TimeStep)
+			       Mask ActiveNodes,
+			       GaussPoint MPM_Mesh,
+			       Mesh FEM_Mesh,
+			       double TimeStep)
 {
 
   /*
@@ -532,12 +532,28 @@ static void update_Local_State(Matrix D_Displacement,
           J_n1_p = I3__TensorLib__(F_n1_p);
           S_p = grad_energy_Neo_Hookean_Wriggers(S_p, C_n1_p, J_n1_p, MatProp_p);
         }
-      else if(strcmp(MatProp_p.Type,"Viscoplastic-Drucker-Prager-Sanavia") == 0)
+      else if(strcmp(MatProp_p.Type,"Von-Mises") == 0)
         {
           J_n1_p = I3__TensorLib__(F_n1_p);
           F_plastic_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_plastic.nM[p],2);
           ptr_c_p = &MPM_Mesh.Phi.cohesion.nM[p];
-          ptr_EPS_p = &MPM_Mesh.Phi.cohesion.nM[p];
+          ptr_EPS_p = &MPM_Mesh.Phi.EPS.nM[p];
+          S_p = viscoplastic_Drucker_Prager_Sanavia(S_p, C_n1_p, F_plastic_p, F_n1_p, ptr_EPS_p, ptr_c_p, J_n1_p, MatProp_p);
+        }
+      else if(strcmp(MatProp_p.Type,"Drucker-Prager-Plane-Strain") == 0)
+        {
+          J_n1_p = I3__TensorLib__(F_n1_p);
+          F_plastic_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_plastic.nM[p],2);
+          ptr_c_p = &MPM_Mesh.Phi.cohesion.nM[p];
+          ptr_EPS_p = &MPM_Mesh.Phi.EPS.nM[p];
+          S_p = viscoplastic_Drucker_Prager_Sanavia(S_p, C_n1_p, F_plastic_p, F_n1_p, ptr_EPS_p, ptr_c_p, J_n1_p, MatProp_p);
+        }
+      else if(strcmp(MatProp_p.Type,"Drucker-Prager-Outer-Cone") == 0)
+        {
+          J_n1_p = I3__TensorLib__(F_n1_p);
+          F_plastic_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_plastic.nM[p],2);
+          ptr_c_p = &MPM_Mesh.Phi.cohesion.nM[p];
+          ptr_EPS_p = &MPM_Mesh.Phi.EPS.nM[p];
           S_p = viscoplastic_Drucker_Prager_Sanavia(S_p, C_n1_p, F_plastic_p, F_n1_p, ptr_EPS_p, ptr_c_p, J_n1_p, MatProp_p);
         }
       else

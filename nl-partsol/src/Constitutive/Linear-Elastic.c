@@ -13,10 +13,10 @@ Tensor LinearElastic(Tensor Strain, Tensor Stress, Material Mat)
       /*!
 	Define material and other properties 
       */
-      double mu = Mat.mu; 
+      double nu = Mat.nu; 
       double E = Mat.E;
-      double lambda = mu*E/((1-mu*2)*(1+mu));
-      double G = E/(2*(1+mu));
+      double lambda = nu*E/((1-nu*2)*(1+nu));
+      double G = E/(2*(1+nu));
       double traceStrain = I1__TensorLib__(Strain);
       Tensor I = Identity__TensorLib__();
 

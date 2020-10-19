@@ -4,7 +4,10 @@
 
 #ifndef _MATLIB_H_
 #define _MATLIB_H_
-  
+
+
+#define PI__MatrixLib__ 3.14159265358979323846
+
 /*
   Math macros from numerical recipies 
 */

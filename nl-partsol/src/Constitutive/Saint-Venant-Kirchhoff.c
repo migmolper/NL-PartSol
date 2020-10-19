@@ -15,9 +15,9 @@ Tensor grad_energy_Saint_Venant_Kirchhoff(Tensor grad_e, Tensor C, Material MatP
   
   /* Material parameters */
   double ElasticModulus = MatProp_p.E;
-  double mu = MatProp_p.mu;
-  double lambda = mu*ElasticModulus/((1-mu*2)*(1+mu));
-  double G = ElasticModulus/(2*(1+mu));
+  double nu = MatProp_p.nu;
+  double lambda = nu*ElasticModulus/((1-nu*2)*(1+nu));
+  double G = ElasticModulus/(2*(1+nu));
   double trE = I1__TensorLib__(E);
 
   for(int i = 0 ; i < Ndim ; i++)
@@ -51,9 +51,9 @@ Tensor compute_stiffness_density_Saint_Venant_Kirchhoff(Tensor v, Tensor w, Mate
     Material parameters 
   */
   double ElasticModulus = MatProp.E;
-  double mu = MatProp.mu;
-  double lambda = mu*ElasticModulus/((1-mu*2)*(1+mu));
-  double G = ElasticModulus/(2*(1+mu));
+  double nu = MatProp.nu;
+  double lambda = nu*ElasticModulus/((1-nu*2)*(1+nu));
+  double G = ElasticModulus/(2*(1+nu));
 
   /*
     Auxiliar variables

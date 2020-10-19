@@ -217,6 +217,11 @@ typedef struct {
    */
   Matrix F_n;
   Matrix F_n1;
+
+  /*!
+   * Plastic deformation gradient
+   */
+  Matrix F_plastic;
   
   /*!
    * Strain during crack 
@@ -232,6 +237,17 @@ typedef struct {
    * Damage parameter (Fracture) 
    */
   Matrix chi;
+
+  /*!
+   * Cohesion of the particle (plasticity) 
+   */
+  Matrix cohesion;
+
+  /*!
+   * Equivalent plastic strain of the particle (plasticity) 
+   */
+  Matrix EPS;
+
   
 } Fields;
 
@@ -316,6 +332,11 @@ typedef struct {
    * Name of the material
    */
   char Type [100];
+
+  /*!
+   * Thickness of the Material 
+   */
+  double thickness;
   
   /*!
    * Material celerity 
@@ -335,47 +356,35 @@ typedef struct {
   /*!
    * Poisson ratio 
    */
-  double mu;
+  double nu;
   
   /*!
-   * Thickness of the Material 
-   */
-  double thickness;
-  
-  /*!
-   * Activate eigenerosion-fracture modulus 
+   * Activate eigenerosion-fracture modulus (Eigenerosion/Eigensoftening)
    */
   bool Eigenerosion;
-  
-  /*!
-   * Activate eigensoftening-fracture modulus 
-   */  
   bool Eigensoftening;
-  
-  /*! 
-   * Normalizing constant (Eigenerosion/Eigensoftening) 
+  double Ceps; /*! Normalizing constant (Eigenerosion/Eigensoftening) */
+  double Gf; /*! Failure energy (Eigenerosion) */
+  double ft; /*! Tensile strengt of the material (Eigensoftening) */
+  double heps; /*! Bandwidth of the cohesive fracture (Eigensoftening) */
+  double Wc; /*! Critical opening displacement (Eigensoftening) */
+
+  /*!
+   * General plastic parameters
    */
-  double Ceps;
+  double yield_stress;
+  double cohesion_reference;
+  double friction_angle;
+  double dilatancy_angle;
   
   /*!
-   * Failure energy (Eigenerosion)  
+   * Parameters of the Drucker-Prager Sanavia
    */
-  double Gf;
-  
-  /*!
-   * Tensile strengt of the material (Eigensoftening) 
-   */
-  double ft;
-  
-  /*!
-   * Bandwidth of the cohesive fracture (Eigensoftening) 
-   */
-  double heps;
-  
-  /*!
-   * Critical opening displacement 
-   */
-  double Wc;
+  double alpha_F_Drucker_Prager;
+  double alpha_Q_Drucker_Prager;
+  double beta_Drucker_Prager;
+  double hardening_exp_Drucker_Prager; /*! Hardening exponent */
+  double E_plastic_reference_Drucker_Prager; /*! Reference plastic strain */
   
 } Material;
 
@@ -465,7 +474,7 @@ typedef struct {
   /*! 
    * Thermalization or regularization parameter for the LME shape functions
    */
-  Matrix Beta; 
+  Matrix Beta;  
 
 } GaussPoint;
 

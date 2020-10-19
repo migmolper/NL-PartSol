@@ -10,9 +10,9 @@ Tensor grad_energy_Neo_Hookean_Wriggers(Tensor grad_e, Tensor C,
   
   /* Material parameters */
   double ElasticModulus = MatProp_p.E;
-  double mu = MatProp_p.mu;
-  double G = ElasticModulus/(2*(1+mu));
-  double lambda = mu*ElasticModulus/((1-mu*2)*(1+mu));
+  double nu = MatProp_p.nu;
+  double G = ElasticModulus/(2*(1+nu));
+  double lambda = nu*ElasticModulus/((1-nu*2)*(1+nu));
   double J2 = J*J;
   
   /*
@@ -54,9 +54,9 @@ Tensor compute_stiffness_density_Neo_Hookean_Wriggers(Tensor v, Tensor w,
     Material parameters 
   */
   double ElasticModulus = MatProp.E;
-  double mu = MatProp.mu;
-  double G = ElasticModulus/(2*(1+mu));
-  double lambda = mu*ElasticModulus/((1-mu*2)*(1+mu));
+  double nu = MatProp.nu;
+  double G = ElasticModulus/(2*(1+nu));
+  double lambda = nu*ElasticModulus/((1-nu*2)*(1+nu));
   double J2 = J*J;
   double alpha = lambda*J2;
   double beta = 0.5*lambda*(J2 - 1) - G;
