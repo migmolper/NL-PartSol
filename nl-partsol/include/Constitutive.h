@@ -95,17 +95,22 @@ Tensor grad_energy_Neo_Hookean_Wriggers(Tensor, Tensor, double, Material);
   \param double J
   \param Material MatProp
 */
-Tensor compute_stiffness_density_Neo_Hookean_Wriggers(Tensor, Tensor,
-						      Tensor, double,
-						      Material);
+Tensor compute_stiffness_density_Neo_Hookean_Wriggers(Tensor, Tensor, Tensor, double, Material);
 /*******************************************************/  
 
 /*
-\fn Tensor viscoplastic_Drucker_Prager_Sanavia(Tensor grad_e, Tensor C, Tensor F_plastic, Tensor F, 
+\fn Tensor plasticity_Drucker_Prager_Sanavia(Tensor grad_e, Tensor C, Tensor F_plastic, Tensor F, 
                        double * ptr_EPS_k, double * ptr_c_k, double J, Material MatProp)
 */
-Tensor viscoplastic_Drucker_Prager_Sanavia(Tensor, Tensor, Tensor, Tensor, 
-                       double *, double *, double, Material);
+Tensor plasticity_Drucker_Prager_Sanavia(Tensor, Tensor, Tensor, Tensor, double *, double *, double, Material);
+/*******************************************************/  
+
+/*
+\fn Tensor plasticity_Von_Mises(Tensor grad_e, Tensor C, Tensor F_plastic, Tensor F, 
+                            double * ptr_EPS_k, double * ptr_c_k, double J, Material MatProp)
+*/
+Tensor plasticity_Von_Mises(Tensor, Tensor, Tensor, Tensor, double *, double *, double, Material);
+/*******************************************************/  
 
 #endif
 
