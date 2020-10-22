@@ -41,6 +41,8 @@ Tensor viscoplastic_Drucker_Prager_Sanavia(Tensor grad_e, Tensor C, Tensor F_pla
   double Phi;
   double d_Phi;	
   double H;
+  double EPS_k;
+  double c_k;
   double p_lim;
   Tensor sigma_k1;
   Tensor D_E_plastic;
@@ -88,11 +90,22 @@ Tensor viscoplastic_Drucker_Prager_Sanavia(Tensor grad_e, Tensor C, Tensor F_pla
 
 	      ptr_EPS_k = &(update_equivalent_plastic_strain_classical(*ptr_EPS_k, delta_Gamma, MatProp));
 
-	      ptr_c_k = &(update_cohesion_modulus(*ptr_EPS_k, MatProp));
+        if(strcmp(MatProp_p.Type,"Von-Mises") == 0)
+        {
+          H = MatProp.hardening_modulus;
 
-	      H = compute_hardening_modulus(*ptr_EPS_k, MatProp);
+          c_k = MatProp.yield_stress;
+        }
+        else
+        {
+          ptr_c_k = &(update_cohesion_modulus(*ptr_EPS_k, MatProp));
 
-	      Phi = compute_yield_surface_classical(s_trial_norm, p_trial, delta_Gamma, *ptr_c_k, MatProp);
+          c_k = *ptr_c_k;
+
+          H = compute_hardening_modulus(*ptr_EPS_k, MatProp);
+        }
+
+	      Phi = compute_yield_surface_classical(s_trial_norm, p_trial, delta_Gamma, c_k, MatProp);
 
 	      /*
 		Check convergence
@@ -125,11 +138,13 @@ Tensor viscoplastic_Drucker_Prager_Sanavia(Tensor grad_e, Tensor C, Tensor F_pla
 	  while(iter < iter_max_DP)
 	    {
 
+        c_k = *ptr_c_k;
+
 	      d_Phi = compute_derivative_yield_surface_apex(H, s_trial_norm, delta_Gamma, MatProp);
 
 	      delta_Gamma = update_increment_plastic_strain(delta_Gamma, Phi, d_Phi);
 
-	      Phi = compute_yield_surface_apex(p_trial, H, delta_Gamma, *ptr_c_k, MatProp);
+	      Phi = compute_yield_surface_apex(p_trial, H, delta_Gamma, c_k, MatProp);
 
 	      /*
 		Check convergence
