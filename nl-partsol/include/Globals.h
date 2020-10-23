@@ -26,6 +26,8 @@ extern double SpectralRadius;
 /* Convergence parameters */
 extern double TOL_Von_Mises;
 extern int Max_Iterations_Von_Mises;
+extern double TOL_Drucker_Prager;
+extern int Max_Iterations_Drucker_Prager;
 
 
 extern int NumTimeStep;

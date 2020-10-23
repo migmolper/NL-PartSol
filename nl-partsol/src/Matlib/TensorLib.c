@@ -554,7 +554,7 @@ Tensor vector_linear_mapping__TensorLib__(Tensor A, Tensor b)
     for(int i = 0 ; i<Ndim ; i++){
       Aux = 0;
       for(int j = 0 ; j<Ndim ; j++){
-	Aux += A.N[i][j]*b.n[j];
+        Aux += A.N[i][j]*b.n[j];
       }
       Adotb.n[i] = Aux;
     }    
@@ -750,3 +750,18 @@ void print__TensorLib__(Tensor A)
 }
 
 /*************************************************************/
+
+void volumetric_desviatoric_decomposition__TensorLib__(E_elastic,double * E_elastic_vol,E_elastic_dev)
+{
+  Tensor E_elastic_dev;
+}
+
+/*************************************************************/
+
+
+
+
+
+
+
+

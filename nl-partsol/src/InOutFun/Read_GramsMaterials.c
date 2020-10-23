@@ -85,6 +85,7 @@ GramsMaterials (Particles=route.txt) {
   char * STATUS_LINE;
   int CountMaterials = 0;
 
+  /* Auxiliar parameters for granular materials */
   double rad_friction_angle;
   double rad_dilatancy_angle;
   
@@ -164,7 +165,7 @@ GramsMaterials (Particles=route.txt) {
       Mat_GP.heps = NAN;
       Mat_GP.Wc = NAN;
       /* Parameters for plastic simulations */
-      Mat_GP.yield_stress = NAN;
+      Mat_GP.yield_stress_0 = NAN;
       Mat_GP.cohesion_reference = NAN;
       Mat_GP.friction_angle = NAN;
       Mat_GP.dilatancy_angle = NAN;
@@ -195,7 +196,8 @@ GramsMaterials (Particles=route.txt) {
 		standard_error(Error_message);
 	  }
 	  /**************************************************/
-	  if(strcmp(Parse_Mat_Prop[0],"Id") == 0){
+	  if(strcmp(Parse_Mat_Prop[0],"Id") == 0)
+	  {
 	    Is_Id = true;
 	    Mat_GP.Id = atoi(Parse_Mat_Prop[1]);
 	    if(Mat_GP.Id >= GP_Mesh.NumberMaterials)
@@ -203,8 +205,10 @@ GramsMaterials (Particles=route.txt) {
 	    	sprintf(Error_message,"%s %i !!! \n","Id should go from 0 to",GP_Mesh.NumberMaterials-1);
 			standard_error(Error_message);
 	    }
-	    for(int i = 0 ; i<Num_Nodes ; i++){
-	      for(int j = 0 ; j<GPxElement ; j++){
+	    for(int i = 0 ; i<Num_Nodes ; i++)
+	    {
+	      for(int j = 0 ; j<GPxElement ; j++)
+	      {
 	    	GP_Mesh.MatIdx[Array_Nodes[i]*GPxElement+j] = Mat_GP.Id;
 	      }
 	    }
@@ -320,12 +324,14 @@ GramsMaterials (Particles=route.txt) {
 	  {
 	    Is_friction_angle = true;
 	    Mat_GP.friction_angle = atof(Parse_Mat_Prop[1]);
+	    rad_friction_angle  = (PI__MatrixLib__/180)*Mat_GP.friction_angle;
 	  }
 	  /**************************************************/
 	  else if(strcmp(Parse_Mat_Prop[0],"Dilatancy_angle") == 0)
 	  {
 	    Is_dilatancy_angle = true;
 	    Mat_GP.dilatancy_angle = atof(Parse_Mat_Prop[1]);
+	    rad_dilatancy_angle = (PI__MatrixLib__/180)*Mat_GP.dilatancy_angle;
 	  }
 	  /**************************************************/
 	  else
@@ -358,53 +364,45 @@ GramsMaterials (Particles=route.txt) {
 	  /* Solid rigid material */
 	  if(strcmp(Mat_GP.Type,"Solid-Rigid") == 0)
 	  {
-	  	check_Solid_Rigid_Material(Is_rho, Mat_GP);
+	  	check_Solid_Rigid_Material(Mat_GP);
 		Mat_GP.Cel = 0;
 	  }
 	  /* Parameters for a linear elastic material */
 	  else if(strcmp(Mat_GP.Type,"LE") == 0)
 	  {
-	  	check_Linear_Elastic_Material(Is_rho, Is_Cel, Is_E, Is_nu, Mat_GP);
+	  	check_Linear_Elastic_Material(Mat_GP);
 	  }
 	  /* Paramters for a Saint Venant Kirchhoff material */
 	  else if(strcmp(Mat_GP.Type,"Saint-Venant-Kirchhoff") == 0)
 	  { 
-		check_Saint_Venant_Kirchhoff_Material(Is_rho, Is_Cel, Is_E, Is_nu, Mat_GP);
+		check_Saint_Venant_Kirchhoff_Material(Mat_GP);
 	  }
 	  /* Parameters for a Neohookean (Wriggers) material */
 	  else if(strcmp(Mat_GP.Type,"Neo-Hookean-Wriggers") == 0)
 	  {
-		check_Neo_Hookean_Wriggers_Material(Is_rho, Is_Cel, Is_E, Is_nu, Mat_GP);
+		check_Neo_Hookean_Wriggers_Material(Mat_GP);
 	  }
 	  /* Parameters for a Von Mises Yield criterium */
 	  else if(strcmp(Mat_GP.Type,"Von-Mises") == 0)
 	  { 
-		check_Von_Mises_Material(Is_rho, Is_Cel, Is_E, Is_nu, Is_yield_stress, Is_H, Is_Hexp, Mat_GP);	
+		check_Von_Mises_Material(Mat_GP);	
 	  	Mat_GP.E_plastic_reference = Mat_GP.yield_stress_0/Mat_GP.hardening_modulus;
 	  }
 	  /* Parameters for a Drucker-Prager Yield criterium */
 	  else if(strcmp(Mat_GP.Type,"Drucker-Prager-Plane-Strain") == 0)
 	  { 
-	  	check_Drucker_Prager_Material(Is_rho, Is_Cel, Is_E, Is_nu, Is_yield_stress, Is_cohesion,
-	  								  Is_H, Is_Hexp, Is_friction_angle, Is_dilatancy_angle, Mat_GP);
+	  	check_Drucker_Prager_Material(Mat_GP);
 
-		rad_friction_angle  = (PI__MatrixLib__/180)*Mat_GP.friction_angle;
-		rad_dilatancy_angle = (PI__MatrixLib__/180)*Mat_GP.dilatancy_angle;
-
-		/*	Plane strain yield suerface */
+		/*	Plane strain yield surface */
 		Mat_GP.alpha_F_Drucker_Prager = sqrt(2/3.)*tan(rad_friction_angle)/sqrt(3+4*DSQR(tan(rad_friction_angle)));
 		Mat_GP.alpha_Q_Drucker_Prager = sqrt(2/3.)*tan(rad_dilatancy_angle)/sqrt(3+4*DSQR(tan(rad_dilatancy_angle)));
 		Mat_GP.beta_Drucker_Prager    = sqrt(2/3.)*3/sqrt(3+4*DSQR(tan(rad_friction_angle)));
 	  }
 	  else if(strcmp(Mat_GP.Type,"Drucker-Prager-Outer-cone") == 0)
 	  { 
-	  	check_Drucker_Prager_Material(Is_rho, Is_Cel, Is_E, Is_nu, Is_cohesion, Is_H,
-	  								  Is_Hexp, Is_friction_angle, Is_dilatancy_angle, Mat_GP);
+	  	check_Drucker_Prager_Material(Mat_GP);
 
-		rad_friction_angle  = (PI__MatrixLib__/180)*Mat_GP.friction_angle;
-		rad_dilatancy_angle = (PI__MatrixLib__/180)*Mat_GP.dilatancy_angle;
-
-		/*	Outer cone yield suerface */
+		/*	Outer cone yield surface */
 		Mat_GP.alpha_F_Drucker_Prager = sqrt(2/3.)*2*sin(rad_friction_angle)/(3-sin(rad_friction_angle));
 		Mat_GP.alpha_Q_Drucker_Prager = sqrt(2/3.)*2*sin(rad_dilatancy_angle)/(3-sin(rad_dilatancy_angle));
 		Mat_GP.beta_Drucker_Prager    = sqrt(2/3.)*6*cos(rad_friction_angle)/(3-sin(rad_friction_angle));

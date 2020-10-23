@@ -30,6 +30,7 @@ Tensor plasticity_Von_Mises(Tensor grad_e, Tensor C, Tensor F_plastic, Tensor F,
 {
 
   int Ndim = NumberDimensions;
+  int iter_NR = 0;
 
   Tensor E_elastic;
   double p_trial;
@@ -76,16 +77,16 @@ Tensor plasticity_Von_Mises(Tensor grad_e, Tensor C, Tensor F_plastic, Tensor F,
       /*
         Newton-Rapson solver
       */
-      while(iter < iter_max_VM)
+      while(iter_NR < iter_max_VM)
         {
 
           d_Phi = compute_derivative_yield_surface(H, MatProp);
 
           delta_Gamma = update_increment_plastic_strain(delta_Gamma, Phi, d_Phi);
 
-          ptr_EPS_k = &(update_equivalent_plastic_strain(*ptr_EPS_k, delta_Gamma, MatProp));
+          *ptr_EPS_k = update_equivalent_plastic_strain(*ptr_EPS_k, delta_Gamma, MatProp);
 
-          ptr_c_k = &(update_yield_stress(*ptr_EPS_k, MatProp));
+          *ptr_c_k = update_yield_stress(*ptr_EPS_k, MatProp);
 
           Phi = compute_yield_surface(s_trial_norm, delta_Gamma, *ptr_yield_stress_k, MatProp);
 
@@ -94,7 +95,7 @@ Tensor plasticity_Von_Mises(Tensor grad_e, Tensor C, Tensor F_plastic, Tensor F,
 	        */
 	        if(Phi < TOL_VM)
             {
-              iter++;
+              iter_NR++;
             }
           else
             {
@@ -175,8 +176,8 @@ static void compute_volumetric_deviatoric_stress_tensor(double * p_trial, Tensor
 {
 
   int Ndim = NumberDimensions;
-  double nu = Mat.nu; 
-  double E = Mat.E;
+  double nu = MatProp.nu; 
+  double E = MatProp.E;
   double K = E/(3*(1-2*nu));
   double G = E/(2*(1+nu));
   double E_elastic_vol;
@@ -245,8 +246,8 @@ static double update_yield_stress(double EPS_k1, Material MatProp)
 
 static double compute_yield_surface(double s_trial_norm, double delta_Gamma, double yield_stress_k1, Material MatProp)
 {
-  double nu = Mat.nu; /* Poisson modulus */
-  double E = Mat.E; /* Elastic modulus */
+  double nu = MatProp.nu; /* Poisson modulus */
+  double E = MatProp.E; /* Elastic modulus */
   double G = E/(2*(1+nu));
 
   return s_trial_norm - 2*G*delta_Gamma - sqrt(2/3.)*yield_stress_k1;
@@ -278,8 +279,8 @@ static Tensor compute_increment_plastic_strain_tensor(Tensor s_trial, double s_t
 static Tensor compute_finite_stress_tensor(Tensor s_trial, double p_trial, double s_trial_norm, double delta_Gamma, Material MatProp)
 {
   int Ndim = NumberDimensions;
-  double nu = Mat.nu; /* Poisson modulus */
-  double E = Mat.E; /* Elastic modulus */
+  double nu = MatProp.nu; /* Poisson modulus */
+  double E = MatProp.E; /* Elastic modulus */
   double G = E/(2*(1+nu));
   double aux = 1 - 2*G*delta_Gamma/s_trial_norm;
   Tensor sigma_k1 = alloc__TensorLib__(2);
