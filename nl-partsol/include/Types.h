@@ -372,11 +372,13 @@ typedef struct {
   /*!
    * General plastic parameters
    */
-  double yield_stress;
+  double yield_stress_0;
   double cohesion_reference;
   double friction_angle;
   double dilatancy_angle;
   double hardening_modulus;
+  double hardening_exp;
+  double E_plastic_reference;
   
   /*!
    * Parameters of the Drucker-Prager Sanavia
@@ -384,8 +386,6 @@ typedef struct {
   double alpha_F_Drucker_Prager;
   double alpha_Q_Drucker_Prager;
   double beta_Drucker_Prager;
-  double hardening_exp_Drucker_Prager; /*! Hardening exponent */
-  double E_plastic_reference_Drucker_Prager; /*! Reference plastic strain */
   
 } Material;
 

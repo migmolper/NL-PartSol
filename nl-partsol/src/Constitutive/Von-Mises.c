@@ -1,13 +1,19 @@
 #include "nl-partsol.h"
 
 /*
+  Call global variables
+*/
+double TOL_Von_Mises;
+int Max_Iterations_Von_Mises;
+
+/*
   Auxiliar functions 
 */
 static Tensor compute_small_strain_tensor(Tensor, Tensor);
 static void   compute_volumetric_deviatoric_stress_tensor(double *, Tensor, Tensor, Material);
 static double compute_yield_surface(double, double, double, Material);
 static double compute_derivative_yield_surface(double, Material);
-static double compute_increment_plastic_strain(double, double, double);
+static double update_increment_plastic_strain(double, double, double);
 static double update_equivalent_plastic_strain(double, double, Material);
 static double update_yield_stress(double, Material);
 static Tensor compute_increment_plastic_strain_tensor(Tensor, double, double, Material);
@@ -17,9 +23,9 @@ extern void   update_plastic_deformation_gradient(Tensor, Tensor);
 /**************************************************************/
 
 Tensor plasticity_Von_Mises(Tensor grad_e, Tensor C, Tensor F_plastic, Tensor F, 
-                					  double * ptr_EPS_k, double * ptr_c_k, double J, Material MatProp)
+                					  double * ptr_EPS_k, double * ptr_yield_stress_k, double J, Material MatProp)
 /*	
-	Radial returning algorithm
+	Radial returning algorithm for the Von-Mises plastic criterium
 */
 {
 
@@ -28,22 +34,23 @@ Tensor plasticity_Von_Mises(Tensor grad_e, Tensor C, Tensor F_plastic, Tensor F,
   Tensor E_elastic;
   double p_trial;
   Tensor s_trial;
-  double delta_Gamma;
   double s_trial_norm;
+  double delta_Gamma;
   double Phi;
   double d_Phi;	
   double H;
   double EPS_k;
-  double c_k;
-  double p_lim;
   Tensor sigma_k1;
   Tensor D_E_plastic;
 
-  double TOL_DP = MatProp.TOL_Drucker_Prager;
-  int iter_max_DP = MatProp.Max_Iterations_Drucker_Prager;
+  /*
+    Initialise convergence parameters
+  */
+  double TOL_VM = TOL_Von_Mises;
+  int iter_max_VM = Max_Iterations_Von_Mises;
 
   /*	
-	calculation of the small strain tensor
+	  Calculation of the small strain tensor
   */
   E_elastic = compute_small_strain_tensor(Tensor C, Tensor F_plastic);
 
@@ -59,14 +66,17 @@ Tensor plasticity_Von_Mises(Tensor grad_e, Tensor C, Tensor F_plastic, Tensor F,
     Yield condition : Starting from incremental plastic strain equal to zero
   */
   delta_Gamma = 0;
-  Phi = compute_yield_surface(s_trial_norm, delta_Gamma, *ptr_c_k, MatProp);
+  Phi = compute_yield_surface(s_trial_norm, delta_Gamma, *ptr_yield_stress_k, MatProp);
 
-  if(Phi >= 0)
+  if(Phi >= TOL_VM)
     {
 
       H = MatProp.hardening_modulus;
           
-      while(iter < iter_max_DP)
+      /*
+        Newton-Rapson solver
+      */
+      while(iter < iter_max_VM)
         {
 
           d_Phi = compute_derivative_yield_surface(H, MatProp);
@@ -77,12 +87,12 @@ Tensor plasticity_Von_Mises(Tensor grad_e, Tensor C, Tensor F_plastic, Tensor F,
 
           ptr_c_k = &(update_yield_stress(*ptr_EPS_k, MatProp));
 
-          Phi = compute_yield_surface(s_trial_norm, delta_Gamma, *ptr_c_k, MatProp);
+          Phi = compute_yield_surface(s_trial_norm, delta_Gamma, *ptr_yield_stress_k, MatProp);
 
           /*
 		        Check convergence
 	        */
-	        if(Phi < TOL_DP)
+	        if(Phi < TOL_VM)
             {
               iter++;
             }
@@ -193,8 +203,6 @@ static void compute_volumetric_deviatoric_stress_tensor(double * p_trial, Tensor
   free__TensorLib__(E_elastic_dev);
 }
 
-
-
 /**************************************************************/
 
 static double compute_derivative_yield_surface(double H, Material MatProp)
@@ -202,42 +210,35 @@ static double compute_derivative_yield_surface(double H, Material MatProp)
   double nu = MatProp.nu; /* Poisson modulus */
   double E = MatProp.E; /* Elastic modulus */
   double G = E/(2*(1+nu));
-  double d_Phi = - 2*G - H*sqrt(2/3);
 
-  return d_Phi;
+  return - 2*G - H*sqrt(2/3.);
 }
 
 /**************************************************************/
 
-static double compute_increment_plastic_strain(double delta_Gamma_k, double Phi, double d_Phi)
+static double update_increment_plastic_strain(double delta_Gamma_k, double Phi, double d_Phi)
 {
-  double delta_Gamma_k1 = delta_Gamma_k - Phi/d_Phi;
-
-  return delta_Gamma_k1;
+  return delta_Gamma_k - Phi/d_Phi;
 }
 
 /**************************************************************/
 
 static double update_equivalent_plastic_strain(double EPS_k, double delta_Gamma, Material MatProp)
 {
-
-  double EPS_k1 = EPS_k + delta_Gamma;
-
-  return EPS_k1;
+  return EPS_k + delta_Gamma;
 }
 
 /**************************************************************/
 
 static double update_yield_stress(double EPS_k1, Material MatProp)
 {
-  double c0    = MatProp.cohesion_reference;
-  double E0_p  = MatProp.E_plastic_reference_Drucker_Prager;
-  double N_exp = MatProp.hardening_exp_Drucker_Prager;
-  double exp   = 1/N_exp - 1;
-  double basis = 1 + EPS_k1/E0_p;
-  double c_k1 = (c_0/(N_exp*E0_p))*pow(basis,exp);
+  double yield_stress_0 = MatProp.yield_stress_0;
+  double E_p0  = MatProp.E_plastic_reference;
+  double N_exp = MatProp.hardening_exp;
+  double basis = 1 + EPS_k1/E_p0;
+  double exp   = 1/N_exp;
 
-  return c_k1;  
+  return yield_stress_0*pow(basis,exp);  
 }
 
 /**************************************************************/
@@ -247,9 +248,8 @@ static double compute_yield_surface(double s_trial_norm, double delta_Gamma, dou
   double nu = Mat.nu; /* Poisson modulus */
   double E = Mat.E; /* Elastic modulus */
   double G = E/(2*(1+nu));
-  double Phi = s_trial_norm - 2*G*delta_Gamma - sqrt(2/3)*yield_stress_k1;
 
-  return Phi;
+  return s_trial_norm - 2*G*delta_Gamma - sqrt(2/3.)*yield_stress_k1;
 }
 
 /**************************************************************/
@@ -257,7 +257,6 @@ static double compute_yield_surface(double s_trial_norm, double delta_Gamma, dou
 
 static Tensor compute_increment_plastic_strain_tensor(Tensor s_trial, double s_trial_norm, double delta_Gamma, Material MatProp)
 {
-
   int Ndim = NumberDimensions;
   double aux = delta_Gamma/s_trial_norm;
   Tensor D_E_plastic = alloc__TensorLib__(2); 

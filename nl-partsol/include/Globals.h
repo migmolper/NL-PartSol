@@ -22,9 +22,16 @@ extern double CFL; /* Courant number (0-1) */
 extern double DeltaTimeStep;
 extern double SpectralRadius;
 
+
+/* Convergence parameters */
+extern double TOL_Von_Mises;
+extern int Max_Iterations_Von_Mises;
+
+
 extern int NumTimeStep;
 extern int ResultsTimeStep;
 extern int NumberDOF;
+
 
 
 /* int * Node; */
