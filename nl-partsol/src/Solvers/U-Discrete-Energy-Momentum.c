@@ -756,7 +756,7 @@ static void update_Local_State(Matrix D_Displacement, Mask ActiveNodes, GaussPoi
       MatIndx_p = MPM_Mesh.MatIdx[p];
       MatProp_p = MPM_Mesh.Mat[MatIndx_p];
       S_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.Stress.nM[p],2);
-      S_p = configurational_midpoint_integration_Stress__Particles__(S_p,F_n1_p,F_n_p,MatProp_p);
+      S_p = average_strain_integration_Stress__Particles__(S_p,F_n1_p,F_n_p,MatProp_p);
       
       /*
 	Free memory 
@@ -1338,7 +1338,7 @@ static void assemble_Nodal_Tangent_Stiffness_Geometric(Matrix Tangent_Stiffness,
 		  /*
 		    Compute the vectorized index
 		  */
-		  Tangent_Stiffness.nM[A_mask*Ndim+i][B_mask*Ndim+i] += Geometric_AB_p*V0_p;
+		  Tangent_Stiffness.nM[A_mask*Ndim+i][B_mask*Ndim+i] += 0.5*Geometric_AB_p*V0_p;
 		}
 
 	      /*
@@ -1498,7 +1498,7 @@ static void assemble_Nodal_Tangent_Stiffness_Material(Matrix Tangent_Stiffness,
 		{
 		  for(int j = 0 ; j<Ndim ; j++)
 		    {
-		      Tangent_Stiffness.nM[A_mask*Ndim+i][B_mask*Ndim+j] += Material_AB.N[i][j]*V0_p;
+		      Tangent_Stiffness.nM[A_mask*Ndim+i][B_mask*Ndim+j] += 0.5*Material_AB.N[i][j]*V0_p;
 		    }
 		}
 
