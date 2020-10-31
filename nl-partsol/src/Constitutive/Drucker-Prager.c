@@ -11,7 +11,8 @@ int Max_Iterations_Drucker_Prager;
   Auxiliar functions 
 */
 static Tensor compute_small_strain_tensor(Tensor, Tensor);
-static void   compute_volumetric_deviatoric_stress_tensor(double *, Tensor, Tensor, Material);
+static Tensor compute_volumetric_stress_tensor(double, Material);
+static Tensor compute_deviatoric_stress_tensor(Tensor, Material);
 static double compute_yield_surface(double, double, double, Material);
 static double compute_hardening_modulus(double, Material);
 static double compute_limit_between_classic_apex_algorithm(double, double, double, Material);
@@ -21,18 +22,18 @@ static double update_equivalent_plastic_strain_classical(double, double, Materia
 static double update_cohesion_modulus(double, Material);
 static double compute_yield_surface_classical(double, double, double, double, Material);
 static Tensor compute_increment_plastic_strain_classical(Tensor, double, double, Material);
-static Tensor compute_finite_stress_tensor_classical(Tensor, double, double, double, Material);
+static Tensor compute_finite_stress_tensor_classical(Tensor, Tensor, double, double, Material);
 static double compute_derivative_yield_surface_apex(double, double, double, Material);
 static double compute_yield_surface_apex(double, double, double, double, double, Material);
 static double update_equivalent_plastic_strain_apex(double, double, double, Material);
 static Tensor compute_increment_plastic_strain_apex(Tensor, double, double, Material);
-static Tensor compute_finite_stress_tensor_apex(double, double, Material);
-extern void   update_plastic_deformation_gradient(Tensor, Tensor);
+static Tensor compute_finite_stress_tensor_apex(Tensor, double, Material);
+static void   update_plastic_deformation_gradient(Tensor, Tensor);
 
 /**************************************************************/
 
 Tensor plasticity_Drucker_Prager_Sanavia(Tensor grad_e, Tensor C_total, Tensor F_plastic, Tensor F, 
-                            					   double * ptr_EPS_k, double * ptr_c_k, double J, Material MatProp)
+                            					   double * ptr_EPS, double * ptr_c, double J, Material MatProp)
 /*	
 	Radial returning algorithm
 */
@@ -42,10 +43,13 @@ Tensor plasticity_Drucker_Prager_Sanavia(Tensor grad_e, Tensor C_total, Tensor F
   int iter_NR = 0;
 
   Tensor E_elastic;
-  double p_trial;
+  double E_elastic_vol;
+  Tensor E_elastic_dev;
+  Tensor p_trial;
   Tensor s_trial;
   double delta_Gamma;
   double s_trial_norm;
+  double p_trial_norm;
   double Phi;
   double d_Phi;	
   double H;
@@ -58,6 +62,12 @@ Tensor plasticity_Drucker_Prager_Sanavia(Tensor grad_e, Tensor C_total, Tensor F
   double TOL_DP = TOL_Drucker_Prager;
   int iter_max_DP = Max_Iterations_Drucker_Prager;
 
+  /*  
+    Get the value of the equivalent plastic stress and cohesion
+  */
+  EPS_k = *ptr_EPS;
+  c_k  = *ptr_c;
+
   /*	
 	calculation of the small strain tensor
   */
@@ -67,28 +77,33 @@ Tensor plasticity_Drucker_Prager_Sanavia(Tensor grad_e, Tensor C_total, Tensor F
     Elastic predictor : Volumetric and deviatoric stress measurements. Compute also
     the norm of the deviatoric tensor
   */
-  compute_volumetric_deviatoric_stress_tensor(&p_trial, s_trial, E_elastic, MatProp);
+  E_elastic_vol = volumetric_component__TensorLib__(E_elastic);
+  E_elastic_dev = deviatoric_component__TensorLib__(E_elastic,E_elastic_vol);
 
-  s_trial_norm = EuclideanNorm__TensorLib__(s_trial);
+  p_trial = compute_volumetric_stress_tensor(E_elastic_vol, MatProp);
+  s_trial = compute_deviatoric_stress_tensor(E_elastic_dev, MatProp);  
+
+  s_trial_norm = EuclideanNorm__TensorLib__(s_trial); 
+  p_trial_norm = p_trial.N[0][0];
 
   /*
     Yield condition : Starting from incremental plastic strain equal to zero
   */
   delta_Gamma = 0;
 
-  Phi = compute_yield_surface(p_trial, s_trial_norm, c_k, MatProp);
+  Phi = compute_yield_surface(p_trial_norm, s_trial_norm, c_k, MatProp);
 
   if(Phi >= 0)
     {
 
-      H = compute_hardening_modulus(*ptr_EPS_k, MatProp);
+      H = compute_hardening_modulus(EPS_k, MatProp);
 
-      p_lim = compute_limit_between_classic_apex_algorithm(s_trial_norm, *ptr_c_k, H, MatProp);
+      p_lim = compute_limit_between_classic_apex_algorithm(s_trial_norm, c_k, H, MatProp);
 
       /*
 	Classical plastic iterator
       */
-      if(p_trial <= p_lim)
+      if(p_trial_norm <= p_lim)
 	{
 	  while(iter_NR < iter_max_DP)
 	    {
@@ -97,13 +112,13 @@ Tensor plasticity_Drucker_Prager_Sanavia(Tensor grad_e, Tensor C_total, Tensor F
 
 	      delta_Gamma = update_increment_plastic_strain(delta_Gamma, Phi, d_Phi);
 
-	      *ptr_EPS_k = update_equivalent_plastic_strain_classical(*ptr_EPS_k, delta_Gamma, MatProp);
+	      EPS_k = update_equivalent_plastic_strain_classical(EPS_k, delta_Gamma, MatProp);
 
-        *ptr_c_k = update_cohesion_modulus(*ptr_EPS_k, MatProp);
+        c_k = update_cohesion_modulus(EPS_k, MatProp);
 
-        H = compute_hardening_modulus(*ptr_EPS_k, MatProp);
+        H = compute_hardening_modulus(EPS_k, MatProp);
 
-	      Phi = compute_yield_surface_classical(s_trial_norm, p_trial, delta_Gamma, *ptr_c_k, MatProp);
+	      Phi = compute_yield_surface_classical(s_trial_norm, p_trial_norm, delta_Gamma, c_k, MatProp);
 
 	      /*
 		Check convergence
@@ -140,7 +155,7 @@ Tensor plasticity_Drucker_Prager_Sanavia(Tensor grad_e, Tensor C_total, Tensor F
 
 	      delta_Gamma = update_increment_plastic_strain(delta_Gamma, Phi, d_Phi);
 
-	      Phi = compute_yield_surface_apex(p_trial, s_trial_norm, H, delta_Gamma, *ptr_c_k, MatProp);
+	      Phi = compute_yield_surface_apex(p_trial_norm, s_trial_norm, H, delta_Gamma, c_k, MatProp);
 
 	      /*
 		Check convergence
@@ -159,7 +174,7 @@ Tensor plasticity_Drucker_Prager_Sanavia(Tensor grad_e, Tensor C_total, Tensor F
 	  /*
 	    update
 	  */
-	  *ptr_EPS_k = update_equivalent_plastic_strain_apex(*ptr_EPS_k, s_trial_norm, delta_Gamma, MatProp);
+	  EPS_k = update_equivalent_plastic_strain_apex(EPS_k, s_trial_norm, delta_Gamma, MatProp);
 
 	  D_E_plastic = compute_increment_plastic_strain_apex(s_trial, s_trial_norm, delta_Gamma,MatProp);
 
@@ -188,10 +203,18 @@ Tensor plasticity_Drucker_Prager_Sanavia(Tensor grad_e, Tensor C_total, Tensor F
     }
 
   /*
+    Update equivalent plastic stress and cohesion
+  */
+  *ptr_EPS = EPS_k;
+  *ptr_c = c_k;
+
+  /*
     Free memory
   */
   free__TensorLib__(E_elastic);
+  free__TensorLib__(E_elastic_dev);
   free__TensorLib__(s_trial);
+  free__TensorLib__(p_trial);
   free__TensorLib__(sigma_k1);
   free__TensorLib__(D_E_plastic);
 
@@ -229,48 +252,60 @@ static Tensor compute_small_strain_tensor(Tensor C_total, Tensor F_plastic)
 
 /**************************************************************/
 
-static void compute_volumetric_deviatoric_stress_tensor(double * p_trial, Tensor s_trial, Tensor E_elastic, Material MatProp)
+static Tensor compute_volumetric_stress_tensor(double E_elastic_vol, Material MatProp)
 {
 
   int Ndim = NumberDimensions;
   double nu = MatProp.nu; 
   double E = MatProp.E;
   double K = E/(3*(1-2*nu));
+  double aux = K*E_elastic_vol;
+  Tensor p_trial = alloc__TensorLib__(2);
+
+  /*
+    Compute deviatoric stress tensor
+  */
+  for(int i = 0 ; i<Ndim ; i++)
+  {
+    p_trial.N[i][i] = aux;
+  }
+
+  return p_trial;
+}
+
+/**************************************************************/
+
+static Tensor compute_deviatoric_stress_tensor(Tensor E_elastic_dev, Material MatProp)
+{
+
+  int Ndim = NumberDimensions;
+  double nu = MatProp.nu; 
+  double E = MatProp.E;
   double G = E/(2*(1+nu));
-
-  double E_elastic_vol;
-  Tensor E_elastic_dev;
-
+  Tensor s_trial = alloc__TensorLib__(2);
   /*
-    Split the deformation tensor into deviatoric and volumetric
+    Compute deviatoric stress tensor
   */
-  volumetric_desviatoric_decomposition__TensorLib__(E_elastic,E_elastic_vol,E_elastic_dev);
-
-  /*
-    Compute deviatoric and volumetric stress tensor
-  */
-  *p_trial = K*E_elastic_vol;
 
   for(int i = 0 ; i<Ndim ; i++)
     {
       for(int j = 0 ; j<Ndim ; j++)
-	{
-	  s_trial.N[i][j] = 2*G*E_elastic_dev.N[i][j];
-	}
+      {
+        s_trial.N[i][j] = 2*G*E_elastic_dev.N[i][j];
+      }
     }
 
-  free__TensorLib__(E_elastic_dev);
+  return s_trial;
 }
-
 
 /**************************************************************/
 
-static double compute_yield_surface(double p_trial, double s_trial_norm, double c_k, Material MatProp)
+static double compute_yield_surface(double p_trial_norm, double s_trial_norm, double c_k, Material MatProp)
 {
   double alpha_F = MatProp.alpha_F_Drucker_Prager;
   double beta = MatProp.beta_Drucker_Prager;
 
-  double Phi = 3*alpha_F*p_trial + s_trial_norm - beta*c_k;
+  double Phi = 3*alpha_F*p_trial_norm + s_trial_norm - beta*c_k;
 
   return Phi;
 }
@@ -361,7 +396,7 @@ static double update_cohesion_modulus(double EPS_k1, Material MatProp)
 
 /**************************************************************/
 
-static double compute_yield_surface_classical(double s_trial_norm, double p_trial, double delta_Gamma, double c_k1, Material MatProp)
+static double compute_yield_surface_classical(double s_trial_norm, double p_trial_norm, double delta_Gamma, double c_k1, Material MatProp)
 {
   double alpha_F = MatProp.alpha_F_Drucker_Prager;
   double alpha_Q = MatProp.alpha_Q_Drucker_Prager;
@@ -371,7 +406,7 @@ static double compute_yield_surface_classical(double s_trial_norm, double p_tria
   double K = E/(3*(1-2*nu));
   double G = E/(2*(1+nu));
 
-  double Phi = s_trial_norm - 2*G*delta_Gamma + 3*alpha_F*(p_trial - 3*K*alpha_Q*delta_Gamma) - beta*c_k1;
+  double Phi = s_trial_norm - 2*G*delta_Gamma + 3*alpha_F*(p_trial_norm - 3*K*alpha_Q*delta_Gamma) - beta*c_k1;
 
   return Phi;
 }
@@ -405,7 +440,7 @@ static Tensor compute_increment_plastic_strain_classical(Tensor s_trial, double 
 
 /**************************************************************/
 
-static Tensor compute_finite_stress_tensor_classical(Tensor s_trial, double p_trial, double s_trial_norm, double delta_Gamma, Material MatProp)
+static Tensor compute_finite_stress_tensor_classical(Tensor s_trial, Tensor p_trial, double s_trial_norm, double delta_Gamma, Material MatProp)
 {
   int Ndim = NumberDimensions;
 
@@ -419,14 +454,14 @@ static Tensor compute_finite_stress_tensor_classical(Tensor s_trial, double p_tr
   double K = E/(3*(1-2*nu));
   double G = E/(2*(1+nu));
 
-  double aux1 = p_trial - 3*K*alpha_Q*delta_Gamma;
+  double aux1 = 3*K*alpha_Q*delta_Gamma;
   double aux2 = 1 - 2*G*delta_Gamma/s_trial_norm;
 
   for(int i = 0 ; i<Ndim ; i++)
     {
       for(int j = 0 ; j<Ndim ; j++)
 	{
-	  sigma_k1.N[i][j] = aux1*I.N[i][j] + aux2*s_trial.N[i][j];
+	  sigma_k1.N[i][j] = p_trial.N[i][j] - aux1*I.N[i][j] + aux2*s_trial.N[i][j];
 	}
     }
 
@@ -459,7 +494,7 @@ static double compute_derivative_yield_surface_apex(double H, double s_trial_nor
 
 /**************************************************************/
 
-static double compute_yield_surface_apex(double p_trial, double s_trial_norm, double H, double delta_Gamma2, double c_k, Material MatProp)
+static double compute_yield_surface_apex(double p_trial_norm, double s_trial_norm, double H, double delta_Gamma2, double c_k, Material MatProp)
 {
   double alpha_F = MatProp.alpha_F_Drucker_Prager;
   double alpha_Q = MatProp.alpha_Q_Drucker_Prager;
@@ -476,7 +511,7 @@ static double compute_yield_surface_apex(double p_trial, double s_trial_norm, do
   double aux4 = H*sqrt(DSQR(delta_Gamma1) + aux2*aux3); 
   double aux5 = 3*K*alpha_Q*(delta_Gamma1 + delta_Gamma2);
 
-  double Phi = aux1*(c_k + aux4 - p_trial + aux5);
+  double Phi = aux1*(c_k + aux4 - p_trial_norm + aux5);
 
   return Phi;
 }
@@ -535,7 +570,7 @@ static Tensor compute_increment_plastic_strain_apex(Tensor s_trial, double s_tri
 
 /**************************************************************/
 
-static Tensor compute_finite_stress_tensor_apex(double p_trial, double delta_Gamma2, Material MatProp)
+static Tensor compute_finite_stress_tensor_apex(Tensor p_trial, double delta_Gamma2, Material MatProp)
 {
   int Ndim = NumberDimensions;
 
@@ -547,14 +582,11 @@ static Tensor compute_finite_stress_tensor_apex(double p_trial, double delta_Gam
   double E = MatProp.E; /* Elastic modulus */
   double K = E/(3*(1-2*nu));
 
-  double aux1 = p_trial - 3*K*alpha_Q*delta_Gamma2;
+  double aux1 = 3*K*alpha_Q*delta_Gamma2;
 
   for(int i = 0 ; i<Ndim ; i++)
     {
-      for(int j = 0 ; j<Ndim ; j++)
-	{
-	  sigma_k1.N[i][j] = aux1*I.N[i][j];
-	}
+	   sigma_k1.N[i][i] = p_trial.N[i][i] - aux1*I.N[i][i];
     }
 
   return sigma_k1;
@@ -562,7 +594,7 @@ static Tensor compute_finite_stress_tensor_apex(double p_trial, double delta_Gam
 
 /**************************************************************/
 
-extern void update_plastic_deformation_gradient(Tensor D_E_plastic, Tensor F_plastic)
+static void update_plastic_deformation_gradient(Tensor D_E_plastic, Tensor F_plastic)
 {
   int Ndim = NumberDimensions;
   double aux1;

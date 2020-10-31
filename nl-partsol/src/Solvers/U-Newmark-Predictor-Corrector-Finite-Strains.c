@@ -536,24 +536,24 @@ static void update_Local_State(Matrix D_Displacement,
         {
           J_n1_p = I3__TensorLib__(F_n1_p);
           F_plastic_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_plastic.nM[p],2);
-          ptr_c_p = &MPM_Mesh.Phi.cohesion.nM[p];
-          ptr_EPS_p = &MPM_Mesh.Phi.EPS.nM[p];
+          ptr_c_p = &(MPM_Mesh.Phi.cohesion.nV[p]);
+          ptr_EPS_p = &(MPM_Mesh.Phi.EPS.nV[p]);
           S_p = plasticity_Von_Mises(S_p, C_n1_p, F_plastic_p, F_n1_p, ptr_EPS_p, ptr_c_p, J_n1_p, MatProp_p);
         }
       else if(strcmp(MatProp_p.Type,"Drucker-Prager-Plane-Strain") == 0)
         {
           J_n1_p = I3__TensorLib__(F_n1_p);
           F_plastic_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_plastic.nM[p],2);
-          ptr_c_p = &MPM_Mesh.Phi.cohesion.nM[p];
-          ptr_EPS_p = &MPM_Mesh.Phi.EPS.nM[p];
+          ptr_c_p = &(MPM_Mesh.Phi.cohesion.nV[p]);
+          ptr_EPS_p = &(MPM_Mesh.Phi.EPS.nV[p]);
           S_p = plasticity_Drucker_Prager_Sanavia(S_p, C_n1_p, F_plastic_p, F_n1_p, ptr_EPS_p, ptr_c_p, J_n1_p, MatProp_p);
         }
       else if(strcmp(MatProp_p.Type,"Drucker-Prager-Outer-Cone") == 0)
         {
           J_n1_p = I3__TensorLib__(F_n1_p);
           F_plastic_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_plastic.nM[p],2);
-          ptr_c_p = &MPM_Mesh.Phi.cohesion.nM[p];
-          ptr_EPS_p = &MPM_Mesh.Phi.EPS.nM[p];
+          ptr_c_p = &(MPM_Mesh.Phi.cohesion.nV[p]);
+          ptr_EPS_p = &(MPM_Mesh.Phi.EPS.nV[p]);
           S_p = plasticity_Drucker_Prager_Sanavia(S_p, C_n1_p, F_plastic_p, F_n1_p, ptr_EPS_p, ptr_c_p, J_n1_p, MatProp_p);
         }
       else

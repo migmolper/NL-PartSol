@@ -230,7 +230,7 @@ Tensor increment_Deformation_Gradient_exponential_strains__Particles__(Tensor D_
   /*
     Compute the spectral descomposition of the tensor exp(D_E)
   */
-  spectral_descomposition_symmetric__TensorLib__(EigenVals_D_E, EigenVects_D_E, Tensor D_E);
+  spectral_descomposition_symmetric__TensorLib__(EigenVals_D_E, EigenVects_D_E, D_E);
   
   for(int i = 0 ; i < Ndim  ; i++)
     {

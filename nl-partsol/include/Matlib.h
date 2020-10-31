@@ -140,7 +140,9 @@ Tensor dyadic_Product__TensorLib__(Tensor, Tensor);
 Tensor vector_linear_mapping__TensorLib__(Tensor, Tensor);
 Tensor matrix_product__TensorLib__(Tensor, Tensor);
 Tensor Convex_combination__TensorLib__(Tensor, Tensor, double);
-void spectral_descomposition_symmetric__TensorLib__(Tensor, Tensor, Tensor);
+void   spectral_descomposition_symmetric__TensorLib__(Tensor, Tensor, Tensor);
+double volumetric_component__TensorLib__(Tensor);
+Tensor deviatoric_component__TensorLib__(Tensor, double);
 Tensor rotate__TensorLib__(Tensor, Tensor);
 void   print__TensorLib__(Tensor);
 /*******************************************************/

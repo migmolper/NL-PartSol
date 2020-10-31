@@ -59,6 +59,9 @@ GramsMaterials (Particles=route.txt) {
   /* Simulation file */
   FILE * Sim_dat;
 
+  /* Error message */
+  char Error_message[MAXC] = {0};
+
   /* Index of the material */
   int Aux_Mat_id;
   char * Parse_Mat_id[MAXW] = {NULL};
@@ -311,7 +314,7 @@ GramsMaterials (Particles=route.txt) {
 	  else if(strcmp(Parse_Mat_Prop[0],"Hardening_exponent") == 0)
 	  {
 	    Is_Hexp = true;
-	    Mat_GP.Mat_GP.hardening_exp = atof(Parse_Mat_Prop[1]);
+	    Mat_GP.hardening_exp = atof(Parse_Mat_Prop[1]);
 	  }
 	  /**************************************************/
 	  else if(strcmp(Parse_Mat_Prop[0],"Cohesion") == 0)

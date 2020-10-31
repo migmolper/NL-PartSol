@@ -679,6 +679,30 @@ void spectral_descomposition_symmetric__TensorLib__(Tensor Lambda,
 
 /*************************************************************/
 
+double volumetric_component__TensorLib__(Tensor A)
+{
+  return I1__TensorLib__(A)/3.0;
+}
+
+/*************************************************************/
+
+Tensor deviatoric_component__TensorLib__(Tensor A, double A_vol)
+{
+  int Ndim = NumberDimensions;
+  Tensor A_dev = alloc__TensorLib__(2); 
+
+  for(int i = 0 ; i<Ndim ; i++)
+  {
+    for(int j = 0 ; j<Ndim ; j++)
+    {
+      A_dev.N[i][j] =  A_dev.N[i][j] - (i == j)*A_vol;
+    }
+  }
+
+  return A_dev;
+}
+
+/*************************************************************/
 
 Tensor rotate__TensorLib__(Tensor In, Tensor R)
 /* 
@@ -751,12 +775,6 @@ void print__TensorLib__(Tensor A)
 
 /*************************************************************/
 
-void volumetric_desviatoric_decomposition__TensorLib__(E_elastic,double * E_elastic_vol,E_elastic_dev)
-{
-  Tensor E_elastic_dev;
-}
-
-/*************************************************************/
 
 
 

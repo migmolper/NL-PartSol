@@ -10,20 +10,21 @@ int Max_Iterations_Von_Mises;
   Auxiliar functions 
 */
 static Tensor compute_small_strain_tensor(Tensor, Tensor);
-static void   compute_volumetric_deviatoric_stress_tensor(double *, Tensor, Tensor, Material);
+static Tensor compute_volumetric_stress_tensor(double, Material);
+static Tensor compute_deviatoric_stress_tensor(Tensor, Material);
 static double compute_yield_surface(double, double, double, Material);
 static double compute_derivative_yield_surface(double, Material);
 static double update_increment_plastic_strain(double, double, double);
 static double update_equivalent_plastic_strain(double, double, Material);
 static double update_yield_stress(double, Material);
 static Tensor compute_increment_plastic_strain_tensor(Tensor, double, double, Material);
-static Tensor compute_finite_stress_tensor(Tensor, double, double, double, Material);
-extern void   update_plastic_deformation_gradient(Tensor, Tensor);
+static Tensor compute_finite_stress_tensor(Tensor, Tensor, double, double, Material);
+static void   update_plastic_deformation_gradient(Tensor, Tensor);
 
 /**************************************************************/
 
 Tensor plasticity_Von_Mises(Tensor grad_e, Tensor C, Tensor F_plastic, Tensor F, 
-                					  double * ptr_EPS_k, double * ptr_yield_stress_k, double J, Material MatProp)
+                					  double * ptr_EPS, double * ptr_yield_stress, double J, Material MatProp)
 /*	
 	Radial returning algorithm for the Von-Mises plastic criterium
 */
@@ -32,17 +33,21 @@ Tensor plasticity_Von_Mises(Tensor grad_e, Tensor C, Tensor F_plastic, Tensor F,
   int Ndim = NumberDimensions;
   int iter_NR = 0;
 
+  double EPS_k;
+  double yield_stress_k;
+
   Tensor E_elastic;
-  double p_trial;
+  double E_elastic_vol;
+  Tensor E_elastic_dev;
+  Tensor p_trial;
   Tensor s_trial;
   double s_trial_norm;
   double delta_Gamma;
   double Phi;
   double d_Phi;	
   double H;
-  double EPS_k;
   Tensor sigma_k1;
-  Tensor D_E_plastic;
+  Tensor Increment_E_plastic;
 
   /*
     Initialise convergence parameters
@@ -50,24 +55,35 @@ Tensor plasticity_Von_Mises(Tensor grad_e, Tensor C, Tensor F_plastic, Tensor F,
   double TOL_VM = TOL_Von_Mises;
   int iter_max_VM = Max_Iterations_Von_Mises;
 
+  /*  
+    Get the value of the equivalent plastic stress and yield stress
+  */
+  EPS_k = *ptr_EPS;
+  yield_stress_k  = *ptr_yield_stress;
+
   /*	
 	  Calculation of the small strain tensor
   */
-  E_elastic = compute_small_strain_tensor(Tensor C, Tensor F_plastic);
+  E_elastic = compute_small_strain_tensor(C, F_plastic);
 
   /*
     Elastic predictor : Volumetric and deviatoric stress measurements. Compute also
     the norm of the deviatoric tensor
   */
-  compute_volumetric_deviatoric_stress_tensor(&p_trial, s_trial, E_elastic, MatProp);
 
-  s_trial_norm = EuclideanNorm__TensorLib__(s_trial);
+  E_elastic_vol = volumetric_component__TensorLib__(E_elastic);
+  E_elastic_dev = deviatoric_component__TensorLib__(E_elastic,E_elastic_vol);
+
+  p_trial = compute_volumetric_stress_tensor(E_elastic_vol, MatProp);
+  s_trial = compute_deviatoric_stress_tensor(E_elastic_dev, MatProp);  
+
+  s_trial_norm = EuclideanNorm__TensorLib__(s_trial); 
 
   /*
     Yield condition : Starting from incremental plastic strain equal to zero
   */
   delta_Gamma = 0;
-  Phi = compute_yield_surface(s_trial_norm, delta_Gamma, *ptr_yield_stress_k, MatProp);
+  Phi = compute_yield_surface(s_trial_norm, delta_Gamma, yield_stress_k, MatProp);
 
   if(Phi >= TOL_VM)
     {
@@ -84,11 +100,11 @@ Tensor plasticity_Von_Mises(Tensor grad_e, Tensor C, Tensor F_plastic, Tensor F,
 
           delta_Gamma = update_increment_plastic_strain(delta_Gamma, Phi, d_Phi);
 
-          *ptr_EPS_k = update_equivalent_plastic_strain(*ptr_EPS_k, delta_Gamma, MatProp);
+          EPS_k = update_equivalent_plastic_strain(EPS_k, delta_Gamma, MatProp);
 
-          *ptr_c_k = update_yield_stress(*ptr_EPS_k, MatProp);
+          yield_stress_k = update_yield_stress(EPS_k, MatProp);
 
-          Phi = compute_yield_surface(s_trial_norm, delta_Gamma, *ptr_yield_stress_k, MatProp);
+          Phi = compute_yield_surface(s_trial_norm, delta_Gamma, yield_stress_k, MatProp);
 
           /*
 		        Check convergence
@@ -106,9 +122,9 @@ Tensor plasticity_Von_Mises(Tensor grad_e, Tensor C, Tensor F_plastic, Tensor F,
       /*
         Update plastic deformation gradient
       */
-	    D_E_plastic = compute_increment_plastic_strain_tensor(s_trial, s_trial_norm, delta_Gamma, MatProp);
+	    Increment_E_plastic = compute_increment_plastic_strain_tensor(s_trial, s_trial_norm, delta_Gamma, MatProp);
 
-      update_plastic_deformation_gradient(D_E_plastic,F_plastic);
+      update_plastic_deformation_gradient(Increment_E_plastic,F_plastic);
 
     }
 
@@ -131,10 +147,18 @@ Tensor plasticity_Von_Mises(Tensor grad_e, Tensor C, Tensor F_plastic, Tensor F,
     }
 
   /*
+    Update equivalent plastic stress and yield stress
+  */
+  *ptr_EPS = EPS_k;
+  *ptr_yield_stress = yield_stress_k;
+
+  /*
     Free memory
   */
   free__TensorLib__(E_elastic);
+  free__TensorLib__(E_elastic_dev);
   free__TensorLib__(s_trial);
+  free__TensorLib__(p_trial);
   free__TensorLib__(sigma_k1);
   free__TensorLib__(Increment_E_plastic);
 
@@ -159,7 +183,7 @@ static Tensor compute_small_strain_tensor(Tensor C, Tensor F_plastic)
   /*
     Use the approach of Ortiz and Camacho to compute the elastic infinitesimal strain tensor.
   */
-  Eps_elastic = logarithmic_strains__Particles__(C_elastic);
+  E_elastic = logarithmic_strains__Particles__(C_elastic);
 
   /*  
   Free memory
@@ -172,26 +196,40 @@ static Tensor compute_small_strain_tensor(Tensor C, Tensor F_plastic)
 
 /**************************************************************/
 
-static void compute_volumetric_deviatoric_stress_tensor(double * p_trial, Tensor s_trial, Tensor E_elastic, Material MatProp)
+static Tensor compute_volumetric_stress_tensor(double E_elastic_vol, Material MatProp)
 {
 
   int Ndim = NumberDimensions;
   double nu = MatProp.nu; 
   double E = MatProp.E;
   double K = E/(3*(1-2*nu));
+  double aux = K*E_elastic_vol;
+  Tensor p_trial = alloc__TensorLib__(2);
+
+  /*
+    Compute deviatoric stress tensor
+  */
+  for(int i = 0 ; i<Ndim ; i++)
+  {
+    p_trial.N[i][i] = aux;
+  }
+
+  return p_trial;
+}
+
+/**************************************************************/
+
+static Tensor compute_deviatoric_stress_tensor(Tensor E_elastic_dev, Material MatProp)
+{
+
+  int Ndim = NumberDimensions;
+  double nu = MatProp.nu; 
+  double E = MatProp.E;
   double G = E/(2*(1+nu));
-  double E_elastic_vol;
-  Tensor E_elastic_dev;
-
+  Tensor s_trial = alloc__TensorLib__(2);
   /*
-    Split the deformation tensor into deviatoric and volumetric
+    Compute deviatoric stress tensor
   */
-  volumetric_desviatoric_decomposition__TensorLib__(E_elastic,E_elastic_vol,E_elastic_dev);
-
-  /*
-    Compute deviatoric and volumetric stress tensor
-  */
-  p_trial = &(K*E_elastic_vol);
 
   for(int i = 0 ; i<Ndim ; i++)
     {
@@ -201,7 +239,7 @@ static void compute_volumetric_deviatoric_stress_tensor(double * p_trial, Tensor
       }
     }
 
-  free__TensorLib__(E_elastic_dev);
+  return s_trial;
 }
 
 /**************************************************************/
@@ -276,7 +314,7 @@ static Tensor compute_increment_plastic_strain_tensor(Tensor s_trial, double s_t
 
 /**************************************************************/
 
-static Tensor compute_finite_stress_tensor(Tensor s_trial, double p_trial, double s_trial_norm, double delta_Gamma, Material MatProp)
+static Tensor compute_finite_stress_tensor(Tensor s_trial, Tensor p_trial, double s_trial_norm, double delta_Gamma, Material MatProp)
 {
   int Ndim = NumberDimensions;
   double nu = MatProp.nu; /* Poisson modulus */
@@ -284,13 +322,12 @@ static Tensor compute_finite_stress_tensor(Tensor s_trial, double p_trial, doubl
   double G = E/(2*(1+nu));
   double aux = 1 - 2*G*delta_Gamma/s_trial_norm;
   Tensor sigma_k1 = alloc__TensorLib__(2);
-  Tensor I = Identity__TensorLib__();
 
   for(int i = 0 ; i<Ndim ; i++)
     {
       for(int j = 0 ; j<Ndim ; j++)
       {
-        sigma_k1.N[i][j] = p_trial*I.N[i][j] + aux*s_trial.N[i][j];
+        sigma_k1.N[i][j] = p_trial.N[i][j] + aux*s_trial.N[i][j];
       }
     }
 
@@ -299,7 +336,7 @@ static Tensor compute_finite_stress_tensor(Tensor s_trial, double p_trial, doubl
 
 /**************************************************************/
 
-extern void update_plastic_deformation_gradient(Tensor D_E_plastic, Tensor F_plastic)
+static void update_plastic_deformation_gradient(Tensor D_E_plastic, Tensor F_plastic)
 {
   int Ndim = NumberDimensions;
 
