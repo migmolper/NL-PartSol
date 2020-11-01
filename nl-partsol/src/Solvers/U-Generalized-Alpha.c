@@ -99,7 +99,7 @@ void U_GA(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int InitialStep)
          /*! 
           Print Nodal values after appling the BCCs 
           */
-  //        nodal_results_vtk__InOutFun__("Mesh",FEM_Mesh,R_I,(int)TimeStep/ResultsTimeStep);
+  //        nodal_results_vtk__InOutFun__("Mesh",FEM_Mesh,R_I,TimeStep,(int)TimeStep/ResultsTimeStep);
           /*!
           Print GPs results
           */

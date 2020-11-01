@@ -138,7 +138,7 @@ void U_Newmark_Predictor_Corrector_Finite_Strains(Mesh FEM_Mesh, GaussPoint MPM_
       */
       if(TimeStep % ResultsTimeStep == 0)
       {
-       nodal_results_vtk__InOutFun__("Mesh", FEM_Mesh, ActiveNodes, Reactions, ResultsTimeStep);
+       nodal_results_vtk__InOutFun__("Mesh", FEM_Mesh, ActiveNodes, Reactions,TimeStep, ResultsTimeStep);
 	     particle_results_vtk__InOutFun__("MPM_VALUES",MPM_Mesh,"ALL",TimeStep,ResultsTimeStep);
       }
 

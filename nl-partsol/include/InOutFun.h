@@ -412,7 +412,7 @@ void particle_results_vtk__InOutFun__(char *, GaussPoint, char *, int, int);
 
 /*****************************************************************/
 
-void nodal_results_vtk__InOutFun__(char *, Mesh, Mask, Matrix, int);
+void nodal_results_vtk__InOutFun__(char *, Mesh, Mask, Matrix, int, int);
 
 /*****************************************************************/
 

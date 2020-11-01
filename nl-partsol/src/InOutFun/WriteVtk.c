@@ -9,8 +9,7 @@ static void WriteVtk_Float_Tensor(char *, Matrix);
 
 /*****************************************************************/
 
-void particle_results_vtk__InOutFun__(char * Name_File, GaussPoint MPM_Mesh,
-		  char * List_Fields, int TimeStep_i, int ResultsTimeStep)
+void particle_results_vtk__InOutFun__(char * Name_File, GaussPoint MPM_Mesh, char * List_Fields, int TimeStep_i, int ResultsTimeStep)
 {
 
   /* Number of dimensions */
@@ -266,7 +265,7 @@ void particle_results_vtk__InOutFun__(char * Name_File, GaussPoint MPM_Mesh,
 
 /*********************************************************************/
 
-void nodal_results_vtk__InOutFun__(char * Name_File, Mesh ElementMesh, Mask ActiveNodes, Matrix REACTIONS, int TimeStep_i)
+void nodal_results_vtk__InOutFun__(char * Name_File, Mesh ElementMesh, Mask ActiveNodes, Matrix REACTIONS, int TimeStep_i, int ResultsTimeStep)
 {
 
   /* Number of dimensions */
