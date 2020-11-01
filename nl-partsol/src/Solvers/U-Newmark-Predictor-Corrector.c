@@ -76,16 +76,16 @@ void U_Newmark_Predictor_Corrector(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int Initi
       print_Status("DONE !!!",TimeStep);
 
       if(TimeStep % ResultsTimeStep == 0)
-	{
-	  /*!
-	    Print Nodal values after appling the BCCs
-	  */
-	  WriteVtk_FEM("Mesh",FEM_Mesh,Reactions,(int)TimeStep/ResultsTimeStep);
-	  /*!
-	    Print particle results 
-	  */
-	  WriteVtk_MPM("MPM_VALUES",MPM_Mesh,"ALL",(int)TimeStep/ResultsTimeStep,ResultsTimeStep);
-	}
+      	{
+	       /*!
+	           Print Nodal values after appling the BCCs
+	       */
+	 //      nodal_results_vtk__InOutFun__("Mesh",FEM_Mesh,Reactions,(int)TimeStep/ResultsTimeStep);
+	       /*!
+	         Print particle results 
+	       */
+	       particle_results_vtk__InOutFun__("MPM_VALUES",MPM_Mesh,"ALL",(int)TimeStep/ResultsTimeStep,ResultsTimeStep);
+	     }
 
       print_Status("*************************************************",TimeStep);
       print_Status("Five step : Reset nodal values ... WORKING",TimeStep);

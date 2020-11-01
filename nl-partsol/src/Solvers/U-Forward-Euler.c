@@ -53,20 +53,6 @@ void U_Forward_Euler(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int InitialStep)
       V_I = compute_Nodal_Velocity(FEM_Mesh, Phi_I);
       print_Status("DONE !!!",TimeStep);
 
-      if(TimeStep % ResultsTimeStep == 0)
-	{
-	  /*!
-	    Print Nodal values after appling the BCCs
-	  */
-	  WriteVtk_FEM("Mesh",FEM_Mesh,Phi_I,
-		       (int)TimeStep/ResultsTimeStep);
-	  /*!
-	    Print particle results 
-	  */
-	  WriteVtk_MPM("MPM_VALUES",MPM_Mesh,"ALL",
-		       (int)TimeStep/ResultsTimeStep,ResultsTimeStep);
-	}
-
       print_Status("*************************************************",TimeStep);
       print_Status("Second step : Compute equilibrium ... WORKING",TimeStep);
       update_LocalState(V_I, MPM_Mesh, FEM_Mesh, DeltaTimeStep);
@@ -87,6 +73,18 @@ void U_Forward_Euler(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int InitialStep)
       update_Particles(MPM_Mesh, FEM_Mesh, Phi_I, F_I, DeltaTimeStep);
       local_search__Particles__(MPM_Mesh,FEM_Mesh);
       print_Status("DONE !!!",TimeStep);
+
+      if(TimeStep % ResultsTimeStep == 0)
+      {
+        /*!
+          Print Nodal values after appling the BCCs
+        */
+ //       nodal_results_vtk__InOutFun__("Mesh",FEM_Mesh,R_I,(int)TimeStep/ResultsTimeStep);
+        /*!
+          Print particle results 
+        */
+        particle_results_vtk__InOutFun__("MPM_VALUES",MPM_Mesh,"ALL",(int)TimeStep/ResultsTimeStep,ResultsTimeStep);
+      }
     
       print_Status("*************************************************",TimeStep);
       print_Status(" Five step : Reset nodal values ... WORKING",TimeStep);
