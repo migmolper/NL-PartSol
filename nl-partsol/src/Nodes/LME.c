@@ -138,7 +138,7 @@ Matrix beta_anisotropic__LME__(Matrix Beta, Matrix f)
   for(int i = 0 ; i<Ndim ; i++)
     {
       for(int j = 0 ; j<Ndim ; j++)
-	{
+      {
 
 	  f_m1T_x_Beta_x_f_m1 = 0;
 	  
@@ -572,13 +572,13 @@ ChainPtr anisotropic_tributary__LME__(Matrix X_p, Matrix M_p, Matrix f_p,
   if(NumTributaryNodes < Ndim + 1)
     {
       for(int i = 0 ; i<NumNodes0 ; i++)
-	{
-	  Node0 = Array_Nodes0[i];
-	  if(!inout__SetLib__(Triburary_Nodes,Node0))
-	    {
-	      push__SetLib__(&Triburary_Nodes,Node0);
+      {
+        Node0 = Array_Nodes0[i];
+        if(!inout__SetLib__(Triburary_Nodes,Node0))
+        {
+	       push__SetLib__(&Triburary_Nodes,Node0);
+	      }
 	    }
-	}
     }
   
   /* Free memory */
