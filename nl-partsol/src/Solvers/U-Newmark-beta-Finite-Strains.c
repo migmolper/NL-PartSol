@@ -241,8 +241,8 @@ void U_Newmark_beta_Finite_Strains(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int Initi
       */
       if(TimeStep % ResultsTimeStep == 0)
 	{
-	  /* WriteVtk_FEM("Mesh",FEM_Mesh,R_I,TimeStep); */
-	  WriteVtk_MPM("MPM_VALUES",MPM_Mesh,"ALL",TimeStep,ResultsTimeStep);
+    nodal_results_vtk__InOutFun__("Mesh", FEM_Mesh, ActiveNodes, Reactions, TimeStep, ResultsTimeStep);
+	  particle_results_vtk__InOutFun__("MPM_VALUES",MPM_Mesh,"ALL",TimeStep,ResultsTimeStep);
 	}
 
       print_Status("*************************************************",TimeStep);

@@ -73,20 +73,6 @@ void U_GA(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int InitialStep)
       print_Status("First step : Compute nodal kinetics ... WORKING",TimeStep);
       /* BCC_Nod_VALUE(FEM_Mesh, V_I, TimeStep); */
       print_Status("DONE !!!",TimeStep);
-
-      if(TimeStep % ResultsTimeStep == 0)
-	{
-	  /*! 
-	    Print Nodal values after appling the BCCs 
-	  */
-	  WriteVtk_FEM("Mesh",FEM_Mesh,Nodal_Kinetics,
-		       (int)TimeStep/ResultsTimeStep);
-	  /*!
-	    Print GPs results
-	  */
-	  WriteVtk_MPM("MPM_VALUES",MPM_Mesh,"ALL",
-		       (int)TimeStep/ResultsTimeStep,ResultsTimeStep);
-	}
       
       print_Status("*************************************************",TimeStep);
       print_Status("Second step : Compute equilibrium ... WORKING",TimeStep);
@@ -107,10 +93,23 @@ void U_GA(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int InitialStep)
       update_Particles(MPM_Mesh, FEM_Mesh, Nodal_Kinetics, Params);
       local_search__Particles__(MPM_Mesh, FEM_Mesh);
       print_Status("DONE !!!",TimeStep);
+
+      if(TimeStep % ResultsTimeStep == 0)
+      {
+         /*! 
+          Print Nodal values after appling the BCCs 
+          */
+  //        nodal_results_vtk__InOutFun__("Mesh",FEM_Mesh,R_I,TimeStep,(int)TimeStep/ResultsTimeStep);
+          /*!
+          Print GPs results
+          */
+          particle_results_vtk__InOutFun__("MPM_VALUES",MPM_Mesh,"ALL",(int)TimeStep/ResultsTimeStep,ResultsTimeStep);
+      }
       
       print_Status("*************************************************",TimeStep);
       print_Status("Five step : Reset nodal values ... WORKING",TimeStep);
       free__MatrixLib__(F_I);
+      free__MatrixLib__(R_I);
       print_Status("DONE !!!",TimeStep);
 
     }

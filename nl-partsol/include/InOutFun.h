@@ -408,23 +408,11 @@ Load * GramsBodyForces(char *, int, int);
 
 /*****************************************************************/
 
-void WriteVtk_MPM(char *, GaussPoint, char *, int, int);
+void particle_results_vtk__InOutFun__(char *, GaussPoint, char *, int, int);
 
 /*****************************************************************/
 
-void WriteVtk_FEM(char *, Mesh, Matrix, int);
-
-/*****************************************************************/
-
-void WriteVtk_Float_Scalar(char *, Matrix);
-
-/*****************************************************************/
-
-void WriteVtk_Float_Vector(char *, Matrix);
-
-/*****************************************************************/
-
-void WriteVtk_Float_Tensor(char *, Matrix);
+void nodal_results_vtk__InOutFun__(char *, Mesh, Mask, Matrix, int, int);
 
 /*****************************************************************/
 
