@@ -239,7 +239,7 @@ typedef struct {
   Matrix chi;
 
   /*!
-   * Cohesion of the particle (plasticity) 
+   * Cohesion/yield stress of the particle (plasticity) 
    */
   Matrix cohesion;
 
