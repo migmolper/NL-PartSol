@@ -192,7 +192,7 @@ Tensor plasticity_Drucker_Prager_Sanavia(Tensor grad_e, Tensor C_total, Tensor F
   /*
     Get the stress tensor in the deformed configuration
   */
-  push_backward_tensor__Particles__(grad_e, sigma_k1, F);
+  contravariant_pull_back_tensor__TensorLib__(grad_e, sigma_k1, F);
 	
   for(int i = 0 ; i<Ndim ; i++)
     {
@@ -234,7 +234,7 @@ static Tensor compute_small_strain_tensor(Tensor C_total, Tensor F_plastic)
   /*
     Compute the trial elastic right Cauchy-Green tensor using the intermediate configuration.
   */
-  push_backward_tensor__Particles__(C_elastic, C_total, F_plastic);
+  covariant_push_forward_tensor__TensorLib__(C_elastic, C_total, F_plastic);
 
   /*
     Use the approach of Ortiz and Camacho to compute the elastic infinitesimal strain tensor.

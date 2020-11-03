@@ -572,7 +572,7 @@ static void check_Neo_Hookean_Wriggers_Material(Material Mat_particle)
 
 static void check_Von_Mises_Material(Material Mat_particle)
 {
-	if(Is_rho && Is_Cel && Is_E && Is_nu && Is_yield_stress && Is_H && Is_Hexp)
+	if(Is_rho && Is_Cel && Is_E && Is_nu && Is_yield_stress && Is_H)
 	{
 		printf("\t -> %s \n","Von-Mises material");
 		printf("\t \t -> %s : %f \n","Celerity",Mat_particle.Cel);
@@ -581,20 +581,18 @@ static void check_Von_Mises_Material(Material Mat_particle)
 		printf("\t \t -> %s : %f \n","Poisson modulus",Mat_particle.nu);
 		printf("\t \t -> %s : %f \n","Yield stress",Mat_particle.yield_stress_0);
 		printf("\t \t -> %s : %f \n","Hardening modulus",Mat_particle.hardening_modulus);
-		printf("\t \t -> %s : %f \n","Hardening exponent",Mat_particle.hardening_exp);
 	}
 	else
 	{
 		fprintf(stderr,"%s : %s \n",
 			"Error in GramsMaterials()",
 			"Some parameter is missed for Von-Mises material");
-		fputs(Is_rho ? "Density : true" : "Density : false", stdout);
-		fputs(Is_Cel ? "Celerity : true" : "Celerity : false", stdout);
-		fputs(Is_E   ? "Elastic modulus : true" : "Elastic modulus : false", stdout);
-		fputs(Is_nu  ? "Poisson modulus : true" : "Poisson modulus : false", stdout);
-		fputs(Is_yield_stress  ? "Yield stress : true" : "Yield stress : false", stdout);
-		fputs(Is_H  ? "Hardening modulus : true" : "Hardening modulus : false", stdout);
-		fputs(Is_Hexp  ? "Hardening exponent : true" : "Hardening exponent : false", stdout);
+		fputs(Is_rho ? "Density : true \n" : "Density : false \n", stdout);
+		fputs(Is_Cel ? "Celerity : true \n" : "Celerity : false \n", stdout);
+		fputs(Is_E   ? "Elastic modulus : true \n" : "Elastic modulus : false \n", stdout);
+		fputs(Is_nu  ? "Poisson modulus : true \n" : "Poisson modulus : false \n", stdout);
+		fputs(Is_yield_stress  ? "Yield stress : true \n" : "Yield stress : false \n", stdout);
+		fputs(Is_H  ? "Hardening modulus : true \n" : "Hardening modulus : false \n", stdout);
 		exit(EXIT_FAILURE);
 	}
 }
@@ -621,14 +619,14 @@ static void check_Drucker_Prager_Material(Material Mat_particle)
 		fprintf(stderr,"%s : %s \n",
 			"Error in GramsMaterials()",
 			"Some parameter is missed for Drucker-Prager material");
-		fputs(Is_rho ? "Density : true" : "Density : false", stdout);
-		fputs(Is_Cel ? "Celerity : true" : "Celerity : false", stdout);
-		fputs(Is_E   ? "Elastic modulus : true" : "Elastic modulus : false", stdout);
-		fputs(Is_nu  ? "Poisson modulus : true" : "Poisson modulus : false", stdout);
-		fputs(Is_cohesion  ? "Cohesion : true" : "Cohesion : false", stdout);
-		fputs(Is_Hexp  ? "Hardening exponent : true" : "Hardening exponent : false", stdout);
-		fputs(Is_friction_angle  ? "Friction angle : true" : "Friction angle : false", stdout);
-		fputs(Is_dilatancy_angle  ? "Dilatancy angle : true" : "Dilatancy angle : false", stdout);
+		fputs(Is_rho ? "Density : true \n" : "Density : false \n", stdout);
+		fputs(Is_Cel ? "Celerity : true \n" : "Celerity : false \n", stdout);
+		fputs(Is_E   ? "Elastic modulus : true \n" : "Elastic modulus : false \n", stdout);
+		fputs(Is_nu  ? "Poisson modulus : true \n" : "Poisson modulus : false \n", stdout);
+		fputs(Is_cohesion  ? "Cohesion : true \n" : "Cohesion : false", stdout);
+		fputs(Is_Hexp  ? "Hardening exponent : true \n" : "Hardening exponent : false \n", stdout);
+		fputs(Is_friction_angle  ? "Friction angle : true \n" : "Friction angle : false \n", stdout);
+		fputs(Is_dilatancy_angle  ? "Dilatancy angle : true \n" : "Dilatancy angle : false \n", stdout);
 		exit(EXIT_FAILURE);
 	}
 }
@@ -648,8 +646,8 @@ static void check_Eigenerosion(Material Mat_particle)
 		fprintf(stderr,"%s : %s \n",
 			"Error in GramsMaterials()",
 			"Some parameters are missed for Eigenerosion");
-		fputs(Is_Ceps ? "Normalizing constan : true" : "Normalizing constan : false", stdout);
-		fputs(Is_Gf ? "Failure energy : true" : "Failure energy : false", stdout);
+		fputs(Is_Ceps ? "Normalizing constan : true \n" : "Normalizing constan : false \n", stdout);
+		fputs(Is_Gf ? "Failure energy : true \n" : "Failure energy : false \n", stdout);
 		exit(EXIT_FAILURE);
 	}
 }
@@ -671,10 +669,10 @@ static void check_Eigensoftening(Material Mat_particle)
 		fprintf(stderr,"%s : %s \n",
 			"Error in GramsMaterials()",
 			"Some parameters are missed for Eigensoftening");
-		fputs(Is_Ceps ? "Normalizing constan : true" : "Normalizing constan : false", stdout);
-		fputs(Is_ft ? "Tensile strengt : true" : "Tensile strengt : false", stdout);
-		fputs(Is_heps ? "Bandwidth Bazant : true" : "Bandwidth Bazant : false", stdout);
-		fputs(Is_Wc ? "Critical opening : true" : "Critical opening : false", stdout);
+		fputs(Is_Ceps ? "Normalizing constan : true \n" : "Normalizing constan : false \n", stdout);
+		fputs(Is_ft ? "Tensile strengt : true \n" : "Tensile strengt : false \n", stdout);
+		fputs(Is_heps ? "Bandwidth Bazant : true \n" : "Bandwidth Bazant : false \n", stdout);
+		fputs(Is_Wc ? "Critical opening : true \n" : "Critical opening : false \n", stdout);
 		exit(EXIT_FAILURE);
 	}
 }

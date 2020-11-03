@@ -66,6 +66,9 @@ Tensor plasticity_Von_Mises(Tensor grad_e, Tensor C, Tensor F_plastic, Tensor F,
   */
   E_elastic = compute_small_strain_tensor(C, F_plastic);
 
+  exit(0);
+
+  
   /*
     Elastic predictor : Volumetric and deviatoric stress measurements. Compute also
     the norm of the deviatoric tensor
@@ -126,6 +129,11 @@ Tensor plasticity_Von_Mises(Tensor grad_e, Tensor C, Tensor F_plastic, Tensor F,
 
       update_plastic_deformation_gradient(Increment_E_plastic,F_plastic);
 
+      /*
+        Free increment of E_plastic
+      */
+      free__TensorLib__(Increment_E_plastic);
+
     }
 
   /*
@@ -136,7 +144,7 @@ Tensor plasticity_Von_Mises(Tensor grad_e, Tensor C, Tensor F_plastic, Tensor F,
   /*
     Get the stress tensor in the reference configuration
   */
-  push_backward_tensor__Particles__(grad_e, sigma_k1, F);
+  contravariant_pull_back_tensor__TensorLib__(grad_e, sigma_k1, F);
 	
   for(int i = 0 ; i<Ndim ; i++)
     {
@@ -160,7 +168,6 @@ Tensor plasticity_Von_Mises(Tensor grad_e, Tensor C, Tensor F_plastic, Tensor F,
   free__TensorLib__(s_trial);
   free__TensorLib__(p_trial);
   free__TensorLib__(sigma_k1);
-  free__TensorLib__(Increment_E_plastic);
 
   /*
     Return stress tensor
@@ -172,13 +179,15 @@ Tensor plasticity_Von_Mises(Tensor grad_e, Tensor C, Tensor F_plastic, Tensor F,
 
 static Tensor compute_small_strain_tensor(Tensor C, Tensor F_plastic)
 {
-  Tensor C_elastic;
+  Tensor C_elastic = alloc__TensorLib__(2);
   Tensor E_elastic;
 
   /*
     Compute the trial elastic right Cauchy-Green tensor using the intermediate configuration.
   */
-  push_backward_tensor__Particles__(C_elastic, C, F_plastic);
+  covariant_push_forward_tensor__TensorLib__(C_elastic, C, F_plastic);
+
+  print__TensorLib__(C_elastic);
 
   /*
     Use the approach of Ortiz and Camacho to compute the elastic infinitesimal strain tensor.
@@ -273,11 +282,9 @@ static double update_yield_stress(double EPS_k1, Material MatProp)
 {
   double yield_stress_0 = MatProp.yield_stress_0;
   double E_p0  = MatProp.E_plastic_reference;
-  double N_exp = MatProp.hardening_exp;
-  double basis = 1 + EPS_k1/E_p0;
-  double exp   = 1/N_exp;
+  double aux = 1 + EPS_k1/E_p0;
 
-  return yield_stress_0*pow(basis,exp);  
+  return yield_stress_0*aux;  
 }
 
 /**************************************************************/

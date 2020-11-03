@@ -130,6 +130,7 @@ double J1__TensorLib__(Tensor);
 double J2__TensorLib__(Tensor);
 double J3__TensorLib__(Tensor);
 Tensor Eigenvalues__TensorLib__(Tensor);
+Tensor Eigenvectors__TensorLib__(Tensor,Tensor);
 double EuclideanNorm__TensorLib__(Tensor);
 Tensor Identity__TensorLib__();
 Tensor Inverse__TensorLib__(Tensor);
@@ -140,10 +141,13 @@ Tensor dyadic_Product__TensorLib__(Tensor, Tensor);
 Tensor vector_linear_mapping__TensorLib__(Tensor, Tensor);
 Tensor matrix_product__TensorLib__(Tensor, Tensor);
 Tensor Convex_combination__TensorLib__(Tensor, Tensor, double);
-void   spectral_descomposition_symmetric__TensorLib__(Tensor, Tensor, Tensor);
 double volumetric_component__TensorLib__(Tensor);
 Tensor deviatoric_component__TensorLib__(Tensor, double);
 Tensor rotate__TensorLib__(Tensor, Tensor);
+void   covariant_push_forward_tensor__TensorLib__(Tensor, Tensor, Tensor);
+void   contravariant_push_forward_tensor__TensorLib__(Tensor, Tensor, Tensor);
+void   covariant_pull_back_tensor__TensorLib__(Tensor, Tensor, Tensor);
+void   contravariant_pull_back_tensor__TensorLib__(Tensor, Tensor, Tensor);
 void   print__TensorLib__(Tensor);
 /*******************************************************/
 

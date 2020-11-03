@@ -182,7 +182,8 @@ Tensor logarithmic_strains__Particles__(Tensor C)
   /*
     Compute the spectral descomposition of the tensor logC
   */
-  spectral_descomposition_symmetric__TensorLib__(EigenVals_C, EigenVects_C, C);
+  EigenVals_C = Eigenvalues__TensorLib__(C);
+  EigenVects_C = Eigenvectors__TensorLib__(C,EigenVals_C);
   
   for(int i = 0 ; i < Ndim  ; i++)
     {
@@ -230,7 +231,8 @@ Tensor increment_Deformation_Gradient_exponential_strains__Particles__(Tensor D_
   /*
     Compute the spectral descomposition of the tensor exp(D_E)
   */
-  spectral_descomposition_symmetric__TensorLib__(EigenVals_D_E, EigenVects_D_E, D_E);
+  EigenVals_D_E = Eigenvalues__TensorLib__(D_E);
+  EigenVects_D_E = Eigenvectors__TensorLib__(D_E,EigenVals_D_E);
   
   for(int i = 0 ; i < Ndim  ; i++)
     {
