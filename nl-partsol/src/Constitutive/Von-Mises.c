@@ -187,12 +187,11 @@ static Tensor compute_small_strain_tensor(Tensor C, Tensor F_plastic)
   */
   covariant_push_forward_tensor__TensorLib__(C_elastic, C, F_plastic);
 
-  print__TensorLib__(C_elastic);
-
   /*
     Use the approach of Ortiz and Camacho to compute the elastic infinitesimal strain tensor.
   */
   E_elastic = logarithmic_strains__Particles__(C_elastic);
+
 
   /*  
   Free memory

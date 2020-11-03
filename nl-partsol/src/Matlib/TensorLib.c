@@ -729,7 +729,7 @@ Tensor rotate__TensorLib__(Tensor In, Tensor R)
     Out.N[0][0] = R.N[0][0]*aux_1 + R.N[0][1]*aux_2;
     Out.N[0][1] = R.N[0][0]*aux_3 + R.N[0][1]*aux_4;
     Out.N[1][0] = R.N[1][0]*aux_1 + R.N[1][1]*aux_2;
-    Out.N[0][0] = R.N[1][0]*aux_3 + R.N[1][1]*aux_4;
+    Out.N[1][1] = R.N[1][0]*aux_3 + R.N[1][1]*aux_4;
 
   }
   else if(Ndim == 3)
@@ -778,7 +778,7 @@ void covariant_push_forward_tensor__TensorLib__(Tensor a, Tensor A, Tensor F)
     a.N[0][0] = F_m1.N[0][0]*aux_1 + F_m1.N[1][0]*aux_3;
     a.N[0][1] = F_m1.N[0][0]*aux_2 + F_m1.N[1][0]*aux_4;
     a.N[1][0] = F_m1.N[0][1]*aux_1 + F_m1.N[1][1]*aux_3;
-    a.N[0][0] = F_m1.N[0][1]*aux_2 + F_m1.N[1][1]*aux_4;
+    a.N[1][1] = F_m1.N[0][1]*aux_2 + F_m1.N[1][1]*aux_4;
 
   }
   else if(Ndim == 3)
@@ -825,7 +825,7 @@ void contravariant_push_forward_tensor__TensorLib__(Tensor a, Tensor A, Tensor F
     a.N[0][0] = F.N[0][0]*aux_1 + F.N[0][1]*aux_3;
     a.N[0][1] = F.N[0][0]*aux_2 + F.N[0][1]*aux_4;
     a.N[1][0] = F.N[1][0]*aux_1 + F.N[1][1]*aux_3;
-    a.N[0][0] = F.N[1][0]*aux_2 + F.N[1][1]*aux_4;
+    a.N[1][1] = F.N[1][0]*aux_2 + F.N[1][1]*aux_4;
   }
     else if(Ndim == 3)
   {
@@ -871,7 +871,7 @@ void covariant_pull_back_tensor__TensorLib__(Tensor A, Tensor a, Tensor F)
     A.N[0][0] = F.N[0][0]*aux_1 + F.N[1][0]*aux_3;
     A.N[0][1] = F.N[0][0]*aux_2 + F.N[1][0]*aux_4;
     A.N[1][0] = F.N[0][1]*aux_1 + F.N[1][1]*aux_3;
-    A.N[0][0] = F.N[0][1]*aux_2 + F.N[1][1]*aux_4;
+    A.N[1][1] = F.N[0][1]*aux_2 + F.N[1][1]*aux_4;
   }
     else if(Ndim == 3)
   {
@@ -918,7 +918,7 @@ void contravariant_pull_back_tensor__TensorLib__(Tensor A, Tensor a, Tensor F)
     A.N[0][0] = F_m1.N[0][0]*aux_1 + F_m1.N[0][1]*aux_3;
     A.N[0][1] = F_m1.N[0][0]*aux_2 + F_m1.N[0][1]*aux_4;
     A.N[1][0] = F_m1.N[1][0]*aux_1 + F_m1.N[1][1]*aux_3;
-    A.N[0][0] = F_m1.N[1][0]*aux_2 + F_m1.N[1][1]*aux_4;
+    A.N[1][1] = F_m1.N[1][0]*aux_2 + F_m1.N[1][1]*aux_4;
   }
     else if(Ndim == 3)
   {
