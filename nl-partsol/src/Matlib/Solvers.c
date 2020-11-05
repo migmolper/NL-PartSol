@@ -11,7 +11,7 @@
 /*********************************************************************/
 
 
-Matrix Newton_Rapson(Matrix(* Function)(Matrix, Matrix),Matrix Parameter_F,
+Matrix Newton_Rapson__MatrixSolvers__(Matrix(* Function)(Matrix, Matrix),Matrix Parameter_F,
 		     Matrix(* Jacobian)(Matrix, Matrix),Matrix Parameter_J,
 		     Matrix Y,Matrix X)
 
@@ -98,7 +98,7 @@ Matrix Newton_Rapson(Matrix(* Function)(Matrix, Matrix),Matrix Parameter_F,
 
 /*********************************************************************/
 
-Matrix Solve_Linear_Sistem(Matrix K, Matrix F)
+Matrix Solve_Linear_Sistem__MatrixSolvers__(Matrix K, Matrix F)
 /*
 
  */
@@ -126,7 +126,7 @@ Matrix Solve_Linear_Sistem(Matrix K, Matrix F)
 
 /*********************************************************************/
 
-Matrix Conjugate_Gradient_Method(Matrix K, Matrix F, Matrix U0)
+Matrix Conjugate_Gradient_Method__MatrixSolvers__(Matrix K, Matrix F, Matrix U0)
 /*!
  *
  *  Practical aspects of the finite element method.
@@ -195,7 +195,7 @@ Matrix Conjugate_Gradient_Method(Matrix K, Matrix F, Matrix U0)
      ( (K.N_rows != U0.N_rows) || (U0.N_cols != 1) ))
     {
       printf("%s : %s \n",
-	     "Error in Conjugate_Gradient_Method()",
+	     "Error in Conjugate_Gradient_Method()__MatrixSolvers__",
 	     "Wrong input data !");
       exit(EXIT_FAILURE);
     }
@@ -290,7 +290,7 @@ Matrix Conjugate_Gradient_Method(Matrix K, Matrix F, Matrix U0)
       }
       else{
 	printf("%s : %s \n \t %s : %f \n",
-	       "Warning in Conjugate_Gradient_Method",
+	       "Warning in Conjugate_Gradient_Method__MatrixSolvers__",
 	       "Maximum number of iterations",
 	       "Norm of r",Norm_r);
       }
@@ -330,7 +330,7 @@ Matrix Conjugate_Gradient_Method(Matrix K, Matrix F, Matrix U0)
 
 /*********************************************************************/
 
-Matrix Jacobi_Conjugate_Gradient_Method(Matrix K, Matrix F, Matrix U0)
+Matrix Jacobi_Conjugate_Gradient_Method__MatrixSolvers__(Matrix K, Matrix F, Matrix U0)
 /*!
  *  To increase the rate of convergence of Conjugate_Gradient_Method(),
  * preconditioning is used. The basic idea is that instead of solving $K U = F$,
@@ -364,7 +364,7 @@ Matrix Jacobi_Conjugate_Gradient_Method(Matrix K, Matrix F, Matrix U0)
      ( (K.N_rows != U0.N_rows) || (U0.N_cols != 1) ))
     {
       printf("%s : %s \n",
-	     "Error in Jacobi_Conjugate_Gradient_Method()",
+	     "Error in Jacobi_Conjugate_Gradient_Method__MatrixSolvers__()",
 	     "Wrong input data !");
       exit(EXIT_FAILURE);
     }
@@ -470,7 +470,7 @@ Matrix Jacobi_Conjugate_Gradient_Method(Matrix K, Matrix F, Matrix U0)
       }
       else{
 	printf("%s : %s \n \t %s : %f \n",
-	       "Warning in Jacobi_Conjugate_Gradient_Method",
+	       "Warning in Jacobi_Conjugate_Gradient_Method__MatrixSolvers__",
 	       "Maximum number of iterations",
 	       "Norm of r",Norm_r);
       }      
@@ -515,12 +515,14 @@ Matrix Jacobi_Conjugate_Gradient_Method(Matrix K, Matrix F, Matrix U0)
 
 /*********************************************************************/
 
-Matrix One_Iteration_Lumped(Matrix K_l, Matrix F, Matrix U0){
+Matrix One_Iteration_Lumped__MatrixSolvers__(Matrix K_l, Matrix F, Matrix U0)
+{
 
   /* 0º First we check if the input data */
-  if( K_l.N_cols*K_l.N_rows != F.N_cols*F.N_rows ){
+  if( K_l.N_cols*K_l.N_rows != F.N_cols*F.N_rows )
+  {
     printf("%s : %s \n",
-	   "Error in One_Iteration_Lumped()",
+	   "Error in One_Iteration_Lumped__MatrixSolvers__()",
 	   "Wrong input data !");
     exit(EXIT_FAILURE);
   }
@@ -535,6 +537,48 @@ Matrix One_Iteration_Lumped(Matrix K_l, Matrix F, Matrix U0){
 
   /* 3º Return the solution */
   return U;
+
+}
+
+/*********************************************************************/
+
+Matrix Accelerated_Viscous_Relaxation__MatrixSolvers__(Matrix K, Matrix K_l, Matrix RHS, Matrix U0)
+/*
+!      npoin                   number of nodes in mesh
+!      nelem                   number of elements
+!      nnode                   nodes per element
+!      ndimn                   dimension
+!      namat                   nr of dofn in the unknowns array
+!      ngeom                   dimension of geome, store Ni,j and area
+!      niter                   AVR number of iterations
+!      nprer                   number of prescribed DOFn
+!      intmat (nnode,nelem)    Connectivity matrix
+!      geome  (ngeom,nelem)    N1x..Nnx,N1y..Nny,...area (2d is 2Area)
+!      bprer      (2,nprer)    node and dofn prescribed for var iprer
+!      mmatl        (npoin)    Lumped mass matrix
+!
+!      rhs    (namat,npoin)    Input : Right hand side of the eqns system
+!      Fi_pres(namat,npoin)    In/Out: prescribed values and solution
+
+!      Fi     (namat,npoin)    Aux   : Solution of the system  (local)
+!      M_by_Fi(namat,npoin)    auxiliar array M*Fi             (local)
+!      mmat   (nnode,nnode)    Lumped mass matrix              (local) 
+!
+!      We solve  M.Fi = rhs  with prescribed dofn given in bprer
+!         where  M  is the mass matrix M = int(Ni Nj)
+!
+!         algorithm is:
+!                    Fi_n+1 = Fi_n + inv(Ml)* ( rhs - M.Fi_n)
+!         stored as:
+!                    Fi = Fi + inv(Ml)* ( rhs - M_by_Fi)
+!
+!      In the case of TG algorithm what we solve is
+!
+!                    dFi = dFi + inv(Ml)* ( rhs - M_by_dFi) 
+!
+!    ** Output is (i) Fi and Fi_pres, where we merge fi and fi_pres **
+*/
+{
 
 }
 

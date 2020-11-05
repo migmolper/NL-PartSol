@@ -218,7 +218,7 @@ void X_to_Xi__T3__(Matrix X_EC_GP,
 */
 {
   
-  X_EC_GP = Newton_Rapson(Xi_to_X__T3__,Element_GC_Nod,
+  X_EC_GP = Newton_Rapson__MatrixSolvers__(Xi_to_X__T3__,Element_GC_Nod,
 			  F_Ref__T3__,Element_GC_Nod,
 			  X_GC_GP,X_EC_GP);
 }

@@ -214,7 +214,7 @@ Matrix lambda__LME__(Matrix l, Matrix lambda, Matrix Beta)
     /* } */
     
     /* Get the increment of lambda */
-    D_lambda = Solve_Linear_Sistem(J,r);
+    D_lambda = Solve_Linear_Sistem__MatrixSolvers__(J,r);
 
     /* Update the value of lambda */
     for(int i = 0 ; i<Ndim ; i++){

@@ -21,7 +21,8 @@ static Matrix compute_Nodal_Forces(Mask,GaussPoint,Mesh,int);
 static void   compute_Nodal_Internal_Forces(Matrix,Mask,GaussPoint,Mesh);
 static void   compute_Nodal_Body_Forces(Matrix,Mask,GaussPoint,Mesh,int);
 static Matrix compute_Reactions(Mesh,Matrix,Mask);
-static void   compute_Nodal_Velocity_Corrected(Matrix,Matrix,Matrix,double,double);
+static Matrix compute_Nodal_Accelerations(Matrix, Matrix, bool);
+static void   compute_Nodal_Velocity_Corrected(Matrix,Matrix,double,double);
 static void   update_Particles(GaussPoint,Mesh,Matrix,Matrix,Matrix,Mask,double);
 
 /**************************************************************/
@@ -46,11 +47,13 @@ void U_Newmark_Predictor_Corrector_Finite_Strains(Mesh FEM_Mesh, GaussPoint MPM_
   /*
     Auxiliar variables for the solver
   */
+  Matrix Consistent_Mass;
   Matrix Lumped_Mass;
   Matrix Velocity;
   Matrix D_Displacement;
   Matrix Forces;
   Matrix Reactions;
+  Matrix Acceleration;
   Mask ActiveNodes;
 
 
@@ -111,13 +114,17 @@ void U_Newmark_Predictor_Corrector_Finite_Strains(Mesh FEM_Mesh, GaussPoint MPM_
         Compute reactions
       */
       Reactions = compute_Reactions(FEM_Mesh,Forces,ActiveNodes);
+      /*
+        Compute nodal acceleration
+      */
+      Acceleration = compute_Nodal_Accelerations(Forces, Lumped_Mass, Consistent_Mass, false);
 
       print_Status("*************************************************",TimeStep);
       print_Status("Five step : Compute velocity corrector ... WORKING",TimeStep);
       /*
 	     Correct the predicted velocity
       */
-      compute_Nodal_Velocity_Corrected(Velocity,Forces,Lumped_Mass,gamma,DeltaTimeStep);
+      compute_Nodal_Velocity_Corrected(Velocity,Accelerations,gamma,DeltaTimeStep);
       print_Status("DONE !!!",TimeStep);
       
       print_Status("*************************************************",TimeStep);
@@ -125,7 +132,7 @@ void U_Newmark_Predictor_Corrector_Finite_Strains(Mesh FEM_Mesh, GaussPoint MPM_
       /*
 	      Update Lagrangians with D_Displacement
       */
-      update_Particles(MPM_Mesh,FEM_Mesh,Lumped_Mass,Forces,Velocity,ActiveNodes,DeltaTimeStep);
+      update_Particles(MPM_Mesh,FEM_Mesh,Accelerations,Velocity,ActiveNodes,DeltaTimeStep);
       print_Status("DONE !!!",TimeStep);
       /*
 	     Reload the connectivity information for each particle
@@ -148,6 +155,7 @@ void U_Newmark_Predictor_Corrector_Finite_Strains(Mesh FEM_Mesh, GaussPoint MPM_
       	Free memory.
       */
       free__MatrixLib__(Lumped_Mass); 
+      free__MatrixLib__(Accelerations);
       free__MatrixLib__(Velocity);
       free__MatrixLib__(D_Displacement);
       free__MatrixLib__(Forces);
@@ -896,9 +904,33 @@ static Matrix compute_Reactions(Mesh FEM_Mesh, Matrix Forces, Mask ActiveNodes)
 /**************************************************************/
 
 
+static Matrix compute_Nodal_Accelerations(Matrix Forces, Matrix Lumped_Mass, Matrix Mass, bool Is_AVR)
+{
+    /* 1º Define auxilar variables */
+  int Ndim = NumberDimensions;
+  int Nnodes_mask = ActiveNodes.Nactivenodes;
+
+  Matrix Accelerations = allocZ__MatrixLib__(Nnodes_mask ,Ndim);
+  strcpy(Accelerations.Info,"ACCELERATIONS");
+
+  if(Is_AVR)
+  {
+    Accelerations = Accelerated_Viscous_Relaxation__MatrixSolvers__(Mass, Lumped_Mass, Forces, Accelerations);
+  }
+  else
+  {
+    Accelerations = One_Iteration_Lumped__MatrixSolvers__(Lumped_Mass, Forces, Accelerations);
+  }
+
+  return Accelerations;
+}
+
+
+/**************************************************************/
+
+
 static void compute_Nodal_Velocity_Corrected(Matrix Velocity,
-                                             Matrix Forces,
-				                                     Matrix Lumped_Mass,
+                                             Matrix Accelerations
                                              double gamma,
                                              double Dt)
 {
@@ -911,7 +943,7 @@ static void compute_Nodal_Velocity_Corrected(Matrix Velocity,
    */
   for(int idx_A_i = 0 ; idx_A_i <Order ; idx_A_i++)
     {	
-      Velocity.nV[idx_A_i] += gamma*Dt*Forces.nV[idx_A_i]/Lumped_Mass.nV[idx_A_i];
+      Velocity.nV[idx_A_i] += gamma*Dt*Accelerations.nV[idx_A_i];
     }
 
 }
@@ -921,8 +953,7 @@ static void compute_Nodal_Velocity_Corrected(Matrix Velocity,
 
 static void update_Particles(GaussPoint MPM_Mesh,
                              Mesh FEM_Mesh,
-                             Matrix Lumped_Mass,
-                             Matrix Forces,
+                             Matrix Accelerations
                              Matrix Velocity,
                              Mask ActiveNodes,
                              double DeltaTimeStep)
@@ -937,7 +968,6 @@ static void update_Particles(GaussPoint MPM_Mesh,
   Matrix ShapeFunction_p; /* Value of the shape-function in the particle */
   Matrix gradient_p;
   double ShapeFunction_pI; /* Nodal value for the particle */
-  double mass_I;
   Element Nodes_p; /* Element for each particle */
 
   /* iterate over the particles */
@@ -979,18 +1009,16 @@ static void update_Particles(GaussPoint MPM_Mesh,
 	      {
 	       idx_A_mask_i = A_mask*Ndim + i;
 
-         /* Get the nodal mass */
-         mass_I = Lumped_Mass.nV[idx_A_mask_i];
          /* Update the particles accelerations */
          MPM_Mesh.Phi.acc.nM[p][i] += 
-             ShapeFunction_pI*Forces.nV[idx_A_mask_i]/mass_I;
+             ShapeFunction_pI*Accelerations.nV[idx_A_mask_i];
          /* Update the particles velocities */
          MPM_Mesh.Phi.vel.nM[p][i] += 
-             ShapeFunction_pI*DeltaTimeStep*Forces.nV[idx_A_mask_i]/mass_I;
+             ShapeFunction_pI*DeltaTimeStep*Accelerations.nV[idx_A_mask_i];
          /* Update the particles displacement */
          MPM_Mesh.Phi.x_GC.nM[p][i] +=
              ShapeFunction_pI*DeltaTimeStep*Velocity.nV[idx_A_mask_i] +
-             ShapeFunction_pI*0.5*pow(DeltaTimeStep,2)*Forces.nV[idx_A_mask_i]/mass_I;
+             ShapeFunction_pI*0.5*pow(DeltaTimeStep,2)*Accelerations.nV[idx_A_mask_i];
 	      } 
     	}
 

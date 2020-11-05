@@ -40,18 +40,6 @@ static int imin_arg1, imin_arg2;
 
 /*******************************************************/
 
-/* Solvers library */
-/* Matrix Nelder_Mead(); */
-Matrix Newton_Rapson(Matrix(* Function)(Matrix, Matrix), Matrix,
-		     Matrix(* Jacobian)(Matrix, Matrix), Matrix,
-		     Matrix,Matrix);
-Matrix Solve_Linear_Sistem(Matrix, Matrix);
-Matrix Conjugate_Gradient_Method(Matrix,Matrix,Matrix);
-Matrix Jacobi_Conjugate_Gradient_Method(Matrix,Matrix,Matrix);
-Matrix One_Iteration_Lumped(Matrix, Matrix, Matrix);
-
-/*******************************************************/
-
 void * Allocate_Array(int,int);
 void * Allocate_ArrayZ(int,int);
 void ** Allocate_Matrix(int,int,int);
@@ -92,6 +80,20 @@ double point_distance__MatrixLib__(Matrix, Matrix);
 void   single_value_descomposition__MatrixLib__(Matrix,Matrix,Matrix);
 
 /*******************************************************/
+
+/* 
+	Matrix Solvers
+*/
+Matrix Newton_Rapson(Matrix(* Function)(Matrix, Matrix), Matrix,
+		     Matrix(* Jacobian)(Matrix, Matrix), Matrix,
+		     Matrix,Matrix);
+Matrix Solve_Linear_Sistem__MatrixSolvers__(Matrix, Matrix);
+Matrix Conjugate_Gradient_Method__MatrixSolvers__(Matrix,Matrix,Matrix);
+Matrix Jacobi_Conjugate_Gradient_Method__MatrixSolvers__(Matrix,Matrix,Matrix);
+Matrix One_Iteration_Lumped__MatrixSolvers__(Matrix, Matrix, Matrix);
+Matrix Accelerated_Viscous_Relaxation__MatrixSolvers__(Matrix, Matrix, Matrix, Matrix);
+/*******************************************************/
+
 
 /*
   Set library 

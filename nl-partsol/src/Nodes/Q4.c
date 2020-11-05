@@ -267,7 +267,7 @@ void X_to_Xi__Q4__(Matrix Xi, Matrix X, Matrix Element)
    of shape functions
 */
 {  
-  Xi = Newton_Rapson(Xi_to_X__Q4__, Element, F_Ref__Q4__, Element, X, Xi);  
+  Xi = Newton_Rapson__MatrixSolvers__(Xi_to_X__Q4__, Element, F_Ref__Q4__, Element, X, Xi);  
 }
 
 /*********************************************************************/
