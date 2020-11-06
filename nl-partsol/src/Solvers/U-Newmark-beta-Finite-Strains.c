@@ -1972,7 +1972,8 @@ static void update_Particles(Matrix D_Displacement,
   Tensor F_n_p;
   Tensor F_n1_p;
   Tensor f_n1_p;
-  double J_p;
+  double Delta_J_p;
+  double rho_n_p;
   Element Nodes_p; /* Element for each particle */
 
   double D_U_pI;
@@ -2022,8 +2023,9 @@ static void update_Particles(Matrix D_Displacement,
       /*
 	Update density with the jacobian of the increment deformation gradient
       */
-      J_p = I3__TensorLib__(f_n1_p);
-      MPM_Mesh.Phi.rho.nV[p] = MPM_Mesh.Phi.rho.nV[p]/J_p;
+      Delta_J_p = I3__TensorLib__(f_n1_p);
+      rho_n_p = MPM_Mesh.Phi.rho.nV[p];
+      MPM_Mesh.Phi.rho.nV[p] = rho_n_p/Delta_J_p;
 
       /*
 	Replace the deformation gradient at t = n with the converged deformation gradient

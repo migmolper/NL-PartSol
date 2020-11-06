@@ -461,6 +461,7 @@ static void update_Local_State(Matrix D_Displacement,
   int Nnodes_p;
   double J_n1_p;  
   double Delta_J_p;
+  double rho_n_p;
   Element Nodes_p;
   Material MatProp_p;
   Matrix gradient_p;
@@ -542,7 +543,8 @@ static void update_Local_State(Matrix D_Displacement,
         Update density with the jacobian of the increment deformation gradient
       */
       Delta_J_p = I3__TensorLib__(f_n1_p);
-      MPM_Mesh.Phi.rho.nV[p] = MPM_Mesh.Phi.rho.nV[p]/Delta_J_p;
+      rho_n_p = MPM_Mesh.Phi.rho.nV[p];
+      MPM_Mesh.Phi.rho.nV[p] = rho_n_p/Delta_J_p;
 
       /*
 	Replace the deformation gradient at t = n with the converged deformation gradient
