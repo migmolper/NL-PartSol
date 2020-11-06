@@ -1858,6 +1858,7 @@ static void update_Particles(Matrix D_Displacement,
   Matrix ShapeFunction_p; /* Value of the shape-function in the particle */
   Matrix gradient_p;
   double ShapeFunction_pI; /* Nodal value for the particle */
+  Tensor S_p;
   Tensor F_n_p;
   Tensor F_n1_p;
   Tensor f_n1_p;
@@ -1913,7 +1914,11 @@ static void update_Particles(Matrix D_Displacement,
 	    {
 	      F_n_p.N[i][j] = F_n1_p.N[i][j];
 	    }
-	}      
+	}
+
+      /* Compute the deformation energy */
+      S_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.Stress.nM[p],2);
+      MPM_Mesh.Phi.W.nV[p]= finite_strains_internal_energy__Particles__(F_n_p, S_p);
       
       /* Iterate over the nodes of the particle */
       for(int A = 0; A<Nodes_p.NumberNodes; A++)

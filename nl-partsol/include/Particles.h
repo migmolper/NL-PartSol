@@ -200,6 +200,11 @@ double internal_energy__Particles__(Tensor, Tensor);
 /*******************************************************/
 
 /*!
+  \fn double finite_strains_internal_energy__Particles__(Tensor F_p, Tensor S_p)
+*/
+double finite_strains_internal_energy__Particles__(Tensor, Tensor);
+/*******************************************************/
+/*!
 
 */
 void initial_position__Particles__(Matrix, Mesh, int);
