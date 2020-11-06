@@ -47,13 +47,7 @@ void compute_particle_Damage(int, GaussPoint, Mesh);
 /*******************************************************/
 
 /*!
-  \fn void compute_particle_Damage(int p, GaussPoint Particles, Mesh Nodes)
 
-  \brief Compute if a particle is damaged and update it damage parameter chi
-
-  \param p : Particle
-  \param Particles : Information of the particle mesh
-  \param Nodes : Informaction with the set of nodes  
 */
 double energy_Saint_Venant_Kirchhoff(Tensor, Material);
 /*******************************************************/
@@ -73,7 +67,7 @@ Tensor compute_stiffness_density_Saint_Venant_Kirchhoff(Tensor, Tensor, Material
 /*!
 
 */
-double energy_Neo_Hookean_Wriggers(Tensor, Material);
+double energy_Neo_Hookean_Wriggers(Tensor, double, Material);
 /*******************************************************/
 
 

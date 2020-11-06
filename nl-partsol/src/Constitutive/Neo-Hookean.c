@@ -2,6 +2,23 @@
 
 /**************************************************************/
 
+double energy_Neo_Hookean_Wriggers(Tensor C, double J, Material MatProp_p)
+{
+  /* Material parameters */
+  double ElasticModulus = MatProp_p.E;
+  double mu = MatProp_p.mu;
+  double G = ElasticModulus/(2*(1+mu));
+  double lambda = mu*ElasticModulus/((1-mu*2)*(1+mu));
+  double I1_C = I1__TensorLib__(C);
+  double f_J = 0.25*lambda*(J*J - 1) - 0.5*lambda*log(J) - G*log(J);
+
+  double W =  f_J + 0.5*G*(I1_C - 3);
+
+  return W;
+}
+
+/**************************************************************/
+
 Tensor grad_energy_Neo_Hookean_Wriggers(Tensor grad_e, Tensor C,
 					double J, Material MatProp_p)
 {

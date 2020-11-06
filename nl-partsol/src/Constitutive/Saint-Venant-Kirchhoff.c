@@ -2,6 +2,26 @@
 
 /**************************************************************/
 
+double energy_Saint_Venant_Kirchhoff(Tensor C, Material MatProp_p)
+{
+  /* Material parameters */
+  double ElasticModulus = MatProp_p.E;
+  double mu = MatProp_p.mu;
+  double lambda = mu*ElasticModulus/((1-mu*2)*(1+mu));
+  double G = ElasticModulus/(2*(1+mu));
+
+  Tensor E = strain_Green_Lagrange__Particles__(C);
+  double I1_E = I1__TensorLib__(E);
+
+  double W = 0.5*lambda*I1_E*I1_E + G*inner_product__TensorLib__(E, E);
+
+  free__TensorLib__(E);
+
+  return W;
+}
+
+/**************************************************************/
+
 Tensor grad_energy_Saint_Venant_Kirchhoff(Tensor grad_e, Tensor C, Material MatProp_p)
 {
   /* Number of dimensions */

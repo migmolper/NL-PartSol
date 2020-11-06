@@ -556,8 +556,7 @@ static void update_Local_State(Matrix D_Displacement,
 	}
 
       /* Compute the deformation energy */
-      S_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.Stress.nM[p],2);
-      MPM_Mesh.Phi.W.nV[p]= finite_strains_internal_energy__Particles__(F_n_p, S_p);
+      MPM_Mesh.Phi.W.nV[p]= finite_strains_internal_energy__Particles__(F_n_p, MatProp_p);
 
       /*
 	Free memory 
