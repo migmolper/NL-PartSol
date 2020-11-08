@@ -459,6 +459,7 @@ static void update_Local_State(Matrix D_Displacement,
   int Nnodes_mask = ActiveNodes.Nactivenodes;
   int MatIndx_p;
   int Nnodes_p;
+  double Vol_0_p;
   double J_n1_p;  
   double Delta_J_p;
   double rho_n_p;
@@ -558,7 +559,8 @@ static void update_Local_State(Matrix D_Displacement,
 	}
 
       /* Compute the deformation energy */
-      MPM_Mesh.Phi.W.nV[p]= finite_strains_internal_energy__Particles__(F_n_p, MatProp_p);
+      Vol_0_p = MPM_Mesh.Phi.Vol_0.nV[p];
+      MPM_Mesh.Phi.W.nV[p]= finite_strains_internal_energy__Particles__(F_n_p, MatProp_p, Vol_0_p);
 
       /*
 	Free memory 

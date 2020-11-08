@@ -1,4 +1,5 @@
 #include "nl-partsol.h"
+#include <sys/stat.h>
 
 /*
   Call global variables
@@ -29,7 +30,11 @@ bool Out_energy = false;
 /*
   Auxiliar functions 
 */
+static FILE * Open_and_Check_simulation_file(char *);
 static bool Is_Output_Activate(char *);
+static void standard_error(char *);
+static void read_Output_intervals(char *);
+static bool Check_Output_directory(char *);
 
 /**********************************************************************/
 
@@ -37,7 +42,7 @@ void GramsOutputs(char * Name_File)
 /*
   Example : 
   GramsOutputs (i=100) {
-  DIR=test/Sulsky_MPM	
+  	DIR=test/Sulsky_MPM	
   }
 */
 {
@@ -66,93 +71,56 @@ void GramsOutputs(char * Name_File)
 
   /* Initial message */  
   puts("*************************************************");
-  printf(" \t %s : \n\t %s \n",
-	 "* Read Outputs properties ",
-	 Name_File);
+  printf(" \t %s : \n\t %s \n", "* Read Outputs properties ", Name_File);
   
   /* Open and check file */
-  Sim_dat = fopen(Name_File,"r");  
-  if (Sim_dat==NULL){
-    fprintf(stderr,"%s : \n\t %s %s",
-	   "Error in GramsOutputs()",
-	   "Incorrect lecture of",
-	   Name_File);
-    exit(EXIT_FAILURE);
-  }
-
-  /* Generate route */
-  generate_route(Route_Outs,Name_File);
+  Sim_dat = Open_and_Check_simulation_file(Name_File);
     
   /* Read the file line by line */
   while( fgets(line, sizeof line, Sim_dat) != NULL ){
 
     /* Read the line with the space as separators */
     nkwords = parse (kwords, line," \n\t");
-    if (nkwords < 0){
-      fprintf(stderr,"%s : %s \n",
-	     "Error in GramsOutputs()",
-	     "Parser failed");
-      exit(EXIT_FAILURE);
+    if (nkwords < 0)
+    {
+    	standard_error("Parser failed");
     }
 
-    if ((nkwords > 0) &&
-	(strcmp(kwords[0],"GramsOutputs") == 0 )){
+    if ((nkwords > 0) && (strcmp(kwords[0],"GramsOutputs") == 0 ))
+    {
 
-      /* Read temporal integrator scheme */
-      Aux_Out_id = parse (Parse_Out_id, kwords[1],"(=)");
-      if( (Aux_Out_id != 2) ||
-	  (strcmp(Parse_Out_id[0],"i") != 0)){
-	fprintf(stderr,"%s : %s \n",
-	       "Error in GramsOutputs()",
-	       "Use this format -> (i=int) !!!");
-	exit(EXIT_FAILURE);
-      }
-      ResultsTimeStep = atoi(Parse_Out_id[1]);
-      if(ResultsTimeStep > NumTimeStep){
-	fprintf(stderr,"%s : %s \n",
-	       "Error in GramsOutputs()",
-	       "The result time step should be less than the total time steps !!!");
-	exit(EXIT_FAILURE);	
-      }
-      printf("\t -> %s : %i \n","Output values each",ResultsTimeStep);
+     /* Read output period */
+    read_Output_intervals(kwords[1]);
 
-      /* Look for the curly brace { */
-      if(strcmp(kwords[2],"{") == 0){
+    /* Look for the curly brace { */
+    if(strcmp(kwords[2],"{") == 0){
 	/* Initial line */
-	STATUS_LINE = fgets(Line_Out_Prop,
-			    sizeof(Line_Out_Prop),
-			    Sim_dat);
-	if(STATUS_LINE == NULL){
-	  fprintf(stderr,"%s : %s \n",
-		  "Error in GramsOutputs()",
-		  "Unspected EOF !!!");
-	  exit(EXIT_FAILURE);	
+	STATUS_LINE = fgets(Line_Out_Prop, sizeof(Line_Out_Prop), Sim_dat);
+	if(STATUS_LINE == NULL)
+	{
+		standard_error("Unspected EOF");
 	}
 	Aux_Out_id = parse(Parse_Out_Prop,Line_Out_Prop," =\t\n");
 	if(strcmp(Parse_Out_Prop[0],"}") == 0){
 	  /* Check output dir */
-	  if(!Is_OutputDir){
-	    fprintf(stderr,"%s : %s \n",
-		    "Error in GramsOutputs()",
-		    "Non output dir defined !!!");
-	    exit(EXIT_FAILURE);
+	  if(!Is_OutputDir)
+	  {
+	  	standard_error("Non output dir defined");
 	  }
 	  break;
 	}
 	while(STATUS_LINE != NULL){
 	  
-	  if(Aux_Out_id != 2){
-	    fprintf(stderr,"%s : %s \n",
-		   "Error in GramsOutputs()",
-		   "Use this format -> Propertie = value !!!");
-	    exit(EXIT_FAILURE);
+	  if(Aux_Out_id != 2)
+	  {
+	  	standard_error("Use this format -> Propertie = value");
 	  }
 
  	  if(strcmp(Parse_Out_Prop[0],"DIR") == 0)
  	  {
+ 	  	generate_route(Route_Outs,Name_File);
 	    sprintf(OutputDir,"%s%s",Route_Outs,Parse_Out_Prop[1]);
-	    printf("\t -> %s : %s \n","Output directory",OutputDir);
-	    Is_OutputDir = true;
+	    Is_OutputDir = Check_Output_directory(OutputDir);
 	  }
 	  else if(strcmp(Parse_Out_Prop[0],"Out-global-coordinates") == 0)
 	  {
@@ -224,43 +192,37 @@ void GramsOutputs(char * Name_File)
 	  }	
 	  else
 	  {
+	  	standard_error("Undefined propertie"); 
+
 	    fprintf(stderr,"%s : %s %s \n",
 		   "Error in GramsOutputs()",
 		   "Undefined",Parse_Out_Prop[0]);
 	    exit(EXIT_FAILURE);
 	  }
 	  /* Read next line and check */
-	  STATUS_LINE = fgets(Line_Out_Prop,
-			      sizeof(Line_Out_Prop),
-			      Sim_dat);
+	  STATUS_LINE = fgets(Line_Out_Prop, sizeof(Line_Out_Prop), Sim_dat);
 	  Aux_Out_id = parse(Parse_Out_Prop,Line_Out_Prop," =\t\n");
-	  if(strcmp(Parse_Out_Prop[0],"}") == 0){
+	  if(strcmp(Parse_Out_Prop[0],"}") == 0)
+	  {
 	    break;
 	  }
 	}
-	if(STATUS_LINE == NULL){
-	fprintf(stderr,"%s : %s \n",
-	       "Error in GramsOutputs()",
-	       "you forget to put a } !!!");
-	exit(EXIT_FAILURE);	  
+	if(STATUS_LINE == NULL)
+	{
+		standard_error("you forget to put a }");  
 	}
 
 	if(strcmp(Parse_Out_Prop[0],"}") == 0){
 	  /* Check output dir */
-	  if(!Is_OutputDir){
-	    fprintf(stderr,"%s : %s \n",
-		    "Error in GramsOutputs()",
-		    "Non output dir defined !!!");
-	    exit(EXIT_FAILURE);
+	  if(!Is_OutputDir)
+	  {
+	  	standard_error("No output dir was defined");
 	  }
 	  break;
 	}
       }
       else{
-	fprintf(stderr,"%s : %s \n",
-	       "Error in GramsOutputs()",
-	       "Use this format -> GramsOutputs (Type=string) { !!!");
-	exit(EXIT_FAILURE);
+      	standard_error("Use this format -> GramsOutputs (Type=string) { ");
       }
     }
   }
@@ -273,25 +235,94 @@ void GramsOutputs(char * Name_File)
 
 /***************************************************************************/
 
-static bool Is_Output_Activate(char * status)
+static FILE * Open_and_Check_simulation_file(char * Name_File)
 {
-	if(strcmp(status,"true") == 0)
+  FILE * Simulation_file = fopen(Name_File,"r");  
+  
+  if (Simulation_file==NULL)
+  {
+    fprintf(stderr,"%s : \n\t %s %s",
+	   "Error in GramsOutputs()","Incorrect lecture of",Name_File);
+    exit(EXIT_FAILURE);
+  }  
+
+  return Simulation_file;
+}
+
+/***************************************************************************/
+
+static bool Is_Output_Activate(char * status_text)
+{
+	bool status;
+
+	if(strcmp(status_text,"true") == 0)
 	{
 		return true;
 	}
-	else if(strcmp(status,"false") == 0)
+	else if(strcmp(status_text,"false") == 0)
 	{
 		return false;
 	}
 	else
 	{
-		fprintf(stderr,"%s : %s \n",
-		     "Error in GramsOutputs()",
-		     "Options for status output -> true/false");
-	     exit(EXIT_FAILURE);
+		standard_error("Options for status output -> true/false");
 	}
+
+	return status;
 }
 
 /***************************************************************************/
+
+static void standard_error(char * Error_message)
+{
+	fprintf(stderr,"%s : %s !!! \n",
+	   "Error in GramsOutputs()",Error_message);
+    exit(EXIT_FAILURE);
+}
+
+/***************************************************************************/
+
+static void read_Output_intervals(char * Interval_message)
+{
+	int Interval_status;
+	char * Parse_message[MAXW] = {NULL};
+
+	Interval_status = parse (Parse_message, Interval_message,"(=)");
+
+	/* Check format */
+	if( (Interval_status != 2) || (strcmp(Parse_message[0],"i") != 0))
+	  {
+	  	standard_error("Use this format -> (i=int)");
+      }
+
+    /* Get interval output and store in a global variable */
+    ResultsTimeStep = atoi(Parse_message[1]);
+    if(ResultsTimeStep > NumTimeStep)
+      {
+      	standard_error("The result time step should be less than the total time steps");
+      }
+
+    /* Print in screen some information */
+    printf("\t -> %s : %i \n","Output values each",ResultsTimeStep);
+
+}
+
+/***************************************************************************/
+
+static bool Check_Output_directory(char * Output_directory)
+{
+	struct stat info;
+	stat(Output_directory,&info);
+	if(S_ISDIR(info.st_mode))
+	{
+		printf("\t -> %s : %s \n","Output directory",OutputDir);
+		return true;
+	}
+	else
+	{
+		printf("\t -> %s : %s %s \n","Output directory",OutputDir,"does not exists");
+		return false;
+	} 
+}
 
 /***************************************************************************/

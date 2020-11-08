@@ -202,7 +202,7 @@ double internal_energy__Particles__(Tensor, Tensor);
 /*!
   \fn double finite_strains_internal_energy__Particles__(Tensor F_p, Material MatProp_p)
 */
-double finite_strains_internal_energy__Particles__(Tensor, Material);
+double finite_strains_internal_energy__Particles__(Tensor, Material, double);
 /*******************************************************/
 /*!
 

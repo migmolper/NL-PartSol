@@ -1975,10 +1975,10 @@ static void update_Particles(Matrix D_Displacement,
   double Delta_J_p;
   double rho_n_p;
   Element Nodes_p; /* Element for each particle */
-
   double D_U_pI;
   double V_pI;
   double A_pI;
+  double Vol_0_p;
   double alpha_1 = Params.alpha_1;
   double alpha_2 = Params.alpha_2;
   double alpha_3 = Params.alpha_3;
@@ -2039,9 +2039,10 @@ static void update_Particles(Matrix D_Displacement,
 	}
 
       /* Compute the deformation energy */
+      Vol_0_p = MPM_Mesh.Phi.Vol_0.nV[p];
       MatIndx_p = MPM_Mesh.MatIdx[p];
       MatProp_p = MPM_Mesh.Mat[MatIndx_p];
-      MPM_Mesh.Phi.W.nV[p]= finite_strains_internal_energy__Particles__(F_n_p, MatProp_p);
+      MPM_Mesh.Phi.W.nV[p]= finite_strains_internal_energy__Particles__(F_n_p, MatProp_p,Vol_0_p);
       
       /* Iterate over the nodes of the particle */
       for(int A = 0; A<Nodes_p.NumberNodes; A++)

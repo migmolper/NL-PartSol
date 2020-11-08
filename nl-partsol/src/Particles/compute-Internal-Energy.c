@@ -20,7 +20,7 @@ double internal_energy__Particles__(Tensor Strain, Tensor Stress){
 
 /*********************************************************************/
 
-double finite_strains_internal_energy__Particles__(Tensor F_p, Material MatProp_p)
+double finite_strains_internal_energy__Particles__(Tensor F_p, Material MatProp_p, double V0_p)
 {
   /* Internal energy for the Gauss-Point */
   double W = 0; 
@@ -32,11 +32,11 @@ double finite_strains_internal_energy__Particles__(Tensor F_p, Material MatProp_
 
   if(strcmp(MatProp_p.Type,"Saint-Venant-Kirchhoff") == 0)
     {
-      W = energy_Saint_Venant_Kirchhoff(C_p, MatProp_p);
+      W = V0_p*energy_Saint_Venant_Kirchhoff(C_p, MatProp_p);
     }
   else if(strcmp(MatProp_p.Type,"Neo-Hookean-Wriggers") == 0)
     {
-      W = energy_Neo_Hookean_Wriggers(C_p, J, MatProp_p);
+      W = V0_p*energy_Neo_Hookean_Wriggers(C_p, J, MatProp_p);
     }     
   else
     {
