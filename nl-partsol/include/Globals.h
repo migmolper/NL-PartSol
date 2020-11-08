@@ -31,3 +31,21 @@ extern int NumTimeStep;
 extern int ResultsTimeStep;
 extern int NumberDOF;
 
+
+extern bool Out_global_coordinates;
+extern bool Out_element_coordinates;
+extern bool Out_mass;
+extern bool Out_density;
+extern bool Out_damage;
+extern bool Out_nodal_idx;
+extern bool Out_material_idx;
+extern bool Out_velocity;
+extern bool Out_acceleration;
+extern bool Out_displacement;
+extern bool Out_stress;
+extern bool Out_eigenvalues_stress;
+extern bool Out_volumetric_stress;
+extern bool Out_strain;
+extern bool Out_eigenvalues_strain;
+extern bool Out_deformation_gradient;
+extern bool Out_energy;

@@ -3,9 +3,33 @@
 /*
   Call global variables
 */
+
 int ResultsTimeStep;
 int NumTimeStep;
 char OutputDir[MAXC];
+
+bool Out_global_coordinates = false;
+bool Out_element_coordinates = false;
+bool Out_mass = false;
+bool Out_density = false;
+bool Out_damage = false;
+bool Out_nodal_idx = false;
+bool Out_material_idx = false;
+bool Out_velocity = false;
+bool Out_acceleration = false;
+bool Out_displacement = false;
+bool Out_stress = false;
+bool Out_eigenvalues_stress = false;
+bool Out_volumetric_stress = false;
+bool Out_strain = false;
+bool Out_eigenvalues_strain = false;
+bool Out_deformation_gradient = false;
+bool Out_energy = false;
+
+/*
+  Auxiliar functions 
+*/
+static bool Is_Output_Activate(char *);
 
 /**********************************************************************/
 
@@ -124,12 +148,82 @@ void GramsOutputs(char * Name_File)
 	    exit(EXIT_FAILURE);
 	  }
 
- 	  if(strcmp(Parse_Out_Prop[0],"DIR") == 0){
+ 	  if(strcmp(Parse_Out_Prop[0],"DIR") == 0)
+ 	  {
 	    sprintf(OutputDir,"%s%s",Route_Outs,Parse_Out_Prop[1]);
 	    printf("\t -> %s : %s \n","Output directory",OutputDir);
 	    Is_OutputDir = true;
 	  }
-	  else{
+	  else if(strcmp(Parse_Out_Prop[0],"Out-global-coordinates") == 0)
+	  {
+		Out_global_coordinates = Is_Output_Activate(Parse_Out_Prop[1]);
+	  }
+	  else if(strcmp(Parse_Out_Prop[0],"Out-element-coordinates") == 0)
+	  {
+		Out_element_coordinates = Is_Output_Activate(Parse_Out_Prop[1]);
+	  }
+  	  else if(strcmp(Parse_Out_Prop[0],"Out-mass") == 0)
+	  {
+		Out_mass = Is_Output_Activate(Parse_Out_Prop[1]);
+	  }
+	  else if(strcmp(Parse_Out_Prop[0],"Out-density") == 0)
+	  {
+		Out_density = Is_Output_Activate(Parse_Out_Prop[1]);
+	  }
+	  else if(strcmp(Parse_Out_Prop[0],"Out-damage") == 0)
+	  {
+		Out_damage = Is_Output_Activate(Parse_Out_Prop[1]);
+	  }
+	  else if(strcmp(Parse_Out_Prop[0],"Out-nodal-idx") == 0)
+	  {
+		Out_nodal_idx = Is_Output_Activate(Parse_Out_Prop[1]);
+	  }
+	  else if(strcmp(Parse_Out_Prop[0],"Out-material-idx") == 0)
+	  {
+		Out_material_idx = Is_Output_Activate(Parse_Out_Prop[1]);
+	  }
+	  else if(strcmp(Parse_Out_Prop[0],"Out-velocity") == 0)
+	  {
+		Out_velocity = Is_Output_Activate(Parse_Out_Prop[1]);
+	  }
+	  else if(strcmp(Parse_Out_Prop[0],"Out-acceleration") == 0)
+	  {
+		Out_acceleration = Is_Output_Activate(Parse_Out_Prop[1]);
+	  }
+	  else if(strcmp(Parse_Out_Prop[0],"Out-displacement") == 0)
+	  {
+		Out_displacement = Is_Output_Activate(Parse_Out_Prop[1]);
+	  }
+	  else if(strcmp(Parse_Out_Prop[0],"Out-stress") == 0)
+	  {
+		Out_stress = Is_Output_Activate(Parse_Out_Prop[1]);
+	  }
+	  else if(strcmp(Parse_Out_Prop[0],"Out-eigenvalues-stress") == 0)
+	  {
+		Out_eigenvalues_stress = Is_Output_Activate(Parse_Out_Prop[1]);
+	  }
+	  else if(strcmp(Parse_Out_Prop[0],"Out-volumetric-stress") == 0)
+	  {
+		Out_volumetric_stress = Is_Output_Activate(Parse_Out_Prop[1]);
+	  }	  
+	  else if(strcmp(Parse_Out_Prop[0],"Out-strain") == 0)
+	  {
+		Out_strain = Is_Output_Activate(Parse_Out_Prop[1]);
+	  }
+	  else if(strcmp(Parse_Out_Prop[0],"Out-eigenvalues-strain") == 0)
+	  {
+		Out_eigenvalues_strain = Is_Output_Activate(Parse_Out_Prop[1]);
+	  }	
+	  else if(strcmp(Parse_Out_Prop[0],"Out-deformation-gradient") == 0)
+	  {
+		Out_deformation_gradient = Is_Output_Activate(Parse_Out_Prop[1]);
+	  }		  
+	  else if(strcmp(Parse_Out_Prop[0],"Out-energy") == 0)
+	  {
+		Out_energy = Is_Output_Activate(Parse_Out_Prop[1]);
+	  }	
+	  else
+	  {
 	    fprintf(stderr,"%s : %s %s \n",
 		   "Error in GramsOutputs()",
 		   "Undefined",Parse_Out_Prop[0]);
@@ -176,5 +270,28 @@ void GramsOutputs(char * Name_File)
   fclose(Sim_dat);
 
 }
+
+/***************************************************************************/
+
+static bool Is_Output_Activate(char * status)
+{
+	if(strcmp(status,"true") == 0)
+	{
+		return true;
+	}
+	else if(strcmp(status,"false") == 0)
+	{
+		return false;
+	}
+	else
+	{
+		fprintf(stderr,"%s : %s \n",
+		     "Error in GramsOutputs()",
+		     "Options for status output -> true/false");
+	     exit(EXIT_FAILURE);
+	}
+}
+
+/***************************************************************************/
 
 /***************************************************************************/
