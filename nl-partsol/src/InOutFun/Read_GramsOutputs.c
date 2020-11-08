@@ -49,6 +49,8 @@ void GramsOutputs(char * Name_File)
   /* Simulation file */
   FILE * Sim_dat;
 
+  char * Error_message;
+
   /* Temporal integator */
   int Aux_Out_id;
   char * Parse_Out_id[MAXW] = {NULL};
@@ -192,12 +194,8 @@ void GramsOutputs(char * Name_File)
 	  }	
 	  else
 	  {
-	  	standard_error("Undefined propertie"); 
-
-	    fprintf(stderr,"%s : %s %s \n",
-		   "Error in GramsOutputs()",
-		   "Undefined",Parse_Out_Prop[0]);
-	    exit(EXIT_FAILURE);
+	  	sprintf(Error_message,"%s %s","Undefined",Parse_Out_Prop[0]);
+	  	standard_error(Error_message); 
 	  }
 	  /* Read next line and check */
 	  STATUS_LINE = fgets(Line_Out_Prop, sizeof(Line_Out_Prop), Sim_dat);
@@ -238,12 +236,12 @@ void GramsOutputs(char * Name_File)
 static FILE * Open_and_Check_simulation_file(char * Name_File)
 {
   FILE * Simulation_file = fopen(Name_File,"r");  
+  char * Error_message;
   
   if (Simulation_file==NULL)
   {
-    fprintf(stderr,"%s : \n\t %s %s",
-	   "Error in GramsOutputs()","Incorrect lecture of",Name_File);
-    exit(EXIT_FAILURE);
+  	sprintf(Error_message,"%s %s","Incorrect lecture of",Name_File);
+	standard_error(Error_message); 
   }  
 
   return Simulation_file;
