@@ -269,10 +269,11 @@ static FILE * Open_and_Check_simulation_file(char * Name_File)
 static bool Is_Output_Activate(char * output_field,char * status_text)
 {
 	bool status;
+	char * Error_message;
 
 	if(strcmp(status_text,"true") == 0)
 	{
-		printf("\t -> %s : True \n", output_field);
+		printf("\t -> %s : true \n", output_field);
 		return true;
 	}
 	else if(strcmp(status_text,"false") == 0)
@@ -282,7 +283,8 @@ static bool Is_Output_Activate(char * output_field,char * status_text)
 	}
 	else
 	{
-		standard_error("Options for status output -> true/false");
+		sprintf(Error_message,"The input was %s. Please, use : true/false",status_text);
+		standard_error(Error_message); 
 	}
 
 	return status;
