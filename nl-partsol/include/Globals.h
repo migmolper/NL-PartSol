@@ -13,6 +13,8 @@ extern char * MPM_MeshFileName;
 extern char * TimeIntegrationScheme;
 extern char * ShapeFunctionGP;
 extern char * Formulation;
+extern char   OutputParticlesFile[MAXC];
+extern char   OutputNodesFile[MAXC];
 extern char   OutputDir[MAXC];
 extern char   Field[10];
 
@@ -30,7 +32,6 @@ extern double TOL_Newmark_beta;
 extern int NumTimeStep;
 extern int ResultsTimeStep;
 extern int NumberDOF;
-
 
 extern bool Out_global_coordinates;
 extern bool Out_element_coordinates;

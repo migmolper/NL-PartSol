@@ -40,5 +40,6 @@ GramsSolid2D (File=MPM_Mesh.msh,GPxElement=1) {
 # Outputs 
 GramsOutputs (i=100) {
 	     DIR=Resultados
-      Out-velocity=true
+       Particles-file=particles
+       Out-velocity=true
 }

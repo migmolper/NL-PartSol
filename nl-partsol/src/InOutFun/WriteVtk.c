@@ -4,6 +4,9 @@
 /*
   Call global variables
 */
+char   OutputParticlesFile[MAXC];
+char   OutputNodesFile[MAXC];
+
 bool Out_global_coordinates;
 bool Out_element_coordinates;
 bool Out_mass;
@@ -57,7 +60,7 @@ void particle_results_vtk__InOutFun__(char * Name_File, GaussPoint MPM_Mesh, cha
   FILE * Vtk_file;
   char Name_file_t[80];
 
-  sprintf(Name_file_t,"%s/MPM_%s_%i.vtk",OutputDir,Name_File,TimeStep_i);
+  sprintf(Name_file_t,"%s/%s_%i.vtk",OutputDir,OutputParticlesFile,TimeStep_i);
   
   Vtk_file = fopen(Name_file_t,"w");
 
@@ -223,7 +226,7 @@ void nodal_results_vtk__InOutFun__(char * Name_File, Mesh ElementMesh, Mask Acti
   int NumNodesElem;
   ChainPtr Elem_Conn;
 
-  sprintf(Name_file_t,"%s/FEM_%s_%i.vtk",OutputDir,Name_File,TimeStep_i);
+  sprintf(Name_file_t,"%s/%s_%i.vtk",OutputDir,OutputParticlesFile,TimeStep_i);
   
   Vtk_file = fopen(Name_file_t,"w");
 

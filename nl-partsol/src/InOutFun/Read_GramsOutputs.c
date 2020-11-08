@@ -7,7 +7,10 @@
 
 int ResultsTimeStep;
 int NumTimeStep;
+
 char OutputDir[MAXC];
+char OutputParticlesFile[MAXC];
+char OutputNodesFile[MAXC];
 
 bool Out_global_coordinates = false;
 bool Out_element_coordinates = false;
@@ -31,7 +34,7 @@ bool Out_energy = false;
   Auxiliar functions 
 */
 static FILE * Open_and_Check_simulation_file(char *);
-static bool Is_Output_Activate(char *);
+static bool Is_Output_Activate(char *,char *);
 static void standard_error(char *);
 static void read_Output_intervals(char *);
 static bool Check_Output_directory(char *);
@@ -77,6 +80,10 @@ void GramsOutputs(char * Name_File)
   
   /* Open and check file */
   Sim_dat = Open_and_Check_simulation_file(Name_File);
+
+  /* Set output file names to default */
+  strcpy(OutputParticlesFile,"Particles");
+  strcpy(OutputNodesFile,"Nodes");
     
   /* Read the file line by line */
   while( fgets(line, sizeof line, Sim_dat) != NULL ){
@@ -124,73 +131,83 @@ void GramsOutputs(char * Name_File)
 	    sprintf(OutputDir,"%s%s",Route_Outs,Parse_Out_Prop[1]);
 	    Is_OutputDir = Check_Output_directory(OutputDir);
 	  }
+	  else if(strcmp(Parse_Out_Prop[0],"Particles-file") == 0)
+	  {
+	  	strcpy(OutputParticlesFile,Parse_Out_Prop[1]);
+	  	printf("\t -> %s : %s \n","Particles files name",OutputParticlesFile);
+	  }
+	  else if(strcmp(Parse_Out_Prop[0],"Nodes-file") == 0)
+	  {
+	  	strcpy(OutputNodesFile,Parse_Out_Prop[1]);
+	  	printf("\t -> %s : %s \n","Nodes files name",OutputNodesFile);
+	  }
 	  else if(strcmp(Parse_Out_Prop[0],"Out-global-coordinates") == 0)
 	  {
-		Out_global_coordinates = Is_Output_Activate(Parse_Out_Prop[1]);
+		Out_global_coordinates = Is_Output_Activate(Parse_Out_Prop[0],Parse_Out_Prop[1]);
 	  }
 	  else if(strcmp(Parse_Out_Prop[0],"Out-element-coordinates") == 0)
 	  {
-		Out_element_coordinates = Is_Output_Activate(Parse_Out_Prop[1]);
+		Out_element_coordinates = Is_Output_Activate(Parse_Out_Prop[0],Parse_Out_Prop[1]);
 	  }
   	  else if(strcmp(Parse_Out_Prop[0],"Out-mass") == 0)
 	  {
-		Out_mass = Is_Output_Activate(Parse_Out_Prop[1]);
+		Out_mass = Is_Output_Activate(Parse_Out_Prop[0],Parse_Out_Prop[1]);
 	  }
 	  else if(strcmp(Parse_Out_Prop[0],"Out-density") == 0)
 	  {
-		Out_density = Is_Output_Activate(Parse_Out_Prop[1]);
+		Out_density = Is_Output_Activate(Parse_Out_Prop[0],Parse_Out_Prop[1]);
 	  }
 	  else if(strcmp(Parse_Out_Prop[0],"Out-damage") == 0)
 	  {
-		Out_damage = Is_Output_Activate(Parse_Out_Prop[1]);
+		Out_damage = Is_Output_Activate(Parse_Out_Prop[0],Parse_Out_Prop[1]);
 	  }
 	  else if(strcmp(Parse_Out_Prop[0],"Out-nodal-idx") == 0)
 	  {
-		Out_nodal_idx = Is_Output_Activate(Parse_Out_Prop[1]);
+		Out_nodal_idx = Is_Output_Activate(Parse_Out_Prop[0],Parse_Out_Prop[1]);
 	  }
 	  else if(strcmp(Parse_Out_Prop[0],"Out-material-idx") == 0)
 	  {
-		Out_material_idx = Is_Output_Activate(Parse_Out_Prop[1]);
+		Out_material_idx = Is_Output_Activate(Parse_Out_Prop[0],Parse_Out_Prop[1]);
 	  }
 	  else if(strcmp(Parse_Out_Prop[0],"Out-velocity") == 0)
 	  {
-		Out_velocity = Is_Output_Activate(Parse_Out_Prop[1]);
+		Out_velocity = Is_Output_Activate(Parse_Out_Prop[0],Parse_Out_Prop[1]);
 	  }
 	  else if(strcmp(Parse_Out_Prop[0],"Out-acceleration") == 0)
 	  {
-		Out_acceleration = Is_Output_Activate(Parse_Out_Prop[1]);
+		Out_acceleration = Is_Output_Activate(Parse_Out_Prop[0],Parse_Out_Prop[1]);
 	  }
 	  else if(strcmp(Parse_Out_Prop[0],"Out-displacement") == 0)
 	  {
-		Out_displacement = Is_Output_Activate(Parse_Out_Prop[1]);
+		Out_displacement = Is_Output_Activate(Parse_Out_Prop[0],Parse_Out_Prop[1]);
 	  }
 	  else if(strcmp(Parse_Out_Prop[0],"Out-stress") == 0)
 	  {
-		Out_stress = Is_Output_Activate(Parse_Out_Prop[1]);
+		Out_stress = Is_Output_Activate(Parse_Out_Prop[0],Parse_Out_Prop[1]);
 	  }
 	  else if(strcmp(Parse_Out_Prop[0],"Out-eigenvalues-stress") == 0)
 	  {
-		Out_eigenvalues_stress = Is_Output_Activate(Parse_Out_Prop[1]);
+		Out_eigenvalues_stress = Is_Output_Activate(Parse_Out_Prop[0],Parse_Out_Prop[1]);
 	  }
 	  else if(strcmp(Parse_Out_Prop[0],"Out-volumetric-stress") == 0)
 	  {
-		Out_volumetric_stress = Is_Output_Activate(Parse_Out_Prop[1]);
+		Out_volumetric_stress = Is_Output_Activate(Parse_Out_Prop[0],Parse_Out_Prop[1]);
 	  }	  
 	  else if(strcmp(Parse_Out_Prop[0],"Out-strain") == 0)
 	  {
-		Out_strain = Is_Output_Activate(Parse_Out_Prop[1]);
+		Out_strain = Is_Output_Activate(Parse_Out_Prop[0],Parse_Out_Prop[1]);
 	  }
 	  else if(strcmp(Parse_Out_Prop[0],"Out-eigenvalues-strain") == 0)
 	  {
-		Out_eigenvalues_strain = Is_Output_Activate(Parse_Out_Prop[1]);
+		Out_eigenvalues_strain = Is_Output_Activate(Parse_Out_Prop[0],Parse_Out_Prop[1]);
 	  }	
 	  else if(strcmp(Parse_Out_Prop[0],"Out-deformation-gradient") == 0)
 	  {
-		Out_deformation_gradient = Is_Output_Activate(Parse_Out_Prop[1]);
+		Out_deformation_gradient = Is_Output_Activate(Parse_Out_Prop[0],Parse_Out_Prop[1]);
 	  }		  
 	  else if(strcmp(Parse_Out_Prop[0],"Out-energy") == 0)
 	  {
-		Out_energy = Is_Output_Activate(Parse_Out_Prop[1]);
+		Out_energy = Is_Output_Activate(Parse_Out_Prop[0],Parse_Out_Prop[1]);
 	  }	
 	  else
 	  {
@@ -249,16 +266,18 @@ static FILE * Open_and_Check_simulation_file(char * Name_File)
 
 /***************************************************************************/
 
-static bool Is_Output_Activate(char * status_text)
+static bool Is_Output_Activate(char * output_field,char * status_text)
 {
 	bool status;
 
 	if(strcmp(status_text,"true") == 0)
 	{
+		printf("\t -> %s : True \n", output_field);
 		return true;
 	}
 	else if(strcmp(status_text,"false") == 0)
 	{
+		printf("\t -> %s : False \n", output_field);
 		return false;
 	}
 	else
