@@ -4,6 +4,9 @@
 
 double energy_Neo_Hookean_Wriggers(Tensor C, double J, Material MatProp_p)
 {
+  /* Number of dimensions */
+  int Ndim = NumberDimensions;
+
   /* Material parameters */
   double ElasticModulus = MatProp_p.E;
   double mu = MatProp_p.mu;
@@ -12,7 +15,7 @@ double energy_Neo_Hookean_Wriggers(Tensor C, double J, Material MatProp_p)
   double I1_C = I1__TensorLib__(C);
   double f_J = 0.25*lambda*(J*J - 1) - 0.5*lambda*log(J) - G*log(J);
 
-  double W =  f_J + 0.5*G*(I1_C - 3);
+  double W =  f_J + 0.5*G*(I1_C - Ndim);
 
   return W;
 }
