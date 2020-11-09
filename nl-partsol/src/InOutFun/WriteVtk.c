@@ -49,7 +49,7 @@ static void vtk_Out_Kinetic_Energy(FILE *, Matrix, Matrix, int);
 
 /*****************************************************************/
 
-void particle_results_vtk__InOutFun__(char * Name_File, GaussPoint MPM_Mesh, char * List_Fields, int TimeStep_i, int ResultsTimeStep)
+void particle_results_vtk__InOutFun__(GaussPoint MPM_Mesh, int TimeStep_i, int ResultsTimeStep)
 {
 
   /* Number of dimensions */
@@ -213,7 +213,7 @@ void particle_results_vtk__InOutFun__(char * Name_File, GaussPoint MPM_Mesh, cha
 
 /*********************************************************************/
 
-void nodal_results_vtk__InOutFun__(char * Name_File, Mesh ElementMesh, Mask ActiveNodes, Matrix REACTIONS, int TimeStep_i, int ResultsTimeStep)
+void nodal_results_vtk__InOutFun__(Mesh ElementMesh, Mask ActiveNodes, Matrix REACTIONS, int TimeStep_i, int ResultsTimeStep)
 {
 
   /* Number of dimensions */
@@ -226,7 +226,7 @@ void nodal_results_vtk__InOutFun__(char * Name_File, Mesh ElementMesh, Mask Acti
   int NumNodesElem;
   ChainPtr Elem_Conn;
 
-  sprintf(Name_file_t,"%s/%s_%i.vtk",OutputDir,OutputParticlesFile,TimeStep_i);
+  sprintf(Name_file_t,"%s/%s_%i.vtk",OutputDir,OutputNodesFile,TimeStep_i);
   
   Vtk_file = fopen(Name_file_t,"w");
 

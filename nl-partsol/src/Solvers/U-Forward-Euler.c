@@ -83,7 +83,7 @@ void U_Forward_Euler(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int InitialStep)
         /*!
           Print particle results 
         */
-        particle_results_vtk__InOutFun__("MPM_VALUES",MPM_Mesh,"ALL",(int)TimeStep/ResultsTimeStep,ResultsTimeStep);
+        particle_results_vtk__InOutFun__(MPM_Mesh,(int)TimeStep/ResultsTimeStep,ResultsTimeStep);
       }
     
       print_Status("*************************************************",TimeStep);

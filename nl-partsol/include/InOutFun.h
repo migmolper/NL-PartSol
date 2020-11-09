@@ -408,11 +408,11 @@ Load * GramsBodyForces(char *, int, int);
 
 /*****************************************************************/
 
-void particle_results_vtk__InOutFun__(char *, GaussPoint, char *, int, int);
+void particle_results_vtk__InOutFun__(GaussPoint, int, int);
 
 /*****************************************************************/
 
-void nodal_results_vtk__InOutFun__(char *, Mesh, Mask, Matrix, int, int);
+void nodal_results_vtk__InOutFun__(Mesh, Mask, Matrix, int, int);
 
 /*****************************************************************/
 
