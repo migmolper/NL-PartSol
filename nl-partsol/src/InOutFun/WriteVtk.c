@@ -633,7 +633,7 @@ static void vtk_Out_Deformation_Gradient(FILE * Vtk_file, Matrix F_n, int NumPar
 
 static void vtk_Out_Deformation_Energy(FILE * Vtk_file, Matrix W, int NumParticles)
 {
-  fprintf(Vtk_file,"SCALARS W double \n");
+  fprintf(Vtk_file,"SCALARS Energy-Potential double \n");
   fprintf(Vtk_file,"LOOKUP_TABLE default \n");
   for(int i =  0 ; i<NumParticles ; i++)
   {
@@ -648,7 +648,7 @@ static void vtk_Out_Kinetic_Energy(FILE * Vtk_file, Matrix vel, Matrix mass, int
   int Ndim = NumberDimensions;
   double K_p;
 
-  fprintf(Vtk_file,"SCALARS K double \n");
+  fprintf(Vtk_file,"SCALARS Energy-Kinetic double \n");
   fprintf(Vtk_file,"LOOKUP_TABLE default \n");
   for(int i =  0 ; i<NumParticles ; i++)
   {

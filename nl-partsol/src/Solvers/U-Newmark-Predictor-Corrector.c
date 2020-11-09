@@ -317,6 +317,7 @@ static void update_Particles(GaussPoint MPM_Mesh,Mesh FEM_Mesh,
   int Nnodes;
   int Ip; /* Index of each tributary node for the GP */
   double mass_I; /* Value of the nodal mass */
+  double D_U_pI; /* Increment of displacement */
   double ShapeFunction_pI; /* Nodal value for the GP */
 
   /* 1º iterate over the Gauss-Points */
@@ -354,10 +355,16 @@ static void update_Particles(GaussPoint MPM_Mesh,Mesh FEM_Mesh,
 	  /* Update the GP velocities */
 	  MPM_Mesh.Phi.vel.nM[p][i] +=
 	    ShapeFunction_pI*DeltaTimeStep*Forces.nM[Ip][i]/mass_I;
-	  /* Update the GP displacement */
-	  MPM_Mesh.Phi.x_GC.nM[p][i] +=
-	    ShapeFunction_pI*DeltaTimeStep*Velocity.nM[Ip][i] +
-	    ShapeFunction_pI*0.5*pow(DeltaTimeStep,2)*Forces.nM[Ip][i]/mass_I;
+
+    /* Compute the nodal contribution of the increment of displacement */
+    D_U_pI = ShapeFunction_pI*DeltaTimeStep*Velocity.nM[Ip][i] +
+              ShapeFunction_pI*0.5*pow(DeltaTimeStep,2)*Forces.nM[Ip][i]/mass_I;
+
+	  /* Update the particle displacement */
+    MPM_Mesh.Phi.dis.nM[p][i] += D_U_pI;
+
+    /* Update the particle position */
+	  MPM_Mesh.Phi.x_GC.nM[p][i] += D_U_pI;
 	}
       } 
     }

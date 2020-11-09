@@ -42,4 +42,6 @@ GramsOutputs (i=100) {
 	     DIR=Resultados
        Particles-file=particles
        Out-velocity=true
+       Out-energy=true
+       Out-displacement=true
 }

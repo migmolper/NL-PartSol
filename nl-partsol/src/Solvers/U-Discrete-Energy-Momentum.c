@@ -1864,6 +1864,7 @@ static void update_Particles(Matrix D_Displacement,
   Tensor F_n_p;
   Tensor F_n1_p;
   Tensor f_n1_p;
+  double D_U_pI;
   double Delta_J_p;
   double rho_n_p;
   Element Nodes_p; /* Element for each particle */
@@ -1947,7 +1948,15 @@ static void update_Particles(Matrix D_Displacement,
 	  for(int i = 0 ; i<Ndim ; i++)
 	    {
 	      MPM_Mesh.Phi.vel.nM[p][i]  += ShapeFunction_pI*D_Velocity.nM[A_mask][i];
-	      MPM_Mesh.Phi.x_GC.nM[p][i] += ShapeFunction_pI*D_Displacement.nM[A_mask][i];
+
+        /* Compute the nodal contribution of the increment of displacement */
+        D_U_pI = ShapeFunction_pI*D_Displacement.nM[A_mask][i];
+
+        /* Update the particle displacement */
+        MPM_Mesh.Phi.dis.nM[p][i] +=  D_U_pI;
+
+        /* Update the particle position */
+	      MPM_Mesh.Phi.x_GC.nM[p][i] +=  D_U_pI;
 	    } 
 	}
 

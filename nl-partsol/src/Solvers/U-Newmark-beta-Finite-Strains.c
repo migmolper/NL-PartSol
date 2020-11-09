@@ -2070,6 +2070,7 @@ static void update_Particles(Matrix D_Displacement,
 	      	      
 	      MPM_Mesh.Phi.acc.nM[p][i]  += alpha_1*D_U_pI - alpha_2*V_pI - (alpha_3 + 1)*A_pI;
 	      MPM_Mesh.Phi.vel.nM[p][i]  += alpha_4*D_U_pI + (alpha_5 - 1)*V_pI + alpha_6*A_pI;
+        MPM_Mesh.Phi.dis.nM[p][i]  += D_U_pI;
 	      MPM_Mesh.Phi.x_GC.nM[p][i] += D_U_pI;
 	    } 
 	}

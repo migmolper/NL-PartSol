@@ -266,7 +266,7 @@ static FILE * Open_and_Check_simulation_file(char * Name_File)
 
 /***************************************************************************/
 
-static bool Is_Output_Activate(char * output_field,char * status_text)
+static bool Is_Output_Activate(char * output_field, char * status_text)
 {
 	bool status;
 	char * Error_message;

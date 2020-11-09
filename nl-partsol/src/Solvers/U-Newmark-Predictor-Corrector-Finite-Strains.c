@@ -945,6 +945,7 @@ static void update_Particles(GaussPoint MPM_Mesh,
   Matrix gradient_p;
   double ShapeFunction_pI; /* Nodal value for the particle */
   double mass_I;
+  double D_U_pI; /* Increment of displacement */
   Element Nodes_p; /* Element for each particle */
 
   /* iterate over the particles */
@@ -989,15 +990,18 @@ static void update_Particles(GaussPoint MPM_Mesh,
 	      /* Get the nodal mass */
 	      mass_I = Lumped_Mass.nV[idx_A_mask_i];
 	      /* Update the particles accelerations */
-	      MPM_Mesh.Phi.acc.nM[p][i] += 
-		ShapeFunction_pI*Forces.nV[idx_A_mask_i]/mass_I;
+	      MPM_Mesh.Phi.acc.nM[p][i] += ShapeFunction_pI*Forces.nV[idx_A_mask_i]/mass_I;
 	      /* Update the particles velocities */
-	      MPM_Mesh.Phi.vel.nM[p][i] += 
-		ShapeFunction_pI*DeltaTimeStep*Forces.nV[idx_A_mask_i]/mass_I;
-	      /* Update the particles displacement */
-	      MPM_Mesh.Phi.x_GC.nM[p][i] +=
-		ShapeFunction_pI*DeltaTimeStep*Velocity.nV[idx_A_mask_i] +
-		ShapeFunction_pI*0.5*pow(DeltaTimeStep,2)*Forces.nV[idx_A_mask_i]/mass_I;
+	      MPM_Mesh.Phi.vel.nM[p][i] += ShapeFunction_pI*DeltaTimeStep*Forces.nV[idx_A_mask_i]/mass_I;
+
+        /* Compute the nodal contribution of the increment of displacement */
+        D_U_pI = ShapeFunction_pI*DeltaTimeStep*Velocity.nV[idx_A_mask_i] + 
+                 ShapeFunction_pI*0.5*pow(DeltaTimeStep,2)*Forces.nV[idx_A_mask_i]/mass_I;
+
+        /* Update the particle displacement */
+        MPM_Mesh.Phi.dis.nM[p][i] += D_U_pI;
+	      /* Update the particles position */
+	      MPM_Mesh.Phi.x_GC.nM[p][i] += D_U_pI;
 	    } 
     	}
 
