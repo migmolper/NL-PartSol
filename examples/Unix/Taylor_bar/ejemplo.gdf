@@ -45,6 +45,6 @@ GramsSolid2D (File=Particles.msh,GPxElement=4) {
 }
 
 # Outputs 
-GramsOutputs (i=100) {
+GramsOutputs (i=1) {
 	     DIR=Resultados
 }

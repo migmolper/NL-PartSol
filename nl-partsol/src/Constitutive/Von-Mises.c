@@ -18,12 +18,13 @@ static double update_increment_plastic_strain(double, double, double);
 static double update_equivalent_plastic_strain(double, double, Material);
 static double update_yield_stress(double, Material);
 static Tensor compute_increment_plastic_strain_tensor(Tensor, double, double, Material);
-static Tensor compute_finite_stress_tensor(Tensor, Tensor, double, double, Material);
+static Tensor compute_finite_stress_tensor_plastic_region(Tensor, Tensor, double, double, Material);
+static Tensor compute_finite_stress_tensor_elastic_region(Tensor, Tensor, Material);
 static void   update_plastic_deformation_gradient(Tensor, Tensor);
 
 /**************************************************************/
 
-Tensor plasticity_Von_Mises(Tensor grad_e, Tensor C, Tensor F_plastic, Tensor F, 
+Tensor plasticity_Von_Mises(Tensor grad_e, Tensor C, Tensor F_plastic, Tensor F_p_n1, 
                 					  double * ptr_EPS, double * ptr_yield_stress, double J, Material MatProp)
 /*	
 	Radial returning algorithm for the Von-Mises plastic criterium
@@ -65,9 +66,6 @@ Tensor plasticity_Von_Mises(Tensor grad_e, Tensor C, Tensor F_plastic, Tensor F,
 	  Calculation of the small strain tensor
   */
   E_elastic = compute_small_strain_tensor(C, F_plastic);
-
-  exit(0);
-
   
   /*
     Elastic predictor : Volumetric and deviatoric stress measurements. Compute also
@@ -134,17 +132,21 @@ Tensor plasticity_Von_Mises(Tensor grad_e, Tensor C, Tensor F_plastic, Tensor F,
       */
       free__TensorLib__(Increment_E_plastic);
 
-    }
+      /*
+        Update stress tensor in the deformed configuration
+      */
+      sigma_k1 = compute_finite_stress_tensor_plastic_region(s_trial, p_trial, s_trial_norm, delta_Gamma, MatProp);
 
-  /*
-    Update stress tensor in the deformed configuration
-  */
-  sigma_k1 = compute_finite_stress_tensor(s_trial, p_trial, s_trial_norm, delta_Gamma, MatProp);
+    }
+    else
+    {
+      sigma_k1 = compute_finite_stress_tensor_elastic_region(s_trial, p_trial, MatProp);
+    }
 
   /*
     Get the stress tensor in the reference configuration
   */
-  contravariant_pull_back_tensor__TensorLib__(grad_e, sigma_k1, F);
+  contravariant_pull_back_tensor__TensorLib__(grad_e, sigma_k1, F_p_n1);
 	
   for(int i = 0 ; i<Ndim ; i++)
     {
@@ -320,7 +322,7 @@ static Tensor compute_increment_plastic_strain_tensor(Tensor s_trial, double s_t
 
 /**************************************************************/
 
-static Tensor compute_finite_stress_tensor(Tensor s_trial, Tensor p_trial, double s_trial_norm, double delta_Gamma, Material MatProp)
+static Tensor compute_finite_stress_tensor_plastic_region(Tensor s_trial, Tensor p_trial, double s_trial_norm, double delta_Gamma, Material MatProp)
 {
   int Ndim = NumberDimensions;
   double nu = MatProp.nu; /* Poisson modulus */
@@ -342,6 +344,25 @@ static Tensor compute_finite_stress_tensor(Tensor s_trial, Tensor p_trial, doubl
 
 /**************************************************************/
 
+static Tensor compute_finite_stress_tensor_elastic_region(Tensor s_trial, Tensor p_trial, Material MatProp)
+{
+  int Ndim = NumberDimensions;
+
+  Tensor sigma_k1 = alloc__TensorLib__(2);
+
+  for(int i = 0 ; i<Ndim ; i++)
+    {
+      for(int j = 0 ; j<Ndim ; j++)
+      {
+        sigma_k1.N[i][j] = p_trial.N[i][j] + s_trial.N[i][j];
+      }
+    }
+
+  return sigma_k1;
+}
+
+/**************************************************************/
+
 static void update_plastic_deformation_gradient(Tensor D_E_plastic, Tensor F_plastic)
 {
   int Ndim = NumberDimensions;
@@ -354,7 +375,7 @@ static void update_plastic_deformation_gradient(Tensor D_E_plastic, Tensor F_pla
   /*
     Compute the new value of the plastic deformation gradient 
   */
-  Tensor Aux_tensor = vector_linear_mapping__TensorLib__(D_F_plastic, F_plastic);
+  Tensor Aux_tensor = matrix_product__TensorLib__(D_F_plastic, F_plastic);
 
   /*
     Update value of the plastic deformation gradient

@@ -231,7 +231,7 @@ void WriteVtk_MPM(char * Name_File, GaussPoint MPM_Mesh,
       }
     }
     fprintf(Vtk_file,"\n");
-    free__TensorLib__(EV_Stress_p);
+    free__TensorLib__(EV_Strain_p);
   }
 
   fprintf(Vtk_file,"TENSORS DEFORMATION-GRADIENT double \n");
