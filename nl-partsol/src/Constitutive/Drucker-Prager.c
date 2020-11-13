@@ -10,9 +10,6 @@ int Max_Iterations_Drucker_Prager;
 /*
   Auxiliar functions 
 */
-static Tensor compute_small_strain_tensor(Tensor, Tensor);
-static Tensor compute_volumetric_stress_tensor(double, Material);
-static Tensor compute_deviatoric_stress_tensor(Tensor, Material);
 static double compute_yield_surface(double, double, double, Material);
 static double compute_hardening_modulus(double, Material);
 static double compute_limit_between_classic_apex_algorithm(double, double, double, Material);
@@ -71,7 +68,7 @@ Tensor plasticity_Drucker_Prager_Sanavia(Tensor grad_e, Tensor C_total, Tensor F
   /*	
 	calculation of the small strain tensor
   */
-  E_elastic = compute_small_strain_tensor(C_total, F_plastic);
+  E_elastic = finite_to_infinitesimal_strains__Particles__(C_total, F_plastic);
 
   /*
     Elastic predictor : Volumetric and deviatoric stress measurements. Compute also
@@ -80,8 +77,8 @@ Tensor plasticity_Drucker_Prager_Sanavia(Tensor grad_e, Tensor C_total, Tensor F
   E_elastic_vol = volumetric_component__TensorLib__(E_elastic);
   E_elastic_dev = deviatoric_component__TensorLib__(E_elastic,E_elastic_vol);
 
-  p_trial = compute_volumetric_stress_tensor(E_elastic_vol, MatProp);
-  s_trial = compute_deviatoric_stress_tensor(E_elastic_dev, MatProp);  
+  p_trial = volumetric_stress__LinearElastic__(E_elastic_vol, MatProp);
+  s_trial = deviatoric_stress__LinearElastic__(E_elastic_dev, MatProp);  
 
   s_trial_norm = EuclideanNorm__TensorLib__(s_trial); 
   p_trial_norm = p_trial.N[0][0];
@@ -227,80 +224,6 @@ free__TensorLib__(sigma_k1);
     Return stress tensor
   */
 return grad_e;
-}
-
-/**************************************************************/
-
-static Tensor compute_small_strain_tensor(Tensor C_total, Tensor F_plastic)
-{
-  Tensor C_elastic;
-  Tensor E_elastic;
-
-  /*
-    Compute the trial elastic right Cauchy-Green tensor using the intermediate configuration.
-  */
-  covariant_push_forward_tensor__TensorLib__(C_elastic, C_total, F_plastic);
-
-  /*
-    Use the approach of Ortiz and Camacho to compute the elastic infinitesimal strain tensor.
-  */
-  E_elastic = logarithmic_strains__Particles__(C_elastic);
-
-  /*	
-	Free memory
-  */
-  free__TensorLib__(C_elastic);
-
-
-  return E_elastic;
-}
-
-/**************************************************************/
-
-static Tensor compute_volumetric_stress_tensor(double E_elastic_vol, Material MatProp)
-{
-
-  int Ndim = NumberDimensions;
-  double nu = MatProp.nu; 
-  double E = MatProp.E;
-  double K = E/(3*(1-2*nu));
-  double aux = K*E_elastic_vol;
-  Tensor p_trial = alloc__TensorLib__(2);
-
-  /*
-    Compute deviatoric stress tensor
-  */
-  for(int i = 0 ; i<Ndim ; i++)
-  {
-    p_trial.N[i][i] = aux;
-  }
-
-  return p_trial;
-}
-
-/**************************************************************/
-
-static Tensor compute_deviatoric_stress_tensor(Tensor E_elastic_dev, Material MatProp)
-{
-
-  int Ndim = NumberDimensions;
-  double nu = MatProp.nu; 
-  double E = MatProp.E;
-  double G = E/(2*(1+nu));
-  Tensor s_trial = alloc__TensorLib__(2);
-  /*
-    Compute deviatoric stress tensor
-  */
-
-  for(int i = 0 ; i<Ndim ; i++)
-  {
-    for(int j = 0 ; j<Ndim ; j++)
-    {
-      s_trial.N[i][j] = 2*G*E_elastic_dev.N[i][j];
-    }
-  }
-
-  return s_trial;
 }
 
 /**************************************************************/

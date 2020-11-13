@@ -32,6 +32,8 @@ Tensor SolidRigid(Tensor Strain);
   \param Properties : Define the material properties of the particle
 */
 Tensor LinearElastic(Tensor, Tensor, Material);
+Tensor volumetric_stress__LinearElastic__(double, Material);
+Tensor deviatoric_stress__LinearElastic__(Tensor, Material);
 /*******************************************************/
 
 /*!

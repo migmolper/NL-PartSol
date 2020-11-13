@@ -9,9 +9,6 @@ int Max_Iterations_Von_Mises;
 /*
   Auxiliar functions 
 */
-static Tensor compute_small_strain_tensor(Tensor, Tensor);
-static Tensor compute_volumetric_stress_tensor(double, Material);
-static Tensor compute_deviatoric_stress_tensor(Tensor, Material);
 static double compute_yield_surface(double, double, double, Material);
 static double compute_derivative_yield_surface(double, Material);
 static double update_increment_plastic_strain(double, double, double);
@@ -20,7 +17,6 @@ static double update_yield_stress(double, Material);
 static Tensor compute_increment_plastic_strain_tensor(Tensor, double, double, Material);
 static Tensor compute_finite_stress_tensor_plastic_region(Tensor, Tensor, double, double, Material);
 static Tensor compute_finite_stress_tensor_elastic_region(Tensor, Tensor, Material);
-static void   update_plastic_deformation_gradient(Tensor, Tensor);
 
 /**************************************************************/
 
@@ -65,7 +61,7 @@ Tensor plasticity_Von_Mises(Tensor grad_e, Tensor C, Tensor F_plastic, Tensor F_
   /*	
 	  Calculation of the small strain tensor
   */
-  E_elastic = compute_small_strain_tensor(C, F_plastic);
+  E_elastic = finite_to_infinitesimal_strains__Particles__(C, F_plastic);
   
   /*
     Elastic predictor : Volumetric and deviatoric stress measurements. Compute also
@@ -75,8 +71,8 @@ Tensor plasticity_Von_Mises(Tensor grad_e, Tensor C, Tensor F_plastic, Tensor F_
   E_elastic_vol = volumetric_component__TensorLib__(E_elastic);
   E_elastic_dev = deviatoric_component__TensorLib__(E_elastic,E_elastic_vol);
 
-  p_trial = compute_volumetric_stress_tensor(E_elastic_vol, MatProp);
-  s_trial = compute_deviatoric_stress_tensor(E_elastic_dev, MatProp);  
+  p_trial = volumetric_stress__LinearElastic__(E_elastic_vol, MatProp);
+  s_trial = deviatoric_stress__LinearElastic__(E_elastic_dev, MatProp);  
 
   s_trial_norm = EuclideanNorm__TensorLib__(s_trial); 
 
@@ -177,82 +173,9 @@ Tensor plasticity_Von_Mises(Tensor grad_e, Tensor C, Tensor F_plastic, Tensor F_
   return grad_e;
 }
 
-/**************************************************************/
-
-static Tensor compute_small_strain_tensor(Tensor C, Tensor F_plastic)
-{
-  Tensor C_elastic = alloc__TensorLib__(2);
-  Tensor E_elastic;
-
-  /*
-    Compute the trial elastic right Cauchy-Green tensor using the intermediate configuration.
-  */
-  covariant_push_forward_tensor__TensorLib__(C_elastic, C, F_plastic);
-
-  /*
-    Use the approach of Ortiz and Camacho to compute the elastic infinitesimal strain tensor.
-  */
-  E_elastic = logarithmic_strains__Particles__(C_elastic);
-
-
-  /*  
-  Free memory
-  */
-  free__TensorLib__(C_elastic);
-
-
-  return E_elastic;
-}
 
 /**************************************************************/
 
-static Tensor compute_volumetric_stress_tensor(double E_elastic_vol, Material MatProp)
-{
-
-  int Ndim = NumberDimensions;
-  double nu = MatProp.nu; 
-  double E = MatProp.E;
-  double K = E/(3*(1-2*nu));
-  double aux = K*E_elastic_vol;
-  Tensor p_trial = alloc__TensorLib__(2);
-
-  /*
-    Compute deviatoric stress tensor
-  */
-  for(int i = 0 ; i<Ndim ; i++)
-  {
-    p_trial.N[i][i] = aux;
-  }
-
-  return p_trial;
-}
-
-/**************************************************************/
-
-static Tensor compute_deviatoric_stress_tensor(Tensor E_elastic_dev, Material MatProp)
-{
-
-  int Ndim = NumberDimensions;
-  double nu = MatProp.nu; 
-  double E = MatProp.E;
-  double G = E/(2*(1+nu));
-  Tensor s_trial = alloc__TensorLib__(2);
-  /*
-    Compute deviatoric stress tensor
-  */
-
-  for(int i = 0 ; i<Ndim ; i++)
-    {
-      for(int j = 0 ; j<Ndim ; j++)
-      {
-        s_trial.N[i][j] = 2*G*E_elastic_dev.N[i][j];
-      }
-    }
-
-  return s_trial;
-}
-
-/**************************************************************/
 
 static double compute_derivative_yield_surface(double H, Material MatProp)
 {
