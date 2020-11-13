@@ -57,3 +57,7 @@ nl-partsol/out/*
 
 # Most used editor files
 *.vscode
+
+
+# Mac OSX
+.DS_Store
