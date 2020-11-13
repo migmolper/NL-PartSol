@@ -125,7 +125,7 @@ Tensor plasticity_Von_Mises(Tensor grad_e, Tensor C, Tensor F_plastic, Tensor F_
       */
 	    Increment_E_plastic = compute_increment_plastic_strain_tensor(s_trial, s_trial_norm, delta_Gamma, MatProp);
 
-      update_plastic_deformation_gradient(Increment_E_plastic,F_plastic);
+      update_plastic_deformation_gradient__Particles__(Increment_E_plastic,F_plastic);
 
       /*
         Free increment of E_plastic
@@ -359,41 +359,6 @@ static Tensor compute_finite_stress_tensor_elastic_region(Tensor s_trial, Tensor
     }
 
   return sigma_k1;
-}
-
-/**************************************************************/
-
-static void update_plastic_deformation_gradient(Tensor D_E_plastic, Tensor F_plastic)
-{
-  int Ndim = NumberDimensions;
-
-  /*
-    Use the Cuitiño & Ortiz exponential maping
-  */
-  Tensor D_F_plastic = increment_Deformation_Gradient_exponential_strains__Particles__(D_E_plastic);
-
-  /*
-    Compute the new value of the plastic deformation gradient 
-  */
-  Tensor Aux_tensor = matrix_product__TensorLib__(D_F_plastic, F_plastic);
-
-  /*
-    Update value of the plastic deformation gradient
-  */
-  for(int i = 0 ; i < Ndim  ; i++)
-    {
-      for(int j = 0 ; j < Ndim  ; j++)
-      {
-        F_plastic.N[i][j] = Aux_tensor.N[i][j];
-      }
-    }
-
-  /*
-    Free memory 
-  */
-  free__TensorLib__(D_F_plastic);
-  free__TensorLib__(Aux_tensor);
-
 }
 
 /**************************************************************/

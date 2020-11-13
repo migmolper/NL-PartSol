@@ -231,4 +231,12 @@ int inout_element__Particles__(int, Matrix, ChainPtr, Mesh);
 void asign_to_nodes__Particles__(int, ChainPtr, Mesh);
 /*******************************************************/
 
+/*!
+
+void update_plastic_deformation_gradient(Tensor D_E_plastic, Tensor F_plastic)
+
+*/
+void update_plastic_deformation_gradient__Particles__(Tensor, Tensor);
+/*******************************************************/
+
 #endif
