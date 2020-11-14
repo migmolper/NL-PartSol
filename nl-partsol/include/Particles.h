@@ -239,12 +239,4 @@ void update_plastic_deformation_gradient(Tensor D_E_plastic, Tensor F_plastic)
 void update_plastic_deformation_gradient__Particles__(Tensor, Tensor);
 /*******************************************************/
 
-/*!
-
-  Tensor finite_to_infinitesimal_strains__Particles__(Tensor C, Tensor F_plastic)
-
-*/
-Tensor finite_to_infinitesimal_strains__Particles__(Tensor, Tensor);
-/*******************************************************/
-
 #endif

@@ -23,11 +23,9 @@ extern double DeltaTimeStep;
 extern double SpectralRadius;
 
 
-/* Convergence parameters */
-extern double TOL_Von_Mises;
-extern int Max_Iterations_Von_Mises;
-extern double TOL_Drucker_Prager;
-extern int Max_Iterations_Drucker_Prager;
+/* Convergence parameters for radia returning algorithm */
+extern double TOL_Radial_Returning;
+extern int Max_Iterations_Radial_Returning;
 
 
 extern int NumTimeStep;

@@ -1,12 +1,12 @@
-BeginZE /Users/migmolper/NL-PartSol/examples/Unix/Strip_footing/particle.gid/particle.vv
-   x -7.92164134979248047 21.5526676177978516
-   y 14.4608554840087891 -1.34608817100524902
-   z -40.2993087768554688 40.2993087768554688
+BeginZE /Users/migmolper/NL-PartSol/examples/Unix/Strip_footing/nodes.gid/nodes.vv
+   x -2.98643922805786133 18.1793365478515625
+   y 11.2235622406005859 -0.127520263195037842
+   z -29.4108810424804688 29.4108810424804688
    e 9.80362701416015625
    v 0 0 0
    r 1
    m 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1
-   c 4.74546432495117188 3.39342117309570312 0
+   c 5.66666650772094727 5.875 0
    pd 0
    pno 0
    pfo 0
@@ -29,7 +29,7 @@ BeginZE /Users/migmolper/NL-PartSol/examples/Unix/Strip_footing/particle.gid/par
    OGLStereo(EyeDistance) 0.075
    OGLStereo(LeftEyeDistance) 1 0 0 1
    OGLStereo(RightEyeDistance) 0 1 1 1
-EndZE /Users/migmolper/NL-PartSol/examples/Unix/Strip_footing/particle.gid/particle.vv
+EndZE /Users/migmolper/NL-PartSol/examples/Unix/Strip_footing/nodes.gid/nodes.vv
 
 BeginMirror
    Mirror 0 Angle 0.0 AngleFake -15.0 SizeFactor 2.0 HeightOffset 0.25 Color #d9e5f24d Backlight Off EdgeStyle No Type Scene DrawMode Mirror

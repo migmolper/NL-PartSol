@@ -1,6 +1,12 @@
 #include "nl-partsol.h"
 
 /*
+  Call global variables
+*/
+double TOL_Radial_Returning;
+int Max_Iterations_Radial_Returning;
+
+/*
 	Global variables for Read_GramsMateriasl.c
 */
 bool Is_Id = false;
@@ -390,6 +396,8 @@ GramsMaterials (Particles=route.txt) {
 	  { 
 		check_Von_Mises_Material(Mat_GP);	
 	  	Mat_GP.E_plastic_reference = Mat_GP.yield_stress_0/Mat_GP.hardening_modulus;
+	  	TOL_Radial_Returning = 1E-10;
+		Max_Iterations_Radial_Returning = 300;
 	  }
 	  /* Parameters for a Drucker-Prager Yield criterium */
 	  else if(strcmp(Mat_GP.Type,"Drucker-Prager-Plane-Strain") == 0)
@@ -400,6 +408,8 @@ GramsMaterials (Particles=route.txt) {
 		Mat_GP.alpha_F_Drucker_Prager = sqrt(2/3.)*tan(rad_friction_angle)/sqrt(3+4*DSQR(tan(rad_friction_angle)));
 		Mat_GP.alpha_Q_Drucker_Prager = sqrt(2/3.)*tan(rad_dilatancy_angle)/sqrt(3+4*DSQR(tan(rad_dilatancy_angle)));
 		Mat_GP.beta_Drucker_Prager    = sqrt(2/3.)*3/sqrt(3+4*DSQR(tan(rad_friction_angle)));
+		TOL_Radial_Returning = 1E-10;
+		Max_Iterations_Radial_Returning = 30;
 	  }
 	  else if(strcmp(Mat_GP.Type,"Drucker-Prager-Outer-cone") == 0)
 	  { 
@@ -409,6 +419,8 @@ GramsMaterials (Particles=route.txt) {
 		Mat_GP.alpha_F_Drucker_Prager = sqrt(2/3.)*2*sin(rad_friction_angle)/(3-sin(rad_friction_angle));
 		Mat_GP.alpha_Q_Drucker_Prager = sqrt(2/3.)*2*sin(rad_dilatancy_angle)/(3-sin(rad_dilatancy_angle));
 		Mat_GP.beta_Drucker_Prager    = sqrt(2/3.)*6*cos(rad_friction_angle)/(3-sin(rad_friction_angle));
+		TOL_Radial_Returning = 1E-10;
+		Max_Iterations_Radial_Returning = 30;
 	  }
 	  else
 	  {

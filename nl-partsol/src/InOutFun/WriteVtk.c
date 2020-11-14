@@ -118,6 +118,12 @@ void WriteVtk_MPM(char * Name_File, GaussPoint MPM_Mesh,
     fprintf(Vtk_file,"%lf \n",MPM_Mesh.Phi.chi.nV[i]); 
   }
 
+  fprintf(Vtk_file,"SCALARS EPS double \n");
+  fprintf(Vtk_file,"LOOKUP_TABLE default \n");
+  for(int i =  0 ; i<MPM_Mesh.NumGP ; i++){
+    fprintf(Vtk_file,"%lf \n",MPM_Mesh.Phi.EPS.nV[i]); 
+  }
+
   /* double -> integer */
   fprintf(Vtk_file,"SCALARS ELEM_i integer \n");
   fprintf(Vtk_file,"LOOKUP_TABLE default \n");

@@ -3,8 +3,8 @@
 /*
   Call global variables
 */
-double TOL_Von_Mises;
-int Max_Iterations_Von_Mises;
+double TOL_Radial_Returning;
+int Max_Iterations_Radial_Returning;
 
 /*
   Auxiliar functions 
@@ -20,7 +20,7 @@ static Tensor compute_finite_stress_tensor_elastic_region(Tensor, Tensor, Materi
 
 /**************************************************************/
 
-Tensor plasticity_Von_Mises(Tensor grad_e, Tensor C, Tensor F_plastic, Tensor F_p_n1, 
+Tensor plasticity_Von_Mises(Tensor S_p, Tensor C_total, Tensor F_plastic, Tensor F_p_n1, 
                 					  double * ptr_EPS, double * ptr_yield_stress, double J, Material MatProp)
 /*	
 	Radial returning algorithm for the Von-Mises plastic criterium
@@ -33,6 +33,7 @@ Tensor plasticity_Von_Mises(Tensor grad_e, Tensor C, Tensor F_plastic, Tensor F_
   double EPS_k;
   double yield_stress_k;
 
+  Tensor C_elastic;
   Tensor E_elastic;
   double E_elastic_vol;
   Tensor E_elastic_dev;
@@ -49,8 +50,8 @@ Tensor plasticity_Von_Mises(Tensor grad_e, Tensor C, Tensor F_plastic, Tensor F_
   /*
     Initialise convergence parameters
   */
-  double TOL_VM = TOL_Von_Mises;
-  int iter_max_VM = Max_Iterations_Von_Mises;
+  double TOL_VM = TOL_Radial_Returning;
+  int iter_max_VM = Max_Iterations_Radial_Returning;
 
   /*  
     Get the value of the equivalent plastic stress and yield stress
@@ -58,10 +59,16 @@ Tensor plasticity_Von_Mises(Tensor grad_e, Tensor C, Tensor F_plastic, Tensor F_
   EPS_k = *ptr_EPS;
   yield_stress_k  = *ptr_yield_stress;
 
-  /*	
-	  Calculation of the small strain tensor
+  /*
+    Compute the trial elastic right Cauchy-Green tensor using the intermediate configuration.
   */
-  E_elastic = finite_to_infinitesimal_strains__Particles__(C, F_plastic);
+  C_elastic = alloc__TensorLib__(2); 
+  covariant_push_forward_tensor__TensorLib__(C_elastic, C_total, F_plastic);
+
+  /*  
+    Calculation of the small strain tensor (the approach of Ortiz and Camacho)
+  */
+  E_elastic = logarithmic_strains__Particles__(C_elastic);
   
   /*
     Elastic predictor : Volumetric and deviatoric stress measurements. Compute also
@@ -142,13 +149,13 @@ Tensor plasticity_Von_Mises(Tensor grad_e, Tensor C, Tensor F_plastic, Tensor F_
   /*
     Get the stress tensor in the reference configuration
   */
-  contravariant_pull_back_tensor__TensorLib__(grad_e, sigma_k1, F_p_n1);
+  contravariant_pull_back_tensor__TensorLib__(S_p, sigma_k1, F_p_n1);
 	
   for(int i = 0 ; i<Ndim ; i++)
     {
       for(int j = 0 ; j<Ndim ; j++)
       {
-        grad_e.N[i][j] *= J;
+        S_p.N[i][j] *= J;
       }
     }
 
@@ -161,6 +168,7 @@ Tensor plasticity_Von_Mises(Tensor grad_e, Tensor C, Tensor F_plastic, Tensor F_
   /*
     Free memory
   */
+  free__TensorLib__(C_elastic);
   free__TensorLib__(E_elastic);
   free__TensorLib__(E_elastic_dev);
   free__TensorLib__(s_trial);
@@ -170,7 +178,7 @@ Tensor plasticity_Von_Mises(Tensor grad_e, Tensor C, Tensor F_plastic, Tensor F_
   /*
     Return stress tensor
   */
-  return grad_e;
+  return S_p;
 }
 
 

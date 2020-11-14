@@ -4,8 +4,8 @@
 /*
 Call global variables
 */
-double TOL_Drucker_Prager;
-int Max_Iterations_Drucker_Prager;
+double TOL_Radial_Returning;
+int Max_Iterations_Radial_Returning;
 
 /*
   Auxiliar functions 
@@ -29,8 +29,8 @@ static Tensor compute_finite_stress_tensor_elastic_region(Tensor, Tensor, Materi
 
 /**************************************************************/
 
-Tensor plasticity_Drucker_Prager_Sanavia(Tensor grad_e, Tensor C_total, Tensor F_plastic, Tensor F, 
-  double * ptr_EPS, double * ptr_c, double J, Material MatProp)
+Tensor plasticity_Drucker_Prager_Sanavia(Tensor S_p, Tensor C_total, Tensor F_plastic, Tensor F, 
+  double * ptr_EPS, double * prt_cohesion, double J, Material MatProp)
 /*	
 	Radial returning algorithm
 */
@@ -39,6 +39,7 @@ Tensor plasticity_Drucker_Prager_Sanavia(Tensor grad_e, Tensor C_total, Tensor F
   int Ndim = NumberDimensions;
   int iter_NR = 0;
 
+  Tensor C_elastic;
   Tensor E_elastic;
   double E_elastic_vol;
   Tensor E_elastic_dev;
@@ -51,24 +52,30 @@ Tensor plasticity_Drucker_Prager_Sanavia(Tensor grad_e, Tensor C_total, Tensor F
   double d_Phi;	
   double H;
   double EPS_k;
-  double c_k;
+  double cohesion_k;
   double p_lim;
   Tensor sigma_k1;
   Tensor Increment_E_plastic;
 
-  double TOL_DP = TOL_Drucker_Prager;
-  int iter_max_DP = Max_Iterations_Drucker_Prager;
+  double TOL_DP = TOL_Radial_Returning;
+  int iter_max_DP = Max_Iterations_Radial_Returning;
 
   /*  
     Get the value of the equivalent plastic stress and cohesion
   */
   EPS_k = *ptr_EPS;
-  c_k  = *ptr_c;
+  cohesion_k  = *prt_cohesion;
+
+  /*
+    Compute the trial elastic right Cauchy-Green tensor using the intermediate configuration.
+  */
+  C_elastic = alloc__TensorLib__(2); 
+  covariant_push_forward_tensor__TensorLib__(C_elastic, C_total, F_plastic);
 
   /*	
-	calculation of the small strain tensor
+  	Calculation of the small strain tensor (the approach of Ortiz and Camacho)
   */
-  E_elastic = finite_to_infinitesimal_strains__Particles__(C_total, F_plastic);
+  E_elastic = logarithmic_strains__Particles__(C_elastic);
 
   /*
     Elastic predictor : Volumetric and deviatoric stress measurements. Compute also
@@ -87,14 +94,14 @@ Tensor plasticity_Drucker_Prager_Sanavia(Tensor grad_e, Tensor C_total, Tensor F
     Yield condition : Starting from incremental plastic strain equal to zero
   */
   delta_Gamma = 0;
-  Phi = compute_yield_surface(p_trial_norm, s_trial_norm, c_k, MatProp);
+  Phi = compute_yield_surface(p_trial_norm, s_trial_norm, cohesion_k, MatProp);
 
   if(Phi >= 0)
   {
 
     H = compute_hardening_modulus(EPS_k, MatProp);
 
-    p_lim = compute_limit_between_classic_apex_algorithm(s_trial_norm, c_k, H, MatProp);
+    p_lim = compute_limit_between_classic_apex_algorithm(s_trial_norm, cohesion_k, H, MatProp);
 
       /*
 	Classical plastic iterator
@@ -110,11 +117,11 @@ Tensor plasticity_Drucker_Prager_Sanavia(Tensor grad_e, Tensor C_total, Tensor F
 
        EPS_k = update_equivalent_plastic_strain_classical(EPS_k, delta_Gamma, MatProp);
 
-       c_k = update_cohesion_modulus(EPS_k, MatProp);
+       cohesion_k = update_cohesion_modulus(EPS_k, MatProp);
 
        H = compute_hardening_modulus(EPS_k, MatProp);
 
-       Phi = compute_yield_surface_classical(s_trial_norm, p_trial_norm, delta_Gamma, c_k, MatProp);
+       Phi = compute_yield_surface_classical(s_trial_norm, p_trial_norm, delta_Gamma, cohesion_k, MatProp);
 
 	      /*
 		Check convergence
@@ -155,7 +162,7 @@ Tensor plasticity_Drucker_Prager_Sanavia(Tensor grad_e, Tensor C_total, Tensor F
 
      delta_Gamma = update_increment_plastic_strain(delta_Gamma, Phi, d_Phi);
 
-     Phi = compute_yield_surface_apex(p_trial_norm, s_trial_norm, H, delta_Gamma, c_k, MatProp);
+     Phi = compute_yield_surface_apex(p_trial_norm, s_trial_norm, H, delta_Gamma, cohesion_k, MatProp);
 
 	      /*
 		Check convergence
@@ -195,13 +202,13 @@ else
   /*
     Get the stress tensor in the deformed configuration
   */
-contravariant_pull_back_tensor__TensorLib__(grad_e, sigma_k1, F);
+contravariant_pull_back_tensor__TensorLib__(S_p, sigma_k1, F);
 
 for(int i = 0 ; i<Ndim ; i++)
 {
   for(int j = 0 ; j<Ndim ; j++)
   {
-   grad_e.N[i][j] *= J;
+   S_p.N[i][j] *= J;
  }
 }
 
@@ -209,11 +216,12 @@ for(int i = 0 ; i<Ndim ; i++)
     Update equivalent plastic stress and cohesion
   */
 *ptr_EPS = EPS_k;
-*ptr_c = c_k;
+*prt_cohesion = cohesion_k;
 
   /*
     Free memory
   */
+free__TensorLib__(C_elastic);
 free__TensorLib__(E_elastic);
 free__TensorLib__(E_elastic_dev);
 free__TensorLib__(s_trial);
@@ -223,17 +231,17 @@ free__TensorLib__(sigma_k1);
   /*
     Return stress tensor
   */
-return grad_e;
+return S_p;
 }
 
 /**************************************************************/
 
-static double compute_yield_surface(double p_trial_norm, double s_trial_norm, double c_k, Material MatProp)
+static double compute_yield_surface(double p_trial_norm, double s_trial_norm, double cohesion_k, Material MatProp)
 {
   double alpha_F = MatProp.alpha_F_Drucker_Prager;
   double beta = MatProp.beta_Drucker_Prager;
 
-  double Phi = 3*alpha_F*p_trial_norm + s_trial_norm - beta*c_k;
+  double Phi = 3*alpha_F*p_trial_norm + s_trial_norm - beta*cohesion_k;
 
   return Phi;
 }
@@ -253,7 +261,7 @@ static double compute_hardening_modulus(double EPS_k, Material MatProp)
 
 /**************************************************************/
 
-static double compute_limit_between_classic_apex_algorithm(double s_trial_norm, double c_k, double H, Material MatProp)
+static double compute_limit_between_classic_apex_algorithm(double s_trial_norm, double cohesion_k, double H, Material MatProp)
 {
   double alpha_F = MatProp.alpha_F_Drucker_Prager;
   double alpha_Q = MatProp.alpha_Q_Drucker_Prager;
@@ -263,7 +271,7 @@ static double compute_limit_between_classic_apex_algorithm(double s_trial_norm, 
   double K = E/(3*(1-2*nu));
   double G = E/(2*(1+nu));
 
-  double p_lim = 3*alpha_Q*K*s_trial_norm/(2*G) + beta/(3*alpha_F)*(s_trial_norm*H/(2*G)*sqrt(1+3*DSQR(alpha_Q)) + c_k);
+  double p_lim = 3*alpha_Q*K*s_trial_norm/(2*G) + beta/(3*alpha_F)*(s_trial_norm*H/(2*G)*sqrt(1+3*DSQR(alpha_Q)) + cohesion_k);
 
   return p_lim;
 
@@ -316,15 +324,15 @@ static double update_cohesion_modulus(double EPS_k1, Material MatProp)
   double exp   = 1/N_exp - 1;
   double basis = 1 + EPS_k1/E0_p;
 
-  double c_k1 = (c_0/(N_exp*E0_p))*pow(basis,exp);
+  double cohesion_k1 = (c_0/(N_exp*E0_p))*pow(basis,exp);
 
-  return c_k1;	
+  return cohesion_k1;	
 }
 
 
 /**************************************************************/
 
-static double compute_yield_surface_classical(double s_trial_norm, double p_trial_norm, double delta_Gamma, double c_k1, Material MatProp)
+static double compute_yield_surface_classical(double s_trial_norm, double p_trial_norm, double delta_Gamma, double cohesion_k1, Material MatProp)
 {
   double alpha_F = MatProp.alpha_F_Drucker_Prager;
   double alpha_Q = MatProp.alpha_Q_Drucker_Prager;
@@ -334,7 +342,7 @@ static double compute_yield_surface_classical(double s_trial_norm, double p_tria
   double K = E/(3*(1-2*nu));
   double G = E/(2*(1+nu));
 
-  double Phi = s_trial_norm - 2*G*delta_Gamma + 3*alpha_F*(p_trial_norm - 3*K*alpha_Q*delta_Gamma) - beta*c_k1;
+  double Phi = s_trial_norm - 2*G*delta_Gamma + 3*alpha_F*(p_trial_norm - 3*K*alpha_Q*delta_Gamma) - beta*cohesion_k1;
 
   return Phi;
 }
@@ -422,7 +430,7 @@ static double compute_derivative_yield_surface_apex(double H, double s_trial_nor
 
 /**************************************************************/
 
-static double compute_yield_surface_apex(double p_trial_norm, double s_trial_norm, double H, double delta_Gamma2, double c_k, Material MatProp)
+static double compute_yield_surface_apex(double p_trial_norm, double s_trial_norm, double H, double delta_Gamma2, double cohesion_k, Material MatProp)
 {
   double alpha_F = MatProp.alpha_F_Drucker_Prager;
   double alpha_Q = MatProp.alpha_Q_Drucker_Prager;
@@ -439,7 +447,7 @@ static double compute_yield_surface_apex(double p_trial_norm, double s_trial_nor
   double aux4 = H*sqrt(DSQR(delta_Gamma1) + aux2*aux3); 
   double aux5 = 3*K*alpha_Q*(delta_Gamma1 + delta_Gamma2);
 
-  double Phi = aux1*(c_k + aux4 - p_trial_norm + aux5);
+  double Phi = aux1*(cohesion_k + aux4 - p_trial_norm + aux5);
 
   return Phi;
 }

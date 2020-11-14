@@ -170,6 +170,9 @@ Tensor right_Cauchy_Green__Particles__(Tensor F)
 /*******************************************************/
 
 Tensor logarithmic_strains__Particles__(Tensor C)
+/*
+    Use the approach of Ortiz and Camacho to compute the elastic infinitesimal strain tensor.
+*/
 {
 
   int Ndim = NumberDimensions;
@@ -278,34 +281,6 @@ Tensor strain_Green_Lagrange__Particles__(Tensor C)
 
   return E;
 }
-
-/*******************************************************/
-
-Tensor finite_to_infinitesimal_strains__Particles__(Tensor C, Tensor F_plastic)
-{
-  Tensor C_elastic = alloc__TensorLib__(2);
-  Tensor E_elastic;
-
-  /*
-    Compute the trial elastic right Cauchy-Green tensor using the intermediate configuration.
-  */
-  covariant_push_forward_tensor__TensorLib__(C_elastic, C, F_plastic);
-
-  /*
-    Use the approach of Ortiz and Camacho to compute the elastic infinitesimal strain tensor.
-  */
-  E_elastic = logarithmic_strains__Particles__(C_elastic);
-
-
-  /*  
-  Free memory
-  */
-  free__TensorLib__(C_elastic);
-
-
-  return E_elastic;
-}
-
 
 /*******************************************************/
 
