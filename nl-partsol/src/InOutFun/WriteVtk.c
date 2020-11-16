@@ -24,6 +24,7 @@ bool Out_strain;
 bool Out_eigenvalues_strain;
 bool Out_deformation_gradient;
 bool Out_energy;
+bool Out_Von_Mises;
 
 /*
   Auxiliar functions 
@@ -46,6 +47,7 @@ static void vtk_Out_Strain_EV(FILE *, Matrix, int);
 static void vtk_Out_Deformation_Gradient(FILE *, Matrix, int);
 static void vtk_Out_Deformation_Energy(FILE *, Matrix, int);
 static void vtk_Out_Kinetic_Energy(FILE *, Matrix, Matrix, int);
+static void vtk_Out_Von_Mises(FILE *, Matrix, Matrix, int);
 
 /*****************************************************************/
 
@@ -205,6 +207,10 @@ void particle_results_vtk__InOutFun__(GaussPoint MPM_Mesh, int TimeStep_i, int R
     vtk_Out_Kinetic_Energy(Vtk_file, MPM_Mesh.Phi.vel, MPM_Mesh.Phi.mass, NumParticles);
   }  
 
+  if(Out_Von_Mises)
+  {
+    vtk_Out_Von_Mises(Vtk_file,  MPM_Mesh.Phi.F_n, MPM_Mesh.Phi.Stress, NumParticles);
+  }
 
   /* Close the file */
   fclose(Vtk_file);
@@ -659,6 +665,67 @@ static void vtk_Out_Kinetic_Energy(FILE * Vtk_file, Matrix vel, Matrix mass, int
     }
     fprintf(Vtk_file,"%lf \n",0.5*K_p*mass.nV[i]); 
   }
+}
+
+/*********************************************************************/
+
+
+static void vtk_Out_Von_Mises(FILE * Vtk_file, Matrix F_n, Matrix S, int NumParticles)
+{
+  int Ndim = NumberDimensions;
+  double SVM;
+  double aux;
+  Tensor S_p;
+  Tensor F_p;
+  Tensor F_pT; 
+  Tensor P_p;
+  Tensor Cauchy_p;
+  Tensor Dev_Cauchy_p = alloc__TensorLib__(2);
+  double tr_Cauchy;
+  double J_p;
+  Tensor Eye = Identity__TensorLib__();
+
+  fprintf(Vtk_file,"SCALARS Von-Mises double \n");
+  fprintf(Vtk_file,"LOOKUP_TABLE default \n");
+  for(int i =  0 ; i<NumParticles ; i++)
+  {
+    S_p = memory_to_tensor__TensorLib__(S.nM[i], 2);
+    F_p = memory_to_tensor__TensorLib__(F_n.nM[i], 2);
+    F_pT = transpose__TensorLib__(F_p);
+    J_p = I3__TensorLib__(F_p);
+    P_p = matrix_product__TensorLib__(F_p, S_p);
+    Cauchy_p = matrix_product__TensorLib__(P_p, F_pT);
+
+    for(int j = 0 ; j<Ndim ; j++)
+    {
+      for(int k = 0 ; k<Ndim ; k++)
+        {
+      Cauchy_p.N[j][k] *= 1/J_p; 
+        }
+    }
+
+    J_p = I3__TensorLib__(F_p);
+    tr_Cauchy = I1__TensorLib__(Cauchy_p);
+
+    for(int j = 0 ; j<Ndim ; j++)
+    {
+      for(int k = 0 ; k<Ndim ; k++)
+        {
+          Dev_Cauchy_p.N[j][k] = Cauchy_p.N[j][k] - (1/3)*tr_Cauchy*Eye.N[j][k]; 
+        }
+    }
+
+    aux = inner_product__TensorLib__(Dev_Cauchy_p, Dev_Cauchy_p);  
+    SVM = sqrt(3/2*aux);  
+
+    fprintf(Vtk_file,"%lf \n",SVM); 
+
+    free__TensorLib__(F_pT);
+    free__TensorLib__(P_p);
+    free__TensorLib__(Cauchy_p);
+  }
+  free__TensorLib__(Eye);
+  free__TensorLib__(Dev_Cauchy_p);
 }
 
 /*********************************************************************/

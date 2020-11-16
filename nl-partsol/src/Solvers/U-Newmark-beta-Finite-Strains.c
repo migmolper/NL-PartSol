@@ -139,6 +139,13 @@ void U_Newmark_beta_Finite_Strains(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int Initi
       Acceleration = compute_Nodal_Acceleration(Effective_Mass,MPM_Mesh,FEM_Mesh,ActiveNodes);
       imposse_Nodal_Kinetics(FEM_Mesh,Velocity,Acceleration,ActiveNodes,TimeStep);
       print_Status("DONE !!!",TimeStep);
+
+      // if(TimeStep == 60)
+      // {
+      //   print__MatrixLib__(Velocity,Nactivenodes,2);
+      //   exit(0);
+      // }
+      
       
       print_Status("*************************************************",TimeStep);
       print_Status("Four step : Compute equilibrium ... WORKING",TimeStep);
