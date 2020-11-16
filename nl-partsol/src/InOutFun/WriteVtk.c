@@ -42,7 +42,7 @@ static void vtk_Out_dis(FILE *, Matrix, int);
 static void vtk_Out_Stress(FILE *, Matrix, int);
 static void vtk_Out_Stress_EV(FILE *, Matrix, int);
 static void vtk_Out_Stress_P(FILE *, Matrix, int);
-static void vtk_Out_Stain(FILE *, Matrix, int);
+static void vtk_Out_Strain(FILE *, Matrix, int);
 static void vtk_Out_Strain_EV(FILE *, Matrix, int);
 static void vtk_Out_Deformation_Gradient(FILE *, Matrix, int);
 static void vtk_Out_Deformation_Energy(FILE *, Matrix, int);
@@ -185,7 +185,7 @@ void particle_results_vtk__InOutFun__(GaussPoint MPM_Mesh, int TimeStep_i, int R
   /* Print particle strain tensor */
   if(Out_strain)
   {
-    vtk_Out_Stain(Vtk_file, MPM_Mesh.Phi.Strain, NumParticles);
+    vtk_Out_Strain(Vtk_file, MPM_Mesh.Phi.Strain, NumParticles);
   }
 
   /* Print particle eigenvalues of the strain tensor */
@@ -566,7 +566,7 @@ static void vtk_Out_Stress_P(FILE * Vtk_file, Matrix Stress, int NumParticles)
 
 /*********************************************************************/
 
-static void vtk_Out_Stain(FILE * Vtk_file, Matrix Strain, int NumParticles)
+static void vtk_Out_Strain(FILE * Vtk_file, Matrix Strain, int NumParticles)
 {
     int Ndim = NumberDimensions;
 
