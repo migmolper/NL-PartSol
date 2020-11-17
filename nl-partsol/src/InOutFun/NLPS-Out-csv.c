@@ -268,7 +268,6 @@ static Parameters read_CSV_Parameters(FILE * Simulation_file, char * Name_File)
 	char * Error_message;
 
 	/* Variables for reading purposes */
-	char * STATUS_LINE;
 	char Line_Out_Prop[MAXC] = {0};
   	char * Parse_Out_Prop[MAXW] = {NULL};
   	int Aux_Out_id;
@@ -282,12 +281,11 @@ static Parameters read_CSV_Parameters(FILE * Simulation_file, char * Name_File)
   	bool Is_Open = false;
   	bool Is_Close = false;
 
-	/* Read first line */  	
-  	STATUS_LINE = fgets(Line_Out_Prop, sizeof(Line_Out_Prop), Simulation_file);
-	Aux_Out_id = parse(Parse_Out_Prop,Line_Out_Prop," =\t\n");
-
-  	while(STATUS_LINE != NULL)
+  	while(fgets(Line_Out_Prop, sizeof(Line_Out_Prop), Simulation_file) != NULL)
   	{
+
+  		/* Parse line */  	
+		Aux_Out_id = parse(Parse_Out_Prop,Line_Out_Prop," =\t\n");
 
 		if((strcmp(Parse_Out_Prop[0],"{") == 0) && (Aux_Out_id == 1))
 		{
@@ -315,20 +313,15 @@ static Parameters read_CSV_Parameters(FILE * Simulation_file, char * Name_File)
 	  		Is_Close = true;
 	    	break;
 	  	}	  
-		else
+		else if(Aux_Out_id > 0)
 	  	{
 	  		sprintf(Error_message,"%s %s","Undefined",Parse_Out_Prop[0]);
 	  		standard_error(Error_message); 
 	  	}
-
-	 	/* Read new line */
-  		STATUS_LINE = fgets(Line_Out_Prop, sizeof(Line_Out_Prop), Simulation_file);
-		Aux_Out_id = parse(Parse_Out_Prop,Line_Out_Prop," =\t\n");
-
+	
 	}
 
-
-	if(Is_Open & Is_Close)
+	if(Is_Open && Is_Close)
 	{
 		if(Is_DIR && Is_PATH && Is_VAR)
 		{
