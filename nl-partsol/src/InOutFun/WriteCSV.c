@@ -22,9 +22,9 @@ void path_nodes_analysis_csv__InOutFun__(Matrix Nodal_Field, Mask ActiveNodes, E
 {
 	int Ndim    = NumberDimensions;
 	int NumCols = Nodal_Field.N_cols;
-	int k_start = Output_Commands.k_start;
-	int k_end   = Output_Commands.k_end;
-	int k_step  = Output_Commands.k_step;
+	int k_start = Output_Commands.i_start;
+	int k_end   = Output_Commands.i_end;
+	int k_step  = Output_Commands.i_step;
 	char * Error_message;
 	char * Name_File = Output_Commands.File;
 	char * Name_file_Ts;
@@ -64,9 +64,9 @@ void path_particles_analysis_csv__InOutFun__(Matrix Particle_Field, Event Output
 {
 	int Ndim    = NumberDimensions;
 	int NumCols = Particle_Field.N_cols;
-	int k_start = Output_Commands.k_start;
-	int k_end   = Output_Commands.k_end;
-	int k_step  = Output_Commands.k_step;
+	int k_start = Output_Commands.i_start;
+	int k_end   = Output_Commands.i_end;
+	int k_step  = Output_Commands.i_step;
 	char * Error_message;
 	char * Name_File = Output_Commands.File;
 	char * Name_file_Ts;

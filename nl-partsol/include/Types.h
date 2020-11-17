@@ -665,7 +665,7 @@ typedef struct {
   /*!
     Numerical step to start the event. Default = 0
    */
-  int k_start;
+  int i_start;
 
   /*!
     Physical time step
@@ -675,7 +675,7 @@ typedef struct {
   /*!
     Numerical time step
    */
-  int k_step;
+  int i_step;
 
   /*!
     Physical time to finish the event    
@@ -685,7 +685,7 @@ typedef struct {
   /*!
     Numerical step to finish the event
    */  
-  int k_end;
+  int i_end;
 
   /*!
     Name of the output file

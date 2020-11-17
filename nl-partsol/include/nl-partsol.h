@@ -47,8 +47,8 @@
 /***************************************/
 /********** GRAMS's libraries **********/
 /***************************************/
-#include "Globals.h"
 #include "Types.h"
+#include "Globals.h"
 #include "Matlib.h"
 #include "Fields.h"
 #include "Constitutive.h"
