@@ -640,6 +640,24 @@ typedef struct {
 typedef struct {
 
   /*!
+    Number of files of the output
+  */
+  int NumFiles;
+
+  /*!
+    Index for the particle or node in the case of single
+    node/particle analysis
+  */
+  int Idx;
+
+  /*!
+    List of nodes or particles to get the information from
+    a path of nodes/particles.
+  */
+  int * Idx_Path;
+  int Lenght_Path;
+
+  /*!
     Physical time to start the event. Default = 0.0
    */
   double start;
@@ -673,6 +691,48 @@ typedef struct {
     Name of the output file
    */
   char * File;
+
+
+  /*!
+    Output selector CSV
+  */
+  bool Out_csv_nodes_path_Velocity;
+  bool Out_csv_nodes_path_Acceleration;
+  bool Out_csv_nodes_path_D_Displacement;
+  bool Out_csv_nodes_path_Forces;
+  bool Out_csv_nodes_path_Reactions;
+  bool Out_csv_nodes_path_Residual; 
+
+  bool Out_csv_particles_path_damage;
+  bool Out_csv_particles_path_velocity;
+  bool Out_csv_particles_path_acceleration;
+  bool Out_csv_particles_path_displacement;
+  bool Out_csv_particles_path_stress;
+  bool Out_csv_particles_path_strain;
+  bool Out_csv_particles_path_deformation_gradient;
+
+  /*!
+    Output selector Vtk
+  */
+  bool Out_vtk_nodes;
+  bool Out_vtk_global_coordinates;
+  bool Out_vtk_element_coordinates;
+  bool Out_vtk_mass;
+  bool Out_vtk_density;
+  bool Out_vtk_damage;
+  bool Out_vtk_nodal_idx;
+  bool Out_vtk_material_idx;
+  bool Out_vtk_velocity;
+  bool Out_vtk_acceleration;
+  bool Out_vtk_displacement;
+  bool Out_vtk_stress;
+  bool Out_vtk_eigenvalues_stress;
+  bool Out_vtk_volumetric_stress;
+  bool Out_vtk_strain;
+  bool Out_vtk_eigenvalues_strain;
+  bool Out_vtk_deformation_gradient;
+  bool Out_vtk_energy;
+  bool Out_vtk_Von_Mises;
 
 } Event;
 

@@ -432,4 +432,9 @@ void WriteGnuplot(Matrix, Matrix, double, double, int, int, char[20]);
 GaussPoint restart_Simulation(char *,char *,Mesh);
 
 /*****************************************************************/
+
+void path_nodes_analysis_csv__InOutFun__(Matrix, Mask, Event, int, double);
+void path_particles_analysis_csv__InOutFun__(Matrix, Event, int, double);
+/*****************************************************************/
+
 #endif
