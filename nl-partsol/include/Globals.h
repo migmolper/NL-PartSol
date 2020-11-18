@@ -34,6 +34,7 @@ extern int ResultsTimeStep;
 extern int NumberDOF;
 
 extern Event * Out_nodal_path_csv;
+extern int Number_Out_nodal_path_csv;
 
 extern bool Out_global_coordinates;
 extern bool Out_element_coordinates;

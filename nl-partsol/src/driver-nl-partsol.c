@@ -21,6 +21,7 @@ char * RestartFile;
 char * TimeIntegrationScheme;
 char * Formulation;
 
+
 void globalfree(Mesh,GaussPoint);
 
 int main(int argc, char * argv[])
@@ -116,8 +117,6 @@ int main(int argc, char * argv[])
   puts("Read outputs ...");
   GramsOutputs(SimulationFile);
   NLPS_Out_nodal_path_csv__InOutFun__(SimulationFile);
-
-  exit(0);
     
   /*********************************************************************/
   /********************** RUN THE MPM CALCULUS *************************/

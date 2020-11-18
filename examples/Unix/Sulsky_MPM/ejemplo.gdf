@@ -46,7 +46,7 @@ GramsOutputs (i=100) {
        Out-displacement=true
 }
 
-Out-nodal-path-csv (i_start=0;i_step=10;i_end=100) 
+Out-nodal-path-csv (i_start=0;i_step=1;i_end=100) 
   {
   	DIR=Resultados	
   	PATH=Nodes_Evol_Velocity.txt

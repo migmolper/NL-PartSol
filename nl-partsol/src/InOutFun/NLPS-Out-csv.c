@@ -5,6 +5,7 @@
   Call global variables
 */
 Event * Out_nodal_path_csv;
+int Number_Out_nodal_path_csv;
 int NumTimeStep;
 char OutputDir[MAXC];
 
@@ -69,6 +70,7 @@ void NLPS_Out_nodal_path_csv__InOutFun__(char * Name_File)
 
   int Num_NCE = Number_nodal_csv_events(Name_File);
   Out_nodal_path_csv = (Event *)malloc(Num_NCE*sizeof(Event));
+  Number_Out_nodal_path_csv = Num_NCE;
 
   /* Initial message */  
   puts("*************************************************");
@@ -283,7 +285,6 @@ static Parameters read_CSV_Parameters(FILE * Simulation_file, char * Name_File)
 
   	while(fgets(Line_Out_Prop, sizeof(Line_Out_Prop), Simulation_file) != NULL)
   	{
-
   		/* Parse line */  	
 		Aux_Out_id = parse(Parse_Out_Prop,Line_Out_Prop," =\t\n");
 
