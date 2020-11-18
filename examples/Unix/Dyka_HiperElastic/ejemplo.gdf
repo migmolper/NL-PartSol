@@ -1,0 +1,51 @@
+
+# Background mesh definition
+GramsBox (Type=GID,File=Nodes.msh) {
+ 
+}
+
+# Time integration
+GramsTime (Type=Newmark-beta-Finite-Strains) {
+    CFL=0.9806
+    N=61
+    Epsilon=0.0
+}
+
+# Material points definitions
+GramsSolid2D (File=Particles.msh,GPxElement=1) {
+    
+   # List of materials for the GPs
+    GramsMaterials (Particles=Bar.txt) {
+	    Type=Neo-Hookean-Wriggers
+	    Cel=1961.16
+	    rho=2600
+	    E=1e10
+	    mu=0.3
+	    Id=0
+    }
+    
+    # Shape function definition
+    GramsShapeFun (Type=LME) {
+      gamma=4.0
+    }
+
+    # Initial conditions for the GPs
+    GramsInitials (Nodes=V10ms_particles.txt) {
+	    Value=[10.0,0.0]
+    }
+  
+}
+
+# Outputs 
+GramsOutputs (i=1) {
+	    DIR=Resultados_consistent
+      Out-velocity=true
+      Out-stress=true
+}
+
+Out-nodal-path-csv (i_start=60;i_step=1;i_end=60) 
+  {
+    DIR=Resultados_csv
+    PATH=Nodes_Evol_Velocity.txt
+    Out-velocity=true
+  }

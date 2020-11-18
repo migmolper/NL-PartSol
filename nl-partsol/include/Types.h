@@ -688,9 +688,9 @@ typedef struct {
   int i_end;
 
   /*!
-    Name of the output file
+    Name of the output directory
    */
-  char * File;
+  char Directory[MAXC];
 
 
   /*!

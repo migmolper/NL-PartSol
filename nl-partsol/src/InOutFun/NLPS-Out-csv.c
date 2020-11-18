@@ -16,7 +16,12 @@ typedef struct {
 
 	char DIR_Name[MAXC];
 	char PATH_Name[MAXC];
-	char VAR_Name[MAXC];
+	bool Out_velocity;
+  	bool Out_acceleration;
+  	bool Out_displacement;
+  	bool Out_forces;
+  	bool Out_reactions;
+  	bool Out_residual; 
 
 } Parameters;
 
@@ -35,8 +40,10 @@ static void standard_error(char *);
 static int Number_nodal_csv_events(char *);
 static FILE * Open_and_Check_simulation_file(char *);
 static bool Check_Output_directory(char *);
+static bool Check_Path(char *);
 static Intervals read_CSV_Intervals(char *);
 static Parameters read_CSV_Parameters(FILE *, char *);
+static bool Is_Output_Activate(char *, char *);
 static Event fill_CSV_Parameters(Intervals,Parameters);
 
 /**********************************************************************/
@@ -176,15 +183,44 @@ static bool Check_Output_directory(char * Output_directory)
 {
 	struct stat info;
 	stat(Output_directory,&info);
+	char * Error_message;
+	bool status_check;
+
 	if(S_ISDIR(info.st_mode))
 	{
-		return true;
+		printf("\t -> %s : %s \n","Output directory",Output_directory);
+		status_check = true;
 	}
 	else
 	{
-		printf("\t -> %s : %s %s \n","Output directory",OutputDir,"does not exists");
-		return false;
+		sprintf(Error_message,"%s : %s %s \n","Output directory",Output_directory,"does not exists");
+		standard_error(Error_message); 
 	} 
+
+	return status_check;
+}
+
+/***************************************************************************/
+
+static bool Check_Path(char * PATH_Name)
+{
+	struct stat info;
+	stat(PATH_Name,&info);
+	char * Error_message;
+	bool status_check;
+
+	if(S_ISREG(info.st_mode))
+	{
+		printf("\t -> %s : %s \n","Path file",PATH_Name);
+		status_check = true;
+	}
+	else
+	{
+		sprintf(Error_message,"\t -> %s : %s %s \n","Path file",PATH_Name,"does not exists");
+		standard_error(Error_message);
+	} 
+
+	return status_check;
 }
 
 /***************************************************************************/
@@ -279,7 +315,6 @@ static Parameters read_CSV_Parameters(FILE * Simulation_file, char * Name_File)
   	/* Check variables for sintax */
   	bool Is_DIR = false;
   	bool Is_PATH = false;
-  	bool Is_VAR = false;
   	bool Is_Open = false;
   	bool Is_Close = false;
 
@@ -302,12 +337,31 @@ static Parameters read_CSV_Parameters(FILE * Simulation_file, char * Name_File)
 	  	{
 	  		generate_route(Route_Path,Name_File);
 	  		sprintf(Output_csv.PATH_Name,"%s%s",Route_Path,Parse_Out_Prop[1]);
-	  		Is_PATH = true;
+	  		Is_PATH = Check_Path(Output_csv.PATH_Name);
 	  	}
-		else if((strcmp(Parse_Out_Prop[0],"VAR") == 0) && (Aux_Out_id == 2))
+	  	else if(strcmp(Parse_Out_Prop[0],"Out-velocity") == 0)
 	  	{
-	  		strcpy(Output_csv.VAR_Name, Parse_Out_Prop[1]);
-	  		Is_VAR = true;
+			Output_csv.Out_velocity = Is_Output_Activate(Parse_Out_Prop[0],Parse_Out_Prop[1]);
+	  	}
+	  	else if(strcmp(Parse_Out_Prop[0],"Out-acceleration") == 0)
+	  	{
+			Output_csv.Out_acceleration = Is_Output_Activate(Parse_Out_Prop[0],Parse_Out_Prop[1]);
+	  	}
+	  	else if(strcmp(Parse_Out_Prop[0],"Out-displacement") == 0)
+	  	{
+			Output_csv.Out_displacement = Is_Output_Activate(Parse_Out_Prop[0],Parse_Out_Prop[1]);
+	  	}
+	  	else if(strcmp(Parse_Out_Prop[0],"Out-forces") == 0)
+	  	{
+			Output_csv.Out_forces = Is_Output_Activate(Parse_Out_Prop[0],Parse_Out_Prop[1]);
+	  	}
+	  	else if(strcmp(Parse_Out_Prop[0],"Out-reactions") == 0)
+	  	{
+			Output_csv.Out_reactions = Is_Output_Activate(Parse_Out_Prop[0],Parse_Out_Prop[1]);
+	  	}
+	  	else if(strcmp(Parse_Out_Prop[0],"Out-residual") == 0)
+	  	{
+			Output_csv.Out_residual = Is_Output_Activate(Parse_Out_Prop[0],Parse_Out_Prop[1]);
 	  	}
 	  	else if((strcmp(Parse_Out_Prop[0],"}") == 0) && (Aux_Out_id == 1))
 	  	{
@@ -324,11 +378,9 @@ static Parameters read_CSV_Parameters(FILE * Simulation_file, char * Name_File)
 
 	if(Is_Open && Is_Close)
 	{
-		if(Is_DIR && Is_PATH && Is_VAR)
+		if(Is_DIR && Is_PATH)
 		{
-			printf("\t -> %s : %s \n","Output directory",Output_csv.DIR_Name);
-			printf("\t -> %s : %s \n","Nodal path",Output_csv.PATH_Name);
-	  		printf("\t -> %s : %s \n","Output variable",Output_csv.VAR_Name);
+			
 		}
 		else
 		{
@@ -349,20 +401,44 @@ static Parameters read_CSV_Parameters(FILE * Simulation_file, char * Name_File)
 
 /***************************************************************************/
 
+static bool Is_Output_Activate(char * output_field, char * status_text)
+{
+	bool status;
+	char * Error_message;
+
+	if(strcmp(status_text,"true") == 0)
+	{
+		printf("\t -> %s : true \n", output_field);
+		return true;
+	}
+	else if(strcmp(status_text,"false") == 0)
+	{
+		printf("\t -> %s : False \n", output_field);
+		return false;
+	}
+	else
+	{
+		sprintf(Error_message,"The input was %s. Please, use : true/false",status_text);
+		standard_error(Error_message); 
+	}
+
+	return status;
+}
+
+/***************************************************************************/
+
 static Event fill_CSV_Parameters(Intervals CSV_Intervals,Parameters CSV_Parameters)
 {
 	Event CSV_Event;
 	ChainPtr Chain_Nodes = NULL;
 
-	char * Error_message;
-
 	/* Read outputs intervals */
 	CSV_Event.i_start = CSV_Intervals.i_start;
 	CSV_Event.i_step  = CSV_Intervals.i_step;
-	CSV_Event.i_end  = CSV_Intervals.i_end;
+	CSV_Event.i_end   = CSV_Intervals.i_end;
 
 	/* Write name of the ouput directory */
-	strcpy(CSV_Event.File,CSV_Parameters.DIR_Name);
+	strcpy(CSV_Event.Directory,CSV_Parameters.DIR_Name);
 
 	/* Write nodal path */
 	Chain_Nodes = File2Chain(CSV_Parameters.PATH_Name);
@@ -370,35 +446,30 @@ static Event fill_CSV_Parameters(Intervals CSV_Intervals,Parameters CSV_Paramete
     CSV_Event.Idx_Path = set_to_memory__SetLib__(Chain_Nodes,CSV_Event.Lenght_Path);
     free__SetLib__(&Chain_Nodes);
 
-    /* Select ouput variable */
-	if(strcmp(CSV_Parameters.VAR_Name,"Velocity") == 0)
+    /* Select ouput variable */ 
+	if(CSV_Parameters.Out_velocity)
 	{
 		CSV_Event.Out_csv_nodes_path_Velocity = true;
 	}
-  	else if(strcmp(CSV_Parameters.VAR_Name,"Acceleration") == 0)
+  	else if(CSV_Parameters.Out_acceleration)
 	{
 	  	CSV_Event.Out_csv_nodes_path_Acceleration = true;
 	}
-	else if(strcmp(CSV_Parameters.VAR_Name,"D_Displacement") == 0)
+	else if(CSV_Parameters.Out_displacement)
 	{
 	  	CSV_Event.Out_csv_nodes_path_D_Displacement = true;
 	}
-	else if(strcmp(CSV_Parameters.VAR_Name,"Forces") == 0)
+	else if(CSV_Parameters.Out_forces)
 	{
 	  	CSV_Event.Out_csv_nodes_path_Forces = true;
 	}
-	else if(strcmp(CSV_Parameters.VAR_Name,"Reactions") == 0)
+	else if(CSV_Parameters.Out_reactions)
 	{
 	  	CSV_Event.Out_csv_nodes_path_Reactions = true;
 	}
-	else if(strcmp(CSV_Parameters.VAR_Name,"Residual") == 0)
+	else if(CSV_Parameters.Out_residual)
 	{
 	  	CSV_Event.Out_csv_nodes_path_Residual = true;
-	}
-	else
-	{
-	  	sprintf(Error_message,"%s : %s","Undefined VAR",CSV_Parameters.VAR_Name);
-	  	standard_error(Error_message); 
 	}
 
 	return CSV_Event;

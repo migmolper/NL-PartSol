@@ -4,7 +4,7 @@ ROUTE_EXE = ../nl-partsol/build/./$(EXE)
 TESTDIR = test
 
 # Rule for benchmarks
-.PHONY: Element Consolidation Debug_MMS Debug_MPM Debug_LME Sulsky_MPM Sulsky_GIMP Sulsky_LME Sulsky_SV Sulsky_NH Sulsky_NPC_FS Cuadrado_MPM Disco_MPM Disco_GIMP Traccion_MPM Traccion_GIMP Traccion_LME Dyka_MPM Dyka_GIMP Dyka_LME Dyka_GA Brazilian_MPM Three_Point_Bar
+.PHONY: Element Consolidation Debug_MMS Debug_MPM Debug_LME Sulsky_MPM Sulsky_GIMP Sulsky_LME Sulsky_SV Sulsky_NH Sulsky_NPC_FS Cuadrado_MPM Disco_MPM Disco_GIMP Traccion_MPM Traccion_GIMP Traccion_LME Dyka_MPM Dyka_GIMP Dyka_LME Dyka_GA Dyka_HiperElastic Brazilian_MPM Three_Point_Bar
 
 # Caso para debugear I
 Element:
@@ -109,24 +109,30 @@ Traccion_LME:
 # Caso barra Dyka Thomas Blanc thesis
 Dyka_MPM:
 	@echo "**************** Run test case ******************"
-	$(ROUTE_EXE) -2D -V Unix/Dyka_MPM/ejemplo.gdf
+	$(ROUTE_EXE) -V Unix/Dyka_MPM/ejemplo.gdf
 	@echo " "
 	@echo "*************** Test case passed ****************"
 Dyka_GIMP:
 	@echo "**************** Run test case ******************"
-	$(ROUTE_EXE) -2D -V Unix/Dyka_GIMP/ejemplo.gdf
+	$(ROUTE_EXE) -V Unix/Dyka_GIMP/ejemplo.gdf
 	@echo " "
 	@echo "*************** Test case passed ****************"
 Dyka_LME:
 	@echo "**************** Run test case ******************"
-	$(ROUTE_EXE) -2D -V Unix/Dyka_LME/ejemplo.gdf
+	$(ROUTE_EXE) -V Unix/Dyka_LME/ejemplo.gdf
 	@echo " "
 	@echo "*************** Test case passed ****************"
 Dyka_GenAlpha:
 	@echo "**************** Run test case ******************"
-	$(ROUTE_EXE) -2D -V Unix/Dyka_GenAlpha/ejemplo.gdf
+	$(ROUTE_EXE) -V Unix/Dyka_GenAlpha/ejemplo.gdf
 	@echo " "
 	@echo "*************** Test case passed ****************"
+Dyka_HiperElastic:
+	@echo "**************** Run test case ******************"
+	$(ROUTE_EXE) -V Unix/Dyka_HiperElastic/ejemplo.gdf
+	@echo " "
+	@echo "*************** Test case passed ****************"
+
 
 # Brazilian test for fracture
 Brazilian_MPM:

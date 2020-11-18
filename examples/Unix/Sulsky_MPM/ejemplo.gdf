@@ -50,6 +50,6 @@ Out-nodal-path-csv (i_start=0;i_step=1;i_end=100)
   {
   	DIR=Resultados	
   	PATH=Nodes_Evol_Velocity.txt
-	  VAR=Velocity
+	  Out-velocity=true
   }
 

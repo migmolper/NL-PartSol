@@ -1,11 +1,4 @@
 
-#define MAXW 100
-#define MAXC 1000
-#define NumberDimensions 2
-#define TOL_InOut 10E-23
-#define TOL_NR 10E-6
-#define TOL_zero 10E-10
-
 extern char * SimulationFile;
 extern char * RestartFile;
 extern char * FEM_MeshFileName;

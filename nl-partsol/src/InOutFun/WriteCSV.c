@@ -17,23 +17,22 @@ static void print_particles_tensorial_variable_to_csv(FILE *, Matrix, Event);
 
 /*****************************************************************/
 
-void path_nodes_analysis_csv__InOutFun__(Matrix Nodal_Field, Mask ActiveNodes, Event Output_Commands,
-										 int TimeStep, double DeltaTimeStep)
+void path_nodes_analysis_csv__InOutFun__(Matrix Nodal_Field, char * Name_File, Mask ActiveNodes, 
+									     Event Output_Commands, int idx, int TimeStep, double DeltaTimeStep)
 {
 	int Ndim    = NumberDimensions;
 	int NumCols = Nodal_Field.N_cols;
 	int k_start = Output_Commands.i_start;
 	int k_end   = Output_Commands.i_end;
 	int k_step  = Output_Commands.i_step;
-	char * Error_message;
-	char * Name_File = Output_Commands.File;
-	char * Name_file_Ts;
+	char Error_message[MAXW];
+	char Name_file_Ts[MAXC];
 	FILE * csv_file;
 
 	if(k_start <= TimeStep && TimeStep <= k_end && TimeStep % k_step == 0)
 	{
 
-		sprintf(Name_file_Ts,"%s/%s_%i.csv",OutputDir,Name_File,TimeStep);
+		sprintf(Name_file_Ts,"%s/%s_idx_%i_step_%i.csv",Output_Commands.Directory,Name_File,idx,TimeStep);
 		csv_file = fopen(Name_file_Ts,"w");
 
 		/* Scalar variable */
@@ -59,8 +58,8 @@ void path_nodes_analysis_csv__InOutFun__(Matrix Nodal_Field, Mask ActiveNodes, E
 
 /*****************************************************************/
 
-void path_particles_analysis_csv__InOutFun__(Matrix Particle_Field, Event Output_Commands,
-											 int TimeStep, double DeltaTimeStep)
+void path_particles_analysis_csv__InOutFun__(Matrix Particle_Field, char * Name_File, Event Output_Commands,
+											 int idx, int TimeStep, double DeltaTimeStep)
 {
 	int Ndim    = NumberDimensions;
 	int NumCols = Particle_Field.N_cols;
@@ -68,14 +67,13 @@ void path_particles_analysis_csv__InOutFun__(Matrix Particle_Field, Event Output
 	int k_end   = Output_Commands.i_end;
 	int k_step  = Output_Commands.i_step;
 	char * Error_message;
-	char * Name_File = Output_Commands.File;
 	char * Name_file_Ts;
 	FILE * csv_file;
 
 	if(k_start <= TimeStep && TimeStep <= k_end && TimeStep % k_step == 0)
 	{
 
-		sprintf(Name_file_Ts,"%s/%s_%i.csv",OutputDir,Name_File,TimeStep);
+		sprintf(Name_file_Ts,"%s/%s_idx_%i_step_%i.csv",Output_Commands.Directory,Name_File,idx,TimeStep);
 		csv_file = fopen(Name_file_Ts,"w");
 
 		/* Scalar variable */

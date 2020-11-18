@@ -433,8 +433,8 @@ GaussPoint restart_Simulation(char *,char *,Mesh);
 
 /*****************************************************************/
 
-void path_nodes_analysis_csv__InOutFun__(Matrix, Mask, Event, int, double);
-void path_particles_analysis_csv__InOutFun__(Matrix, Event, int, double);
+void path_nodes_analysis_csv__InOutFun__(Matrix, char *, Mask, Event, int, int, double);
+void path_particles_analysis_csv__InOutFun__(Matrix, char *, Event, int, int, double);
 /*****************************************************************/
 
 
