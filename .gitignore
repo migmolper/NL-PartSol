@@ -45,6 +45,7 @@ nl-partsol/out/*
 # VTK post files
 *.vtk
 *.vtu
+*.csv
 
 # Output of tests of meshing application (MMG)
 *.sol

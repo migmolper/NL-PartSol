@@ -25,8 +25,7 @@ GramsSolid2D (File=Particles.msh,GPxElement=1) {
     }
     
     # Shape function definition
-    GramsShapeFun (Type=LME) {
-      gamma=2.0
+    GramsShapeFun (Type=MPMQ4) {
     }
 
     # Initial conditions for the GPs
