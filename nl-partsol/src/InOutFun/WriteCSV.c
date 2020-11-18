@@ -8,16 +8,16 @@
   Auxiliar functions 
 */
 static void standard_error(char *);
-static void print_nodes_scalar_variable_to_csv(FILE *, Matrix, Mask, Event);
-static void print_nodes_vectorial_variable_to_csv(FILE *, Matrix, Mask, Event);
-static void print_nodes_tensorial_variable_to_csv(FILE *, Matrix, Mask, Event);
-static void print_particles_scalar_variable_to_csv(FILE *, Matrix, Event);
-static void print_particles_vectorial_variable_to_csv(FILE *, Matrix, Event);
-static void print_particles_tensorial_variable_to_csv(FILE *, Matrix, Event);
+static void print_nodes_scalar_variable_to_csv(FILE *, Matrix, Matrix, Mask, Event);
+static void print_nodes_vectorial_variable_to_csv(FILE *, Matrix, Matrix, Mask, Event);
+static void print_nodes_tensorial_variable_to_csv(FILE *, Matrix, Matrix, Mask, Event);
+static void print_particles_scalar_variable_to_csv(FILE *, Matrix, Matrix, Event);
+static void print_particles_vectorial_variable_to_csv(FILE *, Matrix, Matrix, Event);
+static void print_particles_tensorial_variable_to_csv(FILE *, Matrix, Matrix, Event);
 
 /*****************************************************************/
 
-void path_nodes_analysis_csv__InOutFun__(Matrix Nodal_Field, char * Name_File, Mask ActiveNodes, 
+void path_nodes_analysis_csv__InOutFun__(Matrix Nodal_Field, Matrix Coordinates, char * Name_File, Mask ActiveNodes, 
 									     Event Output_Commands, int idx, int TimeStep, double DeltaTimeStep)
 {
 	int Ndim    = NumberDimensions;
@@ -38,17 +38,17 @@ void path_nodes_analysis_csv__InOutFun__(Matrix Nodal_Field, char * Name_File, M
 		/* Scalar variable */
 		if(NumCols == 1)
 		{
-			print_nodes_scalar_variable_to_csv(csv_file,Nodal_Field,ActiveNodes,Output_Commands);
+			print_nodes_scalar_variable_to_csv(csv_file,Nodal_Field,Coordinates,ActiveNodes,Output_Commands);
 		}
 		/* Vectorial variable */
 		else if(NumCols == Ndim)
 		{
-			print_nodes_vectorial_variable_to_csv(csv_file,Nodal_Field,ActiveNodes,Output_Commands);
+			print_nodes_vectorial_variable_to_csv(csv_file,Nodal_Field,Coordinates,ActiveNodes,Output_Commands);
 		}
 		/* Tensorial variable */
 		else if(NumCols == Ndim*Ndim)
 		{
-			print_nodes_tensorial_variable_to_csv(csv_file,Nodal_Field,ActiveNodes,Output_Commands);
+			print_nodes_tensorial_variable_to_csv(csv_file,Nodal_Field,Coordinates,ActiveNodes,Output_Commands);
 		}
 
 		/* Close the file */
@@ -58,8 +58,8 @@ void path_nodes_analysis_csv__InOutFun__(Matrix Nodal_Field, char * Name_File, M
 
 /*****************************************************************/
 
-void path_particles_analysis_csv__InOutFun__(Matrix Particle_Field, char * Name_File, Event Output_Commands,
-											 int idx, int TimeStep, double DeltaTimeStep)
+void path_particles_analysis_csv__InOutFun__(Matrix Particle_Field, Matrix Coordinates, char * Name_File,
+											 Event Output_Commands, int idx, int TimeStep, double DeltaTimeStep)
 {
 	int Ndim    = NumberDimensions;
 	int NumCols = Particle_Field.N_cols;
@@ -79,17 +79,17 @@ void path_particles_analysis_csv__InOutFun__(Matrix Particle_Field, char * Name_
 		/* Scalar variable */
 		if(NumCols == 1)
 		{
-			print_particles_scalar_variable_to_csv(csv_file,Particle_Field,Output_Commands);
+			print_particles_scalar_variable_to_csv(csv_file,Particle_Field,Coordinates,Output_Commands);
 		}
 		/* Vectorial variable */
 		else if(NumCols == Ndim)
 		{
-			print_particles_vectorial_variable_to_csv(csv_file,Particle_Field,Output_Commands);
+			print_particles_vectorial_variable_to_csv(csv_file,Particle_Field,Coordinates,Output_Commands);
 		}
 		/* Tensorial variable */
 		else if(NumCols == Ndim*Ndim)
 		{
-			print_particles_tensorial_variable_to_csv(csv_file,Particle_Field,Output_Commands);
+			print_particles_tensorial_variable_to_csv(csv_file,Particle_Field,Coordinates,Output_Commands);
 		}
 
 		/* Close the file */
@@ -108,23 +108,25 @@ static void standard_error(char * Error_message)
 
 /*****************************************************************/
 
-static void print_nodes_scalar_variable_to_csv(FILE * csv_file, Matrix Variable, Mask ActiveNodes, Event Output_Commands)
+static void print_nodes_scalar_variable_to_csv(FILE * csv_file, Matrix Variable, Matrix Coordinates, Mask ActiveNodes, Event Output_Commands)
 {
 	int Idx;
 	int Idx_mask;
+
+	fprintf(csv_file,"x,y,z,var \n");
 
 	for(int i = 0 ; i< Output_Commands.Lenght_Path ; i++)
 	{
 		Idx = Output_Commands.Idx_Path[i];
 		Idx_mask = ActiveNodes.Nodes2Mask[Idx];
 		
-		if(Idx_mask == - 1)
-		{
-        	fprintf(csv_file,"0.0 \n");
-    	}
-    	else
+		if(Idx_mask != - 1)
     	{
-          	fprintf(csv_file,"%lf \n",Variable.nV[Idx_mask]);  		
+          	fprintf(csv_file,"%lf,%lf,%lf,%lf \n",
+					Coordinates.nM[Idx_mask][0],
+					Coordinates.nM[Idx_mask][1],
+					Coordinates.nM[Idx_mask][2],
+					Variable.nV[Idx_mask]);  		
     	}
 	}
 
@@ -132,39 +134,43 @@ static void print_nodes_scalar_variable_to_csv(FILE * csv_file, Matrix Variable,
 
 /*****************************************************************/
 
-static void print_nodes_vectorial_variable_to_csv(FILE * csv_file, Matrix Variable, Mask ActiveNodes, Event Output_Commands)
+static void print_nodes_vectorial_variable_to_csv(FILE * csv_file, Matrix Variable, Matrix Coordinates, Mask ActiveNodes, Event Output_Commands)
 {
 	int Idx;
 	int Idx_mask;
 	int Ndim = NumberDimensions;
+
+	if(Ndim == 2)
+	{
+		fprintf(csv_file,"x,y,z,var.x,var.y \n");
+	}
+	else if(Ndim == 3)
+	{
+		fprintf(csv_file,"x,y,z,var.x,var.y,var.z \n");
+	}			
 	
 	for(int i = 0 ; i<Output_Commands.Lenght_Path ; i++)
 	{
 		Idx = Output_Commands.Idx_Path[i];
 		Idx_mask = ActiveNodes.Nodes2Mask[Idx];
 
-		if(Idx_mask == - 1)
+		if(Idx_mask != - 1)
 		{
 			if(Ndim == 2)
 			{
-				fprintf(csv_file,"0.0;0.0 \n");
-			}
-			else if(Ndim == 3)
-			{
-				fprintf(csv_file,"0.0;0.0;0.0 \n");
-			}
-		}
-		else
-		{
-			if(Ndim == 2)
-			{
-				fprintf(csv_file,"%lf;%lf \n",
+				fprintf(csv_file,"%lf,%lf,%lf,%lf,%lf \n",
+						Coordinates.nM[Idx_mask][0],
+						Coordinates.nM[Idx_mask][1],
+						Coordinates.nM[Idx_mask][2],
 						Variable.nM[Idx_mask][0],
 						Variable.nM[Idx_mask][1]);
 			}
 			else if(Ndim == 3)
 			{
-				fprintf(csv_file,"%lf;%lf;%lf \n",
+				fprintf(csv_file,"%lf,%lf,%lf,%lf,%lf,%lf \n",
+						Coordinates.nM[Idx_mask][0],
+						Coordinates.nM[Idx_mask][1],
+						Coordinates.nM[Idx_mask][2],
 						Variable.nM[Idx_mask][0],
 						Variable.nM[Idx_mask][1],
 						Variable.nM[Idx_mask][2]);
@@ -177,36 +183,35 @@ static void print_nodes_vectorial_variable_to_csv(FILE * csv_file, Matrix Variab
 
 /*****************************************************************/
 
-static void print_nodes_tensorial_variable_to_csv(FILE * csv_file, Matrix Variable, Mask ActiveNodes, Event Output_Commands)
+static void print_nodes_tensorial_variable_to_csv(FILE * csv_file, Matrix Variable, Matrix Coordinates, Mask ActiveNodes, Event Output_Commands)
 {
 	int Idx;
 	int Idx_mask;
 	int Ndim = NumberDimensions;
+
+	if(Ndim == 2)
+	{
+		fprintf(csv_file,"x,y,z,var.xx,var.xy,var.yx,var.yy \n");
+	}
+	else if(Ndim == 3)
+	{
+		fprintf(csv_file,"x,y,z,var.xx,var.xy,var.xz,var.yx,var.yy,var.yz,var.zx,var.zy,var.zz \n");
+	}	
 	
 	for(int i = 0 ; i<Output_Commands.Lenght_Path ; i++)
 	{
 		Idx = Output_Commands.Idx_Path[i];
 		Idx_mask = ActiveNodes.Nodes2Mask[Idx];
 
-		if(Idx_mask == - 1)
+		if(Idx_mask != - 1)
 		{
 			if(Ndim == 2)
 			{
 				fprintf(csv_file,
-						"0.0;0.0;0.0;0.0 \n");
-			}
-			else if(Ndim == 3)
-			{
-				fprintf(csv_file,
-						"0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0 \n");
-			}
-		}
-		else
-		{
-			if(Ndim == 2)
-			{
-				fprintf(csv_file,
-						"%lf;%lf;%lf;%lf \n",
+						"%lf,%lf,%lf,%lf,%lf,%lf,%lf \n",
+						Coordinates.nM[Idx_mask][0],
+						Coordinates.nM[Idx_mask][1],
+						Coordinates.nM[Idx_mask][2],
 						Variable.nM[Idx_mask][0],
 						Variable.nM[Idx_mask][1],
 						Variable.nM[Idx_mask][2],
@@ -215,7 +220,10 @@ static void print_nodes_tensorial_variable_to_csv(FILE * csv_file, Matrix Variab
 			else if(Ndim == 3)
 			{
 				fprintf(csv_file,
-						"%lf;%lf;%lf;%lf;%lf;%lf;%lf;%lf;%lf \n",
+						"%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf \n",
+						Coordinates.nM[Idx_mask][0],
+						Coordinates.nM[Idx_mask][1],
+						Coordinates.nM[Idx_mask][2],
 						Variable.nM[Idx_mask][0],
 						Variable.nM[Idx_mask][1],
 						Variable.nM[Idx_mask][2],
@@ -233,25 +241,41 @@ static void print_nodes_tensorial_variable_to_csv(FILE * csv_file, Matrix Variab
 
 /*****************************************************************/
 
-static void print_particles_scalar_variable_to_csv(FILE * csv_file, Matrix Variable, Event Output_Commands)
+static void print_particles_scalar_variable_to_csv(FILE * csv_file, Matrix Variable, Matrix Coordinates, Event Output_Commands)
 {
 	int Idx;
+	int Ndim = NumberDimensions;
+
+	fprintf(csv_file,"x,y,z,var \n");
 
 	for(int i = 0 ; i< Output_Commands.Lenght_Path ; i++)
 	{
 		Idx = Output_Commands.Idx_Path[i];
 
-        fprintf(csv_file,"%lf \n",Variable.nV[Idx]);
+        fprintf(csv_file,"%lf,%lf,%lf,%lf \n",
+        		Coordinates.nM[Idx][0],
+				Coordinates.nM[Idx][1],
+				Coordinates.nM[Idx][2],
+        		Variable.nV[Idx]);
 	}
 
 }
 
 /*****************************************************************/
 
-static void print_particles_vectorial_variable_to_csv(FILE * csv_file, Matrix Variable, Event Output_Commands)
+static void print_particles_vectorial_variable_to_csv(FILE * csv_file, Matrix Variable, Matrix Coordinates, Event Output_Commands)
 {
 	int Idx;
 	int Ndim = NumberDimensions;
+
+	if(Ndim == 2)
+	{
+		fprintf(csv_file,"x,y,z,var.x,var.y \n");
+	}
+	else if(Ndim == 3)
+	{
+		fprintf(csv_file,"x,y,z,var.x,var.y,var.z \n");
+	}	
 	
 	for(int i = 0 ; i<Output_Commands.Lenght_Path ; i++)
 	{
@@ -259,13 +283,19 @@ static void print_particles_vectorial_variable_to_csv(FILE * csv_file, Matrix Va
 
 		if(Ndim == 2)
 			{
-				fprintf(csv_file,"%lf;%lf \n",
+				fprintf(csv_file,"%lf,%lf,%lf,%lf,%lf \n",
+						Coordinates.nM[Idx][0],
+						Coordinates.nM[Idx][1],
+						Coordinates.nM[Idx][2],
 						Variable.nM[Idx][0],
 						Variable.nM[Idx][1]);
 			}
 		else if(Ndim == 3)
 			{
-				fprintf(csv_file,"%lf;%lf;%lf \n",
+				fprintf(csv_file,"%lf,%lf,%lf,%lf,%lf,%lf \n",
+						Coordinates.nM[Idx][0],
+						Coordinates.nM[Idx][1],
+						Coordinates.nM[Idx][2],
 						Variable.nM[Idx][0],
 						Variable.nM[Idx][1],
 						Variable.nM[Idx][2]);
@@ -277,10 +307,19 @@ static void print_particles_vectorial_variable_to_csv(FILE * csv_file, Matrix Va
 
 /*****************************************************************/
 
-static void print_particles_tensorial_variable_to_csv(FILE * csv_file, Matrix Variable, Event Output_Commands)
+static void print_particles_tensorial_variable_to_csv(FILE * csv_file, Matrix Variable, Matrix Coordinates, Event Output_Commands)
 {
 	int Idx;
 	int Ndim = NumberDimensions;
+
+	if(Ndim == 2)
+	{
+		fprintf(csv_file,"x,y,z,var.xx,var.xy,var.yx,var.yy \n");
+	}
+	else if(Ndim == 3)
+	{
+		fprintf(csv_file,"x,y,z,var.xx,var.xy,var.xz,var.yx,var.yy,var.yz,var.zx,var.zy,var.zz \n");
+	}
 	
 	for(int i = 0 ; i<Output_Commands.Lenght_Path ; i++)
 	{
@@ -288,7 +327,10 @@ static void print_particles_tensorial_variable_to_csv(FILE * csv_file, Matrix Va
 
 		if(Ndim == 2)
 			{
-				fprintf(csv_file,"%lf;%lf;%lf;%lf \n",
+				fprintf(csv_file,"%lf,%lf,%lf,%lf,%lf,%lf,%lf \n",
+						Coordinates.nM[Idx][0],
+						Coordinates.nM[Idx][1],
+						Coordinates.nM[Idx][2],
 						Variable.nM[Idx][0],
 						Variable.nM[Idx][1],
 						Variable.nM[Idx][2],
@@ -296,7 +338,10 @@ static void print_particles_tensorial_variable_to_csv(FILE * csv_file, Matrix Va
 			}
 		else if(Ndim == 3)
 			{
-				fprintf(csv_file,"%lf;%lf;%lf;%lf;%lf;%lf;%lf;%lf;%lf \n",
+				fprintf(csv_file,"%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf \n",
+						Coordinates.nM[Idx][0],
+						Coordinates.nM[Idx][1],
+						Coordinates.nM[Idx][2],
 						Variable.nM[Idx][0],
 						Variable.nM[Idx][1],
 						Variable.nM[Idx][2],

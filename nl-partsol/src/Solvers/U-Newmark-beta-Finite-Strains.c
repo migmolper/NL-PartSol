@@ -2121,32 +2121,32 @@ static void nodal_output_selector(GaussPoint MPM_Mesh,
 
     if(Out_nodal_path_csv[i].Out_csv_nodes_path_Velocity)
     {
-      path_nodes_analysis_csv__InOutFun__(Velocity, "Nodal_path_velocity_csv", ActiveNodes, Out_nodal_path_csv[i], i, TimeStep, DeltaTimeStep);
+      path_nodes_analysis_csv__InOutFun__(Velocity, FEM_Mesh.Coordinates,"Nodal_path_velocity_csv", ActiveNodes, Out_nodal_path_csv[i], i, TimeStep, DeltaTimeStep);
     }
 
     if(Out_nodal_path_csv[i].Out_csv_nodes_path_Acceleration)
     {
-      path_nodes_analysis_csv__InOutFun__(Acceleration, "Nodal_path_acceleration_csv", ActiveNodes, Out_nodal_path_csv[i], i, TimeStep, DeltaTimeStep);
+      path_nodes_analysis_csv__InOutFun__(Acceleration, FEM_Mesh.Coordinates,"Nodal_path_acceleration_csv", ActiveNodes, Out_nodal_path_csv[i], i, TimeStep, DeltaTimeStep);
     }
 
     if(Out_nodal_path_csv[i].Out_csv_nodes_path_D_Displacement)
     {
-      path_nodes_analysis_csv__InOutFun__(D_Displacement, "Nodal_path_displacement_csv", ActiveNodes, Out_nodal_path_csv[i], i, TimeStep, DeltaTimeStep);
+      path_nodes_analysis_csv__InOutFun__(D_Displacement, FEM_Mesh.Coordinates,"Nodal_path_displacement_csv", ActiveNodes, Out_nodal_path_csv[i], i, TimeStep, DeltaTimeStep);
     }
 
     if(Out_nodal_path_csv[i].Out_csv_nodes_path_Forces)
     {
-      path_nodes_analysis_csv__InOutFun__(Forces, "Nodal_path_forces_csv", ActiveNodes, Out_nodal_path_csv[i], i, TimeStep, DeltaTimeStep);
+      path_nodes_analysis_csv__InOutFun__(Forces, FEM_Mesh.Coordinates,"Nodal_path_forces_csv", ActiveNodes, Out_nodal_path_csv[i], i, TimeStep, DeltaTimeStep);
     }
 
     if(Out_nodal_path_csv[i].Out_csv_nodes_path_Reactions)
     {
-      path_nodes_analysis_csv__InOutFun__(Reactions, "Nodal_path_reactions_csv", ActiveNodes, Out_nodal_path_csv[i], i, TimeStep, DeltaTimeStep);
+      path_nodes_analysis_csv__InOutFun__(Reactions, FEM_Mesh.Coordinates,"Nodal_path_reactions_csv", ActiveNodes, Out_nodal_path_csv[i], i, TimeStep, DeltaTimeStep);
     }
 
     if(Out_nodal_path_csv[i].Out_csv_nodes_path_Residual)
     {
-      path_nodes_analysis_csv__InOutFun__(Residual, "Nodal_path_residual_csv", ActiveNodes, Out_nodal_path_csv[i], i, TimeStep, DeltaTimeStep);
+      path_nodes_analysis_csv__InOutFun__(Residual, FEM_Mesh.Coordinates,"Nodal_path_residual_csv", ActiveNodes, Out_nodal_path_csv[i], i, TimeStep, DeltaTimeStep);
     }
 
     // if(Out_nodal_path_csv[i].Out_csv_particles_path_damage)
