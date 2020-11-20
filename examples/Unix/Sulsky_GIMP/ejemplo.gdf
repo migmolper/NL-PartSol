@@ -1,18 +1,17 @@
 
-
 # Background mesh definition
 GramsBox (Type=GID,File=FEM_Mesh.msh) {
 
 }
 
 # Time integration
-GramsTime (Type=PCE) {
+GramsTime (Type=NPC) {
     CFL=0.01
     N=15000
 }
 
 # Material points definitions
-GramsSolid2D (File=MPM_Mesh.msh) {
+GramsSolid2D (File=MPM_Mesh.msh,GPxElement=1) {
 
     # List of materials for the GPs
     GramsMaterials (Particles=Material.txt) {
@@ -41,4 +40,8 @@ GramsSolid2D (File=MPM_Mesh.msh) {
 # Outputs 
 GramsOutputs (i=100) {
 	     DIR=Resultados
+       Particles-file=particles
+       Out-velocity=true
+       Out-energy=true
+       Out-displacement=true
 }
