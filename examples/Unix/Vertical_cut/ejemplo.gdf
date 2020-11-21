@@ -1,0 +1,62 @@
+
+# Background mesh definition
+GramsBox (Type=GID,File=Nodes.msh) {
+
+	 GramsBoundary (File=Bottom_wall.txt) { 
+	 	 BcDirichlet V.x NULL
+	 	 BcDirichlet V.y CurveConstat.txt
+	 } 
+
+    GramsBoundary (File=Left_wall.txt) {
+        BcDirichlet V.y NULL
+        BcDirichlet V.x CurveConstat.txt
+    }
+
+    GramsBoundary (File=Right_wall.txt) {
+        BcDirichlet V.y NULL
+        BcDirichlet V.x CurveConstat.txt
+    }
+
+}
+
+# Time integration
+GramsTime (Type=NPC-FS) {
+    CFL=0.3
+    N=14000
+}
+
+
+GramsSolid2D (File=Particles.msh,GPxElement=4) {
+
+    GramsMaterials (Particles=Soil.txt) {
+	    Type=Drucker-Prager-Plane-Strain
+	    Cel=1
+	    rho=1
+	    E=1e5
+	    mu=0.35
+	    Id=0
+    }
+
+  GramsMaterials (Particles=Footing.txt) {
+      Type=Saint-Venant-Kirchhoff
+      Cel=1
+      rho=1
+      E=1e8
+      mu=0.35
+      Id=1
+      }
+    
+    GramsShapeFun (Type=MPMQ4) {
+    }
+
+    GramsBodyForces (Nodes=Footing.txt) {
+	b.y Gravity_Load.txt
+    }
+
+  
+}
+
+# Outputs 
+GramsOutputs (i=1) {
+	     DIR=Resultados
+}
