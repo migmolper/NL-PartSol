@@ -20,8 +20,8 @@ static Tensor compute_finite_stress_tensor_elastic_region(Tensor, Tensor, Materi
 
 /**************************************************************/
 
-Tensor plasticity_Von_Mises(Tensor S_p, Tensor C_total, Tensor F_plastic, Tensor F_p_n1, 
-                					  double * ptr_EPS, double * ptr_yield_stress, double J, Material MatProp)
+Variables_Constitutive plasticity_Von_Mises(Tensor S_p, Tensor C_total, Tensor F_plastic, Tensor F_total, 
+                					  double J, Variables_Constitutive Inputs_VarCons, Material MatProp)
 /*	
 	Radial returning algorithm for the Von-Mises plastic criterium
 */
@@ -53,11 +53,18 @@ Tensor plasticity_Von_Mises(Tensor S_p, Tensor C_total, Tensor F_plastic, Tensor
   double TOL_VM = TOL_Radial_Returning;
   int iter_max_VM = Max_Iterations_Radial_Returning;
 
+  /*
+    Define output varible
+  */
+  Variables_Constitutive Outputs_VarCons;
+
   /*  
     Get the value of the equivalent plastic stress and yield stress
   */
-  EPS_k = *ptr_EPS;
-  yield_stress_k  = *ptr_yield_stress;
+  EPS_k = Inputs_VarCons.EPS;
+  yield_stress_k  = Inputs_VarCons.Yield_stress;
+
+  
 
   /*
     Compute the trial elastic right Cauchy-Green tensor using the intermediate configuration.
@@ -149,7 +156,7 @@ Tensor plasticity_Von_Mises(Tensor S_p, Tensor C_total, Tensor F_plastic, Tensor
   /*
     Get the stress tensor in the reference configuration
   */
-  contravariant_pull_back_tensor__TensorLib__(S_p, sigma_k1, F_p_n1);
+  contravariant_pull_back_tensor__TensorLib__(S_p, sigma_k1, F_total);
 	
   for(int i = 0 ; i<Ndim ; i++)
     {
@@ -158,12 +165,6 @@ Tensor plasticity_Von_Mises(Tensor S_p, Tensor C_total, Tensor F_plastic, Tensor
         S_p.N[i][j] *= J;
       }
     }
-
-  /*
-    Update equivalent plastic stress and yield stress
-  */
-  *ptr_EPS = EPS_k;
-  *ptr_yield_stress = yield_stress_k;
 
   /*
     Free memory
@@ -176,9 +177,11 @@ Tensor plasticity_Von_Mises(Tensor S_p, Tensor C_total, Tensor F_plastic, Tensor
   free__TensorLib__(sigma_k1);
 
   /*
-    Return stress tensor
+    Return yield stress and EPS updated
   */
-  return S_p;
+  Outputs_VarCons.EPS = EPS_k;
+  Outputs_VarCons.Yield_stress = yield_stress_k;
+return Outputs_VarCons;
 }
 
 

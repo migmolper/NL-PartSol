@@ -683,4 +683,19 @@ typedef struct {
 
 /*******************************************************/
 
+/*! \struct Variables_Constitutive
+  Structure with output control
+ */
+typedef struct
+{
+
+  double EPS;
+  double Cohesion;
+  double Yield_stress;
+
+} Variables_Constitutive;
+
+
+/*******************************************************/
+
 #endif

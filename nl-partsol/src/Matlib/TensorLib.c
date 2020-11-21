@@ -700,7 +700,7 @@ Tensor deviatoric_component__TensorLib__(Tensor A, double A_vol)
   {
     for(int j = 0 ; j<Ndim ; j++)
     {
-      A_dev.N[i][j] =  A_dev.N[i][j] - (i == j)*A_vol;
+      A_dev.N[i][j] =  A.N[i][j] - (i == j)*A_vol;
     }
   }
 

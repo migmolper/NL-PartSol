@@ -18,6 +18,7 @@ bool Is_thickness = false;
 bool Is_Ceps = false;
 bool Is_Gf = false;
 bool Is_ft = false;
+bool Is_E_p0 = false;
 bool Is_heps = false;
 bool Is_Wc = false;
 bool Is_yield_stress = false;
@@ -299,6 +300,12 @@ GramsMaterials (Particles=route.txt) {
 	    Mat_GP.heps = atof(Parse_Mat_Prop[1]);
 	  }
 	  /**************************************************/
+	  else if(strcmp(Parse_Mat_Prop[0],"Reference-Plastic-Strain") == 0)
+	  {
+	    Is_E_p0 = true;
+	    Mat_GP.E_plastic_reference = atof(Parse_Mat_Prop[1]);
+	  } 
+	  /**************************************************/
 	  else if(strcmp(Parse_Mat_Prop[0],"Wc") == 0)
 	  {
 	    Is_Wc = true;
@@ -500,7 +507,7 @@ static void check_Solid_Rigid_Material(Material Mat_particle)
 		fprintf(stderr,"%s : %s \n",
 			"Error in GramsMaterials()",
 			"Some parameter is missed for Solid Rigid material");
-		fputs(Is_rho ? "Density : true" : "Density : false", stdout);
+		fputs(Is_rho ? "Density : true \n" : "Density : false \n", stdout);
 		exit(EXIT_FAILURE);
 	}
 }
@@ -522,10 +529,10 @@ static void check_Linear_Elastic_Material(Material Mat_particle)
 		fprintf(stderr,"%s : %s \n",
 			"Error in GramsMaterials()",
 			"Some parameter is missed for Linear Elastic material");
-		fputs(Is_rho ? "Density : true" : "Density : false", stdout);
-		fputs(Is_Cel ? "Celerity : true" : "Celerity : false", stdout);
-		fputs(Is_E   ? "Elastic modulus : true" : "Elastic modulus : false", stdout);
-		fputs(Is_nu  ? "Poisson modulus : true" : "Poisson modulus : false", stdout);
+		fputs(Is_rho ? "Density : true \n" : "Density : false \n", stdout);
+		fputs(Is_Cel ? "Celerity : true \n" : "Celerity : false \n", stdout);
+		fputs(Is_E   ? "Elastic modulus : true \n" : "Elastic modulus : false \n", stdout);
+		fputs(Is_nu  ? "Poisson modulus : true \n" : "Poisson modulus : false \n", stdout);
 		exit(EXIT_FAILURE);
 	}	
 }
@@ -547,10 +554,10 @@ static void check_Saint_Venant_Kirchhoff_Material(Material Mat_particle)
 		fprintf(stderr,"%s : %s \n",
 			"Error in GramsMaterials()",
 			"Some parameter is missed for Saint-Venant-Kirchhoff material");
-		fputs(Is_rho ? "Density : true" : "Density : false", stdout);
-		fputs(Is_Cel ? "Celerity : true" : "Celerity : false", stdout);
-		fputs(Is_E   ? "Elastic modulus : true" : "Elastic modulus : false", stdout);
-		fputs(Is_nu  ? "Poisson modulus : true" : "Poisson modulus : false", stdout);
+		fputs(Is_rho ? "Density : true \n" : "Density : false \n", stdout);
+		fputs(Is_Cel ? "Celerity : true \n" : "Celerity : false \n", stdout);
+		fputs(Is_E   ? "Elastic modulus : true \n" : "Elastic modulus : false \n", stdout);
+		fputs(Is_nu  ? "Poisson modulus : true \n" : "Poisson modulus : false \n", stdout);
 		exit(EXIT_FAILURE);
 	}
 }
@@ -572,10 +579,10 @@ static void check_Neo_Hookean_Wriggers_Material(Material Mat_particle)
 		fprintf(stderr,"%s : %s \n",
 			"Error in GramsMaterials()",
 			"Some parameter is missed for Neo-Hookean material");
-		fputs(Is_rho ? "Density : true" : "Density : false", stdout);
-		fputs(Is_Cel ? "Celerity : true" : "Celerity : false", stdout);
-		fputs(Is_E   ? "Elastic modulus : true" : "Elastic modulus : false", stdout);
-		fputs(Is_nu  ? "Poisson modulus : true" : "Poisson modulus : false", stdout);
+		fputs(Is_rho ? "Density : true \n" : "Density : false \n", stdout);
+		fputs(Is_Cel ? "Celerity : true \n" : "Celerity : false \n", stdout);
+		fputs(Is_E   ? "Elastic modulus : true \n" : "Elastic modulus : false \n", stdout);
+		fputs(Is_nu  ? "Poisson modulus : true \n" : "Poisson modulus : false \n", stdout);
 		exit(EXIT_FAILURE);
 	}
 }
@@ -613,8 +620,7 @@ static void check_Von_Mises_Material(Material Mat_particle)
 
 static void check_Drucker_Prager_Material(Material Mat_particle)
 {
-	if(Is_rho && Is_Cel && Is_E && Is_nu && Is_cohesion && 
-	   Is_H && Is_Hexp && Is_friction_angle && Is_dilatancy_angle)
+	if(Is_rho && Is_Cel && Is_E && Is_nu && Is_cohesion && Is_Hexp && Is_E_p0 && Is_friction_angle && Is_dilatancy_angle)
 	{
 		printf("\t -> %s \n","Drucker-Prager material");
 		printf("\t \t -> %s : %f \n","Celerity",Mat_particle.Cel);
@@ -622,6 +628,7 @@ static void check_Drucker_Prager_Material(Material Mat_particle)
 		printf("\t \t -> %s : %f \n","Elastic modulus",Mat_particle.E);
 		printf("\t \t -> %s : %f \n","Poisson modulus",Mat_particle.nu);
 		printf("\t \t -> %s : %f \n","Cohesion",Mat_particle.cohesion_reference);
+		printf("\t \t -> %s : %f \n","Reference plastic strain",Mat_particle.E_plastic_reference);
 		printf("\t \t -> %s : %f \n","Hardening exponent",Mat_particle.hardening_exp);
 		printf("\t \t -> %s : %f \n","Friction angle",Mat_particle.friction_angle);
 		printf("\t \t -> %s : %f \n","Dilatancy angle",Mat_particle.dilatancy_angle);
@@ -635,7 +642,8 @@ static void check_Drucker_Prager_Material(Material Mat_particle)
 		fputs(Is_Cel ? "Celerity : true \n" : "Celerity : false \n", stdout);
 		fputs(Is_E   ? "Elastic modulus : true \n" : "Elastic modulus : false \n", stdout);
 		fputs(Is_nu  ? "Poisson modulus : true \n" : "Poisson modulus : false \n", stdout);
-		fputs(Is_cohesion  ? "Cohesion : true \n" : "Cohesion : false", stdout);
+		fputs(Is_cohesion  ? "Cohesion : true \n" : "Cohesion : false \n", stdout);
+		fputs(Is_E_p0 ? "Reference plastic strain : true \n" : "Reference plastic strain : false \n", stdout);
 		fputs(Is_Hexp  ? "Hardening exponent : true \n" : "Hardening exponent : false \n", stdout);
 		fputs(Is_friction_angle  ? "Friction angle : true \n" : "Friction angle : false \n", stdout);
 		fputs(Is_dilatancy_angle  ? "Dilatancy angle : true \n" : "Dilatancy angle : false \n", stdout);
