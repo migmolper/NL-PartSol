@@ -703,13 +703,13 @@ typedef struct {
   bool Out_csv_nodes_path_Reactions;
   bool Out_csv_nodes_path_Residual; 
 
-  bool Out_csv_particles_path_damage;
-  bool Out_csv_particles_path_velocity;
-  bool Out_csv_particles_path_acceleration;
-  bool Out_csv_particles_path_displacement;
-  bool Out_csv_particles_path_stress;
-  bool Out_csv_particles_path_strain;
-  bool Out_csv_particles_path_deformation_gradient;
+  bool Out_csv_particles_path_Damage;
+  bool Out_csv_particles_path_Velocity;
+  bool Out_csv_particles_path_Acceleration;
+  bool Out_csv_particles_path_Displacement;
+  bool Out_csv_particles_path_Stress;
+  bool Out_csv_particles_path_Strain;
+  bool Out_csv_particles_path_Deformation_gradient;
 
   /*!
     Output selector Vtk

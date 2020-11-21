@@ -21,34 +21,31 @@ char * RestartFile;
 char * TimeIntegrationScheme;
 char * Formulation;
 
-
+/*
+  Auxiliar functions for the main
+*/
+void nlpartsol_help_message();
 void globalfree(Mesh,GaussPoint);
+
 
 int main(int argc, char * argv[])
 {  
-  /* Read kind of system */
-  puts("*************************************************\n");
-#ifdef __linux__
-  puts("Linux system");
-#endif		
-
-#ifdef __APPLE__
-  puts("Mac OSX system");	
-#endif
-  
-#ifdef _WIN32 
-  puts("WIN32 system");	
-#endif
-
   int InitialStep;
-  bool Is_New_Simulation;
-  bool Is_Restart_Simulation;
+  bool Is_New_Simulation = false;
+  bool Is_Restart_Simulation = false;
   Mesh FEM_Mesh;
   GaussPoint MPM_Mesh;
 
   /*********************************************************************/
   /************ Read simulation file and kind of simulation ************/
   /*********************************************************************/
+  if(argc == 2)
+    {      
+      if((strcmp(argv[1],"--help") == 0) || (strcmp(argv[1],"-h") == 0))
+      { 
+        nlpartsol_help_message();
+      }      
+    }
   if(argc == 3)
     {      
       Formulation = argv[1];
@@ -181,6 +178,35 @@ int main(int argc, char * argv[])
    
 }
 
+/*********************************************************************/
+
+void nlpartsol_help_message()
+{
+
+puts("Non-Linear Particle Solver (NL-PartSol)");
+
+  /* Read kind of system */
+#ifdef __linux__
+  puts("This is the Linux version of the programa.");
+#endif    
+
+#ifdef __APPLE__
+  puts("This is the Mac OSX version of the program."); 
+#endif
+  
+#ifdef _WIN32 
+  puts("This is the Windows version of the program."); 
+#endif
+
+puts("Usage : nl-partsol -V commands.nlp");
+
+puts("The creator of NL-PartSol is Miguel Molinos");
+
+puts("mails to m.molinos@alumnos.upm.es (Madrid-Spain)");
+
+exit(EXIT_SUCCESS);
+}
+
 
 /*********************************************************************/
 
@@ -226,3 +252,5 @@ void globalfree(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
   }
       
 }
+
+/*********************************************************************/

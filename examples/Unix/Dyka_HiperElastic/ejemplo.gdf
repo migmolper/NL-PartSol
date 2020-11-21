@@ -7,7 +7,7 @@ GramsBox (Type=GID,File=Nodes.msh) {
 # Time integration
 GramsTime (Type=Newmark-beta-Finite-Strains) {
     CFL=0.9806
-    N=61
+    N=62
     Epsilon=0.0
 }
 
@@ -29,7 +29,7 @@ GramsSolid2D (File=Particles.msh,GPxElement=1) {
     }
 
     # Initial conditions for the GPs
-    GramsInitials (Nodes=V10ms_particles.txt) {
+    GramsInitials (Nodes=V10ms_4_particles.txt) {
 	    Value=[10.0,0.0]
     }
   
@@ -42,7 +42,7 @@ GramsOutputs (i=1) {
       Out-stress=true
 }
 
-Out-nodal-path-csv (i_start=60;i_step=1;i_end=60) 
+Out-nodal-path-csv (i_start=61;i_step=1;i_end=61) 
   {
     DIR=Resultados_csv
     PATH=Nodes_Evol_Velocity.txt

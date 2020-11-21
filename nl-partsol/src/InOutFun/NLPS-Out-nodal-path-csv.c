@@ -303,6 +303,14 @@ static Parameters read_CSV_Parameters(FILE * Simulation_file, char * Name_File)
 {
 	Parameters Output_csv;
 
+	/* Default output paramters	*/
+	Output_csv.Out_velocity = false;
+  	Output_csv.Out_acceleration = false;
+  	Output_csv.Out_displacement = false;
+  	Output_csv.Out_forces = false;
+  	Output_csv.Out_reactions = false;
+  	Output_csv.Out_residual = false;
+
 	char * Error_message;
 
 	/* Variables for reading purposes */
@@ -430,6 +438,24 @@ static bool Is_Output_Activate(char * output_field, char * status_text)
 static Event fill_CSV_Parameters(Intervals CSV_Intervals,Parameters CSV_Parameters)
 {
 	Event CSV_Event;
+
+	/* Set outputs to default */
+	CSV_Event.Out_csv_particles_path_Damage = false;
+  	CSV_Event.Out_csv_particles_path_Velocity = false;
+  	CSV_Event.Out_csv_particles_path_Acceleration = false;
+  	CSV_Event.Out_csv_particles_path_Displacement = false;
+  	CSV_Event.Out_csv_particles_path_Stress = false;
+  	CSV_Event.Out_csv_particles_path_Strain = false;
+  	CSV_Event.Out_csv_particles_path_Deformation_gradient = false;
+  	  	
+	CSV_Event.Out_csv_nodes_path_Velocity = false;
+  	CSV_Event.Out_csv_nodes_path_Acceleration = false;
+  	CSV_Event.Out_csv_nodes_path_D_Displacement = false;
+  	CSV_Event.Out_csv_nodes_path_Forces = false;
+  	CSV_Event.Out_csv_nodes_path_Reactions = false;
+  	CSV_Event.Out_csv_nodes_path_Residual = false; 
+
+	/* Auxiliar variable to read the chain of nodes */
 	ChainPtr Chain_Nodes = NULL;
 
 	/* Read outputs intervals */
