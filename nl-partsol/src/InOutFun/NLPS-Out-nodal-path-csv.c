@@ -62,7 +62,7 @@ void NLPS_Out_nodal_path_csv__InOutFun__(char * Name_File)
   /* Simulation file */
   FILE * Sim_dat;
 
-  char * Error_message;
+  char Error_message[MAXW];
 
   int i_CSV = 0;
 
@@ -166,7 +166,7 @@ static int Number_nodal_csv_events(char * Name_File)
 static FILE * Open_and_Check_simulation_file(char * Name_File)
 {
   FILE * Simulation_file = fopen(Name_File,"r");  
-  char * Error_message;
+  char Error_message[MAXW];
   
   if (Simulation_file==NULL)
   {
@@ -183,7 +183,7 @@ static bool Check_Output_directory(char * Output_directory)
 {
 	struct stat info;
 	stat(Output_directory,&info);
-	char * Error_message;
+	char Error_message[MAXW];
 	bool status_check;
 
 	if(S_ISDIR(info.st_mode))
@@ -206,7 +206,7 @@ static bool Check_Path(char * PATH_Name)
 {
 	struct stat info;
 	stat(PATH_Name,&info);
-	char * Error_message;
+	char Error_message[MAXW];
 	bool status_check;
 
 	if(S_ISREG(info.st_mode))
@@ -229,7 +229,7 @@ static Intervals read_CSV_Intervals(char * Interval_message)
 {
 	Intervals CSV_Intervals;
 
-	char * Error_message;
+	char Error_message[MAXW];
 	
 	int Interval_status_1;
 	char * Aux_Parse_1[MAXW] = {NULL};
@@ -311,7 +311,7 @@ static Parameters read_CSV_Parameters(FILE * Simulation_file, char * Name_File)
   	Output_csv.Out_reactions = false;
   	Output_csv.Out_residual = false;
 
-	char * Error_message;
+	char Error_message[MAXW];
 
 	/* Variables for reading purposes */
 	char Line_Out_Prop[MAXC] = {0};
@@ -412,7 +412,7 @@ static Parameters read_CSV_Parameters(FILE * Simulation_file, char * Name_File)
 static bool Is_Output_Activate(char * output_field, char * status_text)
 {
 	bool status;
-	char * Error_message;
+	char Error_message[MAXW];
 
 	if(strcmp(status_text,"true") == 0)
 	{

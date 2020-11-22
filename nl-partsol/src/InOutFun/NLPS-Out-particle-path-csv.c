@@ -53,7 +53,7 @@ static Event fill_CSV_Parameters(Intervals,Parameters);
 void NLPS_Out_particles_path_csv__InOutFun__(char * Name_File)
 /*
   Example : 
-  Out-particle-path-csv (i_ini=0;i_step=10;i_end=100) 
+  Out-particles-path-csv (i_ini=0;i_step=10;i_end=100) 
   {
   	DIR=test/Sulsky_MPM	
   	PATH="Particles.txt"
@@ -64,7 +64,7 @@ void NLPS_Out_particles_path_csv__InOutFun__(char * Name_File)
   /* Simulation file */
   FILE * Sim_dat;
 
-  char * Error_message;
+  char Error_message[MAXW];
 
   int i_CSV = 0;
 
@@ -105,8 +105,10 @@ void NLPS_Out_particles_path_csv__InOutFun__(char * Name_File)
 
     	/* Read output period */
     	CSV_Intervals = read_CSV_Intervals(kwords[1]);
+
 	    /* Read csv parameters */
    		CSV_Parameters = read_CSV_Parameters(Sim_dat,Name_File);
+
 	   	/* Fill csv parameters and period */
 	   	Out_particles_path_csv[i_CSV] = fill_CSV_Parameters(CSV_Intervals,CSV_Parameters);
 
@@ -168,7 +170,7 @@ static int Number_particles_csv_events(char * Name_File)
 static FILE * Open_and_Check_simulation_file(char * Name_File)
 {
   FILE * Simulation_file = fopen(Name_File,"r");  
-  char * Error_message;
+  char Error_message[MAXW];
   
   if (Simulation_file==NULL)
   {
@@ -185,7 +187,7 @@ static bool Check_Output_directory(char * Output_directory)
 {
 	struct stat info;
 	stat(Output_directory,&info);
-	char * Error_message;
+	char Error_message[MAXW];
 	bool status_check;
 
 	if(S_ISDIR(info.st_mode))
@@ -208,7 +210,7 @@ static bool Check_Path(char * PATH_Name)
 {
 	struct stat info;
 	stat(PATH_Name,&info);
-	char * Error_message;
+	char Error_message[MAXW];
 	bool status_check;
 
 	if(S_ISREG(info.st_mode))
@@ -231,7 +233,7 @@ static Intervals read_CSV_Intervals(char * Interval_message)
 {
 	Intervals CSV_Intervals;
 
-	char * Error_message;
+	char Error_message[MAXW];
 	
 	int Interval_status_1;
 	char * Aux_Parse_1[MAXW] = {NULL};
@@ -314,7 +316,7 @@ static Parameters read_CSV_Parameters(FILE * Simulation_file, char * Name_File)
   	Output_csv.Out_Strain = false;
   	Output_csv.Out_Deformation_gradient = false;
 
-	char * Error_message;
+	char Error_message[MAXW];
 
 	/* Variables for reading purposes */
 	char Line_Out_Prop[MAXC] = {0};
@@ -419,7 +421,7 @@ static Parameters read_CSV_Parameters(FILE * Simulation_file, char * Name_File)
 static bool Is_Output_Activate(char * output_field, char * status_text)
 {
 	bool status;
-	char * Error_message;
+	char Error_message[MAXW];
 
 	if(strcmp(status_text,"true") == 0)
 	{

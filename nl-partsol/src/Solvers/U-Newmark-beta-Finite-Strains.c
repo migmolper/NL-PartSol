@@ -17,7 +17,10 @@ double beta_Newmark_beta;
 double gamma_Newmark_beta;
 double TOL_Newmark_beta;
 Event * Out_nodal_path_csv;
+Event * Out_particles_path_csv;
 int Number_Out_nodal_path_csv;
+int Number_Out_particles_path_csv;
+
 
 typedef struct
 {
@@ -53,7 +56,7 @@ static Tensor compute_Nodal_Tangent_Stiffness_Material(Tensor,Tensor,Tensor);
 static void   solve_non_reducted_system(Matrix, Matrix, Matrix, Matrix, Newmark_parameters);
 static void   solve_reducted_system(Mask,Matrix, Matrix, Matrix, Matrix, Newmark_parameters);
 static void   update_Particles(Matrix, Matrix, Matrix, GaussPoint, Mesh, Mask, Newmark_parameters);
-static void   nodal_output_selector(GaussPoint, Mesh, Mask, Matrix, Matrix, Matrix, Matrix, Matrix, Matrix, int, int);
+static void   output_selector(GaussPoint, Mesh, Mask, Matrix, Matrix, Matrix, Matrix, Matrix, Matrix, int, int);
 /**************************************************************/
 
 void U_Newmark_beta_Finite_Strains(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int InitialStep)
@@ -241,10 +244,10 @@ void U_Newmark_beta_Finite_Strains(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int Initi
       /*
 	Outputs
       */
-      nodal_output_selector(MPM_Mesh, FEM_Mesh, ActiveNodes,
-                            Velocity, Acceleration, D_Displacement,
-                            Forces, Reactions, Residual,
-                            TimeStep, ResultsTimeStep);
+      output_selector(MPM_Mesh, FEM_Mesh, ActiveNodes,
+                      Velocity, Acceleration, D_Displacement,
+                      Forces, Reactions, Residual,
+                      TimeStep, ResultsTimeStep);
 
     
 
@@ -2091,16 +2094,10 @@ static void update_Particles(Matrix D_Displacement,
 
 /**************************************************************/
 
-static void nodal_output_selector(GaussPoint MPM_Mesh,
-                                  Mesh FEM_Mesh,
-                                  Mask ActiveNodes,
-                                  Matrix Velocity, 
-                                  Matrix Acceleration,
-                                  Matrix D_Displacement,
-                                  Matrix Forces,
-                                  Matrix Reactions,
-                                  Matrix Residual,
-                                  int TimeStep, int ResultsTimeStep)
+static void output_selector(GaussPoint MPM_Mesh, Mesh FEM_Mesh, Mask ActiveNodes,
+                            Matrix Velocity, Matrix Acceleration, Matrix D_Displacement,
+                            Matrix Forces, Matrix Reactions, Matrix Residual,
+                            int TimeStep, int ResultsTimeStep)
 {
 
   /*
@@ -2148,40 +2145,44 @@ static void nodal_output_selector(GaussPoint MPM_Mesh,
     {
       path_nodes_analysis_csv__InOutFun__(Residual, FEM_Mesh.Coordinates,"Nodal_path_residual_csv", ActiveNodes, Out_nodal_path_csv[i], i, TimeStep, DeltaTimeStep);
     }
+  }
 
-    if(Out_nodal_path_csv[i].Out_csv_particles_path_Damage)
+
+  for(int i = 0 ; i<Number_Out_particles_path_csv ; i++)
+  {
+    if(Out_particles_path_csv[i].Out_csv_particles_path_Damage)
     {
-      path_particles_analysis_csv__InOutFun__(MPM_Mesh.Phi.chi, FEM_Mesh.Coordinates, "Particles_path_damage_csv", Out_nodal_path_csv[i], i, TimeStep, DeltaTimeStep);
+      path_particles_analysis_csv__InOutFun__(MPM_Mesh.Phi.chi, MPM_Mesh.Phi.x_GC, "Particles_path_damage_csv", Out_particles_path_csv[i], i, TimeStep, DeltaTimeStep);
     }
 
-    if(Out_nodal_path_csv[i].Out_csv_particles_path_Velocity)
+    if(Out_particles_path_csv[i].Out_csv_particles_path_Velocity)
     {
-      path_particles_analysis_csv__InOutFun__(MPM_Mesh.Phi.vel, FEM_Mesh.Coordinates, "Particles_path_velocity_csv", Out_nodal_path_csv[i], i, TimeStep, DeltaTimeStep);
+      path_particles_analysis_csv__InOutFun__(MPM_Mesh.Phi.vel, MPM_Mesh.Phi.x_GC, "Particles_path_velocity_csv", Out_particles_path_csv[i], i, TimeStep, DeltaTimeStep);
     }
 
-    if(Out_nodal_path_csv[i].Out_csv_particles_path_Acceleration)
+    if(Out_particles_path_csv[i].Out_csv_particles_path_Acceleration)
     {
-      path_particles_analysis_csv__InOutFun__(MPM_Mesh.Phi.acc, FEM_Mesh.Coordinates, "Particles_path_acceleration_csv", Out_nodal_path_csv[i], i, TimeStep, DeltaTimeStep);
+      path_particles_analysis_csv__InOutFun__(MPM_Mesh.Phi.acc, MPM_Mesh.Phi.x_GC, "Particles_path_acceleration_csv", Out_particles_path_csv[i], i, TimeStep, DeltaTimeStep);
     }
 
-    if(Out_nodal_path_csv[i].Out_csv_particles_path_Displacement)
+    if(Out_particles_path_csv[i].Out_csv_particles_path_Displacement)
     {
-      path_particles_analysis_csv__InOutFun__(MPM_Mesh.Phi.dis, FEM_Mesh.Coordinates, "Particles_path_displacement_csv", Out_nodal_path_csv[i], i, TimeStep, DeltaTimeStep);
+      path_particles_analysis_csv__InOutFun__(MPM_Mesh.Phi.dis, MPM_Mesh.Phi.x_GC, "Particles_path_displacement_csv", Out_particles_path_csv[i], i, TimeStep, DeltaTimeStep);
     }
 
-    if(Out_nodal_path_csv[i].Out_csv_particles_path_Stress)
+    if(Out_particles_path_csv[i].Out_csv_particles_path_Stress)
     {
-      path_particles_analysis_csv__InOutFun__(MPM_Mesh.Phi.Stress, FEM_Mesh.Coordinates, "Particles_path_stress_csv", Out_nodal_path_csv[i], i, TimeStep, DeltaTimeStep);
+      path_particles_analysis_csv__InOutFun__(MPM_Mesh.Phi.Stress, MPM_Mesh.Phi.x_GC, "Particles_path_stress_csv", Out_particles_path_csv[i], i, TimeStep, DeltaTimeStep);
     }
 
-    if(Out_nodal_path_csv[i].Out_csv_particles_path_Strain)
+    if(Out_particles_path_csv[i].Out_csv_particles_path_Strain)
     {
-      path_particles_analysis_csv__InOutFun__(MPM_Mesh.Phi.Strain, FEM_Mesh.Coordinates, "Particles_path_strain_csv", Out_nodal_path_csv[i], i, TimeStep, DeltaTimeStep);
+      path_particles_analysis_csv__InOutFun__(MPM_Mesh.Phi.Strain, MPM_Mesh.Phi.x_GC, "Particles_path_strain_csv", Out_particles_path_csv[i], i, TimeStep, DeltaTimeStep);
     }
 
-    if(Out_nodal_path_csv[i].Out_csv_particles_path_Deformation_gradient)
+    if(Out_particles_path_csv[i].Out_csv_particles_path_Deformation_gradient)
     {
-      path_particles_analysis_csv__InOutFun__(MPM_Mesh.Phi.F_n, FEM_Mesh.Coordinates, "Particles_path_deformation_gradient_csv", Out_nodal_path_csv[i], i, TimeStep, DeltaTimeStep);
+      path_particles_analysis_csv__InOutFun__(MPM_Mesh.Phi.F_n, MPM_Mesh.Phi.x_GC, "Particles_path_deformation_gradient_csv", Out_particles_path_csv[i], i, TimeStep, DeltaTimeStep);
     }
 
   }

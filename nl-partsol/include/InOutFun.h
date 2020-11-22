@@ -439,6 +439,7 @@ void path_particles_analysis_csv__InOutFun__(Matrix, Matrix, char *, Event, int,
 
 
 void NLPS_Out_nodal_path_csv__InOutFun__(char * Name_File);
+void NLPS_Out_particles_path_csv__InOutFun__(char * Name_File);
 /*****************************************************************/
 
 #endif

@@ -114,6 +114,7 @@ int main(int argc, char * argv[])
   puts("Read outputs ...");
   GramsOutputs(SimulationFile);
   NLPS_Out_nodal_path_csv__InOutFun__(SimulationFile);
+  NLPS_Out_particles_path_csv__InOutFun__(SimulationFile);
     
   /*********************************************************************/
   /********************** RUN THE MPM CALCULUS *************************/

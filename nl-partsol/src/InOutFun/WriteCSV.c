@@ -17,7 +17,7 @@ static void print_particles_tensorial_variable_to_csv(FILE *, Matrix, Matrix, Ev
 
 /*****************************************************************/
 
-void path_nodes_analysis_csv__InOutFun__(Matrix Nodal_Field, Matrix Coordinates, char * Name_File, Mask ActiveNodes, 
+void path_nodes_analysis_csv__InOutFun__(Matrix Nodal_Field, Matrix Nodes_Coordinates, char * Name_File, Mask ActiveNodes, 
 									     Event Output_Commands, int idx, int TimeStep, double DeltaTimeStep)
 {
 	int Ndim    = NumberDimensions;
@@ -38,17 +38,17 @@ void path_nodes_analysis_csv__InOutFun__(Matrix Nodal_Field, Matrix Coordinates,
 		/* Scalar variable */
 		if(NumCols == 1)
 		{
-			print_nodes_scalar_variable_to_csv(csv_file,Nodal_Field,Coordinates,ActiveNodes,Output_Commands);
+			print_nodes_scalar_variable_to_csv(csv_file,Nodal_Field,Nodes_Coordinates,ActiveNodes,Output_Commands);
 		}
 		/* Vectorial variable */
 		else if(NumCols == Ndim)
 		{
-			print_nodes_vectorial_variable_to_csv(csv_file,Nodal_Field,Coordinates,ActiveNodes,Output_Commands);
+			print_nodes_vectorial_variable_to_csv(csv_file,Nodal_Field,Nodes_Coordinates,ActiveNodes,Output_Commands);
 		}
 		/* Tensorial variable */
 		else if(NumCols == Ndim*Ndim)
 		{
-			print_nodes_tensorial_variable_to_csv(csv_file,Nodal_Field,Coordinates,ActiveNodes,Output_Commands);
+			print_nodes_tensorial_variable_to_csv(csv_file,Nodal_Field,Nodes_Coordinates,ActiveNodes,Output_Commands);
 		}
 
 		/* Close the file */
@@ -58,7 +58,7 @@ void path_nodes_analysis_csv__InOutFun__(Matrix Nodal_Field, Matrix Coordinates,
 
 /*****************************************************************/
 
-void path_particles_analysis_csv__InOutFun__(Matrix Particle_Field, Matrix Coordinates, char * Name_File,
+void path_particles_analysis_csv__InOutFun__(Matrix Particle_Field, Matrix Particles_Coordinates, char * Name_File,
 											 Event Output_Commands, int idx, int TimeStep, double DeltaTimeStep)
 {
 	int Ndim    = NumberDimensions;
@@ -66,8 +66,8 @@ void path_particles_analysis_csv__InOutFun__(Matrix Particle_Field, Matrix Coord
 	int k_start = Output_Commands.i_start;
 	int k_end   = Output_Commands.i_end;
 	int k_step  = Output_Commands.i_step;
-	char * Error_message;
-	char * Name_file_Ts;
+	char Error_message[MAXW];
+	char Name_file_Ts[MAXC];
 	FILE * csv_file;
 
 	if(k_start <= TimeStep && TimeStep <= k_end && TimeStep % k_step == 0)
@@ -79,17 +79,17 @@ void path_particles_analysis_csv__InOutFun__(Matrix Particle_Field, Matrix Coord
 		/* Scalar variable */
 		if(NumCols == 1)
 		{
-			print_particles_scalar_variable_to_csv(csv_file,Particle_Field,Coordinates,Output_Commands);
+			print_particles_scalar_variable_to_csv(csv_file,Particle_Field,Particles_Coordinates,Output_Commands);
 		}
 		/* Vectorial variable */
 		else if(NumCols == Ndim)
 		{
-			print_particles_vectorial_variable_to_csv(csv_file,Particle_Field,Coordinates,Output_Commands);
+			print_particles_vectorial_variable_to_csv(csv_file,Particle_Field,Particles_Coordinates,Output_Commands);
 		}
 		/* Tensorial variable */
 		else if(NumCols == Ndim*Ndim)
 		{
-			print_particles_tensorial_variable_to_csv(csv_file,Particle_Field,Coordinates,Output_Commands);
+			print_particles_tensorial_variable_to_csv(csv_file,Particle_Field,Particles_Coordinates,Output_Commands);
 		}
 
 		/* Close the file */
