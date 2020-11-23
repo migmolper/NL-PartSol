@@ -302,7 +302,7 @@ Material * GramsMaterials(char *, GaussPoint, int);
 
 /*!
   
-  \fn void GramsInitials(char * File, GaussPoint Particles, int GPxElement)
+  \fn void Initial_condition_particles__InOutFun__(char * File, GaussPoint Particles, int GPxElement)
   
   \brief Define initial conditions for the particles
   
@@ -311,7 +311,21 @@ Material * GramsMaterials(char *, GaussPoint, int);
   \param GPxElement : As the particle discretization is performed thorouht 
 
 */
-void GramsInitials(char *, GaussPoint, int);
+void Initial_condition_particles__InOutFun__(char *, GaussPoint, int);
+
+/*****************************************************************/
+
+/*!
+  
+  \fn void Initial_condition_nodes__InOutFun__(char * File, GaussPoint Particles, Mesh FEM_Mesh)
+  
+  \brief Define initial conditions for particles using nodal values
+  
+  \param File: Name of the file with the instructions
+  \param Particles : Particle discretization
+  \param FEM_Mesh
+*/
+void Initial_condition_nodes__InOutFun__(char *, GaussPoint, Mesh);
 
 /*****************************************************************/
 

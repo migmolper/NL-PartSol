@@ -21,6 +21,8 @@ Event * Out_particles_path_csv;
 int Number_Out_nodal_path_csv;
 int Number_Out_particles_path_csv;
 
+bool Initial_condition_particles;
+bool Initial_condition_nodes;
 
 typedef struct
 {
@@ -109,6 +111,7 @@ void U_Newmark_beta_Finite_Strains(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int Initi
   */
   Params = compute_Newmark_parameters(beta, gamma, DeltaTimeStep);
 
+
   for(int TimeStep = InitialStep ; TimeStep<NumTimeStep ; TimeStep++ )
     {
 
@@ -118,8 +121,8 @@ void U_Newmark_beta_Finite_Strains(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int Initi
       print_Status("*************************************************",TimeStep);
       print_Status("First step : Generate Mask ... WORKING",TimeStep);
       /*
-	With the active set of nodes generate a mask to help the algorithm to compute
-	the equilibrium only in the active nodes
+	       With the active set of nodes generate a mask to help the algorithm to compute
+	       the equilibrium only in the active nodes
       */
       ActiveNodes = generate_NodalMask__MeshTools__(FEM_Mesh);
       Nactivenodes = ActiveNodes.Nactivenodes;
@@ -129,8 +132,8 @@ void U_Newmark_beta_Finite_Strains(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int Initi
       print_Status("*************************************************",TimeStep);
       print_Status("Second step : Compute effective mass ... WORKING",TimeStep);
       /*
-	Compute the effective mass matrix as a convex combination of the consistent mass
-	matrix and the lumped mass matrix.
+	       Compute the effective mass matrix as a convex combination of the consistent mass
+	       matrix and the lumped mass matrix.
       */
       Effective_Mass = compute_Nodal_Effective_Mass(MPM_Mesh,FEM_Mesh,ActiveNodes,epsilon);
       print_Status("DONE !!!",TimeStep);
@@ -138,13 +141,14 @@ void U_Newmark_beta_Finite_Strains(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int Initi
       print_Status("*************************************************",TimeStep);
       print_Status("Third step : Compute nodal kinetics ... WORKING",TimeStep);
       /*
-	Compute the nodal values of velocity and acceleration
+        Compute the nodal values of velocity and acceleration
       */
       Velocity = compute_Nodal_Velocity(Effective_Mass,MPM_Mesh,FEM_Mesh,ActiveNodes);
       Acceleration = compute_Nodal_Acceleration(Effective_Mass,MPM_Mesh,FEM_Mesh,ActiveNodes);
+
       imposse_Nodal_Kinetics(FEM_Mesh,Velocity,Acceleration,ActiveNodes,TimeStep);
-      print_Status("DONE !!!",TimeStep);      
-      
+      print_Status("DONE !!!",TimeStep);  
+
       print_Status("*************************************************",TimeStep);
       print_Status("Four step : Compute equilibrium ... WORKING",TimeStep);
       

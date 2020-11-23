@@ -4,7 +4,9 @@
 #define MINVAL(A,B) ((A)<(B) ? (A) : (B))
 
 
-void GramsInitials(char * Name_File, GaussPoint GP_Mesh, int GPxElement)
+/*****************************************************************/
+
+void Initial_condition_particles__InOutFun__(char * Name_File, GaussPoint GP_Mesh, int GPxElement)
 /*
   GramsInitials (Nodes=ListInit.txt) {
   Value=[5.0,0.0,0.0]
@@ -199,3 +201,8 @@ void GramsInitials(char * Name_File, GaussPoint GP_Mesh, int GPxElement)
   /* Close .dat file */
   fclose(Sim_dat);
 }
+
+
+/*****************************************************************/
+
+

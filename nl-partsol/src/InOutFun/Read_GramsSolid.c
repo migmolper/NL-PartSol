@@ -47,7 +47,8 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
   bool Is_GPxElement = false;
   bool Is_GramsShapeFun = false;
   bool Is_GramsMaterials = false;
-  bool Is_GramsInitials = false;
+  bool Is_Particle_Initial = false;
+  bool Is_Nodal_Initial = false;
   bool Is_GramsBodyForces = false;
   bool Is_GramsNeumannBC = false;
 
@@ -112,26 +113,30 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
 	}
       
     }
-    if ((Num_words_parse > 0) &&
-	(strcmp(Parse_GramsSolid2D[0],"GramsShapeFun") == 0)){
+    if ((Num_words_parse > 0) && (strcmp(Parse_GramsSolid2D[0],"GramsShapeFun") == 0))
+    {
       Is_GramsShapeFun = true;
     }
-    if ((Num_words_parse > 0) &&
-	(strcmp(Parse_GramsSolid2D[0],"GramsMaterials") == 0)){
+    if ((Num_words_parse > 0) && (strcmp(Parse_GramsSolid2D[0],"GramsMaterials") == 0))
+    {
       Is_GramsMaterials = true;
       Counter_Materials++;
     }
-    if ((Num_words_parse > 0) &&
-	(strcmp(Parse_GramsSolid2D[0],"GramsInitials") == 0)){
-      Is_GramsInitials = true;
+    if ((Num_words_parse > 0) && (strcmp(Parse_GramsSolid2D[0],"GramsInitials") == 0))
+    {
+      Is_Particle_Initial = true;
     }
-    if ((Num_words_parse > 0) &&
-	(strcmp(Parse_GramsSolid2D[0],"GramsBodyForces") == 0)){
+    if ((Num_words_parse > 0) && (strcmp(Parse_GramsSolid2D[0],"Initial-nodal-values") == 0))
+    {
+      Is_Nodal_Initial = true;
+    }
+    if ((Num_words_parse > 0) && (strcmp(Parse_GramsSolid2D[0],"GramsBodyForces") == 0))
+    {
       Is_GramsBodyForces = true;
       Counter_BodyForces++;
     }
-    if ((Num_words_parse > 0) &&
-	(strcmp(Parse_GramsSolid2D[0],"GramsNeumannBC") == 0)){
+    if ((Num_words_parse > 0) && (strcmp(Parse_GramsSolid2D[0],"GramsNeumannBC") == 0))
+    {
       Is_GramsNeumannBC = true;
       Counter_GramsNeumannBC++;
     }    
@@ -282,44 +287,6 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
       }
       
     }
-
-    /**************************************************/    
-    /************** Read initial values ***************/
-    /**************************************************/    
-    if(Is_GramsInitials){
-      GramsInitials(Name_File,MPM_Mesh,GPxElement);
-    }
-    else{
-      puts("*************************************************");
-      puts(" No initial conditions defined ");
-    }
-    /**************************************************/    
-    /************** Read external forces **************/
-    /**************************************************/    
-    if(Is_GramsNeumannBC){
-      MPM_Mesh.NumNeumannBC = Counter_GramsNeumannBC;
-      MPM_Mesh.F = GramsNeumannBC(Name_File,Counter_GramsNeumannBC,GPxElement);
-    }
-    else{
-      MPM_Mesh.NumNeumannBC = Counter_GramsNeumannBC;
-      puts("*************************************************");
-      printf(" \t %s : \n\t %s \n",
-	     "* No Neumann boundary conditions defined in",
-	     Name_File);
-    }
-    /**************************************************/    
-    /*************** Read body forces *****************/
-    /**************************************************/    
-    if(Is_GramsBodyForces){
-      MPM_Mesh.NumberBodyForces = Counter_BodyForces;
-      MPM_Mesh.B = GramsBodyForces(Name_File,Counter_BodyForces,GPxElement); 
-    }
-    else{
-      MPM_Mesh.NumberBodyForces = Counter_BodyForces;
-      puts("*************************************************");
-      printf(" \t %s : \n\t %s \n",
-	     "* No body forces defined in",Name_File);
-    }
      
     /**************************************************/
     /******** INITIALIZE SHAPE FUNCTIONS **************/
@@ -338,6 +305,50 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
       initialize__LME__(MPM_Mesh,FEM_Mesh);
     }
     printf("\t %s \n","DONE !!");
+
+
+    /**************************************************/    
+    /************** Read initial values ***************/
+    /**************************************************/    
+    if(Is_Particle_Initial)
+    {
+      Initial_condition_particles__InOutFun__(Name_File,MPM_Mesh,GPxElement);
+    }
+    else if(Is_Nodal_Initial)
+    {
+      Initial_condition_nodes__InOutFun__(Name_File,MPM_Mesh,FEM_Mesh);
+    }
+    else{
+      puts("*************************************************");
+      puts(" No initial conditions defined ");
+    }
+    /**************************************************/    
+    /************** Read external forces **************/
+    /**************************************************/    
+    if(Is_GramsNeumannBC){
+      MPM_Mesh.NumNeumannBC = Counter_GramsNeumannBC;
+      MPM_Mesh.F = GramsNeumannBC(Name_File,Counter_GramsNeumannBC,GPxElement);
+    }
+    else{
+      MPM_Mesh.NumNeumannBC = Counter_GramsNeumannBC;
+      puts("*************************************************");
+      printf(" \t %s : \n\t %s \n",
+       "* No Neumann boundary conditions defined in",
+       Name_File);
+    }
+    /**************************************************/    
+    /*************** Read body forces *****************/
+    /**************************************************/    
+    if(Is_GramsBodyForces){
+      MPM_Mesh.NumberBodyForces = Counter_BodyForces;
+      MPM_Mesh.B = GramsBodyForces(Name_File,Counter_BodyForces,GPxElement); 
+    }
+    else{
+      MPM_Mesh.NumberBodyForces = Counter_BodyForces;
+      puts("*************************************************");
+      printf(" \t %s : \n\t %s \n",
+       "* No body forces defined in",Name_File);
+    }
    
     /**************************************************/    
     /************* Free the input data ****************/

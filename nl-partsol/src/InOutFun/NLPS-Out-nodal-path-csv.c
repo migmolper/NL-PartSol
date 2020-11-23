@@ -386,13 +386,9 @@ static Parameters read_CSV_Parameters(FILE * Simulation_file, char * Name_File)
 
 	if(Is_Open && Is_Close)
 	{
-		if(Is_DIR && Is_PATH)
+		if(!Is_DIR || !Is_PATH)
 		{
-			
-		}
-		else
-		{
-	  		sprintf(Error_message,"%s","You forgot to define something or close the statement");
+	  		sprintf(Error_message,"%s","You forgot to define something");
 	  		standard_error(Error_message); 
 		}
 	}
