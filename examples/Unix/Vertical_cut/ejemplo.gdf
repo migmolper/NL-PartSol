@@ -17,6 +17,11 @@ GramsBox (Type=GID,File=Nodes.msh) {
         BcDirichlet V.x CurveConstat.txt
     }
 
+    GramsBoundary (File=Rollers.txt) {
+        BcDirichlet V.y CurveLoad.txt
+        BcDirichlet V.x NULL        
+    }
+
 }
 
 # Time integration
@@ -54,11 +59,6 @@ GramsSolid2D (File=Particles.msh,GPxElement=4) {
     GramsShapeFun (Type=MPMQ4) {
     }
 
-    GramsBodyForces (Nodes=Footing.txt) {
-	b.y Gravity_Load.txt
-    }
-
-  
 }
 
 # Outputs 

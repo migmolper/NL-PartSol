@@ -1,12 +1,12 @@
 BeginZE /Users/migmolper/NL-PartSol/examples/Unix/Vertical_cut/Particles.gid/Particles.vv
-   x -21.8321285247802734 18.65771484375
-   y 19.5122585296630859 -6.78779125213623047
-   z -49.2884788513183594 49.2884788513183594
-   e 8.61023330688476562
+   x 8.30598545074462891 11.0070743560791016
+   y 15.7729339599609375 14.0184450149536133
+   z -81.3372039794921875 81.3372039794921875
+   e 9.48815059661865234
    v 0 0 0
    r 1
    m 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1
-   c 5.31818199157714844 5.73216772079467773 0
+   c 9.31999969482421875 14.9583330154418945 0
    pd 0
    pno 0
    pfo 0
@@ -30,4 +30,8 @@ BeginZE /Users/migmolper/NL-PartSol/examples/Unix/Vertical_cut/Particles.gid/Par
    OGLStereo(LeftEyeDistance) 1 0 0 1
    OGLStereo(RightEyeDistance) 0 1 1 1
 EndZE /Users/migmolper/NL-PartSol/examples/Unix/Vertical_cut/Particles.gid/Particles.vv
+
+BeginMirror
+   Mirror 0 Angle 0.0 AngleFake -15.0 SizeFactor 2.0 HeightOffset 0.25 Color #d9e5f24d Backlight Off EdgeStyle No Type Scene DrawMode Mirror
+EndMirror
 

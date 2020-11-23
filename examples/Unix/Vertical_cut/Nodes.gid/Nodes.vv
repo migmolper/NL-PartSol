@@ -1,12 +1,12 @@
 BeginZE /Users/migmolper/NL-PartSol/examples/Unix/Vertical_cut/Nodes.gid/Nodes.vv
-   x -14.8454017639160156 20.0063114166259766
-   y 19.8366851806640625 -2.80115342140197754
-   z -57.2002830505371094 57.2002830505371094
-   e 9.66222572326660156
+   x -14.2044668197631836 24.7329063415527344
+   y 20.8304977416992188 -4.4611821174621582
+   z -59.3453636169433594 59.3453636169433594
+   e 10.4840354919433594
    v 0 0 0
    r 1
    m 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1
-   c 6.63809537887573242 6.66190481185913086 0
+   c 6.79565238952636719 6.34565210342407227 0
    pd 0
    pno 0
    pfo 0
@@ -30,4 +30,8 @@ BeginZE /Users/migmolper/NL-PartSol/examples/Unix/Vertical_cut/Nodes.gid/Nodes.v
    OGLStereo(LeftEyeDistance) 1 0 0 1
    OGLStereo(RightEyeDistance) 0 1 1 1
 EndZE /Users/migmolper/NL-PartSol/examples/Unix/Vertical_cut/Nodes.gid/Nodes.vv
+
+BeginMirror
+   Mirror 0 Angle 0.0 AngleFake -15.0 SizeFactor 2.0 HeightOffset 0.25 Color #d9e5f24d Backlight Off EdgeStyle No Type Scene DrawMode Mirror
+EndMirror
 
