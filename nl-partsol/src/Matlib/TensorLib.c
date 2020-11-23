@@ -739,7 +739,7 @@ void print__TensorLib__(Tensor A)
 	  printf("\n");
 	}
     }
-  else if(A.Order == 2)
+  else if(A.Order == 1)
     {
       for(int i = 0 ; i < Ndim  ; i++)
 	{

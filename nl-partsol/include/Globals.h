@@ -11,12 +11,6 @@ extern char   OutputNodesFile[MAXC];
 extern char   OutputDir[MAXC];
 extern char   Field[10];
 
-/*
-	Define how we want to initialise
-*/
-extern bool Initial_condition_particles;
-extern bool Initial_condition_nodes;
-
 extern double gamma_LME;
 extern double TOL_lambda;
 extern double CFL; /* Courant number (0-1) */

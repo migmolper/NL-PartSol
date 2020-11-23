@@ -8,7 +8,7 @@ static void standard_error(char *);
 static void standard_output(char *);
 static bool Check_List_Nodes(char *);
 static FILE * Open_and_Check_simulation_file(char *);
-static char * Read_list_nodes_file(char *, char *);
+static void Read_list_nodes_file(char *, char *, char *);
 static Tensor Read_initial_values(FILE *);
 static Tensor Read_initial_vectorial_field(char *);
 static void interpolate_initial_values_particles(GaussPoint, Mesh, char *, Tensor);
@@ -26,7 +26,7 @@ void Initial_condition_nodes__InOutFun__(char * Name_File, GaussPoint MPM_Mesh, 
 	/* Simulation file */
 	FILE * Sim_dat;
 
-	char * Route_NODES;
+	char Route_NODES[MAXC];
 	Tensor Field;
 
 	/* Special variables for line-reading */
@@ -57,11 +57,14 @@ void Initial_condition_nodes__InOutFun__(char * Name_File, GaussPoint MPM_Mesh, 
     	{
 
     		/* Read route with the nodes for the initial condition */
-    		Route_NODES = Read_list_nodes_file(kwords[1], Name_File);
+    		Read_list_nodes_file(Route_NODES, kwords[1], Name_File);
+
 	    	/* Read csv parameters */
    			Field = Read_initial_values(Sim_dat);
+
 	   		/* Fill csv parameters and period */
 	   		interpolate_initial_values_particles(MPM_Mesh, FEM_Mesh, Route_NODES, Field);
+
 	   		/* Free memory */
 	   		free__TensorLib__(Field);
 
@@ -109,10 +112,8 @@ static FILE * Open_and_Check_simulation_file(char * Name_File)
 
 /***************************************************************************/
 
-static char * Read_list_nodes_file(char * List_nodes_string, char * Name_File)
+static void Read_list_nodes_file(char * Route_NODES, char * List_nodes_string, char * Name_File)
 {
-
-	char * Route_NODES;
 	char Error_message[MAXW];
 	char Route_Path[MAXC] = {0};
 	
@@ -142,7 +143,6 @@ static char * Read_list_nodes_file(char * List_nodes_string, char * Name_File)
 	  	standard_error(Error_message);
      }
 
-	return Route_NODES;
 }
 
 /***************************************************************************/
@@ -201,6 +201,10 @@ static Tensor Read_initial_values(FILE * Simulation_file)
 		else if((strcmp(Parameter_pars[0],"VELOCITY") == 0) && (Parser_status == 2)) 
  	  	{
  	  		Field = Read_initial_vectorial_field(Parameter_pars[1]);
+ 	  		sprintf(Status_message,"\t -> %s","The initial velocity is :");
+			standard_output(Status_message);
+			print__TensorLib__(Field);
+ 	  		Is_VELOCITY = true;
 	  	}
 	  	else if((strcmp(Parameter_pars[0],"}") == 0) && (Parser_status == 1))
 	  	{
@@ -221,13 +225,7 @@ static Tensor Read_initial_values(FILE * Simulation_file)
 	  	standard_error(Error_message); 
 	}
 
-	if(Is_VELOCITY)
-	{
-		sprintf(Status_message,"\t -> %s","The initial velocity is :");
-		standard_output(Status_message);
-		print__TensorLib__(Field);
-	}
-	else
+	if(!Is_VELOCITY)
 	{
 		sprintf(Error_message,"%s","You forget to define the initial condition");
 	  	standard_error(Error_message);

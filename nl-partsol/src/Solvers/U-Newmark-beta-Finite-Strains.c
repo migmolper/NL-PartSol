@@ -21,9 +21,6 @@ Event * Out_particles_path_csv;
 int Number_Out_nodal_path_csv;
 int Number_Out_particles_path_csv;
 
-bool Initial_condition_particles;
-bool Initial_condition_nodes;
-
 typedef struct
 {
   double alpha_1;

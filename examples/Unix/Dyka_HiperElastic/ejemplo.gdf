@@ -29,8 +29,14 @@ GramsSolid2D (File=Particles.msh,GPxElement=1) {
     }
 
     # Initial conditions for the GPs
-    GramsInitials (Nodes=V10ms_4_particles.txt) {
-	    Value=[10.0,0.0]
+#    GramsInitials (Nodes=V10ms_4_particles.txt) {
+#	    Value=[10.0,0.0]
+#	    }
+
+    # Initial conditions nodes
+    Initial-nodal-values (NODES=V10ms_Nodes.txt) 
+    {
+  	  VELOCITY=[10.0,0.]
     }
   
 }
@@ -48,3 +54,11 @@ Out-nodal-path-csv (i_start=61;i_step=1;i_end=61)
     PATH=Nodes_Evol_Velocity.txt
     Out-velocity=true
   }
+
+Out-particles-path-csv (i_start=61;i_step=1;i_end=61)
+   {
+     DIR=Resultados_csv
+     PATH=Particles_Evol_Velocity.txt
+     Out-velocity=true
+   }
+
