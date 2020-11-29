@@ -89,6 +89,13 @@ Disco_GIMP:
 	@echo " "
 	@echo "*************** Test case passed ****************"
 
+# Barra de Taylor
+Taylor_bar:
+	@echo "**************** Run test case ******************"
+	$(ROUTE_EXE) -V Unix/Taylor_bar/ejemplo.gdf
+	@echo " "
+	@echo "*************** Test case passed ****************"
+
 # Caso barra traccion
 Traccion_MPM:
 	@echo "**************** Run test case ******************"

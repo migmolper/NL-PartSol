@@ -119,26 +119,26 @@ void update_Deformation_Gradient_n1__Particles__(Tensor F_n1, Tensor F_n, Tensor
   for(int i = 0 ; i < Ndim  ; i++)
     {
       for(int j = 0 ; j < Ndim  ; j++)
-	{
-	  /*
-	    Set to zero the deformation gradient at t = n + 1 
-	   */
-	  F_n1.N[i][j] = 0;
+	     {
+       /*
+	      Set to zero the deformation gradient at t = n + 1 
+        */
+        F_n1.N[i][j] = 0;
 
-	  /*
-	    Compute row-column multiplication
-	   */
-	  aux = 0;
-	  for(int k = 0 ; k < Ndim  ; k++)
-	    {
-	      aux += f_n1.N[i][k]*F_n.N[k][j];
-	    }
+        /*
+        Compute row-column multiplication
+        */
+        aux = 0;
+        for(int k = 0 ; k < Ndim  ; k++)
+        {
+          aux += f_n1.N[i][k]*F_n.N[k][j];
+        }
 
-	  /*
-	    New value
-	   */
-	  F_n1.N[i][j] = aux;
-	}
+        /*
+          New value
+        */
+        F_n1.N[i][j] = aux;
+      }
     }
 }
 
@@ -169,7 +169,10 @@ Tensor right_Cauchy_Green__Particles__(Tensor F)
 
 /*******************************************************/
 
-Tensor logarithmic_elastic_strains(Tensor C)
+Tensor logarithmic_strains__Particles__(Tensor C)
+/*
+    Use the approach of Ortiz and Camacho to compute the elastic infinitesimal strain tensor.
+*/
 {
 
   int Ndim = NumberDimensions;
@@ -182,7 +185,8 @@ Tensor logarithmic_elastic_strains(Tensor C)
   /*
     Compute the spectral descomposition of the tensor logC
   */
-  spectral_descomposition_symmetric__TensorLib__(EigenVals_C, EigenVects_C, C);
+  EigenVals_C = Eigenvalues__TensorLib__(C);
+  EigenVects_C = Eigenvectors__TensorLib__(C,EigenVals_C);
   
   for(int i = 0 ; i < Ndim  ; i++)
     {
@@ -217,6 +221,44 @@ Tensor logarithmic_elastic_strains(Tensor C)
 
 /*******************************************************/
 
+Tensor increment_Deformation_Gradient_exponential_strains__Particles__(Tensor D_E)
+{
+
+  int Ndim = NumberDimensions;
+  Tensor EigenVals_D_E;
+  Tensor EigenVects_D_E;
+  Tensor exp_D_E_spectral = alloc__TensorLib__(2);
+  Tensor exp_D_E;
+
+
+  /*
+    Compute the spectral descomposition of the tensor exp(D_E)
+  */
+  EigenVals_D_E = Eigenvalues__TensorLib__(D_E);
+  EigenVects_D_E = Eigenvectors__TensorLib__(D_E,EigenVals_D_E);
+  
+  for(int i = 0 ; i < Ndim  ; i++)
+    {
+      exp_D_E_spectral.N[i][i] = exp(EigenVals_D_E.n[i]);
+    }
+
+  /*
+    Rotate the spectral descomposition of the tensor exp(D_E)
+  */
+  exp_D_E = rotate__TensorLib__(exp_D_E_spectral,EigenVects_D_E);
+
+  /*
+    Free memory
+  */
+  free__TensorLib__(EigenVals_D_E);
+  free__TensorLib__(EigenVects_D_E);
+  free__TensorLib__(exp_D_E_spectral);
+
+  return exp_D_E; 
+}
+
+/*******************************************************/
+
 Tensor strain_Green_Lagrange__Particles__(Tensor C)
 {
   /* Define output */
@@ -241,3 +283,38 @@ Tensor strain_Green_Lagrange__Particles__(Tensor C)
 }
 
 /*******************************************************/
+
+void update_plastic_deformation_gradient__Particles__(Tensor D_E_plastic, Tensor F_plastic)
+{
+  int Ndim = NumberDimensions;
+
+  /*
+    Use the Cuitiño & Ortiz exponential maping
+  */
+  Tensor D_F_plastic = increment_Deformation_Gradient_exponential_strains__Particles__(D_E_plastic);
+
+  /*
+    Compute the new value of the plastic deformation gradient 
+  */
+  Tensor Aux_tensor = matrix_product__TensorLib__(D_F_plastic, F_plastic);
+
+  /*
+    Update value of the plastic deformation gradient
+  */
+  for(int i = 0 ; i < Ndim  ; i++)
+    {
+      for(int j = 0 ; j < Ndim  ; j++)
+      {
+        F_plastic.N[i][j] = Aux_tensor.N[i][j];
+      }
+    }
+
+  /*
+    Free memory 
+  */
+  free__TensorLib__(D_F_plastic);
+  free__TensorLib__(Aux_tensor);
+
+}
+
+/**************************************************************/

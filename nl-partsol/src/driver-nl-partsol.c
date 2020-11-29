@@ -122,6 +122,7 @@ int main(int argc, char * argv[])
   puts("*************************************************");
   puts("Run simulation ...");
 
+
   /* Forward Euler */
   if(strcmp(TimeIntegrationScheme,"FE") == 0 )
     { 

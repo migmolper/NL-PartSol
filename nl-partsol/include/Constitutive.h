@@ -32,6 +32,8 @@ Tensor SolidRigid(Tensor Strain);
   \param Properties : Define the material properties of the particle
 */
 Tensor LinearElastic(Tensor, Tensor, Material);
+Tensor volumetric_stress__LinearElastic__(double, Material);
+Tensor deviatoric_stress__LinearElastic__(Tensor, Material);
 /*******************************************************/
 
 /*!
@@ -89,9 +91,22 @@ Tensor grad_energy_Neo_Hookean_Wriggers(Tensor, Tensor, double, Material);
   \param double J
   \param Material MatProp
 */
-Tensor compute_stiffness_density_Neo_Hookean_Wriggers(Tensor, Tensor,
-						      Tensor, double,
-						      Material);
+Tensor compute_stiffness_density_Neo_Hookean_Wriggers(Tensor, Tensor, Tensor, double, Material);
+/*******************************************************/  
+
+/*
+\fn Variables_Constitutive plasticity_Drucker_Prager_Sanavia(Tensor S_p, Tensor C_total, Tensor F_total, Tensor F_plastic_p, 
+                                                         double J, Variables_Constitutive Inputs_VarCons, Material MatProp)
+*/
+Variables_Constitutive plasticity_Drucker_Prager_Sanavia(Tensor, Tensor, Tensor, Tensor, 
+                                                         double, Variables_Constitutive, Material);
+/*******************************************************/  
+
+/*
+\fn Variables_Constitutive plasticity_Von_Mises(Tensor S_p, Tensor C_total, Tensor F_plastic, Tensor F_total, 
+                            double J, Variables_Constitutive Inputs_VarCons, Material MatProp)
+*/
+Variables_Constitutive plasticity_Von_Mises(Tensor, Tensor, Tensor, Tensor, double, Variables_Constitutive, Material);
 /*******************************************************/  
 
 #endif

@@ -88,7 +88,7 @@ Tensor right_Cauchy_Green__Particles__(Tensor);
 /*******************************************************/
 
 /*!
-  \fn Tensor logarithmic_elastic_strains(Tensor C)
+  \fn Tensor logarithmic_strains__Particles__(Tensor C)
   \brief Function to cumpute the small strains countrepart of the 
   right Cauchy-Green tensor defined as
   \f[
@@ -99,7 +99,13 @@ Tensor right_Cauchy_Green__Particles__(Tensor);
 
   \return The logaritmic strain tensor
 */
-Tensor logarithmic_elastic_strains(Tensor);
+Tensor logarithmic_strains__Particles__(Tensor);
+/*******************************************************/
+/*!
+  \fn Tensor increment_Deformation_Gradient_exponential_strains__Particles__(Tensor D_E)
+
+*/
+Tensor increment_Deformation_Gradient_exponential_strains__Particles__(Tensor);
 /*******************************************************/
 
 /*!
@@ -236,12 +242,10 @@ void asign_to_nodes__Particles__(int, ChainPtr, Mesh);
 
 /*!
 
+void update_plastic_deformation_gradient(Tensor D_E_plastic, Tensor F_plastic)
+
 */
-void push_forward_tensor__Particles__(Tensor, Tensor, Tensor);
+void update_plastic_deformation_gradient__Particles__(Tensor, Tensor);
 /*******************************************************/
 
-/*!
-
-*/
-void push_backward_tensor__Particles__(Tensor, Tensor, Tensor);
 #endif

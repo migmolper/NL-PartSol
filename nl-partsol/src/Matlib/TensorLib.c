@@ -350,17 +350,77 @@ Tensor Eigenvalues__TensorLib__(Tensor A)
 
 /*************************************************************/
 
+Tensor Eigenvectors__TensorLib__(Tensor A,Tensor Lambda)
+{
+
+  int Ndim = NumberDimensions;
+  Tensor EigenVect = alloc__TensorLib__(2);
+
+  if (Ndim == 2)
+  {
+
+    if (A.N[0][1]*A.N[1][0] < 1e-15)
+    {
+      EigenVect.N[0][0] = EigenVect.N[1][1] = 1.;
+      EigenVect.N[0][1] = EigenVect.N[1][0] = 0.;
+    }
+    else
+    {
+      for(int i = 0 ; i<Ndim ; i++)
+      {
+        double aux1 = (Lambda.n[i] - A.N[0][0])/A.N[0][1];
+        double aux2 = sqrt(1 + aux1*aux1);
+        EigenVect.N[0][i] = 1/aux2;
+        EigenVect.N[1][i] = aux1/aux2;
+      }
+    }
+
+
+  }
+  else if(Ndim == 3)
+    {
+      fprintf(stderr,"%s : %s !!! \n",
+        "Error in spectral_descomposition_symmetric__TensorLib__()",
+        "This operation it is not implemented for 3D");
+      exit(EXIT_FAILURE);  
+    }
+  else
+    {
+      fprintf(stderr,"%s : %s !!! \n",
+        "Error in spectral_descomposition_symmetric__TensorLib__()",
+        "Wrong number of dimensions");
+      exit(EXIT_FAILURE);  
+    }
+
+
+  return EigenVect;
+}
+
+/*************************************************************/
+
 double EuclideanNorm__TensorLib__(Tensor A)
 {
   int Ndim = NumberDimensions;
+  double Aux = 0; 
   /* Define output */
   double Out;
   /* Check if the input is a first order tensor */
-  if(A.Order == 1){
+  if(A.Order == 1)
+  {
     /* Compute norm */    
-    double Aux = 0;
     for(int i = 0 ; i<Ndim ; i++){
       Aux += DSQR(A.n[i]);
+    }
+    Out = pow(Aux,0.5);
+  }
+  else if (A.Order == 2)
+  {
+    for(int i = 0 ; i<Ndim ; i++)
+    {
+      for(int j = 0 ; j<Ndim ; j++)
+      {
+        Aux += DSQR(A.N[i][j]);
+      }  
     }
     Out = pow(Aux,0.5);
   }
@@ -554,7 +614,7 @@ Tensor vector_linear_mapping__TensorLib__(Tensor A, Tensor b)
     for(int i = 0 ; i<Ndim ; i++){
       Aux = 0;
       for(int j = 0 ; j<Ndim ; j++){
-	Aux += A.N[i][j]*b.n[j];
+        Aux += A.N[i][j]*b.n[j];
       }
       Adotb.n[i] = Aux;
     }    
@@ -624,61 +684,30 @@ Tensor Convex_combination__TensorLib__(Tensor F_n1,Tensor F_n,double alpha)
 
 /*************************************************************/
 
-void spectral_descomposition_symmetric__TensorLib__(Tensor Lambda, 
-                                                    Tensor EigenVect, 
-                                                    Tensor A)
+double volumetric_component__TensorLib__(Tensor A)
 {
-
-  int Ndim = NumberDimensions;
-
-  EigenVect = alloc__TensorLib__(2);
-
-  if (Ndim == 2)
-    {
-
-      if (A.N[0][1]*A.N[1][0] < 1e-15)
-        {
-          Lambda = alloc__TensorLib__(1);
-
-          EigenVect.N[0][0] = EigenVect.N[1][1] = 1.;
-          EigenVect.N[0][1] = EigenVect.N[1][0] = 0.;
-
-          Lambda.n[0] = A.N[0][0];
-          Lambda.n[1] = A.N[1][1];
-
-          return;
-        }
-
-      Lambda = Eigenvalues__TensorLib__(A);
-
-      for(int i = 0 ; i<Ndim ; i++)
-        {
-          double aux1 = (Lambda.n[i] - A.N[0][0])/A.N[0][1];
-          double aux2 = sqrt(1 + aux1*aux1);
-          EigenVect.N[0][i] = 1/aux2;
-          EigenVect.N[1][i] = aux1/aux2;
-        }
-
-
-    }
-  else if(Ndim == 3)
-    {
-      fprintf(stderr,"%s : %s !!! \n",
-        "Error in spectral_descomposition_symmetric__TensorLib__()",
-        "This operation it is not implemented for 3D");
-      exit(EXIT_FAILURE);  
-    }
-  else
-    {
-      fprintf(stderr,"%s : %s !!! \n",
-        "Error in spectral_descomposition_symmetric__TensorLib__()",
-        "Wrong number of dimensions");
-      exit(EXIT_FAILURE);  
-    }
+  return I1__TensorLib__(A)/3.0;
 }
 
 /*************************************************************/
 
+Tensor deviatoric_component__TensorLib__(Tensor A, double A_vol)
+{
+  int Ndim = NumberDimensions;
+  Tensor A_dev = alloc__TensorLib__(2); 
+
+  for(int i = 0 ; i<Ndim ; i++)
+  {
+    for(int j = 0 ; j<Ndim ; j++)
+    {
+      A_dev.N[i][j] =  A.N[i][j] - (i == j)*A_vol;
+    }
+  }
+
+  return A_dev;
+}
+
+/*************************************************************/
 
 Tensor rotate__TensorLib__(Tensor In, Tensor R)
 /* 
@@ -700,7 +729,7 @@ Tensor rotate__TensorLib__(Tensor In, Tensor R)
     Out.N[0][0] = R.N[0][0]*aux_1 + R.N[0][1]*aux_2;
     Out.N[0][1] = R.N[0][0]*aux_3 + R.N[0][1]*aux_4;
     Out.N[1][0] = R.N[1][0]*aux_1 + R.N[1][1]*aux_2;
-    Out.N[0][0] = R.N[1][0]*aux_3 + R.N[1][1]*aux_4;
+    Out.N[1][1] = R.N[1][0]*aux_3 + R.N[1][1]*aux_4;
 
   }
   else if(Ndim == 3)
@@ -723,6 +752,194 @@ Tensor rotate__TensorLib__(Tensor In, Tensor R)
 }
 
 /*************************************************************/
+
+void covariant_push_forward_tensor__TensorLib__(Tensor a, Tensor A, Tensor F)
+/* 
+  Covariant push forward operation for any tensor. 
+  a = F^-T A F^-1
+  From literature, this operation moves a tensor from the material description (A) to the
+  spatial description (a). 
+  a (out)
+  A (in)
+  F (in)
+*/
+{
+  int Ndim = NumberDimensions;
+  Tensor F_m1 = Inverse__TensorLib__(F);
+
+  if (Ndim == 2)
+  {
+
+    double aux_1 = A.N[0][0]*F_m1.N[0][0] + A.N[0][1]*F_m1.N[1][0];
+    double aux_2 = A.N[0][0]*F_m1.N[0][1] + A.N[0][1]*F_m1.N[1][1];
+    double aux_3 = A.N[1][0]*F_m1.N[0][0] + A.N[1][1]*F_m1.N[1][0];
+    double aux_4 = A.N[1][0]*F_m1.N[0][1] + A.N[1][1]*F_m1.N[1][1];
+
+    a.N[0][0] = F_m1.N[0][0]*aux_1 + F_m1.N[1][0]*aux_3;
+    a.N[0][1] = F_m1.N[0][0]*aux_2 + F_m1.N[1][0]*aux_4;
+    a.N[1][0] = F_m1.N[0][1]*aux_1 + F_m1.N[1][1]*aux_3;
+    a.N[1][1] = F_m1.N[0][1]*aux_2 + F_m1.N[1][1]*aux_4;
+
+  }
+  else if(Ndim == 3)
+  {
+      fprintf(stderr,"%s : %s !!! \n",
+        "Error in covariant_push_forward_tensor__TensorLib__()",
+        "This operation it is not implemented for 3D");
+      exit(EXIT_FAILURE);  
+  }
+  else
+  {
+      fprintf(stderr,"%s : %s !!! \n",
+        "Error in covariant_push_forward_tensor__TensorLib__()",
+        "Wrong number of dimensions");
+      exit(EXIT_FAILURE);  
+  }
+
+  free__TensorLib__(F_m1);
+
+}
+
+/*********************************************************************/
+
+void contravariant_push_forward_tensor__TensorLib__(Tensor a, Tensor A, Tensor F)
+/* 
+  Contravariant push forward operation for any tensor. 
+  a = F A F^T
+  From literature, this operation moves a tensor in the dual space from the material description (A) to the
+  spatial description (a). 
+  a (out)
+  A (in)
+  F (in)
+*/
+{
+  int Ndim = NumberDimensions;
+
+  if (Ndim == 2)
+  {
+    double aux_1 = A.N[0][0]*F.N[0][0] + A.N[0][1]*F.N[0][1];
+    double aux_2 = A.N[0][0]*F.N[1][0] + A.N[0][1]*F.N[1][1];
+    double aux_3 = A.N[1][0]*F.N[0][0] + A.N[1][1]*F.N[0][1];
+    double aux_4 = A.N[1][0]*F.N[1][0] + A.N[1][1]*F.N[1][1];
+
+    a.N[0][0] = F.N[0][0]*aux_1 + F.N[0][1]*aux_3;
+    a.N[0][1] = F.N[0][0]*aux_2 + F.N[0][1]*aux_4;
+    a.N[1][0] = F.N[1][0]*aux_1 + F.N[1][1]*aux_3;
+    a.N[1][1] = F.N[1][0]*aux_2 + F.N[1][1]*aux_4;
+  }
+    else if(Ndim == 3)
+  {
+      fprintf(stderr,"%s : %s !!! \n",
+        "Error in contravariant_push_forward_tensor__TensorLib__()",
+        "This operation it is not implemented for 3D");
+      exit(EXIT_FAILURE);  
+  }
+  else
+  {
+      fprintf(stderr,"%s : %s !!! \n",
+        "Error in contravariant_push_forward_tensor__TensorLib__()",
+        "Wrong number of dimensions");
+      exit(EXIT_FAILURE);  
+  }
+
+}
+
+
+/*********************************************************************/
+
+void covariant_pull_back_tensor__TensorLib__(Tensor A, Tensor a, Tensor F)
+/* 
+  Covariant pull back operation for any tensor. 
+  A = F^T a F
+  From literature, this operation moves a tensor from the spatial description (a) to the
+  material description (A).
+  A (out)
+  a (in)
+  F (int)
+*/
+{
+  int Ndim = NumberDimensions;
+
+  if (Ndim == 2)
+  {
+
+    double aux_1 = a.N[0][0]*F.N[0][0] + a.N[0][1]*F.N[1][0];
+    double aux_2 = a.N[0][0]*F.N[0][1] + a.N[0][1]*F.N[1][1];
+    double aux_3 = a.N[1][0]*F.N[0][0] + a.N[1][1]*F.N[1][0];
+    double aux_4 = a.N[1][0]*F.N[0][1] + a.N[1][1]*F.N[1][1];
+
+    A.N[0][0] = F.N[0][0]*aux_1 + F.N[1][0]*aux_3;
+    A.N[0][1] = F.N[0][0]*aux_2 + F.N[1][0]*aux_4;
+    A.N[1][0] = F.N[0][1]*aux_1 + F.N[1][1]*aux_3;
+    A.N[1][1] = F.N[0][1]*aux_2 + F.N[1][1]*aux_4;
+  }
+    else if(Ndim == 3)
+  {
+      fprintf(stderr,"%s : %s !!! \n",
+        "Error in covariant_pull_back_tensor__TensorLib__()",
+        "This operation it is not implemented for 3D");
+      exit(EXIT_FAILURE);  
+  }
+  else
+  {
+      fprintf(stderr,"%s : %s !!! \n",
+        "Error in covariant_pull_back_tensor__TensorLib__()",
+        "Wrong number of dimensions");
+      exit(EXIT_FAILURE);  
+  }
+
+}
+
+
+/*********************************************************************/
+
+void contravariant_pull_back_tensor__TensorLib__(Tensor A, Tensor a, Tensor F)
+/* 
+  Contravariant pull back operation for any tensor. 
+  A = F^-1 a F^-T
+  From literature, this operation moves a tensor in the dual space from the spatial description (a) to the
+  material description (A).
+  A (out)
+  a (in)
+  F (int)
+*/
+{
+  int Ndim = NumberDimensions;
+  Tensor F_m1 = Inverse__TensorLib__(F);
+
+  if (Ndim == 2)
+  {
+
+    double aux_1 = a.N[0][0]*F_m1.N[0][0] + a.N[0][1]*F_m1.N[0][1];
+    double aux_2 = a.N[0][0]*F_m1.N[1][0] + a.N[0][1]*F_m1.N[1][1];
+    double aux_3 = a.N[1][0]*F_m1.N[0][0] + a.N[1][1]*F_m1.N[0][1];
+    double aux_4 = a.N[1][0]*F_m1.N[1][0] + a.N[1][1]*F_m1.N[1][1];
+
+    A.N[0][0] = F_m1.N[0][0]*aux_1 + F_m1.N[0][1]*aux_3;
+    A.N[0][1] = F_m1.N[0][0]*aux_2 + F_m1.N[0][1]*aux_4;
+    A.N[1][0] = F_m1.N[1][0]*aux_1 + F_m1.N[1][1]*aux_3;
+    A.N[1][1] = F_m1.N[1][0]*aux_2 + F_m1.N[1][1]*aux_4;
+  }
+    else if(Ndim == 3)
+  {
+      fprintf(stderr,"%s : %s !!! \n",
+        "Error in contravariant_pull_back_tensor__TensorLib__()",
+        "This operation it is not implemented for 3D");
+      exit(EXIT_FAILURE);  
+  }
+  else
+  {
+      fprintf(stderr,"%s : %s !!! \n",
+        "Error in contravariant_pull_back_tensor__TensorLib__()",
+        "Wrong number of dimensions");
+      exit(EXIT_FAILURE);  
+  }
+
+  free__TensorLib__(F_m1);
+}
+
+
+/*********************************************************************/
 
 void print__TensorLib__(Tensor A)
 {
@@ -750,3 +967,12 @@ void print__TensorLib__(Tensor A)
 }
 
 /*************************************************************/
+
+
+
+
+
+
+
+
+

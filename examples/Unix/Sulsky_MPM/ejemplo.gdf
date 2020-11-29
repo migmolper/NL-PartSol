@@ -19,7 +19,7 @@ GramsSolid2D (File=MPM_Mesh.msh,GPxElement=1) {
 	Cel=70.71
 	rho=20
 	E=1.e5
-	mu=0.3
+	nu=0.3
 	Id=0
     }
     

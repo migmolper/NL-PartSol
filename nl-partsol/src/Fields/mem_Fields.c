@@ -43,14 +43,13 @@ Fields allocate_Fields(int NumParticles)
   strcpy(Phi.Strain.Info,"Strain field GP");
 
   /*!
-    Deformation gradient field (Tensor)
+    Deformation gradient field (Tensor) + Initialise it with the indentity
   */  
   Phi.F_n = allocZ__MatrixLib__(NumParticles,Ndim*Ndim);
   strcpy(Phi.F_n.Info,"Deformation gradient at t = n");
   Phi.F_n1 = allocZ__MatrixLib__(NumParticles,Ndim*Ndim);
   strcpy(Phi.F_n1.Info,"Deformation gradient at t = n + 1");
 
-  /* Initialize the deformation gradient with the identity */
   for(int p = 0 ; p<NumParticles ; p++)
     {
       for(int i = 0 ; i<Ndim ; i++)
@@ -59,7 +58,21 @@ Fields allocate_Fields(int NumParticles)
 	}
       
     }
-  
+
+  /*!
+    Plastic deformation gradient field (Tensor) + Initialise it with the indentity
+  */
+  Phi.F_plastic = allocZ__MatrixLib__(NumParticles,Ndim*Ndim);
+  strcpy(Phi.F_plastic.Info,"Plastic deformation gradient");
+ 
+  for(int p = 0 ; p<NumParticles ; p++)
+    {
+      for(int i = 0 ; i<Ndim ; i++)
+	{
+	  Phi.F_plastic.nM[p][i + i*Ndim] = 1.0;	  
+	}
+      
+    }
   
   /*!
     Strain_If field (Scalar) 
@@ -80,12 +93,6 @@ Fields allocate_Fields(int NumParticles)
   strcpy(Phi.W.Info,"Deformation Energy GP");
 
   /*!
-    Damage parameter (fracture) 
-  */
-  Phi.chi = allocZ__MatrixLib__(NumParticles,1);
-  strcpy(Phi.chi.Info,"Damage parameter GP");
-
-  /*!
     Mass 
   */
   Phi.mass = allocZ__MatrixLib__(NumParticles,1);
@@ -102,6 +109,24 @@ Fields allocate_Fields(int NumParticles)
   */
   Phi.Vol_0 = allocZ__MatrixLib__(NumParticles,1);
   strcpy(Phi.Vol_0.Info,"Inital volume GP");
+
+  /*!
+    Damage parameter (Fracture) 
+  */
+  Phi.chi = allocZ__MatrixLib__(NumParticles,1);
+  strcpy(Phi.chi.Info,"Damage parameter GP");
+
+  /*!
+    Cohesion (Plasticity)
+  */
+  Phi.cohesion = allocZ__MatrixLib__(NumParticles,1);
+  strcpy(Phi.cohesion.Info,"Cohesion GP");
+ 
+  /*!
+    Equivalent plastic strain (Plasticity)
+  */
+  Phi.EPS = allocZ__MatrixLib__(NumParticles,1);
+  strcpy(Phi.EPS.Info,"EPS GP");
 
   return Phi;
 }
@@ -123,9 +148,13 @@ void free_Fields(Fields Phi)
   free__MatrixLib__(Phi.Stress);
   free__MatrixLib__(Phi.Strain);
   free__MatrixLib__(Phi.Strain_If);
+  free__MatrixLib__(Phi.F_plastic);
+  free__MatrixLib__(Phi.F_n);
+  free__MatrixLib__(Phi.F_n1);
   free__MatrixLib__(Phi.W);
   free__MatrixLib__(Phi.chi);
-  
+  free__MatrixLib__(Phi.cohesion);
+  free__MatrixLib__(Phi.EPS);
 }
 
 /*********************************************************************/

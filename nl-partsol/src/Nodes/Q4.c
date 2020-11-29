@@ -56,8 +56,7 @@ void initialize__Q4__(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 	asign_to_nodes__Particles__(p, MPM_Mesh.ListNodes[p], FEM_Mesh);
 	
 	/* Get the coordinates of the element vertex */
-	CoordElement = get_nodes_coordinates__MeshTools__(MPM_Mesh.ListNodes[p],
-							  FEM_Mesh.Coordinates);
+	CoordElement = get_nodes_coordinates__MeshTools__(MPM_Mesh.ListNodes[p], FEM_Mesh.Coordinates);
 
 	/* Compute local coordinates of the particle in this element */
 	X_to_Xi__Q4__(Xi_p,X_p,CoordElement);

@@ -1,9 +1,16 @@
 #include "nl-partsol.h"
 
+
 /*
-  Call global variables
+  Call global variables 
 */
 char * MPM_MeshFileName;
+
+
+/*
+  Auxiliar functions 
+*/
+static void initialise_2D_particles();
 
 /*********************************************************************/
 
@@ -32,14 +39,9 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
   /* Material point mesh (Gauss-Points) */
   Mesh MPM_GID_Mesh;
   GaussPoint MPM_Mesh;
-  Matrix Poligon_Coordinates;
-  ChainPtr Poligon_Connectivity;
-  ChainPtr Vertex;
-  int NumVertex;
 
-  double Area_Element, A_p, th_p, m_p, rho_p;
+  /* Number of particles per GID element */
   int GPxElement = 1;
-  int i_p;
 
   /* Set to false check variables */
   bool Is_GramsSolid2D = false;
@@ -219,73 +221,30 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
     MPM_Mesh.Phi = allocate_Fields(NumParticles);
 
     /**************************************************/
-    /********** Generate the initial layout ***********/
+    /************ Read material properties ************/
     /**************************************************/
-    initial_position__Particles__(MPM_Mesh.Phi.x_GC,MPM_GID_Mesh,GPxElement);	
-    
     puts("*************************************************");
     printf(" \t %s \n","* Read materials properties");
-    if(Is_GramsMaterials){
+    if(Is_GramsMaterials)
+    {
       MPM_Mesh.NumberMaterials = Counter_Materials;
       MPM_Mesh.MatIdx = (int *)malloc(NumParticles*sizeof(int));
       MPM_Mesh.Mat = GramsMaterials(Name_File,MPM_Mesh,GPxElement);
     }
-    else{
+    else
+    {
       fprintf(stderr,"%s : %s \n",
 	      "Error in GramsSolid2D()","GramsMaterials no defined");
       exit(EXIT_FAILURE);
     }
 
-    /* Fill geometrical properties of the GP mesh */
-    for(int i = 0 ; i<MPM_GID_Mesh.NumElemMesh ; i++){
-      /* Get the connectivity of the elements vertex */
-      Poligon_Connectivity = MPM_GID_Mesh.Connectivity[i];    
-      /* Generate a matrix with the poligon coordinates */
-      NumVertex = MPM_GID_Mesh.NumNodesElem[i];
-      Poligon_Coordinates = allocZ__MatrixLib__(NumVertex,2); 
-      /* Initialize chain interator */
-      Vertex = Poligon_Connectivity;
-      /* Loop in the chain to fill the poligon */
-      for(int k = 0, I_Vertex = 0;
-	  (k<NumVertex) || (Vertex != NULL);
-	  k++, Vertex = Vertex->next){
-	I_Vertex = Vertex->I;
-	for(int l = 0 ; l<Ndim ; l++){
-	  Poligon_Coordinates.nM[k][l] =
-	    MPM_GID_Mesh.Coordinates.nM[I_Vertex][l];
-	}
-      }
-      /* Free data */
-      free__SetLib__(&MPM_GID_Mesh.Connectivity[i]);
-      /* Get the area (Poligon_Centroid.n) 
-	 and the position of the centroid (Poligon_Centroid.nV) */
-      Area_Element = area__MatrixLib__(Poligon_Coordinates);
-      /* Free data */
-      free__MatrixLib__(Poligon_Coordinates);
-      
-      for(int j = 0 ; j<GPxElement ; j++){
-
-	/* Get the index of the material point */
-	i_p = i*GPxElement+j;
-
-	/* Get material properties */
-	A_p = Area_Element/GPxElement;
-	rho_p = MPM_Mesh.Mat[MPM_Mesh.MatIdx[i_p]].rho;
-	th_p = MPM_Mesh.Mat[MPM_Mesh.MatIdx[i_p]].thickness;
-	m_p = th_p*A_p*rho_p;
-
-	/* Set the initial volume */
-	MPM_Mesh.Phi.Vol_0.nV[i_p] = A_p;
-      	/* Set the initial density */
-      	MPM_Mesh.Phi.rho.nV[i_p] = rho_p;	
-      	/* Assign the mass parameter */
-      	MPM_Mesh.Phi.mass.nV[i_p] = m_p;
-	
-      	/* Local coordinates of the element */
-      	MPM_Mesh.I0[i_p] = -999;
-      	MPM_Mesh.NumberNodes[i_p] = 4;
-      }
-      
+    /**************************************************/    
+    /************** Initialise particle ***************/
+    /**************************************************/    
+    initial_position__Particles__(MPM_Mesh.Phi.x_GC,MPM_GID_Mesh,GPxElement); 
+    if(Ndim == 2)
+    {
+      initialise_2D_particles(MPM_GID_Mesh,MPM_Mesh,GPxElement);
     }
      
     /**************************************************/
@@ -352,9 +311,13 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
    
     /**************************************************/    
     /************* Free the input data ****************/
-    /**************************************************/    
-    free__MatrixLib__(MPM_GID_Mesh.Coordinates);
+    /**************************************************/
+    for(int i = 0 ; i<MPM_GID_Mesh.NumElemMesh ; i++)
+      {
+        free__SetLib__(&MPM_GID_Mesh.Connectivity[i]); 
+      }   
     free(MPM_GID_Mesh.Connectivity);
+    free__MatrixLib__(MPM_GID_Mesh.Coordinates);
     free(MPM_GID_Mesh.NumParticles);
     free(MPM_GID_Mesh.NumNeighbour);
     free(MPM_GID_Mesh.NodeNeighbour);
@@ -372,4 +335,68 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
 
 /***************************************************************************/
 
+static void initialise_2D_particles(Mesh MPM_GID_Mesh,GaussPoint MPM_Mesh, int GPxElement)
+  /*
+     Loop in the GID mesh to create particles from an element 
+  */
+{
+
+
+  Matrix Poligon_Coordinates;
+  double Area_Element, A_p, th_p, m_p, rho_p;
+  int p;
+  int MatIdx_p;
+
+  for(int i = 0 ; i<MPM_GID_Mesh.NumElemMesh ; i++)
+  {
+
+    /* Get the coordinates of the element vertex */ 
+    Poligon_Coordinates = get_nodes_coordinates__MeshTools__(MPM_GID_Mesh.Connectivity[i], MPM_GID_Mesh.Coordinates);
+
+    /* Get the area (Poligon_Centroid.n) and the position of the centroid (Poligon_Centroid.nV) */
+    Area_Element = area__MatrixLib__(Poligon_Coordinates);
+
+    for(int j = 0 ; j<GPxElement ; j++)
+    {
+
+    /* Get the index of the material point */
+      p = i*GPxElement+j;
+
+    /* Get the index of the material */
+      MatIdx_p = MPM_Mesh.MatIdx[p];
+    /* Get material properties */
+      A_p = Area_Element/GPxElement;
+      rho_p = MPM_Mesh.Mat[MatIdx_p].rho;
+      th_p = MPM_Mesh.Mat[MatIdx_p].thickness;
+      m_p = th_p*A_p*rho_p;
+    /* Set the initial density */
+      MPM_Mesh.Phi.rho.nV[p] = rho_p; 
+    /* Assign the mass parameter */
+      MPM_Mesh.Phi.mass.nV[p] = m_p;
+    /* Local coordinates of the element */
+      MPM_Mesh.I0[p] = -999;
+      MPM_Mesh.NumberNodes[p] = 4;
+
+      if(strcmp(MPM_Mesh.Mat[MatIdx_p].Type,"Von-Mises") == 0)
+      {
+          MPM_Mesh.Phi.cohesion.nV[p] = MPM_Mesh.Mat[MatIdx_p].yield_stress_0;
+      }
+      if(strcmp(MPM_Mesh.Mat[MatIdx_p].Type,"Drucker-Prager-Plane-Strain") == 0)
+      {
+          MPM_Mesh.Phi.cohesion.nV[p] = MPM_Mesh.Mat[MatIdx_p].cohesion_reference;
+      }
+      if(strcmp(MPM_Mesh.Mat[MatIdx_p].Type,"Drucker-Prager-Outer-Cone") == 0)
+      {
+          MPM_Mesh.Phi.cohesion.nV[p] = MPM_Mesh.Mat[MatIdx_p].cohesion_reference;
+      }
+
+    }
+
+      /* Free data */
+    free__MatrixLib__(Poligon_Coordinates);
+
+  }
+}
+
+/***************************************************************************/
 

@@ -22,6 +22,12 @@ extern double beta_Newmark_beta;
 extern double gamma_Newmark_beta;
 extern double TOL_Newmark_beta;
 
+
+/* Convergence parameters for radia returning algorithm */
+extern double TOL_Radial_Returning;
+extern int Max_Iterations_Radial_Returning;
+
+
 extern int NumTimeStep;
 extern int ResultsTimeStep;
 extern int NumberDOF;
