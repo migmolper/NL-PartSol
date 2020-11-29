@@ -6,9 +6,9 @@ double energy_Saint_Venant_Kirchhoff(Tensor C, Material MatProp_p)
 {
   /* Material parameters */
   double ElasticModulus = MatProp_p.E;
-  double mu = MatProp_p.mu;
-  double lambda = mu*ElasticModulus/((1-mu*2)*(1+mu));
-  double G = ElasticModulus/(2*(1+mu));
+  double nu  = MatProp_p.nu ;
+  double lambda = nu *ElasticModulus/((1-nu *2)*(1+nu ));
+  double G = ElasticModulus/(2*(1+nu ));
 
   Tensor E = strain_Green_Lagrange__Particles__(C);
   double I1_E = I1__TensorLib__(E);

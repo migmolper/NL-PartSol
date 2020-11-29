@@ -460,6 +460,7 @@ static void update_Local_State(Matrix D_Displacement,
   int MatIndx_p;
   int Nnodes_p;
   double Vol_0_p;
+  double rho_n_p;
   double J_n1_p;  
   double Delta_J_p;
   Variables_Constitutive Inputs_VarCons;

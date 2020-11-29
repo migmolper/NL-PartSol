@@ -9,9 +9,9 @@ double energy_Neo_Hookean_Wriggers(Tensor C, double J, Material MatProp_p)
 
   /* Material parameters */
   double ElasticModulus = MatProp_p.E;
-  double mu = MatProp_p.mu;
-  double G = ElasticModulus/(2*(1+mu));
-  double lambda = mu*ElasticModulus/((1-mu*2)*(1+mu));
+  double nu  = MatProp_p.nu ;
+  double G = ElasticModulus/(2*(1+nu ));
+  double lambda = nu *ElasticModulus/((1-nu *2)*(1+nu ));
   double I1_C = I1__TensorLib__(C);
   double f_J = 0.25*lambda*(J*J - 1) - 0.5*lambda*log(J) - G*log(J);
 
