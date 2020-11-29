@@ -7,8 +7,15 @@ double TOL_Radial_Returning;
 int Max_Iterations_Radial_Returning;
 
 /*
+  Define local global variable for the relative error
+*/
+double Error0;
+
+/*
   Auxiliar functions 
 */
+static void   standard_error(char *);
+static bool   check_convergence(double,double,int,int);
 static double compute_yield_surface(double, double, double, Material);
 static double compute_derivative_yield_surface(double, Material);
 static double update_increment_plastic_strain(double, double, double);
@@ -21,14 +28,13 @@ static Tensor compute_finite_stress_tensor_elastic_region(Tensor, Tensor, Materi
 /**************************************************************/
 
 Variables_Constitutive plasticity_Von_Mises(Tensor S_p, Tensor C_total, Tensor F_plastic, Tensor F_total, 
-                					  double J, Variables_Constitutive Inputs_VarCons, Material MatProp)
+                					                  double J, Variables_Constitutive Inputs_VarCons, Material MatProp)
 /*	
 	Radial returning algorithm for the Von-Mises plastic criterium
 */
 {
 
   int Ndim = NumberDimensions;
-  int iter_NR = 0;
 
   double EPS_k;
   double yield_stress_k;
@@ -48,10 +54,12 @@ Variables_Constitutive plasticity_Von_Mises(Tensor S_p, Tensor C_total, Tensor F
   Tensor Increment_E_plastic;
 
   /*
-    Initialise convergence parameters
+    Initialise convergence parameters for the solver
   */
-  double TOL_VM = TOL_Radial_Returning;
-  int iter_max_VM = Max_Iterations_Radial_Returning;
+  double TOL = TOL_Radial_Returning;
+  int MaxIter = Max_Iterations_Radial_Returning;
+  int Iter = 0;
+  bool Convergence = false;
 
   /*
     Define output varible
@@ -96,7 +104,7 @@ Variables_Constitutive plasticity_Von_Mises(Tensor S_p, Tensor C_total, Tensor F
   delta_Gamma = 0;
   Phi = compute_yield_surface(s_trial_norm, delta_Gamma, yield_stress_k, MatProp);
 
-  if(Phi >= TOL_VM)
+  if(Phi >= TOL)
     {
 
       H = MatProp.hardening_modulus;
@@ -104,7 +112,7 @@ Variables_Constitutive plasticity_Von_Mises(Tensor S_p, Tensor C_total, Tensor F
       /*
         Newton-Rapson solver
       */
-      while(iter_NR < iter_max_VM)
+      while(Convergence == false)
         {
 
           d_Phi = compute_derivative_yield_surface(H, MatProp);
@@ -120,13 +128,10 @@ Variables_Constitutive plasticity_Von_Mises(Tensor S_p, Tensor C_total, Tensor F
           /*
 		        Check convergence
 	        */
-	        if(Phi < TOL_VM)
+          Convergence = check_convergence(Phi,TOL,Iter,MaxIter);
+	        if(Convergence == false)
             {
-              iter_NR++;
-            }
-          else
-            {
-              break;
+              Iter++;
             }
         }
 
@@ -184,6 +189,59 @@ Variables_Constitutive plasticity_Von_Mises(Tensor S_p, Tensor C_total, Tensor F
 return Outputs_VarCons;
 }
 
+/***************************************************************************/
+
+static void standard_error(char * Error_message)
+{
+  fprintf(stderr,"%s : %s !!! \n",
+     "Error in plasticity_Von_Mises",Error_message);
+    exit(EXIT_FAILURE);
+}
+
+/**************************************************************/
+
+static bool check_convergence(double Error, double TOL, int Iter, int MaxIter)
+{
+  bool convergence;
+  double Error_relative;
+  char Error_message[MAXW];
+
+  if(Iter > MaxIter)
+    {
+      sprintf(Error_message,"%s","Convergence not reached in the maximum number of iterations");
+      standard_error(Error_message); 
+    }
+  else
+    {
+
+      /*
+        Compute relative error
+      */
+      if(Iter == 0)
+      {
+        Error0 = Error;
+        Error_relative = Error/Error0;
+//        printf("Error iter %i : %1.4e ; %1.4e \n",Iter,Error,Error_relative);
+      }
+      else
+      {
+        Error_relative = Error/Error0;
+//        printf("Error iter %i : %1.4e ; %1.4e \n",Iter,Error,Error_relative);
+      }
+      
+      /*
+        Check convergence using the relative error
+      */
+      if(Error_relative > TOL)
+      {
+        return false;
+      }
+      else
+      {
+        return true;
+      }
+    }
+}
 
 /**************************************************************/
 

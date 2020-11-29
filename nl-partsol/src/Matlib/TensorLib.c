@@ -686,7 +686,12 @@ Tensor Convex_combination__TensorLib__(Tensor F_n1,Tensor F_n,double alpha)
 
 double volumetric_component__TensorLib__(Tensor A)
 {
-  return I1__TensorLib__(A)/3.0;
+  double Ndim = (double)NumberDimensions;
+  double A_vol;
+
+  A_vol = I1__TensorLib__(A)/Ndim;
+
+  return A_vol;
 }
 
 /*************************************************************/

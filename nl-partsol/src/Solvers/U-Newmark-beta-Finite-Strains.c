@@ -11,7 +11,6 @@
 /*
   Call global variables
 */
-double Error0;
 double epsilon_Mass_Matrix; 
 double beta_Newmark_beta;   
 double gamma_Newmark_beta;
@@ -20,6 +19,11 @@ Event * Out_nodal_path_csv;
 Event * Out_particles_path_csv;
 int Number_Out_nodal_path_csv;
 int Number_Out_particles_path_csv;
+
+/*
+  Define local global variable for the relative error
+*/
+double Error0;
 
 typedef struct
 {

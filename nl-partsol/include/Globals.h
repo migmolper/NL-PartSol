@@ -32,6 +32,11 @@ extern int NumTimeStep;
 extern int ResultsTimeStep;
 extern int NumberDOF;
 
+
+/*
+	Variables for the outputs 
+*/
+
 extern Event * Out_nodal_path_csv;
 extern int Number_Out_nodal_path_csv;
 
