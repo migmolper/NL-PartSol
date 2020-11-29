@@ -29,7 +29,7 @@ GramsSolid2D (File=Particles_coarse.msh,GPxElement=4) {
 	    E=117.e3
 	    nu=0.35
       Yield_stress=400
-      Hardening_modulus=100
+      Hardening_modulus=0.0
 	    Id=0
     }
     
@@ -47,5 +47,8 @@ GramsSolid2D (File=Particles_coarse.msh,GPxElement=4) {
 
 # Outputs 
 GramsOutputs (i=1) {
-	     DIR=Resultados_coarse
+	     DIR=Resultados
+       Out_Von_Mises=true
+       Out-stress=true
+       Out-Equivalent-Plastic-Strain=true
 }

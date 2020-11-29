@@ -749,7 +749,7 @@ typedef struct {
 
 /*******************************************************/
 
-/*! \struct Variables_Constitutive
+/*! \struct Plastic_status
   Structure with output control
  */
 typedef struct
@@ -759,7 +759,7 @@ typedef struct
   double Cohesion;
   double Yield_stress;
 
-} Variables_Constitutive;
+} Plastic_status;
 
 
 /*******************************************************/

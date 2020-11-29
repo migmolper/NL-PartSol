@@ -25,6 +25,7 @@ bool Out_eigenvalues_strain;
 bool Out_deformation_gradient;
 bool Out_energy;
 bool Out_Von_Mises;
+bool Out_EPS;
 
 /*
   Auxiliar functions 
@@ -48,6 +49,7 @@ static void vtk_Out_Deformation_Gradient(FILE *, Matrix, int);
 static void vtk_Out_Deformation_Energy(FILE *, Matrix, int);
 static void vtk_Out_Kinetic_Energy(FILE *, Matrix, Matrix, int);
 static void vtk_Out_Von_Mises(FILE *, Matrix, Matrix, int);
+static void vtk_Out_Equiv_Plastic_Strain(FILE *, Matrix, int);
 
 /*****************************************************************/
 
@@ -207,9 +209,16 @@ void particle_results_vtk__InOutFun__(GaussPoint MPM_Mesh, int TimeStep_i, int R
     vtk_Out_Kinetic_Energy(Vtk_file, MPM_Mesh.Phi.vel, MPM_Mesh.Phi.mass, NumParticles);
   }  
 
+  /* Compute von mises stress */
   if(Out_Von_Mises)
   {
     vtk_Out_Von_Mises(Vtk_file,  MPM_Mesh.Phi.F_n, MPM_Mesh.Phi.Stress, NumParticles);
+  }
+
+  /* print equivalent plastic strain */
+  if(Out_EPS)
+  {
+    vtk_Out_Equiv_Plastic_Strain(Vtk_file, MPM_Mesh.Phi.EPS, NumParticles);
   }
 
   /* Close the file */
@@ -669,7 +678,6 @@ static void vtk_Out_Kinetic_Energy(FILE * Vtk_file, Matrix vel, Matrix mass, int
 
 /*********************************************************************/
 
-
 static void vtk_Out_Von_Mises(FILE * Vtk_file, Matrix F_n, Matrix S, int NumParticles)
 {
   int Ndim = NumberDimensions;
@@ -726,6 +734,19 @@ static void vtk_Out_Von_Mises(FILE * Vtk_file, Matrix F_n, Matrix S, int NumPart
   }
   free__TensorLib__(Eye);
   free__TensorLib__(Dev_Cauchy_p);
+}
+
+/*********************************************************************/
+
+static void vtk_Out_Equiv_Plastic_Strain(FILE * Vtk_file, Matrix EPS, int NumParticles)
+{
+
+  fprintf(Vtk_file,"SCALARS EPS double \n");
+  fprintf(Vtk_file,"LOOKUP_TABLE default \n");
+  for(int i =  0 ; i<NumParticles ; i++)
+  {
+    fprintf(Vtk_file,"%lf \n",EPS.nV[i]); 
+  }
 }
 
 /*********************************************************************/

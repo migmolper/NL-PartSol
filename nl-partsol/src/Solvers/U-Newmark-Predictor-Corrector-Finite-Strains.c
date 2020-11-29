@@ -463,8 +463,8 @@ static void update_Local_State(Matrix D_Displacement,
   double rho_n_p;
   double J_n1_p;  
   double Delta_J_p;
-  Variables_Constitutive Inputs_VarCons;
-  Variables_Constitutive Outputs_VarCons;
+  Plastic_status Input_Plastic_Parameters;
+  Plastic_status Output_Plastic_Parameters;
   Element Nodes_p;
   Material MatProp_p;
   Matrix gradient_p;
@@ -538,28 +538,28 @@ static void update_Local_State(Matrix D_Displacement,
         {
           J_n1_p = I3__TensorLib__(F_n1_p);
           F_plastic_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_plastic.nM[p],2);
-          Inputs_VarCons.Cohesion = MPM_Mesh.Phi.cohesion.nV[p];
-          Inputs_VarCons.EPS = MPM_Mesh.Phi.EPS.nV[p];
+          Input_Plastic_Parameters.Cohesion = MPM_Mesh.Phi.cohesion.nV[p];
+          Input_Plastic_Parameters.EPS = MPM_Mesh.Phi.EPS.nV[p];
 
-          Outputs_VarCons = plasticity_Von_Mises(S_p, C_n1_p, F_plastic_p, F_n1_p, J_n1_p, Inputs_VarCons, MatProp_p);
+          Output_Plastic_Parameters = plasticity_Von_Mises(S_p, C_n1_p, F_plastic_p, F_n1_p, J_n1_p, Input_Plastic_Parameters, MatProp_p);
 
           /* Update variables (cohesion and EPS) */
-          MPM_Mesh.Phi.cohesion.nV[p] = Outputs_VarCons.Yield_stress;
-          MPM_Mesh.Phi.EPS.nV[p] = Outputs_VarCons.EPS;
+          MPM_Mesh.Phi.cohesion.nV[p] = Output_Plastic_Parameters.Yield_stress;
+          MPM_Mesh.Phi.EPS.nV[p] = Output_Plastic_Parameters.EPS;
         }
       else if((strcmp(MatProp_p.Type,"Drucker-Prager-Plane-Strain") == 0) || 
               (strcmp(MatProp_p.Type,"Drucker-Prager-Outer-Cone") == 0))
         {
           J_n1_p = I3__TensorLib__(F_n1_p);
           F_plastic_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_plastic.nM[p],2);
-          Inputs_VarCons.Cohesion = MPM_Mesh.Phi.cohesion.nV[p];
-          Inputs_VarCons.EPS = MPM_Mesh.Phi.EPS.nV[p];
+          Input_Plastic_Parameters.Cohesion = MPM_Mesh.Phi.cohesion.nV[p];
+          Input_Plastic_Parameters.EPS = MPM_Mesh.Phi.EPS.nV[p];
 
-          Outputs_VarCons = plasticity_Drucker_Prager_Sanavia(S_p, C_n1_p, F_n1_p, F_plastic_p, J_n1_p, Inputs_VarCons, MatProp_p);
+          Output_Plastic_Parameters = plasticity_Drucker_Prager_Sanavia(S_p, C_n1_p, F_n1_p, F_plastic_p, J_n1_p, Input_Plastic_Parameters, MatProp_p);
 
           /* Update variables (cohesion and EPS) */
-          MPM_Mesh.Phi.cohesion.nV[p] = Outputs_VarCons.Cohesion;
-          MPM_Mesh.Phi.EPS.nV[p] = Outputs_VarCons.EPS;
+          MPM_Mesh.Phi.cohesion.nV[p] = Output_Plastic_Parameters.Cohesion;
+          MPM_Mesh.Phi.EPS.nV[p] = Output_Plastic_Parameters.EPS;
 
         }
       else

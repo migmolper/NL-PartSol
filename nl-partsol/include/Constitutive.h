@@ -95,18 +95,18 @@ Tensor compute_stiffness_density_Neo_Hookean_Wriggers(Tensor, Tensor, Tensor, do
 /*******************************************************/  
 
 /*
-\fn Variables_Constitutive plasticity_Drucker_Prager_Sanavia(Tensor S_p, Tensor C_total, Tensor F_total, Tensor F_plastic_p, 
-                                                         double J, Variables_Constitutive Inputs_VarCons, Material MatProp)
+\fn Plastic_status plasticity_Drucker_Prager_Sanavia(Tensor S_p, Tensor C_total, Tensor F_total, Tensor F_plastic_p, 
+                                                         double J, Plastic_status Inputs_VarCons, Material MatProp)
 */
-Variables_Constitutive plasticity_Drucker_Prager_Sanavia(Tensor, Tensor, Tensor, Tensor, 
-                                                         double, Variables_Constitutive, Material);
+Plastic_status plasticity_Drucker_Prager_Sanavia(Tensor, Tensor, Tensor, Tensor, 
+                                                         double, Plastic_status, Material);
 /*******************************************************/  
 
 /*
-\fn Variables_Constitutive plasticity_Von_Mises(Tensor S_p, Tensor C_total, Tensor F_plastic, Tensor F_total, 
-                            double J, Variables_Constitutive Inputs_VarCons, Material MatProp)
+\fn Plastic_status plasticity_Von_Mises(Tensor S_p, Tensor C_total, Tensor F_plastic, Tensor F_total, 
+                            double J, Plastic_status Inputs_VarCons, Material MatProp)
 */
-Variables_Constitutive plasticity_Von_Mises(Tensor, Tensor, Tensor, Tensor, double, Variables_Constitutive, Material);
+Plastic_status plasticity_Von_Mises(Tensor, Tensor, Tensor, Tensor, double, Plastic_status, Material);
 /*******************************************************/  
 
 #endif

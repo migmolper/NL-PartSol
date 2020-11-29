@@ -29,8 +29,8 @@ static Tensor compute_finite_stress_tensor_elastic_region(Tensor, Tensor, Materi
 
 /**************************************************************/
 
-Variables_Constitutive plasticity_Drucker_Prager_Sanavia(Tensor S_p, Tensor C_total, Tensor F_total, Tensor F_plastic, 
-                                                         double J, Variables_Constitutive Inputs_VarCons, Material MatProp)
+Plastic_status plasticity_Drucker_Prager_Sanavia(Tensor S_p, Tensor C_total, Tensor F_total, Tensor F_plastic, 
+                                                         double J, Plastic_status Inputs_VarCons, Material MatProp)
 /*	
 	Radial returning algorithm
 */
@@ -63,7 +63,7 @@ Variables_Constitutive plasticity_Drucker_Prager_Sanavia(Tensor S_p, Tensor C_to
   /*
     Define output varible
   */
-  Variables_Constitutive Outputs_VarCons;
+  Plastic_status Outputs_VarCons;
 
   /*  
     Get the value of the equivalent plastic stress and cohesion

@@ -27,8 +27,8 @@ static Tensor compute_finite_stress_tensor_elastic_region(Tensor, Tensor, Materi
 
 /**************************************************************/
 
-Variables_Constitutive plasticity_Von_Mises(Tensor S_p, Tensor C_total, Tensor F_plastic, Tensor F_total, 
-                					                  double J, Variables_Constitutive Inputs_VarCons, Material MatProp)
+Plastic_status plasticity_Von_Mises(Tensor S_p, Tensor C_total, Tensor F_plastic, Tensor F_total, 
+                					                  double J, Plastic_status Inputs_VarCons, Material MatProp)
 /*	
 	Radial returning algorithm for the Von-Mises plastic criterium
 */
@@ -36,8 +36,6 @@ Variables_Constitutive plasticity_Von_Mises(Tensor S_p, Tensor C_total, Tensor F
 
   int Ndim = NumberDimensions;
 
-  double EPS_k;
-  double yield_stress_k;
 
   Tensor C_elastic;
   Tensor E_elastic;
@@ -49,9 +47,13 @@ Variables_Constitutive plasticity_Von_Mises(Tensor S_p, Tensor C_total, Tensor F
   double delta_Gamma;
   double Phi;
   double d_Phi;	
-  double H;
   Tensor sigma_k1;
   Tensor Increment_E_plastic;
+
+  /* Load material marameters */
+  double H = MatProp.hardening_modulus;
+  double EPS_k = Inputs_VarCons.EPS;
+  double yield_stress_k = Inputs_VarCons.Yield_stress;
 
   /*
     Initialise convergence parameters for the solver
@@ -64,15 +66,7 @@ Variables_Constitutive plasticity_Von_Mises(Tensor S_p, Tensor C_total, Tensor F
   /*
     Define output varible
   */
-  Variables_Constitutive Outputs_VarCons;
-
-  /*  
-    Get the value of the equivalent plastic stress and yield stress
-  */
-  EPS_k = Inputs_VarCons.EPS;
-  yield_stress_k  = Inputs_VarCons.Yield_stress;
-
-  
+  Plastic_status Outputs_VarCons;
 
   /*
     Compute the trial elastic right Cauchy-Green tensor using the intermediate configuration.
@@ -104,11 +98,12 @@ Variables_Constitutive plasticity_Von_Mises(Tensor S_p, Tensor C_total, Tensor F
   delta_Gamma = 0;
   Phi = compute_yield_surface(s_trial_norm, delta_Gamma, yield_stress_k, MatProp);
 
-  if(Phi >= TOL)
+  if(Phi < TOL)
     {
-
-      H = MatProp.hardening_modulus;
-          
+      sigma_k1 = compute_finite_stress_tensor_elastic_region(s_trial, p_trial, MatProp);
+    }
+  else
+    {     
       /*
         Newton-Rapson solver
       */
@@ -153,10 +148,6 @@ Variables_Constitutive plasticity_Von_Mises(Tensor S_p, Tensor C_total, Tensor F
       sigma_k1 = compute_finite_stress_tensor_plastic_region(s_trial, p_trial, s_trial_norm, delta_Gamma, MatProp);
 
     }
-    else
-    {
-      sigma_k1 = compute_finite_stress_tensor_elastic_region(s_trial, p_trial, MatProp);
-    }
 
   /*
     Get the stress tensor in the reference configuration
@@ -186,6 +177,8 @@ Variables_Constitutive plasticity_Von_Mises(Tensor S_p, Tensor C_total, Tensor F
   */
   Outputs_VarCons.EPS = EPS_k;
   Outputs_VarCons.Yield_stress = yield_stress_k;
+
+  
 return Outputs_VarCons;
 }
 
@@ -202,7 +195,7 @@ static void standard_error(char * Error_message)
 
 static bool check_convergence(double Error, double TOL, int Iter, int MaxIter)
 {
-  bool convergence;
+  bool convergence = false;
   double Error_relative;
   char Error_message[MAXW];
 
@@ -211,36 +204,31 @@ static bool check_convergence(double Error, double TOL, int Iter, int MaxIter)
       sprintf(Error_message,"%s","Convergence not reached in the maximum number of iterations");
       standard_error(Error_message); 
     }
-  else
-    {
 
-      /*
-        Compute relative error
-      */
-      if(Iter == 0)
-      {
-        Error0 = Error;
-        Error_relative = Error/Error0;
+  /*
+    Compute relative error
+  */
+  if(Iter == 0)
+    {
+      Error0 = Error;
+      Error_relative = Error/Error0;
 //        printf("Error iter %i : %1.4e ; %1.4e \n",Iter,Error,Error_relative);
-      }
-      else
-      {
-        Error_relative = Error/Error0;
-//        printf("Error iter %i : %1.4e ; %1.4e \n",Iter,Error,Error_relative);
-      }
-      
-      /*
-        Check convergence using the relative error
-      */
-      if(Error_relative > TOL)
-      {
-        return false;
-      }
-      else
-      {
-        return true;
-      }
     }
+    else
+    {
+      Error_relative = Error/Error0;
+//        printf("Error iter %i : %1.4e ; %1.4e \n",Iter,Error,Error_relative);
+    }
+      
+    /*
+      Check convergence using the relative error
+    */
+  if(Error_relative < TOL)
+    {
+      convergence = true;
+    }
+
+  return convergence;
 }
 
 /**************************************************************/
@@ -259,14 +247,16 @@ static double compute_derivative_yield_surface(double H, Material MatProp)
 
 static double update_increment_plastic_strain(double delta_Gamma_k, double Phi, double d_Phi)
 {
-  return delta_Gamma_k - Phi/d_Phi;
+  double delta_Gamma_k1 = delta_Gamma_k - Phi/d_Phi;
+  return delta_Gamma_k1;
 }
 
 /**************************************************************/
 
 static double update_equivalent_plastic_strain(double EPS_k, double delta_Gamma, Material MatProp)
 {
-  return EPS_k + delta_Gamma;
+  double EPS_k1 = EPS_k + delta_Gamma;
+  return EPS_k1;
 }
 
 /**************************************************************/
@@ -277,7 +267,9 @@ static double update_yield_stress(double EPS_k1, Material MatProp)
   double E_p0  = MatProp.E_plastic_reference;
   double aux = 1 + EPS_k1/E_p0;
 
-  return yield_stress_0*aux;  
+  double yield_stress_k1 = yield_stress_0*aux;
+
+  return yield_stress_k1;  
 }
 
 /**************************************************************/
