@@ -204,18 +204,11 @@ else
 }
 
 
-  /*
-    Get the stress tensor in the deformed configuration
-  */
-contravariant_pull_back_tensor__TensorLib__(S_p, sigma_k1, F_total);
+/*
+  Get the stress tensor in the reference configuration (S_p) using the Piola transformation
+*/
+compute_Piola_transformation(S_p, sigma_k1, F_total, J);
 
-for(int i = 0 ; i<Ndim ; i++)
-{
-  for(int j = 0 ; j<Ndim ; j++)
-  {
-   S_p.N[i][j] *= J;
- }
-}
 
 
   /*
