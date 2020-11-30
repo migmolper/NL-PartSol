@@ -34,8 +34,7 @@ GramsSolid2D (File=Particles_coarse.msh,GPxElement=4) {
     }
     
     # Shape function definition
-    GramsShapeFun (Type=LME) {
-      gamma=1.0
+    GramsShapeFun (Type=MPMQ4) {
     }
 
     # Initial conditions for the GPs
@@ -48,7 +47,8 @@ GramsSolid2D (File=Particles_coarse.msh,GPxElement=4) {
 # Outputs 
 GramsOutputs (i=1) {
 	     DIR=Resultados
-       Out_Von_Mises=true
+       Out-Von-Mises=true
        Out-stress=true
+       Out-volumetric-stress=true
        Out-Equivalent-Plastic-Strain=true
 }

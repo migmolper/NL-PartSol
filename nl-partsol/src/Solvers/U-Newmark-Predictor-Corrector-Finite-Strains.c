@@ -590,8 +590,8 @@ static void update_Local_State(Matrix D_Displacement,
 	}
 
       /* Compute the deformation energy */
-      Vol_0_p = MPM_Mesh.Phi.Vol_0.nV[p];
-      MPM_Mesh.Phi.W.nV[p]= finite_strains_internal_energy__Particles__(F_n_p, MatProp_p, Vol_0_p);
+  //    Vol_0_p = MPM_Mesh.Phi.Vol_0.nV[p];
+  //    MPM_Mesh.Phi.W.nV[p]= finite_strains_internal_energy__Particles__(F_n_p, MatProp_p, Vol_0_p);
 
       /*
 	Free memory 

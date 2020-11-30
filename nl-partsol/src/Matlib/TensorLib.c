@@ -1,5 +1,6 @@
 #include "nl-partsol.h"
 
+
 /*************************************************************/
 
 Tensor alloc__TensorLib__(int Order)
@@ -456,7 +457,7 @@ Tensor Inverse__TensorLib__(Tensor A)
   if (A.Order == 2){  
     /* Get the determinant of the matrix */
     double detA = I3__TensorLib__(A);
-    if(detA == 0){
+    if(fabs(detA) < TOL_zero){
       fprintf(stderr,"%s : %s !!! \n",
 	      "Error in Inverse__TensorLib__()",
 	      "Determinant null");
