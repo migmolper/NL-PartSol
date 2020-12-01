@@ -10,6 +10,8 @@ int Max_Iterations_Radial_Returning;
 /*
   Auxiliar functions 
 */
+static void   standard_error(char *);
+static bool   check_convergence(double,double,int,int);
 static double compute_yield_surface(double, double, double, Material);
 static double compute_hardening_modulus(double, Material);
 static double compute_limit_between_classic_apex_algorithm(double, double, double, Material);
@@ -37,7 +39,6 @@ Plastic_status plasticity_Drucker_Prager_Sanavia(Tensor S_p, Tensor C_total, Ten
 {
 
   int Ndim = NumberDimensions;
-  int iter_NR = 0;
 
   Tensor C_elastic;
   Tensor E_elastic;
@@ -50,36 +51,29 @@ Plastic_status plasticity_Drucker_Prager_Sanavia(Tensor S_p, Tensor C_total, Ten
   double p_trial_norm;
   double Phi;
   double d_Phi;	
-  double H;
-  double EPS_k;
-  double cohesion_k;
   double p_lim;
   Tensor sigma_k1;
   Tensor Increment_E_plastic;
 
-  double TOL_DP = TOL_Radial_Returning;
-  int iter_max_DP = Max_Iterations_Radial_Returning;
+  /* Load material parameters */
+  double EPS_k = Inputs_VarCons.EPS;
+  double cohesion_k  = Inputs_VarCons.Cohesion;
+  double H;
 
-  /*
-    Define output varible
-  */
+  /* Initialise convergence prameters for the solver */
+  double TOL = TOL_Radial_Returning;
+  int MaxIter = Max_Iterations_Radial_Returning;
+  int Iter = 0;
+  bool Convergence = false;
+
+  /* Define output varible */
   Plastic_status Outputs_VarCons;
 
-  /*  
-    Get the value of the equivalent plastic stress and cohesion
-  */
-  EPS_k = Inputs_VarCons.EPS;
-  cohesion_k  = Inputs_VarCons.Cohesion;
-
-  /*
-    Compute the trial elastic right Cauchy-Green tensor using the intermediate configuration.
-  */
+  /* Compute the trial elastic right Cauchy-Green tensor using the intermediate configuration. */
   C_elastic = alloc__TensorLib__(2); 
   covariant_push_forward_tensor__TensorLib__(C_elastic, C_total, F_plastic);
 
-  /*	
-  	Calculation of the small strain tensor (the approach of Ortiz and Camacho)
-  */
+  /* Calculation of the small strain tensor (the approach of Ortiz and Camacho) */
   E_elastic = logarithmic_strains__Particles__(C_elastic);
 
   /*
@@ -101,7 +95,11 @@ Plastic_status plasticity_Drucker_Prager_Sanavia(Tensor S_p, Tensor C_total, Ten
   delta_Gamma = 0;
   Phi = compute_yield_surface(p_trial_norm, s_trial_norm, cohesion_k, MatProp);
 
-  if(Phi >= 0)
+  if(Phi < TOL)
+  {
+    sigma_k1 = compute_finite_stress_tensor_elastic_region(s_trial, p_trial, MatProp);
+  }
+  else
   {
 
     H = compute_hardening_modulus(EPS_k, MatProp);
@@ -113,7 +111,7 @@ Plastic_status plasticity_Drucker_Prager_Sanavia(Tensor S_p, Tensor C_total, Ten
       */
     if(p_trial_norm <= p_lim)
     {
-     while(iter_NR < iter_max_DP)
+     while(Convergence == false)
      {
 
        d_Phi = compute_derivative_yield_surface_classical(H, MatProp);
@@ -128,17 +126,14 @@ Plastic_status plasticity_Drucker_Prager_Sanavia(Tensor S_p, Tensor C_total, Ten
 
        Phi = compute_yield_surface_classical(s_trial_norm, p_trial_norm, delta_Gamma, cohesion_k, MatProp);
 
-	      /*
-		Check convergence
-	      */
-       if(Phi < TOL_DP)
-       {
-        iter_NR++;
-      }
-      else
-      {
-        break;
-      }
+      /*
+        Check convergence
+      */
+      Convergence = check_convergence(Phi,TOL,Iter,MaxIter);
+      if(Convergence == false)
+        {
+          Iter++;
+        }
 
     }
 
@@ -148,6 +143,8 @@ Plastic_status plasticity_Drucker_Prager_Sanavia(Tensor S_p, Tensor C_total, Ten
     Increment_E_plastic = compute_increment_plastic_strain_classical(s_trial, s_trial_norm, delta_Gamma, MatProp);
 
     update_plastic_deformation_gradient__Particles__(Increment_E_plastic,F_plastic);
+
+    free__TensorLib__(Increment_E_plastic);
     
     sigma_k1 = compute_finite_stress_tensor_classical(s_trial, p_trial, s_trial_norm, delta_Gamma, MatProp);
 
@@ -159,26 +156,23 @@ Plastic_status plasticity_Drucker_Prager_Sanavia(Tensor S_p, Tensor C_total, Ten
   else
   {
 
-   while(iter_NR < iter_max_DP)
+   while(Convergence == false)
    {
 
-     d_Phi = compute_derivative_yield_surface_apex(H, s_trial_norm, delta_Gamma, MatProp);
+    d_Phi = compute_derivative_yield_surface_apex(H, s_trial_norm, delta_Gamma, MatProp);
 
-     delta_Gamma = update_increment_plastic_strain(delta_Gamma, Phi, d_Phi);
+    delta_Gamma = update_increment_plastic_strain(delta_Gamma, Phi, d_Phi);
 
-     Phi = compute_yield_surface_apex(p_trial_norm, s_trial_norm, H, delta_Gamma, cohesion_k, MatProp);
+    Phi = compute_yield_surface_apex(p_trial_norm, s_trial_norm, H, delta_Gamma, cohesion_k, MatProp);
 
-	      /*
-		Check convergence
-	      */
-     if(Phi < TOL_DP)
-     {
-      iter_NR++;
-    }
-    else
-    {
-      break;
-    }
+    /*
+      Check convergence
+    */
+    Convergence = check_convergence(Phi,TOL,Iter,MaxIter);
+    if(Convergence == false)
+      {
+        Iter++;
+      }
 
   }
 
@@ -197,10 +191,6 @@ Plastic_status plasticity_Drucker_Prager_Sanavia(Tensor S_p, Tensor C_total, Ten
 
 }
 
-}
-else
-{
-  sigma_k1 = compute_finite_stress_tensor_elastic_region(s_trial, p_trial, MatProp);
 }
 
 
@@ -227,6 +217,54 @@ free__TensorLib__(sigma_k1);
   Outputs_VarCons.EPS = EPS_k;
   Outputs_VarCons.Cohesion = cohesion_k;
 return Outputs_VarCons;
+}
+/***************************************************************************/
+
+static void standard_error(char * Error_message)
+{
+  fprintf(stderr,"%s : %s !!! \n",
+     "Error in plasticity_Drucker_Prager_Sanavia",Error_message);
+    exit(EXIT_FAILURE);
+}
+
+/**************************************************************/
+
+static bool check_convergence(double Error, double TOL, int Iter, int MaxIter)
+{
+  bool convergence = false;
+  double Error_relative;
+  char Error_message[MAXW];
+
+  if(Iter > MaxIter)
+    {
+      sprintf(Error_message,"%s","Convergence not reached in the maximum number of iterations");
+      standard_error(Error_message); 
+    }
+
+  /*
+    Compute relative error
+  */
+  if(Iter == 0)
+    {
+      Error0 = Error;
+      Error_relative = Error/Error0;
+//        printf("Error iter %i : %1.4e ; %1.4e \n",Iter,Error,Error_relative);
+    }
+    else
+    {
+      Error_relative = Error/Error0;
+//        printf("Error iter %i : %1.4e ; %1.4e \n",Iter,Error,Error_relative);
+    }
+      
+    /*
+      Check convergence using the relative error
+    */
+  if(Error_relative < TOL)
+    {
+      convergence = true;
+    }
+
+  return convergence;
 }
 
 /**************************************************************/
