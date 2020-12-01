@@ -542,43 +542,74 @@ Matrix One_Iteration_Lumped__MatrixSolvers__(Matrix K_l, Matrix F, Matrix U0)
 
 /*********************************************************************/
 
-Matrix Accelerated_Viscous_Relaxation__MatrixSolvers__(Matrix K, Matrix K_l, Matrix RHS, Matrix U0)
+Matrix Accelerated_Viscous_Relaxation__MatrixSolvers__(Matrix M, Matrix M_l, Matrix RHS, Matrix U0)
 /*
-!      npoin                   number of nodes in mesh
-!      nelem                   number of elements
-!      nnode                   nodes per element
-!      ndimn                   dimension
-!      namat                   nr of dofn in the unknowns array
-!      ngeom                   dimension of geome, store Ni,j and area
-!      niter                   AVR number of iterations
-!      nprer                   number of prescribed DOFn
-!      intmat (nnode,nelem)    Connectivity matrix
-!      geome  (ngeom,nelem)    N1x..Nnx,N1y..Nny,...area (2d is 2Area)
-!      bprer      (2,nprer)    node and dofn prescribed for var iprer
-!      mmatl        (npoin)    Lumped mass matrix
-!
-!      rhs    (namat,npoin)    Input : Right hand side of the eqns system
-!      Fi_pres(namat,npoin)    In/Out: prescribed values and solution
+      npoin                   number of nodes in mesh
+      nelem                   number of elements
+      nnode                   nodes per element
+      ndimn                   dimension
+      namat                   nr of dofn in the unknowns array
+      ngeom                   dimension of geome, store Ni,j and area
+      niter                   AVR number of iterations
+      nprer                   number of prescribed DOFn
+      intmat (nnode,nelem)    Connectivity matrix
+      geome  (ngeom,nelem)    N1x..Nnx,N1y..Nny,...area (2d is 2Area)
+      bprer      (2,nprer)    node and dofn prescribed for var iprer
+      mmatl        (npoin)    Lumped mass matrix
 
-!      Fi     (namat,npoin)    Aux   : Solution of the system  (local)
-!      M_by_Fi(namat,npoin)    auxiliar array M*Fi             (local)
-!      mmat   (nnode,nnode)    Lumped mass matrix              (local) 
-!
-!      We solve  M.Fi = rhs  with prescribed dofn given in bprer
-!         where  M  is the mass matrix M = int(Ni Nj)
-!
-!         algorithm is:
-!                    Fi_n+1 = Fi_n + inv(Ml)* ( rhs - M.Fi_n)
-!         stored as:
-!                    Fi = Fi + inv(Ml)* ( rhs - M_by_Fi)
-!
-!      In the case of TG algorithm what we solve is
-!
-!                    dFi = dFi + inv(Ml)* ( rhs - M_by_dFi) 
-!
-!    ** Output is (i) Fi and Fi_pres, where we merge fi and fi_pres **
+      rhs    (namat,npoin)    Input : Right hand side of the eqns system
+      Fi_pres(namat,npoin)    In/Out: prescribed values and solution
+
+      Fi     (namat,npoin)    Aux   : Solution of the system  (local)
+      M_by_Fi(namat,npoin)    auxiliar array M*Fi             (local)
+      mmat   (nnode,nnode)    Lumped mass matrix              (local) 
+
+      We solve  M.Fi = rhs  with prescribed dofn given in bprer
+         where  M  is the mass matrix M = int(Ni Nj)
+
+         algorithm is:
+                    Fi_n+1 = Fi_n + inv(Ml)* ( rhs - M.Fi_n)
+         stored as:
+                    Fi = Fi + inv(Ml)* ( rhs - M_by_Fi)
+
+      In the case of TG algorithm what we solve is
+
+                    dFi = dFi + inv(Ml)* ( rhs - M_by_dFi) 
+
+    ** Output is (i) Fi and Fi_pres, where we merge fi and fi_pres **
 */
 {
+
+  Matrix Inertial_Forces = allocZ__MatrixLib__(Nnodes_mask,Ndim);
+
+  bool Convergence = false;
+  int Iter = 0;
+  int MaxIter = 20;
+
+
+  while(Convergence == false)
+  {
+
+     /*
+    Compute inertial forces (Vectorized)
+  */
+  for(int idx_A = 0 ; idx_A<Order ; idx_A++)
+    {
+      for(int idx_B = 0 ; idx_B<Order ; idx_B++)
+      {
+        idx_AB = idx_A*Order + idx_B;
+        Inertial_Forces.nV[idx_A] += Mass.nV[idx_AB]*Acceleration_n1.nV[idx_B];
+      }
+    } 
+
+    check_convergence();
+
+    if(Convergence == false)
+    {
+      iter++;
+    }
+
+  }
 
 }
 
