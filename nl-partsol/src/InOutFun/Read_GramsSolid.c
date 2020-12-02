@@ -207,6 +207,8 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
 	strcpy(MPM_Mesh.lambda.Info,"Lagrange Multiplier");
 	MPM_Mesh.Beta = allocZ__MatrixLib__(NumParticles,Ndim*Ndim);
 	strcpy(MPM_Mesh.Beta.Info,"Beta tensor");
+  MPM_Mesh.Cut_Off_Ellipsoid = allocZ__MatrixLib__(NumParticles,Ndim*Ndim);
+  strcpy(MPM_Mesh.Cut_Off_Ellipsoid.Info,"Cut-Off Ellipsoid");
       }
     }
     else{

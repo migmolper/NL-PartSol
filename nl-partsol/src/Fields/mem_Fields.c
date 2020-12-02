@@ -49,13 +49,15 @@ Fields allocate_Fields(int NumParticles)
   strcpy(Phi.F_n.Info,"Deformation gradient at t = n");
   Phi.F_n1 = allocZ__MatrixLib__(NumParticles,Ndim*Ndim);
   strcpy(Phi.F_n1.Info,"Deformation gradient at t = n + 1");
+  Phi.DF = allocZ__MatrixLib__(NumParticles,Ndim*Ndim);
+  strcpy(Phi.DF.Info,"Increment of deformation gradient");
 
   for(int p = 0 ; p<NumParticles ; p++)
     {
       for(int i = 0 ; i<Ndim ; i++)
-	{
-	  Phi.F_n.nM[p][i + i*Ndim] = 1.0;	  
-	}
+	     {
+	       Phi.F_n.nM[p][i + i*Ndim] = 1.0;	  
+	     }
       
     }
 
@@ -151,6 +153,7 @@ void free_Fields(Fields Phi)
   free__MatrixLib__(Phi.F_plastic);
   free__MatrixLib__(Phi.F_n);
   free__MatrixLib__(Phi.F_n1);
+  free__MatrixLib__(Phi.DF);
   free__MatrixLib__(Phi.W);
   free__MatrixLib__(Phi.chi);
   free__MatrixLib__(Phi.cohesion);

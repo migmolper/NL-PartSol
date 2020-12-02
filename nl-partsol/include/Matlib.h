@@ -134,6 +134,7 @@ Tensor Eigenvectors__TensorLib__(Tensor,Tensor);
 double EuclideanNorm__TensorLib__(Tensor);
 Tensor Identity__TensorLib__();
 Tensor Inverse__TensorLib__(Tensor);
+Tensor Solve_system__TensorLib__(Tensor, Tensor);
 Tensor transpose__TensorLib__(Tensor);
 double inner_product__TensorLib__(Tensor, Tensor);
 Tensor vector_product__TensorLib__(Tensor, Tensor);

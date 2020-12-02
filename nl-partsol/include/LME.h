@@ -34,7 +34,7 @@ void     initialize__LME__(GaussPoint, Mesh);
   \param Matrix l : Matrix with the distances from nodes in the neiborghood to the particle
   \param double Gamma : Adimensional paramter to control the regularization parameter
 */
-Matrix   beta_isotropic__LME__(Matrix, Matrix, double);
+Matrix   beta__LME__(Matrix, Matrix, double);
 /****************************************************************************/
 /*!
   \fn Matrix beta_anisotropic__LME__(Matrix Beta, Matrix f);
@@ -45,12 +45,8 @@ Matrix   beta_isotropic__LME__(Matrix, Matrix, double);
   \param Matrix Beta : Previous value of the thermalization parameter 
   \param Matrix f : Increment of the deformation gradient
 */
-Matrix   beta_anisotropic__LME__(Matrix, Matrix);
 Matrix   lambda__LME__(Matrix, Matrix, Matrix);
 Matrix   p__LME__(Matrix, Matrix, Matrix);
 Matrix   dp__LME__(Matrix, Matrix);
-ChainPtr isotropic_tributary__LME__(Matrix, Matrix, int, Mesh);
-ChainPtr anisotropic_tributary__LME__(Matrix, Matrix, Matrix, int, Mesh);
-Matrix   isotropic_cut_off(Matrix, Matrix);
-Matrix   anisotropic_cut_off(Matrix, Matrix);
+ChainPtr tributary__LME__(Matrix, Matrix, int, Mesh);
 #endif

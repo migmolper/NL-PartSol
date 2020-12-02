@@ -837,7 +837,7 @@ static void update_Local_State(Matrix D_Displacement,
   Matrix D_Displacement_Ap;
   Tensor F_n_p;
   Tensor F_n1_p;
-  Tensor f_n1_p;
+  Tensor DF_p;
   Tensor S_p;
   
   /*
@@ -865,17 +865,18 @@ static void update_Local_State(Matrix D_Displacement,
       */
       F_n_p  = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n.nM[p],2);
       F_n1_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n1.nM[p],2);
+      DF_p   = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.DF.nM[p],2);
       
       /*
       	Compute the increment of the deformation gradient
       */
-      f_n1_p = increment_Deformation_Gradient__Particles__(D_Displacement_Ap,gradient_p);
+      update_increment_Deformation_Gradient__Particles__(DF_p,D_Displacement_Ap,gradient_p);
 
       /*
       	Update the deformation gradient in t = n + 1 with the information
       	from t = n and the increment of deformation gradient.
       */  
-      update_Deformation_Gradient_n1__Particles__(F_n1_p, F_n_p, f_n1_p);
+      update_Deformation_Gradient_n1__Particles__(F_n1_p, F_n_p, DF_p);
       
       /*
       	Update the second Piola-Kirchhoff stress tensor (S) with an apropiate
@@ -889,7 +890,6 @@ static void update_Local_State(Matrix D_Displacement,
       /*
 	       Free memory 
       */
-      free__TensorLib__(f_n1_p);
       free__MatrixLib__(D_Displacement_Ap);
       free__MatrixLib__(gradient_p);
       free(Nodes_p.Connectivity);
@@ -1982,7 +1982,7 @@ static void update_Particles(Matrix D_Displacement,
   double ShapeFunction_pI; /* Nodal value for the particle */
   Tensor F_n_p;
   Tensor F_n1_p;
-  Tensor f_n1_p;
+  Tensor DF_p;
   double Delta_J_p;
   double rho_n_p;
   Element Nodes_p; /* Element for each particle */
@@ -2020,34 +2020,25 @@ static void update_Particles(Matrix D_Displacement,
       */
       F_n_p  = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n.nM[p],2);
       F_n1_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n1.nM[p],2);
+      DF_p   = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.DF.nM[p],2);
 
       /*
-      	Compute the increment of the deformation gradient
+	     Update density with the jacobian of the increment deformation gradient
       */
-      f_n1_p = increment_Deformation_Gradient__Particles__(D_Displacement_Ap,gradient_p);
-
-      /*
-	Update the deformation gradient in t = n + 1
-      */  
-      update_Deformation_Gradient_n1__Particles__(F_n1_p, F_n_p, f_n1_p);
-
-      /*
-	Update density with the jacobian of the increment deformation gradient
-      */
-      Delta_J_p = I3__TensorLib__(f_n1_p);
+      Delta_J_p = I3__TensorLib__(DF_p);
       rho_n_p = MPM_Mesh.Phi.rho.nV[p];
       MPM_Mesh.Phi.rho.nV[p] = rho_n_p/Delta_J_p;
 
       /*
-	Replace the deformation gradient at t = n with the converged deformation gradient
+	     Replace the deformation gradient at t = n with the converged deformation gradient
       */
       for(int i = 0 ; i<Ndim  ; i++)
-	{
-	  for(int j = 0 ; j<Ndim  ; j++)
-	    {
-	      F_n_p.N[i][j] = F_n1_p.N[i][j];
-	    }
-	}
+	     {
+	     for(int j = 0 ; j<Ndim  ; j++)
+	       {
+	         F_n_p.N[i][j] = F_n1_p.N[i][j];
+	       }
+	     }
 
       /* Compute the deformation energy */
       Vol_0_p = MPM_Mesh.Phi.Vol_0.nV[p];
@@ -2093,7 +2084,6 @@ static void update_Particles(Matrix D_Displacement,
       free__MatrixLib__(D_Displacement_Ap);
       free__MatrixLib__(ShapeFunction_p);
       free__MatrixLib__(gradient_p);
-      free__TensorLib__(f_n1_p);
     }  
 }
 

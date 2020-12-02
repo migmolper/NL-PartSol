@@ -222,6 +222,7 @@ typedef struct {
    */
   Matrix F_n;
   Matrix F_n1;
+  Matrix DF;
 
   /*!
    * Plastic deformation gradient
@@ -482,6 +483,11 @@ typedef struct {
    */
   Matrix Beta;  
 
+  /*!
+   * Cut off ellipsoid
+   */
+  Matrix Cut_Off_Ellipsoid;
+
 } GaussPoint;
 
 
@@ -587,7 +593,7 @@ typedef struct {
 /*! \struct Mask
  *  Structure with the current "element" of the particle
  */
-typedef struct{
+typedef struct {
 
   int Nactivenodes;
 
@@ -600,7 +606,7 @@ typedef struct{
 /*! \struct Element
  *  Structure with the current "element" of the particle
  */
-typedef struct{
+typedef struct {
 
   /*!
    * Index of the particle
