@@ -197,7 +197,7 @@ Plastic_status plasticity_Drucker_Prager_Sanavia(Tensor S_p, Tensor C_total, Ten
 /*
   Get the stress tensor in the reference configuration (S_p) using the Piola transformation
 */
-compute_Piola_transformation(S_p, sigma_k1, F_total, J);
+compute_Piola_transformation__Particles__(S_p, sigma_k1, F_total, J);
 
 
 

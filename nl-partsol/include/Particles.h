@@ -200,10 +200,10 @@ Tensor average_itegration_Stress__Particles__(Tensor, Tensor, Tensor, Material);
 /*******************************************************/
 
 
-/*! \fn void compute_Piola_transformation(Tensor S_p, Tensor sigma_k1, Tensor F_total, double J)
+/*! \fn void compute_Piola_transformation__Particles__(Tensor S_p, Tensor sigma_k1, Tensor F_total, double J)
 
 */
-void compute_Piola_transformation(Tensor, Tensor, Tensor, double);
+void compute_Piola_transformation__Particles__(Tensor, Tensor, Tensor, double);
 
 
 /*!

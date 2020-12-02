@@ -231,7 +231,7 @@ Tensor average_itegration_Stress__Particles__(Tensor S_p,
 
 /**************************************************************/
 
-void compute_Piola_transformation(Tensor S_p, Tensor sigma_k1, Tensor F_total, double J)
+void compute_Piola_transformation__Particles__(Tensor S_p, Tensor sigma_k1, Tensor F_total, double J)
 {
   
   int Ndim = NumberDimensions;

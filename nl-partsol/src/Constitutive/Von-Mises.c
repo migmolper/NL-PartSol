@@ -152,7 +152,7 @@ Plastic_status plasticity_Von_Mises(Tensor S_p, Tensor C_total, Tensor F_plastic
   /*
     Get the stress tensor in the reference configuration (S_p) using the Piola transformation
   */
-  compute_Piola_transformation(S_p, sigma_k1, F_total, J);
+  compute_Piola_transformation__Particles__(S_p, sigma_k1, F_total, J);
 
   /*
     Free memory
