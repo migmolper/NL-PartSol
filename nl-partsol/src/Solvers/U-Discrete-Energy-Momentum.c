@@ -748,7 +748,7 @@ static void update_Local_State(Matrix D_Displacement, Mask ActiveNodes, GaussPoi
 	Update the deformation gradient in t = n + 1 with the information
 	from t = n and the increment of deformation gradient.
       */  
-      update_Deformation_Gradient_n1__Particles__(F_n1_p, F_n_p, DF_p,);
+      update_Deformation_Gradient_n1__Particles__(F_n1_p, F_n_p, DF_p);
       
       /*
       	Update the second Piola-Kirchhoff stress tensor (S) with an apropiate

@@ -82,7 +82,7 @@ void update_increment_Deformation_Gradient__Particles__(Tensor DF_p, Matrix Delt
   /* Initialise with the identity tensor */
   for(int i = 0 ; i<Ndim ; i++)
   {
-    for(int i = 0 ; i<Ndim ; i++)
+    for(int j = 0 ; j<Ndim ; j++)
     {
       DF_p.N[i][j] = 1*(i==j);
     }
@@ -101,12 +101,12 @@ void update_increment_Deformation_Gradient__Particles__(Tensor DF_p, Matrix Delt
       
       /* Ad the nodal contribution to the train tensor */
       for(int i = 0 ; i<Ndim ; i++)
-	{
-	  for(int i = 0 ; i<Ndim ; i++)
-	    {
-	      DF_p.N[i][j] += gradient_DeltaU_I.N[i][j];
-	    }
-	}
+	     {
+	       for(int j = 0 ; j<Ndim ; j++)
+	         {
+	           DF_p.N[i][j] += gradient_DeltaU_I.N[i][j];
+	         }
+      	}
       
       /* Free memory */
       free__TensorLib__(gradient_DeltaU_I);

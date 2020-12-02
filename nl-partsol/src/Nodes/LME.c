@@ -57,10 +57,10 @@ void initialize__LME__(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 						  FEM_Mesh.Coordinates);
 
 	/* Initialize Beta */
-	Beta_p = beta_isotropic__LME__(Beta_p, Delta_Xip, gamma_LME);
+	Beta_p = beta__LME__(Beta_p, Delta_Xip, gamma_LME);
 
 	/* Get the initial connectivity of the particle */
-	MPM_Mesh.ListNodes[p] = isotropic_tributary__LME__(X_p,Beta_p,I_p,FEM_Mesh);
+	MPM_Mesh.ListNodes[p] = tributary__LME__(X_p,Beta_p,I_p,FEM_Mesh);
 
 	/* Measure the size of the connectivity */
 	MPM_Mesh.NumberNodes[p] = lenght__SetLib__(MPM_Mesh.ListNodes[p]);
@@ -78,7 +78,7 @@ void initialize__LME__(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 						  FEM_Mesh.Coordinates);
 
 	/* Update the value of beta */
-	Beta_p = beta_isotropic__LME__(Beta_p, Delta_Xip, gamma_LME);
+	Beta_p = beta__LME__(Beta_p, Delta_Xip, gamma_LME);
 			
 	/* Update lagrange multipliers with Newton-Rapson */
 	lambda_p = lambda__LME__(Delta_Xip, lambda_p, Beta_p);

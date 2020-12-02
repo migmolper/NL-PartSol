@@ -14,7 +14,7 @@
 #ifndef _aLME_H_
 #define _aLME_H_
 
-void initialize__aLME__(MPM_Mesh, FEM_Mesh);
+void initialize__aLME__(GaussPoint, Mesh);
 
 Tensor beta__aLME__(Tensor, Tensor);
 

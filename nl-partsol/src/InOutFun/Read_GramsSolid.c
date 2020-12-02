@@ -202,7 +202,7 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
 	MPM_Mesh.Beta = allocZ__MatrixLib__(NumParticles,Ndim);
 	strcpy(MPM_Mesh.Beta.Info,"Beta parameter");
       }
-      if(strcmp(ShapeFunctionGP,"LME-Anisotropic") == 0){
+      if(strcmp(ShapeFunctionGP,"aLME") == 0){
 	MPM_Mesh.lambda = allocZ__MatrixLib__(NumParticles,Ndim);
 	strcpy(MPM_Mesh.lambda.Info,"Lagrange Multiplier");
 	MPM_Mesh.Beta = allocZ__MatrixLib__(NumParticles,Ndim*Ndim);

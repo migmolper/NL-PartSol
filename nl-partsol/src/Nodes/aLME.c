@@ -60,7 +60,7 @@ void initialize__aLME__(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
     lambda_p = memory_to_tensor__TensorLib__(MPM_Mesh.lambda.nM[p],1);
     Beta_p   = memory_to_tensor__TensorLib__(MPM_Mesh.Beta.nM[p],2); 
     M_p      = memory_to_tensor__TensorLib__(MPM_Mesh.Cut_Off_Ellipsoid.nM[p],2); 
-    DF_p     = memory_to_tensor__TensorLib__(MPM_Mesh.DF.nM[p],2); 
+    DF_p     = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.DF.nM[p],2); 
 
     /* Loop over the element mesh */
     for(int i = 0 ; i<Nelem ; i++)
@@ -84,7 +84,7 @@ void initialize__aLME__(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
         Beta_p = initilise_beta__aLME__(Beta_p, Delta_Xip, gamma_LME);
 
         /* Initilise cutoff ellipsoid */
-        M_p = initialise_cutoff_ellipsoid__aLME__(M_p, Delta_Xip, gamma_LME);
+        M_p = initialise_cutoff__aLME__(M_p, Delta_Xip, gamma_LME);
 
     	  /* Get the initial connectivity of the particle */
         MPM_Mesh.ListNodes[p] = tributary__aLME__(X_p,M_p,I_p,FEM_Mesh);
@@ -103,7 +103,7 @@ void initialize__aLME__(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
         Delta_Xip = compute_distance__MeshTools__(MPM_Mesh.ListNodes[p],X_p,FEM_Mesh.Coordinates);
 
 	       /* Update the value of beta */
-        Beta_p = beta__aLME__(Beta_p, Delta_Xip, DF_p);
+        Beta_p = beta__aLME__(Beta_p, DF_p);
 
       	/* Update lagrange multipliers with Newton-Rapson */
         lambda_p = lambda__aLME__(Delta_Xip, lambda_p, Beta_p);
@@ -135,11 +135,11 @@ Tensor beta__aLME__(Tensor Beta_n, Tensor f)
 
 /****************************************************************************/
 
-Tensor cut_off__aLME__(Tensor M_n1, Tensor f)
+Tensor cut_off__aLME__(Tensor M_n, Tensor f)
 {
   Tensor M_n1 = M_n;
 
-  covariant_push_forward_tensor__TensorLib__(M_n1, M_n1, f);
+  covariant_push_forward_tensor__TensorLib__(M_n1, M_n, f);
 
   return M_n1;
 }
@@ -199,14 +199,14 @@ Tensor lambda__aLME__(Matrix l, Tensor lambda, Tensor Beta)
       /* Update the value of lambda */
       for(int i = 0 ; i<Ndim ; i++)
       {
-        lambda.nV[i] -= D_lambda.nV[i];
+        lambda.n[i] -= D_lambda.n[i];
       }
 
       /* Free memory */
-      free__MatrixLib__(J);
-      free__MatrixLib__(D_lambda);
       free__MatrixLib__(p);
-      free__MatrixLib__(r);
+      free__TensorLib__(J);
+      free__TensorLib__(D_lambda);
+      free__TensorLib__(r);
 
       /* Update iterations */
       Iter++;
@@ -216,7 +216,7 @@ Tensor lambda__aLME__(Matrix l, Tensor lambda, Tensor Beta)
 
   /* Free memory */
   free__MatrixLib__(p);
-  free__MatrixLib__(r);
+  free__TensorLib__(r);
   
   /* Return the lagrange multipliers value */
   return lambda;
@@ -249,7 +249,7 @@ Matrix p__aLME__(Matrix l, Tensor lambda, Tensor Beta)
   /* Get Z and the numerator */
   for(int a = 0 ; a<N_a ; a++)
   {
-    la = Tensor memory_to_tensor__TensorLib__(l.nM[a], 1);
+    la = memory_to_tensor__TensorLib__(l.nM[a], 1);
     p.nV[a] = exp(fa__aLME__(la,lambda,Beta));
     Z += p.nV[a];
   }
@@ -298,7 +298,7 @@ Matrix dp__aLME__(Matrix l, Matrix p)
   J = J__aLME__(l,p,r);
   
   /* Inverse of the Hessian */
-  Jm1 = inverse__MatrixLib__(J);
+  Jm1 = Inverse__TensorLib__(J);
 
   /* Fill the gradient for each node */
   for(int a = 0 ; a<N_a ; a++)
@@ -315,8 +315,8 @@ Matrix dp__aLME__(Matrix l, Matrix p)
   }
 
   /* Free memory */
-  free__MatrixLib__(r);
-  free__MatrixLib__(J);
+  free__TensorLib__(r);
+  free__TensorLib__(J);
   free__TensorLib__(Jm1);
   
   /* Return the value of the shape function gradient */  
@@ -348,7 +348,7 @@ ChainPtr tributary__aLME__(Matrix Coordinate_p, Tensor M_p, int I0, Mesh FEM_Mes
 
   double R_p;
 
-  X_p = memory_to_tensor__TensorLib__(Coordinate_p.n, 1);
+  X_p = memory_to_tensor__TensorLib__(Coordinate_p.nV, 1);
 
   /* Get nodes close to the particle */
   Set_Nodes0 = FEM_Mesh.NodalLocality[I0];
@@ -407,13 +407,13 @@ static Tensor initilise_beta__aLME__(Tensor Beta_p, Matrix l, double Gamma)
   int Ndim = NumberDimensions;
   int NumNodes_p = l.N_rows;
   double h = 0;
-  Matrix l_p_I;
+  Tensor l_pI;
   
   /* Get the mean distande */
   for(int i = 0 ; i<NumNodes_p ; i++)
   {
-    l_p_I = = memory_to_matrix__MatrixLib__(Ndim,1,l.nM[i]);
-    h += norm__MatrixLib__(l_p_I,2);
+    l_pI = memory_to_tensor__TensorLib__(l.nM[i],1);
+    h += EuclideanNorm__TensorLib__(l_pI);
   }
 
   h = h/NumNodes_p;
@@ -451,7 +451,7 @@ static Tensor initialise_cutoff__aLME__(Tensor M_p, Matrix l, double Gamma)
   /* Fill the cutoff ellipsoid */
   for(int i = 0 ; i<Ndim ; i++)
   {
-    Beta_p.N[i][i] = 1/Ra2;
+    M_p.N[i][i] = 1/Ra2;
   }
 
   return M_p;
