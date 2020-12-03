@@ -58,7 +58,7 @@ Plastic_status plasticity_Drucker_Prager_Sanavia(Tensor S_p, Tensor C_total, Ten
   /* Load material parameters */
   double EPS_k = Inputs_VarCons.EPS;
   double cohesion_k  = Inputs_VarCons.Cohesion;
-  double H;
+  double H = 0;
 
   /* Initialise convergence prameters for the solver */
   double TOL = TOL_Radial_Returning;
@@ -216,6 +216,7 @@ free__TensorLib__(sigma_k1);
   */
   Outputs_VarCons.EPS = EPS_k;
   Outputs_VarCons.Cohesion = cohesion_k;
+
 return Outputs_VarCons;
 }
 /***************************************************************************/
