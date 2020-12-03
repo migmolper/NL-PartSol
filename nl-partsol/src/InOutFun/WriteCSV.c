@@ -14,7 +14,9 @@ static void print_nodes_tensorial_variable_to_csv(FILE *, Matrix, Matrix, Mask, 
 static void print_particles_scalar_variable_to_csv(FILE *, Matrix, Matrix, Event);
 static void print_particles_vectorial_variable_to_csv(FILE *, Matrix, Matrix, Event);
 static void print_particles_tensorial_variable_to_csv(FILE *, Matrix, Matrix, Event);
-
+static void print_Gauss_Point_scalar_variable_to_csv(FILE *, double);
+static void print_Gauss_Point_vectorial_variable_to_csv(FILE *, Tensor);
+static void print_Gauss_Point_tensorial_variable_to_csv(FILE *, Tensor);
 /*****************************************************************/
 
 void path_nodes_analysis_csv__InOutFun__(Matrix Nodal_Field, Matrix Nodes_Coordinates, char * Name_File, Mask ActiveNodes, 
@@ -99,10 +101,55 @@ void path_particles_analysis_csv__InOutFun__(Matrix Particle_Field, Matrix Parti
 
 /*****************************************************************/
 
+void Gauss_Point_evolution__InOutFun__(GaussPoint PointAnalysis, Event Output_Commands, char * Name_File, int k, int idx)
+{
+	int Ndim = NumberDimensions;
+
+	char Name_file_Ts[MAXC];
+	FILE * csv_file;
+
+	sprintf(Name_file_Ts,"%s/%s_idx_%i.csv",Output_Commands.Directory,Name_File,idx);
+	csv_file = fopen(Name_file_Ts,"a+");
+
+	if(Output_Commands.Out_csv_Gauss_Point_evolution_Stress)
+	{
+		Tensor Stress_k = memory_to_tensor__TensorLib__(PointAnalysis.Phi.Stress.nM[k],2);
+		print_Gauss_Point_tensorial_variable_to_csv(csv_file, Stress_k);
+	}
+	if(Output_Commands.Out_csv_Gauss_Point_evolution_Strain)
+	{
+		Tensor Strain_k = memory_to_tensor__TensorLib__(PointAnalysis.Phi.Strain.nM[k],2);
+		print_Gauss_Point_tensorial_variable_to_csv(csv_file, Strain_k);
+	}
+	if(Output_Commands.Out_csv_Gauss_Point_evolution_Deformation_gradient)
+	{
+		Tensor Def_Gradient_k = memory_to_tensor__TensorLib__(PointAnalysis.Phi.F_n.nM[k],2);
+		print_Gauss_Point_tensorial_variable_to_csv(csv_file, Def_Gradient_k);
+	}
+	if(Output_Commands.Out_csv_Gauss_Point_evolution_EPS)
+	{
+		double EPS_k = PointAnalysis.Phi.EPS.nV[k];
+		print_Gauss_Point_scalar_variable_to_csv(csv_file, EPS_k);
+	}
+	if(Output_Commands.Out_csv_Gauss_Point_evolution_Cohesion)
+	{
+		double cohesion_k = PointAnalysis.Phi.cohesion.nV[k];
+		print_Gauss_Point_scalar_variable_to_csv(csv_file, cohesion_k);
+	}
+
+	/* New line */
+	fprintf(csv_file,"\n");
+
+	/* Close the file */
+	fclose(csv_file);
+}
+
+/*****************************************************************/
+
 static void standard_error(char * Error_message)
 {
 	fprintf(stderr,"%s : %s !!! \n",
-	   "Error in GramsOutputs()",Error_message);
+	   "Error in __InOutFun__()",Error_message);
     exit(EXIT_FAILURE);
 }
 
@@ -358,3 +405,48 @@ static void print_particles_tensorial_variable_to_csv(FILE * csv_file, Matrix Va
 
 /*****************************************************************/
 
+static void print_Gauss_Point_scalar_variable_to_csv(FILE * csv_file, double Variable)
+{
+	fprintf(csv_file,"%lf,",Variable);
+}
+
+/*****************************************************************/
+
+static void print_Gauss_Point_vectorial_variable_to_csv(FILE * csv_file, Tensor Variable)
+{
+	int Ndim = NumberDimensions;	
+
+	if(Ndim == 2)
+	{
+		fprintf(csv_file,"%lf,%lf,", Variable.n[0], Variable.n[1]);
+	}
+	else if(Ndim == 3)
+	{
+		fprintf(csv_file,"%lf,%lf,%lf,", Variable.n[0], Variable.n[1], Variable.n[2]);
+	}
+}
+
+
+/*****************************************************************/
+
+static void print_Gauss_Point_tensorial_variable_to_csv(FILE * csv_file, Tensor Variable)
+{
+	int Ndim = NumberDimensions;
+
+	if(Ndim == 2)
+	{
+		fprintf(csv_file,"%lf,%lf,%lf,%lf,", 
+						Variable.N[0][0], Variable.N[0][1],
+						Variable.N[1][0], Variable.N[1][1]);
+	}
+	else if(Ndim == 3)
+	{
+		fprintf(csv_file,"%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,",
+						 Variable.N[0][0], Variable.N[0][1], Variable.N[0][2],
+						 Variable.N[1][0], Variable.N[1][1], Variable.N[1][2],
+						 Variable.N[2][0], Variable.N[2][1], Variable.N[2][2]);
+	}
+
+}
+
+/*****************************************************************/

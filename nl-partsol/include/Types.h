@@ -722,6 +722,12 @@ typedef struct {
   bool Out_csv_particles_path_Strain;
   bool Out_csv_particles_path_Deformation_gradient;
 
+  bool Out_csv_Gauss_Point_evolution_Stress;
+  bool Out_csv_Gauss_Point_evolution_Strain;
+  bool Out_csv_Gauss_Point_evolution_Deformation_gradient;
+  bool Out_csv_Gauss_Point_evolution_EPS;
+  bool Out_csv_Gauss_Point_evolution_Cohesion;
+
   /*!
     Output selector Vtk
   */

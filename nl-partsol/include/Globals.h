@@ -40,6 +40,12 @@ extern int NumberDOF;
 extern Event * Out_nodal_path_csv;
 extern int Number_Out_nodal_path_csv;
 
+extern Event * Out_particles_path_csv;
+extern int Number_Out_particles_path_csv;
+
+extern Event * Out_Gauss_Point_evolution_csv;
+extern int Number_Out_Gauss_Point_evolution_csv;
+
 extern bool Out_global_coordinates;
 extern bool Out_element_coordinates;
 extern bool Out_mass;

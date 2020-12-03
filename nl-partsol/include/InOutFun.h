@@ -456,4 +456,9 @@ void NLPS_Out_nodal_path_csv__InOutFun__(char * Name_File);
 void NLPS_Out_particles_path_csv__InOutFun__(char * Name_File);
 /*****************************************************************/
 
+
+void Gauss_Point_evolution__InOutFun__(GaussPoint, Event, char *, int, int);
+/*****************************************************************/
+
+
 #endif
