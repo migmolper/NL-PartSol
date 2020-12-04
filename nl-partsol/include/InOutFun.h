@@ -257,6 +257,10 @@ Boundaries GramsBoundary(char *,int);
 
 /*****************************************************************/
 
+GaussPoint Generate_Gauss_Point_Analysis__InOutFun__(char *);
+
+/*****************************************************************/
+
 /*!
 
   \fn GaussPoint GramsSolid2D(char * File, Mesh Nodes)

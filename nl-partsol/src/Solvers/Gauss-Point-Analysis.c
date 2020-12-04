@@ -36,7 +36,7 @@ void NonLinear_Gauss_Point_Analysis(GaussPoint PointAnalysis)
   for(int k = 0 ; k<NumTimeStep ; k++)
   {
 
-	S_k = memory_to_tensor__TensorLib__(PointAnalysis.Phi.Stress.nM[k],2);     
+	  S_k = memory_to_tensor__TensorLib__(PointAnalysis.Phi.Stress.nM[k],2);     
   	F_k = memory_to_tensor__TensorLib__(PointAnalysis.Phi.F_n.nM[k],2);
   	C_k = right_Cauchy_Green__Particles__(F_k);
 
@@ -79,8 +79,8 @@ void NonLinear_Gauss_Point_Analysis(GaussPoint PointAnalysis)
 	else
 	{
 	  sprintf(Error_message,"%s %s %s","The material",PointAnalysis.Mat[0].Type,"has not been yet implemnented");
-      standard_error(Error_message); 
-    }
+    standard_error(Error_message); 
+  }
 
     free__TensorLib__(C_k);
 
@@ -88,7 +88,7 @@ void NonLinear_Gauss_Point_Analysis(GaussPoint PointAnalysis)
 	for(int i = 0 ; i<Number_Out_Gauss_Point_evolution_csv; i++)
   	{
     	Gauss_Point_evolution__InOutFun__(PointAnalysis,Out_Gauss_Point_evolution_csv[i],"GaussPoint_evolution", k,i);
-	}
+	  }
 
   }
       
