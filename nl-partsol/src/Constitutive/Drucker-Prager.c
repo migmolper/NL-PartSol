@@ -29,19 +29,66 @@ static Tensor compute_increment_plastic_strain_apex(Tensor, double, double, Mate
 static Tensor compute_finite_stress_tensor_apex(Tensor, double, Material);
 static Tensor compute_finite_stress_tensor_elastic_region(Tensor, Tensor, Material);
 
+
 /**************************************************************/
 
-Plastic_status plasticity_Drucker_Prager_Sanavia(Tensor S_p, Tensor C_total, Tensor F_total, Tensor F_plastic, 
-                                                         double J, Plastic_status Inputs_VarCons, Material MatProp)
+Plastic_status finite_strains_plasticity_Drucker_Prager_Sanavia(Tensor Finite_Stress, Tensor C_total, Tensor F_plastic,
+                                                                Tensor F_total, Plastic_status Inputs_VarCons, Material MatProp, double J)
+/*
+  Finite strains plasticity following the apporach of Ortiz and Camacho
+*/
+{
+
+  /* Define output */
+  Plastic_status Outputs_VarCons;
+
+  Tensor C_elastic = alloc__TensorLib__(2);
+  Tensor E_elastic;
+  Tensor Infinitesimal_Stress = alloc__TensorLib__(2);
+  Tensor Increment_E_plastic;
+  Tensor D_F_plastic;
+
+  /* Compute the elastic right Cauchy-Green tensor using the intermediate configuration. */ 
+  covariant_push_forward_tensor__TensorLib__(C_elastic, C_total, F_plastic);
+
+  /* Calculation of the small strain tensor */
+  E_elastic = logarithmic_strains__Particles__(C_elastic);
+
+  /* Start plastic algorithm in infinitesimal strains */
+  Outputs_VarCons = infinitesimal_strains_plasticity_Drucker_Prager_Sanavia(Infinitesimal_Stress, E_elastic, Inputs_VarCons, MatProp);
+
+  /* Use the Cuitiño & Ortiz exponential maping to compute the increment of plasticfinite strains */
+  Increment_E_plastic = Outputs_VarCons.Increment_E_plastic;
+  D_F_plastic = increment_Deformation_Gradient_exponential_strains__Particles__(Increment_E_plastic);
+
+  /* Compute the new plastic deformation gradient */
+  update_plastic_deformation_gradient__Particles__(D_F_plastic,F_plastic);
+
+  /* Get the stress tensor in the reference configuration (S_p) using the Piola transformation */
+  compute_Piola_transformation__Particles__(Finite_Stress, Infinitesimal_Stress, F_total, J);
+
+  /* Free memory */
+  free__TensorLib__(C_elastic);
+  free__TensorLib__(E_elastic);
+  free__TensorLib__(Increment_E_plastic);
+  free__TensorLib__(D_F_plastic);
+  free__TensorLib__(Infinitesimal_Stress);
+
+  return Outputs_VarCons;
+}
+
+/**************************************************************/
+
+Plastic_status infinitesimal_strains_plasticity_Drucker_Prager_Sanavia(Tensor sigma_k1, Tensor E_elastic,
+                                                                       Plastic_status Inputs_VarCons,
+                                                                       Material MatProp)
 /*	
-	Radial returning algorithm
+	Radial returning algorithm for the Drucker-Prager de Sanavia algorithm
 */
 {
 
   int Ndim = NumberDimensions;
 
-  Tensor C_elastic;
-  Tensor E_elastic;
   double E_elastic_vol;
   Tensor E_elastic_dev;
   Tensor p_trial;
@@ -52,8 +99,7 @@ Plastic_status plasticity_Drucker_Prager_Sanavia(Tensor S_p, Tensor C_total, Ten
   double Phi;
   double d_Phi;	
   double p_lim;
-  Tensor sigma_k1;
-  Tensor Increment_E_plastic;
+  Tensor Increment_E_plastic = alloc__TensorLib__(2);
 
   /* Load material parameters */
   double EPS_k = Inputs_VarCons.EPS;
@@ -66,20 +112,11 @@ Plastic_status plasticity_Drucker_Prager_Sanavia(Tensor S_p, Tensor C_total, Ten
   int Iter = 0;
   bool Convergence = false;
 
-  /* Define output varible */
-  Plastic_status Outputs_VarCons;
-
-  /* Compute the trial elastic right Cauchy-Green tensor using the intermediate configuration. */
-  C_elastic = alloc__TensorLib__(2); 
-  covariant_push_forward_tensor__TensorLib__(C_elastic, C_total, F_plastic);
-
-  /* Calculation of the small strain tensor (the approach of Ortiz and Camacho) */
-  E_elastic = logarithmic_strains__Particles__(C_elastic);
-
   /*
     Elastic predictor : Volumetric and deviatoric stress measurements. Compute also
     the norm of the deviatoric tensor
   */
+
   E_elastic_vol = volumetric_component__TensorLib__(E_elastic);
   E_elastic_dev = deviatoric_component__TensorLib__(E_elastic,E_elastic_vol);
 
@@ -141,10 +178,6 @@ Plastic_status plasticity_Drucker_Prager_Sanavia(Tensor S_p, Tensor C_total, Ten
 	    update
 	  */
     Increment_E_plastic = compute_increment_plastic_strain_classical(s_trial, s_trial_norm, delta_Gamma, MatProp);
-
-    update_plastic_deformation_gradient__Particles__(Increment_E_plastic,F_plastic);
-
-    free__TensorLib__(Increment_E_plastic);
     
     sigma_k1 = compute_finite_stress_tensor_classical(s_trial, p_trial, s_trial_norm, delta_Gamma, MatProp);
 
@@ -183,39 +216,26 @@ Plastic_status plasticity_Drucker_Prager_Sanavia(Tensor S_p, Tensor C_total, Ten
 
   Increment_E_plastic = compute_increment_plastic_strain_apex(s_trial, s_trial_norm, delta_Gamma,MatProp);
 
-  update_plastic_deformation_gradient__Particles__(Increment_E_plastic,F_plastic);
-
-  free__TensorLib__(Increment_E_plastic);
-
   sigma_k1 = compute_finite_stress_tensor_apex(p_trial, delta_Gamma, MatProp);
 
 }
 
 }
 
-
-/*
-  Get the stress tensor in the reference configuration (S_p) using the Piola transformation
-*/
-compute_Piola_transformation__Particles__(S_p, sigma_k1, F_total, J);
-
-
-
   /*
     Free memory
   */
-free__TensorLib__(C_elastic);
-free__TensorLib__(E_elastic);
 free__TensorLib__(E_elastic_dev);
 free__TensorLib__(s_trial);
 free__TensorLib__(p_trial);
-free__TensorLib__(sigma_k1);
 
   /*
-    Return cohesion and EPS updated
+    Define output varible
   */
+  Plastic_status Outputs_VarCons;
   Outputs_VarCons.EPS = EPS_k;
   Outputs_VarCons.Cohesion = cohesion_k;
+  Outputs_VarCons.Increment_E_plastic = Increment_E_plastic;
 
 return Outputs_VarCons;
 }

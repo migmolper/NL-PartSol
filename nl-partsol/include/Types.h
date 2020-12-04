@@ -764,6 +764,7 @@ typedef struct
   double EPS;
   double Cohesion;
   double Yield_stress;
+  Tensor Increment_E_plastic;
 
 } Plastic_status;
 
