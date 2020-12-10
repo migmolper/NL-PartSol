@@ -277,15 +277,15 @@ GaussPoint GramsSolid2D(char *,Mesh);
 
 /*!
 
-  \fn void GramsTime(char * File)
+  \fn void Solver_selector__InOutFun__(char * File)
 
-  \brief Function to define the time integration scheme adopted
+  \brief Function to define the solver
   
   \param File: Name of the file with the instructions
 
 }
 */
-void GramsTime(char * );
+void Solver_selector__InOutFun__(char * );
 
 /*****************************************************************/
 

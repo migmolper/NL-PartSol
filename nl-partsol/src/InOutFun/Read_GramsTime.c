@@ -4,6 +4,7 @@
 /*
   Call global variables
 */
+int NumTimeStep;
 double SpectralRadius;
 double CFL;
 double epsilon_Mass_Matrix; 
@@ -13,7 +14,7 @@ double TOL_Newmark_beta;
 
 /**********************************************************************/
 
-void GramsTime(char * Name_File)
+void Solver_selector__InOutFun__(char * Name_File)
 /*
 Example : 
 GramsTime(Scheme=FE){

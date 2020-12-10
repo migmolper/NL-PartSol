@@ -4,6 +4,7 @@
 /*
   Call global variables
 */
+int NumTimeStep;
 Event * Out_Gauss_Point_evolution_csv;
 int Number_Out_Gauss_Point_evolution_csv;
 
@@ -21,6 +22,7 @@ GaussPoint Generate_Gauss_Point_Analysis__InOutFun__(char * SimulationFile)
 
   PointAnalysis.NumberMaterials = 1;
   PointAnalysis.Mat = Read_Materials(SimulationFile, 1);
+  PointAnalysis.Phi = allocate_Fields(NumTimeStep);
 
 	return PointAnalysis;
 }

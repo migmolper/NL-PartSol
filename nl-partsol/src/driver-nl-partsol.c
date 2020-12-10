@@ -82,8 +82,8 @@ int main(int argc, char * argv[])
       FEM_Mesh = GramsBox(SimulationFile);
 
       puts("*************************************************");
-      puts("Read time integration scheme ...");
-      GramsTime(SimulationFile);      
+      puts("Read solver ...");
+      Solver_selector__InOutFun__(SimulationFile);      
 
       puts("*************************************************");
       if(Is_New_Simulation)
@@ -154,6 +154,10 @@ int main(int argc, char * argv[])
     {
       /* Define variable */
       GaussPoint PointAnalysis;
+
+      puts("*************************************************");
+      puts("Read solver ...");
+      Solver_selector__InOutFun__(SimulationFile); 
 
       puts("*************************************************");
       puts("Generating new Gauss Point simulation ...");

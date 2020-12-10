@@ -4,13 +4,17 @@
 /*
   Call global variables
 */
+int NumTimeStep;
 Event * Out_Gauss_Point_evolution_csv;
 int Number_Out_Gauss_Point_evolution_csv;
 
 /*
-  Auxiliar functions 
+  Auxiliar functions and variables
 */
-static void  standard_error(char *);
+
+static char Error_message[MAXW];
+
+static void standard_error();
 
 /**************************************************************/
 
@@ -21,8 +25,6 @@ void NonLinear_Gauss_Point_Analysis(GaussPoint PointAnalysis)
     Integer variables 
   */
   int Ndim = NumberDimensions;
-
-  char Error_message[MAXW];
 
   /* Particles variables */
   Tensor S_k; /* 2ª Piola-Kirchhoff stress tensor at k step */
@@ -90,7 +92,7 @@ void NonLinear_Gauss_Point_Analysis(GaussPoint PointAnalysis)
 	{
 
 	  sprintf(Error_message,"%s %s %s","The material",PointAnalysis.Mat[0].Type,"has not been yet implemnented");
-    standard_error(Error_message); 
+    standard_error(); 
 
   }
 
@@ -110,7 +112,7 @@ void NonLinear_Gauss_Point_Analysis(GaussPoint PointAnalysis)
 
 /***************************************************************************/
 
-static void standard_error(char * Error_message)
+static void standard_error()
 {
   fprintf(stderr,"%s : %s !!! \n",
      "Error in NonLinear_Gauss_Point_Analysis",Error_message);
