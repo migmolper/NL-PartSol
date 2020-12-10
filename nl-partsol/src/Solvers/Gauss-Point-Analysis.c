@@ -42,30 +42,37 @@ void NonLinear_Gauss_Point_Analysis(GaussPoint PointAnalysis)
 
   	if(strcmp(PointAnalysis.Mat[0].Type,"Saint-Venant-Kirchhoff") == 0)
   	{
+
   		S_k = grad_energy_Saint_Venant_Kirchhoff(S_k, C_k, PointAnalysis.Mat[0]);
+
     }
     else if(strcmp(PointAnalysis.Mat[0].Type,"Neo-Hookean-Wriggers") == 0)
     {
+
     	J_k = I3__TensorLib__(F_k);
       S_k = grad_energy_Neo_Hookean_Wriggers(S_k, C_k, J_k, PointAnalysis.Mat[0]);
+
     }
     else if(strcmp(PointAnalysis.Mat[0].Type,"Von-Mises") == 0)
     {
-    	J_k = I3__TensorLib__(F_k);
-        F_plastic_k = memory_to_tensor__TensorLib__(PointAnalysis.Phi.F_plastic.nM[k],2);
-        Input_Plastic_Parameters.Cohesion = PointAnalysis.Phi.cohesion.nV[k];
-        Input_Plastic_Parameters.EPS = PointAnalysis.Phi.EPS.nV[k];
 
-        Output_Plastic_Parameters = finite_strains_plasticity_Von_Mises(S_k, C_k, F_plastic_k, F_k, 
+    	J_k = I3__TensorLib__(F_k);
+      F_plastic_k = memory_to_tensor__TensorLib__(PointAnalysis.Phi.F_plastic.nM[k],2);
+      Input_Plastic_Parameters.Cohesion = PointAnalysis.Phi.cohesion.nV[k];
+      Input_Plastic_Parameters.EPS = PointAnalysis.Phi.EPS.nV[k];
+
+      Output_Plastic_Parameters = finite_strains_plasticity_Von_Mises(S_k, C_k, F_plastic_k, F_k, 
                                                                           Input_Plastic_Parameters, PointAnalysis.Mat[0], J_k);
 
-        /* Update variables (cohesion and EPS) */
-        PointAnalysis.Phi.cohesion.nV[k] = Output_Plastic_Parameters.Yield_stress;
-        PointAnalysis.Phi.EPS.nV[k] = Output_Plastic_Parameters.EPS;
+      /* Update variables (cohesion and EPS) */
+      PointAnalysis.Phi.cohesion.nV[k] = Output_Plastic_Parameters.Yield_stress;
+      PointAnalysis.Phi.EPS.nV[k] = Output_Plastic_Parameters.EPS;
+
     }
     else if((strcmp(PointAnalysis.Mat[0].Type,"Drucker-Prager-Plane-Strain") == 0) || 
               (strcmp(PointAnalysis.Mat[0].Type,"Drucker-Prager-Outer-Cone") == 0))
     {
+
     	J_k = I3__TensorLib__(F_k);
     	F_plastic_k = memory_to_tensor__TensorLib__(PointAnalysis.Phi.F_plastic.nM[k],2);
     	Input_Plastic_Parameters.Cohesion = PointAnalysis.Phi.cohesion.nV[k];
@@ -74,15 +81,17 @@ void NonLinear_Gauss_Point_Analysis(GaussPoint PointAnalysis)
       Output_Plastic_Parameters = finite_strains_plasticity_Drucker_Prager_Sanavia(S_k, C_k, F_plastic_k, F_k, 
                                                                           Input_Plastic_Parameters, PointAnalysis.Mat[0], J_k);
 
-        /* Update variables (cohesion and EPS) */
-        PointAnalysis.Phi.cohesion.nV[k] = Output_Plastic_Parameters.Cohesion;
-        PointAnalysis.Phi.EPS.nV[k] = Output_Plastic_Parameters.EPS;
+      /* Update variables (cohesion and EPS) */
+      PointAnalysis.Phi.cohesion.nV[k] = Output_Plastic_Parameters.Cohesion;
+      PointAnalysis.Phi.EPS.nV[k] = Output_Plastic_Parameters.EPS;
 
     }
 	else
 	{
+
 	  sprintf(Error_message,"%s %s %s","The material",PointAnalysis.Mat[0].Type,"has not been yet implemnented");
     standard_error(Error_message); 
+
   }
 
     free__TensorLib__(C_k);
@@ -90,7 +99,9 @@ void NonLinear_Gauss_Point_Analysis(GaussPoint PointAnalysis)
 	/* Output stress trajectory */
 	for(int i = 0 ; i<Number_Out_Gauss_Point_evolution_csv; i++)
   	{
+
     	Gauss_Point_evolution__InOutFun__(PointAnalysis,Out_Gauss_Point_evolution_csv[i],"GaussPoint_evolution", k,i);
+       
 	  }
 
   }

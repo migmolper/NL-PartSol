@@ -305,6 +305,15 @@ Material * GramsMaterials(char *, GaussPoint, int);
 /*****************************************************************/
 
 /*!
+
+  \fn Material * Read_Materials(char * SimulationFile, int NumberMaterials);
+
+*/
+Material * Read_Materials(char *, int);
+
+/*****************************************************************/
+
+/*!
   
   \fn void Initial_condition_particles__InOutFun__(char * File, GaussPoint Particles, int GPxElement)
   
