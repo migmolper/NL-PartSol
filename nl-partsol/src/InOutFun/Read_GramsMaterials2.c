@@ -37,9 +37,18 @@ typedef struct
   Auxiliar functions and variables
 */
 
+#ifdef _WIN32
+static char * delimiters_1 = " ,()\r\n\t";
+static char * delimiters_2 = " =\t\r\n"; 
+#else
+static char * delimiters_1 = " ,()\n\t";
+static char * delimiters_2 = " =\t\n"; 
+#endif
+static char * delimiters_3 = "=";
+
 static char Error_message[MAXW];
 
-static Param_Index_and_Model Read_Index_and_Model(char *);
+static Param_Index_and_Model Read_Index_and_Model(char *,char *);
 static Material  Define_Material(FILE *, Param_Index_and_Model);
 static Check_Material Initialise_Check_Material();
 static void check_Solid_Rigid_Material(Material,Check_Material);
@@ -51,6 +60,7 @@ static void check_Von_Mises_Material(Material,Check_Material);
 static void check_Drucker_Prager_Material(Material,Check_Material);
 static void standard_error();
 static void standard_output(char *);
+static FILE * Open_and_Check_simulation_file(char *);
 
 /**********************************************************************/
 
@@ -87,18 +97,21 @@ Define-Material(idx=0,Model=Drucker-Prager-Plane-Strain)
   Param_Index_and_Model Index_and_Model;
 
 	/* Allocate table with the material */
-  	Material * List_Materials = (Material *)malloc(NumberMaterials*sizeof(Material));
-  	if(List_Materials == NULL)
-  	{
-  		sprintf(Error_message,"%s","Memory error for table of material");
-		  standard_error();
-  	}
+  Material * List_Materials = (Material *)malloc(NumberMaterials*sizeof(Material));
+  if(List_Materials == NULL)
+  {
+  	sprintf(Error_message,"%s","Memory error for table of material");
+		standard_error();
+  }
 
-  	while(fgets(line, sizeof line, Sim_dat) != NULL)
-  	{
+  /* Open and check file */
+  Sim_dat = Open_and_Check_simulation_file(SimulationFile);
+
+  while(fgets(line, sizeof line, Sim_dat) != NULL)
+  {
 
   		/* Read the line with the space as separators */
-    	nkwords = parse (kwords, line," \n\t");
+    	nkwords = parse (kwords, line, delimiters_1);
     	if (nkwords < 0)
     	{
         sprintf(Error_message,"%s","Parser failed");
@@ -110,7 +123,7 @@ Define-Material(idx=0,Model=Drucker-Prager-Plane-Strain)
     	{
 
     		/* Read index and model */
-    		Index_and_Model = Read_Index_and_Model(kwords[1]);
+    		Index_and_Model = Read_Index_and_Model(kwords[1],kwords[2]);
 
     		/* Read material properties  and asign to the material */
     		List_Materials[idx] = Define_Material(Sim_dat,Index_and_Model);
@@ -125,11 +138,8 @@ Define-Material(idx=0,Model=Drucker-Prager-Plane-Strain)
 
 /**********************************************************************/
 
-static Param_Index_and_Model Read_Index_and_Model(char * String_Parameters)
+static Param_Index_and_Model Read_Index_and_Model(char * String_Index, char * String_Model)
 {
-
-  int Num_Parameters;
-  char * Parameter_pars[MAXW] = {NULL};
 
   int Num_Idx;
   char * Idx_pars[MAXW] = {NULL};
@@ -140,42 +150,27 @@ static Param_Index_and_Model Read_Index_and_Model(char * String_Parameters)
   /* Define outputs */
   Param_Index_and_Model Parameters;
 
-  /* Parse string with the parameters :
-    (idx=0,Model=Drucker-Prager-Plane-Strain)
-  */
-  Num_Parameters = parse (Parameter_pars, String_Parameters,"(,)");
+  Num_Idx   = parse (Idx_pars,String_Index,delimiters_3);
+  Num_Model = parse (Model_pars,String_Model,delimiters_3);
 
-  if(Num_Parameters == 2)
+  /* Fill index of the material */
+  if(Num_Idx == 2)
   {
-
-    Num_Idx   = parse (Idx_pars,Parameter_pars[0],"=");
-    Num_Model = parse (Model_pars,Parameter_pars[1],"=");
-
-    /* Fill index of the material */
-    if(Num_Idx == 2)
-    {
-      Parameters.Idx = atoi(Idx_pars[1]);
-    }
-    else if(Num_Idx == 1)
-    {
-      Parameters.Idx = atoi(Idx_pars[0]);
-    }    
-
-    /* Fill model information */
-    if(Num_Model == 2)
-    {
-      strcpy(Parameters.Model,Model_pars[1]);
-    }
-    else if(Num_Model == 1)
-    {
-      strcpy(Parameters.Model,Model_pars[0]);
-    }
-    
+    Parameters.Idx = atoi(Idx_pars[1]);
   }
-  else
+  else if(Num_Idx == 1)
   {
-    sprintf(Error_message,"%s","Insuficient number of parameters");
-    standard_error();
+    Parameters.Idx = atoi(Idx_pars[0]);
+  }    
+
+  /* Fill model information */
+  if(Num_Model == 2)
+  {
+    strcpy(Parameters.Model,Model_pars[1]);
+  }
+  else if(Num_Model == 1)
+  {
+    strcpy(Parameters.Model,Model_pars[0]);
   }
 
   /* Return outputs */
@@ -207,7 +202,7 @@ static Material Define_Material(FILE * Simulation_file,
   while(fgets(Parameter_line, sizeof(Parameter_line), Simulation_file) != NULL)
   {
     /* Parse line */    
-    Parser_status = parse(Parameter_pars,Parameter_line," =\t\n");
+    Parser_status = parse(Parameter_pars,Parameter_line,delimiters_2);
 
     if((strcmp(Parameter_pars[0],"{") == 0) && (Parser_status == 1))
     {
@@ -296,14 +291,14 @@ static Material Define_Material(FILE * Simulation_file,
   {
     check_Neo_Hookean_Wriggers_Material(New_Material,ChkMat);
   }
-  else if(strcmp(Index_and_Model.Model,"Von-Mises") == 0)
+  else if(strcmp(New_Material.Type,"Von-Mises") == 0)
   { 
     check_Von_Mises_Material(New_Material,ChkMat); 
     New_Material.E_plastic_reference = New_Material.yield_stress_0/New_Material.hardening_modulus;
     TOL_Radial_Returning = 1E-10;
     Max_Iterations_Radial_Returning = 300;
   }
-  else if(strcmp(Index_and_Model.Model,"Drucker-Prager-Plane-Strain") == 0)
+  else if(strcmp(New_Material.Type,"Drucker-Prager-Plane-Strain") == 0)
   { 
     check_Drucker_Prager_Material(New_Material,ChkMat);
     New_Material.alpha_F_Drucker_Prager = sqrt(2/3.)*tan(rad_friction_angle)/sqrt(3+4*DSQR(tan(rad_friction_angle)));
@@ -312,7 +307,7 @@ static Material Define_Material(FILE * Simulation_file,
     TOL_Radial_Returning = 1E-10;
     Max_Iterations_Radial_Returning = 30;
   }
-  else if(strcmp(Index_and_Model.Model,"Drucker-Prager-Outer-cone") == 0)
+  else if(strcmp(New_Material.Type,"Drucker-Prager-Outer-cone") == 0)
   { 
     check_Drucker_Prager_Material(New_Material,ChkMat);
     New_Material.alpha_F_Drucker_Prager = sqrt(2/3.)*2*sin(rad_friction_angle)/(3-sin(rad_friction_angle));
@@ -518,3 +513,18 @@ static void standard_output(char * Status_message)
 }
 
 /**********************************************************************/
+
+static FILE * Open_and_Check_simulation_file(char * Name_File)
+{
+  FILE * Simulation_file = fopen(Name_File,"r");  
+  
+  if (Simulation_file==NULL)
+  {
+    sprintf(Error_message,"%s %s","Incorrect lecture of",Name_File);
+    standard_error(); 
+  }  
+
+  return Simulation_file;
+}
+
+/***************************************************************************/

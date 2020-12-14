@@ -6,6 +6,13 @@ TESTDIR = test
 # Rule for benchmarks
 .PHONY: Element Consolidation Debug_MMS Debug_MPM Debug_LME Sulsky_MPM Sulsky_GIMP Sulsky_LME Sulsky_SV Sulsky_NH Sulsky_NPC_FS Cuadrado_MPM Disco_MPM Disco_GIMP Traccion_MPM Traccion_GIMP Traccion_LME Dyka_MPM Dyka_GIMP Dyka_LME Dyka_GA Dyka_HiperElastic Brazilian_MPM Three_Point_Bar Taylor_bar
 
+# Analisis en punto de gauss
+GPA:
+	@echo "*************************************************"
+	$(ROUTE_EXE) -GP Unix/GaussPoint/ejemplo.gdf
+	@echo " "
+	@echo "*************************************************"
+
 # Caso para debugear I
 Element:
 	@echo "**************** Run test case ******************"

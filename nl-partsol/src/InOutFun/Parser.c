@@ -4,6 +4,10 @@
 
 int parse(char ** words, char * str, char * delims)
 {
+
+  char * delims_cpy = (char *)malloc((strlen(delims))*sizeof(char));
+  strcpy(delims_cpy,delims);
+
   /*!
     Set to zero the number of words 
   */
@@ -14,7 +18,7 @@ int parse(char ** words, char * str, char * delims)
   */
   char * p;
   
-  for (p = strtok (str, delims); p; p = strtok (NULL, delims))
+  for (p = strtok (str, delims_cpy); p; p = strtok (NULL, delims_cpy))
     {
 
       /*!
@@ -32,6 +36,8 @@ int parse(char ** words, char * str, char * delims)
 	}
     
     }
+
+  free(delims_cpy);
   
   return n;
 }

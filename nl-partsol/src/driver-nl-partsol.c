@@ -157,11 +157,13 @@ int main(int argc, char * argv[])
 
       puts("*************************************************");
       puts("Read solver ...");
-      Solver_selector__InOutFun__(SimulationFile); 
+      Solver_selector__InOutFun__(SimulationFile);
 
       puts("*************************************************");
       puts("Generating new Gauss Point simulation ...");
       PointAnalysis = Generate_Gauss_Point_Analysis__InOutFun__(SimulationFile);
+
+      exit(0);
 
       puts("*************************************************");
       puts("Run simulation ...");

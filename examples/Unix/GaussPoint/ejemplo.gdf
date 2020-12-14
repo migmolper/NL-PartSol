@@ -1,0 +1,22 @@
+
+GramsTime (Type=Gauss-Point-Analysis) {
+  N=4000
+}
+
+Define-Material(idx=0,Model=Drucker-Prager-Plane-Strain)
+{
+  rho=0.0
+	E=1e5
+	nu=0.35
+	Reference-Plastic-Strain=0.001
+	Hardening_exponent=0.6
+	Cohesion=20
+	Friction_angle=20
+	Dilatancy_angle=20
+}
+
+Particle-Strain-Curve (Var=Deformation-Gradient)
+{
+  File=Strain.txt
+}
+

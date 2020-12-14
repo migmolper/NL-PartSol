@@ -9,9 +9,11 @@ Event * Out_Gauss_Point_evolution_csv;
 int Number_Out_Gauss_Point_evolution_csv;
 
 /*
-  Auxiliar functions 
+  Auxiliar functions and variables
 */
-static void  standard_error(char *);
+static char Error_message[MAXW];
+
+static void  standard_error();
 static FILE * Open_and_Check_simulation_file(char *);
 
 /**************************************************************/
@@ -21,15 +23,21 @@ GaussPoint Generate_Gauss_Point_Analysis__InOutFun__(char * SimulationFile)
 	GaussPoint PointAnalysis;
 
   PointAnalysis.NumberMaterials = 1;
+
   PointAnalysis.Mat = Read_Materials(SimulationFile, 1);
+
+  exit(0);
+
   PointAnalysis.Phi = allocate_Fields(NumTimeStep);
+
+  //Read_Strain_curve(SimulationFile);
 
 	return PointAnalysis;
 }
 
 /**************************************************************/
 
-static void standard_error(char * Error_message)
+static void standard_error()
 {
   fprintf(stderr,"%s : %s !!! \n",
      "Error in Generate_Gauss_Point_Analysis()",Error_message);
@@ -46,7 +54,7 @@ static FILE * Open_and_Check_simulation_file(char * Name_File)
   if (Simulation_file==NULL)
   {
   	sprintf(Error_message,"%s %s","Incorrect lecture of",Name_File);
-	  standard_error(Error_message); 
+	  standard_error(); 
   }  
 
   return Simulation_file;
