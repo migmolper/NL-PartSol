@@ -26,11 +26,12 @@ GaussPoint Generate_Gauss_Point_Analysis__InOutFun__(char * SimulationFile)
 
   PointAnalysis.Mat = Read_Materials(SimulationFile, 1);
 
-  exit(0);
-
   PointAnalysis.Phi = allocate_Fields(NumTimeStep);
 
+  Matrix Strains = Read_Delimited_File__InOutLib__("Strains.txt");
   //Read_Strain_curve(SimulationFile);
+
+  exit(1);
 
 	return PointAnalysis;
 }

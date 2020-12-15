@@ -133,6 +133,9 @@ Define-Material(idx=0,Model=Drucker-Prager-Plane-Strain)
 
 	}
 
+  /* Close  file */
+  fclose(Sim_dat);
+
 	return List_Materials;
 }
 

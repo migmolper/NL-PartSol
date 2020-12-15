@@ -58,6 +58,17 @@ int get_ResultStep(char *);
 */
 Matrix Read_CSV(char *, int);
 
+
+/*****************************************************************/
+
+/*!
+  \fn Matrix Read_Delimited_File__InOutLib__(char * Name_File)
+
+  \brief Read a file with a given format
+  \param Name_File : file name
+*/
+Matrix Read_Delimited_File__InOutLib__(char *);
+
 /*****************************************************************/
 
 /*! 
