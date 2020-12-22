@@ -64,7 +64,7 @@ static FILE * Open_and_Check_simulation_file(char *);
 
 /**********************************************************************/
 
-Material * Read_Materials(char * SimulationFile, int NumberMaterials)
+Material * Read_Materials__InOutFun__(char * SimulationFile, int NumberMaterials)
 /*
 
 Define-Material(idx=0,Model=Drucker-Prager-Plane-Strain)
@@ -91,7 +91,7 @@ Define-Material(idx=0,Model=Drucker-Prager-Plane-Strain)
   int nkwords;
 
 	/* Index for the materials */
-	int idx;
+	int idx = 0;
   
   /* Auxiliar parameter */
   Param_Index_and_Model Index_and_Model;
@@ -110,7 +110,7 @@ Define-Material(idx=0,Model=Drucker-Prager-Plane-Strain)
   while(fgets(line, sizeof line, Sim_dat) != NULL)
   {
 
-  		/* Read the line with the space as separators */
+  		/* Read the line with the delimiter_1 */
     	nkwords = parse (kwords, line, delimiters_1);
     	if (nkwords < 0)
     	{

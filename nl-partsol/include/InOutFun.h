@@ -317,10 +317,10 @@ Material * GramsMaterials(char *, GaussPoint, int);
 
 /*!
 
-  \fn Material * Read_Materials(char * SimulationFile, int NumberMaterials);
+  \fn Material * Read_Materials__InOutFun__(char * SimulationFile, int NumberMaterials);
 
 */
-Material * Read_Materials(char *, int);
+Material * Read_Materials__InOutFun__(char *, int);
 
 /*****************************************************************/
 

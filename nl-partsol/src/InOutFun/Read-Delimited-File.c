@@ -48,7 +48,7 @@ Matrix Read_Delimited_File__InOutLib__(char * Name_File)
 
 	Data = Read_data(Header_Parameters,Data_File);
 
-  	fclose(Data_File);
+  fclose(Data_File);
 
 	return Data;
 }

@@ -15,8 +15,8 @@ Define-Material(idx=0,Model=Drucker-Prager-Plane-Strain)
 	Dilatancy_angle=20
 }
 
-Particle-Strain-Curve (Var=Deformation-Gradient)
+Define-Strain-Curve (Var=Deformation-Gradient)
 {
-  File=Strain.txt
+  File=Strains.txt
 }
 
