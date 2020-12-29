@@ -94,6 +94,12 @@ Tensor grad_energy_Neo_Hookean_Wriggers(Tensor, Tensor, double, Material);
 Tensor compute_stiffness_density_Neo_Hookean_Wriggers(Tensor, Tensor, Tensor, double, Material);
 /*******************************************************/  
 
+/*!
+
+*/
+Matrix compute_D_matrix_Neo_Hookean_Wriggers(Tensor, double, Material);
+/*******************************************************/
+
 /*
 \fn Plastic_status plasticity_Drucker_Prager_Sanavia(Tensor S_p, Tensor C_total, Tensor F_total, Tensor F_plastic_p, 
                                                          double J, Plastic_status Inputs_VarCons, Material MatProp)

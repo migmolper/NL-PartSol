@@ -125,6 +125,12 @@ Tensor strain_Green_Lagrange__Particles__(Tensor);
 /*!
 
 */
+Matrix compute_B_matrix__Particles__(Tensor, Tensor);
+/*******************************************************/
+
+/*!
+
+*/
 double update_density__Particles__(double, double, Tensor);
 /*******************************************************/
 

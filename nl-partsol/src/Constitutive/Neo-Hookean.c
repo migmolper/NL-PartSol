@@ -125,3 +125,40 @@ Tensor compute_stiffness_density_Neo_Hookean_Wriggers(Tensor v, Tensor w,
 }   
 
 /**************************************************************/
+
+Matrix compute_D_matrix_Neo_Hookean_Wriggers(Tensor F, double J, Material MatProp)
+{
+
+  /*
+    Material parameters 
+  */
+  double ElasticModulus = MatProp.E;
+  double nu = MatProp.nu;
+  double G = ElasticModulus/(2*(1+nu));
+  double lambda = nu*ElasticModulus/((1-nu*2)*(1+nu));
+  double J2 = J*J;
+
+  Tensor C = right_Cauchy_Green__Particles__(F);
+  Tensor Cm1 = Inverse__TensorLib__(C);
+
+
+  Matrix D = allocZ__MatrixLib__(3,3);
+  
+  D.nM[0][0] = lambda*J2*Cm1.N[0][0]*Cm1.N[0][0]-(lambda*(J2-1)-2*G)*Cm1.N[0][0]*Cm1.N[0][0];
+  D.nM[0][1] = lambda*J2*Cm1.N[0][0]*Cm1.N[1][1]-(lambda*(J2-1)-2*G)*Cm1.N[0][1]*Cm1.N[1][0];
+  D.nM[1][0] = D.nM[0][1];
+  D.nM[0][2] = lambda*J2*Cm1.N[0][0]*Cm1.N[0][1]-(lambda*(J2-1)-2*G)*Cm1.N[0][0]*Cm1.N[1][0];
+  D.nM[2][0] = D.nM[0][2];
+  D.nM[1][1] = lambda*J2*Cm1.N[1][1]*Cm1.N[1][1]-(lambda*(J2-1)-2*G)*Cm1.N[1][1]*Cm1.N[1][1];
+  D.nM[1][2] = lambda*J2*Cm1.N[1][1]*Cm1.N[0][1]-(lambda*(J2-1)-2*G)*Cm1.N[1][0]*Cm1.N[1][1];
+  D.nM[2][1] = D.nM[1][2];
+  D.nM[2][2] = lambda*J2*Cm1.N[0][1]*Cm1.N[0][1]-0.5*(lambda*(J2-1)-2*G)*(Cm1.N[0][0]*Cm1.N[1][1]+Cm1.N[0][1]*Cm1.N[0][1]);
+
+  free__TensorLib__(C);
+  free__TensorLib__(Cm1);
+
+  return D;
+}
+
+
+/**************************************************************/

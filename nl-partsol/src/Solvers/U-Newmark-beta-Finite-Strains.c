@@ -1627,12 +1627,12 @@ static void assemble_Nodal_Tangent_Stiffness_Material(Matrix Tangent_Stiffness,
 
 
 	      /*
-		Get the nodal contribution of the material mass matrix
+          Compute stiffness density
 	      */
 	      C_AB = compute_stiffness_density(GRADIENT_pA,GRADIENT_pB, F_n1_p, J_p, MatProp_p);
 
 	      /*
-		Compute the nodal matrix with the contribution to each degree of freedom
+		      Compute the nodal matrix with the contribution to each degree of freedom
 	      */
 	      Material_AB = compute_Nodal_Tangent_Stiffness_Material(F_n1_p,C_AB,transpose_F_n1_p);
 	      
