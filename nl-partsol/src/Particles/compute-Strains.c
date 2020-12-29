@@ -320,14 +320,19 @@ void update_plastic_deformation_gradient__Particles__(Tensor D_E_plastic, Tensor
 /**************************************************************/
 
 Matrix compute_B_matrix__Particles__(Tensor F, Tensor GRAD_N)
+/*
+B=[F(1,1)*gradNptog(1,nn1) F(2,1)*gradNptog(1,nn1);...
+   F(1,2)*gradNptog(2,nn1) F(2,2)*gradNptog(2,nn1);...
+   (F(1,1)*gradNptog(2,nn1)+F(1,2)*gradNptog(1,nn1)) (F(2,1)*gradNptog(2,nn1)+F(2,2)*gradNptog(1,nn1))];
+*/
 {
   Matrix B = allocZ__MatrixLib__(3,2);
 
-  B.nM[0][0] = F.N[0][0]*GRAD_N.n[0];
+  B.nM[0][0] = F.N[0][0]*GRAD_N.n[0]; 
   B.nM[0][1] = F.N[1][0]*GRAD_N.n[0];
-  B.nM[1][0] = F.N[0][1]*GRAD_N.n[1];
+  B.nM[1][0] = F.N[0][1]*GRAD_N.n[1]; 
   B.nM[1][1] = F.N[1][1]*GRAD_N.n[1];
-  B.nM[2][0] = F.N[0][0]*GRAD_N.n[1] + F.N[0][1]*GRAD_N.n[0];
+  B.nM[2][0] = F.N[0][0]*GRAD_N.n[1] + F.N[0][1]*GRAD_N.n[0]; 
   B.nM[2][1] = F.N[1][0]*GRAD_N.n[1] + F.N[1][1]*GRAD_N.n[0];
 
   return B;

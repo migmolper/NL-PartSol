@@ -54,8 +54,7 @@ static bool   check_convergence(Matrix,double,int,int);
 static Matrix assemble_Nodal_Tangent_Stiffness(Mask, GaussPoint, Mesh);
 static void   assemble_Nodal_Tangent_Stiffness_Geometric(Matrix, Mask, GaussPoint, Mesh);
 static void   assemble_Nodal_Tangent_Stiffness_Material(Matrix, Mask, GaussPoint, Mesh);
-static Tensor compute_stiffness_density(Tensor, Tensor, Tensor, double, Material);
-static Tensor compute_Nodal_Tangent_Stiffness_Material(Tensor,Tensor,Tensor);
+static Matrix compute_material_matrix_D(Tensor, double, Material);
 static Matrix compute_Nodal_BDB(Matrix, Tensor, Tensor, Tensor);
 static void   solve_non_reducted_system(Matrix, Matrix, Matrix, Matrix, Newmark_parameters);
 static void   solve_reducted_system(Mask,Matrix, Matrix, Matrix, Matrix, Newmark_parameters);
@@ -1597,7 +1596,7 @@ static void assemble_Nodal_Tangent_Stiffness_Material(Matrix Tangent_Stiffness,
       */
       J_p = I3__TensorLib__(F_n1_p);
 
-      D_p = compute_D_matrix_Neo_Hookean_Wriggers(F_n1_p, J_p, MatProp_p);
+      D_p = compute_material_matrix_D(F_n1_p, J_p, MatProp_p);
 
       for(int A = 0 ; A<NumNodes_p ; A++)
     	{
@@ -1633,6 +1632,8 @@ static void assemble_Nodal_Tangent_Stiffness_Material(Matrix Tangent_Stiffness,
 
         BDB = compute_Nodal_BDB(D_p, GRADIENT_pA, GRADIENT_pB, F_n1_p);
 
+        print__MatrixLib__(BDB, 2, 2);
+
         /*
             Add the geometric contribution to each dof for the assembling process
         */
@@ -1658,6 +1659,10 @@ static void assemble_Nodal_Tangent_Stiffness_Material(Matrix Tangent_Stiffness,
 	  */
 	  free__TensorLib__(GRADIENT_pA);	  
 	}
+
+
+
+  exit(0);
       
 
       /* 
@@ -1675,57 +1680,36 @@ static void assemble_Nodal_Tangent_Stiffness_Material(Matrix Tangent_Stiffness,
 
 /**************************************************************/
 
-static Tensor compute_stiffness_density(Tensor GRADIENT_pA,
-					Tensor GRADIENT_pB,
-					Tensor F_p, double J_p,
-					Material MatProp_p)
+static Matrix compute_material_matrix_D(Tensor F_p, double J_p, Material MatProp_p)
 {
 
-  Tensor C_AB;
+  Matrix D_p;
 
   if(strcmp(MatProp_p.Type,"Saint-Venant-Kirchhoff") == 0)
     {
-      C_AB = compute_stiffness_density_Saint_Venant_Kirchhoff(GRADIENT_pA,
-							      GRADIENT_pB,
-							      MatProp_p);
+      exit(0);
     }
   else if(strcmp(MatProp_p.Type,"Neo-Hookean-Wriggers") == 0)
     {
 
       Tensor C_p = right_Cauchy_Green__Particles__(F_p);
       
-      C_AB = compute_stiffness_density_Neo_Hookean_Wriggers(GRADIENT_pA,
-							    GRADIENT_pB,
-							    C_p, J_p,
-							    MatProp_p);
+      D_p = compute_D_matrix_Neo_Hookean_Wriggers(C_p, J_p, MatProp_p);
+
       free__TensorLib__(C_p);
+
     }
   else
     {
       fprintf(stderr,"%s : %s %s %s \n",
-	      "Error in compute_stiffness_density()",
+	      "Error in compute_material_matrix_D()",
 	      "The material",MatProp_p.Type,"has not been yet implemnented");
       exit(EXIT_FAILURE);
     }
 
-  return C_AB;
+  return D_p;
 }
 
-/**************************************************************/
-
-static Tensor compute_Nodal_Tangent_Stiffness_Material(Tensor F_n1_p,
-						       Tensor C_AB,
-						       Tensor Ft_n1_p)
-{
-  int Ndim = NumberDimensions;
-  Tensor C_x_Ft = matrix_product__TensorLib__(C_AB, Ft_n1_p);
-  Tensor F_x_C_x_Ft = matrix_product__TensorLib__(F_n1_p, C_x_Ft);
-  
-  free__TensorLib__(C_x_Ft);
-  
-  return F_x_C_x_Ft;
-  
-}
 
 /**************************************************************/
 
