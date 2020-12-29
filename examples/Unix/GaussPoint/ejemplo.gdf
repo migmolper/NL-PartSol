@@ -20,3 +20,8 @@ Define-Strain-Curve (Var=Deformation-Gradient)
   File=Strains.txt
 }
 
+Strain-Stress-Trajectories-to-csv (i_start=0;i_step=1;i_end=4000)
+{	
+  File=Strain-Stress.csv
+}
+

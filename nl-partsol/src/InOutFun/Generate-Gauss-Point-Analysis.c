@@ -22,25 +22,45 @@ typedef struct
 
 } Check_Strain;
 
-typedef struct {
+typedef struct
+{
 
   Matrix Value;
-
   Check_Strain ChkStr;
 
 } Strain_curve;
+
+typedef struct 
+{
+
+  int i_start;
+  int i_step;
+  int i_end;
+
+} Intervals;
+
+typedef struct 
+{
+
+  char File_Name[MAXC];
+  char Directory_Name[MAXC];
+  bool Is_Current_directory;
+  bool Is_Defined_directory;
+
+} Parameters;
 
 /*
   Auxiliar functions and variables
 */
 #ifdef _WIN32
-static char * delimiters_1 = " ,()\r\n\t";
+static char * delimiters_1 = " ()\r\n\t";
 static char * delimiters_2 = " =\t\r\n"; 
 #else
-static char * delimiters_1 = " ,()\n\t";
+static char * delimiters_1 = " ()\n\t";
 static char * delimiters_2 = " =\t\n"; 
 #endif
 static char * delimiters_3 = "=";
+static char * delimiters_4 = ";";
 
 static char Error_message[MAXW];
 
@@ -48,7 +68,13 @@ static Strain_curve * Read_Strains_curves(Fields, char *, int);
 static Check_Strain Read_Strain_Measure(char *);
 static Matrix Read_Curve_File_Name(FILE *);
 static void Fill_Strains(Fields, Strain_curve);
-static bool Check_Path(char *);
+static int Number_Output_directives(char * );
+static void Read_Output_directives(char *);
+static Intervals Read_CSV_Intervals(char *);
+static Parameters Read_CSV_Parameters(FILE *);
+static Event Fill_CSV_Output_Directives(Intervals, Parameters);
+static bool Check_Output_directory(char *);
+static bool Check_File(char *);
 static void standard_error();
 static FILE * Open_and_Check_simulation_file(char *);
 
@@ -73,6 +99,8 @@ GaussPoint Generate_Gauss_Point_Analysis__InOutFun__(char * SimulationFile)
     Fill_Strains(PointAnalysis.Phi, Strain_Case[i]);
     free__MatrixLib__(Strain_Case[i].Value);
   }
+
+  Read_Output_directives(SimulationFile);
 
   exit(1);
 
@@ -126,6 +154,9 @@ static Strain_curve * Read_Strains_curves(Fields Phi, char * SimulationFile, int
       }
 
   }
+
+  /* Close  file */
+  fclose(Sim_dat);
 
   return Strain_Case;
 }
@@ -200,7 +231,7 @@ static Matrix Read_Curve_File_Name(FILE * Simulation_file)
     else if(strcmp(Parameter_pars[0],"File") == 0)
     {
       strcpy(File_Name,Parameter_pars[1]);
-      Is_File = Check_Path(File_Name); 
+      Is_File = Check_File(File_Name); 
     }
     else if((strcmp(Parameter_pars[0],"}") == 0) && (Parser_status == 1))
     {
@@ -256,20 +287,306 @@ static void Fill_Strains(Fields Phi, Strain_curve Strain_i)
 
 /***************************************************************************/
 
-static bool Check_Path(char * PATH_Name)
+static int Number_Output_directives(char * Name_File)
+{
+  int NOD = 0;
+
+  /* Special variables for line-reading */
+  char line[MAXC] = {0}; /* Variable for reading the lines in the files */
+  char * kwords[MAXW] = {NULL}; /* Variable to store the parser of a line */
+  int nkwords; /* Number of element in the line , just for check */
+
+  /* Simulation file */
+  FILE * Sim_dat = Open_and_Check_simulation_file(Name_File);
+  
+  /* Read the file line by line */
+  while( fgets(line, sizeof line, Sim_dat) != NULL )
+    {
+      nkwords = parse (kwords, line, delimiters_1);
+
+      if ((nkwords > 0) && (strcmp(kwords[0],"Strain-Stress-Trajectories-to-csv") == 0 ))
+      {
+        NOD++;
+      }
+    }
+
+  fclose(Sim_dat);
+
+  return NOD;
+}
+
+/***************************************************************************/
+
+static void Read_Output_directives(char * SimulationFile)
+/*
+  Strain-Stress-Trajectories-to-csv (i_start=0;i_step=1;i_end=4000)
+  {
+    File=Strain-Stress.csv
+    Directory=Foo    
+  } 
+*/
+{
+  /* Simulation file */
+  FILE * Sim_dat = Open_and_Check_simulation_file(SimulationFile);
+
+  int Num_NOGPE = Number_Output_directives(SimulationFile);
+  Number_Out_Gauss_Point_evolution_csv = Num_NOGPE;
+  Out_Gauss_Point_evolution_csv = (Event *)malloc(Num_NOGPE*sizeof(Event));
+
+  Intervals CSV_Intervals;
+  Parameters CSV_Parameters;
+
+  int idx = 0;
+
+    /* Variables for reading purposes */
+  char line[MAXC] = {0};
+  char * kwords[MAXW] = {NULL};
+  int nkwords;
+
+  while(fgets(line, sizeof line, Sim_dat) != NULL)
+  {
+
+    /* Read the line with the delimiter_1 */
+      nkwords = parse (kwords, line, delimiters_1);
+      if (nkwords < 0)
+      {
+        sprintf(Error_message,"%s","Parser failed");
+        standard_error();
+      }
+
+      /* Read Define-Strain-Curve */
+      if ((nkwords > 0) && (strcmp(kwords[0],"Strain-Stress-Trajectories-to-csv") == 0 ))
+      {
+        printf("\t -> Read Output directive\n");
+
+        CSV_Intervals = Read_CSV_Intervals(kwords[1]);
+
+        CSV_Parameters = Read_CSV_Parameters(Sim_dat);  
+
+        Out_Gauss_Point_evolution_csv[idx] = Fill_CSV_Output_Directives(CSV_Intervals,CSV_Parameters);
+
+        idx++;           
+
+      }
+
+  }
+
+  /* Close  file */
+  fclose(Sim_dat);
+}
+
+/***************************************************************************/
+
+static Intervals Read_CSV_Intervals(char * Interval_message)
+{
+  Intervals CSV_Intervals;
+  
+  int Interval_status_1;
+  char * Aux_Parse_1[MAXW] = {NULL};
+  int Interval_status_2;
+  char * Aux_Parse_2[MAXW] = {NULL};
+
+  /* Set parameters to default */
+  CSV_Intervals.i_start = 0;
+  CSV_Intervals.i_step = 1;
+  CSV_Intervals.i_end = NumTimeStep;
+
+  Interval_status_1 = parse (Aux_Parse_1, Interval_message,delimiters_4);
+
+  /* Check format */
+  if(Interval_status_1 > 3)
+    {
+      sprintf(Error_message,"You have exceded the maximum number of parameters");
+      standard_error();
+    }
+  
+
+  for(int i = 0 ; i<Interval_status_1 ; i++)
+  {
+    Interval_status_2 = parse (Aux_Parse_2, Aux_Parse_1[i],delimiters_3); 
+
+    if((strcmp(Aux_Parse_2[0],"i_start") == 0) && (Interval_status_2 == 2))
+      {
+        CSV_Intervals.i_start  = atoi(Aux_Parse_2[1]);
+      }
+   
+      else if((strcmp(Aux_Parse_2[0],"i_step") == 0) && (Interval_status_2 == 2))
+      {
+        CSV_Intervals.i_step  = atoi(Aux_Parse_2[1]);
+      }
+  
+      else if((strcmp(Aux_Parse_2[0],"i_end") == 0) && (Interval_status_2 == 2))
+      {
+        CSV_Intervals.i_end  = atoi(Aux_Parse_2[1]);
+      }
+      else
+      {
+        sprintf(Error_message,"The statement %s is not recognised",Aux_Parse_2[0]);
+        standard_error();
+      }
+  }
+   
+    /* Check interval output */
+    if(CSV_Intervals.i_end < CSV_Intervals.i_step)
+      {
+        sprintf(Error_message,"The result interval step should be less than final time");
+        standard_error();
+      }
+    if(CSV_Intervals.i_end < CSV_Intervals.i_start)
+      {
+        sprintf(Error_message,"The initial result time step should be less than the final result time");
+        standard_error();
+      }       
+    if(CSV_Intervals.i_end > NumTimeStep)
+      {
+        sprintf(Error_message,"The final result time step should be less than the final time");
+        standard_error();
+      }
+
+  /* Print some info */
+  printf("\t \t -> %s : %i \n","i_start",CSV_Intervals.i_start);
+  printf("\t \t -> %s : %i \n","i_step",CSV_Intervals.i_step);
+  printf("\t \t -> %s : %i \n","i_end",CSV_Intervals.i_end);
+
+  return CSV_Intervals;
+}
+
+/***************************************************************************/
+
+static Parameters Read_CSV_Parameters(FILE * Simulation_file)
+{
+  Parameters Output_csv;
+
+  /* Set outputs to default */
+  Output_csv.Is_Current_directory = true;
+  Output_csv.Is_Defined_directory = false;
+
+  /* Variables for reading purposes */
+  char Line_Out_Prop[MAXC] = {0};
+  char * Parse_Out_Prop[MAXW] = {NULL};
+  int Aux_Out_id;
+
+  /* Check variables for sintax */
+  bool Is_Open = false;
+  bool Is_Close = false;
+  bool Is_File = false;
+
+  while(fgets(Line_Out_Prop, sizeof(Line_Out_Prop), Simulation_file) != NULL)
+    {
+      /* Parse line */    
+    Aux_Out_id = parse(Parse_Out_Prop,Line_Out_Prop,delimiters_2);
+
+    if((strcmp(Parse_Out_Prop[0],"{") == 0) && (Aux_Out_id == 1))
+    {
+      Is_Open = true;
+    }
+    else if((strcmp(Parse_Out_Prop[0],"Directory") == 0) && (Aux_Out_id == 2)) 
+    {
+        sprintf(Output_csv.Directory_Name,"./%s/",Parse_Out_Prop[1]);
+        printf("\t \t -> %s : %s \n","Directory",Output_csv.Directory_Name);
+        Output_csv.Is_Current_directory = false;
+        Output_csv.Is_Defined_directory = Check_Output_directory(Output_csv.Directory_Name);
+    }
+    else if((strcmp(Parse_Out_Prop[0],"File") == 0) && (Aux_Out_id == 2))
+    {
+        sprintf(Output_csv.File_Name,"%s",Parse_Out_Prop[1]);
+        printf("\t \t -> %s : %s \n","File",Parse_Out_Prop[1]);
+        Is_File = true;
+    }
+    else if((strcmp(Parse_Out_Prop[0],"}") == 0) && (Aux_Out_id == 1))
+    {
+        Is_Close = true;
+        break;
+    }   
+    else if(Aux_Out_id > 0)
+      {
+        sprintf(Error_message,"%s %s","Undefined",Parse_Out_Prop[0]);
+        standard_error(); 
+      }
+  
+  }
+
+  if(Output_csv.Is_Current_directory)
+  {
+    sprintf(Output_csv.Directory_Name,"./");
+  }
+
+  if(!Is_Open || !Is_Close)
+  {
+    sprintf(Error_message,"%s","Non balansed statement {}");
+    standard_error(); 
+  }
+  else if(!Is_File)
+  {
+    sprintf(Error_message,"%s","None file provided");
+    standard_error(); 
+  }
+
+  /* Check syntax */
+
+  return Output_csv;
+}
+
+/***************************************************************************/
+
+static Event Fill_CSV_Output_Directives(Intervals CSV_Intervals, Parameters CSV_Parameters)
+{
+  Event CSV_Event;
+
+  /* Read outputs intervals */
+  CSV_Event.i_start = CSV_Intervals.i_start;
+  CSV_Event.i_step  = CSV_Intervals.i_step;
+  CSV_Event.i_end   = CSV_Intervals.i_end;
+  
+  CSV_Event.Out_csv_Gauss_Point_evolution_Stress = ;
+  CSV_Event.Out_csv_Gauss_Point_evolution_Strain = ;
+  CSV_Event.Out_csv_Gauss_Point_evolution_Deformation_gradient = ;
+  CSV_Event.Out_csv_Gauss_Point_evolution_EPS = ;
+  CSV_Event.Out_csv_Gauss_Point_evolution_Cohesion = ;
+
+  return CSV_Event;
+}
+
+
+/***************************************************************************/
+
+static bool Check_Output_directory(char * Output_directory)
 {
   struct stat info;
-  stat(PATH_Name,&info);
+  stat(Output_directory,&info);
+  char Error_message[MAXW];
   bool status_check;
 
-  if(S_ISREG(info.st_mode))
+  if(S_ISDIR(info.st_mode))
   {
-    printf("\t \t -> %s : %s \n","Path file",PATH_Name);
+    printf("\t -> %s : %s \n","Output directory",Output_directory);
     status_check = true;
   }
   else
   {
-    sprintf(Error_message,"%s %s %s","Path file",PATH_Name,"does not exists");
+    sprintf(Error_message,"%s : %s %s \n","Output directory",Output_directory,"does not exists");
+    standard_error(); 
+  } 
+
+  return status_check;
+}
+
+/***************************************************************************/
+
+static bool Check_File(char * Path_File)
+{
+  struct stat info;
+  stat(Path_File,&info);
+  bool status_check;
+
+  if(S_ISREG(info.st_mode))
+  {
+    printf("\t \t -> %s : %s \n","File",Path_File);
+    status_check = true;
+  }
+  else
+  {
+    sprintf(Error_message,"%s %s %s","File",Path_File,"does not exists");
     standard_error();
   } 
 
