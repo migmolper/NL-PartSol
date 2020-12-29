@@ -1632,8 +1632,6 @@ static void assemble_Nodal_Tangent_Stiffness_Material(Matrix Tangent_Stiffness,
 
         BDB = compute_Nodal_BDB(D_p, GRADIENT_pA, GRADIENT_pB, F_n1_p);
 
-        print__MatrixLib__(BDB, 2, 2);
-
         /*
             Add the geometric contribution to each dof for the assembling process
         */
@@ -1660,11 +1658,7 @@ static void assemble_Nodal_Tangent_Stiffness_Material(Matrix Tangent_Stiffness,
 	  free__TensorLib__(GRADIENT_pA);	  
 	}
 
-
-
-  exit(0);
       
-
       /* 
 	 Free memory 
       */

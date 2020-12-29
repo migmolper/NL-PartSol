@@ -369,6 +369,8 @@ static void initialise_2D_particles(Mesh MPM_GID_Mesh,GaussPoint MPM_Mesh, int G
       rho_p = MPM_Mesh.Mat[MatIdx_p].rho;
       th_p = MPM_Mesh.Mat[MatIdx_p].thickness;
       m_p = th_p*A_p*rho_p;
+    /* Set the initial volume */
+      MPM_Mesh.Phi.Vol_0.nV[p] = A_p;
     /* Set the initial density */
       MPM_Mesh.Phi.rho.nV[p] = rho_p; 
     /* Assign the mass parameter */
