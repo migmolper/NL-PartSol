@@ -126,6 +126,7 @@ Tensor strain_Green_Lagrange__Particles__(Tensor);
 
 */
 Matrix compute_B_matrix__Particles__(Tensor, Tensor);
+Matrix compute_BT_matrix__Particles__(Tensor, Tensor);
 /*******************************************************/
 
 /*!

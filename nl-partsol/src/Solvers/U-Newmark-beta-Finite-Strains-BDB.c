@@ -56,13 +56,14 @@ static void   assemble_Nodal_Tangent_Stiffness_Geometric(Matrix, Mask, GaussPoin
 static void   assemble_Nodal_Tangent_Stiffness_Material(Matrix, Mask, GaussPoint, Mesh);
 static Tensor compute_stiffness_density(Tensor, Tensor, Tensor, double, Material);
 static Tensor compute_Nodal_Tangent_Stiffness_Material(Tensor,Tensor,Tensor);
+static Matrix compute_Nodal_BDB(Matrix, Tensor, Tensor, Tensor);
 static void   solve_non_reducted_system(Matrix, Matrix, Matrix, Matrix, Newmark_parameters);
 static void   solve_reducted_system(Mask,Matrix, Matrix, Matrix, Matrix, Newmark_parameters);
 static void   update_Particles(Matrix, Matrix, Matrix, GaussPoint, Mesh, Mask, Newmark_parameters);
 static void   output_selector(GaussPoint, Mesh, Mask, Matrix, Matrix, Matrix, Matrix, Matrix, Matrix, int, int);
 /**************************************************************/
 
-void U_Newmark_beta_Finite_Strains(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int InitialStep)
+void U_Newmark_beta_Finite_Strains_BDB(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int InitialStep)
 {
 
   /*
@@ -1544,9 +1545,10 @@ static void assemble_Nodal_Tangent_Stiffness_Material(Matrix Tangent_Stiffness,
   Tensor F_n1_p;
   Tensor transpose_F_n_p;
   Tensor transpose_F_n1_p;
-  Tensor C_AB;
-  Tensor Material_AB;
 
+  Matrix D_p;
+  Matrix BDB;
+   
   Material MatProp_p;
   double V0_p; /* Volume of the particle in the reference configuration */
   double J_p; /* Jacobian of the deformation gradient */
@@ -1595,9 +1597,12 @@ static void assemble_Nodal_Tangent_Stiffness_Material(Matrix Tangent_Stiffness,
       */
       J_p = I3__TensorLib__(F_n1_p);
 
+      D_p = compute_D_matrix_Neo_Hookean_Wriggers(F_n1_p, J_p, MatProp_p);
+
       for(int A = 0 ; A<NumNodes_p ; A++)
-	{
-	  /*
+    	{
+	  
+    /*
 	    Compute the gradient in the reference configuration 
 	  */
 	  gradient_pA = memory_to_tensor__TensorLib__(gradient_p.nM[A], 1);
@@ -1626,33 +1631,26 @@ static void assemble_Nodal_Tangent_Stiffness_Material(Matrix Tangent_Stiffness,
 	      B_mask = ActiveNodes.Nodes2Mask[Bp];
 
 
-	      /*
-		Get the nodal contribution of the material mass matrix
-	      */
-	      C_AB = compute_stiffness_density(GRADIENT_pA,GRADIENT_pB, F_n1_p, J_p, MatProp_p);
+        BDB = compute_Nodal_BDB(D_p, GRADIENT_pA, GRADIENT_pB, F_n1_p);
 
-	      /*
-		Compute the nodal matrix with the contribution to each degree of freedom
-	      */
-	      Material_AB = compute_Nodal_Tangent_Stiffness_Material(F_n1_p,C_AB,transpose_F_n1_p);
-	      
-	      /*
-		Add the geometric contribution to each dof for the assembling process
-	      */
-	      for(int i = 0 ; i<Ndim ; i++)
-		{
-		  for(int j = 0 ; j<Ndim ; j++)
-		    {
-		      Tangent_Stiffness.nM[A_mask*Ndim+i][B_mask*Ndim+j] += Material_AB.N[i][j]*V0_p;
-		    }
-		}
+        /*
+            Add the geometric contribution to each dof for the assembling process
+        */
+        for(int i = 0 ; i<Ndim ; i++)
+        {
+            for(int j = 0 ; j<Ndim ; j++)
+            {
+              Tangent_Stiffness.nM[A_mask*Ndim+i][B_mask*Ndim+j] += BDB.nM[i][j]*V0_p;
+            }
+        }
 
-	      /*
-		Free memory 
-	      */
-	      free__TensorLib__(GRADIENT_pB);
-	      free__TensorLib__(C_AB);
-	      free__TensorLib__(Material_AB);
+        /*
+    Free memory 
+        */
+        free__MatrixLib__(BDB);
+        free__TensorLib__(GRADIENT_pB);
+        
+
 	    }
 
 	  /*
@@ -1665,6 +1663,7 @@ static void assemble_Nodal_Tangent_Stiffness_Material(Matrix Tangent_Stiffness,
       /* 
 	 Free memory 
       */
+      free__MatrixLib__(D_p);
       free__TensorLib__(transpose_F_n_p);
       free__TensorLib__(transpose_F_n1_p);
       free__MatrixLib__(gradient_p);
@@ -1726,6 +1725,24 @@ static Tensor compute_Nodal_Tangent_Stiffness_Material(Tensor F_n1_p,
   
   return F_x_C_x_Ft;
   
+}
+
+/**************************************************************/
+
+static Matrix compute_Nodal_BDB(Matrix D, Tensor GRADIENT_pA, Tensor GRADIENT_pB, Tensor F_p)
+{
+
+  Matrix BT = compute_BT_matrix__Particles__(F_p, GRADIENT_pA);
+  Matrix B = compute_B_matrix__Particles__(F_p, GRADIENT_pB);
+
+  Matrix DB = matrix_product__MatrixLib__(D, B);
+  Matrix BDB = matrix_product__MatrixLib__(BT, DB);
+  
+  free__MatrixLib__(B);
+  free__MatrixLib__(BT);
+  free__MatrixLib__(DB);
+  
+  return BDB;
 }
 
 /**************************************************************/

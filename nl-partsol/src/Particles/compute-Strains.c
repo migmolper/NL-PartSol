@@ -334,3 +334,19 @@ Matrix compute_B_matrix__Particles__(Tensor F, Tensor GRAD_N)
 }
 
 /**************************************************************/
+
+Matrix compute_BT_matrix__Particles__(Tensor F, Tensor GRAD_N)
+{
+  Matrix BT = allocZ__MatrixLib__(2,3);
+
+  BT.nM[0][0] = F.N[0][0]*GRAD_N.n[0];
+  BT.nM[1][0] = F.N[1][0]*GRAD_N.n[0];
+  BT.nM[0][1] = F.N[0][1]*GRAD_N.n[1];
+  BT.nM[1][1] = F.N[1][1]*GRAD_N.n[1];
+  BT.nM[0][2] = F.N[0][0]*GRAD_N.n[1] + F.N[0][1]*GRAD_N.n[0];
+  BT.nM[1][2] = F.N[1][0]*GRAD_N.n[1] + F.N[1][1]*GRAD_N.n[0];
+
+  return BT;
+}
+
+/**************************************************************/
