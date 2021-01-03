@@ -47,6 +47,13 @@ typedef struct
   bool Is_Current_directory;
   bool Is_Defined_directory;
 
+  bool Out_Stress;
+  bool Out_Strain;
+  bool Out_Deformation_gradient;
+  bool Out_Plastic_Deformation_gradient;
+  bool Out_EPS;
+  bool Out_Cohesion;
+
 } Parameters;
 
 /*
@@ -72,6 +79,7 @@ static int Number_Output_directives(char * );
 static void Read_Output_directives(char *);
 static Intervals Read_CSV_Intervals(char *);
 static Parameters Read_CSV_Parameters(FILE *);
+static bool Is_Output_Activate(char *, char *);
 static Event Fill_CSV_Output_Directives(Intervals, Parameters);
 static bool Check_Output_directory(char *);
 static bool Check_File(char *);
@@ -101,8 +109,7 @@ GaussPoint Generate_Gauss_Point_Analysis__InOutFun__(char * SimulationFile)
   }
 
   Read_Output_directives(SimulationFile);
-
-  exit(1);
+  
 
 	return PointAnalysis;
 }
@@ -304,7 +311,7 @@ static int Number_Output_directives(char * Name_File)
     {
       nkwords = parse (kwords, line, delimiters_1);
 
-      if ((nkwords > 0) && (strcmp(kwords[0],"Strain-Stress-Trajectories-to-csv") == 0 ))
+      if ((nkwords > 0) && (strcmp(kwords[0],"Particle-variables-evolution-to-csv") == 0 ))
       {
         NOD++;
       }
@@ -319,10 +326,11 @@ static int Number_Output_directives(char * Name_File)
 
 static void Read_Output_directives(char * SimulationFile)
 /*
-  Strain-Stress-Trajectories-to-csv (i_start=0;i_step=1;i_end=4000)
+  Particle-variables-evolution-to-csv (i_start=0;i_step=1;i_end=4000)
   {
     File=Strain-Stress.csv
-    Directory=Foo    
+    Directory=Foo
+
   } 
 */
 {
@@ -355,7 +363,7 @@ static void Read_Output_directives(char * SimulationFile)
       }
 
       /* Read Define-Strain-Curve */
-      if ((nkwords > 0) && (strcmp(kwords[0],"Strain-Stress-Trajectories-to-csv") == 0 ))
+      if ((nkwords > 0) && (strcmp(kwords[0],"Particle-variables-evolution-to-csv") == 0 ))
       {
         printf("\t -> Read Output directive\n");
 
@@ -492,6 +500,30 @@ static Parameters Read_CSV_Parameters(FILE * Simulation_file)
         sprintf(Output_csv.File_Name,"%s",Parse_Out_Prop[1]);
         printf("\t \t -> %s : %s \n","File",Parse_Out_Prop[1]);
         Is_File = true;
+    }    
+    else if(strcmp(Parse_Out_Prop[0],"Out-stress") == 0)
+    {
+        Output_csv.Out_Stress = Is_Output_Activate(Parse_Out_Prop[0],Parse_Out_Prop[1]);
+    }
+    else if(strcmp(Parse_Out_Prop[0],"Out-strain") == 0)
+    {
+        Output_csv.Out_Strain = Is_Output_Activate(Parse_Out_Prop[0],Parse_Out_Prop[1]);
+    }
+    else if(strcmp(Parse_Out_Prop[0],"Out-deformation-gradient") == 0)
+    {
+        Output_csv.Out_Deformation_gradient = Is_Output_Activate(Parse_Out_Prop[0],Parse_Out_Prop[1]);
+    }
+    else if(strcmp(Parse_Out_Prop[0],"Out-plastic-deformation-gradient") == 0)
+    {
+        Output_csv.Out_Plastic_Deformation_gradient = Is_Output_Activate(Parse_Out_Prop[0],Parse_Out_Prop[1]);
+    }
+    else if(strcmp(Parse_Out_Prop[0],"Out-EPS") == 0)
+    {
+        Output_csv.Out_EPS = Is_Output_Activate(Parse_Out_Prop[0],Parse_Out_Prop[1]);
+    }
+    else if(strcmp(Parse_Out_Prop[0],"Out-Cohesion") == 0)
+    {
+        Output_csv.Out_Cohesion = Is_Output_Activate(Parse_Out_Prop[0],Parse_Out_Prop[1]);
     }
     else if((strcmp(Parse_Out_Prop[0],"}") == 0) && (Aux_Out_id == 1))
     {
@@ -504,11 +536,6 @@ static Parameters Read_CSV_Parameters(FILE * Simulation_file)
         standard_error(); 
       }
   
-  }
-
-  if(Output_csv.Is_Current_directory)
-  {
-    sprintf(Output_csv.Directory_Name,"./");
   }
 
   if(!Is_Open || !Is_Close)
@@ -529,20 +556,85 @@ static Parameters Read_CSV_Parameters(FILE * Simulation_file)
 
 /***************************************************************************/
 
+static bool Is_Output_Activate(char * output_field, char * status_text)
+{
+  bool status;
+
+  if(strcmp(status_text,"true") == 0)
+  {
+    printf("\t -> %s : true \n", output_field);
+    return true;
+  }
+  else if(strcmp(status_text,"false") == 0)
+  {
+    printf("\t -> %s : False \n", output_field);
+    return false;
+  }
+  else
+  {
+    sprintf(Error_message,"The input was %s. Please, use : true/false",status_text);
+    standard_error(); 
+  }
+
+  return status;
+}
+
+/***************************************************************************/
+
 static Event Fill_CSV_Output_Directives(Intervals CSV_Intervals, Parameters CSV_Parameters)
 {
   Event CSV_Event;
+
+  /* Set outputs to default */
+  CSV_Event.Out_csv_Gauss_Point_evolution_Stress = false;
+  CSV_Event.Out_csv_Gauss_Point_evolution_Strain = false;
+  CSV_Event.Out_csv_Gauss_Point_evolution_Deformation_gradient = false;
+  CSV_Event.Out_csv_Gauss_Point_evolution_Plastic_Deformation_gradient = false;
+  CSV_Event.Out_csv_Gauss_Point_evolution_EPS = false;
+  CSV_Event.Out_csv_Gauss_Point_evolution_Cohesion = false;
+
+
+  /* Write name of the ouput file directory */
+  if(CSV_Parameters.Is_Current_directory)
+  {
+    sprintf(CSV_Event.Directory,"./%s.csv",CSV_Parameters.File_Name);
+  }
+  else if(CSV_Parameters.Is_Defined_directory)
+  {
+    sprintf(CSV_Event.Directory,"./%s/%s.csv",CSV_Parameters.Directory_Name,CSV_Parameters.File_Name);
+  }
 
   /* Read outputs intervals */
   CSV_Event.i_start = CSV_Intervals.i_start;
   CSV_Event.i_step  = CSV_Intervals.i_step;
   CSV_Event.i_end   = CSV_Intervals.i_end;
   
-  CSV_Event.Out_csv_Gauss_Point_evolution_Stress = ;
-  CSV_Event.Out_csv_Gauss_Point_evolution_Strain = ;
-  CSV_Event.Out_csv_Gauss_Point_evolution_Deformation_gradient = ;
-  CSV_Event.Out_csv_Gauss_Point_evolution_EPS = ;
-  CSV_Event.Out_csv_Gauss_Point_evolution_Cohesion = ;
+  /* Select ouput variable */ 
+  if(CSV_Parameters.Out_Stress)
+  {
+    CSV_Event.Out_csv_Gauss_Point_evolution_Stress = true;
+  }
+  else if(CSV_Parameters.Out_Strain)
+  {
+    CSV_Event.Out_csv_Gauss_Point_evolution_Strain = true;
+  }
+  else if(CSV_Parameters.Out_Deformation_gradient)
+  {
+    CSV_Event.Out_csv_Gauss_Point_evolution_Deformation_gradient = true;
+  }
+  else if(CSV_Parameters.Out_Plastic_Deformation_gradient)
+  {
+    CSV_Event.Out_csv_Gauss_Point_evolution_Plastic_Deformation_gradient = true;
+  }
+  else if(CSV_Parameters.Out_EPS)
+  {
+    CSV_Event.Out_csv_Gauss_Point_evolution_EPS = true;
+  }
+  else if(CSV_Parameters.Out_Cohesion)
+  {
+    CSV_Event.Out_csv_Gauss_Point_evolution_Cohesion = true;
+  }
+
 
   return CSV_Event;
 }
