@@ -109,7 +109,7 @@ GaussPoint Generate_Gauss_Point_Analysis__InOutFun__(char * SimulationFile)
   }
 
   Read_Output_directives(SimulationFile);
-  
+
 
 	return PointAnalysis;
 }
@@ -274,20 +274,41 @@ static Matrix Read_Curve_File_Name(FILE * Simulation_file)
 
 static void Fill_Strains(Fields Phi, Strain_curve Strain_i)
 {
+  
+  int Ndim = NumberDimensions;
+
 
     if(Strain_i.ChkStr.Is_Deformation_Gradient)
     {
-      Phi.F_n = increment__MatrixLib__(Phi.F_n, Strain_i.Value);
+      for(int i = 0 ; i<NumTimeStep ; i++)
+      {
+        for(int j = 0 ; j<Ndim*Ndim ; j++)
+        {
+          Phi.F_n.nM[i][j] = Strain_i.Value.nM[i][j];
+        }
+      }
     }
 
     else if(Strain_i.ChkStr.Is_Right_Cauchy_Green)
     {
-      Phi.Strain = increment__MatrixLib__(Phi.Strain, Strain_i.Value);
+      for(int i = 0 ; i<NumTimeStep ; i++)
+      {
+        for(int j = 0 ; j<Ndim*Ndim ; j++)
+        {
+          Phi.Strain.nM[i][j] = Strain_i.Value.nM[i][j];
+        }
+      }
     }
 
     else if(Strain_i.ChkStr.Is_Small_Strain)
     {
-      Phi.Strain = increment__MatrixLib__(Phi.Strain, Strain_i.Value);
+      for(int i = 0 ; i<NumTimeStep ; i++)
+      {
+        for(int j = 0 ; j<Ndim*Ndim ; j++)
+        {
+          Phi.Strain.nM[i][j] = Strain_i.Value.nM[i][j];
+        }
+      }  
     }
 
 }
@@ -597,11 +618,11 @@ static Event Fill_CSV_Output_Directives(Intervals CSV_Intervals, Parameters CSV_
   /* Write name of the ouput file directory */
   if(CSV_Parameters.Is_Current_directory)
   {
-    sprintf(CSV_Event.Directory,"./%s.csv",CSV_Parameters.File_Name);
+    sprintf(CSV_Event.Directory,"./");
   }
   else if(CSV_Parameters.Is_Defined_directory)
   {
-    sprintf(CSV_Event.Directory,"./%s/%s.csv",CSV_Parameters.Directory_Name,CSV_Parameters.File_Name);
+    sprintf(CSV_Event.Directory,"./%s",CSV_Parameters.Directory_Name);
   }
 
   /* Read outputs intervals */
@@ -614,23 +635,23 @@ static Event Fill_CSV_Output_Directives(Intervals CSV_Intervals, Parameters CSV_
   {
     CSV_Event.Out_csv_Gauss_Point_evolution_Stress = true;
   }
-  else if(CSV_Parameters.Out_Strain)
+  if(CSV_Parameters.Out_Strain)
   {
     CSV_Event.Out_csv_Gauss_Point_evolution_Strain = true;
   }
-  else if(CSV_Parameters.Out_Deformation_gradient)
+  if(CSV_Parameters.Out_Deformation_gradient)
   {
     CSV_Event.Out_csv_Gauss_Point_evolution_Deformation_gradient = true;
   }
-  else if(CSV_Parameters.Out_Plastic_Deformation_gradient)
+  if(CSV_Parameters.Out_Plastic_Deformation_gradient)
   {
     CSV_Event.Out_csv_Gauss_Point_evolution_Plastic_Deformation_gradient = true;
   }
-  else if(CSV_Parameters.Out_EPS)
+  if(CSV_Parameters.Out_EPS)
   {
     CSV_Event.Out_csv_Gauss_Point_evolution_EPS = true;
   }
-  else if(CSV_Parameters.Out_Cohesion)
+  if(CSV_Parameters.Out_Cohesion)
   {
     CSV_Event.Out_csv_Gauss_Point_evolution_Cohesion = true;
   }

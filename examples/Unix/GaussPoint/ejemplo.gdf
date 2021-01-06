@@ -3,16 +3,13 @@ GramsTime (Type=Gauss-Point-Analysis) {
   N=4000
 }
 
-Define-Material(idx=0,Model=Drucker-Prager-Plane-Strain)
+Define-Material(idx=0,Model=Von-Mises)
 {
   rho=0.0
-	E=1e5
+	E=117.e3
 	nu=0.35
-	Reference-Plastic-Strain=0.001
-	Hardening_exponent=0.6
-	Cohesion=20
-	Friction_angle=20
-	Dilatancy_angle=20
+  Yield_stress=100
+  Hardening_modulus=0.0
 }
 
 Define-Strain-Curve (Var=Deformation-Gradient)

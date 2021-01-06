@@ -163,8 +163,6 @@ int main(int argc, char * argv[])
       puts("Generating new Gauss Point simulation ...");
       PointAnalysis = Generate_Gauss_Point_Analysis__InOutFun__(SimulationFile);
 
-      exit(0);
-
       puts("*************************************************");
       puts("Run simulation ...");
       NonLinear_Gauss_Point_Analysis(PointAnalysis);

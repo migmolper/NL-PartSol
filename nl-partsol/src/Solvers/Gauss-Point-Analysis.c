@@ -42,6 +42,7 @@ void NonLinear_Gauss_Point_Analysis(GaussPoint PointAnalysis)
   	F_k = memory_to_tensor__TensorLib__(PointAnalysis.Phi.F_n.nM[k],2);
   	C_k = right_Cauchy_Green__Particles__(F_k);
 
+
   	if(strcmp(PointAnalysis.Mat[0].Type,"Saint-Venant-Kirchhoff") == 0)
   	{
 
@@ -96,7 +97,7 @@ void NonLinear_Gauss_Point_Analysis(GaussPoint PointAnalysis)
 
   }
 
-    free__TensorLib__(C_k);
+  free__TensorLib__(C_k);
 
 	/* Output stress trajectory */
 	for(int i = 0 ; i<Number_Out_Gauss_Point_evolution_csv; i++)

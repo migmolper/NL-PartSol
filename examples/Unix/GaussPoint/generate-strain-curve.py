@@ -10,5 +10,5 @@ strain_yy = np.ones(4000)
 strain = np.array([strain_xx, strain_xy, strain_yx, strain_yy]).transpose()
 
 np.savetxt("Strains.txt", strain,
-        header="NROWS=%i NCOLS=%i PARSER=%s"%(4000,2,"%d,%d,%d,%d"), delimiter=",")
+        header="NROWS=%i NCOLS=%i PARSER=%s"%(4000,4,"%d,%d,%d,%d"), delimiter=",")
 

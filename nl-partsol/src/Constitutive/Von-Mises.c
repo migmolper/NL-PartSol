@@ -22,8 +22,8 @@ static double update_increment_plastic_strain(double, double, double);
 static double update_equivalent_plastic_strain(double, double, Material);
 static double update_yield_stress(double, Material);
 static Tensor compute_increment_plastic_strain_tensor(Tensor, double, double, Material);
-static Tensor compute_finite_stress_tensor_plastic_region(Tensor, Tensor, double, double, Material);
-static Tensor compute_finite_stress_tensor_elastic_region(Tensor, Tensor, Material);
+static void   compute_finite_stress_tensor_plastic_region(Tensor, Tensor, Tensor, double, double, Material);
+static void   compute_finite_stress_tensor_elastic_region(Tensor, Tensor, Tensor, Material);
 
 /**************************************************************/
 
@@ -128,7 +128,7 @@ Plastic_status infinitesimal_strains_plasticity_Von_Mises(Tensor sigma_k1, Tenso
 
   if(Phi < TOL)
     {
-      sigma_k1 = compute_finite_stress_tensor_elastic_region(s_trial, p_trial, MatProp);
+      compute_finite_stress_tensor_elastic_region(sigma_k1, s_trial, p_trial, MatProp);
     }
   else
     {     
@@ -166,7 +166,7 @@ Plastic_status infinitesimal_strains_plasticity_Von_Mises(Tensor sigma_k1, Tenso
       /*
         Update stress tensor in the deformed configuration
       */
-      sigma_k1 = compute_finite_stress_tensor_plastic_region(s_trial, p_trial, s_trial_norm, delta_Gamma, MatProp);
+      compute_finite_stress_tensor_plastic_region(sigma_k1, s_trial, p_trial, s_trial_norm, delta_Gamma, MatProp);
 
     }
 
@@ -312,14 +312,13 @@ static Tensor compute_increment_plastic_strain_tensor(Tensor s_trial, double s_t
 
 /**************************************************************/
 
-static Tensor compute_finite_stress_tensor_plastic_region(Tensor s_trial, Tensor p_trial, double s_trial_norm, double delta_Gamma, Material MatProp)
+static void compute_finite_stress_tensor_plastic_region(Tensor sigma_k1, Tensor s_trial, Tensor p_trial, double s_trial_norm, double delta_Gamma, Material MatProp)
 {
   int Ndim = NumberDimensions;
   double nu = MatProp.nu; /* Poisson modulus */
   double E = MatProp.E; /* Elastic modulus */
   double G = E/(2*(1+nu));
   double aux = 1 - 2*G*delta_Gamma/s_trial_norm;
-  Tensor sigma_k1 = alloc__TensorLib__(2);
 
   for(int i = 0 ; i<Ndim ; i++)
     {
@@ -328,17 +327,13 @@ static Tensor compute_finite_stress_tensor_plastic_region(Tensor s_trial, Tensor
         sigma_k1.N[i][j] = p_trial.N[i][j] + aux*s_trial.N[i][j];
       }
     }
-
-  return sigma_k1;
 }
 
 /**************************************************************/
 
-static Tensor compute_finite_stress_tensor_elastic_region(Tensor s_trial, Tensor p_trial, Material MatProp)
+static void compute_finite_stress_tensor_elastic_region(Tensor sigma_k1, Tensor s_trial, Tensor p_trial, Material MatProp)
 {
   int Ndim = NumberDimensions;
-
-  Tensor sigma_k1 = alloc__TensorLib__(2);
 
   for(int i = 0 ; i<Ndim ; i++)
     {
@@ -348,7 +343,6 @@ static Tensor compute_finite_stress_tensor_elastic_region(Tensor s_trial, Tensor
       }
     }
 
-  return sigma_k1;
 }
 
 /**************************************************************/
