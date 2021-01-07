@@ -381,9 +381,10 @@ typedef struct {
   double cohesion_reference;
   double friction_angle;
   double dilatancy_angle;
+  double E_plastic_reference;
   double hardening_modulus;
   double hardening_exp;
-  double E_plastic_reference;
+  bool   Hardening_Ortiz;
   
   /*!
    * Parameters of the Drucker-Prager Sanavia

@@ -50,6 +50,7 @@ static char Error_message[MAXW];
 
 static Param_Index_and_Model Read_Index_and_Model(char *,char *);
 static Material  Define_Material(FILE *, Param_Index_and_Model);
+static bool Activate_Options(char *, char *);
 static Check_Material Initialise_Check_Material();
 static void check_Solid_Rigid_Material(Material,Check_Material);
 static void check_Linear_Elastic_Material(Material,Check_Material);
@@ -202,6 +203,11 @@ static Material Define_Material(FILE * Simulation_file,
   double rad_friction_angle;
   double rad_dilatancy_angle;
 
+  /* Default options */
+  New_Material.Hardening_Ortiz = false;
+  New_Material.Eigenerosion = false;
+  New_Material.Eigensoftening = false;
+
   while(fgets(Parameter_line, sizeof(Parameter_line), Simulation_file) != NULL)
   {
     /* Parse line */    
@@ -225,6 +231,10 @@ static Material Define_Material(FILE * Simulation_file,
     {
       ChkMat.Is_nu = true;
       New_Material.nu = atof(Parameter_pars[1]);
+    }
+    else if(strcmp(Parameter_pars[0],"Hardening-Ortiz") == 0)
+    {
+      New_Material.Hardening_Ortiz = Activate_Options("Hardening-Ortiz", Parameter_pars[1]);
     }
     else if(strcmp(Parameter_pars[0],"Reference-Plastic-Strain") == 0)
     {
@@ -267,7 +277,7 @@ static Material Define_Material(FILE * Simulation_file,
     {
         Is_Close = true;
         break;
-    }   
+    }
     else if(Parser_status > 0)
     {
       sprintf(Error_message,"%s %s","Undefined",Parameter_pars[0]);
@@ -304,6 +314,11 @@ static Material Define_Material(FILE * Simulation_file,
   else if(strcmp(New_Material.Type,"Drucker-Prager-Plane-Strain") == 0)
   { 
     check_Drucker_Prager_Material(New_Material,ChkMat);
+    if(!New_Material.Hardening_Ortiz)
+    {
+      New_Material.E_plastic_reference = New_Material.yield_stress_0/New_Material.hardening_modulus; 
+      New_Material.hardening_exp = 1;
+    }
     New_Material.alpha_F_Drucker_Prager = sqrt(2/3.)*tan(rad_friction_angle)/sqrt(3+4*DSQR(tan(rad_friction_angle)));
     New_Material.alpha_Q_Drucker_Prager = sqrt(2/3.)*tan(rad_dilatancy_angle)/sqrt(3+4*DSQR(tan(rad_dilatancy_angle)));
     New_Material.beta_Drucker_Prager    = sqrt(2/3.)*3/sqrt(3+4*DSQR(tan(rad_friction_angle)));
@@ -313,6 +328,11 @@ static Material Define_Material(FILE * Simulation_file,
   else if(strcmp(New_Material.Type,"Drucker-Prager-Outer-cone") == 0)
   { 
     check_Drucker_Prager_Material(New_Material,ChkMat);
+    if(!New_Material.Hardening_Ortiz)
+    {
+      New_Material.E_plastic_reference = New_Material.yield_stress_0/New_Material.hardening_modulus; 
+      New_Material.hardening_exp = 1;
+    }
     New_Material.alpha_F_Drucker_Prager = sqrt(2/3.)*2*sin(rad_friction_angle)/(3-sin(rad_friction_angle));
     New_Material.alpha_Q_Drucker_Prager = sqrt(2/3.)*2*sin(rad_dilatancy_angle)/(3-sin(rad_dilatancy_angle));
     New_Material.beta_Drucker_Prager    = sqrt(2/3.)*6*cos(rad_friction_angle)/(3-sin(rad_friction_angle));
@@ -327,6 +347,31 @@ static Material Define_Material(FILE * Simulation_file,
 
   /* Return outputs */
   return New_Material;
+}
+
+/***************************************************************************/
+
+static bool Activate_Options(char * Option, char * status_text)
+{
+  bool status;
+
+  if(strcmp(status_text,"true") == 0)
+  {
+    printf("\t -> %s : true \n", Option);
+    return true;
+  }
+  else if(strcmp(status_text,"false") == 0)
+  {
+    printf("\t -> %s : False \n", Option);
+    return false;
+  }
+  else
+  {
+    sprintf(Error_message,"The status was %s. Please, use : true/false",status_text);
+    standard_error(); 
+  }
+
+  return status;
 }
 
 /***************************************************************************/
@@ -469,15 +514,13 @@ static void check_Von_Mises_Material(Material Mat_particle, Check_Material ChkMa
 static void check_Drucker_Prager_Material(Material Mat_particle, Check_Material ChkMat)
 {
   if(ChkMat.Is_rho && ChkMat.Is_E && ChkMat.Is_nu && ChkMat.Is_cohesion && 
-    ChkMat.Is_Hexp && ChkMat.Is_E_p0 && ChkMat.Is_friction_angle && ChkMat.Is_dilatancy_angle)
+     ChkMat.Is_friction_angle && ChkMat.Is_dilatancy_angle)
   {
     printf("\t -> %s \n","Drucker-Prager material");
     printf("\t \t -> %s : %f \n","Density",Mat_particle.rho);
     printf("\t \t -> %s : %f \n","Elastic modulus",Mat_particle.E);
     printf("\t \t -> %s : %f \n","Poisson modulus",Mat_particle.nu);
     printf("\t \t -> %s : %f \n","Cohesion",Mat_particle.cohesion_reference);
-    printf("\t \t -> %s : %f \n","Reference plastic strain",Mat_particle.E_plastic_reference);
-    printf("\t \t -> %s : %f \n","Hardening exponent",Mat_particle.hardening_exp);
     printf("\t \t -> %s : %f \n","Friction angle",Mat_particle.friction_angle);
     printf("\t \t -> %s : %f \n","Dilatancy angle",Mat_particle.dilatancy_angle);
   }
@@ -490,12 +533,44 @@ static void check_Drucker_Prager_Material(Material Mat_particle, Check_Material 
     fputs(ChkMat.Is_E   ? "Elastic modulus : true \n" : "Elastic modulus : false \n", stdout);
     fputs(ChkMat.Is_nu  ? "Poisson modulus : true \n" : "Poisson modulus : false \n", stdout);
     fputs(ChkMat.Is_cohesion  ? "Cohesion : true \n" : "Cohesion : false \n", stdout);
-    fputs(ChkMat.Is_E_p0 ? "Reference plastic strain : true \n" : "Reference plastic strain : false \n", stdout);
-    fputs(ChkMat.Is_Hexp  ? "Hardening exponent : true \n" : "Hardening exponent : false \n", stdout);
     fputs(ChkMat.Is_friction_angle  ? "Friction angle : true \n" : "Friction angle : false \n", stdout);
     fputs(ChkMat.Is_dilatancy_angle  ? "Dilatancy angle : true \n" : "Dilatancy angle : false \n", stdout);
     exit(EXIT_FAILURE);
   }
+
+  if(Mat_particle.Hardening_Ortiz)
+  {
+    if(ChkMat.Is_Hexp && ChkMat.Is_E_p0)
+    {
+      printf("\t \t -> %s : %f \n","Reference plastic strain",Mat_particle.E_plastic_reference);
+      printf("\t \t -> %s : %f \n","Hardening exponent",Mat_particle.hardening_exp);
+    }
+    else 
+    {
+      fprintf(stderr,"%s : %s \n",
+      "Error in GramsMaterials()",
+      "Some parameter is missed for Hardening-Ortiz in Drucker-Prager material");
+      fputs(ChkMat.Is_E_p0 ? "Reference plastic strain : true \n" : "Reference plastic strain : false \n", stdout);
+      fputs(ChkMat.Is_Hexp  ? "Hardening exponent : true \n" : "Hardening exponent : false \n", stdout);
+      exit(EXIT_FAILURE);      
+    }
+  }
+  else
+  {
+    if(ChkMat.Is_H)
+    {
+      printf("\t \t -> %s : %f \n","Hardening modulus",Mat_particle.hardening_modulus);
+    }
+    else
+    {
+      fprintf(stderr,"%s : %s \n",
+      "Error in GramsMaterials()",
+      "Some parameter is missed for Drucker-Prager material");
+      fputs(ChkMat.Is_H  ? "Hardening modulus : true \n" : "Hardening modulus : false \n", stdout);
+      exit(EXIT_FAILURE);
+    }
+  }
+
 }
 
 /**********************************************************************/

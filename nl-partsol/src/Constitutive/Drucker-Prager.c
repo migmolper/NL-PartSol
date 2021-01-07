@@ -104,7 +104,7 @@ Plastic_status infinitesimal_strains_plasticity_Drucker_Prager_Sanavia(Tensor si
   /* Load material parameters */
   double EPS_k = Inputs_VarCons.EPS;
   double cohesion_k  = Inputs_VarCons.Cohesion;
-  double H = 0;
+  double H = MatProp.hardening_modulus;
 
   /* Initialise convergence prameters for the solver */
   double TOL = TOL_Radial_Returning;
@@ -139,7 +139,10 @@ Plastic_status infinitesimal_strains_plasticity_Drucker_Prager_Sanavia(Tensor si
   else
   {
 
-    H = compute_hardening_modulus(EPS_k, MatProp);
+    if(MatProp.Hardening_Ortiz)
+    {
+      H = compute_hardening_modulus(EPS_k, MatProp);
+    }
 
     p_lim = compute_limit_between_classic_apex_algorithm(s_trial_norm, cohesion_k, H, MatProp);
 
@@ -159,7 +162,10 @@ Plastic_status infinitesimal_strains_plasticity_Drucker_Prager_Sanavia(Tensor si
 
        cohesion_k = update_cohesion_modulus(EPS_k, MatProp);
 
-       H = compute_hardening_modulus(EPS_k, MatProp);
+       if(MatProp.Hardening_Ortiz)
+        {
+          H = compute_hardening_modulus(EPS_k, MatProp);
+        }
 
        Phi = compute_yield_surface_classical(s_trial_norm, p_trial_norm, delta_Gamma, cohesion_k, MatProp);
 
@@ -308,8 +314,10 @@ static double compute_hardening_modulus(double EPS_k, Material MatProp)
   double E0_p  = MatProp.E_plastic_reference;
   double N_exp = MatProp.hardening_exp;
   double c0    = MatProp.cohesion_reference;
+  double basis = 1 + EPS_k/E0_p;
+  double exp = 1/N_exp - 1;
 
-  double H = (c0/(N_exp*E0_p))*pow((1 + EPS_k/E0_p),(1/N_exp - 1));
+  double H = (c0/(N_exp*E0_p))*pow(basis,exp);
 
   return H;
 }
@@ -376,10 +384,10 @@ static double update_cohesion_modulus(double EPS_k1, Material MatProp)
   double c_0   = MatProp.cohesion_reference;
   double E0_p  = MatProp.E_plastic_reference;
   double N_exp = MatProp.hardening_exp;
-  double exp   = 1/N_exp - 1;
+  double exp   = 1/N_exp;
   double basis = 1 + EPS_k1/E0_p;
 
-  double cohesion_k1 = (c_0/(N_exp*E0_p))*pow(basis,exp);
+  double cohesion_k1 = c_0*pow(basis,exp);
 
   return cohesion_k1;	
 }
