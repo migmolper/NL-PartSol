@@ -241,17 +241,17 @@ static Material Define_Material(FILE * Simulation_file,
       ChkMat.Is_E_p0 = true;
       New_Material.E_plastic_reference = atof(Parameter_pars[1]);
     } 
-    else if(strcmp(Parameter_pars[0],"Yield_stress") == 0)
+    else if(strcmp(Parameter_pars[0],"Yield-stress") == 0)
     {
       ChkMat.Is_yield_stress = true;
       New_Material.yield_stress_0 = atof(Parameter_pars[1]);
     }
-    else if(strcmp(Parameter_pars[0],"Hardening_modulus") == 0)
+    else if(strcmp(Parameter_pars[0],"Hardening-modulus") == 0)
     {
       ChkMat.Is_H = true;
       New_Material.hardening_modulus = atof(Parameter_pars[1]);
     }
-    else if(strcmp(Parameter_pars[0],"Hardening_exponent") == 0)
+    else if(strcmp(Parameter_pars[0],"Hardening-exponent") == 0)
     {
       ChkMat.Is_Hexp = true;
       New_Material.hardening_exp = atof(Parameter_pars[1]);
@@ -261,13 +261,13 @@ static Material Define_Material(FILE * Simulation_file,
       ChkMat.Is_cohesion = true;
       New_Material.cohesion_reference = atof(Parameter_pars[1]);
     }
-    else if(strcmp(Parameter_pars[0],"Friction_angle") == 0)
+    else if(strcmp(Parameter_pars[0],"Friction-angle") == 0)
     {
       ChkMat.Is_friction_angle = true;
       New_Material.friction_angle = atof(Parameter_pars[1]);
       rad_friction_angle  = (PI__MatrixLib__/180)*New_Material.friction_angle;
     }
-    else if(strcmp(Parameter_pars[0],"Dilatancy_angle") == 0)
+    else if(strcmp(Parameter_pars[0],"Dilatancy-angle") == 0)
     {
       ChkMat.Is_dilatancy_angle = true;
       New_Material.dilatancy_angle = atof(Parameter_pars[1]);
@@ -316,7 +316,7 @@ static Material Define_Material(FILE * Simulation_file,
     check_Drucker_Prager_Material(New_Material,ChkMat);
     if(!New_Material.Hardening_Ortiz)
     {
-      New_Material.E_plastic_reference = New_Material.yield_stress_0/New_Material.hardening_modulus; 
+      New_Material.E_plastic_reference = New_Material.cohesion_reference/New_Material.hardening_modulus; 
       New_Material.hardening_exp = 1;
     }
     New_Material.alpha_F_Drucker_Prager = sqrt(2/3.)*tan(rad_friction_angle)/sqrt(3+4*DSQR(tan(rad_friction_angle)));
@@ -330,7 +330,7 @@ static Material Define_Material(FILE * Simulation_file,
     check_Drucker_Prager_Material(New_Material,ChkMat);
     if(!New_Material.Hardening_Ortiz)
     {
-      New_Material.E_plastic_reference = New_Material.yield_stress_0/New_Material.hardening_modulus; 
+      New_Material.E_plastic_reference = New_Material.cohesion_reference/New_Material.hardening_modulus; 
       New_Material.hardening_exp = 1;
     }
     New_Material.alpha_F_Drucker_Prager = sqrt(2/3.)*2*sin(rad_friction_angle)/(3-sin(rad_friction_angle));

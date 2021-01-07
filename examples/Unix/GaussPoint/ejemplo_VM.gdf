@@ -8,8 +8,8 @@ Define-Material(idx=0,Model=Von-Mises)
   rho=0.0
 	E=117.e3
 	nu=0.35
-  Yield_stress=100
-  Hardening_modulus=-100
+  Yield-stress=100
+  Hardening-modulus=-100
 }
 
 Define-Strain-Curve (Var=Deformation-Gradient)

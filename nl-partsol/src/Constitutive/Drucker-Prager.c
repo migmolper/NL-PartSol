@@ -26,7 +26,7 @@ static double compute_derivative_yield_surface_apex(double, double, double, Mate
 static double compute_yield_surface_apex(double, double, double, double, double, Material);
 static double update_equivalent_plastic_strain_apex(double, double, double, Material);
 static Tensor compute_increment_plastic_strain_apex(Tensor, double, double, Material);
-static void   compute_finite_stress_tensor_apex(Tensor, Tensor, double, Material);
+static void   compute_finite_stress_tensor_apex(Tensor, Tensor, double, double, Material);
 static void   compute_finite_stress_tensor_elastic_region(Tensor, Tensor, Tensor, Material);
 
 
@@ -104,7 +104,15 @@ Plastic_status infinitesimal_strains_plasticity_Drucker_Prager_Sanavia(Tensor si
   /* Load material parameters */
   double EPS_k = Inputs_VarCons.EPS;
   double cohesion_k  = Inputs_VarCons.Cohesion;
-  double H = MatProp.hardening_modulus;
+  double H;
+  if(MatProp.Hardening_Ortiz)
+  {
+    H = 0;
+  }
+  else
+  {
+    H = MatProp.hardening_modulus;
+  }
 
   /* Initialise convergence prameters for the solver */
   double TOL = TOL_Radial_Returning;
@@ -129,7 +137,7 @@ Plastic_status infinitesimal_strains_plasticity_Drucker_Prager_Sanavia(Tensor si
   /*
     Yield condition : Starting from incremental plastic strain equal to zero
   */
-  delta_Gamma = 0;
+  delta_Gamma = 0.0;
   Phi = compute_yield_surface(p_trial_norm, s_trial_norm, cohesion_k, MatProp);
 
   if(Phi < TOL)
@@ -149,8 +157,9 @@ Plastic_status infinitesimal_strains_plasticity_Drucker_Prager_Sanavia(Tensor si
     /*
 	    Classical plastic iterator
     */
-    if(p_trial_norm <= p_lim)
+    if(p_trial_norm >= p_lim)
     {
+
      while(Convergence == false)
      {
 
@@ -222,7 +231,7 @@ Plastic_status infinitesimal_strains_plasticity_Drucker_Prager_Sanavia(Tensor si
 
   Increment_E_plastic = compute_increment_plastic_strain_apex(s_trial, s_trial_norm, delta_Gamma,MatProp);
 
-  compute_finite_stress_tensor_apex(sigma_k1, p_trial, delta_Gamma, MatProp);
+  compute_finite_stress_tensor_apex(sigma_k1, p_trial, s_trial_norm, delta_Gamma, MatProp);
 
 }
 
@@ -480,7 +489,7 @@ static double compute_derivative_yield_surface_apex(double H, double s_trial_nor
   double E = MatProp.E; /* Elastic modulus */
   double K = E/(3*(1-2*nu));
   double G = E/(2*(1+nu));
-  double delta_Gamma1 = s_trial_norm/G;
+  double delta_Gamma1 = s_trial_norm/(2*G);
 
   double aux1 = 3*alpha_Q*K;
   double aux2 = 3*H*beta*DSQR(alpha_Q)*(delta_Gamma1 + delta_Gamma2);
@@ -489,6 +498,9 @@ static double compute_derivative_yield_surface_apex(double H, double s_trial_nor
   double aux5 = 3*alpha_F*sqrt(DSQR(delta_Gamma1) + aux3*aux4);
 
   double d_Phi = aux1 + aux2/aux5;
+
+  printf("parameters : %f %f %f\n", alpha_F,alpha_Q, d_Phi);
+  exit(0);
 
   return d_Phi;
 }
@@ -505,7 +517,7 @@ static double compute_yield_surface_apex(double p_trial_norm, double s_trial_nor
   double E = MatProp.E; /* Elastic modulus */
   double K = E/(3*(1-2*nu));
   double G = E/(2*(1+nu));
-  double delta_Gamma1 = s_trial_norm/G;
+  double delta_Gamma1 = s_trial_norm/(2*G);
 
   double aux1 = beta/(3*alpha_F);
   double aux2 = 3*DSQR(alpha_Q);
@@ -527,7 +539,7 @@ static double update_equivalent_plastic_strain_apex(double EPS_k, double s_trial
   double nu = MatProp.nu; /* Poisson modulus */
   double E = MatProp.E; /* Elastic modulus */
   double G = E/(2*(1+nu));
-  double delta_Gamma1 = s_trial_norm/G;
+  double delta_Gamma1 = s_trial_norm/(2*G);
 
   double aux1 = DSQR(delta_Gamma1);
   double aux2 = 3*DSQR(alpha_Q);
@@ -551,7 +563,7 @@ static Tensor compute_increment_plastic_strain_apex(Tensor s_trial, double s_tri
   double nu = MatProp.nu; /* Poisson modulus */
   double E = MatProp.E; /* Elastic modulus */
   double G = E/(2*(1+nu));
-  double delta_Gamma1 = s_trial_norm/G;
+  double delta_Gamma1 = s_trial_norm/(2*G);
 
   double aux1 = alpha_Q*(delta_Gamma1 + delta_Gamma2);
   double aux2 = delta_Gamma1/s_trial_norm;
@@ -574,7 +586,9 @@ static Tensor compute_increment_plastic_strain_apex(Tensor s_trial, double s_tri
 
 /**************************************************************/
 
-static void compute_finite_stress_tensor_apex(Tensor sigma_k1, Tensor p_trial, double delta_Gamma2, Material MatProp)
+static void compute_finite_stress_tensor_apex(Tensor sigma_k1, Tensor p_trial, 
+                                              double s_trial_norm, double delta_Gamma2, 
+                                              Material MatProp)
 {
   int Ndim = NumberDimensions;
 
@@ -584,8 +598,10 @@ static void compute_finite_stress_tensor_apex(Tensor sigma_k1, Tensor p_trial, d
   double nu = MatProp.nu; /* Poisson modulus */
   double E = MatProp.E; /* Elastic modulus */
   double K = E/(3*(1-2*nu));
+  double G = E/(2*(1+nu));
+  double delta_Gamma1 = s_trial_norm/(2*G);
 
-  double aux1 = 3*K*alpha_Q*delta_Gamma2;
+  double aux1 = 3*K*alpha_Q*(delta_Gamma1 + delta_Gamma2);
 
   for(int i = 0 ; i<Ndim ; i++)
   {
