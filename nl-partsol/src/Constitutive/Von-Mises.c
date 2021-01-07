@@ -22,13 +22,61 @@ static double update_increment_plastic_strain(double, double, double);
 static double update_equivalent_plastic_strain(double, double, Material);
 static double update_yield_stress(double, Material);
 static Tensor compute_increment_plastic_strain_tensor(Tensor, double, double, Material);
-static Tensor compute_finite_stress_tensor_plastic_region(Tensor, Tensor, double, double, Material);
-static Tensor compute_finite_stress_tensor_elastic_region(Tensor, Tensor, Material);
+static void   compute_finite_stress_tensor_plastic_region(Tensor, Tensor, Tensor, double, double, Material);
+static void   compute_finite_stress_tensor_elastic_region(Tensor, Tensor, Tensor, Material);
 
 /**************************************************************/
 
-Plastic_status plasticity_Von_Mises(Tensor S_p, Tensor C_total, Tensor F_plastic, Tensor F_total, 
-                					                  double J, Plastic_status Inputs_VarCons, Material MatProp)
+Plastic_status finite_strains_plasticity_Von_Mises(Tensor Finite_Stress, Tensor C_total, Tensor F_plastic,
+                                                   Tensor F_total, Plastic_status Inputs_VarCons, Material MatProp, double J)
+/*
+  Finite strains plasticity following the apporach of Ortiz and Camacho
+*/
+{
+
+  /* Define output */
+  Plastic_status Outputs_VarCons;
+
+  Tensor C_elastic = alloc__TensorLib__(2);
+  Tensor E_elastic;
+  Tensor Infinitesimal_Stress = alloc__TensorLib__(2);
+  Tensor Increment_E_plastic;
+  Tensor D_F_plastic;
+
+  /* Compute the elastic right Cauchy-Green tensor using the intermediate configuration. */ 
+  covariant_push_forward_tensor__TensorLib__(C_elastic, C_total, F_plastic);
+
+  /* Calculation of the small strain tensor */
+  E_elastic = logarithmic_strains__Particles__(C_elastic);
+
+  /* Start plastic algorithm in infinitesimal strains */
+  Outputs_VarCons = infinitesimal_strains_plasticity_Von_Mises(Infinitesimal_Stress, E_elastic, Inputs_VarCons, MatProp);
+
+  /* Use the Cuitiño & Ortiz exponential maping to compute the increment of plasticfinite strains */
+  Increment_E_plastic = Outputs_VarCons.Increment_E_plastic;
+  D_F_plastic = increment_Deformation_Gradient_exponential_strains__Particles__(Increment_E_plastic);
+
+  /* Compute the new plastic deformation gradient */
+  update_plastic_deformation_gradient__Particles__(D_F_plastic,F_plastic);
+
+  /* Get the stress tensor in the reference configuration (S_p) using the Piola transformation */
+  compute_Piola_transformation__Particles__(Finite_Stress, Infinitesimal_Stress, F_total, J);
+
+  /* Free memory */
+  free__TensorLib__(C_elastic);
+  free__TensorLib__(E_elastic);
+  free__TensorLib__(Increment_E_plastic);
+  free__TensorLib__(D_F_plastic);
+  free__TensorLib__(Infinitesimal_Stress);
+
+  return Outputs_VarCons;
+}
+
+/**************************************************************/
+
+Plastic_status infinitesimal_strains_plasticity_Von_Mises(Tensor sigma_k1, Tensor E_elastic,
+                                                          Plastic_status Inputs_VarCons,
+                                                          Material MatProp)
 /*	
 	Radial returning algorithm for the Von-Mises plastic criterium
 */
@@ -36,9 +84,6 @@ Plastic_status plasticity_Von_Mises(Tensor S_p, Tensor C_total, Tensor F_plastic
 
   int Ndim = NumberDimensions;
 
-
-  Tensor C_elastic;
-  Tensor E_elastic;
   double E_elastic_vol;
   Tensor E_elastic_dev;
   Tensor p_trial;
@@ -47,8 +92,7 @@ Plastic_status plasticity_Von_Mises(Tensor S_p, Tensor C_total, Tensor F_plastic
   double delta_Gamma;
   double Phi;
   double d_Phi;	
-  Tensor sigma_k1;
-  Tensor Increment_E_plastic;
+  Tensor Increment_E_plastic = alloc__TensorLib__(2);
 
   /* Load material marameters */
   double H = MatProp.hardening_modulus;
@@ -62,22 +106,6 @@ Plastic_status plasticity_Von_Mises(Tensor S_p, Tensor C_total, Tensor F_plastic
   int MaxIter = Max_Iterations_Radial_Returning;
   int Iter = 0;
   bool Convergence = false;
-
-  /*
-    Define output varible
-  */
-  Plastic_status Outputs_VarCons;
-
-  /*
-    Compute the trial elastic right Cauchy-Green tensor using the intermediate configuration.
-  */
-  C_elastic = alloc__TensorLib__(2); 
-  covariant_push_forward_tensor__TensorLib__(C_elastic, C_total, F_plastic);
-
-  /*  
-    Calculation of the small strain tensor (the approach of Ortiz and Camacho)
-  */
-  E_elastic = logarithmic_strains__Particles__(C_elastic);
   
   /*
     Elastic predictor : Volumetric and deviatoric stress measurements. Compute also
@@ -100,7 +128,7 @@ Plastic_status plasticity_Von_Mises(Tensor S_p, Tensor C_total, Tensor F_plastic
 
   if(Phi < TOL)
     {
-      sigma_k1 = compute_finite_stress_tensor_elastic_region(s_trial, p_trial, MatProp);
+      compute_finite_stress_tensor_elastic_region(sigma_k1, s_trial, p_trial, MatProp);
     }
   else
     {     
@@ -135,41 +163,27 @@ Plastic_status plasticity_Von_Mises(Tensor S_p, Tensor C_total, Tensor F_plastic
       */
 	    Increment_E_plastic = compute_increment_plastic_strain_tensor(s_trial, s_trial_norm, delta_Gamma, MatProp);
 
-      update_plastic_deformation_gradient__Particles__(Increment_E_plastic,F_plastic);
-
-      /*
-        Free increment of E_plastic
-      */
-      free__TensorLib__(Increment_E_plastic);
-
       /*
         Update stress tensor in the deformed configuration
       */
-      sigma_k1 = compute_finite_stress_tensor_plastic_region(s_trial, p_trial, s_trial_norm, delta_Gamma, MatProp);
+      compute_finite_stress_tensor_plastic_region(sigma_k1, s_trial, p_trial, s_trial_norm, delta_Gamma, MatProp);
 
     }
 
   /*
-    Get the stress tensor in the reference configuration (S_p) using the Piola transformation
-  */
-  compute_Piola_transformation__Particles__(S_p, sigma_k1, F_total, J);
-
-  /*
     Free memory
   */
-  free__TensorLib__(C_elastic);
-  free__TensorLib__(E_elastic);
   free__TensorLib__(E_elastic_dev);
   free__TensorLib__(s_trial);
   free__TensorLib__(p_trial);
-  free__TensorLib__(sigma_k1);
 
   /*
-    Return yield stress and EPS updated
+    Define output varible
   */
+  Plastic_status Outputs_VarCons;
   Outputs_VarCons.EPS = EPS_k;
   Outputs_VarCons.Yield_stress = yield_stress_k;
-
+  Outputs_VarCons.Increment_E_plastic = Increment_E_plastic;
   
 return Outputs_VarCons;
 }
@@ -298,14 +312,13 @@ static Tensor compute_increment_plastic_strain_tensor(Tensor s_trial, double s_t
 
 /**************************************************************/
 
-static Tensor compute_finite_stress_tensor_plastic_region(Tensor s_trial, Tensor p_trial, double s_trial_norm, double delta_Gamma, Material MatProp)
+static void compute_finite_stress_tensor_plastic_region(Tensor sigma_k1, Tensor s_trial, Tensor p_trial, double s_trial_norm, double delta_Gamma, Material MatProp)
 {
   int Ndim = NumberDimensions;
   double nu = MatProp.nu; /* Poisson modulus */
   double E = MatProp.E; /* Elastic modulus */
   double G = E/(2*(1+nu));
   double aux = 1 - 2*G*delta_Gamma/s_trial_norm;
-  Tensor sigma_k1 = alloc__TensorLib__(2);
 
   for(int i = 0 ; i<Ndim ; i++)
     {
@@ -314,17 +327,13 @@ static Tensor compute_finite_stress_tensor_plastic_region(Tensor s_trial, Tensor
         sigma_k1.N[i][j] = p_trial.N[i][j] + aux*s_trial.N[i][j];
       }
     }
-
-  return sigma_k1;
 }
 
 /**************************************************************/
 
-static Tensor compute_finite_stress_tensor_elastic_region(Tensor s_trial, Tensor p_trial, Material MatProp)
+static void compute_finite_stress_tensor_elastic_region(Tensor sigma_k1, Tensor s_trial, Tensor p_trial, Material MatProp)
 {
   int Ndim = NumberDimensions;
-
-  Tensor sigma_k1 = alloc__TensorLib__(2);
 
   for(int i = 0 ; i<Ndim ; i++)
     {
@@ -334,7 +343,6 @@ static Tensor compute_finite_stress_tensor_elastic_region(Tensor s_trial, Tensor
       }
     }
 
-  return sigma_k1;
 }
 
 /**************************************************************/

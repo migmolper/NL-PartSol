@@ -114,7 +114,7 @@ static FILE * Open_and_Check_simulation_file(char * Name_File)
 
 static void Read_list_nodes_file(char * Route_NODES, char * List_nodes_string, char * Name_File)
 {
-	char Error_message[MAXW];
+	char Error_message[MAXW] = {0};
 	char Route_Path[MAXC] = {0};
 	
 	int Parser_status;

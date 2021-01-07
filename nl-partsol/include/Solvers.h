@@ -7,6 +7,17 @@
 
 
 /*!
+  \fn void NonLinear_Gauss_Point_Analysis(GaussPoint PointAnalysis)
+
+  \brief Function to test advanced constitutive models
+
+  \param GaussPoint PointAnalysis :  
+
+*/
+void NonLinear_Gauss_Point_Analysis(GaussPoint PointAnalysis);
+
+
+/*!
   \fn double DeltaT_CFL(GaussPoint MPM_Mesh, double DeltaX)
 
   \brief  Get the time step using \cite Anderson_1987

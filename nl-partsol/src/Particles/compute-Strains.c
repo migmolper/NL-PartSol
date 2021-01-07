@@ -284,14 +284,9 @@ Tensor strain_Green_Lagrange__Particles__(Tensor C)
 
 /*******************************************************/
 
-void update_plastic_deformation_gradient__Particles__(Tensor D_E_plastic, Tensor F_plastic)
+void update_plastic_deformation_gradient__Particles__(Tensor D_F_plastic, Tensor F_plastic)
 {
   int Ndim = NumberDimensions;
-
-  /*
-    Use the Cuitiño & Ortiz exponential maping
-  */
-  Tensor D_F_plastic = increment_Deformation_Gradient_exponential_strains__Particles__(D_E_plastic);
 
   /*
     Compute the new value of the plastic deformation gradient 
@@ -312,7 +307,6 @@ void update_plastic_deformation_gradient__Particles__(Tensor D_E_plastic, Tensor
   /*
     Free memory 
   */
-  free__TensorLib__(D_F_plastic);
   free__TensorLib__(Aux_tensor);
 
 }

@@ -381,9 +381,10 @@ typedef struct {
   double cohesion_reference;
   double friction_angle;
   double dilatancy_angle;
+  double E_plastic_reference;
   double hardening_modulus;
   double hardening_exp;
-  double E_plastic_reference;
+  bool   Hardening_Ortiz;
   
   /*!
    * Parameters of the Drucker-Prager Sanavia
@@ -722,6 +723,13 @@ typedef struct {
   bool Out_csv_particles_path_Strain;
   bool Out_csv_particles_path_Deformation_gradient;
 
+  bool Out_csv_Gauss_Point_evolution_Stress;
+  bool Out_csv_Gauss_Point_evolution_Strain;
+  bool Out_csv_Gauss_Point_evolution_Deformation_gradient;
+  bool Out_csv_Gauss_Point_evolution_Plastic_Deformation_gradient;
+  bool Out_csv_Gauss_Point_evolution_EPS;
+  bool Out_csv_Gauss_Point_evolution_Cohesion;
+
   /*!
     Output selector Vtk
   */
@@ -758,6 +766,7 @@ typedef struct
   double EPS;
   double Cohesion;
   double Yield_stress;
+  Tensor Increment_E_plastic;
 
 } Plastic_status;
 

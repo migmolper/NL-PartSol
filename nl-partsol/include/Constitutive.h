@@ -94,25 +94,16 @@ Tensor grad_energy_Neo_Hookean_Wriggers(Tensor, Tensor, double, Material);
 Tensor compute_stiffness_density_Neo_Hookean_Wriggers(Tensor, Tensor, Tensor, double, Material);
 /*******************************************************/  
 
-/*!
-
-*/
 Matrix compute_D_matrix_Neo_Hookean_Wriggers(Tensor, double, Material);
 /*******************************************************/
 
-/*
-\fn Plastic_status plasticity_Drucker_Prager_Sanavia(Tensor S_p, Tensor C_total, Tensor F_total, Tensor F_plastic_p, 
-                                                         double J, Plastic_status Inputs_VarCons, Material MatProp)
-*/
-Plastic_status plasticity_Drucker_Prager_Sanavia(Tensor, Tensor, Tensor, Tensor, 
-                                                         double, Plastic_status, Material);
+
+Plastic_status finite_strains_plasticity_Von_Mises(Tensor, Tensor, Tensor, Tensor, Plastic_status, Material, double);
+Plastic_status infinitesimal_strains_plasticity_Von_Mises(Tensor, Tensor, Plastic_status, Material);
 /*******************************************************/  
 
-/*
-\fn Plastic_status plasticity_Von_Mises(Tensor S_p, Tensor C_total, Tensor F_plastic, Tensor F_total, 
-                            double J, Plastic_status Inputs_VarCons, Material MatProp)
-*/
-Plastic_status plasticity_Von_Mises(Tensor, Tensor, Tensor, Tensor, double, Plastic_status, Material);
+Plastic_status finite_strains_plasticity_Drucker_Prager_Sanavia(Tensor, Tensor, Tensor, Tensor, Plastic_status, Material, double);
+Plastic_status infinitesimal_strains_plasticity_Drucker_Prager_Sanavia(Tensor, Tensor, Plastic_status, Material);
 /*******************************************************/  
 
 #endif

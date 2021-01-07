@@ -4,6 +4,7 @@
 /*
   Call global variables
 */
+int NumTimeStep;
 double SpectralRadius;
 double CFL;
 double epsilon_Mass_Matrix; 
@@ -11,9 +12,18 @@ double beta_Newmark_beta;
 double gamma_Newmark_beta;
 double TOL_Newmark_beta;
 
+#ifdef _WIN32
+static char * delimiters_1 = " \r\n\t";
+static char * delimiters_2 = " =\t\r\n"; 
+#else
+static char * delimiters_1 = " \n\t";
+static char * delimiters_2 = " =\t\n"; 
+#endif
+static char * delimiters_3 = "(=)";
+
 /**********************************************************************/
 
-void GramsTime(char * Name_File)
+void Solver_selector__InOutFun__(char * Name_File)
 /*
 Example : 
 GramsTime(Scheme=FE){
@@ -65,7 +75,7 @@ GramsTime(Scheme=FE){
   while( fgets(line, sizeof line, Sim_dat) != NULL ){
 
     /* Read the line with the space as separators */
-    nkwords = parse (kwords, line," \n\t");
+    nkwords = parse (kwords, line,delimiters_1);
     if (nkwords < 0){
       fprintf(stderr,"%s : %s \n",
 	     "Error in GramsTime()",
@@ -81,7 +91,7 @@ GramsTime(Scheme=FE){
       Counter_GramsTime++;
 
       /* Read temporal integrator scheme */
-      Aux_Temp_id = parse (Parse_Temp_id, kwords[1],"(=)");
+      Aux_Temp_id = parse (Parse_Temp_id, kwords[1],delimiters_3);
       if( (Aux_Temp_id != 2) ||
 	  (strcmp(Parse_Temp_id[0],"Type") != 0)){
 	fprintf(stderr,"%s : %s \n",
@@ -113,7 +123,7 @@ GramsTime(Scheme=FE){
 		   "Unspected EOF !!!");
 	    exit(EXIT_FAILURE);
 	}
-	Aux_Temp_id = parse(Parse_Temp_Prop,Line_Temp_Prop," =\t\n");
+	Aux_Temp_id = parse(Parse_Temp_Prop,Line_Temp_Prop,delimiters_2);
 	if(strcmp(Parse_Temp_Prop[0],"}") == 0){
 
 	  /* Check number of time steps */	  
@@ -172,7 +182,7 @@ GramsTime(Scheme=FE){
 	  STATUS_LINE = fgets(Line_Temp_Prop,
 			      sizeof(Line_Temp_Prop),
 			      Sim_dat);
-	  Aux_Temp_id = parse(Parse_Temp_Prop,Line_Temp_Prop," =\t\n");
+	  Aux_Temp_id = parse(Parse_Temp_Prop,Line_Temp_Prop,delimiters_2);
 	  if(strcmp(Parse_Temp_Prop[0],"}") == 0){
 	    break;
 	  }

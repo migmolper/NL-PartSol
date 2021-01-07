@@ -12,7 +12,8 @@ char OutputDir[MAXC];
 /*
 	Auxiliar structures
 */
-typedef struct {
+typedef struct 
+{
 
 	char DIR_Name[MAXC];
 	char PATH_Name[MAXC];
@@ -27,7 +28,8 @@ typedef struct {
 
 } Parameters;
 
-typedef struct {
+typedef struct 
+{
 
 	int i_start;
 	int i_step;

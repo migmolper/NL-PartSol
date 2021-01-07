@@ -58,6 +58,17 @@ int get_ResultStep(char *);
 */
 Matrix Read_CSV(char *, int);
 
+
+/*****************************************************************/
+
+/*!
+  \fn Matrix Read_Delimited_File__InOutLib__(char * Name_File)
+
+  \brief Read a file with a given format
+  \param Name_File : file name
+*/
+Matrix Read_Delimited_File__InOutLib__(char *);
+
 /*****************************************************************/
 
 /*! 
@@ -257,6 +268,10 @@ Boundaries GramsBoundary(char *,int);
 
 /*****************************************************************/
 
+GaussPoint Generate_Gauss_Point_Analysis__InOutFun__(char *);
+
+/*****************************************************************/
+
 /*!
 
   \fn GaussPoint GramsSolid2D(char * File, Mesh Nodes)
@@ -273,15 +288,15 @@ GaussPoint GramsSolid2D(char *,Mesh);
 
 /*!
 
-  \fn void GramsTime(char * File)
+  \fn void Solver_selector__InOutFun__(char * File)
 
-  \brief Function to define the time integration scheme adopted
+  \brief Function to define the solver
   
   \param File: Name of the file with the instructions
 
 }
 */
-void GramsTime(char * );
+void Solver_selector__InOutFun__(char * );
 
 /*****************************************************************/
 
@@ -297,6 +312,15 @@ void GramsTime(char * );
 
 */
 Material * GramsMaterials(char *, GaussPoint, int);
+
+/*****************************************************************/
+
+/*!
+
+  \fn Material * Read_Materials__InOutFun__(char * SimulationFile, int NumberMaterials);
+
+*/
+Material * Read_Materials__InOutFun__(char *, int);
 
 /*****************************************************************/
 
@@ -455,5 +479,10 @@ void path_particles_analysis_csv__InOutFun__(Matrix, Matrix, char *, Event, int,
 void NLPS_Out_nodal_path_csv__InOutFun__(char * Name_File);
 void NLPS_Out_particles_path_csv__InOutFun__(char * Name_File);
 /*****************************************************************/
+
+
+void Gauss_Point_evolution__InOutFun__(GaussPoint, Event, char *, int, int);
+/*****************************************************************/
+
 
 #endif
