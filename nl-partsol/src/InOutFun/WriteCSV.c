@@ -118,13 +118,17 @@ void Gauss_Point_evolution__InOutFun__(GaussPoint PointAnalysis, Event Output_Co
 	}
 	if(Output_Commands.Out_csv_Gauss_Point_evolution_Strain)
 	{
-		Tensor Strain_k = memory_to_tensor__TensorLib__(PointAnalysis.Phi.Strain.nM[k],2);
-		print_Gauss_Point_tensorial_variable_to_csv(csv_file, Strain_k);
+		Tensor F_k = memory_to_tensor__TensorLib__(PointAnalysis.Phi.F_n.nM[k],2);
+		Tensor C_k = right_Cauchy_Green__Particles__(F_k);
+		Tensor E_k = strain_Green_Lagrange__Particles__(C_k);
+		print_Gauss_Point_tensorial_variable_to_csv(csv_file, E_k);
+		free__TensorLib__(C_k);
+		free__TensorLib__(E_k);
 	}
 	if(Output_Commands.Out_csv_Gauss_Point_evolution_Deformation_gradient)
 	{
-		Tensor Def_Gradient_k = memory_to_tensor__TensorLib__(PointAnalysis.Phi.F_n.nM[k],2);
-		print_Gauss_Point_tensorial_variable_to_csv(csv_file, Def_Gradient_k);
+		Tensor F_k = memory_to_tensor__TensorLib__(PointAnalysis.Phi.F_n.nM[k],2);
+		print_Gauss_Point_tensorial_variable_to_csv(csv_file, F_k);
 	}
 	if(Output_Commands.Out_csv_Gauss_Point_evolution_EPS)
 	{
