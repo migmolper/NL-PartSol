@@ -499,9 +499,6 @@ static double compute_derivative_yield_surface_apex(double H, double s_trial_nor
 
   double d_Phi = aux1 + aux2/aux5;
 
-  printf("parameters : %f %f %f\n", alpha_F,alpha_Q, d_Phi);
-  exit(0);
-
   return d_Phi;
 }
 
