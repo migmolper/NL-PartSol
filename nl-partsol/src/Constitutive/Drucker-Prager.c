@@ -157,7 +157,7 @@ Plastic_status infinitesimal_strains_plasticity_Drucker_Prager_Sanavia(Tensor si
     /*
 	    Classical plastic iterator
     */
-    if(p_trial_norm >= p_lim)
+    if(p_trial_norm <= p_lim)
     {
 
      while(Convergence == false)
@@ -343,7 +343,7 @@ static double compute_limit_between_classic_apex_algorithm(double s_trial_norm, 
   double K = E/(3*(1-2*nu));
   double G = E/(2*(1+nu));
 
-  double p_lim = 3*alpha_Q*K*s_trial_norm/(2*G) + beta/(3*alpha_F)*(s_trial_norm*H/(2*G)*sqrt(1+3*DSQR(alpha_Q)) + cohesion_k);
+  double p_lim = - 3*alpha_Q*K*s_trial_norm/(2*G) - (beta/(3*alpha_F))*((s_trial_norm*H/(2*G))*sqrt(1+3*DSQR(alpha_Q)) + cohesion_k);
 
   return p_lim;
 
@@ -415,7 +415,7 @@ static double compute_yield_surface_classical(double s_trial_norm, double p_tria
   double K = E/(3*(1-2*nu));
   double G = E/(2*(1+nu));
 
-  double Phi = s_trial_norm - 2*G*delta_Gamma + 3*alpha_F*(p_trial_norm - 3*K*alpha_Q*delta_Gamma) - beta*cohesion_k1;
+  double Phi = s_trial_norm - 2*G*delta_Gamma - 3*alpha_F*(p_trial_norm + 3*K*alpha_Q*delta_Gamma) - beta*cohesion_k1;
 
   return Phi;
 }
@@ -522,7 +522,7 @@ static double compute_yield_surface_apex(double p_trial_norm, double s_trial_nor
   double aux4 = H*sqrt(DSQR(delta_Gamma1) + aux2*aux3); 
   double aux5 = 3*K*alpha_Q*(delta_Gamma1 + delta_Gamma2);
 
-  double Phi = aux1*(cohesion_k + aux4 - p_trial_norm + aux5);
+  double Phi = aux1*(cohesion_k + aux4) - p_trial_norm + aux5;
 
   return Phi;
 }
