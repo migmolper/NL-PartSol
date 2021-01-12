@@ -334,6 +334,31 @@ Matrix compute_N__MeshTools__(Element GP_Element,GaussPoint MPM_Mesh,Mesh FEM_Me
     /* Free memory */
     free__MatrixLib__(Delta_Xip);
   }
+
+  else if(strcmp(ShapeFunctionGP,"aLME") == 0)
+  {
+    /* Get the distance of the GP to the nodes */
+    Delta_Xip = alloc__MatrixLib__(GP_NumNodes,Ndim);
+    for(int k = 0 ; k<GP_NumNodes ; k++)
+    {
+      GP_I = GP_Connect[k];
+      for(int l = 0 ; l<Ndim ; l++)
+      {
+        Delta_Xip.nM[k][l] = MPM_Mesh.Phi.x_GC.nM[i_GP][l] - FEM_Mesh.Coordinates.nM[GP_I][l];
+      }
+    }  
+
+    /* Asign lambda and beta */
+    Tensor lambda_p = memory_to_tensor__TensorLib__(MPM_Mesh.lambda.nM[i_GP],1);
+    Tensor Beta_p   = memory_to_tensor__TensorLib__(MPM_Mesh.Beta.nM[i_GP],2);
+    
+    /* Evaluate the shape function */
+    ShapeFunction_p = p__aLME__(Delta_Xip, lambda_p, Beta_p);
+
+    /* Free memory */
+    free__MatrixLib__(Delta_Xip);
+  }
+
   else{
     printf("%s : %s %s %s \n",
 	   "Error in Get_Operator()",
@@ -442,6 +467,33 @@ Matrix compute_dN__MeshTools__(Element GP_Element,GaussPoint MPM_Mesh,
     free__MatrixLib__(ShapeFunction_p);
     free__MatrixLib__(Delta_Xip);
   }
+
+  else if(strcmp(ShapeFunctionGP,"aLME") == 0)
+  {
+    /* Get the distance of the GP to the nodes */
+    Delta_Xip = alloc__MatrixLib__(GP_NumNodes,Ndim);
+    for(int k = 0 ; k<GP_NumNodes ; k++)
+    {
+      GP_I = GP_Connect[k];
+      for(int l = 0 ; l<Ndim ; l++)
+      {
+        Delta_Xip.nM[k][l] = MPM_Mesh.Phi.x_GC.nM[i_GP][l] - FEM_Mesh.Coordinates.nM[GP_I][l];
+      }
+    }  
+
+    /* Asign lambda and beta */
+    Tensor lambda_p = memory_to_tensor__TensorLib__(MPM_Mesh.lambda.nM[i_GP],1);
+    Tensor Beta_p   = memory_to_tensor__TensorLib__(MPM_Mesh.Beta.nM[i_GP],2);
+    
+    /* Evaluate the shape function gradient */
+    ShapeFunction_p = p__aLME__(Delta_Xip, lambda_p, Beta_p);
+    Gradient_p = dp__LME__(Delta_Xip, ShapeFunction_p);
+
+    /* Free memory */
+    free__MatrixLib__(ShapeFunction_p);
+    free__MatrixLib__(Delta_Xip);
+  }
+
   else{
     printf("%s : %s %s %s \n",
 	   "Error in Get_Operator()",

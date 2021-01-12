@@ -49,7 +49,7 @@ Tensor infinitesimal_Strain__Particles__(Tensor, Tensor, double);
   \param gradient_p : Shape function gradient for each node evaluated
   in the particle position
 */
-Tensor increment_Deformation_Gradient__Particles__(Matrix, Matrix);
+void update_increment_Deformation_Gradient__Particles__(Tensor, Matrix, Matrix);
 /*******************************************************/
 
 /*!

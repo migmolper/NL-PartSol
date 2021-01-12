@@ -63,7 +63,7 @@ Tensor infinitesimal_Strain__Particles__(Tensor Strain, Tensor Rate_Strain, doub
 
 /*******************************************************/
 
-Tensor increment_Deformation_Gradient__Particles__(Matrix DeltaU, Matrix gradient_p)
+void update_increment_Deformation_Gradient__Particles__(Tensor DF_p, Matrix DeltaU, Matrix gradient_p)
 {
 
   /* Variable definition */
@@ -79,8 +79,14 @@ Tensor increment_Deformation_Gradient__Particles__(Matrix DeltaU, Matrix gradien
     f_n1 = I + Delta_u 0 gradient_N
   */
   
-  /* Add identity tensor */
-  f_n1 = Identity__TensorLib__();
+  /* Initialise with the identity tensor */
+  for(int i = 0 ; i<Ndim ; i++)
+  {
+    for(int j = 0 ; j<Ndim ; j++)
+    {
+      DF_p.N[i][j] = 1*(i==j);
+    }
+  }
   
   for(int I = 0 ; I<Nnodes_p ; I++)
     {
@@ -95,18 +101,17 @@ Tensor increment_Deformation_Gradient__Particles__(Matrix DeltaU, Matrix gradien
       
       /* Ad the nodal contribution to the train tensor */
       for(int i = 0 ; i<Ndim ; i++)
-	{
-	  for(int j = 0 ; j<Ndim ; j++)
-	    {
-	      f_n1.N[i][j] += gradient_DeltaU_I.N[i][j];
-	    }
-	}
+	     {
+	       for(int j = 0 ; j<Ndim ; j++)
+	         {
+	           DF_p.N[i][j] += gradient_DeltaU_I.N[i][j];
+	         }
+      	}
       
       /* Free memory */
       free__TensorLib__(gradient_DeltaU_I);
     }
   
-  return f_n1;
 }
 
 /*******************************************************/

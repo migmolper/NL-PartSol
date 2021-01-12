@@ -184,8 +184,8 @@ int inout_element__Particles__(int p, Matrix X_p, ChainPtr ListElement, Mesh FEM
     /* Check if the particle is in the element */
     if(inout_convex_set__MeshTools__(X_p, Nodes, FEM_Mesh.Coordinates))
       {
-	I_element = Ixd->I;
-	break;
+	      I_element = Ixd->I;
+	      break;
       }
     
     /* Cycle */
@@ -287,7 +287,9 @@ void get_particle_tributary_nodes(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int p){
     /* } */
     
   }
-  else if(strcmp(ShapeFunctionGP,"LME") == 0){
+
+  else if(strcmp(ShapeFunctionGP,"LME") == 0)
+  {
     
     /* Auxiliar variables for LME */
     Matrix lambda_p = memory_to_matrix__MatrixLib__(Ndim,1,MPM_Mesh.lambda.nM[p]);
@@ -298,59 +300,53 @@ void get_particle_tributary_nodes(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int p){
     free__SetLib__(&MPM_Mesh.ListNodes[p]);
     MPM_Mesh.ListNodes[p] = NULL;
     /* Calculate the new connectivity with the previous value of beta */
-    MPM_Mesh.ListNodes[p] = isotropic_tributary__LME__(X_p,Beta_p,I0,FEM_Mesh);
+    MPM_Mesh.ListNodes[p] = tributary__LME__(X_p,Beta_p,I0,FEM_Mesh);
     /* Calculate number of nodes */
     MPM_Mesh.NumberNodes[p] = lenght__SetLib__(MPM_Mesh.ListNodes[p]);
     /* Generate nodal distance list */
     Delta_Xip = compute_distance__MeshTools__(MPM_Mesh.ListNodes[p],
 					      X_p, FEM_Mesh.Coordinates);    	      
     /* Update Beta and Lambda for each particle */
-    Beta_p = beta_isotropic__LME__(Beta_p, Delta_Xip, gamma_LME);
+    Beta_p = beta__LME__(Beta_p, Delta_Xip, gamma_LME);
     lambda_p = lambda__LME__(Delta_Xip, lambda_p, Beta_p);
     
     /* Free memory */
     free__MatrixLib__(Delta_Xip);
   }
-  else if(strcmp(ShapeFunctionGP,"LME-Anisotropic") == 0){
+
+  else if(strcmp(ShapeFunctionGP,"aLME") == 0)
+  {
     
     /* Auxiliar variables for LME */
-    Matrix lambda_p = memory_to_matrix__MatrixLib__(Ndim,1,MPM_Mesh.lambda.nM[p]);
-    Matrix Beta_p = memory_to_matrix__MatrixLib__(Ndim,Ndim,MPM_Mesh.Beta.nM[p]);
+    Tensor lambda_p = memory_to_tensor__TensorLib__(MPM_Mesh.lambda.nM[p],1);
+    Tensor Beta_p   = memory_to_tensor__TensorLib__(MPM_Mesh.Beta.nM[p],2);
+    Tensor M_p      = memory_to_tensor__TensorLib__(MPM_Mesh.Cut_Off_Ellipsoid.nM[p],2);
+    Tensor DF_p      = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.DF.nM[p],2);
     Matrix Delta_Xip; /* Distance from particles to the nodes */
 
-    /*
-      Update beta with the increment of the deformation gradient
-     */
-    Beta_p = beta_anisotropic__LME__(Beta_p, Delta_Xip);
+    /* Update the cut-off ellipsoid */
+    M_p = cut_off__aLME__(M_p, DF_p);
+
+    /* Update beta with the increment of the deformation gradient */
+    Beta_p = beta__aLME__(Beta_p, DF_p);
 
     /* Free previous list of tributary nodes to the particle */
     free__SetLib__(&MPM_Mesh.ListNodes[p]);
     MPM_Mesh.ListNodes[p] = NULL;
     
-    /*
-      Calculate the new connectivity with the updated value of beta
-     */
-    MPM_Mesh.ListNodes[p] = isotropic_tributary__LME__(X_p,Beta_p,I0,FEM_Mesh);
+    /* Calculate the new connectivity with the updated value of beta */
+    MPM_Mesh.ListNodes[p]   = tributary__aLME__(X_p,Beta_p,I0,FEM_Mesh);
     
-    /*
-      Calculate number of nodes 
-    */
+    /* Calculate number of nodes */
     MPM_Mesh.NumberNodes[p] = lenght__SetLib__(MPM_Mesh.ListNodes[p]);
     
-    /*
-      Generate nodal distance list 
-    */
-    Delta_Xip = compute_distance__MeshTools__(MPM_Mesh.ListNodes[p],
-					      X_p, FEM_Mesh.Coordinates);
+    /* Generate nodal distance list */
+    Delta_Xip = compute_distance__MeshTools__(MPM_Mesh.ListNodes[p], X_p, FEM_Mesh.Coordinates);
     
-    /* 
-       Update lambda for each particle 
-    */
-    lambda_p = lambda__LME__(Delta_Xip, lambda_p, Beta_p);
+    /* Update lambda for each particle */
+    lambda_p  = lambda__aLME__(Delta_Xip, lambda_p, Beta_p);
     
-    /*
-      Free memory
-    */
+    /* Free memory */
     free__MatrixLib__(Delta_Xip);
   }
 

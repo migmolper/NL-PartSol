@@ -249,7 +249,6 @@ double J3__TensorLib__(Tensor A)
 
 /*************************************************************/
 
-
 Tensor Eigenvalues__TensorLib__(Tensor A)
 {
   /* Auxiliar variables */
@@ -434,6 +433,21 @@ double EuclideanNorm__TensorLib__(Tensor A)
   return Out;
 }
 
+/*********************************************************************/
+
+double Generalised_norm__TensorLib__(Tensor a, Tensor G)
+{
+  double norm;
+  Tensor G_dot_a;
+
+  G_dot_a = vector_linear_mapping__TensorLib__(G, a);
+  norm = inner_product__TensorLib__(a,G_dot_a);
+
+  free__TensorLib__(G_dot_a);
+
+  return norm;
+}
+
 /*************************************************************/
 
 Tensor Identity__TensorLib__()
@@ -494,6 +508,32 @@ Tensor Inverse__TensorLib__(Tensor A)
 
 /*************************************************************/
 
+Tensor Solve_system__TensorLib__(Tensor A, Tensor b)
+{
+  Tensor Am1;
+  Tensor x;
+
+  if ((A.Order == 2) && (b.Order == 1))
+  {
+
+    Am1 = Inverse__TensorLib__(A);
+
+    x = vector_linear_mapping__TensorLib__(Am1, b);
+ 
+  }
+  else
+  {
+    fprintf(stderr,"%s : %s !!! \n",
+      "Error in Solve_system__TensorLib__()",
+      "The input should be 2ord tensor and a 1rd tensor");
+    exit(EXIT_FAILURE);
+  }
+
+  return x;
+}
+
+/*************************************************************/
+
 Tensor transpose__TensorLib__(Tensor A)
 {
   int Ndim = NumberDimensions;
@@ -516,6 +556,51 @@ Tensor transpose__TensorLib__(Tensor A)
   }  
   /* Return the transpose */
   return AT;
+}
+
+/*************************************************************/
+
+Tensor subtraction__TensorLib__(Tensor A, Tensor B)
+{
+  int Ndim = NumberDimensions;
+
+  /* Variable declaration output matrix */
+  Tensor A_minus_B;
+
+  /* Subtraction of second order tensors */
+  if ((A.Order == 2) && (B.Order == 2))
+  { 
+
+    Tensor A_minus_B = alloc__TensorLib__(2); 
+
+    for(int i = 0 ; i < Ndim ; i++)
+    {
+      for(int j = 0 ; j < Ndim ; j++)
+      {
+        A_minus_B.N[i][j] = A.N[i][j] - B.N[i][j];
+      }
+    }
+  }
+  /* Subtraction of first order tensors */
+  else if((A.Order == 1) && (B.Order == 1))
+  {
+
+    Tensor A_minus_B = alloc__TensorLib__(1);
+
+    for(int i = 0 ; i < Ndim ; i++)
+    {
+      A_minus_B.n[i] = A.N[i] - B.N[i];
+    }
+
+  }
+  else{
+    fprintf(stderr,"%s : %s !!! \n",
+      "Error in subtraction__TensorLib__()",
+      "The input should be two tensors or equal order");
+    exit(EXIT_FAILURE);        
+  }
+
+  return A_minus_B;
 }
 
 /*************************************************************/
@@ -942,7 +1027,6 @@ void contravariant_pull_back_tensor__TensorLib__(Tensor A, Tensor a, Tensor F)
 
   free__TensorLib__(F_m1);
 }
-
 
 /*********************************************************************/
 

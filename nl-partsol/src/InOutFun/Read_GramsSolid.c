@@ -202,11 +202,13 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
 	MPM_Mesh.Beta = allocZ__MatrixLib__(NumParticles,Ndim);
 	strcpy(MPM_Mesh.Beta.Info,"Beta parameter");
       }
-      if(strcmp(ShapeFunctionGP,"LME-Anisotropic") == 0){
+      if(strcmp(ShapeFunctionGP,"aLME") == 0){
 	MPM_Mesh.lambda = allocZ__MatrixLib__(NumParticles,Ndim);
 	strcpy(MPM_Mesh.lambda.Info,"Lagrange Multiplier");
 	MPM_Mesh.Beta = allocZ__MatrixLib__(NumParticles,Ndim*Ndim);
 	strcpy(MPM_Mesh.Beta.Info,"Beta tensor");
+  MPM_Mesh.Cut_Off_Ellipsoid = allocZ__MatrixLib__(NumParticles,Ndim*Ndim);
+  strcpy(MPM_Mesh.Cut_Off_Ellipsoid.Info,"Cut-Off Ellipsoid");
       }
     }
     else{
@@ -262,6 +264,10 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
     else if(strcmp(ShapeFunctionGP,"LME") == 0){
       printf("\t * %s \n","Initialize LME shape functions ...");
       initialize__LME__(MPM_Mesh,FEM_Mesh);
+    }
+    else if(strcmp(ShapeFunctionGP,"aLME") == 0){
+      printf("\t * %s \n","Initialize aLME shape functions ...");
+      initialize__aLME__(MPM_Mesh,FEM_Mesh);
     }
     printf("\t %s \n","DONE !!");
 
