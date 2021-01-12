@@ -265,6 +265,10 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
       printf("\t * %s \n","Initialize LME shape functions ...");
       initialize__LME__(MPM_Mesh,FEM_Mesh);
     }
+    else if(strcmp(ShapeFunctionGP,"aLME") == 0){
+      printf("\t * %s \n","Initialize aLME shape functions ...");
+      initialize__aLME__(MPM_Mesh,FEM_Mesh);
+    }
     printf("\t %s \n","DONE !!");
 
 
