@@ -211,6 +211,12 @@ typedef struct {
    * Stress field
    */
   Matrix Stress;
+
+  /*!
+  * Fluid stress tensor and its rate
+  */
+  Matrix Stress_f;
+  Matrix dt_Stress_f;
   
   /*!
    * Strain field 
