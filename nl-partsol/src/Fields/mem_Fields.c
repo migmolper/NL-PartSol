@@ -222,12 +222,13 @@ Fields allocate_upw_vars__Fields__(int NumParticles)
   Phi.Stress = allocZ__MatrixLib__(NumParticles,Ndim*Ndim);
   strcpy(Phi.Stress.Info,"Stress field GP");
 
-
-  Phi.Stress_f = allocZ__MatrixLib__(NumParticles,Ndim*Ndim);
-  strcpy(Phi.Stress_f.Info,"Fluid Stress field GP");
-
-  Phi.dt_Stress_f = allocZ__MatrixLib__(NumParticles,Ndim*Ndim);
-  strcpy(Phi.dt_Stress_f.Info,"Rate of the fluid Stress field GP");
+  /*!
+  * Pore water preassure and its rate
+  */
+  Phi.Pw = allocZ__MatrixLib__(NumParticles,1);
+  strcpy(Phi.Pw.Info,"Pore water preassure");
+  Phi.d_Pw = allocZ__MatrixLib__(NumParticles,1);
+  strcpy(Phi.d_Pw.Info,"Rate of pore water preassure");
 
   /*!
     Deformation Energy (Scalar) 
@@ -312,8 +313,8 @@ void free_upw_vars__Fields__(Fields Phi)
   free__MatrixLib__(Phi.vel);
   free__MatrixLib__(Phi.acc);
   free__MatrixLib__(Phi.Stress);
-  free__MatrixLib__(Phi.Stress_f);
-  free__MatrixLib__(Phi.dt_Stress_f);
+  free__MatrixLib__(Phi.Pw);
+  free__MatrixLib__(Phi.d_Pw);
   free__MatrixLib__(Phi.Strain);
   free__MatrixLib__(Phi.Strain_If);
   free__MatrixLib__(Phi.F_plastic);

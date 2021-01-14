@@ -213,10 +213,15 @@ typedef struct {
   Matrix Stress;
 
   /*!
-  * Fluid stress tensor and its rate
+  * Fluid stress tensor
   */
   Matrix Stress_f;
-  Matrix dt_Stress_f;
+
+  /*!
+  * Pore water preassure and its rate
+  */
+  Matrix Pw;
+  Matrix d_Pw;
   
   /*!
    * Strain field 
