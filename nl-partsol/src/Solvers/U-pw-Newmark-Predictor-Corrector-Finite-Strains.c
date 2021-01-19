@@ -20,18 +20,30 @@ int Number_Out_particles_path_csv;
   Auxiliar functions 
 */
 static Matrix compute_Lumped_Mass_Mixture(GaussPoint,Mesh,Mask);
+static Matrix compute_Compressibility_Fluid(GaussPoint, Mesh, Mask);
 static Matrix Predictor_Velocity(GaussPoint,Mesh,Mask,Matrix,double,double);
 static Matrix Predictor_Pore_water_pressure(GaussPoint,Mesh,Mask,Matrix,double,double);
-static void   Imposse_Velocity(Mesh,Matrix,Mask,int);
+static  void  Imposse_Velocity(Mesh,Matrix,Mask,int);
 static Matrix Compute_D_Displacement(Matrix,Mask,double);
-static void   update_Local_State(Matrix,Mask,GaussPoint,Mesh,double);
+static  void  update_Local_State(Matrix,Mask,GaussPoint,Mesh,double);
 static Matrix compute_Internal_Forces_Mixture(Mask,GaussPoint,Mesh);
 static Tensor compute_total_first_Piola_Kirchhoff_stress(Tensor, double, Tensor);
 static Matrix compute_Gravity_field(Mask, GaussPoint, int);
 static Matrix compute_Reactions(Mesh,Matrix,Mask);
-static void   Corrector_Fields(Matrix,Matrix,Matrix,Matrix,double,double);
-static void   update_Particles(GaussPoint,Mesh,Matrix,Matrix,Matrix,Mask,double);
-static void   output_selector(GaussPoint, Mesh, Mask, Matrix, Matrix, Matrix, Matrix, int, int);
+
+static Matrix compute_Viscous_Forces_Fluid(Mask,GaussPoint,Mesh,Matrix);
+static Matrix compute_C_Viscosity(Mask,GaussPoint,Mesh);
+
+static Matrix compute_Permeability_Forces_Fluid(Mask,GaussPoint,Mesh,Matrix);
+static Matrix compute_K_Permeability(Mask,GaussPoint,Mesh);
+
+static Matrix compute_Permeability_Inertial_Forces_Fluid(Mask, GaussPoint, Mesh, Matrix, Matrix);
+static Matrix compute_C_Permeability(Mask,GaussPoint,Mesh);
+
+
+static  void  Corrector_Fields(Matrix,Matrix,Matrix,Matrix,double,double);
+static  void  update_Particles(GaussPoint,Mesh,Matrix,Matrix,Matrix,Mask,double);
+static  void  output_selector(GaussPoint, Mesh, Mask, Matrix, Matrix, Matrix, Matrix, int, int);
 
 /**************************************************************/
 
@@ -56,6 +68,7 @@ void upw_Newmark_Predictor_Corrector_Finite_Strains(Mesh FEM_Mesh, GaussPoint MP
     Auxiliar variables for the solver
   */
   Matrix Lumped_Mass_Mixture;
+  Matrix Compressibility_Fluid;
   Matrix Velocity;
   Matrix Pore_water_pressure;
   Matrix Acceleration;
@@ -74,6 +87,12 @@ void upw_Newmark_Predictor_Corrector_Finite_Strains(Mesh FEM_Mesh, GaussPoint MP
       DeltaTimeStep = DeltaT_CFL(MPM_Mesh, FEM_Mesh.DeltaX);
       print_step(TimeStep,DeltaTimeStep);
 
+      /*
+        Compute the nodal gravity field
+      */
+      Gravity_field = compute_Gravity_field(ActiveNodes, MPM_Mesh, TimeStep);
+
+
       print_Status("*************************************************",TimeStep);
       print_Status("First step : Generate Mask ... WORKING",TimeStep);
       /*
@@ -88,6 +107,8 @@ void upw_Newmark_Predictor_Corrector_Finite_Strains(Mesh FEM_Mesh, GaussPoint MP
       print_Status("Second step : Compute lumped mass of the mixture ... WORKING",TimeStep);
 
       Lumped_Mass_Mixture = compute_Lumped_Mass_Mixture(MPM_Mesh,FEM_Mesh,ActiveNodes);
+
+      Compressibility_Fluid = compute_Compressibility_Fluid(MPM_Mesh,FEM_Mesh,ActiveNodes);
 
       print_Status("DONE !!!",TimeStep);
       
@@ -108,7 +129,7 @@ void upw_Newmark_Predictor_Corrector_Finite_Strains(Mesh FEM_Mesh, GaussPoint MP
       print_Status("DONE !!!",TimeStep);
 
       print_Status("*************************************************",TimeStep);
-      print_Status("Four step : Compute equilibrium ... WORKING",TimeStep);
+      print_Status("Four step : Compute equilibrium mixture ... WORKING",TimeStep);
 
       /*
         Compute the nodal displacement
@@ -126,11 +147,6 @@ void upw_Newmark_Predictor_Corrector_Finite_Strains(Mesh FEM_Mesh, GaussPoint MP
       Internal_Forces_Mixture = compute_Internal_Forces_Mixture(ActiveNodes, MPM_Mesh, FEM_Mesh);
 
       /*
-        Compute the nodal gravity field
-      */
-      Gravity_field = compute_Gravity_field(ActiveNodes, MPM_Mesh, TimeStep);
-
-      /*
         Compute reactions
       */
       Reactions = compute_Reactions(FEM_Mesh,Internal_Forces_Mixture,ActiveNodes);
@@ -140,14 +156,22 @@ void upw_Newmark_Predictor_Corrector_Finite_Strains(Mesh FEM_Mesh, GaussPoint MP
       */
       Acceleration = solve_Nodal_Equilibrium_Mixture(Lumped_Mass_Mixture,Gravity_field,Internal_Forces_Mixture);
 
+
+      print_Status("*************************************************",TimeStep);
+      print_Status("Five step : Compute equilibrium fluid ... WORKING",TimeStep);
+
+      /*
+        Compute fluid viscous forces
+      */
+      Viscous_Forces_Fluid = compute_Viscous_Forces_Fluid(ActiveNodes, MPM_Mesh, FEM_Mesh, Velocity);
+
       /*
         Compute rate of pore water pressure solving the generalized Darcy law
       */
       Rate_Pore_water_pressure = solve_Nodal_Generalized_Darcy_Law();
 
-
       print_Status("*************************************************",TimeStep);
-      print_Status("Five step : Compute corrector ... WORKING",TimeStep);
+      print_Status("Six step : Compute corrector ... WORKING",TimeStep);
 
       Corrector_Fields(Velocity, Acceleration, Pore_water_pressure, Rate_Pore_water_pressure, gamma, DeltaTimeStep);
 
@@ -155,7 +179,7 @@ void upw_Newmark_Predictor_Corrector_Finite_Strains(Mesh FEM_Mesh, GaussPoint MP
       
 
       print_Status("*************************************************",TimeStep);
-      print_Status("Six step : Update particles lagrangian ... WORKING",TimeStep);
+      print_Status("Seven step : Update particles lagrangian ... WORKING",TimeStep);
 
       update_Particles(MPM_Mesh,FEM_Mesh,Lumped_Mass_Mixture,Internal_Forces_Mixture,Velocity,ActiveNodes,DeltaTimeStep);
 
@@ -174,11 +198,12 @@ void upw_Newmark_Predictor_Corrector_Finite_Strains(Mesh FEM_Mesh, GaussPoint MP
                       Internal_Forces_Mixture, Reactions, TimeStep, ResultsTimeStep);
 
       print_Status("*************************************************",TimeStep);
-      print_Status("Seven step : Reset nodal values ... WORKING",TimeStep);
+      print_Status("Eight step : Reset nodal values ... WORKING",TimeStep);
       /*
       	Free memory.
       */
       free__MatrixLib__(Lumped_Mass_Mixture); 
+      free__MatrixLib__(Compressibility_Fluid);
       free__MatrixLib__(Velocity);
       free__MatrixLib__(D_Displacement);
       free__MatrixLib__(Internal_Forces_Mixture);
@@ -261,6 +286,97 @@ static Matrix compute_Lumped_Mass_Mixture(GaussPoint MPM_Mesh, Mesh FEM_Mesh, Ma
 
   return Lumped_Mass_Mixture_Matrix; 
 }
+
+/**************************************************************/
+
+
+static Matrix compute_Compressibility_Fluid((GaussPoint MPM_Mesh, Mesh FEM_Mesh, Mask ActiveNodes))
+{
+  int Ndim = NumberDimensions;
+  int Nnodes_mask = ActiveNodes.Nactivenodes;
+  int Np = MPM_Mesh.NumGP;
+  int Order = Ndim*Nnodes_mask;
+  int Ap;
+  int A_mask;
+
+  /* Value of the shape-function */
+  Matrix ShapeFunction_p;  
+
+  /* Evaluation of the particle in the node */
+  double ShapeFunction_pA;
+  /* Mass of the particle (mixture) */
+  double V0_p;
+  /* Material density of the fluid */
+  double rho_f_p;
+  /* Volume fractions of the fluid */
+  double phi_f_p;
+  /* Compressibility of the fluid */
+  double K_f;
+  /* Compressibilidy density fo the fluid */
+  double compressibility_density_f_p;
+  /* Nodal contribution A of the particle p */
+  double compressibility_density_A_p;
+  /* Element for each particle */
+  Element Nodes_p;
+
+  /* Define and allocate the lumped mass matrix */
+  Matrix Compressibility_Fluid = allocZ__MatrixLib__(Nnodes_mask, 1);
+
+  /* Compressibility of the fluid */
+  K_f = MPM_Mesh.Mat.K_f;
+
+  /* Iterate over the particles to get the nodal values */
+  for(int p = 0 ; p<Np ; p++)
+    {
+
+      /* Define tributary nodes of the particle */
+      Nodes_p = nodal_set__Particles__(p, MPM_Mesh.ListNodes[p], MPM_Mesh.NumberNodes[p]);
+
+      /* Evaluate the shape function in the coordinates of the particle */
+      ShapeFunction_p = compute_N__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
+   
+      /* Get the initial volume of the particle */
+      V0_p = MPM_Mesh.Phi.Vol_0.nV[p];
+
+      /* Get the current material density and volume fraction 
+        for each material point (fluid) */
+      rho_f_p = MPM_Mesh.Phi.rho_f.nV[p];
+      phi_f_p = MPM_Mesh.Phi.phi_f.nV[p];
+
+      /* Compute relative density */
+      relative_rho_f_p = phi_f_p*rho_f_p;
+
+      /* Compute the compressibility density */
+      compressibility_density_f_p = (relative_rho_f_p/K_f)*V0_p;
+      
+      for(int A = 0 ; A<Nodes_p.NumberNodes ; A++)
+       {
+        /* Get the node in the mass matrix with the mask */
+        Ap = Nodes_p.Connectivity[A];
+        A_mask = ActiveNodes.Nodes2Mask[Ap];
+ 
+       /* Get the value of the shape function */
+        ShapeFunction_pA = ShapeFunction_p.nV[A];
+
+       /* Compute the nodal A contribution of the particle p */
+        compressibility_density_A_p = compressibility_density_f_p*ShapeFunction_pA;
+
+       /* Fill the Lumped mass matrix */
+        Compressibility_Fluid.nV[A_mask] += compressibility_density_A_p;       
+      }
+
+      /* Free the value of the shape functions */
+      free__MatrixLib__(ShapeFunction_p);
+      free(Nodes_p.Connectivity);      
+      
+    }
+
+  /* Add some usefulll info */
+  strcpy(Compressibility_Fluid.Info,"Lumped-Compressibility-Matrix");
+
+  return Compressibility_Fluid;
+}
+
 
 /**************************************************************/
 
@@ -713,9 +829,7 @@ static void update_Local_State(Matrix D_Displacement,
 
 /**************************************************************/
 
-static Matrix compute_Internal_Forces_Mixture(Mask ActiveNodes,
-					                                         GaussPoint MPM_Mesh,
-					                                         Mesh FEM_Mesh)
+static Matrix compute_Internal_Forces_Mixture(Mask ActiveNodes, GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 {
 
   int Ndim = NumberDimensions;
@@ -787,7 +901,7 @@ static Matrix compute_Internal_Forces_Mixture(Mask ActiveNodes,
         Compute the volume of the particle in the reference configuration 
       */
       J_p = I3__TensorLib__(F_n1_p);
-      V0_p = (1/J_p)*(m_p/rho_p);
+      V0_p = MPM_Mesh.Phi.Vol_0.nV[p];
 
       /*
 	       Compute the first Piola-Kirchhoff stress tensor
@@ -895,7 +1009,7 @@ static Matrix compute_Gravity_field(Mask ActiveNodes, GaussPoint MPM_Mesh, int T
   double m_p; /* Mass of the particle */
   Load * B = MPM_Mesh.B; /* List with the load cases */
   
-  Matrix Gravity_field = allocZ__MatrixLib__(Nnodes_mask,Ndim);
+  Matrix Gravity_field = allocZ__MatrixLib__(Nnodes_mask, Ndim);
   Tensor b = alloc__TensorLib__(1); /* Body forces vector */
   
   for(int i = 0 ; i<NumBodyForces ; i++)
@@ -953,7 +1067,7 @@ static Matrix compute_Reactions(Mesh FEM_Mesh, Matrix Forces, Mask ActiveNodes)
   int Id_BCC_mask;
   int Id_BCC_mask_k;
 
-  Matrix Reactions = allocZ__MatrixLib__(Nnodes_mask ,Ndim);
+  Matrix Reactions = allocZ__MatrixLib__(Nnodes_mask, Ndim);
   strcpy(Reactions.Info,"REACTIONS");
 
   /*
@@ -1011,6 +1125,499 @@ static Matrix compute_Reactions(Mesh FEM_Mesh, Matrix Forces, Mask ActiveNodes)
     }
 
   return Reactions;
+}
+
+
+/**************************************************************/
+
+static Matrix compute_Viscous_Forces_Fluid(Mask ActiveNodes, GaussPoint MPM_Mesh, Mesh FEM_Mesh, Matrix Velocity)
+{
+
+  int Ndim = NumberDimensions;
+  int Nnodes_mask = ActiveNodes.Nactivenodes;
+  int Order = Nnodes_mask*Ndim;
+  int idx_B, idx_AB;
+
+  Matrix Viscous_Forces = allocZ__MatrixLib__(Nnodes_mask,1);
+
+  Matrix C_Viscosity = compute_K_Permeability(ActiveNodes, MPM_Mesh, FEM_Mesh);
+
+  /*
+    Compute the permabily forces (Vectorized)
+  */
+  for(int A = 0 ; A<Nnodes_mask ; A++)
+    {
+      for(int B = 0 ; B<Nnodes_mask ; B++)
+      {
+        for(int i = 0 ; i<Ndim ; i++)
+        {
+          idx_B = B*Ndim + i; 
+          idx_AB = A*Order + B*Ndim + i;
+          Viscous_Forces.nV[A] += K_Permeability.nV[idx_AB]*Velocity.nV[idx_B];
+        }
+      }
+    }
+
+  free__MatrixLib__(C_Viscosity);  
+   
+
+  return Viscous_Forces;
+}
+
+/**************************************************************/
+
+static Matrix compute_C_Viscosity(Mask ActiveNodes, GaussPoint MPM_Mesh, Mesh FEM_Mesh)
+{
+
+  int Ndim = NumberDimensions;
+  int Nnodes_mask = ActiveNodes.Nactivenodes;
+  int Np = MPM_Mesh.NumGP;
+  int NumNodes_p; /* Number of tributary nodes of p */
+  int A_mask; /* Index of the node where we apply the body force */
+  int Ap; /* Tributary node A of particle p */
+  int B_mask; /* Index of the node where we apply the body force */
+  int Bp; /* Tributary node B of particle p */
+
+  Element Nodes_p; /* Element for each particle */
+  Matrix ShapeFunction_p;
+  Matrix gradient_p;
+  Tensor F_n1_p;
+  Tensor gradient_pB;
+  double ShapeFunction_pA;
+  double rho_f_p;
+  double V0_p;
+  double J_p;
+
+  Matrix C_Viscosity = allocZ__MatrixLib__(Nnodes_mask,Nnodes_mask*Ndim);
+
+  for(int p = 0 ; p<Np ; p++)
+    {
+      
+      /* 
+        Get the current material density for each material point (fluid) 
+      */
+      rho_f_p = MPM_Mesh.Phi.rho_f.nV[p];
+
+      /*
+        Get the reference volume for each material point (mixture) 
+      */
+      V0_p = MPM_Mesh.Phi.Vol_0.nV[p];
+
+      /*
+        Define nodes for each particle
+      */
+      NumNodes_p = MPM_Mesh.NumberNodes[p];
+      Nodes_p = nodal_set__Particles__(p, MPM_Mesh.ListNodes[p], NumNodes_p);
+
+      /*
+        Evaluate the shape function in the coordinates of the particle 
+      */
+      ShapeFunction_p = compute_N__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
+
+      /*
+        Compute gradient of the shape function in each node 
+      */
+      gradient_p = compute_dN__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
+        
+      /*
+         Take the value of the deformation gradient at t = n + 1. 
+      */
+      F_n1_p  = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n1.nM[p],2);
+
+      /*
+        Compute the jacobian for each material point
+      */
+      J_p = I3__TensorLib__(F_n1_p);
+
+    
+      for(int A = 0 ; A<NumNodes_p ; A++)
+       {
+      
+         /*
+           Compute the gradient in the reference configuration 
+         */
+        ShapeFunction_pA = ShapeFunction_p.nV[A];   
+
+        /*
+          Get the node of the mesh for the contribution 
+        */
+        Ap = Nodes_p.Connectivity[A];
+        A_mask = ActiveNodes.Nodes2Mask[Ap];
+
+        for(int B = 0 ; B<NumNodes_p ; B++)
+        {
+          /*
+            Compute the gradient in the deformed configuration
+          */
+          gradient_pB = memory_to_tensor__TensorLib__(gradient_p.nM[B],1);
+
+          /*
+            Get the node of the mesh for the contribution 
+          */
+          Bp = Nodes_p.Connectivity[B];
+          B_mask = ActiveNodes.Nodes2Mask[Bp];
+
+          /*
+            Fill the viscosity matrix
+          */
+          for(int i = 0 ; i<Ndim ; i++)
+          {
+            C_Viscosity.nM[A_mask][B_mask*Ndim + i] += ShapeFunction_pA*J_p*rho_f_p*gradient_pB.n[i]*V0_p;
+          }
+
+
+        }
+    
+
+      }
+        
+      /* 
+   Free memory 
+      */
+      free__MatrixLib__(ShapeFunction_p);
+      free__MatrixLib__(gradient_p);
+      free(Nodes_p.Connectivity);
+    }
+
+    return C_Viscosity;
+}
+
+/**************************************************************/
+
+static Matrix compute_Permeability_Forces_Fluid(Mask ActiveNodes, GaussPoint MPM_Mesh, Mesh FEM_Mesh, Matrix Pore_water_pressure)
+{
+  int Ndim = NumberDimensions;
+  int Nnodes_mask = ActiveNodes.Nactivenodes;
+
+  Matrix Permeability_Forces = allocZ__MatrixLib__(Nnodes_mask, 1);
+  Matrix K_Permeability = compute_K_Permeability(ActiveNodes, MPM_Mesh, FEM_Mesh);
+
+  /*
+    Compute the permabily forces (Vectorized)
+  */
+  for(int idx_A = 0 ; idx_A<Nnodes_mask ; idx_A++)
+    {
+      for(int idx_B = 0 ; idx_B<Nnodes_mask ; idx_B++)
+      {
+        idx_AB = idx_A*Nnodes_mask + idx_B;
+        Permeability_Forces.nV[idx_A] += K_Permeability.nV[idx_AB]*Pore_water_pressure.nV[idx_B];
+      }
+    }
+
+  free__MatrixLib__(K_Permeability);
+
+  return Permeability_Forces;
+}
+
+/**************************************************************/
+
+static Matrix compute_K_Permeability(Mask ActiveNodes, GaussPoint MPM_Mesh, Mesh FEM_Mesh)
+{
+  int Ndim = NumberDimensions;
+  int Nnodes_mask = ActiveNodes.Nactivenodes;
+  int Np = MPM_Mesh.NumGP;
+
+  Matrix K_Permeability = allocZ__MatrixLib__(Nnodes_mask, Nnodes_mask);
+
+  Element Nodes_p; /* Element for each particle */
+  Matrix gradient_p;  /* Shape functions gradients */
+  Tensor gradient_pA; /* Shape functions gradients (Node A), def config */
+  Tensor gradient_pB; /* Shape functions gradients (Node B), def config */
+  Tensor GRADIENT_pA; /* Shape functions gradients (Node A), ref config */
+  Tensor GRADIENT_pB; /* Shape functions gradients (Node B), ref config */
+  Tensor F_n_p; /* Deformation gradient t = n */
+  Tensor transpose_F_n_p; /*  /* Transpose of the deformation gradient t = n */
+  Tensor k_p; /* Spatial permebility tensor */
+  Tensor K_p; /* Material permeability tensor */
+  double g = 9.81;
+  double rho_f_p;
+  double V0_p;
+  double aux1_K_Permeability;
+  double aux2_K_Permeability;
+
+  /*
+    Iterate over the particles to get the nodal values 
+  */
+  for(int p = 0 ; p<Np ; p++)
+    {
+
+      /*
+        Define tributary nodes of the particle 
+      */
+      Nodes_p = nodal_set__Particles__(p, MPM_Mesh.ListNodes[p], MPM_Mesh.NumberNodes[p]);
+
+      /*
+        Compute gradient of the shape function in each node 
+      */
+      gradient_p = compute_dN__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
+
+      /*
+        Take the values of the deformation gradient ant t = n. 
+        Later compute the transpose of the deformation gradient.
+      */
+      F_n_p  = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n.nM[p],2);
+      transpose_F_n_p = transpose__TensorLib__(F_n_p);
+        
+      /* 
+        Get the current material density for each material point (fluid) 
+      */
+      rho_f_p = MPM_Mesh.Phi.rho_f.nV[p];
+
+      /*
+        Get the reference volume for each material point (mixture) 
+      */
+      V0_p = MPM_Mesh.Phi.Vol_0.nV[p];
+
+      /*
+        Describe the permeability tensor using the reference configuration 
+        of the soil
+      */
+      k_p = MPM_Mesh.Mat.Permeability;
+      K_p = alloc__TensorLib__(2);
+      contravariant_pull_back_tensor__TensorLib__(K_p, k_p, F_n_p);
+
+
+      for(int A = 0 ; A<Nodes_p.NumberNodes ; A++)
+      {
+
+        /* 
+          Get the node in the mass matrix with the mask
+        */
+        Ap = Nodes_p.Connectivity[A];
+        A_mask = ActiveNodes.Nodes2Mask[Ap];
+    
+        /*
+          Compute the gradient in the reference configuration for the node A
+        */
+        gradient_pA = memory_to_tensor__TensorLib__(gradient_p.nM[A], 1);
+        GRADIENT_pA = vector_linear_mapping__TensorLib__(transpose_F_n_p,gradient_pA);
+  
+
+          for(int B = 0 ; B<Nodes_p.NumberNodes ; B++)
+          {       
+            /* 
+              Get the node in the mass matrix with the mask
+            */
+            Bp = Nodes_p.Connectivity[B];
+            B_mask = ActiveNodes.Nodes2Mask[Bp];
+
+            /*
+              Compute the gradient in the reference configuration 
+            */
+            gradient_pB = memory_to_tensor__TensorLib__(gradient_p.nM[B], 1);
+            GRADIENT_pB = vector_linear_mapping__TensorLib__(transpose_F_n_p,gradient_pA);
+
+            /*
+              Compute (1/gJ)*GRAD(N_A)*K*GRAD(N_B)
+            */
+            aux1_K_Permeability = 0;
+
+            for(int i = 0 ; i<Ndim ; i++)
+            {
+
+              aux2_K_Permeability = 0;
+
+              for(int j = 0 ; j<Ndim ; j++)
+              {
+                aux2_K_Permeability += K_p.N[i][j]*GRADIENT_pB.n[j];
+              }
+
+              aux1_K_Permeability += GRADIENT_pA.n[i]*aux2_K_Permeability;
+
+            }
+
+            /*
+              Assign the calculated value to the permeability matrix
+            */
+            K_Permeability.nM[A_mask][B_mask] += (V0_p/g)*aux1_K_Permeability;
+
+
+           free__TensorLib__(GRADIENT_pB);
+
+          }
+
+          free__TensorLib__(GRADIENT_pA);
+      }
+
+      /* Free the value of the shape functions */
+      free__MatrixLib__(gradient_p);
+      free__TensorLib__(transpose_F_n_p);
+      free__TensorLib__(K_p);
+      free(Nodes_p.Connectivity);      
+
+    }
+
+  return K_Permeability;
+}
+
+/**************************************************************/
+
+static Matrix compute_Permeability_Inertial_Forces_Fluid(Mask ActiveNodes, GaussPoint MPM_Mesh, Mesh FEM_Mesh, Matrix Acceleration, Matrix Gravity)
+{
+  
+  int Ndim = NumberDimensions;
+  int Nnodes_mask = ActiveNodes.Nactivenodes;
+  int Order = Nnodes_mask*Ndim;
+  int idx_B, idx_AB;
+
+  Matrix Permeability_Inertial_Forces = allocZ__MatrixLib__(Nnodes_mask,1);
+
+  Matrix C_Permeability = compute_C_Permeability(ActiveNodes, MPM_Mesh, FEM_Mesh);
+
+  /*
+    Compute the permabily inertial forces (Vectorized)
+  */
+  for(int A = 0 ; A<Nnodes_mask ; A++)
+    {
+      for(int B = 0 ; B<Nnodes_mask ; B++)
+      {
+        for(int i = 0 ; i<Ndim ; i++)
+        {
+          idx_B = B*Ndim + i; 
+          idx_AB = A*Order + B*Ndim + i;
+          Permeability_Inertial_Forces.nV[A] += C_Permeability.nV[idx_AB]*(Acceleration.nV[idx_B] - Gravity.nV[idx_B]);
+        }
+      }
+    }
+
+  free__MatrixLib__(C_Permeability);  
+   
+
+  return Permeability_Inertial_Forces;
+}
+
+/**************************************************************/
+
+static Matrix compute_C_Permeability(Mask ActiveNodes, GaussPoint MPM_Mesh, Mesh FEM_Mesh);
+{
+  int Ndim = NumberDimensions;
+  int Nnodes_mask = ActiveNodes.Nactivenodes;
+  int Np = MPM_Mesh.NumGP;
+  int NumNodes_p; /* Number of tributary nodes of p */
+  int A_mask; /* Index of the node where we apply the body force */
+  int Ap; /* Tributary node A of particle p */
+  int B_mask; /* Index of the node where we apply the body force */
+  int Bp; /* Tributary node B of particle p */
+
+  Element Nodes_p; /* Element for each particle */
+  Matrix ShapeFunction_p;
+  Matrix gradient_p;
+  Tensor F_n1_p;
+  Tensor inverse_F_n1_p;
+  Tensor gradient_pB;
+  double ShapeFunction_pA;
+  double rho_f_p;
+  double g = 9.81;
+  double V0_p;
+
+  Matrix C_Permeability = allocZ__MatrixLib__(Nnodes_mask,Nnodes_mask*Ndim);
+
+  for(int p = 0 ; p<Np ; p++)
+    {
+      
+      /* 
+        Get the current material density for each material point (fluid) 
+      */
+      rho_f_p = MPM_Mesh.Phi.rho_f.nV[p];
+
+      /*
+        Get the reference volume for each material point (mixture) 
+      */
+      V0_p = MPM_Mesh.Phi.Vol_0.nV[p];
+
+      /*
+        Define nodes for each particle
+      */
+      NumNodes_p = MPM_Mesh.NumberNodes[p];
+      Nodes_p = nodal_set__Particles__(p, MPM_Mesh.ListNodes[p], NumNodes_p);
+
+      /*
+        Evaluate the shape function in the coordinates of the particle 
+      */
+      ShapeFunction_p = compute_N__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
+
+      /*
+        Compute gradient of the shape function in each node 
+      */
+      gradient_p = compute_dN__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
+        
+      /*
+        Take the value of the deformation gradient at t = n + 1. 
+        And transpose it
+      */
+      F_n1_p  = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n1.nM[p],2);
+      inverse_F_n1_p = Inverse__TensorLib__(F_n1_p);
+      J_p = I3__TensorLib__(F_n1_p);
+
+      /*
+        Compute the transpose of tensor k'
+      */
+      k_prim_p = matrix_product__TensorLib__(inverse_F_n1_p,k_prim_p);
+      for(int i = 0 ; i<Ndim ; i++)
+      {
+        for(int j = 0 ; j<Ndim ; j++)
+        {
+          k_prim_p.N[i][j] *= J_p;
+        }
+      }
+      transpose_k_prim_p = transpose__TensorLib__(k_prim_p);
+
+    
+      for(int A = 0 ; A<NumNodes_p ; A++)
+       {
+
+        /*
+          Get the gradient of the shape function and multiply it by the permeability tensor
+        */
+        gradient_pA = memory_to_tensor__TensorLib__(gradient_p.nM[A],1);
+        gradient_pA_k_prim = vector_linear_mapping__TensorLib__(transpose_k_prim_p,gradient_pA);
+     
+        /*
+          Get the node of the mesh for the contribution 
+        */
+        Ap = Nodes_p.Connectivity[A];
+        A_mask = ActiveNodes.Nodes2Mask[Ap];
+
+        for(int B = 0 ; B<NumNodes_p ; B++)
+        {
+          /*
+            Get the shape function in the node B
+          */
+          ShapeFunction_pB = ShapeFunction_p.nV[B];  
+
+          /*
+            Get the node of the mesh for the contribution 
+          */
+          Bp = Nodes_p.Connectivity[B];
+          B_mask = ActiveNodes.Nodes2Mask[Bp];
+
+          /*
+            Fill the viscosity matrix
+          */
+          for(int i = 0 ; i<Ndim ; i++)
+          {
+            C_Permeability.nM[A_mask][B_mask*Ndim + i] += gradient_pA_k_prim.n[i]*(rho_f_p/g)*ShapeFunction_pB.*V0_p;
+          }
+
+
+        }
+    
+        free__TensorLib__(gradient_pA_k_prim);
+
+      }
+        
+      /* 
+       Free memory 
+      */
+      free__TensorLib__(inverse_F_n1_p);
+      free__TensorLib__(k_prim_p);
+      free__TensorLib__(transpose_k_prim_p);
+      free__MatrixLib__(ShapeFunction_p);
+      free__MatrixLib__(gradient_p);
+      free(Nodes_p.Connectivity);
+    }
+
+    return C_Permeability;
 }
 
 /**************************************************************/

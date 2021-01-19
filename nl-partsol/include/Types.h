@@ -173,9 +173,22 @@ typedef struct {
   Matrix Vol_0;
 
   /*!
-   * Density field 
+   * Density field
    */
   Matrix rho;
+
+  /*!
+   * Density field (solid/water/mixture) 
+   */
+  Matrix rho_s;
+  Matrix rho_f;
+  Matrix rho_m;
+
+  /*!
+  * Volume fraction occupied for each material
+  */
+  Matrix phi_s;
+  Matrix phi_f;
   
   /*!
    * Mass field 
@@ -374,6 +387,17 @@ typedef struct {
    * Poisson ratio 
    */
   double nu;
+
+  /*!
+  * Compressibility
+  */
+  double K_s;
+  double K_f;
+
+  /*!
+  * Permeability of the soil skleleton
+  */
+  Tensor Permeability;
   
   /*!
    * Activate eigenerosion-fracture modulus (Eigenerosion/Eigensoftening)
