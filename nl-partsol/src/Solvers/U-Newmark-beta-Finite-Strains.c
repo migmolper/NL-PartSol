@@ -336,7 +336,7 @@ static Matrix compute_Nodal_Effective_Mass(GaussPoint MPM_Mesh, Mesh FEM_Mesh, M
   Matrix Effective_MassMatrix = allocZ__MatrixLib__(Order, Order);
 
   /* Define and allocate the lumped mass matrix */
-  Matrix Lumped_MassMatrix = allocZ__MatrixLib__(Order, 1);
+  Matrix Lumped_MassMatrix = allocZ__MatrixLib__(Order, Order);
 
   /*
     Iterate over the particles to get the nodal values 
@@ -382,7 +382,7 @@ static Matrix compute_Nodal_Effective_Mass(GaussPoint MPM_Mesh, Mesh FEM_Mesh, M
 	  */
 	  for(int i = 0 ; i<Ndof ; i++)
 	    {
-	      Lumped_MassMatrix.nV[A_mask*Ndof + i] += m_A_p;	      
+	      Lumped_MassMatrix.nM[A_mask*Ndof + i][A_mask*Ndof + i] += m_A_p;	      
 	    }
 
 	  for(int B = 0 ; B<Nodes_p.NumberNodes ; B++)
@@ -409,7 +409,7 @@ static Matrix compute_Nodal_Effective_Mass(GaussPoint MPM_Mesh, Mesh FEM_Mesh, M
 		  /*
 		    Compute the vectorized index
 		  */
-		  Effective_MassMatrix.nM[A_mask*Ndof+i][A_mask*Ndof+i] += m_AB_p;
+		  Effective_MassMatrix.nM[A_mask*Ndof+i][B_mask*Ndof+i] += m_AB_p;
 		}
 
 	    }
@@ -428,9 +428,9 @@ static Matrix compute_Nodal_Effective_Mass(GaussPoint MPM_Mesh, Mesh FEM_Mesh, M
   for(int A = 0 ; A<Order ; A++)
     {
       for(int B = 0 ; B<Order ; B++)
-	{    
-	  Effective_MassMatrix.nM[A][B] = (1-epsilon)*Effective_MassMatrix.nM[A][B] + (A == B)*epsilon*Lumped_MassMatrix.nV[A];
-	}
+    	{    
+	     Effective_MassMatrix.nM[A][B] = (1-epsilon)*Effective_MassMatrix.nM[A][B] + (A == B)*epsilon*Lumped_MassMatrix.nM[A][B];
+	     }
     }
 
   /*
