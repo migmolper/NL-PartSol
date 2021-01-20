@@ -138,7 +138,7 @@ Matrix get_set_field__MeshTools__(Matrix Field, Element Nodes_p, Mask ActiveNode
  */
 {
   int Nnodes = Nodes_p.NumberNodes;
-  int Ndim = NumberDimensions;
+  int Ndim = Field.N_cols;
   Matrix Field_Ap = allocZ__MatrixLib__(Nnodes,Ndim);
   int Ap;
   int A_mask;
@@ -164,10 +164,9 @@ else
 {
 	for(int A = 0 ; A<Nnodes ; A++)
  {
-
-	    /* 
-	       Get the node in the mass matrix with the mask
-	    */
+	 /* 
+	   Get the node in the mass matrix with the mask
+	 */
    Ap = Nodes_p.Connectivity[A];
    A_mask = ActiveNodes.Nodes2Mask[Ap];
    
@@ -761,7 +760,8 @@ int get_closest_node__MeshTools__(Matrix X_p, ChainPtr Nodes, Matrix Coordinates
 
 /*********************************************************************/
 
-bool inout_convex_set__MeshTools__(Matrix X_p, ChainPtr Elem_p, Matrix Coordinates){
+bool inout_convex_set__MeshTools__(Matrix X_p, ChainPtr Elem_p, Matrix Coordinates)
+{
 
   bool Is_In_Element = false;
   Matrix Element_Coordinates;
@@ -778,3 +778,19 @@ bool inout_convex_set__MeshTools__(Matrix X_p, ChainPtr Elem_p, Matrix Coordinat
 }
 
 /*********************************************************************/
+
+double interpolate_scalar__MeshTools__(Matrix A, Matrix N_p)
+{
+  int Nnodes_p = A.N_rows;
+  double A_p = 0;
+
+  for(int I = 0 ; I<Nnodes_p ; I++)
+  {
+    A_p += A.nV[I]*N_p.nV[I];
+  }
+
+  return A_p; 
+}
+
+/*********************************************************************/
+
