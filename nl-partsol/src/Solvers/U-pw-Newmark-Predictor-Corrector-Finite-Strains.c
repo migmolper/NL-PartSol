@@ -192,10 +192,10 @@ void upw_Newmark_Predictor_Corrector_Finite_Strains(Mesh FEM_Mesh, GaussPoint MP
 /**************************************************************/
 
 static Matrix compute_Mass_Matrix_Mixture(
-  GaussPoint MPM_Mesh,
-  Mesh FEM_Mesh,
-  Mask ActiveNodes,
-  double epsilon)
+  GaussPoint MPM_Mesh, // Variable with information of the particles 
+  Mesh FEM_Mesh, // Variable with information of the nodes
+  Mask ActiveNodes, // Variable with information of the active nodes
+  double epsilon) // Combianation varible
 /*
   This function computes the effective mass matrix (mixture) as a convex combination
   of the lumped mass matrix and the consistent mass matrix. Later assemble
@@ -356,10 +356,10 @@ static Matrix compute_Mass_Matrix_Mixture(
 
 
 static Matrix compute_Compressibility_Matrix_Fluid(
-  GaussPoint MPM_Mesh,
-  Mesh FEM_Mesh,
-  Mask ActiveNodes,
-  double epsilon)
+  GaussPoint MPM_Mesh, // Variable with information of the particles
+  Mesh FEM_Mesh, // Variable with information of the nodes
+  Mask ActiveNodes, // Variable with information of the active nodes
+  double epsilon) // Combianation varible
 /*
   Compute the compresibility matrix
 */
@@ -367,71 +367,79 @@ static Matrix compute_Compressibility_Matrix_Fluid(
   int Nnodes_mask = ActiveNodes.Nactivenodes;
   int Np = MPM_Mesh.NumGP;
   int Order = 1*Nnodes_mask;
+  int Mat_idx;
   int Ap;
   int A_mask;
+  Element Nodes_p; /* Element for each particle */
+  Matrix ShapeFunction_p; /* Value of the shape-function */
+  double ShapeFunction_pA; /* Evaluation of the particle in the node */
+  double V0_p; /* Mass of the particle (mixture) */
+  double rho_f_p; /* Material density of the fluid */
+  double phi_f_p; /* Volume fractions of the fluid */
+  double K_f; /* Compressibility (fluid) */
+  double compressibility_density_f_p; /* Compressibilidy density fo the fluid */
+  double compressibility_density_A_p; /* Nodal contribution A of the particle p */
+  double compressibility_density_AB_p; /* Nodal contribution AB of the particle p */  
 
-  /* Value of the shape-function */
-  Matrix ShapeFunction_p;  
+  /* 
+    Define and allocate the effective Compressibility matrix 
+  */
+  Matrix Compressibility_Matrix = allocZ__MatrixLib__(Order, Order);
 
-  /* Evaluation of the particle in the node */
-  double ShapeFunction_pA;
-  /* Mass of the particle (mixture) */
-  double V0_p;
-  /* Material density of the fluid */
-  double rho_f_p;
-  /* Volume fractions of the fluid */
-  double phi_f_p;
-  /* Compressibility of the fluid */
-  double K_f;
-  /* Compressibilidy density fo the fluid */
-  double compressibility_density_f_p;
-  /* Nodal contribution A of the particle p */
-  double compressibility_density_A_p;
-  /* Nodal contribution AB of the particle p */  
-  double compressibility_density_AB_p;
-  /* Element for each particle */
-  Element Nodes_p;
+  /* 
+    Define and allocate the lumped Compressibility matrix 
+  */
+  Matrix Lumped_Compressibility_Matrix = allocZ__MatrixLib__(Order, Order);
 
-  /* Define and allocate the effective Compressibility matrix */
-  Matrix Compressibility_Matrix_Fluid = allocZ__MatrixLib__(Order, Order);
 
-  /* Define and allocate the lumped Compressibility matrix */
-  Matrix Lumped_Compressibility_Matrix_Fluid = allocZ__MatrixLib__(Order, Order);
-
-  /* Compressibility of the fluid */
-  K_f = MPM_Mesh.Mat.K_f;
-
-  /* Iterate over the particles to get the nodal values */
   for(int p = 0 ; p<Np ; p++)
     {
 
-      /* Define tributary nodes of the particle */
+      /* 
+        Define tributary nodes of the particle 
+      */
       Nodes_p = nodal_set__Particles__(p, MPM_Mesh.ListNodes[p], MPM_Mesh.NumberNodes[p]);
 
-      /* Evaluate the shape function in the coordinates of the particle */
+      /* 
+        Evaluate the shape function in the coordinates of the particle 
+      */
       ShapeFunction_p = compute_N__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
    
-      /* Get the initial volume of the particle */
+      /* 
+        Get the initial volume of the particle 
+      */
       V0_p = MPM_Mesh.Phi.Vol_0.nV[p];
 
-      /* Get the current material density and volume fraction 
-        for each material point (fluid) */
+      /*
+        Get the current material density, volume fraction 
+        and compressibility for each material point (fluid) 
+      */
       rho_f_p = MPM_Mesh.Phi.rho_f.nV[p];
       phi_f_p = MPM_Mesh.Phi.phi_f.nV[p];
+      Mat_idx = MPM_Mesh.MatIdx[p];
+      K_f = MPM_Mesh.Mat[Mat_idx].K_f;
 
-      /* Compute relative density */
+      /*
+        Compute relative density 
+      */
       relative_rho_f_p = phi_f_p*rho_f_p;
 
-      /* Compute the compressibility density */
+      /* 
+        Compute the compressibility density 
+      */
       compressibility_density_f_p = (relative_rho_f_p/K_f)*V0_p;
       
       for(int A = 0 ; A<Nodes_p.NumberNodes ; A++)
        {
-        /* Get the node in the mass matrix with the mask */
+        /* 
+          Get the node in the mass matrix with the mask 
+        */
         Ap = Nodes_p.Connectivity[A];
         A_mask = ActiveNodes.Nodes2Mask[Ap];
  
-       /* Get the value of the shape function */
+       /*
+         Get the value of the shape function 
+        */
         ShapeFunction_pA = ShapeFunction_p.nV[A];
 
        /* 
@@ -442,7 +450,7 @@ static Matrix compute_Compressibility_Matrix_Fluid(
         /* 
           Fill the Lumped Compressibility matrix
         */
-        Lumped_Compressibility_Matrix_Fluid.nM[A_mask][A_mask] += compressibility_density_A_p;      
+        Lumped_Compressibility_Matrix.nM[A_mask][A_mask] += compressibility_density_A_p;      
 
 
         for(int B = 0 ; B<Nodes_p.NumberNodes ; B++)
@@ -466,7 +474,7 @@ static Matrix compute_Compressibility_Matrix_Fluid(
               /* 
                 Fill the effective Compressibility matrix
               */
-              Compressibility_Matrix_Fluid.nM[A_mask][B_mask] += compressibility_density_AB_p;
+              Compressibility_Matrix.nM[A_mask][B_mask] += compressibility_density_AB_p;
         }       
       }
 
@@ -476,7 +484,7 @@ static Matrix compute_Compressibility_Matrix_Fluid(
       
     }
 
-    /*
+  /*
     At this point the effective Compressibility matrix coincides with the consistent Compressibility
     matrix. We can tune it by a convex combination with the lumped Compressibility matrix
   */
@@ -484,17 +492,17 @@ static Matrix compute_Compressibility_Matrix_Fluid(
     {
       for(int B = 0 ; B<Order ; B++)
       {    
-        Compressibility_Matrix_Fluid.nM[A][B] = (1-epsilon)*Compressibility_Matrix_Fluid.nM[A][B] + (A == B)*epsilon*Lumped_Compressibility_Matrix_Fluid.nM[A][B];
+        Compressibility_Matrix.nM[A][B] = (1-epsilon)*Compressibility_Matrix.nM[A][B] + (A == B)*epsilon*Lumped_Compressibility_Matrix.nM[A][B];
       }
     }
 
   /*
     Free lumped Compressibility matrix.
   */
-  free__MatrixLib__(Lumped_Compressibility_Matrix_Fluid);
+  free__MatrixLib__(Lumped_Compressibility_Matrix);
 
   /* Add some usefulll info */
-  strcpy(Compressibility_Matrix_Fluid.Info,"Compressibility-Matrix");
+  strcpy(Compressibility_Matrix.Info,"Compressibility-Matrix");
 
   return Compressibility_Matrix_Fluid;
 }
@@ -522,7 +530,7 @@ static  void  compute_Explicit_Newmark_Predictor(
     MPM_Mesh.Phi.Pw.nV[p] += (1-gamma)*Dt*MPM_Mesh.Phi.d_Pw.nV[p];
 
     /* 
-      Compute velocity and increment of displacement predictor
+      Compute velocity predictor and increment of displacements 
     */
     for(int i = 0 ; i<Ndim ; i++)
     {
@@ -536,219 +544,6 @@ static  void  compute_Explicit_Newmark_Predictor(
 
   }
 
-}
-
-/**************************************************************/
-
-static Matrix compute_Nodal_D_Displacement(
-  GaussPoint MPM_Mesh,
-  Mesh FEM_Mesh,
-  Mask ActiveNodes,
-  Matrix Mass_Matrix_Mixture)
-/*
-  Call the LAPACK solver to compute the nodal increment of displacement. The operation is linearized and
-  all the dof split the increment of displacement array in n components like :
-  | M 0 |   |D_u.x|   | M*D_u.x |
-  | 0 M | * |D_u.y| = | M*D_u.y |
-*/
-{
-  int Ndim = NumberDimensions;
-  int Nnodes_mask = ActiveNodes.Nactivenodes;
-  int Np = MPM_Mesh.NumGP;
-  int Ap;
-  int A_mask;
-  int idx_A_mask_i;
-
-  /* Value of the shape-function */
-  Matrix ShapeFunction_p;
-
-  /* Evaluation of the particle in the node */
-  double ShapeFunction_pA;
-  /* Mass of the particle */
-  double m_p;
-  /* Element for each particle */
-  Element Nodes_p;
-
-  /* Define and allocate the temporal derivative of the momentum vector */
-  Matrix D_Displacement = allocZ__MatrixLib__(Nnodes_mask,Ndim);
-
-  /* Iterate over the particles to get the nodal values */
-  for(int p = 0 ; p<Np ; p++)
-    {
-
-      /* Define element of the particle */
-      Nodes_p = nodal_set__Particles__(p, MPM_Mesh.ListNodes[p], MPM_Mesh.NumberNodes[p]);
-
-      /* Evaluate the shape function in the coordinates of the particle */
-      ShapeFunction_p = compute_N__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
-
-      /* Get the mass of the GP */
-      m_p = MPM_Mesh.Phi.mass.nV[p];
-
-      /* Get the nodal mommentum */
-      for(int A = 0 ; A<Nodes_p.NumberNodes ; A++)
-        {
-
-          /*
-            Get the node in the nodal momentum with the mask
-          */
-          Ap = Nodes_p.Connectivity[A];
-          A_mask = ActiveNodes.Nodes2Mask[Ap];
-
-          /* Evaluate the GP function in the node */
-          ShapeFunction_pA = ShapeFunction_p.nV[A];
-
-          /* Nodal velocity and D_Displacement  */
-          for(int i = 0 ; i<Ndim ; i++)
-            {
-              D_Displacement.nM[A_mask][i] += m_p*ShapeFunction_pA*MPM_Mesh.Phi.D_dis.nM[p][i];
-            }
-        }
-
-      /* Free the value of the shape functions */
-      free__MatrixLib__(ShapeFunction_p);
-      free(Nodes_p.Connectivity);
-    }
-
-
-  /*
-    Call the LAPACK solver to compute the D_Displacements
-  */
-  int Order = Nnodes_mask*Ndim;
-  int LDA   = Order;
-  int LDB = Order;
-  char  TRANS = 'T'; /* (Transpose) */
-  int   INFO= 3;
-  int * IPIV = (int *)Allocate_Array(Order,sizeof(int));
-  int NRHS = 1;
-
-  /*
-    Compute the LU factorization for the mass matrix
-  */
-  dgetrf_(&Order,&Order,Mass_Matrix_Mixture.nV,&LDA,IPIV,&INFO);
-
-  /*
-    Solve for the D_Displacement
-  */
-  dgetrs_(&TRANS,&Order,&NRHS,Mass_Matrix_Mixture.nV,&LDA,IPIV,D_Displacement.nV,&LDB,&INFO);
-  free(IPIV);
-
-  /*
-    Add some usefulll info
-  */
-  strcpy(D_Displacement.Info,"Nodal-D-Displacement");
-
-  return D_Displacement;
-}
-
-
-/**************************************************************/
-
-static Matrix compute_Nodal_Acceleration(
-  GaussPoint MPM_Mesh,
-  Mesh FEM_Mesh,
-  Mask ActiveNodes,
-  Matrix Mass_Matrix_Mixture)
-/*
-  Call the LAPACK solver to compute the nodal Acceleration. The operation is linearized and
-  all the dof split the acceleration array in n components like :
-  | M 0 |   |A.x|   | dt_p.x |
-  | 0 M | * |A.y| = | dt_p.y |
-*/
-{
-  int Ndim = NumberDimensions;
-  int Nnodes_mask = ActiveNodes.Nactivenodes;
-  int Np = MPM_Mesh.NumGP;
-  int Ap;
-  int A_mask;
-  int idx_A_mask_i;
-
-  /* Value of the shape-function */
-  Matrix ShapeFunction_p;
-
-  /* Evaluation of the particle in the node */
-  double ShapeFunction_pA;
-  /* Mass of the particle */
-  double m_p;
-  /* Element for each particle */
-  Element Nodes_p;
-
-  /* Define and allocate the temporal derivative of the momentum vector */
-  Matrix Acceleration;
-  Matrix dt_Momentum = allocZ__MatrixLib__(Nnodes_mask,Ndim);
-
-  /* Iterate over the particles to get the nodal values */
-  for(int p = 0 ; p<Np ; p++)
-    {
-
-      /* Define element of the particle */
-      Nodes_p = nodal_set__Particles__(p, MPM_Mesh.ListNodes[p], MPM_Mesh.NumberNodes[p]);
-
-      /* Evaluate the shape function in the coordinates of the particle */
-      ShapeFunction_p = compute_N__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
-
-      /* Get the mass of the GP */
-      m_p = MPM_Mesh.Phi.mass.nV[p];
-
-      /* Get the nodal mommentum */
-      for(int A = 0 ; A<Nodes_p.NumberNodes ; A++)
-        {
-
-          /*
-            Get the node in the nodal momentum with the mask
-          */
-          Ap = Nodes_p.Connectivity[A];
-          A_mask = ActiveNodes.Nodes2Mask[Ap];
-
-          /* Evaluate the GP function in the node */
-          ShapeFunction_pA = ShapeFunction_p.nV[A];
-
-          /* Nodal velocity and acceleration  */
-          for(int i = 0 ; i<Ndim ; i++)
-            {
-              dt_Momentum.nM[A_mask][i] += m_p*ShapeFunction_pA*MPM_Mesh.Phi.acc.nM[p][i];
-            }
-        }
-
-      /* Free the value of the shape functions */
-      free__MatrixLib__(ShapeFunction_p);
-      free(Nodes_p.Connectivity);
-    }
-
-
-  /*
-    Call the LAPACK solver to compute the accelerations and velocities
-  */
-  int Order = Nnodes_mask*Ndim;
-  int LDA   = Order;
-  int LDB = Order;
-  char  TRANS = 'T'; /* (Transpose) */
-  int   INFO= 3;
-  int * IPIV = (int *)Allocate_Array(Order,sizeof(int));
-  int NRHS = 1;
-
-  /*
-    Compute the LU factorization for the mass matrix
-  */
-  dgetrf_(&Order,&Order,Mass_Matrix_Mixture.nV,&LDA,IPIV,&INFO);
-
-  /*
-    Solve for the acceleration
-  */
-  dgetrs_(&TRANS,&Order,&NRHS,Mass_Matrix_Mixture.nV,&LDA,IPIV,dt_Momentum.nV,&LDB,&INFO);
-  free(IPIV);
-
-  /*
-    Transfer
-  */
-  Acceleration = dt_Momentum;
- 
-  /*
-    Add some usefulll info
-  */
-  strcpy(Acceleration.Info,"Nodal-Acceleration");
-
-  return Acceleration;
 }
 
 /**************************************************************/
@@ -813,6 +608,228 @@ static Matrix compute_Nodal_Gravity_field(
 
 /**************************************************************/
 
+static Matrix compute_Nodal_D_Displacement(
+  GaussPoint MPM_Mesh,
+  Mesh FEM_Mesh,
+  Mask ActiveNodes,
+  Matrix Mass_Matrix_Mixture)
+/*
+  Call the LAPACK solver to compute the nodal increment of displacement. The operation is linearized and
+  all the dof split the increment of displacement array in n components like :
+  | M 0 |   |D_u.x|   | M*D_u.x |
+  | 0 M | * |D_u.y| = | M*D_u.y |
+*/
+{
+  int Ndim = NumberDimensions;
+  int Nnodes_mask = ActiveNodes.Nactivenodes;
+  int Np = MPM_Mesh.NumGP;
+  int Ap;
+  int A_mask;
+  int idx_A_mask_i;
+  Element Nodes_p; /* Element for each particle */
+  Matrix ShapeFunction_p; /* Value of the shape-function */
+  double ShapeFunction_pA; /* Evaluation of the particle in the node */
+  double m_p; /* Mass of the particle */
+
+  /* 
+    Define and allocate the nodal increment of displacement vector 
+  */
+  Matrix D_Displacement = allocZ__MatrixLib__(Nnodes_mask,Ndim);
+
+
+  for(int p = 0 ; p<Np ; p++)
+    {
+
+      /* 
+        Define element of the particle 
+      */
+      Nodes_p = nodal_set__Particles__(p, MPM_Mesh.ListNodes[p], MPM_Mesh.NumberNodes[p]);
+
+      /* 
+        Evaluate the shape function in the coordinates of the particle
+      */
+      ShapeFunction_p = compute_N__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
+
+      /* 
+        Get the mass of the GP 
+      */
+      m_p = MPM_Mesh.Phi.mass.nV[p];
+
+      for(int A = 0 ; A<Nodes_p.NumberNodes ; A++)
+        {
+
+          /*
+            Get the node in the nodal momentum with the mask
+          */
+          Ap = Nodes_p.Connectivity[A];
+          A_mask = ActiveNodes.Nodes2Mask[Ap];
+
+          /*
+             Evaluate the GP function in the node 
+          */
+          ShapeFunction_pA = ShapeFunction_p.nV[A];
+
+          /*
+            Nodal velocity and D_Displacement 
+          */
+          for(int i = 0 ; i<Ndim ; i++)
+            {
+              D_Displacement.nM[A_mask][i] += m_p*ShapeFunction_pA*MPM_Mesh.Phi.D_dis.nM[p][i];
+            }
+        }
+
+      /* 
+        Free the value of the shape functions 
+      */
+      free__MatrixLib__(ShapeFunction_p);
+      free(Nodes_p.Connectivity);
+    }
+
+
+  /*
+    Call the LAPACK solver to compute the D_Displacements
+  */
+  int Order = Nnodes_mask*Ndim;
+  int LDA   = Order;
+  int LDB = Order;
+  char  TRANS = 'T'; /* (Transpose) */
+  int   INFO= 3;
+  int * IPIV = (int *)Allocate_Array(Order,sizeof(int));
+  int NRHS = 1;
+
+  /*
+    Compute the LU factorization for the mass matrix
+  */
+  dgetrf_(&Order,&Order,Mass_Matrix_Mixture.nV,&LDA,IPIV,&INFO);
+
+  /*
+    Solve for the D_Displacement
+  */
+  dgetrs_(&TRANS,&Order,&NRHS,Mass_Matrix_Mixture.nV,&LDA,IPIV,D_Displacement.nV,&LDB,&INFO);
+  free(IPIV);
+
+  /*
+    Add some usefulll info
+  */
+  strcpy(D_Displacement.Info,"Nodal-D-Displacement");
+
+  return D_Displacement;
+}
+
+
+/**************************************************************/
+
+static Matrix compute_Nodal_Acceleration(
+  GaussPoint MPM_Mesh,
+  Mesh FEM_Mesh,
+  Mask ActiveNodes,
+  Matrix Mass_Matrix_Mixture)
+/*
+  Call the LAPACK solver to compute the nodal Acceleration. The operation is linearized and
+  all the dof split the acceleration array in n components like :
+  | M 0 |   |A.x|   | dt_p.x |
+  | 0 M | * |A.y| = | dt_p.y |
+*/
+{
+  int Ndim = NumberDimensions;
+  int Nnodes_mask = ActiveNodes.Nactivenodes;
+  int Np = MPM_Mesh.NumGP;
+  int Ap;
+  int A_mask;
+  int idx_A_mask_i;
+  Element Nodes_p; /* Element for each particle */
+  Matrix ShapeFunction_p; /* Value of the shape-function */
+  double ShapeFunction_pA; /* Evaluation of the particle in the node */
+  double m_p; /* Mass of the particle */
+
+  /* Define and allocate the nodal acceleration vector */
+  Matrix Acceleration = allocZ__MatrixLib__(Nnodes_mask,Ndim);
+
+
+  for(int p = 0 ; p<Np ; p++)
+    {
+
+      /* 
+        Define element of the particle 
+      */
+      Nodes_p = nodal_set__Particles__(p, MPM_Mesh.ListNodes[p], MPM_Mesh.NumberNodes[p]);
+
+      /* 
+        Evaluate the shape function in the coordinates of the particle 
+      */
+      ShapeFunction_p = compute_N__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
+
+      /* 
+        Get the mass of the GP 
+      */
+      m_p = MPM_Mesh.Phi.mass.nV[p];
+
+      /* 
+        Get the nodal mommentum 
+      */
+      for(int A = 0 ; A<Nodes_p.NumberNodes ; A++)
+        {
+
+          /*
+            Get the node in the nodal momentum with the mask
+          */
+          Ap = Nodes_p.Connectivity[A];
+          A_mask = ActiveNodes.Nodes2Mask[Ap];
+
+          /* 
+            Evaluate the GP function in the node 
+          */
+          ShapeFunction_pA = ShapeFunction_p.nV[A];
+
+          /* 
+            Nodal velocity and acceleration 
+          */
+          for(int i = 0 ; i<Ndim ; i++)
+            {
+              Acceleration.nM[A_mask][i] += m_p*ShapeFunction_pA*MPM_Mesh.Phi.acc.nM[p][i];
+            }
+        }
+
+      /* 
+        Free the value of the shape functions 
+      */
+      free__MatrixLib__(ShapeFunction_p);
+      free(Nodes_p.Connectivity);
+    }
+
+
+  /*
+    Call the LAPACK solver to compute the nodal accelerations
+  */
+  int Order = Nnodes_mask*Ndim;
+  int LDA   = Order;
+  int LDB = Order;
+  char  TRANS = 'T'; /* (Transpose) */
+  int   INFO= 3;
+  int * IPIV = (int *)Allocate_Array(Order,sizeof(int));
+  int NRHS = 1;
+
+  /*
+    Compute the LU factorization for the mass matrix
+  */
+  dgetrf_(&Order,&Order,Mass_Matrix_Mixture.nV,&LDA,IPIV,&INFO);
+
+  /*
+    Solve for the nocal acceleration
+  */
+  dgetrs_(&TRANS,&Order,&NRHS,Mass_Matrix_Mixture.nV,&LDA,IPIV,Acceleration.nV,&LDB,&INFO);
+  free(IPIV);
+ 
+  /*
+    Add some usefulll info
+  */
+  strcpy(Acceleration.Info,"Nodal-Acceleration");
+
+  return Acceleration;
+}
+
+/**************************************************************/
+
 static Matrix compute_Nodal_Velocity(
   GaussPoint MPM_Mesh,
   Mesh FEM_Mesh,
@@ -832,61 +849,66 @@ static Matrix compute_Nodal_Velocity(
   int Ap;
   int A_mask;
   int idx_A_mask_i;
+  Element Nodes_p; /* Element for each particle */
+  Matrix ShapeFunction_p; /* Value of the shape-function */
+  double ShapeFunction_pA; /* Evaluation of the particle in the node */
+  double m_p; /* Mass of the particle */
 
-  /* Value of the shape-function */
-  Matrix ShapeFunction_p;
+  /* Define and allocate the velocity vector */
+  Matrix Velocity = allocZ__MatrixLib__(Nnodes_mask,Ndim);
 
-  /* Evaluation of the particle in the node */
-  double ShapeFunction_pA;
-  /* Mass of the particle */
-  double m_p;
-  /* Element for each particle */
-  Element Nodes_p;
 
-  /* Define and allocate the momentum vector */
-  Matrix Velocity;
-  Matrix Momentum = allocZ__MatrixLib__(Nnodes_mask,Ndim);
-
-  /* Iterate over the particles to get the nodal values */
   for(int p = 0 ; p<Np ; p++)
     {
 
-      /* Define element of the particle */
+      /*
+         Define element of the particle 
+      */
       Nodes_p = nodal_set__Particles__(p, MPM_Mesh.ListNodes[p], MPM_Mesh.NumberNodes[p]);
 
-      /* Evaluate the shape function in the coordinates of the particle */
+      /* 
+        Evaluate the shape function in the coordinates of the particle 
+      */
       ShapeFunction_p = compute_N__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
 
-      /* Get the mass of the GP */
+      /*
+        Get the mass of the GP
+      */
       m_p = MPM_Mesh.Phi.mass.nV[p];
 
-      /* Get the nodal mommentum */
+      /* 
+        Get the nodal mommentum 
+      */
       for(int A = 0 ; A<Nodes_p.NumberNodes ; A++)
         {
           /*
-            Get the node in the nodal momentum with the mask
+            Get the node with the mask
           */
           Ap = Nodes_p.Connectivity[A];
           A_mask = ActiveNodes.Nodes2Mask[Ap];
 
-          /* Evaluate the GP function in the node */
+          /* 
+            Evaluate the GP function in the node 
+          */
           ShapeFunction_pA = ShapeFunction_p.nV[A];
 
-          /* Nodal velocity and acceleration  */
+
           for(int i = 0 ; i<Ndim ; i++)
             {
-              Momentum.nM[A_mask][i] += m_p*ShapeFunction_pA*MPM_Mesh.Phi.vel.nM[p][i];
+              Velocity.nM[A_mask][i] += m_p*ShapeFunction_pA*MPM_Mesh.Phi.vel.nM[p][i];
             }
         }
 
-      /* Free the value of the shape functions */
+      /* 
+        Free the value of the shape functions 
+      */
       free__MatrixLib__(ShapeFunction_p);
       free(Nodes_p.Connectivity);
     }
 
 
   /*
-    Call the LAPACK solver to compute the accelerations and velocities
+    Call the LAPACK solver to compute the velocities
   */
   int Order = Nnodes_mask*Ndim;
   int LDA   = Order;
@@ -900,16 +922,12 @@ static Matrix compute_Nodal_Velocity(
     Compute the LU factorization for the mass matrix
   */
   dgetrf_(&Order,&Order,Mass_Matrix_Mixture.nV,&LDA,IPIV,&INFO);
+
   /*
     Solve for the velocity
   */
-  dgetrs_(&TRANS,&Order,&NRHS,Mass_Matrix_Mixture.nV,&LDA,IPIV,Momentum.nV,&LDB,&INFO);
+  dgetrs_(&TRANS,&Order,&NRHS,Mass_Matrix_Mixture.nV,&LDA,IPIV,Velocity.nV,&LDB,&INFO);
   free(IPIV);
-
-  /*
-    Transfer
-   */
-  Velocity = Momentum;
  
   /*
     Add some usefulll info
@@ -934,45 +952,69 @@ static Matrix compute_Nodal_Pore_water_pressure(
   int Ndim = NumberDimensions;
   int Nnodes_mask = ActiveNodes.Nactivenodes;
   int Np = MPM_Mesh.NumGP;
+  int Mat_idx;
   int Ap;
   int A_mask;
   int idx_A_mask_i;
+  Element Nodes_p; /* Element for each particle */
+  Matrix ShapeFunction_p; /* Value of the shape-function */
+  double ShapeFunction_pA; /* Evaluation of the particle in the node */
+  double Pw_p; /* Particle pore water pressure */
+  double V0_p; /* Volume of the particle */
+  double rho_f_p; /* Material density of the particle (fluid phase) */
+  double phi_f_p; /* Volume fraction of the particle (fluid phase) */
+  double relative_rho_f_p; /* Relative density of the particle (fluid phase) */
+  double K_f; /* Compressibility (fluid) */
+  double compressibility_density_f_p; /* Compressibily density for the particle (fluid phase) */
+  double compressibility_density_A_p; /* Contribution of the particle p to the compressibility in the node A */
 
-  /* Value of the shape-function */
-  Matrix ShapeFunction_p;
-
-  /* Evaluation of the particle in the node */
-  double ShapeFunction_pA;
-
-  /* Element for each particle */
-  Element Nodes_p;
-
-  /* Define and allocate the Pore water pressure vector */
+  /* 
+    Define and allocate the Pore water pressure vector 
+  */
   Matrix Pore_water_pressure = allocZ__MatrixLib__(Nnodes_mask,1);
 
   /* Iterate over the particles to get the nodal values */
   for(int p = 0 ; p<Np ; p++)
     {
 
-      /* Define element of the particle */
+      /*
+        Define element of the particle 
+      */
       Nodes_p = nodal_set__Particles__(p, MPM_Mesh.ListNodes[p], MPM_Mesh.NumberNodes[p]);
 
-      /* Evaluate the shape function in the coordinates of the particle */
+      /* 
+        Evaluate the shape function in the coordinates of the particle 
+      */
       ShapeFunction_p = compute_N__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
 
-      /* Get the pore water pressure */
+      /*
+         Get the pore water pressure 
+      */
       Pw_p = MPM_Mesh.Phi.Pw.nV[p];
 
-      /* Get the initial volume of the particle */
+      /* 
+        Get the initial volume of the particle 
+      */
       V0_p = MPM_Mesh.Phi.Vol_0.nV[p];
 
-      /* Get the current material density and volume fraction 
-        for each material point (fluid) */
+      /*
+        Get the current material density, volume fraction 
+        and compressibility for each material point (fluid) 
+      */
       rho_f_p = MPM_Mesh.Phi.rho_f.nV[p];
       phi_f_p = MPM_Mesh.Phi.phi_f.nV[p];
+      Mat_idx = MPM_Mesh.MatIdx[p];
+      K_f = MPM_Mesh.Mat[Mat_idx].K_f;
 
-      /* Compute relative density */
+      /*  
+        Compute relative density 
+      */
       relative_rho_f_p = phi_f_p*rho_f_p;
+
+      /* 
+        Compute the compressibility density 
+      */
+      compressibility_density_f_p = (relative_rho_f_p/K_f)*V0_p;
 
       /* Get the nodal mommentum */
       for(int A = 0 ; A<Nodes_p.NumberNodes ; A++)
@@ -1002,7 +1044,7 @@ static Matrix compute_Nodal_Pore_water_pressure(
 
 
   /*
-    Call the LAPACK solver to compute the accelerations and velocities
+    Call the LAPACK solver to compute the nodal pore water pressure
   */
   int Order = Nnodes_mask*Ndim;
   int LDA   = Order;
@@ -1046,18 +1088,21 @@ static Matrix compute_Nodal_Rate_Pore_water_pressure(
   int Ndim = NumberDimensions;
   int Nnodes_mask = ActiveNodes.Nactivenodes;
   int Np = MPM_Mesh.NumGP;
+  int Mat_idx;
   int Ap;
   int A_mask;
   int idx_A_mask_i;
-
-  /* Value of the shape-function */
-  Matrix ShapeFunction_p;
-
-  /* Evaluation of the particle in the node */
-  double ShapeFunction_pA;
-
-  /* Element for each particle */
-  Element Nodes_p;
+  Element Nodes_p; /* Element for each particle */
+  Matrix ShapeFunction_p; /* Value of the shape-function */
+  double ShapeFunction_pA; /* Evaluation of the particle in the node */
+  double Pw_p; /* Particle pore water pressure */
+  double V0_p; /* Volume of the particle */
+  double rho_f_p; /* Material density of the particle (fluid phase) */
+  double phi_f_p; /* Volume fraction of the particle (fluid phase) */
+  double K_f; /* Compressibility (fluid) */
+  double relative_rho_f_p; /* Relative density of the particle (fluid phase) */
+  double compressibility_density_f_p; /* Compressibily density for the particle (fluid phase) */
+  double compressibility_density_A_p; /* Contribution of the particle p to the compressibility in the node A */
 
   /* Define and allocate the Pore water pressure vector */
   Matrix Rate_Pore_water_pressure = allocZ__MatrixLib__(Nnodes_mask,1);
@@ -1078,10 +1123,14 @@ static Matrix compute_Nodal_Rate_Pore_water_pressure(
       /* Get the initial volume of the particle */
       V0_p = MPM_Mesh.Phi.Vol_0.nV[p];
 
-      /* Get the current material density and volume fraction 
-        for each material point (fluid) */
+      /*
+        Get the current material density, volume fraction 
+        and compressibility for each material point (fluid) 
+      */
       rho_f_p = MPM_Mesh.Phi.rho_f.nV[p];
       phi_f_p = MPM_Mesh.Phi.phi_f.nV[p];
+      Mat_idx = MPM_Mesh.MatIdx[p];
+      K_f = MPM_Mesh.Mat[Mat_idx].K_f;
 
       /* Compute relative density */
       relative_rho_f_p = phi_f_p*rho_f_p;
@@ -1114,7 +1163,7 @@ static Matrix compute_Nodal_Rate_Pore_water_pressure(
 
 
   /*
-    Call the LAPACK solver to compute the accelerations and velocities
+    Call the LAPACK solver to compute the rate of pore water pressure
   */
   int Order = Nnodes_mask*Ndim;
   int LDA   = Order;
@@ -1232,13 +1281,13 @@ static void Imposse_Velocity(
 /**************************************************************/
 
 static void update_Local_State(
-  Matrix D_Displacement,
-  Mask ActiveNodes,
-  GaussPoint MPM_Mesh,
-  Mesh FEM_Mesh,
-  double TimeStep)
+  Matrix D_Displacement, // Nodal values of the increment of displacement
+  Mask ActiveNodes, // Information with the active nodes
+  GaussPoint MPM_Mesh, // Information related with the particles
+  Mesh FEM_Mesh, // Information related with the nodes
+  double TimeStep) // Time step
 /*
-
+  
 */
 {
 
@@ -1250,21 +1299,24 @@ static void update_Local_State(
   int Nnodes_mask = ActiveNodes.Nactivenodes;
   int MatIndx_p;
   int Nnodes_p;
-  double Vol_0_p;
-  double rho_n_p;
-  double J_n1_p;  
-  double Delta_J_p;
-  Plastic_status Input_Plastic_Parameters;
-  Plastic_status Output_Plastic_Parameters;
-  Element Nodes_p;
-  Material MatProp_p;
+  double J_n1_p; /* Jacobian of the deformation gradient at t = n + 1 */
+  double Delta_J_p; /* Jacobian of the increment of deformation gradient */
+  double K_f; /* Compressibility (fluid) */
+  double rho_f_0; /* Initial density of the fluid */
+  Plastic_status Input_Plastic_Parameters; /* Input parameters for plasticity */
+  Plastic_status Output_Plastic_Parameters; /* Output parameters for plasticity */
+  Element Nodes_p; /* Element for each particle */
+  Material MatProp_p; /* Variable with the material properties of each particle */
   Matrix gradient_p;
   Matrix D_Displacement_Ap;
-  Tensor F_n_p;
-  Tensor F_n1_p;
-  Tensor DF_p;
-  Tensor F_plastic_p;
-  Tensor S_p;
+  Tensor F_n_p; /* Deformation gradient of the soil skeleton (t = n) */
+  Tensor F_n1_p; /* Deformation gradient of the soil skeleton (t = n + 1) */
+  Tensor DF_p; /* Increment of the deformation gradient of the soil skeleton */
+  Tensor F_plastic_p; /* Plastic deformation gradient of the soil skeleton */
+  Tensor S_p; /* Second Piola-Kirchhoff stress tensor */
+  Tensor C_n1_p; /* Right Cauchy-Green tensor */
+  double Pw_0; /* Cauchy pore water pressure at t = 0 */
+  double Pw_n1; /* Cauchy pore water pressure at t = n + 1 */
   
   /*
     Loop in the material point set 
@@ -1272,18 +1324,25 @@ static void update_Local_State(
   for(int p = 0 ; p<Np ; p++)
     {
       /*
-	Define tributary nodes of the particle 
+        Read material properties
+      */
+      MatIndx_p = MPM_Mesh.MatIdx[p];
+      MatProp_p = MPM_Mesh.Mat[MatIndx_p];
+      K_f = MatProp_p.K_f;
+      rho_f_0 = MatProp_p.rho_f_0;
+
+      /*
+	       Define tributary nodes of the particle 
       */
       Nodes_p = nodal_set__Particles__(p, MPM_Mesh.ListNodes[p], MPM_Mesh.NumberNodes[p]);
       
       /*
-      	Get the nodal increment of displacement and the pressure using the mask
+      	Get the nodal increment of displacement using the mask
       */
       D_Displacement_Ap = get_set_field__MeshTools__(D_Displacement, Nodes_p, ActiveNodes);
-      Pw_Ap = get_set_field__MeshTools__(Pore_water_pressure, Nodes_p, ActiveNodes);
 
       /*
-	Evaluate the shape function gradient in the coordinates of the particle
+	       Evaluate the shape function gradient in the coordinates of the particle
       */
       gradient_p = compute_dN__MeshTools__(Nodes_p,MPM_Mesh,FEM_Mesh);
 	  
@@ -1293,6 +1352,12 @@ static void update_Local_State(
       F_n_p  = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n.nM[p],2);
       F_n1_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n1.nM[p],2);
       DF_p   = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.DF.nM[p],2);
+
+      /*
+        Compute the Jacobian of the deformation gradient
+      */
+      Delta_J_p = I3__TensorLib__(DF_p);
+      J_n1_p = I3__TensorLib__(F_n1_p);
       
       /*
       	Compute the increment of the deformation gradient
@@ -1308,14 +1373,12 @@ static void update_Local_State(
       /*
         Compute the right Cauchy Green tensor
       */
-      Tensor C_n1_p = right_Cauchy_Green__Particles__(F_n1_p);
+      C_n1_p = right_Cauchy_Green__Particles__(F_n1_p);
       
       /*
       	Update the second Piola-Kirchhoff stress tensor (S) with an apropiate
 	      integration rule.
       */
-      MatIndx_p = MPM_Mesh.MatIdx[p];
-      MatProp_p = MPM_Mesh.Mat[MatIndx_p];
       S_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.Stress.nM[p],2);      
 
       if(strcmp(MatProp_p.Type,"Saint-Venant-Kirchhoff") == 0)
@@ -1324,12 +1387,10 @@ static void update_Local_State(
         }
       else if(strcmp(MatProp_p.Type,"Neo-Hookean-Wriggers") == 0)
         {
-          J_n1_p = I3__TensorLib__(F_n1_p);
           S_p = grad_energy_Neo_Hookean_Wriggers(S_p, C_n1_p, J_n1_p, MatProp_p);
         }
       else if(strcmp(MatProp_p.Type,"Von-Mises") == 0)
         {
-          J_n1_p = I3__TensorLib__(F_n1_p);
           F_plastic_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_plastic.nM[p],2);
           Input_Plastic_Parameters.Cohesion = MPM_Mesh.Phi.cohesion.nV[p];
           Input_Plastic_Parameters.EPS = MPM_Mesh.Phi.EPS.nV[p];
@@ -1337,14 +1398,11 @@ static void update_Local_State(
           Output_Plastic_Parameters = finite_strains_plasticity_Von_Mises(S_p, C_n1_p, F_plastic_p, F_n1_p, 
                                                                           Input_Plastic_Parameters, MatProp_p, J_n1_p);
 
-          /* Update variables (cohesion and EPS) */
           MPM_Mesh.Phi.cohesion.nV[p] = Output_Plastic_Parameters.Yield_stress;
           MPM_Mesh.Phi.EPS.nV[p] = Output_Plastic_Parameters.EPS;
         }
-      else if((strcmp(MatProp_p.Type,"Drucker-Prager-Plane-Strain") == 0) || 
-              (strcmp(MatProp_p.Type,"Drucker-Prager-Outer-Cone") == 0))
+      else if((strcmp(MatProp_p.Type,"Drucker-Prager-Plane-Strain") == 0) || (strcmp(MatProp_p.Type,"Drucker-Prager-Outer-Cone") == 0))
         {
-          J_n1_p = I3__TensorLib__(F_n1_p);
           F_plastic_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_plastic.nM[p],2);
           Input_Plastic_Parameters.Cohesion = MPM_Mesh.Phi.cohesion.nV[p];
           Input_Plastic_Parameters.EPS = MPM_Mesh.Phi.EPS.nV[p];
@@ -1352,7 +1410,6 @@ static void update_Local_State(
           Output_Plastic_Parameters = finite_strains_plasticity_Drucker_Prager_Sanavia(S_p, C_n1_p, F_plastic_p, F_n1_p, 
                                                                           Input_Plastic_Parameters, MatProp_p, J_n1_p);
 
-          /* Update variables (cohesion and EPS) */
           MPM_Mesh.Phi.cohesion.nV[p] = Output_Plastic_Parameters.Cohesion;
           MPM_Mesh.Phi.EPS.nV[p] = Output_Plastic_Parameters.EPS;
 
@@ -1366,14 +1423,21 @@ static void update_Local_State(
         }
 
       /*
-        Update density with the jacobian of the increment deformation gradient
+        Update state parameters
       */
-      Delta_J_p = I3__TensorLib__(DF_p);
-      rho_n_p = MPM_Mesh.Phi.rho.nV[p];
-      MPM_Mesh.Phi.rho.nV[p] = rho_n_p/Delta_J_p;
+      Pw_0 = MPM_Mesh.Phi.Pw_0[p]; /* Get the initial pressure */
+      Pw_n1 = MPM_Mesh.Phi.Pw.nV[p]/J_n1_p; /* From the Kirchhoff pressure compure the cauchy pore water pressure */
+
+      MPM_Mesh.Phi.rho_f.nV[p] = rho_f_0*exp((Pw_n1-Pw_0)/K_f); /* Update the fluid pressure */
+
+      MPM_Mesh.Phi.phi_s.nV[p] *= (1/Delta_J_p); /* Update the volume fraction of the solid phase */
+      MPM_Mesh.Phi.phi_f.nV[p] = 1 - MPM_Mesh.Phi.phi_s.nV[p]; /* Update the volume fraction of the fluid phase */
+
+      MPM_Mesh.Phi.rho.nV[p] = MPM_Mesh.Phi.rho_s.nV[p]*MPM_Mesh.Phi.phi_s.nV[p] +
+                               MPM_Mesh.Phi.rho_f.nV[p]*MPM_Mesh.Phi.phi_f.nV[p];  /* Update density of the mixture */
 
       /*
-	Free memory 
+	       Free memory 
       */
       free__TensorLib__(C_n1_p);
       free__MatrixLib__(D_Displacement_Ap);
@@ -1446,9 +1510,8 @@ static Matrix compute_Internal_Forces_Mixture(
       F_n1_p  = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n1.nM[p],2);
 
       /*
-        Compute the volume of the particle in the reference configuration 
+        Get the volume of the particle in the reference configuration 
       */
-      J_p = I3__TensorLib__(F_n1_p);
       V0_p = MPM_Mesh.Phi.Vol_0.nV[p];
 
       /*
@@ -1634,7 +1697,8 @@ static void solve_Nodal_Equilibrium_Mixture(
   Matrix Gravity_field,
   Matrix Internal_Forces_Mixture)
 /*
-
+  Solve equilibrium equation to get the nodal values of the aceleration 
+  at t = n + 1
 */
 {
   
@@ -1691,7 +1755,7 @@ static Matrix compute_Viscous_Forces_Fluid(
 
   Matrix Viscous_Forces = allocZ__MatrixLib__(Nnodes_mask,1);
 
-  Matrix C_Viscosity = compute_K_Permeability(ActiveNodes, MPM_Mesh, FEM_Mesh);
+  Matrix C_Viscosity = compute_C_Viscosity(ActiveNodes, MPM_Mesh, FEM_Mesh);
 
   /*
     Compute the permabily forces (Vectorized)
@@ -1735,17 +1799,17 @@ static Matrix compute_C_Viscosity(
   int B_mask; /* Index of the node where we apply the body force */
   int Bp; /* Tributary node B of particle p */
 
-  Element Nodes_p; /* Element for each particle */
-  Matrix ShapeFunction_p;
-  Matrix gradient_p;
-  Tensor F_n1_p;
-  Tensor gradient_pB;
-  double ShapeFunction_pA;
-  double rho_f_p;
-  double V0_p;
-  double J_p;
+  Element Nodes_p; /* Element for each particle p */
+  Matrix ShapeFunction_p; /* Matrix with the value of the shape function in the particle p */ 
+  Matrix gradient_p; /* Matrix with the value of the shape function gradient in the particle p */ 
+  Tensor F_n1_p; /* Deformation gradient of the solid skeleton in t = n + 1 */
+  Tensor gradient_pB; /* Vector with the gradient of the shape function in node B for the particle p */
+  double ShapeFunction_pA; /* Value of the shape funtion in node A for the particle p */
+  double rho_f_p; /* Material density of the fluid phase for particle p */
+  double V0_p; /* Volume of the particle */
+  double J_n1_p; /* Determinant of the solid skeleton deformation gradient in t = n + 1 */
 
-  Matrix C_Viscosity = allocZ__MatrixLib__(Nnodes_mask,Nnodes_mask*Ndim);
+  Matrix C_Viscosity = allocZ__MatrixLib__(Nnodes_mask,Nnodes_mask*Ndim); /* Nodal viscosity */
 
   for(int p = 0 ; p<Np ; p++)
     {
@@ -1767,24 +1831,20 @@ static Matrix compute_C_Viscosity(
       Nodes_p = nodal_set__Particles__(p, MPM_Mesh.ListNodes[p], NumNodes_p);
 
       /*
-        Evaluate the shape function in the coordinates of the particle 
+        Evaluate the shape function and its gradient in the coordinates of the particle 
       */
       ShapeFunction_p = compute_N__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
-
-      /*
-        Compute gradient of the shape function in each node 
-      */
       gradient_p = compute_dN__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
         
       /*
-         Take the value of the deformation gradient at t = n + 1. 
+         Get the value of the deformation gradient at t = n + 1. 
       */
       F_n1_p  = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n1.nM[p],2);
 
       /*
         Compute the jacobian for each material point
       */
-      J_p = I3__TensorLib__(F_n1_p);
+      J_n1_p = I3__TensorLib__(F_n1_p);
 
     
       for(int A = 0 ; A<NumNodes_p ; A++)
@@ -1819,7 +1879,7 @@ static Matrix compute_C_Viscosity(
           */
           for(int i = 0 ; i<Ndim ; i++)
           {
-            C_Viscosity.nM[A_mask][B_mask*Ndim + i] += ShapeFunction_pA*J_p*rho_f_p*gradient_pB.n[i]*V0_p;
+            C_Viscosity.nM[A_mask][B_mask*Ndim + i] += ShapeFunction_pA*J_n1_p*rho_f_p*gradient_pB.n[i]*V0_p;
           }
 
 
@@ -1896,14 +1956,16 @@ static Matrix compute_K_Permeability(
   Tensor GRADIENT_pA; /* Shape functions gradients (Node A), ref config */
   Tensor GRADIENT_pB; /* Shape functions gradients (Node B), ref config */
   Tensor F_n_p; /* Deformation gradient t = n */
+  Tensor F_n1_p; /* Deformation gradient t = n + 1 */
   Tensor transpose_F_n_p; /*  /* Transpose of the deformation gradient t = n */
   Tensor k_p; /* Spatial permebility tensor */
   Tensor K_p; /* Material permeability tensor */
   double g = 9.81;
   double rho_f_p;
-  double V0_p;
-  double aux1_K_Permeability;
-  double aux2_K_Permeability;
+  double V0_p; /* Volume of the particle at the reference configuration */
+  double J_n1_p; /* Determinant of the deformation gradient at t = n + 1 */
+  double aux1_K_Permeability; /* Intermediate result */
+  double aux2_K_Permeability; /* Intermediate result */
 
   /*
     Iterate over the particles to get the nodal values 
@@ -1922,11 +1984,13 @@ static Matrix compute_K_Permeability(
       gradient_p = compute_dN__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
 
       /*
-        Take the values of the deformation gradient ant t = n. 
-        Later compute the transpose of the deformation gradient.
+        Take the values of the deformation gradient at t = n and t = n + 1. 
+        Later compute the transpose of the deformation gradient and the determinant.
       */
       F_n_p  = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n.nM[p],2);
+      F_n1_p  = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n1.nM[p],2);
       transpose_F_n_p = transpose__TensorLib__(F_n_p);
+      J_n1_p = I3__TensorLib__(F_n1_p);
         
       /* 
         Get the current material density for each material point (fluid) 
@@ -1944,7 +2008,7 @@ static Matrix compute_K_Permeability(
       */
       k_p = MPM_Mesh.Mat.Permeability;
       K_p = alloc__TensorLib__(2);
-      contravariant_pull_back_tensor__TensorLib__(K_p, k_p, F_n_p);
+      contravariant_pull_back_tensor__TensorLib__(K_p, k_p, F_n1_p);
 
 
       for(int A = 0 ; A<Nodes_p.NumberNodes ; A++)
@@ -1999,7 +2063,7 @@ static Matrix compute_K_Permeability(
             /*
               Assign the calculated value to the permeability matrix
             */
-            K_Permeability.nM[A_mask][B_mask] += (V0_p/g)*aux1_K_Permeability;
+            K_Permeability.nM[A_mask][B_mask] += (V0_p/(g*J_n1_p))*aux1_K_Permeability;
 
 
            free__TensorLib__(GRADIENT_pB);
@@ -2009,7 +2073,9 @@ static Matrix compute_K_Permeability(
           free__TensorLib__(GRADIENT_pA);
       }
 
-      /* Free the value of the shape functions */
+      /* 
+        Free the value of the shape functions 
+      */
       free__MatrixLib__(gradient_p);
       free__TensorLib__(transpose_F_n_p);
       free__TensorLib__(K_p);
@@ -2085,14 +2151,22 @@ static Matrix compute_C_Permeability(
 
   Element Nodes_p; /* Element for each particle */
   Matrix ShapeFunction_p;
-  Matrix gradient_p;
-  Tensor F_n1_p;
-  Tensor inverse_F_n1_p;
-  Tensor gradient_pB;
-  double ShapeFunction_pA;
-  double rho_f_p;
-  double g = 9.81;
-  double V0_p;
+  Matrix gradient_p;  /* Shape functions gradients */
+  Tensor gradient_pA; /* Shape functions gradients (Node A), def config */
+  Tensor GRADIENT_pA; /* Shape functions gradients (Node A), ref config */
+  Tensor F_n_p; /* Deformation gradient t = n */
+  Tensor F_n1_p; /* Deformation gradient t = n + 1 */
+  Tensor transpose_F_n_p; /* Transpose of the deformation gradient t = n */
+  Tensor inverse_F_n1_p; /* Inverse of the deformation gradient t = n + 1 */
+  Tensor k_p; /* Spatial permebility tensor */
+  Tensor k_prim_p; /* Two-point permeability tensor */
+  Tensor transpose_k_prim_p; /* Transpose of the two-point permeability tensor */
+  Tensor GRADIENT_pA_k_prim; /* Intermediate result */
+  double ShapeFunction_pB; /* Nodal value of the shape function in node B */
+  double rho_f_p; /* Intrinsic or material density (fluid phase) */
+  double g = 9.81; /* Gravity constant */
+  double V0_p; /* Inital volume of the particle p */
+  double J_n1_p; /* Determianant of the soil skeleton deformation gradient at t = n + 1 */
 
   Matrix C_Permeability = allocZ__MatrixLib__(Nnodes_mask,Nnodes_mask*Ndim);
 
@@ -2126,22 +2200,24 @@ static Matrix compute_C_Permeability(
       gradient_p = compute_dN__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
         
       /*
-        Take the value of the deformation gradient at t = n + 1. 
-        And transpose it
+        Take the value of the deformation gradient at t = n + 1, and t = n. 
+        Get intermediate results
       */
+      F_n_p  = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n.nM[p],2);
       F_n1_p  = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n1.nM[p],2);
+      transpose_F_n_p = transpose__TensorLib__(F_n_p);
       inverse_F_n1_p = Inverse__TensorLib__(F_n1_p);
-      J_p = I3__TensorLib__(F_n1_p);
+      J_n1_p = I3__TensorLib__(F_n1_p);
 
       /*
-        Compute the transpose of tensor k'
+        Compute the tensor k' and its transpose
       */
       k_prim_p = matrix_product__TensorLib__(inverse_F_n1_p,k_prim_p);
       for(int i = 0 ; i<Ndim ; i++)
       {
         for(int j = 0 ; j<Ndim ; j++)
         {
-          k_prim_p.N[i][j] *= J_p;
+          k_prim_p.N[i][j] *= J_n1_p;
         }
       }
       transpose_k_prim_p = transpose__TensorLib__(k_prim_p);
@@ -2154,7 +2230,8 @@ static Matrix compute_C_Permeability(
           Get the gradient of the shape function and multiply it by the permeability tensor
         */
         gradient_pA = memory_to_tensor__TensorLib__(gradient_p.nM[A],1);
-        gradient_pA_k_prim = vector_linear_mapping__TensorLib__(transpose_k_prim_p,gradient_pA);
+        GRADIENT_pA = vector_linear_mapping__TensorLib__(transpose_F_n_p,gradient_pA);
+        GRADIENT_pA_k_prim = vector_linear_mapping__TensorLib__(transpose_k_prim_p,GRADIENT_pA);
      
         /*
           Get the node of the mesh for the contribution 
@@ -2180,19 +2257,21 @@ static Matrix compute_C_Permeability(
           */
           for(int i = 0 ; i<Ndim ; i++)
           {
-            C_Permeability.nM[A_mask][B_mask*Ndim + i] += gradient_pA_k_prim.n[i]*(rho_f_p/g)*ShapeFunction_pB.*V0_p;
+            C_Permeability.nM[A_mask][B_mask*Ndim + i] += GRADIENT_pA_k_prim.n[i]*(rho_f_p/g)*ShapeFunction_pB*V0_p;
           }
 
 
         }
-    
-        free__TensorLib__(gradient_pA_k_prim);
+  
+        free__TensorLib__(GRADIENT_pA);
+        free__TensorLib__(GRADIENT_pA_k_prim);
 
       }
         
       /* 
        Free memory 
       */
+      free__TensorLib__(transpose_F_n_p);
       free__TensorLib__(inverse_F_n1_p);
       free__TensorLib__(k_prim_p);
       free__TensorLib__(transpose_k_prim_p);
@@ -2286,36 +2365,6 @@ static void solve_Nodal_Generalized_Darcy_Law(
   free__MatrixLib__(Fluid_Forces);
 
   return Fluid_Forces;
-}
-
-/**************************************************************/
-
-static void Corrector_Fields(
-  Matrix Velocity,
-  Matrix Acceleration, 
-  Matrix Pore_water_pressure,
-  Matrix Rate_Pore_water_pressure, 
-  double gamma,
-  double Dt)
-{
-  int Nnodes_mask = Velocity.N_rows;
-  int Ndim = NumberDimensions;
-  int idx_A_i;
-  /*
-    Correct the nodal velocity field
-  */
-  for(int idx_A = 0 ; idx_A<Nnodes_mask ; idx_A++)
-  {
-    Pore_water_pressure.nV[idx_A] += gamma*Dt*Rate_Pore_water_pressure.nV[idx_A];
-
-    for(int i = 0 ; i<Ndim ; i++)
-    { 
-      idx_A_i = idx_A*Ndim + i;
-      Velocity.nV[idx_A_i] += gamma*Dt*Acceleration.nV[idx_A_i];
-    }
-
-  }
-
 }
 
 /**************************************************************/

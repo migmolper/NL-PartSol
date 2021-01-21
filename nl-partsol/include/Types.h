@@ -178,11 +178,10 @@ typedef struct {
   Matrix rho;
 
   /*!
-   * Density field (solid/water/mixture) 
+   * Density field (solid/water) 
    */
   Matrix rho_s;
   Matrix rho_f;
-  Matrix rho_m;
 
   /*!
   * Volume fraction occupied for each material
@@ -232,10 +231,11 @@ typedef struct {
   Matrix Stress_f;
 
   /*!
-  * Pore water preassure and its rate
+  * Pore water preassure, its rate and initial state
   */
   Matrix Pw;
   Matrix d_Pw;
+  Matrix Pw_0;
   
   /*!
    * Strain field 
@@ -375,9 +375,11 @@ typedef struct {
   double Cel;
   
   /*!
-   * Initial density 
+   * Initial density (mixture/fluid/density)
    */
   double rho;
+  double rho_f_0;
+  double rho_s_0;
   
   /*!
    * Elastic modulus 
