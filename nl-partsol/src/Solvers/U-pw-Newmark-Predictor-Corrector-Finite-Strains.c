@@ -24,13 +24,14 @@ int Number_Out_particles_path_csv;
 static Matrix compute_Mass_Matrix_Mixture(GaussPoint,Mesh,Mask,double);
 static Matrix compute_Compressibility_Matrix_Fluid(GaussPoint, Mesh, Mask);
 /* Step 2 */
+static  void  compute_Explicit_Newmark_Predictor(GaussPoint,double,double);
+/* Step 3 */
 static Matrix compute_Nodal_Gravity_field(Mask, GaussPoint, int);
+static Matrix compute_Nodal_D_Displacement(GaussPoint,Mesh,Mask,Matrix);
 static Matrix compute_Nodal_Acceleration(GaussPoint,Mesh,Mask,Matrix);
 static Matrix compute_Nodal_Velocity(GaussPoint,Mesh,Mask,Matrix);
 static Matrix compute_Nodal_Pore_water_pressure(GaussPoint,Mesh,Mask,Matrix);
 static Matrix compute_Nodal_Rate_Pore_water_pressure(GaussPoint,Mesh,Mask,Matrix);
-/* Step 3 */
-static  void  compute_Explicit_Newmark_Predictor(Matrix,Matrix,Matrix,Matrix,double,double);
 static  void  Imposse_Velocity(Mesh,Matrix,Mask,int);
 /* Step 4 */
 static  void  update_Local_State(Matrix,Mask,GaussPoint,Mesh,double);
@@ -48,10 +49,8 @@ static Matrix compute_Permeability_Inertial_Forces_Fluid(Mask, GaussPoint, Mesh,
 static Matrix compute_C_Permeability(Mask,GaussPoint,Mesh);
 static  void  solve_Nodal_Generalized_Darcy_Law(Matrix,Matrix,Matrix,Matrix,Matrix);
 /* Step 7 */
-static  void  Corrector_Fields(Matrix,Matrix,Matrix,Matrix,double,double);
+static  void  compute_Explicit_Newmark_Corrector(GaussPoint,Mesh,Matrix,Matrix,Matrix,Mask,double, double);
 /* Step 8 */
-static  void  update_Particles(GaussPoint,Mesh,Matrix,Matrix,Matrix,Mask,double);
-/* Step 9 */
 static  void  output_selector(GaussPoint, Mesh, Mask, Matrix, Matrix, Matrix, Matrix, int, int);
 
 /**************************************************************/
@@ -88,7 +87,6 @@ void upw_Newmark_Predictor_Corrector_Finite_Strains(Mesh FEM_Mesh, GaussPoint MP
   Matrix Reactions;
   Mask ActiveNodes;
 
-
   for(int TimeStep = InitialStep ; TimeStep<NumTimeStep ; TimeStep++ )
     {
 
@@ -106,13 +104,18 @@ void upw_Newmark_Predictor_Corrector_Finite_Strains(Mesh FEM_Mesh, GaussPoint MP
       Compressibility_Matrix_Fluid = compute_Compressibility_Matrix_Fluid(MPM_Mesh,FEM_Mesh,ActiveNodes,1);
 
       print_Status("DONE !!!",TimeStep);
+   
+      print_Status("*************************************************",TimeStep);
+      print_Status("Second step : Explicit Newmark predictor ... WORKING",TimeStep);
+      
+      compute_Explicit_Newmark_Predictor(MPM_Mesh, gamma, Dt);
 
       print_Status("*************************************************",TimeStep);
-      print_Status("Second step : Compute nodal magnitudes ... WORKING",TimeStep);
+      print_Status("Third step : Compute nodal magnitudes ... WORKING",TimeStep);
 
       Gravity_field = compute_Nodal_Gravity_field(ActiveNodes, MPM_Mesh, TimeStep);
 
-      D_Displacement = allocZ__MatrixLib__(Nactivenodes, Ndim);
+      D_Displacement = compute_Nodal_D_Displacement(MPM_Mesh, FEM_Mesh, ActiveNodes, Mass_Matrix_Mixture);
 
       Velocity = compute_Nodal_Velocity(MPM_Mesh, FEM_Mesh, ActiveNodes, Mass_Matrix_Mixture);
 
@@ -121,13 +124,6 @@ void upw_Newmark_Predictor_Corrector_Finite_Strains(Mesh FEM_Mesh, GaussPoint MP
       Pore_water_pressure = compute_Pore_water_pressure(MPM_Mesh, FEM_Mesh, ActiveNodes, Compressibility_Matrix_Fluid);
 
       Rate_Pore_water_pressure = compute_Rate_Pore_water_pressure(MPM_Mesh, FEM_Mesh, ActiveNodes, Compressibility_Matrix_Fluid);
-    
-      print_Status("*************************************************",TimeStep);
-      print_Status("Third step : Explicit Newmark predictor ... WORKING",TimeStep);
-      
-      compute_Explicit_Newmark_Predictor(D_Displacement, Velocity, Acceleration,
-                                         Pore_water_pressure, Rate_Pore_water_pressure,
-                                         gamma, Dt);
  
       Imposse_Velocity(FEM_Mesh,Velocity,ActiveNodes,TimeStep);
 
@@ -164,22 +160,14 @@ void upw_Newmark_Predictor_Corrector_Finite_Strains(Mesh FEM_Mesh, GaussPoint MP
       print_Status("*************************************************",TimeStep);
       print_Status("Seven step : Compute corrector ... WORKING",TimeStep);
 
-      Corrector_Fields(Velocity, Acceleration, Pore_water_pressure, Rate_Pore_water_pressure, gamma, DeltaTimeStep);
-
-      print_Status("DONE !!!",TimeStep);
-      
-
-      print_Status("*************************************************",TimeStep);
-      print_Status("Eight step : Update particles lagrangian ... WORKING",TimeStep);
-
-      update_Particles(MPM_Mesh,FEM_Mesh,Mass_Matrix_Mixture,Internal_Forces_Mixture,Velocity,ActiveNodes,DeltaTimeStep);
+      compute_Explicit_Newmark_Corrector(MPM_Mesh,FEM_Mesh,D_Displacement,Acceleration,Rate_Pore_water_pressure,ActiveNodes,gamma,Dt);
 
       local_search__Particles__(MPM_Mesh,FEM_Mesh);
 
       print_Status("DONE !!!",TimeStep);
       
       print_Status("*************************************************",TimeStep);
-      print_Status("Nine step : Output variables and reset nodal values ... WORKING",TimeStep);
+      print_Status("Eight step : Output variables and reset nodal values ... WORKING",TimeStep);
 
       output_selector(MPM_Mesh, FEM_Mesh, ActiveNodes, Velocity, D_Displacement,
                       Internal_Forces_Mixture, Reactions, TimeStep, ResultsTimeStep);
@@ -510,6 +498,149 @@ static Matrix compute_Compressibility_Matrix_Fluid(
 
   return Compressibility_Matrix_Fluid;
 }
+
+/**************************************************************/
+
+static  void  compute_Explicit_Newmark_Predictor(
+  GaussPoint MPM_Mesh, // Information related with particles
+  double gamma, // Newmark integration parameter
+  double Dt) // Time step
+/*
+  The predictor stage is computed in the particles
+*/
+{
+
+  int Ndim = NumberDimensions;
+  int Np = MPM_Mesh.NumGP;
+
+  for(int p = 0 ; p<Np ; p++)
+    {
+
+    /*
+      Compute pore water pressure predictor
+    */
+    MPM_Mesh.Phi.Pw.nV[p] += (1-gamma)*Dt*MPM_Mesh.Phi.d_Pw.nV[p];
+
+    /* 
+      Compute velocity and increment of displacement predictor
+    */
+    for(int i = 0 ; i<Ndim ; i++)
+    {
+
+      MPM_Mesh.Phi.D_dis.nM[p][i] = Dt*MPM_Mesh.Phi.vel.nM[p][i] + 0.5*DSQR(Dt)*MPM_Mesh.Phi.acc.nM[p][i];
+
+      MPM_Mesh.Phi.vel.nM[p][i] += (1-gamma)*Dt*MPM_Mesh.Phi.acc.nM[p][i];
+
+    }
+
+
+  }
+
+}
+
+/**************************************************************/
+
+static Matrix compute_Nodal_D_Displacement(
+  GaussPoint MPM_Mesh,
+  Mesh FEM_Mesh,
+  Mask ActiveNodes,
+  Matrix Mass_Matrix_Mixture)
+/*
+  Call the LAPACK solver to compute the nodal increment of displacement. The operation is linearized and
+  all the dof split the increment of displacement array in n components like :
+  | M 0 |   |D_u.x|   | M*D_u.x |
+  | 0 M | * |D_u.y| = | M*D_u.y |
+*/
+{
+  int Ndim = NumberDimensions;
+  int Nnodes_mask = ActiveNodes.Nactivenodes;
+  int Np = MPM_Mesh.NumGP;
+  int Ap;
+  int A_mask;
+  int idx_A_mask_i;
+
+  /* Value of the shape-function */
+  Matrix ShapeFunction_p;
+
+  /* Evaluation of the particle in the node */
+  double ShapeFunction_pA;
+  /* Mass of the particle */
+  double m_p;
+  /* Element for each particle */
+  Element Nodes_p;
+
+  /* Define and allocate the temporal derivative of the momentum vector */
+  Matrix D_Displacement = allocZ__MatrixLib__(Nnodes_mask,Ndim);
+
+  /* Iterate over the particles to get the nodal values */
+  for(int p = 0 ; p<Np ; p++)
+    {
+
+      /* Define element of the particle */
+      Nodes_p = nodal_set__Particles__(p, MPM_Mesh.ListNodes[p], MPM_Mesh.NumberNodes[p]);
+
+      /* Evaluate the shape function in the coordinates of the particle */
+      ShapeFunction_p = compute_N__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
+
+      /* Get the mass of the GP */
+      m_p = MPM_Mesh.Phi.mass.nV[p];
+
+      /* Get the nodal mommentum */
+      for(int A = 0 ; A<Nodes_p.NumberNodes ; A++)
+        {
+
+          /*
+            Get the node in the nodal momentum with the mask
+          */
+          Ap = Nodes_p.Connectivity[A];
+          A_mask = ActiveNodes.Nodes2Mask[Ap];
+
+          /* Evaluate the GP function in the node */
+          ShapeFunction_pA = ShapeFunction_p.nV[A];
+
+          /* Nodal velocity and D_Displacement  */
+          for(int i = 0 ; i<Ndim ; i++)
+            {
+              D_Displacement.nM[A_mask][i] += m_p*ShapeFunction_pA*MPM_Mesh.Phi.D_dis.nM[p][i];
+            }
+        }
+
+      /* Free the value of the shape functions */
+      free__MatrixLib__(ShapeFunction_p);
+      free(Nodes_p.Connectivity);
+    }
+
+
+  /*
+    Call the LAPACK solver to compute the D_Displacements
+  */
+  int Order = Nnodes_mask*Ndim;
+  int LDA   = Order;
+  int LDB = Order;
+  char  TRANS = 'T'; /* (Transpose) */
+  int   INFO= 3;
+  int * IPIV = (int *)Allocate_Array(Order,sizeof(int));
+  int NRHS = 1;
+
+  /*
+    Compute the LU factorization for the mass matrix
+  */
+  dgetrf_(&Order,&Order,Mass_Matrix_Mixture.nV,&LDA,IPIV,&INFO);
+
+  /*
+    Solve for the D_Displacement
+  */
+  dgetrs_(&TRANS,&Order,&NRHS,Mass_Matrix_Mixture.nV,&LDA,IPIV,D_Displacement.nV,&LDB,&INFO);
+  free(IPIV);
+
+  /*
+    Add some usefulll info
+  */
+  strcpy(D_Displacement.Info,"Nodal-D-Displacement");
+
+  return D_Displacement;
+}
+
 
 /**************************************************************/
 
@@ -1012,49 +1143,6 @@ static Matrix compute_Nodal_Rate_Pore_water_pressure(
   return Rate_Pore_water_pressure;
 }
 
-/**************************************************************/
-
-static  void  compute_Explicit_Newmark_Predictor(
-  Matrix D_Displacement,
-  Matrix Velocity,
-  Matrix Acceleration,
-  Matrix Pore_water_pressure,
-  Matrix Rate_Pore_water_pressure,
-  double gamma,
-  double Dt)
-/*
-
-*/
-{
-
-  int Ndim = NumberDimensions;
-  int Nnodes_mask = ActiveNodes.Nactivenodes;
-
-  for(int A = 0 ; A<Nnodes_mask ; A++)
-  {
-    /*
-      Compute pore water pressure predictor
-    */
-    Pore_water_pressure.nV[A] = Pore_water_pressure.nV[A] + (1-gamma)*Dt*Rate_Pore_water_pressure.nV[A];
-
-    /* 
-      Compute velocity predictor
-    */
-    for(int i = 0 ; i<Ndim ; i++)
-    {
-      A_idx = A*Ndim + i;
-
-      D_Displacement.nV[A_idx] = Dt*Velocity.nV[A_idx] + gamma*DSQR(Dt)*Acceleration.nV[A_idx];
-
-      Velocity.nV[A_idx] = Velocity.nV[A_idx] + (1-gamma)*Dt*Acceleration.nV[A_idx];
-
-    }
-
-
-  }
-
-}
-
 /**********************************************************************/
 
 static void Imposse_Velocity(
@@ -1276,11 +1364,6 @@ static void update_Local_State(
 		  "The material",MatProp_p.Type,"has not been yet implemnented");
           exit(EXIT_FAILURE);
         }
-
-      /*
-        Compute kirchhoff pore water pressure in particles (Using predicted values)
-      */
-      MPM_Mesh.Phi.Pw.nV[p] = interpolate_scalar__MeshTools__(Pw_Ap,ShapeFunction_p);
 
       /*
         Update density with the jacobian of the increment deformation gradient
@@ -2237,14 +2320,15 @@ static void Corrector_Fields(
 
 /**************************************************************/
 
-static void update_Particles(
+static void compute_Explicit_Newmark_Corrector(
   GaussPoint MPM_Mesh,
   Mesh FEM_Mesh,
   Matrix D_Displacement,
-  Matrix Forces,
-  Matrix Velocity,
+  Matrix Acceleration,
+  Matrix Rate_Pore_water_pressure,
   Mask ActiveNodes,
-  double DeltaTimeStep)
+  double gamma,
+  double Dt)
 {
   int Ndim = NumberDimensions;
   int Np = MPM_Mesh.NumGP;
@@ -2279,56 +2363,67 @@ static void update_Particles(
            }
        }
 
+       /*
+        Set to zero the particle acceleration to get later it vale from  
+          direct interpolation using nodal values
+        */
+       for(int i = 0 ; i<Ndim ; i++)
+       {
+          MPM_Mesh.Phi.acc.nM[p][i] = 0.0;
+       }
+
       /*
         Define element of the particle 
       */
       Nodes_p = nodal_set__Particles__(p, MPM_Mesh.ListNodes[p], MPM_Mesh.NumberNodes[p]);
 
       /*
-	Evaluate the shape function in the coordinates of the particle 
+	     Evaluate the shape function in the coordinates of the particle 
       */
       ShapeFunction_p = compute_N__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
       
       /* 
-	 Iterate over the nodes of the particle 
+	      Iterate over the nodes of the particle 
       */
       for(int A = 0; A<Nodes_p.NumberNodes; A++)
         {
 
-	  /*
-	    Get the node in the nodal momentum with the mask
-	  */
-	  Ap = Nodes_p.Connectivity[A];
-	  A_mask = ActiveNodes.Nodes2Mask[Ap];
+	       /*
+	         Get the node in the nodal momentum with the mask
+	       */
+	       Ap = Nodes_p.Connectivity[A];
+	       A_mask = ActiveNodes.Nodes2Mask[Ap];
 	  
     	  /*
-	    Evaluate the GP function in the node 
-	  */
-	  ShapeFunction_pI = ShapeFunction_p.nV[A];
+    	    Evaluate the GP function in the node 
+	       */
+	       ShapeFunction_pI = ShapeFunction_p.nV[A];
 	  
-	  /*
-	    Update velocity position and deformation gradient of the particles
-	  */
-	  for(int i = 0 ; i<Ndim ; i++)
-	    {
-	      idx_A_mask_i = A_mask*Ndim + i;
+    	  /*
+	         Update velocity position and deformation gradient of the particles
+	       */
+	       for(int i = 0 ; i<Ndim ; i++)
+	       {
+    	      idx_A_mask_i = A_mask*Ndim + i;
 
-	      /* Get the nodal mass */
-	      mass_I = Mass_Matrix_Mixture.nV[idx_A_mask_i];
-	      /* Update the particles accelerations */
-	      MPM_Mesh.Phi.acc.nM[p][i] += ShapeFunction_pI*Forces.nV[idx_A_mask_i]/mass_I;
-	      /* Update the particles velocities */
-	      MPM_Mesh.Phi.vel.nM[p][i] += ShapeFunction_pI*DeltaTimeStep*Forces.nV[idx_A_mask_i]/mass_I;
+    	      /* Update the particles accelerations */
+    	      MPM_Mesh.Phi.acc.nM[p][i] += ShapeFunction_pI*Acceleration.nV[idx_A_mask_i];
+    	      /* Update the particles velocities */
+    	      MPM_Mesh.Phi.vel.nM[p][i] += gamma*ShapeFunction_pI*Dt*Acceleration.nV[idx_A_mask_i];
+            /* Compute the nodal contribution of the increment of displacement */
+            D_U_pI = ShapeFunction_pI*D_Displacement.nV[idx_A_mask_i];
+            /* Update the particle displacement */
+            MPM_Mesh.Phi.dis.nM[p][i] += D_U_pI;
+    	      /* Update the particles position */
+    	      MPM_Mesh.Phi.x_GC.nM[p][i] += D_U_pI;
+	       } 
 
-        /* Compute the nodal contribution of the increment of displacement */
-        D_U_pI = D_Displacement.nV[idx_A_mask_i];
+         /*
+          Update pressure field
+         */
+          MPM_Mesh.Phi.Pw.nM[p] += gamma*ShapeFunction_pI*Dt*Rate_Pore_water_pressure.nV[A_mask];
 
-        /* Update the particle displacement */
-        MPM_Mesh.Phi.dis.nM[p][i] += D_U_pI;
-	      /* Update the particles position */
-	      MPM_Mesh.Phi.x_GC.nM[p][i] += D_U_pI;
-	    } 
-    	}
+      	}
 
       /*
 	Free memory

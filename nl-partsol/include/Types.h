@@ -209,6 +209,7 @@ typedef struct {
    * Displacement field 
    */
   Matrix dis;
+  Matrix D_dis;
   
   /*! 
    * Velocity field 
