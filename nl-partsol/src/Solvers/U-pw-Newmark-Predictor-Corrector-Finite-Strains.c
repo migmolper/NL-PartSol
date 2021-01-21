@@ -22,7 +22,7 @@ int Number_Out_particles_path_csv;
 
 /* Step 1 */
 static Matrix compute_Mass_Matrix_Mixture(GaussPoint,Mesh,Mask,double);
-static Matrix compute_Compressibility_Matrix_Fluid(GaussPoint, Mesh, Mask);
+static Matrix compute_Compressibility_Matrix_Fluid(GaussPoint, Mesh, Mask, double);
 /* Step 2 */
 static  void  compute_Explicit_Newmark_Predictor(GaussPoint,double,double);
 /* Step 3 */
@@ -85,6 +85,9 @@ void upw_Newmark_Predictor_Corrector_Finite_Strains(Mesh FEM_Mesh, GaussPoint MP
   Matrix D_Displacement;
   Matrix Internal_Forces_Mixture;
   Matrix Reactions;
+  Matrix Viscous_Forces_Fluid;
+  Matrix Permeability_Forces_Fluid;
+  Matrix Permeability_Inertial_Forces_Fluid;
   Mask ActiveNodes;
 
   for(int TimeStep = InitialStep ; TimeStep<NumTimeStep ; TimeStep++ )
@@ -99,16 +102,16 @@ void upw_Newmark_Predictor_Corrector_Finite_Strains(Mesh FEM_Mesh, GaussPoint MP
       print_Status("*************************************************",TimeStep);
       print_Status("First step : Compute lumped mass of the mixture and compressibility matrix ... WORKING",TimeStep);
 
-      Mass_Matrix_Mixture = compute_Mass_Matrix_Mixture(MPM_Mesh,FEM_Mesh,ActiveNodes,1);
+      Mass_Matrix_Mixture = compute_Mass_Matrix_Mixture(MPM_Mesh,FEM_Mesh,ActiveNodes,1.0);
 
-      Compressibility_Matrix_Fluid = compute_Compressibility_Matrix_Fluid(MPM_Mesh,FEM_Mesh,ActiveNodes,1);
+      Compressibility_Matrix_Fluid = compute_Compressibility_Matrix_Fluid(MPM_Mesh,FEM_Mesh,ActiveNodes,1.0);
 
       print_Status("DONE !!!",TimeStep);
    
       print_Status("*************************************************",TimeStep);
       print_Status("Second step : Explicit Newmark predictor ... WORKING",TimeStep);
       
-      compute_Explicit_Newmark_Predictor(MPM_Mesh, gamma, Dt);
+      compute_Explicit_Newmark_Predictor(MPM_Mesh, gamma, TimeStep);
 
       print_Status("*************************************************",TimeStep);
       print_Status("Third step : Compute nodal magnitudes ... WORKING",TimeStep);
@@ -121,9 +124,9 @@ void upw_Newmark_Predictor_Corrector_Finite_Strains(Mesh FEM_Mesh, GaussPoint MP
 
       Acceleration = compute_Nodal_Acceleration(MPM_Mesh, FEM_Mesh, ActiveNodes, Mass_Matrix_Mixture);
       
-      Pore_water_pressure = compute_Pore_water_pressure(MPM_Mesh, FEM_Mesh, ActiveNodes, Compressibility_Matrix_Fluid);
+      Pore_water_pressure = compute_Nodal_Pore_water_pressure(MPM_Mesh, FEM_Mesh, ActiveNodes, Compressibility_Matrix_Fluid);
 
-      Rate_Pore_water_pressure = compute_Rate_Pore_water_pressure(MPM_Mesh, FEM_Mesh, ActiveNodes, Compressibility_Matrix_Fluid);
+      Rate_Pore_water_pressure = compute_Nodal_Rate_Pore_water_pressure(MPM_Mesh, FEM_Mesh, ActiveNodes, Compressibility_Matrix_Fluid);
  
       Imposse_Velocity(FEM_Mesh,Velocity,ActiveNodes,TimeStep);
 
@@ -160,7 +163,7 @@ void upw_Newmark_Predictor_Corrector_Finite_Strains(Mesh FEM_Mesh, GaussPoint MP
       print_Status("*************************************************",TimeStep);
       print_Status("Seven step : Compute corrector ... WORKING",TimeStep);
 
-      compute_Explicit_Newmark_Corrector(MPM_Mesh,FEM_Mesh,D_Displacement,Acceleration,Rate_Pore_water_pressure,ActiveNodes,gamma,Dt);
+      compute_Explicit_Newmark_Corrector(MPM_Mesh,FEM_Mesh,D_Displacement,Acceleration,Rate_Pore_water_pressure,ActiveNodes,gamma,TimeStep);
 
       local_search__Particles__(MPM_Mesh,FEM_Mesh);
 
@@ -176,11 +179,14 @@ void upw_Newmark_Predictor_Corrector_Finite_Strains(Mesh FEM_Mesh, GaussPoint MP
       */
       free__MatrixLib__(Mass_Matrix_Mixture); 
       free__MatrixLib__(Compressibility_Matrix_Fluid);
+      free__MatrixLib__(Gravity_field);
       free__MatrixLib__(Velocity);
       free__MatrixLib__(D_Displacement);
       free__MatrixLib__(Internal_Forces_Mixture);
-      free__MatrixLib__(Gravity_field);
       free__MatrixLib__(Reactions);
+      free__MatrixLib__(Viscous_Forces_Fluid);
+      free__MatrixLib__(Permeability_Forces_Fluid);
+      free__MatrixLib__(Permeability_Inertial_Forces_Fluid);
       free(ActiveNodes.Nodes2Mask);
       
       print_Status("DONE !!!",TimeStep);
@@ -369,12 +375,16 @@ static Matrix compute_Compressibility_Matrix_Fluid(
   int Order = 1*Nnodes_mask;
   int Mat_idx;
   int Ap;
+  int Bp;
   int A_mask;
+  int B_mask;
   Element Nodes_p; /* Element for each particle */
   Matrix ShapeFunction_p; /* Value of the shape-function */
-  double ShapeFunction_pA; /* Evaluation of the particle in the node */
+  double ShapeFunction_pA; /* Evaluation of the particle in the node A */
+  double ShapeFunction_pB; /* Evaluation of the particle in the node B */
   double V0_p; /* Mass of the particle (mixture) */
   double rho_f_p; /* Material density of the fluid */
+  double relative_rho_f_p; /* Relative density of the fluid */
   double phi_f_p; /* Volume fractions of the fluid */
   double K_f; /* Compressibility (fluid) */
   double compressibility_density_f_p; /* Compressibilidy density fo the fluid */
@@ -384,12 +394,12 @@ static Matrix compute_Compressibility_Matrix_Fluid(
   /* 
     Define and allocate the effective Compressibility matrix 
   */
-  Matrix Compressibility_Matrix = allocZ__MatrixLib__(Order, Order);
+  Matrix Compressibility_Matrix_Fluid = allocZ__MatrixLib__(Order, Order);
 
   /* 
     Define and allocate the lumped Compressibility matrix 
   */
-  Matrix Lumped_Compressibility_Matrix = allocZ__MatrixLib__(Order, Order);
+  Matrix Lumped_Compressibility_Matrix_Fluid = allocZ__MatrixLib__(Order, Order);
 
 
   for(int p = 0 ; p<Np ; p++)
@@ -450,7 +460,7 @@ static Matrix compute_Compressibility_Matrix_Fluid(
         /* 
           Fill the Lumped Compressibility matrix
         */
-        Lumped_Compressibility_Matrix.nM[A_mask][A_mask] += compressibility_density_A_p;      
+        Lumped_Compressibility_Matrix_Fluid.nM[A_mask][A_mask] += compressibility_density_A_p;      
 
 
         for(int B = 0 ; B<Nodes_p.NumberNodes ; B++)
@@ -474,7 +484,7 @@ static Matrix compute_Compressibility_Matrix_Fluid(
               /* 
                 Fill the effective Compressibility matrix
               */
-              Compressibility_Matrix.nM[A_mask][B_mask] += compressibility_density_AB_p;
+              Compressibility_Matrix_Fluid.nM[A_mask][B_mask] += compressibility_density_AB_p;
         }       
       }
 
@@ -492,17 +502,17 @@ static Matrix compute_Compressibility_Matrix_Fluid(
     {
       for(int B = 0 ; B<Order ; B++)
       {    
-        Compressibility_Matrix.nM[A][B] = (1-epsilon)*Compressibility_Matrix.nM[A][B] + (A == B)*epsilon*Lumped_Compressibility_Matrix.nM[A][B];
+        Compressibility_Matrix_Fluid.nM[A][B] = (1-epsilon)*Compressibility_Matrix_Fluid.nM[A][B] + (A == B)*epsilon*Lumped_Compressibility_Matrix_Fluid.nM[A][B];
       }
     }
 
   /*
     Free lumped Compressibility matrix.
   */
-  free__MatrixLib__(Lumped_Compressibility_Matrix);
+  free__MatrixLib__(Lumped_Compressibility_Matrix_Fluid);
 
   /* Add some usefulll info */
-  strcpy(Compressibility_Matrix.Info,"Compressibility-Matrix");
+  strcpy(Compressibility_Matrix_Fluid.Info,"Compressibility-Matrix");
 
   return Compressibility_Matrix_Fluid;
 }
@@ -1034,7 +1044,7 @@ static Matrix compute_Nodal_Pore_water_pressure(
           compressibility_density_A_p = compressibility_density_f_p*ShapeFunction_pA;
 
           /* Nodal Pore water pressure */
-          Pore_water_pressure.nV[A_mask] += compressibility_density_A_p*pw_p;
+          Pore_water_pressure.nV[A_mask] += compressibility_density_A_p*Pw_p;
         }
 
       /* Free the value of the shape functions */
@@ -1095,7 +1105,7 @@ static Matrix compute_Nodal_Rate_Pore_water_pressure(
   Element Nodes_p; /* Element for each particle */
   Matrix ShapeFunction_p; /* Value of the shape-function */
   double ShapeFunction_pA; /* Evaluation of the particle in the node */
-  double Pw_p; /* Particle pore water pressure */
+  double d_Pw_p; /* Particle rate pore water pressure */
   double V0_p; /* Volume of the particle */
   double rho_f_p; /* Material density of the particle (fluid phase) */
   double phi_f_p; /* Volume fraction of the particle (fluid phase) */
@@ -1425,7 +1435,7 @@ static void update_Local_State(
       /*
         Update state parameters
       */
-      Pw_0 = MPM_Mesh.Phi.Pw_0[p]; /* Get the initial pressure */
+      Pw_0 = MPM_Mesh.Phi.Pw_0.nV[p]; /* Get the initial pressure */
       Pw_n1 = MPM_Mesh.Phi.Pw.nV[p]/J_n1_p; /* From the Kirchhoff pressure compure the cauchy pore water pressure */
 
       MPM_Mesh.Phi.rho_f.nV[p] = rho_f_0*exp((Pw_n1-Pw_0)/K_f); /* Update the fluid pressure */
@@ -1595,17 +1605,17 @@ static Tensor compute_total_first_Piola_Kirchhoff_stress(
   int Ndim = NumberDimensions;
 
   Tensor P_p = alloc__TensorLib__(2);
-  Tensor inverse_Fm1_n1_p = Tensor Inverse__TensorLib__(F_n1_p);
+  Tensor inverse_F_n1_p = Inverse__TensorLib__(F_n1_p);
 
   for(int i = 0 ; i<Ndim ; i++)
   {
     for(int j = 0 ; j<Ndim ; j++)
     {
-      P_p.N[i][j] = P_effective_p.N[i][j] - theta_p*Fm1_n1_p.N[j][i];
+      P_p.N[i][j] = P_effective_p.N[i][j] - theta_p*inverse_F_n1_p.N[j][i];
     }
   }
 
-  free__TensorLib__(Fm1_n1_p);
+  free__TensorLib__(inverse_F_n1_p);
 
   return P_p;
 }
@@ -1768,7 +1778,7 @@ static Matrix compute_Viscous_Forces_Fluid(
         {
           idx_B = B*Ndim + i; 
           idx_AB = A*Order + B*Ndim + i;
-          Viscous_Forces.nV[A] += K_Permeability.nV[idx_AB]*Velocity.nV[idx_B];
+          Viscous_Forces.nV[A] += C_Viscosity.nV[idx_AB]*Velocity.nV[idx_B];
         }
       }
     }
@@ -1912,6 +1922,7 @@ static Matrix compute_Permeability_Forces_Fluid(
 {
   int Ndim = NumberDimensions;
   int Nnodes_mask = ActiveNodes.Nactivenodes;
+  int idx_AB;
 
   Matrix Permeability_Forces = allocZ__MatrixLib__(Nnodes_mask, 1);
   Matrix K_Permeability = compute_K_Permeability(ActiveNodes, MPM_Mesh, FEM_Mesh);
@@ -1946,9 +1957,15 @@ static Matrix compute_K_Permeability(
   int Ndim = NumberDimensions;
   int Nnodes_mask = ActiveNodes.Nactivenodes;
   int Np = MPM_Mesh.NumGP;
+  int MatIndx_p;
+  int Ap;
+  int Bp;
+  int A_mask;
+  int B_mask;
 
   Matrix K_Permeability = allocZ__MatrixLib__(Nnodes_mask, Nnodes_mask);
 
+  Material MatProp_p; /* Variable with the material properties of each particle */
   Element Nodes_p; /* Element for each particle */
   Matrix gradient_p;  /* Shape functions gradients */
   Tensor gradient_pA; /* Shape functions gradients (Node A), def config */
@@ -1957,7 +1974,7 @@ static Matrix compute_K_Permeability(
   Tensor GRADIENT_pB; /* Shape functions gradients (Node B), ref config */
   Tensor F_n_p; /* Deformation gradient t = n */
   Tensor F_n1_p; /* Deformation gradient t = n + 1 */
-  Tensor transpose_F_n_p; /*  /* Transpose of the deformation gradient t = n */
+  Tensor transpose_F_n_p; /* Transpose of the deformation gradient t = n */
   Tensor k_p; /* Spatial permebility tensor */
   Tensor K_p; /* Material permeability tensor */
   double g = 9.81;
@@ -1972,6 +1989,12 @@ static Matrix compute_K_Permeability(
   */
   for(int p = 0 ; p<Np ; p++)
     {
+
+      /*
+        Read material properties structures
+      */
+      MatIndx_p = MPM_Mesh.MatIdx[p];
+      MatProp_p = MPM_Mesh.Mat[MatIndx_p];
 
       /*
         Define tributary nodes of the particle 
@@ -2006,7 +2029,7 @@ static Matrix compute_K_Permeability(
         Describe the permeability tensor using the reference configuration 
         of the soil
       */
-      k_p = MPM_Mesh.Mat.Permeability;
+      k_p = MatProp_p.Permeability;
       K_p = alloc__TensorLib__(2);
       contravariant_pull_back_tensor__TensorLib__(K_p, k_p, F_n1_p);
 
@@ -2364,7 +2387,6 @@ static void solve_Nodal_Generalized_Darcy_Law(
   */
   free__MatrixLib__(Fluid_Forces);
 
-  return Fluid_Forces;
 }
 
 /**************************************************************/
@@ -2470,7 +2492,7 @@ static void compute_Explicit_Newmark_Corrector(
          /*
           Update pressure field
          */
-          MPM_Mesh.Phi.Pw.nM[p] += gamma*ShapeFunction_pI*Dt*Rate_Pore_water_pressure.nV[A_mask];
+          MPM_Mesh.Phi.Pw.nV[p] += gamma*ShapeFunction_pI*Dt*Rate_Pore_water_pressure.nV[A_mask];
 
       	}
 
@@ -2478,7 +2500,6 @@ static void compute_Explicit_Newmark_Corrector(
 	Free memory
       */
       free(Nodes_p.Connectivity);
-      free__MatrixLib__(gradient_p);
     }  
 }
 
