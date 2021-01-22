@@ -1310,9 +1310,10 @@ static void update_Local_State(
   int MatIndx_p;
   int Nnodes_p;
   double J_n1_p; /* Jacobian of the deformation gradient at t = n + 1 */
-  double Delta_J_p; /* Jacobian of the increment of deformation gradient */
   double K_f; /* Compressibility (fluid) */
   double rho_f_0; /* Initial density of the fluid */
+  double phi_s_0; /* Initial volume fraction (solid) */
+  double phi_f_0; /* Initial volume fraction (fluid) */
   Plastic_status Input_Plastic_Parameters; /* Input parameters for plasticity */
   Plastic_status Output_Plastic_Parameters; /* Output parameters for plasticity */
   Element Nodes_p; /* Element for each particle */
@@ -1340,6 +1341,8 @@ static void update_Local_State(
       MatProp_p = MPM_Mesh.Mat[MatIndx_p];
       K_f = MatProp_p.K_f;
       rho_f_0 = MatProp_p.rho_f_0;
+      phi_f_0 = MatProp_p.phi_f_0;
+      phi_s_0 = MatProp_p.phi_s_0;
 
       /*
 	       Define tributary nodes of the particle 
@@ -1366,7 +1369,6 @@ static void update_Local_State(
       /*
         Compute the Jacobian of the deformation gradient
       */
-      Delta_J_p = I3__TensorLib__(DF_p);
       J_n1_p = I3__TensorLib__(F_n1_p);
       
       /*
@@ -1440,8 +1442,8 @@ static void update_Local_State(
 
       MPM_Mesh.Phi.rho_f.nV[p] = rho_f_0*exp((Pw_n1-Pw_0)/K_f); /* Update the fluid pressure */
 
-      MPM_Mesh.Phi.phi_s.nV[p] *= (1/Delta_J_p); /* Update the volume fraction of the solid phase */
-      MPM_Mesh.Phi.phi_f.nV[p] = 1 - MPM_Mesh.Phi.phi_s.nV[p]; /* Update the volume fraction of the fluid phase */
+      MPM_Mesh.Phi.phi_s.nV[p] = phi_s_0/J_n1_p; /* Update the volume fraction of the solid phase */
+      MPM_Mesh.Phi.phi_f.nV[p] = 1 - (1 - phi_f_0)/J_n1_p; /* Update the volume fraction of the fluid phase */
 
       MPM_Mesh.Phi.rho.nV[p] = MPM_Mesh.Phi.rho_s.nV[p]*MPM_Mesh.Phi.phi_s.nV[p] +
                                MPM_Mesh.Phi.rho_f.nV[p]*MPM_Mesh.Phi.phi_f.nV[p];  /* Update density of the mixture */

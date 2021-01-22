@@ -375,7 +375,7 @@ typedef struct {
   double Cel;
   
   /*!
-   * Initial density (mixture/fluid/density)
+   * Initial density (mixture/fluid/solid)
    */
   double rho;
   double rho_f_0;
@@ -401,7 +401,13 @@ typedef struct {
   * Permeability of the soil skleleton
   */
   Tensor Permeability;
-  
+
+  /*!
+  * Initial volume fractions (solid/fluid)
+  */
+  double phi_s_0;
+  double phi_f_0;
+
   /*!
    * Activate eigenerosion-fracture modulus (Eigenerosion/Eigensoftening)
    */
@@ -431,6 +437,11 @@ typedef struct {
   double alpha_F_Drucker_Prager;
   double alpha_Q_Drucker_Prager;
   double beta_Drucker_Prager;
+
+  /*!
+  * Allows coupling with one layer material points
+  */
+  bool Mixture_Material_1L;
   
 } Material;
 

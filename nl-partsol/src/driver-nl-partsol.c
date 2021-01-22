@@ -171,7 +171,7 @@ int main(int argc, char * argv[])
       if(Is_New_Simulation)
       {
         puts("Generating new MPM simulation ...");
-        MPM_Mesh = GramsSolid2D(SimulationFile,FEM_Mesh);
+        MPM_Mesh = Generate_Soil_Water_Coupling_Analysis__InOutFun__(SimulationFile,FEM_Mesh);
       }
       if(Is_Restart_Simulation)
       {
