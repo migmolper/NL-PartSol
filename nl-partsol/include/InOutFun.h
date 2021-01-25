@@ -283,7 +283,17 @@ GaussPoint Generate_Gauss_Point_Analysis__InOutFun__(char *);
 
 */
 GaussPoint GramsSolid2D(char *,Mesh);
+/*****************************************************************/
 
+/*
+  \fn GaussPoint Generate_Soil_Water_Coupling_Analysis__InOutFun__(char * Name_File, Mesh FEM_Mesh);
+ 
+  \brief Function that generate a set of material points for soil-water coupling applications
+
+  \param File: Name of the file with the instructions
+  \param Nodes : Set of background nodes
+*/
+GaussPoint Generate_Soil_Water_Coupling_Analysis__InOutFun__(char *, Mesh);
 /*****************************************************************/
 
 /*!
@@ -297,7 +307,6 @@ GaussPoint GramsSolid2D(char *,Mesh);
 }
 */
 void Solver_selector__InOutFun__(char * );
-
 /*****************************************************************/
 
 /*!
@@ -312,7 +321,6 @@ void Solver_selector__InOutFun__(char * );
 
 */
 Material * GramsMaterials(char *, GaussPoint, int);
-
 /*****************************************************************/
 
 /*!
@@ -321,7 +329,6 @@ Material * GramsMaterials(char *, GaussPoint, int);
 
 */
 Material * Read_Materials__InOutFun__(char *, int);
-
 /*****************************************************************/
 
 /*!
@@ -336,7 +343,6 @@ Material * Read_Materials__InOutFun__(char *, int);
 
 */
 void Initial_condition_particles__InOutFun__(char *, GaussPoint, int);
-
 /*****************************************************************/
 
 /*!
@@ -350,7 +356,6 @@ void Initial_condition_particles__InOutFun__(char *, GaussPoint, int);
   \param FEM_Mesh
 */
 void Initial_condition_nodes__InOutFun__(char *, GaussPoint, Mesh);
-
 /*****************************************************************/
 
 /*!
@@ -373,7 +378,6 @@ void Initial_condition_nodes__InOutFun__(char *, GaussPoint, Mesh);
 
 */
 void GramsShapeFun(char * );
-
 /*****************************************************************/
 
 /*!
@@ -386,7 +390,6 @@ void GramsShapeFun(char * );
 
 */
 void GramsOutputs(char * );
-
 /*****************************************************************/
 
 /*!

@@ -1,5 +1,5 @@
 #include "nl-partsol.h"
-
+#include <sys/stat.h>
 
 /*
   Call global variables 
@@ -48,8 +48,9 @@ static char Error_message[MAXW];
 
 static Simulation_Key_Words Check_Simulation_Key_Words(char *);
 static Mesh_Parameters Read_Mesh_Parameters(char *);
+static int * assign_material_to_particles(char *, int, int, int);
 static void initialise_2D_particles();
-static bool Check_File(char *);
+static void Check_File(char *);
 static void standard_error();
 static FILE * Open_and_Check_simulation_file(char *);
 
@@ -105,7 +106,7 @@ GaussPoint Generate_Soil_Water_Coupling_Analysis__InOutFun__(char * Name_File, M
     /*
       Read particle mesh preliminar information
     */
-    Msh_Parms = (Name_File);
+    Msh_Parms = Read_Mesh_Parameters(Name_File);
 
     /*
       Read particles mesh 
@@ -188,12 +189,12 @@ GaussPoint Generate_Soil_Water_Coupling_Analysis__InOutFun__(char * Name_File, M
     /*
       Allocate vectorial/tensorial fields 
     */
-    MPM_Mesh.Phi = allocate_Fields(NumParticles);
+    MPM_Mesh.Phi = allocate_upw_vars__Fields__(NumParticles);
 
     /*
       Assign material for each material point
     */
-    MPM_Mesh.MatIdx = 
+    MPM_Mesh.MatIdx = assign_material_to_particles(Name_File,MPM_Mesh.NumberMaterials,NumParticles,Msh_Parms.GPxElement);
 
     /*
       Initialise particle 
@@ -208,19 +209,23 @@ GaussPoint Generate_Soil_Water_Coupling_Analysis__InOutFun__(char * Name_File, M
       Initialise shape functions 
     */
     puts("*************************************************");
-    if(strcmp(ShapeFunctionGP,"MPMQ4") == 0){
+    if(strcmp(ShapeFunctionGP,"MPMQ4") == 0)
+    {
       printf("\t * %s \n","Initialize MPMQ4 shape functions ...");
       initialize__Q4__(MPM_Mesh, FEM_Mesh);
     }
-    else if(strcmp(ShapeFunctionGP,"uGIMP") == 0){
+    else if(strcmp(ShapeFunctionGP,"uGIMP") == 0)
+    {
       printf("\t * %s \n","Initialize uGIMP shape functions ...");      
       initialize__GIMP__(MPM_Mesh,FEM_Mesh);
     }
-    else if(strcmp(ShapeFunctionGP,"LME") == 0){
+    else if(strcmp(ShapeFunctionGP,"LME") == 0)
+    {
       printf("\t * %s \n","Initialize LME shape functions ...");
       initialize__LME__(MPM_Mesh,FEM_Mesh);
     }
-    else if(strcmp(ShapeFunctionGP,"aLME") == 0){
+    else if(strcmp(ShapeFunctionGP,"aLME") == 0)
+    {
       printf("\t * %s \n","Initialize aLME shape functions ...");
       initialize__aLME__(MPM_Mesh,FEM_Mesh);
     }
@@ -230,11 +235,11 @@ GaussPoint Generate_Soil_Water_Coupling_Analysis__InOutFun__(char * Name_File, M
     /*
       Read initial values 
     */    
-    if(Is_Particle_Initial)
+    if(Sim_Params.Is_Particle_Initial)
     {
       Initial_condition_particles__InOutFun__(Name_File,MPM_Mesh,Msh_Parms.GPxElement);
     }
-    else if(Is_Nodal_Initial)
+    else if(Sim_Params.Is_Nodal_Initial)
     {
       Initial_condition_nodes__InOutFun__(Name_File,MPM_Mesh,FEM_Mesh);
     }
@@ -246,14 +251,14 @@ GaussPoint Generate_Soil_Water_Coupling_Analysis__InOutFun__(char * Name_File, M
     /*
       Read external forces 
     */    
-    if(Is_GramsNeumannBC)
+    if(Sim_Params.Is_GramsNeumannBC)
     {
-      MPM_Mesh.NumNeumannBC = Counter_GramsNeumannBC;
-      MPM_Mesh.F = GramsNeumannBC(Name_File,Counter_GramsNeumannBC,Msh_Parms.GPxElement);
+      MPM_Mesh.NumNeumannBC = Sim_Params.Counter_GramsNeumannBC;
+      MPM_Mesh.F = GramsNeumannBC(Name_File,Sim_Params.Counter_GramsNeumannBC,Msh_Parms.GPxElement);
     }
     else
     {
-      MPM_Mesh.NumNeumannBC = Counter_GramsNeumannBC;
+      MPM_Mesh.NumNeumannBC = Sim_Params.Counter_GramsNeumannBC;
       puts("*************************************************");
       printf(" \t %s : \n\t %s \n",
        "* No Neumann boundary conditions defined in",
@@ -263,13 +268,14 @@ GaussPoint Generate_Soil_Water_Coupling_Analysis__InOutFun__(char * Name_File, M
     /*
       Read body forces 
     */    
-    if(Is_GramsBodyForces)
+    if(Sim_Params.Is_GramsBodyForces)
     {
-      MPM_Mesh.NumberBodyForces = Counter_BodyForces;
-      MPM_Mesh.B = GramsBodyForces(Name_File,Counter_BodyForces,Msh_Parms.GPxElement); 
+      MPM_Mesh.NumberBodyForces = Sim_Params.Counter_BodyForces;
+      MPM_Mesh.B = GramsBodyForces(Name_File,Sim_Params.Counter_BodyForces,Msh_Parms.GPxElement); 
     }
-    else{
-      MPM_Mesh.NumberBodyForces = Counter_BodyForces;
+    else
+    {
+      MPM_Mesh.NumberBodyForces = Sim_Params.Counter_BodyForces;
       puts("*************************************************");
       printf(" \t %s : \n\t %s \n",
        "* No body forces defined in",Name_File);
@@ -431,30 +437,31 @@ static Mesh_Parameters Read_Mesh_Parameters(char * Name_File)
      if ((strcmp(File_Parameter[0],"File") == 0) && (Num_parameters == 2))
      {
         MPM_MeshFileName = File_Parameter[1];
-        generate_route(GPxElement.Route_Mesh,Name_File);
-        strcat(GPxElement.Route_Mesh,MPM_MeshFileName);
+        generate_route(Msh_Params.Route_Mesh,Name_File);
+        strcat(Msh_Params.Route_Mesh,MPM_MeshFileName);
+        Check_File(Msh_Params.Route_Mesh);
      }
      else
      {
-        sprintf(Error_message,"%s (Line %i)","File parameter missed",Num_line);
+        sprintf(Error_message,"Sintax error in line %i : %s",Num_line,"Soil-Water-Coupling-One-Layer (File=Mesh.msh, *)");
         standard_error(); 
      }
 
       Num_parameters = parse(GPxElement_Parameter,Words[2],delimiters_3);
      if ((strcmp(GPxElement_Parameter[0],"GPxElement") == 0) && (Num_parameters == 2))
      {
-        GPxElement.GPxElement = atoi(GPxElement_Parameter[1]);
+        Msh_Params.GPxElement = atoi(GPxElement_Parameter[1]);
      }
      else
      {
-        sprintf(Error_message,"%s (Line %i)","GPxElement parameter missed",Num_line);
+        sprintf(Error_message,"Sintax error in line %i : %s",Num_line,"Soil-Water-Coupling-One-Layer (*, GPxElement=int)");
         standard_error(); 
      }
 
     }
     else
     {
-      sprintf(Error_message,"%s (Line %i)","Insuficient number of parameters",Num_line);
+      sprintf(Error_message,"Sintax error in line %i : %s",Num_line,"Soil-Water-Coupling-One-Layer (File=Mesh.msh, GPxElement=int)");
       standard_error(); 
     }
 
@@ -473,19 +480,30 @@ static Mesh_Parameters Read_Mesh_Parameters(char * Name_File)
 
 static int * assign_material_to_particles(char * Name_File, int NumMaterials, int NumParticles, int GPxElement)
 {
+  ChainPtr Chain_Nodes = NULL;
+  int * Array_Nodes;
   int * MatIdx = (int *)calloc(NumParticles,sizeof(int));
   char Line[MAXC] = {0}; 
+  char FileNodesRoute[MAXC] = {0};
+  char Route_Nodes[MAXC] = {0};
   char * Words[MAXW] = {NULL};
   char * File_Parameter[MAXW] = {NULL};
   char * MatIdx_Parameter[MAXW] = {NULL};
   int Num_words = 0;
   int Num_parameters = 0;
   int Num_line = 0;
+  int Num_Nodes_File = 0;
+  int Material_Index;
  
   /*
     Open and check file
   */
   FILE * Sim_dat = Open_and_Check_simulation_file(Name_File);
+
+  /*
+    Generate route with the current possition of the command file
+  */
+  generate_route(Route_Nodes,Name_File);
 
 
   while(fgets(Line,sizeof(Line),Sim_dat) != NULL)
@@ -504,30 +522,60 @@ static int * assign_material_to_particles(char * Name_File, int NumMaterials, in
     if ((strcmp(Words[0],"Assign-material-to-particles") == 0) && (Num_words >= 3))
     {
 
-//      /* Read file with the nodes */
-//      sprintf(FileNodesRoute,"%s%s",Route_Nodes,Parse_Mat_id[1]);
-//      printf("\t -> %s : %s \n","Material points",FileNodesRoute);
+      /* 
+        Read index of the material
+      */
+      Num_words = parse(MatIdx_Parameter,Words[1],delimiters_3);
+      if((strcmp(MatIdx_Parameter[0],"MatIdx") == 0) && (Num_words == 2))
+      {
+        Material_Index = atoi(MatIdx_Parameter[1]);
 
-//      /* Get an array with the nodes */
-//      Chain_Nodes = File2Chain(FileNodesRoute);
-//      Num_Nodes = lenght__SetLib__(Chain_Nodes);
-//      Array_Nodes = set_to_memory__SetLib__(Chain_Nodes,Num_Nodes);
+        if(Material_Index >= NumMaterials)
+        {
+          sprintf(Error_message,"Sintax error in line %i : %s %i",Num_line,"MatIdx should go from 0 to",NumMaterials-1);
+          standard_error(); 
+        }
+      }
+      else
+      {
+        sprintf(Error_message,"Sintax error in line %i : %s",Num_line,"Assign-material-to-particles (MatIdx=Int, *)");
+        standard_error(); 
+      }
 
+      /*
+        Read file with the nodes 
+      */
+      Num_words = parse(File_Parameter,Words[2],delimiters_3);
+      if((strcmp(File_Parameter[0],"Particles") == 0) && (Num_words == 2))
+      {
+        sprintf(FileNodesRoute,"%s%s",Route_Nodes,File_Parameter[1]);
+        Check_File(FileNodesRoute);
+        Chain_Nodes = File2Chain(FileNodesRoute);
+        Num_Nodes_File = lenght__SetLib__(Chain_Nodes);
+        Array_Nodes = set_to_memory__SetLib__(Chain_Nodes,Num_Nodes_File);
+        free__SetLib__(&Chain_Nodes);
+      }
+      else
+      {
+        sprintf(Error_message,"Sintax error in line %i : %s",Num_line,"Assign-material-to-particles (*, Particles=List-Particles.txt)");
+        standard_error(); 
+      }
 
-      // Mat_GP.Id = atoi(Parse_Mat_Prop[1]);
-      // if(Mat_GP.Id >= GP_Mesh.NumberMaterials)
-      // {
-      //   sprintf(Error_message,"%s %i !!! \n","Id should go from 0 to",GP_Mesh.NumberMaterials-1);
-      // standard_error(Error_message);
-      // }
-      // for(int i = 0 ; i<Num_Nodes ; i++)
-      // {
-      //   for(int j = 0 ; j<GPxElement ; j++)
-      //   {
-      //   GP_Mesh.MatIdx[Array_Nodes[i]*GPxElement+j] = Mat_GP.Id;
-      //   }
-      // }
+      /*
+        Fill the MatIdx array with the index
+      */      
+      for(int i = 0 ; i<Num_Nodes_File ; i++)
+      {
+        for(int j = 0 ; j<GPxElement ; j++)
+        {
+          MatIdx[Array_Nodes[i]*GPxElement+j] = Material_Index;
+        }
+      }
 
+      /*
+        Free memory
+      */
+      free(Array_Nodes);
 
     }
 
@@ -538,7 +586,7 @@ static int * assign_material_to_particles(char * Name_File, int NumMaterials, in
   */
   fclose(Sim_dat);
 
-  return MatIdx
+  return MatIdx;
 }
 
 /***************************************************************************/
@@ -614,32 +662,27 @@ static void initialise_2D_particles(Mesh MPM_GID_Mesh,GaussPoint MPM_Mesh, int G
 
 /***************************************************************************/
 
-static bool Check_File(char * Path_File)
+static void Check_File(char * Path_File)
 {
   struct stat info;
   stat(Path_File,&info);
-  bool status_check;
 
   if(S_ISREG(info.st_mode))
   {
     printf("\t \t -> %s : %s \n","File",Path_File);
-    status_check = true;
   }
   else
   {
     sprintf(Error_message,"%s %s %s","File",Path_File,"does not exists");
     standard_error();
   } 
-
-  return status_check;
 }
 
 /***************************************************************************/
 
 static void standard_error()
 {
-  fprintf(stderr,"%s : %s !!! \n",
-     "Error in Generate-Soil-Water-Coupling-Analysis()",Error_message);
+  fprintf(stderr,"%s !!! \n",Error_message);
     exit(EXIT_FAILURE);
 }
 
