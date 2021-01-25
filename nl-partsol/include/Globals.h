@@ -34,6 +34,12 @@ extern int NumberDOF;
 
 
 /*
+	Soil-water mixture
+*/
+extern int Number_Soil_Water_Mixtures;
+extern Mixture * Soil_Water_Mixtures;
+
+/*
 	Variables for the outputs 
 */
 

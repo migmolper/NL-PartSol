@@ -178,7 +178,7 @@ typedef struct {
   Matrix rho;
 
   /*!
-   * Density field (solid/water) 
+   * Material density field (solid/water) 
    */
   Matrix rho_s;
   Matrix rho_f;
@@ -350,7 +350,7 @@ typedef struct {
 /*******************************************************/
 
 /*! \struct Material
- * Properties of a material model 
+ * Properties of a general material model 
  */
 typedef struct {
 
@@ -378,8 +378,6 @@ typedef struct {
    * Initial density (mixture/fluid/solid)
    */
   double rho;
-  double rho_f_0;
-  double rho_s_0;
   
   /*!
    * Elastic modulus 
@@ -394,19 +392,7 @@ typedef struct {
   /*!
   * Compressibility
   */
-  double K_s;
-  double K_f;
-
-  /*!
-  * Permeability of the soil skleleton
-  */
-  Tensor Permeability;
-
-  /*!
-  * Initial volume fractions (solid/fluid)
-  */
-  double phi_s_0;
-  double phi_f_0;
+  double Compressibility;
 
   /*!
    * Activate eigenerosion-fracture modulus (Eigenerosion/Eigensoftening)
@@ -438,12 +424,46 @@ typedef struct {
   double alpha_Q_Drucker_Prager;
   double beta_Drucker_Prager;
 
-  /*!
-  * Allows coupling with one layer material points
-  */
-  bool Mixture_Material_1L;
   
 } Material;
+
+/*******************************************************/
+
+/*! \struct Mixture
+ * This structure is devoted to store information 
+ * for a general kind of mixtures
+ */
+typedef struct {
+
+  /*!
+   * Index of the mixture 
+   */
+  int Id;
+
+  /*!
+   * Name of the mixture
+   */
+  char Type [100];
+
+  /* 
+    Index for the constitutive description of each phase
+    for the soil-water mixture
+  */
+  int Soil_Idx;
+  int Water_Idx;
+
+  /*!
+  * Permeability of the soil skleleton
+  */
+  Tensor Permeability;
+
+  /*!
+  * Initial volume fractions (Soil/Water)
+  */
+  double phi_s_0;
+  double phi_f_0;
+
+} Mixture;
 
 /*******************************************************/
 
@@ -496,6 +516,11 @@ typedef struct {
    * Library of materials 
    */
   Material * Mat;
+
+  /*! 
+  * Index of the mixtures for each particle 
+  */
+  int * MixtIdx;
 
   /*!
    * Number of Neumann boundary conditions 

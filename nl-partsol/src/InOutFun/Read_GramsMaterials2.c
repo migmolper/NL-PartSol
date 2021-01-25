@@ -22,15 +22,9 @@ typedef struct
 {
 
   bool Is_rho; // Reference fensity
-  bool Is_rho_s_0; // Reference density (solid phase)
-  bool Is_rho_f_0; // Reference density (fluid phase)
   bool Is_E; // Young modulus
   bool Is_nu; // Poisson cefficient
-  bool Is_K_s; // Bulk stiffness (solid phase)
-  bool Is_K_f; // Bulk stiffness (fluid phase)
-  bool Is_Permeability; // Permeability porous skeleton
-  bool Is_phi_s_0; // Reference volume fraction (solid phase)
-  bool Is_phi_f_0; // Reference volume fraction (fluid phase)
+  bool Is_Compressibility; // Bulk stiffness
   bool Is_E_p0; // Initial plastic strain
   bool Is_yield_stress; // Initial Yield stress
   bool Is_H; // Hardening parameter (modulus)
@@ -67,7 +61,7 @@ static void check_Neo_Hookean_Wriggers_Material(Material,Check_Material);
 static void check_Von_Mises_Material(Material,Check_Material);
 static void check_Von_Mises_Material(Material,Check_Material);
 static void check_Drucker_Prager_Material(Material,Check_Material);
-static void check_mixture_parameters_one_layer(Material, Check_Material);
+static void check_Compressible_Newtonian_Fluid_Material(Material,Check_Material);
 static void standard_error();
 static void standard_output(char *);
 static FILE * Open_and_Check_simulation_file(char *);
@@ -233,16 +227,6 @@ static Material Define_Material(FILE * Simulation_file,
       ChkMat.Is_rho = true;
       New_Material.rho = atof(Parameter_pars[1]);
     }
-    else if(strcmp(Parameter_pars[0],"rho-s-0") == 0)
-    {
-      ChkMat.Is_rho_s_0 = true;
-      New_Material.rho_s_0 = atof(Parameter_pars[1]);
-    }
-    else if(strcmp(Parameter_pars[0],"rho-f-0") == 0)
-    {
-      ChkMat.Is_rho_f_0 = true;
-      New_Material.rho_f_0 = atof(Parameter_pars[1]);
-    }
     else if(strcmp(Parameter_pars[0],"E") == 0)
     {
       ChkMat.Is_E = true;
@@ -253,34 +237,10 @@ static Material Define_Material(FILE * Simulation_file,
       ChkMat.Is_nu = true;
       New_Material.nu = atof(Parameter_pars[1]);
     }
-    else if(strcmp(Parameter_pars[0],"Compressibility-Solid") == 0)
+    else if(strcmp(Parameter_pars[0],"Compressibility") == 0)
     {
-      ChkMat.Is_K_s = true;
-      New_Material.K_s = atof(Parameter_pars[1]);
-    }
-    else if(strcmp(Parameter_pars[0],"Compressibility-Fluid") == 0)
-    {
-      ChkMat.Is_K_f = true;
-      New_Material.K_f = atof(Parameter_pars[1]);
-    }
-    else if(strcmp(Parameter_pars[0],"Permeability-Skeleton") == 0)
-    {
-      ChkMat.Is_Permeability = true;
-      New_Material.Permeability = alloc__TensorLib__(2);
-      for(int i = 0 ; i<Ndim ; i++)
-      {
-        New_Material.Permeability.N[i][i] = atof(Parameter_pars[1]);
-      }
-    }
-    else if(strcmp(Parameter_pars[0],"Reference-Volume-Fraction-Solid") == 0)
-    {
-      ChkMat.Is_phi_s_0 = true;
-      New_Material.phi_s_0 = atof(Parameter_pars[1]);
-    }
-    else if(strcmp(Parameter_pars[0],"Reference-Volume-Fraction-Fluid") == 0)
-    {
-      ChkMat.Is_phi_f_0 = true;
-      New_Material.phi_f_0 = atof(Parameter_pars[1]);
+      ChkMat.Is_Compressibility = true;
+      New_Material.Compressibility = atof(Parameter_pars[1]);
     }
     else if(strcmp(Parameter_pars[0],"Reference-Plastic-Strain") == 0)
     {
@@ -322,10 +282,6 @@ static Material Define_Material(FILE * Simulation_file,
     else if(strcmp(Parameter_pars[0],"Hardening-Ortiz") == 0)
     {
       New_Material.Hardening_Ortiz = Activate_Options("Hardening-Ortiz", Parameter_pars[1]);
-    }
-    else if(strcmp(Parameter_pars[0],"Mixture-material-1L") == 0)
-    {
-      New_Material.Mixture_Material_1L = Activate_Options("Mixture-material-1L", Parameter_pars[1]);
     }
     else if((strcmp(Parameter_pars[0],"}") == 0) && (Parser_status == 1))
     {
@@ -393,6 +349,10 @@ static Material Define_Material(FILE * Simulation_file,
     TOL_Radial_Returning = 1E-10;
     Max_Iterations_Radial_Returning = 30;
   }
+  else if(strcmp(New_Material.Type,"Compressible-Newtonian-Fluid") == 0)
+  {
+    check_Compressible_Newtonian_Fluid_Material(New_Material,ChkMat);
+  }
   else
   {
     sprintf(Error_message,"%s","Unrecognized kind of material");
@@ -411,7 +371,7 @@ static bool Activate_Options(char * Option, char * status_text)
 
   if(strcmp(status_text,"true") == 0)
   {
-    printf("\t -> %s : true \n", Option);
+    printf("\t -> %s : True \n", Option);
     return true;
   }
   else if(strcmp(status_text,"false") == 0)
@@ -444,6 +404,7 @@ static Check_Material Initialise_Check_Material()
   ChkMat.Is_cohesion = false;
   ChkMat.Is_friction_angle = false;
   ChkMat.Is_dilatancy_angle = false;
+  ChkMat.Is_Compressibility = false;
 
   return ChkMat;
 }
@@ -488,13 +449,6 @@ static void check_Linear_Elastic_Material(Material Mat_particle, Check_Material 
     exit(EXIT_FAILURE);
   } 
 
-  /*  
-    If the one layer mixture parameter is activated, each material point carries
-    the information of fluid and solid phases, therefore some aditional properties  
-    must be defined.
-  */
-  check_mixture_parameters_one_layer(Mat_particle,ChkMat);
-
 }
 
 /**********************************************************************/
@@ -519,13 +473,6 @@ static void check_Saint_Venant_Kirchhoff_Material(Material Mat_particle, Check_M
     exit(EXIT_FAILURE);
   }
 
-  /*  
-    If the one layer mixture parameter is activated, each material point carries
-    the information of fluid and solid phases, therefore some aditional properties  
-    must be defined.
-  */
-  check_mixture_parameters_one_layer(Mat_particle,ChkMat);
-
 }
 
 /**********************************************************************/
@@ -549,13 +496,6 @@ static void check_Neo_Hookean_Wriggers_Material(Material Mat_particle, Check_Mat
     fputs(ChkMat.Is_nu  ? "Poisson modulus : true \n" : "Poisson modulus : false \n", stdout);
     exit(EXIT_FAILURE);
   }
-
-  /*  
-    If the one layer mixture parameter is activated, each material point carries
-    the information of fluid and solid phases, therefore some aditional properties  
-    must be defined.
-  */
-  check_mixture_parameters_one_layer(Mat_particle,ChkMat);
 
 }
 
@@ -585,13 +525,6 @@ static void check_Von_Mises_Material(Material Mat_particle, Check_Material ChkMa
     fputs(ChkMat.Is_H  ? "Hardening modulus : true \n" : "Hardening modulus : false \n", stdout);
     exit(EXIT_FAILURE);
   }
-
-  /*  
-    If the one layer mixture parameter is activated, each material point carries
-    the information of fluid and solid phases, therefore some aditional properties  
-    must be defined.
-  */
-  check_mixture_parameters_one_layer(Mat_particle,ChkMat);
 
 }
 
@@ -657,50 +590,27 @@ static void check_Drucker_Prager_Material(Material Mat_particle, Check_Material 
     }
   }
 
-  /*  
-    If the one layer mixture parameter is activated, each material point carries
-    the information of fluid and solid phases, therefore some aditional properties  
-    must be defined.
-  */
-  check_mixture_parameters_one_layer(Mat_particle,ChkMat);
-
 }
+
 
 /**********************************************************************/
 
-static void check_mixture_parameters_one_layer(Material Mat_particle, Check_Material ChkMat)
+static void check_Compressible_Newtonian_Fluid_Material(Material Mat_particle, Check_Material ChkMat)
 {
-  if(Mat_particle.Mixture_Material_1L)
+  if(ChkMat.Is_rho && ChkMat.Is_Compressibility)
   {
-    if(ChkMat.Is_rho_s_0 &&
-     ChkMat.Is_rho_f_0 && 
-     ChkMat.Is_K_s && 
-     ChkMat.Is_K_f && 
-     ChkMat.Is_Permeability && 
-     ChkMat.Is_phi_s_0 &&
-     ChkMat.Is_phi_f_0)
-    {
-      printf("\t \t -> %s : %f \n","Reference intrinsic density (solid phase)",Mat_particle.rho_s_0);
-      printf("\t \t -> %s : %f \n","Reference intrinsic density (fluid phase)",Mat_particle.rho_f_0);
-      printf("\t \t -> %s : %f \n","Bulk stiffness (solid phase)",Mat_particle.K_s);
-      printf("\t \t -> %s : %f \n","Bulk stiffness (fluid phase)",Mat_particle.K_f);
-      printf("\t \t -> %s : %f \n","Permeabily solid skeleton",Mat_particle.Permeability.N[0][0]);
-      printf("\t \t -> %s : %f \n","Volume fraction (solid phase)",Mat_particle.phi_s_0);
-      printf("\t \t -> %s : %f \n","Volume fraction (fluid phase)",Mat_particle.phi_f_0);
-    }
-    else
-    {
-      fprintf(stderr,"%s : %s %s %s\n",
-        "Error in GramsMaterials()","Some parameter is missed for",Mat_particle.Type,"material");
-      fputs(ChkMat.Is_rho_s_0 ? "Reference intrinsic density (solid phase) : true \n" : "Reference intrinsic density (solid phase) : false \n", stdout);
-      fputs(ChkMat.Is_rho_f_0 ? "Reference intrinsic density (fluid phase) : true \n" : "Reference intrinsic density (fluid phase) : false \n", stdout);
-      fputs(ChkMat.Is_K_s  ? "Bulk stiffness (solid phase) : true \n" : "Bulk stiffness (solid phase)s : false \n", stdout);
-      fputs(ChkMat.Is_K_f  ? "Bulk stiffness (fluid phase) : true \n" : "Bulk stiffness (fluid phase) : false \n", stdout);
-      fputs(ChkMat.Is_Permeability  ? "Permeabily solid skeleton : true \n" : "Permeabily solid skeleton : false \n", stdout);
-      fputs(ChkMat.Is_phi_s_0  ? "Volume fraction (solid phase) : true \n" : "Volume fraction (solid phase) : false \n", stdout);
-      fputs(ChkMat.Is_phi_f_0  ? "Volume fraction (fluid phase) : true \n" : "Volume fraction (fluid phase) : false \n", stdout);
-      exit(EXIT_FAILURE);
-    }
+    printf("\t -> %s \n","Compressible Newtonian Fluid material");
+    printf("\t \t -> %s : %f \n","Density",Mat_particle.rho);
+    printf("\t \t -> %s : %f \n","Compressibility",Mat_particle.Compressibility);
+  }
+  else
+  {
+    fprintf(stderr,"%s : %s \n",
+      "Error in GramsMaterials()",
+      "Some parameter is missed for Compressible Newtonian Fluid material");
+    fputs(ChkMat.Is_rho ? "Density : true \n" : "Density : false \n", stdout);
+    fputs(ChkMat.Is_Compressibility ? "Compressibility : true \n" : "Compressibility : false \n", stdout);
+    exit(EXIT_FAILURE);
   }
 }
 

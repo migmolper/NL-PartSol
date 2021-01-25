@@ -332,6 +332,13 @@ Material * Read_Materials__InOutFun__(char *, int);
 /*****************************************************************/
 
 /*!
+\fn Mixture * Read_Soil_Water_Mixtures__InOutFun__(char * SimulationFile, int Number_Soil_Water_Mixtures);
+
+*/
+Mixture * Read_Soil_Water_Mixtures__InOutFun__(char *, int);
+/*****************************************************************/
+
+/*!
   
   \fn void Initial_condition_particles__InOutFun__(char * File, GaussPoint Particles, int GPxElement)
   

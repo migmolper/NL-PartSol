@@ -11,6 +11,7 @@
 /*
   Call global variables
 */
+Mixture * Soil_Water_Mixtures; // Structure with the properties of the sample
 Event * Out_nodal_path_csv;
 Event * Out_particles_path_csv;
 int Number_Out_nodal_path_csv;
@@ -373,13 +374,15 @@ static Matrix compute_Compressibility_Matrix_Fluid(
   int Nnodes_mask = ActiveNodes.Nactivenodes;
   int Np = MPM_Mesh.NumGP;
   int Order = 1*Nnodes_mask;
-  int Mat_idx;
+  int Mixture_idx;
+  int Material_Water_idx;
   int Ap;
   int Bp;
   int A_mask;
   int B_mask;
   Element Nodes_p; /* Element for each particle */
   Matrix ShapeFunction_p; /* Value of the shape-function */
+  Material MatProp_Water_p; /* Variable with the material properties of the fluid phase */
   double ShapeFunction_pA; /* Evaluation of the particle in the node A */
   double ShapeFunction_pB; /* Evaluation of the particle in the node B */
   double V0_p; /* Mass of the particle (mixture) */
@@ -426,8 +429,19 @@ static Matrix compute_Compressibility_Matrix_Fluid(
       */
       rho_f_p = MPM_Mesh.Phi.rho_f.nV[p];
       phi_f_p = MPM_Mesh.Phi.phi_f.nV[p];
-      Mat_idx = MPM_Mesh.MatIdx[p];
-      K_f = MPM_Mesh.Mat[Mat_idx].K_f;
+
+      /*
+        Load intrinsic properties for the fluid phase to get the compressibility
+      */
+      Mixture_idx = MPM_Mesh.MixtIdx[p];
+      Material_Water_idx = Soil_Water_Mixtures[Mixture_idx].Water_Idx;
+      MatProp_Water_p = MPM_Mesh.Mat[Material_Water_idx];
+      K_f = MatProp_Water_p.Compressibility;
+
+      /* 
+        Load intrinsic properties for the fluid phase to get the compressibility
+      */
+      K_f = MatProp_Water_p.Compressibility;
 
       /*
         Compute relative density 
@@ -962,10 +976,12 @@ static Matrix compute_Nodal_Pore_water_pressure(
   int Ndim = NumberDimensions;
   int Nnodes_mask = ActiveNodes.Nactivenodes;
   int Np = MPM_Mesh.NumGP;
-  int Mat_idx;
+  int Mixture_idx;
+  int Material_Water_idx;
   int Ap;
   int A_mask;
   int idx_A_mask_i;
+  Material MatProp_Water_p; /* Variable with the material properties of the fluid phase */
   Element Nodes_p; /* Element for each particle */
   Matrix ShapeFunction_p; /* Value of the shape-function */
   double ShapeFunction_pA; /* Evaluation of the particle in the node */
@@ -1013,8 +1029,14 @@ static Matrix compute_Nodal_Pore_water_pressure(
       */
       rho_f_p = MPM_Mesh.Phi.rho_f.nV[p];
       phi_f_p = MPM_Mesh.Phi.phi_f.nV[p];
-      Mat_idx = MPM_Mesh.MatIdx[p];
-      K_f = MPM_Mesh.Mat[Mat_idx].K_f;
+
+      /*
+        Get intrinsic material properties for the fluid phase (Compressibility)
+      */
+      Mixture_idx = MPM_Mesh.MixtIdx[p];
+      Material_Water_idx = Soil_Water_Mixtures[Mixture_idx].Water_Idx;
+      MatProp_Water_p = MPM_Mesh.Mat[Material_Water_idx];
+      K_f = MatProp_Water_p.Compressibility;
 
       /*  
         Compute relative density 
@@ -1098,10 +1120,12 @@ static Matrix compute_Nodal_Rate_Pore_water_pressure(
   int Ndim = NumberDimensions;
   int Nnodes_mask = ActiveNodes.Nactivenodes;
   int Np = MPM_Mesh.NumGP;
-  int Mat_idx;
+  int Mixture_idx;
+  int Material_Water_idx;
   int Ap;
   int A_mask;
   int idx_A_mask_i;
+  Material MatProp_Water_p; /* Variable with the material properties of the fluid phase */  
   Element Nodes_p; /* Element for each particle */
   Matrix ShapeFunction_p; /* Value of the shape-function */
   double ShapeFunction_pA; /* Evaluation of the particle in the node */
@@ -1133,14 +1157,21 @@ static Matrix compute_Nodal_Rate_Pore_water_pressure(
       /* Get the initial volume of the particle */
       V0_p = MPM_Mesh.Phi.Vol_0.nV[p];
 
+
       /*
         Get the current material density, volume fraction 
         and compressibility for each material point (fluid) 
       */
       rho_f_p = MPM_Mesh.Phi.rho_f.nV[p];
       phi_f_p = MPM_Mesh.Phi.phi_f.nV[p];
-      Mat_idx = MPM_Mesh.MatIdx[p];
-      K_f = MPM_Mesh.Mat[Mat_idx].K_f;
+
+      /*
+        Get intrinsic material properties for the fluid phase (Compressibility)
+      */
+      Mixture_idx = MPM_Mesh.MixtIdx[p];
+      Material_Water_idx = Soil_Water_Mixtures[Mixture_idx].Water_Idx;
+      MatProp_Water_p = MPM_Mesh.Mat[Material_Water_idx];
+      K_f = MatProp_Water_p.Compressibility;
 
       /* Compute relative density */
       relative_rho_f_p = phi_f_p*rho_f_p;
@@ -1307,7 +1338,9 @@ static void update_Local_State(
   int Ndim = NumberDimensions;
   int Np = MPM_Mesh.NumGP;
   int Nnodes_mask = ActiveNodes.Nactivenodes;
-  int MatIndx_p;
+  int Mixture_idx;
+  int Material_Soil_idx;
+  int Material_Water_idx;
   int Nnodes_p;
   double J_n1_p; /* Jacobian of the deformation gradient at t = n + 1 */
   double K_f; /* Compressibility (fluid) */
@@ -1317,7 +1350,8 @@ static void update_Local_State(
   Plastic_status Input_Plastic_Parameters; /* Input parameters for plasticity */
   Plastic_status Output_Plastic_Parameters; /* Output parameters for plasticity */
   Element Nodes_p; /* Element for each particle */
-  Material MatProp_p; /* Variable with the material properties of each particle */
+  Material MatProp_Soil_p; /* Variable with the material properties of the solid phase */
+  Material MatProp_Water_p; /* Variable with the material properties of the fluid phase */
   Matrix gradient_p;
   Matrix D_Displacement_Ap;
   Tensor F_n_p; /* Deformation gradient of the soil skeleton (t = n) */
@@ -1329,20 +1363,29 @@ static void update_Local_State(
   double Pw_0; /* Cauchy pore water pressure at t = 0 */
   double Pw_n1; /* Cauchy pore water pressure at t = n + 1 */
   
-  /*
-    Loop in the material point set 
-  */
+
   for(int p = 0 ; p<Np ; p++)
     {
-      /*
-        Read material properties
+      /* 
+        Load material properties for each phase
       */
-      MatIndx_p = MPM_Mesh.MatIdx[p];
-      MatProp_p = MPM_Mesh.Mat[MatIndx_p];
-      K_f = MatProp_p.K_f;
-      rho_f_0 = MatProp_p.rho_f_0;
-      phi_f_0 = MatProp_p.phi_f_0;
-      phi_s_0 = MatProp_p.phi_s_0;
+      Mixture_idx = MPM_Mesh.MixtIdx[p];
+      Material_Soil_idx = Soil_Water_Mixtures[Mixture_idx].Soil_Idx;
+      Material_Water_idx = Soil_Water_Mixtures[Mixture_idx].Water_Idx;
+      MatProp_Soil_p = MPM_Mesh.Mat[Material_Soil_idx];
+      MatProp_Water_p = MPM_Mesh.Mat[Material_Water_idx];
+
+      /*
+        Read intrinsic material properties (fluid)
+      */
+      K_f = MatProp_Water_p.Compressibility;
+      rho_f_0 = MatProp_Water_p.rho;
+
+      /*
+        Read reference volume fraction for each phase
+      */
+      phi_f_0 = Soil_Water_Mixtures[Mixture_idx].phi_f_0;
+      phi_s_0 = Soil_Water_Mixtures[Mixture_idx].phi_s_0;
 
       /*
 	       Define tributary nodes of the particle 
@@ -1393,34 +1436,34 @@ static void update_Local_State(
       */
       S_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.Stress.nM[p],2);      
 
-      if(strcmp(MatProp_p.Type,"Saint-Venant-Kirchhoff") == 0)
+      if(strcmp(MatProp_Soil_p.Type,"Saint-Venant-Kirchhoff") == 0)
         {
-          S_p = grad_energy_Saint_Venant_Kirchhoff(S_p, C_n1_p, MatProp_p);
+          S_p = grad_energy_Saint_Venant_Kirchhoff(S_p, C_n1_p, MatProp_Soil_p);
         }
-      else if(strcmp(MatProp_p.Type,"Neo-Hookean-Wriggers") == 0)
+      else if(strcmp(MatProp_Soil_p.Type,"Neo-Hookean-Wriggers") == 0)
         {
-          S_p = grad_energy_Neo_Hookean_Wriggers(S_p, C_n1_p, J_n1_p, MatProp_p);
+          S_p = grad_energy_Neo_Hookean_Wriggers(S_p, C_n1_p, J_n1_p, MatProp_Soil_p);
         }
-      else if(strcmp(MatProp_p.Type,"Von-Mises") == 0)
+      else if(strcmp(MatProp_Soil_p.Type,"Von-Mises") == 0)
         {
           F_plastic_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_plastic.nM[p],2);
           Input_Plastic_Parameters.Cohesion = MPM_Mesh.Phi.cohesion.nV[p];
           Input_Plastic_Parameters.EPS = MPM_Mesh.Phi.EPS.nV[p];
 
           Output_Plastic_Parameters = finite_strains_plasticity_Von_Mises(S_p, C_n1_p, F_plastic_p, F_n1_p, 
-                                                                          Input_Plastic_Parameters, MatProp_p, J_n1_p);
+                                                                          Input_Plastic_Parameters, MatProp_Soil_p, J_n1_p);
 
           MPM_Mesh.Phi.cohesion.nV[p] = Output_Plastic_Parameters.Yield_stress;
           MPM_Mesh.Phi.EPS.nV[p] = Output_Plastic_Parameters.EPS;
         }
-      else if((strcmp(MatProp_p.Type,"Drucker-Prager-Plane-Strain") == 0) || (strcmp(MatProp_p.Type,"Drucker-Prager-Outer-Cone") == 0))
+      else if((strcmp(MatProp_Soil_p.Type,"Drucker-Prager-Plane-Strain") == 0) || (strcmp(MatProp_Soil_p.Type,"Drucker-Prager-Outer-Cone") == 0))
         {
           F_plastic_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_plastic.nM[p],2);
           Input_Plastic_Parameters.Cohesion = MPM_Mesh.Phi.cohesion.nV[p];
           Input_Plastic_Parameters.EPS = MPM_Mesh.Phi.EPS.nV[p];
 
           Output_Plastic_Parameters = finite_strains_plasticity_Drucker_Prager_Sanavia(S_p, C_n1_p, F_plastic_p, F_n1_p, 
-                                                                          Input_Plastic_Parameters, MatProp_p, J_n1_p);
+                                                                          Input_Plastic_Parameters, MatProp_Soil_p, J_n1_p);
 
           MPM_Mesh.Phi.cohesion.nV[p] = Output_Plastic_Parameters.Cohesion;
           MPM_Mesh.Phi.EPS.nV[p] = Output_Plastic_Parameters.EPS;
@@ -1430,7 +1473,7 @@ static void update_Local_State(
         {
           fprintf(stderr,"%s : %s %s %s \n",
 		  "Error in update_Local_State()",
-		  "The material",MatProp_p.Type,"has not been yet implemnented");
+		  "The material",MatProp_Soil_p.Type,"has not been yet implemnented");
           exit(EXIT_FAILURE);
         }
 
@@ -1959,7 +2002,8 @@ static Matrix compute_K_Permeability(
   int Ndim = NumberDimensions;
   int Nnodes_mask = ActiveNodes.Nactivenodes;
   int Np = MPM_Mesh.NumGP;
-  int MatIndx_p;
+  int Mixture_idx;
+  int Material_Soil_idx;
   int Ap;
   int Bp;
   int A_mask;
@@ -1967,7 +2011,7 @@ static Matrix compute_K_Permeability(
 
   Matrix K_Permeability = allocZ__MatrixLib__(Nnodes_mask, Nnodes_mask);
 
-  Material MatProp_p; /* Variable with the material properties of each particle */
+  Material MatProp_Soil_p; /* Variable with the material propertie of solid phase for each particle */
   Element Nodes_p; /* Element for each particle */
   Matrix gradient_p;  /* Shape functions gradients */
   Tensor gradient_pA; /* Shape functions gradients (Node A), def config */
@@ -1991,12 +2035,6 @@ static Matrix compute_K_Permeability(
   */
   for(int p = 0 ; p<Np ; p++)
     {
-
-      /*
-        Read material properties structures
-      */
-      MatIndx_p = MPM_Mesh.MatIdx[p];
-      MatProp_p = MPM_Mesh.Mat[MatIndx_p];
 
       /*
         Define tributary nodes of the particle 
@@ -2027,11 +2065,13 @@ static Matrix compute_K_Permeability(
       */
       V0_p = MPM_Mesh.Phi.Vol_0.nV[p];
 
-      /*
-        Describe the permeability tensor using the reference configuration 
-        of the soil
+      /* 
+        Load intrinsic properties for the solid phase to compute the permeability
       */
-      k_p = MatProp_p.Permeability;
+      Mixture_idx = MPM_Mesh.MixtIdx[p];
+      Material_Soil_idx = Soil_Water_Mixtures[Mixture_idx].Soil_Idx;
+      MatProp_Soil_p = MPM_Mesh.Mat[Material_Soil_idx];
+      k_p = Soil_Water_Mixtures[Mixture_idx].Permeability;
       K_p = alloc__TensorLib__(2);
       contravariant_pull_back_tensor__TensorLib__(K_p, k_p, F_n1_p);
 

@@ -6,18 +6,24 @@
 */
 char * MPM_MeshFileName;
 
+int Number_Soil_Water_Mixtures; // Number of Soil-Water Mixtures in the sample
+Mixture * Soil_Water_Mixtures; // Structure with the properties of the sample
+
+
 typedef struct
 {
   bool Is_Soil_Water_Coupling;
   bool Is_ParticlesMesh;
   bool Is_GramsShapeFun;
   bool Is_GramsMaterials;
+  bool Is_Material_Mixtures;
   bool Is_Particle_Initial;
   bool Is_Nodal_Initial;
   bool Is_GramsBodyForces;
   bool Is_GramsNeumannBC;
 
   int Counter_Materials;
+  int Counter_Mixtures;
   int Counter_BodyForces;
   int Counter_GramsNeumannBC;
 
@@ -48,7 +54,7 @@ static char Error_message[MAXW];
 
 static Simulation_Key_Words Check_Simulation_Key_Words(char *);
 static Mesh_Parameters Read_Mesh_Parameters(char *);
-static int * assign_material_to_particles(char *, int, int, int);
+static int * assign_mixture_to_particles(char *, int, int, int);
 static void initialise_2D_particles();
 static void Check_File(char *);
 static void standard_error();
@@ -76,7 +82,10 @@ GaussPoint Generate_Soil_Water_Coupling_Analysis__InOutFun__(char * Name_File, M
   Simulation_Key_Words Sim_Params; /* Auxiliar varible to check key words */
   Mesh_Parameters Msh_Parms; /* Auxiliar variable to read mesh parameters */
 
-
+  /*
+    Loop in the file to find key words, some of them are
+    mandatory, other no.
+  */
   Sim_Params = Check_Simulation_Key_Words(Name_File);
 
   /*
@@ -95,6 +104,24 @@ GaussPoint Generate_Soil_Water_Coupling_Analysis__InOutFun__(char * Name_File, M
     standard_error(); 
   }
   printf("\t %s \n","DONE !!");
+
+  exit(0);
+
+  /*
+    Define material mixtures
+  */
+  puts("*************************************************");
+  printf(" \t %s \n","* Read mixtures");
+  if(Sim_Params.Is_Material_Mixtures && (MPM_Mesh.NumberMaterials > 1))
+  {
+    Number_Soil_Water_Mixtures = Sim_Params.Counter_Materials;
+    Soil_Water_Mixtures = Read_Soil_Water_Mixtures__InOutFun__(Name_File, Number_Soil_Water_Mixtures);
+  }
+  else
+  {
+    sprintf(Error_message,"%s","No material mixtures were defined or insuficient number of material for the mixture");
+    standard_error(); 
+  }
 
   
   /*
@@ -192,9 +219,9 @@ GaussPoint Generate_Soil_Water_Coupling_Analysis__InOutFun__(char * Name_File, M
     MPM_Mesh.Phi = allocate_upw_vars__Fields__(NumParticles);
 
     /*
-      Assign material for each material point
+      Assign mixture for each material point
     */
-    MPM_Mesh.MatIdx = assign_material_to_particles(Name_File,MPM_Mesh.NumberMaterials,NumParticles,Msh_Parms.GPxElement);
+    MPM_Mesh.MixtIdx = assign_mixture_to_particles(Name_File,Number_Soil_Water_Mixtures,NumParticles,Msh_Parms.GPxElement);
 
     /*
       Initialise particle 
@@ -324,16 +351,17 @@ static Simulation_Key_Words Check_Simulation_Key_Words(char * Name_File)
   Sim_Key_Wrds.Is_ParticlesMesh = false;
   Sim_Key_Wrds.Is_GramsShapeFun = false;
   Sim_Key_Wrds.Is_GramsMaterials = false;
+  Sim_Key_Wrds.Is_Material_Mixtures = false;
   Sim_Key_Wrds.Is_Particle_Initial = false;
   Sim_Key_Wrds.Is_Nodal_Initial = false;
   Sim_Key_Wrds.Is_GramsBodyForces = false;
   Sim_Key_Wrds.Is_GramsNeumannBC = false;
 
   Sim_Key_Wrds.Counter_Materials = 0;
+  Sim_Key_Wrds.Counter_Mixtures = 0;
   Sim_Key_Wrds.Counter_BodyForces = 0;
   Sim_Key_Wrds.Counter_GramsNeumannBC = 0;
   
-
   /*
     Open and check file
   */
@@ -364,10 +392,15 @@ static Simulation_Key_Words Check_Simulation_Key_Words(char * Name_File)
     {
       Sim_Key_Wrds.Is_GramsShapeFun = true;
     }
-    else if (strcmp(Words[0],"GramsMaterials") == 0)
+    else if (strcmp(Words[0],"Define-Material") == 0)
     {
       Sim_Key_Wrds.Is_GramsMaterials = true;
       Sim_Key_Wrds.Counter_Materials++;
+    }
+    else if (strcmp(Words[0],"Define-Mixture") == 0)
+    {
+      Sim_Key_Wrds.Is_Material_Mixtures = true;
+      Sim_Key_Wrds.Counter_Mixtures++;
     }
     else if (strcmp(Words[0],"GramsInitials") == 0)
     {
@@ -478,22 +511,22 @@ static Mesh_Parameters Read_Mesh_Parameters(char * Name_File)
 
 /***************************************************************************/
 
-static int * assign_material_to_particles(char * Name_File, int NumMaterials, int NumParticles, int GPxElement)
+static int * assign_mixture_to_particles(char * Name_File, int NumMixtures, int NumParticles, int GPxElement)
 {
   ChainPtr Chain_Nodes = NULL;
   int * Array_Nodes;
-  int * MatIdx = (int *)calloc(NumParticles,sizeof(int));
+  int * MixtIdx = (int *)calloc(NumParticles,sizeof(int));
   char Line[MAXC] = {0}; 
   char FileNodesRoute[MAXC] = {0};
   char Route_Nodes[MAXC] = {0};
   char * Words[MAXW] = {NULL};
   char * File_Parameter[MAXW] = {NULL};
-  char * MatIdx_Parameter[MAXW] = {NULL};
+  char * MixtIdx_Parameter[MAXW] = {NULL};
   int Num_words = 0;
   int Num_parameters = 0;
   int Num_line = 0;
   int Num_Nodes_File = 0;
-  int Material_Index;
+  int Mixture_Index;
  
   /*
     Open and check file
@@ -519,26 +552,26 @@ static int * assign_material_to_particles(char * Name_File, int NumMaterials, in
     */
     Num_line++;
 
-    if ((strcmp(Words[0],"Assign-material-to-particles") == 0) && (Num_words >= 3))
+    if ((strcmp(Words[0],"Assign-mixture-to-particles") == 0) && (Num_words >= 3))
     {
 
       /* 
-        Read index of the material
+        Read index of the mixture
       */
-      Num_words = parse(MatIdx_Parameter,Words[1],delimiters_3);
-      if((strcmp(MatIdx_Parameter[0],"MatIdx") == 0) && (Num_words == 2))
+      Num_words = parse(MixtIdx_Parameter,Words[1],delimiters_3);
+      if((strcmp(MixtIdx_Parameter[0],"MixtIdx") == 0) && (Num_words == 2))
       {
-        Material_Index = atoi(MatIdx_Parameter[1]);
+        Mixture_Index = atoi(MixtIdx_Parameter[1]);
 
-        if(Material_Index >= NumMaterials)
+        if(Mixture_Index >= NumMixtures)
         {
-          sprintf(Error_message,"Sintax error in line %i : %s %i",Num_line,"MatIdx should go from 0 to",NumMaterials-1);
+          sprintf(Error_message,"Sintax error in line %i : %s %i",Num_line,"MixtIdx should go from 0 to",NumMixtures-1);
           standard_error(); 
         }
       }
       else
       {
-        sprintf(Error_message,"Sintax error in line %i : %s",Num_line,"Assign-material-to-particles (MatIdx=Int, *)");
+        sprintf(Error_message,"Sintax error in line %i : %s",Num_line,"Assign-mixture-to-particles (MixtIdx=Int, *)");
         standard_error(); 
       }
 
@@ -557,18 +590,18 @@ static int * assign_material_to_particles(char * Name_File, int NumMaterials, in
       }
       else
       {
-        sprintf(Error_message,"Sintax error in line %i : %s",Num_line,"Assign-material-to-particles (*, Particles=List-Particles.txt)");
+        sprintf(Error_message,"Sintax error in line %i : %s",Num_line,"Assign-mixture-to-particles (*, Particles=List-Particles.txt)");
         standard_error(); 
       }
 
       /*
-        Fill the MatIdx array with the index
+        Fill the MixtIdx array with the index
       */      
       for(int i = 0 ; i<Num_Nodes_File ; i++)
       {
         for(int j = 0 ; j<GPxElement ; j++)
         {
-          MatIdx[Array_Nodes[i]*GPxElement+j] = Material_Index;
+          MixtIdx[Array_Nodes[i]*GPxElement+j] = Mixture_Index;
         }
       }
 
@@ -586,7 +619,7 @@ static int * assign_material_to_particles(char * Name_File, int NumMaterials, in
   */
   fclose(Sim_dat);
 
-  return MatIdx;
+  return MixtIdx;
 }
 
 /***************************************************************************/
@@ -601,7 +634,17 @@ static void initialise_2D_particles(Mesh MPM_GID_Mesh,GaussPoint MPM_Mesh, int G
   Matrix Poligon_Coordinates;
   double Area_Element, A_p, th_p, m_p, rho_p;
   int p;
-  int MatIdx_p;
+  int Mixture_idx;
+  int Material_Soil_idx;
+  int Material_Water_idx;
+
+  Material MatProp_Soil_p; /* Variable with the material properties of the solid phase */
+  Material MatProp_Water_p; /* Variable with the material properties of the fluid phase */
+  double rho_0; /* Initial density of the mixture */
+  double rho_s_0; /* Initial density of the fluid */
+  double rho_f_0; /* Initial density of the fluid */
+  double phi_s_0; /* Initial volume fraction (solid) */
+  double phi_f_0; /* Initial volume fraction (fluid) */
 
   for(int i = 0 ; i<MPM_GID_Mesh.NumElemMesh ; i++)
   {
@@ -621,35 +664,77 @@ static void initialise_2D_particles(Mesh MPM_GID_Mesh,GaussPoint MPM_Mesh, int G
       p = i*GPxElement+j;
 
       /*
-        Get the index of the material 
+        Get the index of the mixture 
       */
-      MatIdx_p = MPM_Mesh.MatIdx[p];
-    /* Get material properties */
-      A_p = Area_Element/GPxElement;
-      rho_p = MPM_Mesh.Mat[MatIdx_p].rho;
-      th_p = MPM_Mesh.Mat[MatIdx_p].thickness;
-      m_p = th_p*A_p*rho_p;
-    /* Set the initial volume */
+      Mixture_idx = MPM_Mesh.MixtIdx[p];
+      Material_Soil_idx = Soil_Water_Mixtures[Mixture_idx].Soil_Idx;
+      Material_Water_idx = Soil_Water_Mixtures[Mixture_idx].Water_Idx;
+      MatProp_Soil_p = MPM_Mesh.Mat[Material_Soil_idx];
+      MatProp_Water_p = MPM_Mesh.Mat[Material_Water_idx];
+
+      /*
+        Get the intrinsic density of each phase and
+        assign it to the current intrinsic density of
+        each phase
+      */
+      rho_s_0 = MatProp_Soil_p.rho;
+      rho_f_0 = MatProp_Water_p.rho;
+      MPM_Mesh.Phi.rho_s.nV[p] = rho_s_0; 
+      MPM_Mesh.Phi.rho_f.nV[p] = phi_f_0;
+
+      /*
+        Get initial volume fraction of each phase and
+        assign it to the current volume fraction of
+        each phase
+      */
+      phi_s_0 = Soil_Water_Mixtures[Mixture_idx].phi_s_0;
+      phi_f_0 = Soil_Water_Mixtures[Mixture_idx].phi_f_0;
+      MPM_Mesh.Phi.phi_s.nV[p] = phi_s_0;
+      MPM_Mesh.Phi.phi_f.nV[p] = phi_f_0;
+
+      /*
+        Compute material properties 
+      */
+      A_p   = Area_Element/GPxElement; // Material point area
+      rho_p = phi_s_0*rho_s_0 + phi_f_0*rho_f_0; // Mixture density
+      th_p  = MPM_Mesh.Mat[Mixture_idx].thickness; // Material point thickness
+      m_p   = th_p*A_p*rho_p; // Material point mass
+      
+      /*
+        Set the initial total volume volume fractions 
+      */
       MPM_Mesh.Phi.Vol_0.nV[p] = A_p;
-    /* Set the initial density */
-      MPM_Mesh.Phi.rho.nV[p] = rho_p; 
-    /* Assign the mass parameter */
+
+      /*
+        Set the relative density of the mixture
+      */
+      MPM_Mesh.Phi.rho.nV[p] = rho_p;
+    
+      /*
+        Assign the mass parameter
+      */
       MPM_Mesh.Phi.mass.nV[p] = m_p;
-    /* Local coordinates of the element */
+      
+      /*
+        Local coordinates of the element
+      */
       MPM_Mesh.I0[p] = -999;
       MPM_Mesh.NumberNodes[p] = 4;
 
-      if(strcmp(MPM_Mesh.Mat[MatIdx_p].Type,"Von-Mises") == 0)
+      /*
+        Initialise some plastic variables
+      */
+      if(strcmp(MPM_Mesh.Mat[Mixture_idx].Type,"Von-Mises") == 0)
       {
-          MPM_Mesh.Phi.cohesion.nV[p] = MPM_Mesh.Mat[MatIdx_p].yield_stress_0;
+          MPM_Mesh.Phi.cohesion.nV[p] = MPM_Mesh.Mat[Mixture_idx].yield_stress_0;
       }
-      if(strcmp(MPM_Mesh.Mat[MatIdx_p].Type,"Drucker-Prager-Plane-Strain") == 0)
+      if(strcmp(MPM_Mesh.Mat[Mixture_idx].Type,"Drucker-Prager-Plane-Strain") == 0)
       {
-          MPM_Mesh.Phi.cohesion.nV[p] = MPM_Mesh.Mat[MatIdx_p].cohesion_reference;
+          MPM_Mesh.Phi.cohesion.nV[p] = MPM_Mesh.Mat[Mixture_idx].cohesion_reference;
       }
-      if(strcmp(MPM_Mesh.Mat[MatIdx_p].Type,"Drucker-Prager-Outer-Cone") == 0)
+      if(strcmp(MPM_Mesh.Mat[Mixture_idx].Type,"Drucker-Prager-Outer-Cone") == 0)
       {
-          MPM_Mesh.Phi.cohesion.nV[p] = MPM_Mesh.Mat[MatIdx_p].cohesion_reference;
+          MPM_Mesh.Phi.cohesion.nV[p] = MPM_Mesh.Mat[Mixture_idx].cohesion_reference;
       }
 
     }
