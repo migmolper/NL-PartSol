@@ -54,14 +54,14 @@ static Param_Index_and_Model Read_Index_and_Model(char *,char *);
 static Material  Define_Material(FILE *, Param_Index_and_Model);
 static bool Activate_Options(char *, char *);
 static Check_Material Initialise_Check_Material();
-static void check_Solid_Rigid_Material(Material,Check_Material);
-static void check_Linear_Elastic_Material(Material,Check_Material);
-static void check_Saint_Venant_Kirchhoff_Material(Material,Check_Material);
-static void check_Neo_Hookean_Wriggers_Material(Material,Check_Material);
-static void check_Von_Mises_Material(Material,Check_Material);
-static void check_Von_Mises_Material(Material,Check_Material);
-static void check_Drucker_Prager_Material(Material,Check_Material);
-static void check_Compressible_Newtonian_Fluid_Material(Material,Check_Material);
+static void check_Solid_Rigid_Material(Material,Check_Material,int);
+static void check_Linear_Elastic_Material(Material,Check_Material,int);
+static void check_Saint_Venant_Kirchhoff_Material(Material,Check_Material,int);
+static void check_Neo_Hookean_Wriggers_Material(Material,Check_Material,int);
+static void check_Von_Mises_Material(Material,Check_Material,int);
+static void check_Von_Mises_Material(Material,Check_Material,int);
+static void check_Drucker_Prager_Material(Material,Check_Material,int);
+static void check_Compressible_Newtonian_Fluid_Material(Material,Check_Material,int);
 static void standard_error();
 static void standard_output(char *);
 static FILE * Open_and_Check_simulation_file(char *);
@@ -300,30 +300,30 @@ static Material Define_Material(FILE * Simulation_file,
 
   if(strcmp(New_Material.Type,"Solid-Rigid") == 0)
   {
-    check_Solid_Rigid_Material(New_Material,ChkMat);
+    check_Solid_Rigid_Material(New_Material,ChkMat,Index_and_Model.Idx);
   }
   else if(strcmp(New_Material.Type,"LE") == 0)
   {
-    check_Linear_Elastic_Material(New_Material,ChkMat);
+    check_Linear_Elastic_Material(New_Material,ChkMat,Index_and_Model.Idx);
   }
   else if(strcmp(New_Material.Type,"Saint-Venant-Kirchhoff") == 0)
   { 
-    check_Saint_Venant_Kirchhoff_Material(New_Material,ChkMat);
+    check_Saint_Venant_Kirchhoff_Material(New_Material,ChkMat,Index_and_Model.Idx);
   }
   else if(strcmp(New_Material.Type,"Neo-Hookean-Wriggers") == 0)
   {
-    check_Neo_Hookean_Wriggers_Material(New_Material,ChkMat);
+    check_Neo_Hookean_Wriggers_Material(New_Material,ChkMat,Index_and_Model.Idx);
   }
   else if(strcmp(New_Material.Type,"Von-Mises") == 0)
   { 
-    check_Von_Mises_Material(New_Material,ChkMat); 
+    check_Von_Mises_Material(New_Material,ChkMat,Index_and_Model.Idx); 
     New_Material.E_plastic_reference = New_Material.yield_stress_0/New_Material.hardening_modulus;
     TOL_Radial_Returning = 1E-10;
     Max_Iterations_Radial_Returning = 300;
   }
   else if(strcmp(New_Material.Type,"Drucker-Prager-Plane-Strain") == 0)
   { 
-    check_Drucker_Prager_Material(New_Material,ChkMat);
+    check_Drucker_Prager_Material(New_Material,ChkMat,Index_and_Model.Idx);
     if(!New_Material.Hardening_Ortiz)
     {
       New_Material.E_plastic_reference = New_Material.cohesion_reference/New_Material.hardening_modulus; 
@@ -337,7 +337,7 @@ static Material Define_Material(FILE * Simulation_file,
   }
   else if(strcmp(New_Material.Type,"Drucker-Prager-Outer-cone") == 0)
   { 
-    check_Drucker_Prager_Material(New_Material,ChkMat);
+    check_Drucker_Prager_Material(New_Material,ChkMat,Index_and_Model.Idx);
     if(!New_Material.Hardening_Ortiz)
     {
       New_Material.E_plastic_reference = New_Material.cohesion_reference/New_Material.hardening_modulus; 
@@ -351,7 +351,7 @@ static Material Define_Material(FILE * Simulation_file,
   }
   else if(strcmp(New_Material.Type,"Compressible-Newtonian-Fluid") == 0)
   {
-    check_Compressible_Newtonian_Fluid_Material(New_Material,ChkMat);
+    check_Compressible_Newtonian_Fluid_Material(New_Material,ChkMat,Index_and_Model.Idx);
   }
   else
   {
@@ -410,11 +410,12 @@ static Check_Material Initialise_Check_Material()
 }
 
 /***************************************************************************/
-static void check_Solid_Rigid_Material(Material Mat_particle, Check_Material ChkMat)
+static void check_Solid_Rigid_Material(Material Mat_particle, Check_Material ChkMat, int Idx)
 {
   if(ChkMat.Is_rho)
   {
     printf("\t -> %s \n","Solid rigid material");
+    printf("\t \t -> %s : %i \n","Idx",Idx);
     printf("\t \t -> %s : %f \n","Density",Mat_particle.rho);
   }
   else
@@ -429,11 +430,12 @@ static void check_Solid_Rigid_Material(Material Mat_particle, Check_Material Chk
 
 /**********************************************************************/
 
-static void check_Linear_Elastic_Material(Material Mat_particle, Check_Material ChkMat)
+static void check_Linear_Elastic_Material(Material Mat_particle, Check_Material ChkMat, int Idx)
 {
   if(ChkMat.Is_rho && ChkMat.Is_E && ChkMat.Is_nu)
   {
     printf("\t -> %s \n","Linear elastic material");
+    printf("\t \t -> %s : %i \n","Idx",Idx);
     printf("\t \t -> %s : %f \n","Density",Mat_particle.rho);
     printf("\t \t -> %s : %f \n","Elastic modulus",Mat_particle.E);
     printf("\t \t -> %s : %f \n","Poisson modulus",Mat_particle.nu);
@@ -453,11 +455,12 @@ static void check_Linear_Elastic_Material(Material Mat_particle, Check_Material 
 
 /**********************************************************************/
 
-static void check_Saint_Venant_Kirchhoff_Material(Material Mat_particle, Check_Material ChkMat)
+static void check_Saint_Venant_Kirchhoff_Material(Material Mat_particle, Check_Material ChkMat, int Idx)
 {
   if(ChkMat.Is_rho && ChkMat.Is_E && ChkMat.Is_nu)
   {
     printf("\t -> %s \n","Saint-Venant-Kirchhoff material");
+    printf("\t \t -> %s : %i \n","Idx",Idx);
     printf("\t \t -> %s : %f \n","Density",Mat_particle.rho);
     printf("\t \t -> %s : %f \n","Elastic modulus",Mat_particle.E);
     printf("\t \t -> %s : %f \n","Poisson modulus",Mat_particle.nu);
@@ -477,11 +480,12 @@ static void check_Saint_Venant_Kirchhoff_Material(Material Mat_particle, Check_M
 
 /**********************************************************************/
 
-static void check_Neo_Hookean_Wriggers_Material(Material Mat_particle, Check_Material ChkMat)
+static void check_Neo_Hookean_Wriggers_Material(Material Mat_particle, Check_Material ChkMat, int Idx)
 {
   if(ChkMat.Is_rho && ChkMat.Is_E && ChkMat.Is_nu)
   {
     printf("\t -> %s \n","Neo-Hookean material (Wriggers model)");
+    printf("\t \t -> %s : %i \n","Idx",Idx);
     printf("\t \t -> %s : %f \n","Density",Mat_particle.rho);
     printf("\t \t -> %s : %f \n","Elastic modulus",Mat_particle.E);
     printf("\t \t -> %s : %f \n","Poisson modulus",Mat_particle.nu);
@@ -501,12 +505,13 @@ static void check_Neo_Hookean_Wriggers_Material(Material Mat_particle, Check_Mat
 
 /**********************************************************************/
 
-static void check_Von_Mises_Material(Material Mat_particle, Check_Material ChkMat)
+static void check_Von_Mises_Material(Material Mat_particle, Check_Material ChkMat, int Idx)
 {
   if(ChkMat.Is_rho && ChkMat.Is_E && ChkMat.Is_nu &&
    ChkMat.Is_yield_stress && ChkMat.Is_H)
   {
     printf("\t -> %s \n","Von-Mises material");
+    printf("\t \t -> %s : %i \n","Idx",Idx);
     printf("\t \t -> %s : %f \n","Density",Mat_particle.rho);
     printf("\t \t -> %s : %f \n","Elastic modulus",Mat_particle.E);
     printf("\t \t -> %s : %f \n","Poisson modulus",Mat_particle.nu);
@@ -530,12 +535,13 @@ static void check_Von_Mises_Material(Material Mat_particle, Check_Material ChkMa
 
 /**********************************************************************/
 
-static void check_Drucker_Prager_Material(Material Mat_particle, Check_Material ChkMat)
+static void check_Drucker_Prager_Material(Material Mat_particle, Check_Material ChkMat, int Idx)
 {
   if(ChkMat.Is_rho && ChkMat.Is_E && ChkMat.Is_nu && ChkMat.Is_cohesion && 
      ChkMat.Is_friction_angle && ChkMat.Is_dilatancy_angle)
   {
     printf("\t -> %s \n","Drucker-Prager material");
+    printf("\t \t -> %s : %i \n","Idx",Idx);
     printf("\t \t -> %s : %f \n","Density",Mat_particle.rho);
     printf("\t \t -> %s : %f \n","Elastic modulus",Mat_particle.E);
     printf("\t \t -> %s : %f \n","Poisson modulus",Mat_particle.nu);
@@ -595,11 +601,12 @@ static void check_Drucker_Prager_Material(Material Mat_particle, Check_Material 
 
 /**********************************************************************/
 
-static void check_Compressible_Newtonian_Fluid_Material(Material Mat_particle, Check_Material ChkMat)
+static void check_Compressible_Newtonian_Fluid_Material(Material Mat_particle, Check_Material ChkMat, int Idx)
 {
   if(ChkMat.Is_rho && ChkMat.Is_Compressibility)
   {
     printf("\t -> %s \n","Compressible Newtonian Fluid material");
+    printf("\t \t -> %s : %i \n","Idx",Idx);
     printf("\t \t -> %s : %f \n","Density",Mat_particle.rho);
     printf("\t \t -> %s : %f \n","Compressibility",Mat_particle.Compressibility);
   }

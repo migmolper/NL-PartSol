@@ -325,8 +325,9 @@ static void check_Borja_2004_Soil_water_Mixture(Mixture Mix_particle, Check_Mixt
       ChkMix.Is_phi_s_0 && 
       ChkMix.Is_phi_f_0)
     {
+      printf("\t -> %s \n","Soil-Water mixture (Borja 2004)");
       printf("\t \t -> %s : %i \n","Material model for the Soil phase",Mix_particle.Soil_Idx);
-      printf("\t \t -> %s : %i \n","Material model for the fluid phase",Mix_particle.Water_Idx);
+      printf("\t \t -> %s : %i \n","Material model for the Fluid phase",Mix_particle.Water_Idx);
       printf("\t \t -> %s : %f \n","Volume fraction (Soil phase)",Mix_particle.phi_s_0);
       printf("\t \t -> %s : %f \n","Volume fraction (fluid phase)",Mix_particle.phi_f_0);
     }
@@ -335,10 +336,10 @@ static void check_Borja_2004_Soil_water_Mixture(Mixture Mix_particle, Check_Mixt
       fprintf(stderr,"%s : %s %s %s\n",
         "Error in Define-Mixture()","Some parameter is missed for",Mix_particle.Type,"Mixture");
       fputs(ChkMix.Is_Soil_Idx  ? "Material model (Soil phase) : true \n" : "Material model (Soil phase) : false \n", stdout);
-      fputs(ChkMix.Is_Water_Idx  ? "Material model (fluid phase) : true \n" : "Material model (fluid phase) : false \n", stdout);
+      fputs(ChkMix.Is_Water_Idx  ? "Material model (Fluid phase) : true \n" : "Material model (Fluid phase) : false \n", stdout);
       fputs(ChkMix.Is_Permeability  ? "Permeabily Soil skeleton : true \n" : "Permeabily Soil skeleton : false \n", stdout);
       fputs(ChkMix.Is_phi_s_0  ? "Volume fraction (Soil phase) : true \n" : "Volume fraction (Soil phase) : false \n", stdout);
-      fputs(ChkMix.Is_phi_f_0  ? "Volume fraction (fluid phase) : true \n" : "Volume fraction (fluid phase) : false \n", stdout);
+      fputs(ChkMix.Is_phi_f_0  ? "Volume fraction (Fluid phase) : true \n" : "Volume fraction (Fluid phase) : false \n", stdout);
       exit(EXIT_FAILURE);
     }
 }

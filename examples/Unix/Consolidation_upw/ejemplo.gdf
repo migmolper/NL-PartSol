@@ -32,9 +32,15 @@ GramsBox (Type=GID,File=Nodes.msh) {
 }
 
 
+GramsTime (Type=NPC-FS) {
+     CFL=0.17
+     N=500
+}
+
+
 Define-Material (idx=0 , Model=Neo-Hookean-Wriggers)
 {
-  E=19.639
+  E=19.639e6
   nu=0.403
   rho=2700
 }
@@ -42,8 +48,9 @@ Define-Material (idx=0 , Model=Neo-Hookean-Wriggers)
 Define-Material (idx=1 , Model=Compressible-Newtonian-Fluid)
 {
   rho=1000
-  Compressibility=2.2e4
+  Compressibility=2.2e10
 }
+
 
 Define-Mixture (idx=0, Model=Borja-2004)
 {

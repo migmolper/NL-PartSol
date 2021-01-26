@@ -223,8 +223,8 @@ Mesh GramsBox(char * Name_File)
   /**************************************************/
   if(NumBounds > 0){
     puts("*************************************************");
-    printf(" \t %s : \n \t %i \n",
-	   "* Number of boundaries",NumBounds);
+    printf(" \t %s (%i) : \n",
+	   "* Boundary conditions",NumBounds);
     FEM_Mesh.Bounds.NumBounds = NumBounds;
     if(strcmp(Formulation,"-u") == 0)
     {

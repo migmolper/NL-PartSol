@@ -82,6 +82,7 @@ GaussPoint Generate_Soil_Water_Coupling_Analysis__InOutFun__(char * Name_File, M
   Simulation_Key_Words Sim_Params; /* Auxiliar varible to check key words */
   Mesh_Parameters Msh_Parms; /* Auxiliar variable to read mesh parameters */
 
+
   /*
     Loop in the file to find key words, some of them are
     mandatory, other no.
@@ -92,7 +93,7 @@ GaussPoint Generate_Soil_Water_Coupling_Analysis__InOutFun__(char * Name_File, M
     Define materials
   */
   puts("*************************************************");
-  printf(" \t %s \n","* Read materials properties");
+  printf(" \t %s \n","* Read materials properties :");
   if(Sim_Params.Is_GramsMaterials)
   {
     MPM_Mesh.NumberMaterials = Sim_Params.Counter_Materials;
@@ -103,15 +104,12 @@ GaussPoint Generate_Soil_Water_Coupling_Analysis__InOutFun__(char * Name_File, M
     sprintf(Error_message,"%s","No materials were defined");
     standard_error(); 
   }
-  printf("\t %s \n","DONE !!");
-
-  exit(0);
 
   /*
     Define material mixtures
   */
   puts("*************************************************");
-  printf(" \t %s \n","* Read mixtures");
+  printf(" \t %s \n","* Read mixtures :");
   if(Sim_Params.Is_Material_Mixtures && (MPM_Mesh.NumberMaterials > 1))
   {
     Number_Soil_Water_Mixtures = Sim_Params.Counter_Materials;
@@ -123,6 +121,7 @@ GaussPoint Generate_Soil_Water_Coupling_Analysis__InOutFun__(char * Name_File, M
     standard_error(); 
   }
 
+  exit(0);
   
   /*
     Define particles mesh 
@@ -384,38 +383,38 @@ static Simulation_Key_Words Check_Simulation_Key_Words(char * Name_File)
       sprintf(Error_message,"%s : %i","Parser failed in line",Num_line);
       standard_error(); 
     }
-    else if (strcmp(Words[0],"Soil-Water-Coupling-One-Layer") == 0)
+    else if ((Num_words > 0) && (strcmp(Words[0],"Soil-Water-Coupling-One-Layer") == 0))
     {
       Sim_Key_Wrds.Is_Soil_Water_Coupling = true;
     }
-    else if (strcmp(Words[0],"GramsShapeFun") == 0)
+    else if ((Num_words > 0) && (strcmp(Words[0],"GramsShapeFun") == 0))
     {
       Sim_Key_Wrds.Is_GramsShapeFun = true;
     }
-    else if (strcmp(Words[0],"Define-Material") == 0)
+    else if ((Num_words > 0) && (strcmp(Words[0],"Define-Material") == 0))
     {
       Sim_Key_Wrds.Is_GramsMaterials = true;
       Sim_Key_Wrds.Counter_Materials++;
     }
-    else if (strcmp(Words[0],"Define-Mixture") == 0)
+    else if ((Num_words > 0) && (strcmp(Words[0],"Define-Mixture") == 0))
     {
       Sim_Key_Wrds.Is_Material_Mixtures = true;
       Sim_Key_Wrds.Counter_Mixtures++;
     }
-    else if (strcmp(Words[0],"GramsInitials") == 0)
+    else if ((Num_words > 0) && (strcmp(Words[0],"GramsInitials") == 0))
     {
       Sim_Key_Wrds.Is_Particle_Initial = true;
     }
-    else if (strcmp(Words[0],"Initial-nodal-values") == 0)
+    else if ((Num_words > 0) && (strcmp(Words[0],"Initial-nodal-values") == 0))
     {
       Sim_Key_Wrds.Is_Nodal_Initial = true;
     }
-    else if (strcmp(Words[0],"GramsBodyForces") == 0)
+    else if ((Num_words > 0) && (strcmp(Words[0],"GramsBodyForces") == 0))
     {
       Sim_Key_Wrds.Is_GramsBodyForces = true;
       Sim_Key_Wrds.Counter_BodyForces++;
     }
-    else if (strcmp(Words[0],"GramsNeumannBC") == 0)
+    else if ((Num_words > 0) && (strcmp(Words[0],"GramsNeumannBC") == 0))
     {
       Sim_Key_Wrds.Is_GramsNeumannBC = true;
       Sim_Key_Wrds.Counter_GramsNeumannBC++;
