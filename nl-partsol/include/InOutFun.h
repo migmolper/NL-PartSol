@@ -251,7 +251,6 @@ void print_iteration(int,int);
 
 */
 Mesh GramsBox(char *);
-
 /*****************************************************************/
 
 /*!
@@ -265,11 +264,24 @@ Mesh GramsBox(char *);
 
 */
 Boundaries GramsBoundary(char *,int);
-
 /*****************************************************************/
 
-GaussPoint Generate_Gauss_Point_Analysis__InOutFun__(char *);
+/*!
 
+  \fn Boundaries Read_upw_Boundary_Conditions__InOutFun__(char * Name_File,int NumBounds)
+
+  \brief Function that reads the boundary conditions for the mesh
+
+  \param File: Name of the file with the instructions
+  \param NumBounds : Numerb of boundary defined in the domain
+
+*/
+Boundaries Read_upw_Boundary_Conditions__InOutFun__(char *,int);
+/*****************************************************************/
+
+
+
+GaussPoint Generate_Gauss_Point_Analysis__InOutFun__(char *);
 /*****************************************************************/
 
 /*!

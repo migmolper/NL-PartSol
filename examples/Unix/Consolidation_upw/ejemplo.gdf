@@ -1,25 +1,29 @@
 
 GramsBox (Type=GID,File=Nodes.msh) {
  
-  GramsBoundary (File=Bottom_contour.txt) {
+  GramsBoundary (File=Bottom_contour.txt) 
+  {
     BcDirichlet V.x NULL
     BcDirichlet V.y CurveConstant.txt
     BcDirichlet P NULL
   }
 
-  GramsBoundary (File=Top_contour.txt) {
+  GramsBoundary (File=Top_contour.txt) 
+  {
     BcDirichlet V.x NULL
     BcDirichlet V.y NULL
     BcDirichlet P CurveConstant.txt
   }  
 
-  GramsBoundary (File=Right_contour.txt) {
+  GramsBoundary (File=Right_contour.txt)
+  {
     BcDirichlet V.x CurveConstant.txt
     BcDirichlet V.y NULL
     BcDirichlet P NULL
   } 
 
-  GramsBoundary (File=Left_contour.txt){
+  GramsBoundary (File=Left_contour.txt)
+  {
     BcDirichlet V.x CurveConstant.txt
     BcDirichlet V.y NULL
     BcDirichlet P NULL
