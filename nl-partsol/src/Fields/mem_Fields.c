@@ -153,11 +153,13 @@ Fields allocate_upw_vars__Fields__(int NumParticles)
   strcpy(Phi.x_EC.Info,"Element Coordinates GP");
   
   /*!
-    Displacement field (Vectorial) 
+    Displacement and increment of displacement fields (Vectorial) 
   */
   Phi.dis = allocZ__MatrixLib__(NumParticles,Ndim);
   strcpy(Phi.dis.Info,"Displacement field GP");
-  
+  Phi.D_dis = allocZ__MatrixLib__(NumParticles,Ndim);
+  strcpy(Phi.D_dis.Info,"Increment of displacement field GP");
+
   /*!
     Velocity field (Vectorial) 
   */
@@ -229,6 +231,8 @@ Fields allocate_upw_vars__Fields__(int NumParticles)
   strcpy(Phi.Pw.Info,"Pore water preassure");
   Phi.d_Pw = allocZ__MatrixLib__(NumParticles,1);
   strcpy(Phi.d_Pw.Info,"Rate of pore water preassure");
+  Phi.Pw_0 = allocZ__MatrixLib__(NumParticles,1);
+  strcpy(Phi.Pw_0.Info,"Initial pore water preassure");
 
   /*!
     Deformation Energy (Scalar) 
@@ -243,16 +247,31 @@ Fields allocate_upw_vars__Fields__(int NumParticles)
   strcpy(Phi.mass.Info,"Mass GP");
 
   /*!
-    Density 
+    Density of the mixture
   */
   Phi.rho = allocZ__MatrixLib__(NumParticles,1);
   strcpy(Phi.rho.Info,"Density GP");
 
   /*!
+    Density of each phase (intrinsic)
+  */
+  Phi.rho_s = allocZ__MatrixLib__(NumParticles,1);
+  strcpy(Phi.rho_s.Info,"Intrinsic soil density");  
+  Phi.rho_f = allocZ__MatrixLib__(NumParticles,1);
+  strcpy(Phi.rho_f.Info,"Intrinsic water density");
+  /*!
     Inital volume
   */
   Phi.Vol_0 = allocZ__MatrixLib__(NumParticles,1);
   strcpy(Phi.Vol_0.Info,"Inital volume GP");
+
+  /*!
+    Relative volume fraction for each phase
+  */
+  Phi.phi_s = allocZ__MatrixLib__(NumParticles,1);
+  strcpy(Phi.phi_s.Info,"Volume fraction soil");
+  Phi.phi_f = allocZ__MatrixLib__(NumParticles,1);
+  strcpy(Phi.phi_s.Info,"Volume fraction water");
 
   /*!
     Damage parameter (Fracture) 
@@ -295,6 +314,7 @@ void free_Fields(Fields Phi)
   free__MatrixLib__(Phi.F_n1);
   free__MatrixLib__(Phi.DF);
   free__MatrixLib__(Phi.W);
+  free__MatrixLib__(Phi.Vol_0);
   free__MatrixLib__(Phi.chi);
   free__MatrixLib__(Phi.cohesion);
   free__MatrixLib__(Phi.EPS);
@@ -305,16 +325,20 @@ void free_Fields(Fields Phi)
 void free_upw_vars__Fields__(Fields Phi)
 {
   free__MatrixLib__(Phi.rho);
+  free__MatrixLib__(Phi.rho_s);
+  free__MatrixLib__(Phi.rho_f);
   free__MatrixLib__(Phi.Vol_0);
   free__MatrixLib__(Phi.mass);
   free__MatrixLib__(Phi.x_GC);  
   free__MatrixLib__(Phi.x_EC);
   free__MatrixLib__(Phi.dis);
+  free__MatrixLib__(Phi.D_dis);
   free__MatrixLib__(Phi.vel);
   free__MatrixLib__(Phi.acc);
   free__MatrixLib__(Phi.Stress);
   free__MatrixLib__(Phi.Pw);
   free__MatrixLib__(Phi.d_Pw);
+  free__MatrixLib__(Phi.Pw_0);
   free__MatrixLib__(Phi.Strain);
   free__MatrixLib__(Phi.Strain_If);
   free__MatrixLib__(Phi.F_plastic);
@@ -322,6 +346,9 @@ void free_upw_vars__Fields__(Fields Phi)
   free__MatrixLib__(Phi.F_n1);
   free__MatrixLib__(Phi.DF);
   free__MatrixLib__(Phi.W);
+  free__MatrixLib__(Phi.Vol_0);
+  free__MatrixLib__(Phi.phi_s);
+  free__MatrixLib__(Phi.phi_f);
   free__MatrixLib__(Phi.chi);
   free__MatrixLib__(Phi.cohesion);
   free__MatrixLib__(Phi.EPS);

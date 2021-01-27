@@ -29,18 +29,17 @@ static  void  compute_Explicit_Newmark_Predictor(GaussPoint,double,double);
 /* Step 3 */
 static Matrix compute_Nodal_Gravity_field(Mask, GaussPoint, int);
 static Matrix compute_Nodal_D_Displacement(GaussPoint,Mesh,Mask,Matrix);
-static Matrix compute_Nodal_Acceleration(GaussPoint,Mesh,Mask,Matrix);
 static Matrix compute_Nodal_Velocity(GaussPoint,Mesh,Mask,Matrix);
 static Matrix compute_Nodal_Pore_water_pressure(GaussPoint,Mesh,Mask,Matrix);
-static Matrix compute_Nodal_Rate_Pore_water_pressure(GaussPoint,Mesh,Mask,Matrix);
 static  void  Imposse_Velocity(Mesh,Matrix,Mask,int);
+static  void  Imposse_Pore_water_pressure(Mesh,Matrix,Mask,int);
 /* Step 4 */
 static  void  update_Local_State(Matrix,Mask,GaussPoint,Mesh,double);
 /* Step 5 */
 static Matrix compute_Internal_Forces_Mixture(Mask,GaussPoint,Mesh);
 static Tensor compute_total_first_Piola_Kirchhoff_stress(Tensor,double,Tensor);
 static Matrix compute_Reactions(Mesh,Matrix,Mask);
-static  void  solve_Nodal_Equilibrium_Mixture(Matrix,Matrix,Matrix,Matrix);
+static Matrix solve_Nodal_Equilibrium_Mixture(Matrix,Matrix,Matrix);
 /* Step 6 */
 static Matrix compute_Viscous_Forces_Fluid(Mask,GaussPoint,Mesh,Matrix);
 static Matrix compute_C_Viscosity(Mask,GaussPoint,Mesh);
@@ -48,7 +47,7 @@ static Matrix compute_Permeability_Forces_Fluid(Mask,GaussPoint,Mesh,Matrix);
 static Matrix compute_K_Permeability(Mask,GaussPoint,Mesh);
 static Matrix compute_Permeability_Inertial_Forces_Fluid(Mask, GaussPoint, Mesh, Matrix, Matrix);
 static Matrix compute_C_Permeability(Mask,GaussPoint,Mesh);
-static  void  solve_Nodal_Generalized_Darcy_Law(Matrix,Matrix,Matrix,Matrix,Matrix);
+static Matrix solve_Nodal_Generalized_Darcy_Law(Matrix,Matrix,Matrix,Matrix);
 /* Step 7 */
 static  void  compute_Explicit_Newmark_Corrector(GaussPoint,Mesh,Matrix,Matrix,Matrix,Mask,double, double);
 /* Step 8 */
@@ -101,7 +100,7 @@ void upw_Newmark_Predictor_Corrector_Finite_Strains(Mesh FEM_Mesh, GaussPoint MP
       print_step(TimeStep,DeltaTimeStep);
 
       print_Status("*************************************************",TimeStep);
-      print_Status("First step : Compute lumped mass of the mixture and compressibility matrix ... WORKING",TimeStep);
+      print_Status("First step : Compute mass and compressibility matrix ... WORKING",TimeStep);
 
       Mass_Matrix_Mixture = compute_Mass_Matrix_Mixture(MPM_Mesh,FEM_Mesh,ActiveNodes,1.0);
 
@@ -114,6 +113,8 @@ void upw_Newmark_Predictor_Corrector_Finite_Strains(Mesh FEM_Mesh, GaussPoint MP
       
       compute_Explicit_Newmark_Predictor(MPM_Mesh, gamma, TimeStep);
 
+      print_Status("DONE !!!",TimeStep);
+
       print_Status("*************************************************",TimeStep);
       print_Status("Third step : Compute nodal magnitudes ... WORKING",TimeStep);
 
@@ -122,16 +123,16 @@ void upw_Newmark_Predictor_Corrector_Finite_Strains(Mesh FEM_Mesh, GaussPoint MP
       D_Displacement = compute_Nodal_D_Displacement(MPM_Mesh, FEM_Mesh, ActiveNodes, Mass_Matrix_Mixture);
 
       Velocity = compute_Nodal_Velocity(MPM_Mesh, FEM_Mesh, ActiveNodes, Mass_Matrix_Mixture);
-
-      Acceleration = compute_Nodal_Acceleration(MPM_Mesh, FEM_Mesh, ActiveNodes, Mass_Matrix_Mixture);
       
       Pore_water_pressure = compute_Nodal_Pore_water_pressure(MPM_Mesh, FEM_Mesh, ActiveNodes, Compressibility_Matrix_Fluid);
-
-      Rate_Pore_water_pressure = compute_Nodal_Rate_Pore_water_pressure(MPM_Mesh, FEM_Mesh, ActiveNodes, Compressibility_Matrix_Fluid);
  
       Imposse_Velocity(FEM_Mesh,Velocity,ActiveNodes,TimeStep);
 
+      Imposse_Pore_water_pressure(FEM_Mesh,Pore_water_pressure,ActiveNodes,TimeStep);
+
       print_Status("DONE !!!",TimeStep);
+
+      exit(0);
 
       print_Status("*************************************************",TimeStep);
       print_Status("Four step : Update local state ... WORKING",TimeStep);
@@ -148,7 +149,7 @@ void upw_Newmark_Predictor_Corrector_Finite_Strains(Mesh FEM_Mesh, GaussPoint MP
 
       Reactions = compute_Reactions(FEM_Mesh,Internal_Forces_Mixture,ActiveNodes);
 
-      solve_Nodal_Equilibrium_Mixture(Acceleration,Mass_Matrix_Mixture,Gravity_field,Internal_Forces_Mixture);
+      Acceleration = solve_Nodal_Equilibrium_Mixture(Mass_Matrix_Mixture,Gravity_field,Internal_Forces_Mixture);
 
       print_Status("*************************************************",TimeStep);
       print_Status("Six step : Compute equilibrium fluid ... WORKING",TimeStep);
@@ -159,7 +160,7 @@ void upw_Newmark_Predictor_Corrector_Finite_Strains(Mesh FEM_Mesh, GaussPoint MP
 
       Permeability_Inertial_Forces_Fluid = compute_Permeability_Inertial_Forces_Fluid(ActiveNodes, MPM_Mesh, FEM_Mesh, Acceleration, Gravity_field);
 
-      solve_Nodal_Generalized_Darcy_Law(Rate_Pore_water_pressure,Compressibility_Matrix_Fluid,Viscous_Forces_Fluid,Permeability_Forces_Fluid,Permeability_Inertial_Forces_Fluid);
+      Rate_Pore_water_pressure = solve_Nodal_Generalized_Darcy_Law(Compressibility_Matrix_Fluid,Viscous_Forces_Fluid,Permeability_Forces_Fluid,Permeability_Inertial_Forces_Fluid);
 
       print_Status("*************************************************",TimeStep);
       print_Status("Seven step : Compute corrector ... WORKING",TimeStep);
@@ -452,6 +453,7 @@ static Matrix compute_Compressibility_Matrix_Fluid(
         Compute the compressibility density 
       */
       compressibility_density_f_p = (relative_rho_f_p/K_f)*V0_p;
+
       
       for(int A = 0 ; A<Nodes_p.NumberNodes ; A++)
        {
@@ -743,117 +745,6 @@ static Matrix compute_Nodal_D_Displacement(
 
 /**************************************************************/
 
-static Matrix compute_Nodal_Acceleration(
-  GaussPoint MPM_Mesh,
-  Mesh FEM_Mesh,
-  Mask ActiveNodes,
-  Matrix Mass_Matrix_Mixture)
-/*
-  Call the LAPACK solver to compute the nodal Acceleration. The operation is linearized and
-  all the dof split the acceleration array in n components like :
-  | M 0 |   |A.x|   | dt_p.x |
-  | 0 M | * |A.y| = | dt_p.y |
-*/
-{
-  int Ndim = NumberDimensions;
-  int Nnodes_mask = ActiveNodes.Nactivenodes;
-  int Np = MPM_Mesh.NumGP;
-  int Ap;
-  int A_mask;
-  int idx_A_mask_i;
-  Element Nodes_p; /* Element for each particle */
-  Matrix ShapeFunction_p; /* Value of the shape-function */
-  double ShapeFunction_pA; /* Evaluation of the particle in the node */
-  double m_p; /* Mass of the particle */
-
-  /* Define and allocate the nodal acceleration vector */
-  Matrix Acceleration = allocZ__MatrixLib__(Nnodes_mask,Ndim);
-
-
-  for(int p = 0 ; p<Np ; p++)
-    {
-
-      /* 
-        Define element of the particle 
-      */
-      Nodes_p = nodal_set__Particles__(p, MPM_Mesh.ListNodes[p], MPM_Mesh.NumberNodes[p]);
-
-      /* 
-        Evaluate the shape function in the coordinates of the particle 
-      */
-      ShapeFunction_p = compute_N__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
-
-      /* 
-        Get the mass of the GP 
-      */
-      m_p = MPM_Mesh.Phi.mass.nV[p];
-
-      /* 
-        Get the nodal mommentum 
-      */
-      for(int A = 0 ; A<Nodes_p.NumberNodes ; A++)
-        {
-
-          /*
-            Get the node in the nodal momentum with the mask
-          */
-          Ap = Nodes_p.Connectivity[A];
-          A_mask = ActiveNodes.Nodes2Mask[Ap];
-
-          /* 
-            Evaluate the GP function in the node 
-          */
-          ShapeFunction_pA = ShapeFunction_p.nV[A];
-
-          /* 
-            Nodal velocity and acceleration 
-          */
-          for(int i = 0 ; i<Ndim ; i++)
-            {
-              Acceleration.nM[A_mask][i] += m_p*ShapeFunction_pA*MPM_Mesh.Phi.acc.nM[p][i];
-            }
-        }
-
-      /* 
-        Free the value of the shape functions 
-      */
-      free__MatrixLib__(ShapeFunction_p);
-      free(Nodes_p.Connectivity);
-    }
-
-
-  /*
-    Call the LAPACK solver to compute the nodal accelerations
-  */
-  int Order = Nnodes_mask*Ndim;
-  int LDA   = Order;
-  int LDB = Order;
-  char  TRANS = 'T'; /* (Transpose) */
-  int   INFO= 3;
-  int * IPIV = (int *)Allocate_Array(Order,sizeof(int));
-  int NRHS = 1;
-
-  /*
-    Compute the LU factorization for the mass matrix
-  */
-  dgetrf_(&Order,&Order,Mass_Matrix_Mixture.nV,&LDA,IPIV,&INFO);
-
-  /*
-    Solve for the nocal acceleration
-  */
-  dgetrs_(&TRANS,&Order,&NRHS,Mass_Matrix_Mixture.nV,&LDA,IPIV,Acceleration.nV,&LDB,&INFO);
-  free(IPIV);
- 
-  /*
-    Add some usefulll info
-  */
-  strcpy(Acceleration.Info,"Nodal-Acceleration");
-
-  return Acceleration;
-}
-
-/**************************************************************/
-
 static Matrix compute_Nodal_Velocity(
   GaussPoint MPM_Mesh,
   Mesh FEM_Mesh,
@@ -972,8 +863,6 @@ static Matrix compute_Nodal_Pore_water_pressure(
 
 */
 {
-
-  int Ndim = NumberDimensions;
   int Nnodes_mask = ActiveNodes.Nactivenodes;
   int Np = MPM_Mesh.NumGP;
   int Mixture_idx;
@@ -1074,11 +963,10 @@ static Matrix compute_Nodal_Pore_water_pressure(
       free(Nodes_p.Connectivity);
     }
 
-
   /*
     Call the LAPACK solver to compute the nodal pore water pressure
   */
-  int Order = Nnodes_mask*Ndim;
+  int Order = Nnodes_mask;
   int LDA   = Order;
   int LDB = Order;
   char  TRANS = 'T'; /* (Transpose) */
@@ -1096,7 +984,7 @@ static Matrix compute_Nodal_Pore_water_pressure(
   */
   dgetrs_(&TRANS,&Order,&NRHS,Compressibility_Matrix_Fluid.nV,&LDA,IPIV,Pore_water_pressure.nV,&LDB,&INFO);
   free(IPIV);
- 
+
   /*
     Add some usefulll info
   */
@@ -1106,134 +994,6 @@ static Matrix compute_Nodal_Pore_water_pressure(
 }
 
 /**************************************************************/
-
-static Matrix compute_Nodal_Rate_Pore_water_pressure(
-  GaussPoint MPM_Mesh,
-  Mesh FEM_Mesh,
-  Mask ActiveNodes,
-  Matrix Compressibility_Matrix_Fluid)
-/*
-
-*/
-{
-
-  int Ndim = NumberDimensions;
-  int Nnodes_mask = ActiveNodes.Nactivenodes;
-  int Np = MPM_Mesh.NumGP;
-  int Mixture_idx;
-  int Material_Water_idx;
-  int Ap;
-  int A_mask;
-  int idx_A_mask_i;
-  Material MatProp_Water_p; /* Variable with the material properties of the fluid phase */  
-  Element Nodes_p; /* Element for each particle */
-  Matrix ShapeFunction_p; /* Value of the shape-function */
-  double ShapeFunction_pA; /* Evaluation of the particle in the node */
-  double d_Pw_p; /* Particle rate pore water pressure */
-  double V0_p; /* Volume of the particle */
-  double rho_f_p; /* Material density of the particle (fluid phase) */
-  double phi_f_p; /* Volume fraction of the particle (fluid phase) */
-  double K_f; /* Compressibility (fluid) */
-  double relative_rho_f_p; /* Relative density of the particle (fluid phase) */
-  double compressibility_density_f_p; /* Compressibily density for the particle (fluid phase) */
-  double compressibility_density_A_p; /* Contribution of the particle p to the compressibility in the node A */
-
-  /* Define and allocate the Pore water pressure vector */
-  Matrix Rate_Pore_water_pressure = allocZ__MatrixLib__(Nnodes_mask,1);
-
-  /* Iterate over the particles to get the nodal values */
-  for(int p = 0 ; p<Np ; p++)
-    {
-
-      /* Define element of the particle */
-      Nodes_p = nodal_set__Particles__(p, MPM_Mesh.ListNodes[p], MPM_Mesh.NumberNodes[p]);
-
-      /* Evaluate the shape function in the coordinates of the particle */
-      ShapeFunction_p = compute_N__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
-
-      /* Get the rate of pore water pressure */
-      d_Pw_p = MPM_Mesh.Phi.d_Pw.nV[p];
-
-      /* Get the initial volume of the particle */
-      V0_p = MPM_Mesh.Phi.Vol_0.nV[p];
-
-
-      /*
-        Get the current material density, volume fraction 
-        and compressibility for each material point (fluid) 
-      */
-      rho_f_p = MPM_Mesh.Phi.rho_f.nV[p];
-      phi_f_p = MPM_Mesh.Phi.phi_f.nV[p];
-
-      /*
-        Get intrinsic material properties for the fluid phase (Compressibility)
-      */
-      Mixture_idx = MPM_Mesh.MixtIdx[p];
-      Material_Water_idx = Soil_Water_Mixtures[Mixture_idx].Water_Idx;
-      MatProp_Water_p = MPM_Mesh.Mat[Material_Water_idx];
-      K_f = MatProp_Water_p.Compressibility;
-
-      /* Compute relative density */
-      relative_rho_f_p = phi_f_p*rho_f_p;
-
-      /* Get the nodal mommentum */
-      for(int A = 0 ; A<Nodes_p.NumberNodes ; A++)
-        {
-          /*
-            Get the node in the nodal momentum with the mask
-          */
-          Ap = Nodes_p.Connectivity[A];
-          A_mask = ActiveNodes.Nodes2Mask[Ap];
-
-          /* Evaluate the GP function in the node */
-          ShapeFunction_pA = ShapeFunction_p.nV[A];
-
-          /* 
-            Compute the nodal A contribution of the particle p 
-          */
-          compressibility_density_A_p = compressibility_density_f_p*ShapeFunction_pA;
-
-          /* Nodal Pore water pressure */
-          Rate_Pore_water_pressure.nV[A_mask] += compressibility_density_A_p*d_Pw_p;
-        }
-
-      /* Free the value of the shape functions */
-      free__MatrixLib__(ShapeFunction_p);
-      free(Nodes_p.Connectivity);
-    }
-
-
-  /*
-    Call the LAPACK solver to compute the rate of pore water pressure
-  */
-  int Order = Nnodes_mask*Ndim;
-  int LDA   = Order;
-  int LDB = Order;
-  char  TRANS = 'T'; /* (Transpose) */
-  int   INFO= 3;
-  int * IPIV = (int *)Allocate_Array(Order,sizeof(int));
-  int NRHS = 1;
-
-  /*
-    Compute the LU factorization for the mass matrix
-  */
-  dgetrf_(&Order,&Order,Compressibility_Matrix_Fluid.nV,&LDA,IPIV,&INFO);
-
-  /*
-    Solve for the sistem
-  */
-  dgetrs_(&TRANS,&Order,&NRHS,Compressibility_Matrix_Fluid.nV,&LDA,IPIV,Rate_Pore_water_pressure.nV,&LDB,&INFO);
-  free(IPIV);
- 
-  /*
-    Add some usefulll info
-  */
-  strcpy(Rate_Pore_water_pressure.Info,"Nodal-Pore-water-pressure");
-
-  return Rate_Pore_water_pressure;
-}
-
-/**********************************************************************/
 
 static void Imposse_Velocity(
   Mesh FEM_Mesh,
@@ -1317,6 +1077,17 @@ static void Imposse_Velocity(
         }    
     }
 
+}
+
+/**************************************************************/
+
+static void Imposse_Pore_water_pressure(
+  Mesh FEM_Mesh,
+  Matrix Pore_water_pressure,
+  Mask ActiveNodes,
+  int TimeStep)
+{
+  
 }
 
 /**************************************************************/
@@ -1746,8 +1517,7 @@ static Matrix compute_Reactions(
 
 /**************************************************************/
 
-static void solve_Nodal_Equilibrium_Mixture(
-  Matrix Acceleration,
+static Matrix solve_Nodal_Equilibrium_Mixture(
   Matrix Mass_Matrix_Mixture,
   Matrix Gravity_field,
   Matrix Internal_Forces_Mixture)
@@ -1761,7 +1531,7 @@ static void solve_Nodal_Equilibrium_Mixture(
     Call the LAPACK solver to compute the accelerations and velocities
   */
   int Ndim = NumberDimensions;
-  int Nnodes = Acceleration.N_rows;
+  int Nnodes = Internal_Forces_Mixture.N_rows;
   int Order = Nnodes*Ndim;
   int LDA = Order;
   int LDB = Order;
@@ -1769,6 +1539,8 @@ static void solve_Nodal_Equilibrium_Mixture(
   int   INFO = 3;
   int * IPIV = (int *)Allocate_Array(Order,sizeof(int));
   int NRHS = 1;
+
+  Matrix Acceleration = allocZ__MatrixLib__(Nnodes,Ndim);
 
   /*
     Compute the LU factorization for the mass matrix
@@ -1788,6 +1560,8 @@ static void solve_Nodal_Equilibrium_Mixture(
   {
     Acceleration.nV[A_indx] = Gravity_field.nV[A_indx] + Internal_Forces_Mixture.nV[A_indx];
   }
+
+  return Acceleration;
 
 }
 
@@ -2350,8 +2124,7 @@ static Matrix compute_C_Permeability(
 
 /**************************************************************/
 
-static void solve_Nodal_Generalized_Darcy_Law(
-  Matrix Rate_Pore_water_pressure,
+static Matrix solve_Nodal_Generalized_Darcy_Law(
   Matrix Compressibility_Matrix_Fluid,
   Matrix Viscous_Forces_Fluid,
   Matrix Permeability_Forces_Fluid,
@@ -2369,6 +2142,7 @@ static void solve_Nodal_Generalized_Darcy_Law(
   int * IPIV = (int *)Allocate_Array(Order,sizeof(int));
   int NRHS = 1;
 
+  Matrix Rate_Pore_water_pressure = allocZ__MatrixLib__(Nnodes_mask,1);
   Matrix Fluid_Forces = allocZ__MatrixLib__(Nnodes_mask,1);
 
   for(int A = 0 ; A<Order ; A++)
@@ -2428,6 +2202,9 @@ static void solve_Nodal_Generalized_Darcy_Law(
     Free auxiliar vector
   */
   free__MatrixLib__(Fluid_Forces);
+
+
+  return Rate_Pore_water_pressure;
 
 }
 

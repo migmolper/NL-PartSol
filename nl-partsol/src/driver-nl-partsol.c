@@ -180,11 +180,16 @@ int main(int argc, char * argv[])
       }
 
       puts("*************************************************");
-      puts("Read outputs ...");
+      puts("Read VTK output directives ...");
       GramsOutputs(SimulationFile);
-      NLPS_Out_nodal_path_csv__InOutFun__(SimulationFile);
-      NLPS_Out_particles_path_csv__InOutFun__(SimulationFile);
 
+      puts("*************************************************");
+      puts("Read nodal path output directives ...");
+      NLPS_Out_nodal_path_csv__InOutFun__(SimulationFile);
+
+      puts("*************************************************");
+      puts("Read particle path output directives ...");
+      NLPS_Out_particles_path_csv__InOutFun__(SimulationFile);
 
       puts("*************************************************");
       puts("Run simulation ...");

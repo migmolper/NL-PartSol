@@ -305,18 +305,22 @@ static Material Define_Material(FILE * Simulation_file,
   else if(strcmp(New_Material.Type,"LE") == 0)
   {
     check_Linear_Elastic_Material(New_Material,ChkMat,Index_and_Model.Idx);
+    New_Material.Cel = sqrt(New_Material.E/New_Material.rho);
   }
   else if(strcmp(New_Material.Type,"Saint-Venant-Kirchhoff") == 0)
   { 
     check_Saint_Venant_Kirchhoff_Material(New_Material,ChkMat,Index_and_Model.Idx);
+    New_Material.Cel = sqrt(New_Material.E/New_Material.rho);
   }
   else if(strcmp(New_Material.Type,"Neo-Hookean-Wriggers") == 0)
   {
     check_Neo_Hookean_Wriggers_Material(New_Material,ChkMat,Index_and_Model.Idx);
+    New_Material.Cel = sqrt(New_Material.E/New_Material.rho);
   }
   else if(strcmp(New_Material.Type,"Von-Mises") == 0)
   { 
     check_Von_Mises_Material(New_Material,ChkMat,Index_and_Model.Idx); 
+    New_Material.Cel = sqrt(New_Material.E/New_Material.rho);
     New_Material.E_plastic_reference = New_Material.yield_stress_0/New_Material.hardening_modulus;
     TOL_Radial_Returning = 1E-10;
     Max_Iterations_Radial_Returning = 300;
@@ -324,6 +328,7 @@ static Material Define_Material(FILE * Simulation_file,
   else if(strcmp(New_Material.Type,"Drucker-Prager-Plane-Strain") == 0)
   { 
     check_Drucker_Prager_Material(New_Material,ChkMat,Index_and_Model.Idx);
+    New_Material.Cel = sqrt(New_Material.E/New_Material.rho);
     if(!New_Material.Hardening_Ortiz)
     {
       New_Material.E_plastic_reference = New_Material.cohesion_reference/New_Material.hardening_modulus; 
@@ -338,6 +343,7 @@ static Material Define_Material(FILE * Simulation_file,
   else if(strcmp(New_Material.Type,"Drucker-Prager-Outer-cone") == 0)
   { 
     check_Drucker_Prager_Material(New_Material,ChkMat,Index_and_Model.Idx);
+    New_Material.Cel = sqrt(New_Material.E/New_Material.rho);
     if(!New_Material.Hardening_Ortiz)
     {
       New_Material.E_plastic_reference = New_Material.cohesion_reference/New_Material.hardening_modulus; 
@@ -352,6 +358,7 @@ static Material Define_Material(FILE * Simulation_file,
   else if(strcmp(New_Material.Type,"Compressible-Newtonian-Fluid") == 0)
   {
     check_Compressible_Newtonian_Fluid_Material(New_Material,ChkMat,Index_and_Model.Idx);
+    New_Material.Cel = sqrt(New_Material.Compressibility/New_Material.rho);
   }
   else
   {

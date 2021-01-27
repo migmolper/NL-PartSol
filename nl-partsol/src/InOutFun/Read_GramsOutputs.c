@@ -76,10 +76,6 @@ void GramsOutputs(char * Name_File)
   /* Auxiliar variable for status */
   char * STATUS_LINE;
 
-  /* Initial message */  
-  puts("*************************************************");
-  printf(" \t %s : \n\t %s \n", "* Read Outputs properties ", Name_File);
-  
   /* Open and check file */
   Sim_dat = Open_and_Check_simulation_file(Name_File);
 

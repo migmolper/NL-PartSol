@@ -79,45 +79,49 @@ void NLPS_Out_nodal_path_csv__InOutFun__(char * Name_File)
   Out_nodal_path_csv = (Event *)malloc(Num_NCE*sizeof(Event));
   Number_Out_nodal_path_csv = Num_NCE;
 
-  /* Initial message */  
-  puts("*************************************************");
-  printf(" \t %s : \n\t %s \n", "* Read Outputs properties ", Name_File);
-  
-  /* Open and check file */
-  Sim_dat = Open_and_Check_simulation_file(Name_File);
-    
-  /* Read the file line by line */
-  while( fgets(line, sizeof line, Sim_dat) != NULL )
+  if(Num_NCE > 0)
   {
+	  /* Open and check file */
+	  Sim_dat = Open_and_Check_simulation_file(Name_File);
+	    
+	  /* Read the file line by line */
+	  while( fgets(line, sizeof line, Sim_dat) != NULL )
+	  {
 
-    /* Read the line with the space as separators */
-    nkwords = parse (kwords, line," \n\t");
-    if (nkwords < 0)
-    {
-    	standard_error("Parser failed");
-    }
+	    /* Read the line with the space as separators */
+	    nkwords = parse (kwords, line," \n\t");
+	    if (nkwords < 0)
+	    {
+	    	standard_error("Parser failed");
+	    }
 
-	/* Read Out-nodal-path-csv */
-    if ((nkwords > 0) && (strcmp(kwords[0],"Out-nodal-path-csv") == 0 ))
-    {
+		/* Read Out-nodal-path-csv */
+	    if ((nkwords > 0) && (strcmp(kwords[0],"Out-nodal-path-csv") == 0 ))
+	    {
 
-    	/* Read output period */
-    	CSV_Intervals = read_CSV_Intervals(kwords[1]);
-	    /* Read csv parameters */
-   		CSV_Parameters = read_CSV_Parameters(Sim_dat,Name_File);
-	   	/* Fill csv parameters and period */
-	   	Out_nodal_path_csv[i_CSV] = fill_CSV_Parameters(CSV_Intervals,CSV_Parameters);
+	    	/* Read output period */
+	    	CSV_Intervals = read_CSV_Intervals(kwords[1]);
+		    /* Read csv parameters */
+	   		CSV_Parameters = read_CSV_Parameters(Sim_dat,Name_File);
+		   	/* Fill csv parameters and period */
+		   	Out_nodal_path_csv[i_CSV] = fill_CSV_Parameters(CSV_Intervals,CSV_Parameters);
 
-	   	/* Update counter */
-	   	i_CSV++;
+		   	/* Update counter */
+		   	i_CSV++;
 
-    }
+	    }
+
+	  }
+
+	   /* Close .dat file */
+  	/* Final message */
+  	fclose(Sim_dat);
 
   }
-
-  /* Close .dat file */
-  /* Final message */
-  fclose(Sim_dat);
+  else
+  {
+  	printf("\t * %s \n","No nodal path results were defined");
+  }
 
 }
 
