@@ -28,6 +28,17 @@ void NonLinear_Gauss_Point_Analysis(GaussPoint PointAnalysis);
 double DeltaT_CFL(GaussPoint, double);
 
 /*!
+  \fn double DeltaT_Coussy__SolversLib__(GaussPoint MPM_Mesh, double h, double xi)
+
+  \brief  Get the time step using \cite Coussy_1995
+
+  \param GaussPoint MPM_Mesh : Variable with the particle information
+  \param double DeltaX : Minimum mesh size
+  \param double xi : Parameter to include the tortuosity of flow
+*/
+double DeltaT_Coussy__SolversLib__(GaussPoint, double, double);
+
+/*!
   \fn void U_Forward_Euler(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int InitialStep)
 
   \brief Displacement formulation of the MPM with a Forward Euler as 

@@ -98,7 +98,8 @@ void upw_Newmark_Predictor_Corrector_Finite_Strains(Mesh FEM_Mesh, GaussPoint MP
     {
 
       print_Status("*************************************************",TimeStep);
-      DeltaTimeStep = DeltaT_CFL(MPM_Mesh, FEM_Mesh.DeltaX);
+      DeltaTimeStep = DeltaT_Coussy__SolversLib__(MPM_Mesh, FEM_Mesh.DeltaX, 1.0);
+
       ActiveNodes = generate_NodalMask__MeshTools__(FEM_Mesh);
       Nactivenodes = ActiveNodes.Nactivenodes;
       print_step(TimeStep,DeltaTimeStep);
@@ -134,8 +135,6 @@ void upw_Newmark_Predictor_Corrector_Finite_Strains(Mesh FEM_Mesh, GaussPoint MP
 
       print_Status("DONE !!!",TimeStep);
 
-      exit(0);
-
       print_Status("*************************************************",TimeStep);
       print_Status("Four step : Update local state ... WORKING",TimeStep);
 
@@ -143,6 +142,7 @@ void upw_Newmark_Predictor_Corrector_Finite_Strains(Mesh FEM_Mesh, GaussPoint MP
 
       print_Status("DONE !!!",TimeStep);
 
+      exit(0);
 
       print_Status("*************************************************",TimeStep);
       print_Status("Five step : Compute equilibrium mixture ... WORKING",TimeStep);
@@ -1253,7 +1253,7 @@ static void update_Local_State(
       Pw_0 = MPM_Mesh.Phi.Pw_0.nV[p]; /* Get the initial pressure */
       Pw_n1 = MPM_Mesh.Phi.Pw.nV[p]/J_n1_p; /* From the Kirchhoff pressure compure the cauchy pore water pressure */
 
-      MPM_Mesh.Phi.rho_f.nV[p] = rho_f_0*exp((Pw_n1-Pw_0)/K_f); /* Update the fluid pressure */
+      MPM_Mesh.Phi.rho_f.nV[p] = rho_f_0*exp((Pw_n1-Pw_0)/K_f); /* Update the fluid density */
 
       MPM_Mesh.Phi.phi_s.nV[p] = phi_s_0/J_n1_p; /* Update the volume fraction of the solid phase */
       MPM_Mesh.Phi.phi_f.nV[p] = 1 - (1 - phi_f_0)/J_n1_p; /* Update the volume fraction of the fluid phase */
@@ -1469,7 +1469,7 @@ static void compute_Contact_Forces_Mixture(
   int TimeStep)
 {
   int Ndim = NumberDimensions;
-  Load * F = MPM_Mesh.F;
+  Load T_i;
   Element Nodes_p; /* Element for each Gauss-Point */
   Material MatProp_Soil_p; /* Information with properties of the soil phase */
   Matrix ShapeFunction_p; /* Nodal values of the sahpe function */
@@ -1481,7 +1481,7 @@ static void compute_Contact_Forces_Mixture(
 
   int Mixture_idx; /* Index of the mixture for each particle */
   int Material_Soil_idx; /* Index of the soil properties for each particle */
-  int NumContactForces = MPM_Mesh.NumNeumannBC;
+  int NumContactForces = MPM_Mesh.Neumann_Contours.NumBounds;
   int NumNodesLoad;
   int p;
   int Ap;
@@ -1492,7 +1492,12 @@ static void compute_Contact_Forces_Mixture(
   for(int i = 0 ; i<NumContactForces; i++)
   {
 
-    NumNodesLoad = F[i].NumNodes;
+    /*
+      Read load i
+    */
+    T_i = MPM_Mesh.Neumann_Contours.BCC_i[i];
+
+    NumNodesLoad = T_i.NumNodes;
       
     for(int j = 0 ; j<NumNodesLoad ; j++)
     {
@@ -1500,7 +1505,7 @@ static void compute_Contact_Forces_Mixture(
       /*
         Get the index of the particle
       */
-      p = F[i].Nodes[j];
+      p = T_i.Nodes[j];
 
       /*
         Get the volume of the particle in the reference configuration 
@@ -1508,7 +1513,7 @@ static void compute_Contact_Forces_Mixture(
       V0_p = MPM_Mesh.Phi.Vol_0.nV[p];
 
       /*
-        Get the material proerties of the soil phase for each particle
+        Get the material properties of the soil phase for each particle
       */
       Mixture_idx = MPM_Mesh.MixtIdx[p];
       Material_Soil_idx = Soil_Water_Mixtures[Mixture_idx].Soil_Idx;
@@ -1540,16 +1545,16 @@ static void compute_Contact_Forces_Mixture(
       */
       for(int k = 0 ; k<Ndim ; k++)
       {
-        if(F[i].Dir[k])
+        if(T_i.Dir[k])
         {
-          if( (TimeStep < 0) || (TimeStep > F[i].Value[k].Num))
+          if( (TimeStep < 0) || (TimeStep > T_i.Value[k].Num))
           {
             sprintf(Error_message,"%s : %s",
               "Error in compute_Contact_Forces_Mixture()",
               "The time step is out of the curve !!");
             standard_error();
           }
-          t.n[k] = F[i].Value[k].Fx[TimeStep];
+          t.n[k] = T_i.Value[k].Fx[TimeStep];
         }
       }
 

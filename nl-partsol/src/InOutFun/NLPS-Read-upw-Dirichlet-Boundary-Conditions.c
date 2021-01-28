@@ -35,7 +35,7 @@ static FILE * Open_and_Check_simulation_file(char *);
 
 /**********************************************************************/
 
-Boundaries Read_upw_Boundary_Conditions__InOutFun__(char * Name_File,int NumBounds)
+Boundaries Read_upw_Dirichlet_Boundary_Conditions__InOutFun__(char * Name_File,int NumBounds)
 /*
 
 GramsBoundary (File=Right_contour.txt) 

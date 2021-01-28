@@ -532,6 +532,12 @@ typedef struct {
    */  
   Load * F;
 
+  /*!
+  * Structure to store Neumann boundary conditions.
+  * will replace NumNeumannBC and F;
+  */
+  Boundaries Neumann_Contours;
+
   /*! 
    * Number of body forces 
    */

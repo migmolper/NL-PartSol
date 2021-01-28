@@ -70,6 +70,13 @@ Soil-Water-Coupling-One-Layer (File=Material_Points.msh,GPxElement=4)
     gamma=3.0
   }
 
+  Define-Neumann-Boundary(File=Load.txt) 
+  {
+	  T.x NULL
+ 	  T.y CurveRamp.txt
+ 	  Q NULL
+  }
+
 }
 
 

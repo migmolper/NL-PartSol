@@ -179,6 +179,8 @@ int main(int argc, char * argv[])
         MPM_Mesh = restart_Simulation(SimulationFile,RestartFile,FEM_Mesh);
       }
 
+      exit(0);
+
       puts("*************************************************");
       puts("Read VTK output directives ...");
       GramsOutputs(SimulationFile);

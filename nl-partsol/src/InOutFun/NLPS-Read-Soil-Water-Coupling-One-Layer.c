@@ -284,12 +284,13 @@ GaussPoint Generate_Soil_Water_Coupling_Analysis__InOutFun__(char * Name_File, M
     */    
     if(Sim_Params.Is_GramsNeumannBC)
     {
-      MPM_Mesh.NumNeumannBC = Sim_Params.Counter_GramsNeumannBC;
-      MPM_Mesh.F = GramsNeumannBC(Name_File,Sim_Params.Counter_GramsNeumannBC,Msh_Parms.GPxElement);
+      puts("*************************************************");
+      printf("\t * %s \n","Read Newmann boundary conditions :");
+      MPM_Mesh.Neumann_Contours = Read_upw_Neumann_Boundary_Conditions__InOutFun__(Name_File,Sim_Params.Counter_GramsNeumannBC,Msh_Parms.GPxElement);
     }
     else
     {
-      MPM_Mesh.NumNeumannBC = Sim_Params.Counter_GramsNeumannBC;
+      MPM_Mesh.Neumann_Contours.NumBounds = 0;
       puts("*************************************************");
       printf(" \t %s \n","* No Neumann boundary conditions defined");
     }
@@ -414,7 +415,7 @@ static Simulation_Key_Words Check_Simulation_Key_Words(char * Name_File)
       Sim_Key_Wrds.Is_GramsBodyForces = true;
       Sim_Key_Wrds.Counter_BodyForces++;
     }
-    else if ((Num_words > 0) && (strcmp(Words[0],"GramsNeumannBC") == 0))
+    else if ((Num_words > 0) && (strcmp(Words[0],"Define-Neumann-Boundary") == 0))
     {
       Sim_Key_Wrds.Is_GramsNeumannBC = true;
       Sim_Key_Wrds.Counter_GramsNeumannBC++;

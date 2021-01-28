@@ -232,7 +232,7 @@ Mesh GramsBox(char * Name_File)
     }
     else if(strcmp(Formulation,"-upw") == 0)
     {
-      FEM_Mesh.Bounds = Read_upw_Boundary_Conditions__InOutFun__(Name_File,NumBounds);
+      FEM_Mesh.Bounds = Read_upw_Dirichlet_Boundary_Conditions__InOutFun__(Name_File,NumBounds);
     }
     
   }
