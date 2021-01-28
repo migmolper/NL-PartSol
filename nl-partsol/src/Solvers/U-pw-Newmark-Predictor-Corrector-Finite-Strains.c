@@ -105,7 +105,8 @@ void upw_Newmark_Predictor_Corrector_Finite_Strains(Mesh FEM_Mesh, GaussPoint MP
       print_step(TimeStep,DeltaTimeStep);
 
       print_Status("*************************************************",TimeStep);
-      print_Status("First step : Compute mass and compressibility matrix ... WORKING",TimeStep);
+      print_Status("First step : Compute mass and compressibility matrix",TimeStep);
+      print_Status("WORKING ...",TimeStep);
 
       Mass_Matrix_Mixture = compute_Mass_Matrix_Mixture(MPM_Mesh,FEM_Mesh,ActiveNodes,1.0);
 
@@ -114,14 +115,16 @@ void upw_Newmark_Predictor_Corrector_Finite_Strains(Mesh FEM_Mesh, GaussPoint MP
       print_Status("DONE !!!",TimeStep);
    
       print_Status("*************************************************",TimeStep);
-      print_Status("Second step : Explicit Newmark predictor ... WORKING",TimeStep);
+      print_Status("Second step : Explicit Newmark predictor",TimeStep);
+      print_Status("WORKING ...",TimeStep);
       
       compute_Explicit_Newmark_Predictor(MPM_Mesh, gamma, TimeStep);
 
       print_Status("DONE !!!",TimeStep);
 
       print_Status("*************************************************",TimeStep);
-      print_Status("Third step : Compute nodal magnitudes ... WORKING",TimeStep);
+      print_Status("Third step : Compute nodal magnitudes",TimeStep);
+      print_Status("WORKING ...",TimeStep);
 
       Gravity_field = compute_Nodal_Gravity_field(ActiveNodes, MPM_Mesh, TimeStep);
 
@@ -136,16 +139,16 @@ void upw_Newmark_Predictor_Corrector_Finite_Strains(Mesh FEM_Mesh, GaussPoint MP
       print_Status("DONE !!!",TimeStep);
 
       print_Status("*************************************************",TimeStep);
-      print_Status("Four step : Update local state ... WORKING",TimeStep);
+      print_Status("Four step : Update local state",TimeStep);
+      print_Status("WORKING ...",TimeStep);
 
       update_Local_State(D_Displacement, ActiveNodes, MPM_Mesh, FEM_Mesh, DeltaTimeStep);
 
       print_Status("DONE !!!",TimeStep);
 
-      exit(0);
-
       print_Status("*************************************************",TimeStep);
-      print_Status("Five step : Compute equilibrium mixture ... WORKING",TimeStep);
+      print_Status("Five step : Compute equilibrium mixture",TimeStep);
+      print_Status("WORKING ...",TimeStep);
 
       Total_Forces_Mixture = compute_Total_Forces_Mixture(ActiveNodes, MPM_Mesh, FEM_Mesh, TimeStep);
 
@@ -153,8 +156,11 @@ void upw_Newmark_Predictor_Corrector_Finite_Strains(Mesh FEM_Mesh, GaussPoint MP
 
       Acceleration = solve_Nodal_Equilibrium_Mixture(Mass_Matrix_Mixture,Gravity_field,Total_Forces_Mixture);
 
+      print_Status("DONE !!!",TimeStep);
+
       print_Status("*************************************************",TimeStep);
-      print_Status("Six step : Compute equilibrium fluid ... WORKING",TimeStep);
+      print_Status("Six step : Compute equilibrium fluid",TimeStep);
+      print_Status("WORKING ...",TimeStep);
 
       Viscous_Forces_Fluid = compute_Viscous_Forces_Fluid(ActiveNodes, MPM_Mesh, FEM_Mesh, Velocity);
 
@@ -165,7 +171,8 @@ void upw_Newmark_Predictor_Corrector_Finite_Strains(Mesh FEM_Mesh, GaussPoint MP
       Rate_Pore_water_pressure = solve_Nodal_Generalized_Darcy_Law(Compressibility_Matrix_Fluid,Viscous_Forces_Fluid,Permeability_Forces_Fluid,Permeability_Inertial_Forces_Fluid);
 
       print_Status("*************************************************",TimeStep);
-      print_Status("Seven step : Compute corrector ... WORKING",TimeStep);
+      print_Status("Seven step : Compute corrector",TimeStep);
+      print_Status("WORKING ...",TimeStep);
 
       compute_Explicit_Newmark_Corrector(MPM_Mesh,FEM_Mesh,D_Displacement,Acceleration,Rate_Pore_water_pressure,ActiveNodes,gamma,TimeStep);
 
@@ -174,7 +181,8 @@ void upw_Newmark_Predictor_Corrector_Finite_Strains(Mesh FEM_Mesh, GaussPoint MP
       print_Status("DONE !!!",TimeStep);
       
       print_Status("*************************************************",TimeStep);
-      print_Status("Eight step : Output variables and reset nodal values ... WORKING",TimeStep);
+      print_Status("Eight step : Output variables and reset nodal values",TimeStep);
+      print_Status("WORKING ...",TimeStep);
 
       output_selector(MPM_Mesh, FEM_Mesh, ActiveNodes, Velocity, D_Displacement,
                       Total_Forces_Mixture, Reactions, TimeStep, ResultsTimeStep);
@@ -2150,12 +2158,12 @@ static Matrix compute_C_Permeability(
   int Ap; /* Tributary node A of particle p */
   int B_mask; /* Index of the node where we apply the body force */
   int Bp; /* Tributary node B of particle p */
+  int Mixture_idx; /* Index for the material point mixture parameters */
 
   Element Nodes_p; /* Element for each particle */
   Matrix ShapeFunction_p;
   Matrix gradient_p;  /* Shape functions gradients */
   Tensor gradient_pA; /* Shape functions gradients (Node A), def config */
-  Tensor GRADIENT_pA; /* Shape functions gradients (Node A), ref config */
   Tensor F_n_p; /* Deformation gradient t = n */
   Tensor F_n1_p; /* Deformation gradient t = n + 1 */
   Tensor transpose_F_n_p; /* Transpose of the deformation gradient t = n */
@@ -2163,7 +2171,7 @@ static Matrix compute_C_Permeability(
   Tensor k_p; /* Spatial permebility tensor */
   Tensor k_prim_p; /* Two-point permeability tensor */
   Tensor transpose_k_prim_p; /* Transpose of the two-point permeability tensor */
-  Tensor GRADIENT_pA_k_prim; /* Intermediate result */
+  Tensor gradien_pA_k_prim; /* Intermediate result */
   double ShapeFunction_pB; /* Nodal value of the shape function in node B */
   double rho_f_p; /* Intrinsic or material density (fluid phase) */
   double g = 9.81; /* Gravity constant */
@@ -2212,9 +2220,15 @@ static Matrix compute_C_Permeability(
       J_n1_p = I3__TensorLib__(F_n1_p);
 
       /*
+        Get the permeability tensor
+      */
+      Mixture_idx = MPM_Mesh.MixtIdx[p];
+      k_p = Soil_Water_Mixtures[Mixture_idx].Permeability;
+
+      /*
         Compute the tensor k' and its transpose
       */
-      k_prim_p = matrix_product__TensorLib__(inverse_F_n1_p,k_prim_p);
+      k_prim_p = matrix_product__TensorLib__(inverse_F_n1_p,k_p);
       for(int i = 0 ; i<Ndim ; i++)
       {
         for(int j = 0 ; j<Ndim ; j++)
@@ -2232,8 +2246,7 @@ static Matrix compute_C_Permeability(
           Get the gradient of the shape function and multiply it by the permeability tensor
         */
         gradient_pA = memory_to_tensor__TensorLib__(gradient_p.nM[A],1);
-        GRADIENT_pA = vector_linear_mapping__TensorLib__(transpose_F_n_p,gradient_pA);
-        GRADIENT_pA_k_prim = vector_linear_mapping__TensorLib__(transpose_k_prim_p,GRADIENT_pA);
+        gradien_pA_k_prim = vector_linear_mapping__TensorLib__(transpose_k_prim_p,gradient_pA);
      
         /*
           Get the node of the mesh for the contribution 
@@ -2259,14 +2272,13 @@ static Matrix compute_C_Permeability(
           */
           for(int i = 0 ; i<Ndim ; i++)
           {
-            C_Permeability.nM[A_mask][B_mask*Ndim + i] += GRADIENT_pA_k_prim.n[i]*(rho_f_p/g)*ShapeFunction_pB*V0_p;
+            C_Permeability.nM[A_mask][B_mask*Ndim + i] += gradien_pA_k_prim.n[i]*(rho_f_p/g)*ShapeFunction_pB*V0_p;
           }
 
 
         }
   
-        free__TensorLib__(GRADIENT_pA);
-        free__TensorLib__(GRADIENT_pA_k_prim);
+        free__TensorLib__(gradien_pA_k_prim);
 
       }
         

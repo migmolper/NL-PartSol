@@ -105,32 +105,26 @@ int main(int argc, char * argv[])
 
       puts("*************************************************");
       puts("Run simulation ...");
-      /* Forward Euler */
       if(strcmp(TimeIntegrationScheme,"FE") == 0 )
       { 
         U_Forward_Euler(FEM_Mesh, MPM_Mesh, InitialStep);
       }
-      /* Generalized-alpha */
       else if(strcmp(TimeIntegrationScheme,"GA") == 0 )
       { 
         U_GA(FEM_Mesh, MPM_Mesh, InitialStep);
       }
-      /* Explicit Newmark predictor-corrector with infinitesimal strains */
       else if(strcmp(TimeIntegrationScheme,"NPC") == 0 )
       { 
         U_Newmark_Predictor_Corrector(FEM_Mesh, MPM_Mesh, InitialStep);
       }
-      /* Explicit Newmark predictor-corrector with finite strains */
       else if(strcmp(TimeIntegrationScheme,"NPC-FS") == 0 )
       { 
         U_Newmark_Predictor_Corrector_Finite_Strains(FEM_Mesh, MPM_Mesh, InitialStep);
       }
-      /* Discrete energy momentum method */
       else if(strcmp(TimeIntegrationScheme,"Discrete-Energy-Momentum") == 0 )
       { 
         U_Discrete_Energy_Momentum(FEM_Mesh, MPM_Mesh, InitialStep);
       }
-      /* Newmark-beta finite strains */
       else if(strcmp(TimeIntegrationScheme,"Newmark-beta-Finite-Strains") == 0 )
       {
         U_Newmark_beta_Finite_Strains(FEM_Mesh, MPM_Mesh, InitialStep);
@@ -179,8 +173,6 @@ int main(int argc, char * argv[])
         MPM_Mesh = restart_Simulation(SimulationFile,RestartFile,FEM_Mesh);
       }
 
-      exit(0);
-
       puts("*************************************************");
       puts("Read VTK output directives ...");
       GramsOutputs(SimulationFile);
@@ -195,7 +187,6 @@ int main(int argc, char * argv[])
 
       puts("*************************************************");
       puts("Run simulation ...");
-      /* Explicit Newmark predictor-corrector with finite strains */
       if(strcmp(TimeIntegrationScheme,"NPC-FS") == 0 )
       { 
         upw_Newmark_Predictor_Corrector_Finite_Strains(FEM_Mesh, MPM_Mesh, InitialStep);
