@@ -18,8 +18,11 @@ int Number_Out_nodal_path_csv;
 int Number_Out_particles_path_csv;
 
 /*
-  Auxiliar functions 
+  Auxiliar functions and variables
 */
+
+static char Error_message[MAXW];
+static void standard_error();
 
 /* Step 1 */
 static Matrix compute_Mass_Matrix_Mixture(GaussPoint,Mesh,Mask,double);
@@ -35,7 +38,9 @@ static  void  impose_Dirichlet_Boundary_Conditions(Mesh,Matrix,Matrix,Mask,int);
 /* Step 4 */
 static  void  update_Local_State(Matrix,Mask,GaussPoint,Mesh,double);
 /* Step 5 */
-static Matrix compute_Internal_Forces_Mixture(Mask,GaussPoint,Mesh);
+static Matrix compute_Total_Forces_Mixture(Mask,GaussPoint,Mesh,int);
+static  void  compute_Internal_Forces_Mixture(Matrix,Mask,GaussPoint,Mesh);
+static  void  compute_Contact_Forces_Mixture(Matrix,Mask,GaussPoint,Mesh,int);
 static Tensor compute_total_first_Piola_Kirchhoff_stress(Tensor,double,Tensor);
 static Matrix compute_Reactions(Mesh,Matrix,Mask);
 static Matrix solve_Nodal_Equilibrium_Mixture(Matrix,Matrix,Matrix);
@@ -82,7 +87,7 @@ void upw_Newmark_Predictor_Corrector_Finite_Strains(Mesh FEM_Mesh, GaussPoint MP
   Matrix Rate_Pore_water_pressure;
   Matrix Gravity_field;
   Matrix D_Displacement;
-  Matrix Internal_Forces_Mixture;
+  Matrix Total_Forces_Mixture;
   Matrix Reactions;
   Matrix Viscous_Forces_Fluid;
   Matrix Permeability_Forces_Fluid;
@@ -142,11 +147,11 @@ void upw_Newmark_Predictor_Corrector_Finite_Strains(Mesh FEM_Mesh, GaussPoint MP
       print_Status("*************************************************",TimeStep);
       print_Status("Five step : Compute equilibrium mixture ... WORKING",TimeStep);
 
-      Internal_Forces_Mixture = compute_Internal_Forces_Mixture(ActiveNodes, MPM_Mesh, FEM_Mesh);
+      Total_Forces_Mixture = compute_Total_Forces_Mixture(ActiveNodes, MPM_Mesh, FEM_Mesh, TimeStep);
 
-      Reactions = compute_Reactions(FEM_Mesh,Internal_Forces_Mixture,ActiveNodes);
+      Reactions = compute_Reactions(FEM_Mesh,Total_Forces_Mixture,ActiveNodes);
 
-      Acceleration = solve_Nodal_Equilibrium_Mixture(Mass_Matrix_Mixture,Gravity_field,Internal_Forces_Mixture);
+      Acceleration = solve_Nodal_Equilibrium_Mixture(Mass_Matrix_Mixture,Gravity_field,Total_Forces_Mixture);
 
       print_Status("*************************************************",TimeStep);
       print_Status("Six step : Compute equilibrium fluid ... WORKING",TimeStep);
@@ -172,7 +177,7 @@ void upw_Newmark_Predictor_Corrector_Finite_Strains(Mesh FEM_Mesh, GaussPoint MP
       print_Status("Eight step : Output variables and reset nodal values ... WORKING",TimeStep);
 
       output_selector(MPM_Mesh, FEM_Mesh, ActiveNodes, Velocity, D_Displacement,
-                      Internal_Forces_Mixture, Reactions, TimeStep, ResultsTimeStep);
+                      Total_Forces_Mixture, Reactions, TimeStep, ResultsTimeStep);
       /*
       	Free memory.
       */
@@ -181,7 +186,7 @@ void upw_Newmark_Predictor_Corrector_Finite_Strains(Mesh FEM_Mesh, GaussPoint MP
       free__MatrixLib__(Gravity_field);
       free__MatrixLib__(Velocity);
       free__MatrixLib__(D_Displacement);
-      free__MatrixLib__(Internal_Forces_Mixture);
+      free__MatrixLib__(Total_Forces_Mixture);
       free__MatrixLib__(Reactions);
       free__MatrixLib__(Viscous_Forces_Fluid);
       free__MatrixLib__(Permeability_Forces_Fluid);
@@ -1270,10 +1275,38 @@ static void update_Local_State(
 
 /**************************************************************/
 
-static Matrix compute_Internal_Forces_Mixture(
+static Matrix compute_Total_Forces_Mixture(
   Mask ActiveNodes,
-  GaussPoint MPM_Mesh, Mesh
-  FEM_Mesh)
+  GaussPoint MPM_Mesh,
+  Mesh FEM_Mesh,
+  int TimeStep)
+{
+  
+  int Ndim = NumberDimensions;
+  int Nnodes_mask = ActiveNodes.Nactivenodes;
+  Matrix Forces = allocZ__MatrixLib__(Nnodes_mask,Ndim);
+
+  /*
+    Add internal forces contribution
+  */
+  compute_Internal_Forces_Mixture(Forces,ActiveNodes,MPM_Mesh,FEM_Mesh);
+
+  /*
+    Add contact forces contribution
+  */
+  compute_Contact_Forces_Mixture(Forces,ActiveNodes,MPM_Mesh,FEM_Mesh,TimeStep);
+  
+  return Forces;
+}
+
+/**************************************************************/
+
+
+static void compute_Internal_Forces_Mixture(
+  Matrix Forces,
+  Mask ActiveNodes,
+  GaussPoint MPM_Mesh,
+  Mesh FEM_Mesh)
 /*
 
 */
@@ -1286,8 +1319,6 @@ static Matrix compute_Internal_Forces_Mixture(
   int A_mask;
   int NumNodes_p;
   int idx_A_mask_i;
-
-  Matrix Forces = allocZ__MatrixLib__(Nnodes_mask,Ndim);
 
   Tensor P_p; /* Total First Piola-Kirchhoff Stress tensor */
   Tensor P_effective_p; /* Effective First Piola-Kirchhoff Stress tensor */
@@ -1397,9 +1428,7 @@ static Matrix compute_Internal_Forces_Mixture(
       free__MatrixLib__(gradient_p);
       free(Nodes_p.Connectivity);
     }
-   
-
-   return Forces;
+  
 }
 
 /**************************************************************/
@@ -1428,6 +1457,141 @@ static Tensor compute_total_first_Piola_Kirchhoff_stress(
   free__TensorLib__(inverse_F_n1_p);
 
   return P_p;
+}
+
+/*********************************************************************/
+
+static void compute_Contact_Forces_Mixture(
+  Matrix Forces,
+  Mask ActiveNodes,
+  GaussPoint MPM_Mesh,
+  Mesh FEM_Mesh,
+  int TimeStep)
+{
+  int Ndim = NumberDimensions;
+  Load * F = MPM_Mesh.F;
+  Element Nodes_p; /* Element for each Gauss-Point */
+  Material MatProp_Soil_p; /* Information with properties of the soil phase */
+  Matrix ShapeFunction_p; /* Nodal values of the sahpe function */
+  double ShapeFunction_pA;
+  Tensor t = alloc__TensorLib__(1); /* Body forces vector */
+  double V0_p; /* Volumen of the particle in the reference configuration */
+  double thickness_p; /* Thickness of the particle */
+  double A0_p; /* Area of the particle in the reference configuration */ 
+
+  int Mixture_idx; /* Index of the mixture for each particle */
+  int Material_Soil_idx; /* Index of the soil properties for each particle */
+  int NumContactForces = MPM_Mesh.NumNeumannBC;
+  int NumNodesLoad;
+  int p;
+  int Ap;
+  int A_mask;
+  int idx_A_mask_k;
+  int NumNodes_p; /* Number of nodes of each particle */
+
+  for(int i = 0 ; i<NumContactForces; i++)
+  {
+
+    NumNodesLoad = F[i].NumNodes;
+      
+    for(int j = 0 ; j<NumNodesLoad ; j++)
+    {
+
+      /*
+        Get the index of the particle
+      */
+      p = F[i].Nodes[j];
+
+      /*
+        Get the volume of the particle in the reference configuration 
+      */
+      V0_p = MPM_Mesh.Phi.Vol_0.nV[p];
+
+      /*
+        Get the material proerties of the soil phase for each particle
+      */
+      Mixture_idx = MPM_Mesh.MixtIdx[p];
+      Material_Soil_idx = Soil_Water_Mixtures[Mixture_idx].Soil_Idx;
+      MatProp_Soil_p = MPM_Mesh.Mat[Material_Soil_idx];
+
+      /*
+        Get the thickness of each particle
+      */
+      thickness_p = MatProp_Soil_p.thickness;
+
+      /*
+        Get the area of each particle
+      */
+      A0_p = V0_p/thickness_p;
+
+      /*
+        Define tributary nodes of the particle 
+      */
+      NumNodes_p = MPM_Mesh.NumberNodes[p];
+      Nodes_p = nodal_set__Particles__(p, MPM_Mesh.ListNodes[p],NumNodes_p);
+
+      /* 
+        Evaluate the shape function in the coordinates of the particle
+      */
+      ShapeFunction_p = compute_N__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
+
+      /*
+        Fill vector of contact forces
+      */
+      for(int k = 0 ; k<Ndim ; k++)
+      {
+        if(F[i].Dir[k])
+        {
+          if( (TimeStep < 0) || (TimeStep > F[i].Value[k].Num))
+          {
+            sprintf(Error_message,"%s : %s",
+              "Error in compute_Contact_Forces_Mixture()",
+              "The time step is out of the curve !!");
+            standard_error();
+          }
+          t.n[k] = F[i].Value[k].Fx[TimeStep];
+        }
+      }
+
+      /*
+        Get the node of the mesh for the contribution
+      */
+      for(int A = 0 ; A<NumNodes_p ; A++)
+      {
+
+        /*
+          Pass the value of the nodal shape function to a scalar
+        */
+        ShapeFunction_pA = ShapeFunction_p.nV[A];
+
+        /*
+          Node for the contribution
+        */
+        Ap = Nodes_p.Connectivity[A];
+        A_mask = ActiveNodes.Nodes2Mask[Ap];
+  
+        /*
+          Compute Contact forces
+        */
+        for(int k = 0 ; k<Ndim ; k++)
+        {
+          idx_A_mask_k = A_mask*Ndim + k;
+          Forces.nV[idx_A_mask_k] += ShapeFunction_pA*t.n[k]*A0_p;
+        }
+  
+      }
+
+      /* Free the matrix with the nodal gradient of the element */
+      free__MatrixLib__(ShapeFunction_p);
+      free(Nodes_p.Connectivity);
+  
+    }
+
+      
+  }
+
+  free__TensorLib__(t);
+
 }
 
 /**********************************************************************/
@@ -2414,3 +2578,11 @@ static void output_selector(
 }
 
 /**************************************************************/
+
+static void standard_error()
+{
+  fprintf(stderr,"%s !!! \n",Error_message);
+  exit(EXIT_FAILURE);
+}
+
+/***************************************************************************/
