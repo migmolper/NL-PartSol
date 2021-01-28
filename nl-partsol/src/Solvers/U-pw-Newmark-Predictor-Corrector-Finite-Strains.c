@@ -31,8 +31,7 @@ static Matrix compute_Nodal_Gravity_field(Mask, GaussPoint, int);
 static Matrix compute_Nodal_D_Displacement(GaussPoint,Mesh,Mask,Matrix);
 static Matrix compute_Nodal_Velocity(GaussPoint,Mesh,Mask,Matrix);
 static Matrix compute_Nodal_Pore_water_pressure(GaussPoint,Mesh,Mask,Matrix);
-static  void  Imposse_Velocity(Mesh,Matrix,Mask,int);
-static  void  Imposse_Pore_water_pressure(Mesh,Matrix,Mask,int);
+static  void  impose_Dirichlet_Boundary_Conditions(Mesh,Matrix,Matrix,Mask,int);
 /* Step 4 */
 static  void  update_Local_State(Matrix,Mask,GaussPoint,Mesh,double);
 /* Step 5 */
@@ -126,9 +125,7 @@ void upw_Newmark_Predictor_Corrector_Finite_Strains(Mesh FEM_Mesh, GaussPoint MP
       
       Pore_water_pressure = compute_Nodal_Pore_water_pressure(MPM_Mesh, FEM_Mesh, ActiveNodes, Compressibility_Matrix_Fluid);
  
-      Imposse_Velocity(FEM_Mesh,Velocity,ActiveNodes,TimeStep);
-
-      Imposse_Pore_water_pressure(FEM_Mesh,Pore_water_pressure,ActiveNodes,TimeStep);
+      impose_Dirichlet_Boundary_Conditions(FEM_Mesh,Velocity,Pore_water_pressure,ActiveNodes,TimeStep);
 
       print_Status("DONE !!!",TimeStep);
 
@@ -995,9 +992,10 @@ static Matrix compute_Nodal_Pore_water_pressure(
 
 /**************************************************************/
 
-static void Imposse_Velocity(
+static void impose_Dirichlet_Boundary_Conditions(
   Mesh FEM_Mesh,
   Matrix Velocity,
+  Matrix Pore_water_pressure,
   Mask ActiveNodes,
   int TimeStep)
 /*
@@ -1008,7 +1006,8 @@ static void Imposse_Velocity(
   /* 1º Define auxilar variables */
   int Nnodes_mask = ActiveNodes.Nactivenodes;
   int NumNodesBound; /* Number of nodes of the bound */
-  int NumDimBound; /* Number of dimensions */
+  int Ndim = NumberDimensions; /* Number of dimensions */
+  int Ndof = NumberDOF; /* Number of degree of freedom */
   int Id_BCC; /* Index of the node where we apply the BCC */
   int Id_BCC_mask;
   int Id_BCC_mask_k;
@@ -1017,78 +1016,73 @@ static void Imposse_Velocity(
   for(int i = 0 ; i<FEM_Mesh.Bounds.NumBounds ; i++)
     {
 
+    /* 
+      Get the number of nodes of this boundarie 
+    */
+    NumNodesBound = FEM_Mesh.Bounds.BCC_i[i].NumNodes;
+
+    /* 
+      Get the number of dimensions where the BCC it is applied 
+    */
+    Ndof = FEM_Mesh.Bounds.BCC_i[i].Dim;
+
+    for(int j = 0 ; j<NumNodesBound ; j++)
+    {
       /* 
-	 Get the number of nodes of this boundarie 
+        Get the index of the node 
       */
-      NumNodesBound = FEM_Mesh.Bounds.BCC_i[i].NumNodes;
+      Id_BCC = FEM_Mesh.Bounds.BCC_i[i].Nodes[j];
+      Id_BCC_mask = ActiveNodes.Nodes2Mask[Id_BCC];
+
+      /*
+        The boundary condition is not affecting any active node,
+        continue interating
+      */
+      if(Id_BCC_mask == -1)
+      {
+        continue;
+      }
 
       /* 
-	 Get the number of dimensions where the BCC it is applied 
+        Loop over the dimensions of the boundary condition 
       */
-      NumDimBound = FEM_Mesh.Bounds.BCC_i[i].Dim;
+      for(int k = 0 ; k<Ndof ; k++)
+      {
 
-      for(int j = 0 ; j<NumNodesBound ; j++)
+        /* 
+		      Apply only if the direction is active (1) 
+        */
+        if(FEM_Mesh.Bounds.BCC_i[i].Dir[k] == 1)
         {
-          /* 
-	         Get the index of the node 
-          */
-          Id_BCC = FEM_Mesh.Bounds.BCC_i[i].Nodes[j];
-          Id_BCC_mask = ActiveNodes.Nodes2Mask[Id_BCC];
-
-          /*
-            The boundary condition is not affecting any active node,
-            continue interating
-          */
-          if(Id_BCC_mask == -1)
-      	    {
-      	      continue;
-      	    }
-
-          /* 
-	     Loop over the dimensions of the boundary condition 
-          */
-          for(int k = 0 ; k<NumDimBound ; k++)
-            {
-
-              /* 
-		 Apply only if the direction is active (1) 
-              */
-              if(FEM_Mesh.Bounds.BCC_i[i].Dir[k] == 1)
-                {
     
-                  /* 
-		     Check if the curve it is on time 
-                  */
-                  if( (TimeStep < 0) || (TimeStep > FEM_Mesh.Bounds.BCC_i[i].Value[k].Num))
-                    {
-                      printf("%s : %s \n",
-                             "Error in imposse_NodalMomentum()",
-                             "The time step is out of the curve !!");
-                      exit(EXIT_FAILURE);
-                    }
+          /* 
+		        Check if the curve it is on time 
+          */
+          if( (TimeStep < 0) || (TimeStep > FEM_Mesh.Bounds.BCC_i[i].Value[k].Num))
+          {
+            printf("%s : %s \n","Error in imposse_NodalMomentum()","The time step is out of the curve !!");
+            exit(EXIT_FAILURE);
+          }
 
-                  /* 
-		     Assign the boundary condition 
-                  */
-                  Id_BCC_mask_k = Id_BCC_mask*NumDimBound + k; 
-                  Velocity.nV[Id_BCC_mask_k] = FEM_Mesh.Bounds.BCC_i[i].Value[k].Fx[TimeStep]*(double)FEM_Mesh.Bounds.BCC_i[i].Dir[k];
-                }
-            }
-        }    
-    }
+          /* 
+            Assign the boundary condition 
+          */
+          if(k<Ndim)
+          {
+            Id_BCC_mask_k = Id_BCC_mask*Ndim + k;
+            Velocity.nV[Id_BCC_mask_k] = FEM_Mesh.Bounds.BCC_i[i].Value[k].Fx[TimeStep]*(double)FEM_Mesh.Bounds.BCC_i[i].Dir[k];                    
+          }
+          else
+          {
+            Pore_water_pressure.nV[Id_BCC_mask] = FEM_Mesh.Bounds.BCC_i[i].Value[k].Fx[TimeStep]*(double)FEM_Mesh.Bounds.BCC_i[i].Dir[k];
+          }                
+        }
+      }
+    }    
+  }
 
 }
 
-/**************************************************************/
-
-static void Imposse_Pore_water_pressure(
-  Mesh FEM_Mesh,
-  Matrix Pore_water_pressure,
-  Mask ActiveNodes,
-  int TimeStep)
-{
-  
-}
 
 /**************************************************************/
 
