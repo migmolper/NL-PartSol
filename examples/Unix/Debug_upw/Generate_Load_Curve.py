@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 w = -40e3
-DetalT = 0.000759 # sg
+DetalT = 0.001710 # sg
 Nsteps = 500
 Tend = DetalT*Nsteps
 

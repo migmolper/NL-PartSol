@@ -208,6 +208,9 @@ static Material Define_Material(FILE * Simulation_file,
   double rad_friction_angle;
   double rad_dilatancy_angle;
 
+  /* Default values */
+  New_Material.thickness = 1;
+
   /* Default options */
   New_Material.Hardening_Ortiz = false;
   New_Material.Eigenerosion = false;
