@@ -198,6 +198,20 @@ Fields allocate_upw_vars__Fields__(int NumParticles)
     }
 
   /*!
+    Allocate and initialise the Jacobian of the deformation gradient 
+    ant its rate
+  */
+  Phi.J = allocZ__MatrixLib__(NumParticles,1);
+  strcpy(Phi.J.Info,"Jacobian of the deformation gradient at t = n + 1");
+  Phi.dJ_dt = allocZ__MatrixLib__(NumParticles,1);
+  strcpy(Phi.dJ_dt.Info,"Rate of the Jacobian of the deformation gradient at t = n + 1");
+
+  for(int p = 0 ; p<NumParticles ; p++)
+  {
+     Phi.J.nV[p] = 1.0;  
+  }
+
+  /*!
     Plastic deformation gradient field (Tensor) + Initialise it with the indentity
   */
   Phi.F_plastic = allocZ__MatrixLib__(NumParticles,Ndim*Ndim);
@@ -344,6 +358,8 @@ void free_upw_vars__Fields__(Fields Phi)
   free__MatrixLib__(Phi.F_plastic);
   free__MatrixLib__(Phi.F_n);
   free__MatrixLib__(Phi.F_n1);
+  free__MatrixLib__(Phi.J);
+  free__MatrixLib__(Phi.dJ_dt);
   free__MatrixLib__(Phi.DF);
   free__MatrixLib__(Phi.W);
   free__MatrixLib__(Phi.Vol_0);

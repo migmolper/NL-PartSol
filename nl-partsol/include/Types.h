@@ -216,7 +216,7 @@ typedef struct {
   Matrix vel;
   
   /*!
-   * Acceleration field 
+   * Acceleration fields 
    */
   Matrix acc;
   
@@ -248,6 +248,12 @@ typedef struct {
   Matrix F_n;
   Matrix F_n1;
   Matrix DF;
+
+  /*!
+  * Jacobian of the deformation gradient and its rate
+  */
+  Matrix J;
+  Matrix dJ_dt;
 
   /*!
    * Plastic deformation gradient
@@ -547,6 +553,11 @@ typedef struct {
    * Load case for the body forces
    */
   Load * B; 
+
+  /*
+    Current vector of distance accelerations
+  */
+  Tensor b;
 
   /*!
    * Size of the voxel for each particle. Variable for the uGIMP 
