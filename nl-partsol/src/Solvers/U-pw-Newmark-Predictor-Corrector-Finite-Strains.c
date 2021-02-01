@@ -511,7 +511,7 @@ static Matrix compute_Nodal_Gravity_field(
       /* Compute body forces */
       for(int k = 0 ; k<Ndim ; k++)
         {
-          Gravity_field.nV[A*Ndim + k] = MPM_Mesh.b.n[k];
+          Gravity_field.nM[A][k] = MPM_Mesh.b.n[k];
         }  
     }
 
@@ -1347,7 +1347,6 @@ static void compute_Contact_Forces_Mixture(
   int p;
   int Ap;
   int A_mask;
-  int idx_A_mask_k;
   int NumNodes_p; /* Number of nodes of each particle */
 
   for(int i = 0 ; i<NumContactForces; i++)
@@ -1441,8 +1440,7 @@ static void compute_Contact_Forces_Mixture(
         */
         for(int k = 0 ; k<Ndim ; k++)
         {
-          idx_A_mask_k = A_mask*Ndim + k;
-          Forces.nV[idx_A_mask_k] += ShapeFunction_pA*t.n[k]*A0_p;
+          Forces.nM[A_mask][k] += ShapeFunction_pA*t.n[k]*A0_p;
         }
   
       }
