@@ -8,10 +8,11 @@ Tend = DetalT*Nsteps
 
 Ramp = np.zeros(Nsteps)
 T = np.linspace(0,Tend,Nsteps)
+T_c = 0.6
 
 for i in range(0,Nsteps):
-    if T[i] < 0.1:
-        Ramp[i] = w*(min(T[i],0.1)/0.1)
+    if T[i] < T_c:
+        Ramp[i] = w*(min(T[i],T_c)/T_c)
     else:
         Ramp[i] = w
 

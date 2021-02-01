@@ -65,6 +65,8 @@ extern bool Out_displacement;
 extern bool Out_stress;
 extern bool Out_eigenvalues_stress;
 extern bool Out_volumetric_stress;
+extern bool Out_Pw;
+extern bool Out_dPw_dt;
 extern bool Out_strain;
 extern bool Out_eigenvalues_strain;
 extern bool Out_deformation_gradient;

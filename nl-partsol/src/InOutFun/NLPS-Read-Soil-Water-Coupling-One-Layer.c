@@ -298,11 +298,11 @@ GaussPoint Generate_Soil_Water_Coupling_Analysis__InOutFun__(char * Name_File, M
     /*
       Read body forces 
     */    
+    MPM_Mesh.b = alloc__TensorLib__(1); // Vector with the current value of the distance accelerations
     if(Sim_Params.Is_GramsBodyForces)
     {
       MPM_Mesh.NumberBodyForces = Sim_Params.Counter_BodyForces;
       MPM_Mesh.B = GramsBodyForces(Name_File,Sim_Params.Counter_BodyForces,Msh_Parms.GPxElement); 
-      MPM_Mesh.b = alloc__TensorLib__(1); // Vector with the current value of the distance accelerations
     }
     else
     {
