@@ -34,8 +34,7 @@ static Matrix compute_Total_Forces_Mixture(Mask,GaussPoint,Mesh,int);
 static  void  compute_Internal_Forces_Mixture(Matrix,Mask,GaussPoint,Mesh);
 static  void  compute_Contact_Forces_Mixture(Matrix,Mask,GaussPoint,Mesh,int);
 static Tensor compute_total_first_Piola_Kirchhoff_stress(Tensor,double,Tensor);
-static Matrix compute_Reactions_Mixture(Mesh,Matrix,Mask);
-static  void  solve_Nodal_Equilibrium_Mixture(Matrix,Matrix,Matrix,GaussPoint,Mesh,Mask);
+static Matrix  solve_Nodal_Equilibrium_Mixture(Matrix,Matrix,Matrix,GaussPoint,Mesh,Mask,Mask);
 /* Step 6 */
 static Matrix compute_Mass_exchanges_Source_Terms(Matrix,Mask,GaussPoint,Mesh,int);
 static  void  compute_Jacobian_Rate_Mass_Balance(Matrix,Mask,GaussPoint,Mesh);
@@ -43,7 +42,7 @@ static  void  compute_Permeability_Mass_Balance(Matrix,Mask,GaussPoint,Mesh,Matr
 static Tensor compute_Pore_water_pressure_gradient(Matrix,Matrix);
 static  void  compute_Permeability_Inertial_Forces_Fluid(Matrix,Mask,GaussPoint,Mesh);
 //static  void  compute_Fluid_Mass_Pump(Matrix,Mesh,Matrix,Mask,int);
-static  void  solve_Nodal_Mass_Balance(Matrix,Matrix,GaussPoint,Mesh,Mask);
+static  void  solve_Nodal_Mass_Balance(Matrix,Matrix,GaussPoint,Mesh,Mask,Mask);
 /* Step 7 */
 static  void  compute_Explicit_Newmark_Corrector(GaussPoint,double,double);
 /* Step 8 */
@@ -83,6 +82,7 @@ void upw_Newmark_Predictor_Corrector_Finite_Strains(Mesh FEM_Mesh, GaussPoint MP
   Matrix Mass_Exchanges_Source_Terms;
   Matrix Reactions_Fluid;
   Mask ActiveNodes;
+  Mask Free_and_Restricted_Dofs;
 
   for(int TimeStep = InitialStep ; TimeStep<NumTimeStep ; TimeStep++ )
     {
@@ -92,6 +92,7 @@ void upw_Newmark_Predictor_Corrector_Finite_Strains(Mesh FEM_Mesh, GaussPoint MP
 
       ActiveNodes = generate_NodalMask__MeshTools__(FEM_Mesh);
       Nactivenodes = ActiveNodes.Nactivenodes;
+      Free_and_Restricted_Dofs = generate_Mask_for_static_condensation__MeshTools__(ActiveNodes,FEM_Mesh);
       print_step(TimeStep,DeltaTimeStep);
 
       print_Status("*************************************************",TimeStep);
@@ -142,9 +143,8 @@ void upw_Newmark_Predictor_Corrector_Finite_Strains(Mesh FEM_Mesh, GaussPoint MP
 
       Total_Forces_Mixture = compute_Total_Forces_Mixture(ActiveNodes, MPM_Mesh, FEM_Mesh, TimeStep);
 
-      Reactions_Mixture = compute_Reactions_Mixture(FEM_Mesh,Total_Forces_Mixture,ActiveNodes);
-
-      solve_Nodal_Equilibrium_Mixture(Mass_Matrix_Mixture,Gravity_field,Total_Forces_Mixture,MPM_Mesh,FEM_Mesh,ActiveNodes);
+      Reactions_Mixture = solve_Nodal_Equilibrium_Mixture(Mass_Matrix_Mixture,Gravity_field,Total_Forces_Mixture,MPM_Mesh,FEM_Mesh,
+                                                          ActiveNodes,Free_and_Restricted_Dofs);
 
       print_Status("DONE !!!",TimeStep);
 
@@ -154,7 +154,7 @@ void upw_Newmark_Predictor_Corrector_Finite_Strains(Mesh FEM_Mesh, GaussPoint MP
 
       Mass_Exchanges_Source_Terms = compute_Mass_exchanges_Source_Terms(Pore_water_pressure,ActiveNodes,MPM_Mesh,FEM_Mesh,TimeStep);
 
-      solve_Nodal_Mass_Balance(Compressibility_Matrix_Fluid,Mass_Exchanges_Source_Terms,MPM_Mesh,FEM_Mesh,ActiveNodes);
+      solve_Nodal_Mass_Balance(Compressibility_Matrix_Fluid,Mass_Exchanges_Source_Terms,MPM_Mesh,FEM_Mesh,ActiveNodes,Free_and_Restricted_Dofs);
 
       print_Status("*************************************************",TimeStep);
       print_Status("Seven step : Compute corrector",TimeStep);
@@ -182,7 +182,7 @@ void upw_Newmark_Predictor_Corrector_Finite_Strains(Mesh FEM_Mesh, GaussPoint MP
       free__MatrixLib__(Velocity);
       free__MatrixLib__(D_Displacement);
       free__MatrixLib__(Total_Forces_Mixture);
-      free__MatrixLib__(Mass_Exchanges_Source_Terms);
+//      free__MatrixLib__(Mass_Exchanges_Source_Terms);
       free__MatrixLib__(Reactions_Mixture);
       free(ActiveNodes.Nodes2Mask);
       
@@ -984,7 +984,6 @@ static void update_Local_State(
   Tensor C_n1_p; /* Right Cauchy-Green tensor */
   double Pw_0; /* Cauchy pore water pressure at t = 0 */
   double Pw_n1; /* Cauchy pore water pressure at t = n + 1 */
-  
 
   for(int p = 0 ; p<Np ; p++)
     {
@@ -1458,84 +1457,16 @@ static void compute_Contact_Forces_Mixture(
 
 }
 
-/**********************************************************************/
-
-static Matrix compute_Reactions_Mixture(
-  Mesh FEM_Mesh,
-  Matrix Forces,
-  Mask ActiveNodes)
-/*
-  Compute the nodal reactions
-*/
-{
-  /* 1º Define auxilar variables */
-  int Ndim = NumberDimensions;
-  int NumNodesBound; /* Number of nodes of the bound */
-  int Nnodes_mask = ActiveNodes.Nactivenodes;
-  int Id_BCC; /* Index of the node where we apply the BCC */
-  int Id_BCC_mask;
-
-  Matrix Reactions = allocZ__MatrixLib__(Nnodes_mask, Ndim);
-  strcpy(Reactions.Info,"REACTIONS");
-
-  /*
-    Loop over the the boundaries 
-  */
-  for(int i = 0 ; i<FEM_Mesh.Bounds.NumBounds ; i++)
-  {
-    /* 
-      Get the number of nodes of this boundarie 
-    */
-    NumNodesBound = FEM_Mesh.Bounds.BCC_i[i].NumNodes;
-    
-    
-    for(int j = 0 ; j<NumNodesBound ; j++)
-    {
-      /* 
-        Get the index of the node 
-      */
-      Id_BCC = FEM_Mesh.Bounds.BCC_i[i].Nodes[j];
-      Id_BCC_mask = ActiveNodes.Nodes2Mask[Id_BCC];
-
-      /*
-        The boundary condition is not affecting any active node,
-        continue interating
-      */
-      if(Id_BCC_mask == -1)
-	    {
-	      continue;
-	    }
-      
-      /* 
-        Loop over the dimensions of the boundary condition 
-      */
-      for(int k = 0 ; k<Ndim ; k++)
-	    {
-
-        /* 
-		      Apply only if the direction is active (1) 
-        */
-	      if(FEM_Mesh.Bounds.BCC_i[i].Dir[k] == 1)
-        {
-          Reactions.nM[Id_BCC_mask][k] = Forces.nM[Id_BCC_mask][k];
-          Forces.nM[Id_BCC_mask][k] = 0.0;
-        }
-	    }
-    }    
-  }
-
-  return Reactions;
-}
-
 /**************************************************************/
 
-static void solve_Nodal_Equilibrium_Mixture(
+static Matrix solve_Nodal_Equilibrium_Mixture(
   Matrix Mass_Matrix_Mixture,
   Matrix Gravity_field,
   Matrix Total_Forces_Mixture,
   GaussPoint MPM_Mesh,
   Mesh FEM_Mesh,
-  Mask ActiveNodes)
+  Mask ActiveNodes,
+  Mask Free_and_Restricted_Dofs)
 /*
   Call the LAPACK solver to compute the accelerations and velocities
   Solve equilibrium equation to get the nodal values of the aceleration 
@@ -1547,8 +1478,9 @@ static void solve_Nodal_Equilibrium_Mixture(
     General varibles
   */
   int Ndim = NumberDimensions;
+  int Ndof = NumberDOF;
   int Np = MPM_Mesh.NumGP;
-  int Nnodes = Total_Forces_Mixture.N_rows;
+  int Nnodes = ActiveNodes.Nactivenodes;
   int NumNodes_p;
   int Order = Nnodes*Ndim;
   int AB;
@@ -1564,14 +1496,29 @@ static void solve_Nodal_Equilibrium_Mixture(
   Matrix Acceleration = allocZ__MatrixLib__(Nnodes,Ndim);
 
   /*
+    Output
+  */
+  Matrix Reactions = allocZ__MatrixLib__(Nnodes, Ndim);
+  strcpy(Reactions.Info,"REACTIONS");
+
+  /*
     The solution is now stored in the internal forces vector
   */
   for(int A = 0; A<Nnodes; A++)
   {
     for(int i = 0 ; i<Ndim ; i++)
     {
-      AB = A*Ndim + i;
-      Acceleration.nM[A][i] = Gravity_field.nM[A][i] + Total_Forces_Mixture.nM[A][i]/Mass_Matrix_Mixture.nM[AB][AB];
+      if(Free_and_Restricted_Dofs.Nodes2Mask[A*Ndof + i] != -1)
+      {
+        AB = A*Ndim + i;
+        Acceleration.nM[A][i] = Gravity_field.nM[A][i] + Total_Forces_Mixture.nM[A][i]/Mass_Matrix_Mixture.nM[AB][AB];
+      }
+      else
+      {
+        Acceleration.nM[A][i] = 0.0;
+        Reactions.nM[A][i] = Total_Forces_Mixture.nM[A][i];
+      }
+      
     }
   }
 
@@ -1635,6 +1582,8 @@ static void solve_Nodal_Equilibrium_Mixture(
   */
   free__MatrixLib__(Acceleration);
 
+
+  return Reactions;
 }
 
 
@@ -1791,7 +1740,7 @@ static void compute_Permeability_Mass_Balance(
   Tensor gradPw; 
   Tensor Fk__x__gradPw;
   double GRADIENT_pA__x__Fk__x__gradPw;
-  double g = 9.81;
+  double g = -9.81;
   double V0_p; /* Volume of the particle at the reference configuration */
 
   /*
@@ -1970,7 +1919,7 @@ static void compute_Permeability_Inertial_Forces_Fluid(
   Tensor Fk_dyn_p; /* Axiliar tensor for intermediate result */
   double GRADIENT_pA__x__Fk_dyn_p; /* Auxiliar scalar for intermediate result */
   double rho_f_p; /* Intrinsic or material density (fluid phase) */
-  double g = 9.81; /* Gravity constant */
+  double g = -9.81; /* Gravity constant */
   double V0_p; /* Inital volume of the particle p */
   double J_n1_p; /* Determianant of the soil skeleton deformation gradient at t = n + 1 */
 
@@ -2086,11 +2035,14 @@ static void solve_Nodal_Mass_Balance(
   Matrix Mass_Exchanges_Source_Terms,
   GaussPoint MPM_Mesh,
   Mesh FEM_Mesh,
-  Mask ActiveNodes)
+  Mask ActiveNodes,
+  Mask Free_and_Restricted_Dofs)
 /*
 
 */
 {
+  int Ndim = NumberDimensions;
+  int Ndof = NumberDOF;
   int Nnodes_mask = Mass_Exchanges_Source_Terms.N_rows;
   int AB_indx;
   int Np = MPM_Mesh.NumGP;
@@ -2103,16 +2055,19 @@ static void solve_Nodal_Mass_Balance(
 
   Matrix Rate_Pore_water_pressure = allocZ__MatrixLib__(Nnodes_mask,1);
 
-  Mass_Exchanges_Source_Terms.nV[0] = 0.0;
-  Mass_Exchanges_Source_Terms.nV[2] = 0.0;
-  Mass_Exchanges_Source_Terms.nV[5] = 0.0;
-
   /*
     The solution is now stored in the fluid forces vector
   */
   for(int A = 0; A<Nnodes_mask; A++)
   {
-    Rate_Pore_water_pressure.nV[A] = Mass_Exchanges_Source_Terms.nV[A]/Compressibility_Matrix_Fluid.nM[A][A];
+    if(Free_and_Restricted_Dofs.Nodes2Mask[A*Ndof + Ndim] != -1)
+    {
+      Rate_Pore_water_pressure.nV[A] = Mass_Exchanges_Source_Terms.nV[A]/Compressibility_Matrix_Fluid.nM[A][A];
+    }
+    else
+    {
+      Rate_Pore_water_pressure.nV[A] = 0.0;
+    }
   }
 
 

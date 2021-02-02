@@ -33,7 +33,7 @@ GramsBox (Type=GID,File=Nodes.msh) {
 
 
 GramsTime (Type=NPC-FS) {
-     CFL=0.005
+     CFL=0.0001
      N=500
 }
 
@@ -56,7 +56,7 @@ Define-Mixture (idx=0, Model=Borja-2004)
 {
   Soil-Idx=0
   Fluid-Idx=1
-  Permeability-Skeleton=0.0001
+  Permeability-Skeleton=0.1
   Reference-Volume-Fraction-Soil=0.58
   Reference-Volume-Fraction-Fluid=0.42
 }
@@ -67,7 +67,7 @@ Soil-Water-Coupling-One-Layer (File=Material_Points.msh,GPxElement=4)
   Assign-mixture-to-particles(MixtIdx=0,Particles=Soil.txt)
 
   GramsShapeFun (Type=LME) {
-    gamma=0.1
+    gamma=2.5
   }
 
   Define-Neumann-Boundary(File=Load.txt) 

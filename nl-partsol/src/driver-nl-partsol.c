@@ -299,14 +299,19 @@ static void globalfree(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
   free(MPM_Mesh.NumberNodes);
   free_table__SetLib__(MPM_Mesh.ListNodes,MPM_Mesh.NumGP);
   free_table__SetLib__(MPM_Mesh.Beps,MPM_Mesh.NumGP);
-  free_Fields(MPM_Mesh.Phi);
-  /* free_Fields(MPM_Mesh.Phi_n0);   */
-  free(MPM_Mesh.MatIdx);
 
-  /* Material * Mat; */
+  if(strcmp(Formulation,"-u") == 0)
+  {
+    free_Fields(MPM_Mesh.Phi);
+    free(MPM_Mesh.MatIdx);
+  }
 
-  /* Load * F; */
-  /* Load * B; */
+  if(strcmp(Formulation,"-upw") == 0)
+  {
+    free_upw_vars__Fields__(MPM_Mesh.Phi);
+    free(MPM_Mesh.MixtIdx);
+  }
+
 
   if(strcmp(ShapeFunctionGP,"uGIMP") == 0){
     free__MatrixLib__(MPM_Mesh.lp);

@@ -36,4 +36,14 @@ Fields allocate_upw_vars__Fields__(int NumParticles);
 void free_Fields(Fields);
 /*****************************************************************/
 
+/*!
+  \fn void free_upw_vars__Fields__(Fields Phi)
+
+  \brief This function is devoted to free memory
+
+  \param Fields : Variable that stores all the field information
+*/
+void free_upw_vars__Fields__(Fields);
+/*****************************************************************/
+
 #endif

@@ -273,6 +273,7 @@ Fields allocate_upw_vars__Fields__(int NumParticles)
   strcpy(Phi.rho_s.Info,"Intrinsic soil density");  
   Phi.rho_f = allocZ__MatrixLib__(NumParticles,1);
   strcpy(Phi.rho_f.Info,"Intrinsic water density");
+
   /*!
     Inital volume
   */
@@ -313,7 +314,6 @@ Fields allocate_upw_vars__Fields__(int NumParticles)
 void free_Fields(Fields Phi)
 {
   free__MatrixLib__(Phi.rho);
-  free__MatrixLib__(Phi.Vol_0);
   free__MatrixLib__(Phi.mass);
   free__MatrixLib__(Phi.x_GC);  
   free__MatrixLib__(Phi.x_EC);
@@ -358,11 +358,10 @@ void free_upw_vars__Fields__(Fields Phi)
   free__MatrixLib__(Phi.F_plastic);
   free__MatrixLib__(Phi.F_n);
   free__MatrixLib__(Phi.F_n1);
+  free__MatrixLib__(Phi.DF);
   free__MatrixLib__(Phi.J);
   free__MatrixLib__(Phi.dJ_dt);
-  free__MatrixLib__(Phi.DF);
   free__MatrixLib__(Phi.W);
-  free__MatrixLib__(Phi.Vol_0);
   free__MatrixLib__(Phi.phi_s);
   free__MatrixLib__(Phi.phi_f);
   free__MatrixLib__(Phi.chi);
