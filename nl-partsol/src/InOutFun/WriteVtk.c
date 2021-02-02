@@ -20,6 +20,8 @@ bool Out_displacement;
 bool Out_stress;
 bool Out_eigenvalues_stress;
 bool Out_volumetric_stress;
+bool Out_Pw;
+bool Out_dPw_dt;
 bool Out_strain;
 bool Out_eigenvalues_strain;
 bool Out_deformation_gradient;
@@ -43,6 +45,8 @@ static void vtk_Out_dis(FILE *, Matrix, int);
 static void vtk_Out_Stress(FILE *, Matrix, int);
 static void vtk_Out_Stress_EV(FILE *, Matrix, int);
 static void vtk_Out_Stress_P(FILE *, Matrix, int);
+static void vtk_Out_Pw(FILE *, Matrix, int);
+static void vtk_Out_dPw_dt(FILE *, Matrix, int);
 static void vtk_Out_Strain(FILE *, Matrix, int);
 static void vtk_Out_Strain_EV(FILE *, Matrix, int);
 static void vtk_Out_Deformation_Gradient(FILE *, Matrix, int);
@@ -182,6 +186,18 @@ void particle_results_vtk__InOutFun__(GaussPoint MPM_Mesh, int TimeStep_i, int R
   if(Out_volumetric_stress)
   {
     vtk_Out_Stress_P(Vtk_file, MPM_Mesh.Phi.Stress, NumParticles);
+  }
+
+  /* Print particle pore water pressure */
+  if(Out_Pw)
+  {
+    vtk_Out_Pw(Vtk_file, MPM_Mesh.Phi.Pw, NumParticles);
+  }
+
+  /* Print particle rate of pore water pressure */
+  if(Out_dPw_dt)
+  {
+    vtk_Out_dPw_dt(Vtk_file, MPM_Mesh.Phi.d_Pw, NumParticles);
   }
 
   /* Print particle strain tensor */
@@ -565,6 +581,36 @@ static void vtk_Out_Stress_P(FILE * Vtk_file, Matrix Stress, int NumParticles)
     fprintf(Vtk_file,"%lf \n",P_p);
   }
 
+}
+
+/*********************************************************************/
+
+static void vtk_Out_Pw(FILE * Vtk_file, Matrix Pw, int NumParticles)
+{
+  int Ndim = NumberDimensions;
+  Tensor Stress_p;
+  double P_p; /* Trace of the stress tensor (volumetric) */
+  fprintf(Vtk_file,"SCALARS Pw double \n");
+  fprintf(Vtk_file,"LOOKUP_TABLE default \n");
+  for(int i =  0 ; i<NumParticles ; i++)
+  {  
+    fprintf(Vtk_file,"%lf \n",Pw.nV[i]);
+  }
+}
+
+/*********************************************************************/
+
+static void  vtk_Out_dPw_dt(FILE * Vtk_file, Matrix d_Pw, int NumParticles)
+{
+  int Ndim = NumberDimensions;
+  Tensor Stress_p;
+  double P_p; /* Trace of the stress tensor (volumetric) */
+  fprintf(Vtk_file,"SCALARS dPw_dt double \n");
+  fprintf(Vtk_file,"LOOKUP_TABLE default \n");
+  for(int i =  0 ; i<NumParticles ; i++)
+  {  
+    fprintf(Vtk_file,"%lf \n",d_Pw.nV[i]);
+  }
 }
 
 /*********************************************************************/

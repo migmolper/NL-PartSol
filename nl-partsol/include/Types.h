@@ -173,9 +173,21 @@ typedef struct {
   Matrix Vol_0;
 
   /*!
-   * Density field 
+   * Density field
    */
   Matrix rho;
+
+  /*!
+   * Material density field (solid/water) 
+   */
+  Matrix rho_s;
+  Matrix rho_f;
+
+  /*!
+  * Volume fraction occupied for each material
+  */
+  Matrix phi_s;
+  Matrix phi_f;
   
   /*!
    * Mass field 
@@ -196,6 +208,7 @@ typedef struct {
    * Displacement field 
    */
   Matrix dis;
+  Matrix D_dis;
   
   /*! 
    * Velocity field 
@@ -203,7 +216,7 @@ typedef struct {
   Matrix vel;
   
   /*!
-   * Acceleration field 
+   * Acceleration fields 
    */
   Matrix acc;
   
@@ -211,6 +224,18 @@ typedef struct {
    * Stress field
    */
   Matrix Stress;
+
+  /*!
+  * Fluid stress tensor
+  */
+  Matrix Stress_f;
+
+  /*!
+  * Pore water preassure, its rate and initial state
+  */
+  Matrix Pw;
+  Matrix d_Pw;
+  Matrix Pw_0;
   
   /*!
    * Strain field 
@@ -223,6 +248,12 @@ typedef struct {
   Matrix F_n;
   Matrix F_n1;
   Matrix DF;
+
+  /*!
+  * Jacobian of the deformation gradient and its rate
+  */
+  Matrix J;
+  Matrix dJ_dt;
 
   /*!
    * Plastic deformation gradient
@@ -325,7 +356,7 @@ typedef struct {
 /*******************************************************/
 
 /*! \struct Material
- * Properties of a material model 
+ * Properties of a general material model 
  */
 typedef struct {
 
@@ -350,7 +381,7 @@ typedef struct {
   double Cel;
   
   /*!
-   * Initial density 
+   * Initial density (mixture/fluid/solid)
    */
   double rho;
   
@@ -363,7 +394,12 @@ typedef struct {
    * Poisson ratio 
    */
   double nu;
-  
+
+  /*!
+  * Compressibility
+  */
+  double Compressibility;
+
   /*!
    * Activate eigenerosion-fracture modulus (Eigenerosion/Eigensoftening)
    */
@@ -393,8 +429,47 @@ typedef struct {
   double alpha_F_Drucker_Prager;
   double alpha_Q_Drucker_Prager;
   double beta_Drucker_Prager;
+
   
 } Material;
+
+/*******************************************************/
+
+/*! \struct Mixture
+ * This structure is devoted to store information 
+ * for a general kind of mixtures
+ */
+typedef struct {
+
+  /*!
+   * Index of the mixture 
+   */
+  int Id;
+
+  /*!
+   * Name of the mixture
+   */
+  char Type [100];
+
+  /* 
+    Index for the constitutive description of each phase
+    for the soil-water mixture
+  */
+  int Soil_Idx;
+  int Water_Idx;
+
+  /*!
+  * Permeability of the soil skleleton
+  */
+  Tensor Permeability;
+
+  /*!
+  * Initial volume fractions (Soil/Water)
+  */
+  double phi_s_0;
+  double phi_f_0;
+
+} Mixture;
 
 /*******************************************************/
 
@@ -448,6 +523,11 @@ typedef struct {
    */
   Material * Mat;
 
+  /*! 
+  * Index of the mixtures for each particle 
+  */
+  int * MixtIdx;
+
   /*!
    * Number of Neumann boundary conditions 
    */
@@ -458,6 +538,12 @@ typedef struct {
    */  
   Load * F;
 
+  /*!
+  * Structure to store Neumann boundary conditions.
+  * will replace NumNeumannBC and F;
+  */
+  Boundaries Neumann_Contours;
+
   /*! 
    * Number of body forces 
    */
@@ -467,6 +553,11 @@ typedef struct {
    * Load case for the body forces
    */
   Load * B; 
+
+  /*
+    Current vector of distance accelerations
+  */
+  Tensor b;
 
   /*!
    * Size of the voxel for each particle. Variable for the uGIMP 

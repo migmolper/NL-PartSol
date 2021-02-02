@@ -25,6 +25,8 @@ bool Out_displacement = false;
 bool Out_stress = false;
 bool Out_eigenvalues_stress = false;
 bool Out_volumetric_stress = false;
+bool Out_Pw = false;
+bool Out_dPw_dt = false;
 bool Out_strain = false;
 bool Out_eigenvalues_strain = false;
 bool Out_deformation_gradient = false;
@@ -76,10 +78,6 @@ void GramsOutputs(char * Name_File)
   /* Auxiliar variable for status */
   char * STATUS_LINE;
 
-  /* Initial message */  
-  puts("*************************************************");
-  printf(" \t %s : \n\t %s \n", "* Read Outputs properties ", Name_File);
-  
   /* Open and check file */
   Sim_dat = Open_and_Check_simulation_file(Name_File);
 
@@ -195,6 +193,14 @@ void GramsOutputs(char * Name_File)
 	  {
 		Out_volumetric_stress = Is_Output_Activate(Parse_Out_Prop[0],Parse_Out_Prop[1]);
 	  }	  
+	  else if(strcmp(Parse_Out_Prop[0],"Pore-water-pressure") == 0)
+	  {
+	  	Out_Pw = Is_Output_Activate(Parse_Out_Prop[0],Parse_Out_Prop[1]);
+	  }
+	  else if(strcmp(Parse_Out_Prop[0],"Rate-Pore-water-pressure") == 0)
+	  {
+	  	Out_dPw_dt = Is_Output_Activate(Parse_Out_Prop[0],Parse_Out_Prop[1]);
+	  }
 	  else if(strcmp(Parse_Out_Prop[0],"Out-strain") == 0)
 	  {
 		Out_strain = Is_Output_Activate(Parse_Out_Prop[0],Parse_Out_Prop[1]);

@@ -44,9 +44,7 @@ void GramsShapeFun(char * Name_File)
 
   /* Initial message */  
   puts("*************************************************");
-  printf(" \t %s : \n\t %s \n",
-	 "* Read shape function properties ",
-	 Name_File);
+  printf(" \t %s : \n","* Read shape function properties ");
   
   /* Open and check file */
   Sim_dat = fopen(Name_File,"r");  

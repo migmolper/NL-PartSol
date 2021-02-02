@@ -251,7 +251,6 @@ void print_iteration(int,int);
 
 */
 Mesh GramsBox(char *);
-
 /*****************************************************************/
 
 /*!
@@ -265,11 +264,36 @@ Mesh GramsBox(char *);
 
 */
 Boundaries GramsBoundary(char *,int);
-
 /*****************************************************************/
 
-GaussPoint Generate_Gauss_Point_Analysis__InOutFun__(char *);
+/*!
 
+  \fn Boundaries Read_upw_Dirichlet_Boundary_Conditions__InOutFun__(char * Name_File,int NumBounds)
+
+  \brief Function that reads the boundary conditions for the mesh
+
+  \param File: Name of the file with the instructions
+  \param NumBounds : Numerb of boundary defined in the domain
+
+*/
+Boundaries Read_upw_Dirichlet_Boundary_Conditions__InOutFun__(char *,int);
+/*****************************************************************/
+
+/*!
+  \fn Boundaries Read_upw_Neumann_Boundary_Conditions__InOutFun__(char * Name_File,int NumBounds,int GPxElement)
+
+  \brief Function that reads the neumann boundary conditions for the mesh
+
+  \param File: Name of the file with the instructions
+  \param NumBounds : Numerb of boundary defined in the domain
+  \param GPxElement
+
+*/
+Boundaries Read_upw_Neumann_Boundary_Conditions__InOutFun__(char *,int,int);
+/*****************************************************************/
+
+
+GaussPoint Generate_Gauss_Point_Analysis__InOutFun__(char *);
 /*****************************************************************/
 
 /*!
@@ -283,7 +307,17 @@ GaussPoint Generate_Gauss_Point_Analysis__InOutFun__(char *);
 
 */
 GaussPoint GramsSolid2D(char *,Mesh);
+/*****************************************************************/
 
+/*
+  \fn GaussPoint Generate_Soil_Water_Coupling_Analysis__InOutFun__(char * Name_File, Mesh FEM_Mesh);
+ 
+  \brief Function that generate a set of material points for soil-water coupling applications
+
+  \param File: Name of the file with the instructions
+  \param Nodes : Set of background nodes
+*/
+GaussPoint Generate_Soil_Water_Coupling_Analysis__InOutFun__(char *, Mesh);
 /*****************************************************************/
 
 /*!
@@ -297,7 +331,6 @@ GaussPoint GramsSolid2D(char *,Mesh);
 }
 */
 void Solver_selector__InOutFun__(char * );
-
 /*****************************************************************/
 
 /*!
@@ -312,7 +345,6 @@ void Solver_selector__InOutFun__(char * );
 
 */
 Material * GramsMaterials(char *, GaussPoint, int);
-
 /*****************************************************************/
 
 /*!
@@ -321,7 +353,13 @@ Material * GramsMaterials(char *, GaussPoint, int);
 
 */
 Material * Read_Materials__InOutFun__(char *, int);
+/*****************************************************************/
 
+/*!
+\fn Mixture * Read_Soil_Water_Mixtures__InOutFun__(char * SimulationFile, int Number_Soil_Water_Mixtures);
+
+*/
+Mixture * Read_Soil_Water_Mixtures__InOutFun__(char *, int);
 /*****************************************************************/
 
 /*!
@@ -336,7 +374,6 @@ Material * Read_Materials__InOutFun__(char *, int);
 
 */
 void Initial_condition_particles__InOutFun__(char *, GaussPoint, int);
-
 /*****************************************************************/
 
 /*!
@@ -350,7 +387,6 @@ void Initial_condition_particles__InOutFun__(char *, GaussPoint, int);
   \param FEM_Mesh
 */
 void Initial_condition_nodes__InOutFun__(char *, GaussPoint, Mesh);
-
 /*****************************************************************/
 
 /*!
@@ -373,7 +409,6 @@ void Initial_condition_nodes__InOutFun__(char *, GaussPoint, Mesh);
 
 */
 void GramsShapeFun(char * );
-
 /*****************************************************************/
 
 /*!
@@ -386,7 +421,6 @@ void GramsShapeFun(char * );
 
 */
 void GramsOutputs(char * );
-
 /*****************************************************************/
 
 /*!

@@ -72,7 +72,7 @@ int main(int argc, char * argv[])
     }
     
   /* Select kinf of formulation  */
-  if(strcmp(Formulation,"-V") == 0)
+  if(strcmp(Formulation,"-u") == 0)
     {
 
       NumberDOF = NumberDimensions;
@@ -105,32 +105,26 @@ int main(int argc, char * argv[])
 
       puts("*************************************************");
       puts("Run simulation ...");
-      /* Forward Euler */
       if(strcmp(TimeIntegrationScheme,"FE") == 0 )
       { 
         U_Forward_Euler(FEM_Mesh, MPM_Mesh, InitialStep);
       }
-      /* Generalized-alpha */
       else if(strcmp(TimeIntegrationScheme,"GA") == 0 )
       { 
         U_GA(FEM_Mesh, MPM_Mesh, InitialStep);
       }
-      /* Explicit Newmark predictor-corrector with infinitesimal strains */
       else if(strcmp(TimeIntegrationScheme,"NPC") == 0 )
       { 
         U_Newmark_Predictor_Corrector(FEM_Mesh, MPM_Mesh, InitialStep);
       }
-      /* Explicit Newmark predictor-corrector with finite strains */
       else if(strcmp(TimeIntegrationScheme,"NPC-FS") == 0 )
       { 
         U_Newmark_Predictor_Corrector_Finite_Strains(FEM_Mesh, MPM_Mesh, InitialStep);
       }
-      /* Discrete energy momentum method */
       else if(strcmp(TimeIntegrationScheme,"Discrete-Energy-Momentum") == 0 )
       { 
         U_Discrete_Energy_Momentum(FEM_Mesh, MPM_Mesh, InitialStep);
       }
-      /* Newmark-beta finite strains */
       else if(strcmp(TimeIntegrationScheme,"Newmark-beta-Finite-Strains") == 0 )
       {
         U_Newmark_beta_Finite_Strains(FEM_Mesh, MPM_Mesh, InitialStep);
@@ -139,6 +133,64 @@ int main(int argc, char * argv[])
       {
         U_Newmark_beta_Finite_Strains_BDB(FEM_Mesh, MPM_Mesh, InitialStep);
       } 
+      else
+      {
+        sprintf(Error_message,"%s","Wrong time integration scheme");
+        standard_error(Error_message); 
+      }
+
+      puts("*************************************************");
+      puts("Free memory ...");
+      globalfree(FEM_Mesh, MPM_Mesh);       
+
+      printf("Computation finished at : %s \n",__TIME__);  
+      puts("Exiting of the program...");
+      exit(EXIT_SUCCESS);
+
+    }
+    else if(strcmp(Formulation,"-upw") == 0)
+    {
+
+      NumberDOF = NumberDimensions + 1;
+
+      puts("*************************************************");
+      puts("Generating the background mesh ...");
+      FEM_Mesh = GramsBox(SimulationFile);
+
+      puts("*************************************************");
+      puts("Read solver ...");
+      Solver_selector__InOutFun__(SimulationFile);      
+
+      puts("*************************************************");
+      if(Is_New_Simulation)
+      {
+        puts("Generating new MPM simulation ...");
+        MPM_Mesh = Generate_Soil_Water_Coupling_Analysis__InOutFun__(SimulationFile,FEM_Mesh);
+      }
+      if(Is_Restart_Simulation)
+      {
+        puts("Restarting old MPM simulation ...");
+        MPM_Mesh = restart_Simulation(SimulationFile,RestartFile,FEM_Mesh);
+      }
+
+      puts("*************************************************");
+      puts("Read VTK output directives ...");
+      GramsOutputs(SimulationFile);
+
+      puts("*************************************************");
+      puts("Read nodal path output directives ...");
+      NLPS_Out_nodal_path_csv__InOutFun__(SimulationFile);
+
+      puts("*************************************************");
+      puts("Read particle path output directives ...");
+      NLPS_Out_particles_path_csv__InOutFun__(SimulationFile);
+
+      puts("*************************************************");
+      puts("Run simulation ...");
+      if(strcmp(TimeIntegrationScheme,"NPC-FS") == 0 )
+      { 
+        upw_Newmark_Predictor_Corrector_Finite_Strains(FEM_Mesh, MPM_Mesh, InitialStep);
+      }
       else
       {
         sprintf(Error_message,"%s","Wrong time integration scheme");
@@ -210,10 +262,10 @@ puts("Non-Linear Particle Solver (NL-PartSol)");
 puts("Usage : nl-partsol -Flag [commands.nlp]");
 puts("Flag values:");
 puts(" * -GP  : Gauss Point Analysis");
-puts(" * -V   : Velocity formulation");
-puts(" * -Up  : Velocity-Pressure formulation (Under development)");
-puts(" * -Upw : Soil-water mixture displacement-pressure formulation (Under development)");
-puts(" * -VW  : Soil-water mixture velocity formulation (Under development)");
+puts(" * -u   : Displacement formulation");
+puts(" * -up  : Velocity-Pressure formulation (Under development)");
+puts(" * -upw : Soil-water mixture displacement-pressure formulation (Under development)");
+puts(" * -uU  : Soil-water mixture velocity formulation (Under development)");
 puts("The creator of NL-PartSol is Miguel Molinos");
 
 puts("mails to : m.molinos@alumnos.upm.es (Madrid-Spain)");
@@ -247,14 +299,19 @@ static void globalfree(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
   free(MPM_Mesh.NumberNodes);
   free_table__SetLib__(MPM_Mesh.ListNodes,MPM_Mesh.NumGP);
   free_table__SetLib__(MPM_Mesh.Beps,MPM_Mesh.NumGP);
-  free_Fields(MPM_Mesh.Phi);
-  /* free_Fields(MPM_Mesh.Phi_n0);   */
-  free(MPM_Mesh.MatIdx);
 
-  /* Material * Mat; */
+  if(strcmp(Formulation,"-u") == 0)
+  {
+    free_Fields(MPM_Mesh.Phi);
+    free(MPM_Mesh.MatIdx);
+  }
 
-  /* Load * F; */
-  /* Load * B; */
+  if(strcmp(Formulation,"-upw") == 0)
+  {
+    free_upw_vars__Fields__(MPM_Mesh.Phi);
+    free(MPM_Mesh.MixtIdx);
+  }
+
 
   if(strcmp(ShapeFunctionGP,"uGIMP") == 0){
     free__MatrixLib__(MPM_Mesh.lp);

@@ -571,7 +571,7 @@ Tensor subtraction__TensorLib__(Tensor A, Tensor B)
   if ((A.Order == 2) && (B.Order == 2))
   { 
 
-    Tensor A_minus_B = alloc__TensorLib__(2); 
+    A_minus_B = alloc__TensorLib__(2); 
 
     for(int i = 0 ; i < Ndim ; i++)
     {
@@ -585,11 +585,11 @@ Tensor subtraction__TensorLib__(Tensor A, Tensor B)
   else if((A.Order == 1) && (B.Order == 1))
   {
 
-    Tensor A_minus_B = alloc__TensorLib__(1);
+    A_minus_B = alloc__TensorLib__(1);
 
     for(int i = 0 ; i < Ndim ; i++)
     {
-      A_minus_B.n[i] = A.N[i] - B.N[i];
+      A_minus_B.n[i] = A.n[i] - B.n[i];
     }
 
   }

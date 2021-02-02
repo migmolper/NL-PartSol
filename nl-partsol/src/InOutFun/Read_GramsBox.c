@@ -223,11 +223,20 @@ Mesh GramsBox(char * Name_File)
   /**************************************************/
   if(NumBounds > 0){
     puts("*************************************************");
-    printf(" \t %s : \n \t %i \n",
-	   "* Number of boundaries",NumBounds);
+    printf(" \t %s (%i) : \n",
+	   "* Boundary conditions",NumBounds);
     FEM_Mesh.Bounds.NumBounds = NumBounds;
-    FEM_Mesh.Bounds = GramsBoundary(Name_File,NumBounds);
+    if(strcmp(Formulation,"-u") == 0)
+    {
+      FEM_Mesh.Bounds = GramsBoundary(Name_File,NumBounds);  
+    }
+    else if(strcmp(Formulation,"-upw") == 0)
+    {
+      FEM_Mesh.Bounds = Read_upw_Dirichlet_Boundary_Conditions__InOutFun__(Name_File,NumBounds);
+    }
+    
   }
+
 
   return FEM_Mesh;
 }
