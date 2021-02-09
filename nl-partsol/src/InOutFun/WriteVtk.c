@@ -45,7 +45,7 @@ static void vtk_Out_dis(FILE *, Matrix, int);
 static void vtk_Out_Stress(FILE *, Matrix, int);
 static void vtk_Out_Stress_EV(FILE *, Matrix, int);
 static void vtk_Out_Stress_P(FILE *, Matrix, int);
-static void vtk_Out_Pw(FILE *, Matrix, int);
+static void vtk_Out_Pw(FILE *, Matrix, Matrix, int);
 static void vtk_Out_dPw_dt(FILE *, Matrix, int);
 static void vtk_Out_Strain(FILE *, Matrix, int);
 static void vtk_Out_Strain_EV(FILE *, Matrix, int);
@@ -191,7 +191,7 @@ void particle_results_vtk__InOutFun__(GaussPoint MPM_Mesh, int TimeStep_i, int R
   /* Print particle pore water pressure */
   if(Out_Pw)
   {
-    vtk_Out_Pw(Vtk_file, MPM_Mesh.Phi.Pw, NumParticles);
+    vtk_Out_Pw(Vtk_file, MPM_Mesh.Phi.Pw, MPM_Mesh.Phi.J, NumParticles);
   }
 
   /* Print particle rate of pore water pressure */
@@ -585,7 +585,7 @@ static void vtk_Out_Stress_P(FILE * Vtk_file, Matrix Stress, int NumParticles)
 
 /*********************************************************************/
 
-static void vtk_Out_Pw(FILE * Vtk_file, Matrix Pw, int NumParticles)
+static void vtk_Out_Pw(FILE * Vtk_file, Matrix Pw, Matrix J, int NumParticles)
 {
   int Ndim = NumberDimensions;
   Tensor Stress_p;
@@ -594,7 +594,7 @@ static void vtk_Out_Pw(FILE * Vtk_file, Matrix Pw, int NumParticles)
   fprintf(Vtk_file,"LOOKUP_TABLE default \n");
   for(int i =  0 ; i<NumParticles ; i++)
   {  
-    fprintf(Vtk_file,"%lf \n",Pw.nV[i]);
+    fprintf(Vtk_file,"%lf \n",Pw.nV[i]/J.nV[i]);
   }
 }
 

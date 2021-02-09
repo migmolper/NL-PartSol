@@ -1,14 +1,14 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-w = -20e3
-DetalT = 0.000022 # sg
-Nsteps = 500
+w = -40e3
+DetalT = 0.000001 # sg
+Nsteps = 500000
 Tend = DetalT*Nsteps
 
 Ramp = np.zeros(Nsteps)
 T = np.linspace(0,Tend,Nsteps)
-Tc = 0.01
+Tc = 0.1
 
 for i in range(0,Nsteps):
     if T[i] < Tc:

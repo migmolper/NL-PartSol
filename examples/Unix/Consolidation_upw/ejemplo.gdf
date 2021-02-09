@@ -34,7 +34,7 @@ GramsBox (Type=GID,File=Nodes.msh) {
 
 GramsTime (Type=NPC-FS) {
      CFL=0.0001
-     N=500
+     N=500000
 }
 
 
@@ -80,7 +80,7 @@ Soil-Water-Coupling-One-Layer (File=Material_Points.msh,GPxElement=4)
 }
 
 
-GramsOutputs (i=1) {
+GramsOutputs (i=1000) {
   DIR=Resultados
   Out-displacement=true
   Out-velocity=true
