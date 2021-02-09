@@ -584,39 +584,43 @@ static int * assign_mixture_to_particles(char * Name_File, int NumMixtures, int 
       Num_words = parse(File_Parameter,Words[2],delimiters_3);
       if((Num_words == 2) && (strcmp(File_Parameter[0],"Particles") == 0))
       {
+        /*
+          Generate array with the nodes
+        */
         sprintf(FileNodesRoute,"%s%s",Route_Nodes,File_Parameter[1]);
         Check_File(FileNodesRoute);
         Chain_Nodes = File2Chain(FileNodesRoute);
         Num_Nodes_File = lenght__SetLib__(Chain_Nodes);
         Array_Nodes = set_to_memory__SetLib__(Chain_Nodes,Num_Nodes_File);
         free__SetLib__(&Chain_Nodes);
+
+        /*
+          Fill the MixtIdx array with the index
+        */      
+        for(int i = 0 ; i<Num_Nodes_File ; i++)
+        {
+          for(int j = 0 ; j<GPxElement ; j++)
+          {
+            MixtIdx[Array_Nodes[i]*GPxElement+j] = Mixture_Index;
+          }
+        }
+
+        /*
+          Information message
+        */
+        printf("\t -> Mixture %i has been assigned to %i particles \n",Mixture_Index,GPxElement*Num_Nodes_File);
+
+        /*
+          Free memory
+        */
+        free(Array_Nodes);
+
       }
       else
       {
         sprintf(Error_message,"Sintax error in line %i : %s",Num_line,"Assign-mixture-to-particles (*, Particles=List-Particles.txt)");
         standard_error(); 
       }
-
-      /*
-        Fill the MixtIdx array with the index
-      */      
-      for(int i = 0 ; i<Num_Nodes_File ; i++)
-      {
-        for(int j = 0 ; j<GPxElement ; j++)
-        {
-          MixtIdx[Array_Nodes[i]*GPxElement+j] = Mixture_Index;
-        }
-      }
-
-      /*
-        Information message
-      */
-      printf("\t -> Mixture %i has been assigned to %i particles \n",Mixture_Index,GPxElement*Num_Nodes_File);
-
-      /*
-        Free memory
-      */
-      free(Array_Nodes);
 
     }
 
