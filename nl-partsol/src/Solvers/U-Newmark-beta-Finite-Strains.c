@@ -1686,9 +1686,7 @@ static Tensor compute_stiffness_density(Tensor GRADIENT_pA,
 
   if(strcmp(MatProp_p.Type,"Saint-Venant-Kirchhoff") == 0)
     {
-      C_AB = compute_stiffness_density_Saint_Venant_Kirchhoff(GRADIENT_pA,
-							      GRADIENT_pB,
-							      MatProp_p);
+      C_AB = compute_Cij__SaintVenantKirchhoff__(GRADIENT_pA,GRADIENT_pB,MatProp_p);
     }
   else if(strcmp(MatProp_p.Type,"Neo-Hookean-Wriggers") == 0)
     {

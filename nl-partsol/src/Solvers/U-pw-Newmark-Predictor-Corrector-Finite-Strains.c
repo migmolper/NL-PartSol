@@ -1066,7 +1066,7 @@ static void update_Local_State(
 
       if(strcmp(MatProp_Soil_p.Type,"Saint-Venant-Kirchhoff") == 0)
         {
-          S_p = grad_energy_Saint_Venant_Kirchhoff(S_p, C_n1_p, MatProp_Soil_p);
+          S_p = compute_SPK__SaintVenantKirchhoff__(S_p, C_n1_p, MatProp_Soil_p);
         }
       else if(strcmp(MatProp_Soil_p.Type,"Neo-Hookean-Wriggers") == 0)
         {
@@ -1090,8 +1090,8 @@ static void update_Local_State(
           Input_Plastic_Parameters.Cohesion = MPM_Mesh.Phi.cohesion.nV[p];
           Input_Plastic_Parameters.EPS = MPM_Mesh.Phi.EPS.nV[p];
 
-          Output_Plastic_Parameters = finite_strains_plasticity_Drucker_Prager_Sanavia(S_p, C_n1_p, F_plastic_p, F_n1_p, 
-                                                                          Input_Plastic_Parameters, MatProp_Soil_p, J_n1_p);
+          Output_Plastic_Parameters = finite_strains_plasticity_Drucker_Prager_Sanavia(S_p, C_n1_p, F_plastic_p, 
+                                                                                       Input_Plastic_Parameters, MatProp_Soil_p);
 
           MPM_Mesh.Phi.cohesion.nV[p] = Output_Plastic_Parameters.Cohesion;
           MPM_Mesh.Phi.EPS.nV[p] = Output_Plastic_Parameters.EPS;

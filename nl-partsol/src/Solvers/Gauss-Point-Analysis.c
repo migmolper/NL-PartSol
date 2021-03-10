@@ -45,7 +45,7 @@ void NonLinear_Gauss_Point_Analysis(GaussPoint PointAnalysis)
   	if(strcmp(PointAnalysis.Mat[0].Type,"Saint-Venant-Kirchhoff") == 0)
   	{
 
-  		S_k = grad_energy_Saint_Venant_Kirchhoff(S_k, C_k, PointAnalysis.Mat[0]);
+  		S_k = compute_SPK__SaintVenantKirchhoff__(S_k, C_k, PointAnalysis.Mat[0]);
 
     }
     else if(strcmp(PointAnalysis.Mat[0].Type,"Neo-Hookean-Wriggers") == 0)
@@ -80,8 +80,8 @@ void NonLinear_Gauss_Point_Analysis(GaussPoint PointAnalysis)
     	Input_Plastic_Parameters.Cohesion = PointAnalysis.Phi.cohesion.nV[k];
     	Input_Plastic_Parameters.EPS = PointAnalysis.Phi.EPS.nV[k];
 
-      Output_Plastic_Parameters = finite_strains_plasticity_Drucker_Prager_Sanavia(S_k, C_k, F_plastic_k, F_k, 
-                                                                          Input_Plastic_Parameters, PointAnalysis.Mat[0], J_k);
+      Output_Plastic_Parameters = finite_strains_plasticity_Drucker_Prager_Sanavia(S_k, C_k, F_plastic_k,
+                                                                                    Input_Plastic_Parameters, PointAnalysis.Mat[0]);
 
       /* Update variables (cohesion and EPS) */
       PointAnalysis.Phi.cohesion.nV[k] = Output_Plastic_Parameters.Cohesion;

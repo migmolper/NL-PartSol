@@ -39,7 +39,7 @@ Tensor forward_integration_Stress__Particles__(Tensor S_p,Tensor F_n1_p,Material
    */
   if(strcmp(MatProp_p.Type,"Saint-Venant-Kirchhoff") == 0)
     {
-      S_p = grad_energy_Saint_Venant_Kirchhoff(S_p, C_n1_p, MatProp_p);
+      S_p = compute_SPK__SaintVenantKirchhoff__(S_p, C_n1_p, MatProp_p);
     }
   else if(strcmp(MatProp_p.Type,"Neo-Hookean-Wriggers") == 0)
     {
@@ -86,7 +86,7 @@ Tensor configurational_midpoint_integration_Stress__Particles__(Tensor S_p,
    */
   if(strcmp(MatProp_p.Type,"Saint-Venant-Kirchhoff") == 0)
     {
-      S_p = grad_energy_Saint_Venant_Kirchhoff(S_p, C_n12_p, MatProp_p);
+      S_p = compute_SPK__SaintVenantKirchhoff__(S_p, C_n12_p, MatProp_p);
     }
   else if(strcmp(MatProp_p.Type,"Neo-Hookean-Wriggers") == 0)
     {
@@ -131,7 +131,7 @@ Tensor average_strain_integration_Stress__Particles__(Tensor S_p,
   */
   if(strcmp(MatProp_p.Type,"Saint-Venant-Kirchhoff") == 0)
     {
-      S_p = grad_energy_Saint_Venant_Kirchhoff(S_p, C_n12_p, MatProp_p);
+      S_p = compute_SPK__SaintVenantKirchhoff__(S_p, C_n12_p, MatProp_p);
     }
   else if(strcmp(MatProp_p.Type,"Neo-Hookean-Wriggers") == 0)
     {
@@ -185,8 +185,8 @@ Tensor average_itegration_Stress__Particles__(Tensor S_p,
   
   if(strcmp(MatProp_p.Type,"Saint-Venant-Kirchhoff") == 0)
     {
-      S_n_p = grad_energy_Saint_Venant_Kirchhoff(S_n_p, C_n_p, MatProp_p);
-      S_n1_p = grad_energy_Saint_Venant_Kirchhoff(S_n1_p, C_n1_p, MatProp_p);
+      S_n_p = compute_SPK__SaintVenantKirchhoff__(S_n_p, C_n_p, MatProp_p);
+      S_n1_p = compute_SPK__SaintVenantKirchhoff__(S_n1_p, C_n1_p, MatProp_p);
       S_n12_p = Convex_combination__TensorLib__(S_n1_p,S_n_p,0.5);
     }
   else if(strcmp(MatProp_p.Type,"Neo-Hookean-Wriggers") == 0)
@@ -231,7 +231,11 @@ Tensor average_itegration_Stress__Particles__(Tensor S_p,
 
 /**************************************************************/
 
-void compute_Piola_transformation__Particles__(Tensor S_p, Tensor sigma_k1, Tensor F_total, double J)
+void compute_Piola_transformation__Particles__(
+  Tensor S_p,
+  Tensor sigma_k1,
+  Tensor F_total,
+  double J)
 {
   
   int Ndim = NumberDimensions;
@@ -245,6 +249,34 @@ void compute_Piola_transformation__Particles__(Tensor S_p, Tensor sigma_k1, Tens
         S_p.N[i][j] = J*S_p.N[i][j];
       }
     }
+}
+
+/**************************************************************/
+
+void Mandel_to_second_Piola_Kirchhoff__Particles__(
+  Tensor SPK,
+  Tensor M_Mandel,
+  Tensor C_elastic)
+{
+  int Ndim = NumberDimensions;
+  Tensor inverse_C_elastic = Inverse__TensorLib__(C_elastic);
+
+  for(int i = 0 ; i < Ndim  ; i++)
+  {
+    for(int j = 0 ; j < Ndim  ; j++)
+    {
+      SPK.N[i][j] = 0.0;
+
+      for(int k = 0 ; k < Ndim  ; k++)
+      {
+        SPK.N[i][j] += inverse_C_elastic.N[i][k]*M_Mandel.N[k][j];
+      }
+
+    }
+  }
+
+  free__TensorLib__(inverse_C_elastic);
+
 }
 
 /**************************************************************/

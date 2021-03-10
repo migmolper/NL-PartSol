@@ -32,7 +32,7 @@ double finite_strains_internal_energy__Particles__(Tensor F_p, Material MatProp_
 
   if(strcmp(MatProp_p.Type,"Saint-Venant-Kirchhoff") == 0)
     {
-      W = V0_p*energy_Saint_Venant_Kirchhoff(C_p, MatProp_p);
+      W = V0_p*compute_E__SaintVenantKirchhoff__(C_p, MatProp_p);
     }
   else if(strcmp(MatProp_p.Type,"Neo-Hookean-Wriggers") == 0)
     {

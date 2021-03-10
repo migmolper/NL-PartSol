@@ -770,23 +770,18 @@ Tensor Convex_combination__TensorLib__(Tensor F_n1,Tensor F_n,double alpha)
 
 /*************************************************************/
 
-Tensor volumetric_component__TensorLib__(Tensor A)
+double volumetric_component__TensorLib__(Tensor A)
 {
   int Ndim = NumberDimensions;
-  double vol = I1__TensorLib__(A)/3.0;
-  Tensor A_vol = alloc__TensorLib__(2); 
 
-  for(int i = 0 ; i<Ndim ; i++)
-  {
-    A_dev.N[i][i] = vol;
-  }
+  double A_vol = I1__TensorLib__(A)/3.0;
 
   return A_vol;
 }
 
 /*************************************************************/
 
-Tensor deviatoric_component__TensorLib__(Tensor A, Tensor A_vol)
+Tensor deviatoric_component__TensorLib__(Tensor A, double A_vol)
 {
   int Ndim = NumberDimensions;
   Tensor A_dev = alloc__TensorLib__(2); 
@@ -795,11 +790,26 @@ Tensor deviatoric_component__TensorLib__(Tensor A, Tensor A_vol)
   {
     for(int j = 0 ; j<Ndim ; j++)
     {
-      A_dev.N[i][j] =  A.N[i][j] - (i == j)*A_vol.N[i][j];
+      A_dev.N[i][j] =  A.N[i][j] - (i == j)*A_vol;
     }
   }
 
   return A_dev;
+}
+
+/**************************************************************/
+
+void assemble_volumetric_deviatoric__TensorLib__(Tensor A, double Vol, Tensor Dev)
+{
+  int Ndim = NumberDimensions;
+
+  for(int i = 0 ; i<Ndim ; i++)
+  {
+    for(int j = 0 ; j<Ndim ; j++)
+    {
+      A.N[i][j] = Vol*(i==j) + Dev.N[i][j];
+    }
+  }
 }
 
 /*************************************************************/

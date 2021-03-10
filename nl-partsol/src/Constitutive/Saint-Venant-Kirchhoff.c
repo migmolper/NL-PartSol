@@ -2,7 +2,7 @@
 
 /**************************************************************/
 
-double energy_Saint_Venant_Kirchhoff(Tensor C, Material MatProp_p)
+double compute_E__SaintVenantKirchhoff__(Tensor C, Material MatProp_p)
 {
   /* Material parameters */
   double ElasticModulus = MatProp_p.E;
@@ -22,7 +22,7 @@ double energy_Saint_Venant_Kirchhoff(Tensor C, Material MatProp_p)
 
 /**************************************************************/
 
-Tensor grad_energy_Saint_Venant_Kirchhoff(Tensor grad_e, Tensor C, Material MatProp_p)
+Tensor compute_SPK__SaintVenantKirchhoff__(Tensor grad_e, Tensor C, Material MatProp_p)
 {
   /* Number of dimensions */
   int Ndim = NumberDimensions;
@@ -59,7 +59,7 @@ Tensor grad_energy_Saint_Venant_Kirchhoff(Tensor grad_e, Tensor C, Material MatP
 
 /**************************************************************/
 
-Tensor compute_stiffness_density_Saint_Venant_Kirchhoff(Tensor v, Tensor w, Material MatProp)
+Tensor compute_Cij__SaintVenantKirchhoff__(Tensor v, Tensor w, Material MatProp)
 {
 
   /*

@@ -51,20 +51,23 @@ void compute_particle_Damage(int, GaussPoint, Mesh);
 /*!
 
 */
-double energy_Saint_Venant_Kirchhoff(Tensor, Material);
+double compute_E__SaintVenantKirchhoff__(Tensor, Material);
 /*******************************************************/
 
 /*!
   
 */
-Tensor grad_energy_Saint_Venant_Kirchhoff(Tensor, Tensor, Material);
+Tensor compute_SPK__SaintVenantKirchhoff__(Tensor, Tensor, Material);
 /*******************************************************/
 /*!
   
 */
-Tensor compute_stiffness_density_Saint_Venant_Kirchhoff(Tensor, Tensor, Material);
+Tensor compute_Cij__SaintVenantKirchhoff__(Tensor, Tensor, Material);
 /*******************************************************/
 
+
+Tensor compute_log_stress_tensor__Hencky__(Tensor, Tensor, Material);
+/*******************************************************/
 
 /*!
 
@@ -102,8 +105,8 @@ Plastic_status finite_strains_plasticity_Von_Mises(Tensor, Tensor, Tensor, Tenso
 Plastic_status infinitesimal_strains_plasticity_Von_Mises(Tensor, Tensor, Plastic_status, Material);
 /*******************************************************/  
 
-Plastic_status finite_strains_plasticity_Drucker_Prager_Sanavia(Tensor, Tensor, Tensor, Tensor, Plastic_status, Material, double);
-Plastic_status infinitesimal_strains_plasticity_Drucker_Prager_Sanavia(Tensor, Tensor, Plastic_status, Material);
+Plastic_status finite_strains_plasticity_Drucker_Prager_Sanavia(Tensor, Tensor, Tensor, Plastic_status, Material);
+Plastic_status infinitesimal_strains_plasticity_Drucker_Prager_Sanavia(double, Tensor, Plastic_status, Material);
 /*******************************************************/  
 
 #endif
