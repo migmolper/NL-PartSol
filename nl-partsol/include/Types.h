@@ -560,25 +560,15 @@ typedef struct {
   Tensor b;
 
   /*!
-   * Size of the voxel for each particle. Variable for the uGIMP 
-   * shape function
+   * uGIMP shape function parameter:
    */
-  Matrix lp;
+  Matrix lp; // Size of the voxel for each particle.
 
   /*!
-   * Lagrange multiplier for the LME shape functions 
+   * LME shape function parameters:
    */
-  Matrix lambda;
-
-  /*! 
-   * Thermalization or regularization parameter for the LME shape functions
-   */
-  Matrix Beta;  
-
-  /*!
-   * Cut off ellipsoid
-   */
-  Matrix Cut_Off_Ellipsoid;
+  Matrix lambda; // Lagrange multiplier
+  Matrix Beta; // Thermalization or regularization parameter
 
 } GaussPoint;
 

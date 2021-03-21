@@ -3,395 +3,486 @@
 /*
   Auxiliar functions 
  */
-static double fa__LME__(Matrix, Matrix, Matrix);
+static double fa__LME__(Matrix, Matrix, Matrix, double);
 static Matrix r__LME__(Matrix, Matrix);
 static Matrix J__LME__(Matrix, Matrix, Matrix);
 
 /****************************************************************************/
 
-void initialize__LME__(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
+void initialize__LME__(
+  GaussPoint MPM_Mesh,
+  Mesh FEM_Mesh)
 {
 
   int Ndim = NumberDimensions;
-  int Np = MPM_Mesh.NumGP;
-  int Nelem = FEM_Mesh.NumElemMesh;
+  int Np = MPM_Mesh.NumGP; // Number of gauss-points in the simulation
+  int Nelem = FEM_Mesh.NumElemMesh; // Number of elements
+  int I0; // Closest node to the particle
+  ChainPtr Elem_p; // Surrounding elements
+  ChainPtr Nodes_p; // Surrounding particles
 
-  /* Particle coordinates */  
-  Matrix X_p;
-  /* Lagrange multipliers */
-  Matrix lambda_p;
-  /* Tunning parameter */
-  Matrix Beta_p; 
-  
-  ChainPtr Elem_p;
-  
-  ChainPtr Nodes_p;
-  int I_p;
+  Matrix Metric_p; // Define a metric tensor
+  Matrix X_p; // Particle coordinates  
+  Matrix Delta_Xip; // Distance from GP to the nodes
+  Matrix lambda_p; // Lagrange multiplier
+  double Beta_p; // Thermalization or regularization parameter
 
-  /* Distance from GP to the nodes */
-  Matrix Delta_Xip; 
-
-  /* Loop over the particle mesh */
-  for(int p = 0 ; p<Np ; p++){
-
-    /* Get some properties for each particle */ 
+  for(int p = 0 ; p<Np ; p++)
+  {
+    /* 
+      Get some properties for each particle
+    */ 
+    Metric_p = metric__LME__();
     X_p = memory_to_matrix__MatrixLib__(Ndim,1,MPM_Mesh.Phi.x_GC.nM[p]);
-    Beta_p = memory_to_matrix__MatrixLib__(Ndim,1,MPM_Mesh.Beta.nM[p]);
     lambda_p = memory_to_matrix__MatrixLib__(Ndim,1,MPM_Mesh.lambda.nM[p]);
+    Beta_p = MPM_Mesh.Beta.nV[p];
 
-    /* Loop over the element mesh */
-    for(int i = 0 ; i<Nelem ; i++){
+    /*
+      Loop over the element mesh
+    */
+    for(int i = 0 ; i<Nelem ; i++)
+    {
 
       /* Get the element properties */
       Elem_p = FEM_Mesh.Connectivity[i];
       
-      /* 6º Check out if the GP is in the Element */
-      if(inout_convex_set__MeshTools__(X_p, Elem_p, FEM_Mesh.Coordinates)){
+      /* Check out if the GP is in the Element */
+      if(inout_convex_set__MeshTools__(X_p, Elem_p, FEM_Mesh.Coordinates))
+      {
 
-	/* With the element connectivity get the node close to the particle */
-	I_p = get_closest_node__MeshTools__(X_p,Elem_p,FEM_Mesh.Coordinates);
+        /* With the element connectivity get the node close to the particle */
+        I0 = get_closest_node__MeshTools__(X_p,Elem_p,FEM_Mesh.Coordinates);
 
-	/* Calculate distance from particle to each node in the neibourhood */
-	MPM_Mesh.ListNodes[p] = copy__SetLib__(Elem_p);
-	Delta_Xip = compute_distance__MeshTools__(MPM_Mesh.ListNodes[p],X_p,
-						  FEM_Mesh.Coordinates);
+        /* Calculate distance from particle to each node in the neibourhood */
+        MPM_Mesh.ListNodes[p] = copy__SetLib__(Elem_p);
+        Delta_Xip = compute_distance__MeshTools__(MPM_Mesh.ListNodes[p],X_p,FEM_Mesh.Coordinates);
 
-	/* Initialize Beta */
-	Beta_p = beta__LME__(Beta_p, Delta_Xip, gamma_LME);
+        /* Initialize Beta */
+        Beta_p = beta__LME__(Delta_Xip, gamma_LME);
 
-	/* Get the initial connectivity of the particle */
-	MPM_Mesh.ListNodes[p] = tributary__LME__(X_p,Beta_p,I_p,FEM_Mesh);
+        /* Get the initial connectivity of the particle */
+        MPM_Mesh.ListNodes[p] = tributary__LME__(X_p,Beta_p,I0,FEM_Mesh);
 
-	/* Measure the size of the connectivity */
-	MPM_Mesh.NumberNodes[p] = lenght__SetLib__(MPM_Mesh.ListNodes[p]);
+        /* Measure the size of the connectivity */
+        MPM_Mesh.NumberNodes[p] = lenght__SetLib__(MPM_Mesh.ListNodes[p]);
 
-	/* Asign to each particle the closest node in the mesh
-	   and to this node asign the particle */
-	MPM_Mesh.I0[p] = get_closest_node__MeshTools__(X_p,MPM_Mesh.ListNodes[p],
-						       FEM_Mesh.Coordinates);
-	
-	/* Active those nodes that interact with the particle */
-	asign_to_nodes__Particles__(p, MPM_Mesh.ListNodes[p], FEM_Mesh);
+        /* Asign to each particle the closest node in the mesh
+          and to this node asign the particle */
+        MPM_Mesh.I0[p] = get_closest_node__MeshTools__(X_p,MPM_Mesh.ListNodes[p],FEM_Mesh.Coordinates);
+
+        /* 
+          Active those nodes that interact with the particle
+        */
+        asign_to_nodes__Particles__(p, MPM_Mesh.ListNodes[p], FEM_Mesh);
        	
-	/* Calculate distance from particle to each node in the neibourhood */
-	Delta_Xip = compute_distance__MeshTools__(MPM_Mesh.ListNodes[p],X_p,
-						  FEM_Mesh.Coordinates);
+        /*
+          Calculate distance from particle to each node in the neibourhood
+        */
+        Delta_Xip = compute_distance__MeshTools__(MPM_Mesh.ListNodes[p],X_p,FEM_Mesh.Coordinates);
 
-	/* Update the value of beta */
-	Beta_p = beta__LME__(Beta_p, Delta_Xip, gamma_LME);
-			
-	/* Update lagrange multipliers with Newton-Rapson */
-	lambda_p = lambda__LME__(Delta_Xip, lambda_p, Beta_p);
+        /*
+          Update the value of the thermalization parameter
+        */
+        Beta_p = beta__LME__(Delta_Xip, gamma_LME);
+        MPM_Mesh.Beta.nV[p] = Beta_p;
 
-	/* Free memory */
-	free__MatrixLib__(Delta_Xip);
+        /* 
+          Update lagrange multipliers with Newton-Rapson
+        */
+        lambda_p = lambda__LME__(Delta_Xip, lambda_p, Metric_p, Beta_p);
 
-	break;
+        /* 
+          Free memory
+        */
+        free__MatrixLib__(Delta_Xip);
+
+        break;
       }      
     }
 
+    /*
+      Free memory
+    */
+    free__MatrixLib__(Metric_p);
   }
 
 }
 
 /****************************************************************************/
 
-Matrix beta__LME__(Matrix Beta, Matrix l, double Gamma)
+double beta__LME__(
+  Matrix l, // Set than contanins vector form neighborhood nodes to particle.
+  double Gamma) // User define parameter to control the value of the thermalization parameter.
+/*!
+  Get the thermalization parameter beta using the global variable gamma_LME.
+*/
 {
   int Ndim = NumberDimensions;
   int NumNodes_GP = l.N_rows;
-  double h = 0;
-  Matrix l_GP_I = memory_to_matrix__MatrixLib__(Ndim,1,NULL);
+  double Beta = 0; // Intialise the thermalization parameter
+  double h = 0; // Initalise the average nodal distance
+  Matrix l_pI = memory_to_matrix__MatrixLib__(Ndim,1,NULL);
   
-  /* Get the mean distande */
+  /* 
+    Get the mean distande
+  */
   for(int i = 0 ; i<NumNodes_GP ; i++){
-    l_GP_I.nV = l.nM[i];
-    h += norm__MatrixLib__(l_GP_I,2);
+    l_pI.nV = l.nM[i];
+    h += norm__MatrixLib__(l_pI,2);
   }
   h = h/NumNodes_GP;
 
-  /* Fill Beta */
-  for(int j = 0 ; j<Ndim ; j++){
-    Beta.nV[j] = Gamma/(h*h);
-  }
+  /*
+    Compute beta
+  */
+  Beta = Gamma/(h*h);
 
   return Beta;
 }
 
 /****************************************************************************/
 
-Matrix lambda__LME__(Matrix l, Matrix lambda, Matrix Beta)
+Matrix metric__LME__()
+/*!
+  Return a metric tensor to compute the locality parameter
+  in the LME shape functions
+*/
+{
+  int Ndim = NumberDimensions;
+  Matrix Metric = allocZ__MatrixLib__(Ndim,Ndim);
+
+  for(int i = 0 ; i<Ndim ; i++)
+  {
+    Metric.nM[i][i] = 1.0;
+  }
+
+  return Metric;
+}
+
+/****************************************************************************/
+
+Matrix lambda__LME__(
+  Matrix l, // Set than contanins vector form neighborhood nodes to particle.
+  Matrix lambda, // Lagrange multiplier.
+  Matrix Metric, // Measure for the norm definition.
+  double Beta) // Thermalization parameter.
 /*!
   Get the lagrange multipliers "lambda" (1 x dim) for the LME 
   shape function. The numerical method for that is the Newton-Rapson.
-
-  Input parameters :
-  -> l : Matrix with the distances to the
-  neighborhood nodes (neighborhood x dim).
-  -> lambda : Initial value of the
-  lagrange multipliers (1 x dim).
-  -> Beta : Tunning parameter (scalar).
-  -> h : Grid spacing (scalar).
-  -> TOL_zero : Tolerance for Newton-Rapson.
 */
 {
-  /* Definition of some parameters */
+  /*
+    Definition of some parameters
+  */
   int MaxIter = 100;
   int Ndim = NumberDimensions;
-  int NumIter = 0; /* Iterator counter */
-  double norm_r = 10; /* Value of the norm */
-  Matrix p; /* Shape function vector */
-  Matrix r; /* Gradient of log(Z) */
-  Matrix J; /* Hessian of log(Z) */
-  Matrix D_lambda; /* Increment of lambda */
+  int NumIter = 0; // Iterator counter
+  double norm_r = 10; // Value of the norm
+  double norm_r0 = 10; // Initial Value of the norm
+  double norm_relative;
+  Matrix p; // Shape function vector
+  Matrix r; // Gradient of log(Z)
+  Matrix J; // Hessian of log(Z)
+  Matrix D_lambda; // Increment of lambda
  
-  /* Start with the Newton-Rapson method */
-  while(NumIter <= MaxIter){
-	
-    /* Get vector with the shape functions evaluated in the nodes */
-    p = p__LME__(l,lambda,Beta);
 
-    /* Get the gradient of log(Z) and its norm */
+  while(NumIter <= MaxIter)
+  {
+	
+    /* 
+      Get vector with the shape functions evaluated in the nodes
+    */
+    p = p__LME__(l,lambda,Metric,Beta);
+
+    /*
+      Get the gradient of log(Z) and its norm
+    */
     r = r__LME__(l,p);
     norm_r = norm__MatrixLib__(r,2);
 
-    /* Get the Hessian of log(Z) */    
-    J = J__LME__(l,p,r);
-
-    /* /\* Check the conditioning number of the Hessian *\/ */
-    /* if (fabs(conditioning__MatrixLib__(J,TOL_lambda)) > 10){ */
-    /*   printf(" %s (%s %i) : %s \n", */
-    /* 	     "Error in lambda__LME__","Iter",NumIter, */
-    /* 	     "The Hessian is near to singular matrix"); */
-    /*   exit(0); */
-    /* } */
-    
-    /* Get the increment of lambda */
-    D_lambda = Solve_Linear_Sistem(J,r);
-
-    /* Update the value of lambda */
-    for(int i = 0 ; i<Ndim ; i++){
-      lambda.nV[i] -= D_lambda.nV[i];
+    /*
+      Compute the relative norm
+    */
+    if(NumIter == 0) 
+    {
+      norm_r0 = norm_r;
     }
+    norm_relative = norm_r/norm_r0;
 
-    /* Free memory */
-    free__MatrixLib__(p);
-    free__MatrixLib__(r);
-    free__MatrixLib__(J);
-    free__MatrixLib__(D_lambda);
+    /* 
+      Check convergence
+    */
+    if(norm_relative > TOL_lambda)
+    {
+      /* 
+        Get the Hessian of log(Z)
+      */    
+      J = J__LME__(l,p,r);
     
-    if(norm_r > TOL_lambda){
-      /* Update the iteration */
+      /*
+        Get the increment of lambda
+      */
+      D_lambda = Solve_Linear_Sistem(J,r);
+
+      /*
+        Update the value of lambda
+      */
+      for(int i = 0 ; i<Ndim ; i++)
+      {
+        lambda.nV[i] -= D_lambda.nV[i];
+      }
+
+      /*
+        Free memory
+      */
+      free__MatrixLib__(p);
+      free__MatrixLib__(r);
+      free__MatrixLib__(J);
+      free__MatrixLib__(D_lambda);
+
       NumIter ++;
     }
-    else{
-      /* Break the loop */
+    else
+    {
+      free__MatrixLib__(r);
       break;
     }
     
   }
 
-  if(NumIter == MaxIter){
-    printf("%s : %s %i/%i %s \n",
-	   "Warning in LME_lambda",
-	   "No convergence in",NumIter,MaxIter,"iterations");
-    printf("%s : %f \n",
-	   "Error",norm_r);
+  if(NumIter >= MaxIter)
+  {
+    printf("%s : %s \n",
+      "Warning in LME_lambda",
+      "No convergence reached in the maximum number of interations");
+    printf("%s : %f | %s : %f \n",
+      "Total Error",norm_r,
+      "Relative Error",norm_relative);
   }
   
-  /* Once the stopping criteria is reached, 
-     return the lagrange multipliers value */
+
   return lambda;
 }
 
 /****************************************************************************/
 
-static double fa__LME__(Matrix la, Matrix lambda, Matrix Beta)
+static double fa__LME__(
+  Matrix la, // Vector form node "a" to particle.
+  Matrix lambda, // Lagrange multiplier.
+  Matrix Metric, // Measure for the norm definition.
+  double Beta) // Thermalization parameter.
 /*!
-  Output :
-  -> fa : the function fa that appear in [1] (scalar).
-  Input parameters :
-  -> la : Matrix with the distance to the neighborhood node ''a'' (1 x dim).
-  -> lambda : Initial value of the lagrange multipliers (dim x 1).
-  -> Gamma : Tunning parameter (scalar).
+  fa (scalar): the function fa that appear in [1].
 */
 {  
   int Ndim = NumberDimensions;
+  double la_x_lambda = 0;
+  double Metric_x_la = 0;
+  double norm_la = 0;
   double fa = 0;
 
-  for(int i = 0 ; i<Ndim ; i++){
-    fa += - Beta.nV[i]*la.nV[i]*la.nV[i] + la.nV[i]*lambda.nV[i];
+  for(int i = 0 ; i<Ndim ; i++)
+  {
+
+    Metric_x_la = 0;
+
+    for(int j = 0 ; j<Ndim ; j++)
+    {
+      Metric_x_la += Metric.nM[i][j]*la.nV[j];
+    }
+
+    la_x_lambda += la.nV[i]*lambda.nV[i];
+    norm_la += la.nV[i]*Metric_x_la;
+
   }
-    
-  /* Return the value of fa */
+  
+  fa = - Beta*norm_la + la_x_lambda;
+
   return fa;
 }
 
 /****************************************************************************/
 
-Matrix p__LME__(Matrix l, Matrix lambda, Matrix Beta)
+Matrix p__LME__(
+  Matrix l, // Set than contanins vector form neighborhood nodes to particle.
+  Matrix lambda, // Lagrange multiplier.
+  Matrix Metric, // Measure for the norm definition.
+  double Beta) // Thermalization parameter.
 /*!
   Get the value of the shape function "pa" (1 x neighborhood) in the
   neighborhood nodes.
-
-  Input parameters :
-  -> l : Matrix with the distances to the
-  neighborhood nodes (neiborghood x dim).
-  -> lambda : Initial value of the lagrange multipliers (1 x dim).
-  -> Beta : Tunning parameter (scalar).
 */
 {
   
   /* Definition of some parameters */
   int N_a = l.N_rows;
   int Ndim = NumberDimensions;
-  double Z = 0, Z_m1 = 0;
-  Matrix p = /* Vector with the values of the shape-function in the nodes */
-    alloc__MatrixLib__(1,N_a); 
-  Matrix la = /* Distance to the neighbour (x-x_a) */
-    memory_to_matrix__MatrixLib__(1,Ndim,NULL);
+  double Z = 0;
+  double Z_m1 = 0;
+  Matrix p = alloc__MatrixLib__(1,N_a); // Shape function in the nodes
+  Matrix la = memory_to_matrix__MatrixLib__(1,Ndim,NULL); // Vector form node "a" to particle.
 
-  /* Get Z and the numerator */
-  for(int a = 0 ; a<N_a ; a++){
+  /*
+    Get Z and the numerator
+  */
+  for(int a = 0 ; a<N_a ; a++)
+  {
     la.nV = l.nM[a];
-    p.nV[a] = exp(fa__LME__(la,lambda,Beta));
+    p.nV[a] = exp(fa__LME__(la,lambda,Metric,Beta));
     Z += p.nV[a];
   }
 
-  /* Get the inverse of Z */
+  /*
+    Divide by Z and get the final value of the shape function
+  */
   Z_m1 = (double)1/Z;
-
-  /* Divide by Z and get the final value */
-  for(int a = 0 ; a<N_a ; a++){
+  for(int a = 0 ; a<N_a ; a++)
+  {
     p.nV[a] *= Z_m1;
   }
   
-  /* Return the value of the shape function */  
+
   return p;
 }
 
 /****************************************************************************/
 
-static Matrix r__LME__(Matrix l, Matrix p)
+static Matrix r__LME__(
+  Matrix l, // Set than contanins vector form neighborhood nodes to particle.
+  Matrix p) // Set with the evaluation of the shape function in the neighborhood nodes.
 /*!
-  Get the gradient "r" (dim x 1) of the function log(Z) = 0.
-  Input parameters :
-  -> l : Matrix with the distances to the 
-  neighborhood nodes (neighborhood x dim).
-  -> p : Shape function value in the
-  neighborhood nodes (1 x neighborhood).
+  Gradient dlogZ_dLambda "r"
 */
 {  
-  /* Definition of some parameters */
+  /* 
+    Definition of some parameters
+  */
   int N_a = l.N_rows;
   int Ndim = NumberDimensions;
-  Matrix r /* Value of the gradient */
-    = allocZ__MatrixLib__(Ndim,1);
+  Matrix r = allocZ__MatrixLib__(Ndim,1); // Gradient definition
 
-  /* Fill ''r'' */
-  for(int i = 0 ; i<Ndim ; i++){
-    for(int a = 0 ; a<N_a ; a++){
+  /* 
+    Fill the gradient
+  */
+  for(int i = 0 ; i<Ndim ; i++)
+  {
+    for(int a = 0 ; a<N_a ; a++)
+    {
       r.nV[i] += p.nV[a]*l.nM[a][i];
     }
   }
 
-  /* Return the value of the gradient */
   return r;
 }
 
 /****************************************************************************/
 
-static Matrix J__LME__(Matrix l, Matrix p, Matrix r)
+static Matrix J__LME__(
+  Matrix l, // Set than contanins vector form neighborhood nodes to particle.
+  Matrix p, // Set with the evaluation of the shape function in the neighborhood nodes.
+  Matrix r) // Gradient dlogZ_dLambda "r"
 /*!
-  Get the Hessian "J" (dim x dim) of the function log(Z) = 0.
-  Input parameters :
-  -> l : Matrix with the distances to the
-  neighborhood nodes (neighborhood x dim).
-  -> p : Shape function value in the
-  neighborhood nodes (neighborhood x 1).
-  -> r : Gradient of log(Z) (dim x 1).
+  Hessian d2logZ_dLambdadLambda "J"
 */
 {  
-  /* Definition of some parameters */
+  /* 
+    Definition of some parameters
+  */
   int N_a = l.N_rows;
   int Ndim = NumberDimensions;
-  Matrix J; /* Hessian definition */
+  Matrix J = allocZ__MatrixLib__(Ndim,Ndim); // Hessian definition
   
-  /* Allocate Hessian */
-  J = allocZ__MatrixLib__(Ndim,Ndim);
-
-  /* Fill the Hessian */
-  for(int i = 0 ; i<Ndim ; i++){
-    for(int j = 0 ; j<Ndim ; j++){
-      for(int a = 0 ; a<N_a ; a++){
-	/* Get the first component of the Hessian looping
-	   over the neighborhood nodes. */
-	J.nM[i][j] += p.nV[a]*l.nM[a][i]*l.nM[a][j];
+  /*
+    Fill the Hessian
+  */
+  for(int i = 0 ; i<Ndim ; i++)
+  {
+    for(int j = 0 ; j<Ndim ; j++)
+    {
+      /* 
+        Get the first component of the Hessian looping
+        over the neighborhood nodes.
+      */
+      for(int a = 0 ; a<N_a ; a++)
+      {
+        J.nM[i][j] += p.nV[a]*l.nM[a][i]*l.nM[a][j];
       }
-      /* Get the second value of the Hessian */
+
+      /*
+        Get the second value of the Hessian
+      */
       J.nM[i][j] -= r.nV[i]*r.nV[j];
     }
   }
 
-  /* Return the value of the Hessian */
   return J;
 }
 
 /****************************************************************************/
 
-Matrix dp__LME__(Matrix l, Matrix p)
+Matrix dp__LME__(
+  Matrix l, // Set than contanins vector form neighborhood nodes to particle.
+  Matrix p) // Set with the evaluation of the shape function in the neighborhood nodes.
 /*!
-  Value of the shape function gradient "dp" (dim x neighborhood) in 
-  the neighborhood nodes.
-  Input parameters :
-  -> l : Matrix with the distances to the
-  neighborhood nodes (neighborhood x dim).
-  -> p : Shape function value in the
-  neighborhood nodes (neighborhood x 1).
+  Value of the shape function gradient "dp" (dim x neighborhood) in the neighborhood nodes
 */
 {  
-  /* Definition of some parameters */
+  /* 
+    Definition of some parameters
+  */
   int N_a = l.N_rows;
   int Ndim = NumberDimensions;
   Matrix dp = allocZ__MatrixLib__(N_a,Ndim);
-  Matrix r; /* Gradient of log(Z) */
-  Matrix J; /* Hessian of log(Z) */
-  Matrix Jm1; /* Inverse of J */
-  Matrix Jm1_la; /* Auxiliar vector */
-  Matrix la = /* Distance to the neighbour (x-x_a) */
-    memory_to_matrix__MatrixLib__(Ndim,1,NULL); 
+  Matrix r; // Gradient of log(Z)
+  Matrix J; // Hessian of log(Z)
+  Matrix Jm1; // Inverse of J
+  Matrix Jm1_la; // Auxiliar vector
+  Matrix la = memory_to_matrix__MatrixLib__(Ndim,1,NULL); // Distance to the neighbour (x-x_a)
   
-  /* Get the Gradient and the Hessian of log(Z) */
+  /*
+    Get the Gradient and the Hessian of log(Z)
+  */
   r = r__LME__(l,p);
   J = J__LME__(l,p,r);
   
-  /* Inverse of the Hessian */
+  /*
+    Inverse of the Hessian
+  */
   Jm1 = inverse__MatrixLib__(J);
   
-  /* Free memory */
-  free__MatrixLib__(r);
-  free__MatrixLib__(J);
-
-  /* Fill the gradient for each node */
-  for(int a = 0 ; a<N_a ; a++){
+  /* 
+    Fill the gradient for each node
+  */
+  for(int a = 0 ; a<N_a ; a++)
+  {
     la.nV = l.nM[a]; 
     Jm1_la = matrix_product__MatrixLib__(Jm1,la);    
-    for(int i = 0 ; i<Ndim ; i++){
+  
+    for(int i = 0 ; i<Ndim ; i++)
+    {
       dp.nM[a][i] = - p.nV[a]*Jm1_la.nV[i];
     }
+
     free__MatrixLib__(Jm1_la);
   }
 
-  /* Free memory */
+  /* 
+    Free memory
+  */
+  free__MatrixLib__(r);
+  free__MatrixLib__(J);
   free__MatrixLib__(Jm1);
-  
-  /* Return the value of the shape function gradient */  
+
   return dp;  
 }
 
 /****************************************************************************/
 
-ChainPtr tributary__LME__(Matrix X_GP, Matrix Beta, int I0, Mesh FEM_Mesh)
+ChainPtr tributary__LME__(
+  Matrix X_p,
+  double Beta_p,
+  int I0,
+  Mesh FEM_Mesh)
 {
 
   /* Define output */
@@ -411,7 +502,7 @@ ChainPtr tributary__LME__(Matrix X_GP, Matrix Beta, int I0, Mesh FEM_Mesh)
   int NumTributaryNodes = 0;
 
   /* Get the search radius */
-  double Ra = sqrt(-log(TOL_lambda)/Beta.nV[0]);
+  double Ra = sqrt(-log(TOL_lambda)/Beta_p);
 
   /* Get nodes close to the particle */
   Set_Nodes0 = FEM_Mesh.NodalLocality[I0];
@@ -419,7 +510,8 @@ ChainPtr tributary__LME__(Matrix X_GP, Matrix Beta, int I0, Mesh FEM_Mesh)
   Array_Nodes0 = set_to_memory__SetLib__(Set_Nodes0,NumNodes0);
      
   /* Loop over the chain with the tributary nodes */
-  for(int i = 0 ; i<NumNodes0 ; i++){
+  for(int i = 0 ; i<NumNodes0 ; i++)
+  {
 
     Node0 = Array_Nodes0[i];
 
@@ -427,10 +519,11 @@ ChainPtr tributary__LME__(Matrix X_GP, Matrix Beta, int I0, Mesh FEM_Mesh)
     X_I.nV = FEM_Mesh.Coordinates.nM[Node0];
 
     /* Get a vector from the GP to the node */
-    Distance = substraction__MatrixLib__(X_GP,X_I);
+    Distance = substraction__MatrixLib__(X_p,X_I);
 
     /* If the node is near the GP push in the chain */
-    if(norm__MatrixLib__(Distance,2) <= Ra){
+    if(norm__MatrixLib__(Distance,2) <= Ra)
+    {
       push__SetLib__(&Triburary_Nodes,Node0);
       NumTributaryNodes++;
     }
@@ -440,18 +533,22 @@ ChainPtr tributary__LME__(Matrix X_GP, Matrix Beta, int I0, Mesh FEM_Mesh)
 
   }
 
-  /* If the Triburary_Nodes chain lenght is less than 3 assign al the node */
+  /* 
+    If the Triburary_Nodes chain lenght is less than 3 assign al the node
+  */
   if(NumTributaryNodes < Ndim + 1)
+  {
+    for(int i = 0 ; i<NumNodes0 ; i++)
     {
-      for(int i = 0 ; i<NumNodes0 ; i++)
-	{
-	  Node0 = Array_Nodes0[i];
-	  if(!inout__SetLib__(Triburary_Nodes,Node0))
-	    {
-	      push__SetLib__(&Triburary_Nodes,Node0);
-	    }
-	}
+
+      Node0 = Array_Nodes0[i];
+
+      if(!inout__SetLib__(Triburary_Nodes,Node0))
+      {
+        push__SetLib__(&Triburary_Nodes,Node0);
+      }
     }
+  }
   
   /* Free memory */
   free(Array_Nodes0);

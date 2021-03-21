@@ -17,8 +17,9 @@ void GramsShapeFun(char * Name_File)
   GramsShapeFun (Type=uGIMP) {
   }
   GramsShapeFun (Type=LME) {
-  gamma=2.3
-  TOL_lambda=10e-6
+	gamma=2.3
+  	metric="isotropic"/"anysotropic"
+  	TOL_lambda=10e-6
   }
 */
 {

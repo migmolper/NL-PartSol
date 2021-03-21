@@ -190,20 +190,8 @@ GaussPoint Generate_Soil_Water_Coupling_Analysis__InOutFun__(char * Name_File, M
       {
         MPM_Mesh.lambda = allocZ__MatrixLib__(NumParticles,Ndim);
         strcpy(MPM_Mesh.lambda.Info,"Lagrange Multiplier");
-        MPM_Mesh.Beta = allocZ__MatrixLib__(NumParticles,Ndim);
-        strcpy(MPM_Mesh.Beta.Info,"Beta parameter");
-      }
-      /*
-         Anisotropic lagrange Multipliers / Beta (Only LME ) 
-      */
-      if(strcmp(ShapeFunctionGP,"aLME") == 0)
-      {
-        MPM_Mesh.lambda = allocZ__MatrixLib__(NumParticles,Ndim);
-        strcpy(MPM_Mesh.lambda.Info,"Lagrange Multiplier");
-        MPM_Mesh.Beta = allocZ__MatrixLib__(NumParticles,Ndim*Ndim);
-        strcpy(MPM_Mesh.Beta.Info,"Beta tensor");
-        MPM_Mesh.Cut_Off_Ellipsoid = allocZ__MatrixLib__(NumParticles,Ndim*Ndim);
-        strcpy(MPM_Mesh.Cut_Off_Ellipsoid.Info,"Cut-Off Ellipsoid");
+        MPM_Mesh.Beta = allocZ__MatrixLib__(NumParticles,1);
+        strcpy(MPM_Mesh.Beta.Info,"Beta");
       }
     }
     else
@@ -255,11 +243,6 @@ GaussPoint Generate_Soil_Water_Coupling_Analysis__InOutFun__(char * Name_File, M
     {
       printf("\t * %s \n","Start LME shape functions initialisation ...");
       initialize__LME__(MPM_Mesh,FEM_Mesh);
-    }
-    else if(strcmp(ShapeFunctionGP,"aLME") == 0)
-    {
-      printf("\t * %s \n","Start aLME shape functions initialisation ...");
-      initialize__aLME__(MPM_Mesh,FEM_Mesh);
     }
     printf("\t %s \n","Success !!");
 
