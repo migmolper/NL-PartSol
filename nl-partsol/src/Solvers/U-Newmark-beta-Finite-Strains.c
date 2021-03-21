@@ -139,6 +139,7 @@ void U_Newmark_beta_Finite_Strains(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int Initi
       Effective_Mass = compute_Nodal_Effective_Mass(MPM_Mesh,FEM_Mesh,ActiveNodes,epsilon);
       print_Status("DONE !!!",TimeStep);
 
+
       print_Status("*************************************************",TimeStep);
       print_Status("Third step : Compute nodal kinetics ... WORKING",TimeStep);
       /*
@@ -336,7 +337,7 @@ static Matrix compute_Nodal_Effective_Mass(GaussPoint MPM_Mesh, Mesh FEM_Mesh, M
   Matrix Effective_MassMatrix = allocZ__MatrixLib__(Order, Order);
 
   /* Define and allocate the lumped mass matrix */
-  Matrix Lumped_MassMatrix = allocZ__MatrixLib__(Order, Order);
+  Matrix Lumped_MassMatrix = allocZ__MatrixLib__(Order, 1);
 
   /*
     Iterate over the particles to get the nodal values 
@@ -382,7 +383,7 @@ static Matrix compute_Nodal_Effective_Mass(GaussPoint MPM_Mesh, Mesh FEM_Mesh, M
 	  */
 	  for(int i = 0 ; i<Ndof ; i++)
 	    {
-	      Lumped_MassMatrix.nM[A_mask*Ndof + i][A_mask*Ndof + i] += m_A_p;	      
+	      Lumped_MassMatrix.nV[A_mask*Ndof + i] += m_A_p;	      
 	    }
 
 	  for(int B = 0 ; B<Nodes_p.NumberNodes ; B++)
@@ -429,7 +430,7 @@ static Matrix compute_Nodal_Effective_Mass(GaussPoint MPM_Mesh, Mesh FEM_Mesh, M
     {
       for(int B = 0 ; B<Order ; B++)
     	{    
-	     Effective_MassMatrix.nM[A][B] = (1-epsilon)*Effective_MassMatrix.nM[A][B] + (A == B)*epsilon*Lumped_MassMatrix.nM[A][B];
+	     Effective_MassMatrix.nM[A][B] = (1-epsilon)*Effective_MassMatrix.nM[A][B] + (A == B)*epsilon*Lumped_MassMatrix.nV[A];
 	     }
     }
 

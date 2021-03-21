@@ -149,12 +149,11 @@ void Initial_condition_particles__InOutFun__(char * Name_File, GaussPoint GP_Mes
 	    }
 
 	    /* Fill it IC for velocity formulation */
-	    if(strcmp(Formulation,"-V") == 0){
+	    if(strcmp(Formulation,"-u") == 0){
 	      for(int i = 0 ; i<Num_Nodes ; i++){
 		for(int j = 0 ; j<GPxElement ; j++){
 		  for(int k = 0 ; k<Ndim ; k++){
-		    GP_Mesh.Phi.vel.nM[Array_Nodes[i]*GPxElement+j][k] =
-		    atof(IC_value[k]);
+		    GP_Mesh.Phi.vel.nM[Array_Nodes[i]*GPxElement+j][k] = atof(IC_value[k]);
 		  }
 		}
 	      }

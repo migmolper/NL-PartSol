@@ -108,7 +108,7 @@ Load * GramsBodyForces(char * Name_File, int NumBodyForces, int GPxElement)
       B[IndexLoad].Value =
 	(Curve *)Allocate_Array(NumberDOF,sizeof(Curve));
       /* Information of the BCC */
-      if(strcmp(Formulation,"-V") == 0){
+      if(strcmp(Formulation,"-u") == 0){
   	/* Name of the BCC */
   	strcpy(B[IndexLoad].Info,"Velocity");
       }
@@ -126,7 +126,7 @@ Load * GramsBodyForces(char * Name_File, int NumBodyForces, int GPxElement)
 	}
 	if((Num_words_line > 0) &&
 	   (strcmp(Parse_Properties[0],"}") != 0 )){
-	    if(strcmp(Formulation,"-V") == 0){ 
+	    if(strcmp(Formulation,"-u") == 0){ 
 	      if(strcmp(Parse_Properties[0],"b.x") == 0){
 		/* Fill the direction of the BCC */
 		B[IndexLoad].Dir[0] = 1;

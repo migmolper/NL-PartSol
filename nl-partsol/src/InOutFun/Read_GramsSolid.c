@@ -264,7 +264,8 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
 
     /**************************************************/    
     /************** Read initial values ***************/
-    /**************************************************/    
+    /**************************************************/
+ 
     if(Is_Particle_Initial)
     {
       Initial_condition_particles__InOutFun__(Name_File,MPM_Mesh,GPxElement);
