@@ -58,6 +58,13 @@ Mesh GramsBox(char * Name_File)
 
   /* Auxiliar variable for status */
   char * STATUS_LINE;
+
+  /*
+    Auxiliar variables for the nodal neighborhood reconstruction
+  */
+  int Num_nodal_rings = 3; // Number of search rings
+  int k_nodal_ring; // Current search ring
+  ChainPtr Search_Set; // Auxiliar set for recursive search
     
   /* Open and check file */
   Sim_dat = fopen(Name_File,"r");  
@@ -197,10 +204,40 @@ Mesh GramsBox(char * Name_File)
     (ChainPtr *)malloc(FEM_Mesh.NumNodesMesh*sizeof(ChainPtr));
 
   /* Fill the table with the nodal locality */
-  for(int i = 0 ; i<FEM_Mesh.NumNodesMesh ; i++){
-    FEM_Mesh.NodalLocality[i] = get_nodal_locality__MeshTools__(i, FEM_Mesh);
+  for(int i = 0 ; i<FEM_Mesh.NumNodesMesh ; i++)
+  {
+
+    printf("Node : %i\n",i);
+
+    if (Num_nodal_rings == 1)
+    {
+      FEM_Mesh.NodalLocality[i] = nodal_locality__MeshTools__(i, FEM_Mesh);
+    }
+    else
+    {
+
+      k_nodal_ring = 0;
+      Search_Set = NULL;
+      push__SetLib__(&Search_Set, i);
+
+      while(k_nodal_ring < Num_nodal_rings)
+      {
+
+        Search_Set = recursive_nodal_locality__MeshTools__(&FEM_Mesh.NodalLocality[i], Search_Set, FEM_Mesh);
+
+        k_nodal_ring++;
+      }
+
+
+    }
+
     FEM_Mesh.SizeNodalLocality[i] = lenght__SetLib__(FEM_Mesh.NodalLocality[i]);
+
+    printf("Lenght locality after %i searchs : %i\n",Num_nodal_rings,FEM_Mesh.SizeNodalLocality[i]);
+
   }
+
+  exit(0);
   
   /**************************************************/	
   /** Initialize particle connectivity of each node */

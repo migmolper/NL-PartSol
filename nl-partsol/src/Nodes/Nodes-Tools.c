@@ -179,7 +179,8 @@ return Field_Ap;
 
 /*********************************************************************/
 
-ChainPtr get_nodal_locality__MeshTools__(int I, Mesh FEM_Mesh){
+ChainPtr nodal_locality__MeshTools__(int I, Mesh FEM_Mesh)
+{
 
   /* Define output */
   ChainPtr Nodes = NULL;
@@ -210,6 +211,71 @@ ChainPtr get_nodal_locality__MeshTools__(int I, Mesh FEM_Mesh){
 
   /* Return nodes close to the node I */
   return Nodes;
+}
+
+/*********************************************************************/
+
+
+ChainPtr recursive_nodal_locality__MeshTools__(ChainPtr * Set_k, ChainPtr Search_Set, Mesh FEM_Mesh)
+{
+
+  /*
+    Variables
+  */
+  ChainPtr aux_Set = NULL;
+  ChainPtr new_Search_Set = NULL;
+  ChainPtr i_Search_Set = Search_Set; 
+  
+  /*
+    Loop in the search set
+  */
+  while (i_Search_Set != NULL)
+  { 
+
+    /*
+      For each node in the set, get the closest node
+    */
+    aux_Set = nodal_locality__MeshTools__(i_Search_Set->I, FEM_Mesh);
+
+    /*
+      Loop in the closest set of nodes of the original set
+    */
+    while (aux_Set != NULL)
+    {
+      /*
+        Update the set with the new node and the search set
+      */
+      if (!inout__SetLib__(*Set_k, aux_Set->I))
+      {
+        push__SetLib__(Set_k, aux_Set->I);
+        push__SetLib__(&new_Search_Set, aux_Set->I);
+      }
+
+      /*
+        Update second iterator
+      */
+      aux_Set = aux_Set->next; 
+
+    }
+
+    /*  
+      Free auxiliar set
+    */
+    free__SetLib__(&aux_Set);
+
+    /*
+      Update first iterator
+    */
+    i_Search_Set = i_Search_Set->next; 
+
+  }
+
+  /*
+    Free old search list
+  */
+  free__SetLib__(&Search_Set);
+
+  return new_Search_Set;
 }
 
 /*********************************************************************/
