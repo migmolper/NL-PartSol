@@ -3,17 +3,18 @@
 #define MAXVAL(A,B) ((A)>(B) ? (A) : (B))
 #define MINVAL(A,B) ((A)<(B) ? (A) : (B))
 
+
+// Define some auxiliar functions
+static void get_sourrounding_elements(Mesh);
+static void fill_nodal_locality(Mesh);
+static ChainPtr node_I_locality(int, Mesh);
+static ChainPtr ring_search_nodal_locality(ChainPtr *, ChainPtr, Mesh);
+static double mesh_size(Mesh);
+
 /**********************************************************************/
 
 Mesh GramsBox(char * Name_File)
 /*    
-      top = 2
-      *-----*
-      |     |
-      left = 3 |     | right = 1
-      |     | 
-      *-----*
-      bottom = 0
 
       GramsBox (Type=GID,File=FEM_Mesh.msh) { 
       left = GramsBoundary {
@@ -58,13 +59,6 @@ Mesh GramsBox(char * Name_File)
 
   /* Auxiliar variable for status */
   char * STATUS_LINE;
-
-  /*
-    Auxiliar variables for the nodal neighborhood reconstruction
-  */
-  int Num_nodal_rings = 3; // Number of search rings
-  int k_nodal_ring; // Current search ring
-  ChainPtr Search_Set; // Auxiliar set for recursive search
     
   /* Open and check file */
   Sim_dat = fopen(Name_File,"r");  
@@ -182,87 +176,49 @@ Mesh GramsBox(char * Name_File)
   /**************************************************/
   /********** Set the minimum mesh size *************/
   /**************************************************/
-  FEM_Mesh.DeltaX = mesh_size__MeshTools__(FEM_Mesh);
+  FEM_Mesh.DeltaX = mesh_size(FEM_Mesh);
+
   puts("*************************************************");
-  printf(" \t %s : \n \t %f \n",
-	 "* Mesh size",FEM_Mesh.DeltaX);
+  printf(" \t %s : \n \t %f \n","* Mesh size",FEM_Mesh.DeltaX);
+
   /**************************************************/	
   /*** Generate nodal connectivity of the mesh : ****/
   /******* list of elements near to a node ***********/
   /**************************************************/
-  get_nodal_connectivity__MeshTools__(FEM_Mesh);
+  FEM_Mesh.NumNeighbour =  (int *)Allocate_ArrayZ(FEM_Mesh.NumNodesMesh,sizeof(int)); 
+  FEM_Mesh.NodeNeighbour = (ChainPtr *)malloc(FEM_Mesh.NumNodesMesh*sizeof(ChainPtr));
+  get_sourrounding_elements(FEM_Mesh);
   
-  /**************************************************/	
-  /***** Initialize nodal locality of each node *****/
-  /**************************************************/
-  /* Pointer with the number of nodes close to each node */
-  FEM_Mesh.SizeNodalLocality =
-    (int *)Allocate_ArrayZ(FEM_Mesh.NumNodesMesh,sizeof(int));
+  /*
+    Initialize nodal locality of each node :
 
-  /* Table of sets with the list of nodes close to a node */
-  FEM_Mesh.NodalLocality =
-    (ChainPtr *)malloc(FEM_Mesh.NumNodesMesh*sizeof(ChainPtr));
+    1º Define a pointer with the number of nodes close to each node
 
-  /* Fill the table with the nodal locality */
-  for(int i = 0 ; i<FEM_Mesh.NumNodesMesh ; i++)
-  {
+    2ª Define a table of sets with the list of nodes close to a node
 
-    printf("Node : %i\n",i);
+    3ª Fill the table with the nodal locality and the pointer with the
+      number of nodes close to each node
+  */
 
-    if (Num_nodal_rings == 1)
-    {
-      FEM_Mesh.NodalLocality[i] = nodal_locality__MeshTools__(i, FEM_Mesh);
-    }
-    else
-    {
-
-      k_nodal_ring = 0;
-      Search_Set = NULL;
-      push__SetLib__(&Search_Set, i);
-
-      while(k_nodal_ring < Num_nodal_rings)
-      {
-
-        Search_Set = recursive_nodal_locality__MeshTools__(&FEM_Mesh.NodalLocality[i], Search_Set, FEM_Mesh);
-
-        k_nodal_ring++;
-      }
-
-
-    }
-
-    FEM_Mesh.SizeNodalLocality[i] = lenght__SetLib__(FEM_Mesh.NodalLocality[i]);
-
-    printf("Lenght locality after %i searchs : %i\n",Num_nodal_rings,FEM_Mesh.SizeNodalLocality[i]);
-
-  }
-
-  exit(0);
+  FEM_Mesh.SizeNodalLocality = (int *)Allocate_ArrayZ(FEM_Mesh.NumNodesMesh,sizeof(int));
+  FEM_Mesh.NodalLocality = (ChainPtr *)malloc(FEM_Mesh.NumNodesMesh*sizeof(ChainPtr));
+  fill_nodal_locality(FEM_Mesh);
   
   /**************************************************/	
   /** Initialize particle connectivity of each node */
   /**************************************************/
-  FEM_Mesh.NumParticles =
-    (int *)Allocate_ArrayZ(FEM_Mesh.NumNodesMesh,sizeof(int));
-  FEM_Mesh.I_particles =
-    (ChainPtr *)malloc(FEM_Mesh.NumNodesMesh*sizeof(ChainPtr));
-  if(FEM_Mesh.I_particles == NULL){
-    printf("%s : %s \n",
-	   "get_nodal_connectivity__MeshTools__",
-	   "Memory error for I_particles");
-    exit(EXIT_FAILURE);
-  }
-  for(int i = 0 ; i<FEM_Mesh.NumNodesMesh ; i++){
-    FEM_Mesh.I_particles[i] = NULL;
-  }
+  FEM_Mesh.NumParticles = (int *)Allocate_ArrayZ(FEM_Mesh.NumNodesMesh,sizeof(int));
+  FEM_Mesh.I_particles = (ChainPtr *)malloc(FEM_Mesh.NumNodesMesh*sizeof(ChainPtr));
+
+
   /**************************************************/  
   /******** Allocate array with the boundaries ******/
   /**************************************************/
   if(NumBounds > 0){
     puts("*************************************************");
-    printf(" \t %s (%i) : \n",
-	   "* Boundary conditions",NumBounds);
+    printf(" \t %s (%i) : \n","* Boundary conditions",NumBounds);
     FEM_Mesh.Bounds.NumBounds = NumBounds;
+    
     if(strcmp(Formulation,"-u") == 0)
     {
       FEM_Mesh.Bounds = GramsBoundary(Name_File,NumBounds);  
@@ -277,3 +233,291 @@ Mesh GramsBox(char * Name_File)
 
   return FEM_Mesh;
 }
+
+/*********************************************************************/
+
+static void get_sourrounding_elements(Mesh FEM_Mesh)
+{
+
+  /* Variable declaration */
+  int * Element_Connectivity;
+  int NumNodesElem;
+  
+  /* 1º Start the search of neighbour for each node */
+  for(int i = 0 ; i<FEM_Mesh.NumNodesMesh ; i++)
+  {
+    /* 2º Loop over all the elements in the mesh */
+    for(int j = 0 ; j<FEM_Mesh.NumElemMesh ; j++)
+    {
+      NumNodesElem = FEM_Mesh.NumNodesElem[j];
+      Element_Connectivity = set_to_memory__SetLib__(FEM_Mesh.Connectivity[j],NumNodesElem);
+
+      /* 3º Loop over the all the node in an element */
+      for(int k = 0 ; k<NumNodesElem ; k++)
+      {
+        /* 4º If my node belong to the element */
+        if(Element_Connectivity[k] == i)
+        {
+
+          /* 5º Introduce the element in the chain */
+          push__SetLib__(&FEM_Mesh.NodeNeighbour[i], j);
+          
+          /* 6º Update the counter */
+          FEM_Mesh.NumNeighbour[i] += 1;    
+        }
+
+      }
+
+      /* Free memory */
+      free(Element_Connectivity);
+    }
+    
+  }
+  
+}
+
+/*********************************************************************/
+
+static double mesh_size(Mesh FEM_Mesh)
+/*
+  Function to get the minimum mesh size.
+*/
+{
+
+  /* Auxiliar variables of the function */
+  int NumElemMesh = FEM_Mesh.NumElemMesh;
+  int NumNodesElem; /* Number of nodes of each element */
+  int * Connectivity; /* Connectivity of the element */
+  Matrix Poligon; /* Element Poligon */
+  Matrix X_eval = allocZ__MatrixLib__(1,2); /* Where to evaluate the shape function */
+  X_eval.nV[0] = 0;
+  X_eval.nV[1] = 0;
+  Matrix dNdx; /* Gradient of the shapefunction for each node */
+  double MinElementSize_aux;
+  double MinElementSize = 10e16;
+
+  /* 1º Loop over the elements in the mesh */
+  for(int i = 0 ; i<NumElemMesh ; i++){
+
+    /* 2º Connectivity of the Poligon */
+    NumNodesElem = FEM_Mesh.NumNodesElem[i];
+    Connectivity = set_to_memory__SetLib__(FEM_Mesh.Connectivity[i],NumNodesElem);
+    
+    /* 4º Get the gradient of the element for each node */
+    if((NumNodesElem == 3) &&
+       (NumberDimensions == 2)){ /* Triangular element */
+      /* The poligon is a triangle */
+      Poligon = allocZ__MatrixLib__(3,2);
+      /* Fill the triangle */
+      for(int k = 0; k<3; k++){
+  for(int l = 0 ; l<2 ; l++){
+    Poligon.nM[k][l] = FEM_Mesh.Coordinates.nM[Connectivity[k]][l];
+  }
+      }
+      /* Get the gradient of the triangle */
+      dNdx = dN__T3__(X_eval,Poligon);
+      free__MatrixLib__(Poligon);
+      
+      /* Get the minimum minimum height of the triangle */
+      for(int j = 0 ; j<3 ; j++){
+  MinElementSize_aux =
+    1/pow(dNdx.nM[0][j]*dNdx.nM[0][j] +
+    dNdx.nM[1][j]*dNdx.nM[1][j],0.5);
+  MinElementSize = DMIN(MinElementSize,MinElementSize_aux);
+      }
+      /* Free memory */
+      free__MatrixLib__(dNdx);
+      
+    }
+    else if((NumNodesElem == 4) &&
+      (NumberDimensions == 2)){ /* Quadrilateral element */
+      /* The poligon is a quadrilateral */
+      Poligon = allocZ__MatrixLib__(4,2);
+
+      /* Fill the poligon with vectors */
+      for(int k = 0; k<3; k++){
+  for(int l = 0 ; l<2 ; l++){
+    Poligon.nM[k][l] =
+      FEM_Mesh.Coordinates.nM[Connectivity[k+1]][l] -
+      FEM_Mesh.Coordinates.nM[Connectivity[k]][l];
+  }
+      }
+      for(int l = 0 ; l<2 ; l++){
+  Poligon.nM[3][l] = FEM_Mesh.Coordinates.nM[Connectivity[0]][l] -
+    FEM_Mesh.Coordinates.nM[Connectivity[3]][l];
+      }
+      
+      /* Get the minimum minimum height of the triangle */
+      for(int k = 0 ; k<4 ; k++){
+  MinElementSize_aux = pow(Poligon.nM[k][0]*Poligon.nM[k][0] +
+         Poligon.nM[k][1]*Poligon.nM[k][1] , 0.5);
+  MinElementSize = DMIN(MinElementSize,MinElementSize_aux);
+      }
+
+      /* Free memory */
+      free__MatrixLib__(Poligon);
+
+    }
+    else{
+      printf("%s : %s %i %s \n",
+       "Error in mesh_size",
+       "Element with ",
+       NumNodesElem,
+       "nodes is not implemented !!!" );
+      exit(EXIT_FAILURE);
+    }
+
+    /* Free memory */
+    free(Connectivity);
+    
+  }
+
+  /* Free memory */
+  free__MatrixLib__(X_eval);
+
+  return MinElementSize;
+
+}
+
+/*********************************************************************/
+
+static void fill_nodal_locality(Mesh FEM_Mesh)
+{
+  /*
+    Auxiliar variables for the nodal neighborhood reconstruction
+  */
+  int Num_nodal_rings = 3; // Number of search rings
+  int k_nodal_ring; // Current search ring
+  ChainPtr Search_Set; // Auxiliar set for recursive search
+
+  for(int i = 0 ; i<FEM_Mesh.NumNodesMesh ; i++)
+  {
+
+    if (Num_nodal_rings == 1)
+    {
+      FEM_Mesh.NodalLocality[i] = node_I_locality(i, FEM_Mesh);
+    }
+    else
+    {
+
+      k_nodal_ring = 0;
+      Search_Set = NULL;
+      push__SetLib__(&Search_Set, i);
+
+      while(k_nodal_ring < Num_nodal_rings)
+      {
+
+        Search_Set = ring_search_nodal_locality(&FEM_Mesh.NodalLocality[i], Search_Set, FEM_Mesh);
+
+        k_nodal_ring++;
+      }
+
+    }
+
+    FEM_Mesh.SizeNodalLocality[i] = lenght__SetLib__(FEM_Mesh.NodalLocality[i]);
+
+  }
+
+}
+
+/*********************************************************************/
+
+static ChainPtr node_I_locality(int I, Mesh FEM_Mesh)
+{
+
+  /* Define output */
+  ChainPtr Nodes = NULL;
+
+  /* Number of elements sourronding the node */
+  int NumNeighbour = FEM_Mesh.NumNeighbour[I];
+  
+  /* Index of the elements sourronding the node */
+  int * NodeNeighbour = set_to_memory__SetLib__(FEM_Mesh.NodeNeighbour[I],NumNeighbour);
+  
+  /* Table with the nodes of each element */
+  ChainPtr * Table_ElemNodes = malloc(NumNeighbour*sizeof(ChainPtr));
+
+  /* Fill each position of the table with a list of nodes in the element */
+  for(int i = 0 ; i<NumNeighbour ; i++)
+  {
+    Table_ElemNodes[i] = FEM_Mesh.Connectivity[NodeNeighbour[i]];
+  }
+  
+  /* Free table with elements */
+  free(NodeNeighbour);
+  
+  /* Get the union of this nodes */
+  Nodes = union__SetLib__(Table_ElemNodes,NumNeighbour);
+  
+  /* Free table with the nodes of each elements */
+  free(Table_ElemNodes);
+
+  /* Return nodes close to the node I */
+  return Nodes;
+}
+
+/*********************************************************************/
+
+static ChainPtr ring_search_nodal_locality(ChainPtr * Set_k, ChainPtr Search_Set, Mesh FEM_Mesh)
+{
+
+  /*
+    Variables
+  */
+  ChainPtr aux_Set = NULL;
+  ChainPtr new_Search_Set = NULL;
+  ChainPtr i_Search_Set = Search_Set; 
+  
+  /*
+    Loop in the search set
+  */
+  while (i_Search_Set != NULL)
+  { 
+
+    /*
+      For each node in the set, get the closest node
+    */
+    aux_Set = node_I_locality(i_Search_Set->I, FEM_Mesh);
+
+    /*
+      Loop in the closest set of nodes of the original set
+    */
+    while (aux_Set != NULL)
+    {
+      /*
+        Update the set with the new node and the search set
+      */
+      if (!inout__SetLib__(*Set_k, aux_Set->I))
+      {
+        push__SetLib__(Set_k, aux_Set->I);
+        push__SetLib__(&new_Search_Set, aux_Set->I);
+      }
+
+      /*
+        Update second iterator
+      */
+      aux_Set = aux_Set->next; 
+
+    }
+
+    /*  
+      Free auxiliar set
+    */
+    free__SetLib__(&aux_Set);
+
+    /*
+      Update first iterator
+    */
+    i_Search_Set = i_Search_Set->next; 
+
+  }
+
+  /*
+    Free old search list
+  */
+  free__SetLib__(&Search_Set);
+
+  return new_Search_Set;
+}
+
+/*********************************************************************/

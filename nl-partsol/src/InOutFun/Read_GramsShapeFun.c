@@ -5,7 +5,7 @@
 */
 char * ShapeFunctionGP;
 double gamma_LME;
-double TOL_lambda;
+double TOL_LME;
 
 /**********************************************************************/
 
@@ -19,7 +19,7 @@ void GramsShapeFun(char * Name_File)
   GramsShapeFun (Type=LME) {
 	gamma=2.3
   	metric="isotropic"/"anysotropic"
-  	TOL_lambda=10e-6
+  	TOL_LME=10e-6
   }
 */
 {
@@ -88,7 +88,7 @@ void GramsShapeFun(char * Name_File)
 
       /* Set to default all it properties */
       gamma_LME=0;
-      TOL_lambda=10e-10;
+      TOL_LME=10e-10;
 
       /* Look for the curly brace { */
       if((Num_GramsShapeFun>=3) &&
@@ -147,8 +147,8 @@ void GramsShapeFun(char * Name_File)
  	  if(strcmp(Parse_Shf_Prop[0],"gamma") == 0){
 	    gamma_LME = atof(Parse_Shf_Prop[1]);
 	  }
-	  else if(strcmp(Parse_Shf_Prop[0],"TOL_lambda") == 0){
-	    TOL_lambda = atof(Parse_Shf_Prop[1]);
+	  else if(strcmp(Parse_Shf_Prop[0],"TOL") == 0){
+	    TOL_LME = atof(Parse_Shf_Prop[1]);
 	  }
 	  else{
 	    fprintf(stderr,"%s : %s %s \n",

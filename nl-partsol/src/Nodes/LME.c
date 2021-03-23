@@ -7,6 +7,12 @@ static double fa__LME__(Matrix, Matrix, Matrix, double);
 static Matrix r__LME__(Matrix, Matrix);
 static Matrix J__LME__(Matrix, Matrix, Matrix);
 
+/*
+  Call global var¡ables
+*/
+double gamma_LME;
+double TOL_LME;
+
 /****************************************************************************/
 
 void initialize__LME__(
@@ -212,7 +218,7 @@ Matrix lambda__LME__(
     /* 
       Check convergence
     */
-    if(norm_relative > TOL_lambda)
+    if(norm_relative > TOL_LME)
     {
       /* 
         Get the Hessian of log(Z)
@@ -502,7 +508,7 @@ ChainPtr tributary__LME__(
   int NumTributaryNodes = 0;
 
   /* Get the search radius */
-  double Ra = sqrt(-log(TOL_lambda)/Beta_p);
+  double Ra = sqrt(-log(TOL_LME)/Beta_p);
 
   /* Get nodes close to the particle */
   Set_Nodes0 = FEM_Mesh.NodalLocality[I0];

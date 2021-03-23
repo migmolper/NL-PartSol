@@ -12,11 +12,7 @@ Matrix   get_set_field_old__MeshTools__(Matrix, Element);
 Matrix   compute_distance__MeshTools__(ChainPtr, Matrix, Matrix);
 int      get_closest_node__MeshTools__(Matrix, ChainPtr, Matrix);
 bool     inout_convex_set__MeshTools__(Matrix, ChainPtr, Matrix);
-ChainPtr nodal_locality__MeshTools__(int, Mesh);
-ChainPtr recursive_nodal_locality__MeshTools__(ChainPtr *, ChainPtr, Mesh);
-void     get_nodal_connectivity__MeshTools__(Mesh);
 Matrix   get_nodes_coordinates__MeshTools__(ChainPtr, Matrix);
-double   mesh_size__MeshTools__(Mesh);
 Matrix   compute_N__MeshTools__(Element, GaussPoint, Mesh );
 Matrix   compute_dN__MeshTools__(Element, GaussPoint, Mesh);
 
