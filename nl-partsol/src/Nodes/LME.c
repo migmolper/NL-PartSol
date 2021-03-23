@@ -184,8 +184,6 @@ Matrix lambda__LME__(
   int Ndim = NumberDimensions;
   int NumIter = 0; // Iterator counter
   double norm_r = 10; // Value of the norm
-  double norm_r0 = 10; // Initial Value of the norm
-  double norm_relative;
   Matrix p; // Shape function vector
   Matrix r; // Gradient of log(Z)
   Matrix J; // Hessian of log(Z)
@@ -206,19 +204,10 @@ Matrix lambda__LME__(
     r = r__LME__(l,p);
     norm_r = norm__MatrixLib__(r,2);
 
-    /*
-      Compute the relative norm
-    */
-    if(NumIter == 0) 
-    {
-      norm_r0 = norm_r;
-    }
-    norm_relative = norm_r/norm_r0;
-
     /* 
       Check convergence
     */
-    if(norm_relative > TOL_LME)
+    if(norm_r > TOL_LME)
     {
       /* 
         Get the Hessian of log(Z)
@@ -261,9 +250,7 @@ Matrix lambda__LME__(
     printf("%s : %s \n",
       "Warning in LME_lambda",
       "No convergence reached in the maximum number of interations");
-    printf("%s : %f | %s : %f \n",
-      "Total Error",norm_r,
-      "Relative Error",norm_relative);
+    printf("%s : %f\n", "Total Error",norm_r);
   }
   
 
