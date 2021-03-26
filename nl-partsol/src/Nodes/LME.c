@@ -167,6 +167,28 @@ Matrix metric__LME__()
 
 /****************************************************************************/
 
+// Matrix metric_Kumar__LME__(Matrix Fm1)
+// /*!
+//   Return the metric tensor computed as the contravariant push-forward of the
+//   identity metric tensor
+// */
+// {
+
+//     double aux_1 = A.N[0][0]*F_m1.N[0][0] + A.N[0][1]*F_m1.N[1][0];
+//     double aux_2 = A.N[0][0]*F_m1.N[0][1] + A.N[0][1]*F_m1.N[1][1];
+//     double aux_3 = A.N[1][0]*F_m1.N[0][0] + A.N[1][1]*F_m1.N[1][0];
+//     double aux_4 = A.N[1][0]*F_m1.N[0][1] + A.N[1][1]*F_m1.N[1][1];
+
+//     a.N[0][0] = F_m1.N[0][0]*aux_1 + F_m1.N[1][0]*aux_3;
+//     a.N[0][1] = F_m1.N[0][0]*aux_2 + F_m1.N[1][0]*aux_4;
+//     a.N[1][0] = F_m1.N[0][1]*aux_1 + F_m1.N[1][1]*aux_3;
+//     a.N[1][1] = F_m1.N[0][1]*aux_2 + F_m1.N[1][1]*aux_4;
+
+//   (DeltaF)^(-T)*DeltaF^(-1)
+// }
+
+/****************************************************************************/
+
 Matrix lambda__LME__(
   Matrix l, // Set than contanins vector form neighborhood nodes to particle.
   Matrix lambda, // Lagrange multiplier.

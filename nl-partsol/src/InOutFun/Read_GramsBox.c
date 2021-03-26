@@ -386,7 +386,7 @@ static void fill_nodal_locality(Mesh FEM_Mesh)
   /*
     Auxiliar variables for the nodal neighborhood reconstruction
   */
-  int Num_nodal_rings = 1; // Number of search rings
+  int Num_nodal_rings = 3; // Number of search rings
   int k_nodal_ring; // Current search ring
   ChainPtr Search_Set; // Auxiliar set for recursive search
 
