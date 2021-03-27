@@ -88,16 +88,17 @@ Matrix dp__LME__(Matrix, Matrix);
 /****************************************************************************/
 
 /*!
-  \fn Matrix tributary__LME__(Matrix X_p, double Beta_p, int I0, Mesh FEM_Mesh);
+  \fn Matrix tributary__LME__(Matrix X_p, Matrix Metric, double Beta_p, int I0, Mesh FEM_Mesh);
 
   \brief Compute a set with the sourrounding nodes of the particle
 
   \param X_p : Coordinates of the particle
+  \param Metric : Measure for the norm definition
   \param Beta_p : Thermalization parameter of the particle
   \param I0 : Index of the closest node to the particle
   \param FEM_Mesh : Variable wih information of the background set of nodes
 */
-ChainPtr tributary__LME__(Matrix, double, int, Mesh);
+ChainPtr tributary__LME__(Matrix, Matrix, double, int, Mesh);
 
 
 #endif

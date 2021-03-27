@@ -67,7 +67,7 @@ void initialize__LME__(
         Beta_p = beta__LME__(Delta_Xip, gamma_LME);
 
         /* Get the initial connectivity of the particle */
-        MPM_Mesh.ListNodes[p] = tributary__LME__(X_p,Beta_p,I0,FEM_Mesh);
+        MPM_Mesh.ListNodes[p] = tributary__LME__(X_p,Metric_p,Beta_p,I0,FEM_Mesh);
 
         /* Measure the size of the connectivity */
         MPM_Mesh.NumberNodes[p] = lenght__SetLib__(MPM_Mesh.ListNodes[p]);
@@ -306,9 +306,10 @@ static double fa__LME__(
       Metric_x_la += Metric.nM[i][j]*la.nV[j];
     }
 
-    la_x_lambda += la.nV[i]*lambda.nV[i];
     norm_la += la.nV[i]*Metric_x_la;
 
+    la_x_lambda += la.nV[i]*lambda.nV[i];
+    
   }
   
   fa = - Beta*norm_la + la_x_lambda;
@@ -495,6 +496,7 @@ Matrix dp__LME__(
 
 ChainPtr tributary__LME__(
   Matrix X_p,
+  Matrix Metric,
   double Beta_p,
   int I0,
   Mesh FEM_Mesh)
@@ -537,7 +539,7 @@ ChainPtr tributary__LME__(
     Distance = substraction__MatrixLib__(X_p,X_I);
 
     /* If the node is near the GP push in the chain */
-    if(norm__MatrixLib__(Distance,2) <= Ra)
+    if(generalised_Euclidean_distance__MatrixLib__(Distance, Metric) <= Ra)
     {
       push__SetLib__(&Triburary_Nodes,Node0);
       NumTributaryNodes++;

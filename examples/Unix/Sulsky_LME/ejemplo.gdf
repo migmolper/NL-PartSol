@@ -24,7 +24,8 @@ GramsSolid2D (File=MPM_Mesh.msh,GPxElement=1) {
     }
     
     # Shape function definition
-    GramsShapeFun (Type=MPMQ4) {
+    GramsShapeFun (Type=LME) {
+      gamma=3.0
     }
 
     # Initial conditions for the GPs

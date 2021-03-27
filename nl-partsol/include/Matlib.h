@@ -74,6 +74,7 @@ void   free__MatrixLib__(Matrix);
 void   print__MatrixLib__(Matrix, int, int);
 Matrix copy__MatrixLib__(Matrix);
 double norm__MatrixLib__(Matrix, int);
+double generalised_Euclidean_distance__MatrixLib__(Matrix, Matrix);
 double conditioning__MatrixLib__(Matrix, double);
 Matrix inverse__MatrixLib__(Matrix);
 Matrix transpose__MatrixLib__(Matrix);

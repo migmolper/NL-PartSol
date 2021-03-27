@@ -297,10 +297,11 @@ void get_particle_tributary_nodes(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int p){
     free__SetLib__(&MPM_Mesh.ListNodes[p]);
     MPM_Mesh.ListNodes[p] = NULL;
 
+
     /*
       Calculate the new connectivity with the previous value of beta
     */
-    MPM_Mesh.ListNodes[p] = tributary__LME__(X_p,Beta_p,I0,FEM_Mesh);
+    MPM_Mesh.ListNodes[p] = tributary__LME__(X_p,Metric_p,Beta_p,I0,FEM_Mesh);
 
     /*
       Calculate number of nodes
