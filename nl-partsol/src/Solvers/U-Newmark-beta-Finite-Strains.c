@@ -1216,12 +1216,13 @@ static Matrix compute_Nodal_Reactions(Mesh FEM_Mesh,
 
 /**************************************************************/
 
-static Matrix compute_Nodal_Residual(Matrix Velocity,
-				     Matrix Acceleration,
-				     Matrix Forces,
-				     Matrix D_Displacement,
-				     Matrix Mass,
-				     Newmark_parameters Params)
+static Matrix compute_Nodal_Residual(
+  Matrix Velocity,
+  Matrix Acceleration,
+  Matrix Forces,
+  Matrix D_Displacement,
+  Matrix Mass,
+  Newmark_parameters Params)
 {
   int Ndim = NumberDimensions;
   int Nnodes_mask = Velocity.N_rows;
@@ -1229,7 +1230,6 @@ static Matrix compute_Nodal_Residual(Matrix Velocity,
   Matrix Acceleration_n1 = allocZ__MatrixLib__(Nnodes_mask,Ndim);
   Matrix Inertial_Forces = allocZ__MatrixLib__(Nnodes_mask,Ndim);
   Matrix Residual = allocZ__MatrixLib__(Nnodes_mask,Ndim);
-  int idx_AB;
   double alpha_1 = Params.alpha_1;
   double alpha_2 = Params.alpha_2;
   double alpha_3 = Params.alpha_3;
@@ -1247,10 +1247,9 @@ static Matrix compute_Nodal_Residual(Matrix Velocity,
   for(int idx_A = 0 ; idx_A<Order ; idx_A++)
     {
       for(int idx_B = 0 ; idx_B<Order ; idx_B++)
-	{
-	  idx_AB = idx_A*Order + idx_B;
-	  Inertial_Forces.nV[idx_A] += Mass.nV[idx_AB]*Acceleration_n1.nV[idx_B];
-	}
+      {
+        Inertial_Forces.nV[idx_A] += Mass.nM[idx_A][idx_B]*Acceleration_n1.nV[idx_B];
+      }
     }
 
   /*
