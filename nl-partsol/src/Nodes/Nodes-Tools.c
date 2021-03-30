@@ -200,7 +200,7 @@ Matrix compute_N__MeshTools__(Element GP_Element,GaussPoint MPM_Mesh,Mesh FEM_Me
   Matrix l_Ip; // Just for GIMP/LME -> Distance from GP to the nodes
   Matrix lambda_p; // Just for LME -> Lagrange multipliers
   Matrix Metric_p; // Just for LME -> Metric tensor
-  Matrix F_p; // Just for aLME -> Deformation gradient
+  Tensor F_p; // Just for aLME -> Deformation gradient
   double Beta_p; // Just for LME -> Thermalization parameter
     
   /* 
@@ -279,7 +279,7 @@ Matrix compute_N__MeshTools__(Element GP_Element,GaussPoint MPM_Mesh,Mesh FEM_Me
     }
     else if(strcmp(Metric_LME,"bm1") == 0)
     {
-      F_p = memory_to_matrix__MatrixLib__(Ndim,Ndim,MPM_Mesh.Phi.F_n.nM[i_GP]);
+      F_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n.nM[i_GP],2);
       Metric_p = metric_bm1__LME__(F_p);
     }
 
@@ -329,10 +329,10 @@ Matrix compute_dN__MeshTools__(Element GP_Element,GaussPoint MPM_Mesh,
   Matrix xi_p; // Just for Q4 -> Element coordinates of the Gauss-Point
   Matrix lp; // Just for GIMP -> Particle voxel 
   Matrix l_Ip; // Just for GIMP/LME -> Distance from GP to the nodes
+  Matrix ShapeFunction_p; // Just for LME -> Matrix with the nodal shape functions
   Matrix lambda_p; // Just for LME -> Lagrange multipliers
   Matrix Metric_p; // Just for LME -> Metric tensor
-  Matrix F_p; // Just for aLME -> Deformation gradient
-  Matrix ShapeFunction_p; // Just for LME -> Matrix with the nodal shape functions
+  Tensor F_p; // Just for aLME -> Deformation gradient
   double Beta_p; // Just for LME -> Thermalization parameter
 
   /*  
@@ -425,7 +425,7 @@ Matrix compute_dN__MeshTools__(Element GP_Element,GaussPoint MPM_Mesh,
     }
     else if(strcmp(Metric_LME,"bm1") == 0)
     {
-      F_p = memory_to_matrix__MatrixLib__(Ndim,Ndim,MPM_Mesh.Phi.F_n.nM[i_GP]);
+      F_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n.nM[i_GP],2);
       Metric_p = metric_bm1__LME__(F_p);
     }
 

@@ -32,7 +32,7 @@ void initialize__LME__(
   Matrix X_p; // Particle coordinates  
   Matrix Delta_Xip; // Distance from GP to the nodes
   Matrix lambda_p; // Lagrange multiplier
-  Matrix F_p; // Particle deformation gradient, only for anysotropic
+  Tensor F_p; // Particle deformation gradient, only for anysotropic
   double Beta_p; // Thermalization or regularization parameter
 
 
@@ -54,7 +54,7 @@ void initialize__LME__(
     }
     else if(strcmp(Metric_LME,"bm1") == 0)
     {
-      F_p = memory_to_matrix__MatrixLib__(Ndim,Ndim,MPM_Mesh.Phi.F_n.nM[p]);
+      F_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n.nM[p],2);
       Metric_p = metric_bm1__LME__(F_p);
     }
     else
@@ -193,7 +193,7 @@ Matrix metric_I__LME__()
 
 /****************************************************************************/
 
- Matrix metric_bm1__LME__(Matrix F)
+ Matrix metric_bm1__LME__(Tensor F)
  /*!
    Return the metric tensor proposed by Molinos (b^{-1} = F^{-T}F^{-1})
  */
@@ -201,7 +201,7 @@ Matrix metric_I__LME__()
     int Ndim = NumberDimensions;
     Matrix Metric = allocZ__MatrixLib__(Ndim,Ndim);
 
-    Matrix Fm1 = inverse__MatrixLib__(F);
+    Tensor Fm1 = Inverse__TensorLib__(F);
 
     for(int i = 0 ; i < Ndim  ; i++)
     {
@@ -209,12 +209,12 @@ Matrix metric_I__LME__()
       {
         for(int k = 0 ; k < Ndim  ; k++)
         {
-          Metric.nM[i][j] += Fm1.nM[k][i]*Fm1.nM[k][j];
+          Metric.nM[i][j] += Fm1.N[k][i]*Fm1.N[k][j];
         }
       }
     } 
 
-    free__MatrixLib__(Fm1);
+    free__TensorLib__(Fm1);
 
    return Metric;
  }

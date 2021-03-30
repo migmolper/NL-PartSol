@@ -294,7 +294,7 @@ void get_particle_tributary_nodes(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int p){
     Matrix Metric_p = metric_I__LME__(); // Define a metric tensor
     Matrix Delta_Xip; // Distance from particles to the nodes
     Matrix lambda_p = memory_to_matrix__MatrixLib__(Ndim,1,MPM_Mesh.lambda.nM[p]);
-    Matrix F_p; // Particle deformation gradient
+    Tensor F_p; // Particle deformation gradient
     double Beta_p = MPM_Mesh.Beta.nV[p]; // Thermalization parameter
 
     /*
@@ -306,7 +306,7 @@ void get_particle_tributary_nodes(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int p){
     }
     else if(strcmp(Metric_LME,"bm1") == 0)
     {
-      F_p = memory_to_matrix__MatrixLib__(Ndim,Ndim,MPM_Mesh.Phi.F_n.nM[p]);
+      F_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n.nM[p],2);
       Metric_p = metric_bm1__LME__(F_p);
     }
 
