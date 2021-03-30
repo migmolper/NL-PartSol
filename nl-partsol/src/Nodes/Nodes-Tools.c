@@ -1,5 +1,9 @@
 #include "nl-partsol.h"
 
+/*
+  Global variables
+*/
+char * Metric_LME;
 
 /**************************************************************/
 
@@ -196,6 +200,7 @@ Matrix compute_N__MeshTools__(Element GP_Element,GaussPoint MPM_Mesh,Mesh FEM_Me
   Matrix l_Ip; // Just for GIMP/LME -> Distance from GP to the nodes
   Matrix lambda_p; // Just for LME -> Lagrange multipliers
   Matrix Metric_p; // Just for LME -> Metric tensor
+  Matrix F_p; // Just for aLME -> Deformation gradient
   double Beta_p; // Just for LME -> Thermalization parameter
     
   /* 
@@ -268,7 +273,15 @@ Matrix compute_N__MeshTools__(Element GP_Element,GaussPoint MPM_Mesh,Mesh FEM_Me
     /*
       Compute the metric tensor
     */
-    Metric_p = metric__LME__();
+    if(strcmp(Metric_LME,"Identity") == 0)
+    {
+      Metric_p = metric_I__LME__();
+    }
+    else if(strcmp(Metric_LME,"bm1") == 0)
+    {
+      F_p = memory_to_matrix__MatrixLib__(Ndim,Ndim,MPM_Mesh.Phi.F_n.nM[i_GP]);
+      Metric_p = metric_bm1__LME__(F_p);
+    }
 
     /*
       Get lambda and beta
@@ -318,6 +331,7 @@ Matrix compute_dN__MeshTools__(Element GP_Element,GaussPoint MPM_Mesh,
   Matrix l_Ip; // Just for GIMP/LME -> Distance from GP to the nodes
   Matrix lambda_p; // Just for LME -> Lagrange multipliers
   Matrix Metric_p; // Just for LME -> Metric tensor
+  Matrix F_p; // Just for aLME -> Deformation gradient
   Matrix ShapeFunction_p; // Just for LME -> Matrix with the nodal shape functions
   double Beta_p; // Just for LME -> Thermalization parameter
 
@@ -405,7 +419,15 @@ Matrix compute_dN__MeshTools__(Element GP_Element,GaussPoint MPM_Mesh,
     /*
       Compute the metric tensor
     */
-    Metric_p = metric__LME__();
+    if(strcmp(Metric_LME,"Identity") == 0)
+    {
+      Metric_p = metric_I__LME__();
+    }
+    else if(strcmp(Metric_LME,"bm1") == 0)
+    {
+      F_p = memory_to_matrix__MatrixLib__(Ndim,Ndim,MPM_Mesh.Phi.F_n.nM[i_GP]);
+      Metric_p = metric_bm1__LME__(F_p);
+    }
 
     /*
       Get lambda and beta

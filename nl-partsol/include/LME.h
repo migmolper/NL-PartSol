@@ -21,21 +21,22 @@
 
   \brief  Initialize LME shape functions 
 
-  \param GaussPoint MPM_Mesh : Variable with the particle information
-  \param Mesh FEM_Mesh : Nodes information
+  \param MPM_Mesh : Variable with the particle information
+  \param FEM_Mesh : Nodes information
 */
 void initialize__LME__(GaussPoint, Mesh);
 /****************************************************************************/
 
 /*!
-  \fn double beta__LME__(Matrix l, double Gamma);
+  \fn double beta__LME__(Matrix l, double Gamma, double DeltaX);
 
   \brief  Compute the value of the thermalization parameter using a circular support.
 
-  \param Matrix l : Matrix with the distances from nodes in the neiborghood to the particle
-  \param double Gamma : Adimensional paramter to control the regularization parameter
+  \param l : Matrix with the distances from nodes in the neiborghood to the particle.
+  \param Gamma : Adimensional paramter to control the regularization parameter.
+  \param DeltaX : Minimum size in the all nodal set.
 */
-double beta__LME__(Matrix, double);
+double beta__LME__(Matrix, double, double);
 /****************************************************************************/
 
 /*!
@@ -44,7 +45,17 @@ double beta__LME__(Matrix, double);
   \brief Return a metric tensor to compute the locality parameter
     in the LME shape functions.
 */
-Matrix metric__LME__();
+Matrix metric_I__LME__();
+/****************************************************************************/
+
+/*!
+  \fn  Matrix metric_bm1__LME__(Matrix F);
+
+  \brief Return a metric tensor to compute the locality parameter in the LME shape functions.
+
+  \param F : Deformation gradient
+*/
+Matrix metric_bm1__LME__(Matrix);
 /****************************************************************************/
 
 /*!

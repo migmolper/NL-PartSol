@@ -3,6 +3,11 @@
 #define MAXVAL(A,B) ((A)>(B) ? (A) : (B))
 #define MINVAL(A,B) ((A)<(B) ? (A) : (B))
 
+/*
+  Global variables
+*/
+char * Metric_LME;
+
 /*********************************************************************/
 
 void initial_position__Particles__(Matrix X_p, Mesh FEM_Mesh, int GPxElement)
@@ -286,10 +291,24 @@ void get_particle_tributary_nodes(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int p){
     /* 
       Auxiliar variables for LME
     */
-    Matrix Metric_p = metric__LME__(); // Define a metric tensor
+    Matrix Metric_p = metric_I__LME__(); // Define a metric tensor
     Matrix Delta_Xip; // Distance from particles to the nodes
     Matrix lambda_p = memory_to_matrix__MatrixLib__(Ndim,1,MPM_Mesh.lambda.nM[p]);
+    Matrix F_p; // Particle deformation gradient
     double Beta_p = MPM_Mesh.Beta.nV[p]; // Thermalization parameter
+
+    /*
+      Compute the metric tensor
+    */
+    if(strcmp(Metric_LME,"Identity") == 0)
+    {
+      Metric_p = metric_I__LME__();
+    }
+    else if(strcmp(Metric_LME,"bm1") == 0)
+    {
+      F_p = memory_to_matrix__MatrixLib__(Ndim,Ndim,MPM_Mesh.Phi.F_n.nM[p]);
+      Metric_p = metric_bm1__LME__(F_p);
+    }
 
     /*
       Free previous list of tributary nodes to the particle
@@ -317,7 +336,7 @@ void get_particle_tributary_nodes(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int p){
       Compute the thermalization parameter for the new set of nodes
       and update it
     */
-    Beta_p = beta__LME__(Delta_Xip, gamma_LME);
+    Beta_p = beta__LME__(Delta_Xip, gamma_LME, FEM_Mesh.DeltaX);
     MPM_Mesh.Beta.nV[p] = Beta_p;
 
     /*

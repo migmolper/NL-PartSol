@@ -89,6 +89,7 @@ void GramsShapeFun(char * Name_File)
       /* Set to default all it properties */
       gamma_LME=0;
       TOL_LME=10e-10;
+      strcpy(Metric_LME,"Identity");
 
       /* Look for the curly brace { */
       if((Num_GramsShapeFun>=3) &&

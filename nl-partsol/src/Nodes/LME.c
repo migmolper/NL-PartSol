@@ -12,6 +12,7 @@ static Matrix J__LME__(Matrix, Matrix, Matrix);
 */
 double gamma_LME;
 double TOL_LME;
+char * Metric_LME;
 
 /****************************************************************************/
 
@@ -31,17 +32,31 @@ void initialize__LME__(
   Matrix X_p; // Particle coordinates  
   Matrix Delta_Xip; // Distance from GP to the nodes
   Matrix lambda_p; // Lagrange multiplier
+  Matrix F_p; // Particle deformation gradient, only for anysotropic
   double Beta_p; // Thermalization or regularization parameter
+
 
   for(int p = 0 ; p<Np ; p++)
   {
     /* 
       Get some properties for each particle
     */ 
-    Metric_p = metric__LME__();
     X_p = memory_to_matrix__MatrixLib__(Ndim,1,MPM_Mesh.Phi.x_GC.nM[p]);
     lambda_p = memory_to_matrix__MatrixLib__(Ndim,1,MPM_Mesh.lambda.nM[p]);
     Beta_p = MPM_Mesh.Beta.nV[p];
+
+    /*
+      Get the metric tensor
+    */
+    if(strcmp(Metric_LME,"Identity") == 0)
+    {
+      Metric_p = metric_I__LME__();
+    }
+    else if(strcmp(Metric_LME,"bm1") == 0)
+    {
+      F_p = memory_to_matrix__MatrixLib__(Ndim,Ndim,MPM_Mesh.Phi.F_n.nM[p]);
+      Metric_p = metric_bm1__LME__(F_p);
+    }
 
     /*
       Loop over the element mesh
@@ -64,7 +79,7 @@ void initialize__LME__(
         Delta_Xip = compute_distance__MeshTools__(MPM_Mesh.ListNodes[p],X_p,FEM_Mesh.Coordinates);
 
         /* Initialize Beta */
-        Beta_p = beta__LME__(Delta_Xip, gamma_LME);
+        Beta_p = beta__LME__(Delta_Xip, gamma_LME, FEM_Mesh.DeltaX);
 
         /* Get the initial connectivity of the particle */
         MPM_Mesh.ListNodes[p] = tributary__LME__(X_p,Metric_p,Beta_p,I0,FEM_Mesh);
@@ -89,7 +104,7 @@ void initialize__LME__(
         /*
           Update the value of the thermalization parameter
         */
-        Beta_p = beta__LME__(Delta_Xip, gamma_LME);
+        Beta_p = beta__LME__(Delta_Xip, gamma_LME, FEM_Mesh.DeltaX);
         MPM_Mesh.Beta.nV[p] = Beta_p;
 
         /* 
@@ -118,7 +133,8 @@ void initialize__LME__(
 
 double beta__LME__(
   Matrix l, // Set than contanins vector form neighborhood nodes to particle.
-  double Gamma) // User define parameter to control the value of the thermalization parameter.
+  double Gamma, // User define parameter to control the value of the thermalization parameter.
+  double DeltaX) // Average mesh size
 /*!
   Get the thermalization parameter beta using the global variable gamma_LME.
 */
@@ -126,7 +142,8 @@ double beta__LME__(
   int Ndim = NumberDimensions;
   int NumNodes_GP = l.N_rows;
   double Beta = 0; // Intialise the thermalization parameter
-  double h = 0; // Initalise the average nodal distance
+  double avg_l = 0; // Initalise the average nodal distance
+  double h = 0; // Distance parameter
   Matrix l_pI = memory_to_matrix__MatrixLib__(Ndim,1,NULL);
   
   /* 
@@ -134,9 +151,12 @@ double beta__LME__(
   */
   for(int i = 0 ; i<NumNodes_GP ; i++){
     l_pI.nV = l.nM[i];
-    h += norm__MatrixLib__(l_pI,2);
+    avg_l += norm__MatrixLib__(l_pI,2);
   }
-  h = h/NumNodes_GP;
+  avg_l = avg_l/NumNodes_GP;
+
+
+  h = DMIN(avg_l,DeltaX);
 
   /*
     Compute beta
@@ -148,7 +168,7 @@ double beta__LME__(
 
 /****************************************************************************/
 
-Matrix metric__LME__()
+Matrix metric_I__LME__()
 /*!
   Return a metric tensor to compute the locality parameter
   in the LME shape functions
@@ -167,25 +187,31 @@ Matrix metric__LME__()
 
 /****************************************************************************/
 
-// Matrix metric_Kumar__LME__(Matrix Fm1)
-// /*!
-//   Return the metric tensor computed as the contravariant push-forward of the
-//   identity metric tensor
-// */
-// {
+ Matrix metric_bm1__LME__(Matrix F)
+ /*!
+   Return the metric tensor proposed by Molinos (b^{-1} = F^{-T}F^{-1})
+ */
+ {
+    int Ndim = NumberDimensions;
+    Matrix Metric = allocZ__MatrixLib__(Ndim,Ndim);
 
-//     double aux_1 = A.N[0][0]*F_m1.N[0][0] + A.N[0][1]*F_m1.N[1][0];
-//     double aux_2 = A.N[0][0]*F_m1.N[0][1] + A.N[0][1]*F_m1.N[1][1];
-//     double aux_3 = A.N[1][0]*F_m1.N[0][0] + A.N[1][1]*F_m1.N[1][0];
-//     double aux_4 = A.N[1][0]*F_m1.N[0][1] + A.N[1][1]*F_m1.N[1][1];
+    Matrix Fm1 = inverse__MatrixLib__(F);
 
-//     a.N[0][0] = F_m1.N[0][0]*aux_1 + F_m1.N[1][0]*aux_3;
-//     a.N[0][1] = F_m1.N[0][0]*aux_2 + F_m1.N[1][0]*aux_4;
-//     a.N[1][0] = F_m1.N[0][1]*aux_1 + F_m1.N[1][1]*aux_3;
-//     a.N[1][1] = F_m1.N[0][1]*aux_2 + F_m1.N[1][1]*aux_4;
+    for(int i = 0 ; i < Ndim  ; i++)
+    {
+      for(int j = 0 ; j < Ndim  ; j++)
+      {
+        for(int k = 0 ; k < Ndim  ; k++)
+        {
+          Metric.nM[i][j] += Fm1.nM[k][i]*Fm1.nM[k][j];
+        }
+      }
+    } 
 
-//   (DeltaF)^(-T)*DeltaF^(-1)
-// }
+    free__MatrixLib__(Fm1);
+
+   return Metric;
+ }
 
 /****************************************************************************/
 
@@ -549,6 +575,7 @@ ChainPtr tributary__LME__(
     free__MatrixLib__(Distance);
 
   }
+
 
   /* 
     If the Triburary_Nodes chain lenght is less than 3 assign al the node
