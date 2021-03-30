@@ -57,6 +57,12 @@ void initialize__LME__(
       F_p = memory_to_matrix__MatrixLib__(Ndim,Ndim,MPM_Mesh.Phi.F_n.nM[p]);
       Metric_p = metric_bm1__LME__(F_p);
     }
+    else
+    {
+      printf("%s : %s %s \n","Warning in initialize__LME__","Unrecognised metric tensor",Metric_LME);
+      printf("Use instead Identity or bm1 \n");
+      exit(EXIT_FAILURE);
+    }
 
     /*
       Loop over the element mesh

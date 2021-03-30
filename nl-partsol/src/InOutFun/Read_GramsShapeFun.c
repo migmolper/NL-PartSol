@@ -152,6 +152,9 @@ void GramsShapeFun(char * Name_File)
 	  else if(strcmp(Parse_Shf_Prop[0],"TOL") == 0){
 	    TOL_LME = atof(Parse_Shf_Prop[1]);
 	  }
+	  else if(strcmp(Parse_Shf_Prop[0],"Metric") == 0){
+	    strcpy(Metric_LME,Parse_Shf_Prop[1]);
+	  }
 	  else{
 	    fprintf(stderr,"%s : %s %s \n",
 		   "Error in GramsShapeFun()",
