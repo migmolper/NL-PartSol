@@ -12,7 +12,7 @@ static Matrix J__LME__(Matrix, Matrix, Matrix);
 */
 double gamma_LME;
 double TOL_LME;
-char * Metric_LME;
+char Metric_LME [100];
 
 /****************************************************************************/
 

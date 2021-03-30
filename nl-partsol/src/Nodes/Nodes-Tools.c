@@ -3,7 +3,7 @@
 /*
   Global variables
 */
-char * Metric_LME;
+char Metric_LME [100];
 
 /**************************************************************/
 

@@ -4,6 +4,7 @@
   Call global variables
 */
 char * ShapeFunctionGP;
+char Metric_LME [100];
 double gamma_LME;
 double TOL_LME;
 
