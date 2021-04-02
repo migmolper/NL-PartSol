@@ -8,6 +8,16 @@
 */
 char Metric_LME [100];
 
+
+/*
+  Local functions
+*/
+static void fill_1_particle_2d_Triangle(Matrix, Mesh);
+static void fill_3_particle_2d_Triangle(Matrix, Mesh);
+static void fill_1_particle_2d_Quadrilateral(Matrix, Mesh);
+static void fill_4_particle_2d_Quadrilateral(Matrix, Mesh);
+static void fill_9_particle_2d_Quadrilateral(Matrix, Mesh);
+
 /*********************************************************************/
 
 void initial_position__Particles__(Matrix X_p, Mesh FEM_Mesh, int GPxElement)
@@ -15,149 +25,68 @@ void initial_position__Particles__(Matrix X_p, Mesh FEM_Mesh, int GPxElement)
  * 
  */
 {
-  int Ndim = NumberDimensions;
-  int NumElemMesh = FEM_Mesh.NumElemMesh;
-  Matrix N_GP;
-  Matrix Xi_p = allocZ__MatrixLib__(GPxElement,Ndim);
-  Matrix Xi_p_j;
-  Element Element;
-  int Node;
 
-  switch(GPxElement){
+  switch(GPxElement)
+  {
+  
   case 1 :
-    if(strcmp(FEM_Mesh.TypeElem,"Quadrilateral") == 0){
-      /* Centred GP */
-      Xi_p.nV[0] = 0.0;
-      Xi_p.nV[1] = 0.0;
-      /* Evaluate the shape function */
-      N_GP = N__Q4__(Xi_p);
-      /* Get the coordinate of the center */
-      for(int i = 0 ; i<NumElemMesh ; i++){
-	Element = nodal_set__Particles__(i,FEM_Mesh.Connectivity[i],
-					 FEM_Mesh.NumNodesElem[i]);
-	
-	for(int k = 0 ; k<4 ; k++){
-	  Node = Element.Connectivity[k];
-	  for(int l = 0 ; l<2 ; l++){
-	    X_p.nM[i][l] += N_GP.nV[k]*FEM_Mesh.Coordinates.nM[Node][l];
-	  }
-	}
-	
-	free(Element.Connectivity);
-      }
-      /* Free auxiliar matrix with the coordinates */
-      free__MatrixLib__(Xi_p);
-      /* Free value of the shape function in the GP */
-      free__MatrixLib__(N_GP);
-    }
-    else if(strcmp(FEM_Mesh.TypeElem,"Triangle") == 0){
-      Xi_p.nV[0] = (double)1/3;
-      Xi_p.nV[1] = (double)1/3;
-      /* Evaluate the shape function */
-      N_GP = N__T3__(Xi_p);
-      /* Get the coordinate of the center */
-      for(int i = 0 ; i<NumElemMesh ; i++){
-	
-	Element = nodal_set__Particles__(i, FEM_Mesh.Connectivity[i],
-					 FEM_Mesh.NumNodesElem[i]);
-	for(int k = 0 ; k<3 ; k++){
-	  Node = Element.Connectivity[k];
-	  for(int l = 0 ; l<2 ; l++){
-	    X_p.nM[i][l] += N_GP.nV[k]*FEM_Mesh.Coordinates.nM[Node][l];
-	  }
-	}
-	
-	free(Element.Connectivity);
-      }
-      /* Free auxiliar matrix with the coordinates */
-      free__MatrixLib__(Xi_p);
-      /* Free value of the shape function in the GP */
-      free__MatrixLib__(N_GP);
-    }
-    break;
+
+  if(strcmp(FEM_Mesh.TypeElem,"Quadrilateral") == 0)
+  {
+    fill_1_particle_2d_Quadrilateral(X_p, FEM_Mesh);
+  }
+  else if(strcmp(FEM_Mesh.TypeElem,"Triangle") == 0)
+  {
+    fill_1_particle_2d_Triangle(X_p, FEM_Mesh);
+  }
+
+  break;
 
   case 3:
-    if(strcmp(FEM_Mesh.TypeElem,"Triangle") == 0){
-      /* Centred GP */
-      Xi_p.nM[0][0] =  0.16666666666;
-      Xi_p.nM[0][1] =  0.16666666666;
-      Xi_p.nM[1][0] =  0.66666666666;
-      Xi_p.nM[1][1] =  0.16666666666;
-      Xi_p.nM[2][0] =  0.16666666666;
-      Xi_p.nM[2][1] =  0.66666666666;
-      /* Get the coordinate of the center */
-      for(int i = 0 ; i<NumElemMesh ; i++){
-	
-	Element = nodal_set__Particles__(i, FEM_Mesh.Connectivity[i],
-					 FEM_Mesh.NumNodesElem[i]);
-	for(int j = 0 ; j<GPxElement ; j++){
-	  /* Evaluate the shape function in the GP position */
-	  Xi_p_j.nV = Xi_p.nM[j]; 
-	  N_GP = N__T3__(Xi_p_j);
-	  for(int k = 0 ; k<3 ; k++){
-	    /* Connectivity of each element */
-	    Node = Element.Connectivity[k];
-	    for(int l = 0 ; l<Ndim ; l++){
-	      X_p.nM[i*GPxElement+j][l] += 
-		N_GP.nV[k]*FEM_Mesh.Coordinates.nM[Node][l];
-	    }
-	  }
-	  
-	  /* Free value of the shape function in the GP */
-	  free__MatrixLib__(N_GP);
-	}
-	free(Element.Connectivity);
-      }
-      /* Free auxiliar matrix with the coordinates */
-      free__MatrixLib__(Xi_p);
-    }
-    break;
+
+  if(strcmp(FEM_Mesh.TypeElem,"Triangle") == 0)
+  {
+    fill_3_particle_2d_Triangle(X_p, FEM_Mesh);
+  }
+  else
+  {
+    fprintf(stderr,"%s : %s \n","Error in initial_position__Particles__()",
+      "This option is only for triangle elements");
+    exit(EXIT_FAILURE); 
+  }
+
+  break;
     
   case 4:
-    if(strcmp(FEM_Mesh.TypeElem,"Quadrilateral") == 0){
-      /* Xi_p.nM[0][0] = (double)1/pow(3,0.5); */
-      /* Xi_p.nM[0][1] = (double)1/pow(3,0.5); */
-      /* Xi_p.nM[1][0] = (double)1/pow(3,0.5); */
-      /* Xi_p.nM[1][1] = (double)-1/pow(3,0.5); */
-      /* Xi_p.nM[2][0] = (double)-1/pow(3,0.5); */
-      /* Xi_p.nM[2][1] = (double)1/pow(3,0.5); */
-      /* Xi_p.nM[3][0] = (double)-1/pow(3,0.5); */
-      /* Xi_p.nM[3][1] = (double)-1/pow(3,0.5); */
-      Xi_p.nM[0][0] =   0.5;
-      Xi_p.nM[0][1] =   0.5;
-      Xi_p.nM[1][0] =   0.5;
-      Xi_p.nM[1][1] = - 0.5;
-      Xi_p.nM[2][0] = - 0.5;
-      Xi_p.nM[2][1] =   0.5;
-      Xi_p.nM[3][0] = - 0.5;
-      Xi_p.nM[3][1] = - 0.5;
-      /* Get the coordinate of the center */
-      for(int i = 0 ; i<NumElemMesh ; i++){
-	
-	Element = nodal_set__Particles__(i, FEM_Mesh.Connectivity[i],
-					 FEM_Mesh.NumNodesElem[i]);
-	for(int j = 0 ; j<GPxElement ; j++){
-	  /* Evaluate the shape function in the GP position */
-	  Xi_p_j.nV = Xi_p.nM[j]; 
-	  N_GP = N__Q4__(Xi_p_j);
-	  for(int k = 0 ; k<4 ; k++){
-	    /* Connectivity of each element */
-	    Node = Element.Connectivity[k];
-	    for(int l = 0 ; l<Ndim ; l++){
-	      X_p.nM[i*GPxElement+j][l] += 
-		N_GP.nV[k]*FEM_Mesh.Coordinates.nM[Node][l];
-	    }
-	  }
-	  
-	  /* Free value of the shape function in the GP */
-	  free__MatrixLib__(N_GP);
-	}
-	free(Element.Connectivity);
-      }
-      /* Free auxiliar matrix with the coordinates */
-      free__MatrixLib__(Xi_p);
-    }
-    break;
+
+  if(strcmp(FEM_Mesh.TypeElem,"Quadrilateral") == 0)
+  {
+      fill_4_particle_2d_Quadrilateral(X_p, FEM_Mesh);
+  }
+  else
+  {
+    fprintf(stderr,"%s : %s \n","Error in initial_position__Particles__()",
+      "This option is only for quadrilateral elements");
+    exit(EXIT_FAILURE); 
+  }
+
+  break;
+  
+  case 9:
+
+  if(strcmp(FEM_Mesh.TypeElem,"Quadrilateral") == 0)
+  {
+    fill_9_particle_2d_Quadrilateral(X_p, FEM_Mesh);
+  }
+  else
+  {
+    fprintf(stderr,"%s : %s \n","Error in initial_position__Particles__()",
+      "This option is only for quadrilateral elements");
+    exit(EXIT_FAILURE); 
+  }
+
+  break;
+
   default :
     fprintf(stderr,"%s : %s \n",
 	    "Error in initial_position__Particles__()",
@@ -166,6 +95,299 @@ void initial_position__Particles__(Matrix X_p, Mesh FEM_Mesh, int GPxElement)
   }
   
 }
+
+/*********************************************************************/
+
+static void fill_1_particle_2d_Triangle(Matrix X_p, Mesh FEM_Mesh)
+{
+  int Ndim = NumberDimensions;
+  int NumElemMesh = FEM_Mesh.NumElemMesh;
+  int NumNodesElem = 3;
+  int GPxElement = 1;
+  Matrix N_GP;
+  Matrix Xi_p = allocZ__MatrixLib__(GPxElement,Ndim);
+  Matrix Xi_p_j;
+  Element Element;
+  int Node;
+
+  /* Centred GP */
+  Xi_p.nV[0] = (double)1/3;
+  Xi_p.nV[1] = (double)1/3;
+
+  /* Evaluate the shape function */
+  N_GP = N__T3__(Xi_p);
+
+  /* Get the coordinate of the center */
+  for(int i = 0 ; i<NumElemMesh ; i++)
+  {
+
+    Element = nodal_set__Particles__(i, FEM_Mesh.Connectivity[i],FEM_Mesh.NumNodesElem[i]);
+
+    for(int k = 0 ; k<NumNodesElem ; k++)
+    {
+
+      Node = Element.Connectivity[k];
+
+      for(int l = 0 ; l<Ndim ; l++)
+      {
+
+        X_p.nM[i][l] += N_GP.nV[k]*FEM_Mesh.Coordinates.nM[Node][l];
+
+      }
+
+    }
+
+    free(Element.Connectivity);
+
+  }
+
+  /* Free auxiliar matrix with the coordinates */
+  free__MatrixLib__(Xi_p);
+  /* Free value of the shape function in the GP */
+  free__MatrixLib__(N_GP);
+
+}
+
+/*********************************************************************/
+
+static void fill_3_particle_2d_Triangle(Matrix X_p, Mesh FEM_Mesh)
+{
+  int Ndim = NumberDimensions;
+  int NumElemMesh = FEM_Mesh.NumElemMesh;
+  int GPxElement = 3;
+  int NumNodesElem = 4;
+  Matrix N_GP;
+  Matrix Xi_p = allocZ__MatrixLib__(GPxElement,Ndim);
+  Matrix Xi_p_j;
+  Element Element;
+  int Node;
+
+  /* Centred GP */
+  Xi_p.nM[0][0] =  0.16666666666;
+  Xi_p.nM[0][1] =  0.16666666666;
+  Xi_p.nM[1][0] =  0.66666666666;
+  Xi_p.nM[1][1] =  0.16666666666;
+  Xi_p.nM[2][0] =  0.16666666666;
+  Xi_p.nM[2][1] =  0.66666666666;
+      
+  /* Get the coordinate of the center */
+  for(int i = 0 ; i<NumElemMesh ; i++)
+  {
+
+    Element = nodal_set__Particles__(i, FEM_Mesh.Connectivity[i],FEM_Mesh.NumNodesElem[i]);
+
+    for(int j = 0 ; j<GPxElement ; j++)
+    {
+      
+      /* Evaluate the shape function in the GP position */
+      Xi_p_j.nV = Xi_p.nM[j]; 
+      N_GP = N__T3__(Xi_p_j);
+
+      for(int k = 0 ; k<3 ; k++)
+      {
+        /* Connectivity of each element */
+        Node = Element.Connectivity[k];
+
+        for(int l = 0 ; l<Ndim ; l++)
+        {
+          X_p.nM[i*GPxElement+j][l] += N_GP.nV[k]*FEM_Mesh.Coordinates.nM[Node][l];
+        }
+
+      }
+
+      /* Free value of the shape function in the GP */
+      free__MatrixLib__(N_GP);
+    }
+
+    free(Element.Connectivity);
+
+  }
+  /* Free auxiliar matrix with the coordinates */
+  free__MatrixLib__(Xi_p);
+}
+
+/*********************************************************************/
+
+static void fill_1_particle_2d_Quadrilateral(Matrix X_p, Mesh FEM_Mesh)
+{
+
+  int Ndim = NumberDimensions;
+  int NumElemMesh = FEM_Mesh.NumElemMesh;
+  int GPxElement = 1;
+  int NumNodesElem = 4;
+  Matrix N_GP;
+  Matrix Xi_p = allocZ__MatrixLib__(GPxElement,Ndim);
+  Matrix Xi_p_j;
+  Element Element;
+  int Node;
+
+  /* Centred GP */
+  Xi_p.nV[0] = 0.0;
+  Xi_p.nV[1] = 0.0;
+
+  /* Evaluate the shape function */
+  N_GP = N__Q4__(Xi_p);
+
+  /* Get the coordinate of the center */
+  for(int i = 0 ; i<NumElemMesh ; i++)
+  {
+    Element = nodal_set__Particles__(i,FEM_Mesh.Connectivity[i],FEM_Mesh.NumNodesElem[i]);
+
+    for(int k = 0 ; k<NumNodesElem ; k++)
+    {
+      Node = Element.Connectivity[k];
+      
+      for(int l = 0 ; l<Ndim ; l++)
+      {
+        X_p.nM[i][l] += N_GP.nV[k]*FEM_Mesh.Coordinates.nM[Node][l];
+      }
+
+    }
+
+    free(Element.Connectivity);
+
+  }
+
+  /* Free auxiliar matrix with the coordinates */
+  free__MatrixLib__(Xi_p);
+
+  /* Free value of the shape function in the GP */
+  free__MatrixLib__(N_GP);
+
+}
+
+/*********************************************************************/
+
+static void fill_4_particle_2d_Quadrilateral(Matrix X_p, Mesh FEM_Mesh)
+{
+  int Ndim = NumberDimensions;
+  int NumElemMesh = FEM_Mesh.NumElemMesh;
+  int GPxElement = 4;
+  int NumNodesElem = 4;
+  Matrix N_GP;
+  Matrix Xi_p = allocZ__MatrixLib__(GPxElement,Ndim);
+  Matrix Xi_p_j;
+  Element Element;
+  int Node;
+
+  Xi_p.nM[0][0] =   0.5;
+  Xi_p.nM[0][1] =   0.5;
+  Xi_p.nM[1][0] =   0.5;
+  Xi_p.nM[1][1] = - 0.5;
+  Xi_p.nM[2][0] = - 0.5;
+  Xi_p.nM[2][1] =   0.5;
+  Xi_p.nM[3][0] = - 0.5;
+  Xi_p.nM[3][1] = - 0.5;
+
+  /* Get the coordinate of the center */
+  for(int i = 0 ; i<NumElemMesh ; i++)
+  {
+
+    Element = nodal_set__Particles__(i, FEM_Mesh.Connectivity[i],FEM_Mesh.NumNodesElem[i]);
+
+    for(int j = 0 ; j<GPxElement ; j++)
+    {
+      /* Evaluate the shape function in the GP position */
+      Xi_p_j.nV = Xi_p.nM[j]; 
+      N_GP = N__Q4__(Xi_p_j);
+      
+      for(int k = 0 ; k<NumNodesElem ; k++)
+      {
+            
+        /* Connectivity of each element */
+        Node = Element.Connectivity[k];
+        
+        for(int l = 0 ; l<Ndim ; l++)
+        {
+          X_p.nM[i*GPxElement+j][l] += N_GP.nV[k]*FEM_Mesh.Coordinates.nM[Node][l];
+        }
+      }
+
+      /* Free value of the shape function in the GP */
+      free__MatrixLib__(N_GP);
+
+    }
+
+    free(Element.Connectivity);
+
+  }
+
+  /* Free auxiliar matrix with the coordinates */
+  free__MatrixLib__(Xi_p); 
+
+}
+
+/*********************************************************************/
+
+static void fill_9_particle_2d_Quadrilateral(Matrix X_p, Mesh FEM_Mesh)
+{
+  int Ndim = NumberDimensions;
+  int NumElemMesh = FEM_Mesh.NumElemMesh;
+  int GPxElement = 9;
+  int NumNodesElem = 4;
+  Matrix N_GP;
+  Matrix Xi_p = allocZ__MatrixLib__(GPxElement,Ndim);
+  Matrix Xi_p_j;
+  Element Element;
+  int Node;
+
+  Xi_p.nM[0][0] =   0.0;
+  Xi_p.nM[0][1] =   0.0;
+  Xi_p.nM[1][0] =   0.66666666666666;
+  Xi_p.nM[1][1] =   0.0;
+  Xi_p.nM[2][0] =   0.66666666666666;
+  Xi_p.nM[2][1] =   0.66666666666666;
+  Xi_p.nM[3][0] =   0.0;
+  Xi_p.nM[3][1] =   0.66666666666666;
+  Xi_p.nM[4][0] = - 0.66666666666666;
+  Xi_p.nM[4][1] =   0.66666666666666;
+  Xi_p.nM[5][0] = - 0.66666666666666;
+  Xi_p.nM[5][1] =   0.0;
+  Xi_p.nM[6][0] = - 0.66666666666666;
+  Xi_p.nM[6][1] = - 0.66666666666666;
+  Xi_p.nM[7][0] =   0.0;
+  Xi_p.nM[7][1] = - 0.66666666666666;
+  Xi_p.nM[8][0] =   0.66666666666666;
+  Xi_p.nM[8][1] = - 0.66666666666666;
+
+  /* Get the coordinate of the center */
+  for(int i = 0 ; i<NumElemMesh ; i++)
+  {
+
+    Element = nodal_set__Particles__(i, FEM_Mesh.Connectivity[i],FEM_Mesh.NumNodesElem[i]);
+
+    for(int j = 0 ; j<GPxElement ; j++)
+    {
+      /* Evaluate the shape function in the GP position */
+      Xi_p_j.nV = Xi_p.nM[j]; 
+      N_GP = N__Q4__(Xi_p_j);
+      
+      for(int k = 0 ; k<NumNodesElem ; k++)
+      {
+            
+        /* Connectivity of each element */
+        Node = Element.Connectivity[k];
+        
+        for(int l = 0 ; l<Ndim ; l++)
+        {
+          X_p.nM[i*GPxElement+j][l] += N_GP.nV[k]*FEM_Mesh.Coordinates.nM[Node][l];
+        }
+      }
+
+      /* Free value of the shape function in the GP */
+      free__MatrixLib__(N_GP);
+
+    }
+
+    free(Element.Connectivity);
+
+  }
+
+  /* Free auxiliar matrix with the coordinates */
+  free__MatrixLib__(Xi_p); 
+
+}
+
 
 /*********************************************************************/
 

@@ -238,6 +238,7 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
     /************** Initialise particle ***************/
     /**************************************************/    
     initial_position__Particles__(MPM_Mesh.Phi.x_GC,MPM_GID_Mesh,GPxElement); 
+
     if(Ndim == 2)
     {
       initialise_2D_particles(MPM_GID_Mesh,MPM_Mesh,GPxElement);
