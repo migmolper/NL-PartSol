@@ -74,6 +74,13 @@ void   update_Deformation_Gradient_n1__Particles__(Tensor, Tensor, Tensor);
 /*******************************************************/
 
 /*!
+  \fn double compute_Jacobian_Rate__Particles__(double J_p, Matrix Velocity, Matrix gradient_p)
+
+*/
+double compute_Jacobian_Rate__Particles__(double, Matrix, Matrix);
+/*******************************************************/
+
+/*!
   \fn Tensor right_Cauchy_Green__Particles__(Tensor F)
   \brief Function to cumpute the right Cauchy-Green tensor defined as
   \f[

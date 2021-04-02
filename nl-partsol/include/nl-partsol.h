@@ -14,7 +14,7 @@
 #define NumberDimensions 2
 #define TOL_InOut 10E-23
 #define TOL_NR 10E-6
-#define TOL_zero 10E-10
+#define TOL_zero 1E-16
 
 /***************************************/
 /********** External libraries *********/
@@ -64,7 +64,6 @@
 #include "Q4.h"
 #include "GIMP.h"
 #include "LME.h"
-#include "aLME.h"
 #include "Nodes.h"
 #include "InOutFun.h"
 #include "Solvers.h"

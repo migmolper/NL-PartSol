@@ -147,6 +147,42 @@ void update_Deformation_Gradient_n1__Particles__(Tensor F_n1, Tensor F_n, Tensor
     }
 }
 
+/*******************************************************/
+
+double compute_Jacobian_Rate__Particles__(double J_p, Matrix Velocity, Matrix gradient_p)
+{
+  /* Variable definition */
+  int Ndim = NumberDimensions;
+  int Nnodes_p = Velocity.N_rows; 
+  double dJ_dt_p = 0;
+  double div_V_p = 0;
+  double gradient_Velocity_I = 0;
+  Tensor Velocity_I;
+  Tensor gradient_I;
+
+  /*
+    Compute velocity divergence
+  */
+  for(int I = 0 ; I<Nnodes_p ; I++)
+    {
+
+      /* Assign from matrix to tensor */
+      Velocity_I = memory_to_tensor__TensorLib__(Velocity.nM[I], 1);
+      gradient_I = memory_to_tensor__TensorLib__(gradient_p.nM[I], 1);
+      
+      /* Compute the inner product of the nodal velocity and the
+         gradient of the shape functions */
+      gradient_Velocity_I = inner_product__TensorLib__(Velocity_I, gradient_I);
+      
+      /* Ad the nodal contribution to the train tensor */
+      div_V_p += gradient_Velocity_I;
+  }
+
+  dJ_dt_p = J_p*div_V_p;
+
+  return dJ_dt_p;
+}
+
 
 /*******************************************************/
 

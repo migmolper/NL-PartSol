@@ -4,8 +4,9 @@
   Call global variables
 */
 char * ShapeFunctionGP;
+char Metric_LME [100];
 double gamma_LME;
-double TOL_lambda;
+double TOL_LME;
 
 /**********************************************************************/
 
@@ -17,8 +18,9 @@ void GramsShapeFun(char * Name_File)
   GramsShapeFun (Type=uGIMP) {
   }
   GramsShapeFun (Type=LME) {
-  gamma=2.3
-  TOL_lambda=10e-6
+	gamma=2.3
+  	metric="isotropic"/"anysotropic"
+  	TOL_LME=10e-6
   }
 */
 {
@@ -44,9 +46,7 @@ void GramsShapeFun(char * Name_File)
 
   /* Initial message */  
   puts("*************************************************");
-  printf(" \t %s : \n\t %s \n",
-	 "* Read shape function properties ",
-	 Name_File);
+  printf(" \t %s : \n","* Read shape function properties ");
   
   /* Open and check file */
   Sim_dat = fopen(Name_File,"r");  
@@ -89,7 +89,8 @@ void GramsShapeFun(char * Name_File)
 
       /* Set to default all it properties */
       gamma_LME=0;
-      TOL_lambda=10e-10;
+      TOL_LME=10e-10;
+      strcpy(Metric_LME,"Identity");
 
       /* Look for the curly brace { */
       if((Num_GramsShapeFun>=3) &&
@@ -148,8 +149,11 @@ void GramsShapeFun(char * Name_File)
  	  if(strcmp(Parse_Shf_Prop[0],"gamma") == 0){
 	    gamma_LME = atof(Parse_Shf_Prop[1]);
 	  }
-	  else if(strcmp(Parse_Shf_Prop[0],"TOL_lambda") == 0){
-	    TOL_lambda = atof(Parse_Shf_Prop[1]);
+	  else if(strcmp(Parse_Shf_Prop[0],"TOL") == 0){
+	    TOL_LME = atof(Parse_Shf_Prop[1]);
+	  }
+	  else if(strcmp(Parse_Shf_Prop[0],"Metric") == 0){
+	    strcpy(Metric_LME,Parse_Shf_Prop[1]);
 	  }
 	  else{
 	    fprintf(stderr,"%s : %s %s \n",

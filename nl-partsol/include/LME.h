@@ -15,38 +15,101 @@
 #define _LME_H_
 
 /****************************************************************************/
+
 /*!
   \fn void initialize__LME__(GaussPoint MPM_Mesh, Mesh FEM_Mesh);
 
   \brief  Initialize LME shape functions 
 
-  \param GaussPoint MPM_Mesh : Variable with the particle information
-  \param Mesh FEM_Mesh : Nodes information
+  \param MPM_Mesh : Variable with the particle information
+  \param FEM_Mesh : Nodes information
 */
-void     initialize__LME__(GaussPoint, Mesh);
+void initialize__LME__(GaussPoint, Mesh);
 /****************************************************************************/
+
 /*!
-  \fn Matrix  beta_isotropic__LME__(Matrix Beta, Matrix l, double Gamma);
+  \fn double beta__LME__(Matrix l, double Gamma, double DeltaX);
 
-  \brief  Update the value of the thermalization parameter using a circular support.
+  \brief  Compute the value of the thermalization parameter using a circular support.
 
-  \param Matrix Beta : Previous value of the thermalization parameter 
-  \param Matrix l : Matrix with the distances from nodes in the neiborghood to the particle
-  \param double Gamma : Adimensional paramter to control the regularization parameter
+  \param l : Matrix with the distances from nodes in the neiborghood to the particle.
+  \param Gamma : Adimensional paramter to control the regularization parameter.
+  \param DeltaX : Minimum size in the all nodal set.
 */
-Matrix   beta__LME__(Matrix, Matrix, double);
+double beta__LME__(Matrix, double, double);
 /****************************************************************************/
+
 /*!
-  \fn Matrix beta_anisotropic__LME__(Matrix Beta, Matrix f);
+  \fn Matrix metric__LME__();
 
-  \brief Update the value of the termalization paramter with the increment
-  of the deformation gradient
-
-  \param Matrix Beta : Previous value of the thermalization parameter 
-  \param Matrix f : Increment of the deformation gradient
+  \brief Return a metric tensor to compute the locality parameter
+    in the LME shape functions.
 */
-Matrix   lambda__LME__(Matrix, Matrix, Matrix);
-Matrix   p__LME__(Matrix, Matrix, Matrix);
-Matrix   dp__LME__(Matrix, Matrix);
-ChainPtr tributary__LME__(Matrix, Matrix, int, Mesh);
+Matrix metric_I__LME__();
+/****************************************************************************/
+
+/*!
+  \fn  Matrix metric_bm1__LME__(Tensor F);
+
+  \brief Return a metric tensor to compute the locality parameter in the LME shape functions.
+
+  \param F : Deformation gradient
+*/
+Matrix metric_bm1__LME__(Tensor);
+/****************************************************************************/
+
+/*!
+  \fn Matrix lambda__LME__(Matrix l, Matrix lambda, Matrix Metric, double Beta)
+
+  \brief Function ot get the lagrange multipliers "lambda" (1 x dim) for the LME 
+  shape function. The numerical method for that is the Newton-Rapson.
+
+  \param l : Set than contanins vector form neighborhood nodes to particle.
+  \param lambda : Lagrange multiplier.
+  \param Metric : Measure for the norm definition.
+  \param Beta : Thermalization parameter.
+*/
+Matrix lambda__LME__(Matrix, Matrix, Matrix, double);
+/****************************************************************************/
+
+/*!
+  \fn Matrix p__LME__(Matrix l, Matrix lambda, Matrix Metric, double Beta)
+
+  \brief Function to get the value of the shape function "pa" (1 x neighborhood) in the
+  neighborhood nodes.
+
+  \param l : Set than contanins vector form neighborhood nodes to particle.
+  \param lambda : Lagrange multiplier.
+  \param Metric : Measure for the norm definition.
+  \param Beta : Thermalization parameter.
+
+*/
+Matrix p__LME__(Matrix, Matrix, Matrix, double);
+/****************************************************************************/
+
+/*!
+  \fn Matrix dp__LME__(Matrix l, Matrix p) 
+
+  \brief Compute the value of the shape function gradient "dp" (dim x neighborhood) in the neighborhood nodes
+
+  \param l : Set than contanins vector form neighborhood nodes to particle.
+  \param p : Set with the evaluation of the shape function in the neighborhood nodes.
+*/
+Matrix dp__LME__(Matrix, Matrix);
+/****************************************************************************/
+
+/*!
+  \fn Matrix tributary__LME__(Matrix X_p, Matrix Metric, double Beta_p, int I0, Mesh FEM_Mesh);
+
+  \brief Compute a set with the sourrounding nodes of the particle
+
+  \param X_p : Coordinates of the particle
+  \param Metric : Measure for the norm definition
+  \param Beta_p : Thermalization parameter of the particle
+  \param I0 : Index of the closest node to the particle
+  \param FEM_Mesh : Variable wih information of the background set of nodes
+*/
+ChainPtr tributary__LME__(Matrix, Matrix, double, int, Mesh);
+
+
 #endif

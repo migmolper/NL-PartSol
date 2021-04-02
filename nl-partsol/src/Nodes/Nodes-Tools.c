@@ -1,5 +1,9 @@
 #include "nl-partsol.h"
 
+/*
+  Global variables
+*/
+char Metric_LME [100];
 
 /**************************************************************/
 
@@ -138,7 +142,7 @@ Matrix get_set_field__MeshTools__(Matrix Field, Element Nodes_p, Mask ActiveNode
  */
 {
   int Nnodes = Nodes_p.NumberNodes;
-  int Ndim = NumberDimensions;
+  int Ndim = Field.N_cols;
   Matrix Field_Ap = allocZ__MatrixLib__(Nnodes,Ndim);
   int Ap;
   int A_mask;
@@ -164,10 +168,9 @@ else
 {
 	for(int A = 0 ; A<Nnodes ; A++)
  {
-
-	    /* 
-	       Get the node in the mass matrix with the mask
-	    */
+	 /* 
+	   Get the node in the mass matrix with the mask
+	 */
    Ap = Nodes_p.Connectivity[A];
    A_mask = ActiveNodes.Nodes2Mask[Ap];
    
@@ -180,183 +183,122 @@ return Field_Ap;
 
 /*********************************************************************/
 
-ChainPtr get_nodal_locality__MeshTools__(int I, Mesh FEM_Mesh){
-
-  /* Define output */
-  ChainPtr Nodes = NULL;
-
-  /* Number of elements sourronding the node */
-  int NumNeighbour = FEM_Mesh.NumNeighbour[I];
-  
-  /* Index of the elements sourronding the node */
-  int * NodeNeighbour =
-    set_to_memory__SetLib__(FEM_Mesh.NodeNeighbour[I],NumNeighbour);
-  
-  /* Table with the nodes of each element */
-  ChainPtr * Table_ElemNodes = malloc(NumNeighbour*sizeof(ChainPtr));
-
-  /* Fill each position of the table with a list of nodes in the element */
-  for(int i = 0 ; i<NumNeighbour ; i++){
-    Table_ElemNodes[i] = FEM_Mesh.Connectivity[NodeNeighbour[i]];
-  }
-  
-  /* Free table with elements */
-  free(NodeNeighbour);
-  
-  /* Get the union of this nodes */
-  Nodes = union__SetLib__(Table_ElemNodes,NumNeighbour);
-  
-  /* Free table with the nodes of each elements */
-  free(Table_ElemNodes);
-
-  /* Return nodes close to the node I */
-  return Nodes;
-}
-
-/*********************************************************************/
-
-void get_nodal_connectivity__MeshTools__(Mesh FEM_Mesh){
-
-  /* Variable declaration */
-  int * Element_Connectivity;
-  int NumNodesElem;
-  
-  /* 1º Start the search of neighbour for each node */
-  for(int i = 0 ; i<FEM_Mesh.NumNodesMesh ; i++){
-    /* 2º Loop over all the elements in the mesh */
-    for(int j = 0 ; j<FEM_Mesh.NumElemMesh ; j++){
-      NumNodesElem = FEM_Mesh.NumNodesElem[j];
-      Element_Connectivity = set_to_memory__SetLib__(FEM_Mesh.Connectivity[j],NumNodesElem);
-      /* 3º Loop over the all the node in an element */
-      for(int k = 0 ; k<NumNodesElem ; k++){
-	/* 4º If my node belong to the element */
-	if(Element_Connectivity[k] == i){
-	  /* 5º Introduce the element in the chain */
-	  push__SetLib__(&FEM_Mesh.NodeNeighbour[i], j);
-	  /* 6º Update the counter */
-	  FEM_Mesh.NumNeighbour[i] += 1;	  
-	}
-      }
-      /* Free memory */
-      free(Element_Connectivity);
-    }
-  }
-  
-}
-
-/*********************************************************************/
-
 Matrix compute_N__MeshTools__(Element GP_Element,GaussPoint MPM_Mesh,Mesh FEM_Mesh) 
 { 
-  int i_GP = GP_Element.i_GP;
-  int GP_NumNodes = GP_Element.NumberNodes;
-  int * GP_Connect = GP_Element.Connectivity;
-  
-  Matrix GP_ElemCoord; /* Coordinates of the nodes */
-  int GP_I; /* Get the node for the GP */
 
+  /*
+    Auxiliar variables
+  */
   int Ndim = NumberDimensions;
+  int i_GP = GP_Element.i_GP; // Current intex of the particle
+  int I_p; // Index of a node in the neiborhood of the particle
+  int NumNodes_p = GP_Element.NumberNodes; // Number of nodes in the neiborhood of the particle
+  int * Connectivity_p = GP_Element.Connectivity; // List of nodes in the neiborhood of the particle
+  Matrix X_I; // Coordinates of the set of nodes in the neiborhood of the particle
+  Matrix xi_p; // Just for Q4 -> Element coordinates of the Gauss-Point
+  Matrix lp; // Just for GIMP -> Particle voxel 
+  Matrix l_Ip; // Just for GIMP/LME -> Distance from GP to the nodes
+  Matrix lambda_p; // Just for LME -> Lagrange multipliers
+  Matrix Metric_p; // Just for LME -> Metric tensor
+  Tensor F_p; // Just for aLME -> Deformation gradient
+  double Beta_p; // Just for LME -> Thermalization parameter
+    
+  /* 
+    Matrix with the nodal shape functions
+  */
+  Matrix ShapeFunction_p; 
   
-  /* Gauss-Point properties */
-  Matrix X_GP = /* Element coordinates of the Gauss-Point */
-    memory_to_matrix__MatrixLib__(Ndim,1,NULL); 
-  Matrix lp; /* Just for GIMP -> Particle voxel */
-  Matrix Beta_GP =  /* Tunning parameter for LME */
-    memory_to_matrix__MatrixLib__(Ndim,1,NULL);
-  Matrix Delta_Xip; /* Just for GIMP -> Distance from GP to the nodes */
-  Matrix lambda_GP = /* Just for LME/LME -> Lagrange multipliers */
-    memory_to_matrix__MatrixLib__(Ndim,1,NULL);
-  
-  Matrix ShapeFunction_p; /* Matrix with the nodal shape functions */
-  
-  if(strcmp(ShapeFunctionGP,"MPMQ4") == 0){
-
-    /* Fill the poligon */
-    GP_ElemCoord = allocZ__MatrixLib__(GP_NumNodes,Ndim);
-    for(int k = 0; k<GP_NumNodes ; k++){
-      /* Get the node for the GP */
-      GP_I = GP_Connect[k];
-      for(int l = 0 ; l<Ndim ; l++){
-	GP_ElemCoord.nM[k][l] =
-	  FEM_Mesh.Coordinates.nM[GP_I][l];
-      }
-    }
-    
-    /* Get the element coordinates of the GP */
-    X_GP.nV = MPM_Mesh.Phi.x_EC.nM[i_GP];
-
-    /* Evaluate the shape function */
-    ShapeFunction_p = N__Q4__(X_GP);
-    
-    /* Free memory */
-    free__MatrixLib__(GP_ElemCoord);
-  }
-  else if(strcmp(ShapeFunctionGP,"uGIMP") == 0){
-    /* Generate a matrix with the distances to the nodes */
-    Delta_Xip = alloc__MatrixLib__(GP_NumNodes,Ndim);
-    for(int k = 0 ; k<GP_NumNodes ; k++){
-      /* Get the node for the GP */
-      GP_I = GP_Connect[k];
-      for(int l = 0 ; l<Ndim ; l++){
-	Delta_Xip.nM[k][l] =
-	  MPM_Mesh.Phi.x_GC.nM[i_GP][l]-
-	  FEM_Mesh.Coordinates.nM[GP_I][l];
-      }
-    }
-    
-    /* Get the GP voxel */
-    lp.nV = MPM_Mesh.lp.nM[i_GP];
-
-    /* Evaluate the shape function */
-    ShapeFunction_p = N__GIMP__(Delta_Xip,lp,FEM_Mesh.DeltaX);
-
-    /* Free memory */
-    free__MatrixLib__(Delta_Xip);
-  }
-  else if(strcmp(ShapeFunctionGP,"LME") == 0){
-    /* Get the distance of the GP to the nodes */
-    Delta_Xip = alloc__MatrixLib__(GP_NumNodes,Ndim);
-    for(int k = 0 ; k<GP_NumNodes ; k++){
-      GP_I = GP_Connect[k];
-      for(int l = 0 ; l<Ndim ; l++){
-	Delta_Xip.nM[k][l] =
-	  MPM_Mesh.Phi.x_GC.nM[i_GP][l]-
-	  FEM_Mesh.Coordinates.nM[GP_I][l];
-      }
-    }      
-    /* Asign lambda and beta */
-    lambda_GP.nV = MPM_Mesh.lambda.nM[i_GP];
-    Beta_GP.nV = MPM_Mesh.Beta.nM[i_GP];
-   
-    /* Evaluate the shape function */
-    ShapeFunction_p = p__LME__(Delta_Xip, lambda_GP,Beta_GP);
-    
-    /* Free memory */
-    free__MatrixLib__(Delta_Xip);
-  }
-
-  else if(strcmp(ShapeFunctionGP,"aLME") == 0)
+  if(strcmp(ShapeFunctionGP,"MPMQ4") == 0)
   {
-    /* Get the distance of the GP to the nodes */
-    Delta_Xip = alloc__MatrixLib__(GP_NumNodes,Ndim);
-    for(int k = 0 ; k<GP_NumNodes ; k++)
+    
+    /*
+      Get the element coordinates of the GP
+    */
+    xi_p = memory_to_matrix__MatrixLib__(Ndim,1,MPM_Mesh.Phi.x_EC.nM[i_GP]);
+
+    /* 
+      Evaluate the shape function
+    */
+    ShapeFunction_p = N__Q4__(xi_p);
+    
+  }
+
+  else if(strcmp(ShapeFunctionGP,"uGIMP") == 0)
+  {
+    /* 
+      Get the distance of the particle to the nodes
+    */
+    l_Ip = alloc__MatrixLib__(NumNodes_p,Ndim);
+    for(int k = 0 ; k<NumNodes_p ; k++)
     {
-      GP_I = GP_Connect[k];
+      I_p = Connectivity_p[k];
       for(int l = 0 ; l<Ndim ; l++)
       {
-        Delta_Xip.nM[k][l] = MPM_Mesh.Phi.x_GC.nM[i_GP][l] - FEM_Mesh.Coordinates.nM[GP_I][l];
+        l_Ip.nM[k][l] = MPM_Mesh.Phi.x_GC.nM[i_GP][l] - FEM_Mesh.Coordinates.nM[I_p][l];
       }
-    }  
-
-    /* Asign lambda and beta */
-    Tensor lambda_p = memory_to_tensor__TensorLib__(MPM_Mesh.lambda.nM[i_GP],1);
-    Tensor Beta_p   = memory_to_tensor__TensorLib__(MPM_Mesh.Beta.nM[i_GP],2);
+    }
     
-    /* Evaluate the shape function */
-    ShapeFunction_p = p__aLME__(Delta_Xip, lambda_p, Beta_p);
+    /*
+      Get the GP voxel
+    */
+    lp.nV = MPM_Mesh.lp.nM[i_GP];
 
-    /* Free memory */
-    free__MatrixLib__(Delta_Xip);
+    /*
+      Evaluate the shape function
+    */
+    ShapeFunction_p = N__GIMP__(l_Ip,lp,FEM_Mesh.DeltaX);
+
+    /*
+      Free memory
+    */
+    free__MatrixLib__(l_Ip);
+  }
+
+  else if(strcmp(ShapeFunctionGP,"LME") == 0)
+  {
+
+    /* 
+      Get the distance of the particle to the nodes
+    */
+    l_Ip = alloc__MatrixLib__(NumNodes_p,Ndim);
+    for(int k = 0 ; k<NumNodes_p ; k++)
+    {
+      I_p = Connectivity_p[k];
+      for(int l = 0 ; l<Ndim ; l++)
+      {
+        l_Ip.nM[k][l] = MPM_Mesh.Phi.x_GC.nM[i_GP][l] - FEM_Mesh.Coordinates.nM[I_p][l];
+      }
+    }
+
+    /*
+      Compute the metric tensor
+    */
+    if(strcmp(Metric_LME,"Identity") == 0)
+    {
+      Metric_p = metric_I__LME__();
+    }
+    else if(strcmp(Metric_LME,"bm1") == 0)
+    {
+      F_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n.nM[i_GP],2);
+      Metric_p = metric_bm1__LME__(F_p);
+    }
+
+    /*
+      Get lambda and beta
+    */
+    lambda_p = memory_to_matrix__MatrixLib__(Ndim,1,MPM_Mesh.lambda.nM[i_GP]);
+    Beta_p = MPM_Mesh.Beta.nV[i_GP];
+   
+    /*
+      Evaluate the shape function
+    */
+    ShapeFunction_p = p__LME__(l_Ip, lambda_p, Metric_p, Beta_p);
+    
+    /*
+      Free memory
+    */
+    free__MatrixLib__(l_Ip);
+    free__MatrixLib__(Metric_p);
   }
 
   else{
@@ -377,121 +319,134 @@ Matrix compute_N__MeshTools__(Element GP_Element,GaussPoint MPM_Mesh,Mesh FEM_Me
 Matrix compute_dN__MeshTools__(Element GP_Element,GaussPoint MPM_Mesh,
 			      Mesh FEM_Mesh) 
 { 
-  int i_GP = GP_Element.i_GP;
-  int GP_NumNodes = GP_Element.NumberNodes;
-  int * GP_Connect = GP_Element.Connectivity;
-
   int Ndim = NumberDimensions;
-  
-  Matrix GP_ElemCoord; /* Coordinates of the nodes */
-  int GP_I; /* Get the node for the GP */
-  
-  /* Gauss-Point properties */
-  Matrix X_GP = /* Element coordinates of the Gauss-Point */
-    memory_to_matrix__MatrixLib__(Ndim,1,NULL); 
-  Matrix lp; /* Just for GIMP -> Particle voxel */
-  Matrix Beta_GP =  /* Tunning parameter for LME */
-    memory_to_matrix__MatrixLib__(Ndim,1,NULL);
-  Matrix Delta_Xip; /* Just for GIMP -> Distance from GP to the nodes */
-  
-  Matrix lambda_GP = /* Just for LME/LME -> Lagrange multipliers */
-    memory_to_matrix__MatrixLib__(Ndim,1,NULL);
-  
-  Matrix ShapeFunction_p; /* Matrix with the nodal shape functions */
-  Matrix Gradient_p; /* Matrix with the nodal derivatives */
-  
-  if(strcmp(ShapeFunctionGP,"MPMQ4") == 0){
-    /* Fill the poligon */
-    GP_ElemCoord = allocZ__MatrixLib__(GP_NumNodes,Ndim);
-    
-    for(int k = 0; k<GP_NumNodes ; k++){
-      /* Get the node for the GP */
-      GP_I = GP_Connect[k];
-      for(int l = 0 ; l<Ndim ; l++){
-	GP_ElemCoord.nM[k][l] =
-	  FEM_Mesh.Coordinates.nM[GP_I][l];
-      }
-    }
-    
-    /* Get the element coordinates of the GP */
-    X_GP.nV = MPM_Mesh.Phi.x_EC.nM[i_GP];
+  int i_GP = GP_Element.i_GP; // Current intex of the particle
+  int I_p; // Index of a node in the neiborhood of the particle
+  int NumNodes_p = GP_Element.NumberNodes; // Number of nodes in the neiborhood of the particle
+  int * Connectivity_p = GP_Element.Connectivity; // List of nodes in the neiborhood of the particle
 
-    /* Evaluate the shape function gradient */
-    Gradient_p = dN__Q4__(X_GP,GP_ElemCoord);
-    
-    /* Free memory */
-    free__MatrixLib__(GP_ElemCoord);
-  }
-  else if(strcmp(ShapeFunctionGP,"uGIMP") == 0){
-    /* Generate a matrix with the distances to the nodes */
-    Delta_Xip = alloc__MatrixLib__(GP_NumNodes,Ndim);
-    for(int k = 0 ; k<GP_NumNodes ; k++){
-      /* Get the node for the GP */
-      GP_I = GP_Connect[k];
-      for(int l = 0 ; l<Ndim ; l++){
-	Delta_Xip.nM[k][l] =
-	  MPM_Mesh.Phi.x_GC.nM[i_GP][l]-
-	  FEM_Mesh.Coordinates.nM[GP_I][l];
-      }
-    }
-    
-    /* Get the GP voxel */
-    lp.nV = MPM_Mesh.lp.nM[i_GP];
-    
-    /* Evaluate the shape function gradient */
-    Gradient_p = dN__GIMP__(Delta_Xip,lp,FEM_Mesh.DeltaX);
+  Matrix X_I; // Coordinates of the set of nodes in the neiborhood of the particle
+  Matrix xi_p; // Just for Q4 -> Element coordinates of the Gauss-Point
+  Matrix lp; // Just for GIMP -> Particle voxel 
+  Matrix l_Ip; // Just for GIMP/LME -> Distance from GP to the nodes
+  Matrix ShapeFunction_p; // Just for LME -> Matrix with the nodal shape functions
+  Matrix lambda_p; // Just for LME -> Lagrange multipliers
+  Matrix Metric_p; // Just for LME -> Metric tensor
+  Tensor F_p; // Just for aLME -> Deformation gradient
+  double Beta_p; // Just for LME -> Thermalization parameter
 
-    /* Free memory */
-    free__MatrixLib__(Delta_Xip);
-  }
-  else if(strcmp(ShapeFunctionGP,"LME") == 0){
-    /* Get the distance of the GP to the nodes */
-    Delta_Xip = alloc__MatrixLib__(GP_NumNodes,Ndim);
-    for(int k = 0 ; k<GP_NumNodes ; k++){
-      GP_I = GP_Connect[k];
-      for(int l = 0 ; l<Ndim ; l++){
-	Delta_Xip.nM[k][l] =
-	  MPM_Mesh.Phi.x_GC.nM[i_GP][l]-
-	  FEM_Mesh.Coordinates.nM[GP_I][l];
-      }
-    }      
-    /* Asign lambda and beta */
-    lambda_GP.nV = MPM_Mesh.lambda.nM[i_GP];
-    Beta_GP.nV = MPM_Mesh.Beta.nM[i_GP];
-    
-    /* Evaluate the shape function gradient */
-    ShapeFunction_p = p__LME__(Delta_Xip, lambda_GP,Beta_GP);
-    Gradient_p = dp__LME__(Delta_Xip, ShapeFunction_p);
-   
-    /* Free memory */
-    free__MatrixLib__(ShapeFunction_p);
-    free__MatrixLib__(Delta_Xip);
-  }
+  /*  
+    Matrix with the nodal derivatives
+  */
+  Matrix Gradient_p;
 
-  else if(strcmp(ShapeFunctionGP,"aLME") == 0)
+  
+  if(strcmp(ShapeFunctionGP,"MPMQ4") == 0)
   {
-    /* Get the distance of the GP to the nodes */
-    Delta_Xip = alloc__MatrixLib__(GP_NumNodes,Ndim);
-    for(int k = 0 ; k<GP_NumNodes ; k++)
+    /* 
+      Fill the poligon woth the nodal coordinates of the current element
+    */
+    X_I = allocZ__MatrixLib__(NumNodes_p,Ndim);
+    for(int k = 0; k<NumNodes_p ; k++)
     {
-      GP_I = GP_Connect[k];
+      I_p = Connectivity_p[k];
       for(int l = 0 ; l<Ndim ; l++)
       {
-        Delta_Xip.nM[k][l] = MPM_Mesh.Phi.x_GC.nM[i_GP][l] - FEM_Mesh.Coordinates.nM[GP_I][l];
+        X_I.nM[k][l] = FEM_Mesh.Coordinates.nM[I_p][l];
       }
-    }  
-
-    /* Asign lambda and beta */
-    Tensor lambda_p = memory_to_tensor__TensorLib__(MPM_Mesh.lambda.nM[i_GP],1);
-    Tensor Beta_p   = memory_to_tensor__TensorLib__(MPM_Mesh.Beta.nM[i_GP],2);
+    }
     
-    /* Evaluate the shape function gradient */
-    ShapeFunction_p = p__aLME__(Delta_Xip, lambda_p, Beta_p);
-    Gradient_p = dp__LME__(Delta_Xip, ShapeFunction_p);
+    /*
+      Get the element coordinates of the GP
+    */
+    xi_p = memory_to_matrix__MatrixLib__(Ndim,1,MPM_Mesh.Phi.x_EC.nM[i_GP]);
 
+    /*
+      Evaluate the shape function gradient
+    */
+    Gradient_p = dN__Q4__(xi_p,X_I);
+    
     /* Free memory */
+    free__MatrixLib__(X_I);
+  }
+
+  else if(strcmp(ShapeFunctionGP,"uGIMP") == 0)
+  {
+    /* 
+      Get the distance of the particle to the nodes
+    */
+    l_Ip = alloc__MatrixLib__(NumNodes_p,Ndim);
+    for(int k = 0 ; k<NumNodes_p ; k++)
+    {
+      I_p = Connectivity_p[k];
+      for(int l = 0 ; l<Ndim ; l++)
+      {
+        l_Ip.nM[k][l] = MPM_Mesh.Phi.x_GC.nM[i_GP][l] - FEM_Mesh.Coordinates.nM[I_p][l];
+      }
+    }
+    
+    /* 
+      Get the GP voxel
+    */
+    lp.nV = MPM_Mesh.lp.nM[i_GP];
+    
+    /*
+      Evaluate the shape function gradient
+    */
+    Gradient_p = dN__GIMP__(l_Ip,lp,FEM_Mesh.DeltaX);
+
+    /*
+      Free memory
+    */
+    free__MatrixLib__(l_Ip);
+  }
+
+  else if(strcmp(ShapeFunctionGP,"LME") == 0)
+  {
+    /* 
+      Get the distance of the particle to the nodes
+    */
+    l_Ip = alloc__MatrixLib__(NumNodes_p,Ndim);
+    for(int k = 0 ; k<NumNodes_p ; k++)
+    {
+      I_p = Connectivity_p[k];
+      for(int l = 0 ; l<Ndim ; l++)
+      {
+        l_Ip.nM[k][l] = MPM_Mesh.Phi.x_GC.nM[i_GP][l] - FEM_Mesh.Coordinates.nM[I_p][l];
+      }
+    }   
+
+    /*
+      Compute the metric tensor
+    */
+    if(strcmp(Metric_LME,"Identity") == 0)
+    {
+      Metric_p = metric_I__LME__();
+    }
+    else if(strcmp(Metric_LME,"bm1") == 0)
+    {
+      F_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n.nM[i_GP],2);
+      Metric_p = metric_bm1__LME__(F_p);
+    }
+
+    /*
+      Get lambda and beta
+    */
+    lambda_p = memory_to_matrix__MatrixLib__(Ndim,1,MPM_Mesh.lambda.nM[i_GP]);
+    Beta_p = MPM_Mesh.Beta.nV[i_GP];
+    
+    /*
+      Evaluate the shape function gradient
+    */
+    ShapeFunction_p = p__LME__(l_Ip, lambda_p, Metric_p, Beta_p);
+    Gradient_p = dp__LME__(l_Ip, ShapeFunction_p);
+   
+    /*
+      Free memory
+    */
     free__MatrixLib__(ShapeFunction_p);
-    free__MatrixLib__(Delta_Xip);
+    free__MatrixLib__(Metric_p);
+    free__MatrixLib__(l_Ip);
   }
 
   else{
@@ -504,109 +459,6 @@ Matrix compute_dN__MeshTools__(Element GP_Element,GaussPoint MPM_Mesh,
   }
 
   return Gradient_p;
-}
-
-/*********************************************************************/
-
-double mesh_size__MeshTools__(Mesh FEM_Mesh)
-/*
-  Function to get the minimum mesh size.
-*/
-{
-
-  /* Auxiliar variables of the function */
-  int NumElemMesh = FEM_Mesh.NumElemMesh;
-  int NumNodesElem; /* Number of nodes of each element */
-  int * Connectivity; /* Connectivity of the element */
-  Matrix Poligon; /* Element Poligon */
-  Matrix X_eval = allocZ__MatrixLib__(1,2); /* Where to evaluate the shape function */
-  X_eval.nV[0] = 0;
-  X_eval.nV[1] = 0;
-  Matrix dNdx; /* Gradient of the shapefunction for each node */
-  double MinElementSize_aux;
-  double MinElementSize = 10e16;
-
-  /* 1º Loop over the elements in the mesh */
-  for(int i = 0 ; i<NumElemMesh ; i++){
-
-    /* 2º Connectivity of the Poligon */
-    NumNodesElem = FEM_Mesh.NumNodesElem[i];
-    Connectivity = set_to_memory__SetLib__(FEM_Mesh.Connectivity[i],NumNodesElem);
-    
-    /* 4º Get the gradient of the element for each node */
-    if((NumNodesElem == 3) &&
-       (NumberDimensions == 2)){ /* Triangular element */
-      /* The poligon is a triangle */
-      Poligon = allocZ__MatrixLib__(3,2);
-      /* Fill the triangle */
-      for(int k = 0; k<3; k++){
-	for(int l = 0 ; l<2 ; l++){
-	  Poligon.nM[k][l] = FEM_Mesh.Coordinates.nM[Connectivity[k]][l];
-	}
-      }
-      /* Get the gradient of the triangle */
-      dNdx = dN__T3__(X_eval,Poligon);
-      free__MatrixLib__(Poligon);
-      
-      /* Get the minimum minimum height of the triangle */
-      for(int j = 0 ; j<3 ; j++){
-	MinElementSize_aux =
-	  1/pow(dNdx.nM[0][j]*dNdx.nM[0][j] +
-		dNdx.nM[1][j]*dNdx.nM[1][j],0.5);
-	MinElementSize = DMIN(MinElementSize,MinElementSize_aux);
-      }
-      /* Free memory */
-      free__MatrixLib__(dNdx);
-      
-    }
-    else if((NumNodesElem == 4) &&
-	    (NumberDimensions == 2)){ /* Quadrilateral element */
-      /* The poligon is a quadrilateral */
-      Poligon = allocZ__MatrixLib__(4,2);
-
-      /* Fill the poligon with vectors */
-      for(int k = 0; k<3; k++){
-	for(int l = 0 ; l<2 ; l++){
-	  Poligon.nM[k][l] =
-	    FEM_Mesh.Coordinates.nM[Connectivity[k+1]][l] -
-	    FEM_Mesh.Coordinates.nM[Connectivity[k]][l];
-	}
-      }
-      for(int l = 0 ; l<2 ; l++){
-	Poligon.nM[3][l] = FEM_Mesh.Coordinates.nM[Connectivity[0]][l] -
-	  FEM_Mesh.Coordinates.nM[Connectivity[3]][l];
-      }
-      
-      /* Get the minimum minimum height of the triangle */
-      for(int k = 0 ; k<4 ; k++){
-	MinElementSize_aux = pow(Poligon.nM[k][0]*Poligon.nM[k][0] +
-				 Poligon.nM[k][1]*Poligon.nM[k][1] , 0.5);
-	MinElementSize = DMIN(MinElementSize,MinElementSize_aux);
-      }
-
-      /* Free memory */
-      free__MatrixLib__(Poligon);
-
-    }
-    else{
-      printf("%s : %s %i %s \n",
-	     "Error in mesh_size__MeshTools__",
-	     "Element with ",
-	     NumNodesElem,
-	     "nodes is not implemented !!!" );
-      exit(EXIT_FAILURE);
-    }
-
-    /* Free memory */
-    free(Connectivity);
-    
-  }
-
-  /* Free memory */
-  free__MatrixLib__(X_eval);
-
-  return MinElementSize;
-
 }
 
 /*********************************************************************/
@@ -761,7 +613,8 @@ int get_closest_node__MeshTools__(Matrix X_p, ChainPtr Nodes, Matrix Coordinates
 
 /*********************************************************************/
 
-bool inout_convex_set__MeshTools__(Matrix X_p, ChainPtr Elem_p, Matrix Coordinates){
+bool inout_convex_set__MeshTools__(Matrix X_p, ChainPtr Elem_p, Matrix Coordinates)
+{
 
   bool Is_In_Element = false;
   Matrix Element_Coordinates;
@@ -778,3 +631,19 @@ bool inout_convex_set__MeshTools__(Matrix X_p, ChainPtr Elem_p, Matrix Coordinat
 }
 
 /*********************************************************************/
+
+double interpolate_scalar__MeshTools__(Matrix A, Matrix N_p)
+{
+  int Nnodes_p = A.N_rows;
+  double A_p = 0;
+
+  for(int I = 0 ; I<Nnodes_p ; I++)
+  {
+    A_p += A.nV[I]*N_p.nV[I];
+  }
+
+  return A_p; 
+}
+
+/*********************************************************************/
+

@@ -11,7 +11,7 @@ Define-Material(idx=0,Model=Drucker-Prager-Plane-Strain)
   Hardening-modulus=-10.0
   Cohesion=100
   Friction-angle=20
-  Dilatancy-angle=0
+  Dilatancy-angle=20
 }
 
 Define-Strain-Curve (Var=Deformation-Gradient)

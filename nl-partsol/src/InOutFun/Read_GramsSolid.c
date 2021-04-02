@@ -191,24 +191,18 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
     if(Is_GramsShapeFun){
       GramsShapeFun(Name_File);
       /* Lenght of the Voxel (Only GIMP) */
-      if(strcmp(ShapeFunctionGP,"uGIMP") == 0){
-	MPM_Mesh.lp = allocZ__MatrixLib__(NumParticles,Ndim);
-	strcpy(MPM_Mesh.lp.Info,"Voxel lenght GP");
+      if(strcmp(ShapeFunctionGP,"uGIMP") == 0)
+      {
+        MPM_Mesh.lp = allocZ__MatrixLib__(NumParticles,Ndim);
+        strcpy(MPM_Mesh.lp.Info,"Voxel lenght GP");
       }
       /* Lagrange Multipliers / Beta (Only LME ) */
-      if(strcmp(ShapeFunctionGP,"LME") == 0){
-	MPM_Mesh.lambda = allocZ__MatrixLib__(NumParticles,Ndim);
-	strcpy(MPM_Mesh.lambda.Info,"Lagrange Multiplier");
-	MPM_Mesh.Beta = allocZ__MatrixLib__(NumParticles,Ndim);
-	strcpy(MPM_Mesh.Beta.Info,"Beta parameter");
-      }
-      if(strcmp(ShapeFunctionGP,"aLME") == 0){
-	MPM_Mesh.lambda = allocZ__MatrixLib__(NumParticles,Ndim);
-	strcpy(MPM_Mesh.lambda.Info,"Lagrange Multiplier");
-	MPM_Mesh.Beta = allocZ__MatrixLib__(NumParticles,Ndim*Ndim);
-	strcpy(MPM_Mesh.Beta.Info,"Beta tensor");
-  MPM_Mesh.Cut_Off_Ellipsoid = allocZ__MatrixLib__(NumParticles,Ndim*Ndim);
-  strcpy(MPM_Mesh.Cut_Off_Ellipsoid.Info,"Cut-Off Ellipsoid");
+      if(strcmp(ShapeFunctionGP,"LME") == 0)
+      {
+        MPM_Mesh.lambda = allocZ__MatrixLib__(NumParticles,Ndim);
+        strcpy(MPM_Mesh.lambda.Info,"Lagrange Multiplier");
+        MPM_Mesh.Beta = allocZ__MatrixLib__(NumParticles,1);
+        strcpy(MPM_Mesh.Beta.Info,"Beta parameter");
       }
     }
     else{
@@ -265,16 +259,13 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
       printf("\t * %s \n","Initialize LME shape functions ...");
       initialize__LME__(MPM_Mesh,FEM_Mesh);
     }
-    else if(strcmp(ShapeFunctionGP,"aLME") == 0){
-      printf("\t * %s \n","Initialize aLME shape functions ...");
-      initialize__aLME__(MPM_Mesh,FEM_Mesh);
-    }
     printf("\t %s \n","DONE !!");
 
 
     /**************************************************/    
     /************** Read initial values ***************/
-    /**************************************************/    
+    /**************************************************/
+ 
     if(Is_Particle_Initial)
     {
       Initial_condition_particles__InOutFun__(Name_File,MPM_Mesh,GPxElement);
@@ -325,8 +316,6 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
     free(MPM_GID_Mesh.Connectivity);
     free__MatrixLib__(MPM_GID_Mesh.Coordinates);
     free(MPM_GID_Mesh.NumParticles);
-    free(MPM_GID_Mesh.NumNeighbour);
-    free(MPM_GID_Mesh.NodeNeighbour);
 
   } 
   else{

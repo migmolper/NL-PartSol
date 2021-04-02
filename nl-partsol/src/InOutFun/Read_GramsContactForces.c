@@ -114,7 +114,7 @@ Load * GramsNeumannBC(char * Name_File, int NumNeumannBC, int GPxElement)
       F[IndexLoad].Value =
 	(Curve *)Allocate_Array(Ndim,sizeof(Curve));
       /* Information of the BCC */
-      if(strcmp(Formulation,"-V") == 0){
+      if(strcmp(Formulation,"-u") == 0){
   	/* Name of the BCC */
   	strcpy(F[IndexLoad].Info,"Velocity");
       }
@@ -132,8 +132,8 @@ Load * GramsNeumannBC(char * Name_File, int NumNeumannBC, int GPxElement)
 	}
 	if((Num_words_line > 0) &&
 	   (strcmp(Parse_Properties[0],"}") != 0 )){
-	    if(strcmp(Formulation,"-V") == 0){ 
-	      if(strcmp(Parse_Properties[0],"V.x") == 0){
+	    if(strcmp(Formulation,"-u") == 0){ 
+	      if(strcmp(Parse_Properties[0],"u.x") == 0){
 		/* Fill the direction of the BCC */
 		F[IndexLoad].Dir[0] = 1;
 		/* Read the curve to impose the boundary condition */
@@ -150,7 +150,7 @@ Load * GramsNeumannBC(char * Name_File, int NumNeumannBC, int GPxElement)
 		  F[IndexLoad].Dir[0] = 0;
 		}
 	      }
-	      else if(strcmp(Parse_Properties[0],"V.y") == 0){
+	      else if(strcmp(Parse_Properties[0],"u.y") == 0){
 		/* Fill the direction of the BCC */
 		F[IndexLoad].Dir[1] = 1;
 		/* Read the curve to impose the boundary condition */
@@ -168,7 +168,7 @@ Load * GramsNeumannBC(char * Name_File, int NumNeumannBC, int GPxElement)
 		  F[IndexLoad].Dir[1] = 0;
 		}
 	      }
-	      else if(strcmp(Parse_Properties[0],"V.z") == 0){
+	      else if(strcmp(Parse_Properties[0],"u.z") == 0){
 		/* Fill the direction of the BCC */
 		F[IndexLoad].Dir[2] = 1;
 		/* Read the curve to impose the boundary condition */

@@ -182,27 +182,12 @@ Mesh ReadGidMesh(char * MeshName)
     {
       GID_Mesh.Connectivity[i] = NULL;  
     }
-
-  GID_Mesh.NodeNeighbour = (ChainPtr *)
-    malloc(GID_Mesh.NumNodesMesh*sizeof(ChainPtr));
-  if(GID_Mesh.NodeNeighbour == NULL)
-    {
-      puts("Error in Chain declaration");
-      exit(EXIT_FAILURE);
-    }
-  for(int i = 0 ; i<GID_Mesh.NumNodesMesh ; i++)
-    {
-      GID_Mesh.NodeNeighbour[i] = NULL;  
-    }
   
   GID_Mesh.NumNodesElem =  (int *)
     Allocate_ArrayZ(GID_Mesh.NumElemMesh,sizeof(int));
 
   GID_Mesh.NumParticles = (int *)
     Allocate_ArrayZ(GID_Mesh.NumNodesMesh,sizeof(int));
-
-  GID_Mesh.NumNeighbour =  (int *)
-    Allocate_ArrayZ(GID_Mesh.NumNodesMesh,sizeof(int)); 
 
   /***************************************************************************/
   /***************************************************************************/

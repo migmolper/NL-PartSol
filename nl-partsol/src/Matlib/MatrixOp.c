@@ -1004,6 +1004,39 @@ double norm__MatrixLib__(Matrix In,int kind)
 
 /*********************************************************************/
 
+double generalised_Euclidean_distance__MatrixLib__(Matrix la, Matrix Metric)
+/*
+  Compute the Euclidean distance using a general metric tensor
+*/
+{
+
+  int Ndim = NumberDimensions;
+  double Metric_x_la = 0;
+  double sqr_distance = 0;
+  double distance = 0;
+
+  for(int i = 0 ; i<Ndim ; i++)
+  {
+
+    Metric_x_la = 0;
+
+    for(int j = 0 ; j<Ndim ; j++)
+    {
+      Metric_x_la += Metric.nM[i][j]*la.nV[j];
+    }
+
+    sqr_distance += la.nV[i]*Metric_x_la;
+    
+  }
+
+  distance = sqrt(sqr_distance);
+
+  return distance;
+
+}
+
+/*********************************************************************/
+
 Matrix Eigen_Mat(Matrix In)
 {
 

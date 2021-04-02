@@ -11,9 +11,19 @@ extern char   OutputNodesFile[MAXC];
 extern char   OutputDir[MAXC];
 extern char   Field[10];
 
+
+//	Global variables for simulation purposes
+extern int NumberDOF;
+extern int Number_Soil_Water_Mixtures;
+extern Mixture * Soil_Water_Mixtures;
+
+// Global variables for the LME shape functions
+extern double TOL_LME;
 extern double gamma_LME;
-extern double TOL_lambda;
-extern double CFL; /* Courant number (0-1) */
+extern char Metric_LME [100];
+
+// Global variables for the time-integrator 
+extern double CFL;
 extern double DeltaTimeStep;
 extern double Error0;
 extern double SpectralRadius;
@@ -21,21 +31,17 @@ extern double epsilon_Mass_Matrix;
 extern double beta_Newmark_beta;
 extern double gamma_Newmark_beta;
 extern double TOL_Newmark_beta;
+extern int NumTimeStep;
 
-
-/* Convergence parameters for radia returning algorithm */
+/* Convergence parameters for radial returning algorithm */
 extern double TOL_Radial_Returning;
 extern int Max_Iterations_Radial_Returning;
-
-
-extern int NumTimeStep;
-extern int ResultsTimeStep;
-extern int NumberDOF;
-
 
 /*
 	Variables for the outputs 
 */
+
+extern int ResultsTimeStep;
 
 extern Event * Out_nodal_path_csv;
 extern int Number_Out_nodal_path_csv;
@@ -59,6 +65,8 @@ extern bool Out_displacement;
 extern bool Out_stress;
 extern bool Out_eigenvalues_stress;
 extern bool Out_volumetric_stress;
+extern bool Out_Pw;
+extern bool Out_dPw_dt;
 extern bool Out_strain;
 extern bool Out_eigenvalues_strain;
 extern bool Out_deformation_gradient;
