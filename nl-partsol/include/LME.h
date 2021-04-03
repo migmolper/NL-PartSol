@@ -49,13 +49,13 @@ Matrix metric_I__LME__();
 /****************************************************************************/
 
 /*!
-  \fn  Matrix metric_bm1__LME__(Tensor F);
+  \fn  Matrix metric_C__LME__(Tensor F);
 
   \brief Return a metric tensor to compute the locality parameter in the LME shape functions.
 
   \param F : Deformation gradient
 */
-Matrix metric_bm1__LME__(Tensor);
+Matrix metric_C__LME__(Tensor);
 /****************************************************************************/
 
 /*!

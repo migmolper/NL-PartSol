@@ -522,14 +522,14 @@ void get_particle_tributary_nodes(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int p){
     /*
       Compute the metric tensor
     */
-    if(strcmp(Metric_LME,"Identity") == 0)
+    if(strcmp(Metric_LME,"I") == 0)
     {
       Metric_p = metric_I__LME__();
     }
-    else if(strcmp(Metric_LME,"bm1") == 0)
+    else if(strcmp(Metric_LME,"C") == 0)
     {
       F_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n.nM[p],2);
-      Metric_p = metric_bm1__LME__(F_p);
+      Metric_p = metric_C__LME__(F_p);
     }
 
     /*

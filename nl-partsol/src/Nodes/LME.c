@@ -48,19 +48,19 @@ void initialize__LME__(
     /*
       Get the metric tensor
     */
-    if(strcmp(Metric_LME,"Identity") == 0)
+    if(strcmp(Metric_LME,"I") == 0)
     {
       Metric_p = metric_I__LME__();
     }
-    else if(strcmp(Metric_LME,"bm1") == 0)
+    else if(strcmp(Metric_LME,"C") == 0)
     {
       F_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n.nM[p],2);
-      Metric_p = metric_bm1__LME__(F_p);
+      Metric_p = metric_C__LME__(F_p);
     }
     else
     {
       printf("%s : %s %s \n","Warning in initialize__LME__","Unrecognised metric tensor",Metric_LME);
-      printf("Use instead Identity or bm1 \n");
+      printf("Use instead I or C \n");
       exit(EXIT_FAILURE);
     }
 
@@ -193,15 +193,16 @@ Matrix metric_I__LME__()
 
 /****************************************************************************/
 
- Matrix metric_bm1__LME__(Tensor F)
+ Matrix metric_C__LME__(Tensor F)
  /*!
-   Return the metric tensor proposed by Molinos (b^{-1} = F^{-T}F^{-1})
+   Return the metric tensor (C = F^{T}F) to compute the locality parameter
+  in the LME shape functions
  */
  {
     int Ndim = NumberDimensions;
     Matrix Metric = allocZ__MatrixLib__(Ndim,Ndim);
 
-    Tensor Fm1 = Inverse__TensorLib__(F);
+//    Tensor Fm1 = Inverse__TensorLib__(F);
 
     for(int i = 0 ; i < Ndim  ; i++)
     {
@@ -209,12 +210,12 @@ Matrix metric_I__LME__()
       {
         for(int k = 0 ; k < Ndim  ; k++)
         {
-          Metric.nM[i][j] += Fm1.N[k][i]*Fm1.N[k][j];
+          Metric.nM[i][j] += F.N[k][i]*F.N[k][j];
         }
       }
     } 
 
-    free__TensorLib__(Fm1);
+//    free__TensorLib__(Fm1);
 
    return Metric;
  }
