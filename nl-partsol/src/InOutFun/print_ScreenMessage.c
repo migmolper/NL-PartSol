@@ -1,5 +1,8 @@
 #include "nl-partsol.h"
 
+// Global variables 
+int ResultsTimeStep;
+
 /*********************************************************************/
 
 void print_Status(char * Message,int Time)
@@ -23,12 +26,13 @@ void print_step(int Time,double DeltaTimeStep)
 
 /*********************************************************************/
 
-void print_iteration(int Time,int Iter)
+void print_convergence_stats(int Time, int Iter, double Error_total, double Error_relative)
 {
   if(Time%ResultsTimeStep == 0)
     {
-      printf("\t CONVERGENCE REACHED AT : %i \n",
-	     Iter);
+      printf("\t Convergence reached after : %i interations \n",Iter);
+      printf("\t Total error : %1.4e \n",Error_total);
+      printf("\t Relative error : %1.4e \n",Error_relative);
     }
 }
 

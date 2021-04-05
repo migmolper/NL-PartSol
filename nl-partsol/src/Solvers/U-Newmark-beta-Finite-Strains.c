@@ -50,7 +50,7 @@ static void   compute_Nodal_Internal_Forces(Matrix,Matrix,Mask,GaussPoint, Mesh)
 static void   compute_Nodal_Body_Forces(Matrix, Mask, GaussPoint, Mesh, int);
 static Matrix compute_Nodal_Reactions(Mesh, Matrix, Mask);
 static Matrix compute_Nodal_Residual(Matrix, Matrix, Matrix, Matrix, Matrix, Newmark_parameters);
-static bool   check_convergence(Matrix,double,int,int);
+static bool   check_convergence(Matrix,double,int,int,int);
 static Matrix assemble_Nodal_Tangent_Stiffness(Mask, GaussPoint, Mesh);
 static void   assemble_Nodal_Tangent_Stiffness_Geometric(Matrix, Mask, GaussPoint, Mesh);
 static void   assemble_Nodal_Tangent_Stiffness_Material(Matrix, Mask, GaussPoint, Mesh);
@@ -190,7 +190,7 @@ void U_Newmark_beta_Finite_Strains(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int Initi
 	    If the norm of the residual for each nodal value is below a tolerace
 	    skip
 	  */
-	  Convergence = check_convergence(Residual,TOL,Iter,MaxIter);
+	  Convergence = check_convergence(Residual,TOL,Iter,MaxIter,TimeStep);
 
 	  /*
 	    If not, solve the linearized equilibrium to compute the next step
@@ -228,22 +228,15 @@ void U_Newmark_beta_Finite_Strains(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int Initi
 	    }
 	}
 
-
-      print_iteration(TimeStep,Iter);
       print_Status("DONE !!!",TimeStep);
 
 
       print_Status("*************************************************",TimeStep);
       print_Status("Seven step : Update particles lagrangian ... WORKING",TimeStep);
       /*
-	Update Lagrangians with D_Displacement
+      	Update Lagrangians with D_Displacement and reload the connectivity information for each particle
       */
       update_Particles(D_Displacement,Velocity,Acceleration,MPM_Mesh,FEM_Mesh,ActiveNodes, Params);
-      print_Status("DONE !!!",TimeStep);
-      
-      /*
-	Reload the connectivity information for each particle
-      */
       local_search__Particles__(MPM_Mesh,FEM_Mesh);
       print_Status("DONE !!!",TimeStep);
 
@@ -1272,10 +1265,12 @@ static Matrix compute_Nodal_Residual(
 }
 
 /**************************************************************/
-static bool check_convergence(Matrix Residual,
-			      double TOL,
-			      int Iter,
-			      int MaxIter)
+static bool check_convergence(
+  Matrix Residual,
+  double TOL,
+  int Iter,
+  int MaxIter,
+  int Step)
 {
   bool convergence;
   int Ndim = NumberDimensions;
@@ -1309,12 +1304,10 @@ static bool check_convergence(Matrix Residual,
       {
         Error0 = Error;
         Error_relative = Error/Error0;
-        printf("Error iter %i : %1.4e ; %1.4e \n",Iter,Error,Error_relative);
       }
       else
       {
         Error_relative = Error/Error0;
-        printf("Error iter %i : %1.4e ; %1.4e \n",Iter,Error,Error_relative);
       }
       
       /*
@@ -1326,6 +1319,7 @@ static bool check_convergence(Matrix Residual,
       }
       else
       {
+        print_convergence_stats(Step, Iter, Error, Error_relative);
         return true;
       }
     }
@@ -1333,9 +1327,10 @@ static bool check_convergence(Matrix Residual,
 
 /**************************************************************/
 
-static Matrix assemble_Nodal_Tangent_Stiffness(Mask ActiveNodes,
-					       GaussPoint MPM_Mesh,
-					       Mesh FEM_Mesh)
+static Matrix assemble_Nodal_Tangent_Stiffness(
+  Mask ActiveNodes,
+  GaussPoint MPM_Mesh,
+  Mesh FEM_Mesh)
 
 /*
   This function computes the tangent stiffness matrix as a combination

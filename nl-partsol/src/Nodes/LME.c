@@ -202,8 +202,6 @@ Matrix metric_I__LME__()
     int Ndim = NumberDimensions;
     Matrix Metric = allocZ__MatrixLib__(Ndim,Ndim);
 
-//    Tensor Fm1 = Inverse__TensorLib__(F);
-
     for(int i = 0 ; i < Ndim  ; i++)
     {
       for(int j = 0 ; j < Ndim  ; j++)
@@ -214,8 +212,6 @@ Matrix metric_I__LME__()
         }
       }
     } 
-
-//    free__TensorLib__(Fm1);
 
    return Metric;
  }

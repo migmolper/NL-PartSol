@@ -229,15 +229,17 @@ void print_step(int,double);
 
 /*! 
 
-  \fn void print_iteration(int TimeStep,int Iter)
+  \fn void print_convergence_stats(int TimeStep,int Iter, double Error_total, double Error_relative)
  
   \brief Print number of iterations required.
  
   \param Time : Current step of the simulation 
   \param Iter : Number of iterations required
+  \param Error_total 
+  \param Error_relative
 
  */
-void print_iteration(int,int);
+void print_convergence_stats(int Time, int Iter, double Error_total, double Error_relative);
 
 /*****************************************************************/
 
