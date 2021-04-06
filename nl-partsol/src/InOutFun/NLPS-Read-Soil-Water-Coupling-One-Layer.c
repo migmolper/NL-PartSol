@@ -229,7 +229,7 @@ GaussPoint Generate_Soil_Water_Coupling_Analysis__InOutFun__(char * Name_File, M
       Initialise shape functions 
     */
     puts("*************************************************");
-    if(strcmp(ShapeFunctionGP,"MPMQ4") == 0)
+    if(strcmp(ShapeFunctionGP,"Q4") == 0)
     {
       printf("\t * %s \n","Start MPMQ4 shape functions initialisation ...");
       initialize__Q4__(MPM_Mesh, FEM_Mesh);

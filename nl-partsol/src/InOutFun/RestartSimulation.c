@@ -166,7 +166,7 @@ GaussPoint restart_Simulation(char * File_Parameters,
   printf(" \t %s \n","* Read shape functions");
   GramsShapeFun(File_Parameters);
   
-  if(strcmp(ShapeFunctionGP,"MPMQ4") == 0)
+  if(strcmp(ShapeFunctionGP,"Q4") == 0)
     {
       initialize__Q4__(Set_Particles, FEM_Mesh);
     }

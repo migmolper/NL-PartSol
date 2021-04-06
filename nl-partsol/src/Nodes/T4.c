@@ -1,16 +1,4 @@
-/***********************************************/
-/********* 3D triangle linear element **********/
-/***********************************************/
 
-/*        o (3)    */
-/*       /|\       */
-/*      / | \      */
-/* (0) /  |  \     */
-/*    o-------o    */
-/*     \  |  / (2) */
-/*      \ | /      */ 
-/*       \|/       */
-/*    (1) o        */
 
 #include "nl-partsol.h"
 
@@ -22,7 +10,9 @@ static Matrix Xi_to_X__T4__(Matrix, Matrix);
 
 /*********************************************************************/
 
-void initialize__T4__(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
+void initialize__T4__(
+  GaussPoint MPM_Mesh,
+  Mesh FEM_Mesh)
 {
   /* Variables for the GP coordinates */
   int Ndim = NumberDimensions;
@@ -52,7 +42,8 @@ void initialize__T4__(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
     Xi_p = memory_to_matrix__MatrixLib__(Ndim,1,MPM_Mesh.Phi.x_EC.nM[p]);
     
     /* Check for each element of the mesh */
-    for(int i = 0 ; i<Nelem ; i++){
+    for(int i = 0 ; i<Nelem ; i++)
+    {
 
       /* Get connectivity of the element */
       Elem_p = FEM_Mesh.Connectivity[i];
@@ -92,7 +83,8 @@ void initialize__T4__(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 /*********************************************************************/
 
 /* Shape functions */
-Matrix N__T4__(Matrix Xi)
+Matrix N__T4__(
+  Matrix Xi)
 {
   
   /* Definition and allocation */
@@ -110,7 +102,8 @@ Matrix N__T4__(Matrix Xi)
 /*********************************************************************/
 
 /* Derivatives of the shape functions */
-Matrix dN_Ref__T4__(Matrix Xi)
+Matrix dN_Ref__T4__(
+  Matrix Xi)
 {
   int Ndim = NumberDimensions;
   
@@ -132,7 +125,9 @@ Matrix dN_Ref__T4__(Matrix Xi)
 /*********************************************************************/
 
 /* Deformation gradient of the reference element for the three-nodes triangle */
-static Matrix F_Ref__T4__(Matrix Xi,Matrix Element)
+static Matrix F_Ref__T4__(
+  Matrix Xi,
+  Matrix Element)
 /*
   Get the deformation gradient of the transformation of the reference element :
 
@@ -193,7 +188,9 @@ static Matrix F_Ref__T4__(Matrix Xi,Matrix Element)
 /*********************************************************************/
 
 /* Element gradient in the real element */
-Matrix dN__T4__(Matrix Xi,Matrix Element)
+Matrix dN__T4__(
+  Matrix Xi,
+  Matrix Element)
 /*
   - Matrix Xi_GP : Element coordinates of the gauss point
   - Matrix Element : Coordinates of the element (NumNodesElem x NumberDimensions)
@@ -234,7 +231,9 @@ Matrix dN__T4__(Matrix Xi,Matrix Element)
 /*********************************************************************/
 
 /* Global coordinates of the four nodes quadrilateral */
-static Matrix Xi_to_X__T4__(Matrix Xi,Matrix Element)
+static Matrix Xi_to_X__T4__(
+  Matrix Xi,
+  Matrix Element)
 /*
   This function evaluate the position of the GP in the element,
   and get it global coordiantes    
@@ -250,12 +249,12 @@ static Matrix Xi_to_X__T4__(Matrix Xi,Matrix Element)
 
   /* 3º Get the global coordinates for this element coordiantes in this element */
   for(int I = 0 ; I<4 ; I++)
+  {
+    for(int i = 0 ; i<Ndim ; i++)
     {
-      for(int i = 0 ; i<Ndim ; i++)
-      {
-        X.nV[i] += N.nV[I]*Element.nM[I][i];
-      }
+      X.nV[i] += N.nV[I]*Element.nM[I][i];
     }
+  }
 
   /* 4º Free memory */
   free__MatrixLib__(N);
@@ -267,7 +266,10 @@ static Matrix Xi_to_X__T4__(Matrix Xi,Matrix Element)
 
 /*********************************************************************/
 
-void X_to_Xi__T4__(Matrix Xi,Matrix X,Matrix Element)
+void X_to_Xi__T4__(
+  Matrix Xi,
+  Matrix X,
+  Matrix Element)
 /* 
    The function return the natural coordinates of a point 
    inside of the element.
@@ -287,90 +289,78 @@ void X_to_Xi__T4__(Matrix Xi,Matrix X,Matrix Element)
 /*********************************************************************/
 
 
-Matrix element_to_particles__T4__(int Num_GP)
+void element_to_particles__T4__(
+  Matrix X_p,
+  Mesh FEM_Mesh,
+  int GPxElement)
 /*
   Given a T4 element, transform it in to a set of MPM particles
 */
 {
   int Ndim = NumberDimensions;
-  Matrix Xi = allocZ__MatrixLib__(Num_GP,Ndim);
-  double a, b, c;
+  int NumElemMesh = FEM_Mesh.NumElemMesh;
+  int NumNodesElem = 4;
+  Matrix N_GP;
+  Matrix Xi_p = allocZ__MatrixLib__(GPxElement,Ndim);
+  Matrix Xi_p_j;
+  Element Element;
+  int Node;
 
-  switch(Num_GP)
+  switch(GPxElement)
     {
     case 1 :
-      a = 0.25;
       
-      Xi.nV[0] = a;
-      Xi.nV[1] = a;
-      Xi.nV[2] = a;
+      Xi_p.nV[0] = 0.25;
+      Xi_p.nV[1] = 0.25;
+      Xi_p.nV[2] = 0.25;
       break;
       
-    case 4 :
-      a = 0.585410196624968;
-      b = 0.138196601125010;
-      
-      Xi.nM[0][0] = b;
-      Xi.nM[0][1] = b;
-      Xi.nM[0][2] = b;
-      
-      Xi.nM[1][0] = a;
-      Xi.nM[1][1] = b;
-      Xi.nM[1][2] = b;
-
-      Xi.nM[2][0] = b;
-      Xi.nM[2][1] = a;
-      Xi.nM[2][2] = b;
-
-      Xi.nM[3][0] = b;
-      Xi.nM[3][1] = b;
-      Xi.nM[3][2] = a;
+    case 4 :      
+      Xi_p.nM[0][0] = 0.138196601125010;
+      Xi_p.nM[0][1] = 0.138196601125010;
+      Xi_p.nM[0][2] = 0.138196601125010;
+      Xi_p.nM[1][0] = 0.585410196624968;
+      Xi_p.nM[1][1] = 0.138196601125010;
+      Xi_p.nM[1][2] = 0.138196601125010;
+      Xi_p.nM[2][0] = 0.138196601125010;
+      Xi_p.nM[2][1] = 0.585410196624968;
+      Xi_p.nM[2][2] = 0.138196601125010;
+      Xi_p.nM[3][0] = 0.138196601125010;
+      Xi_p.nM[3][1] = 0.138196601125010;
+      Xi_p.nM[3][2] = 0.585410196624968;
       break;
 
     case 10:
-      a=0.108103018168070;
-      b=0.445948490915965;
-      c=0.816847572980459;
-
-      Xi.nM[0][0] = a;
-      Xi.nM[0][1] = a;
-      Xi.nM[0][2] = a;
-      
-      Xi.nM[1][0] = c;
-      Xi.nM[1][1] = a;
-      Xi.nM[1][2] = a;
-
-      Xi.nM[2][0] = a;
-      Xi.nM[2][1] = c;
-      Xi.nM[2][2] = a;
-
-      Xi.nM[3][0] = a;
-      Xi.nM[3][1] = a;
-      Xi.nM[3][2] = c;
-
-      Xi.nM[4][0] = b;
-      Xi.nM[4][1] = a;
-      Xi.nM[4][2] = a;
-      
-      Xi.nM[5][0] = b;
-      Xi.nM[5][1] = b;
-      Xi.nM[5][2] = a;
-
-      Xi.nM[6][0] = a;
-      Xi.nM[6][1] = b;
-      Xi.nM[6][2] = a;
-
-      Xi.nM[7][0] = a;
-      Xi.nM[7][1] = a;
-      Xi.nM[7][2] = b;
-
-      Xi.nM[8][0] = b;
-      Xi.nM[8][1] = a;
-      Xi.nM[8][2] = b;
-      
-      Xi.nM[9][0] = a;
-      Xi.nM[9][1] = b;
-      Xi.nM[9][2] = b;
+      Xi_p.nM[0][0] = 0.108103018168070;
+      Xi_p.nM[0][1] = 0.108103018168070;
+      Xi_p.nM[0][2] = 0.108103018168070;      
+      Xi_p.nM[1][0] = 0.816847572980459;
+      Xi_p.nM[1][1] = 0.108103018168070;
+      Xi_p.nM[1][2] = 0.108103018168070;
+      Xi_p.nM[2][0] = 0.108103018168070;
+      Xi_p.nM[2][1] = 0.816847572980459;
+      Xi_p.nM[2][2] = 0.108103018168070;
+      Xi_p.nM[3][0] = 0.108103018168070;
+      Xi_p.nM[3][1] = 0.108103018168070;
+      Xi_p.nM[3][2] = 0.816847572980459;
+      Xi_p.nM[4][0] = 0.445948490915965;
+      Xi_p.nM[4][1] = 0.108103018168070;
+      Xi_p.nM[4][2] = 0.108103018168070;    
+      Xi_p.nM[5][0] = 0.445948490915965;
+      Xi_p.nM[5][1] = 0.445948490915965;
+      Xi_p.nM[5][2] = 0.108103018168070;
+      Xi_p.nM[6][0] = 0.108103018168070;
+      Xi_p.nM[6][1] = 0.445948490915965;
+      Xi_p.nM[6][2] = 0.108103018168070;
+      Xi_p.nM[7][0] = 0.108103018168070;
+      Xi_p.nM[7][1] = 0.108103018168070;
+      Xi_p.nM[7][2] = 0.445948490915965;
+      Xi_p.nM[8][0] = 0.445948490915965;
+      Xi_p.nM[8][1] = 0.108103018168070;
+      Xi_p.nM[8][2] = 0.445948490915965;
+      Xi_p.nM[9][0] = 0.108103018168070;
+      Xi_p.nM[9][1] = 0.445948490915965;
+      Xi_p.nM[9][2] = 0.445948490915965;
       break;
 
     default :
@@ -380,7 +370,49 @@ Matrix element_to_particles__T4__(int Num_GP)
       exit(EXIT_FAILURE);
     }
 
-  return Xi;
+  /* Get the coordinate of the center */
+  for(int i = 0 ; i<NumElemMesh ; i++)
+  {
+
+    Element = nodal_set__Particles__(i, FEM_Mesh.Connectivity[i],FEM_Mesh.NumNodesElem[i]);
+
+    for(int j = 0 ; j<GPxElement ; j++)
+    {
+      /* Evaluate the shape function in the GP position */
+      if(GPxElement == 1)
+      {
+        Xi_p_j.nV = Xi_p.nM[j]; 
+        N_GP = N__T4__(Xi_p_j);
+      }
+      else
+      {
+        N_GP = N__T4__(Xi_p);
+      }
+      
+      for(int k = 0 ; k<NumNodesElem ; k++)
+      {
+            
+        /* Connectivity of each element */
+        Node = Element.Connectivity[k];
+        
+        for(int l = 0 ; l<Ndim ; l++)
+        {
+          X_p.nM[i*GPxElement+j][l] += N_GP.nV[k]*FEM_Mesh.Coordinates.nM[Node][l];
+        }
+      }
+
+      /* Free value of the shape function in the GP */
+      free__MatrixLib__(N_GP);
+
+    }
+
+    free(Element.Connectivity);
+
+  }
+
+  /* Free auxiliar matrix with the coordinates */
+  free__MatrixLib__(Xi_p); 
+
 }
 
 /*********************************************************************/

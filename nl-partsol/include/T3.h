@@ -12,7 +12,11 @@
 #ifndef _T3_H_
 #define _T3_H_
 
+void   initialize__T3__(GaussPoint, Mesh);
 Matrix N__T3__(Matrix);
 Matrix dN__T3__(Matrix,Matrix);
+Matrix dN_Ref__T3__(Matrix);
+void   X_to_Xi__T3__(Matrix,Matrix,Matrix);
+void   element_to_particles__T3__(Matrix, Mesh, int);
 
 #endif

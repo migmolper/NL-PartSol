@@ -1,16 +1,4 @@
-/***********************************************/
-/******* 3D cuadrilateral linear element *******/
-/***********************************************/
 
-/*     (7)      (6)   */
-/*       o-------o    */
-/*      /.      /|    */
-/* (4) / . (5) / |    */
-/*    o--o----o..o    */
-/*    | / (3) | / (2) */
-/*    |/      |/      */
-/*    o-------o       */
-/*   (0)     (1)      */
 
 #include "nl-partsol.h"
 
@@ -316,181 +304,189 @@ void X_to_Xi__Q8__(Matrix Xi, Matrix X, Matrix Element)
 
 /*********************************************************************/
 
-
-Matrix element_to_particles__Q8__(int Num_GP)
-/*
-  Given a Q8 element, transform it in to a set of MPM particles
-*/
+void element_to_particles__Q8__(
+  Matrix X_p,
+  Mesh FEM_Mesh,
+  int GPxElement)
 {
   int Ndim = NumberDimensions;
-  Matrix Xi = allocZ__MatrixLib__(Num_GP,Ndim);
-  double a;
+  int NumElemMesh = FEM_Mesh.NumElemMesh;
+  int NumNodesElem = 8;
+  Matrix N_GP;
+  Matrix Xi_p = allocZ__MatrixLib__(GPxElement,Ndim);
+  Matrix Xi_p_j;
+  Element Element;
+  int Node;
 
-  switch(Num_GP)
-    {
+  switch(GPxElement)
+  {
     case 1 :
-      a = 0;
-      Xi.nV[0] = a;
-      Xi.nV[1] = a;
-      Xi.nV[2] = a;
-      break;
+    Xi_p.nV[0] = 0.0;
+    Xi_p.nV[1] = 0.0;
+    Xi_p.nV[2] = 0.0;
+    break;
       
     case 8 :
-      a = 0.577350269189626;
-      
-      Xi.nM[0][0] = - a;
-      Xi.nM[0][1] = - a;
-      Xi.nM[0][2] = - a;
-
-      Xi.nM[1][0] =   a;
-      Xi.nM[1][1] = - a;
-      Xi.nM[1][2] = - a;
-
-      Xi.nM[2][0] =   a;
-      Xi.nM[2][1] =   a;
-      Xi.nM[2][2] = - a;
-
-      Xi.nM[3][0] = - a;
-      Xi.nM[3][1] =   a;
-      Xi.nM[3][2] = - a;
-
-      Xi.nM[4][0] = - a;
-      Xi.nM[4][1] = - a;
-      Xi.nM[4][2] =   a;
-
-      Xi.nM[5][0] =   a;
-      Xi.nM[5][1] = - a;
-      Xi.nM[5][2] =   a;
-
-      Xi.nM[6][0] =   a;
-      Xi.nM[6][1] =   a;
-      Xi.nM[6][2] =   a;
-
-      Xi.nM[7][0] = - a;
-      Xi.nM[7][1] =   a;
-      Xi.nM[7][2] =   a;      
-      break;
+    Xi_p.nM[0][0] = - 0.5;
+    Xi_p.nM[0][1] = - 0.5;
+    Xi_p.nM[0][2] =   0.5;
+    Xi_p.nM[1][0] =   0.5;
+    Xi_p.nM[1][1] = - 0.5;
+    Xi_p.nM[1][2] =   0.5;
+    Xi_p.nM[2][0] =   0.5;
+    Xi_p.nM[2][1] =   0.5;
+    Xi_p.nM[2][2] =   0.5;
+    Xi_p.nM[3][0] = - 0.5;
+    Xi_p.nM[3][1] =   0.5;
+    Xi_p.nM[3][2] =   0.5;
+    Xi_p.nM[4][0] = - 0.5;
+    Xi_p.nM[4][1] = - 0.5;
+    Xi_p.nM[4][2] = - 0.5;
+    Xi_p.nM[5][0] =   0.5;
+    Xi_p.nM[5][1] = - 0.5;
+    Xi_p.nM[5][2] = - 0.5;
+    Xi_p.nM[6][0] =   0.5;
+    Xi_p.nM[6][1] =   0.5;
+    Xi_p.nM[6][2] = - 0.5;
+    Xi_p.nM[7][0] = - 0.5;
+    Xi_p.nM[7][1] =   0.5;
+    Xi_p.nM[7][2] = - 0.5;      
+    break;
 
     case 27:
-      a = 0.774596669241483;
 
-      Xi.nM[0][0] = - a;
-      Xi.nM[0][1] = - a;
-      Xi.nM[0][2] = - a;
-
-      Xi.nM[1][0] =   a;
-      Xi.nM[1][1] = - a;
-      Xi.nM[1][2] = - a;
-
-      Xi.nM[2][0] =   a;
-      Xi.nM[2][1] =   a;
-      Xi.nM[2][2] = - a;
-
-      Xi.nM[3][0] = - a;
-      Xi.nM[3][1] =   a;
-      Xi.nM[3][2] = - a;
-
-      Xi.nM[4][0] = - a;
-      Xi.nM[4][1] = - a;
-      Xi.nM[4][2] =   a;
-
-      Xi.nM[5][0] =   a;
-      Xi.nM[5][1] = - a;
-      Xi.nM[5][2] =   a;
-
-      Xi.nM[6][0] =   a;
-      Xi.nM[6][1] =   a;
-      Xi.nM[6][2] =   a;
-
-      Xi.nM[7][0] = - a;
-      Xi.nM[7][1] =   a;
-      Xi.nM[7][2] =   a;
-
-      Xi.nM[8][0] =   0;
-      Xi.nM[8][1] = - a;
-      Xi.nM[8][2] = - a;
-
-      Xi.nM[9][0] =   a;
-      Xi.nM[9][1] =   0;
-      Xi.nM[9][2] = - a;
-
-      Xi.nM[10][0] =   0;
-      Xi.nM[10][1] =   a;
-      Xi.nM[10][2] = - a;
-
-      Xi.nM[11][0] = - a;
-      Xi.nM[11][1] =   0;
-      Xi.nM[11][2] = - a;
-
-      Xi.nM[12][0] = - a;
-      Xi.nM[12][1] = - a;
-      Xi.nM[12][2] =   0;
-
-      Xi.nM[13][0] =   a;
-      Xi.nM[13][1] = - a;
-      Xi.nM[13][2] =   0;
-
-      Xi.nM[14][0] =   a;
-      Xi.nM[14][1] =   a;
-      Xi.nM[14][2] =   0;
-
-      Xi.nM[15][0] = - a;
-      Xi.nM[15][1] =   a;
-      Xi.nM[15][2] =   0;
-
-      Xi.nM[16][0] =   0;
-      Xi.nM[16][1] = - a;
-      Xi.nM[16][2] =   a;
-
-      Xi.nM[17][0] =   a;
-      Xi.nM[17][1] =   0;
-      Xi.nM[17][2] =   a;
-
-      Xi.nM[18][0] =   0;
-      Xi.nM[18][1] =   a;
-      Xi.nM[18][2] =   a;
-
-      Xi.nM[19][0] = - a;
-      Xi.nM[19][1] =   0;
-      Xi.nM[19][2] = - a;
-
-      Xi.nM[20][0] =   0;
-      Xi.nM[20][1] =   0;
-      Xi.nM[20][2] = - a;
-
-      Xi.nM[21][0] =   0;
-      Xi.nM[21][1] = - a;
-      Xi.nM[21][2] =   0;
-
-      Xi.nM[22][0] =   a;
-      Xi.nM[22][1] =   0;
-      Xi.nM[22][2] =   0;
-
-      Xi.nM[23][0] =   0;
-      Xi.nM[23][1] =   a;
-      Xi.nM[23][2] =   0;
-
-      Xi.nM[24][0] = - a;
-      Xi.nM[24][1] =   0;
-      Xi.nM[24][2] =   0;
-
-      Xi.nM[25][0] =   0;
-      Xi.nM[25][1] =   0;
-      Xi.nM[25][2] =   a;
-
-      Xi.nM[26][0] =   0;
-      Xi.nM[26][1] =   0;
-      Xi.nM[26][2] =   0;
-      break;
+    Xi_p.nM[0][0] =   0.0;
+    Xi_p.nM[0][1] =   0.0;
+    Xi_p.nM[0][2] =   0.0;
+    Xi_p.nM[1][0] =   0.66666666666;
+    Xi_p.nM[1][1] =   0.0;
+    Xi_p.nM[1][2] =   0.0;
+    Xi_p.nM[2][0] =   0.66666666666;
+    Xi_p.nM[2][1] =   0.66666666666;
+    Xi_p.nM[2][2] =   0.0;
+    Xi_p.nM[3][0] =   0.0;
+    Xi_p.nM[3][1] =   0.66666666666;
+    Xi_p.nM[3][2] =   0.0;
+    Xi_p.nM[4][0] = - 0.66666666666;
+    Xi_p.nM[4][1] =   0.66666666666;
+    Xi_p.nM[4][2] =   0.0;
+    Xi_p.nM[5][0] = - 0.66666666666;
+    Xi_p.nM[5][1] =   0.0;
+    Xi_p.nM[5][2] =   0.0;
+    Xi_p.nM[6][0] = - 0.66666666666;
+    Xi_p.nM[6][1] = - 0.66666666666;
+    Xi_p.nM[6][2] =   0.0;
+    Xi_p.nM[7][0] =   0.0;
+    Xi_p.nM[7][1] = - 0.66666666666;
+    Xi_p.nM[7][2] =   0.0;
+    Xi_p.nM[8][0] =   0.66666666666;
+    Xi_p.nM[8][1] = - 0.66666666666;
+    Xi_p.nM[8][2] =   0.0;
+    Xi_p.nM[9][0] =   0.0;
+    Xi_p.nM[9][1] =   0.0;
+    Xi_p.nM[9][2] =   0.66666666666;
+    Xi_p.nM[10][0] =   0.66666666666;
+    Xi_p.nM[10][1] =   0.0;
+    Xi_p.nM[10][2] =   0.66666666666;
+    Xi_p.nM[11][0] =   0.66666666666;
+    Xi_p.nM[11][1] =   0.66666666666;
+    Xi_p.nM[11][2] =   0.66666666666;
+    Xi_p.nM[12][0] =   0.0;
+    Xi_p.nM[12][1] =   0.66666666666;
+    Xi_p.nM[12][2] =   0.66666666666;
+    Xi_p.nM[13][0] = - 0.66666666666;
+    Xi_p.nM[13][1] =   0.66666666666;
+    Xi_p.nM[13][2] =   0.66666666666;
+    Xi_p.nM[14][0] = - 0.66666666666;
+    Xi_p.nM[14][1] =   0.0;
+    Xi_p.nM[14][2] =   0.66666666666;
+    Xi_p.nM[15][0] = - 0.66666666666;
+    Xi_p.nM[15][1] = - 0.66666666666;
+    Xi_p.nM[15][2] =   0.66666666666;
+    Xi_p.nM[16][0] =   0.0;
+    Xi_p.nM[16][1] = - 0.66666666666;
+    Xi_p.nM[16][2] =   0.66666666666;
+    Xi_p.nM[17][0] = - 0.66666666666;
+    Xi_p.nM[17][1] = - 0.66666666666;
+    Xi_p.nM[17][2] =   0.66666666666;
+    Xi_p.nM[18][0] =   0.0;
+    Xi_p.nM[18][1] =   0.0;
+    Xi_p.nM[18][2] = - 0.66666666666;
+    Xi_p.nM[19][0] =   0.66666666666;
+    Xi_p.nM[19][1] =   0;
+    Xi_p.nM[19][2] = - 0.66666666666;
+    Xi_p.nM[20][0] =   0.66666666666;
+    Xi_p.nM[20][1] =   0.66666666666;
+    Xi_p.nM[20][2] = - 0.66666666666;
+    Xi_p.nM[21][0] =   0.0;
+    Xi_p.nM[21][1] =   0.66666666666;
+    Xi_p.nM[21][2] = - 0.66666666666;
+    Xi_p.nM[22][0] = - 0.66666666666;
+    Xi_p.nM[22][1] =   0.66666666666;
+    Xi_p.nM[22][2] = - 0.66666666666;
+    Xi_p.nM[23][0] = - 0.66666666666;
+    Xi_p.nM[23][1] =   0.0;
+    Xi_p.nM[23][2] = - 0.66666666666;
+    Xi_p.nM[24][0] = - 0.66666666666;
+    Xi_p.nM[24][1] = - 0.66666666666;
+    Xi_p.nM[24][2] = - 0.66666666666;
+    Xi_p.nM[25][0] =   0.0;
+    Xi_p.nM[25][1] = - 0.66666666666;
+    Xi_p.nM[25][2] = - 0.66666666666;
+    Xi_p.nM[26][0] = - 0.66666666666;
+    Xi_p.nM[26][1] = - 0.66666666666;
+    Xi_p.nM[26][2] = - 0.66666666666;
+    break;
 
     default :
       fprintf(stderr,"%s : %s \n",
-	      "Error in element_to_particles__Q8__()",
-	      "Wrong number of particles per element");
+	      "Error in element_to_particles__Q8__()","Wrong number of particles per element");
       exit(EXIT_FAILURE);
     }
 
-  return Xi;
+  /* Get the coordinate of the center */
+  for(int i = 0 ; i<NumElemMesh ; i++)
+  {
+
+    Element = nodal_set__Particles__(i, FEM_Mesh.Connectivity[i],FEM_Mesh.NumNodesElem[i]);
+
+    for(int j = 0 ; j<GPxElement ; j++)
+    {
+      /* Evaluate the shape function in the GP position */
+      if(GPxElement == 1)
+      {
+        Xi_p_j.nV = Xi_p.nM[j]; 
+        N_GP = N__Q8__(Xi_p_j);
+      }
+      else
+      {
+        N_GP = N__Q8__(Xi_p);
+      }
+      
+      for(int k = 0 ; k<NumNodesElem ; k++)
+      {
+            
+        /* Connectivity of each element */
+        Node = Element.Connectivity[k];
+        
+        for(int l = 0 ; l<Ndim ; l++)
+        {
+          X_p.nM[i*GPxElement+j][l] += N_GP.nV[k]*FEM_Mesh.Coordinates.nM[Node][l];
+        }
+      }
+
+      /* Free value of the shape function in the GP */
+      free__MatrixLib__(N_GP);
+
+    }
+
+    free(Element.Connectivity);
+
+  }
+
+  /* Free auxiliar matrix with the coordinates */
+  free__MatrixLib__(Xi_p); 
+
 }
 
 

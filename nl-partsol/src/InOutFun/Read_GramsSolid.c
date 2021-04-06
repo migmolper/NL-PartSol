@@ -248,7 +248,7 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
     /******** INITIALIZE SHAPE FUNCTIONS **************/
     /**************************************************/
     puts("*************************************************");
-    if(strcmp(ShapeFunctionGP,"MPMQ4") == 0){
+    if(strcmp(ShapeFunctionGP,"Q4") == 0){
       printf("\t * %s \n","Initialize MPMQ4 shape functions ...");
       initialize__Q4__(MPM_Mesh, FEM_Mesh);
     }
