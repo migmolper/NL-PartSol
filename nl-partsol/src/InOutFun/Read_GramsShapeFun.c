@@ -4,7 +4,7 @@
   Call global variables
 */
 char * ShapeFunctionGP;
-char Metric_LME [100];
+double curvature_LME;
 double gamma_LME;
 double TOL_LME;
 
@@ -19,7 +19,7 @@ void GramsShapeFun(char * Name_File)
   }
   GramsShapeFun (Type=LME) {
 	gamma=2.3
-  	metric="isotropic"/"anysotropic"
+  	curvature=0
   	TOL_LME=10e-6
   }
 */
@@ -88,9 +88,9 @@ void GramsShapeFun(char * Name_File)
       printf("\t -> %s : %s \n","Type of shape function",ShapeFunctionGP);
 
       /* Set to default all it properties */
-      gamma_LME=0;
-      TOL_LME=10e-10;
-      strcpy(Metric_LME,"I");
+      gamma_LME = 3;
+      TOL_LME = 10e-10;
+      curvature_LME = 0;
 
       /* Look for the curly brace { */
       if((Num_GramsShapeFun>=3) &&
@@ -152,8 +152,15 @@ void GramsShapeFun(char * Name_File)
 	  else if(strcmp(Parse_Shf_Prop[0],"TOL") == 0){
 	    TOL_LME = atof(Parse_Shf_Prop[1]);
 	  }
-	  else if(strcmp(Parse_Shf_Prop[0],"Metric") == 0){
-	    strcpy(Metric_LME,Parse_Shf_Prop[1]);
+	  else if(strcmp(Parse_Shf_Prop[0],"curvature") == 0){
+	  	curvature_LME = atof(Parse_Shf_Prop[1]);
+	  	if((curvature_LME > 1) || (curvature_LME < 0))
+	  	{
+	  		fprintf(stderr,"%s : %s \n",
+		   	"Error in GramsShapeFun()",
+		   	"curvature takes values in the range [0,1] !!!");
+	    	exit(EXIT_FAILURE);
+	  	}
 	  }
 	  else{
 	    fprintf(stderr,"%s : %s %s \n",

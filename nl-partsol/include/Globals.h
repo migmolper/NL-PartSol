@@ -20,7 +20,7 @@ extern Mixture * Soil_Water_Mixtures;
 // Global variables for the LME shape functions
 extern double TOL_LME;
 extern double gamma_LME;
-extern char Metric_LME [100];
+extern double curvature_LME;
 
 // Global variables for the time-integrator 
 extern double CFL;

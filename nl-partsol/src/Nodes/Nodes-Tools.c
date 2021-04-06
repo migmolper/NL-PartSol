@@ -1,10 +1,5 @@
 #include "nl-partsol.h"
 
-/*
-  Global variables
-*/
-char Metric_LME [100];
-
 /**************************************************************/
 
 Mask generate_NodalMask__MeshTools__(Mesh FEM_Mesh)
@@ -200,7 +195,7 @@ Matrix compute_N__MeshTools__(Element GP_Element,GaussPoint MPM_Mesh,Mesh FEM_Me
   Matrix l_Ip; // Just for GIMP/LME -> Distance from GP to the nodes
   Matrix lambda_p; // Just for LME -> Lagrange multipliers
   Matrix Metric_p; // Just for LME -> Metric tensor
-  Tensor F_p; // Just for aLME -> Deformation gradient
+  Tensor F_p; // Just for LME -> Deformation gradient
   double Beta_p; // Just for LME -> Thermalization parameter
     
   /* 
@@ -273,15 +268,8 @@ Matrix compute_N__MeshTools__(Element GP_Element,GaussPoint MPM_Mesh,Mesh FEM_Me
     /*
       Compute the metric tensor
     */
-    if(strcmp(Metric_LME,"I") == 0)
-    {
-      Metric_p = metric_I__LME__();
-    }
-    else if(strcmp(Metric_LME,"C") == 0)
-    {
-      F_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n.nM[i_GP],2);
-      Metric_p = metric_C__LME__(F_p);
-    }
+    F_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n.nM[i_GP],2);
+    Metric_p = metric__LME__(F_p);
 
     /*
       Get lambda and beta
@@ -332,7 +320,7 @@ Matrix compute_dN__MeshTools__(Element GP_Element,GaussPoint MPM_Mesh,
   Matrix ShapeFunction_p; // Just for LME -> Matrix with the nodal shape functions
   Matrix lambda_p; // Just for LME -> Lagrange multipliers
   Matrix Metric_p; // Just for LME -> Metric tensor
-  Tensor F_p; // Just for aLME -> Deformation gradient
+  Tensor F_p; // Just for LME -> Deformation gradient
   double Beta_p; // Just for LME -> Thermalization parameter
 
   /*  
@@ -419,15 +407,8 @@ Matrix compute_dN__MeshTools__(Element GP_Element,GaussPoint MPM_Mesh,
     /*
       Compute the metric tensor
     */
-    if(strcmp(Metric_LME,"I") == 0)
-    {
-      Metric_p = metric_I__LME__();
-    }
-    else if(strcmp(Metric_LME,"C") == 0)
-    {
-      F_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n.nM[i_GP],2);
-      Metric_p = metric_C__LME__(F_p);
-    }
+    F_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n.nM[i_GP],2);
+    Metric_p = metric__LME__(F_p);
 
     /*
       Get lambda and beta

@@ -3,11 +3,6 @@
 #define MAXVAL(A,B) ((A)>(B) ? (A) : (B))
 #define MINVAL(A,B) ((A)<(B) ? (A) : (B))
 
-/*
-  Global variables
-*/
-char Metric_LME [100];
-
 
 /*
   Local functions
@@ -513,7 +508,7 @@ void get_particle_tributary_nodes(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int p){
     /* 
       Auxiliar variables for LME
     */
-    Matrix Metric_p = metric_I__LME__(); // Define a metric tensor
+    Matrix Metric_p; // Define a metric tensor
     Matrix Delta_Xip; // Distance from particles to the nodes
     Matrix lambda_p = memory_to_matrix__MatrixLib__(Ndim,1,MPM_Mesh.lambda.nM[p]);
     Tensor F_p; // Particle deformation gradient
@@ -522,15 +517,8 @@ void get_particle_tributary_nodes(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int p){
     /*
       Compute the metric tensor
     */
-    if(strcmp(Metric_LME,"I") == 0)
-    {
-      Metric_p = metric_I__LME__();
-    }
-    else if(strcmp(Metric_LME,"C") == 0)
-    {
-      F_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n.nM[p],2);
-      Metric_p = metric_C__LME__(F_p);
-    }
+    F_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n.nM[p],2);
+    Metric_p = metric__LME__(F_p);
 
     /*
       Free previous list of tributary nodes to the particle

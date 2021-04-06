@@ -40,22 +40,13 @@ double beta__LME__(Matrix, double, double);
 /****************************************************************************/
 
 /*!
-  \fn Matrix metric__LME__();
+  \fn  Matrix metric__LME__(Tensor F);
 
-  \brief Return a metric tensor to compute the locality parameter
-    in the LME shape functions.
-*/
-Matrix metric_I__LME__();
-/****************************************************************************/
-
-/*!
-  \fn  Matrix metric_C__LME__(Tensor F);
-
-  \brief Return a metric tensor to compute the locality parameter in the LME shape functions.
+  \brief Return a general metric tensor to compute the locality parameter in the LME shape functions.
 
   \param F : Deformation gradient
 */
-Matrix metric_C__LME__(Tensor);
+Matrix metric__LME__(Tensor);
 /****************************************************************************/
 
 /*!

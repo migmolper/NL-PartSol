@@ -11,6 +11,7 @@ static Matrix J__LME__(Matrix, Matrix, Matrix);
   Call global var¡ables
 */
 double gamma_LME;
+double curvature_LME;
 double TOL_LME;
 char Metric_LME [100];
 
@@ -48,21 +49,9 @@ void initialize__LME__(
     /*
       Get the metric tensor
     */
-    if(strcmp(Metric_LME,"I") == 0)
-    {
-      Metric_p = metric_I__LME__();
-    }
-    else if(strcmp(Metric_LME,"C") == 0)
-    {
-      F_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n.nM[p],2);
-      Metric_p = metric_C__LME__(F_p);
-    }
-    else
-    {
-      printf("%s : %s %s \n","Warning in initialize__LME__","Unrecognised metric tensor",Metric_LME);
-      printf("Use instead I or C \n");
-      exit(EXIT_FAILURE);
-    }
+    F_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n.nM[p],2);
+    Metric_p = metric__LME__(F_p);
+
 
     /*
       Loop over the element mesh
@@ -172,43 +161,40 @@ double beta__LME__(
   return Beta;
 }
 
-/****************************************************************************/
-
-Matrix metric_I__LME__()
-/*!
-  Return a metric tensor to compute the locality parameter
-  in the LME shape functions
-*/
-{
-  int Ndim = NumberDimensions;
-  Matrix Metric = allocZ__MatrixLib__(Ndim,Ndim);
-
-  for(int i = 0 ; i<Ndim ; i++)
-  {
-    Metric.nM[i][i] = 1.0;
-  }
-
-  return Metric;
-}
 
 /****************************************************************************/
 
- Matrix metric_C__LME__(Tensor F)
+ Matrix metric__LME__(Tensor F)
  /*!
-   Return the metric tensor (C = F^{T}F) to compute the locality parameter
-  in the LME shape functions
+   Return the metric tensor intrucing curvature as a convex combination of the 
+   right Cauch-Green tensor (C = F^{T}F) and the identiy (Euclidean norm).
  */
  {
     int Ndim = NumberDimensions;
+    double C_ij;
     Matrix Metric = allocZ__MatrixLib__(Ndim,Ndim);
 
-    for(int i = 0 ; i < Ndim  ; i++)
+    for(int i = 0 ; i < Ndim ; i++)
     {
-      for(int j = 0 ; j < Ndim  ; j++)
+
+      // Introduce Euclidean metric contribution
+      Metric.nM[i][i] += (1.0 - curvature_LME);
+
+      // Include include non-Euclidean metric
+      if(curvature_LME > 0.0)
       {
-        for(int k = 0 ; k < Ndim  ; k++)
+
+        for(int j = 0 ; j < Ndim ; j++)
         {
-          Metric.nM[i][j] += F.N[k][i]*F.N[k][j];
+          C_ij = 0.0;
+
+          for(int k = 0 ; k < Ndim ; k++)
+          {
+            C_ij += F.N[k][i]*F.N[k][j];
+          }
+
+          Metric.nM[i][j] += curvature_LME*C_ij;
+        
         }
       }
     } 
