@@ -41,29 +41,6 @@ Mesh ReadGidMesh__MeshTools__(char * MeshName)
 
   /* Pointer to the file */
   FILE * MeshFile;
-
-  /* Variable to save the line of a text */
-  char line[MAXC] = {0};
-  char line_coords[MAXC] = {0};
-  char line_connectivity[MAXC] = {0};
-  char * Aux_line;
-  
-  /* Char pointer to store the words in a line */
-  char * words[MAXW] = {NULL};
-  char * read_coords[MAXW] = {NULL};
-  char * read_connectivity[MAXW] = {NULL};
-
-  /* Count number of lines */
-  int Num_line = 0;
-  
-  /* Number of words in a text line */
-  int nwords;
-  int ncoords;
-  int nconnectivity;
-
-  /* Variables to fill the Connectivity */
-  int NumNodesElem;
-  int * ConnectivityElem;
      
   /*
     Read information of the mesh such as number of nodes, number of elements, etc
