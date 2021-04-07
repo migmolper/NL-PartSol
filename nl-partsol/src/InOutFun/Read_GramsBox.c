@@ -104,7 +104,8 @@ Mesh GramsBox(char * Name_File)
       }
 
       /* Read GID-type mesh */
-      if(strcmp(Parse_Mesh_id[1],"GID") == 0){
+      if(strcmp(Parse_Mesh_id[1],"GID") == 0)
+      {
 	/* Read file with the mesh */
 	sprintf(FileMeshRoute,"%s%s",Route_Mesh,Parse_Mesh_id[3]);
 
@@ -113,11 +114,9 @@ Mesh GramsBox(char * Name_File)
 	       "* Read GID mesh in",FileMeshRoute);
 	FEM_Mesh = ReadGidMesh(FileMeshRoute);
       }
-      else{
-	fprintf(stderr,"%s : %s %s \n",
-		"Error in GramsBox(Type=*, )",
-		"Unrecognized mesh Type",
-		Parse_Mesh_id[1]);
+      else
+      {
+        fprintf(stderr,"%s : %s %s \n","Error in GramsBox(Type=*, )","Unrecognized mesh Type",Parse_Mesh_id[1]);
       }
 
       /* By default the number of BCCs is 0 */
@@ -236,6 +235,110 @@ Mesh GramsBox(char * Name_File)
 
 /*********************************************************************/
 
+static double mesh_size(Mesh FEM_Mesh)
+/*
+  Function to get the minimum mesh size.
+*/
+{
+
+  /* Auxiliar variables of the function */
+  int NumElemMesh = FEM_Mesh.NumElemMesh;
+  int NumNodesElem; /* Number of nodes of each element */
+  int * Connectivity; /* Connectivity of the element */
+  Matrix Poligon; /* Element Poligon */
+  Matrix X_eval = allocZ__MatrixLib__(1,2); /* Where to evaluate the shape function */
+  X_eval.nV[0] = 0;
+  X_eval.nV[1] = 0;
+  Matrix dNdx; /* Gradient of the shapefunction for each node */
+  double MinElementSize_aux;
+  double MinElementSize = 10e16;
+
+  /* 1º Loop over the elements in the mesh */
+  for(int i = 0 ; i<NumElemMesh ; i++)
+  {
+
+    /* 2º Connectivity of the Poligon */
+    NumNodesElem = FEM_Mesh.NumNodesElem[i];
+    Connectivity = set_to_memory__SetLib__(FEM_Mesh.Connectivity[i],NumNodesElem);
+    
+    /* 4º Get the gradient of the element for each node */
+    if((NumNodesElem == 3) && (NumberDimensions == 2))
+    { 
+      /* Fill the triangular element with the coordinates of the nodes */
+      Poligon = allocZ__MatrixLib__(3,2);
+      for(int k = 0; k<3; k++)
+      {
+        for(int l = 0 ; l<2 ; l++)
+        {
+          Poligon.nM[k][l] = FEM_Mesh.Coordinates.nM[Connectivity[k]][l];
+        }
+      }
+
+      /* Get the gradient of the triangle */
+      dNdx = dN__T3__(X_eval,Poligon);
+      free__MatrixLib__(Poligon);
+      
+      /* Get the minimum minimum height of the triangle */
+      for(int j = 0 ; j<3 ; j++)
+      {
+        MinElementSize_aux = 1/pow(dNdx.nM[0][j]*dNdx.nM[0][j] + dNdx.nM[1][j]*dNdx.nM[1][j],0.5);
+        MinElementSize = DMIN(MinElementSize,MinElementSize_aux);
+      }
+      /* Free memory */
+      free__MatrixLib__(dNdx);
+      
+    }
+    else if((NumNodesElem == 4) && (NumberDimensions == 2))
+    { 
+      /* Fill the quadrilateral element with the coordinates of the nodes */
+      Poligon = allocZ__MatrixLib__(4,2);
+
+      /* Fill the poligon with vectors */
+      for(int k = 0; k<3; k++)
+      {
+        for(int l = 0 ; l<2 ; l++)
+        {
+          Poligon.nM[k][l] = FEM_Mesh.Coordinates.nM[Connectivity[k+1]][l] - FEM_Mesh.Coordinates.nM[Connectivity[k]][l];
+        }
+      }
+
+      for(int l = 0 ; l<2 ; l++)
+      {
+        Poligon.nM[3][l] = FEM_Mesh.Coordinates.nM[Connectivity[0]][l] - FEM_Mesh.Coordinates.nM[Connectivity[3]][l];
+      }
+      
+      /* Get the minimum minimum height of the triangle */
+      for(int k = 0 ; k<4 ; k++)
+      {
+        MinElementSize_aux = pow(Poligon.nM[k][0]*Poligon.nM[k][0] + Poligon.nM[k][1]*Poligon.nM[k][1] , 0.5);
+        MinElementSize = DMIN(MinElementSize,MinElementSize_aux);
+      }
+
+      /* Free memory */
+      free__MatrixLib__(Poligon);
+
+    }
+    else
+    {
+      printf("%s : %s %i %s \n",
+       "Error in mesh_size","Element with ",NumNodesElem,"nodes is not implemented !!!" );
+      exit(EXIT_FAILURE);
+    }
+
+    /* Free memory */
+    free(Connectivity);
+    
+  }
+
+  /* Free memory */
+  free__MatrixLib__(X_eval);
+
+  return MinElementSize;
+
+}
+
+/*********************************************************************/
+
 static void get_sourrounding_elements(Mesh FEM_Mesh)
 {
 
@@ -274,109 +377,6 @@ static void get_sourrounding_elements(Mesh FEM_Mesh)
     
   }
   
-}
-
-/*********************************************************************/
-
-static double mesh_size(Mesh FEM_Mesh)
-/*
-  Function to get the minimum mesh size.
-*/
-{
-
-  /* Auxiliar variables of the function */
-  int NumElemMesh = FEM_Mesh.NumElemMesh;
-  int NumNodesElem; /* Number of nodes of each element */
-  int * Connectivity; /* Connectivity of the element */
-  Matrix Poligon; /* Element Poligon */
-  Matrix X_eval = allocZ__MatrixLib__(1,2); /* Where to evaluate the shape function */
-  X_eval.nV[0] = 0;
-  X_eval.nV[1] = 0;
-  Matrix dNdx; /* Gradient of the shapefunction for each node */
-  double MinElementSize_aux;
-  double MinElementSize = 10e16;
-
-  /* 1º Loop over the elements in the mesh */
-  for(int i = 0 ; i<NumElemMesh ; i++){
-
-    /* 2º Connectivity of the Poligon */
-    NumNodesElem = FEM_Mesh.NumNodesElem[i];
-    Connectivity = set_to_memory__SetLib__(FEM_Mesh.Connectivity[i],NumNodesElem);
-    
-    /* 4º Get the gradient of the element for each node */
-    if((NumNodesElem == 3) &&
-       (NumberDimensions == 2)){ /* Triangular element */
-      /* The poligon is a triangle */
-      Poligon = allocZ__MatrixLib__(3,2);
-      /* Fill the triangle */
-      for(int k = 0; k<3; k++){
-  for(int l = 0 ; l<2 ; l++){
-    Poligon.nM[k][l] = FEM_Mesh.Coordinates.nM[Connectivity[k]][l];
-  }
-      }
-      /* Get the gradient of the triangle */
-      dNdx = dN__T3__(X_eval,Poligon);
-      free__MatrixLib__(Poligon);
-      
-      /* Get the minimum minimum height of the triangle */
-      for(int j = 0 ; j<3 ; j++){
-  MinElementSize_aux =
-    1/pow(dNdx.nM[0][j]*dNdx.nM[0][j] +
-    dNdx.nM[1][j]*dNdx.nM[1][j],0.5);
-  MinElementSize = DMIN(MinElementSize,MinElementSize_aux);
-      }
-      /* Free memory */
-      free__MatrixLib__(dNdx);
-      
-    }
-    else if((NumNodesElem == 4) &&
-      (NumberDimensions == 2)){ /* Quadrilateral element */
-      /* The poligon is a quadrilateral */
-      Poligon = allocZ__MatrixLib__(4,2);
-
-      /* Fill the poligon with vectors */
-      for(int k = 0; k<3; k++){
-  for(int l = 0 ; l<2 ; l++){
-    Poligon.nM[k][l] =
-      FEM_Mesh.Coordinates.nM[Connectivity[k+1]][l] -
-      FEM_Mesh.Coordinates.nM[Connectivity[k]][l];
-  }
-      }
-      for(int l = 0 ; l<2 ; l++){
-  Poligon.nM[3][l] = FEM_Mesh.Coordinates.nM[Connectivity[0]][l] -
-    FEM_Mesh.Coordinates.nM[Connectivity[3]][l];
-      }
-      
-      /* Get the minimum minimum height of the triangle */
-      for(int k = 0 ; k<4 ; k++){
-  MinElementSize_aux = pow(Poligon.nM[k][0]*Poligon.nM[k][0] +
-         Poligon.nM[k][1]*Poligon.nM[k][1] , 0.5);
-  MinElementSize = DMIN(MinElementSize,MinElementSize_aux);
-      }
-
-      /* Free memory */
-      free__MatrixLib__(Poligon);
-
-    }
-    else{
-      printf("%s : %s %i %s \n",
-       "Error in mesh_size",
-       "Element with ",
-       NumNodesElem,
-       "nodes is not implemented !!!" );
-      exit(EXIT_FAILURE);
-    }
-
-    /* Free memory */
-    free(Connectivity);
-    
-  }
-
-  /* Free memory */
-  free__MatrixLib__(X_eval);
-
-  return MinElementSize;
-
 }
 
 /*********************************************************************/

@@ -52,7 +52,7 @@
 #endif
 
 /***************************************/
-/********** GRAMS's libraries **********/
+/******** nl-partsol libraries *********/
 /***************************************/
 #include "Types.h"
 #include "Globals.h"
@@ -61,9 +61,9 @@
 #include "Constitutive.h"
 #include "Particles.h"
 #include "T3.h"
-#include "T4.h"
 #include "Q4.h"
-#include "Q8.h"
+#include "T4.h"
+#include "H8.h"
 #include "GIMP.h"
 #include "LME.h"
 #include "Nodes.h"

@@ -12,14 +12,21 @@ void initial_position__Particles__(Matrix X_p, Mesh FEM_Mesh, int GPxElement)
  */
 {
 
-
-  if(strcmp(FEM_Mesh.TypeElem,"Quadrilateral") == 0)
+  if(strcmp(FEM_Mesh.TypeElem,"Triangle") == 0)
+  {
+    element_to_particles__T3__(X_p, FEM_Mesh,GPxElement);
+  }
+  else if(strcmp(FEM_Mesh.TypeElem,"Quadrilateral") == 0)
   {
     element_to_particles__Q4__(X_p, FEM_Mesh,GPxElement);
   }
-  else if(strcmp(FEM_Mesh.TypeElem,"Triangle") == 0)
+  else if(strcmp(FEM_Mesh.TypeElem,"Tetrahedra") == 0)
   {
-    element_to_particles__T3__(X_p, FEM_Mesh,GPxElement);
+    element_to_particles__T4__(X_p, FEM_Mesh,GPxElement);
+  }
+  else if(strcmp(FEM_Mesh.TypeElem,"Hexahedra") == 0)
+  {
+    element_to_particles__H8__(X_p, FEM_Mesh,GPxElement);
   }
   else
   {
@@ -75,7 +82,8 @@ int inout_element__Particles__(int p, Matrix X_p, ChainPtr ListElement, Mesh FEM
 
 /*********************************************************************/
 
-void get_particle_tributary_nodes(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int p){
+void get_particle_tributary_nodes(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int p)
+{
 
   int Ndim = NumberDimensions;
 
@@ -124,7 +132,7 @@ void get_particle_tributary_nodes(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int p){
     
   }
 
-  else if(strcmp(ShapeFunctionGP,"Q8") == 0)
+  else if(strcmp(ShapeFunctionGP,"H8") == 0)
   {
 
     /* Get the index of the element */
@@ -139,7 +147,7 @@ void get_particle_tributary_nodes(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int p){
       /* Get the coordinates of the element vertex */
       CoordElement = get_nodes_coordinates__MeshTools__(MPM_Mesh.ListNodes[p],FEM_Mesh.Coordinates);
       /* Compute local coordinates of the particle in this element */
-      X_to_Xi__Q8__(Xi_p,X_p,CoordElement);
+      X_to_Xi__H8__(Xi_p,X_p,CoordElement);
       /* Free coordinates of the element */
       free__MatrixLib__(CoordElement);
     }
@@ -148,7 +156,7 @@ void get_particle_tributary_nodes(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int p){
       /* Get the coordinates of the element vertex */
       CoordElement = get_nodes_coordinates__MeshTools__(MPM_Mesh.ListNodes[p],FEM_Mesh.Coordinates);
       /* Compute local coordinates of the particle in this element */
-      X_to_Xi__Q8__(Xi_p,X_p,CoordElement);
+      X_to_Xi__H8__(Xi_p,X_p,CoordElement);
       /* Free coordinates of the element */
       free__MatrixLib__(CoordElement);      
     }
@@ -323,10 +331,12 @@ void local_search__Particles__(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
   ChainPtr Locality_I0;
 
   /* Set to zero the active/non-active node, and the GPs in each element */
-  for(int i = 0 ; i<FEM_Mesh.NumNodesMesh ; i++){
+  for(int i = 0 ; i<FEM_Mesh.NumNodesMesh ; i++)
+  {
     FEM_Mesh.NumParticles[i] = 0;
   }
-  for(int i = 0 ; i<FEM_Mesh.NumNodesMesh ; i++){
+  for(int i = 0 ; i<FEM_Mesh.NumNodesMesh ; i++)
+  {
     free__SetLib__(&FEM_Mesh.I_particles[i]);
   }
 

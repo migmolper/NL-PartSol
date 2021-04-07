@@ -1,4 +1,4 @@
-/*! \file Q4.h
+/*! \file H8.h
   \brief Linear quadrilateral shape function
 
 */
@@ -18,14 +18,14 @@
 /*   (0)     (1)      */
 
 
-#ifndef _Q8_H_
-#define _Q8_H_
+#ifndef _H8_H_
+#define _H8_H_
 
-void   initialize__Q8__(GaussPoint, Mesh);
-Matrix N__Q8__(Matrix);
-Matrix dN_Ref__Q8__(Matrix);
-Matrix dN__Q8__(Matrix,Matrix);
-void   X_to_Xi__Q8__(Matrix,Matrix,Matrix);
-void   element_to_particles__Q8__(Matrix, Mesh, int);
+void   initialize__H8__(GaussPoint, Mesh);
+Matrix N__H8__(Matrix);
+Matrix dN_Ref__H8__(Matrix);
+Matrix dN__H8__(Matrix,Matrix);
+void   X_to_Xi__H8__(Matrix,Matrix,Matrix);
+void   element_to_particles__H8__(Matrix, Mesh, int);
 
 #endif

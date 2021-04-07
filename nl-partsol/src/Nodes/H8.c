@@ -5,12 +5,12 @@
 /*
   Auxiliar functions
  */
-static Matrix F_Ref__Q8__(Matrix, Matrix);
-static Matrix Xi_to_X__Q8__(Matrix, Matrix);
+static Matrix F_Ref__H8__(Matrix, Matrix);
+static Matrix Xi_to_X__H8__(Matrix, Matrix);
 
 /*********************************************************************/
 
-void initialize__Q8__(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
+void initialize__H8__(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 {
   /* Variables for the GP coordinates */
   int Ndim = NumberDimensions;
@@ -81,7 +81,7 @@ void initialize__Q8__(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 /*********************************************************************/
 
 /* Shape functions */
-Matrix N__Q8__(Matrix Xi)
+Matrix N__H8__(Matrix Xi)
 {
   
   /* Definition and allocation */
@@ -102,7 +102,7 @@ Matrix N__Q8__(Matrix Xi)
 /*********************************************************************/
 
 /* Derivatives of the shape functions */
-Matrix dN_Ref__Q8__(Matrix Xi)
+Matrix dN_Ref__H8__(Matrix Xi)
 {
 
   int Ndim = NumberDimensions;
@@ -149,7 +149,7 @@ Matrix dN_Ref__Q8__(Matrix Xi)
 /*********************************************************************/
 
 /* Jacobian of the transformation for the four-nodes quadrilateral */
-static Matrix F_Ref__Q8__(Matrix Xi, Matrix Element)
+static Matrix F_Ref__H8__(Matrix Xi, Matrix Element)
 /*
   Get the jacobian of the transformation of the reference element :
 
@@ -174,7 +174,7 @@ static Matrix F_Ref__Q8__(Matrix Xi, Matrix Element)
   Matrix F_Ref = allocZ__MatrixLib__(Ndim,Ndim);
 
   /* 1º Evaluate the derivarive of the shape function in the GP */
-  dNdX_Ref_GP = dN_Ref__Q8__(Xi);
+  dNdX_Ref_GP = dN_Ref__H8__(Xi);
 
   /* 2º Get the F_Ref doing a loop over the nodes of the element */
   for(int I = 0 ; I<8 ; I++)
@@ -210,7 +210,7 @@ static Matrix F_Ref__Q8__(Matrix Xi, Matrix Element)
 /*********************************************************************/
 
 /* Element gradient in the real element */
-Matrix dN__Q8__(Matrix Xi, Matrix Element)
+Matrix dN__H8__(Matrix Xi, Matrix Element)
 /*
   - Matrix Xi_GP : Element coordinates of the gauss point
   - Matrix Element : Coordinates of the element (8 x Ndim)
@@ -223,11 +223,11 @@ Matrix dN__Q8__(Matrix Xi, Matrix Element)
     
   /* 1º Evaluate the gradient of the shape function in the GP (8 x Ndim)
   and transpose it */
-  Matrix dNdX_Ref   = dN_Ref__Q8__(Xi);
+  Matrix dNdX_Ref   = dN_Ref__H8__(Xi);
   Matrix dNdX_Ref_T = transpose__MatrixLib__(dNdX_Ref);
 
   /* 2º Get the Jacobian of the transformation evaluated in the GP */
-  Matrix F     = F_Ref__Q8__(Xi,Element);
+  Matrix F     = F_Ref__H8__(Xi,Element);
   Matrix F_m1  = inverse__MatrixLib__(F);  
   Matrix F_Tm1 = transpose__MatrixLib__(F_m1);
   
@@ -250,7 +250,7 @@ Matrix dN__Q8__(Matrix Xi, Matrix Element)
 /*********************************************************************/
 
 /* Global coordinates of the four nodes quadrilateral */
-static Matrix Xi_to_X__Q8__(Matrix Xi, Matrix Element)
+static Matrix Xi_to_X__H8__(Matrix Xi, Matrix Element)
 /*
   This function evaluate the position of the GP in the element,
   and get it global coordiantes    
@@ -259,7 +259,7 @@ static Matrix Xi_to_X__Q8__(Matrix Xi, Matrix Element)
   int Ndim = NumberDimensions;
 
   /* 1º Evaluate the Q8 element in the element coordinates */
-  Matrix N = N__Q8__(Xi);
+  Matrix N = N__H8__(Xi);
 
   /* 2º Allocate the output coordinates */
   Matrix X = allocZ__MatrixLib__(Ndim,1);
@@ -283,7 +283,7 @@ static Matrix Xi_to_X__Q8__(Matrix Xi, Matrix Element)
 
 /*********************************************************************/
 
-void X_to_Xi__Q8__(Matrix Xi, Matrix X, Matrix Element)
+void X_to_Xi__H8__(Matrix Xi, Matrix X, Matrix Element)
 /* 
    The function return the natural coordinates of a point 
    inside of the element.
@@ -298,13 +298,13 @@ void X_to_Xi__Q8__(Matrix Xi, Matrix X, Matrix Element)
 */
 {
   
-  Xi = Newton_Rapson(Xi_to_X__Q8__, Element, F_Ref__Q8__, Element, X, Xi);
+  Xi = Newton_Rapson(Xi_to_X__H8__, Element, F_Ref__H8__, Element, X, Xi);
   
 }
 
 /*********************************************************************/
 
-void element_to_particles__Q8__(
+void element_to_particles__H8__(
   Matrix X_p,
   Mesh FEM_Mesh,
   int GPxElement)
@@ -440,7 +440,7 @@ void element_to_particles__Q8__(
 
     default :
       fprintf(stderr,"%s : %s \n",
-	      "Error in element_to_particles__Q8__()","Wrong number of particles per element");
+	      "Error in element_to_particles__H8__()","Wrong number of particles per element");
       exit(EXIT_FAILURE);
     }
 
@@ -456,11 +456,11 @@ void element_to_particles__Q8__(
       if(GPxElement == 1)
       {
         Xi_p_j.nV = Xi_p.nM[j]; 
-        N_GP = N__Q8__(Xi_p_j);
+        N_GP = N__H8__(Xi_p_j);
       }
       else
       {
-        N_GP = N__Q8__(Xi_p);
+        N_GP = N__H8__(Xi_p);
       }
       
       for(int k = 0 ; k<NumNodesElem ; k++)

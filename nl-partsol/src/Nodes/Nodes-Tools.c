@@ -227,7 +227,7 @@ Matrix compute_N__MeshTools__(
     
   }
   
-  else if(strcmp(ShapeFunctionGP,"Q8") == 0)
+  else if(strcmp(ShapeFunctionGP,"H8") == 0)
   {
     
     /*
@@ -238,7 +238,7 @@ Matrix compute_N__MeshTools__(
     /* 
       Evaluate the shape function
     */
-    ShapeFunction_p = N__Q8__(xi_p);
+    ShapeFunction_p = N__H8__(xi_p);
     
   }
 
@@ -412,7 +412,7 @@ Matrix compute_dN__MeshTools__(Element GP_Element,GaussPoint MPM_Mesh,
     free__MatrixLib__(X_I);
   }
 
-  else if(strcmp(ShapeFunctionGP,"Q8") == 0)
+  else if(strcmp(ShapeFunctionGP,"H8") == 0)
   {
     /* 
       Fill the poligon woth the nodal coordinates of the current element
@@ -435,7 +435,7 @@ Matrix compute_dN__MeshTools__(Element GP_Element,GaussPoint MPM_Mesh,
     /*
       Evaluate the shape function gradient
     */
-    Gradient_p = dN__Q8__(xi_p,X_I);
+    Gradient_p = dN__H8__(xi_p,X_I);
     
     /* Free memory */
     free__MatrixLib__(X_I);
