@@ -17,7 +17,6 @@ typedef struct
 /*
   Auxiliar functions and variables
 */
-
 #ifdef _WIN32
 static char * delimiters = " \r\n\t";
 #else
@@ -26,7 +25,7 @@ static char * delimiters = " \t\n";
 
 static char Error_message[MAXW];
 
-static Mesh_Information Read_Mesh_Information(char * );
+static Mesh_Information Read_Mesh_Information(char *);
 static void Fill_Coordinates(char * , Mesh_Information, Matrix);
 static void Fill_Conectivity(char * , Mesh_Information, ChainPtr *, int *);
 static void standard_error(int, char *);
@@ -99,11 +98,6 @@ Mesh ReadGidMesh__MeshTools__(char * MeshName)
   Fill_Coordinates(MeshName,Mesh_Info,GID_Mesh.Coordinates);
   Fill_Conectivity(MeshName,Mesh_Info,GID_Mesh.Connectivity,GID_Mesh.NumNodesElem);
 
-  for(int i = 0; i<GID_Mesh.NumElemMesh ; i++)
-  {
-    print__SetLib__(GID_Mesh.Connectivity[i]); 
-  }
-  
   return GID_Mesh;
 }
 
@@ -160,7 +154,7 @@ static Mesh_Information Read_Mesh_Information(char * MeshName)
     }
 
     // Start counting the number of nodes
-    if(strcmp(words[0],"Coordinates") == 0)
+    if((nwords == 1) && (strcmp(words[0],"Coordinates") == 0))
     {
       Mesh_Info.NumNodesMesh = -2;
       Count_Nodes = true;
@@ -171,13 +165,13 @@ static Mesh_Information Read_Mesh_Information(char * MeshName)
       Mesh_Info.NumNodesMesh++;
     }
 
-    if((strcmp(words[0],"End") == 0) && (strcmp(words[1],"Coordinates") == 0))
+    if((nwords == 2) && (strcmp(words[0],"End") == 0) && (strcmp(words[1],"Coordinates") == 0))
     {
       Count_Nodes = false;
     }
 
     // Start counting the number of elements
-    if(strcmp(words[0],"Elements") == 0)
+    if((nwords == 1) && (strcmp(words[0],"Elements") == 0))
     {
       Mesh_Info.NumElemMesh = -2;
       Count_Elements = true;
@@ -188,7 +182,7 @@ static Mesh_Information Read_Mesh_Information(char * MeshName)
       Mesh_Info.NumElemMesh++;
     }
 
-    if((strcmp(words[0],"End") == 0) && (strcmp(words[1],"Elements") == 0))
+    if((nwords == 2) && (strcmp(words[0],"End") == 0) && (strcmp(words[1],"Elements") == 0))
     {
       Count_Elements = false;
     }
@@ -239,7 +233,7 @@ static void Fill_Coordinates(
     nwords = parse (words, line, delimiters);
 
     // Start reading the coordinates of the nodes
-    if(strcmp(words[0],"Coordinates") == 0)
+    if((nwords == 1) && (strcmp(words[0],"Coordinates") == 0))
     {
       Read_Coordinates_Nodes = true;
     }
@@ -255,7 +249,7 @@ static void Fill_Coordinates(
       Node_i++;
     }
 
-    if((strcmp(words[0],"End") == 0) && (strcmp(words[1],"Coordinates") == 0))
+    if((nwords == 2) && (strcmp(words[0],"End") == 0) && (strcmp(words[1],"Coordinates") == 0))
     {
       Read_Coordinates_Nodes = false;
     }
@@ -307,7 +301,7 @@ static void Fill_Conectivity(
     nwords = parse (words, line, delimiters);
 
     // Start reading the coordinates of the nodes
-    if(strcmp(words[0],"Elements") == 0)
+    if((nwords == 1) && (strcmp(words[0],"Elements") == 0))
     {
       Read_Element_Connectivity = true;
     }
@@ -317,7 +311,7 @@ static void Fill_Conectivity(
 
       for(int j = 0 ; j<Mesh_Info.NumNodesElem ; j++)
       {
-        push__SetLib__(&Connectivity[Element_i], atoi(words[j+1]));
+        push__SetLib__(&Connectivity[Element_i], atoi(words[j+1]) - 1);
       } 
 
       NumNodesElem[Element_i] = Mesh_Info.NumNodesElem;
@@ -325,7 +319,7 @@ static void Fill_Conectivity(
       Element_i++;
     }
 
-    if((strcmp(words[0],"End") == 0) && (strcmp(words[1],"Elements") == 0))
+    if((nwords == 2) && (strcmp(words[0],"End") == 0) && (strcmp(words[1],"Elements") == 0))
     {
       Read_Element_Connectivity = false;
     }

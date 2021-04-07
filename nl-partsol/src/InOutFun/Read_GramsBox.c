@@ -1,230 +1,114 @@
 #include "nl-partsol.h"
+#include <sys/stat.h>
 
-#define MAXVAL(A,B) ((A)>(B) ? (A) : (B))
-#define MINVAL(A,B) ((A)<(B) ? (A) : (B))
+/*
+  Local structures and variables
+*/
+typedef struct
+{
+  char  Mesh_Generator [100];
+  char  Mesh_File [100];
+  int   Number_Boundaries;
 
+} Nodes_Information;
 
-// Define some auxiliar functions
+#ifdef _WIN32
+static char * delimiters = " =,()\r\n\t";
+#else
+static char * delimiters = " =,()\n\t";
+#endif
+
+static char Error_message[MAXW];
+
+/*
+  Auxiliar functions
+*/
+static Nodes_Information Read_Nodal_Set_Information(char *);
+static void Check_Mesh_File(char *);
 static void get_sourrounding_elements(Mesh);
 static void fill_nodal_locality(Mesh);
 static ChainPtr node_I_locality(int, Mesh);
 static ChainPtr ring_search_nodal_locality(ChainPtr *, ChainPtr, Mesh);
 static double mesh_size(Mesh);
+static void standard_error(int, char *);
+static void standard_output(char *);
+static FILE * Open_and_Check_simulation_file(char * );
 
 /**********************************************************************/
 
 Mesh GramsBox(char * Name_File)
 /*    
-
       GramsBox (Type=GID,File=FEM_Mesh.msh) { 
-      left = GramsBoundary {
-      BcDirichlet U NULL
-      BcDirichlet V NULL	
-      }
-      right = GramsBoundary {
-      BcDirichlet U NULL
-      BcDirichlet V NULL	
-      }
-      top = GramsBoundary {
-      BcDirichlet U NULL
-      BcDirichlet V NULL
-      }
-      bottom = GramsBoundary {
-      BcDirichlet U NULL
-      BcDirichlet V NULL
-      }
+
+        GramsBoundary (File=Top.txt) {
+          BcDirichlet V.x NULL
+          BcDirichlet V.y CurveConstat.txt
+        }
+
       }
 */
 {
-  /* Asign material library to an auxiliar variable */
+  // Define mesh variable
   Mesh FEM_Mesh;
 
-  /* Simulation file */
-  FILE * Sim_dat;
-  char Route_Mesh[MAXC] = {0};
-  char FileMeshRoute[MAXC];
-   
-  /* Parse line of GramsBox */
-  int Num_GramsBox;
-  char Line_GramsBox[MAXC] = {0};
-  char * Parse_GramsBox[MAXW] = {NULL};
-  int Num_GramsBox_Prop;
-  char * Parse_Mesh_id[MAXW] = {NULL};
+  // Read information in GramsBox and check sintax
+  Nodes_Information Nodes_Info = Read_Nodal_Set_Information(Name_File);
 
-  /* Parse lines of GramsBoundary */
-  int Num_GramsBoundary;
-  char Line_GramsBoundary[MAXC] = {0};
-  char * Parse_GramsBoundary[MAXW] = {NULL};
-  int NumBounds;
+  /*
+    -> Read file with the mesh and allocate memory
 
-  /* Auxiliar variable for status */
-  char * STATUS_LINE;
-    
-  /* Open and check file */
-  Sim_dat = fopen(Name_File,"r");  
-  if (Sim_dat==NULL){
-    fprintf(stderr,"%s : \n\t %s %s",
-	    "Error in GramsBox()",
-	    "Incorrect lecture of",
-	    Name_File);
-    exit(EXIT_FAILURE);
-  }
+    -> Get the sourrounding elements of each nodes
 
-  /* Generate route */
-  generate_route(Route_Mesh,Name_File);
-  printf("%s : %s \n","Read mesh from", Route_Mesh);
+    -> Initialize nodal locality of each node :
 
-  /* Read GramsBox line  */
-  while( fgets(Line_GramsBox, sizeof(Line_GramsBox), Sim_dat) != NULL ){
-    
-    /* Read the line with the space as separators */
-    Num_GramsBox = parse (Parse_GramsBox, Line_GramsBox," \n\t");
-    
-    if (Num_GramsBox < 0){
-      fprintf(stderr,"%s : %s \n",
-	      "Error in GramsBox ()",
-	      "Parser failed");
-      exit(EXIT_FAILURE);
-    }
+      1º Define a pointer with the number of nodes close to each node
 
-    /* Find GramsBox line */
-    if ((Num_GramsBox > 0) &&
-    	(strcmp(Parse_GramsBox[0],"GramsBox") == 0 ) &&
-	((strcmp(Parse_GramsBox[2],"{") == 0))){
+      2ª Define a table of sets with the list of nodes close to a node
 
-      /* Read the type of the mesh and the name of the file */
-      Num_GramsBox_Prop = parse (Parse_Mesh_id, Parse_GramsBox[1],"(=,)");
-      if( (Num_GramsBox_Prop != 4) ||
-	  (strcmp(Parse_Mesh_id[0],"Type") != 0) ||
-	  (strcmp(Parse_Mesh_id[2],"File") != 0) ){
-	fprintf(stderr,"%s : %s \n",
-		"Error in GramsBox()",
-		"Use this format -> (Type=str,File=str) !!!");
-	exit(EXIT_FAILURE);
-      }
+      3ª Fill the table with the nodal locality and the pointer with the
+        number of nodes close to each node
 
-      /* Read GID-type mesh */
-      if(strcmp(Parse_Mesh_id[1],"GID") == 0)
-      {
-	/* Read file with the mesh */
-	sprintf(FileMeshRoute,"%s%s",Route_Mesh,Parse_Mesh_id[3]);
-
-	puts("*************************************************");
-	printf(" \t %s : \n \t %s \n",
-	       "* Read GID mesh in",FileMeshRoute);
-	FEM_Mesh = ReadGidMesh__MeshTools__(FileMeshRoute);
-      }
-      else
-      {
-        fprintf(stderr,"%s : %s %s \n","Error in GramsBox(Type=*, )","Unrecognized mesh Type",Parse_Mesh_id[1]);
-      }
-
-      /* By default the number of BCCs is 0 */
-      NumBounds = 0;
-
-      /* Check format GramsBox (Type=,File=) { } */
-      if((Num_GramsBox == 4) &&
-	 (strcmp(Parse_GramsBox[3],"}") == 0)){
-	puts("*************************************************");
-	printf(" \t %s : \n \t %i \n",
-	       "* Number of boundaries",0);
-	break;
-      }
-
-      /* Initial line */
-      STATUS_LINE =
-	fgets(Line_GramsBoundary,sizeof(Line_GramsBoundary),Sim_dat);
-      if(STATUS_LINE == NULL){
-	fprintf(stderr,"%s : %s \n",
-		"Error in GramsBox()",
-		"Unspected EOF !!!");
-	exit(EXIT_FAILURE);
-      }
-      Num_GramsBoundary = parse(Parse_GramsBoundary,Line_GramsBoundary," =\t\n");
-
-      /* Check format GramsBox (Type=,File=) { 
-	 }
-      */
-      if((Num_GramsBoundary > 0) &&
-	 (strcmp(Parse_GramsBoundary[0],"}") == 0)){
-	puts("*************************************************");
-	printf(" \t %s : \n \t %i \n",
-	       "* Number of boundaries",0);
-	break;
-      }
-
-      /* Loop to count the number of boundaries */
-      while(STATUS_LINE != NULL){
-	if((Num_GramsBoundary > 0) &&
-	   (strcmp(Parse_GramsBoundary[0],"GramsBoundary") == 0)){
-	  NumBounds++;
-	}
-	/* Continue reading to the end*/
-	STATUS_LINE = fgets(Line_GramsBoundary,
-			    sizeof(Line_GramsBoundary),Sim_dat);
-	Num_GramsBoundary = parse(Parse_GramsBoundary,
-			       Line_GramsBoundary," =\t\n");	
-      }
-      
-    }
-  }
-
-  /* Close file */
-  fclose(Sim_dat);
-
-  /**************************************************/
-  /********** Set the minimum mesh size *************/
-  /**************************************************/
-  FEM_Mesh.DeltaX = mesh_size(FEM_Mesh);
-
+    -> Compute minimum nodal distance
+  */
   puts("*************************************************");
-  printf(" \t %s : \n \t %f \n","* Mesh size",FEM_Mesh.DeltaX);
-
-  /**************************************************/	
-  /*** Generate nodal connectivity of the mesh : ****/
-  /******* list of elements near to a node ***********/
-  /**************************************************/
+  printf(" \t %s : %s \n","* Read GID mesh in",Nodes_Info.Mesh_File);
+  FEM_Mesh = ReadGidMesh__MeshTools__(Nodes_Info.Mesh_File);
+  
   FEM_Mesh.NumNeighbour =  (int *)Allocate_ArrayZ(FEM_Mesh.NumNodesMesh,sizeof(int)); 
   FEM_Mesh.NodeNeighbour = (ChainPtr *)malloc(FEM_Mesh.NumNodesMesh*sizeof(ChainPtr));
   get_sourrounding_elements(FEM_Mesh);
-  
-  /*
-    Initialize nodal locality of each node :
-
-    1º Define a pointer with the number of nodes close to each node
-
-    2ª Define a table of sets with the list of nodes close to a node
-
-    3ª Fill the table with the nodal locality and the pointer with the
-      number of nodes close to each node
-  */
+  printf("\t \t %s : %s \n","-> Compute sourrounding elements","Done");
 
   FEM_Mesh.SizeNodalLocality = (int *)Allocate_ArrayZ(FEM_Mesh.NumNodesMesh,sizeof(int));
   FEM_Mesh.NodalLocality = (ChainPtr *)malloc(FEM_Mesh.NumNodesMesh*sizeof(ChainPtr));
   fill_nodal_locality(FEM_Mesh);
-  
-  /**************************************************/	
-  /** Initialize particle connectivity of each node */
-  /**************************************************/
+  printf("\t \t %s : %s \n","-> Compute nodal neighborhood","Done");
+
   FEM_Mesh.NumParticles = (int *)Allocate_ArrayZ(FEM_Mesh.NumNodesMesh,sizeof(int));
   FEM_Mesh.I_particles = (ChainPtr *)malloc(FEM_Mesh.NumNodesMesh*sizeof(ChainPtr));
+  printf("\t \t %s : %s \n","-> Initialize ","Done");
+
+  exit(0);
+  FEM_Mesh.DeltaX = mesh_size(FEM_Mesh);
+  printf("\t \t %s : %f \n","-> Compute mesh size",FEM_Mesh.DeltaX);
 
 
-  /**************************************************/  
-  /******** Allocate array with the boundaries ******/
-  /**************************************************/
-  if(NumBounds > 0){
+  puts("*************************************************");
+  printf(" \t %s : \n \t %i \n","* Number of boundaries",Nodes_Info.Number_Boundaries);
+
+  if(Nodes_Info.Number_Boundaries > 0)
+  {
     puts("*************************************************");
-    printf(" \t %s (%i) : \n","* Boundary conditions",NumBounds);
-    FEM_Mesh.Bounds.NumBounds = NumBounds;
+    printf(" \t %s (%i) : \n","* Boundary conditions",Nodes_Info.Number_Boundaries);
+    FEM_Mesh.Bounds.NumBounds = Nodes_Info.Number_Boundaries;
     
     if(strcmp(Formulation,"-u") == 0)
     {
-      FEM_Mesh.Bounds = GramsBoundary(Name_File,NumBounds);  
+      FEM_Mesh.Bounds = GramsBoundary(Name_File,Nodes_Info.Number_Boundaries);  
     }
     else if(strcmp(Formulation,"-upw") == 0)
     {
-      FEM_Mesh.Bounds = Read_upw_Dirichlet_Boundary_Conditions__InOutFun__(Name_File,NumBounds);
+      FEM_Mesh.Bounds = Read_upw_Dirichlet_Boundary_Conditions__InOutFun__(Name_File,Nodes_Info.Number_Boundaries);
     }
     
   }
@@ -235,106 +119,134 @@ Mesh GramsBox(char * Name_File)
 
 /*********************************************************************/
 
-static double mesh_size(Mesh FEM_Mesh)
-/*
-  Function to get the minimum mesh size.
-*/
+static Nodes_Information Read_Nodal_Set_Information(char * Name_File)
 {
 
-  /* Auxiliar variables of the function */
-  int NumElemMesh = FEM_Mesh.NumElemMesh;
-  int NumNodesElem; /* Number of nodes of each element */
-  int * Connectivity; /* Connectivity of the element */
-  Matrix Poligon; /* Element Poligon */
-  Matrix X_eval = allocZ__MatrixLib__(1,2); /* Where to evaluate the shape function */
-  X_eval.nV[0] = 0;
-  X_eval.nV[1] = 0;
-  Matrix dNdx; /* Gradient of the shapefunction for each node */
-  double MinElementSize_aux;
-  double MinElementSize = 10e16;
+  Nodes_Information Nodes_Info;
 
-  /* 1º Loop over the elements in the mesh */
-  for(int i = 0 ; i<NumElemMesh ; i++)
+  // Generate read route
+  char Route_Mesh[MAXC] = {0};
+  generate_route(Route_Mesh,Name_File);
+
+  // Counter for the number of boundaries
+  int Number_Boundaries = 0;
+
+  // Variables to read file
+  char line[MAXC] = {0};
+  char * words[MAXW] = {NULL};
+  int nwords;
+  int Num_line = 0;
+  int Node_i = 0;
+
+  // Boolean variables to open and close braces 
+  bool Start_Reading_Nodes_Info = false;
+  int Number_Left_Braces = 0;
+  int Number_Right_Braces = 0;
+
+  // Open the mesh file
+  FILE * MeshFile = Open_and_Check_simulation_file(Name_File);
+
+  // Read the file line by line
+  while(fgets(line, sizeof(line), MeshFile) != NULL)
   {
 
-    /* 2º Connectivity of the Poligon */
-    NumNodesElem = FEM_Mesh.NumNodesElem[i];
-    Connectivity = set_to_memory__SetLib__(FEM_Mesh.Connectivity[i],NumNodesElem);
-    
-    /* 4º Get the gradient of the element for each node */
-    if((NumNodesElem == 3) && (NumberDimensions == 2))
-    { 
-      /* Fill the triangular element with the coordinates of the nodes */
-      Poligon = allocZ__MatrixLib__(3,2);
-      for(int k = 0; k<3; k++)
-      {
-        for(int l = 0 ; l<2 ; l++)
-        {
-          Poligon.nM[k][l] = FEM_Mesh.Coordinates.nM[Connectivity[k]][l];
-        }
-      }
+    // Parse the conten of the line
+    nwords = parse (words, line, delimiters);
 
-      /* Get the gradient of the triangle */
-      dNdx = dN__T3__(X_eval,Poligon);
-      free__MatrixLib__(Poligon);
-      
-      /* Get the minimum minimum height of the triangle */
-      for(int j = 0 ; j<3 ; j++)
-      {
-        MinElementSize_aux = 1/pow(dNdx.nM[0][j]*dNdx.nM[0][j] + dNdx.nM[1][j]*dNdx.nM[1][j],0.5);
-        MinElementSize = DMIN(MinElementSize,MinElementSize_aux);
-      }
-      /* Free memory */
-      free__MatrixLib__(dNdx);
-      
-    }
-    else if((NumNodesElem == 4) && (NumberDimensions == 2))
-    { 
-      /* Fill the quadrilateral element with the coordinates of the nodes */
-      Poligon = allocZ__MatrixLib__(4,2);
-
-      /* Fill the poligon with vectors */
-      for(int k = 0; k<3; k++)
-      {
-        for(int l = 0 ; l<2 ; l++)
-        {
-          Poligon.nM[k][l] = FEM_Mesh.Coordinates.nM[Connectivity[k+1]][l] - FEM_Mesh.Coordinates.nM[Connectivity[k]][l];
-        }
-      }
-
-      for(int l = 0 ; l<2 ; l++)
-      {
-        Poligon.nM[3][l] = FEM_Mesh.Coordinates.nM[Connectivity[0]][l] - FEM_Mesh.Coordinates.nM[Connectivity[3]][l];
-      }
-      
-      /* Get the minimum minimum height of the triangle */
-      for(int k = 0 ; k<4 ; k++)
-      {
-        MinElementSize_aux = pow(Poligon.nM[k][0]*Poligon.nM[k][0] + Poligon.nM[k][1]*Poligon.nM[k][1] , 0.5);
-        MinElementSize = DMIN(MinElementSize,MinElementSize_aux);
-      }
-
-      /* Free memory */
-      free__MatrixLib__(Poligon);
-
-    }
-    else
+    // Count the number of boundary conditions
+    if(Start_Reading_Nodes_Info)
     {
-      printf("%s : %s %i %s \n",
-       "Error in mesh_size","Element with ",NumNodesElem,"nodes is not implemented !!!" );
-      exit(EXIT_FAILURE);
+
+        // Check number of open and closed braces
+        for(int i = 0 ; i<nwords ; i++)
+        {
+          if(strcmp(words[i],"{") == 0)
+          {
+            Number_Left_Braces++;
+          }
+          if(strcmp(words[i],"}") == 0)
+          {
+            Number_Right_Braces++;
+          }
+          if(strcmp(words[i],"GramsBoundary") == 0)
+          {
+            Number_Boundaries++;
+          }
+        }
+
+    }
+    else if(Start_Reading_Nodes_Info && (Number_Left_Braces == Number_Right_Braces))
+    {
+      break;
     }
 
-    /* Free memory */
-    free(Connectivity);
-    
+    if((nwords >= 5) && (strcmp(words[0],"GramsBox") == 0))
+    {
+
+      if((strcmp(words[1],"Type") == 0) && 
+        (strcmp(words[3],"File") == 0))
+      {
+        Start_Reading_Nodes_Info = true;
+
+        // Check kind of mesh generator
+        if(strcmp(words[2],"GID") != 0)
+        {
+          sprintf(Error_message,"%s","Unrecognised kind of mesh");
+          standard_error(Num_line,Name_File);
+        }
+        else
+        {
+          strcpy(Nodes_Info.Mesh_Generator,words[2]);
+        }
+
+        // Check file with the mesh
+        sprintf(Nodes_Info.Mesh_File,"%s%s",Route_Mesh,words[4]);
+        Check_Mesh_File(Nodes_Info.Mesh_File);
+
+        // Check number of open and closed braces
+        for(int i = 0 ; i<nwords ; i++)
+        {
+          if(strcmp(words[i],"{") == 0)
+          {
+            Number_Left_Braces++;
+          }
+          if(strcmp(words[i],"}") == 0)
+          {
+            Number_Right_Braces++;
+          }
+        }
+
+      }
+      else
+      {
+        sprintf(Error_message,"GramsBox has an unrecognised structure");
+        standard_error(Num_line, Name_File);
+      }
+    }
+
+    // Update the linea counter
+    Num_line++;
   }
 
-  /* Free memory */
-  free__MatrixLib__(X_eval);
+  if(!Start_Reading_Nodes_Info)
+  {
+    fprintf(stderr,"%s","GramsBox keyword not founded");
+    exit(EXIT_FAILURE);
+  }
 
-  return MinElementSize;
+  if(Number_Left_Braces != Number_Right_Braces)
+  {
+    fprintf(stderr,"%s","Umbalanced number of braces in GramsBox");
+    exit(EXIT_FAILURE);
+  }
 
+  // Write the number of boundaries in the information structure
+  Nodes_Info.Number_Boundaries = Number_Boundaries;
+ 
+  //  At the end close the mesh file
+  fclose(MeshFile);
+
+  return Nodes_Info;
 }
 
 /*********************************************************************/
@@ -373,6 +285,12 @@ static void get_sourrounding_elements(Mesh FEM_Mesh)
 
       /* Free memory */
       free(Element_Connectivity);
+    }
+
+    if(FEM_Mesh.NumNeighbour[i] == 0)
+    {
+      fprintf(stderr,"%s : %i \n","Error computing the sourrounding elements of",i);
+      exit(EXIT_FAILURE); 
     }
     
   }
@@ -521,3 +439,157 @@ static ChainPtr ring_search_nodal_locality(ChainPtr * Set_k, ChainPtr Search_Set
 }
 
 /*********************************************************************/
+
+static double mesh_size(Mesh FEM_Mesh)
+/*
+  Function to get the minimum mesh size.
+*/
+{
+
+  /* Auxiliar variables of the function */
+  int NumElemMesh = FEM_Mesh.NumElemMesh;
+  int NumNodesElem; /* Number of nodes of each element */
+  int * Connectivity; /* Connectivity of the element */
+  Matrix Poligon; /* Element Poligon */
+  Matrix X_eval = allocZ__MatrixLib__(1,2); /* Where to evaluate the shape function */
+  X_eval.nV[0] = 0;
+  X_eval.nV[1] = 0;
+  Matrix dNdx; /* Gradient of the shapefunction for each node */
+  double MinElementSize_aux;
+  double MinElementSize = 10e16;
+
+  /* 1º Loop over the elements in the mesh */
+  for(int i = 0 ; i<NumElemMesh ; i++)
+  {
+
+    /* 2º Connectivity of the Poligon */
+    NumNodesElem = FEM_Mesh.NumNodesElem[i];
+    Connectivity = set_to_memory__SetLib__(FEM_Mesh.Connectivity[i],NumNodesElem);
+    
+    /* 4º Get the gradient of the element for each node */
+    if((NumNodesElem == 3) && (NumberDimensions == 2))
+    { 
+      /* Fill the triangular element with the coordinates of the nodes */
+      Poligon = allocZ__MatrixLib__(3,2);
+      for(int k = 0; k<3; k++)
+      {
+        for(int l = 0 ; l<2 ; l++)
+        {
+          Poligon.nM[k][l] = FEM_Mesh.Coordinates.nM[Connectivity[k]][l];
+        }
+      }
+
+      /* Get the gradient of the triangle */
+      dNdx = dN__T3__(X_eval,Poligon);
+      free__MatrixLib__(Poligon);
+      
+      /* Get the minimum minimum height of the triangle */
+      for(int j = 0 ; j<3 ; j++)
+      {
+        MinElementSize_aux = 1/pow(dNdx.nM[0][j]*dNdx.nM[0][j] + dNdx.nM[1][j]*dNdx.nM[1][j],0.5);
+        MinElementSize = DMIN(MinElementSize,MinElementSize_aux);
+      }
+      /* Free memory */
+      free__MatrixLib__(dNdx);
+      
+    }
+    else if((NumNodesElem == 4) && (NumberDimensions == 2))
+    { 
+      /* Fill the quadrilateral element with the coordinates of the nodes */
+      Poligon = allocZ__MatrixLib__(4,2);
+
+      /* Fill the poligon with vectors */
+      for(int k = 0; k<3; k++)
+      {
+        for(int l = 0 ; l<2 ; l++)
+        {
+          Poligon.nM[k][l] = FEM_Mesh.Coordinates.nM[Connectivity[k+1]][l] - FEM_Mesh.Coordinates.nM[Connectivity[k]][l];
+        }
+      }
+
+      for(int l = 0 ; l<2 ; l++)
+      {
+        Poligon.nM[3][l] = FEM_Mesh.Coordinates.nM[Connectivity[0]][l] - FEM_Mesh.Coordinates.nM[Connectivity[3]][l];
+      }
+      
+      /* Get the minimum minimum height of the triangle */
+      for(int k = 0 ; k<4 ; k++)
+      {
+        MinElementSize_aux = pow(Poligon.nM[k][0]*Poligon.nM[k][0] + Poligon.nM[k][1]*Poligon.nM[k][1] , 0.5);
+        MinElementSize = DMIN(MinElementSize,MinElementSize_aux);
+      }
+
+      /* Free memory */
+      free__MatrixLib__(Poligon);
+
+    }
+    else
+    {
+      printf("%s : %s %i %s \n",
+       "Error in mesh_size","Element with ",NumNodesElem,"nodes is not implemented !!!" );
+      exit(EXIT_FAILURE);
+    }
+
+    /* Free memory */
+    free(Connectivity);
+    
+  }
+
+  /* Free memory */
+  free__MatrixLib__(X_eval);
+
+  return MinElementSize;
+
+}
+
+/*********************************************************************/
+
+static void standard_error(
+  int Num_line, 
+  char * Name_File)
+{
+  fprintf(stderr,"GramsBox : Error in line %i while reading %s \n",Num_line,Name_File);
+  fprintf(stderr,"%s \n",Error_message);
+  exit(EXIT_FAILURE);
+}
+
+/***************************************************************************/
+
+static void standard_output(
+  char * Status_message)
+{
+  fprintf(stdout,"%s \n",Status_message);
+}
+
+/***************************************************************************/
+
+static void Check_Mesh_File(char * PATH_Name)
+{
+  struct stat info;
+  stat(PATH_Name,&info);
+  char Error_message[MAXW];
+
+  if(!S_ISREG(info.st_mode))
+  {
+    fprintf(stderr,"GramsBox : Mesh file %s does not exists \n",PATH_Name);
+    exit(EXIT_FAILURE);
+  } 
+}
+
+/**********************************************************************/
+
+static FILE * Open_and_Check_simulation_file(
+  char * Name_File)
+{
+  FILE * Simulation_file = fopen(Name_File,"r");  
+  
+  if (Simulation_file==NULL)
+  {
+    fprintf(stderr,"GramsBox : Incorrect lecture of %s \n",Name_File);
+    exit(EXIT_FAILURE);
+  }  
+
+  return Simulation_file;
+}
+
+/***************************************************************************/
