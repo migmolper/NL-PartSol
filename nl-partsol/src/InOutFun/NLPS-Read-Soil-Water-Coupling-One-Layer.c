@@ -137,7 +137,7 @@ GaussPoint Generate_Soil_Water_Coupling_Analysis__InOutFun__(char * Name_File, M
     /*
       Read particles mesh 
     */
-    MPM_GID_Mesh = ReadGidMesh(Msh_Parms.Route_Mesh);
+    MPM_GID_Mesh = ReadGidMesh__MeshTools__(Msh_Parms.Route_Mesh);
 
     /*
       Define the number of particles

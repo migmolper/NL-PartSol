@@ -5,6 +5,7 @@
 #ifndef _NODES_H_
 #define _NODES_H_
 
+Mesh     ReadGidMesh__MeshTools__(char *);
 Mask     generate_NodalMask__MeshTools__(Mesh);
 Mask     generate_Mask_for_static_condensation__MeshTools__(Mask, Mesh);
 Matrix   get_set_field__MeshTools__(Matrix, Element, Mask);

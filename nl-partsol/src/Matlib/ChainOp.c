@@ -324,9 +324,10 @@ ChainPtr intersection__SetLib__(ChainPtr A,ChainPtr B)
 void print__SetLib__(ChainPtr A) 
 {  
   while (A != NULL){ 
-    printf ("%d \n", A->I); 
+    printf ("%d -> ", A->I); 
     A = A->next; 
   } 
+  printf("NULL \n");
 } 
 
 /*********************************************************************/

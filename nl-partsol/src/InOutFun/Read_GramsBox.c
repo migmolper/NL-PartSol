@@ -112,7 +112,7 @@ Mesh GramsBox(char * Name_File)
 	puts("*************************************************");
 	printf(" \t %s : \n \t %s \n",
 	       "* Read GID mesh in",FileMeshRoute);
-	FEM_Mesh = ReadGidMesh(FileMeshRoute);
+	FEM_Mesh = ReadGidMesh__MeshTools__(FileMeshRoute);
       }
       else
       {

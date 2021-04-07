@@ -151,7 +151,7 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
   if(Is_GramsSolid2D && Is_GPxElement && Is_GPxElement){
     
     /* Read GP mesh */
-    MPM_GID_Mesh = ReadGidMesh(Route_Mesh);
+    MPM_GID_Mesh = ReadGidMesh__MeshTools__(Route_Mesh);
 
     /* Define the number of particles */
     NumParticles = GPxElement*MPM_GID_Mesh.NumElemMesh;
