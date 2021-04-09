@@ -27,5 +27,5 @@ Matrix dN_Ref__H8__(Matrix);
 Matrix dN__H8__(Matrix,Matrix);
 void   X_to_Xi__H8__(Matrix,Matrix,Matrix);
 void   element_to_particles__H8__(Matrix, Mesh, int);
-
+double min_DeltaX__H8__(ChainPtr, Matrix);
 #endif

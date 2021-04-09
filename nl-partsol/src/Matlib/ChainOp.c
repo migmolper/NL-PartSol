@@ -2,7 +2,8 @@
 
 /*********************************************************************/
 
-ChainPtr memory_to_set__SetLib__(int * A_array, int NumNodes){
+ChainPtr memory_to_set__SetLib__(int * A_array, int NumNodes)
+{
 
   /* Variable declaration */
   ChainPtr A_chain = NULL;
@@ -69,38 +70,22 @@ int * set_to_memory__SetLib__(ChainPtr A_chain, int NumNodes){
 
 /*********************************************************************/
 
-void free__SetLib__(ChainPtr * A){
+void free__SetLib__(ChainPtr * A)
+{
 
   /* Loop index */
   ChainPtr INode = (*A);
   ChainPtr NextNode = NULL;
   
-  while (INode != NULL){
+  while (INode != NULL)
+  {
     NextNode = INode->next;
     free(INode);
     INode = NextNode;    
-   }
+  }
   
   (*A) = NULL;
 }
-
-/* void free__SetLib__(struct Node** head_ref) */
-/* { */
-/*   /\* deref head_ref to get the real head *\/ */
-/*   struct Node* current = *head_ref; */
-/*   struct Node* next; */
-  
-/*   while (current != NULL) */
-/*     { */
-/*       next = current->next; */
-/*       free(current); */
-/*       current = next; */
-/*     } */
-    
-/*   /\* deref head_ref to affect the real head back */
-/*      in the caller. *\/ */
-/*   *head_ref = NULL; */
-/* } */
 
 /*********************************************************************/
 
@@ -112,12 +97,12 @@ ChainPtr * alloc_table__SetLib__(int SizeTable)
   /* Tributary nodes for each particle */
   SetTable = (ChainPtr *)malloc(SizeTable*sizeof(ChainPtr));
   if(SetTable == NULL)
-    {
-      printf("%s : %s \n",
-	     "alloc_table__SetLib__","Memory error");
-      exit(EXIT_FAILURE);
-    }
-  for(int i = 0 ; i<SizeTable ; i++){
+  {
+    printf("%s : %s \n","alloc_table__SetLib__","Memory error");
+    exit(EXIT_FAILURE);
+  }
+  for(int i = 0 ; i<SizeTable ; i++)
+  {
     SetTable[i] = NULL;  
   }
 
@@ -127,10 +112,12 @@ ChainPtr * alloc_table__SetLib__(int SizeTable)
 
 /*********************************************************************/
 
-void free_table__SetLib__(ChainPtr * A, int SizeTable){
+void free_table__SetLib__(ChainPtr * A, int SizeTable)
+{
 
   /* Loop in the table to free each set */
-  for(int i = 0 ; i<SizeTable ; i++){
+  for(int i = 0 ; i<SizeTable ; i++)
+  {
     free__SetLib__(&A[i]);
   }
 
@@ -147,11 +134,14 @@ int lenght__SetLib__(ChainPtr A)
   int NumElem = 0;
   ChainPtr INode = A;
   
-  if(A == NULL){
+  if(A == NULL)
+  {
     return NumElem;
   }
-  else{
-    while(INode != NULL){
+  else
+  {
+    while(INode != NULL)
+    {
       NumElem ++;
       INode = INode->next;
     }
@@ -169,8 +159,10 @@ bool inout__SetLib__(ChainPtr Node, int I)
   ChainPtr INode = Node;
   
   /* Loop in the chain */
-  while (INode != NULL){ 
-    if (INode->I == I){
+  while (INode != NULL)
+  { 
+    if (INode->I == I)
+    {
       return 1;
     }
     INode = INode->next; 
@@ -190,7 +182,8 @@ void push__SetLib__ (ChainPtr * TopNodePtr, int I_new)
   NewNodePtr = malloc(sizeof(ChainPtr));
 
   /* Insert the node at the list top (stack) */
-  if(NewNodePtr != NULL){
+  if(NewNodePtr != NULL)
+  {
     /* put in the data */
     NewNodePtr->I = I_new;
     /* link the old list off the new node */
@@ -198,11 +191,9 @@ void push__SetLib__ (ChainPtr * TopNodePtr, int I_new)
     /* move the head to point to the new node */
     (*TopNodePtr) = NewNodePtr; 
   }
-  else{
-    printf("%s %i : %s \n",
-	   "Unable to insert node",
-	   I_new,
-	   "No memory available.");
+  else
+  {
+    printf("%s %i : %s \n","Unable to insert node",I_new,"No memory available.");
   }
     
 }
@@ -219,17 +210,20 @@ void pop__SetLib__(ChainPtr * TopNodePtr, int I_trash)
   while(iPtr != NULL){
 
     /* If the node is the one we want to extract */
-    if(iPtr->I == I_trash){
+    if(iPtr->I == I_trash)
+    {
       /* If the node is the first in the chain */
-      if(PrevPtr == NULL){
-	AuxPtr = iPtr->next;
-	free(iPtr);
-	(* TopNodePtr) = AuxPtr;
+      if(PrevPtr == NULL)
+      {
+        AuxPtr = iPtr->next;
+        free(iPtr);
+        (* TopNodePtr) = AuxPtr;
       }
       /* If the node is in the middle or at the end */
-      else{
-	PrevPtr->next = iPtr->next;
-	free(iPtr);
+      else
+      {
+        PrevPtr->next = iPtr->next;
+        free(iPtr);
       }
       /* Once the node is located, breack the loop */
       break;
@@ -245,12 +239,14 @@ void pop__SetLib__(ChainPtr * TopNodePtr, int I_trash)
 
 /*********************************************************************/
 
-ChainPtr copy__SetLib__(ChainPtr start1){
+ChainPtr copy__SetLib__(ChainPtr start1)
+{
   
   ChainPtr start2=NULL;
   ChainPtr previous=NULL;
 
-  while(start1!=NULL){
+  while(start1!=NULL)
+  {
   
     ChainPtr temp = malloc (sizeof(ChainPtr));
     temp->I=start1->I;
@@ -269,6 +265,40 @@ ChainPtr copy__SetLib__(ChainPtr start1){
     start1=start1->next;
   }
   return start2;
+}
+
+/*********************************************************************/
+
+ChainPtr create_circular_set__SetLib__(ChainPtr A)
+{
+  ChainPtr Head = A; 
+  ChainPtr A_circular = NULL;
+  ChainPtr A_aux = NULL;
+  ChainPtr New_Node = NULL;
+
+  while(A!=NULL)
+  {
+  
+    New_Node = malloc (sizeof(ChainPtr));
+    New_Node->I=A->I;
+    New_Node->next=Head;
+
+    if(A_circular == NULL)
+    {
+      A_circular = New_Node;
+      A_aux = New_Node;
+    }
+    else
+    {
+      A_aux->next=New_Node;
+      A_aux=New_Node;          
+    }
+
+    A=A->next;
+
+  }
+
+  return A_circular;
 }
 
 /*********************************************************************/

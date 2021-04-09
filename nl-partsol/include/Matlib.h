@@ -110,6 +110,7 @@ bool inout__SetLib__(ChainPtr, int);
 void push__SetLib__(ChainPtr *, int);
 void pop__SetLib__(ChainPtr *, int);
 ChainPtr copy__SetLib__(ChainPtr);
+ChainPtr create_circular_set__SetLib__(ChainPtr);
 int lenght__SetLib__(ChainPtr);
 ChainPtr union__SetLib__(ChainPtr *, int);
 ChainPtr intersection__SetLib__(ChainPtr, ChainPtr);

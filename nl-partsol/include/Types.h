@@ -63,6 +63,10 @@ typedef struct Chain {
    * Pointer to the next node in the set
    */
   struct Chain * next;
+
+  /*!
+    
+  */
   
 } Chain; 
 

@@ -491,3 +491,66 @@ void element_to_particles__H8__(
 
 
 /*********************************************************************/
+
+
+double min_DeltaX__H8__(ChainPtr Element_Connectivity, Matrix Coordinates)
+{
+
+  /* Auxiliar variables of the function */
+  int Ndim = NumberDimensions;
+  int Node_k;
+  int Node_k1;
+  int Node_k4;
+  int NumNodesElem = 4;
+  int NumSides = 4;
+  double sqr_lenght = 0.0;
+  double MinElementSize = 10e16;
+
+  /*
+    Fill the poligon with vectors
+  */
+  for(int k = 0; k<NumNodesElem; k++)
+  {
+
+    Node_k  = Element_Connectivity->I;
+    Node_k1 = Element_Connectivity->next->I;
+
+    sqr_lenght = 0.0;
+    
+    for(int l = 0 ; l<Ndim ; l++)
+    {
+      sqr_lenght += DSQR(Coordinates.nM[Node_k1][l] - Coordinates.nM[Node_k][l]);
+    }
+
+    MinElementSize = DMIN(MinElementSize,sqrt(sqr_lenght));
+
+    Element_Connectivity = Element_Connectivity->next;
+
+  }
+
+  for(int k = 0; k<4; k++)
+  {
+
+    Node_k  = Element_Connectivity->I;
+    Node_k4 = Element_Connectivity->next->next->next->next->I;
+
+    sqr_lenght = 0.0;
+    
+    for(int l = 0 ; l<Ndim ; l++)
+    {
+      sqr_lenght += DSQR(Coordinates.nM[Node_k4][l] - Coordinates.nM[Node_k][l]);
+    }
+
+    MinElementSize = DMIN(MinElementSize,sqrt(sqr_lenght));
+
+    Element_Connectivity = Element_Connectivity->next;
+
+  }
+
+
+
+  return MinElementSize;
+}
+
+
+/*********************************************************************/

@@ -19,5 +19,6 @@ Matrix dN__Q4__(Matrix,Matrix);
 Matrix dN_Ref__Q4__(Matrix);
 void   X_to_Xi__Q4__(Matrix,Matrix,Matrix);
 void   element_to_particles__Q4__(Matrix, Mesh, int);
+double min_DeltaX__Q4__(ChainPtr, Matrix);
 
 #endif

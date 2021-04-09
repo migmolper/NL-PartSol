@@ -360,3 +360,59 @@ void element_to_particles__T3__(
 }
 
 /*********************************************************************/
+
+double min_DeltaX__T3__(ChainPtr Element_Connectivity, Matrix Coordinates)
+{
+  /* Auxiliar variables of the function */
+  int Ndim = NumberDimensions;
+  int NumNodesElem = 3; /* Number of nodes of each element */
+  int Node_k;
+  Matrix Poligon; /* Element Poligon */
+  Matrix X_eval = allocZ__MatrixLib__(1,Ndim); /* Where to evaluate the shape function */
+  X_eval.nV[0] = 0.0;
+  X_eval.nV[1] = 0.0;
+  Matrix dNdx; /* Gradient of the shapefunction for each node */
+  double MinElementSize = 10e16;
+
+  /* 
+    Fill the triangular element with the coordinates of the nodes
+  */
+  Poligon = allocZ__MatrixLib__(NumNodesElem,Ndim);
+
+  for(int k = 0; k<NumNodesElem; k++)
+  {
+    Node_k = Element_Connectivity->I;
+
+    for(int l = 0 ; l<Ndim ; l++)
+    {
+      Poligon.nM[k][l] = Coordinates.nM[Node_k][l];
+    }
+
+    Element_Connectivity = Element_Connectivity->next;
+
+  }
+
+  /*
+    Get the gradient of the triangle
+  */
+  dNdx = dN__T3__(X_eval,Poligon);
+      
+  /*
+    Get the minimum minimum height of the triangle
+  */
+  for(int j = 0 ; j<NumNodesElem ; j++)
+  {
+    MinElementSize = DMIN(MinElementSize,1/sqrt(dNdx.nM[0][j]*dNdx.nM[0][j] + dNdx.nM[1][j]*dNdx.nM[1][j]));
+  }
+
+  /*
+    Free memory
+  */
+  free__MatrixLib__(Poligon);
+  free__MatrixLib__(dNdx);
+  free__MatrixLib__(X_eval);
+
+  return MinElementSize;
+}
+
+/*********************************************************************/

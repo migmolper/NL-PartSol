@@ -1,5 +1,10 @@
 
 GramsBox (Type=GID,File=cube.msh) {
 
+  GramsBoundary (File=Bottom.txt) {
+    BcDirichlet V.x NULL
+    BcDirichlet V.y NULL
+    BcDirichlet V.z CurveConstant.txt
+  }
 }
 

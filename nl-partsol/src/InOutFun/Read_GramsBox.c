@@ -74,7 +74,7 @@ Mesh GramsBox(char * Name_File)
   printf(" \t %s : %s \n","* Read GID mesh in",Nodes_Info.Mesh_File);
   FEM_Mesh = ReadGidMesh__MeshTools__(Nodes_Info.Mesh_File);
   
-  FEM_Mesh.NumNeighbour =  (int *)Allocate_ArrayZ(FEM_Mesh.NumNodesMesh,sizeof(int)); 
+  FEM_Mesh.NumNeighbour = (int *)Allocate_ArrayZ(FEM_Mesh.NumNodesMesh,sizeof(int)); 
   FEM_Mesh.NodeNeighbour = (ChainPtr *)malloc(FEM_Mesh.NumNodesMesh*sizeof(ChainPtr));
   get_sourrounding_elements(FEM_Mesh);
   printf("\t \t %s : %s \n","-> Compute sourrounding elements","Done");
@@ -88,31 +88,29 @@ Mesh GramsBox(char * Name_File)
   FEM_Mesh.I_particles = (ChainPtr *)malloc(FEM_Mesh.NumNodesMesh*sizeof(ChainPtr));
   printf("\t \t %s : %s \n","-> Initialize ","Done");
 
-  exit(0);
   FEM_Mesh.DeltaX = mesh_size(FEM_Mesh);
   printf("\t \t %s : %f \n","-> Compute mesh size",FEM_Mesh.DeltaX);
 
-
+  /*  
+    -> Compute the boundary conditions
+  */
   puts("*************************************************");
-  printf(" \t %s : \n \t %i \n","* Number of boundaries",Nodes_Info.Number_Boundaries);
+  printf(" \t %s : %i \n","* Number of boundaries",Nodes_Info.Number_Boundaries);
+  FEM_Mesh.Bounds.NumBounds = Nodes_Info.Number_Boundaries;
 
   if(Nodes_Info.Number_Boundaries > 0)
   {
-    puts("*************************************************");
-    printf(" \t %s (%i) : \n","* Boundary conditions",Nodes_Info.Number_Boundaries);
-    FEM_Mesh.Bounds.NumBounds = Nodes_Info.Number_Boundaries;
-    
     if(strcmp(Formulation,"-u") == 0)
     {
-      FEM_Mesh.Bounds = GramsBoundary(Name_File,Nodes_Info.Number_Boundaries);  
+      FEM_Mesh.Bounds = Read_u_Dirichlet_Boundary_Conditions__InOutFun__(Name_File,Nodes_Info.Number_Boundaries);  
     }
     else if(strcmp(Formulation,"-upw") == 0)
     {
       FEM_Mesh.Bounds = Read_upw_Dirichlet_Boundary_Conditions__InOutFun__(Name_File,Nodes_Info.Number_Boundaries);
     }
-    
   }
 
+  exit(0);
 
   return FEM_Mesh;
 }
@@ -447,81 +445,36 @@ static double mesh_size(Mesh FEM_Mesh)
 {
 
   /* Auxiliar variables of the function */
+  int Ndim = NumberDimensions;
   int NumElemMesh = FEM_Mesh.NumElemMesh;
   int NumNodesElem; /* Number of nodes of each element */
-  int * Connectivity; /* Connectivity of the element */
-  Matrix Poligon; /* Element Poligon */
-  Matrix X_eval = allocZ__MatrixLib__(1,2); /* Where to evaluate the shape function */
-  X_eval.nV[0] = 0;
-  X_eval.nV[1] = 0;
-  Matrix dNdx; /* Gradient of the shapefunction for each node */
-  double MinElementSize_aux;
+  ChainPtr Element_Connectivity; /* Connectivity of the element */
   double MinElementSize = 10e16;
 
-  /* 1º Loop over the elements in the mesh */
+  /* Loop over the elements in the mesh */
   for(int i = 0 ; i<NumElemMesh ; i++)
   {
 
-    /* 2º Connectivity of the Poligon */
+    /* Connectivity of the element */
     NumNodesElem = FEM_Mesh.NumNodesElem[i];
-    Connectivity = set_to_memory__SetLib__(FEM_Mesh.Connectivity[i],NumNodesElem);
+    Element_Connectivity = create_circular_set__SetLib__(FEM_Mesh.Connectivity[i]);
     
-    /* 4º Get the gradient of the element for each node */
-    if((NumNodesElem == 3) && (NumberDimensions == 2))
-    { 
-      /* Fill the triangular element with the coordinates of the nodes */
-      Poligon = allocZ__MatrixLib__(3,2);
-      for(int k = 0; k<3; k++)
-      {
-        for(int l = 0 ; l<2 ; l++)
-        {
-          Poligon.nM[k][l] = FEM_Mesh.Coordinates.nM[Connectivity[k]][l];
-        }
-      }
-
-      /* Get the gradient of the triangle */
-      dNdx = dN__T3__(X_eval,Poligon);
-      free__MatrixLib__(Poligon);
-      
-      /* Get the minimum minimum height of the triangle */
-      for(int j = 0 ; j<3 ; j++)
-      {
-        MinElementSize_aux = 1/pow(dNdx.nM[0][j]*dNdx.nM[0][j] + dNdx.nM[1][j]*dNdx.nM[1][j],0.5);
-        MinElementSize = DMIN(MinElementSize,MinElementSize_aux);
-      }
-      /* Free memory */
-      free__MatrixLib__(dNdx);
-      
+    /* Get the gradient of the element for each node */
+    if((Ndim == 2) && (strcmp(FEM_Mesh.TypeElem,"Triangle") == 0) && (NumNodesElem == 3))
+    {
+      MinElementSize = DMIN(MinElementSize,min_DeltaX__T3__(Element_Connectivity, FEM_Mesh.Coordinates));
     }
-    else if((NumNodesElem == 4) && (NumberDimensions == 2))
+    else if((Ndim == 2) && (strcmp(FEM_Mesh.TypeElem,"Quadrilateral") == 0) && (NumNodesElem == 4))
     { 
-      /* Fill the quadrilateral element with the coordinates of the nodes */
-      Poligon = allocZ__MatrixLib__(4,2);
-
-      /* Fill the poligon with vectors */
-      for(int k = 0; k<3; k++)
-      {
-        for(int l = 0 ; l<2 ; l++)
-        {
-          Poligon.nM[k][l] = FEM_Mesh.Coordinates.nM[Connectivity[k+1]][l] - FEM_Mesh.Coordinates.nM[Connectivity[k]][l];
-        }
-      }
-
-      for(int l = 0 ; l<2 ; l++)
-      {
-        Poligon.nM[3][l] = FEM_Mesh.Coordinates.nM[Connectivity[0]][l] - FEM_Mesh.Coordinates.nM[Connectivity[3]][l];
-      }
-      
-      /* Get the minimum minimum height of the triangle */
-      for(int k = 0 ; k<4 ; k++)
-      {
-        MinElementSize_aux = pow(Poligon.nM[k][0]*Poligon.nM[k][0] + Poligon.nM[k][1]*Poligon.nM[k][1] , 0.5);
-        MinElementSize = DMIN(MinElementSize,MinElementSize_aux);
-      }
-
-      /* Free memory */
-      free__MatrixLib__(Poligon);
-
+      MinElementSize = DMIN(MinElementSize,min_DeltaX__Q4__(Element_Connectivity, FEM_Mesh.Coordinates));
+    }
+    else if((Ndim == 3) && (strcmp(FEM_Mesh.TypeElem,"Tetrahedra") == 0) && (NumNodesElem == 4))
+    {
+      MinElementSize = DMIN(MinElementSize,min_DeltaX__T4__(Element_Connectivity, FEM_Mesh.Coordinates));
+    }
+    else if((Ndim == 3) && (strcmp(FEM_Mesh.TypeElem,"Hexahedra") == 0) && (NumNodesElem == 8))
+    {
+      MinElementSize = DMIN(MinElementSize,min_DeltaX__H8__(Element_Connectivity, FEM_Mesh.Coordinates));
     }
     else
     {
@@ -531,12 +484,8 @@ static double mesh_size(Mesh FEM_Mesh)
     }
 
     /* Free memory */
-    free(Connectivity);
-    
+    free__SetLib__(&Element_Connectivity);
   }
-
-  /* Free memory */
-  free__MatrixLib__(X_eval);
 
   return MinElementSize;
 

@@ -244,7 +244,7 @@ Mesh GramsBox(char *);
 
 /*!
 
-  \fn Boundaries GramsBoundary(char * File,int NumBounds)
+  \fn Boundaries Read_u_Dirichlet_Boundary_Conditions__InOutFun__(char * File,int NumBounds)
 
   \brief Function that reads the boundary conditions for the mesh
 
@@ -252,7 +252,7 @@ Mesh GramsBox(char *);
   \param NumBounds : Numerb of boundary defined in the domain
 
 */
-Boundaries GramsBoundary(char *,int);
+Boundaries Read_u_Dirichlet_Boundary_Conditions__InOutFun__(char *,int);
 /*****************************************************************/
 
 /*!
