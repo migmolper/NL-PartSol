@@ -665,12 +665,20 @@ typedef struct {
    */
   Matrix (* N_ref)(Matrix );
 
-
   /*!
    * Function with the gradient of the interpolation technique
    */
   Matrix (* dNdX_ref)(Matrix );
 
+  /*!
+   * Function with the gradient of the interpolation technique
+   */
+  Matrix (* dNdX)(Matrix, Matrix);
+
+  /*! 
+  * Function to check if a point is inside or outside of a elemnt
+  */
+  bool (* In_Out_Element)(Matrix, Matrix);
     
 } Mesh;
 

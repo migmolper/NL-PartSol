@@ -40,7 +40,11 @@ void initial_position__Particles__(Matrix X_p, Mesh FEM_Mesh, int GPxElement)
 
 /*********************************************************************/
 
-int inout_element__Particles__(int p, Matrix X_p, ChainPtr ListElement, Mesh FEM_Mesh)
+int search_particle_in_surrounding_elements__Particles__(
+  int p,
+  Matrix X_p,
+  ChainPtr ListElement,
+  Mesh FEM_Mesh)
 /*
 
 */
@@ -49,22 +53,28 @@ int inout_element__Particles__(int p, Matrix X_p, ChainPtr ListElement, Mesh FEM
   int I_element = -999;
   int Nn; /* Number of nodes of the element */
   ChainPtr Nodes;
+  Matrix Element_Coordinates;
 
   Ixd = ListElement;
   
-  while(Ixd!=NULL){
+  while(Ixd!=NULL)
+  {
 
     Nn = FEM_Mesh.NumNodesElem[Ixd->I];
     Nodes = FEM_Mesh.Connectivity[Ixd->I];
 
+    Element_Coordinates = get_nodes_coordinates__MeshTools__(Nodes, FEM_Mesh.Coordinates);
+
     /* Check if the particle is in the element */
-    if(inout_convex_set__MeshTools__(X_p, Nodes, FEM_Mesh.Coordinates))
-      {
-	      I_element = Ixd->I;
-	      break;
-      }
+    if(FEM_Mesh.In_Out_Element(X_p,Element_Coordinates))
+    {
+      free__MatrixLib__(Element_Coordinates);
+      I_element = Ixd->I;
+      break;
+    }
     
     /* Cycle */
+    free__MatrixLib__(Element_Coordinates);
     Ixd = Ixd->next;
 
   }
@@ -72,7 +82,7 @@ int inout_element__Particles__(int p, Matrix X_p, ChainPtr ListElement, Mesh FEM
   if(I_element == -999)
     {
       fprintf(stderr,"%s : %s %i \n",
-	      "Error in inout_element__Particles__()",
+	      "Error in search_particle_in_surrounding_elements__Particles__()",
 	      "Not posible to find the particle",p);
     }
   
@@ -105,7 +115,7 @@ void get_particle_tributary_nodes(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int p)
   {
 
     /* Get the index of the element */
-    IdxElement = inout_element__Particles__(p,X_p,Elements_Near_I0,FEM_Mesh);
+    IdxElement = search_particle_in_surrounding_elements__Particles__(p,X_p,Elements_Near_I0,FEM_Mesh);
     if(IdxElement != -999)
     {
       /* Free previous list of tributary nodes to the particle */
@@ -136,7 +146,7 @@ void get_particle_tributary_nodes(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int p)
   {
 
     /* Get the index of the element */
-    IdxElement = inout_element__Particles__(p,X_p,Elements_Near_I0,FEM_Mesh);
+    IdxElement = search_particle_in_surrounding_elements__Particles__(p,X_p,Elements_Near_I0,FEM_Mesh);
     if(IdxElement != -999)
     {
       /* Free previous list of tributary nodes to the particle */
@@ -167,7 +177,7 @@ void get_particle_tributary_nodes(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int p)
   {
 
     /* Get the index of the element */
-    IdxElement = inout_element__Particles__(p,X_p,Elements_Near_I0,FEM_Mesh);
+    IdxElement = search_particle_in_surrounding_elements__Particles__(p,X_p,Elements_Near_I0,FEM_Mesh);
     if(IdxElement != -999)
     {
       /* Free previous list of tributary nodes to the particle */
@@ -198,7 +208,7 @@ void get_particle_tributary_nodes(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int p)
   {
 
     /* Get the index of the element */
-    IdxElement = inout_element__Particles__(p,X_p,Elements_Near_I0,FEM_Mesh);
+    IdxElement = search_particle_in_surrounding_elements__Particles__(p,X_p,Elements_Near_I0,FEM_Mesh);
     if(IdxElement != -999)
     {
       /* Free previous list of tributary nodes to the particle */
@@ -232,7 +242,7 @@ void get_particle_tributary_nodes(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int p)
     Matrix lp = memory_to_matrix__MatrixLib__(Ndim,1,MPM_Mesh.lp.nM[p]);
     
     /* Get the index of the element */
-    IdxElement = inout_element__Particles__(p,X_p,Elements_Near_I0,FEM_Mesh);
+    IdxElement = search_particle_in_surrounding_elements__Particles__(p,X_p,Elements_Near_I0,FEM_Mesh);
 
     if(IdxElement != -999)
     {

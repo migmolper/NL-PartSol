@@ -57,9 +57,7 @@ GramsTime(Scheme=FE){
 
   /* Initial message */  
   puts("*************************************************");
-  printf(" \t %s : \n\t %s \n",
-	 "* Read time integration properties in ",
-	 Name_File);
+  printf(" \t %s : %s \n","* Read time integration properties in",Name_File);
   
   /* Open and check file */
   Sim_dat = fopen(Name_File,"r");  
@@ -100,7 +98,7 @@ GramsTime(Scheme=FE){
 	exit(EXIT_FAILURE);
       }
       TimeIntegrationScheme = Parse_Temp_id[1];
-      printf("\t -> %s : %s \n","Time integrator",TimeIntegrationScheme);
+      printf("\t \t -> %s : %s \n","Time integrator",TimeIntegrationScheme);
      
       /* Set to default all it properties */
       CFL=0.8;
@@ -146,31 +144,31 @@ GramsTime(Scheme=FE){
 
 	  if(strcmp(Parse_Temp_Prop[0],"CFL") == 0){
 	    CFL = atof(Parse_Temp_Prop[1]);
-	    printf("\t -> %s : %f \n","CFL condition",CFL);
+	    printf("\t \t -> %s : %f \n","CFL condition",CFL);
 	  }
 	  else if(strcmp(Parse_Temp_Prop[0],"N") == 0){
 	    NumTimeStep = atoi(Parse_Temp_Prop[1]);
-	    printf("\t -> %s : %i \n","Number of time-steps",NumTimeStep);
+	    printf("\t \t -> %s : %i \n","Number of time-steps",NumTimeStep);
 	  }
 	  else if(strcmp(Parse_Temp_Prop[0],"rb") == 0){
 	    SpectralRadius = atof(Parse_Temp_Prop[1]);
-	    printf("\t -> %s : %f \n","Spectral radio",SpectralRadius);
+	    printf("\t \t -> %s : %f \n","Spectral radio",SpectralRadius);
 	  }
 	  else if(strcmp(Parse_Temp_Prop[0],"Epsilon") == 0){
 	    epsilon_Mass_Matrix = atof(Parse_Temp_Prop[1]);
-	    printf("\t -> %s : %f \n","Epsilon",epsilon_Mass_Matrix);
+	    printf("\t \t -> %s : %f \n","Epsilon",epsilon_Mass_Matrix);
 	  }
 	  else if(strcmp(Parse_Temp_Prop[0],"Beta-Newmark") == 0){
 	    beta_Newmark_beta = atof(Parse_Temp_Prop[1]);
-	    printf("\t -> %s : %f \n","Beta-Newmark",beta_Newmark_beta);
+	    printf("\t \t -> %s : %f \n","Beta-Newmark",beta_Newmark_beta);
 	  }
 	  else if(strcmp(Parse_Temp_Prop[0],"Gamma-Newmark") == 0){
 	    gamma_Newmark_beta = atof(Parse_Temp_Prop[1]);
-	    printf("\t -> %s : %f \n","Gamma-Newmark",gamma_Newmark_beta);
+	    printf("\t \t -> %s : %f \n","Gamma-Newmark",gamma_Newmark_beta);
 	  }
 	  else if(strcmp(Parse_Temp_Prop[0],"TOL-Newmark") == 0){
 	    TOL_Newmark_beta = atof(Parse_Temp_Prop[1]);
-	    printf("\t -> %s : %f \n","Tolerance Newmark",TOL_Newmark_beta);
+	    printf("\t \t -> %s : %f \n","Tolerance Newmark",TOL_Newmark_beta);
 	  } 
 	  else{
 	    fprintf(stderr,"%s : %s %s \n",

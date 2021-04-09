@@ -21,13 +21,13 @@ void initialize__Q4__(
   Matrix X_p, Xi_p;
 
   /* Variable with stores the conectivity of the element of the particle */
-  ChainPtr Elem_p;
+  ChainPtr Elem_p_Connectivity;
 
   /* Auxiliar variable to loop in the list of tributary nodes of the particle */
   ChainPtr ListNodes_p;
 
   /* Matrix with the coordinate of the nodes in the element */
-  Matrix CoordElement;
+  Matrix Elem_p_Coordinates;
  
   /* Loop over the particles to initialize them */
   for(int p = 0 ; p<Np ; p++)
@@ -45,34 +45,34 @@ void initialize__Q4__(
     {
 
       /* Get connectivity of the element */
-      Elem_p = FEM_Mesh.Connectivity[i];
+      Elem_p_Connectivity = FEM_Mesh.Connectivity[i];
+      Elem_p_Coordinates = get_nodes_coordinates__MeshTools__(Elem_p_Connectivity, FEM_Mesh.Coordinates);
       
       /* 5º Check out if the GP is in the Element */
-      if(inout_convex_set__MeshTools__(X_p, Elem_p, FEM_Mesh.Coordinates))
+      if(FEM_Mesh.In_Out_Element(X_p,Elem_p_Coordinates))
       {
 
         /* With the element connectivity get the node close to the particle */
-        MPM_Mesh.I0[p] = get_closest_node__MeshTools__(X_p,Elem_p,FEM_Mesh.Coordinates);
+        MPM_Mesh.I0[p] = get_closest_node__MeshTools__(X_p,Elem_p_Connectivity,FEM_Mesh.Coordinates);
 
         /* Asign connectivity */
-        MPM_Mesh.ListNodes[p] = copy__SetLib__(Elem_p);
+        MPM_Mesh.ListNodes[p] = copy__SetLib__(Elem_p_Connectivity);
 
         /* Active those nodes that interact with the particle */
         asign_to_nodes__Particles__(p, MPM_Mesh.ListNodes[p], FEM_Mesh);
 
-        /* Get the coordinates of the element vertex */
-        CoordElement = get_nodes_coordinates__MeshTools__(MPM_Mesh.ListNodes[p], FEM_Mesh.Coordinates);
-
         /* Compute local coordinates of the particle in this element */
-        X_to_Xi__Q4__(Xi_p,X_p,CoordElement);
+        X_to_Xi__Q4__(Xi_p,X_p,Elem_p_Coordinates);
 
         /* Free coordinates of the element */
-        free__MatrixLib__(CoordElement);
+        free__MatrixLib__(Elem_p_Coordinates);
 
         break;
 	
       }
-      
+
+      /* Free coordinates of the element */
+      free__MatrixLib__(Elem_p_Coordinates);
     }
 
   }
@@ -289,6 +289,31 @@ void X_to_Xi__Q4__(
 */
 {  
   Xi = Newton_Rapson(Xi_to_X__Q4__, Element, F_Ref__Q4__, Element, X, Xi);  
+}
+
+/*********************************************************************/
+
+bool in_out__Q4__(
+  Matrix X,
+  Matrix Element)
+{
+  bool in_out = false;
+
+  Matrix Xi = allocZ__MatrixLib__(2,1);
+
+  Xi = Newton_Rapson(Xi_to_X__Q4__, Element, F_Ref__Q4__, Element, X, Xi);
+
+  if((Xi.nV[0] <= 1.0) && 
+    (Xi.nV[1]  <= 1.0) && 
+    (Xi.nV[0]  >= -1.0) &&
+    (Xi.nV[1]  >= -1.0))
+  {
+    in_out = true;    
+  }
+
+  free__MatrixLib__(Xi);
+
+  return in_out;
 }
 
 /*********************************************************************/

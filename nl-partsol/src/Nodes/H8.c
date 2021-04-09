@@ -10,7 +10,9 @@ static Matrix Xi_to_X__H8__(Matrix, Matrix);
 
 /*********************************************************************/
 
-void initialize__H8__(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
+void initialize__H8__(
+  GaussPoint MPM_Mesh, 
+  Mesh FEM_Mesh)
 {
   /* Variables for the GP coordinates */
   int Ndim = NumberDimensions;
@@ -21,13 +23,13 @@ void initialize__H8__(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
   Matrix X_p, Xi_p;
 
   /* Variable with stores the conectivity of the element of the particle */
-  ChainPtr Elem_p;
+  ChainPtr Elem_p_Connectivity;
 
   /* Auxiliar variable to loop in the list of tributary nodes of the particle */
   ChainPtr ListNodes_p;
 
   /* Matrix with the coordinate of the nodes in the element */
-  Matrix CoordElement;
+  Matrix Elem_p_Coordinates;
  
   /* Loop over the particles to initialize them */
   for(int p = 0 ; p<Np ; p++)
@@ -45,32 +47,36 @@ void initialize__H8__(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
     {
 
       /* Get connectivity of the element */
-      Elem_p = FEM_Mesh.Connectivity[i];
+      Elem_p_Connectivity = FEM_Mesh.Connectivity[i];
+      Elem_p_Coordinates = get_nodes_coordinates__MeshTools__(Elem_p_Connectivity, FEM_Mesh.Coordinates);
       
       /* 5º Check out if the GP is in the Element */
-      if(inout_convex_set__MeshTools__(X_p, Elem_p, FEM_Mesh.Coordinates))
+      if(FEM_Mesh.In_Out_Element(X_p,Elem_p_Coordinates))
       {
-      /* With the element connectivity get the node close to the particle */
-       MPM_Mesh.I0[p] = get_closest_node__MeshTools__(X_p,Elem_p,FEM_Mesh.Coordinates);
-  
-      /* Asign connectivity */
-      MPM_Mesh.ListNodes[p] = copy__SetLib__(Elem_p);
-  
-      /* Active those nodes that interact with the particle */
-      asign_to_nodes__Particles__(p, MPM_Mesh.ListNodes[p], FEM_Mesh);
-   
-      /* Get the coordinates of the element vertex */
-      CoordElement = get_nodes_coordinates__MeshTools__(MPM_Mesh.ListNodes[p],FEM_Mesh.Coordinates);
 
-      /* Compute local coordinates of the particle in this element */
-      X_to_Xi__Q4__(Xi_p,X_p,CoordElement);
-  
-      /* Free coordinates of the element */
-      free__MatrixLib__(CoordElement);
+        /* With the element connectivity get the node close to the particle */
+        MPM_Mesh.I0[p] = get_closest_node__MeshTools__(X_p,Elem_p_Connectivity,FEM_Mesh.Coordinates);
 
-      break;
+        /* Asign connectivity */
+        MPM_Mesh.ListNodes[p] = copy__SetLib__(Elem_p_Connectivity);
+
+        /* Active those nodes that interact with the particle */
+        asign_to_nodes__Particles__(p, MPM_Mesh.ListNodes[p], FEM_Mesh);
+
+
+        /* Compute local coordinates of the particle in this element */
+        X_to_Xi__Q4__(Xi_p,X_p,Elem_p_Coordinates);
+
+
+        /* Free coordinates of the element */
+        free__MatrixLib__(Elem_p_Coordinates);
+
+        break;
   
       }
+
+      /* Free coordinates of the element */
+      free__MatrixLib__(Elem_p_Coordinates);
       
     }
 
@@ -81,7 +87,8 @@ void initialize__H8__(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 /*********************************************************************/
 
 /* Shape functions */
-Matrix N__H8__(Matrix Xi)
+Matrix N__H8__(
+  Matrix Xi)
 {
   
   /* Definition and allocation */
@@ -102,7 +109,8 @@ Matrix N__H8__(Matrix Xi)
 /*********************************************************************/
 
 /* Derivatives of the shape functions */
-Matrix dN_Ref__H8__(Matrix Xi)
+Matrix dN_Ref__H8__(
+  Matrix Xi)
 {
 
   int Ndim = NumberDimensions;
@@ -149,7 +157,9 @@ Matrix dN_Ref__H8__(Matrix Xi)
 /*********************************************************************/
 
 /* Jacobian of the transformation for the four-nodes quadrilateral */
-static Matrix F_Ref__H8__(Matrix Xi, Matrix Element)
+static Matrix F_Ref__H8__(
+  Matrix Xi,
+  Matrix Element)
 /*
   Get the jacobian of the transformation of the reference element :
 
@@ -210,7 +220,9 @@ static Matrix F_Ref__H8__(Matrix Xi, Matrix Element)
 /*********************************************************************/
 
 /* Element gradient in the real element */
-Matrix dN__H8__(Matrix Xi, Matrix Element)
+Matrix dN__H8__(
+  Matrix Xi,
+  Matrix Element)
 /*
   - Matrix Xi_GP : Element coordinates of the gauss point
   - Matrix Element : Coordinates of the element (8 x Ndim)
@@ -250,7 +262,9 @@ Matrix dN__H8__(Matrix Xi, Matrix Element)
 /*********************************************************************/
 
 /* Global coordinates of the four nodes quadrilateral */
-static Matrix Xi_to_X__H8__(Matrix Xi, Matrix Element)
+static Matrix Xi_to_X__H8__(
+  Matrix Xi,
+  Matrix Element)
 /*
   This function evaluate the position of the GP in the element,
   and get it global coordiantes    
@@ -283,7 +297,10 @@ static Matrix Xi_to_X__H8__(Matrix Xi, Matrix Element)
 
 /*********************************************************************/
 
-void X_to_Xi__H8__(Matrix Xi, Matrix X, Matrix Element)
+void X_to_Xi__H8__(
+  Matrix Xi, 
+  Matrix X, 
+  Matrix Element)
 /* 
    The function return the natural coordinates of a point 
    inside of the element.
@@ -301,6 +318,35 @@ void X_to_Xi__H8__(Matrix Xi, Matrix X, Matrix Element)
   Xi = Newton_Rapson(Xi_to_X__H8__, Element, F_Ref__H8__, Element, X, Xi);
   
 }
+
+
+/*********************************************************************/
+
+bool in_out__H8__(
+  Matrix X,
+  Matrix Element)
+{
+  bool in_out = false;
+
+  Matrix Xi = allocZ__MatrixLib__(3,1);
+
+  Xi = Newton_Rapson(Xi_to_X__H8__, Element, F_Ref__H8__, Element, X, Xi);
+
+  if((Xi.nV[0] <= 1.0) && 
+    (Xi.nV[0] >= -1.0) && 
+    (Xi.nV[1] <=  1.0) && 
+    (Xi.nV[1] >= -1.0) && 
+    (Xi.nV[2] <=  1.0) && 
+    (Xi.nV[2] >= -1.0))
+  {
+    in_out = true;    
+  }
+
+  free__MatrixLib__(Xi);
+
+  return in_out;
+}
+
 
 /*********************************************************************/
 
@@ -493,7 +539,9 @@ void element_to_particles__H8__(
 /*********************************************************************/
 
 
-double min_DeltaX__H8__(ChainPtr Element_Connectivity, Matrix Coordinates)
+double min_DeltaX__H8__(
+  ChainPtr Element_Connectivity, 
+  Matrix Coordinates)
 {
 
   /* Auxiliar variables of the function */
@@ -551,6 +599,5 @@ double min_DeltaX__H8__(ChainPtr Element_Connectivity, Matrix Coordinates)
 
   return MinElementSize;
 }
-
 
 /*********************************************************************/

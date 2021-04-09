@@ -10,11 +10,12 @@ char * MPM_MeshFileName;
 /*
   Auxiliar functions 
 */
-static void initialise_2D_particles();
+static void initialise_2D_particles(Mesh,GaussPoint,int);
+static void initialise_3D_particles(Mesh,GaussPoint,int);
 
 /*********************************************************************/
 
-GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
+GaussPoint GramsSolid(char * Name_File, Mesh FEM_Mesh)
 /*
  */
 {
@@ -61,10 +62,9 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
   
   /* Open and check file */
   Sim_dat = fopen(Name_File,"r");  
-  if (Sim_dat==NULL){
-    fprintf(stderr,"%s : \n\t %s %s",
-	    "Error in GramsInitials()","Incorrect lecture of",
-	    Name_File);
+  if (Sim_dat==NULL)
+  {
+    fprintf(stderr,"%s : \n\t %s %s","Error in GramsInitials()","Incorrect lecture of",Name_File);
     exit(EXIT_FAILURE);
   }
   
@@ -85,34 +85,32 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
     /*
       Read file mesh and number of material points per element
     */
-    if ((Num_words_parse > 0) &&
-	(strcmp(Parse_GramsSolid2D[0],"GramsSolid2D") == 0)){
+    if ((Num_words_parse > 0) && (strcmp(Parse_GramsSolid2D[0],"GramsSolid") == 0))
+    {
       Is_GramsSolid2D = true;
       Num_words_parse = parse(Parse_Mesh_id, Parse_GramsSolid2D[1],"(,)");
 
       /*
-	Propertie 1
-       */
+	       Propertie 1
+      */
       Num_words_parse = parse(Parse_Mesh_Properties, Parse_Mesh_id[0],"=");
-      if((Num_words_parse == 2) &&
-	 (strcmp(Parse_Mesh_Properties[0],"File") == 0))
-	{
-	  MPM_MeshFileName = Parse_Mesh_Properties[1];
-	  generate_route(Route_Mesh,Name_File);
-	  strcat(Route_Mesh,MPM_MeshFileName);
-	  Is_ParticlesMesh = true;
-	}
+      if((Num_words_parse == 2) && (strcmp(Parse_Mesh_Properties[0],"File") == 0))
+      {
+        MPM_MeshFileName = Parse_Mesh_Properties[1];
+        generate_route(Route_Mesh,Name_File);
+        strcat(Route_Mesh,MPM_MeshFileName);
+        Is_ParticlesMesh = true;
+      }
       
       /*
-	Propertie 2
+	      Propertie 2
       */
       Num_words_parse = parse(Parse_Mesh_Properties,Parse_Mesh_id[1],"=");
-      if((Num_words_parse == 2) &&
-	 (strcmp(Parse_Mesh_Properties[0],"GPxElement") == 0))
-	{
-	  GPxElement = atoi(Parse_Mesh_Properties[1]);
-	  Is_GPxElement = true;
-	}
+      if((Num_words_parse == 2) && (strcmp(Parse_Mesh_Properties[0],"GPxElement") == 0))
+      {
+        GPxElement = atoi(Parse_Mesh_Properties[1]);
+        Is_GPxElement = true;
+      }
       
     }
     if ((Num_words_parse > 0) && (strcmp(Parse_GramsSolid2D[0],"GramsShapeFun") == 0))
@@ -148,7 +146,8 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
   /***************** Define MPM Mesh ****************/
   /**************************************************/
   /* Define GP Mesh */
-  if(Is_GramsSolid2D && Is_GPxElement && Is_GPxElement){
+  if(Is_GramsSolid2D && Is_GPxElement && Is_GPxElement)
+  {
     
     /* Read GP mesh */
     MPM_GID_Mesh = ReadGidMesh__MeshTools__(Route_Mesh);
@@ -165,30 +164,33 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
 
     /* Tributary nodes for each particle */
     MPM_Mesh.ListNodes = (ChainPtr *)malloc(NumParticles*sizeof(ChainPtr));
-    if(MPM_Mesh.ListNodes == NULL){
-      printf("%s : %s \n",
-	     "Define_GP_Mesh","Memory error for ListNodes");
+    if(MPM_Mesh.ListNodes == NULL)
+    {
+      printf("%s : %s \n","Define_GP_Mesh","Memory error for ListNodes");
       exit(EXIT_FAILURE);
     }
-    for(int i = 0 ; i<NumParticles ; i++){
+    for(int i = 0 ; i<NumParticles ; i++)
+    {
       MPM_Mesh.ListNodes[i] = NULL;  
     }
 
     /* List of particles close to each particle */
     MPM_Mesh.Beps = (ChainPtr *)malloc(NumParticles*sizeof(ChainPtr));
-    if(MPM_Mesh.Beps == NULL){
-      printf("%s : %s \n",
-	     "Define_GP_Mesh","Memory error for Beps");
+    if(MPM_Mesh.Beps == NULL)
+    {
+      printf("%s : %s \n","Define_GP_Mesh","Memory error for Beps");
       exit(EXIT_FAILURE);
     }
-    for(int i = 0 ; i<NumParticles ; i++){
+    for(int i = 0 ; i<NumParticles ; i++)
+    {
       MPM_Mesh.Beps[i] = NULL;  
     }
 
     /**************************************************/
     /********* Read Shape functions parameters ********/
     /**************************************************/
-    if(Is_GramsShapeFun){
+    if(Is_GramsShapeFun)
+    {
       GramsShapeFun(Name_File);
       /* Lenght of the Voxel (Only GIMP) */
       if(strcmp(ShapeFunctionGP,"uGIMP") == 0)
@@ -205,7 +207,8 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
         strcpy(MPM_Mesh.Beta.Info,"Beta parameter");
       }
     }
-    else{
+    else
+    {
       fprintf(stderr,"%s : %s \n",
 	      "Error in GramsSolid2D()","GramsShapeFun no defined");
       exit(EXIT_FAILURE);
@@ -242,6 +245,10 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
     if(Ndim == 2)
     {
       initialise_2D_particles(MPM_GID_Mesh,MPM_Mesh,GPxElement);
+    }
+    else if(Ndim == 3)
+    {
+
     }
      
     /**************************************************/
@@ -296,11 +303,13 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
     /**************************************************/    
     /*************** Read body forces *****************/
     /**************************************************/    
-    if(Is_GramsBodyForces){
+    if(Is_GramsBodyForces)
+    {
       MPM_Mesh.NumberBodyForces = Counter_BodyForces;
       MPM_Mesh.B = GramsBodyForces(Name_File,Counter_BodyForces,GPxElement); 
     }
-    else{
+    else
+    {
       MPM_Mesh.NumberBodyForces = Counter_BodyForces;
       puts("*************************************************");
       printf(" \t %s : \n\t %s \n",
@@ -311,15 +320,16 @@ GaussPoint GramsSolid2D(char * Name_File, Mesh FEM_Mesh)
     /************* Free the input data ****************/
     /**************************************************/
     for(int i = 0 ; i<MPM_GID_Mesh.NumElemMesh ; i++)
-      {
-        free__SetLib__(&MPM_GID_Mesh.Connectivity[i]); 
-      }   
+    {
+      free__SetLib__(&MPM_GID_Mesh.Connectivity[i]); 
+    }   
     free(MPM_GID_Mesh.Connectivity);
     free__MatrixLib__(MPM_GID_Mesh.Coordinates);
     free(MPM_GID_Mesh.NumParticles);
 
   } 
-  else{
+  else
+  {
     fprintf(stderr,"%s : %s \n",
 	    "Error in GramsSolid2D()",
 	    "Mesh file name and number of particles are required");
@@ -392,6 +402,68 @@ static void initialise_2D_particles(Mesh MPM_GID_Mesh,GaussPoint MPM_Mesh, int G
 
       /* Free data */
     free__MatrixLib__(Poligon_Coordinates);
+
+  }
+}
+
+/***************************************************************************/
+
+static void initialise_3D_particles(Mesh MPM_GID_Mesh,GaussPoint MPM_Mesh, int GPxElement)
+  /*
+     Loop in the GID mesh to create particles from an element 
+  */
+{
+
+
+  Matrix Poligon_Coordinates;
+  double Vol_Element, V_p, th_p, m_p, rho_p;
+  int p;
+  int MatIdx_p;
+
+  for(int i = 0 ; i<MPM_GID_Mesh.NumElemMesh ; i++)
+  {
+
+    /* Get the coordinates of the element vertex */ 
+    Poligon_Coordinates = get_nodes_coordinates__MeshTools__(MPM_GID_Mesh.Connectivity[i], MPM_GID_Mesh.Coordinates);
+    Vol_Element = area__MatrixLib__(Poligon_Coordinates);
+    free__MatrixLib__(Poligon_Coordinates);
+
+    for(int j = 0 ; j<GPxElement ; j++)
+    {
+
+    /* Get the index of the material point */
+      p = i*GPxElement+j;
+
+    /* Get the index of the material */
+      MatIdx_p = MPM_Mesh.MatIdx[p];
+    /* Get material properties */
+      V_p = Vol_Element/GPxElement;
+      rho_p = MPM_Mesh.Mat[MatIdx_p].rho;
+      m_p = V_p*rho_p;
+    /* Set the initial volume */
+      MPM_Mesh.Phi.Vol_0.nV[p] = V_p;
+    /* Set the initial density */
+      MPM_Mesh.Phi.rho.nV[p] = rho_p; 
+    /* Assign the mass parameter */
+      MPM_Mesh.Phi.mass.nV[p] = m_p;
+    /* Local coordinates of the element */
+      MPM_Mesh.I0[p] = -999;
+      MPM_Mesh.NumberNodes[p] = 4;
+
+      if(strcmp(MPM_Mesh.Mat[MatIdx_p].Type,"Von-Mises") == 0)
+      {
+          MPM_Mesh.Phi.cohesion.nV[p] = MPM_Mesh.Mat[MatIdx_p].yield_stress_0;
+      }
+      if(strcmp(MPM_Mesh.Mat[MatIdx_p].Type,"Drucker-Prager-Plane-Strain") == 0)
+      {
+          MPM_Mesh.Phi.cohesion.nV[p] = MPM_Mesh.Mat[MatIdx_p].cohesion_reference;
+      }
+      if(strcmp(MPM_Mesh.Mat[MatIdx_p].Type,"Drucker-Prager-Outer-Cone") == 0)
+      {
+          MPM_Mesh.Phi.cohesion.nV[p] = MPM_Mesh.Mat[MatIdx_p].cohesion_reference;
+      }
+
+    }    
 
   }
 }

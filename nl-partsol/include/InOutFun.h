@@ -287,7 +287,7 @@ GaussPoint Generate_Gauss_Point_Analysis__InOutFun__(char *);
 
 /*!
 
-  \fn GaussPoint GramsSolid2D(char * File, Mesh Nodes)
+  \fn GaussPoint GramsSolid(char * File, Mesh Nodes)
 
   \brief Function that generate a set of material points
 
@@ -295,7 +295,7 @@ GaussPoint Generate_Gauss_Point_Analysis__InOutFun__(char *);
   \param Nodes : Set of background nodes
 
 */
-GaussPoint GramsSolid2D(char *,Mesh);
+GaussPoint GramsSolid(char *,Mesh);
 /*****************************************************************/
 
 /*

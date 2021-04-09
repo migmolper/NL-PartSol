@@ -110,8 +110,6 @@ Mesh GramsBox(char * Name_File)
     }
   }
 
-  exit(0);
-
   return FEM_Mesh;
 }
 

@@ -212,7 +212,10 @@ Matrix compute_N__MeshTools__(
   */
   Matrix ShapeFunction_p; 
   
-  if(strcmp(ShapeFunctionGP,"Q4") == 0)
+  if((strcmp(ShapeFunctionGP,"Q4") == 0) ||
+    (strcmp(ShapeFunctionGP,"H8") == 0)  || 
+    (strcmp(ShapeFunctionGP,"T3") == 0)  || 
+    (strcmp(ShapeFunctionGP,"T4") == 0))
   {
     
     /*
@@ -223,54 +226,10 @@ Matrix compute_N__MeshTools__(
     /* 
       Evaluate the shape function
     */
-    ShapeFunction_p = N__Q4__(xi_p);
-    
-  }
-  
-  else if(strcmp(ShapeFunctionGP,"H8") == 0)
-  {
-    
-    /*
-      Get the element coordinates of the GP
-    */
-    xi_p = memory_to_matrix__MatrixLib__(Ndim,1,MPM_Mesh.Phi.x_EC.nM[i_GP]);
-
-    /* 
-      Evaluate the shape function
-    */
-    ShapeFunction_p = N__H8__(xi_p);
+    ShapeFunction_p = FEM_Mesh.N_ref(xi_p);
     
   }
 
-  else if(strcmp(ShapeFunctionGP,"T3") == 0)
-  {
-    
-    /*
-      Get the element coordinates of the GP
-    */
-    xi_p = memory_to_matrix__MatrixLib__(Ndim,1,MPM_Mesh.Phi.x_EC.nM[i_GP]);
-
-    /* 
-      Evaluate the shape function
-    */
-    ShapeFunction_p = N__T3__(xi_p);
-    
-  }
-
-  else if(strcmp(ShapeFunctionGP,"T4") == 0)
-  {
-    
-    /*
-      Get the element coordinates of the GP
-    */
-    xi_p = memory_to_matrix__MatrixLib__(Ndim,1,MPM_Mesh.Phi.x_EC.nM[i_GP]);
-
-    /* 
-      Evaluate the shape function
-    */
-    ShapeFunction_p = N__T4__(xi_p);
-    
-  }
 
   else if(strcmp(ShapeFunctionGP,"uGIMP") == 0)
   {
@@ -383,7 +342,10 @@ Matrix compute_dN__MeshTools__(Element GP_Element,GaussPoint MPM_Mesh,
   Matrix Gradient_p;
 
   
-  if(strcmp(ShapeFunctionGP,"Q4") == 0)
+  if((strcmp(ShapeFunctionGP,"Q4") == 0) ||
+    (strcmp(ShapeFunctionGP,"H8") == 0)  || 
+    (strcmp(ShapeFunctionGP,"T3") == 0)  || 
+    (strcmp(ShapeFunctionGP,"T4") == 0))
   {
     /* 
       Fill the poligon woth the nodal coordinates of the current element
@@ -406,94 +368,7 @@ Matrix compute_dN__MeshTools__(Element GP_Element,GaussPoint MPM_Mesh,
     /*
       Evaluate the shape function gradient
     */
-    Gradient_p = dN__Q4__(xi_p,X_I);
-    
-    /* Free memory */
-    free__MatrixLib__(X_I);
-  }
-
-  else if(strcmp(ShapeFunctionGP,"H8") == 0)
-  {
-    /* 
-      Fill the poligon woth the nodal coordinates of the current element
-    */
-    X_I = allocZ__MatrixLib__(NumNodes_p,Ndim);
-    for(int k = 0; k<NumNodes_p ; k++)
-    {
-      I_p = Connectivity_p[k];
-      for(int l = 0 ; l<Ndim ; l++)
-      {
-        X_I.nM[k][l] = FEM_Mesh.Coordinates.nM[I_p][l];
-      }
-    }
-    
-    /*
-      Get the element coordinates of the GP
-    */
-    xi_p = memory_to_matrix__MatrixLib__(Ndim,1,MPM_Mesh.Phi.x_EC.nM[i_GP]);
-
-    /*
-      Evaluate the shape function gradient
-    */
-    Gradient_p = dN__H8__(xi_p,X_I);
-    
-    /* Free memory */
-    free__MatrixLib__(X_I);
-  }
-
-  else if(strcmp(ShapeFunctionGP,"T3") == 0)
-  {
-    /* 
-      Fill the poligon woth the nodal coordinates of the current element
-    */
-    X_I = allocZ__MatrixLib__(NumNodes_p,Ndim);
-    for(int k = 0; k<NumNodes_p ; k++)
-    {
-      I_p = Connectivity_p[k];
-      for(int l = 0 ; l<Ndim ; l++)
-      {
-        X_I.nM[k][l] = FEM_Mesh.Coordinates.nM[I_p][l];
-      }
-    }
-    
-    /*
-      Get the element coordinates of the GP
-    */
-    xi_p = memory_to_matrix__MatrixLib__(Ndim,1,MPM_Mesh.Phi.x_EC.nM[i_GP]);
-
-    /*
-      Evaluate the shape function gradient
-    */
-    Gradient_p = dN__T3__(xi_p,X_I);
-    
-    /* Free memory */
-    free__MatrixLib__(X_I);
-  }
-
-  else if(strcmp(ShapeFunctionGP,"T4") == 0)
-  {
-    /* 
-      Fill the poligon woth the nodal coordinates of the current element
-    */
-    X_I = allocZ__MatrixLib__(NumNodes_p,Ndim);
-    for(int k = 0; k<NumNodes_p ; k++)
-    {
-      I_p = Connectivity_p[k];
-      for(int l = 0 ; l<Ndim ; l++)
-      {
-        X_I.nM[k][l] = FEM_Mesh.Coordinates.nM[I_p][l];
-      }
-    }
-    
-    /*
-      Get the element coordinates of the GP
-    */
-    xi_p = memory_to_matrix__MatrixLib__(Ndim,1,MPM_Mesh.Phi.x_EC.nM[i_GP]);
-
-    /*
-      Evaluate the shape function gradient
-    */
-    Gradient_p = dN__T4__(xi_p,X_I);
+    Gradient_p = FEM_Mesh.dNdX(xi_p,X_I);
     
     /* Free memory */
     free__MatrixLib__(X_I);
@@ -750,29 +625,6 @@ int get_closest_node__MeshTools__(
   }
    
   return I_DistMin;
-}
-
-/*********************************************************************/
-
-bool inout_convex_set__MeshTools__(
-  Matrix X_p,
-  ChainPtr Elem_p,
-  Matrix Coordinates)
-{
-
-  bool Is_In_Element = false;
-  Matrix Element_Coordinates;
-  
-  Element_Coordinates = get_nodes_coordinates__MeshTools__(Elem_p, Coordinates);
-  
-  if (inout__MatrixLib__(X_p, Element_Coordinates) == 1)
-  {
-    Is_In_Element = true;
-  }
-
-  free__MatrixLib__(Element_Coordinates);
-
-  return Is_In_Element;
 }
 
 /*********************************************************************/

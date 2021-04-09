@@ -55,27 +55,35 @@ Mesh ReadGidMesh__MeshTools__(char * MeshName)
   strcpy(GID_Mesh.TypeElem,Mesh_Info.ElemType);
   
   /*
-    Select the kind of element of the mesh
+    Select the kind of element of the mesh and assign functions
   */
   if((strcmp(GID_Mesh.TypeElem,"Triangle") == 0) && (Mesh_Info.NumNodesElem == 3))
   {
     GID_Mesh.N_ref = N__T3__;
     GID_Mesh.dNdX_ref = dN_Ref__T3__;
+    GID_Mesh.dNdX = dN__T3__;
+    GID_Mesh.In_Out_Element = in_out__T3__;
   }
   else if((strcmp(GID_Mesh.TypeElem,"Quadrilateral") == 0) && (Mesh_Info.NumNodesElem == 4))
   {
     GID_Mesh.N_ref = N__Q4__;
     GID_Mesh.dNdX_ref = dN_Ref__Q4__;
+    GID_Mesh.dNdX = dN__Q4__;
+    GID_Mesh.In_Out_Element = in_out__Q4__;
   }
   else if((strcmp(GID_Mesh.TypeElem,"Tetrahedra") == 0) && (Mesh_Info.NumNodesElem == 4))
   {
     GID_Mesh.N_ref = N__T4__;
     GID_Mesh.dNdX_ref = dN_Ref__T4__;
+    GID_Mesh.dNdX = dN__T4__;
+    GID_Mesh.In_Out_Element = in_out__T4__;
   }
   else if((strcmp(GID_Mesh.TypeElem,"Hexahedra") == 0) && (Mesh_Info.NumNodesElem == 8))
   {
     GID_Mesh.N_ref = N__H8__;
-    GID_Mesh.dNdX_ref = dN_Ref__H8__; 
+    GID_Mesh.dNdX_ref = dN_Ref__H8__;
+    GID_Mesh.dNdX = dN__H8__;
+    GID_Mesh.In_Out_Element = in_out__H8__;
   }
   else
   {

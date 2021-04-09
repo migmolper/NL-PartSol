@@ -17,6 +17,7 @@ Matrix N__T3__(Matrix);
 Matrix dN__T3__(Matrix,Matrix);
 Matrix dN_Ref__T3__(Matrix);
 void   X_to_Xi__T3__(Matrix,Matrix,Matrix);
+bool in_out__T3__(Matrix,Matrix);
 void   element_to_particles__T3__(Matrix, Mesh, int);
 double min_DeltaX__T3__(ChainPtr, Matrix);
 

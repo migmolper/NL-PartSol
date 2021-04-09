@@ -26,7 +26,8 @@ void initialize__LME__(
   int Np = MPM_Mesh.NumGP; // Number of gauss-points in the simulation
   int Nelem = FEM_Mesh.NumElemMesh; // Number of elements
   int I0; // Closest node to the particle
-  ChainPtr Elem_p; // Surrounding elements
+  ChainPtr Elem_p_Connectivity; // Surrounding elements
+  Matrix Elem_p_Coordinates;
   ChainPtr Nodes_p; // Surrounding particles
 
   Matrix Metric_p; // Define a metric tensor
@@ -60,17 +61,17 @@ void initialize__LME__(
     {
 
       /* Get the element properties */
-      Elem_p = FEM_Mesh.Connectivity[i];
-      
-      /* Check out if the GP is in the Element */
-      if(inout_convex_set__MeshTools__(X_p, Elem_p, FEM_Mesh.Coordinates))
-      {
+      Elem_p_Connectivity = FEM_Mesh.Connectivity[i];
+      Elem_p_Coordinates = get_nodes_coordinates__MeshTools__(Elem_p_Connectivity, FEM_Mesh.Coordinates);
 
+      /* Check out if the GP is in the Element */
+      if(FEM_Mesh.In_Out_Element(X_p,Elem_p_Coordinates))
+      {
         /* With the element connectivity get the node close to the particle */
-        I0 = get_closest_node__MeshTools__(X_p,Elem_p,FEM_Mesh.Coordinates);
+        I0 = get_closest_node__MeshTools__(X_p,Elem_p_Connectivity,FEM_Mesh.Coordinates);
 
         /* Calculate distance from particle to each node in the neibourhood */
-        MPM_Mesh.ListNodes[p] = copy__SetLib__(Elem_p);
+        MPM_Mesh.ListNodes[p] = copy__SetLib__(Elem_p_Connectivity);
         Delta_Xip = compute_distance__MeshTools__(MPM_Mesh.ListNodes[p],X_p,FEM_Mesh.Coordinates);
 
         /* Initialize Beta */
@@ -110,10 +111,17 @@ void initialize__LME__(
         /* 
           Free memory
         */
+        free__MatrixLib__(Elem_p_Coordinates);
         free__MatrixLib__(Delta_Xip);
 
         break;
       }      
+
+      /* 
+        Free memory
+      */
+      free__MatrixLib__(Elem_p_Coordinates);
+
     }
 
     /*
