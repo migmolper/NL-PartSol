@@ -14,7 +14,7 @@ void initial_position__Particles__(Matrix X_p, Mesh FEM_Mesh, int GPxElement)
 
   if(strcmp(FEM_Mesh.TypeElem,"Triangle") == 0)
   {
-    element_to_particles__T3__(X_p, FEM_Mesh,GPxElement);
+    element_to_particles__T3__(X_p, FEM_Mesh, GPxElement);
   }
   else if(strcmp(FEM_Mesh.TypeElem,"Quadrilateral") == 0)
   {

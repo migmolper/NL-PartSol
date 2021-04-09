@@ -229,10 +229,28 @@ GaussPoint Generate_Soil_Water_Coupling_Analysis__InOutFun__(char * Name_File, M
       Initialise shape functions 
     */
     puts("*************************************************");
-    if(strcmp(ShapeFunctionGP,"Q4") == 0)
+    if(strcmp(ShapeFunctionGP,"FEM") == 0)
     {
-      printf("\t * %s \n","Start MPMQ4 shape functions initialisation ...");
-      initialize__Q4__(MPM_Mesh, FEM_Mesh);
+      if(strcmp(FEM_Mesh.TypeElem,"Triangle") == 0)
+      {
+        printf("\t * %s \n","Start FEM-T3 shape functions initialisation ...");
+        initialize__T3__(MPM_Mesh, FEM_Mesh);
+      }
+      else if(strcmp(FEM_Mesh.TypeElem,"Quadrilateral") == 0)
+      {
+        printf("\t * %s \n","Start FEM-Q4 shape functions initialisation ...");
+        initialize__Q4__(MPM_Mesh, FEM_Mesh);
+      }
+      else if(strcmp(FEM_Mesh.TypeElem,"Tetrahedra") == 0)
+      {
+        printf("\t * %s \n","Start FEM-T4 shape functions initialisation ...");
+        initialize__T4__(MPM_Mesh, FEM_Mesh);
+      }
+      else if(strcmp(FEM_Mesh.TypeElem,"Hexahedra") == 0)
+      {
+        printf("\t * %s \n","Start FEM-H8 shape functions initialisation ...");
+        initialize__H8__(MPM_Mesh, FEM_Mesh);
+      }
     }
     else if(strcmp(ShapeFunctionGP,"uGIMP") == 0)
     {

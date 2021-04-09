@@ -166,10 +166,29 @@ GaussPoint restart_Simulation(char * File_Parameters,
   printf(" \t %s \n","* Read shape functions");
   GramsShapeFun(File_Parameters);
   
-  if(strcmp(ShapeFunctionGP,"Q4") == 0)
+  if(strcmp(ShapeFunctionGP,"FEM") == 0)
     {
-      initialize__Q4__(Set_Particles, FEM_Mesh);
-    }
+      if(strcmp(FEM_Mesh.TypeElem,"Triangle") == 0)
+      {
+        printf("\t * %s \n","Start FEM-T3 shape functions initialisation ...");
+        initialize__T3__(Set_Particles, FEM_Mesh);
+      }
+      else if(strcmp(FEM_Mesh.TypeElem,"Quadrilateral") == 0)
+      {
+        printf("\t * %s \n","Start FEM-Q4 shape functions initialisation ...");
+        initialize__Q4__(Set_Particles, FEM_Mesh);
+      }
+      else if(strcmp(FEM_Mesh.TypeElem,"Tetrahedra") == 0)
+      {
+        printf("\t * %s \n","Start FEM-T4 shape functions initialisation ...");
+        initialize__T4__(Set_Particles, FEM_Mesh);
+      }
+      else if(strcmp(FEM_Mesh.TypeElem,"Hexahedra") == 0)
+      {
+        printf("\t * %s \n","Start FEM-H8 shape functions initialisation ...");
+        initialize__H8__(Set_Particles, FEM_Mesh);
+      }
+  }
   else if(strcmp(ShapeFunctionGP,"uGIMP") == 0)
     {
       Set_Particles.lp = allocZ__MatrixLib__(Np,Ndim);

@@ -212,10 +212,7 @@ Matrix compute_N__MeshTools__(
   */
   Matrix ShapeFunction_p; 
   
-  if((strcmp(ShapeFunctionGP,"Q4") == 0) ||
-    (strcmp(ShapeFunctionGP,"H8") == 0)  || 
-    (strcmp(ShapeFunctionGP,"T3") == 0)  || 
-    (strcmp(ShapeFunctionGP,"T4") == 0))
+  if(strcmp(ShapeFunctionGP,"FEM") == 0)
   {
     
     /*
@@ -342,10 +339,7 @@ Matrix compute_dN__MeshTools__(Element GP_Element,GaussPoint MPM_Mesh,
   Matrix Gradient_p;
 
   
-  if((strcmp(ShapeFunctionGP,"Q4") == 0) ||
-    (strcmp(ShapeFunctionGP,"H8") == 0)  || 
-    (strcmp(ShapeFunctionGP,"T3") == 0)  || 
-    (strcmp(ShapeFunctionGP,"T4") == 0))
+  if(strcmp(ShapeFunctionGP,"FEM") == 0)
   {
     /* 
       Fill the poligon woth the nodal coordinates of the current element
