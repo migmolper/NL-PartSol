@@ -73,7 +73,7 @@ Mesh GramsBox(char * Name_File)
   puts("*************************************************");
   printf(" \t %s : %s \n","* Read GID mesh in",Nodes_Info.Mesh_File);
   FEM_Mesh = ReadGidMesh__MeshTools__(Nodes_Info.Mesh_File);
-  
+
   FEM_Mesh.NumNeighbour = (int *)Allocate_ArrayZ(FEM_Mesh.NumNodesMesh,sizeof(int)); 
   FEM_Mesh.NodeNeighbour = (ChainPtr *)malloc(FEM_Mesh.NumNodesMesh*sizeof(ChainPtr));
   get_sourrounding_elements(FEM_Mesh);
@@ -362,9 +362,6 @@ static ChainPtr node_I_locality(int I, Mesh FEM_Mesh)
   
   /* Get the union of this nodes */
   Nodes = union__SetLib__(Table_ElemNodes,NumNeighbour);
-  
-  /* Free table with the nodes of each elements */
-  free(Table_ElemNodes);
 
   /* Return nodes close to the node I */
   return Nodes;
@@ -447,6 +444,7 @@ static double mesh_size(Mesh FEM_Mesh)
   int NumElemMesh = FEM_Mesh.NumElemMesh;
   int NumNodesElem; /* Number of nodes of each element */
   ChainPtr Element_Connectivity; /* Connectivity of the element */
+  ChainPtr Element_Connectivity_Circular;
   double MinElementSize = 10e16;
 
   /* Loop over the elements in the mesh */
@@ -455,24 +453,25 @@ static double mesh_size(Mesh FEM_Mesh)
 
     /* Connectivity of the element */
     NumNodesElem = FEM_Mesh.NumNodesElem[i];
-    Element_Connectivity = create_circular_set__SetLib__(FEM_Mesh.Connectivity[i]);
+    Element_Connectivity = copy__SetLib__(FEM_Mesh.Connectivity[i]);
+    Element_Connectivity_Circular = create_circular_set__SetLib__(Element_Connectivity);
     
     /* Get the gradient of the element for each node */
     if((Ndim == 2) && (strcmp(FEM_Mesh.TypeElem,"Triangle") == 0) && (NumNodesElem == 3))
     {
-      MinElementSize = DMIN(MinElementSize,min_DeltaX__T3__(Element_Connectivity, FEM_Mesh.Coordinates));
+      MinElementSize = DMIN(MinElementSize,min_DeltaX__T3__(Element_Connectivity_Circular, FEM_Mesh.Coordinates));
     }
     else if((Ndim == 2) && (strcmp(FEM_Mesh.TypeElem,"Quadrilateral") == 0) && (NumNodesElem == 4))
     { 
-      MinElementSize = DMIN(MinElementSize,min_DeltaX__Q4__(Element_Connectivity, FEM_Mesh.Coordinates));
+      MinElementSize = DMIN(MinElementSize,min_DeltaX__Q4__(Element_Connectivity_Circular, FEM_Mesh.Coordinates));
     }
     else if((Ndim == 3) && (strcmp(FEM_Mesh.TypeElem,"Tetrahedra") == 0) && (NumNodesElem == 4))
     {
-      MinElementSize = DMIN(MinElementSize,min_DeltaX__T4__(Element_Connectivity, FEM_Mesh.Coordinates));
+      MinElementSize = DMIN(MinElementSize,min_DeltaX__T4__(Element_Connectivity_Circular, FEM_Mesh.Coordinates));
     }
     else if((Ndim == 3) && (strcmp(FEM_Mesh.TypeElem,"Hexahedra") == 0) && (NumNodesElem == 8))
     {
-      MinElementSize = DMIN(MinElementSize,min_DeltaX__H8__(Element_Connectivity, FEM_Mesh.Coordinates));
+      MinElementSize = DMIN(MinElementSize,min_DeltaX__H8__(Element_Connectivity_Circular, FEM_Mesh.Coordinates));
     }
     else
     {

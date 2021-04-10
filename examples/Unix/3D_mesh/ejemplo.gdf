@@ -12,6 +12,30 @@ GramsBox (Type=GID,File=cube.msh) {
 GramsTime (Type=Newmark-beta-Finite-Strains) {
      CFL=1.0
      N=1000
+     Epsilon=1.0
  }
 
+GramsSolid (File=Cube.msh,GPxElement=8) {
 
+  GramsMaterials (Particles=Material.txt) {
+    Type=Neo-Hookean-Wriggers
+    Cel=5.4
+    rho=2700
+    E=78750
+    nu=0.3125
+    Id=0
+  }
+
+  GramsShapeFun (Type=LME) {
+    gamma=3.0
+   }
+
+  GramsBodyForces (Nodes=Material.txt) {
+   b.z Gravity_Load.txt
+  }
+   
+}
+
+  GramsOutputs (i=1) {
+         DIR=Resultados
+  }

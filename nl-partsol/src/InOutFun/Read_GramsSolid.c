@@ -18,6 +18,7 @@ GaussPoint GramsSolid(char * Name_File, Mesh FEM_Mesh)
 /*
  */
 {
+
   int Ndim = NumberDimensions;
   int NumParticles;
 
@@ -140,7 +141,7 @@ GaussPoint GramsSolid(char * Name_File, Mesh FEM_Mesh)
       Counter_GramsNeumannBC++;
     }    
   }
-  
+
   /**************************************************/
   /***************** Define MPM Mesh ****************/
   /**************************************************/
@@ -212,7 +213,8 @@ GaussPoint GramsSolid(char * Name_File, Mesh FEM_Mesh)
 	      "Error in GramsSolid2D()","GramsShapeFun no defined");
       exit(EXIT_FAILURE);
     }
-    
+
+
     /**************************************************/    
     /****** Allocate vectorial/tensorial fields *******/
     /**************************************************/
@@ -239,9 +241,8 @@ GaussPoint GramsSolid(char * Name_File, Mesh FEM_Mesh)
     /**************************************************/    
     /************** Initialise particle ***************/
     /**************************************************/    
-    initial_position__Particles__(MPM_Mesh.Phi.x_GC,MPM_GID_Mesh,GPxElement); 
+    initial_position__Particles__(MPM_Mesh.Phi.x_GC,MPM_GID_Mesh,GPxElement);
     initialise_particles(MPM_GID_Mesh,MPM_Mesh,GPxElement);
-
      
     /**************************************************/
     /******** INITIALIZE SHAPE FUNCTIONS **************/
@@ -281,7 +282,6 @@ GaussPoint GramsSolid(char * Name_File, Mesh FEM_Mesh)
       initialize__LME__(MPM_Mesh,FEM_Mesh);
     }
     printf("\t %s \n","DONE !!");
-
 
     /**************************************************/    
     /************** Read initial values ***************/

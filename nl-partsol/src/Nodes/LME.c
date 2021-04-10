@@ -53,7 +53,6 @@ void initialize__LME__(
     F_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n.nM[p],2);
     Metric_p = metric__LME__(F_p);
 
-
     /*
       Loop over the element mesh
     */
