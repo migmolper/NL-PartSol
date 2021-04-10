@@ -3,6 +3,7 @@
 /*
   Call global variables
 */
+double Thickness_Plain_Stress;
 double TOL_Radial_Returning;
 int Max_Iterations_Radial_Returning;
 
@@ -164,6 +165,7 @@ GramsMaterials (Particles=route.txt) {
       Mat_GP.nu = NAN;
       /* Thickness of the mateial (2D) */
       Mat_GP.thickness = 1;
+      Thickness_Plain_Stress = 1;
       /* Fracture module */
       Mat_GP.Eigenerosion = false;
       Mat_GP.Eigensoftening = false;
@@ -257,6 +259,7 @@ GramsMaterials (Particles=route.txt) {
 	  {
 	    Is_thickness = true;
 	    Mat_GP.thickness = atof(Parse_Mat_Prop[1]);
+	    Thickness_Plain_Stress = Mat_GP.thickness;
 	  }
 	  /**************************************************/	    
 	  else if(strcmp(Parse_Mat_Prop[0],"Fracture") == 0)

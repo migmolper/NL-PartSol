@@ -1,5 +1,11 @@
 #include "nl-partsol.h"
 
+
+/* 
+  Call global variables
+*/
+double Thickness_Plain_Stress;
+
 /*
   Auxiliar functions
 */
@@ -460,6 +466,54 @@ double min_DeltaX__Q4__(ChainPtr Element_Connectivity, Matrix Coordinates)
   }
 
   return MinElementSize;
+}
+
+/*********************************************************************/
+
+double volume__Q4__(
+  Matrix Element)
+{
+  int Ndim = NumberDimensions;
+  double J_i;
+  double Vol = 0;
+
+  // Use 4 integration points to compute volume
+  double table_w[4] = {1.,1.,1.,1.};
+  double table_X[4][2] = 
+  {
+    {-0.577350269200000,-0.577350269200000},
+    {0.577350269200000,-0.577350269200000},
+    {-0.577350269200000,0.577350269200000},
+    {0.577350269200000,0.577350269200000}
+  };
+
+  Matrix F_i;
+  Matrix Xi = allocZ__MatrixLib__(2,1);
+
+  for(int i = 0 ; i<4 ; i++)
+  {
+    for(int j = 0 ; j<Ndim ; j++)
+    {
+       Xi.nV[j] = table_X[i][j];
+    }
+
+    // Compute deformation gradient and jacobian of this integration point
+    F_i = F_Ref__Q4__(Xi,Element);
+    J_i = I3__MatrixLib__(F_i);
+
+    // Compute volume contribution
+    Vol += J_i*table_w[i];
+
+    // Free memory
+    free__MatrixLib__(F_i);
+  }
+
+  Vol *= Thickness_Plain_Stress;
+
+  // Free memory
+  free__MatrixLib__(Xi);
+
+  return Vol;
 }
 
 /*********************************************************************/

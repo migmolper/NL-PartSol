@@ -504,6 +504,48 @@ double min_DeltaX__T4__(
 
 /*********************************************************************/
 
+double volume__T4__(
+  Matrix Element)
+{
+  int Ndim = NumberDimensions;
+  double J_i;
+  double Vol = 0;
 
+  // Use 4 integration points to compute volume
+  double table_w[4] = {1./24.,1./24.,1./24.,1./24.};
+  double table_X[4][3] = 
+  {
+    {0.585410200000000,0.138196600000000,0.138196600000000},
+    {0.138196600000000,0.585410200000000,0.138196600000000},
+    {0.138196600000000,0.138196600000000,0.585410200000000},
+    {0.138196600000000,0.138196600000000,0.138196600000000}
+  };
+
+  Matrix F_i;
+  Matrix Xi = allocZ__MatrixLib__(3,1);
+
+  for(int i = 0 ; i<4 ; i++)
+  {
+    for(int j = 0 ; j<Ndim ; j++)
+    {
+       Xi.nV[j] = table_X[i][j];
+    }
+
+    // Compute deformation gradient and jacobian of this integration point
+    F_i = F_Ref__T4__(Xi,Element);
+    J_i = I3__MatrixLib__(F_i);
+
+    // Compute volume contribution
+    Vol += J_i*table_w[i];
+
+    // Free memory
+    free__MatrixLib__(F_i);
+  }
+
+  // Free memory
+  free__MatrixLib__(Xi);
+
+  return Vol;
+}
 
 /*********************************************************************/

@@ -538,7 +538,6 @@ void element_to_particles__H8__(
 
 /*********************************************************************/
 
-
 double min_DeltaX__H8__(
   ChainPtr Element_Connectivity, 
   Matrix Coordinates)
@@ -598,6 +597,56 @@ double min_DeltaX__H8__(
 
 
   return MinElementSize;
+}
+
+/*********************************************************************/
+
+double volume__H8__(
+  Matrix Element)
+{
+  int Ndim = NumberDimensions;
+  double J_i;
+  double Vol = 0;
+
+  // Use 8 integration points to compute volume
+  double table_w[8] = {1.,1.,1.,1.,1.,1.,1.,1.};
+  double table_X[8][3] = 
+  {
+    {-0.577350269200000,-0.577350269200000,-0.577350269200000},
+    {0.577350269200000,-0.577350269200000,-0.577350269200000},
+    {-0.577350269200000,0.577350269200000,-0.577350269200000},
+    {0.577350269200000,0.577350269200000,-0.577350269200000},
+    {-0.577350269200000,-0.577350269200000,0.577350269200000,},
+    {0.577350269200000,-0.577350269200000,0.577350269200000},
+    {-0.577350269200000,0.577350269200000, 0.577350269200000},
+    {0.577350269200000,0.577350269200000,0.577350269200000}
+  };
+
+  Matrix F_i;
+  Matrix Xi = allocZ__MatrixLib__(3,1);
+
+  for(int i = 0 ; i<8 ; i++)
+  {
+    for(int j = 0 ; j<Ndim ; j++)
+    {
+       Xi.nV[j] = table_X[i][j];
+    }
+
+    // Compute deformation gradient and jacobian of this integration point
+    F_i = F_Ref__H8__(Xi,Element);
+    J_i = I3__MatrixLib__(F_i);
+
+    // Compute volume contribution
+    Vol += J_i*table_w[i];
+
+    // Free memory
+    free__MatrixLib__(F_i);
+  }
+
+  // Free memory
+  free__MatrixLib__(Xi);
+
+  return Vol;
 }
 
 /*********************************************************************/

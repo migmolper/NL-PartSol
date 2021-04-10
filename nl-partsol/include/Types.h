@@ -675,6 +675,11 @@ typedef struct {
    */
   Matrix (* dNdX)(Matrix, Matrix);
 
+  /* !
+  * Function to compute the volume of an element
+  */
+  double (* volume_Element)(Matrix);
+
   /*! 
   * Function to check if a point is inside or outside of a elemnt
   */

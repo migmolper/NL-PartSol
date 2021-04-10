@@ -13,7 +13,7 @@ double TOL_LME;
 void GramsShapeFun(char * Name_File)
 /*
   Example : 
-  GramsShapeFun (Type=MPMQ4) {
+  GramsShapeFun (Type=FEM) {
   }
   GramsShapeFun (Type=uGIMP) {
   }

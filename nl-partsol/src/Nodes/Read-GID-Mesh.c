@@ -62,6 +62,7 @@ Mesh ReadGidMesh__MeshTools__(char * MeshName)
     GID_Mesh.N_ref = N__T3__;
     GID_Mesh.dNdX_ref = dN_Ref__T3__;
     GID_Mesh.dNdX = dN__T3__;
+    GID_Mesh.volume_Element = volume__T3__;
     GID_Mesh.In_Out_Element = in_out__T3__;
   }
   else if((strcmp(GID_Mesh.TypeElem,"Quadrilateral") == 0) && (Mesh_Info.NumNodesElem == 4))
@@ -69,6 +70,7 @@ Mesh ReadGidMesh__MeshTools__(char * MeshName)
     GID_Mesh.N_ref = N__Q4__;
     GID_Mesh.dNdX_ref = dN_Ref__Q4__;
     GID_Mesh.dNdX = dN__Q4__;
+    GID_Mesh.volume_Element = volume__Q4__;
     GID_Mesh.In_Out_Element = in_out__Q4__;
   }
   else if((strcmp(GID_Mesh.TypeElem,"Tetrahedra") == 0) && (Mesh_Info.NumNodesElem == 4))
@@ -76,6 +78,7 @@ Mesh ReadGidMesh__MeshTools__(char * MeshName)
     GID_Mesh.N_ref = N__T4__;
     GID_Mesh.dNdX_ref = dN_Ref__T4__;
     GID_Mesh.dNdX = dN__T4__;
+    GID_Mesh.volume_Element = volume__T4__;
     GID_Mesh.In_Out_Element = in_out__T4__;
   }
   else if((strcmp(GID_Mesh.TypeElem,"Hexahedra") == 0) && (Mesh_Info.NumNodesElem == 8))
@@ -83,6 +86,7 @@ Mesh ReadGidMesh__MeshTools__(char * MeshName)
     GID_Mesh.N_ref = N__H8__;
     GID_Mesh.dNdX_ref = dN_Ref__H8__;
     GID_Mesh.dNdX = dN__H8__;
+    GID_Mesh.volume_Element = volume__H8__;
     GID_Mesh.In_Out_Element = in_out__H8__;
   }
   else
