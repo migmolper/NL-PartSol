@@ -38,4 +38,6 @@ GramsSolid (File=Cube.msh,GPxElement=8) {
 
   GramsOutputs (i=1) {
          DIR=Resultados
+         Out-stress=true
+         Out-displacement=true
   }
