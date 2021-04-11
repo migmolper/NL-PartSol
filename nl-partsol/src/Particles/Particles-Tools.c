@@ -111,7 +111,7 @@ void get_particle_tributary_nodes(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int p)
   Matrix CoordElement;
   
   /* 6º Assign the new connectivity of the GP */
-  if(strcmp(ShapeFunctionGP,"Q4") == 0)
+  if(strcmp(ShapeFunctionGP,"FEM") == 0)
   {
 
     /* Get the index of the element */
@@ -126,7 +126,7 @@ void get_particle_tributary_nodes(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int p)
       /* Get the coordinates of the element vertex */
       CoordElement = get_nodes_coordinates__MeshTools__(MPM_Mesh.ListNodes[p],FEM_Mesh.Coordinates);
       /* Compute local coordinates of the particle in this element */
-      X_to_Xi__Q4__(Xi_p,X_p,CoordElement);
+      FEM_Mesh.X_to_Xi(Xi_p,X_p,CoordElement);
       /* Free coordinates of the element */
       free__MatrixLib__(CoordElement);
     }
@@ -135,100 +135,7 @@ void get_particle_tributary_nodes(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int p)
       /* Get the coordinates of the element vertex */
       CoordElement = get_nodes_coordinates__MeshTools__(MPM_Mesh.ListNodes[p],FEM_Mesh.Coordinates);
       /* Compute local coordinates of the particle in this element */
-      X_to_Xi__Q4__(Xi_p,X_p,CoordElement);
-      /* Free coordinates of the element */
-      free__MatrixLib__(CoordElement);      
-    }
-    
-  }
-
-  else if(strcmp(ShapeFunctionGP,"H8") == 0)
-  {
-
-    /* Get the index of the element */
-    IdxElement = search_particle_in_surrounding_elements__Particles__(p,X_p,Elements_Near_I0,FEM_Mesh);
-    if(IdxElement != -999)
-    {
-      /* Free previous list of tributary nodes to the particle */
-      free__SetLib__(&MPM_Mesh.ListNodes[p]);
-      MPM_Mesh.ListNodes[p] = NULL;    
-      /* Asign new connectivity */
-      MPM_Mesh.ListNodes[p] = copy__SetLib__(FEM_Mesh.Connectivity[IdxElement]);
-      /* Get the coordinates of the element vertex */
-      CoordElement = get_nodes_coordinates__MeshTools__(MPM_Mesh.ListNodes[p],FEM_Mesh.Coordinates);
-      /* Compute local coordinates of the particle in this element */
-      X_to_Xi__H8__(Xi_p,X_p,CoordElement);
-      /* Free coordinates of the element */
-      free__MatrixLib__(CoordElement);
-    }
-    else
-    {
-      /* Get the coordinates of the element vertex */
-      CoordElement = get_nodes_coordinates__MeshTools__(MPM_Mesh.ListNodes[p],FEM_Mesh.Coordinates);
-      /* Compute local coordinates of the particle in this element */
-      X_to_Xi__H8__(Xi_p,X_p,CoordElement);
-      /* Free coordinates of the element */
-      free__MatrixLib__(CoordElement);      
-    }
-    
-  }
-
-  else if(strcmp(ShapeFunctionGP,"T3") == 0)
-  {
-
-    /* Get the index of the element */
-    IdxElement = search_particle_in_surrounding_elements__Particles__(p,X_p,Elements_Near_I0,FEM_Mesh);
-    if(IdxElement != -999)
-    {
-      /* Free previous list of tributary nodes to the particle */
-      free__SetLib__(&MPM_Mesh.ListNodes[p]);
-      MPM_Mesh.ListNodes[p] = NULL;    
-      /* Asign new connectivity */
-      MPM_Mesh.ListNodes[p] = copy__SetLib__(FEM_Mesh.Connectivity[IdxElement]);
-      /* Get the coordinates of the element vertex */
-      CoordElement = get_nodes_coordinates__MeshTools__(MPM_Mesh.ListNodes[p],FEM_Mesh.Coordinates);
-      /* Compute local coordinates of the particle in this element */
-      X_to_Xi__T3__(Xi_p,X_p,CoordElement);
-      /* Free coordinates of the element */
-      free__MatrixLib__(CoordElement);
-    }
-    else
-    {
-      /* Get the coordinates of the element vertex */
-      CoordElement = get_nodes_coordinates__MeshTools__(MPM_Mesh.ListNodes[p],FEM_Mesh.Coordinates);
-      /* Compute local coordinates of the particle in this element */
-      X_to_Xi__T3__(Xi_p,X_p,CoordElement);
-      /* Free coordinates of the element */
-      free__MatrixLib__(CoordElement);      
-    }
-    
-  }
-
-  else if(strcmp(ShapeFunctionGP,"T4") == 0)
-  {
-
-    /* Get the index of the element */
-    IdxElement = search_particle_in_surrounding_elements__Particles__(p,X_p,Elements_Near_I0,FEM_Mesh);
-    if(IdxElement != -999)
-    {
-      /* Free previous list of tributary nodes to the particle */
-      free__SetLib__(&MPM_Mesh.ListNodes[p]);
-      MPM_Mesh.ListNodes[p] = NULL;    
-      /* Asign new connectivity */
-      MPM_Mesh.ListNodes[p] = copy__SetLib__(FEM_Mesh.Connectivity[IdxElement]);
-      /* Get the coordinates of the element vertex */
-      CoordElement = get_nodes_coordinates__MeshTools__(MPM_Mesh.ListNodes[p],FEM_Mesh.Coordinates);
-      /* Compute local coordinates of the particle in this element */
-      X_to_Xi__T4__(Xi_p,X_p,CoordElement);
-      /* Free coordinates of the element */
-      free__MatrixLib__(CoordElement);
-    }
-    else
-    {
-      /* Get the coordinates of the element vertex */
-      CoordElement = get_nodes_coordinates__MeshTools__(MPM_Mesh.ListNodes[p],FEM_Mesh.Coordinates);
-      /* Compute local coordinates of the particle in this element */
-      X_to_Xi__T4__(Xi_p,X_p,CoordElement);
+      FEM_Mesh.X_to_Xi(Xi_p,X_p,CoordElement);
       /* Free coordinates of the element */
       free__MatrixLib__(CoordElement);      
     }

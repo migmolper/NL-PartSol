@@ -49,7 +49,7 @@ void initialize__H8__(
       /* Get connectivity of the element */
       Elem_p_Connectivity = FEM_Mesh.Connectivity[i];
       Elem_p_Coordinates = get_nodes_coordinates__MeshTools__(Elem_p_Connectivity, FEM_Mesh.Coordinates);
-      
+
       /* 5º Check out if the GP is in the Element */
       if(FEM_Mesh.In_Out_Element(X_p,Elem_p_Coordinates))
       {
@@ -63,10 +63,8 @@ void initialize__H8__(
         /* Active those nodes that interact with the particle */
         asign_to_nodes__Particles__(p, MPM_Mesh.ListNodes[p], FEM_Mesh);
 
-
         /* Compute local coordinates of the particle in this element */
-        X_to_Xi__Q4__(Xi_p,X_p,Elem_p_Coordinates);
-
+        X_to_Xi__H8__(Xi_p,X_p,Elem_p_Coordinates);
 
         /* Free coordinates of the element */
         free__MatrixLib__(Elem_p_Coordinates);
@@ -376,31 +374,24 @@ void element_to_particles__H8__(
     Xi_p.nM[0][0] = - 0.5;
     Xi_p.nM[0][1] = - 0.5;
     Xi_p.nM[0][2] =   0.5;
-
     Xi_p.nM[1][0] =   0.5;
     Xi_p.nM[1][1] = - 0.5;
-    Xi_p.nM[1][2] =   0.5;
-    
+    Xi_p.nM[1][2] =   0.5;    
     Xi_p.nM[2][0] =   0.5;
     Xi_p.nM[2][1] =   0.5;
     Xi_p.nM[2][2] =   0.5;
-    
     Xi_p.nM[3][0] = - 0.5;
     Xi_p.nM[3][1] =   0.5;
     Xi_p.nM[3][2] =   0.5;
-    
     Xi_p.nM[4][0] = - 0.5;
     Xi_p.nM[4][1] = - 0.5;
     Xi_p.nM[4][2] = - 0.5;
-
     Xi_p.nM[5][0] =   0.5;
     Xi_p.nM[5][1] = - 0.5;
-    Xi_p.nM[5][2] = - 0.5;
-    
+    Xi_p.nM[5][2] = - 0.5;   
     Xi_p.nM[6][0] =   0.5;
     Xi_p.nM[6][1] =   0.5;
     Xi_p.nM[6][2] = - 0.5;
-    
     Xi_p.nM[7][0] = - 0.5;
     Xi_p.nM[7][1] =   0.5;
     Xi_p.nM[7][2] = - 0.5;      

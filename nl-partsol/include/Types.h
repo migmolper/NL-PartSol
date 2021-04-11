@@ -675,6 +675,11 @@ typedef struct {
    */
   Matrix (* dNdX)(Matrix, Matrix);
 
+  /*
+   * Function of compute natural coordinate
+  */
+  void (* X_to_Xi)(Matrix, Matrix, Matrix);
+
   /* !
   * Function to compute the volume of an element
   */
