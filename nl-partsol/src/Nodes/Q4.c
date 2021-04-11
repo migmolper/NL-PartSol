@@ -335,7 +335,7 @@ void element_to_particles__Q4__(
   int NumNodesElem = 4;
   Matrix N_GP;
   Matrix Xi_p = allocZ__MatrixLib__(GPxElement,Ndim);
-  Matrix Xi_p_j;
+  Matrix Xi_p_j = memory_to_matrix__MatrixLib__(1,Ndim,NULL);
   Element Element;
   int Node;
 
@@ -394,12 +394,12 @@ void element_to_particles__Q4__(
       /* Evaluate the shape function in the GP position */
       if(GPxElement == 1)
       {
-        Xi_p_j.nV = Xi_p.nM[j]; 
-        N_GP = N__Q4__(Xi_p_j);
+        N_GP = N__Q4__(Xi_p);
       }
       else
       {
-        N_GP = N__Q4__(Xi_p);
+        Xi_p_j.nV = Xi_p.nM[j]; 
+        N_GP = N__Q4__(Xi_p_j);
       }
       
       for(int k = 0 ; k<NumNodesElem ; k++)

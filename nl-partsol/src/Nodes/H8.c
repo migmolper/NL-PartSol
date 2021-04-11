@@ -360,7 +360,7 @@ void element_to_particles__H8__(
   int NumNodesElem = 8;
   Matrix N_GP;
   Matrix Xi_p = allocZ__MatrixLib__(GPxElement,Ndim);
-  Matrix Xi_p_j;
+  Matrix Xi_p_j = memory_to_matrix__MatrixLib__(1,Ndim,NULL);
   Element Element;
   int Node;
 
@@ -376,24 +376,31 @@ void element_to_particles__H8__(
     Xi_p.nM[0][0] = - 0.5;
     Xi_p.nM[0][1] = - 0.5;
     Xi_p.nM[0][2] =   0.5;
+
     Xi_p.nM[1][0] =   0.5;
     Xi_p.nM[1][1] = - 0.5;
     Xi_p.nM[1][2] =   0.5;
+    
     Xi_p.nM[2][0] =   0.5;
     Xi_p.nM[2][1] =   0.5;
     Xi_p.nM[2][2] =   0.5;
+    
     Xi_p.nM[3][0] = - 0.5;
     Xi_p.nM[3][1] =   0.5;
     Xi_p.nM[3][2] =   0.5;
+    
     Xi_p.nM[4][0] = - 0.5;
     Xi_p.nM[4][1] = - 0.5;
     Xi_p.nM[4][2] = - 0.5;
+
     Xi_p.nM[5][0] =   0.5;
     Xi_p.nM[5][1] = - 0.5;
     Xi_p.nM[5][2] = - 0.5;
+    
     Xi_p.nM[6][0] =   0.5;
     Xi_p.nM[6][1] =   0.5;
     Xi_p.nM[6][2] = - 0.5;
+    
     Xi_p.nM[7][0] = - 0.5;
     Xi_p.nM[7][1] =   0.5;
     Xi_p.nM[7][2] = - 0.5;      
@@ -501,12 +508,12 @@ void element_to_particles__H8__(
       /* Evaluate the shape function in the GP position */
       if(GPxElement == 1)
       {
-        Xi_p_j.nV = Xi_p.nM[j]; 
-        N_GP = N__H8__(Xi_p_j);
+        N_GP = N__H8__(Xi_p);
       }
       else
       {
-        N_GP = N__H8__(Xi_p);
+        Xi_p_j.nV = Xi_p.nM[j];
+        N_GP = N__H8__(Xi_p_j);
       }
       
       for(int k = 0 ; k<NumNodesElem ; k++)
