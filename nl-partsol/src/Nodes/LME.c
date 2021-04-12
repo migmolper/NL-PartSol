@@ -86,25 +86,17 @@ void initialize__LME__(
           and to this node asign the particle */
         MPM_Mesh.I0[p] = get_closest_node__MeshTools__(X_p,MPM_Mesh.ListNodes[p],FEM_Mesh.Coordinates);
 
-        /* 
-          Active those nodes that interact with the particle
-        */
+        /* Active those nodes that interact with the particle */
         asign_to_nodes__Particles__(p, MPM_Mesh.ListNodes[p], FEM_Mesh);
        	
-        /*
-          Calculate distance from particle to each node in the neibourhood
-        */
+        /* Calculate distance from particle to each node in the neibourhood */
         Delta_Xip = compute_distance__MeshTools__(MPM_Mesh.ListNodes[p],X_p,FEM_Mesh.Coordinates);
 
-        /*
-          Update the value of the thermalization parameter
-        */
+        /* Update the value of the thermalization parameter */
         Beta_p = beta__LME__(Delta_Xip, gamma_LME, FEM_Mesh.DeltaX);
         MPM_Mesh.Beta.nV[p] = Beta_p;
 
-        /* 
-          Update lagrange multipliers with Newton-Rapson
-        */
+        /* Update lagrange multipliers with Newton-Rapson */
         lambda_p = lambda__LME__(Delta_Xip, lambda_p, Metric_p, Beta_p);
 
         /* 
@@ -164,6 +156,7 @@ double beta__LME__(
     Compute beta
   */
   Beta = Gamma/(h*h);
+
 
   return Beta;
 }
@@ -233,7 +226,6 @@ Matrix lambda__LME__(
   Matrix J; // Hessian of log(Z)
   Matrix D_lambda; // Increment of lambda
  
-
   while(NumIter <= MaxIter)
   {
 	
@@ -357,7 +349,7 @@ Matrix p__LME__(
   int Ndim = NumberDimensions;
   double Z = 0;
   double Z_m1 = 0;
-  Matrix p = alloc__MatrixLib__(1,N_a); // Shape function in the nodes
+  Matrix p = allocZ__MatrixLib__(1,N_a); // Shape function in the nodes
   Matrix la = memory_to_matrix__MatrixLib__(1,Ndim,NULL); // Vector form node "a" to particle.
 
   /*
