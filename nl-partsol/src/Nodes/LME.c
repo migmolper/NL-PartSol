@@ -3,6 +3,7 @@
 /*
   Auxiliar functions 
  */
+static Matrix lambda_initialisation__LME__(Matrix,Matrix,double);
 static double fa__LME__(Matrix, Matrix, Matrix, double);
 static Matrix r__LME__(Matrix, Matrix);
 static Matrix J__LME__(Matrix, Matrix, Matrix);
@@ -66,8 +67,9 @@ void initialize__LME__(
       /* Check out if the GP is in the Element */
       if(FEM_Mesh.In_Out_Element(X_p,Elem_p_Coordinates))
       {
-        /* With the element connectivity get the node close to the particle */
-        I0 = get_closest_node__MeshTools__(X_p,Elem_p_Connectivity,FEM_Mesh.Coordinates);
+        /* Asign to each particle the closest node in the mesh
+          and to this node asign the particle */
+        MPM_Mesh.I0[p] = get_closest_node__MeshTools__(X_p,Elem_p_Connectivity,FEM_Mesh.Coordinates);
 
         /* Calculate distance from particle to each node in the neibourhood */
         MPM_Mesh.ListNodes[p] = copy__SetLib__(Elem_p_Connectivity);
@@ -76,15 +78,17 @@ void initialize__LME__(
         /* Initialize Beta */
         Beta_p = beta__LME__(Delta_Xip, gamma_LME, FEM_Mesh.DeltaX);
 
+        /* Initalise lambda */
+        lambda_p = lambda_initialisation__LME__(Delta_Xip, lambda_p, Beta_p);
+
+        /* Free memory */ 
+        free__MatrixLib__(Delta_Xip);
+
         /* Get the initial connectivity of the particle */
-        MPM_Mesh.ListNodes[p] = tributary__LME__(X_p,Metric_p,Beta_p,I0,FEM_Mesh);
+        MPM_Mesh.ListNodes[p] = tributary__LME__(X_p,Metric_p,Beta_p,MPM_Mesh.I0[p],FEM_Mesh);
 
         /* Measure the size of the connectivity */
         MPM_Mesh.NumberNodes[p] = lenght__SetLib__(MPM_Mesh.ListNodes[p]);
-
-        /* Asign to each particle the closest node in the mesh
-          and to this node asign the particle */
-        MPM_Mesh.I0[p] = get_closest_node__MeshTools__(X_p,MPM_Mesh.ListNodes[p],FEM_Mesh.Coordinates);
 
         /* Active those nodes that interact with the particle */
         asign_to_nodes__Particles__(p, MPM_Mesh.ListNodes[p], FEM_Mesh);
@@ -120,6 +124,7 @@ void initialize__LME__(
     */
     free__MatrixLib__(Metric_p);
   }
+
 
 }
 
@@ -201,6 +206,107 @@ double beta__LME__(
 
    return Metric;
  }
+
+/****************************************************************************/
+
+static Matrix lambda_initialisation__LME__(
+  Matrix l, // Set than contanins vector form neighborhood nodes to particle.
+  Matrix lambda, // Lagrange multiplier.
+  double Beta) // Thermalization parameter.
+{
+
+  int Ndim = NumberDimensions;
+  int N_size_l = l.N_rows;
+  int aux;
+  bool swapped = false;
+
+  int * order_l = (int *)Allocate_ArrayZ(N_size_l,sizeof(int));
+  double * Norm_l  = (double *)Allocate_ArrayZ(N_size_l,sizeof(double));
+
+  Matrix A = allocZ__MatrixLib__(Ndim,Ndim);
+  Matrix b = allocZ__MatrixLib__(Ndim,1);
+  Matrix x;
+
+  // Initialise a list with distances and order
+  for(int i = 0 ; i<N_size_l ; i++)
+  {
+
+    order_l[i] = i;
+
+    Norm_l[i] = 0.0;
+
+    for(int j = 0 ; j<Ndim ; j++)
+    {
+      Norm_l[i] += l.nM[i][j]*l.nM[i][j];
+    }
+
+  }
+
+  // Ordenate the list from lowest to higher (bubble sort)
+  for(int i = 1 ; i<N_size_l ; i++)
+  {
+    swapped = false;
+
+    for(int j = 0 ; j<(N_size_l - i) ; j++)
+    {
+
+      if(Norm_l[order_l[j]] > Norm_l[order_l[j+1]]) 
+      {
+        
+        aux = order_l[j];
+        order_l[j] = order_l[j+1];
+        order_l[j+1] = aux;
+
+        swapped = true;
+      }
+
+    }
+
+    if(!swapped) 
+    {
+      break;
+    }
+
+  }
+
+  /*
+    Assemble matrix to solve the system Ax = b
+  */
+  for(int i = 1 ; i<(Ndim + 1) ; i++)
+  {
+
+    b.nV[i-1] = - Beta*(Norm_l[order_l[0]] - Norm_l[order_l[i]]);
+
+    for(int j = 0 ; j<Ndim ; j++)
+    {
+      A.nM[i-1][j] = l.nM[order_l[i]][j] - l.nM[order_l[0]][j];
+    }
+  }
+
+  /*
+    Solve the system
+  */
+  x = Solve_Linear_Sistem(A,b);
+
+  /*
+    Update the value of lambda
+  */
+  for(int i = 0 ; i<Ndim ; i++)
+  {
+    lambda.nV[i] = x.nV[i];
+  }
+
+  /*
+    Free memory
+  */
+  free(order_l);
+  free(Norm_l);
+  free__MatrixLib__(A);
+  free__MatrixLib__(b);
+  free__MatrixLib__(x);
+
+  return lambda;
+}
 
 /****************************************************************************/
 
