@@ -53,14 +53,28 @@ Matrix metric__LME__(Tensor);
   \fn Matrix lambda__LME__(Matrix l, Matrix lambda, Matrix Metric, double Beta)
 
   \brief Function ot get the lagrange multipliers "lambda" (1 x dim) for the LME 
-  shape function. The numerical method for that is the Newton-Rapson.
+  shape function. The numerical methodis the Newton-Rapson.
 
   \param l : Set than contanins vector form neighborhood nodes to particle.
   \param lambda : Lagrange multiplier.
   \param Metric : Measure for the norm definition.
   \param Beta : Thermalization parameter.
 */
-Matrix lambda__LME__(Matrix, Matrix, Matrix, double);
+Matrix lambda_Newton_Rapson__LME__(Matrix, Matrix, Matrix, double);
+/****************************************************************************/
+
+/*!
+  \fn Matrix lambda_Nelder_Mead__LME__(Matrix l, Matrix lambda, Matrix Metric, double Beta)
+
+  \brief Function ot get the lagrange multipliers "lambda" (1 x dim) for the LME 
+  shape function. The numerical method is the Nelder-Mead.
+
+  \param l : Set than contanins vector form neighborhood nodes to particle.
+  \param lambda : Lagrange multiplier.
+  \param Metric : Measure for the norm definition.
+  \param Beta : Thermalization parameter.
+*/
+Matrix lambda_Nelder_Mead__LME__(Matrix, Matrix, Matrix, double);
 /****************************************************************************/
 
 /*!
