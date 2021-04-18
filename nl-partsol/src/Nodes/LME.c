@@ -2,13 +2,13 @@
 
 
 // Auxiliar functions to compute the shape functions
-static Matrix lambda_initialisation__LME__(Matrix,Matrix,double);
 static double fa__LME__(Matrix, Matrix, Matrix, double);
 static double logZ__LME__(Matrix, Matrix, Matrix, double);
 static Matrix r__LME__(Matrix, Matrix);
 static Matrix J__LME__(Matrix, Matrix, Matrix);
 
 // Auxiliar functions for the Neldel Mead in the LME
+static void initialisation_Nelder_Mead__LME__(Matrix,Matrix,double);
 static Matrix gravity_center_Nelder_Mead__LME__(Matrix);
 static void order_logZ_simplex_Nelder_Mead__LME__(Matrix, Matrix);
 static void expansion_Nelder_Mead__LME__(Matrix,Matrix,Matrix,Matrix,Matrix,Matrix,double,double);
@@ -84,13 +84,11 @@ void initialize__LME__(
 
         /* Calculate distance from particle to each node in the neibourhood */
         MPM_Mesh.ListNodes[p] = copy__SetLib__(Elem_p_Connectivity);
+
         Delta_Xip = compute_distance__MeshTools__(MPM_Mesh.ListNodes[p],X_p,FEM_Mesh.Coordinates);
 
         /* Initialize Beta */
         Beta_p = beta__LME__(Delta_Xip, gamma_LME, FEM_Mesh.DeltaX);
-
-        /* Initalise lambda */
-        lambda_p = lambda_initialisation__LME__(Delta_Xip, lambda_p, Beta_p);
 
         /* Free memory */ 
         free__MatrixLib__(Delta_Xip);
@@ -134,8 +132,9 @@ void initialize__LME__(
       Free memory
     */
     free__MatrixLib__(Metric_p);
-  }
+  } 
 
+  exit(0);
 
 }
 
@@ -218,106 +217,6 @@ double beta__LME__(
    return Metric;
  }
 
-/****************************************************************************/
-
-static Matrix lambda_initialisation__LME__(
-  Matrix l, // Set than contanins vector form neighborhood nodes to particle.
-  Matrix lambda, // Lagrange multiplier.
-  double Beta) // Thermalization parameter.
-{
-
-  int Ndim = NumberDimensions;
-  int N_size_l = l.N_rows;
-  int aux;
-  bool swapped = false;
-
-  int * order_l = (int *)Allocate_ArrayZ(N_size_l,sizeof(int));
-  double * Norm_l  = (double *)Allocate_ArrayZ(N_size_l,sizeof(double));
-
-  Matrix A = allocZ__MatrixLib__(Ndim,Ndim);
-  Matrix b = allocZ__MatrixLib__(Ndim,1);
-  Matrix x;
-
-  // Initialise a list with distances and order
-  for(int i = 0 ; i<N_size_l ; i++)
-  {
-
-    order_l[i] = i;
-
-    Norm_l[i] = 0.0;
-
-    for(int j = 0 ; j<Ndim ; j++)
-    {
-      Norm_l[i] += l.nM[i][j]*l.nM[i][j];
-    }
-
-  }
-
-  // Ordenate the list from lowest to higher (bubble sort)
-  for(int i = 1 ; i<N_size_l ; i++)
-  {
-    swapped = false;
-
-    for(int j = 0 ; j<(N_size_l - i) ; j++)
-    {
-
-      if(Norm_l[order_l[j]] > Norm_l[order_l[j+1]]) 
-      {
-        
-        aux = order_l[j];
-        order_l[j] = order_l[j+1];
-        order_l[j+1] = aux;
-
-        swapped = true;
-      }
-
-    }
-
-    if(!swapped) 
-    {
-      break;
-    }
-
-  }
-
-  /*
-    Assemble matrix to solve the system Ax = b
-  */
-  for(int i = 1 ; i<(Ndim + 1) ; i++)
-  {
-
-    b.nV[i-1] = - Beta*(Norm_l[order_l[0]] - Norm_l[order_l[i]]);
-
-    for(int j = 0 ; j<Ndim ; j++)
-    {
-      A.nM[i-1][j] = l.nM[order_l[i]][j] - l.nM[order_l[0]][j];
-    }
-  }
-
-  /*
-    Solve the system
-  */
-  x = Solve_Linear_Sistem(A,b);
-
-  /*
-    Update the value of lambda
-  */
-  for(int i = 0 ; i<Ndim ; i++)
-  {
-    lambda.nV[i] = x.nV[i];
-  }
-
-  /*
-    Free memory
-  */
-  free(order_l);
-  free(Norm_l);
-  free__MatrixLib__(A);
-  free__MatrixLib__(b);
-  free__MatrixLib__(x);
-
-  return lambda;
-}
 
 /****************************************************************************/
 
@@ -366,6 +265,12 @@ Matrix lambda_Newton_Rapson__LME__(
         Get the Hessian of log(Z)
       */    
       J = J__LME__(l,p,r);
+
+      if(fabs(I3__MatrixLib__(J)) < TOL_zero)
+      {
+        fprintf(stderr,"Error in lambda_Newton_Rapson__LME__ : %s \n","The Hessian is singular !");
+        exit(EXIT_FAILURE);
+      }
     
       /*
         Get the increment of lambda
@@ -441,6 +346,9 @@ Matrix lambda_Nelder_Mead__LME__(
   double logZ_n;
   double logZ_n1;
 
+  // Compute an initial value for lambda
+  initialisation_Nelder_Mead__LME__(l, lambda, Beta);
+
   // Compute the initial values of logZ in each vertex of the simplex
   for(int a = 0 ; a<Nnodes_simplex ; a++)
   {
@@ -509,6 +417,11 @@ Matrix lambda_Nelder_Mead__LME__(
     printf("%s : %f\n", "Total Error",logZ_0 - logZ_n1);
   }
 
+  // Update the value of lambda
+  for(int i = 0 ; i<Ndim ; i++)
+  {
+    lambda.nV[i] = simplex.nM[0][i];
+  }
 
   /*
     Free memory
@@ -517,6 +430,123 @@ Matrix lambda_Nelder_Mead__LME__(
   free__MatrixLib__(logZ);
 
   return lambda;
+}
+
+/****************************************************************************/
+
+static void initialisation_Nelder_Mead__LME__(
+  Matrix l, // Set than contanins vector form neighborhood nodes to particle.
+  Matrix lambda, // Lagrange multiplier.
+  double Beta) // Thermalization parameter.
+{
+
+  int Ndim = NumberDimensions;
+  int Nnodes_simplex = Ndim + 1;
+  int N_size_l = l.N_rows;
+  bool swapped = false;
+  double sqr_norm_i;
+  double aux_norm;
+  double aux_l;
+
+  double * Norm_l  = (double *)Allocate_ArrayZ(N_size_l,sizeof(double));
+
+  Matrix A = allocZ__MatrixLib__(Ndim,Ndim);
+  Matrix b = allocZ__MatrixLib__(Ndim,1);
+  Matrix x;
+
+  // Initialise a list with distances and order
+  for(int i = 0 ; i<N_size_l ; i++)
+  {
+
+    sqr_norm_i = 0.0;
+
+    for(int j = 0 ; j<Ndim ; j++)
+    {
+      sqr_norm_i += l.nM[i][j]*l.nM[i][j];
+    }
+
+    Norm_l[i] = sqrt(sqr_norm_i);
+
+  }
+
+  // Ordenate the list from lowest to higher (bubble sort)
+  for(int i = 1 ; i<N_size_l ; i++)
+  {
+
+    swapped = false;
+
+    for(int j = 0 ; j<(N_size_l - i) ; j++)
+    {
+
+      if(Norm_l[j] > Norm_l[j+1]) 
+      {
+        
+        aux_norm = Norm_l[j];
+        Norm_l[j] = Norm_l[j+1];
+        Norm_l[j+1] = aux_norm;
+
+        for(int k = 0 ; k<Ndim ; k++)
+        {
+          aux_l = l.nM[j][k];
+          l.nM[j][k] = l.nM[j+1][k];
+          l.nM[j+1][k] = aux_l;
+        }
+
+        swapped = true;
+      }
+
+    }
+
+    if(!swapped) 
+    {
+      break;
+    }
+
+  }
+
+  /*
+    Assemble matrix to solve the system Ax = b
+  */
+  for(int i = 1 ; i<Nnodes_simplex ; i++)
+  {
+
+    b.nV[i-1] = - Beta*(Norm_l[0]*Norm_l[0] - Norm_l[i]*Norm_l[i]);
+
+    for(int j = 0 ; j<Ndim ; j++)
+    {
+      A.nM[i-1][j] = l.nM[i][j] - l.nM[0][j];
+    }
+  }
+
+
+  if(fabs(I3__MatrixLib__(A)) < TOL_zero)
+  {
+    strcpy(A.Info,"A");
+    print__MatrixLib__(A,Ndim,Ndim);
+    fprintf(stderr,"Error in initialisation_Nelder_Mead__LME__ : %s \n","Determinant of A is null !");
+    exit(EXIT_FAILURE);
+  }
+
+  /*
+    Solve the system
+  */
+  x = Solve_Linear_Sistem(A,b);
+
+  /*
+    Update the value of lambda
+  */
+  for(int i = 0 ; i<Ndim ; i++)
+  {
+    lambda.nV[i] = x.nV[i];
+  }
+
+  /*
+    Free memory
+  */
+  free(Norm_l);
+  free__MatrixLib__(A);
+  free__MatrixLib__(b);
+  free__MatrixLib__(x);
 }
 
 /****************************************************************************/
