@@ -1,6 +1,11 @@
 #include "nl-partsol.h"
 
 /*
+  Global variables
+*/
+double Thickness_Plain_Stress;
+
+/*
   Auxiliar functions
  */
 static Matrix voxel__GIMP__(Matrix, double);
@@ -42,7 +47,7 @@ void initialize__GIMP__(
   l_p = memory_to_matrix__MatrixLib__(Ndim,1,MPM_Mesh.lp.nM[i]);
   rho_p = MPM_Mesh.Phi.rho.nV[i];
   m_p = MPM_Mesh.Phi.mass.nV[i];
-  th_p = MPM_Mesh.Mat[MPM_Mesh.MatIdx[i]].thickness;
+  th_p = Thickness_Plain_Stress;
   A_p = m_p/(rho_p*th_p);
 
   /* Supose that the particle was not initilise */

@@ -9,6 +9,7 @@ char * MPM_MeshFileName;
 int Number_Soil_Water_Mixtures; // Number of Soil-Water Mixtures in the sample
 Mixture * Soil_Water_Mixtures; // Structure with the properties of the sample
 
+double Thickness_Plain_Stress; // For 2D cases
 
 typedef struct
 {
@@ -55,7 +56,7 @@ static char Error_message[MAXW];
 static Simulation_Key_Words Check_Simulation_Key_Words(char *);
 static Mesh_Parameters Read_Mesh_Parameters(char *);
 static int * assign_mixture_to_particles(char *, int, int, int);
-static void initialise_2D_particles();
+static void initialise_particles(Mesh,GaussPoint, int);
 static void Check_File(char *);
 static void standard_error();
 static FILE * Open_and_Check_simulation_file(char *);
@@ -134,6 +135,8 @@ GaussPoint Generate_Soil_Water_Coupling_Analysis__InOutFun__(char * Name_File, M
     printf(" \t %s \n","* Read mesh properties for particles :");
     Msh_Parms = Read_Mesh_Parameters(Name_File);
 
+    Thickness_Plain_Stress = 1.0;
+
     /*
       Read particles mesh 
     */
@@ -192,6 +195,20 @@ GaussPoint Generate_Soil_Water_Coupling_Analysis__InOutFun__(char * Name_File, M
         strcpy(MPM_Mesh.lambda.Info,"Lagrange Multiplier");
         MPM_Mesh.Beta = allocZ__MatrixLib__(NumParticles,1);
         strcpy(MPM_Mesh.Beta.Info,"Beta");
+        if(strcmp(wrapper_LME,"Newton-Raphson"))
+        {
+          MPM_Mesh.update_lambda = update_lambda_Newton_Rapson__LME__;
+        }
+        else if(strcmp(wrapper_LME,"Nelder-Mead"))
+        {
+          MPM_Mesh.update_lambda = update_lambda_Nelder_Mead__LME__;
+        }
+        else
+        {
+          fprintf(stderr,"%s : %s \n",
+            "Error in GramsSolid()","Unrecognaised wrapper");
+          exit(EXIT_FAILURE);      
+        }
       }
     }
     else
@@ -221,7 +238,7 @@ GaussPoint Generate_Soil_Water_Coupling_Analysis__InOutFun__(char * Name_File, M
     initial_position__Particles__(MPM_Mesh.Phi.x_GC,MPM_GID_Mesh,Msh_Parms.GPxElement); 
     if(Ndim == 2)
     {
-      initialise_2D_particles(MPM_GID_Mesh,MPM_Mesh,Msh_Parms.GPxElement);
+      initialise_particles(MPM_GID_Mesh,MPM_Mesh,Msh_Parms.GPxElement);
     }
     printf(" \t %s \n","Success !!");
  
@@ -637,15 +654,15 @@ static int * assign_mixture_to_particles(char * Name_File, int NumMixtures, int 
 
 /***************************************************************************/
 
-static void initialise_2D_particles(Mesh MPM_GID_Mesh,GaussPoint MPM_Mesh, int GPxElement)
+static void initialise_particles(Mesh MPM_GID_Mesh,GaussPoint MPM_Mesh, int GPxElement)
   /*
      Loop in the GID mesh to create particles from an element 
   */
 {
 
 
-  Matrix Poligon_Coordinates;
-  double Area_Element, A_p, th_p, m_p, rho_p;
+  Matrix Element_Coordinates;
+  double Vol_Element, V_p, m_p, rho_p;
   int p;
   int Mixture_idx;
   int Material_Soil_idx;
@@ -663,10 +680,9 @@ static void initialise_2D_particles(Mesh MPM_GID_Mesh,GaussPoint MPM_Mesh, int G
   {
 
     /* Get the coordinates of the element vertex */ 
-    Poligon_Coordinates = get_nodes_coordinates__MeshTools__(MPM_GID_Mesh.Connectivity[i], MPM_GID_Mesh.Coordinates);
-
-    /* Get the area (Poligon_Centroid.n) and the position of the centroid (Poligon_Centroid.nV) */
-    Area_Element = area__MatrixLib__(Poligon_Coordinates);
+    Element_Coordinates = get_nodes_coordinates__MeshTools__(MPM_GID_Mesh.Connectivity[i], MPM_GID_Mesh.Coordinates);
+    Vol_Element = MPM_GID_Mesh.volume_Element(Element_Coordinates);
+    free__MatrixLib__(Element_Coordinates);
 
     for(int j = 0 ; j<GPxElement ; j++)
     {
@@ -708,15 +724,14 @@ static void initialise_2D_particles(Mesh MPM_GID_Mesh,GaussPoint MPM_Mesh, int G
       /*
         Compute material properties 
       */
-      A_p   = Area_Element/GPxElement; // Material point area
+      V_p = Vol_Element/GPxElement; // Material point area
       rho_p = phi_s_0*rho_s_0 + phi_f_0*rho_f_0; // Mixture density
-      th_p  = MPM_Mesh.Mat[Mixture_idx].thickness; // Material point thickness
-      m_p   = th_p*A_p*rho_p; // Material point mass
+      m_p   = V_p*rho_p; // Material point mass
       
       /*
         Set the initial total volume volume fractions 
       */
-      MPM_Mesh.Phi.Vol_0.nV[p] = A_p;
+      MPM_Mesh.Phi.Vol_0.nV[p] = V_p;
 
       /*
         Set the relative density of the mixture
@@ -728,12 +743,6 @@ static void initialise_2D_particles(Mesh MPM_GID_Mesh,GaussPoint MPM_Mesh, int G
       */
       MPM_Mesh.Phi.mass.nV[p] = m_p;
       
-      /*
-        Local coordinates of the element
-      */
-      MPM_Mesh.I0[p] = -999;
-      MPM_Mesh.NumberNodes[p] = 4;
-
       /*
         Initialise some plastic variables
       */
@@ -751,9 +760,6 @@ static void initialise_2D_particles(Mesh MPM_GID_Mesh,GaussPoint MPM_Mesh, int G
       }
 
     }
-
-      /* Free data */
-    free__MatrixLib__(Poligon_Coordinates);
 
   }
 }

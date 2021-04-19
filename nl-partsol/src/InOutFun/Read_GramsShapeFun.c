@@ -90,7 +90,8 @@ void GramsShapeFun(char * Name_File)
       /* Set to default all it properties */
       gamma_LME = 3;
       TOL_LME = 1e-10;
-      curvature_LME = 0;
+      curvature_LME = 0.0;
+      strcpy(wrapper_LME,"Newton-Raphson");
 
       /* Look for the curly brace { */
       if((Num_GramsShapeFun>=3) &&
@@ -146,11 +147,17 @@ void GramsShapeFun(char * Name_File)
 	    exit(EXIT_FAILURE);
 	  }
 
- 	  if(strcmp(Parse_Shf_Prop[0],"gamma") == 0){
+ 	  if(strcmp(Parse_Shf_Prop[0],"gamma") == 0)
+ 	  {
 	    gamma_LME = atof(Parse_Shf_Prop[1]);
 	  }
-	  else if(strcmp(Parse_Shf_Prop[0],"TOL") == 0){
+	  else if(strcmp(Parse_Shf_Prop[0],"TOL") == 0)
+	  {
 	    TOL_LME = atof(Parse_Shf_Prop[1]);
+	  }
+	  else if(strcmp(Parse_Shf_Prop[0],"wrapper") == 0)
+	  {
+	  	strcpy(wrapper_LME,Parse_Shf_Prop[1]);
 	  }
 	  else if(strcmp(Parse_Shf_Prop[0],"curvature") == 0){
 	  	curvature_LME = atof(Parse_Shf_Prop[1]);

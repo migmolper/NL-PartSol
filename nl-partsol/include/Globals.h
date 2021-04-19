@@ -20,6 +20,7 @@ extern Mixture * Soil_Water_Mixtures;
 extern double TOL_LME;
 extern double gamma_LME;
 extern double curvature_LME;
+extern char   wrapper_LME[MAXC];
 
 // Global variables for the time-integrator 
 extern double CFL;

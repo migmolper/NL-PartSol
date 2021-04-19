@@ -373,11 +373,6 @@ typedef struct {
    * Name of the material
    */
   char Type [100];
-
-  /*!
-   * Thickness of the Material 
-   */
-  double thickness;
   
   /*!
    * Material celerity 

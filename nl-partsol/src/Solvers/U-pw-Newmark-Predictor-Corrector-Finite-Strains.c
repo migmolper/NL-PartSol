@@ -1,8 +1,10 @@
 #include "nl-partsol.h"
 
+
 /*
   Call global variables
 */
+double Thickness_Plain_Stress;
 Mixture * Soil_Water_Mixtures; // Structure with the properties of the sample
 Event * Out_nodal_path_csv;
 Event * Out_particles_path_csv;
@@ -1331,7 +1333,6 @@ static void compute_Contact_Forces_Mixture(
   int Ndim = NumberDimensions;
   Load T_i;
   Element Nodes_p; /* Element for each Gauss-Point */
-  Material MatProp_Soil_p; /* Information with properties of the soil phase */
   Matrix ShapeFunction_p; /* Nodal values of the sahpe function */
   double ShapeFunction_pA;
   Tensor t = alloc__TensorLib__(1); /* Body forces vector */
@@ -1339,8 +1340,6 @@ static void compute_Contact_Forces_Mixture(
   double thickness_p; /* Thickness of the particle */
   double A0_p; /* Area of the particle in the reference configuration */ 
 
-  int Mixture_idx; /* Index of the mixture for each particle */
-  int Material_Soil_idx; /* Index of the soil properties for each particle */
   int NumContactForces = MPM_Mesh.Neumann_Contours.NumBounds;
   int NumNodesLoad;
   int p;
@@ -1372,16 +1371,9 @@ static void compute_Contact_Forces_Mixture(
       V0_p = MPM_Mesh.Phi.Vol_0.nV[p];
 
       /*
-        Get the material properties of the soil phase for each particle
-      */
-      Mixture_idx = MPM_Mesh.MixtIdx[p];
-      Material_Soil_idx = Soil_Water_Mixtures[Mixture_idx].Soil_Idx;
-      MatProp_Soil_p = MPM_Mesh.Mat[Material_Soil_idx];
-
-      /*
         Get the thickness of each particle
       */
-      thickness_p = MatProp_Soil_p.thickness;
+      thickness_p = Thickness_Plain_Stress;
 
       /*
         Get the area of each particle

@@ -4,7 +4,9 @@
 /*
   Call global variables 
 */
+double Thickness_Plain_Stress;
 char * MPM_MeshFileName;
+char   wrapper_LME[MAXC];
 
 
 /*
@@ -45,7 +47,7 @@ GaussPoint GramsSolid(char * Name_File, Mesh FEM_Mesh)
   int GPxElement = 1;
 
   /* Set to false check variables */
-  bool Is_GramsSolid2D = false;
+  bool Is_GramsSolid = false;
   bool Is_ParticlesMesh = false;
   bool Is_GPxElement = false;
   bool Is_GramsShapeFun = false;
@@ -71,13 +73,14 @@ GaussPoint GramsSolid(char * Name_File, Mesh FEM_Mesh)
   /**************************************************/
   /********* Read and check GramsSolid2D ************/
   /**************************************************/
-  while(fgets(Line_GramsSolid2D,sizeof(Line_GramsSolid2D),Sim_dat) != NULL){
+  while(fgets(Line_GramsSolid2D,sizeof(Line_GramsSolid2D),Sim_dat) != NULL)
+  {
 
     /* Read the line with the space as separators */
     Num_words_parse = parse(Parse_GramsSolid2D,Line_GramsSolid2D," \n\t");
     if (Num_words_parse < 0){
       fprintf(stderr,"%s : %s \n",
-	      "Error in GramsSolid2D()",
+	      "Error in GramsSolid()",
 	      "Parser failed");
       exit(EXIT_FAILURE);
     }
@@ -85,9 +88,9 @@ GaussPoint GramsSolid(char * Name_File, Mesh FEM_Mesh)
     /*
       Read file mesh and number of material points per element
     */
-    if ((Num_words_parse > 0) && (strcmp(Parse_GramsSolid2D[0],"GramsSolid") == 0))
+    if((Num_words_parse > 0) && (strcmp(Parse_GramsSolid2D[0],"GramsSolid") == 0))
     {
-      Is_GramsSolid2D = true;
+      Is_GramsSolid = true;
       Num_words_parse = parse(Parse_Mesh_id, Parse_GramsSolid2D[1],"(,)");
 
       /*
@@ -111,6 +114,8 @@ GaussPoint GramsSolid(char * Name_File, Mesh FEM_Mesh)
         GPxElement = atoi(Parse_Mesh_Properties[1]);
         Is_GPxElement = true;
       }
+
+      Thickness_Plain_Stress = 1.0;
       
     }
     if ((Num_words_parse > 0) && (strcmp(Parse_GramsSolid2D[0],"GramsShapeFun") == 0))
@@ -146,7 +151,7 @@ GaussPoint GramsSolid(char * Name_File, Mesh FEM_Mesh)
   /***************** Define MPM Mesh ****************/
   /**************************************************/
   /* Define GP Mesh */
-  if(Is_GramsSolid2D && Is_GPxElement && Is_GPxElement)
+  if(Is_GramsSolid && Is_GPxElement)
   {
     
     /* Read GP mesh */
@@ -205,14 +210,26 @@ GaussPoint GramsSolid(char * Name_File, Mesh FEM_Mesh)
         strcpy(MPM_Mesh.lambda.Info,"Lagrange Multiplier");
         MPM_Mesh.Beta = allocZ__MatrixLib__(NumParticles,1);
         strcpy(MPM_Mesh.Beta.Info,"Beta parameter");
-//        MPM_Mesh.update_lambda = update_lambda_Newton_Rapson__LME__;
-        MPM_Mesh.update_lambda = update_lambda_Nelder_Mead__LME__;
+        if(strcmp(wrapper_LME,"Newton-Raphson"))
+        {
+          MPM_Mesh.update_lambda = update_lambda_Newton_Rapson__LME__;
+        }
+        else if(strcmp(wrapper_LME,"Nelder-Mead"))
+        {
+          MPM_Mesh.update_lambda = update_lambda_Nelder_Mead__LME__;
+        }
+        else
+        {
+          fprintf(stderr,"%s : %s \n",
+            "Error in GramsSolid()","Unrecognaised wrapper");
+          exit(EXIT_FAILURE);      
+        }
       }
     }
     else
     {
       fprintf(stderr,"%s : %s \n",
-	      "Error in GramsSolid2D()","GramsShapeFun no defined");
+	      "Error in GramsSolid()","GramsShapeFun no defined");
       exit(EXIT_FAILURE);
     }
 
@@ -236,7 +253,7 @@ GaussPoint GramsSolid(char * Name_File, Mesh FEM_Mesh)
     else
     {
       fprintf(stderr,"%s : %s \n",
-	      "Error in GramsSolid2D()","GramsMaterials no defined");
+	      "Error in GramsSolid()","GramsMaterials no defined");
       exit(EXIT_FAILURE);
     }
 
@@ -297,7 +314,8 @@ GaussPoint GramsSolid(char * Name_File, Mesh FEM_Mesh)
     {
       Initial_condition_nodes__InOutFun__(Name_File,MPM_Mesh,FEM_Mesh);
     }
-    else{
+    else
+    {
       puts("*************************************************");
       puts(" No initial conditions defined ");
     }
@@ -346,7 +364,7 @@ GaussPoint GramsSolid(char * Name_File, Mesh FEM_Mesh)
   else
   {
     fprintf(stderr,"%s : %s \n",
-	    "Error in GramsSolid2D()",
+	    "Error in GramsSolid()",
 	    "Mesh file name and number of particles are required");
     exit(EXIT_FAILURE);
   }
@@ -365,7 +383,7 @@ static void initialise_particles(Mesh MPM_GID_Mesh, GaussPoint MPM_Mesh, int GPx
 
 
   Matrix Element_Coordinates;
-  double Vol_Element, V_p, th_p, m_p, rho_p;
+  double Vol_Element, V_p, m_p, rho_p;
   int p;
   int MatIdx_p;
 
@@ -385,19 +403,21 @@ static void initialise_particles(Mesh MPM_GID_Mesh, GaussPoint MPM_Mesh, int GPx
 
     /* Get the index of the material */
       MatIdx_p = MPM_Mesh.MatIdx[p];
+
     /* Get material properties */
       V_p = Vol_Element/GPxElement;
       rho_p = MPM_Mesh.Mat[MatIdx_p].rho;
       m_p = V_p*rho_p;
+
     /* Set the initial volume */
       MPM_Mesh.Phi.Vol_0.nV[p] = V_p;
+
     /* Set the initial density */
       MPM_Mesh.Phi.rho.nV[p] = rho_p; 
+
     /* Assign the mass parameter */
       MPM_Mesh.Phi.mass.nV[p] = m_p;
-    /* Local coordinates of the element */
-      MPM_Mesh.I0[p] = -999;
-      MPM_Mesh.NumberNodes[p] = 4;
+
 
       if(strcmp(MPM_Mesh.Mat[MatIdx_p].Type,"Von-Mises") == 0)
       {
