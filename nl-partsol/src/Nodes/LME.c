@@ -8,7 +8,7 @@ static Matrix r__LME__(Matrix, Matrix);
 static Matrix J__LME__(Matrix, Matrix, Matrix);
 
 // Auxiliar functions for the Neldel Mead in the LME
-static void initialisation_Nelder_Mead__LME__(Matrix,Matrix,double);
+static void initialise_lambda__LME__(int,Matrix,Matrix,Matrix,double);
 static Matrix gravity_center_Nelder_Mead__LME__(Matrix);
 static void order_logZ_simplex_Nelder_Mead__LME__(Matrix, Matrix);
 static void expansion_Nelder_Mead__LME__(Matrix,Matrix,Matrix,Matrix,Matrix,Matrix,double,double);
@@ -78,19 +78,26 @@ void initialize__LME__(
       /* Check out if the GP is in the Element */
       if(FEM_Mesh.In_Out_Element(X_p,Elem_p_Coordinates))
       {
+
         /* Asign to each particle the closest node in the mesh
           and to this node asign the particle */
         MPM_Mesh.I0[p] = get_closest_node__MeshTools__(X_p,Elem_p_Connectivity,FEM_Mesh.Coordinates);
 
         /* Calculate distance from particle to each node in the neibourhood */
         MPM_Mesh.ListNodes[p] = copy__SetLib__(Elem_p_Connectivity);
-
         Delta_Xip = compute_distance__MeshTools__(MPM_Mesh.ListNodes[p],X_p,FEM_Mesh.Coordinates);
 
         /* Initialize Beta */
         Beta_p = beta__LME__(Delta_Xip, gamma_LME, FEM_Mesh.DeltaX);
 
+        /* Initialise lambda using Bo-Li approach */
+//        initialise_lambda__LME__(p, X_p, Elem_p_Coordinates, lambda_p, Beta_p);
+        lambda_p.nV[0] = 1.0;
+        lambda_p.nV[1] = 1.0;
+        lambda_p.nV[2] = 1.0;
+
         /* Free memory */ 
+        free__MatrixLib__(Elem_p_Coordinates);
         free__MatrixLib__(Delta_Xip);
 
         /* Get the initial connectivity of the particle */
@@ -109,13 +116,12 @@ void initialize__LME__(
         Beta_p = beta__LME__(Delta_Xip, gamma_LME, FEM_Mesh.DeltaX);
         MPM_Mesh.Beta.nV[p] = Beta_p;
 
-        /* Update lagrange multipliers with Newton-Rapson */
-        lambda_p = lambda_Newton_Rapson__LME__(Delta_Xip, lambda_p, Metric_p, Beta_p);
+        /* Update lagrange multiplier with Newton-Rapson or with Nelder-Mead */
+        MPM_Mesh.update_lambda(p, Delta_Xip, lambda_p, Metric_p, Beta_p);
 
         /* 
           Free memory
         */
-        free__MatrixLib__(Elem_p_Coordinates);
         free__MatrixLib__(Delta_Xip);
 
         break;
@@ -134,7 +140,6 @@ void initialize__LME__(
     free__MatrixLib__(Metric_p);
   } 
 
-  exit(0);
 
 }
 
@@ -220,7 +225,166 @@ double beta__LME__(
 
 /****************************************************************************/
 
-Matrix lambda_Newton_Rapson__LME__(
+static void initialise_lambda__LME__(
+  int Idx_particle,
+  Matrix X_p,
+  Matrix Elem_p_Coordinates, //
+  Matrix lambda, // Lagrange multiplier.
+  double Beta) // Thermalization parameter.
+{
+
+  int Ndim = NumberDimensions;
+  int Nnodes_simplex = Ndim + 1;
+  int Size_element = Elem_p_Coordinates.N_rows;
+  int Closest_node = 0;
+  double sqr_dist_i;
+  double dist = 1E10;
+
+  int * simplex  = (int *)Allocate_ArrayZ(Nnodes_simplex,sizeof(int));
+  int simplex_0;
+  int simplex_i;
+
+  Matrix Norm_l = allocZ__MatrixLib__(Size_element,1);
+  Matrix l = allocZ__MatrixLib__(Size_element,Ndim);
+
+  Matrix A = allocZ__MatrixLib__(Ndim,Ndim);
+  Matrix b = allocZ__MatrixLib__(Ndim,1);
+  Matrix x;
+
+  // Initialise a list with distances and order
+  for(int i = 0 ; i<Size_element ; i++)
+  {
+
+    sqr_dist_i = 0.0;
+
+    for(int j = 0 ; j<Ndim ; j++)
+    {
+      l.nM[i][j] = X_p.nV[i] - Elem_p_Coordinates.nM[i][j];
+      sqr_dist_i += DSQR(l.nM[i][j]);
+    }
+
+    Norm_l.nV[i] = sqr_dist_i;
+
+    if(Norm_l.nV[i] < dist)
+    {
+      dist = sqrt(sqr_dist_i);
+      Closest_node = i;
+    }
+  
+  }
+
+  if(Closest_node == 0)
+  {
+    simplex[0] = Closest_node;
+    simplex[1] = 1;
+    simplex[2] = 3;
+    simplex[3] = 4;
+  }
+
+  if(Closest_node == 1)
+  {
+    simplex[0] = Closest_node;
+    simplex[1] = 0;
+    simplex[2] = 2;
+    simplex[3] = 5;
+  }
+
+  if(Closest_node == 2)
+  {
+    simplex[0] = Closest_node;
+    simplex[1] = 1;
+    simplex[2] = 3;
+    simplex[3] = 6;
+  }
+
+  if(Closest_node == 3)
+  {
+    simplex[0] = Closest_node;
+    simplex[1] = 0;
+    simplex[2] = 2;
+    simplex[3] = 7;
+  }
+
+  if(Closest_node == 4)
+  {
+    simplex[0] = Closest_node;
+    simplex[1] = 5;
+    simplex[2] = 7;
+    simplex[3] = 0;
+  }
+
+  if(Closest_node == 5)
+  {
+    simplex[0] = Closest_node;
+    simplex[1] = 4;
+    simplex[2] = 6;
+    simplex[3] = 1;
+  }
+
+  if(Closest_node == 6)
+  {
+    simplex[0] = Closest_node;
+    simplex[1] = 5;
+    simplex[2] = 7;
+    simplex[3] = 2;
+  }
+
+  if(Closest_node == 7)
+  {
+    simplex[0] = Closest_node;
+    simplex[1] = 4;
+    simplex[2] = 6;
+    simplex[3] = 3;
+  }
+
+  simplex_0 = simplex[0];
+
+  // Assemble matrix to solve the system Ax = b
+  for(int i = 1 ; i<Nnodes_simplex ; i++)
+  {
+    simplex_i = simplex[i];
+
+    b.nV[i-1] = - Beta*(Norm_l.nV[simplex_0] - Norm_l.nV[simplex_i]);
+
+    for(int j = 0 ; j<Ndim ; j++)
+    {
+      A.nM[i-1][j] = l.nM[simplex_i][j] - l.nM[simplex_0][j];
+    }
+  }
+
+
+  if(fabs(I3__MatrixLib__(A)) < TOL_zero)
+  {
+    strcpy(A.Info,"A");
+    print__MatrixLib__(A,Ndim,Ndim);
+    fprintf(stderr,"%s %i : %s \n",
+      "Error in initialise_lambda__LME__ for particle",
+      Idx_particle,"Determinant of A is null !");
+    exit(EXIT_FAILURE);
+  }
+
+  // Solve the system
+  x = Solve_Linear_Sistem(A,b);
+
+  // Update the value of lambda
+  for(int i = 0 ; i<Ndim ; i++)
+  {
+    lambda.nV[i] = x.nV[i];
+  }
+
+  // Free memory
+  free(simplex);
+  free__MatrixLib__(Norm_l);
+  free__MatrixLib__(l);
+  free__MatrixLib__(A);
+  free__MatrixLib__(b);
+  free__MatrixLib__(x);
+}
+
+/****************************************************************************/
+
+void update_lambda_Newton_Rapson__LME__(
+  int Idx_particle,
   Matrix l, // Set than contanins vector form neighborhood nodes to particle.
   Matrix lambda, // Lagrange multiplier.
   Matrix Metric, // Measure for the norm definition.
@@ -268,7 +432,9 @@ Matrix lambda_Newton_Rapson__LME__(
 
       if(fabs(I3__MatrixLib__(J)) < TOL_zero)
       {
-        fprintf(stderr,"Error in lambda_Newton_Rapson__LME__ : %s \n","The Hessian is singular !");
+        fprintf(stderr,"%s %i : %s \n",
+          "Error in lambda_Newton_Rapson__LME__ for particle",
+          Idx_particle,"The Hessian is singular !");
         exit(EXIT_FAILURE);
       }
     
@@ -305,19 +471,19 @@ Matrix lambda_Newton_Rapson__LME__(
 
   if(NumIter >= MaxIter)
   {
-    printf("%s : %s \n",
-      "Warning in lambda_Newton_Rapson__LME__",
+    fprintf(stderr,"%s %i : %s \n",
+      "Warning in lambda_Newton_Rapson__LME__ for particle",Idx_particle,
       "No convergence reached in the maximum number of interations");
-    printf("%s : %f\n", "Total Error",norm_r);
+    fprintf(stderr,"%s : %f\n", "Total Error",norm_r);
+    exit(EXIT_FAILURE);
   }
   
-
-  return lambda;
 }
 
 /****************************************************************************/
 
-Matrix lambda_Nelder_Mead__LME__(
+void update_lambda_Nelder_Mead__LME__(
+  int Idx_particle,
   Matrix l, // Set than contanins vector form neighborhood nodes to particle.
   Matrix lambda, // Lagrange multiplier.
   Matrix Metric, // Measure for the norm definition.
@@ -330,7 +496,7 @@ Matrix lambda_Nelder_Mead__LME__(
 {
   int Ndim = NumberDimensions;
   int Nnodes_simplex = Ndim + 1;
-  int MaxIter = 100;
+  int MaxIter = 700;
   int NumIter = 0;
 
   // Simplex generated with lagrange multipliers
@@ -346,12 +512,27 @@ Matrix lambda_Nelder_Mead__LME__(
   double logZ_n;
   double logZ_n1;
 
-  // Compute an initial value for lambda
-  initialisation_Nelder_Mead__LME__(l, lambda, Beta);
+  // Compute the initial positions of the nodes in the simplex
+  simplex.nM[0][0] = lambda.nV[0];
+  simplex.nM[0][1] = lambda.nV[1];
+  simplex.nM[0][2] = lambda.nV[2];
 
-  // Compute the initial values of logZ in each vertex of the simplex
+  simplex.nM[1][0] = lambda.nV[0]/10;
+  simplex.nM[1][1] = lambda.nV[1];
+  simplex.nM[1][2] = lambda.nV[2];
+
+  simplex.nM[2][0] = lambda.nV[0];
+  simplex.nM[2][1] = lambda.nV[1]/10;
+  simplex.nM[2][2] = lambda.nV[2];
+
+  simplex.nM[3][0] = lambda.nV[0];
+  simplex.nM[3][1] = lambda.nV[1];
+  simplex.nM[3][2] = lambda.nV[2]/10;
+
+  
   for(int a = 0 ; a<Nnodes_simplex ; a++)
-  {
+  {    
+    // Compute the initial values of logZ in each vertex of the simplex
     simplex_a.nV = simplex.nM[a];
     logZ.nV[a] = logZ__LME__(l, simplex_a, Metric, Beta);
   }
@@ -359,7 +540,7 @@ Matrix lambda_Nelder_Mead__LME__(
   // Nelder-Mead main loop
   while(NumIter <= MaxIter)
   {
-    
+
     order_logZ_simplex_Nelder_Mead__LME__(logZ, simplex);
 
     logZ_0 = logZ.nV[0];
@@ -367,7 +548,7 @@ Matrix lambda_Nelder_Mead__LME__(
     logZ_n1 = logZ.nV[Nnodes_simplex-1];
 
     // Check convergence
-    if((logZ_0 - logZ_n1) > TOL_LME)
+    if(fabs(logZ_0 - logZ_n1) > TOL_LME)
     {
 
       // Spin the simplex to get the simplex with the smallest normalized volume
@@ -387,13 +568,23 @@ Matrix lambda_Nelder_Mead__LME__(
       logZ_reflected_point = logZ__LME__(l,reflected_point,Metric,Beta);
 
       // Do an expansion using the reflected point
-      if(logZ_reflected_point <= logZ_0)
+      if(logZ_reflected_point < logZ_0)
       {
         expansion_Nelder_Mead__LME__(simplex,logZ,reflected_point,gravity_center,l,Metric,Beta,logZ_reflected_point);
       }
+      // Take the reflected point
+      else if((logZ_reflected_point > logZ_0) && (logZ_reflected_point < logZ_n))
+      {
+        for(int i = 0 ; i<Ndim ; i++)
+        {
+          simplex.nM[Nnodes_simplex-1][i] = reflected_point.nV[i];
+        }
 
+        logZ.nV[Nnodes_simplex-1] = logZ_reflected_point; 
+
+      }
       // Do a contraction using the reflected point (or a shrinkage)
-      else if(logZ_reflected_point > logZ_n)
+      else if(logZ_reflected_point >= logZ_n)
       {
         contraction_Nelder_Mead__LME__(simplex,logZ,reflected_point,gravity_center,l,Metric,Beta,logZ_reflected_point);
       }
@@ -411,10 +602,11 @@ Matrix lambda_Nelder_Mead__LME__(
 
   if(NumIter >= MaxIter)
   {
-    printf("%s : %s \n",
-      "Warning in lambda_Nelder_Mead__LME__",
+    fprintf(stderr,"%s %i : %s \n",
+      "Warning in lambda_Nelder_Mead__LME__ for particle",Idx_particle,
       "No convergence reached in the maximum number of interations");
-    printf("%s : %f\n", "Total Error",logZ_0 - logZ_n1);
+    fprintf(stderr,"%s : %e\n", "Total Error",fabs(logZ_0 - logZ_n1));
+    exit(EXIT_FAILURE);
   }
 
   // Update the value of lambda
@@ -429,125 +621,8 @@ Matrix lambda_Nelder_Mead__LME__(
   free__MatrixLib__(simplex);
   free__MatrixLib__(logZ);
 
-  return lambda;
 }
 
-/****************************************************************************/
-
-static void initialisation_Nelder_Mead__LME__(
-  Matrix l, // Set than contanins vector form neighborhood nodes to particle.
-  Matrix lambda, // Lagrange multiplier.
-  double Beta) // Thermalization parameter.
-{
-
-  int Ndim = NumberDimensions;
-  int Nnodes_simplex = Ndim + 1;
-  int N_size_l = l.N_rows;
-  bool swapped = false;
-  double sqr_norm_i;
-  double aux_norm;
-  double aux_l;
-
-  double * Norm_l  = (double *)Allocate_ArrayZ(N_size_l,sizeof(double));
-
-  Matrix A = allocZ__MatrixLib__(Ndim,Ndim);
-  Matrix b = allocZ__MatrixLib__(Ndim,1);
-  Matrix x;
-
-  // Initialise a list with distances and order
-  for(int i = 0 ; i<N_size_l ; i++)
-  {
-
-    sqr_norm_i = 0.0;
-
-    for(int j = 0 ; j<Ndim ; j++)
-    {
-      sqr_norm_i += l.nM[i][j]*l.nM[i][j];
-    }
-
-    Norm_l[i] = sqrt(sqr_norm_i);
-
-  }
-
-  // Ordenate the list from lowest to higher (bubble sort)
-  for(int i = 1 ; i<N_size_l ; i++)
-  {
-
-    swapped = false;
-
-    for(int j = 0 ; j<(N_size_l - i) ; j++)
-    {
-
-      if(Norm_l[j] > Norm_l[j+1]) 
-      {
-        
-        aux_norm = Norm_l[j];
-        Norm_l[j] = Norm_l[j+1];
-        Norm_l[j+1] = aux_norm;
-
-        for(int k = 0 ; k<Ndim ; k++)
-        {
-          aux_l = l.nM[j][k];
-          l.nM[j][k] = l.nM[j+1][k];
-          l.nM[j+1][k] = aux_l;
-        }
-
-        swapped = true;
-      }
-
-    }
-
-    if(!swapped) 
-    {
-      break;
-    }
-
-  }
-
-  /*
-    Assemble matrix to solve the system Ax = b
-  */
-  for(int i = 1 ; i<Nnodes_simplex ; i++)
-  {
-
-    b.nV[i-1] = - Beta*(Norm_l[0]*Norm_l[0] - Norm_l[i]*Norm_l[i]);
-
-    for(int j = 0 ; j<Ndim ; j++)
-    {
-      A.nM[i-1][j] = l.nM[i][j] - l.nM[0][j];
-    }
-  }
-
-
-  if(fabs(I3__MatrixLib__(A)) < TOL_zero)
-  {
-    strcpy(A.Info,"A");
-    print__MatrixLib__(A,Ndim,Ndim);
-    fprintf(stderr,"Error in initialisation_Nelder_Mead__LME__ : %s \n","Determinant of A is null !");
-    exit(EXIT_FAILURE);
-  }
-
-  /*
-    Solve the system
-  */
-  x = Solve_Linear_Sistem(A,b);
-
-  /*
-    Update the value of lambda
-  */
-  for(int i = 0 ; i<Ndim ; i++)
-  {
-    lambda.nV[i] = x.nV[i];
-  }
-
-  /*
-    Free memory
-  */
-  free(Norm_l);
-  free__MatrixLib__(A);
-  free__MatrixLib__(b);
-  free__MatrixLib__(x);
-}
 
 /****************************************************************************/
 

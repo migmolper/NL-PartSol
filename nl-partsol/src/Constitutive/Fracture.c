@@ -15,8 +15,12 @@
   \param B_eps : Define the particles close to each particle
   \param DeltaX : Mesh size
 */
-static void Eigenerosion(int p, Fields Phi, Material MatPro,
-			 ChainPtr * Beps, double DeltaX)
+static void Eigenerosion(
+  int p, 
+  Fields Phi, 
+  Material MatPro,
+  ChainPtr * Beps, 
+  double DeltaX)
 {
 
   /* Read the required fields */
@@ -45,8 +49,9 @@ static void Eigenerosion(int p, Fields Phi, Material MatPro,
   /*!
     Non broken GP Only traction 
   */ 
-  if((chi.nV[p] < 1) && (EV_Stress_p.n[0]>0))
-    { 
+  if((chi.nV[p] < 1) && 
+    (EV_Stress_p.n[0]>0))
+  { 
 
       /*!
 	Normalizing constant 
@@ -153,7 +158,11 @@ static void Eigenerosion(int p, Fields Phi, Material MatPro,
   \param Properties : Define the material properties of the particle
   \param Beps : Table with the list of neighbours per particle.
 */
-static void Eigensoftening(int p, Fields Phi, Material MatPro, ChainPtr * Beps)
+static void Eigensoftening(
+  int p, 
+  Fields Phi, 
+  Material MatPro, 
+  ChainPtr * Beps)
 {
 
   int Ndim = NumberDimensions;
@@ -345,7 +354,10 @@ static void Eigensoftening(int p, Fields Phi, Material MatPro, ChainPtr * Beps)
   \param Particles : Information of the particle mesh
   \param Nodes : Informaction with the set of nodes
  */
-static void ComputeBeps(int p, GaussPoint MPM_Mesh, Mesh FEM_Mesh)
+static void ComputeBeps(
+  int p, 
+  GaussPoint MPM_Mesh, 
+  Mesh FEM_Mesh)
 {
 
   int Ndim = NumberDimensions;
@@ -424,7 +436,10 @@ static void ComputeBeps(int p, GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 
 /*********************************************************************/
 
-void compute_particle_Damage(int p, GaussPoint MPM_Mesh, Mesh FEM_Mesh)
+void compute_particle_Damage(
+  int p, 
+  GaussPoint MPM_Mesh, 
+  Mesh FEM_Mesh)
 {
 
   int Ndim = NumberDimensions;

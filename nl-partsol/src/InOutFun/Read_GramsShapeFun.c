@@ -89,7 +89,7 @@ void GramsShapeFun(char * Name_File)
 
       /* Set to default all it properties */
       gamma_LME = 3;
-      TOL_LME = 10e-10;
+      TOL_LME = 1e-10;
       curvature_LME = 0;
 
       /* Look for the curly brace { */

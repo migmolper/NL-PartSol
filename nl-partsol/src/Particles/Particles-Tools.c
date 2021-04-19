@@ -219,7 +219,7 @@ void get_particle_tributary_nodes(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int p)
     /*
       Compute the lagrange multiplier of the new shape functions
     */
-    lambda_p = lambda_Newton_Rapson__LME__(Delta_Xip, lambda_p, Metric_p, Beta_p);
+    MPM_Mesh.update_lambda(p, Delta_Xip, lambda_p, Metric_p, Beta_p);
     
     /* Free memory */
     free__MatrixLib__(Metric_p);

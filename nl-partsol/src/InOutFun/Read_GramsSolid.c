@@ -205,6 +205,8 @@ GaussPoint GramsSolid(char * Name_File, Mesh FEM_Mesh)
         strcpy(MPM_Mesh.lambda.Info,"Lagrange Multiplier");
         MPM_Mesh.Beta = allocZ__MatrixLib__(NumParticles,1);
         strcpy(MPM_Mesh.Beta.Info,"Beta parameter");
+//        MPM_Mesh.update_lambda = update_lambda_Newton_Rapson__LME__;
+        MPM_Mesh.update_lambda = update_lambda_Nelder_Mead__LME__;
       }
     }
     else

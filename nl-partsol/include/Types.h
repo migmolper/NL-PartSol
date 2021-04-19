@@ -573,6 +573,7 @@ typedef struct {
    */
   Matrix lambda; // Lagrange multiplier
   Matrix Beta; // Thermalization or regularization parameter
+  void (* update_lambda)(int, Matrix, Matrix, Matrix, double);
 
 } GaussPoint;
 
