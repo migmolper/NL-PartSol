@@ -91,10 +91,7 @@ void initialize__LME__(
         Beta_p = beta__LME__(Delta_Xip, gamma_LME, FEM_Mesh.DeltaX);
 
         /* Initialise lambda using Bo-Li approach */
-//        initialise_lambda__LME__(p, X_p, Elem_p_Coordinates, lambda_p, Beta_p);
-        lambda_p.nV[0] = 1.0;
-        lambda_p.nV[1] = 1.0;
-        lambda_p.nV[2] = 1.0;
+        initialise_lambda__LME__(p, X_p, Elem_p_Coordinates, lambda_p, Beta_p);
 
         /* Free memory */ 
         free__MatrixLib__(Elem_p_Coordinates);
@@ -234,7 +231,13 @@ static void initialise_lambda__LME__(
 {
 
   int Ndim = NumberDimensions;
-  int Nnodes_simplex = Ndim + 1;
+
+  for(int i = 0 ; i<Ndim ; i++)
+  {
+    lambda.nV[i] = 1.0;
+  }
+
+  /*int Nnodes_simplex = Ndim + 1;
   int Size_element = Elem_p_Coordinates.N_rows;
   int Closest_node = 0;
   double sqr_dist_i;
@@ -378,7 +381,7 @@ static void initialise_lambda__LME__(
   free__MatrixLib__(l);
   free__MatrixLib__(A);
   free__MatrixLib__(b);
-  free__MatrixLib__(x);
+  free__MatrixLib__(x);*/
 }
 
 /****************************************************************************/
