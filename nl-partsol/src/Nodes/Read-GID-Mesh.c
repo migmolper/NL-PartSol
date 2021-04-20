@@ -17,11 +17,19 @@ typedef struct
 /*
   Auxiliar functions and variables
 */
-#ifdef _WIN32
-static char * delimiters = " \r\n\t";
-#else
-static char * delimiters = " \t\n"; 
+
+#ifdef __linux__
+  static char * delimiters = " \t\n"; 
+#endif    
+
+#ifdef __APPLE__
+  static char * delimiters = " \t\n"; 
 #endif
+  
+#ifdef _WIN32 
+  static char * delimiters = " \r\n\t";
+#endif
+
 
 static char Error_message[MAXW];
 

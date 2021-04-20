@@ -7,6 +7,7 @@ char * ShapeFunctionGP;
 double curvature_LME;
 double gamma_LME;
 double TOL_LME;
+char wrapper_LME[MAXC];
 
 /**********************************************************************/
 
