@@ -19,6 +19,7 @@ static void shrinkage_Nelder_Mead__LME__(Matrix,Matrix,Matrix,Matrix,double);
 double gamma_LME;
 double curvature_LME;
 double TOL_LME;
+int max_iter_LME;
 
 // Nelder-Mead parameters
 double NM_rho_LME = 1.0;
@@ -400,7 +401,7 @@ void update_lambda_Newton_Rapson__LME__(
   /*
     Definition of some parameters
   */
-  int MaxIter = 100;
+  int MaxIter = max_iter_LME;
   int Ndim = NumberDimensions;
   int NumIter = 0; // Iterator counter
   double norm_r = 10; // Value of the norm
@@ -474,9 +475,9 @@ void update_lambda_Newton_Rapson__LME__(
 
   if(NumIter >= MaxIter)
   {
-    fprintf(stderr,"%s %i : %s \n",
+    fprintf(stderr,"%s %i : %s (%i)\n",
       "Warning in lambda_Newton_Rapson__LME__ for particle",Idx_particle,
-      "No convergence reached in the maximum number of interations");
+      "No convergence reached in the maximum number of interations",MaxIter);
     fprintf(stderr,"%s : %f\n", "Total Error",norm_r);
     exit(EXIT_FAILURE);
   }
@@ -499,7 +500,7 @@ void update_lambda_Nelder_Mead__LME__(
 {
   int Ndim = NumberDimensions;
   int Nnodes_simplex = Ndim + 1;
-  int MaxIter = 700;
+  int MaxIter = max_iter_LME;
   int NumIter = 0;
 
   // Simplex generated with lagrange multipliers
@@ -605,9 +606,9 @@ void update_lambda_Nelder_Mead__LME__(
 
   if(NumIter >= MaxIter)
   {
-    fprintf(stderr,"%s %i : %s \n",
+    fprintf(stderr,"%s %i : %s (%i) \n",
       "Warning in lambda_Nelder_Mead__LME__ for particle",Idx_particle,
-      "No convergence reached in the maximum number of interations");
+      "No convergence reached in the maximum number of interations",MaxIter);
     fprintf(stderr,"%s : %e\n", "Total Error",fabs(logZ_0 - logZ_n1));
     exit(EXIT_FAILURE);
   }

@@ -17,6 +17,7 @@ extern int Number_Soil_Water_Mixtures;
 extern Mixture * Soil_Water_Mixtures;
 
 // Global variables for the LME shape functions
+extern int max_iter_LME;
 extern double TOL_LME;
 extern double gamma_LME;
 extern double curvature_LME;
