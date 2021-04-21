@@ -411,16 +411,16 @@ Matrix inverse__MatrixLib__(Matrix A)
 
       /* Rank 3 */
       else if(Columns == 3)
-	{
-	  Am1.nM[0][0] =   DetAm1*(A.nM[1][1]*A.nM[2][2]-A.nM[1][2]*A.nM[2][1]);
-	  Am1.nM[0][1] = - DetAm1*(A.nM[0][1]*A.nM[2][2]-A.nM[0][2]*A.nM[2][1]);
-	  Am1.nM[0][2] =   DetAm1*(A.nM[0][1]*A.nM[1][2]-A.nM[0][2]*A.nM[1][1]); 
-	  Am1.nM[1][0] = - DetAm1*(A.nM[1][0]*A.nM[2][2]-A.nM[1][2]*A.nM[2][0]); 
-	  Am1.nM[1][1] =   DetAm1*(A.nM[0][0]*A.nM[2][2]-A.nM[0][2]*A.nM[2][0]); 
-	  Am1.nM[1][2] = - DetAm1*(A.nM[0][0]*A.nM[1][2]-A.nM[0][2]*A.nM[1][0]); 
-	  Am1.nM[2][0] =   DetAm1*(A.nM[1][0]*A.nM[2][1]-A.nM[1][1]*A.nM[2][0]); 
-	  Am1.nM[2][1] = - DetAm1*(A.nM[0][0]*A.nM[2][1]-A.nM[0][1]*A.nM[2][0]); 
-	  Am1.nM[2][2] =   DetAm1*(A.nM[0][0]*A.nM[1][1]-A.nM[0][1]*A.nM[1][0]);
+      {
+        Am1.nM[0][0] =   DetAm1*(A.nM[1][1]*A.nM[2][2]-A.nM[1][2]*A.nM[2][1]);
+        Am1.nM[0][1] = - DetAm1*(A.nM[0][1]*A.nM[2][2]-A.nM[0][2]*A.nM[2][1]);
+        Am1.nM[0][2] =   DetAm1*(A.nM[0][1]*A.nM[1][2]-A.nM[0][2]*A.nM[1][1]); 
+        Am1.nM[1][0] = - DetAm1*(A.nM[1][0]*A.nM[2][2]-A.nM[1][2]*A.nM[2][0]); 
+        Am1.nM[1][1] =   DetAm1*(A.nM[0][0]*A.nM[2][2]-A.nM[0][2]*A.nM[2][0]); 
+        Am1.nM[1][2] = - DetAm1*(A.nM[0][0]*A.nM[1][2]-A.nM[0][2]*A.nM[1][0]); 
+        Am1.nM[2][0] =   DetAm1*(A.nM[1][0]*A.nM[2][1]-A.nM[1][1]*A.nM[2][0]); 
+        Am1.nM[2][1] = - DetAm1*(A.nM[0][0]*A.nM[2][1]-A.nM[0][1]*A.nM[2][0]); 
+        Am1.nM[2][2] =   DetAm1*(A.nM[0][0]*A.nM[1][1]-A.nM[0][1]*A.nM[1][0]);
 	}
 
       /* Fail */

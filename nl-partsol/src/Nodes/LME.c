@@ -8,7 +8,7 @@ static Matrix r__LME__(Matrix, Matrix);
 static Matrix J__LME__(Matrix, Matrix, Matrix);
 
 // Auxiliar functions for the Neldel Mead in the LME
-static void initialise_lambda__LME__(int,Matrix,Matrix,Matrix,double);
+static void initialise_lambda__LME__(int,Matrix,Matrix,Matrix,double, double);
 static Matrix gravity_center_Nelder_Mead__LME__(Matrix);
 static void order_logZ_simplex_Nelder_Mead__LME__(Matrix, Matrix);
 static void expansion_Nelder_Mead__LME__(Matrix,Matrix,Matrix,Matrix,Matrix,Matrix,double,double);
@@ -92,7 +92,7 @@ void initialize__LME__(
         Beta_p = beta__LME__(Delta_Xip, gamma_LME, FEM_Mesh.DeltaX);
 
         /* Initialise lambda using Bo-Li approach */
-        initialise_lambda__LME__(p, X_p, Elem_p_Coordinates, lambda_p, Beta_p);
+        initialise_lambda__LME__(p, X_p, Elem_p_Coordinates, lambda_p, Beta_p, FEM_Mesh.DeltaX);
 
         /* Free memory */ 
         free__MatrixLib__(Elem_p_Coordinates);
@@ -228,25 +228,16 @@ static void initialise_lambda__LME__(
   Matrix X_p,
   Matrix Elem_p_Coordinates, //
   Matrix lambda, // Lagrange multiplier.
-  double Beta) // Thermalization parameter.
+  double Beta,
+  double DeltaX) // Thermalization parameter.
 {
 
   int Ndim = NumberDimensions;
-
-  for(int i = 0 ; i<Ndim ; i++)
-  {
-    lambda.nV[i] = 1.0;
-  }
-
-  /*int Nnodes_simplex = Ndim + 1;
+  int Nnodes_simplex = Ndim + 1;
   int Size_element = Elem_p_Coordinates.N_rows;
-  int Closest_node = 0;
   double sqr_dist_i;
-  double dist = 1E10;
 
-  int * simplex  = (int *)Allocate_ArrayZ(Nnodes_simplex,sizeof(int));
-  int simplex_0;
-  int simplex_i;
+  int * simplex;
 
   Matrix Norm_l = allocZ__MatrixLib__(Size_element,1);
   Matrix l = allocZ__MatrixLib__(Size_element,Ndim);
@@ -268,91 +259,27 @@ static void initialise_lambda__LME__(
     }
 
     Norm_l.nV[i] = sqr_dist_i;
-
-    if(Norm_l.nV[i] < dist)
-    {
-      dist = sqrt(sqr_dist_i);
-      Closest_node = i;
-    }
   
   }
 
-  if(Closest_node == 0)
+  if(Size_element == 8)
   {
-    simplex[0] = Closest_node;
+    simplex = (int *)Allocate_ArrayZ(Nnodes_simplex,sizeof(int));
+    simplex[0] = 0;
     simplex[1] = 1;
     simplex[2] = 3;
     simplex[3] = 4;
   }
 
-  if(Closest_node == 1)
-  {
-    simplex[0] = Closest_node;
-    simplex[1] = 0;
-    simplex[2] = 2;
-    simplex[3] = 5;
-  }
-
-  if(Closest_node == 2)
-  {
-    simplex[0] = Closest_node;
-    simplex[1] = 1;
-    simplex[2] = 3;
-    simplex[3] = 6;
-  }
-
-  if(Closest_node == 3)
-  {
-    simplex[0] = Closest_node;
-    simplex[1] = 0;
-    simplex[2] = 2;
-    simplex[3] = 7;
-  }
-
-  if(Closest_node == 4)
-  {
-    simplex[0] = Closest_node;
-    simplex[1] = 5;
-    simplex[2] = 7;
-    simplex[3] = 0;
-  }
-
-  if(Closest_node == 5)
-  {
-    simplex[0] = Closest_node;
-    simplex[1] = 4;
-    simplex[2] = 6;
-    simplex[3] = 1;
-  }
-
-  if(Closest_node == 6)
-  {
-    simplex[0] = Closest_node;
-    simplex[1] = 5;
-    simplex[2] = 7;
-    simplex[3] = 2;
-  }
-
-  if(Closest_node == 7)
-  {
-    simplex[0] = Closest_node;
-    simplex[1] = 4;
-    simplex[2] = 6;
-    simplex[3] = 3;
-  }
-
-  simplex_0 = simplex[0];
-
   // Assemble matrix to solve the system Ax = b
   for(int i = 1 ; i<Nnodes_simplex ; i++)
   {
-    simplex_i = simplex[i];
 
-    b.nV[i-1] = - Beta*(Norm_l.nV[simplex_0] - Norm_l.nV[simplex_i]);
+    b.nV[i-1] = - Beta*(Norm_l.nV[simplex[0]] - Norm_l.nV[simplex[i]]);
 
     for(int j = 0 ; j<Ndim ; j++)
     {
-      A.nM[i-1][j] = l.nM[simplex_i][j] - l.nM[simplex_0][j];
+      A.nM[i-1][j] = l.nM[simplex[i]][j] - l.nM[simplex[0]][j];
     }
   }
 
@@ -373,7 +300,8 @@ static void initialise_lambda__LME__(
   // Update the value of lambda
   for(int i = 0 ; i<Ndim ; i++)
   {
-    lambda.nV[i] = x.nV[i];
+//    lambda.nV[i] = x.nV[i];
+    lambda.nV[i] = 1.0;
   }
 
   // Free memory
@@ -382,7 +310,7 @@ static void initialise_lambda__LME__(
   free__MatrixLib__(l);
   free__MatrixLib__(A);
   free__MatrixLib__(b);
-  free__MatrixLib__(x);*/
+  free__MatrixLib__(x);
 }
 
 /****************************************************************************/
@@ -516,22 +444,21 @@ void update_lambda_Nelder_Mead__LME__(
   double logZ_n;
   double logZ_n1;
 
-  // Compute the initial positions of the nodes in the simplex
-  simplex.nM[0][0] = lambda.nV[0];
-  simplex.nM[0][1] = lambda.nV[1];
-  simplex.nM[0][2] = lambda.nV[2];
-
-  simplex.nM[1][0] = lambda.nV[0]/10;
-  simplex.nM[1][1] = lambda.nV[1];
-  simplex.nM[1][2] = lambda.nV[2];
-
-  simplex.nM[2][0] = lambda.nV[0];
-  simplex.nM[2][1] = lambda.nV[1]/10;
-  simplex.nM[2][2] = lambda.nV[2];
-
-  simplex.nM[3][0] = lambda.nV[0];
-  simplex.nM[3][1] = lambda.nV[1];
-  simplex.nM[3][2] = lambda.nV[2]/10;
+  // Compute the initial positions of the nodes in the simplex (P.Navas)
+  for(int a = 0 ; a<Nnodes_simplex ; a++)
+  {
+    for(int i = 0 ; i<Ndim ; i++)
+    {
+      if(i == a)
+      {
+        simplex.nM[a][i] = lambda.nV[i]/10;
+      }
+      else
+      {
+        simplex.nM[a][i] = lambda.nV[i];
+      }
+    }
+  }
 
   
   for(int a = 0 ; a<Nnodes_simplex ; a++)
@@ -556,7 +483,7 @@ void update_lambda_Nelder_Mead__LME__(
     {
 
       // Spin the simplex to get the simplex with the smallest normalized volume
-//      spin_Nelder_Mead__LME__(simplex);
+      // spin_Nelder_Mead__LME__(simplex);
 
       // Compute the gravity center of the simplex
       gravity_center = gravity_center_Nelder_Mead__LME__(simplex);
