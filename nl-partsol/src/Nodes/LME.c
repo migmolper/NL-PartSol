@@ -233,7 +233,7 @@ static void initialise_lambda__LME__(
 {
 
   int Ndim = NumberDimensions;
-  int Nnodes_simplex = Ndim + 1;
+/*  int Nnodes_simplex = Ndim + 1;
   int Size_element = Elem_p_Coordinates.N_rows;
   double sqr_dist_i;
 
@@ -296,7 +296,7 @@ static void initialise_lambda__LME__(
 
   // Solve the system
   x = Solve_Linear_Sistem(A,b);
-
+*/
   // Update the value of lambda
   for(int i = 0 ; i<Ndim ; i++)
   {
@@ -304,13 +304,13 @@ static void initialise_lambda__LME__(
     lambda.nV[i] = 1.0;
   }
 
-  // Free memory
+/*  // Free memory
   free(simplex);
   free__MatrixLib__(Norm_l);
   free__MatrixLib__(l);
   free__MatrixLib__(A);
   free__MatrixLib__(b);
-  free__MatrixLib__(x);
+  free__MatrixLib__(x);*/
 }
 
 /****************************************************************************/
