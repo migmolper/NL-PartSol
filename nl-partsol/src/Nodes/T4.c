@@ -11,7 +11,7 @@ static Matrix Xi_to_X__T4__(Matrix, Matrix);
 /*********************************************************************/
 
 void initialize__T4__(
-  GaussPoint MPM_Mesh,
+  Particle MPM_Mesh,
   Mesh FEM_Mesh)
 {
   /* Variables for the GP coordinates */

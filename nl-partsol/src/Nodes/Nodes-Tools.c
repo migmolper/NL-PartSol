@@ -186,7 +186,7 @@ return Field_Ap;
 
 Matrix compute_N__MeshTools__(
   Element GP_Element,
-  GaussPoint MPM_Mesh,
+  Particle MPM_Mesh,
   Mesh FEM_Mesh) 
 { 
 
@@ -314,7 +314,7 @@ Matrix compute_N__MeshTools__(
 
 /*********************************************************************/
 
-Matrix compute_dN__MeshTools__(Element GP_Element,GaussPoint MPM_Mesh,
+Matrix compute_dN__MeshTools__(Element GP_Element,Particle MPM_Mesh,
 			      Mesh FEM_Mesh) 
 { 
   int Ndim = NumberDimensions;

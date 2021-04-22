@@ -39,30 +39,30 @@ typedef struct
   Auxiliar functions 
 */
 static Newmark_parameters compute_Newmark_parameters(double, double, double);
-static Matrix compute_Nodal_Effective_Mass(GaussPoint, Mesh, Mask, double);
-static Matrix compute_Nodal_Velocity(Matrix,GaussPoint, Mesh, Mask);
-static Matrix compute_Nodal_Acceleration(Matrix,GaussPoint, Mesh, Mask);
+static Matrix compute_Nodal_Effective_Mass(Particle, Mesh, Mask, double);
+static Matrix compute_Nodal_Velocity(Matrix,Particle, Mesh, Mask);
+static Matrix compute_Nodal_Acceleration(Matrix,Particle, Mesh, Mask);
 static void   imposse_Nodal_Kinetics(Mesh,Matrix,Matrix,Mask,int);
 static void   imposed_Nodal_Displacements(Matrix, Mask, Mesh, int);
-static void   update_Local_State(Matrix,Mask,GaussPoint,Mesh,double);
-static Matrix compute_Nodal_Forces(Matrix, Mask, GaussPoint, Mesh, int);
-static void   compute_Nodal_Internal_Forces(Matrix,Matrix,Mask,GaussPoint, Mesh);
-static void   compute_Nodal_Body_Forces(Matrix, Mask, GaussPoint, Mesh, int);
+static void   update_Local_State(Matrix,Mask,Particle,Mesh,double);
+static Matrix compute_Nodal_Forces(Matrix, Mask, Particle, Mesh, int);
+static void   compute_Nodal_Internal_Forces(Matrix,Matrix,Mask,Particle, Mesh);
+static void   compute_Nodal_Body_Forces(Matrix, Mask, Particle, Mesh, int);
 static Matrix compute_Nodal_Reactions(Mesh, Matrix, Mask);
 static Matrix compute_Nodal_Residual(Matrix, Matrix, Matrix, Matrix, Matrix, Newmark_parameters);
 static bool   check_convergence(Matrix,double,int,int,int);
-static Matrix assemble_Nodal_Tangent_Stiffness(Mask, GaussPoint, Mesh);
-static void   assemble_Nodal_Tangent_Stiffness_Geometric(Matrix, Mask, GaussPoint, Mesh);
-static void   assemble_Nodal_Tangent_Stiffness_Material(Matrix, Mask, GaussPoint, Mesh);
+static Matrix assemble_Nodal_Tangent_Stiffness(Mask, Particle, Mesh);
+static void   assemble_Nodal_Tangent_Stiffness_Geometric(Matrix, Mask, Particle, Mesh);
+static void   assemble_Nodal_Tangent_Stiffness_Material(Matrix, Mask, Particle, Mesh);
 static Tensor compute_stiffness_density(Tensor, Tensor, Tensor, double, Material);
 static Tensor compute_Nodal_Tangent_Stiffness_Material(Tensor,Tensor,Tensor);
 static void   solve_non_reducted_system(Matrix, Matrix, Matrix, Matrix, Newmark_parameters);
 static void   solve_reducted_system(Mask,Matrix, Matrix, Matrix, Matrix, Newmark_parameters);
-static void   update_Particles(Matrix, Matrix, Matrix, GaussPoint, Mesh, Mask, Newmark_parameters);
-static void   output_selector(GaussPoint, Mesh, Mask, Matrix, Matrix, Matrix, Matrix, Matrix, Matrix, int, int);
+static void   update_Particles(Matrix, Matrix, Matrix, Particle, Mesh, Mask, Newmark_parameters);
+static void   output_selector(Particle, Mesh, Mask, Matrix, Matrix, Matrix, Matrix, Matrix, Matrix, int, int);
 /**************************************************************/
 
-void U_Newmark_beta_Finite_Strains(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int InitialStep)
+void U_Newmark_beta_Finite_Strains(Mesh FEM_Mesh, Particle MPM_Mesh, int InitialStep)
 {
 
   /*
@@ -288,7 +288,7 @@ static Newmark_parameters compute_Newmark_parameters(double beta, double gamma, 
 
 /**************************************************************/
 
-static Matrix compute_Nodal_Effective_Mass(GaussPoint MPM_Mesh, Mesh FEM_Mesh, Mask ActiveNodes, double epsilon)
+static Matrix compute_Nodal_Effective_Mass(Particle MPM_Mesh, Mesh FEM_Mesh, Mask ActiveNodes, double epsilon)
 /*
   This function computes the effective mass matrix as a convex combination
   of the lumped mass matrix and the consistent mass matrix. Later assemble
@@ -441,7 +441,7 @@ static Matrix compute_Nodal_Effective_Mass(GaussPoint MPM_Mesh, Mesh FEM_Mesh, M
 
 /**************************************************************/
 
-static Matrix compute_Nodal_Velocity(Matrix Mass,GaussPoint MPM_Mesh, Mesh FEM_Mesh, Mask ActiveNodes)
+static Matrix compute_Nodal_Velocity(Matrix Mass,Particle MPM_Mesh, Mesh FEM_Mesh, Mask ActiveNodes)
 /*
   Call the LAPACK solver to compute the nodal velocity. The operation is linearized and
   all the dof split the velocity array in n components like :
@@ -547,7 +547,7 @@ static Matrix compute_Nodal_Velocity(Matrix Mass,GaussPoint MPM_Mesh, Mesh FEM_M
 
 /**************************************************************/
 
-static Matrix compute_Nodal_Acceleration(Matrix Mass,GaussPoint MPM_Mesh, Mesh FEM_Mesh, Mask ActiveNodes)
+static Matrix compute_Nodal_Acceleration(Matrix Mass,Particle MPM_Mesh, Mesh FEM_Mesh, Mask ActiveNodes)
 /*
   Call the LAPACK solver to compute the nodal Acceleration. The operation is linearized and
   all the dof split the acceleration array in n components like :
@@ -579,7 +579,6 @@ static Matrix compute_Nodal_Acceleration(Matrix Mass,GaussPoint MPM_Mesh, Mesh F
   /* Iterate over the particles to get the nodal values */
   for(int p = 0 ; p<Np ; p++)
     {
-
       /* Define element of the particle */
       Nodes_p = nodal_set__Particles__(p, MPM_Mesh.ListNodes[p], MPM_Mesh.NumberNodes[p]);
 
@@ -591,7 +590,7 @@ static Matrix compute_Nodal_Acceleration(Matrix Mass,GaussPoint MPM_Mesh, Mesh F
 
       /* Get the nodal mommentum */
       for(int A = 0 ; A<Nodes_p.NumberNodes ; A++)
-	{
+      {
 
 	  /*
 	    Get the node in the nodal momentum with the mask
@@ -604,9 +603,9 @@ static Matrix compute_Nodal_Acceleration(Matrix Mass,GaussPoint MPM_Mesh, Mesh F
 
 	  /* Nodal velocity and acceleration  */
 	  for(int i = 0 ; i<Ndim ; i++)
-	    {
-	      dt_Momentum.nM[A_mask][i] += m_p*ShapeFunction_pA*MPM_Mesh.Phi.acc.nM[p][i];
-	    }
+    {
+      dt_Momentum.nM[A_mask][i] += m_p*ShapeFunction_pA*MPM_Mesh.Phi.acc.nM[p][i];
+    }
 	}
 
       /* Free the value of the shape functions */
@@ -810,7 +809,7 @@ static void imposed_Nodal_Displacements(Matrix D_Displacement, Mask ActiveNodes,
 
 static void update_Local_State(Matrix D_Displacement,
 			       Mask ActiveNodes,
-			       GaussPoint MPM_Mesh,
+			       Particle MPM_Mesh,
 			       Mesh FEM_Mesh,
 			       double TimeStep)
 {
@@ -895,7 +894,7 @@ static void update_Local_State(Matrix D_Displacement,
 
 static Matrix compute_Nodal_Forces(Matrix D_Displacement,
 				   Mask ActiveNodes,
-				   GaussPoint MPM_Mesh,
+				   Particle MPM_Mesh,
 				   Mesh FEM_Mesh,
 				   int TimeStep)
 {
@@ -923,7 +922,7 @@ static Matrix compute_Nodal_Forces(Matrix D_Displacement,
 static void compute_Nodal_Internal_Forces(Matrix Forces,
 					  Matrix D_Displacement,
 					  Mask ActiveNodes,
-					  GaussPoint MPM_Mesh,
+					  Particle MPM_Mesh,
 					  Mesh FEM_Mesh)
 {
 
@@ -1035,7 +1034,7 @@ static void compute_Nodal_Internal_Forces(Matrix Forces,
 
 static void compute_Nodal_Body_Forces(Matrix Forces,
 				      Mask ActiveNodes,
-				      GaussPoint MPM_Mesh,
+				      Particle MPM_Mesh,
 				      Mesh FEM_Mesh,
 				      int TimeStep)
 {
@@ -1328,7 +1327,7 @@ static bool check_convergence(
 
 static Matrix assemble_Nodal_Tangent_Stiffness(
   Mask ActiveNodes,
-  GaussPoint MPM_Mesh,
+  Particle MPM_Mesh,
   Mesh FEM_Mesh)
 
 /*
@@ -1366,7 +1365,7 @@ static Matrix assemble_Nodal_Tangent_Stiffness(
 
 static void assemble_Nodal_Tangent_Stiffness_Geometric(Matrix Tangent_Stiffness,
 						       Mask ActiveNodes,
-						       GaussPoint MPM_Mesh,
+						       Particle MPM_Mesh,
 						       Mesh FEM_Mesh)
 /*
   Introduce the geometric contribution G_AB to the full stiffness matrix K_AB
@@ -1512,7 +1511,7 @@ static void assemble_Nodal_Tangent_Stiffness_Geometric(Matrix Tangent_Stiffness,
 /**************************************************************/
 static void assemble_Nodal_Tangent_Stiffness_Material(Matrix Tangent_Stiffness,
 						      Mask ActiveNodes,
-						      GaussPoint MPM_Mesh,
+						      Particle MPM_Mesh,
 						      Mesh FEM_Mesh)
 {
 
@@ -1956,7 +1955,7 @@ for(idx_A_ij = 0 ; idx_A_ij < Order ; idx_A_ij++)
 static void update_Particles(Matrix D_Displacement,
 			     Matrix Velocity,
 			     Matrix Acceleration,
-			     GaussPoint MPM_Mesh,
+			     Particle MPM_Mesh,
 			     Mesh FEM_Mesh,
 			     Mask ActiveNodes,
 			     Newmark_parameters Params)
@@ -2083,7 +2082,7 @@ static void update_Particles(Matrix D_Displacement,
 
 /**************************************************************/
 
-static void output_selector(GaussPoint MPM_Mesh, Mesh FEM_Mesh, Mask ActiveNodes,
+static void output_selector(Particle MPM_Mesh, Mesh FEM_Mesh, Mask ActiveNodes,
                             Matrix Velocity, Matrix Acceleration, Matrix D_Displacement,
                             Matrix Forces, Matrix Reactions, Matrix Residual,
                             int TimeStep, int ResultsTimeStep)

@@ -5,7 +5,7 @@
 int main(void){
 
   Element * E2D = (Element *)Allocate_Array(1,sizeof(Element));
-  GaussPoint * GP_e = (GaussPoint *)Allocate_Array(1,sizeof(GaussPoint));
+  Particle * GP_e = (Particle *)Allocate_Array(1,sizeof(Particle));
   double ** X_g = (double **)Allocate_Matrix(4,2,sizeof(double));
   Vector * X_e = (Vector *)Allocate_Array(1,sizeof(Vector));
   

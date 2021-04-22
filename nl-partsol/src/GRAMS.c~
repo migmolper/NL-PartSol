@@ -8,7 +8,7 @@
 #include "MathTools/MathTools.h"
 #include "InOutFun/InOutFun.h"
 #include "MeshTools/MeshTools.h"
-#include "GaussPointsFunctions/GaussPointsTools.h"
+#include "ParticlesFunctions/ParticlesTools.h"
 #include "Constitutive/Constitutive.h"
 #include "NumSchemes/NumSchemes.h"
 
@@ -59,7 +59,7 @@ int main(int argc, char * argv[])
   /*********************************************************************/
   /******************* DEFINE GAUSS-POINT MESH *************************/
   /*********************************************************************/
-  GaussPoint GP_Mesh; 
+  Particle GP_Mesh; 
   GP_Mesh = InitializeGP(argv[1], FEM_Mesh, D_e);
 
   /*********************************************************************/

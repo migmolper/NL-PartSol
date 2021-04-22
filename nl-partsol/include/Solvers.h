@@ -7,130 +7,130 @@
 
 
 /*!
-  \fn void NonLinear_Gauss_Point_Analysis(GaussPoint PointAnalysis)
+  \fn void NonLinear_Gauss_Point_Analysis(Particle PointAnalysis)
 
   \brief Function to test advanced constitutive models
 
-  \param GaussPoint PointAnalysis :  
+  \param Particle PointAnalysis :  
 
 */
-void NonLinear_Gauss_Point_Analysis(GaussPoint PointAnalysis);
+void NonLinear_Gauss_Point_Analysis(Particle PointAnalysis);
 
 
 /*!
-  \fn double DeltaT_CFL(GaussPoint MPM_Mesh, double DeltaX)
+  \fn double DeltaT_CFL(Particle MPM_Mesh, double DeltaX)
 
   \brief  Get the time step using \cite Anderson_1987
 
-  \param GaussPoint MPM_Mesh : Variable with the particle information
+  \param Particle MPM_Mesh : Variable with the particle information
   \param double DeltaX : Minimum mesh size
 */
-double DeltaT_CFL(GaussPoint, double);
+double DeltaT_CFL(Particle, double);
 
 /*!
-  \fn double DeltaT_Coussy__SolversLib__(GaussPoint MPM_Mesh, double h, double xi)
+  \fn double DeltaT_Coussy__SolversLib__(Particle MPM_Mesh, double h, double xi)
 
   \brief  Get the time step using \cite Coussy_1995
 
-  \param GaussPoint MPM_Mesh : Variable with the particle information
+  \param Particle MPM_Mesh : Variable with the particle information
   \param double DeltaX : Minimum mesh size
   \param double xi : Parameter to include the tortuosity of flow
 */
-double DeltaT_Coussy__SolversLib__(GaussPoint, double, double);
+double DeltaT_Coussy__SolversLib__(Particle, double, double);
 
 /*!
-  \fn void U_Forward_Euler(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int InitialStep)
+  \fn void U_Forward_Euler(Mesh FEM_Mesh, Particle MPM_Mesh, int InitialStep)
 
   \brief Displacement formulation of the MPM with a Forward Euler as 
   time integrator scheme. The algorithm was taken from \cite Zhang_book_2016
 
   \param Mesh FEM_Mesh : Variable with the nodal information
-  \param GaussPoint MPM_Mesh : Variable with the particle information
+  \param Particle MPM_Mesh : Variable with the particle information
   \param InitialStep
  */
-void U_Forward_Euler(Mesh, GaussPoint, int);
+void U_Forward_Euler(Mesh, Particle, int);
 
 
 /*!
-  \fn void U_GA(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int InitialStep)
+  \fn void U_GA(Mesh FEM_Mesh, Particle MPM_Mesh, int InitialStep)
 
   \brief The generalized-alpha algorithm here implemented is analogous
   to the one described in \cite Tran2019e
 
   \param Mesh FEM_Mesh : Variable with the nodal information
-  \param GaussPoint MPM_Mesh : Variable with the particle information
+  \param Particle MPM_Mesh : Variable with the particle information
   \param InitialStep
  */
-void U_GA(Mesh, GaussPoint, int);
+void U_GA(Mesh, Particle, int);
 
 /*!
-  \fn void U_Newmark_Predictor_Corrector(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int InitialStep)
+  \fn void U_Newmark_Predictor_Corrector(Mesh FEM_Mesh, Particle MPM_Mesh, int InitialStep)
 
   \brief Explicit predictor-corrector gamma = 0.5
  
   \param Mesh FEM_Mesh : Variable with the nodal information
-  \param GaussPoint MPM_Mesh : Variable with the particle information
+  \param Particle MPM_Mesh : Variable with the particle information
   \param InitialStep
  */
-void U_Newmark_Predictor_Corrector(Mesh, GaussPoint, int);
+void U_Newmark_Predictor_Corrector(Mesh, Particle, int);
 
 /*!
-  \fn void U_Newmark_Predictor_Corrector_Finite_Strains(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int InitialStep)
+  \fn void U_Newmark_Predictor_Corrector_Finite_Strains(Mesh FEM_Mesh, Particle MPM_Mesh, int InitialStep)
 
   \brief Finite strains explicit predictor-corrector gamma = 0.5
  
   \param Mesh FEM_Mesh : Variable with the nodal information
-  \param GaussPoint MPM_Mesh : Variable with the particle information
+  \param Particle MPM_Mesh : Variable with the particle information
   \param InitialStep
  */
-void U_Newmark_Predictor_Corrector_Finite_Strains(Mesh, GaussPoint, int);
+void U_Newmark_Predictor_Corrector_Finite_Strains(Mesh, Particle, int);
 
 /*
-  \fn void U_Newmark_beta_Finite_Strains(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int InitialStep)
+  \fn void U_Newmark_beta_Finite_Strains(Mesh FEM_Mesh, Particle MPM_Mesh, int InitialStep)
 
   \brief Finite strains Newmark-beta
  
   \param Mesh FEM_Mesh : Variable with the nodal information
-  \param GaussPoint MPM_Mesh : Variable with the particle information
+  \param Particle MPM_Mesh : Variable with the particle information
   \param InitialStep
 */
-void U_Newmark_beta_Finite_Strains(Mesh, GaussPoint, int);
+void U_Newmark_beta_Finite_Strains(Mesh, Particle, int);
 
 /*
-  \fn void U_Newmark_beta_Finite_Strains_BDB(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int InitialStep)
+  \fn void U_Newmark_beta_Finite_Strains_BDB(Mesh FEM_Mesh, Particle MPM_Mesh, int InitialStep)
 
   \brief Finite strains Newmark-beta
  
   \param Mesh FEM_Mesh : Variable with the nodal information
-  \param GaussPoint MPM_Mesh : Variable with the particle information
+  \param Particle MPM_Mesh : Variable with the particle information
   \param InitialStep
 */
-void U_Newmark_beta_Finite_Strains_BDB(Mesh, GaussPoint, int);
+void U_Newmark_beta_Finite_Strains_BDB(Mesh, Particle, int);
 
 /*
-  \fn void U_Discrete_Energy_Momentum(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int InitialStep)
+  \fn void U_Discrete_Energy_Momentum(Mesh FEM_Mesh, Particle MPM_Mesh, int InitialStep)
 
   \brief Discrete energy-momentum method. Implicit iterative solver proposed 
   by \cite Simo_and_Tarnow_1992, preserves linear and angular momentum.
 
   \param Mesh FEM_Mesh : Variable with the nodal information
-  \param GaussPoint MPM_Mesh : Variable with the particle information
+  \param Particle MPM_Mesh : Variable with the particle information
   \param InitialStep  
 */
-void U_Discrete_Energy_Momentum(Mesh, GaussPoint, int);
+void U_Discrete_Energy_Momentum(Mesh, Particle, int);
 
 
 /*
-  \fn void upw_Newmark_Predictor_Corrector_Finite_Strains(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int InitialStep)
+  \fn void upw_Newmark_Predictor_Corrector_Finite_Strains(Mesh FEM_Mesh, Particle MPM_Mesh, int InitialStep)
 
   \brief u-pw formulation with one single set of material points. Explicit solver for finite strains based in the 
     Newmark Predictor-Corrector, see \cite Molinos_et_al_2021_CMAME.
 
   \param Mesh FEM_Mesh : Variable with the nodal information
-  \param GaussPoint MPM_Mesh : Variable with the particle information
+  \param Particle MPM_Mesh : Variable with the particle information
   \param InitialStep  
 */
-void upw_Newmark_Predictor_Corrector_Finite_Strains(Mesh, GaussPoint, int);
+void upw_Newmark_Predictor_Corrector_Finite_Strains(Mesh, Particle, int);
 
 
 #endif

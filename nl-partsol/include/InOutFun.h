@@ -282,12 +282,12 @@ Boundaries Read_upw_Neumann_Boundary_Conditions__InOutFun__(char *,int,int);
 /*****************************************************************/
 
 
-GaussPoint Generate_Gauss_Point_Analysis__InOutFun__(char *);
+Particle Generate_Gauss_Point_Analysis__InOutFun__(char *);
 /*****************************************************************/
 
 /*!
 
-  \fn GaussPoint GramsSolid(char * File, Mesh Nodes)
+  \fn Particle GramsSolid(char * File, Mesh Nodes)
 
   \brief Function that generate a set of material points
 
@@ -295,18 +295,18 @@ GaussPoint Generate_Gauss_Point_Analysis__InOutFun__(char *);
   \param Nodes : Set of background nodes
 
 */
-GaussPoint GramsSolid(char *,Mesh);
+Particle GramsSolid(char *,Mesh);
 /*****************************************************************/
 
 /*
-  \fn GaussPoint Generate_Soil_Water_Coupling_Analysis__InOutFun__(char * Name_File, Mesh FEM_Mesh);
+  \fn Particle Generate_Soil_Water_Coupling_Analysis__InOutFun__(char * Name_File, Mesh FEM_Mesh);
  
   \brief Function that generate a set of material points for soil-water coupling applications
 
   \param File: Name of the file with the instructions
   \param Nodes : Set of background nodes
 */
-GaussPoint Generate_Soil_Water_Coupling_Analysis__InOutFun__(char *, Mesh);
+Particle Generate_Soil_Water_Coupling_Analysis__InOutFun__(char *, Mesh);
 /*****************************************************************/
 
 /*!
@@ -324,7 +324,7 @@ void Solver_selector__InOutFun__(char * );
 
 /*!
 
-  \fn Material * GramsMaterials(char * File, GaussPoint Particles, int GPxElement)
+  \fn Material * GramsMaterials(char * File, Particle Particles, int GPxElement)
 
   \brief Generate the libreary of materials
 
@@ -333,7 +333,7 @@ void Solver_selector__InOutFun__(char * );
   \param GPxElement : As the particle discretization is performed thorouht 
 
 */
-Material * GramsMaterials(char *, GaussPoint, int);
+Material * GramsMaterials(char *, Particle, int);
 /*****************************************************************/
 
 /*!
@@ -353,7 +353,7 @@ Mixture * Read_Soil_Water_Mixtures__InOutFun__(char *, int);
 
 /*!
   
-  \fn void Initial_condition_particles__InOutFun__(char * File, GaussPoint Particles, int GPxElement)
+  \fn void Initial_condition_particles__InOutFun__(char * File, Particle Particles, int GPxElement)
   
   \brief Define initial conditions for the particles
   
@@ -362,12 +362,12 @@ Mixture * Read_Soil_Water_Mixtures__InOutFun__(char *, int);
   \param GPxElement : As the particle discretization is performed thorouht 
 
 */
-void Initial_condition_particles__InOutFun__(char *, GaussPoint, int);
+void Initial_condition_particles__InOutFun__(char *, Particle, int);
 /*****************************************************************/
 
 /*!
   
-  \fn void Initial_condition_nodes__InOutFun__(char * File, GaussPoint Particles, Mesh FEM_Mesh)
+  \fn void Initial_condition_nodes__InOutFun__(char * File, Particle Particles, Mesh FEM_Mesh)
   
   \brief Define initial conditions for particles using nodal values
   
@@ -375,7 +375,7 @@ void Initial_condition_particles__InOutFun__(char *, GaussPoint, int);
   \param Particles : Particle discretization
   \param FEM_Mesh
 */
-void Initial_condition_nodes__InOutFun__(char *, GaussPoint, Mesh);
+void Initial_condition_nodes__InOutFun__(char *, Particle, Mesh);
 /*****************************************************************/
 
 /*!
@@ -413,7 +413,7 @@ void GramsOutputs(char * );
 /*****************************************************************/
 
 /*!
-  \fn void OutputSimulation(GaussPoint Set_Particles,int Numerical_T,double Physical_T,
+  \fn void OutputSimulation(Particle Set_Particles,int Numerical_T,double Physical_T,
   double DeltaT,Event Parameters)
  
   \brief Generate backup copy
@@ -424,7 +424,7 @@ void GramsOutputs(char * );
   \param DeltaT
   \param Parameters
 */
-void OutputSimulation(GaussPoint,int,double,double,Event);
+void OutputSimulation(Particle,int,double,double,Event);
 /*****************************************************************/
 
 /*!
@@ -469,7 +469,7 @@ Load * GramsBodyForces(char *, int, int);
 
 /*****************************************************************/
 
-void particle_results_vtk__InOutFun__(GaussPoint, int, int);
+void particle_results_vtk__InOutFun__(Particle, int, int);
 
 /*****************************************************************/
 
@@ -482,7 +482,7 @@ void WriteGnuplot(Matrix, Matrix, double, double, int, int, char[20]);
 /*****************************************************************/
 
 /*!
-\fn GaussPoint restart_Simulation(char * Parameters,char * Restart,Mesh Nodes)
+\fn Particle restart_Simulation(char * Parameters,char * Restart,Mesh Nodes)
 
 \brief Generate simulation structure from previous results
 
@@ -490,7 +490,7 @@ void WriteGnuplot(Matrix, Matrix, double, double, int, int, char[20]);
 \param Restart
 \param Nodes
 */
-GaussPoint restart_Simulation(char *,char *,Mesh);
+Particle restart_Simulation(char *,char *,Mesh);
 
 /*****************************************************************/
 
@@ -504,7 +504,7 @@ void NLPS_Out_particles_path_csv__InOutFun__(char * Name_File);
 /*****************************************************************/
 
 
-void Gauss_Point_evolution__InOutFun__(GaussPoint, Event, char *, int, int);
+void Gauss_Point_evolution__InOutFun__(Particle, Event, char *, int, int);
 /*****************************************************************/
 
 

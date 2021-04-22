@@ -6,7 +6,7 @@
 
 /*****************************************************************/
 
-void Initial_condition_particles__InOutFun__(char * Name_File, GaussPoint GP_Mesh, int GPxElement)
+void Initial_condition_particles__InOutFun__(char * Name_File, Particle GP_Mesh, int GPxElement)
 /*
   GramsInitials (Nodes=ListInit.txt) {
   Value=[5.0,0.0,0.0]

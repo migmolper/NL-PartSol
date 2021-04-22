@@ -44,7 +44,7 @@ static void standard_error(char *);
 
 /**********************************************************************/
 
-Material * GramsMaterials(char * Name_File, GaussPoint GP_Mesh, int GPxElement)
+Material * GramsMaterials(char * Name_File, Particle GP_Mesh, int GPxElement)
 /*
 GramsMaterials (Particles=route.txt) {
                Id=0

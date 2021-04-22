@@ -9,20 +9,20 @@ double Thickness_Plain_Stress;
 /*
   Auxiliar functions 
 */
-static void   update_Particles(GaussPoint, Mesh, Matrix, Matrix, double);
-static Matrix compute_NodalMomentumMass(GaussPoint, Mesh);
+static void   update_Particles(Particle, Mesh, Matrix, Matrix, double);
+static Matrix compute_NodalMomentumMass(Particle, Mesh);
 static void   imposed_Momentum(Mesh, Matrix, int);
 static Matrix compute_Nodal_Velocity(Mesh, Matrix);
 static void   update_Nodal_Momentum(Mesh, Matrix, Matrix);
-static void   update_LocalState(Matrix, GaussPoint,Mesh, double);
-static Matrix compute_InternalForces(Matrix, GaussPoint,Mesh);
-static Matrix compute_BodyForces(Matrix, GaussPoint, Mesh, int);
-static Matrix compute_ContacForces(Matrix, GaussPoint, Mesh, int);
+static void   update_LocalState(Matrix, Particle,Mesh, double);
+static Matrix compute_InternalForces(Matrix, Particle,Mesh);
+static Matrix compute_BodyForces(Matrix, Particle, Mesh, int);
+static Matrix compute_ContacForces(Matrix, Particle, Mesh, int);
 static Matrix compute_Reactions(Mesh, Matrix);
 
 /**************************************************************/
 
-void U_Forward_Euler(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int InitialStep)
+void U_Forward_Euler(Mesh FEM_Mesh, Particle MPM_Mesh, int InitialStep)
 {
 
   /*!
@@ -101,7 +101,7 @@ void U_Forward_Euler(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int InitialStep)
 
 /*******************************************************/
 
-static Matrix compute_NodalMomentumMass(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
+static Matrix compute_NodalMomentumMass(Particle MPM_Mesh, Mesh FEM_Mesh)
 /*
   This function performs a information trasference from the lagrangian particles to 
   the nodes of the eulerian mesh.
@@ -221,7 +221,7 @@ static void imposed_Momentum(Mesh FEM_Mesh, Matrix Phi_I, int TimeStep)
 
 /**************************************************************/
 
-static void update_Particles(GaussPoint MPM_Mesh, Mesh FEM_Mesh,
+static void update_Particles(Particle MPM_Mesh, Mesh FEM_Mesh,
 				Matrix Phi_I, Matrix F_I, double Dt)
 {
 
@@ -341,7 +341,7 @@ static void update_Nodal_Momentum(Mesh FEM_Mesh, Matrix Phi_I, Matrix F_I)
 
 /**************************************************************/
 
-static void update_LocalState(Matrix V_I, GaussPoint MPM_Mesh, Mesh FEM_Mesh, double TimeStep)
+static void update_LocalState(Matrix V_I, Particle MPM_Mesh, Mesh FEM_Mesh, double TimeStep)
 {
   Element Nodes_p; /* Element for each Gauss-Point */
   Matrix Gradient_p; /* Shape functions gradients */
@@ -412,7 +412,7 @@ static void update_LocalState(Matrix V_I, GaussPoint MPM_Mesh, Mesh FEM_Mesh, do
 
 /*************************************************************/
 
-static Matrix compute_InternalForces(Matrix F_I, GaussPoint MPM_Mesh, Mesh FEM_Mesh)
+static Matrix compute_InternalForces(Matrix F_I, Particle MPM_Mesh, Mesh FEM_Mesh)
 {
   int Ndim = NumberDimensions;
   Element Nodes_p; /* Element for each Gauss-Point */
@@ -481,7 +481,7 @@ static Matrix compute_InternalForces(Matrix F_I, GaussPoint MPM_Mesh, Mesh FEM_M
 
 /*********************************************************************/
 
-static Matrix compute_BodyForces(Matrix F_I, GaussPoint MPM_Mesh,
+static Matrix compute_BodyForces(Matrix F_I, Particle MPM_Mesh,
 				 Mesh FEM_Mesh, int TimeStep)
 {
   int Ndim = NumberDimensions;
@@ -562,7 +562,7 @@ static Matrix compute_BodyForces(Matrix F_I, GaussPoint MPM_Mesh,
 
 /*********************************************************************/
 
-static Matrix compute_ContacForces(Matrix F_I, GaussPoint MPM_Mesh,
+static Matrix compute_ContacForces(Matrix F_I, Particle MPM_Mesh,
 				   Mesh FEM_Mesh, int TimeStep)
 {
   int Ndim = NumberDimensions;

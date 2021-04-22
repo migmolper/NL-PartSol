@@ -19,23 +19,23 @@ int Number_Out_particles_path_csv;
 /*
   Auxiliar functions 
 */
-static Matrix compute_Nodal_Lumped_Mass(GaussPoint,Mesh,Mask);
-static Matrix compute_Nodal_Momentum(GaussPoint,Mesh,Mask);
-static Matrix compute_Nodal_Velocity_Predicted(GaussPoint,Mesh,Mask,Matrix,double,double);
+static Matrix compute_Nodal_Lumped_Mass(Particle,Mesh,Mask);
+static Matrix compute_Nodal_Momentum(Particle,Mesh,Mask);
+static Matrix compute_Nodal_Velocity_Predicted(Particle,Mesh,Mask,Matrix,double,double);
 static void   imposse_Velocity(Mesh,Matrix,Mask,int);
 static Matrix compute_Nodal_D_Displacement(Matrix,Mask,double);
-static void   update_Local_State(Matrix,Mask,GaussPoint,Mesh,double);
-static Matrix compute_Nodal_Forces(Mask,GaussPoint,Mesh,int);
-static void   compute_Nodal_Internal_Forces(Matrix,Mask,GaussPoint,Mesh);
-static void   compute_Nodal_Body_Forces(Matrix,Mask,GaussPoint,Mesh,int);
+static void   update_Local_State(Matrix,Mask,Particle,Mesh,double);
+static Matrix compute_Nodal_Forces(Mask,Particle,Mesh,int);
+static void   compute_Nodal_Internal_Forces(Matrix,Mask,Particle,Mesh);
+static void   compute_Nodal_Body_Forces(Matrix,Mask,Particle,Mesh,int);
 static Matrix compute_Reactions(Mesh,Matrix,Mask);
 static void   compute_Nodal_Velocity_Corrected(Matrix,Matrix,Matrix,double,double);
-static void   update_Particles(GaussPoint,Mesh,Matrix,Matrix,Matrix,Mask,double);
-static void   output_selector(GaussPoint, Mesh, Mask, Matrix, Matrix, Matrix, Matrix, int, int);
+static void   update_Particles(Particle,Mesh,Matrix,Matrix,Matrix,Mask,double);
+static void   output_selector(Particle, Mesh, Mask, Matrix, Matrix, Matrix, Matrix, int, int);
 
 /**************************************************************/
 
-void U_Newmark_Predictor_Corrector_Finite_Strains(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int InitialStep)
+void U_Newmark_Predictor_Corrector_Finite_Strains(Mesh FEM_Mesh, Particle MPM_Mesh, int InitialStep)
 {
 
   /*
@@ -168,7 +168,7 @@ void U_Newmark_Predictor_Corrector_Finite_Strains(Mesh FEM_Mesh, GaussPoint MPM_
 
 /**************************************************************/
 
-static Matrix compute_Nodal_Lumped_Mass(GaussPoint MPM_Mesh,
+static Matrix compute_Nodal_Lumped_Mass(Particle MPM_Mesh,
 					Mesh FEM_Mesh,
 					Mask ActiveNodes)
 /*
@@ -248,7 +248,7 @@ static Matrix compute_Nodal_Lumped_Mass(GaussPoint MPM_Mesh,
 
 /**************************************************************/
 
-static Matrix compute_Nodal_Velocity_Predicted(GaussPoint MPM_Mesh, 
+static Matrix compute_Nodal_Velocity_Predicted(Particle MPM_Mesh, 
                                                Mesh FEM_Mesh,
                                                Mask ActiveNodes,
                                                Matrix Lumped_Mass,
@@ -452,7 +452,7 @@ static Matrix compute_Nodal_D_Displacement(Matrix Velocity,
 
 static void update_Local_State(Matrix D_Displacement,
 			       Mask ActiveNodes,
-			       GaussPoint MPM_Mesh,
+			       Particle MPM_Mesh,
 			       Mesh FEM_Mesh,
 			       double TimeStep)
 {
@@ -618,7 +618,7 @@ static void update_Local_State(Matrix D_Displacement,
 /**************************************************************/
 
 static Matrix compute_Nodal_Forces(Mask ActiveNodes,
-				   GaussPoint MPM_Mesh,
+				   Particle MPM_Mesh,
 				   Mesh FEM_Mesh,
                                    int TimeStep)
 {
@@ -644,7 +644,7 @@ static Matrix compute_Nodal_Forces(Mask ActiveNodes,
 
 static void compute_Nodal_Internal_Forces(Matrix Forces,
 					  Mask ActiveNodes,
-					  GaussPoint MPM_Mesh,
+					  Particle MPM_Mesh,
 					  Mesh FEM_Mesh)
 {
 
@@ -770,7 +770,7 @@ static void compute_Nodal_Internal_Forces(Matrix Forces,
 
 static void compute_Nodal_Body_Forces(Matrix Forces,
 				      Mask ActiveNodes,
-				      GaussPoint MPM_Mesh,
+				      Particle MPM_Mesh,
 				      Mesh FEM_Mesh,
 				      int TimeStep)
 {
@@ -966,7 +966,7 @@ static void compute_Nodal_Velocity_Corrected(Matrix Velocity,
 
 /**************************************************************/
 
-static void update_Particles(GaussPoint MPM_Mesh,
+static void update_Particles(Particle MPM_Mesh,
                              Mesh FEM_Mesh,
                              Matrix Lumped_Mass,
                              Matrix Forces,
@@ -1056,7 +1056,7 @@ static void update_Particles(GaussPoint MPM_Mesh,
 
 /**************************************************************/
 
-static void output_selector(GaussPoint MPM_Mesh, Mesh FEM_Mesh, Mask ActiveNodes,
+static void output_selector(Particle MPM_Mesh, Mesh FEM_Mesh, Mask ActiveNodes,
                             Matrix Velocity, Matrix D_Displacement, Matrix Forces,
                             Matrix Reactions, int TimeStep, int ResultsTimeStep)
 {

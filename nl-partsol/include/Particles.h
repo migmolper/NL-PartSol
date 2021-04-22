@@ -240,7 +240,7 @@ void initial_position__Particles__(Matrix, Mesh, int);
 /*!
 
 */
-void local_search__Particles__(GaussPoint, Mesh);
+void local_search__Particles__(Particle, Mesh);
 /*******************************************************/
 
 /*!

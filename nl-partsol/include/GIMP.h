@@ -17,7 +17,7 @@
 #ifndef _GIMP_H_
 #define _GIMP_H_
 
-void     initialize__GIMP__(GaussPoint, Mesh);
+void     initialize__GIMP__(Particle, Mesh);
 Matrix   N__GIMP__(Matrix, Matrix, double);
 Matrix   dN__GIMP__(Matrix, Matrix, double);
 ChainPtr tributary__GIMP__(Matrix, int,Matrix, Mesh);

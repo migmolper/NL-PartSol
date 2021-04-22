@@ -37,7 +37,7 @@ Tensor deviatoric_stress__LinearElastic__(Tensor, Material);
 /*******************************************************/
 
 /*!
-  \fn void compute_particle_Damage(int p, GaussPoint Particles, Mesh Nodes)
+  \fn void compute_particle_Damage(int p, Particle Particles, Mesh Nodes)
 
   \brief Compute if a particle is damaged and update it damage parameter chi
 
@@ -45,7 +45,7 @@ Tensor deviatoric_stress__LinearElastic__(Tensor, Material);
   \param Particles : Information of the particle mesh
   \param Nodes : Informaction with the set of nodes
 */
-void compute_particle_Damage(int, GaussPoint, Mesh);
+void compute_particle_Damage(int, Particle, Mesh);
 /*******************************************************/
 
 /*!

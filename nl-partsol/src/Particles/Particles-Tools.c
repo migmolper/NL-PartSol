@@ -92,7 +92,7 @@ int search_particle_in_surrounding_elements__Particles__(
 
 /*********************************************************************/
 
-void get_particle_tributary_nodes(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int p)
+void get_particle_tributary_nodes(Particle MPM_Mesh, Mesh FEM_Mesh, int p)
 {
 
   int Ndim = NumberDimensions;
@@ -231,7 +231,7 @@ void get_particle_tributary_nodes(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int p)
 
 /*********************************************************************/
 
-void local_search__Particles__(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
+void local_search__Particles__(Particle MPM_Mesh, Mesh FEM_Mesh)
 /*
   Search the closest node to the particle based in its previous position.
 */

@@ -2,7 +2,7 @@
 
 /* /\*********************************************************************\/ */
 
-/* void OutputSimulation(GaussPoint Set_Particles, */
+/* void OutputSimulation(Particle Set_Particles, */
 /* 		      int Numerical_T, */
 /* 		      double Physical_T, */
 /* 		      double DeltaT, */

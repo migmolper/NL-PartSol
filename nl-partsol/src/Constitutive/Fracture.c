@@ -346,7 +346,7 @@ static void Eigensoftening(
 /*******************************************************/
 
 /*
-  \fn static void ComputeBeps(int p, GaussPoint Particles, Mesh Nodes)
+  \fn static void ComputeBeps(int p, Particle Particles, Mesh Nodes)
   
   \param Generate the B$_{\epsilon}$ neibourhood of each particle
 
@@ -356,7 +356,7 @@ static void Eigensoftening(
  */
 static void ComputeBeps(
   int p, 
-  GaussPoint MPM_Mesh, 
+  Particle MPM_Mesh, 
   Mesh FEM_Mesh)
 {
 
@@ -438,7 +438,7 @@ static void ComputeBeps(
 
 void compute_particle_Damage(
   int p, 
-  GaussPoint MPM_Mesh, 
+  Particle MPM_Mesh, 
   Mesh FEM_Mesh)
 {
 

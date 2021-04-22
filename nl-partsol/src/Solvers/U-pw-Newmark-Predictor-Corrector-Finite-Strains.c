@@ -19,40 +19,40 @@ static char Error_message[MAXW];
 static void standard_error();
 
 /* Step 1 */
-static Matrix compute_Mass_Matrix_Mixture(GaussPoint,Mesh,Mask);
-static Matrix compute_Compressibility_Matrix_Fluid(GaussPoint, Mesh, Mask);
+static Matrix compute_Mass_Matrix_Mixture(Particle,Mesh,Mask);
+static Matrix compute_Compressibility_Matrix_Fluid(Particle, Mesh, Mask);
 /* Step 2 */
-static  void  compute_Explicit_Newmark_Predictor(GaussPoint,double,double);
+static  void  compute_Explicit_Newmark_Predictor(Particle,double,double);
 /* Step 3 */
-static Matrix compute_Nodal_Gravity_field(Mask, GaussPoint, int);
-static Matrix compute_Nodal_D_Displacement(GaussPoint,Mesh,Mask,Matrix);
-static Matrix compute_Nodal_Velocity(GaussPoint,Mesh,Mask,Matrix);
-static Matrix compute_Nodal_Pore_water_pressure(GaussPoint,Mesh,Mask,Matrix);
+static Matrix compute_Nodal_Gravity_field(Mask, Particle, int);
+static Matrix compute_Nodal_D_Displacement(Particle,Mesh,Mask,Matrix);
+static Matrix compute_Nodal_Velocity(Particle,Mesh,Mask,Matrix);
+static Matrix compute_Nodal_Pore_water_pressure(Particle,Mesh,Mask,Matrix);
 static  void  impose_Dirichlet_Boundary_Conditions(Mesh,Matrix,Matrix,Mask,int);
 /* Step 4 */
-static  void  update_Local_State(Matrix,Matrix,Mask,GaussPoint,Mesh);
+static  void  update_Local_State(Matrix,Matrix,Mask,Particle,Mesh);
 /* Step 5 */
-static Matrix compute_Total_Forces_Mixture(Mask,GaussPoint,Mesh,int);
-static  void  compute_Internal_Forces_Mixture(Matrix,Mask,GaussPoint,Mesh);
-static  void  compute_Contact_Forces_Mixture(Matrix,Mask,GaussPoint,Mesh,int);
+static Matrix compute_Total_Forces_Mixture(Mask,Particle,Mesh,int);
+static  void  compute_Internal_Forces_Mixture(Matrix,Mask,Particle,Mesh);
+static  void  compute_Contact_Forces_Mixture(Matrix,Mask,Particle,Mesh,int);
 static Tensor compute_total_first_Piola_Kirchhoff_stress(Tensor,double,Tensor);
-static Matrix  solve_Nodal_Equilibrium_Mixture(Matrix,Matrix,Matrix,GaussPoint,Mesh,Mask,Mask);
+static Matrix  solve_Nodal_Equilibrium_Mixture(Matrix,Matrix,Matrix,Particle,Mesh,Mask,Mask);
 /* Step 6 */
-static Matrix compute_Mass_exchanges_Source_Terms(Matrix,Mask,GaussPoint,Mesh,int);
-static  void  compute_Jacobian_Rate_Mass_Balance(Matrix,Mask,GaussPoint,Mesh);
-static  void  compute_Permeability_Mass_Balance(Matrix,Mask,GaussPoint,Mesh,Matrix);
+static Matrix compute_Mass_exchanges_Source_Terms(Matrix,Mask,Particle,Mesh,int);
+static  void  compute_Jacobian_Rate_Mass_Balance(Matrix,Mask,Particle,Mesh);
+static  void  compute_Permeability_Mass_Balance(Matrix,Mask,Particle,Mesh,Matrix);
 static Tensor compute_Pore_water_pressure_gradient(Matrix,Matrix);
-static  void  compute_Permeability_Inertial_Forces_Fluid(Matrix,Mask,GaussPoint,Mesh);
+static  void  compute_Permeability_Inertial_Forces_Fluid(Matrix,Mask,Particle,Mesh);
 //static  void  compute_Fluid_Mass_Pump(Matrix,Mesh,Matrix,Mask,int);
-static  void  solve_Nodal_Mass_Balance(Matrix,Matrix,GaussPoint,Mesh,Mask,Mask);
+static  void  solve_Nodal_Mass_Balance(Matrix,Matrix,Particle,Mesh,Mask,Mask);
 /* Step 7 */
-static  void  compute_Explicit_Newmark_Corrector(GaussPoint,double,double);
+static  void  compute_Explicit_Newmark_Corrector(Particle,double,double);
 /* Step 8 */
-static  void  output_selector(GaussPoint, Mesh, Mask, Matrix, Matrix, Matrix, Matrix, int, int);
+static  void  output_selector(Particle, Mesh, Mask, Matrix, Matrix, Matrix, Matrix, int, int);
 
 /**************************************************************/
 
-void upw_Newmark_Predictor_Corrector_Finite_Strains(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int InitialStep)
+void upw_Newmark_Predictor_Corrector_Finite_Strains(Mesh FEM_Mesh, Particle MPM_Mesh, int InitialStep)
 {
 
   /*
@@ -197,7 +197,7 @@ void upw_Newmark_Predictor_Corrector_Finite_Strains(Mesh FEM_Mesh, GaussPoint MP
 /**************************************************************/
 
 static Matrix compute_Mass_Matrix_Mixture(
-  GaussPoint MPM_Mesh, // Variable with information of the particles 
+  Particle MPM_Mesh, // Variable with information of the particles 
   Mesh FEM_Mesh, // Variable with information of the nodes
   Mask ActiveNodes) // Variable with information of the active nodes
 /*
@@ -299,7 +299,7 @@ static Matrix compute_Mass_Matrix_Mixture(
 
 
 static Matrix compute_Compressibility_Matrix_Fluid(
-  GaussPoint MPM_Mesh, // Variable with information of the particles
+  Particle MPM_Mesh, // Variable with information of the particles
   Mesh FEM_Mesh, // Variable with information of the nodes
   Mask ActiveNodes) // Variable with information of the active nodes
 /*
@@ -420,7 +420,7 @@ static Matrix compute_Compressibility_Matrix_Fluid(
 /**************************************************************/
 
 static  void  compute_Explicit_Newmark_Predictor(
-  GaussPoint MPM_Mesh, // Information related with particles
+  Particle MPM_Mesh, // Information related with particles
   double gamma, // Newmark integration parameter
   double Dt) // Time step
 /*
@@ -462,7 +462,7 @@ static  void  compute_Explicit_Newmark_Predictor(
 
 static Matrix compute_Nodal_Gravity_field(
   Mask ActiveNodes,
-  GaussPoint MPM_Mesh,
+  Particle MPM_Mesh,
   int TimeStep)
 /*
 
@@ -524,7 +524,7 @@ static Matrix compute_Nodal_Gravity_field(
 /**************************************************************/
 
 static Matrix compute_Nodal_D_Displacement(
-  GaussPoint MPM_Mesh,
+  Particle MPM_Mesh,
   Mesh FEM_Mesh,
   Mask ActiveNodes,
   Matrix Mass_Matrix_Mixture)
@@ -626,7 +626,7 @@ static Matrix compute_Nodal_D_Displacement(
 /**************************************************************/
 
 static Matrix compute_Nodal_Velocity(
-  GaussPoint MPM_Mesh,
+  Particle MPM_Mesh,
   Mesh FEM_Mesh,
   Mask ActiveNodes,
   Matrix Mass_Matrix_Mixture)
@@ -726,7 +726,7 @@ static Matrix compute_Nodal_Velocity(
 /**************************************************************/
 
 static Matrix compute_Nodal_Pore_water_pressure(
-  GaussPoint MPM_Mesh,
+  Particle MPM_Mesh,
   Mesh FEM_Mesh,
   Mask ActiveNodes,
   Matrix Compressibility_Matrix_Fluid)
@@ -947,7 +947,7 @@ static void update_Local_State(
   Matrix D_Displacement, // Nodal values of the increment of displacement
   Matrix Velocity, // Nodal values of the velocity
   Mask ActiveNodes, // Information with the active nodes
-  GaussPoint MPM_Mesh, // Information related with the particles
+  Particle MPM_Mesh, // Information related with the particles
   Mesh FEM_Mesh) // Information related with the nodes
 /*
   
@@ -1141,7 +1141,7 @@ static void update_Local_State(
 
 static Matrix compute_Total_Forces_Mixture(
   Mask ActiveNodes,
-  GaussPoint MPM_Mesh,
+  Particle MPM_Mesh,
   Mesh FEM_Mesh,
   int TimeStep)
 {
@@ -1169,7 +1169,7 @@ static Matrix compute_Total_Forces_Mixture(
 static void compute_Internal_Forces_Mixture(
   Matrix Forces,
   Mask ActiveNodes,
-  GaussPoint MPM_Mesh,
+  Particle MPM_Mesh,
   Mesh FEM_Mesh)
 /*
 
@@ -1326,7 +1326,7 @@ static Tensor compute_total_first_Piola_Kirchhoff_stress(
 static void compute_Contact_Forces_Mixture(
   Matrix Forces,
   Mask ActiveNodes,
-  GaussPoint MPM_Mesh,
+  Particle MPM_Mesh,
   Mesh FEM_Mesh,
   int TimeStep)
 {
@@ -1455,7 +1455,7 @@ static Matrix solve_Nodal_Equilibrium_Mixture(
   Matrix Mass_Matrix_Mixture,
   Matrix Gravity_field,
   Matrix Total_Forces_Mixture,
-  GaussPoint MPM_Mesh,
+  Particle MPM_Mesh,
   Mesh FEM_Mesh,
   Mask ActiveNodes,
   Mask Free_and_Restricted_Dofs)
@@ -1584,7 +1584,7 @@ static Matrix solve_Nodal_Equilibrium_Mixture(
 static Matrix compute_Mass_exchanges_Source_Terms(
   Matrix Pore_water_pressure,
   Mask ActiveNodes,
-  GaussPoint MPM_Mesh,
+  Particle MPM_Mesh,
   Mesh FEM_Mesh,
   int TimeStep)
 {
@@ -1614,7 +1614,7 @@ static Matrix compute_Mass_exchanges_Source_Terms(
 static void compute_Jacobian_Rate_Mass_Balance(
   Matrix Mass_Exchanges_Source_Terms,
   Mask ActiveNodes,
-  GaussPoint MPM_Mesh,
+  Particle MPM_Mesh,
   Mesh FEM_Mesh)
 /*
 
@@ -1700,7 +1700,7 @@ static void compute_Jacobian_Rate_Mass_Balance(
 static void compute_Permeability_Mass_Balance(
   Matrix Mass_Exchanges_Source_Terms,
   Mask ActiveNodes,
-  GaussPoint MPM_Mesh,
+  Particle MPM_Mesh,
   Mesh FEM_Mesh,
   Matrix Pore_water_pressure)
 /*
@@ -1878,7 +1878,7 @@ static Tensor compute_Pore_water_pressure_gradient(
 static void compute_Permeability_Inertial_Forces_Fluid(
   Matrix Mass_Exchanges_Source_Terms,
   Mask ActiveNodes,
-  GaussPoint MPM_Mesh,
+  Particle MPM_Mesh,
   Mesh FEM_Mesh)
 /*
 
@@ -2025,7 +2025,7 @@ static void compute_Permeability_Inertial_Forces_Fluid(
 static void solve_Nodal_Mass_Balance(
   Matrix Compressibility_Matrix_Fluid,
   Matrix Mass_Exchanges_Source_Terms,
-  GaussPoint MPM_Mesh,
+  Particle MPM_Mesh,
   Mesh FEM_Mesh,
   Mask ActiveNodes,
   Mask Free_and_Restricted_Dofs)
@@ -2123,7 +2123,7 @@ static void solve_Nodal_Mass_Balance(
 /**************************************************************/
 
 static void compute_Explicit_Newmark_Corrector(
-  GaussPoint MPM_Mesh,
+  Particle MPM_Mesh,
   double gamma,
   double Dt)
 {
@@ -2176,7 +2176,7 @@ static void compute_Explicit_Newmark_Corrector(
 /**************************************************************/
 
 static void output_selector(
-  GaussPoint MPM_Mesh,
+  Particle MPM_Mesh,
   Mesh FEM_Mesh,
   Mask ActiveNodes,
   Matrix Velocity,

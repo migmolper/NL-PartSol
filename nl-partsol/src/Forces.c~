@@ -23,7 +23,7 @@
 /* } */
 
 
-/* Matrix GaussPointForces(GaussPoint * MaterialPoints) */
+/* Matrix ParticleForces(Particle * MaterialPoints) */
 /* /\* */
 /*   Forces defined in the Gauss Points : */
 /*   Inputs  */

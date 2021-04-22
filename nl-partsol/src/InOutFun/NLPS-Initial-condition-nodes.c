@@ -11,11 +11,11 @@ static FILE * Open_and_Check_simulation_file(char *);
 static void Read_list_nodes_file(char *, char *, char *);
 static Tensor Read_initial_values(FILE *);
 static Tensor Read_initial_vectorial_field(char *);
-static void interpolate_initial_values_particles(GaussPoint, Mesh, char *, Tensor);
+static void interpolate_initial_values_particles(Particle, Mesh, char *, Tensor);
 
 /***************************************************************************/
 
-void Initial_condition_nodes__InOutFun__(char * Name_File, GaussPoint MPM_Mesh, Mesh FEM_Mesh)
+void Initial_condition_nodes__InOutFun__(char * Name_File, Particle MPM_Mesh, Mesh FEM_Mesh)
 /*
   Initial-nodal-values (NODES=ListInit.txt) 
   {
@@ -268,7 +268,7 @@ static Tensor Read_initial_vectorial_field(char * String_Values)
 
 /***************************************************************************/
 
-static void interpolate_initial_values_particles(GaussPoint MPM_Mesh, Mesh FEM_Mesh, char * Route_NODES, Tensor Field)
+static void interpolate_initial_values_particles(Particle MPM_Mesh, Mesh FEM_Mesh, char * Route_NODES, Tensor Field)
 {
 
 	/* Auxiliar variables to read the chain of nodes */

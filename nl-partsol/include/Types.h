@@ -472,7 +472,7 @@ typedef struct {
 
 /*******************************************************/
 
-/*! \struct GaussPoint
+/*! \struct Particle
  * This structure is devoted to store all the information 
  * of a list of particles
  */
@@ -570,7 +570,7 @@ typedef struct {
   Matrix Beta; // Thermalization or regularization parameter
   void (* update_lambda)(int, Matrix, Matrix, Matrix, double);
 
-} GaussPoint;
+} Particle;
 
 
 /*******************************************************/

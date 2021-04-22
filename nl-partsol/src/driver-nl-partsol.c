@@ -25,7 +25,7 @@ char * Formulation;
   Auxiliar functions for the main
 */
 static void nlpartsol_help_message();
-static void globalfree(Mesh,GaussPoint);
+static void globalfree(Mesh,Particle);
 static void standard_error(char * Error_message);
 
 
@@ -36,7 +36,7 @@ int main(int argc, char * argv[])
   bool Is_New_Simulation = false;
   bool Is_Restart_Simulation = false;
   Mesh FEM_Mesh;
-  GaussPoint MPM_Mesh;
+  Particle MPM_Mesh;
 
   /*********************************************************************/
   /************ Read simulation file and kind of simulation ************/
@@ -209,7 +209,7 @@ int main(int argc, char * argv[])
     else if(strcmp(Formulation,"-GP") == 0)
     {
       /* Define variable */
-      GaussPoint PointAnalysis;
+      Particle PointAnalysis;
 
       puts("*************************************************");
       puts("Read solver ...");
@@ -276,7 +276,7 @@ exit(EXIT_SUCCESS);
 
 /*********************************************************************/
 
-static void globalfree(Mesh FEM_Mesh, GaussPoint MPM_Mesh)
+static void globalfree(Mesh FEM_Mesh, Particle MPM_Mesh)
 /*
   Function to free the reamaining memory
 */

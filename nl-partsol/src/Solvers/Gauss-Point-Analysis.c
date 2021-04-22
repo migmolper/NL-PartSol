@@ -18,7 +18,7 @@ static void standard_error();
 
 /**************************************************************/
 
-void NonLinear_Gauss_Point_Analysis(GaussPoint PointAnalysis)
+void NonLinear_Gauss_Point_Analysis(Particle PointAnalysis)
 {
 
   /*
@@ -102,7 +102,7 @@ void NonLinear_Gauss_Point_Analysis(GaussPoint PointAnalysis)
 	for(int i = 0 ; i<Number_Out_Gauss_Point_evolution_csv; i++)
   	{
 
-    	Gauss_Point_evolution__InOutFun__(PointAnalysis,Out_Gauss_Point_evolution_csv[i],"GaussPoint_evolution", k,i);
+    	Gauss_Point_evolution__InOutFun__(PointAnalysis,Out_Gauss_Point_evolution_csv[i],"Particle_evolution", k,i);
        
 	  }
 

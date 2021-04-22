@@ -15,7 +15,7 @@
 #ifndef _T4_H_
 #define _T4_H_
 
-void   initialize__T4__(GaussPoint, Mesh);
+void   initialize__T4__(Particle, Mesh);
 Matrix N__T4__(Matrix);
 Matrix dN__T4__(Matrix,Matrix);
 Matrix dN_Ref__T4__(Matrix);

@@ -13,7 +13,7 @@
 #ifndef _Q4_H_
 #define _Q4_H_
 
-void   initialize__Q4__(GaussPoint, Mesh);
+void   initialize__Q4__(Particle, Mesh);
 Matrix N__Q4__(Matrix);
 Matrix dN__Q4__(Matrix,Matrix);
 Matrix dN_Ref__Q4__(Matrix);

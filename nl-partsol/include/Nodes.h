@@ -13,7 +13,7 @@ Matrix   get_set_field_old__MeshTools__(Matrix, Element);
 Matrix   compute_distance__MeshTools__(ChainPtr, Matrix, Matrix);
 int      get_closest_node__MeshTools__(Matrix, ChainPtr, Matrix);
 Matrix   get_nodes_coordinates__MeshTools__(ChainPtr, Matrix);
-Matrix   compute_N__MeshTools__(Element, GaussPoint, Mesh );
-Matrix   compute_dN__MeshTools__(Element, GaussPoint, Mesh);
+Matrix   compute_N__MeshTools__(Element, Particle, Mesh );
+Matrix   compute_dN__MeshTools__(Element, Particle, Mesh);
 
 #endif

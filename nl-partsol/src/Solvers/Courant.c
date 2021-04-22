@@ -11,7 +11,7 @@ int Number_Soil_Water_Mixtures;
 
 /*********************************************************************/
 
-double DeltaT_CFL(GaussPoint MPM_Mesh, double h)
+double DeltaT_CFL(Particle MPM_Mesh, double h)
 {
 
   double DeltaT;
@@ -75,7 +75,7 @@ double DeltaT_CFL(GaussPoint MPM_Mesh, double h)
 
 /*********************************************************************/
 
-double DeltaT_Coussy__SolversLib__(GaussPoint MPM_Mesh, double h, double xi)
+double DeltaT_Coussy__SolversLib__(Particle MPM_Mesh, double h, double xi)
 {
 
   bool DynamicTimeStep = false;

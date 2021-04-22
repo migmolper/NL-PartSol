@@ -17,14 +17,14 @@
 /****************************************************************************/
 
 /*!
-  \fn void initialize__LME__(GaussPoint MPM_Mesh, Mesh FEM_Mesh);
+  \fn void initialize__LME__(Particle MPM_Mesh, Mesh FEM_Mesh);
 
   \brief  Initialize LME shape functions 
 
   \param MPM_Mesh : Variable with the particle information
   \param FEM_Mesh : Nodes information
 */
-void initialize__LME__(GaussPoint, Mesh);
+void initialize__LME__(Particle, Mesh);
 /****************************************************************************/
 
 /*!

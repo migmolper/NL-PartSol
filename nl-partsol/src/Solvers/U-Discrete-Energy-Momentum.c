@@ -16,31 +16,31 @@ double Error0;
 /*
   Auxiliar functions 
 */
-static Matrix compute_Nodal_Effective_Mass(GaussPoint, Mesh, Mask, double);
-static Matrix compute_Nodal_Momentum(GaussPoint, Mesh, Mask);
+static Matrix compute_Nodal_Effective_Mass(Particle, Mesh, Mask, double);
+static Matrix compute_Nodal_Momentum(Particle, Mesh, Mask);
 static Matrix compute_Nodal_Velocity(Matrix, Matrix);
 static void   imposse_Nodal_Velocity(Mesh,Matrix,Mask,int);
 static void   imposed_Nodal_Displacements(Matrix, Mask, Mesh, int);
 static void   solve_non_reducted_system(Matrix, Matrix, Matrix, Matrix, double);
 static void   solve_reducted_system(Mask,Matrix, Matrix, Matrix, Matrix, double);
-static void   update_Local_State(Matrix,Mask,GaussPoint,Mesh,double);
-static Matrix compute_Nodal_Forces(Matrix, Mask, GaussPoint, Mesh, int);
-static void   compute_Nodal_Internal_Forces(Matrix,Matrix,Mask,GaussPoint, Mesh);
-static void   compute_Nodal_Body_Forces(Matrix, Mask, GaussPoint, Mesh, int);
+static void   update_Local_State(Matrix,Mask,Particle,Mesh,double);
+static Matrix compute_Nodal_Forces(Matrix, Mask, Particle, Mesh, int);
+static void   compute_Nodal_Internal_Forces(Matrix,Matrix,Mask,Particle, Mesh);
+static void   compute_Nodal_Body_Forces(Matrix, Mask, Particle, Mesh, int);
 static Matrix compute_Nodal_Reactions(Mesh, Matrix, Mask);
 static Matrix compute_Nodal_Residual(Matrix, Matrix, Matrix, Matrix, double);
 static bool   check_convergence(Matrix,double,int,int,int);
-static Matrix assemble_Nodal_Tangent_Stiffness(Mask, GaussPoint, Mesh);
-static void   assemble_Nodal_Tangent_Stiffness_Geometric(Matrix, Mask, GaussPoint, Mesh);
-static void   assemble_Nodal_Tangent_Stiffness_Material(Matrix, Mask, GaussPoint, Mesh);
+static Matrix assemble_Nodal_Tangent_Stiffness(Mask, Particle, Mesh);
+static void   assemble_Nodal_Tangent_Stiffness_Geometric(Matrix, Mask, Particle, Mesh);
+static void   assemble_Nodal_Tangent_Stiffness_Material(Matrix, Mask, Particle, Mesh);
 static Tensor compute_stiffness_density(Tensor, Tensor, Tensor, double, Material);
 static Tensor compute_Nodal_Tangent_Stiffness_Material(Tensor,Tensor,Tensor);
 static Matrix compute_Nodal_D_Velocity(Matrix, Matrix,double);
-static void   update_Particles(Matrix, Matrix, GaussPoint, Mesh, Mask, double);
+static void   update_Particles(Matrix, Matrix, Particle, Mesh, Mask, double);
 
 /**************************************************************/
 
-void U_Discrete_Energy_Momentum(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int InitialStep)
+void U_Discrete_Energy_Momentum(Mesh FEM_Mesh, Particle MPM_Mesh, int InitialStep)
 {
 
   /*
@@ -261,7 +261,7 @@ void U_Discrete_Energy_Momentum(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int InitialS
 
 /**************************************************************/
 
-static Matrix compute_Nodal_Effective_Mass(GaussPoint MPM_Mesh, Mesh FEM_Mesh, Mask ActiveNodes, double epsilon)
+static Matrix compute_Nodal_Effective_Mass(Particle MPM_Mesh, Mesh FEM_Mesh, Mask ActiveNodes, double epsilon)
 /*
   This function computes the effective mass matrix as a convex combination
   of the lumped mass matrix and the consistent mass matrix. Later assemble
@@ -414,7 +414,7 @@ return Effective_MassMatrix;
 
 /**************************************************************/
 
-static Matrix compute_Nodal_Momentum(GaussPoint MPM_Mesh, Mesh FEM_Mesh, Mask ActiveNodes)
+static Matrix compute_Nodal_Momentum(Particle MPM_Mesh, Mesh FEM_Mesh, Mask ActiveNodes)
 /*
 
  */
@@ -686,7 +686,7 @@ static void imposed_Nodal_Displacements(Matrix D_Displacement, Mask ActiveNodes,
 /**************************************************************/
 
 
-static void update_Local_State(Matrix D_Displacement, Mask ActiveNodes, GaussPoint MPM_Mesh, Mesh FEM_Mesh, double TimeStep)
+static void update_Local_State(Matrix D_Displacement, Mask ActiveNodes, Particle MPM_Mesh, Mesh FEM_Mesh, double TimeStep)
 {
 
   /*
@@ -767,7 +767,7 @@ static void update_Local_State(Matrix D_Displacement, Mask ActiveNodes, GaussPoi
 
 /**************************************************************/
 
-static Matrix compute_Nodal_Forces(Matrix D_Displacement, Mask ActiveNodes, GaussPoint MPM_Mesh, Mesh FEM_Mesh, int TimeStep)
+static Matrix compute_Nodal_Forces(Matrix D_Displacement, Mask ActiveNodes, Particle MPM_Mesh, Mesh FEM_Mesh, int TimeStep)
 {
   int Ndim = NumberDimensions;
   int Nnodes_mask = ActiveNodes.Nactivenodes;
@@ -793,7 +793,7 @@ static Matrix compute_Nodal_Forces(Matrix D_Displacement, Mask ActiveNodes, Gaus
 static void compute_Nodal_Internal_Forces(Matrix Forces,
 					  Matrix D_Displacement,
 					  Mask ActiveNodes,
-					  GaussPoint MPM_Mesh,
+					  Particle MPM_Mesh,
 					  Mesh FEM_Mesh)
 {
 
@@ -906,7 +906,7 @@ static void compute_Nodal_Internal_Forces(Matrix Forces,
 
 /**************************************************************/
 
-static void compute_Nodal_Body_Forces(Matrix Forces, Mask ActiveNodes, GaussPoint MPM_Mesh, Mesh FEM_Mesh, int TimeStep)
+static void compute_Nodal_Body_Forces(Matrix Forces, Mask ActiveNodes, Particle MPM_Mesh, Mesh FEM_Mesh, int TimeStep)
 {
   /* Define auxilar variables */
   int Ndim = NumberDimensions;
@@ -1182,7 +1182,7 @@ static bool check_convergence(Matrix Residual,double TOL, int Iter, int MaxIter,
 /**************************************************************/
 
 static Matrix assemble_Nodal_Tangent_Stiffness(Mask ActiveNodes,
-					       GaussPoint MPM_Mesh,
+					       Particle MPM_Mesh,
 					       Mesh FEM_Mesh)
 
 /*
@@ -1218,7 +1218,7 @@ static Matrix assemble_Nodal_Tangent_Stiffness(Mask ActiveNodes,
 
 /**************************************************************/
 
-static void assemble_Nodal_Tangent_Stiffness_Geometric(Matrix Tangent_Stiffness, Mask ActiveNodes, GaussPoint MPM_Mesh, Mesh FEM_Mesh)
+static void assemble_Nodal_Tangent_Stiffness_Geometric(Matrix Tangent_Stiffness, Mask ActiveNodes, Particle MPM_Mesh, Mesh FEM_Mesh)
 /*
   Introduce the geometric contribution G_AB to the full stiffness matrix K_AB
 */
@@ -1363,7 +1363,7 @@ static void assemble_Nodal_Tangent_Stiffness_Geometric(Matrix Tangent_Stiffness,
 /**************************************************************/
 static void assemble_Nodal_Tangent_Stiffness_Material(Matrix Tangent_Stiffness,
 						      Mask ActiveNodes,
-						      GaussPoint MPM_Mesh,
+						      Particle MPM_Mesh,
 						      Mesh FEM_Mesh)
 {
 
@@ -1836,7 +1836,7 @@ static Matrix compute_Nodal_D_Velocity(Matrix Velocity,
 
 static void update_Particles(Matrix D_Displacement,
 			     Matrix D_Velocity,
-			     GaussPoint MPM_Mesh,
+			     Particle MPM_Mesh,
 			     Mesh FEM_Mesh,
 			     Mask ActiveNodes,
 			     double DeltaTimeStep)

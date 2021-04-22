@@ -9,7 +9,7 @@
 #include "InOutFun/InOutFun.h"
 #include "ElementsFunctions/ElementTools.h"
 #include "MPM_Subroutines/MPM_Subroutines.h"
-#include "GaussPointsFunctions/GaussPointsTools.h"
+#include "ParticlesFunctions/ParticlesTools.h"
 #include "Boundary_Conditions/BoundaryConditions.h"
 #include "Constitutive/Constitutive.h"
 
@@ -43,7 +43,7 @@ int main(int argc, char *argv[])
   /* General variables */
   Matrix D_e; /* Constitutive matrix */
   Mesh FEM_Mesh; /* Define FEM mesh */
-  GaussPoint GP_Mesh; /* Define MPM mesh */
+  Particle GP_Mesh; /* Define MPM mesh */
   int TimeStep; /* Time step */
 
   /* Some auxiliar variables for the outputs */
@@ -114,7 +114,7 @@ int main(int argc, char *argv[])
   printf("************************************************* \n");
   printf(" Begin of the global search of the GP over the mesh \n");
   printf(" \t WORKING ... \n");
-  GlobalSearchGaussPoints(GP_Mesh,FEM_Mesh);
+  GlobalSearchParticles(GP_Mesh,FEM_Mesh);
   printf(" DONE !!! \n");
   
   /***********************************************************************/
@@ -161,11 +161,11 @@ int main(int argc, char *argv[])
     printf(" \t DONE !!! \n");
     /* b) Calculate the strain increment */
     printf(" \t b) Calculate the strain increment ... WORKING \n");
-    UpdateGaussPointStrain(GP_Mesh,FEM_Mesh,Nodal_VELOCITY);
+    UpdateParticleStrain(GP_Mesh,FEM_Mesh,Nodal_VELOCITY);
     printf(" \t DONE !!! \n");
     /* c) Update the particle stress state */
     printf(" \t c) Update the particle stress state ... WORKING \n");
-    UpdateGaussPointStress(GP_Mesh);
+    UpdateParticleStress(GP_Mesh);
     printf(" \t DONE !!! \n");
 
     /* Five step : Calculate total forces */
@@ -195,8 +195,8 @@ int main(int argc, char *argv[])
     printf("************************************************* \n");
     printf(" Eight step : Search the GP in the mesh \n");
     printf(" \t WORKING ... \n");
-    /* GlobalSearchGaussPoints(GP_Mesh,FEM_Mesh); */
-    LocalSearchGaussPoints(GP_Mesh,FEM_Mesh);
+    /* GlobalSearchParticles(GP_Mesh,FEM_Mesh); */
+    LocalSearchParticles(GP_Mesh,FEM_Mesh);
     printf(" DONE !!! \n");
 
     /* Nine step : Print nodal values */

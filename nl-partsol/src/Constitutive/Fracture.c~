@@ -337,7 +337,7 @@ static void Eigensoftening(int p, Fields Phi, Material MatPro, ChainPtr * Beps)
 /*******************************************************/
 
 /*
-  \fn static void ComputeBeps(int p, GaussPoint Particles, Mesh Nodes)
+  \fn static void ComputeBeps(int p, Particle Particles, Mesh Nodes)
   
   \param Generate the B$_{\epsilon}$ neibourhood of each particle
 
@@ -345,7 +345,7 @@ static void Eigensoftening(int p, Fields Phi, Material MatPro, ChainPtr * Beps)
   \param Particles : Information of the particle mesh
   \param Nodes : Informaction with the set of nodes
  */
-static void ComputeBeps(int p, GaussPoint MPM_Mesh, Mesh FEM_Mesh)
+static void ComputeBeps(int p, Particle MPM_Mesh, Mesh FEM_Mesh)
 {
 
   int Ndim = NumberDimensions;
@@ -424,7 +424,7 @@ static void ComputeBeps(int p, GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 
 /*********************************************************************/
 
-void compute_particle_Damage(int p, GaussPoint MPM_Mesh, Mesh FEM_Mesh)
+void compute_particle_Damage(int p, Particle MPM_Mesh, Mesh FEM_Mesh)
 {
 
   int Ndim = NumberDimensions;

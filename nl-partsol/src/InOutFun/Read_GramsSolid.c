@@ -12,11 +12,11 @@ char   wrapper_LME[MAXC];
 /*
   Auxiliar functions 
 */
-static void initialise_particles(Mesh,GaussPoint,int);
+static void initialise_particles(Mesh,Particle,int);
 
 /*********************************************************************/
 
-GaussPoint GramsSolid(char * Name_File, Mesh FEM_Mesh)
+Particle GramsSolid(char * Name_File, Mesh FEM_Mesh)
 /*
  */
 {
@@ -41,7 +41,7 @@ GaussPoint GramsSolid(char * Name_File, Mesh FEM_Mesh)
   
   /* Material point mesh (Gauss-Points) */
   Mesh MPM_GID_Mesh;
-  GaussPoint MPM_Mesh;
+  Particle MPM_Mesh;
 
   /* Number of particles per GID element */
   int GPxElement = 1;
@@ -376,7 +376,7 @@ GaussPoint GramsSolid(char * Name_File, Mesh FEM_Mesh)
 
 /***************************************************************************/
 
-static void initialise_particles(Mesh MPM_GID_Mesh, GaussPoint MPM_Mesh, int GPxElement)
+static void initialise_particles(Mesh MPM_GID_Mesh, Particle MPM_Mesh, int GPxElement)
   /*
      Loop in the GID mesh to create particles from an element 
   */

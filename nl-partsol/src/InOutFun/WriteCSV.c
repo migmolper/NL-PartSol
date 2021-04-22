@@ -101,7 +101,7 @@ void path_particles_analysis_csv__InOutFun__(Matrix Particle_Field, Matrix Parti
 
 /*****************************************************************/
 
-void Gauss_Point_evolution__InOutFun__(GaussPoint PointAnalysis, Event Output_Commands, char * Name_File, int k, int idx)
+void Gauss_Point_evolution__InOutFun__(Particle PointAnalysis, Event Output_Commands, char * Name_File, int k, int idx)
 {
 	int Ndim = NumberDimensions;
 

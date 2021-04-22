@@ -21,7 +21,7 @@
 #ifndef _H8_H_
 #define _H8_H_
 
-void   initialize__H8__(GaussPoint, Mesh);
+void   initialize__H8__(Particle, Mesh);
 Matrix N__H8__(Matrix);
 Matrix dN_Ref__H8__(Matrix);
 Matrix dN__H8__(Matrix,Matrix);

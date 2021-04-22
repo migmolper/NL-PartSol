@@ -41,7 +41,7 @@ void Initialize_Element(Element * Elem,
   
 }
 
-void Initialize_GP(GaussPoint * GP,Vector * RefCoords)
+void Initialize_GP(Particle * GP,Vector * RefCoords)
 /* In this function we Initialize and allocate all the variables of the Gauss Points,
    if they are necessary */
 {
@@ -111,7 +111,7 @@ void Initialize_GP(GaussPoint * GP,Vector * RefCoords)
 
 /*********************************************************************/
 
-void Get_RefDeformation_Gradient(GaussPoint * GP,
+void Get_RefDeformation_Gradient(Particle * GP,
 				 Element * Elem)
 /*
   Get the deformation gradient of the reference element:
@@ -164,7 +164,7 @@ void Get_RefDeformation_Gradient(GaussPoint * GP,
 /*********************************************************************/
 
 void Get_Deformation_Gradient(Element * Elem, /* Gauss point */
-			      GaussPoint * GP) /* Element */
+			      Particle * GP) /* Element */
 {
   double ** F_ref_m1 = (double **)Allocate_Matrix(2,2,sizeof(double));
 
@@ -191,7 +191,7 @@ void Get_Deformation_Gradient(Element * Elem, /* Gauss point */
 
 /*********************************************************************/
 
-void Get_Lagrangian_CG_Tensor(GaussPoint * GP) /* Gauss point */
+void Get_Lagrangian_CG_Tensor(Particle * GP) /* Gauss point */
 			        
 /* The Right Cauchy Green Deformation Tensor :
    C = F^{T} \cdot F 
@@ -211,7 +211,7 @@ void Get_Lagrangian_CG_Tensor(GaussPoint * GP) /* Gauss point */
 
 /*********************************************************************/
 
-void Get_Eulerian_CG_Tensor(GaussPoint * GP) /* Gauss point */
+void Get_Eulerian_CG_Tensor(Particle * GP) /* Gauss point */
   
   /* The Left Cauchy Green Deformation Tensor :
    B = F \cdot F^{T} */
@@ -231,7 +231,7 @@ void Get_Eulerian_CG_Tensor(GaussPoint * GP) /* Gauss point */
 
 
 /* double ** Get_Stiffness_Matrix(double ** D, /\* Constitutive matrix *\/ */
-/* 			       GaussPoint * GP, /\* Gauss points of the element *\/ */
+/* 			       Particle * GP, /\* Gauss points of the element *\/ */
 /* 			       Element * Elem) /\* Element to analyze *\/ */
 /* /\* Calcule the element stiffness matrix K *\/ */
 /* { */

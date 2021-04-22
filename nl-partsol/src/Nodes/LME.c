@@ -31,7 +31,7 @@ double tau_NM = 1E-3;
 /****************************************************************************/
 
 void initialize__LME__(
-  GaussPoint MPM_Mesh,
+  Particle MPM_Mesh,
   Mesh FEM_Mesh)
 {
 

@@ -88,12 +88,12 @@ static FILE * Open_and_Check_simulation_file(char *);
 
 /***************************************************************************/
 
-GaussPoint Generate_Gauss_Point_Analysis__InOutFun__(char * SimulationFile)
+Particle Generate_Gauss_Point_Analysis__InOutFun__(char * SimulationFile)
 {
   int NumStrainCurves = 1;
   int NumberMaterials = 1;
 
-	GaussPoint PointAnalysis;
+	Particle PointAnalysis;
 
   PointAnalysis.NumberMaterials = NumberMaterials;
   PointAnalysis.Mat = Read_Materials__InOutFun__(SimulationFile, NumberMaterials);

@@ -57,7 +57,7 @@ static void vtk_Out_Equiv_Plastic_Strain(FILE *, Matrix, int);
 
 /*****************************************************************/
 
-void particle_results_vtk__InOutFun__(GaussPoint MPM_Mesh, int TimeStep_i, int ResultsTimeStep)
+void particle_results_vtk__InOutFun__(Particle MPM_Mesh, int TimeStep_i, int ResultsTimeStep)
 {
 
   /* Number of dimensions */

@@ -56,14 +56,14 @@ static char Error_message[MAXW];
 static Simulation_Key_Words Check_Simulation_Key_Words(char *);
 static Mesh_Parameters Read_Mesh_Parameters(char *);
 static int * assign_mixture_to_particles(char *, int, int, int);
-static void initialise_particles(Mesh,GaussPoint, int);
+static void initialise_particles(Mesh,Particle, int);
 static void Check_File(char *);
 static void standard_error();
 static FILE * Open_and_Check_simulation_file(char *);
 
 /*********************************************************************/
 
-GaussPoint Generate_Soil_Water_Coupling_Analysis__InOutFun__(char * Name_File, Mesh FEM_Mesh)
+Particle Generate_Soil_Water_Coupling_Analysis__InOutFun__(char * Name_File, Mesh FEM_Mesh)
 /*
  */
 {
@@ -79,7 +79,7 @@ GaussPoint Generate_Soil_Water_Coupling_Analysis__InOutFun__(char * Name_File, M
   char * Parse_Mesh_Properties[MAXW] = {NULL};
 
   Mesh MPM_GID_Mesh; /* GID mesh to define the material point mesh */
-  GaussPoint MPM_Mesh; /* Material point mesh (Gauss-Points) */
+  Particle MPM_Mesh; /* Material point mesh (Gauss-Points) */
   Simulation_Key_Words Sim_Params; /* Auxiliar varible to check key words */
   Mesh_Parameters Msh_Parms; /* Auxiliar variable to read mesh parameters */
 
@@ -654,7 +654,7 @@ static int * assign_mixture_to_particles(char * Name_File, int NumMixtures, int 
 
 /***************************************************************************/
 
-static void initialise_particles(Mesh MPM_GID_Mesh,GaussPoint MPM_Mesh, int GPxElement)
+static void initialise_particles(Mesh MPM_GID_Mesh,Particle MPM_Mesh, int GPxElement)
   /*
      Loop in the GID mesh to create particles from an element 
   */

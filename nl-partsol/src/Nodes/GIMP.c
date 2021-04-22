@@ -16,7 +16,7 @@ static double dSip__GIMP__(double, double, double);
 
 
 void initialize__GIMP__(
-  GaussPoint MPM_Mesh,
+  Particle MPM_Mesh,
   Mesh FEM_Mesh)
 {
 

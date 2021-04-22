@@ -8,20 +8,20 @@ double Thickness_Plain_Stress;
 /*
   Auxiliar functions 
 */
-static Matrix compute_Nodal_Mass(GaussPoint, Mesh);
-static Matrix compute_Velocity_Predictor(GaussPoint, Mesh, Matrix,Matrix,double,double);
+static Matrix compute_Nodal_Mass(Particle, Mesh);
+static Matrix compute_Velocity_Predictor(Particle, Mesh, Matrix,Matrix,double,double);
 static void   imposse_Velocity(Mesh, Matrix, int);
 static Matrix compute_Velocity_Corrector(Mesh, Matrix, Matrix,Matrix,double,double);
-static void   update_Particles(GaussPoint,Mesh,Matrix,Matrix,Matrix,double);
-static void   update_LocalState(Matrix, GaussPoint,Mesh, double);
-static Matrix compute_InternalForces(Matrix, GaussPoint,Mesh);
-static Matrix compute_BodyForces(Matrix, GaussPoint, Mesh, int);
-static Matrix compute_ContacForces(Matrix, GaussPoint, Mesh, int);
+static void   update_Particles(Particle,Mesh,Matrix,Matrix,Matrix,double);
+static void   update_LocalState(Matrix, Particle,Mesh, double);
+static Matrix compute_InternalForces(Matrix, Particle,Mesh);
+static Matrix compute_BodyForces(Matrix, Particle, Mesh, int);
+static Matrix compute_ContacForces(Matrix, Particle, Mesh, int);
 static Matrix compute_Reactions(Mesh, Matrix);
 
 /**************************************************************/
 
-void U_Newmark_Predictor_Corrector(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int InitialStep)
+void U_Newmark_Predictor_Corrector(Mesh FEM_Mesh, Particle MPM_Mesh, int InitialStep)
 {
 
   int Ndim = NumberDimensions;
@@ -105,7 +105,7 @@ void U_Newmark_Predictor_Corrector(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int Initi
 
 /*******************************************************/
 
-static Matrix compute_Nodal_Mass(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
+static Matrix compute_Nodal_Mass(Particle MPM_Mesh, Mesh FEM_Mesh)
 {
 
   int Np = MPM_Mesh.NumGP;
@@ -160,7 +160,7 @@ static Matrix compute_Nodal_Mass(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 
 /*******************************************************/
 
-static Matrix compute_Velocity_Predictor(GaussPoint MPM_Mesh,Mesh FEM_Mesh,
+static Matrix compute_Velocity_Predictor(Particle MPM_Mesh,Mesh FEM_Mesh,
 					 Matrix Velocity,Matrix Lumped_Mass,
 					 double gamma,double DeltaTimeStep)
 /*
@@ -310,7 +310,7 @@ static Matrix compute_Velocity_Corrector(Mesh FEM_Mesh,Matrix Velocity,
 
 /*******************************************************/
 
-static void update_Particles(GaussPoint MPM_Mesh,Mesh FEM_Mesh,
+static void update_Particles(Particle MPM_Mesh,Mesh FEM_Mesh,
 			     Matrix Lumped_Mass,Matrix Velocity,
 			     Matrix Forces,double DeltaTimeStep)
 {
@@ -382,7 +382,7 @@ static void update_Particles(GaussPoint MPM_Mesh,Mesh FEM_Mesh,
 
 /*************************************************************/
 
-static void update_LocalState(Matrix V_I, GaussPoint MPM_Mesh,Mesh FEM_Mesh, double TimeStep)
+static void update_LocalState(Matrix V_I, Particle MPM_Mesh,Mesh FEM_Mesh, double TimeStep)
 {
   Element Nodes_p; /* Element for each Gauss-Point */
   Matrix Gradient_p; /* Shape functions gradients */
@@ -453,7 +453,7 @@ static void update_LocalState(Matrix V_I, GaussPoint MPM_Mesh,Mesh FEM_Mesh, dou
 
 /*************************************************************/
 
-static Matrix compute_InternalForces(Matrix F_I, GaussPoint MPM_Mesh, Mesh FEM_Mesh)
+static Matrix compute_InternalForces(Matrix F_I, Particle MPM_Mesh, Mesh FEM_Mesh)
 {
   int Ndim = NumberDimensions;
   Element Nodes_p; /* Element for each Gauss-Point */
@@ -522,7 +522,7 @@ static Matrix compute_InternalForces(Matrix F_I, GaussPoint MPM_Mesh, Mesh FEM_M
 
 /*********************************************************************/
 
-static Matrix compute_BodyForces(Matrix F_I, GaussPoint MPM_Mesh,
+static Matrix compute_BodyForces(Matrix F_I, Particle MPM_Mesh,
 				 Mesh FEM_Mesh, int TimeStep)
 {
   int Ndim = NumberDimensions;
@@ -603,7 +603,7 @@ static Matrix compute_BodyForces(Matrix F_I, GaussPoint MPM_Mesh,
 
 /*********************************************************************/
 
-static Matrix compute_ContacForces(Matrix F_I, GaussPoint MPM_Mesh,
+static Matrix compute_ContacForces(Matrix F_I, Particle MPM_Mesh,
 				   Mesh FEM_Mesh, int TimeStep)
 {
   int Ndim = NumberDimensions;

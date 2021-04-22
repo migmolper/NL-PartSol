@@ -12,7 +12,7 @@ static Matrix restart_ReadVtk_Tensors(char *,char *,int);
 
 /**********************************************************************/
 
-GaussPoint restart_Simulation(char * File_Parameters,
+Particle restart_Simulation(char * File_Parameters,
 			      char * File_Restart,
 			      Mesh FEM_Mesh)
 {
@@ -20,7 +20,7 @@ GaussPoint restart_Simulation(char * File_Parameters,
   int Ndim = NumberDimensions;
   int Np;
 
-  GaussPoint Set_Particles;
+  Particle Set_Particles;
 
   /* Set to false check variables */
   bool Is_GramsSolid2D = false;
