@@ -139,7 +139,6 @@ void U_Newmark_beta_Finite_Strains(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int Initi
       Effective_Mass = compute_Nodal_Effective_Mass(MPM_Mesh,FEM_Mesh,ActiveNodes,epsilon);
       print_Status("DONE !!!",TimeStep);
 
-
       print_Status("*************************************************",TimeStep);
       print_Status("Third step : Compute nodal kinetics ... WORKING",TimeStep);
       /*

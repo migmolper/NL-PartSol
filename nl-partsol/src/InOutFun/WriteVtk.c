@@ -93,7 +93,7 @@ void particle_results_vtk__InOutFun__(GaussPoint MPM_Mesh, int TimeStep_i, int R
   }
 
   /* Connectivity */
-  fprintf(Vtk_file,"CELLS %i %i \n",MPM_Mesh.NumGP,Ndim*MPM_Mesh.NumGP);
+  fprintf(Vtk_file,"CELLS %i %i \n",MPM_Mesh.NumGP,2*MPM_Mesh.NumGP);
   for(int i = 0 ; i<MPM_Mesh.NumGP ; i++){
     fprintf(Vtk_file,"%i %i \n",1,i);
   }
@@ -290,7 +290,7 @@ void nodal_results_vtk__InOutFun__(Mesh ElementMesh, Mask ActiveNodes, Matrix RE
   }
 
   /* Connectivity */
-  fprintf(Vtk_file,"CELLS %i %i \n",ActiveNodes.Nactivenodes,Ndim*ActiveNodes.Nactivenodes);
+  fprintf(Vtk_file,"CELLS %i %i \n",ActiveNodes.Nactivenodes,2*ActiveNodes.Nactivenodes);
   for(int i = 0 ; i<ActiveNodes.Nactivenodes ; i++)
   {
     fprintf(Vtk_file,"%i %i \n",1,i);

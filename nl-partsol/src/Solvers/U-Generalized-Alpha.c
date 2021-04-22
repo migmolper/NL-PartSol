@@ -1,6 +1,11 @@
 #include "nl-partsol.h"
 
 /*
+  Global variables
+*/
+double Thickness_Plain_Stress;
+
+/*
   Auxiliar functions 
 */
 static Matrix compute_Nodal_Kinetics(GaussPoint, Mesh);
@@ -804,7 +809,6 @@ static Matrix compute_ContacForces(Matrix F_I, GaussPoint MPM_Mesh,
   double rho_p; /* Density of the Gauss-Point */
   double V_p; /* Volumen of the Gauss-Point */
   double thickness_p; /* Thickness of the Gauss-Point */
-  int Mat_p; /* Index of tha material for each Gauss-Point */
   int NumContactForces = MPM_Mesh.NumNeumannBC;
   int NumNodesLoad;
   int p;
@@ -830,8 +834,7 @@ static Matrix compute_ContacForces(Matrix F_I, GaussPoint MPM_Mesh,
       V_p = m_p/rho_p;
 
       /* Get the thickness of the material point */
-      Mat_p = MPM_Mesh.MatIdx[p];
-      thickness_p = MPM_Mesh.Mat[Mat_p].thickness;
+      thickness_p = Thickness_Plain_Stress;
 
       /* Define element for each GP */
       Nn = MPM_Mesh.NumberNodes[p];

@@ -3,6 +3,7 @@
 /*
   Call global variables
 */
+double Thickness_Plain_Stress;
 double TOL_Radial_Returning;
 int Max_Iterations_Radial_Returning;
 
@@ -14,7 +15,6 @@ bool Is_Cel = false;
 bool Is_rho = false;
 bool Is_E = false;
 bool Is_nu = false;
-bool Is_thickness = false;
 bool Is_Ceps = false;
 bool Is_Gf = false;
 bool Is_ft = false;
@@ -162,8 +162,6 @@ GramsMaterials (Particles=route.txt) {
       /* Linear elastic parameters */
       Mat_GP.E = NAN;
       Mat_GP.nu = NAN;
-      /* Thickness of the mateial (2D) */
-      Mat_GP.thickness = 1;
       /* Fracture module */
       Mat_GP.Eigenerosion = false;
       Mat_GP.Eigensoftening = false;
@@ -251,12 +249,6 @@ GramsMaterials (Particles=route.txt) {
 	  {
 	    Is_nu = true;
 	    Mat_GP.nu = atof(Parse_Mat_Prop[1]);
-	  }
-	  /**************************************************/	    
-	  else if(strcmp(Parse_Mat_Prop[0],"thickness") == 0)
-	  {
-	    Is_thickness = true;
-	    Mat_GP.thickness = atof(Parse_Mat_Prop[1]);
 	  }
 	  /**************************************************/	    
 	  else if(strcmp(Parse_Mat_Prop[0],"Fracture") == 0)
@@ -433,20 +425,6 @@ GramsMaterials (Particles=route.txt) {
 	  {
 	  	sprintf(Error_message,"%s","Unrecognized kind of material");
 		standard_error(Error_message);
-	  }
-
-	  /**************************************************/
-	  if(Is_thickness)
-	  {
-	    if(Ndim != 2)
-	    {
-	    	sprintf(Error_message,"%s","thickness is only for plain strain cases");
-			standard_error(Error_message);
-	    }
-	    else
-	    {
-	    	printf("\t \t -> %s : %f \n","thickness",Mat_GP.thickness);
-	    }
 	  }
 	  /**************************************************/
 	  if(Mat_GP.Eigenerosion)

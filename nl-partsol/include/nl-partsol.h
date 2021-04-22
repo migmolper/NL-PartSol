@@ -11,7 +11,7 @@
 
 #define MAXW 100
 #define MAXC 1000
-#define NumberDimensions 2
+#define NumberDimensions 3
 #define TOL_InOut 10E-23
 #define TOL_NR 10E-6
 #define TOL_zero 1E-16
@@ -52,7 +52,7 @@
 #endif
 
 /***************************************/
-/********** GRAMS's libraries **********/
+/******** nl-partsol libraries *********/
 /***************************************/
 #include "Types.h"
 #include "Globals.h"
@@ -62,6 +62,8 @@
 #include "Particles.h"
 #include "T3.h"
 #include "Q4.h"
+#include "T4.h"
+#include "H8.h"
 #include "GIMP.h"
 #include "LME.h"
 #include "Nodes.h"

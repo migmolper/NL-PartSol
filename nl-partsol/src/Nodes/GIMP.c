@@ -1,16 +1,24 @@
 #include "nl-partsol.h"
 
 /*
+  Global variables
+*/
+double Thickness_Plain_Stress;
+
+/*
   Auxiliar functions
  */
-static Matrix   voxel__GIMP__(Matrix, double);
-static double   Sip__GIMP__(double, double, double);
-static double   dSip__GIMP__(double, double, double);
+static Matrix voxel__GIMP__(Matrix, double);
+static double Sip__GIMP__(double, double, double);
+static double dSip__GIMP__(double, double, double);
 
 /*********************************************************************/
 
 
-void initialize__GIMP__(GaussPoint MPM_Mesh, Mesh FEM_Mesh){
+void initialize__GIMP__(
+  GaussPoint MPM_Mesh,
+  Mesh FEM_Mesh)
+{
 
   int Ndim = NumberDimensions;
 
@@ -26,13 +34,12 @@ void initialize__GIMP__(GaussPoint MPM_Mesh, Mesh FEM_Mesh){
   int Mat_p;
   bool Init_p;
 
-  /* Variable with stores the conectivity of the element of the particle */
-  ChainPtr Elem_p;
-  
-  /* Variable with stores the coordinates of the element of the particle */
-  Matrix Poligon_Coordinates;
+  /* Variables to store the conectivity and coordinates of the element of the particle */
+  ChainPtr Elem_p_Connectivity;
+  Matrix Elem_p_Coordinates;
 
-  for(int i = 0 ; i<MPM_Mesh.NumGP ; i++){
+  for(int i = 0 ; i<MPM_Mesh.NumGP ; i++)
+  {
    
   /* Get some properties for each particle */ 
   X_p = memory_to_matrix__MatrixLib__(Ndim,1,MPM_Mesh.Phi.x_GC.nM[i]);
@@ -40,33 +47,32 @@ void initialize__GIMP__(GaussPoint MPM_Mesh, Mesh FEM_Mesh){
   l_p = memory_to_matrix__MatrixLib__(Ndim,1,MPM_Mesh.lp.nM[i]);
   rho_p = MPM_Mesh.Phi.rho.nV[i];
   m_p = MPM_Mesh.Phi.mass.nV[i];
-  th_p = MPM_Mesh.Mat[MPM_Mesh.MatIdx[i]].thickness;
+  th_p = Thickness_Plain_Stress;
   A_p = m_p/(rho_p*th_p);
 
   /* Supose that the particle was not initilise */
   Init_p = false;
 
-  for(int j = 0 ; j<FEM_Mesh.NumElemMesh ; j++){
+  for(int j = 0 ; j<FEM_Mesh.NumElemMesh ; j++)
+  {
 
     /* Get the element properties */
-    Elem_p = FEM_Mesh.Connectivity[j];
+    Elem_p_Connectivity = FEM_Mesh.Connectivity[j];
+    Elem_p_Coordinates = get_nodes_coordinates__MeshTools__(Elem_p_Connectivity, FEM_Mesh.Coordinates);
       
-    /* 5º Check out if the GP is in the Element */
-    if(inout_convex_set__MeshTools__(X_p, Elem_p, FEM_Mesh.Coordinates)){
+    /* Check out if the GP is in the Element */
+    if(FEM_Mesh.In_Out_Element(X_p,Elem_p_Coordinates))
+    {
 
       /* Particle will be initilise */
       Init_p = true;
 	
       /* With the element connectivity get the node close to the particle */
-      MPM_Mesh.I0[i] = get_closest_node__MeshTools__(X_p,Elem_p,FEM_Mesh.Coordinates);
-
-      /* Get the coordinates of the element */
-      Poligon_Coordinates = get_nodes_coordinates__MeshTools__(FEM_Mesh.Connectivity[j],
-							       FEM_Mesh.Coordinates);
+      MPM_Mesh.I0[i] = get_closest_node__MeshTools__(X_p,Elem_p_Connectivity,FEM_Mesh.Coordinates);
 
       /* If the GP is in the element, get its natural coordinates */
       Xi_p.nV = MPM_Mesh.Phi.x_EC.nM[i];
-      X_to_Xi__Q4__(Xi_p,X_p,Poligon_Coordinates);
+      X_to_Xi__Q4__(Xi_p,X_p,Elem_p_Coordinates);
 
       /* Initialize the voxel lenght */
       l_p = voxel__GIMP__(l_p, A_p);
@@ -81,20 +87,20 @@ void initialize__GIMP__(GaussPoint MPM_Mesh, Mesh FEM_Mesh){
       asign_to_nodes__Particles__(i, MPM_Mesh.ListNodes[i], FEM_Mesh);
 
       /* Free memory */
-      free__MatrixLib__(Poligon_Coordinates);
+      free__MatrixLib__(Elem_p_Coordinates);
 	
       break;
     }
-      
+
+    /* Free memory */
+    free__MatrixLib__(Elem_p_Coordinates);  
       
   }
   if(!Init_p)
-    {
-      fprintf(stderr,"%s : %s %i %s \n",
-	      "Error in initialize__GIMP__",
-	      "Particle",i,"Was not initialise");
-      exit(EXIT_FAILURE);
-    }
+  {
+    fprintf(stderr,"%s : %s %i %s \n","Error in initialize__GIMP__","Particle",i,"Was not initialise");
+    exit(EXIT_FAILURE);
+  }
 
   }
   
@@ -102,7 +108,9 @@ void initialize__GIMP__(GaussPoint MPM_Mesh, Mesh FEM_Mesh){
 
 /*********************************************************************/
 
-static Matrix voxel__GIMP__(Matrix l_p, double Volume_p)
+static Matrix voxel__GIMP__(
+  Matrix l_p,
+  double Volume_p)
 /*!
   Get the initial voxel lenght
   Clarify that the volume measure depends if the problem is 2D (area)
@@ -114,9 +122,9 @@ static Matrix voxel__GIMP__(Matrix l_p, double Volume_p)
 
   /* Fill Voxel */  
   for(int j =0 ; j<Ndim ; j++)
-    {
-      l_p.nV[j] = 0.5*pow(Volume_p,(double)1/Ndim);
-    }
+  {
+    l_p.nV[j] = 0.5*pow(Volume_p,(double)1/Ndim);
+  }
 
   return l_p;
   
@@ -125,26 +133,35 @@ static Matrix voxel__GIMP__(Matrix l_p, double Volume_p)
 /*********************************************************************/
 
 /* Uniform GIMP shape function */
-static double Sip__GIMP__(double L, double lp, double Delta_xp){
+static double Sip__GIMP__(
+  double L,
+  double lp, double Delta_xp)
+{
 
   /* Evaluation of the shape function */
 
-  if ((-lp < Delta_xp) && (Delta_xp <= lp)){
+  if ((-lp < Delta_xp) && (Delta_xp <= lp))
+  {
     return 1 - 0.5*(DSQR(Delta_xp) + lp*lp)*(double)1/(L*lp);
   }
-  else if (((-L-lp) < Delta_xp) && (Delta_xp <= (-L+lp))){
+  else if (((-L-lp) < Delta_xp) && (Delta_xp <= (-L+lp)))
+  {
     return (double)(0.25/(L*lp))*DSQR(L+lp+Delta_xp);
   }
-  else if (((L-lp) < Delta_xp) && (Delta_xp <= (L+lp))){
+  else if (((L-lp) < Delta_xp) && (Delta_xp <= (L+lp)))
+  {
     return (double)(0.25/(L*lp))*DSQR(L+lp-Delta_xp);
   }
-  else if (((-L+lp) < Delta_xp) && (Delta_xp <= -lp)){
+  else if (((-L+lp) < Delta_xp) && (Delta_xp <= -lp))
+  {
     return 1 + (double)Delta_xp/L;
   }
-  else if ((lp < Delta_xp) && (Delta_xp <= (L-lp))){
+  else if ((lp < Delta_xp) && (Delta_xp <= (L-lp)))
+  {
     return 1 - (double)Delta_xp/L;
   }
-  else {
+  else 
+  {
     return (double)0.0;
   }
 }
@@ -152,112 +169,118 @@ static double Sip__GIMP__(double L, double lp, double Delta_xp){
 /*********************************************************************/
 
 /* Uniform GIMP derivative shape function */
-static double dSip__GIMP__(double L, double lp, double Delta_xp){
+static double dSip__GIMP__(
+  double L, 
+  double lp, 
+  double Delta_xp)
+{
 
   /* Evaluation of the shape function */
-  if (((-L-lp) < Delta_xp) && (Delta_xp <= (-L+lp))){
+  if (((-L-lp) < Delta_xp) && (Delta_xp <= (-L+lp)))
+  {
     return (double)(0.5/(L*lp))*(L+lp+Delta_xp);
   }
-  else if (((-L+lp) < Delta_xp) && (Delta_xp <= -lp)){
+  else if (((-L+lp) < Delta_xp) && (Delta_xp <= -lp))
+  {
     return (double)1/L;
   }
-  else if ((-lp < Delta_xp) && (Delta_xp <= lp)){
+  else if ((-lp < Delta_xp) && (Delta_xp <= lp))
+  {
     return -(double)Delta_xp/(L*lp);
   }
-  else if ((lp < Delta_xp) && (Delta_xp <= (L-lp))){
+  else if ((lp < Delta_xp) && (Delta_xp <= (L-lp)))
+  {
     return -(double)1/L;
   }
-  else if (((L-lp) < Delta_xp) && (Delta_xp <= (L+lp))){
+  else if (((L-lp) < Delta_xp) && (Delta_xp <= (L+lp)))
+  {
     return -(double)(0.5/(L*lp))*(L+lp-Delta_xp);
   }
-  else {
+  else 
+  {
     return (double)0.0;
   }
 }
 
 /*********************************************************************/
 
-/* Uniform GIMP shape function 2D */
-Matrix N__GIMP__(Matrix Delta_Xp, Matrix lp, double L){
+Matrix N__GIMP__(
+  Matrix Delta_Xp, 
+  Matrix lp, 
+  double L)
+{
 
-  /* 1º Variable declaration */
+  /* Variable declaration */
   int Ndim = NumberDimensions;
   int Nnodes = Delta_Xp.N_rows;
   Matrix S_Ip = allocZ__MatrixLib__(1,Nnodes);
 
-  /* 2º Fill the shape function array */
-  switch(Ndim){
-  case 2 :
-    for(int i = 0 ; i<Nnodes ; i++){
-      /* 3º Shape function in this node */
-      S_Ip.nV[i] =
-	Sip__GIMP__(L, lp.nV[0], Delta_Xp.nM[i][0])*
-	Sip__GIMP__(L, lp.nV[1], Delta_Xp.nM[i][1]);
+  for(int i = 0 ; i<Nnodes ; i++)
+  {
+
+    // Initialise to one for the node i
+    S_Ip.nV[i] = 1.0;
+
+    for(int j = 0 ; j<Ndim ; j++)
+    {
+      S_Ip.nV[i] *= Sip__GIMP__(L,lp.nV[j],Delta_Xp.nM[i][j]);
     }
-    break;
-  case 3:
-    for(int i = 0 ; i<Nnodes ; i++){
-      /* 3º Shape function in this node */
-      S_Ip.nV[i] =
-	Sip__GIMP__(L, lp.nV[0], Delta_Xp.nM[i][0])*
-	Sip__GIMP__(L, lp.nV[1], Delta_Xp.nM[i][1])*
-	Sip__GIMP__(L, lp.nV[2], Delta_Xp.nM[i][2]);
-    }
-    break;
   }
 
-  /* 4º Output */
   return S_Ip;
 }
 
 /*********************************************************************/
 
-/* Uniform GIMP derivative shape function 2D */
-Matrix dN__GIMP__(Matrix Delta_xp, Matrix lp, double L){
 
-  /* 1º Variable declaration */
+Matrix dN__GIMP__(
+  Matrix Delta_xp,
+  Matrix lp,
+  double L)
+{
+
+  /* Variable declaration */
   int Ndim = NumberDimensions;
   int Nnodes = Delta_xp.N_rows;
   Matrix dS_Ip = allocZ__MatrixLib__(Nnodes,Ndim); 
   
   /* 2º Fill the shape function array */
-  switch(Ndim){    
-  case 2 :
-    for(int i = 0 ; i<Nnodes ; i++){
-      /* 3º Gradient of the shape function for each node*/
-      dS_Ip.nM[i][0] =
-	dSip__GIMP__(L, lp.nV[0], Delta_xp.nM[i][0])*
-	Sip__GIMP__(L, lp.nV[1], Delta_xp.nM[i][1]);
-      dS_Ip.nM[i][1] =
-	Sip__GIMP__(L, lp.nV[0], Delta_xp.nM[i][0])*
-	dSip__GIMP__(L, lp.nV[1], Delta_xp.nM[i][1]);
+  for(int i = 0 ; i<Nnodes ; i++)
+  {
+
+    // Initialise to one in each direction for the node i
+    for(int j = 0 ; j<Ndim ; j++)
+    {
+      dS_Ip.nM[i][j] = 1.0;
     }
-    break;
-  case 3 :
-    for(int i = 0 ; i<Nnodes ; i++){
-      /* 3º Gradient of the shape function for each node*/
-      dS_Ip.nM[i][0] =
-	dSip__GIMP__(L, lp.nV[0], Delta_xp.nM[i][0])*
-	Sip__GIMP__(L, lp.nV[1], Delta_xp.nM[i][1])*
-	Sip__GIMP__(L, lp.nV[2], Delta_xp.nM[i][2]);
-      dS_Ip.nM[i][1] =
-	Sip__GIMP__(L, lp.nV[0], Delta_xp.nM[i][0])*
-	dSip__GIMP__(L, lp.nV[1], Delta_xp.nM[i][1])*
-	Sip__GIMP__(L, lp.nV[2], Delta_xp.nM[i][2]);
-      dS_Ip.nM[i][2] =
-	Sip__GIMP__(L, lp.nV[0], Delta_xp.nM[i][0])*
-	Sip__GIMP__(L, lp.nV[1], Delta_xp.nM[i][1])*
-	dSip__GIMP__(L, lp.nV[2], Delta_xp.nM[i][2]);      
+
+    for(int j = 0 ; j<Ndim ; j++)
+    {
+      if(i == j)
+      {
+        dS_Ip.nM[i][j] *= dSip__GIMP__(L,lp.nV[j],Delta_xp.nM[i][j]);
+      }
+      else
+      {
+        dS_Ip.nM[i][j] *= Sip__GIMP__(L,lp.nV[j],Delta_xp.nM[i][j]);
+      }
     }
-    break;
-  }
-  /* 4º Output */
+  } 
+
+
   return dS_Ip;
 }
 
 /*********************************************************************/
 
-ChainPtr tributary__GIMP__(Matrix Xi_p,int Elem_GP,Matrix lp,Mesh FEM_Mesh)
+/*
+  This function is a mess, sorry for that
+*/
+ChainPtr tributary__GIMP__(
+  Matrix Xi_p,
+  int Elem_GP,
+  Matrix lp,
+  Mesh FEM_Mesh)
 {
 
   ChainPtr * Table_Nodes = NULL;
@@ -584,69 +607,3 @@ ChainPtr tributary__GIMP__(Matrix Xi_p,int Elem_GP,Matrix lp,Mesh FEM_Mesh)
  
   return Triburary_Nodes;
 }
-
-  
-/*   /\* Chain with the tributary elements, this is the list of element near the */
-/*      gauss point, including where it is *\/ */
-
-/*   /\* Iterate in the list and select the union of the sets of nodes *\/ */
-/*   Table_Elem = malloc(NumNodesElem*sizeof(ChainPtr)); */
-/*   for(int i = 0 ; i<NumNodesElem ; i++){ */
-/*     Table_Elem[i] = FEM_Mesh.NodeNeighbour[NodesElem[i]]; */
-/*   } */
-/*   Triburary_Elements = union__SetLib__(Table_Elem,NumNodesElem); */
-/*   /\* Free memory *\/ */
-/*   free(NodesElem); */
-/*   free(Table_Elem); */
-/*   Table_Elem = NULL; */
-  
-/*   /\* List with the tributary nodes *\/ */
-/*   Num_Elem = lenght__SetLib__(Triburary_Elements); */
-/*   List_Elements = set_to_memory__SetLib__(Triburary_Elements,Num_Elem); */
-
-/*   /\* Free the chain with the tributary elements *\/ */
-/*   free__SetLib__(Triburary_Elements); */
-  
-/*   /\* Fill the chain with the preliminary tributary nodes *\/ */
-/*   Table_ElemNodes = malloc(Num_Elem*sizeof(ChainPtr)); */
-/*   for(int i = 0 ; i<Num_Elem ; i++){ */
-/*     Table_ElemNodes[i] = FEM_Mesh.Connectivity[List_Elements[i]]; */
-/*   } */
-  
-/*   List_Nodes = union__SetLib__(Table_ElemNodes,Num_Elem); */
-  
-/*   /\* Free the array wit the list of tributary elements *\/ */
-/*   free(List_Elements); */
-/*   free(Table_ElemNodes); */
-/*   Table_ElemNodes = NULL; */
-  
-/*   /\* Initialize the iterator to iterate over the list of tributary nodes *\/ */
-/*   iPtr = List_Nodes; */
-
-/*   /\* Loop over the chain with the tributary nodes *\/ */
-/*   while(iPtr != NULL){ */
-
-/*     /\* Assign to a pointer the coordinates of the nodes *\/ */
-/*     X_I.nV = FEM_Mesh.Coordinates.nM[iPtr->I]; */
-
-/*     /\* Get a vector from the GP to the node *\/ */
-/*     Distance = substraction__MatrixLib__(X_GP,X_I); */
-
-/*     /\* If the node is near the GP push in the chain *\/ */
-/*     if(norm__MatrixLib__(Distance,2) <= Ra){ */
-/*       PushNodeTop(&Triburary_Nodes,iPtr->I); */
-/*     } */
-
-/*     /\* Free memory of the distrance vector *\/ */
-/*     free__MatrixLib__(Distance); */
-
-/*     /\* Update pointer index *\/ */
-/*     iPtr = iPtr->next; */
-/*   } */
-/*   /\* Free memory *\/ */
-/*   free__SetLib__(&List_Nodes); */
-  
-/*   return Triburary_Nodes; */
-/* } */
-
-

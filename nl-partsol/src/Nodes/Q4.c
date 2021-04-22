@@ -1,5 +1,11 @@
 #include "nl-partsol.h"
 
+
+/* 
+  Call global variables
+*/
+double Thickness_Plain_Stress;
+
 /*
   Auxiliar functions
 */
@@ -8,7 +14,9 @@ static Matrix Xi_to_X__Q4__(Matrix,Matrix);
 
 /*********************************************************************/
 
-void initialize__Q4__(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
+void initialize__Q4__(
+  GaussPoint MPM_Mesh, 
+  Mesh FEM_Mesh)
 {
   /* Variables for the GP coordinates */
   int Ndim = NumberDimensions;
@@ -19,16 +27,17 @@ void initialize__Q4__(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
   Matrix X_p, Xi_p;
 
   /* Variable with stores the conectivity of the element of the particle */
-  ChainPtr Elem_p;
+  ChainPtr Elem_p_Connectivity;
 
   /* Auxiliar variable to loop in the list of tributary nodes of the particle */
   ChainPtr ListNodes_p;
 
   /* Matrix with the coordinate of the nodes in the element */
-  Matrix CoordElement;
+  Matrix Elem_p_Coordinates;
  
   /* Loop over the particles to initialize them */
-  for(int p = 0 ; p<Np ; p++){
+  for(int p = 0 ; p<Np ; p++)
+  {
 
     /* Asign the number of nodes */
     MPM_Mesh.NumberNodes[p] = 4;
@@ -38,36 +47,38 @@ void initialize__Q4__(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
     Xi_p = memory_to_matrix__MatrixLib__(Ndim,1,MPM_Mesh.Phi.x_EC.nM[p]);
     
     /* Check for each element of the mesh */
-    for(int i = 0 ; i<Nelem ; i++){
+    for(int i = 0 ; i<Nelem ; i++)
+    {
 
       /* Get connectivity of the element */
-      Elem_p = FEM_Mesh.Connectivity[i];
+      Elem_p_Connectivity = FEM_Mesh.Connectivity[i];
+      Elem_p_Coordinates = get_nodes_coordinates__MeshTools__(Elem_p_Connectivity, FEM_Mesh.Coordinates);
       
       /* 5º Check out if the GP is in the Element */
-      if(inout_convex_set__MeshTools__(X_p, Elem_p, FEM_Mesh.Coordinates)){
+      if(FEM_Mesh.In_Out_Element(X_p,Elem_p_Coordinates))
+      {
 
-	/* With the element connectivity get the node close to the particle */
-	MPM_Mesh.I0[p] = get_closest_node__MeshTools__(X_p,Elem_p,FEM_Mesh.Coordinates);
-	
-	/* Asign connectivity */
-	MPM_Mesh.ListNodes[p] = copy__SetLib__(Elem_p);
-	
-	/* Active those nodes that interact with the particle */
-	asign_to_nodes__Particles__(p, MPM_Mesh.ListNodes[p], FEM_Mesh);
-	
-	/* Get the coordinates of the element vertex */
-	CoordElement = get_nodes_coordinates__MeshTools__(MPM_Mesh.ListNodes[p], FEM_Mesh.Coordinates);
+        /* With the element connectivity get the node close to the particle */
+        MPM_Mesh.I0[p] = get_closest_node__MeshTools__(X_p,Elem_p_Connectivity,FEM_Mesh.Coordinates);
 
-	/* Compute local coordinates of the particle in this element */
-	X_to_Xi__Q4__(Xi_p,X_p,CoordElement);
-	
-	/* Free coordinates of the element */
-	free__MatrixLib__(CoordElement);
+        /* Asign connectivity */
+        MPM_Mesh.ListNodes[p] = copy__SetLib__(Elem_p_Connectivity);
 
-	break;
+        /* Active those nodes that interact with the particle */
+        asign_to_nodes__Particles__(p, MPM_Mesh.ListNodes[p], FEM_Mesh);
+
+        /* Compute local coordinates of the particle in this element */
+        X_to_Xi__Q4__(Xi_p,X_p,Elem_p_Coordinates);
+
+        /* Free coordinates of the element */
+        free__MatrixLib__(Elem_p_Coordinates);
+
+        break;
 	
       }
-      
+
+      /* Free coordinates of the element */
+      free__MatrixLib__(Elem_p_Coordinates);
     }
 
   }
@@ -77,7 +88,9 @@ void initialize__Q4__(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
 /*********************************************************************/
 
 /* Shape functions */
-Matrix N__Q4__(Matrix X_e){
+Matrix N__Q4__(
+  Matrix X_e)
+{
   
   /* Definition and allocation */
   Matrix N_ref =  allocZ__MatrixLib__(1,4);
@@ -94,7 +107,9 @@ Matrix N__Q4__(Matrix X_e){
 /*********************************************************************/
 
 /* Derivatives of the shape functions */
-Matrix dN_Ref__Q4__(Matrix X_e){
+Matrix dN_Ref__Q4__(
+  Matrix X_e)
+{
 
   int Ndim = NumberDimensions;
   
@@ -125,7 +140,9 @@ Matrix dN_Ref__Q4__(Matrix X_e){
 /*********************************************************************/
 
 /* Jacobian of the transformation for the four-nodes quadrilateral */
-static Matrix F_Ref__Q4__(Matrix X_NC_GP, Matrix X_GC_Nodes)
+static Matrix F_Ref__Q4__(
+  Matrix X_NC_GP, 
+  Matrix X_GC_Nodes)
 /*
   Get the jacobian of the transformation of the reference element :
 
@@ -152,7 +169,8 @@ static Matrix F_Ref__Q4__(Matrix X_NC_GP, Matrix X_GC_Nodes)
   dNdX_Ref_GP = dN_Ref__Q4__(X_NC_GP);
 
   /* 2º Get the F_Ref doing a loop over the nodes of the element */
-  for(int I = 0 ; I<4 ; I++){
+  for(int I = 0 ; I<4 ; I++)
+  {
 
     /* 3º Fill arrays for the tensorial product */
     X_I = memory_to_tensor__TensorLib__(X_GC_Nodes.nM[I],1);
@@ -162,9 +180,11 @@ static Matrix F_Ref__Q4__(Matrix X_NC_GP, Matrix X_GC_Nodes)
     F_Ref_I = dyadic_Product__TensorLib__(X_I,dNdx_I);
 
     /* 5º Increment the reference deformation gradient */
-    for(int i = 0 ; i<Ndim ; i++){
-      for(int j = 0 ; j<Ndim ; j++){
-	F_Ref.nM[i][j] += F_Ref_I.N[i][j];
+    for(int i = 0 ; i<Ndim ; i++)
+    {
+      for(int j = 0 ; j<Ndim ; j++)
+      {
+        F_Ref.nM[i][j] += F_Ref_I.N[i][j];
       }
     }
     /* 6º Free data of the nodal contribution */
@@ -181,7 +201,9 @@ static Matrix F_Ref__Q4__(Matrix X_NC_GP, Matrix X_GC_Nodes)
 /*********************************************************************/
 
 /* Element gradient in the real element */
-Matrix dN__Q4__(Matrix X_EC, Matrix Element)
+Matrix dN__Q4__(
+  Matrix X_EC, 
+  Matrix Element)
 /*
   - Matrix X_EC_GP : Element coordinates of the gauss point
   - Matrix Element : Coordinates of the element (4 x Ndim)
@@ -223,7 +245,9 @@ Matrix dN__Q4__(Matrix X_EC, Matrix Element)
 /*********************************************************************/
 
 /* Global coordinates of the four nodes quadrilateral */
-Matrix Xi_to_X__Q4__(Matrix Xi, Matrix Element)
+Matrix Xi_to_X__Q4__(
+  Matrix Xi,
+  Matrix Element)
 /*
   This function evaluate the position of the GP in the element,
   and get it global coordiantes    
@@ -237,7 +261,8 @@ Matrix Xi_to_X__Q4__(Matrix Xi, Matrix Element)
   Matrix X = allocZ__MatrixLib__(Ndim,1);
 
   /* 3º Get the global coordinates for this element coordiantes in this element */
-  for(int I = 0 ; I<4 ; I++){
+  for(int I = 0 ; I<4 ; I++)
+  {
     X.nV[0] += N.nV[I]*Element.nM[I][0];
     X.nV[1] += N.nV[I]*Element.nM[I][1];
   }
@@ -252,7 +277,10 @@ Matrix Xi_to_X__Q4__(Matrix Xi, Matrix Element)
 
 /*********************************************************************/
 
-void X_to_Xi__Q4__(Matrix Xi, Matrix X, Matrix Element)
+void X_to_Xi__Q4__(
+  Matrix Xi,
+  Matrix X,
+  Matrix Element)
 /* 
    The function return the natural coordinates of a point 
    inside of the element.
@@ -267,6 +295,225 @@ void X_to_Xi__Q4__(Matrix Xi, Matrix X, Matrix Element)
 */
 {  
   Xi = Newton_Rapson(Xi_to_X__Q4__, Element, F_Ref__Q4__, Element, X, Xi);  
+}
+
+/*********************************************************************/
+
+bool in_out__Q4__(
+  Matrix X,
+  Matrix Element)
+{
+  bool in_out = false;
+
+  Matrix Xi = allocZ__MatrixLib__(2,1);
+
+  Xi = Newton_Rapson(Xi_to_X__Q4__, Element, F_Ref__Q4__, Element, X, Xi);
+
+  if((Xi.nV[0] <= 1.0) && 
+    (Xi.nV[1]  <= 1.0) && 
+    (Xi.nV[0]  >= -1.0) &&
+    (Xi.nV[1]  >= -1.0))
+  {
+    in_out = true;    
+  }
+
+  free__MatrixLib__(Xi);
+
+  return in_out;
+}
+
+/*********************************************************************/
+
+void element_to_particles__Q4__(
+  Matrix X_p,
+  Mesh FEM_Mesh,
+  int GPxElement)
+{
+
+  int Ndim = NumberDimensions;
+  int NumElemMesh = FEM_Mesh.NumElemMesh;
+  int NumNodesElem = 4;
+  Matrix N_GP;
+  Matrix Xi_p = allocZ__MatrixLib__(GPxElement,Ndim);
+  Matrix Xi_p_j = memory_to_matrix__MatrixLib__(1,Ndim,NULL);
+  Element Element;
+  int Node;
+
+  switch(GPxElement)
+  {
+    case 1:
+    Xi_p.nV[0] = 0.0;
+    Xi_p.nV[1] = 0.0;
+    break;
+
+    case 4:
+    Xi_p.nM[0][0] =   0.5;
+    Xi_p.nM[0][1] =   0.5;
+    Xi_p.nM[1][0] =   0.5;
+    Xi_p.nM[1][1] = - 0.5;
+    Xi_p.nM[2][0] = - 0.5;
+    Xi_p.nM[2][1] =   0.5;
+    Xi_p.nM[3][0] = - 0.5;
+    Xi_p.nM[3][1] = - 0.5;
+    break;
+
+    case 9:
+    Xi_p.nM[0][0] =   0.0;
+    Xi_p.nM[0][1] =   0.0;
+    Xi_p.nM[1][0] =   0.66666666666666;
+    Xi_p.nM[1][1] =   0.0;
+    Xi_p.nM[2][0] =   0.66666666666666;
+    Xi_p.nM[2][1] =   0.66666666666666;
+    Xi_p.nM[3][0] =   0.0;
+    Xi_p.nM[3][1] =   0.66666666666666;
+    Xi_p.nM[4][0] = - 0.66666666666666;
+    Xi_p.nM[4][1] =   0.66666666666666;
+    Xi_p.nM[5][0] = - 0.66666666666666;
+    Xi_p.nM[5][1] =   0.0;
+    Xi_p.nM[6][0] = - 0.66666666666666;
+    Xi_p.nM[6][1] = - 0.66666666666666;
+    Xi_p.nM[7][0] =   0.0;
+    Xi_p.nM[7][1] = - 0.66666666666666;
+    Xi_p.nM[8][0] =   0.66666666666666;
+    Xi_p.nM[8][1] = - 0.66666666666666;
+    break;
+
+    default :
+    fprintf(stderr,"%s : %s \n","Error in element_to_particles__Q4__()","Wrong number of particles per element");
+    exit(EXIT_FAILURE);
+  }
+
+  /* Get the coordinate of the center */
+  for(int i = 0 ; i<NumElemMesh ; i++)
+  {
+
+    Element = nodal_set__Particles__(i, FEM_Mesh.Connectivity[i],FEM_Mesh.NumNodesElem[i]);
+
+    for(int j = 0 ; j<GPxElement ; j++)
+    {
+      /* Evaluate the shape function in the GP position */
+      if(GPxElement == 1)
+      {
+        N_GP = N__Q4__(Xi_p);
+      }
+      else
+      {
+        Xi_p_j.nV = Xi_p.nM[j]; 
+        N_GP = N__Q4__(Xi_p_j);
+      }
+      
+      for(int k = 0 ; k<NumNodesElem ; k++)
+      {
+            
+        /* Connectivity of each element */
+        Node = Element.Connectivity[k];
+        
+        for(int l = 0 ; l<Ndim ; l++)
+        {
+          X_p.nM[i*GPxElement+j][l] += N_GP.nV[k]*FEM_Mesh.Coordinates.nM[Node][l];
+        }
+      }
+
+      /* Free value of the shape function in the GP */
+      free__MatrixLib__(N_GP);
+
+    }
+
+    free(Element.Connectivity);
+
+  }
+
+  /* Free auxiliar matrix with the coordinates */
+  free__MatrixLib__(Xi_p); 
+
+
+}
+
+/*********************************************************************/
+
+double min_DeltaX__Q4__(ChainPtr Element_Connectivity, Matrix Coordinates)
+{
+
+  /* Auxiliar variables of the function */
+  int Ndim = NumberDimensions;
+  int Node_k;
+  int Node_k1;
+  int NumNodesElem = 4;
+  int NumSides = 4;
+  double sqr_lenght = 0.0;
+  double MinElementSize = 10e16;
+
+  /*
+    Fill the poligon with vectors
+  */
+  for(int k = 0; k<NumNodesElem; k++)
+  {
+
+    Node_k = Element_Connectivity->I;
+    Node_k1 = Element_Connectivity->next->I;
+
+    sqr_lenght = 0.0;
+    
+    for(int l = 0 ; l<Ndim ; l++)
+    {
+      sqr_lenght += DSQR(Coordinates.nM[Node_k1][l] - Coordinates.nM[Node_k][l]);
+    }
+
+    MinElementSize = DMIN(MinElementSize,sqrt(sqr_lenght));
+
+    Element_Connectivity = Element_Connectivity->next;
+
+  }
+
+  return MinElementSize;
+}
+
+/*********************************************************************/
+
+double volume__Q4__(
+  Matrix Element)
+{
+  int Ndim = NumberDimensions;
+  double J_i;
+  double Vol = 0;
+
+  // Use 4 integration points to compute volume
+  double table_w[4] = {1.,1.,1.,1.};
+  double table_X[4][2] = 
+  {
+    {-0.577350269200000,-0.577350269200000},
+    {0.577350269200000,-0.577350269200000},
+    {-0.577350269200000,0.577350269200000},
+    {0.577350269200000,0.577350269200000}
+  };
+
+  Matrix F_i;
+  Matrix Xi = allocZ__MatrixLib__(2,1);
+
+  for(int i = 0 ; i<4 ; i++)
+  {
+    for(int j = 0 ; j<Ndim ; j++)
+    {
+       Xi.nV[j] = table_X[i][j];
+    }
+
+    // Compute deformation gradient and jacobian of this integration point
+    F_i = F_Ref__Q4__(Xi,Element);
+    J_i = I3__MatrixLib__(F_i);
+
+    // Compute volume contribution
+    Vol += J_i*table_w[i];
+
+    // Free memory
+    free__MatrixLib__(F_i);
+  }
+
+  Vol *= Thickness_Plain_Stress;
+
+  // Free memory
+  free__MatrixLib__(Xi);
+
+  return Vol;
 }
 
 /*********************************************************************/

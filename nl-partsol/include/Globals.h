@@ -11,16 +11,17 @@ extern char   OutputNodesFile[MAXC];
 extern char   OutputDir[MAXC];
 extern char   Field[10];
 
-
 //	Global variables for simulation purposes
 extern int NumberDOF;
 extern int Number_Soil_Water_Mixtures;
 extern Mixture * Soil_Water_Mixtures;
 
 // Global variables for the LME shape functions
+extern int max_iter_LME;
 extern double TOL_LME;
 extern double gamma_LME;
 extern double curvature_LME;
+extern char   wrapper_LME[MAXC];
 
 // Global variables for the time-integrator 
 extern double CFL;
@@ -32,6 +33,9 @@ extern double beta_Newmark_beta;
 extern double gamma_Newmark_beta;
 extern double TOL_Newmark_beta;
 extern int NumTimeStep;
+
+// Parameter for plain stress simulations
+extern double Thickness_Plain_Stress;
 
 /* Convergence parameters for radial returning algorithm */
 extern double TOL_Radial_Returning;

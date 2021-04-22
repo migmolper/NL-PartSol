@@ -252,7 +252,7 @@ Element nodal_set__Particles__(int, ChainPtr, int);
 /*!
 
 */
-int inout_element__Particles__(int, Matrix, ChainPtr, Mesh);
+int search_particle_in_surrounding_elements__Particles__(int, Matrix, ChainPtr, Mesh);
 /*******************************************************/
 
 /*!

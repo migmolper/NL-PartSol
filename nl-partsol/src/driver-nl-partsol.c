@@ -83,13 +83,13 @@ int main(int argc, char * argv[])
 
       puts("*************************************************");
       puts("Read solver ...");
-      Solver_selector__InOutFun__(SimulationFile);      
+      Solver_selector__InOutFun__(SimulationFile);
 
       puts("*************************************************");
       if(Is_New_Simulation)
       {
         puts("Generating new MPM simulation ...");
-        MPM_Mesh = GramsSolid2D(SimulationFile,FEM_Mesh);
+        MPM_Mesh = GramsSolid(SimulationFile,FEM_Mesh);
       }
       if(Is_Restart_Simulation)
       {

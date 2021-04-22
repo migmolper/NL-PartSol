@@ -4,15 +4,6 @@
 #define MINVAL(A,B) ((A)<(B) ? (A) : (B))
 
 
-/*
-  Local functions
-*/
-static void fill_1_particle_2d_Triangle(Matrix, Mesh);
-static void fill_3_particle_2d_Triangle(Matrix, Mesh);
-static void fill_1_particle_2d_Quadrilateral(Matrix, Mesh);
-static void fill_4_particle_2d_Quadrilateral(Matrix, Mesh);
-static void fill_9_particle_2d_Quadrilateral(Matrix, Mesh);
-
 /*********************************************************************/
 
 void initial_position__Particles__(Matrix X_p, Mesh FEM_Mesh, int GPxElement)
@@ -21,71 +12,27 @@ void initial_position__Particles__(Matrix X_p, Mesh FEM_Mesh, int GPxElement)
  */
 {
 
-  switch(GPxElement)
-  {
-  
-  case 1 :
-
-  if(strcmp(FEM_Mesh.TypeElem,"Quadrilateral") == 0)
-  {
-    fill_1_particle_2d_Quadrilateral(X_p, FEM_Mesh);
-  }
-  else if(strcmp(FEM_Mesh.TypeElem,"Triangle") == 0)
-  {
-    fill_1_particle_2d_Triangle(X_p, FEM_Mesh);
-  }
-
-  break;
-
-  case 3:
-
   if(strcmp(FEM_Mesh.TypeElem,"Triangle") == 0)
   {
-    fill_3_particle_2d_Triangle(X_p, FEM_Mesh);
+    element_to_particles__T3__(X_p, FEM_Mesh, GPxElement);
+  }
+  else if(strcmp(FEM_Mesh.TypeElem,"Quadrilateral") == 0)
+  {
+    element_to_particles__Q4__(X_p, FEM_Mesh,GPxElement);
+  }
+  else if(strcmp(FEM_Mesh.TypeElem,"Tetrahedra") == 0)
+  {
+    element_to_particles__T4__(X_p, FEM_Mesh,GPxElement);
+  }
+  else if(strcmp(FEM_Mesh.TypeElem,"Hexahedra") == 0)
+  {
+    element_to_particles__H8__(X_p, FEM_Mesh,GPxElement);
   }
   else
   {
-    fprintf(stderr,"%s : %s \n","Error in initial_position__Particles__()",
-      "This option is only for triangle elements");
-    exit(EXIT_FAILURE); 
-  }
-
-  break;
-    
-  case 4:
-
-  if(strcmp(FEM_Mesh.TypeElem,"Quadrilateral") == 0)
-  {
-      fill_4_particle_2d_Quadrilateral(X_p, FEM_Mesh);
-  }
-  else
-  {
-    fprintf(stderr,"%s : %s \n","Error in initial_position__Particles__()",
-      "This option is only for quadrilateral elements");
-    exit(EXIT_FAILURE); 
-  }
-
-  break;
-  
-  case 9:
-
-  if(strcmp(FEM_Mesh.TypeElem,"Quadrilateral") == 0)
-  {
-    fill_9_particle_2d_Quadrilateral(X_p, FEM_Mesh);
-  }
-  else
-  {
-    fprintf(stderr,"%s : %s \n","Error in initial_position__Particles__()",
-      "This option is only for quadrilateral elements");
-    exit(EXIT_FAILURE); 
-  }
-
-  break;
-
-  default :
     fprintf(stderr,"%s : %s \n",
-	    "Error in initial_position__Particles__()",
-	    "Wrong number of gauss point per element");
+      "Error in initial_position__Particles__()",
+      "Wrong type of shape function");
     exit(EXIT_FAILURE);
   }
   
@@ -93,300 +40,11 @@ void initial_position__Particles__(Matrix X_p, Mesh FEM_Mesh, int GPxElement)
 
 /*********************************************************************/
 
-static void fill_1_particle_2d_Triangle(Matrix X_p, Mesh FEM_Mesh)
-{
-  int Ndim = NumberDimensions;
-  int NumElemMesh = FEM_Mesh.NumElemMesh;
-  int NumNodesElem = 3;
-  int GPxElement = 1;
-  Matrix N_GP;
-  Matrix Xi_p = allocZ__MatrixLib__(GPxElement,Ndim);
-  Matrix Xi_p_j;
-  Element Element;
-  int Node;
-
-  /* Centred GP */
-  Xi_p.nV[0] = (double)1/3;
-  Xi_p.nV[1] = (double)1/3;
-
-  /* Evaluate the shape function */
-  N_GP = N__T3__(Xi_p);
-
-  /* Get the coordinate of the center */
-  for(int i = 0 ; i<NumElemMesh ; i++)
-  {
-
-    Element = nodal_set__Particles__(i, FEM_Mesh.Connectivity[i],FEM_Mesh.NumNodesElem[i]);
-
-    for(int k = 0 ; k<NumNodesElem ; k++)
-    {
-
-      Node = Element.Connectivity[k];
-
-      for(int l = 0 ; l<Ndim ; l++)
-      {
-
-        X_p.nM[i][l] += N_GP.nV[k]*FEM_Mesh.Coordinates.nM[Node][l];
-
-      }
-
-    }
-
-    free(Element.Connectivity);
-
-  }
-
-  /* Free auxiliar matrix with the coordinates */
-  free__MatrixLib__(Xi_p);
-  /* Free value of the shape function in the GP */
-  free__MatrixLib__(N_GP);
-
-}
-
-/*********************************************************************/
-
-static void fill_3_particle_2d_Triangle(Matrix X_p, Mesh FEM_Mesh)
-{
-  int Ndim = NumberDimensions;
-  int NumElemMesh = FEM_Mesh.NumElemMesh;
-  int GPxElement = 3;
-  int NumNodesElem = 4;
-  Matrix N_GP;
-  Matrix Xi_p = allocZ__MatrixLib__(GPxElement,Ndim);
-  Matrix Xi_p_j;
-  Element Element;
-  int Node;
-
-  /* Centred GP */
-  Xi_p.nM[0][0] =  0.16666666666;
-  Xi_p.nM[0][1] =  0.16666666666;
-  Xi_p.nM[1][0] =  0.66666666666;
-  Xi_p.nM[1][1] =  0.16666666666;
-  Xi_p.nM[2][0] =  0.16666666666;
-  Xi_p.nM[2][1] =  0.66666666666;
-      
-  /* Get the coordinate of the center */
-  for(int i = 0 ; i<NumElemMesh ; i++)
-  {
-
-    Element = nodal_set__Particles__(i, FEM_Mesh.Connectivity[i],FEM_Mesh.NumNodesElem[i]);
-
-    for(int j = 0 ; j<GPxElement ; j++)
-    {
-      
-      /* Evaluate the shape function in the GP position */
-      Xi_p_j.nV = Xi_p.nM[j]; 
-      N_GP = N__T3__(Xi_p_j);
-
-      for(int k = 0 ; k<3 ; k++)
-      {
-        /* Connectivity of each element */
-        Node = Element.Connectivity[k];
-
-        for(int l = 0 ; l<Ndim ; l++)
-        {
-          X_p.nM[i*GPxElement+j][l] += N_GP.nV[k]*FEM_Mesh.Coordinates.nM[Node][l];
-        }
-
-      }
-
-      /* Free value of the shape function in the GP */
-      free__MatrixLib__(N_GP);
-    }
-
-    free(Element.Connectivity);
-
-  }
-  /* Free auxiliar matrix with the coordinates */
-  free__MatrixLib__(Xi_p);
-}
-
-/*********************************************************************/
-
-static void fill_1_particle_2d_Quadrilateral(Matrix X_p, Mesh FEM_Mesh)
-{
-
-  int Ndim = NumberDimensions;
-  int NumElemMesh = FEM_Mesh.NumElemMesh;
-  int GPxElement = 1;
-  int NumNodesElem = 4;
-  Matrix N_GP;
-  Matrix Xi_p = allocZ__MatrixLib__(GPxElement,Ndim);
-  Matrix Xi_p_j;
-  Element Element;
-  int Node;
-
-  /* Centred GP */
-  Xi_p.nV[0] = 0.0;
-  Xi_p.nV[1] = 0.0;
-
-  /* Evaluate the shape function */
-  N_GP = N__Q4__(Xi_p);
-
-  /* Get the coordinate of the center */
-  for(int i = 0 ; i<NumElemMesh ; i++)
-  {
-    Element = nodal_set__Particles__(i,FEM_Mesh.Connectivity[i],FEM_Mesh.NumNodesElem[i]);
-
-    for(int k = 0 ; k<NumNodesElem ; k++)
-    {
-      Node = Element.Connectivity[k];
-      
-      for(int l = 0 ; l<Ndim ; l++)
-      {
-        X_p.nM[i][l] += N_GP.nV[k]*FEM_Mesh.Coordinates.nM[Node][l];
-      }
-
-    }
-
-    free(Element.Connectivity);
-
-  }
-
-  /* Free auxiliar matrix with the coordinates */
-  free__MatrixLib__(Xi_p);
-
-  /* Free value of the shape function in the GP */
-  free__MatrixLib__(N_GP);
-
-}
-
-/*********************************************************************/
-
-static void fill_4_particle_2d_Quadrilateral(Matrix X_p, Mesh FEM_Mesh)
-{
-  int Ndim = NumberDimensions;
-  int NumElemMesh = FEM_Mesh.NumElemMesh;
-  int GPxElement = 4;
-  int NumNodesElem = 4;
-  Matrix N_GP;
-  Matrix Xi_p = allocZ__MatrixLib__(GPxElement,Ndim);
-  Matrix Xi_p_j;
-  Element Element;
-  int Node;
-
-  Xi_p.nM[0][0] =   0.5;
-  Xi_p.nM[0][1] =   0.5;
-  Xi_p.nM[1][0] =   0.5;
-  Xi_p.nM[1][1] = - 0.5;
-  Xi_p.nM[2][0] = - 0.5;
-  Xi_p.nM[2][1] =   0.5;
-  Xi_p.nM[3][0] = - 0.5;
-  Xi_p.nM[3][1] = - 0.5;
-
-  /* Get the coordinate of the center */
-  for(int i = 0 ; i<NumElemMesh ; i++)
-  {
-
-    Element = nodal_set__Particles__(i, FEM_Mesh.Connectivity[i],FEM_Mesh.NumNodesElem[i]);
-
-    for(int j = 0 ; j<GPxElement ; j++)
-    {
-      /* Evaluate the shape function in the GP position */
-      Xi_p_j.nV = Xi_p.nM[j]; 
-      N_GP = N__Q4__(Xi_p_j);
-      
-      for(int k = 0 ; k<NumNodesElem ; k++)
-      {
-            
-        /* Connectivity of each element */
-        Node = Element.Connectivity[k];
-        
-        for(int l = 0 ; l<Ndim ; l++)
-        {
-          X_p.nM[i*GPxElement+j][l] += N_GP.nV[k]*FEM_Mesh.Coordinates.nM[Node][l];
-        }
-      }
-
-      /* Free value of the shape function in the GP */
-      free__MatrixLib__(N_GP);
-
-    }
-
-    free(Element.Connectivity);
-
-  }
-
-  /* Free auxiliar matrix with the coordinates */
-  free__MatrixLib__(Xi_p); 
-
-}
-
-/*********************************************************************/
-
-static void fill_9_particle_2d_Quadrilateral(Matrix X_p, Mesh FEM_Mesh)
-{
-  int Ndim = NumberDimensions;
-  int NumElemMesh = FEM_Mesh.NumElemMesh;
-  int GPxElement = 9;
-  int NumNodesElem = 4;
-  Matrix N_GP;
-  Matrix Xi_p = allocZ__MatrixLib__(GPxElement,Ndim);
-  Matrix Xi_p_j;
-  Element Element;
-  int Node;
-
-  Xi_p.nM[0][0] =   0.0;
-  Xi_p.nM[0][1] =   0.0;
-  Xi_p.nM[1][0] =   0.66666666666666;
-  Xi_p.nM[1][1] =   0.0;
-  Xi_p.nM[2][0] =   0.66666666666666;
-  Xi_p.nM[2][1] =   0.66666666666666;
-  Xi_p.nM[3][0] =   0.0;
-  Xi_p.nM[3][1] =   0.66666666666666;
-  Xi_p.nM[4][0] = - 0.66666666666666;
-  Xi_p.nM[4][1] =   0.66666666666666;
-  Xi_p.nM[5][0] = - 0.66666666666666;
-  Xi_p.nM[5][1] =   0.0;
-  Xi_p.nM[6][0] = - 0.66666666666666;
-  Xi_p.nM[6][1] = - 0.66666666666666;
-  Xi_p.nM[7][0] =   0.0;
-  Xi_p.nM[7][1] = - 0.66666666666666;
-  Xi_p.nM[8][0] =   0.66666666666666;
-  Xi_p.nM[8][1] = - 0.66666666666666;
-
-  /* Get the coordinate of the center */
-  for(int i = 0 ; i<NumElemMesh ; i++)
-  {
-
-    Element = nodal_set__Particles__(i, FEM_Mesh.Connectivity[i],FEM_Mesh.NumNodesElem[i]);
-
-    for(int j = 0 ; j<GPxElement ; j++)
-    {
-      /* Evaluate the shape function in the GP position */
-      Xi_p_j.nV = Xi_p.nM[j]; 
-      N_GP = N__Q4__(Xi_p_j);
-      
-      for(int k = 0 ; k<NumNodesElem ; k++)
-      {
-            
-        /* Connectivity of each element */
-        Node = Element.Connectivity[k];
-        
-        for(int l = 0 ; l<Ndim ; l++)
-        {
-          X_p.nM[i*GPxElement+j][l] += N_GP.nV[k]*FEM_Mesh.Coordinates.nM[Node][l];
-        }
-      }
-
-      /* Free value of the shape function in the GP */
-      free__MatrixLib__(N_GP);
-
-    }
-
-    free(Element.Connectivity);
-
-  }
-
-  /* Free auxiliar matrix with the coordinates */
-  free__MatrixLib__(Xi_p); 
-
-}
-
-
-/*********************************************************************/
-
-int inout_element__Particles__(int p, Matrix X_p, ChainPtr ListElement, Mesh FEM_Mesh)
+int search_particle_in_surrounding_elements__Particles__(
+  int p,
+  Matrix X_p,
+  ChainPtr ListElement,
+  Mesh FEM_Mesh)
 /*
 
 */
@@ -395,22 +53,28 @@ int inout_element__Particles__(int p, Matrix X_p, ChainPtr ListElement, Mesh FEM
   int I_element = -999;
   int Nn; /* Number of nodes of the element */
   ChainPtr Nodes;
+  Matrix Element_Coordinates;
 
   Ixd = ListElement;
   
-  while(Ixd!=NULL){
+  while(Ixd!=NULL)
+  {
 
     Nn = FEM_Mesh.NumNodesElem[Ixd->I];
     Nodes = FEM_Mesh.Connectivity[Ixd->I];
 
+    Element_Coordinates = get_nodes_coordinates__MeshTools__(Nodes, FEM_Mesh.Coordinates);
+
     /* Check if the particle is in the element */
-    if(inout_convex_set__MeshTools__(X_p, Nodes, FEM_Mesh.Coordinates))
-      {
-	      I_element = Ixd->I;
-	      break;
-      }
+    if(FEM_Mesh.In_Out_Element(X_p,Element_Coordinates))
+    {
+      free__MatrixLib__(Element_Coordinates);
+      I_element = Ixd->I;
+      break;
+    }
     
     /* Cycle */
+    free__MatrixLib__(Element_Coordinates);
     Ixd = Ixd->next;
 
   }
@@ -418,7 +82,7 @@ int inout_element__Particles__(int p, Matrix X_p, ChainPtr ListElement, Mesh FEM
   if(I_element == -999)
     {
       fprintf(stderr,"%s : %s %i \n",
-	      "Error in inout_element__Particles__()",
+	      "Error in search_particle_in_surrounding_elements__Particles__()",
 	      "Not posible to find the particle",p);
     }
   
@@ -428,7 +92,8 @@ int inout_element__Particles__(int p, Matrix X_p, ChainPtr ListElement, Mesh FEM
 
 /*********************************************************************/
 
-void get_particle_tributary_nodes(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int p){
+void get_particle_tributary_nodes(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int p)
+{
 
   int Ndim = NumberDimensions;
 
@@ -446,35 +111,37 @@ void get_particle_tributary_nodes(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int p){
   Matrix CoordElement;
   
   /* 6º Assign the new connectivity of the GP */
-  if(strcmp(ShapeFunctionGP,"MPMQ4") == 0){
+  if(strcmp(ShapeFunctionGP,"FEM") == 0)
+  {
 
     /* Get the index of the element */
-    IdxElement = inout_element__Particles__(p,X_p,Elements_Near_I0,FEM_Mesh);
-    if(IdxElement != -999){
+    IdxElement = search_particle_in_surrounding_elements__Particles__(p,X_p,Elements_Near_I0,FEM_Mesh);
+    if(IdxElement != -999)
+    {
       /* Free previous list of tributary nodes to the particle */
       free__SetLib__(&MPM_Mesh.ListNodes[p]);
       MPM_Mesh.ListNodes[p] = NULL;    
       /* Asign new connectivity */
       MPM_Mesh.ListNodes[p] = copy__SetLib__(FEM_Mesh.Connectivity[IdxElement]);
       /* Get the coordinates of the element vertex */
-      CoordElement = get_nodes_coordinates__MeshTools__(MPM_Mesh.ListNodes[p],
-							FEM_Mesh.Coordinates);
+      CoordElement = get_nodes_coordinates__MeshTools__(MPM_Mesh.ListNodes[p],FEM_Mesh.Coordinates);
       /* Compute local coordinates of the particle in this element */
-      X_to_Xi__Q4__(Xi_p,X_p,CoordElement);
+      FEM_Mesh.X_to_Xi(Xi_p,X_p,CoordElement);
       /* Free coordinates of the element */
       free__MatrixLib__(CoordElement);
     }
-    else{
+    else
+    {
       /* Get the coordinates of the element vertex */
-      CoordElement = get_nodes_coordinates__MeshTools__(MPM_Mesh.ListNodes[p],
-							FEM_Mesh.Coordinates);
+      CoordElement = get_nodes_coordinates__MeshTools__(MPM_Mesh.ListNodes[p],FEM_Mesh.Coordinates);
       /* Compute local coordinates of the particle in this element */
-      X_to_Xi__Q4__(Xi_p,X_p,CoordElement);
+      FEM_Mesh.X_to_Xi(Xi_p,X_p,CoordElement);
       /* Free coordinates of the element */
       free__MatrixLib__(CoordElement);      
     }
     
   }
+
   else if(strcmp(ShapeFunctionGP,"uGIMP") == 0)
   {
 
@@ -482,7 +149,7 @@ void get_particle_tributary_nodes(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int p){
     Matrix lp = memory_to_matrix__MatrixLib__(Ndim,1,MPM_Mesh.lp.nM[p]);
     
     /* Get the index of the element */
-    IdxElement = inout_element__Particles__(p,X_p,Elements_Near_I0,FEM_Mesh);
+    IdxElement = search_particle_in_surrounding_elements__Particles__(p,X_p,Elements_Near_I0,FEM_Mesh);
 
     if(IdxElement != -999)
     {
@@ -552,7 +219,7 @@ void get_particle_tributary_nodes(GaussPoint MPM_Mesh, Mesh FEM_Mesh, int p){
     /*
       Compute the lagrange multiplier of the new shape functions
     */
-    lambda_p = lambda__LME__(Delta_Xip, lambda_p, Metric_p, Beta_p);
+    MPM_Mesh.update_lambda(p, Delta_Xip, lambda_p, Metric_p, Beta_p);
     
     /* Free memory */
     free__MatrixLib__(Metric_p);
@@ -581,15 +248,18 @@ void local_search__Particles__(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
   ChainPtr Locality_I0;
 
   /* Set to zero the active/non-active node, and the GPs in each element */
-  for(int i = 0 ; i<FEM_Mesh.NumNodesMesh ; i++){
+  for(int i = 0 ; i<FEM_Mesh.NumNodesMesh ; i++)
+  {
     FEM_Mesh.NumParticles[i] = 0;
   }
-  for(int i = 0 ; i<FEM_Mesh.NumNodesMesh ; i++){
+  for(int i = 0 ; i<FEM_Mesh.NumNodesMesh ; i++)
+  {
     free__SetLib__(&FEM_Mesh.I_particles[i]);
   }
 
   /* Loop over the particles */
-  for(int p = 0 ; p<MPM_Mesh.NumGP ; p++){
+  for(int p = 0 ; p<MPM_Mesh.NumGP ; p++)
+  {
 
     /* Get the global coordinates and velocity of the particle */
     X_p = memory_to_matrix__MatrixLib__(Ndim,1,MPM_Mesh.Phi.x_GC.nM[p]);
@@ -614,7 +284,8 @@ void local_search__Particles__(GaussPoint MPM_Mesh, Mesh FEM_Mesh)
       asign_to_nodes__Particles__(p, MPM_Mesh.ListNodes[p], FEM_Mesh);
       
     }
-    else{
+    else
+    {
       /* Active those nodes that interact with the particle */
       asign_to_nodes__Particles__(p, MPM_Mesh.ListNodes[p], FEM_Mesh);
     }

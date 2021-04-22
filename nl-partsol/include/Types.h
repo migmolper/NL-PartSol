@@ -63,6 +63,10 @@ typedef struct Chain {
    * Pointer to the next node in the set
    */
   struct Chain * next;
+
+  /*!
+    
+  */
   
 } Chain; 
 
@@ -369,11 +373,6 @@ typedef struct {
    * Name of the material
    */
   char Type [100];
-
-  /*!
-   * Thickness of the Material 
-   */
-  double thickness;
   
   /*!
    * Material celerity 
@@ -569,6 +568,7 @@ typedef struct {
    */
   Matrix lambda; // Lagrange multiplier
   Matrix Beta; // Thermalization or regularization parameter
+  void (* update_lambda)(int, Matrix, Matrix, Matrix, double);
 
 } GaussPoint;
 
@@ -661,12 +661,30 @@ typedef struct {
    */
   Matrix (* N_ref)(Matrix );
 
-
   /*!
    * Function with the gradient of the interpolation technique
    */
   Matrix (* dNdX_ref)(Matrix );
 
+  /*!
+   * Function with the gradient of the interpolation technique
+   */
+  Matrix (* dNdX)(Matrix, Matrix);
+
+  /*
+   * Function of compute natural coordinate
+  */
+  void (* X_to_Xi)(Matrix, Matrix, Matrix);
+
+  /* !
+  * Function to compute the volume of an element
+  */
+  double (* volume_Element)(Matrix);
+
+  /*! 
+  * Function to check if a point is inside or outside of a elemnt
+  */
+  bool (* In_Out_Element)(Matrix, Matrix);
     
 } Mesh;
 

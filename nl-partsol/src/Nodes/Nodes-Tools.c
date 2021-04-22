@@ -2,7 +2,8 @@
 
 /**************************************************************/
 
-Mask generate_NodalMask__MeshTools__(Mesh FEM_Mesh)
+Mask generate_NodalMask__MeshTools__(
+  Mesh FEM_Mesh)
 {
   int Nnodes = FEM_Mesh.NumNodesMesh;
   int Nactivenodes = 0;
@@ -31,7 +32,9 @@ Mask generate_NodalMask__MeshTools__(Mesh FEM_Mesh)
 
 /**************************************************************/
 
-Mask generate_Mask_for_static_condensation__MeshTools__(Mask ActiveNodes, Mesh FEM_Mesh)
+Mask generate_Mask_for_static_condensation__MeshTools__(
+  Mask ActiveNodes,
+  Mesh FEM_Mesh)
 {
 
   /* 
@@ -129,7 +132,10 @@ Mask generate_Mask_for_static_condensation__MeshTools__(Mask ActiveNodes, Mesh F
 /**************************************************************/
 
 
-Matrix get_set_field__MeshTools__(Matrix Field, Element Nodes_p, Mask ActiveNodes)
+Matrix get_set_field__MeshTools__(
+  Matrix Field,
+  Element Nodes_p,
+  Mask ActiveNodes)
 /*
   This function performs two operations. First takes the nodal connectivity of the particle, 
   and translate it to the mask numeration. Second, generate a Matrix with the nodal values.
@@ -178,7 +184,10 @@ return Field_Ap;
 
 /*********************************************************************/
 
-Matrix compute_N__MeshTools__(Element GP_Element,GaussPoint MPM_Mesh,Mesh FEM_Mesh) 
+Matrix compute_N__MeshTools__(
+  Element GP_Element,
+  GaussPoint MPM_Mesh,
+  Mesh FEM_Mesh) 
 { 
 
   /*
@@ -203,7 +212,7 @@ Matrix compute_N__MeshTools__(Element GP_Element,GaussPoint MPM_Mesh,Mesh FEM_Me
   */
   Matrix ShapeFunction_p; 
   
-  if(strcmp(ShapeFunctionGP,"MPMQ4") == 0)
+  if(strcmp(ShapeFunctionGP,"FEM") == 0)
   {
     
     /*
@@ -214,9 +223,10 @@ Matrix compute_N__MeshTools__(Element GP_Element,GaussPoint MPM_Mesh,Mesh FEM_Me
     /* 
       Evaluate the shape function
     */
-    ShapeFunction_p = N__Q4__(xi_p);
+    ShapeFunction_p = FEM_Mesh.N_ref(xi_p);
     
   }
+
 
   else if(strcmp(ShapeFunctionGP,"uGIMP") == 0)
   {
@@ -329,7 +339,7 @@ Matrix compute_dN__MeshTools__(Element GP_Element,GaussPoint MPM_Mesh,
   Matrix Gradient_p;
 
   
-  if(strcmp(ShapeFunctionGP,"MPMQ4") == 0)
+  if(strcmp(ShapeFunctionGP,"FEM") == 0)
   {
     /* 
       Fill the poligon woth the nodal coordinates of the current element
@@ -352,7 +362,7 @@ Matrix compute_dN__MeshTools__(Element GP_Element,GaussPoint MPM_Mesh,
     /*
       Evaluate the shape function gradient
     */
-    Gradient_p = dN__Q4__(xi_p,X_I);
+    Gradient_p = FEM_Mesh.dNdX(xi_p,X_I);
     
     /* Free memory */
     free__MatrixLib__(X_I);
@@ -444,7 +454,9 @@ Matrix compute_dN__MeshTools__(Element GP_Element,GaussPoint MPM_Mesh,
 
 /*********************************************************************/
 
-Matrix get_nodes_coordinates__MeshTools__(ChainPtr Element_p, Matrix Coordinates)
+Matrix get_nodes_coordinates__MeshTools__(
+  ChainPtr Element_p,
+  Matrix Coordinates)
 /*
   Get the matrix with the coordinates of an element
 */
@@ -458,10 +470,12 @@ Matrix get_nodes_coordinates__MeshTools__(ChainPtr Element_p, Matrix Coordinates
 
   Idx = Element_p;
 
-  while(Idx != NULL){
+  while(Idx != NULL)
+  {
 
     /* Fill the elelemtn coordinates */
-    for(int l = 0 ; l<Ndim ; l++){
+    for(int l = 0 ; l<Ndim ; l++)
+    {
       Element_Coordinates.nM[I_Idx][l] = Coordinates.nM[Idx->I][l];
     }
     
@@ -476,7 +490,10 @@ Matrix get_nodes_coordinates__MeshTools__(ChainPtr Element_p, Matrix Coordinates
 /*********************************************************************/
 
 
-Matrix compute_distance__MeshTools__(ChainPtr Set, Matrix X0, Matrix Coordinates)
+Matrix compute_distance__MeshTools__(
+  ChainPtr Set,
+  Matrix X0,
+  Matrix Coordinates)
 {
   int Ndim = NumberDimensions;
   int SizeSet = lenght__SetLib__(Set);
@@ -487,9 +504,11 @@ Matrix compute_distance__MeshTools__(ChainPtr Set, Matrix X0, Matrix Coordinates
 
   /* Loop in the set */
   ChainPtr Aux_Set = Set;
-  while (Aux_Set != NULL){ 
+  while (Aux_Set != NULL)
+  { 
     /* Get coordinates local coodinates of each node in the set */
-    for(int i = 0 ; i<Ndim ; i++){
+    for(int i = 0 ; i<Ndim ; i++)
+    {
       Set_Coordinates.nM[I][i] =  X0.nV[i] - Coordinates.nM[Aux_Set->I][i];
     }
     /* Update index */
@@ -502,7 +521,10 @@ Matrix compute_distance__MeshTools__(ChainPtr Set, Matrix X0, Matrix Coordinates
 
 /*********************************************************************/
 
-Matrix get_set_field_old__MeshTools__(Matrix Nodal_Field, Element GP_Element){
+Matrix get_set_field_old__MeshTools__(
+  Matrix Nodal_Field,
+  Element GP_Element)
+{
 
   int * Element_Connectivity = GP_Element.Connectivity;
   int NumNodes = GP_Element.NumberNodes;
@@ -514,11 +536,13 @@ Matrix get_set_field_old__MeshTools__(Matrix Nodal_Field, Element GP_Element){
   Element_Field = alloc__MatrixLib__(NumNodes,Ndim);
 
   /* Loop over the nodes of the element */
-  for(int I = 0; I<NumNodes; I++){
+  for(int I = 0; I<NumNodes; I++)
+  {
     /* Get the node of the element */
     Ie = Element_Connectivity[I];
     /* Fill each dimension of the nodal quantitie */
-    for(int i = 0 ; i<Ndim ; i++){
+    for(int i = 0 ; i<Ndim ; i++)
+    {
       Element_Field.nM[I][i] = Nodal_Field.nM[Ie][i];
     }
   }
@@ -528,7 +552,10 @@ Matrix get_set_field_old__MeshTools__(Matrix Nodal_Field, Element GP_Element){
  
 /*********************************************************************/
 
-int get_closest_node__MeshTools__(Matrix X_p, ChainPtr Nodes, Matrix Coordinates)
+int get_closest_node__MeshTools__(
+  Matrix X_p,
+  ChainPtr Nodes, 
+  Matrix Coordinates)
 /*
   Ordenate recursively and array with distances and get a chain 
   with the positions in orden
@@ -567,7 +594,8 @@ int get_closest_node__MeshTools__(Matrix X_p, ChainPtr Nodes, Matrix Coordinates
   /* Search in the reamaining nodes */      
   Node_I = Node_I->next;
   
-  while(Node_I != NULL){
+  while(Node_I != NULL)
+  {
 
     /* Get the index of the node */
     I = Node_I->I;
@@ -579,7 +607,8 @@ int get_closest_node__MeshTools__(Matrix X_p, ChainPtr Nodes, Matrix Coordinates
     Distance_I = point_distance__MatrixLib__(X_p, X_I);
       
     /* Get the max distance of the matrix */
-    if(Distance_I < DistMin){
+    if(Distance_I < DistMin)
+    {
       DistMin = Distance_I;
       I_DistMin = Node_I->I;
     }
@@ -594,26 +623,9 @@ int get_closest_node__MeshTools__(Matrix X_p, ChainPtr Nodes, Matrix Coordinates
 
 /*********************************************************************/
 
-bool inout_convex_set__MeshTools__(Matrix X_p, ChainPtr Elem_p, Matrix Coordinates)
-{
-
-  bool Is_In_Element = false;
-  Matrix Element_Coordinates;
-  
-  Element_Coordinates = get_nodes_coordinates__MeshTools__(Elem_p, Coordinates);
-  
-  if (inout__MatrixLib__(X_p, Element_Coordinates) == 1){
-    Is_In_Element = true;
-  }
-
-  free__MatrixLib__(Element_Coordinates);
-
-  return Is_In_Element;
-}
-
-/*********************************************************************/
-
-double interpolate_scalar__MeshTools__(Matrix A, Matrix N_p)
+double interpolate_scalar__MeshTools__(
+  Matrix A, 
+  Matrix N_p)
 {
   int Nnodes_p = A.N_rows;
   double A_p = 0;

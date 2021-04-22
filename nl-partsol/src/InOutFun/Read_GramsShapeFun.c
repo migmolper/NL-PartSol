@@ -7,13 +7,15 @@ char * ShapeFunctionGP;
 double curvature_LME;
 double gamma_LME;
 double TOL_LME;
+int max_iter_LME;
+char wrapper_LME[MAXC];
 
 /**********************************************************************/
 
 void GramsShapeFun(char * Name_File)
 /*
   Example : 
-  GramsShapeFun (Type=MPMQ4) {
+  GramsShapeFun (Type=FEM) {
   }
   GramsShapeFun (Type=uGIMP) {
   }
@@ -89,8 +91,10 @@ void GramsShapeFun(char * Name_File)
 
       /* Set to default all it properties */
       gamma_LME = 3;
-      TOL_LME = 10e-10;
-      curvature_LME = 0;
+      TOL_LME = 1e-10;
+      curvature_LME = 0.0;
+      max_iter_LME = 10;
+      strcpy(wrapper_LME,"Newton-Raphson");
 
       /* Look for the curly brace { */
       if((Num_GramsShapeFun>=3) &&
@@ -146,11 +150,21 @@ void GramsShapeFun(char * Name_File)
 	    exit(EXIT_FAILURE);
 	  }
 
- 	  if(strcmp(Parse_Shf_Prop[0],"gamma") == 0){
+ 	  if(strcmp(Parse_Shf_Prop[0],"gamma") == 0)
+ 	  {
 	    gamma_LME = atof(Parse_Shf_Prop[1]);
 	  }
-	  else if(strcmp(Parse_Shf_Prop[0],"TOL") == 0){
+	  else if(strcmp(Parse_Shf_Prop[0],"TOL") == 0)
+	  {
 	    TOL_LME = atof(Parse_Shf_Prop[1]);
+	  }
+	  else if(strcmp(Parse_Shf_Prop[0],"MaxIter") == 0)
+	  {
+	  	max_iter_LME = atoi(Parse_Shf_Prop[1]);
+	  }
+	  else if(strcmp(Parse_Shf_Prop[0],"wrapper") == 0)
+	  {
+	  	strcpy(wrapper_LME,Parse_Shf_Prop[1]);
 	  }
 	  else if(strcmp(Parse_Shf_Prop[0],"curvature") == 0){
 	  	curvature_LME = atof(Parse_Shf_Prop[1]);
