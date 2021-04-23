@@ -1688,7 +1688,7 @@ static Tensor compute_stiffness_density(Tensor GRADIENT_pA,
 
       Tensor C_p = right_Cauchy_Green__Particles__(F_p);
       
-      C_AB = compute_stiffness_density_Neo_Hookean_Wriggers(GRADIENT_pA,
+      C_AB = compute_material_stiffness_density_Neo_Hookean_Wriggers(GRADIENT_pA,
 							    GRADIENT_pB,
 							    C_p, J_p,
 							    MatProp_p);

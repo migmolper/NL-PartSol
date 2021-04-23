@@ -1072,7 +1072,7 @@ static void update_Local_State(
         }
       else if(strcmp(MatProp_Soil_p.Type,"Neo-Hookean-Wriggers") == 0)
         {
-          S_p = grad_energy_Neo_Hookean_Wriggers(S_p, C_n1_p, J_n1_p, MatProp_Soil_p);
+          S_p = compute_2PK_Stress_Tensor_Neo_Hookean_Wriggers(S_p, C_n1_p, J_n1_p, MatProp_Soil_p);
         }
       else if(strcmp(MatProp_Soil_p.Type,"Von-Mises") == 0)
         {

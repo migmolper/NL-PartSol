@@ -540,7 +540,7 @@ static void update_Local_State(Matrix D_Displacement,
       else if(strcmp(MatProp_p.Type,"Neo-Hookean-Wriggers") == 0)
         {
           J_n1_p = I3__TensorLib__(F_n1_p);
-          S_p = grad_energy_Neo_Hookean_Wriggers(S_p, C_n1_p, J_n1_p, MatProp_p);
+          S_p = compute_2PK_Stress_Tensor_Neo_Hookean_Wriggers(S_p, C_n1_p, J_n1_p, MatProp_p);
         }
       else if(strcmp(MatProp_p.Type,"Von-Mises") == 0)
         {

@@ -22,8 +22,108 @@ double energy_Neo_Hookean_Wriggers(Tensor C, double J, Material MatProp_p)
 
 /**************************************************************/
 
-Tensor grad_energy_Neo_Hookean_Wriggers(Tensor grad_e, Tensor C,
-					double J, Material MatProp_p)
+Tensor compute_1PK_Stress_Tensor_Neo_Hookean_Wriggers(
+  Tensor P, 
+  Tensor F,
+  double J, 
+  Material MatProp_p)
+{
+  /* Number of dimensions */
+  int Ndim = NumberDimensions;
+  
+  /* Material parameters */
+  double ElasticModulus = MatProp_p.E;
+  double nu = MatProp_p.nu;
+  double G = ElasticModulus/(2*(1+nu));
+  double lambda = nu*ElasticModulus/((1-nu*2)*(1+nu));
+  double J2 = J*J;
+  
+  /*
+    Auxiliar tensors
+  */
+  Tensor Fm1 = Inverse__TensorLib__(F);
+
+  for(int i = 0 ; i < Ndim ; i++)
+  {
+    for(int j = 0 ; j < Ndim ; j++)
+    {
+      P.N[i][j] = lambda*0.5*(J2 - 1)*Fm1.N[j][i] + G*(F.N[i][j] - Fm1.N[j][i]);
+    }
+  }
+  
+  /*
+    Free tensors 
+  */
+  free__TensorLib__(Fm1);
+
+  return P;
+}
+
+/**************************************************************/
+
+Tensor compute_stiffness_density_Neo_Hookean_Wriggers(
+  Tensor GRAD_I, 
+  Tensor GRAD_J,
+  Tensor F, 
+  double J,
+  Material MatProp)
+{
+
+  /*
+    Number of dimensions
+  */
+  int Ndim = NumberDimensions;
+    
+  /*
+    Material parameters 
+  */
+  double ElasticModulus = MatProp.E;
+  double nu = MatProp.nu;
+  double G = ElasticModulus/(2*(1+nu));
+  double lambda = nu*ElasticModulus/((1-nu*2)*(1+nu));
+  double J2 = J*J;
+  double alpha = lambda*J2;
+  double beta = 0.5*lambda*(1 - J2) + G;
+  
+  /*
+    Stifness density tensor
+  */
+  Tensor A = alloc__TensorLib__(2);
+
+  /*
+    Auxiliar variables
+  */    
+  Tensor Fm1 = Inverse__TensorLib__(F);
+  Tensor Fm1GRAD_I = vector_linear_mapping__TensorLib__(Fm1,GRAD_I);
+  Tensor Fm1GRAD_J = vector_linear_mapping__TensorLib__(Fm1,GRAD_J);
+  Tensor Fm1GRAD_o_Fm1GRAD_IJ = dyadic_Product__TensorLib__(Fm1GRAD_I,Fm1GRAD_J);
+  double GRAD_I_dot_GRAD_J = inner_product__TensorLib__(GRAD_I,GRAD_J);  
+
+  for(int i = 0 ; i<Ndim ; i++)
+    {
+      for(int j = 0 ; j<Ndim ; j++)
+      {
+       A.N[i][j] += alpha*Fm1GRAD_o_Fm1GRAD_IJ.N[i][j] + G*GRAD_I_dot_GRAD_J*(i==j) + beta*Fm1GRAD_o_Fm1GRAD_IJ.N[j][i];
+      }
+    }
+
+  /*
+    Free memory
+   */
+  free__TensorLib__(Fm1);
+  free__TensorLib__(Fm1GRAD_I);
+  free__TensorLib__(Fm1GRAD_J);
+  free__TensorLib__(Fm1GRAD_o_Fm1GRAD_IJ);
+  
+
+  return A;
+}   
+
+/**************************************************************/
+
+
+Tensor compute_2PK_Stress_Tensor_Neo_Hookean_Wriggers(Tensor grad_e, Tensor C,
+          double J, Material MatProp_p)
 {
   /* Number of dimensions */
   int Ndim = NumberDimensions;
@@ -44,9 +144,9 @@ Tensor grad_energy_Neo_Hookean_Wriggers(Tensor grad_e, Tensor C,
   for(int i = 0 ; i < Ndim ; i++)
     {
       for(int j = 0 ; j < Ndim ; j++)
-	{
-	  grad_e.N[i][j] = lambda*0.5*(J2 - 1)*C_m1.N[i][j] + G*(I.N[i][j] - C_m1.N[i][j]);
-	}
+  {
+    grad_e.N[i][j] = lambda*0.5*(J2 - 1)*C_m1.N[i][j] + G*(I.N[i][j] - C_m1.N[i][j]);
+  }
     }
   
   /*
@@ -60,9 +160,12 @@ Tensor grad_energy_Neo_Hookean_Wriggers(Tensor grad_e, Tensor C,
 
 /**************************************************************/
 
-Tensor compute_stiffness_density_Neo_Hookean_Wriggers(Tensor v, Tensor w,
-						      Tensor C, double J,
-						      Material MatProp)
+Tensor compute_material_stiffness_density_Neo_Hookean_Wriggers(
+  Tensor v, 
+  Tensor w,
+  Tensor C, 
+  double J,
+  Material MatProp)
 {
 
   /*
@@ -126,18 +229,12 @@ Tensor compute_stiffness_density_Neo_Hookean_Wriggers(Tensor v, Tensor w,
 
 /**************************************************************/
 
-Matrix compute_D_matrix_Neo_Hookean_Wriggers(Tensor C, double J, Material MatProp)
+Matrix compute_D_matrix_Neo_Hookean_Wriggers(
+  Tensor C, 
+  double J, 
+  Material MatProp)
 /*
-D=zeros(3,3);
-D(1,1)=lambda*Jpto^2*Cmenos1(1,1)*Cmenos1(1,1)-(lambda*(Jpto^2-1)-2*mu)*Cmenos1(1,1)*Cmenos1(1,1);
-D(1,2)=lambda*Jpto^2*Cmenos1(1,1)*Cmenos1(2,2)-(lambda*(Jpto^2-1)-2*mu)*Cmenos1(1,2)*Cmenos1(2,1);
-D(2,1)=D(1,2);
-D(1,3)=lambda*Jpto^2*Cmenos1(1,1)*Cmenos1(1,2)-(lambda*(Jpto^2-1)-2*mu)*Cmenos1(1,1)*Cmenos1(2,1);
-D(3,1)=D(1,3);
-D(2,2)=lambda*Jpto^2*Cmenos1(2,2)*Cmenos1(2,2)-(lambda*(Jpto^2-1)-2*mu)*Cmenos1(2,2)*Cmenos1(2,2);
-D(2,3)=lambda*Jpto^2*Cmenos1(2,2)*Cmenos1(1,2)-(lambda*(Jpto^2-1)-2*mu)*Cmenos1(2,1)*Cmenos1(2,2);
-D(3,2)=D(2,3);
-D(3,3)=lambda*Jpto^2*Cmenos1(1,2)*Cmenos1(1,2)-0.5*(lambda*(Jpto^2-1)-2*mu)*(Cmenos1(1,1)*Cmenos1(2,2)+Cmenos1(1,2)*Cmenos1(1,2));
+
 */
 {
 

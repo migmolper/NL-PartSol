@@ -76,12 +76,13 @@ double energy_Neo_Hookean_Wriggers(Tensor, double, Material);
 /*!
 
 */
-Tensor grad_energy_Neo_Hookean_Wriggers(Tensor, Tensor, double, Material);
+Tensor compute_1PK_Stress_Tensor_Neo_Hookean_Wriggers(Tensor, Tensor, double, Material);
+Tensor compute_2PK_Stress_Tensor_Neo_Hookean_Wriggers(Tensor, Tensor, double, Material);
 /*******************************************************/
 
 
 /*!
-  \fn Tensor compute_stiffness_density_Neo_Hookean(Tensor v, Tensor w, Tensor C, double J, Material MatProp)
+  \fn Tensor compute_material_stiffness_density_Neo_Hookean_Wriggers(Tensor v, Tensor w, Tensor C, double J, Material MatProp)
 
   \brief Assemble the factorised material tensor 
 
@@ -90,6 +91,12 @@ Tensor grad_energy_Neo_Hookean_Wriggers(Tensor, Tensor, double, Material);
   \param Tensor C
   \param double J
   \param Material MatProp
+*/
+Tensor compute_material_stiffness_density_Neo_Hookean_Wriggers(Tensor, Tensor, Tensor, double, Material);
+/*******************************************************/
+
+/*
+Tensor compute_stiffness_density_Neo_Hookean_Wriggers(Tensor GRAD_I, Tensor GRAD_J, Tensor F, double J,Material MatProp)
 */
 Tensor compute_stiffness_density_Neo_Hookean_Wriggers(Tensor, Tensor, Tensor, double, Material);
 /*******************************************************/  

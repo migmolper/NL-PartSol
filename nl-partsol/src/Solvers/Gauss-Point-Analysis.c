@@ -52,7 +52,7 @@ void NonLinear_Gauss_Point_Analysis(Particle PointAnalysis)
     {
 
     	J_k = I3__TensorLib__(F_k);
-      S_k = grad_energy_Neo_Hookean_Wriggers(S_k, C_k, J_k, PointAnalysis.Mat[0]);
+      S_k = compute_2PK_Stress_Tensor_Neo_Hookean_Wriggers(S_k, C_k, J_k, PointAnalysis.Mat[0]);
 
     }
     else if(strcmp(PointAnalysis.Mat[0].Type,"Von-Mises") == 0)
