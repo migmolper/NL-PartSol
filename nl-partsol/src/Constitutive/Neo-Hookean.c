@@ -41,20 +41,22 @@ Tensor compute_1PK_Stress_Tensor_Neo_Hookean_Wriggers(
   /*
     Auxiliar tensors
   */
-  Tensor Fm1 = Inverse__TensorLib__(F);
+  Tensor FT = transpose__TensorLib__(F);
+  Tensor FmT = Inverse__TensorLib__(FT);
 
   for(int i = 0 ; i < Ndim ; i++)
   {
     for(int j = 0 ; j < Ndim ; j++)
     {
-      P.N[i][j] = lambda*0.5*(J2 - 1)*Fm1.N[j][i] + G*(F.N[i][j] - Fm1.N[j][i]);
+      P.N[i][j] = lambda*0.5*(J2 - 1)*FmT.N[i][j] + G*(F.N[i][j] - FmT.N[i][j]);
     }
   }
   
   /*
     Free tensors 
   */
-  free__TensorLib__(Fm1);
+  free__TensorLib__(FT);
+  free__TensorLib__(FmT);
 
   return P;
 }
@@ -83,7 +85,7 @@ Tensor compute_stiffness_density_Neo_Hookean_Wriggers(
   double lambda = nu*ElasticModulus/((1-nu*2)*(1+nu));
   double J2 = J*J;
   double alpha = lambda*J2;
-  double beta = 0.5*lambda*(1 - J2) + G;
+  double beta = G - 0.5*lambda*(J2 - 1);
   
   /*
     Stifness density tensor
@@ -93,27 +95,31 @@ Tensor compute_stiffness_density_Neo_Hookean_Wriggers(
   /*
     Auxiliar variables
   */    
-  Tensor Fm1 = Inverse__TensorLib__(F);
-  Tensor Fm1GRAD_I = vector_linear_mapping__TensorLib__(Fm1,GRAD_I);
-  Tensor Fm1GRAD_J = vector_linear_mapping__TensorLib__(Fm1,GRAD_J);
-  Tensor Fm1GRAD_o_Fm1GRAD_IJ = dyadic_Product__TensorLib__(Fm1GRAD_I,Fm1GRAD_J);
+  Tensor FT = transpose__TensorLib__(F);
+  Tensor FmT = Inverse__TensorLib__(FT);
+  Tensor FmTGRAD_I = vector_linear_mapping__TensorLib__(FmT,GRAD_I);
+  Tensor FmTGRAD_J = vector_linear_mapping__TensorLib__(FmT,GRAD_J);
+  Tensor Fm1GRAD_o_FmTGRAD_IJ = dyadic_Product__TensorLib__(FmTGRAD_I,FmTGRAD_J);
+  Tensor Fm1GRAD_o_FmTGRAD_JI = dyadic_Product__TensorLib__(FmTGRAD_J,FmTGRAD_I);
   double GRAD_I_dot_GRAD_J = inner_product__TensorLib__(GRAD_I,GRAD_J);  
 
   for(int i = 0 ; i<Ndim ; i++)
+  {
+    for(int j = 0 ; j<Ndim ; j++)
     {
-      for(int j = 0 ; j<Ndim ; j++)
-      {
-       A.N[i][j] += alpha*Fm1GRAD_o_Fm1GRAD_IJ.N[i][j] + G*GRAD_I_dot_GRAD_J*(i==j) + beta*Fm1GRAD_o_Fm1GRAD_IJ.N[j][i];
-      }
+      A.N[i][j] = alpha*Fm1GRAD_o_FmTGRAD_IJ.N[i][j] + G*GRAD_I_dot_GRAD_J*(i==j) + beta*Fm1GRAD_o_FmTGRAD_JI.N[i][j];
     }
+  }
 
   /*
     Free memory
    */
-  free__TensorLib__(Fm1);
-  free__TensorLib__(Fm1GRAD_I);
-  free__TensorLib__(Fm1GRAD_J);
-  free__TensorLib__(Fm1GRAD_o_Fm1GRAD_IJ);
+  free__TensorLib__(FT);
+  free__TensorLib__(FmT);
+  free__TensorLib__(FmTGRAD_I);
+  free__TensorLib__(FmTGRAD_J);
+  free__TensorLib__(Fm1GRAD_o_FmTGRAD_IJ);
+  free__TensorLib__(Fm1GRAD_o_FmTGRAD_JI);
   
 
   return A;
