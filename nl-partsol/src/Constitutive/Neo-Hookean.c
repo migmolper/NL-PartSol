@@ -107,7 +107,10 @@ Tensor compute_stiffness_density_Neo_Hookean_Wriggers(
   {
     for(int j = 0 ; j<Ndim ; j++)
     {
-      A.N[i][j] = alpha*Fm1GRAD_o_FmTGRAD_IJ.N[i][j] + G*GRAD_I_dot_GRAD_J*(i==j) + beta*Fm1GRAD_o_FmTGRAD_JI.N[i][j];
+      A.N[i][j] += 
+      alpha*Fm1GRAD_o_FmTGRAD_IJ.N[i][j] + 
+      G*GRAD_I_dot_GRAD_J*(i==j) + 
+      beta*Fm1GRAD_o_FmTGRAD_JI.N[i][j];
     }
   }
 
