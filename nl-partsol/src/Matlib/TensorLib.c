@@ -491,8 +491,8 @@ Tensor Inverse__TensorLib__(Tensor A)
     }
     if(Ndim == 2){
       Am1.N[0][0] = + (double)1/detA*A.N[1][1];
-      Am1.N[0][1] = - (double)1/detA*A.N[1][0];
-      Am1.N[1][0] = - (double)1/detA*A.N[0][1];
+      Am1.N[0][1] = - (double)1/detA*A.N[0][1];
+      Am1.N[1][0] = - (double)1/detA*A.N[1][0];
       Am1.N[1][1] = + (double)1/detA*A.N[0][0]; 
     }    
   }

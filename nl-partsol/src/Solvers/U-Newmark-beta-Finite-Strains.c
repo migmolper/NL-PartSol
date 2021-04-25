@@ -822,7 +822,7 @@ static void update_Local_State(Matrix D_Displacement,
   int Nnodes_mask = ActiveNodes.Nactivenodes;
   int MatIndx_p;
   int Nnodes_p;
-  double J_p;  
+  double J_n1_p;  
   Element Nodes_p;
   Material MatProp_p;
   Matrix gradient_p;
@@ -830,7 +830,7 @@ static void update_Local_State(Matrix D_Displacement,
   Tensor F_n_p;
   Tensor F_n1_p;
   Tensor DF_p;
-  Tensor S_p;
+  Tensor P_p;
   
   /*
     Loop in the material point set 
@@ -870,14 +870,17 @@ static void update_Local_State(Matrix D_Displacement,
       */  
       update_Deformation_Gradient_n1__Particles__(F_n1_p, F_n_p, DF_p);
       
+
+      J_n1_p = I3__TensorLib__(F_n1_p);
+
       /*
       	Update the second Piola-Kirchhoff stress tensor (S) with an apropiate
 	     integration rule.
       */
       MatIndx_p = MPM_Mesh.MatIdx[p];
       MatProp_p = MPM_Mesh.Mat[MatIndx_p];
-      S_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.Stress.nM[p],2);
-      S_p = forward_integration_Stress__Particles__(S_p,F_n1_p,MatProp_p);
+      P_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.Stress.nM[p],2);
+      P_p = compute_1PK_Stress_Tensor_Neo_Hookean_Wriggers(P_p,F_n1_p,J_n1_p,MatProp_p);
       
       /*
 	       Free memory 
@@ -892,11 +895,12 @@ static void update_Local_State(Matrix D_Displacement,
 
 /**************************************************************/
 
-static Matrix compute_Nodal_Forces(Matrix D_Displacement,
-				   Mask ActiveNodes,
-				   Particle MPM_Mesh,
-				   Mesh FEM_Mesh,
-				   int TimeStep)
+static Matrix compute_Nodal_Forces(
+  Matrix D_Displacement,
+	Mask ActiveNodes,
+	Particle MPM_Mesh,
+	Mesh FEM_Mesh,
+	int TimeStep)
 {
   int Ndim = NumberDimensions;
   int Nnodes_mask = ActiveNodes.Nactivenodes;
@@ -935,7 +939,6 @@ static void compute_Nodal_Internal_Forces(Matrix Forces,
   int idx_A_mask_i;
 
   Tensor P_p; /* First Piola-Kirchhoff Stress tensor */
-  Tensor S_p; /* Second Piola-Kirchhoff Stress tensor */
   Tensor InternalForcesDensity_Ap;
 
   Element Nodes_p; /* List of nodes for particle */
@@ -981,8 +984,7 @@ static void compute_Nodal_Internal_Forces(Matrix Forces,
       /*
 	Compute the first Piola-Kirchhoff stress tensor
       */
-      S_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.Stress.nM[p], 2);
-      P_p = matrix_product__TensorLib__(F_n1_p, S_p);
+      P_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.Stress.nM[p], 2);
     
       for(int A = 0 ; A<NumNodes_p ; A++)
 	{
@@ -1023,7 +1025,6 @@ static void compute_Nodal_Internal_Forces(Matrix Forces,
 	 Free memory 
       */
       free__TensorLib__(transpose_F_n_p);
-      free__TensorLib__(P_p);
       free__MatrixLib__(gradient_p);
       free(Nodes_p.Connectivity);
     }
@@ -1348,163 +1349,11 @@ static Matrix assemble_Nodal_Tangent_Stiffness(
   Matrix Tangent_Stiffness = allocZ__MatrixLib__(Order, Order);
   
   /*
-    Compute terms related to the geometric non-linearities.
-  */
-  assemble_Nodal_Tangent_Stiffness_Geometric(Tangent_Stiffness,ActiveNodes,MPM_Mesh,FEM_Mesh);
-  
-  /*
     Compute term related to the material non-linearities
   */
   assemble_Nodal_Tangent_Stiffness_Material(Tangent_Stiffness,ActiveNodes,MPM_Mesh,FEM_Mesh);
 
   return Tangent_Stiffness;
-}
-
-
-/**************************************************************/
-
-static void assemble_Nodal_Tangent_Stiffness_Geometric(Matrix Tangent_Stiffness,
-						       Mask ActiveNodes,
-						       Particle MPM_Mesh,
-						       Mesh FEM_Mesh)
-/*
-  Introduce the geometric contribution G_AB to the full stiffness matrix K_AB
-*/
-{
-  int Ndim = NumberDimensions;
-  int Nnodes_mask = ActiveNodes.Nactivenodes;
-  int Order = Ndim*Nnodes_mask;
-  int Np = MPM_Mesh.NumGP;
-  int Ap;
-  int A_mask;
-  int Bp;
-  int B_mask;
-  int NumNodes_p;
-  int idx_AB_mask_i;
-
-  Tensor S_p; /* Second Piola-Kirchhoff Stress tensor */
-
-  Element Nodes_p; /* List of nodes for particle */
-  Matrix gradient_p; /* Shape functions gradients */
-  Tensor gradient_pA;
-  Tensor GRADIENT_pA;
-  Tensor gradient_pB;
-  Tensor GRADIENT_pB;
-  Tensor F_n_p;
-  Tensor transpose_F_n_p;
-  Tensor GRADIENT_pA_o_GRADIENT_pB;
-
-  double V0_p; /* Volume of the particle in the reference configuration */
-  double Geometric_AB_p; /* Geometric contribution */
-
-  /*
-    Loop in the particles 
-  */
-  for(int p = 0 ; p<Np ; p++)
-    {
-
-      /*
-	Get the volume of the particle in the reference configuration
-       */
-      V0_p = MPM_Mesh.Phi.Vol_0.nV[p];
-
-      /*
-	Define nodes for each particle
-      */
-      NumNodes_p = MPM_Mesh.NumberNodes[p];
-      Nodes_p = nodal_set__Particles__(p, MPM_Mesh.ListNodes[p], NumNodes_p);
-
-      /*
-	Compute gradient of the shape function in each node 
-      */
-      gradient_p = compute_dN__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
-    	  
-      /*
-	Take the values of the deformation gradient ant t = n and  
-	the transpose of the deformation gradient.
-      */
-      F_n_p  = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n.nM[p],2);
-      transpose_F_n_p = transpose__TensorLib__(F_n_p);
-
-      /*
-	Compute the first Piola-Kirchhoff stress tensor
-      */
-      S_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.Stress.nM[p], 2);
-      
-
-      for(int A = 0 ; A<NumNodes_p ; A++)
-	{
-	  /*
-	    Compute the gradient in the reference configuration 
-	  */
-	  gradient_pA = memory_to_tensor__TensorLib__(gradient_p.nM[A], 1);
-	  GRADIENT_pA = vector_linear_mapping__TensorLib__(transpose_F_n_p,gradient_pA);
-
-	  /*
-	    Get the node of the mesh for the contribution 
-	  */
-	  Ap = Nodes_p.Connectivity[A];
-	  A_mask = ActiveNodes.Nodes2Mask[Ap];
-
-	  
-	  for(int B = 0 ; B<NumNodes_p ; B++)
-	    {
-
-	      /*
-		Compute the gradient in the reference configuration 
-	      */
-	      gradient_pB = memory_to_tensor__TensorLib__(gradient_p.nM[B], 1);
-	      GRADIENT_pB = vector_linear_mapping__TensorLib__(transpose_F_n_p,gradient_pB);
-
-	      /*
-		Get the node of the mesh for the contribution 
-	      */
-	      Bp = Nodes_p.Connectivity[B];
-	      B_mask = ActiveNodes.Nodes2Mask[Bp];
-
-	      /*
-		Compute the dyadic product of both gradients 
-	      */
-	      GRADIENT_pA_o_GRADIENT_pB = dyadic_Product__TensorLib__(GRADIENT_pA,GRADIENT_pB);
-
-	      /*
-		Get the nodal contribution
-	      */
-	      Geometric_AB_p = inner_product__TensorLib__(S_p, GRADIENT_pA_o_GRADIENT_pB);
-
-	      /*
-		Add the geometric contribution
-	      */
-	      for(int i = 0 ; i<Ndim ; i++)
-		{
-		  /*
-		    Compute the vectorized index
-		  */
-		  Tangent_Stiffness.nM[A_mask*Ndim+i][B_mask*Ndim+i] += Geometric_AB_p*V0_p;
-		}
-
-	      /*
-		Free memory 
-	      */
-	      free__TensorLib__(GRADIENT_pB);
-	      free__TensorLib__(GRADIENT_pA_o_GRADIENT_pB);
-	    }
-
-	  /*
-	    Free memory 
-	  */
-	  free__TensorLib__(GRADIENT_pA);	  
-	}
-      
-
-      /* 
-	 Free memory 
-      */
-      free__TensorLib__(transpose_F_n_p);
-      free__MatrixLib__(gradient_p);
-      free(Nodes_p.Connectivity);
-    }
-
 }
 
 
@@ -1620,14 +1469,9 @@ static void assemble_Nodal_Tangent_Stiffness_Material(Matrix Tangent_Stiffness,
 
 
 	      /*
-		Get the nodal contribution of the material mass matrix
-	      */
-	      C_AB = compute_stiffness_density(GRADIENT_pA,GRADIENT_pB, F_n1_p, J_p, MatProp_p);
-
-	      /*
 		Compute the nodal matrix with the contribution to each degree of freedom
 	      */
-	      Material_AB = compute_Nodal_Tangent_Stiffness_Material(F_n1_p,C_AB,transpose_F_n1_p);
+	      Material_AB = compute_stiffness_density_Neo_Hookean_Wriggers(GRADIENT_pA, GRADIENT_pB, F_n1_p, J_p, MatProp_p);
 	      
 	      /*
 		Add the geometric contribution to each dof for the assembling process
@@ -1644,7 +1488,6 @@ static void assemble_Nodal_Tangent_Stiffness_Material(Matrix Tangent_Stiffness,
 		Free memory 
 	      */
 	      free__TensorLib__(GRADIENT_pB);
-	      free__TensorLib__(C_AB);
 	      free__TensorLib__(Material_AB);
 	    }
 
@@ -1667,59 +1510,6 @@ static void assemble_Nodal_Tangent_Stiffness_Material(Matrix Tangent_Stiffness,
 
 }
 
-/**************************************************************/
-
-static Tensor compute_stiffness_density(Tensor GRADIENT_pA,
-					Tensor GRADIENT_pB,
-					Tensor F_p, double J_p,
-					Material MatProp_p)
-{
-
-  Tensor C_AB;
-
-  if(strcmp(MatProp_p.Type,"Saint-Venant-Kirchhoff") == 0)
-    {
-      C_AB = compute_stiffness_density_Saint_Venant_Kirchhoff(GRADIENT_pA,
-							      GRADIENT_pB,
-							      MatProp_p);
-    }
-  else if(strcmp(MatProp_p.Type,"Neo-Hookean-Wriggers") == 0)
-    {
-
-      Tensor C_p = right_Cauchy_Green__Particles__(F_p);
-      
-      C_AB = compute_material_stiffness_density_Neo_Hookean_Wriggers(GRADIENT_pA,
-							    GRADIENT_pB,
-							    C_p, J_p,
-							    MatProp_p);
-      free__TensorLib__(C_p);
-    }
-  else
-    {
-      fprintf(stderr,"%s : %s %s %s \n",
-	      "Error in compute_stiffness_density()",
-	      "The material",MatProp_p.Type,"has not been yet implemnented");
-      exit(EXIT_FAILURE);
-    }
-
-  return C_AB;
-}
-
-/**************************************************************/
-
-static Tensor compute_Nodal_Tangent_Stiffness_Material(Tensor F_n1_p,
-						       Tensor C_AB,
-						       Tensor Ft_n1_p)
-{
-  int Ndim = NumberDimensions;
-  Tensor C_x_Ft = matrix_product__TensorLib__(C_AB, Ft_n1_p);
-  Tensor F_x_C_x_Ft = matrix_product__TensorLib__(F_n1_p, C_x_Ft);
-  
-  free__TensorLib__(C_x_Ft);
-  
-  return F_x_C_x_Ft;
-  
-}
 
 /**************************************************************/
 

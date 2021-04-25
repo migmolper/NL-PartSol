@@ -41,22 +41,20 @@ Tensor compute_1PK_Stress_Tensor_Neo_Hookean_Wriggers(
   /*
     Auxiliar tensors
   */
-  Tensor FT = transpose__TensorLib__(F);
-  Tensor FmT = Inverse__TensorLib__(FT);
+  Tensor Fm1 = Inverse__TensorLib__(F);
 
   for(int i = 0 ; i < Ndim ; i++)
   {
     for(int j = 0 ; j < Ndim ; j++)
     {
-      P.N[i][j] = lambda*0.5*(J2 - 1)*FmT.N[i][j] + G*(F.N[i][j] - FmT.N[i][j]);
+      P.N[i][j] = lambda*0.5*(J2 - 1)*Fm1.N[j][i] + G*(F.N[i][j] - Fm1.N[j][i]);
     }
   }
   
   /*
     Free tensors 
   */
-  free__TensorLib__(FT);
-  free__TensorLib__(FmT);
+  free__TensorLib__(Fm1);
 
   return P;
 }
