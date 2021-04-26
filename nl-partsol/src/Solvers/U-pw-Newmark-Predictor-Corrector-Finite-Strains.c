@@ -3,6 +3,7 @@
 /*
   Call global variables
 */
+double Thickness_Plain_Stress;
 Mixture * Soil_Water_Mixtures; // Structure with the properties of the sample
 Event * Out_nodal_path_csv;
 Event * Out_particles_path_csv;
