@@ -491,8 +491,8 @@ Tensor Inverse__TensorLib__(Tensor A)
     }
     if(Ndim == 2){
       Am1.N[0][0] = + (double)1/detA*A.N[1][1];
-      Am1.N[0][1] = - (double)1/detA*A.N[1][0];
-      Am1.N[1][0] = - (double)1/detA*A.N[0][1];
+      Am1.N[0][1] = - (double)1/detA*A.N[0][1];
+      Am1.N[1][0] = - (double)1/detA*A.N[1][0];
       Am1.N[1][1] = + (double)1/detA*A.N[0][0]; 
     }    
   }
@@ -840,6 +840,34 @@ Tensor rotate__TensorLib__(Tensor In, Tensor R)
   return Out;
 
 }
+
+/*************************************************************/
+
+Tensor symmetrise__TensorLib__(Tensor A)
+{
+  Tensor symA = alloc__TensorLib__(2);
+
+  int Ndim = NumberDimensions;
+
+  for(int i = 0 ; i<Ndim ; i++)
+  {
+    for(int j = i ; j<Ndim ; j++)
+    {
+      if(i != j)
+      {
+        symA.N[i][j] = 0.5*(A.N[i][j] + A.N[j][i]);
+        symA.N[j][i] = symA.N[i][j];
+      }
+      else
+      {
+        symA.N[i][j] = A.N[i][j];
+      }
+    }
+  }
+
+  return symA;
+}
+
 
 /*************************************************************/
 
