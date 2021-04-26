@@ -1,10 +1,8 @@
 #include "nl-partsol.h"
 
-
 /*
   Call global variables
 */
-double Thickness_Plain_Stress;
 Mixture * Soil_Water_Mixtures; // Structure with the properties of the sample
 Event * Out_nodal_path_csv;
 Event * Out_particles_path_csv;
@@ -437,7 +435,7 @@ static  void  compute_Explicit_Newmark_Predictor(
     /*
       Compute pore water pressure predictor
     */
-    MPM_Mesh.Phi.Pw.nV[p] += (1-gamma)*Dt*MPM_Mesh.Phi.d_Pw.nV[p];
+    MPM_Mesh.Phi.Pw.nV[p] += (1-gamma)*Dt*MPM_Mesh.Phi.d_Pw_dt.nV[p];
 
     /* 
       Compute velocity predictor and increment of displacements 
@@ -1053,7 +1051,7 @@ static void update_Local_State(
       /*
         Compute the rate of the jacobian
       */
-      dJ_dt_n1_p = compute_Jacobian_Rate__Particles__(J_n1_p, Nodal_Velocity_p, gradient_p);
+      dJ_dt_n1_p = compute_Jacobian_Rate(J_n1_p, Nodal_Velocity_p, gradient_p);
 
       /*
         Compute the right Cauchy Green tensor
@@ -1072,7 +1070,7 @@ static void update_Local_State(
         }
       else if(strcmp(MatProp_Soil_p.Type,"Neo-Hookean-Wriggers") == 0)
         {
-          S_p = compute_2PK_Stress_Tensor_Neo_Hookean_Wriggers(S_p, C_n1_p, J_n1_p, MatProp_Soil_p);
+          S_p = grad_energy_Neo_Hookean_Wriggers(S_p, C_n1_p, J_n1_p, MatProp_Soil_p);
         }
       else if(strcmp(MatProp_Soil_p.Type,"Von-Mises") == 0)
         {
@@ -2071,7 +2069,7 @@ static void solve_Nodal_Mass_Balance(
     /*
       Set to zero the rate of pore water pressure
     */
-    MPM_Mesh.Phi.d_Pw.nV[p] = 0.0;
+    MPM_Mesh.Phi.d_Pw_dt.nV[p] = 0.0;
 
     /*
       Define element of the particle 
@@ -2103,7 +2101,7 @@ static void solve_Nodal_Mass_Balance(
       /*
         Update the particle rate of pore water pressure
       */
-      MPM_Mesh.Phi.d_Pw.nV[p] += ShapeFunction_pA*Rate_Pore_water_pressure.nV[A_mask];
+      MPM_Mesh.Phi.d_Pw_dt.nV[p] += ShapeFunction_pA*Rate_Pore_water_pressure.nV[A_mask];
     }
 
     /*
@@ -2168,7 +2166,7 @@ static void compute_Explicit_Newmark_Corrector(
       /*
         Correct pressure field
       */
-      MPM_Mesh.Phi.Pw.nV[p] += gamma*Dt*MPM_Mesh.Phi.d_Pw.nV[p];
+      MPM_Mesh.Phi.Pw.nV[p] += gamma*Dt*MPM_Mesh.Phi.d_Pw_dt.nV[p];
 
     }  
 }
