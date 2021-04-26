@@ -149,6 +149,7 @@ Tensor Convex_combination__TensorLib__(Tensor, Tensor, double);
 double volumetric_component__TensorLib__(Tensor);
 Tensor deviatoric_component__TensorLib__(Tensor, double);
 Tensor rotate__TensorLib__(Tensor, Tensor);
+Tensor symmetrise__TensorLib__(Tensor);
 void   covariant_push_forward_tensor__TensorLib__(Tensor, Tensor, Tensor);
 void   contravariant_push_forward_tensor__TensorLib__(Tensor, Tensor, Tensor);
 void   covariant_pull_back_tensor__TensorLib__(Tensor, Tensor, Tensor);

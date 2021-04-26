@@ -93,12 +93,11 @@ Tensor compute_stiffness_density_Neo_Hookean_Wriggers(
   /*
     Auxiliar variables
   */    
-  Tensor FT = transpose__TensorLib__(F);
-  Tensor FmT = Inverse__TensorLib__(FT);
+  Tensor Fm1 = transpose__TensorLib__(F);
+  Tensor FmT = Inverse__TensorLib__(Fm1);
   Tensor FmTGRAD_I = vector_linear_mapping__TensorLib__(FmT,GRAD_I);
   Tensor FmTGRAD_J = vector_linear_mapping__TensorLib__(FmT,GRAD_J);
   Tensor Fm1GRAD_o_FmTGRAD_IJ = dyadic_Product__TensorLib__(FmTGRAD_I,FmTGRAD_J);
-  Tensor Fm1GRAD_o_FmTGRAD_JI = dyadic_Product__TensorLib__(FmTGRAD_J,FmTGRAD_I);
   double GRAD_I_dot_GRAD_J = inner_product__TensorLib__(GRAD_I,GRAD_J);  
 
   for(int i = 0 ; i<Ndim ; i++)
@@ -108,19 +107,18 @@ Tensor compute_stiffness_density_Neo_Hookean_Wriggers(
       A.N[i][j] += 
       alpha*Fm1GRAD_o_FmTGRAD_IJ.N[i][j] + 
       G*GRAD_I_dot_GRAD_J*(i==j) + 
-      beta*Fm1GRAD_o_FmTGRAD_JI.N[i][j];
+      beta*Fm1GRAD_o_FmTGRAD_IJ.N[j][i];
     }
   }
 
   /*
     Free memory
    */
-  free__TensorLib__(FT);
+  free__TensorLib__(Fm1);
   free__TensorLib__(FmT);
   free__TensorLib__(FmTGRAD_I);
   free__TensorLib__(FmTGRAD_J);
   free__TensorLib__(Fm1GRAD_o_FmTGRAD_IJ);
-  free__TensorLib__(Fm1GRAD_o_FmTGRAD_JI);
   
 
   return A;

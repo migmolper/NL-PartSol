@@ -843,6 +843,34 @@ Tensor rotate__TensorLib__(Tensor In, Tensor R)
 
 /*************************************************************/
 
+Tensor symmetrise__TensorLib__(Tensor A)
+{
+  Tensor symA = alloc__TensorLib__(2);
+
+  int Ndim = NumberDimensions;
+
+  for(int i = 0 ; i<Ndim ; i++)
+  {
+    for(int j = i ; j<Ndim ; j++)
+    {
+      if(i != j)
+      {
+        symA.N[i][j] = 0.5*(A.N[i][j] + A.N[j][i]);
+        symA.N[j][i] = symA.N[i][j];
+      }
+      else
+      {
+        symA.N[i][j] = A.N[i][j];
+      }
+    }
+  }
+
+  return symA;
+}
+
+
+/*************************************************************/
+
 void covariant_push_forward_tensor__TensorLib__(Tensor a, Tensor A, Tensor F)
 /* 
   Covariant push forward operation for any tensor. 

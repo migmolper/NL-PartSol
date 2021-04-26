@@ -95,6 +95,15 @@ Tensor right_Cauchy_Green__Particles__(Tensor);
 /*******************************************************/
 
 /*!
+  \fn Tensor rate_of_deformation__Particles__(Tensor dFdt, Tensor Fm1)  
+
+  \param dFdt : Temporal derivative of the deformation gradient
+  \param Fm1 : Inverse of the deformation gradient  
+*/
+Tensor rate_of_deformation__Particles__(Tensor, Tensor);
+/*******************************************************/
+
+/*!
   \fn Tensor logarithmic_strains__Particles__(Tensor C)
   \brief Function to cumpute the small strains countrepart of the 
   right Cauchy-Green tensor defined as

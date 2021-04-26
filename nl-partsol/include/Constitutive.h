@@ -111,6 +111,22 @@ Plastic_status infinitesimal_strains_plasticity_Von_Mises(Tensor, Tensor, Plasti
 
 Plastic_status finite_strains_plasticity_Drucker_Prager_Sanavia(Tensor, Tensor, Tensor, Tensor, Plastic_status, Material, double);
 Plastic_status infinitesimal_strains_plasticity_Drucker_Prager_Sanavia(Tensor, Tensor, Plastic_status, Material);
+/*******************************************************/
+
+
+// Compresible Newtonian fluid
+
+/*!
+
+  \fn Tensor compute_1PK_Stress_Tensor_Newtonian_Fluid(Tensor P,Tensor F,Tensor dFdt,double J, Material MatProp_p)
+
+*/
+Tensor compute_1PK_Stress_Tensor_Newtonian_Fluid(Tensor,Tensor,Tensor,double,Material);
+
+/*!
+\fn Tensor compute_stiffness_density_Newtonian_Fluid(Tensor GRAD_I,Tensor GRAD_J,Tensor F,Tensor dFdt,double J,double alpha4,Material MatProp_p)
+*/
+Tensor compute_stiffness_density_Newtonian_Fluid(Tensor,Tensor,Tensor,Tensor,double,double,Material);
 /*******************************************************/  
 
 #endif

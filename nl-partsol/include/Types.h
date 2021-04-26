@@ -400,6 +400,13 @@ typedef struct {
   double Compressibility;
 
   /*!
+  * Fluid parameters
+  */
+  double ReferencePressure;
+  double Viscosity;
+  double n_Macdonald_model;
+
+  /*!
    * Activate eigenerosion-fracture modulus (Eigenerosion/Eigensoftening)
    */
   bool Eigenerosion;
