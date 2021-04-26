@@ -131,7 +131,6 @@ Mask generate_Mask_for_static_condensation__MeshTools__(
 
 /**************************************************************/
 
-
 Matrix get_set_field__MeshTools__(
   Matrix Field,
   Element Nodes_p,
@@ -180,6 +179,65 @@ else
 }
 
 return Field_Ap;
+}
+
+/*********************************************************************/
+
+Matrix get_U_set_field_upw__MeshTools__(Matrix Field_upw, Element Nodes_p, Mask ActiveNodes)
+{
+  int Nnodes = Nodes_p.NumberNodes;
+  int Ndim = NumberDimensions;
+  Matrix Field_U_Ap = allocZ__MatrixLib__(Nnodes,Ndim);
+  int Ap;
+  int A_mask;
+
+
+  for(int A = 0 ; A<Nnodes ; A++)
+  {
+    /* 
+      Get the node in the mass matrix with the mask
+    */
+    Ap = Nodes_p.Connectivity[A];
+    A_mask = ActiveNodes.Nodes2Mask[Ap];
+     
+    /*
+      Get nodal field for particle p
+    */
+    for(int i = 0 ; i<Ndim ; i++)
+    {
+      Field_U_Ap.nM[A][i] = Field_upw.nM[A_mask][i];
+    }
+  }
+
+  return Field_U_Ap;
+}
+
+/*********************************************************************/
+
+Matrix get_Pw_set_field_upw__MeshTools__(Matrix Field_upw, Element Nodes_p, Mask ActiveNodes)
+{
+  int Nnodes = Nodes_p.NumberNodes;
+  int Ndim = NumberDimensions;
+  Matrix Field_pw_Ap = allocZ__MatrixLib__(Nnodes,1);
+  int Ap;
+  int A_mask;
+
+
+  for(int A = 0 ; A<Nnodes ; A++)
+  {
+    /* 
+      Get the node in the mass matrix with the mask
+    */
+    Ap = Nodes_p.Connectivity[A];
+    A_mask = ActiveNodes.Nodes2Mask[Ap];
+    
+    /*
+      Get nodal field for particle p
+    */
+    Field_pw_Ap.nV[A] = Field_upw.nM[A_mask][Ndim];
+  }
+
+  return Field_pw_Ap;
 }
 
 /*********************************************************************/
