@@ -235,11 +235,18 @@ typedef struct {
   Matrix Stress_f;
 
   /*!
-  * Pore water preassure, its rate and initial state
+  * Pore water preassure, initial state, and the increment
   */
   Matrix Pw;
   Matrix d_Pw;
   Matrix Pw_0;
+  Matrix Pw_n1;
+  Matrix D_Pw;
+  /*!
+  * Rates of the pore water pressure
+  */
+  Matrix d_Pw_dt;
+  Matrix d2_Pw_dt2;
   
   /*!
    * Strain field 
@@ -247,11 +254,19 @@ typedef struct {
   Matrix Strain;
 
   /*!
-   * Deformation gradient at t = n and t = n + 1
+   * Deformation gradient at t = n, t = n + 1
    */
   Matrix F_n;
   Matrix F_n1;
   Matrix DF;
+
+  /*!
+   * Rate of the deformation gradient
+  */
+  Matrix dt_F_n;
+  Matrix dt_F_n1;
+  Matrix dt_DF;
+
 
   /*!
   * Jacobian of the deformation gradient and its rate
