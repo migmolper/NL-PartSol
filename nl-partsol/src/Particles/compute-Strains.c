@@ -116,6 +116,58 @@ void update_increment_Deformation_Gradient__Particles__(Tensor DF_p, Matrix Delt
 
 /*******************************************************/
 
+void update_rate_increment_Deformation_Gradient__Particles__(Tensor dt_DF_p, Matrix DeltaV, Matrix gradient_p)
+{
+
+  /* Variable definition */
+  int Ndim = NumberDimensions;
+  int Nnodes_p = DeltaV.N_rows;  
+  Tensor f_n1;
+  Tensor DeltaV_I;
+  Tensor gradient_I;
+  Tensor gradient_DeltaV_I;
+  
+  /*
+    Compute increment of the deformation gradient 
+    dt_f_n1 = I + (Delta_V o gradient_N)
+  */
+  
+  /* Initialise with the identity tensor */
+  for(int i = 0 ; i<Ndim ; i++)
+  {
+    for(int j = 0 ; j<Ndim ; j++)
+    {
+      dt_DF_p.N[i][j] = 1*(i==j);
+    }
+  }
+  
+  for(int I = 0 ; I<Nnodes_p ; I++)
+    {
+
+      /* Assign from matrix to tensor */
+      DeltaV_I = memory_to_tensor__TensorLib__(DeltaV.nM[I], 1);
+      gradient_I = memory_to_tensor__TensorLib__(gradient_p.nM[I], 1);
+      
+      /* Compute the dyadic product of the nodal velocity and the
+          gradient of the shape functions */
+      gradient_DeltaV_I = dyadic_Product__TensorLib__(DeltaV_I, gradient_I);
+      
+      /* Ad the nodal contribution to the train tensor */
+      for(int i = 0 ; i<Ndim ; i++)
+       {
+         for(int j = 0 ; j<Ndim ; j++)
+           {
+             dt_DF_p.N[i][j] += gradient_DeltaV_I.N[i][j];
+           }
+        }
+      
+      /* Free memory */
+      free__TensorLib__(gradient_DeltaV_I);
+    }
+} 
+
+/*******************************************************/
+
 void update_Deformation_Gradient_n1__Particles__(Tensor F_n1, Tensor F_n, Tensor f_n1)
 {
   int Ndim = NumberDimensions;
@@ -149,40 +201,53 @@ void update_Deformation_Gradient_n1__Particles__(Tensor F_n1, Tensor F_n, Tensor
 
 /*******************************************************/
 
-double compute_Jacobian_Rate__Particles__(double J_p, Matrix Velocity, Matrix gradient_p)
+void update_rate_Deformation_Gradient_n1__Particles__(Tensor dt_F_n1, Tensor dt_f_n1, Tensor F_n, Tensor f_n1, Tensor dt_F_n)
 {
-  /* Variable definition */
   int Ndim = NumberDimensions;
-  int Nnodes_p = Velocity.N_rows; 
-  double dJ_dt_p = 0;
-  double div_V_p = 0;
-  double gradient_Velocity_I = 0;
-  Tensor Velocity_I;
-  Tensor gradient_I;
-
-  /*
-    Compute velocity divergence
-  */
-  for(int I = 0 ; I<Nnodes_p ; I++)
+  double aux;
+    
+  for(int i = 0 ; i < Ndim  ; i++)
     {
+      for(int j = 0 ; j < Ndim  ; j++)
+       {
+       /*
+        Set to zero the deformation gradient at t = n + 1 
+        */
+        dt_F_n1.N[i][j] = 0;
 
-      /* Assign from matrix to tensor */
-      Velocity_I = memory_to_tensor__TensorLib__(Velocity.nM[I], 1);
-      gradient_I = memory_to_tensor__TensorLib__(gradient_p.nM[I], 1);
-      
-      /* Compute the inner product of the nodal velocity and the
-         gradient of the shape functions */
-      gradient_Velocity_I = inner_product__TensorLib__(Velocity_I, gradient_I);
-      
-      /* Ad the nodal contribution to the train tensor */
-      div_V_p += gradient_Velocity_I;
-  }
+        /*
+        Compute row-column multiplication
+        */
+        aux = 0;
+        for(int k = 0 ; k < Ndim  ; k++)
+        {
+          aux += dt_f_n1.N[i][k]*F_n.N[k][j] + f_n1.N[i][k]*dt_F_n.N[k][j];
+        }
 
-  dJ_dt_p = J_p*div_V_p;
-
-  return dJ_dt_p;
+        /*
+          New value
+        */
+        dt_F_n1.N[i][j] = aux;
+      }
+    }
 }
 
+/*******************************************************/
+
+double compute_Jacobian_Rate__Particles__(double J_p, Tensor F_p, Tensor dt_F_p)
+{
+  /* Variable definition */
+  double dt_J_p = 0;
+  Tensor inverse_F_p = Inverse__TensorLib__(F_p);
+  Tensor transpose_inverse_F_p = transpose__TensorLib__(inverse_F_p);
+
+  dt_J_p = J_p*inner_product__TensorLib__(transpose_inverse_F_p, dt_F_p);
+
+  free__TensorLib__(inverse_F_p);
+  free__TensorLib__(transpose_inverse_F_p);
+
+  return dt_J_p;
+}
 
 /*******************************************************/
 
