@@ -217,7 +217,12 @@ void update_Deformation_Gradient_n1__Particles__(
 
 /*******************************************************/
 
-void update_rate_Deformation_Gradient_n1__Particles__(Tensor dt_F_n1, Tensor dt_f_n1, Tensor F_n, Tensor f_n1, Tensor dt_F_n)
+void update_rate_Deformation_Gradient_n1__Particles__(
+  Tensor dt_F_n1, 
+  Tensor dt_f_n1, 
+  Tensor F_n, 
+  Tensor f_n1, 
+  Tensor dt_F_n)
 {
   int Ndim = NumberDimensions;
   double aux;

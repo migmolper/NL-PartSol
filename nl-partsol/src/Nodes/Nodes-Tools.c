@@ -696,5 +696,52 @@ double interpolate_scalar__MeshTools__(
   return A_p; 
 }
 
+/**************************************************************/
+
+Tensor compute_vector_magnitude_gradient__MeshTools__(
+  Matrix Variable_p,
+  Matrix gradient_p)
+/*
+
+*/
+ {
+
+  /* Variable definition */
+  int Ndim = NumberDimensions;
+  int Nnodes_p = Variable_p.N_rows; 
+  Tensor Variable_pI;
+  Tensor gradient_I;
+  Tensor Variable__o__gradient_Ip;
+  Tensor grad_variable_p = alloc__TensorLib__(2);
+
+  for(int I = 0 ; I<Nnodes_p ; I++)
+  {
+
+    /*
+      Assign from matrix
+    */
+    Variable_pI = memory_to_tensor__TensorLib__(Variable_p.nM[I], 1);
+    gradient_I = memory_to_tensor__TensorLib__(gradient_p.nM[I], 1);
+
+    Variable__o__gradient_Ip = dyadic_Product__TensorLib__(Variable_pI,gradient_I);
+
+    /*
+      Compute nodal contribution
+    */
+    for(int i = 0 ; i<Ndim ; i++)
+    {
+      for(int j = 0 ; j<Ndim ; j++)
+      {
+        grad_variable_p.N[i][j] += Variable__o__gradient_Ip.N[i][j];
+      }
+    } 
+
+    free__TensorLib__(Variable__o__gradient_Ip);
+
+  }
+
+  return grad_variable_p;
+ } 
+
 /*********************************************************************/
 

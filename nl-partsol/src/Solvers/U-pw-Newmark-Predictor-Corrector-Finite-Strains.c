@@ -418,7 +418,7 @@ static Matrix compute_Compressibility_Matrix_Fluid(
 
 /**************************************************************/
 
-static  void  compute_Explicit_Newmark_Predictor(
+static void compute_Explicit_Newmark_Predictor(
   Particle MPM_Mesh, // Information related with particles
   double gamma, // Newmark integration parameter
   double Dt) // Time step
@@ -977,12 +977,14 @@ static void update_Local_State(
   Matrix gradient_p;
   Matrix D_Displacement_Ap;
   Matrix Nodal_Velocity_p;
+  Tensor grad_Nodal_Velocity_p;
+  Tensor GRAD_Nodal_Velocity_p;
   Tensor F_n_p; /* Deformation gradient of the soil skeleton (t = n) */
   Tensor F_n1_p; /* Deformation gradient of the soil skeleton (t = n + 1) */
   Tensor DF_p; /* Increment of the deformation gradient of the soil skeleton */
+  Tensor FT_n1_p; /* Transpose of the deformation gradient of the soil skeleton (t = n + 1) */ 
   Tensor F_plastic_p; /* Plastic deformation gradient of the soil skeleton */
-  Tensor S_p; /* Second Piola-Kirchhoff stress tensor */
-  Tensor C_n1_p; /* Right Cauchy-Green tensor */
+  Tensor P_p; /* First Piola-Kirchhoff stress tensor */
   double Pw_0; /* Cauchy pore water pressure at t = 0 */
   double Pw_n1; /* Cauchy pore water pressure at t = n + 1 */
 
@@ -1029,21 +1031,18 @@ static void update_Local_State(
       /*
       	Take the values of the deformation gradient from the previous step
       */
-      F_n_p  = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n.nM[p],2);
-      F_n1_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n1.nM[p],2);
-      DF_p   = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.DF.nM[p],2);
+      F_n_p     = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n.nM[p],2);
+      F_n1_p    = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n1.nM[p],2);
+      DF_p      = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.DF.nM[p],2);
+      FT_n1_p   = transpose__TensorLib__(F_n1_p); 
       
       /*
-      	Compute the increment of the deformation gradient
+      	Compute the increment of the deformation gradient to compute the deformation gradient
       */
       update_increment_Deformation_Gradient__Particles__(DF_p,D_Displacement_Ap,gradient_p);
-
-      /*
-      	Update the deformation gradient in t = n + 1 with the information
-	      from t = n and the increment of deformation gradient.
-      */  
       update_Deformation_Gradient_n1__Particles__(F_n1_p, F_n_p, DF_p);
 
+  
       /*
         Compute the Jacobian of the deformation gradient
       */
@@ -1052,59 +1051,50 @@ static void update_Local_State(
       /*
         Compute the rate of the jacobian
       */
-      dJ_dt_n1_p = compute_Jacobian_Rate(J_n1_p, Nodal_Velocity_p, gradient_p);
-
-      /*
-        Compute the right Cauchy Green tensor
-      */
-      C_n1_p = right_Cauchy_Green__Particles__(F_n1_p);
+      grad_Nodal_Velocity_p = compute_vector_magnitude_gradient__MeshTools__(Nodal_Velocity_p,gradient_p);
+      GRAD_Nodal_Velocity_p = vector_linear_mapping__TensorLib__(FT_n1_p,grad_Nodal_Velocity_p);
+      dJ_dt_n1_p = I1__TensorLib__(GRAD_Nodal_Velocity_p);
 
       /*
       	Update the second Piola-Kirchhoff stress tensor (S) with an apropiate
 	      integration rule.
       */
-      S_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.Stress.nM[p],2);      
+      P_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.Stress.nM[p],2);      
 
-      if(strcmp(MatProp_Soil_p.Type,"Saint-Venant-Kirchhoff") == 0)
-        {
-          S_p = grad_energy_Saint_Venant_Kirchhoff(S_p, C_n1_p, MatProp_Soil_p);
-        }
-      else if(strcmp(MatProp_Soil_p.Type,"Neo-Hookean-Wriggers") == 0)
-        {
-          S_p = grad_energy_Neo_Hookean_Wriggers(S_p, C_n1_p, J_n1_p, MatProp_Soil_p);
-        }
-      else if(strcmp(MatProp_Soil_p.Type,"Von-Mises") == 0)
-        {
-          F_plastic_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_plastic.nM[p],2);
-          Input_Plastic_Parameters.Cohesion = MPM_Mesh.Phi.cohesion.nV[p];
-          Input_Plastic_Parameters.EPS = MPM_Mesh.Phi.EPS.nV[p];
+      if(strcmp(MatProp_Soil_p.Type,"Neo-Hookean-Wriggers") == 0)
+      {
+        P_p = compute_1PK_Stress_Tensor_Neo_Hookean_Wriggers(P_p, F_n1_p, J_n1_p, MatProp_Soil_p);
+      }
+/*      else if(strcmp(MatProp_Soil_p.Type,"Von-Mises") == 0)
+      {
+        F_plastic_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_plastic.nM[p],2);
+        Input_Plastic_Parameters.Cohesion = MPM_Mesh.Phi.cohesion.nV[p];
+        Input_Plastic_Parameters.EPS = MPM_Mesh.Phi.EPS.nV[p];
 
-          Output_Plastic_Parameters = finite_strains_plasticity_Von_Mises(S_p, C_n1_p, F_plastic_p, F_n1_p, 
-                                                                          Input_Plastic_Parameters, MatProp_Soil_p, J_n1_p);
+        Output_Plastic_Parameters = finite_strains_plasticity_Von_Mises(P_p, F_n1_p, F_plastic_p, Input_Plastic_Parameters, MatProp_Soil_p, J_n1_p);
 
-          MPM_Mesh.Phi.cohesion.nV[p] = Output_Plastic_Parameters.Yield_stress;
-          MPM_Mesh.Phi.EPS.nV[p] = Output_Plastic_Parameters.EPS;
-        }
+        MPM_Mesh.Phi.cohesion.nV[p] = Output_Plastic_Parameters.Yield_stress;
+        MPM_Mesh.Phi.EPS.nV[p] = Output_Plastic_Parameters.EPS;
+      }
       else if((strcmp(MatProp_Soil_p.Type,"Drucker-Prager-Plane-Strain") == 0) || (strcmp(MatProp_Soil_p.Type,"Drucker-Prager-Outer-Cone") == 0))
-        {
-          F_plastic_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_plastic.nM[p],2);
-          Input_Plastic_Parameters.Cohesion = MPM_Mesh.Phi.cohesion.nV[p];
-          Input_Plastic_Parameters.EPS = MPM_Mesh.Phi.EPS.nV[p];
+      {
+        F_plastic_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_plastic.nM[p],2);
+        Input_Plastic_Parameters.Cohesion = MPM_Mesh.Phi.cohesion.nV[p];
+        Input_Plastic_Parameters.EPS = MPM_Mesh.Phi.EPS.nV[p];
 
-          Output_Plastic_Parameters = finite_strains_plasticity_Drucker_Prager_Sanavia(S_p, C_n1_p, F_plastic_p, F_n1_p, 
-                                                                          Input_Plastic_Parameters, MatProp_Soil_p, J_n1_p);
+        Output_Plastic_Parameters = finite_strains_plasticity_Drucker_Prager_Sanavia(P_p, F_n1_p, F_plastic_p, Input_Plastic_Parameters, MatProp_Soil_p, J_n1_p);
 
-          MPM_Mesh.Phi.cohesion.nV[p] = Output_Plastic_Parameters.Cohesion;
-          MPM_Mesh.Phi.EPS.nV[p] = Output_Plastic_Parameters.EPS;
+        MPM_Mesh.Phi.cohesion.nV[p] = Output_Plastic_Parameters.Cohesion;
+        MPM_Mesh.Phi.EPS.nV[p] = Output_Plastic_Parameters.EPS;
 
-        }
+      }*/
       else
-        {
+      {
           fprintf(stderr,"%s : %s %s %s \n",
 		  "Error in update_Local_State()",
 		  "The material",MatProp_Soil_p.Type,"has not been yet implemnented");
           exit(EXIT_FAILURE);
-        }
+      }
 
       /*
         Update state parameters
@@ -1126,10 +1116,12 @@ static void update_Local_State(
       /*
 	       Free memory 
       */
-      free__TensorLib__(C_n1_p);
       free__MatrixLib__(D_Displacement_Ap);
       free__MatrixLib__(Nodal_Velocity_p);
       free__MatrixLib__(gradient_p);
+      free__TensorLib__(FT_n1_p);
+      free__TensorLib__(grad_Nodal_Velocity_p);
+      free__TensorLib__(GRAD_Nodal_Velocity_p);
       free(Nodes_p.Connectivity);
 	  
     }
@@ -1184,7 +1176,6 @@ static void compute_Internal_Forces_Mixture(
 
   Tensor P_p; /* Total First Piola-Kirchhoff Stress tensor */
   Tensor P_effective_p; /* Effective First Piola-Kirchhoff Stress tensor */
-  Tensor S_effective_p; /* Effective Second Piola-Kirchhoff Stress tensor */
   double theta_p; /* Kirchhoff pore fluid pressure */
 
   Tensor InternalForcesDensity_Ap;
@@ -1230,8 +1221,7 @@ static void compute_Internal_Forces_Mixture(
       /*
 	       Get the first Piola-Kirchhoff stress tensor
       */
-      S_effective_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.Stress.nM[p], 2);
-      P_effective_p = matrix_product__TensorLib__(F_n1_p, S_effective_p);
+      P_effective_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.Stress.nM[p], 2);
 
       /*
         Get the Kirchhoff pressure
@@ -1285,7 +1275,6 @@ static void compute_Internal_Forces_Mixture(
       */
       free__TensorLib__(transpose_F_n_p);
       free__TensorLib__(P_effective_p);
-      free__TensorLib__(P_p);
       free__MatrixLib__(gradient_p);
       free(Nodes_p.Connectivity);
     }

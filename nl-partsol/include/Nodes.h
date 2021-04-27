@@ -15,5 +15,6 @@ int      get_closest_node__MeshTools__(Matrix, ChainPtr, Matrix);
 Matrix   get_nodes_coordinates__MeshTools__(ChainPtr, Matrix);
 Matrix   compute_N__MeshTools__(Element, Particle, Mesh );
 Matrix   compute_dN__MeshTools__(Element, Particle, Mesh);
-
+Tensor compute_vector_magnitude_gradient__MeshTools__(Matrix,Matrix);
+double interpolate_scalar__MeshTools__(Matrix,Matrix);
 #endif

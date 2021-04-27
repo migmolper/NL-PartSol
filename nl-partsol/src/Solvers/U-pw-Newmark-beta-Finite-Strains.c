@@ -49,37 +49,37 @@ typedef struct
 */
 
 static Newmark_parameters compute_Newmark_parameters(double, double, double);
-static Matrix compute_Nodal_Effective_Mass(GaussPoint, Mesh, Mask, double);
-static  void  compute_Gravity_field(Mask, GaussPoint, int);
-static Nodal_Field compute_Nodal_Field(Matrix, GaussPoint, Mesh, Mask);
+static Matrix compute_Nodal_Effective_Mass(Particle, Mesh, Mask, double);
+static  void  compute_Gravity_field(Mask, Particle, int);
+static Nodal_Field compute_Nodal_Field(Matrix, Particle, Mesh, Mask);
 static Nodal_Field initialise_Nodal_Increments(Mask, Mesh, int);
-static  void  update_Local_State(Nodal_Field, Mask, GaussPoint, Mesh);
-static Matrix compute_Residual(Nodal_Field,Nodal_Field,Mask,GaussPoint,Mesh,int);
-static  void  compute_Inertial_Forces_Mixture(Nodal_Field,Matrix,Mask,GaussPoint,Mesh);
-static  void  compute_Internal_Forces_Mixture(Matrix,Mask,GaussPoint,Mesh);
+static  void  update_Local_State(Nodal_Field, Mask, Particle, Mesh);
+static Matrix compute_Residual(Nodal_Field,Nodal_Field,Mask,Particle,Mesh,int);
+static  void  compute_Inertial_Forces_Mixture(Nodal_Field,Matrix,Mask,Particle,Mesh);
+static  void  compute_Internal_Forces_Mixture(Matrix,Mask,Particle,Mesh);
 static Tensor compute_total_first_Piola_Kirchhoff_stress(Tensor,double,Tensor);
-static  void  compute_Contact_Forces_Mixture(Matrix,Mask,GaussPoint,Mesh,int);
-static  void  compute_Compresibility_Mass_Balance(Nodal_Field, Matrix, Mask, GaussPoint, Mesh);
-static  void  compute_Jacobian_Rate_Mass_Balance(Matrix,Mask,GaussPoint,Mesh);
-static  void  compute_Permeability_Mass_Balance(Nodal_Field, Nodal_Field,Matrix,Mask,GaussPoint,Mesh);
+static  void  compute_Contact_Forces_Mixture(Matrix,Mask,Particle,Mesh,int);
+static  void  compute_Compresibility_Mass_Balance(Nodal_Field, Matrix, Mask, Particle, Mesh);
+static  void  compute_Jacobian_Rate_Mass_Balance(Matrix,Mask,Particle,Mesh);
+static  void  compute_Permeability_Mass_Balance(Nodal_Field, Nodal_Field,Matrix,Mask,Particle,Mesh);
 static Tensor compute_Pore_water_pressure_gradient_n1(Matrix,Matrix,Matrix);
-static  void  compute_Permeability_Inertial_Forces_Fluid(Nodal_Field,Matrix,Mask,GaussPoint,Mesh);
+static  void  compute_Permeability_Inertial_Forces_Fluid(Nodal_Field,Matrix,Mask,Particle,Mesh);
 static  bool  check_convergence(Matrix,double,int,int);
-static Matrix assemble_Nodal_Tangent_Stiffness(Nodal_Field,Mask,GaussPoint,Mesh,Newmark_parameters);
+static Matrix assemble_Nodal_Tangent_Stiffness(Nodal_Field,Mask,Particle,Mesh,Newmark_parameters);
 static Tensor compute_stiffness_density(Tensor, Tensor, Tensor, double, Material);
 static Tensor compute_H_AB(Tensor,Tensor);
 static Tensor compute_L_AB(double,Tensor,Tensor,Tensor);
 static  void  solve_non_reducted_system(Nodal_Field,Matrix,Matrix);
 static  void  solve_reducted_system(Nodal_Field,Matrix,Matrix,Mask);
 static  void  update_Newmark_Nodal_Increments(Nodal_Field,Nodal_Field,Newmark_parameters);
-static  void  update_Particles(Nodal_Field,GaussPoint,Mesh,Mask);
-static  void  output_selector(Nodal_Field,Nodal_Field,GaussPoint,Mesh,Mask,int,int);
+static  void  update_Particles(Nodal_Field,Particle,Mesh,Mask);
+static  void  output_selector(Nodal_Field,Nodal_Field,Particle,Mesh,Mask,int,int);
 static  char  Error_message[MAXW];
 static  void  standard_error();
 
 /**************************************************************/
 
-void upw_Newmark_beta_Finite_Strains(Mesh FEM_Mesh, GaussPoint MPM_Mesh, int InitialStep)
+void upw_Newmark_beta_Finite_Strains(Mesh FEM_Mesh, Particle MPM_Mesh, int InitialStep)
 {
 
   /*
@@ -254,7 +254,7 @@ static Newmark_parameters compute_Newmark_parameters(
 /**************************************************************/
 
 static Matrix compute_Nodal_Effective_Mass(
-  GaussPoint MPM_Mesh,
+  Particle MPM_Mesh,
   Mesh FEM_Mesh,
   Mask ActiveNodes,
   double epsilon)
@@ -411,7 +411,7 @@ static Matrix compute_Nodal_Effective_Mass(
 
 static void compute_Gravity_field(
   Mask ActiveNodes,
-  GaussPoint MPM_Mesh,
+  Particle MPM_Mesh,
   int TimeStep)
 /*
 
@@ -459,7 +459,7 @@ static void compute_Gravity_field(
 
 static Nodal_Field compute_Nodal_Field(
   Matrix Effective_Mass,
-  GaussPoint MPM_Mesh,
+  Particle MPM_Mesh,
   Mesh FEM_Mesh,
   Mask ActiveNodes)
 /*
@@ -712,7 +712,7 @@ static Nodal_Field initialise_Nodal_Increments(
 static void update_Local_State(
   Nodal_Field D_upw, // Structure with the nodal values of the increment of displacementm and pore water pressure
   Mask ActiveNodes, // Information with the active nodes
-  GaussPoint MPM_Mesh, // Information related with the particles
+  Particle MPM_Mesh, // Information related with the particles
   Mesh FEM_Mesh) // Information related with the nodes
 /*
   
@@ -885,7 +885,7 @@ static Matrix compute_Residual(
   Nodal_Field upw_n,
   Nodal_Field D_upw,
   Mask ActiveNodes,
-  GaussPoint MPM_Mesh,
+  Particle MPM_Mesh,
   Mesh FEM_Mesh,
   int TimeStep)
 {
@@ -918,7 +918,7 @@ static void compute_Inertial_Forces_Mixture(
   Nodal_Field D_upw,
   Matrix Residual,
   Mask ActiveNodes,
-  GaussPoint MPM_Mesh,
+  Particle MPM_Mesh,
   Mesh FEM_Mesh)
 {
   int Ndim = NumberDimensions;
@@ -1016,7 +1016,7 @@ static void compute_Inertial_Forces_Mixture(
 static void compute_Internal_Forces_Mixture(
   Matrix Residual,
   Mask ActiveNodes,
-  GaussPoint MPM_Mesh,
+  Particle MPM_Mesh,
   Mesh FEM_Mesh)
 /*
 
@@ -1167,7 +1167,7 @@ static Tensor compute_total_first_Piola_Kirchhoff_stress(
 static void compute_Contact_Forces_Mixture(
   Matrix Residual,
   Mask ActiveNodes,
-  GaussPoint MPM_Mesh,
+  Particle MPM_Mesh,
   Mesh FEM_Mesh,
   int TimeStep)
 {
@@ -1306,7 +1306,7 @@ static void compute_Compresibility_Mass_Balance(
   Nodal_Field D_upw,
   Matrix Residual,
   Mask ActiveNodes,
-  GaussPoint MPM_Mesh,
+  Particle MPM_Mesh,
   Mesh FEM_Mesh)
 {
   int Nnodes_mask = ActiveNodes.Nactivenodes;
@@ -1420,7 +1420,7 @@ static void compute_Compresibility_Mass_Balance(
 static void compute_Jacobian_Rate_Mass_Balance(
   Matrix Residual,
   Mask ActiveNodes,
-  GaussPoint MPM_Mesh,
+  Particle MPM_Mesh,
   Mesh FEM_Mesh)
 /*
 
@@ -1508,7 +1508,7 @@ static void compute_Permeability_Mass_Balance(
   Nodal_Field D_upw,
   Matrix Residual,
   Mask ActiveNodes,
-  GaussPoint MPM_Mesh,
+  Particle MPM_Mesh,
   Mesh FEM_Mesh)
 /*
 
@@ -1692,7 +1692,7 @@ static void compute_Permeability_Inertial_Forces_Fluid(
   Nodal_Field D_upw,
   Matrix Residual,
   Mask ActiveNodes,
-  GaussPoint MPM_Mesh,
+  Particle MPM_Mesh,
   Mesh FEM_Mesh)
 /*
 
@@ -1911,7 +1911,7 @@ static bool check_convergence(
 static Matrix assemble_Nodal_Tangent_Stiffness(
   Nodal_Field D_upw,
   Mask ActiveNodes,
-  GaussPoint MPM_Mesh,
+  Particle MPM_Mesh,
   Mesh FEM_Mesh,
   Newmark_parameters Params)
 /*
@@ -2495,7 +2495,7 @@ static void update_Newmark_Nodal_Increments(
 
 static void update_Particles(
   Nodal_Field D_upw,
-  GaussPoint MPM_Mesh,
+  Particle MPM_Mesh,
   Mesh FEM_Mesh,
   Mask ActiveNodes)
 {
@@ -2621,7 +2621,7 @@ static void update_Particles(
 static void output_selector(
   Nodal_Field D_upw,
   Nodal_Field upw_n,
-  GaussPoint MPM_Mesh,
+  Particle MPM_Mesh,
   Mesh FEM_Mesh,
   Mask ActiveNodes,
   int TimeStep,
