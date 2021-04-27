@@ -38,19 +38,26 @@ Tensor rate_inifinitesimal_Strain__Particles__(Matrix Velocity, Matrix Gradient)
 
 /*******************************************************/
 
-Tensor infinitesimal_Strain__Particles__(Tensor Strain, Tensor Rate_Strain, double TimeStep)
+Tensor infinitesimal_Strain__Particles__(
+  Tensor Strain, 
+  Tensor Rate_Strain, 
+  double TimeStep)
 {
   int Ndim = NumberDimensions;
   /* Check in the input its is ok */
-  if ((Strain.Order == 2) && (Rate_Strain.Order == 2)){
+  if ((Strain.Order == 2) && (Rate_Strain.Order == 2))
+  {
     /* Update strain tensor with the rate of strain tensor */
-    for(int i = 0 ; i<Ndim ; i++){
-      for(int j = 0 ; j<Ndim ; j++){
-	Strain.N[i][j] += TimeStep*Rate_Strain.N[i][j];
+    for(int i = 0 ; i<Ndim ; i++)
+    {
+      for(int j = 0 ; j<Ndim ; j++)
+      {
+        Strain.N[i][j] += TimeStep*Rate_Strain.N[i][j];
       }
     }
   }
-  else{
+  else
+  {
     fprintf(stderr,"%s : %s %s !!! \n",
 	    "Error in infinitesimal_Strain__Particles__()",
 	    "The input should be",
@@ -63,7 +70,10 @@ Tensor infinitesimal_Strain__Particles__(Tensor Strain, Tensor Rate_Strain, doub
 
 /*******************************************************/
 
-void update_increment_Deformation_Gradient__Particles__(Tensor DF_p, Matrix DeltaU, Matrix gradient_p)
+void update_increment_Deformation_Gradient__Particles__(
+  Tensor DF_p, 
+  Matrix DeltaU, 
+  Matrix gradient_p)
 {
 
   /* Variable definition */
@@ -89,34 +99,37 @@ void update_increment_Deformation_Gradient__Particles__(Tensor DF_p, Matrix Delt
   }
   
   for(int I = 0 ; I<Nnodes_p ; I++)
-    {
+  {
 
-      /* Assign from matrix to tensor */
-      DeltaU_I = memory_to_tensor__TensorLib__(DeltaU.nM[I], 1);
-      gradient_I = memory_to_tensor__TensorLib__(gradient_p.nM[I], 1);
+    /* Assign from matrix to tensor */
+    DeltaU_I = memory_to_tensor__TensorLib__(DeltaU.nM[I], 1);
+    gradient_I = memory_to_tensor__TensorLib__(gradient_p.nM[I], 1);
       
-      /* Compute the dyadic product of the nodal velocity and the
-	 gradient of the shape functions */
-      gradient_DeltaU_I = dyadic_Product__TensorLib__(DeltaU_I, gradient_I);
+    /* Compute the dyadic product of the nodal velocity and the
+    gradient of the shape functions */
+    gradient_DeltaU_I = dyadic_Product__TensorLib__(DeltaU_I, gradient_I);
       
-      /* Ad the nodal contribution to the train tensor */
-      for(int i = 0 ; i<Ndim ; i++)
-	     {
-	       for(int j = 0 ; j<Ndim ; j++)
-	         {
-	           DF_p.N[i][j] += gradient_DeltaU_I.N[i][j];
-	         }
-      	}
-      
-      /* Free memory */
-      free__TensorLib__(gradient_DeltaU_I);
+    /* Ad the nodal contribution to the train tensor */
+    for(int i = 0 ; i<Ndim ; i++)
+    {
+      for(int j = 0 ; j<Ndim ; j++)
+      {
+        DF_p.N[i][j] += gradient_DeltaU_I.N[i][j];
+      }
     }
+      
+    /* Free memory */
+    free__TensorLib__(gradient_DeltaU_I);
+  }
   
 }
 
 /*******************************************************/
 
-void update_rate_increment_Deformation_Gradient__Particles__(Tensor dt_DF_p, Matrix DeltaV, Matrix gradient_p)
+void update_rate_increment_Deformation_Gradient__Particles__(
+  Tensor dt_DF_p,
+  Matrix DeltaV,
+  Matrix gradient_p)
 {
 
   /* Variable definition */
@@ -168,7 +181,10 @@ void update_rate_increment_Deformation_Gradient__Particles__(Tensor dt_DF_p, Mat
 
 /*******************************************************/
 
-void update_Deformation_Gradient_n1__Particles__(Tensor F_n1, Tensor F_n, Tensor f_n1)
+void update_Deformation_Gradient_n1__Particles__(
+  Tensor F_n1,
+  Tensor F_n,
+  Tensor f_n1)
 {
   int Ndim = NumberDimensions;
   double aux;

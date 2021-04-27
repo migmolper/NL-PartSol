@@ -67,7 +67,6 @@ static  void  compute_Permeability_Inertial_Forces_Fluid(Nodal_Field,Matrix,Mask
 static  bool  check_convergence(Matrix,double,int,int);
 static Matrix assemble_Nodal_Tangent_Stiffness(Nodal_Field,Mask,GaussPoint,Mesh,Newmark_parameters);
 static Tensor compute_stiffness_density(Tensor, Tensor, Tensor, double, Material);
-static Tensor compute_Nodal_Tangent_Stiffness_Material(Tensor,Tensor,Tensor);
 static Tensor compute_H_AB(Tensor,Tensor);
 static Tensor compute_L_AB(double,Tensor,Tensor,Tensor);
 static  void  solve_non_reducted_system(Nodal_Field,Matrix,Matrix);
@@ -753,8 +752,7 @@ static void update_Local_State(
   Tensor dFdt_n1_p; /* Rate of the deformation gradient of the soil skeleton (t = n + 1) */
   Tensor dt_DF_p; /* Rate of the increment of the deformation gradient of the soil skeleton */
   Tensor F_plastic_p; /* Plastic deformation gradient of the soil skeleton */
-  Tensor S_n1_p; /* Second Piola-Kirchhoff stress tensor (t = n + 1) */
-  Tensor C_n1_p; /* Right Cauchy-Green tensor (t = n + 1) */
+  Tensor P_n1_p; /* First Piola-Kirchhoff stress tensor (t = n + 1) */
   double Pw_0; /* Cauchy pore water pressure at t = 0 */
   double Pw_n1; /* Cauchy pore water pressure at t = n + 1 */
 
@@ -829,46 +827,14 @@ static void update_Local_State(
     dJ_dt_n1_p = compute_Jacobian_Rate__Particles__(J_n1_p,F_n1_p,dFdt_n1_p);
 
     /*
-      Compute the right Cauchy Green Tensor and its stress conjugate, 
-      the second Piola-Kirchhoff stress tensor (S) with an apropiate
-      integration rule.
+      Compute the first Piola-Kirchhoff stress tensor (P).
     */
-    C_n1_p = right_Cauchy_Green__Particles__(F_n1_p);
-    S_n1_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.Stress.nM[p],2);      
+    P_n1_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.Stress.nM[p],2);      
 
-    if(strcmp(MatProp_Soil_p.Type,"Saint-Venant-Kirchhoff") == 0)
+    
+    if(strcmp(MatProp_Soil_p.Type,"Neo-Hookean-Wriggers") == 0)
     {
-      S_n1_p = grad_energy_Saint_Venant_Kirchhoff(S_n1_p, C_n1_p, MatProp_Soil_p);
-    }
-    else if(strcmp(MatProp_Soil_p.Type,"Neo-Hookean-Wriggers") == 0)
-    {
-      S_n1_p = grad_energy_Neo_Hookean_Wriggers(S_n1_p, C_n1_p, J_n1_p, MatProp_Soil_p);
-    }
-    else if(strcmp(MatProp_Soil_p.Type,"Von-Mises") == 0)
-    {
-      F_plastic_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_plastic.nM[p],2);
-      Input_Plastic_Parameters.Cohesion = MPM_Mesh.Phi.cohesion.nV[p];
-      Input_Plastic_Parameters.EPS = MPM_Mesh.Phi.EPS.nV[p];
-
-      Output_Plastic_Parameters = finite_strains_plasticity_Von_Mises(S_n1_p, C_n1_p, F_plastic_p, F_n1_p, 
-                                                                      Input_Plastic_Parameters, MatProp_Soil_p, J_n1_p);
-
-      MPM_Mesh.Phi.cohesion.nV[p] = Output_Plastic_Parameters.Yield_stress;
-      MPM_Mesh.Phi.EPS.nV[p] = Output_Plastic_Parameters.EPS;
-    }
-    else if((strcmp(MatProp_Soil_p.Type,"Drucker-Prager-Plane-Strain") == 0) ||
-            (strcmp(MatProp_Soil_p.Type,"Drucker-Prager-Outer-Cone") == 0))
-    {
-      F_plastic_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_plastic.nM[p],2);
-      Input_Plastic_Parameters.Cohesion = MPM_Mesh.Phi.cohesion.nV[p];
-      Input_Plastic_Parameters.EPS = MPM_Mesh.Phi.EPS.nV[p];
-
-      Output_Plastic_Parameters = finite_strains_plasticity_Drucker_Prager_Sanavia(S_n1_p, C_n1_p, F_plastic_p, F_n1_p, 
-                                                                          Input_Plastic_Parameters, MatProp_Soil_p, J_n1_p);
-
-      MPM_Mesh.Phi.cohesion.nV[p] = Output_Plastic_Parameters.Cohesion;
-      MPM_Mesh.Phi.EPS.nV[p] = Output_Plastic_Parameters.EPS;
-
+      P_n1_p = compute_1PK_Stress_Tensor_Neo_Hookean_Wriggers(P_n1_p, F_n1_p, J_n1_p, MatProp_Soil_p);
     }
     else
     {
@@ -902,7 +868,6 @@ static void update_Local_State(
     /*
       Free memory 
     */
-    free__TensorLib__(C_n1_p);
     free__MatrixLib__(Nodal_D_Displacement_p);
     free__MatrixLib__(Nodal_D_Velocity_p);
     free__MatrixLib__(Nodal_D_Pw_p);
@@ -1067,7 +1032,6 @@ static void compute_Internal_Forces_Mixture(
 
   Tensor P_p; /* Total First Piola-Kirchhoff Stress tensor */
   Tensor P_effective_p; /* Effective First Piola-Kirchhoff Stress tensor */
-  Tensor S_effective_p; /* Effective Second Piola-Kirchhoff Stress tensor */
   double theta_n1_p; /* Kirchhoff pore fluid pressure t = n + 1 */
   Tensor InternalForcesDensity_Ap;
   Element Nodes_p; /* List of nodes for particle */
@@ -1111,8 +1075,7 @@ static void compute_Internal_Forces_Mixture(
     /*
       Get the first Piola-Kirchhoff stress tensor
     */
-    S_effective_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.Stress.nM[p], 2);
-    P_effective_p = matrix_product__TensorLib__(F_n1_p, S_effective_p);
+    P_effective_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.Stress.nM[p], 2);
 
     /*
       Get the Kirchhoff pore water pressure 
@@ -1164,7 +1127,6 @@ static void compute_Internal_Forces_Mixture(
       Free memory 
     */
     free__TensorLib__(FT_n_p);
-    free__TensorLib__(P_effective_p);
     free__TensorLib__(P_p);
     free__MatrixLib__(gradient_p);
     free(Nodes_p.Connectivity);
@@ -1989,35 +1951,34 @@ static Matrix assemble_Nodal_Tangent_Stiffness(
   Tensor D_a_p; // Particle increment of acceleration
   Tensor a_n1_p; // Particle acceleration at t = n + 1 
   Tensor a_n_p; // Particle acceleration at t = n 
+  Tensor gradPw; // Particle pore water pressure
   Tensor b_p; // External accelerations
   Tensor dyn_p; // Particle acceleration minus externa accelerations 
+  Tensor kdyn_p; // Product of the permeability tensor and the total acceleration
+  Tensor kgradPw_p; // Product of the permeability tensor and the gradient of the pore water pressure
   Tensor F_n_p; // Particle deformation gradient at t = n 
+  Tensor FT_n_p; // Transpose of the particle deformation gradient at t = n 
   Tensor F_n1_p; // Particle deformation gradient at t = n + 1
-  Tensor dFdt_n1_p; // Rate of the particle deformation gradient at t = n + 
-  Tensor FT_n1_p;
-  Tensor Fm1_n1_p;
-
-  Tensor FmT_n1_p; // Transpose of the inverse deformation gradient
-
-  Tensor FT_n_p;
-  Tensor gradient_pA; // Shape function gradient in the deformed configuration (Node A)
-  Tensor GRADIENT_pA; // Shape function gradient in the reference configuration (Node A)
-  Tensor gradient_pB; // Shape function gradient in the deformed configuration (Node B)
-  Tensor GRADIENT_pB; // Shape function gradient in the reference configuration (Node B)
-  Tensor GRADIENT_pA_o_GRADIENT_pB; // Diadic product between GRADIENT_pA and GRADIENT_pB
-  Tensor k__x__ag_p; // Product of the permeability tensor and the total acceleration
-
+  Tensor FT_n1_p; // Transpose of the particle deformation gradient at t = n + 1
+  Tensor Fm1_n1_p; // Inverse of the particle deformation gradient at t = n + 1
+  Tensor FmT_n1_p; // Inverse of the transposed particle deformation gradient at t = n + 1
+  Tensor dFdt_n1_p; // Rate of the particle deformation gradient at t = n + 1
+  double FmT__dd__dFdt_n1_p; // FmT : dFdt_n1
+  Tensor dFdt__x__Fm1_n1_p; // dFdt x Fm1_n1
+  Tensor gradient_pA, GRADIENT_pA; // Shape function gradient in the deformed/reference configurations (Node A)
+  Tensor gradient_pB, GRADIENT_pB; // Shape function gradient in the deformed/reference configurations (Node B)
   Tensor FmTGRADIENT_pA; // Covariant push-forward of the GRADIENT_pA vector
   Tensor FmTGRADIENT_pB; // Covariant push-forward of the GRADIENT_pB vector
+  Tensor FmTGRADIENT__o__FmTGRADIENT_pAB; // Diadic product between FmTGRADIENT_A and FmTGRADIENT_B
+  Tensor FmTGRADIENT__o__FmTGRADIENT_pBA; 
+  Tensor FmTGRADIENT__o__FmTGRADIENT_AB__d__kdyn_p; // Auxiliar tensors
+  Tensor FmTGRADIENT__o__FmTGRADIENT_BA__d__kdyn_p;
+  Tensor FmTGRADIENT__o__FmTGRADIENT_AB__d__kgradPw_p; // Auxiliar tensors
+  Tensor FmTGRADIENT__o__FmTGRADIENT_BA__d__kgradPw_p;
+  Tensor dFdt__x__Fm1_n1_dot_FmTGRADIENT_pB;
+  double FmTGRADIENT__o__FmTGRADIENT_AB__dd__k_p;
 
-  Tensor Fm1__x__GRADIENT_pB; // Linear mapping between Fm1_n1_p and GRADIENT_pB
-  Tensor a_n1__o__Fm1GRADIENT_pB; // Diadic product between a_n1_p and Fm1GRADIENT_pB
-  Tensor S_p; // Second Piola-Kirchhoff Stress tensor
-  Tensor C_AB; // Stiffness density contribution to the nodes A and B
-  Tensor H_AB; // B-free operator
-  Tensor L_AB; // B-free operator
-
-  Tensor Material_AB; // Contribution of the material non-linearities to the nodes A and B
+  Tensor Stiffness_density_pAB; // Stiffness density contribution to the nodes A and B
 
   double V0_p; // Volume of the particle in the reference configuration
   double m_p; // Mass of the particle
@@ -2032,21 +1993,8 @@ static Matrix assemble_Nodal_Tangent_Stiffness(
   double relative_rho_f_p; // Current relative  density of the fluid pahse 
   double theta_n1_p; // Kirchhoff pore water pressure
   double d_theta_n1_p_dt; // Rate of the Kirchhoff pore water pressure
-  double alef_p; // Auxiliar variable to store intermediate results 
-  double bet_p; // Auxiliar variable to store intermediate results 
-  double guimel_p; // Auxiliar variable to store intermediate results 
-  double dalet_p; // Auxiliar variable to store intermediate results
-  double hei_p; // Auxiliar variable to store intermediate results
-  double vav_p; // Auxiliar variable to store intermediate results
-  double zayn_p; // Auxiliar variable to store intermediate results
-  double jet_p; // Auxiliar variable to store intermediate results
-  double tet_p; // Auxiliar variable to store intermediate results
-  double samej_p; // Auxiliar variable to store intermediate results 
-  double tzadi_p; // Auxiliar variable to store intermediate results 
-  double resh_p; // Auxiliar variable to store intermediate results 
   double alpha_1 = Params.alpha_1; // Time integration parameter
   double alpha_4 = Params.alpha_4; // Time integration parameter
-  double Geometric_AB_p; // Geometric contribution
   double ShapeFunction_pA; // Nodal value of the shape function in node A
   double ShapeFunction_pB; // Nodal value of the shape function in node B
   double g = -9.81; // Gravity constant
@@ -2091,30 +2039,41 @@ static Matrix assemble_Nodal_Tangent_Stiffness(
     K_f_p = MatProp_Water_p.Compressibility; 
     phi_f_0 = Soil_Water_Mixtures[Mixture_idx].phi_f_0;
     phi_s_0 = Soil_Water_Mixtures[Mixture_idx].phi_s_0;
-    phi_f_p = MPM_Mesh.Phi.phi_f.nV[p];
-    rho_f_p = MPM_Mesh.Phi.rho_f.nV[p];
-    rho_s_p = MPM_Mesh.Phi.rho_s.nV[p];
-    relative_rho_f_p = phi_f_p*rho_f_p; 
-    k_p = Soil_Water_Mixtures[Mixture_idx].Permeability;
+    phi_f_p = MPM_Mesh.Phi.phi_f.nV[p]; // Volume fraction of fluid for particle p
+    phi_s_p = MPM_Mesh.Phi.phi_s.nV[p]; // Volume fraction of solid for particle p
+    rho_f_p = MPM_Mesh.Phi.rho_f.nV[p]; // Intrinsic density of fluid for particle p
+    rho_s_p = MPM_Mesh.Phi.rho_s.nV[p]; // Intrinsic density of solid for particle p
+    relative_rho_f_p = phi_f_p*rho_f_p; // Relative density of fluid for particle p
+    relative_rho_s_p = phi_s_p*rho_s_p; // Relative density of solid for particle p
+    relative_rho_p = MPM_Mesh.Phi.rho.nV[p]; // Relative density of mixture for particle p
+    k_p = Soil_Water_Mixtures[Mixture_idx].Permeability; // Particle permeability
 
     /*
-      Compute current particle acceleration at t = n + 1
+      Get some nodal values
     */
     Nodal_D_Acceleration_p = get_U_set_field_upw__MeshTools__(D_upw.d2_value_dt2, Nodes_p, ActiveNodes);
+    Nodal_Pw_n_p = get_Pw_set_field_upw__MeshTools__(upw_n.value, Nodes_p, ActiveNodes);
+    Nodal_D_Pw_p = get_Pw_set_field_upw__MeshTools__(D_upw.value, Nodes_p, ActiveNodes);
+    
+    /*
+      Compute auxiliar particle velocity in the next time step
+    */
     D_a_p = interpolate_vectorial__MeshTools__(Nodal_D_Acceleration_p, ShapeFunction_p);
     a_n_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.acc.nM[p],1);
     a_n1_p = addition__TensorLib__(a_n_p, D_a_p);
 
     /*
-      Compute dynamic terms (a-g)
+      Compute current particle gradient of pore water pressure
+    */
+    gradPw = compute_Pore_water_pressure_gradient_n1(Nodal_Pw_n_p,Nodal_D_Pw_p,gradient_p);
+
+    /*
+      Compute auxiliar terms
     */
     b_p = MPM_Mesh.b;
     dyn_p = subtraction__TensorLib__(a_n1_p, b_p);
-
-    /*
-      Compute (k_p x dyn_p)
-    */
-    k__x__ag_p = vector_linear_mapping__TensorLib__(k_p,dyn_p);
+    kdyn_p = vector_linear_mapping__TensorLib__(k_p,dyn_p);
+    kgradPw_p = vector_linear_mapping__TensorLib__(k_p,gradPw):
       
     /*
       Take the values of the deformation gradient ant t = n and t = n + 1. 
@@ -2128,62 +2087,21 @@ static Matrix assemble_Nodal_Tangent_Stiffness(
     FT_n1_p = transpose__TensorLib__(F_n1_p);
     Fm1_n1_p = Inverse__TensorLib__(F_n1_p);
     FmT_n1_p = transpose__TensorLib__(Fm1_n1_p);
+    FmT__dd__dFdt_n1_p = inner_product__TensorLib__(FmT_n1_p, dFdt_n1_p);
+    dFdt__x__Fm1_n1_p = matrix_product__TensorLib__(dFdt_n1_p,Fm1_n1_p);
 
     /*
       Get the jacobian of the deformation gradient
       and its rate
     */
-    J_p = MPM_Mesh.Phi.J.nV[p];;
+    J_p = MPM_Mesh.Phi.J.nV[p];
     dJ_dt_n1_p = MPM_Mesh.Phi.dJ_dt.nV[p];
 
     /*
-      Get the first Piola-Kirchhoff stress tensor of the soil skeleton,
-      the Kirchhoff pore water pressure and its rate
+      Get Kirchhoff pore water pressure and its rate
     */
-    S_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.Stress.nM[p], 2);
     theta_n1_p = MPM_Mesh.Phi.Pw_n1.nV[p];
     d_theta_n1_p_dt = MPM_Mesh.Phi.d_Pw_dt.nV[p];
-
-    /*
-      Compute the value of some auxiliar variables using
-      some material maginudes defined before
-    */
-    alef_p = (1/J_p)*(phi_f_0*rho_f_p - phi_s_0*rho_s_p - (relative_rho_f_p*theta_n1_p)/K_f_p);
-    bet_p = relative_rho_f_p/(K_f_p*J_p);
-    guimel_p = (d_theta_n1_p_dt*phi_f_0*rho_f_p)/(K_f_p*J_p) - (theta_n1_p*d_theta_n1_p_dt*relative_rho_f_p)/(K_f_p*K_f_p*J_p);
-    dalet_p = (d_theta_n1_p_dt*relative_rho_f_p)/(K_f_p*K_f_p*J_p);
-    hei_p = relative_rho_f_p*alpha_4/K_f_p;
-    vav_p = (dJ_dt_n1_p*rho_f_p)/(K_f_p*J_p);
-    zayn_p = (rho_f_p*theta_n1_p*dJ_dt_n1_p)/(K_f_p*J_p);
-    jet_p = rho_f_p*J_p*(alpha_4 + inner_product__TensorLib__(FmT_n1_p, dFdt_n1_p));
-    tet_p = rho_f_p*J_p;   
-
-
-
-
-    (dJ_dt_n1_p*rho_f_p)/(K_f_p*J_p) + ;
-
-    bet_p = 
-
-    guimel_p = 
-
-     = relative_rho_f_p/K_f_p;
-
-    hei_p = ;
-
-     = 
-
-     = (rho_f_p*theta_n1_p)/(g*K_f_p);
-
-     = (rho_f_p*J_p)/(g*K_f_p);
-
-    tet_p = (alpha_1*rho_f_p*J_p)/g;
-
-    samej_p = ;
-
-    tzadi_p = 
-
-    resh_p = ;
 
 
     for(int A = 0 ; A<NumNodes_p ; A++)
@@ -2194,21 +2112,16 @@ static Matrix assemble_Nodal_Tangent_Stiffness(
       ShapeFunction_pA = ShapeFunction_p.nV[A];
 
       /*
-        Compute the gradient in the reference configuration 
+        Compute the gradient in the reference configuration and the covariant pushforward
       */
       gradient_pA = memory_to_tensor__TensorLib__(gradient_p.nM[A], 1);
       GRADIENT_pA = vector_linear_mapping__TensorLib__(FT_n_p,gradient_pA);
-
+      FmTGRADIENT_pA = vector_linear_mapping__TensorLib__(FmT_n1_p,GRADIENT_pA);
       /*
         Get the node of the mesh for the contribution 
       */
       Ap = Nodes_p.Connectivity[A];
       A_mask = ActiveNodes.Nodes2Mask[Ap];
-
-      /*
-        Covariant push-forward of the GRADIENT_pA vector
-      */
-      FmTGRADIENT_pA = vector_linear_mapping__TensorLib__(FmT_n1_p,GRADIENT_pA);
 
 
       for(int B = 0 ; B<NumNodes_p ; B++)
@@ -2219,37 +2132,41 @@ static Matrix assemble_Nodal_Tangent_Stiffness(
         ShapeFunction_pB = ShapeFunction_p.nV[B];
 
         /*
-          Compute the gradient in the reference configuration 
+          Compute the gradient in the reference configuration and the covariant pushforward
         */
         gradient_pB = memory_to_tensor__TensorLib__(gradient_p.nM[B], 1);
         GRADIENT_pB = vector_linear_mapping__TensorLib__(FT_n_p,gradient_pB);
+        FmTGRADIENT_pB = vector_linear_mapping__TensorLib__(FmT_n1_p,GRADIENT_pB);
 
         /*
           Get the node of the mesh for the contribution 
         */
         Bp = Nodes_p.Connectivity[B];
         B_mask = ActiveNodes.Nodes2Mask[Bp];
-
+        
         /*
-          Covariant push-forward of the GRADIENT_pB vector
+          Compute operators
         */
-        FmTGRADIENT_pB = vector_linear_mapping__TensorLib__(FmT_n1_p,GRADIENT_pB);
+        FmTGRADIENT__o__FmTGRADIENT_pAB = dyadic_Product__TensorLib__(FmTGRADIENT_pA, FmTGRADIENT_pB); 
+        FmTGRADIENT__o__FmTGRADIENT_pBA = dyadic_Product__TensorLib__(FmTGRADIENT_pB, FmTGRADIENT_pA); 
+        dFdt__x__Fm1_n1_dot_FmTGRADIENT_pB = vector_linear_mapping__TensorLib__(dFdt__x__Fm1_n1_p,FmTGRADIENT_pB);
+        FmTGRADIENT__o__FmTGRADIENT_AB__d__kdyn_p = vector_linear_mapping__TensorLib__(FmTGRADIENT__o__FmTGRADIENT_pAB,kdyn_p);
+        FmTGRADIENT__o__FmTGRADIENT_BA__d__kdyn_p = vector_linear_mapping__TensorLib__(FmTGRADIENT__o__FmTGRADIENT_pBA,kdyn_p);
+        FmTGRADIENT__o__FmTGRADIENT_AB__d__kgradPw_p = vector_linear_mapping__TensorLib__(FmTGRADIENT__o__FmTGRADIENT_pAB,kgradPw_p);
+        FmTGRADIENT__o__FmTGRADIENT_BA__d__kgradPw_p = vector_linear_mapping__TensorLib__(FmTGRADIENT__o__FmTGRADIENT_pBA,kgradPw_p);
+        FmTGRADIENT__o__FmTGRADIENT_AB__dd__k_p = inner_product__TensorLib__(FmTGRADIENT__o__FmTGRADIENT_pAB, k_p);
+        
 
-
-        /*
-          Compute B-free operators -> [C : (delta o vec_b)]·vec_a = C{·vec_a,vec_b}·delta
-        */
-        GRADIENT_pA_o_GRADIENT_pB = dyadic_Product__TensorLib__(GRADIENT_pA,GRADIENT_pB);
-        H_AB = compute_H_AB(FmTGRADIENT_pA,FmTGRADIENT_pB)
-        L_AB = compute_L_AB(ShapeFunction_pA,Fm1_n1_p,dFdt_n1_p,FmTGRADIENT_pB);
-
-        /*
-          Compute geometric and material terms of the internal forces linearisation
-        */
-        Geometric_AB_p = inner_product__TensorLib__(S_p, GRADIENT_pA_o_GRADIENT_pB);
-        C_AB = compute_stiffness_density(GRADIENT_pA,GRADIENT_pB, F_n1_p, J_p, MatProp_Soil_p);
-        Material_AB = compute_Nodal_Tangent_Stiffness_Material(F_n1_p,C_AB,FT_n1_p);
-
+        if(strcmp(MatProp_p.Type,"Neo-Hookean-Wriggers") == 0)
+        {
+          Stiffness_density_pAB = compute_stiffness_density_Neo_Hookean_Wriggers(GRADIENT_pA,GRADIENT_pB,F_n1_p,J_p,MatProp_p);
+        }
+        else
+        {
+          fprintf(stderr,"%s : %s %s %s \n","Error in assemble_Nodal_Tangent_Stiffness()",
+            "The material",MatProp_p.Type,"has not been yet implemnented");
+          exit(EXIT_FAILURE);
+        }
         
         /*
           Add the geometric and material contribution to each dof for the assembling process
@@ -2259,9 +2176,9 @@ static Matrix assemble_Nodal_Tangent_Stiffness(
           /*
             Compute the contribution of the linearised terms to the D_phi-D_theta direcction. 
           */
-          Tangent_Stiffness.nM[A_mask*Ndof+i][B_mask*Ndof+Ndim] += 
-          bet_p*ShapeFunction_pA*dyn_p.n[i]*ShapeFunction_pB*V0_p - 
-          FmTGRADIENT_pA.n[i]*ShapeFunction_pB*V0_p;
+          Tangent_Stiffness.nM[A_mask*Ndof+i][B_mask*Ndof+Ndim] +=  
+          + (relative_rho_f_p/(K_f_p*J_p))*ShapeFunction_pA*ShapeFunction_pB*dyn_p.n[i]*V0_p
+          - FmTGRADIENT_pA.n[i]*ShapeFunction_pB*V0_p;
 
           for(int j = 0 ; j<Ndim ; j++)
           {
@@ -2269,20 +2186,27 @@ static Matrix assemble_Nodal_Tangent_Stiffness(
               Compute the contribution of the linearised terms to the D_phi-D_phi direcction. 
             */
             Tangent_Stiffness.nM[A_mask*Ndof+i][B_mask*Ndof+j] += 
-            alef_p*ShapeFunction_pA*dyn_o_FmTGRADIENT_pB.N[i][j]*V0_p +
-            (i==j)*alpha_1*m_p*ShapeFunction_pA*ShapeFunction_pB +
-            (i==j)*Geometric_AB_p*V0_p +
-            Material_AB.N[i][j]*V0_p -
-            theta_n1_p*H_AB.N[i][j]*V0_p;
-
+            + (phi_f_0*rho_f_p/J_p -
+              phi_s_0*rho_s_p/J_p -
+              (relative_rho_f_p*theta_n1_p)/(K_f_p*J_p))*ShapeFunction_pA*dyn_o_FmTGRADIENT_pB.N[i][j]*V0_p
+            + alpha_1*relative_rho_p*ShapeFunction_pA*ShapeFunction_pB*(i==j)*V0_p
+            + theta_n1_p*FmTGRADIENT__o__FmTGRADIENT_pAB.N[j][i]*V0_p
+            + Stiffness_density_pAB.N[i][j]*V0_p;
             /*
               Compute the contribution of the linearised terms to the D_theta-D_phi direcction. 
             */
-            Tangent_Stiffness.nM[A_mask*Ndof+Ndim][B_mask*Ndof+j] +=
-            guimel_p*ShapeFunction_pA*FmTGRADIENT_pB.n[j]*V0_p -
-            zayn_p*ShapeFunction_pA*FmTGRADIENT_pB.n[j]*V0_p +
-            jet_p*ShapeFunction_pA*FmTGRADIENT_pB.n[j]*V0_p -
-            tet_p*ShapeFunction_pA*L_AB.n[j]*V0_p;
+            Tangent_Stiffness.nM[A_mask*Ndof+Ndim][B_mask*Ndof+j] += 
+            + ((d_theta_n1_p_dt*phi_f_0*rho_f_p)/(K_f_p*J_p) - 
+              (theta_n1_p*d_theta_n1_p_dt*relative_rho_f_p)/(K_f_p*K_f_p*J_p) - 
+              (rho_f_p*theta_n1_p*dJ_dt_n1_p)/(K_f_p*J_p) + 
+              rho_f_p*J_p*alpha_4 + 
+              rho_f_p*J_p*FmT__dd__dFdt_n1_p)*ShapeFunction_pA*FmTGRADIENT_pB.n[j]*V0_p
+            - rho_f_p*J_p*ShapeFunction_pA*dFdt__x__Fm1_n1_dot_FmTGRADIENT_pB.n[j]*V0_p 
+            + (1/g)*FmTGRADIENT__o__FmTGRADIENT_AB__d__kgradPw_p.n[j]*V0_p
+            + (1/g)*FmTGRADIENT__o__FmTGRADIENT_AB__dd__k_p*gradPw.n[j]*V0_p 
+            + (rho_f_p/(g*K_f_p))*FmTGRADIENT__o__FmTGRADIENT_BA__d__kdyn_p.n[j]*V0_p
+            - (rho_f_p*J_p/g)*FmTGRADIENT__o__FmTGRADIENT_BA__d__kdyn_p.n[j]*V0_p
+            + (rho_f_p*J_p/g)*FmTGRADIENT__o__FmTGRADIENT_AB__d__kdyn_p.n[j]*V0_p;
           }
         }
 
@@ -2290,19 +2214,24 @@ static Matrix assemble_Nodal_Tangent_Stiffness(
           Compute the contribution of the linearised terms to the D_theta-D_theta direcction.
         */
         Tangent_Stiffness.nM[A_mask*Ndof+Ndim][B_mask*Ndof+Ndim] =+ 
-        dalet_p*ShapeFunction_pA*ShapeFunction_pB*V0_p +
-        hei_p*ShapeFunction_pA*ShapeFunction_pB*V0_p +
-        vav_p*ShapeFunction_pA*ShapeFunction_pB*V0_p;
+        ((d_theta_n1_p_dt*relative_rho_f_p)/(K_f_p*K_f_p*J_p) + 
+          relative_rho_f_p*alpha_4/K_f_p +
+          (dJ_dt_n1_p*rho_f_p)/(K_f_p*J_p))*ShapeFunction_pA*ShapeFunction_pB*V0_p
+        - (1/g)*FmTGRADIENT__o__FmTGRADIENT_AB__dd__k_p*V0_p;
 
         /*
           Free memory 
         */
         free__TensorLib__(GRADIENT_pB);
         free__TensorLib__(FmTGRADIENT_pB);
-        free__TensorLib__(GRADIENT_pA_o_GRADIENT_pB);
-        free__TensorLib__(C_AB);
-        free__TensorLib__(Material_AB);
-        free__TensorLib__(H_AB);
+        free__TensorLib__(FmTGRADIENT__o__FmTGRADIENT_pAB); 
+        free__TensorLib__(FmTGRADIENT__o__FmTGRADIENT_pBA); 
+        free__TensorLib__(FmTGRADIENT__o__FmTGRADIENT_AB__d__kdyn_p);
+        free__TensorLib__(FmTGRADIENT__o__FmTGRADIENT_BA__d__kdyn_p);
+        free__TensorLib__(FmTGRADIENT__o__FmTGRADIENT_AB__d__kgradPw_p);
+        free__TensorLib__(FmTGRADIENT__o__FmTGRADIENT_BA__d__kgradPw_p);
+        free__TensorLib__(dFdt__x__Fm1_n1_dot_FmTGRADIENT_pB);
+        free__TensorLib__(Stiffness_density_pAB);
       }
 
       /*
@@ -2320,10 +2249,13 @@ static Matrix assemble_Nodal_Tangent_Stiffness(
     free__TensorLib__(FT_n1_p);
     free__TensorLib__(Fm1_n1_p);
     free__TensorLib__(FmT_n1_p);
+    free__TensorLib__(dFdt__x__Fm1_n1_p);
     free__TensorLib__(D_a_p);
     free__TensorLib__(a_n1_p);
     free__TensorLib__(dyn_p);
-    free__TensorLib__(kag_p);
+    free__TensorLib__(gradPw);
+    free__TensorLib__(kdyn_p);
+    free__TensorLib__(kgradPw_p);
     free__MatrixLib__(ShapeFunction_p);
     free__MatrixLib__(gradient_p);
     free__MatrixLib__(Nodal_D_Acceleration_p);
@@ -2336,115 +2268,6 @@ static Matrix assemble_Nodal_Tangent_Stiffness(
   */
   return Tangent_Stiffness;
 }
-
-/**************************************************************/
-
-static Tensor compute_stiffness_density(
-  Tensor GRADIENT_pA,
-  Tensor GRADIENT_pB,
-  Tensor F_p, 
-  double J_p,
-  Material MatProp_p)
-{
-
-  Tensor C_AB;
-
-  if(strcmp(MatProp_p.Type,"Saint-Venant-Kirchhoff") == 0)
-  {
-    C_AB = compute_stiffness_density_Saint_Venant_Kirchhoff(GRADIENT_pA, GRADIENT_pB, MatProp_p);
-  }
-  else if(strcmp(MatProp_p.Type,"Neo-Hookean-Wriggers") == 0)
-  {
-
-    Tensor C_p = right_Cauchy_Green__Particles__(F_p);
-      
-    C_AB = compute_stiffness_density_Neo_Hookean_Wriggers(GRADIENT_pA,GRADIENT_pB,C_p, J_p,MatProp_p);
-    
-    free__TensorLib__(C_p);
-  }
-  else
-  {
-    fprintf(stderr,"%s : %s %s %s \n","Error in compute_stiffness_density()",
-      "The material",MatProp_p.Type,"has not been yet implemnented");
-    exit(EXIT_FAILURE);
-  }
-
-  return C_AB;
-}
-
-/**************************************************************/
-
-static Tensor compute_Nodal_Tangent_Stiffness_Material(
-  Tensor F_n1_p,
-  Tensor C_AB,
-  Tensor Ft_n1_p)
-{
-  int Ndim = NumberDimensions;
-
-  Tensor C_x_Ft = matrix_product__TensorLib__(C_AB, Ft_n1_p);
-  Tensor F_x_C_x_Ft = matrix_product__TensorLib__(F_n1_p, C_x_Ft);
-  
-  free__TensorLib__(C_x_Ft);
-  
-  return F_x_C_x_Ft;
-  
-}
-
-/**************************************************************/
-
-static Tensor compute_H_AB(
-  Tensor FmTGRADIENT_pA,
-  Tensor FmTGRADIENT_pB)
-{
-
-  Tensor H_AB = dyadic_Product__TensorLib__(FmTGRADIENT_pA, FmTGRADIENT_pB);
-
-  return H_AB;
-}
-
-/**************************************************************/
-
-static Tensor compute_L_AB(
-  double ShapeFunction_pA,
-  Tensor Fm1_n1_p,
-  Tensor dFdt_n1_p,
-  Tensor FmTGRADIENT_pB)
-{
-  int Ndim = NumberDimensions;
-
-  Tensor dFdt_x_Fm1_n1_p = matrix_product__TensorLib__(dFdt_n1_p, Fm1_n1_p);
-  Tensor L_AB = alloc__TensorLib__(1);
-
-  for(int i = 0 ; i<Ndim ; i++)
-  {
-    for(int j = 0 ; j<Ndim ; j++)
-    {
-      L_AB.n[i] += dFdt_x_Fm1_n1_p.N[j][i]*FmTGRADIENT_pB.n[j];
-    }
-  }  
-
-  free__TensorLib__(dFdt_x_Fm1_n1_p);
-
-  return L_AB;
-}
-
-/**************************************************************/
-
-//static Tensor compute_FK_B(
-//  Tensor K_p,
-//  Tensor GRADIENT_pA,
-//  Tensor GRADIENT_pB,
-//  Tensor Fm1_n1_p,
-//  Tensor gradient_theta_w_p)
-//{
-//  Tensor FmT_n1_p = transpose__TensorLib__(Fm1_n1_p);
-//  Tensor transpose_K_p = transpose__TensorLib__(K_p);
-//  Tensor T_Fm1_n1_p__x__GRADIENT_pA = vector_linear_mapping__TensorLib__(FmT_n1_p,GRADIENT_pA);
-//  Tensor T_Fm1_n1_p__x__GRADIENT_pB = vector_linear_mapping__TensorLib__(FmT_n1_p,GRADIENT_pB);
-//  Tensor AUX_1 = vector_linear_mapping__TensorLib__(transpose_K_p,T_Fm1_n1_p__x__GRADIENT_pB);
-
-//  return ;
-//} 
 
 /**************************************************************/
 
