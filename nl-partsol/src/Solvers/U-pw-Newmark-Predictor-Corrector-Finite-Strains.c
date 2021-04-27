@@ -1051,7 +1051,7 @@ static void update_Local_State(
       /*
         Compute the rate of the jacobian
       */
-      grad_Nodal_Velocity_p = compute_vector_magnitude_gradient__MeshTools__(Nodal_Velocity_p,gradient_p);
+      grad_Nodal_Velocity_p = interpolate_vectorial_magnitude_gradient__MeshTools__(Nodal_Velocity_p,gradient_p);
       GRAD_Nodal_Velocity_p = vector_linear_mapping__TensorLib__(FT_n1_p,grad_Nodal_Velocity_p);
       dJ_dt_n1_p = I1__TensorLib__(GRAD_Nodal_Velocity_p);
 

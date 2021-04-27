@@ -681,7 +681,7 @@ int get_closest_node__MeshTools__(
 
 /*********************************************************************/
 
-double interpolate_scalar__MeshTools__(
+double interpolate_scalar_magnitude__MeshTools__(
   Matrix A, 
   Matrix N_p)
 {
@@ -698,7 +698,46 @@ double interpolate_scalar__MeshTools__(
 
 /**************************************************************/
 
-Tensor compute_vector_magnitude_gradient__MeshTools__(
+Tensor interpolate_vectorial_magnitude__MeshTools__(
+  Matrix Nodal_Variable,
+  Matrix ShapeFunction_p)
+/*
+
+*/
+ {
+
+  /* Variable definition */
+  int Ndim = NumberDimensions;
+  int Nnodes_p = Nodal_Variable.N_rows; 
+  double ShapeFunction_pI;
+  Tensor Variable_I;
+  Tensor Variable_p = alloc__TensorLib__(1);
+
+  for(int I = 0 ; I<Nnodes_p ; I++)
+  {
+
+    /*
+      Assign from matrix
+    */
+    Variable_I = memory_to_tensor__TensorLib__(Nodal_Variable.nM[I], 1);
+    ShapeFunction_pI = ShapeFunction_p.nV[I];
+
+    /*
+      Compute nodal contribution
+    */
+    for(int i = 0 ; i<Ndim ; i++)
+    {
+      Variable_p.n[i] += ShapeFunction_pI*Variable_I.n[i];
+    } 
+  }
+
+  return Variable_p;
+ } 
+
+
+/**************************************************************/
+
+Tensor interpolate_vectorial_magnitude_gradient__MeshTools__(
   Matrix Variable_p,
   Matrix gradient_p)
 /*

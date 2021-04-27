@@ -139,6 +139,7 @@ Tensor Identity__TensorLib__();
 Tensor Inverse__TensorLib__(Tensor);
 Tensor Solve_system__TensorLib__(Tensor, Tensor);
 Tensor transpose__TensorLib__(Tensor);
+Tensor addition__TensorLib__(Tensor, Tensor);
 Tensor subtraction__TensorLib__(Tensor, Tensor);
 double inner_product__TensorLib__(Tensor, Tensor);
 Tensor vector_product__TensorLib__(Tensor, Tensor);
