@@ -131,7 +131,6 @@ Mask generate_Mask_for_static_condensation__MeshTools__(
 
 /**************************************************************/
 
-
 Matrix get_set_field__MeshTools__(
   Matrix Field,
   Element Nodes_p,
@@ -180,6 +179,65 @@ else
 }
 
 return Field_Ap;
+}
+
+/*********************************************************************/
+
+Matrix get_U_set_field_upw__MeshTools__(Matrix Field_upw, Element Nodes_p, Mask ActiveNodes)
+{
+  int Nnodes = Nodes_p.NumberNodes;
+  int Ndim = NumberDimensions;
+  Matrix Field_U_Ap = allocZ__MatrixLib__(Nnodes,Ndim);
+  int Ap;
+  int A_mask;
+
+
+  for(int A = 0 ; A<Nnodes ; A++)
+  {
+    /* 
+      Get the node in the mass matrix with the mask
+    */
+    Ap = Nodes_p.Connectivity[A];
+    A_mask = ActiveNodes.Nodes2Mask[Ap];
+     
+    /*
+      Get nodal field for particle p
+    */
+    for(int i = 0 ; i<Ndim ; i++)
+    {
+      Field_U_Ap.nM[A][i] = Field_upw.nM[A_mask][i];
+    }
+  }
+
+  return Field_U_Ap;
+}
+
+/*********************************************************************/
+
+Matrix get_Pw_set_field_upw__MeshTools__(Matrix Field_upw, Element Nodes_p, Mask ActiveNodes)
+{
+  int Nnodes = Nodes_p.NumberNodes;
+  int Ndim = NumberDimensions;
+  Matrix Field_pw_Ap = allocZ__MatrixLib__(Nnodes,1);
+  int Ap;
+  int A_mask;
+
+
+  for(int A = 0 ; A<Nnodes ; A++)
+  {
+    /* 
+      Get the node in the mass matrix with the mask
+    */
+    Ap = Nodes_p.Connectivity[A];
+    A_mask = ActiveNodes.Nodes2Mask[Ap];
+    
+    /*
+      Get nodal field for particle p
+    */
+    Field_pw_Ap.nV[A] = Field_upw.nM[A_mask][Ndim];
+  }
+
+  return Field_pw_Ap;
 }
 
 /*********************************************************************/
@@ -623,7 +681,7 @@ int get_closest_node__MeshTools__(
 
 /*********************************************************************/
 
-double interpolate_scalar__MeshTools__(
+double interpolate_scalar_magnitude__MeshTools__(
   Matrix A, 
   Matrix N_p)
 {
@@ -637,6 +695,92 @@ double interpolate_scalar__MeshTools__(
 
   return A_p; 
 }
+
+/**************************************************************/
+
+Tensor interpolate_vectorial_magnitude__MeshTools__(
+  Matrix Nodal_Variable,
+  Matrix ShapeFunction_p)
+/*
+
+*/
+ {
+
+  /* Variable definition */
+  int Ndim = NumberDimensions;
+  int Nnodes_p = Nodal_Variable.N_rows; 
+  double ShapeFunction_pI;
+  Tensor Variable_I;
+  Tensor Variable_p = alloc__TensorLib__(1);
+
+  for(int I = 0 ; I<Nnodes_p ; I++)
+  {
+
+    /*
+      Assign from matrix
+    */
+    Variable_I = memory_to_tensor__TensorLib__(Nodal_Variable.nM[I], 1);
+    ShapeFunction_pI = ShapeFunction_p.nV[I];
+
+    /*
+      Compute nodal contribution
+    */
+    for(int i = 0 ; i<Ndim ; i++)
+    {
+      Variable_p.n[i] += ShapeFunction_pI*Variable_I.n[i];
+    } 
+  }
+
+  return Variable_p;
+ } 
+
+
+/**************************************************************/
+
+Tensor interpolate_vectorial_magnitude_gradient__MeshTools__(
+  Matrix Variable_p,
+  Matrix gradient_p)
+/*
+
+*/
+ {
+
+  /* Variable definition */
+  int Ndim = NumberDimensions;
+  int Nnodes_p = Variable_p.N_rows; 
+  Tensor Variable_pI;
+  Tensor gradient_I;
+  Tensor Variable__o__gradient_Ip;
+  Tensor grad_variable_p = alloc__TensorLib__(2);
+
+  for(int I = 0 ; I<Nnodes_p ; I++)
+  {
+
+    /*
+      Assign from matrix
+    */
+    Variable_pI = memory_to_tensor__TensorLib__(Variable_p.nM[I], 1);
+    gradient_I = memory_to_tensor__TensorLib__(gradient_p.nM[I], 1);
+
+    Variable__o__gradient_Ip = dyadic_Product__TensorLib__(Variable_pI,gradient_I);
+
+    /*
+      Compute nodal contribution
+    */
+    for(int i = 0 ; i<Ndim ; i++)
+    {
+      for(int j = 0 ; j<Ndim ; j++)
+      {
+        grad_variable_p.N[i][j] += Variable__o__gradient_Ip.N[i][j];
+      }
+    } 
+
+    free__TensorLib__(Variable__o__gradient_Ip);
+
+  }
+
+  return grad_variable_p;
+ } 
 
 /*********************************************************************/
 

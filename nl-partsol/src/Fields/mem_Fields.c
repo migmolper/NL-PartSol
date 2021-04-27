@@ -50,16 +50,22 @@ Fields allocate_Fields(int NumParticles)
   Phi.F_n1 = allocZ__MatrixLib__(NumParticles,Ndim*Ndim);
   strcpy(Phi.F_n1.Info,"Deformation gradient at t = n + 1");
   Phi.DF = allocZ__MatrixLib__(NumParticles,Ndim*Ndim);
-  strcpy(Phi.DF.Info,"Increment of deformation gradient");
+  strcpy(Phi.DF.Info,"Increment deformation gradient");
 
   for(int p = 0 ; p<NumParticles ; p++)
+  {
+    for(int i = 0 ; i<Ndim ; i++)
     {
-      for(int i = 0 ; i<Ndim ; i++)
-	     {
-	       Phi.F_n.nM[p][i + i*Ndim] = 1.0;	  
-	     }
-      
-    }
+      Phi.F_n.nM[p][i + i*Ndim] = 1.0;	  
+    }  
+  }
+
+  Phi.dt_F_n = allocZ__MatrixLib__(NumParticles,Ndim*Ndim);
+  strcpy(Phi.dt_F_n.Info,"Rate of deformation gradient at t = n");
+  Phi.dt_F_n1 = allocZ__MatrixLib__(NumParticles,Ndim*Ndim);
+  strcpy(Phi.dt_F_n1.Info,"Rate of deformation gradient at t = n + 1");
+  Phi.dt_DF = allocZ__MatrixLib__(NumParticles,Ndim*Ndim);
+  strcpy(Phi.dt_DF.Info,"Rate of increment deformation gradient");
 
   /*!
     Plastic deformation gradient field (Tensor) + Initialise it with the indentity
@@ -68,13 +74,12 @@ Fields allocate_Fields(int NumParticles)
   strcpy(Phi.F_plastic.Info,"Plastic deformation gradient");
  
   for(int p = 0 ; p<NumParticles ; p++)
+  {
+    for(int i = 0 ; i<Ndim ; i++)
     {
-      for(int i = 0 ; i<Ndim ; i++)
-	{
-	  Phi.F_plastic.nM[p][i + i*Ndim] = 1.0;	  
-	}
-      
+      Phi.F_plastic.nM[p][i + i*Ndim] = 1.0;	  
     }
+  }
   
   /*!
     Strain_If field (Scalar) 
@@ -189,13 +194,19 @@ Fields allocate_upw_vars__Fields__(int NumParticles)
   strcpy(Phi.DF.Info,"Increment of deformation gradient");
 
   for(int p = 0 ; p<NumParticles ; p++)
+  {
+    for(int i = 0 ; i<Ndim ; i++)
     {
-      for(int i = 0 ; i<Ndim ; i++)
-       {
-         Phi.F_n.nM[p][i + i*Ndim] = 1.0;   
-       }
-      
+      Phi.F_n.nM[p][i + i*Ndim] = 1.0;   
     }
+  }
+
+  Phi.dt_F_n = allocZ__MatrixLib__(NumParticles,Ndim*Ndim);
+  strcpy(Phi.dt_F_n.Info,"Rate of deformation gradient at t = n");
+  Phi.dt_F_n1 = allocZ__MatrixLib__(NumParticles,Ndim*Ndim);
+  strcpy(Phi.dt_F_n1.Info,"Rate of deformation gradient at t = n + 1");
+  Phi.dt_DF = allocZ__MatrixLib__(NumParticles,Ndim*Ndim);
+  strcpy(Phi.dt_DF.Info,"Rate of increment deformation gradient");
 
   /*!
     Allocate and initialise the Jacobian of the deformation gradient 
@@ -218,13 +229,12 @@ Fields allocate_upw_vars__Fields__(int NumParticles)
   strcpy(Phi.F_plastic.Info,"Plastic deformation gradient");
  
   for(int p = 0 ; p<NumParticles ; p++)
-    {
-      for(int i = 0 ; i<Ndim ; i++)
   {
-    Phi.F_plastic.nM[p][i + i*Ndim] = 1.0;    
-  }
-      
+    for(int i = 0 ; i<Ndim ; i++)
+    {
+      Phi.F_plastic.nM[p][i + i*Ndim] = 1.0;
     }
+  }
   
   /*!
     Strain_If field (Scalar) 
@@ -243,10 +253,16 @@ Fields allocate_upw_vars__Fields__(int NumParticles)
   */
   Phi.Pw = allocZ__MatrixLib__(NumParticles,1);
   strcpy(Phi.Pw.Info,"Pore water preassure");
-  Phi.d_Pw = allocZ__MatrixLib__(NumParticles,1);
-  strcpy(Phi.d_Pw.Info,"Rate of pore water preassure");
   Phi.Pw_0 = allocZ__MatrixLib__(NumParticles,1);
   strcpy(Phi.Pw_0.Info,"Initial pore water preassure");
+  Phi.Pw_n1 = allocZ__MatrixLib__(NumParticles,1);
+  strcpy(Phi.Pw_n1.Info,"Pore water preassure at t = n + 1");
+  Phi.D_Pw = allocZ__MatrixLib__(NumParticles,1);
+  strcpy(Phi.D_Pw.Info,"Increment of pore water preassure");
+  Phi.d_Pw_dt = allocZ__MatrixLib__(NumParticles,1);
+  strcpy(Phi.d_Pw_dt.Info,"First time derivative of pore water preassure");
+  Phi.d2_Pw_dt2 = allocZ__MatrixLib__(NumParticles,1);
+  strcpy(Phi.d2_Pw_dt2.Info,"Second time derivative of pore water preassure");
 
   /*!
     Deformation Energy (Scalar) 
@@ -326,6 +342,9 @@ void free_Fields(Fields Phi)
   free__MatrixLib__(Phi.F_plastic);
   free__MatrixLib__(Phi.F_n);
   free__MatrixLib__(Phi.F_n1);
+  free__MatrixLib__(Phi.dt_F_n);
+  free__MatrixLib__(Phi.dt_F_n1);
+  free__MatrixLib__(Phi.dt_DF);
   free__MatrixLib__(Phi.DF);
   free__MatrixLib__(Phi.W);
   free__MatrixLib__(Phi.Vol_0);
@@ -351,14 +370,20 @@ void free_upw_vars__Fields__(Fields Phi)
   free__MatrixLib__(Phi.acc);
   free__MatrixLib__(Phi.Stress);
   free__MatrixLib__(Phi.Pw);
-  free__MatrixLib__(Phi.d_Pw);
   free__MatrixLib__(Phi.Pw_0);
+  free__MatrixLib__(Phi.Pw_n1);
+  free__MatrixLib__(Phi.D_Pw);
+  free__MatrixLib__(Phi.d_Pw_dt);
+  free__MatrixLib__(Phi.d2_Pw_dt2);
   free__MatrixLib__(Phi.Strain);
   free__MatrixLib__(Phi.Strain_If);
   free__MatrixLib__(Phi.F_plastic);
   free__MatrixLib__(Phi.F_n);
   free__MatrixLib__(Phi.F_n1);
   free__MatrixLib__(Phi.DF);
+  free__MatrixLib__(Phi.dt_F_n);
+  free__MatrixLib__(Phi.dt_F_n1);
+  free__MatrixLib__(Phi.dt_DF);
   free__MatrixLib__(Phi.J);
   free__MatrixLib__(Phi.dJ_dt);
   free__MatrixLib__(Phi.W);

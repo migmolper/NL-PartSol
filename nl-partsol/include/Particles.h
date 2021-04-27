@@ -70,14 +70,26 @@ void update_increment_Deformation_Gradient__Particles__(Tensor, Matrix, Matrix);
   \param gradient_p : Shape function gradient for each node evaluated
   in the particle position
 */
-void   update_Deformation_Gradient_n1__Particles__(Tensor, Tensor, Tensor);
+void update_Deformation_Gradient_n1__Particles__(Tensor, Tensor, Tensor);
+/*******************************************************/
+
+/*
+  \fn void update_rate_increment_Deformation_Gradient__Particles__(Tensor dt_DF_p,Matrix DeltaV,Matrix gradient_p);
+*/
+void update_rate_increment_Deformation_Gradient__Particles__(Tensor,Matrix,Matrix);
+/*******************************************************/
+
+/*
+  \fn void update_rate_Deformation_Gradient_n1__Particles__(Tensor dt_F_n1, Tensor dt_f_n1, Tensor F_n, Tensor f_n1, Tensor dt_F_n)
+*/
+void update_rate_Deformation_Gradient_n1__Particles__(Tensor, Tensor, Tensor, Tensor, Tensor);
 /*******************************************************/
 
 /*!
-  \fn double compute_Jacobian_Rate__Particles__(double J_p, Matrix Velocity, Matrix gradient_p)
+  \fn double compute_Jacobian_Rate__Particles__(double J_p, Tensor F_p, Tensor dt_F_p)
 
 */
-double compute_Jacobian_Rate__Particles__(double, Matrix, Matrix);
+double compute_Jacobian_Rate__Particles__(double, Tensor, Tensor);
 /*******************************************************/
 
 /*!

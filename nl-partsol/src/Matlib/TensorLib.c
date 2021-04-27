@@ -605,6 +605,51 @@ Tensor subtraction__TensorLib__(Tensor A, Tensor B)
 
 /*************************************************************/
 
+Tensor addition__TensorLib__(Tensor A, Tensor B)
+{
+  int Ndim = NumberDimensions;
+
+  /* Variable declaration output matrix */
+  Tensor A_plus_B;
+
+  /* Addition of second order tensors */
+  if ((A.Order == 2) && (B.Order == 2))
+  { 
+
+    A_plus_B = alloc__TensorLib__(2); 
+
+    for(int i = 0 ; i < Ndim ; i++)
+    {
+      for(int j = 0 ; j < Ndim ; j++)
+      {
+        A_plus_B.N[i][j] = A.N[i][j] + B.N[i][j];
+      }
+    }
+  }
+  /* Addition of first order tensors */
+  else if((A.Order == 1) && (B.Order == 1))
+  {
+
+    A_plus_B = alloc__TensorLib__(1);
+
+    for(int i = 0 ; i < Ndim ; i++)
+    {
+      A_plus_B.n[i] = A.n[i] + B.n[i];
+    }
+
+  }
+  else{
+    fprintf(stderr,"%s : %s !!! \n",
+      "Error in addition__TensorLib__()",
+      "The input should be two tensors or equal order");
+    exit(EXIT_FAILURE);        
+  }
+
+  return A_plus_B;
+}
+
+/*************************************************************/
+
 double inner_product__TensorLib__(Tensor A, Tensor B)
 {
 
