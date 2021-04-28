@@ -66,7 +66,7 @@ static  void  compute_Permeability_Mass_Balance(Nodal_Field, Nodal_Field,Matrix,
 static Tensor compute_Pore_water_pressure_gradient_n1(Matrix,Matrix,Matrix);
 static  void  compute_Permeability_Inertial_Forces_Fluid(Nodal_Field,Matrix,Mask,Particle,Mesh);
 static  bool  check_convergence(Matrix,double,int,int,int);
-static Matrix assemble_Nodal_Tangent_Stiffness(Nodal_Field,Nodal_Field,Mask,Particle,Mesh,Newmark_parameters);
+static Matrix assemble_Tangent_Stiffness(Nodal_Field,Nodal_Field,Mask,Particle,Mesh,Newmark_parameters);
 static Tensor compute_stiffness_density(Tensor, Tensor, Tensor, double, Material);
 static Tensor compute_H_AB(Tensor,Tensor);
 static Tensor compute_L_AB(double,Tensor,Tensor,Tensor);
@@ -172,7 +172,7 @@ void upw_Newmark_beta_Finite_Strains(Mesh FEM_Mesh, Particle MPM_Mesh, int Initi
       if(Convergence == false)
       {
 
-        Tangent_Stiffness = assemble_Nodal_Tangent_Stiffness(upw_n,D_upw,ActiveNodes,MPM_Mesh,FEM_Mesh,Params);
+        Tangent_Stiffness = assemble_Tangent_Stiffness(upw_n,D_upw,ActiveNodes,MPM_Mesh,FEM_Mesh,Params);
 
         if((Free_and_Restricted_Dofs.Nactivenodes - Ndim*Nactivenodes) == 0)
         {
@@ -1900,7 +1900,7 @@ static bool check_convergence(
 
 /**************************************************************/
 
-static Matrix assemble_Nodal_Tangent_Stiffness(
+static Matrix assemble_Tangent_Stiffness(
   Nodal_Field upw_n,
   Nodal_Field D_upw,
   Mask ActiveNodes,
@@ -2163,7 +2163,7 @@ static Matrix assemble_Nodal_Tangent_Stiffness(
         }
         else
         {
-          fprintf(stderr,"%s : %s %s %s \n","Error in assemble_Nodal_Tangent_Stiffness()",
+          fprintf(stderr,"%s : %s %s %s \n","Error in assemble_Tangent_Stiffness()",
             "The material",MatProp_Soil_p.Type,"has not been yet implemnented");
           exit(EXIT_FAILURE);
         }
@@ -2503,6 +2503,7 @@ static void update_Particles(
   Mask ActiveNodes)
 {
   int Ndim = NumberDimensions;
+  int Ndof = NumberDOF;
   int Np = MPM_Mesh.NumGP;
   int Nnodes_mask = ActiveNodes.Nactivenodes;
   int Ap;
@@ -2587,7 +2588,7 @@ static void update_Particles(
       /*
         Update the particle primitive fields using nodal values of the increments
       */
-      for(int i = 0 ; i<Ndim ; i++)
+      for(int i = 0 ; i<Ndof ; i++)
       {
         D_upw_pI = ShapeFunction_pI*D_upw.value.nM[A_mask][i];
         D_dt_upw_pI = ShapeFunction_pI*D_upw.d_value_dt.nM[A_mask][i];

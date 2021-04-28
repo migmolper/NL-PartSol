@@ -27,6 +27,15 @@ double Error0;
 
 typedef struct
 {
+
+  Matrix value;
+  Matrix d_value_dt;
+  Matrix d2_value_dt2;
+
+} Nodal_Field;
+
+typedef struct
+{
   double alpha_1;
   double alpha_2;
   double alpha_3;
@@ -40,22 +49,21 @@ typedef struct
 */
 static Newmark_parameters compute_Newmark_parameters(double, double, double);
 static Matrix compute_Nodal_Effective_Mass(Particle, Mesh, Mask, double);
-static Matrix compute_Nodal_Velocity(Matrix,Particle, Mesh, Mask);
-static Matrix compute_Nodal_Acceleration(Matrix,Particle, Mesh, Mask);
-static void   imposse_Nodal_Kinetics(Mesh,Matrix,Matrix,Mask,int);
-static void   imposed_Nodal_Displacements(Matrix, Mask, Mesh, int);
-static void   update_Local_State(Matrix,Mask,Particle,Mesh,double);
-static Matrix compute_Nodal_Forces(Matrix, Mask, Particle, Mesh, int);
-static void   compute_Nodal_Internal_Forces(Matrix,Matrix,Mask,Particle, Mesh);
-static void   compute_Nodal_Body_Forces(Matrix, Mask, Particle, Mesh, int);
-static Matrix compute_Nodal_Reactions(Mesh, Matrix, Mask);
-static Matrix compute_Nodal_Residual(Matrix, Matrix, Matrix, Matrix, Matrix, Newmark_parameters);
+static Nodal_Field compute_Nodal_Field(Matrix,Particle, Mesh, Mask);
+static Nodal_Field initialise_Nodal_Increments(Mesh,Mask,int);
+static void   update_Local_State(Nodal_Field,Mask,Particle,Mesh,double);
+static Matrix compute_Nodal_Forces(Mask, Particle, Mesh, int);
+static void   compute_Nodal_Internal_Forces(Matrix,Mask,Particle, Mesh);
+static void   compute_Nodal_Body_Forces(Matrix,Mask,Particle,Mesh, int);
+static Matrix compute_Nodal_Reactions(Mesh,Matrix,Mask);
+static Matrix compute_Nodal_Residual(Nodal_Field,Nodal_Field,Mask,Matrix, Matrix, Newmark_parameters);
 static bool   check_convergence(Matrix,double,int,int,int);
-static Matrix assemble_Nodal_Tangent_Stiffness(Mask, Particle, Mesh);
-static void   solve_non_reducted_system(Matrix, Matrix, Matrix, Matrix, Newmark_parameters);
-static void   solve_reducted_system(Mask,Matrix, Matrix, Matrix, Matrix, Newmark_parameters);
-static void   update_Particles(Matrix, Matrix, Matrix, Particle, Mesh, Mask, Newmark_parameters);
-static void   output_selector(Particle, Mesh, Mask, Matrix, Matrix, Matrix, Matrix, Matrix, Matrix, int, int);
+static Matrix assemble_Nodal_Tangent_Stiffness(Mask,Particle,Mesh);
+static void   solve_non_reducted_system(Nodal_Field,Matrix, Matrix, Matrix, Newmark_parameters);
+static void   solve_reducted_system(Nodal_Field,Matrix,Matrix,Matrix,Mask,Newmark_parameters);
+static void   update_Newmark_Nodal_Increments(Nodal_Field,Nodal_Field,Newmark_parameters);
+static void   update_Particles(Nodal_Field,Particle,Mesh,Mask);
+static void output_selector(Particle,Mesh,Mask,Nodal_Field,Nodal_Field,Matrix,Matrix,Matrix,int,int);
 /**************************************************************/
 
 void U_Newmark_beta_Finite_Strains(
@@ -76,9 +84,8 @@ void U_Newmark_beta_Finite_Strains(
   Matrix Tangent_Stiffness;
   Matrix Forces;
   Matrix Reactions;
-  Matrix Momentum;
-  Matrix Velocity;
-  Matrix Acceleration;
+  Nodal_Field U_n;
+  Nodal_Field D_U;
   Matrix D_Displacement;
   Matrix Residual;
   Mask ActiveNodes;
@@ -143,108 +150,97 @@ void U_Newmark_beta_Finite_Strains(
       /*
         Compute the nodal values of velocity and acceleration
       */
-      Velocity = compute_Nodal_Velocity(Effective_Mass,MPM_Mesh,FEM_Mesh,ActiveNodes);
-      Acceleration = compute_Nodal_Acceleration(Effective_Mass,MPM_Mesh,FEM_Mesh,ActiveNodes);
-
-      imposse_Nodal_Kinetics(FEM_Mesh,Velocity,Acceleration,ActiveNodes,TimeStep);
+      U_n = compute_Nodal_Field(Effective_Mass,MPM_Mesh,FEM_Mesh,ActiveNodes);
+      D_U = initialise_Nodal_Increments(FEM_Mesh,ActiveNodes,TimeStep);
       print_Status("DONE !!!",TimeStep);  
 
       print_Status("*************************************************",TimeStep);
       print_Status("Four step : Compute equilibrium ... WORKING",TimeStep);
-      
-      D_Displacement = allocZ__MatrixLib__(Nactivenodes,Ndim);
-      imposed_Nodal_Displacements(D_Displacement, ActiveNodes, FEM_Mesh, TimeStep);      
+           
       /*
-	Set the convergence false by default and start the iterations to compute
-	the incement of velocity and displacement in the nodes of the mesh
+	      Set the convergence false by default and start the iterations to compute
+      	the incement of velocity and displacement in the nodes of the mesh
       */
       Convergence = false;
       Iter = 0;
       while(Convergence == false)
-	{
+      {
+        /*
+          Compute the stress-strain state for each particle
+        */
+        update_Local_State(D_U,ActiveNodes,MPM_Mesh,FEM_Mesh,DeltaTimeStep);
 
-	  /*
-	    Compute the stress-strain state for each particle
-	  */
-	  update_Local_State(D_Displacement,ActiveNodes,MPM_Mesh,FEM_Mesh,DeltaTimeStep);
+        /*
+          Compute the nodal forces
+        */
+        Forces = compute_Nodal_Forces(ActiveNodes,MPM_Mesh,FEM_Mesh,TimeStep);
 
-	  /*
-	    Compute the nodal forces
-	  */
-	  Forces = compute_Nodal_Forces(D_Displacement,ActiveNodes,MPM_Mesh,FEM_Mesh,TimeStep);
+        /*
+          Compute nodal reactions and set to zero those DOF of the
+          nodal forces with imposed displacements.
+        */
+        Reactions = compute_Nodal_Reactions(FEM_Mesh,Forces,ActiveNodes);
 
-	  /*
-	    Compute nodal reactions and set to zero those DOF of the
-	    nodal forces with imposed displacements.
-	  */
-	  Reactions = compute_Nodal_Reactions(FEM_Mesh,Forces,ActiveNodes);
+        /*
+          Compute the numerical residual to check the equilibrium
+        */
+        Residual = compute_Nodal_Residual(U_n,D_U,ActiveNodes,Forces,Effective_Mass,Params);
 
-	  /*
-	    Compute the numerical residual to check the equilibrium
-	  */
-	  Residual = compute_Nodal_Residual(Velocity,Acceleration,Forces,D_Displacement,Effective_Mass,Params);
+        /*
+          If the norm of the residual for each nodal value is below a tolerace skip
+        */
+        Convergence = check_convergence(Residual,TOL,Iter,MaxIter,TimeStep);
 
-	  /*
-	    If the norm of the residual for each nodal value is below a tolerace
-	    skip
-	  */
-	  Convergence = check_convergence(Residual,TOL,Iter,MaxIter,TimeStep);
+        /*
+          If not, solve the linearized equilibrium to compute the next step
+        */
+        if(Convergence == false)
+        {
 
-	  /*
-	    If not, solve the linearized equilibrium to compute the next step
-	  */
-	  if(Convergence == false)
-	    {
+          /*
+		        Assemble the tangent stiffness matrix as a sum of the material tangent
+		        stiffness and the geometrical tangent stiffness.
+	        */
+	        Tangent_Stiffness = assemble_Nodal_Tangent_Stiffness(ActiveNodes,MPM_Mesh,FEM_Mesh);
 
-	      /*
-		Assemble the tangent stiffness matrix as a sum of the material tangent
-		stiffness and the geometrical tangent stiffness.
-	      */
-	      Tangent_Stiffness = assemble_Nodal_Tangent_Stiffness(ActiveNodes,MPM_Mesh,FEM_Mesh);
+          /*
+        		Solve the resulting equation 
+	        */
+	        if((Free_and_Restricted_Dofs.Nactivenodes - Ndim*Nactivenodes) == 0)
+		      {
+		        solve_non_reducted_system(D_U,Tangent_Stiffness,Effective_Mass,Residual,Params);
+		      }
+	        else
+		      {
+		        solve_reducted_system(D_U,Tangent_Stiffness,Effective_Mass,Residual,Free_and_Restricted_Dofs,Params);
+		      }
 
-	      /*
-		Solve the resulting equation 
-	      */
-	      if((Free_and_Restricted_Dofs.Nactivenodes - Ndim*Nactivenodes) == 0)
-		{
-		  solve_non_reducted_system(D_Displacement,Tangent_Stiffness,Effective_Mass,Residual,Params);
-		}
-	      else
-		{
-		  solve_reducted_system(Free_and_Restricted_Dofs,D_Displacement,Tangent_Stiffness,Effective_Mass,Residual,Params);
-		}
+          update_Newmark_Nodal_Increments(D_U,U_n,Params);
 
-	      /*
-		Update the iteration number
-	      */
-	      Iter++;
+	        Iter++;
 
-	      free__MatrixLib__(Forces);
-	      free__MatrixLib__(Reactions);
-	      free__MatrixLib__(Residual);
-	      free__MatrixLib__(Tangent_Stiffness);
-	    }
-	}
+	        free__MatrixLib__(Forces);
+	        free__MatrixLib__(Reactions);
+	        free__MatrixLib__(Residual);
+	        free__MatrixLib__(Tangent_Stiffness);
+        }
+      }
 
       print_Status("DONE !!!",TimeStep);
 
 
       print_Status("*************************************************",TimeStep);
       print_Status("Seven step : Update particles lagrangian ... WORKING",TimeStep);
-      /*
-      	Update Lagrangians with D_Displacement and reload the connectivity information for each particle
-      */
-      update_Particles(D_Displacement,Velocity,Acceleration,MPM_Mesh,FEM_Mesh,ActiveNodes, Params);
+
+      update_Particles(D_U,MPM_Mesh,FEM_Mesh,ActiveNodes);
       local_search__Particles__(MPM_Mesh,FEM_Mesh);
+
       print_Status("DONE !!!",TimeStep);
 
       /*
 	Outputs
       */
-      output_selector(MPM_Mesh, FEM_Mesh, ActiveNodes,
-                      Velocity, Acceleration, D_Displacement,
-                      Forces, Reactions, Residual,
-                      TimeStep, ResultsTimeStep);
+      output_selector(MPM_Mesh, FEM_Mesh, ActiveNodes, D_U, U_n, Forces, Reactions, Residual,TimeStep, ResultsTimeStep);
 
     
 
@@ -254,9 +250,12 @@ void U_Newmark_beta_Finite_Strains(
 	Free memory.
       */
       free__MatrixLib__(Effective_Mass); 
-      free__MatrixLib__(Velocity);
-      free__MatrixLib__(Acceleration);
-      free__MatrixLib__(D_Displacement);
+      free__MatrixLib__(U_n.value);
+      free__MatrixLib__(U_n.d_value_dt);
+      free__MatrixLib__(U_n.d2_value_dt2);
+      free__MatrixLib__(D_U.value);
+      free__MatrixLib__(D_U.d_value_dt);
+      free__MatrixLib__(D_U.d2_value_dt2);
       free__MatrixLib__(Forces);
       free__MatrixLib__(Reactions);
       free__MatrixLib__(Residual);
@@ -447,8 +446,8 @@ static Matrix compute_Nodal_Effective_Mass(
 
 /**************************************************************/
 
-static Matrix compute_Nodal_Velocity(
-  Matrix Mass,
+static Nodal_Field compute_Nodal_Field(
+  Matrix Effective_Mass,
   Particle MPM_Mesh, 
   Mesh FEM_Mesh, 
   Mask ActiveNodes)
@@ -461,6 +460,7 @@ static Matrix compute_Nodal_Velocity(
 */
 {
   int Ndim = NumberDimensions;
+  int Ndof = NumberDOF;
   int Nnodes_mask = ActiveNodes.Nactivenodes;
   int Np = MPM_Mesh.NumGP;
   int Ap;
@@ -477,9 +477,11 @@ static Matrix compute_Nodal_Velocity(
   /* Element for each particle */
   Element Nodes_p;
 
-  /* Define and allocate the momentum vector */
-  Matrix Velocity;
-  Matrix Momentum = allocZ__MatrixLib__(Nnodes_mask,Ndim);
+  /* Define and allocate the output vector */
+  Nodal_Field U_n;
+  U_n.value        = allocZ__MatrixLib__(Nnodes_mask,Ndof);
+  U_n.d_value_dt   = allocZ__MatrixLib__(Nnodes_mask,Ndof);
+  U_n.d2_value_dt2 = allocZ__MatrixLib__(Nnodes_mask,Ndof);
 
   /* Iterate over the particles to get the nodal values */
   for(int p = 0 ; p<Np ; p++)
@@ -509,9 +511,11 @@ static Matrix compute_Nodal_Velocity(
 
 	  /* Nodal velocity and acceleration  */
 	  for(int i = 0 ; i<Ndim ; i++)
-	    {
-	      Momentum.nM[A_mask][i] += m_p*ShapeFunction_pA*MPM_Mesh.Phi.vel.nM[p][i];
-	    }
+    {
+        U_n.value.nM[A_mask][i]        += m_p*ShapeFunction_pA*MPM_Mesh.Phi.dis.nM[p][i];
+        U_n.d_value_dt.nM[A_mask][i]   += m_p*ShapeFunction_pA*MPM_Mesh.Phi.vel.nM[p][i];
+        U_n.d2_value_dt2.nM[A_mask][i] += m_p*ShapeFunction_pA*MPM_Mesh.Phi.acc.nM[p][i];
+      }
 	}
 
       /* Free the value of the shape functions */
@@ -534,142 +538,29 @@ static Matrix compute_Nodal_Velocity(
   /*
     Compute the LU factorization for the mass matrix
   */
-  dgetrf_(&Order,&Order,Mass.nV,&LDA,IPIV,&INFO);
+  dgetrf_(&Order,&Order,Effective_Mass.nV,&LDA,IPIV,&INFO);
   /*
     Solve for the velocity
   */
-  dgetrs_(&TRANS,&Order,&NRHS,Mass.nV,&LDA,IPIV,Momentum.nV,&LDB,&INFO);
+  dgetrs_(&TRANS,&Order,&NRHS,Effective_Mass.nV,&LDA,IPIV,U_n.value.nV,&LDB,&INFO);
+  dgetrs_(&TRANS,&Order,&NRHS,Effective_Mass.nV,&LDA,IPIV,U_n.d_value_dt.nV,&LDB,&INFO);
+  dgetrs_(&TRANS,&Order,&NRHS,Effective_Mass.nV,&LDA,IPIV,U_n.d2_value_dt2.nV,&LDB,&INFO);
   free(IPIV);
 
   /*
-    Transfer
-   */
-  Velocity = Momentum;
- 
-  /*
     Add some usefulll info
   */
-  strcpy(Velocity.Info,"Nodal-Velocity");
+  strcpy(U_n.value.Info,"Displacement");
+  strcpy(U_n.d_value_dt.Info,"Velocity");
+  strcpy(U_n.d2_value_dt2.Info,"Acceleration");
 
-  return Velocity;
+  return U_n;
 }
-
 
 /**************************************************************/
 
-static Matrix compute_Nodal_Acceleration(
-  Matrix Mass,
-  Particle MPM_Mesh, 
-  Mesh FEM_Mesh, 
-  Mask ActiveNodes)
-/*
-  Call the LAPACK solver to compute the nodal Acceleration. The operation is linearized and
-  all the dof split the acceleration array in n components like :
-  | M 0 |   |A.x|   | dt_p.x |
-  | 0 M | * |A.y| = | dt_p.y |
-*/
-{
-  int Ndim = NumberDimensions;
-  int Nnodes_mask = ActiveNodes.Nactivenodes;
-  int Np = MPM_Mesh.NumGP;
-  int Ap;
-  int A_mask;
-  int idx_A_mask_i;
-
-  /* Value of the shape-function */
-  Matrix ShapeFunction_p;
-
-  /* Evaluation of the particle in the node */
-  double ShapeFunction_pA;
-  /* Mass of the particle */
-  double m_p;
-  /* Element for each particle */
-  Element Nodes_p;
-
-  /* Define and allocate the temporal derivative of the momentum vector */
-  Matrix Acceleration;
-  Matrix dt_Momentum = allocZ__MatrixLib__(Nnodes_mask,Ndim);
-
-  /* Iterate over the particles to get the nodal values */
-  for(int p = 0 ; p<Np ; p++)
-    {
-      /* Define element of the particle */
-      Nodes_p = nodal_set__Particles__(p, MPM_Mesh.ListNodes[p], MPM_Mesh.NumberNodes[p]);
-
-      /* Evaluate the shape function in the coordinates of the particle */
-      ShapeFunction_p = compute_N__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
-
-      /* Get the mass of the GP */
-      m_p = MPM_Mesh.Phi.mass.nV[p];
-
-      /* Get the nodal mommentum */
-      for(int A = 0 ; A<Nodes_p.NumberNodes ; A++)
-      {
-
-	  /*
-	    Get the node in the nodal momentum with the mask
-	  */
-	  Ap = Nodes_p.Connectivity[A];
-	  A_mask = ActiveNodes.Nodes2Mask[Ap];
-
-	  /* Evaluate the GP function in the node */
-	  ShapeFunction_pA = ShapeFunction_p.nV[A];
-
-	  /* Nodal velocity and acceleration  */
-	  for(int i = 0 ; i<Ndim ; i++)
-    {
-      dt_Momentum.nM[A_mask][i] += m_p*ShapeFunction_pA*MPM_Mesh.Phi.acc.nM[p][i];
-    }
-	}
-
-      /* Free the value of the shape functions */
-      free__MatrixLib__(ShapeFunction_p);
-      free(Nodes_p.Connectivity);
-    }
-
-
-  /*
-    Call the LAPACK solver to compute the accelerations and velocities
-  */
-  int Order = Nnodes_mask*Ndim;
-  int LDA   = Order;
-  int LDB = Order;
-  char  TRANS = 'T'; /* (Transpose) */
-  int   INFO= 3;
-  int * IPIV = (int *)Allocate_Array(Order,sizeof(int));
-  int NRHS = 1;
-
-  /*
-    Compute the LU factorization for the mass matrix
-  */
-  dgetrf_(&Order,&Order,Mass.nV,&LDA,IPIV,&INFO);
-
-  /*
-    Solve for the acceleration
-  */
-  dgetrs_(&TRANS,&Order,&NRHS,Mass.nV,&LDA,IPIV,dt_Momentum.nV,&LDB,&INFO);
-  free(IPIV);
-
-  /*
-    Transfer
-  */
-  Acceleration = dt_Momentum;
- 
-  /*
-    Add some usefulll info
-  */
-  strcpy(Acceleration.Info,"Nodal-Acceleration");
-
-  return Acceleration;
-}
-
-
-/**************************************************************/
-
-static void imposse_Nodal_Kinetics(
+static Nodal_Field initialise_Nodal_Increments(
   Mesh FEM_Mesh,
-  Matrix Velocity,
-  Matrix Acceleration,
   Mask ActiveNodes,
   int TimeStep)
 /*
@@ -680,146 +571,88 @@ static void imposse_Nodal_Kinetics(
   /* 1º Define auxilar variables */
   int Nnodes_mask = ActiveNodes.Nactivenodes;
   int NumNodesBound; /* Number of nodes of the bound */
-  int NumDimBound; /* Number of dimensions */
+  int Ndim = NumberDimensions; /* Number of dimensions */
+  int Ndof = NumberDOF; /* Number of degree of freedom */
   int Id_BCC; /* Index of the node where we apply the BCC */
   int Id_BCC_mask;
-  int Id_BCC_mask_k;
 
-  /* 2º Loop over the the boundaries */
+  Nodal_Field D_U;
+  D_U.value        = allocZ__MatrixLib__(Nnodes_mask,Ndof);
+  D_U.d_value_dt   = allocZ__MatrixLib__(Nnodes_mask,Ndof);
+  D_U.d2_value_dt2 = allocZ__MatrixLib__(Nnodes_mask,Ndof);
+
+  /* 
+    Loop over the the boundaries to set boundary conditions
+  */
   for(int i = 0 ; i<FEM_Mesh.Bounds.NumBounds ; i++)
     {
 
-      /* 
-  	 Get the number of nodes of this boundarie 
-      */
-      NumNodesBound = FEM_Mesh.Bounds.BCC_i[i].NumNodes;
+    /* 
+      Get the number of nodes of this boundarie 
+    */
+    NumNodesBound = FEM_Mesh.Bounds.BCC_i[i].NumNodes;
 
-      /* 
-  	 Get the number of dimensions where the BCC it is applied 
-      */
-      NumDimBound = FEM_Mesh.Bounds.BCC_i[i].Dim;
+    /* 
+      Get the number of dimensions where the BCC it is applied 
+    */
+    Ndof = FEM_Mesh.Bounds.BCC_i[i].Dim;
 
-      for(int j = 0 ; j<NumNodesBound ; j++)
-	{
-	  /* 
-  	     Get the index of the node 
-	  */
-	  Id_BCC = FEM_Mesh.Bounds.BCC_i[i].Nodes[j];
-	  Id_BCC_mask = ActiveNodes.Nodes2Mask[Id_BCC];
-
-	  /*
-	    The boundary condition is not affecting any active node,
-	    continue interating
-	  */
-	  if(Id_BCC_mask == -1)
-	    {
-	      continue;
-	    }
-
-	  /* 
-  	     Loop over the dimensions of the boundary condition 
-	  */
-	  for(int k = 0 ; k<NumDimBound ; k++)
-	    {
-
-	      /* 
-  		 Apply only if the direction is active (1) 
-	      */
-	      if(FEM_Mesh.Bounds.BCC_i[i].Dir[k] == 1)
-		{
-
-		  /* 
-  		     Check if the curve it is on time 
-		  */
-		  if( (TimeStep < 0) || (TimeStep > FEM_Mesh.Bounds.BCC_i[i].Value[k].Num))
-		    {
-		      printf("%s : %s \n",
-			     "Error in imposse_Nodal_Velocity()",
-			     "The time step is out of the curve !!");
-		      exit(EXIT_FAILURE);
-		    }
-
-		  /* 
-  		     Assign the boundary condition 
-		  */
-		  Velocity.nM[Id_BCC_mask][k] = FEM_Mesh.Bounds.BCC_i[i].Value[k].Fx[TimeStep]*(double)FEM_Mesh.Bounds.BCC_i[i].Dir[k];
-		  Acceleration.nM[Id_BCC_mask][k] = 0.0;
-		}
-	    }
-	}    
-    }
-
-}
-
-/**************************************************************/
-
-static void imposed_Nodal_Displacements(Matrix D_Displacement, Mask ActiveNodes, Mesh FEM_Mesh, int TimeStep)
-/*
-  Apply the boundary conditions over the nodes 
-*/
-{
-
-  /* Define auxilar variables */
-  int NumBoundaryConditions = FEM_Mesh.Bounds.NumBounds;
-  int NumNodesBound; /* Number of nodes of the bound */
-  int NumDimBound; /* Number of dimensions */
-  int A_BCC; /* Index of the node where we apply the BCC */
-  int A_mask_BCC; /* Index of the node where we apply the BCC */
-  
-  for(int i_boundary = 0 ; i_boundary<NumBoundaryConditions ; i_boundary++)
+    for(int j = 0 ; j<NumNodesBound ; j++)
     {
-      
-      /*
-	Get the number of nodes of this boundary and 
-	the number of dimensions where it is applied
+      /* 
+        Get the index of the node 
       */
-      NumNodesBound = FEM_Mesh.Bounds.BCC_i[i_boundary].NumNodes;
-      NumDimBound = FEM_Mesh.Bounds.BCC_i[i_boundary].Dim;
-    
-      for(int A = 0 ; A<NumNodesBound ; A++)
-	{
-  
-	  /* 
-	     Get the index of the node and get the mask node value 
-	  */
-	  A_BCC = FEM_Mesh.Bounds.BCC_i[i_boundary].Nodes[A];
-	  A_mask_BCC = ActiveNodes.Nodes2Mask[A_BCC];
+      Id_BCC = FEM_Mesh.Bounds.BCC_i[i].Nodes[j];
+      Id_BCC_mask = ActiveNodes.Nodes2Mask[Id_BCC];
 
-	  /*
-	    The boundary condition is not affecting any active node,
-	    continue interating
-	  */
-	  if(A_mask_BCC == -1)
-	    {
-	      continue;
-	    }
+      /*
+        The boundary condition is not affecting any active node,
+        continue interating
+      */
+      if(Id_BCC_mask == -1)
+      {
+        continue;
+      }
 
-	  for(int i_dim = 0 ; i_dim<NumDimBound ; i_dim++)
-	    {
+      /* 
+        Loop over the dimensions of the boundary condition 
+      */
+      for(int k = 0 ; k<Ndof ; k++)
+      {
+
+        /* 
+          Apply only if the direction is active (1) 
+        */
+        if(FEM_Mesh.Bounds.BCC_i[i].Dir[k] == 1)
+        {
     
-	      if(FEM_Mesh.Bounds.BCC_i[i_boundary].Dir[i_dim] == 1)
-		{
-		  /*
-		    Check if the curve it is on time 
-		  */
-		  if( (TimeStep < 0) ||
-		      (TimeStep > FEM_Mesh.Bounds.BCC_i[i_boundary].Value[i_dim].Num))
-		    {
-		      printf("%s : %s \n",
-			     "Error in imposed_displacements()",
-			     "The time step is out of the curve !!");
-		      exit(EXIT_FAILURE);
-		    }
-		  /* 
-		     Assign the boundary condition 
-		  */
-		  D_Displacement.nM[A_mask_BCC][i_dim] = FEM_Mesh.Bounds.BCC_i[i_boundary].Value[i_dim].Fx[TimeStep]*(double)FEM_Mesh.Bounds.BCC_i[i_boundary].Dir[i_dim];
-    
-		}
-	    }
-	}    
-    }
-  
+          /* 
+            Check if the curve it is on time 
+          */
+          if( (TimeStep < 0) || (TimeStep > FEM_Mesh.Bounds.BCC_i[i].Value[k].Num))
+          {
+            printf("%s : %s \n","Error in initialise_Nodal_Increments()","The time step is out of the curve !!");
+            exit(EXIT_FAILURE);
+          }
+
+          /* 
+            Assign the boundary condition 
+          */
+          D_U.value.nM[Id_BCC_mask][k] = FEM_Mesh.Bounds.BCC_i[i].Value[k].Fx[TimeStep]*(double)FEM_Mesh.Bounds.BCC_i[i].Dir[k];                    
+               
+        }
+      }
+    }    
+  }
+
+  /*
+    Add some usefulll info
+  */
+  strcpy(D_U.value.Info,"Displacement");
+  strcpy(D_U.d_value_dt.Info,"Velocity");
+  strcpy(D_U.d2_value_dt2.Info,"Acceleration");
+
+  return D_U;
 }
 
 
@@ -827,7 +660,7 @@ static void imposed_Nodal_Displacements(Matrix D_Displacement, Mask ActiveNodes,
 
 
 static void update_Local_State(
-  Matrix D_Displacement,
+  Nodal_Field D_U,
 	Mask ActiveNodes,
 	Particle MPM_Mesh,
 	Mesh FEM_Mesh,
@@ -847,9 +680,13 @@ static void update_Local_State(
   Material MatProp_p;
   Matrix gradient_p;
   Matrix D_Displacement_Ap;
+  Matrix D_Velocity_Ap;
   Tensor F_n_p;
   Tensor F_n1_p;
   Tensor DF_p;
+  Tensor dFdt_n_p;
+  Tensor dFdt_n1_p;
+  Tensor dt_DF_p;
   Tensor P_p;
   
   /*
@@ -865,7 +702,8 @@ static void update_Local_State(
       /*
 	Get the nodal increment of displacement using the mask
       */
-      D_Displacement_Ap = get_set_field__MeshTools__(D_Displacement, Nodes_p, ActiveNodes);
+      D_Displacement_Ap = get_set_field__MeshTools__(D_U.value, Nodes_p, ActiveNodes);
+      D_Velocity_Ap = get_set_field__MeshTools__(D_U.d_value_dt, Nodes_p, ActiveNodes);
 
       /*
 	Evaluate the shape function gradient in the coordinates of the particle
@@ -875,20 +713,25 @@ static void update_Local_State(
       /*
       	Take the values of the deformation gradient from the previous step
       */
-      F_n_p  = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n.nM[p],2);
-      F_n1_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n1.nM[p],2);
-      DF_p   = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.DF.nM[p],2);
+      F_n_p     = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n.nM[p],2);
+      F_n1_p    = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n1.nM[p],2);
+      DF_p      = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.DF.nM[p],2);
+      dFdt_n_p  = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.dt_F_n.nM[p],2);
+      dFdt_n1_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.dt_F_n1.nM[p],2);
+      dt_DF_p   = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.dt_DF.nM[p],2);
       
       /*
       	Compute the increment of the deformation gradient
       */
       update_increment_Deformation_Gradient__Particles__(DF_p,D_Displacement_Ap,gradient_p);
+      update_rate_increment_Deformation_Gradient__Particles__(dt_DF_p,D_Velocity_Ap,gradient_p);
 
       /*
       	Update the deformation gradient in t = n + 1 with the information
       	from t = n and the increment of deformation gradient.
       */  
       update_Deformation_Gradient_n1__Particles__(F_n1_p, F_n_p, DF_p);
+      update_rate_Deformation_Gradient_n1__Particles__(dFdt_n1_p, dt_DF_p, F_n_p, DF_p, dFdt_n_p);
       
       /*
       	Update the First Piola-Kirchhoff stress tensor (P)
@@ -905,7 +748,6 @@ static void update_Local_State(
       else if(strcmp(MatProp_p.Type,"Newtonian-Fluid-Compressible") == 0)
       {
         J_n1_p = I3__TensorLib__(F_n1_p);
-        Tensor dFdt_n1_p;
         P_p = compute_1PK_Stress_Tensor_Newtonian_Fluid(P_p,F_n1_p,dFdt_n1_p,J_n1_p,MatProp_p);
       }
       else
@@ -920,6 +762,7 @@ static void update_Local_State(
 	       Free memory 
       */
       free__MatrixLib__(D_Displacement_Ap);
+      free__MatrixLib__(D_Velocity_Ap);
       free__MatrixLib__(gradient_p);
       free(Nodes_p.Connectivity);
 	  
@@ -930,7 +773,6 @@ static void update_Local_State(
 /**************************************************************/
 
 static Matrix compute_Nodal_Forces(
-  Matrix D_Displacement,
 	Mask ActiveNodes,
 	Particle MPM_Mesh,
 	Mesh FEM_Mesh,
@@ -943,7 +785,7 @@ static Matrix compute_Nodal_Forces(
   /*
     Add internal forces contribution
   */
-  compute_Nodal_Internal_Forces(Forces, D_Displacement, ActiveNodes, MPM_Mesh, FEM_Mesh);
+  compute_Nodal_Internal_Forces(Forces, ActiveNodes, MPM_Mesh, FEM_Mesh);
 
   /*
     Add body forces contribution
@@ -958,7 +800,6 @@ static Matrix compute_Nodal_Forces(
 
 static void compute_Nodal_Internal_Forces(
   Matrix Forces,
-	Matrix D_Displacement,
 	Mask ActiveNodes,
 	Particle MPM_Mesh,
 	Mesh FEM_Mesh)
@@ -1241,15 +1082,16 @@ static Matrix compute_Nodal_Reactions(
 /**************************************************************/
 
 static Matrix compute_Nodal_Residual(
-  Matrix Velocity,
-  Matrix Acceleration,
+  Nodal_Field D_U,
+  Nodal_Field U_n,
+  Mask ActiveNodes,
   Matrix Forces,
-  Matrix D_Displacement,
   Matrix Mass,
   Newmark_parameters Params)
 {
   int Ndim = NumberDimensions;
-  int Nnodes_mask = Velocity.N_rows;
+  int Ndof = NumberDOF;
+  int Nnodes_mask = ActiveNodes.Nactivenodes;
   int Order = Ndim*Nnodes_mask;
   Matrix Acceleration_n1 = allocZ__MatrixLib__(Nnodes_mask,Ndim);
   Matrix Inertial_Forces = allocZ__MatrixLib__(Nnodes_mask,Ndim);
@@ -1263,7 +1105,7 @@ static Matrix compute_Nodal_Residual(
   */
   for(int idx_B = 0 ; idx_B<Order ; idx_B++)
     {
-      Acceleration_n1.nV[idx_B] = alpha_1*D_Displacement.nV[idx_B] - alpha_2*Velocity.nV[idx_B] - alpha_3*Acceleration.nV[idx_B];
+      Acceleration_n1.nV[idx_B] = alpha_1*D_U.value.nV[idx_B] - alpha_2*U_n.d_value_dt.nV[idx_B] - alpha_3*U_n.d2_value_dt2.nV[idx_B];
     }
   /*
     Compute inertial forces (Vectorized)
@@ -1534,7 +1376,7 @@ static Matrix assemble_Nodal_Tangent_Stiffness(
 /**************************************************************/
 
 static void solve_non_reducted_system(
-  Matrix D_Displacement,
+  Nodal_Field D_U,
 	Matrix Tangent_Stiffness,
 	Matrix Effective_Mass,
 	Matrix Residual,
@@ -1611,7 +1453,7 @@ static void solve_non_reducted_system(
   */
   for(int idx_A_i = 0 ; idx_A_i < Order ; idx_A_i++)
     {	
-      D_Displacement.nV[idx_A_i] -= Residual.nV[idx_A_i];
+      D_U.value.nV[idx_A_i] -= Residual.nV[idx_A_i];
     }
 
   /*
@@ -1625,11 +1467,11 @@ static void solve_non_reducted_system(
 /**************************************************************/
 
 static void solve_reducted_system(
-  Mask Free_and_Restricted_Dofs,
-  Matrix D_Displacement,
+  Nodal_Field D_U,
   Matrix Tangent_Stiffness,
   Matrix Effective_Mass,
   Matrix Residual,
+  Mask Free_and_Restricted_Dofs,
   Newmark_parameters Params)
 /*
   This function is deboted to update the vector with the nodal displacement by
@@ -1749,7 +1591,7 @@ for(idx_A_ij = 0 ; idx_A_ij < Order ; idx_A_ij++)
       if(Mask_idx_A_ij != - 1)
       {
 
-        D_Displacement.nV[idx_A_ij] -= Residual_F.nV[Mask_idx_A_ij];
+        D_U.value.nV[idx_A_ij] -= Residual_F.nV[Mask_idx_A_ij];
       } 
       
     }
@@ -1764,14 +1606,39 @@ for(idx_A_ij = 0 ; idx_A_ij < Order ; idx_A_ij++)
 
 /**************************************************************/
 
+static void update_Newmark_Nodal_Increments(
+  Nodal_Field D_U,
+  Nodal_Field U_n,
+  Newmark_parameters Params)
+{
+
+  int Nnodes = U_n.value.N_rows;
+  int Ndof = NumberDOF;
+  int Total_dof = Nnodes*NumberDOF;
+  double alpha_1 = Params.alpha_1;
+  double alpha_2 = Params.alpha_2;
+  double alpha_3 = Params.alpha_3;
+  double alpha_4 = Params.alpha_4;
+  double alpha_5 = Params.alpha_5;
+  double alpha_6 = Params.alpha_6;
+
+  /*
+    Update nodal variables
+  */
+  for(int A = 0 ; A<Total_dof ; A++)
+  {  
+    D_U.d2_value_dt2.nV[A] = alpha_1*D_U.value.nV[A] - (alpha_2 + 1)*U_n.d_value_dt.nV[A] - alpha_3*U_n.d2_value_dt2.nV[A];
+    D_U.d_value_dt.nV[A]   = alpha_4*D_U.value.nV[A] + alpha_5*U_n.d_value_dt.nV[A] + (alpha_6 - 1)*U_n.d2_value_dt2.nV[A];
+  }
+}
+
+/**************************************************************/
+
 static void update_Particles(
-  Matrix D_Displacement,
-  Matrix Velocity,
-  Matrix Acceleration,
+  Nodal_Field D_U,
   Particle MPM_Mesh,
   Mesh FEM_Mesh,
-  Mask ActiveNodes,
-  Newmark_parameters Params)
+  Mask ActiveNodes)
 {
   int Ndim = NumberDimensions;
   int Np = MPM_Mesh.NumGP;
@@ -1789,19 +1656,15 @@ static void update_Particles(
   Tensor F_n_p;
   Tensor F_n1_p;
   Tensor DF_p;
+  Tensor dFdt_n_p;
+  Tensor dFdt_n1_p;
   double Delta_J_p;
   double rho_n_p;
   Element Nodes_p; /* Element for each particle */
   double D_U_pI;
-  double V_pI;
-  double A_pI;
+  double D_V_pI;
+  double D_A_pI;
   double Vol_0_p;
-  double alpha_1 = Params.alpha_1;
-  double alpha_2 = Params.alpha_2;
-  double alpha_3 = Params.alpha_3;
-  double alpha_4 = Params.alpha_4;
-  double alpha_5 = Params.alpha_5;
-  double alpha_6 = Params.alpha_6;
 
   /* iterate over the particles */
   for(int p = 0 ; p<Np ; p++)
@@ -1809,11 +1672,6 @@ static void update_Particles(
       
       /* Define element of the particle */
       Nodes_p = nodal_set__Particles__(p, MPM_Mesh.ListNodes[p], MPM_Mesh.NumberNodes[p]);
-      
-      /*
-	Get the nodal increment of displacement using the mask
-      */
-      D_Displacement_Ap = get_set_field__MeshTools__(D_Displacement, Nodes_p, ActiveNodes);
       
       /*
 	Evaluate the shape function and gradient in the coordinates of the particle 
@@ -1827,7 +1685,8 @@ static void update_Particles(
       F_n_p  = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n.nM[p],2);
       F_n1_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n1.nM[p],2);
       DF_p   = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.DF.nM[p],2);
-
+      dFdt_n_p  = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.dt_F_n.nM[p],2);
+      dFdt_n1_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.dt_F_n1.nM[p],2);
       /*
 	     Update density with the jacobian of the increment deformation gradient
       */
@@ -1843,6 +1702,7 @@ static void update_Particles(
 	     for(int j = 0 ; j<Ndim  ; j++)
 	       {
 	         F_n_p.N[i][j] = F_n1_p.N[i][j];
+           dFdt_n_p.N[i][j] = dFdt_n1_p.N[i][j];
 	       }
 	     }
 
@@ -1872,12 +1732,12 @@ static void update_Particles(
 	  */
 	  for(int i = 0 ; i<Ndim ; i++)
 	    {
-	      D_U_pI = ShapeFunction_pI*D_Displacement.nM[A_mask][i];
-	      V_pI = ShapeFunction_pI*Velocity.nM[A_mask][i];
-	      A_pI = ShapeFunction_pI*Acceleration.nM[A_mask][i];
+	      D_U_pI = ShapeFunction_pI*D_U.value.nM[A_mask][i];
+	      D_V_pI = ShapeFunction_pI*D_U.d_value_dt.nM[A_mask][i];
+	      D_A_pI = ShapeFunction_pI*D_U.d2_value_dt2.nM[A_mask][i];
 	      	      
-	      MPM_Mesh.Phi.acc.nM[p][i]  += alpha_1*D_U_pI - alpha_2*V_pI - (alpha_3 + 1)*A_pI;
-	      MPM_Mesh.Phi.vel.nM[p][i]  += alpha_4*D_U_pI + (alpha_5 - 1)*V_pI + alpha_6*A_pI;
+	      MPM_Mesh.Phi.acc.nM[p][i]  += D_A_pI;
+	      MPM_Mesh.Phi.vel.nM[p][i]  += D_V_pI;
         MPM_Mesh.Phi.dis.nM[p][i]  += D_U_pI;
 	      MPM_Mesh.Phi.x_GC.nM[p][i] += D_U_pI;
 	    } 
@@ -1887,7 +1747,6 @@ static void update_Particles(
 	Free memory
       */
       free(Nodes_p.Connectivity);
-      free__MatrixLib__(D_Displacement_Ap);
       free__MatrixLib__(ShapeFunction_p);
       free__MatrixLib__(gradient_p);
     }  
@@ -1899,9 +1758,8 @@ static void output_selector(
   Particle MPM_Mesh,
   Mesh FEM_Mesh,
   Mask ActiveNodes,
-  Matrix Velocity,
-  Matrix Acceleration,
-  Matrix D_Displacement,
+  Nodal_Field D_U,
+  Nodal_Field U_n,
   Matrix Forces,
   Matrix Reactions,
   Matrix Residual,
@@ -1919,82 +1777,82 @@ static void output_selector(
     nodal_results_vtk__InOutFun__(FEM_Mesh, ActiveNodes, Reactions, TimeStep, ResultsTimeStep);
   }
 
-  /* 
-    csv results 
-  */
-  for(int i = 0 ; i<Number_Out_nodal_path_csv ; i++)
-  {
+  // /* 
+  //   csv results 
+  // */
+  // for(int i = 0 ; i<Number_Out_nodal_path_csv ; i++)
+  // {
 
-    if(Out_nodal_path_csv[i].Out_csv_nodes_path_Velocity)
-    {
-      path_nodes_analysis_csv__InOutFun__(Velocity, FEM_Mesh.Coordinates,"Nodal_path_velocity_csv", ActiveNodes, Out_nodal_path_csv[i], i, TimeStep, DeltaTimeStep);
-    }
+  //   if(Out_nodal_path_csv[i].Out_csv_nodes_path_Velocity)
+  //   {
+  //     path_nodes_analysis_csv__InOutFun__(Velocity, FEM_Mesh.Coordinates,"Nodal_path_velocity_csv", ActiveNodes, Out_nodal_path_csv[i], i, TimeStep, DeltaTimeStep);
+  //   }
 
-    if(Out_nodal_path_csv[i].Out_csv_nodes_path_Acceleration)
-    {
-      path_nodes_analysis_csv__InOutFun__(Acceleration, FEM_Mesh.Coordinates,"Nodal_path_acceleration_csv", ActiveNodes, Out_nodal_path_csv[i], i, TimeStep, DeltaTimeStep);
-    }
+  //   if(Out_nodal_path_csv[i].Out_csv_nodes_path_Acceleration)
+  //   {
+  //     path_nodes_analysis_csv__InOutFun__(Acceleration, FEM_Mesh.Coordinates,"Nodal_path_acceleration_csv", ActiveNodes, Out_nodal_path_csv[i], i, TimeStep, DeltaTimeStep);
+  //   }
 
-    if(Out_nodal_path_csv[i].Out_csv_nodes_path_D_Displacement)
-    {
-      path_nodes_analysis_csv__InOutFun__(D_Displacement, FEM_Mesh.Coordinates,"Nodal_path_displacement_csv", ActiveNodes, Out_nodal_path_csv[i], i, TimeStep, DeltaTimeStep);
-    }
+  //   if(Out_nodal_path_csv[i].Out_csv_nodes_path_D_Displacement)
+  //   {
+  //     path_nodes_analysis_csv__InOutFun__(D_Displacement, FEM_Mesh.Coordinates,"Nodal_path_displacement_csv", ActiveNodes, Out_nodal_path_csv[i], i, TimeStep, DeltaTimeStep);
+  //   }
 
-    if(Out_nodal_path_csv[i].Out_csv_nodes_path_Forces)
-    {
-      path_nodes_analysis_csv__InOutFun__(Forces, FEM_Mesh.Coordinates,"Nodal_path_forces_csv", ActiveNodes, Out_nodal_path_csv[i], i, TimeStep, DeltaTimeStep);
-    }
+  //   if(Out_nodal_path_csv[i].Out_csv_nodes_path_Forces)
+  //   {
+  //     path_nodes_analysis_csv__InOutFun__(Forces, FEM_Mesh.Coordinates,"Nodal_path_forces_csv", ActiveNodes, Out_nodal_path_csv[i], i, TimeStep, DeltaTimeStep);
+  //   }
 
-    if(Out_nodal_path_csv[i].Out_csv_nodes_path_Reactions)
-    {
-      path_nodes_analysis_csv__InOutFun__(Reactions, FEM_Mesh.Coordinates,"Nodal_path_reactions_csv", ActiveNodes, Out_nodal_path_csv[i], i, TimeStep, DeltaTimeStep);
-    }
+  //   if(Out_nodal_path_csv[i].Out_csv_nodes_path_Reactions)
+  //   {
+  //     path_nodes_analysis_csv__InOutFun__(Reactions, FEM_Mesh.Coordinates,"Nodal_path_reactions_csv", ActiveNodes, Out_nodal_path_csv[i], i, TimeStep, DeltaTimeStep);
+  //   }
 
-    if(Out_nodal_path_csv[i].Out_csv_nodes_path_Residual)
-    {
-      path_nodes_analysis_csv__InOutFun__(Residual, FEM_Mesh.Coordinates,"Nodal_path_residual_csv", ActiveNodes, Out_nodal_path_csv[i], i, TimeStep, DeltaTimeStep);
-    }
-  }
+  //   if(Out_nodal_path_csv[i].Out_csv_nodes_path_Residual)
+  //   {
+  //     path_nodes_analysis_csv__InOutFun__(Residual, FEM_Mesh.Coordinates,"Nodal_path_residual_csv", ActiveNodes, Out_nodal_path_csv[i], i, TimeStep, DeltaTimeStep);
+  //   }
+  // }
 
 
-  for(int i = 0 ; i<Number_Out_particles_path_csv ; i++)
-  {
-    if(Out_particles_path_csv[i].Out_csv_particles_path_Damage)
-    {
-      path_particles_analysis_csv__InOutFun__(MPM_Mesh.Phi.chi, MPM_Mesh.Phi.x_GC, "Particles_path_damage_csv", Out_particles_path_csv[i], i, TimeStep, DeltaTimeStep);
-    }
+  // for(int i = 0 ; i<Number_Out_particles_path_csv ; i++)
+  // {
+  //   if(Out_particles_path_csv[i].Out_csv_particles_path_Damage)
+  //   {
+  //     path_particles_analysis_csv__InOutFun__(MPM_Mesh.Phi.chi, MPM_Mesh.Phi.x_GC, "Particles_path_damage_csv", Out_particles_path_csv[i], i, TimeStep, DeltaTimeStep);
+  //   }
 
-    if(Out_particles_path_csv[i].Out_csv_particles_path_Velocity)
-    {
-      path_particles_analysis_csv__InOutFun__(MPM_Mesh.Phi.vel, MPM_Mesh.Phi.x_GC, "Particles_path_velocity_csv", Out_particles_path_csv[i], i, TimeStep, DeltaTimeStep);
-    }
+  //   if(Out_particles_path_csv[i].Out_csv_particles_path_Velocity)
+  //   {
+  //     path_particles_analysis_csv__InOutFun__(MPM_Mesh.Phi.vel, MPM_Mesh.Phi.x_GC, "Particles_path_velocity_csv", Out_particles_path_csv[i], i, TimeStep, DeltaTimeStep);
+  //   }
 
-    if(Out_particles_path_csv[i].Out_csv_particles_path_Acceleration)
-    {
-      path_particles_analysis_csv__InOutFun__(MPM_Mesh.Phi.acc, MPM_Mesh.Phi.x_GC, "Particles_path_acceleration_csv", Out_particles_path_csv[i], i, TimeStep, DeltaTimeStep);
-    }
+  //   if(Out_particles_path_csv[i].Out_csv_particles_path_Acceleration)
+  //   {
+  //     path_particles_analysis_csv__InOutFun__(MPM_Mesh.Phi.acc, MPM_Mesh.Phi.x_GC, "Particles_path_acceleration_csv", Out_particles_path_csv[i], i, TimeStep, DeltaTimeStep);
+  //   }
 
-    if(Out_particles_path_csv[i].Out_csv_particles_path_Displacement)
-    {
-      path_particles_analysis_csv__InOutFun__(MPM_Mesh.Phi.dis, MPM_Mesh.Phi.x_GC, "Particles_path_displacement_csv", Out_particles_path_csv[i], i, TimeStep, DeltaTimeStep);
-    }
+  //   if(Out_particles_path_csv[i].Out_csv_particles_path_Displacement)
+  //   {
+  //     path_particles_analysis_csv__InOutFun__(MPM_Mesh.Phi.dis, MPM_Mesh.Phi.x_GC, "Particles_path_displacement_csv", Out_particles_path_csv[i], i, TimeStep, DeltaTimeStep);
+  //   }
 
-    if(Out_particles_path_csv[i].Out_csv_particles_path_Stress)
-    {
-      path_particles_analysis_csv__InOutFun__(MPM_Mesh.Phi.Stress, MPM_Mesh.Phi.x_GC, "Particles_path_stress_csv", Out_particles_path_csv[i], i, TimeStep, DeltaTimeStep);
-    }
+  //   if(Out_particles_path_csv[i].Out_csv_particles_path_Stress)
+  //   {
+  //     path_particles_analysis_csv__InOutFun__(MPM_Mesh.Phi.Stress, MPM_Mesh.Phi.x_GC, "Particles_path_stress_csv", Out_particles_path_csv[i], i, TimeStep, DeltaTimeStep);
+  //   }
 
-    if(Out_particles_path_csv[i].Out_csv_particles_path_Strain)
-    {
-      path_particles_analysis_csv__InOutFun__(MPM_Mesh.Phi.Strain, MPM_Mesh.Phi.x_GC, "Particles_path_strain_csv", Out_particles_path_csv[i], i, TimeStep, DeltaTimeStep);
-    }
+  //   if(Out_particles_path_csv[i].Out_csv_particles_path_Strain)
+  //   {
+  //     path_particles_analysis_csv__InOutFun__(MPM_Mesh.Phi.Strain, MPM_Mesh.Phi.x_GC, "Particles_path_strain_csv", Out_particles_path_csv[i], i, TimeStep, DeltaTimeStep);
+  //   }
 
-    if(Out_particles_path_csv[i].Out_csv_particles_path_Deformation_gradient)
-    {
-      path_particles_analysis_csv__InOutFun__(MPM_Mesh.Phi.F_n, MPM_Mesh.Phi.x_GC, "Particles_path_deformation_gradient_csv", Out_particles_path_csv[i], i, TimeStep, DeltaTimeStep);
-    }
+  //   if(Out_particles_path_csv[i].Out_csv_particles_path_Deformation_gradient)
+  //   {
+  //     path_particles_analysis_csv__InOutFun__(MPM_Mesh.Phi.F_n, MPM_Mesh.Phi.x_GC, "Particles_path_deformation_gradient_csv", Out_particles_path_csv[i], i, TimeStep, DeltaTimeStep);
+  //   }
 
-  }
+  // }
 
 }
 
