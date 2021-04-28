@@ -50,7 +50,7 @@ typedef struct
 static Newmark_parameters compute_Newmark_parameters(double, double, double);
 static Matrix compute_Nodal_Effective_Mass(Particle, Mesh, Mask, double);
 static Nodal_Field compute_Nodal_Field(Matrix,Particle, Mesh, Mask);
-static Nodal_Field initialise_Nodal_Increments(Mesh,Mask,int);
+static Nodal_Field initialise_Nodal_Increments(Nodal_Field,Mesh,Mask,int);
 static void   update_Local_State(Nodal_Field,Mask,Particle,Mesh,double);
 static Matrix compute_Nodal_Forces(Mask, Particle, Mesh, int);
 static void   compute_Nodal_Internal_Forces(Matrix,Mask,Particle, Mesh);
@@ -151,7 +151,7 @@ void U_Newmark_beta_Finite_Strains(
         Compute the nodal values of velocity and acceleration
       */
       U_n = compute_Nodal_Field(Effective_Mass,MPM_Mesh,FEM_Mesh,ActiveNodes);
-      D_U = initialise_Nodal_Increments(FEM_Mesh,ActiveNodes,TimeStep);
+      D_U = initialise_Nodal_Increments(U_n,FEM_Mesh,ActiveNodes,TimeStep);
       print_Status("DONE !!!",TimeStep);
 
       print_Status("*************************************************",TimeStep);
@@ -560,6 +560,7 @@ static Nodal_Field compute_Nodal_Field(
 /**************************************************************/
 
 static Nodal_Field initialise_Nodal_Increments(
+  Nodal_Field U_n,
   Mesh FEM_Mesh,
   Mask ActiveNodes,
   int TimeStep)
@@ -639,7 +640,8 @@ static Nodal_Field initialise_Nodal_Increments(
             Assign the boundary condition 
           */
           D_U.value.nM[Id_BCC_mask][k] = FEM_Mesh.Bounds.BCC_i[i].Value[k].Fx[TimeStep]*(double)FEM_Mesh.Bounds.BCC_i[i].Dir[k];                    
-               
+          U_n.d_value_dt.nM[Id_BCC_mask][k] = 0.0;
+          U_n.d2_value_dt2.nM[Id_BCC_mask][k] = 0.0;
         }
       }
     }    
