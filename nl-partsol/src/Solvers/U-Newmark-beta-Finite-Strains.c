@@ -1628,7 +1628,7 @@ static void update_Newmark_Nodal_Increments(
   for(int A = 0 ; A<Total_dof ; A++)
   {  
     D_U.d2_value_dt2.nV[A] = alpha_1*D_U.value.nV[A] - alpha_2*U_n.d_value_dt.nV[A] - (alpha_3 + 1)*U_n.d2_value_dt2.nV[A];
-    D_U.d_value_dt.nV[A]   = alpha_4*D_U.value.nV[A] + (alpha_5-1)*U_n.d_value_dt.nV[A] + (alpha_6 - 1)*U_n.d2_value_dt2.nV[A];
+    D_U.d_value_dt.nV[A]   = alpha_4*D_U.value.nV[A] + (alpha_5-1)*U_n.d_value_dt.nV[A] + alpha_6*U_n.d2_value_dt2.nV[A];
   }
 }
 
