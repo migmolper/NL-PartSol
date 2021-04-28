@@ -1613,6 +1613,7 @@ static void update_Newmark_Nodal_Increments(
 {
 
   int Nnodes = U_n.value.N_rows;
+  int Ndim = NumberDimensions;
   int Ndof = NumberDOF;
   int Total_dof = Nnodes*NumberDOF;
   double alpha_1 = Params.alpha_1;
@@ -1625,10 +1626,13 @@ static void update_Newmark_Nodal_Increments(
   /*
     Update nodal variables
   */
-  for(int A = 0 ; A<Total_dof ; A++)
+  for(int A = 0 ; A<Nnodes ; A++)
   {  
-    D_U.d2_value_dt2.nV[A] = alpha_1*D_U.value.nV[A] - alpha_2*U_n.d_value_dt.nV[A] - (alpha_3 + 1)*U_n.d2_value_dt2.nV[A];
-    D_U.d_value_dt.nV[A]   = alpha_4*D_U.value.nV[A] + (alpha_5-1)*U_n.d_value_dt.nV[A] + alpha_6*U_n.d2_value_dt2.nV[A];
+    for(int i = 0 ; i<Ndim ; i++)
+    {
+      D_U.d2_value_dt2.nM[A][i] = alpha_1*D_U.value.nM[A][i] - alpha_2*U_n.d_value_dt.nM[A][i] - (alpha_3 + 1)*U_n.d2_value_dt2.nM[A][i];
+      D_U.d_value_dt.nM[A][i]   = alpha_4*D_U.value.nM[A][i] + (alpha_5-1)*U_n.d_value_dt.nM[A][i] + alpha_6*U_n.d2_value_dt2.nM[A][i];
+    }
   }
 }
 
