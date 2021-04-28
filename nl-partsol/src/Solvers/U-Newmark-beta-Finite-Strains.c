@@ -152,7 +152,7 @@ void U_Newmark_beta_Finite_Strains(
       */
       U_n = compute_Nodal_Field(Effective_Mass,MPM_Mesh,FEM_Mesh,ActiveNodes);
       D_U = initialise_Nodal_Increments(FEM_Mesh,ActiveNodes,TimeStep);
-      print_Status("DONE !!!",TimeStep);  
+      print_Status("DONE !!!",TimeStep);
 
       print_Status("*************************************************",TimeStep);
       print_Status("Four step : Compute equilibrium ... WORKING",TimeStep);
@@ -1082,8 +1082,8 @@ static Matrix compute_Nodal_Reactions(
 /**************************************************************/
 
 static Matrix compute_Nodal_Residual(
-  Nodal_Field D_U,
   Nodal_Field U_n,
+  Nodal_Field D_U,
   Mask ActiveNodes,
   Matrix Forces,
   Matrix Mass,
@@ -1627,8 +1627,8 @@ static void update_Newmark_Nodal_Increments(
   */
   for(int A = 0 ; A<Total_dof ; A++)
   {  
-    D_U.d2_value_dt2.nV[A] = alpha_1*D_U.value.nV[A] - (alpha_2 + 1)*U_n.d_value_dt.nV[A] - alpha_3*U_n.d2_value_dt2.nV[A];
-    D_U.d_value_dt.nV[A]   = alpha_4*D_U.value.nV[A] + alpha_5*U_n.d_value_dt.nV[A] + (alpha_6 - 1)*U_n.d2_value_dt2.nV[A];
+    D_U.d2_value_dt2.nV[A] = alpha_1*D_U.value.nV[A] - alpha_2*U_n.d_value_dt.nV[A] - (alpha_3 + 1)*U_n.d2_value_dt2.nV[A];
+    D_U.d_value_dt.nV[A]   = alpha_4*D_U.value.nV[A] + (alpha_5-1)*U_n.d_value_dt.nV[A] + (alpha_6 - 1)*U_n.d2_value_dt2.nV[A];
   }
 }
 
