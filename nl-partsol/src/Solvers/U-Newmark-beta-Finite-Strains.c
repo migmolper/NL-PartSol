@@ -58,7 +58,7 @@ static void   compute_Nodal_Body_Forces(Matrix,Mask,Particle,Mesh, int);
 static Matrix compute_Nodal_Reactions(Mesh,Matrix,Mask);
 static Matrix compute_Nodal_Residual(Nodal_Field,Nodal_Field,Mask,Matrix, Matrix, Newmark_parameters);
 static bool   check_convergence(Matrix,double,int,int,int);
-static Matrix assemble_Nodal_Tangent_Stiffness(Mask,Particle,Mesh);
+static Matrix assemble_Nodal_Tangent_Stiffness(Mask,Particle,Mesh,Newmark_parameters);
 static void   solve_non_reducted_system(Nodal_Field,Matrix, Matrix, Matrix, Newmark_parameters);
 static void   solve_reducted_system(Nodal_Field,Matrix,Matrix,Matrix,Mask,Newmark_parameters);
 static void   update_Newmark_Nodal_Increments(Nodal_Field,Nodal_Field,Newmark_parameters);
@@ -201,7 +201,7 @@ void U_Newmark_beta_Finite_Strains(
 		        Assemble the tangent stiffness matrix as a sum of the material tangent
 		        stiffness and the geometrical tangent stiffness.
 	        */
-	        Tangent_Stiffness = assemble_Nodal_Tangent_Stiffness(ActiveNodes,MPM_Mesh,FEM_Mesh);
+	        Tangent_Stiffness = assemble_Nodal_Tangent_Stiffness(ActiveNodes,MPM_Mesh,FEM_Mesh,Params);
 
           /*
         		Solve the resulting equation 
@@ -1205,7 +1205,8 @@ static bool check_convergence(
 static Matrix assemble_Nodal_Tangent_Stiffness(
   Mask ActiveNodes,
   Particle MPM_Mesh,
-  Mesh FEM_Mesh)
+  Mesh FEM_Mesh,
+  Newmark_parameters Params)
 
 /*
   This function computes the tangent stiffness matrix. 
@@ -1234,14 +1235,14 @@ static Matrix assemble_Nodal_Tangent_Stiffness(
   Tensor GRADIENT_pB;
   Tensor F_n_p;
   Tensor F_n1_p;
+  Tensor dFdt_n1_p;
   Tensor transpose_F_n_p;
   Tensor Stiffness_density_p;
 
   Material MatProp_p;
   double V0_p; /* Volume of the particle in the reference configuration */
   double J_p; /* Jacobian of the deformation gradient */
-  double Geometric_AB_p; /* Geometric contribution */
-
+  double alpha_4 = Params.alpha_4; /* Newmark parameter (rate-dependent models) */
 
   Matrix Tangent_Stiffness = allocZ__MatrixLib__(Order, Order);
 
@@ -1280,6 +1281,7 @@ static Matrix assemble_Nodal_Tangent_Stiffness(
       */
       F_n_p  = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n.nM[p],2);
       F_n1_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n1.nM[p],2);
+      dFdt_n1_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.dt_F_n1.nM[p],2);
       transpose_F_n_p = transpose__TensorLib__(F_n_p);
 
       /*
@@ -1326,9 +1328,7 @@ static Matrix assemble_Nodal_Tangent_Stiffness(
         }
         else if(strcmp(MatProp_p.Type,"Newtonian-Fluid-Compressible") == 0)
         {
-          Tensor dFdt_n1_p;
-          double alpha4;
-          Stiffness_density_p = compute_stiffness_density_Newtonian_Fluid(GRADIENT_pA,GRADIENT_pB,F_n1_p,dFdt_n1_p,J_p,alpha4,MatProp_p);
+          Stiffness_density_p = compute_stiffness_density_Newtonian_Fluid(GRADIENT_pA,GRADIENT_pB,F_n1_p,dFdt_n1_p,J_p,alpha_4,MatProp_p);
         }
         else
         {

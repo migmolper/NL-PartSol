@@ -27,6 +27,10 @@ bool Is_Hexp = false;
 bool Is_cohesion = false;
 bool Is_friction_angle = false;
 bool Is_dilatancy_angle = false;
+bool Is_Compressibility = false;
+bool Is_ReferencePressure = false;
+bool Is_Viscosity = false;
+bool Is_n_Macdonald_model = false;
 
 /*
   Auxiliar functions 
@@ -35,6 +39,7 @@ static void check_Solid_Rigid_Material(Material);
 static void check_Linear_Elastic_Material(Material);
 static void check_Saint_Venant_Kirchhoff_Material(Material);
 static void check_Neo_Hookean_Wriggers_Material(Material);
+static void check_Newtonian_Fluid_Compressible_Material(Material);
 static void check_Von_Mises_Material(Material);
 static void check_Von_Mises_Material(Material);
 static void check_Drucker_Prager_Material(Material);
@@ -342,6 +347,30 @@ GramsMaterials (Particles=route.txt) {
 	    rad_dilatancy_angle = (PI__MatrixLib__/180)*Mat_GP.dilatancy_angle;
 	  }
 	  /**************************************************/
+	  else if(strcmp(Parse_Mat_Prop[0],"Compressibility") == 0)
+	  {
+	  	Is_Compressibility = true;
+	  	Mat_GP.Compressibility = atof(Parse_Mat_Prop[1]);
+	  }
+	  /**************************************************/
+	  else if(strcmp(Parse_Mat_Prop[0],"Reference-Pressure") == 0)
+	  {
+	  	Is_ReferencePressure = true;
+	  	Mat_GP.ReferencePressure = atof(Parse_Mat_Prop[1]);
+	  }
+	  /**************************************************/
+	  else if(strcmp(Parse_Mat_Prop[0],"Viscosity") == 0)
+	  {
+	  	Is_Viscosity = true;
+	  	Mat_GP.Viscosity = atof(Parse_Mat_Prop[1]);
+	  }
+	  /**************************************************/
+	  else if(strcmp(Parse_Mat_Prop[0],"Macdonald-parameter") == 0)
+	  {
+	  	Is_n_Macdonald_model = true;
+	  	Mat_GP.n_Macdonald_model = atof(Parse_Mat_Prop[1]);
+	  }
+	  /**************************************************/
 	  else
 	  {
 	  	sprintf(Error_message,"%s %s %s","the propertie",Parse_Mat_Prop[0],"is not defined");
@@ -389,6 +418,11 @@ GramsMaterials (Particles=route.txt) {
 	  else if(strcmp(Mat_GP.Type,"Neo-Hookean-Wriggers") == 0)
 	  {
 		check_Neo_Hookean_Wriggers_Material(Mat_GP);
+	  }
+	  /* Parameters for a Newtonian Compressible fluid */
+	  else if(strcmp(Mat_GP.Type,"Newtonian-Fluid-Compressible") == 0)
+	  {
+	  	check_Newtonian_Fluid_Compressible_Material(Mat_GP);
 	  }
 	  /* Parameters for a Von Mises Yield criterium */
 	  else if(strcmp(Mat_GP.Type,"Von-Mises") == 0)
@@ -563,6 +597,36 @@ static void check_Neo_Hookean_Wriggers_Material(Material Mat_particle)
 		fputs(Is_nu  ? "Poisson modulus : true \n" : "Poisson modulus : false \n", stdout);
 		exit(EXIT_FAILURE);
 	}
+}
+
+/**********************************************************************/
+
+static void check_Newtonian_Fluid_Compressible_Material(Material Mat_particle)
+{	
+
+	if(Is_rho && Is_Cel && Is_Compressibility && Is_ReferencePressure && Is_Viscosity && Is_n_Macdonald_model)
+	{
+		printf("\t -> %s \n","Newtonian-Compressible fluid");
+		printf("\t \t -> %s : %f \n","Celerity",Mat_particle.Cel);
+		printf("\t \t -> %s : %f \n","Density",Mat_particle.rho);
+		printf("\t \t -> %s : %f \n","Compressibility",Mat_particle.Compressibility);
+		printf("\t \t -> %s : %f \n","Reference Pressure",Mat_particle.ReferencePressure);
+		printf("\t \t -> %s : %f \n","Viscosity",Mat_particle.Viscosity);
+		printf("\t \t -> %s : %f \n","Macdonald-parameter",Mat_particle.n_Macdonald_model);
+	}
+	else
+	{
+		fprintf(stderr,"%s : %s \n",
+			"Error in GramsMaterials()",
+			"Some parameter is missed for Newtonian-Compressible fluid");
+		fputs(Is_rho ? "Density : true \n" : "Density : false \n", stdout);
+		fputs(Is_Compressibility ? "Compressibility : true \n" : "Compressibility : false \n", stdout);
+		fputs(Is_ReferencePressure ? "Reference Pressure : true \n" : "Reference Pressure : false \n", stdout);
+		fputs(Is_Viscosity ? "Viscosity : true \n" : "Viscosity : false \n", stdout);
+		fputs(Is_n_Macdonald_model ? "Macdonald-parameter : true \n" : "Macdonald-parameter : false \n", stdout);
+		exit(EXIT_FAILURE);
+	}
+
 }
 
 /**********************************************************************/
