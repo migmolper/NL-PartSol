@@ -896,12 +896,11 @@ Tensor symmetrise__TensorLib__(Tensor A)
 
   for(int i = 0 ; i<Ndim ; i++)
   {
-    for(int j = i ; j<Ndim ; j++)
+    for(int j = 0 ; j<Ndim ; j++)
     {
       if(i != j)
       {
         symA.N[i][j] = 0.5*(A.N[i][j] + A.N[j][i]);
-        symA.N[j][i] = symA.N[i][j];
       }
       else
       {

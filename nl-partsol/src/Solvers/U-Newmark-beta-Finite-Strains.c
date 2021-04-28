@@ -1716,7 +1716,7 @@ static void update_Particles(
       Vol_0_p = MPM_Mesh.Phi.Vol_0.nV[p];
       MatIndx_p = MPM_Mesh.MatIdx[p];
       MatProp_p = MPM_Mesh.Mat[MatIndx_p];
-      MPM_Mesh.Phi.W.nV[p]= finite_strains_internal_energy__Particles__(F_n_p, MatProp_p,Vol_0_p);
+//      MPM_Mesh.Phi.W.nV[p]= finite_strains_internal_energy__Particles__(F_n_p, MatProp_p,Vol_0_p);
       
       /* Iterate over the nodes of the particle */
       for(int A = 0; A<Nodes_p.NumberNodes; A++)
