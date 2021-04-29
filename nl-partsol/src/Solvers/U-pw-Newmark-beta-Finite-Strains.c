@@ -690,7 +690,9 @@ static Nodal_Field initialise_Nodal_Increments(
           /* 
             Assign the boundary condition 
           */
-          D_upw.value.nM[Id_BCC_mask][k] = FEM_Mesh.Bounds.BCC_i[i].Value[k].Fx[TimeStep]*(double)FEM_Mesh.Bounds.BCC_i[i].Dir[k];                    
+          D_upw.value.nM[Id_BCC_mask][k] = FEM_Mesh.Bounds.BCC_i[i].Value[k].Fx[TimeStep]*(double)FEM_Mesh.Bounds.BCC_i[i].Dir[k];  
+          D_upw.d_value_dt.nM[Id_BCC_mask][k] = 0.0;
+          D_upw.d2_value_dt2.nM[Id_BCC_mask][k] = 0.0;
                
         }
       }
@@ -2488,8 +2490,8 @@ static void update_Newmark_Nodal_Increments(
   */
   for(int A = 0 ; A<Total_dof ; A++)
   {  
-    D_upw.d2_value_dt2.nV[A] = alpha_1*D_upw.value.nV[A] - (alpha_2 + 1)*upw_n.d_value_dt.nV[A] - alpha_3*upw_n.d2_value_dt2.nV[A];
-    D_upw.d_value_dt.nV[A]   = alpha_4*D_upw.value.nV[A] + alpha_5*upw_n.d_value_dt.nV[A] + (alpha_6 - 1)*upw_n.d2_value_dt2.nV[A];
+    D_upw.d2_value_dt2.nV[A] = alpha_1*D_upw.value.nV[A] - (alpha_2 + 1)*upw_n.d_value_dt.nV[A] - (alpha_3+1)*upw_n.d2_value_dt2.nV[A];
+    D_upw.d_value_dt.nV[A]   = alpha_4*D_upw.value.nV[A] + (alpha_5-1)*upw_n.d_value_dt.nV[A] + alpha_6*upw_n.d2_value_dt2.nV[A];
   }
 }
 
