@@ -110,18 +110,18 @@ Matrix dN_Ref__T3__(
 {
   
   /* Definition and allocation */
-  Matrix dNdX_ref = alloc__MatrixLib__(2,3);
+  Matrix dNdX_ref = alloc__MatrixLib__(3,2);
   
   /* Fill the matrix */
   /* Node 0 */
   dNdX_ref.nM[0][0] = - 1; /* \frac{\partial N0}{\partial \xi} */
-  dNdX_ref.nM[1][0] = - 1; /* \frac{\partial N0}{\partial \eta} */
+  dNdX_ref.nM[0][1] = - 1; /* \frac{\partial N0}{\partial \eta} */
   /* Node 1 */
-  dNdX_ref.nM[0][1] = + 1; /* \frac{\partial N1}{\partial \xi} */
+  dNdX_ref.nM[1][0] = + 1; /* \frac{\partial N1}{\partial \xi} */
   dNdX_ref.nM[1][1] = + 0; /* \frac{\partial N1}{\partial \eta} */
   /* Node 2 */
-  dNdX_ref.nM[0][2] = + 0; /* \frac{\partial N2}{\partial \xi} */
-  dNdX_ref.nM[1][2] = + 1; /* \frac{\partial N2}{\partial \eta} */
+  dNdX_ref.nM[2][0] = + 0; /* \frac{\partial N2}{\partial \xi} */
+  dNdX_ref.nM[2][1] = + 1; /* \frac{\partial N2}{\partial \eta} */
   
   return dNdX_ref;
 }
@@ -131,8 +131,8 @@ Matrix dN_Ref__T3__(
 
 /* Deformation gradient of the reference element for the three-nodes triangle */
 static Matrix F_Ref__T3__(
-  Matrix X_NC_GP,
-  Matrix X_GC_Nodes)
+  Matrix Xi,
+  Matrix Element)
 /*
   Get the deformation gradient of the transformation of the reference element :
 
@@ -147,42 +147,44 @@ static Matrix F_Ref__T3__(
   evaluated in the GP
 */
 {
+  int Ndim = NumberDimensions;
+
   /* Variable declaration */
   Matrix dNdX_Ref_GP;
-  Matrix X_alpha = alloc__MatrixLib__(2,1);
-  Matrix dNdx_alpha = alloc__MatrixLib__(1,2);
-  Matrix F_Ref_alpha;
-  Matrix F_Ref = allocZ__MatrixLib__(2,2);
+  Tensor X_I;
+  Tensor dNdx_I;
+  Tensor F_Ref_I;
+  Matrix F_Ref = allocZ__MatrixLib__(Ndim,Ndim);
 
   /* 1º Evaluate the derivarive of the shape function in the GP */
-  dNdX_Ref_GP = dN_Ref__T3__(X_NC_GP); 
+  dNdX_Ref_GP = dN_Ref__T3__(Xi);
 
   /* 2º Get the F_Ref doing a loop over the nodes of the element */
-  for(int i = 0 ; i<3 ; i++)
+  for(int I = 0 ; I<3 ; I++)
   {
 
     /* 3º Fill arrays for the tensorial product */
-    for(int j = 0 ; j<2 ; j++)
-    {
-      X_alpha.nV[j] = X_GC_Nodes.nM[i][j];
-      dNdx_alpha.nV[j] = dNdX_Ref_GP.nM[j][i];
-    }
+    X_I    = memory_to_tensor__TensorLib__(Element.nM[I],1);
+    dNdx_I = memory_to_tensor__TensorLib__(dNdX_Ref_GP.nM[I],1);
 
     /* 4º Get the nodal contribution */
-    F_Ref_alpha = dyadic_product__MatrixLib__(X_alpha,dNdx_alpha);
+    F_Ref_I = dyadic_Product__TensorLib__(X_I,dNdx_I);
 
     /* 5º Increment the reference deformation gradient */
-    F_Ref = increment__MatrixLib__(F_Ref, F_Ref_alpha);
-
-    /* 6º Free data of the nodal contribution */
-    free__MatrixLib__(F_Ref_alpha);
+    for(int i = 0 ; i<Ndim ; i++)
+    {
+      for(int j = 0 ; j<Ndim ; j++)
+      {
+        F_Ref.nM[i][j] += F_Ref_I.N[i][j];
+      }
+    }
     
+    /* 6º Free data of the nodal contribution */
+    free__TensorLib__(F_Ref_I);    
   }
   
   /* 7º Free memory */
   free__MatrixLib__(dNdX_Ref_GP);
-  free__MatrixLib__(X_alpha);
-  free__MatrixLib__(dNdx_alpha);
 
   /* 8º Output */
   return F_Ref;
@@ -192,42 +194,42 @@ static Matrix F_Ref__T3__(
 
 /* Element gradient in the real element */
 Matrix dN__T3__(
-  Matrix X_EC_GP,
+  Matrix Xi,
   Matrix Element)
 /*
-  - Matrix X_EC_GP : Element coordinates of the gauss point
-  - Matrix Element : Coordinates of the element (NumNodesElem x NumberDimensions)
+  - Matrix Xi_GP : Element coordinates of the gauss point
+  - Matrix Element : Coordinates of the element (8 x Ndim)
 */
 {
   
-  /* 0º Definition and allocation */
-  Matrix dNdX_Ref_GP; /* Derivative of the shape function evaluated in the GP (Ndim x Nnodes) */
-  Matrix F_GP; /* Deformation gradient of the transformation evaluated in the GP (Ndim x Ndim) */
-  Matrix F_GP_m1; /* Inverse of the deformation gradient */
-  Matrix F_GP_Tm1; /* Transpose of the deformation gradient */
-  Matrix dNdx_GP; /* Derivatives of the shape function evaluates in the GP (Ndim x Ndim) */
-
-  /* 1º Evaluate the gradient of the shape function in the GP */
-  dNdX_Ref_GP = dN_Ref__T3__(X_EC_GP);
-  
-  /* 2º Get the deformation gradient of the transformation evaluated in the GP */
-  F_GP = F_Ref__T3__(X_EC_GP,Element);
+  /* Derivatives of the shape function evaluates in the GP (8 x Ndim) */
+  Matrix dNdX;
+  Matrix dNdX_T;
     
-  /* 3º Get the inverse of the deformation gradient */
-  F_GP_m1 = inverse__MatrixLib__(F_GP);
-  free__MatrixLib__(F_GP);
-  
-  /* 4º Get the transpose of the inverse of the deformation gradient */
-  F_GP_Tm1 = transpose__MatrixLib__(F_GP_m1);
-  free__MatrixLib__(F_GP_m1);
-  
-  /* 5º Get the gradient of the shape functions in global coordinates */
-  dNdx_GP = matrix_product__MatrixLib__(F_GP_Tm1,dNdX_Ref_GP);
-  free__MatrixLib__(F_GP_Tm1);
-  free__MatrixLib__(dNdX_Ref_GP);
+  /* 1º Evaluate the gradient of the shape function in the GP (8 x Ndim)
+  and transpose it */
+  Matrix dNdX_Ref   = dN_Ref__T3__(Xi);
+  Matrix dNdX_Ref_T = transpose__MatrixLib__(dNdX_Ref);
 
-  /* 6º Return result */
-  return dNdx_GP;
+  /* 2º Get the Jacobian of the transformation evaluated in the GP */
+  Matrix F     = F_Ref__T3__(Xi,Element);
+  Matrix F_m1  = inverse__MatrixLib__(F);  
+  Matrix F_Tm1 = transpose__MatrixLib__(F_m1);
+  
+  /* 3º Get the gradient of the shape functions in global coordinates */
+  dNdX_T = matrix_product__MatrixLib__(F_Tm1, dNdX_Ref_T);
+  dNdX   = transpose__MatrixLib__(dNdX_T);
+
+  /* 4º Free memory */
+  free__MatrixLib__(F);
+  free__MatrixLib__(F_m1);
+  free__MatrixLib__(F_Tm1);
+  free__MatrixLib__(dNdX_Ref);
+  free__MatrixLib__(dNdX_Ref_T);
+  free__MatrixLib__(dNdX_T);
+  
+  /* 5º Return result */
+  return dNdX;
 }
 
 /*********************************************************************/
@@ -433,7 +435,7 @@ double min_DeltaX__T3__(ChainPtr Element_Connectivity, Matrix Coordinates)
   */
   for(int j = 0 ; j<NumNodesElem ; j++)
   {
-    MinElementSize = DMIN(MinElementSize,1/sqrt(dNdx.nM[0][j]*dNdx.nM[0][j] + dNdx.nM[1][j]*dNdx.nM[1][j]));
+    MinElementSize = DMIN(MinElementSize,1/sqrt(dNdx.nM[j][0]*dNdx.nM[j][0] + dNdx.nM[j][1]*dNdx.nM[j][1]));
   }
 
   /*
@@ -467,7 +469,7 @@ double volume__T3__(
   Matrix F_i;
   Matrix Xi = allocZ__MatrixLib__(2,1);
 
-  for(int i = 0 ; i<4 ; i++)
+  for(int i = 0 ; i<3 ; i++)
   {
     for(int j = 0 ; j<Ndim ; j++)
     {
