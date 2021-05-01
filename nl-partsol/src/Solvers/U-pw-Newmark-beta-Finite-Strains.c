@@ -192,8 +192,6 @@ void upw_Newmark_beta_Finite_Strains(Mesh FEM_Mesh, Particle MPM_Mesh, int Initi
       }
     }
 
-    exit(0);
-
     print_Status("DONE !!!",TimeStep);
 
     print_Status("*************************************************",TimeStep);
@@ -204,7 +202,6 @@ void upw_Newmark_beta_Finite_Strains(Mesh FEM_Mesh, Particle MPM_Mesh, int Initi
     local_search__Particles__(MPM_Mesh,FEM_Mesh);
 
     print_Status("DONE !!!",TimeStep);
-      
 
     /*
       Outputs
@@ -229,6 +226,8 @@ void upw_Newmark_beta_Finite_Strains(Mesh FEM_Mesh, Particle MPM_Mesh, int Initi
     free(Free_and_Restricted_Dofs.Nodes2Mask);
 
     print_Status("DONE !!!",TimeStep);
+
+        exit(0);
 
   }
 
@@ -2554,79 +2553,79 @@ static void output_selector(
   /* 
     csv results 
   */
-  for(int i = 0 ; i<Number_Out_nodal_path_csv ; i++)
+/*  for(int i = 0 ; i<Number_Out_nodal_path_csv ; i++)
   {
 
     if(Out_nodal_path_csv[i].Out_csv_nodes_path_Velocity)
     {
-//      path_nodes_analysis_csv__InOutFun__(Velocity, FEM_Mesh.Coordinates,"Nodal_path_velocity_csv", ActiveNodes, Out_nodal_path_csv[i], i, TimeStep, DeltaTimeStep);
+      path_nodes_analysis_csv__InOutFun__(Velocity, FEM_Mesh.Coordinates,"Nodal_path_velocity_csv", ActiveNodes, Out_nodal_path_csv[i], i, TimeStep, DeltaTimeStep);
     }
 
     if(Out_nodal_path_csv[i].Out_csv_nodes_path_Acceleration)
     {
- //     path_nodes_analysis_csv__InOutFun__(Acceleration, FEM_Mesh.Coordinates,"Nodal_path_acceleration_csv", ActiveNodes, Out_nodal_path_csv[i], i, TimeStep, DeltaTimeStep);
+      path_nodes_analysis_csv__InOutFun__(Acceleration, FEM_Mesh.Coordinates,"Nodal_path_acceleration_csv", ActiveNodes, Out_nodal_path_csv[i], i, TimeStep, DeltaTimeStep);
     }
 
     if(Out_nodal_path_csv[i].Out_csv_nodes_path_D_Displacement)
     {
-//      path_nodes_analysis_csv__InOutFun__(D_Displacement, FEM_Mesh.Coordinates,"Nodal_path_displacement_csv", ActiveNodes, Out_nodal_path_csv[i], i, TimeStep, DeltaTimeStep);
+      path_nodes_analysis_csv__InOutFun__(D_Displacement, FEM_Mesh.Coordinates,"Nodal_path_displacement_csv", ActiveNodes, Out_nodal_path_csv[i], i, TimeStep, DeltaTimeStep);
     }
 
     if(Out_nodal_path_csv[i].Out_csv_nodes_path_Forces)
     {
-//      path_nodes_analysis_csv__InOutFun__(Forces, FEM_Mesh.Coordinates,"Nodal_path_forces_csv", ActiveNodes, Out_nodal_path_csv[i], i, TimeStep, DeltaTimeStep);
+      path_nodes_analysis_csv__InOutFun__(Forces, FEM_Mesh.Coordinates,"Nodal_path_forces_csv", ActiveNodes, Out_nodal_path_csv[i], i, TimeStep, DeltaTimeStep);
     }
 
     if(Out_nodal_path_csv[i].Out_csv_nodes_path_Reactions)
     {
-//      path_nodes_analysis_csv__InOutFun__(Reactions, FEM_Mesh.Coordinates,"Nodal_path_reactions_csv", ActiveNodes, Out_nodal_path_csv[i], i, TimeStep, DeltaTimeStep);
+      path_nodes_analysis_csv__InOutFun__(Reactions, FEM_Mesh.Coordinates,"Nodal_path_reactions_csv", ActiveNodes, Out_nodal_path_csv[i], i, TimeStep, DeltaTimeStep);
     }
 
     if(Out_nodal_path_csv[i].Out_csv_nodes_path_Residual)
     {
-//      path_nodes_analysis_csv__InOutFun__(Residual, FEM_Mesh.Coordinates,"Nodal_path_residual_csv", ActiveNodes, Out_nodal_path_csv[i], i, TimeStep, DeltaTimeStep);
+      path_nodes_analysis_csv__InOutFun__(Residual, FEM_Mesh.Coordinates,"Nodal_path_residual_csv", ActiveNodes, Out_nodal_path_csv[i], i, TimeStep, DeltaTimeStep);
     }
-  }
+  }*/
 
 
-  for(int i = 0 ; i<Number_Out_particles_path_csv ; i++)
-  {
-    if(Out_particles_path_csv[i].Out_csv_particles_path_Damage)
-    {
-      path_particles_analysis_csv__InOutFun__(MPM_Mesh.Phi.chi, MPM_Mesh.Phi.x_GC, "Particles_path_damage_csv", Out_particles_path_csv[i], i, TimeStep, DeltaTimeStep);
-    }
+  // for(int i = 0 ; i<Number_Out_particles_path_csv ; i++)
+  // {
+  //   if(Out_particles_path_csv[i].Out_csv_particles_path_Damage)
+  //   {
+  //     path_particles_analysis_csv__InOutFun__(MPM_Mesh.Phi.chi, MPM_Mesh.Phi.x_GC, "Particles_path_damage_csv", Out_particles_path_csv[i], i, TimeStep, DeltaTimeStep);
+  //   }
 
-    if(Out_particles_path_csv[i].Out_csv_particles_path_Velocity)
-    {
-      path_particles_analysis_csv__InOutFun__(MPM_Mesh.Phi.vel, MPM_Mesh.Phi.x_GC, "Particles_path_velocity_csv", Out_particles_path_csv[i], i, TimeStep, DeltaTimeStep);
-    }
+  //   if(Out_particles_path_csv[i].Out_csv_particles_path_Velocity)
+  //   {
+  //     path_particles_analysis_csv__InOutFun__(MPM_Mesh.Phi.vel, MPM_Mesh.Phi.x_GC, "Particles_path_velocity_csv", Out_particles_path_csv[i], i, TimeStep, DeltaTimeStep);
+  //   }
 
-    if(Out_particles_path_csv[i].Out_csv_particles_path_Acceleration)
-    {
-      path_particles_analysis_csv__InOutFun__(MPM_Mesh.Phi.acc, MPM_Mesh.Phi.x_GC, "Particles_path_acceleration_csv", Out_particles_path_csv[i], i, TimeStep, DeltaTimeStep);
-    }
+  //   if(Out_particles_path_csv[i].Out_csv_particles_path_Acceleration)
+  //   {
+  //     path_particles_analysis_csv__InOutFun__(MPM_Mesh.Phi.acc, MPM_Mesh.Phi.x_GC, "Particles_path_acceleration_csv", Out_particles_path_csv[i], i, TimeStep, DeltaTimeStep);
+  //   }
 
-    if(Out_particles_path_csv[i].Out_csv_particles_path_Displacement)
-    {
-      path_particles_analysis_csv__InOutFun__(MPM_Mesh.Phi.dis, MPM_Mesh.Phi.x_GC, "Particles_path_displacement_csv", Out_particles_path_csv[i], i, TimeStep, DeltaTimeStep);
-    }
+  //   if(Out_particles_path_csv[i].Out_csv_particles_path_Displacement)
+  //   {
+  //     path_particles_analysis_csv__InOutFun__(MPM_Mesh.Phi.dis, MPM_Mesh.Phi.x_GC, "Particles_path_displacement_csv", Out_particles_path_csv[i], i, TimeStep, DeltaTimeStep);
+  //   }
 
-    if(Out_particles_path_csv[i].Out_csv_particles_path_Stress)
-    {
-      path_particles_analysis_csv__InOutFun__(MPM_Mesh.Phi.Stress, MPM_Mesh.Phi.x_GC, "Particles_path_stress_csv", Out_particles_path_csv[i], i, TimeStep, DeltaTimeStep);
-    }
+  //   if(Out_particles_path_csv[i].Out_csv_particles_path_Stress)
+  //   {
+  //     path_particles_analysis_csv__InOutFun__(MPM_Mesh.Phi.Stress, MPM_Mesh.Phi.x_GC, "Particles_path_stress_csv", Out_particles_path_csv[i], i, TimeStep, DeltaTimeStep);
+  //   }
 
-    if(Out_particles_path_csv[i].Out_csv_particles_path_Strain)
-    {
-      path_particles_analysis_csv__InOutFun__(MPM_Mesh.Phi.Strain, MPM_Mesh.Phi.x_GC, "Particles_path_strain_csv", Out_particles_path_csv[i], i, TimeStep, DeltaTimeStep);
-    }
+  //   if(Out_particles_path_csv[i].Out_csv_particles_path_Strain)
+  //   {
+  //     path_particles_analysis_csv__InOutFun__(MPM_Mesh.Phi.Strain, MPM_Mesh.Phi.x_GC, "Particles_path_strain_csv", Out_particles_path_csv[i], i, TimeStep, DeltaTimeStep);
+  //   }
 
-    if(Out_particles_path_csv[i].Out_csv_particles_path_Deformation_gradient)
-    {
-      path_particles_analysis_csv__InOutFun__(MPM_Mesh.Phi.F_n, MPM_Mesh.Phi.x_GC, "Particles_path_deformation_gradient_csv", Out_particles_path_csv[i], i, TimeStep, DeltaTimeStep);
-    }
+  //   if(Out_particles_path_csv[i].Out_csv_particles_path_Deformation_gradient)
+  //   {
+  //     path_particles_analysis_csv__InOutFun__(MPM_Mesh.Phi.F_n, MPM_Mesh.Phi.x_GC, "Particles_path_deformation_gradient_csv", Out_particles_path_csv[i], i, TimeStep, DeltaTimeStep);
+  //   }
 
-  }
+  // }
 
 }
 

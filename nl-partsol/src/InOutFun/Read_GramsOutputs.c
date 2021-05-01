@@ -193,11 +193,11 @@ void GramsOutputs(char * Name_File)
 	  {
 		Out_volumetric_stress = Is_Output_Activate(Parse_Out_Prop[0],Parse_Out_Prop[1]);
 	  }	  
-	  else if(strcmp(Parse_Out_Prop[0],"Pore-water-pressure") == 0)
+	  else if(strcmp(Parse_Out_Prop[0],"Out-Pore-water-pressure") == 0)
 	  {
 	  	Out_Pw = Is_Output_Activate(Parse_Out_Prop[0],Parse_Out_Prop[1]);
 	  }
-	  else if(strcmp(Parse_Out_Prop[0],"Rate-Pore-water-pressure") == 0)
+	  else if(strcmp(Parse_Out_Prop[0],"Out-Rate-Pore-water-pressure") == 0)
 	  {
 	  	Out_dPw_dt = Is_Output_Activate(Parse_Out_Prop[0],Parse_Out_Prop[1]);
 	  }
