@@ -2494,9 +2494,9 @@ static void update_Particles(
         }
         else
         {
-          MPM_Mesh.Phi.d2_Pw_dt2.nV[p] = D_dt2_upw_pI;
-          MPM_Mesh.Phi.d_Pw_dt.nV[p] = D_dt_upw_pI;
-          MPM_Mesh.Phi.Pw.nV[p] = D_upw_pI;
+          MPM_Mesh.Phi.d2_Pw_dt2.nV[p] += D_dt2_upw_pI;
+          MPM_Mesh.Phi.d_Pw_dt.nV[p] += D_dt_upw_pI;
+          MPM_Mesh.Phi.Pw.nV[p] += D_upw_pI;
         }
       } 
 
