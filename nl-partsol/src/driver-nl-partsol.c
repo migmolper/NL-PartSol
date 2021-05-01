@@ -187,9 +187,13 @@ int main(int argc, char * argv[])
 
       puts("*************************************************");
       puts("Run simulation ...");
-      if(strcmp(TimeIntegrationScheme,"NPC-FS") == 0 )
+      if(strcmp(TimeIntegrationScheme,"NPC-FS") == 0)
       { 
         upw_Newmark_Predictor_Corrector_Finite_Strains(FEM_Mesh, MPM_Mesh, InitialStep);
+      }
+      else if(strcmp(TimeIntegrationScheme,"Newmark-beta-Finite-Strains") == 0)
+      {
+        upw_Newmark_beta_Finite_Strains(FEM_Mesh, MPM_Mesh, InitialStep);
       }
       else
       {

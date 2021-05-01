@@ -133,4 +133,16 @@ void U_Discrete_Energy_Momentum(Mesh, Particle, int);
 void upw_Newmark_Predictor_Corrector_Finite_Strains(Mesh, Particle, int);
 
 
+/*
+  \fn void upw_Newmark_beta_Finite_Strains(Mesh FEM_Mesh, Particle MPM_Mesh, int InitialStep)
+
+  \brief u-pw formulation with one single set of material points. Implicit solver for finite strains based in the 
+    Newmark-beta, see \cite Molinos_et_al_2021_CMAME.
+
+  \param Mesh FEM_Mesh : Variable with the nodal information
+  \param Particle MPM_Mesh : Variable with the particle information
+  \param InitialStep  
+*/
+void upw_Newmark_beta_Finite_Strains(Mesh, Particle, int);
+
 #endif
