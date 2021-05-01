@@ -59,14 +59,13 @@ static Matrix compute_Residual(Nodal_Field,Nodal_Field,Mask,Particle,Mesh,int);
 static  void  compute_Inertial_Forces_Mixture(Nodal_Field,Matrix,Mask,Particle,Mesh);
 static  void  compute_Internal_Forces_Mixture(Matrix,Mask,Particle,Mesh);
 static Tensor compute_total_first_Piola_Kirchhoff_stress(Tensor,double,Tensor);
-static  void  compute_Contact_Forces_Mixture(Matrix,Mask,Particle,Mesh,int);
 static  void  compute_Compresibility_Mass_Balance(Nodal_Field, Matrix, Mask, Particle, Mesh);
 static  void  compute_Jacobian_Rate_Mass_Balance(Matrix,Mask,Particle,Mesh);
-static  void  compute_Permeability_Mass_Balance(Nodal_Field, Nodal_Field,Matrix,Mask,Particle,Mesh);
+static  void  compute_Flow_contribution_Mass_Balance(Nodal_Field, Nodal_Field,Matrix,Mask,Particle,Mesh);
 static Tensor compute_Pore_water_pressure_gradient_n1(Matrix,Matrix,Matrix);
-static  void  compute_Permeability_Inertial_Forces_Fluid(Nodal_Field,Matrix,Mask,Particle,Mesh);
+static  void  compute_nominal_traction_and_fluid_flux(Matrix,Mask,Particle,Mesh,int);
 static  bool  check_convergence(Matrix,double,int,int,int);
-static Matrix assemble_Tangent_Stiffness(Nodal_Field,Nodal_Field,Mask,Particle,Mesh,Newmark_parameters);
+static Matrix assemble_Tangent_Stiffness(Nodal_Field,Nodal_Field,Mask,Particle,Mesh,double,Newmark_parameters);
 static Tensor compute_stiffness_density(Tensor, Tensor, Tensor, double, Material);
 static Tensor compute_H_AB(Tensor,Tensor);
 static Tensor compute_L_AB(double,Tensor,Tensor,Tensor);
@@ -172,7 +171,7 @@ void upw_Newmark_beta_Finite_Strains(Mesh FEM_Mesh, Particle MPM_Mesh, int Initi
       if(Convergence == false)
       {
 
-        Tangent_Stiffness = assemble_Tangent_Stiffness(upw_n,D_upw,ActiveNodes,MPM_Mesh,FEM_Mesh,Params);
+        Tangent_Stiffness = assemble_Tangent_Stiffness(upw_n,D_upw,ActiveNodes,MPM_Mesh,FEM_Mesh,epsilon,Params);
 
         if((Free_and_Restricted_Dofs.Nactivenodes - Ndim*Nactivenodes) == 0)
         {
@@ -260,12 +259,7 @@ static Matrix compute_Nodal_Effective_Mass(
   double epsilon)
 /*
   This function computes the effective mass matrix as a convex combination
-  of the lumped mass matrix and the consistent mass matrix. Later assemble
-  a total mass matrix with the contribution of each degree of freedom.
-
-  | M_eff |   0   |              | M_cons |   0    |          | M_lump |   0    |
-  -----------------  = (1-eps) * -------------------  + eps * -------------------
-  |    0  | M_eff |              |   0    | M_cons |        |   0    | M_lump |
+  of the lumped mass matrix and the consistent mass matrix. 
 */
 {
 
@@ -284,7 +278,8 @@ static Matrix compute_Nodal_Effective_Mass(
   Matrix ShapeFunction_p;  
 
   /* Evaluation of the particle in the node */
-  double ShapeFunction_pA, ShapeFunction_pB;
+  double ShapeFunction_pA;
+  double ShapeFunction_pB;
   /* Mass of the particle */
   double m_p;
   /* Nodal contribution A of the particle p */
@@ -901,15 +896,13 @@ static Matrix compute_Residual(
 
   compute_Internal_Forces_Mixture(Residual,ActiveNodes,MPM_Mesh,FEM_Mesh);
 
-  compute_Contact_Forces_Mixture(Residual,ActiveNodes,MPM_Mesh,FEM_Mesh,TimeStep);
-
   compute_Compresibility_Mass_Balance(D_upw, Residual, ActiveNodes, MPM_Mesh, FEM_Mesh);
 
   compute_Jacobian_Rate_Mass_Balance(Residual, ActiveNodes, MPM_Mesh, FEM_Mesh);
 
-  compute_Permeability_Mass_Balance(upw_n, D_upw, Residual, ActiveNodes, MPM_Mesh, FEM_Mesh);
+  compute_Flow_contribution_Mass_Balance(upw_n, D_upw, Residual, ActiveNodes, MPM_Mesh, FEM_Mesh);
 
-  compute_Permeability_Inertial_Forces_Fluid(D_upw, Residual, ActiveNodes, MPM_Mesh, FEM_Mesh);
+  compute_nominal_traction_and_fluid_flux(Residual,ActiveNodes,MPM_Mesh,FEM_Mesh,TimeStep);
   
   return Residual;
 }
@@ -1032,7 +1025,7 @@ static void compute_Internal_Forces_Mixture(
   int A_mask;
   int NumNodes_p;
 
-  Tensor P_p; /* Total First Piola-Kirchhoff Stress tensor */
+  Tensor P_total_p; /* Total First Piola-Kirchhoff Stress tensor */
   Tensor P_effective_p; /* Effective First Piola-Kirchhoff Stress tensor */
   double theta_n1_p; /* Kirchhoff pore fluid pressure t = n + 1 */
   Tensor InternalForcesDensity_Ap;
@@ -1088,7 +1081,7 @@ static void compute_Internal_Forces_Mixture(
       Following Terzaghi's idea, the effective stress tensor in the reference configuration
       is computed:
     */
-    P_p = compute_total_first_Piola_Kirchhoff_stress(P_effective_p,theta_n1_p,F_n1_p);
+    P_total_p = compute_total_first_Piola_Kirchhoff_stress(P_effective_p,theta_n1_p,F_n1_p);
 
     for(int A = 0 ; A<NumNodes_p ; A++)
     {
@@ -1102,7 +1095,7 @@ static void compute_Internal_Forces_Mixture(
       /*
         Compute the nodal forces of the particle 
       */
-      InternalForcesDensity_Ap = vector_linear_mapping__TensorLib__(P_p, GRADIENT_pA);
+      InternalForcesDensity_Ap = vector_linear_mapping__TensorLib__(P_total_p, GRADIENT_pA);
       
       /*
         Get the node of the mesh for the contribution 
@@ -1129,7 +1122,7 @@ static void compute_Internal_Forces_Mixture(
       Free memory 
     */
     free__TensorLib__(FT_n_p);
-    free__TensorLib__(P_p);
+    free__TensorLib__(P_total_p);
     free__MatrixLib__(gradient_p);
     free(Nodes_p.Connectivity);
   }
@@ -1166,134 +1159,6 @@ static Tensor compute_total_first_Piola_Kirchhoff_stress(
 
 /*********************************************************************/
 
-static void compute_Contact_Forces_Mixture(
-  Matrix Residual,
-  Mask ActiveNodes,
-  Particle MPM_Mesh,
-  Mesh FEM_Mesh,
-  int TimeStep)
-{
-  int Ndim = NumberDimensions;
-  Load T_i;
-  Element Nodes_p; /* Element for each Gauss-Point */
-  Matrix ShapeFunction_p; /* Nodal values of the sahpe function */
-  double ShapeFunction_pA;
-  Tensor t = alloc__TensorLib__(1); /* Body forces vector */
-  double V0_p; /* Volumen of the particle in the reference configuration */
-  double thickness_p; /* Thickness of the particle */
-  double A0_p; /* Area of the particle in the reference configuration */ 
-
-  int NumContactForces = MPM_Mesh.Neumann_Contours.NumBounds;
-  int NumNodesLoad;
-  int p;
-  int Ap;
-  int A_mask;
-  int NumNodes_p; /* Number of nodes of each particle */
-
-  for(int i = 0 ; i<NumContactForces; i++)
-  {
-
-    /*
-      Read load i
-    */
-    T_i = MPM_Mesh.Neumann_Contours.BCC_i[i];
-
-    NumNodesLoad = T_i.NumNodes;
-      
-    for(int j = 0 ; j<NumNodesLoad ; j++)
-    {
-
-      /*
-        Get the index of the particle
-      */
-      p = T_i.Nodes[j];
-
-      /*
-        Get the volume of the particle in the reference configuration 
-      */
-      V0_p = MPM_Mesh.Phi.Vol_0.nV[p];
-
-      /*
-        Get the thickness of each particle
-      */
-      thickness_p = Thickness_Plain_Stress;
-
-      /*
-        Get the area of each particle
-      */
-      A0_p = V0_p/thickness_p;
-
-      /*
-        Define tributary nodes of the particle 
-      */
-      NumNodes_p = MPM_Mesh.NumberNodes[p];
-      Nodes_p = nodal_set__Particles__(p, MPM_Mesh.ListNodes[p],NumNodes_p);
-
-      /* 
-        Evaluate the shape function in the coordinates of the particle
-      */
-      ShapeFunction_p = compute_N__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
-
-      /*
-        Fill vector of contact forces
-      */
-      for(int k = 0 ; k<Ndim ; k++)
-      {
-        if(T_i.Dir[k])
-        {
-          if( (TimeStep < 0) || (TimeStep > T_i.Value[k].Num))
-          {
-            sprintf(Error_message,"%s : %s",
-              "Error in compute_Contact_Forces_Mixture()",
-              "The time step is out of the curve !!");
-            standard_error();
-          }
-          t.n[k] = T_i.Value[k].Fx[TimeStep];
-        }
-      }
-
-      /*
-        Get the node of the mesh for the contribution
-      */
-      for(int A = 0 ; A<NumNodes_p ; A++)
-      {
-
-        /*
-          Pass the value of the nodal shape function to a scalar
-        */
-        ShapeFunction_pA = ShapeFunction_p.nV[A];
-
-        /*
-          Node for the contribution
-        */
-        Ap = Nodes_p.Connectivity[A];
-        A_mask = ActiveNodes.Nodes2Mask[Ap];
-  
-        /*
-          Compute Contact forces
-        */
-        for(int k = 0 ; k<Ndim ; k++)
-        {
-          Residual.nM[A_mask][k] -= ShapeFunction_pA*t.n[k]*A0_p;
-        }
-  
-      }
-
-      /* Free the matrix with the nodal gradient of the element */
-      free__MatrixLib__(ShapeFunction_p);
-      free(Nodes_p.Connectivity);
-  
-    }
-
-      
-  }
-
-  free__TensorLib__(t);
-
-}
-
-/**************************************************************/
-
 static void compute_Compresibility_Mass_Balance(
   Nodal_Field D_upw,
   Matrix Residual,
@@ -1314,12 +1179,10 @@ static void compute_Compresibility_Mass_Balance(
   Matrix D_d_Pw_dt_n_I;
   double ShapeFunction_pA; /* Evaluation of the particle in the node A */
   double V0_p; /* Mass of the particle (mixture) */
-  double rho_f_p; /* Material density of the fluid */
   double phi_f_p; /* Volume fractions of the fluid */
+  double intrinsic_rho_f_p; /* Initrinsic density of the fluid */
   double relative_rho_f_p; /* Relative density of the fluid */
   double K_f; /* Compressibility (fluid) */
-  double compressibility_density_f_p; /* Compressibilidy density fo the fluid */
-  double compressibility_density_f_A_p; /* Nodal contribution A of the particle p */
   double d_Pw_dt_n_p; /* Rate of pore water pressure (t = n) in particle p */
   double d_Pw_dt_n1_p; /* Rate of pore water pressure (t = n + 1) in particle p */
 
@@ -1346,9 +1209,9 @@ static void compute_Compresibility_Mass_Balance(
       and compressibility for each material point (fluid).
       Compute relative density.
     */
-    rho_f_p = MPM_Mesh.Phi.rho_f.nV[p];
     phi_f_p = MPM_Mesh.Phi.phi_f.nV[p];
-    relative_rho_f_p = phi_f_p*rho_f_p;
+    intrinsic_rho_f_p = MPM_Mesh.Phi.rho_f.nV[p];
+    relative_rho_f_p = phi_f_p*intrinsic_rho_f_p;
 
     /*
       Load intrinsic properties for the fluid phase to 
@@ -1367,35 +1230,17 @@ static void compute_Compresibility_Mass_Balance(
     D_d_Pw_dt_n_I = get_Pw_set_field_upw__MeshTools__(D_upw.d_value_dt, Nodes_p, ActiveNodes);
     d_Pw_dt_n1_p = d_Pw_dt_n_p + interpolate_scalar_magnitude__MeshTools__(D_d_Pw_dt_n_I, ShapeFunction_p);
 
-
-    /* 
-      Compute the compressibility density 
-    */
-    compressibility_density_f_p = relative_rho_f_p/K_f;
-
-      
     for(int A = 0 ; A<Nodes_p.NumberNodes ; A++)
     {
-      /* 
-        Get the node in the mass matrix with the mask 
-      */
+      /* Get the node in the mass matrix with the mask */
       Ap = Nodes_p.Connectivity[A];
       A_mask = ActiveNodes.Nodes2Mask[Ap];
  
-      /*
-        Get the value of the shape function 
-      */
+      /* Get the value of the shape function */
       ShapeFunction_pA = ShapeFunction_p.nV[A];
 
-      /* 
-        Compute the nodal A contribution of the particle p 
-      */
-      compressibility_density_f_A_p = compressibility_density_f_p*ShapeFunction_pA;
-
-      /* 
-        Add the compressubility contribution
-      */
-      Residual.nM[A_mask][Ndim] += compressibility_density_f_A_p*d_Pw_dt_n1_p*V0_p;      
+      /* Add the compressibility contribution */
+      Residual.nM[A_mask][Ndim] += (relative_rho_f_p/K_f)*ShapeFunction_pA*d_Pw_dt_n1_p*V0_p;      
     }
 
     /* Free the value of the shape functions */
@@ -1429,7 +1274,7 @@ static void compute_Jacobian_Rate_Mass_Balance(
   Element Nodes_p; /* Element for each particle p */
   Matrix ShapeFunction_p; /* Matrix with the value of the shape function in the particle p */ 
   double ShapeFunction_pA; /* Value of the shape funtion in node A for the particle p */
-  double rho_f_p; /* Material density of the fluid phase for particle p */
+  double intrinsic_rho_f_p; /* Intrinsic density of the fluid phase for particle p */
   double V0_p; /* Volume of the particle */
   double dJ_dt_n1_p; /* Rate of the jacobian */
 
@@ -1439,7 +1284,7 @@ static void compute_Jacobian_Rate_Mass_Balance(
     /* 
       Get the current material density for each material point (fluid) 
     */
-    rho_f_p = MPM_Mesh.Phi.rho_f.nV[p];
+    intrinsic_rho_f_p = MPM_Mesh.Phi.rho_f.nV[p];
 
     /*
       Get the reference volume for each material point (mixture) 
@@ -1480,7 +1325,7 @@ static void compute_Jacobian_Rate_Mass_Balance(
       /*
         Add the contribution of the jacobian rate to the mass conservation
       */
-      Residual.nM[A_mask][Ndim] += ShapeFunction_pA*rho_f_p*dJ_dt_n1_p*V0_p;
+      Residual.nM[A_mask][Ndim] += ShapeFunction_pA*intrinsic_rho_f_p*dJ_dt_n1_p*V0_p;
 
     }
         
@@ -1495,7 +1340,7 @@ static void compute_Jacobian_Rate_Mass_Balance(
 
 /**************************************************************/
 
-static void compute_Permeability_Mass_Balance(
+static void compute_Flow_contribution_Mass_Balance(
   Nodal_Field upw_n,
   Nodal_Field D_upw,
   Matrix Residual,
@@ -1520,6 +1365,8 @@ static void compute_Permeability_Mass_Balance(
   Element Nodes_p; /* Element for each particle */
   Matrix Nodal_Pw_n_p;
   Matrix Nodal_D_Pw_p;
+  Matrix Nodal_D_Acceleration_p;
+  Matrix ShapeFunction_p; /* Shape functions */
   Matrix gradient_p;  /* Shape functions gradients */
   Tensor gradient_pA; /* Shape functions gradients (Node A), def config */
   Tensor GRADIENT_pA; /* Shape functions gradients (Node A), ref config */
@@ -1530,10 +1377,19 @@ static void compute_Permeability_Mass_Balance(
   Tensor k_p; /* Spatial permebility tensor */
   Tensor Fk_p; /* Product of the inverse of the defomration gradient and the permeability tensor */
   Tensor gradPw_n1; 
+  Tensor a_n_p; /* Particle acceleration */
+  Tensor a_n1_p; /* Particle acceleration */
+  Tensor D_a_p; /* Particle acceleration */
+  Tensor b_p; /* External acceleration */
+  Tensor dyn_n1; /* Total acceleration of the particle */
   Tensor Fk__x__gradPw_n1;
+  Tensor Fk__x__dyn_n1;
   double GRADIENT_pA__x__Fk__x__gradPw_n1;
+  double GRADIENT_pA__x__Fk__x__dyn_n1;
   double g = -9.81;
   double V0_p; /* Volume of the particle at the reference configuration */
+  double intrinsic_rho_f_p;
+  double J_n1_p; /* Determianant of the soil skeleton deformation gradient at t = n + 1 */
 
   /*
     Iterate over the particles to get the nodal values 
@@ -1550,6 +1406,7 @@ static void compute_Permeability_Mass_Balance(
       /*
         Compute gradient of the shape function in each node 
       */
+      ShapeFunction_p = compute_N__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
       gradient_p = compute_dN__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
 
       /*
@@ -1560,11 +1417,17 @@ static void compute_Permeability_Mass_Balance(
       F_n1_p  = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n1.nM[p],2);
       FT_n_p = transpose__TensorLib__(F_n_p);
       Fm1_n1_p = Inverse__TensorLib__(F_n1_p);
+      J_n1_p = MPM_Mesh.Phi.J.nV[p];
 
       /*
         Get the reference volume for each material point (mixture) 
       */
       V0_p = MPM_Mesh.Phi.Vol_0.nV[p];
+
+      /* 
+        Get the current material density for each material point (fluid) 
+      */
+      intrinsic_rho_f_p = MPM_Mesh.Phi.rho_f.nV[p];
 
       /* 
         Load intrinsic properties for the solid phase to compute the permeability
@@ -1587,9 +1450,20 @@ static void compute_Permeability_Mass_Balance(
       gradPw_n1 = compute_Pore_water_pressure_gradient_n1(Nodal_Pw_n_p,Nodal_D_Pw_p,gradient_p);
 
       /*
-        Intermediate result 1
+        Compute total particle acceleration at n+1 using nodal variables
+      */
+      Nodal_D_Acceleration_p = get_U_set_field_upw__MeshTools__(D_upw.d2_value_dt2, Nodes_p, ActiveNodes);
+      D_a_p = interpolate_vectorial_magnitude__MeshTools__(Nodal_D_Acceleration_p, ShapeFunction_p);
+      a_n_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.acc.nM[p],1);
+      a_n1_p = addition__TensorLib__(a_n_p, D_a_p);
+      b_p = MPM_Mesh.b;
+      dyn_n1 = subtraction__TensorLib__(a_n1_p, b_p);
+
+      /*
+        Intermediate results
       */
       Fk__x__gradPw_n1 = vector_linear_mapping__TensorLib__(Fk_p,gradPw_n1);
+      Fk__x__dyn_n1 = vector_linear_mapping__TensorLib__(Fk_p,dyn_n1);
 
 
       for(int A = 0 ; A<NumNodes_p ; A++)
@@ -1608,14 +1482,15 @@ static void compute_Permeability_Mass_Balance(
         GRADIENT_pA = vector_linear_mapping__TensorLib__(FT_n_p,gradient_pA);
   
         /*
-          Intermediate result 2
+          Intermediate results
         */
         GRADIENT_pA__x__Fk__x__gradPw_n1 = inner_product__TensorLib__(GRADIENT_pA,Fk__x__gradPw_n1);
+        GRADIENT_pA__x__Fk__x__dyn_n1    = inner_product__TensorLib__(GRADIENT_pA,Fk__x__dyn_n1);
 
         /* 
           Compute nodal contribution to the mass conservation
         */
-        Residual.nM[A_mask][Ndim] -= (1/g)*GRADIENT_pA__x__Fk__x__gradPw_n1*V0_p; 
+        Residual.nM[A_mask][Ndim] -= (1/g)*(GRADIENT_pA__x__Fk__x__gradPw_n1 + J_n1_p*intrinsic_rho_f_p*GRADIENT_pA__x__Fk__x__dyn_n1)*V0_p;
 
         free__TensorLib__(GRADIENT_pA);
       }
@@ -1623,14 +1498,20 @@ static void compute_Permeability_Mass_Balance(
       /* 
         Free the value of the shape functions 
       */
+      free__MatrixLib__(ShapeFunction_p);
       free__MatrixLib__(gradient_p);
       free__MatrixLib__(Nodal_Pw_n_p);
       free__MatrixLib__(Nodal_D_Pw_p);
+      free__MatrixLib__(Nodal_D_Acceleration_p);
       free__TensorLib__(gradPw_n1);
+      free__TensorLib__(D_a_p);
+      free__TensorLib__(a_n1_p);
+      free__TensorLib__(dyn_n1);
       free__TensorLib__(FT_n_p);
       free__TensorLib__(Fm1_n1_p);
       free__TensorLib__(Fk_p);
       free__TensorLib__(Fk__x__gradPw_n1);
+      free__TensorLib__(Fk__x__dyn_n1);
       free(Nodes_p.Connectivity);      
     }
 
@@ -1678,165 +1559,157 @@ static Tensor compute_Pore_water_pressure_gradient_n1(
   return gradPw_n1;
  } 
 
+
 /**************************************************************/
 
-static void compute_Permeability_Inertial_Forces_Fluid(
-  Nodal_Field D_upw,
+
+static void compute_nominal_traction_and_fluid_flux(
   Matrix Residual,
   Mask ActiveNodes,
   Particle MPM_Mesh,
-  Mesh FEM_Mesh)
-/*
-
-*/
+  Mesh FEM_Mesh,
+  int TimeStep)
 {
-
   int Ndim = NumberDimensions;
-  int Nnodes_mask = ActiveNodes.Nactivenodes;
-  int Np = MPM_Mesh.NumGP;
-  int NumNodes_p; /* Number of tributary nodes of p */
-  int A_mask; /* Index of the node where we apply the body force */
-  int Ap; /* Tributary node A of particle p */
-  int B_mask; /* Index of the node where we apply the body force */
-  int Bp; /* Tributary node B of particle p */
-  int Mixture_idx; /* Index for the material point mixture parameters */
+  int Ndof = NumberDOF;
+  Load Load_i;
+  Element Nodes_p; /* Element for each Gauss-Point */
+  Matrix ShapeFunction_p; /* Nodal values of the sahpe function */
+  double ShapeFunction_pA;
+  Tensor T = alloc__TensorLib__(1); // Nominal traction
+  double Q; // Nominal flux
+  double A0_p; /* Area of the particle in the reference configuration */ 
 
-  Element Nodes_p; /* Element for each particle */
-  Matrix Nodal_D_Acceleration_p;
-  Matrix ShapeFunction_p;
-  Matrix gradient_p;  /* Shape functions gradients */
-  Tensor gradient_pA; /* Shape functions gradients (Node A), def config */
-  Tensor GRADIENT_pA; /* Shape functions gradients (Node A), ref config */
-  Tensor F_n_p; /* Deformation gradient t = n */
-  Tensor F_n1_p; /* Deformation gradient t = n + 1 */
-  Tensor FT_n_p; /* Transpose of the deformation gradient t = n */
-  Tensor Fm1_n1_p; /* Inverse of the deformation gradient t = n + 1 */
-  Tensor k_p; /* Spatial permebility tensor */
-  Tensor Fk_p; /* One side pull-back of the permeability tensor */
-  Tensor a_n_p; /* Particle acceleration */
-  Tensor a_n1_p; /* Particle acceleration */
-  Tensor D_a_p; /* Particle acceleration */
-  Tensor b_p; /* External acceleration */
-  Tensor dyn_p; /* Total acceleration of the particle */
-  Tensor Fk_dyn_p; /* Axiliar tensor for intermediate result */
-  double GRADIENT_pA__x__Fk_dyn_p; /* Auxiliar scalar for intermediate result */
-  double rho_f_p; /* Intrinsic or material density (fluid phase) */
-  double g = -9.81; /* Gravity constant */
-  double V0_p; /* Inital volume of the particle p */
-  double J_n1_p; /* Determianant of the soil skeleton deformation gradient at t = n + 1 */
+  int NumContactForces = MPM_Mesh.Neumann_Contours.NumBounds;
+  int NumNodesLoad;
+  int p;
+  int Ap;
+  int A_mask;
+  int NumNodes_p; /* Number of nodes of each particle */
 
-  for(int p = 0 ; p<Np ; p++)
+  for(int i = 0 ; i<NumContactForces; i++)
   {
+
+    /*
+      Read load i
+    */
+    Load_i = MPM_Mesh.Neumann_Contours.BCC_i[i];
+
+    NumNodesLoad = Load_i.NumNodes;
       
-    /* 
-      Get the current material density for each material point (fluid) 
-    */
-    rho_f_p = MPM_Mesh.Phi.rho_f.nV[p];
-
-    /*
-      Get the reference volume for each material point (mixture) 
-    */
-    V0_p = MPM_Mesh.Phi.Vol_0.nV[p];
-
-    /*
-      Define nodes for each particle
-    */
-    NumNodes_p = MPM_Mesh.NumberNodes[p];
-    Nodes_p = nodal_set__Particles__(p, MPM_Mesh.ListNodes[p], NumNodes_p);
-
-    /*
-      Compute gradient of the shape function in each node 
-    */
-    gradient_p = compute_dN__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
-    ShapeFunction_p = compute_N__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
-        
-    /*
-      Take the value of the deformation gradient at t = n + 1, and t = n. 
-      Get intermediate results
-    */
-    F_n_p  = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n.nM[p],2);
-    F_n1_p  = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n1.nM[p],2);
-    FT_n_p = transpose__TensorLib__(F_n_p);
-    Fm1_n1_p = Inverse__TensorLib__(F_n1_p);
-    J_n1_p = MPM_Mesh.Phi.J.nV[p];
-
-    /*
-      Get the permeability tensor
-    */
-    Mixture_idx = MPM_Mesh.MixtIdx[p];
-    k_p = Soil_Water_Mixtures[Mixture_idx].Permeability;
-
-    /*
-      Compute intermediate result
-    */
-    Fk_p = matrix_product__TensorLib__(Fm1_n1_p,k_p);
-
-    /*
-      Compute total particle acceleration at n+1 using nodal variables
-    */
-    Nodal_D_Acceleration_p = get_U_set_field_upw__MeshTools__(D_upw.d2_value_dt2, Nodes_p, ActiveNodes);
-    D_a_p = interpolate_vectorial_magnitude__MeshTools__(Nodal_D_Acceleration_p, ShapeFunction_p);
-    a_n_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.acc.nM[p],1);
-    a_n1_p = addition__TensorLib__(a_n_p, D_a_p);
-    b_p = MPM_Mesh.b;
-    dyn_p = subtraction__TensorLib__(a_n1_p, b_p);
-
-    /*
-      Compute intermediate result
-    */
-    Fk_dyn_p = vector_linear_mapping__TensorLib__(Fk_p,dyn_p);
-
-    for(int A = 0 ; A<NumNodes_p ; A++)
+    for(int j = 0 ; j<NumNodesLoad ; j++)
     {
 
       /*
-        Get the gradient of the shape function and multiply it by the permeability tensor
+        Get the index of the particle
       */
-      gradient_pA = memory_to_tensor__TensorLib__(gradient_p.nM[A],1);
-      GRADIENT_pA = vector_linear_mapping__TensorLib__(FT_n_p,gradient_pA);
-     
-      /*
-        Get the node of the mesh for the contribution 
-      */
-      Ap = Nodes_p.Connectivity[A];
-      A_mask = ActiveNodes.Nodes2Mask[Ap];
+      p = Load_i.Nodes[j];
 
       /*
-        Compute intermediate result
-      */
-      GRADIENT_pA__x__Fk_dyn_p = inner_product__TensorLib__(GRADIENT_pA, Fk_dyn_p);
+        Get the area of each particle
+      */      
+      if(Ndim == 2)
+      {
+        A0_p = MPM_Mesh.Phi.Vol_0.nV[p]/Thickness_Plain_Stress;
+      }
+      else if(Ndim == 3)
+      {
+        A0_p = MPM_Mesh.Phi.Area_0.nV[p];
+      }
 
       /*
-        Add nodal contributions
+        Define tributary nodes of the particle 
       */
-      Residual.nM[A_mask][Ndim] -= (J_n1_p*rho_f_p/g)*GRADIENT_pA__x__Fk_dyn_p*V0_p;
+      NumNodes_p = MPM_Mesh.NumberNodes[p];
+      Nodes_p = nodal_set__Particles__(p, MPM_Mesh.ListNodes[p],NumNodes_p);
+
+      /* 
+        Evaluate the shape function in the coordinates of the particle
+      */
+      ShapeFunction_p = compute_N__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
 
       /*
-        Free some auxiliar resutls
-      */  
-      free__TensorLib__(GRADIENT_pA);
+        Fill vector of contact forces
+      */
+      for(int k = 0 ; k<Ndof ; k++)
+      {
+        if(Load_i.Dir[k])
+        {
+          if((TimeStep < 0) || (TimeStep > Load_i.Value[k].Num))
+          {
+            sprintf(Error_message,"%s : %s",
+              "Error in compute_Contact_Forces_Mixture()",
+              "The time step is out of the curve !!");
+            standard_error();
+          }
 
+          if(k<Ndim)
+          {
+            T.n[k] = Load_i.Value[k].Fx[TimeStep];
+          }
+          else if(k == Ndim)
+          {
+            Q = Load_i.Value[k].Fx[TimeStep];
+          }
+          
+        }
+        else
+        {
+          if(k<Ndim)
+          {
+            T.n[k] = 0.0;
+          }
+          else if(k == Ndim)
+          {
+            Q = 0.0;
+          }
+        }
+      }
+
+      /*
+        Get the node of the mesh for the contribution
+      */
+      for(int A = 0 ; A<NumNodes_p ; A++)
+      {
+
+        /*
+          Pass the value of the nodal shape function to a scalar
+        */
+        ShapeFunction_pA = ShapeFunction_p.nV[A];
+
+        /*
+          Node for the contribution
+        */
+        Ap = Nodes_p.Connectivity[A];
+        A_mask = ActiveNodes.Nodes2Mask[Ap];
+  
+        /*
+          Compute Contact forces
+        */
+        for(int k = 0 ; k<Ndim ; k++)
+        {
+          Residual.nM[A_mask][k] -= ShapeFunction_pA*T.n[k]*A0_p;
+        }
+        Residual.nM[A_mask][Ndim] -= ShapeFunction_pA*Q*A0_p;
+  
+      }
+
+      /* Free the matrix with the nodal gradient of the element */
+      free__MatrixLib__(ShapeFunction_p);
+      free(Nodes_p.Connectivity);
+  
     }
-        
-    /* 
-      Free memory 
-    */
-    free__MatrixLib__(Nodal_D_Acceleration_p);
-    free__TensorLib__(FT_n_p);
-    free__TensorLib__(Fm1_n1_p);
-    free__TensorLib__(Fk_p);
-    free__TensorLib__(D_a_p);
-    free__TensorLib__(a_n1_p);
-    free__TensorLib__(dyn_p);
-    free__TensorLib__(Fk_dyn_p);
-    free__MatrixLib__(gradient_p);
-    free__MatrixLib__(ShapeFunction_p);
-    free(Nodes_p.Connectivity);
+
+      
   }
+
+  free__TensorLib__(T);
 
 }
 
+
 /**************************************************************/
+
 
 static bool check_convergence(
   Matrix Residual,
@@ -1908,6 +1781,7 @@ static Matrix assemble_Tangent_Stiffness(
   Mask ActiveNodes,
   Particle MPM_Mesh,
   Mesh FEM_Mesh,
+  double epsilon,
   Newmark_parameters Params)
 /*
   This function computes the tangent stiffness matrix as a combination
@@ -1945,6 +1819,7 @@ static Matrix assemble_Tangent_Stiffness(
   Material MatProp_Water_p; // structure with the material properties of the water
 
   Tensor k_p; // Particle permeability
+  Tensor kT_p;
   Tensor D_a_p; // Particle increment of acceleration
   Tensor a_n1_p; // Particle acceleration at t = n + 1 
   Tensor a_n_p; // Particle acceleration at t = n 
@@ -1962,10 +1837,12 @@ static Matrix assemble_Tangent_Stiffness(
   Tensor dFdt_n1_p; // Rate of the particle deformation gradient at t = n + 1
   double FmT__dd__dFdt_n1_p; // FmT : dFdt_n1
   Tensor dFdt__x__Fm1_n1_p; // dFdt x Fm1_n1
+  Tensor FmT__x__dFdtT_n1_p;
   Tensor gradient_pA, GRADIENT_pA; // Shape function gradient in the deformed/reference configurations (Node A)
   Tensor gradient_pB, GRADIENT_pB; // Shape function gradient in the deformed/reference configurations (Node B)
   Tensor FmTGRADIENT_pA; // Covariant push-forward of the GRADIENT_pA vector
   Tensor FmTGRADIENT_pB; // Covariant push-forward of the GRADIENT_pB vector
+  Tensor kT__x__FmTGRADIENT_A_p;
   Tensor dyn__o__FmTGRADIENT_pB;
   Tensor FmTGRADIENT__o__FmTGRADIENT_pAB; // Diadic product between FmTGRADIENT_A and FmTGRADIENT_B
   Tensor FmTGRADIENT__o__FmTGRADIENT_pBA; 
@@ -1973,9 +1850,9 @@ static Matrix assemble_Tangent_Stiffness(
   Tensor FmTGRADIENT__o__FmTGRADIENT_BA__d__kdyn_p;
   Tensor FmTGRADIENT__o__FmTGRADIENT_AB__d__kgradPw_p; // Auxiliar tensors
   Tensor FmTGRADIENT__o__FmTGRADIENT_BA__d__kgradPw_p;
-  Tensor dFdt__x__Fm1_n1_dot_FmTGRADIENT_pB;
+  Tensor FmT__x__dFdtT_dot_FmTGRADIENT_pB;
   double FmTGRADIENT__o__FmTGRADIENT_AB__dd__k_p;
-
+  double kdyn__dd__FmTGRADIENT_A_p;
   Tensor Stiffness_density_pAB; // Stiffness density contribution to the nodes A and B
 
   double V0_p; // Volume of the particle in the reference configuration
@@ -1985,12 +1862,12 @@ static Matrix assemble_Tangent_Stiffness(
   double K_f_p; // Compresibility of the fluid
   double phi_f_0; // Reference volume fraction of the fluid phase
   double phi_s_0; // Reference volume fraction of the solid phase
-  double phi_f_p; // Current volume fraction of the fluid phase
-  double rho_f_p; // Current intrinsic density of the fluid phase
-  double phi_s_p; // Current volume fraction of the solid phase
-  double rho_s_p; // Current intrinsic density of the solid phase
-  double relative_rho_f_p; // Current relative density of the fluid phase 
-  double relative_rho_s_p; // Current relative density of the solid phase 
+  double phi_f_p; // Volume fraction of the fluid phase
+  double phi_s_p; // Volume fraction of the solid phase
+  double intrinsic_rho_f_p; // Intrinsic density of the fluid phase
+  double intrinsic_rho_s_p; // Intrinsic density of the solid phase
+  double relative_rho_f_p; // Relative density of the fluid phase 
+  double relative_rho_s_p; // Relative density of the solid phase 
   double relative_rho_p; // Current relative density of the mixture
   double theta_n1_p; // Kirchhoff pore water pressure
   double d_theta_n1_p_dt; // Rate of the Kirchhoff pore water pressure
@@ -2042,12 +1919,13 @@ static Matrix assemble_Tangent_Stiffness(
     phi_s_0 = Soil_Water_Mixtures[Mixture_idx].phi_s_0;
     phi_f_p = MPM_Mesh.Phi.phi_f.nV[p]; // Volume fraction of fluid for particle p
     phi_s_p = MPM_Mesh.Phi.phi_s.nV[p]; // Volume fraction of solid for particle p
-    rho_f_p = MPM_Mesh.Phi.rho_f.nV[p]; // Intrinsic density of fluid for particle p
-    rho_s_p = MPM_Mesh.Phi.rho_s.nV[p]; // Intrinsic density of solid for particle p
-    relative_rho_f_p = phi_f_p*rho_f_p; // Relative density of fluid for particle p
-    relative_rho_s_p = phi_s_p*rho_s_p; // Relative density of solid for particle p
+    intrinsic_rho_f_p = MPM_Mesh.Phi.rho_f.nV[p]; // Intrinsic density of fluid for particle p
+    intrinsic_rho_s_p = MPM_Mesh.Phi.rho_s.nV[p]; // Intrinsic density of solid for particle p
+    relative_rho_f_p = phi_f_p*intrinsic_rho_s_p; // Relative density of fluid for particle p
+    relative_rho_s_p = phi_s_p*relative_rho_s_p; // Relative density of solid for particle p
     relative_rho_p = MPM_Mesh.Phi.rho.nV[p]; // Relative density of mixture for particle p
     k_p = Soil_Water_Mixtures[Mixture_idx].Permeability; // Particle permeability
+    kT_p = transpose__TensorLib__(k_p);
 
     /*
       Get some nodal values
@@ -2057,11 +1935,13 @@ static Matrix assemble_Tangent_Stiffness(
     Nodal_D_Pw_p = get_Pw_set_field_upw__MeshTools__(D_upw.value, Nodes_p, ActiveNodes);
     
     /*
-      Compute auxiliar particle velocity in the next time step
+      Compute particle dynamics in the next time step
     */
     D_a_p = interpolate_vectorial_magnitude__MeshTools__(Nodal_D_Acceleration_p, ShapeFunction_p);
     a_n_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.acc.nM[p],1);
     a_n1_p = addition__TensorLib__(a_n_p, D_a_p);
+    b_p = MPM_Mesh.b;
+    dyn_p = subtraction__TensorLib__(a_n1_p, b_p);
 
     /*
       Compute current particle gradient of pore water pressure
@@ -2071,8 +1951,6 @@ static Matrix assemble_Tangent_Stiffness(
     /*
       Compute auxiliar terms
     */
-    b_p = MPM_Mesh.b;
-    dyn_p = subtraction__TensorLib__(a_n1_p, b_p);
     kdyn_p = vector_linear_mapping__TensorLib__(k_p,dyn_p);
     kgradPw_p = vector_linear_mapping__TensorLib__(k_p,gradPw_n1);
       
@@ -2090,10 +1968,10 @@ static Matrix assemble_Tangent_Stiffness(
     FmT_n1_p = transpose__TensorLib__(Fm1_n1_p);
     FmT__dd__dFdt_n1_p = inner_product__TensorLib__(FmT_n1_p, dFdt_n1_p);
     dFdt__x__Fm1_n1_p = matrix_product__TensorLib__(dFdt_n1_p,Fm1_n1_p);
+    FmT__x__dFdtT_n1_p = transpose__TensorLib__(dFdt__x__Fm1_n1_p);
 
     /*
-      Get the jacobian of the deformation gradient
-      and its rate
+      Get the jacobian of the deformation gradient and its rate
     */
     J_p = MPM_Mesh.Phi.J.nV[p];
     dJ_dt_n1_p = MPM_Mesh.Phi.dJ_dt.nV[p];
@@ -2118,6 +1996,13 @@ static Matrix assemble_Tangent_Stiffness(
       gradient_pA = memory_to_tensor__TensorLib__(gradient_p.nM[A], 1);
       GRADIENT_pA = vector_linear_mapping__TensorLib__(FT_n_p,gradient_pA);
       FmTGRADIENT_pA = vector_linear_mapping__TensorLib__(FmT_n1_p,GRADIENT_pA);
+
+      /*
+        Compute operators
+      */
+      kdyn__dd__FmTGRADIENT_A_p = inner_product__TensorLib__(kdyn_p,FmTGRADIENT_pA);
+      kT__x__FmTGRADIENT_A_p = vector_linear_mapping__TensorLib__(kT_p,FmTGRADIENT_pA);
+
       /*
         Get the node of the mesh for the contribution 
       */
@@ -2151,7 +2036,7 @@ static Matrix assemble_Tangent_Stiffness(
         dyn__o__FmTGRADIENT_pB = dyadic_Product__TensorLib__(dyn_p, FmTGRADIENT_pB); 
         FmTGRADIENT__o__FmTGRADIENT_pAB = dyadic_Product__TensorLib__(FmTGRADIENT_pA, FmTGRADIENT_pB); 
         FmTGRADIENT__o__FmTGRADIENT_pBA = dyadic_Product__TensorLib__(FmTGRADIENT_pB, FmTGRADIENT_pA); 
-        dFdt__x__Fm1_n1_dot_FmTGRADIENT_pB = vector_linear_mapping__TensorLib__(dFdt__x__Fm1_n1_p,FmTGRADIENT_pB);
+        FmT__x__dFdtT_dot_FmTGRADIENT_pB = vector_linear_mapping__TensorLib__(FmT__x__dFdtT_n1_p,FmTGRADIENT_pB);
         FmTGRADIENT__o__FmTGRADIENT_AB__d__kdyn_p = vector_linear_mapping__TensorLib__(FmTGRADIENT__o__FmTGRADIENT_pAB,kdyn_p);
         FmTGRADIENT__o__FmTGRADIENT_BA__d__kdyn_p = vector_linear_mapping__TensorLib__(FmTGRADIENT__o__FmTGRADIENT_pBA,kdyn_p);
         FmTGRADIENT__o__FmTGRADIENT_AB__d__kgradPw_p = vector_linear_mapping__TensorLib__(FmTGRADIENT__o__FmTGRADIENT_pAB,kgradPw_p);
@@ -2188,27 +2073,29 @@ static Matrix assemble_Tangent_Stiffness(
               Compute the contribution of the linearised terms to the D_phi-D_phi direcction. 
             */
             Tangent_Stiffness.nM[A_mask*Ndof+i][B_mask*Ndof+j] += 
-            + (phi_f_0*rho_f_p/J_p -
-              phi_s_0*rho_s_p/J_p -
+            + (phi_f_0*intrinsic_rho_f_p/J_p - 
+              phi_s_0*intrinsic_rho_s_p/J_p - 
               (relative_rho_f_p*theta_n1_p)/(K_f_p*J_p))*ShapeFunction_pA*dyn__o__FmTGRADIENT_pB.N[i][j]*V0_p
-            + alpha_1*relative_rho_p*ShapeFunction_pA*ShapeFunction_pB*(i==j)*V0_p
+            + alpha_1*m_p*((1-epsilon)*ShapeFunction_pA*ShapeFunction_pB*(i==j) + epsilon*ShapeFunction_pA) 
             + theta_n1_p*FmTGRADIENT__o__FmTGRADIENT_pAB.N[j][i]*V0_p
             + Stiffness_density_pAB.N[i][j]*V0_p;
             /*
               Compute the contribution of the linearised terms to the D_theta-D_phi direcction. 
             */
             Tangent_Stiffness.nM[A_mask*Ndof+Ndim][B_mask*Ndof+j] += 
-            + ((d_theta_n1_p_dt*phi_f_0*rho_f_p)/(K_f_p*J_p) - 
+            + ((d_theta_n1_p_dt*phi_f_0*intrinsic_rho_f_p)/(K_f_p*J_p) - 
               (theta_n1_p*d_theta_n1_p_dt*relative_rho_f_p)/(K_f_p*K_f_p*J_p) - 
-              (rho_f_p*theta_n1_p*dJ_dt_n1_p)/(K_f_p*J_p) + 
-              rho_f_p*J_p*alpha_4 + 
-              rho_f_p*J_p*FmT__dd__dFdt_n1_p)*ShapeFunction_pA*FmTGRADIENT_pB.n[j]*V0_p
-            - rho_f_p*J_p*ShapeFunction_pA*dFdt__x__Fm1_n1_dot_FmTGRADIENT_pB.n[j]*V0_p 
+              (intrinsic_rho_f_p*theta_n1_p*dJ_dt_n1_p)/(K_f_p*J_p) + 
+              intrinsic_rho_f_p*J_p*alpha_4 + 
+              intrinsic_rho_f_p*J_p*FmT__dd__dFdt_n1_p)*ShapeFunction_pA*FmTGRADIENT_pB.n[j]*V0_p
+            - intrinsic_rho_f_p*J_p*ShapeFunction_pA*FmT__x__dFdtT_dot_FmTGRADIENT_pB.n[j]*V0_p 
             + (1/g)*FmTGRADIENT__o__FmTGRADIENT_AB__d__kgradPw_p.n[j]*V0_p
             + (1/g)*FmTGRADIENT__o__FmTGRADIENT_AB__dd__k_p*gradPw_n1.n[j]*V0_p 
-            + (rho_f_p/(g*K_f_p))*FmTGRADIENT__o__FmTGRADIENT_BA__d__kdyn_p.n[j]*V0_p
-            - (rho_f_p*J_p/g)*FmTGRADIENT__o__FmTGRADIENT_BA__d__kdyn_p.n[j]*V0_p
-            + (rho_f_p*J_p/g)*FmTGRADIENT__o__FmTGRADIENT_AB__d__kdyn_p.n[j]*V0_p;
+            + (intrinsic_rho_f_p/(g*K_f_p))*FmTGRADIENT__o__FmTGRADIENT_BA__d__kdyn_p.n[j]*V0_p
+            - (intrinsic_rho_f_p/(g*K_f_p))*kdyn__dd__FmTGRADIENT_A_p*ShapeFunction_pB*V0_p
+            - (intrinsic_rho_f_p*J_p/g)*FmTGRADIENT__o__FmTGRADIENT_BA__d__kdyn_p.n[j]*V0_p
+            + (intrinsic_rho_f_p*J_p/g)*FmTGRADIENT__o__FmTGRADIENT_AB__d__kdyn_p.n[j]*V0_p
+            - (intrinsic_rho_f_p*J_p*alpha_1/g)*kT__x__FmTGRADIENT_A_p.n[j]*ShapeFunction_pB*V0_p;
           }
         }
 
@@ -2218,7 +2105,7 @@ static Matrix assemble_Tangent_Stiffness(
         Tangent_Stiffness.nM[A_mask*Ndof+Ndim][B_mask*Ndof+Ndim] =+ 
         ((d_theta_n1_p_dt*relative_rho_f_p)/(K_f_p*K_f_p*J_p) + 
           relative_rho_f_p*alpha_4/K_f_p +
-          (dJ_dt_n1_p*rho_f_p)/(K_f_p*J_p))*ShapeFunction_pA*ShapeFunction_pB*V0_p
+          (dJ_dt_n1_p*intrinsic_rho_f_p)/(K_f_p*J_p))*ShapeFunction_pA*ShapeFunction_pB*V0_p
         - (1/g)*FmTGRADIENT__o__FmTGRADIENT_AB__dd__k_p*V0_p;
 
         /*
@@ -2233,7 +2120,7 @@ static Matrix assemble_Tangent_Stiffness(
         free__TensorLib__(FmTGRADIENT__o__FmTGRADIENT_BA__d__kdyn_p);
         free__TensorLib__(FmTGRADIENT__o__FmTGRADIENT_AB__d__kgradPw_p);
         free__TensorLib__(FmTGRADIENT__o__FmTGRADIENT_BA__d__kgradPw_p);
-        free__TensorLib__(dFdt__x__Fm1_n1_dot_FmTGRADIENT_pB);
+        free__TensorLib__(FmT__x__dFdtT_dot_FmTGRADIENT_pB);
         free__TensorLib__(Stiffness_density_pAB);
       }
 
@@ -2242,30 +2129,32 @@ static Matrix assemble_Tangent_Stiffness(
       */
       free__TensorLib__(GRADIENT_pA);
       free__TensorLib__(FmTGRADIENT_pA);
+      free__TensorLib__(kT__x__FmTGRADIENT_A_p);
     }
       
 
     /* 
       Free memory 
     */
+    free(Nodes_p.Connectivity);
+    free__MatrixLib__(ShapeFunction_p);
+    free__MatrixLib__(gradient_p);
+    free__MatrixLib__(Nodal_D_Acceleration_p);
+    free__MatrixLib__(Nodal_Pw_n_p);
+    free__MatrixLib__(Nodal_D_Pw_p);
     free__TensorLib__(FT_n_p);
     free__TensorLib__(FT_n1_p);
     free__TensorLib__(Fm1_n1_p);
     free__TensorLib__(FmT_n1_p);
     free__TensorLib__(dFdt__x__Fm1_n1_p);
+    free__TensorLib__(FmT__x__dFdtT_n1_p);
+    free__TensorLib__(kT_p);
     free__TensorLib__(D_a_p);
     free__TensorLib__(a_n1_p);
     free__TensorLib__(dyn_p);
     free__TensorLib__(gradPw_n1);
     free__TensorLib__(kdyn_p);
     free__TensorLib__(kgradPw_p);
-    free__MatrixLib__(ShapeFunction_p);
-    free__MatrixLib__(gradient_p);
-    free__MatrixLib__(Nodal_D_Acceleration_p);
-    free__MatrixLib__(Nodal_Pw_n_p);
-    free__MatrixLib__(Nodal_D_Pw_p);
-    free(Nodes_p.Connectivity);
-
   }
 
   /*

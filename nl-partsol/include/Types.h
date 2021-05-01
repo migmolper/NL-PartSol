@@ -172,17 +172,18 @@ typedef struct{
 typedef struct {
 
   /*!
-   * Initial Volume
+   * Initial Volume and area
    */
   Matrix Vol_0;
+  Matrix Area_0;
 
   /*!
-   * Density field
+   * Density field (mixture)
    */
   Matrix rho;
 
   /*!
-   * Material density field (solid/water) 
+   * Intrinsic density field (solid/water) 
    */
   Matrix rho_s;
   Matrix rho_f;
