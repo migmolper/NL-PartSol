@@ -19,7 +19,7 @@ void print_step(int Time,double DeltaTimeStep)
 {
   if(Time%ResultsTimeStep == 0)
     {
-      printf("************* STEP : %i , DeltaT : %f \n",
+      printf("************* STEP : %i , DeltaT : %e \n",
 	     Time,DeltaTimeStep);
     }
 }

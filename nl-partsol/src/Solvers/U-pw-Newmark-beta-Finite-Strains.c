@@ -164,6 +164,7 @@ void upw_Newmark_beta_Finite_Strains(Mesh FEM_Mesh, Particle MPM_Mesh, int Initi
 
       update_Local_State(D_upw,ActiveNodes,MPM_Mesh,FEM_Mesh);
 
+
       Residual = compute_Residual(upw_n,D_upw,ActiveNodes,MPM_Mesh,FEM_Mesh,TimeStep);
 
       Convergence = check_convergence(Residual,TOL,Iter,MaxIter,TimeStep);
@@ -190,6 +191,8 @@ void upw_Newmark_beta_Finite_Strains(Mesh FEM_Mesh, Particle MPM_Mesh, int Initi
         free__MatrixLib__(Tangent_Stiffness);
       }
     }
+
+    exit(0);
 
     print_Status("DONE !!!",TimeStep);
 
@@ -1306,7 +1309,6 @@ static void compute_Jacobian_Rate_Mass_Balance(
       Get the rate of the jacobian for each material point
     */
     dJ_dt_n1_p = MPM_Mesh.Phi.dJ_dt.nV[p];
-
     
     for(int A = 0 ; A<NumNodes_p ; A++)
     {
@@ -1727,7 +1729,7 @@ static bool check_convergence(
 
   if(Iter > MaxIter)
   {
-      fprintf(stderr,"%s : %s !!! \n","Error in upw_Newmark_beta_Finite_Strains()",
+      fprintf(stderr,"%s : %s !!! \n","Error in check_convergence()",
         "Convergence not reached in the maximum number of iterations");
       exit(EXIT_FAILURE);
     }
@@ -1748,13 +1750,11 @@ static bool check_convergence(
       if(Iter == 0)
       {
         Error0 = Error;
-        Error_relative = Error/Error0;
-        printf("Error iter %i : %1.4e ; %1.4e \n",Iter,Error,Error_relative);
+        Error_relative = Error/Error0;      
       }
       else
       {
         Error_relative = Error/Error0;
-        printf("Error iter %i : %1.4e ; %1.4e \n",Iter,Error,Error_relative);
       }
       
       /*
@@ -1762,6 +1762,7 @@ static bool check_convergence(
       */
       if(Error_relative > TOL)
       {
+        printf("%f\n",Error_relative);
         return false;
       }
       else

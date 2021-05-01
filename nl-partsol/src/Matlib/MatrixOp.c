@@ -255,7 +255,7 @@ void print__MatrixLib__(Matrix In, int PrintRows, int PrintColumns)
 	
 	  for(int j = 0 ; j<Columns ; j++)
 	    {
-	      printf(" %f ",In.nM[i][j]);
+	      printf(" %e ",In.nM[i][j]);
 	    }
 	
 	  printf("\n");

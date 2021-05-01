@@ -195,11 +195,12 @@ Particle Generate_Soil_Water_Coupling_Analysis__InOutFun__(char * Name_File, Mes
         strcpy(MPM_Mesh.lambda.Info,"Lagrange Multiplier");
         MPM_Mesh.Beta = allocZ__MatrixLib__(NumParticles,1);
         strcpy(MPM_Mesh.Beta.Info,"Beta");
-        if(strcmp(wrapper_LME,"Newton-Raphson"))
+
+        if(strcmp(wrapper_LME,"Newton-Raphson") == 0)
         {
           MPM_Mesh.update_lambda = update_lambda_Newton_Rapson__LME__;
         }
-        else if(strcmp(wrapper_LME,"Nelder-Mead"))
+        else if(strcmp(wrapper_LME,"Nelder-Mead") == 0)
         {
           MPM_Mesh.update_lambda = update_lambda_Nelder_Mead__LME__;
         }
@@ -339,8 +340,6 @@ Particle Generate_Soil_Water_Coupling_Analysis__InOutFun__(char * Name_File, Mes
     free(MPM_GID_Mesh.Connectivity);
     free__MatrixLib__(MPM_GID_Mesh.Coordinates);
     free(MPM_GID_Mesh.NumParticles);
-    free(MPM_GID_Mesh.NumNeighbour);
-    free(MPM_GID_Mesh.NodeNeighbour);
 
   } 
   else

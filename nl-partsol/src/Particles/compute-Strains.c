@@ -150,7 +150,7 @@ void update_rate_increment_Deformation_Gradient__Particles__(
   {
     for(int j = 0 ; j<Ndim ; j++)
     {
-      dt_DF_p.N[i][j] = 1*(i==j);
+      dt_DF_p.N[i][j] = 0.0;
     }
   }
   
