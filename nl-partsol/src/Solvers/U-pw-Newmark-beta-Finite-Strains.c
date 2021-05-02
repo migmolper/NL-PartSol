@@ -184,7 +184,7 @@ void upw_Newmark_beta_Finite_Strains(Mesh FEM_Mesh, Particle MPM_Mesh, int Initi
         }
 
         update_Newmark_Nodal_Increments(D_upw,upw_n,Params);
-
+        
         Iter++;
 
         free__MatrixLib__(Residual);
@@ -227,7 +227,10 @@ void upw_Newmark_beta_Finite_Strains(Mesh FEM_Mesh, Particle MPM_Mesh, int Initi
 
     print_Status("DONE !!!",TimeStep);
 
-        exit(0);
+    if(TimeStep == 1)
+    {
+      exit(0);
+    }
 
   }
 
@@ -825,6 +828,7 @@ static void update_Local_State(
     J_n1_p     = I3__TensorLib__(F_n1_p);
     dJ_dt_n1_p = compute_Jacobian_Rate__Particles__(J_n1_p,F_n1_p,dFdt_n1_p);
 
+
     /*
       Compute the first Piola-Kirchhoff stress tensor (P).
     */
@@ -969,6 +973,7 @@ static void compute_Inertial_Forces_Mixture(
     a_n_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.acc.nM[p],1);
     a_n1_p = addition__TensorLib__(a_n_p, D_a_p);
     b_p = MPM_Mesh.b;
+
     dyn_p = subtraction__TensorLib__(a_n1_p, b_p);
 
     for(int A = 0 ; A<Nodes_p.NumberNodes ; A++)
@@ -1634,7 +1639,7 @@ static void compute_nominal_traction_and_fluid_flux(
       */
       for(int k = 0 ; k<Ndof ; k++)
       {
-        if(Load_i.Dir[k])
+        if(Load_i.Dir[k] == 1)
         {
           if((TimeStep < 0) || (TimeStep > Load_i.Value[k].Num))
           {
@@ -1691,8 +1696,8 @@ static void compute_nominal_traction_and_fluid_flux(
         {
           Residual.nM[A_mask][k] -= ShapeFunction_pA*T.n[k]*A0_p;
         }
-        Residual.nM[A_mask][Ndim] -= ShapeFunction_pA*Q*A0_p;
-  
+
+        Residual.nM[A_mask][Ndim] -= ShapeFunction_pA*Q*A0_p;  
       }
 
       /* Free the matrix with the nodal gradient of the element */
@@ -2377,10 +2382,13 @@ static void update_Newmark_Nodal_Increments(
   /*
     Update nodal variables
   */
-  for(int A = 0 ; A<Total_dof ; A++)
+  for(int A = 0 ; A<Nnodes ; A++)
   {  
-    D_upw.d2_value_dt2.nV[A] = alpha_1*D_upw.value.nV[A] - (alpha_2 + 1)*upw_n.d_value_dt.nV[A] - (alpha_3+1)*upw_n.d2_value_dt2.nV[A];
-    D_upw.d_value_dt.nV[A]   = alpha_4*D_upw.value.nV[A] + (alpha_5-1)*upw_n.d_value_dt.nV[A] + alpha_6*upw_n.d2_value_dt2.nV[A];
+    for(int i = 0 ; i<Ndof ; i++)
+    {
+      D_upw.d2_value_dt2.nM[A][i] = alpha_1*D_upw.value.nM[A][i] - alpha_2*upw_n.d_value_dt.nM[A][i] - (alpha_3+1)*upw_n.d2_value_dt2.nM[A][i];
+      D_upw.d_value_dt.nM[A][i]   = alpha_4*D_upw.value.nM[A][i] + (alpha_5-1)*upw_n.d_value_dt.nM[A][i] + alpha_6*upw_n.d2_value_dt2.nM[A][i];
+    }
   }
 }
 

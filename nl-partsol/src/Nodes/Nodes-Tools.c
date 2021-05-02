@@ -152,9 +152,9 @@ Matrix get_set_field__MeshTools__(
    for(int A = 0 ; A<Nnodes ; A++)
    {
      
-	    /* 
+	  /* 
 	       Get the node in the mass matrix with the mask
-	    */
+	  */
      Ap = Nodes_p.Connectivity[A];
      A_mask = ActiveNodes.Nodes2Mask[Ap];
      
