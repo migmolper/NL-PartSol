@@ -11,6 +11,7 @@
 /*
   Call global variables
 */
+double Thickness_Plain_Stress;
 double epsilon_Mass_Matrix; 
 double beta_Newmark_beta;   
 double gamma_Newmark_beta;
@@ -54,6 +55,7 @@ static Nodal_Field initialise_Nodal_Increments(Nodal_Field,Mesh,Mask,int);
 static void   update_Local_State(Nodal_Field,Mask,Particle,Mesh,double);
 static Matrix compute_Nodal_Forces(Mask, Particle, Mesh, int);
 static void   compute_Nodal_Internal_Forces(Matrix,Mask,Particle, Mesh);
+static void   compute_Nodal_Nominal_traction_Forces(Matrix,Mask,Particle,Mesh,int);
 static void   compute_Nodal_Body_Forces(Matrix,Mask,Particle,Mesh, int);
 static Matrix compute_Nodal_Reactions(Mesh,Matrix,Mask);
 static Matrix compute_Nodal_Residual(Nodal_Field,Nodal_Field,Mask,Matrix, Matrix, Newmark_parameters);
@@ -790,10 +792,15 @@ static Matrix compute_Nodal_Forces(
   compute_Nodal_Internal_Forces(Forces, ActiveNodes, MPM_Mesh, FEM_Mesh);
 
   /*
+    Add nominal traction contribution
+  */
+  compute_Nodal_Nominal_traction_Forces(Forces, ActiveNodes, MPM_Mesh, FEM_Mesh, TimeStep);
+
+  /*
     Add body forces contribution
   */
   compute_Nodal_Body_Forces(Forces, ActiveNodes, MPM_Mesh, FEM_Mesh, TimeStep);
-  
+
   return Forces;
 }
 
@@ -902,6 +909,131 @@ static void compute_Nodal_Internal_Forces(
       free(Nodes_p.Connectivity);
     }
    
+}
+
+/**************************************************************/
+
+
+static void compute_Nodal_Nominal_traction_Forces(
+  Matrix Forces,
+  Mask ActiveNodes,
+  Particle MPM_Mesh,
+  Mesh FEM_Mesh,
+  int TimeStep)
+{
+
+  int Ndim = NumberDimensions;
+  Load Load_i;
+  Element Nodes_p; /* Element for each Gauss-Point */
+  Matrix ShapeFunction_p; /* Nodal values of the sahpe function */
+  double ShapeFunction_pA;
+  Tensor T = alloc__TensorLib__(1); // Nominal traction
+  double A0_p; /* Area of the particle in the reference configuration */ 
+
+  int NumContactForces = MPM_Mesh.Neumann_Contours.NumBounds;
+  int NumNodesLoad;
+  int p;
+  int Ap;
+  int A_mask;
+  int NumNodes_p; /* Number of nodes of each particle */
+
+  for(int i = 0 ; i<NumContactForces; i++)
+  {
+
+    /*
+      Read load i
+    */
+    Load_i = MPM_Mesh.Neumann_Contours.BCC_i[i];
+
+    NumNodesLoad = Load_i.NumNodes;
+      
+    for(int j = 0 ; j<NumNodesLoad ; j++)
+    {
+
+      /*
+        Get the index of the particle
+      */
+      p = Load_i.Nodes[j];
+
+      /*
+        Get the area of each particle
+      */      
+      if(Ndim == 2)
+      {
+        A0_p = MPM_Mesh.Phi.Vol_0.nV[p]/Thickness_Plain_Stress;
+      }
+      else if(Ndim == 3)
+      {
+        A0_p = MPM_Mesh.Phi.Area_0.nV[p];
+      }
+
+      /*
+        Define tributary nodes of the particle 
+      */
+      NumNodes_p = MPM_Mesh.NumberNodes[p];
+      Nodes_p = nodal_set__Particles__(p, MPM_Mesh.ListNodes[p],NumNodes_p);
+
+      /* 
+        Evaluate the shape function in the coordinates of the particle
+      */
+      ShapeFunction_p = compute_N__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
+
+      /*
+        Fill vector of contact forces
+      */
+      for(int k = 0 ; k<Ndim ; k++)
+      {
+        if(Load_i.Dir[k] == 1)
+        {
+          if((TimeStep < 0) || (TimeStep > Load_i.Value[k].Num))
+          {
+            printf("%s : %s",
+              "Error in compute_Nodal_Nominal_traction_Forces()",
+              "The time step is out of the curve !!");
+            exit(EXIT_FAILURE);
+          }
+
+          T.n[k] = Load_i.Value[k].Fx[TimeStep];
+        }
+      }
+
+      /*
+        Get the node of the mesh for the contribution
+      */
+      for(int A = 0 ; A<NumNodes_p ; A++)
+      {
+
+        /*
+          Pass the value of the nodal shape function to a scalar
+        */
+        ShapeFunction_pA = ShapeFunction_p.nV[A];
+
+        /*
+          Node for the contribution
+        */
+        Ap = Nodes_p.Connectivity[A];
+        A_mask = ActiveNodes.Nodes2Mask[Ap];
+  
+        /*
+          Compute Contact forces
+        */
+        for(int k = 0 ; k<Ndim ; k++)
+        {
+          Forces.nM[A_mask][k] -= ShapeFunction_pA*T.n[k]*A0_p;
+        }
+      }
+
+      /* Free the matrix with the nodal gradient of the element */
+      free__MatrixLib__(ShapeFunction_p);
+      free(Nodes_p.Connectivity);
+  
+    }
+
+      
+  }
+
+  free__TensorLib__(T);
+
 }
 
 /**************************************************************/
