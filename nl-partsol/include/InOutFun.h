@@ -257,6 +257,28 @@ Boundaries Read_u_Dirichlet_Boundary_Conditions__InOutFun__(char *,int);
 
 /*!
 
+  \fn Boundaries Read_u_Neumann_Boundary_Conditions__InOutFun__(char * Name_File,int NumBounds,int GPxElement)
+  
+  \brief Generate the load state
+
+  Example
+  Define-Neumann-Boundary (Nodes=ListNodes.txt) {
+  T.x Load_x.txt
+  T.y Load_x.txt
+  }
+
+  \param File: Name of the file with the instructions
+  \param NumNeumannBC : Number of loads
+  \param GPxElement : As the particle discretization is performed thorouht 
+
+*/
+Boundaries Read_u_Neumann_Boundary_Conditions__InOutFun__(char *,int,int);
+
+/*****************************************************************/
+
+
+/*!
+
   \fn Boundaries Read_upw_Dirichlet_Boundary_Conditions__InOutFun__(char * Name_File,int NumBounds)
 
   \brief Function that reads the boundary conditions for the mesh
@@ -425,27 +447,6 @@ void GramsOutputs(char * );
   \param Parameters
 */
 void OutputSimulation(Particle,int,double,double,Event);
-/*****************************************************************/
-
-/*!
-
-  \fn Load * GramsNeumannBC(char * File, int NumNeumannBC, int GPxElement)
-  
-  \brief Generate the load state
-
-  Example
-  GramsNeumannBC (Nodes=ListNodes.txt) {
-  V.x Load_x.txt
-  V.y Load_x.txt
-  }
-
-  \param File: Name of the file with the instructions
-  \param NumNeumannBC : Number of loads
-  \param GPxElement : As the particle discretization is performed thorouht 
-
-*/
-Load * GramsNeumannBC(char *, int, int);
-
 /*****************************************************************/
 
 /*!
