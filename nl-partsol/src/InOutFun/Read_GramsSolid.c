@@ -140,7 +140,7 @@ Particle GramsSolid(char * Name_File, Mesh FEM_Mesh)
       Is_GramsBodyForces = true;
       Counter_BodyForces++;
     }
-    if ((Num_words_parse > 0) && (strcmp(Parse_GramsSolid2D[0],"GramsNeumannBC") == 0))
+    if ((Num_words_parse > 0) && (strcmp(Parse_GramsSolid2D[0],"Define-Neumann-Boundary") == 0))
     {
       Is_GramsNeumannBC = true;
       Counter_GramsNeumannBC++;
@@ -323,16 +323,15 @@ Particle GramsSolid(char * Name_File, Mesh FEM_Mesh)
     /**************************************************/    
     /************** Read external forces **************/
     /**************************************************/    
-    if(Is_GramsNeumannBC){
-      MPM_Mesh.NumNeumannBC = Counter_GramsNeumannBC;
-      MPM_Mesh.F = GramsNeumannBC(Name_File,Counter_GramsNeumannBC,GPxElement);
+    if(Is_GramsNeumannBC)
+    {
+      MPM_Mesh.Neumann_Contours = Read_u_Neumann_Boundary_Conditions__InOutFun__(Name_File,Counter_GramsNeumannBC,GPxElement);
     }
-    else{
-      MPM_Mesh.NumNeumannBC = Counter_GramsNeumannBC;
+    else
+    {
+      MPM_Mesh.Neumann_Contours.NumBounds = 0;
       puts("*************************************************");
-      printf(" \t %s : \n\t %s \n",
-       "* No Neumann boundary conditions defined in",
-       Name_File);
+      printf(" \t %s \n","* No Neumann boundary conditions defined");
     }
     /**************************************************/    
     /*************** Read body forces *****************/
@@ -395,6 +394,14 @@ static void initialise_particles(Mesh MPM_GID_Mesh, Particle MPM_Mesh, int GPxEl
     Element_Coordinates = get_nodes_coordinates__MeshTools__(MPM_GID_Mesh.Connectivity[i], MPM_GID_Mesh.Coordinates);
     Vol_Element = MPM_GID_Mesh.volume_Element(Element_Coordinates);
     free__MatrixLib__(Element_Coordinates);
+
+    if(Vol_Element <= 0.0)
+    {
+      fprintf(stderr,"%s : %s \n",
+      "Error in GramsSolid()",
+      "Element with negative volume");
+      exit(EXIT_FAILURE);
+    }
 
     for(int j = 0 ; j<GPxElement ; j++)
     {

@@ -35,7 +35,7 @@ static FILE * Open_and_Check_simulation_file(char *);
 
 /**********************************************************************/
 
-Boundaries Read_upw_Neumann_Boundary_Conditions__InOutFun__(
+Boundaries Read_u_Neumann_Boundary_Conditions__InOutFun__(
 	char * Name_File,
 	int NumBounds,
 	int GPxElement)
@@ -45,7 +45,6 @@ Boundaries Read_upw_Neumann_Boundary_Conditions__InOutFun__(
 	{
 		T.x CurveConstant.txt
  		T.y NULL
- 		Q NULL
 	}
 
 */
@@ -319,17 +318,6 @@ static BCC_Properties Read_Boundary_Conditions_Properties(FILE * Simulation_file
 					"-> BcNeumann ",Parameter_pars[0],NumNodes,FileLoadRoute);
     		}
     	}
-    	else if((Parser_status == 2) && (strcmp(Parameter_pars[0],"Q") == 0))
-    	{
-    		if(strcmp(Parameter_pars[1],"NULL") != 0)
-    		{
-	    		Properties.Dir[Ndim] = 1;
-    			sprintf(FileLoadRoute,"%s%s",Route_Nodes,Parameter_pars[1]);
-    			Properties.Value[Ndim] = ReadCurve(FileLoadRoute);
-				printf(" \t %s (%s) : \n \t \t Number of particles = %i \n \t \t File curve %s \n",
-					"-> BcNeumann ",Parameter_pars[0],NumNodes,FileLoadRoute);
-    		}
-    	}
     	else if((Parser_status == 1) && (strcmp(Parameter_pars[0],"}") == 0))
     	{
         	Is_Close = true;
@@ -365,7 +353,7 @@ static void Check_Curve_File(char * PATH_Name)
 static void standard_error()
 {
   fprintf(stderr,"%s : %s !!! \n",
-     "Error in Read_upw_Neumann_Boundary_Conditions__InOutFun__()",Error_message);
+     "Error in Read_u_Neumann_Boundary_Conditions__InOutFun__()",Error_message);
     exit(EXIT_FAILURE);
 }
 
@@ -393,4 +381,3 @@ static FILE * Open_and_Check_simulation_file(char * Name_File)
 
 /***************************************************************************/
   
-
