@@ -661,7 +661,7 @@ double volume__H8__(
     J_i = I3__MatrixLib__(F_i);
 
     // Compute volume contribution
-    Vol += J_i*table_w[i];
+    Vol += fabs(J_i)*table_w[i];
 
     // Free memory
     free__MatrixLib__(F_i);

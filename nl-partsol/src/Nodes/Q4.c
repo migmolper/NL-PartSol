@@ -96,10 +96,10 @@ Matrix N__Q4__(
   Matrix N_ref =  allocZ__MatrixLib__(1,4);
 
   /* Fill the array */
-  N_ref.nV[0] = 0.25*DMIN(4,DMAX(0,(1-X_e.nV[0])*(1-X_e.nV[1])));
-  N_ref.nV[1] = 0.25*DMIN(4,DMAX(0,(1+X_e.nV[0])*(1-X_e.nV[1])));
-  N_ref.nV[2] = 0.25*DMIN(4,DMAX(0,(1+X_e.nV[0])*(1+X_e.nV[1])));
-  N_ref.nV[3] = 0.25*DMIN(4,DMAX(0,(1-X_e.nV[0])*(1+X_e.nV[1])));
+  N_ref.nV[0] = 0.25*(1-X_e.nV[0])*(1-X_e.nV[1]);
+  N_ref.nV[1] = 0.25*(1+X_e.nV[0])*(1-X_e.nV[1]);
+  N_ref.nV[2] = 0.25*(1+X_e.nV[0])*(1+X_e.nV[1]);
+  N_ref.nV[3] = 0.25*(1-X_e.nV[0])*(1+X_e.nV[1]);
   
   return N_ref;
 }
@@ -119,20 +119,20 @@ Matrix dN_Ref__Q4__(
   /* Fill the matrix */
 
   /* Node 1 */
-  dNdX_ref.nM[0][0] = -0.25*DMIN(2,DMAX(0,(1-X_e.nV[1])));
-  dNdX_ref.nM[0][1] = -0.25*DMIN(2,DMAX(0,(1-X_e.nV[0]))); 
+  dNdX_ref.nM[0][0] = -0.25*(1-X_e.nV[1]);
+  dNdX_ref.nM[0][1] = -0.25*(1-X_e.nV[0]); 
 
   /* Node 2 */
-  dNdX_ref.nM[1][0] = +0.25*DMIN(2,DMAX(0,(1-X_e.nV[1])));
-  dNdX_ref.nM[1][1] = -0.25*DMIN(2,DMAX(0,(1+X_e.nV[0])));
+  dNdX_ref.nM[1][0] = +0.25*(1-X_e.nV[1]);
+  dNdX_ref.nM[1][1] = -0.25*(1+X_e.nV[0]);
   
   /* Node 3 */
-  dNdX_ref.nM[2][0] = +0.25*DMIN(2,DMAX(0,(1+X_e.nV[1])));
-  dNdX_ref.nM[2][1] = +0.25*DMIN(2,DMAX(0,(1+X_e.nV[0])));
+  dNdX_ref.nM[2][0] = +0.25*(1+X_e.nV[1]);
+  dNdX_ref.nM[2][1] = +0.25*(1+X_e.nV[0]);
   
   /* Node 4 */
-  dNdX_ref.nM[3][0] = -0.25*DMIN(2,DMAX(0,(1+X_e.nV[1])));
-  dNdX_ref.nM[3][1] = +0.25*DMIN(2,DMAX(0,(1-X_e.nV[0]))); 
+  dNdX_ref.nM[3][0] = -0.25*(1+X_e.nV[1]);
+  dNdX_ref.nM[3][1] = +0.25*(1-X_e.nV[0]); 
   
   return dNdX_ref;
 }
@@ -309,10 +309,7 @@ bool in_out__Q4__(
 
   Xi = Newton_Rapson(Xi_to_X__Q4__, Element, F_Ref__Q4__, Element, X, Xi);
 
-  if((Xi.nV[0] <= 1.0) && 
-    (Xi.nV[1]  <= 1.0) && 
-    (Xi.nV[0]  >= -1.0) &&
-    (Xi.nV[1]  >= -1.0))
+  if((Xi.nV[0] <= 1.0) && (Xi.nV[1]  <= 1.0) && (Xi.nV[0]  >= -1.0) && (Xi.nV[1] >= -1.0))
   {
     in_out = true;    
   }
@@ -412,6 +409,7 @@ void element_to_particles__Q4__(
         {
           X_p.nM[i*GPxElement+j][l] += N_GP.nV[k]*FEM_Mesh.Coordinates.nM[Node][l];
         }
+        
       }
 
       /* Free value of the shape function in the GP */
@@ -502,7 +500,7 @@ double volume__Q4__(
     J_i = I3__MatrixLib__(F_i);
 
     // Compute volume contribution
-    Vol += J_i*table_w[i];
+    Vol += fabs(J_i)*table_w[i];
 
     // Free memory
     free__MatrixLib__(F_i);
