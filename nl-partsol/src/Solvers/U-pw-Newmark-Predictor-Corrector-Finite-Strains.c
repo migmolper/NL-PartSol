@@ -1065,29 +1065,6 @@ static void update_Local_State(
       {
         P_p = compute_1PK_Stress_Tensor_Neo_Hookean_Wriggers(P_p, F_n1_p, J_n1_p, MatProp_Soil_p);
       }
-/*      else if(strcmp(MatProp_Soil_p.Type,"Von-Mises") == 0)
-      {
-        F_plastic_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_plastic.nM[p],2);
-        Input_Plastic_Parameters.Cohesion = MPM_Mesh.Phi.cohesion.nV[p];
-        Input_Plastic_Parameters.EPS = MPM_Mesh.Phi.EPS.nV[p];
-
-        Output_Plastic_Parameters = finite_strains_plasticity_Von_Mises(P_p, F_n1_p, F_plastic_p, Input_Plastic_Parameters, MatProp_Soil_p, J_n1_p);
-
-        MPM_Mesh.Phi.cohesion.nV[p] = Output_Plastic_Parameters.Yield_stress;
-        MPM_Mesh.Phi.EPS.nV[p] = Output_Plastic_Parameters.EPS;
-      }
-      else if((strcmp(MatProp_Soil_p.Type,"Drucker-Prager-Plane-Strain") == 0) || (strcmp(MatProp_Soil_p.Type,"Drucker-Prager-Outer-Cone") == 0))
-      {
-        F_plastic_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_plastic.nM[p],2);
-        Input_Plastic_Parameters.Cohesion = MPM_Mesh.Phi.cohesion.nV[p];
-        Input_Plastic_Parameters.EPS = MPM_Mesh.Phi.EPS.nV[p];
-
-        Output_Plastic_Parameters = finite_strains_plasticity_Drucker_Prager_Sanavia(P_p, F_n1_p, F_plastic_p, Input_Plastic_Parameters, MatProp_Soil_p, J_n1_p);
-
-        MPM_Mesh.Phi.cohesion.nV[p] = Output_Plastic_Parameters.Cohesion;
-        MPM_Mesh.Phi.EPS.nV[p] = Output_Plastic_Parameters.EPS;
-
-      }*/
       else
       {
           fprintf(stderr,"%s : %s %s %s \n",

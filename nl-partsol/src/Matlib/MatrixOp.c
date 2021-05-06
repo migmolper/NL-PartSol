@@ -255,10 +255,17 @@ void print__MatrixLib__(Matrix In, int PrintRows, int PrintColumns)
 	
 	  for(int j = 0 ; j<Columns ; j++)
 	    {
-	      printf(" %e ",In.nM[i][j]);
+        if(In.nM[i][j] == 0)
+        {
+          printf("-------- ");
+        }
+        else
+        {
+          printf("%2.2e ",In.nM[i][j]);
+        }
 	    }
 	
-	  printf("\n");
+	  printf("\n\n");
 	
 	}
     }

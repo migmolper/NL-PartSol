@@ -51,7 +51,7 @@ typedef struct
 static Newmark_parameters compute_Newmark_parameters(double, double, double);
 static Matrix compute_Nodal_Effective_Mass(Particle, Mesh, Mask, double);
 static Nodal_Field compute_Nodal_Field(Matrix,Particle, Mesh, Mask);
-static Nodal_Field initialise_Nodal_Increments(Nodal_Field,Mesh,Mask,int);
+static Nodal_Field initialise_Nodal_Increments(Nodal_Field,Mesh,Mask,Newmark_parameters,int);
 static void   update_Local_State(Nodal_Field,Mask,Particle,Mesh,double);
 static Matrix compute_Nodal_Forces(Mask, Particle, Mesh, int);
 static void   compute_Nodal_Internal_Forces(Matrix,Mask,Particle, Mesh);
@@ -153,7 +153,7 @@ void U_Newmark_beta_Finite_Strains(
         Compute the nodal values of velocity and acceleration
       */
       U_n = compute_Nodal_Field(Effective_Mass,MPM_Mesh,FEM_Mesh,ActiveNodes);
-      D_U = initialise_Nodal_Increments(U_n,FEM_Mesh,ActiveNodes,TimeStep);
+      D_U = initialise_Nodal_Increments(U_n,FEM_Mesh,ActiveNodes,Params,TimeStep);
       print_Status("DONE !!!",TimeStep);
 
       print_Status("*************************************************",TimeStep);
@@ -565,6 +565,7 @@ static Nodal_Field initialise_Nodal_Increments(
   Nodal_Field U_n,
   Mesh FEM_Mesh,
   Mask ActiveNodes,
+  Newmark_parameters Params,
   int TimeStep)
 /*
   Apply the boundary conditions over the nodes 
@@ -578,6 +579,13 @@ static Nodal_Field initialise_Nodal_Increments(
   int Ndof = NumberDOF; /* Number of degree of freedom */
   int Id_BCC; /* Index of the node where we apply the BCC */
   int Id_BCC_mask;
+
+  double alpha_1 = Params.alpha_1;
+  double alpha_2 = Params.alpha_2;
+  double alpha_3 = Params.alpha_3;
+  double alpha_4 = Params.alpha_4;
+  double alpha_5 = Params.alpha_5;
+  double alpha_6 = Params.alpha_6;
 
   Nodal_Field D_U;
   D_U.value        = allocZ__MatrixLib__(Nnodes_mask,Ndof);
@@ -642,8 +650,8 @@ static Nodal_Field initialise_Nodal_Increments(
             Assign the boundary condition 
           */
           D_U.value.nM[Id_BCC_mask][k] = FEM_Mesh.Bounds.BCC_i[i].Value[k].Fx[TimeStep]*(double)FEM_Mesh.Bounds.BCC_i[i].Dir[k];                    
-          U_n.d_value_dt.nM[Id_BCC_mask][k] = 0.0;
-          U_n.d2_value_dt2.nM[Id_BCC_mask][k] = 0.0;
+          D_U.d2_value_dt2.nM[Id_BCC_mask][k] = alpha_1*D_U.value.nM[Id_BCC_mask][k] - alpha_2*U_n.d_value_dt.nM[Id_BCC_mask][k] - (alpha_3 + 1)*U_n.d2_value_dt2.nM[Id_BCC_mask][k];
+          D_U.d_value_dt.nM[Id_BCC_mask][k]   = alpha_4*D_U.value.nM[Id_BCC_mask][k] + (alpha_5-1)*U_n.d_value_dt.nM[Id_BCC_mask][k] + alpha_6*U_n.d2_value_dt2.nM[Id_BCC_mask][k];
         }
       }
     }    
