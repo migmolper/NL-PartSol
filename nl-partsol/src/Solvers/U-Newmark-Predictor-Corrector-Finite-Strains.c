@@ -479,7 +479,7 @@ static void update_Local_State(Matrix D_Displacement,
   Tensor F_n1_p;
   Tensor DF_p;
   Tensor F_plastic_p;
-  Tensor S_p;
+  Tensor P_p;
   
   /*
     Loop in the material point set 
@@ -519,11 +519,6 @@ static void update_Local_State(Matrix D_Displacement,
 	from t = n and the increment of deformation gradient.
       */  
       update_Deformation_Gradient_n1__Particles__(F_n1_p, F_n_p, DF_p);
-
-      /*
-        Compute the right Cauchy Green tensor
-      */
-      Tensor C_n1_p = right_Cauchy_Green__Particles__(F_n1_p);
       
       /*
       	Update the second Piola-Kirchhoff stress tensor (S) with an apropiate
@@ -531,41 +526,41 @@ static void update_Local_State(Matrix D_Displacement,
       */
       MatIndx_p = MPM_Mesh.MatIdx[p];
       MatProp_p = MPM_Mesh.Mat[MatIndx_p];
-      S_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.Stress.nM[p],2);      
+      P_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.Stress.nM[p],2);      
 
       if(strcmp(MatProp_p.Type,"Saint-Venant-Kirchhoff") == 0)
-        {
-          S_p = grad_energy_Saint_Venant_Kirchhoff(S_p, C_n1_p, MatProp_p);
-        }
+      {
+          P_p = compute_1PK_Stress_Tensor_Saint_Venant_Kirchhoff(P_p, F_n1_p, MatProp_p);
+      }
       else if(strcmp(MatProp_p.Type,"Neo-Hookean-Wriggers") == 0)
-        {
+      {
           J_n1_p = I3__TensorLib__(F_n1_p);
-          S_p = compute_2PK_Stress_Tensor_Neo_Hookean_Wriggers(S_p, C_n1_p, J_n1_p, MatProp_p);
-        }
+          P_p = compute_1PK_Stress_Tensor_Neo_Hookean_Wriggers(P_p, F_n1_p, J_n1_p, MatProp_p);
+      }
       else if(strcmp(MatProp_p.Type,"Von-Mises") == 0)
-        {
+      {
           J_n1_p = I3__TensorLib__(F_n1_p);
           F_plastic_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_plastic.nM[p],2);
           Input_Plastic_Parameters.Cohesion = MPM_Mesh.Phi.cohesion.nV[p];
           Input_Plastic_Parameters.EPS = MPM_Mesh.Phi.EPS.nV[p];
 
-          Output_Plastic_Parameters = finite_strains_plasticity_Von_Mises(S_p, C_n1_p, F_plastic_p, F_n1_p, 
-                                                                          Input_Plastic_Parameters, MatProp_p, J_n1_p);
+          /* Run the plastic solver */
+          Output_Plastic_Parameters = finite_strains_plasticity_Von_Mises(P_p,F_plastic_p,F_n1_p,Input_Plastic_Parameters,MatProp_p,J_n1_p);
 
           /* Update variables (cohesion and EPS) */
           MPM_Mesh.Phi.cohesion.nV[p] = Output_Plastic_Parameters.Yield_stress;
           MPM_Mesh.Phi.EPS.nV[p] = Output_Plastic_Parameters.EPS;
-        }
+      }
       else if((strcmp(MatProp_p.Type,"Drucker-Prager-Plane-Strain") == 0) || 
               (strcmp(MatProp_p.Type,"Drucker-Prager-Outer-Cone") == 0))
-        {
+      {
           J_n1_p = I3__TensorLib__(F_n1_p);
           F_plastic_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_plastic.nM[p],2);
           Input_Plastic_Parameters.Cohesion = MPM_Mesh.Phi.cohesion.nV[p];
           Input_Plastic_Parameters.EPS = MPM_Mesh.Phi.EPS.nV[p];
 
-          Output_Plastic_Parameters = finite_strains_plasticity_Drucker_Prager_Sanavia(S_p, C_n1_p, F_plastic_p, F_n1_p, 
-                                                                          Input_Plastic_Parameters, MatProp_p, J_n1_p);
+          /* Run the plastic solver */
+          Output_Plastic_Parameters = finite_strains_plasticity_Drucker_Prager_Sanavia(P_p,F_plastic_p,F_n1_p,Input_Plastic_Parameters,MatProp_p,J_n1_p);
 
           /* Update variables (cohesion and EPS) */
           MPM_Mesh.Phi.cohesion.nV[p] = Output_Plastic_Parameters.Cohesion;
@@ -592,12 +587,12 @@ static void update_Local_State(Matrix D_Displacement,
 	Replace the deformation gradient at t = n with the converged deformation gradient
       */
       for(int i = 0 ; i<Ndim  ; i++)
-	{
-	  for(int j = 0 ; j<Ndim  ; j++)
-	    {
-	      F_n_p.N[i][j] = F_n1_p.N[i][j];
-	    }
-	}
+      {
+        for(int j = 0 ; j<Ndim  ; j++)
+        {
+          F_n_p.N[i][j] = F_n1_p.N[i][j];
+        }
+      }
 
       /* Compute the deformation energy */
   //    Vol_0_p = MPM_Mesh.Phi.Vol_0.nV[p];
@@ -606,7 +601,6 @@ static void update_Local_State(Matrix D_Displacement,
       /*
 	Free memory 
       */
-      free__TensorLib__(C_n1_p);
       free__MatrixLib__(D_Displacement_Ap);
       free__MatrixLib__(gradient_p);
       free(Nodes_p.Connectivity);
@@ -657,7 +651,6 @@ static void compute_Nodal_Internal_Forces(Matrix Forces,
   int idx_A_mask_i;
 
   Tensor P_p; /* First Piola-Kirchhoff Stress tensor */
-  Tensor S_p; /* Second Piola-Kirchhoff Stress tensor */
   Tensor InternalForcesDensity_Ap;
 
   Element Nodes_p; /* List of nodes for particle */
@@ -710,8 +703,7 @@ static void compute_Nodal_Internal_Forces(Matrix Forces,
       /*
 	Compute the first Piola-Kirchhoff stress tensor
       */
-      S_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.Stress.nM[p], 2);
-      P_p = matrix_product__TensorLib__(F_n1_p, S_p);
+      P_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.Stress.nM[p], 2);
 
       /*
       	Compute the volume of the particle in the reference configuration 
@@ -759,7 +751,6 @@ static void compute_Nodal_Internal_Forces(Matrix Forces,
 	 Free memory 
       */
       free__TensorLib__(transpose_F_n1_p);
-      free__TensorLib__(P_p);
       free__MatrixLib__(gradient_p);
       free(Nodes_p.Connectivity);
     }

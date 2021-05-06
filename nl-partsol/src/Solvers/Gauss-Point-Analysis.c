@@ -63,8 +63,7 @@ void NonLinear_Gauss_Point_Analysis(Particle PointAnalysis)
       Input_Plastic_Parameters.Cohesion = PointAnalysis.Phi.cohesion.nV[k];
       Input_Plastic_Parameters.EPS = PointAnalysis.Phi.EPS.nV[k];
 
-      Output_Plastic_Parameters = finite_strains_plasticity_Von_Mises(S_k, C_k, F_plastic_k, F_k, 
-                                                                          Input_Plastic_Parameters, PointAnalysis.Mat[0], J_k);
+      Output_Plastic_Parameters = finite_strains_plasticity_Von_Mises(S_k,F_plastic_k,F_k,Input_Plastic_Parameters, PointAnalysis.Mat[0], J_k);
 
       /* Update variables (cohesion and EPS) */
       PointAnalysis.Phi.cohesion.nV[k] = Output_Plastic_Parameters.Yield_stress;
@@ -80,8 +79,7 @@ void NonLinear_Gauss_Point_Analysis(Particle PointAnalysis)
     	Input_Plastic_Parameters.Cohesion = PointAnalysis.Phi.cohesion.nV[k];
     	Input_Plastic_Parameters.EPS = PointAnalysis.Phi.EPS.nV[k];
 
-      Output_Plastic_Parameters = finite_strains_plasticity_Drucker_Prager_Sanavia(S_k, C_k, F_plastic_k, F_k, 
-                                                                          Input_Plastic_Parameters, PointAnalysis.Mat[0], J_k);
+      Output_Plastic_Parameters = finite_strains_plasticity_Drucker_Prager_Sanavia(S_k,F_plastic_k,F_k,Input_Plastic_Parameters,PointAnalysis.Mat[0],J_k);
 
       /* Update variables (cohesion and EPS) */
       PointAnalysis.Phi.cohesion.nV[k] = Output_Plastic_Parameters.Cohesion;

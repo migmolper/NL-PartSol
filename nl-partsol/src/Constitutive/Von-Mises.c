@@ -27,16 +27,23 @@ static void   compute_finite_stress_tensor_elastic_region(Tensor, Tensor, Tensor
 
 /**************************************************************/
 
-Plastic_status finite_strains_plasticity_Von_Mises(Tensor Finite_Stress, Tensor C_total, Tensor F_plastic,
-                                                   Tensor F_total, Plastic_status Inputs_VarCons, Material MatProp, double J)
+Plastic_status finite_strains_plasticity_Von_Mises(
+  Tensor Finite_Stress, 
+  Tensor F_plastic,
+  Tensor F_total,
+  Plastic_status Inputs_VarCons, 
+  Material MatProp, 
+  double J)
 /*
   Finite strains plasticity following the apporach of Ortiz and Camacho
 */
 {
+  int Ndim = NumberDimensions;
 
-  /* Define output */
+  /* Define auxiliar variables */
   Plastic_status Outputs_VarCons;
-
+  Tensor Fm1_total = Inverse__TensorLib__(F_total);
+  Tensor C_total = right_Cauchy_Green__Particles__(F_total);
   Tensor C_elastic = alloc__TensorLib__(2);
   Tensor E_elastic;
   Tensor Infinitesimal_Stress = alloc__TensorLib__(2);
@@ -59,10 +66,25 @@ Plastic_status finite_strains_plasticity_Von_Mises(Tensor Finite_Stress, Tensor 
   /* Compute the new plastic deformation gradient */
   update_plastic_deformation_gradient__Particles__(D_F_plastic,F_plastic);
 
-  /* Get the stress tensor in the reference configuration (S_p) using the Piola transformation */
-  compute_Piola_transformation__Particles__(Finite_Stress, Infinitesimal_Stress, F_total, J);
+  /* Get the stress tensor in the reference configuration (P_p) */
+  for(int i = 0 ; i < Ndim  ; i++)
+  {
+    for(int j = 0 ; j < Ndim  ; j++)
+    {
+      Finite_Stress.N[i][j] = 0.0;
+
+      for(int k = 0 ; k < Ndim  ; k++)
+      {
+        Finite_Stress.N[i][j] += Infinitesimal_Stress.N[i][k]*Fm1_total.N[j][k];
+      }
+
+      Finite_Stress.N[i][j] = J*Finite_Stress.N[i][j];
+
+    }
+  }
 
   /* Free memory */
+  free__TensorLib__(C_total);
   free__TensorLib__(C_elastic);
   free__TensorLib__(E_elastic);
   free__TensorLib__(Increment_E_plastic);
