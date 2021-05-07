@@ -288,10 +288,9 @@ Tensor Eigenvalues__TensorLib__(Tensor A)
 
 	else
 	  {
-
-	    printf("%s : %s -> %f \n",
-		   "Error in Eigenvalues__TensorLib__()",
-		   "Input tensor should be Hermitian",b);
+	    printf("%s\n","Error in Eigenvalues__TensorLib__(A)");
+      print__TensorLib__(A);
+		  printf("%s\n","Input tensor should be Hermitian");
 	    exit(EXIT_FAILURE);
 
 	  }

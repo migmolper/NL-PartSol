@@ -406,7 +406,7 @@ void update_lambda_Newton_Rapson__LME__(
     fprintf(stderr,"%s %i : %s (%i)\n",
       "Warning in lambda_Newton_Rapson__LME__ for particle",Idx_particle,
       "No convergence reached in the maximum number of interations",MaxIter);
-    fprintf(stderr,"%s : %f\n", "Total Error",norm_r);
+    fprintf(stderr,"%s : %e\n", "Total Error",norm_r);
     exit(EXIT_FAILURE);
   }
   
