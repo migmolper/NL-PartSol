@@ -50,7 +50,7 @@ Matrix metric__LME__(Tensor);
 /****************************************************************************/
 
 /*!
-  \fn void lambda__LME__(Matrix l, Matrix lambda, Matrix Metric, double Beta)
+  \fn void update_lambda_Newton_Rapson__LME__(Matrix l, Matrix lambda, Matrix Metric, double Beta)
 
   \brief Function ot get the lagrange multipliers "lambda" (1 x dim) for the LME 
   shape function. The numerical methodis the Newton-Rapson.
@@ -116,7 +116,7 @@ Matrix dp__LME__(Matrix, Matrix);
   \param I0 : Index of the closest node to the particle
   \param FEM_Mesh : Variable wih information of the background set of nodes
 */
-ChainPtr tributary__LME__(Matrix, Matrix, double, int, Mesh);
+ChainPtr tributary__LME__(int,Matrix, Matrix, double, int, Mesh);
 
 
 #endif

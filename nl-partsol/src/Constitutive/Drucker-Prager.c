@@ -12,6 +12,7 @@ int Max_Iterations_Radial_Returning;
 */
 static void   standard_error(char *);
 static bool   check_convergence(double,double,int,int);
+
 static double compute_yield_surface(double, double, double, Material);
 static double compute_hardening_modulus(double, Material);
 static double compute_limit_between_classic_apex_algorithm(double, double, double, Material);

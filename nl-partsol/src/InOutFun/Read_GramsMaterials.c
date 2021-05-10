@@ -428,7 +428,6 @@ GramsMaterials (Particles=route.txt) {
 	  else if(strcmp(Mat_GP.Type,"Von-Mises") == 0)
 	  { 
 		check_Von_Mises_Material(Mat_GP);	
-	  	Mat_GP.E_plastic_reference = Mat_GP.yield_stress_0/Mat_GP.hardening_modulus;
 	  	TOL_Radial_Returning = 1E-10;
 		Max_Iterations_Radial_Returning = 300;
 	  }

@@ -197,7 +197,7 @@ void get_particle_tributary_nodes(Particle MPM_Mesh, Mesh FEM_Mesh, int p)
     /*
       Calculate the new connectivity with the previous value of beta
     */
-    MPM_Mesh.ListNodes[p] = tributary__LME__(X_p,Metric_p,Beta_p,I0,FEM_Mesh);
+    MPM_Mesh.ListNodes[p] = tributary__LME__(p,X_p,Metric_p,Beta_p,I0,FEM_Mesh);
 
     /*
       Calculate number of nodes

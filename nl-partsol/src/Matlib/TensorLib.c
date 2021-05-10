@@ -260,7 +260,8 @@ Tensor Eigenvalues__TensorLib__(Tensor A)
   Tensor lambda = alloc__TensorLib__(1);
 
   /* Check the order of the input tensor */
-  if(A.Order == 2){
+  if(A.Order == 2)
+  {
 
     /*
       Solve the second order equation
@@ -268,27 +269,24 @@ Tensor Eigenvalues__TensorLib__(Tensor A)
      */
     if(Ndim == 2)
       {
-	I1 = I1__TensorLib__(A);
-	I2 = I2__TensorLib__(A);
+        I1 = I1__TensorLib__(A);
+        I2 = I2__TensorLib__(A);
 
-	b = I1*I1 - 4*I2;
+        b = I1*I1 - 4*I2;
 
-	if(b > TOL_zero)
-	  {
-	    
-	    lambda.n[0] = 0.5*(I1 + sqrt(b));
-	    lambda.n[1] = 0.5*(I1 - sqrt(b));
-
-	  }
-	else if(fabs(b) <= TOL_zero)
-	  {
-	    lambda.n[0] = 0.5*I1;
-	    lambda.n[1] = 0.5*I1;
-	  }
-
-	else
-	  {
-	    printf("%s\n","Error in Eigenvalues__TensorLib__(A)");
+        if(b > 0.0)
+        {
+          lambda.n[0] = 0.5*(I1 + sqrt(b));
+          lambda.n[1] = 0.5*(I1 - sqrt(b));
+        }
+        else if(b <= 0.0)
+        {
+          lambda.n[0] = 0.5*I1;
+          lambda.n[1] = 0.5*I1;
+        }
+        else
+        {
+	     printf("%s\n","Error in Eigenvalues__TensorLib__(A)");
       print__TensorLib__(A);
 		  printf("%s\n","Input tensor should be Hermitian");
 	    exit(EXIT_FAILURE);
@@ -310,7 +308,7 @@ Tensor Eigenvalues__TensorLib__(Tensor A)
 	b = I2 - I1*I1/3;
 	c = -2/27*I1*I1*I1 + I1*I2/3 - I3;
 
-	if(fabs(b) <= TOL_zero)
+	if(b <= 0.0)
 	  {
 	    
 	    lambda.n[0] = - pow(c,1/3.);
@@ -318,7 +316,7 @@ Tensor Eigenvalues__TensorLib__(Tensor A)
 	    lambda.n[2] = - pow(c,1/3.);
 	    
 	  }
-	else if(b > TOL_zero)
+	else if(b > 0.0)
 	  {
 
 	    m = 2*sqrt(-b/3);
@@ -817,8 +815,9 @@ Tensor Convex_combination__TensorLib__(Tensor F_n1,Tensor F_n,double alpha)
 double volumetric_component__TensorLib__(Tensor A)
 {
   double A_vol;
+  int Ndim = NumberDimensions;
 
-  A_vol = I1__TensorLib__(A)/3.0;
+  A_vol = I1__TensorLib__(A)/Ndim;
 
   return A_vol;
 }

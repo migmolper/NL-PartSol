@@ -94,8 +94,7 @@ void U_Newmark_Predictor_Corrector_Finite_Strains(Mesh FEM_Mesh, Particle MPM_Me
       */      
       print_Status("*************************************************",TimeStep);
       print_Status("Third step : Compute predicted nodal velocity ... WORKING",TimeStep);
-      Velocity = compute_Nodal_Velocity_Predicted(MPM_Mesh,FEM_Mesh,ActiveNodes,
-                                                  Lumped_Mass,gamma,DeltaTimeStep);
+      Velocity = compute_Nodal_Velocity_Predicted(MPM_Mesh,FEM_Mesh,ActiveNodes,Lumped_Mass,gamma,DeltaTimeStep);
       /*
         Imposse velocity values in the boundary conditions nodes.
       */
@@ -113,7 +112,7 @@ void U_Newmark_Predictor_Corrector_Finite_Strains(Mesh FEM_Mesh, Particle MPM_Me
       */
       update_Local_State(D_Displacement, ActiveNodes, MPM_Mesh, FEM_Mesh, DeltaTimeStep);
       /*
-	Compute the nodal forces
+	     Compute the nodal forces
       */
       Forces = compute_Nodal_Forces(ActiveNodes, MPM_Mesh, FEM_Mesh, TimeStep);
       /*
@@ -124,21 +123,17 @@ void U_Newmark_Predictor_Corrector_Finite_Strains(Mesh FEM_Mesh, Particle MPM_Me
       print_Status("*************************************************",TimeStep);
       print_Status("Five step : Compute velocity corrector ... WORKING",TimeStep);
       /*
-	Correct the predicted velocity
+	       Correct the predicted velocity
       */
       compute_Nodal_Velocity_Corrected(Velocity,Forces,Lumped_Mass,gamma,DeltaTimeStep);
       print_Status("DONE !!!",TimeStep);
       
       print_Status("*************************************************",TimeStep);
       print_Status("Six step : Update particles lagrangian ... WORKING",TimeStep);
-      /*
-	Update Lagrangians with D_Displacement
+      /* 
+      	Update Lagrangians with D_Displacement and reload the connectivity information for each particle
       */
       update_Particles(MPM_Mesh,FEM_Mesh,Lumped_Mass,Forces,Velocity,ActiveNodes,DeltaTimeStep);
-      print_Status("DONE !!!",TimeStep);
-      /*
-	Reload the connectivity information for each particle
-      */
       local_search__Particles__(MPM_Mesh,FEM_Mesh);
       print_Status("DONE !!!",TimeStep);
       
@@ -158,8 +153,7 @@ void U_Newmark_Predictor_Corrector_Finite_Strains(Mesh FEM_Mesh, Particle MPM_Me
       free__MatrixLib__(D_Displacement);
       free__MatrixLib__(Forces);
       free__MatrixLib__(Reactions);
-      free(ActiveNodes.Nodes2Mask);
-      
+      free(ActiveNodes.Nodes2Mask); 
       print_Status("DONE !!!",TimeStep);
 
     }
@@ -168,9 +162,10 @@ void U_Newmark_Predictor_Corrector_Finite_Strains(Mesh FEM_Mesh, Particle MPM_Me
 
 /**************************************************************/
 
-static Matrix compute_Nodal_Lumped_Mass(Particle MPM_Mesh,
-					Mesh FEM_Mesh,
-					Mask ActiveNodes)
+static Matrix compute_Nodal_Lumped_Mass(
+  Particle MPM_Mesh,
+  Mesh FEM_Mesh,
+  Mask ActiveNodes)
 /*
   This function computes the lumped mass matrix.
 */
@@ -248,12 +243,13 @@ static Matrix compute_Nodal_Lumped_Mass(Particle MPM_Mesh,
 
 /**************************************************************/
 
-static Matrix compute_Nodal_Velocity_Predicted(Particle MPM_Mesh, 
-                                               Mesh FEM_Mesh,
-                                               Mask ActiveNodes,
-                                               Matrix Lumped_Mass,
-                                               double gamma,
-                                               double DeltaTimeStep)
+static Matrix compute_Nodal_Velocity_Predicted(
+  Particle MPM_Mesh, 
+  Mesh FEM_Mesh,
+  Mask ActiveNodes,
+  Matrix Lumped_Mass,
+  double gamma,
+  double DeltaTimeStep)
 /*
   Get the nodal velocity using : 
   v_{i,I}^{k-1/2} = \frac{p_{i,I}^{k-1/2}}{m_I^{k}}
@@ -341,10 +337,11 @@ static Matrix compute_Nodal_Velocity_Predicted(Particle MPM_Mesh,
 
 /**********************************************************************/
 
-static void imposse_Velocity(Mesh FEM_Mesh,
-                             Matrix Velocity,
-                             Mask ActiveNodes,
-                             int TimeStep)
+static void imposse_Velocity(
+  Mesh FEM_Mesh,
+  Matrix Velocity,
+  Mask ActiveNodes,
+  int TimeStep)
 /*
   Apply the boundary conditions over the nodes 
 */
@@ -417,8 +414,7 @@ static void imposse_Velocity(Mesh FEM_Mesh,
 		     Assign the boundary condition 
                   */
                   Id_BCC_mask_k = Id_BCC_mask*NumDimBound + k; 
-                  Velocity.nV[Id_BCC_mask_k] = FEM_Mesh.Bounds.BCC_i[i].Value[k].Fx[TimeStep]*
-		    (double)FEM_Mesh.Bounds.BCC_i[i].Dir[k];
+                  Velocity.nV[Id_BCC_mask_k] = FEM_Mesh.Bounds.BCC_i[i].Value[k].Fx[TimeStep]*(double)FEM_Mesh.Bounds.BCC_i[i].Dir[k];
                 }
             }
         }    
@@ -428,9 +424,10 @@ static void imposse_Velocity(Mesh FEM_Mesh,
 
 /**************************************************************/
 
-static Matrix compute_Nodal_D_Displacement(Matrix Velocity,
-                                           Mask ActiveNodes,
-                                           double Dt)
+static Matrix compute_Nodal_D_Displacement(
+  Matrix Velocity,
+  Mask ActiveNodes,
+  double Dt)
 {
   int Ndim = NumberDimensions;
   int Nnodes_mask = Velocity.N_rows;
@@ -450,11 +447,12 @@ static Matrix compute_Nodal_D_Displacement(Matrix Velocity,
 
 /**************************************************************/
 
-static void update_Local_State(Matrix D_Displacement,
-			       Mask ActiveNodes,
-			       Particle MPM_Mesh,
-			       Mesh FEM_Mesh,
-			       double TimeStep)
+static void update_Local_State(
+  Matrix D_Displacement,
+	Mask ActiveNodes,
+	Particle MPM_Mesh,
+	Mesh FEM_Mesh,
+	double TimeStep)
 {
 
   /*
@@ -541,14 +539,12 @@ static void update_Local_State(Matrix D_Displacement,
       {
           J_n1_p = I3__TensorLib__(F_n1_p);
           F_plastic_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_plastic.nM[p],2);
-          Input_Plastic_Parameters.Cohesion = MPM_Mesh.Phi.cohesion.nV[p];
           Input_Plastic_Parameters.EPS = MPM_Mesh.Phi.EPS.nV[p];
 
           /* Run the plastic solver */
           Output_Plastic_Parameters = finite_strains_plasticity_Von_Mises(P_p,F_plastic_p,F_n1_p,Input_Plastic_Parameters,MatProp_p,J_n1_p);
 
           /* Update variables (cohesion and EPS) */
-          MPM_Mesh.Phi.cohesion.nV[p] = Output_Plastic_Parameters.Yield_stress;
           MPM_Mesh.Phi.EPS.nV[p] = Output_Plastic_Parameters.EPS;
       }
       else if((strcmp(MatProp_p.Type,"Drucker-Prager-Plane-Strain") == 0) || 

@@ -99,7 +99,7 @@ void initialize__LME__(
         free__MatrixLib__(Delta_Xip);
 
         /* Get the initial connectivity of the particle */
-        MPM_Mesh.ListNodes[p] = tributary__LME__(X_p,Metric_p,Beta_p,MPM_Mesh.I0[p],FEM_Mesh);
+        MPM_Mesh.ListNodes[p] = tributary__LME__(p,X_p,Metric_p,Beta_p,MPM_Mesh.I0[p],FEM_Mesh);
 
         /* Measure the size of the connectivity */
         MPM_Mesh.NumberNodes[p] = lenght__SetLib__(MPM_Mesh.ListNodes[p]);
@@ -168,7 +168,8 @@ double beta__LME__(
   avg_l = avg_l/NumNodes_GP;
 
 
-  h = DMIN(avg_l,DeltaX);
+//  h = DMAX(avg_l,DeltaX);
+  h = DeltaX;
 
   /*
     Compute beta
@@ -208,7 +209,8 @@ double beta__LME__(
 
           for(int k = 0 ; k < Ndim ; k++)
           {
-            C_ij += F.N[k][i]*F.N[k][j];
+//            C_ij += F.N[k][i]*F.N[k][j];
+            C_ij += F.N[i][k]*F.N[j][k];
           }
 
           Metric.nM[i][j] += curvature_LME*C_ij;
@@ -604,78 +606,6 @@ static void order_logZ_simplex_Nelder_Mead__LME__(
   }
 
 }
-
-/****************************************************************************/
-
-/*static double spin_Nelder_Mead__LME__(
-  Matrix simplex)
-{
-
-    int Ndim = NumberDimensions;
-  int Nnodes_simplex = Ndim + 1;
-
-  Matrix L_simplex = allocZ__MatrixLib__();
-
-
-[n,sp]=size(LL);
-mat=ones(n);
-
-mat(:,1:2)=LL;
-DT=abs(det(mat)/factorial(sp));
-
-dist(n,n)=0;
-for i=1:n
-  for k=1:n
-    for j=1:sp
-      dist(i,k)=dist(i,k)+(LL(i,j)-LL(k,j))^2;
-    end
-    dist(i,k)=sqrt(dist(i,k));
-  end
-end
-
-diam=max(max(dist));
-
-Vn=DT/diam^sp;
-
-
-[~,sp]=size(LL);
-
-DIS=max(diam/50,eps*2);
-
-
-LL1(1,:)=LL(1,:);
-LL2(1,:)=LL(1,:);
-
-LL1(2,1)=LL(2,1)+DIS;
-LL1(2,2)=LL(2,2);
-LL1(3,1)=LL(3,1);
-LL1(3,2)=LL(3,2)-DIS;
-
-LL2(2,1)=LL(2,1)-DIS;
-LL2(2,2)=LL(2,2);
-LL2(3,2)=LL(3,2)+DIS;
-
-f_1(1)=1e10;
-f_2(1)=1e10;
-
-[f_1(2),~,~,~]=LME.Gamma_(sp,x_a,x,beta,LL1(2,:),near);
-[f_1(3),~,~,~]=LME.Gamma_(sp,x_a,x,beta,LL1(3,:),near);
-[f_2(2),~,~,~]=LME.Gamma_(sp,x_a,x,beta,LL2(2,:),near);
-[f_2(3),~,~,~]=LME.Gamma_(sp,x_a,x,beta,LL2(3,:),near);
-
-f1=min(f_1);
-f2=min(f_2);
-
-if f1<f2
-  LL2=LL1;
-  f_2=f_1;
-end
-
-f_2(1),~,~,~]=LME.Gamma_(sp,x_a,x,beta,LL1(1,:),near);
-
-[LL2,f_m,f_mm,f_w]=LME.order(LL2,f_2);
-
-}*/
 
 /****************************************************************************/
 
@@ -1095,6 +1025,7 @@ Matrix dp__LME__(
 /****************************************************************************/
 
 ChainPtr tributary__LME__(
+  int Indx_p,
   Matrix X_p,
   Matrix Metric,
   double Beta_p,
@@ -1156,16 +1087,10 @@ ChainPtr tributary__LME__(
   */
   if(NumTributaryNodes < Ndim + 1)
   {
-    for(int i = 0 ; i<NumNodes0 ; i++)
-    {
-
-      Node0 = Array_Nodes0[i];
-
-      if(!inout__SetLib__(Triburary_Nodes,Node0))
-      {
-        push__SetLib__(&Triburary_Nodes,Node0);
-      }
-    }
+    fprintf(stderr,"%s %i : %s\n",
+      "Warning in tributary__LME__ for particle",Indx_p,
+      "Insufficient nodal connectivity");
+    exit(EXIT_FAILURE);
   }
   
   /* Free memory */

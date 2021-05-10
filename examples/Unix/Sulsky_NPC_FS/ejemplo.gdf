@@ -11,20 +11,20 @@ GramsTime (Type=NPC-FS) {
 }
 
 # Material points definitions
-GramsSolid2D (File=MPM_Mesh.msh,GPxElement=1) {
+GramsSolid (File=MPM_Mesh.msh,GPxElement=3) {
 
     # List of materials for the GPs
     GramsMaterials (Particles=Material.txt) {
-	Type=Saint-Venant-Kirchhoff
-	Cel=70.71
-	rho=20
-	E=1.e5
-	mu=0.3
-	Id=0
+	    Type=Saint-Venant-Kirchhoff
+	    Cel=70.71
+	    rho=20
+	    E=1.e5
+	    nu=0.3
+	    Id=0
     }
     
     # Shape function definition
-    GramsShapeFun (Type=MPMQ4) {
+    GramsShapeFun (Type=FEM) {
     }
 
     # Initial conditions for the GPs
