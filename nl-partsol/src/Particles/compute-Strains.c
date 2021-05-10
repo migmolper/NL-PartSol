@@ -217,6 +217,84 @@ void update_Deformation_Gradient_n1__Particles__(
 
 /*******************************************************/
 
+void get_locking_free_Deformation_Gradient_n1__Particles__(
+  int p,
+  Tensor F_n1,
+  Particle MPM_Mesh,
+  Mesh FEM_Mesh)
+{
+
+  int Ndim = NumberDimensions;
+  int I0_p = MPM_Mesh.I0[p];
+  double J_p_patch;
+  double Vol_0_p_patch;
+  double Vol_n_p_patch;
+  double V0_p_patch;
+  double Vn_p_patch;
+  double J_p;
+  double J_patch;
+  double J_averaged;
+  double averaged_F_vol;
+
+
+  V0_p_patch = 0.0;
+  Vn_p_patch = 0.0;
+
+  ChainPtr Tributary_Nodes_p = NULL;
+  ChainPtr Node_Patch_p = NULL;
+  ChainPtr Particle_Patch_p = NULL;
+
+  // Get the surrounding nodes
+  Tributary_Nodes_p = MPM_Mesh.ListNodes[p];
+  Node_Patch_p = Tributary_Nodes_p;
+
+  // Loop in the sourrounding particles to get the deformed and reference volumes
+  while(Node_Patch_p != NULL)
+  {
+
+    // Get the list of particles close to this node
+    Particle_Patch_p = FEM_Mesh.I_particles[Node_Patch_p->I];
+
+    while(Particle_Patch_p != NULL)
+    {
+
+      J_p_patch = MPM_Mesh.Phi.J.nV[Particle_Patch_p->I];
+      Vol_0_p_patch = MPM_Mesh.Phi.Vol_0.nV[Particle_Patch_p->I];
+      Vol_n_p_patch = Vol_0_p_patch*J_p_patch;
+
+      V0_p_patch += Vol_0_p_patch;
+      Vn_p_patch += Vol_n_p_patch;
+
+      Particle_Patch_p = Particle_Patch_p->next;
+    }
+
+    Particle_Patch_p = NULL;
+
+    Node_Patch_p = Node_Patch_p->next; 
+  }
+
+  // Compute the averaged jacobian of the deformation gradient
+  J_p = MPM_Mesh.Phi.J.nV[p];
+  J_patch = Vn_p_patch/V0_p_patch;
+  J_averaged = J_patch/J_p;
+
+  // Compute the averaged volume of the deformation gradient
+  averaged_F_vol = pow(J_averaged,(double)1/Ndim);
+
+  // Update the deformation gradient to avoid locking (F-bar)
+  for(int i = 0 ; i<Ndim ; i++)
+  {
+    for(int j = 0 ; j<Ndim ; j++)
+    {
+      F_n1.N[i][j] *= averaged_F_vol;
+    }
+  }
+
+  free__SetLib__(&Node_Patch_p);
+}
+
+/*******************************************************/
+
 void update_rate_Deformation_Gradient_n1__Particles__(
   Tensor dt_F_n1, 
   Tensor dt_f_n1, 

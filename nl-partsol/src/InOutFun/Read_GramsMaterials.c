@@ -31,6 +31,7 @@ bool Is_Compressibility = false;
 bool Is_ReferencePressure = false;
 bool Is_Viscosity = false;
 bool Is_n_Macdonald_model = false;
+bool Is_Locking_Control_Fbar = false;
 
 /*
   Auxiliar functions 
@@ -271,6 +272,23 @@ GramsMaterials (Particles=route.txt) {
 	    	sprintf(Error_message,"%s","Options -> Eigenerosion/Eigensoftening");
 			standard_error(Error_message);
 	    }
+	  }
+	  /**************************************************/
+	  else if(strcmp(Parse_Mat_Prop[0],"Fbar") == 0)
+	  {
+	   	if(strcmp(Parse_Mat_Prop[1],"true") == 0)
+	   	{
+	   		Mat_GP.Locking_Control_Fbar = true;
+	   	}
+	   	else if(strcmp(Parse_Mat_Prop[1],"false") == 0)
+	   	{
+	   		Mat_GP.Locking_Control_Fbar = false;
+	   	}
+	   	else
+	   	{
+	   		sprintf(Error_message,"The input was %s. Please, use : true/false",Parse_Mat_Prop[1]);
+	   		standard_error(Error_message); 
+	   	}
 	  }
 	  /**************************************************/
 	  else if(strcmp(Parse_Mat_Prop[0],"Ceps") == 0)

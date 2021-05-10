@@ -25,49 +25,68 @@ Tensor explicit_integration_stress__Particles__(Tensor Strain,
 
 /**************************************************************/
 
-Tensor forward_integration_Stress__Particles__(Tensor S_p,Tensor F_n1_p,Material MatProp_p)
+Tensor forward_integration_Stress__Particles__(
+  int p,
+  Tensor F_n1_p,
+  Particle MPM_Mesh)
 {
-
-  /*
-    Compute the right Cauchy Green tensor
-   */
-  Tensor C_n1_p = right_Cauchy_Green__Particles__(F_n1_p);
-
-  /*
-    Compute the Stress tensor
-   */
-  if(strcmp(MatProp_p.Type,"Saint-Venant-Kirchhoff") == 0)
-    {
-      S_p = grad_energy_Saint_Venant_Kirchhoff(S_p, C_n1_p, MatProp_p);
-    }
-  else if(strcmp(MatProp_p.Type,"Neo-Hookean-Wriggers") == 0)
-    {
-      double J_n1_p = I3__TensorLib__(F_n1_p);
-      S_p = compute_2PK_Stress_Tensor_Neo_Hookean_Wriggers(S_p, C_n1_p, J_n1_p, MatProp_p);
-    }
-  else
-    {
-      fprintf(stderr,"%s : %s %s %s \n",
-	      "Error in forward_integration_Stress__Particles__()",
-	      "The material",MatProp_p.Type,"has not been yet implemnented");
-      exit(EXIT_FAILURE);
-    }
-
-  /*
-    Free auxiliar variables
-   */
-  free__TensorLib__(C_n1_p);
-
-  return S_p; 
   
+  Tensor P_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.Stress.nM[p],2); 
+
+  // Variables for the constitutive model
+  double J_p = I3__TensorLib__(F_n1_p);
+  int MatIndx_p = MPM_Mesh.MatIdx[p];
+  Material MatProp_p = MPM_Mesh.Mat[MatIndx_p];
+  Tensor F_plastic_p;
+  Plastic_status Input_Plastic_Parameters;
+  Plastic_status Output_Plastic_Parameters;
+
+  if(strcmp(MatProp_p.Type,"Saint-Venant-Kirchhoff") == 0)
+  {
+    P_p = compute_1PK_Stress_Tensor_Saint_Venant_Kirchhoff(P_p, F_n1_p, MatProp_p);
+  }
+  else if(strcmp(MatProp_p.Type,"Neo-Hookean-Wriggers") == 0)
+  {
+    P_p = compute_1PK_Stress_Tensor_Neo_Hookean_Wriggers(P_p, F_n1_p, J_p, MatProp_p);
+  }
+  else if(strcmp(MatProp_p.Type,"Von-Mises") == 0)
+  {
+    F_plastic_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_plastic.nM[p],2);
+    Input_Plastic_Parameters.EPS = MPM_Mesh.Phi.EPS.nV[p];
+
+    Output_Plastic_Parameters = finite_strains_plasticity_Von_Mises(P_p,F_plastic_p,F_n1_p,Input_Plastic_Parameters,MatProp_p,J_p);
+
+    MPM_Mesh.Phi.EPS.nV[p] = Output_Plastic_Parameters.EPS;
+  }
+  else if((strcmp(MatProp_p.Type,"Drucker-Prager-Plane-Strain") == 0) || (strcmp(MatProp_p.Type,"Drucker-Prager-Outer-Cone") == 0))
+  {
+    F_plastic_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_plastic.nM[p],2);
+    Input_Plastic_Parameters.Cohesion = MPM_Mesh.Phi.cohesion.nV[p];
+    Input_Plastic_Parameters.EPS = MPM_Mesh.Phi.EPS.nV[p];
+
+    Output_Plastic_Parameters = finite_strains_plasticity_Drucker_Prager_Sanavia(P_p,F_plastic_p,F_n1_p,Input_Plastic_Parameters,MatProp_p,J_p);
+
+    MPM_Mesh.Phi.cohesion.nV[p] = Output_Plastic_Parameters.Cohesion;
+    MPM_Mesh.Phi.EPS.nV[p] = Output_Plastic_Parameters.EPS;
+
+  }
+  else
+  {
+    fprintf(stderr,"%s : %s %s %s \n","Error in forward_integration_Stress__Particles__()",
+    "The material",MatProp_p.Type,"has not been yet implemnented");
+    exit(EXIT_FAILURE);
+  }
+
+  return P_p;
 }
 
 /**************************************************************/
 
-Tensor configurational_midpoint_integration_Stress__Particles__(Tensor S_p,
-								Tensor F_n1_p,
-								Tensor F_n_p,
-								Material MatProp_p)
+Tensor configurational_midpoint_integration_Stress__Particles__(
+  Tensor S_p,
+  Tensor F_n1_p,
+  Tensor F_n_p,
+  Material MatProp_p)
 {
 
   /*

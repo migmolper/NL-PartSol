@@ -452,6 +452,10 @@ typedef struct {
   double alpha_Q_Drucker_Prager;
   double beta_Drucker_Prager;
 
+  /*!
+  * Activate auxiliar techniques
+  */
+  bool Locking_Control_Fbar;
   
 } Material;
 

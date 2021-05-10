@@ -881,8 +881,7 @@ static void update_Local_State(Matrix D_Displacement,
       */
       MatIndx_p = MPM_Mesh.MatIdx[p];
       MatProp_p = MPM_Mesh.Mat[MatIndx_p];
-      S_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.Stress.nM[p],2);
-      S_p = forward_integration_Stress__Particles__(S_p,F_n1_p,MatProp_p);
+      S_p = forward_integration_Stress__Particles__(p,F_n1_p,MPM_Mesh);
       
       /*
 	       Free memory 
