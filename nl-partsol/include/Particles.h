@@ -76,7 +76,7 @@ void update_Deformation_Gradient_n1__Particles__(Tensor, Tensor, Tensor);
 /*
   \fn void get_locking_free_Deformation_Gradient_n1__Particles__(int p,Tensor F_n1,Particle MPM_Mesh,Mesh FEM_Mesh);
 */
-void get_locking_free_Deformation_Gradient_n1__Particles__(int,Tensor,Particle,Mesh);
+void get_locking_free_Deformation_Gradient_n1__Particles__(int,Particle,Mesh);
 /*******************************************************/
 
 /*
@@ -177,7 +177,7 @@ Tensor explicit_integration_stress__Particles__(Tensor, Tensor, Material);
 /*
 \fn Tensor forward_integration_Stress__Particles__()
 */
-Tensor forward_integration_Stress__Particles__(int,Tensor,Particle);
+Tensor forward_integration_Stress__Particles__(int,Particle);
 /*******************************************************/
 /*!
   \fn Tensor configurational_midpoint_integration_Stress__Particles__(Tensor T_n1,Tensor T_n,double alpha)
@@ -285,7 +285,7 @@ int search_particle_in_surrounding_elements__Particles__(int, Matrix, ChainPtr, 
 /*!
 
 */
-void asign_to_nodes__Particles__(int, ChainPtr, Mesh);
+void asign_to_nodes__Particles__(int, int, ChainPtr, Mesh);
 /*******************************************************/
 
 /*!

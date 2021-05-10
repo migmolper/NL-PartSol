@@ -2,7 +2,9 @@
 
 /*************************************************************/
 
-Tensor rate_inifinitesimal_Strain__Particles__(Matrix Velocity, Matrix Gradient)
+Tensor rate_inifinitesimal_Strain__Particles__(
+  Matrix Velocity, 
+  Matrix Gradient)
 {
   int Ndim = NumberDimensions;
   Tensor Rate_Strain = alloc__TensorLib__(2);
@@ -23,10 +25,11 @@ Tensor rate_inifinitesimal_Strain__Particles__(Matrix Velocity, Matrix Gradient)
     VoG_I = dyadic_Product__TensorLib__(Velocity_I, Gradient_I);
     
     /* Ad the nodal contribution to the train tensor */
-    for(int i = 0 ; i<Ndim ; i++){
-      for(int j = 0 ; j<Ndim ; j++){
-	Rate_Strain.N[i][j] +=
-	  0.5*(VoG_I.N[i][j] + VoG_I.N[j][i]);
+    for(int i = 0 ; i<Ndim ; i++)
+    {
+      for(int j = 0 ; j<Ndim ; j++)
+      {
+        Rate_Strain.N[i][j] += 0.5*(VoG_I.N[i][j] + VoG_I.N[j][i]);
       }
     }
     /* Free memory */
@@ -155,28 +158,28 @@ void update_rate_increment_Deformation_Gradient__Particles__(
   }
   
   for(int I = 0 ; I<Nnodes_p ; I++)
-    {
+  {
 
-      /* Assign from matrix to tensor */
-      DeltaV_I = memory_to_tensor__TensorLib__(DeltaV.nM[I], 1);
-      gradient_I = memory_to_tensor__TensorLib__(gradient_p.nM[I], 1);
+    /* Assign from matrix to tensor */
+    DeltaV_I = memory_to_tensor__TensorLib__(DeltaV.nM[I], 1);
+    gradient_I = memory_to_tensor__TensorLib__(gradient_p.nM[I], 1);
       
-      /* Compute the dyadic product of the nodal velocity and the
-          gradient of the shape functions */
-      gradient_DeltaV_I = dyadic_Product__TensorLib__(DeltaV_I, gradient_I);
+    /* Compute the dyadic product of the nodal velocity and the
+        gradient of the shape functions */
+    gradient_DeltaV_I = dyadic_Product__TensorLib__(DeltaV_I, gradient_I);
       
-      /* Ad the nodal contribution to the train tensor */
-      for(int i = 0 ; i<Ndim ; i++)
-       {
-         for(int j = 0 ; j<Ndim ; j++)
-           {
-             dt_DF_p.N[i][j] += gradient_DeltaV_I.N[i][j];
-           }
-        }
-      
-      /* Free memory */
-      free__TensorLib__(gradient_DeltaV_I);
+    /* Ad the nodal contribution to the train tensor */
+    for(int i = 0 ; i<Ndim ; i++)
+    {
+      for(int j = 0 ; j<Ndim ; j++)
+      {
+        dt_DF_p.N[i][j] += gradient_DeltaV_I.N[i][j];
+      }
     }
+      
+    /* Free memory */
+    free__TensorLib__(gradient_DeltaV_I);
+  }
 } 
 
 /*******************************************************/
@@ -190,107 +193,120 @@ void update_Deformation_Gradient_n1__Particles__(
   double aux;
     
   for(int i = 0 ; i < Ndim  ; i++)
-    {
-      for(int j = 0 ; j < Ndim  ; j++)
-	     {
-       /*
+  {
+    for(int j = 0 ; j < Ndim  ; j++)
+	   {
+      /*
 	      Set to zero the deformation gradient at t = n + 1 
-        */
-        F_n1.N[i][j] = 0;
+      */
+      F_n1.N[i][j] = 0;
 
-        /*
+      /*
         Compute row-column multiplication
-        */
-        aux = 0;
-        for(int k = 0 ; k < Ndim  ; k++)
-        {
-          aux += f_n1.N[i][k]*F_n.N[k][j];
-        }
-
-        /*
-          New value
-        */
-        F_n1.N[i][j] = aux;
+      */
+      aux = 0;
+      for(int k = 0 ; k < Ndim  ; k++)
+      {
+        aux += f_n1.N[i][k]*F_n.N[k][j];
       }
+
+      /*
+        New value
+      */
+      F_n1.N[i][j] = aux;
     }
+  }
 }
 
 /*******************************************************/
 
 void get_locking_free_Deformation_Gradient_n1__Particles__(
   int p,
-  Tensor F_n1,
   Particle MPM_Mesh,
   Mesh FEM_Mesh)
 {
 
+  int q;
   int Ndim = NumberDimensions;
   int I0_p = MPM_Mesh.I0[p];
-  double J_p_patch;
-  double Vol_0_p_patch;
-  double Vol_n_p_patch;
-  double V0_p_patch;
-  double Vn_p_patch;
+  double J_n_p_patch;
+  double J_n1_p_patch;
+  double Vol_0_q;
+  double Vol_n_q;
+  double Vol_n1_q;
+  double Vn_patch;
+  double Vn1_patch;
   double J_p;
   double J_patch;
   double J_averaged;
   double averaged_F_vol;
+  ChainPtr Node_Patch_p;
+  ChainPtr Particle_Patch_p;
 
+  Tensor F_n1_p;
 
-  V0_p_patch = 0.0;
-  Vn_p_patch = 0.0;
+  Vn_patch = 0.0;
+  Vn1_patch = 0.0;
 
-  ChainPtr Tributary_Nodes_p = NULL;
-  ChainPtr Node_Patch_p = NULL;
-  ChainPtr Particle_Patch_p = NULL;
+  Node_Patch_p = NULL;
 
-  // Get the surrounding nodes
-  Tributary_Nodes_p = MPM_Mesh.ListNodes[p];
-  Node_Patch_p = Tributary_Nodes_p;
+  // Get the surrounding nodes  
+  Node_Patch_p = MPM_Mesh.ListNodes[p];
 
   // Loop in the sourrounding particles to get the deformed and reference volumes
   while(Node_Patch_p != NULL)
   {
+
+    Particle_Patch_p = NULL;
 
     // Get the list of particles close to this node
     Particle_Patch_p = FEM_Mesh.I_particles[Node_Patch_p->I];
 
     while(Particle_Patch_p != NULL)
     {
+      q = Particle_Patch_p->I;
 
-      J_p_patch = MPM_Mesh.Phi.J.nV[Particle_Patch_p->I];
-      Vol_0_p_patch = MPM_Mesh.Phi.Vol_0.nV[Particle_Patch_p->I];
-      Vol_n_p_patch = Vol_0_p_patch*J_p_patch;
+      if(MPM_Mesh.MatIdx[p] == MPM_Mesh.MatIdx[q])
+      {
 
-      V0_p_patch += Vol_0_p_patch;
-      Vn_p_patch += Vol_n_p_patch;
+        Vol_0_q = MPM_Mesh.Phi.Vol_0.nV[q];
+
+        J_n_p_patch = I3__TensorLib__(memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n.nM[q],2));
+        J_n1_p_patch = MPM_Mesh.Phi.J.nV[q];
+
+        Vol_n_q = Vol_0_q*J_n_p_patch;
+        Vol_n1_q = Vol_0_q*J_n1_p_patch;
+
+        Vn_patch += Vol_n_q;
+        Vn1_patch += Vol_n1_q;
+      }
 
       Particle_Patch_p = Particle_Patch_p->next;
     }
 
-    Particle_Patch_p = NULL;
-
     Node_Patch_p = Node_Patch_p->next; 
   }
 
+
   // Compute the averaged jacobian of the deformation gradient
   J_p = MPM_Mesh.Phi.J.nV[p];
-  J_patch = Vn_p_patch/V0_p_patch;
+  J_patch = Vn_patch/Vn1_patch;
   J_averaged = J_patch/J_p;
 
   // Compute the averaged volume of the deformation gradient
   averaged_F_vol = pow(J_averaged,(double)1/Ndim);
+
+  F_n1_p  = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n1.nM[p],2);
 
   // Update the deformation gradient to avoid locking (F-bar)
   for(int i = 0 ; i<Ndim ; i++)
   {
     for(int j = 0 ; j<Ndim ; j++)
     {
-      F_n1.N[i][j] *= averaged_F_vol;
+      F_n1_p.N[i][j] *= averaged_F_vol;
     }
   }
 
-  free__SetLib__(&Node_Patch_p);
 }
 
 /*******************************************************/
@@ -306,34 +322,37 @@ void update_rate_Deformation_Gradient_n1__Particles__(
   double aux;
     
   for(int i = 0 ; i < Ndim  ; i++)
+  {
+    for(int j = 0 ; j < Ndim  ; j++)
     {
-      for(int j = 0 ; j < Ndim  ; j++)
-       {
-       /*
+      /*
         Set to zero the deformation gradient at t = n + 1 
-        */
-        dt_F_n1.N[i][j] = 0;
+      */
+      dt_F_n1.N[i][j] = 0;
 
-        /*
+      /*
         Compute row-column multiplication
-        */
-        aux = 0;
-        for(int k = 0 ; k < Ndim  ; k++)
-        {
-          aux += dt_f_n1.N[i][k]*F_n.N[k][j] + f_n1.N[i][k]*dt_F_n.N[k][j];
-        }
-
-        /*
-          New value
-        */
-        dt_F_n1.N[i][j] = aux;
+      */
+      aux = 0;
+      for(int k = 0 ; k < Ndim  ; k++)
+      {
+        aux += dt_f_n1.N[i][k]*F_n.N[k][j] + f_n1.N[i][k]*dt_F_n.N[k][j];
       }
+
+      /*
+        New value
+      */
+      dt_F_n1.N[i][j] = aux;
     }
+  }
 }
 
 /*******************************************************/
 
-double compute_Jacobian_Rate__Particles__(double J_p, Tensor F_p, Tensor dt_F_p)
+double compute_Jacobian_Rate__Particles__(
+  double J_p,
+  Tensor F_p,
+  Tensor dt_F_p)
 {
   /* Variable definition */
   double dt_J_p = 0;
@@ -350,7 +369,8 @@ double compute_Jacobian_Rate__Particles__(double J_p, Tensor F_p, Tensor dt_F_p)
 
 /*******************************************************/
 
-Tensor right_Cauchy_Green__Particles__(Tensor F)
+Tensor right_Cauchy_Green__Particles__(
+  Tensor F)
 {
   /* Define output */
   Tensor C = alloc__TensorLib__(2);
@@ -359,22 +379,23 @@ Tensor right_Cauchy_Green__Particles__(Tensor F)
 
   /* Compute C = F^T F */
   for(int i = 0 ; i < Ndim  ; i++)
+  {
+    for(int j = 0 ; j < Ndim  ; j++)
     {
-      for(int j = 0 ; j < Ndim  ; j++)
+      for(int k = 0 ; k < Ndim  ; k++)
       {
-        for(int k = 0 ; k < Ndim  ; k++)
-        {
-          C.N[i][j] += F.N[k][i]*F.N[k][j];
-        }
+        C.N[i][j] += F.N[k][i]*F.N[k][j];
       }
     }
+  }
 
   return C;
 }
 
 /*******************************************************/
 
-Tensor logarithmic_strains__Particles__(Tensor C)
+Tensor logarithmic_strains__Particles__(
+  Tensor C)
 /*
     Use the approach of Ortiz and Camacho to compute the elastic infinitesimal strain tensor.
 */
@@ -394,9 +415,9 @@ Tensor logarithmic_strains__Particles__(Tensor C)
   EigenVects_C = Eigenvectors__TensorLib__(C,EigenVals_C);
   
   for(int i = 0 ; i < Ndim  ; i++)
-    {
-      logC_spectral.N[i][i] = log(EigenVals_C.n[i]);
-    }
+  {
+    logC_spectral.N[i][i] = log(EigenVals_C.n[i]);
+  }
 
   /*
     Rotate the spectral descomposition of the tensor logC
@@ -407,12 +428,12 @@ Tensor logarithmic_strains__Particles__(Tensor C)
     Multiply by 1/2
   */
   for(int i = 0 ; i < Ndim  ; i++)
-    {
-      for(int j = 0 ; j < Ndim  ; j++)
-      { 
-        logC.N[i][j] *= 0.5;
-      }
+  {
+    for(int j = 0 ; j < Ndim  ; j++)
+    { 
+      logC.N[i][j] *= 0.5;
     }
+  }
 
   /*
     Free memory
@@ -426,7 +447,8 @@ Tensor logarithmic_strains__Particles__(Tensor C)
 
 /*******************************************************/
 
-Tensor increment_Deformation_Gradient_exponential_strains__Particles__(Tensor D_E)
+Tensor increment_Deformation_Gradient_exponential_strains__Particles__(
+  Tensor D_E)
 {
 
   int Ndim = NumberDimensions;
@@ -443,9 +465,9 @@ Tensor increment_Deformation_Gradient_exponential_strains__Particles__(Tensor D_
   EigenVects_D_E = Eigenvectors__TensorLib__(D_E,EigenVals_D_E);
   
   for(int i = 0 ; i < Ndim  ; i++)
-    {
-      exp_D_E_spectral.N[i][i] = exp(EigenVals_D_E.n[i]);
-    }
+  {
+    exp_D_E_spectral.N[i][i] = exp(EigenVals_D_E.n[i]);
+  }
 
   /*
     Rotate the spectral descomposition of the tensor exp(D_E)
@@ -464,7 +486,8 @@ Tensor increment_Deformation_Gradient_exponential_strains__Particles__(Tensor D_
 
 /*******************************************************/
 
-Tensor strain_Green_Lagrange__Particles__(Tensor C)
+Tensor strain_Green_Lagrange__Particles__(
+  Tensor C)
 {
   /* Define output */
   Tensor E = alloc__TensorLib__(2);
@@ -475,12 +498,12 @@ Tensor strain_Green_Lagrange__Particles__(Tensor C)
 
   /* Compute E = 1/2 * [ C - I]  */
   for(int i = 0 ; i < Ndim  ; i++)
+  {
+    for(int j = 0 ; j < Ndim  ; j++)
     {
-      for(int j = 0 ; j < Ndim  ; j++)
-      {
-        E.N[i][j] = 0.5 * (C.N[i][j] - I.N[i][j]);
-      }
+      E.N[i][j] = 0.5 * (C.N[i][j] - I.N[i][j]);
     }
+  }
 
   free__TensorLib__(I);
 
@@ -489,7 +512,9 @@ Tensor strain_Green_Lagrange__Particles__(Tensor C)
 
 /*******************************************************/
 
-void update_plastic_deformation_gradient__Particles__(Tensor D_F_plastic, Tensor F_plastic)
+void update_plastic_deformation_gradient__Particles__(
+  Tensor D_F_plastic, 
+  Tensor F_plastic)
 {
   int Ndim = NumberDimensions;
 
@@ -502,12 +527,12 @@ void update_plastic_deformation_gradient__Particles__(Tensor D_F_plastic, Tensor
     Update value of the plastic deformation gradient
   */
   for(int i = 0 ; i < Ndim  ; i++)
+  {
+    for(int j = 0 ; j < Ndim  ; j++)
     {
-      for(int j = 0 ; j < Ndim  ; j++)
-      {
-        F_plastic.N[i][j] = Aux_tensor.N[i][j];
-      }
+      F_plastic.N[i][j] = Aux_tensor.N[i][j];
     }
+  }
 
   /*
     Free memory 
@@ -518,7 +543,9 @@ void update_plastic_deformation_gradient__Particles__(Tensor D_F_plastic, Tensor
 
 /**************************************************************/
 
-Matrix compute_B_matrix__Particles__(Tensor F, Tensor GRAD_N)
+Matrix compute_B_matrix__Particles__(
+  Tensor F, 
+  Tensor GRAD_N)
 /*
 B=[F(1,1)*gradNptog(1,nn1) F(2,1)*gradNptog(1,nn1);...
    F(1,2)*gradNptog(2,nn1) F(2,2)*gradNptog(2,nn1);...
@@ -539,7 +566,9 @@ B=[F(1,1)*gradNptog(1,nn1) F(2,1)*gradNptog(1,nn1);...
 
 /**************************************************************/
 
-Matrix compute_BT_matrix__Particles__(Tensor F, Tensor GRAD_N)
+Matrix compute_BT_matrix__Particles__(
+  Tensor F, 
+  Tensor GRAD_N)
 {
   Matrix BT = allocZ__MatrixLib__(2,3);
 

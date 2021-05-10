@@ -72,7 +72,7 @@ void initialize__Q4__(
         MPM_Mesh.ListNodes[p] = copy__SetLib__(Elem_p_Connectivity);
 
         /* Active those nodes that interact with the particle */
-        asign_to_nodes__Particles__(p, MPM_Mesh.ListNodes[p], FEM_Mesh);
+        asign_to_nodes__Particles__(p, MPM_Mesh.I0[p], MPM_Mesh.ListNodes[p], FEM_Mesh);
 
         /* Compute local coordinates of the particle in this element */
         X_to_Xi__Q4__(Xi_p,X_p,Elem_p_Coordinates);

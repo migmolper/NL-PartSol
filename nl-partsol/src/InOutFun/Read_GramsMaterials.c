@@ -278,10 +278,12 @@ GramsMaterials (Particles=route.txt) {
 	  {
 	   	if(strcmp(Parse_Mat_Prop[1],"true") == 0)
 	   	{
+	   		Is_Locking_Control_Fbar = true;
 	   		Mat_GP.Locking_Control_Fbar = true;
 	   	}
 	   	else if(strcmp(Parse_Mat_Prop[1],"false") == 0)
 	   	{
+		    Is_Locking_Control_Fbar = false;
 	   		Mat_GP.Locking_Control_Fbar = false;
 	   	}
 	   	else

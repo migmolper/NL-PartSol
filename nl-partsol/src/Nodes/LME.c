@@ -105,7 +105,7 @@ void initialize__LME__(
         MPM_Mesh.NumberNodes[p] = lenght__SetLib__(MPM_Mesh.ListNodes[p]);
 
         /* Active those nodes that interact with the particle */
-        asign_to_nodes__Particles__(p, MPM_Mesh.ListNodes[p], FEM_Mesh);
+        asign_to_nodes__Particles__(p, MPM_Mesh.I0[p], MPM_Mesh.ListNodes[p], FEM_Mesh);
        	
         /* Calculate distance from particle to each node in the neibourhood */
         Delta_Xip = compute_distance__MeshTools__(MPM_Mesh.ListNodes[p],X_p,FEM_Mesh.Coordinates);
@@ -235,7 +235,7 @@ static void initialise_lambda__LME__(
 {
 
   int Ndim = NumberDimensions;
-/*  int Nnodes_simplex = Ndim + 1;
+  int Nnodes_simplex = Ndim + 1;
   int Size_element = Elem_p_Coordinates.N_rows;
   double sqr_dist_i;
 
@@ -264,13 +264,23 @@ static void initialise_lambda__LME__(
   
   }
 
-  if(Size_element == 8)
+  if(Size_element == 3)
   {
     simplex = (int *)Allocate_ArrayZ(Nnodes_simplex,sizeof(int));
     simplex[0] = 0;
     simplex[1] = 1;
-    simplex[2] = 3;
-    simplex[3] = 4;
+    simplex[2] = 2;
+  }
+  else if(Size_element == 4)
+  {
+    simplex = (int *)Allocate_ArrayZ(Nnodes_simplex,sizeof(int));
+    simplex[0] = 0;
+    simplex[1] = 1;
+    simplex[2] = 2;
+  }
+  else
+  {
+    exit(0);
   }
 
   // Assemble matrix to solve the system Ax = b
@@ -298,21 +308,21 @@ static void initialise_lambda__LME__(
 
   // Solve the system
   x = Solve_Linear_Sistem(A,b);
-*/
+
   // Update the value of lambda
   for(int i = 0 ; i<Ndim ; i++)
   {
-//    lambda.nV[i] = x.nV[i];
-    lambda.nV[i] = 1.0;
+    lambda.nV[i] = x.nV[i];
+ //   lambda.nV[i] = 1.0;
   }
 
-/*  // Free memory
+  // Free memory
   free(simplex);
   free__MatrixLib__(Norm_l);
   free__MatrixLib__(l);
   free__MatrixLib__(A);
   free__MatrixLib__(b);
-  free__MatrixLib__(x);*/
+  free__MatrixLib__(x);
 }
 
 /****************************************************************************/
@@ -363,6 +373,11 @@ void update_lambda_Newton_Rapson__LME__(
         Get the Hessian of log(Z)
       */    
       J = J__LME__(l,p,r);
+
+      for(int i = 0 ; i<Ndim; i++)
+      {
+        J.nM[i][i] += norm_r;
+      }
 
       if(fabs(I3__MatrixLib__(J)) < TOL_zero)
       {

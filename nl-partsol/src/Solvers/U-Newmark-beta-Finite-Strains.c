@@ -52,7 +52,7 @@ static Newmark_parameters compute_Newmark_parameters(double, double, double);
 static Matrix compute_Nodal_Effective_Mass(Particle, Mesh, Mask, double);
 static Nodal_Field compute_Nodal_Field(Matrix,Particle, Mesh, Mask);
 static Nodal_Field initialise_Nodal_Increments(Nodal_Field,Mesh,Mask,Newmark_parameters,int);
-static void   update_Local_State(Nodal_Field,Mask,Particle,Mesh,double);
+static void   compute_Particle_Deformation(Nodal_Field,Mask,Particle,Mesh,double);
 static Matrix compute_Nodal_Forces(Mask, Particle, Mesh, int);
 static void   compute_Nodal_Internal_Forces(Matrix,Mask,Particle, Mesh);
 static void   compute_Nodal_Nominal_traction_Forces(Matrix,Mask,Particle,Mesh,int);
@@ -170,7 +170,7 @@ void U_Newmark_beta_Finite_Strains(
         /*
           Compute the stress-strain state for each particle
         */
-        update_Local_State(D_U,ActiveNodes,MPM_Mesh,FEM_Mesh,DeltaTimeStep);
+        compute_Particle_Deformation(D_U,ActiveNodes,MPM_Mesh,FEM_Mesh,DeltaTimeStep);
 
         /*
           Compute the nodal forces
@@ -265,7 +265,6 @@ void U_Newmark_beta_Finite_Strains(
       free(Free_and_Restricted_Dofs.Nodes2Mask);
 
       print_Status("DONE !!!",TimeStep);
-
     }
 
 }
@@ -690,7 +689,7 @@ static Nodal_Field initialise_Nodal_Increments(
 /**************************************************************/
 
 
-static void update_Local_State(
+static void compute_Particle_Deformation(
   Nodal_Field D_U,
 	Mask ActiveNodes,
 	Particle MPM_Mesh,
@@ -718,7 +717,6 @@ static void update_Local_State(
   Tensor dFdt_n_p;
   Tensor dFdt_n1_p;
   Tensor dt_DF_p;
-  Tensor P_p;
   
   /*
     Loop in the material point set 
@@ -763,32 +761,12 @@ static void update_Local_State(
       */  
       update_Deformation_Gradient_n1__Particles__(F_n1_p, F_n_p, DF_p);
       update_rate_Deformation_Gradient_n1__Particles__(dFdt_n1_p, dt_DF_p, F_n_p, DF_p, dFdt_n_p);
-      
+
       /*
-      	Update the First Piola-Kirchhoff stress tensor (P)
+        Compute Jacobian of the deformation gradient
       */
-      MatIndx_p = MPM_Mesh.MatIdx[p];
-      MatProp_p = MPM_Mesh.Mat[MatIndx_p];
-      P_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.Stress.nM[p],2);
-      
-      if(strcmp(MatProp_p.Type,"Neo-Hookean-Wriggers") == 0)
-      {
-        J_n1_p = I3__TensorLib__(F_n1_p);
-        P_p = compute_1PK_Stress_Tensor_Neo_Hookean_Wriggers(P_p,F_n1_p,J_n1_p,MatProp_p);
-      }
-      else if(strcmp(MatProp_p.Type,"Newtonian-Fluid-Compressible") == 0)
-      {
-        J_n1_p = I3__TensorLib__(F_n1_p);
-        P_p = compute_1PK_Stress_Tensor_Newtonian_Fluid(P_p,F_n1_p,dFdt_n1_p,J_n1_p,MatProp_p);
-      }
-      else
-      {
-        fprintf(stderr,"%s : %s %s %s \n",
-          "Error in update_Local_State()",
-          "The material",MatProp_p.Type,"has not been yet implemnented");
-        exit(EXIT_FAILURE);
-      }
-      
+      MPM_Mesh.Phi.J.nV[p] = I3__TensorLib__(F_n1_p);
+            
       /*
 	       Free memory 
       */
@@ -889,10 +867,19 @@ static void compute_Nodal_Internal_Forces(
     transpose_F_n_p = transpose__TensorLib__(F_n_p);
 
     /*
-      Get the first Piola-Kirchhoff stress tensor
+      Activate locking control technique (F-bar)
     */
-    P_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.Stress.nM[p], 2);
-    
+    if(MPM_Mesh.Mat[MPM_Mesh.MatIdx[p]].Locking_Control_Fbar)
+    {
+      get_locking_free_Deformation_Gradient_n1__Particles__(p,MPM_Mesh,FEM_Mesh);
+    }
+
+    /*
+      Compute the first Piola-Kirchhoff stress tensor
+    */
+    P_p = forward_integration_Stress__Particles__(p,MPM_Mesh);
+
+ 
     for(int A = 0 ; A<NumNodes_p ; A++)
     {
       

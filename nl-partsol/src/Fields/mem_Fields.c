@@ -80,6 +80,17 @@ Fields allocate_Fields(int NumParticles)
       Phi.F_plastic.nM[p][i + i*Ndim] = 1.0;	  
     }
   }
+
+  /*!
+    Jacobian field (Scalar) 
+  */
+  Phi.J = allocZ__MatrixLib__(NumParticles,1);
+  strcpy(Phi.J.Info,"Jacobian of the particle");  
+
+  for(int p = 0 ; p<NumParticles ; p++)
+  {
+     Phi.J.nV[p] = 1.0;  
+  }
   
   /*!
     Strain_If field (Scalar) 
@@ -342,6 +353,7 @@ void free_Fields(Fields Phi)
   free__MatrixLib__(Phi.F_plastic);
   free__MatrixLib__(Phi.F_n);
   free__MatrixLib__(Phi.F_n1);
+  free__MatrixLib__(Phi.J);
   free__MatrixLib__(Phi.dt_F_n);
   free__MatrixLib__(Phi.dt_F_n1);
   free__MatrixLib__(Phi.dt_DF);

@@ -27,30 +27,43 @@ Tensor explicit_integration_stress__Particles__(Tensor Strain,
 
 Tensor forward_integration_Stress__Particles__(
   int p,
-  Tensor F_n1_p,
   Particle MPM_Mesh)
 {
   
   Tensor P_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.Stress.nM[p],2); 
 
   // Variables for the constitutive model
-  double J_p = I3__TensorLib__(F_n1_p);
+  double J_p;
   int MatIndx_p = MPM_Mesh.MatIdx[p];
   Material MatProp_p = MPM_Mesh.Mat[MatIndx_p];
+  Tensor F_n1_p;
+  Tensor dFdt_n1_p;
   Tensor F_plastic_p;
   Plastic_status Input_Plastic_Parameters;
   Plastic_status Output_Plastic_Parameters;
 
   if(strcmp(MatProp_p.Type,"Saint-Venant-Kirchhoff") == 0)
   {
+    F_n1_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n1.nM[p],2);
     P_p = compute_1PK_Stress_Tensor_Saint_Venant_Kirchhoff(P_p, F_n1_p, MatProp_p);
   }
   else if(strcmp(MatProp_p.Type,"Neo-Hookean-Wriggers") == 0)
   {
+    J_p = MPM_Mesh.Phi.J.nV[p];
+    F_n1_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n1.nM[p],2);
     P_p = compute_1PK_Stress_Tensor_Neo_Hookean_Wriggers(P_p, F_n1_p, J_p, MatProp_p);
+  }
+  else if(strcmp(MatProp_p.Type,"Newtonian-Fluid-Compressible") == 0)
+  {
+    J_p = MPM_Mesh.Phi.J.nV[p];
+    F_n1_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n1.nM[p],2);
+    dFdt_n1_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.dt_F_n1.nM[p],2);
+    P_p = compute_1PK_Stress_Tensor_Newtonian_Fluid(P_p,F_n1_p,dFdt_n1_p,J_p,MatProp_p);
   }
   else if(strcmp(MatProp_p.Type,"Von-Mises") == 0)
   {
+    J_p = MPM_Mesh.Phi.J.nV[p];
+    F_n1_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n1.nM[p],2);
     F_plastic_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_plastic.nM[p],2);
     Input_Plastic_Parameters.EPS = MPM_Mesh.Phi.EPS.nV[p];
 
@@ -60,6 +73,8 @@ Tensor forward_integration_Stress__Particles__(
   }
   else if((strcmp(MatProp_p.Type,"Drucker-Prager-Plane-Strain") == 0) || (strcmp(MatProp_p.Type,"Drucker-Prager-Outer-Cone") == 0))
   {
+    J_p = MPM_Mesh.Phi.J.nV[p];
+    F_n1_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n1.nM[p],2);
     F_plastic_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_plastic.nM[p],2);
     Input_Plastic_Parameters.Cohesion = MPM_Mesh.Phi.cohesion.nV[p];
     Input_Plastic_Parameters.EPS = MPM_Mesh.Phi.EPS.nV[p];

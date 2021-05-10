@@ -281,13 +281,13 @@ void local_search__Particles__(Particle MPM_Mesh, Mesh FEM_Mesh)
       get_particle_tributary_nodes(MPM_Mesh,FEM_Mesh,p);
 
       /* Active those nodes that interact with the particle */
-      asign_to_nodes__Particles__(p, MPM_Mesh.ListNodes[p], FEM_Mesh);
+      asign_to_nodes__Particles__(p, MPM_Mesh.I0[p], MPM_Mesh.ListNodes[p], FEM_Mesh);
       
     }
     else
     {
       /* Active those nodes that interact with the particle */
-      asign_to_nodes__Particles__(p, MPM_Mesh.ListNodes[p], FEM_Mesh);
+      asign_to_nodes__Particles__(p, MPM_Mesh.I0[p], MPM_Mesh.ListNodes[p], FEM_Mesh);
     }
 
   }
@@ -311,20 +311,20 @@ Element nodal_set__Particles__(int i_GP, ChainPtr ListNodes, int NumNodes)
 
 /*********************************************************************/
 
-void asign_to_nodes__Particles__(int p, ChainPtr ListNodes_p, Mesh FEM_Mesh)
+void asign_to_nodes__Particles__(int p, int I0, ChainPtr ListNodes_p, Mesh FEM_Mesh)
 {
   
   /* Auxiliar variable to loop in the list of tributary nodes of the particle */
   ChainPtr Nodes_p = NULL;
+
+  push__SetLib__(&FEM_Mesh.I_particles[I0],p);
   
   Nodes_p = ListNodes_p;
   while(Nodes_p != NULL)
-    {
-      FEM_Mesh.NumParticles[Nodes_p->I] += 1;
-      push__SetLib__(&FEM_Mesh.I_particles[Nodes_p->I],p);
-      Nodes_p = Nodes_p->next; 
-    }
-
+  {
+    FEM_Mesh.NumParticles[Nodes_p->I] += 1;
+    Nodes_p = Nodes_p->next; 
+  }
 }
 
 /*********************************************************************/
