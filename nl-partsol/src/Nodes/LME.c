@@ -16,6 +16,7 @@ static void contraction_Nelder_Mead__LME__(Matrix,Matrix,Matrix,Matrix,Matrix,Ma
 static void shrinkage_Nelder_Mead__LME__(Matrix,Matrix,Matrix,Matrix,double);
 
 // Call global var¡ables
+char wrapper_LME[MAXC];
 double gamma_LME;
 double curvature_LME;
 double TOL_LME;
@@ -42,7 +43,7 @@ void initialize__LME__(
   ChainPtr Elem_p_Connectivity; // Surrounding elements
   Matrix Elem_p_Coordinates;
   ChainPtr Nodes_p; // Surrounding particles
-
+  bool Init_p;
   Matrix Metric_p; // Define a metric tensor
   Matrix X_p; // Particle coordinates  
   Matrix Delta_Xip; // Distance from GP to the nodes
@@ -53,6 +54,10 @@ void initialize__LME__(
 
   for(int p = 0 ; p<Np ; p++)
   {
+
+    /* Supose that the particle was not initilise */
+    Init_p = false;
+
     /* 
       Get some properties for each particle
     */ 
@@ -80,6 +85,9 @@ void initialize__LME__(
       if(FEM_Mesh.In_Out_Element(X_p,Elem_p_Coordinates))
       {
 
+        /* Particle will be initilise */
+        Init_p = true;
+
         /* Asign to each particle the closest node in the mesh
           and to this node asign the particle */
         MPM_Mesh.I0[p] = get_closest_node__MeshTools__(X_p,Elem_p_Connectivity,FEM_Mesh.Coordinates);
@@ -91,9 +99,12 @@ void initialize__LME__(
         /* Initialize Beta */
         Beta_p = beta__LME__(Delta_Xip, gamma_LME, FEM_Mesh.DeltaX);
 
-        /* Initialise lambda using Bo-Li approach */
-        initialise_lambda__LME__(p, X_p, Elem_p_Coordinates, lambda_p, Beta_p, FEM_Mesh.DeltaX);
-
+        /* Initialise lambda for the Nelder-Mead using Bo-Li approach */
+        if(strcmp(wrapper_LME,"Nelder-Mead") == 0)
+        {
+          initialise_lambda__LME__(p, X_p, Elem_p_Coordinates, lambda_p, Beta_p, FEM_Mesh.DeltaX);
+        }
+        
         /* Free memory */ 
         free__MatrixLib__(Elem_p_Coordinates);
         free__MatrixLib__(Delta_Xip);
@@ -130,6 +141,14 @@ void initialize__LME__(
       */
       free__MatrixLib__(Elem_p_Coordinates);
 
+    }
+
+    if(!Init_p)
+    {
+      fprintf(stderr,"%s : %s %i\n",
+        "Error in initialize__LME__()",
+        "The search algorithm was unable to find particle",p);
+      exit(EXIT_FAILURE);
     }
 
     /*
