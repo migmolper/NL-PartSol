@@ -90,6 +90,7 @@ Plastic_status finite_strains_plasticity_Drucker_Prager_Sanavia(
   }
 
   /* Free memory */
+  free__TensorLib__(Fm1_total);
   free__TensorLib__(C_total);
   free__TensorLib__(C_elastic);
   free__TensorLib__(E_elastic);

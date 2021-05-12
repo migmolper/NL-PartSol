@@ -93,8 +93,8 @@ void U_Newmark_Predictor_Corrector_Finite_Strains(Mesh FEM_Mesh, Particle MPM_Me
       /*
         Compute the predicted nodal valocity.
       */      
-      print_Status("*************************************************",TimeStep);
-      print_Status("Third step : Compute predicted nodal velocity ... WORKING",TimeStep);
+      print_Status("***************************************************",TimeStep);
+      print_Status("Third step : Compute velocity predicted ... WORKING",TimeStep);
       Velocity = compute_Nodal_Velocity_Predicted(MPM_Mesh,FEM_Mesh,ActiveNodes,Lumped_Mass,gamma,DeltaTimeStep);
       /*
         Imposse velocity values in the boundary conditions nodes.
@@ -146,6 +146,7 @@ void U_Newmark_Predictor_Corrector_Finite_Strains(Mesh FEM_Mesh, Particle MPM_Me
 
       print_Status("*************************************************",TimeStep);
       print_Status("Seven step : Reset nodal values ... WORKING",TimeStep);
+
       /*
       	Free memory.
       */
