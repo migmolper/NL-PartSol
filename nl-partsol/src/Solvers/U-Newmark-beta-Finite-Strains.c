@@ -52,7 +52,7 @@ static Newmark_parameters compute_Newmark_parameters(double, double, double);
 static Matrix compute_Nodal_Effective_Mass(Particle, Mesh, Mask, double);
 static Nodal_Field compute_Nodal_Field(Matrix,Particle, Mesh, Mask);
 static Nodal_Field initialise_Nodal_Increments(Nodal_Field,Mesh,Mask,Newmark_parameters,int);
-static void   compute_Particle_Deformation(Nodal_Field,Mask,Particle,Mesh,double);
+static void   update_Local_State(Nodal_Field,Mask,Particle,Mesh,double);
 static Matrix compute_Nodal_Forces(Mask, Particle, Mesh, int);
 static void   compute_Nodal_Internal_Forces(Matrix,Mask,Particle, Mesh);
 static void   compute_Nodal_Nominal_traction_Forces(Matrix,Mask,Particle,Mesh,int);
@@ -170,7 +170,7 @@ void U_Newmark_beta_Finite_Strains(
         /*
           Compute the stress-strain state for each particle
         */
-        compute_Particle_Deformation(D_U,ActiveNodes,MPM_Mesh,FEM_Mesh,DeltaTimeStep);
+        update_Local_State(D_U,ActiveNodes,MPM_Mesh,FEM_Mesh,DeltaTimeStep);
 
         /*
           Compute the nodal forces
@@ -689,7 +689,7 @@ static Nodal_Field initialise_Nodal_Increments(
 /**************************************************************/
 
 
-static void compute_Particle_Deformation(
+static void update_Local_State(
   Nodal_Field D_U,
 	Mask ActiveNodes,
 	Particle MPM_Mesh,
@@ -717,6 +717,7 @@ static void compute_Particle_Deformation(
   Tensor dFdt_n_p;
   Tensor dFdt_n1_p;
   Tensor dt_DF_p;
+  Tensor P_p;
   
   /*
     Loop in the material point set 
@@ -776,6 +777,26 @@ static void compute_Particle_Deformation(
       free(Nodes_p.Connectivity);
 	  
     }
+
+  /*
+    Loop in the material point set to update stress
+  */
+  for(int p = 0 ; p<Np ; p++)
+  {
+    /*
+      Activate locking control technique (F-bar)
+    */
+    if(MPM_Mesh.Mat[MPM_Mesh.MatIdx[p]].Locking_Control_Fbar)
+    {
+      get_locking_free_Deformation_Gradient_n1__Particles__(p,MPM_Mesh,FEM_Mesh);
+    }
+
+    /*
+      Update the first Piola-Kirchhoff stress tensor with an apropiate
+      integration rule.
+    */
+    P_p = forward_integration_Stress__Particles__(p,MPM_Mesh); 
+  }
   
 }
 
@@ -875,9 +896,9 @@ static void compute_Nodal_Internal_Forces(
     }
 
     /*
-      Compute the first Piola-Kirchhoff stress tensor
+      Get the first Piola-Kirchhoff stress tensor
     */
-    P_p = forward_integration_Stress__Particles__(p,MPM_Mesh);
+    P_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.Stress.nM[p],2); 
 
  
     for(int A = 0 ; A<NumNodes_p ; A++)

@@ -692,8 +692,6 @@ static void update_Local_State(
   double rho_f_0; /* Initial density of the fluid */
   double phi_s_0; /* Initial volume fraction (solid) */
   double phi_f_0; /* Initial volume fraction (fluid) */
-  Plastic_status Input_Plastic_Parameters; /* Input parameters for plasticity */
-  Plastic_status Output_Plastic_Parameters; /* Output parameters for plasticity */
   Element Nodes_p; /* Element for each particle */
   Material MatProp_Soil_p; /* Variable with the material properties of the solid phase */
   Material MatProp_Water_p; /* Variable with the material properties of the fluid phase */
@@ -702,14 +700,13 @@ static void update_Local_State(
   Matrix Nodal_D_Displacement_p;
   Matrix Nodal_D_Velocity_p;
   Matrix Nodal_D_Pw_p;
+  Tensor P_p;
   Tensor F_n_p; /* Deformation gradient of the soil skeleton (t = n) */
   Tensor F_n1_p; /* Deformation gradient of the soil skeleton (t = n + 1) */
   Tensor DF_p; /* Increment of the deformation gradient of the soil skeleton */
   Tensor dFdt_n_p; /* Rate of the deformation gradient of the soil skeleton (t = n) */
   Tensor dFdt_n1_p; /* Rate of the deformation gradient of the soil skeleton (t = n + 1) */
   Tensor dt_DF_p; /* Rate of the increment of the deformation gradient of the soil skeleton */
-  Tensor F_plastic_p; /* Plastic deformation gradient of the soil skeleton */
-  Tensor P_n1_p; /* First Piola-Kirchhoff stress tensor (t = n + 1) */
   double Pw_0; /* Cauchy pore water pressure at t = 0 */
   double Pw_n1; /* Cauchy pore water pressure at t = n + 1 */
 
@@ -784,22 +781,6 @@ static void update_Local_State(
     dJ_dt_n1_p = compute_Jacobian_Rate__Particles__(J_n1_p,F_n1_p,dFdt_n1_p);
 
     /*
-      Compute the first Piola-Kirchhoff stress tensor (P).
-    */
-    P_n1_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.Stress.nM[p],2);      
-
-    
-    if(strcmp(MatProp_Soil_p.Type,"Neo-Hookean-Wriggers") == 0)
-    {
-      P_n1_p = compute_1PK_Stress_Tensor_Neo_Hookean_Wriggers(P_n1_p, F_n1_p, J_n1_p, MatProp_Soil_p);
-    }
-    else
-    {
-      fprintf(stderr,"%s : %s %s %s \n","Error in update_Local_State()","The material",MatProp_Soil_p.Type,"has not been yet implemnented");
-      exit(EXIT_FAILURE);
-    }
-
-    /*
       Get the Kirchhoff pore water pressure at t = n + 1
     */
     Nodal_D_Pw_p = get_Pw_set_field_upw__MeshTools__(D_upw.value, Nodes_p, ActiveNodes);
@@ -834,6 +815,26 @@ static void update_Local_State(
 
   }
   
+  /*
+    Loop in the material point set to update stress
+  */
+  for(int p = 0 ; p<Np ; p++)
+  {
+    /*
+      Activate locking control technique (F-bar)
+    */
+    if(MPM_Mesh.Mat[MPM_Mesh.MatIdx[p]].Locking_Control_Fbar)
+    {
+      get_locking_free_Deformation_Gradient_n1__Particles__(p,MPM_Mesh,FEM_Mesh);
+    }
+
+    /*
+      Update the first Piola-Kirchhoff stress tensor with an apropiate
+      integration rule.
+    */
+    P_p = forward_integration_Stress__Particles__(p,MPM_Mesh); 
+  }
+
 }
 
 /**************************************************************/
@@ -1029,9 +1030,9 @@ static void compute_Internal_Forces_Mixture(
     V0_p = MPM_Mesh.Phi.Vol_0.nV[p];
 
     /*
-      Get the first Piola-Kirchhoff stress tensor
+      Get the first Piola-Kirchhoff stress tensor.
     */
-    P_effective_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.Stress.nM[p], 2);
+    P_effective_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.Stress.nM[p],2); 
 
     /*
       Get the Kirchhoff pore water pressure 

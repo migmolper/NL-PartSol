@@ -35,7 +35,7 @@ static Matrix compute_Total_Forces_Mixture(Mask,Particle,Mesh,int);
 static  void  compute_Internal_Forces_Mixture(Matrix,Mask,Particle,Mesh);
 static  void  compute_Contact_Forces_Mixture(Matrix,Mask,Particle,Mesh,int);
 static Tensor compute_total_first_Piola_Kirchhoff_stress(Tensor,double,Tensor);
-static Matrix  solve_Nodal_Equilibrium_Mixture(Matrix,Matrix,Matrix,Particle,Mesh,Mask,Mask);
+static Matrix solve_Nodal_Equilibrium_Mixture(Matrix,Matrix,Matrix,Particle,Mesh,Mask,Mask);
 /* Step 6 */
 static Matrix compute_Mass_exchanges_Source_Terms(Matrix,Mask,Particle,Mesh,int);
 static  void  compute_Jacobian_Rate_Mass_Balance(Matrix,Mask,Particle,Mesh);
@@ -1056,24 +1056,6 @@ static void update_Local_State(
       dJ_dt_n1_p = I1__TensorLib__(GRAD_Nodal_Velocity_p);
 
       /*
-      	Update the second Piola-Kirchhoff stress tensor (S) with an apropiate
-	      integration rule.
-      */
-      P_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.Stress.nM[p],2);      
-
-      if(strcmp(MatProp_Soil_p.Type,"Neo-Hookean-Wriggers") == 0)
-      {
-        P_p = compute_1PK_Stress_Tensor_Neo_Hookean_Wriggers(P_p, F_n1_p, J_n1_p, MatProp_Soil_p);
-      }
-      else
-      {
-          fprintf(stderr,"%s : %s %s %s \n",
-		  "Error in update_Local_State()",
-		  "The material",MatProp_Soil_p.Type,"has not been yet implemnented");
-          exit(EXIT_FAILURE);
-      }
-
-      /*
         Update state parameters
       */
       Pw_0 = MPM_Mesh.Phi.Pw_0.nV[p]; /* Get the initial pressure */
@@ -1103,6 +1085,27 @@ static void update_Local_State(
 	  
     }
   
+  /*
+    Loop in the material point set to update stress
+  */
+  for(int p = 0 ; p<Np ; p++)
+  {
+    /*
+      Activate locking control technique (F-bar)
+    */
+    if(MPM_Mesh.Mat[MPM_Mesh.MatIdx[p]].Locking_Control_Fbar)
+    {
+      get_locking_free_Deformation_Gradient_n1__Particles__(p,MPM_Mesh,FEM_Mesh);
+    }
+
+    /*
+      Update the first Piola-Kirchhoff stress tensor with an apropiate
+      integration rule.
+    */
+    P_p = forward_integration_Stress__Particles__(p,MPM_Mesh); 
+  }
+
+
 }
 
 /**************************************************************/
