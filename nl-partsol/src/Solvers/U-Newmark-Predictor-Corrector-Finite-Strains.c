@@ -525,17 +525,6 @@ static void update_Local_State(
     MPM_Mesh.Phi.rho.nV[p] = rho_n_p/Delta_J_p;
 
     /*
-      Replace the deformation gradient at t = n with the converged deformation gradient
-    */
-    for(int i = 0 ; i<Ndim  ; i++)
-    {
-      for(int j = 0 ; j<Ndim  ; j++)
-      {
-        F_n_p.N[i][j] = F_n1_p.N[i][j];
-      }
-    }
-
-    /*
       Free memory 
     */
     free__MatrixLib__(D_Displacement_Ap);
@@ -623,8 +612,8 @@ static void compute_Nodal_Internal_Forces(
   Matrix gradient_p; /* Shape functions gradients */
   Tensor gradient_pA;
   Tensor GRADIENT_pA;
-  Tensor F_n1_p;
-  Tensor transpose_F_n1_p;
+  Tensor F_n_p;
+  Tensor transpose_F_n_p;
   
   double V0_p; /* Volume of the Gauss-Point */
   
@@ -654,8 +643,8 @@ static void compute_Nodal_Internal_Forces(
       Later compute the midpoint deformation gradient and 
       the transpose of the deformation gradient.
     */
-    F_n1_p  = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n1.nM[p],2);
-    transpose_F_n1_p = transpose__TensorLib__(F_n1_p);
+    F_n_p  = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n.nM[p],2);
+    transpose_F_n_p = transpose__TensorLib__(F_n_p);
 
     /*
       Get the first Piola-Kirchhoff stress tensor.
@@ -669,7 +658,7 @@ static void compute_Nodal_Internal_Forces(
         Compute the gradient in the reference configuration 
       */
       gradient_pA = memory_to_tensor__TensorLib__(gradient_p.nM[A], 1);
-      GRADIENT_pA = vector_linear_mapping__TensorLib__(transpose_F_n1_p,gradient_pA);
+      GRADIENT_pA = vector_linear_mapping__TensorLib__(transpose_F_n_p,gradient_pA);
       
   	  /*
         Compute the nodal forces of the particle 
@@ -701,7 +690,7 @@ static void compute_Nodal_Internal_Forces(
     /* 
       Free memory 
     */
-    free__TensorLib__(transpose_F_n1_p);
+    free__TensorLib__(transpose_F_n_p);
     free__MatrixLib__(gradient_p);
     free(Nodes_p.Connectivity);
   }
@@ -1061,11 +1050,27 @@ static void update_Particles(
   double mass_I;
   double D_U_pI; /* Increment of displacement */
   Element Nodes_p; /* Element for each particle */
+  Tensor F_n_p;
+  Tensor F_n1_p;
 
   /* iterate over the particles */
   for(int p = 0 ; p<Np ; p++)
     {
       
+    F_n_p  = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n.nM[p],2);
+    F_n1_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n1.nM[p],2);
+
+    /*
+      Replace the deformation gradient at t = n with the converged deformation gradient
+    */
+    for(int i = 0 ; i<Ndim  ; i++)
+    {
+      for(int j = 0 ; j<Ndim  ; j++)
+      {
+        F_n_p.N[i][j] = F_n1_p.N[i][j];
+      }
+    }
+
       /*
         Define element of the particle 
       */

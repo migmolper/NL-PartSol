@@ -232,12 +232,11 @@ void get_locking_free_Deformation_Gradient_n1__Particles__(
   double J_n_p_patch;
   double J_n1_p_patch;
   double Vol_0_q;
-  double Vol_n_q;
   double Vol_n1_q;
-  double Vn_patch;
+  double V0_patch;
   double Vn1_patch;
   double J_p;
-  double J_patch;
+  double J_n1_patch;
   double J_averaged;
   double averaged_F_vol;
   ChainPtr Node_Patch_p;
@@ -245,10 +244,13 @@ void get_locking_free_Deformation_Gradient_n1__Particles__(
 
   Tensor F_n1_p;
 
-  Vn_patch = 0.0;
+  V0_patch = 0.0;
   Vn1_patch = 0.0;
 
   Node_Patch_p = NULL;
+
+  Matrix X_p = memory_to_matrix__MatrixLib__(Ndim,1,NULL);
+  Matrix X_q = memory_to_matrix__MatrixLib__(Ndim,1,NULL);
 
   // Get the surrounding nodes  
   Node_Patch_p = MPM_Mesh.ListNodes[p];
@@ -271,13 +273,10 @@ void get_locking_free_Deformation_Gradient_n1__Particles__(
 
         Vol_0_q = MPM_Mesh.Phi.Vol_0.nV[q];
 
-        J_n_p_patch = I3__TensorLib__(memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n.nM[q],2));
         J_n1_p_patch = MPM_Mesh.Phi.J.nV[q];
-
-        Vol_n_q = Vol_0_q*J_n_p_patch;
         Vol_n1_q = Vol_0_q*J_n1_p_patch;
 
-        Vn_patch += Vol_n_q;
+        V0_patch += Vol_0_q;
         Vn1_patch += Vol_n1_q;
       }
 
@@ -287,16 +286,15 @@ void get_locking_free_Deformation_Gradient_n1__Particles__(
     Node_Patch_p = Node_Patch_p->next; 
   }
 
-
   // Compute the averaged jacobian of the deformation gradient
   J_p = MPM_Mesh.Phi.J.nV[p];
-  J_patch = Vn_patch/Vn1_patch;
-  J_averaged = J_patch/J_p;
+  J_n1_patch = Vn1_patch/V0_patch;
+  J_averaged = J_n1_patch/J_p;
 
   // Compute the averaged volume of the deformation gradient
   averaged_F_vol = pow(J_averaged,(double)1/Ndim);
 
-  F_n1_p  = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n1.nM[p],2);
+  F_n1_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n1.nM[p],2);
 
   // Update the deformation gradient to avoid locking (F-bar)
   for(int i = 0 ; i<Ndim ; i++)
