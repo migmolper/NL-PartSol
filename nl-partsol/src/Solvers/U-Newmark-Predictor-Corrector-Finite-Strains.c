@@ -464,9 +464,11 @@ static void update_Local_State(
   int Np = MPM_Mesh.NumGP;
   int Nnodes_mask = ActiveNodes.Nactivenodes;
   int Nnodes_p;
+  int MatIndx_p;
   double rho_n_p;
   double Delta_J_p;
   Element Nodes_p;
+  Material MatProp_p;
   Matrix gradient_p;
   Matrix D_Displacement_Ap;
   Tensor F_n_p;
@@ -538,6 +540,9 @@ static void update_Local_State(
   */
   for(int p = 0 ; p<Np ; p++)
   {
+    MatIndx_p = MPM_Mesh.MatIdx[p];
+    MatProp_p = MPM_Mesh.Mat[MatIndx_p];
+
     /*
       Activate locking control technique (F-bar)
     */
@@ -550,7 +555,7 @@ static void update_Local_State(
       Update the first Piola-Kirchhoff stress tensor with an apropiate
       integration rule.
     */
-    P_p = forward_integration_Stress__Particles__(p,MPM_Mesh); 
+    P_p = forward_integration_Stress__Particles__(p,MPM_Mesh,MatProp_p); 
   }
 
   

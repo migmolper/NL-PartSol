@@ -540,6 +540,26 @@ static Nodal_Field compute_Nodal_Field(
     Compute the LU factorization for the mass matrix
   */
   dgetrf_(&Order,&Order,Effective_Mass.nV,&LDA,IPIV,&INFO);
+
+  if(INFO != 0)
+  {
+    if(INFO < 0)
+    {
+      printf("%s : \n","Error in compute_Nodal_Field()");
+      printf("the %i-th argument had an illegal value",abs(INFO));
+    }
+    else if(INFO > 0)
+    {
+      printf("%s :\n","Error in compute_Nodal_Field()");
+      printf(" M(%i,%i) %s \n %s \n %s \n %s \n",INFO,INFO,"is exactly zero. The factorization",
+        "has been completed, but the factor M is exactly",
+        "singular, and division by zero will occur if it is used",
+        "to solve a system of equations.");
+    
+    }    
+    exit(EXIT_FAILURE);
+  }
+
   /*
     Solve for the velocity
   */
@@ -783,6 +803,10 @@ static void update_Local_State(
   */
   for(int p = 0 ; p<Np ; p++)
   {
+
+    MatIndx_p = MPM_Mesh.MatIdx[p];
+    MatProp_p = MPM_Mesh.Mat[MatIndx_p];
+
     /*
       Activate locking control technique (F-bar)
     */
@@ -795,7 +819,7 @@ static void update_Local_State(
       Update the first Piola-Kirchhoff stress tensor with an apropiate
       integration rule.
     */
-    P_p = forward_integration_Stress__Particles__(p,MPM_Mesh); 
+    P_p = forward_integration_Stress__Particles__(p,MPM_Mesh,MatProp_p); 
   }
   
 }

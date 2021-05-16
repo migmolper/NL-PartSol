@@ -1090,6 +1090,10 @@ static void update_Local_State(
   */
   for(int p = 0 ; p<Np ; p++)
   {
+    Mixture_idx = MPM_Mesh.MixtIdx[p];
+    Material_Soil_idx = Soil_Water_Mixtures[Mixture_idx].Soil_Idx;
+    MatProp_Soil_p = MPM_Mesh.Mat[Material_Soil_idx];
+
     /*
       Activate locking control technique (F-bar)
     */
@@ -1102,7 +1106,7 @@ static void update_Local_State(
       Update the first Piola-Kirchhoff stress tensor with an apropiate
       integration rule.
     */
-    P_p = forward_integration_Stress__Particles__(p,MPM_Mesh); 
+    P_p = forward_integration_Stress__Particles__(p,MPM_Mesh,MatProp_Soil_p); 
   }
 
 

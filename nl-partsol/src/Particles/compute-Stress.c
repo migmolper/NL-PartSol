@@ -27,15 +27,14 @@ Tensor explicit_integration_stress__Particles__(Tensor Strain,
 
 Tensor forward_integration_Stress__Particles__(
   int p,
-  Particle MPM_Mesh)
+  Particle MPM_Mesh,
+  Material MatProp_p)
 {
   
   Tensor P_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.Stress.nM[p],2); 
 
   // Variables for the constitutive model
   double J_p;
-  int MatIndx_p = MPM_Mesh.MatIdx[p];
-  Material MatProp_p = MPM_Mesh.Mat[MatIndx_p];
   Tensor F_n1_p;
   Tensor dFdt_n1_p;
   Tensor F_plastic_p;
