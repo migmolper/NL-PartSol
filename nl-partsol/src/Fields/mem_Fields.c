@@ -270,8 +270,10 @@ Fields allocate_upw_vars__Fields__(int NumParticles)
   strcpy(Phi.Pw_n1.Info,"Pore water preassure at t = n + 1");
   Phi.D_Pw = allocZ__MatrixLib__(NumParticles,1);
   strcpy(Phi.D_Pw.Info,"Increment of pore water preassure");
-  Phi.d_Pw_dt = allocZ__MatrixLib__(NumParticles,1);
-  strcpy(Phi.d_Pw_dt.Info,"First time derivative of pore water preassure");
+  Phi.d_Pw_dt_n = allocZ__MatrixLib__(NumParticles,1);
+  strcpy(Phi.d_Pw_dt_n.Info,"First time derivative of pore water preassure at t = n");
+  Phi.d_Pw_dt_n1 = allocZ__MatrixLib__(NumParticles,1);
+  strcpy(Phi.d_Pw_dt_n1.Info,"First time derivative of pore water preassure at t = n + 1");
   Phi.d2_Pw_dt2 = allocZ__MatrixLib__(NumParticles,1);
   strcpy(Phi.d2_Pw_dt2.Info,"Second time derivative of pore water preassure");
 
@@ -385,7 +387,8 @@ void free_upw_vars__Fields__(Fields Phi)
   free__MatrixLib__(Phi.Pw_0);
   free__MatrixLib__(Phi.Pw_n1);
   free__MatrixLib__(Phi.D_Pw);
-  free__MatrixLib__(Phi.d_Pw_dt);
+  free__MatrixLib__(Phi.d_Pw_dt_n);
+  free__MatrixLib__(Phi.d_Pw_dt_n1);
   free__MatrixLib__(Phi.d2_Pw_dt2);
   free__MatrixLib__(Phi.Strain);
   free__MatrixLib__(Phi.Strain_If);

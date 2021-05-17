@@ -74,6 +74,7 @@ extern bool Out_dPw_dt;
 extern bool Out_strain;
 extern bool Out_eigenvalues_strain;
 extern bool Out_deformation_gradient;
+extern bool Out_plastic_deformation_gradient;
 extern bool Out_energy;
 extern bool Out_Von_Mises;
 extern bool Out_EPS;

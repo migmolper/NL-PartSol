@@ -161,22 +161,25 @@ double I3__TensorLib__(Tensor A)
   /* Define output */
   double I3 = 0;
   /* Check if is the order is order 2 */
-  if(A.Order == 2){
-    if(Ndim == 3){
+  if(A.Order == 2)
+  {
+    if(Ndim == 3)
+    {
       I3 =
-	A.N[0][0]*A.N[1][1]*A.N[2][2] - 
-	A.N[0][0]*A.N[1][2]*A.N[2][1] + 
-	A.N[0][1]*A.N[1][2]*A.N[2][0] - 
-	A.N[0][1]*A.N[1][0]*A.N[2][2] + 
-	A.N[0][2]*A.N[1][0]*A.N[2][1] - 
-	A.N[0][2]*A.N[1][1]*A.N[2][0] ; 
+      A.N[0][0]*A.N[1][1]*A.N[2][2] - 
+	    A.N[0][0]*A.N[1][2]*A.N[2][1] + 
+	    A.N[0][1]*A.N[1][2]*A.N[2][0] - 
+	    A.N[0][1]*A.N[1][0]*A.N[2][2] + 
+	    A.N[0][2]*A.N[1][0]*A.N[2][1] - 
+	    A.N[0][2]*A.N[1][1]*A.N[2][0] ; 
     }
-    if(Ndim == 2){
-      I3 =
-	A.N[0][0]*A.N[1][1] - A.N[0][1]*A.N[1][0];
+    if(Ndim == 2)
+    {
+      I3 = A.N[0][0]*A.N[1][1] - A.N[0][1]*A.N[1][0];
     }
   }
-  else{
+  else
+  {
     fprintf(stderr,"%s : %s !!! \n",
 	    "Error in I3__TensorLib__()",
 	    "The input should be of order 2");
@@ -270,28 +273,29 @@ Tensor Eigenvalues__TensorLib__(Tensor A)
     if(Ndim == 2)
       {
         I1 = I1__TensorLib__(A);
-        I2 = I2__TensorLib__(A);
+        I3 = I3__TensorLib__(A);
+        m = 0.5*I1;
 
-        b = I1*I1 - 4*I2;
+        b = m*m - I3;
 
-        if(b > 0.0)
+        if(b > TOL_zero)
         {
-          lambda.n[0] = 0.5*(I1 + sqrt(b));
-          lambda.n[1] = 0.5*(I1 - sqrt(b));
+          lambda.n[0] = m + sqrt(b);
+          lambda.n[1] = m - sqrt(b);
         }
-        else if(b <= 0.0)
+        else if(b <= TOL_zero)
         {
-          lambda.n[0] = 0.5*I1;
-          lambda.n[1] = 0.5*I1;
+          lambda.n[0] = m;
+          lambda.n[1] = m;
         }
         else
         {
-	     printf("%s\n","Error in Eigenvalues__TensorLib__(A)");
-      print__TensorLib__(A);
-		  printf("%s\n","Input tensor should be Hermitian");
-	    exit(EXIT_FAILURE);
-
-	  }
+         printf("%s\n","Error in Eigenvalues__TensorLib__(A)");
+          printf("%e\n",b);
+          printf("%s\n","Input tensor A should be Hermitian");
+          print__TensorLib__(A);
+          exit(EXIT_FAILURE);
+        }
 	
            
       }
@@ -356,10 +360,16 @@ Tensor Eigenvectors__TensorLib__(Tensor A,Tensor Lambda)
   if (Ndim == 2)
   {
 
-    if (A.N[0][1]*A.N[1][0] < 1e-15)
+    if (fabs(A.N[0][1]*A.N[1][0]) < TOL_zero)
     {
-      EigenVect.N[0][0] = EigenVect.N[1][1] = 1.;
-      EigenVect.N[0][1] = EigenVect.N[1][0] = 0.;
+      // Eigen vec 1
+      EigenVect.N[0][0] = 1.0;
+      EigenVect.N[1][0] = 0.0;
+
+      // Eigen vec 2
+      EigenVect.N[0][1] = 0.0;
+      EigenVect.N[1][1] = 1.0;
+      
     }
     else
     {
@@ -468,11 +478,13 @@ Tensor Inverse__TensorLib__(Tensor A)
   if (A.Order == 2){  
     /* Get the determinant of the matrix */
     double detA = I3__TensorLib__(A);
-    if(fabs(detA) < TOL_zero){
-      fprintf(stderr,"%s : %s !!! \n",
-	      "Error in Inverse__TensorLib__()",
-	      "Determinant null");
-      exit(EXIT_FAILURE);    
+    if(fabs(detA) < TOL_zero)
+    {
+      fprintf(stderr,"%s\n","Error in Inverse__TensorLib__(A)");
+      printf("%s\n","Input tensor A should be invertible");
+      printf("det(A) : %e\n",detA);
+      print__TensorLib__(A);
+      exit(EXIT_FAILURE);   
     }
     if(Ndim == 3){
       /* Compute each component  */
@@ -815,9 +827,8 @@ Tensor Convex_combination__TensorLib__(Tensor F_n1,Tensor F_n,double alpha)
 double volumetric_component__TensorLib__(Tensor A)
 {
   double A_vol;
-  int Ndim = NumberDimensions;
 
-  A_vol = I1__TensorLib__(A)/Ndim;
+  A_vol = I1__TensorLib__(A)/3.0;
 
   return A_vol;
 }
@@ -913,7 +924,7 @@ Tensor symmetrise__TensorLib__(Tensor A)
 
 /*************************************************************/
 
-void covariant_push_forward_tensor__TensorLib__(Tensor a, Tensor A, Tensor F)
+Tensor covariant_push_forward_tensor__TensorLib__(Tensor A, Tensor F)
 /* 
   Covariant push forward operation for any tensor. 
   a = F^-T A F^-1
@@ -926,37 +937,16 @@ void covariant_push_forward_tensor__TensorLib__(Tensor a, Tensor A, Tensor F)
 {
   int Ndim = NumberDimensions;
   Tensor F_m1 = Inverse__TensorLib__(F);
+  Tensor F_mT = transpose__TensorLib__(F_m1);
 
-  if (Ndim == 2)
-  {
-
-    double aux_1 = A.N[0][0]*F_m1.N[0][0] + A.N[0][1]*F_m1.N[1][0];
-    double aux_2 = A.N[0][0]*F_m1.N[0][1] + A.N[0][1]*F_m1.N[1][1];
-    double aux_3 = A.N[1][0]*F_m1.N[0][0] + A.N[1][1]*F_m1.N[1][0];
-    double aux_4 = A.N[1][0]*F_m1.N[0][1] + A.N[1][1]*F_m1.N[1][1];
-
-    a.N[0][0] = F_m1.N[0][0]*aux_1 + F_m1.N[1][0]*aux_3;
-    a.N[0][1] = F_m1.N[0][0]*aux_2 + F_m1.N[1][0]*aux_4;
-    a.N[1][0] = F_m1.N[0][1]*aux_1 + F_m1.N[1][1]*aux_3;
-    a.N[1][1] = F_m1.N[0][1]*aux_2 + F_m1.N[1][1]*aux_4;
-
-  }
-  else if(Ndim == 3)
-  {
-      fprintf(stderr,"%s : %s !!! \n",
-        "Error in covariant_push_forward_tensor__TensorLib__()",
-        "This operation it is not implemented for 3D");
-      exit(EXIT_FAILURE);  
-  }
-  else
-  {
-      fprintf(stderr,"%s : %s !!! \n",
-        "Error in covariant_push_forward_tensor__TensorLib__()",
-        "Wrong number of dimensions");
-      exit(EXIT_FAILURE);  
-  }
+  Tensor A__x__F_m1 = matrix_product__TensorLib__(A,F_m1);
+  Tensor F_mT__x__A__x__F_m1 = matrix_product__TensorLib__(F_mT,A__x__F_m1);
 
   free__TensorLib__(F_m1);
+  free__TensorLib__(F_mT);
+  free__TensorLib__(A__x__F_m1);
+
+  return F_mT__x__A__x__F_m1;
 
 }
 

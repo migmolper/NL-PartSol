@@ -50,14 +50,14 @@ Plastic_status finite_strains_plasticity_Drucker_Prager_Sanavia(
   Plastic_status Outputs_VarCons;
   Tensor Fm1_total = Inverse__TensorLib__(F_total);
   Tensor C_total = right_Cauchy_Green__Particles__(F_total);
-  Tensor C_elastic = alloc__TensorLib__(2);
+  Tensor C_elastic;
   Tensor E_elastic;
   Tensor Infinitesimal_Stress = alloc__TensorLib__(2);
   Tensor Increment_E_plastic;
   Tensor D_F_plastic;
 
   /* Compute the elastic right Cauchy-Green tensor using the intermediate configuration. */ 
-  covariant_push_forward_tensor__TensorLib__(C_elastic, C_total, F_plastic);
+  C_elastic = covariant_push_forward_tensor__TensorLib__(C_total, F_plastic);
 
   /* Calculation of the small strain tensor */
   E_elastic = logarithmic_strains__Particles__(C_elastic);

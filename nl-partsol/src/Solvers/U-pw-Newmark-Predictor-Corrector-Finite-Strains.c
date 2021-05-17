@@ -436,7 +436,7 @@ static void compute_Explicit_Newmark_Predictor(
     /*
       Compute pore water pressure predictor
     */
-    MPM_Mesh.Phi.Pw.nV[p] += (1-gamma)*Dt*MPM_Mesh.Phi.d_Pw_dt.nV[p];
+    MPM_Mesh.Phi.Pw.nV[p] += (1-gamma)*Dt*MPM_Mesh.Phi.d_Pw_dt_n1.nV[p];
 
     /* 
       Compute velocity predictor and increment of displacements 
@@ -2043,7 +2043,7 @@ static void solve_Nodal_Mass_Balance(
     /*
       Set to zero the rate of pore water pressure
     */
-    MPM_Mesh.Phi.d_Pw_dt.nV[p] = 0.0;
+    MPM_Mesh.Phi.d_Pw_dt_n1.nV[p] = 0.0;
 
     /*
       Define element of the particle 
@@ -2075,7 +2075,8 @@ static void solve_Nodal_Mass_Balance(
       /*
         Update the particle rate of pore water pressure
       */
-      MPM_Mesh.Phi.d_Pw_dt.nV[p] += ShapeFunction_pA*Rate_Pore_water_pressure.nV[A_mask];
+      MPM_Mesh.Phi.d_Pw_dt_n1.nV[p] += ShapeFunction_pA*Rate_Pore_water_pressure.nV[A_mask];
+
     }
 
     /*
@@ -2140,7 +2141,7 @@ static void compute_Explicit_Newmark_Corrector(
       /*
         Correct pressure field
       */
-      MPM_Mesh.Phi.Pw.nV[p] += gamma*Dt*MPM_Mesh.Phi.d_Pw_dt.nV[p];
+      MPM_Mesh.Phi.Pw.nV[p] += gamma*Dt*MPM_Mesh.Phi.d_Pw_dt_n1.nV[p];
 
     }  
 }

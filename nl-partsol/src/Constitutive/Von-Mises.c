@@ -33,11 +33,11 @@ static void   compute_finite_stress_tensor_elastic_region(Tensor, Tensor, Tensor
 /**************************************************************/
 
 Plastic_status finite_strains_plasticity_Von_Mises(
-  Tensor Finite_Stress, 
+  Tensor Finite_Stress,
   Tensor F_plastic,
   Tensor F_total,
   Plastic_status Inputs_VarCons, 
-  Material MatProp, 
+  Material MatProp,
   double J)
 /*
   Finite strains plasticity following the apporach of Ortiz and Camacho
@@ -49,14 +49,14 @@ Plastic_status finite_strains_plasticity_Von_Mises(
   Plastic_status Outputs_VarCons;
   Tensor Fm1_total = Inverse__TensorLib__(F_total);
   Tensor C_total = right_Cauchy_Green__Particles__(F_total);
-  Tensor C_elastic = alloc__TensorLib__(2);
+  Tensor C_elastic;
   Tensor E_elastic;
   Tensor Infinitesimal_Stress = alloc__TensorLib__(2);
   Tensor Increment_E_plastic;
   Tensor D_F_plastic;
 
   /* Compute the elastic right Cauchy-Green tensor using the intermediate configuration. */ 
-  covariant_push_forward_tensor__TensorLib__(C_elastic, C_total, F_plastic);
+  C_elastic = covariant_push_forward_tensor__TensorLib__(C_total, F_plastic);
 
   /* Calculation of the small strain tensor */
   E_elastic = logarithmic_strains__Particles__(C_elastic);

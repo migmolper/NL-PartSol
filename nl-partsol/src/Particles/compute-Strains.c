@@ -229,6 +229,8 @@ void get_locking_free_Deformation_Gradient_n1__Particles__(
   int q;
   int Ndim = NumberDimensions;
   int I0_p = MPM_Mesh.I0[p];
+  int IdxElement;
+  double Simplex_Radius = FEM_Mesh.DeltaX;
   double J_n_p_patch;
   double J_n1_p_patch;
   double Vol_0_q;
@@ -239,6 +241,10 @@ void get_locking_free_Deformation_Gradient_n1__Particles__(
   double J_n1_patch;
   double J_averaged;
   double averaged_F_vol;
+  Matrix X_p;
+  Matrix X_q;
+  Matrix Coordinates_Patch_p;
+  ChainPtr Elements_Near_I0;
   ChainPtr Node_Patch_p;
   ChainPtr Particle_Patch_p;
 
@@ -247,43 +253,56 @@ void get_locking_free_Deformation_Gradient_n1__Particles__(
   V0_patch = 0.0;
   Vn1_patch = 0.0;
 
-  Node_Patch_p = NULL;
+  /* Get the coordinates of the particle */
+  X_p = memory_to_matrix__MatrixLib__(Ndim,1,MPM_Mesh.Phi.x_GC.nM[p]);
 
-  Matrix X_p = memory_to_matrix__MatrixLib__(Ndim,1,NULL);
-  Matrix X_q = memory_to_matrix__MatrixLib__(Ndim,1,NULL);
+  /* List of elements near the particle */
+  Elements_Near_I0 = FEM_Mesh.NodeNeighbour[I0_p];
 
-  // Get the surrounding nodes  
-  Node_Patch_p = MPM_Mesh.ListNodes[p];
+  /* Get the element inside of the */
+  IdxElement = search_particle_in_surrounding_elements__Particles__(p,X_p,Elements_Near_I0,FEM_Mesh);
 
-  // Loop in the sourrounding particles to get the deformed and reference volumes
-  while(Node_Patch_p != NULL)
+  if(IdxElement != -999)
   {
+    // Get the surrounding nodes  
+    Node_Patch_p = FEM_Mesh.Connectivity[IdxElement];
 
-    Particle_Patch_p = NULL;
+    Coordinates_Patch_p = get_nodes_coordinates__MeshTools__(Node_Patch_p, FEM_Mesh.Coordinates);
 
-    // Get the list of particles close to this node
-    Particle_Patch_p = FEM_Mesh.I_particles[Node_Patch_p->I];
-
-    while(Particle_Patch_p != NULL)
+    // Loop in the sourrounding particles to get the deformed and reference volumes
+    while(Node_Patch_p != NULL)
     {
-      q = Particle_Patch_p->I;
+      Particle_Patch_p = NULL;
 
-      if(MPM_Mesh.MatIdx[p] == MPM_Mesh.MatIdx[q])
+      // Get the list of particles close to this node
+      Particle_Patch_p = FEM_Mesh.I_particles[Node_Patch_p->I];
+
+      while(Particle_Patch_p != NULL)
       {
+        q = Particle_Patch_p->I;
+        X_q = memory_to_matrix__MatrixLib__(Ndim,1,MPM_Mesh.Phi.x_GC.nM[q]);
 
-        Vol_0_q = MPM_Mesh.Phi.Vol_0.nV[q];
+        if(FEM_Mesh.In_Out_Element(X_q,Coordinates_Patch_p))
+        {
+          Vol_0_q = MPM_Mesh.Phi.Vol_0.nV[q];
 
-        J_n1_p_patch = MPM_Mesh.Phi.J.nV[q];
-        Vol_n1_q = Vol_0_q*J_n1_p_patch;
+          J_n1_p_patch = MPM_Mesh.Phi.J.nV[q];
+          Vol_n1_q = Vol_0_q*J_n1_p_patch;
 
-        V0_patch += Vol_0_q;
-        Vn1_patch += Vol_n1_q;
+          V0_patch += Vol_0_q;
+          Vn1_patch += Vol_n1_q;
+        }
+
+        Particle_Patch_p = Particle_Patch_p->next;
       }
 
-      Particle_Patch_p = Particle_Patch_p->next;
+      Node_Patch_p = Node_Patch_p->next; 
+
     }
 
-    Node_Patch_p = Node_Patch_p->next; 
+
+    free__MatrixLib__(Coordinates_Patch_p);
+
   }
 
   // Compute the averaged jacobian of the deformation gradient
@@ -403,6 +422,8 @@ Tensor logarithmic_strains__Particles__(
   Tensor EigenVals_C;
   Tensor EigenVects_C;
   Tensor logC_spectral = alloc__TensorLib__(2);
+  Tensor m1_EigenVects_C;
+  Tensor logC_spectral__x__m1_EigenVects_C;
   Tensor logC;
 
 
@@ -418,9 +439,23 @@ Tensor logarithmic_strains__Particles__(
   }
 
   /*
+    Check the EigenVects_C tensor
+  */
+  if(fabs(I3__TensorLib__(EigenVects_C)) < TOL_zero)
+  {
+      fprintf(stderr,"%s\n","Error in logarithmic_strains__Particles__()");
+      printf("%s\n","The tensor EigenVects_C should be invertible");
+      printf("det(EigenVects_C) : %e\n",I3__TensorLib__(EigenVects_C));
+      print__TensorLib__(EigenVects_C);
+      exit(EXIT_FAILURE);   
+  }
+
+  /*
     Rotate the spectral descomposition of the tensor logC
   */
-  logC = rotate__TensorLib__(logC_spectral,EigenVects_C);
+  m1_EigenVects_C = Inverse__TensorLib__(EigenVects_C);
+  logC_spectral__x__m1_EigenVects_C = matrix_product__TensorLib__(logC_spectral,m1_EigenVects_C);
+  logC = matrix_product__TensorLib__(EigenVects_C,logC_spectral__x__m1_EigenVects_C);
 
   /*
     Multiply by 1/2
@@ -439,6 +474,8 @@ Tensor logarithmic_strains__Particles__(
   free__TensorLib__(EigenVals_C);
   free__TensorLib__(EigenVects_C);
   free__TensorLib__(logC_spectral);
+  free__TensorLib__(m1_EigenVects_C);
+  free__TensorLib__(logC_spectral__x__m1_EigenVects_C);
 
   return logC; 
 }
@@ -453,6 +490,8 @@ Tensor increment_Deformation_Gradient_exponential_strains__Particles__(
   Tensor EigenVals_D_E;
   Tensor EigenVects_D_E;
   Tensor exp_D_E_spectral = alloc__TensorLib__(2);
+  Tensor m1_EigenVects_D_E;
+  Tensor exp_D_E_spectral__x__m1_EigenVects_D_E;
   Tensor exp_D_E;
 
 
@@ -468,9 +507,23 @@ Tensor increment_Deformation_Gradient_exponential_strains__Particles__(
   }
 
   /*
+    Check the EigenVects_D_E tensor
+  */
+  if(fabs(I3__TensorLib__(EigenVects_D_E)) < TOL_zero)
+  {
+      fprintf(stderr,"%s\n","Error in increment_Deformation_Gradient_exponential_strains__Particles__()");
+      printf("%s\n","The tensor EigenVects_D_E should be invertible");
+      printf("det(EigenVects_D_E) : %e\n",I3__TensorLib__(EigenVects_D_E));
+      print__TensorLib__(EigenVects_D_E);
+      exit(EXIT_FAILURE);   
+  }
+
+  /*
     Rotate the spectral descomposition of the tensor exp(D_E)
   */
-  exp_D_E = rotate__TensorLib__(exp_D_E_spectral,EigenVects_D_E);
+  m1_EigenVects_D_E = Inverse__TensorLib__(EigenVects_D_E);
+  exp_D_E_spectral__x__m1_EigenVects_D_E = matrix_product__TensorLib__(exp_D_E_spectral,m1_EigenVects_D_E);
+  exp_D_E = matrix_product__TensorLib__(EigenVects_D_E,exp_D_E_spectral__x__m1_EigenVects_D_E);
 
   /*
     Free memory
@@ -478,6 +531,8 @@ Tensor increment_Deformation_Gradient_exponential_strains__Particles__(
   free__TensorLib__(EigenVals_D_E);
   free__TensorLib__(EigenVects_D_E);
   free__TensorLib__(exp_D_E_spectral);
+  free__TensorLib__(m1_EigenVects_D_E);
+  free__TensorLib__(exp_D_E_spectral__x__m1_EigenVects_D_E);
 
   return exp_D_E; 
 }

@@ -211,6 +211,7 @@ double beta__LME__(
     int Ndim = NumberDimensions;
     double C_ij;
     Matrix Metric = allocZ__MatrixLib__(Ndim,Ndim);
+//    Tensor Inverse_F = Inverse__TensorLib__(F);
 
     for(int i = 0 ; i < Ndim ; i++)
     {
@@ -228,15 +229,18 @@ double beta__LME__(
 
           for(int k = 0 ; k < Ndim ; k++)
           {
-//            C_ij += F.N[k][i]*F.N[k][j];
-            C_ij += F.N[i][k]*F.N[j][k];
+            C_ij += F.N[k][i]*F.N[k][j];
+//            C_ij += Inverse_F.N[k][i]*Inverse_F.N[k][j];
+//            C_ij += Inverse_F.N[i][k]*Inverse_F.N[j][k];
           }
 
           Metric.nM[i][j] += curvature_LME*C_ij;
         
         }
       }
-    } 
+    }
+
+//    free__TensorLib__(Inverse_F); 
 
    return Metric;
  }

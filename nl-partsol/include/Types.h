@@ -246,7 +246,9 @@ typedef struct {
   /*!
   * Rates of the pore water pressure
   */
-  Matrix d_Pw_dt;
+  Matrix d_Pw_dt_n;
+  Matrix d_Pw_dt_n1;
+
   Matrix d2_Pw_dt2;
   
   /*!
