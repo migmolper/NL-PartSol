@@ -376,7 +376,7 @@ static void update_Particles(
 	  /* Update the GP velocities */
     MPM_Mesh.Phi.acc.nM[p][i] += ShapeFunction_pI*Forces.nM[Ip][i]/mass_I;
     /* Update the GP velocities */
-    MPM_Mesh.Phi.vel.nM[p][i] += ShapeFunction_pI*DeltaTimeStep*Forces.nM[Ip][i]/mass_I;
+    MPM_Mesh.Phi.vel.nM[p][i] += ShapeFunction_pI*Velocity.nM[Ip][i]/mass_I;
 
     /* Compute the nodal contribution of the increment of displacement */
     D_U_pI = ShapeFunction_pI*DeltaTimeStep*Velocity.nM[Ip][i] +

@@ -23,7 +23,9 @@ Fields allocate_Fields(int NumParticles)
   */
   Phi.dis = allocZ__MatrixLib__(NumParticles,Ndim);
   strcpy(Phi.dis.Info,"Displacement field GP");
-  
+  Phi.D_dis = allocZ__MatrixLib__(NumParticles,Ndim);
+  strcpy(Phi.D_dis.Info,"Increment of displacement field GP");
+
   /*!
     Velocity field (Vectorial) 
   */
@@ -347,6 +349,7 @@ void free_Fields(Fields Phi)
   free__MatrixLib__(Phi.x_GC);  
   free__MatrixLib__(Phi.x_EC);
   free__MatrixLib__(Phi.dis);
+  free__MatrixLib__(Phi.D_dis);
   free__MatrixLib__(Phi.vel);
   free__MatrixLib__(Phi.acc);
   free__MatrixLib__(Phi.Stress);
