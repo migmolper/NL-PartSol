@@ -22,7 +22,7 @@ int Number_Out_particles_path_csv;
 static Matrix compute_Nodal_Lumped_Mass(Particle,Mesh,Mask);
 static Matrix compute_Nodal_Momentum(Particle,Mesh,Mask);
 static Matrix compute_Nodal_Velocity_Predicted(Particle,Mesh,Mask,Matrix,double,double);
-static void   imposse_Velocity(Mesh,Matrix,Mask,int);
+static void   initialise_Nodal_Increments(Mesh,Matrix,Matrix,Mask,int);
 static Matrix compute_Nodal_D_Displacement(Particle,Mesh,Mask,Matrix);
 static void   update_Local_State(Matrix,Mask,Particle,Mesh,double);
 static Matrix compute_Nodal_Forces(Mask,Particle,Mesh,int);
@@ -96,18 +96,12 @@ void U_Newmark_Predictor_Corrector_Finite_Strains(Mesh FEM_Mesh, Particle MPM_Me
       print_Status("***************************************************",TimeStep);
       print_Status("Third step : Compute velocity predicted ... WORKING",TimeStep);
       Velocity = compute_Nodal_Velocity_Predicted(MPM_Mesh,FEM_Mesh,ActiveNodes,Lumped_Mass,gamma,DeltaTimeStep);
-      /*
-        Imposse velocity values in the boundary conditions nodes.
-      */
-      imposse_Velocity(FEM_Mesh,Velocity,ActiveNodes,TimeStep);
+      D_Displacement = compute_Nodal_D_Displacement(MPM_Mesh, FEM_Mesh, ActiveNodes, Lumped_Mass);
+      initialise_Nodal_Increments(FEM_Mesh,D_Displacement,Velocity,ActiveNodes,TimeStep);
       print_Status("DONE !!!",TimeStep);
 
       print_Status("*************************************************",TimeStep);
       print_Status("Four step : Compute equilibrium ... WORKING",TimeStep);
-      /*
-        Compute the nodal displacement
-      */
-      D_Displacement = compute_Nodal_D_Displacement(MPM_Mesh, FEM_Mesh, ActiveNodes, Lumped_Mass);
 
       /*
         Compute the strain state for each particle
@@ -334,91 +328,6 @@ static Matrix compute_Nodal_Velocity_Predicted(
   return Velocity;
 }
 
-/**********************************************************************/
-
-static void imposse_Velocity(
-  Mesh FEM_Mesh,
-  Matrix Velocity,
-  Mask ActiveNodes,
-  int TimeStep)
-/*
-  Apply the boundary conditions over the nodes 
-*/
-{
-
-  /* 1º Define auxilar variables */
-  int Nnodes_mask = ActiveNodes.Nactivenodes;
-  int NumNodesBound; /* Number of nodes of the bound */
-  int NumDimBound; /* Number of dimensions */
-  int Id_BCC; /* Index of the node where we apply the BCC */
-  int Id_BCC_mask;
-  int Id_BCC_mask_k;
-
-  /* 2º Loop over the the boundaries */
-  for(int i = 0 ; i<FEM_Mesh.Bounds.NumBounds ; i++)
-    {
-
-      /* 
-	 Get the number of nodes of this boundarie 
-      */
-      NumNodesBound = FEM_Mesh.Bounds.BCC_i[i].NumNodes;
-
-      /* 
-	 Get the number of dimensions where the BCC it is applied 
-      */
-      NumDimBound = FEM_Mesh.Bounds.BCC_i[i].Dim;
-
-      for(int j = 0 ; j<NumNodesBound ; j++)
-        {
-          /* 
-	     Get the index of the node 
-          */
-          Id_BCC = FEM_Mesh.Bounds.BCC_i[i].Nodes[j];
-          Id_BCC_mask = ActiveNodes.Nodes2Mask[Id_BCC];
-
-          /*
-            The boundary condition is not affecting any active node,
-            continue interating
-          */
-          if(Id_BCC_mask == -1)
-	    {
-	      continue;
-	    }
-
-          /* 
-	     Loop over the dimensions of the boundary condition 
-          */
-          for(int k = 0 ; k<NumDimBound ; k++)
-            {
-
-              /* 
-		 Apply only if the direction is active (1) 
-              */
-              if(FEM_Mesh.Bounds.BCC_i[i].Dir[k] == 1)
-                {
-    
-                  /* 
-		     Check if the curve it is on time 
-                  */
-                  if( (TimeStep < 0) ||
-		      (TimeStep > FEM_Mesh.Bounds.BCC_i[i].Value[k].Num))
-                    {
-                      printf("%s : %s \n",
-                             "Error in imposse_NodalMomentum()",
-                             "The time step is out of the curve !!");
-                      exit(EXIT_FAILURE);
-                    }
-
-                  /* 
-		     Assign the boundary condition 
-                  */
-                  Velocity.nM[Id_BCC_mask][k] = FEM_Mesh.Bounds.BCC_i[i].Value[k].Fx[TimeStep]*(double)FEM_Mesh.Bounds.BCC_i[i].Dir[k];
-                }
-            }
-        }    
-    }
-
-}
 
 /**************************************************************/
 
@@ -504,6 +413,101 @@ static Matrix compute_Nodal_D_Displacement(
   strcpy(D_Displacement.Info,"Nodal-Displacement");
 
   return D_Displacement;
+}
+
+
+/**************************************************************/
+
+static void initialise_Nodal_Increments(
+  Mesh FEM_Mesh,
+  Matrix D_Displacement,
+  Matrix Velocity,
+  Mask ActiveNodes,
+  int TimeStep)
+/*
+  Apply the boundary conditions over the nodes 
+*/
+{
+
+  /* 1º Define auxilar variables */
+  int Nnodes_mask = ActiveNodes.Nactivenodes;
+  int NumNodesBound; /* Number of nodes of the bound */
+  int Ndim = NumberDimensions; /* Number of dimensions */
+  int Ndof = NumberDOF; /* Number of degree of freedom */
+  int Id_BCC; /* Index of the node where we apply the BCC */
+  int Id_BCC_mask;
+
+  /* 
+    Loop over the the boundaries to set boundary conditions
+  */
+  for(int i = 0 ; i<FEM_Mesh.Bounds.NumBounds ; i++)
+    {
+
+    /* 
+      Get the number of nodes of this boundarie 
+    */
+    NumNodesBound = FEM_Mesh.Bounds.BCC_i[i].NumNodes;
+
+    /* 
+      Get the number of dimensions where the BCC it is applied 
+    */
+    Ndof = FEM_Mesh.Bounds.BCC_i[i].Dim;
+
+    for(int j = 0 ; j<NumNodesBound ; j++)
+    {
+      /* 
+        Get the index of the node 
+      */
+      Id_BCC = FEM_Mesh.Bounds.BCC_i[i].Nodes[j];
+      Id_BCC_mask = ActiveNodes.Nodes2Mask[Id_BCC];
+
+      /*
+        The boundary condition is not affecting any active node,
+        continue interating
+      */
+      if(Id_BCC_mask == -1)
+      {
+        continue;
+      }
+
+      /* 
+        Loop over the dimensions of the boundary condition 
+      */
+      for(int k = 0 ; k<Ndof ; k++)
+      {
+
+        /* 
+          Apply only if the direction is active (1) 
+        */
+        if(FEM_Mesh.Bounds.BCC_i[i].Dir[k] == 1)
+        {
+    
+          /* 
+            Check if the curve it is on time 
+          */
+          if( (TimeStep < 0) || (TimeStep > FEM_Mesh.Bounds.BCC_i[i].Value[k].Num))
+          {
+            printf("%s : %s \n","Error in initialise_Nodal_Increments()","The time step is out of the curve !!");
+            exit(EXIT_FAILURE);
+          }
+
+          /* 
+            Assign the boundary condition :
+            First remove the value obtained during the projection and compute the value
+            using the evolution of the boundary condition
+          */
+//          Velocity.nM[Id_BCC_mask][k] = 0.0;
+
+          /*
+            Initialise increments using newmark and the value of the boundary condition
+          */
+          D_Displacement.nM[Id_BCC_mask][k] = FEM_Mesh.Bounds.BCC_i[i].Value[k].Fx[TimeStep]*(double)FEM_Mesh.Bounds.BCC_i[i].Dir[k];                    
+
+        }
+      }
+    }    
+  }
+
 }
 
 /**************************************************************/
@@ -615,6 +619,7 @@ static void update_Local_State(
       integration rule.
     */
     P_p = forward_integration_Stress__Particles__(p,MPM_Mesh,MatProp_p); 
+
   }
 
   
@@ -680,7 +685,7 @@ static void compute_Nodal_Internal_Forces(
   Tensor transpose_F_n_p;
   
   double V0_p; /* Volume of the Gauss-Point */
-  
+  double J_p;
   /*
     Loop in the particles 
   */
@@ -740,7 +745,7 @@ static void compute_Nodal_Internal_Forces(
       */
       for(int i = 0 ; i<Ndim ; i++)
 	    {
-	      Forces.nM[A][i] -= InternalForcesDensity_Ap.n[i]*V0_p;
+	      Forces.nM[A_mask][i] -= InternalForcesDensity_Ap.n[i]*V0_p;
 	    }
 
   	  /*
@@ -1124,11 +1129,23 @@ static void update_Particles(
     F_n_p  = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n.nM[p],2);
     F_n1_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n1.nM[p],2);
 
-    /*
-      Replace the deformation gradient at t = n with the converged deformation gradient
-    */
+
     for(int i = 0 ; i<Ndim  ; i++)
     {
+
+      /*
+        Update the position of the particles
+      */
+      MPM_Mesh.Phi.x_GC.nM[p][i] += MPM_Mesh.Phi.dis.nM[p][i];
+
+      /*
+        Set the displacement to zero to recompute it  
+      */
+      MPM_Mesh.Phi.dis.nM[p][i] = 0.0;
+
+      /*
+        Replace the deformation gradient at t = n with the converged deformation gradient
+      */
       for(int j = 0 ; j<Ndim  ; j++)
       {
         F_n_p.N[i][j] = F_n1_p.N[i][j];
@@ -1178,9 +1195,7 @@ static void update_Particles(
                  ShapeFunction_pI*0.5*pow(DeltaTimeStep,2)*Forces.nM[A_mask][i]/Lumped_Mass.nV[A_mask];
 
         /* Update the particle displacement */
-        MPM_Mesh.Phi.dis.nM[p][i] = D_U_pI;
-	      /* Update the particles position */
-	      MPM_Mesh.Phi.x_GC.nM[p][i] += D_U_pI;
+        MPM_Mesh.Phi.dis.nM[p][i] += D_U_pI;
 	    } 
     }
 

@@ -74,8 +74,8 @@ Plastic_status finite_strains_plasticity_Von_Mises(
   /* Get the stress tensor in the reference configuration (P_p) */
   for(int i = 0 ; i < Ndim  ; i++)
   {
-    for(int j = 0 ; j < Ndim  ; j++)
-    {
+   for(int j = 0 ; j < Ndim  ; j++)
+     {
       Finite_Stress.N[i][j] = 0.0;
 
       for(int k = 0 ; k < Ndim  ; k++)
@@ -87,6 +87,13 @@ Plastic_status finite_strains_plasticity_Von_Mises(
 
     }
   }
+/*  for(int i = 0 ; i < Ndim  ; i++)
+  {
+    for(int j = 0 ; j < Ndim  ; j++)
+    {
+      Finite_Stress.N[i][j] = Infinitesimal_Stress.N[i][j];
+    }
+  }*/
 
   /* Free memory */
   free__TensorLib__(Fm1_total);

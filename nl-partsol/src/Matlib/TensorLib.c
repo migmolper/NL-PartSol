@@ -1046,7 +1046,7 @@ void print__TensorLib__(Tensor A)
 	{
 	  for(int j = 0 ; j < Ndim  ; j++)
 	    {
-	      printf("%f ",A.N[i][j]);
+	      printf("%e ",A.N[i][j]);
 	    }
 	  printf("\n");
 	}
@@ -1055,7 +1055,7 @@ void print__TensorLib__(Tensor A)
     {
       for(int i = 0 ; i < Ndim  ; i++)
 	{
-	  printf("%f ",A.n[i]);
+	  printf("%e ",A.n[i]);
 	}
       printf("\n");      
     }
