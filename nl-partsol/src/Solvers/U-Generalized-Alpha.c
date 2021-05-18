@@ -622,7 +622,7 @@ static void update_LocalState(Matrix V_I, Particle MPM_Mesh,
     free__TensorLib__(Rate_Strain_p);
 
     /* Compute stress tensor */
-    Stress_p = explicit_integration_stress__Particles__(Strain_p,Stress_p,Material_p);
+    Stress_p = explicit_integration_stress__Particles__(p,MPM_Mesh,Material_p);
 
     /* Compute deformation energy */
     MPM_Mesh.Phi.W.nV[p] = 0.5*inner_product__TensorLib__(Strain_p, Stress_p);

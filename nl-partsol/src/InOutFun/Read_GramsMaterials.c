@@ -160,7 +160,7 @@ GramsMaterials (Particles=route.txt) {
       free__SetLib__(&Chain_Nodes);
 
       /* Id of the material */
-      Mat_GP.Id=-1;
+      Mat_GP.Id = -1;
       /* Celerity */
       Mat_GP.Cel = NAN;
       /* Density */      

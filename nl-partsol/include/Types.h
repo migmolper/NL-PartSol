@@ -153,7 +153,7 @@ typedef struct{
   /*! 
    * Second order tensor 
    */
-  double *N[3];
+  double *N[NumberDimensions];
 
   /*! 
    * Aditional information 
@@ -161,6 +161,20 @@ typedef struct{
   char Info [100];
   
 } Tensor;
+
+/*******************************************************/
+
+/*! \struct EigenTensor
+  Structure for the output of a function wich compute eigenvalues 
+    and eigenvectors
+*/
+typedef struct{
+
+  Tensor Value;
+
+  Tensor Vector;
+
+} EigenTensor;
 
 /*******************************************************/
 

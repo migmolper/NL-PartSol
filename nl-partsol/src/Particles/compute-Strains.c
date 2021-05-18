@@ -419,8 +419,7 @@ Tensor logarithmic_strains__Particles__(
 {
 
   int Ndim = NumberDimensions;
-  Tensor EigenVals_C;
-  Tensor EigenVects_C;
+  EigenTensor Eigen_C;
   Tensor logC_spectral = alloc__TensorLib__(2);
   Tensor m1_EigenVects_C;
   Tensor logC_spectral__x__m1_EigenVects_C;
@@ -430,32 +429,19 @@ Tensor logarithmic_strains__Particles__(
   /*
     Compute the spectral descomposition of the tensor logC
   */
-  EigenVals_C = Eigenvalues__TensorLib__(C);
-  EigenVects_C = Eigenvectors__TensorLib__(C,EigenVals_C);
+  Eigen_C = Eigen_analysis__TensorLib__(C);
   
   for(int i = 0 ; i < Ndim  ; i++)
   {
-    logC_spectral.N[i][i] = log(EigenVals_C.n[i]);
-  }
-
-  /*
-    Check the EigenVects_C tensor
-  */
-  if(fabs(I3__TensorLib__(EigenVects_C)) < TOL_zero)
-  {
-      fprintf(stderr,"%s\n","Error in logarithmic_strains__Particles__()");
-      printf("%s\n","The tensor EigenVects_C should be invertible");
-      printf("det(EigenVects_C) : %e\n",I3__TensorLib__(EigenVects_C));
-      print__TensorLib__(EigenVects_C);
-      exit(EXIT_FAILURE);   
+    logC_spectral.N[i][i] = log(Eigen_C.Value.n[i]);
   }
 
   /*
     Rotate the spectral descomposition of the tensor logC
   */
-  m1_EigenVects_C = Inverse__TensorLib__(EigenVects_C);
+  m1_EigenVects_C = Inverse__TensorLib__(Eigen_C.Vector);
   logC_spectral__x__m1_EigenVects_C = matrix_product__TensorLib__(logC_spectral,m1_EigenVects_C);
-  logC = matrix_product__TensorLib__(EigenVects_C,logC_spectral__x__m1_EigenVects_C);
+  logC = matrix_product__TensorLib__(Eigen_C.Vector,logC_spectral__x__m1_EigenVects_C);
 
   /*
     Multiply by 1/2
@@ -471,8 +457,8 @@ Tensor logarithmic_strains__Particles__(
   /*
     Free memory
   */
-  free__TensorLib__(EigenVals_C);
-  free__TensorLib__(EigenVects_C);
+  free__TensorLib__(Eigen_C.Value);
+  free__TensorLib__(Eigen_C.Vector);
   free__TensorLib__(logC_spectral);
   free__TensorLib__(m1_EigenVects_C);
   free__TensorLib__(logC_spectral__x__m1_EigenVects_C);
@@ -487,8 +473,7 @@ Tensor increment_Deformation_Gradient_exponential_strains__Particles__(
 {
 
   int Ndim = NumberDimensions;
-  Tensor EigenVals_D_E;
-  Tensor EigenVects_D_E;
+  EigenTensor Eigen_D_E;
   Tensor exp_D_E_spectral = alloc__TensorLib__(2);
   Tensor m1_EigenVects_D_E;
   Tensor exp_D_E_spectral__x__m1_EigenVects_D_E;
@@ -498,38 +483,26 @@ Tensor increment_Deformation_Gradient_exponential_strains__Particles__(
   /*
     Compute the spectral descomposition of the tensor exp(D_E)
   */
-  EigenVals_D_E = Eigenvalues__TensorLib__(D_E);
-  EigenVects_D_E = Eigenvectors__TensorLib__(D_E,EigenVals_D_E);
+  Eigen_D_E = Eigen_analysis__TensorLib__(D_E);
+
   
   for(int i = 0 ; i < Ndim  ; i++)
   {
-    exp_D_E_spectral.N[i][i] = exp(EigenVals_D_E.n[i]);
-  }
-
-  /*
-    Check the EigenVects_D_E tensor
-  */
-  if(fabs(I3__TensorLib__(EigenVects_D_E)) < TOL_zero)
-  {
-      fprintf(stderr,"%s\n","Error in increment_Deformation_Gradient_exponential_strains__Particles__()");
-      printf("%s\n","The tensor EigenVects_D_E should be invertible");
-      printf("det(EigenVects_D_E) : %e\n",I3__TensorLib__(EigenVects_D_E));
-      print__TensorLib__(EigenVects_D_E);
-      exit(EXIT_FAILURE);   
+    exp_D_E_spectral.N[i][i] = exp(Eigen_D_E.Value.n[i]);
   }
 
   /*
     Rotate the spectral descomposition of the tensor exp(D_E)
   */
-  m1_EigenVects_D_E = Inverse__TensorLib__(EigenVects_D_E);
+  m1_EigenVects_D_E = Inverse__TensorLib__(Eigen_D_E.Vector);
   exp_D_E_spectral__x__m1_EigenVects_D_E = matrix_product__TensorLib__(exp_D_E_spectral,m1_EigenVects_D_E);
-  exp_D_E = matrix_product__TensorLib__(EigenVects_D_E,exp_D_E_spectral__x__m1_EigenVects_D_E);
+  exp_D_E = matrix_product__TensorLib__(Eigen_D_E.Vector,exp_D_E_spectral__x__m1_EigenVects_D_E);
 
   /*
     Free memory
   */
-  free__TensorLib__(EigenVals_D_E);
-  free__TensorLib__(EigenVects_D_E);
+  free__TensorLib__(Eigen_D_E.Value);
+  free__TensorLib__(Eigen_D_E.Vector);
   free__TensorLib__(exp_D_E_spectral);
   free__TensorLib__(m1_EigenVects_D_E);
   free__TensorLib__(exp_D_E_spectral__x__m1_EigenVects_D_E);

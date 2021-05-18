@@ -141,7 +141,6 @@ Plastic_status infinitesimal_strains_plasticity_Von_Mises(
     Elastic predictor : Volumetric and deviatoric stress measurements. Compute also
     the norm of the deviatoric tensor
   */
-
   E_elastic_vol = volumetric_component__TensorLib__(E_elastic);
   E_elastic_dev = deviatoric_component__TensorLib__(E_elastic,E_elastic_vol);
 

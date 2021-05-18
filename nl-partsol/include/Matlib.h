@@ -132,8 +132,12 @@ double I3__TensorLib__(Tensor);
 double J1__TensorLib__(Tensor);
 double J2__TensorLib__(Tensor);
 double J3__TensorLib__(Tensor);
+
 Tensor Eigenvalues__TensorLib__(Tensor);
 Tensor Eigenvectors__TensorLib__(Tensor,Tensor);
+
+EigenTensor Eigen_analysis__TensorLib__(Tensor A);
+
 double EuclideanNorm__TensorLib__(Tensor);
 double Generalised_norm__TensorLib__(Tensor, Tensor);
 Tensor Identity__TensorLib__();

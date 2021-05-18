@@ -170,7 +170,9 @@ void upw_Newmark_beta_Finite_Strains(Mesh FEM_Mesh, Particle MPM_Mesh, int Initi
 
         Tangent_Stiffness = assemble_Tangent_Stiffness(upw_n,D_upw,ActiveNodes,MPM_Mesh,FEM_Mesh,epsilon,Params);
 
-  //      print__MatrixLib__(Tangent_Stiffness,Nactivenodes*NumberDOF,Nactivenodes*NumberDOF);
+        print__MatrixLib__(Tangent_Stiffness,Nactivenodes*NumberDOF,Nactivenodes*NumberDOF);
+
+//        exit(0);
 
         if((Free_and_Restricted_Dofs.Nactivenodes - Ndim*Nactivenodes) == 0)
         {

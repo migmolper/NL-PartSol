@@ -388,7 +388,7 @@ static void update_LocalState(Matrix V_I, Particle MPM_Mesh, Mesh FEM_Mesh, doub
     free__TensorLib__(Rate_Strain_p);
 
     /* Compute stress tensor */
-    Stress_p = explicit_integration_stress__Particles__(Strain_p,Stress_p,Material_p);
+    Stress_p = explicit_integration_stress__Particles__(p,MPM_Mesh,Material_p);
 
     /* Compute deformation energy */
     MPM_Mesh.Phi.W.nV[p] = 0.5*inner_product__TensorLib__(Strain_p, Stress_p);
@@ -562,85 +562,95 @@ static Matrix compute_BodyForces(Matrix F_I, Particle MPM_Mesh,
 
 /*********************************************************************/
 
-static Matrix compute_ContacForces(Matrix F_I, Particle MPM_Mesh,
-				   Mesh FEM_Mesh, int TimeStep)
+static Matrix compute_ContacForces(
+  Matrix F_I,
+  Particle MPM_Mesh,
+  Mesh FEM_Mesh, 
+  int TimeStep)
 {
   int Ndim = NumberDimensions;
-  Load * F = MPM_Mesh.F;
+  Load Load_i;
   Element Nodes_p; /* Element for each Gauss-Point */
-  Matrix ShapeFunction_p; /* Nodal values of the sahpe function */
-  double ShapeFunction_pI;
+  Matrix N_p; /* Nodal values of the sahpe function */
+  double N_pa;
   Tensor t = alloc__TensorLib__(1); /* Body forces vector */
   double m_p; /* Mass of the Gauss-Point */
   double rho_p; /* Density of the Gauss-Point */
   double V_p; /* Volumen of the Gauss-Point */
-  double thickness_p; /* Thickness of the Gauss-Point */
-  int NumContactForces = MPM_Mesh.NumNeumannBC;
+  double A_p; /* Area of the Gauss-Point */
+  int NumContactForces = MPM_Mesh.Neumann_Contours.NumBounds;
   int NumNodesLoad;
   int p;
   int Ip;
   int Nn; /* Number of nodes of each Gauss-Point */
 
-  for(int i = 0 ; i<NumContactForces; i++){
+  for(int i = 0 ; i<NumContactForces; i++)
+  {
 
-    NumNodesLoad = F[i].NumNodes;
+    /*
+      Read load i
+    */
+    Load_i = MPM_Mesh.Neumann_Contours.BCC_i[i];
+
+    NumNodesLoad = Load_i.NumNodes;
       
-    for(int j = 0 ; j<NumNodesLoad ; j++){
+    for(int j = 0 ; j<NumNodesLoad ; j++)
+    {
 
-      /* Get the index of the Gauss-Point */
-      p = F[i].Nodes[j];
+      /*
+        Get the index of the particle
+      */
+      p = Load_i.Nodes[j];
 
-      /* Get the value of the mass */
+      /*
+        Get the area of each particle
+      */ 
       m_p = MPM_Mesh.Phi.mass.nV[p];
-      
-      /* Get the value of the density */
       rho_p = MPM_Mesh.Phi.mass.nV[p];
-
-      /* Get the value of the volum */
       V_p = m_p/rho_p;
-
-      /* Get the thickness of the material point */
-      thickness_p = Thickness_Plain_Stress;
+      A_p = V_p/Thickness_Plain_Stress;
 
       /* Define element for each GP */
       Nn = MPM_Mesh.NumberNodes[p];
       Nodes_p = nodal_set__Particles__(p, MPM_Mesh.ListNodes[p], Nn);
 
       /* Compute shape functions */
-      ShapeFunction_p = compute_N__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
+      N_p = compute_N__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
 
       /* Fill vector of body forces */
-      for(int k = 0 ; k<Ndim ; k++){
-	if(F[i].Dir[k]){
-	  if( (TimeStep < 0) || (TimeStep > F[i].Value[k].Num)){
-	    printf("%s : %s\n",
-		   "Error in compute_ContacForces()",
-		   "The time step is out of the curve !!");
-	  }
-	  t.n[k] = F[i].Value[k].Fx[TimeStep];
-	}
+      for(int k = 0 ; k<Ndim ; k++)
+      {
+        if(Load_i.Dir[k])
+        {
+          if( (TimeStep < 0) || (TimeStep > Load_i.Value[k].Num))
+          {
+            printf("%s : %s\n","Error in compute_ContacForces()","The time step is out of the curve !!");
+          }
+          t.n[k] = Load_i.Value[k].Fx[TimeStep];
+        }
       }
 
       /* Get the node of the mesh for the contribution */
-      for(int I = 0 ; I<Nn ; I++){
+      for(int I = 0 ; I<Nn ; I++)
+      {
+        /* Node for the contribution */
+        Ip = Nodes_p.Connectivity[I];
+  
+        /* Pass the value of the nodal shape function to a scalar */
+        N_pa = N_p.nV[I];
 
-	/* Node for the contribution */
-	Ip = Nodes_p.Connectivity[I];
-	
-	/* Pass the value of the nodal shape function to a scalar */
-	ShapeFunction_pI = ShapeFunction_p.nV[I];
-	
-	/* Compute Contact forces */
-	for(int k = 0 ; k<Ndim ; k++){
-	  F_I.nM[Ip][k] += ShapeFunction_pI*(t.n[k]/thickness_p)*V_p;
-	}
-	
+        /* Compute Contact forces */
+        for(int k = 0 ; k<Ndim ; k++)
+        {
+          F_I.nM[Ip][k] += N_pa*t.n[k]*A_p;
+        }
+  
       }
 
       /* Free the matrix with the nodal gradient of the element */
-      free__MatrixLib__(ShapeFunction_p);
+      free__MatrixLib__(N_p);
       free(Nodes_p.Connectivity);
-	
+  
     }
 
       
@@ -651,6 +661,7 @@ static Matrix compute_ContacForces(Matrix F_I, Particle MPM_Mesh,
   return F_I;
 
 }
+
 
 /**********************************************************************/
 

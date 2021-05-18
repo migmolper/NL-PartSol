@@ -984,8 +984,8 @@ static void compute_Nodal_Nominal_traction_Forces(
   int Ndim = NumberDimensions;
   Load Load_i;
   Element Nodes_p; /* Element for each Gauss-Point */
-  Matrix ShapeFunction_p; /* Nodal values of the sahpe function */
-  double ShapeFunction_pA;
+  Matrix N_p; /* Nodal values of the sahpe function */
+  double N_pa;
   Tensor T = alloc__TensorLib__(1); // Nominal traction
   double A0_p; /* Area of the particle in the reference configuration */ 
 
@@ -1035,7 +1035,7 @@ static void compute_Nodal_Nominal_traction_Forces(
       /* 
         Evaluate the shape function in the coordinates of the particle
       */
-      ShapeFunction_p = compute_N__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
+      N_p = compute_N__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
 
       /*
         Fill vector of contact forces
@@ -1065,7 +1065,7 @@ static void compute_Nodal_Nominal_traction_Forces(
         /*
           Pass the value of the nodal shape function to a scalar
         */
-        ShapeFunction_pA = ShapeFunction_p.nV[A];
+        N_pa = N_p.nV[A];
 
         /*
           Node for the contribution
@@ -1078,12 +1078,12 @@ static void compute_Nodal_Nominal_traction_Forces(
         */
         for(int k = 0 ; k<Ndim ; k++)
         {
-          Forces.nM[A_mask][k] -= ShapeFunction_pA*T.n[k]*A0_p;
+          Forces.nM[A_mask][k] -= N_pa*T.n[k]*A0_p;
         }
       }
 
       /* Free the matrix with the nodal gradient of the element */
-      free__MatrixLib__(ShapeFunction_p);
+      free__MatrixLib__(N_p);
       free(Nodes_p.Connectivity);
   
     }

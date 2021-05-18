@@ -172,7 +172,7 @@ double update_density__Particles__(double, double, Tensor);
 /*!
 
 */
-Tensor explicit_integration_stress__Particles__(Tensor, Tensor, Material);
+Tensor explicit_integration_stress__Particles__(int, Particle, Material);
 /*******************************************************/
 /*
 \fn Tensor forward_integration_Stress__Particles__()

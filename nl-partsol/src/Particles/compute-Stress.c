@@ -2,20 +2,39 @@
 
 /*************************************************************/
 
-Tensor explicit_integration_stress__Particles__(Tensor Strain,
-						Tensor Stress,
-						Material Mat)
+Tensor explicit_integration_stress__Particles__(
+  int p,
+  Particle MPM_Mesh,
+  Material MatProp)
 {   
+  Tensor Stress = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.Stress.nM[p],2); 
+  Tensor Strain = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.Strain.nM[p], 2);
+
+  Plastic_status Input_Plastic_Parameters;
+  Plastic_status Output_Plastic_Parameters;
+
   /*
     Select the constitutive model 
   */
-  if(strcmp(Mat.Type,"SR") == 0){
+  if(strcmp(MatProp.Type,"SR") == 0)
+  {
     Stress = SolidRigid(Stress);
   }  
-  else if(strcmp(Mat.Type,"LE") == 0){
-    Stress = LinearElastic(Strain,Stress,Mat);
+  else if(strcmp(MatProp.Type,"LE") == 0)
+  {
+    Stress = LinearElastic(Strain,Stress,MatProp);
   }
-  else{
+  else if(strcmp(MatProp.Type,"Von-Mises") == 0)
+  {
+
+    Input_Plastic_Parameters.EPS = MPM_Mesh.Phi.EPS.nV[p];
+
+    Output_Plastic_Parameters = infinitesimal_strains_plasticity_Von_Mises(Stress, Strain, Input_Plastic_Parameters, MatProp);
+
+    MPM_Mesh.Phi.EPS.nV[p] = Output_Plastic_Parameters.EPS;
+  }
+  else
+  {
     exit(EXIT_FAILURE);
   }
   
