@@ -282,12 +282,12 @@ Tensor average_itegration_Stress__Particles__(Tensor S_p,
 
 /**************************************************************/
 
-void compute_Piola_transformation__Particles__(Tensor S_p, Tensor sigma_k1, Tensor F_total, double J)
+Tensor compute_Piola_transformation__Particles__(Tensor sigma_k1, Tensor F, double J)
 {
   
   int Ndim = NumberDimensions;
 
-  contravariant_pull_back_tensor__TensorLib__(S_p, sigma_k1, F_total);
+  Tensor S_p = contravariant_pull_back_tensor__TensorLib__(sigma_k1, F);
   
   for(int i = 0 ; i<Ndim ; i++)
     {
@@ -296,6 +296,8 @@ void compute_Piola_transformation__Particles__(Tensor S_p, Tensor sigma_k1, Tens
         S_p.N[i][j] = J*S_p.N[i][j];
       }
     }
+
+  return S_p;
 }
 
 /**************************************************************/

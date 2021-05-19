@@ -159,7 +159,7 @@ Tensor symmetrise__TensorLib__(Tensor);
 Tensor covariant_push_forward_tensor__TensorLib__(Tensor, Tensor);
 void   contravariant_push_forward_tensor__TensorLib__(Tensor, Tensor, Tensor);
 void   covariant_pull_back_tensor__TensorLib__(Tensor, Tensor, Tensor);
-void   contravariant_pull_back_tensor__TensorLib__(Tensor, Tensor, Tensor);
+Tensor contravariant_pull_back_tensor__TensorLib__(Tensor, Tensor);
 void   print__TensorLib__(Tensor);
 /*******************************************************/
 
