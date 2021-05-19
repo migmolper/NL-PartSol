@@ -806,36 +806,15 @@ Tensor rotate__TensorLib__(Tensor In, Tensor R)
 */
 {
   int Ndim = NumberDimensions;
-  Tensor Out = alloc__TensorLib__(2);
 
-  if (Ndim == 2)
-  {
+  Tensor Rm1 = Inverse__TensorLib__(R);
 
-    double aux_1 = R.N[0][0]*In.N[0][0] + R.N[0][1]*In.N[0][1];
-    double aux_2 = R.N[0][0]*In.N[1][0] + R.N[0][1]*In.N[1][1];
-    double aux_3 = R.N[1][0]*In.N[0][0] + R.N[1][1]*In.N[0][1];
-    double aux_4 = R.N[1][0]*In.N[1][0] + R.N[1][1]*In.N[1][1];
+  Tensor In__x__Rm1 = matrix_product__TensorLib__(In,Rm1);
 
-    Out.N[0][0] = R.N[0][0]*aux_1 + R.N[0][1]*aux_2;
-    Out.N[0][1] = R.N[0][0]*aux_3 + R.N[0][1]*aux_4;
-    Out.N[1][0] = R.N[1][0]*aux_1 + R.N[1][1]*aux_2;
-    Out.N[1][1] = R.N[1][0]*aux_3 + R.N[1][1]*aux_4;
+  Tensor Out = matrix_product__TensorLib__(R,In__x__Rm1);
 
-  }
-  else if(Ndim == 3)
-  {
-      fprintf(stderr,"%s : %s !!! \n",
-        "Error in rotate__TensorLib__()",
-        "This operation it is not implemented for 3D");
-      exit(EXIT_FAILURE);  
-  }
-  else
-  {
-      fprintf(stderr,"%s : %s !!! \n",
-        "Error in rotate__TensorLib__()",
-        "Wrong number of dimensions");
-      exit(EXIT_FAILURE);  
-  }
+  free__TensorLib__(Rm1);
+  free__TensorLib__(In__x__Rm1);
 
   return Out;
 
