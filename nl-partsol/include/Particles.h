@@ -294,6 +294,9 @@ void update_plastic_deformation_gradient(Tensor D_E_plastic, Tensor F_plastic)
 
 */
 void update_plastic_deformation_gradient__Particles__(Tensor, Tensor);
+
+
+void update_elastic_deformation_gradient__Particles__(Tensor, Tensor, Tensor);
 /*******************************************************/
 
 #endif

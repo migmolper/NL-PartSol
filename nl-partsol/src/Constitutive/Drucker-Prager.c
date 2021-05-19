@@ -34,10 +34,11 @@ static void   compute_finite_stress_tensor_elastic_region(Tensor, Tensor, Tensor
 /**************************************************************/
 
 Plastic_status finite_strains_plasticity_Drucker_Prager_Sanavia(
-  Tensor Finite_Stress,
-  Tensor F_plastic,
+  Tensor P_p,
+  Tensor F_elastic,
+  Tensor D_F_total,
   Tensor F_total,
-  Plastic_status Inputs_VarCons,
+  Plastic_status Inputs_VarCons, 
   Material MatProp,
   double J)
 /*
@@ -48,55 +49,71 @@ Plastic_status finite_strains_plasticity_Drucker_Prager_Sanavia(
 
   /* Define auxiliar variables */
   Plastic_status Outputs_VarCons;
-  Tensor Fm1_total = Inverse__TensorLib__(F_total);
-  Tensor C_total = right_Cauchy_Green__Particles__(F_total);
+  Tensor F_trial_elastic;
+  Tensor C_trial_elastic;
+  Tensor E_trial_elastic;
   Tensor C_elastic;
-  Tensor E_elastic;
+  Tensor C_m1_elastic;
   Tensor Infinitesimal_Stress = alloc__TensorLib__(2);
   Tensor Increment_E_plastic;
   Tensor D_F_plastic;
+  Tensor Fm1_plastic;
+  Tensor S_p = alloc__TensorLib__(2);
 
   /* Compute the elastic right Cauchy-Green tensor using the intermediate configuration. */ 
-  C_elastic = covariant_push_forward_tensor__TensorLib__(C_total, F_plastic);
+  F_trial_elastic = matrix_product__TensorLib__(D_F_total,F_elastic);
+
+  C_trial_elastic = right_Cauchy_Green__Particles__(F_trial_elastic);
 
   /* Calculation of the small strain tensor */
-  E_elastic = logarithmic_strains__Particles__(C_elastic);
+  E_trial_elastic = logarithmic_strains__Particles__(C_trial_elastic);
 
   /* Start plastic algorithm in infinitesimal strains */
-  Outputs_VarCons = infinitesimal_strains_plasticity_Drucker_Prager_Sanavia(Infinitesimal_Stress, E_elastic, Inputs_VarCons, MatProp);
+  Outputs_VarCons = infinitesimal_strains_plasticity_Drucker_Prager_Sanavia(Infinitesimal_Stress, E_trial_elastic, Inputs_VarCons, MatProp);
 
-  /* Use the Cuitiño & Ortiz exponential maping to compute the increment of plasticfinite strains */
-  Increment_E_plastic = Outputs_VarCons.Increment_E_plastic;
-  D_F_plastic = increment_Deformation_Gradient_exponential_strains__Particles__(Increment_E_plastic);
+  /* Use the Cuitiño & Ortiz exponential maping to compute the increment of elastic finite strains */
+  update_elastic_deformation_gradient__Particles__(F_elastic,F_trial_elastic,Outputs_VarCons.Increment_E_plastic);
 
-  /* Compute the new plastic deformation gradient */
-  update_plastic_deformation_gradient__Particles__(D_F_plastic,F_plastic);
+  C_elastic = right_Cauchy_Green__Particles__(F_elastic);
+
+  C_m1_elastic = Inverse__TensorLib__(C_elastic);
+
+  /* Get the S stress tensor */
+  for(int i = 0 ; i < Ndim  ; i++)
+  {
+   for(int j = 0 ; j < Ndim  ; j++)
+     {
+      for(int k = 0 ; k < Ndim  ; k++)
+      {
+        S_p.N[i][j] += 0.5*(C_m1_elastic.N[i][k]*Infinitesimal_Stress.N[k][j] + 
+                            Infinitesimal_Stress.N[k][i]*C_m1_elastic.N[k][j]);
+      }
+    }
+  }
 
   /* Get the stress tensor in the reference configuration (P_p) */
   for(int i = 0 ; i < Ndim  ; i++)
   {
-    for(int j = 0 ; j < Ndim  ; j++)
-    {
-      Finite_Stress.N[i][j] = 0.0;
+   for(int j = 0 ; j < Ndim  ; j++)
+     {
+      P_p.N[i][j] = 0.0;
 
       for(int k = 0 ; k < Ndim  ; k++)
       {
-        Finite_Stress.N[i][j] += Infinitesimal_Stress.N[i][k]*Fm1_total.N[j][k];
+        P_p.N[i][j] += F_total.N[i][k]*S_p.N[k][j];
       }
-
-      Finite_Stress.N[i][j] = J*Finite_Stress.N[i][j];
-
     }
   }
 
   /* Free memory */
-  free__TensorLib__(Fm1_total);
-  free__TensorLib__(C_total);
+  free__TensorLib__(F_trial_elastic);
+  free__TensorLib__(C_trial_elastic);
+  free__TensorLib__(E_trial_elastic);
   free__TensorLib__(C_elastic);
-  free__TensorLib__(E_elastic);
-  free__TensorLib__(Increment_E_plastic);
-  free__TensorLib__(D_F_plastic);
+  free__TensorLib__(C_m1_elastic);
   free__TensorLib__(Infinitesimal_Stress);
+  free__TensorLib__(S_p);
+  free__TensorLib__(Outputs_VarCons.Increment_E_plastic);
 
   return Outputs_VarCons;
 }

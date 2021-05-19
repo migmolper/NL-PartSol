@@ -19,8 +19,15 @@ static void print_Gauss_Point_vectorial_variable_to_csv(FILE *, Tensor);
 static void print_Gauss_Point_tensorial_variable_to_csv(FILE *, Tensor);
 /*****************************************************************/
 
-void path_nodes_analysis_csv__InOutFun__(Matrix Nodal_Field, Matrix Nodes_Coordinates, char * Name_File, Mask ActiveNodes, 
-									     Event Output_Commands, int idx, int TimeStep, double DeltaTimeStep)
+void path_nodes_analysis_csv__InOutFun__(
+	Matrix Nodal_Field,
+	Matrix Nodes_Coordinates,
+	char * Name_File,
+	Mask ActiveNodes, 
+	Event Output_Commands,
+	int idx,
+	int TimeStep,
+	double DeltaTimeStep)
 {
 	int Ndim    = NumberDimensions;
 	int NumCols = Nodal_Field.N_cols;
@@ -420,14 +427,12 @@ static void print_Gauss_Point_vectorial_variable_to_csv(FILE * csv_file, Tensor 
 {
 	int Ndim = NumberDimensions;	
 
-	if(Ndim == 2)
-	{
+#if NumberDimensions == 2
 		fprintf(csv_file,"%lf,%lf,", Variable.n[0], Variable.n[1]);
-	}
-	else if(Ndim == 3)
-	{
+#endif
+#if NumberDimensions == 3 
 		fprintf(csv_file,"%lf,%lf,%lf,", Variable.n[0], Variable.n[1], Variable.n[2]);
-	}
+#endif
 }
 
 
@@ -437,19 +442,17 @@ static void print_Gauss_Point_tensorial_variable_to_csv(FILE * csv_file, Tensor 
 {
 	int Ndim = NumberDimensions;
 
-	if(Ndim == 2)
-	{
+#if NumberDimensions == 2
 		fprintf(csv_file,"%lf,%lf,%lf,%lf,", 
 						Variable.N[0][0], Variable.N[0][1],
 						Variable.N[1][0], Variable.N[1][1]);
-	}
-	else if(Ndim == 3)
-	{
+#endif
+#if NumberDimensions == 3 
 		fprintf(csv_file,"%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,",
 						 Variable.N[0][0], Variable.N[0][1], Variable.N[0][2],
 						 Variable.N[1][0], Variable.N[1][1], Variable.N[1][2],
 						 Variable.N[2][0], Variable.N[2][1], Variable.N[2][2]);
-	}
+#endif
 
 }
 

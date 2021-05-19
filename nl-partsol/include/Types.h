@@ -292,9 +292,9 @@ typedef struct {
   Matrix dJ_dt;
 
   /*!
-   * Plastic deformation gradient
+   * Elastic deformation gradient
    */
-  Matrix F_plastic;
+  Matrix F_elastic;
   
   /*!
    * Strain during crack 

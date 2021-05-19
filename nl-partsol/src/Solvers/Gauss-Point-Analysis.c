@@ -29,8 +29,9 @@ void NonLinear_Gauss_Point_Analysis(Particle PointAnalysis)
   /* Particles variables */
   Tensor S_k; /* 2ª Piola-Kirchhoff stress tensor at k step */
   Tensor F_k; /* Deformation gradient tensor at k step */
+  Tensor D_F_k;
   Tensor C_k; /* Right Cauchy-Green tensor at k step */
-  Tensor F_plastic_k; /* Plastic deformation gradient at k step */
+  Tensor F_elastic_k; /* Plastic deformation gradient at k step */
   double J_k; /* Jacobian */
   Plastic_status Input_Plastic_Parameters;
   Plastic_status Output_Plastic_Parameters;
@@ -59,11 +60,12 @@ void NonLinear_Gauss_Point_Analysis(Particle PointAnalysis)
     {
 
     	J_k = I3__TensorLib__(F_k);
-      F_plastic_k = memory_to_tensor__TensorLib__(PointAnalysis.Phi.F_plastic.nM[k],2);
+      F_elastic_k = memory_to_tensor__TensorLib__(PointAnalysis.Phi.F_elastic.nM[k],2);
+      D_F_k = memory_to_tensor__TensorLib__(PointAnalysis.Phi.DF.nM[k],2);
       Input_Plastic_Parameters.Cohesion = PointAnalysis.Phi.cohesion.nV[k];
       Input_Plastic_Parameters.EPS = PointAnalysis.Phi.EPS.nV[k];
 
-      Output_Plastic_Parameters = finite_strains_plasticity_Von_Mises(S_k,F_plastic_k,F_k,Input_Plastic_Parameters, PointAnalysis.Mat[0], J_k);
+      Output_Plastic_Parameters = finite_strains_plasticity_Von_Mises(S_k,F_elastic_k,D_F_k,F_k,Input_Plastic_Parameters, PointAnalysis.Mat[0], J_k);
 
       /* Update variables (cohesion and EPS) */
       PointAnalysis.Phi.cohesion.nV[k] = Output_Plastic_Parameters.Yield_stress;
@@ -75,11 +77,12 @@ void NonLinear_Gauss_Point_Analysis(Particle PointAnalysis)
     {
 
     	J_k = I3__TensorLib__(F_k);
-    	F_plastic_k = memory_to_tensor__TensorLib__(PointAnalysis.Phi.F_plastic.nM[k],2);
+    	F_elastic_k = memory_to_tensor__TensorLib__(PointAnalysis.Phi.F_elastic.nM[k],2);
+      D_F_k = memory_to_tensor__TensorLib__(PointAnalysis.Phi.DF.nM[k],2);
     	Input_Plastic_Parameters.Cohesion = PointAnalysis.Phi.cohesion.nV[k];
     	Input_Plastic_Parameters.EPS = PointAnalysis.Phi.EPS.nV[k];
 
-      Output_Plastic_Parameters = finite_strains_plasticity_Drucker_Prager_Sanavia(S_k,F_plastic_k,F_k,Input_Plastic_Parameters,PointAnalysis.Mat[0],J_k);
+      Output_Plastic_Parameters = finite_strains_plasticity_Drucker_Prager_Sanavia(S_k,F_elastic_k,D_F_k,F_k,Input_Plastic_Parameters,PointAnalysis.Mat[0],J_k);
 
       /* Update variables (cohesion and EPS) */
       PointAnalysis.Phi.cohesion.nV[k] = Output_Plastic_Parameters.Cohesion;

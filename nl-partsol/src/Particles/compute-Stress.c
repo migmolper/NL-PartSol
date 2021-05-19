@@ -7,6 +7,8 @@ Tensor explicit_integration_stress__Particles__(
   Particle MPM_Mesh,
   Material MatProp)
 {   
+  int Ndim = NumberDimensions;
+
   Tensor Stress = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.Stress.nM[p],2); 
   Tensor Strain = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.Strain.nM[p], 2);
 
@@ -32,6 +34,8 @@ Tensor explicit_integration_stress__Particles__(
     Output_Plastic_Parameters = infinitesimal_strains_plasticity_Von_Mises(Stress, Strain, Input_Plastic_Parameters, MatProp);
 
     MPM_Mesh.Phi.EPS.nV[p] = Output_Plastic_Parameters.EPS;
+
+    free__TensorLib__(Output_Plastic_Parameters.Increment_E_plastic);
   }
   else
   {
@@ -55,8 +59,9 @@ Tensor forward_integration_Stress__Particles__(
   // Variables for the constitutive model
   double J_p;
   Tensor F_n1_p;
+  Tensor D_F_p;
   Tensor dFdt_n1_p;
-  Tensor F_plastic_p;
+  Tensor F_elastic_p;
   Plastic_status Input_Plastic_Parameters;
   Plastic_status Output_Plastic_Parameters;
 
@@ -82,10 +87,11 @@ Tensor forward_integration_Stress__Particles__(
   {
     J_p = MPM_Mesh.Phi.J.nV[p];
     F_n1_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n1.nM[p],2);
-    F_plastic_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_plastic.nM[p],2);
+    D_F_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.DF.nM[p],2);
+    F_elastic_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_elastic.nM[p],2);
     Input_Plastic_Parameters.EPS = MPM_Mesh.Phi.EPS.nV[p];
 
-    Output_Plastic_Parameters = finite_strains_plasticity_Von_Mises(P_p,F_plastic_p,F_n1_p,Input_Plastic_Parameters,MatProp_p,J_p);
+    Output_Plastic_Parameters = finite_strains_plasticity_Von_Mises(P_p,F_elastic_p,D_F_p,F_n1_p,Input_Plastic_Parameters,MatProp_p,J_p);
 
     MPM_Mesh.Phi.EPS.nV[p] = Output_Plastic_Parameters.EPS;
   }
@@ -93,11 +99,12 @@ Tensor forward_integration_Stress__Particles__(
   {
     J_p = MPM_Mesh.Phi.J.nV[p];
     F_n1_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n1.nM[p],2);
-    F_plastic_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_plastic.nM[p],2);
+    D_F_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.DF.nM[p],2);
+    F_elastic_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_elastic.nM[p],2);
     Input_Plastic_Parameters.Cohesion = MPM_Mesh.Phi.cohesion.nV[p];
     Input_Plastic_Parameters.EPS = MPM_Mesh.Phi.EPS.nV[p];
 
-    Output_Plastic_Parameters = finite_strains_plasticity_Drucker_Prager_Sanavia(P_p,F_plastic_p,F_n1_p,Input_Plastic_Parameters,MatProp_p,J_p);
+    Output_Plastic_Parameters = finite_strains_plasticity_Drucker_Prager_Sanavia(P_p,F_elastic_p,D_F_p,F_n1_p,Input_Plastic_Parameters,MatProp_p,J_p);
 
     MPM_Mesh.Phi.cohesion.nV[p] = Output_Plastic_Parameters.Cohesion;
     MPM_Mesh.Phi.EPS.nV[p] = Output_Plastic_Parameters.EPS;

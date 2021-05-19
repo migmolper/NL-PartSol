@@ -25,7 +25,7 @@ bool Out_dPw_dt;
 bool Out_strain;
 bool Out_eigenvalues_strain;
 bool Out_deformation_gradient;
-bool Out_plastic_deformation_gradient;
+bool Out_elastic_deformation_gradient;
 bool Out_energy;
 bool Out_Von_Mises;
 bool Out_EPS;
@@ -52,7 +52,7 @@ static void vtk_Out_Strain(FILE *, Matrix, int);
 static void vtk_Out_Strain_EV(FILE *, Matrix, int);
 static void vtk_Out_Deformation_Gradient(FILE *, Matrix, int);
 static void vtk_Out_Deformation_Energy(FILE *, Matrix, int);
-static void vtk_Out_Plastic_Deformation_Gradient(FILE *, Matrix, int);
+static void vtk_Out_Elastic_Deformation_Gradient(FILE *, Matrix, int);
 static void vtk_Out_Kinetic_Energy(FILE *, Matrix, Matrix, int);
 static void vtk_Out_Von_Mises(FILE *, Matrix, Matrix, int);
 static void vtk_Out_Equiv_Plastic_Strain(FILE *, Matrix, int);
@@ -226,9 +226,9 @@ void particle_results_vtk__InOutFun__(Particle MPM_Mesh, int TimeStep_i, int Res
     vtk_Out_Deformation_Gradient(Vtk_file, MPM_Mesh.Phi.F_n, NumParticles);    
   }
 
-  if(Out_plastic_deformation_gradient)
+  if(Out_elastic_deformation_gradient)
   {
-    vtk_Out_Plastic_Deformation_Gradient(Vtk_file, MPM_Mesh.Phi.F_plastic, NumParticles); 
+    vtk_Out_Elastic_Deformation_Gradient(Vtk_file, MPM_Mesh.Phi.F_elastic, NumParticles); 
   }
 
   /* Print particle energy */
@@ -701,16 +701,16 @@ static void vtk_Out_Deformation_Gradient(FILE * Vtk_file, Matrix F_n, int NumPar
 
 /*********************************************************************/
 
-static void vtk_Out_Plastic_Deformation_Gradient(FILE * Vtk_file, Matrix F_plastic, int NumParticles)
+static void vtk_Out_Elastic_Deformation_Gradient(FILE * Vtk_file, Matrix F_elastic, int NumParticles)
 {
   int Ndim = NumberDimensions;
 
-    fprintf(Vtk_file,"TENSORS PLASTIC-DEFORMATION-GRADIENT double \n");
+    fprintf(Vtk_file,"TENSORS ELASTIC-DEFORMATION-GRADIENT double \n");
   for(int i =  0 ; i<NumParticles ; i++){
     for(int j = 0 ; j<3 ; j++){
       for(int k = 0 ; k<3 ; k++){
   if((j<Ndim) && (k<Ndim)){
-    fprintf(Vtk_file,"%lf ",F_plastic.nM[i][j*Ndim+k]);
+    fprintf(Vtk_file,"%lf ",F_elastic.nM[i][j*Ndim+k]);
   }
   else{
     fprintf(Vtk_file,"%lf ",0.0);
