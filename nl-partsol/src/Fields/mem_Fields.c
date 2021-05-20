@@ -70,16 +70,16 @@ Fields allocate_Fields(int NumParticles)
   strcpy(Phi.dt_DF.Info,"Rate of increment deformation gradient");
 
   /*!
-    Elastic deformation gradient field (Tensor) + Initialise it with the indentity
+    Inverse plastic deformation gradient field (Tensor) + Initialise it with the indentity
   */
-  Phi.F_elastic = allocZ__MatrixLib__(NumParticles,Ndim*Ndim);
-  strcpy(Phi.F_elastic.Info,"Elastic deformation gradient");
+  Phi.F_m1_plastic = allocZ__MatrixLib__(NumParticles,Ndim*Ndim);
+  strcpy(Phi.F_m1_plastic.Info,"Inverse plastic deformation gradient");
  
   for(int p = 0 ; p<NumParticles ; p++)
   {
     for(int i = 0 ; i<Ndim ; i++)
     {
-      Phi.F_elastic.nM[p][i + i*Ndim] = 1.0;	  
+      Phi.F_m1_plastic.nM[p][i + i*Ndim] = 1.0;	  
     }
   }
 
@@ -236,16 +236,16 @@ Fields allocate_upw_vars__Fields__(int NumParticles)
   }
 
   /*!
-    Elastic deformation gradient field (Tensor) + Initialise it with the indentity
+    Inverse plastic deformation gradient field (Tensor) + Initialise it with the indentity
   */
-  Phi.F_elastic = allocZ__MatrixLib__(NumParticles,Ndim*Ndim);
-  strcpy(Phi.F_elastic.Info,"Elastic deformation gradient");
+  Phi.F_m1_plastic = allocZ__MatrixLib__(NumParticles,Ndim*Ndim);
+  strcpy(Phi.F_m1_plastic.Info,"Inverse plastic deformation gradient");
  
   for(int p = 0 ; p<NumParticles ; p++)
   {
     for(int i = 0 ; i<Ndim ; i++)
     {
-      Phi.F_elastic.nM[p][i + i*Ndim] = 1.0;
+      Phi.F_m1_plastic.nM[p][i + i*Ndim] = 1.0;
     }
   }
   
@@ -355,7 +355,7 @@ void free_Fields(Fields Phi)
   free__MatrixLib__(Phi.Stress);
   free__MatrixLib__(Phi.Strain);
   free__MatrixLib__(Phi.Strain_If);
-  free__MatrixLib__(Phi.F_elastic);
+  free__MatrixLib__(Phi.F_m1_plastic);
   free__MatrixLib__(Phi.F_n);
   free__MatrixLib__(Phi.F_n1);
   free__MatrixLib__(Phi.J);
@@ -395,7 +395,7 @@ void free_upw_vars__Fields__(Fields Phi)
   free__MatrixLib__(Phi.d2_Pw_dt2);
   free__MatrixLib__(Phi.Strain);
   free__MatrixLib__(Phi.Strain_If);
-  free__MatrixLib__(Phi.F_elastic);
+  free__MatrixLib__(Phi.F_m1_plastic);
   free__MatrixLib__(Phi.F_n);
   free__MatrixLib__(Phi.F_n1);
   free__MatrixLib__(Phi.DF);

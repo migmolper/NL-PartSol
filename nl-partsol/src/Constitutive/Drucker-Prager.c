@@ -35,8 +35,7 @@ static void   compute_finite_stress_tensor_elastic_region(Tensor, Tensor, Tensor
 
 Plastic_status finite_strains_plasticity_Drucker_Prager_Sanavia(
   Tensor P_p,
-  Tensor F_elastic,
-  Tensor D_F_total,
+  Tensor F_m1_plastic,
   Tensor F_total,
   Plastic_status Inputs_VarCons, 
   Material MatProp,
@@ -52,6 +51,7 @@ Plastic_status finite_strains_plasticity_Drucker_Prager_Sanavia(
   Tensor F_trial_elastic;
   Tensor C_trial_elastic;
   Tensor E_trial_elastic;
+  Tensor F_elastic;
   Tensor C_elastic;
   Tensor C_m1_elastic;
   Tensor Infinitesimal_Stress = alloc__TensorLib__(2);
@@ -62,7 +62,7 @@ Plastic_status finite_strains_plasticity_Drucker_Prager_Sanavia(
   Tensor S_p = alloc__TensorLib__(2);
 
   /* Compute the elastic right Cauchy-Green tensor using the intermediate configuration. */ 
-  F_trial_elastic = matrix_product__TensorLib__(D_F_total,F_elastic);
+  F_trial_elastic = matrix_product__TensorLib__(F_total,F_m1_plastic);
 
   C_trial_elastic = right_Cauchy_Green__Particles__(F_trial_elastic);
 
@@ -81,8 +81,11 @@ Plastic_status finite_strains_plasticity_Drucker_Prager_Sanavia(
     }
   }
 
-  /* Use the Cuitiño & Ortiz exponential maping to compute the increment of elastic finite strains */
-  update_elastic_deformation_gradient__Particles__(F_elastic,F_trial_elastic,Outputs_VarCons.Increment_E_plastic);
+  /* Use the Cuitiño & Ortiz exponential maping to compute the increment of plastic finite strains */
+  update_plastic_deformation_gradient__Particles__(Outputs_VarCons.Increment_E_plastic, F_m1_plastic);
+
+  /* Compute the elastic stress tensor */
+  F_elastic = matrix_product__TensorLib__(F_total,F_m1_plastic);
 
   /* Compute the inverse of the elastic right Cauchy-Green tensor */
   C_elastic = right_Cauchy_Green__Particles__(F_elastic);
@@ -135,6 +138,7 @@ Plastic_status finite_strains_plasticity_Drucker_Prager_Sanavia(
   free__TensorLib__(F_trial_elastic);
   free__TensorLib__(C_trial_elastic);
   free__TensorLib__(E_trial_elastic);
+  free__TensorLib__(F_elastic);
   free__TensorLib__(C_elastic);
   free__TensorLib__(C_m1_elastic);
   free__TensorLib__(Infinitesimal_Stress);

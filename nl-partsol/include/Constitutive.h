@@ -112,11 +112,11 @@ Matrix compute_D_matrix_Neo_Hookean_Wriggers(Tensor, double, Material);
 /*******************************************************/
 
 
-Plastic_status finite_strains_plasticity_Von_Mises(Tensor, Tensor, Tensor, Tensor, Plastic_status, Material, double);
+Plastic_status finite_strains_plasticity_Von_Mises(Tensor, Tensor, Tensor, Plastic_status, Material, double);
 Plastic_status infinitesimal_strains_plasticity_Von_Mises(Tensor, Tensor, Plastic_status, Material);
 /*******************************************************/  
 
-Plastic_status finite_strains_plasticity_Drucker_Prager_Sanavia(Tensor, Tensor, Tensor, Tensor, Plastic_status, Material, double);
+Plastic_status finite_strains_plasticity_Drucker_Prager_Sanavia(Tensor, Tensor, Tensor, Plastic_status, Material, double);
 Plastic_status infinitesimal_strains_plasticity_Drucker_Prager_Sanavia(Tensor, Tensor, Plastic_status, Material);
 /*******************************************************/
 
