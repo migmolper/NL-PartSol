@@ -92,6 +92,7 @@ Tensor forward_integration_Stress__Particles__(
     Output_Plastic_Parameters = finite_strains_plasticity_Von_Mises(P_p,F_m1_plastic_p,F_n1_p,Input_Plastic_Parameters,MatProp_p,J_p);
 
     MPM_Mesh.Phi.EPS.nV[p] = Output_Plastic_Parameters.EPS;
+    free__TensorLib__(Output_Plastic_Parameters.Increment_E_plastic);
   }
   else if((strcmp(MatProp_p.Type,"Drucker-Prager-Plane-Strain") == 0) || (strcmp(MatProp_p.Type,"Drucker-Prager-Outer-Cone") == 0))
   {
@@ -105,7 +106,7 @@ Tensor forward_integration_Stress__Particles__(
 
     MPM_Mesh.Phi.cohesion.nV[p] = Output_Plastic_Parameters.Cohesion;
     MPM_Mesh.Phi.EPS.nV[p] = Output_Plastic_Parameters.EPS;
-
+    free__TensorLib__(Output_Plastic_Parameters.Increment_E_plastic);
   }
   else
   {

@@ -397,11 +397,6 @@ void update_lambda_Newton_Rapson__LME__(
       */    
       J = J__LME__(l,p,r);
 
-      for(int i = 0 ; i<Ndim; i++)
-      {
-        J.nM[i][i] += norm_r;
-      }
-
       if(fabs(I3__MatrixLib__(J)) < TOL_zero)
       {
         fprintf(stderr,"%s %i : %s \n",
@@ -436,6 +431,7 @@ void update_lambda_Newton_Rapson__LME__(
     else
     {
       free__MatrixLib__(r);
+      free__MatrixLib__(p);
       break;
     }
     

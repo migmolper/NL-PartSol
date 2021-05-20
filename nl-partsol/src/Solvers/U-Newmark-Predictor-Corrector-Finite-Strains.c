@@ -139,8 +139,7 @@ void U_Newmark_Predictor_Corrector_Finite_Strains(Mesh FEM_Mesh, Particle MPM_Me
       print_Status("Seven step : Output variables and reset nodal values",TimeStep);
       print_Status("WORKING ...",TimeStep);
 
-      output_selector(MPM_Mesh, FEM_Mesh, ActiveNodes, Velocity, D_Displacement,
-                      Forces, Reactions, TimeStep, ResultsTimeStep);
+      output_selector(MPM_Mesh, FEM_Mesh, ActiveNodes, Velocity, D_Displacement,Forces, Reactions, TimeStep, ResultsTimeStep);
 
       /*
       	Free memory

@@ -98,8 +98,9 @@ void free__TensorLib__(Tensor A)
       free(A.n);
       break;
     case 2:
-      for(int i = 0 ; i<Ndim ; i++){
-	free(A.N[i]);
+      for(int i = 0 ; i<Ndim ; i++)
+      {
+	     free(A.N[i]);
       }
       break;
     default :

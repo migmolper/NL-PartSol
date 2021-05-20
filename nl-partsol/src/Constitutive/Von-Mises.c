@@ -53,10 +53,10 @@ Plastic_status finite_strains_plasticity_Von_Mises(
   Tensor F_elastic;
   Tensor C_elastic;
   Tensor C_m1_elastic;
-  Tensor Infinitesimal_Stress = alloc__TensorLib__(2);
   Tensor Increment_E_plastic;
   Tensor D_F_plastic;
   Tensor Fm1_plastic;
+  Tensor T_p = alloc__TensorLib__(2);
   Tensor M_p = alloc__TensorLib__(2);
   Tensor S_p = alloc__TensorLib__(2);
 
@@ -69,7 +69,7 @@ Plastic_status finite_strains_plasticity_Von_Mises(
   E_trial_elastic = logarithmic_strains__Particles__(C_trial_elastic);
 
   /* Start plastic algorithm in infinitesimal strains */
-  Outputs_VarCons = infinitesimal_strains_plasticity_Von_Mises(Infinitesimal_Stress, E_trial_elastic, Inputs_VarCons, MatProp);
+  Outputs_VarCons = infinitesimal_strains_plasticity_Von_Mises(T_p, E_trial_elastic, Inputs_VarCons, MatProp);
 
   /* Update the logarithmic strain tensor */
   for(int i = 0 ; i < Ndim  ; i++)
@@ -96,13 +96,12 @@ Plastic_status finite_strains_plasticity_Von_Mises(
    for(int j = 0 ; j < Ndim  ; j++)
      {
       /* Symmetric part */
-      M_p.N[i][j] += Infinitesimal_Stress.N[i][j];
+      M_p.N[i][j] += T_p.N[i][j];
 
       /* Kew symetric part */
       for(int k = 0 ; k < Ndim  ; k++)
       {
-        M_p.N[i][j] += E_trial_elastic.N[i][k]*Infinitesimal_Stress.N[k][j] - 
-                       Infinitesimal_Stress.N[i][k]*E_trial_elastic.N[k][j];
+        M_p.N[i][j] += E_trial_elastic.N[i][k]*T_p.N[k][j] - T_p.N[i][k]*E_trial_elastic.N[k][j];
       }
     }
   }
@@ -140,10 +139,9 @@ Plastic_status finite_strains_plasticity_Von_Mises(
   free__TensorLib__(F_elastic);
   free__TensorLib__(C_elastic);
   free__TensorLib__(C_m1_elastic);
-  free__TensorLib__(Infinitesimal_Stress);
+  free__TensorLib__(T_p);
   free__TensorLib__(M_p);
   free__TensorLib__(S_p);
-  free__TensorLib__(Outputs_VarCons.Increment_E_plastic);
 
   return Outputs_VarCons;
 }
@@ -170,7 +168,7 @@ Plastic_status infinitesimal_strains_plasticity_Von_Mises(
   double delta_Gamma;
   double Phi;
   double d_Phi;	
-  Tensor Increment_E_plastic = alloc__TensorLib__(2);
+  Tensor Increment_E_plastic;
 
   /* Load material marameters */
   double EPS = Inputs_VarCons.EPS;
@@ -207,6 +205,7 @@ Plastic_status infinitesimal_strains_plasticity_Von_Mises(
   if(Phi < TOL)
   {
     compute_finite_stress_tensor_elastic_region(sigma_k1, s_trial, p_trial, MatProp);
+    Increment_E_plastic = alloc__TensorLib__(2);
   }
   else
   {     
