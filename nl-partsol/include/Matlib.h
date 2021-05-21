@@ -94,7 +94,7 @@ int    inout__MatrixLib__(Matrix, Matrix);
 Matrix solve_polynomial__MatrixLib__(Matrix);
 Matrix nurbs_distance__MatrixLib__(Matrix);
 double point_distance__MatrixLib__(Matrix, Matrix);
-void   single_value_descomposition__MatrixLib__(Matrix,Matrix,Matrix);
+double rcond__MatrixLib__(Matrix);
 
 /*******************************************************/
 

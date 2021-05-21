@@ -1,5 +1,13 @@
 #include "nl-partsol.h"
 
+#ifdef __linux__
+#include <lapacke.h>
+
+#elif __APPLE__
+#include <Accelerate/Accelerate.h>
+
+#endif
+
 /*********************************************************************/
 
 /* Function for arrays declaration */
@@ -1221,19 +1229,44 @@ Matrix lumped__MatrixLib__(Matrix M_in)
 /*********************************************************************/
 
 
-/* void single_value_descomposition__MatrixLib__(Matrix A, Matrix W, Matrix V) */
-/* /\* */
-/*   This routine was adapted from the "Numerical recipies in C". */
-/*   Given a matrix A [m x n], this routine computes */
-/*   its singular value decomposition, A = U*W*VT.  */
-/*   Outputs : */
-/*   The matrix U [m x n] replaces A on output.  */
-/*   The matrix of singular values W [n x n].  */
-/*   The matrix V (not the transpose VT) is output as V [n x n].    */
-/* *\/ */
-/* { */
-  
-/* } */
+double rcond__MatrixLib__(Matrix A)
+/*
+  C = rcond(A) returns an estimate for the reciprocal condition of A in 1-norm. 
+  If A is well conditioned, rcond(A) is near 1.0. 
+  If A is badly conditioned, rcond(A) is near 0.
+*/
+{
+
+ double RCOND; 
+ double ANORM;
+ int INFO;
+ int N_rows = A.N_rows;
+ int N_cols = A.N_cols;
+ int LDA = IMAX(N_rows,N_cols);
+ double * WORK_ANORM = (double *)Allocate_Array(IMAX(1,N_rows),sizeof(double));
+ double * WORK_RCOND = (double *)Allocate_Array(4*N_rows,sizeof(double));
+ int * IWORK_RCOND = (int *)Allocate_Array(N_rows,sizeof(int));
+
+ // Compute 1-norm
+ ANORM = dlange_("1", &N_rows, &N_cols, A.nV, &LDA, WORK_ANORM);
+
+ // Compute the Reciprocal condition number
+ dgecon_("1", &N_rows, A.nV, &LDA, &ANORM, &RCOND, WORK_RCOND, IWORK_RCOND, &INFO);
+
+ if(INFO<0)
+ {
+  printf("Error in rcond__MatrixLib__() : the %i-th argument of dgecon_ had an illegal value\n",abs(INFO));
+  exit(EXIT_FAILURE);
+ }
+
+ // Free auxiliar memory
+ free(WORK_ANORM);
+ free(WORK_RCOND);
+ free(IWORK_RCOND);
+
+ return RCOND;
+}
+
 
 /*********************************************************************/
 

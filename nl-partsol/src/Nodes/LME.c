@@ -211,7 +211,7 @@ double beta__LME__(
     int Ndim = NumberDimensions;
     double C_ij;
     Matrix Metric = allocZ__MatrixLib__(Ndim,Ndim);
-//    Tensor Inverse_F = Inverse__TensorLib__(F);
+    Tensor Inverse_F = Inverse__TensorLib__(F);
 
     for(int i = 0 ; i < Ndim ; i++)
     {
@@ -229,8 +229,8 @@ double beta__LME__(
 
           for(int k = 0 ; k < Ndim ; k++)
           {
-            C_ij += F.N[k][i]*F.N[k][j];
-//            C_ij += Inverse_F.N[k][i]*Inverse_F.N[k][j];
+//            C_ij += F.N[k][i]*F.N[k][j];
+            C_ij += Inverse_F.N[k][i]*Inverse_F.N[k][j];
 //            C_ij += Inverse_F.N[i][k]*Inverse_F.N[j][k];
           }
 
@@ -240,7 +240,7 @@ double beta__LME__(
       }
     }
 
-//    free__TensorLib__(Inverse_F); 
+    free__TensorLib__(Inverse_F); 
 
    return Metric;
  }
@@ -390,18 +390,18 @@ void update_lambda_Newton_Rapson__LME__(
     /* 
       Check convergence
     */
-    if(norm_r > TOL_LME)
+    if(norm_r > TOL_zero)
     {
       /* 
         Get the Hessian of log(Z)
       */    
       J = J__LME__(l,p,r);
 
-      if(fabs(I3__MatrixLib__(J)) < TOL_zero)
+      if(rcond__MatrixLib__(J) < 1E-8)
       {
         fprintf(stderr,"%s %i : %s \n",
           "Error in lambda_Newton_Rapson__LME__ for particle",
-          Idx_particle,"The Hessian is singular !");
+          Idx_particle,"The Hessian near to singular matrix' !");
         exit(EXIT_FAILURE);
       }
     
