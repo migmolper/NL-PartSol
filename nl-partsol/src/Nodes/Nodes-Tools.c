@@ -547,6 +547,38 @@ Matrix get_nodes_coordinates__MeshTools__(
 
 /*********************************************************************/
 
+double point_distance__MeshTools__(Matrix End, Matrix Init)
+/*
+  Distance between two points.
+*/
+{
+  int Ndim = NumberDimensions;
+
+  if((End.N_rows != Init.N_rows) ||
+     (End.N_cols != Init.N_cols)){
+    printf("%s : %s \n",
+     "Error in point_distance__MeshTools__",
+     "Inputs arrays are not equal");
+    exit(EXIT_FAILURE);
+  }
+
+  double DIST = 0;
+
+  for(int i = 0 ; i<Ndim ; i++){
+
+    DIST += pow(End.nV[i] - Init.nV[i],2);
+
+  }
+
+  DIST = sqrt(DIST);
+  
+
+  return DIST;
+}
+
+
+/*********************************************************************/
+
 
 Matrix compute_distance__MeshTools__(
   ChainPtr Set,
@@ -643,7 +675,7 @@ int get_closest_node__MeshTools__(
   X_I = memory_to_matrix__MatrixLib__(Ndim,1,Coordinates.nM[I]);
 
   /* Get the distance from the node to the particle */
-  Distance_I = point_distance__MatrixLib__(X_p, X_I);
+  Distance_I = point_distance__MeshTools__(X_p, X_I);
       
   /* Get the distance from the node to the particle */
   DistMin = Distance_I;
@@ -662,7 +694,7 @@ int get_closest_node__MeshTools__(
     X_I = memory_to_matrix__MatrixLib__(Ndim,1,Coordinates.nM[I]);
 
     /* Get the distance from the node to the particle */
-    Distance_I = point_distance__MatrixLib__(X_p, X_I);
+    Distance_I = point_distance__MeshTools__(X_p, X_I);
       
     /* Get the max distance of the matrix */
     if(Distance_I < DistMin)

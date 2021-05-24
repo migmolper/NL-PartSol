@@ -47,30 +47,30 @@ static  void  solve_Nodal_Mass_Balance(Matrix,Matrix,Particle,Mesh,Mask,Mask);
 /* Step 7 */
 static  void  compute_Explicit_Newmark_Corrector(Particle,double,double);
 /* Step 8 */
-static  void  output_selector(Particle, Mesh, Mask, Matrix, Matrix, Matrix, Matrix, int, int);
+static  void  output_selector(Particle, Mesh, Mask, Matrix, Matrix, Matrix, Matrix, double, int, int);
 
 /**************************************************************/
 
-void upw_Newmark_Predictor_Corrector_Finite_Strains(Mesh FEM_Mesh, Particle MPM_Mesh, int InitialStep)
+void upw_Newmark_Predictor_Corrector_Finite_Strains(
+  Mesh FEM_Mesh,
+  Particle MPM_Mesh,
+  Time_Int_Params Parameters_Solver)
 {
 
-  /*
-    Integer variables 
-  */
-  int Ndim = NumberDimensions;
-  int Nactivenodes;
-
-  /*!
-    Control parameters of the generalized-alpha algorithm 
-    all the parameters are controled by a simple parameter :
-    SpectralRadius 
-  */
-  double gamma = 0.5;
-  double DeltaTimeStep;
 
   /*
     Auxiliar variables for the solver
   */
+  int Ndim = NumberDimensions;
+  int Nactivenodes;
+  int InitialStep = Parameters_Solver.InitialTimeStep;
+  int NumTimeStep = Parameters_Solver.NumTimeStep;  
+
+  double gamma = 0.5;
+  double CFL = Parameters_Solver.CFL;
+  double DeltaTimeStep;
+  double DeltaX = FEM_Mesh.DeltaX;
+
   Matrix Mass_Matrix_Mixture;
   Matrix Compressibility_Matrix_Fluid;
   Matrix Velocity;
@@ -82,6 +82,7 @@ void upw_Newmark_Predictor_Corrector_Finite_Strains(Mesh FEM_Mesh, Particle MPM_
   Matrix Reactions_Mixture;
   Matrix Mass_Exchanges_Source_Terms;
   Matrix Reactions_Fluid;
+
   Mask ActiveNodes;
   Mask Free_and_Restricted_Dofs;
 
@@ -89,7 +90,7 @@ void upw_Newmark_Predictor_Corrector_Finite_Strains(Mesh FEM_Mesh, Particle MPM_
     {
 
       print_Status("*************************************************",TimeStep);
-      DeltaTimeStep = DeltaT_Coussy__SolversLib__(MPM_Mesh, FEM_Mesh.DeltaX, 1.0);
+      DeltaTimeStep = DeltaT_Coussy__SolversLib__(MPM_Mesh, DeltaX, 1.0, CFL);
 
       ActiveNodes = generate_NodalMask__MeshTools__(FEM_Mesh);
       Nactivenodes = ActiveNodes.Nactivenodes;
@@ -172,7 +173,7 @@ void upw_Newmark_Predictor_Corrector_Finite_Strains(Mesh FEM_Mesh, Particle MPM_
       print_Status("WORKING ...",TimeStep);
 
       output_selector(MPM_Mesh, FEM_Mesh, ActiveNodes, Velocity, D_Displacement,
-                    Total_Forces_Mixture, Reactions_Mixture, TimeStep, ResultsTimeStep);
+                    Total_Forces_Mixture, Reactions_Mixture, DeltaTimeStep, TimeStep, ResultsTimeStep);
 
       /*
       	Free memory.
@@ -2156,6 +2157,7 @@ static void output_selector(
   Matrix D_Displacement,
   Matrix Forces,
   Matrix Reactions,
+  double DeltaTimeStep,
   int TimeStep,
   int ResultsTimeStep)
 /*

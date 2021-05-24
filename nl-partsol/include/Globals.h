@@ -18,21 +18,11 @@ extern Mixture * Soil_Water_Mixtures;
 
 // Global variables for the LME shape functions
 extern int max_iter_LME;
-extern double TOL_LME;
+extern double TOL_zero_LME;
+extern double TOL_wrapper_LME;
 extern double gamma_LME;
 extern double curvature_LME;
 extern char   wrapper_LME[MAXC];
-
-// Global variables for the time-integrator 
-extern double CFL;
-extern double DeltaTimeStep;
-extern double Error0;
-extern double SpectralRadius;
-extern double epsilon_Mass_Matrix;
-extern double beta_Newmark_beta;
-extern double gamma_Newmark_beta;
-extern double TOL_Newmark_beta;
-extern int NumTimeStep;
 
 // Parameter for plain stress simulations
 extern double Thickness_Plain_Stress;

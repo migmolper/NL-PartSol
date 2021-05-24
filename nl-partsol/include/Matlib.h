@@ -48,7 +48,6 @@ static int imin_arg1, imin_arg2;
 Matrix Newton_Rapson(Matrix(* Function)(Matrix, Matrix), Matrix,
 		     Matrix(* Jacobian)(Matrix, Matrix), Matrix,
 		     Matrix,Matrix);
-Matrix Solve_Linear_Sistem(Matrix, Matrix);
 Matrix Conjugate_Gradient_Method(Matrix,Matrix,Matrix);
 Matrix Jacobi_Conjugate_Gradient_Method(Matrix,Matrix,Matrix);
 Matrix One_Iteration_Lumped(Matrix, Matrix, Matrix);
@@ -76,7 +75,6 @@ Matrix copy__MatrixLib__(Matrix);
 double norm__MatrixLib__(Matrix, int);
 double Euclidean_distance__MatrixLib__(Matrix);
 double generalised_Euclidean_distance__MatrixLib__(Matrix, Matrix);
-double conditioning__MatrixLib__(Matrix, double);
 Matrix inverse__MatrixLib__(Matrix);
 Matrix transpose__MatrixLib__(Matrix);
 double I3__MatrixLib__(Matrix);
@@ -88,14 +86,9 @@ Matrix increment__MatrixLib__(Matrix, Matrix);
 Matrix addition__MatrixLib__(Matrix, Matrix);
 Matrix substraction__MatrixLib__(Matrix, Matrix);
 Matrix lumped__MatrixLib__(Matrix);
-double area__MatrixLib__(Matrix);
-Matrix centroid__MatrixLib__(Matrix);
-int    inout__MatrixLib__(Matrix, Matrix);
 Matrix solve_polynomial__MatrixLib__(Matrix);
-Matrix nurbs_distance__MatrixLib__(Matrix);
-double point_distance__MatrixLib__(Matrix, Matrix);
 double rcond__MatrixLib__(Matrix);
-
+Matrix solve__MatrixLib__(Matrix, Matrix);
 /*******************************************************/
 
 /*

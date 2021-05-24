@@ -98,34 +98,6 @@ Matrix Newton_Rapson(Matrix(* Function)(Matrix, Matrix),Matrix Parameter_F,
 
 /*********************************************************************/
 
-Matrix Solve_Linear_Sistem(Matrix K, Matrix F)
-/*
-
- */
-{
-  int Bool = K.N_cols>3;
-  Matrix Km1;
-  Matrix U;
-  
-  switch(Bool){
-  case 0 :
-    Km1 = inverse__MatrixLib__(K);
-    U = matrix_product__MatrixLib__(Km1,F);
-    free__MatrixLib__(Km1);
-    return U; 
-  case 1 :
-    puts("fix U");
-    exit(EXIT_FAILURE);
-    U = Conjugate_Gradient_Method(K,F,U);
-    return U;
-  default :
-    exit(EXIT_FAILURE);
-  }
-
-}
-
-/*********************************************************************/
-
 Matrix Conjugate_Gradient_Method(Matrix K, Matrix F, Matrix U0)
 /*!
  *

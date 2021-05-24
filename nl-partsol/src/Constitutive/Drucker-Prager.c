@@ -7,6 +7,8 @@ Call global variables
 double TOL_Radial_Returning;
 int Max_Iterations_Radial_Returning;
 
+double Error0;
+
 /*
   Auxiliar functions 
 */

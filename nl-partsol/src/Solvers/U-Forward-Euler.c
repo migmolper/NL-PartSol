@@ -3,7 +3,6 @@
 /*
   Call global variables
 */
-double DeltaTimeStep;
 double Thickness_Plain_Stress;
 
 /*
@@ -13,7 +12,7 @@ static void   update_Particles(Particle, Mesh, Matrix, Matrix, double);
 static Matrix compute_NodalMomentumMass(Particle, Mesh);
 static void   imposed_Momentum(Mesh, Matrix, int);
 static Matrix compute_Nodal_Velocity(Mesh, Matrix);
-static void   update_Nodal_Momentum(Mesh, Matrix, Matrix);
+static void   update_Nodal_Momentum(Mesh, Matrix, Matrix, double);
 static void   update_LocalState(Matrix, Particle,Mesh, double);
 static Matrix compute_InternalForces(Matrix, Particle,Mesh);
 static Matrix compute_BodyForces(Matrix, Particle, Mesh, int);
@@ -22,16 +21,23 @@ static Matrix compute_Reactions(Mesh, Matrix);
 
 /**************************************************************/
 
-void U_Forward_Euler(Mesh FEM_Mesh, Particle MPM_Mesh, int InitialStep)
+void U_Forward_Euler(
+  Mesh FEM_Mesh,
+  Particle MPM_Mesh,
+  Time_Int_Params Parameters_Solver)
 {
 
-  /*!
-    Integer variables 
+  /*
+    Auxiliar variables 
   */
   int Ndim = NumberDimensions;
   int Nnodes = FEM_Mesh.NumNodesMesh;
+  int InitialTimeStep= Parameters_Solver.InitialTimeStep; 
+  int NumTimeStep = Parameters_Solver.NumTimeStep;
+  double CFL = Parameters_Solver.CFL;
+  double DeltaTimeStep;
 
-  /*!
+  /*
     Auxiliar variable for the mass and momentum 
   */
   Matrix Phi_I;
@@ -40,11 +46,11 @@ void U_Forward_Euler(Mesh FEM_Mesh, Particle MPM_Mesh, int InitialStep)
   Matrix F_I;
   Matrix R_I;
 
-  for(int TimeStep = InitialStep ; TimeStep<NumTimeStep ; TimeStep++ )
+  for(int TimeStep = InitialTimeStep ; TimeStep<NumTimeStep ; TimeStep++ )
     {
 
       print_Status("*************************************************",TimeStep);
-      DeltaTimeStep = DeltaT_CFL(MPM_Mesh, FEM_Mesh.DeltaX);
+      DeltaTimeStep = U_DeltaT__SolversLib__(MPM_Mesh, FEM_Mesh.DeltaX, CFL);
       print_step(TimeStep,DeltaTimeStep);
 
       print_Status("*************************************************",TimeStep);
@@ -66,7 +72,7 @@ void U_Forward_Euler(Mesh FEM_Mesh, Particle MPM_Mesh, int InitialStep)
 
       print_Status("*************************************************",TimeStep);
       print_Status(" Third step : Update nodal momentum ... WORKING",TimeStep);
-      update_Nodal_Momentum(FEM_Mesh,Phi_I,F_I);
+      update_Nodal_Momentum(FEM_Mesh,Phi_I,F_I,DeltaTimeStep);
       print_Status("DONE !!!",TimeStep);
     
       print_Status("*************************************************",TimeStep);
@@ -314,7 +320,7 @@ static Matrix compute_Nodal_Velocity(Mesh FEM_Mesh, Matrix Phi_I)
 
 /*******************************************************/
 
-static void update_Nodal_Momentum(Mesh FEM_Mesh, Matrix Phi_I, Matrix F_I)
+static void update_Nodal_Momentum(Mesh FEM_Mesh, Matrix Phi_I, Matrix F_I, double DeltaTimeStep)
 /*!
  * \brief Brief description of UpdateGridNodalMomentum.
  *        Compute the nodal contribution of each GP to the total forces.

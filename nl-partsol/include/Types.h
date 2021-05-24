@@ -775,20 +775,59 @@ typedef struct {
  */
 typedef struct {
 
-  /*! 
-   * Generalized alpha parameter alpha 
-   */
-  double GA_alpha;
+  /*!
+  * Courant number
+  */ 
+  double CFL;
 
   /*!
-   * Generalized alpha parameter alpha 
+   * Material celerity 
    */
-  double GA_beta;
+  double Cel;
 
   /*!
-   * Generalized alpha parameter gamma 
+  * Initial step
+  */
+  int InitialTimeStep;
+
+  /*!
+  * Número de pasos de tiempo
+  */
+  int NumTimeStep;
+
+  /*!
+  * Simulation time
+  */
+  double FinalTime;
+
+  /*!
+  * Parameter to generate a mass matrix
+  */
+  double epsilon_Mass_Matrix;
+
+  /*!
+  * Conserving Energy-Momentum parameters 
+  */
+  double TOL_Conserving_Energy_Momentum;
+
+  /*!
+   * Generalized alpha parameters 
    */
-  double GA_gamma;
+  double rb_Generalized_alpha;
+  double TOL_Generalized_alpha;
+
+  /*!
+  * Newmark parameters
+  */
+  double beta_Newmark_beta;   
+  double gamma_Newmark_beta;
+  double TOL_Newmark_beta;
+
+
+  /*!
+  * Maximum number of interations
+  */
+  int MaxIter;
   
 } Time_Int_Params;
 

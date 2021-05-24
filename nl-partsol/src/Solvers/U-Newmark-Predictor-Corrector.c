@@ -21,19 +21,20 @@ static Matrix compute_Reactions(Mesh, Matrix);
 
 /**************************************************************/
 
-void U_Newmark_Predictor_Corrector(Mesh FEM_Mesh, Particle MPM_Mesh, int InitialStep)
+void U_Newmark_Predictor_Corrector(
+  Mesh FEM_Mesh,
+  Particle MPM_Mesh,
+  Time_Int_Params Parameters_Solver)
 {
 
   int Ndim = NumberDimensions;
   int Nnodes = FEM_Mesh.NumNodesMesh;
+  int InitialStep = Parameters_Solver.InitialTimeStep;
+  int NumTimeStep = Parameters_Solver.NumTimeStep;  
 
-  /*!
-    Control parameters of the generalized-alpha algorithm 
-    all the parameters are controled by a simple parameter :
-    SpectralRadius 
-  */
+  double DeltaTimeStep;
   double gamma = 0.5;
-
+  double CFL = Parameters_Solver.CFL;
   /*!
     Auxiliar variable for the mass and momentum 
   */
@@ -46,7 +47,7 @@ void U_Newmark_Predictor_Corrector(Mesh FEM_Mesh, Particle MPM_Mesh, int Initial
   for(int TimeStep = InitialStep ; TimeStep<NumTimeStep ; TimeStep++ )
     {
       print_Status("*************************************************",TimeStep);
-      DeltaTimeStep = DeltaT_CFL(MPM_Mesh, FEM_Mesh.DeltaX);
+      DeltaTimeStep = U_DeltaT__SolversLib__(MPM_Mesh, FEM_Mesh.DeltaX, CFL);
       print_step(TimeStep,DeltaTimeStep);
 
       print_Status("*************************************************",TimeStep);

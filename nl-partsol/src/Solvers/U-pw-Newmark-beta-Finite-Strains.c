@@ -12,10 +12,6 @@
   Call global variables
 */
 double Thickness_Plain_Stress;
-double epsilon_Mass_Matrix; 
-double beta_Newmark_beta;   
-double gamma_Newmark_beta;
-double TOL_Newmark_beta;
 Event * Out_nodal_path_csv;
 Event * Out_particles_path_csv;
 int Number_Out_nodal_path_csv;
@@ -76,47 +72,54 @@ static  void  standard_error();
 
 /**************************************************************/
 
-void upw_Newmark_beta_Finite_Strains(Mesh FEM_Mesh, Particle MPM_Mesh, int InitialStep)
+void upw_Newmark_beta_Finite_Strains(
+  Mesh FEM_Mesh,
+  Particle MPM_Mesh,
+  Time_Int_Params Parameters_Solver)
 {
 
   /*
-    Integer variables 
+    Auxiliar variables for the solver
   */
   int Ndim = NumberDimensions;
   int Ndof = NumberDOF;
   int Nactivenodes;
-  /*
-    Auxiliar variables for the solver
-  */
+  int InitialStep = Parameters_Solver.InitialTimeStep;
+  int NumTimeStep = Parameters_Solver.NumTimeStep;  
+  int MaxIter = Parameters_Solver.MaxIter;
+  int Iter;
+
+  double TOL = Parameters_Solver.TOL_Newmark_beta;
+  double epsilon = Parameters_Solver.epsilon_Mass_Matrix;
+  double beta = Parameters_Solver.beta_Newmark_beta;
+  double gamma = Parameters_Solver.gamma_Newmark_beta;
+  double CFL = Parameters_Solver.CFL;
+  double DeltaTimeStep;
+  double DeltaX = FEM_Mesh.DeltaX;
+
+  bool Convergence;
+
   Matrix Effective_Mass;
   Nodal_Field D_upw;
   Nodal_Field upw_n;
   Matrix Residual;
   Matrix Tangent_Stiffness;
+
   Mask ActiveNodes;
   Mask Free_and_Restricted_Dofs;
-  double TOL = TOL_Newmark_beta;
-  double epsilon = epsilon_Mass_Matrix;
-  double beta = beta_Newmark_beta;
-  double gamma = gamma_Newmark_beta;
 
   /*
     Alpha parameters for the Newmark-beta
   */
   Newmark_parameters Params;
   
-  double DeltaTimeStep;
-  bool Convergence;
-  int Iter = 0;
-  int MaxIter = 2;
-
   /*
     Time step is defined at the init of the simulation throught the
     CFL condition. Notice that for this kind of solver, CFL confition is
     not required to be satisfied. The only purpose of it is to use the existing
     software interfase.
   */
-  DeltaTimeStep = DeltaT_Coussy__SolversLib__(MPM_Mesh, FEM_Mesh.DeltaX, 1.0); 
+  DeltaTimeStep = DeltaT_Coussy__SolversLib__(MPM_Mesh, DeltaX, 1.0, CFL); 
   Params = compute_Newmark_parameters(beta, gamma, DeltaTimeStep);
 
   for(int TimeStep = InitialStep ; TimeStep<NumTimeStep ; TimeStep++ )

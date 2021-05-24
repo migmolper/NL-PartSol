@@ -333,15 +333,16 @@ Particle Generate_Soil_Water_Coupling_Analysis__InOutFun__(char *, Mesh);
 
 /*!
 
-  \fn void Solver_selector__InOutFun__(char * File)
+  \fn void Solver_selector__InOutFun__(char * File, double DeltaX)
 
   \brief Function to define the solver
   
   \param File: Name of the file with the instructions
+  \param DeltaX : Minimum mesh size
 
 }
 */
-void Solver_selector__InOutFun__(char * );
+Time_Int_Params Solver_selector__InOutFun__(char *, double);
 /*****************************************************************/
 
 /*!

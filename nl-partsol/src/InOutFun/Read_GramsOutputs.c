@@ -6,7 +6,7 @@
 */
 
 int ResultsTimeStep;
-int NumTimeStep;
+//int NumTimeStep//////;
 
 char OutputDir[MAXC];
 char OutputParticlesFile[MAXC];
@@ -337,10 +337,10 @@ static void read_Output_intervals(char * Interval_message)
 
     /* Get interval output and store in a global variable */
     ResultsTimeStep = atoi(Parse_message[1]);
-    if(ResultsTimeStep > NumTimeStep)
-      {
-      	standard_error("The result time step should be less than the total time steps");
-      }
+//    if(ResultsTimeStep > NumTimeStep)
+//      {
+//      	standard_error("The result time step should be less than the total time steps");
+//      }
 
     /* Print in screen some information */
     printf("\t -> %s : %i \n","Output values each",ResultsTimeStep);

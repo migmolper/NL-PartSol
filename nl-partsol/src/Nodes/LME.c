@@ -19,7 +19,8 @@ static void shrinkage_Nelder_Mead__LME__(Matrix,Matrix,Matrix,Matrix,double);
 char wrapper_LME[MAXC];
 double gamma_LME;
 double curvature_LME;
-double TOL_LME;
+double TOL_zero_LME;
+double TOL_wrapper_LME;
 int max_iter_LME;
 
 // Nelder-Mead parameters
@@ -318,25 +319,22 @@ static void initialise_lambda__LME__(
     }
   }
 
-
-  if(fabs(I3__MatrixLib__(A)) < TOL_zero)
+  // Solve the system
+  if(rcond__MatrixLib__(A) < 1E-8)
   {
-    strcpy(A.Info,"A");
-    print__MatrixLib__(A,Ndim,Ndim);
     fprintf(stderr,"%s %i : %s \n",
       "Error in initialise_lambda__LME__ for particle",
-      Idx_particle,"Determinant of A is null !");
+      Idx_particle,"The Hessian near to singular matrix!");
     exit(EXIT_FAILURE);
   }
 
-  // Solve the system
-  x = Solve_Linear_Sistem(A,b);
+
+  x = solve__MatrixLib__(A,b);
 
   // Update the value of lambda
   for(int i = 0 ; i<Ndim ; i++)
   {
     lambda.nV[i] = x.nV[i];
- //   lambda.nV[i] = 1.0;
   }
 
   // Free memory
@@ -390,7 +388,7 @@ void update_lambda_Newton_Rapson__LME__(
     /* 
       Check convergence
     */
-    if(norm_r > TOL_zero)
+    if(norm_r > TOL_wrapper_LME)
     {
       /* 
         Get the Hessian of log(Z)
@@ -401,14 +399,14 @@ void update_lambda_Newton_Rapson__LME__(
       {
         fprintf(stderr,"%s %i : %s \n",
           "Error in lambda_Newton_Rapson__LME__ for particle",
-          Idx_particle,"The Hessian near to singular matrix' !");
+          Idx_particle,"The Hessian near to singular matrix!");
         exit(EXIT_FAILURE);
       }
     
       /*
         Get the increment of lambda
       */
-      D_lambda = Solve_Linear_Sistem(J,r);
+      D_lambda = solve__MatrixLib__(J,r);
 
       /*
         Update the value of lambda
@@ -515,7 +513,7 @@ void update_lambda_Nelder_Mead__LME__(
     logZ_n1 = logZ.nV[Nnodes_simplex-1];
 
     // Check convergence
-    if(fabs(logZ_0 - logZ_n1) > TOL_LME)
+    if(fabs(logZ_0 - logZ_n1) > TOL_wrapper_LME)
     {
 
       // Spin the simplex to get the simplex with the smallest normalized volume
@@ -1084,7 +1082,7 @@ ChainPtr tributary__LME__(
   int NumTributaryNodes = 0;
 
   /* Get the search radius */
-  double Ra = sqrt(-log(TOL_LME)/Beta_p);
+  double Ra = sqrt(-log(TOL_zero_LME)/Beta_p);
 
   /* Get nodes close to the particle */
   Set_Nodes0 = FEM_Mesh.NodalLocality[I0];

@@ -38,6 +38,9 @@ Matrix   compute_dN__MeshTools__(Element, Particle, Mesh);
 Matrix   get_nodes_coordinates__MeshTools__(ChainPtr, Matrix);
 /********************************************************************/
 
+double point_distance__MeshTools__(Matrix, Matrix);
+/********************************************************************/
+
 Matrix   compute_distance__MeshTools__(ChainPtr, Matrix, Matrix);
 /********************************************************************/
 

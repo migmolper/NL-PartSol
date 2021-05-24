@@ -11,10 +11,7 @@
 /*
   Call global variables
 */
-double epsilon_Mass_Matrix; 
-double beta_Newmark_beta;   
-double gamma_Newmark_beta;
-double TOL_Newmark_beta;
+double Thickness_Plain_Stress;
 Event * Out_nodal_path_csv;
 Event * Out_particles_path_csv;
 int Number_Out_nodal_path_csv;
@@ -59,20 +56,35 @@ static Matrix compute_Nodal_BDB(Matrix, Tensor, Tensor, Tensor);
 static void   solve_non_reducted_system(Matrix, Matrix, Matrix, Matrix, Newmark_parameters);
 static void   solve_reducted_system(Mask,Matrix, Matrix, Matrix, Matrix, Newmark_parameters);
 static void   update_Particles(Matrix, Matrix, Matrix, Particle, Mesh, Mask, Newmark_parameters);
-static void   output_selector(Particle, Mesh, Mask, Matrix, Matrix, Matrix, Matrix, Matrix, Matrix, int, int);
+static void   output_selector(Particle, Mesh, Mask, Matrix, Matrix, Matrix, Matrix, Matrix, Matrix, double, int, int);
 /**************************************************************/
 
-void U_Newmark_beta_Finite_Strains_BDB(Mesh FEM_Mesh, Particle MPM_Mesh, int InitialStep)
+void U_Newmark_beta_Finite_Strains_BDB(
+  Mesh FEM_Mesh,
+  Particle MPM_Mesh,
+  Time_Int_Params Parameters_Solver)
 {
 
   /*
-    Integer variables 
+    Auxiliar variables for the solver
   */
   int Ndim = NumberDimensions;
   int Nactivenodes;
-  /*
-    Auxiliar variables for the solver
-  */
+  int InitialStep = Parameters_Solver.InitialTimeStep;
+  int NumTimeStep = Parameters_Solver.NumTimeStep;  
+  int MaxIter = Parameters_Solver.MaxIter;
+  int Iter;
+
+  double TOL = Parameters_Solver.TOL_Newmark_beta;
+  double epsilon = Parameters_Solver.epsilon_Mass_Matrix;
+  double beta = Parameters_Solver.beta_Newmark_beta;
+  double gamma = Parameters_Solver.gamma_Newmark_beta;
+  double CFL = Parameters_Solver.CFL;
+  double DeltaTimeStep;
+  double DeltaX = FEM_Mesh.DeltaX;
+
+  bool Convergence;
+
   Matrix Effective_Mass;
   Matrix Tangent_Stiffness;
   Matrix Forces;
@@ -82,22 +94,12 @@ void U_Newmark_beta_Finite_Strains_BDB(Mesh FEM_Mesh, Particle MPM_Mesh, int Ini
   Matrix Acceleration;
   Matrix D_Displacement;
   Matrix Residual;
+
   Mask ActiveNodes;
   Mask Free_and_Restricted_Dofs;
-  double TOL = TOL_Newmark_beta;
-  double epsilon = epsilon_Mass_Matrix;
-  double beta = beta_Newmark_beta;
-  double gamma = gamma_Newmark_beta;
 
-  /*
-    Alpha parameters for the Newmark-beta
-  */
   Newmark_parameters Params;
-  
-  double DeltaTimeStep;
-  bool Convergence;
-  int Iter = 0;
-  int MaxIter = 100;
+
 
   /*
     Time step is defined at the init of the simulation throught the
@@ -105,7 +107,7 @@ void U_Newmark_beta_Finite_Strains_BDB(Mesh FEM_Mesh, Particle MPM_Mesh, int Ini
     not required to be satisfied. The only purpose of it is to use the existing
     software interfase.
   */
-  DeltaTimeStep = DeltaT_CFL(MPM_Mesh, FEM_Mesh.DeltaX);
+  DeltaTimeStep = U_DeltaT__SolversLib__(MPM_Mesh, DeltaX, CFL);
  
   /*
     Compute alpha parameters
@@ -249,7 +251,7 @@ void U_Newmark_beta_Finite_Strains_BDB(Mesh FEM_Mesh, Particle MPM_Mesh, int Ini
       output_selector(MPM_Mesh, FEM_Mesh, ActiveNodes,
                       Velocity, Acceleration, D_Displacement,
                       Forces, Reactions, Residual,
-                      TimeStep, ResultsTimeStep);
+                      DeltaTimeStep, TimeStep, ResultsTimeStep);
 
     
 
@@ -2081,10 +2083,19 @@ static void update_Particles(Matrix D_Displacement,
 
 /**************************************************************/
 
-static void output_selector(Particle MPM_Mesh, Mesh FEM_Mesh, Mask ActiveNodes,
-                            Matrix Velocity, Matrix Acceleration, Matrix D_Displacement,
-                            Matrix Forces, Matrix Reactions, Matrix Residual,
-                            int TimeStep, int ResultsTimeStep)
+static void output_selector(
+  Particle MPM_Mesh, 
+  Mesh FEM_Mesh,
+  Mask ActiveNodes,
+  Matrix Velocity,
+  Matrix Acceleration,
+  Matrix D_Displacement,
+  Matrix Forces,
+  Matrix Reactions,
+  Matrix Residual,
+  double DeltaTimeStep,
+  int TimeStep, 
+  int ResultsTimeStep)
 {
 
   /*

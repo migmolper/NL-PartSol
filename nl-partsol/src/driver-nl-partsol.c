@@ -31,12 +31,12 @@ static void standard_error(char * Error_message);
 
 int main(int argc, char * argv[])
 {  
-  int InitialStep;
   char Error_message[MAXW];
   bool Is_New_Simulation = false;
   bool Is_Restart_Simulation = false;
   Mesh FEM_Mesh;
   Particle MPM_Mesh;
+  Time_Int_Params Parameters_Solver;
 
   /*********************************************************************/
   /************ Read simulation file and kind of simulation ************/
@@ -53,8 +53,8 @@ int main(int argc, char * argv[])
       Formulation = argv[1];
       SimulationFile = argv[2];
       Is_New_Simulation = true;
-      Is_Restart_Simulation = false;
-      InitialStep = 0;
+//      Is_Restart_Simulation = false;
+//      InitialStep = 0;
     }
   else if(argc == 4)
     {      
@@ -62,8 +62,8 @@ int main(int argc, char * argv[])
       SimulationFile = argv[2];
       RestartFile = argv[3];
       Is_New_Simulation = false;
-      Is_Restart_Simulation = true;
-      InitialStep = get_ResultStep(RestartFile);
+//      Is_Restart_Simulation = true;
+//      InitialStep = get_ResultStep(RestartFile);
     }
   else
     {
@@ -83,19 +83,19 @@ int main(int argc, char * argv[])
 
       puts("*************************************************");
       puts("Read solver ...");
-      Solver_selector__InOutFun__(SimulationFile);
+      Parameters_Solver = Solver_selector__InOutFun__(SimulationFile,FEM_Mesh.DeltaX);
 
       puts("*************************************************");
-      if(Is_New_Simulation)
-      {
-        puts("Generating new MPM simulation ...");
-        MPM_Mesh = GramsSolid(SimulationFile,FEM_Mesh);
-      }
-      if(Is_Restart_Simulation)
-      {
-        puts("Restarting old MPM simulation ...");
-        MPM_Mesh = restart_Simulation(SimulationFile,RestartFile,FEM_Mesh);
-      }
+//      if(Is_New_Simulation)
+//      {
+      puts("Generating new MPM simulation ...");
+      MPM_Mesh = GramsSolid(SimulationFile,FEM_Mesh);
+//      }
+//      if(Is_Restart_Simulation)
+//      {
+//        puts("Restarting old MPM simulation ...");
+//        MPM_Mesh = restart_Simulation(SimulationFile,RestartFile,FEM_Mesh);
+//      }
 
       puts("*************************************************");
       puts("Read outputs ...");
@@ -107,31 +107,31 @@ int main(int argc, char * argv[])
       puts("Run simulation ...");
       if(strcmp(TimeIntegrationScheme,"FE") == 0 )
       { 
-        U_Forward_Euler(FEM_Mesh, MPM_Mesh, InitialStep);
+        U_Forward_Euler(FEM_Mesh, MPM_Mesh, Parameters_Solver);
       }
       else if(strcmp(TimeIntegrationScheme,"GA") == 0 )
       { 
-        U_GA(FEM_Mesh, MPM_Mesh, InitialStep);
+        U_Generalized_alpha(FEM_Mesh, MPM_Mesh, Parameters_Solver);
       }
       else if(strcmp(TimeIntegrationScheme,"NPC") == 0 )
       { 
-        U_Newmark_Predictor_Corrector(FEM_Mesh, MPM_Mesh, InitialStep);
+        U_Newmark_Predictor_Corrector(FEM_Mesh, MPM_Mesh, Parameters_Solver);
       }
       else if(strcmp(TimeIntegrationScheme,"NPC-FS") == 0 )
       { 
-        U_Newmark_Predictor_Corrector_Finite_Strains(FEM_Mesh, MPM_Mesh, InitialStep);
+        U_Newmark_Predictor_Corrector_Finite_Strains(FEM_Mesh, MPM_Mesh, Parameters_Solver);
       }
       else if(strcmp(TimeIntegrationScheme,"Discrete-Energy-Momentum") == 0 )
       { 
-        U_Discrete_Energy_Momentum(FEM_Mesh, MPM_Mesh, InitialStep);
+        U_Discrete_Energy_Momentum(FEM_Mesh, MPM_Mesh, Parameters_Solver);
       }
       else if(strcmp(TimeIntegrationScheme,"Newmark-beta-Finite-Strains") == 0 )
       {
-        U_Newmark_beta_Finite_Strains(FEM_Mesh, MPM_Mesh, InitialStep);
+        U_Newmark_beta_Finite_Strains(FEM_Mesh, MPM_Mesh, Parameters_Solver);
       }
       else if(strcmp(TimeIntegrationScheme,"Newmark-beta-Finite-Strains-BDB") == 0 )
       {
-        U_Newmark_beta_Finite_Strains_BDB(FEM_Mesh, MPM_Mesh, InitialStep);
+        U_Newmark_beta_Finite_Strains_BDB(FEM_Mesh, MPM_Mesh, Parameters_Solver);
       } 
       else
       {
@@ -159,7 +159,7 @@ int main(int argc, char * argv[])
 
       puts("*************************************************");
       puts("Read solver ...");
-      Solver_selector__InOutFun__(SimulationFile);      
+      Parameters_Solver = Solver_selector__InOutFun__(SimulationFile,FEM_Mesh.DeltaX);      
 
       puts("*************************************************");
       if(Is_New_Simulation)
@@ -189,11 +189,11 @@ int main(int argc, char * argv[])
       puts("Run simulation ...");
       if(strcmp(TimeIntegrationScheme,"NPC-FS") == 0)
       { 
-        upw_Newmark_Predictor_Corrector_Finite_Strains(FEM_Mesh, MPM_Mesh, InitialStep);
+        upw_Newmark_Predictor_Corrector_Finite_Strains(FEM_Mesh, MPM_Mesh, Parameters_Solver);
       }
       else if(strcmp(TimeIntegrationScheme,"Newmark-beta-Finite-Strains") == 0)
       {
-        upw_Newmark_beta_Finite_Strains(FEM_Mesh, MPM_Mesh, InitialStep);
+        upw_Newmark_beta_Finite_Strains(FEM_Mesh, MPM_Mesh, Parameters_Solver);
       }
       else
       {
@@ -217,7 +217,7 @@ int main(int argc, char * argv[])
 
       puts("*************************************************");
       puts("Read solver ...");
-      Solver_selector__InOutFun__(SimulationFile);
+      Parameters_Solver = Solver_selector__InOutFun__(SimulationFile, FEM_Mesh.DeltaX);
 
       puts("*************************************************");
       puts("Generating new Gauss Point simulation ...");

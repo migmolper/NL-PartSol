@@ -8,9 +8,11 @@
 
 #endif
 
+
 /*
   Call global variables
 */
+double Thickness_Plain_Stress;
 Event * Out_nodal_path_csv;
 Event * Out_particles_path_csv;
 int Number_Out_nodal_path_csv;
@@ -39,36 +41,36 @@ static Matrix solve_Nodal_Equilibrium(Matrix,Matrix,Matrix,Matrix,Particle,Mesh,
 /* Step 6 */
 static  void  compute_Explicit_Newmark_Corrector(Particle,double,double);
 /* Step 7 */
-static void   output_selector(Particle, Mesh, Mask, Matrix, Matrix, Matrix, Matrix, int, int);
+static void   output_selector(Particle, Mesh, Mask, Matrix, Matrix, Matrix, Matrix, double, int, int);
 
 /**************************************************************/
 
-void U_Newmark_Predictor_Corrector_Finite_Strains(Mesh FEM_Mesh, Particle MPM_Mesh, int InitialStep)
+void U_Newmark_Predictor_Corrector_Finite_Strains(
+  Mesh FEM_Mesh,
+  Particle MPM_Mesh,
+  Time_Int_Params Parameters_Solver)
 {
-
-  /*
-    Integer variables 
-  */
-  int Ndim = NumberDimensions;
-  int Nactivenodes;
-
-  /*!
-    Control parameters of the generalized-alpha algorithm 
-    all the parameters are controled by a simple parameter :
-    SpectralRadius 
-  */
-  double gamma = 0.5;
-  double DeltaTimeStep;
 
   /*
     Auxiliar variables for the solver
   */
+  int Ndim = NumberDimensions;
+  int Nactivenodes;
+  int InitialStep = Parameters_Solver.InitialTimeStep;
+  int NumTimeStep = Parameters_Solver.NumTimeStep;  
+
+  double gamma = 0.5;
+  double CFL = Parameters_Solver.CFL;
+  double DeltaTimeStep;
+  double DeltaX = FEM_Mesh.DeltaX;
+
   Matrix Lumped_Mass;
   Matrix Gravity_field;
   Matrix Velocity;
   Matrix D_Displacement;
   Matrix Forces;
   Matrix Reactions;
+
   Mask ActiveNodes;
   Mask Free_and_Restricted_Dofs;
 
@@ -77,7 +79,7 @@ void U_Newmark_Predictor_Corrector_Finite_Strains(Mesh FEM_Mesh, Particle MPM_Me
     {
 
       print_Status("*************************************************",TimeStep);
-      DeltaTimeStep = DeltaT_CFL(MPM_Mesh, FEM_Mesh.DeltaX);
+      DeltaTimeStep = U_DeltaT__SolversLib__(MPM_Mesh, DeltaX, CFL);
       print_step(TimeStep,DeltaTimeStep);
       ActiveNodes = generate_NodalMask__MeshTools__(FEM_Mesh);
       Nactivenodes = ActiveNodes.Nactivenodes;
@@ -139,7 +141,7 @@ void U_Newmark_Predictor_Corrector_Finite_Strains(Mesh FEM_Mesh, Particle MPM_Me
       print_Status("Seven step : Output variables and reset nodal values",TimeStep);
       print_Status("WORKING ...",TimeStep);
 
-      output_selector(MPM_Mesh, FEM_Mesh, ActiveNodes, Velocity, D_Displacement,Forces, Reactions, TimeStep, ResultsTimeStep);
+      output_selector(MPM_Mesh, FEM_Mesh, ActiveNodes, Velocity, D_Displacement,Forces, Reactions, DeltaTimeStep, TimeStep, ResultsTimeStep);
 
       /*
       	Free memory
@@ -1213,6 +1215,7 @@ static void output_selector(
   Matrix D_Displacement,
   Matrix Forces,
   Matrix Reactions,
+  double DeltaTimeStep,
   int TimeStep,
   int ResultsTimeStep)
 {

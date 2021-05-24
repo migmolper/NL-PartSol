@@ -8,8 +8,11 @@
 
 #endif
 
+
+double Thickness_Plain_Stress;
+
 /*
-  Call global variables
+  Generate a global variable
 */
 double Error0;
 
@@ -40,17 +43,30 @@ static void   update_Particles(Matrix, Matrix, Particle, Mesh, Mask, double);
 
 /**************************************************************/
 
-void U_Discrete_Energy_Momentum(Mesh FEM_Mesh, Particle MPM_Mesh, int InitialStep)
+void U_Discrete_Energy_Momentum(
+  Mesh FEM_Mesh,
+  Particle MPM_Mesh,
+  Time_Int_Params Parameters_Solver)
 {
 
   /*
-    Integer variables 
+    Auxiliar variables for the solver
   */
   int Ndim = NumberDimensions;
   int Nactivenodes;
-  /*
-    Auxiliar variables for the solver
-  */
+  int InitialStep = Parameters_Solver.InitialTimeStep;
+  int NumTimeStep = Parameters_Solver.NumTimeStep;
+  int MaxIter = Parameters_Solver.MaxIter;
+  int Iter;
+  
+  double TOL = Parameters_Solver.TOL_Conserving_Energy_Momentum;
+  double epsilon = Parameters_Solver.epsilon_Mass_Matrix;
+  double CFL = Parameters_Solver.CFL;
+  double DeltaTimeStep;
+  double DeltaX = FEM_Mesh.DeltaX;
+  
+  bool Convergence;
+
   Matrix Effective_Mass;
   Matrix Tangent_Stiffness;
   Matrix Forces;
@@ -60,14 +76,9 @@ void U_Discrete_Energy_Momentum(Mesh FEM_Mesh, Particle MPM_Mesh, int InitialSte
   Matrix D_Displacement;
   Matrix D_Velocity;
   Matrix Residual;
+  
   Mask ActiveNodes;
   Mask Free_and_Restricted_Dofs;
-  double TOL = 0.000000001;
-  double epsilon = 0.0;
-  double DeltaTimeStep;
-  bool Convergence;
-  int Iter = 0;
-  int MaxIter = 100;
 
   /*
     Time step is defined at the init of the simulation throught the
@@ -75,7 +86,7 @@ void U_Discrete_Energy_Momentum(Mesh FEM_Mesh, Particle MPM_Mesh, int InitialSte
     not required to be satisfied. The only purpose of it is to use the existing
     software interfase.
   */
-  DeltaTimeStep = DeltaT_CFL(MPM_Mesh, FEM_Mesh.DeltaX);
+  DeltaTimeStep = U_DeltaT__SolversLib__(MPM_Mesh, DeltaX, CFL);
 
   for(int TimeStep = InitialStep ; TimeStep<NumTimeStep ; TimeStep++ )
   {
@@ -86,39 +97,33 @@ void U_Discrete_Energy_Momentum(Mesh FEM_Mesh, Particle MPM_Mesh, int InitialSte
 
     print_Status("*************************************************",TimeStep);
     print_Status("First step : Generate Mask ... WORKING",TimeStep);
-      /*
-	With the active set of nodes generate a mask to help the algorithm to compute
-	the equilibrium only in the active nodes
-      */
+
     ActiveNodes = generate_NodalMask__MeshTools__(FEM_Mesh);
     Nactivenodes = ActiveNodes.Nactivenodes;
     Free_and_Restricted_Dofs = generate_Mask_for_static_condensation__MeshTools__(ActiveNodes,FEM_Mesh);
+
     print_Status("DONE !!!",TimeStep);
 
     print_Status("*************************************************",TimeStep);
     print_Status("Second step : Compute effective mass ... WORKING",TimeStep);
-      /*
-	Compute the effective mass matrix as a convex combination of the consistent mass
-	matrix and the lumped mass matrix.
-      */
+
     Effective_Mass = compute_Nodal_Effective_Mass(MPM_Mesh,FEM_Mesh,ActiveNodes,epsilon);
+
     print_Status("DONE !!!",TimeStep);
 
     print_Status("*************************************************",TimeStep);
     print_Status("Third step : Compute nodal momentum ... WORKING",TimeStep);
-      /*
-	Compute the nodal value of the momentum
-      */
+
     Momentum = compute_Nodal_Momentum(MPM_Mesh, FEM_Mesh, ActiveNodes);
+
     print_Status("DONE !!!",TimeStep);
 
     print_Status("*************************************************",TimeStep);
     print_Status("Four step : Compute nodal velocity ... WORKING",TimeStep);
-      /*
-	     Compute the nodal valocities with the effective mass matrix and the nodal momentum
-      */
+
     Velocity = compute_Nodal_Velocity(Effective_Mass, Momentum);
     imposse_Nodal_Velocity(FEM_Mesh,Velocity,ActiveNodes,TimeStep);
+
     print_Status("DONE !!!",TimeStep);
 
     print_Status("*************************************************",TimeStep);
@@ -229,9 +234,9 @@ void U_Discrete_Energy_Momentum(Mesh FEM_Mesh, Particle MPM_Mesh, int InitialSte
   print_Status("DONE !!!",TimeStep);
 
 
-      /*
-	Outputs
-      */
+  /*
+    Outputs
+  */
   if(TimeStep % ResultsTimeStep == 0)
   {
 	 nodal_results_vtk__InOutFun__(FEM_Mesh, ActiveNodes, Reactions,TimeStep, ResultsTimeStep);

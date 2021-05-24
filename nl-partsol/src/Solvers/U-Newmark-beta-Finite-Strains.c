@@ -12,10 +12,6 @@
   Call global variables
 */
 double Thickness_Plain_Stress;
-double epsilon_Mass_Matrix; 
-double beta_Newmark_beta;   
-double gamma_Newmark_beta;
-double TOL_Newmark_beta;
 Event * Out_nodal_path_csv;
 Event * Out_particles_path_csv;
 int Number_Out_nodal_path_csv;
@@ -71,17 +67,29 @@ static void output_selector(Particle,Mesh,Mask,Nodal_Field,Nodal_Field,Matrix,Ma
 void U_Newmark_beta_Finite_Strains(
   Mesh FEM_Mesh,
   Particle MPM_Mesh,
-  int InitialStep)
+  Time_Int_Params Parameters_Solver)
 {
 
   /*
-    Integer variables 
+    Auxiliar variables for the solver
   */
   int Ndim = NumberDimensions;
   int Nactivenodes;
-  /*
-    Auxiliar variables for the solver
-  */
+  int InitialStep = Parameters_Solver.InitialTimeStep;
+  int NumTimeStep = Parameters_Solver.NumTimeStep;  
+  int MaxIter = Parameters_Solver.MaxIter;
+  int Iter;
+
+  double TOL = Parameters_Solver.TOL_Newmark_beta;
+  double epsilon = Parameters_Solver.epsilon_Mass_Matrix;
+  double beta = Parameters_Solver.beta_Newmark_beta;
+  double gamma = Parameters_Solver.gamma_Newmark_beta;
+  double CFL = Parameters_Solver.CFL;
+  double DeltaTimeStep;
+  double DeltaX = FEM_Mesh.DeltaX;
+
+  bool Convergence;
+
   Matrix Effective_Mass;
   Matrix Tangent_Stiffness;
   Matrix Forces;
@@ -90,22 +98,12 @@ void U_Newmark_beta_Finite_Strains(
   Nodal_Field D_U;
   Matrix D_Displacement;
   Matrix Residual;
+
   Mask ActiveNodes;
   Mask Free_and_Restricted_Dofs;
-  double TOL = TOL_Newmark_beta;
-  double epsilon = epsilon_Mass_Matrix;
-  double beta = beta_Newmark_beta;
-  double gamma = gamma_Newmark_beta;
 
-  /*
-    Alpha parameters for the Newmark-beta
-  */
   Newmark_parameters Params;
-  
-  double DeltaTimeStep;
-  bool Convergence;
-  int Iter = 0;
-  int MaxIter = 100;
+
 
   /*
     Time step is defined at the init of the simulation throught the
@@ -113,7 +111,7 @@ void U_Newmark_beta_Finite_Strains(
     not required to be satisfied. The only purpose of it is to use the existing
     software interfase.
   */
-  DeltaTimeStep = DeltaT_CFL(MPM_Mesh, FEM_Mesh.DeltaX);
+  DeltaTimeStep = U_DeltaT__SolversLib__(MPM_Mesh, DeltaX, CFL);
  
   /*
     Compute alpha parameters
@@ -535,11 +533,17 @@ static Nodal_Field compute_Nodal_Field(
   int   INFO= 3;
   int * IPIV = (int *)Allocate_Array(Order,sizeof(int));
   int NRHS = 1;
+  double * AUX_MEMORY = (double *)calloc(Order*Order,sizeof(double));
+
+  /*
+    Generate auxiliar copy of the mass matrix to avoid destructive operations
+  */
+  memcpy(AUX_MEMORY, Effective_Mass.nV, Order*Order*sizeof(double));
 
   /*
     Compute the LU factorization for the mass matrix
   */
-  dgetrf_(&Order,&Order,Effective_Mass.nV,&LDA,IPIV,&INFO);
+  dgetrf_(&Order,&Order,AUX_MEMORY,&LDA,IPIV,&INFO);
 
   if(INFO != 0)
   {
@@ -563,9 +567,14 @@ static Nodal_Field compute_Nodal_Field(
   /*
     Solve for the velocity
   */
-  dgetrs_(&TRANS,&Order,&NRHS,Effective_Mass.nV,&LDA,IPIV,U_n.value.nV,&LDB,&INFO);
-  dgetrs_(&TRANS,&Order,&NRHS,Effective_Mass.nV,&LDA,IPIV,U_n.d_value_dt.nV,&LDB,&INFO);
-  dgetrs_(&TRANS,&Order,&NRHS,Effective_Mass.nV,&LDA,IPIV,U_n.d2_value_dt2.nV,&LDB,&INFO);
+  dgetrs_(&TRANS,&Order,&NRHS,AUX_MEMORY,&LDA,IPIV,U_n.value.nV,&LDB,&INFO);
+  dgetrs_(&TRANS,&Order,&NRHS,AUX_MEMORY,&LDA,IPIV,U_n.d_value_dt.nV,&LDB,&INFO);
+  dgetrs_(&TRANS,&Order,&NRHS,AUX_MEMORY,&LDA,IPIV,U_n.d2_value_dt2.nV,&LDB,&INFO);
+
+  /*
+    Free auxiliar memory
+  */
+  free(AUX_MEMORY);
   free(IPIV);
 
   /*
@@ -1598,9 +1607,9 @@ static void solve_non_reducted_system(
     Compute the adition of the mass matrix and the tangent stifness matrix
   */
   for(int idx_AB_ij = 0 ; idx_AB_ij<Order*Order ; idx_AB_ij++)
-    {
-      K_Global.nV[idx_AB_ij] = alpha_1*Effective_Mass.nV[idx_AB_ij] + Tangent_Stiffness.nV[idx_AB_ij];
-    }
+  {
+    K_Global.nV[idx_AB_ij] = alpha_1*Effective_Mass.nV[idx_AB_ij] + Tangent_Stiffness.nV[idx_AB_ij];
+  }
 
 
   /*
