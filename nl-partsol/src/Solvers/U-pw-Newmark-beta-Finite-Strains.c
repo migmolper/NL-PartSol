@@ -60,7 +60,7 @@ static  void  compute_Flow_contribution_Fluid(Nodal_Field, Nodal_Field,Matrix,Ma
 static Tensor compute_Kirchoff_Pore_water_pressure_gradient_n1(Matrix,Matrix,Matrix,Tensor);
 static  void  compute_nominal_traction_and_fluid_flux(Matrix,Mask,Particle,Mesh,int);
 static  bool  check_convergence(Matrix,double,int,int,int);
-static Matrix assemble_Tangent_Stiffness(Nodal_Field,Nodal_Field,Mask,Particle,Mesh,double,Newmark_parameters);
+static Matrix assemble_Tangent_Stiffness(Nodal_Field,Nodal_Field,Matrix,Mask,Particle,Mesh,double,Newmark_parameters);
 static Tensor compute_stiffness_density(Tensor, Tensor, Tensor, double, Material);
 static  void  solve_non_reducted_system(Nodal_Field,Matrix,Matrix);
 static  void  solve_reducted_system(Nodal_Field,Matrix,Matrix,Mask);
@@ -171,11 +171,9 @@ void upw_Newmark_beta_Finite_Strains(
       if(Convergence == false)
       {
 
-        Tangent_Stiffness = assemble_Tangent_Stiffness(upw_n,D_upw,ActiveNodes,MPM_Mesh,FEM_Mesh,epsilon,Params);
+        Tangent_Stiffness = assemble_Tangent_Stiffness(upw_n,D_upw,Effective_Mass,ActiveNodes,MPM_Mesh,FEM_Mesh,epsilon,Params);
 
-        print__MatrixLib__(Tangent_Stiffness,Nactivenodes*NumberDOF,Nactivenodes*NumberDOF);
-
-//        exit(0);
+//        print__MatrixLib__(Tangent_Stiffness,Nactivenodes*NumberDOF,Nactivenodes*NumberDOF);
 
         if((Free_and_Restricted_Dofs.Nactivenodes - Ndim*Nactivenodes) == 0)
         {
@@ -194,6 +192,8 @@ void upw_Newmark_beta_Finite_Strains(
         free__MatrixLib__(Tangent_Stiffness);
       }
     }
+
+    exit(0);
 
     print_Status("DONE !!!",TimeStep);
 
@@ -544,11 +544,17 @@ static Nodal_Field compute_Nodal_Field(
   int   INFO= 3;
   int * IPIV = (int *)Allocate_Array(Order,sizeof(int));
   int NRHS = 1;
+  double * AUX_MEMORY = (double *)calloc(Order*Order,sizeof(double));
+
+  /*
+    Generate auxiliar copy of the mass matrix to avoid destructive operations
+  */
+  memcpy(AUX_MEMORY, Effective_Mass.nV, Order*Order*sizeof(double));
 
   /*
     Compute the LU factorization for the mass matrix
   */
-  dgetrf_(&Order,&Order,Effective_Mass.nV,&LDA,IPIV,&INFO);
+  dgetrf_(&Order,&Order,AUX_MEMORY,&LDA,IPIV,&INFO);
 
   if(INFO != 0)
   {
@@ -572,9 +578,14 @@ static Nodal_Field compute_Nodal_Field(
   /*
     Solve for the acceleration and second derivative of the pore water pressure
   */
-  dgetrs_(&TRANS,&Order,&NRHS,Effective_Mass.nV,&LDA,IPIV,upw.value.nV,&LDB,&INFO);
-  dgetrs_(&TRANS,&Order,&NRHS,Effective_Mass.nV,&LDA,IPIV,upw.d_value_dt.nV,&LDB,&INFO);
-  dgetrs_(&TRANS,&Order,&NRHS,Effective_Mass.nV,&LDA,IPIV,upw.d2_value_dt2.nV,&LDB,&INFO);
+  dgetrs_(&TRANS,&Order,&NRHS,AUX_MEMORY,&LDA,IPIV,upw.value.nV,&LDB,&INFO);
+  dgetrs_(&TRANS,&Order,&NRHS,AUX_MEMORY,&LDA,IPIV,upw.d_value_dt.nV,&LDB,&INFO);
+  dgetrs_(&TRANS,&Order,&NRHS,AUX_MEMORY,&LDA,IPIV,upw.d2_value_dt2.nV,&LDB,&INFO);
+
+  /*
+    Free auxiliar memory
+  */
+  free(AUX_MEMORY);
   free(IPIV);
  
   /*
@@ -926,7 +937,7 @@ static void compute_Inertial_Forces_Mixture(
   double alpha_3 = Params.alpha_3;
 
   /*
-    Compute nodal acceleration (Vectorized)
+    Compute nodal acceleration
   */
   for(int A = 0 ; A<Nnodes_mask ; A++)
   {
@@ -935,16 +946,20 @@ static void compute_Inertial_Forces_Mixture(
       Acceleration_n1.nM[A][i] = alpha_1*D_upw.value.nM[A][i] - alpha_2*upw_n.d_value_dt.nM[A][i] - alpha_3*upw_n.d2_value_dt2.nM[A][i] - MPM_Mesh.b.n[i];
     }
   }
+
   /*
-    Compute inertial forces (Vectorized)
+    Compute inertial forces
   */
-  for(int idx_A = 0 ; idx_A<Order ; idx_A++)
+  for(int A = 0 ; A<Nnodes_mask ; A++)
+  {
+    for(int B = 0 ; B<Nnodes_mask ; B++)
     {
-      for(int idx_B = 0 ; idx_B<Order ; idx_B++)
+      for(int i = 0 ; i<Ndim ; i++)
       {
-        Residual.nV[idx_A] += Effective_Mass.nM[idx_A][idx_B]*Acceleration_n1.nV[idx_B];
+        Residual.nM[A][i] += Effective_Mass.nM[A*Ndof+i][B*Ndof+i]*Acceleration_n1.nM[B][i];
       }
     }
+  }
 
   free__MatrixLib__(Acceleration_n1);
 
@@ -1684,6 +1699,7 @@ static bool check_convergence(
 static Matrix assemble_Tangent_Stiffness(
   Nodal_Field upw_n,
   Nodal_Field D_upw,
+  Matrix Effective_Mass,
   Mask ActiveNodes,
   Particle MPM_Mesh,
   Mesh FEM_Mesh,
@@ -2036,7 +2052,7 @@ static Matrix assemble_Tangent_Stiffness(
               Compute the contribution of the linearised terms to the D_phi-D_phi direcction. 
             */
             Tangent_Stiffness.nM[A_mask*Ndof+i][B_mask*Ndof+j] += 
-            + alpha_1*(i==j)*((1-epsilon)*m_p*Na_p*Nb_p + (A_mask==B_mask)*epsilon*m_p*Na_p)
+            + alpha_1*Effective_Mass.nM[A_mask*Ndof+i][B_mask*Ndof+j]
             + Na_p*constant_1*dyn__o__FmTGRADIENT_B.N[i][j]*V0_p
             + Stiffness_density_pAB.N[i][j]*V0_p
             + theta_n1_p*FmTGRADIENT_Na_p__o__FmTGRADIENT_Nb_p.N[j][i]*V0_p;

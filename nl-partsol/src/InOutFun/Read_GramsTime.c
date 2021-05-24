@@ -115,6 +115,8 @@ GramsTime(Scheme=FE){
       Parameters.gamma_Newmark_beta = 0.5;
       Parameters.TOL_Newmark_beta = 1E-10;
 
+      Parameters.MaxIter = 10;
+
       /* Look for the curly brace { */
       if(strcmp(kwords[2],"{") == 0){
 	/* Initial line */
@@ -199,6 +201,11 @@ GramsTime(Scheme=FE){
 	    Parameters.TOL_Newmark_beta = atof(Parse_Temp_Prop[1]);
 	    printf("\t \t -> %s : %f \n","Tolerance Newmark-beta",Parameters.TOL_Newmark_beta);
 	  } 
+	  else if(strcmp(Parse_Temp_Prop[0],"Max-Iter") == 0)
+	  {
+	  	Parameters.MaxIter = atoi(Parse_Temp_Prop[1]);
+	    printf("\t \t -> %s : %i \n","Max number of interations",Parameters.MaxIter);
+	  }
 	  else
 	  {
 	    fprintf(stderr,"%s : %s %s \n",
