@@ -29,6 +29,7 @@ static void get_sourrounding_elements(Mesh);
 static void fill_nodal_locality(Mesh);
 static ChainPtr node_I_locality(int, Mesh);
 static ChainPtr ring_search_nodal_locality(ChainPtr *, ChainPtr, Mesh);
+static void compute_nodal_distance_local(Mesh);
 static double mesh_size(Mesh);
 static void standard_error(int, char *);
 static void standard_output(char *);
@@ -87,6 +88,10 @@ Mesh GramsBox(char * Name_File)
   FEM_Mesh.NumParticles = (int *)Allocate_ArrayZ(FEM_Mesh.NumNodesMesh,sizeof(int));
   FEM_Mesh.I_particles = (ChainPtr *)malloc(FEM_Mesh.NumNodesMesh*sizeof(ChainPtr));
   printf("\t \t %s : %s \n","-> Initialize ","Done");
+
+  FEM_Mesh.h_avg = (double *)Allocate_ArrayZ(FEM_Mesh.NumNodesMesh,sizeof(double));
+  compute_nodal_distance_local(FEM_Mesh);
+  printf("\t \t %s : %s \n","-> Compute local nodal distance ","Done");
 
   FEM_Mesh.DeltaX = mesh_size(FEM_Mesh);
   printf("\t \t %s : %f \n","-> Compute mesh size",FEM_Mesh.DeltaX);
@@ -432,6 +437,67 @@ static ChainPtr ring_search_nodal_locality(ChainPtr * Set_k, ChainPtr Search_Set
 }
 
 /*********************************************************************/
+
+static void compute_nodal_distance_local(Mesh FEM_Mesh)
+{
+  int Ndim = NumberDimensions;
+  int A,B;
+  int NumCloseNodes_A;
+
+  ChainPtr NodalLocality_A = NULL;
+
+  Matrix h_AB = alloc__MatrixLib__(1,Ndim);
+  double avg_h_A;
+
+  for(A = 0 ; A<FEM_Mesh.NumNodesMesh ; A++)
+  {
+    
+    NodalLocality_A = node_I_locality(A, FEM_Mesh);
+
+    avg_h_A = 0.0;
+    NumCloseNodes_A = 0;
+
+    /*
+      Loop in the closest set of nodes
+    */
+    while (NodalLocality_A != NULL)
+    {
+      /*
+        Get the index of the node
+      */
+      B = NodalLocality_A->I;
+
+      if (A != B)
+      {
+
+        for(int i = 0 ; i<Ndim ; i++)
+        {
+          h_AB.nV[i] = FEM_Mesh.Coordinates.nM[B][i] - FEM_Mesh.Coordinates.nM[A][i];
+        }
+        
+        avg_h_A += norm__MatrixLib__(h_AB,2);
+
+        NumCloseNodes_A ++;
+
+      }
+
+      NodalLocality_A = NodalLocality_A->next; 
+
+    }
+
+    FEM_Mesh.h_avg[A] = avg_h_A/(double)NumCloseNodes_A;
+
+
+    free__SetLib__(&NodalLocality_A);
+
+  }
+
+
+  free__MatrixLib__(h_AB);
+}
+
+/*********************************************************************/
+
 
 static double mesh_size(Mesh FEM_Mesh)
 /*

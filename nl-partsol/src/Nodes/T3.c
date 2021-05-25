@@ -23,6 +23,8 @@ void initialize__T3__(
   int Np = MPM_Mesh.NumGP;
   int Nelem = FEM_Mesh.NumElemMesh;
 
+  bool Init_p;
+
   /*Definition of auxiliar global and local coordinates */
   Matrix X_p, Xi_p;
 
@@ -38,6 +40,9 @@ void initialize__T3__(
   /* Loop over the particles to initialize them */
   for(int p = 0 ; p<Np ; p++)
   {
+
+    /* Supose that the particle was not initilise */
+    Init_p = false;
 
     /* Asign the number of nodes */
     MPM_Mesh.NumberNodes[p] = 3;
@@ -57,6 +62,9 @@ void initialize__T3__(
       /* 5º Check out if the GP is in the Element */
       if(FEM_Mesh.In_Out_Element(X_p,Elem_p_Coordinates))
       {
+
+        /* Particle will be initilise */
+        Init_p = true;
 
         /* With the element connectivity get the node close to the particle */
         MPM_Mesh.I0[p] = get_closest_node__MeshTools__(X_p,Elem_p_Connectivity,FEM_Mesh.Coordinates);
@@ -80,6 +88,14 @@ void initialize__T3__(
       /* Free coordinates of the element */
       free__MatrixLib__(Elem_p_Coordinates);
       
+    }
+
+    if(!Init_p)
+    {
+      fprintf(stderr,"%s : %s %i\n",
+        "Error in initialize__T3__()",
+        "The search algorithm was unable to find particle",p);
+      exit(EXIT_FAILURE);
     }
 
   }

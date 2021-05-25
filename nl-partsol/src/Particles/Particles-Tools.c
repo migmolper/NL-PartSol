@@ -213,7 +213,7 @@ void get_particle_tributary_nodes(Particle MPM_Mesh, Mesh FEM_Mesh, int p)
       Compute the thermalization parameter for the new set of nodes
       and update it
     */
-    Beta_p = beta__LME__(Delta_Xip, gamma_LME, FEM_Mesh.DeltaX);
+    Beta_p = beta__LME__(gamma_LME, FEM_Mesh.h_avg[MPM_Mesh.I0[p]]);
     MPM_Mesh.Beta.nV[p] = Beta_p;
 
     /*

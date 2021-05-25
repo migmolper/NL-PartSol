@@ -173,7 +173,7 @@ void upw_Newmark_beta_Finite_Strains(
 
         Tangent_Stiffness = assemble_Tangent_Stiffness(upw_n,D_upw,Effective_Mass,ActiveNodes,MPM_Mesh,FEM_Mesh,epsilon,Params);
 
-//        print__MatrixLib__(Tangent_Stiffness,Nactivenodes*NumberDOF,Nactivenodes*NumberDOF);
+////        print__MatrixLib__(Tangent_Stiffness,Nactivenodes*NumberDOF,Nactivenodes*NumberDOF);
 
         if((Free_and_Restricted_Dofs.Nactivenodes - Ndim*Nactivenodes) == 0)
         {
@@ -931,7 +931,7 @@ static void compute_Inertial_Forces_Mixture(
   int Ndof = NumberDOF;
   int Nnodes_mask = ActiveNodes.Nactivenodes;
   int Order = Ndim*Nnodes_mask;
-  Matrix Acceleration_n1 = allocZ__MatrixLib__(Nnodes_mask,Ndof);
+  Matrix Acceleration_n1 = allocZ__MatrixLib__(Nnodes_mask,Ndim);
   double alpha_1 = Params.alpha_1;
   double alpha_2 = Params.alpha_2;
   double alpha_3 = Params.alpha_3;
@@ -943,7 +943,11 @@ static void compute_Inertial_Forces_Mixture(
   {
     for(int i = 0 ; i<Ndim ; i++)
     {
-      Acceleration_n1.nM[A][i] = alpha_1*D_upw.value.nM[A][i] - alpha_2*upw_n.d_value_dt.nM[A][i] - alpha_3*upw_n.d2_value_dt2.nM[A][i] - MPM_Mesh.b.n[i];
+      Acceleration_n1.nM[A][i] = 
+      alpha_1*D_upw.value.nM[A][i] - 
+      alpha_2*upw_n.d_value_dt.nM[A][i] - 
+      alpha_3*upw_n.d2_value_dt2.nM[A][i] - 
+      MPM_Mesh.b.n[i];
     }
   }
 
@@ -1350,7 +1354,7 @@ static void compute_Flow_contribution_Fluid(
 
     for(int i = 0 ; i<Ndim ; i++)
     {
-      water_dyn_p.n[i] = (1/(intrinsic_rho_f_p*J_n1_p))*gradient_theta_n1_p.n[i] + D_a_p.n[i] + a_n_p.n[i] - b_p.n[i];
+      water_dyn_p.n[i] = (1.0/(intrinsic_rho_f_p*J_n1_p))*gradient_theta_n1_p.n[i] + D_a_p.n[i] + a_n_p.n[i] - b_p.n[i];
     }
 
     /*  
@@ -1445,7 +1449,6 @@ static Tensor compute_Kirchoff_Pore_water_pressure_gradient_n1(
   double D_theta_a;
   double theta_a_n1;
   Tensor gradient_Na_n_p;
-  Tensor gradient_Na_n1_p;
   Tensor gradient_theta_n1_p = alloc__TensorLib__(1);
 
   for(int a = 0 ; a<Nnodes_p ; a++)
@@ -1462,18 +1465,14 @@ static Tensor compute_Kirchoff_Pore_water_pressure_gradient_n1(
       Get nodal value (a) of the gradient evaluated in the particle position (p) at n+1
     */
     gradient_Na_n_p = memory_to_tensor__TensorLib__(gradient_p.nM[a], 1);
-  //  gradient_Na_n1_p = vector_linear_mapping__TensorLib__(DF_p,gradient_Na_n_p);
 
     /*
       Compute nodal contribution
     */
     for(int i = 0 ; i<Ndim ; i++)
     {
-    //  gradient_theta_n1_p.n[i] += theta_a_n1*gradient_Na_n1_p.n[i];
-      gradient_theta_n1_p.n[i] += theta_a_n1*gradient_Na_n_p.n[i];
+     gradient_theta_n1_p.n[i] += theta_a_n1*gradient_Na_n_p.n[i];
     } 
-
-    //free__TensorLib__(gradient_Na_n1_p);
 
   }
 
@@ -1805,6 +1804,11 @@ static Matrix assemble_Tangent_Stiffness(
   /*
     Auxiliar variables 
   */
+  Tensor gradient_theta_n1;
+  Tensor mixture_dyn_p;
+  Tensor water_dyn_p;
+  Tensor Eulerian_relative_flux;
+
   Tensor k__x__gradient_theta_p;
   Tensor k_T_p__x__FmTGRADIENT_A;
   double FmTGRADIENT_A__x__k__x__gradient_theta_p;
@@ -1874,14 +1878,6 @@ static Matrix assemble_Tangent_Stiffness(
     Nodal_D_Acceleration_p = get_U_set_field_upw__MeshTools__(D_upw.d2_value_dt2, Nodes_p, ActiveNodes);
     Nodal_Pw_n_p = get_Pw_set_field_upw__MeshTools__(upw_n.value, Nodes_p, ActiveNodes);
     Nodal_D_Pw_p = get_Pw_set_field_upw__MeshTools__(D_upw.value, Nodes_p, ActiveNodes);
-
-    Tensor gradient_theta_n1;
-
-    /*
-    */
-    Tensor mixture_dyn_p;
-    Tensor water_dyn_p;
-    Tensor Eulerian_relative_flux;
     
     /*
       Take the values of the deformation gradient ant t = n and t = n + 1. 
@@ -1968,7 +1964,7 @@ static Matrix assemble_Tangent_Stiffness(
     constant_4c = (intrinsic_rho_f_p/K_f_p)*div_v_p;
     constant_4 = constant_4a + constant_4b + constant_4c;
     constant_5 = intrinsic_rho_f_p*J_p;
-    constant_6 = 1/(K_f_p*J_p);
+    constant_6 = 1.0/(K_f_p*J_p);
     constant_7 = intrinsic_rho_f_p*J_p*alpha_1/g;
 
     for(int A = 0 ; A<NumNodes_p ; A++)
@@ -2079,10 +2075,9 @@ static Matrix assemble_Tangent_Stiffness(
           - J_p*FmTGRADIENT_A__x__Eulerian_relative_flux*FmTGRADIENT_Nb_p.n[j]*V0_p
           + J_p*FmTGRADIENT_B__x__Eulerian_relative_flux*FmTGRADIENT_Na_p.n[j]*V0_p
           - (constant_6*theta_n1_p/g)*FmTGRADIENT_A__x__k__x__gradient_theta_p*FmTGRADIENT_Nb_p.n[j]*V0_p
-          + (1/g)*FmTGRADIENT_A__x__k__x__gradient_theta_p*FmTGRADIENT_Nb_p.n[j]*V0_p
-          + (1/g)*FmTGRADIENT_A__x__k__x__FmTGRADIENT_Nb_p*gradient_theta_n1.n[j]*V0_p
+          + (1.0/g)*FmTGRADIENT_A__x__k__x__gradient_theta_p*FmTGRADIENT_Nb_p.n[j]*V0_p
+          + (1.0/g)*FmTGRADIENT_A__x__k__x__FmTGRADIENT_Nb_p*gradient_theta_n1.n[j]*V0_p
           - constant_7*k_T_p__x__FmTGRADIENT_A.n[j]*Nb_p*V0_p;
-
         }
 
         /*
@@ -2090,9 +2085,9 @@ static Matrix assemble_Tangent_Stiffness(
         */
         Tangent_Stiffness.nM[A_mask*Ndof+Ndim][B_mask*Ndof+Ndim] += 
         + Na_p*constant_4*Nb_p*V0_p
-        - (1/K_f_p)*FmTGRADIENT_A__x__Eulerian_relative_flux*Nb_p*V0_p
+        - (1.0/K_f_p)*FmTGRADIENT_A__x__Eulerian_relative_flux*Nb_p*V0_p
         + (constant_6/g)*FmTGRADIENT_A__x__k__x__gradient_theta_p*Nb_p*V0_p
-        - (1/g)*FmTGRADIENT_A__x__k__x__FmTGRADIENT_Nb_p*V0_p;
+        - (1.0/g)*FmTGRADIENT_A__x__k__x__FmTGRADIENT_Nb_p*V0_p;
 
         /*
           Free memory 
@@ -2326,8 +2321,6 @@ static void solve_reducted_system(
     } 
       
   }
-
-  print__MatrixLib__(D_upw.value,Nnodes_mask,Ndof);
 
 //  exit(0);
 

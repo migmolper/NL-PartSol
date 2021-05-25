@@ -8,7 +8,7 @@ static Matrix r__LME__(Matrix, Matrix);
 static Matrix J__LME__(Matrix, Matrix, Matrix);
 
 // Auxiliar functions for the Neldel Mead in the LME
-static void initialise_lambda__LME__(int,Matrix,Matrix,Matrix,double, double);
+static void initialise_lambda__LME__(int,Matrix,Matrix,Matrix,double);
 static Matrix gravity_center_Nelder_Mead__LME__(Matrix);
 static void order_logZ_simplex_Nelder_Mead__LME__(Matrix, Matrix);
 static void expansion_Nelder_Mead__LME__(Matrix,Matrix,Matrix,Matrix,Matrix,Matrix,double,double);
@@ -93,22 +93,17 @@ void initialize__LME__(
           and to this node asign the particle */
         MPM_Mesh.I0[p] = get_closest_node__MeshTools__(X_p,Elem_p_Connectivity,FEM_Mesh.Coordinates);
 
-        /* Calculate distance from particle to each node in the neibourhood */
-        MPM_Mesh.ListNodes[p] = copy__SetLib__(Elem_p_Connectivity);
-        Delta_Xip = compute_distance__MeshTools__(MPM_Mesh.ListNodes[p],X_p,FEM_Mesh.Coordinates);
-
         /* Initialize Beta */
-        Beta_p = beta__LME__(Delta_Xip, gamma_LME, FEM_Mesh.DeltaX);
+        Beta_p = beta__LME__(gamma_LME, FEM_Mesh.h_avg[MPM_Mesh.I0[p]]);
 
         /* Initialise lambda for the Nelder-Mead using Bo-Li approach */
         if(strcmp(wrapper_LME,"Nelder-Mead") == 0)
         {
-          initialise_lambda__LME__(p, X_p, Elem_p_Coordinates, lambda_p, Beta_p, FEM_Mesh.DeltaX);
+          initialise_lambda__LME__(p, X_p, Elem_p_Coordinates, lambda_p, Beta_p);
         }
         
         /* Free memory */ 
         free__MatrixLib__(Elem_p_Coordinates);
-        free__MatrixLib__(Delta_Xip);
 
         /* Get the initial connectivity of the particle */
         MPM_Mesh.ListNodes[p] = tributary__LME__(p,X_p,Metric_p,Beta_p,MPM_Mesh.I0[p],FEM_Mesh);
@@ -123,7 +118,7 @@ void initialize__LME__(
         Delta_Xip = compute_distance__MeshTools__(MPM_Mesh.ListNodes[p],X_p,FEM_Mesh.Coordinates);
 
         /* Update the value of the thermalization parameter */
-        Beta_p = beta__LME__(Delta_Xip, gamma_LME, FEM_Mesh.DeltaX);
+        Beta_p = beta__LME__(gamma_LME, FEM_Mesh.h_avg[MPM_Mesh.I0[p]]);
         MPM_Mesh.Beta.nV[p] = Beta_p;
 
         /* Update lagrange multiplier with Newton-Rapson or with Nelder-Mead */
@@ -164,42 +159,30 @@ void initialize__LME__(
 /****************************************************************************/
 
 double beta__LME__(
-  Matrix l, // Set than contanins vector form neighborhood nodes to particle.
   double Gamma, // User define parameter to control the value of the thermalization parameter.
-  double DeltaX) // Average mesh size
+  double h_avg) // Average mesh size
 /*!
   Get the thermalization parameter beta using the global variable gamma_LME.
 */
 {
-  int Ndim = NumberDimensions;
-  int NumNodes_GP = l.N_rows;
-  double Beta = 0; // Intialise the thermalization parameter
-  double avg_l = 0; // Initalise the average nodal distance
-  double h = 0; // Distance parameter
-  Matrix l_pI = memory_to_matrix__MatrixLib__(Ndim,1,NULL);
-  
-  /* 
-    Get the mean distande
-  */
-  for(int i = 0 ; i<NumNodes_GP ; i++){
-    l_pI.nV = l.nM[i];
-    avg_l += norm__MatrixLib__(l_pI,2);
-  }
-  avg_l = avg_l/NumNodes_GP;
-
-
-//  h = DMAX(avg_l,DeltaX);
-  h = DeltaX;
-
-  /*
-    Compute beta
-  */
-  Beta = Gamma/(h*h);
-
-
-  return Beta;
+  return Gamma/(h_avg*h_avg);
 }
 
+/****************************************************************************/
+
+//Matrix grad_beta__LME__(
+//  double Gamma, // User define parameter to control the value of the thermalization parameter.
+//  double h_avg) // Average mesh size
+/*!
+  Get the thermalization parameter beta using the global variable gamma_LME.
+*/
+//{
+//  d_Beta_dX = allocZ__MatrixLib__(1,Ndim);
+
+//  Gamma/(h_avg*h_avg);
+
+//  return d_Beta_dX; 
+//}
 
 /****************************************************************************/
 
@@ -254,8 +237,7 @@ static void initialise_lambda__LME__(
   Matrix X_p,
   Matrix Elem_p_Coordinates, //
   Matrix lambda, // Lagrange multiplier.
-  double Beta,
-  double DeltaX) // Thermalization parameter.
+  double Beta) // Thermalization parameter.
 {
 
   int Ndim = NumberDimensions;

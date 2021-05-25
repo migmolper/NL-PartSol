@@ -31,12 +31,11 @@ void initialize__LME__(Particle, Mesh);
   \fn double beta__LME__(Matrix l, double Gamma, double DeltaX);
 
   \brief  Compute the value of the thermalization parameter using a circular support.
-
-  \param l : Matrix with the distances from nodes in the neiborghood to the particle.
+  
   \param Gamma : Adimensional paramter to control the regularization parameter.
   \param DeltaX : Minimum size in the all nodal set.
 */
-double beta__LME__(Matrix, double, double);
+double beta__LME__(double, double);
 /****************************************************************************/
 
 /*!

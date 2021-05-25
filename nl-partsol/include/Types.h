@@ -695,6 +695,11 @@ typedef struct {
   double DeltaX;
 
   /*! 
+  * Nodal spacing
+  */
+  double * h_avg;
+
+  /*! 
    * Name of the element (OLD)
    */
   char TypeElem [20];
@@ -728,6 +733,8 @@ typedef struct {
   * Function to check if a point is inside or outside of a elemnt
   */
   bool (* In_Out_Element)(Matrix, Matrix);
+
+
     
 } Mesh;
 
