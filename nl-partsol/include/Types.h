@@ -321,6 +321,11 @@ typedef struct {
    */
   Matrix EPS;
 
+  /*! 
+  * Back stress for kinematic hardening (plasticity)
+  */
+  Matrix Back_stress;
+
   
 } Fields;
 
@@ -450,20 +455,37 @@ typedef struct {
   double Wc; /*! Critical opening displacement (Eigensoftening) */
 
   /*!
-   * General plastic parameters
-   */
+  * General plastic parameters
+  */
   double yield_stress_0;
   double cohesion_reference;
   double friction_angle;
   double dilatancy_angle;
+  
+  /*!
+  * Linear hardening parameters
+  */
+  double isotropic_hardening_modulus;
+  double isotropic_hardening_theta;
+  double kinematic_hardening_modulus;
+  double kinematic_hardening_beta;
+
+  /*!
+  * Non-linear hardening parameter
+  */
   double E_plastic_reference;
   double hardening_modulus;
   double hardening_exp;
   bool   Hardening_Ortiz;
-  
+
   /*!
-   * Parameters of the Drucker-Prager Sanavia
-   */
+  * Viscoplasticity parameters
+  */
+  double fluidity_param;
+
+  /*!
+  * Parameters of the Drucker-Prager Sanavia
+  */
   double alpha_F_Drucker_Prager;
   double alpha_Q_Drucker_Prager;
   double beta_Drucker_Prager;
@@ -956,11 +978,13 @@ typedef struct {
  */
 typedef struct
 {
-
   double EPS;
   double Cohesion;
   double Yield_stress;
   Tensor Increment_E_plastic;
+  Tensor Back_stress;
+  Tensor F_n1_p;
+  Tensor F_m1_plastic_p;
 
 } Plastic_status;
 

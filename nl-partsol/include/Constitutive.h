@@ -22,18 +22,16 @@ Tensor SolidRigid(Tensor Strain);
 
 
 /*!
-  \fn Tensor LinearElastic(Tensor Strain, Tensor Stress, Material Properties)
+  \fn Tensor LinearElastic(Tensor Stress, Tensor Strain, Material Properties)
   
   \brief This function is devoted to make a material point behaves as a
   linear elastic material.
   
-  \param Strain : Strain field of each particle 
   \param Stress : Stress field of each particle
+  \param Strain : Strain field of each particle 
   \param Properties : Define the material properties of the particle
 */
 Tensor LinearElastic(Tensor, Tensor, Material);
-Tensor volumetric_stress__LinearElastic__(double, Material);
-Tensor deviatoric_stress__LinearElastic__(Tensor, Material);
 /*******************************************************/
 
 /*!
@@ -112,11 +110,15 @@ Matrix compute_D_matrix_Neo_Hookean_Wriggers(Tensor, double, Material);
 /*******************************************************/
 
 
-Plastic_status finite_strains_plasticity_Von_Mises(Tensor, Tensor, Tensor, Plastic_status, Material, double);
+Plastic_status finite_strains_plasticity_Von_Mises(Tensor, Plastic_status, Material);
 Plastic_status infinitesimal_strains_plasticity_Von_Mises(Tensor, Tensor, Plastic_status, Material);
 /*******************************************************/  
 
-Plastic_status finite_strains_plasticity_Drucker_Prager_Sanavia(Tensor, Tensor, Tensor, Plastic_status, Material, double);
+Plastic_status finite_strains_viscoplasticity_Von_Mises_Perzyna(Tensor,Plastic_status,Material);
+Plastic_status infinitesimal_strains_viscoplasticity_Von_Mises_Perzyna(Tensor,Tensor,Plastic_status,Material);
+/*******************************************************/
+
+Plastic_status finite_strains_plasticity_Drucker_Prager_Sanavia(Tensor, Plastic_status, Material);
 Plastic_status infinitesimal_strains_plasticity_Drucker_Prager_Sanavia(Tensor, Tensor, Plastic_status, Material);
 /*******************************************************/
 

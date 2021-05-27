@@ -32,16 +32,12 @@ static Tensor compute_increment_plastic_strain_apex(Tensor, double, double, Mate
 static void   compute_finite_stress_tensor_apex(Tensor, Tensor, double, double, Material);
 static void   compute_finite_stress_tensor_elastic_region(Tensor, Tensor, Tensor, Material);
 
-
 /**************************************************************/
 
 Plastic_status finite_strains_plasticity_Drucker_Prager_Sanavia(
   Tensor P_p,
-  Tensor F_m1_plastic,
-  Tensor F_total,
   Plastic_status Inputs_VarCons, 
-  Material MatProp,
-  double J)
+  Material MatProp)
 /*
   Finite strains plasticity following the apporach of Ortiz and Camacho
 */
@@ -50,6 +46,8 @@ Plastic_status finite_strains_plasticity_Drucker_Prager_Sanavia(
 
   /* Define auxiliar variables */
   Plastic_status Outputs_VarCons;
+  Tensor F_m1_plastic = Inputs_VarCons.F_m1_plastic_p;
+  Tensor F_total = Inputs_VarCons.F_n1_p;
   Tensor F_trial_elastic;
   Tensor C_trial_elastic;
   Tensor E_trial_elastic;
@@ -70,6 +68,9 @@ Plastic_status finite_strains_plasticity_Drucker_Prager_Sanavia(
 
   /* Calculation of the small strain tensor */
   E_trial_elastic = logarithmic_strains__Particles__(C_trial_elastic);
+
+  /* Calculation of the trial stress tensor using the trial small strain tensor */
+  T_p = LinearElastic(T_p, E_trial_elastic, MatProp);
 
   /* Start plastic algorithm in infinitesimal strains */
   Outputs_VarCons = infinitesimal_strains_plasticity_Drucker_Prager_Sanavia(T_p, E_trial_elastic, Inputs_VarCons, MatProp);
@@ -163,8 +164,6 @@ Plastic_status infinitesimal_strains_plasticity_Drucker_Prager_Sanavia(
 
   int Ndim = NumberDimensions;
 
-  double E_elastic_vol;
-  Tensor E_elastic_dev;
   Tensor p_trial;
   Tensor s_trial;
   double delta_Gamma;
@@ -187,17 +186,13 @@ Plastic_status infinitesimal_strains_plasticity_Drucker_Prager_Sanavia(
   bool Convergence = false;
 
   /*
-    Elastic predictor : Volumetric and deviatoric stress measurements. Compute also
-    the norm of the deviatoric tensor
+    Decompose the elastic trial in volumetric and deviatoric components
   */
-  E_elastic_vol = volumetric_component__TensorLib__(E_elastic);
-  E_elastic_dev = deviatoric_component__TensorLib__(E_elastic,E_elastic_vol);
+  p_trial = volumetric_component__TensorLib__(sigma_k1);
+  s_trial = deviatoric_component__TensorLib__(sigma_k1,p_trial);
 
-  p_trial = volumetric_stress__LinearElastic__(E_elastic_vol, MatProp);
-  s_trial = deviatoric_stress__LinearElastic__(E_elastic_dev, MatProp);  
-
-  s_trial_norm = EuclideanNorm__TensorLib__(s_trial); 
-  p_trial_norm = p_trial.N[0][0];
+  s_trial_norm = EuclideanNorm__TensorLib__(s_trial);
+  p_trial_norm = EuclideanNorm__TensorLib__(p_trial); 
 
   /*
     Yield condition : Starting from incremental plastic strain equal to zero
@@ -287,7 +282,6 @@ Plastic_status infinitesimal_strains_plasticity_Drucker_Prager_Sanavia(
   /*
     Free memory
   */
-free__TensorLib__(E_elastic_dev);
 free__TensorLib__(s_trial);
 free__TensorLib__(p_trial);
 

@@ -148,6 +148,12 @@ Fields allocate_Fields(int NumParticles)
   Phi.EPS = allocZ__MatrixLib__(NumParticles,1);
   strcpy(Phi.EPS.Info,"EPS GP");
 
+  /*! 
+  * Back stress for kinematic hardening (plasticity)
+  */
+  Phi.Back_stress = allocZ__MatrixLib__(NumParticles,Ndim*Ndim);
+  strcpy(Phi.EPS.Info,"Back stress GP");
+
   return Phi;
 }
 
@@ -337,6 +343,12 @@ Fields allocate_upw_vars__Fields__(int NumParticles)
   Phi.EPS = allocZ__MatrixLib__(NumParticles,1);
   strcpy(Phi.EPS.Info,"EPS GP");
 
+  /*! 
+  * Back stress for kinematic hardening (plasticity)
+  */
+  Phi.Back_stress = allocZ__MatrixLib__(NumParticles,Ndim*Ndim);
+  strcpy(Phi.EPS.Info,"Back stress GP");
+
   return Phi;
 }
 
@@ -368,6 +380,7 @@ void free_Fields(Fields Phi)
   free__MatrixLib__(Phi.chi);
   free__MatrixLib__(Phi.cohesion);
   free__MatrixLib__(Phi.EPS);
+  free__MatrixLib__(Phi.Back_stress);
 }
 
 /*********************************************************************/
@@ -410,6 +423,7 @@ void free_upw_vars__Fields__(Fields Phi)
   free__MatrixLib__(Phi.chi);
   free__MatrixLib__(Phi.cohesion);
   free__MatrixLib__(Phi.EPS);
+  free__MatrixLib__(Phi.Back_stress);
 }
 
 /*********************************************************************/

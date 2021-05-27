@@ -771,18 +771,23 @@ Tensor Convex_combination__TensorLib__(Tensor F_n1,Tensor F_n,double alpha)
 
 /*************************************************************/
 
-double volumetric_component__TensorLib__(Tensor A)
+Tensor volumetric_component__TensorLib__(Tensor A)
 {
-  double A_vol;
+  int Ndim = NumberDimensions;
+  Tensor A_vol = alloc__TensorLib__(2); 
+  double detA = I1__TensorLib__(A);
 
-  A_vol = I1__TensorLib__(A)/3.0;
+  for(int i = 0 ; i<Ndim ; i++)
+  {
+    A_vol.N[i][i] = detA/3.0;
+  }
 
   return A_vol;
 }
 
 /*************************************************************/
 
-Tensor deviatoric_component__TensorLib__(Tensor A, double A_vol)
+Tensor deviatoric_component__TensorLib__(Tensor A, Tensor A_vol)
 {
   int Ndim = NumberDimensions;
   Tensor A_dev = alloc__TensorLib__(2); 
@@ -791,7 +796,7 @@ Tensor deviatoric_component__TensorLib__(Tensor A, double A_vol)
   {
     for(int j = 0 ; j<Ndim ; j++)
     {
-      A_dev.N[i][j] =  A.N[i][j] - (i == j)*A_vol;
+      A_dev.N[i][j] =  A.N[i][j] - A_vol.N[i][j];
     }
   }
 

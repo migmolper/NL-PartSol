@@ -585,14 +585,15 @@ static void vtk_Out_Stress_P(FILE * Vtk_file, Matrix Stress, int NumParticles)
 {
   int Ndim = NumberDimensions;
   Tensor Stress_p;
-  double P_p; /* Trace of the stress tensor (volumetric) */
+  Tensor P_p; /* Trace of the stress tensor (volumetric) */
   fprintf(Vtk_file,"SCALARS P double \n");
   fprintf(Vtk_file,"LOOKUP_TABLE default \n");
   for(int i =  0 ; i<NumParticles ; i++)
   {
     Stress_p = memory_to_tensor__TensorLib__(Stress.nM[i], 2);
     P_p = volumetric_component__TensorLib__(Stress_p);   
-    fprintf(Vtk_file,"%lf \n",P_p);
+    fprintf(Vtk_file,"%lf \n",P_p.N[0][0]);
+    free__TensorLib__(P_p);
   }
 
 }
@@ -770,7 +771,7 @@ static void vtk_Out_Von_Mises(FILE * Vtk_file, Matrix F_n, Matrix P_n, int NumPa
   Tensor P_p;
   Tensor Cauchy_p;
   Tensor Cauchy_dev_p;
-  double Cauchy_vol_p;
+  Tensor Cauchy_vol_p;
   double J_p;
 
   fprintf(Vtk_file,"SCALARS Von-Mises double \n");
@@ -802,6 +803,7 @@ static void vtk_Out_Von_Mises(FILE * Vtk_file, Matrix F_n, Matrix P_n, int NumPa
     free__TensorLib__(F_pT);
     free__TensorLib__(Cauchy_p);
     free__TensorLib__(Cauchy_dev_p);
+    free__TensorLib__(Cauchy_vol_p);
   }
 }
 

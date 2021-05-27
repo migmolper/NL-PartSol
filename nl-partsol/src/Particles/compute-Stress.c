@@ -24,7 +24,7 @@ Tensor explicit_integration_stress__Particles__(
   }  
   else if(strcmp(MatProp.Type,"LE") == 0)
   {
-    Stress = LinearElastic(Strain,Stress,MatProp);
+    Stress = LinearElastic(Stress,Strain,MatProp);
   }
   else if(strcmp(MatProp.Type,"Von-Mises") == 0)
   {
@@ -84,25 +84,37 @@ Tensor forward_integration_Stress__Particles__(
   }
   else if(strcmp(MatProp_p.Type,"Von-Mises") == 0)
   {
-    J_p = MPM_Mesh.Phi.J.nV[p];
-    F_n1_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n1.nM[p],2);
-    F_m1_plastic_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_m1_plastic.nM[p],2);
+    Input_Plastic_Parameters.F_n1_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n1.nM[p],2);
+    Input_Plastic_Parameters.F_m1_plastic_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_m1_plastic.nM[p],2);
     Input_Plastic_Parameters.EPS = MPM_Mesh.Phi.EPS.nV[p];
+    Input_Plastic_Parameters.Back_stress = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.Back_stress.nM[p],2);
 
-    Output_Plastic_Parameters = finite_strains_plasticity_Von_Mises(P_p,F_m1_plastic_p,F_n1_p,Input_Plastic_Parameters,MatProp_p,J_p);
+    Output_Plastic_Parameters = finite_strains_plasticity_Von_Mises(P_p,Input_Plastic_Parameters,MatProp_p);
 
     MPM_Mesh.Phi.EPS.nV[p] = Output_Plastic_Parameters.EPS;
     free__TensorLib__(Output_Plastic_Parameters.Increment_E_plastic);
   }
-  else if((strcmp(MatProp_p.Type,"Drucker-Prager-Plane-Strain") == 0) || (strcmp(MatProp_p.Type,"Drucker-Prager-Outer-Cone") == 0))
+  else if(strcmp(MatProp_p.Type,"Von-Mises-Perzyna") == 0)
   {
-    J_p = MPM_Mesh.Phi.J.nV[p];
-    F_n1_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n1.nM[p],2);
-    F_m1_plastic_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_m1_plastic.nM[p],2);
+    Input_Plastic_Parameters.F_n1_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n1.nM[p],2);
+    Input_Plastic_Parameters.F_m1_plastic_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_m1_plastic.nM[p],2);
+    Input_Plastic_Parameters.EPS = MPM_Mesh.Phi.EPS.nV[p];
+    Input_Plastic_Parameters.Back_stress = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.Back_stress.nM[p],2);
+
+    Output_Plastic_Parameters = finite_strains_viscoplasticity_Von_Mises_Perzyna(P_p,Input_Plastic_Parameters,MatProp_p);
+
+    MPM_Mesh.Phi.EPS.nV[p] = Output_Plastic_Parameters.EPS;
+    free__TensorLib__(Output_Plastic_Parameters.Increment_E_plastic);
+  }
+  else if((strcmp(MatProp_p.Type,"Drucker-Prager-Plane-Strain") == 0) || 
+    (strcmp(MatProp_p.Type,"Drucker-Prager-Outer-Cone") == 0))
+  {
+    Input_Plastic_Parameters.F_n1_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n1.nM[p],2);
+    Input_Plastic_Parameters.F_m1_plastic_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_m1_plastic.nM[p],2);
     Input_Plastic_Parameters.Cohesion = MPM_Mesh.Phi.cohesion.nV[p];
     Input_Plastic_Parameters.EPS = MPM_Mesh.Phi.EPS.nV[p];
 
-    Output_Plastic_Parameters = finite_strains_plasticity_Drucker_Prager_Sanavia(P_p,F_m1_plastic_p,F_n1_p,Input_Plastic_Parameters,MatProp_p,J_p);
+    Output_Plastic_Parameters = finite_strains_plasticity_Drucker_Prager_Sanavia(P_p,Input_Plastic_Parameters,MatProp_p);
 
     MPM_Mesh.Phi.cohesion.nV[p] = Output_Plastic_Parameters.Cohesion;
     MPM_Mesh.Phi.EPS.nV[p] = Output_Plastic_Parameters.EPS;
