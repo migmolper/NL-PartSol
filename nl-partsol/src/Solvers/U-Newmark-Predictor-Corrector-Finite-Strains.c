@@ -1,11 +1,12 @@
 #include "nl-partsol.h"
 
+#include <omp.h>
+
 #ifdef __linux__
 #include <lapacke.h>
 
 #elif __APPLE__
 #include <Accelerate/Accelerate.h>
-
 #endif
 
 
