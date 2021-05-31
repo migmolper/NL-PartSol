@@ -775,11 +775,11 @@ Tensor volumetric_component__TensorLib__(Tensor A)
 {
   int Ndim = NumberDimensions;
   Tensor A_vol = alloc__TensorLib__(2); 
-  double detA = I1__TensorLib__(A);
+  double trA = I1__TensorLib__(A);
 
   for(int i = 0 ; i<Ndim ; i++)
   {
-    A_vol.N[i][i] = detA/3.0;
+    A_vol.N[i][i] = trA/3.0;
   }
 
   return A_vol;

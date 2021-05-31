@@ -8,6 +8,8 @@
 
 #endif
 
+#include <omp.h>
+
 /*
   Call global variables
 */
@@ -869,18 +871,10 @@ static void update_Local_State(
     MatProp_Soil_p = MPM_Mesh.Mat[Material_Soil_idx];
 
     /*
-      Activate locking control technique (F-bar)
-    */
-    if(MatProp_Soil_p.Locking_Control_Fbar)
-    {
-      get_locking_free_Deformation_Gradient_n1__Particles__(p,MPM_Mesh,FEM_Mesh);
-    }
-
-    /*
       Update the first Piola-Kirchhoff stress tensor with an apropiate
       integration rule.
     */
-    P_p = forward_integration_Stress__Particles__(p,MPM_Mesh,MatProp_Soil_p); 
+    P_p = forward_integration_Stress__Particles__(p,MPM_Mesh,FEM_Mesh,MatProp_Soil_p); 
   }
 
 }

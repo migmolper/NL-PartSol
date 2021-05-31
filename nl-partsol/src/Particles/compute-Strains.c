@@ -220,7 +220,7 @@ void update_Deformation_Gradient_n1__Particles__(
 
 /*******************************************************/
 
-void get_locking_free_Deformation_Gradient_n1__Particles__(
+Tensor get_locking_free_Deformation_Gradient_n1__Particles__(
   int p,
   Particle MPM_Mesh,
   Mesh FEM_Mesh)
@@ -249,6 +249,7 @@ void get_locking_free_Deformation_Gradient_n1__Particles__(
   ChainPtr Particle_Patch_p;
 
   Tensor F_n1_p;
+  Tensor F_bar = alloc__TensorLib__(2);
 
   V0_patch = 0.0;
   Vn1_patch = 0.0;
@@ -320,9 +321,11 @@ void get_locking_free_Deformation_Gradient_n1__Particles__(
   {
     for(int j = 0 ; j<Ndim ; j++)
     {
-      F_n1_p.N[i][j] *= averaged_F_vol;
+      F_bar.N[i][j] = averaged_F_vol*F_n1_p.N[i][j];
     }
   }
+
+  return F_bar;
 
 }
 

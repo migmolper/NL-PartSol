@@ -3,6 +3,7 @@
 /*
   Call global variables
 */
+double DeltaTimeStep;
 double TOL_Radial_Returning;
 int Max_Iterations_Radial_Returning;
 
@@ -19,8 +20,8 @@ static bool   check_convergence(double,double,int,int);
 
 static Tensor compute_plastic_flow_direction(Tensor, double);
 
-static double compute_yield_surface(double,double,double,double,Material);
-static double compute_derivative_yield_surface(double,Material);
+static double compute_yield_surface(double,double,double,Material);
+static double compute_derivative_yield_surface(Material);
 
 static double compute_K(double,Material);
 static double compute_D_K(Material);
@@ -185,9 +186,6 @@ Plastic_status infinitesimal_strains_viscoplasticity_Von_Mises_Perzyna(
   double EPS_k;
   double delta_Gamma_k;
  
-
-  double DeltaT;
-
   /*
     Initialise convergence parameters for the solver
   */
@@ -220,7 +218,7 @@ Plastic_status infinitesimal_strains_viscoplasticity_Von_Mises_Perzyna(
   */
   EPS_k = EPS;
   delta_Gamma_k = 0;
-  Phi = compute_yield_surface(relative_stress_norm, delta_Gamma_k, EPS_k, DeltaT, MatProp);
+  Phi = compute_yield_surface(relative_stress_norm, delta_Gamma_k, EPS_k, MatProp);
 
   if(Phi > TOL)
   {     
@@ -230,9 +228,9 @@ Plastic_status infinitesimal_strains_viscoplasticity_Von_Mises_Perzyna(
     while(Convergence == false)
     {
           
-      Phi = compute_yield_surface(relative_stress_norm, delta_Gamma_k, EPS_k, DeltaT, MatProp);
+      Phi = compute_yield_surface(relative_stress_norm, delta_Gamma_k, EPS_k, MatProp);
 
-      d_Phi = compute_derivative_yield_surface(DeltaT,MatProp);
+      d_Phi = compute_derivative_yield_surface(MatProp);
 
       delta_Gamma_k = update_increment_plastic_strain(delta_Gamma_k, Phi, d_Phi);
 
@@ -363,7 +361,6 @@ static double compute_yield_surface(
   double relative_stress_norm,
   double delta_Gamma,
   double EPS_k,
-  double DeltaT,
   Material MatProp)
 {
   double nu = MatProp.nu; /* Poisson modulus */
@@ -373,14 +370,13 @@ static double compute_yield_surface(
   double K = compute_K(EPS_k,MatProp);
   double DeltaH = compute_DeltaH(delta_Gamma,MatProp);
 
-  return - sqrt(2./3.)*(K + DeltaH) + relative_stress_norm - (2*G + fluidity_param/DeltaT)*delta_Gamma;
+  return - sqrt(2./3.)*(K + DeltaH) + relative_stress_norm - (2*G + fluidity_param/DeltaTimeStep)*delta_Gamma;
 }
 
 /**************************************************************/
 
 
 static double compute_derivative_yield_surface(
-  double DeltaT,
   Material MatProp)
 {
   double nu = MatProp.nu; /* Poisson modulus */
@@ -390,7 +386,7 @@ static double compute_derivative_yield_surface(
   double D_K = compute_D_K(MatProp);
   double D_DeltaH = compute_D_DeltaH(MatProp);
 
-  return - sqrt(2./3.)*(D_K + D_DeltaH) - (2*G + fluidity_param/DeltaT);
+  return - sqrt(2./3.)*(D_K + D_DeltaH) - (2*G + fluidity_param/DeltaTimeStep);
 }
 
 /**************************************************************/

@@ -75,7 +75,7 @@ Plastic_status finite_strains_plasticity_Von_Mises(
   T_p = LinearElastic(T_p, E_trial_elastic, MatProp);
 
   /* Start plastic corrector algorithm in infinitesimal strains */
-  Outputs_VarCons = infinitesimal_strains_plasticity_Von_Mises(T_p, E_trial_elastic, Inputs_VarCons, MatProp);
+  Outputs_VarCons = infinitesimal_strains_plasticity_Von_Mises(T_p, Inputs_VarCons, MatProp);
 
   /* Update the logarithmic strain tensor */
   for(int i = 0 ; i < Ndim  ; i++)
@@ -156,7 +156,6 @@ Plastic_status finite_strains_plasticity_Von_Mises(
 
 Plastic_status infinitesimal_strains_plasticity_Von_Mises(
   Tensor sigma_k1,
-  Tensor E_elastic,
   Plastic_status Inputs_VarCons,
   Material MatProp)
 /*	

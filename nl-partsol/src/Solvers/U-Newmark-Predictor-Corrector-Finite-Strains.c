@@ -13,6 +13,7 @@
 /*
   Call global variables
 */
+double DeltaTimeStep;
 double Thickness_Plain_Stress;
 Event * Out_nodal_path_csv;
 Event * Out_particles_path_csv;
@@ -26,21 +27,21 @@ int Number_Out_particles_path_csv;
 /* Step 1 */
 static Matrix compute_Mass_Matrix(Particle MPM_Mesh, Mesh FEM_Mesh, Mask ActiveNodes);
 /* Step 2 */
-static  void  compute_Explicit_Newmark_Predictor(Particle,double,double);
+static  void  compute_Explicit_Newmark_Predictor(Particle,double);
 /* Step 3 */
 static Matrix compute_Nodal_Gravity_field(Mask, Particle, int);
 static Matrix compute_Nodal_D_Displacement(Particle,Mesh,Mask,Matrix);
 static Matrix compute_Nodal_Velocity(Particle,Mesh,Mask,Matrix);
 static void   impose_Dirichlet_Boundary_Conditions(Mesh,Matrix,Matrix,Mask,int);
 /* Step 4 */
-static void   update_Local_State(Matrix,Mask,Particle,Mesh,double);
+static void   update_Local_State(Matrix,Mask,Particle,Mesh);
 /* Step 5 */
 static Matrix compute_Nodal_Forces(Mask,Particle,Mesh,int);
 static void   compute_Nodal_Internal_Forces(Matrix,Mask,Particle,Mesh);
 static void   compute_Nodal_Nominal_traction_Forces(Matrix,Mask,Particle,Mesh,int);
 static Matrix solve_Nodal_Equilibrium(Matrix,Matrix,Matrix,Matrix,Particle,Mesh,Mask,Mask);
 /* Step 6 */
-static  void  compute_Explicit_Newmark_Corrector(Particle,double,double);
+static  void  compute_Explicit_Newmark_Corrector(Particle,double);
 /* Step 7 */
 static void   output_selector(Particle, Mesh, Mask, Matrix, Matrix, Matrix, Matrix, double, int, int);
 
@@ -62,7 +63,6 @@ void U_Newmark_Predictor_Corrector_Finite_Strains(
 
   double gamma = 0.5;
   double CFL = Parameters_Solver.CFL;
-  double DeltaTimeStep;
   double DeltaX = FEM_Mesh.DeltaX;
 
   Matrix Lumped_Mass;
@@ -98,7 +98,7 @@ void U_Newmark_Predictor_Corrector_Finite_Strains(
       print_Status("Second step : Explicit Newmark predictor",TimeStep);
       print_Status("WORKING ...",TimeStep);
       
-      compute_Explicit_Newmark_Predictor(MPM_Mesh, gamma, DeltaTimeStep);
+      compute_Explicit_Newmark_Predictor(MPM_Mesh, gamma);
 
       print_Status("DONE !!!",TimeStep);
 
@@ -120,7 +120,7 @@ void U_Newmark_Predictor_Corrector_Finite_Strains(
       print_Status("Four step : Update local state",TimeStep);
       print_Status("WORKING ...",TimeStep);
 
-      update_Local_State(D_Displacement, ActiveNodes, MPM_Mesh, FEM_Mesh, DeltaTimeStep);
+      update_Local_State(D_Displacement, ActiveNodes, MPM_Mesh, FEM_Mesh);
 
       print_Status("*************************************************",TimeStep);
       print_Status("Five step : Compute equilibrium ... WORKING",TimeStep);
@@ -133,7 +133,7 @@ void U_Newmark_Predictor_Corrector_Finite_Strains(
       print_Status("Six step : Compute corrector",TimeStep);
       print_Status("WORKING ...",TimeStep);
 
-      compute_Explicit_Newmark_Corrector(MPM_Mesh,gamma,DeltaTimeStep);
+      compute_Explicit_Newmark_Corrector(MPM_Mesh,gamma);
       local_search__Particles__(MPM_Mesh,FEM_Mesh);
       
       print_Status("DONE !!!",TimeStep);
@@ -267,8 +267,7 @@ static Matrix compute_Mass_Matrix(
 
 static void compute_Explicit_Newmark_Predictor(
   Particle MPM_Mesh, // Information related with particles
-  double gamma, // Newmark integration parameter
-  double Dt) // Time step
+  double gamma) // Newmark integration parameter
 /*
   The predictor stage is computed in the particles
 */
@@ -286,9 +285,9 @@ static void compute_Explicit_Newmark_Predictor(
     for(int i = 0 ; i<Ndim ; i++)
     {
 
-      MPM_Mesh.Phi.D_dis.nM[p][i] = Dt*MPM_Mesh.Phi.vel.nM[p][i] + 0.5*DSQR(Dt)*MPM_Mesh.Phi.acc.nM[p][i];
+      MPM_Mesh.Phi.D_dis.nM[p][i] = DeltaTimeStep*MPM_Mesh.Phi.vel.nM[p][i] + 0.5*DSQR(DeltaTimeStep)*MPM_Mesh.Phi.acc.nM[p][i];
 
-      MPM_Mesh.Phi.vel.nM[p][i] += (1-gamma)*Dt*MPM_Mesh.Phi.acc.nM[p][i];
+      MPM_Mesh.Phi.vel.nM[p][i] += (1-gamma)*DeltaTimeStep*MPM_Mesh.Phi.acc.nM[p][i];
 
     }
 
@@ -656,8 +655,7 @@ static void update_Local_State(
   Matrix D_Displacement,
 	Mask ActiveNodes,
 	Particle MPM_Mesh,
-	Mesh FEM_Mesh,
-	double TimeStep)
+	Mesh FEM_Mesh)
 {
 
   /*
@@ -747,18 +745,10 @@ static void update_Local_State(
     MatProp_p = MPM_Mesh.Mat[MatIndx_p];
 
     /*
-      Activate locking control technique (F-bar)
-    */
-    if(MPM_Mesh.Mat[MPM_Mesh.MatIdx[p]].Locking_Control_Fbar)
-    {
-      get_locking_free_Deformation_Gradient_n1__Particles__(p,MPM_Mesh,FEM_Mesh);
-    }
-
-    /*
       Update the first Piola-Kirchhoff stress tensor with an apropiate
       integration rule.
     */
-    P_p = forward_integration_Stress__Particles__(p,MPM_Mesh,MatProp_p); 
+    P_p = forward_integration_Stress__Particles__(p,MPM_Mesh,FEM_Mesh,MatProp_p); 
 
   }
 
@@ -1161,8 +1151,7 @@ static Matrix solve_Nodal_Equilibrium(
 
 static void compute_Explicit_Newmark_Corrector(
   Particle MPM_Mesh,
-  double gamma,
-  double Dt)
+  double gamma)
 {
   int Ndim = NumberDimensions;
   int Np = MPM_Mesh.NumGP;
@@ -1188,7 +1177,7 @@ static void compute_Explicit_Newmark_Corrector(
           /* 
             Correct particle velocity
           */
-          MPM_Mesh.Phi.vel.nM[p][i] += gamma*Dt*MPM_Mesh.Phi.acc.nM[p][i];
+          MPM_Mesh.Phi.vel.nM[p][i] += gamma*DeltaTimeStep*MPM_Mesh.Phi.acc.nM[p][i];
 
           /*
             Update the particles position and displacement

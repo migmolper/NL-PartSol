@@ -883,7 +883,7 @@ static void update_Local_State(Matrix D_Displacement,
       */
       MatIndx_p = MPM_Mesh.MatIdx[p];
       MatProp_p = MPM_Mesh.Mat[MatIndx_p];
-      S_p = forward_integration_Stress__Particles__(p,MPM_Mesh,MatProp_p);
+      S_p = forward_integration_Stress__Particles__(p,MPM_Mesh,FEM_Mesh,MatProp_p);
       
       /*
 	       Free memory 

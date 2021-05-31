@@ -111,7 +111,7 @@ Matrix compute_D_matrix_Neo_Hookean_Wriggers(Tensor, double, Material);
 
 
 Plastic_status finite_strains_plasticity_Von_Mises(Tensor, Plastic_status, Material);
-Plastic_status infinitesimal_strains_plasticity_Von_Mises(Tensor, Tensor, Plastic_status, Material);
+Plastic_status infinitesimal_strains_plasticity_Von_Mises(Tensor, Plastic_status, Material);
 /*******************************************************/  
 
 Plastic_status finite_strains_viscoplasticity_Von_Mises_Perzyna(Tensor,Plastic_status,Material);

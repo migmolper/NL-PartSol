@@ -16,7 +16,7 @@ Tensor LinearElastic(Tensor Stress, Tensor Strain, Material Mat)
   {
     for(int j = 0 ; j<Ndim ; j++)
     {
-      Stress.N[i][j] = 2*G*Strain.N[i][j] + (i==j)*(K - 2./3.*G)*traceStrain;
+      Stress.N[i][j] = 2*G*Strain.N[i][j] + (K - 2*G/3.0)*(i==j)*traceStrain;
     }
   }
 
@@ -24,3 +24,4 @@ Tensor LinearElastic(Tensor Stress, Tensor Strain, Material Mat)
 }
 
 /**************************************************************/
+
