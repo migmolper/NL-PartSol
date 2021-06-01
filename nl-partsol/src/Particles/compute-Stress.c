@@ -40,6 +40,20 @@ Tensor explicit_integration_stress__Particles__(
 
     free__TensorLib__(Output_Plastic_Parameters.Increment_E_plastic);
   }
+  else if(strcmp(MatProp.Type,"Von-Mises-Perzyna") == 0)
+  {
+
+    Input_Plastic_Parameters.EPS = MPM_Mesh.Phi.EPS.nV[p];
+    Input_Plastic_Parameters.Back_stress = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.Back_stress.nM[p],2);
+
+    Stress = LinearElastic(Stress,Strain,MatProp);
+
+    Output_Plastic_Parameters = infinitesimal_strains_viscoplasticity_Von_Mises_Perzyna(Stress,Input_Plastic_Parameters, MatProp);
+
+    MPM_Mesh.Phi.EPS.nV[p] = Output_Plastic_Parameters.EPS;
+
+    free__TensorLib__(Output_Plastic_Parameters.Increment_E_plastic);
+  }
   else
   {
     exit(EXIT_FAILURE);

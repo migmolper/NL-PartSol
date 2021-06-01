@@ -115,7 +115,7 @@ Plastic_status infinitesimal_strains_plasticity_Von_Mises(Tensor, Plastic_status
 /*******************************************************/  
 
 Plastic_status finite_strains_viscoplasticity_Von_Mises_Perzyna(Tensor,Plastic_status,Material);
-Plastic_status infinitesimal_strains_viscoplasticity_Von_Mises_Perzyna(Tensor,Tensor,Plastic_status,Material);
+Plastic_status infinitesimal_strains_viscoplasticity_Von_Mises_Perzyna(Tensor,Plastic_status,Material);
 /*******************************************************/
 
 Plastic_status finite_strains_plasticity_Drucker_Prager_Sanavia(Tensor, Plastic_status, Material);

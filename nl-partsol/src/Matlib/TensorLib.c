@@ -310,12 +310,12 @@ EigenTensor Eigen_analysis__TensorLib__(Tensor A)
     Query and allocate the optimal workspace
   */
   lwork = -1;
-  dgeev_("V", "N", &n, a, &lda, wr, wi, vl, &ldvl, vr, &ldvr, &wkopt, &lwork, &info );
+  dgeev_("N", "V", &n, a, &lda, wr, wi, vl, &ldvl, vr, &ldvr, &wkopt, &lwork, &info );
   lwork = (int)wkopt;
   work = (double*)malloc(lwork*sizeof(double));
         
   /* Solve eigenproblem */
-  dgeev_("V","N", &n, a, &lda, wr, wi, vl, &ldvl, vr, &ldvr,work, &lwork, &info );
+  dgeev_("N","V", &n, a, &lda, wr, wi, vl, &ldvl, vr, &ldvr,work, &lwork, &info );
   
   /* Check for convergence */
   if(info > 0)
@@ -338,7 +338,7 @@ EigenTensor Eigen_analysis__TensorLib__(Tensor A)
 
     for(int j = 0 ; j<Ndim ; j++)
     {
-      EigenA.Vector.N[i][j] = vl[i+j*Ndim];
+      EigenA.Vector.N[i][j] = vr[i+j*Ndim];
     }
   }
 

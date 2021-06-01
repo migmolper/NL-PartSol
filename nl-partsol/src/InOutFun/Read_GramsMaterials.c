@@ -505,7 +505,7 @@ GramsMaterials (Particles=route.txt) {
 	  else if(strcmp(Mat_GP.Type,"Von-Mises") == 0)
 	  { 
 		check_Von_Mises_Material(Mat_GP);	
-	  	TOL_Radial_Returning = 1E-10;
+	  	TOL_Radial_Returning = 1E-16;
 		Max_Iterations_Radial_Returning = 300;
 	  }
 	  /* Parameters for a Von Mises Yield criterium + Perzyna visplasticity */

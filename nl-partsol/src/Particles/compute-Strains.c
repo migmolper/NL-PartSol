@@ -232,7 +232,7 @@ Tensor get_locking_free_Deformation_Gradient_n1__Particles__(
   int IdxElement;
   double Simplex_Radius = FEM_Mesh.DeltaX;
   double J_n_p_patch;
-  double J_n1_p_patch;
+  double J_n1_q_patch;
   double Vol_0_q;
   double Vol_n1_q;
   double V0_patch;
@@ -241,6 +241,9 @@ Tensor get_locking_free_Deformation_Gradient_n1__Particles__(
   double J_n1_patch;
   double J_averaged;
   double averaged_F_vol;
+
+  double alpha = 0.5;
+
   Matrix X_p;
   Matrix X_q;
   Matrix Coordinates_Patch_p;
@@ -287,8 +290,8 @@ Tensor get_locking_free_Deformation_Gradient_n1__Particles__(
         {
           Vol_0_q = MPM_Mesh.Phi.Vol_0.nV[q];
 
-          J_n1_p_patch = MPM_Mesh.Phi.J.nV[q];
-          Vol_n1_q = Vol_0_q*J_n1_p_patch;
+          J_n1_q_patch = MPM_Mesh.Phi.J.nV[q];
+          Vol_n1_q = Vol_0_q*J_n1_q_patch;
 
           V0_patch += Vol_0_q;
           Vn1_patch += Vol_n1_q;
@@ -321,7 +324,7 @@ Tensor get_locking_free_Deformation_Gradient_n1__Particles__(
   {
     for(int j = 0 ; j<Ndim ; j++)
     {
-      F_bar.N[i][j] = averaged_F_vol*F_n1_p.N[i][j];
+      F_bar.N[i][j] = alpha*F_n1_p.N[i][j] + (1 - alpha)*averaged_F_vol*F_n1_p.N[i][j];
     }
   }
 
@@ -424,8 +427,6 @@ Tensor logarithmic_strains__Particles__(
   int Ndim = NumberDimensions;
   EigenTensor Eigen_C;
   Tensor logC_spectral = alloc__TensorLib__(2);
-  Tensor m1_EigenVects_C;
-  Tensor logC_spectral__x__m1_EigenVects_C;
   Tensor logC;
 
 
@@ -436,26 +437,14 @@ Tensor logarithmic_strains__Particles__(
   
   for(int i = 0 ; i < Ndim  ; i++)
   {
-    logC_spectral.N[i][i] = log(Eigen_C.Value.n[i]);
+    logC_spectral.N[i][i] = 0.5*log(Eigen_C.Value.n[i]);
   }
 
   /*
     Rotate the spectral descomposition of the tensor logC
   */
-  m1_EigenVects_C = Inverse__TensorLib__(Eigen_C.Vector);
-  logC_spectral__x__m1_EigenVects_C = matrix_product__TensorLib__(logC_spectral,m1_EigenVects_C);
-  logC = matrix_product__TensorLib__(Eigen_C.Vector,logC_spectral__x__m1_EigenVects_C);
+  logC = rotate__TensorLib__(logC_spectral, Eigen_C.Vector);
 
-  /*
-    Multiply by 1/2
-  */
-  for(int i = 0 ; i < Ndim  ; i++)
-  {
-    for(int j = 0 ; j < Ndim  ; j++)
-    { 
-      logC.N[i][j] *= 0.5;
-    }
-  }
 
   /*
     Free memory
@@ -463,8 +452,6 @@ Tensor logarithmic_strains__Particles__(
   free__TensorLib__(Eigen_C.Value);
   free__TensorLib__(Eigen_C.Vector);
   free__TensorLib__(logC_spectral);
-  free__TensorLib__(m1_EigenVects_C);
-  free__TensorLib__(logC_spectral__x__m1_EigenVects_C);
 
   return logC; 
 }

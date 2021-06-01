@@ -51,17 +51,13 @@ Plastic_status finite_strains_plasticity_Von_Mises(
   Plastic_status Outputs_VarCons;
   Tensor F_m1_plastic = Inputs_VarCons.F_m1_plastic_p;
   Tensor F_total = Inputs_VarCons.F_n1_p;
+  Tensor F_m1_total;
   Tensor F_trial_elastic;
   Tensor C_trial_elastic;
   Tensor E_trial_elastic;
-  Tensor F_elastic;
-  Tensor C_elastic;
-  Tensor C_m1_elastic;
   Tensor D_F_plastic;
   Tensor Fm1_plastic;
   Tensor T_p = alloc__TensorLib__(2);
-  Tensor M_p = alloc__TensorLib__(2);
-  Tensor S_p = alloc__TensorLib__(2);
 
   /* Compute the elastic right Cauchy-Green tensor using the intermediate configuration. */ 
   F_trial_elastic = matrix_product__TensorLib__(F_total,F_m1_plastic);
@@ -77,77 +73,33 @@ Plastic_status finite_strains_plasticity_Von_Mises(
   /* Start plastic corrector algorithm in infinitesimal strains */
   Outputs_VarCons = infinitesimal_strains_plasticity_Von_Mises(T_p, Inputs_VarCons, MatProp);
 
-  /* Update the logarithmic strain tensor */
-  for(int i = 0 ; i < Ndim  ; i++)
-  {
-   for(int j = 0 ; j < Ndim  ; j++)
-    {
-      E_trial_elastic.N[i][j] -= Outputs_VarCons.Increment_E_plastic.N[i][j];
-    }
-  }
-
   /* Use the Cuitiño & Ortiz exponential maping to compute the increment of plastic finite strains */
   update_plastic_deformation_gradient__Particles__(Outputs_VarCons.Increment_E_plastic, F_m1_plastic);
 
-  /* Compute the elastic stress tensor */
-  F_elastic = matrix_product__TensorLib__(F_total,F_m1_plastic);
-
-  /* Compute the inverse of the elastic right Cauchy-Green tensor */
-  C_elastic = right_Cauchy_Green__Particles__(F_elastic);
-  C_m1_elastic = Inverse__TensorLib__(C_elastic);
-
-  /* Compute the Mandel stress tensor */
-  for(int i = 0 ; i < Ndim  ; i++)
-  {
-   for(int j = 0 ; j < Ndim  ; j++)
-     {
-      /* Symmetric part */
-      M_p.N[i][j] += T_p.N[i][j];
-
-      /* Kew symetric part */
-      for(int k = 0 ; k < Ndim  ; k++)
-      {
-        M_p.N[i][j] += E_trial_elastic.N[i][k]*T_p.N[k][j] - T_p.N[i][k]*E_trial_elastic.N[k][j];
-      }
-    }
-  }
-
-  /* Get the Second Piola-Kirchhoff stress tensor (S_p) */
-  for(int i = 0 ; i < Ndim  ; i++)
-  {
-   for(int j = 0 ; j < Ndim  ; j++)
-     {
-      for(int k = 0 ; k < Ndim  ; k++)
-      {
-        S_p.N[i][j] += 0.5*(C_m1_elastic.N[i][k]*M_p.N[k][j] + M_p.N[k][i]*C_m1_elastic.N[k][j]);
-      }
-    }
-  }
-
   /* Get the First Piola-Kirchhoff stress tensor (P_p) */
+  F_m1_total = Inverse__TensorLib__(F_total);
+
   for(int i = 0 ; i < Ndim  ; i++)
   {
-   for(int j = 0 ; j < Ndim  ; j++)
-     {
-      P_p.N[i][j] = 0.0;
+    for(int j = 0 ; j < Ndim  ; j++)    
+    {
 
-      for(int k = 0 ; k < Ndim  ; k++)
-      {
-        P_p.N[i][j] += F_total.N[i][k]*S_p.N[k][j];
+     P_p.N[i][j] = 0.0;
+
+     for(int k = 0 ; k < Ndim  ; k++)
+     {
+        P_p.N[i][j] += T_p.N[i][k]*F_m1_total.N[k][j];
       }
     }
   }
+
 
   /* Free memory */
   free__TensorLib__(F_trial_elastic);
   free__TensorLib__(C_trial_elastic);
   free__TensorLib__(E_trial_elastic);
-  free__TensorLib__(F_elastic);
-  free__TensorLib__(C_elastic);
-  free__TensorLib__(C_m1_elastic);
   free__TensorLib__(T_p);
-  free__TensorLib__(M_p);
-  free__TensorLib__(S_p);
+  free__TensorLib__(F_m1_total);
 
   return Outputs_VarCons;
 }
@@ -172,7 +124,7 @@ Plastic_status infinitesimal_strains_plasticity_Von_Mises(
   double s_trial_norm;
   double relative_stress_norm;
   double Phi;
-  double d_Phi;	
+  double d_Phi;
   Tensor Increment_E_plastic;
 
   /* Load material marameters */
