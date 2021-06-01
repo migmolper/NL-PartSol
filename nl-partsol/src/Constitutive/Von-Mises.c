@@ -261,12 +261,12 @@ static bool check_convergence(double Error, double TOL, int Iter, int MaxIter)
   */
   if(Iter == 0)
     {
-      Error0 = Error;
-      Error_relative = Error/Error0;
+      Error0 = fabs(Error);
+      Error_relative = fabs(Error/Error0);
     }
     else
     {
-      Error_relative = Error/Error0;
+      Error_relative = fabs(Error/Error0);
     }
       
     /*
