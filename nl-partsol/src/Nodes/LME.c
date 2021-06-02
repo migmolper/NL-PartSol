@@ -1162,6 +1162,11 @@ void local_search__LME__(Particle MPM_Mesh, Mesh FEM_Mesh)
     Tensor F_p; // Particle deformation gradient
     double Beta_p = MPM_Mesh.Beta.nV[p]; // Thermalization parameter
 
+    /* 
+      Get the global coordinates of the particle
+    */
+    X_p = memory_to_matrix__MatrixLib__(Ndim,1,MPM_Mesh.Phi.x_GC.nM[p]);
+
     /*
       Compute the metric tensor
     */
@@ -1282,9 +1287,9 @@ ChainPtr tributary__LME__(
   */
   if(NumTributaryNodes < Ndim + 1)
   {
-    fprintf(stderr,"%s %i : %s\n",
+    fprintf(stderr,"%s %i : %s -> %i\n",
       "Warning in tributary__LME__ for particle",Indx_p,
-      "Insufficient nodal connectivity");
+      "Insufficient nodal connectivity",NumTributaryNodes);
     exit(EXIT_FAILURE);
   }
   

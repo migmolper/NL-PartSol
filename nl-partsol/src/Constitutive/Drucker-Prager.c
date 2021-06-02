@@ -320,19 +320,26 @@ static bool check_convergence(
   if(Iter > MaxIter)
     {
       sprintf(Error_message,"%s","Convergence not reached in the maximum number of iterations");
+      printf("%e\n",Error_relative);
       standard_error(Error_message); 
     }
 
+  /*
+    Compute relative error
+  */
   if(Iter == 0)
     {
-      Error0 = Error;
-      Error_relative = Error/Error0;
+      Error0 = fabs(Error);
+      Error_relative = fabs(Error/Error0);
     }
     else
     {
-      Error_relative = Error/Error0;
+      Error_relative = fabs(Error/Error0);
     }
       
+    /*
+      Check convergence using the relative error
+    */
   if(Error_relative < TOL)
     {
       convergence = true;

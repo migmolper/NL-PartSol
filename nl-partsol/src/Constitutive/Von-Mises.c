@@ -243,7 +243,11 @@ static void standard_error(char * Error_message)
 
 /**************************************************************/
 
-static bool check_convergence(double Error, double TOL, int Iter, int MaxIter)
+static bool check_convergence(
+  double Error,
+  double TOL,
+  int Iter,
+  int MaxIter)
 {
   bool convergence = false;
   double Error_relative;
