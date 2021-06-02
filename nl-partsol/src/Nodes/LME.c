@@ -51,7 +51,7 @@ void initialize__LME__(
   Matrix lambda_p; // Lagrange multiplier
   Tensor F_p; // Particle deformation gradient, only for anysotropic
   double Beta_p; // Thermalization or regularization parameter
-
+  ChainPtr Locality_I0; // List of nodes close to the node I0_p
 
   for(int p = 0 ; p<Np ; p++)
   {
@@ -63,14 +63,6 @@ void initialize__LME__(
       Get some properties for each particle
     */ 
     X_p = memory_to_matrix__MatrixLib__(Ndim,1,MPM_Mesh.Phi.x_GC.nM[p]);
-    lambda_p = memory_to_matrix__MatrixLib__(Ndim,1,MPM_Mesh.lambda.nM[p]);
-    Beta_p = MPM_Mesh.Beta.nV[p];
-
-    /*
-      Get the metric tensor
-    */
-    F_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n.nM[p],2);
-    Metric_p = metric__LME__(F_p);
 
     /*
       Loop over the element mesh
@@ -101,34 +93,26 @@ void initialize__LME__(
         {
           initialise_lambda__LME__(p, X_p, Elem_p_Coordinates, lambda_p, Beta_p);
         }
-        
-        /* Free memory */ 
-        free__MatrixLib__(Elem_p_Coordinates);
-
-        /* Get the initial connectivity of the particle */
-        MPM_Mesh.ListNodes[p] = tributary__LME__(p,X_p,Metric_p,Beta_p,MPM_Mesh.I0[p],FEM_Mesh);
-
-        /* Measure the size of the connectivity */
-        MPM_Mesh.NumberNodes[p] = lenght__SetLib__(MPM_Mesh.ListNodes[p]);
-
-        /* Active those nodes that interact with the particle */
-        asign_to_nodes__Particles__(p, MPM_Mesh.I0[p], MPM_Mesh.ListNodes[p], FEM_Mesh);
-       	
-        /* Calculate distance from particle to each node in the neibourhood */
-        Delta_Xip = compute_distance__MeshTools__(MPM_Mesh.ListNodes[p],X_p,FEM_Mesh.Coordinates);
-
-        /* Update the value of the thermalization parameter */
-        Beta_p = beta__LME__(gamma_LME, FEM_Mesh.h_avg[MPM_Mesh.I0[p]]);
-        MPM_Mesh.Beta.nV[p] = Beta_p;
-
-        /* Update lagrange multiplier with Newton-Rapson or with Nelder-Mead */
-        MPM_Mesh.update_lambda(p, Delta_Xip, lambda_p, Metric_p, Beta_p);
 
         /* 
-          Free memory
+          Activate the nodes near the particle
         */
-        free__MatrixLib__(Delta_Xip);
+        Locality_I0 = FEM_Mesh.NodalLocality_0[MPM_Mesh.I0[p]];
 
+        while(Locality_I0 != NULL)
+        {
+          if(FEM_Mesh.ActiveNode[Locality_I0->I] == false)
+          {
+            FEM_Mesh.ActiveNode[Locality_I0->I] = true;
+          }
+
+          Locality_I0 = Locality_I0->next; 
+
+        }
+
+        /* Free memory */ 
+        free__MatrixLib__(Elem_p_Coordinates);
+       	
         break;
       }      
 
@@ -147,11 +131,61 @@ void initialize__LME__(
       exit(EXIT_FAILURE);
     }
 
+  } 
+
+
+  for(int p = 0 ; p<Np ; p++)
+  {
+
+    /* 
+      Get some properties for each particle
+    */ 
+    X_p = memory_to_matrix__MatrixLib__(Ndim,1,MPM_Mesh.Phi.x_GC.nM[p]);
+    lambda_p = memory_to_matrix__MatrixLib__(Ndim,1,MPM_Mesh.lambda.nM[p]);
+    Beta_p = MPM_Mesh.Beta.nV[p];
+
     /*
+      Get the metric tensor
+    */
+    F_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n.nM[p],2);
+    Metric_p = metric__LME__(F_p);
+
+    /* 
+      Get the initial connectivity of the particle
+    */
+    MPM_Mesh.ListNodes[p] = tributary__LME__(p,X_p,Metric_p,Beta_p,MPM_Mesh.I0[p],FEM_Mesh);
+
+    /*
+      Calculate number of nodes
+    */
+    MPM_Mesh.NumberNodes[p] = lenght__SetLib__(MPM_Mesh.ListNodes[p]);
+
+    /* 
+      Generate nodal distance list
+    */
+    Delta_Xip = compute_distance__MeshTools__(MPM_Mesh.ListNodes[p],X_p,FEM_Mesh.Coordinates);
+
+    /* 
+      Update the value of the thermalization parameter
+    */
+    Beta_p = beta__LME__(gamma_LME, FEM_Mesh.h_avg[MPM_Mesh.I0[p]]);
+    MPM_Mesh.Beta.nV[p] = Beta_p;
+
+    /* 
+      Update lagrange multiplier with Newton-Rapson or with Nelder-Mead
+    */
+    MPM_Mesh.update_lambda(p, Delta_Xip, lambda_p, Metric_p, Beta_p);
+
+    /* 
       Free memory
     */
+    free__MatrixLib__(Delta_Xip);
     free__MatrixLib__(Metric_p);
-  } 
+
+    /* Active those nodes that interact with the particle */
+    asign_to_nodes__Particles__(p, MPM_Mesh.I0[p], MPM_Mesh.ListNodes[p], FEM_Mesh);
+
+  }
 
 
 }
@@ -1038,6 +1072,148 @@ Matrix dp__LME__(
 
 /****************************************************************************/
 
+void local_search__LME__(Particle MPM_Mesh, Mesh FEM_Mesh)
+/*
+  Search the closest node to the particle based in its previous position.
+*/
+{
+
+  /* Number of dimensions */
+  int Ndim = NumberDimensions;
+  /* Velocity and position of the particle */
+  Matrix X_p;
+  Matrix V_p;
+  /* Previous closest node to the particle */
+  int I0_p;
+  /* List of nodes close to the node I0_p */
+  ChainPtr Locality_I0;
+
+  /* Set to zero the active/non-active node, and the GPs in each element */
+  for(int i = 0 ; i<FEM_Mesh.NumNodesMesh ; i++)
+  {
+    FEM_Mesh.NumParticles[i] = 0;
+    FEM_Mesh.ActiveNode[i] = false;
+  }
+  for(int i = 0 ; i<FEM_Mesh.NumNodesMesh ; i++)
+  {
+    free__SetLib__(&FEM_Mesh.I_particles[i]);
+  }
+
+  /* 
+    Loop over the particles to create the list with active nodes
+  */
+  for(int p = 0 ; p<MPM_Mesh.NumGP ; p++)
+  {
+
+    /* 
+      Get the global coordinates and velocity of the particle
+    */
+    X_p = memory_to_matrix__MatrixLib__(Ndim,1,MPM_Mesh.Phi.x_GC.nM[p]);
+    V_p = memory_to_matrix__MatrixLib__(Ndim,1,MPM_Mesh.Phi.vel.nM[p]);
+
+    /* 
+      Get the index of the node close to the particle
+    */
+    I0_p = MPM_Mesh.I0[p];
+
+    /* 
+      Get nodes close to the node I0_p
+    */
+    Locality_I0 = FEM_Mesh.NodalLocality_0[I0_p];
+
+    /* 
+      Update the index of the node close to the particle
+      if there is advection
+    */
+    if(norm__MatrixLib__(V_p,2) > 0)
+    {
+      MPM_Mesh.I0[p] = get_closest_node__MeshTools__(X_p,Locality_I0,FEM_Mesh.Coordinates);
+      Locality_I0 = FEM_Mesh.NodalLocality_0[I0_p];
+    }
+
+    /* 
+      Activate the nodes near the particle
+    */
+    while(Locality_I0 != NULL)
+    {
+      if(FEM_Mesh.ActiveNode[Locality_I0->I] == false)
+      {
+        FEM_Mesh.ActiveNode[Locality_I0->I] = true;
+      }
+
+      Locality_I0 = Locality_I0->next; 
+
+    }
+ 
+
+  }
+
+  /* 
+    Loop over the particles to compute the tributary nodes
+  */
+  for(int p = 0 ; p<MPM_Mesh.NumGP ; p++)
+  {
+    /* 
+      Auxiliar variables for LME
+    */
+    Matrix Metric_p; // Define a metric tensor
+    Matrix Delta_Xip; // Distance from particles to the nodes
+    Matrix lambda_p = memory_to_matrix__MatrixLib__(Ndim,1,MPM_Mesh.lambda.nM[p]);
+    Tensor F_p; // Particle deformation gradient
+    double Beta_p = MPM_Mesh.Beta.nV[p]; // Thermalization parameter
+
+    /*
+      Compute the metric tensor
+    */
+    F_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n.nM[p],2);
+    Metric_p = metric__LME__(F_p);
+
+    /*
+      Free previous list of tributary nodes to the particle
+    */
+    free__SetLib__(&MPM_Mesh.ListNodes[p]);
+    MPM_Mesh.ListNodes[p] = NULL;
+
+    /*
+      Calculate the new connectivity with the previous value of beta
+    */
+    MPM_Mesh.ListNodes[p] = tributary__LME__(p,X_p,Metric_p,Beta_p,MPM_Mesh.I0[p],FEM_Mesh);
+
+    /*
+      Calculate number of nodes
+    */
+    MPM_Mesh.NumberNodes[p] = lenght__SetLib__(MPM_Mesh.ListNodes[p]);
+
+    /* 
+      Generate nodal distance list
+    */
+    Delta_Xip = compute_distance__MeshTools__(MPM_Mesh.ListNodes[p], X_p, FEM_Mesh.Coordinates);            
+
+    /*
+      Compute the thermalization parameter for the new set of nodes
+      and update it
+    */
+    Beta_p = beta__LME__(gamma_LME, FEM_Mesh.h_avg[MPM_Mesh.I0[p]]);
+    MPM_Mesh.Beta.nV[p] = Beta_p;
+
+    /*
+      Compute the lagrange multiplier of the new shape functions
+    */
+    MPM_Mesh.update_lambda(p, Delta_Xip, lambda_p, Metric_p, Beta_p);
+    
+    /* Free memory */
+    free__MatrixLib__(Metric_p);
+    free__MatrixLib__(Delta_Xip);
+
+    /* Active those nodes that interact with the particle */
+    asign_to_nodes__Particles__(p, MPM_Mesh.I0[p], MPM_Mesh.ListNodes[p], FEM_Mesh);
+  }
+
+
+}
+
+/****************************************************************************/
+
 ChainPtr tributary__LME__(
   int Indx_p,
   Matrix X_p,
@@ -1066,7 +1242,9 @@ ChainPtr tributary__LME__(
   /* Get the search radius */
   double Ra = sqrt(-log(TOL_zero_LME)/Beta_p);
 
-  /* Get nodes close to the particle */
+  /* 
+    Get nodes close to the particle
+  */
   Set_Nodes0 = FEM_Mesh.NodalLocality[I0];
   NumNodes0 = FEM_Mesh.SizeNodalLocality[I0];
   Array_Nodes0 = set_to_memory__SetLib__(Set_Nodes0,NumNodes0);
@@ -1077,21 +1255,24 @@ ChainPtr tributary__LME__(
 
     Node0 = Array_Nodes0[i];
 
-    /* Assign to a pointer the coordinates of the nodes */
-    X_I.nV = FEM_Mesh.Coordinates.nM[Node0];
-
-    /* Get a vector from the GP to the node */
-    Distance = substraction__MatrixLib__(X_p,X_I);
-
-    /* If the node is near the GP push in the chain */
-    if(generalised_Euclidean_distance__MatrixLib__(Distance, Metric) <= Ra)
+    if(FEM_Mesh.ActiveNode[Node0] == true)
     {
-      push__SetLib__(&Triburary_Nodes,Node0);
-      NumTributaryNodes++;
-    }
+      /* Assign to a pointer the coordinates of the nodes */
+      X_I.nV = FEM_Mesh.Coordinates.nM[Node0];
 
-    /* Free memory of the distrance vector */
-    free__MatrixLib__(Distance);
+      /* Get a vector from the GP to the node */
+      Distance = substraction__MatrixLib__(X_p,X_I);
+
+      /* If the node is near the GP push in the chain */
+      if(generalised_Euclidean_distance__MatrixLib__(Distance, Metric) <= Ra)
+      {
+        push__SetLib__(&Triburary_Nodes,Node0);
+        NumTributaryNodes++;
+      }
+
+      /* Free memory of the distrance vector */
+      free__MatrixLib__(Distance);
+    }
 
   }
 

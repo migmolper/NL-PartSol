@@ -684,17 +684,24 @@ typedef struct {
   /*!
    * Number of nodes close to a node 
    */
+  int * SizeNodalLocality_0;
   int * SizeNodalLocality;
 
   /*!
    * List of nodes close to a node 
    */  
+  ChainPtr * NodalLocality_0;
   ChainPtr * NodalLocality;
 
   /*!
    * List with the number of particles close to a node
    */
   int * NumParticles;
+
+  /*!
+  * Defines if a node is activated or not
+  */
+  bool * ActiveNode;
 
   /*!
    * List of particles in a node 
