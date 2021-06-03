@@ -92,7 +92,7 @@ void GramsShapeFun(char * Name_File)
 
       /* Set to default all it properties */
       gamma_LME = 3;
-      TOL_zero_LME = 1e-6;
+      TOL_zero_LME = 1e-10;
       TOL_wrapper_LME = 1e-10;
       curvature_LME = 0.0;
       max_iter_LME = 10;

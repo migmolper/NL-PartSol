@@ -78,7 +78,9 @@ void U_Newmark_Predictor_Corrector(
       print_Status("*************************************************",TimeStep);
       print_Status("Four step : Update particles lagrangian ... WORKING",TimeStep);
       update_Particles(MPM_Mesh, FEM_Mesh, Lumped_Mass, Velocity, Forces,DeltaTimeStep);
-      local_search__Particles__(MPM_Mesh,FEM_Mesh);
+//      local_search__Particles__(MPM_Mesh,FEM_Mesh);
+//      local_search__LME__(MPM_Mesh,FEM_Mesh);
+      local_search__Q4__(MPM_Mesh,FEM_Mesh);
       print_Status("DONE !!!",TimeStep);
 
       if(TimeStep % ResultsTimeStep == 0)

@@ -520,10 +520,10 @@ static void vtk_Out_dis(FILE * Vtk_file, Matrix dis, int NumParticles)
   for(int i =  0 ; i<NumParticles ; i++){
     for(int j = 0 ; j<3 ; j++){
       if(j<Ndim){
-  fprintf(Vtk_file,"%lf ",dis.nM[i][j]);
+  fprintf(Vtk_file,"%e ",dis.nM[i][j]);
       }
       else{
-  fprintf(Vtk_file,"%lf ",0.0);
+  fprintf(Vtk_file,"%e ",0.0);
       }
     }
     fprintf(Vtk_file,"\n");

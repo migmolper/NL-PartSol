@@ -22,4 +22,5 @@ bool in_out__Q4__(Matrix,Matrix);
 void   element_to_particles__Q4__(Matrix, Mesh, int);
 double min_DeltaX__Q4__(ChainPtr, Matrix);
 double volume__Q4__(Matrix);
+void local_search__Q4__(Particle, Mesh);
 #endif

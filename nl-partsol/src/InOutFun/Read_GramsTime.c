@@ -262,7 +262,7 @@ GramsTime(Scheme=FE){
 
   if((Is_NumTimeStep == false) && (Is_FinalTime == true) && (Is_Cel == true))
   {
-	Parameters.NumTimeStep = (int)(Parameters.FinalTime*Parameters.Cel*DeltaX)/(Parameters.CFL);
+	Parameters.NumTimeStep = (int)(Parameters.FinalTime*Parameters.Cel)/(Parameters.CFL*DeltaX);
 	printf("\t \t -> %s : %i \n","Number of time-steps",Parameters.NumTimeStep);
   }
   else if((Is_NumTimeStep == true) && (Is_FinalTime == false) && (Is_Cel == true))

@@ -57,7 +57,7 @@ int search_particle_in_surrounding_elements__Particles__(
 
   Ixd = ListElement;
   
-  while(Ixd!=NULL)
+  while(Ixd != NULL)
   {
 
     Nn = FEM_Mesh.NumNodesElem[Ixd->I];
@@ -70,7 +70,7 @@ int search_particle_in_surrounding_elements__Particles__(
     {
       free__MatrixLib__(Element_Coordinates);
       I_element = Ixd->I;
-      break;
+      break; 
     }
     
     /* Cycle */
@@ -84,6 +84,12 @@ int search_particle_in_surrounding_elements__Particles__(
       fprintf(stderr,"%s : %s %i \n",
 	      "Error in search_particle_in_surrounding_elements__Particles__()",
 	      "Not posible to find the particle",p);
+      fprintf(stderr, "%s\n","Coordinate of the particle :");
+      print__MatrixLib__(X_p,NumberDimensions,1);
+      fprintf(stderr, "%s\n","Surrounding element :");
+      print__SetLib__(ListElement);
+
+      exit(EXIT_FAILURE);
     }
   
   
@@ -266,13 +272,14 @@ void local_search__Particles__(Particle MPM_Mesh, Mesh FEM_Mesh)
     V_p = memory_to_matrix__MatrixLib__(Ndim,1,MPM_Mesh.Phi.vel.nM[p]);
 
     /* Check if the particle is static or is in movement */
-    if(norm__MatrixLib__(V_p,2) > 0){
+    if(norm__MatrixLib__(V_p,2) > 0)
+    {
 
       /* Get the index of the node close to the particle */
       I0_p = MPM_Mesh.I0[p];
 
       /* Get nodes close to the node I0_p */
-      Locality_I0 = FEM_Mesh.NodalLocality[I0_p];
+      Locality_I0 = FEM_Mesh.NodalLocality_0[I0_p];
 
       /* Update the index of the node close to the particle */
       MPM_Mesh.I0[p] = get_closest_node__MeshTools__(X_p,Locality_I0,FEM_Mesh.Coordinates);
