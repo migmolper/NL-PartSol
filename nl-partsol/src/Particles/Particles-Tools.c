@@ -88,8 +88,6 @@ int search_particle_in_surrounding_elements__Particles__(
       print__MatrixLib__(X_p,NumberDimensions,1);
       fprintf(stderr, "%s\n","Surrounding element :");
       print__SetLib__(ListElement);
-
-      exit(EXIT_FAILURE);
     }
   
   
@@ -127,12 +125,16 @@ void get_particle_tributary_nodes(Particle MPM_Mesh, Mesh FEM_Mesh, int p)
       /* Free previous list of tributary nodes to the particle */
       free__SetLib__(&MPM_Mesh.ListNodes[p]);
       MPM_Mesh.ListNodes[p] = NULL;    
+      
       /* Asign new connectivity */
       MPM_Mesh.ListNodes[p] = copy__SetLib__(FEM_Mesh.Connectivity[IdxElement]);
+      
       /* Get the coordinates of the element vertex */
       CoordElement = get_nodes_coordinates__MeshTools__(MPM_Mesh.ListNodes[p],FEM_Mesh.Coordinates);
+      
       /* Compute local coordinates of the particle in this element */
       FEM_Mesh.X_to_Xi(Xi_p,X_p,CoordElement);
+
       /* Free coordinates of the element */
       free__MatrixLib__(CoordElement);
     }
@@ -279,7 +281,7 @@ void local_search__Particles__(Particle MPM_Mesh, Mesh FEM_Mesh)
       I0_p = MPM_Mesh.I0[p];
 
       /* Get nodes close to the node I0_p */
-      Locality_I0 = FEM_Mesh.NodalLocality_0[I0_p];
+      Locality_I0 = FEM_Mesh.NodalLocality[I0_p];
 
       /* Update the index of the node close to the particle */
       MPM_Mesh.I0[p] = get_closest_node__MeshTools__(X_p,Locality_I0,FEM_Mesh.Coordinates);

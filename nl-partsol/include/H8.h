@@ -30,4 +30,5 @@ bool   in_out__H8__(Matrix, Matrix);
 void   element_to_particles__H8__(Matrix, Mesh, int);
 double min_DeltaX__H8__(ChainPtr, Matrix);
 double volume__H8__(Matrix);
+void   local_search__H8__(Particle, Mesh);
 #endif

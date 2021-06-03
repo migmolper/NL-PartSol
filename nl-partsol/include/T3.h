@@ -21,4 +21,5 @@ bool   in_out__T3__(Matrix,Matrix);
 void   element_to_particles__T3__(Matrix, Mesh, int);
 double min_DeltaX__T3__(ChainPtr, Matrix);
 double volume__T3__(Matrix);
+void   local_search__T3__(Particle, Mesh);
 #endif
