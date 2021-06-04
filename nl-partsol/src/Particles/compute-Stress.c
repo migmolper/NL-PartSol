@@ -106,7 +106,7 @@ Tensor forward_integration_Stress__Particles__(
     /*
       Activate locking control technique (F-bar)
     */
-    if(MatProp_p.Locking_Control_Fbar)
+    if((MatProp_p.Locking_Control_Fbar == true) && (fabs(Input_Plastic_Parameters.EPS) > 0.0))
     {
       Input_Plastic_Parameters.F_n1_p = get_locking_free_Deformation_Gradient_n1__Particles__(p,MPM_Mesh,FEM_Mesh);
     }
@@ -121,20 +121,20 @@ Tensor forward_integration_Stress__Particles__(
 
     Output_Plastic_Parameters = finite_strains_plasticity_Von_Mises(P_p,Input_Plastic_Parameters,MatProp_p);
 
-    MPM_Mesh.Phi.EPS.nV[p] = Output_Plastic_Parameters.EPS;
-    free__TensorLib__(Output_Plastic_Parameters.Increment_E_plastic);
-
-    if(MatProp_p.Locking_Control_Fbar)
+    if((MatProp_p.Locking_Control_Fbar == true) && (fabs(Input_Plastic_Parameters.EPS) > 0.0))
     {
       free__TensorLib__(Input_Plastic_Parameters.F_n1_p);
     }
+
+    MPM_Mesh.Phi.EPS.nV[p] = Output_Plastic_Parameters.EPS;
+    free__TensorLib__(Output_Plastic_Parameters.Increment_E_plastic);
   }
   else if(strcmp(MatProp_p.Type,"Von-Mises-Perzyna") == 0)
   {
     /*
       Activate locking control technique (F-bar)
     */
-    if(MatProp_p.Locking_Control_Fbar)
+    if((MatProp_p.Locking_Control_Fbar == true) && (fabs(Input_Plastic_Parameters.EPS) > 0.0))
     {
       Input_Plastic_Parameters.F_n1_p = get_locking_free_Deformation_Gradient_n1__Particles__(p,MPM_Mesh,FEM_Mesh);
     }
@@ -149,13 +149,14 @@ Tensor forward_integration_Stress__Particles__(
 
     Output_Plastic_Parameters = finite_strains_viscoplasticity_Von_Mises_Perzyna(P_p,Input_Plastic_Parameters,MatProp_p);
 
-    MPM_Mesh.Phi.EPS.nV[p] = Output_Plastic_Parameters.EPS;
-    free__TensorLib__(Output_Plastic_Parameters.Increment_E_plastic);
 
-    if(MatProp_p.Locking_Control_Fbar)
+    if((MatProp_p.Locking_Control_Fbar == true) && (fabs(Input_Plastic_Parameters.EPS) > 0.0))
     {
       free__TensorLib__(Input_Plastic_Parameters.F_n1_p);
     }
+
+    MPM_Mesh.Phi.EPS.nV[p] = Output_Plastic_Parameters.EPS;
+    free__TensorLib__(Output_Plastic_Parameters.Increment_E_plastic);
 
   }
   else if((strcmp(MatProp_p.Type,"Drucker-Prager-Plane-Strain") == 0) || 
@@ -164,7 +165,7 @@ Tensor forward_integration_Stress__Particles__(
     /*
       Activate locking control technique (F-bar)
     */
-    if(MatProp_p.Locking_Control_Fbar)
+    if((MatProp_p.Locking_Control_Fbar == true) && (fabs(Input_Plastic_Parameters.EPS) > 0.0))
     {
       Input_Plastic_Parameters.F_n1_p = get_locking_free_Deformation_Gradient_n1__Particles__(p,MPM_Mesh,FEM_Mesh);
     }
@@ -179,14 +180,14 @@ Tensor forward_integration_Stress__Particles__(
 
     Output_Plastic_Parameters = finite_strains_plasticity_Drucker_Prager_Sanavia(P_p,Input_Plastic_Parameters,MatProp_p);
 
-    MPM_Mesh.Phi.cohesion.nV[p] = Output_Plastic_Parameters.Cohesion;
-    MPM_Mesh.Phi.EPS.nV[p] = Output_Plastic_Parameters.EPS;
-    free__TensorLib__(Output_Plastic_Parameters.Increment_E_plastic);
-
-    if(MatProp_p.Locking_Control_Fbar)
+    if((MatProp_p.Locking_Control_Fbar == true) && (fabs(Input_Plastic_Parameters.EPS) > 0.0))
     {
       free__TensorLib__(Input_Plastic_Parameters.F_n1_p);
     }
+
+    MPM_Mesh.Phi.cohesion.nV[p] = Output_Plastic_Parameters.Cohesion;
+    MPM_Mesh.Phi.EPS.nV[p] = Output_Plastic_Parameters.EPS;
+    free__TensorLib__(Output_Plastic_Parameters.Increment_E_plastic);
 
   }
   else
