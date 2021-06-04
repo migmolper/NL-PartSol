@@ -36,6 +36,8 @@ void initialize__Q4__(
   /* Matrix with the coordinate of the nodes in the element */
   Matrix Elem_p_Coordinates;
  
+  ChainPtr Locality_I0; // List of nodes close to the node I0_p
+ 
   /* Loop over the particles to initialize them */
   for(int p = 0 ; p<Np ; p++)
   {
@@ -79,6 +81,23 @@ void initialize__Q4__(
 
         /* Free coordinates of the element */
         free__MatrixLib__(Elem_p_Coordinates);
+
+        /* 
+          Activate the nodes near the particle
+        */
+        Locality_I0 = FEM_Mesh.NodalLocality_0[MPM_Mesh.I0[p]];
+
+        while(Locality_I0 != NULL)
+        {
+          if(FEM_Mesh.ActiveNode[Locality_I0->I] == false)
+          {
+            FEM_Mesh.ActiveNode[Locality_I0->I] = true;
+          }
+
+          Locality_I0 = Locality_I0->next; 
+
+        }
+
 
         break;
 	
@@ -217,7 +236,7 @@ static Matrix F_Ref__Q4__(
 
 /* Element gradient in the real element */
 Matrix dN__Q4__(
-  Matrix X_EC, 
+  Matrix Xi,
   Matrix Element)
 /*
   - Matrix X_EC_GP : Element coordinates of the gauss point
@@ -229,27 +248,26 @@ Matrix dN__Q4__(
   Matrix dNdX;
   Matrix dNdX_T;
     
-  /* 1º Evaluate the gradient of the shape function in the GP (4 x Ndim) */
-  Matrix dNdX_Ref = dN_Ref__Q4__(X_EC);
+  /* 1º Evaluate the gradient of the shape function in the GP (4 x Ndim)
+  and get the transpose */
+  Matrix dNdX_Ref   = dN_Ref__Q4__(Xi);
+  Matrix dNdX_Ref_T = transpose__MatrixLib__(dNdX_Ref);
 
   /* 2º Get the Jacobian of the transformation evaluated in the GP */
-  Matrix F = F_Ref__Q4__(X_EC,Element);
-  Matrix F_m1 = inverse__MatrixLib__(F);  
+  Matrix F     = F_Ref__Q4__(Xi,Element);
+  Matrix F_m1  = inverse__MatrixLib__(F);  
   Matrix F_Tm1 = transpose__MatrixLib__(F_m1);
- 
-  free__MatrixLib__(F);
-  free__MatrixLib__(F_m1);
-  Matrix dNdX_Ref_T = transpose__MatrixLib__(dNdX_Ref);
-  free__MatrixLib__(dNdX_Ref);
   
   /* 5º Get the gradient of the shape functions in global coordinates */
   dNdX_T = matrix_product__MatrixLib__(F_Tm1, dNdX_Ref_T);
+  dNdX   = transpose__MatrixLib__(dNdX_T);
   
   /* Free memory */
+  free__MatrixLib__(F);
+  free__MatrixLib__(F_m1);
   free__MatrixLib__(F_Tm1);  
+  free__MatrixLib__(dNdX_Ref);
   free__MatrixLib__(dNdX_Ref_T);
-
-  dNdX = transpose__MatrixLib__(dNdX_T);
   free__MatrixLib__(dNdX_T);  
 
   
@@ -278,8 +296,10 @@ Matrix Xi_to_X__Q4__(
   /* 3º Get the global coordinates for this element coordiantes in this element */
   for(int I = 0 ; I<4 ; I++)
   {
-    X.nV[0] += N.nV[I]*Element.nM[I][0];
-    X.nV[1] += N.nV[I]*Element.nM[I][1];
+    for(int i = 0 ; i<Ndim ; i++)
+    {
+      X.nV[i] += N.nV[I]*Element.nM[I][i];
+    }
   }
 
   /* 4º Free memory */
@@ -319,36 +339,32 @@ bool in_out__Q4__(
   Matrix Element)
 {
 
-  double min_x = Element.nM[0][0];
-  double max_x = Element.nM[0][0];
-  double min_y = Element.nM[0][1];
-  double max_y = Element.nM[0][1];
+  double min[2] = {Element.nM[0][0],Element.nM[0][1]};
+  double max[2] = {Element.nM[0][0],Element.nM[0][1]};
 
   for(int a = 1 ; a<4 ; a++)
   {
-    for(int i = 0 ; i<2 ; i++)
+    for(int i = 0 ; i<2; i++)
     {
-      min_x = DMIN(min_x,Element.nM[a][0]);
-      min_y = DMIN(min_y,Element.nM[a][1]);
-      max_x = DMAX(max_x,Element.nM[a][0]);
-      max_y = DMAX(max_y,Element.nM[a][1]);
+      min[i] = DMIN(min[i],Element.nM[a][i]);
+      max[i] = DMAX(max[i],Element.nM[a][i]);
     }
   }
 
   Matrix Xi;
 
   // Check if it is inside
-  if((X.nV[0] <= max_x) && 
-    (X.nV[0] >= min_x) && 
-    (X.nV[1] <= max_y) && 
-    (X.nV[1] >= min_y))
+  if((X.nV[0] <= max[0]) && 
+    (X.nV[0] >= min[0]) && 
+    (X.nV[1] <= max[1]) && 
+    (X.nV[1] >= min[1]))
   {
 
     Xi = allocZ__MatrixLib__(2,1);
 
     X_to_Xi__Q4__(Xi, X, Element);
 
-    if((fabs(Xi.nV[0]) < 1.0) && (fabs(Xi.nV[1]) < 1.0))
+    if((fabs(Xi.nV[0]) <= 1.0) && (fabs(Xi.nV[1]) <= 1.0))
     {
       return true;    
     }
@@ -574,7 +590,6 @@ void local_search__Q4__(Particle MPM_Mesh, Mesh FEM_Mesh)
   Matrix Xi_p;
   Matrix X_p;
   Matrix V_p;
-  Matrix d_p;
   // Previous closest node to the particle
   int I0_p_old; 
   // New closest node to the particle
@@ -606,7 +621,6 @@ void local_search__Q4__(Particle MPM_Mesh, Mesh FEM_Mesh)
     // Get the global coordinates and velocity of the particle
     X_p = memory_to_matrix__MatrixLib__(Ndim,1,MPM_Mesh.Phi.x_GC.nM[p]);
     V_p = memory_to_matrix__MatrixLib__(Ndim,1,MPM_Mesh.Phi.vel.nM[p]);
-    d_p = memory_to_matrix__MatrixLib__(Ndim,1,MPM_Mesh.Phi.dis.nM[p]);
     Xi_p = memory_to_matrix__MatrixLib__(Ndim,1,MPM_Mesh.Phi.x_EC.nM[p]);
 
     // Check if the particle is static or is in movement
@@ -632,18 +646,6 @@ void local_search__Q4__(Particle MPM_Mesh, Mesh FEM_Mesh)
         fprintf(stderr,"%s : %s %i \n",
         "Error in local_search__Q4__ -> search_particle_in_surrounding_elements__Particles__",
         "Not posible to find the particle",p);
-        fprintf(stderr, "%s :\n","Coordinate of the particle");
-        print__MatrixLib__(X_p,Ndim,1);
-        fprintf(stderr, "%s :\n","Particle Velocity");
-        print__MatrixLib__(V_p,Ndim,1);
-        fprintf(stderr, "%s :\n","Particle displacement");
-        print__MatrixLib__(d_p,Ndim,1);
-        fprintf(stderr, "%s (%i) :\n","Old connectivity",I0_p_old);
-        print__SetLib__(FEM_Mesh.NodeNeighbour[I0_p_old]);
-        fprintf(stderr, "%s (%i) :\n","Sourrounding nodes",I0_p_old);
-        print__SetLib__(Locality_I0);
-        fprintf(stderr, "%s (%i) :\n","New connectivity",I0_p_new);
-        print__SetLib__(FEM_Mesh.NodeNeighbour[I0_p_new]);
         exit(EXIT_FAILURE);
       }
 

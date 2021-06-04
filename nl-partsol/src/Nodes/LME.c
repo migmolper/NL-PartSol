@@ -75,7 +75,7 @@ void initialize__LME__(
       Elem_p_Coordinates = get_nodes_coordinates__MeshTools__(Elem_p_Connectivity, FEM_Mesh.Coordinates);
 
       /* Check out if the GP is in the Element */
-      if(FEM_Mesh.In_Out_Element(X_p,Elem_p_Coordinates))
+      if(FEM_Mesh.In_Out_Element(X_p,Elem_p_Coordinates) == true)
       {
 
         /* Particle will be initilise */
