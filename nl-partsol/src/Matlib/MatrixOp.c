@@ -1251,7 +1251,7 @@ void print__MatrixLib__(Matrix In, int PrintRows, int PrintColumns)
        
       for(int i = 0 ; i<Rows*Columns ; i++)
   {
-    printf("%f \n",In.nV[i]);
+    printf("%e \n",In.nV[i]);
   }
       
     }

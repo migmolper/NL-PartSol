@@ -78,18 +78,6 @@ int search_particle_in_surrounding_elements__Particles__(
     Ixd = Ixd->next;
 
   }
-
-  if(I_element == -999)
-    {
-      fprintf(stderr,"%s : %s %i \n",
-	      "Error in search_particle_in_surrounding_elements__Particles__()",
-	      "Not posible to find the particle",p);
-      fprintf(stderr, "%s\n","Coordinate of the particle :");
-      print__MatrixLib__(X_p,NumberDimensions,1);
-      fprintf(stderr, "%s\n","Surrounding element :");
-      print__SetLib__(ListElement);
-    }
-  
   
   return I_element;
 }
