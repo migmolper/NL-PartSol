@@ -366,14 +366,14 @@ bool in_out__Q4__(
 
     if((fabs(Xi.nV[0]) <= 1.0) && (fabs(Xi.nV[1]) <= 1.0))
     {
+      free__MatrixLib__(Xi);
       return true;    
     }
     else
     {
+      free__MatrixLib__(Xi);
       return false;
     }
-
-    free__MatrixLib__(Xi);
 
   }
   else

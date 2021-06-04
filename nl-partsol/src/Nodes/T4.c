@@ -340,14 +340,14 @@ bool in_out__T4__(
     (Xi.nV[2] >= 0.0) &&
     (Xi.nV[0] + Xi.nV[1] + Xi.nV[2] - 1.0 <= 0))
   {
+    free__MatrixLib__(Xi);
     return true;    
   }
     else
     {
+      free__MatrixLib__(Xi);
       return false;
     }
-
-    free__MatrixLib__(Xi);
 
   }
   else

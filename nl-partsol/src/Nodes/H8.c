@@ -371,14 +371,14 @@ bool in_out__H8__(
       (fabs(Xi.nV[1]) <=  1.0) && 
       (fabs(Xi.nV[2]) <=  1.0))
     {
+          free__MatrixLib__(Xi);
       return true;    
     }
     else
     {
+          free__MatrixLib__(Xi);
       return false;
     }
-
-    free__MatrixLib__(Xi);
 
   }
   else

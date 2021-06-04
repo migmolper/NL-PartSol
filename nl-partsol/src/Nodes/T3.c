@@ -338,14 +338,14 @@ bool in_out__T3__(
       (Xi.nV[1]  >= 0.0) && 
       (Xi.nV[1] + Xi.nV[0] -1 <=  0.0))
     {
+      free__MatrixLib__(Xi);
       return true;    
     }
     else
     {
+      free__MatrixLib__(Xi);
       return false;
     }
-
-    free__MatrixLib__(Xi);
 
   }
   else
