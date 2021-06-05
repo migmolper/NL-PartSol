@@ -312,7 +312,7 @@ bool in_out__T3__(
   double min[2] = {Element.nM[0][0],Element.nM[0][1]};
   double max[2] = {Element.nM[0][0],Element.nM[0][1]};
 
-  for(int a = 1 ; a<4 ; a++)
+  for(int a = 1 ; a<3 ; a++)
   {
     for(int i = 0 ; i<2; i++)
     {

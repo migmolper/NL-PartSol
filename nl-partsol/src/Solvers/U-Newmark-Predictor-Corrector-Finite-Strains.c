@@ -136,7 +136,8 @@ void U_Newmark_Predictor_Corrector_Finite_Strains(
       compute_Explicit_Newmark_Corrector(MPM_Mesh,gamma);
 //      local_search__Particles__(MPM_Mesh,FEM_Mesh);
 
-      local_search__Q4__(MPM_Mesh,FEM_Mesh);
+//      local_search__Q4__(MPM_Mesh,FEM_Mesh);
+      local_search__LME__(MPM_Mesh,FEM_Mesh);
       
       print_Status("DONE !!!",TimeStep);
       
