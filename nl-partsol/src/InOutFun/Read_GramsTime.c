@@ -270,10 +270,10 @@ GramsTime(Scheme=FE){
 	Parameters.FinalTime = (int)(Parameters.NumTimeStep*Parameters.CFL*DeltaX/Parameters.Cel);
 	printf("\t \t -> %s : %e \n","Final time step",Parameters.FinalTime);
   }
-  else
-  {
-	exit(EXIT_FAILURE);
-  }
+//  else
+//  {
+//	exit(EXIT_FAILURE);
+//  }
 
 
 

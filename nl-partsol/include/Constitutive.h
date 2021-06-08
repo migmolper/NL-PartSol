@@ -56,7 +56,7 @@ double energy_Saint_Venant_Kirchhoff(Tensor, Material);
   \fn Tensor compute_1PK_Stress_Tensor_Saint_Venant_Kirchhoff(Tensor P, Tensor F, Material MatProp_p);
 */
 
-Tensor compute_1PK_Stress_Tensor_Saint_Venant_Kirchhoff(Tensor,Tensor,Material);
+State_Parameters compute_1PK_Stress_Tensor_Saint_Venant_Kirchhoff(State_Parameters,Material);
 /*******************************************************/
 
 /*!
@@ -81,7 +81,7 @@ double energy_Neo_Hookean_Wriggers(Tensor, double, Material);
 /*!
 
 */
-Tensor compute_1PK_Stress_Tensor_Neo_Hookean_Wriggers(Tensor, Tensor, double, Material);
+State_Parameters compute_1PK_Stress_Tensor_Neo_Hookean_Wriggers(State_Parameters, Material);
 Tensor compute_2PK_Stress_Tensor_Neo_Hookean_Wriggers(Tensor, Tensor, double, Material);
 /*******************************************************/
 
@@ -110,27 +110,33 @@ Matrix compute_D_matrix_Neo_Hookean_Wriggers(Tensor, double, Material);
 /*******************************************************/
 
 
-Plastic_status finite_strains_plasticity_Von_Mises(Tensor, Plastic_status, Material);
-Plastic_status infinitesimal_strains_plasticity_Von_Mises(Tensor, Plastic_status, Material);
+State_Parameters finite_strains_plasticity_Von_Mises(Tensor, State_Parameters, Material);
+State_Parameters infinitesimal_strains_plasticity_Von_Mises(Tensor, State_Parameters, Material);
 /*******************************************************/  
 
-Plastic_status finite_strains_viscoplasticity_Von_Mises_Perzyna(Tensor,Plastic_status,Material);
-Plastic_status infinitesimal_strains_viscoplasticity_Von_Mises_Perzyna(Tensor,Plastic_status,Material);
+State_Parameters finite_strains_viscoplasticity_Von_Mises_Perzyna(Tensor,State_Parameters,Material);
+
+State_Parameters implicit_viscoplasticity_Von_Mises_Perzyna(Tensor,State_Parameters,Material);
+State_Parameters explicit_viscoplasticity_Von_Mises_Perzyna(Tensor,State_Parameters,Material);
 /*******************************************************/
 
-Plastic_status finite_strains_plasticity_Drucker_Prager_Sanavia(Tensor, Plastic_status, Material);
-Plastic_status infinitesimal_strains_plasticity_Drucker_Prager_Sanavia(Tensor, Tensor, Plastic_status, Material);
+State_Parameters finite_strains_plasticity_Drucker_Prager_Sanavia(Tensor, State_Parameters, Material);
+State_Parameters infinitesimal_strains_plasticity_Drucker_Prager_Sanavia(Tensor, Tensor, State_Parameters, Material);
 /*******************************************************/
 
+
+State_Parameters finite_strains_plasticity(Tensor,State_Parameters,Material,State_Parameters(* infinitesimal_plasticity)(State_Parameters,Material));
+
+/*******************************************************/
 
 // Compresible Newtonian fluid
 
 /*!
 
-  \fn Tensor compute_1PK_Stress_Tensor_Newtonian_Fluid(Tensor P,Tensor F,Tensor dFdt,double J, Material MatProp_p)
+  \fn State_Parameters compute_1PK_Stress_Tensor_Newtonian_Fluid(Tensor P,State_Parameters Input_SP, Material MatProp_p)
 
 */
-Tensor compute_1PK_Stress_Tensor_Newtonian_Fluid(Tensor,Tensor,Tensor,double,Material);
+State_Parameters compute_1PK_Stress_Tensor_Newtonian_Fluid(State_Parameters,Material);
 
 /*!
 \fn Tensor compute_stiffness_density_Newtonian_Fluid(Tensor GRAD_I,Tensor GRAD_J,Tensor F,Tensor dFdt,double J,double alpha4,Material MatProp_p)

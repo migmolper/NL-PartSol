@@ -138,7 +138,8 @@ void U_Newmark_Predictor_Corrector_Finite_Strains(
 
 //      local_search__Q4__(MPM_Mesh,FEM_Mesh);
       local_search__LME__(MPM_Mesh,FEM_Mesh);
-      
+//      local_search__T3__(MPM_Mesh,FEM_Mesh);
+
       print_Status("DONE !!!",TimeStep);
       
       print_Status("*************************************************",TimeStep);
@@ -269,8 +270,8 @@ static Matrix compute_Mass_Matrix(
 /**************************************************************/
 
 static void compute_Explicit_Newmark_Predictor(
-  Particle MPM_Mesh, // Information related with particles
-  double gamma) // Newmark integration parameter
+  Particle MPM_Mesh,
+  double gamma)
 /*
   The predictor stage is computed in the particles
 */

@@ -33,6 +33,14 @@ typedef struct
   bool Is_friction_angle; // Friction angle
   bool Is_dilatancy_angle; // Dilatancy angle
 
+  bool Is_isotropic_hardening;
+  bool Is_isotropic_hardening_modulus;
+  bool Is_isotropic_hardening_theta;
+
+  bool Is_kinematic_hardening;
+  bool Is_kinematic_hardening_modulus; 
+  bool Is_kinematic_hardening_beta;
+
 } Check_Material;
 
 /*
@@ -252,15 +260,63 @@ static Material Define_Material(FILE * Simulation_file,
       ChkMat.Is_yield_stress = true;
       New_Material.yield_stress_0 = atof(Parameter_pars[1]);
     }
-    else if(strcmp(Parameter_pars[0],"Hardening-modulus") == 0)
+    else if(strcmp(Parameter_pars[0],"Isotropic-Hardening") == 0)
     {
-      ChkMat.Is_H = true;
-      New_Material.hardening_modulus = atof(Parameter_pars[1]);
+      ChkMat.Is_isotropic_hardening = true;
+
+      if (strcmp(Parameter_pars[1],"Linear") == 0)
+      {
+        New_Material.Linear_Isotropic_Hardening = true;
+      }
+      else if (strcmp(Parameter_pars[1],"Exponential") == 0)
+      {
+        New_Material.Exponential_Isotropic_Hardening = true;
+      }
+      else
+      {
+        sprintf(Error_message,"%s","Options for Isotropic-Hardening -> Linear/Exponential");
+      standard_error(Error_message);
+      }
     }
-    else if(strcmp(Parameter_pars[0],"Hardening-exponent") == 0)
+    /**************************************************/
+    else if(strcmp(Parameter_pars[0],"Isotropic-Hardening-Modulus") == 0)
     {
-      ChkMat.Is_Hexp = true;
-      New_Material.hardening_exp = atof(Parameter_pars[1]);
+      ChkMat.Is_isotropic_hardening_modulus = true;
+      New_Material.isotropic_hardening_modulus = atof(Parameter_pars[1]);
+    }
+    /**************************************************/
+
+    else if(strcmp(Parameter_pars[0],"Isotropic-Hardening-Theta") == 0)
+    {
+      ChkMat.Is_isotropic_hardening_theta = true;
+      New_Material.isotropic_hardening_theta = atof(Parameter_pars[1]);
+    }
+    /**************************************************/
+    else if(strcmp(Parameter_pars[0],"Kinematic-Hardening") == 0)
+    {
+      ChkMat.Is_kinematic_hardening = true;
+
+      if (strcmp(Parameter_pars[1],"Linear") == 0)
+      {
+        New_Material.Linear_Kinematic_Hardening = true;
+      }
+      else
+      {
+        sprintf(Error_message,"%s","Options for Kinematic-Hardening -> Linear");
+      standard_error(Error_message);
+      }
+    }
+    /**************************************************/
+    else if(strcmp(Parameter_pars[0],"Kinematic-Hardening-Modulus") == 0)
+    {
+      ChkMat.Is_kinematic_hardening_modulus = true;
+      New_Material.kinematic_hardening_modulus = atof(Parameter_pars[1]);
+    }
+    /**************************************************/
+    else if(strcmp(Parameter_pars[0],"Kinematic-Hardening-Beta") == 0)
+    {
+      ChkMat.Is_kinematic_hardening_beta = true;
+      New_Material.kinematic_hardening_beta = atof(Parameter_pars[1]);
     }
     else if(strcmp(Parameter_pars[0],"Cohesion") == 0)
     {
@@ -514,16 +570,70 @@ static void check_Neo_Hookean_Wriggers_Material(Material Mat_particle, Check_Mat
 
 static void check_Von_Mises_Material(Material Mat_particle, Check_Material ChkMat, int Idx)
 {
-  if(ChkMat.Is_rho && ChkMat.Is_E && ChkMat.Is_nu &&
-   ChkMat.Is_yield_stress && ChkMat.Is_H)
+  if(ChkMat.Is_rho && ChkMat.Is_E && 
+   ChkMat.Is_nu && ChkMat.Is_yield_stress)
   {
     printf("\t -> %s \n","Von-Mises material");
-    printf("\t \t -> %s : %i \n","Idx",Idx);
+    printf("\t \t -> %s : %f \n","Celerity",Mat_particle.Cel);
     printf("\t \t -> %s : %f \n","Density",Mat_particle.rho);
     printf("\t \t -> %s : %f \n","Elastic modulus",Mat_particle.E);
     printf("\t \t -> %s : %f \n","Poisson modulus",Mat_particle.nu);
     printf("\t \t -> %s : %f \n","Yield stress",Mat_particle.yield_stress_0);
-    printf("\t \t -> %s : %f \n","Hardening modulus",Mat_particle.hardening_modulus);
+
+    if(ChkMat.Is_isotropic_hardening && Mat_particle.Linear_Isotropic_Hardening)
+    {
+      if(ChkMat.Is_isotropic_hardening_modulus && 
+        ChkMat.Is_isotropic_hardening_theta)
+      {
+        printf("\t \t -> %s : %f \n","Isotropic hardening modulus",Mat_particle.isotropic_hardening_modulus);
+        printf("\t \t -> %s : %f \n","Isotropic hardening theta",Mat_particle.isotropic_hardening_theta);   
+      }
+      else
+      {
+        fprintf(stderr,"%s : %s \n",
+          "Error in GramsMaterials()",
+          "Some parameter is missed for Von-Mises material (Isotropic Hardening parameters)");
+        fputs(ChkMat.Is_isotropic_hardening_modulus  ? "Isotropic hardening modulus : true \n" : "Isotropic hardening modulus : false \n", stdout);
+        fputs(ChkMat.Is_isotropic_hardening_theta  ? "Isotropic hardening theta : true \n" : "Isotropic hardening theta : false \n", stdout);
+      }
+    }
+
+    if(ChkMat.Is_isotropic_hardening &&
+     Mat_particle.Exponential_Isotropic_Hardening)
+    {
+      if(ChkMat.Is_isotropic_hardening_modulus)
+      {
+        printf("\t \t -> %s : %f \n","Isotropic hardening modulus",Mat_particle.isotropic_hardening_modulus);
+      }
+      else
+      {
+        fprintf(stderr,"%s : %s \n",
+          "Error in GramsMaterials()",
+          "Some parameter is missed for Von-Mises material (Isotropic Hardening parameters)");
+        fputs(ChkMat.Is_isotropic_hardening_modulus  ? "Isotropic hardening modulus : true \n" : "Isotropic hardening modulus : false \n", stdout);
+      }
+    }
+
+
+    if(ChkMat.Is_kinematic_hardening)
+    {
+      if(ChkMat.Is_kinematic_hardening_modulus && 
+        ChkMat.Is_kinematic_hardening_beta)
+      {
+        printf("\t \t -> %s : %f \n","Kinematic hardening modulus",Mat_particle.kinematic_hardening_modulus);
+        printf("\t \t -> %s : %f \n","Kinematic hardening theta",Mat_particle.kinematic_hardening_beta);    
+      }
+      else
+      {
+        fprintf(stderr,"%s : %s \n",
+          "Error in GramsMaterials()",
+          "Some parameter is missed for Von-Mises material (Kinematic Hardening parameters)");
+        fputs(ChkMat.Is_kinematic_hardening_modulus  ? "Kinematic hardening modulus : true \n" : "Kinematic hardening modulus : false \n", stdout);
+        fputs(ChkMat.Is_kinematic_hardening_beta  ? "Kinematic hardening theta : true \n" : "Kinematic hardening theta : false \n", stdout);
+      }
+    }
+
+
   }
   else
   {
@@ -534,10 +644,8 @@ static void check_Von_Mises_Material(Material Mat_particle, Check_Material ChkMa
     fputs(ChkMat.Is_E   ? "Elastic modulus : true \n" : "Elastic modulus : false \n", stdout);
     fputs(ChkMat.Is_nu  ? "Poisson modulus : true \n" : "Poisson modulus : false \n", stdout);
     fputs(ChkMat.Is_yield_stress  ? "Yield stress : true \n" : "Yield stress : false \n", stdout);
-    fputs(ChkMat.Is_H  ? "Hardening modulus : true \n" : "Hardening modulus : false \n", stdout);
     exit(EXIT_FAILURE);
   }
-
 }
 
 /**********************************************************************/

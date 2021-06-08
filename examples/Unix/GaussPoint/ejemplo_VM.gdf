@@ -6,10 +6,11 @@ GramsTime (Type=Gauss-Point-Analysis) {
 Define-Material(idx=0,Model=Von-Mises)
 {
   rho=0.0
-	E=117.e3
-	nu=0.35
-  Yield-stress=100
-  Hardening-modulus=-100
+  E=10.0E6
+  nu=0.45
+  Yield-stress=10.0E3
+  Isotropic-Hardening=Exponential
+  Isotropic-Hardening-Modulus=29.0E3
 }
 
 Define-Strain-Curve (Var=Deformation-Gradient)

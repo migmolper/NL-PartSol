@@ -463,10 +463,13 @@ typedef struct {
   double dilatancy_angle;
   
   /*!
-  * Linear hardening parameters
+  * Hardening parameters
   */
+  bool Linear_Isotropic_Hardening;
+  bool Exponential_Isotropic_Hardening;
   double isotropic_hardening_modulus;
   double isotropic_hardening_theta;
+  bool Linear_Kinematic_Hardening;
   double kinematic_hardening_modulus;
   double kinematic_hardening_beta;
 
@@ -534,6 +537,37 @@ typedef struct {
   double phi_f_0;
 
 } Mixture;
+
+/*******************************************************/
+
+/*! 
+ * \struct State_Parameters
+ */
+typedef struct
+{
+  /*
+    Stress parameters
+  */
+  double * P_p;
+
+  /*
+    Kinematic parameters
+  */
+  double * F_n1_p;
+  double J;
+  double * dFdt;
+
+  /*
+    Plasticity parameters
+  */
+  double EPS;
+  double Cohesion;
+  double Yield_stress;
+  Tensor Increment_E_plastic;
+  Tensor Back_stress;
+  Tensor F_m1_plastic_p;
+
+} State_Parameters;
 
 /*******************************************************/
 
@@ -634,6 +668,11 @@ typedef struct {
   Matrix lambda; // Lagrange multiplier
   Matrix Beta; // Thermalization or regularization parameter
   void (* update_lambda)(int, Matrix, Matrix, Matrix, double);
+
+  /*!
+  * Function to compute the stress state of the particle
+  */
+  State_Parameters (* constitutive)(State_Parameters,Material);
 
 } Particle;
 
@@ -977,23 +1016,6 @@ typedef struct {
   bool Out_vtk_Von_Mises;
 
 } Event;
-
-/*******************************************************/
-
-/*! \struct Plastic_status
-  Structure with output control
- */
-typedef struct
-{
-  double EPS;
-  double Cohesion;
-  double Yield_stress;
-  Tensor Increment_E_plastic;
-  Tensor Back_stress;
-  Tensor F_n1_p;
-  Tensor F_m1_plastic_p;
-
-} Plastic_status;
 
 
 /*******************************************************/

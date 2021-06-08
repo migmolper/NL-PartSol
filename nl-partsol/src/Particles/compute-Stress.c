@@ -12,8 +12,8 @@ Tensor explicit_integration_stress__Particles__(
   Tensor Stress = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.Stress.nM[p],2); 
   Tensor Strain = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.Strain.nM[p], 2);
 
-  Plastic_status Input_Plastic_Parameters;
-  Plastic_status Output_Plastic_Parameters;
+  State_Parameters Input_SP;
+  State_Parameters Output_SP;
 
   /*
     Select the constitutive model 
@@ -29,30 +29,30 @@ Tensor explicit_integration_stress__Particles__(
   else if(strcmp(MatProp.Type,"Von-Mises") == 0)
   {
 
-    Input_Plastic_Parameters.EPS = MPM_Mesh.Phi.EPS.nV[p];
-    Input_Plastic_Parameters.Back_stress = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.Back_stress.nM[p],2);
+    Input_SP.EPS = MPM_Mesh.Phi.EPS.nV[p];
+    Input_SP.Back_stress = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.Back_stress.nM[p],2);
 
     Stress = LinearElastic(Stress,Strain,MatProp);
 
-    Output_Plastic_Parameters = infinitesimal_strains_plasticity_Von_Mises(Stress,Input_Plastic_Parameters, MatProp);
+    Output_SP = infinitesimal_strains_plasticity_Von_Mises(Stress,Input_SP, MatProp);
 
-    MPM_Mesh.Phi.EPS.nV[p] = Output_Plastic_Parameters.EPS;
+    MPM_Mesh.Phi.EPS.nV[p] = Output_SP.EPS;
 
-    free__TensorLib__(Output_Plastic_Parameters.Increment_E_plastic);
+    free__TensorLib__(Output_SP.Increment_E_plastic);
   }
   else if(strcmp(MatProp.Type,"Von-Mises-Perzyna") == 0)
   {
 
-    Input_Plastic_Parameters.EPS = MPM_Mesh.Phi.EPS.nV[p];
-    Input_Plastic_Parameters.Back_stress = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.Back_stress.nM[p],2);
+    Input_SP.EPS = MPM_Mesh.Phi.EPS.nV[p];
+    Input_SP.Back_stress = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.Back_stress.nM[p],2);
 
     Stress = LinearElastic(Stress,Strain,MatProp);
 
-    Output_Plastic_Parameters = infinitesimal_strains_viscoplasticity_Von_Mises_Perzyna(Stress,Input_Plastic_Parameters, MatProp);
+    Output_SP = implicit_viscoplasticity_Von_Mises_Perzyna(Stress,Input_SP, MatProp);
 
-    MPM_Mesh.Phi.EPS.nV[p] = Output_Plastic_Parameters.EPS;
+    MPM_Mesh.Phi.EPS.nV[p] = Output_SP.EPS;
 
-    free__TensorLib__(Output_Plastic_Parameters.Increment_E_plastic);
+    free__TensorLib__(Output_SP.Increment_E_plastic);
   }
   else
   {
@@ -71,7 +71,7 @@ Tensor forward_integration_Stress__Particles__(
   Mesh FEM_Mesh,
   Material MatProp_p)
 {
-  
+  int Ndim = NumberDimensions;
   Tensor P_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.Stress.nM[p],2); 
 
   // Variables for the constitutive model
@@ -79,117 +79,123 @@ Tensor forward_integration_Stress__Particles__(
   Tensor F_n1_p;
   Tensor dFdt_n1_p;
   Tensor F_m1_plastic_p;
-  Plastic_status Input_Plastic_Parameters;
-  Plastic_status Output_Plastic_Parameters;
+  State_Parameters Input_SP;
+  State_Parameters Output_SP;
 
   if(strcmp(MatProp_p.Type,"Saint-Venant-Kirchhoff") == 0)
   {
-    F_n1_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n1.nM[p],2);
-    P_p = compute_1PK_Stress_Tensor_Saint_Venant_Kirchhoff(P_p, F_n1_p, MatProp_p);
+    Input_SP.P_p = MPM_Mesh.Phi.Stress.nM[p];
+    Input_SP.F_n1_p = MPM_Mesh.Phi.F_n1.nM[p];
+    Output_SP = compute_1PK_Stress_Tensor_Saint_Venant_Kirchhoff(Input_SP, MatProp_p);
   }
   else if(strcmp(MatProp_p.Type,"Neo-Hookean-Wriggers") == 0)
   {
-    J_p = MPM_Mesh.Phi.J.nV[p];
-    F_n1_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n1.nM[p],2);
-    P_p = compute_1PK_Stress_Tensor_Neo_Hookean_Wriggers(P_p, F_n1_p, J_p, MatProp_p);
+    Input_SP.P_p = MPM_Mesh.Phi.Stress.nM[p];
+    Input_SP.F_n1_p = MPM_Mesh.Phi.F_n1.nM[p];
+    Input_SP.J = MPM_Mesh.Phi.J.nV[p];
+    Output_SP = compute_1PK_Stress_Tensor_Neo_Hookean_Wriggers(Input_SP, MatProp_p);
   }
   else if(strcmp(MatProp_p.Type,"Newtonian-Fluid-Compressible") == 0)
   {
-    J_p = MPM_Mesh.Phi.J.nV[p];
-    F_n1_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n1.nM[p],2);
-    dFdt_n1_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.dt_F_n1.nM[p],2);
-    P_p = compute_1PK_Stress_Tensor_Newtonian_Fluid(P_p,F_n1_p,dFdt_n1_p,J_p,MatProp_p);
+    Input_SP.P_p = MPM_Mesh.Phi.Stress.nM[p];
+    Input_SP.F_n1_p = MPM_Mesh.Phi.F_n1.nM[p];
+    Input_SP.dFdt = MPM_Mesh.Phi.dt_F_n1.nM[p];
+    Input_SP.J = MPM_Mesh.Phi.J.nV[p];
+    Output_SP = compute_1PK_Stress_Tensor_Newtonian_Fluid(Input_SP,MatProp_p);
   }
   else if(strcmp(MatProp_p.Type,"Von-Mises") == 0)
   {
 
-    Input_Plastic_Parameters.F_m1_plastic_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_m1_plastic.nM[p],2);
-    Input_Plastic_Parameters.EPS = MPM_Mesh.Phi.EPS.nV[p];
-    Input_Plastic_Parameters.Back_stress = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.Back_stress.nM[p],2);
+    Input_SP.F_m1_plastic_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_m1_plastic.nM[p],2);
+    Input_SP.EPS = MPM_Mesh.Phi.EPS.nV[p];
+    Input_SP.Back_stress = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.Back_stress.nM[p],2);
 
     /*
       Activate locking control technique (F-bar)
     */
-    if((MatProp_p.Locking_Control_Fbar == true) && (fabs(Input_Plastic_Parameters.EPS) > 0.0))
+    if(MatProp_p.Locking_Control_Fbar && (fabs(Input_SP.EPS) > 0.0))
     {
-      Input_Plastic_Parameters.F_n1_p = get_locking_free_Deformation_Gradient_n1__Particles__(p,MPM_Mesh,FEM_Mesh);
+      Input_SP.F_n1_p = (double *)calloc(Ndim*Ndim,sizeof(double));
+      get_locking_free_Deformation_Gradient_n1__Particles__(p,memory_to_tensor__TensorLib__(Input_SP.F_n1_p,2),MPM_Mesh,FEM_Mesh);
     }
     else
     {
-      Input_Plastic_Parameters.F_n1_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n1.nM[p],2);
+      Input_SP.F_n1_p = MPM_Mesh.Phi.F_n1.nM[p];
     }
   
-    Output_Plastic_Parameters = finite_strains_plasticity_Von_Mises(P_p,Input_Plastic_Parameters,MatProp_p);
+    Output_SP = finite_strains_plasticity_Von_Mises(P_p,Input_SP,MatProp_p);
 
-    if((MatProp_p.Locking_Control_Fbar == true) && (fabs(Input_Plastic_Parameters.EPS) > 0.0))
+    if(MatProp_p.Locking_Control_Fbar && (fabs(Input_SP.EPS) > 0.0))
     {
-      free__TensorLib__(Input_Plastic_Parameters.F_n1_p);
+      free(Input_SP.F_n1_p);
     }
 
-    MPM_Mesh.Phi.EPS.nV[p] = Output_Plastic_Parameters.EPS;
-    free__TensorLib__(Output_Plastic_Parameters.Increment_E_plastic);
+    MPM_Mesh.Phi.EPS.nV[p] = Output_SP.EPS;
+    free__TensorLib__(Output_SP.Increment_E_plastic);
   }
   else if(strcmp(MatProp_p.Type,"Von-Mises-Perzyna") == 0)
   {
 
-    Input_Plastic_Parameters.F_m1_plastic_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_m1_plastic.nM[p],2);
-    Input_Plastic_Parameters.EPS = MPM_Mesh.Phi.EPS.nV[p];
-    Input_Plastic_Parameters.Back_stress = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.Back_stress.nM[p],2);
+    Input_SP.F_m1_plastic_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_m1_plastic.nM[p],2);
+    Input_SP.EPS = MPM_Mesh.Phi.EPS.nV[p];
+    Input_SP.Back_stress = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.Back_stress.nM[p],2);
 
     /*
       Activate locking control technique (F-bar)
     */
-    if((MatProp_p.Locking_Control_Fbar == true) && (fabs(Input_Plastic_Parameters.EPS) > 0.0))
+    if((MatProp_p.Locking_Control_Fbar == true) && (fabs(Input_SP.EPS) > 0.0))
     {
-      Input_Plastic_Parameters.F_n1_p = get_locking_free_Deformation_Gradient_n1__Particles__(p,MPM_Mesh,FEM_Mesh);
+      Input_SP.F_n1_p = (double *)calloc(Ndim*Ndim,sizeof(double));
+      get_locking_free_Deformation_Gradient_n1__Particles__(p,memory_to_tensor__TensorLib__(Input_SP.F_n1_p,2),MPM_Mesh,FEM_Mesh);
     }
     else
     {
-      Input_Plastic_Parameters.F_n1_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n1.nM[p],2);
+      Input_SP.F_n1_p = MPM_Mesh.Phi.F_n1.nM[p];
     }
 
-    Output_Plastic_Parameters = finite_strains_viscoplasticity_Von_Mises_Perzyna(P_p,Input_Plastic_Parameters,MatProp_p);
+    Output_SP = finite_strains_viscoplasticity_Von_Mises_Perzyna(P_p,Input_SP,MatProp_p);
 
 
-    if((MatProp_p.Locking_Control_Fbar == true) && (fabs(Input_Plastic_Parameters.EPS) > 0.0))
+    if((MatProp_p.Locking_Control_Fbar == true) && (fabs(Input_SP.EPS) > 0.0))
     {
-      free__TensorLib__(Input_Plastic_Parameters.F_n1_p);
+      free(Input_SP.F_n1_p);
     }
 
-    MPM_Mesh.Phi.EPS.nV[p] = Output_Plastic_Parameters.EPS;
-    free__TensorLib__(Output_Plastic_Parameters.Increment_E_plastic);
+    MPM_Mesh.Phi.EPS.nV[p] = Output_SP.EPS;
+    free__TensorLib__(Output_SP.Increment_E_plastic);
 
   }
   else if((strcmp(MatProp_p.Type,"Drucker-Prager-Plane-Strain") == 0) || 
     (strcmp(MatProp_p.Type,"Drucker-Prager-Outer-Cone") == 0))
   {
 
-    Input_Plastic_Parameters.F_m1_plastic_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_m1_plastic.nM[p],2);
-    Input_Plastic_Parameters.Cohesion = MPM_Mesh.Phi.cohesion.nV[p];
-    Input_Plastic_Parameters.EPS = MPM_Mesh.Phi.EPS.nV[p];
+    Input_SP.F_m1_plastic_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_m1_plastic.nM[p],2);
+    Input_SP.Cohesion = MPM_Mesh.Phi.cohesion.nV[p];
+    Input_SP.EPS = MPM_Mesh.Phi.EPS.nV[p];
 
     /*
       Activate locking control technique (F-bar)
     */
-    if((MatProp_p.Locking_Control_Fbar == true) && (fabs(Input_Plastic_Parameters.EPS) > 0.0))
+    if((MatProp_p.Locking_Control_Fbar == true) && (fabs(Input_SP.EPS) > 0.0))
     {
-      Input_Plastic_Parameters.F_n1_p = get_locking_free_Deformation_Gradient_n1__Particles__(p,MPM_Mesh,FEM_Mesh);
+      Input_SP.F_n1_p = (double *)calloc(Ndim*Ndim,sizeof(double));
+      get_locking_free_Deformation_Gradient_n1__Particles__(p,memory_to_tensor__TensorLib__(Input_SP.F_n1_p,2),MPM_Mesh,FEM_Mesh);
     }
     else
     {
-      Input_Plastic_Parameters.F_n1_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n1.nM[p],2);
+      Input_SP.F_n1_p = MPM_Mesh.Phi.F_n1.nM[p];
     }
 
-    Output_Plastic_Parameters = finite_strains_plasticity_Drucker_Prager_Sanavia(P_p,Input_Plastic_Parameters,MatProp_p);
+    Output_SP = finite_strains_plasticity_Drucker_Prager_Sanavia(P_p,Input_SP,MatProp_p);
 
-    if((MatProp_p.Locking_Control_Fbar == true) && (fabs(Input_Plastic_Parameters.EPS) > 0.0))
+    if((MatProp_p.Locking_Control_Fbar == true) && (fabs(Input_SP.EPS) > 0.0))
     {
-      free__TensorLib__(Input_Plastic_Parameters.F_n1_p);
+      free(Input_SP.F_n1_p);
     }
 
-    MPM_Mesh.Phi.cohesion.nV[p] = Output_Plastic_Parameters.Cohesion;
-    MPM_Mesh.Phi.EPS.nV[p] = Output_Plastic_Parameters.EPS;
-    free__TensorLib__(Output_Plastic_Parameters.Increment_E_plastic);
+    MPM_Mesh.Phi.cohesion.nV[p] = Output_SP.Cohesion;
+    MPM_Mesh.Phi.EPS.nV[p] = Output_SP.EPS;
+    free__TensorLib__(Output_SP.Increment_E_plastic);
 
   }
   else

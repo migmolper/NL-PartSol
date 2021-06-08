@@ -970,8 +970,8 @@ static void update_Local_State(
   double rho_f_0; /* Initial density of the fluid */
   double phi_s_0; /* Initial volume fraction (solid) */
   double phi_f_0; /* Initial volume fraction (fluid) */
-  Plastic_status Input_Plastic_Parameters; /* Input parameters for plasticity */
-  Plastic_status Output_Plastic_Parameters; /* Output parameters for plasticity */
+  State_Parameters Input_Plastic_Parameters; /* Input parameters for plasticity */
+  State_Parameters Output_Plastic_Parameters; /* Output parameters for plasticity */
   Element Nodes_p; /* Element for each particle */
   Material MatProp_Soil_p; /* Variable with the material properties of the solid phase */
   Material MatProp_Water_p; /* Variable with the material properties of the fluid phase */

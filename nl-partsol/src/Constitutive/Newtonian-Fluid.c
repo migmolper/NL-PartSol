@@ -2,17 +2,31 @@
 
 /**************************************************************/
 
-Tensor compute_1PK_Stress_Tensor_Newtonian_Fluid(
-  Tensor P, 
-  Tensor F,
-  Tensor dFdt,
-  double J, 
+State_Parameters compute_1PK_Stress_Tensor_Newtonian_Fluid( 
+  State_Parameters Intput_SP,
   Material MatProp_p)
 {
-  /* Number of dimensions */
+  /*
+    Number of dimensions
+  */
   int Ndim = NumberDimensions;
+
+  /* 
+    Output state parameter
+  */
+  State_Parameters Output_SP;
+
+  /*
+    Take information from input state parameters
+  */
+  Tensor P = memory_to_tensor__TensorLib__(Intput_SP.P_p,2);
+  Tensor F = memory_to_tensor__TensorLib__(Intput_SP.F_n1_p,2);
+  Tensor dFdt = memory_to_tensor__TensorLib__(Intput_SP.dFdt,2);
+  double J = Intput_SP.J;
   
-  /* Material parameters */
+  /*
+    Material parameters
+  */
   double p0 = MatProp_p.ReferencePressure;
   double mu = MatProp_p.Viscosity;
   double n = MatProp_p.n_Macdonald_model;
@@ -53,7 +67,7 @@ Tensor compute_1PK_Stress_Tensor_Newtonian_Fluid(
   free__TensorLib__(d);
   free__TensorLib__(d__x__FmT);
 
-  return P;
+  return Output_SP;
 }
 
 /**************************************************************/

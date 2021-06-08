@@ -20,16 +20,16 @@ static bool   check_convergence(double,double,int,int);
 static Tensor compute_plastic_flow_direction(Tensor *,double);
 
 static double compute_yield_surface(double,double,double,Material);
-static double compute_derivative_yield_surface(Material);
+static double compute_derivative_yield_surface(double,Material);
 
 static double compute_K(double,Material);
-static double compute_D_K(Material);
+static double compute_D_K(double,Material);
 
 static double compute_DeltaH(double,Material);
 static double compute_D_DeltaH(Material);
 
 static double update_increment_plastic_strain(double, double, double);
-static double update_equivalent_plastic_strain(double, double, Material);
+static double update_equivalent_plastic_strain(double, double);
 static  void  update_back_stress(Tensor *,Tensor *,double, Material);
 
 static Tensor compute_increment_plastic_strain_tensor(Tensor *,double);
@@ -37,9 +37,9 @@ static void   apply_plastic_corrector_stress_tensor(Tensor *,Tensor *,double,Mat
 
 /**************************************************************/
 
-Plastic_status finite_strains_plasticity_Von_Mises(
+State_Parameters finite_strains_plasticity_Von_Mises(
   Tensor P_p,
-  Plastic_status Inputs_VarCons, 
+  State_Parameters Inputs_VarCons, 
   Material MatProp)
 /*
   Finite strains plasticity following the apporach of Ortiz and Camacho
@@ -48,9 +48,9 @@ Plastic_status finite_strains_plasticity_Von_Mises(
   int Ndim = NumberDimensions;
 
   /* Define auxiliar variables */
-  Plastic_status Outputs_VarCons;
+  State_Parameters Outputs_VarCons;
   Tensor F_m1_plastic = Inputs_VarCons.F_m1_plastic_p;
-  Tensor F_total = Inputs_VarCons.F_n1_p;
+  Tensor F_total = memory_to_tensor__TensorLib__(Inputs_VarCons.F_n1_p,2);
   Tensor F_m1_total;
   Tensor F_trial_elastic;
   Tensor C_trial_elastic;
@@ -106,9 +106,9 @@ Plastic_status finite_strains_plasticity_Von_Mises(
 
 /**************************************************************/
 
-Plastic_status infinitesimal_strains_plasticity_Von_Mises(
+State_Parameters infinitesimal_strains_plasticity_Von_Mises(
   Tensor sigma_k1,
-  Plastic_status Inputs_VarCons,
+  State_Parameters Inputs_VarCons,
   Material MatProp)
 /*	
 	Radial returning algorithm for the Von-Mises plastic criterium
@@ -178,11 +178,11 @@ Plastic_status infinitesimal_strains_plasticity_Von_Mises(
           
       Phi = compute_yield_surface(relative_stress_norm, delta_Gamma_k, EPS_k, MatProp);
 
-      d_Phi = compute_derivative_yield_surface(MatProp);
+      d_Phi = compute_derivative_yield_surface(EPS_k,MatProp);
 
       delta_Gamma_k = update_increment_plastic_strain(delta_Gamma_k, Phi, d_Phi);
 
-      EPS_k = update_equivalent_plastic_strain(EPS, delta_Gamma_k, MatProp);
+      EPS_k = update_equivalent_plastic_strain(EPS, delta_Gamma_k);
 
       Convergence = check_convergence(Phi,TOL,Iter,MaxIter);
 	     
@@ -225,7 +225,7 @@ Plastic_status infinitesimal_strains_plasticity_Von_Mises(
   /*
     Define output varible
   */
-  Plastic_status Outputs_VarCons;
+  State_Parameters Outputs_VarCons;
   Outputs_VarCons.EPS = EPS_k;
   Outputs_VarCons.Increment_E_plastic = Increment_E_plastic;
   
@@ -325,12 +325,13 @@ static double compute_yield_surface(
 
 
 static double compute_derivative_yield_surface(
+  double EPS_k,
   Material MatProp)
 {
   double nu = MatProp.nu; /* Poisson modulus */
   double E = MatProp.E; /* Elastic modulus */
   double G = E/(2*(1+nu));
-  double D_K = compute_D_K(MatProp); /* Derivative of the isotropic hardening */
+  double D_K = compute_D_K(EPS_k,MatProp); /* Derivative of the isotropic hardening */
   double D_DeltaH = compute_D_DeltaH(MatProp); /* Derivative of the kinematic hardening */
 
   return - sqrt(2./3.)*(D_K + D_DeltaH) - 2*G;
@@ -339,7 +340,7 @@ static double compute_derivative_yield_surface(
 /**************************************************************/
 
 static double compute_K(
-  double EPS_k1,
+  double EPS_k,
   Material MatProp)
 /*
   Isotropic hardening function
@@ -349,14 +350,26 @@ static double compute_K(
   double theta = MatProp.isotropic_hardening_theta;
   double Sigma_y = MatProp.yield_stress_0;
 
-  double K = Sigma_y + theta*H*EPS_k1;
+  if(MatProp.Linear_Isotropic_Hardening)
+  {
+    return Sigma_y + theta*H*EPS_k;
+  }
+  else if(MatProp.Exponential_Isotropic_Hardening)
+  {
+    return Sigma_y*exp(-2*H*EPS_k/Sigma_y);
+  }
+  else
+  {
+    return 0.0;
+  }
 
-  return K;
+
 }
 
 /**************************************************************/
 
 static double compute_D_K(
+  double EPS_k,
   Material MatProp)
 /*
   Derivative of the isotropic hardening function
@@ -364,10 +377,21 @@ static double compute_D_K(
 {
   double H = MatProp.isotropic_hardening_modulus;
   double theta = MatProp.isotropic_hardening_theta;
+  double Sigma_y = MatProp.yield_stress_0;
+  
+  if(MatProp.Linear_Isotropic_Hardening)
+  {
+    return sqrt(2./3.)*theta*H;
+  }
+  else if(MatProp.Exponential_Isotropic_Hardening)
+  {
+    return -2.0*sqrt(2./3.)*H*exp(-2.0*H*EPS_k/Sigma_y);
+  }
+  else
+  {
+    return 0.0;
+  }
 
-  double DK = sqrt(2./3.)*theta*H;
-
-  return DK;
 }
 
 /**************************************************************/
@@ -382,9 +406,15 @@ static double compute_DeltaH(
   double H = MatProp.kinematic_hardening_modulus;
   double beta = MatProp.kinematic_hardening_beta;
 
-  double DeltaH = sqrt(2./3.)*(1-beta)*H*delta_Gamma;
+  if(MatProp.Linear_Kinematic_Hardening)
+  {
+    return sqrt(2./3.)*(1-beta)*H*delta_Gamma;;
+  }
+  else
+  {
+    return 0.0;
+  }
 
-  return DeltaH;
 }
 
 /**************************************************************/
@@ -398,9 +428,15 @@ static double compute_D_DeltaH(
   double H = MatProp.kinematic_hardening_modulus;
   double beta = MatProp.kinematic_hardening_beta;
 
-  double D_DeltaH = sqrt(2./3.)*(1-beta)*H;
+  if(MatProp.Linear_Kinematic_Hardening)
+  {
+    return sqrt(2./3.)*(1-beta)*H;
+  }
+  else
+  {
+    return 0.0;
+  }
 
-  return D_DeltaH;
 }
 
 /**************************************************************/
@@ -410,19 +446,16 @@ static double update_increment_plastic_strain(
   double Phi,
   double d_Phi)
 {
-  double delta_Gamma_k1 = delta_Gamma_k - Phi/d_Phi;
-  return delta_Gamma_k1;
+  return delta_Gamma_k - Phi/d_Phi;
 }
 
 /**************************************************************/
 
 static double update_equivalent_plastic_strain(
   double EPS,
-  double delta_Gamma,
-  Material MatProp)
+  double delta_Gamma)
 {
-  double EPS_k = EPS + sqrt(2./3.)*delta_Gamma;
-  return EPS_k;
+  return EPS + sqrt(2./3.)*delta_Gamma;
 }
 
 /**************************************************************/

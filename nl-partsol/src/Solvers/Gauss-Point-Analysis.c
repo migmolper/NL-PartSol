@@ -32,32 +32,33 @@ void NonLinear_Gauss_Point_Analysis(Particle PointAnalysis)
   Tensor C_k; /* Right Cauchy-Green tensor at k step */
   Tensor F_m1_plastic_k; /* Plastic deformation gradient at k step */
   double J_k; /* Jacobian */
-  Plastic_status Input_Plastic_Parameters;
-  Plastic_status Output_Plastic_Parameters;
+  State_Parameters Input_Plastic_Parameters;
+  State_Parameters Output_Plastic_Parameters;
 
   for(int k = 0 ; k<NumTimeStep ; k++)
   {
 
 	  S_k = memory_to_tensor__TensorLib__(PointAnalysis.Phi.Stress.nM[k],2);     
   	F_k = memory_to_tensor__TensorLib__(PointAnalysis.Phi.F_n.nM[k],2);
-  	C_k = right_Cauchy_Green__Particles__(F_k);
 
   	if(strcmp(PointAnalysis.Mat[0].Type,"Saint-Venant-Kirchhoff") == 0)
   	{
-
+      C_k = right_Cauchy_Green__Particles__(F_k);
   		S_k = grad_energy_Saint_Venant_Kirchhoff(S_k, C_k, PointAnalysis.Mat[0]);
+      free__TensorLib__(C_k);
 
     }
     else if(strcmp(PointAnalysis.Mat[0].Type,"Neo-Hookean-Wriggers") == 0)
     {
 
+      C_k = right_Cauchy_Green__Particles__(F_k);
     	J_k = I3__TensorLib__(F_k);
       S_k = compute_2PK_Stress_Tensor_Neo_Hookean_Wriggers(S_k, C_k, J_k, PointAnalysis.Mat[0]);
-
+      free__TensorLib__(C_k);
     }
     else if(strcmp(PointAnalysis.Mat[0].Type,"Von-Mises") == 0)
     {
-      Input_Plastic_Parameters.F_n1_p = memory_to_tensor__TensorLib__(PointAnalysis.Phi.F_n1.nM[k],2);
+      Input_Plastic_Parameters.F_n1_p = PointAnalysis.Phi.F_n.nM[k];
       Input_Plastic_Parameters.F_m1_plastic_p = memory_to_tensor__TensorLib__(PointAnalysis.Phi.F_m1_plastic.nM[k],2);
       Input_Plastic_Parameters.EPS = PointAnalysis.Phi.EPS.nV[k];
       Input_Plastic_Parameters.Back_stress = memory_to_tensor__TensorLib__(PointAnalysis.Phi.Back_stress.nM[k],2);
@@ -72,7 +73,7 @@ void NonLinear_Gauss_Point_Analysis(Particle PointAnalysis)
     else if((strcmp(PointAnalysis.Mat[0].Type,"Drucker-Prager-Plane-Strain") == 0) || 
               (strcmp(PointAnalysis.Mat[0].Type,"Drucker-Prager-Outer-Cone") == 0))
     {
-      Input_Plastic_Parameters.F_n1_p = memory_to_tensor__TensorLib__(PointAnalysis.Phi.F_n1.nM[k],2);
+      Input_Plastic_Parameters.F_n1_p = PointAnalysis.Phi.F_n.nM[k];
       Input_Plastic_Parameters.F_m1_plastic_p = memory_to_tensor__TensorLib__(PointAnalysis.Phi.F_m1_plastic.nM[k],2);
     	Input_Plastic_Parameters.Cohesion = PointAnalysis.Phi.cohesion.nV[k];
     	Input_Plastic_Parameters.EPS = PointAnalysis.Phi.EPS.nV[k];
@@ -91,8 +92,6 @@ void NonLinear_Gauss_Point_Analysis(Particle PointAnalysis)
     standard_error(); 
 
   }
-
-  free__TensorLib__(C_k);
 
 	/* Output stress trajectory */
 	for(int i = 0 ; i<Number_Out_Gauss_Point_evolution_csv; i++)

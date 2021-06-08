@@ -912,19 +912,10 @@ static void compute_Nodal_Internal_Forces(
     transpose_F_n_p = transpose__TensorLib__(F_n_p);
 
     /*
-      Activate locking control technique (F-bar)
-    */
-    if(MPM_Mesh.Mat[MPM_Mesh.MatIdx[p]].Locking_Control_Fbar)
-    {
-      get_locking_free_Deformation_Gradient_n1__Particles__(p,MPM_Mesh,FEM_Mesh);
-    }
-
-    /*
       Get the first Piola-Kirchhoff stress tensor
     */
     P_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.Stress.nM[p],2); 
 
- 
     for(int A = 0 ; A<NumNodes_p ; A++)
     {
       

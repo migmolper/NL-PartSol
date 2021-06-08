@@ -34,9 +34,9 @@ static void   compute_finite_stress_tensor_elastic_region(Tensor, Tensor, Tensor
 
 /**************************************************************/
 
-Plastic_status finite_strains_plasticity_Drucker_Prager_Sanavia(
+State_Parameters finite_strains_plasticity_Drucker_Prager_Sanavia(
   Tensor P_p,
-  Plastic_status Inputs_VarCons, 
+  State_Parameters Inputs_VarCons, 
   Material MatProp)
 /*
   Finite strains plasticity following the apporach of Ortiz and Camacho
@@ -45,9 +45,9 @@ Plastic_status finite_strains_plasticity_Drucker_Prager_Sanavia(
   int Ndim = NumberDimensions;
 
   /* Define auxiliar variables */
-  Plastic_status Outputs_VarCons;
+  State_Parameters Outputs_VarCons;
   Tensor F_m1_plastic = Inputs_VarCons.F_m1_plastic_p;
-  Tensor F_total = Inputs_VarCons.F_n1_p;
+  Tensor F_total = memory_to_tensor__TensorLib__(Inputs_VarCons.F_n1_p,2);
   Tensor F_trial_elastic;
   Tensor C_trial_elastic;
   Tensor E_trial_elastic;
@@ -152,10 +152,10 @@ Plastic_status finite_strains_plasticity_Drucker_Prager_Sanavia(
 
 /**************************************************************/
 
-Plastic_status infinitesimal_strains_plasticity_Drucker_Prager_Sanavia(
+State_Parameters infinitesimal_strains_plasticity_Drucker_Prager_Sanavia(
   Tensor sigma_k1,
   Tensor E_elastic,
-  Plastic_status Inputs_VarCons,
+  State_Parameters Inputs_VarCons,
   Material MatProp)
 /*	
 	Radial returning algorithm for the Drucker-Prager de Sanavia algorithm
@@ -288,7 +288,7 @@ free__TensorLib__(p_trial);
   /*
     Define output varible
   */
-  Plastic_status Outputs_VarCons;
+  State_Parameters Outputs_VarCons;
   Outputs_VarCons.EPS = EPS_k;
   Outputs_VarCons.Increment_E_plastic = Increment_E_plastic;
 

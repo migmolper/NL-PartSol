@@ -4,7 +4,7 @@
 /*
   Call global variables
 */
-int NumTimeStep;
+int NumTimeStep = 4000;
 Event * Out_Gauss_Point_evolution_csv;
 int Number_Out_Gauss_Point_evolution_csv;
 
