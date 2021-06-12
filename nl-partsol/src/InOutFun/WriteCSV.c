@@ -129,6 +129,7 @@ void Gauss_Point_evolution__InOutFun__(Particle PointAnalysis, Event Output_Comm
 		Tensor C_k = right_Cauchy_Green__Particles__(F_k);
 		Tensor E_k = strain_Green_Lagrange__Particles__(C_k);
 		print_Gauss_Point_tensorial_variable_to_csv(csv_file, E_k);
+
 		free__TensorLib__(C_k);
 		free__TensorLib__(E_k);
 	}

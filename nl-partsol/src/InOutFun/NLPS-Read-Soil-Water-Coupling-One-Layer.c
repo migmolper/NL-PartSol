@@ -742,22 +742,6 @@ static void initialise_particles(Mesh MPM_GID_Mesh,Particle MPM_Mesh, int GPxEle
       */
       MPM_Mesh.Phi.mass.nV[p] = m_p;
       
-      /*
-        Initialise some plastic variables
-      */
-      if(strcmp(MPM_Mesh.Mat[Mixture_idx].Type,"Von-Mises") == 0)
-      {
-          MPM_Mesh.Phi.cohesion.nV[p] = MPM_Mesh.Mat[Mixture_idx].yield_stress_0;
-      }
-      if(strcmp(MPM_Mesh.Mat[Mixture_idx].Type,"Drucker-Prager-Plane-Strain") == 0)
-      {
-          MPM_Mesh.Phi.cohesion.nV[p] = MPM_Mesh.Mat[Mixture_idx].cohesion_reference;
-      }
-      if(strcmp(MPM_Mesh.Mat[Mixture_idx].Type,"Drucker-Prager-Outer-Cone") == 0)
-      {
-          MPM_Mesh.Phi.cohesion.nV[p] = MPM_Mesh.Mat[Mixture_idx].cohesion_reference;
-      }
-
     }
 
   }

@@ -19,7 +19,7 @@ State_Parameters compute_1PK_Stress_Tensor_Newtonian_Fluid(
   /*
     Take information from input state parameters
   */
-  Tensor P = memory_to_tensor__TensorLib__(Intput_SP.P_p,2);
+  Tensor P = memory_to_tensor__TensorLib__(Intput_SP.Stress,2);
   Tensor F = memory_to_tensor__TensorLib__(Intput_SP.F_n1_p,2);
   Tensor dFdt = memory_to_tensor__TensorLib__(Intput_SP.dFdt,2);
   double J = Intput_SP.J;

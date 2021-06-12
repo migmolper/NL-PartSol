@@ -2,12 +2,19 @@
 
 /*************************************************************/
 
-Tensor LinearElastic(Tensor Stress, Tensor Strain, Material Mat)
+State_Parameters compute_kirchhoff_isotropic_linear_elasticity(
+  State_Parameters Intput_SP,
+  Material MatProp_p)
 {
 
   int Ndim = NumberDimensions;
-  double nu = Mat.nu; 
-  double E = Mat.E;
+
+  /* Get information from the state parameter */
+  Tensor Strain = memory_to_tensor__TensorLib__(Intput_SP.Strain,2);
+  Tensor Stress = memory_to_tensor__TensorLib__(Intput_SP.Stress,2);
+
+  double nu = MatProp_p.nu; 
+  double E = MatProp_p.E;
   double K = E/(3*(1-2*nu));
   double G = E/(2*(1+nu));
   double traceStrain = I1__TensorLib__(Strain);
@@ -20,7 +27,12 @@ Tensor LinearElastic(Tensor Stress, Tensor Strain, Material Mat)
     }
   }
 
-  return Stress;  
+  /* 
+    Define output
+  */
+  State_Parameters Output_SP;
+
+  return Output_SP;  
 }
 
 /**************************************************************/

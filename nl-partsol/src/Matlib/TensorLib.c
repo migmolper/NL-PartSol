@@ -113,7 +113,7 @@ void free__TensorLib__(Tensor A)
 
 /*************************************************************/
 
-double I1__TensorLib__(Tensor A)
+double I1__TensorLib__(const Tensor A)
 {
   int Ndim = NumberDimensions;
   /* Define output */
@@ -135,7 +135,7 @@ double I1__TensorLib__(Tensor A)
 
 /*************************************************************/
 
-double I2__TensorLib__(Tensor A)
+double I2__TensorLib__(const Tensor A)
 {
   int Ndim = NumberDimensions;  
   /* Define output */
@@ -167,7 +167,7 @@ double I2__TensorLib__(Tensor A)
 
 /*************************************************************/
 
-double I3__TensorLib__(Tensor A)
+double I3__TensorLib__(const Tensor A)
 {
   int Ndim = NumberDimensions;  
   /* Define output */
@@ -203,7 +203,7 @@ double I3__TensorLib__(Tensor A)
 
 /*************************************************************/
 
-double J1__TensorLib__(Tensor A)
+double J1__TensorLib__(const Tensor A)
 {
   /* Define output */
   double J1;
@@ -222,7 +222,7 @@ double J1__TensorLib__(Tensor A)
 
 /*************************************************************/
 
-double J2__TensorLib__(Tensor A)
+double J2__TensorLib__(const Tensor A)
 {
   /* Define output */
   double J2;
@@ -243,7 +243,7 @@ double J2__TensorLib__(Tensor A)
 
 /*************************************************************/
 
-double J3__TensorLib__(Tensor A)
+double J3__TensorLib__(const Tensor A)
 {
   /* Define output */
   double J3;
@@ -265,7 +265,7 @@ double J3__TensorLib__(Tensor A)
 
 /*************************************************************/
 
-EigenTensor Eigen_analysis__TensorLib__(Tensor A)
+EigenTensor Eigen_analysis__TensorLib__(const Tensor A)
 {
 
   /* Output variable */
@@ -348,7 +348,7 @@ EigenTensor Eigen_analysis__TensorLib__(Tensor A)
 
 /*************************************************************/
 
-double EuclideanNorm__TensorLib__(Tensor A)
+double EuclideanNorm__TensorLib__(const Tensor A)
 {
   int Ndim = NumberDimensions;
   double Aux = 0; 
@@ -385,7 +385,7 @@ double EuclideanNorm__TensorLib__(Tensor A)
 
 /*********************************************************************/
 
-double Generalised_norm__TensorLib__(Tensor a, Tensor G)
+double Generalised_norm__TensorLib__(const Tensor a, const Tensor G)
 {
   double norm;
   Tensor G_dot_a;
@@ -412,7 +412,7 @@ Tensor Identity__TensorLib__()
 
 /*************************************************************/
 
-Tensor Inverse__TensorLib__(Tensor A)
+Tensor Inverse__TensorLib__(const Tensor A)
 {
   int Ndim = NumberDimensions;
   /* Allocate the output */
@@ -490,21 +490,25 @@ Tensor Solve_system__TensorLib__(Tensor A, Tensor b)
 
 /*************************************************************/
 
-Tensor transpose__TensorLib__(Tensor A)
+Tensor transpose__TensorLib__(const Tensor A)
 {
   int Ndim = NumberDimensions;
   /* Allocate the output */
   Tensor AT = alloc__TensorLib__(2);  
   /* Check if the input is a second order tensor */
-  if (A.Order == 2){
+  if (A.Order == 2)
+  {
     /* Get the transpose */
-    for(int i = 0 ; i < Ndim ; i++){
-      for(int j = 0 ; j < Ndim ; j++){
-	AT.N[i][j] = A.N[j][i];
+    for(int i = 0 ; i < Ndim ; i++)
+    {
+      for(int j = 0 ; j < Ndim ; j++)
+      {
+        AT.N[i][j] = A.N[j][i];
       }
     }
   }
-  else{
+  else
+  {
     fprintf(stderr,"%s : %s !!! \n",
 	    "Error in transpose__TensorLib__()",
 	    "The input should be of order 2");
@@ -668,15 +672,19 @@ Tensor dyadic_Product__TensorLib__(Tensor a, Tensor b)
   /* Tensor declaration */
   Tensor aob = alloc__TensorLib__(2);
   /* Check if the input are a first order tensor */
-  if ((a.Order == 1) && (b.Order == 1)){
+  if ((a.Order == 1) && (b.Order == 1))
+  {
     /* Operate tensor product */
-    for(int i = 0 ; i<Ndim ; i++){
-      for(int j = 0 ; j<Ndim ; j++){
-	aob.N[i][j] = a.n[i]*b.n[j];
+    for(int i = 0 ; i<Ndim ; i++)
+    {
+      for(int j = 0 ; j<Ndim ; j++)
+      {
+        aob.N[i][j] = a.n[i]*b.n[j];
       } 
     }
   }
-  else{
+  else
+  {
     fprintf(stderr,"%s : %s !!! \n",
 	    "Error in dyadic_Product__TensorLib__()",
 	    "The input should be two tensors of first order");
@@ -694,7 +702,8 @@ Tensor vector_linear_mapping__TensorLib__(Tensor A, Tensor b)
   /* Tensor declaration */
   Tensor Adotb = alloc__TensorLib__(1);
   /* Check in the input its is ok */
-  if ((A.Order == 2) && (b.Order == 1)){
+  if ((A.Order == 2) && (b.Order == 1))
+  {
     /* Auxiliar variable */
     double Aux;
     /* Operate tensors */
@@ -706,7 +715,8 @@ Tensor vector_linear_mapping__TensorLib__(Tensor A, Tensor b)
       Adotb.n[i] = Aux;
     }    
   }
-  else{
+  else
+  {
     fprintf(stderr,"%s : %s !!! \n",
 	    "Error in vector_linear_mapping__TensorLib__()",
 	    "The input should be 2ord tensor and a 1rd tensor");

@@ -18,24 +18,26 @@ bool Is_nu = false;
 bool Is_Ceps = false;
 bool Is_Gf = false;
 bool Is_ft = false;
-bool Is_E_p0 = false;
 bool Is_heps = false;
 bool Is_Wc = false;
+
+bool Is_Plastic_solver = true;
+
 bool Is_yield_stress = false;
 
-bool Is_Hexp = false;
+bool Is_Hardening_modulus = false;
 
-bool Is_isotropic_hardening = false;
-bool Is_isotropic_hardening_modulus = false;
-bool Is_isotropic_hardening_theta = false;
+bool Is_Hardening = false;
+bool Is_Hardening_Hughes = false;
+bool Is_Parameter_Hardening_Hughes = false;
+bool Is_Hardening_Cervera = false;
+bool Is_Hardening_Ortiz = false;
+bool Is_Exponent_Hardening_Ortiz = false;
+bool Is_Reference_Plastic_Strain_Ortiz = false;
 
-bool Is_kinematic_hardening = false;
-bool Is_kinematic_hardening_modulus = false;
-bool Is_kinematic_hardening_beta = false;
-
+bool Is_Viscous_regularization = false;
 bool Is_fluidity_param = false;
 
-bool Is_cohesion = false;
 bool Is_friction_angle = false;
 bool Is_dilatancy_angle = false;
 bool Is_Compressibility = false;
@@ -191,23 +193,21 @@ GramsMaterials (Particles=route.txt) {
       Mat_GP.Wc = NAN;
       /* Parameters for plastic simulations */
       Mat_GP.yield_stress_0 = NAN;
-      Mat_GP.cohesion_reference = NAN;
       Mat_GP.friction_angle = NAN;
       Mat_GP.dilatancy_angle = NAN;
-      Mat_GP.hardening_modulus = NAN;
-	  Mat_GP.hardening_exp = NAN;
+      Mat_GP.Hardening_modulus = NAN;
 
-	  /* Parameters for isotropic/kinematic hardening */
-	  Mat_GP.Linear_Isotropic_Hardening = false;
-	  Mat_GP.Exponential_Isotropic_Hardening = false;
-	  Mat_GP.isotropic_hardening_modulus = 0.0;
-	  Mat_GP.isotropic_hardening_theta = 0.0;
-	  Mat_GP.Linear_Kinematic_Hardening = false;
-	  Mat_GP.kinematic_hardening_modulus = 0.0;
-	  Mat_GP.kinematic_hardening_beta = 0.0;
+	 	 	/* Parameters for isotropic/kinematic hardening */
+		  Mat_GP.Hardening_Hughes = false;
+		  Mat_GP.Parameter_Hardening_Hughes = 1.0;
+	  	Mat_GP.Hardening_Cervera = false;
+	  	Mat_GP.Hardening_Ortiz = false;
+	  	Mat_GP.Exponent_Hardening_Ortiz = 1.0;
+	  	Mat_GP.Reference_Plastic_Strain_Ortiz = 0.0;
 
-	  /* Fluidity parameters for the viscoplasticity */
-	  Mat_GP.fluidity_param = NAN;
+	  /* Viscoplasticity */
+	  Mat_GP.Viscous_regularization = false;
+	  Mat_GP.fluidity_param = 0.0;
 
       /* Look for the curly brace { */
       if(strcmp(kwords[2],"{") == 0){
@@ -340,109 +340,105 @@ GramsMaterials (Particles=route.txt) {
 	    Mat_GP.heps = atof(Parse_Mat_Prop[1]);
 	  }
 	  /**************************************************/
-	  else if(strcmp(Parse_Mat_Prop[0],"Reference-Plastic-Strain") == 0)
-	  {
-	    Is_E_p0 = true;
-	    Mat_GP.E_plastic_reference = atof(Parse_Mat_Prop[1]);
-	  } 
-	  /**************************************************/
 	  else if(strcmp(Parse_Mat_Prop[0],"Wc") == 0)
 	  {
 	    Is_Wc = true;
 	    Mat_GP.Wc = atof(Parse_Mat_Prop[1]);
 	  }
 	  /**************************************************/
-	  else if(strcmp(Parse_Mat_Prop[0],"Yield_stress") == 0)
+	  else if(strcmp(Parse_Mat_Prop[0],"Plastic-Solver") == 0)
+	  {
+	  	Is_Plastic_solver = true;
+	  	strcpy(Mat_GP.Plastic_Solver,Parse_Mat_Prop[1]);
+	  }
+	  /**************************************************/
+	  else if(strcmp(Parse_Mat_Prop[0],"Yield-stress") == 0)
 	  {
 	    Is_yield_stress = true;
 	    Mat_GP.yield_stress_0 = atof(Parse_Mat_Prop[1]);
 	  }
 		/**************************************************/
-	  else if(strcmp(Parse_Mat_Prop[0],"Isotropic-Hardening") == 0)
+	  else if(strcmp(Parse_Mat_Prop[0],"Hardening-Criteria") == 0)
 	  {
-	  	Is_isotropic_hardening = true;
+	  	Is_Hardening = true;
 
-	    if (strcmp(Parse_Mat_Prop[1],"Linear") == 0)
+	    if (strcmp(Parse_Mat_Prop[1],"Hughes") == 0)
 	    {
-	      Mat_GP.Linear_Isotropic_Hardening = true;
+	      Mat_GP.Hardening_Hughes = true;
 	    }
-	    else if (strcmp(Parse_Mat_Prop[1],"Exponential") == 0)
+	    else if (strcmp(Parse_Mat_Prop[1],"Cervera") == 0)
 	    {
-	      Mat_GP.Exponential_Isotropic_Hardening = true;
+	      Mat_GP.Hardening_Cervera = true;
+	    }
+	    else if (strcmp(Parse_Mat_Prop[1],"Ortiz") == 0)
+	    {
+	    	Mat_GP.Hardening_Ortiz = true;
 	    }
 	    else
 	    {
-	    	sprintf(Error_message,"%s","Options for Isotropic-Hardening -> Linear/Exponential");
+	    	sprintf(Error_message,"%s","Options for Hardening-Criteria -> Hughes/Cervera/Ortiz");
 			standard_error(Error_message);
 	    }
 	  }
 	  /**************************************************/
-	  else if(strcmp(Parse_Mat_Prop[0],"Isotropic-Hardening-Modulus") == 0)
+	  else if(strcmp(Parse_Mat_Prop[0],"Hardening-Modulus") == 0)
 	  {
-	    Is_isotropic_hardening_modulus = true;
-	    Mat_GP.isotropic_hardening_modulus = atof(Parse_Mat_Prop[1]);
+	    Is_Hardening_modulus = true;
+	    Mat_GP.Hardening_modulus = atof(Parse_Mat_Prop[1]);
 	  }
 	  /**************************************************/
 
-	  else if(strcmp(Parse_Mat_Prop[0],"Isotropic-Hardening-Theta") == 0)
+	  else if(strcmp(Parse_Mat_Prop[0],"Parameter-Hardening-Hughes") == 0)
 	  {
-	    Is_isotropic_hardening_theta = true;
-	    Mat_GP.isotropic_hardening_theta = atof(Parse_Mat_Prop[1]);
+	    Is_Parameter_Hardening_Hughes = true;
+	    Mat_GP.Parameter_Hardening_Hughes = atof(Parse_Mat_Prop[1]);
+	  }
+	  /**************************************************/
+	  else if(strcmp(Parse_Mat_Prop[0],"Exponent-Hardening-Ortiz") == 0)
+	  {
+	    Is_Exponent_Hardening_Ortiz = true;
+	    Mat_GP.Exponent_Hardening_Ortiz = atof(Parse_Mat_Prop[1]);
+	  }
+	  /**************************************************/
+	  else if(strcmp(Parse_Mat_Prop[0],"Reference-Plastic-Strain_Ortiz") == 0)
+	  {
+	    Is_Reference_Plastic_Strain_Ortiz = true;
+	    Mat_GP.Reference_Plastic_Strain_Ortiz = atof(Parse_Mat_Prop[1]);
 	  }
 		/**************************************************/
-	  else if(strcmp(Parse_Mat_Prop[0],"Kinematic-Hardening") == 0)
+	  else if(strcmp(Parse_Mat_Prop[0],"Viscous-regularization") == 0)
 	  {
-	  	Is_kinematic_hardening = true;
+	  	Is_Viscous_regularization = true;
 
-	    if (strcmp(Parse_Mat_Prop[1],"Linear") == 0)
+	    if (strcmp(Parse_Mat_Prop[1],"true") == 0)
 	    {
-	      Mat_GP.Linear_Kinematic_Hardening = true;
+	      Mat_GP.Viscous_regularization = true;
+	    }
+	    else if(strcmp(Parse_Mat_Prop[1],"false") == 0)
+	    {
+	    	Mat_GP.Viscous_regularization = false;
 	    }
 	    else
 	    {
-	    	sprintf(Error_message,"%s","Options for Kinematic-Hardening -> Linear");
-			standard_error(Error_message);
-	    }
+	    	sprintf(Error_message,"%s","Options for Viscous-regularization -> true/false");
+				standard_error(Error_message);
+	    }	  	
 	  }
 	  /**************************************************/
-	  else if(strcmp(Parse_Mat_Prop[0],"Kinematic-Hardening-Modulus") == 0)
-	  {
-	    Is_kinematic_hardening_modulus = true;
-	    Mat_GP.kinematic_hardening_modulus = atof(Parse_Mat_Prop[1]);
-	  }
-	  /**************************************************/
-	  else if(strcmp(Parse_Mat_Prop[0],"Kinematic-Hardening-Beta") == 0)
-	  {
-	    Is_kinematic_hardening_beta = true;
-	    Mat_GP.kinematic_hardening_beta = atof(Parse_Mat_Prop[1]);
-	  }
-	 /**************************************************/
 	  else if(strcmp(Parse_Mat_Prop[0],"Fluidity-Parameter") == 0)
 	  {
 	  	Is_fluidity_param = true;
 	  	Mat_GP.fluidity_param = atof(Parse_Mat_Prop[1]);
 	  }
 	  /**************************************************/
-	  else if(strcmp(Parse_Mat_Prop[0],"Hardening_exponent") == 0)
-	  {
-	    Is_Hexp = true;
-	    Mat_GP.hardening_exp = atof(Parse_Mat_Prop[1]);
-	  }
-	  /**************************************************/
-	  else if(strcmp(Parse_Mat_Prop[0],"Cohesion") == 0)
-	  {
-	    Is_cohesion = true;
-	    Mat_GP.cohesion_reference = atof(Parse_Mat_Prop[1]);
-	  }
-	  /**************************************************/
-	  else if(strcmp(Parse_Mat_Prop[0],"Friction_angle") == 0)
+	  else if(strcmp(Parse_Mat_Prop[0],"Friction-angle") == 0)
 	  {
 	    Is_friction_angle = true;
 	    Mat_GP.friction_angle = atof(Parse_Mat_Prop[1]);
 	    rad_friction_angle  = (PI__MatrixLib__/180)*Mat_GP.friction_angle;
 	  }
 	  /**************************************************/
-	  else if(strcmp(Parse_Mat_Prop[0],"Dilatancy_angle") == 0)
+	  else if(strcmp(Parse_Mat_Prop[0],"Dilatancy-angle") == 0)
 	  {
 	    Is_dilatancy_angle = true;
 	    Mat_GP.dilatancy_angle = atof(Parse_Mat_Prop[1]);
@@ -529,16 +525,9 @@ GramsMaterials (Particles=route.txt) {
 	  /* Parameters for a Von Mises Yield criterium */
 	  else if(strcmp(Mat_GP.Type,"Von-Mises") == 0)
 	  { 
-		check_Von_Mises_Material(Mat_GP);	
+	  	check_Von_Mises_Material(Mat_GP);	
 	  	TOL_Radial_Returning = 1E-10;
-		Max_Iterations_Radial_Returning = 300;
-	  }
-	  /* Parameters for a Von Mises Yield criterium + Perzyna visplasticity */
-	  else if(strcmp(Mat_GP.Type,"Von-Mises-Perzyna") == 0)
-	  { 
-		check_Von_Mises_Perzyna_Material(Mat_GP);	
-	  	TOL_Radial_Returning = 1E-10;
-		Max_Iterations_Radial_Returning = 300;
+	  	Max_Iterations_Radial_Returning = 300;
 	  }
 	  /* Parameters for a Drucker-Prager Yield criterium */
 	  else if(strcmp(Mat_GP.Type,"Drucker-Prager-Plane-Strain") == 0)
@@ -742,7 +731,7 @@ static void check_Newtonian_Fluid_Compressible_Material(Material Mat_particle)
 static void check_Von_Mises_Material(Material Mat_particle)
 {
 	if(Is_rho && Is_Cel && Is_E && 
-	 Is_nu && Is_yield_stress)
+	 Is_nu && Is_yield_stress && Is_Plastic_solver)
 	{
 		printf("\t -> %s \n","Von-Mises material");
 		printf("\t \t -> %s : %f \n","Celerity",Mat_particle.Cel);
@@ -750,57 +739,92 @@ static void check_Von_Mises_Material(Material Mat_particle)
 		printf("\t \t -> %s : %f \n","Elastic modulus",Mat_particle.E);
 		printf("\t \t -> %s : %f \n","Poisson modulus",Mat_particle.nu);
 		printf("\t \t -> %s : %f \n","Yield stress",Mat_particle.yield_stress_0);
-
-		if(Is_isotropic_hardening && Mat_particle.Linear_Isotropic_Hardening)
+		printf("\t \t -> %s : %s \n","Plastic solver",Mat_particle.Plastic_Solver);
+		
+		if(Is_Hardening)
 		{
-			if(Is_isotropic_hardening_modulus && 
-				Is_isotropic_hardening_theta)
+			if(Is_Hardening_Hughes)
 			{
-				printf("\t \t -> %s : %f \n","Isotropic hardening modulus",Mat_particle.isotropic_hardening_modulus);
-				printf("\t \t -> %s : %f \n","Isotropic hardening theta",Mat_particle.isotropic_hardening_theta);		
-			}
-			else
-			{
-				fprintf(stderr,"%s : %s \n",
+				if(Is_Hardening_modulus && Is_Parameter_Hardening_Hughes)
+				{
+					printf("\t \t -> %s : %f \n","Hardening-Modulus",Mat_particle.Hardening_modulus);
+					printf("\t \t -> %s : %f \n","Parameter-Hardening-Hughes",Mat_particle.Parameter_Hardening_Hughes);	
+				}
+				else
+				{
+					fprintf(stderr,"%s : %s \n",
 					"Error in GramsMaterials()",
-					"Some parameter is missed for Von-Mises material (Isotropic Hardening parameters)");
-				fputs(Is_isotropic_hardening_modulus  ? "Isotropic hardening modulus : true \n" : "Isotropic hardening modulus : false \n", stdout);
-				fputs(Is_isotropic_hardening_theta  ? "Isotropic hardening theta : true \n" : "Isotropic hardening theta : false \n", stdout);
+					"Some parameter is missed for Von-Mises material (Hughes Hardening)");
+					fputs(Is_Hardening_modulus  ? "Hardening-Modulus : true \n" : "Hardening-Modulus : false \n", stdout);
+					fputs(Is_Parameter_Hardening_Hughes  ? "Parameter-Hardening-Hughes : true \n" : "Parameter-Hardening-Hughes : false \n", stdout);
+				}
+	
+			}
+			else if(Is_Hardening_Cervera)
+			{
+
+				if(strcmp(Mat_particle.Plastic_Solver,"Forward-Euler") == 0)
+				{
+					fprintf(stderr,"%s : %s \n",
+						"Error in GramsMaterials()",
+						"Switch to Backward-Euler for non-linear Hardening laws)");
+					exit(EXIT_FAILURE);	
+				}
+
+				if(Is_Hardening_modulus)
+				{
+					printf("\t \t -> %s : %f \n","Hardening-Modulus",Mat_particle.Hardening_modulus);
+				}
+				else
+				{
+					fprintf(stderr,"%s : %s \n",
+					"Error in GramsMaterials()",
+					"Some parameter is missed for Von-Mises material (Cervera Hardening)");
+					fputs(Is_Hardening_modulus  ? "Hardening-Modulus : true \n" : "Hardening-Modulus : false \n", stdout);
+				}
+			}
+			else if(Is_Hardening_Ortiz)
+			{
+
+				if(strcmp(Mat_particle.Plastic_Solver,"Forward-Euler") == 0)
+				{
+					fprintf(stderr,"%s : %s \n",
+						"Error in GramsMaterials()",
+						"Switch to Backward-Euler for non-linear Hardening laws)");
+					exit(EXIT_FAILURE);	
+				}
+
+				if(Is_Exponent_Hardening_Ortiz && Is_Reference_Plastic_Strain_Ortiz)
+				{
+					printf("\t \t -> %s : %f \n","Exponent-Hardening-Ortiz",Mat_particle.Exponent_Hardening_Ortiz);
+					printf("\t \t -> %s : %f \n","Reference-Plastic-Strain_Ortiz",Mat_particle.Reference_Plastic_Strain_Ortiz);	
+				}
+				else
+				{
+					fprintf(stderr,"%s : %s \n",
+					"Error in GramsMaterials()",
+					"Some parameter is missed for Von-Mises material (Ortiz Hardening)");
+					fputs(Is_Exponent_Hardening_Ortiz  ? "Exponent-Hardening-Ortiz : true \n" : "Exponent-Hardening-Ortiz : false \n", stdout);
+					fputs(Is_Reference_Plastic_Strain_Ortiz  ? "Reference-Plastic-Strain_Ortiz : true \n" : "Reference-Plastic-Strain_Ortiz : false \n", stdout);
+				}
+
 			}
 		}
 
-		if(Is_isotropic_hardening && Mat_particle.Exponential_Isotropic_Hardening)
+		if(Is_Viscous_regularization)
 		{
-			if(Is_isotropic_hardening_modulus)
+			if(Is_fluidity_param)
 			{
-				printf("\t \t -> %s : %f \n","Isotropic hardening modulus",Mat_particle.isotropic_hardening_modulus);
+				printf("\t \t -> %s : %f \n","Fluidity parameter",Mat_particle.fluidity_param);
 			}
 			else
 			{
-				fprintf(stderr,"%s : %s \n",
-					"Error in GramsMaterials()",
-					"Some parameter is missed for Von-Mises material (Isotropic Hardening parameters)");
-				fputs(Is_isotropic_hardening_modulus  ? "Isotropic hardening modulus : true \n" : "Isotropic hardening modulus : false \n", stdout);
+				fprintf(stderr,"%s : %s \n","Error in GramsMaterials()",
+					"Some parameter is missed for Von-Mises material (Viscoplastic regularization)");
+				fputs(Is_fluidity_param ? "Fluidity parameter : true \n" : "Fluidity parameter : false \n", stdout);
+				exit(EXIT_FAILURE);
 			}
-		}
 
-
-		if(Is_kinematic_hardening)
-		{
-			if(Is_kinematic_hardening_modulus && 
-				Is_kinematic_hardening_beta)
-			{
-				printf("\t \t -> %s : %f \n","Kinematic hardening modulus",Mat_particle.kinematic_hardening_modulus);
-				printf("\t \t -> %s : %f \n","Kinematic hardening theta",Mat_particle.kinematic_hardening_beta);		
-			}
-			else
-			{
-				fprintf(stderr,"%s : %s \n",
-					"Error in GramsMaterials()",
-					"Some parameter is missed for Von-Mises material (Kinematic Hardening parameters)");
-				fputs(Is_kinematic_hardening_modulus  ? "Kinematic hardening modulus : true \n" : "Kinematic hardening modulus : false \n", stdout);
-				fputs(Is_kinematic_hardening_beta  ? "Kinematic hardening theta : true \n" : "Kinematic hardening theta : false \n", stdout);
-			}
 		}
 
 
@@ -821,102 +845,15 @@ static void check_Von_Mises_Material(Material Mat_particle)
 
 /**********************************************************************/
 
-static void check_Von_Mises_Perzyna_Material(Material Mat_particle)
-{
-	if(Is_rho && Is_Cel && Is_E && 
-	 Is_nu && Is_yield_stress && Is_fluidity_param)
-	{
-		printf("\t -> %s \n","Von-Mises-Perzyna material");
-		printf("\t \t -> %s : %f \n","Celerity",Mat_particle.Cel);
-		printf("\t \t -> %s : %f \n","Density",Mat_particle.rho);
-		printf("\t \t -> %s : %f \n","Elastic modulus",Mat_particle.E);
-		printf("\t \t -> %s : %f \n","Poisson modulus",Mat_particle.nu);
-		printf("\t \t -> %s : %f \n","Yield stress",Mat_particle.yield_stress_0);
-		printf("\t \t -> %s : %f \n","Fluidity parameter",Mat_particle.fluidity_param);
-
-		if(Is_isotropic_hardening && Mat_particle.Linear_Isotropic_Hardening)
-		{
-			if(Is_isotropic_hardening_modulus && 
-				Is_isotropic_hardening_theta)
-			{
-				printf("\t \t -> %s : %f \n","Isotropic hardening modulus",Mat_particle.isotropic_hardening_modulus);
-				printf("\t \t -> %s : %f \n","Isotropic hardening theta",Mat_particle.isotropic_hardening_theta);		
-			}
-			else
-			{
-				fprintf(stderr,"%s : %s \n",
-					"Error in GramsMaterials()",
-					"Some parameter is missed for Von-Mises-Perzyna material (Isotropic Hardening parameters)");
-				fputs(Is_isotropic_hardening_modulus  ? "Isotropic hardening modulus : true \n" : "Isotropic hardening modulus : false \n", stdout);
-				fputs(Is_isotropic_hardening_theta  ? "Isotropic hardening theta : true \n" : "Isotropic hardening theta : false \n", stdout);
-			}
-		}
-
-		if(Is_isotropic_hardening && Mat_particle.Exponential_Isotropic_Hardening)
-		{
-			if(Is_isotropic_hardening_modulus)
-			{
-				printf("\t \t -> %s : %f \n","Isotropic hardening modulus",Mat_particle.isotropic_hardening_modulus);
-			}
-			else
-			{
-				fprintf(stderr,"%s : %s \n",
-					"Error in GramsMaterials()",
-					"Some parameter is missed for Von-Mises-Perzyna material (Isotropic Hardening parameters)");
-				fputs(Is_isotropic_hardening_modulus  ? "Isotropic hardening modulus : true \n" : "Isotropic hardening modulus : false \n", stdout);
-			}
-		}
-
-
-		if(Is_kinematic_hardening)
-		{
-			if(Is_kinematic_hardening_modulus && 
-				Is_kinematic_hardening_beta)
-			{
-				printf("\t \t -> %s : %f \n","Kinematic hardening modulus",Mat_particle.kinematic_hardening_modulus);
-				printf("\t \t -> %s : %f \n","Kinematic hardening theta",Mat_particle.kinematic_hardening_beta);		
-			}
-			else
-			{
-				fprintf(stderr,"%s : %s \n",
-					"Error in GramsMaterials()",
-					"Some parameter is missed for Von-Mises-Perzyna material (Kinematic Hardening parameters)");
-				fputs(Is_kinematic_hardening_modulus  ? "Kinematic hardening modulus : true \n" : "Kinematic hardening modulus : false \n", stdout);
-				fputs(Is_kinematic_hardening_beta  ? "Kinematic hardening theta : true \n" : "Kinematic hardening theta : false \n", stdout);
-			}
-		}
-
-
-	}
-	else
-	{
-		fprintf(stderr,"%s : %s \n",
-			"Error in GramsMaterials()",
-			"Some parameter is missed for Von-Mises-Perzyna material");
-		fputs(Is_rho ? "Density : true \n" : "Density : false \n", stdout);
-		fputs(Is_Cel ? "Celerity : true \n" : "Celerity : false \n", stdout);
-		fputs(Is_E   ? "Elastic modulus : true \n" : "Elastic modulus : false \n", stdout);
-		fputs(Is_nu  ? "Poisson modulus : true \n" : "Poisson modulus : false \n", stdout);
-		fputs(Is_yield_stress  ? "Yield stress : true \n" : "Yield stress : false \n", stdout);
-		fputs(Is_fluidity_param  ? "Fluidity parameter : true \n" : "Fluidity parameter : false \n", stdout);
-		exit(EXIT_FAILURE);
-	}
-}
-
-/**********************************************************************/
-
 static void check_Drucker_Prager_Material(Material Mat_particle)
 {
-	if(Is_rho && Is_Cel && Is_E && Is_nu && Is_cohesion && Is_Hexp && Is_E_p0 && Is_friction_angle && Is_dilatancy_angle)
+	if(Is_rho && Is_Cel && Is_E && Is_nu && Is_Exponent_Hardening_Ortiz && Is_friction_angle && Is_dilatancy_angle)
 	{
 		printf("\t -> %s \n","Drucker-Prager material");
 		printf("\t \t -> %s : %f \n","Celerity",Mat_particle.Cel);
 		printf("\t \t -> %s : %f \n","Density",Mat_particle.rho);
 		printf("\t \t -> %s : %f \n","Elastic modulus",Mat_particle.E);
 		printf("\t \t -> %s : %f \n","Poisson modulus",Mat_particle.nu);
-		printf("\t \t -> %s : %f \n","Cohesion",Mat_particle.cohesion_reference);
-		printf("\t \t -> %s : %f \n","Reference plastic strain",Mat_particle.E_plastic_reference);
-		printf("\t \t -> %s : %f \n","Hardening exponent",Mat_particle.hardening_exp);
 		printf("\t \t -> %s : %f \n","Friction angle",Mat_particle.friction_angle);
 		printf("\t \t -> %s : %f \n","Dilatancy angle",Mat_particle.dilatancy_angle);
 	}
@@ -929,9 +866,7 @@ static void check_Drucker_Prager_Material(Material Mat_particle)
 		fputs(Is_Cel ? "Celerity : true \n" : "Celerity : false \n", stdout);
 		fputs(Is_E   ? "Elastic modulus : true \n" : "Elastic modulus : false \n", stdout);
 		fputs(Is_nu  ? "Poisson modulus : true \n" : "Poisson modulus : false \n", stdout);
-		fputs(Is_cohesion  ? "Cohesion : true \n" : "Cohesion : false \n", stdout);
-		fputs(Is_E_p0 ? "Reference plastic strain : true \n" : "Reference plastic strain : false \n", stdout);
-		fputs(Is_Hexp  ? "Hardening exponent : true \n" : "Hardening exponent : false \n", stdout);
+		fputs(Is_Exponent_Hardening_Ortiz  ? "Hardening exponent : true \n" : "Hardening exponent : false \n", stdout);
 		fputs(Is_friction_angle  ? "Friction angle : true \n" : "Friction angle : false \n", stdout);
 		fputs(Is_dilatancy_angle  ? "Dilatancy angle : true \n" : "Dilatancy angle : false \n", stdout);
 		exit(EXIT_FAILURE);

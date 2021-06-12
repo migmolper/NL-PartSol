@@ -746,7 +746,6 @@ static void update_Local_State(
   Tensor dFdt_n_p;
   Tensor dFdt_n1_p;
   Tensor dt_DF_p;
-  Tensor P_p;
   
   /*
     Loop in the material point set 
@@ -819,7 +818,7 @@ static void update_Local_State(
       Update the first Piola-Kirchhoff stress tensor with an apropiate
       integration rule.
     */
-    P_p = forward_integration_Stress__Particles__(p,MPM_Mesh,FEM_Mesh,MatProp_p); 
+    Stress_integration__Particles__(p,MPM_Mesh,FEM_Mesh,MatProp_p); 
   }
   
 }

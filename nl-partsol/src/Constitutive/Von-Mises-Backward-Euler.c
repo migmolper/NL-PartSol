@@ -5,6 +5,8 @@
 */
 double TOL_Radial_Returning;
 int Max_Iterations_Radial_Returning;
+double DeltaTimeStep;
+
 
 /*
   Define local global variable for the relative error
@@ -19,8 +21,10 @@ static bool   check_convergence(double,double,int,int);
 
 static Tensor compute_plastic_flow_direction(Tensor *,double);
 
-static double compute_yield_surface(double,double,double,Material);
-static double compute_derivative_yield_surface(double,Material);
+static double compute_yield_surface(double,double,Material);
+
+static double compute_objective_function(double,double,double,Material);
+static double compute_derivative_objective_function(double,Material);
 
 static double compute_K(double,Material);
 static double compute_D_K(double,Material);
@@ -32,83 +36,13 @@ static double update_increment_plastic_strain(double, double, double);
 static double update_equivalent_plastic_strain(double, double);
 static  void  update_back_stress(Tensor *,Tensor *,double, Material);
 
-static Tensor compute_increment_plastic_strain_tensor(Tensor *,double);
+static void compute_increment_plastic_strain_tensor(Tensor *,Tensor *,double);
 static void   apply_plastic_corrector_stress_tensor(Tensor *,Tensor *,double,Material);
 
 /**************************************************************/
 
-State_Parameters finite_strains_plasticity_Von_Mises(
-  Tensor P_p,
-  State_Parameters Inputs_VarCons, 
-  Material MatProp)
-/*
-  Finite strains plasticity following the apporach of Ortiz and Camacho
-*/
-{
-  int Ndim = NumberDimensions;
-
-  /* Define auxiliar variables */
-  State_Parameters Outputs_VarCons;
-  Tensor F_m1_plastic = Inputs_VarCons.F_m1_plastic_p;
-  Tensor F_total = memory_to_tensor__TensorLib__(Inputs_VarCons.F_n1_p,2);
-  Tensor F_m1_total;
-  Tensor F_trial_elastic;
-  Tensor C_trial_elastic;
-  Tensor E_trial_elastic;
-  Tensor D_F_plastic;
-  Tensor Fm1_plastic;
-  Tensor T_p = alloc__TensorLib__(2);
-
-  /* Compute the elastic right Cauchy-Green tensor using the intermediate configuration. */ 
-  F_trial_elastic = matrix_product__TensorLib__(F_total,F_m1_plastic);
-
-  C_trial_elastic = right_Cauchy_Green__Particles__(F_trial_elastic);
-
-  /* Calculation of the small strain tensor */
-  E_trial_elastic = logarithmic_strains__Particles__(C_trial_elastic);
-
-  /* Calculation of the trial stress tensor using the trial small strain tensor */
-  T_p = LinearElastic(T_p, E_trial_elastic, MatProp);
-
-  /* Start plastic corrector algorithm in infinitesimal strains */
-  Outputs_VarCons = infinitesimal_strains_plasticity_Von_Mises(T_p, Inputs_VarCons, MatProp);
-
-  /* Use the Cuitiño & Ortiz exponential maping to compute the increment of plastic finite strains */
-  update_plastic_deformation_gradient__Particles__(Outputs_VarCons.Increment_E_plastic, F_m1_plastic);
-
-  /* Get the First Piola-Kirchhoff stress tensor (P_p) */
-  F_m1_total = Inverse__TensorLib__(F_total);
-
-  for(int i = 0 ; i < Ndim  ; i++)
-  {
-    for(int j = 0 ; j < Ndim  ; j++)    
-    {
-
-     P_p.N[i][j] = 0.0;
-
-     for(int k = 0 ; k < Ndim  ; k++)
-     {
-        P_p.N[i][j] += T_p.N[i][k]*F_m1_total.N[k][j];
-      }
-    }
-  }
-
-
-  /* Free memory */
-  free__TensorLib__(F_trial_elastic);
-  free__TensorLib__(C_trial_elastic);
-  free__TensorLib__(E_trial_elastic);
-  free__TensorLib__(T_p);
-  free__TensorLib__(F_m1_total);
-
-  return Outputs_VarCons;
-}
-
-/**************************************************************/
-
-State_Parameters infinitesimal_strains_plasticity_Von_Mises(
-  Tensor sigma_k1,
-  State_Parameters Inputs_VarCons,
+State_Parameters Von_Mises_backward_euler(
+  State_Parameters Inputs_SP,
   Material MatProp)
 /*	
 	Radial returning algorithm for the Von-Mises plastic criterium
@@ -124,20 +58,30 @@ State_Parameters infinitesimal_strains_plasticity_Von_Mises(
   double s_trial_norm;
   double relative_stress_norm;
   double Phi;
-  double d_Phi;
-  Tensor Increment_E_plastic;
-
-  /* Load material marameters */
-  double EPS = Inputs_VarCons.EPS;
-  Tensor Back_stress = Inputs_VarCons.Back_stress;
-
-  /* Auxiliar variables during iterations */
-  double EPS_k;
-  double delta_Gamma_k;
+  double G;
+  double d_G;
+  
   /*
-    Initialise convergence parameters for the solver
+    Load state parameters
   */
+  Tensor sigma_k1 = memory_to_tensor__TensorLib__(Inputs_SP.Stress,2);
+  Tensor Back_stress = memory_to_tensor__TensorLib__(Inputs_SP.Back_stress,2);
+
+  /*
+    Define output state parameters
+  */
+  State_Parameters Outputs_VarCons;
+  Outputs_VarCons.Increment_E_plastic = (double *)calloc(Ndim*Ndim,sizeof(double));
+
+  Tensor Increment_E_plastic = memory_to_tensor__TensorLib__(Outputs_VarCons.Increment_E_plastic,2);
+
+  /*
+    Initialise solver parameters
+  */
+  double EPS_k = Inputs_SP.EPS;
+  double delta_Gamma_k = 0;
   double TOL = TOL_Radial_Returning;
+
   int MaxIter = Max_Iterations_Radial_Returning;
   int Iter = 0;
   bool Convergence = false;
@@ -164,9 +108,7 @@ State_Parameters infinitesimal_strains_plasticity_Von_Mises(
   /*
     Yield condition : Starting from incremental plastic strain equal to zero
   */
-  EPS_k = EPS;
-  delta_Gamma_k = 0;
-  Phi = compute_yield_surface(relative_stress_norm, delta_Gamma_k, EPS_k, MatProp);
+  Phi = compute_yield_surface(relative_stress_norm, Inputs_SP.EPS, MatProp);
 
   if(Phi > TOL)
   {     
@@ -176,26 +118,24 @@ State_Parameters infinitesimal_strains_plasticity_Von_Mises(
     while(Convergence == false)
     {
           
-      Phi = compute_yield_surface(relative_stress_norm, delta_Gamma_k, EPS_k, MatProp);
+      G = compute_objective_function(relative_stress_norm, delta_Gamma_k, EPS_k, MatProp);
 
-      d_Phi = compute_derivative_yield_surface(EPS_k,MatProp);
+      Convergence = check_convergence(G,TOL,Iter,MaxIter);
+    
+      d_G = compute_derivative_objective_function(EPS_k,MatProp);
 
-      delta_Gamma_k = update_increment_plastic_strain(delta_Gamma_k, Phi, d_Phi);
+      delta_Gamma_k = update_increment_plastic_strain(delta_Gamma_k, G, d_G);
 
-      EPS_k = update_equivalent_plastic_strain(EPS, delta_Gamma_k);
+      EPS_k = update_equivalent_plastic_strain(Inputs_SP.EPS, delta_Gamma_k);
 
-      Convergence = check_convergence(Phi,TOL,Iter,MaxIter);
-	     
-      if(Convergence == false)
-      {
-        Iter++;
-      }
+      Iter++;
+
     }
 
     /*
       Update plastic deformation gradient
     */
-    Increment_E_plastic = compute_increment_plastic_strain_tensor(&plastic_flow_direction, delta_Gamma_k);
+    compute_increment_plastic_strain_tensor(&Increment_E_plastic,&plastic_flow_direction, delta_Gamma_k);
 
     /*
       Update back stress
@@ -207,10 +147,15 @@ State_Parameters infinitesimal_strains_plasticity_Von_Mises(
     */
     apply_plastic_corrector_stress_tensor(&sigma_k1,&plastic_flow_direction,delta_Gamma_k,MatProp);
 
+    /*
+      Update equivalent plastic strain
+    */
+    Outputs_VarCons.EPS = EPS_k;
+
   }
   else
   {
-    Increment_E_plastic = alloc__TensorLib__(2);
+    Outputs_VarCons.EPS = Inputs_SP.EPS;
   }
   
 
@@ -222,14 +167,7 @@ State_Parameters infinitesimal_strains_plasticity_Von_Mises(
   free__TensorLib__(relative_stress);
   free__TensorLib__(plastic_flow_direction);
 
-  /*
-    Define output varible
-  */
-  State_Parameters Outputs_VarCons;
-  Outputs_VarCons.EPS = EPS_k;
-  Outputs_VarCons.Increment_E_plastic = Increment_E_plastic;
-  
-return Outputs_VarCons;
+  return Outputs_VarCons;
 }
 
 /***************************************************************************/
@@ -308,6 +246,21 @@ static Tensor compute_plastic_flow_direction(
 
 static double compute_yield_surface(
   double relative_stress_norm,
+  double EPS,
+  Material MatProp)
+{
+  double nu = MatProp.nu; /* Poisson modulus */
+  double E = MatProp.E; /* Elastic modulus */
+  double G = E/(2*(1+nu));
+  double K = compute_K(EPS,MatProp); /* Isotropic hardening */
+
+  return - sqrt(2./3.)*K + relative_stress_norm;
+}
+
+/**************************************************************/
+
+static double compute_objective_function(
+  double relative_stress_norm,
   double delta_Gamma,
   double EPS_k,
   Material MatProp)
@@ -318,13 +271,23 @@ static double compute_yield_surface(
   double K = compute_K(EPS_k,MatProp); /* Isotropic hardening */
   double DeltaH = compute_DeltaH(delta_Gamma,MatProp); /* Kinematic hardening */
 
-  return - sqrt(2./3.)*(K + DeltaH) + relative_stress_norm - 2*G*delta_Gamma;
+  if(MatProp.Viscous_regularization)
+  {
+    double fluidity_param = MatProp.fluidity_param;
+    double DT = 1.0;
+
+    return - sqrt(2./3.)*(K + DeltaH) + relative_stress_norm - DMAX(0,delta_Gamma*fluidity_param/DT) - 2*G*delta_Gamma;
+  }
+  else
+  {
+      return - sqrt(2./3.)*(K + DeltaH) + relative_stress_norm - 2*G*delta_Gamma;
+  }
 }
 
 /**************************************************************/
 
 
-static double compute_derivative_yield_surface(
+static double compute_derivative_objective_function(
   double EPS_k,
   Material MatProp)
 {
@@ -334,33 +297,55 @@ static double compute_derivative_yield_surface(
   double D_K = compute_D_K(EPS_k,MatProp); /* Derivative of the isotropic hardening */
   double D_DeltaH = compute_D_DeltaH(MatProp); /* Derivative of the kinematic hardening */
 
-  return - sqrt(2./3.)*(D_K + D_DeltaH) - 2*G;
+  if(MatProp.Viscous_regularization)
+  {
+    double fluidity_param = MatProp.fluidity_param;
+    double DT = 1.0;
+
+    return - sqrt(2./3.)*(D_K + D_DeltaH) - 2*G - fluidity_param/DT;
+  }
+  else
+  {
+    return - sqrt(2./3.)*(D_K + D_DeltaH) - 2*G;
+  }
+
 }
 
 /**************************************************************/
 
 static double compute_K(
-  double EPS_k,
+  double EPS,
   Material MatProp)
 /*
   Isotropic hardening function
 */
 {
-  double H = MatProp.isotropic_hardening_modulus;
-  double theta = MatProp.isotropic_hardening_theta;
   double Sigma_y = MatProp.yield_stress_0;
 
-  if(MatProp.Linear_Isotropic_Hardening)
+  if(MatProp.Hardening_Hughes)
   {
-    return Sigma_y + theta*H*EPS_k;
+    double Hardening_modulus = MatProp.Hardening_modulus;
+    double theta = MatProp.Parameter_Hardening_Hughes;
+
+    return Sigma_y + theta*Hardening_modulus*EPS;
   }
-  else if(MatProp.Exponential_Isotropic_Hardening)
+  else if(MatProp.Hardening_Cervera)
   {
-    return Sigma_y*exp(-2*H*EPS_k/Sigma_y);
+    double Hardening_modulus = MatProp.Hardening_modulus;
+
+    return Sigma_y*exp(-2*Hardening_modulus*EPS/Sigma_y);
+  }
+  else if(MatProp.Hardening_Ortiz)
+  {
+    double Hardening_modulus = MatProp.Hardening_modulus;
+    double Exponent = MatProp.Exponent_Hardening_Ortiz;
+    double Ref_PS = MatProp.Reference_Plastic_Strain_Ortiz;
+
+    return Sigma_y*pow(1 + EPS/Ref_PS,1.0/Exponent);
   }
   else
   {
-    return 0.0;
+    return Sigma_y;
   }
 
 
@@ -369,23 +354,35 @@ static double compute_K(
 /**************************************************************/
 
 static double compute_D_K(
-  double EPS_k,
+  double EPS,
   Material MatProp)
 /*
   Derivative of the isotropic hardening function
 */
 {
-  double H = MatProp.isotropic_hardening_modulus;
-  double theta = MatProp.isotropic_hardening_theta;
-  double Sigma_y = MatProp.yield_stress_0;
   
-  if(MatProp.Linear_Isotropic_Hardening)
+  if(MatProp.Hardening_Hughes)
   {
-    return sqrt(2./3.)*theta*H;
+    double Hardening_modulus = MatProp.Hardening_modulus;
+    double theta = MatProp.Parameter_Hardening_Hughes;
+
+    return sqrt(2./3.)*theta*Hardening_modulus;
   }
-  else if(MatProp.Exponential_Isotropic_Hardening)
+  else if(MatProp.Hardening_Cervera)
   {
-    return -2.0*sqrt(2./3.)*H*exp(-2.0*H*EPS_k/Sigma_y);
+    double Hardening_modulus = MatProp.Hardening_modulus;
+    double Sigma_y = MatProp.yield_stress_0;
+
+    return -2.0*sqrt(2./3.)*Hardening_modulus*exp(-2.0*Hardening_modulus*EPS/Sigma_y);
+  }
+  else if(MatProp.Hardening_Ortiz)
+  {
+    double Hardening_modulus = MatProp.Hardening_modulus;
+    double Exponent = MatProp.Exponent_Hardening_Ortiz;
+    double Ref_PS = MatProp.Reference_Plastic_Strain_Ortiz;
+    double Sigma_y = MatProp.yield_stress_0;
+
+    return sqrt(2./3.)*(Sigma_y/(Ref_PS*Exponent))*pow(1 + EPS/Ref_PS,1.0/Exponent - 1);
   }
   else
   {
@@ -403,12 +400,13 @@ static double compute_DeltaH(
   Kinematic hardening function
 */
 {
-  double H = MatProp.kinematic_hardening_modulus;
-  double beta = MatProp.kinematic_hardening_beta;
 
-  if(MatProp.Linear_Kinematic_Hardening)
+  if(MatProp.Hardening_Hughes)
   {
-    return sqrt(2./3.)*(1-beta)*H*delta_Gamma;;
+    double Hardening_modulus = MatProp.Hardening_modulus;
+    double theta = MatProp.Parameter_Hardening_Hughes;
+
+    return sqrt(2./3.)*(1-theta)*Hardening_modulus*delta_Gamma;
   }
   else
   {
@@ -425,12 +423,13 @@ static double compute_D_DeltaH(
   Derivative of the kinematic hardening function
 */
 {
-  double H = MatProp.kinematic_hardening_modulus;
-  double beta = MatProp.kinematic_hardening_beta;
 
-  if(MatProp.Linear_Kinematic_Hardening)
+  if(MatProp.Hardening_Hughes)
   {
-    return sqrt(2./3.)*(1-beta)*H;
+    double Hardening_modulus = MatProp.Hardening_modulus;
+    double theta = MatProp.Parameter_Hardening_Hughes;
+
+    return sqrt(2./3.)*(1-theta)*Hardening_modulus;
   }
   else
   {
@@ -443,10 +442,10 @@ static double compute_D_DeltaH(
 
 static double update_increment_plastic_strain(
   double delta_Gamma_k,
-  double Phi,
-  double d_Phi)
+  double G,
+  double d_G)
 {
-  return delta_Gamma_k - Phi/d_Phi;
+  return delta_Gamma_k - G/d_G;
 }
 
 /**************************************************************/
@@ -481,23 +480,21 @@ static void update_back_stress(
 
 /**************************************************************/
 
-static Tensor compute_increment_plastic_strain_tensor(
+static void compute_increment_plastic_strain_tensor(
+  Tensor * D_E_plastic,
   Tensor * plastic_flow_direction, 
   double delta_Gamma)
 {
   int Ndim = NumberDimensions;
-  Tensor D_E_plastic = alloc__TensorLib__(2); 
-
+ 
   for(int i = 0 ; i<Ndim ; i++)
   {
     for(int j = 0 ; j<Ndim ; j++)
     {
-      D_E_plastic.N[i][j] = delta_Gamma*plastic_flow_direction->N[i][j];
+      D_E_plastic->N[i][j] = delta_Gamma*plastic_flow_direction->N[i][j];
     }
   }
 
-
-  return D_E_plastic;
 }
 
 /**************************************************************/

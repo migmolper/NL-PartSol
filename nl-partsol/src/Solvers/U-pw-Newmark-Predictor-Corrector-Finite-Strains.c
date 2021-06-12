@@ -985,7 +985,6 @@ static void update_Local_State(
   Tensor DF_p; /* Increment of the deformation gradient of the soil skeleton */
   Tensor FT_n1_p; /* Transpose of the deformation gradient of the soil skeleton (t = n + 1) */ 
   Tensor F_plastic_p; /* Plastic deformation gradient of the soil skeleton */
-  Tensor P_p; /* First Piola-Kirchhoff stress tensor */
   double Pw_0; /* Cauchy pore water pressure at t = 0 */
   double Pw_n1; /* Cauchy pore water pressure at t = n + 1 */
 
@@ -1099,7 +1098,7 @@ static void update_Local_State(
       Update the first Piola-Kirchhoff stress tensor with an apropiate
       integration rule.
     */
-    P_p = forward_integration_Stress__Particles__(p,MPM_Mesh,FEM_Mesh,MatProp_Soil_p); 
+    Stress_integration__Particles__(p,MPM_Mesh,FEM_Mesh,MatProp_Soil_p); 
   }
 
 

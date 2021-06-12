@@ -35,14 +35,14 @@ State_Parameters compute_1PK_Stress_Tensor_Saint_Venant_Kirchhoff(
   State_Parameters Output_SP;
 
   /* Get information from the state parameter */
-  Tensor F = memory_to_tensor__TensorLib__(Intput_SP.F_n1_p,2);
-  Tensor P = memory_to_tensor__TensorLib__(Intput_SP.P_p,2);
+  Tensor P = memory_to_tensor__TensorLib__(Intput_SP.Stress,2);
+  const Tensor F = memory_to_tensor__TensorLib__(Intput_SP.F_n1_p,2);
   
   /* Material parameters */
-  double ElasticModulus = MatProp_p.E;
-  double nu = MatProp_p.nu;
-  double lambda = nu*ElasticModulus/((1-nu*2)*(1+nu));
-  double G = ElasticModulus/(2*(1+nu));
+  const double ElasticModulus = MatProp_p.E;
+  const double nu = MatProp_p.nu;
+  const double lambda = nu*ElasticModulus/((1-nu*2)*(1+nu));
+  const double G = ElasticModulus/(2*(1+nu));
   
   /*
     Auxiliar tensors and variables

@@ -741,7 +741,6 @@ static void update_Local_State(
   Matrix Nodal_D_Velocity_p;
   Matrix Nodal_D_Pw_p;
   Matrix Nodal_D_theta_dt;
-  Tensor P_p;
   Tensor F_n_p; /* Deformation gradient of the soil skeleton (t = n) */
   Tensor F_n1_p; /* Deformation gradient of the soil skeleton (t = n + 1) */
   Tensor DF_p; /* Increment of the deformation gradient of the soil skeleton */
@@ -874,7 +873,7 @@ static void update_Local_State(
       Update the first Piola-Kirchhoff stress tensor with an apropiate
       integration rule.
     */
-    P_p = forward_integration_Stress__Particles__(p,MPM_Mesh,FEM_Mesh,MatProp_Soil_p); 
+    Stress_integration__Particles__(p,MPM_Mesh,FEM_Mesh,MatProp_Soil_p); 
   }
 
 }

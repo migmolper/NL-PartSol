@@ -173,11 +173,13 @@ double update_density__Particles__(double, double, Tensor);
 
 */
 Tensor explicit_integration_stress__Particles__(int, Particle, Material);
+
 /*******************************************************/
 /*
-\fn Tensor forward_integration_Stress__Particles__()
+\fn void Stress_integration__Particles__()
 */
-Tensor forward_integration_Stress__Particles__(int,Particle,Mesh,Material);
+void Stress_integration__Particles__(int,Particle,Mesh,Material);
+
 /*******************************************************/
 /*!
   \fn Tensor configurational_midpoint_integration_Stress__Particles__(Tensor T_n1,Tensor T_n,double alpha)

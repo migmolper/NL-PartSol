@@ -455,36 +455,54 @@ typedef struct {
   double Wc; /*! Critical opening displacement (Eigensoftening) */
 
   /*!
+   * Integration algorithm for plasticity
+  */
+  char Plastic_Solver [100];
+
+  /*!
   * General plastic parameters
   */
   double yield_stress_0;
-  double cohesion_reference;
-  double friction_angle;
-  double dilatancy_angle;
+  double Hardening_modulus;
   
   /*!
-  * Hardening parameters
+  * Hardening Hughes
   */
-  bool Linear_Isotropic_Hardening;
-  bool Exponential_Isotropic_Hardening;
-  double isotropic_hardening_modulus;
-  double isotropic_hardening_theta;
-  bool Linear_Kinematic_Hardening;
-  double kinematic_hardening_modulus;
-  double kinematic_hardening_beta;
+  bool Hardening_Hughes;
+  double Parameter_Hardening_Hughes;
 
   /*!
-  * Non-linear hardening parameter
-  */
-  double E_plastic_reference;
-  double hardening_modulus;
-  double hardening_exp;
-  bool   Hardening_Ortiz;
+   * Hardening Cervera
+   * */
+  bool Hardening_Cervera;
 
   /*!
-  * Viscoplasticity parameters
-  */
+   * Hardening Ortiz
+   * */
+  bool Hardening_Ortiz;
+  double Exponent_Hardening_Ortiz;
+  double Reference_Plastic_Strain_Ortiz;
+
+  /*!
+   * Hardening Voce
+   * */
+  bool Hardening_Voce;
+  double K_0_Hardening_Voce;
+  double K_inf_Hardening_Voce;
+  double delta_Hardening_Voce;
+  double theta_Hardening_Voce;
+
+  /*!
+   * Viscoplasticity parameters
+   * */
+  bool Viscous_regularization;
   double fluidity_param;
+
+  /*!
+   * Soil parameters
+   * */
+  double friction_angle;
+  double dilatancy_angle;
 
   /*!
   * Parameters of the Drucker-Prager Sanavia
@@ -494,8 +512,8 @@ typedef struct {
   double beta_Drucker_Prager;
 
   /*!
-  * Activate auxiliar techniques
-  */
+   * Activate auxiliar techniques
+   * */
   bool Locking_Control_Fbar;
   
 } Material;
@@ -546,12 +564,13 @@ typedef struct {
 typedef struct
 {
   /*
-    Stress parameters
+    Stress/strain parameters
   */
-  double * P_p;
+  double * Stress;
+  double * Strain;
 
   /*
-    Kinematic parameters
+    Finiste strain kinematic parameters
   */
   double * F_n1_p;
   double J;
@@ -560,12 +579,13 @@ typedef struct
   /*
     Plasticity parameters
   */
+  double * Back_stress;
+  double * F_m1_plastic_p;
+  double * Increment_E_plastic;
+  
   double EPS;
   double Cohesion;
   double Yield_stress;
-  Tensor Increment_E_plastic;
-  Tensor Back_stress;
-  Tensor F_m1_plastic_p;
 
 } State_Parameters;
 

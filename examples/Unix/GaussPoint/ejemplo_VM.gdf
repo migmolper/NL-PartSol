@@ -7,10 +7,15 @@ Define-Material(idx=0,Model=Von-Mises)
 {
   rho=0.0
   E=10.0E6
-  nu=0.45
+  nu=0.3
+  Cel=0.0
   Yield-stress=10.0E3
-  Isotropic-Hardening=Exponential
-  Isotropic-Hardening-Modulus=29.0E3
+  Plastic-Solver=Backward-Euler
+  Hardening-Criteria=Hughes
+  Hardening-Modulus=1000000
+  Parameter-Hardening-Hughes=0.0
+  Viscous-regularization=true
+  Fluidity-Parameter=900000000
 }
 
 Define-Strain-Curve (Var=Deformation-Gradient)

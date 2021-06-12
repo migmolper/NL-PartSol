@@ -119,24 +119,21 @@ void order__SetLib__(ChainPtr *, ChainPtr *, Matrix);
 Tensor alloc__TensorLib__(int);
 Tensor memory_to_tensor__TensorLib__(double *, int);
 void   free__TensorLib__(Tensor);
-double I1__TensorLib__(Tensor);
-double I2__TensorLib__(Tensor);
-double I3__TensorLib__(Tensor);
-double J1__TensorLib__(Tensor);
-double J2__TensorLib__(Tensor);
-double J3__TensorLib__(Tensor);
+double I1__TensorLib__(const Tensor);
+double I2__TensorLib__(const Tensor);
+double I3__TensorLib__(const Tensor);
+double J1__TensorLib__(const Tensor);
+double J2__TensorLib__(const Tensor);
+double J3__TensorLib__(const Tensor);
 
-Tensor Eigenvalues__TensorLib__(Tensor);
-Tensor Eigenvectors__TensorLib__(Tensor,Tensor);
+EigenTensor Eigen_analysis__TensorLib__(const Tensor);
 
-EigenTensor Eigen_analysis__TensorLib__(Tensor A);
-
-double EuclideanNorm__TensorLib__(Tensor);
-double Generalised_norm__TensorLib__(Tensor, Tensor);
+double EuclideanNorm__TensorLib__(const Tensor);
+double Generalised_norm__TensorLib__(const Tensor, const Tensor);
 Tensor Identity__TensorLib__();
-Tensor Inverse__TensorLib__(Tensor);
+Tensor Inverse__TensorLib__(const Tensor);
 Tensor Solve_system__TensorLib__(Tensor, Tensor);
-Tensor transpose__TensorLib__(Tensor);
+Tensor transpose__TensorLib__(const Tensor);
 Tensor addition__TensorLib__(Tensor, Tensor);
 Tensor subtraction__TensorLib__(Tensor, Tensor);
 double inner_product__TensorLib__(Tensor, Tensor);

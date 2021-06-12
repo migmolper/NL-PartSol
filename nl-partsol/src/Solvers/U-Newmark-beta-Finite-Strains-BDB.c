@@ -837,7 +837,6 @@ static void update_Local_State(Matrix D_Displacement,
   Tensor F_n_p;
   Tensor F_n1_p;
   Tensor DF_p;
-  Tensor S_p;
   
   /*
     Loop in the material point set 
@@ -883,7 +882,7 @@ static void update_Local_State(Matrix D_Displacement,
       */
       MatIndx_p = MPM_Mesh.MatIdx[p];
       MatProp_p = MPM_Mesh.Mat[MatIndx_p];
-      S_p = forward_integration_Stress__Particles__(p,MPM_Mesh,FEM_Mesh,MatProp_p);
+      Stress_integration__Particles__(p,MPM_Mesh,FEM_Mesh,MatProp_p);
       
       /*
 	       Free memory 

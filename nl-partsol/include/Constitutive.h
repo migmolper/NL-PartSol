@@ -22,16 +22,15 @@ Tensor SolidRigid(Tensor Strain);
 
 
 /*!
-  \fn Tensor LinearElastic(Tensor Stress, Tensor Strain, Material Properties)
+  \fn State_Parameters LinearElastic(State_Parameters Intput_SP, Material MatProp_p)
   
   \brief This function is devoted to make a material point behaves as a
   linear elastic material.
   
-  \param Stress : Stress field of each particle
-  \param Strain : Strain field of each particle 
-  \param Properties : Define the material properties of the particle
+  \param Input_SP : State parameters of the particle
+  \param MatProp : Material properties of the model
 */
-Tensor LinearElastic(Tensor, Tensor, Material);
+State_Parameters compute_kirchhoff_isotropic_linear_elasticity(State_Parameters, Material);
 /*******************************************************/
 
 /*!
@@ -109,27 +108,42 @@ Tensor compute_stiffness_density_Neo_Hookean_Wriggers(Tensor, Tensor, Tensor, do
 Matrix compute_D_matrix_Neo_Hookean_Wriggers(Tensor, double, Material);
 /*******************************************************/
 
+/*!
+  \fn State_Parameters Von_Mises_backward_euler(State_Parameters Input_SP, Material MatProp)
 
-State_Parameters finite_strains_plasticity_Von_Mises(Tensor, State_Parameters, Material);
-State_Parameters infinitesimal_strains_plasticity_Von_Mises(Tensor, State_Parameters, Material);
-/*******************************************************/  
+  \brief Compute the plastic Von Mises model using an implicit backward euler radial returning 
 
-State_Parameters finite_strains_viscoplasticity_Von_Mises_Perzyna(Tensor,State_Parameters,Material);
-
-State_Parameters implicit_viscoplasticity_Von_Mises_Perzyna(Tensor,State_Parameters,Material);
-State_Parameters explicit_viscoplasticity_Von_Mises_Perzyna(Tensor,State_Parameters,Material);
+  \param Input_SP : State parameters of the particle
+  \param MatProp : Material properties of the model
+*/
+State_Parameters Von_Mises_backward_euler(State_Parameters, Material);
 /*******************************************************/
 
-State_Parameters finite_strains_plasticity_Drucker_Prager_Sanavia(Tensor, State_Parameters, Material);
-State_Parameters infinitesimal_strains_plasticity_Drucker_Prager_Sanavia(Tensor, Tensor, State_Parameters, Material);
+/*!
+  \fn State_Parameters Von_Mises_forward_euler(State_Parameters Input_SP, Material MatProp)
+
+  \brief Compute the plastic Von Mises model using an explicit forward euler radial returning 
+
+  \param Input_SP : State parameters of the particle
+  \param MatProp : Material properties of the model
+*/
+State_Parameters Von_Mises_forward_euler(State_Parameters, Material);
 /*******************************************************/
 
 
-State_Parameters finite_strains_plasticity(Tensor,State_Parameters,Material,State_Parameters(* infinitesimal_plasticity)(State_Parameters,Material));
-
+State_Parameters Drucker_Prager_backward_euler(State_Parameters, Material);
 /*******************************************************/
 
-// Compresible Newtonian fluid
+/*!
+  \fn State_Parameters Von_Mises_forward_euler(State_Parameters Input_SP, Material MatProp)
+
+  \brief Compute the plastic Von Mises model using an explicit forward euler radial returning 
+
+  \param Input_SP : State parameters of the particle
+  \param MatProp : Material properties of the model
+*/
+State_Parameters finite_strain_plasticity(State_Parameters,Material,State_Parameters(* infinitesimal_plasticity)(State_Parameters,Material));
+/*******************************************************/
 
 /*!
 
@@ -137,6 +151,7 @@ State_Parameters finite_strains_plasticity(Tensor,State_Parameters,Material,Stat
 
 */
 State_Parameters compute_1PK_Stress_Tensor_Newtonian_Fluid(State_Parameters,Material);
+/*******************************************************/
 
 /*!
 \fn Tensor compute_stiffness_density_Newtonian_Fluid(Tensor GRAD_I,Tensor GRAD_J,Tensor F,Tensor dFdt,double J,double alpha4,Material MatProp_p)

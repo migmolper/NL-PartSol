@@ -16,12 +16,12 @@ static void   standard_error(char *);
 static bool   check_convergence(double,double,int,int);
 
 static double compute_yield_surface(double, double, double, Material);
-static double compute_hardening_modulus(double, Material);
+static double compute_D_K(double, Material);
 static double compute_limit_between_classic_apex_algorithm(double, double, double, Material);
 static double compute_derivative_yield_surface_classical(double, Material);
 static double update_increment_plastic_strain(double, double, double);
 static double update_equivalent_plastic_strain_classical(double, double, Material);
-static double compute_cohesion_modulus(double, Material);
+static double compute_K(double, double, Material);
 static double compute_yield_surface_classical(double, double, double, double, Material);
 static Tensor compute_increment_plastic_strain_classical(Tensor, double, double, Material);
 static void   compute_finite_stress_tensor_classical(Tensor, Tensor, Tensor, double, double, Material);
@@ -32,130 +32,11 @@ static Tensor compute_increment_plastic_strain_apex(Tensor, double, double, Mate
 static void   compute_finite_stress_tensor_apex(Tensor, Tensor, double, double, Material);
 static void   compute_finite_stress_tensor_elastic_region(Tensor, Tensor, Tensor, Material);
 
-/**************************************************************/
-
-State_Parameters finite_strains_plasticity_Drucker_Prager_Sanavia(
-  Tensor P_p,
-  State_Parameters Inputs_VarCons, 
-  Material MatProp)
-/*
-  Finite strains plasticity following the apporach of Ortiz and Camacho
-*/
-{
-  int Ndim = NumberDimensions;
-
-  /* Define auxiliar variables */
-  State_Parameters Outputs_VarCons;
-  Tensor F_m1_plastic = Inputs_VarCons.F_m1_plastic_p;
-  Tensor F_total = memory_to_tensor__TensorLib__(Inputs_VarCons.F_n1_p,2);
-  Tensor F_trial_elastic;
-  Tensor C_trial_elastic;
-  Tensor E_trial_elastic;
-  Tensor F_elastic;
-  Tensor C_elastic;
-  Tensor C_m1_elastic;
-  Tensor Increment_E_plastic;
-  Tensor D_F_plastic;
-  Tensor Fm1_plastic;
-  Tensor T_p = alloc__TensorLib__(2);
-  Tensor M_p = alloc__TensorLib__(2);
-  Tensor S_p = alloc__TensorLib__(2);
-
-  /* Compute the elastic right Cauchy-Green tensor using the intermediate configuration. */ 
-  F_trial_elastic = matrix_product__TensorLib__(F_total,F_m1_plastic);
-
-  C_trial_elastic = right_Cauchy_Green__Particles__(F_trial_elastic);
-
-  /* Calculation of the small strain tensor */
-  E_trial_elastic = logarithmic_strains__Particles__(C_trial_elastic);
-
-  /* Calculation of the trial stress tensor using the trial small strain tensor */
-  T_p = LinearElastic(T_p, E_trial_elastic, MatProp);
-
-  /* Start plastic algorithm in infinitesimal strains */
-  Outputs_VarCons = infinitesimal_strains_plasticity_Drucker_Prager_Sanavia(T_p, E_trial_elastic, Inputs_VarCons, MatProp);
-
-  /* Update the logarithmic strain tensor */
-  for(int i = 0 ; i < Ndim  ; i++)
-  {
-   for(int j = 0 ; j < Ndim  ; j++)
-    {
-      E_trial_elastic.N[i][j] -= Outputs_VarCons.Increment_E_plastic.N[i][j];
-    }
-  }
-
-  /* Use the Cuitiño & Ortiz exponential maping to compute the increment of plastic finite strains */
-  update_plastic_deformation_gradient__Particles__(Outputs_VarCons.Increment_E_plastic, F_m1_plastic);
-
-  /* Compute the elastic stress tensor */
-  F_elastic = matrix_product__TensorLib__(F_total,F_m1_plastic);
-
-  /* Compute the inverse of the elastic right Cauchy-Green tensor */
-  C_elastic = right_Cauchy_Green__Particles__(F_elastic);
-  C_m1_elastic = Inverse__TensorLib__(C_elastic);
-
-  /* Compute the Mandel stress tensor */
-  for(int i = 0 ; i < Ndim  ; i++)
-  {
-   for(int j = 0 ; j < Ndim  ; j++)
-     {
-      /* Symmetric part */
-      M_p.N[i][j] += T_p.N[i][j];
-
-      /* Kew symetric part */
-      for(int k = 0 ; k < Ndim  ; k++)
-      {
-        M_p.N[i][j] += E_trial_elastic.N[i][k]*T_p.N[k][j] - T_p.N[i][k]*E_trial_elastic.N[k][j];
-      }
-    }
-  }
-
-  /* Get the Second Piola-Kirchhoff stress tensor (S_p) */
-  for(int i = 0 ; i < Ndim  ; i++)
-  {
-   for(int j = 0 ; j < Ndim  ; j++)
-     {
-      for(int k = 0 ; k < Ndim  ; k++)
-      {
-        S_p.N[i][j] += 0.5*(C_m1_elastic.N[i][k]*M_p.N[k][j] + M_p.N[k][i]*C_m1_elastic.N[k][j]);
-      }
-    }
-  }
-
-  /* Get the First Piola-Kirchhoff stress tensor (P_p) */
-  for(int i = 0 ; i < Ndim  ; i++)
-  {
-   for(int j = 0 ; j < Ndim  ; j++)
-     {
-      P_p.N[i][j] = 0.0;
-
-      for(int k = 0 ; k < Ndim  ; k++)
-      {
-        P_p.N[i][j] += F_total.N[i][k]*S_p.N[k][j];
-      }
-    }
-  }
-
-  /* Free memory */
-  free__TensorLib__(F_trial_elastic);
-  free__TensorLib__(C_trial_elastic);
-  free__TensorLib__(E_trial_elastic);
-  free__TensorLib__(F_elastic);
-  free__TensorLib__(C_elastic);
-  free__TensorLib__(C_m1_elastic);
-  free__TensorLib__(T_p);
-  free__TensorLib__(M_p);
-  free__TensorLib__(S_p);
-
-  return Outputs_VarCons;
-}
 
 /**************************************************************/
 
-State_Parameters infinitesimal_strains_plasticity_Drucker_Prager_Sanavia(
-  Tensor sigma_k1,
-  Tensor E_elastic,
-  State_Parameters Inputs_VarCons,
+State_Parameters Drucker_Prager_backward_euler(
+  State_Parameters Inputs_SP,
   Material MatProp)
 /*	
 	Radial returning algorithm for the Drucker-Prager de Sanavia algorithm
@@ -174,10 +55,11 @@ State_Parameters infinitesimal_strains_plasticity_Drucker_Prager_Sanavia(
   double p_lim;
   Tensor Increment_E_plastic = alloc__TensorLib__(2);
 
-  /* Load material parameters */
-  double EPS_k = Inputs_VarCons.EPS;
-  double cohesion_k = compute_cohesion_modulus(EPS_k, MatProp);;
-  double hardening_k = compute_hardening_modulus(EPS_k, MatProp);
+  /*
+    Load state parameters
+  */
+  Tensor sigma_k1 = memory_to_tensor__TensorLib__(Inputs_SP.Stress,2);
+  double EPS_k = Inputs_SP.EPS;
 
   /* Initialise convergence prameters for the solver */
   double TOL = TOL_Radial_Returning;
@@ -198,7 +80,7 @@ State_Parameters infinitesimal_strains_plasticity_Drucker_Prager_Sanavia(
     Yield condition : Starting from incremental plastic strain equal to zero
   */
   delta_Gamma = 0.0;
-  Phi = compute_yield_surface(p_trial_norm, s_trial_norm, cohesion_k, MatProp);
+  Phi = compute_yield_surface(p_trial_norm, s_trial_norm, EPS, MatProp);
 
   if(Phi < TOL)
   {
@@ -206,7 +88,7 @@ State_Parameters infinitesimal_strains_plasticity_Drucker_Prager_Sanavia(
   }
   else
   {
-    p_lim = compute_limit_between_classic_apex_algorithm(s_trial_norm, cohesion_k, hardening_k, MatProp);
+    p_lim = compute_limit_between_classic_apex_algorithm(s_trial_norm, cohesion_k, EPS_k, MatProp);
 
     /*
 	    Classical plastic iterator
@@ -225,9 +107,7 @@ State_Parameters infinitesimal_strains_plasticity_Drucker_Prager_Sanavia(
 
       EPS_k = update_equivalent_plastic_strain_classical(EPS_k, delta_Gamma, MatProp);
 
-      cohesion_k = compute_cohesion_modulus(EPS_k, MatProp);
-
-      hardening_k = compute_hardening_modulus(EPS_k, MatProp);
+      hardening_k = compute_D_K(EPS_k, MatProp);
 
       Convergence = check_convergence(Phi,TOL,Iter,MaxIter);
 
@@ -290,7 +170,7 @@ free__TensorLib__(p_trial);
   */
   State_Parameters Outputs_VarCons;
   Outputs_VarCons.EPS = EPS_k;
-  Outputs_VarCons.Increment_E_plastic = Increment_E_plastic;
+  Outputs_VarCons.Increment_E_plastic = Increment_E_plastic.N[0];
 
 return Outputs_VarCons;
 
@@ -353,13 +233,14 @@ static bool check_convergence(
 static double compute_yield_surface(
   double p_trial_norm,
   double s_trial_norm,
-  double cohesion_k,
+  double EPS,
   Material MatProp)
 {
   double alpha_F = MatProp.alpha_F_Drucker_Prager;
   double beta = MatProp.beta_Drucker_Prager;
+  double K = compute_K(EPS, MatProp); // Isotropic hardening
 
-  double Phi = 3*alpha_F*p_trial_norm + s_trial_norm - beta*cohesion_k;
+  double Phi = 3*alpha_F*p_trial_norm + s_trial_norm - beta*K;
 
   return Phi;
 }
@@ -370,7 +251,7 @@ static double compute_yield_surface(
 static double compute_limit_between_classic_apex_algorithm(
   double s_trial_norm,
   double cohesion_k,
-  double hardening_k,
+  double EPS_k,
   Material MatProp)
 {
   double alpha_F = MatProp.alpha_F_Drucker_Prager;
@@ -380,8 +261,9 @@ static double compute_limit_between_classic_apex_algorithm(
   double E = MatProp.E;
   double K = E/(3*(1-2*nu));
   double G = E/(2*(1+nu));
+  double H = compute_D_K(EPS_k, MatProp);
 
-  double p_lim = 3*alpha_Q*K*s_trial_norm/(2*G) + (beta/(3*alpha_F))*((s_trial_norm/(2*G))*hardening_k*sqrt(1+3*DSQR(alpha_Q)) + cohesion_k);
+  double p_lim = 3*alpha_Q*K*s_trial_norm/(2*G) + (beta/(3*alpha_F))*((s_trial_norm/(2*G))*H*sqrt(1+3*DSQR(alpha_Q)) + cohesion_k);
 
   return p_lim;
 
@@ -571,36 +453,45 @@ static double update_equivalent_plastic_strain_apex(
 
 /**************************************************************/
 
-static double compute_cohesion_modulus(
-  double EPS_k1,
+static double compute_K(
+  double EPS,
   Material MatProp)
 {
-  double c_0   = MatProp.cohesion_reference;
-  double E0_p  = MatProp.E_plastic_reference;
-  double N_exp = MatProp.hardening_exp;
-  double basis = 1.0 + EPS_k1/E0_p;
-  double exp   = 1.0/N_exp;
+  double Sigma_y = MatProp.yield_stress_0;
 
-  double cohesion_k1 = c_0*pow(basis,exp);
+  if(MatProp.Hardening_Ortiz)
+  {
+    double Hardening_modulus = MatProp.Hardening_modulus;
+    double Exponent = MatProp.Exponent_Hardening_Ortiz;
+    double Ref_PS = MatProp.Reference_Plastic_Strain_Ortiz;
 
-  return cohesion_k1; 
+    return Sigma_y*pow(1 + EPS/Ref_PS,1.0/Exponent);
+  }
+  else
+  {
+    return Sigma_y;
+  }
 }
 
 /**************************************************************/
 
-static double compute_hardening_modulus(
-  double EPS_k,
+static double compute_D_K(
+  double EPS,
   Material MatProp)
 {
-  double E0_p  = MatProp.E_plastic_reference;
-  double N_exp = MatProp.hardening_exp;
-  double c0    = MatProp.cohesion_reference;
-  double basis = 1.0 + EPS_k/E0_p;
-  double exp = 1.0/N_exp - 1.0;
+  if(MatProp.Hardening_Ortiz)
+  {
+    double Hardening_modulus = MatProp.Hardening_modulus;
+    double Exponent = MatProp.Exponent_Hardening_Ortiz;
+    double Ref_PS = MatProp.Reference_Plastic_Strain_Ortiz;
+    double Sigma_y = MatProp.yield_stress_0;
 
-  double H = (c0/(N_exp*E0_p))*pow(basis,exp);
-
-  return H;
+    return (Sigma_y/(Ref_PS*Exponent))*pow(1 + EPS/Ref_PS,1.0/Exponent - 1);
+  }
+  else
+  {
+    return 0.0;
+  }
 }
 
 
