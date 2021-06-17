@@ -505,13 +505,6 @@ typedef struct {
   double dilatancy_angle;
 
   /*!
-  * Parameters of the Drucker-Prager Sanavia
-  */
-  double alpha_F_Drucker_Prager;
-  double alpha_Q_Drucker_Prager;
-  double beta_Drucker_Prager;
-
-  /*!
    * Activate auxiliar techniques
    * */
   bool Locking_Control_Fbar;

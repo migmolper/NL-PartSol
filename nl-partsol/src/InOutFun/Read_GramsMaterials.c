@@ -534,23 +534,17 @@ GramsMaterials (Particles=route.txt) {
 	  { 
 	  	check_Drucker_Prager_Material(Mat_GP);
 
-		/*	Plane strain yield surface */
-		Mat_GP.alpha_F_Drucker_Prager = sqrt(2/3.)*tan(rad_friction_angle)/sqrt(3+4*DSQR(tan(rad_friction_angle)));
-		Mat_GP.alpha_Q_Drucker_Prager = sqrt(2/3.)*tan(rad_dilatancy_angle)/sqrt(3+4*DSQR(tan(rad_dilatancy_angle)));
-		Mat_GP.beta_Drucker_Prager    = sqrt(2/3.)*3/sqrt(3+4*DSQR(tan(rad_friction_angle)));
-		TOL_Radial_Returning = 1E-10;
-		Max_Iterations_Radial_Returning = 30;
+			/*	Plane strain yield surface */
+			TOL_Radial_Returning = 1E-10;
+			Max_Iterations_Radial_Returning = 30;
 	  }
 	  else if(strcmp(Mat_GP.Type,"Drucker-Prager-Outer-cone") == 0)
 	  { 
 	  	check_Drucker_Prager_Material(Mat_GP);
 
-		/*	Outer cone yield surface */
-		Mat_GP.alpha_F_Drucker_Prager = sqrt(2/3.)*2*sin(rad_friction_angle)/(3-sin(rad_friction_angle));
-		Mat_GP.alpha_Q_Drucker_Prager = sqrt(2/3.)*2*sin(rad_dilatancy_angle)/(3-sin(rad_dilatancy_angle));
-		Mat_GP.beta_Drucker_Prager    = sqrt(2/3.)*6*cos(rad_friction_angle)/(3-sin(rad_friction_angle));
-		TOL_Radial_Returning = 1E-10;
-		Max_Iterations_Radial_Returning = 30;
+	  	/*	Outer cone yield surface */
+			TOL_Radial_Returning = 1E-10;
+			Max_Iterations_Radial_Returning = 30;
 	  }
 	  else
 	  {

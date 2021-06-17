@@ -81,7 +81,6 @@ State_Parameters Von_Mises_backward_euler(
   double EPS_k = Inputs_SP.EPS;
   double delta_Gamma_k = 0;
   double TOL = TOL_Radial_Returning;
-
   int MaxIter = Max_Iterations_Radial_Returning;
   int Iter = 0;
   bool Convergence = false;
@@ -106,7 +105,7 @@ State_Parameters Von_Mises_backward_euler(
   plastic_flow_direction = compute_plastic_flow_direction(&relative_stress,relative_stress_norm);
 
   /*
-    Yield condition : Starting from incremental plastic strain equal to zero
+    Check yield condition
   */
   Phi = compute_yield_surface(relative_stress_norm, Inputs_SP.EPS, MatProp);
 
@@ -117,6 +116,7 @@ State_Parameters Von_Mises_backward_euler(
     */
     while(Convergence == false)
     {
+      Iter++;
           
       G = compute_objective_function(relative_stress_norm, delta_Gamma_k, EPS_k, MatProp);
 
@@ -127,8 +127,6 @@ State_Parameters Von_Mises_backward_euler(
       delta_Gamma_k = update_increment_plastic_strain(delta_Gamma_k, G, d_G);
 
       EPS_k = update_equivalent_plastic_strain(Inputs_SP.EPS, delta_Gamma_k);
-
-      Iter++;
 
     }
 
@@ -143,7 +141,7 @@ State_Parameters Von_Mises_backward_euler(
     update_back_stress(&Back_stress,&plastic_flow_direction,delta_Gamma_k,MatProp);
 
     /*
-      Update stress tensor in the deformed configuration
+      Update stress tensor with the plastic corrector
     */
     apply_plastic_corrector_stress_tensor(&sigma_k1,&plastic_flow_direction,delta_Gamma_k,MatProp);
 

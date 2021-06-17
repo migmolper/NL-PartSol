@@ -424,9 +424,6 @@ static Material Define_Material(
   { 
     check_Drucker_Prager_Material(New_Material,ChkMat,Index_and_Model.Idx);
     New_Material.Cel = sqrt(New_Material.E/New_Material.rho);
-    New_Material.alpha_F_Drucker_Prager = sqrt(2/3.)*tan(rad_friction_angle)/sqrt(3+4*DSQR(tan(rad_friction_angle)));
-    New_Material.alpha_Q_Drucker_Prager = sqrt(2/3.)*tan(rad_dilatancy_angle)/sqrt(3+4*DSQR(tan(rad_dilatancy_angle)));
-    New_Material.beta_Drucker_Prager    = sqrt(2/3.)*3/sqrt(3+4*DSQR(tan(rad_friction_angle)));
     TOL_Radial_Returning = 1E-10;
     Max_Iterations_Radial_Returning = 30;
   }
@@ -434,9 +431,6 @@ static Material Define_Material(
   { 
     check_Drucker_Prager_Material(New_Material,ChkMat,Index_and_Model.Idx);
     New_Material.Cel = sqrt(New_Material.E/New_Material.rho);
-    New_Material.alpha_F_Drucker_Prager = sqrt(2/3.)*2*sin(rad_friction_angle)/(3-sin(rad_friction_angle));
-    New_Material.alpha_Q_Drucker_Prager = sqrt(2/3.)*2*sin(rad_dilatancy_angle)/(3-sin(rad_dilatancy_angle));
-    New_Material.beta_Drucker_Prager    = sqrt(2/3.)*6*cos(rad_friction_angle)/(3-sin(rad_friction_angle));
     TOL_Radial_Returning = 1E-10;
     Max_Iterations_Radial_Returning = 30;
   }
