@@ -57,7 +57,7 @@ static Matrix compute_Residual(Nodal_Field,Nodal_Field,Matrix,Mask,Particle,Mesh
 static  void  compute_Inertial_Forces_Mixture(Nodal_Field,Nodal_Field,Matrix,Matrix,Mask,Particle,Newmark_parameters);
 static  void  compute_Internal_Forces_Mixture(Matrix,Mask,Particle,Mesh);
 static Tensor compute_total_first_Piola_Kirchhoff_stress(Tensor,double,Tensor);
-static  void  compute_Rate_Mass_Fluid(Nodal_Field,Matrix,Mask,Particle,Mesh);
+static  void  compute_Rate_Mass_Fluid(Matrix,Mask,Particle,Mesh);
 static  void  compute_Flow_contribution_Fluid(Nodal_Field, Nodal_Field,Matrix,Mask,Particle,Mesh);
 static Tensor compute_Kirchoff_Pore_water_pressure_gradient_n1(Matrix,Matrix,Matrix,Tensor);
 static  void  compute_nominal_traction_and_fluid_flux(Matrix,Mask,Particle,Mesh,int);
@@ -135,7 +135,7 @@ void upw_Newmark_beta_Finite_Strains(
 
     ActiveNodes = generate_NodalMask__MeshTools__(FEM_Mesh);
     Nactivenodes = ActiveNodes.Nactivenodes;
-    Free_and_Restricted_Dofs = generate_Mask_for_static_condensation__MeshTools__(ActiveNodes,FEM_Mesh);
+    Free_and_Restricted_Dofs = generate_Mask_for_static_condensation_upw__MeshTools__(ActiveNodes,FEM_Mesh);
 
     print_Status("DONE !!!",TimeStep);
 
@@ -175,7 +175,7 @@ void upw_Newmark_beta_Finite_Strains(
 
         Tangent_Stiffness = assemble_Tangent_Stiffness(upw_n,D_upw,Effective_Mass,ActiveNodes,MPM_Mesh,FEM_Mesh,epsilon,Params);
 
-////        print__MatrixLib__(Tangent_Stiffness,Nactivenodes*NumberDOF,Nactivenodes*NumberDOF);
+//        print__MatrixLib__(Tangent_Stiffness,Nactivenodes*3,Nactivenodes*3);
 
         if((Free_and_Restricted_Dofs.Nactivenodes - Ndim*Nactivenodes) == 0)
         {
@@ -351,7 +351,7 @@ static Matrix compute_Nodal_Effective_Mass(
         */
         for(int i = 0 ; i<Ndof ; i++)
         {
-          Effective_MassMatrix.nM[A_mask*Ndof+i][B_mask*Ndof+i] += (1-epsilon)*m_p*Na_p*Nb_p + (A_mask==B_mask)*epsilon*m_p*Na_p;
+          Effective_MassMatrix.nM[A_mask+Nnodes_mask*i][B_mask+Nnodes_mask*i] += (1-epsilon)*m_p*Na_p*Nb_p + (A_mask==B_mask)*epsilon*m_p*Na_p;
         }
 
       }
@@ -470,9 +470,9 @@ static Nodal_Field compute_Nodal_Field(
 
   /* Define and allocate the output vector */
   Nodal_Field upw;
-  upw.value        = allocZ__MatrixLib__(Nnodes_mask,Ndof);
-  upw.d_value_dt   = allocZ__MatrixLib__(Nnodes_mask,Ndof);
-  upw.d2_value_dt2 = allocZ__MatrixLib__(Nnodes_mask,Ndof);
+  upw.value        = allocZ__MatrixLib__(Ndof,Nnodes_mask);
+  upw.d_value_dt   = allocZ__MatrixLib__(Ndof,Nnodes_mask);
+  upw.d2_value_dt2 = allocZ__MatrixLib__(Ndof,Nnodes_mask);
 
 
   /* Iterate over the particles to get the nodal values */
@@ -514,15 +514,15 @@ static Nodal_Field compute_Nodal_Field(
       {
         if(i<Ndim)
         {
-          upw.value.nM[A_mask][i]        += m_p*Na_p*MPM_Mesh.Phi.dis.nM[p][i];
-          upw.d_value_dt.nM[A_mask][i]   += m_p*Na_p*MPM_Mesh.Phi.vel.nM[p][i];
-          upw.d2_value_dt2.nM[A_mask][i] += m_p*Na_p*MPM_Mesh.Phi.acc.nM[p][i];
+          upw.value.nM[i][A_mask]        += m_p*Na_p*MPM_Mesh.Phi.dis.nM[p][i];
+          upw.d_value_dt.nM[i][A_mask]   += m_p*Na_p*MPM_Mesh.Phi.vel.nM[p][i];
+          upw.d2_value_dt2.nM[i][A_mask] += m_p*Na_p*MPM_Mesh.Phi.acc.nM[p][i];
         } 
         else
         {
-          upw.value.nM[A_mask][i]        += m_p*Na_p*MPM_Mesh.Phi.Pw.nV[p]; 
-          upw.d_value_dt.nM[A_mask][i]   += m_p*Na_p*MPM_Mesh.Phi.d_Pw_dt_n.nV[p];
-          upw.d2_value_dt2.nM[A_mask][i] += m_p*Na_p*MPM_Mesh.Phi.d2_Pw_dt2.nV[p];          
+          upw.value.nM[i][A_mask]        += m_p*Na_p*MPM_Mesh.Phi.Pw.nV[p]; 
+          upw.d_value_dt.nM[i][A_mask]   += m_p*Na_p*MPM_Mesh.Phi.d_Pw_dt_n.nV[p];
+          upw.d2_value_dt2.nM[i][A_mask] += m_p*Na_p*MPM_Mesh.Phi.d2_Pw_dt2.nV[p];          
         } 
 
       }
@@ -572,7 +572,6 @@ static Nodal_Field compute_Nodal_Field(
         "has been completed, but the factor M is exactly",
         "singular, and division by zero will occur if it is used",
         "to solve a system of equations.");
-    
     }    
     exit(EXIT_FAILURE);
   }
@@ -624,9 +623,9 @@ static Nodal_Field initialise_Nodal_Increments(
     Allocate memory
   */
   Nodal_Field D_upw;
-  D_upw.value        = allocZ__MatrixLib__(Nnodes_mask,Ndof);
-  D_upw.d_value_dt   = allocZ__MatrixLib__(Nnodes_mask,Ndof);
-  D_upw.d2_value_dt2 = allocZ__MatrixLib__(Nnodes_mask,Ndof);
+  D_upw.value        = allocZ__MatrixLib__(Ndof,Nnodes_mask);
+  D_upw.d_value_dt   = allocZ__MatrixLib__(Ndof,Nnodes_mask);
+  D_upw.d2_value_dt2 = allocZ__MatrixLib__(Ndof,Nnodes_mask);
 
   /* 
     Loop over the the boundaries to set boundary conditions
@@ -685,9 +684,9 @@ static Nodal_Field initialise_Nodal_Increments(
           /* 
             Assign the boundary condition 
           */
-          D_upw.value.nM[Id_BCC_mask][k] = FEM_Mesh.Bounds.BCC_i[i].Value[k].Fx[TimeStep]*(double)FEM_Mesh.Bounds.BCC_i[i].Dir[k];  
-          D_upw.d_value_dt.nM[Id_BCC_mask][k] = 0.0;
-          D_upw.d2_value_dt2.nM[Id_BCC_mask][k] = 0.0;
+          D_upw.value.nM[k][Id_BCC_mask] = FEM_Mesh.Bounds.BCC_i[i].Value[k].Fx[TimeStep]*(double)FEM_Mesh.Bounds.BCC_i[i].Dir[k];  
+          D_upw.d_value_dt.nM[k][Id_BCC_mask] = 0.0;
+          D_upw.d2_value_dt2.nM[k][Id_BCC_mask] = 0.0;
                
         }
       }
@@ -894,13 +893,13 @@ static Matrix compute_Residual(
   int Ndof = NumberDOF;
   int Nnodes_mask = ActiveNodes.Nactivenodes;
 
-  Matrix Residual = allocZ__MatrixLib__(Nnodes_mask,Ndof);
+  Matrix Residual = allocZ__MatrixLib__(Ndof,Nnodes_mask);
 
   compute_Inertial_Forces_Mixture(D_upw,upw_n,Effective_Mass,Residual,ActiveNodes,MPM_Mesh,Params);
 
   compute_Internal_Forces_Mixture(Residual,ActiveNodes,MPM_Mesh,FEM_Mesh);
 
-  compute_Rate_Mass_Fluid(D_upw,Residual, ActiveNodes, MPM_Mesh, FEM_Mesh);
+  compute_Rate_Mass_Fluid(Residual, ActiveNodes, MPM_Mesh, FEM_Mesh);
 
   compute_Flow_contribution_Fluid(upw_n, D_upw, Residual, ActiveNodes, MPM_Mesh, FEM_Mesh);
 
@@ -924,7 +923,7 @@ static void compute_Inertial_Forces_Mixture(
   int Ndof = NumberDOF;
   int Nnodes_mask = ActiveNodes.Nactivenodes;
   int Order = Ndim*Nnodes_mask;
-  Matrix Acceleration_n1 = allocZ__MatrixLib__(Nnodes_mask,Ndim);
+  Matrix Acceleration_n1 = allocZ__MatrixLib__(Ndim,Nnodes_mask);
   double alpha_1 = Params.alpha_1;
   double alpha_2 = Params.alpha_2;
   double alpha_3 = Params.alpha_3;
@@ -936,10 +935,10 @@ static void compute_Inertial_Forces_Mixture(
   {
     for(int i = 0 ; i<Ndim ; i++)
     {
-      Acceleration_n1.nM[A][i] = 
-      alpha_1*D_upw.value.nM[A][i] - 
-      alpha_2*upw_n.d_value_dt.nM[A][i] - 
-      alpha_3*upw_n.d2_value_dt2.nM[A][i] - 
+      Acceleration_n1.nM[i][A] = 
+      alpha_1*D_upw.value.nM[i][A] - 
+      alpha_2*upw_n.d_value_dt.nM[i][A] - 
+      alpha_3*upw_n.d2_value_dt2.nM[i][A] - 
       MPM_Mesh.b.n[i];
     }
   }
@@ -947,13 +946,13 @@ static void compute_Inertial_Forces_Mixture(
   /*
     Compute inertial forces
   */
-  for(int A = 0 ; A<Nnodes_mask ; A++)
+  for(int i = 0 ; i<Ndim ; i++)
   {
-    for(int B = 0 ; B<Nnodes_mask ; B++)
+    for(int A = 0 ; A<Nnodes_mask ; A++)
     {
-      for(int i = 0 ; i<Ndim ; i++)
+      for(int B = 0 ; B<Nnodes_mask ; B++)
       {
-        Residual.nM[A][i] += Effective_Mass.nM[A*Ndof+i][B*Ndof+i]*Acceleration_n1.nM[B][i];
+        Residual.nM[i][A] += Effective_Mass.nM[A+Nnodes_mask*i][B+Nnodes_mask*i]*Acceleration_n1.nM[i][B];
       }
     }
   }
@@ -1064,7 +1063,7 @@ static void compute_Internal_Forces_Mixture(
       */
       for(int i = 0 ; i<Ndim ; i++)
       {
-        Residual.nM[A_mask][i] += InternalForcesDensity_Ap.n[i]*V0_p;
+        Residual.nM[i][A_mask] += InternalForcesDensity_Ap.n[i]*V0_p;
       }
 
       /*
@@ -1116,7 +1115,6 @@ static Tensor compute_total_first_Piola_Kirchhoff_stress(
 /**************************************************************/
 
 static void compute_Rate_Mass_Fluid(
-  Nodal_Field D_upw,
   Matrix Residual,
   Mask ActiveNodes,
   Particle MPM_Mesh,
@@ -1211,7 +1209,7 @@ static void compute_Rate_Mass_Fluid(
       /*
         Add the contribution of the jacobian rate to the mass conservation
       */
-      Residual.nM[A_mask][Ndim] += Na_p*(intrinsic_rho_f_p*dJ_dt_n1_p + theta_dt_n1_p*relative_rho_f_p/K_f)*V0_p;
+      Residual.nM[Ndim][A_mask] += Na_p*(intrinsic_rho_f_p*dJ_dt_n1_p + theta_dt_n1_p*relative_rho_f_p/K_f)*V0_p;
 
     }
         
@@ -1398,7 +1396,7 @@ static void compute_Flow_contribution_Fluid(
       /* 
         Compute nodal contribution to the mass conservation
       */
-      Residual.nM[A_mask][Ndim] -= GRADIENT_Na__x__Lagrangian_relative_flux*V0_p;
+      Residual.nM[Ndim][A_mask] -= GRADIENT_Na__x__Lagrangian_relative_flux*V0_p;
 
       free__TensorLib__(GRADIENT_Na_n_p);
     }
@@ -1602,10 +1600,10 @@ static void compute_nominal_traction_and_fluid_flux(
         */
         for(int k = 0 ; k<Ndim ; k++)
         {
-          Residual.nM[A_mask][k] -= Na_p*T.n[k]*A0_p;
+          Residual.nM[k][A_mask] -= Na_p*T.n[k]*A0_p;
         }
 
-        Residual.nM[A_mask][Ndim] -= Na_p*Q*A0_p;  
+        Residual.nM[Ndim][A_mask] -= Na_p*Q*A0_p;  
       }
 
       /* Free the matrix with the nodal gradient of the element */
@@ -1633,11 +1631,12 @@ static bool check_convergence(
   int Step)
 {
   bool convergence;
-  int Ndof = NumberDOF;
-  int Nnodes_mask = Residual.N_rows;
-  int Total_dof = Ndof*Nnodes_mask;
-  double Error = 0;
-  double Error_relative = 0;
+  int Ndim = NumberDimensions;
+  int Nnodes_mask = Residual.N_cols;
+  double Error_u = 0.0;
+  double Error_pw = 0.0;
+  double Error = 0.0;
+  double Error_relative = 0.0;
 
   if(Iter > MaxIter)
   {
@@ -1650,22 +1649,32 @@ static bool check_convergence(
       /*
         Compute absolute error 
       */
-      for(int A = 0 ; A<Total_dof ; A++)
+      for(int A = 0 ; A<Nnodes_mask ; A++)
       {
-        Error += DSQR(Residual.nV[A]);
+
+        for(int i = 0 ; i<Ndim ; i++)
+        {
+          Error_u += DSQR(Residual.nM[i][A]);
+        }
+
+        Error_pw += DSQR(Residual.nM[Ndim][A]);
       }
-      Error = pow(Error,0.5);
+
+      Error_u = pow(Error_u,0.5);
+      Error_pw = pow(Error_pw,0.5);
 
       /*
         Compute relative error
       */
       if(Iter == 0)
       {
+        Error = Error_u + Error_pw;
         Error0 = Error;
         Error_relative = Error/Error0;      
       }
       else
       {
+        Error = Error_u + Error_pw;
         Error_relative = Error/Error0;
       }
       
@@ -1674,7 +1683,7 @@ static bool check_convergence(
       */
       if(Error_relative > TOL)
       {
-        printf("%f\n",Error_relative);
+        printf("%e %e -> %e\n",Error_u,Error_pw,Error_relative);
         return false;
       }
       else
@@ -2040,7 +2049,7 @@ static Matrix assemble_Tangent_Stiffness(
             /*
               Compute the contribution of the linearised terms to the D_phi-D_phi direcction. 
             */
-            Tangent_Stiffness.nM[A_mask*Ndof+i][B_mask*Ndof+j] += 
+            Tangent_Stiffness.nM[A_mask+Nnodes_mask*i][B_mask+Nnodes_mask*j] +=
             + alpha_1*Effective_Mass.nM[A_mask*Ndof+i][B_mask*Ndof+j]
             + Na_p*constant_1*dyn__o__FmTGRADIENT_B.N[i][j]*V0_p
             + Stiffness_density_pAB.N[i][j]*V0_p
@@ -2050,7 +2059,7 @@ static Matrix assemble_Tangent_Stiffness(
           /*
             Compute the contribution of the linearised terms to the D_phi-D_theta direcction. 
           */
-           Tangent_Stiffness.nM[A_mask*Ndof+i][B_mask*Ndof+Ndim] +=  
+          Tangent_Stiffness.nM[A_mask+Nnodes_mask*i][B_mask+Nnodes_mask*Ndim] +=  
            + Na_p*constant_2*mixture_dyn_p.n[i]*Nb_p*V0_p 
            - FmTGRADIENT_Na_p.n[i]*Nb_p*V0_p;
 
@@ -2060,8 +2069,8 @@ static Matrix assemble_Tangent_Stiffness(
           Compute the contribution of the linearised terms to the D_theta-D_phi direcction. 
         */
         for(int j = 0 ; j<Ndim ; j++)
-        {  
-          Tangent_Stiffness.nM[A_mask*Ndof+Ndim][B_mask*Ndof+j] += 
+        { 
+          Tangent_Stiffness.nM[A_mask+Nnodes_mask*Ndim][B_mask+Nnodes_mask*j] += 
           + Na_p*constant_3*FmTGRADIENT_Nb_p.n[j]*V0_p 
           - Na_p*constant_5*transpose_grad_v__x__FmTGRADIENT_B.n[j]*V0_p
           + (theta_n1_p/K_f_p)*FmTGRADIENT_A__x__Eulerian_relative_flux*FmTGRADIENT_Nb_p.n[j]*V0_p
@@ -2076,7 +2085,7 @@ static Matrix assemble_Tangent_Stiffness(
         /*
           Compute the contribution of the linearised terms to the D_theta-D_theta direcction.
         */
-        Tangent_Stiffness.nM[A_mask*Ndof+Ndim][B_mask*Ndof+Ndim] += 
+        Tangent_Stiffness.nM[A_mask+Nnodes_mask*Ndim][B_mask+Nnodes_mask*Ndim] += 
         + Na_p*constant_4*Nb_p*V0_p
         - (1.0/K_f_p)*FmTGRADIENT_A__x__Eulerian_relative_flux*Nb_p*V0_p
         + (constant_6/g)*FmTGRADIENT_A__x__k__x__gradient_theta_p*Nb_p*V0_p
@@ -2133,7 +2142,7 @@ static void solve_non_reducted_system(
 
 */
 {
-  int Nnodes_mask = Residual.N_rows;
+  int Nnodes_mask = Residual.N_cols;
   int Ndof = NumberDOF;
   int Order = Nnodes_mask*Ndof;
   int LDA   = Nnodes_mask*Ndof;
@@ -2198,7 +2207,7 @@ static void solve_reducted_system(
 
 */
 {
-  int Nnodes_mask = Residual.N_rows;
+  int Nnodes_mask = Residual.N_cols;
   int Ndof = NumberDOF;
   int Order = Nnodes_mask*Ndof;
   int Num_Free_dofs = Free_and_Restricted_Dofs.Nactivenodes;
@@ -2244,6 +2253,7 @@ static void solve_reducted_system(
     }
 
   }
+
 
 /*
   Parameters for the solver
@@ -2333,7 +2343,7 @@ static void update_Newmark_Nodal_Increments(
   Newmark_parameters Params)
 {
 
-  int Nnodes = upw_n.value.N_rows;
+  int Nnodes = upw_n.value.N_cols;
   int Ndof = NumberDOF;
   int Total_dof = Nnodes*NumberDOF;
   double alpha_1 = Params.alpha_1;
@@ -2350,8 +2360,8 @@ static void update_Newmark_Nodal_Increments(
   {  
     for(int i = 0 ; i<Ndof ; i++)
     {
-      D_upw.d2_value_dt2.nM[A][i] = alpha_1*D_upw.value.nM[A][i] - alpha_2*upw_n.d_value_dt.nM[A][i] - (alpha_3+1)*upw_n.d2_value_dt2.nM[A][i];
-      D_upw.d_value_dt.nM[A][i]   = alpha_4*D_upw.value.nM[A][i] + (alpha_5-1)*upw_n.d_value_dt.nM[A][i] + alpha_6*upw_n.d2_value_dt2.nM[A][i];
+      D_upw.d2_value_dt2.nM[i][A] = alpha_1*D_upw.value.nM[i][A] - alpha_2*upw_n.d_value_dt.nM[i][A] - (alpha_3+1)*upw_n.d2_value_dt2.nM[i][A];
+      D_upw.d_value_dt.nM[i][A]   = alpha_4*D_upw.value.nM[i][A] + (alpha_5-1)*upw_n.d_value_dt.nM[i][A] + alpha_6*upw_n.d2_value_dt2.nM[i][A];
     }
   }
 }

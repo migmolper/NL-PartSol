@@ -128,6 +128,103 @@ Mask generate_Mask_for_static_condensation__MeshTools__(
   return Free_and_Restricted_Dofs;
 }
 
+/**************************************************************/
+
+Mask generate_Mask_for_static_condensation_upw__MeshTools__(
+  Mask ActiveNodes,
+  Mesh FEM_Mesh)
+{
+
+  /* 
+    Define auxilar variables 
+  */
+  int Ndof = NumberDOF;
+  int Nnodes_mask = ActiveNodes.Nactivenodes;
+  int Order = Nnodes_mask*Ndof;
+  int Number_of_BCC = FEM_Mesh.Bounds.NumBounds;
+  int NumNodesBound; /* Number of nodes of the bound */
+  int NumDimBound; /* Number of dimensions */
+  int Id_BCC; /* Index of the node where we apply the BCC */
+  int Id_BCC_mask;
+  int Id_BCC_mask_k;
+
+  /*
+    Generate mask for the static condensation.
+  */
+  int Nactivenodes = 0;
+  int * Nodes2Mask = (int *)Allocate_ArrayZ(Order,sizeof(int));
+  Mask Free_and_Restricted_Dofs;
+
+  /* 
+    Loop over the the boundaries to find the constrained dofs
+  */
+  for(int i = 0 ; i<Number_of_BCC ; i++)
+    {
+
+      /* 
+        Get the number of nodes of this boundary
+      */
+      NumNodesBound = FEM_Mesh.Bounds.BCC_i[i].NumNodes;
+
+      /* 
+        Get the number of dimensions where the BCC it is applied 
+      */
+      NumDimBound = FEM_Mesh.Bounds.BCC_i[i].Dim;
+
+      for(int j = 0 ; j<NumNodesBound ; j++)
+        {
+          /* 
+            Get the index of the node 
+          */
+          Id_BCC = FEM_Mesh.Bounds.BCC_i[i].Nodes[j];
+          Id_BCC_mask = ActiveNodes.Nodes2Mask[Id_BCC];
+
+          /*
+            If the boundary condition is under an active node 
+          */
+          if(Id_BCC_mask != -1)
+          {
+            /* 
+              Loop over the dimensions of the boundary condition 
+            */
+            for(int k = 0 ; k<NumDimBound ; k++)
+              {
+
+                /* 
+                  Apply only if the direction is active
+                */
+                if(FEM_Mesh.Bounds.BCC_i[i].Dir[k] == 1)
+                  {
+                    Id_BCC_mask_k = Id_BCC_mask + Nnodes_mask*k;
+                    Nodes2Mask[Id_BCC_mask_k] = -1;
+                  }
+              }
+          }
+
+        }    
+    }
+
+  /* 
+    Generate mask using the location of the constrained dofs
+  */
+  for(int A_i = 0 ; A_i<Order ; A_i++)
+    {
+     if(Nodes2Mask[A_i] != -1)
+      {
+        Nodes2Mask[A_i] = Nactivenodes;
+        Nactivenodes++;
+      } 
+    }
+
+
+  /*
+    Assign information to the output
+  */
+  Free_and_Restricted_Dofs.Nactivenodes = Nactivenodes;
+  Free_and_Restricted_Dofs.Nodes2Mask = Nodes2Mask;  
+
+  return Free_and_Restricted_Dofs;
+}
 
 /**************************************************************/
 
@@ -205,7 +302,7 @@ Matrix get_U_set_field_upw__MeshTools__(Matrix Field_upw, Element Nodes_p, Mask 
     */
     for(int i = 0 ; i<Ndim ; i++)
     {
-      Field_U_Ap.nM[A][i] = Field_upw.nM[A_mask][i];
+      Field_U_Ap.nM[A][i] = Field_upw.nM[i][A_mask];
     }
   }
 
@@ -234,7 +331,7 @@ Matrix get_Pw_set_field_upw__MeshTools__(Matrix Field_upw, Element Nodes_p, Mask
     /*
       Get nodal field for particle p
     */
-    Field_pw_Ap.nV[A] = Field_upw.nM[A_mask][Ndim];
+    Field_pw_Ap.nV[A] = Field_upw.nM[Ndim][A_mask];
   }
 
   return Field_pw_Ap;

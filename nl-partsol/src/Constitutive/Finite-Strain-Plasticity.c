@@ -62,15 +62,13 @@ State_Parameters finite_strain_plasticity(
   {
     for(int j = 0 ; j < Ndim  ; j++)    
     {
-
-      P_p.N[i][j] = kirchhoff_p.N[i][j];
       
-//      P_p.N[i][j] = 0.0;
+      P_p.N[i][j] = 0.0;
 
-//     for(int k = 0 ; k < Ndim  ; k++)
-//     {
-//        P_p.N[i][j] += kirchhoff_p.N[i][k]*F_m1_total.N[k][j];
-//      }
+     for(int k = 0 ; k < Ndim  ; k++)
+     {
+        P_p.N[i][j] += kirchhoff_p.N[i][k]*F_m1_total.N[k][j];
+      }
     }
   }
 
