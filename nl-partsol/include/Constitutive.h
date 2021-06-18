@@ -157,7 +157,19 @@ State_Parameters compute_1PK_Stress_Tensor_Newtonian_Fluid(State_Parameters,Mate
 \fn Tensor compute_stiffness_density_Newtonian_Fluid(Tensor GRAD_I,Tensor GRAD_J,Tensor F,Tensor dFdt,double J,double alpha4,Material MatProp_p)
 */
 Tensor compute_stiffness_density_Newtonian_Fluid(Tensor,Tensor,Tensor,Tensor,double,double,Material);
+/*******************************************************/
+
+/*!
+ * \fn State_Parameters compute_1PK_Stress_Tensor_Bingham_Fluid(State_Parameters Intput_SP,Material MatProp_p);
+ * */
+State_Parameters compute_1PK_Stress_Tensor_Bingham_Fluid(State_Parameters,Material);
 /*******************************************************/  
+
+/*!
+ * \fn Tensor compute_stiffness_density_Bingham_Fluid(Tensor GRAD_I, Tensor GRAD_J, Tensor F, Tensor dFdt, double J, double alpha4, Material MatProp_p)
+ * */ 
+Tensor compute_stiffness_density_Bingham_Fluid(Tensor,Tensor,Tensor,Tensor,double, double,Material);
+/*******************************************************/
 
 #endif
 
