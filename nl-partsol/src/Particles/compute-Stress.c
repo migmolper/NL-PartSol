@@ -87,9 +87,9 @@ void Stress_integration__Particles__(
 
     if(MatProp_p.Locking_Control_Fbar)
     {
-      F_n1_p = alloc__TensorLib__(2);
+      Input_SP.F_n1_p = (double *)calloc(Ndim*Ndim,sizeof(double));
+      F_n1_p = memory_to_tensor__TensorLib__(Input_SP.F_n1_p,2);
       get_locking_free_Deformation_Gradient_n1__Particles__(p,F_n1_p,MPM_Mesh,FEM_Mesh);
-      Input_SP.F_n1_p = F_n1_p.N[0];
     }
     else
     {
@@ -111,9 +111,9 @@ void Stress_integration__Particles__(
 
     if(MatProp_p.Locking_Control_Fbar)
     {
-      F_n1_p = alloc__TensorLib__(2);
+      Input_SP.F_n1_p = (double *)calloc(Ndim*Ndim,sizeof(double));
+      F_n1_p = memory_to_tensor__TensorLib__(Input_SP.F_n1_p,2);
       get_locking_free_Deformation_Gradient_n1__Particles__(p,F_n1_p,MPM_Mesh,FEM_Mesh);
-      Input_SP.F_n1_p = F_n1_p.N[0];
     }
     else
     {
@@ -136,9 +136,9 @@ void Stress_integration__Particles__(
 
     if(MatProp_p.Locking_Control_Fbar)
     {
-      F_n1_p = alloc__TensorLib__(2);
+      Input_SP.F_n1_p = (double *)calloc(Ndim*Ndim,sizeof(double));
+      F_n1_p = memory_to_tensor__TensorLib__(Input_SP.F_n1_p,2);
       get_locking_free_Deformation_Gradient_n1__Particles__(p,F_n1_p,MPM_Mesh,FEM_Mesh);
-      Input_SP.F_n1_p = F_n1_p.N[0];
     }
     else
     {
@@ -163,9 +163,9 @@ void Stress_integration__Particles__(
 
     if(MatProp_p.Locking_Control_Fbar)
     {
-      F_n1_p = alloc__TensorLib__(2);
+      Input_SP.F_n1_p = (double *)calloc(Ndim*Ndim,sizeof(double));
+      F_n1_p = memory_to_tensor__TensorLib__(Input_SP.F_n1_p,2);
       get_locking_free_Deformation_Gradient_n1__Particles__(p,F_n1_p,MPM_Mesh,FEM_Mesh);
-      Input_SP.F_n1_p = F_n1_p.N[0];
     }
     else
     {
@@ -204,9 +204,9 @@ void Stress_integration__Particles__(
 
     if(MatProp_p.Locking_Control_Fbar)
     {
-      F_n1_p = alloc__TensorLib__(2);
+      Input_SP.F_n1_p = (double *)calloc(Ndim*Ndim,sizeof(double));
+      F_n1_p = memory_to_tensor__TensorLib__(Input_SP.F_n1_p,2);
       get_locking_free_Deformation_Gradient_n1__Particles__(p,F_n1_p,MPM_Mesh,FEM_Mesh);
-      Input_SP.F_n1_p = F_n1_p.N[0];
     }
     else
     {

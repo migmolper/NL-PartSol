@@ -28,6 +28,12 @@ State_Parameters finite_strain_plasticity(
   State_Parameters Input_SP_infinitesimal;
   State_Parameters Output_SP_infinitesimal;
 
+  /* Defin the input parameters for the infinitesimal elasticity */
+  Input_SP_infinitesimal.EPS = Inputs_SP_finite.EPS;
+  Input_SP_infinitesimal.Back_stress = Inputs_SP_finite.Back_stress;
+  Input_SP_infinitesimal.Stress = (double *)calloc(Ndim*Ndim,sizeof(double));
+  Input_SP_infinitesimal.Strain = (double *)calloc(Ndim*Ndim,sizeof(double));
+
   /* Compute the elastic right Cauchy-Green tensor using the intermediate configuration. */ 
   F_trial_elastic = matrix_product__TensorLib__(F_total,F_m1_plastic);
 
@@ -36,12 +42,14 @@ State_Parameters finite_strain_plasticity(
   /* Calculation of the small strain tensor */
   E_trial_elastic = logarithmic_strains__Particles__(C_trial_elastic);
 
-
-  /* Defin thw input parameters for the infinitesimal elasticity */
-  Input_SP_infinitesimal.EPS = Inputs_SP_finite.EPS;
-  Input_SP_infinitesimal.Back_stress = Inputs_SP_finite.Back_stress;
-  Input_SP_infinitesimal.Stress = (double *)calloc(Ndim*Ndim,sizeof(double));
-  Input_SP_infinitesimal.Strain = E_trial_elastic.N[0];
+  /* Fill memory */
+  for(int i = 0 ; i<Ndim ; i++)
+  {
+    for(int j = 0 ; j<Ndim ; j++)
+    {
+      Input_SP_infinitesimal.Strain[i*Ndim + j] = E_trial_elastic.N[i][j];
+    }
+  }
   
   /* Calculation of the trial stress tensor using the trial small strain tensor */
   Output_SP_infinitesimal = compute_kirchhoff_isotropic_linear_elasticity(Input_SP_infinitesimal, MatProp);
@@ -79,6 +87,7 @@ State_Parameters finite_strain_plasticity(
   free__TensorLib__(F_m1_total);
   free(Output_SP_infinitesimal.Increment_E_plastic);
   free(Input_SP_infinitesimal.Stress);
+  free(Input_SP_infinitesimal.Strain);
 
   /*
     Update state paramers
