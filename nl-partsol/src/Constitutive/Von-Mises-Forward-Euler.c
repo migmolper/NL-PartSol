@@ -176,7 +176,7 @@ static double compute_increment_flow_rule(
     if(MatProp.Viscous_regularization)
     {
       double fluidity_param = MatProp.fluidity_param;
-      double DT = 1.0;
+      double DT = DeltaTimeStep;
 
       return (Phi_tr/(2*G))/(fluidity_param/(DT*2*G) + 1 + Hardening_modulus/(3*G));
     }
@@ -192,7 +192,7 @@ static double compute_increment_flow_rule(
     if(MatProp.Viscous_regularization)
     {
       double fluidity_param = MatProp.fluidity_param; 
-      double DT = 1.0;
+      double DT = DeltaTimeStep;
 
       return (Phi_tr/(2*G))/(fluidity_param/(DT*2*G) + 1);
     }

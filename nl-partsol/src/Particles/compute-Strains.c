@@ -243,7 +243,7 @@ void get_locking_free_Deformation_Gradient_n1__Particles__(
   double J_averaged;
   double averaged_F_vol;
 
-  double alpha = 0.5;
+  double alpha = 1.0;
 
   Matrix X_p;
   Matrix X_q;
@@ -284,18 +284,26 @@ void get_locking_free_Deformation_Gradient_n1__Particles__(
       while(Particle_Patch_p != NULL)
       {
         q = Particle_Patch_p->I;
-        X_q = memory_to_matrix__MatrixLib__(Ndim,1,MPM_Mesh.Phi.x_GC.nM[q]);
+        // X_q = memory_to_matrix__MatrixLib__(Ndim,1,MPM_Mesh.Phi.x_GC.nM[q]);
 
-        if(FEM_Mesh.In_Out_Element(X_q,Coordinates_Patch_p))
-        {
-          Vol_0_q = MPM_Mesh.Phi.Vol_0.nV[q];
+        // if(FEM_Mesh.In_Out_Element(X_q,Coordinates_Patch_p))
+        // {
+        //   Vol_0_q = MPM_Mesh.Phi.Vol_0.nV[q];
 
-          J_n1_q_patch = MPM_Mesh.Phi.J.nV[q];
-          Vol_n1_q = Vol_0_q*J_n1_q_patch;
+        //   J_n1_q_patch = MPM_Mesh.Phi.J.nV[q];
+        //   Vol_n1_q = Vol_0_q*J_n1_q_patch;
 
-          V0_patch += Vol_0_q;
-          Vn1_patch += Vol_n1_q;
-        }
+        //   V0_patch += Vol_0_q;
+        //   Vn1_patch += Vol_n1_q;
+        // }
+
+        Vol_0_q = MPM_Mesh.Phi.Vol_0.nV[q];
+
+        J_n1_q_patch = MPM_Mesh.Phi.J.nV[q];
+        Vol_n1_q = Vol_0_q*J_n1_q_patch;
+
+        V0_patch += Vol_0_q;
+        Vn1_patch += Vol_n1_q;
 
         Particle_Patch_p = Particle_Patch_p->next;
       }
@@ -315,7 +323,7 @@ void get_locking_free_Deformation_Gradient_n1__Particles__(
   J_averaged = J_n1_patch/J_p;
 
   // Compute the averaged volume of the deformation gradient
-  averaged_F_vol = pow(J_averaged,(double)1/Ndim);
+  averaged_F_vol = pow(J_averaged,(double)1/3.0);
 
   F_n1_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n1.nM[p],2);
 

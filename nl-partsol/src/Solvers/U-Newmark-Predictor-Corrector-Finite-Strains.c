@@ -134,11 +134,16 @@ void U_Newmark_Predictor_Corrector_Finite_Strains(
       print_Status("WORKING ...",TimeStep);
 
       compute_Explicit_Newmark_Corrector(MPM_Mesh,gamma);
-//      local_search__Particles__(MPM_Mesh,FEM_Mesh);
 
-//      local_search__Q4__(MPM_Mesh,FEM_Mesh);
-//      local_search__LME__(MPM_Mesh,FEM_Mesh);
-      local_search__T3__(MPM_Mesh,FEM_Mesh);
+      if(strcmp(ShapeFunctionGP,"LME") == 0)
+      {
+        local_search__LME__(MPM_Mesh,FEM_Mesh);
+      }
+      if(strcmp(ShapeFunctionGP,"FEM") == 0)
+      {
+//        local_search__T3__(MPM_Mesh,FEM_Mesh);
+        local_search__Q4__(MPM_Mesh,FEM_Mesh);
+      }
 
       print_Status("DONE !!!",TimeStep);
       

@@ -163,7 +163,8 @@ void Stress_integration__Particles__(
 
     if(MatProp_p.Locking_Control_Fbar)
     {
-      Input_SP.F_n1_p = (double *)calloc(Ndim*Ndim,sizeof(double));
+//      Input_SP.F_n1_p = (double *)calloc(Ndim*Ndim,sizeof(double));
+      Input_SP.F_n1_p = MPM_Mesh.Phi.F_n1.nM[p];
       F_n1_p = memory_to_tensor__TensorLib__(Input_SP.F_n1_p,2);
       get_locking_free_Deformation_Gradient_n1__Particles__(p,F_n1_p,MPM_Mesh,FEM_Mesh);
     }
@@ -187,10 +188,10 @@ void Stress_integration__Particles__(
       exit(EXIT_FAILURE);
     }
 
-    if(MatProp_p.Locking_Control_Fbar)
-    {
-      free(Input_SP.F_n1_p);
-    }
+//    if(MatProp_p.Locking_Control_Fbar)
+//    {
+//      free(Input_SP.F_n1_p);
+//    }
 
     MPM_Mesh.Phi.EPS.nV[p] = Output_SP.EPS;
   }
