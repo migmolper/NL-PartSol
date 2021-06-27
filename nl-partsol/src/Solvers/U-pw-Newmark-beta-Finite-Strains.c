@@ -59,10 +59,16 @@ static  void  compute_Internal_Forces_Mixture(Matrix,Mask,Particle,Mesh);
 static Tensor compute_total_first_Piola_Kirchhoff_stress(Tensor,double,Tensor);
 static  void  compute_Rate_Mass_Fluid(Matrix,Mask,Particle,Mesh);
 static  void  compute_Flow_contribution_Fluid(Nodal_Field, Nodal_Field,Matrix,Mask,Particle,Mesh);
-static Tensor compute_Kirchoff_Pore_water_pressure_gradient_n1(Matrix,Matrix,Matrix,Tensor);
+static Tensor compute_Kirchoff_Pore_water_pressure_gradient_n1(Matrix,Matrix,Matrix);
 static  void  compute_nominal_traction_and_fluid_flux(Matrix,Mask,Particle,Mesh,int);
 static  bool  check_convergence(Matrix,double,int,int,int);
 static Matrix assemble_Tangent_Stiffness(Nodal_Field,Nodal_Field,Matrix,Mask,Particle,Mesh,double,Newmark_parameters);
+
+static Matrix compute_mixture_stiffness_density(Tensor,Tensor,Tensor,double,double);
+static Matrix compute_mixture_inertial_density(Tensor,Tensor,double,double,double,double,double,double,double,double,double,double,double,double);
+static Matrix compute_water_flux_density(Tensor,Tensor,Tensor,Tensor,Tensor,double,double,double,double,double,double);
+static Matrix compute_water_inertial_density(Tensor,Tensor,double,double,double,double,double,double,double,double,double,double,double);
+
 static Tensor compute_stiffness_density(Tensor, Tensor, Tensor, double, Material);
 static  void  solve_non_reducted_system(Nodal_Field,Matrix,Matrix);
 static  void  solve_reducted_system(Nodal_Field,Matrix,Matrix,Mask);
@@ -88,7 +94,7 @@ void upw_Newmark_beta_Finite_Strains(
   int Nactivenodes;
   int InitialStep = Parameters_Solver.InitialTimeStep;
   int NumTimeStep = Parameters_Solver.NumTimeStep;  
-  int MaxIter = Parameters_Solver.MaxIter;
+  int MaxIter = 10;// Parameters_Solver.MaxIter;
   int Iter;
 
   double TOL = Parameters_Solver.TOL_Newmark_beta;
@@ -195,7 +201,7 @@ void upw_Newmark_beta_Finite_Strains(
       }
     }
 
-    exit(0);
+ //   exit(0);
 
     print_Status("DONE !!!",TimeStep);
 
@@ -203,6 +209,8 @@ void upw_Newmark_beta_Finite_Strains(
     print_Status("Seven step : Update particles lagrangian ... WORKING",TimeStep);
 
     update_Particles(D_upw,MPM_Mesh,FEM_Mesh,ActiveNodes);
+
+    puts("paso");
 
     local_search__Particles__(MPM_Mesh,FEM_Mesh);
 
@@ -234,7 +242,7 @@ void upw_Newmark_beta_Finite_Strains(
 
     if(TimeStep == 20)
     {
-          exit(0);
+      exit(0);
     }
 
   }
@@ -1262,25 +1270,31 @@ static void compute_Flow_contribution_Fluid(
   Tensor F_n1_p; /* Deformation gradient t = n + 1 */
   Tensor DF_p;
   Tensor FT_n_p; /* Transpose of the deformation gradient t = n */
-  Tensor Fm1_n1_p; /* */
+  Tensor Fm1_n1_p; /* Inverse of the deformation agradient a t = n + 1 */
+  Tensor FmT_n1_p; /* Transpose and inverse of the deformation agradient a t = n + 1 */
   Tensor k_p; /* Spatial permebility tensor */
 
   /* Variables to compute the relative flux */
-  double g = -9.81;
+  double g = -10.0;
   double intrinsic_rho_f_p;
   double J_n1_p; /* Determianant of the soil skeleton deformation gradient at t = n + 1 */
   Tensor gradient_theta_n1_p;
+  Tensor GRADIENT_theta_n1_p;
   Tensor a_n_p; /* Particle acceleration */
+  Tensor D_a_p; /* Increment of the particle acceleration */
   Tensor a_n1_p; /* Particle acceleration */
-  Tensor D_a_p; /* Particle acceleration */
   Tensor b_p; /* External acceleration */
-  Tensor water_dyn_p;
-  Tensor Eulerian_relative_flux;
-  Tensor Lagrangian_relative_flux;
-
-
+  Tensor dyn_p;
   double V0_p; /* Volume of the particle at the reference configuration */
-  double GRADIENT_Na__x__Lagrangian_relative_flux;
+
+  /* Auxiliar values */
+  Tensor Fm1__x__k_p;
+  Tensor Fm1__x__k__x__FmT_p;
+  Tensor Fm1K__x__dyn_p;
+  Tensor Fm1KFmT__x__GRAD_theta;
+  double GRADIENT_Na__x__Fm1KF__x__dyn;
+  double GRADIENT_Na__x__Fm1KFmT__x__GRAD_theta;
+
 
   /*
     Iterate over the particles to get the nodal values 
@@ -1309,6 +1323,7 @@ static void compute_Flow_contribution_Fluid(
     DF_p   = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.DF.nM[p],2);
     FT_n_p = transpose__TensorLib__(F_n_p);
     Fm1_n1_p = Inverse__TensorLib__(F_n1_p);
+    FmT_n1_p = transpose__TensorLib__(Fm1_n1_p);
     J_n1_p = MPM_Mesh.Phi.J.nV[p];
 
     /*
@@ -1328,7 +1343,8 @@ static void compute_Flow_contribution_Fluid(
     */
     Nodal_theta_n = get_Pw_set_field_upw__MeshTools__(upw_n.value, Nodes_p, ActiveNodes);
     Nodal_D_theta = get_Pw_set_field_upw__MeshTools__(D_upw.value, Nodes_p, ActiveNodes);
-    gradient_theta_n1_p = compute_Kirchoff_Pore_water_pressure_gradient_n1(Nodal_theta_n,Nodal_D_theta,gradient_N_p,DF_p);
+    gradient_theta_n1_p = compute_Kirchoff_Pore_water_pressure_gradient_n1(Nodal_theta_n,Nodal_D_theta,gradient_N_p);
+    GRADIENT_theta_n1_p = vector_linear_mapping__TensorLib__(FT_n_p,gradient_theta_n1_p);
 
     /*
       Compute total particle acceleration at n+1 using nodal variables
@@ -1336,42 +1352,19 @@ static void compute_Flow_contribution_Fluid(
     Nodal_D_acceleration_p = get_U_set_field_upw__MeshTools__(D_upw.d2_value_dt2, Nodes_p, ActiveNodes);
     D_a_p = interpolate_vectorial_magnitude__MeshTools__(Nodal_D_acceleration_p, N_p);
     a_n_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.acc.nM[p],1);
+    a_n1_p = addition__TensorLib__(D_a_p,a_n_p);
     b_p = MPM_Mesh.b;
+    dyn_p = subtraction__TensorLib__(a_n1_p,b_p);
+
 
     /*
-      Compute the dynamics of the fluid phase
+      Compute intermediate values
     */
-    water_dyn_p = alloc__TensorLib__(1); 
-
-    for(int i = 0 ; i<Ndim ; i++)
-    {
-      water_dyn_p.n[i] = (1.0/(intrinsic_rho_f_p*J_n1_p))*gradient_theta_n1_p.n[i] + D_a_p.n[i] + a_n_p.n[i] - b_p.n[i];
-    }
-
-    /*  
-      Compute Eulerian flux of water
-    */
-    Eulerian_relative_flux = alloc__TensorLib__(1);
-
-    for(int i = 0 ; i<Ndim ; i++)
-    {
-      for(int j = 0 ; j<Ndim ; j++)
-      {
-        Eulerian_relative_flux.n[i] += k_p.N[i][j]*water_dyn_p.n[j];
-      }
-      Eulerian_relative_flux.n[i] *= (intrinsic_rho_f_p/g);
-    }
-
-    /*
-      Compute Lagrangian flux of water
-    */
-    Lagrangian_relative_flux = vector_linear_mapping__TensorLib__(Fm1_n1_p,Eulerian_relative_flux);
-
-    for(int i = 0 ; i<Ndim ; i++)
-    {
-      Lagrangian_relative_flux.n[i] *= J_n1_p;
-    }
-
+    Fm1__x__k_p = matrix_product__TensorLib__(Fm1_n1_p,k_p);
+    Fm1__x__k__x__FmT_p = matrix_product__TensorLib__(Fm1__x__k_p,FmT_n1_p);
+    Fm1K__x__dyn_p = vector_linear_mapping__TensorLib__(Fm1__x__k_p,dyn_p);
+    Fm1KFmT__x__GRAD_theta = vector_linear_mapping__TensorLib__(Fm1__x__k__x__FmT_p,GRADIENT_theta_n1_p);
+    
 
     for(int A = 0 ; A<NumNodes_p ; A++)
     {
@@ -1391,12 +1384,13 @@ static void compute_Flow_contribution_Fluid(
       /*
         Intermediate results
       */
-      GRADIENT_Na__x__Lagrangian_relative_flux = inner_product__TensorLib__(GRADIENT_Na_n_p,Lagrangian_relative_flux);
+      GRADIENT_Na__x__Fm1KF__x__dyn = inner_product__TensorLib__(GRADIENT_Na_n_p,Fm1K__x__dyn_p);
+      GRADIENT_Na__x__Fm1KFmT__x__GRAD_theta = inner_product__TensorLib__(GRADIENT_Na_n_p,Fm1KFmT__x__GRAD_theta);
 
       /* 
         Compute nodal contribution to the mass conservation
       */
-      Residual.nM[Ndim][A_mask] -= GRADIENT_Na__x__Lagrangian_relative_flux*V0_p;
+      Residual.nM[Ndim][A_mask] -= (1/g)*(GRADIENT_Na__x__Fm1KFmT__x__GRAD_theta + J_n1_p*intrinsic_rho_f_p*GRADIENT_Na__x__Fm1KF__x__dyn)*V0_p;
 
       free__TensorLib__(GRADIENT_Na_n_p);
     }
@@ -1409,13 +1403,23 @@ static void compute_Flow_contribution_Fluid(
     free__MatrixLib__(Nodal_theta_n);
     free__MatrixLib__(Nodal_D_theta);
     free__MatrixLib__(Nodal_D_acceleration_p);
-    free__TensorLib__(gradient_theta_n1_p);
-    free__TensorLib__(D_a_p);
+
     free__TensorLib__(FT_n_p);
     free__TensorLib__(Fm1_n1_p);
-    free__TensorLib__(water_dyn_p);
-    free__TensorLib__(Eulerian_relative_flux);
-    free__TensorLib__(Lagrangian_relative_flux);
+    free__TensorLib__(FmT_n1_p);
+
+    free__TensorLib__(gradient_theta_n1_p);
+    free__TensorLib__(GRADIENT_theta_n1_p);
+    free__TensorLib__(D_a_p);
+    free__TensorLib__(a_n1_p);
+    free__TensorLib__(dyn_p);
+
+    free__TensorLib__(Fm1__x__k_p);
+    free__TensorLib__(Fm1__x__k__x__FmT_p);
+    free__TensorLib__(Fm1K__x__dyn_p);
+    free__TensorLib__(Fm1KFmT__x__GRAD_theta);
+
+
     free(Nodes_p.Connectivity);      
   }
 
@@ -1426,8 +1430,7 @@ static void compute_Flow_contribution_Fluid(
 static Tensor compute_Kirchoff_Pore_water_pressure_gradient_n1(
   Matrix Nodal_theta_n,
   Matrix Nodal_D_theta,
-  Matrix gradient_p,
-  Tensor DF_p)
+  Matrix gradient_p)
 /*
 
 */
@@ -1642,7 +1645,8 @@ static bool check_convergence(
   {
       fprintf(stderr,"%s : %s !!! \n","Error in check_convergence()",
         "Convergence not reached in the maximum number of iterations");
-      exit(EXIT_FAILURE);
+//      exit(EXIT_FAILURE);
+      return true;
     }
   else
     {
@@ -1708,11 +1712,7 @@ static Matrix assemble_Tangent_Stiffness(
   Newmark_parameters Params)
 /*
   This function computes the tangent stiffness matrix as a combination
-  of the geometrical stiffness matrix and the material stiffness matrix. 
-
-  | K_xx | K_xy |   | K_geom_xx |    0      |     | K_mat_xx | K_mat_xy |
-  ---------------- = -------------------------  +  ----------------------- + ...
-  | K_yx | K_yy |   |     0     | K_geom_yy |     | K_mat_yx | K_mat_y  |
+  of the geometrical stiffness matrix and the material stiffness matrix.
 */
 {
 
@@ -1744,21 +1744,22 @@ static Matrix assemble_Tangent_Stiffness(
   */
   Material MatProp_Soil_p; // structure with the material properties of the soil
   Material MatProp_Water_p; // structure with the material properties of the water
-  Tensor k_p, k_T_p; // Particle permeability and its transpose
+  Tensor k_p; // Particle permeability and its transpose
   Tensor D_a_p; // Particle increment of acceleration
   Tensor a_n1_p; // Particle acceleration at t = n + 1 
   Tensor a_n_p; // Particle acceleration at t = n 
-  Tensor gradPw_n1; // Particle pore water pressure
   Tensor b_p; // External accelerations
+  Tensor dyn_p;
+  Tensor gradPw_n1; // Particle pore water pressure
+  Tensor gradient_theta_n1;
   Tensor F_n_p; // Particle deformation gradient at t = n 
   Tensor DF_p;
   Tensor FT_n_p; // Transpose of the particle deformation gradient at t = n 
   Tensor F_n1_p; // Particle deformation gradient at t = n + 1
-  Tensor FT_n1_p; // Transpose of the particle deformation gradient at t = n + 1
   Tensor Fm1_n1_p; // Inverse of the particle deformation gradient at t = n + 1
   Tensor FmT_n1_p; // Inverse of the transposed particle deformation gradient at t = n + 1
   Tensor dFdt_n1_p; // Rate of the particle deformation gradient at t = n + 1
-
+  Tensor Stiffness_density_pAB;
   /*
     Auxiliar variables
   */
@@ -1778,7 +1779,6 @@ static Matrix assemble_Tangent_Stiffness(
   double Nb_p; // Nodal value of the shape function in node B
 
   double V0_p; // Volume of the particle in the reference configuration
-  double m_p; // Mass of the particle
   double J_p; // Jacobian of the deformation gradient
   double K_f_p; // Compresibility of the fluid
   double phi_f_0; // Reference volume fraction of the fluid phase
@@ -1792,42 +1792,18 @@ static Matrix assemble_Tangent_Stiffness(
   double relative_rho_mixture_p; // Current relative density of the mixture
   double theta_n1_p; // Kirchhoff pore water pressure
   double d_theta_n1_p_dt; // Rate of the Kirchhoff pore water pressure
-  double constant_1, constant_1a, constant_1b, constant_1c;
-  double constant_2;
-  double constant_3, constant_3a, constant_3b, constant_3c;
-  double constant_4, constant_4a, constant_4b, constant_4c;
-  double constant_5;
-  double constant_6;
-  double constant_7;
   double alpha_1 = Params.alpha_1; // Time integration parameter
   double alpha_4 = Params.alpha_4; // Time integration parameter
-  double g = -9.81; // Gravity constant
-
-  /*
-    Auxiliar variables 
-  */
-  Tensor gradient_theta_n1;
-  Tensor mixture_dyn_p;
-  Tensor water_dyn_p;
-  Tensor Eulerian_relative_flux;
-
-  Tensor k__x__gradient_theta_p;
-  Tensor k_T_p__x__FmTGRADIENT_A;
-  double FmTGRADIENT_A__x__k__x__gradient_theta_p;
-  double FmTGRADIENT_A__x__Eulerian_relative_flux;
-
-  Tensor Stiffness_density_pAB;
-  Tensor dyn__o__FmTGRADIENT_B;
-  Tensor FmTGRADIENT_Na_p__o__FmTGRADIENT_Nb_p;
-  Tensor transpose_grad_v__x__FmTGRADIENT_B;
-  Tensor k__x__FmTGRADIENT_Nb_p;
-  double FmTGRADIENT_A__x__k__x__FmTGRADIENT_Nb_p;
-  double FmTGRADIENT_B__x__Eulerian_relative_flux;
 
   /*
     Define and allocate the tangent stiffness matrix
   */
   Matrix Tangent_Stiffness = allocZ__MatrixLib__(Order, Order);
+
+  Matrix mixture_inertial_density;
+  Matrix mixture_stiffness_density;
+  Matrix water_inertial_density;
+  Matrix water_flux_density;
 
   /*
     Loop in the particles for the assembling process
@@ -1860,7 +1836,6 @@ static Matrix assemble_Tangent_Stiffness(
       Get some material properties
     */
     V0_p = MPM_Mesh.Phi.Vol_0.nV[p]; 
-    m_p = MPM_Mesh.Phi.mass.nV[p]; 
     K_f_p = MatProp_Water_p.Compressibility; 
     phi_f_0 = Soil_Water_Mixtures[Mixture_idx].phi_f_0;
     phi_s_0 = Soil_Water_Mixtures[Mixture_idx].phi_s_0;
@@ -1872,14 +1847,11 @@ static Matrix assemble_Tangent_Stiffness(
     relative_rho_s_p = phi_s_p*intrinsic_rho_s_p; // Relative density of solid for particle p
     relative_rho_mixture_p = MPM_Mesh.Phi.rho.nV[p]; // Relative density of mixture for particle p
     k_p = Soil_Water_Mixtures[Mixture_idx].Permeability; // Particle permeability
-    k_T_p = transpose__TensorLib__(k_p);
-
+    
     /*
       Get some nodal values
     */
     Nodal_D_Acceleration_p = get_U_set_field_upw__MeshTools__(D_upw.d2_value_dt2, Nodes_p, ActiveNodes);
-    Nodal_Pw_n_p = get_Pw_set_field_upw__MeshTools__(upw_n.value, Nodes_p, ActiveNodes);
-    Nodal_D_Pw_p = get_Pw_set_field_upw__MeshTools__(D_upw.value, Nodes_p, ActiveNodes);
     
     /*
       Take the values of the deformation gradient ant t = n and t = n + 1. 
@@ -1891,7 +1863,6 @@ static Matrix assemble_Tangent_Stiffness(
     DF_p   = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.DF.nM[p],2);
     dFdt_n1_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.dt_F_n1.nM[p],2);
     FT_n_p = transpose__TensorLib__(F_n_p);
-    FT_n1_p = transpose__TensorLib__(F_n1_p);
     Fm1_n1_p = Inverse__TensorLib__(F_n1_p);
     FmT_n1_p = transpose__TensorLib__(Fm1_n1_p);
 
@@ -1913,61 +1884,24 @@ static Matrix assemble_Tangent_Stiffness(
     theta_n1_p = MPM_Mesh.Phi.Pw_n1.nV[p];
     d_theta_n1_p_dt = MPM_Mesh.Phi.d_Pw_dt_n1.nV[p];
 
-    /*
-      Compute current particle gradient of pore water pressure
+    /* 
+      Compute particle pore water pressure gradient
     */
-    gradient_theta_n1 = compute_Kirchoff_Pore_water_pressure_gradient_n1(Nodal_Pw_n_p,Nodal_D_Pw_p,gradient_N_p,DF_p);
-
+    Matrix Nodal_theta_n = get_Pw_set_field_upw__MeshTools__(upw_n.value, Nodes_p, ActiveNodes);
+    Matrix Nodal_D_theta = get_Pw_set_field_upw__MeshTools__(D_upw.value, Nodes_p, ActiveNodes);
+    Tensor gradient_theta_n1_p = compute_Kirchoff_Pore_water_pressure_gradient_n1(Nodal_theta_n,Nodal_D_theta,gradient_N_p);
+    Tensor GRADIENT_theta_n1_p = vector_linear_mapping__TensorLib__(FT_n_p,gradient_theta_n1_p);
+    Tensor FmTGRADIENT_theta_p = vector_linear_mapping__TensorLib__(FmT_n1_p,GRADIENT_theta_n1_p);
+    
     /*
       Compute mixture/fluid dynamics in the next time step
     */
     D_a_p = interpolate_vectorial_magnitude__MeshTools__(Nodal_D_Acceleration_p, N_p);
     a_n_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.acc.nM[p],1);
+    a_n1_p = addition__TensorLib__(D_a_p,a_n_p);
     b_p = MPM_Mesh.b;
-    
-    mixture_dyn_p = alloc__TensorLib__(1);
-    water_dyn_p = alloc__TensorLib__(1);
+    dyn_p = subtraction__TensorLib__(a_n1_p,b_p);    
 
-    for(int i = 0 ; i<Ndim ; i++)
-    {
-      mixture_dyn_p.n[i] = D_a_p.n[i] + a_n_p.n[i] - b_p.n[i];
-      water_dyn_p.n[i] = (1/(intrinsic_rho_f_p*J_p))*gradient_theta_n1.n[i] + mixture_dyn_p.n[i];
-    }
-
-    /*
-      Compute Eulerian flux of water
-    */
-    Eulerian_relative_flux = alloc__TensorLib__(1);
-
-    for(int i = 0 ; i<Ndim ; i++)
-    {
-      for(int j = 0 ; j<Ndim ; j++)
-      {
-        Eulerian_relative_flux.n[i] += k_p.N[i][j]*water_dyn_p.n[j];
-      }
-      Eulerian_relative_flux.n[i] *= (intrinsic_rho_f_p/g);
-    }
-
-
-    /*
-      Auxiliar constants
-    */
-    constant_1a = intrinsic_rho_f_p*(1 - phi_f_0);
-    constant_1b = relative_rho_f_p*theta_n1_p/K_f_p;
-    constant_1c = intrinsic_rho_s_p*phi_s_0;
-    constant_1 = constant_1a - constant_1b - constant_1c;
-    constant_2 = relative_rho_f_p/K_f_p;
-    constant_3a = (d_theta_n1_p_dt/(K_f_p*J_p))*(intrinsic_rho_f_p*(1 - phi_f_0) - relative_rho_f_p*theta_n1_p/K_f_p);
-    constant_3b = (intrinsic_rho_f_p*J_p - intrinsic_rho_f_p*theta_n1_p/K_f_p)*div_v_p;
-    constant_3c = alpha_4*J_p*intrinsic_rho_f_p;
-    constant_3 = constant_3a+ constant_3b + constant_3c;
-    constant_4a = relative_rho_f_p*d_theta_n1_p_dt/(K_f_p*K_f_p*J_p);
-    constant_4b = relative_rho_f_p*alpha_4/K_f_p;
-    constant_4c = (intrinsic_rho_f_p/K_f_p)*div_v_p;
-    constant_4 = constant_4a + constant_4b + constant_4c;
-    constant_5 = intrinsic_rho_f_p*J_p;
-    constant_6 = 1.0/(K_f_p*J_p);
-    constant_7 = intrinsic_rho_f_p*J_p*alpha_1/g;
 
     for(int A = 0 ; A<NumNodes_p ; A++)
     {
@@ -1982,14 +1916,6 @@ static Matrix assemble_Tangent_Stiffness(
       gradient_Na_p = memory_to_tensor__TensorLib__(gradient_N_p.nM[A], 1);
       GRADIENT_Na_p = vector_linear_mapping__TensorLib__(FT_n_p,gradient_Na_p);
       FmTGRADIENT_Na_p = vector_linear_mapping__TensorLib__(FmT_n1_p,GRADIENT_Na_p);
-
-      /*
-        Compute operators
-      */
-      k__x__gradient_theta_p = vector_linear_mapping__TensorLib__(k_p,gradient_theta_n1);
-      FmTGRADIENT_A__x__k__x__gradient_theta_p = inner_product__TensorLib__(FmTGRADIENT_Na_p,k__x__gradient_theta_p);
-      FmTGRADIENT_A__x__Eulerian_relative_flux = inner_product__TensorLib__(FmTGRADIENT_Na_p,Eulerian_relative_flux);
-      k_T_p__x__FmTGRADIENT_A = vector_linear_mapping__TensorLib__(k_T_p,FmTGRADIENT_Na_p);
 
       /*
         Get the node of the mesh for the contribution 
@@ -2017,16 +1943,6 @@ static Matrix assemble_Tangent_Stiffness(
         Bp = Nodes_p.Connectivity[B];
         B_mask = ActiveNodes.Nodes2Mask[Bp];
 
-        /*
-          Compute operators
-        */
-        dyn__o__FmTGRADIENT_B = dyadic_Product__TensorLib__(mixture_dyn_p,FmTGRADIENT_Nb_p);
-        FmTGRADIENT_Na_p__o__FmTGRADIENT_Nb_p = dyadic_Product__TensorLib__(FmTGRADIENT_Na_p,FmTGRADIENT_Nb_p);
-        transpose_grad_v__x__FmTGRADIENT_B = vector_linear_mapping__TensorLib__(transpose_grad_v_p,FmTGRADIENT_Nb_p);
-        k__x__FmTGRADIENT_Nb_p = vector_linear_mapping__TensorLib__(k_p,FmTGRADIENT_Nb_p);
-        FmTGRADIENT_A__x__k__x__FmTGRADIENT_Nb_p = inner_product__TensorLib__(FmTGRADIENT_Na_p,k__x__FmTGRADIENT_Nb_p);
-        FmTGRADIENT_B__x__Eulerian_relative_flux = inner_product__TensorLib__(FmTGRADIENT_Nb_p,Eulerian_relative_flux);
-
         if(strcmp(MatProp_Soil_p.Type,"Neo-Hookean-Wriggers") == 0)
         {
           Stiffness_density_pAB = compute_stiffness_density_Neo_Hookean_Wriggers(GRADIENT_Na_p,GRADIENT_Nb_p,F_n1_p,J_p,MatProp_Soil_p);
@@ -2036,60 +1952,50 @@ static Matrix assemble_Tangent_Stiffness(
           fprintf(stderr,"%s : %s %s %s \n","Error in assemble_Tangent_Stiffness()",
             "The material",MatProp_Soil_p.Type,"has not been yet implemnented");
           exit(EXIT_FAILURE);
-        }
-        
-        /*
-          Add the contribution of the mixture balance of momentum mixture linearisation
-        */
-        for(int i = 0 ; i<Ndim ; i++)
-        {
-
-          for(int j = 0 ; j<Ndim ; j++)
-          {
-            /*
-              Compute the contribution of the linearised terms to the D_phi-D_phi direcction. 
-            */
-            Tangent_Stiffness.nM[A_mask+Nnodes_mask*i][B_mask+Nnodes_mask*j] +=
-            + alpha_1*Effective_Mass.nM[A_mask*Ndof+i][B_mask*Ndof+j]
-            + Na_p*constant_1*dyn__o__FmTGRADIENT_B.N[i][j]*V0_p
-            + Stiffness_density_pAB.N[i][j]*V0_p
-            + theta_n1_p*FmTGRADIENT_Na_p__o__FmTGRADIENT_Nb_p.N[j][i]*V0_p;
-          }
-
-          /*
-            Compute the contribution of the linearised terms to the D_phi-D_theta direcction. 
-          */
-          Tangent_Stiffness.nM[A_mask+Nnodes_mask*i][B_mask+Nnodes_mask*Ndim] +=  
-           + Na_p*constant_2*mixture_dyn_p.n[i]*Nb_p*V0_p 
-           - FmTGRADIENT_Na_p.n[i]*Nb_p*V0_p;
-
-        }
+        }        
 
         /*
-          Compute the contribution of the linearised terms to the D_theta-D_phi direcction. 
+          Compute the contribution of the mixture to the tangent matrix
         */
-        for(int j = 0 ; j<Ndim ; j++)
+        mixture_inertial_density = compute_mixture_inertial_density(
+          FmTGRADIENT_Nb_p,dyn_p,Na_p,Nb_p,J_p,
+          intrinsic_rho_f_p,intrinsic_rho_s_p,
+          phi_f_p,phi_s_p,phi_f_0,phi_s_0,K_f_p,
+          theta_n1_p,alpha_1);
+
+        mixture_stiffness_density = compute_mixture_stiffness_density(
+          FmTGRADIENT_Na_p,FmTGRADIENT_Nb_p,
+          Stiffness_density_pAB,Nb_p,theta_n1_p);
+
+        /*
+          Compute the contribution of the fluid phase to the tangent matrix
+        */
+        water_inertial_density = compute_water_inertial_density(
+          FmTGRADIENT_Nb_p,transpose_grad_v_p,Na_p,
+          Nb_p,div_v_p,J_p,intrinsic_rho_f_p,
+          phi_f_p,phi_f_0,theta_n1_p,d_theta_n1_p_dt,
+          K_f_p,alpha_4);
+
+        water_flux_density = compute_water_flux_density(
+          FmTGRADIENT_Na_p,FmTGRADIENT_Nb_p,
+          FmTGRADIENT_theta_p,k_p,dyn_p,Nb_p,
+          J_p,intrinsic_rho_f_p,theta_n1_p,
+          K_f_p,alpha_1);
+
+        for(int i = 0 ; i<Ndof ; i++)
         { 
-          Tangent_Stiffness.nM[A_mask+Nnodes_mask*Ndim][B_mask+Nnodes_mask*j] += 
-          + Na_p*constant_3*FmTGRADIENT_Nb_p.n[j]*V0_p 
-          - Na_p*constant_5*transpose_grad_v__x__FmTGRADIENT_B.n[j]*V0_p
-          + (theta_n1_p/K_f_p)*FmTGRADIENT_A__x__Eulerian_relative_flux*FmTGRADIENT_Nb_p.n[j]*V0_p
-          - J_p*FmTGRADIENT_A__x__Eulerian_relative_flux*FmTGRADIENT_Nb_p.n[j]*V0_p
-          + J_p*FmTGRADIENT_B__x__Eulerian_relative_flux*FmTGRADIENT_Na_p.n[j]*V0_p
-          - (constant_6*theta_n1_p/g)*FmTGRADIENT_A__x__k__x__gradient_theta_p*FmTGRADIENT_Nb_p.n[j]*V0_p
-          + (1.0/g)*FmTGRADIENT_A__x__k__x__gradient_theta_p*FmTGRADIENT_Nb_p.n[j]*V0_p
-          + (1.0/g)*FmTGRADIENT_A__x__k__x__FmTGRADIENT_Nb_p*gradient_theta_n1.n[j]*V0_p
-          - constant_7*k_T_p__x__FmTGRADIENT_A.n[j]*Nb_p*V0_p;
+          for(int j = 0 ; j<Ndof ; j++)
+          {
+            if(i<Ndim)
+            {
+              Tangent_Stiffness.nM[A_mask+Nnodes_mask*i][B_mask+Nnodes_mask*j] += (mixture_inertial_density.nM[i][j] + mixture_stiffness_density.nM[i][j])*V0_p;
+            }
+            else
+            {
+              Tangent_Stiffness.nM[A_mask+Nnodes_mask*i][B_mask+Nnodes_mask*j] += (water_inertial_density.nV[j] - water_flux_density.nV[j])*V0_p;
+            }        
+          }
         }
-
-        /*
-          Compute the contribution of the linearised terms to the D_theta-D_theta direcction.
-        */
-        Tangent_Stiffness.nM[A_mask+Nnodes_mask*Ndim][B_mask+Nnodes_mask*Ndim] += 
-        + Na_p*constant_4*Nb_p*V0_p
-        - (1.0/K_f_p)*FmTGRADIENT_A__x__Eulerian_relative_flux*Nb_p*V0_p
-        + (constant_6/g)*FmTGRADIENT_A__x__k__x__gradient_theta_p*Nb_p*V0_p
-        - (1.0/g)*FmTGRADIENT_A__x__k__x__FmTGRADIENT_Nb_p*V0_p;
 
         /*
           Free memory 
@@ -2097,10 +2003,10 @@ static Matrix assemble_Tangent_Stiffness(
         free__TensorLib__(GRADIENT_Nb_p);
         free__TensorLib__(FmTGRADIENT_Nb_p);
         free__TensorLib__(Stiffness_density_pAB);
-        free__TensorLib__(dyn__o__FmTGRADIENT_B);
-        free__TensorLib__(FmTGRADIENT_Na_p__o__FmTGRADIENT_Nb_p);
-        free__TensorLib__(transpose_grad_v__x__FmTGRADIENT_B);
-        free__TensorLib__(k__x__FmTGRADIENT_Nb_p);
+        free__MatrixLib__(mixture_inertial_density);
+        free__MatrixLib__(mixture_stiffness_density);
+        free__MatrixLib__(water_inertial_density);
+        free__MatrixLib__(water_flux_density);
       }
 
       /*
@@ -2115,20 +2021,206 @@ static Matrix assemble_Tangent_Stiffness(
       Free memory 
     */
     free(Nodes_p.Connectivity);
-    free__TensorLib__(k_T_p);
-    free__TensorLib__(gradient_theta_n1);
-    free__TensorLib__(mixture_dyn_p);
-    free__TensorLib__(water_dyn_p);
-    free__TensorLib__(Eulerian_relative_flux);
+    free__TensorLib__(gradient_theta_n1_p);
     free__MatrixLib__(N_p);
     free__MatrixLib__(gradient_N_p);
-
   }
 
   /*
     Return tangent matrix
   */
   return Tangent_Stiffness;
+
+}
+
+/**************************************************************/
+
+static Matrix compute_mixture_inertial_density(
+  Tensor FmTGRADIENT_Nb_p,
+  Tensor dyn_p,
+  double Na_p,
+  double Nb_p,
+  double J_p,
+  double intrinsic_rho_f_p,
+  double intrinsic_rho_s_p,
+  double phi_f_p,
+  double phi_s_p,
+  double phi_f_0,
+  double phi_s_0,
+  double K_f_p,
+  double theta_n1_p,
+  double alpha_1)
+{
+  int Ndim = NumberDimensions;
+  int Ndof = NumberDOF;
+
+  double rho_0 = J_p*(intrinsic_rho_f_p*phi_f_p + intrinsic_rho_s_p*phi_s_p);
+  double C1 = phi_f_p*intrinsic_rho_f_p/(K_f_p*J_p);
+  double C2 = (1/J_p)*(intrinsic_rho_f_p*(1 - phi_f_0) - phi_s_p*intrinsic_rho_f_p*theta_n1_p/K_f_p);
+  double C3 = C2 - intrinsic_rho_s_p*phi_s_0/J_p;
+
+  Matrix mixture_inertial_density = allocZ__MatrixLib__(Ndim,Ndof);
+
+  Tensor dyn__o__FmTGRADIENT_Nb_p = dyadic_Product__TensorLib__(dyn_p,FmTGRADIENT_Nb_p);
+
+  for(int i = 0; i<Ndim ; i++)
+  {
+    for(int j = 0; j<Ndim ; j++)
+    {
+      mixture_inertial_density.nM[i][j] = Na_p*rho_0*alpha_1*Nb_p*(i==j);// + Na_p*(J_p*C3 + rho_0)*dyn__o__FmTGRADIENT_Nb_p.N[i][j];
+    }
+
+    mixture_inertial_density.nM[i][Ndim] = Na_p*J_p*C1*dyn_p.n[i]*Nb_p;
+
+  }
+
+  free__TensorLib__(dyn__o__FmTGRADIENT_Nb_p);
+
+  return mixture_inertial_density;
+}
+
+/**************************************************************/
+
+static Matrix compute_mixture_stiffness_density(
+  Tensor FmTGRADIENT_Na_p,
+  Tensor FmTGRADIENT_Nb_p,
+  Tensor Stiffness_density_pAB,
+  double Nb_p,
+  double theta_n1_p)
+{  
+  int Ndim = NumberDimensions;
+  int Ndof = NumberDOF;
+
+  Matrix mixture_stiffness_density = allocZ__MatrixLib__(Ndim,Ndof);
+
+  Tensor FmTGRADIENT_Na_p__o__FmTGRADIENT_Nb_p = dyadic_Product__TensorLib__(FmTGRADIENT_Na_p,FmTGRADIENT_Nb_p);
+
+  for(int i = 0; i<Ndim ; i++)
+  {
+    for(int j = 0; j<Ndim ; j++)
+    {
+      mixture_stiffness_density.nM[i][j] +=  
+      + Stiffness_density_pAB.N[i][j]
+      + theta_n1_p*FmTGRADIENT_Na_p__o__FmTGRADIENT_Nb_p.N[i][j];
+    }
+
+    mixture_stiffness_density.nM[i][Ndim] = 
+     - FmTGRADIENT_Na_p.n[i]*Nb_p;
+
+  }
+
+  free__TensorLib__(FmTGRADIENT_Na_p__o__FmTGRADIENT_Nb_p);
+
+  return mixture_stiffness_density;
+}
+
+/**************************************************************/
+
+static Matrix compute_water_inertial_density(
+  Tensor FmTGRADIENT_Nb_p,
+  Tensor transpose_grad_v_p,
+  double Na_p,
+  double Nb_p,
+  double div_v_p,
+  double J_p,
+  double intrinsic_rho_f_p,
+  double phi_f_p,
+  double phi_f_0,
+  double theta_n1_p,
+  double d_theta_n1_p_dt,
+  double K_f_p,
+  double alpha_4)
+{
+  int Ndim = NumberDimensions;
+  int Ndof = NumberDOF;
+
+  Matrix water_flux_density = allocZ__MatrixLib__(1,Ndof);
+
+  Tensor T_grad_v__x__FmTGRADIENT_Nb_p = vector_linear_mapping__TensorLib__(transpose_grad_v_p,FmTGRADIENT_Nb_p);
+
+  for(int i = 0; i<Ndim ; i++)
+  {
+    water_flux_density.nV[i] = 
+    + (d_theta_n1_p_dt*(1-phi_f_0)*intrinsic_rho_f_p/(K_f_p*J_p))*(Na_p*FmTGRADIENT_Nb_p.n[i])
+    - (d_theta_n1_p_dt*phi_f_p*intrinsic_rho_f_p*theta_n1_p/(K_f_p*K_f_p*J_p))*(Na_p*FmTGRADIENT_Nb_p.n[i])
+    - (intrinsic_rho_f_p*div_v_p*theta_n1_p/(K_f_p))*(Na_p*FmTGRADIENT_Nb_p.n[i])
+    + (intrinsic_rho_f_p*J_p*div_v_p)*(Na_p*FmTGRADIENT_Nb_p.n[i])
+    + (intrinsic_rho_f_p*alpha_4*J_p)*(Na_p*FmTGRADIENT_Nb_p.n[i])
+    - (intrinsic_rho_f_p*J_p)*(Na_p*T_grad_v__x__FmTGRADIENT_Nb_p.n[i]);
+  }
+
+  water_flux_density.nV[Ndim] = 
+  + (d_theta_n1_p_dt*phi_f_p*intrinsic_rho_f_p/(J_p*K_f_p*K_f_p))*(Na_p*Nb_p)
+  + (phi_f_p*intrinsic_rho_f_p*alpha_4/K_f_p)*(Na_p*Nb_p)
+  + (intrinsic_rho_f_p*div_v_p/K_f_p)*(Na_p*Nb_p);
+
+
+  free__TensorLib__(T_grad_v__x__FmTGRADIENT_Nb_p);
+
+  return water_flux_density; 
+}
+
+/**************************************************************/
+
+static Matrix compute_water_flux_density(
+  Tensor FmTGRADIENT_Na_p,
+  Tensor FmTGRADIENT_Nb_p,
+  Tensor FmTGRADIENT_theta_p,
+  Tensor k_p,
+  Tensor dyn_p,
+  double Nb_p,
+  double J_p,
+  double intrinsic_rho_f_p,
+  double theta_n1_p,
+  double K_f_p,
+  double alpha_1)
+{
+  int Ndim = NumberDimensions;
+  int Ndof = NumberDOF;
+  double g = -10.0; // Gravity constant
+
+  Matrix water_flux_density = allocZ__MatrixLib__(1,Ndof);
+
+  Tensor FmTGRADIENT_Na_p__o__FmTGRADIENT_Nb_p = dyadic_Product__TensorLib__(FmTGRADIENT_Na_p,FmTGRADIENT_Nb_p);
+  Tensor FmTGRADIENT_Nb_p__o__FmTGRADIENT_Na_p = transpose__TensorLib__(FmTGRADIENT_Na_p__o__FmTGRADIENT_Nb_p);
+  Tensor K__x__FmTGRADIENT_Na_p = vector_linear_mapping__TensorLib__(k_p,FmTGRADIENT_Na_p);
+  Tensor K__x__FmTGRADIENT_Nb_p = vector_linear_mapping__TensorLib__(k_p,FmTGRADIENT_Nb_p);
+  Tensor K__x__FmTGRADIENT_theta_p = vector_linear_mapping__TensorLib__(k_p,FmTGRADIENT_theta_p);
+  Tensor K__x__dyn_p = vector_linear_mapping__TensorLib__(k_p,dyn_p);
+  Tensor FmTGRADIENT_a__o__FmTGRADIENT_b__x__KFmTGRADIENT_theta_p = vector_linear_mapping__TensorLib__(FmTGRADIENT_Na_p__o__FmTGRADIENT_Nb_p,K__x__FmTGRADIENT_theta_p);
+
+  Tensor FmTGRADIENT_a__o__FmTGRADIENT_b__x__Kdyn_p = vector_linear_mapping__TensorLib__(FmTGRADIENT_Na_p__o__FmTGRADIENT_Nb_p,K__x__dyn_p);
+  Tensor FmTGRADIENT_b__o__FmTGRADIENT_a__x__Kdyn_p = vector_linear_mapping__TensorLib__(FmTGRADIENT_Nb_p__o__FmTGRADIENT_Na_p,K__x__dyn_p);
+
+  double FmTGRADIENT__x__K__x__FmTGRADIENT_p = inner_product__TensorLib__(FmTGRADIENT_Na_p,K__x__FmTGRADIENT_Nb_p);
+  double FmTGRADIENT_a__x__K__x__dyn_p = inner_product__TensorLib__(FmTGRADIENT_Na_p,K__x__dyn_p);
+
+  for(int i = 0; i<Ndim ; i++)
+  { 
+    water_flux_density.nV[i] = 
+    - (1/g)*FmTGRADIENT_a__o__FmTGRADIENT_b__x__KFmTGRADIENT_theta_p.n[i]
+    - (1/g)*FmTGRADIENT__x__K__x__FmTGRADIENT_p*FmTGRADIENT_theta_p.n[i]
+    - (J_p*intrinsic_rho_f_p/g)*FmTGRADIENT_a__o__FmTGRADIENT_b__x__Kdyn_p.n[i]
+    + (J_p*intrinsic_rho_f_p/g)*FmTGRADIENT_b__o__FmTGRADIENT_a__x__Kdyn_p.n[i]
+    - (intrinsic_rho_f_p*theta_n1_p/(g*K_f_p))*FmTGRADIENT_b__o__FmTGRADIENT_a__x__Kdyn_p.n[i]
+    + (J_p*intrinsic_rho_f_p*alpha_1/g)*K__x__FmTGRADIENT_Na_p.n[i]*Nb_p;
+  }
+
+  water_flux_density.nV[Ndim] = 
+  + (1/g)*FmTGRADIENT__x__K__x__FmTGRADIENT_p
+  + (intrinsic_rho_f_p/(K_f_p*g)*FmTGRADIENT_a__x__K__x__dyn_p*Nb_p);
+
+  free__TensorLib__(FmTGRADIENT_Na_p__o__FmTGRADIENT_Nb_p);
+  free__TensorLib__(FmTGRADIENT_Nb_p__o__FmTGRADIENT_Na_p);
+  free__TensorLib__(K__x__FmTGRADIENT_Na_p);
+  free__TensorLib__(K__x__FmTGRADIENT_Nb_p);
+  free__TensorLib__(K__x__FmTGRADIENT_theta_p);
+  free__TensorLib__(K__x__dyn_p);
+  free__TensorLib__(FmTGRADIENT_a__o__FmTGRADIENT_b__x__KFmTGRADIENT_theta_p);
+  free__TensorLib__(FmTGRADIENT_a__o__FmTGRADIENT_b__x__Kdyn_p);
+  free__TensorLib__(FmTGRADIENT_b__o__FmTGRADIENT_a__x__Kdyn_p);
+
+  return water_flux_density;
 }
 
 /**************************************************************/
@@ -2439,7 +2531,6 @@ static void update_Particles(
     Mixture_idx = MPM_Mesh.MixtIdx[p];
     Material_Soil_idx = Soil_Water_Mixtures[Mixture_idx].Soil_Idx;
     MatProp_Soil_p = MPM_Mesh.Mat[Material_Soil_idx];
-    MPM_Mesh.Phi.W.nV[p]= finite_strains_internal_energy__Particles__(F_n_p, MatProp_Soil_p,Vol_0_p);
       
     /*
       Iterate over the nodes of the particle
@@ -2463,9 +2554,9 @@ static void update_Particles(
       */
       for(int i = 0 ; i<Ndof ; i++)
       {
-        D_upw_pI = N_pI*D_upw.value.nM[A_mask][i];
-        D_dt_upw_pI = N_pI*D_upw.d_value_dt.nM[A_mask][i];
-        D_dt2_upw_pI = N_pI*D_upw.d2_value_dt2.nM[A_mask][i];
+        D_upw_pI = N_pI*D_upw.value.nM[i][A_mask];
+        D_dt_upw_pI = N_pI*D_upw.d_value_dt.nM[i][A_mask];
+        D_dt2_upw_pI = N_pI*D_upw.d2_value_dt2.nM[i][A_mask];
                 
         if(i<Ndim)
         {

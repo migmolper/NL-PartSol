@@ -329,7 +329,7 @@ static Material Define_Material(
       New_Material.Exponent_Hardening_Ortiz = atof(Parameter_pars[1]);
     }
     /**************************************************/
-    else if(strcmp(Parameter_pars[0],"Reference-Plastic-Strain_Ortiz") == 0)
+    else if(strcmp(Parameter_pars[0],"Reference-Plastic-Strain-Ortiz") == 0)
     {
       ChkMat.Is_Reference_Plastic_Strain_Ortiz = true;
       New_Material.Reference_Plastic_Strain_Ortiz = atof(Parameter_pars[1]);

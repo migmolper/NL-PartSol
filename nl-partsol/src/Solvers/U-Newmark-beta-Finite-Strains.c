@@ -233,7 +233,16 @@ void U_Newmark_beta_Finite_Strains(
       print_Status("Seven step : Update particles lagrangian ... WORKING",TimeStep);
 
       update_Particles(D_U,MPM_Mesh,FEM_Mesh,ActiveNodes);
-      local_search__Particles__(MPM_Mesh,FEM_Mesh);
+     
+      if(strcmp(ShapeFunctionGP,"LME") == 0)
+      {
+        local_search__LME__(MPM_Mesh,FEM_Mesh);
+      }
+      else
+      {
+       local_search__Particles__(MPM_Mesh,FEM_Mesh);
+      }
+
 
       print_Status("DONE !!!",TimeStep);
 

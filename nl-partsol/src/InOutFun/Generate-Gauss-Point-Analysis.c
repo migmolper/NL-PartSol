@@ -95,6 +95,8 @@ Particle Generate_Gauss_Point_Analysis__InOutFun__(char * SimulationFile)
 
 	Particle PointAnalysis;
 
+  DeltaTimeStep = 3.643236E-06;
+
   PointAnalysis.NumberMaterials = NumberMaterials;
   PointAnalysis.Mat = Read_Materials__InOutFun__(SimulationFile, NumberMaterials);
 

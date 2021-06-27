@@ -400,7 +400,7 @@ GramsMaterials (Particles=route.txt) {
 	    Mat_GP.Exponent_Hardening_Ortiz = atof(Parse_Mat_Prop[1]);
 	  }
 	  /**************************************************/
-	  else if(strcmp(Parse_Mat_Prop[0],"Reference-Plastic-Strain_Ortiz") == 0)
+	  else if(strcmp(Parse_Mat_Prop[0],"Reference-Plastic-Strain-Ortiz") == 0)
 	  {
 	    Is_Reference_Plastic_Strain_Ortiz = true;
 	    Mat_GP.Reference_Plastic_Strain_Ortiz = atof(Parse_Mat_Prop[1]);

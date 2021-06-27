@@ -116,7 +116,6 @@ State_Parameters Von_Mises_backward_euler(
     */
     while(Convergence == false)
     {
-      Iter++;
           
       G = compute_objective_function(relative_stress_norm, delta_Gamma_k, EPS_k, MatProp);
 
@@ -127,6 +126,8 @@ State_Parameters Von_Mises_backward_euler(
       delta_Gamma_k = update_increment_plastic_strain(delta_Gamma_k, G, d_G);
 
       EPS_k = update_equivalent_plastic_strain(Inputs_SP.EPS, delta_Gamma_k);
+
+      Iter++;
 
     }
 
@@ -200,23 +201,28 @@ static bool check_convergence(
     Compute relative error
   */
   if(Iter == 0)
-    {
-      Error0 = fabs(Error);
-      Error_relative = fabs(Error/Error0);
-    }
-    else
-    {
-      Error_relative = fabs(Error/Error0);
-    }
-      
-    /*
-      Check convergence using the relative error
-    */
-  if(Error_relative < TOL)
+  {
+
+    Error0 = fabs(Error);
+    Error_relative = fabs(Error/Error0);
+
+    if(Error0 < TOL)
     {
       convergence = true;
     }
 
+  }
+  else
+  {
+    Error_relative = fabs(Error/Error0);
+
+    if(Error_relative < TOL)
+    {
+      convergence = true;
+    }
+
+  }
+      
   return convergence;
 }
 
