@@ -280,7 +280,10 @@ return Field_Ap;
 
 /*********************************************************************/
 
-Matrix get_U_set_field_upw__MeshTools__(Matrix Field_upw, Element Nodes_p, Mask ActiveNodes)
+Matrix get_U_set_field_upw__MeshTools__(
+  Matrix Field_upw,
+  Element Nodes_p, 
+  Mask ActiveNodes)
 {
   int Nnodes = Nodes_p.NumberNodes;
   int Ndim = NumberDimensions;
@@ -302,7 +305,7 @@ Matrix get_U_set_field_upw__MeshTools__(Matrix Field_upw, Element Nodes_p, Mask 
     */
     for(int i = 0 ; i<Ndim ; i++)
     {
-      Field_U_Ap.nM[A][i] = Field_upw.nM[i][A_mask];
+      Field_U_Ap.nM[A][i] = Field_upw.nM[A_mask][i];
     }
   }
 
@@ -331,7 +334,7 @@ Matrix get_Pw_set_field_upw__MeshTools__(Matrix Field_upw, Element Nodes_p, Mask
     /*
       Get nodal field for particle p
     */
-    Field_pw_Ap.nV[A] = Field_upw.nM[Ndim][A_mask];
+    Field_pw_Ap.nV[A] = Field_upw.nM[A_mask][Ndim];
   }
 
   return Field_pw_Ap;
