@@ -178,8 +178,6 @@ void upw_Newmark_beta_Finite_Strains(
 
       Reactions = compute_Nodal_Reactions(FEM_Mesh,Residual,ActiveNodes);
 
-      print__MatrixLib__(Residual,Nactivenodes,3);
-
       Convergence = check_convergence(Residual,TOL,Iter,MaxIter,TimeStep);
 
       if(Convergence == false)
@@ -235,8 +233,6 @@ void upw_Newmark_beta_Finite_Strains(
     free(ActiveNodes.Nodes2Mask);
 
     print_Status("DONE !!!",TimeStep);
-
-    exit(0);
 
   }
 
@@ -739,7 +735,7 @@ static void update_Local_State(
   Matrix N_p;
   Matrix Nodal_D_Displacement_p;
   Matrix Nodal_D_Velocity_p;
-  Matrix Nodal_D_Pw_p;
+  Matrix Nodal_D_theta_p;
   Matrix Nodal_D_theta_dt;
   Tensor F_n_p; /* Deformation gradient of the soil skeleton (t = n) */
   Tensor F_n1_p; /* Deformation gradient of the soil skeleton (t = n + 1) */
@@ -823,10 +819,10 @@ static void update_Local_State(
     /*
       Get the Kirchhoff pore water pressure at t = n + 1
     */
-    Nodal_D_Pw_p = get_Pw_set_field_upw__MeshTools__(D_upw.value, Nodes_p, ActiveNodes);
-    MPM_Mesh.Phi.Pw_n1.nV[p] = MPM_Mesh.Phi.Pw.nV[p] + interpolate_scalar_magnitude__MeshTools__(Nodal_D_Pw_p, N_p);
-
+    Nodal_D_theta_p = get_Pw_set_field_upw__MeshTools__(D_upw.value, Nodes_p, ActiveNodes);
     Nodal_D_theta_dt = get_Pw_set_field_upw__MeshTools__(D_upw.d_value_dt, Nodes_p, ActiveNodes);
+
+    MPM_Mesh.Phi.Pw_n1.nV[p] = MPM_Mesh.Phi.Pw.nV[p] + interpolate_scalar_magnitude__MeshTools__(Nodal_D_theta_p, N_p);
     MPM_Mesh.Phi.d_Pw_dt_n1.nV[p] = MPM_Mesh.Phi.d_Pw_dt_n.nV[p] + interpolate_scalar_magnitude__MeshTools__(Nodal_D_theta_dt, N_p);
 
     /*
@@ -851,7 +847,7 @@ static void update_Local_State(
     */
     free__MatrixLib__(Nodal_D_Displacement_p);
     free__MatrixLib__(Nodal_D_Velocity_p);
-    free__MatrixLib__(Nodal_D_Pw_p);
+    free__MatrixLib__(Nodal_D_theta_p);
     free__MatrixLib__(Nodal_D_theta_dt);
     free__MatrixLib__(gradient_p);
     free__MatrixLib__(N_p);
@@ -1266,7 +1262,7 @@ static void compute_Flow_contribution_Fluid(
   Tensor k_p; /* Spatial permebility tensor */
 
   /* Variables to compute the relative flux */
-  double g = -10.0;
+  double g = - 10.0;
   double intrinsic_rho_f_p;
   double J_n1_p; /* Determianant of the soil skeleton deformation gradient at t = n + 1 */
   Tensor gradient_theta_n1_p;
@@ -1723,7 +1719,7 @@ static bool check_convergence(
       */
       for(int A = 0 ; A<Nnodes_mask ; A++)
       {
-        for(int i = 0 ; i<Ndof ; i++)
+        for(int i = 0 ; i<Ndim ; i++)
         {
           Error += DSQR(Residual.nM[A][i]);
         }
@@ -2122,7 +2118,7 @@ static Matrix compute_mixture_inertial_density(
 
   double rho_0 = J_p*(intrinsic_rho_f_p*phi_f_p + intrinsic_rho_s_p*phi_s_p);
   double C1 = phi_f_p*intrinsic_rho_f_p/(K_f_p*J_p);
-  double C2 = (1/J_p)*(intrinsic_rho_f_p*(1 - phi_f_0) - phi_s_p*intrinsic_rho_f_p*theta_n1_p/K_f_p);
+  double C2 = (1/J_p)*(intrinsic_rho_f_p*(1 - phi_f_0) - phi_f_p*intrinsic_rho_f_p*theta_n1_p/K_f_p);
   double C3 = C2 - intrinsic_rho_s_p*phi_s_0/J_p;
 
   Matrix mixture_inertial_density = allocZ__MatrixLib__(Ndim,Ndof);
@@ -2133,10 +2129,10 @@ static Matrix compute_mixture_inertial_density(
   {
     for(int j = 0; j<Ndim ; j++)
     {
-      mixture_inertial_density.nM[i][j] += Na_p*(J_p*C3 + rho_0)*dyn__o__FmTGRADIENT_Nb_p.N[i][j];
+      mixture_inertial_density.nM[i][j] = Na_p*(J_p*C3 + rho_0)*dyn__o__FmTGRADIENT_Nb_p.N[i][j];
     }
 
-    mixture_inertial_density.nM[i][Ndim] += Na_p*J_p*C1*dyn_p.n[i]*Nb_p;
+    mixture_inertial_density.nM[i][Ndim] = Na_p*J_p*C1*dyn_p.n[i]*Nb_p;
 
   }
 
@@ -2165,13 +2161,10 @@ static Matrix compute_mixture_stiffness_density(
   {
     for(int j = 0; j<Ndim ; j++)
     {
-      mixture_stiffness_density.nM[i][j] +=  
-      + Stiffness_density_pAB.N[i][j]
-      + theta_n1_p*FmTGRADIENT_Na_p__o__FmTGRADIENT_Nb_p.N[i][j];
+      mixture_stiffness_density.nM[i][j] = Stiffness_density_pAB.N[i][j] + theta_n1_p*FmTGRADIENT_Na_p__o__FmTGRADIENT_Nb_p.N[i][j];
     }
 
-    mixture_stiffness_density.nM[i][Ndim] += 
-     - FmTGRADIENT_Na_p.n[i]*Nb_p;
+    mixture_stiffness_density.nM[i][Ndim] = - FmTGRADIENT_Na_p.n[i]*Nb_p;
 
   }
 
@@ -2206,7 +2199,7 @@ static Matrix compute_water_inertial_density(
 
   for(int i = 0; i<Ndim ; i++)
   {
-    water_flux_density.nV[i] += 
+    water_flux_density.nV[i] = 
     + (d_theta_n1_p_dt*(1-phi_f_0)*intrinsic_rho_f_p/(K_f_p*J_p))*(Na_p*FmTGRADIENT_Nb_p.n[i])
     - (d_theta_n1_p_dt*phi_f_p*intrinsic_rho_f_p*theta_n1_p/(K_f_p*K_f_p*J_p))*(Na_p*FmTGRADIENT_Nb_p.n[i])
     - (intrinsic_rho_f_p*div_v_p*theta_n1_p/(K_f_p))*(Na_p*FmTGRADIENT_Nb_p.n[i])
@@ -2215,7 +2208,7 @@ static Matrix compute_water_inertial_density(
     - (intrinsic_rho_f_p*J_p)*(Na_p*T_grad_v__x__FmTGRADIENT_Nb_p.n[i]);
   }
 
-  water_flux_density.nV[Ndim] += 
+  water_flux_density.nV[Ndim] = 
   + (d_theta_n1_p_dt*phi_f_p*intrinsic_rho_f_p/(J_p*K_f_p*K_f_p))*(Na_p*Nb_p)
   + (phi_f_p*intrinsic_rho_f_p*alpha_4/K_f_p)*(Na_p*Nb_p)
   + (intrinsic_rho_f_p*div_v_p/K_f_p)*(Na_p*Nb_p);
@@ -2243,7 +2236,7 @@ static Matrix compute_water_flux_density(
 {
   int Ndim = NumberDimensions;
   int Ndof = NumberDOF;
-  double g = -10.0; // Gravity constant
+  double g = - 10.0; // Gravity constant
 
   Matrix water_flux_density = allocZ__MatrixLib__(1,Ndof);
 
@@ -2263,7 +2256,7 @@ static Matrix compute_water_flux_density(
 
   for(int i = 0; i<Ndim ; i++)
   { 
-    water_flux_density.nV[i] += 
+    water_flux_density.nV[i] = 
     - (1.0/g)*FmTGRADIENT_a__o__FmTGRADIENT_b__x__KFmTGRADIENT_theta_p.n[i]
     - (1.0/g)*FmTGRADIENT__x__K__x__FmTGRADIENT_p*FmTGRADIENT_theta_p.n[i]
     - (J_p*intrinsic_rho_f_p/g)*FmTGRADIENT_a__o__FmTGRADIENT_b__x__Kdyn_p.n[i]
@@ -2272,7 +2265,7 @@ static Matrix compute_water_flux_density(
     + (J_p*intrinsic_rho_f_p*alpha_1/g)*K__x__FmTGRADIENT_Na_p.n[i]*Nb_p;
   }
 
-  water_flux_density.nV[Ndim] += 
+  water_flux_density.nV[Ndim] = 
   + (1.0/g)*FmTGRADIENT__x__K__x__FmTGRADIENT_p
   + (intrinsic_rho_f_p/(K_f_p*g)*FmTGRADIENT_a__x__K__x__dyn_p*Nb_p);
 
@@ -2347,8 +2340,6 @@ static void system_reduction(
             {
               if(FEM_Mesh.Bounds.BCC_i[i].Dir[k] == 1)
               {
-
-                Residual.nM[Id_BCC_mask][k] = 0.0;
 
                 for(int A_mask = 0 ; A_mask < Nnodes_mask ; A_mask++)
                 {
