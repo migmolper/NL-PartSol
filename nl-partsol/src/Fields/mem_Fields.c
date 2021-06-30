@@ -68,6 +68,8 @@ Fields allocate_Fields(int NumParticles)
   strcpy(Phi.dt_F_n1.Info,"Rate of deformation gradient at t = n + 1");
   Phi.dt_DF = allocZ__MatrixLib__(NumParticles,Ndim*Ndim);
   strcpy(Phi.dt_DF.Info,"Rate of increment deformation gradient");
+  Phi.Fbar = allocZ__MatrixLib__(NumParticles,Ndim*Ndim);
+  strcpy(Phi.Fbar.Info,"Fbar deformation gradient");
 
   /*!
     Inverse plastic deformation gradient field (Tensor) + Initialise it with the indentity
@@ -370,6 +372,7 @@ void free_Fields(Fields Phi)
   free__MatrixLib__(Phi.F_m1_plastic);
   free__MatrixLib__(Phi.F_n);
   free__MatrixLib__(Phi.F_n1);
+  free__MatrixLib__(Phi.Fbar);
   free__MatrixLib__(Phi.J);
   free__MatrixLib__(Phi.dt_F_n);
   free__MatrixLib__(Phi.dt_F_n1);

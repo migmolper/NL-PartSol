@@ -752,6 +752,11 @@ static void update_Local_State(
     MatIndx_p = MPM_Mesh.MatIdx[p];
     MatProp_p = MPM_Mesh.Mat[MatIndx_p];
 
+    if(MatProp_p.Locking_Control_Fbar)
+    {
+      get_locking_free_Deformation_Gradient_n1__Particles__(p,MPM_Mesh,FEM_Mesh);
+    }
+
     /*
       Update the first Piola-Kirchhoff stress tensor with an apropiate
       integration rule.

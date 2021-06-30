@@ -24,7 +24,8 @@ GramsSolid (File=MPM_Mesh.msh,GPxElement=3) {
     }
     
     # Shape function definition
-    GramsShapeFun (Type=FEM) {
+    GramsShapeFun (Type=LME) {
+      gamma=7.0
     }
 
     # Initial conditions for the GPs
@@ -39,5 +40,6 @@ GramsSolid (File=MPM_Mesh.msh,GPxElement=3) {
 
 # Outputs 
 GramsOutputs (i=100) {
-	     DIR=Resultados
+  DIR=Resultados
+  Out-stress=true
 }

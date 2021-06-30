@@ -98,8 +98,12 @@ Mesh GramsBox(char * Name_File)
   FEM_Mesh.ActiveNode = (bool *)malloc(FEM_Mesh.NumNodesMesh*sizeof(bool));
   printf("\t \t %s : %s \n","-> Allocate list of active nodes","Done");
 
-  FEM_Mesh.NumParticles = (int *)Allocate_ArrayZ(FEM_Mesh.NumNodesMesh,sizeof(int));
-  FEM_Mesh.I_particles = (ChainPtr *)malloc(FEM_Mesh.NumNodesMesh*sizeof(ChainPtr));
+  FEM_Mesh.Num_Particles_Node = (int *)Allocate_ArrayZ(FEM_Mesh.NumNodesMesh,sizeof(int));
+  FEM_Mesh.List_Particles_Node = (ChainPtr *)malloc(FEM_Mesh.NumNodesMesh*sizeof(ChainPtr));
+  printf("\t \t %s : %s \n","-> Initialize ","Done");
+
+  FEM_Mesh.Num_Particles_Element = (int *)Allocate_ArrayZ(FEM_Mesh.NumElemMesh,sizeof(int));
+  FEM_Mesh.List_Particles_Element = (ChainPtr *)malloc(FEM_Mesh.NumElemMesh*sizeof(ChainPtr));
   printf("\t \t %s : %s \n","-> Initialize ","Done");
 
   FEM_Mesh.h_avg = (double *)Allocate_ArrayZ(FEM_Mesh.NumNodesMesh,sizeof(double));

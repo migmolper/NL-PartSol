@@ -339,7 +339,7 @@ Particle Generate_Soil_Water_Coupling_Analysis__InOutFun__(char * Name_File, Mes
       }   
     free(MPM_GID_Mesh.Connectivity);
     free__MatrixLib__(MPM_GID_Mesh.Coordinates);
-    free(MPM_GID_Mesh.NumParticles);
+    free(MPM_GID_Mesh.Num_Particles_Node);
 
   } 
   else

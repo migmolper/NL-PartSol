@@ -293,13 +293,16 @@ static void globalfree(Mesh FEM_Mesh, Particle MPM_Mesh)
   free_table__SetLib__(FEM_Mesh.NodeNeighbour,FEM_Mesh.NumNodesMesh);
   free(FEM_Mesh.SizeNodalLocality);
   free_table__SetLib__(FEM_Mesh.NodalLocality,FEM_Mesh.NumNodesMesh);
-  free(FEM_Mesh.NumParticles);
-  free_table__SetLib__(FEM_Mesh.I_particles,FEM_Mesh.NumNodesMesh);
-  
+  free(FEM_Mesh.Num_Particles_Node);
+  free_table__SetLib__(FEM_Mesh.List_Particles_Node,FEM_Mesh.NumNodesMesh);
+  free(FEM_Mesh.Num_Particles_Element);
+  free_table__SetLib__(FEM_Mesh.List_Particles_Element,FEM_Mesh.NumElemMesh); 
+
   /* FEM_Mesh.Bounds */
 
   /* Free malloc in MPM_Mesh */
   free(MPM_Mesh.I0);
+  free(MPM_Mesh.Element_p);
   free(MPM_Mesh.NumberNodes);
   free_table__SetLib__(MPM_Mesh.ListNodes,MPM_Mesh.NumGP);
   free_table__SetLib__(MPM_Mesh.Beps,MPM_Mesh.NumGP);

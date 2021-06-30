@@ -13,7 +13,7 @@ Mask generate_NodalMask__MeshTools__(
   for(int A = 0 ; A<Nnodes ; A++)
     {
       
-      if(FEM_Mesh.NumParticles[A] > 0)
+      if(FEM_Mesh.Num_Particles_Node[A] > 0)
       {
         Nodes2Mask[A] = Nactivenodes;
         Nactivenodes++;

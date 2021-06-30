@@ -75,21 +75,16 @@ void Stress_integration__Particles__(
 {
   int Ndim = NumberDimensions;
 
-  // Variables for the constitutive model
-  Tensor F_n1_p;
-
   State_Parameters Input_SP;
   State_Parameters Output_SP;
 
   if(strcmp(MatProp_p.Type,"Saint-Venant-Kirchhoff") == 0)
   {
     Input_SP.Stress = MPM_Mesh.Phi.Stress.nM[p];
-
+    
     if(MatProp_p.Locking_Control_Fbar)
     {
-      Input_SP.F_n1_p = (double *)calloc(Ndim*Ndim,sizeof(double));
-      F_n1_p = memory_to_tensor__TensorLib__(Input_SP.F_n1_p,2);
-      get_locking_free_Deformation_Gradient_n1__Particles__(p,F_n1_p,MPM_Mesh,FEM_Mesh);
+      Input_SP.F_n1_p = MPM_Mesh.Phi.Fbar.nM[p];
     }
     else
     {
@@ -98,22 +93,15 @@ void Stress_integration__Particles__(
 
     Output_SP = compute_1PK_Stress_Tensor_Saint_Venant_Kirchhoff(Input_SP, MatProp_p);
 
-    if(MatProp_p.Locking_Control_Fbar)
-    {
-      free(Input_SP.F_n1_p);
-    }
-
   }
   else if(strcmp(MatProp_p.Type,"Neo-Hookean-Wriggers") == 0)
   {
     Input_SP.Stress = MPM_Mesh.Phi.Stress.nM[p];
     Input_SP.J = MPM_Mesh.Phi.J.nV[p];
-
+    
     if(MatProp_p.Locking_Control_Fbar)
     {
-      Input_SP.F_n1_p = (double *)calloc(Ndim*Ndim,sizeof(double));
-      F_n1_p = memory_to_tensor__TensorLib__(Input_SP.F_n1_p,2);
-      get_locking_free_Deformation_Gradient_n1__Particles__(p,F_n1_p,MPM_Mesh,FEM_Mesh);
+      Input_SP.F_n1_p = MPM_Mesh.Phi.Fbar.nM[p];
     }
     else
     {
@@ -122,23 +110,16 @@ void Stress_integration__Particles__(
 
     Output_SP = compute_1PK_Stress_Tensor_Neo_Hookean_Wriggers(Input_SP, MatProp_p);
 
-    if(MatProp_p.Locking_Control_Fbar)
-    {
-      free(Input_SP.F_n1_p);
-    }
-
   }
   else if(strcmp(MatProp_p.Type,"Newtonian-Fluid-Compressible") == 0)
   {
     Input_SP.Stress = MPM_Mesh.Phi.Stress.nM[p];
     Input_SP.dFdt = MPM_Mesh.Phi.dt_F_n1.nM[p];
     Input_SP.J = MPM_Mesh.Phi.J.nV[p];
-
+    
     if(MatProp_p.Locking_Control_Fbar)
     {
-      Input_SP.F_n1_p = (double *)calloc(Ndim*Ndim,sizeof(double));
-      F_n1_p = memory_to_tensor__TensorLib__(Input_SP.F_n1_p,2);
-      get_locking_free_Deformation_Gradient_n1__Particles__(p,F_n1_p,MPM_Mesh,FEM_Mesh);
+      Input_SP.F_n1_p = MPM_Mesh.Phi.Fbar.nM[p];
     }
     else
     {
@@ -146,11 +127,6 @@ void Stress_integration__Particles__(
     }
 
     Output_SP = compute_1PK_Stress_Tensor_Newtonian_Fluid(Input_SP,MatProp_p);
-
-    if(MatProp_p.Locking_Control_Fbar)
-    {
-      free(Input_SP.F_n1_p);
-    }
 
   }
   else if(strcmp(MatProp_p.Type,"Von-Mises") == 0)
@@ -163,10 +139,8 @@ void Stress_integration__Particles__(
 
     if(MatProp_p.Locking_Control_Fbar)
     {
-//      Input_SP.F_n1_p = (double *)calloc(Ndim*Ndim,sizeof(double));
       Input_SP.F_n1_p = MPM_Mesh.Phi.F_n1.nM[p];
-      F_n1_p = memory_to_tensor__TensorLib__(Input_SP.F_n1_p,2);
-      get_locking_free_Deformation_Gradient_n1__Particles__(p,F_n1_p,MPM_Mesh,FEM_Mesh);
+      Input_SP.Fbar = MPM_Mesh.Phi.Fbar.nM[p];
     }
     else
     {
@@ -188,11 +162,6 @@ void Stress_integration__Particles__(
       exit(EXIT_FAILURE);
     }
 
-//    if(MatProp_p.Locking_Control_Fbar)
-//    {
-//      free(Input_SP.F_n1_p);
-//    }
-
     MPM_Mesh.Phi.EPS.nV[p] = Output_SP.EPS;
   }
   else if((strcmp(MatProp_p.Type,"Drucker-Prager-Plane-Strain") == 0) || 
@@ -205,9 +174,8 @@ void Stress_integration__Particles__(
 
     if(MatProp_p.Locking_Control_Fbar)
     {
-      Input_SP.F_n1_p = (double *)calloc(Ndim*Ndim,sizeof(double));
-      F_n1_p = memory_to_tensor__TensorLib__(Input_SP.F_n1_p,2);
-      get_locking_free_Deformation_Gradient_n1__Particles__(p,F_n1_p,MPM_Mesh,FEM_Mesh);
+      Input_SP.F_n1_p = MPM_Mesh.Phi.F_n1.nM[p];
+      Input_SP.Fbar = MPM_Mesh.Phi.Fbar.nM[p];
     }
     else
     {
@@ -225,11 +193,6 @@ void Stress_integration__Particles__(
       exit(EXIT_FAILURE);
     }
     
-
-    if(MatProp_p.Locking_Control_Fbar)
-    {
-      free(Input_SP.F_n1_p);
-    }
 
     MPM_Mesh.Phi.cohesion.nV[p] = Output_SP.Cohesion;
     MPM_Mesh.Phi.EPS.nV[p] = Output_SP.EPS;

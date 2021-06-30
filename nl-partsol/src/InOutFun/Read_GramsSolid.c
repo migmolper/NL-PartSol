@@ -164,6 +164,9 @@ Particle GramsSolid(char * Name_File, Mesh FEM_Mesh)
     /* Closest node to the particle */
     MPM_Mesh.I0 = (int *)Allocate_ArrayZ(NumParticles,sizeof(int));
 
+    /* Element of the particle */
+    MPM_Mesh.Element_p = (int *)Allocate_ArrayZ(NumParticles,sizeof(int));
+
     /* Number of tributary nodes for each particle */
     MPM_Mesh.NumberNodes = (int *)Allocate_ArrayZ(NumParticles,sizeof(int));
 
@@ -363,7 +366,7 @@ Particle GramsSolid(char * Name_File, Mesh FEM_Mesh)
     }   
     free(MPM_GID_Mesh.Connectivity);
     free__MatrixLib__(MPM_GID_Mesh.Coordinates);
-    free(MPM_GID_Mesh.NumParticles);
+    free(MPM_GID_Mesh.Num_Particles_Node);
 
   } 
   else

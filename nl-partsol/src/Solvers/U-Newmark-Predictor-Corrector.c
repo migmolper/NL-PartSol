@@ -311,7 +311,7 @@ static Matrix compute_Velocity_Corrector(
   /* 1º Get nodal values of the velocity */
   for(int I = 0 ; I<Nnodes ; I++)
   {
-    if((FEM_Mesh.NumParticles[I] > 0) && (Lumped_Mass.nV[I] > 0))
+    if((FEM_Mesh.Num_Particles_Node[I] > 0) && (Lumped_Mass.nV[I] > 0))
     {
 	  for(int i = 0 ; i<Ndim ; i++)
 	   {

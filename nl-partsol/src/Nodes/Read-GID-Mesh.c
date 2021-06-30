@@ -113,7 +113,7 @@ Mesh ReadGidMesh__MeshTools__(char * MeshName)
   GID_Mesh.Coordinates  = alloc__MatrixLib__(GID_Mesh.NumNodesMesh,GID_Mesh.Dimension);
   GID_Mesh.Connectivity = alloc_table__SetLib__(GID_Mesh.NumElemMesh);  
   GID_Mesh.NumNodesElem = (int *)Allocate_ArrayZ(GID_Mesh.NumElemMesh,sizeof(int));
-  GID_Mesh.NumParticles = (int *)Allocate_ArrayZ(GID_Mesh.NumNodesMesh,sizeof(int));
+  GID_Mesh.Num_Particles_Node = (int *)Allocate_ArrayZ(GID_Mesh.NumNodesMesh,sizeof(int));
 
 
   /*  

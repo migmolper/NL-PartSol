@@ -404,7 +404,7 @@ static void ComputeBeps(
     I_Beps = NodesBeps[i];
 
     /* List of particles close to the node */
-    Particles_Beps = FEM_Mesh.I_particles[I_Beps];
+    Particles_Beps = FEM_Mesh.List_Particles_Node[I_Beps];
     
     while(Particles_Beps != NULL){
 

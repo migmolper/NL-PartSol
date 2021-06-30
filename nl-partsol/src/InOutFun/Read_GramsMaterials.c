@@ -44,6 +44,7 @@ bool Is_Compressibility = false;
 bool Is_ReferencePressure = false;
 bool Is_Viscosity = false;
 bool Is_n_Macdonald_model = false;
+
 bool Is_Locking_Control_Fbar = false;
 
 /*
@@ -209,6 +210,10 @@ GramsMaterials (Particles=route.txt) {
 	  Mat_GP.Viscous_regularization = false;
 	  Mat_GP.fluidity_param = 0.0;
 
+	  /* Locking control */
+	  Mat_GP.Locking_Control_Fbar = false;
+	  Mat_GP.alpha_Fbar = 1.0;
+
       /* Look for the curly brace { */
       if(strcmp(kwords[2],"{") == 0){
 
@@ -314,6 +319,17 @@ GramsMaterials (Particles=route.txt) {
 	   		sprintf(Error_message,"The input was %s. Please, use : true/false",Parse_Mat_Prop[1]);
 	   		standard_error(Error_message); 
 	   	}
+	  }
+	  /**************************************************/
+	  else if(strcmp(Parse_Mat_Prop[0],"Fbar-alpha") == 0)
+	  {
+			Mat_GP.alpha_Fbar = atof(Parse_Mat_Prop[1]);
+
+			if((Mat_GP.alpha_Fbar < 0.0) || (Mat_GP.alpha_Fbar > 1.0))
+			{
+				sprintf(Error_message,"The range for Fbar-alpha is [0,1]");
+	   		standard_error(Error_message); 
+			}
 	  }
 	  /**************************************************/
 	  else if(strcmp(Parse_Mat_Prop[0],"Ceps") == 0)

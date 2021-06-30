@@ -69,7 +69,7 @@ void initialize__T4__(
         MPM_Mesh.ListNodes[p] = copy__SetLib__(Elem_p_Connectivity);
 
         /* Active those nodes that interact with the particle */
-        asign_to_nodes__Particles__(p, MPM_Mesh.I0[p], MPM_Mesh.ListNodes[p], FEM_Mesh);
+        asign_to_nodes__Particles__(p, i, MPM_Mesh.I0[p], MPM_Mesh.ListNodes[p], FEM_Mesh);
 
         /* Compute local coordinates of the particle in this element */
         X_to_Xi__T4__(Xi_p,X_p,Elem_p_Coordinates);
@@ -622,12 +622,19 @@ void local_search__T4__(Particle MPM_Mesh, Mesh FEM_Mesh)
   // Set to zero the active/non-active node, and the GPs in each element
   for(int i = 0 ; i<FEM_Mesh.NumNodesMesh ; i++)
   {
-    FEM_Mesh.NumParticles[i] = 0;
+    FEM_Mesh.Num_Particles_Node[i] = 0;
     FEM_Mesh.ActiveNode[i] = false;
   }
+
+  for(int i = 0 ; i<FEM_Mesh.NumElemMesh ; i++)
+  {
+    FEM_Mesh.Num_Particles_Element[i] = 0;
+    free__SetLib__(&FEM_Mesh.List_Particles_Element[i]); 
+  }
+
   for(int i = 0 ; i<FEM_Mesh.NumNodesMesh ; i++)
   {
-    free__SetLib__(&FEM_Mesh.I_particles[i]);
+    free__SetLib__(&FEM_Mesh.List_Particles_Node[i]);
   }
 
   // Loop over the particles
@@ -694,7 +701,7 @@ void local_search__T4__(Particle MPM_Mesh, Mesh FEM_Mesh)
       }
 
       // Active those nodes that interact with the particle
-      asign_to_nodes__Particles__(p, MPM_Mesh.I0[p], MPM_Mesh.ListNodes[p], FEM_Mesh);
+      asign_to_nodes__Particles__(p, MPM_Mesh.Element_p[p], MPM_Mesh.I0[p], MPM_Mesh.ListNodes[p], FEM_Mesh);
       
    }
     else
@@ -712,7 +719,7 @@ void local_search__T4__(Particle MPM_Mesh, Mesh FEM_Mesh)
       }
 
       // Active those nodes that interact with the particle
-      asign_to_nodes__Particles__(p, MPM_Mesh.I0[p], MPM_Mesh.ListNodes[p], FEM_Mesh);
+      asign_to_nodes__Particles__(p, MPM_Mesh.Element_p[p], MPM_Mesh.I0[p], MPM_Mesh.ListNodes[p], FEM_Mesh);
     }
 
   }

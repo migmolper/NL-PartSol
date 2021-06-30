@@ -338,8 +338,9 @@ static void update_Nodal_Momentum(Mesh FEM_Mesh, Matrix Phi_I, Matrix F_I, doubl
   /* Update the grid nodal momentum */
   for(int i = 0 ; i<Nnodes ; i++){
     for(int j = 0 ; j<Ndim ; j++){
-      if(FEM_Mesh.NumParticles[i] > 0){
-	Phi_I.nM[i][j] += DeltaTimeStep*F_I.nM[i][j];
+      if(FEM_Mesh.Num_Particles_Node[i] > 0)
+      {
+	       Phi_I.nM[i][j] += DeltaTimeStep*F_I.nM[i][j];
       }
     }
   }  

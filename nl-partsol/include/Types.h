@@ -284,6 +284,10 @@ typedef struct {
   Matrix dt_F_n1;
   Matrix dt_DF;
 
+  /*!
+   * F-bar
+   * */
+  Matrix Fbar;
 
   /*!
   * Jacobian of the deformation gradient and its rate
@@ -508,6 +512,7 @@ typedef struct {
    * Activate auxiliar techniques
    * */
   bool Locking_Control_Fbar;
+  double alpha_Fbar;
   
 } Material;
 
@@ -556,22 +561,23 @@ typedef struct {
  */
 typedef struct
 {
-  /*
-    Stress/strain parameters
-  */
+  /*!
+   * Stress/strain parameters
+   * */
   double * Stress;
   double * Strain;
 
-  /*
-    Finiste strain kinematic parameters
-  */
+  /*!
+   * Finite strain kinematic parameters
+   * */
   double * F_n1_p;
-  double J;
+  double * Fbar;
   double * dFdt;
+  double J;
 
-  /*
-    Plasticity parameters
-  */
+  /*!
+   * Plasticity parameters
+   * */
   double * Back_stress;
   double * F_m1_plastic_p;
   double * Increment_E_plastic;
@@ -591,101 +597,91 @@ typedef struct
 typedef struct {
 
   /*!
-   * Number of particles  
-   */
+   * Number of particles
+   * */
   int NumGP;
   
   /*!
    * Index with the closest node to each particle 
-   */
+   * */
   int * I0;
 
-  /*! Tributary nodes variables */
+  /*!
+   * Index of the element
+   * */
+  int * Element_p;
+
+  /*!
+   * Tributary nodes variables
+   * */
   int * NumberNodes;
   ChainPtr * ListNodes;
 
   /*! 
    * Set of particles close to each particle 
-   */
+   * */
   ChainPtr * Beps;
 
   /*! 
    * Store the values of each field in the current time step
-   */
+   * */
   Fields Phi;
   
-  /*! 
+  /*!
    * Values from the previous step 
-   */
+   * */
   Fields Phi_n0; 
   
-  /*! 
-   * Number of materials 
-   */
-  int NumberMaterials;
-  
-  /*! 
-   * Index of the material for each particle
-   */
-  int * MatIdx;
-  
   /*!
-   * Library of materials 
-   */
+   * Material variables
+   * */
+  int NumberMaterials;
+  int * MatIdx;
+  int * MixtIdx;
   Material * Mat;
 
-  /*! 
-  * Index of the mixtures for each particle 
-  */
-  int * MixtIdx;
-
   /*!
-   * Number of Neumann boundary conditions 
-   */
+   * Neumann boundary conditions 
+   * */
   int NumNeumannBC;
-
-  /*!
-   * Load case of Neumann boundary conditions 
-   */  
   Load * F;
 
   /*!
-  * Structure to store Neumann boundary conditions.
-  * will replace NumNeumannBC and F;
-  */
+   * Body forces 
+   * */
+  int NumberBodyForces;
+  Load * B;
+
+
+  /*!
+   * Structure to store Neumann boundary conditions will replace NumNeumannBC and F;
+   * */
   Boundaries Neumann_Contours;
 
-  /*! 
-   * Number of body forces 
-   */
-  int NumberBodyForces;
-
   /*!
-   * Load case for the body forces
-   */
-  Load * B; 
-
-  /*
-    Current vector of distance accelerations
-  */
+   * Current vector of distance accelerations
+   * */
   Tensor b;
 
+
   /*!
-   * uGIMP shape function parameter:
-   */
-  Matrix lp; // Size of the voxel for each particle.
+   * uGIMP shape function parameter
+   * */
+  Matrix lp;
 
   /*!
    * LME shape function parameters:
-   */
+   * */
   Matrix lambda; // Lagrange multiplier
   Matrix Beta; // Thermalization or regularization parameter
   void (* update_lambda)(int, Matrix, Matrix, Matrix, double);
 
+
   /*!
-  * Function to compute the stress state of the particle
-  */
+   * Function to compute the stress state of the particle
+   * */
   State_Parameters (* constitutive)(State_Parameters,Material);
+
 
 } Particle;
 
@@ -746,19 +742,9 @@ typedef struct {
   ChainPtr * NodalLocality;
 
   /*!
-   * List with the number of particles close to a node
-   */
-  int * NumParticles;
-
-  /*!
   * Defines if a node is activated or not
   */
   bool * ActiveNode;
-
-  /*!
-   * List of particles in a node 
-   */
-  ChainPtr * I_particles;
 
   /*!
    * List of boundaries of the domain
@@ -815,7 +801,17 @@ typedef struct {
   */
   bool (* In_Out_Element)(Matrix, Matrix);
 
+  /*!
+   * List of particles adjacent to a node 
+   */
+  int * Num_Particles_Node;
+  ChainPtr * List_Particles_Node;
 
+  /*!
+   * Variables for F-bar calculation
+   * */
+  int * Num_Particles_Element;
+  ChainPtr * List_Particles_Element;
     
 } Mesh;
 

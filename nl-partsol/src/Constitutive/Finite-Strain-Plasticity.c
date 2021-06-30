@@ -35,7 +35,15 @@ State_Parameters finite_strain_plasticity(
   Input_SP_infinitesimal.Strain = (double *)calloc(Ndim*Ndim,sizeof(double));
 
   /* Compute the elastic right Cauchy-Green tensor using the intermediate configuration. */ 
-  F_trial_elastic = matrix_product__TensorLib__(F_total,F_m1_plastic);
+  if(MatProp.Locking_Control_Fbar)
+  {    
+    Tensor Fbar = memory_to_tensor__TensorLib__(Inputs_SP_finite.Fbar,2);
+    F_trial_elastic = matrix_product__TensorLib__(Fbar,F_m1_plastic);
+  }
+  else
+  {
+    F_trial_elastic = matrix_product__TensorLib__(F_total,F_m1_plastic); 
+  }
 
   C_trial_elastic = right_Cauchy_Green__Particles__(F_trial_elastic);
 
