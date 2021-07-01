@@ -29,13 +29,13 @@ GramsSolid (File=Particles.msh,GPxElement=3) {
 	    Cel=0.2
 	    rho=1500
 	    E=60
-	    nu=0.4
+	    nu=0.48
 	    Id=0
       Fbar=true
     }
     
     GramsShapeFun (Type=LME) {
-      gamma=5.0
+      gamma=1.0
     }
 
     Define-Neumann-Boundary (File=Load_Particles.txt) {
