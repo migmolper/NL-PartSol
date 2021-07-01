@@ -97,7 +97,7 @@ void initialize__LME__(
         }
 
         // Select the closest nodes to the particle and activate them
-        Locality_I0 = FEM_Mesh.Connectivity[MPM_Mesh.Element_p[p]];
+        Locality_I0 = FEM_Mesh.NodalLocality_0[MPM_Mesh.I0[p]];
 
         while(Locality_I0 != NULL)
         {
@@ -1112,17 +1112,7 @@ void local_search__LME__(Particle MPM_Mesh, Mesh FEM_Mesh)
     }
   
     // Select the closest nodes to the particle
-    if(MPM_Mesh.Element_p[p] != -999)
-    {
-      Locality_I0 = FEM_Mesh.Connectivity[MPM_Mesh.Element_p[p]];
-    }
-    else
-    {
-      fprintf(stderr,"%s : %s %i \n",
-        "Error in local_search__LME__ -> search_particle_in_surrounding_elements__Particles__",
-        "Not posible to find the particle",p);
-      Locality_I0 = FEM_Mesh.NodalLocality_0[MPM_Mesh.I0[p]];
-    }
+    Locality_I0 = FEM_Mesh.NodalLocality_0[MPM_Mesh.I0[p]];
 
     /* 
       Activate the nodes near the particle

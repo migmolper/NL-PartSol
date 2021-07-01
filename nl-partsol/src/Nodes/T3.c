@@ -607,10 +607,8 @@ void local_search__T3__(Particle MPM_Mesh, Mesh FEM_Mesh)
       // Compute node close to the particle
       I0_p_new = get_closest_node__MeshTools__(X_p,Locality_I0,FEM_Mesh.Coordinates);
 
-      MPM_Mesh.I0[p] = I0_p_new;
-
       // Update the tributary nodes of each particle
-      MPM_Mesh.Element_p[p] = search_particle_in_surrounding_elements__Particles__(p,X_p,FEM_Mesh.NodeNeighbour[I0_p_new],FEM_Mesh);
+      MPM_Mesh.Element_p[p] = search_particle_in_surrounding_elements__Particles__(p,X_p,FEM_Mesh.NodeNeighbour[MPM_Mesh.I0[p]],FEM_Mesh);
   
       if(MPM_Mesh.Element_p[p] == -999)
       {
