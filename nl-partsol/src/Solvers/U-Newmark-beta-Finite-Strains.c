@@ -826,7 +826,8 @@ static void update_Local_State(
 
     if(MatProp_p.Locking_Control_Fbar)
     {
-      get_locking_free_Deformation_Gradient_n1__Particles__(p,MPM_Mesh,FEM_Mesh);
+      MPM_Mesh.Phi.Jbar.nV[p] = FEM_Mesh.compute_Jacobian_patch(p,MPM_Mesh,FEM_Mesh.NodeNeighbour,FEM_Mesh.List_Particles_Element);
+      get_locking_free_Deformation_Gradient_n1__Particles__(p,MPM_Mesh);
     }
 
     /*

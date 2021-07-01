@@ -76,7 +76,7 @@ void update_Deformation_Gradient_n1__Particles__(Tensor, Tensor, Tensor);
 /*
   \fn void get_locking_free_Deformation_Gradient_n1__Particles__(int p,Tensor F_n1,Particle MPM_Mesh,Mesh FEM_Mesh);
 */
-void get_locking_free_Deformation_Gradient_n1__Particles__(int,Particle,Mesh);
+void get_locking_free_Deformation_Gradient_n1__Particles__(int,Particle);
 /*******************************************************/
 
 /*

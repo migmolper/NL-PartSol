@@ -285,15 +285,16 @@ typedef struct {
   Matrix dt_DF;
 
   /*!
-   * F-bar
-   * */
-  Matrix Fbar;
-
-  /*!
   * Jacobian of the deformation gradient and its rate
   */
   Matrix J;
   Matrix dJ_dt;
+
+  /*!
+   * F-bar
+   * */
+  Matrix Fbar;
+  Matrix Jbar;
 
   /*!
    * Inverse of the plastic deformation gradient
@@ -808,11 +809,12 @@ typedef struct {
   ChainPtr * List_Particles_Node;
 
   /*!
-   * Variables for F-bar calculation
+   * Variables and function for F-bar calculation
    * */
   int * Num_Particles_Element;
-  ChainPtr * List_Particles_Element;
-    
+  ChainPtr * List_Particles_Element;    
+  double (* compute_Jacobian_patch)(int,Particle,ChainPtr *,ChainPtr *);
+
 } Mesh;
 
 /*******************************************************/

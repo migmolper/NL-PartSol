@@ -222,110 +222,35 @@ void update_Deformation_Gradient_n1__Particles__(
 
 void get_locking_free_Deformation_Gradient_n1__Particles__(
   int p,
-  Particle MPM_Mesh,
-  Mesh FEM_Mesh)
+  Particle MPM_Mesh)
 {
 
-  int q;
   int Ndim = NumberDimensions;
   int MatIndx_p = MPM_Mesh.MatIdx[p];
-  int I0_p = MPM_Mesh.I0[p];
-  int IdxElement;
-  double Simplex_Radius = FEM_Mesh.DeltaX;
-  double J_n_p_patch;
-  double J_n1_q_patch;
-  double Vol_0_q;
-  double Vol_n1_q;
-  double V0_patch;
-  double Vn1_patch;
+
+  double J_n1_patch = MPM_Mesh.Phi.Jbar.nV[p];
   double J_p;
-  double J_n1_patch;
   double J_averaged;
   double averaged_F_vol;
 
   double alpha = MPM_Mesh.Mat[MatIndx_p].alpha_Fbar;
 
-  Matrix X_p;
-  Matrix X_q;
-  Matrix Coordinates_Patch_p;
-  ChainPtr Elements_Near_I0;
-  ChainPtr Node_Patch_p;
-  ChainPtr Particle_Patch_p;
-
-  Tensor F_n1_p;
-  Tensor Fbar;
-
-  V0_patch = 0.0;
-  Vn1_patch = 0.0;
-
-  /* Get the coordinates of the particle */
-  X_p = memory_to_matrix__MatrixLib__(Ndim,1,MPM_Mesh.Phi.x_GC.nM[p]);
-
-  /* List of elements near the particle */
-  Elements_Near_I0 = FEM_Mesh.NodeNeighbour[I0_p];
-
-  /* Get the element inside of the */
-  IdxElement = search_particle_in_surrounding_elements__Particles__(p,X_p,Elements_Near_I0,FEM_Mesh);
-
-  if(IdxElement != -999)
-  {
-    // Get the surrounding nodes  
-    Node_Patch_p = FEM_Mesh.Connectivity[IdxElement];
-
-    Coordinates_Patch_p = get_nodes_coordinates__MeshTools__(Node_Patch_p, FEM_Mesh.Coordinates);
-
-    // Loop in the sourrounding particles to get the deformed and reference volumes
-    while(Node_Patch_p != NULL)
-    {
-      Particle_Patch_p = NULL;
-
-      // Get the list of particles close to this node
-      Particle_Patch_p = FEM_Mesh.List_Particles_Node[Node_Patch_p->I];
-
-      while(Particle_Patch_p != NULL)
-      {
-        q = Particle_Patch_p->I;
-        X_q = memory_to_matrix__MatrixLib__(Ndim,1,MPM_Mesh.Phi.x_GC.nM[q]);
-
-        if(FEM_Mesh.In_Out_Element(X_q,Coordinates_Patch_p))
-        {
-           Vol_0_q = MPM_Mesh.Phi.Vol_0.nV[q];
-
-           J_n1_q_patch = MPM_Mesh.Phi.J.nV[q];
-           Vol_n1_q = Vol_0_q*J_n1_q_patch;
-
-           V0_patch += Vol_0_q;
-           Vn1_patch += Vol_n1_q;
-         }
-
-        Particle_Patch_p = Particle_Patch_p->next;
-      }
-
-      Node_Patch_p = Node_Patch_p->next; 
-
-    }
-
-    free__MatrixLib__(Coordinates_Patch_p);
-
-  }
+  Tensor F_n1_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n1.nM[p],2);
+  Tensor Fbar   = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.Fbar.nM[p],2);
 
   // Compute the averaged jacobian of the deformation gradient
   J_p = MPM_Mesh.Phi.J.nV[p];
-  J_n1_patch = Vn1_patch/V0_patch;
   J_averaged = J_n1_patch/J_p;
 
   // Compute the averaged volume of the deformation gradient
-  averaged_F_vol = pow(J_averaged,(double)1/2.0);
-
-  F_n1_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n1.nM[p],2);
-  Fbar  =  memory_to_tensor__TensorLib__(MPM_Mesh.Phi.Fbar.nM[p],2);
+  averaged_F_vol = pow(J_averaged,(double)1/Ndim);
 
   // Update the deformation gradient to avoid locking (F-bar)
   for(int i = 0 ; i<Ndim ; i++)
   {
     for(int j = 0 ; j<Ndim ; j++)
     {
-      Fbar.N[i][j] = alpha*F_n1_p.N[i][j] + (1 - alpha)*averaged_F_vol*F_n1_p.N[i][j];
+      Fbar.N[i][j] = (1 - alpha)*F_n1_p.N[i][j] + alpha*averaged_F_vol*F_n1_p.N[i][j];
     }
   }
 

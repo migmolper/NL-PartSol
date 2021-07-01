@@ -68,8 +68,6 @@ Fields allocate_Fields(int NumParticles)
   strcpy(Phi.dt_F_n1.Info,"Rate of deformation gradient at t = n + 1");
   Phi.dt_DF = allocZ__MatrixLib__(NumParticles,Ndim*Ndim);
   strcpy(Phi.dt_DF.Info,"Rate of increment deformation gradient");
-  Phi.Fbar = allocZ__MatrixLib__(NumParticles,Ndim*Ndim);
-  strcpy(Phi.Fbar.Info,"Fbar deformation gradient");
 
   /*!
     Inverse plastic deformation gradient field (Tensor) + Initialise it with the indentity
@@ -96,6 +94,15 @@ Fields allocate_Fields(int NumParticles)
      Phi.J.nV[p] = 1.0;  
   }
   
+  /*!
+   * F-bar variables
+   * */
+  Phi.Fbar = allocZ__MatrixLib__(NumParticles,Ndim*Ndim);
+  strcpy(Phi.Fbar.Info,"Fbar deformation gradient");
+  Phi.Jbar = allocZ__MatrixLib__(NumParticles,1);
+  strcpy(Phi.Jbar.Info,"Jacobian-bar of the particle"); 
+
+
   /*!
     Strain_If field (Scalar) 
   */
@@ -258,6 +265,14 @@ Fields allocate_upw_vars__Fields__(int NumParticles)
   }
   
   /*!
+   * F-bar variables
+   * */
+  Phi.Fbar = allocZ__MatrixLib__(NumParticles,Ndim*Ndim);
+  strcpy(Phi.Fbar.Info,"Fbar deformation gradient");
+  Phi.Jbar = allocZ__MatrixLib__(NumParticles,1);
+  strcpy(Phi.Jbar.Info,"Jacobian-bar of the particle"); 
+
+  /*!
     Strain_If field (Scalar) 
   */
   Phi.Strain_If = allocZ__MatrixLib__(NumParticles,1);
@@ -372,11 +387,12 @@ void free_Fields(Fields Phi)
   free__MatrixLib__(Phi.F_m1_plastic);
   free__MatrixLib__(Phi.F_n);
   free__MatrixLib__(Phi.F_n1);
-  free__MatrixLib__(Phi.Fbar);
   free__MatrixLib__(Phi.J);
   free__MatrixLib__(Phi.dt_F_n);
   free__MatrixLib__(Phi.dt_F_n1);
   free__MatrixLib__(Phi.dt_DF);
+  free__MatrixLib__(Phi.Fbar);
+  free__MatrixLib__(Phi.Jbar);
   free__MatrixLib__(Phi.DF);
   free__MatrixLib__(Phi.W);
   free__MatrixLib__(Phi.Vol_0);
@@ -420,6 +436,8 @@ void free_upw_vars__Fields__(Fields Phi)
   free__MatrixLib__(Phi.dt_DF);
   free__MatrixLib__(Phi.J);
   free__MatrixLib__(Phi.dJ_dt);
+  free__MatrixLib__(Phi.Fbar);
+  free__MatrixLib__(Phi.Jbar);  
   free__MatrixLib__(Phi.W);
   free__MatrixLib__(Phi.phi_s);
   free__MatrixLib__(Phi.phi_f);

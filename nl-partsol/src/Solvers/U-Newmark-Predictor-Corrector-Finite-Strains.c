@@ -141,8 +141,8 @@ void U_Newmark_Predictor_Corrector_Finite_Strains(
       }
       if(strcmp(ShapeFunctionGP,"FEM") == 0)
       {
-//        local_search__T3__(MPM_Mesh,FEM_Mesh);
-        local_search__Q4__(MPM_Mesh,FEM_Mesh);
+        local_search__T3__(MPM_Mesh,FEM_Mesh);
+//        local_search__Q4__(MPM_Mesh,FEM_Mesh);
       }
 
       print_Status("DONE !!!",TimeStep);
@@ -754,7 +754,8 @@ static void update_Local_State(
 
     if(MatProp_p.Locking_Control_Fbar)
     {
-      get_locking_free_Deformation_Gradient_n1__Particles__(p,MPM_Mesh,FEM_Mesh);
+      MPM_Mesh.Phi.Jbar.nV[p] = FEM_Mesh.compute_Jacobian_patch(p,MPM_Mesh,FEM_Mesh.NodeNeighbour,FEM_Mesh.List_Particles_Element);
+      get_locking_free_Deformation_Gradient_n1__Particles__(p,MPM_Mesh);
     }
 
     /*
@@ -1179,7 +1180,16 @@ static void compute_Explicit_Newmark_Corrector(
         Replace the deformation gradient at t = n with the new one
       */
       F_n_p   = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n.nM[p],2);
-      F_n1_p  = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n1.nM[p],2);
+     
+
+      if(MPM_Mesh.Mat[MPM_Mesh.MatIdx[p]].Locking_Control_Fbar)
+      {
+        F_n1_p  = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.Fbar.nM[p],2);      
+      }
+      else
+      {
+        F_n1_p  = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n1.nM[p],2);      
+      }
 
       /* 
         Update/correct tensor and vector variables

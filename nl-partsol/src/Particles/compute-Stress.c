@@ -97,14 +97,15 @@ void Stress_integration__Particles__(
   else if(strcmp(MatProp_p.Type,"Neo-Hookean-Wriggers") == 0)
   {
     Input_SP.Stress = MPM_Mesh.Phi.Stress.nM[p];
-    Input_SP.J = MPM_Mesh.Phi.J.nV[p];
-    
+        
     if(MatProp_p.Locking_Control_Fbar)
     {
+      Input_SP.J = MPM_Mesh.Phi.Jbar.nV[p];
       Input_SP.F_n1_p = MPM_Mesh.Phi.Fbar.nM[p];
     }
     else
     {
+      Input_SP.J = MPM_Mesh.Phi.J.nV[p];
       Input_SP.F_n1_p = MPM_Mesh.Phi.F_n1.nM[p];
     }
 
@@ -115,14 +116,15 @@ void Stress_integration__Particles__(
   {
     Input_SP.Stress = MPM_Mesh.Phi.Stress.nM[p];
     Input_SP.dFdt = MPM_Mesh.Phi.dt_F_n1.nM[p];
-    Input_SP.J = MPM_Mesh.Phi.J.nV[p];
     
     if(MatProp_p.Locking_Control_Fbar)
     {
+      Input_SP.J = MPM_Mesh.Phi.Jbar.nV[p];
       Input_SP.F_n1_p = MPM_Mesh.Phi.Fbar.nM[p];
     }
     else
     {
+      Input_SP.J = MPM_Mesh.Phi.J.nV[p];
       Input_SP.F_n1_p = MPM_Mesh.Phi.F_n1.nM[p];
     }
 

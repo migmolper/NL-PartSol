@@ -62,6 +62,9 @@ void initialize__H8__(
         /* Particle will be initilise */
         Init_p = true;
 
+        // Assign the index of the element
+        MPM_Mesh.Element_p[p] = i;
+
         /* With the element connectivity get the node close to the particle */
         MPM_Mesh.I0[p] = get_closest_node__MeshTools__(X_p,Elem_p_Connectivity,FEM_Mesh.Coordinates);
 
@@ -69,7 +72,7 @@ void initialize__H8__(
         MPM_Mesh.ListNodes[p] = copy__SetLib__(Elem_p_Connectivity);
 
         /* Active those nodes that interact with the particle */
-        asign_to_nodes__Particles__(p, i, MPM_Mesh.I0[p], MPM_Mesh.ListNodes[p], FEM_Mesh);
+        asign_to_nodes__Particles__(p, MPM_Mesh.Element_p[p], MPM_Mesh.I0[p], MPM_Mesh.ListNodes[p], FEM_Mesh);
 
         /* Compute local coordinates of the particle in this element */
         X_to_Xi__H8__(Xi_p,X_p,Elem_p_Coordinates);
@@ -731,8 +734,6 @@ void local_search__H8__(Particle MPM_Mesh, Mesh FEM_Mesh)
   int I0_p_old; 
   // New closest node to the particle
   int I0_p_new;
-  // Index of the element
-  int IdxElement;
   // List of nodes that interact with the particle
   ChainPtr Connectivity_p;
   // Coordinates of the nodes of the Element 
@@ -783,9 +784,9 @@ void local_search__H8__(Particle MPM_Mesh, Mesh FEM_Mesh)
       MPM_Mesh.I0[p] = I0_p_new;
 
       // Update the tributary nodes of each particle
-      IdxElement = search_particle_in_surrounding_elements__Particles__(p,X_p,FEM_Mesh.NodeNeighbour[I0_p_new],FEM_Mesh);
+      MPM_Mesh.Element_p[p] = search_particle_in_surrounding_elements__Particles__(p,X_p,FEM_Mesh.NodeNeighbour[I0_p_new],FEM_Mesh);
   
-      if(IdxElement == -999)
+      if(MPM_Mesh.Element_p[p] == -999)
       {
         fprintf(stderr,"%s : %s %i \n",
         "Error in local_search__H8__ -> search_particle_in_surrounding_elements__Particles__",
@@ -793,15 +794,12 @@ void local_search__H8__(Particle MPM_Mesh, Mesh FEM_Mesh)
         exit(EXIT_FAILURE);
       }
 
-      // Assign the index of the element
-      MPM_Mesh.Element_p[p] = IdxElement;
-
       // Free previous connectivity
       free__SetLib__(&MPM_Mesh.ListNodes[p]);
       MPM_Mesh.ListNodes[p] = NULL;  
         
       // Asign new connectivity
-      MPM_Mesh.ListNodes[p] = copy__SetLib__(FEM_Mesh.Connectivity[IdxElement]);
+      MPM_Mesh.ListNodes[p] = copy__SetLib__(FEM_Mesh.Connectivity[MPM_Mesh.Element_p[p]]);
 
       // Get the coordinates of the element vertex
       CoordElement = get_nodes_coordinates__MeshTools__(MPM_Mesh.ListNodes[p],FEM_Mesh.Coordinates);
@@ -825,7 +823,7 @@ void local_search__H8__(Particle MPM_Mesh, Mesh FEM_Mesh)
       }
 
       // Active those nodes that interact with the particle
-      asign_to_nodes__Particles__(p, IdxElement, MPM_Mesh.I0[p], MPM_Mesh.ListNodes[p], FEM_Mesh);
+      asign_to_nodes__Particles__(p, MPM_Mesh.Element_p[p], MPM_Mesh.I0[p], MPM_Mesh.ListNodes[p], FEM_Mesh);
       
    }
     else
@@ -850,5 +848,67 @@ void local_search__H8__(Particle MPM_Mesh, Mesh FEM_Mesh)
 
 
 }
+
+/*********************************************************************/
+
+double compute_Jacobian_patch__H8__(
+  int p,
+  Particle MPM_Mesh,
+  ChainPtr * NodeNeighbour,
+  ChainPtr * List_Particles_Element)
+{
+
+  int q;
+  int Ndim = NumberDimensions;
+  int MatIndx_p = MPM_Mesh.MatIdx[p];
+  int I0_p = MPM_Mesh.I0[p];
+  int Element_p;
+  double J_n_p_patch;
+  double J_n1_q_patch;
+  double Vol_0_q;
+  double Vol_n1_q;
+  double V0_patch;
+  double Vn1_patch;
+  double J_p;
+  double J_n1_patch;
+  double J_averaged;
+  double averaged_F_vol;
+
+  double alpha = MPM_Mesh.Mat[MatIndx_p].alpha_Fbar;
+
+  ChainPtr Particles_Patch_p;
+
+  Tensor F_n1_p;
+  Tensor Fbar;
+
+  V0_patch = 0.0;
+  Vn1_patch = 0.0;
+
+  // Element of the particle
+  Element_p = MPM_Mesh.Element_p[p];
+
+  // Get the list of particles inside of the element
+  Particles_Patch_p = List_Particles_Element[Element_p];
+
+  while(Particles_Patch_p != NULL)
+  {
+    q = Particles_Patch_p->I;
+    Vol_0_q = MPM_Mesh.Phi.Vol_0.nV[q];
+
+    J_n1_q_patch = MPM_Mesh.Phi.J.nV[q];
+    Vol_n1_q = Vol_0_q*J_n1_q_patch;
+
+    V0_patch += Vol_0_q;
+    Vn1_patch += Vol_n1_q;
+
+    Particles_Patch_p = Particles_Patch_p->next;
+  }
+
+  // Compute the averaged jacobian of the deformation gradient
+  J_n1_patch = Vn1_patch/V0_patch;
+
+  return J_n1_patch;
+}
+
 
 /*********************************************************************/
