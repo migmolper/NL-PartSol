@@ -97,7 +97,7 @@ void U_Discrete_Energy_Momentum(
 
     print_Status("*************************************************",TimeStep);
     print_Status("First step : Generate Mask ... WORKING",TimeStep);
-
+    local_search__MeshTools__(MPM_Mesh,FEM_Mesh);
     ActiveNodes = generate_NodalMask__MeshTools__(FEM_Mesh);
     Nactivenodes = ActiveNodes.Nactivenodes;
     Free_and_Restricted_Dofs = generate_Mask_for_static_condensation__MeshTools__(ActiveNodes,FEM_Mesh);
@@ -230,7 +230,6 @@ void U_Discrete_Energy_Momentum(
   	Update Lagrangians with D_Displacement and reload the connectivity information for each particle
   */
   update_Particles(D_Displacement,D_Velocity,MPM_Mesh,FEM_Mesh,ActiveNodes,DeltaTimeStep);
-  local_search__Particles__(MPM_Mesh,FEM_Mesh);
   print_Status("DONE !!!",TimeStep);
 
 

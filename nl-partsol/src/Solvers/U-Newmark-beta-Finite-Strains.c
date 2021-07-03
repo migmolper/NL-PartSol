@@ -121,7 +121,6 @@ void U_Newmark_beta_Finite_Strains(
 
   for(int TimeStep = InitialStep ; TimeStep<NumTimeStep ; TimeStep++ )
     {
-
       print_Status("*************************************************",TimeStep);
       print_step(TimeStep,DeltaTimeStep);
 
@@ -131,6 +130,7 @@ void U_Newmark_beta_Finite_Strains(
 	       With the active set of nodes generate a mask to help the algorithm to compute
 	       the equilibrium only in the active nodes
       */
+      local_search__MeshTools__(MPM_Mesh,FEM_Mesh);
       ActiveNodes = generate_NodalMask__MeshTools__(FEM_Mesh);
       Nactivenodes = ActiveNodes.Nactivenodes;
       Free_and_Restricted_Dofs = generate_Mask_for_static_condensation__MeshTools__(ActiveNodes,FEM_Mesh);
@@ -233,17 +233,7 @@ void U_Newmark_beta_Finite_Strains(
       print_Status("Seven step : Update particles lagrangian ... WORKING",TimeStep);
 
       update_Particles(D_U,MPM_Mesh,FEM_Mesh,ActiveNodes);
-     
-      if(strcmp(ShapeFunctionGP,"LME") == 0)
-      {
-        local_search__LME__(MPM_Mesh,FEM_Mesh);
-      }
-      else
-      {
-       local_search__Particles__(MPM_Mesh,FEM_Mesh);
-      }
-
-
+    
       print_Status("DONE !!!",TimeStep);
 
       /*

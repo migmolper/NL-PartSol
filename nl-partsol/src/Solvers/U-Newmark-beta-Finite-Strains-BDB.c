@@ -127,6 +127,7 @@ void U_Newmark_beta_Finite_Strains_BDB(
 	       With the active set of nodes generate a mask to help the algorithm to compute
 	       the equilibrium only in the active nodes
       */
+      local_search__MeshTools__(MPM_Mesh,FEM_Mesh);
       ActiveNodes = generate_NodalMask__MeshTools__(FEM_Mesh);
       Nactivenodes = ActiveNodes.Nactivenodes;
       Free_and_Restricted_Dofs = generate_Mask_for_static_condensation__MeshTools__(ActiveNodes,FEM_Mesh);
@@ -239,10 +240,6 @@ void U_Newmark_beta_Finite_Strains_BDB(
       update_Particles(D_Displacement,Velocity,Acceleration,MPM_Mesh,FEM_Mesh,ActiveNodes, Params);
       print_Status("DONE !!!",TimeStep);
       
-      /*
-	Reload the connectivity information for each particle
-      */
-      local_search__Particles__(MPM_Mesh,FEM_Mesh);
       print_Status("DONE !!!",TimeStep);
 
       /*

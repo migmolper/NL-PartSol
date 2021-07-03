@@ -141,7 +141,7 @@ void upw_Newmark_beta_Finite_Strains(
 
     print_Status("*************************************************",TimeStep);
     print_Status("First step : Generate Mask ... WORKING",TimeStep);
-
+    local_search__MeshTools__(MPM_Mesh,FEM_Mesh);
     ActiveNodes = generate_NodalMask__MeshTools__(FEM_Mesh);
     Nactivenodes = ActiveNodes.Nactivenodes;
 
@@ -205,8 +205,6 @@ void upw_Newmark_beta_Finite_Strains(
     print_Status("Seven step : Update particles lagrangian ... WORKING",TimeStep);
 
     update_Particles(D_upw,MPM_Mesh,FEM_Mesh,ActiveNodes);
-
-    local_search__Particles__(MPM_Mesh,FEM_Mesh);
 
     print_Status("DONE !!!",TimeStep);
 

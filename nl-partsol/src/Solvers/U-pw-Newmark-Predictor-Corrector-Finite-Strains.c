@@ -91,7 +91,7 @@ void upw_Newmark_Predictor_Corrector_Finite_Strains(
 
       print_Status("*************************************************",TimeStep);
       DeltaTimeStep = DeltaT_Coussy__SolversLib__(MPM_Mesh, DeltaX, 1.0, CFL);
-
+      local_search__MeshTools__(MPM_Mesh,FEM_Mesh);
       ActiveNodes = generate_NodalMask__MeshTools__(FEM_Mesh);
       Nactivenodes = ActiveNodes.Nactivenodes;
       Free_and_Restricted_Dofs = generate_Mask_for_static_condensation__MeshTools__(ActiveNodes,FEM_Mesh);
@@ -164,8 +164,6 @@ void upw_Newmark_Predictor_Corrector_Finite_Strains(
 
       compute_Explicit_Newmark_Corrector(MPM_Mesh,gamma,DeltaTimeStep);
 
-      local_search__Particles__(MPM_Mesh,FEM_Mesh);
-
       print_Status("DONE !!!",TimeStep);
       
       print_Status("*************************************************",TimeStep);
@@ -184,7 +182,6 @@ void upw_Newmark_Predictor_Corrector_Finite_Strains(
       free__MatrixLib__(Velocity);
       free__MatrixLib__(D_Displacement);
       free__MatrixLib__(Total_Forces_Mixture);
-//      free__MatrixLib__(Mass_Exchanges_Source_Terms);
       free__MatrixLib__(Reactions_Mixture);
       free(ActiveNodes.Nodes2Mask);
       

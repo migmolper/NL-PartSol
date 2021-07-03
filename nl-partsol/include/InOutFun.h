@@ -16,8 +16,20 @@
   \param Words : Output string with the words parsed
 
 */
-int parse(char **, char *, char *);
 
+int parse(char **, char *, char *);
+/*****************************************************************/
+
+int Parse_string__InOutFun__(char **, char *, char *, int *);
+/*****************************************************************/
+
+FILE * Open_and_Check_File__InOutFun__(char *, int *);
+/*****************************************************************/
+
+ChainPtr File_to_Chain__InOutFun__(char *, int *);
+/*****************************************************************/
+
+Tensor Read_Vector__InOutFun__(char *, int * );
 /*****************************************************************/
 
 /*
@@ -317,7 +329,7 @@ Particle Generate_Gauss_Point_Analysis__InOutFun__(char *);
   \param Nodes : Set of background nodes
 
 */
-Particle GramsSolid(char *,Mesh);
+Particle GramsSolid(char *,Mesh,int *);
 /*****************************************************************/
 
 /*
@@ -509,5 +521,7 @@ void NLPS_Out_particles_path_csv__InOutFun__(char * Name_File);
 void Gauss_Point_evolution__InOutFun__(Particle, Event, char *, int, int);
 /*****************************************************************/
 
+
+void Hidrostatic_condition_particles__InOutFun__(char *, Particle, int,int *);
 
 #endif

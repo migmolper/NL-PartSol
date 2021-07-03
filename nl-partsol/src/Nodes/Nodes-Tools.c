@@ -1,5 +1,44 @@
 #include "nl-partsol.h"
 
+/*********************************************************************/
+
+void local_search__MeshTools__(Particle MPM_Mesh, Mesh FEM_Mesh)
+/*
+  Search the closest node to the particle based in its previous position.
+*/
+{
+
+  if(strcmp(ShapeFunctionGP,"FEM") == 0)
+  {
+    if(strcmp(FEM_Mesh.TypeElem,"Triangle") == 0)
+    {
+      local_search__T3__(MPM_Mesh, FEM_Mesh);
+    }
+    else if(strcmp(FEM_Mesh.TypeElem,"Quadrilateral") == 0)
+    {
+      local_search__Q4__(MPM_Mesh, FEM_Mesh);
+    }
+    else if(strcmp(FEM_Mesh.TypeElem,"Tetrahedra") == 0)
+    {
+      local_search__T4__(MPM_Mesh, FEM_Mesh);
+    }
+    else if(strcmp(FEM_Mesh.TypeElem,"Hexahedra") == 0)
+    {
+      local_search__H8__(MPM_Mesh, FEM_Mesh);
+    }
+  }
+  else if(strcmp(ShapeFunctionGP,"uGIMP") == 0)
+  {
+
+  }
+  else if(strcmp(ShapeFunctionGP,"LME") == 0)
+  {
+    local_search__LME__(MPM_Mesh,FEM_Mesh);
+  }
+  
+}
+
+
 /**************************************************************/
 
 Mask generate_NodalMask__MeshTools__(
@@ -13,7 +52,7 @@ Mask generate_NodalMask__MeshTools__(
   for(int A = 0 ; A<Nnodes ; A++)
     {
       
-      if(FEM_Mesh.Num_Particles_Node[A] > 0)
+      if(FEM_Mesh.ActiveNode[A])
       {
         Nodes2Mask[A] = Nactivenodes;
         Nactivenodes++;

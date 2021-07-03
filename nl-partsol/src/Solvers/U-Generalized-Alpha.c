@@ -70,7 +70,7 @@ void U_Generalized_alpha(
       print_Status("*************************************************",TimeStep);
       DeltaTimeStep = U_DeltaT__SolversLib__(MPM_Mesh, DeltaX, CFL);
       print_step(TimeStep,DeltaTimeStep);
-      
+      local_search__MeshTools__(MPM_Mesh,FEM_Mesh);
       print_Status("*************************************************",TimeStep);
       print_Status("First step : Compute nodal kinetics ... WORKING",TimeStep);
       /* BCC_Nod_VALUE(FEM_Mesh, V_I, TimeStep); */
@@ -93,7 +93,6 @@ void U_Generalized_alpha(
       print_Status("*************************************************",TimeStep);
       print_Status("Four step : Update particles lagrangian ... WORKING",TimeStep);
       update_Particles(MPM_Mesh, FEM_Mesh, Nodal_Kinetics, rb, DeltaTimeStep);
-      local_search__Particles__(MPM_Mesh, FEM_Mesh);
       print_Status("DONE !!!",TimeStep);
 
       if(TimeStep % ResultsTimeStep == 0)

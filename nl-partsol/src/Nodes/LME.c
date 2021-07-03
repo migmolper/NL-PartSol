@@ -1059,6 +1059,8 @@ void local_search__LME__(Particle MPM_Mesh, Mesh FEM_Mesh)
 
   /* Number of dimensions */
   int Ndim = NumberDimensions;
+  int Num_Particles_Node_i;
+  int Num_Particles_Element_i;
   /* Velocity and position of the particle */
   Matrix X_p;
   Matrix V_p;
@@ -1066,23 +1068,33 @@ void local_search__LME__(Particle MPM_Mesh, Mesh FEM_Mesh)
   /* List of nodes close to the node I0_p */
   ChainPtr Locality_I0;
 
-  /* Set to zero the active/non-active node, and the GPs in each element */
+
+  // Set to zero the active/non-active node, and the GPs in each element
   for(int i = 0 ; i<FEM_Mesh.NumNodesMesh ; i++)
   {
-    FEM_Mesh.Num_Particles_Node[i] = 0;
+    Num_Particles_Node_i = FEM_Mesh.Num_Particles_Node[i];
+
+    if(Num_Particles_Node_i != 0)
+    {
+      FEM_Mesh.Num_Particles_Node[i] = 0;
+      free__SetLib__(&FEM_Mesh.List_Particles_Node[i]);
+    }
+
     FEM_Mesh.ActiveNode[i] = false;
+
   }
 
   for(int i = 0 ; i<FEM_Mesh.NumElemMesh ; i++)
   {
-    FEM_Mesh.Num_Particles_Element[i] = 0;
-    free__SetLib__(&FEM_Mesh.List_Particles_Element[i]); 
+    Num_Particles_Element_i = FEM_Mesh.Num_Particles_Element[i];
+
+    if(Num_Particles_Element_i != 0)
+    {
+      free__SetLib__(&FEM_Mesh.List_Particles_Element[i]); 
+      FEM_Mesh.Num_Particles_Element[i] = 0;
+    }
   }
 
-  for(int i = 0 ; i<FEM_Mesh.NumNodesMesh ; i++)
-  {
-    free__SetLib__(&FEM_Mesh.List_Particles_Node[i]);
-  }
 
   /* 
     Loop over the particles to create the list with active nodes
@@ -1103,12 +1115,14 @@ void local_search__LME__(Particle MPM_Mesh, Mesh FEM_Mesh)
     */
     if(norm__MatrixLib__(V_p,2) > 0)
     {
+
       // Update the index of the closest node to the particle
       Locality_I0 = FEM_Mesh.NodalLocality_0[MPM_Mesh.I0[p]];
       MPM_Mesh.I0[p] = get_closest_node__MeshTools__(X_p,Locality_I0,FEM_Mesh.Coordinates);
 
       // Search particle in the sourrounding elements to this node
       MPM_Mesh.Element_p[p] = search_particle_in_surrounding_elements__Particles__(p,X_p,FEM_Mesh.NodeNeighbour[MPM_Mesh.I0[p]],FEM_Mesh);
+
     }
   
     // Select the closest nodes to the particle
@@ -1127,7 +1141,6 @@ void local_search__LME__(Particle MPM_Mesh, Mesh FEM_Mesh)
       Locality_I0 = Locality_I0->next; 
 
     }
- 
 
   }
 

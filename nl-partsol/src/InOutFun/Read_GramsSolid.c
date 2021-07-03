@@ -16,13 +16,17 @@ static void initialise_particles(Mesh,Particle,int);
 
 /*********************************************************************/
 
-Particle GramsSolid(char * Name_File, Mesh FEM_Mesh)
+Particle GramsSolid(char * Name_File, Mesh FEM_Mesh, int * STATUS)
 /*
  */
 {
 
   int Ndim = NumberDimensions;
   int NumParticles;
+
+
+  // Error signals
+  int INFO_Hidrostatic = 0;
 
   /* Simulation file */
   FILE * Sim_dat;
@@ -54,6 +58,7 @@ Particle GramsSolid(char * Name_File, Mesh FEM_Mesh)
   bool Is_GramsMaterials = false;
   bool Is_Particle_Initial = false;
   bool Is_Nodal_Initial = false;
+  bool Is_Hidrostatic_Initial = false;
   bool Is_GramsBodyForces = false;
   bool Is_GramsNeumannBC = false;
 
@@ -134,6 +139,10 @@ Particle GramsSolid(char * Name_File, Mesh FEM_Mesh)
     if ((Num_words_parse > 0) && (strcmp(Parse_GramsSolid2D[0],"Initial-nodal-values") == 0))
     {
       Is_Nodal_Initial = true;
+    }
+    if ((Num_words_parse > 0) && (strcmp(Parse_GramsSolid2D[0],"Hydrostatic-condition") == 0))
+    {
+      Is_Hidrostatic_Initial = true;
     }
     if ((Num_words_parse > 0) && (strcmp(Parse_GramsSolid2D[0],"GramsBodyForces") == 0))
     {
@@ -322,6 +331,18 @@ Particle GramsSolid(char * Name_File, Mesh FEM_Mesh)
     else if(Is_Nodal_Initial)
     {
       Initial_condition_nodes__InOutFun__(Name_File,MPM_Mesh,FEM_Mesh);
+    }
+    else if(Is_Hidrostatic_Initial)
+    {
+      Hidrostatic_condition_particles__InOutFun__(Name_File,MPM_Mesh,GPxElement,&INFO_Hidrostatic);
+      
+      if(INFO_Hidrostatic)
+      {
+        fprintf(stderr,"Error in : %s\n","GramsSolid");
+        (*STATUS) = 1;
+        return MPM_Mesh;
+      }
+
     }
     else
     {

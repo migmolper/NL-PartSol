@@ -269,12 +269,6 @@ void initial_position__Particles__(Matrix, Mesh, int);
 /*!
 
 */
-void local_search__Particles__(Particle, Mesh);
-/*******************************************************/
-
-/*!
-
-*/
 Element nodal_set__Particles__(int, ChainPtr, int);
 /*******************************************************/
 

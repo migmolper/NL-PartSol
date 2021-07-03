@@ -52,6 +52,7 @@ void U_Forward_Euler(
       print_Status("*************************************************",TimeStep);
       DeltaTimeStep = U_DeltaT__SolversLib__(MPM_Mesh, FEM_Mesh.DeltaX, CFL);
       print_step(TimeStep,DeltaTimeStep);
+      local_search__MeshTools__(MPM_Mesh,FEM_Mesh);
 
       print_Status("*************************************************",TimeStep);
       print_Status(" First step : Get the nodal fields ... WORKING",TimeStep);
@@ -78,7 +79,6 @@ void U_Forward_Euler(
       print_Status("*************************************************",TimeStep);
       print_Status(" Four step : Update lagrangian ... WORKING",TimeStep);
       update_Particles(MPM_Mesh, FEM_Mesh, Phi_I, F_I, DeltaTimeStep);
-      local_search__Particles__(MPM_Mesh,FEM_Mesh);
       print_Status("DONE !!!",TimeStep);
 
       if(TimeStep % ResultsTimeStep == 0)
@@ -338,7 +338,7 @@ static void update_Nodal_Momentum(Mesh FEM_Mesh, Matrix Phi_I, Matrix F_I, doubl
   /* Update the grid nodal momentum */
   for(int i = 0 ; i<Nnodes ; i++){
     for(int j = 0 ; j<Ndim ; j++){
-      if(FEM_Mesh.Num_Particles_Node[i] > 0)
+      if(FEM_Mesh.ActiveNode[i])
       {
 	       Phi_I.nM[i][j] += DeltaTimeStep*F_I.nM[i][j];
       }

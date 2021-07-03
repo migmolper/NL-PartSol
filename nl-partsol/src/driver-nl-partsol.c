@@ -34,6 +34,7 @@ int main(int argc, char * argv[])
   char Error_message[MAXW];
   bool Is_New_Simulation = false;
   bool Is_Restart_Simulation = false;
+  int INFO_GramsSolid = 3;
   Mesh FEM_Mesh;
   Particle MPM_Mesh;
   Time_Int_Params Parameters_Solver;
@@ -89,7 +90,7 @@ int main(int argc, char * argv[])
 //      if(Is_New_Simulation)
 //      {
       puts("Generating new MPM simulation ...");
-      MPM_Mesh = GramsSolid(SimulationFile,FEM_Mesh);
+      MPM_Mesh = GramsSolid(SimulationFile,FEM_Mesh,&INFO_GramsSolid);
 //      }
 //      if(Is_Restart_Simulation)
 //      {

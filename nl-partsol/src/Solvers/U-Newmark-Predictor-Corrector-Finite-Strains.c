@@ -82,6 +82,7 @@ void U_Newmark_Predictor_Corrector_Finite_Strains(
       print_Status("*************************************************",TimeStep);
       DeltaTimeStep = U_DeltaT__SolversLib__(MPM_Mesh, DeltaX, CFL);
       print_step(TimeStep,DeltaTimeStep);
+      local_search__MeshTools__(MPM_Mesh,FEM_Mesh);
       ActiveNodes = generate_NodalMask__MeshTools__(FEM_Mesh);
       Nactivenodes = ActiveNodes.Nactivenodes;
       Free_and_Restricted_Dofs = generate_Mask_for_static_condensation__MeshTools__(ActiveNodes,FEM_Mesh);
@@ -135,16 +136,6 @@ void U_Newmark_Predictor_Corrector_Finite_Strains(
 
       compute_Explicit_Newmark_Corrector(MPM_Mesh,gamma);
 
-      if(strcmp(ShapeFunctionGP,"LME") == 0)
-      {
-        local_search__LME__(MPM_Mesh,FEM_Mesh);
-      }
-      if(strcmp(ShapeFunctionGP,"FEM") == 0)
-      {
-        local_search__T3__(MPM_Mesh,FEM_Mesh);
-//        local_search__Q4__(MPM_Mesh,FEM_Mesh);
-      }
-
       print_Status("DONE !!!",TimeStep);
       
       print_Status("*************************************************",TimeStep);
@@ -152,6 +143,8 @@ void U_Newmark_Predictor_Corrector_Finite_Strains(
       print_Status("WORKING ...",TimeStep);
 
       output_selector(MPM_Mesh, FEM_Mesh, ActiveNodes, Velocity, D_Displacement,Forces, Reactions, DeltaTimeStep, TimeStep, ResultsTimeStep);
+
+      print_Status("DONE !!!",TimeStep);
 
       /*
       	Free memory
@@ -164,7 +157,6 @@ void U_Newmark_Predictor_Corrector_Finite_Strains(
       free__MatrixLib__(Reactions);
       free(ActiveNodes.Nodes2Mask); 
       free(Free_and_Restricted_Dofs.Nodes2Mask);
-      print_Status("DONE !!!",TimeStep);
 
     }
   

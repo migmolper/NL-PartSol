@@ -224,79 +224,6 @@ void get_particle_tributary_nodes(Particle MPM_Mesh, Mesh FEM_Mesh, int p)
 
 }
 
-
-/*********************************************************************/
-
-void local_search__Particles__(Particle MPM_Mesh, Mesh FEM_Mesh)
-/*
-  Search the closest node to the particle based in its previous position.
-*/
-{
-
-  /* Number of dimensions */
-  int Ndim = NumberDimensions;
-  /* Velocity and position of the particle */
-  Matrix X_p;
-  Matrix V_p;
-  /* Previous closest node to the particle */
-  int I0_p;
-  /* List of nodes close to the node I0_p */
-  ChainPtr Locality_I0;
-
-  /* Set to zero the active/non-active node, and the GPs in each element */
-  for(int i = 0 ; i<FEM_Mesh.NumNodesMesh ; i++)
-  {
-    FEM_Mesh.Num_Particles_Node[i] = 0;
-  }
-  
-  for(int i = 0 ; i<FEM_Mesh.NumElemMesh ; i++)
-  {
-    FEM_Mesh.Num_Particles_Element[i] = 0;
-    free__SetLib__(&FEM_Mesh.List_Particles_Element[i]); 
-  }
-
-  for(int i = 0 ; i<FEM_Mesh.NumNodesMesh ; i++)
-  {
-    free__SetLib__(&FEM_Mesh.List_Particles_Node[i]);
-  }
-
-  /* Loop over the particles */
-  for(int p = 0 ; p<MPM_Mesh.NumGP ; p++)
-  {
-
-    /* Get the global coordinates and velocity of the particle */
-    X_p = memory_to_matrix__MatrixLib__(Ndim,1,MPM_Mesh.Phi.x_GC.nM[p]);
-    V_p = memory_to_matrix__MatrixLib__(Ndim,1,MPM_Mesh.Phi.vel.nM[p]);
-
-    /* Check if the particle is static or is in movement */
-    if(norm__MatrixLib__(V_p,2) > 0)
-    {
-
-      /* Get the index of the node close to the particle */
-      I0_p = MPM_Mesh.I0[p];
-
-      /* Get nodes close to the node I0_p */
-      Locality_I0 = FEM_Mesh.NodalLocality[I0_p];
-
-      /* Update the index of the node close to the particle */
-      MPM_Mesh.I0[p] = get_closest_node__MeshTools__(X_p,Locality_I0,FEM_Mesh.Coordinates);
-
-      /* Update the tributary nodes of each particle */
-      get_particle_tributary_nodes(MPM_Mesh,FEM_Mesh,p);
-
-      /* Active those nodes that interact with the particle */
-      asign_to_nodes__Particles__(p, MPM_Mesh.Element_p[p], MPM_Mesh.I0[p], MPM_Mesh.ListNodes[p], FEM_Mesh);
-      
-    }
-    else
-    {
-      /* Active those nodes that interact with the particle */
-      asign_to_nodes__Particles__(p, MPM_Mesh.Element_p[p], MPM_Mesh.I0[p], MPM_Mesh.ListNodes[p], FEM_Mesh);
-    }
-
-  }
-}
-
 /*********************************************************************/
 
 Element nodal_set__Particles__(int i_GP, ChainPtr ListNodes, int NumNodes)
@@ -318,21 +245,18 @@ Element nodal_set__Particles__(int i_GP, ChainPtr ListNodes, int NumNodes)
 void asign_to_nodes__Particles__(int p, int E_p, int I0, ChainPtr ListNodes_p, Mesh FEM_Mesh)
 {
 
-  /*  */
+  /*!
+   * Assign particle to an element of the background mesh
+   * */
   push__SetLib__(&FEM_Mesh.List_Particles_Element[E_p],p);
   FEM_Mesh.Num_Particles_Element[E_p] += 1;
   
-  /* Auxiliar variable to loop in the list of tributary nodes of the particle */
-  ChainPtr Nodes_p = NULL;
-
+  /*!
+   * Assign particle to a node of the background mesh
+   * */
   push__SetLib__(&FEM_Mesh.List_Particles_Node[I0],p);
+  FEM_Mesh.Num_Particles_Node[I0] += 1;
   
-  Nodes_p = ListNodes_p;
-  while(Nodes_p != NULL)
-  {
-    FEM_Mesh.Num_Particles_Node[Nodes_p->I] += 1;
-    Nodes_p = Nodes_p->next; 
-  }
 }
 
 /*********************************************************************/

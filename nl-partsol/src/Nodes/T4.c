@@ -605,6 +605,8 @@ void local_search__T4__(Particle MPM_Mesh, Mesh FEM_Mesh)
 
   // Number of dimensions
   int Ndim = NumberDimensions;
+  int Num_Particles_Node_i;
+  int Num_Particles_Element_i;
   // Velocity and position of the particle
   Matrix Xi_p;
   Matrix X_p;
@@ -620,22 +622,30 @@ void local_search__T4__(Particle MPM_Mesh, Mesh FEM_Mesh)
   // List of nodes close to the node I0_p 
   ChainPtr Locality_I0;
 
-  // Set to zero the active/non-active node, and the GPs in each element
+  // Set to zero the active/non-active node, and the GPs in each element */
   for(int i = 0 ; i<FEM_Mesh.NumNodesMesh ; i++)
   {
-    FEM_Mesh.Num_Particles_Node[i] = 0;
+    Num_Particles_Node_i = FEM_Mesh.Num_Particles_Node[i];
+
+    if(Num_Particles_Node_i != 0)
+    {
+      FEM_Mesh.Num_Particles_Node[i] = 0;
+      free__SetLib__(&FEM_Mesh.List_Particles_Node[i]);
+    }
+
     FEM_Mesh.ActiveNode[i] = false;
+
   }
 
   for(int i = 0 ; i<FEM_Mesh.NumElemMesh ; i++)
   {
-    FEM_Mesh.Num_Particles_Element[i] = 0;
-    free__SetLib__(&FEM_Mesh.List_Particles_Element[i]); 
-  }
+    Num_Particles_Element_i = FEM_Mesh.Num_Particles_Element[i];
 
-  for(int i = 0 ; i<FEM_Mesh.NumNodesMesh ; i++)
-  {
-    free__SetLib__(&FEM_Mesh.List_Particles_Node[i]);
+    if(Num_Particles_Element_i != 0)
+    {
+      free__SetLib__(&FEM_Mesh.List_Particles_Element[i]); 
+      FEM_Mesh.Num_Particles_Element[i] = 0;
+    }
   }
 
   // Loop over the particles
