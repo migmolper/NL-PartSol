@@ -327,7 +327,7 @@ static void assign_hidrostatic_condition(
 
 		  for(int j = 0 ; j<Ndim ; j++)
 		  {
-		    MPM_Mesh.Phi.Stress.nM[p][j*Ndim + j] -= Pressure;
+		    MPM_Mesh.Phi.Stress.nM[p][j*Ndim + j] += Pressure;
 		  }
 
 		  free__TensorLib__(X_0p);

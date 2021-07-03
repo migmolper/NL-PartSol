@@ -166,11 +166,6 @@ void U_Newmark_beta_Finite_Strains(
       while(Convergence == false)
       {
         /*
-          Compute the stress-strain state for each particle
-        */
-        update_Local_State(D_U,ActiveNodes,MPM_Mesh,FEM_Mesh,DeltaTimeStep);
-
-        /*
           Compute the nodal forces
         */
         Forces = compute_Nodal_Forces(ActiveNodes,MPM_Mesh,FEM_Mesh,TimeStep);
@@ -216,6 +211,11 @@ void U_Newmark_beta_Finite_Strains(
 		      }
 
           update_Newmark_Nodal_Increments(D_U,U_n,Params);
+
+          /*
+            Compute the stress-strain state for each particle
+          */
+          update_Local_State(D_U,ActiveNodes,MPM_Mesh,FEM_Mesh,DeltaTimeStep);
 
 	        Iter++;
 
