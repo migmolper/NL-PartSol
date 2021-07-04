@@ -166,9 +166,9 @@ Tensor compute_stiffness_density_Newtonian_Fluid(Tensor,Tensor,Tensor,Tensor,dou
 /*******************************************************/
 
 /*!
- * \fn Matrix compute_stiffness_density_Newtonian_Fluid_Incompressible(Tensor GRAD_I,Tensor GRAD_J,Tensor F,Tensor dFdt,double J,double alpha4,Material MatProp_p);
+ * \fn Matrix compute_stiffness_density_Newtonian_Fluid_Incompressible(Tensor GRAD_I,Tensor GRAD_J,Tensor F,Tensor dFdt,double N_I, double N_J,double J,double alpha4,Material MatProp_p);
  * */
-Matrix compute_stiffness_density_Newtonian_Fluid_Incompressible(Tensor,Tensor,Tensor,Tensor,double,double,Material);
+Matrix compute_stiffness_density_Newtonian_Fluid_Incompressible(Tensor, Tensor,Tensor,Tensor,double,double,double,double,Material);
 /*******************************************************/
 
 /*!

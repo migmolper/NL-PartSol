@@ -1372,6 +1372,7 @@ static bool check_convergence(
   int MaxIter,
   int Step)
 {
+
   bool convergence;
   int Ndim = NumberDimensions;
   int Ndof = NumberDOF;
@@ -1381,54 +1382,52 @@ static bool check_convergence(
 
   if(Iter > MaxIter)
   {
-      fprintf(stderr,"%s : %s !!! \n","Error in check_convergence()",
+    fprintf(stderr,"%s : %s !!! \n","Error in check_convergence()",
         "Convergence not reached in the maximum number of iterations");
-      return true;
-      //exit(EXIT_FAILURE);
-    }
+    exit(EXIT_FAILURE);
+  }
   else
+  {
+    /*
+      Compute absolute error 
+    */
+    for(int A = 0 ; A<Nnodes_mask ; A++)
     {
-      /*
-        Compute absolute error 
-      */
-      for(int A = 0 ; A<Nnodes_mask ; A++)
+      for(int i = 0 ; i<Ndim ; i++)
       {
-        for(int i = 0 ; i<Ndim ; i++)
-        {
-          Error += DSQR(Residual.nM[A][i]);
-        }
-      }
-
-      Error = pow(Error,0.5);
-
-
-      /*
-        Compute relative error
-      */
-      if(Iter == 0)
-      {
-        Error0 = Error;
-        Error_relative = Error/Error0;      
-      }
-      else
-      {
-        Error_relative = Error/Error0;
-      }
-      
-      /*
-        Check convergence using the relative error
-      */
-      if(Error_relative > TOL)
-      {
-        printf("%e -> %e\n",Error,Error_relative);
-        return false;
-      }
-      else
-      {
-        print_convergence_stats(Step, Iter, Error, Error_relative);
-        return true;
+        Error += DSQR(Residual.nM[A][i]);
       }
     }
+
+    Error = pow(Error,0.5);
+
+    /*
+      Compute relative error
+    */
+    if(Iter == 0)
+    {
+      Error0 = Error;
+      Error_relative = Error/Error0;      
+    }
+    else
+    {
+      Error_relative = Error/Error0;
+    }
+      
+    /*
+      Check convergence using the relative error
+    */
+    if(Error_relative > TOL)
+    {
+      printf("%e -> %e\n",Error,Error_relative);
+      return false;
+    }
+    else
+    {
+      print_convergence_stats(Step, Iter, Error, Error_relative);
+      return true;
+    }
+  }
 }
 
 
@@ -1460,11 +1459,12 @@ static Matrix assemble_Tangent_Stiffness(
   int idx_AB_mask_ij;
 
   Element Nodes_p; /* List of nodes for particle */
-  Matrix gradient_p; /* Shape functions gradients */
-  Tensor gradient_pA;
-  Tensor GRADIENT_pA;
-  Tensor gradient_pB;
-  Tensor GRADIENT_pB;
+  Matrix N_p;
+  Matrix gradient_N_p; /* Shape functions gradients */
+  Tensor gradient_N_pA;
+  Tensor GRADIENT_N_pA;
+  Tensor gradient_N_pB;
+  Tensor GRADIENT_N_pB;
   Tensor F_n_p;
   Tensor F_n1_p;
   Tensor dFdt_n1_p;
@@ -1472,6 +1472,8 @@ static Matrix assemble_Tangent_Stiffness(
   Matrix Stiffness_density_p;
 
   Material MatProp_p;
+  double N_pA;
+  double N_pB;
   double V0_p; /* Volume of the particle in the reference configuration */
   double J_p; /* Jacobian of the deformation gradient */
   double alpha_4 = Params.alpha_4; /* Newmark parameter (rate-dependent models) */
@@ -1482,71 +1484,82 @@ static Matrix assemble_Tangent_Stiffness(
     Loop in the particles for the assembling process
   */
   for(int p = 0 ; p<Np ; p++)
+  {
+
+    /*
+      Get the volume of the particle in the reference configuration
+    */
+    V0_p = MPM_Mesh.Phi.Vol_0.nV[p];
+      
+    /*
+      Material properties of the particle
+    */      
+    MatIndx_p = MPM_Mesh.MatIdx[p];
+    MatProp_p = MPM_Mesh.Mat[MatIndx_p];
+
+    /*
+      Define nodes for each particle
+    */
+    NumNodes_p = MPM_Mesh.NumberNodes[p];
+    Nodes_p = nodal_set__Particles__(p, MPM_Mesh.ListNodes[p], NumNodes_p);
+
+    /* 
+      Evaluate the shape function in the coordinates of the particle
+    */
+    N_p = compute_N__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
+    gradient_N_p = compute_dN__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
+      
+    /*
+      Take the values of the deformation gradient ant t = n and t = n + 1. 
+      Later compute the midpoint deformation gradient and 
+      the transpose of the deformation gradient at the midpoint.
+    */
+    F_n_p  = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n.nM[p],2);
+    F_n1_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n1.nM[p],2);
+    dFdt_n1_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.dt_F_n1.nM[p],2);
+    transpose_F_n_p = transpose__TensorLib__(F_n_p);
+
+    /*
+      Compute the jacobian of the deformation gradient in the deformed configuration
+    */
+    J_p = I3__TensorLib__(F_n1_p);
+
+    for(int A = 0 ; A<NumNodes_p ; A++)
     {
 
-      /*
-  Get the volume of the particle in the reference configuration
-       */
-      V0_p = MPM_Mesh.Phi.Vol_0.nV[p];
-      
-      /*
-  Material properties of the particle
-       */      
-      MatIndx_p = MPM_Mesh.MatIdx[p];
-      MatProp_p = MPM_Mesh.Mat[MatIndx_p];
-
-      /*
-  Define nodes for each particle
+      /* 
+        Get the value of the shape function in node A
       */
-      NumNodes_p = MPM_Mesh.NumberNodes[p];
-      Nodes_p = nodal_set__Particles__(p, MPM_Mesh.ListNodes[p], NumNodes_p);
-
-      /*
-  Compute gradient of the shape function in each node 
-      */
-      gradient_p = compute_dN__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
-      
-      /*
-  Take the values of the deformation gradient ant t = n and t = n + 1. 
-  Later compute the midpoint deformation gradient and 
-  the transpose of the deformation gradient at the midpoint.
-      */
-      F_n_p  = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n.nM[p],2);
-      F_n1_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n1.nM[p],2);
-      dFdt_n1_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.dt_F_n1.nM[p],2);
-      transpose_F_n_p = transpose__TensorLib__(F_n_p);
-
-      /*
-  Compute the jacobian of the deformation gradient in the deformed configuration
-      */
-      J_p = I3__TensorLib__(F_n1_p);
-
-      for(int A = 0 ; A<NumNodes_p ; A++)
-  {
-    /*
-      Compute the gradient in the reference configuration 
-    */
-    gradient_pA = memory_to_tensor__TensorLib__(gradient_p.nM[A], 1);
-    GRADIENT_pA = vector_linear_mapping__TensorLib__(transpose_F_n_p,gradient_pA);
-
-    /*
-      Get the node of the mesh for the contribution 
-    */
-    Ap = Nodes_p.Connectivity[A];
-    A_mask = ActiveNodes.Nodes2Mask[Ap];
-
+      N_pA = N_p.nV[A];
     
-    for(int B = 0 ; B<NumNodes_p ; B++)
+      /*
+        Compute the gradient in the reference configuration 
+      */
+      gradient_N_pA = memory_to_tensor__TensorLib__(gradient_N_p.nM[A], 1);
+      GRADIENT_N_pA = vector_linear_mapping__TensorLib__(transpose_F_n_p,gradient_N_pA);
+
+      /*
+        Get the node of the mesh for the contribution 
+      */
+      Ap = Nodes_p.Connectivity[A];
+      A_mask = ActiveNodes.Nodes2Mask[Ap];
+
+      for(int B = 0 ; B<NumNodes_p ; B++)
       {
 
-        /*
-    Compute the gradient in the reference configuration 
+        /* 
+          Get the value of the shape function in node A
         */
-        gradient_pB = memory_to_tensor__TensorLib__(gradient_p.nM[B], 1);
-        GRADIENT_pB = vector_linear_mapping__TensorLib__(transpose_F_n_p,gradient_pB);
+         N_pB = N_p.nV[B];
+        
+        /*
+          Compute the gradient in the reference configuration 
+        */
+        gradient_N_pB = memory_to_tensor__TensorLib__(gradient_N_p.nM[B], 1);
+        GRADIENT_N_pB = vector_linear_mapping__TensorLib__(transpose_F_n_p,gradient_N_pB);
 
         /*
-    Get the node of the mesh for the contribution 
+          Get the node of the mesh for the contribution 
         */
         Bp = Nodes_p.Connectivity[B];
         B_mask = ActiveNodes.Nodes2Mask[Bp];
@@ -1556,7 +1569,7 @@ static Matrix assemble_Tangent_Stiffness(
         */
         if(strcmp(MatProp_p.Type,"Newtonian-Fluid-Incompressible") == 0)
         {
-          Stiffness_density_p = compute_stiffness_density_Newtonian_Fluid_Incompressible(GRADIENT_pA,GRADIENT_pB,F_n1_p,dFdt_n1_p,J_p,alpha_4,MatProp_p);
+          Stiffness_density_p = compute_stiffness_density_Newtonian_Fluid_Incompressible(GRADIENT_N_pA,GRADIENT_N_pB,F_n1_p,dFdt_n1_p,N_pA,N_pB,J_p,alpha_4,MatProp_p);
         }
         else
         {
@@ -1567,38 +1580,38 @@ static Matrix assemble_Tangent_Stiffness(
         }
         
         /*
-    Add the geometric contribution to each dof for the assembling process
+          Add the geometric contribution to each dof for the assembling process
         */
-        for(int i = 0 ; i<Ndim ; i++)
+        for(int i = 0 ; i<Ndof ; i++)
         {
-          for(int j = 0 ; j<Ndim ; j++)
+          for(int j = 0 ; j<Ndof ; j++)
           {
-            Tangent_Stiffness.nM[A_mask*Ndim+i][B_mask*Ndim+j] += Stiffness_density_p.nM[i][j]*V0_p;
+            Tangent_Stiffness.nM[A_mask*Ndof+i][B_mask*Ndof+j] += Stiffness_density_p.nM[i][j]*V0_p;
           }
         }
 
         /*
-    Free memory 
+          Free memory 
         */
-        free__TensorLib__(GRADIENT_pB);
+        free__TensorLib__(GRADIENT_N_pB);
         free__MatrixLib__(Stiffness_density_p);
       }
 
-    /*
+      /*
+        Free memory 
+      */
+      free__TensorLib__(GRADIENT_N_pA);   
+    }
+      
+    /* 
       Free memory 
     */
-    free__TensorLib__(GRADIENT_pA);   
+    free__TensorLib__(transpose_F_n_p);
+    free__MatrixLib__(N_p);
+    free__MatrixLib__(gradient_N_p);
+    free(Nodes_p.Connectivity);
+
   }
-      
-
-      /* 
-   Free memory 
-      */
-      free__TensorLib__(transpose_F_n_p);
-      free__MatrixLib__(gradient_p);
-      free(Nodes_p.Connectivity);
-
-    }
 
   return Tangent_Stiffness;
 }

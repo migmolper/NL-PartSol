@@ -2158,10 +2158,13 @@ static Matrix compute_mixture_stiffness_density(
   {
     for(int j = 0; j<Ndim ; j++)
     {
-      mixture_stiffness_density.nM[i][j] = Stiffness_density_pAB.N[i][j] + theta_n1_p*FmTGRADIENT_Na_p__o__FmTGRADIENT_Nb_p.N[i][j];
+      mixture_stiffness_density.nM[i][j] = 
+      + Stiffness_density_pAB.N[i][j] 
+      + theta_n1_p*FmTGRADIENT_Na_p__o__FmTGRADIENT_Nb_p.N[j][i];
     }
 
-    mixture_stiffness_density.nM[i][Ndim] = - FmTGRADIENT_Na_p.n[i]*Nb_p;
+    mixture_stiffness_density.nM[i][Ndim] = 
+    - FmTGRADIENT_Na_p.n[i]*Nb_p;
 
   }
 

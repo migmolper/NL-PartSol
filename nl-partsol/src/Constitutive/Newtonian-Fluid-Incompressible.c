@@ -49,7 +49,7 @@ State_Parameters compute_1PK_Stress_Tensor_Newtonian_Fluid_Incompressible(
     for(int j = 0 ; j < Ndim ; j++)
     {
       P.N[i][j] = 
-      - Pressure
+      - Pressure*FmT.N[i][j]
       + 2*J*mu*d__x__FmT.N[i][j]
       - (2.0/((double)Ndim))*J*mu*tr_d*FmT.N[i][j];
     }
@@ -70,10 +70,12 @@ State_Parameters compute_1PK_Stress_Tensor_Newtonian_Fluid_Incompressible(
 /**************************************************************/
 
 Matrix compute_stiffness_density_Newtonian_Fluid_Incompressible(
-  Tensor GRAD_I, 
-  Tensor GRAD_J,
+  Tensor GRAD_pA, 
+  Tensor GRAD_pB,
   Tensor F,
   Tensor dFdt,
+  double N_pA,
+  double N_pB,
   double J, 
   double alpha4,
   Material MatProp_p)
@@ -102,36 +104,48 @@ Matrix compute_stiffness_density_Newtonian_Fluid_Incompressible(
   Tensor dFdt_Fm1 = matrix_product__TensorLib__(dFdt,Fm1);
   Tensor d = symmetrise__TensorLib__(dFdt_Fm1);
 
-  Tensor FmTGRAD_I = vector_linear_mapping__TensorLib__(FmT,GRAD_I);
-  Tensor FmTGRAD_J = vector_linear_mapping__TensorLib__(FmT,GRAD_J);
+  Tensor FmTGRAD_pA = vector_linear_mapping__TensorLib__(FmT,GRAD_pA);
+  Tensor FmTGRAD_pB = vector_linear_mapping__TensorLib__(FmT,GRAD_pB);
 
-  Tensor Fm1GRAD_o_FmTGRAD_IJ = dyadic_Product__TensorLib__(FmTGRAD_I,FmTGRAD_J);
-  Tensor Fm1GRAD_o_FmTGRAD_JI = dyadic_Product__TensorLib__(FmTGRAD_J,FmTGRAD_I);
+  Tensor Fm1GRAD_o_FmTGRAD_pAB = dyadic_Product__TensorLib__(FmTGRAD_pA,FmTGRAD_pB);
+  Tensor Fm1GRAD_o_FmTGRAD_pBA = dyadic_Product__TensorLib__(FmTGRAD_pB,FmTGRAD_pA);
 
-  Tensor d_Fm1GRAD_o_FmTGRAD_IJ = matrix_product__TensorLib__(d,Fm1GRAD_o_FmTGRAD_IJ);
-  Tensor d_Fm1GRAD_o_FmTGRAD_JI = matrix_product__TensorLib__(d,Fm1GRAD_o_FmTGRAD_JI);
+  Tensor d_Fm1GRAD_o_FmTGRAD_pAB = matrix_product__TensorLib__(d,Fm1GRAD_o_FmTGRAD_pAB);
+  Tensor d_Fm1GRAD_o_FmTGRAD_pBA = matrix_product__TensorLib__(d,Fm1GRAD_o_FmTGRAD_pBA);
 
-  Tensor Fm1GRAD_o_FmTGRAD_IJ_dFdt_Fm1 = matrix_product__TensorLib__(Fm1GRAD_o_FmTGRAD_IJ,dFdt_Fm1);
-  Tensor Fm1GRAD_o_FmTGRAD_JI_dFdt_Fm1 = matrix_product__TensorLib__(Fm1GRAD_o_FmTGRAD_JI,dFdt_Fm1);
+  Tensor Fm1GRAD_o_FmTGRAD_pAB_dFdt_Fm1 = matrix_product__TensorLib__(Fm1GRAD_o_FmTGRAD_pAB,dFdt_Fm1);
+  Tensor Fm1GRAD_o_FmTGRAD_pBA_dFdt_Fm1 = matrix_product__TensorLib__(Fm1GRAD_o_FmTGRAD_pBA,dFdt_Fm1);
 
-  double GRAD_I_dot_GRAD_J = inner_product__TensorLib__(GRAD_I,GRAD_J);
+  double GRAD_A_dot_GRAD_B = inner_product__TensorLib__(GRAD_pA,GRAD_pB);
 
   for(int i = 0 ; i<Ndof ; i++)
   {
+
+    if(i<Ndim)
+    {
+      A.nM[i][Ndim] -= J*FmTGRAD_pA.n[i]*N_pB;
+    }
+
     for(int j = 0 ; j<Ndof ; j++)
     {
       if((i<Ndim) && (j<Ndim))
       {
-        A.nM[i][j] = 
-        - ((2.0/((double)Ndim))*alpha4*J*mu)*Fm1GRAD_o_FmTGRAD_IJ.N[i][j]
-        + 2*J*mu*d_Fm1GRAD_o_FmTGRAD_IJ.N[i][j]
-        + (alpha4*J*mu)*Fm1GRAD_o_FmTGRAD_JI.N[i][j]
-        - 2*J*mu*d_Fm1GRAD_o_FmTGRAD_JI.N[i][j]
-        + alpha4*J*mu*(i==j)*GRAD_I_dot_GRAD_J
-        - J*mu*GRAD_I_dot_GRAD_J*dFdt_Fm1.N[i][j]
-        - J*mu*Fm1GRAD_o_FmTGRAD_JI_dFdt_Fm1.N[i][j]
-        + (2.0/((double)Ndim))*J*mu*Fm1GRAD_o_FmTGRAD_IJ_dFdt_Fm1.N[i][j];
+        A.nM[i][j] += 
+        - ((2.0/((double)Ndim))*alpha4*J*mu)*Fm1GRAD_o_FmTGRAD_pAB.N[i][j]
+        + 2*J*mu*d_Fm1GRAD_o_FmTGRAD_pAB.N[i][j]
+        + (alpha4*J*mu)*Fm1GRAD_o_FmTGRAD_pBA.N[i][j]
+        - 2*J*mu*d_Fm1GRAD_o_FmTGRAD_pBA.N[i][j]
+        + alpha4*J*mu*(i==j)*GRAD_A_dot_GRAD_B
+        - J*mu*GRAD_A_dot_GRAD_B*dFdt_Fm1.N[i][j]
+        - J*mu*Fm1GRAD_o_FmTGRAD_pBA_dFdt_Fm1.N[i][j]
+        + (2.0/((double)Ndim))*J*mu*Fm1GRAD_o_FmTGRAD_pAB_dFdt_Fm1.N[i][j];
       }
+
+      if(j<Ndim)
+      {
+        A.nM[Ndim][j] -= J*N_pA*FmTGRAD_pB.n[j];
+      }
+
     }
   }
 
@@ -142,14 +156,14 @@ Matrix compute_stiffness_density_Newtonian_Fluid_Incompressible(
   free__TensorLib__(FmT);
   free__TensorLib__(dFdt_Fm1);
   free__TensorLib__(d);
-  free__TensorLib__(FmTGRAD_I);
-  free__TensorLib__(FmTGRAD_J);
-  free__TensorLib__(Fm1GRAD_o_FmTGRAD_IJ);
-  free__TensorLib__(Fm1GRAD_o_FmTGRAD_JI);
-  free__TensorLib__(d_Fm1GRAD_o_FmTGRAD_IJ);
-  free__TensorLib__(d_Fm1GRAD_o_FmTGRAD_JI);
-  free__TensorLib__(Fm1GRAD_o_FmTGRAD_IJ_dFdt_Fm1);
-  free__TensorLib__(Fm1GRAD_o_FmTGRAD_JI_dFdt_Fm1);
+  free__TensorLib__(FmTGRAD_pA);
+  free__TensorLib__(FmTGRAD_pB);
+  free__TensorLib__(Fm1GRAD_o_FmTGRAD_pAB);
+  free__TensorLib__(Fm1GRAD_o_FmTGRAD_pBA);
+  free__TensorLib__(d_Fm1GRAD_o_FmTGRAD_pAB);
+  free__TensorLib__(d_Fm1GRAD_o_FmTGRAD_pBA);
+  free__TensorLib__(Fm1GRAD_o_FmTGRAD_pAB_dFdt_Fm1);
+  free__TensorLib__(Fm1GRAD_o_FmTGRAD_pBA_dFdt_Fm1);
 
   return A;
 }   
