@@ -15,8 +15,6 @@ typedef struct {
 
 	double Gravity;
 
-	double P0;
-
 	int MatIndx;
 
 } Parameters;
@@ -48,7 +46,6 @@ void Hidrostatic_condition_particles__InOutFun__(
  * 	Origin = {0 ; 10}
  * 	Direction = {0 ; -1}
  * 	Gravity = 10
- * 	P0 = 0.0
  * 	MatIndx = 0
  * } 
  * */
@@ -150,7 +147,6 @@ static Parameters Read_Hidrostatic_Parameters__InOutFun__(
  * Origin = {0, 10}
  * Direction = {0,-1}
  * Gravity = 10
- * P0 = 0.0
  * MatIndx = 0
  * }
  *  
@@ -175,7 +171,6 @@ static Parameters Read_Hidrostatic_Parameters__InOutFun__(
   bool Is_Origin = false;
   bool Is_Direction = false;
   bool Is_Gravity = false;
-  bool Is_P0 = false;
   bool Is_MatIndx = false;
   bool Is_Close = false;
 
@@ -227,11 +222,6 @@ static Parameters Read_Hidrostatic_Parameters__InOutFun__(
     	Is_Gravity = true;
       hidrostatic_parameters.Gravity = atof(Parameter_pars[1]);
     } 
-    else if(strcmp(Parameter_pars[0],"P0") == 0)
-    {
-    	Is_P0 = true;
-      hidrostatic_parameters.P0 = atof(Parameter_pars[1]);
-    } 
     else if(strcmp(Parameter_pars[0],"MatIndx") == 0)
     {
     	Is_MatIndx = true;
@@ -263,7 +253,6 @@ static Parameters Read_Hidrostatic_Parameters__InOutFun__(
   	!Is_Origin || 
   	!Is_Direction || 
     !Is_Gravity || 
-    !Is_P0 ||
     !Is_MatIndx)
   {
     fprintf(stderr,"%s : %s \n","Error in Read_Hidrostatic_Parameters__InOutFun__","Some parameters are missed");
@@ -271,7 +260,6 @@ static Parameters Read_Hidrostatic_Parameters__InOutFun__(
     fputs(Is_Origin  ? "Origin : true \n" : "Origin : false \n", stdout);
     fputs(Is_Direction ? "Direction : true \n" : "Direction : false \n", stdout);
     fputs(Is_Gravity ? "Gravity : true \n" : "Gravity : false \n", stdout);
-    fputs(Is_P0 ? "Reference Pressure : true \n" : "Reference Pressure : false \n", stdout);
     fputs(Is_MatIndx ? "MatIndx : true \n" : "MatIndx : false \n", stdout);
 		(*STATUS) = 1;
     return hidrostatic_parameters;
@@ -290,9 +278,9 @@ static void assign_hidrostatic_condition(
 {
 	int Ndim = NumberDimensions;
 	int p;
-	double P0 = hidrostatic_parameters.P0;
 	double g = hidrostatic_parameters.Gravity;
 	double rho = MPM_Mesh.Mat[hidrostatic_parameters.MatIndx].rho;
+	double P0 = MPM_Mesh.Mat[hidrostatic_parameters.MatIndx].ReferencePressure;
 	double gamma = g*rho;
 	double distance;
 	double Pressure;

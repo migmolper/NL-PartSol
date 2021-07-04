@@ -245,12 +245,13 @@ typedef struct {
   Matrix Stress;
 
   /*!
-  * Fluid stress tensor
-  */
-  Matrix Stress_f;
+  * Lagrange multiplier for incompressible formulations
+  * */
+  Matrix lambda_pressure_n;
+  Matrix lambda_pressure_n1;
 
   /*!
-  * Pore water preassure, initial state, and the increment
+  * Pore water pressure, initial state, and the increment
   */
   Matrix Pw;
   Matrix d_Pw;
@@ -567,6 +568,7 @@ typedef struct
    * */
   double * Stress;
   double * Strain;
+  double Pressure;
 
   /*!
    * Finite strain kinematic parameters

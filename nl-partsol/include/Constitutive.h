@@ -160,6 +160,18 @@ Tensor compute_stiffness_density_Newtonian_Fluid(Tensor,Tensor,Tensor,Tensor,dou
 /*******************************************************/
 
 /*!
+ * \fn State_Parameters compute_1PK_Stress_Tensor_Newtonian_Fluid_Incompressible(State_Parameters Intput_SP,Material MatProp_p)
+ * */
+ State_Parameters compute_1PK_Stress_Tensor_Newtonian_Fluid_Incompressible(State_Parameters,Material);
+/*******************************************************/
+
+/*!
+ * \fn Matrix compute_stiffness_density_Newtonian_Fluid_Incompressible(Tensor GRAD_I,Tensor GRAD_J,Tensor F,Tensor dFdt,double J,double alpha4,Material MatProp_p);
+ * */
+Matrix compute_stiffness_density_Newtonian_Fluid_Incompressible(Tensor,Tensor,Tensor,Tensor,double,double,Material);
+/*******************************************************/
+
+/*!
  * \fn State_Parameters compute_1PK_Stress_Tensor_Bingham_Fluid(State_Parameters Intput_SP,Material MatProp_p);
  * */
 State_Parameters compute_1PK_Stress_Tensor_Bingham_Fluid(State_Parameters,Material);

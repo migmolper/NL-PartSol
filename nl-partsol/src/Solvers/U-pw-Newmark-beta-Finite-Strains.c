@@ -71,7 +71,6 @@ static Matrix compute_mixture_inertial_density(Tensor,Tensor,double,double,doubl
 static Matrix compute_water_flux_density(Tensor,Tensor,Tensor,Tensor,Tensor,double,double,double,double,double,double);
 static Matrix compute_water_inertial_density(Tensor,Tensor,double,double,double,double,double,double,double,double,double,double,double);
 
-static Tensor compute_stiffness_density(Tensor, Tensor, Tensor, double, Material);
 static  void  system_reduction(Matrix,Matrix,Mask,Mesh);
 static  void  solve_system(Nodal_Field,Matrix,Matrix);
 

@@ -149,6 +149,50 @@ int main(int argc, char * argv[])
       exit(EXIT_SUCCESS);
 
     }
+    else if(strcmp(Formulation,"-up") == 0)
+    {
+
+      NumberDOF = NumberDimensions + 1;
+
+      puts("*************************************************");
+      puts("Generating the background mesh ...");
+      FEM_Mesh = GramsBox(SimulationFile);
+
+      puts("*************************************************");
+      puts("Read solver ...");
+      Parameters_Solver = Solver_selector__InOutFun__(SimulationFile,FEM_Mesh.DeltaX);
+
+      puts("*************************************************");
+      puts("Generating new MPM simulation ...");
+      MPM_Mesh = GramsSolid(SimulationFile,FEM_Mesh,&INFO_GramsSolid);
+
+      puts("*************************************************");
+      puts("Read outputs ...");
+      GramsOutputs(SimulationFile);
+      NLPS_Out_nodal_path_csv__InOutFun__(SimulationFile);
+      NLPS_Out_particles_path_csv__InOutFun__(SimulationFile);
+
+      puts("*************************************************");
+      puts("Run simulation ...");
+      if(strcmp(TimeIntegrationScheme,"Newmark-beta-Finite-Strains") == 0 )
+      {
+        Up_Newmark_beta_Finite_Strains(FEM_Mesh, MPM_Mesh, Parameters_Solver);
+      }
+      else
+      {
+        sprintf(Error_message,"%s","Wrong time integration scheme");
+        standard_error(Error_message); 
+      }
+
+      puts("*************************************************");
+      puts("Free memory ...");
+      globalfree(FEM_Mesh, MPM_Mesh);       
+
+      printf("Computation finished at : %s \n",__TIME__);  
+      puts("Exiting of the program...");
+      exit(EXIT_SUCCESS);
+
+    }
     else if(strcmp(Formulation,"-upw") == 0)
     {
 
@@ -253,24 +297,24 @@ puts("Non-Linear Particle Solver (NL-PartSol)");
 
   /* Read kind of system */
 #ifdef __linux__
-  puts("This is the Linux version of the programa.");
+  puts("Linux version.");
 #endif    
 
 #ifdef __APPLE__
-  puts("This is the Mac OSX version of the program."); 
+  puts("Mac OSX version."); 
 #endif
   
 #ifdef _WIN32 
-  puts("This is the Windows version of the program."); 
+  puts("Windows version."); 
 #endif
 
 puts("Usage : nl-partsol -Flag [commands.nlp]");
 puts("Flag values:");
 puts(" * -GP  : Gauss Point Analysis");
 puts(" * -u   : Displacement formulation");
-puts(" * -up  : Velocity-Pressure formulation (Under development)");
-puts(" * -upw : Soil-water mixture displacement-pressure formulation (Under development)");
-puts(" * -uU  : Soil-water mixture velocity formulation (Under development)");
+puts(" * -up  : Velocity-Pressure formulation");
+puts(" * -upw : Soil-water mixture displacement-pressure formulation");
+puts(" * -uU  : Soil-water mixture velocity formulation (Not developed yet)");
 puts("The creator of NL-PartSol is Miguel Molinos");
 
 puts("mails to : m.molinos@alumnos.upm.es (Madrid-Spain)");

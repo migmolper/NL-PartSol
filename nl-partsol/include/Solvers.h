@@ -96,6 +96,18 @@ void U_Newmark_Predictor_Corrector_Finite_Strains(Mesh, Particle, Time_Int_Param
 */
 void U_Newmark_beta_Finite_Strains(Mesh, Particle, Time_Int_Params);
 
+
+/*
+  \fn void Up_Newmark_beta_Finite_Strains(Mesh FEM_Mesh, Particle MPM_Mesh, Time_Int_Params Parameters_Solver)
+
+  \brief Incompresssible formulation of the finite strain Newmark-beta
+ 
+  \param Mesh FEM_Mesh : Variable with the nodal information
+  \param Particle MPM_Mesh : Variable with the particle information
+  \param InitialStep
+*/
+void Up_Newmark_beta_Finite_Strains(Mesh,Particle,Time_Int_Params);
+
 /*
   \fn void U_Newmark_beta_Finite_Strains_BDB(Mesh FEM_Mesh, Particle MPM_Mesh, Time_Int_Params Parameters_Solver)
 

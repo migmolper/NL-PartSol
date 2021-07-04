@@ -131,6 +131,17 @@ void Stress_integration__Particles__(
     Output_SP = compute_1PK_Stress_Tensor_Newtonian_Fluid(Input_SP,MatProp_p);
 
   }
+  else if(strcmp(MatProp_p.Type,"Newtonian-Fluid-Incompressible") == 0)
+  {
+    Input_SP.Stress = MPM_Mesh.Phi.Stress.nM[p];
+    Input_SP.dFdt = MPM_Mesh.Phi.dt_F_n1.nM[p];
+    Input_SP.J = MPM_Mesh.Phi.J.nV[p];
+    Input_SP.F_n1_p = MPM_Mesh.Phi.F_n1.nM[p];
+    Input_SP.Pressure = MPM_Mesh.Phi.lambda_pressure_n1.nV[p];
+
+    Output_SP = compute_1PK_Stress_Tensor_Newtonian_Fluid_Incompressible(Input_SP,MatProp_p);
+
+  }
   else if(strcmp(MatProp_p.Type,"Von-Mises") == 0)
   {
 
