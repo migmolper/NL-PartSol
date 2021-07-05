@@ -471,6 +471,7 @@ Fields allocate_upw_vars__Fields__(int NumParticles)
     for(int i = 0 ; i<Ndim ; i++)
     {
       Phi.F_n.nM[p][i + i*Ndim] = 1.0;   
+      Phi.F_n1.nM[p][i + i*Ndim] = 1.0;
     }
   }
 

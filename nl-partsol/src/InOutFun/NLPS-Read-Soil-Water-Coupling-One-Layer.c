@@ -153,6 +153,11 @@ Particle Generate_Soil_Water_Coupling_Analysis__InOutFun__(char * Name_File, Mes
     */
     MPM_Mesh.I0 = (int *)Allocate_ArrayZ(NumParticles,sizeof(int));
 
+    /*
+      Element of the particle
+    */
+    MPM_Mesh.Element_p = (int *)Allocate_ArrayZ(NumParticles,sizeof(int));
+
     /* 
       Number of tributary nodes for each particle 
     */

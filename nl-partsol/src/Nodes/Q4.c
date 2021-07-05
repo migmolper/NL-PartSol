@@ -51,7 +51,7 @@ void initialize__Q4__(
     /* Get the global and local coodinates of the particle */ 
     X_p = memory_to_matrix__MatrixLib__(Ndim,1,MPM_Mesh.Phi.x_GC.nM[p]);
     Xi_p = memory_to_matrix__MatrixLib__(Ndim,1,MPM_Mesh.Phi.x_EC.nM[p]);
-    
+
     /* Check for each element of the mesh */
     for(int i = 0 ; i<Nelem ; i++)
     {
@@ -97,8 +97,7 @@ void initialize__Q4__(
             FEM_Mesh.ActiveNode[Locality_I0->I] = true;
           }
 
-          Locality_I0 = Locality_I0->next; 
-
+          Locality_I0 = Locality_I0->next;
         }
 
 

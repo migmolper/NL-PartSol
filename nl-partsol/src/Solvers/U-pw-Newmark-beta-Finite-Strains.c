@@ -171,8 +171,6 @@ void upw_Newmark_beta_Finite_Strains(
     while(Convergence == false)
     {
 
-      update_Local_State(D_upw,ActiveNodes,MPM_Mesh,FEM_Mesh);
-
       Residual = compute_Residual(upw_n,D_upw,Effective_Mass,ActiveNodes,MPM_Mesh,FEM_Mesh,Params,TimeStep);
 
       Reactions = compute_Nodal_Reactions(FEM_Mesh,Residual,ActiveNodes);
@@ -189,6 +187,8 @@ void upw_Newmark_beta_Finite_Strains(
         solve_system(D_upw,Tangent_Stiffness,Residual);
 
         update_Newmark_Nodal_Increments(D_upw,upw_n,Params);
+
+        update_Local_State(D_upw,ActiveNodes,MPM_Mesh,FEM_Mesh);
         
         Iter++;
 
@@ -197,6 +197,8 @@ void upw_Newmark_beta_Finite_Strains(
         free__MatrixLib__(Tangent_Stiffness);
       }
     }
+
+    exit(0);
 
     print_Status("DONE !!!",TimeStep);
 
