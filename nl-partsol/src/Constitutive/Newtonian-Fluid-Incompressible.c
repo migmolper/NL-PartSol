@@ -69,13 +69,11 @@ State_Parameters compute_1PK_Stress_Tensor_Newtonian_Fluid_Incompressible(
 
 /**************************************************************/
 
-Matrix compute_stiffness_density_Newtonian_Fluid_Incompressible(
+Tensor compute_stiffness_density_Newtonian_Fluid_Incompressible(
   Tensor GRAD_pA, 
   Tensor GRAD_pB,
   Tensor F,
   Tensor dFdt,
-  double N_pA,
-  double N_pB,
   double J, 
   double alpha4,
   Material MatProp_p)
@@ -85,7 +83,6 @@ Matrix compute_stiffness_density_Newtonian_Fluid_Incompressible(
     Number of dimensions
   */
   int Ndim = NumberDimensions;
-  int Ndof = NumberDOF;
     
   /* Material parameters */
   double mu = MatProp_p.Viscosity;
@@ -93,7 +90,7 @@ Matrix compute_stiffness_density_Newtonian_Fluid_Incompressible(
   /*
     Stifness density tensor
   */
-  Matrix A = allocZ__MatrixLib__(Ndof,Ndof);
+  Tensor A = alloc__TensorLib__(2);
 
   /*
     Auxiliar variables
@@ -118,34 +115,20 @@ Matrix compute_stiffness_density_Newtonian_Fluid_Incompressible(
 
   double GRAD_A_dot_GRAD_B = inner_product__TensorLib__(GRAD_pA,GRAD_pB);
 
-  for(int i = 0 ; i<Ndof ; i++)
+  for(int i = 0 ; i<Ndim ; i++)
   {
 
-    if(i<Ndim)
+    for(int j = 0 ; j<Ndim ; j++)
     {
-      A.nM[i][Ndim] -= J*FmTGRAD_pA.n[i]*N_pB;
-    }
-
-    for(int j = 0 ; j<Ndof ; j++)
-    {
-      if((i<Ndim) && (j<Ndim))
-      {
-        A.nM[i][j] += 
-        - ((2.0/((double)Ndim))*alpha4*J*mu)*Fm1GRAD_o_FmTGRAD_pAB.N[i][j]
-        + 2*J*mu*d_Fm1GRAD_o_FmTGRAD_pAB.N[i][j]
-        + (alpha4*J*mu)*Fm1GRAD_o_FmTGRAD_pBA.N[i][j]
-        - 2*J*mu*d_Fm1GRAD_o_FmTGRAD_pBA.N[i][j]
-        + alpha4*J*mu*(i==j)*GRAD_A_dot_GRAD_B
-        - J*mu*GRAD_A_dot_GRAD_B*dFdt_Fm1.N[i][j]
-        - J*mu*Fm1GRAD_o_FmTGRAD_pBA_dFdt_Fm1.N[i][j]
-        + (2.0/((double)Ndim))*J*mu*Fm1GRAD_o_FmTGRAD_pAB_dFdt_Fm1.N[i][j];
-      }
-
-      if(j<Ndim)
-      {
-        A.nM[Ndim][j] -= J*N_pA*FmTGRAD_pB.n[j];
-      }
-
+      A.N[i][j] += 
+      - ((2.0/((double)Ndim))*alpha4*J*mu)*Fm1GRAD_o_FmTGRAD_pAB.N[i][j]
+      + 2*J*mu*d_Fm1GRAD_o_FmTGRAD_pAB.N[i][j]
+      + (alpha4*J*mu)*Fm1GRAD_o_FmTGRAD_pBA.N[i][j]
+      - 2*J*mu*d_Fm1GRAD_o_FmTGRAD_pBA.N[i][j]
+      + alpha4*J*mu*(i==j)*GRAD_A_dot_GRAD_B
+      - J*mu*GRAD_A_dot_GRAD_B*dFdt_Fm1.N[i][j]
+      - J*mu*Fm1GRAD_o_FmTGRAD_pBA_dFdt_Fm1.N[i][j]
+      + (2.0/((double)Ndim))*J*mu*Fm1GRAD_o_FmTGRAD_pAB_dFdt_Fm1.N[i][j];
     }
   }
 

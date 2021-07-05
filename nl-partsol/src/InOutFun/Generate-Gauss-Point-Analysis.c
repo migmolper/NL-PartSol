@@ -100,7 +100,7 @@ Particle Generate_Gauss_Point_Analysis__InOutFun__(char * SimulationFile)
   PointAnalysis.NumberMaterials = NumberMaterials;
   PointAnalysis.Mat = Read_Materials__InOutFun__(SimulationFile, NumberMaterials);
 
-  PointAnalysis.Phi = allocate_Fields(NumTimeStep);
+  PointAnalysis.Phi = allocate_U_vars__Fields__(NumTimeStep);
 
   Strain_curve * Strain_Case = Read_Strains_curves(PointAnalysis.Phi,SimulationFile,NumStrainCurves);
 

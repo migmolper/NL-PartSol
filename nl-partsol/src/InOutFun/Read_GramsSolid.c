@@ -250,7 +250,14 @@ Particle GramsSolid(char * Name_File, Mesh FEM_Mesh, int * STATUS)
     /**************************************************/    
     /****** Allocate vectorial/tensorial fields *******/
     /**************************************************/
-    MPM_Mesh.Phi = allocate_Fields(NumParticles);
+    if(strcmp(Formulation,"-u") == 0)
+    {
+      MPM_Mesh.Phi = allocate_U_vars__Fields__(NumParticles);
+    }
+    else if(strcmp(Formulation,"-up") == 0)
+    {
+      MPM_Mesh.Phi = allocate_Up_vars__Fields__(NumParticles);
+    }
 
     /**************************************************/
     /************ Read material properties ************/

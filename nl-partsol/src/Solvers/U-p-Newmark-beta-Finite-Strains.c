@@ -61,7 +61,7 @@ static  void  compute_Nodal_Nominal_traction_Forces(Matrix,Mask,Particle,Mesh,in
 static Matrix compute_Nodal_Reactions(Mesh,Matrix,Mask);
 static  bool  check_convergence(Matrix,double,int,int,int);
 
-static Matrix assemble_Tangent_Stiffness(Mask,Particle,Mesh,Newmark_parameters);
+static Matrix assemble_Tangent_Stiffness(Mask,Particle,Mesh,double,Newmark_parameters);
 static  void  system_reduction(Matrix,Matrix,Mask,Mesh);
 static  void  solve_system(Nodal_Field,Matrix,Matrix);
 
@@ -175,7 +175,7 @@ void Up_Newmark_beta_Finite_Strains(
       if(Convergence == false)
       {
 
-        Tangent_Stiffness = assemble_Tangent_Stiffness(ActiveNodes,MPM_Mesh,FEM_Mesh,Params);
+        Tangent_Stiffness = assemble_Tangent_Stiffness(ActiveNodes,MPM_Mesh,FEM_Mesh,epsilon,Params);
 
         system_reduction(Tangent_Stiffness,Residual,ActiveNodes,FEM_Mesh);
 
@@ -1437,6 +1437,7 @@ static Matrix assemble_Tangent_Stiffness(
   Mask ActiveNodes,
   Particle MPM_Mesh,
   Mesh FEM_Mesh,
+  double epsilon,
   Newmark_parameters Params)
 
 /*
@@ -1468,15 +1469,21 @@ static Matrix assemble_Tangent_Stiffness(
   Tensor F_n_p;
   Tensor F_n1_p;
   Tensor dFdt_n1_p;
+  Tensor Fm1_n1_p;
+  Tensor FmT_n1_p;
+  Tensor FmTGRADIENT_N_pA;
+  Tensor FmTGRADIENT_N_pB;
   Tensor transpose_F_n_p;
-  Matrix Stiffness_density_p;
+  Tensor Stiffness_density_p;
 
   Material MatProp_p;
   double N_pA;
   double N_pB;
+  double m_p;
   double V0_p; /* Volume of the particle in the reference configuration */
   double J_p; /* Jacobian of the deformation gradient */
-  double alpha_4 = Params.alpha_4; /* Newmark parameter (rate-dependent models) */
+  double alpha_1 = Params.alpha_1; // Time integration parameter
+  double alpha_4 = Params.alpha_4; // Time integration parameter
 
   Matrix Tangent_Stiffness = allocZ__MatrixLib__(Order, Order);
 
@@ -1487,9 +1494,10 @@ static Matrix assemble_Tangent_Stiffness(
   {
 
     /*
-      Get the volume of the particle in the reference configuration
+      Get the volume and mass of the particle in the reference configuration
     */
     V0_p = MPM_Mesh.Phi.Vol_0.nV[p];
+    m_p = MPM_Mesh.Phi.mass.nV[p];
       
     /*
       Material properties of the particle
@@ -1518,6 +1526,8 @@ static Matrix assemble_Tangent_Stiffness(
     F_n1_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n1.nM[p],2);
     dFdt_n1_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.dt_F_n1.nM[p],2);
     transpose_F_n_p = transpose__TensorLib__(F_n_p);
+    Fm1_n1_p = Inverse__TensorLib__(F_n1_p);
+    FmT_n1_p = transpose__TensorLib__(Fm1_n1_p);
 
     /*
       Compute the jacobian of the deformation gradient in the deformed configuration
@@ -1527,16 +1537,13 @@ static Matrix assemble_Tangent_Stiffness(
     for(int A = 0 ; A<NumNodes_p ; A++)
     {
 
-      /* 
-        Get the value of the shape function in node A
+      /*
+        Get the value of the shape function and derivative in node A
       */
       N_pA = N_p.nV[A];
-    
-      /*
-        Compute the gradient in the reference configuration 
-      */
       gradient_N_pA = memory_to_tensor__TensorLib__(gradient_N_p.nM[A], 1);
       GRADIENT_N_pA = vector_linear_mapping__TensorLib__(transpose_F_n_p,gradient_N_pA);
+      FmTGRADIENT_N_pA = vector_linear_mapping__TensorLib__(FmT_n1_p,GRADIENT_N_pA);
 
       /*
         Get the node of the mesh for the contribution 
@@ -1548,15 +1555,12 @@ static Matrix assemble_Tangent_Stiffness(
       {
 
         /* 
-          Get the value of the shape function in node A
+          Get the value of the shape function and derivative in node B
         */
-         N_pB = N_p.nV[B];
-        
-        /*
-          Compute the gradient in the reference configuration 
-        */
+        N_pB = N_p.nV[B];
         gradient_N_pB = memory_to_tensor__TensorLib__(gradient_N_p.nM[B], 1);
         GRADIENT_N_pB = vector_linear_mapping__TensorLib__(transpose_F_n_p,gradient_N_pB);
+        FmTGRADIENT_N_pB = vector_linear_mapping__TensorLib__(FmT_n1_p,GRADIENT_N_pB);
 
         /*
           Get the node of the mesh for the contribution 
@@ -1569,7 +1573,7 @@ static Matrix assemble_Tangent_Stiffness(
         */
         if(strcmp(MatProp_p.Type,"Newtonian-Fluid-Incompressible") == 0)
         {
-          Stiffness_density_p = compute_stiffness_density_Newtonian_Fluid_Incompressible(GRADIENT_N_pA,GRADIENT_N_pB,F_n1_p,dFdt_n1_p,N_pA,N_pB,J_p,alpha_4,MatProp_p);
+          Stiffness_density_p = compute_stiffness_density_Newtonian_Fluid_Incompressible(GRADIENT_N_pA,GRADIENT_N_pB,F_n1_p,dFdt_n1_p,J_p,alpha_4,MatProp_p);
         }
         else
         {
@@ -1580,13 +1584,21 @@ static Matrix assemble_Tangent_Stiffness(
         }
         
         /*
-          Add the geometric contribution to each dof for the assembling process
+          Start assembling process
         */
-        for(int i = 0 ; i<Ndof ; i++)
+        for(int i = 0 ; i<Ndim ; i++)
         {
-          for(int j = 0 ; j<Ndof ; j++)
+
+          // Cross terms for the irredectuble formulation
+          Tangent_Stiffness.nM[A_mask*Ndof+i][B_mask*Ndof+Ndim] -= J_p*FmTGRADIENT_N_pA.n[i]*N_pB*V0_p;
+          Tangent_Stiffness.nM[A_mask*Ndof+Ndim][B_mask*Ndof+i] -= J_p*N_pA*FmTGRADIENT_N_pB.n[i]*V0_p;
+
+          // Stiffness and intertial density
+          for(int j = 0 ; j<Ndim ; j++)
           {
-            Tangent_Stiffness.nM[A_mask*Ndof+i][B_mask*Ndof+j] += Stiffness_density_p.nM[i][j]*V0_p;
+            Tangent_Stiffness.nM[A_mask*Ndof+i][B_mask*Ndof+j] += 
+            + alpha_1*(i==j)*((1-epsilon)*N_pA*N_pB + (A_mask==B_mask)*epsilon*N_pA)*m_p 
+            + Stiffness_density_p.N[i][j]*V0_p;
           }
         }
 
@@ -1594,19 +1606,23 @@ static Matrix assemble_Tangent_Stiffness(
           Free memory 
         */
         free__TensorLib__(GRADIENT_N_pB);
-        free__MatrixLib__(Stiffness_density_p);
+        free__TensorLib__(FmTGRADIENT_N_pB);
+        free__TensorLib__(Stiffness_density_p);
       }
 
       /*
         Free memory 
       */
       free__TensorLib__(GRADIENT_N_pA);   
+      free__TensorLib__(FmTGRADIENT_N_pA);
     }
       
     /* 
       Free memory 
     */
     free__TensorLib__(transpose_F_n_p);
+    free__TensorLib__(Fm1_n1_p);
+    free__TensorLib__(FmT_n1_p);
     free__MatrixLib__(N_p);
     free__MatrixLib__(gradient_N_p);
     free(Nodes_p.Connectivity);

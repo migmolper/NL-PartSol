@@ -354,7 +354,13 @@ static void globalfree(Mesh FEM_Mesh, Particle MPM_Mesh)
 
   if(strcmp(Formulation,"-u") == 0)
   {
-    free_Fields(MPM_Mesh.Phi);
+    free_U_vars__Fields__(MPM_Mesh.Phi);
+    free(MPM_Mesh.MatIdx);
+  }
+
+  if(strcmp(Formulation,"-up") == 0)
+  {
+    free_Up_vars__Fields__(MPM_Mesh.Phi);
     free(MPM_Mesh.MatIdx);
   }
 

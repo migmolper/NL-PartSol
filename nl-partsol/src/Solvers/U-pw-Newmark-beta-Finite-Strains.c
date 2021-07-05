@@ -2046,7 +2046,7 @@ static Matrix assemble_Tangent_Stiffness(
             if(i<Ndim)
             {
               Tangent_Stiffness.nM[A_mask*Ndof+i][B_mask*Ndof+j] += 
-              (i==j)*((1-epsilon)*Na_p*Nb_p + (A_mask==B_mask)*epsilon*Na_p)*m_p +
+              alpha_1*(i==j)*((1-epsilon)*Na_p*Nb_p + (A_mask==B_mask)*epsilon*Na_p)*m_p +
               (mixture_inertial_density.nM[i][j] + mixture_stiffness_density.nM[i][j])*V0_p;
             }
             else
