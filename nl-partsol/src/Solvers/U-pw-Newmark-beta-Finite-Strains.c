@@ -129,7 +129,7 @@ void upw_Newmark_beta_Finite_Strains(
     not required to be satisfied. The only purpose of it is to use the existing
     software interfase.
   */
-  DeltaTimeStep = 0.01;// DeltaT_Coussy__SolversLib__(MPM_Mesh, DeltaX, 1.0, CFL); 
+  DeltaTimeStep = DeltaT_Coussy__SolversLib__(MPM_Mesh, DeltaX, 1.0, CFL); 
   Params = compute_Newmark_parameters(beta, gamma, DeltaTimeStep);
 
   for(int TimeStep = InitialStep ; TimeStep<NumTimeStep ; TimeStep++ )
@@ -1702,56 +1702,56 @@ static bool check_convergence(
   double Error = 0.0;
   double Error_relative = 0.0;
 
-  if(Iter > MaxIter)
+  
+  /*
+    Compute absolute error 
+  */
+  for(int A = 0 ; A<Nnodes_mask ; A++)
   {
-      fprintf(stderr,"%s : %s !!! \n","Error in check_convergence()",
-        "Convergence not reached in the maximum number of iterations");
-      return true;
-      //exit(EXIT_FAILURE);
-    }
-  else
+    for(int i = 0 ; i<Ndof ; i++)
     {
-      /*
-        Compute absolute error 
-      */
-      for(int A = 0 ; A<Nnodes_mask ; A++)
-      {
-        for(int i = 0 ; i<Ndof ; i++)
-        {
-          Error += DSQR(Residual.nM[A][i]);
-        }
-      }
-
-      Error = pow(Error,0.5);
-
-
-      /*
-        Compute relative error
-      */
-      if(Iter == 0)
-      {
-        Error0 = Error;
-        Error_relative = Error/Error0;      
-      }
-      else
-      {
-        Error_relative = Error/Error0;
-      }
-      
-      /*
-        Check convergence using the relative error
-      */
-      if(Error_relative > TOL)
-      {
-        printf("%e -> %e\n",Error,Error_relative);
-        return false;
-      }
-      else
-      {
-        print_convergence_stats(Step, Iter, Error, Error_relative);
-        return true;
-      }
+      Error += DSQR(Residual.nM[A][i]);
     }
+  }
+
+  Error = pow(Error,0.5);
+
+
+  /*
+    Compute relative error
+  */
+  if(Iter == 0)
+  {
+    Error0 = Error;
+    Error_relative = Error/Error0;      
+  }
+  else if(Iter > MaxIter)
+  {
+    Error_relative = Error/Error0;
+    fprintf(stderr,"%s : %s !!! \n","Error in check_convergence()",
+          "Convergence not reached in the maximum number of iterations");
+    fprintf(stderr,"Absolute error : %e | Relative error %e \n",Error,Error_relative);
+//    exit(EXIT_FAILURE);
+    return true;
+  }
+  else
+  {
+        Error_relative = Error/Error0;
+  }
+      
+  /*
+    Check convergence using the relative error
+  */
+  if(Error_relative > TOL)
+  {
+    return false;
+  }
+  else
+  {
+    print_convergence_stats(Step, Iter, Error, Error_relative);
+    return true;
+  }
+
 }
 
 
