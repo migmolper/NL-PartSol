@@ -198,8 +198,6 @@ void upw_Newmark_beta_Finite_Strains(
       }
     }
 
-    exit(0);
-
     print_Status("DONE !!!",TimeStep);
 
     print_Status("*************************************************",TimeStep);
@@ -1718,7 +1716,7 @@ static bool check_convergence(
       */
       for(int A = 0 ; A<Nnodes_mask ; A++)
       {
-        for(int i = 0 ; i<Ndim ; i++)
+        for(int i = 0 ; i<Ndof ; i++)
         {
           Error += DSQR(Residual.nM[A][i]);
         }
