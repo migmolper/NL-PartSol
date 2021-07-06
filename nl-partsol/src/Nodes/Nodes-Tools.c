@@ -353,7 +353,10 @@ Matrix get_U_set_field_upw__MeshTools__(
 
 /*********************************************************************/
 
-Matrix get_Pw_set_field_upw__MeshTools__(Matrix Field_upw, Element Nodes_p, Mask ActiveNodes)
+Matrix get_Pw_set_field_upw__MeshTools__(
+  Matrix Field_upw, 
+  Element Nodes_p, 
+  Mask ActiveNodes)
 {
   int Nnodes = Nodes_p.NumberNodes;
   int Ndim = NumberDimensions;

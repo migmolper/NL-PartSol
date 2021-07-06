@@ -37,9 +37,10 @@ typedef struct
 typedef struct
 {
 
-  Matrix value;
-  Matrix d_value_dt;
-  Matrix d2_value_dt2;
+  Matrix U;
+  Matrix d_U_dt;
+  Matrix d2_U_dt2;
+  Matrix lambda_pressure;
 
 } Nodal_Field;
   
@@ -51,7 +52,7 @@ static Newmark_parameters compute_Newmark_parameters(double, double, double);
 static Matrix compute_Nodal_Effective_Mass(Particle, Mesh, Mask, double);
 static  void  compute_Gravity_field(Mask, Particle, int);
 static Nodal_Field compute_Nodal_Field(Matrix, Particle, Mesh, Mask);
-static Nodal_Field initialise_Nodal_Increments(Mask, Mesh, int);
+static Nodal_Field initialise_Nodal_Increments(Nodal_Field,Mask,Mesh,Newmark_parameters,int);
 
 static Matrix compute_Residual(Nodal_Field,Nodal_Field,Matrix,Mask,Particle,Mesh,Newmark_parameters,int);
 static  void  compute_Inertial_Forces(Nodal_Field,Nodal_Field,Matrix,Matrix,Mask,Particle,Newmark_parameters);
@@ -105,8 +106,8 @@ void Up_Newmark_beta_Finite_Strains(
   bool Convergence;
 
   Matrix Effective_Mass;
-  Nodal_Field D_up;
-  Nodal_Field up_n;
+  Nodal_Field D_Up;
+  Nodal_Field Up_n;
   Matrix Residual;
   Matrix Reactions;
   Matrix Tangent_Stiffness;
@@ -152,8 +153,8 @@ void Up_Newmark_beta_Finite_Strains(
     print_Status("Third step : Compute nodal kinetics ... WORKING",TimeStep);
   
     compute_Gravity_field(ActiveNodes, MPM_Mesh, TimeStep);
-    up_n = compute_Nodal_Field(Effective_Mass,MPM_Mesh,FEM_Mesh,ActiveNodes);
-    D_up = initialise_Nodal_Increments(ActiveNodes, FEM_Mesh, TimeStep);
+    Up_n = compute_Nodal_Field(Effective_Mass,MPM_Mesh,FEM_Mesh,ActiveNodes);
+    D_Up = initialise_Nodal_Increments(Up_n,ActiveNodes,FEM_Mesh,Params,TimeStep);
 
     print_Status("DONE !!!",TimeStep);  
 
@@ -166,7 +167,7 @@ void Up_Newmark_beta_Finite_Strains(
     while(Convergence == false)
     {
 
-      Residual = compute_Residual(up_n,D_up,Effective_Mass,ActiveNodes,MPM_Mesh,FEM_Mesh,Params,TimeStep);
+      Residual = compute_Residual(Up_n,D_Up,Effective_Mass,ActiveNodes,MPM_Mesh,FEM_Mesh,Params,TimeStep);
 
       Reactions = compute_Nodal_Reactions(FEM_Mesh,Residual,ActiveNodes);
 
@@ -179,11 +180,11 @@ void Up_Newmark_beta_Finite_Strains(
 
         system_reduction(Tangent_Stiffness,Residual,ActiveNodes,FEM_Mesh);
 
-        solve_system(D_up,Tangent_Stiffness,Residual);
+        solve_system(D_Up,Tangent_Stiffness,Residual);
 
-        update_Newmark_Nodal_Increments(D_up,up_n,Params);
+        update_Newmark_Nodal_Increments(D_Up,Up_n,Params);
 
-        update_Local_State(D_up,ActiveNodes,MPM_Mesh,FEM_Mesh);
+        update_Local_State(D_Up,ActiveNodes,MPM_Mesh,FEM_Mesh);
         
         Iter++;
 
@@ -198,14 +199,14 @@ void Up_Newmark_beta_Finite_Strains(
     print_Status("*************************************************",TimeStep);
     print_Status("Seven step : Update particles lagrangian ... WORKING",TimeStep);
 
-    update_Particles(D_up,MPM_Mesh,FEM_Mesh,ActiveNodes);
+    update_Particles(D_Up,MPM_Mesh,FEM_Mesh,ActiveNodes);
 
     print_Status("DONE !!!",TimeStep);
 
     /*
       Outputs
     */
-    output_selector(up_n, D_up, MPM_Mesh, FEM_Mesh, ActiveNodes, TimeStep, ResultsTimeStep);
+    output_selector(Up_n, D_Up, MPM_Mesh, FEM_Mesh, ActiveNodes, TimeStep, ResultsTimeStep);
   
     print_Status("*************************************************",TimeStep);
     print_Status("Eight step : Reset nodal values ... WORKING",TimeStep);
@@ -214,12 +215,15 @@ void Up_Newmark_beta_Finite_Strains(
       Free memory.
     */
     free__MatrixLib__(Effective_Mass); 
-    free__MatrixLib__(up_n.value);
-    free__MatrixLib__(up_n.d_value_dt);
-    free__MatrixLib__(up_n.d2_value_dt2);
-    free__MatrixLib__(D_up.value);
-    free__MatrixLib__(D_up.d_value_dt);
-    free__MatrixLib__(D_up.d2_value_dt2);
+    
+    free__MatrixLib__(Up_n.U);
+    free__MatrixLib__(Up_n.d_U_dt);
+    free__MatrixLib__(Up_n.d2_U_dt2); 
+    free__MatrixLib__(Up_n.lambda_pressure);
+    free__MatrixLib__(D_Up.U);
+    free__MatrixLib__(D_Up.d_U_dt);
+    free__MatrixLib__(D_Up.d2_U_dt2);
+    free__MatrixLib__(D_Up.lambda_pressure);
     free__MatrixLib__(Residual);
     free__MatrixLib__(Reactions);
     free(ActiveNodes.Nodes2Mask);
@@ -264,9 +268,8 @@ static Matrix compute_Nodal_Effective_Mass(
 
   int Nnodes_mask = ActiveNodes.Nactivenodes;
   int Ndim = NumberDimensions;
-  int Ndof = NumberDOF;
   int Np = MPM_Mesh.NumGP;
-  int Order = Ndof*Nnodes_mask;
+  int Order = Ndim*Nnodes_mask;
   int Ap;
   int Bp;
   int A_mask;
@@ -338,9 +341,9 @@ static Matrix compute_Nodal_Effective_Mass(
         /* 
           Fill the effective mass matrix considering the number of dofs
         */
-        for(int i = 0 ; i<Ndof ; i++)
+        for(int i = 0 ; i<Ndim ; i++)
         {
-          Effective_MassMatrix.nM[A_mask*Ndof+i][B_mask*Ndof+i] += (1-epsilon)*m_p*Na_p*Nb_p + (A_mask==B_mask)*epsilon*m_p*Na_p;
+          Effective_MassMatrix.nM[A_mask*Ndim+i][B_mask*Ndim+i] += (1-epsilon)*m_p*Na_p*Nb_p + (A_mask==B_mask)*epsilon*m_p*Na_p;
         }
 
       }
@@ -421,21 +424,21 @@ static Nodal_Field compute_Nodal_Field(
 
   -> The nodal Acceleration/Second time derivative of the pore water pressure.
   The operation is linearized and all the dof split the solution array in n components like :
-  | M 0 0 |   |d2 (u.x) dt2|   |m * d2 (u.x) dt2|
-  | 0 M 0 | * |d2 (u.y) dt2| = |m * d2 (u.y) dt2|
-  | 0 0 M |   |d2 (p.w) dt2|   |m * d2 (p.w) dt2|
+  | M 0 | *  |d2 (u.x) dt2| = |m * d2 (u.x) dt2|
+  | 0 M |_IJ |d2 (u.y) dt2|_J |m * d2 (u.y) dt2|_I
 
   -> The nodal Velocity/First time derivative of the pore water pressure.
   The operation is linearized and all the dof split the solution array in n components like :
-  | M 0 0 |   |d (u.x) dt|   |m * d (u.x) dt|
-  | 0 M 0 | * |d (u.y) dt| = |m * d (u.y) dt|
-  | 0 0 M |   |d (p.w) dt|   |m * d (p.w) dt|
+  | M 0 | *   |d (u.x) dt| = |m * d (u.x) dt|
+  | 0 M |_IJ  |d (u.y) dt|_J |m * d (u.y) dt|_I
 
   -> The nodal displacement/pore water pressure.
   The operation is linearized and all the dof split the solution array in n components like :
-  | M 0 0 |   |u.x|   |m * u.x|
-  | 0 M 0 | * |u.y| = |m * u.y|
-  | 0 0 M |   |p.w|   |m * p.w|
+  | M 0 | *  |u.x| = |m * u.x|
+  | 0 M |_IJ |u.y|_J |m * u.y|_I
+
+
+  | M |_IJ * |l.p|_J = |m * l.p|_I
 */
 {
 
@@ -458,11 +461,14 @@ static Nodal_Field compute_Nodal_Field(
   Element Nodes_p;
 
   /* Define and allocate the output vector */
-  Nodal_Field upw;
-  upw.value        = allocZ__MatrixLib__(Nnodes_mask,Ndof);
-  upw.d_value_dt   = allocZ__MatrixLib__(Nnodes_mask,Ndof);
-  upw.d2_value_dt2 = allocZ__MatrixLib__(Nnodes_mask,Ndof);
+  Nodal_Field Up_n;
+  Up_n.U        = allocZ__MatrixLib__(Nnodes_mask,Ndim);
+  Up_n.d_U_dt   = allocZ__MatrixLib__(Nnodes_mask,Ndim);
+  Up_n.d2_U_dt2 = allocZ__MatrixLib__(Nnodes_mask,Ndim);
+  Up_n.lambda_pressure = allocZ__MatrixLib__(Nnodes_mask,1);
 
+  /* Lumped mass for the lagrange multiplier */
+  Matrix Lumped_MassMatrix = allocZ__MatrixLib__(Nnodes_mask,1);
 
   /* Iterate over the particles to get the nodal values */
   for(int p = 0 ; p<Np ; p++)
@@ -478,7 +484,7 @@ static Nodal_Field compute_Nodal_Field(
     N_p = compute_N__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
 
     /* 
-      Get the mass of the GP
+      Get the mass of the particle
     */
     m_p = MPM_Mesh.Phi.mass.nV[p];
 
@@ -497,24 +503,22 @@ static Nodal_Field compute_Nodal_Field(
       Na_p = N_p.nV[A];
 
       /*
+        Compute terms of the lumped mass matrix
+      */
+      Lumped_MassMatrix.nV[A_mask] += m_p*Na_p;
+
+      /*
         Nodal displacement and pressure (and its rates)
       */
-      for(int i = 0 ; i<Ndof ; i++)
+      for(int i = 0 ; i<Ndim ; i++)
       {
-        if(i<Ndim)
-        {
-          upw.value.nM[A_mask][i]        += m_p*Na_p*MPM_Mesh.Phi.dis.nM[p][i];
-          upw.d_value_dt.nM[A_mask][i]   += m_p*Na_p*MPM_Mesh.Phi.vel.nM[p][i];
-          upw.d2_value_dt2.nM[A_mask][i] += m_p*Na_p*MPM_Mesh.Phi.acc.nM[p][i];
-        } 
-        else
-        {
-          upw.value.nM[A_mask][i]        += m_p*Na_p*MPM_Mesh.Phi.Pw.nV[p]; 
-          upw.d_value_dt.nM[A_mask][i]   += m_p*Na_p*MPM_Mesh.Phi.d_Pw_dt_n.nV[p];
-          upw.d2_value_dt2.nM[A_mask][i] += m_p*Na_p*MPM_Mesh.Phi.d2_Pw_dt2.nV[p];          
-        } 
-
+        Up_n.U.nM[A_mask][i]        += m_p*Na_p*MPM_Mesh.Phi.dis.nM[p][i];
+        Up_n.d_U_dt.nM[A_mask][i]   += m_p*Na_p*MPM_Mesh.Phi.vel.nM[p][i];
+        Up_n.d2_U_dt2.nM[A_mask][i] += m_p*Na_p*MPM_Mesh.Phi.acc.nM[p][i];
       }
+
+      Up_n.lambda_pressure.nV[A_mask] += m_p*Na_p*MPM_Mesh.Phi.lambda_pressure_n.nV[p];
+
     }
 
     /*
@@ -528,11 +532,11 @@ static Nodal_Field compute_Nodal_Field(
   /*
     Call the LAPACK solver to compute the accelerations and second derivative of the pore water pressure
   */
-  int Order = Nnodes_mask*Ndof;
+  int Order = Nnodes_mask*Ndim;
   int LDA   = Order;
   int LDB   = Order;
   char  TRANS = 'T'; /* (Transpose) */
-  int   INFO= 3;
+  int   INFO = 3;
   int * IPIV = (int *)Allocate_Array(Order,sizeof(int));
   int NRHS = 1;
   double * AUX_MEMORY = (double *)calloc(Order*Order,sizeof(double));
@@ -566,33 +570,45 @@ static Nodal_Field compute_Nodal_Field(
   }
 
   /*
-    Solve for the acceleration and second derivative of the pore water pressure
+    Solve for the displacemen field and derivates fields
   */
-  dgetrs_(&TRANS,&Order,&NRHS,AUX_MEMORY,&LDA,IPIV,upw.value.nV,&LDB,&INFO);
-  dgetrs_(&TRANS,&Order,&NRHS,AUX_MEMORY,&LDA,IPIV,upw.d_value_dt.nV,&LDB,&INFO);
-  dgetrs_(&TRANS,&Order,&NRHS,AUX_MEMORY,&LDA,IPIV,upw.d2_value_dt2.nV,&LDB,&INFO);
+  dgetrs_(&TRANS,&Order,&NRHS,AUX_MEMORY,&LDA,IPIV,Up_n.U.nV,&LDB,&INFO);
+  dgetrs_(&TRANS,&Order,&NRHS,AUX_MEMORY,&LDA,IPIV,Up_n.d_U_dt.nV,&LDB,&INFO);
+  dgetrs_(&TRANS,&Order,&NRHS,AUX_MEMORY,&LDA,IPIV,Up_n.d2_U_dt2.nV,&LDB,&INFO);
+
+  /*
+    Solve for the pressure lagrange multiplier
+  */
+  for(int A = 0 ; A<Nnodes_mask ; A++)
+  {
+    Up_n.lambda_pressure.nV[A] = Up_n.lambda_pressure.nV[A]/Lumped_MassMatrix.nV[A];
+  }
 
   /*
     Free auxiliar memory
   */
+  free__MatrixLib__(Lumped_MassMatrix);
   free(AUX_MEMORY);
   free(IPIV);
  
   /*
     Add some usefulll info
   */
-  strcpy(upw.value.Info,"Nodal-fields");
-  strcpy(upw.d_value_dt.Info,"First-time-derivative-nodal-fields");
-  strcpy(upw.d2_value_dt2.Info,"Second-time-derivative-nodal-fields");
+  strcpy(Up_n.U.Info,"Nodal-Displacement");
+  strcpy(Up_n.d_U_dt.Info,"First-time-derivative-nodal-Displacement");
+  strcpy(Up_n.d2_U_dt2.Info,"Second-time-derivative-nodal-Displacement");
+  strcpy(Up_n.lambda_pressure.Info,"Pressure-lagrange-multiplier");
 
-  return upw;
+  return Up_n;
 }
 
 /**************************************************************/
 
 static Nodal_Field initialise_Nodal_Increments(
+  Nodal_Field Up_n,
   Mask ActiveNodes,
   Mesh FEM_Mesh,
+  Newmark_parameters Params,
   int TimeStep)
 /*
   Allocate the increments nodal values for the time integration scheme,
@@ -608,13 +624,22 @@ static Nodal_Field initialise_Nodal_Increments(
   int Id_BCC; /* Index of the node where we apply the BCC */
   int Id_BCC_mask;
 
+  double alpha_1 = Params.alpha_1;
+  double alpha_2 = Params.alpha_2;
+  double alpha_3 = Params.alpha_3;
+  double alpha_4 = Params.alpha_4;
+  double alpha_5 = Params.alpha_5;
+  double alpha_6 = Params.alpha_6;
+
+  double D_U_value_It;
   /* 
     Allocate memory
   */
-  Nodal_Field D_up;
-  D_up.value        = allocZ__MatrixLib__(Nnodes_mask,Ndof);
-  D_up.d_value_dt   = allocZ__MatrixLib__(Nnodes_mask,Ndof);
-  D_up.d2_value_dt2 = allocZ__MatrixLib__(Nnodes_mask,Ndof);
+  Nodal_Field D_Up;
+  D_Up.U        = allocZ__MatrixLib__(Nnodes_mask,Ndim);
+  D_Up.d_U_dt   = allocZ__MatrixLib__(Nnodes_mask,Ndim);
+  D_Up.d2_U_dt2 = allocZ__MatrixLib__(Nnodes_mask,Ndim);
+  D_Up.lambda_pressure = allocZ__MatrixLib__(Nnodes_mask,1);
 
   /* 
     Loop over the the boundaries to set boundary conditions
@@ -626,11 +651,6 @@ static Nodal_Field initialise_Nodal_Increments(
       Get the number of nodes of this boundarie 
     */
     NumNodesBound = FEM_Mesh.Bounds.BCC_i[i].NumNodes;
-
-    /* 
-      Get the number of dimensions where the BCC it is applied 
-    */
-    Ndof = FEM_Mesh.Bounds.BCC_i[i].Dim;
 
     for(int j = 0 ; j<NumNodesBound ; j++)
     {
@@ -652,7 +672,7 @@ static Nodal_Field initialise_Nodal_Increments(
       /* 
         Loop over the dimensions of the boundary condition 
       */
-      for(int k = 0 ; k<Ndof ; k++)
+      for(int k = 0 ; k<Ndim ; k++)
       {
 
         /* 
@@ -671,11 +691,28 @@ static Nodal_Field initialise_Nodal_Increments(
           }
 
           /* 
-            Assign the boundary condition 
+            Assign the boundary condition :
+            First remove the value obtained during the projection and compute the value
+            using the evolution of the boundary condition
           */
-          D_up.value.nM[Id_BCC_mask][k] = FEM_Mesh.Bounds.BCC_i[i].Value[k].Fx[TimeStep]*(double)FEM_Mesh.Bounds.BCC_i[i].Dir[k];  
-          D_up.d_value_dt.nM[Id_BCC_mask][k] = 0.0;
-          D_up.d2_value_dt2.nM[Id_BCC_mask][k] = 0.0;
+          Up_n.U.nM[Id_BCC_mask][k] = 0.0;
+          Up_n.d_U_dt.nM[Id_BCC_mask][k] = 0.0;
+          Up_n.d2_U_dt2.nM[Id_BCC_mask][k] = 0.0;
+
+          for(int t = 0 ; t<TimeStep ; t++)
+          {
+            D_U_value_It = FEM_Mesh.Bounds.BCC_i[i].Value[k].Fx[t]*(double)FEM_Mesh.Bounds.BCC_i[i].Dir[k];
+            Up_n.U.nM[Id_BCC_mask][k] += D_U_value_It;                    
+            Up_n.d2_U_dt2.nM[Id_BCC_mask][k] += alpha_1*D_U_value_It - alpha_2*Up_n.d_U_dt.nM[Id_BCC_mask][k] - (alpha_3 + 1)*Up_n.d2_U_dt2.nM[Id_BCC_mask][k];
+            Up_n.d_U_dt.nM[Id_BCC_mask][k]   += alpha_4*D_U_value_It + (alpha_5-1)*Up_n.d_U_dt.nM[Id_BCC_mask][k] + alpha_6*Up_n.d2_U_dt2.nM[Id_BCC_mask][k];
+          }
+
+          /*
+            Initialise increments using newmark and the U of the boundary condition
+          */
+          D_Up.U.nM[Id_BCC_mask][k] = FEM_Mesh.Bounds.BCC_i[i].Value[k].Fx[TimeStep]*(double)FEM_Mesh.Bounds.BCC_i[i].Dir[k];                    
+          D_Up.d2_U_dt2.nM[Id_BCC_mask][k] = alpha_1*D_Up.U.nM[Id_BCC_mask][k] - alpha_2*Up_n.d_U_dt.nM[Id_BCC_mask][k] - (alpha_3 + 1)*Up_n.d2_U_dt2.nM[Id_BCC_mask][k];
+          D_Up.d_U_dt.nM[Id_BCC_mask][k]   = alpha_4*D_Up.U.nM[Id_BCC_mask][k] + (alpha_5-1)*Up_n.d_U_dt.nM[Id_BCC_mask][k] + alpha_6*Up_n.d2_U_dt2.nM[Id_BCC_mask][k];
                
         }
       }
@@ -685,11 +722,11 @@ static Nodal_Field initialise_Nodal_Increments(
   /*
     Add some usefull info
   */
-  strcpy(D_up.value.Info,"Nodal-fields");
-  strcpy(D_up.d_value_dt.Info,"First-time-derivative-nodal-fields");
-  strcpy(D_up.d2_value_dt2.Info,"Second-time-derivative-nodal-fields");
+  strcpy(D_Up.U.Info,"Nodal-fields");
+  strcpy(D_Up.d_U_dt.Info,"First-time-derivative-nodal-fields");
+  strcpy(D_Up.d2_U_dt2.Info,"Second-time-derivative-nodal-fields");
 
-  return D_up;
+  return D_Up;
 }
 
 /**************************************************************/
@@ -739,9 +776,9 @@ static void update_Local_State(
       /*
         Get the nodal increment of displacement using the mask
       */
-      D_Displacement_Ap = get_U_set_field_Up(D_Up.value, Nodes_p, ActiveNodes);
-      D_Velocity_Ap = get_U_set_field_Up(D_Up.d_value_dt, Nodes_p, ActiveNodes);
-      D_lambda_pressure_n1 = get_P_set_field_Up(D_Up.value, Nodes_p, ActiveNodes);
+      D_Displacement_Ap = get_U_set_field_Up(D_Up.U, Nodes_p, ActiveNodes);
+      D_Velocity_Ap = get_U_set_field_Up(D_Up.d_U_dt, Nodes_p, ActiveNodes);
+      D_lambda_pressure_n1 = get_P_set_field_Up(D_Up.lambda_pressure, Nodes_p, ActiveNodes);
 
       /*
         Evaluate the shape function gradient in the coordinates of the particle
@@ -817,7 +854,7 @@ static void update_Local_State(
 /*********************************************************************/
 
 static Matrix get_U_set_field_Up(
-  Matrix Field_Up,
+  Matrix Field_U,
   Element Nodes_p, 
   Mask ActiveNodes)
 {
@@ -841,7 +878,7 @@ static Matrix get_U_set_field_Up(
     */
     for(int i = 0 ; i<Ndim ; i++)
     {
-      Field_U_Ap.nM[A][i] = Field_Up.nM[A_mask][i];
+      Field_U_Ap.nM[A][i] = Field_U.nM[A_mask][i];
     }
   }
 
@@ -851,7 +888,7 @@ static Matrix get_U_set_field_Up(
 /*********************************************************************/
 
 static Matrix get_P_set_field_Up(
-  Matrix Field_Up, 
+  Matrix Field_lambda_pressure, 
   Element Nodes_p, 
   Mask ActiveNodes)
 {
@@ -872,7 +909,7 @@ static Matrix get_P_set_field_Up(
     /*
       Get nodal field for particle p
     */
-    Field_p_Ap.nV[A] = Field_Up.nM[A_mask][Ndim];
+    Field_p_Ap.nV[A] = Field_lambda_pressure.nV[A_mask];
   }
 
   return Field_p_Ap;
@@ -921,8 +958,8 @@ static void compute_Inertial_Forces(
   int Ndim = NumberDimensions;
   int Ndof = NumberDOF;
   int Nnodes_mask = ActiveNodes.Nactivenodes;
-  int Order = Ndof*Nnodes_mask;
-  Matrix Acceleration_n1 = allocZ__MatrixLib__(Nnodes_mask,Ndof);
+  int Order = Ndim*Nnodes_mask;
+  Matrix Acceleration_n1 = allocZ__MatrixLib__(Nnodes_mask,Ndim);
   double alpha_1 = Params.alpha_1;
   double alpha_2 = Params.alpha_2;
   double alpha_3 = Params.alpha_3;
@@ -935,9 +972,9 @@ static void compute_Inertial_Forces(
     for(int i = 0 ; i<Ndim ; i++)
     {
       Acceleration_n1.nM[A][i] = 
-      alpha_1*D_up.value.nM[A][i] - 
-      alpha_2*up_n.d_value_dt.nM[A][i] - 
-      alpha_3*up_n.d2_value_dt2.nM[A][i] - 
+      alpha_1*D_up.U.nM[A][i] - 
+      alpha_2*up_n.d_U_dt.nM[A][i] - 
+      alpha_3*up_n.d2_U_dt2.nM[A][i] - 
       MPM_Mesh.b.n[i];
     }
   }
@@ -945,13 +982,18 @@ static void compute_Inertial_Forces(
   /*
     Compute inertial forces
   */
-  for(int idx_A = 0 ; idx_A<Order ; idx_A++)
+  for(int idx_A = 0 ; idx_A<Nnodes_mask ; idx_A++)
   {
-    for(int idx_B = 0 ; idx_B<Order ; idx_B++)
+    for(int i = 0 ; i<Ndim ; i++)
     {
-      Residual.nV[idx_A] += Effective_Mass.nM[idx_A][idx_B]*Acceleration_n1.nV[idx_B];
+      for(int idx_B = 0 ; idx_B<Nnodes_mask ; idx_B++)
+      {
+        Residual.nM[idx_A][i] += Effective_Mass.nM[idx_A*Ndim+i][idx_B*Ndim+i]*Acceleration_n1.nM[idx_B][i];
+      }
     }
   }
+
+  
 
 
   free__MatrixLib__(Acceleration_n1);
@@ -1294,6 +1336,7 @@ static Matrix compute_Nodal_Reactions(
   Compute the nodal reactions
 */
 {
+
   /* 1º Define auxilar variables */
   int Ndim = NumberDimensions;
   int Ndof = NumberDOF;
@@ -1311,54 +1354,51 @@ static Matrix compute_Nodal_Reactions(
     Loop over the the boundaries 
   */
   for(int i = 0 ; i<FEM_Mesh.Bounds.NumBounds ; i++)
-    {
-      /* 
-   Get the number of nodes of this boundarie 
-      */
-      NumNodesBound = FEM_Mesh.Bounds.BCC_i[i].NumNodes;
-    
-      /* 
-   Get the number of dimensions where the BCC it is applied 
-      */
-      NumDimBound = FEM_Mesh.Bounds.BCC_i[i].Dim;
-    
-      for(int j = 0 ; j<NumNodesBound ; j++)
   {
     /* 
-       Get the index of the node 
+      Get the number of nodes of this boundarie 
     */
-    Id_BCC = FEM_Mesh.Bounds.BCC_i[i].Nodes[j];
-    Id_BCC_mask = ActiveNodes.Nodes2Mask[Id_BCC];
+    NumNodesBound = FEM_Mesh.Bounds.BCC_i[i].NumNodes;
+    
+    
+    for(int j = 0 ; j<NumNodesBound ; j++)
+    {
+      /* 
+        Get the index of the node 
+      */
+      Id_BCC = FEM_Mesh.Bounds.BCC_i[i].Nodes[j];
+      Id_BCC_mask = ActiveNodes.Nodes2Mask[Id_BCC];
 
-    /*
-      The boundary condition is not affecting any active node,
-      continue interating
-    */
-    if(Id_BCC_mask == -1)
+      /*
+        The boundary condition is not affecting any active node,
+        continue interating
+      */
+      if(Id_BCC_mask == -1)
       {
         continue;
       }
       
-    /* 
-       Loop over the dimensions of the boundary condition 
-    */
-    for(int k = 0 ; k<NumDimBound ; k++)
+      /* 
+        Loop over the dimensions of the boundary condition 
+      */
+      for(int k = 0 ; k<Ndim ; k++)
       {
 
         /* 
-     Apply only if the direction is active (1) 
+          Apply only if the direction is active (1) 
         */
         if(FEM_Mesh.Bounds.BCC_i[i].Dir[k] == 1)
-    {
-      /* 
-         Set to zero the Residual in the nodes where velocity is fixed 
-      */
-      Reactions.nM[Id_BCC_mask][k] = Residual.nM[Id_BCC_mask][k];
-      Residual.nM[Id_BCC_mask][k] = 0;
-    }
+        {
+
+          /* 
+          Set to zero the Residual in the nodes where velocity is fixed 
+          */
+          Reactions.nM[Id_BCC_mask][k] = Residual.nM[Id_BCC_mask][k];
+          Residual.nM[Id_BCC_mask][k] = 0;
+        }
       }
-  }    
-    }
+    }    
+  }
 
   return Reactions;
 }
@@ -1372,7 +1412,6 @@ static bool check_convergence(
   int MaxIter,
   int Step)
 {
-
   bool convergence;
   int Ndim = NumberDimensions;
   int Ndof = NumberDOF;
@@ -1380,54 +1419,56 @@ static bool check_convergence(
   double Error = 0.0;
   double Error_relative = 0.0;
 
-  if(Iter > MaxIter)
+  
+  /*
+    Compute absolute error 
+  */
+  for(int A = 0 ; A<Nnodes_mask ; A++)
   {
+    for(int i = 0 ; i<Ndof ; i++)
+    {
+      Error += DSQR(Residual.nM[A][i]);
+    }
+  }
+
+  Error = pow(Error,0.5);
+
+
+  /*
+    Compute relative error
+  */
+  if(Iter == 0)
+  {
+    Error0 = Error;
+    Error_relative = Error/Error0;      
+  }
+  else if(Iter > MaxIter)
+  {
+    Error_relative = Error/Error0;
     fprintf(stderr,"%s : %s !!! \n","Error in check_convergence()",
-        "Convergence not reached in the maximum number of iterations");
-    exit(EXIT_FAILURE);
+          "Convergence not reached in the maximum number of iterations");
+    fprintf(stderr,"Absolute error : %e | Relative error %e \n",Error,Error_relative);
+//    exit(EXIT_FAILURE);
+    return true;
   }
   else
   {
-    /*
-      Compute absolute error 
-    */
-    for(int A = 0 ; A<Nnodes_mask ; A++)
-    {
-      for(int i = 0 ; i<Ndim ; i++)
-      {
-        Error += DSQR(Residual.nM[A][i]);
-      }
-    }
-
-    Error = pow(Error,0.5);
-
-    /*
-      Compute relative error
-    */
-    if(Iter == 0)
-    {
-      Error0 = Error;
-      Error_relative = Error/Error0;      
-    }
-    else
-    {
-      Error_relative = Error/Error0;
-    }
-      
-    /*
-      Check convergence using the relative error
-    */
-    if(Error_relative > TOL)
-    {
-      printf("%e -> %e\n",Error,Error_relative);
-      return false;
-    }
-    else
-    {
-      print_convergence_stats(Step, Iter, Error, Error_relative);
-      return true;
-    }
+        Error_relative = Error/Error0;
   }
+      
+  /*
+    Check convergence using the relative error
+  */
+  if(Error_relative > TOL)
+  {
+    return false;
+  }
+  else
+  {
+    print_convergence_stats(Step, Iter, Error, Error_relative);
+    return true;
+  }
+
 }
 
 
@@ -1641,9 +1682,10 @@ static void system_reduction(
   Mesh FEM_Mesh)
 {
 
-    /* 
+  /* 
     Define auxilar variables 
   */
+  int Ndim = NumberDimensions;
   int Ndof = NumberDOF;
   int Nnodes_mask = ActiveNodes.Nactivenodes;
   int Order = Nnodes_mask*Ndof;
@@ -1665,11 +1707,6 @@ static void system_reduction(
       */
       NumNodesBound = FEM_Mesh.Bounds.BCC_i[i].NumNodes;
 
-      /* 
-        Get the number of dimensions where the BCC it is applied 
-      */
-      NumDimBound = FEM_Mesh.Bounds.BCC_i[i].Dim;
-
       for(int j = 0 ; j<NumNodesBound ; j++)
         {
           /* 
@@ -1686,7 +1723,7 @@ static void system_reduction(
             /* 
               Loop over the dimensions of the boundary condition 
             */
-            for(int k = 0 ; k<NumDimBound ; k++)
+            for(int k = 0 ; k<Ndim ; k++)
             {
               if(FEM_Mesh.Bounds.BCC_i[i].Dir[k] == 1)
               {
@@ -1723,6 +1760,7 @@ static void solve_system(
 */
 {
   int Nnodes_mask = Residual.N_rows;
+  int Ndim = NumberDimensions;
   int Ndof = NumberDOF;
   int Order = Nnodes_mask*Ndof;
   int LDA   = Nnodes_mask*Ndof;
@@ -1769,7 +1807,11 @@ static void solve_system(
   */
   for(int idx_A_i = 0 ; idx_A_i < Order ; idx_A_i++)
   {
-    D_up.value.nV[idx_A_i] -= Residual.nV[idx_A_i];
+    for(int i = 0 ; i<Ndim ; i++)
+    {
+      D_up.U.nM[idx_A_i][i] -= Residual.nM[idx_A_i][i];
+    }
+    D_up.lambda_pressure.nV[idx_A_i] -= Residual.nM[idx_A_i][Ndim];
   }
 
 }
@@ -1783,9 +1825,8 @@ static void update_Newmark_Nodal_Increments(
   Newmark_parameters Params)
 {
 
-  int Nnodes = up_n.value.N_rows;
-  int Ndof = NumberDOF;
-  int Total_dof = Nnodes*NumberDOF;
+  int Nnodes = up_n.U.N_rows;
+  int Ndim = NumberDimensions;
   double alpha_1 = Params.alpha_1;
   double alpha_2 = Params.alpha_2;
   double alpha_3 = Params.alpha_3;
@@ -1798,10 +1839,10 @@ static void update_Newmark_Nodal_Increments(
   */
   for(int A = 0 ; A<Nnodes ; A++)
   {  
-    for(int i = 0 ; i<Ndof ; i++)
+    for(int i = 0 ; i<Ndim ; i++)
     {
-      D_up.d2_value_dt2.nM[A][i] = alpha_1*D_up.value.nM[A][i] - alpha_2*up_n.d_value_dt.nM[A][i] - (alpha_3+1)*up_n.d2_value_dt2.nM[A][i];
-      D_up.d_value_dt.nM[A][i]   = alpha_4*D_up.value.nM[A][i] + (alpha_5-1)*up_n.d_value_dt.nM[A][i] + alpha_6*up_n.d2_value_dt2.nM[A][i];
+      D_up.d2_U_dt2.nM[A][i] = alpha_1*D_up.U.nM[A][i] - alpha_2*up_n.d_U_dt.nM[A][i] - (alpha_3+1)*up_n.d2_U_dt2.nM[A][i];
+      D_up.d_U_dt.nM[A][i]   = alpha_4*D_up.U.nM[A][i] + (alpha_5-1)*up_n.d_U_dt.nM[A][i] + alpha_6*up_n.d2_U_dt2.nM[A][i];
     }
   }
 }
@@ -1834,9 +1875,6 @@ static void update_Particles(
   Tensor dFdt_n_p;
   Tensor dFdt_n1_p;
   double N_pI; /* Nodal value for the particle */
-  double D_up_pI;
-  double D_dt_upw_pI;
-  double D_dt2_upw_pI;
   double Vol_0_p;
 
   /* iterate over the particles */
@@ -1900,26 +1938,15 @@ static void update_Particles(
       /*
         Update the particle primitive fields using nodal values of the increments
       */
-      for(int i = 0 ; i<Ndof ; i++)
+      for(int i = 0 ; i<Ndim ; i++)
       {
-        D_up_pI = N_pI*D_up.value.nM[A_mask][i];
-        D_dt_upw_pI = N_pI*D_up.d_value_dt.nM[A_mask][i];
-        D_dt2_upw_pI = N_pI*D_up.d2_value_dt2.nM[A_mask][i];
-                
-        if(i<Ndim)
-        {
-          MPM_Mesh.Phi.acc.nM[p][i]  += D_dt2_upw_pI;
-          MPM_Mesh.Phi.vel.nM[p][i]  += D_dt_upw_pI;
-          MPM_Mesh.Phi.dis.nM[p][i]  += D_up_pI;
-          MPM_Mesh.Phi.x_GC.nM[p][i] += D_up_pI;
-        }
-        else
-        {
-          MPM_Mesh.Phi.d2_Pw_dt2.nV[p] += D_dt2_upw_pI;
-          MPM_Mesh.Phi.d_Pw_dt_n.nV[p] += D_dt_upw_pI;
-          MPM_Mesh.Phi.Pw.nV[p] += D_up_pI;
-        }
+        MPM_Mesh.Phi.acc.nM[p][i]  += N_pI*D_up.d2_U_dt2.nM[A_mask][i];
+        MPM_Mesh.Phi.vel.nM[p][i]  += N_pI*D_up.d_U_dt.nM[A_mask][i];
+        MPM_Mesh.Phi.dis.nM[p][i]  += N_pI*D_up.U.nM[A_mask][i];
+        MPM_Mesh.Phi.x_GC.nM[p][i] += N_pI*D_up.U.nM[A_mask][i];
       } 
+
+      MPM_Mesh.Phi.lambda_pressure_n.nV[p] += N_pI*D_up.lambda_pressure.nV[A_mask];
 
     }
 
