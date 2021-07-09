@@ -4,6 +4,7 @@
 /*
   Call global variables 
 */
+char * ShapeFunctionGP;
 double Thickness_Plain_Stress;
 char * MPM_MeshFileName;
 char   wrapper_LME[MAXC];
@@ -209,6 +210,7 @@ Particle GramsSolid(char * Name_File, Mesh FEM_Mesh, int * STATUS)
     if(Is_GramsShapeFun)
     {
       GramsShapeFun(Name_File);
+
       /* Lenght of the Voxel (Only GIMP) */
       if(strcmp(ShapeFunctionGP,"uGIMP") == 0)
       {
@@ -411,7 +413,10 @@ Particle GramsSolid(char * Name_File, Mesh FEM_Mesh, int * STATUS)
 
 /***************************************************************************/
 
-static void initialise_particles(Mesh MPM_GID_Mesh, Particle MPM_Mesh, int GPxElement)
+static void initialise_particles(
+  Mesh MPM_GID_Mesh,
+  Particle MPM_Mesh,
+  int GPxElement)
   /*
      Loop in the GID mesh to create particles from an element 
   */

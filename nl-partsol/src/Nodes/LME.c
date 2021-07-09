@@ -49,7 +49,7 @@ void initialize__LME__(
   Matrix X_p; // Particle coordinates  
   Matrix Delta_Xip; // Distance from GP to the nodes
   Matrix lambda_p; // Lagrange multiplier
-  Tensor F_p; // Particle deformation gradient, only for anysotropic
+  Tensor F_m1_plastic; // Particle deformation gradient, only for anysotropic
   double Beta_p; // Thermalization or regularization parameter
   ChainPtr Locality_I0; // List of nodes close to the node I0_p
 
@@ -88,7 +88,7 @@ void initialize__LME__(
         MPM_Mesh.I0[p] = get_closest_node__MeshTools__(X_p,Elem_p_Connectivity,FEM_Mesh.Coordinates);
 
         // Initialize Beta
-        Beta_p = beta__LME__(gamma_LME, FEM_Mesh.h_avg[MPM_Mesh.I0[p]]);
+        Beta_p = beta__LME__(gamma_LME, FEM_Mesh.DeltaX);
 
         // Initialise lambda for the Nelder-Mead using Bo-Li approach
         if(strcmp(wrapper_LME,"Nelder-Mead") == 0)
@@ -143,8 +143,8 @@ void initialize__LME__(
     Beta_p = MPM_Mesh.Beta.nV[p];
 
     // Get the metric tensor
-    F_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n.nM[p],2);
-    Metric_p = metric__LME__(F_p);
+    F_m1_plastic = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_m1_plastic.nM[p],2);
+    Metric_p = metric__LME__(F_m1_plastic);
 
     // Get the initial connectivity of the particle
     MPM_Mesh.ListNodes[p] = tributary__LME__(p,X_p,Metric_p,Beta_p,MPM_Mesh.I0[p],FEM_Mesh);
@@ -156,7 +156,7 @@ void initialize__LME__(
     Delta_Xip = compute_distance__MeshTools__(MPM_Mesh.ListNodes[p],X_p,FEM_Mesh.Coordinates);
 
     // Update the value of the thermalization parameter
-    Beta_p = beta__LME__(gamma_LME, FEM_Mesh.h_avg[MPM_Mesh.I0[p]]);
+    Beta_p = beta__LME__(gamma_LME, FEM_Mesh.DeltaX);
     MPM_Mesh.Beta.nV[p] = Beta_p;
 
     // Update lagrange multiplier with Newton-Rapson or with Nelder-Mead
@@ -204,21 +204,18 @@ double beta__LME__(
 
 /****************************************************************************/
 
- Matrix metric__LME__(Tensor F)
+ Matrix metric__LME__(Tensor F_m1_plastic)
  /*!
   * Return the metric tensor intrucing curvature as a convex combination of the 
   * right Cauch-Green tensor (C = F^{T}F) and the identiy (Euclidean norm).   
   * */
  {
     int Ndim = NumberDimensions;
-    double C_ij;
+    double C_plastic_ij;
     Matrix Metric = allocZ__MatrixLib__(Ndim,Ndim);
   
     for(int i = 0 ; i < Ndim ; i++)
     {
-
-      // Introduce Euclidean metric contribution
-      Metric.nM[i][i] += (1.0 - curvature_LME);
 
       // Include include non-Euclidean metric
       if(curvature_LME > 0.0)
@@ -226,18 +223,24 @@ double beta__LME__(
 
         for(int j = 0 ; j < Ndim ; j++)
         {
-          C_ij = 0.0;
+          C_plastic_ij = 0.0;
 
           for(int k = 0 ; k < Ndim ; k++)
           {
-            C_ij += F.N[k][i]*F.N[k][j];
+            C_plastic_ij += F_m1_plastic.N[k][i]*F_m1_plastic.N[k][j];
           }
 
-          Metric.nM[i][j] += curvature_LME*C_ij;
+          Metric.nM[i][j] += curvature_LME*C_plastic_ij;
         
         }
       }
+      else
+      {
+        // Introduce Euclidean metric contribution
+        Metric.nM[i][i] += 1.0;
+      }
    }
+
 
    return Metric;
  }
@@ -1155,7 +1158,7 @@ void local_search__LME__(Particle MPM_Mesh, Mesh FEM_Mesh)
     Matrix Metric_p; // Define a metric tensor
     Matrix Delta_Xip; // Distance from particles to the nodes
     Matrix lambda_p = memory_to_matrix__MatrixLib__(Ndim,1,MPM_Mesh.lambda.nM[p]);
-    Tensor F_p; // Particle deformation gradient
+    Tensor F_m1_plastic; // Particle deformation gradient
     double Beta_p = MPM_Mesh.Beta.nV[p]; // Thermalization parameter
 
     /* 
@@ -1166,8 +1169,8 @@ void local_search__LME__(Particle MPM_Mesh, Mesh FEM_Mesh)
     /*
       Compute the metric tensor
     */
-    F_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n.nM[p],2);
-    Metric_p = metric__LME__(F_p);
+    F_m1_plastic = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_m1_plastic.nM[p],2);
+    Metric_p = metric__LME__(F_m1_plastic);
 
     /*
       Free previous list of tributary nodes to the particle
@@ -1194,7 +1197,7 @@ void local_search__LME__(Particle MPM_Mesh, Mesh FEM_Mesh)
       Compute the thermalization parameter for the new set of nodes
       and update it
     */
-    Beta_p = beta__LME__(gamma_LME, FEM_Mesh.h_avg[MPM_Mesh.I0[p]]);
+    Beta_p = beta__LME__(gamma_LME, FEM_Mesh.DeltaX);
     MPM_Mesh.Beta.nV[p] = Beta_p;
 
     /*
