@@ -545,11 +545,11 @@ static void vtk_Out_Stress(FILE * Vtk_file, Matrix Stress, int NumParticles)
       {
         if((j<Ndim) && (k<Ndim))
         {
-          fprintf(Vtk_file,"%lf ",Stress.nM[i][j*Ndim+k]);
+          fprintf(Vtk_file,"%e",Stress.nM[i][j*Ndim+k]);
         }
         else
         {
-          fprintf(Vtk_file,"%lf ",Stress.nM[i][4]);
+          fprintf(Vtk_file,"%e",0.0);
         }
       }
       fprintf(Vtk_file,"\n");

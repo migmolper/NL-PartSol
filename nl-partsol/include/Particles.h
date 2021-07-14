@@ -122,27 +122,6 @@ Tensor rate_of_deformation__Particles__(Tensor, Tensor);
 /*******************************************************/
 
 /*!
-  \fn Tensor logarithmic_strains__Particles__(Tensor C)
-  \brief Function to cumpute the small strains countrepart of the 
-  right Cauchy-Green tensor defined as
-  \f[
-  \varepsilon = 1/2*logC
-  \f]
-  
-  \param C : right Cauchy-Green
-
-  \return The logaritmic strain tensor
-*/
-Tensor logarithmic_strains__Particles__(Tensor);
-/*******************************************************/
-/*!
-  \fn Tensor increment_Deformation_Gradient_exponential_strains__Particles__(Tensor D_E)
-
-*/
-Tensor increment_Deformation_Gradient_exponential_strains__Particles__(Tensor);
-/*******************************************************/
-
-/*!
   \fn Tensor strain_Green_Lagrange__Particles__(Tensor C)
   \brief Function to cumpute the Lagrangian Strain tensor defined as
   \f[
@@ -219,35 +198,6 @@ Tensor configurational_midpoint_integration_Stress__Particles__(Tensor,Tensor, T
 */
 Tensor average_strain_integration_Stress__Particles__(Tensor, Tensor, Tensor, Material);
 /*******************************************************/
-
-/*!
-  \fn void average_itegration_Stress__Particles__(Tensor PK2,Tensor C_n1,Tensor C_n,Material Mat);
-
-  \brief Compute the second Piola-Kirchhoff stress tensor
-  with an average value of the right Cauchy-Green tensors in 
-  t = n and t = n + 1
-  \f[
-  C^{n + 1/2} = \frac{C^{n+1} + C^{n}}{2}
-  \f]
-  And evaluating it the gradient of the internal energy function
-  \f[
-  S =  2 \cdot \Delta \hat{e}(C^{n + 1/2 )}) 
-  \f]
-
-  \param PK2  : Previous value of the stress tensor
-  \param C_n1 : Right Cauchy-Green tensor at t = n + 1
-  \param C_n  : Right Cauchy-Green tensor at t = n
-  \param Mat  : Material properties.
-*/
-Tensor average_itegration_Stress__Particles__(Tensor, Tensor, Tensor, Material);
-/*******************************************************/
-
-
-/*! \fn Tensor compute_Piola_transformation__Particles__(Tensor sigma_k1, Tensor F_total, double J)
-
-*/
-Tensor compute_Piola_transformation__Particles__(Tensor, Tensor, double);
-
 
 /*!
 

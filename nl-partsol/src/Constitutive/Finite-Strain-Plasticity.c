@@ -30,6 +30,7 @@ State_Parameters finite_strain_plasticity(
 
   Tensor F_m1_plastic_new;
 
+  Tensor kirchhoff_spectral_p = alloc__TensorLib__(2);
   Tensor kirchhoff_p;
 
   State_Parameters Input_SP_infinitesimal;
@@ -77,11 +78,6 @@ State_Parameters finite_strain_plasticity(
   */
   elastic_trial(Input_SP_infinitesimal, MatProp);
 
-//  printf("%f %f %f \n",
-//   Input_SP_infinitesimal.Stress[0],
-//    Input_SP_infinitesimal.Stress[1],
-//    Input_SP_infinitesimal.Stress[2]);
-
   /*
     Start plastic corrector algorithm in infinitesimal strains
   */
@@ -116,10 +112,21 @@ State_Parameters finite_strain_plasticity(
   }
 
   /*
-    Get the First Piola-Kirchhoff stress tensor from the Kirchhoff stress
+    Rotate the kirchhoff stress tensor in the spectral representation
+    to obtain its value in the cartesian representation. Note that we are employing the same
+    directions to rotate D_F_platic as those employed for C_elastic
+  */
+  for(int i = 0 ; i<Ndim ; i++)
+  {
+    kirchhoff_spectral_p.N[i][i] = Input_SP_infinitesimal.Stress[i];
+  }
+
+  kirchhoff_p = rotate__TensorLib__(kirchhoff_spectral_p, Eigen_C_trial_elastic.Vector);
+
+  /*
+    Get the First Piola-Kirchhoff stress tensor from the Kirchhoff stress.
   */
   F_m1_total = Inverse__TensorLib__(F_total);
-  kirchhoff_p = memory_to_tensor__TensorLib__(Input_SP_infinitesimal.Stress,2);
 
   for(int i = 0 ; i < Ndim  ; i++)
   {
@@ -135,10 +142,6 @@ State_Parameters finite_strain_plasticity(
     }
   }
 
-  if(Ndim == 2)
-  {
-    Inputs_SP_finite.Stress[4] = Input_SP_infinitesimal.Stress[4];
-  }
 
   /* Free memory */
   free(Input_SP_infinitesimal.Stress);
@@ -150,6 +153,8 @@ State_Parameters finite_strain_plasticity(
   free__TensorLib__(Eigen_C_trial_elastic.Vector);
   free__TensorLib__(D_F_plastic_spectral);
   free__TensorLib__(D_F_plastic);
+  free__TensorLib__(kirchhoff_spectral_p);
+  free__TensorLib__(kirchhoff_p);
   free__TensorLib__(F_m1_plastic_new);
   free__TensorLib__(F_m1_total);
 
