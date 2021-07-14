@@ -28,12 +28,13 @@ bool Is_yield_stress = false;
 bool Is_Hardening_modulus = false;
 
 bool Is_Hardening = false;
-bool Is_Hardening_Hughes = false;
 bool Is_Parameter_Hardening_Hughes = false;
-bool Is_Hardening_Cervera = false;
-bool Is_Hardening_Ortiz = false;
 bool Is_Exponent_Hardening_Ortiz = false;
 bool Is_Reference_Plastic_Strain_Ortiz = false;
+bool Is_theta_Hardening_Voce = false;
+bool Is_delta_Hardening_Voce = false;
+bool Is_K_inf_Hardening_Voce = false;
+bool Is_K_0_Hardening_Voce = false;
 
 bool Is_Viscous_regularization = false;
 bool Is_fluidity_param = false;
@@ -205,6 +206,11 @@ GramsMaterials (Particles=route.txt) {
 	  	Mat_GP.Hardening_Ortiz = false;
 	  	Mat_GP.Exponent_Hardening_Ortiz = 1.0;
 	  	Mat_GP.Reference_Plastic_Strain_Ortiz = 0.0;
+	  	Mat_GP.Hardening_Voce = false;
+  		Mat_GP.K_0_Hardening_Voce = 0.0;
+  		Mat_GP.K_inf_Hardening_Voce = 0.0;
+  		Mat_GP.delta_Hardening_Voce = 0.0;
+  		Mat_GP.theta_Hardening_Voce = 1.0;
 
 	  /* Viscoplasticity */
 	  Mat_GP.Viscous_regularization = false;
@@ -212,7 +218,7 @@ GramsMaterials (Particles=route.txt) {
 
 	  /* Locking control */
 	  Mat_GP.Locking_Control_Fbar = false;
-	  Mat_GP.alpha_Fbar = 1.0;
+	  Mat_GP.alpha_Fbar = 0.0;
 
       /* Look for the curly brace { */
       if(strcmp(kwords[2],"{") == 0){
@@ -390,10 +396,14 @@ GramsMaterials (Particles=route.txt) {
 	    {
 	    	Mat_GP.Hardening_Ortiz = true;
 	    }
+	    else if (strcmp(Parse_Mat_Prop[1],"Voce") == 0)
+	    {
+	    	Mat_GP.Hardening_Voce = true;
+	    }
 	    else
 	    {
-	    	sprintf(Error_message,"%s","Options for Hardening-Criteria -> Hughes/Cervera/Ortiz");
-			standard_error(Error_message);
+	    	sprintf(Error_message,"%s","Options for Hardening-Criteria -> Hughes/Cervera/Ortiz/Voce");
+			  standard_error(Error_message);
 	    }
 	  }
 	  /**************************************************/
@@ -420,6 +430,30 @@ GramsMaterials (Particles=route.txt) {
 	  {
 	    Is_Reference_Plastic_Strain_Ortiz = true;
 	    Mat_GP.Reference_Plastic_Strain_Ortiz = atof(Parse_Mat_Prop[1]);
+	  }
+	  /**************************************************/
+	  else if(strcmp(Parse_Mat_Prop[0],"K-0-Voce") == 0)
+	  {
+	    Is_K_0_Hardening_Voce = true;
+	    Mat_GP.K_0_Hardening_Voce = atof(Parse_Mat_Prop[1]);
+	  }
+		/**************************************************/
+	  else if(strcmp(Parse_Mat_Prop[0],"K-inf-Voce") == 0)
+	  {
+	    Is_K_inf_Hardening_Voce = true;
+	    Mat_GP.K_inf_Hardening_Voce = atof(Parse_Mat_Prop[1]);
+	  }
+		/**************************************************/
+	  else if(strcmp(Parse_Mat_Prop[0],"delta-Voce") == 0)
+	  {
+	    Is_delta_Hardening_Voce = true;
+	    Mat_GP.delta_Hardening_Voce = atof(Parse_Mat_Prop[1]);
+	  }
+		/**************************************************/
+	  else if(strcmp(Parse_Mat_Prop[0],"theta-Voce") == 0)
+	  {
+	    Is_theta_Hardening_Voce = true;
+	    Mat_GP.theta_Hardening_Voce = atof(Parse_Mat_Prop[1]);
 	  }
 		/**************************************************/
 	  else if(strcmp(Parse_Mat_Prop[0],"Viscous-regularization") == 0)
@@ -753,7 +787,7 @@ static void check_Von_Mises_Material(Material Mat_particle)
 		
 		if(Is_Hardening)
 		{
-			if(Is_Hardening_Hughes)
+			if(Mat_particle.Hardening_Hughes)
 			{
 				if(Is_Hardening_modulus && Is_Parameter_Hardening_Hughes)
 				{
@@ -770,7 +804,7 @@ static void check_Von_Mises_Material(Material Mat_particle)
 				}
 	
 			}
-			else if(Is_Hardening_Cervera)
+			else if(Mat_particle.Hardening_Cervera)
 			{
 
 				if(strcmp(Mat_particle.Plastic_Solver,"Forward-Euler") == 0)
@@ -793,7 +827,7 @@ static void check_Von_Mises_Material(Material Mat_particle)
 					fputs(Is_Hardening_modulus  ? "Hardening-Modulus : true \n" : "Hardening-Modulus : false \n", stdout);
 				}
 			}
-			else if(Is_Hardening_Ortiz)
+			else if(Mat_particle.Hardening_Ortiz)
 			{
 
 				if(strcmp(Mat_particle.Plastic_Solver,"Forward-Euler") == 0)
@@ -819,6 +853,39 @@ static void check_Von_Mises_Material(Material Mat_particle)
 				}
 
 			}
+			else if(Mat_particle.Hardening_Voce)
+			{
+				if(strcmp(Mat_particle.Plastic_Solver,"Forward-Euler") == 0)
+				{
+					fprintf(stderr,"%s : %s \n",
+						"Error in GramsMaterials()",
+						"Switch to Backward-Euler for non-linear Hardening laws)");
+					exit(EXIT_FAILURE);	
+				}
+
+				if(Is_theta_Hardening_Voce &&
+				 Is_delta_Hardening_Voce && 
+				 Is_K_inf_Hardening_Voce && 
+				 Is_K_0_Hardening_Voce)
+				{
+					printf("\t \t -> %s : %f \n","K-0-Hardening-Voce",Mat_particle.K_0_Hardening_Voce);
+					printf("\t \t -> %s : %f \n","K-inf-Hardening-Voce",Mat_particle.K_inf_Hardening_Voce);	
+					printf("\t \t -> %s : %f \n","delta-Hardening-Voce",Mat_particle.delta_Hardening_Voce);	
+					printf("\t \t -> %s : %f \n","theta-Hardening-Voce",Mat_particle.theta_Hardening_Voce);	
+				}
+				else
+				{
+					fprintf(stderr,"%s : %s \n",
+					"Error in GramsMaterials()",
+					"Some parameter is missed for Von-Mises material (Voce Hardening)");
+					fputs(Is_theta_Hardening_Voce ? "theta-Hardening-Voce : true \n" : "theta-Hardening-Voce : false \n", stdout);
+					fputs(Is_delta_Hardening_Voce ? "delta-Hardening-Voce : true \n" : "delta-Hardening-Voce : false \n", stdout);
+					fputs(Is_K_inf_Hardening_Voce ? "K-inf-Hardening-Voce : true \n" : "K-inf-Hardening-Voce : false \n", stdout);
+					fputs(Is_K_0_Hardening_Voce ? "K-0-Hardening-Voce : true \n" : "K-0-Hardening-Voce : false \n", stdout);
+				}
+
+			}
+
 		}
 
 		if(Is_Viscous_regularization)

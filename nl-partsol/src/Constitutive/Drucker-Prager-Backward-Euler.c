@@ -86,7 +86,6 @@ State_Parameters Drucker_Prager_backward_euler(
     Define output state parameters
   */
   State_Parameters Outputs_VarCons;
-  Outputs_VarCons.Increment_E_plastic = (double *)calloc(Ndim*Ndim,sizeof(double));
 
   Tensor Increment_E_plastic = memory_to_tensor__TensorLib__(Outputs_VarCons.Increment_E_plastic,2);
 

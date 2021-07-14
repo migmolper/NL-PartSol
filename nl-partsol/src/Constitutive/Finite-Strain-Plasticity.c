@@ -1,5 +1,7 @@
 #include "nl-partsol.h"
 
+static void elastic_trial(State_Parameters,Material);
+
 /**************************************************************/
 
 State_Parameters finite_strain_plasticity(
@@ -20,9 +22,14 @@ State_Parameters finite_strain_plasticity(
   Tensor F_m1_total;
   Tensor F_trial_elastic;
   Tensor C_trial_elastic;
-  Tensor E_trial_elastic;
+
+  EigenTensor Eigen_C_trial_elastic;
+
+  Tensor D_F_plastic_spectral = alloc__TensorLib__(2);
   Tensor D_F_plastic;
-  Tensor Fm1_plastic;
+
+  Tensor F_m1_plastic_new;
+
   Tensor kirchhoff_p;
 
   State_Parameters Input_SP_infinitesimal;
@@ -31,10 +38,14 @@ State_Parameters finite_strain_plasticity(
   /* Defin the input parameters for the infinitesimal elasticity */
   Input_SP_infinitesimal.EPS = Inputs_SP_finite.EPS;
   Input_SP_infinitesimal.Back_stress = Inputs_SP_finite.Back_stress;
-  Input_SP_infinitesimal.Stress = (double *)calloc(Ndim*Ndim,sizeof(double));
-  Input_SP_infinitesimal.Strain = (double *)calloc(Ndim*Ndim,sizeof(double));
+  Input_SP_infinitesimal.Stress = (double *)calloc(3,sizeof(double));
+  Input_SP_infinitesimal.Strain = (double *)calloc(3,sizeof(double));
+  Input_SP_infinitesimal.Increment_E_plastic = (double *)calloc(3,sizeof(double));
+  
 
-  /* Compute the elastic right Cauchy-Green tensor using the intermediate configuration. */ 
+  /*
+    Compute the trial right Cauchy-Green tensor
+  */
   if(MatProp.Locking_Control_Fbar)
   {    
     Tensor Fbar = memory_to_tensor__TensorLib__(Inputs_SP_finite.Fbar,2);
@@ -47,30 +58,66 @@ State_Parameters finite_strain_plasticity(
 
   C_trial_elastic = right_Cauchy_Green__Particles__(F_trial_elastic);
 
-  /* Calculation of the small strain tensor */
-  E_trial_elastic = logarithmic_strains__Particles__(C_trial_elastic);
+  /*
+    Perform the spectral decomposition of the right Cauchy-Green tensor
+  */
+  Eigen_C_trial_elastic = Eigen_analysis__TensorLib__(C_trial_elastic);
 
-  /* Fill memory */
+  /*
+    Compute the infinitesimal strain magnitude using the logarithmic mapping
+  */ 
   for(int i = 0 ; i<Ndim ; i++)
   {
-    for(int j = 0 ; j<Ndim ; j++)
-    {
-      Input_SP_infinitesimal.Strain[i*Ndim + j] = E_trial_elastic.N[i][j];
-    }
+    Input_SP_infinitesimal.Strain[i] = 0.5*log(Eigen_C_trial_elastic.Value.n[i]);
   }
-  
-  /* Calculation of the trial stress tensor using the trial small strain tensor */
-  Output_SP_infinitesimal = compute_kirchhoff_isotropic_linear_elasticity(Input_SP_infinitesimal, MatProp);
 
-  /* Start plastic corrector algorithm in infinitesimal strains */
+  /*
+    Calculation of the trial stress tensor using the trial small strain tensor
+    with a linear elastic material
+  */
+  elastic_trial(Input_SP_infinitesimal, MatProp);
+
+//  printf("%f %f %f \n",
+//   Input_SP_infinitesimal.Stress[0],
+//    Input_SP_infinitesimal.Stress[1],
+//    Input_SP_infinitesimal.Stress[2]);
+
+  /*
+    Start plastic corrector algorithm in infinitesimal strains
+  */
   Output_SP_infinitesimal = infinitesimal_plasticity(Input_SP_infinitesimal, MatProp);
 
-  Tensor Increment_E_plastic = memory_to_tensor__TensorLib__(Output_SP_infinitesimal.Increment_E_plastic,2);
+  /*
+    Get the increment of plastic finite strains following the Cuitiño & Ortiz exponential maping
+  */
+  for(int i = 0 ; i<Ndim ; i++)
+  {
+    D_F_plastic_spectral.N[i][i] = exp(- Output_SP_infinitesimal.Increment_E_plastic[i]);
+  }
 
-  /* Use the Cuitiño & Ortiz exponential maping to compute the increment of plastic finite strains */
-  update_plastic_deformation_gradient__Particles__(Increment_E_plastic, F_m1_plastic);
+  /*
+    Rotate the increment of the plastic deformation gradient in the spectral representation
+    to obtain its value in the cartesian representation. Note that we are employing the same
+    directions to rotate D_F_platic as those employed for C_elastic
+  */
+  D_F_plastic = rotate__TensorLib__(D_F_plastic_spectral, Eigen_C_trial_elastic.Vector);
 
-  /* Get the First Piola-Kirchhoff stress tensor (P_p) */
+  /*
+    Compute the new value of the plastic deformation gradient and update it
+  */
+  F_m1_plastic_new = matrix_product__TensorLib__(F_m1_plastic,D_F_plastic);
+
+  for(int i = 0 ; i < Ndim  ; i++)
+  {
+    for(int j = 0 ; j < Ndim  ; j++)
+    {
+      F_m1_plastic.N[i][j] = F_m1_plastic_new.N[i][j];
+    }
+  }
+
+  /*
+    Get the First Piola-Kirchhoff stress tensor from the Kirchhoff stress
+  */
   F_m1_total = Inverse__TensorLib__(F_total);
   kirchhoff_p = memory_to_tensor__TensorLib__(Input_SP_infinitesimal.Stress,2);
 
@@ -81,21 +128,30 @@ State_Parameters finite_strain_plasticity(
       
       P_p.N[i][j] = 0.0;
 
-     for(int k = 0 ; k < Ndim  ; k++)
-     {
-        P_p.N[i][j] += kirchhoff_p.N[i][k]*F_m1_total.N[k][j];
+      for(int k = 0 ; k < Ndim  ; k++)
+      {
+        P_p.N[i][j] += kirchhoff_p.N[i][k]*F_m1_total.N[j][k];
       }
     }
   }
 
+  if(Ndim == 2)
+  {
+    Inputs_SP_finite.Stress[4] = Input_SP_infinitesimal.Stress[4];
+  }
+
   /* Free memory */
-  free__TensorLib__(F_trial_elastic);
-  free__TensorLib__(C_trial_elastic);
-  free__TensorLib__(E_trial_elastic);
-  free__TensorLib__(F_m1_total);
-  free(Output_SP_infinitesimal.Increment_E_plastic);
   free(Input_SP_infinitesimal.Stress);
   free(Input_SP_infinitesimal.Strain);
+  free(Input_SP_infinitesimal.Increment_E_plastic);
+  free__TensorLib__(F_trial_elastic);
+  free__TensorLib__(C_trial_elastic);
+  free__TensorLib__(Eigen_C_trial_elastic.Value);
+  free__TensorLib__(Eigen_C_trial_elastic.Vector);
+  free__TensorLib__(D_F_plastic_spectral);
+  free__TensorLib__(D_F_plastic);
+  free__TensorLib__(F_m1_plastic_new);
+  free__TensorLib__(F_m1_total);
 
   /*
     Update state paramers
@@ -105,6 +161,31 @@ State_Parameters finite_strain_plasticity(
 
 
   return Output_SP;
+}
+
+/**************************************************************/
+
+static void elastic_trial(
+  State_Parameters Intput_SP,
+  Material MatProp_p)
+{
+
+  int Ndim = NumberDimensions;
+
+  /* Get information from the state parameter */
+  Tensor Strain = memory_to_tensor__TensorLib__(Intput_SP.Strain,2);
+  Tensor Stress = memory_to_tensor__TensorLib__(Intput_SP.Stress,2);
+
+  double nu = MatProp_p.nu; 
+  double E = MatProp_p.E;
+  double G = E/(2*(1+nu));
+  double Lambda = nu*E/((1+nu)*(1-2*nu));
+  double traceStrain = Intput_SP.Strain[0] + Intput_SP.Strain[1] + Intput_SP.Strain[2];
+
+  Intput_SP.Stress[0] = 2*G*Intput_SP.Strain[0] - Lambda*traceStrain;
+  Intput_SP.Stress[1] = 2*G*Intput_SP.Strain[1] - Lambda*traceStrain;
+  Intput_SP.Stress[2] = 2*G*Intput_SP.Strain[2] - Lambda*traceStrain;
+ 
 }
 
 /**************************************************************/

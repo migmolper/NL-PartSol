@@ -59,6 +59,12 @@ State_Parameters compute_1PK_Stress_Tensor_Neo_Hookean_Wriggers(
     }
   }
   
+  /* Plain stress condition */
+  if(Ndim == 2)
+  {
+    Intput_SP.Stress[4] = lambda*0.5*(J2 - 1);
+  }
+
   /*
     Free tensors 
   */

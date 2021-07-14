@@ -27,6 +27,12 @@ State_Parameters compute_kirchhoff_isotropic_linear_elasticity(
     }
   }
 
+  /* Plain stress condition */
+  if(Ndim == 2)
+  {
+    Intput_SP.Stress[4] = (K - 2*G/3.0)*traceStrain;
+  }
+
   /* 
     Define output
   */

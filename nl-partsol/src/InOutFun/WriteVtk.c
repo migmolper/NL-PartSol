@@ -537,15 +537,20 @@ static void vtk_Out_Stress(FILE * Vtk_file, Matrix Stress, int NumParticles)
   int Ndim = NumberDimensions;
 
   fprintf(Vtk_file,"TENSORS STRESS double \n");
-  for(int i =  0 ; i<NumParticles ; i++){
-    for(int j = 0 ; j<3 ; j++){
-      for(int k = 0 ; k<3 ; k++){
-  if((j<Ndim) && (k<Ndim)){
-    fprintf(Vtk_file,"%lf ",Stress.nM[i][j*Ndim+k]);
-  }
-  else{
-    fprintf(Vtk_file,"%lf ",0.0);
-  }
+  for(int i =  0 ; i<NumParticles ; i++)
+  {
+    for(int j = 0 ; j<3 ; j++)
+    {
+      for(int k = 0 ; k<3 ; k++)
+      {
+        if((j<Ndim) && (k<Ndim))
+        {
+          fprintf(Vtk_file,"%lf ",Stress.nM[i][j*Ndim+k]);
+        }
+        else
+        {
+          fprintf(Vtk_file,"%lf ",Stress.nM[i][4]);
+        }
       }
       fprintf(Vtk_file,"\n");
     }

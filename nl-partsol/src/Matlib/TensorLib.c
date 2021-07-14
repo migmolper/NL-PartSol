@@ -56,7 +56,8 @@ Tensor memory_to_tensor__TensorLib__(double * A_mem, int Order)
   /* Define output */
   Tensor A_tens;
   /* Swith cases */
-  switch(Order){
+  switch(Order)
+  {
   case 0:
     fprintf(stderr,"%s : %s !!! \n",
 	    "Error in memory_to_tensor__TensorLib__()",
@@ -68,7 +69,8 @@ Tensor memory_to_tensor__TensorLib__(double * A_mem, int Order)
     break;
   case 2:
     A_tens.Order = 2;
-    for(long i = 0 ; i<Ndim ; i++){
+    for(long i = 0 ; i<Ndim ; i++)
+    {
       A_tens.N[i] = A_mem+i*Ndim;
     }
     break;
@@ -789,7 +791,7 @@ Tensor volumetric_component__TensorLib__(Tensor A)
 
   for(int i = 0 ; i<Ndim ; i++)
   {
-    A_vol.N[i][i] = trA/3.0;
+    A_vol.N[i][i] = trA/(double)Ndim;
   }
 
   return A_vol;

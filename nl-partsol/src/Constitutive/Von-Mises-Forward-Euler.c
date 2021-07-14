@@ -8,14 +8,16 @@ double DeltaTimeStep;
 /*
   Auxiliar functions 
 */
-static Tensor compute_plastic_flow_direction(Tensor *,double);
+
+static void compute_relative_stress(double *,double *, double *);
+static void compute_plastic_flow_direction(double *, double *,double);
 static double compute_yield_surface(double,double,Material);
 static double compute_DeltaH(double,Material);
 static double compute_increment_flow_rule(double, Material);
 static double update_equivalent_plastic_strain(double, double);
-static  void  update_back_stress(Tensor *,Tensor *,double, Material);
-static void compute_increment_plastic_strain_tensor(Tensor *,Tensor *,double);
-static void   apply_plastic_corrector_stress_tensor(Tensor *,Tensor *,double,Material);
+static  void  update_back_stress(double *,double *,double, Material);
+static void compute_increment_plastic_strain_tensor(double *, double *,double);
+static void   apply_plastic_corrector_stress_tensor(double *, double *,double,Material);
 
 /**************************************************************/
 
@@ -29,26 +31,16 @@ State_Parameters Von_Mises_forward_euler(
 
   int Ndim = NumberDimensions;
 
-  Tensor p_trial;
-  Tensor s_trial;
-  Tensor relative_stress_tr;
-  Tensor plastic_flow_direction;
-  double s_trial_norm;
-  double norm_relative_stress_tr;
+  double relative_stress[3];
+  double plastic_flow_direction[3];
+  double relative_stress_norm;
   double Phi_tr;
-
-  /* Load input state marameters */
-  Tensor sigma_k1 = memory_to_tensor__TensorLib__(Inputs_SP.Stress,2);
-  Tensor Back_stress = memory_to_tensor__TensorLib__(Inputs_SP.Back_stress,2);
 
   /*
     Define output state parameters
   */
   State_Parameters Outputs_VarCons;
-  Outputs_VarCons.Increment_E_plastic = (double *)calloc(Ndim*Ndim,sizeof(double));
-
-  Tensor Increment_E_plastic = memory_to_tensor__TensorLib__(Outputs_VarCons.Increment_E_plastic,2);
-
+  
   /* Auxiliar variables during iterations */
   double delta_Gamma;
 
@@ -58,28 +50,20 @@ State_Parameters Von_Mises_forward_euler(
   double TOL = TOL_Radial_Returning;
   
   /*
-    Decompose the elastic trial in volumetric and deviatoric components
+    Compute the relative stress
   */
-  p_trial = volumetric_component__TensorLib__(sigma_k1);
-  s_trial = deviatoric_component__TensorLib__(sigma_k1,p_trial);
-
-  s_trial_norm = EuclideanNorm__TensorLib__(s_trial); 
-
-  /*
-    Compute the trial relative stress
-  */
-  relative_stress_tr = subtraction__TensorLib__(s_trial,Back_stress);
-  norm_relative_stress_tr = EuclideanNorm__TensorLib__(relative_stress_tr);
+  compute_relative_stress(relative_stress,Inputs_SP.Stress,Inputs_SP.Back_stress);
+  relative_stress_norm = sqrt(relative_stress[0]*relative_stress[0] + relative_stress[1]*relative_stress[1] + relative_stress[2]*relative_stress[2]);
 
   /*
     Compute plastic flow
   */
-  plastic_flow_direction = compute_plastic_flow_direction(&relative_stress_tr,norm_relative_stress_tr);
+  compute_plastic_flow_direction(plastic_flow_direction,relative_stress,relative_stress_norm);
 
   /*
     Yield condition : Starting from incremental plastic strain equal to zero
   */
-  Phi_tr = compute_yield_surface(norm_relative_stress_tr, Inputs_SP.EPS, MatProp);
+  Phi_tr = compute_yield_surface(relative_stress_norm, Inputs_SP.EPS, MatProp);
 
   if(Phi_tr > TOL)
   {
@@ -88,54 +72,53 @@ State_Parameters Von_Mises_forward_euler(
 
     Outputs_VarCons.EPS = update_equivalent_plastic_strain(Inputs_SP.EPS, delta_Gamma);
 
-    compute_increment_plastic_strain_tensor(&Increment_E_plastic,&plastic_flow_direction, delta_Gamma);
+    compute_increment_plastic_strain_tensor(Outputs_VarCons.Increment_E_plastic,plastic_flow_direction, delta_Gamma);
 
-    update_back_stress(&Back_stress,&plastic_flow_direction,delta_Gamma,MatProp);
+    update_back_stress(Inputs_SP.Back_stress,plastic_flow_direction,delta_Gamma,MatProp);
 
-    apply_plastic_corrector_stress_tensor(&sigma_k1,&plastic_flow_direction,delta_Gamma,MatProp);
+    apply_plastic_corrector_stress_tensor(Inputs_SP.Stress,plastic_flow_direction,delta_Gamma,MatProp);
 
+    Outputs_VarCons.Increment_E_plastic = Inputs_SP.Increment_E_plastic;
   }
   else
   {
     Outputs_VarCons.EPS = Inputs_SP.EPS;
+    Outputs_VarCons.Increment_E_plastic = Inputs_SP.Increment_E_plastic;
   }
-  
-
-  /*
-    Free memory
-  */
-  free__TensorLib__(s_trial);
-  free__TensorLib__(p_trial);
-  free__TensorLib__(relative_stress_tr);
-  free__TensorLib__(plastic_flow_direction);
   
   return Outputs_VarCons;
 }
 
 /**************************************************************/
 
-static Tensor compute_plastic_flow_direction(
-  Tensor * relative_stress_tr,
-  double norm_relative_stress_tr)
+static void compute_relative_stress(
+  double * Relative_Stress,
+  double * Stress,
+  double * Back_stress)
 {
-  int Ndim = NumberDimensions;
-  Tensor plastic_flow_direction = alloc__TensorLib__(2); 
+  double vol_Stress = (Stress[0] + Stress[1] + Stress[2])/3.0;
 
-  for(int i = 0 ; i<Ndim ; i++)
-  {
-    for(int j = 0 ; j<Ndim ; j++)
-    {
-      plastic_flow_direction.N[i][j] = relative_stress_tr->N[i][j]/norm_relative_stress_tr;
-    }
-  }
+  Relative_Stress[0] = Stress[0] - vol_Stress - Back_stress[0];
+  Relative_Stress[1] = Stress[1] - vol_Stress - Back_stress[1];
+  Relative_Stress[2] = Stress[2] - vol_Stress - Back_stress[2];
+}
 
-  return plastic_flow_direction;
+/**************************************************************/
+
+static void compute_plastic_flow_direction(
+  double * plastic_flow_direction,
+  double * Relative_Stress,
+  double Relative_Stress_norm)
+{
+  plastic_flow_direction[0] = Relative_Stress[0]/Relative_Stress_norm;
+  plastic_flow_direction[1] = Relative_Stress[1]/Relative_Stress_norm;
+  plastic_flow_direction[2] = Relative_Stress[2]/Relative_Stress_norm;
 }
 
 /**************************************************************/
 
 static double compute_yield_surface(
-  double norm_relative_stress_tr,
+  double relative_stress_norm,
   double EPS_n,
   Material MatProp)
 {
@@ -149,11 +132,11 @@ static double compute_yield_surface(
     double Hardening_modulus = MatProp.Hardening_modulus;
     double theta = MatProp.Parameter_Hardening_Hughes;
     
-    return norm_relative_stress_tr - sqrt(2./3.)*(Sigma_y + Hardening_modulus*theta*EPS_n);
+    return relative_stress_norm - sqrt(2./3.)*(Sigma_y + Hardening_modulus*theta*EPS_n);
   }
   else
   {
-    return norm_relative_stress_tr - sqrt(2./3.)*Sigma_y;
+    return relative_stress_norm - sqrt(2./3.)*Sigma_y;
   }
   
 }
@@ -218,8 +201,8 @@ static double update_equivalent_plastic_strain(
 /**************************************************************/
 
 static void update_back_stress(
-  Tensor * Back_stress,
-  Tensor * plastic_flow_direction,
+  double * Back_Stress,
+  double * Plastic_Flow_Direction,
   double delta_Gamma,
   Material MatProp)
 {
@@ -238,41 +221,30 @@ static void update_back_stress(
     DeltaH = 0.0;
   }
 
-
-  for(int i = 0 ; i<Ndim ; i++)
-  {
-    for(int j = 0 ; j<Ndim ; j++)
-    {
-      Back_stress->N[i][j] += sqrt(2./3.)*DeltaH*plastic_flow_direction->N[i][j];
-    }
-  }
+  Back_Stress[0] += sqrt(2./3.)*DeltaH*Plastic_Flow_Direction[0];
+  Back_Stress[1] += sqrt(2./3.)*DeltaH*Plastic_Flow_Direction[1];
+  Back_Stress[2] += sqrt(2./3.)*DeltaH*Plastic_Flow_Direction[2];
 
 }
 
 /**************************************************************/
 
 static void compute_increment_plastic_strain_tensor(
-  Tensor * Increment_E_plastic,
-  Tensor * plastic_flow_direction, 
+  double * Increment_E_plastic,
+  double * plastic_flow_direction, 
   double delta_Gamma)
 {
-  int Ndim = NumberDimensions;
 
-  for(int i = 0 ; i<Ndim ; i++)
-  {
-    for(int j = 0 ; j<Ndim ; j++)
-    {
-      Increment_E_plastic->N[i][j] = delta_Gamma*plastic_flow_direction->N[i][j];
-    }
-  }
-
+  Increment_E_plastic[0] = delta_Gamma*plastic_flow_direction[0];
+  Increment_E_plastic[1] = delta_Gamma*plastic_flow_direction[1];
+  Increment_E_plastic[2] = delta_Gamma*plastic_flow_direction[2];
 }
 
 /**************************************************************/
 
 static void apply_plastic_corrector_stress_tensor(
-  Tensor * sigma_k1, 
-  Tensor * plastic_flow_direction, 
+  double * Stress, 
+  double * Plastic_Flow_Direction, 
   double delta_Gamma, 
   Material MatProp)
 {
@@ -281,13 +253,9 @@ static void apply_plastic_corrector_stress_tensor(
   double E = MatProp.E; /* Elastic modulus */
   double G = E/(2*(1+nu));
 
-  for(int i = 0 ; i<Ndim ; i++)
-  {
-    for(int j = 0 ; j<Ndim ; j++)
-    {
-      sigma_k1->N[i][j] -= 2*G*delta_Gamma*plastic_flow_direction->N[i][j];
-    }
-  }
+  Stress[0] -= 2*G*delta_Gamma*Plastic_Flow_Direction[0];
+  Stress[1] -= 2*G*delta_Gamma*Plastic_Flow_Direction[1];
+  Stress[2] -= 2*G*delta_Gamma*Plastic_Flow_Direction[2];
 }
 
 /**************************************************************/

@@ -250,7 +250,7 @@ void get_locking_free_Deformation_Gradient_n1__Particles__(
   {
     for(int j = 0 ; j<Ndim ; j++)
     {
-      Fbar.N[i][j] = (1 - alpha)*F_n1_p.N[i][j] + alpha*averaged_F_vol*F_n1_p.N[i][j];
+      Fbar.N[i][j] = alpha*F_n1_p.N[i][j] + (1 - alpha)*averaged_F_vol*F_n1_p.N[i][j];
     }
   }
 

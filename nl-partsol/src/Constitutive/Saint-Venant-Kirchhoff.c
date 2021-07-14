@@ -59,6 +59,12 @@ State_Parameters compute_1PK_Stress_Tensor_Saint_Venant_Kirchhoff(
       P.N[i][j] = lambda*0.5*(tr__Ft_x_F - Ndim)*F.N[i][j] + G*(F_x_Ft_x_F.N[i][j] - F.N[i][j]);
     }
   }
+
+  /* Plain stress condition */
+  if(Ndim == 2)
+  {
+    Intput_SP.Stress[4] = lambda*0.5*(tr__Ft_x_F - Ndim);
+  }
   
   /*
     Free tensors 
