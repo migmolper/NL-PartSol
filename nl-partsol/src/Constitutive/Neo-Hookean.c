@@ -58,6 +58,14 @@ State_Parameters compute_1PK_Stress_Tensor_Neo_Hookean_Wriggers(
       P.N[i][j] = lambda*0.5*(J2 - 1)*Fm1.N[j][i] + G*(F.N[i][j] - Fm1.N[j][i]);
     }
   }
+
+  /*
+    Plane strain conditions
+  */
+  if(Ndim == 2)
+  {
+    Intput_SP.Stress[4] = lambda*0.5*(J2 - 1);
+  }
   
   /*
     Free tensors 

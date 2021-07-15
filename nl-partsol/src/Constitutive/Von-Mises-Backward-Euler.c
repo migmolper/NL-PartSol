@@ -132,12 +132,13 @@ State_Parameters Von_Mises_backward_euler(
       Update equivalent plastic strain and increment of plastic deformation
     */
     Outputs_VarCons.EPS = EPS_k;
+    Outputs_VarCons.Stress = Inputs_SP.Stress;
     Outputs_VarCons.Increment_E_plastic = Inputs_SP.Increment_E_plastic;
-
   }
   else
   {
     Outputs_VarCons.EPS = Inputs_SP.EPS;
+    Outputs_VarCons.Stress = Inputs_SP.Stress;
     Outputs_VarCons.Increment_E_plastic = Inputs_SP.Increment_E_plastic;
   }
   

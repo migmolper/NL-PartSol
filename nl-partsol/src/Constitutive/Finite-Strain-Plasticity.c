@@ -88,7 +88,7 @@ State_Parameters finite_strain_plasticity(
   */
   for(int i = 0 ; i<Ndim ; i++)
   {
-    D_F_plastic_spectral.N[i][i] = exp(- Output_SP_infinitesimal.Increment_E_plastic[i]);
+    D_F_plastic_spectral.N[i][i] = exp( - Output_SP_infinitesimal.Increment_E_plastic[i]);
   }
 
   /*
@@ -118,7 +118,7 @@ State_Parameters finite_strain_plasticity(
   */
   for(int i = 0 ; i<Ndim ; i++)
   {
-    kirchhoff_spectral_p.N[i][i] = Input_SP_infinitesimal.Stress[i];
+    kirchhoff_spectral_p.N[i][i] = Output_SP_infinitesimal.Stress[i];
   }
 
   kirchhoff_p = rotate__TensorLib__(kirchhoff_spectral_p, Eigen_C_trial_elastic.Vector);
@@ -142,6 +142,13 @@ State_Parameters finite_strain_plasticity(
     }
   }
 
+  /*
+    Plane strain conditions
+  */
+  if(Ndim == 2)
+  {
+    Inputs_SP_finite.Stress[4] = Input_SP_infinitesimal.Stress[2];
+  }
 
   /* Free memory */
   free(Input_SP_infinitesimal.Stress);
@@ -175,21 +182,15 @@ static void elastic_trial(
   Material MatProp_p)
 {
 
-  int Ndim = NumberDimensions;
-
-  /* Get information from the state parameter */
-  Tensor Strain = memory_to_tensor__TensorLib__(Intput_SP.Strain,2);
-  Tensor Stress = memory_to_tensor__TensorLib__(Intput_SP.Stress,2);
-
   double nu = MatProp_p.nu; 
   double E = MatProp_p.E;
   double G = E/(2*(1+nu));
-  double Lambda = nu*E/((1+nu)*(1-2*nu));
+  double K = 3*E/(1-2*nu);
   double traceStrain = Intput_SP.Strain[0] + Intput_SP.Strain[1] + Intput_SP.Strain[2];
 
-  Intput_SP.Stress[0] = 2*G*Intput_SP.Strain[0] - Lambda*traceStrain;
-  Intput_SP.Stress[1] = 2*G*Intput_SP.Strain[1] - Lambda*traceStrain;
-  Intput_SP.Stress[2] = 2*G*Intput_SP.Strain[2] - Lambda*traceStrain;
+  Intput_SP.Stress[0] = 2*G*Intput_SP.Strain[0] + K*traceStrain;
+  Intput_SP.Stress[1] = 2*G*Intput_SP.Strain[1] + K*traceStrain;
+  Intput_SP.Stress[2] = 2*G*Intput_SP.Strain[2] + K*traceStrain;
  
 }
 
