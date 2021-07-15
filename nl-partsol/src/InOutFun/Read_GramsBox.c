@@ -26,9 +26,10 @@ static char Error_message[MAXW];
 static Nodes_Information Read_Nodal_Set_Information(char *);
 static void Check_Mesh_File(char *);
 static void get_sourrounding_elements(Mesh);
-static void fill_nodal_locality(Mesh);
+static void fill_nodal_locality(Mesh, int);
 static ChainPtr node_I_locality(int, Mesh);
 static ChainPtr ring_search_nodal_locality(ChainPtr *, ChainPtr, Mesh);
+static void compute_nodal_distance_local(Mesh);
 static double mesh_size(Mesh);
 static void standard_error(int, char *);
 static void standard_output(char *);
@@ -50,6 +51,8 @@ Mesh GramsBox(char * Name_File)
 {
   // Define mesh variable
   Mesh FEM_Mesh;
+
+  int Num_nodal_rings = 4;
 
   // Read information in GramsBox and check sintax
   Nodes_Information Nodes_Info = Read_Nodal_Set_Information(Name_File);
@@ -79,14 +82,33 @@ Mesh GramsBox(char * Name_File)
   get_sourrounding_elements(FEM_Mesh);
   printf("\t \t %s : %s \n","-> Compute sourrounding elements","Done");
 
-  FEM_Mesh.SizeNodalLocality = (int *)Allocate_ArrayZ(FEM_Mesh.NumNodesMesh,sizeof(int));
-  FEM_Mesh.NodalLocality = (ChainPtr *)malloc(FEM_Mesh.NumNodesMesh*sizeof(ChainPtr));
-  fill_nodal_locality(FEM_Mesh);
+  FEM_Mesh.SizeNodalLocality_0 = (int *)Allocate_ArrayZ(FEM_Mesh.NumNodesMesh,sizeof(int));
+  FEM_Mesh.NodalLocality_0 = (ChainPtr *)malloc(FEM_Mesh.NumNodesMesh*sizeof(ChainPtr));
+  fill_nodal_locality(FEM_Mesh,1);
   printf("\t \t %s : %s \n","-> Compute nodal neighborhood","Done");
 
-  FEM_Mesh.NumParticles = (int *)Allocate_ArrayZ(FEM_Mesh.NumNodesMesh,sizeof(int));
-  FEM_Mesh.I_particles = (ChainPtr *)malloc(FEM_Mesh.NumNodesMesh*sizeof(ChainPtr));
+  if(Num_nodal_rings > 1)
+  {
+    FEM_Mesh.SizeNodalLocality = (int *)Allocate_ArrayZ(FEM_Mesh.NumNodesMesh,sizeof(int));
+    FEM_Mesh.NodalLocality = (ChainPtr *)malloc(FEM_Mesh.NumNodesMesh*sizeof(ChainPtr));
+    fill_nodal_locality(FEM_Mesh,Num_nodal_rings);
+    printf("\t \t %s : %s \n","-> Compute extended nodal neighborhood","Done");
+  }
+
+  FEM_Mesh.ActiveNode = (bool *)malloc(FEM_Mesh.NumNodesMesh*sizeof(bool));
+  printf("\t \t %s : %s \n","-> Allocate list of active nodes","Done");
+
+  FEM_Mesh.Num_Particles_Node = (int *)Allocate_ArrayZ(FEM_Mesh.NumNodesMesh,sizeof(int));
+  FEM_Mesh.List_Particles_Node = (ChainPtr *)malloc(FEM_Mesh.NumNodesMesh*sizeof(ChainPtr));
   printf("\t \t %s : %s \n","-> Initialize ","Done");
+
+  FEM_Mesh.Num_Particles_Element = (int *)Allocate_ArrayZ(FEM_Mesh.NumElemMesh,sizeof(int));
+  FEM_Mesh.List_Particles_Element = (ChainPtr *)malloc(FEM_Mesh.NumElemMesh*sizeof(ChainPtr));
+  printf("\t \t %s : %s \n","-> Initialize ","Done");
+
+  FEM_Mesh.h_avg = (double *)Allocate_ArrayZ(FEM_Mesh.NumNodesMesh,sizeof(double));
+  compute_nodal_distance_local(FEM_Mesh);
+  printf("\t \t %s : %s \n","-> Compute local nodal distance ","Done");
 
   FEM_Mesh.DeltaX = mesh_size(FEM_Mesh);
   printf("\t \t %s : %f \n","-> Compute mesh size",FEM_Mesh.DeltaX);
@@ -295,12 +317,11 @@ static void get_sourrounding_elements(Mesh FEM_Mesh)
 
 /*********************************************************************/
 
-static void fill_nodal_locality(Mesh FEM_Mesh)
+static void fill_nodal_locality(Mesh FEM_Mesh, int Num_nodal_rings)
 {
   /*
     Auxiliar variables for the nodal neighborhood reconstruction
   */
-  int Num_nodal_rings = 3; // Number of search rings
   int k_nodal_ring; // Current search ring
   ChainPtr Search_Set; // Auxiliar set for recursive search
 
@@ -309,9 +330,10 @@ static void fill_nodal_locality(Mesh FEM_Mesh)
 
     if (Num_nodal_rings == 1)
     {
-      FEM_Mesh.NodalLocality[i] = node_I_locality(i, FEM_Mesh);
+      FEM_Mesh.NodalLocality_0[i] = node_I_locality(i, FEM_Mesh);
+      FEM_Mesh.SizeNodalLocality_0[i] = lenght__SetLib__(FEM_Mesh.NodalLocality_0[i]);
     }
-    else
+    else if(Num_nodal_rings > 1)
     {
 
       k_nodal_ring = 0;
@@ -326,9 +348,9 @@ static void fill_nodal_locality(Mesh FEM_Mesh)
         k_nodal_ring++;
       }
 
-    }
+      FEM_Mesh.SizeNodalLocality[i] = lenght__SetLib__(FEM_Mesh.NodalLocality[i]);
 
-    FEM_Mesh.SizeNodalLocality[i] = lenght__SetLib__(FEM_Mesh.NodalLocality[i]);
+    }    
 
   }
 
@@ -432,6 +454,67 @@ static ChainPtr ring_search_nodal_locality(ChainPtr * Set_k, ChainPtr Search_Set
 }
 
 /*********************************************************************/
+
+static void compute_nodal_distance_local(Mesh FEM_Mesh)
+{
+  int Ndim = NumberDimensions;
+  int A,B;
+  int NumCloseNodes_A;
+
+  ChainPtr NodalLocality_A = NULL;
+
+  Matrix h_AB = alloc__MatrixLib__(1,Ndim);
+  double avg_h_A;
+
+  for(A = 0 ; A<FEM_Mesh.NumNodesMesh ; A++)
+  {
+    
+    NodalLocality_A = node_I_locality(A, FEM_Mesh);
+
+    avg_h_A = 0.0;
+    NumCloseNodes_A = 0;
+
+    /*
+      Loop in the closest set of nodes
+    */
+    while (NodalLocality_A != NULL)
+    {
+      /*
+        Get the index of the node
+      */
+      B = NodalLocality_A->I;
+
+      if (A != B)
+      {
+
+        for(int i = 0 ; i<Ndim ; i++)
+        {
+          h_AB.nV[i] = FEM_Mesh.Coordinates.nM[B][i] - FEM_Mesh.Coordinates.nM[A][i];
+        }
+        
+        avg_h_A += norm__MatrixLib__(h_AB,2);
+
+        NumCloseNodes_A ++;
+
+      }
+
+      NodalLocality_A = NodalLocality_A->next; 
+
+    }
+
+    FEM_Mesh.h_avg[A] = avg_h_A/(double)NumCloseNodes_A;
+
+
+    free__SetLib__(&NodalLocality_A);
+
+  }
+
+
+  free__MatrixLib__(h_AB);
+}
+
+/*********************************************************************/
+
 
 static double mesh_size(Mesh FEM_Mesh)
 /*

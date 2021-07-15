@@ -84,7 +84,7 @@ void initialize__GIMP__(
       MPM_Mesh.NumberNodes[i] = lenght__SetLib__(MPM_Mesh.ListNodes[i]);
 	
       /* Active those nodes that interact with the particle */
-      asign_to_nodes__Particles__(i, MPM_Mesh.ListNodes[i], FEM_Mesh);
+      asign_to_nodes__Particles__(i, j, MPM_Mesh.I0[i], MPM_Mesh.ListNodes[i], FEM_Mesh);
 
       /* Free memory */
       free__MatrixLib__(Elem_p_Coordinates);

@@ -23,6 +23,8 @@ void initialize__T3__(
   int Np = MPM_Mesh.NumGP;
   int Nelem = FEM_Mesh.NumElemMesh;
 
+  bool Init_p;
+
   /*Definition of auxiliar global and local coordinates */
   Matrix X_p, Xi_p;
 
@@ -38,6 +40,9 @@ void initialize__T3__(
   /* Loop over the particles to initialize them */
   for(int p = 0 ; p<Np ; p++)
   {
+
+    /* Supose that the particle was not initilise */
+    Init_p = false;
 
     /* Asign the number of nodes */
     MPM_Mesh.NumberNodes[p] = 3;
@@ -55,8 +60,14 @@ void initialize__T3__(
       Elem_p_Coordinates = get_nodes_coordinates__MeshTools__(Elem_p_Connectivity, FEM_Mesh.Coordinates);
       
       /* 5º Check out if the GP is in the Element */
-      if(FEM_Mesh.In_Out_Element(X_p,Elem_p_Coordinates))
+      if(in_out__T3__(X_p,Elem_p_Coordinates) == true)
       {
+
+        /* Particle will be initilise */
+        Init_p = true;
+
+        // Assign the index of the element
+        MPM_Mesh.Element_p[p] = i;
 
         /* With the element connectivity get the node close to the particle */
         MPM_Mesh.I0[p] = get_closest_node__MeshTools__(X_p,Elem_p_Connectivity,FEM_Mesh.Coordinates);
@@ -65,7 +76,7 @@ void initialize__T3__(
         MPM_Mesh.ListNodes[p] = copy__SetLib__(Elem_p_Connectivity);
 
         /* Active those nodes that interact with the particle */
-        asign_to_nodes__Particles__(p, MPM_Mesh.ListNodes[p], FEM_Mesh);
+        asign_to_nodes__Particles__(p, MPM_Mesh.Element_p[p], MPM_Mesh.I0[p], MPM_Mesh.ListNodes[p], FEM_Mesh);
 
         /* Compute local coordinates of the particle in this element */
         X_to_Xi__T3__(Xi_p,X_p,Elem_p_Coordinates);
@@ -80,6 +91,14 @@ void initialize__T3__(
       /* Free coordinates of the element */
       free__MatrixLib__(Elem_p_Coordinates);
       
+    }
+
+    if(!Init_p)
+    {
+      fprintf(stderr,"%s : %s %i\n",
+        "Error in initialize__T3__()",
+        "The search algorithm was unable to find particle",p);
+      exit(EXIT_FAILURE);
     }
 
   }
@@ -110,18 +129,18 @@ Matrix dN_Ref__T3__(
 {
   
   /* Definition and allocation */
-  Matrix dNdX_ref = alloc__MatrixLib__(2,3);
+  Matrix dNdX_ref = alloc__MatrixLib__(3,2);
   
   /* Fill the matrix */
   /* Node 0 */
   dNdX_ref.nM[0][0] = - 1; /* \frac{\partial N0}{\partial \xi} */
-  dNdX_ref.nM[1][0] = - 1; /* \frac{\partial N0}{\partial \eta} */
+  dNdX_ref.nM[0][1] = - 1; /* \frac{\partial N0}{\partial \eta} */
   /* Node 1 */
-  dNdX_ref.nM[0][1] = + 1; /* \frac{\partial N1}{\partial \xi} */
+  dNdX_ref.nM[1][0] = + 1; /* \frac{\partial N1}{\partial \xi} */
   dNdX_ref.nM[1][1] = + 0; /* \frac{\partial N1}{\partial \eta} */
   /* Node 2 */
-  dNdX_ref.nM[0][2] = + 0; /* \frac{\partial N2}{\partial \xi} */
-  dNdX_ref.nM[1][2] = + 1; /* \frac{\partial N2}{\partial \eta} */
+  dNdX_ref.nM[2][0] = + 0; /* \frac{\partial N2}{\partial \xi} */
+  dNdX_ref.nM[2][1] = + 1; /* \frac{\partial N2}{\partial \eta} */
   
   return dNdX_ref;
 }
@@ -131,8 +150,8 @@ Matrix dN_Ref__T3__(
 
 /* Deformation gradient of the reference element for the three-nodes triangle */
 static Matrix F_Ref__T3__(
-  Matrix X_NC_GP,
-  Matrix X_GC_Nodes)
+  Matrix Xi,
+  Matrix Element)
 /*
   Get the deformation gradient of the transformation of the reference element :
 
@@ -147,42 +166,44 @@ static Matrix F_Ref__T3__(
   evaluated in the GP
 */
 {
+  int Ndim = NumberDimensions;
+
   /* Variable declaration */
   Matrix dNdX_Ref_GP;
-  Matrix X_alpha = alloc__MatrixLib__(2,1);
-  Matrix dNdx_alpha = alloc__MatrixLib__(1,2);
-  Matrix F_Ref_alpha;
-  Matrix F_Ref = allocZ__MatrixLib__(2,2);
+  Tensor X_I;
+  Tensor dNdx_I;
+  Tensor F_Ref_I;
+  Matrix F_Ref = allocZ__MatrixLib__(Ndim,Ndim);
 
   /* 1º Evaluate the derivarive of the shape function in the GP */
-  dNdX_Ref_GP = dN_Ref__T3__(X_NC_GP); 
+  dNdX_Ref_GP = dN_Ref__T3__(Xi);
 
   /* 2º Get the F_Ref doing a loop over the nodes of the element */
-  for(int i = 0 ; i<3 ; i++)
+  for(int I = 0 ; I<3 ; I++)
   {
 
     /* 3º Fill arrays for the tensorial product */
-    for(int j = 0 ; j<2 ; j++)
-    {
-      X_alpha.nV[j] = X_GC_Nodes.nM[i][j];
-      dNdx_alpha.nV[j] = dNdX_Ref_GP.nM[j][i];
-    }
+    X_I    = memory_to_tensor__TensorLib__(Element.nM[I],1);
+    dNdx_I = memory_to_tensor__TensorLib__(dNdX_Ref_GP.nM[I],1);
 
     /* 4º Get the nodal contribution */
-    F_Ref_alpha = dyadic_product__MatrixLib__(X_alpha,dNdx_alpha);
+    F_Ref_I = dyadic_Product__TensorLib__(X_I,dNdx_I);
 
     /* 5º Increment the reference deformation gradient */
-    F_Ref = increment__MatrixLib__(F_Ref, F_Ref_alpha);
-
-    /* 6º Free data of the nodal contribution */
-    free__MatrixLib__(F_Ref_alpha);
+    for(int i = 0 ; i<Ndim ; i++)
+    {
+      for(int j = 0 ; j<Ndim ; j++)
+      {
+        F_Ref.nM[i][j] += F_Ref_I.N[i][j];
+      }
+    }
     
+    /* 6º Free data of the nodal contribution */
+    free__TensorLib__(F_Ref_I);    
   }
   
   /* 7º Free memory */
   free__MatrixLib__(dNdX_Ref_GP);
-  free__MatrixLib__(X_alpha);
-  free__MatrixLib__(dNdx_alpha);
 
   /* 8º Output */
   return F_Ref;
@@ -192,72 +213,73 @@ static Matrix F_Ref__T3__(
 
 /* Element gradient in the real element */
 Matrix dN__T3__(
-  Matrix X_EC_GP,
+  Matrix Xi,
   Matrix Element)
 /*
-  - Matrix X_EC_GP : Element coordinates of the gauss point
-  - Matrix Element : Coordinates of the element (NumNodesElem x NumberDimensions)
+  - Matrix Xi_GP : Element coordinates of the gauss point
+  - Matrix Element : Coordinates of the element (8 x Ndim)
 */
 {
   
-  /* 0º Definition and allocation */
-  Matrix dNdX_Ref_GP; /* Derivative of the shape function evaluated in the GP (Ndim x Nnodes) */
-  Matrix F_GP; /* Deformation gradient of the transformation evaluated in the GP (Ndim x Ndim) */
-  Matrix F_GP_m1; /* Inverse of the deformation gradient */
-  Matrix F_GP_Tm1; /* Transpose of the deformation gradient */
-  Matrix dNdx_GP; /* Derivatives of the shape function evaluates in the GP (Ndim x Ndim) */
-
-  /* 1º Evaluate the gradient of the shape function in the GP */
-  dNdX_Ref_GP = dN_Ref__T3__(X_EC_GP);
-  
-  /* 2º Get the deformation gradient of the transformation evaluated in the GP */
-  F_GP = F_Ref__T3__(X_EC_GP,Element);
+  /* Derivatives of the shape function evaluates in the GP (8 x Ndim) */
+  Matrix dNdX;
+  Matrix dNdX_T;
     
-  /* 3º Get the inverse of the deformation gradient */
-  F_GP_m1 = inverse__MatrixLib__(F_GP);
-  free__MatrixLib__(F_GP);
-  
-  /* 4º Get the transpose of the inverse of the deformation gradient */
-  F_GP_Tm1 = transpose__MatrixLib__(F_GP_m1);
-  free__MatrixLib__(F_GP_m1);
-  
-  /* 5º Get the gradient of the shape functions in global coordinates */
-  dNdx_GP = matrix_product__MatrixLib__(F_GP_Tm1,dNdX_Ref_GP);
-  free__MatrixLib__(F_GP_Tm1);
-  free__MatrixLib__(dNdX_Ref_GP);
+  /* 1º Evaluate the gradient of the shape function in the GP (8 x Ndim)
+  and transpose it */
+  Matrix dNdX_Ref   = dN_Ref__T3__(Xi);
+  Matrix dNdX_Ref_T = transpose__MatrixLib__(dNdX_Ref);
 
-  /* 6º Return result */
-  return dNdx_GP;
+  /* 2º Get the Jacobian of the transformation evaluated in the GP */
+  Matrix F     = F_Ref__T3__(Xi,Element);
+  Matrix F_m1  = inverse__MatrixLib__(F);  
+  Matrix F_Tm1 = transpose__MatrixLib__(F_m1);
+  
+  /* 3º Get the gradient of the shape functions in global coordinates */
+  dNdX_T = matrix_product__MatrixLib__(F_Tm1, dNdX_Ref_T);
+  dNdX   = transpose__MatrixLib__(dNdX_T);
+
+  /* 4º Free memory */
+  free__MatrixLib__(F);
+  free__MatrixLib__(F_m1);
+  free__MatrixLib__(F_Tm1);
+  free__MatrixLib__(dNdX_Ref);
+  free__MatrixLib__(dNdX_Ref_T);
+  free__MatrixLib__(dNdX_T);
+  
+  /* 5º Return result */
+  return dNdX;
 }
 
 /*********************************************************************/
 
 /* Global coordinates of the four nodes quadrilateral */
-static Matrix Xi_to_X__T3__(Matrix X_NC_GP,Matrix X_GC_Nodes)
+static Matrix Xi_to_X__T3__(
+  Matrix Xi,
+  Matrix Element)
 /*
 This function evaluate the position of the GP in the element, and get it global coordiantes    
  */
 {
-  /* 0º Variable declaration */
-  Matrix N_ref;
-  Matrix X_GC_GP;
-
+  int Ndim = NumberDimensions;
   /* 1º Evaluate the Q4 element in the element coordinates */
-  N_ref = N__T3__(X_NC_GP);
+  Matrix N = N__T3__(Xi);
 
   /* 2º Allocate the output coordinates */
-  X_GC_GP = alloc__MatrixLib__(2,1);
+  Matrix X = allocZ__MatrixLib__(Ndim,1);
 
   /* 3º Get the global coordinates for this element coordiantes in this element */
-  X_GC_GP.nV[0] = N_ref.nV[0]*X_GC_Nodes.nM[0][0] + N_ref.nV[1]*X_GC_Nodes.nM[1][0] + N_ref.nV[2]*X_GC_Nodes.nM[2][0];
-  
-  X_GC_GP.nV[1] = N_ref.nV[0]*X_GC_Nodes.nM[0][1] + N_ref.nV[1]*X_GC_Nodes.nM[1][1] + N_ref.nV[2]*X_GC_Nodes.nM[2][1];
+  for(int I = 0 ; I<3 ; I++)
+  {
+    X.nV[0] += N.nV[I]*Element.nM[I][0];
+    X.nV[1] += N.nV[I]*Element.nM[I][1];
+  }
 
   /* 4º Free memory */
-  free__MatrixLib__(N_ref);
+  free__MatrixLib__(N);
 
   /* 5º Output */
-  return X_GC_GP;
+  return X;
  
 }
 
@@ -290,23 +312,52 @@ bool in_out__T3__(
   Matrix X,
   Matrix Element)
 {
-  bool in_out = false;
+  double min[2] = {Element.nM[0][0],Element.nM[0][1]};
+  double max[2] = {Element.nM[0][0],Element.nM[0][1]};
 
-  Matrix Xi = allocZ__MatrixLib__(2,1);
-
-  Xi = Newton_Rapson(Xi_to_X__T3__, Element, F_Ref__T3__, Element, X, Xi);
-
-  if((Xi.nV[0] >= 0.0) && 
-    (Xi.nV[1]  >= 0.0) && 
-    (Xi.nV[1] + Xi.nV[0] -1 <=  0.0))
+  for(int a = 1 ; a<3 ; a++)
   {
-    in_out = true;    
+    for(int i = 0 ; i<2; i++)
+    {
+      min[i] = DMIN(min[i],Element.nM[a][i]);
+      max[i] = DMAX(max[i],Element.nM[a][i]);
+    }
   }
 
-  free__MatrixLib__(Xi);
+  Matrix Xi;
 
-  return in_out;
+  // Check if it is inside
+  if((X.nV[0] <= max[0]) && 
+    (X.nV[0] >= min[0]) && 
+    (X.nV[1] <= max[1]) && 
+    (X.nV[1] >= min[1]))
+  {
+
+    Xi = allocZ__MatrixLib__(2,1);
+
+    X_to_Xi__T3__(Xi, X, Element);
+
+    if((Xi.nV[0] >= 0.0) && 
+      (Xi.nV[1]  >= 0.0) && 
+      (Xi.nV[1] + Xi.nV[0] -1 <=  0.0))
+    {
+      free__MatrixLib__(Xi);
+      return true;    
+    }
+    else
+    {
+      free__MatrixLib__(Xi);
+      return false;
+    }
+
+  }
+  else
+  {
+    return false;
+  }
+
 }
+
 
 /*********************************************************************/
 
@@ -433,7 +484,7 @@ double min_DeltaX__T3__(ChainPtr Element_Connectivity, Matrix Coordinates)
   */
   for(int j = 0 ; j<NumNodesElem ; j++)
   {
-    MinElementSize = DMIN(MinElementSize,1/sqrt(dNdx.nM[0][j]*dNdx.nM[0][j] + dNdx.nM[1][j]*dNdx.nM[1][j]));
+    MinElementSize = DMIN(MinElementSize,1/sqrt(dNdx.nM[j][0]*dNdx.nM[j][0] + dNdx.nM[j][1]*dNdx.nM[j][1]));
   }
 
   /*
@@ -467,7 +518,7 @@ double volume__T3__(
   Matrix F_i;
   Matrix Xi = allocZ__MatrixLib__(2,1);
 
-  for(int i = 0 ; i<4 ; i++)
+  for(int i = 0 ; i<3 ; i++)
   {
     for(int j = 0 ; j<Ndim ; j++)
     {
@@ -479,7 +530,7 @@ double volume__T3__(
     J_i = I3__MatrixLib__(F_i);
 
     // Compute volume contribution
-    Vol += J_i*table_w[i];
+    Vol += fabs(J_i)*table_w[i];
 
     // Free memory
     free__MatrixLib__(F_i);
@@ -492,5 +543,216 @@ double volume__T3__(
 
   return Vol;
 }
+
+/*********************************************************************/
+
+
+void local_search__T3__(Particle MPM_Mesh, Mesh FEM_Mesh)
+{
+
+  // Number of dimensions
+  int Ndim = NumberDimensions;
+  int Num_Particles_Node_i;
+  int Num_Particles_Element_i;
+  // Velocity and position of the particle
+  Matrix Xi_p;
+  Matrix X_p;
+  Matrix V_p;
+  // Previous closest node to the particle
+  int I0_p_old; 
+  // New closest node to the particle
+  int I0_p_new;
+  // List of nodes that interact with the particle
+  ChainPtr Connectivity_p;
+  // Coordinates of the nodes of the Element 
+  Matrix CoordElement;
+  // List of nodes close to the node I0_p 
+  ChainPtr Locality_I0;
+
+  // Set to zero the active/non-active node, and the GPs in each element */
+  for(int i = 0 ; i<FEM_Mesh.NumNodesMesh ; i++)
+  {
+    Num_Particles_Node_i = FEM_Mesh.Num_Particles_Node[i];
+
+    if(Num_Particles_Node_i != 0)
+    {
+      FEM_Mesh.Num_Particles_Node[i] = 0;
+      free__SetLib__(&FEM_Mesh.List_Particles_Node[i]);
+    }
+
+    FEM_Mesh.ActiveNode[i] = false;
+
+  }
+
+  for(int i = 0 ; i<FEM_Mesh.NumElemMesh ; i++)
+  {
+    Num_Particles_Element_i = FEM_Mesh.Num_Particles_Element[i];
+
+    if(Num_Particles_Element_i != 0)
+    {
+      free__SetLib__(&FEM_Mesh.List_Particles_Element[i]); 
+      FEM_Mesh.Num_Particles_Element[i] = 0;
+    }
+  }
+
+  // Loop over the particles
+  for(int p = 0 ; p<MPM_Mesh.NumGP ; p++)
+  {
+
+    // Get the global coordinates and velocity of the particle
+    X_p = memory_to_matrix__MatrixLib__(Ndim,1,MPM_Mesh.Phi.x_GC.nM[p]);
+    V_p = memory_to_matrix__MatrixLib__(Ndim,1,MPM_Mesh.Phi.vel.nM[p]);
+    Xi_p = memory_to_matrix__MatrixLib__(Ndim,1,MPM_Mesh.Phi.x_EC.nM[p]);
+
+    // Check if the particle is static or is in movement
+    if(norm__MatrixLib__(V_p,2) > 0)
+    {
+
+      // Get the index of the node close to the particle
+      I0_p_old = MPM_Mesh.I0[p];
+
+      // Get nodes close to the node I0_p
+      Locality_I0 = FEM_Mesh.NodalLocality_0[I0_p_old];
+
+      // Compute node close to the particle
+      I0_p_new = get_closest_node__MeshTools__(X_p,Locality_I0,FEM_Mesh.Coordinates);
+
+      // Update the tributary nodes of each particle
+      MPM_Mesh.Element_p[p] = search_particle_in_surrounding_elements__Particles__(p,X_p,FEM_Mesh.NodeNeighbour[MPM_Mesh.I0[p]],FEM_Mesh);
+  
+      if(MPM_Mesh.Element_p[p] == -999)
+      {
+        fprintf(stderr,"%s : %s %i \n",
+        "Error in local_search__T3__ -> search_particle_in_surrounding_elements__Particles__",
+        "Not posible to find the particle",p);
+        exit(EXIT_FAILURE);
+      }
+
+      // Free previous connectivity
+      free__SetLib__(&MPM_Mesh.ListNodes[p]);
+      MPM_Mesh.ListNodes[p] = NULL;  
+        
+      // Asign new connectivity
+      MPM_Mesh.ListNodes[p] = copy__SetLib__(FEM_Mesh.Connectivity[MPM_Mesh.Element_p[p]]);
+
+      // Get the coordinates of the element vertex
+      CoordElement = get_nodes_coordinates__MeshTools__(MPM_Mesh.ListNodes[p],FEM_Mesh.Coordinates);
+
+      // Compute local coordinates of the particle in this element
+      FEM_Mesh.X_to_Xi(Xi_p,X_p,CoordElement);
+
+      // Free coordinates of the element
+      free__MatrixLib__(CoordElement);
+
+      // Activate the nodes near the particle
+      Connectivity_p = MPM_Mesh.ListNodes[p];
+      while(Connectivity_p != NULL)
+      {
+        if(FEM_Mesh.ActiveNode[Connectivity_p->I] == false)
+        {
+          FEM_Mesh.ActiveNode[Connectivity_p->I] = true;
+        }
+
+        Connectivity_p = Connectivity_p->next;
+      }
+
+      // Active those nodes that interact with the particle
+      asign_to_nodes__Particles__(p, MPM_Mesh.Element_p[p], MPM_Mesh.I0[p], MPM_Mesh.ListNodes[p], FEM_Mesh);
+      
+   }
+    else
+    {
+      // Activate the nodes near the particle
+      Connectivity_p = MPM_Mesh.ListNodes[p];
+      while(Connectivity_p != NULL)
+      {
+        if(FEM_Mesh.ActiveNode[Connectivity_p->I] == false)
+        {
+          FEM_Mesh.ActiveNode[Connectivity_p->I] = true;
+        }
+
+        Connectivity_p = Connectivity_p->next;
+      }
+
+      // Active those nodes that interact with the particle
+      asign_to_nodes__Particles__(p, MPM_Mesh.Element_p[p], MPM_Mesh.I0[p], MPM_Mesh.ListNodes[p], FEM_Mesh);
+    }
+
+  }
+
+
+}
+
+/*********************************************************************/
+
+double compute_Jacobian_patch__T3__(
+  int p,
+  Particle MPM_Mesh,
+  ChainPtr * NodeNeighbour,
+  ChainPtr * List_Particles_Element)
+{
+
+  int q;
+  int Ndim = NumberDimensions;
+  int MatIndx_p = MPM_Mesh.MatIdx[p];
+  int I0_p = MPM_Mesh.I0[p];
+  int IdxElement;
+  double J_n_p_patch;
+  double J_n1_q_patch;
+  double Vol_0_q;
+  double Vol_n1_q;
+  double V0_patch;
+  double Vn1_patch;
+  double J_p;
+  double J_n1_patch;
+  double J_averaged;
+  double averaged_F_vol;
+
+  double alpha = MPM_Mesh.Mat[MatIndx_p].alpha_Fbar;
+
+  ChainPtr Elements_Near_I0;
+  ChainPtr Particles_Patch_p;
+
+  Tensor F_n1_p;
+  Tensor Fbar;
+
+  V0_patch = 0.0;
+  Vn1_patch = 0.0;
+
+  // List of elements near the particle
+  Elements_Near_I0 = NodeNeighbour[I0_p];
+
+  // Loop in the sourrounding elements to get the deformed and reference volumes
+  while(Elements_Near_I0 != NULL)
+  {
+    Particles_Patch_p = NULL;
+
+    // Get the list of particles inside of the element
+    Particles_Patch_p = List_Particles_Element[Elements_Near_I0->I];
+
+    while(Particles_Patch_p != NULL)
+    {
+      q = Particles_Patch_p->I;
+      Vol_0_q = MPM_Mesh.Phi.Vol_0.nV[q];
+
+      J_n1_q_patch = MPM_Mesh.Phi.J.nV[q];
+      Vol_n1_q = Vol_0_q*J_n1_q_patch;
+
+      V0_patch += Vol_0_q;
+      Vn1_patch += Vol_n1_q;
+
+      Particles_Patch_p = Particles_Patch_p->next;
+    }
+
+    Elements_Near_I0 = Elements_Near_I0->next; 
+
+  }
+
+  // Compute the averaged jacobian of the deformation gradient
+  J_n1_patch = Vn1_patch/V0_patch;
+
+  return J_n1_patch;
+}
+
 
 /*********************************************************************/

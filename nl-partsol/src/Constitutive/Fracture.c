@@ -33,7 +33,8 @@ static void Eigenerosion(
   /*!
     Define auxiliar variable 
   */
-  Tensor Stress_p, EV_Stress_p; /* Stress tensor */
+  Tensor Stress_p;  /* Stress tensor */
+  EigenTensor Eigen_Stress_p;
   double Ceps_p, m_p, rho_p, V_p, sum_p, G_p, Gf_p;
   double m_q, rho_q, V_q, W_q;
   int * Beps_p;
@@ -44,13 +45,13 @@ static void Eigenerosion(
     For the current particle get first principal stress 
   */	
   Stress_p = memory_to_tensor__TensorLib__(Stress.nM[p], 2);
-  EV_Stress_p = Eigenvalues__TensorLib__(Stress_p);
+  Eigen_Stress_p = Eigen_analysis__TensorLib__(Stress_p);
 
   /*!
     Non broken GP Only traction 
   */ 
   if((chi.nV[p] < 1) && 
-    (EV_Stress_p.n[0]>0))
+    (Eigen_Stress_p.Value.n[0]>0))
   { 
 
       /*!
@@ -137,7 +138,8 @@ static void Eigenerosion(
   /*!
     Free eigenvalues 
   */
-  free__TensorLib__(EV_Stress_p);
+  free__TensorLib__(Eigen_Stress_p.Value);
+  free__TensorLib__(Eigen_Stress_p.Vector);
     
   
 }
@@ -175,8 +177,10 @@ static void Eigensoftening(
   Matrix Strain_If = Phi.Strain_If;
   
   /* Define auxiliar variable */
-  Tensor Stress_p, Stress_q, EV_Stress_p, EV_Stress_q; 
-  Tensor Strain_p, EV_Strain_p; 
+  Tensor Stress_p, Stress_q;
+  EigenTensor Eigen_Stress_p, Eigen_Stress_q; 
+  Tensor Strain_p;
+  EigenTensor Eigen_Strain_p; 
   
   /* Material properties of the eigensoftening algorithm */
   double ft_p, Wc_p, heps_p;
@@ -222,17 +226,18 @@ static void Eigensoftening(
 	    For the current particle get first principal stress 
 	  */	
 	  Stress_p = memory_to_tensor__TensorLib__(Stress.nM[p], 2);
-	  EV_Stress_p = Eigenvalues__TensorLib__(Stress_p);
+	  Eigen_Stress_p = Eigen_analysis__TensorLib__(Stress_p);
       
 	  /*!
 	    Add the first term to the sumation 
 	  */
-	  sum_p = m_p*EV_Stress_p.n[0];
+	  sum_p = m_p*Eigen_Stress_p.Value.n[0];
 
 	  /*!
 	    Free eigenvalues 
 	  */
-	  free__TensorLib__(EV_Stress_p);
+	  free__TensorLib__(Eigen_Stress_p.Value);
+    free__TensorLib__(Eigen_Stress_p.Vector);
 
 	  /*!
 	    Loop over the neighbours 
@@ -254,15 +259,16 @@ static void Eigensoftening(
 	      if(chi.nV[q] != 1.0)
 		{
 		  Stress_q = memory_to_tensor__TensorLib__(Stress.nM[q], 2);
-		  EV_Stress_q = Eigenvalues__TensorLib__(Stress_q);
+		  Eigen_Stress_q = Eigen_analysis__TensorLib__(Stress_q);
 	    
 		  /*!
 		    Get sum_p 
 		  */
-		  sum_p += m_q*EV_Stress_q.n[0];
+		  sum_p += m_q*Eigen_Stress_q.Value.n[0];
 
 		  /* Free eigenvalues */
-		  free__TensorLib__(EV_Stress_q);	    
+		  free__TensorLib__(Eigen_Stress_q.Value);
+      free__TensorLib__(Eigen_Stress_q.Vector);	    
 		}
 	
 	      /*!
@@ -286,15 +292,16 @@ static void Eigensoftening(
 	    {
 
 	      Strain_p = memory_to_tensor__TensorLib__(Strain.nM[p], 2);
-	      EV_Strain_p = Eigenvalues__TensorLib__(Strain_p);
+	      Eigen_Strain_p = Eigen_analysis__TensorLib__(Strain_p);
 	  	  
 	      /*!
 		Strain during fracture 
 	      */
-	      Strain_If.nV[p] = EV_Strain_p.n[0];
+	      Strain_If.nV[p] = Eigen_Strain_p.Value.n[0];
 
 	      /* Free eigenvalues */
-	      free__TensorLib__(EV_Strain_p);	    	  
+	      free__TensorLib__(Eigen_Strain_p.Value);	
+        free__TensorLib__(Eigen_Strain_p.Vector);      	  
 	    }
 	
 	}
@@ -308,12 +315,12 @@ static void Eigensoftening(
     {
 
       Strain_p = memory_to_tensor__TensorLib__(Strain.nM[p], 2);
-      EV_Strain_p = Eigenvalues__TensorLib__(Strain_p);
+      Eigen_Strain_p = Eigen_analysis__TensorLib__(Strain_p);
 	  	  
       /*!
 	Fracture criterium 
       */
-      Strain_eps_f_p = EV_Strain_p.n[0]-Strain_If.nV[p];
+      Strain_eps_f_p = Eigen_Strain_p.Value.n[0]-Strain_If.nV[p];
       chi_p = Strain_eps_f_p*heps_p/Wc_p;
       chi.nV[p] = DMIN(1,DMAX(chi_p,chi.nV[p]));
 
@@ -327,7 +334,8 @@ static void Eigensoftening(
 	}
 
       /* Free eigenvalues */
-      free__TensorLib__(EV_Strain_p);	    	  
+      free__TensorLib__(Eigen_Strain_p.Value);
+      free__TensorLib__(Eigen_Strain_p.Vector);	    	  
       
     }
   /*!
@@ -396,7 +404,7 @@ static void ComputeBeps(
     I_Beps = NodesBeps[i];
 
     /* List of particles close to the node */
-    Particles_Beps = FEM_Mesh.I_particles[I_Beps];
+    Particles_Beps = FEM_Mesh.List_Particles_Node[I_Beps];
     
     while(Particles_Beps != NULL){
 

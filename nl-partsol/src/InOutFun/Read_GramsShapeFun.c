@@ -6,7 +6,8 @@
 char * ShapeFunctionGP;
 double curvature_LME;
 double gamma_LME;
-double TOL_LME;
+double TOL_zero_LME;
+double TOL_wrapper_LME;
 int max_iter_LME;
 char wrapper_LME[MAXC];
 
@@ -22,7 +23,7 @@ void GramsShapeFun(char * Name_File)
   GramsShapeFun (Type=LME) {
 	gamma=2.3
   	curvature=0
-  	TOL_LME=10e-6
+  	TOL_zero_LME=10e-6
   }
 */
 {
@@ -91,7 +92,8 @@ void GramsShapeFun(char * Name_File)
 
       /* Set to default all it properties */
       gamma_LME = 3;
-      TOL_LME = 1e-10;
+      TOL_zero_LME = 1e-10;
+      TOL_wrapper_LME = 1e-10;
       curvature_LME = 0.0;
       max_iter_LME = 10;
       strcpy(wrapper_LME,"Newton-Raphson");
@@ -154,9 +156,9 @@ void GramsShapeFun(char * Name_File)
  	  {
 	    gamma_LME = atof(Parse_Shf_Prop[1]);
 	  }
-	  else if(strcmp(Parse_Shf_Prop[0],"TOL") == 0)
+	  else if(strcmp(Parse_Shf_Prop[0],"TOL-Zero") == 0)
 	  {
-	    TOL_LME = atof(Parse_Shf_Prop[1]);
+	    TOL_zero_LME = atof(Parse_Shf_Prop[1]);
 	  }
 	  else if(strcmp(Parse_Shf_Prop[0],"MaxIter") == 0)
 	  {
@@ -165,6 +167,10 @@ void GramsShapeFun(char * Name_File)
 	  else if(strcmp(Parse_Shf_Prop[0],"wrapper") == 0)
 	  {
 	  	strcpy(wrapper_LME,Parse_Shf_Prop[1]);
+	  }
+	  else if(strcmp(Parse_Shf_Prop[0],"TOL-Wrapper") == 0)
+	  {
+	  	TOL_wrapper_LME = atof(Parse_Shf_Prop[1]);
 	  }
 	  else if(strcmp(Parse_Shf_Prop[0],"curvature") == 0){
 	  	curvature_LME = atof(Parse_Shf_Prop[1]);

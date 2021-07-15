@@ -4,6 +4,7 @@
 /*
   Call global variables 
 */
+char * ShapeFunctionGP;
 double Thickness_Plain_Stress;
 char * MPM_MeshFileName;
 char   wrapper_LME[MAXC];
@@ -16,13 +17,17 @@ static void initialise_particles(Mesh,Particle,int);
 
 /*********************************************************************/
 
-Particle GramsSolid(char * Name_File, Mesh FEM_Mesh)
+Particle GramsSolid(char * Name_File, Mesh FEM_Mesh, int * STATUS)
 /*
  */
 {
 
   int Ndim = NumberDimensions;
   int NumParticles;
+
+
+  // Error signals
+  int INFO_Hidrostatic = 0;
 
   /* Simulation file */
   FILE * Sim_dat;
@@ -54,6 +59,7 @@ Particle GramsSolid(char * Name_File, Mesh FEM_Mesh)
   bool Is_GramsMaterials = false;
   bool Is_Particle_Initial = false;
   bool Is_Nodal_Initial = false;
+  bool Is_Hidrostatic_Initial = false;
   bool Is_GramsBodyForces = false;
   bool Is_GramsNeumannBC = false;
 
@@ -135,12 +141,16 @@ Particle GramsSolid(char * Name_File, Mesh FEM_Mesh)
     {
       Is_Nodal_Initial = true;
     }
+    if ((Num_words_parse > 0) && (strcmp(Parse_GramsSolid2D[0],"Hydrostatic-condition") == 0))
+    {
+      Is_Hidrostatic_Initial = true;
+    }
     if ((Num_words_parse > 0) && (strcmp(Parse_GramsSolid2D[0],"GramsBodyForces") == 0))
     {
       Is_GramsBodyForces = true;
       Counter_BodyForces++;
     }
-    if ((Num_words_parse > 0) && (strcmp(Parse_GramsSolid2D[0],"GramsNeumannBC") == 0))
+    if ((Num_words_parse > 0) && (strcmp(Parse_GramsSolid2D[0],"Define-Neumann-Boundary") == 0))
     {
       Is_GramsNeumannBC = true;
       Counter_GramsNeumannBC++;
@@ -163,6 +173,9 @@ Particle GramsSolid(char * Name_File, Mesh FEM_Mesh)
 
     /* Closest node to the particle */
     MPM_Mesh.I0 = (int *)Allocate_ArrayZ(NumParticles,sizeof(int));
+
+    /* Element of the particle */
+    MPM_Mesh.Element_p = (int *)Allocate_ArrayZ(NumParticles,sizeof(int));
 
     /* Number of tributary nodes for each particle */
     MPM_Mesh.NumberNodes = (int *)Allocate_ArrayZ(NumParticles,sizeof(int));
@@ -197,6 +210,7 @@ Particle GramsSolid(char * Name_File, Mesh FEM_Mesh)
     if(Is_GramsShapeFun)
     {
       GramsShapeFun(Name_File);
+
       /* Lenght of the Voxel (Only GIMP) */
       if(strcmp(ShapeFunctionGP,"uGIMP") == 0)
       {
@@ -238,7 +252,14 @@ Particle GramsSolid(char * Name_File, Mesh FEM_Mesh)
     /**************************************************/    
     /****** Allocate vectorial/tensorial fields *******/
     /**************************************************/
-    MPM_Mesh.Phi = allocate_Fields(NumParticles);
+    if(strcmp(Formulation,"-u") == 0)
+    {
+      MPM_Mesh.Phi = allocate_U_vars__Fields__(NumParticles);
+    }
+    else if(strcmp(Formulation,"-up") == 0)
+    {
+      MPM_Mesh.Phi = allocate_Up_vars__Fields__(NumParticles);
+    }
 
     /**************************************************/
     /************ Read material properties ************/
@@ -301,6 +322,11 @@ Particle GramsSolid(char * Name_File, Mesh FEM_Mesh)
       printf("\t * %s \n","Initialize LME shape functions ...");
       initialize__LME__(MPM_Mesh,FEM_Mesh);
     }
+    else
+    {
+      fprintf(stderr,"%s : %s \n","Error in GramsSolid()","Undefined kind of shape function");
+      exit(EXIT_FAILURE);
+    }
     printf("\t %s \n","DONE !!");
 
     /**************************************************/    
@@ -315,6 +341,18 @@ Particle GramsSolid(char * Name_File, Mesh FEM_Mesh)
     {
       Initial_condition_nodes__InOutFun__(Name_File,MPM_Mesh,FEM_Mesh);
     }
+    else if(Is_Hidrostatic_Initial)
+    {
+      Hidrostatic_condition_particles__InOutFun__(Name_File,MPM_Mesh,GPxElement,&INFO_Hidrostatic);
+      
+      if(INFO_Hidrostatic)
+      {
+        fprintf(stderr,"Error in : %s\n","GramsSolid");
+        (*STATUS) = 1;
+        return MPM_Mesh;
+      }
+
+    }
     else
     {
       puts("*************************************************");
@@ -323,16 +361,15 @@ Particle GramsSolid(char * Name_File, Mesh FEM_Mesh)
     /**************************************************/    
     /************** Read external forces **************/
     /**************************************************/    
-    if(Is_GramsNeumannBC){
-      MPM_Mesh.NumNeumannBC = Counter_GramsNeumannBC;
-      MPM_Mesh.F = GramsNeumannBC(Name_File,Counter_GramsNeumannBC,GPxElement);
+    if(Is_GramsNeumannBC)
+    {
+      MPM_Mesh.Neumann_Contours = Read_u_Neumann_Boundary_Conditions__InOutFun__(Name_File,Counter_GramsNeumannBC,GPxElement);
     }
-    else{
-      MPM_Mesh.NumNeumannBC = Counter_GramsNeumannBC;
+    else
+    {
+      MPM_Mesh.Neumann_Contours.NumBounds = 0;
       puts("*************************************************");
-      printf(" \t %s : \n\t %s \n",
-       "* No Neumann boundary conditions defined in",
-       Name_File);
+      printf(" \t %s \n","* No Neumann boundary conditions defined");
     }
     /**************************************************/    
     /*************** Read body forces *****************/
@@ -359,7 +396,7 @@ Particle GramsSolid(char * Name_File, Mesh FEM_Mesh)
     }   
     free(MPM_GID_Mesh.Connectivity);
     free__MatrixLib__(MPM_GID_Mesh.Coordinates);
-    free(MPM_GID_Mesh.NumParticles);
+    free(MPM_GID_Mesh.Num_Particles_Node);
 
   } 
   else
@@ -376,7 +413,10 @@ Particle GramsSolid(char * Name_File, Mesh FEM_Mesh)
 
 /***************************************************************************/
 
-static void initialise_particles(Mesh MPM_GID_Mesh, Particle MPM_Mesh, int GPxElement)
+static void initialise_particles(
+  Mesh MPM_GID_Mesh,
+  Particle MPM_Mesh,
+  int GPxElement)
   /*
      Loop in the GID mesh to create particles from an element 
   */
@@ -395,6 +435,14 @@ static void initialise_particles(Mesh MPM_GID_Mesh, Particle MPM_Mesh, int GPxEl
     Element_Coordinates = get_nodes_coordinates__MeshTools__(MPM_GID_Mesh.Connectivity[i], MPM_GID_Mesh.Coordinates);
     Vol_Element = MPM_GID_Mesh.volume_Element(Element_Coordinates);
     free__MatrixLib__(Element_Coordinates);
+
+    if(Vol_Element <= 0.0)
+    {
+      fprintf(stderr,"%s : %s \n",
+      "Error in GramsSolid()",
+      "Element with negative volume");
+      exit(EXIT_FAILURE);
+    }
 
     for(int j = 0 ; j<GPxElement ; j++)
     {
@@ -418,20 +466,6 @@ static void initialise_particles(Mesh MPM_GID_Mesh, Particle MPM_Mesh, int GPxEl
 
     /* Assign the mass parameter */
       MPM_Mesh.Phi.mass.nV[p] = m_p;
-
-
-      if(strcmp(MPM_Mesh.Mat[MatIdx_p].Type,"Von-Mises") == 0)
-      {
-          MPM_Mesh.Phi.cohesion.nV[p] = MPM_Mesh.Mat[MatIdx_p].yield_stress_0;
-      }
-      if(strcmp(MPM_Mesh.Mat[MatIdx_p].Type,"Drucker-Prager-Plane-Strain") == 0)
-      {
-          MPM_Mesh.Phi.cohesion.nV[p] = MPM_Mesh.Mat[MatIdx_p].cohesion_reference;
-      }
-      if(strcmp(MPM_Mesh.Mat[MatIdx_p].Type,"Drucker-Prager-Outer-Cone") == 0)
-      {
-          MPM_Mesh.Phi.cohesion.nV[p] = MPM_Mesh.Mat[MatIdx_p].cohesion_reference;
-      }
 
     }    
 

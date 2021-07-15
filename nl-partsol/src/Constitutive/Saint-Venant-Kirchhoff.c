@@ -22,6 +22,56 @@ double energy_Saint_Venant_Kirchhoff(Tensor C, Material MatProp_p)
 
 /**************************************************************/
 
+State_Parameters compute_1PK_Stress_Tensor_Saint_Venant_Kirchhoff(
+  State_Parameters Intput_SP,
+  Material MatProp_p)
+{
+  /* Number of dimensions */
+  int Ndim = NumberDimensions;
+
+  /* 
+    Output state parameter
+  */
+  State_Parameters Output_SP;
+
+  /* Get information from the state parameter */
+  Tensor P = memory_to_tensor__TensorLib__(Intput_SP.Stress,2);
+  const Tensor F = memory_to_tensor__TensorLib__(Intput_SP.F_n1_p,2);
+  
+  /* Material parameters */
+  const double ElasticModulus = MatProp_p.E;
+  const double nu = MatProp_p.nu;
+  const double lambda = nu*ElasticModulus/((1-nu*2)*(1+nu));
+  const double G = ElasticModulus/(2*(1+nu));
+  
+  /*
+    Auxiliar tensors and variables
+  */
+  Tensor Ft = transpose__TensorLib__(F);
+  Tensor Ft_x_F = matrix_product__TensorLib__(Ft,F);
+  Tensor F_x_Ft_x_F = matrix_product__TensorLib__(F,Ft_x_F);
+  double tr__Ft_x_F = I1__TensorLib__(Ft_x_F);
+
+  for(int i = 0 ; i < Ndim ; i++)
+  {
+    for(int j = 0 ; j < Ndim ; j++)
+    {
+      P.N[i][j] = lambda*0.5*(tr__Ft_x_F - Ndim)*F.N[i][j] + G*(F_x_Ft_x_F.N[i][j] - F.N[i][j]);
+    }
+  }
+  
+  /*
+    Free tensors 
+  */
+  free__TensorLib__(Ft);
+  free__TensorLib__(Ft_x_F);
+  free__TensorLib__(F_x_Ft_x_F);
+
+  return Output_SP;
+}
+
+/**************************************************************/
+
 Tensor grad_energy_Saint_Venant_Kirchhoff(Tensor grad_e, Tensor C, Material MatProp_p)
 {
   /* Number of dimensions */

@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.10.2)
 project("nl-partsol")
- 
+
 #Bring the headers
 include_directories(include)
 
@@ -18,15 +18,20 @@ set_target_properties("${PROJECT_NAME}" PROPERTIES
   )
 
 # Add math library
-target_link_libraries("${PROJECT_NAME}" m)
+target_link_libraries(${PROJECT_NAME} m)
 
 # Add LAPACK
-if(APPLE)
-  set(BLA_VENDOR Apple)
-  find_package(LAPACK)
-  target_link_libraries("${PROJECT_NAME}" LAPACK)
-elseif(UNIX)
-  target_link_libraries("${PROJECT_NAME}" lapack)
+find_package(LAPACK REQUIRED)
+if(LAPACK_FOUND)
+  message("Found Lapack")
+  target_link_libraries(${PROJECT_NAME} ${LAPACK_LIBRARIES})
+endif()
+
+# Add OpenMP
+find_package(OpenMP REQUIRED)
+if (OPENMP_FOUND)
+  message("Found OpenMP")
+  target_link_libraries(${PROJECT_NAME} OpenMP::OpenMP_C)
 endif()
 
 

@@ -22,18 +22,15 @@ Tensor SolidRigid(Tensor Strain);
 
 
 /*!
-  \fn Tensor LinearElastic(Tensor Strain, Tensor Stress, Material Properties)
+  \fn State_Parameters LinearElastic(State_Parameters Intput_SP, Material MatProp_p)
   
   \brief This function is devoted to make a material point behaves as a
   linear elastic material.
   
-  \param Strain : Strain field of each particle 
-  \param Stress : Stress field of each particle
-  \param Properties : Define the material properties of the particle
+  \param Input_SP : State parameters of the particle
+  \param MatProp : Material properties of the model
 */
-Tensor LinearElastic(Tensor, Tensor, Material);
-Tensor volumetric_stress__LinearElastic__(double, Material);
-Tensor deviatoric_stress__LinearElastic__(Tensor, Material);
+State_Parameters compute_kirchhoff_isotropic_linear_elasticity(State_Parameters, Material);
 /*******************************************************/
 
 /*!
@@ -52,6 +49,13 @@ void compute_particle_Damage(int, Particle, Mesh);
 
 */
 double energy_Saint_Venant_Kirchhoff(Tensor, Material);
+/*******************************************************/
+
+/*
+  \fn Tensor compute_1PK_Stress_Tensor_Saint_Venant_Kirchhoff(Tensor P, Tensor F, Material MatProp_p);
+*/
+
+State_Parameters compute_1PK_Stress_Tensor_Saint_Venant_Kirchhoff(State_Parameters,Material);
 /*******************************************************/
 
 /*!
@@ -76,7 +80,7 @@ double energy_Neo_Hookean_Wriggers(Tensor, double, Material);
 /*!
 
 */
-Tensor compute_1PK_Stress_Tensor_Neo_Hookean_Wriggers(Tensor, Tensor, double, Material);
+State_Parameters compute_1PK_Stress_Tensor_Neo_Hookean_Wriggers(State_Parameters, Material);
 Tensor compute_2PK_Stress_Tensor_Neo_Hookean_Wriggers(Tensor, Tensor, double, Material);
 /*******************************************************/
 
@@ -104,30 +108,80 @@ Tensor compute_stiffness_density_Neo_Hookean_Wriggers(Tensor, Tensor, Tensor, do
 Matrix compute_D_matrix_Neo_Hookean_Wriggers(Tensor, double, Material);
 /*******************************************************/
 
+/*!
+  \fn State_Parameters Von_Mises_backward_euler(State_Parameters Input_SP, Material MatProp)
 
-Plastic_status finite_strains_plasticity_Von_Mises(Tensor, Tensor, Tensor, Tensor, Plastic_status, Material, double);
-Plastic_status infinitesimal_strains_plasticity_Von_Mises(Tensor, Tensor, Plastic_status, Material);
-/*******************************************************/  
+  \brief Compute the plastic Von Mises model using an implicit backward euler radial returning 
 
-Plastic_status finite_strains_plasticity_Drucker_Prager_Sanavia(Tensor, Tensor, Tensor, Tensor, Plastic_status, Material, double);
-Plastic_status infinitesimal_strains_plasticity_Drucker_Prager_Sanavia(Tensor, Tensor, Plastic_status, Material);
+  \param Input_SP : State parameters of the particle
+  \param MatProp : Material properties of the model
+*/
+State_Parameters Von_Mises_backward_euler(State_Parameters, Material);
+/*******************************************************/
+
+/*!
+  \fn State_Parameters Von_Mises_forward_euler(State_Parameters Input_SP, Material MatProp)
+
+  \brief Compute the plastic Von Mises model using an explicit forward euler radial returning 
+
+  \param Input_SP : State parameters of the particle
+  \param MatProp : Material properties of the model
+*/
+State_Parameters Von_Mises_forward_euler(State_Parameters, Material);
 /*******************************************************/
 
 
-// Compresible Newtonian fluid
+State_Parameters Drucker_Prager_backward_euler(State_Parameters, Material);
+/*******************************************************/
+
+/*!
+  \fn State_Parameters Von_Mises_forward_euler(State_Parameters Input_SP, Material MatProp)
+
+  \brief Compute the plastic Von Mises model using an explicit forward euler radial returning 
+
+  \param Input_SP : State parameters of the particle
+  \param MatProp : Material properties of the model
+*/
+State_Parameters finite_strain_plasticity(State_Parameters,Material,State_Parameters(* infinitesimal_plasticity)(State_Parameters,Material));
+/*******************************************************/
 
 /*!
 
-  \fn Tensor compute_1PK_Stress_Tensor_Newtonian_Fluid(Tensor P,Tensor F,Tensor dFdt,double J, Material MatProp_p)
+  \fn State_Parameters compute_1PK_Stress_Tensor_Newtonian_Fluid(Tensor P,State_Parameters Input_SP, Material MatProp_p)
 
 */
-Tensor compute_1PK_Stress_Tensor_Newtonian_Fluid(Tensor,Tensor,Tensor,double,Material);
+State_Parameters compute_1PK_Stress_Tensor_Newtonian_Fluid(State_Parameters,Material);
+/*******************************************************/
 
 /*!
 \fn Tensor compute_stiffness_density_Newtonian_Fluid(Tensor GRAD_I,Tensor GRAD_J,Tensor F,Tensor dFdt,double J,double alpha4,Material MatProp_p)
 */
 Tensor compute_stiffness_density_Newtonian_Fluid(Tensor,Tensor,Tensor,Tensor,double,double,Material);
+/*******************************************************/
+
+/*!
+ * \fn State_Parameters compute_1PK_Stress_Tensor_Newtonian_Fluid_Incompressible(State_Parameters Intput_SP,Material MatProp_p)
+ * */
+ State_Parameters compute_1PK_Stress_Tensor_Newtonian_Fluid_Incompressible(State_Parameters,Material);
+/*******************************************************/
+
+/*!
+ * \fn Tensor compute_stiffness_density_Newtonian_Fluid_Incompressible(Tensor GRAD_I,Tensor GRAD_J,Tensor F,Tensor dFdt,double J,double alpha4,Material MatProp_p);
+ * */
+Tensor compute_stiffness_density_Newtonian_Fluid_Incompressible(Tensor, Tensor,Tensor,Tensor,double,double,Material);
+/*******************************************************/
+
+/*!
+ * \fn State_Parameters compute_1PK_Stress_Tensor_Bingham_Fluid(State_Parameters Intput_SP,Material MatProp_p);
+ * */
+State_Parameters compute_1PK_Stress_Tensor_Bingham_Fluid(State_Parameters,Material);
 /*******************************************************/  
+
+/*!
+ * \fn Tensor compute_stiffness_density_Bingham_Fluid(Tensor GRAD_I, Tensor GRAD_J, Tensor F, Tensor dFdt, double J, double alpha4, Material MatProp_p)
+ * */ 
+Tensor compute_stiffness_density_Bingham_Fluid(Tensor,Tensor,Tensor,Tensor,double, double,Material);
+/*******************************************************/
 
 #endif
 

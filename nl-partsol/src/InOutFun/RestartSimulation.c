@@ -144,10 +144,7 @@ Particle restart_Simulation(char * File_Parameters,
     {
       puts("*************************************************");
       printf(" \t %s \n","* Read Neumann boundary conditions");
-      Set_Particles.NumNeumannBC = Counter_GramsNeumannBC;
-      Set_Particles.F = GramsNeumannBC(File_Parameters,
-				       Counter_GramsNeumannBC,
-				       GPxElement);
+      Set_Particles.Neumann_Contours = Read_u_Neumann_Boundary_Conditions__InOutFun__(File_Parameters,Counter_GramsNeumannBC,GPxElement);
     }
   
   /* Read body forces */    

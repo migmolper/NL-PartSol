@@ -74,6 +74,12 @@ void update_Deformation_Gradient_n1__Particles__(Tensor, Tensor, Tensor);
 /*******************************************************/
 
 /*
+  \fn void get_locking_free_Deformation_Gradient_n1__Particles__(int p,Tensor F_n1,Particle MPM_Mesh,Mesh FEM_Mesh);
+*/
+void get_locking_free_Deformation_Gradient_n1__Particles__(int,Particle);
+/*******************************************************/
+
+/*
   \fn void update_rate_increment_Deformation_Gradient__Particles__(Tensor dt_DF_p,Matrix DeltaV,Matrix gradient_p);
 */
 void update_rate_increment_Deformation_Gradient__Particles__(Tensor,Matrix,Matrix);
@@ -116,27 +122,6 @@ Tensor rate_of_deformation__Particles__(Tensor, Tensor);
 /*******************************************************/
 
 /*!
-  \fn Tensor logarithmic_strains__Particles__(Tensor C)
-  \brief Function to cumpute the small strains countrepart of the 
-  right Cauchy-Green tensor defined as
-  \f[
-  \varepsilon = 1/2*logC
-  \f]
-  
-  \param C : right Cauchy-Green
-
-  \return The logaritmic strain tensor
-*/
-Tensor logarithmic_strains__Particles__(Tensor);
-/*******************************************************/
-/*!
-  \fn Tensor increment_Deformation_Gradient_exponential_strains__Particles__(Tensor D_E)
-
-*/
-Tensor increment_Deformation_Gradient_exponential_strains__Particles__(Tensor);
-/*******************************************************/
-
-/*!
   \fn Tensor strain_Green_Lagrange__Particles__(Tensor C)
   \brief Function to cumpute the Lagrangian Strain tensor defined as
   \f[
@@ -166,12 +151,14 @@ double update_density__Particles__(double, double, Tensor);
 /*!
 
 */
-Tensor explicit_integration_stress__Particles__(Tensor, Tensor, Material);
+Tensor explicit_integration_stress__Particles__(int, Particle, Material);
+
 /*******************************************************/
 /*
-\fn Tensor forward_integration_Stress__Particles__(Tensor S_p,Tensor F_n1_p,Material MatProp_p)
+\fn void Stress_integration__Particles__()
 */
-Tensor forward_integration_Stress__Particles__(Tensor,Tensor,Material);
+void Stress_integration__Particles__(int,Particle,Mesh,Material);
+
 /*******************************************************/
 /*!
   \fn Tensor configurational_midpoint_integration_Stress__Particles__(Tensor T_n1,Tensor T_n,double alpha)
@@ -213,35 +200,6 @@ Tensor average_strain_integration_Stress__Particles__(Tensor, Tensor, Tensor, Ma
 /*******************************************************/
 
 /*!
-  \fn void average_itegration_Stress__Particles__(Tensor PK2,Tensor C_n1,Tensor C_n,Material Mat);
-
-  \brief Compute the second Piola-Kirchhoff stress tensor
-  with an average value of the right Cauchy-Green tensors in 
-  t = n and t = n + 1
-  \f[
-  C^{n + 1/2} = \frac{C^{n+1} + C^{n}}{2}
-  \f]
-  And evaluating it the gradient of the internal energy function
-  \f[
-  S =  2 \cdot \Delta \hat{e}(C^{n + 1/2 )}) 
-  \f]
-
-  \param PK2  : Previous value of the stress tensor
-  \param C_n1 : Right Cauchy-Green tensor at t = n + 1
-  \param C_n  : Right Cauchy-Green tensor at t = n
-  \param Mat  : Material properties.
-*/
-Tensor average_itegration_Stress__Particles__(Tensor, Tensor, Tensor, Material);
-/*******************************************************/
-
-
-/*! \fn void compute_Piola_transformation__Particles__(Tensor S_p, Tensor sigma_k1, Tensor F_total, double J)
-
-*/
-void compute_Piola_transformation__Particles__(Tensor, Tensor, Tensor, double);
-
-
-/*!
 
 */
 double internal_energy__Particles__(Tensor, Tensor);
@@ -261,12 +219,6 @@ void initial_position__Particles__(Matrix, Mesh, int);
 /*!
 
 */
-void local_search__Particles__(Particle, Mesh);
-/*******************************************************/
-
-/*!
-
-*/
 Element nodal_set__Particles__(int, ChainPtr, int);
 /*******************************************************/
 
@@ -279,7 +231,7 @@ int search_particle_in_surrounding_elements__Particles__(int, Matrix, ChainPtr, 
 /*!
 
 */
-void asign_to_nodes__Particles__(int, ChainPtr, Mesh);
+void asign_to_nodes__Particles__(int, int, int, ChainPtr, Mesh);
 /*******************************************************/
 
 /*!
@@ -288,6 +240,9 @@ void update_plastic_deformation_gradient(Tensor D_E_plastic, Tensor F_plastic)
 
 */
 void update_plastic_deformation_gradient__Particles__(Tensor, Tensor);
+
+
+void update_elastic_deformation_gradient__Particles__(Tensor, Tensor, Tensor);
 /*******************************************************/
 
 #endif

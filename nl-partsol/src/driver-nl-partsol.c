@@ -31,12 +31,13 @@ static void standard_error(char * Error_message);
 
 int main(int argc, char * argv[])
 {  
-  int InitialStep;
   char Error_message[MAXW];
   bool Is_New_Simulation = false;
   bool Is_Restart_Simulation = false;
+  int INFO_GramsSolid = 3;
   Mesh FEM_Mesh;
   Particle MPM_Mesh;
+  Time_Int_Params Parameters_Solver;
 
   /*********************************************************************/
   /************ Read simulation file and kind of simulation ************/
@@ -53,8 +54,8 @@ int main(int argc, char * argv[])
       Formulation = argv[1];
       SimulationFile = argv[2];
       Is_New_Simulation = true;
-      Is_Restart_Simulation = false;
-      InitialStep = 0;
+//      Is_Restart_Simulation = false;
+//      InitialStep = 0;
     }
   else if(argc == 4)
     {      
@@ -62,8 +63,8 @@ int main(int argc, char * argv[])
       SimulationFile = argv[2];
       RestartFile = argv[3];
       Is_New_Simulation = false;
-      Is_Restart_Simulation = true;
-      InitialStep = get_ResultStep(RestartFile);
+//      Is_Restart_Simulation = true;
+//      InitialStep = get_ResultStep(RestartFile);
     }
   else
     {
@@ -83,19 +84,19 @@ int main(int argc, char * argv[])
 
       puts("*************************************************");
       puts("Read solver ...");
-      Solver_selector__InOutFun__(SimulationFile);
+      Parameters_Solver = Solver_selector__InOutFun__(SimulationFile,FEM_Mesh.DeltaX);
 
       puts("*************************************************");
-      if(Is_New_Simulation)
-      {
-        puts("Generating new MPM simulation ...");
-        MPM_Mesh = GramsSolid(SimulationFile,FEM_Mesh);
-      }
-      if(Is_Restart_Simulation)
-      {
-        puts("Restarting old MPM simulation ...");
-        MPM_Mesh = restart_Simulation(SimulationFile,RestartFile,FEM_Mesh);
-      }
+//      if(Is_New_Simulation)
+//      {
+      puts("Generating new MPM simulation ...");
+      MPM_Mesh = GramsSolid(SimulationFile,FEM_Mesh,&INFO_GramsSolid);
+//      }
+//      if(Is_Restart_Simulation)
+//      {
+//        puts("Restarting old MPM simulation ...");
+//        MPM_Mesh = restart_Simulation(SimulationFile,RestartFile,FEM_Mesh);
+//      }
 
       puts("*************************************************");
       puts("Read outputs ...");
@@ -107,32 +108,76 @@ int main(int argc, char * argv[])
       puts("Run simulation ...");
       if(strcmp(TimeIntegrationScheme,"FE") == 0 )
       { 
-        U_Forward_Euler(FEM_Mesh, MPM_Mesh, InitialStep);
+        U_Forward_Euler(FEM_Mesh, MPM_Mesh, Parameters_Solver);
       }
       else if(strcmp(TimeIntegrationScheme,"GA") == 0 )
       { 
-        U_GA(FEM_Mesh, MPM_Mesh, InitialStep);
+        U_Generalized_alpha(FEM_Mesh, MPM_Mesh, Parameters_Solver);
       }
       else if(strcmp(TimeIntegrationScheme,"NPC") == 0 )
       { 
-        U_Newmark_Predictor_Corrector(FEM_Mesh, MPM_Mesh, InitialStep);
+        U_Newmark_Predictor_Corrector(FEM_Mesh, MPM_Mesh, Parameters_Solver);
       }
       else if(strcmp(TimeIntegrationScheme,"NPC-FS") == 0 )
       { 
-        U_Newmark_Predictor_Corrector_Finite_Strains(FEM_Mesh, MPM_Mesh, InitialStep);
+        U_Newmark_Predictor_Corrector_Finite_Strains(FEM_Mesh, MPM_Mesh, Parameters_Solver);
       }
       else if(strcmp(TimeIntegrationScheme,"Discrete-Energy-Momentum") == 0 )
       { 
-        U_Discrete_Energy_Momentum(FEM_Mesh, MPM_Mesh, InitialStep);
+        U_Discrete_Energy_Momentum(FEM_Mesh, MPM_Mesh, Parameters_Solver);
       }
       else if(strcmp(TimeIntegrationScheme,"Newmark-beta-Finite-Strains") == 0 )
       {
-        U_Newmark_beta_Finite_Strains(FEM_Mesh, MPM_Mesh, InitialStep);
+        U_Newmark_beta_Finite_Strains(FEM_Mesh, MPM_Mesh, Parameters_Solver);
       }
       else if(strcmp(TimeIntegrationScheme,"Newmark-beta-Finite-Strains-BDB") == 0 )
       {
-        U_Newmark_beta_Finite_Strains_BDB(FEM_Mesh, MPM_Mesh, InitialStep);
+        U_Newmark_beta_Finite_Strains_BDB(FEM_Mesh, MPM_Mesh, Parameters_Solver);
       } 
+      else
+      {
+        sprintf(Error_message,"%s","Wrong time integration scheme");
+        standard_error(Error_message); 
+      }
+
+      puts("*************************************************");
+      puts("Free memory ...");
+      globalfree(FEM_Mesh, MPM_Mesh);       
+
+      printf("Computation finished at : %s \n",__TIME__);  
+      puts("Exiting of the program...");
+      exit(EXIT_SUCCESS);
+
+    }
+    else if(strcmp(Formulation,"-up") == 0)
+    {
+
+      NumberDOF = NumberDimensions + 1;
+
+      puts("*************************************************");
+      puts("Generating the background mesh ...");
+      FEM_Mesh = GramsBox(SimulationFile);
+
+      puts("*************************************************");
+      puts("Read solver ...");
+      Parameters_Solver = Solver_selector__InOutFun__(SimulationFile,FEM_Mesh.DeltaX);
+
+      puts("*************************************************");
+      puts("Generating new MPM simulation ...");
+      MPM_Mesh = GramsSolid(SimulationFile,FEM_Mesh,&INFO_GramsSolid);
+
+      puts("*************************************************");
+      puts("Read outputs ...");
+      GramsOutputs(SimulationFile);
+      NLPS_Out_nodal_path_csv__InOutFun__(SimulationFile);
+      NLPS_Out_particles_path_csv__InOutFun__(SimulationFile);
+
+      puts("*************************************************");
+      puts("Run simulation ...");
+      if(strcmp(TimeIntegrationScheme,"Newmark-beta-Finite-Strains") == 0 )
+      {
+        Up_Newmark_beta_Finite_Strains(FEM_Mesh, MPM_Mesh, Parameters_Solver);
+      }
       else
       {
         sprintf(Error_message,"%s","Wrong time integration scheme");
@@ -159,7 +204,7 @@ int main(int argc, char * argv[])
 
       puts("*************************************************");
       puts("Read solver ...");
-      Solver_selector__InOutFun__(SimulationFile);      
+      Parameters_Solver = Solver_selector__InOutFun__(SimulationFile,FEM_Mesh.DeltaX);      
 
       puts("*************************************************");
       if(Is_New_Simulation)
@@ -187,9 +232,13 @@ int main(int argc, char * argv[])
 
       puts("*************************************************");
       puts("Run simulation ...");
-      if(strcmp(TimeIntegrationScheme,"NPC-FS") == 0 )
+      if(strcmp(TimeIntegrationScheme,"NPC-FS") == 0)
       { 
-        upw_Newmark_Predictor_Corrector_Finite_Strains(FEM_Mesh, MPM_Mesh, InitialStep);
+        upw_Newmark_Predictor_Corrector_Finite_Strains(FEM_Mesh, MPM_Mesh, Parameters_Solver);
+      }
+      else if(strcmp(TimeIntegrationScheme,"Newmark-beta-Finite-Strains") == 0)
+      {
+        upw_Newmark_beta_Finite_Strains(FEM_Mesh, MPM_Mesh, Parameters_Solver);
       }
       else
       {
@@ -213,7 +262,7 @@ int main(int argc, char * argv[])
 
       puts("*************************************************");
       puts("Read solver ...");
-      Solver_selector__InOutFun__(SimulationFile);
+      Parameters_Solver = Solver_selector__InOutFun__(SimulationFile, FEM_Mesh.DeltaX);
 
       puts("*************************************************");
       puts("Generating new Gauss Point simulation ...");
@@ -248,24 +297,24 @@ puts("Non-Linear Particle Solver (NL-PartSol)");
 
   /* Read kind of system */
 #ifdef __linux__
-  puts("This is the Linux version of the programa.");
+  puts("Linux version.");
 #endif    
 
 #ifdef __APPLE__
-  puts("This is the Mac OSX version of the program."); 
+  puts("Mac OSX version."); 
 #endif
   
 #ifdef _WIN32 
-  puts("This is the Windows version of the program."); 
+  puts("Windows version."); 
 #endif
 
 puts("Usage : nl-partsol -Flag [commands.nlp]");
 puts("Flag values:");
 puts(" * -GP  : Gauss Point Analysis");
 puts(" * -u   : Displacement formulation");
-puts(" * -up  : Velocity-Pressure formulation (Under development)");
-puts(" * -upw : Soil-water mixture displacement-pressure formulation (Under development)");
-puts(" * -uU  : Soil-water mixture velocity formulation (Under development)");
+puts(" * -up  : Velocity-Pressure formulation");
+puts(" * -upw : Soil-water mixture displacement-pressure formulation");
+puts(" * -uU  : Soil-water mixture velocity formulation (Not developed yet)");
 puts("The creator of NL-PartSol is Miguel Molinos");
 
 puts("mails to : m.molinos@alumnos.upm.es (Madrid-Spain)");
@@ -289,20 +338,29 @@ static void globalfree(Mesh FEM_Mesh, Particle MPM_Mesh)
   free_table__SetLib__(FEM_Mesh.NodeNeighbour,FEM_Mesh.NumNodesMesh);
   free(FEM_Mesh.SizeNodalLocality);
   free_table__SetLib__(FEM_Mesh.NodalLocality,FEM_Mesh.NumNodesMesh);
-  free(FEM_Mesh.NumParticles);
-  free_table__SetLib__(FEM_Mesh.I_particles,FEM_Mesh.NumNodesMesh);
-  
+  free(FEM_Mesh.Num_Particles_Node);
+  free_table__SetLib__(FEM_Mesh.List_Particles_Node,FEM_Mesh.NumNodesMesh);
+  free(FEM_Mesh.Num_Particles_Element);
+  free_table__SetLib__(FEM_Mesh.List_Particles_Element,FEM_Mesh.NumElemMesh); 
+
   /* FEM_Mesh.Bounds */
 
   /* Free malloc in MPM_Mesh */
   free(MPM_Mesh.I0);
+  free(MPM_Mesh.Element_p);
   free(MPM_Mesh.NumberNodes);
   free_table__SetLib__(MPM_Mesh.ListNodes,MPM_Mesh.NumGP);
   free_table__SetLib__(MPM_Mesh.Beps,MPM_Mesh.NumGP);
 
   if(strcmp(Formulation,"-u") == 0)
   {
-    free_Fields(MPM_Mesh.Phi);
+    free_U_vars__Fields__(MPM_Mesh.Phi);
+    free(MPM_Mesh.MatIdx);
+  }
+
+  if(strcmp(Formulation,"-up") == 0)
+  {
+    free_Up_vars__Fields__(MPM_Mesh.Phi);
     free(MPM_Mesh.MatIdx);
   }
 

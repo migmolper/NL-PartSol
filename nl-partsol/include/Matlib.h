@@ -48,7 +48,6 @@ static int imin_arg1, imin_arg2;
 Matrix Newton_Rapson(Matrix(* Function)(Matrix, Matrix), Matrix,
 		     Matrix(* Jacobian)(Matrix, Matrix), Matrix,
 		     Matrix,Matrix);
-Matrix Solve_Linear_Sistem(Matrix, Matrix);
 Matrix Conjugate_Gradient_Method(Matrix,Matrix,Matrix);
 Matrix Jacobi_Conjugate_Gradient_Method(Matrix,Matrix,Matrix);
 Matrix One_Iteration_Lumped(Matrix, Matrix, Matrix);
@@ -74,8 +73,8 @@ void   free__MatrixLib__(Matrix);
 void   print__MatrixLib__(Matrix, int, int);
 Matrix copy__MatrixLib__(Matrix);
 double norm__MatrixLib__(Matrix, int);
+double Euclidean_distance__MatrixLib__(Matrix);
 double generalised_Euclidean_distance__MatrixLib__(Matrix, Matrix);
-double conditioning__MatrixLib__(Matrix, double);
 Matrix inverse__MatrixLib__(Matrix);
 Matrix transpose__MatrixLib__(Matrix);
 double I3__MatrixLib__(Matrix);
@@ -87,14 +86,9 @@ Matrix increment__MatrixLib__(Matrix, Matrix);
 Matrix addition__MatrixLib__(Matrix, Matrix);
 Matrix substraction__MatrixLib__(Matrix, Matrix);
 Matrix lumped__MatrixLib__(Matrix);
-double area__MatrixLib__(Matrix);
-Matrix centroid__MatrixLib__(Matrix);
-int    inout__MatrixLib__(Matrix, Matrix);
 Matrix solve_polynomial__MatrixLib__(Matrix);
-Matrix nurbs_distance__MatrixLib__(Matrix);
-double point_distance__MatrixLib__(Matrix, Matrix);
-void   single_value_descomposition__MatrixLib__(Matrix,Matrix,Matrix);
-
+double rcond__MatrixLib__(Matrix);
+Matrix solve__MatrixLib__(Matrix, Matrix);
 /*******************************************************/
 
 /*
@@ -125,20 +119,21 @@ void order__SetLib__(ChainPtr *, ChainPtr *, Matrix);
 Tensor alloc__TensorLib__(int);
 Tensor memory_to_tensor__TensorLib__(double *, int);
 void   free__TensorLib__(Tensor);
-double I1__TensorLib__(Tensor);
-double I2__TensorLib__(Tensor);
-double I3__TensorLib__(Tensor);
-double J1__TensorLib__(Tensor);
-double J2__TensorLib__(Tensor);
-double J3__TensorLib__(Tensor);
-Tensor Eigenvalues__TensorLib__(Tensor);
-Tensor Eigenvectors__TensorLib__(Tensor,Tensor);
-double EuclideanNorm__TensorLib__(Tensor);
-double Generalised_norm__TensorLib__(Tensor, Tensor);
+double I1__TensorLib__(const Tensor);
+double I2__TensorLib__(const Tensor);
+double I3__TensorLib__(const Tensor);
+double J1__TensorLib__(const Tensor);
+double J2__TensorLib__(const Tensor);
+double J3__TensorLib__(const Tensor);
+
+EigenTensor Eigen_analysis__TensorLib__(const Tensor);
+
+double EuclideanNorm__TensorLib__(const Tensor);
+double Generalised_norm__TensorLib__(const Tensor, const Tensor);
 Tensor Identity__TensorLib__();
-Tensor Inverse__TensorLib__(Tensor);
+Tensor Inverse__TensorLib__(const Tensor);
 Tensor Solve_system__TensorLib__(Tensor, Tensor);
-Tensor transpose__TensorLib__(Tensor);
+Tensor transpose__TensorLib__(const Tensor);
 Tensor addition__TensorLib__(Tensor, Tensor);
 Tensor subtraction__TensorLib__(Tensor, Tensor);
 double inner_product__TensorLib__(Tensor, Tensor);
@@ -147,14 +142,14 @@ Tensor dyadic_Product__TensorLib__(Tensor, Tensor);
 Tensor vector_linear_mapping__TensorLib__(Tensor, Tensor);
 Tensor matrix_product__TensorLib__(Tensor, Tensor);
 Tensor Convex_combination__TensorLib__(Tensor, Tensor, double);
-double volumetric_component__TensorLib__(Tensor);
-Tensor deviatoric_component__TensorLib__(Tensor, double);
+Tensor volumetric_component__TensorLib__(Tensor);
+Tensor deviatoric_component__TensorLib__(Tensor, Tensor);
 Tensor rotate__TensorLib__(Tensor, Tensor);
 Tensor symmetrise__TensorLib__(Tensor);
-void   covariant_push_forward_tensor__TensorLib__(Tensor, Tensor, Tensor);
+Tensor covariant_push_forward_tensor__TensorLib__(Tensor, Tensor);
 void   contravariant_push_forward_tensor__TensorLib__(Tensor, Tensor, Tensor);
 void   covariant_pull_back_tensor__TensorLib__(Tensor, Tensor, Tensor);
-void   contravariant_pull_back_tensor__TensorLib__(Tensor, Tensor, Tensor);
+Tensor contravariant_pull_back_tensor__TensorLib__(Tensor, Tensor);
 void   print__TensorLib__(Tensor);
 /*******************************************************/
 

@@ -7,11 +7,12 @@ Mixture * Soil_Water_Mixtures;
 int Number_Soil_Water_Mixtures;
 
 
-#define MAXVAL(A,B) ((A)>(B) ? (A) : (B))
-
 /*********************************************************************/
 
-double DeltaT_CFL(Particle MPM_Mesh, double h)
+double U_DeltaT__SolversLib__(
+  Particle MPM_Mesh,
+  double h,
+  double CFL)
 {
 
   double DeltaT;
@@ -26,39 +27,40 @@ double DeltaT_CFL(Particle MPM_Mesh, double h)
     Get the maximum material celerity
    */
   for(int i = 0 ; i<Nmat ; i++)
-    {
-      CEL_MAT = MAXVAL(MPM_Mesh.Mat[i].Cel,CEL_MAT);
-    }
+  {
+    CEL_MAT = DMAX(MPM_Mesh.Mat[i].Cel,CEL_MAT);
+  }
 
   /*
     Consider the velocity of the particles for the courant. In
     some cases, for instance Fr>1 is important.
    */
   if(DynamicTimeStep)
-    {
+  {
     /*
       Get the maximum wave speed in any direction
     */
     for(int i = 0 ; i<MPM_Mesh.NumGP ; i++)
+    {
+      for(int j = 0 ; j<Ndim ; j++)
       {
-	for(int j = 0 ; j<Ndim ; j++)
-	  {
-	    C[j] = MAXVAL(C[j],CEL_MAT+fabs(MPM_Mesh.Phi.vel.nM[i][j]));
-	  }
+        C[j] = DMAX(C[j],CEL_MAT+fabs(MPM_Mesh.Phi.vel.nM[i][j]));
       }
+    }
 
     /*
       Get the absolute maximum value of the celerity
     */
     for(int j = 0 ; j<Ndim ; j++)
-      {
-	CEL_MAX = MAXVAL(CEL_MAX,C[j]);
-      }
+    {
+      CEL_MAX = DMAX(CEL_MAX,C[j]);
+    }
+
   }
   else
-    {
-      CEL_MAX = CEL_MAT;
-    }
+  {
+    CEL_MAX = CEL_MAT;
+  }
 
   
   /*
@@ -75,7 +77,11 @@ double DeltaT_CFL(Particle MPM_Mesh, double h)
 
 /*********************************************************************/
 
-double DeltaT_Coussy__SolversLib__(Particle MPM_Mesh, double h, double xi)
+double DeltaT_Coussy__SolversLib__(
+  Particle MPM_Mesh,
+  double h,
+  double xi,
+  double CFL)
 {
 
   bool DynamicTimeStep = false;
@@ -123,7 +129,7 @@ double DeltaT_Coussy__SolversLib__(Particle MPM_Mesh, double h, double xi)
     /*
       Compute the celerity of the material for the particle p
     */
-    CEL_MAT = MAXVAL(sqrt(E/rho_mixture),CEL_MAT);
+    CEL_MAT = DMAX(sqrt(E/rho_mixture),CEL_MAT);
 
   }
 
@@ -141,7 +147,7 @@ double DeltaT_Coussy__SolversLib__(Particle MPM_Mesh, double h, double xi)
       {
   for(int j = 0 ; j<Ndim ; j++)
     {
-      C[j] = MAXVAL(C[j],CEL_MAT+fabs(MPM_Mesh.Phi.vel.nM[i][j]));
+      C[j] = DMAX(C[j],CEL_MAT+fabs(MPM_Mesh.Phi.vel.nM[i][j]));
     }
       }
 
@@ -150,7 +156,7 @@ double DeltaT_Coussy__SolversLib__(Particle MPM_Mesh, double h, double xi)
     */
     for(int j = 0 ; j<Ndim ; j++)
       {
-  CEL_MAX = MAXVAL(CEL_MAX,C[j]);
+  CEL_MAX = DMAX(CEL_MAX,C[j]);
       }
   }
   else

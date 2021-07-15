@@ -153,6 +153,11 @@ Particle Generate_Soil_Water_Coupling_Analysis__InOutFun__(char * Name_File, Mes
     */
     MPM_Mesh.I0 = (int *)Allocate_ArrayZ(NumParticles,sizeof(int));
 
+    /*
+      Element of the particle
+    */
+    MPM_Mesh.Element_p = (int *)Allocate_ArrayZ(NumParticles,sizeof(int));
+
     /* 
       Number of tributary nodes for each particle 
     */
@@ -195,11 +200,12 @@ Particle Generate_Soil_Water_Coupling_Analysis__InOutFun__(char * Name_File, Mes
         strcpy(MPM_Mesh.lambda.Info,"Lagrange Multiplier");
         MPM_Mesh.Beta = allocZ__MatrixLib__(NumParticles,1);
         strcpy(MPM_Mesh.Beta.Info,"Beta");
-        if(strcmp(wrapper_LME,"Newton-Raphson"))
+
+        if(strcmp(wrapper_LME,"Newton-Raphson") == 0)
         {
           MPM_Mesh.update_lambda = update_lambda_Newton_Rapson__LME__;
         }
-        else if(strcmp(wrapper_LME,"Nelder-Mead"))
+        else if(strcmp(wrapper_LME,"Nelder-Mead") == 0)
         {
           MPM_Mesh.update_lambda = update_lambda_Nelder_Mead__LME__;
         }
@@ -338,9 +344,7 @@ Particle Generate_Soil_Water_Coupling_Analysis__InOutFun__(char * Name_File, Mes
       }   
     free(MPM_GID_Mesh.Connectivity);
     free__MatrixLib__(MPM_GID_Mesh.Coordinates);
-    free(MPM_GID_Mesh.NumParticles);
-    free(MPM_GID_Mesh.NumNeighbour);
-    free(MPM_GID_Mesh.NodeNeighbour);
+    free(MPM_GID_Mesh.Num_Particles_Node);
 
   } 
   else
@@ -743,22 +747,6 @@ static void initialise_particles(Mesh MPM_GID_Mesh,Particle MPM_Mesh, int GPxEle
       */
       MPM_Mesh.Phi.mass.nV[p] = m_p;
       
-      /*
-        Initialise some plastic variables
-      */
-      if(strcmp(MPM_Mesh.Mat[Mixture_idx].Type,"Von-Mises") == 0)
-      {
-          MPM_Mesh.Phi.cohesion.nV[p] = MPM_Mesh.Mat[Mixture_idx].yield_stress_0;
-      }
-      if(strcmp(MPM_Mesh.Mat[Mixture_idx].Type,"Drucker-Prager-Plane-Strain") == 0)
-      {
-          MPM_Mesh.Phi.cohesion.nV[p] = MPM_Mesh.Mat[Mixture_idx].cohesion_reference;
-      }
-      if(strcmp(MPM_Mesh.Mat[Mixture_idx].Type,"Drucker-Prager-Outer-Cone") == 0)
-      {
-          MPM_Mesh.Phi.cohesion.nV[p] = MPM_Mesh.Mat[Mixture_idx].cohesion_reference;
-      }
-
     }
 
   }

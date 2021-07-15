@@ -15,7 +15,10 @@ static void interpolate_initial_values_particles(Particle, Mesh, char *, Tensor)
 
 /***************************************************************************/
 
-void Initial_condition_nodes__InOutFun__(char * Name_File, Particle MPM_Mesh, Mesh FEM_Mesh)
+void Initial_condition_nodes__InOutFun__(
+	char * Name_File, 
+	Particle MPM_Mesh, 
+	Mesh FEM_Mesh)
 /*
   Initial-nodal-values (NODES=ListInit.txt) 
   {

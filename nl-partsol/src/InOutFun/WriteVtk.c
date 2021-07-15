@@ -25,6 +25,7 @@ bool Out_dPw_dt;
 bool Out_strain;
 bool Out_eigenvalues_strain;
 bool Out_deformation_gradient;
+bool Out_plastic_deformation_gradient;
 bool Out_energy;
 bool Out_Von_Mises;
 bool Out_EPS;
@@ -51,6 +52,7 @@ static void vtk_Out_Strain(FILE *, Matrix, int);
 static void vtk_Out_Strain_EV(FILE *, Matrix, int);
 static void vtk_Out_Deformation_Gradient(FILE *, Matrix, int);
 static void vtk_Out_Deformation_Energy(FILE *, Matrix, int);
+static void vtk_Out_plastic_deformation_gradient(FILE *, Matrix, int);
 static void vtk_Out_Kinetic_Energy(FILE *, Matrix, Matrix, int);
 static void vtk_Out_Von_Mises(FILE *, Matrix, Matrix, int);
 static void vtk_Out_Equiv_Plastic_Strain(FILE *, Matrix, int);
@@ -80,13 +82,17 @@ void particle_results_vtk__InOutFun__(Particle MPM_Mesh, int TimeStep_i, int Res
 
   /* Coordinates */
   fprintf(Vtk_file,"POINTS %i double \n",MPM_Mesh.NumGP);
-  for(int i = 0 ; i<MPM_Mesh.NumGP ; i++){
-    for(int j = 0 ; j<3 ; j++){
-      if(j<Ndim){
-	fprintf(Vtk_file,"%lf ",MPM_Mesh.Phi.x_GC.nM[i][j]);
+  for(int i = 0 ; i<MPM_Mesh.NumGP ; i++)
+  {
+    for(int j = 0 ; j<3 ; j++)
+    {
+      if(j<Ndim)
+      {
+        fprintf(Vtk_file,"%lf ",MPM_Mesh.Phi.x_GC.nM[i][j]);
       }
-      else{
-	fprintf(Vtk_file,"%lf ",0.0);
+      else
+      {
+        fprintf(Vtk_file,"%lf ",0.0);
       }
     }
     fprintf(Vtk_file,"\n");
@@ -94,13 +100,15 @@ void particle_results_vtk__InOutFun__(Particle MPM_Mesh, int TimeStep_i, int Res
 
   /* Connectivity */
   fprintf(Vtk_file,"CELLS %i %i \n",MPM_Mesh.NumGP,2*MPM_Mesh.NumGP);
-  for(int i = 0 ; i<MPM_Mesh.NumGP ; i++){
+  for(int i = 0 ; i<MPM_Mesh.NumGP ; i++)
+  {
     fprintf(Vtk_file,"%i %i \n",1,i);
   }
 
   /* Type of element */
   fprintf(Vtk_file,"CELL_TYPES %i \n",MPM_Mesh.NumGP);
-  for(int i = 0 ; i<MPM_Mesh.NumGP ; i++){
+  for(int i = 0 ; i<MPM_Mesh.NumGP ; i++)
+  {
     fprintf(Vtk_file,"%i \n",1);
   }
 
@@ -197,7 +205,7 @@ void particle_results_vtk__InOutFun__(Particle MPM_Mesh, int TimeStep_i, int Res
   /* Print particle rate of pore water pressure */
   if(Out_dPw_dt)
   {
-    vtk_Out_dPw_dt(Vtk_file, MPM_Mesh.Phi.d_Pw, NumParticles);
+    vtk_Out_dPw_dt(Vtk_file, MPM_Mesh.Phi.d_Pw_dt_n1, NumParticles);
   }
 
   /* Print particle strain tensor */
@@ -216,6 +224,11 @@ void particle_results_vtk__InOutFun__(Particle MPM_Mesh, int TimeStep_i, int Res
   if(Out_deformation_gradient)
   {
     vtk_Out_Deformation_Gradient(Vtk_file, MPM_Mesh.Phi.F_n, NumParticles);    
+  }
+
+  if(Out_plastic_deformation_gradient)
+  {
+    vtk_Out_plastic_deformation_gradient(Vtk_file, MPM_Mesh.Phi.F_m1_plastic, NumParticles); 
   }
 
   /* Print particle energy */
@@ -277,13 +290,13 @@ void nodal_results_vtk__InOutFun__(Mesh ElementMesh, Mask ActiveNodes, Matrix RE
         for(int j = 0 ; j<3 ; j++)
           {
             if(j<Ndim)
-              {
-	               fprintf(Vtk_file,"%lf ",ElementMesh.Coordinates.nM[i][j]);
-              }
+            {
+	             fprintf(Vtk_file,"%lf ",ElementMesh.Coordinates.nM[i][j]);
+            }
             else
-              {
-	               fprintf(Vtk_file,"%lf ",0.0);
-              }
+            {
+	             fprintf(Vtk_file,"%lf ",0.0);
+            }
           }
         fprintf(Vtk_file,"\n");
       }
@@ -309,18 +322,18 @@ void nodal_results_vtk__InOutFun__(Mesh ElementMesh, Mask ActiveNodes, Matrix RE
   {
     i_mask = ActiveNodes.Nodes2Mask[i];
     if(i_mask != -1)
-      {
+    {
         for(int j = 0 ; j<3 ; j++)
+        {
+          if(j<Ndim)
           {
-            if(j<Ndim)
-              {
-	               fprintf(Vtk_file,"%lf ",ElementMesh.Coordinates.nM[i][j]);
-              }
-            else
-              {
-	               fprintf(Vtk_file,"%lf ",0.0);
-              }
+            fprintf(Vtk_file,"%lf ",ElementMesh.Coordinates.nM[i][j]);
           }
+          else
+          {
+            fprintf(Vtk_file,"%lf ",0.0);
+          }
+        }
         fprintf(Vtk_file,"\n");
       }
   }
@@ -507,10 +520,10 @@ static void vtk_Out_dis(FILE * Vtk_file, Matrix dis, int NumParticles)
   for(int i =  0 ; i<NumParticles ; i++){
     for(int j = 0 ; j<3 ; j++){
       if(j<Ndim){
-  fprintf(Vtk_file,"%lf ",dis.nM[i][j]);
+  fprintf(Vtk_file,"%e ",dis.nM[i][j]);
       }
       else{
-  fprintf(Vtk_file,"%lf ",0.0);
+  fprintf(Vtk_file,"%e ",0.0);
       }
     }
     fprintf(Vtk_file,"\n");
@@ -524,15 +537,27 @@ static void vtk_Out_Stress(FILE * Vtk_file, Matrix Stress, int NumParticles)
   int Ndim = NumberDimensions;
 
   fprintf(Vtk_file,"TENSORS STRESS double \n");
-  for(int i =  0 ; i<NumParticles ; i++){
-    for(int j = 0 ; j<3 ; j++){
-      for(int k = 0 ; k<3 ; k++){
-  if((j<Ndim) && (k<Ndim)){
-    fprintf(Vtk_file,"%lf ",Stress.nM[i][j*Ndim+k]);
-  }
-  else{
-    fprintf(Vtk_file,"%lf ",0.0);
-  }
+  for(int i =  0 ; i<NumParticles ; i++)
+  {
+    for(int j = 0 ; j<3 ; j++)
+    {
+      for(int k = 0 ; k<3 ; k++)
+      {
+        if((j<Ndim) && (k<Ndim))
+        {
+          fprintf(Vtk_file,"%lf",Stress.nM[i][j*Ndim+k]);
+        }
+        else
+        {
+          if((j==2) && (k==2))
+          {
+            fprintf(Vtk_file,"%lf",Stress.nM[i][4]);
+          }
+          else
+          {
+            fprintf(Vtk_file,"%lf",0.0);
+          }
+        }
       }
       fprintf(Vtk_file,"\n");
     }
@@ -546,22 +571,23 @@ static void vtk_Out_Stress_EV(FILE * Vtk_file, Matrix Stress, int NumParticles)
 {
   int Ndim = NumberDimensions;
   Tensor Stress_p;
-  Tensor EV_Stress_p; 
+  EigenTensor Eigen_Stress_p; 
 
   fprintf(Vtk_file,"VECTORS STRESS_EV double \n");
   for(int i =  0 ; i<NumParticles ; i++){
     Stress_p = memory_to_tensor__TensorLib__(Stress.nM[i], 2);
-    EV_Stress_p = Eigenvalues__TensorLib__(Stress_p);
+    Eigen_Stress_p = Eigen_analysis__TensorLib__(Stress_p);
     for(int j = 0 ; j<3 ; j++){
       if(j<Ndim){
-  fprintf(Vtk_file,"%lf ",EV_Stress_p.n[j]);
+  fprintf(Vtk_file,"%lf ",Eigen_Stress_p.Value.n[j]);
       }
       else{
   fprintf(Vtk_file,"%lf ",0.0);
       }
     }
     fprintf(Vtk_file,"\n");
-    free__TensorLib__(EV_Stress_p);
+    free__TensorLib__(Eigen_Stress_p.Value);
+    free__TensorLib__(Eigen_Stress_p.Vector);
   }
 }
 
@@ -571,14 +597,15 @@ static void vtk_Out_Stress_P(FILE * Vtk_file, Matrix Stress, int NumParticles)
 {
   int Ndim = NumberDimensions;
   Tensor Stress_p;
-  double P_p; /* Trace of the stress tensor (volumetric) */
+  Tensor P_p; /* Trace of the stress tensor (volumetric) */
   fprintf(Vtk_file,"SCALARS P double \n");
   fprintf(Vtk_file,"LOOKUP_TABLE default \n");
   for(int i =  0 ; i<NumParticles ; i++)
   {
     Stress_p = memory_to_tensor__TensorLib__(Stress.nM[i], 2);
     P_p = volumetric_component__TensorLib__(Stress_p);   
-    fprintf(Vtk_file,"%lf \n",P_p);
+    fprintf(Vtk_file,"%lf \n",P_p.N[0][0]);
+    free__TensorLib__(P_p);
   }
 
 }
@@ -642,22 +669,23 @@ static void vtk_Out_Strain_EV(FILE * Vtk_file, Matrix Strain, int NumParticles)
 {
   int Ndim = NumberDimensions;
   Tensor Strain_p;
-  Tensor EV_Strain_p; 
+  EigenTensor Eigen_Strain_p; 
 
     fprintf(Vtk_file,"VECTORS STRAIN_EV double \n");
   for(int i =  0 ; i<NumParticles ; i++){
     Strain_p = memory_to_tensor__TensorLib__(Strain.nM[i], 2);
-    EV_Strain_p = Eigenvalues__TensorLib__(Strain_p);
+    Eigen_Strain_p = Eigen_analysis__TensorLib__(Strain_p);
     for(int j = 0 ; j<3 ; j++){
       if(j<Ndim){
-  fprintf(Vtk_file,"%lf ",EV_Strain_p.n[j]);
+  fprintf(Vtk_file,"%lf ",Eigen_Strain_p.Value.n[j]);
       }
       else{
   fprintf(Vtk_file,"%lf ",0.0);
       }
     }
     fprintf(Vtk_file,"\n");
-    free__TensorLib__(EV_Strain_p);
+    free__TensorLib__(Eigen_Strain_p.Value);
+    free__TensorLib__(Eigen_Strain_p.Vector);
   }
 }
 
@@ -682,6 +710,33 @@ static void vtk_Out_Deformation_Gradient(FILE * Vtk_file, Matrix F_n, int NumPar
     }
     fprintf(Vtk_file,"\n");
   }
+}
+
+/*********************************************************************/
+
+static void vtk_Out_plastic_deformation_gradient(FILE * Vtk_file, Matrix F_m1_plastic, int NumParticles)
+{
+  int Ndim = NumberDimensions;
+
+  Matrix F_plastic = inverse__MatrixLib__(F_m1_plastic);
+
+    fprintf(Vtk_file,"TENSORS ELASTIC-DEFORMATION-GRADIENT double \n");
+  for(int i =  0 ; i<NumParticles ; i++){
+    for(int j = 0 ; j<3 ; j++){
+      for(int k = 0 ; k<3 ; k++){
+  if((j<Ndim) && (k<Ndim)){
+    fprintf(Vtk_file,"%lf ",F_plastic.nM[i][j*Ndim+k]);
+  }
+  else{
+    fprintf(Vtk_file,"%lf ",0.0);
+  }
+      }
+      fprintf(Vtk_file,"\n");
+    }
+    fprintf(Vtk_file,"\n");
+  }
+
+  free__MatrixLib__(F_plastic);
 }
 
 /*********************************************************************/
@@ -718,62 +773,50 @@ static void vtk_Out_Kinetic_Energy(FILE * Vtk_file, Matrix vel, Matrix mass, int
 
 /*********************************************************************/
 
-static void vtk_Out_Von_Mises(FILE * Vtk_file, Matrix F_n, Matrix S, int NumParticles)
+static void vtk_Out_Von_Mises(FILE * Vtk_file, Matrix F_n, Matrix P_n, int NumParticles)
 {
   int Ndim = NumberDimensions;
   double SVM;
-  double aux;
-  Tensor S_p;
+  double norm_Cauchy_dev_p;
   Tensor F_p;
   Tensor F_pT; 
   Tensor P_p;
   Tensor Cauchy_p;
-  Tensor Dev_Cauchy_p = alloc__TensorLib__(2);
-  double tr_Cauchy;
+  Tensor Cauchy_dev_p;
+  Tensor Cauchy_vol_p;
   double J_p;
-  Tensor Eye = Identity__TensorLib__();
 
   fprintf(Vtk_file,"SCALARS Von-Mises double \n");
   fprintf(Vtk_file,"LOOKUP_TABLE default \n");
   for(int i =  0 ; i<NumParticles ; i++)
   {
-    S_p = memory_to_tensor__TensorLib__(S.nM[i], 2);
+    P_p = memory_to_tensor__TensorLib__(P_n.nM[i], 2);
     F_p = memory_to_tensor__TensorLib__(F_n.nM[i], 2);
-    F_pT = transpose__TensorLib__(F_p);
     J_p = I3__TensorLib__(F_p);
-    P_p = matrix_product__TensorLib__(F_p, S_p);
+    F_pT = transpose__TensorLib__(F_p);
     Cauchy_p = matrix_product__TensorLib__(P_p, F_pT);
 
     for(int j = 0 ; j<Ndim ; j++)
     {
       for(int k = 0 ; k<Ndim ; k++)
-        {
-      Cauchy_p.N[j][k] *= 1/J_p; 
-        }
+      {
+        Cauchy_p.N[j][k] *= 1/J_p; 
+      }
     }
 
-    J_p = I3__TensorLib__(F_p);
-    tr_Cauchy = I1__TensorLib__(Cauchy_p);
+    Cauchy_vol_p = volumetric_component__TensorLib__(Cauchy_p);
+    Cauchy_dev_p = deviatoric_component__TensorLib__(Cauchy_p,Cauchy_vol_p);
 
-    for(int j = 0 ; j<Ndim ; j++)
-    {
-      for(int k = 0 ; k<Ndim ; k++)
-        {
-          Dev_Cauchy_p.N[j][k] = Cauchy_p.N[j][k] - (1/3)*tr_Cauchy*Eye.N[j][k]; 
-        }
-    }
-
-    aux = inner_product__TensorLib__(Dev_Cauchy_p, Dev_Cauchy_p);  
-    SVM = sqrt(3/2*aux);  
+    norm_Cauchy_dev_p = inner_product__TensorLib__(Cauchy_dev_p, Cauchy_dev_p);  
+    SVM = sqrt(3./2.*norm_Cauchy_dev_p);  
 
     fprintf(Vtk_file,"%lf \n",SVM); 
 
     free__TensorLib__(F_pT);
-    free__TensorLib__(P_p);
     free__TensorLib__(Cauchy_p);
+    free__TensorLib__(Cauchy_dev_p);
+    free__TensorLib__(Cauchy_vol_p);
   }
-  free__TensorLib__(Eye);
-  free__TensorLib__(Dev_Cauchy_p);
 }
 
 /*********************************************************************/

@@ -4,7 +4,7 @@
 /*
   Call global variables
 */
-int NumTimeStep;
+int NumTimeStep = 4000;
 Event * Out_Gauss_Point_evolution_csv;
 int Number_Out_Gauss_Point_evolution_csv;
 
@@ -95,10 +95,12 @@ Particle Generate_Gauss_Point_Analysis__InOutFun__(char * SimulationFile)
 
 	Particle PointAnalysis;
 
+  DeltaTimeStep = 3.643236E-06;
+
   PointAnalysis.NumberMaterials = NumberMaterials;
   PointAnalysis.Mat = Read_Materials__InOutFun__(SimulationFile, NumberMaterials);
 
-  PointAnalysis.Phi = allocate_Fields(NumTimeStep);
+  PointAnalysis.Phi = allocate_U_vars__Fields__(NumTimeStep);
 
   Strain_curve * Strain_Case = Read_Strains_curves(PointAnalysis.Phi,SimulationFile,NumStrainCurves);
 

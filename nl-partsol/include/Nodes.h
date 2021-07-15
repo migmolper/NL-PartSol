@@ -8,10 +8,16 @@
 Mesh     ReadGidMesh__MeshTools__(char *);
 /********************************************************************/
 
+void local_search__MeshTools__(Particle, Mesh);
+/*******************************************************/
+
 Mask     generate_NodalMask__MeshTools__(Mesh);
 /********************************************************************/
 
 Mask     generate_Mask_for_static_condensation__MeshTools__(Mask, Mesh);
+/********************************************************************/
+
+Mask generate_Mask_for_static_condensation_upw__MeshTools__(Mask, Mesh);
 /********************************************************************/
 
 Matrix   get_set_field__MeshTools__(Matrix, Element, Mask);
@@ -36,6 +42,9 @@ Matrix   compute_dN__MeshTools__(Element, Particle, Mesh);
 /********************************************************************/
 
 Matrix   get_nodes_coordinates__MeshTools__(ChainPtr, Matrix);
+/********************************************************************/
+
+double point_distance__MeshTools__(Matrix, Matrix);
 /********************************************************************/
 
 Matrix   compute_distance__MeshTools__(ChainPtr, Matrix, Matrix);

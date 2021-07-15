@@ -164,7 +164,7 @@ Boundaries Read_upw_Neumann_Boundary_Conditions__InOutFun__(
       		sprintf(FileNodesRoute,"%s%s",Route_Nodes,Parse_Nodes[1]);
       		Chain_Nodes = File2Chain(FileNodesRoute);
       		NumElements = lenght__SetLib__(Chain_Nodes);
-      		ElementList = set_to_memory__SetLib__(Chain_Nodes,Bounds.BCC_i[IndexBoundary].NumNodes);
+      		ElementList = set_to_memory__SetLib__(Chain_Nodes,NumElements);
       		free__SetLib__(&Chain_Nodes);
 
       		/*

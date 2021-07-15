@@ -1,5 +1,44 @@
 #include "nl-partsol.h"
 
+/*********************************************************************/
+
+void local_search__MeshTools__(Particle MPM_Mesh, Mesh FEM_Mesh)
+/*
+  Search the closest node to the particle based in its previous position.
+*/
+{
+
+  if(strcmp(ShapeFunctionGP,"FEM") == 0)
+  {
+    if(strcmp(FEM_Mesh.TypeElem,"Triangle") == 0)
+    {
+      local_search__T3__(MPM_Mesh, FEM_Mesh);
+    }
+    else if(strcmp(FEM_Mesh.TypeElem,"Quadrilateral") == 0)
+    {
+      local_search__Q4__(MPM_Mesh, FEM_Mesh);
+    }
+    else if(strcmp(FEM_Mesh.TypeElem,"Tetrahedra") == 0)
+    {
+      local_search__T4__(MPM_Mesh, FEM_Mesh);
+    }
+    else if(strcmp(FEM_Mesh.TypeElem,"Hexahedra") == 0)
+    {
+      local_search__H8__(MPM_Mesh, FEM_Mesh);
+    }
+  }
+  else if(strcmp(ShapeFunctionGP,"uGIMP") == 0)
+  {
+
+  }
+  else if(strcmp(ShapeFunctionGP,"LME") == 0)
+  {
+    local_search__LME__(MPM_Mesh,FEM_Mesh);
+  }
+  
+}
+
+
 /**************************************************************/
 
 Mask generate_NodalMask__MeshTools__(
@@ -13,7 +52,7 @@ Mask generate_NodalMask__MeshTools__(
   for(int A = 0 ; A<Nnodes ; A++)
     {
       
-      if(FEM_Mesh.NumParticles[A] > 0)
+      if(FEM_Mesh.ActiveNode[A])
       {
         Nodes2Mask[A] = Nactivenodes;
         Nactivenodes++;
@@ -128,6 +167,103 @@ Mask generate_Mask_for_static_condensation__MeshTools__(
   return Free_and_Restricted_Dofs;
 }
 
+/**************************************************************/
+
+Mask generate_Mask_for_static_condensation_upw__MeshTools__(
+  Mask ActiveNodes,
+  Mesh FEM_Mesh)
+{
+
+  /* 
+    Define auxilar variables 
+  */
+  int Ndof = NumberDOF;
+  int Nnodes_mask = ActiveNodes.Nactivenodes;
+  int Order = Nnodes_mask*Ndof;
+  int Number_of_BCC = FEM_Mesh.Bounds.NumBounds;
+  int NumNodesBound; /* Number of nodes of the bound */
+  int NumDimBound; /* Number of dimensions */
+  int Id_BCC; /* Index of the node where we apply the BCC */
+  int Id_BCC_mask;
+  int Id_BCC_mask_k;
+
+  /*
+    Generate mask for the static condensation.
+  */
+  int Nactivenodes = 0;
+  int * Nodes2Mask = (int *)Allocate_ArrayZ(Order,sizeof(int));
+  Mask Free_and_Restricted_Dofs;
+
+  /* 
+    Loop over the the boundaries to find the constrained dofs
+  */
+  for(int i = 0 ; i<Number_of_BCC ; i++)
+    {
+
+      /* 
+        Get the number of nodes of this boundary
+      */
+      NumNodesBound = FEM_Mesh.Bounds.BCC_i[i].NumNodes;
+
+      /* 
+        Get the number of dimensions where the BCC it is applied 
+      */
+      NumDimBound = FEM_Mesh.Bounds.BCC_i[i].Dim;
+
+      for(int j = 0 ; j<NumNodesBound ; j++)
+        {
+          /* 
+            Get the index of the node 
+          */
+          Id_BCC = FEM_Mesh.Bounds.BCC_i[i].Nodes[j];
+          Id_BCC_mask = ActiveNodes.Nodes2Mask[Id_BCC];
+
+          /*
+            If the boundary condition is under an active node 
+          */
+          if(Id_BCC_mask != -1)
+          {
+            /* 
+              Loop over the dimensions of the boundary condition 
+            */
+            for(int k = 0 ; k<NumDimBound ; k++)
+              {
+
+                /* 
+                  Apply only if the direction is active
+                */
+                if(FEM_Mesh.Bounds.BCC_i[i].Dir[k] == 1)
+                  {
+                    Id_BCC_mask_k = Id_BCC_mask + Nnodes_mask*k;
+                    Nodes2Mask[Id_BCC_mask_k] = -1;
+                  }
+              }
+          }
+
+        }    
+    }
+
+  /* 
+    Generate mask using the location of the constrained dofs
+  */
+  for(int A_i = 0 ; A_i<Order ; A_i++)
+    {
+     if(Nodes2Mask[A_i] != -1)
+      {
+        Nodes2Mask[A_i] = Nactivenodes;
+        Nactivenodes++;
+      } 
+    }
+
+
+  /*
+    Assign information to the output
+  */
+  Free_and_Restricted_Dofs.Nactivenodes = Nactivenodes;
+  Free_and_Restricted_Dofs.Nodes2Mask = Nodes2Mask;  
+
+  return Free_and_Restricted_Dofs;
+}
 
 /**************************************************************/
 
@@ -152,9 +288,9 @@ Matrix get_set_field__MeshTools__(
    for(int A = 0 ; A<Nnodes ; A++)
    {
      
-	    /* 
+	  /* 
 	       Get the node in the mass matrix with the mask
-	    */
+	  */
      Ap = Nodes_p.Connectivity[A];
      A_mask = ActiveNodes.Nodes2Mask[Ap];
      
@@ -183,7 +319,10 @@ return Field_Ap;
 
 /*********************************************************************/
 
-Matrix get_U_set_field_upw__MeshTools__(Matrix Field_upw, Element Nodes_p, Mask ActiveNodes)
+Matrix get_U_set_field_upw__MeshTools__(
+  Matrix Field_upw,
+  Element Nodes_p, 
+  Mask ActiveNodes)
 {
   int Nnodes = Nodes_p.NumberNodes;
   int Ndim = NumberDimensions;
@@ -214,7 +353,10 @@ Matrix get_U_set_field_upw__MeshTools__(Matrix Field_upw, Element Nodes_p, Mask 
 
 /*********************************************************************/
 
-Matrix get_Pw_set_field_upw__MeshTools__(Matrix Field_upw, Element Nodes_p, Mask ActiveNodes)
+Matrix get_Pw_set_field_upw__MeshTools__(
+  Matrix Field_upw, 
+  Element Nodes_p, 
+  Mask ActiveNodes)
 {
   int Nnodes = Nodes_p.NumberNodes;
   int Ndim = NumberDimensions;
@@ -262,7 +404,7 @@ Matrix compute_N__MeshTools__(
   Matrix l_Ip; // Just for GIMP/LME -> Distance from GP to the nodes
   Matrix lambda_p; // Just for LME -> Lagrange multipliers
   Matrix Metric_p; // Just for LME -> Metric tensor
-  Tensor F_p; // Just for LME -> Deformation gradient
+  Tensor F_m1_plastic; // Just for LME -> Deformation gradient
   double Beta_p; // Just for LME -> Thermalization parameter
     
   /* 
@@ -336,8 +478,8 @@ Matrix compute_N__MeshTools__(
     /*
       Compute the metric tensor
     */
-    F_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n.nM[i_GP],2);
-    Metric_p = metric__LME__(F_p);
+    F_m1_plastic = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_m1_plastic.nM[i_GP],2);
+    Metric_p = metric__LME__(F_m1_plastic);
 
     /*
       Get lambda and beta
@@ -388,7 +530,7 @@ Matrix compute_dN__MeshTools__(Element GP_Element,Particle MPM_Mesh,
   Matrix ShapeFunction_p; // Just for LME -> Matrix with the nodal shape functions
   Matrix lambda_p; // Just for LME -> Lagrange multipliers
   Matrix Metric_p; // Just for LME -> Metric tensor
-  Tensor F_p; // Just for LME -> Deformation gradient
+  Tensor F_m1_plastic; // Just for LME -> Deformation gradient
   double Beta_p; // Just for LME -> Thermalization parameter
 
   /*  
@@ -475,8 +617,8 @@ Matrix compute_dN__MeshTools__(Element GP_Element,Particle MPM_Mesh,
     /*
       Compute the metric tensor
     */
-    F_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n.nM[i_GP],2);
-    Metric_p = metric__LME__(F_p);
+    F_m1_plastic = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_m1_plastic.nM[i_GP],2);
+    Metric_p = metric__LME__(F_m1_plastic);
 
     /*
       Get lambda and beta
@@ -544,6 +686,38 @@ Matrix get_nodes_coordinates__MeshTools__(
   
   return Element_Coordinates;
 }
+
+/*********************************************************************/
+
+double point_distance__MeshTools__(Matrix End, Matrix Init)
+/*
+  Distance between two points.
+*/
+{
+  int Ndim = NumberDimensions;
+
+  if((End.N_rows != Init.N_rows) ||
+     (End.N_cols != Init.N_cols)){
+    printf("%s : %s \n",
+     "Error in point_distance__MeshTools__",
+     "Inputs arrays are not equal");
+    exit(EXIT_FAILURE);
+  }
+
+  double DIST = 0;
+
+  for(int i = 0 ; i<Ndim ; i++){
+
+    DIST += pow(End.nV[i] - Init.nV[i],2);
+
+  }
+
+  DIST = sqrt(DIST);
+  
+
+  return DIST;
+}
+
 
 /*********************************************************************/
 
@@ -643,7 +817,7 @@ int get_closest_node__MeshTools__(
   X_I = memory_to_matrix__MatrixLib__(Ndim,1,Coordinates.nM[I]);
 
   /* Get the distance from the node to the particle */
-  Distance_I = point_distance__MatrixLib__(X_p, X_I);
+  Distance_I = point_distance__MeshTools__(X_p, X_I);
       
   /* Get the distance from the node to the particle */
   DistMin = Distance_I;
@@ -662,7 +836,7 @@ int get_closest_node__MeshTools__(
     X_I = memory_to_matrix__MatrixLib__(Ndim,1,Coordinates.nM[I]);
 
     /* Get the distance from the node to the particle */
-    Distance_I = point_distance__MatrixLib__(X_p, X_I);
+    Distance_I = point_distance__MeshTools__(X_p, X_I);
       
     /* Get the max distance of the matrix */
     if(Distance_I < DistMin)

@@ -6,10 +6,16 @@ GramsTime (Type=Gauss-Point-Analysis) {
 Define-Material(idx=0,Model=Von-Mises)
 {
   rho=0.0
-	E=117.e3
-	nu=0.35
-  Yield-stress=100
-  Hardening-modulus=-100
+  E=25E6
+  nu=0.4
+  Cel=0.0
+  Yield-stress=15.0E3
+  Plastic-Solver=Backward-Euler
+  Hardening-Criteria=Hughes
+  Hardening-Modulus=25E4
+  Parameter-Hardening-Hughes=1.0
+  Viscous-regularization=true
+  Fluidity-Parameter=50000
 }
 
 Define-Strain-Curve (Var=Deformation-Gradient)

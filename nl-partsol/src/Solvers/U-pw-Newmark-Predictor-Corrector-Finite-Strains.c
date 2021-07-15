@@ -35,7 +35,7 @@ static Matrix compute_Total_Forces_Mixture(Mask,Particle,Mesh,int);
 static  void  compute_Internal_Forces_Mixture(Matrix,Mask,Particle,Mesh);
 static  void  compute_Contact_Forces_Mixture(Matrix,Mask,Particle,Mesh,int);
 static Tensor compute_total_first_Piola_Kirchhoff_stress(Tensor,double,Tensor);
-static Matrix  solve_Nodal_Equilibrium_Mixture(Matrix,Matrix,Matrix,Particle,Mesh,Mask,Mask);
+static Matrix solve_Nodal_Equilibrium_Mixture(Matrix,Matrix,Matrix,Particle,Mesh,Mask,Mask);
 /* Step 6 */
 static Matrix compute_Mass_exchanges_Source_Terms(Matrix,Mask,Particle,Mesh,int);
 static  void  compute_Jacobian_Rate_Mass_Balance(Matrix,Mask,Particle,Mesh);
@@ -47,30 +47,30 @@ static  void  solve_Nodal_Mass_Balance(Matrix,Matrix,Particle,Mesh,Mask,Mask);
 /* Step 7 */
 static  void  compute_Explicit_Newmark_Corrector(Particle,double,double);
 /* Step 8 */
-static  void  output_selector(Particle, Mesh, Mask, Matrix, Matrix, Matrix, Matrix, int, int);
+static  void  output_selector(Particle, Mesh, Mask, Matrix, Matrix, Matrix, Matrix, double, int, int);
 
 /**************************************************************/
 
-void upw_Newmark_Predictor_Corrector_Finite_Strains(Mesh FEM_Mesh, Particle MPM_Mesh, int InitialStep)
+void upw_Newmark_Predictor_Corrector_Finite_Strains(
+  Mesh FEM_Mesh,
+  Particle MPM_Mesh,
+  Time_Int_Params Parameters_Solver)
 {
 
-  /*
-    Integer variables 
-  */
-  int Ndim = NumberDimensions;
-  int Nactivenodes;
-
-  /*!
-    Control parameters of the generalized-alpha algorithm 
-    all the parameters are controled by a simple parameter :
-    SpectralRadius 
-  */
-  double gamma = 0.5;
-  double DeltaTimeStep;
 
   /*
     Auxiliar variables for the solver
   */
+  int Ndim = NumberDimensions;
+  int Nactivenodes;
+  int InitialStep = Parameters_Solver.InitialTimeStep;
+  int NumTimeStep = Parameters_Solver.NumTimeStep;  
+
+  double gamma = 0.5;
+  double CFL = Parameters_Solver.CFL;
+  double DeltaTimeStep;
+  double DeltaX = FEM_Mesh.DeltaX;
+
   Matrix Mass_Matrix_Mixture;
   Matrix Compressibility_Matrix_Fluid;
   Matrix Velocity;
@@ -82,6 +82,7 @@ void upw_Newmark_Predictor_Corrector_Finite_Strains(Mesh FEM_Mesh, Particle MPM_
   Matrix Reactions_Mixture;
   Matrix Mass_Exchanges_Source_Terms;
   Matrix Reactions_Fluid;
+
   Mask ActiveNodes;
   Mask Free_and_Restricted_Dofs;
 
@@ -89,8 +90,8 @@ void upw_Newmark_Predictor_Corrector_Finite_Strains(Mesh FEM_Mesh, Particle MPM_
     {
 
       print_Status("*************************************************",TimeStep);
-      DeltaTimeStep = DeltaT_Coussy__SolversLib__(MPM_Mesh, FEM_Mesh.DeltaX, 1.0);
-
+      DeltaTimeStep = DeltaT_Coussy__SolversLib__(MPM_Mesh, DeltaX, 1.0, CFL);
+      local_search__MeshTools__(MPM_Mesh,FEM_Mesh);
       ActiveNodes = generate_NodalMask__MeshTools__(FEM_Mesh);
       Nactivenodes = ActiveNodes.Nactivenodes;
       Free_and_Restricted_Dofs = generate_Mask_for_static_condensation__MeshTools__(ActiveNodes,FEM_Mesh);
@@ -163,8 +164,6 @@ void upw_Newmark_Predictor_Corrector_Finite_Strains(Mesh FEM_Mesh, Particle MPM_
 
       compute_Explicit_Newmark_Corrector(MPM_Mesh,gamma,DeltaTimeStep);
 
-      local_search__Particles__(MPM_Mesh,FEM_Mesh);
-
       print_Status("DONE !!!",TimeStep);
       
       print_Status("*************************************************",TimeStep);
@@ -172,7 +171,7 @@ void upw_Newmark_Predictor_Corrector_Finite_Strains(Mesh FEM_Mesh, Particle MPM_
       print_Status("WORKING ...",TimeStep);
 
       output_selector(MPM_Mesh, FEM_Mesh, ActiveNodes, Velocity, D_Displacement,
-                    Total_Forces_Mixture, Reactions_Mixture, TimeStep, ResultsTimeStep);
+                    Total_Forces_Mixture, Reactions_Mixture, DeltaTimeStep, TimeStep, ResultsTimeStep);
 
       /*
       	Free memory.
@@ -183,7 +182,6 @@ void upw_Newmark_Predictor_Corrector_Finite_Strains(Mesh FEM_Mesh, Particle MPM_
       free__MatrixLib__(Velocity);
       free__MatrixLib__(D_Displacement);
       free__MatrixLib__(Total_Forces_Mixture);
-//      free__MatrixLib__(Mass_Exchanges_Source_Terms);
       free__MatrixLib__(Reactions_Mixture);
       free(ActiveNodes.Nodes2Mask);
       
@@ -436,7 +434,7 @@ static void compute_Explicit_Newmark_Predictor(
     /*
       Compute pore water pressure predictor
     */
-    MPM_Mesh.Phi.Pw.nV[p] += (1-gamma)*Dt*MPM_Mesh.Phi.d_Pw_dt.nV[p];
+    MPM_Mesh.Phi.Pw.nV[p] += (1-gamma)*Dt*MPM_Mesh.Phi.d_Pw_dt_n1.nV[p];
 
     /* 
       Compute velocity predictor and increment of displacements 
@@ -969,8 +967,8 @@ static void update_Local_State(
   double rho_f_0; /* Initial density of the fluid */
   double phi_s_0; /* Initial volume fraction (solid) */
   double phi_f_0; /* Initial volume fraction (fluid) */
-  Plastic_status Input_Plastic_Parameters; /* Input parameters for plasticity */
-  Plastic_status Output_Plastic_Parameters; /* Output parameters for plasticity */
+  State_Parameters Input_Plastic_Parameters; /* Input parameters for plasticity */
+  State_Parameters Output_Plastic_Parameters; /* Output parameters for plasticity */
   Element Nodes_p; /* Element for each particle */
   Material MatProp_Soil_p; /* Variable with the material properties of the solid phase */
   Material MatProp_Water_p; /* Variable with the material properties of the fluid phase */
@@ -984,7 +982,6 @@ static void update_Local_State(
   Tensor DF_p; /* Increment of the deformation gradient of the soil skeleton */
   Tensor FT_n1_p; /* Transpose of the deformation gradient of the soil skeleton (t = n + 1) */ 
   Tensor F_plastic_p; /* Plastic deformation gradient of the soil skeleton */
-  Tensor P_p; /* First Piola-Kirchhoff stress tensor */
   double Pw_0; /* Cauchy pore water pressure at t = 0 */
   double Pw_n1; /* Cauchy pore water pressure at t = n + 1 */
 
@@ -1056,47 +1053,6 @@ static void update_Local_State(
       dJ_dt_n1_p = I1__TensorLib__(GRAD_Nodal_Velocity_p);
 
       /*
-      	Update the second Piola-Kirchhoff stress tensor (S) with an apropiate
-	      integration rule.
-      */
-      P_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.Stress.nM[p],2);      
-
-      if(strcmp(MatProp_Soil_p.Type,"Neo-Hookean-Wriggers") == 0)
-      {
-        P_p = compute_1PK_Stress_Tensor_Neo_Hookean_Wriggers(P_p, F_n1_p, J_n1_p, MatProp_Soil_p);
-      }
-/*      else if(strcmp(MatProp_Soil_p.Type,"Von-Mises") == 0)
-      {
-        F_plastic_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_plastic.nM[p],2);
-        Input_Plastic_Parameters.Cohesion = MPM_Mesh.Phi.cohesion.nV[p];
-        Input_Plastic_Parameters.EPS = MPM_Mesh.Phi.EPS.nV[p];
-
-        Output_Plastic_Parameters = finite_strains_plasticity_Von_Mises(P_p, F_n1_p, F_plastic_p, Input_Plastic_Parameters, MatProp_Soil_p, J_n1_p);
-
-        MPM_Mesh.Phi.cohesion.nV[p] = Output_Plastic_Parameters.Yield_stress;
-        MPM_Mesh.Phi.EPS.nV[p] = Output_Plastic_Parameters.EPS;
-      }
-      else if((strcmp(MatProp_Soil_p.Type,"Drucker-Prager-Plane-Strain") == 0) || (strcmp(MatProp_Soil_p.Type,"Drucker-Prager-Outer-Cone") == 0))
-      {
-        F_plastic_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_plastic.nM[p],2);
-        Input_Plastic_Parameters.Cohesion = MPM_Mesh.Phi.cohesion.nV[p];
-        Input_Plastic_Parameters.EPS = MPM_Mesh.Phi.EPS.nV[p];
-
-        Output_Plastic_Parameters = finite_strains_plasticity_Drucker_Prager_Sanavia(P_p, F_n1_p, F_plastic_p, Input_Plastic_Parameters, MatProp_Soil_p, J_n1_p);
-
-        MPM_Mesh.Phi.cohesion.nV[p] = Output_Plastic_Parameters.Cohesion;
-        MPM_Mesh.Phi.EPS.nV[p] = Output_Plastic_Parameters.EPS;
-
-      }*/
-      else
-      {
-          fprintf(stderr,"%s : %s %s %s \n",
-		  "Error in update_Local_State()",
-		  "The material",MatProp_Soil_p.Type,"has not been yet implemnented");
-          exit(EXIT_FAILURE);
-      }
-
-      /*
         Update state parameters
       */
       Pw_0 = MPM_Mesh.Phi.Pw_0.nV[p]; /* Get the initial pressure */
@@ -1126,6 +1082,23 @@ static void update_Local_State(
 	  
     }
   
+  /*
+    Loop in the material point set to update stress
+  */
+  for(int p = 0 ; p<Np ; p++)
+  {
+    Mixture_idx = MPM_Mesh.MixtIdx[p];
+    Material_Soil_idx = Soil_Water_Mixtures[Mixture_idx].Soil_Idx;
+    MatProp_Soil_p = MPM_Mesh.Mat[Material_Soil_idx];
+
+    /*
+      Update the first Piola-Kirchhoff stress tensor with an apropiate
+      integration rule.
+    */
+    Stress_integration__Particles__(p,MPM_Mesh,FEM_Mesh,MatProp_Soil_p); 
+  }
+
+
 }
 
 /**************************************************************/
@@ -2059,7 +2032,7 @@ static void solve_Nodal_Mass_Balance(
     /*
       Set to zero the rate of pore water pressure
     */
-    MPM_Mesh.Phi.d_Pw_dt.nV[p] = 0.0;
+    MPM_Mesh.Phi.d_Pw_dt_n1.nV[p] = 0.0;
 
     /*
       Define element of the particle 
@@ -2091,7 +2064,8 @@ static void solve_Nodal_Mass_Balance(
       /*
         Update the particle rate of pore water pressure
       */
-      MPM_Mesh.Phi.d_Pw_dt.nV[p] += ShapeFunction_pA*Rate_Pore_water_pressure.nV[A_mask];
+      MPM_Mesh.Phi.d_Pw_dt_n1.nV[p] += ShapeFunction_pA*Rate_Pore_water_pressure.nV[A_mask];
+
     }
 
     /*
@@ -2156,7 +2130,7 @@ static void compute_Explicit_Newmark_Corrector(
       /*
         Correct pressure field
       */
-      MPM_Mesh.Phi.Pw.nV[p] += gamma*Dt*MPM_Mesh.Phi.d_Pw_dt.nV[p];
+      MPM_Mesh.Phi.Pw.nV[p] += gamma*Dt*MPM_Mesh.Phi.d_Pw_dt_n1.nV[p];
 
     }  
 }
@@ -2171,6 +2145,7 @@ static void output_selector(
   Matrix D_Displacement,
   Matrix Forces,
   Matrix Reactions,
+  double DeltaTimeStep,
   int TimeStep,
   int ResultsTimeStep)
 /*

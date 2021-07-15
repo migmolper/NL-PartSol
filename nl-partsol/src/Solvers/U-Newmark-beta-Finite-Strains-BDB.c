@@ -11,10 +11,7 @@
 /*
   Call global variables
 */
-double epsilon_Mass_Matrix; 
-double beta_Newmark_beta;   
-double gamma_Newmark_beta;
-double TOL_Newmark_beta;
+double Thickness_Plain_Stress;
 Event * Out_nodal_path_csv;
 Event * Out_particles_path_csv;
 int Number_Out_nodal_path_csv;
@@ -59,20 +56,35 @@ static Matrix compute_Nodal_BDB(Matrix, Tensor, Tensor, Tensor);
 static void   solve_non_reducted_system(Matrix, Matrix, Matrix, Matrix, Newmark_parameters);
 static void   solve_reducted_system(Mask,Matrix, Matrix, Matrix, Matrix, Newmark_parameters);
 static void   update_Particles(Matrix, Matrix, Matrix, Particle, Mesh, Mask, Newmark_parameters);
-static void   output_selector(Particle, Mesh, Mask, Matrix, Matrix, Matrix, Matrix, Matrix, Matrix, int, int);
+static void   output_selector(Particle, Mesh, Mask, Matrix, Matrix, Matrix, Matrix, Matrix, Matrix, double, int, int);
 /**************************************************************/
 
-void U_Newmark_beta_Finite_Strains_BDB(Mesh FEM_Mesh, Particle MPM_Mesh, int InitialStep)
+void U_Newmark_beta_Finite_Strains_BDB(
+  Mesh FEM_Mesh,
+  Particle MPM_Mesh,
+  Time_Int_Params Parameters_Solver)
 {
 
   /*
-    Integer variables 
+    Auxiliar variables for the solver
   */
   int Ndim = NumberDimensions;
   int Nactivenodes;
-  /*
-    Auxiliar variables for the solver
-  */
+  int InitialStep = Parameters_Solver.InitialTimeStep;
+  int NumTimeStep = Parameters_Solver.NumTimeStep;  
+  int MaxIter = Parameters_Solver.MaxIter;
+  int Iter;
+
+  double TOL = Parameters_Solver.TOL_Newmark_beta;
+  double epsilon = Parameters_Solver.epsilon_Mass_Matrix;
+  double beta = Parameters_Solver.beta_Newmark_beta;
+  double gamma = Parameters_Solver.gamma_Newmark_beta;
+  double CFL = Parameters_Solver.CFL;
+  double DeltaTimeStep;
+  double DeltaX = FEM_Mesh.DeltaX;
+
+  bool Convergence;
+
   Matrix Effective_Mass;
   Matrix Tangent_Stiffness;
   Matrix Forces;
@@ -82,22 +94,12 @@ void U_Newmark_beta_Finite_Strains_BDB(Mesh FEM_Mesh, Particle MPM_Mesh, int Ini
   Matrix Acceleration;
   Matrix D_Displacement;
   Matrix Residual;
+
   Mask ActiveNodes;
   Mask Free_and_Restricted_Dofs;
-  double TOL = TOL_Newmark_beta;
-  double epsilon = epsilon_Mass_Matrix;
-  double beta = beta_Newmark_beta;
-  double gamma = gamma_Newmark_beta;
 
-  /*
-    Alpha parameters for the Newmark-beta
-  */
   Newmark_parameters Params;
-  
-  double DeltaTimeStep;
-  bool Convergence;
-  int Iter = 0;
-  int MaxIter = 100;
+
 
   /*
     Time step is defined at the init of the simulation throught the
@@ -105,7 +107,7 @@ void U_Newmark_beta_Finite_Strains_BDB(Mesh FEM_Mesh, Particle MPM_Mesh, int Ini
     not required to be satisfied. The only purpose of it is to use the existing
     software interfase.
   */
-  DeltaTimeStep = DeltaT_CFL(MPM_Mesh, FEM_Mesh.DeltaX);
+  DeltaTimeStep = U_DeltaT__SolversLib__(MPM_Mesh, DeltaX, CFL);
  
   /*
     Compute alpha parameters
@@ -125,6 +127,7 @@ void U_Newmark_beta_Finite_Strains_BDB(Mesh FEM_Mesh, Particle MPM_Mesh, int Ini
 	       With the active set of nodes generate a mask to help the algorithm to compute
 	       the equilibrium only in the active nodes
       */
+      local_search__MeshTools__(MPM_Mesh,FEM_Mesh);
       ActiveNodes = generate_NodalMask__MeshTools__(FEM_Mesh);
       Nactivenodes = ActiveNodes.Nactivenodes;
       Free_and_Restricted_Dofs = generate_Mask_for_static_condensation__MeshTools__(ActiveNodes,FEM_Mesh);
@@ -237,10 +240,6 @@ void U_Newmark_beta_Finite_Strains_BDB(Mesh FEM_Mesh, Particle MPM_Mesh, int Ini
       update_Particles(D_Displacement,Velocity,Acceleration,MPM_Mesh,FEM_Mesh,ActiveNodes, Params);
       print_Status("DONE !!!",TimeStep);
       
-      /*
-	Reload the connectivity information for each particle
-      */
-      local_search__Particles__(MPM_Mesh,FEM_Mesh);
       print_Status("DONE !!!",TimeStep);
 
       /*
@@ -249,7 +248,7 @@ void U_Newmark_beta_Finite_Strains_BDB(Mesh FEM_Mesh, Particle MPM_Mesh, int Ini
       output_selector(MPM_Mesh, FEM_Mesh, ActiveNodes,
                       Velocity, Acceleration, D_Displacement,
                       Forces, Reactions, Residual,
-                      TimeStep, ResultsTimeStep);
+                      DeltaTimeStep, TimeStep, ResultsTimeStep);
 
     
 
@@ -835,7 +834,6 @@ static void update_Local_State(Matrix D_Displacement,
   Tensor F_n_p;
   Tensor F_n1_p;
   Tensor DF_p;
-  Tensor S_p;
   
   /*
     Loop in the material point set 
@@ -881,8 +879,7 @@ static void update_Local_State(Matrix D_Displacement,
       */
       MatIndx_p = MPM_Mesh.MatIdx[p];
       MatProp_p = MPM_Mesh.Mat[MatIndx_p];
-      S_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.Stress.nM[p],2);
-      S_p = forward_integration_Stress__Particles__(S_p,F_n1_p,MatProp_p);
+      Stress_integration__Particles__(p,MPM_Mesh,FEM_Mesh,MatProp_p);
       
       /*
 	       Free memory 
@@ -2082,10 +2079,19 @@ static void update_Particles(Matrix D_Displacement,
 
 /**************************************************************/
 
-static void output_selector(Particle MPM_Mesh, Mesh FEM_Mesh, Mask ActiveNodes,
-                            Matrix Velocity, Matrix Acceleration, Matrix D_Displacement,
-                            Matrix Forces, Matrix Reactions, Matrix Residual,
-                            int TimeStep, int ResultsTimeStep)
+static void output_selector(
+  Particle MPM_Mesh, 
+  Mesh FEM_Mesh,
+  Mask ActiveNodes,
+  Matrix Velocity,
+  Matrix Acceleration,
+  Matrix D_Displacement,
+  Matrix Forces,
+  Matrix Reactions,
+  Matrix Residual,
+  double DeltaTimeStep,
+  int TimeStep, 
+  int ResultsTimeStep)
 {
 
   /*

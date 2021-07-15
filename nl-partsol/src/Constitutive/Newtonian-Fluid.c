@@ -2,17 +2,31 @@
 
 /**************************************************************/
 
-Tensor compute_1PK_Stress_Tensor_Newtonian_Fluid(
-  Tensor P, 
-  Tensor F,
-  Tensor dFdt,
-  double J, 
+State_Parameters compute_1PK_Stress_Tensor_Newtonian_Fluid( 
+  State_Parameters Intput_SP,
   Material MatProp_p)
 {
-  /* Number of dimensions */
+  /*
+    Number of dimensions
+  */
   int Ndim = NumberDimensions;
+
+  /* 
+    Output state parameter
+  */
+  State_Parameters Output_SP;
+
+  /*
+    Take information from input state parameters
+  */
+  Tensor P = memory_to_tensor__TensorLib__(Intput_SP.Stress,2);
+  Tensor F = memory_to_tensor__TensorLib__(Intput_SP.F_n1_p,2);
+  Tensor dFdt = memory_to_tensor__TensorLib__(Intput_SP.dFdt,2);
+  double J = Intput_SP.J;
   
-  /* Material parameters */
+  /*
+    Material parameters
+  */
   double p0 = MatProp_p.ReferencePressure;
   double mu = MatProp_p.Viscosity;
   double n = MatProp_p.n_Macdonald_model;
@@ -23,9 +37,9 @@ Tensor compute_1PK_Stress_Tensor_Newtonian_Fluid(
   */
   Tensor Fm1 = Inverse__TensorLib__(F);
   Tensor FmT = transpose__TensorLib__(Fm1);
-  Tensor dFdt_Fm1 = matrix_product__TensorLib__(dFdt,Fm1);
-  Tensor d = symmetrise__TensorLib__(dFdt_Fm1);
-  Tensor d_FmT = matrix_product__TensorLib__(d, FmT);
+  Tensor dFdt__x__Fm1 = matrix_product__TensorLib__(dFdt,Fm1);
+  Tensor d = symmetrise__TensorLib__(dFdt__x__Fm1);
+  Tensor d__x__FmT = matrix_product__TensorLib__(d, FmT);
 
   /*
     Auxiliar parameters
@@ -37,10 +51,10 @@ Tensor compute_1PK_Stress_Tensor_Newtonian_Fluid(
     for(int j = 0 ; j < Ndim ; j++)
     {
       P.N[i][j] = 
-      + J*p0*FmT.N[i][j]
-      + J*(K/n)*(pow(J,-n) - 1)*FmT.N[i][j]
-      + 2*J*mu*d_FmT.N[i][j]
-      - (2/3)*J*mu*tr_d*FmT.N[i][j];
+      - J*p0*FmT.N[i][j]
+      - J*(K/n)*(pow(J,-n) - 1)*FmT.N[i][j]
+      + 2*J*mu*d__x__FmT.N[i][j]
+      - (2.0/((double)Ndim))*J*mu*tr_d*FmT.N[i][j];
     }
   }
   
@@ -49,11 +63,11 @@ Tensor compute_1PK_Stress_Tensor_Newtonian_Fluid(
   */
   free__TensorLib__(Fm1);
   free__TensorLib__(FmT);
-  free__TensorLib__(dFdt_Fm1);
+  free__TensorLib__(dFdt__x__Fm1);
   free__TensorLib__(d);
-  free__TensorLib__(d_FmT);
+  free__TensorLib__(d__x__FmT);
 
-  return P;
+  return Output_SP;
 }
 
 /**************************************************************/
@@ -112,14 +126,14 @@ Tensor compute_stiffness_density_Newtonian_Fluid(
     for(int j = 0 ; j<Ndim ; j++)
     {
       A.N[i][j] = 
-      + (J*p0 - K*pow(J,1-n) - (2/3)*alpha4*J*mu)*Fm1GRAD_o_FmTGRAD_IJ.N[i][j]
+      + (- J*p0 - J*(K/n)*(pow(J,-n) - 1) + K*pow(J,1-n) - (2.0/((double)Ndim))*alpha4*J*mu)*Fm1GRAD_o_FmTGRAD_IJ.N[i][j]
       + 2*J*mu*d_Fm1GRAD_o_FmTGRAD_IJ.N[i][j]
-      - (J*p0 - J*(K/n)*(pow(J,-n)-1) - alpha4*J*mu)*Fm1GRAD_o_FmTGRAD_JI.N[i][j]
+      + (J*p0 + J*(K/n)*(pow(J,-n)-1) + alpha4*J*mu)*Fm1GRAD_o_FmTGRAD_JI.N[i][j]
       - 2*J*mu*d_Fm1GRAD_o_FmTGRAD_JI.N[i][j]
       + alpha4*J*mu*(i==j)*GRAD_I_dot_GRAD_J
       - J*mu*GRAD_I_dot_GRAD_J*dFdt_Fm1.N[i][j]
-      - J*mu*Fm1GRAD_o_FmTGRAD_IJ_dFdt_Fm1.N[i][j]
-      + (2/3)*J*mu*Fm1GRAD_o_FmTGRAD_JI_dFdt_Fm1.N[i][j];
+      - J*mu*Fm1GRAD_o_FmTGRAD_JI_dFdt_Fm1.N[i][j]
+      + (2.0/((double)Ndim))*J*mu*Fm1GRAD_o_FmTGRAD_IJ_dFdt_Fm1.N[i][j];
     }
   }
 

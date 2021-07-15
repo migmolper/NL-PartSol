@@ -2,7 +2,9 @@
 
 /*************************************************************/
 
-Tensor rate_inifinitesimal_Strain__Particles__(Matrix Velocity, Matrix Gradient)
+Tensor rate_inifinitesimal_Strain__Particles__(
+  Matrix Velocity, 
+  Matrix Gradient)
 {
   int Ndim = NumberDimensions;
   Tensor Rate_Strain = alloc__TensorLib__(2);
@@ -23,10 +25,11 @@ Tensor rate_inifinitesimal_Strain__Particles__(Matrix Velocity, Matrix Gradient)
     VoG_I = dyadic_Product__TensorLib__(Velocity_I, Gradient_I);
     
     /* Ad the nodal contribution to the train tensor */
-    for(int i = 0 ; i<Ndim ; i++){
-      for(int j = 0 ; j<Ndim ; j++){
-	Rate_Strain.N[i][j] +=
-	  0.5*(VoG_I.N[i][j] + VoG_I.N[j][i]);
+    for(int i = 0 ; i<Ndim ; i++)
+    {
+      for(int j = 0 ; j<Ndim ; j++)
+      {
+        Rate_Strain.N[i][j] += 0.5*(VoG_I.N[i][j] + VoG_I.N[j][i]);
       }
     }
     /* Free memory */
@@ -150,33 +153,33 @@ void update_rate_increment_Deformation_Gradient__Particles__(
   {
     for(int j = 0 ; j<Ndim ; j++)
     {
-      dt_DF_p.N[i][j] = 1*(i==j);
+      dt_DF_p.N[i][j] = 0.0;
     }
   }
   
   for(int I = 0 ; I<Nnodes_p ; I++)
-    {
+  {
 
-      /* Assign from matrix to tensor */
-      DeltaV_I = memory_to_tensor__TensorLib__(DeltaV.nM[I], 1);
-      gradient_I = memory_to_tensor__TensorLib__(gradient_p.nM[I], 1);
+    /* Assign from matrix to tensor */
+    DeltaV_I = memory_to_tensor__TensorLib__(DeltaV.nM[I], 1);
+    gradient_I = memory_to_tensor__TensorLib__(gradient_p.nM[I], 1);
       
-      /* Compute the dyadic product of the nodal velocity and the
-          gradient of the shape functions */
-      gradient_DeltaV_I = dyadic_Product__TensorLib__(DeltaV_I, gradient_I);
+    /* Compute the dyadic product of the nodal velocity and the
+        gradient of the shape functions */
+    gradient_DeltaV_I = dyadic_Product__TensorLib__(DeltaV_I, gradient_I);
       
-      /* Ad the nodal contribution to the train tensor */
-      for(int i = 0 ; i<Ndim ; i++)
-       {
-         for(int j = 0 ; j<Ndim ; j++)
-           {
-             dt_DF_p.N[i][j] += gradient_DeltaV_I.N[i][j];
-           }
-        }
-      
-      /* Free memory */
-      free__TensorLib__(gradient_DeltaV_I);
+    /* Ad the nodal contribution to the train tensor */
+    for(int i = 0 ; i<Ndim ; i++)
+    {
+      for(int j = 0 ; j<Ndim ; j++)
+      {
+        dt_DF_p.N[i][j] += gradient_DeltaV_I.N[i][j];
+      }
     }
+      
+    /* Free memory */
+    free__TensorLib__(gradient_DeltaV_I);
+  }
 } 
 
 /*******************************************************/
@@ -190,29 +193,67 @@ void update_Deformation_Gradient_n1__Particles__(
   double aux;
     
   for(int i = 0 ; i < Ndim  ; i++)
-    {
-      for(int j = 0 ; j < Ndim  ; j++)
-	     {
-       /*
+  {
+    for(int j = 0 ; j < Ndim  ; j++)
+	   {
+      /*
 	      Set to zero the deformation gradient at t = n + 1 
-        */
-        F_n1.N[i][j] = 0;
+      */
+      F_n1.N[i][j] = 0;
 
-        /*
+      /*
         Compute row-column multiplication
-        */
-        aux = 0;
-        for(int k = 0 ; k < Ndim  ; k++)
-        {
-          aux += f_n1.N[i][k]*F_n.N[k][j];
-        }
-
-        /*
-          New value
-        */
-        F_n1.N[i][j] = aux;
+      */
+      aux = 0;
+      for(int k = 0 ; k < Ndim  ; k++)
+      {
+        aux += f_n1.N[i][k]*F_n.N[k][j];
       }
+
+      /*
+        New value
+      */
+      F_n1.N[i][j] = aux;
     }
+  }
+}
+
+/*******************************************************/
+
+void get_locking_free_Deformation_Gradient_n1__Particles__(
+  int p,
+  Particle MPM_Mesh)
+{
+
+  int Ndim = NumberDimensions;
+  int MatIndx_p = MPM_Mesh.MatIdx[p];
+
+  double J_n1_patch = MPM_Mesh.Phi.Jbar.nV[p];
+  double J_p;
+  double J_averaged;
+  double averaged_F_vol;
+
+  double alpha = MPM_Mesh.Mat[MatIndx_p].alpha_Fbar;
+
+  Tensor F_n1_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n1.nM[p],2);
+  Tensor Fbar   = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.Fbar.nM[p],2);
+
+  // Compute the averaged jacobian of the deformation gradient
+  J_p = MPM_Mesh.Phi.J.nV[p];
+  J_averaged = J_n1_patch/J_p;
+
+  // Compute the averaged volume of the deformation gradient
+  averaged_F_vol = pow(J_averaged,(double)1/Ndim);
+
+  // Update the deformation gradient to avoid locking (F-bar)
+  for(int i = 0 ; i<Ndim ; i++)
+  {
+    for(int j = 0 ; j<Ndim ; j++)
+    {
+      Fbar.N[i][j] = alpha*F_n1_p.N[i][j] + (1 - alpha)*averaged_F_vol*F_n1_p.N[i][j];
+    }
+  }
+
 }
 
 /*******************************************************/
@@ -228,34 +269,37 @@ void update_rate_Deformation_Gradient_n1__Particles__(
   double aux;
     
   for(int i = 0 ; i < Ndim  ; i++)
+  {
+    for(int j = 0 ; j < Ndim  ; j++)
     {
-      for(int j = 0 ; j < Ndim  ; j++)
-       {
-       /*
+      /*
         Set to zero the deformation gradient at t = n + 1 
-        */
-        dt_F_n1.N[i][j] = 0;
+      */
+      dt_F_n1.N[i][j] = 0;
 
-        /*
+      /*
         Compute row-column multiplication
-        */
-        aux = 0;
-        for(int k = 0 ; k < Ndim  ; k++)
-        {
-          aux += dt_f_n1.N[i][k]*F_n.N[k][j] + f_n1.N[i][k]*dt_F_n.N[k][j];
-        }
-
-        /*
-          New value
-        */
-        dt_F_n1.N[i][j] = aux;
+      */
+      aux = 0;
+      for(int k = 0 ; k < Ndim  ; k++)
+      {
+        aux += dt_f_n1.N[i][k]*F_n.N[k][j] + f_n1.N[i][k]*dt_F_n.N[k][j];
       }
+
+      /*
+        New value
+      */
+      dt_F_n1.N[i][j] = aux;
     }
+  }
 }
 
 /*******************************************************/
 
-double compute_Jacobian_Rate__Particles__(double J_p, Tensor F_p, Tensor dt_F_p)
+double compute_Jacobian_Rate__Particles__(
+  double J_p,
+  Tensor F_p,
+  Tensor dt_F_p)
 {
   /* Variable definition */
   double dt_J_p = 0;
@@ -272,7 +316,8 @@ double compute_Jacobian_Rate__Particles__(double J_p, Tensor F_p, Tensor dt_F_p)
 
 /*******************************************************/
 
-Tensor right_Cauchy_Green__Particles__(Tensor F)
+Tensor right_Cauchy_Green__Particles__(
+  Tensor F)
 {
   /* Define output */
   Tensor C = alloc__TensorLib__(2);
@@ -281,112 +326,23 @@ Tensor right_Cauchy_Green__Particles__(Tensor F)
 
   /* Compute C = F^T F */
   for(int i = 0 ; i < Ndim  ; i++)
+  {
+    for(int j = 0 ; j < Ndim  ; j++)
     {
-      for(int j = 0 ; j < Ndim  ; j++)
+      for(int k = 0 ; k < Ndim  ; k++)
       {
-        for(int k = 0 ; k < Ndim  ; k++)
-        {
-          C.N[i][j] += F.N[k][i]*F.N[k][j];
-        }
+        C.N[i][j] += F.N[k][i]*F.N[k][j];
       }
     }
+  }
 
   return C;
 }
 
 /*******************************************************/
 
-Tensor logarithmic_strains__Particles__(Tensor C)
-/*
-    Use the approach of Ortiz and Camacho to compute the elastic infinitesimal strain tensor.
-*/
-{
-
-  int Ndim = NumberDimensions;
-  Tensor EigenVals_C;
-  Tensor EigenVects_C;
-  Tensor logC_spectral = alloc__TensorLib__(2);
-  Tensor logC;
-
-
-  /*
-    Compute the spectral descomposition of the tensor logC
-  */
-  EigenVals_C = Eigenvalues__TensorLib__(C);
-  EigenVects_C = Eigenvectors__TensorLib__(C,EigenVals_C);
-  
-  for(int i = 0 ; i < Ndim  ; i++)
-    {
-      logC_spectral.N[i][i] = log(EigenVals_C.n[i]);
-    }
-
-  /*
-    Rotate the spectral descomposition of the tensor logC
-  */
-  logC = rotate__TensorLib__(logC_spectral,EigenVects_C);
-
-  /*
-    Multiply by 1/2
-  */
-  for(int i = 0 ; i < Ndim  ; i++)
-    {
-      for(int j = 0 ; j < Ndim  ; j++)
-      { 
-        logC.N[i][j] *= 0.5;
-      }
-    }
-
-  /*
-    Free memory
-  */
-  free__TensorLib__(EigenVals_C);
-  free__TensorLib__(EigenVects_C);
-  free__TensorLib__(logC_spectral);
-
-  return logC; 
-}
-
-/*******************************************************/
-
-Tensor increment_Deformation_Gradient_exponential_strains__Particles__(Tensor D_E)
-{
-
-  int Ndim = NumberDimensions;
-  Tensor EigenVals_D_E;
-  Tensor EigenVects_D_E;
-  Tensor exp_D_E_spectral = alloc__TensorLib__(2);
-  Tensor exp_D_E;
-
-
-  /*
-    Compute the spectral descomposition of the tensor exp(D_E)
-  */
-  EigenVals_D_E = Eigenvalues__TensorLib__(D_E);
-  EigenVects_D_E = Eigenvectors__TensorLib__(D_E,EigenVals_D_E);
-  
-  for(int i = 0 ; i < Ndim  ; i++)
-    {
-      exp_D_E_spectral.N[i][i] = exp(EigenVals_D_E.n[i]);
-    }
-
-  /*
-    Rotate the spectral descomposition of the tensor exp(D_E)
-  */
-  exp_D_E = rotate__TensorLib__(exp_D_E_spectral,EigenVects_D_E);
-
-  /*
-    Free memory
-  */
-  free__TensorLib__(EigenVals_D_E);
-  free__TensorLib__(EigenVects_D_E);
-  free__TensorLib__(exp_D_E_spectral);
-
-  return exp_D_E; 
-}
-
-/*******************************************************/
-
-Tensor strain_Green_Lagrange__Particles__(Tensor C)
+Tensor strain_Green_Lagrange__Particles__(
+  Tensor C)
 {
   /* Define output */
   Tensor E = alloc__TensorLib__(2);
@@ -397,12 +353,12 @@ Tensor strain_Green_Lagrange__Particles__(Tensor C)
 
   /* Compute E = 1/2 * [ C - I]  */
   for(int i = 0 ; i < Ndim  ; i++)
+  {
+    for(int j = 0 ; j < Ndim  ; j++)
     {
-      for(int j = 0 ; j < Ndim  ; j++)
-      {
-        E.N[i][j] = 0.5 * (C.N[i][j] - I.N[i][j]);
-      }
+      E.N[i][j] = 0.5 * (C.N[i][j] - I.N[i][j]);
     }
+  }
 
   free__TensorLib__(I);
 
@@ -411,36 +367,121 @@ Tensor strain_Green_Lagrange__Particles__(Tensor C)
 
 /*******************************************************/
 
-void update_plastic_deformation_gradient__Particles__(Tensor D_F_plastic, Tensor F_plastic)
+void update_plastic_deformation_gradient__Particles__(
+  Tensor Increment_E_plastic, 
+  Tensor F_m1_plastic)
 {
   int Ndim = NumberDimensions;
+  EigenTensor Eigen_Increment_E_plastic;
+  Tensor D_F_elastic_spectral = alloc__TensorLib__(2);
+  Tensor D_F_elastic;
+  Tensor F_m1_plastic_new;
+
+  /*
+    Compute the spectral descomposition of the tensor exp(D_E)
+  */
+  Eigen_Increment_E_plastic = Eigen_analysis__TensorLib__(Increment_E_plastic);
+
+  
+  for(int i = 0 ; i < Ndim  ; i++)
+  {
+    D_F_elastic_spectral.N[i][i] = exp(- Eigen_Increment_E_plastic.Value.n[i]);
+  }
+
+  /*
+    Rotate the spectral descomposition of the tensor exp(D_E)
+  */
+  D_F_elastic = rotate__TensorLib__(D_F_elastic_spectral, Eigen_Increment_E_plastic.Vector);
 
   /*
     Compute the new value of the plastic deformation gradient 
   */
-  Tensor Aux_tensor = matrix_product__TensorLib__(D_F_plastic, F_plastic);
+  F_m1_plastic_new = matrix_product__TensorLib__(F_m1_plastic,D_F_elastic);
 
   /*
     Update value of the plastic deformation gradient
   */
   for(int i = 0 ; i < Ndim  ; i++)
+  {
+    for(int j = 0 ; j < Ndim  ; j++)
     {
-      for(int j = 0 ; j < Ndim  ; j++)
-      {
-        F_plastic.N[i][j] = Aux_tensor.N[i][j];
-      }
+      F_m1_plastic.N[i][j] = F_m1_plastic_new.N[i][j];
     }
+  }
 
   /*
-    Free memory 
+    Free memory
   */
-  free__TensorLib__(Aux_tensor);
+  free__TensorLib__(Eigen_Increment_E_plastic.Value);
+  free__TensorLib__(Eigen_Increment_E_plastic.Vector);
+  free__TensorLib__(D_F_elastic_spectral);
+  free__TensorLib__(D_F_elastic);
+  free__TensorLib__(F_m1_plastic_new);
 
 }
 
 /**************************************************************/
 
-Matrix compute_B_matrix__Particles__(Tensor F, Tensor GRAD_N)
+void update_elastic_deformation_gradient__Particles__(
+  Tensor F_elastic,
+  Tensor F_trial_elastic,
+  Tensor Increment_E_plastic)
+{
+  int Ndim = NumberDimensions;
+  EigenTensor Eigen_Increment_E_plastic;
+  Tensor D_F_elastic_spectral = alloc__TensorLib__(2);
+  Tensor D_F_elastic;
+  Tensor F_elastic_new;
+
+  /*
+    Compute the spectral descomposition of the tensor exp(D_E)
+  */
+  Eigen_Increment_E_plastic = Eigen_analysis__TensorLib__(Increment_E_plastic);
+
+  
+  for(int i = 0 ; i < Ndim  ; i++)
+  {
+    D_F_elastic_spectral.N[i][i] = exp(-Eigen_Increment_E_plastic.Value.n[i]);
+  }
+
+  /*
+    Rotate the spectral descomposition of the tensor exp(D_E)
+  */
+  D_F_elastic = rotate__TensorLib__(D_F_elastic_spectral, Eigen_Increment_E_plastic.Vector);
+
+
+  /*
+    Compute the new value of the plastic deformation gradient 
+  */
+  F_elastic_new = matrix_product__TensorLib__(F_trial_elastic,D_F_elastic);
+
+  /*
+    Update value of the plastic deformation gradient
+  */
+  for(int i = 0 ; i < Ndim  ; i++)
+  {
+    for(int j = 0 ; j < Ndim  ; j++)
+    {
+      F_elastic.N[i][j] = F_elastic_new.N[i][j];
+    }
+  }
+
+  /*
+    Free memory 
+  */
+  free__TensorLib__(Eigen_Increment_E_plastic.Value);
+  free__TensorLib__(Eigen_Increment_E_plastic.Vector);
+  free__TensorLib__(D_F_elastic_spectral);
+  free__TensorLib__(D_F_elastic);
+  free__TensorLib__(F_elastic_new);
+}
+
+
+/**************************************************************/
+
+Matrix compute_B_matrix__Particles__(
+  Tensor F, 
+  Tensor GRAD_N)
 /*
 B=[F(1,1)*gradNptog(1,nn1) F(2,1)*gradNptog(1,nn1);...
    F(1,2)*gradNptog(2,nn1) F(2,2)*gradNptog(2,nn1);...
@@ -461,7 +502,9 @@ B=[F(1,1)*gradNptog(1,nn1) F(2,1)*gradNptog(1,nn1);...
 
 /**************************************************************/
 
-Matrix compute_BT_matrix__Particles__(Tensor F, Tensor GRAD_N)
+Matrix compute_BT_matrix__Particles__(
+  Tensor F, 
+  Tensor GRAD_N)
 {
   Matrix BT = allocZ__MatrixLib__(2,3);
 

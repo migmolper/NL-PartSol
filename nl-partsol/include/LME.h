@@ -22,7 +22,7 @@
   \brief  Initialize LME shape functions 
 
   \param MPM_Mesh : Variable with the particle information
-  \param FEM_Mesh : Nodes information
+  \param FEM_Mesh : Variable wih information of the background set of nodes
 */
 void initialize__LME__(Particle, Mesh);
 /****************************************************************************/
@@ -31,12 +31,11 @@ void initialize__LME__(Particle, Mesh);
   \fn double beta__LME__(Matrix l, double Gamma, double DeltaX);
 
   \brief  Compute the value of the thermalization parameter using a circular support.
-
-  \param l : Matrix with the distances from nodes in the neiborghood to the particle.
+  
   \param Gamma : Adimensional paramter to control the regularization parameter.
   \param DeltaX : Minimum size in the all nodal set.
 */
-double beta__LME__(Matrix, double, double);
+double beta__LME__(double, double);
 /****************************************************************************/
 
 /*!
@@ -50,7 +49,7 @@ Matrix metric__LME__(Tensor);
 /****************************************************************************/
 
 /*!
-  \fn void lambda__LME__(Matrix l, Matrix lambda, Matrix Metric, double Beta)
+  \fn void update_lambda_Newton_Rapson__LME__(Matrix l, Matrix lambda, Matrix Metric, double Beta)
 
   \brief Function ot get the lagrange multipliers "lambda" (1 x dim) for the LME 
   shape function. The numerical methodis the Newton-Rapson.
@@ -106,6 +105,18 @@ Matrix dp__LME__(Matrix, Matrix);
 /****************************************************************************/
 
 /*!
+
+ \fn void local_search__LME__(Particle MPM_Mesh, Mesh FEM_Mesh)
+
+  \brief Compute the local search for the LME (update to reduce the number of computational nodes)
+
+  \param MPM_Mesh : Variable with the particle information
+  \param FEM_Mesh : Variable wih information of the background set of nodes
+*/
+void local_search__LME__(Particle, Mesh);
+/****************************************************************************/
+
+/*!
   \fn Matrix tributary__LME__(Matrix X_p, Matrix Metric, double Beta_p, int I0, Mesh FEM_Mesh);
 
   \brief Compute a set with the sourrounding nodes of the particle
@@ -116,7 +127,7 @@ Matrix dp__LME__(Matrix, Matrix);
   \param I0 : Index of the closest node to the particle
   \param FEM_Mesh : Variable wih information of the background set of nodes
 */
-ChainPtr tributary__LME__(Matrix, Matrix, double, int, Mesh);
-
+ChainPtr tributary__LME__(int,Matrix, Matrix, double, int, Mesh);
+/****************************************************************************/
 
 #endif

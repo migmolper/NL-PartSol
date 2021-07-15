@@ -22,14 +22,22 @@ double energy_Neo_Hookean_Wriggers(Tensor C, double J, Material MatProp_p)
 
 /**************************************************************/
 
-Tensor compute_1PK_Stress_Tensor_Neo_Hookean_Wriggers(
-  Tensor P, 
-  Tensor F,
-  double J, 
+State_Parameters compute_1PK_Stress_Tensor_Neo_Hookean_Wriggers(
+  State_Parameters Intput_SP,
   Material MatProp_p)
 {
   /* Number of dimensions */
   int Ndim = NumberDimensions;
+
+  /* 
+    Output state parameter
+  */
+  State_Parameters Output_SP;
+
+  /* Get information from the state parameter */
+  Tensor F = memory_to_tensor__TensorLib__(Intput_SP.F_n1_p,2);
+  Tensor P = memory_to_tensor__TensorLib__(Intput_SP.Stress,2);
+  double J = Intput_SP.J;
   
   /* Material parameters */
   double ElasticModulus = MatProp_p.E;
@@ -50,13 +58,21 @@ Tensor compute_1PK_Stress_Tensor_Neo_Hookean_Wriggers(
       P.N[i][j] = lambda*0.5*(J2 - 1)*Fm1.N[j][i] + G*(F.N[i][j] - Fm1.N[j][i]);
     }
   }
+
+  /*
+    Plane strain conditions
+  */
+  if(Ndim == 2)
+  {
+    Intput_SP.Stress[4] = lambda*0.5*(J2 - 1);
+  }
   
   /*
     Free tensors 
   */
   free__TensorLib__(Fm1);
 
-  return P;
+  return Output_SP;
 }
 
 /**************************************************************/
@@ -127,8 +143,11 @@ Tensor compute_stiffness_density_Neo_Hookean_Wriggers(
 /**************************************************************/
 
 
-Tensor compute_2PK_Stress_Tensor_Neo_Hookean_Wriggers(Tensor grad_e, Tensor C,
-          double J, Material MatProp_p)
+Tensor compute_2PK_Stress_Tensor_Neo_Hookean_Wriggers(
+  Tensor grad_e,
+  Tensor C,
+  double J,
+  Material MatProp_p)
 {
   /* Number of dimensions */
   int Ndim = NumberDimensions;

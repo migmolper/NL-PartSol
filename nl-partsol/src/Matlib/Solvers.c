@@ -36,7 +36,7 @@ Matrix Newton_Rapson(Matrix(* Function)(Matrix, Matrix),Matrix Parameter_F,
   Matrix dY_dX;
   Matrix dY_dX_m1;
   Matrix DeltaX;
-  double TOL_NormDeltaX = pow(10,-10);
+  double TOL_NormDeltaX = pow(10,-23);
   double NormDeltaX = pow(10,4);
   int Num_Iter = 20;  
   int Iter_i = 0;
@@ -63,7 +63,8 @@ Matrix Newton_Rapson(Matrix(* Function)(Matrix, Matrix),Matrix Parameter_F,
 
     /* 3º Solve the sistem DY_dX(X0)*DeltaX = F(X0) -> DeltaX */
     Bool = dY_dX.N_cols>3;
-    switch(Bool){
+    switch(Bool)
+    {
     case 0 : /* If the size of the Jacobian is less than 4, use analitical */
       dY_dX_m1 = inverse__MatrixLib__(dY_dX);
       free__MatrixLib__(dY_dX);
@@ -94,34 +95,6 @@ Matrix Newton_Rapson(Matrix(* Function)(Matrix, Matrix),Matrix Parameter_F,
   /* 6º Return X */
   return X;
   
-}
-
-/*********************************************************************/
-
-Matrix Solve_Linear_Sistem(Matrix K, Matrix F)
-/*
-
- */
-{
-  int Bool = K.N_cols>3;
-  Matrix Km1;
-  Matrix U;
-  
-  switch(Bool){
-  case 0 :
-    Km1 = inverse__MatrixLib__(K);
-    U = matrix_product__MatrixLib__(Km1,F);
-    free__MatrixLib__(Km1);
-    return U; 
-  case 1 :
-    puts("fix U");
-    exit(EXIT_FAILURE);
-    U = Conjugate_Gradient_Method(K,F,U);
-    return U;
-  default :
-    exit(EXIT_FAILURE);
-  }
-
 }
 
 /*********************************************************************/

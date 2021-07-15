@@ -9,9 +9,9 @@ double Thickness_Plain_Stress;
   Auxiliar functions 
 */
 static Matrix compute_Nodal_Kinetics(Particle, Mesh);
-static void update_Kinetics(Mesh, Matrix, Matrix, Time_Int_Params);
+static void update_Kinetics(Mesh, Matrix, Matrix, double, double);
 static Matrix GetNodalVelocityDisplacement(Particle, Mesh);
-static void update_Particles(Particle, Mesh, Matrix, Time_Int_Params);
+static void update_Particles(Particle, Mesh, Matrix, double, double);
 static void update_LocalState(Matrix, Particle,Mesh, double);
 static Matrix compute_InternalForces(Matrix, Particle,Mesh);
 static Matrix compute_BodyForces(Matrix, Particle, Mesh, int);
@@ -20,7 +20,10 @@ static Matrix compute_Reactions(Mesh, Matrix);
 
 /**************************************************************/
 
-void U_GA(Mesh FEM_Mesh, Particle MPM_Mesh, int InitialStep)
+void U_Generalized_alpha(
+  Mesh FEM_Mesh,
+  Particle MPM_Mesh,
+  Time_Int_Params Parameters_Solver)
 {
 
   /*!
@@ -29,27 +32,21 @@ void U_GA(Mesh FEM_Mesh, Particle MPM_Mesh, int InitialStep)
   int TimeStep;
 
   /*!
-    Control parameters of the generalized-alpha algorithm 
-    all the parameters are controled by a simple parameter :
-    SpectralRadius 
-  */
-  Time_Int_Params Params;
-  Params.GA_alpha = (2*SpectralRadius-1)/(1+SpectralRadius);
-  Params.GA_beta = (5-3*SpectralRadius)/(pow((1+SpectralRadius),2)*(2-SpectralRadius));
-  Params.GA_gamma = 3/2 - Params.GA_alpha;
-
-  /*!
     Auxiliar variable for the nodal kinetics
     Nodal_Kinetics = {mass, a0, a1, v}
   */
   int Nnodes = FEM_Mesh.NumNodesMesh;
   int Ndim = NumberDimensions;
+  int InitialStep = Parameters_Solver.InitialTimeStep;
+  int NumTimeStep = Parameters_Solver.NumTimeStep;  
+
+  double rb = Parameters_Solver.rb_Generalized_alpha;
+  double CFL = Parameters_Solver.CFL;
+  double DeltaTimeStep;
+  double DeltaX = FEM_Mesh.DeltaX;
+
   Matrix V_I;
   Matrix Nodal_Kinetics;
-
-  /*!
-    Nodal forces for the balance 
-  */
   Matrix F_I = memory_to_matrix__MatrixLib__(Ndim,Nnodes,NULL);
   Matrix R_I = memory_to_matrix__MatrixLib__(Ndim,Nnodes,NULL);
 
@@ -71,9 +68,9 @@ void U_GA(Mesh FEM_Mesh, Particle MPM_Mesh, int InitialStep)
     {
 
       print_Status("*************************************************",TimeStep);
-      DeltaTimeStep = DeltaT_CFL(MPM_Mesh, FEM_Mesh.DeltaX);
+      DeltaTimeStep = U_DeltaT__SolversLib__(MPM_Mesh, DeltaX, CFL);
       print_step(TimeStep,DeltaTimeStep);
-      
+      local_search__MeshTools__(MPM_Mesh,FEM_Mesh);
       print_Status("*************************************************",TimeStep);
       print_Status("First step : Compute nodal kinetics ... WORKING",TimeStep);
       /* BCC_Nod_VALUE(FEM_Mesh, V_I, TimeStep); */
@@ -90,13 +87,12 @@ void U_GA(Mesh FEM_Mesh, Particle MPM_Mesh, int InitialStep)
     
       print_Status("*************************************************",TimeStep);
       print_Status(" Third step : Update kinetics ... WORKING",TimeStep);
-      update_Kinetics(FEM_Mesh, Nodal_Kinetics, F_I, Params);
+      update_Kinetics(FEM_Mesh, Nodal_Kinetics, F_I, rb, DeltaTimeStep);
       print_Status("DONE !!!",TimeStep);
 
       print_Status("*************************************************",TimeStep);
       print_Status("Four step : Update particles lagrangian ... WORKING",TimeStep);
-      update_Particles(MPM_Mesh, FEM_Mesh, Nodal_Kinetics, Params);
-      local_search__Particles__(MPM_Mesh, FEM_Mesh);
+      update_Particles(MPM_Mesh, FEM_Mesh, Nodal_Kinetics, rb, DeltaTimeStep);
       print_Status("DONE !!!",TimeStep);
 
       if(TimeStep % ResultsTimeStep == 0)
@@ -124,10 +120,12 @@ void U_GA(Mesh FEM_Mesh, Particle MPM_Mesh, int InitialStep)
 
 /*******************************************************/
 
-static void update_Kinetics(Mesh FEM_Mesh,
-			    Matrix Nodal_Kinetics,
-			    Matrix Nodal_Forces,
-			    Time_Int_Params Params)
+static void update_Kinetics(
+  Mesh FEM_Mesh,
+  Matrix Nodal_Kinetics,
+  Matrix Nodal_Forces,
+	double rb,
+  double DeltaTimeStep)
 /*!
  * \brief Brief description of Update_Nodal_Acceleration_Velocity.
  *
@@ -144,8 +142,18 @@ static void update_Kinetics(Mesh FEM_Mesh,
   double Mass_I;
 
   /* Time integration parameters */
-  double alpha = Params.GA_alpha;
-  double gamma = Params.GA_gamma;
+  double alpha = (2*rb-1)/(1+rb);
+  double beta = (5-3*rb)/(pow((1+rb),2)*(2-rb));
+  double gamma = 3/2 - alpha;
+
+
+    /*!
+    Control parameters of the generalized-alpha algorithm 
+    all the parameters are controled by a simple parameter :
+    SpectralRadius 
+  */
+  Time_Int_Params Params;
+
 
   /* Asign forces to an auxiliar variable */
   Matrix F = Nodal_Forces;
@@ -309,7 +317,9 @@ static Matrix compute_Nodal_Kinetics(Particle MPM_Mesh, Mesh FEM_Mesh)
 
 /*******************************************************/
 
-static Matrix GetNodalVelocityDisplacement(Particle MPM_Mesh, Mesh FEM_Mesh)
+static Matrix GetNodalVelocityDisplacement(
+  Particle MPM_Mesh,
+  Mesh FEM_Mesh)
 /*!
  *  Nodal_Kinetics = {m, d, v}
  */
@@ -437,8 +447,12 @@ static Matrix GetNodalVelocityDisplacement(Particle MPM_Mesh, Mesh FEM_Mesh)
 
 /*******************************************************/
 
-static void update_Particles(Particle MPM_Mesh,Mesh FEM_Mesh,
-			     Matrix Nodal_Kinetics,Time_Int_Params GA_Params)
+static void update_Particles(
+  Particle MPM_Mesh,
+  Mesh FEM_Mesh,
+  Matrix Nodal_Kinetics,
+  double rb,
+  double DeltaTimeStep)
 {
 
   
@@ -453,8 +467,9 @@ static void update_Particles(Particle MPM_Mesh,Mesh FEM_Mesh,
   double N_I_GP; /* Nodal value for the GP */
 
   /* Time integration parameters */
-  double beta = GA_Params.GA_beta;
-  double gamma = GA_Params.GA_gamma;
+  double alpha = (2*rb-1)/(1+rb);
+  double beta = (5-3*rb)/(pow((1+rb),2)*(2-rb));
+  double gamma = 3/2 - alpha;
 
   /* Asign Kinetics values to matricial tables */
   Matrix  Nodal_Acceleration_t0;
@@ -574,8 +589,11 @@ static void update_Particles(Particle MPM_Mesh,Mesh FEM_Mesh,
 
 /*************************************************************/
 
-static void update_LocalState(Matrix V_I, Particle MPM_Mesh,
-			      Mesh FEM_Mesh, double TimeStep)
+static void update_LocalState(
+  Matrix V_I,
+  Particle MPM_Mesh,
+  Mesh FEM_Mesh, 
+  double TimeStep)
 {
   Element Nodes_p; /* Element for each Gauss-Point */
   Matrix Gradient_p; /* Shape functions gradients */
@@ -622,7 +640,7 @@ static void update_LocalState(Matrix V_I, Particle MPM_Mesh,
     free__TensorLib__(Rate_Strain_p);
 
     /* Compute stress tensor */
-    Stress_p = explicit_integration_stress__Particles__(Strain_p,Stress_p,Material_p);
+    Stress_p = explicit_integration_stress__Particles__(p,MPM_Mesh,Material_p);
 
     /* Compute deformation energy */
     MPM_Mesh.Phi.W.nV[p] = 0.5*inner_product__TensorLib__(Strain_p, Stress_p);
@@ -646,7 +664,10 @@ static void update_LocalState(Matrix V_I, Particle MPM_Mesh,
 
 /*************************************************************/
 
-static Matrix compute_InternalForces(Matrix F_I, Particle MPM_Mesh, Mesh FEM_Mesh)
+static Matrix compute_InternalForces(
+  Matrix F_I,
+  Particle MPM_Mesh,
+  Mesh FEM_Mesh)
 {
   int Ndim = NumberDimensions;
   Element Nodes_p; /* Element for each Gauss-Point */
@@ -715,8 +736,11 @@ static Matrix compute_InternalForces(Matrix F_I, Particle MPM_Mesh, Mesh FEM_Mes
 
 /*********************************************************************/
 
-static Matrix compute_BodyForces(Matrix F_I, Particle MPM_Mesh,
-				 Mesh FEM_Mesh, int TimeStep)
+static Matrix compute_BodyForces(
+  Matrix F_I, 
+Particle MPM_Mesh,
+Mesh FEM_Mesh,
+int TimeStep)
 {
   int Ndim = NumberDimensions;
   Load * B = MPM_Mesh.B;
@@ -796,8 +820,11 @@ static Matrix compute_BodyForces(Matrix F_I, Particle MPM_Mesh,
 
 /*********************************************************************/
 
-static Matrix compute_ContacForces(Matrix F_I, Particle MPM_Mesh,
-				   Mesh FEM_Mesh, int TimeStep)
+static Matrix compute_ContacForces(
+  Matrix F_I,
+  Particle MPM_Mesh,
+  Mesh FEM_Mesh,
+  int TimeStep)
 {
   int Ndim = NumberDimensions;
   Load * F = MPM_Mesh.F;
@@ -888,7 +915,9 @@ static Matrix compute_ContacForces(Matrix F_I, Particle MPM_Mesh,
 
 /**********************************************************************/
 
-static Matrix compute_Reactions(Mesh FEM_Mesh, Matrix F_I)
+static Matrix compute_Reactions(
+  Mesh FEM_Mesh,
+  Matrix F_I)
 /*
   Compute the nodal reactions
 */

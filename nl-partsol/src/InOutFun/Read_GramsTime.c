@@ -1,16 +1,6 @@
 #include "nl-partsol.h"
 
 
-/*
-  Call global variables
-*/
-int NumTimeStep;
-double SpectralRadius;
-double CFL;
-double epsilon_Mass_Matrix; 
-double beta_Newmark_beta;   
-double gamma_Newmark_beta;
-double TOL_Newmark_beta;
 
 #ifdef _WIN32
 static char * delimiters_1 = " \r\n\t";
@@ -23,7 +13,7 @@ static char * delimiters_3 = "(=)";
 
 /**********************************************************************/
 
-void Solver_selector__InOutFun__(char * Name_File)
+Time_Int_Params Solver_selector__InOutFun__(char * Name_File, double DeltaX)
 /*
 Example : 
 GramsTime(Scheme=FE){
@@ -32,6 +22,14 @@ GramsTime(Scheme=FE){
 }
 */
 {
+
+  Time_Int_Params Parameters;
+
+
+  bool Is_NumTimeStep = false;
+  bool Is_FinalTime = false;
+  bool Is_Cel = false;
+
   /* Check the number of GramsTime calls */
   bool Is_GramsTime = false;
   int Counter_GramsTime = 0;
@@ -101,13 +99,23 @@ GramsTime(Scheme=FE){
       printf("\t \t -> %s : %s \n","Time integrator",TimeIntegrationScheme);
      
       /* Set to default all it properties */
-      CFL=0.8;
-      NumTimeStep=0;
-      SpectralRadius=0.6;
-      epsilon_Mass_Matrix = 0.0;
-      beta_Newmark_beta = 0.25;
-      gamma_Newmark_beta = 0.5;
-      TOL_Newmark_beta = 0.000000001;
+      Parameters.CFL = 0.8;
+      Parameters.Cel = 0.0;
+      Parameters.InitialTimeStep = 0;
+      Parameters.NumTimeStep = 0;
+      Parameters.FinalTime = 0.0;
+      Parameters.epsilon_Mass_Matrix = 0.0;
+
+      Parameters.TOL_Conserving_Energy_Momentum = 1E-10;
+
+      Parameters.rb_Generalized_alpha = 0.6;
+      Parameters.TOL_Generalized_alpha = 1E-10;
+
+      Parameters.beta_Newmark_beta = 0.25;
+      Parameters.gamma_Newmark_beta = 0.5;
+      Parameters.TOL_Newmark_beta = 1E-10;
+
+      Parameters.MaxIter = 10;
 
       /* Look for the curly brace { */
       if(strcmp(kwords[2],"{") == 0){
@@ -123,17 +131,10 @@ GramsTime(Scheme=FE){
 	}
 	Aux_Temp_id = parse(Parse_Temp_Prop,Line_Temp_Prop,delimiters_2);
 	if(strcmp(Parse_Temp_Prop[0],"}") == 0){
-
-	  /* Check number of time steps */	  
-	  if(NumTimeStep == 0){
-	    fprintf(stderr,"%s : %s \n",
-	   "Error in GramsTime()",
-		   "Number of time steps <= 0 !!!");
-	    exit(EXIT_FAILURE);
-	  }
 	  break;
 	}
-	while(STATUS_LINE != NULL){
+	while(STATUS_LINE != NULL)
+	{
 
 	  if(Aux_Temp_id != 2){
 	    fprintf(stderr,"%s : %s \n",
@@ -142,35 +143,71 @@ GramsTime(Scheme=FE){
 	    exit(EXIT_FAILURE);
 	  }
 
-	  if(strcmp(Parse_Temp_Prop[0],"CFL") == 0){
-	    CFL = atof(Parse_Temp_Prop[1]);
-	    printf("\t \t -> %s : %f \n","CFL condition",CFL);
+	  if(strcmp(Parse_Temp_Prop[0],"CFL") == 0)
+	  {
+	    Parameters.CFL = atof(Parse_Temp_Prop[1]);
+	    printf("\t \t -> %s : %f \n","CFL condition",Parameters.CFL);
 	  }
-	  else if(strcmp(Parse_Temp_Prop[0],"N") == 0){
-	    NumTimeStep = atoi(Parse_Temp_Prop[1]);
-	    printf("\t \t -> %s : %i \n","Number of time-steps",NumTimeStep);
+	  else if(strcmp(Parse_Temp_Prop[0],"Cel") == 0)
+	  {
+	  	Is_Cel = true;
+	  	Parameters.Cel = atof(Parse_Temp_Prop[1]);
+	  	printf("\t \t -> %s : %f \n","Celerity",Parameters.Cel);
 	  }
-	  else if(strcmp(Parse_Temp_Prop[0],"rb") == 0){
-	    SpectralRadius = atof(Parse_Temp_Prop[1]);
-	    printf("\t \t -> %s : %f \n","Spectral radio",SpectralRadius);
+	  else if(strcmp(Parse_Temp_Prop[0],"Tend") == 0)
+	  {
+	  	Is_FinalTime = true;
+	  	Parameters.FinalTime = atof(Parse_Temp_Prop[1]);
+	  	printf("\t \t -> %s : %e \n","Final time step",Parameters.FinalTime);
 	  }
-	  else if(strcmp(Parse_Temp_Prop[0],"Epsilon") == 0){
-	    epsilon_Mass_Matrix = atof(Parse_Temp_Prop[1]);
-	    printf("\t \t -> %s : %f \n","Epsilon",epsilon_Mass_Matrix);
+	  else if(strcmp(Parse_Temp_Prop[0],"i0") == 0)
+	  {
+	  	Parameters.InitialTimeStep = atoi(Parse_Temp_Prop[1]);
+	  	printf("\t \t -> %s : %i \n","Initial time",Parameters.InitialTimeStep);
 	  }
-	  else if(strcmp(Parse_Temp_Prop[0],"Beta-Newmark") == 0){
-	    beta_Newmark_beta = atof(Parse_Temp_Prop[1]);
-	    printf("\t \t -> %s : %f \n","Beta-Newmark",beta_Newmark_beta);
+	  else if(strcmp(Parse_Temp_Prop[0],"N") == 0)
+	  {
+	  	Is_NumTimeStep = true;
+	    Parameters.NumTimeStep = atoi(Parse_Temp_Prop[1]);
+	    printf("\t \t -> %s : %i \n","Number of time-steps",Parameters.NumTimeStep);
 	  }
-	  else if(strcmp(Parse_Temp_Prop[0],"Gamma-Newmark") == 0){
-	    gamma_Newmark_beta = atof(Parse_Temp_Prop[1]);
-	    printf("\t \t -> %s : %f \n","Gamma-Newmark",gamma_Newmark_beta);
+	  else if(strcmp(Parse_Temp_Prop[0],"Epsilon") == 0)
+	  {
+	    Parameters.epsilon_Mass_Matrix = atof(Parse_Temp_Prop[1]);
+	    printf("\t \t -> %s : %f \n","Epsilon",Parameters.epsilon_Mass_Matrix);
 	  }
-	  else if(strcmp(Parse_Temp_Prop[0],"TOL-Newmark") == 0){
-	    TOL_Newmark_beta = atof(Parse_Temp_Prop[1]);
-	    printf("\t \t -> %s : %f \n","Tolerance Newmark",TOL_Newmark_beta);
+	  else if(strcmp(Parse_Temp_Prop[0],"rb-Generalized-alpha") == 0)
+	  {
+	    Parameters.rb_Generalized_alpha = atof(Parse_Temp_Prop[1]);
+	    printf("\t \t -> %s : %f \n","Spectral radio Generalized-alpha",Parameters.rb_Generalized_alpha);
+	  }
+	  else if(strcmp(Parse_Temp_Prop[0],"TOL-Generalized-alpha") == 0)
+	  {
+	  	Parameters.TOL_Generalized_alpha = atof(Parse_Temp_Prop[1]);
+	    printf("\t \t -> %s : %f \n","Tolerance Generalized-alpha",Parameters.TOL_Generalized_alpha);
+	  }
+	  else if(strcmp(Parse_Temp_Prop[0],"Beta-Newmark-beta") == 0)
+	  {
+	    Parameters.beta_Newmark_beta = atof(Parse_Temp_Prop[1]);
+	    printf("\t \t -> %s : %f \n","Beta Newmark-beta",Parameters.beta_Newmark_beta);
+	  }
+	  else if(strcmp(Parse_Temp_Prop[0],"Gamma-Newmark-beta") == 0)
+	  {
+	    Parameters.gamma_Newmark_beta = atof(Parse_Temp_Prop[1]);
+	    printf("\t \t -> %s : %f \n","Gamma Newmark-beta",Parameters.gamma_Newmark_beta);
+	  }
+	  else if(strcmp(Parse_Temp_Prop[0],"TOL-Newmark-beta") == 0)
+	  {
+	    Parameters.TOL_Newmark_beta = atof(Parse_Temp_Prop[1]);
+	    printf("\t \t -> %s : %f \n","Tolerance Newmark-beta",Parameters.TOL_Newmark_beta);
 	  } 
-	  else{
+	  else if(strcmp(Parse_Temp_Prop[0],"Max-Iter") == 0)
+	  {
+	  	Parameters.MaxIter = atoi(Parse_Temp_Prop[1]);
+	    printf("\t \t -> %s : %i \n","Max number of interations",Parameters.MaxIter);
+	  }
+	  else
+	  {
 	    fprintf(stderr,"%s : %s %s \n",
 		   "Error in GramsTime()",
 		   "Undefined",Parse_Temp_Prop[0]);
@@ -185,22 +222,16 @@ GramsTime(Scheme=FE){
 	    break;
 	  }
 	}
-	if(STATUS_LINE == NULL){
+	if(STATUS_LINE == NULL)
+	{
 	fprintf(stderr,"%s : %s \n",
 	       "Error in GramsTime()",
 	       "you forget to put a } !!!");
 	exit(EXIT_FAILURE);	  
 	}
 
-	if(strcmp(Parse_Temp_Prop[0],"}") == 0){
-
-	  /* Check number of time steps */	  
-	  if(NumTimeStep == 0){
-	    fprintf(stderr,"%s : %s \n",
-	   "Error in GramsTime()",
-		   "Number of time steps <= 0 !!!");
-	    exit(EXIT_FAILURE);
-	  }
+	if(strcmp(Parse_Temp_Prop[0],"}") == 0)
+	{
 	  break;
 	}
       }
@@ -213,21 +244,42 @@ GramsTime(Scheme=FE){
     }
   }
 
-  if(Is_GramsTime == false){
+  if(Is_GramsTime == false)
+  {
     fprintf(stderr,"%s : %s \n",
-	    "Error in GramsSolid2D()",
+	    "Error in GramsSolid()",
 	    "GramsTime no defined");
     exit(EXIT_FAILURE);
   }
-  if(Counter_GramsTime != 1){
+
+  if(Counter_GramsTime != 1)
+  {
     fprintf(stderr,"%s : %s \n",
 	    "Error in GramsSolid2D()",
 	    "More than one call to GramsTime");
     exit(EXIT_FAILURE);
   }
 
+  if((Is_NumTimeStep == false) && (Is_FinalTime == true) && (Is_Cel == true))
+  {
+	Parameters.NumTimeStep = (int)(Parameters.FinalTime*Parameters.Cel)/(Parameters.CFL*DeltaX);
+	printf("\t \t -> %s : %i \n","Number of time-steps",Parameters.NumTimeStep);
+  }
+  else if((Is_NumTimeStep == true) && (Is_FinalTime == false) && (Is_Cel == true))
+  {
+	Parameters.FinalTime = (int)(Parameters.NumTimeStep*Parameters.CFL*DeltaX/Parameters.Cel);
+	printf("\t \t -> %s : %e \n","Final time step",Parameters.FinalTime);
+  }
+//  else
+//  {
+//	exit(EXIT_FAILURE);
+//  }
+
+
+
   /* Close .dat file */
   /* Final message */
   fclose(Sim_dat);
 
+  return Parameters;
 }

@@ -1,5 +1,13 @@
 #include "nl-partsol.h"
 
+#ifdef __linux__
+#include <lapacke.h>
+
+#elif __APPLE__
+#include <Accelerate/Accelerate.h>
+
+#endif
+
 /*********************************************************************/
 
 /* Function for arrays declaration */
@@ -225,82 +233,30 @@ void free__MatrixLib__(Matrix Input)
 
 /*********************************************************************/
 
-void print__MatrixLib__(Matrix In, int PrintRows, int PrintColumns)
-/*
-  Print term by term the input matrix
-*/
-{
-
-  int Rows = IMIN(PrintRows,In.N_rows);
-  int Columns = IMIN(PrintColumns,In.N_cols);
-
-  printf("%s : \n",In.Info);
-  
-  if(((In.N_rows > 1) && (In.N_cols == 1)) ||
-     ((In.N_rows == 1) && (In.N_cols > 1)))
-    {
-       
-      for(int i = 0 ; i<Rows*Columns ; i++)
-	{
-	  printf("%f \n",In.nV[i]);
-	}
-      
-    }
-  
-  if((In.N_rows > 1) && (In.N_cols > 1))
-    {
-    
-      for(int i = 0 ; i<Rows ; i++)
-	{
-	
-	  for(int j = 0 ; j<Columns ; j++)
-	    {
-	      printf(" %f ",In.nM[i][j]);
-	    }
-	
-	  printf("\n");
-	
-	}
-    }
-}
-
-/*********************************************************************/
-
 Matrix copy__MatrixLib__(Matrix In)
 /* 
    Copy the input matrix in a auxiliar matrix.
  */
 {
 
-  int Rows = In.N_rows;
-  int Columns = In.N_cols;
-    
-  Matrix Out = allocZ__MatrixLib__(Rows,Columns);
+  int N_rows = In.N_rows;
+  int N_cols = In.N_cols;
 
-  /* Is a matrix */
-  if((Columns > 1) && (Rows > 1))
-    {
-      for(int i = 0; i<Rows; i++)
-	{
-	  memcpy(&Out.nM[i], &In.nM[i], sizeof(In.nM[0]));
-	}
-    }
+  Matrix Out;
+  Out.N_rows = N_rows;
+  Out.N_cols = N_cols;
+  Out.nV = (double *)calloc(N_rows*N_cols,sizeof(double));
+  memcpy(Out.nV, In.nV, N_rows*N_cols*sizeof(double));
 
-  /* Is a array */
-  else if(((Columns == 1) && (Rows > 1)) || ((Columns > 1) && (Rows == 1)))
+  /* It is a matrix generate a table */
+  if((N_rows > 1) && (N_cols > 1))
+  {
+    Out.nM = (double **)malloc(N_rows*sizeof(double *));
+    for(int i = 0 ; i<N_rows ; i++)
     {
-      for(int i = 0; i<Rows; i++)
-	{
-	  memcpy(&Out.nV[i], &In.nV[i], sizeof(In.nV[0]));
-	}
+      Out.nM[i] = Out.nV + i*N_cols;
     }
-
-  /* Fail */
-  else
-    {
-      puts("Error in copy__MatrixLib__() : The input matrix is NULL !");
-      exit(EXIT_FAILURE);
-    }
+  }
 
   return Out;
 }
@@ -375,72 +331,63 @@ Matrix inverse__MatrixLib__(Matrix A)
 */
 {
 
-  int Rows = A.N_rows;
-  int Columns = A.N_cols;
-  double DetA, DetAm1;
-  Matrix Am1;
+  int INFO;
+  int N_rows = A.N_rows;
+  int N_cols = A.N_cols;
+  int LDA = IMAX(N_rows,N_cols);
+  int LWORK = IMAX(1,N_rows);
+  double * WORK_DGETRI = (double *)Allocate_Array(IMAX(1,LWORK),sizeof(double));
+  int * IPIV = (int *)Allocate_Array(IMIN(N_rows,N_cols),sizeof(int));
+  int * IWORK_RCOND = (int *)Allocate_Array(N_rows,sizeof(int));
 
-  /* Check if we have square matrix */
-  if ((Rows>1) && (Columns>1) && (Columns == Rows))
-    {     
-  
-      /* Get the determinant of the matrix */
-      DetA = I3__MatrixLib__(A);
+  Matrix Am1 = copy__MatrixLib__(A);
 
-      if(fabs(DetA) < TOL_zero)
-	{
-	  fprintf(stderr,"%s : %s \n",
-		  "Error in inverse__MatrixLib__()","Determinant null !");
-	  exit(EXIT_FAILURE);
-	}
+  /* Compute the LU factorization of the input matrix */
+  dgetrf_(&N_rows,&N_cols,Am1.nV,&LDA,IPIV,&INFO);
 
-      /* Get the inverse of the determinant */
-      DetAm1 = (double)1/DetA;
-
-      /* Allocate the output */
-      Am1 = allocZ__MatrixLib__(Rows,Columns);
- 
-      /* Rank 2 */
-      if(Columns == 2)
-	{
-	  Am1.nM[0][0] =   DetAm1*A.nM[1][1];
-	  Am1.nM[0][1] = - DetAm1*A.nM[0][1];
-	  Am1.nM[1][0] = - DetAm1*A.nM[1][0];
-	  Am1.nM[1][1] =   DetAm1*A.nM[0][0];
-	}
-
-      /* Rank 3 */
-      else if(Columns == 3)
-      {
-        Am1.nM[0][0] =   DetAm1*(A.nM[1][1]*A.nM[2][2]-A.nM[1][2]*A.nM[2][1]);
-        Am1.nM[0][1] = - DetAm1*(A.nM[0][1]*A.nM[2][2]-A.nM[0][2]*A.nM[2][1]);
-        Am1.nM[0][2] =   DetAm1*(A.nM[0][1]*A.nM[1][2]-A.nM[0][2]*A.nM[1][1]); 
-        Am1.nM[1][0] = - DetAm1*(A.nM[1][0]*A.nM[2][2]-A.nM[1][2]*A.nM[2][0]); 
-        Am1.nM[1][1] =   DetAm1*(A.nM[0][0]*A.nM[2][2]-A.nM[0][2]*A.nM[2][0]); 
-        Am1.nM[1][2] = - DetAm1*(A.nM[0][0]*A.nM[1][2]-A.nM[0][2]*A.nM[1][0]); 
-        Am1.nM[2][0] =   DetAm1*(A.nM[1][0]*A.nM[2][1]-A.nM[1][1]*A.nM[2][0]); 
-        Am1.nM[2][1] = - DetAm1*(A.nM[0][0]*A.nM[2][1]-A.nM[0][1]*A.nM[2][0]); 
-        Am1.nM[2][2] =   DetAm1*(A.nM[0][0]*A.nM[1][1]-A.nM[0][1]*A.nM[1][0]);
-	}
-
-      /* Fail */
-      else
-	{
-	  fprintf(stderr,"%s : %s \n",
-		  "Error in I3__MatrixLib__()",
-		  "Max size 3 !");
-	  exit(EXIT_FAILURE);
-	}
-    }
-
-  /* Fail */
-  else
+  if(INFO != 0)
+  {
+    if(INFO < 0)
     {
-      fprintf(stderr,"%s : %s \n",
-	      "Error in I3__MatrixLib__()","Should be a square matrix !");
-      exit(EXIT_FAILURE);
+      printf("%s : \n","Error in inverse__MatrixLib__()");
+      printf("the %i-th argument of dgetrf_ had an illegal value",abs(INFO));
     }
-  
+    else if(INFO > 0)
+    {
+      printf("%s :\n","Error in inverse__MatrixLib__()");
+      printf(" A(%i,%i) %s \n %s \n %s \n %s \n",INFO,INFO,"is exactly zero. The factorization",
+        "has been completed, but the factor A is exactly",
+        "singular, and division by zero will occur if it is used",
+        "to solve a system of equations.");
+    }    
+    exit(EXIT_FAILURE);
+  }
+
+  /* Compute the inverse */
+  dgetri_(&N_rows, Am1.nV, &LDA, IPIV, WORK_DGETRI, &LWORK, &INFO); 
+
+  if(INFO != 0)
+  {
+    if(INFO < 0)
+    {
+      printf("%s : \n","Error in inverse__MatrixLib__()");
+      printf("the %i-th argument of dgetrf_ had an illegal value",abs(INFO));
+    }
+    else if(INFO > 0)
+    {
+      printf("%s :\n","Error in inverse__MatrixLib__()");
+      printf(" A(%i,%i) %s \n %s \n %s \n %s \n",INFO,INFO,"is exactly zero. The factorization",
+        "has been completed, but the factor A is exactly",
+        "singular, and division by zero will occur if it is used",
+        "to solve a system of equations.");
+    }    
+    exit(EXIT_FAILURE);
+  }
+
+  free(WORK_DGETRI);
+  free(IPIV);
+  free(IWORK_RCOND);
+ 
   /* Return the inverse matrix */
   return Am1;
 }
@@ -1004,6 +951,29 @@ double norm__MatrixLib__(Matrix In,int kind)
 
 /*********************************************************************/
 
+double Euclidean_distance__MatrixLib__(Matrix la)
+/*
+  Compute the Euclidean distance
+*/
+{
+
+  int Ndim = NumberDimensions;
+  double sqr_distance = 0;
+  double distance = 0;
+
+  for(int i = 0 ; i<Ndim ; i++)
+  {
+    sqr_distance += la.nV[i]*la.nV[i]; 
+  }
+
+  distance = sqrt(sqr_distance);
+
+  return distance;
+
+}
+
+/*********************************************************************/
+
 double generalised_Euclidean_distance__MatrixLib__(Matrix la, Matrix Metric)
 /*
   Compute the Euclidean distance using a general metric tensor
@@ -1113,56 +1083,6 @@ Matrix Eigen_Mat(Matrix In)
 
 /*********************************************************************/
 
-double conditioning__MatrixLib__(Matrix In, double TOL)
-/*
-  Return the conditioning number 
-*/
-{
-  int Rows = In.N_rows;
-  int Columns = In.N_cols;  
-  Matrix Eigen;
-  double max_Eigen;
-  double min_Eigen;
-      
-  /* Check if the matrix is square */
-  if(Columns != Rows){
-    puts(" Error in conditioning__MatrixLib__() : Non square matrix !");
-    exit(EXIT_FAILURE);
-  }
-  
-  if((Rows == Columns) && (Columns > 1) && (Rows > 1))
-    {
-      
-      /* Remove numerical zeros */
-      for(int i = 0 ; i<In.N_rows ; i++){
-	for(int j = 0 ; j<In.N_cols ; j++){
-	  if(fabs(In.nM[i][j])<TOL){
-	    In.nM[i][j] = 0;
-	  }
-	}
-      }
-  
-      Eigen = Eigen_Mat(In);
-      max_Eigen = fabs(Eigen.nV[0]);
-      min_Eigen = fabs(Eigen.nV[0]);
-    
-      for(int i = 1 ; i<Eigen.N_rows ; i++){
-	max_Eigen = DMAX(max_Eigen,fabs(Eigen.nV[i]));
-	min_Eigen = DMIN(min_Eigen,fabs(Eigen.nV[i]));
-      }
-    }
-  else
-    {
-      puts(" Error in conditioning__MatrixLib__() : the input should be a square matrix !");
-      exit(EXIT_FAILURE);
-    }
-
-  return (double)max_Eigen/min_Eigen;
-  
-}
-
-/*********************************************************************/
-
 Matrix lumped__MatrixLib__(Matrix M_in)
 {
   /*
@@ -1191,21 +1111,107 @@ Matrix lumped__MatrixLib__(Matrix M_in)
 /*********************************************************************/
 
 
-/* void single_value_descomposition__MatrixLib__(Matrix A, Matrix W, Matrix V) */
-/* /\* */
-/*   This routine was adapted from the "Numerical recipies in C". */
-/*   Given a matrix A [m x n], this routine computes */
-/*   its singular value decomposition, A = U*W*VT.  */
-/*   Outputs : */
-/*   The matrix U [m x n] replaces A on output.  */
-/*   The matrix of singular values W [n x n].  */
-/*   The matrix V (not the transpose VT) is output as V [n x n].    */
-/* *\/ */
-/* { */
-  
-/* } */
+double rcond__MatrixLib__(Matrix A)
+/*
+  C = rcond(A) returns an estimate for the reciprocal condition of A in 1-norm. 
+  If A is well conditioned, rcond(A) is near 1.0. 
+  If A is badly conditioned, rcond(A) is near 0.
+*/
+{
+
+  double RCOND; 
+  double ANORM;
+  int INFO;
+  int N_rows = A.N_rows;
+  int N_cols = A.N_cols;
+  int LDA = IMAX(N_rows,N_cols);
+  double * AUX_MEMORY = (double *)calloc(N_rows*N_cols,sizeof(double));
+  double * WORK_ANORM = (double *)Allocate_Array(IMAX(1,N_rows),sizeof(double));
+  double * WORK_RCOND = (double *)Allocate_Array(4*N_rows,sizeof(double));
+  int * IPIV = (int *)Allocate_Array(IMIN(N_rows,N_cols),sizeof(int));
+  int * IWORK_RCOND = (int *)Allocate_Array(N_rows,sizeof(int));
+
+  // Copy matrix because dgetrf_ is a destructive operation
+  memcpy(AUX_MEMORY, A.nV, N_rows*N_cols*sizeof(double));
+
+  // Compute 1-norm
+  ANORM = dlange_("1", &N_rows, &N_cols, AUX_MEMORY, &LDA, WORK_ANORM);
+
+  // The factors L and U from the factorization A = P*L*U
+  dgetrf_(&N_rows,&N_cols,AUX_MEMORY,&LDA,IPIV,&INFO);
+
+  // Check output of dgetrf
+  if(INFO != 0)
+  {
+    if(INFO < 0)
+    {
+      printf("%s : \n","Error in rcond__MatrixLib__()");
+      printf("the %i-th argument had an illegal value",abs(INFO));
+    }
+    else if(INFO > 0)
+    {
+      printf("%s :\n","Error in rcond__MatrixLib__()");
+      printf(" M(%i,%i) %s \n %s \n %s \n %s \n",INFO,INFO,"is exactly zero. The factorization",
+        "has been completed, but the factor M is exactly",
+        "singular, and division by zero will occur if it is used",
+        "to solve a system of equations.");
+    
+    }    
+    exit(EXIT_FAILURE);
+  }
+
+  // Compute the Reciprocal condition number
+  dgecon_("1", &N_rows, AUX_MEMORY, &LDA, &ANORM, &RCOND, WORK_RCOND, IWORK_RCOND, &INFO);
+
+ if(INFO<0)
+ {
+  printf("Error in rcond__MatrixLib__() : the %i-th argument of dgecon_ had an illegal value\n",abs(INFO));
+  exit(EXIT_FAILURE);
+ }
+
+ // Free auxiliar memory
+ free(IPIV);
+ free(WORK_ANORM);
+ free(WORK_RCOND);
+ free(IWORK_RCOND);
+ free(AUX_MEMORY);
+
+ return RCOND;
+}
 
 /*********************************************************************/
+
+Matrix solve__MatrixLib__(Matrix K, Matrix F)
+/*
+
+ */
+{
+  int Bool = K.N_cols>3;
+  Matrix Km1;
+  Matrix U;
+  
+  switch(Bool)
+  {
+    case 0 :
+    Km1 = inverse__MatrixLib__(K);
+    U = matrix_product__MatrixLib__(Km1,F);
+    free__MatrixLib__(Km1);
+    return U; 
+    
+    case 1 :
+    puts("fix U");
+    exit(EXIT_FAILURE);
+    U = Conjugate_Gradient_Method(K,F,U);
+    return U;
+    
+    default :
+    exit(EXIT_FAILURE);
+  }
+
+}
+
+/*********************************************************************/
+
 
 float pythag(float a, float b)
 /*
@@ -1228,6 +1234,50 @@ float pythag(float a, float b)
     }
 }
 
+/*********************************************************************/
 
+void print__MatrixLib__(Matrix In, int PrintRows, int PrintColumns)
+/*
+  Print term by term the input matrix
+*/
+{
+
+  int Rows = IMIN(PrintRows,In.N_rows);
+  int Columns = IMIN(PrintColumns,In.N_cols);
+  
+  if(((In.N_rows > 1) && (In.N_cols == 1)) ||
+     ((In.N_rows == 1) && (In.N_cols > 1)))
+    {
+       
+      for(int i = 0 ; i<Rows*Columns ; i++)
+  {
+    printf("%e \n",In.nV[i]);
+  }
+      
+    }
+  
+  if((In.N_rows > 1) && (In.N_cols > 1))
+    {
+    
+      for(int i = 0 ; i<Rows ; i++)
+  {
+  
+    for(int j = 0 ; j<Columns ; j++)
+      {
+        if(In.nM[i][j] == 0)
+        {
+          printf("-------- ");
+        }
+        else
+        {
+          printf("%2.2e ",In.nM[i][j]);
+        }
+      }
+  
+    printf("\n\n");
+  
+  }
+    }
+}
 
 /*********************************************************************/

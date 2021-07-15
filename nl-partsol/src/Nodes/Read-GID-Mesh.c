@@ -73,6 +73,7 @@ Mesh ReadGidMesh__MeshTools__(char * MeshName)
     GID_Mesh.volume_Element = volume__T3__;
     GID_Mesh.In_Out_Element = in_out__T3__;
     GID_Mesh.X_to_Xi = X_to_Xi__T3__;
+    GID_Mesh.compute_Jacobian_patch = compute_Jacobian_patch__T3__;
   }
   else if((strcmp(GID_Mesh.TypeElem,"Quadrilateral") == 0) && (Mesh_Info.NumNodesElem == 4))
   {
@@ -82,6 +83,7 @@ Mesh ReadGidMesh__MeshTools__(char * MeshName)
     GID_Mesh.volume_Element = volume__Q4__;
     GID_Mesh.In_Out_Element = in_out__Q4__;
     GID_Mesh.X_to_Xi = X_to_Xi__Q4__;
+    GID_Mesh.compute_Jacobian_patch = compute_Jacobian_patch__Q4__;
   }
   else if((strcmp(GID_Mesh.TypeElem,"Tetrahedra") == 0) && (Mesh_Info.NumNodesElem == 4))
   {
@@ -91,6 +93,7 @@ Mesh ReadGidMesh__MeshTools__(char * MeshName)
     GID_Mesh.volume_Element = volume__T4__;
     GID_Mesh.In_Out_Element = in_out__T4__;
     GID_Mesh.X_to_Xi = X_to_Xi__T4__;
+    GID_Mesh.compute_Jacobian_patch = compute_Jacobian_patch__T4__;
   }
   else if((strcmp(GID_Mesh.TypeElem,"Hexahedra") == 0) && (Mesh_Info.NumNodesElem == 8))
   {
@@ -100,6 +103,7 @@ Mesh ReadGidMesh__MeshTools__(char * MeshName)
     GID_Mesh.volume_Element = volume__H8__;
     GID_Mesh.In_Out_Element = in_out__H8__;
     GID_Mesh.X_to_Xi = X_to_Xi__H8__;
+    GID_Mesh.compute_Jacobian_patch = compute_Jacobian_patch__H8__;
   }
   else
   {
@@ -113,7 +117,7 @@ Mesh ReadGidMesh__MeshTools__(char * MeshName)
   GID_Mesh.Coordinates  = alloc__MatrixLib__(GID_Mesh.NumNodesMesh,GID_Mesh.Dimension);
   GID_Mesh.Connectivity = alloc_table__SetLib__(GID_Mesh.NumElemMesh);  
   GID_Mesh.NumNodesElem = (int *)Allocate_ArrayZ(GID_Mesh.NumElemMesh,sizeof(int));
-  GID_Mesh.NumParticles = (int *)Allocate_ArrayZ(GID_Mesh.NumNodesMesh,sizeof(int));
+  GID_Mesh.Num_Particles_Node = (int *)Allocate_ArrayZ(GID_Mesh.NumNodesMesh,sizeof(int));
 
 
   /*  
