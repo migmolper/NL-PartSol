@@ -365,117 +365,6 @@ Tensor strain_Green_Lagrange__Particles__(
   return E;
 }
 
-/*******************************************************/
-
-void update_plastic_deformation_gradient__Particles__(
-  Tensor Increment_E_plastic, 
-  Tensor F_m1_plastic)
-{
-  int Ndim = NumberDimensions;
-  EigenTensor Eigen_Increment_E_plastic;
-  Tensor D_F_elastic_spectral = alloc__TensorLib__(2);
-  Tensor D_F_elastic;
-  Tensor F_m1_plastic_new;
-
-  /*
-    Compute the spectral descomposition of the tensor exp(D_E)
-  */
-  Eigen_Increment_E_plastic = Eigen_analysis__TensorLib__(Increment_E_plastic);
-
-  
-  for(int i = 0 ; i < Ndim  ; i++)
-  {
-    D_F_elastic_spectral.N[i][i] = exp(- Eigen_Increment_E_plastic.Value.n[i]);
-  }
-
-  /*
-    Rotate the spectral descomposition of the tensor exp(D_E)
-  */
-  D_F_elastic = rotate__TensorLib__(D_F_elastic_spectral, Eigen_Increment_E_plastic.Vector);
-
-  /*
-    Compute the new value of the plastic deformation gradient 
-  */
-  F_m1_plastic_new = matrix_product__TensorLib__(F_m1_plastic,D_F_elastic);
-
-  /*
-    Update value of the plastic deformation gradient
-  */
-  for(int i = 0 ; i < Ndim  ; i++)
-  {
-    for(int j = 0 ; j < Ndim  ; j++)
-    {
-      F_m1_plastic.N[i][j] = F_m1_plastic_new.N[i][j];
-    }
-  }
-
-  /*
-    Free memory
-  */
-  free__TensorLib__(Eigen_Increment_E_plastic.Value);
-  free__TensorLib__(Eigen_Increment_E_plastic.Vector);
-  free__TensorLib__(D_F_elastic_spectral);
-  free__TensorLib__(D_F_elastic);
-  free__TensorLib__(F_m1_plastic_new);
-
-}
-
-/**************************************************************/
-
-void update_elastic_deformation_gradient__Particles__(
-  Tensor F_elastic,
-  Tensor F_trial_elastic,
-  Tensor Increment_E_plastic)
-{
-  int Ndim = NumberDimensions;
-  EigenTensor Eigen_Increment_E_plastic;
-  Tensor D_F_elastic_spectral = alloc__TensorLib__(2);
-  Tensor D_F_elastic;
-  Tensor F_elastic_new;
-
-  /*
-    Compute the spectral descomposition of the tensor exp(D_E)
-  */
-  Eigen_Increment_E_plastic = Eigen_analysis__TensorLib__(Increment_E_plastic);
-
-  
-  for(int i = 0 ; i < Ndim  ; i++)
-  {
-    D_F_elastic_spectral.N[i][i] = exp(-Eigen_Increment_E_plastic.Value.n[i]);
-  }
-
-  /*
-    Rotate the spectral descomposition of the tensor exp(D_E)
-  */
-  D_F_elastic = rotate__TensorLib__(D_F_elastic_spectral, Eigen_Increment_E_plastic.Vector);
-
-
-  /*
-    Compute the new value of the plastic deformation gradient 
-  */
-  F_elastic_new = matrix_product__TensorLib__(F_trial_elastic,D_F_elastic);
-
-  /*
-    Update value of the plastic deformation gradient
-  */
-  for(int i = 0 ; i < Ndim  ; i++)
-  {
-    for(int j = 0 ; j < Ndim  ; j++)
-    {
-      F_elastic.N[i][j] = F_elastic_new.N[i][j];
-    }
-  }
-
-  /*
-    Free memory 
-  */
-  free__TensorLib__(Eigen_Increment_E_plastic.Value);
-  free__TensorLib__(Eigen_Increment_E_plastic.Vector);
-  free__TensorLib__(D_F_elastic_spectral);
-  free__TensorLib__(D_F_elastic);
-  free__TensorLib__(F_elastic_new);
-}
-
 
 /**************************************************************/
 
@@ -517,5 +406,9 @@ Matrix compute_BT_matrix__Particles__(
 
   return BT;
 }
+
+/**************************************************************/
+
+
 
 /**************************************************************/

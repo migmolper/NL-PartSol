@@ -1171,7 +1171,7 @@ static void compute_Explicit_Newmark_Corrector(
       /*
         Replace the deformation gradient at t = n with the new one
       */
-      F_n_p   = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n.nM[p],2);
+      F_n_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n.nM[p],2);
       F_n1_p  = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n1.nM[p],2);      
 
       /* 

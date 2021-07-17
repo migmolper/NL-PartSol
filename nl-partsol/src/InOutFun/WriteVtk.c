@@ -26,6 +26,7 @@ bool Out_strain;
 bool Out_eigenvalues_strain;
 bool Out_deformation_gradient;
 bool Out_plastic_deformation_gradient;
+bool Out_plastic_jacobian;
 bool Out_energy;
 bool Out_Von_Mises;
 bool Out_EPS;
@@ -53,6 +54,7 @@ static void vtk_Out_Strain_EV(FILE *, Matrix, int);
 static void vtk_Out_Deformation_Gradient(FILE *, Matrix, int);
 static void vtk_Out_Deformation_Energy(FILE *, Matrix, int);
 static void vtk_Out_plastic_deformation_gradient(FILE *, Matrix, int);
+static void vtk_Out_plastic_jacobian(FILE *, Matrix, int);
 static void vtk_Out_Kinetic_Energy(FILE *, Matrix, Matrix, int);
 static void vtk_Out_Von_Mises(FILE *, Matrix, Matrix, int);
 static void vtk_Out_Equiv_Plastic_Strain(FILE *, Matrix, int);
@@ -229,6 +231,11 @@ void particle_results_vtk__InOutFun__(Particle MPM_Mesh, int TimeStep_i, int Res
   if(Out_plastic_deformation_gradient)
   {
     vtk_Out_plastic_deformation_gradient(Vtk_file, MPM_Mesh.Phi.F_m1_plastic, NumParticles); 
+  }
+
+  if(Out_plastic_jacobian)
+  {
+    vtk_Out_plastic_jacobian(Vtk_file, MPM_Mesh.Phi.F_m1_plastic, NumParticles);
   }
 
   /* Print particle energy */
@@ -545,17 +552,17 @@ static void vtk_Out_Stress(FILE * Vtk_file, Matrix Stress, int NumParticles)
       {
         if((j<Ndim) && (k<Ndim))
         {
-          fprintf(Vtk_file,"%lf",Stress.nM[i][j*Ndim+k]);
+          fprintf(Vtk_file,"%lf ",Stress.nM[i][j*Ndim+k]);
         }
         else
         {
           if((j==2) && (k==2))
           {
-            fprintf(Vtk_file,"%lf",Stress.nM[i][4]);
+            fprintf(Vtk_file,"%lf ",Stress.nM[i][4]);
           }
           else
           {
-            fprintf(Vtk_file,"%lf",0.0);
+            fprintf(Vtk_file,"%lf ",0.0);
           }
         }
       }
@@ -720,7 +727,7 @@ static void vtk_Out_plastic_deformation_gradient(FILE * Vtk_file, Matrix F_m1_pl
 
   Matrix F_plastic = inverse__MatrixLib__(F_m1_plastic);
 
-    fprintf(Vtk_file,"TENSORS ELASTIC-DEFORMATION-GRADIENT double \n");
+    fprintf(Vtk_file,"TENSORS PLASTIC-DEFORMATION-GRADIENT double \n");
   for(int i =  0 ; i<NumParticles ; i++){
     for(int j = 0 ; j<3 ; j++){
       for(int k = 0 ; k<3 ; k++){
@@ -737,6 +744,29 @@ static void vtk_Out_plastic_deformation_gradient(FILE * Vtk_file, Matrix F_m1_pl
   }
 
   free__MatrixLib__(F_plastic);
+}
+
+/*********************************************************************/
+
+static void vtk_Out_plastic_jacobian(FILE * Vtk_file, Matrix Field_F_m1_plastic, int NumParticles)
+{
+  int Ndim = NumberDimensions;
+
+  Tensor F_m1_plastic;
+  Tensor F_plastic;
+
+  fprintf(Vtk_file,"SCALARS PLASTIC-JACOBIAN double \n");
+  fprintf(Vtk_file,"LOOKUP_TABLE default \n");
+  for(int i =  0 ; i<NumParticles ; i++)
+  {
+    F_m1_plastic = memory_to_tensor__TensorLib__(Field_F_m1_plastic.nM[i],2);
+    F_plastic = Inverse__TensorLib__(F_m1_plastic);
+
+    fprintf(Vtk_file,"%lf \n",I3__TensorLib__(F_plastic)); 
+
+    free__TensorLib__(F_plastic);
+  }
+
 }
 
 /*********************************************************************/
@@ -778,13 +808,16 @@ static void vtk_Out_Von_Mises(FILE * Vtk_file, Matrix F_n, Matrix P_n, int NumPa
   int Ndim = NumberDimensions;
   double SVM;
   double norm_Cauchy_dev_p;
+  double Stress[3];
   Tensor F_p;
   Tensor F_pT; 
   Tensor P_p;
   Tensor Cauchy_p;
   Tensor Cauchy_dev_p;
   Tensor Cauchy_vol_p;
+  EigenTensor Eigen_Cauchy;
   double J_p;
+  double J2;
 
   fprintf(Vtk_file,"SCALARS Von-Mises double \n");
   fprintf(Vtk_file,"LOOKUP_TABLE default \n");
@@ -804,18 +837,34 @@ static void vtk_Out_Von_Mises(FILE * Vtk_file, Matrix F_n, Matrix P_n, int NumPa
       }
     }
 
-    Cauchy_vol_p = volumetric_component__TensorLib__(Cauchy_p);
-    Cauchy_dev_p = deviatoric_component__TensorLib__(Cauchy_p,Cauchy_vol_p);
+    Eigen_Cauchy = Eigen_analysis__TensorLib__(Cauchy_p);
 
-    norm_Cauchy_dev_p = inner_product__TensorLib__(Cauchy_dev_p, Cauchy_dev_p);  
-    SVM = sqrt(3./2.*norm_Cauchy_dev_p);  
+    if(Ndim == 2)
+    {
+      Stress[0] = Eigen_Cauchy.Value.n[0];
+      Stress[1] = Eigen_Cauchy.Value.n[1];
+      Stress[2] = P_n.nM[i][4];
+    }
+    else
+    {
+      Stress[0] = Eigen_Cauchy.Value.n[0];
+      Stress[1] = Eigen_Cauchy.Value.n[1];
+      Stress[2] = Eigen_Cauchy.Value.n[2];      
+    }
+
+    J2 = (1.0/6.0)*(
+      (Stress[0] - Stress[1])*(Stress[0] - Stress[1]) +
+      (Stress[1] - Stress[2])*(Stress[1] - Stress[2]) +
+      (Stress[0] - Stress[2])*(Stress[0] - Stress[2]));
+
+    SVM = sqrt(2.0*J2);  
 
     fprintf(Vtk_file,"%lf \n",SVM); 
 
     free__TensorLib__(F_pT);
     free__TensorLib__(Cauchy_p);
-    free__TensorLib__(Cauchy_dev_p);
-    free__TensorLib__(Cauchy_vol_p);
+    free__TensorLib__(Eigen_Cauchy.Value);
+    free__TensorLib__(Eigen_Cauchy.Vector);
   }
 }
 

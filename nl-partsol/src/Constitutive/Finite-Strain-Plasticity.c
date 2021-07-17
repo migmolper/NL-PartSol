@@ -48,7 +48,7 @@ State_Parameters finite_strain_plasticity(
     Compute the trial right Cauchy-Green tensor
   */
   if(MatProp.Locking_Control_Fbar)
-  {    
+  {
     Tensor Fbar = memory_to_tensor__TensorLib__(Inputs_SP_finite.Fbar,2);
     F_trial_elastic = matrix_product__TensorLib__(Fbar,F_m1_plastic);
   }

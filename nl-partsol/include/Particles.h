@@ -234,15 +234,5 @@ int search_particle_in_surrounding_elements__Particles__(int, Matrix, ChainPtr, 
 void asign_to_nodes__Particles__(int, int, int, ChainPtr, Mesh);
 /*******************************************************/
 
-/*!
-
-void update_plastic_deformation_gradient(Tensor D_E_plastic, Tensor F_plastic)
-
-*/
-void update_plastic_deformation_gradient__Particles__(Tensor, Tensor);
-
-
-void update_elastic_deformation_gradient__Particles__(Tensor, Tensor, Tensor);
-/*******************************************************/
 
 #endif

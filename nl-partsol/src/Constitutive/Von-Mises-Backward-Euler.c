@@ -241,7 +241,7 @@ static double compute_yield_surface(
   double G = E/(2*(1+nu));
   double K = compute_K(EPS,MatProp); /* Isotropic hardening */
 
-  return - sqrt(2./3.)*K + relative_stress_norm;
+  return relative_stress_norm - sqrt(2./3.)*K;
 }
 
 /**************************************************************/
@@ -263,11 +263,11 @@ static double compute_objective_function(
     double fluidity_param = MatProp.fluidity_param;
     double DT = 1.0;
 
-    return - sqrt(2./3.)*(K + DeltaH) + relative_stress_norm - DMAX(0,delta_Gamma*fluidity_param/DT) - 2*G*delta_Gamma;
+    return relative_stress_norm - sqrt(2./3.)*(K + DeltaH) - DMAX(0,delta_Gamma*fluidity_param/DT) - 2*G*delta_Gamma;
   }
   else
   {
-    return - sqrt(2./3.)*(K + DeltaH) + relative_stress_norm - 2*G*delta_Gamma;
+    return relative_stress_norm - sqrt(2./3.)*(K + DeltaH) - 2*G*delta_Gamma;
   }
 }
 

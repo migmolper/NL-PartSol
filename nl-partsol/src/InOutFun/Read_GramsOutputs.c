@@ -31,6 +31,7 @@ bool Out_strain = false;
 bool Out_eigenvalues_strain = false;
 bool Out_deformation_gradient = false;
 bool Out_plastic_deformation_gradient = false;
+bool Out_plastic_jacobian = false;
 bool Out_energy = false;
 bool Out_Von_Mises = false;
 bool Out_EPS = false;
@@ -217,6 +218,10 @@ void GramsOutputs(char * Name_File)
 	  else if(strcmp(Parse_Out_Prop[0],"Out-plastic-deformation-gradient") == 0)
 	  {
 	  	Out_plastic_deformation_gradient = Is_Output_Activate(Parse_Out_Prop[0],Parse_Out_Prop[1]);
+	  }
+	  else if(strcmp(Parse_Out_Prop[0],"Out-plastic-jacobian") == 0)
+	  {
+	  	Out_plastic_jacobian = Is_Output_Activate(Parse_Out_Prop[0],Parse_Out_Prop[1]);
 	  }
 	  else if(strcmp(Parse_Out_Prop[0],"Out-energy") == 0)
 	  {

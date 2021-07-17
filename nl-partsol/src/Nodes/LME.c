@@ -88,7 +88,7 @@ void initialize__LME__(
         MPM_Mesh.I0[p] = get_closest_node__MeshTools__(X_p,Elem_p_Connectivity,FEM_Mesh.Coordinates);
 
         // Initialize Beta
-        Beta_p = beta__LME__(gamma_LME, FEM_Mesh.DeltaX);
+        Beta_p = beta__LME__(gamma_LME, FEM_Mesh.h_avg[MPM_Mesh.I0[p]]);
 
         // Initialise lambda for the Nelder-Mead using Bo-Li approach
         if(strcmp(wrapper_LME,"Nelder-Mead") == 0)
@@ -156,7 +156,7 @@ void initialize__LME__(
     Delta_Xip = compute_distance__MeshTools__(MPM_Mesh.ListNodes[p],X_p,FEM_Mesh.Coordinates);
 
     // Update the value of the thermalization parameter
-    Beta_p = beta__LME__(gamma_LME, FEM_Mesh.DeltaX);
+    Beta_p = beta__LME__(gamma_LME, FEM_Mesh.h_avg[MPM_Mesh.I0[p]]);
     MPM_Mesh.Beta.nV[p] = Beta_p;
 
     // Update lagrange multiplier with Newton-Rapson or with Nelder-Mead
@@ -1197,7 +1197,7 @@ void local_search__LME__(Particle MPM_Mesh, Mesh FEM_Mesh)
       Compute the thermalization parameter for the new set of nodes
       and update it
     */
-    Beta_p = beta__LME__(gamma_LME, FEM_Mesh.DeltaX);
+    Beta_p = beta__LME__(gamma_LME, FEM_Mesh.h_avg[MPM_Mesh.I0[p]]);
     MPM_Mesh.Beta.nV[p] = Beta_p;
 
     /*
