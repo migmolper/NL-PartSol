@@ -79,7 +79,10 @@ State_Parameters Von_Mises_backward_euler(
     Compute the relative stress
   */
   compute_relative_stress(relative_stress,Inputs_SP.Stress,Inputs_SP.Back_stress);
-  relative_stress_norm = sqrt(relative_stress[0]*relative_stress[0] + relative_stress[1]*relative_stress[1] + relative_stress[2]*relative_stress[2]);
+  relative_stress_norm = sqrt(
+    relative_stress[0]*relative_stress[0] + 
+    relative_stress[1]*relative_stress[1] + 
+    relative_stress[2]*relative_stress[2]);
 
   /*
     Compute plastic flow
@@ -93,6 +96,7 @@ State_Parameters Von_Mises_backward_euler(
 
   if(Phi > TOL)
   {   
+    
     /*
       Newton-Rapson solver
     */

@@ -97,7 +97,8 @@ void initialize__LME__(
         }
 
         // Select the closest nodes to the particle and activate them
-        Locality_I0 = FEM_Mesh.NodalLocality_0[MPM_Mesh.I0[p]];
+//        Locality_I0 = FEM_Mesh.NodalLocality_0[MPM_Mesh.I0[p]];
+        Locality_I0 = FEM_Mesh.Connectivity[MPM_Mesh.Element_p[p]];
 
         while(Locality_I0 != NULL)
         {
@@ -1120,7 +1121,9 @@ void local_search__LME__(Particle MPM_Mesh, Mesh FEM_Mesh)
     {
 
       // Update the index of the closest node to the particle
-      Locality_I0 = FEM_Mesh.NodalLocality_0[MPM_Mesh.I0[p]];
+      // Locality_I0 = FEM_Mesh.NodalLocality_0[MPM_Mesh.I0[p]];
+      Locality_I0 = FEM_Mesh.Connectivity[MPM_Mesh.Element_p[p]];
+
       MPM_Mesh.I0[p] = get_closest_node__MeshTools__(X_p,Locality_I0,FEM_Mesh.Coordinates);
 
       // Search particle in the sourrounding elements to this node
@@ -1129,7 +1132,8 @@ void local_search__LME__(Particle MPM_Mesh, Mesh FEM_Mesh)
     }
   
     // Select the closest nodes to the particle
-    Locality_I0 = FEM_Mesh.NodalLocality_0[MPM_Mesh.I0[p]];
+    // Locality_I0 = FEM_Mesh.NodalLocality_0[MPM_Mesh.I0[p]];
+    Locality_I0 = FEM_Mesh.Connectivity[MPM_Mesh.Element_p[p]];
 
     /* 
       Activate the nodes near the particle
