@@ -307,7 +307,6 @@ EigenTensor Eigen_analysis__TensorLib__(const Tensor A)
   }; 
 #endif
 
-  
   /* 
     Query and allocate the optimal workspace
   */
@@ -315,6 +314,13 @@ EigenTensor Eigen_analysis__TensorLib__(const Tensor A)
   dgeev_("N", "V", &n, a, &lda, wr, wi, vl, &ldvl, vr, &ldvr, &wkopt, &lwork, &info );
   lwork = (int)wkopt;
   work = (double*)malloc(lwork*sizeof(double));
+
+  /* Check for convergence */
+  if(info > 0)
+  {
+    printf("Error in Eigen_analysis__TensorLib__() : The algorithm failed to compute eigenvalues.\n" );
+    exit(EXIT_FAILURE); 
+  }
         
   /* Solve eigenproblem */
   dgeev_("N","V", &n, a, &lda, wr, wi, vl, &ldvl, vr, &ldvr,work, &lwork, &info );

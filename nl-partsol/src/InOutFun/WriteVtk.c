@@ -603,16 +603,22 @@ static void vtk_Out_Stress_EV(FILE * Vtk_file, Matrix Stress, int NumParticles)
 static void vtk_Out_Stress_P(FILE * Vtk_file, Matrix Stress, int NumParticles)
 {
   int Ndim = NumberDimensions;
-  Tensor Stress_p;
-  Tensor P_p; /* Trace of the stress tensor (volumetric) */
+  double pressure;
   fprintf(Vtk_file,"SCALARS P double \n");
   fprintf(Vtk_file,"LOOKUP_TABLE default \n");
   for(int i =  0 ; i<NumParticles ; i++)
   {
-    Stress_p = memory_to_tensor__TensorLib__(Stress.nM[i], 2);
-    P_p = volumetric_component__TensorLib__(Stress_p);   
-    fprintf(Vtk_file,"%lf \n",P_p.N[0][0]);
-    free__TensorLib__(P_p);
+    if(Ndim == 2)
+    {
+      pressure = Stress.nM[i][0] + Stress.nM[i][3] + Stress.nM[i][4];  
+      fprintf(Vtk_file,"%lf \n",pressure);
+    }
+    else
+    { 
+      pressure = Stress.nM[i][0] + Stress.nM[i][4] + Stress.nM[i][8]; 
+      fprintf(Vtk_file,"%lf \n",pressure);
+    }
+    
   }
 
 }
