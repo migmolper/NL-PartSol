@@ -186,11 +186,11 @@ static void elastic_trial(
   double E = MatProp_p.E;
   double G = E/(2*(1+nu));
   double K = 3*E/(1-2*nu);
-  double traceStrain = Intput_SP.Strain[0] + Intput_SP.Strain[1] + Intput_SP.Strain[2];
+  double Strain_trace = Intput_SP.Strain[0] + Intput_SP.Strain[1] + Intput_SP.Strain[2];
 
-  Intput_SP.Stress[0] = 2*G*Intput_SP.Strain[0] + K*traceStrain;
-  Intput_SP.Stress[1] = 2*G*Intput_SP.Strain[1] + K*traceStrain;
-  Intput_SP.Stress[2] = 2*G*Intput_SP.Strain[2] + K*traceStrain;
+  Intput_SP.Stress[0] = 2*G*(Intput_SP.Strain[0] - Strain_trace/3.0) + K*Strain_trace;
+  Intput_SP.Stress[1] = 2*G*(Intput_SP.Strain[1] - Strain_trace/3.0) + K*Strain_trace;
+  Intput_SP.Stress[2] = 2*G*(Intput_SP.Strain[2] - Strain_trace/3.0) + K*Strain_trace;
  
 }
 
