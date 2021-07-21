@@ -157,7 +157,6 @@ void U_Newmark_Predictor_Corrector_Finite_Strains(
       free__MatrixLib__(Reactions);
       free(ActiveNodes.Nodes2Mask); 
       free(Free_and_Restricted_Dofs.Nodes2Mask);
-
     }
   
 }
@@ -1172,15 +1171,7 @@ static void compute_Explicit_Newmark_Corrector(
         Replace the deformation gradient at t = n with the new one
       */
       F_n_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n.nM[p],2);
-
-      if(MPM_Mesh.Mat[MPM_Mesh.MatIdx[p]].Locking_Control_Fbar)
-      {
-        F_n1_p  = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.Fbar.nM[p],2); 
-      }
-      else
-      {
-        F_n1_p  = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n1.nM[p],2);      
-      }
+      F_n1_p  = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n1.nM[p],2);
       
       /* 
         Update/correct tensor and vector variables
@@ -1197,12 +1188,12 @@ static void compute_Explicit_Newmark_Corrector(
             Update the particles position and displacement
           */
           MPM_Mesh.Phi.x_GC.nM[p][i] += MPM_Mesh.Phi.D_dis.nM[p][i];
-          MPM_Mesh.Phi.dis.nM[p][i] += MPM_Mesh.Phi.D_dis.nM[p][i];
+          MPM_Mesh.Phi.dis.nM[p][i]  += MPM_Mesh.Phi.D_dis.nM[p][i];
 
           /* Update deformation gradient tensor */
          for(int j = 0 ; j<Ndim  ; j++)
          {
-             F_n_p.N[i][j] = F_n1_p.N[i][j];
+            F_n_p.N[i][j] = F_n1_p.N[i][j];
          }
       }
 

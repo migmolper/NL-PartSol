@@ -235,24 +235,41 @@ void get_locking_free_Deformation_Gradient_n1__Particles__(
 
   double alpha = MPM_Mesh.Mat[MatIndx_p].alpha_Fbar;
 
-  Tensor F_n1_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n1.nM[p],2);
-  Tensor Fbar   = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.Fbar.nM[p],2);
+  Tensor F_total   = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n1.nM[p],2);
+  Tensor DF_p      = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.DF.nM[p],2);
+  Tensor Fbar_n    = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.Fbar.nM[p],2);
+  Tensor DF_bar_p  = alloc__TensorLib__(2);
 
   // Compute the averaged jacobian of the deformation gradient
-  J_p = MPM_Mesh.Phi.J.nV[p];
+  J_p = I3__TensorLib__(DF_p);
   J_averaged = J_n1_patch/J_p;
 
   // Compute the averaged volume of the deformation gradient
   averaged_F_vol = pow(J_averaged,(double)1/Ndim);
+
+  // Compute the incremental F-bar
+  for(int i = 0 ; i<Ndim ; i++)
+  {
+    for(int j = 0 ; j<Ndim ; j++)
+    {
+      DF_bar_p.N[i][j] = averaged_F_vol*DF_p.N[i][j];
+    }
+  }
+
+  // Compute the new F-bar
+  Tensor Fbar_n1 = matrix_product__TensorLib__(DF_bar_p,Fbar_n);
 
   // Update the deformation gradient to avoid locking (F-bar)
   for(int i = 0 ; i<Ndim ; i++)
   {
     for(int j = 0 ; j<Ndim ; j++)
     {
-      Fbar.N[i][j] = alpha*F_n1_p.N[i][j] + (1 - alpha)*averaged_F_vol*F_n1_p.N[i][j];
+      Fbar_n.N[i][j] = alpha*F_total.N[i][j] + (1 - alpha)*Fbar_n1.N[i][j];
     }
   }
+
+  free__TensorLib__(DF_bar_p);
+  free__TensorLib__(Fbar_n1);
 
 }
 

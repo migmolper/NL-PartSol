@@ -100,6 +100,16 @@ Fields allocate_U_vars__Fields__(int NumParticles)
    * */
   Phi.Fbar = allocZ__MatrixLib__(NumParticles,Ndim*Ndim);
   strcpy(Phi.Fbar.Info,"Fbar deformation gradient");
+
+  for(int p = 0 ; p<NumParticles ; p++)
+  {
+    for(int i = 0 ; i<Ndim ; i++)
+    {
+      Phi.Fbar.nM[p][i + i*Ndim] = 1.0;   
+    }
+  }
+
+
   Phi.Jbar = allocZ__MatrixLib__(NumParticles,1);
   strcpy(Phi.Jbar.Info,"Jacobian-bar of the particle"); 
 
@@ -301,6 +311,15 @@ Fields allocate_Up_vars__Fields__(int NumParticles)
    * */
   Phi.Fbar = allocZ__MatrixLib__(NumParticles,Ndim*Ndim);
   strcpy(Phi.Fbar.Info,"Fbar deformation gradient");
+
+  for(int p = 0 ; p<NumParticles ; p++)
+  {
+    for(int i = 0 ; i<Ndim ; i++)
+    {
+      Phi.Fbar.nM[p][i + i*Ndim] = 1.0;   
+    }
+  }
+
   Phi.Jbar = allocZ__MatrixLib__(NumParticles,1);
   strcpy(Phi.Jbar.Info,"Jacobian-bar of the particle"); 
 
@@ -515,6 +534,15 @@ Fields allocate_upw_vars__Fields__(int NumParticles)
    * */
   Phi.Fbar = allocZ__MatrixLib__(NumParticles,Ndim*Ndim);
   strcpy(Phi.Fbar.Info,"Fbar deformation gradient");
+
+  for(int p = 0 ; p<NumParticles ; p++)
+  {
+    for(int i = 0 ; i<Ndim ; i++)
+    {
+      Phi.Fbar.nM[p][i + i*Ndim] = 1.0;   
+    }
+  }
+  
   Phi.Jbar = allocZ__MatrixLib__(NumParticles,1);
   strcpy(Phi.Jbar.Info,"Jacobian-bar of the particle"); 
 

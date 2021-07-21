@@ -18,7 +18,7 @@ State_Parameters finite_strain_plasticity(
   State_Parameters Output_SP;
   Tensor P_p = memory_to_tensor__TensorLib__(Inputs_SP_finite.Stress,2);
   Tensor F_m1_plastic = memory_to_tensor__TensorLib__(Inputs_SP_finite.F_m1_plastic_p,2);
-  Tensor F_total;
+  Tensor F_total = memory_to_tensor__TensorLib__(Inputs_SP_finite.F_n1_p,2);
   Tensor F_m1_total;
   Tensor F_trial_elastic;
   Tensor C_trial_elastic;
@@ -42,18 +42,17 @@ State_Parameters finite_strain_plasticity(
   Input_SP_infinitesimal.Stress = (double *)calloc(3,sizeof(double));
   Input_SP_infinitesimal.Strain = (double *)calloc(3,sizeof(double));
   Input_SP_infinitesimal.Increment_E_plastic = (double *)calloc(3,sizeof(double));
-  
+
   /*
     Compute the trial right Cauchy-Green tensor
   */
   if(MatProp.Locking_Control_Fbar)
   {
-    F_total= memory_to_tensor__TensorLib__(Inputs_SP_finite.Fbar,2);
-    F_trial_elastic = matrix_product__TensorLib__(F_total,F_m1_plastic);
+    Tensor F_bar = memory_to_tensor__TensorLib__(Inputs_SP_finite.Fbar,2);
+    F_trial_elastic = matrix_product__TensorLib__(F_bar,F_m1_plastic);
   }
   else
   {
-    F_total = memory_to_tensor__TensorLib__(Inputs_SP_finite.F_n1_p,2);
     F_trial_elastic = matrix_product__TensorLib__(F_total,F_m1_plastic); 
   }
 
