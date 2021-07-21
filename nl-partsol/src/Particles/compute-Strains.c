@@ -222,16 +222,16 @@ void update_Deformation_Gradient_n1__Particles__(
 
 void get_locking_free_Deformation_Gradient_n1__Particles__(
   int p,
+  double DJ_patch,
   Particle MPM_Mesh)
 {
 
   int Ndim = NumberDimensions;
   int MatIndx_p = MPM_Mesh.MatIdx[p];
 
-  double J_n1_patch = MPM_Mesh.Phi.Jbar.nV[p];
-  double J_p;
-  double J_averaged;
-  double averaged_F_vol;
+  double DJ_p;
+  double DJ_averaged;
+  double averaged_DF_vol;
 
   double alpha = MPM_Mesh.Mat[MatIndx_p].alpha_Fbar;
 
@@ -241,18 +241,18 @@ void get_locking_free_Deformation_Gradient_n1__Particles__(
   Tensor DF_bar_p  = alloc__TensorLib__(2);
 
   // Compute the averaged jacobian of the deformation gradient
-  J_p = I3__TensorLib__(DF_p);
-  J_averaged = J_n1_patch/J_p;
+  DJ_p = I3__TensorLib__(DF_p);
+  DJ_averaged = DJ_patch/DJ_p;
 
   // Compute the averaged volume of the deformation gradient
-  averaged_F_vol = pow(J_averaged,(double)1/Ndim);
+  averaged_DF_vol = pow(DJ_averaged,(double)1/Ndim);
 
   // Compute the incremental F-bar
   for(int i = 0 ; i<Ndim ; i++)
   {
     for(int j = 0 ; j<Ndim ; j++)
     {
-      DF_bar_p.N[i][j] = averaged_F_vol*DF_p.N[i][j];
+      DF_bar_p.N[i][j] = averaged_DF_vol*DF_p.N[i][j];
     }
   }
 

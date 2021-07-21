@@ -100,13 +100,13 @@ void Stress_integration__Particles__(
         
     if(MatProp_p.Locking_Control_Fbar)
     {
-      Input_SP.J = MPM_Mesh.Phi.Jbar.nV[p];
       Input_SP.F_n1_p = MPM_Mesh.Phi.Fbar.nM[p];
+//      Input_SP.J = MPM_Mesh.Phi.Jbar.nV[p];
     }
     else
     {
-      Input_SP.J = MPM_Mesh.Phi.J.nV[p];
       Input_SP.F_n1_p = MPM_Mesh.Phi.F_n1.nM[p];
+      Input_SP.J = MPM_Mesh.Phi.J.nV[p];
     }
 
     Output_SP = compute_1PK_Stress_Tensor_Neo_Hookean_Wriggers(Input_SP, MatProp_p);
@@ -119,7 +119,7 @@ void Stress_integration__Particles__(
     
     if(MatProp_p.Locking_Control_Fbar)
     {
-      Input_SP.J = MPM_Mesh.Phi.Jbar.nV[p];
+//      Input_SP.J = MPM_Mesh.Phi.Jbar.nV[p];
       Input_SP.F_n1_p = MPM_Mesh.Phi.Fbar.nM[p];
     }
     else

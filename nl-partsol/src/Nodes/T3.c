@@ -697,14 +697,15 @@ double compute_Jacobian_patch__T3__(
   int MatIndx_p = MPM_Mesh.MatIdx[p];
   int I0_p = MPM_Mesh.I0[p];
   int IdxElement;
-  double J_n_p_patch;
+  double J_n_q_patch;
   double J_n1_q_patch;
   double Vol_0_q;
+  double Vol_n_q;
   double Vol_n1_q;
-  double V0_patch;
+  double Vn_patch;
   double Vn1_patch;
   double J_p;
-  double J_n1_patch;
+  double J_patch;
   double J_averaged;
   double averaged_F_vol;
 
@@ -716,7 +717,7 @@ double compute_Jacobian_patch__T3__(
   Tensor F_n1_p;
   Tensor Fbar;
 
-  V0_patch = 0.0;
+  Vn_patch = 0.0;
   Vn1_patch = 0.0;
 
   // List of elements near the particle
@@ -735,10 +736,12 @@ double compute_Jacobian_patch__T3__(
       q = Particles_Patch_p->I;
       Vol_0_q = MPM_Mesh.Phi.Vol_0.nV[q];
 
+      J_n_q_patch = MPM_Mesh.Phi.J_n.nV[q];
       J_n1_q_patch = MPM_Mesh.Phi.J.nV[q];
+      Vol_n_q = Vol_0_q*J_n_q_patch;      
       Vol_n1_q = Vol_0_q*J_n1_q_patch;
 
-      V0_patch += Vol_0_q;
+      Vn_patch += Vol_n_q;
       Vn1_patch += Vol_n1_q;
 
       Particles_Patch_p = Particles_Patch_p->next;
@@ -749,9 +752,9 @@ double compute_Jacobian_patch__T3__(
   }
 
   // Compute the averaged jacobian of the deformation gradient
-  J_n1_patch = Vn1_patch/V0_patch;
+  J_patch = Vn1_patch/Vn_patch;
 
-  return J_n1_patch;
+  return J_patch;
 }
 
 

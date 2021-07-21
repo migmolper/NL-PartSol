@@ -288,6 +288,7 @@ typedef struct {
   /*!
   * Jacobian of the deformation gradient and its rate
   */
+  Matrix J_n;
   Matrix J;
   Matrix dJ_dt;
 
@@ -295,7 +296,6 @@ typedef struct {
    * F-bar
    * */
   Matrix Fbar;
-  Matrix Jbar;
 
   /*!
    * Inverse of the plastic deformation gradient

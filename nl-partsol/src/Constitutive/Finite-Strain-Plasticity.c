@@ -48,11 +48,12 @@ State_Parameters finite_strain_plasticity(
   */
   if(MatProp.Locking_Control_Fbar)
   {
-    Tensor F_bar = memory_to_tensor__TensorLib__(Inputs_SP_finite.Fbar,2);
-    F_trial_elastic = matrix_product__TensorLib__(F_bar,F_m1_plastic);
+    Tensor Fbar = memory_to_tensor__TensorLib__(Inputs_SP_finite.Fbar,2);
+    F_trial_elastic = matrix_product__TensorLib__(Fbar,F_m1_plastic);
   }
   else
   {
+    F_total = memory_to_tensor__TensorLib__(Inputs_SP_finite.F_n1_p,2);
     F_trial_elastic = matrix_product__TensorLib__(F_total,F_m1_plastic); 
   }
 
