@@ -1096,8 +1096,8 @@ void local_search__LME__(Particle MPM_Mesh, Mesh FEM_Mesh)
     {
       free__SetLib__(&FEM_Mesh.List_Particles_Element[i]); 
       FEM_Mesh.Num_Particles_Element[i] = 0;
-      FEM_Mesh.V_n_patch[i] = 0.0;
-      FEM_Mesh.V_n1_patch[i] = 0.0;
+      FEM_Mesh.Vol_element_n[i] = 0.0;
+      FEM_Mesh.Vol_element_n1[i] = 0.0;
     }
   }
 

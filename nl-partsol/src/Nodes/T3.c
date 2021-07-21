@@ -592,8 +592,8 @@ void local_search__T3__(Particle MPM_Mesh, Mesh FEM_Mesh)
     {
       free__SetLib__(&FEM_Mesh.List_Particles_Element[i]); 
       FEM_Mesh.Num_Particles_Element[i] = 0;
-      FEM_Mesh.V_n_patch[i] = 0.0;
-      FEM_Mesh.V_n1_patch[i] = 0.0;
+      FEM_Mesh.Vol_element_n[i] = 0.0;
+      FEM_Mesh.Vol_element_n1[i] = 0.0;
     }
   }
 
@@ -691,8 +691,8 @@ double compute_Jacobian_patch__T3__(
   int p,
   Particle MPM_Mesh,
   ChainPtr * NodeNeighbour,
-  double * V_n_patch,
-  double * V_n1_patch)
+  double * Vol_element_n,
+  double * Vol_element_n1)
 {
 
   int q;
@@ -714,8 +714,8 @@ double compute_Jacobian_patch__T3__(
   while(Elements_Near_I0 != NULL)
   {
 
-    Vn_patch += V_n_patch[Elements_Near_I0->I];
-    Vn1_patch += V_n1_patch[Elements_Near_I0->I];
+    Vn_patch += Vol_element_n[Elements_Near_I0->I];
+    Vn1_patch += Vol_element_n1[Elements_Near_I0->I];
 
     Elements_Near_I0 = Elements_Near_I0->next; 
 

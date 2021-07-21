@@ -628,8 +628,8 @@ void local_search__Q4__(Particle MPM_Mesh, Mesh FEM_Mesh)
     {
       free__SetLib__(&FEM_Mesh.List_Particles_Element[i]); 
       FEM_Mesh.Num_Particles_Element[i] = 0;
-      FEM_Mesh.V_n_patch[i] = 0.0;
-      FEM_Mesh.V_n1_patch[i] = 0.0;
+      FEM_Mesh.Vol_element_n[i] = 0.0;
+      FEM_Mesh.Vol_element_n1[i] = 0.0;
     }
   }
 
@@ -728,8 +728,8 @@ double compute_Jacobian_patch__Q4__(
   int p,
   Particle MPM_Mesh,
   ChainPtr * NodeNeighbour,
-  double * V_n_patch,
-  double * V_n1_patch)
+  double * Vol_element_n,
+  double * Vol_element_n1)
 {
   int Element_p;
   double Vn_patch;
@@ -739,8 +739,8 @@ double compute_Jacobian_patch__Q4__(
 
   // Get the volume of the element
   Element_p = MPM_Mesh.Element_p[p];
-  Vn_patch = V_n_patch[Element_p];
-  Vn1_patch = V_n1_patch[Element_p];
+  Vn_patch = Vol_element_n[Element_p];
+  Vn1_patch = Vol_element_n1[Element_p];
 
   // Compute the averaged jacobian of the deformation gradient
   J_patch = Vn1_patch/Vn_patch;

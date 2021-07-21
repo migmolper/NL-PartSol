@@ -679,7 +679,7 @@ static void update_Local_State(
   Tensor DF_p;
 
   /*
-    Loop in the material point set to update strains
+    Loop in the material point set to update kinematics
   */
   for(int p = 0 ; p<Np ; p++)
   {
@@ -727,8 +727,8 @@ static void update_Local_State(
     if(MatProp_p.Locking_Control_Fbar)
     {
       Element_p = MPM_Mesh.Element_p[p];
-      FEM_Mesh.V_n_patch[Element_p] += MPM_Mesh.Phi.J_n.nV[p]*MPM_Mesh.Phi.Vol_0.nV[p];
-      FEM_Mesh.V_n1_patch[Element_p] += MPM_Mesh.Phi.J_n1.nV[p]*MPM_Mesh.Phi.Vol_0.nV[p];
+      FEM_Mesh.Vol_element_n[Element_p] += MPM_Mesh.Phi.J_n.nV[p]*MPM_Mesh.Phi.Vol_0.nV[p];
+      FEM_Mesh.Vol_element_n1[Element_p] += MPM_Mesh.Phi.J_n1.nV[p]*MPM_Mesh.Phi.Vol_0.nV[p];
     }
 
     /*
@@ -757,7 +757,7 @@ static void update_Local_State(
 
     if(MatProp_p.Locking_Control_Fbar)
     {
-      J_patch = FEM_Mesh.compute_Jacobian_patch(p,MPM_Mesh,FEM_Mesh.NodeNeighbour,FEM_Mesh.V_n_patch,FEM_Mesh.V_n1_patch);
+      J_patch = FEM_Mesh.compute_Jacobian_patch(p,MPM_Mesh,FEM_Mesh.NodeNeighbour,FEM_Mesh.Vol_element_n,FEM_Mesh.Vol_element_n1);
       get_locking_free_Deformation_Gradient_n1__Particles__(p,J_patch,MPM_Mesh);
     }
 
