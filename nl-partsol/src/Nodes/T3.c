@@ -592,6 +592,8 @@ void local_search__T3__(Particle MPM_Mesh, Mesh FEM_Mesh)
     {
       free__SetLib__(&FEM_Mesh.List_Particles_Element[i]); 
       FEM_Mesh.Num_Particles_Element[i] = 0;
+      FEM_Mesh.V_n_patch[i] = 0.0;
+      FEM_Mesh.V_n1_patch[i] = 0.0;
     }
   }
 
@@ -689,33 +691,18 @@ double compute_Jacobian_patch__T3__(
   int p,
   Particle MPM_Mesh,
   ChainPtr * NodeNeighbour,
-  ChainPtr * List_Particles_Element)
+  double * V_n_patch,
+  double * V_n1_patch)
 {
 
   int q;
   int Ndim = NumberDimensions;
-  int MatIndx_p = MPM_Mesh.MatIdx[p];
   int I0_p = MPM_Mesh.I0[p];
-  int IdxElement;
-  double J_n_q_patch;
-  double J_n1_q_patch;
-  double Vol_0_q;
-  double Vol_n_q;
-  double Vol_n1_q;
   double Vn_patch;
   double Vn1_patch;
-  double J_p;
   double J_patch;
-  double J_averaged;
-  double averaged_F_vol;
-
-  double alpha = MPM_Mesh.Mat[MatIndx_p].alpha_Fbar;
 
   ChainPtr Elements_Near_I0;
-  ChainPtr Particles_Patch_p;
-
-  Tensor F_n1_p;
-  Tensor Fbar;
 
   Vn_patch = 0.0;
   Vn1_patch = 0.0;
@@ -726,26 +713,9 @@ double compute_Jacobian_patch__T3__(
   // Loop in the sourrounding elements to get the deformed and reference volumes
   while(Elements_Near_I0 != NULL)
   {
-    Particles_Patch_p = NULL;
 
-    // Get the list of particles inside of the element
-    Particles_Patch_p = List_Particles_Element[Elements_Near_I0->I];
-
-    while(Particles_Patch_p != NULL)
-    {
-      q = Particles_Patch_p->I;
-      Vol_0_q = MPM_Mesh.Phi.Vol_0.nV[q];
-
-      J_n_q_patch = MPM_Mesh.Phi.J_n.nV[q];
-      J_n1_q_patch = MPM_Mesh.Phi.J.nV[q];
-      Vol_n_q = Vol_0_q*J_n_q_patch;      
-      Vol_n1_q = Vol_0_q*J_n1_q_patch;
-
-      Vn_patch += Vol_n_q;
-      Vn1_patch += Vol_n1_q;
-
-      Particles_Patch_p = Particles_Patch_p->next;
-    }
+    Vn_patch += V_n_patch[Elements_Near_I0->I];
+    Vn1_patch += V_n1_patch[Elements_Near_I0->I];
 
     Elements_Near_I0 = Elements_Near_I0->next; 
 

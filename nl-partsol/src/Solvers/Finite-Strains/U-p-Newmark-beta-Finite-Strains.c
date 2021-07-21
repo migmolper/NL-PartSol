@@ -819,7 +819,7 @@ static void update_Local_State(
       /*
         Compute Jacobian of the deformation gradient
       */
-      MPM_Mesh.Phi.J.nV[p] = I3__TensorLib__(F_n1_p);
+      MPM_Mesh.Phi.J_n1.nV[p] = I3__TensorLib__(F_n1_p);
             
       /*
          Free memory 
@@ -1157,7 +1157,7 @@ static void compute_Volumetric_Constrain_Forces(
     /*
       Get the Jacobian
     */
-    J_n1_p = MPM_Mesh.Phi.J.nV[p];
+    J_n1_p = MPM_Mesh.Phi.J_n1.nV[p];
 
     /*
       Impose the volumetric constrain
@@ -1910,6 +1910,11 @@ static void update_Particles(
       }
     }
 
+    /*
+      Replace the determinant of the deformation gradient
+    */
+    MPM_Mesh.Phi.J_n.nV[p] = MPM_Mesh.Phi.J_n1.nV[p];
+    
     /*
       Compute the deformation energy (reference volume + material properties (solid phase))
     */

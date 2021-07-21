@@ -289,7 +289,7 @@ typedef struct {
   * Jacobian of the deformation gradient and its rate
   */
   Matrix J_n;
-  Matrix J;
+  Matrix J_n1;
   Matrix dJ_dt;
 
   /*!
@@ -815,7 +815,9 @@ typedef struct {
    * */
   int * Num_Particles_Element;
   ChainPtr * List_Particles_Element;    
-  double (* compute_Jacobian_patch)(int,Particle,ChainPtr *,ChainPtr *);
+  double (* compute_Jacobian_patch)(int,Particle,ChainPtr *,double *,double *);
+  double * V_n_patch;
+  double * V_n1_patch;
 
 } Mesh;
 
