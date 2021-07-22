@@ -157,7 +157,6 @@ void U_Newmark_Predictor_Corrector_Finite_Strains(
       free__MatrixLib__(Reactions);
       free(ActiveNodes.Nodes2Mask); 
       free(Free_and_Restricted_Dofs.Nodes2Mask);
-
     }
   
 }
@@ -667,8 +666,10 @@ static void update_Local_State(
   int Nnodes_mask = ActiveNodes.Nactivenodes;
   int Nnodes_p;
   int MatIndx_p;
+  int Element_p;
   double rho_n_p;
   double Delta_J_p;
+  double J_patch;
   Element Nodes_p;
   Material MatProp_p;
   Matrix gradient_p;
@@ -678,7 +679,7 @@ static void update_Local_State(
   Tensor DF_p;
 
   /*
-    Loop in the material point set to update strains
+    Loop in the material point set to update kinematics
   */
   for(int p = 0 ; p<Np ; p++)
   {
@@ -718,8 +719,18 @@ static void update_Local_State(
     /*
       Compute Jacobian of the deformation gradient
     */
-    MPM_Mesh.Phi.J.nV[p] = I3__TensorLib__(F_n1_p);
-            
+    MPM_Mesh.Phi.J_n1.nV[p] = I3__TensorLib__(F_n1_p);
+
+    /*
+      Update patch
+    */
+    if(MatProp_p.Locking_Control_Fbar)
+    {
+      Element_p = MPM_Mesh.Element_p[p];
+      FEM_Mesh.Vol_element_n[Element_p] += MPM_Mesh.Phi.J_n.nV[p]*MPM_Mesh.Phi.Vol_0.nV[p];
+      FEM_Mesh.Vol_element_n1[Element_p] += MPM_Mesh.Phi.J_n1.nV[p]*MPM_Mesh.Phi.Vol_0.nV[p];
+    }
+
     /*
       Update density with the jacobian of the increment deformation gradient
     */
@@ -746,8 +757,8 @@ static void update_Local_State(
 
     if(MatProp_p.Locking_Control_Fbar)
     {
-      MPM_Mesh.Phi.Jbar.nV[p] = FEM_Mesh.compute_Jacobian_patch(p,MPM_Mesh,FEM_Mesh.NodeNeighbour,FEM_Mesh.List_Particles_Element);
-      get_locking_free_Deformation_Gradient_n1__Particles__(p,MPM_Mesh);
+      J_patch = FEM_Mesh.compute_Jacobian_patch(p,MPM_Mesh,FEM_Mesh.NodeNeighbour,FEM_Mesh.Vol_element_n,FEM_Mesh.Vol_element_n1);
+      get_locking_free_Deformation_Gradient_n1__Particles__(p,J_patch,MPM_Mesh);
     }
 
     /*
@@ -1164,50 +1175,45 @@ static void compute_Explicit_Newmark_Corrector(
   Tensor F_n_p;
   Tensor F_n1_p;
 
-
   for(int p = 0 ; p<Np ; p++)
+  {
+      
+    /*
+      Replace the deformation gradient at t = n with the new one
+    */
+    F_n_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n.nM[p],2);
+    F_n1_p  = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n1.nM[p],2);
+      
+    /*
+      Replace the determinant of the deformation gradient
+    */
+    MPM_Mesh.Phi.J_n.nV[p] = MPM_Mesh.Phi.J_n1.nV[p];
+
+    /* 
+      Update/correct tensor and vector variables
+    */
+    for(int i = 0 ; i<Ndim  ; i++)
     {
-      
-      /*
-        Replace the deformation gradient at t = n with the new one
-      */
-      F_n_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n.nM[p],2);
-
-      if(MPM_Mesh.Mat[MPM_Mesh.MatIdx[p]].Locking_Control_Fbar)
-      {
-        F_n1_p  = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.Fbar.nM[p],2); 
-      }
-      else
-      {
-        F_n1_p  = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n1.nM[p],2);      
-      }
-      
       /* 
-        Update/correct tensor and vector variables
+        Correct particle velocity
       */
-      for(int i = 0 ; i<Ndim  ; i++)
+      MPM_Mesh.Phi.vel.nM[p][i] += gamma*DeltaTimeStep*MPM_Mesh.Phi.acc.nM[p][i];
+
+      /*
+        Update the particles position and displacement
+      */
+      MPM_Mesh.Phi.x_GC.nM[p][i] += MPM_Mesh.Phi.D_dis.nM[p][i];
+      MPM_Mesh.Phi.dis.nM[p][i]  += MPM_Mesh.Phi.D_dis.nM[p][i];
+
+      /* Update deformation gradient tensor */
+      for(int j = 0 ; j<Ndim  ; j++)
       {
-
-          /* 
-            Correct particle velocity
-          */
-          MPM_Mesh.Phi.vel.nM[p][i] += gamma*DeltaTimeStep*MPM_Mesh.Phi.acc.nM[p][i];
-
-          /*
-            Update the particles position and displacement
-          */
-          MPM_Mesh.Phi.x_GC.nM[p][i] += MPM_Mesh.Phi.D_dis.nM[p][i];
-          MPM_Mesh.Phi.dis.nM[p][i] += MPM_Mesh.Phi.D_dis.nM[p][i];
-
-          /* Update deformation gradient tensor */
-         for(int j = 0 ; j<Ndim  ; j++)
-         {
-             F_n_p.N[i][j] = F_n1_p.N[i][j];
-         }
+        F_n_p.N[i][j] = F_n1_p.N[i][j];
       }
+    }
 
-    }  
-}
+  }
+  }  
 
 /**************************************************************/
 

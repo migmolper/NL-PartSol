@@ -1,5 +1,56 @@
 #include "nl-partsol.h"
 
+
+static void Eigenerosion(int,Fields,Material,ChainPtr *,double);
+static void Eigensoftening(int,Fields,Material,ChainPtr *);
+static void ComputeBeps(int,Particle,Mesh);
+
+/*********************************************************************/
+
+void compute_particle_Damage(
+  int p, 
+  Particle MPM_Mesh, 
+  Mesh FEM_Mesh)
+{
+
+  int Ndim = NumberDimensions;
+  int Mat_p = MPM_Mesh.MatIdx[p];  
+  double DeltaX = FEM_Mesh.DeltaX;
+  
+  /* Get the material properties of the particle */
+  Material MatProp = MPM_Mesh.Mat[Mat_p];
+
+  /* Beps of all the particles */
+  ChainPtr * Beps = MPM_Mesh.Beps;
+
+  /* Select the eigenerosion algorithm */
+  if(MatProp.Eigenerosion)
+    {
+      /* Update Beps of each particle p */
+      ComputeBeps(p, MPM_Mesh, FEM_Mesh);
+      
+      /* Update the damage variable of the particle */
+      Eigenerosion(p,MPM_Mesh.Phi,MatProp,Beps,DeltaX);
+
+      /* Free the previous list and set to NULL */
+      free__SetLib__(&MPM_Mesh.Beps[p]);
+    }
+
+  /* Select the eigensoftening algorithm */
+  if(MatProp.Eigensoftening)
+    {
+      /* Update Beps of each particle p */
+      ComputeBeps(p, MPM_Mesh, FEM_Mesh);
+
+      /* Update the damage variable of the particle */
+      Eigensoftening(p,MPM_Mesh.Phi,MatProp,Beps);
+
+      /* Free the previous list and set to NULL */
+      free__SetLib__(&MPM_Mesh.Beps[p]);   
+    }
+  
+}
+
 /*******************************************************/
 
 /*! 
@@ -440,52 +491,6 @@ static void ComputeBeps(
   /* Free pointer with the list of nodes close to the particle */
   free(NodesBeps);    
  
-}
-
-/*********************************************************************/
-
-void compute_particle_Damage(
-  int p, 
-  Particle MPM_Mesh, 
-  Mesh FEM_Mesh)
-{
-
-  int Ndim = NumberDimensions;
-  int Mat_p = MPM_Mesh.MatIdx[p];  
-  double DeltaX = FEM_Mesh.DeltaX;
-  
-  /* Get the material properties of the particle */
-  Material MatProp = MPM_Mesh.Mat[Mat_p];
-
-  /* Beps of all the particles */
-  ChainPtr * Beps = MPM_Mesh.Beps;
-
-  /* Select the eigenerosion algorithm */
-  if(MatProp.Eigenerosion)
-    {
-      /* Update Beps of each particle p */
-      ComputeBeps(p, MPM_Mesh, FEM_Mesh);
-      
-      /* Update the damage variable of the particle */
-      Eigenerosion(p,MPM_Mesh.Phi,MatProp,Beps,DeltaX);
-
-      /* Free the previous list and set to NULL */
-      free__SetLib__(&MPM_Mesh.Beps[p]);
-    }
-
-  /* Select the eigensoftening algorithm */
-  if(MatProp.Eigensoftening)
-    {
-      /* Update Beps of each particle p */
-      ComputeBeps(p, MPM_Mesh, FEM_Mesh);
-
-      /* Update the damage variable of the particle */
-      Eigensoftening(p,MPM_Mesh.Phi,MatProp,Beps);
-
-      /* Free the previous list and set to NULL */
-      free__SetLib__(&MPM_Mesh.Beps[p]);   
-    }
-  
 }
 
 /*******************************************************/

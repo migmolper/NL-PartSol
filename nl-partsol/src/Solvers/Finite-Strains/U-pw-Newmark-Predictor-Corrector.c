@@ -1066,7 +1066,7 @@ static void update_Local_State(
       MPM_Mesh.Phi.rho.nV[p] = MPM_Mesh.Phi.rho_s.nV[p]*MPM_Mesh.Phi.phi_s.nV[p] +
                                MPM_Mesh.Phi.rho_f.nV[p]*MPM_Mesh.Phi.phi_f.nV[p];  /* Update density of the mixture */
 
-      MPM_Mesh.Phi.J.nV[p] = J_n1_p; /* Update soil skeleton jacobian */
+      MPM_Mesh.Phi.J_n1.nV[p] = J_n1_p; /* Update soil skeleton jacobian */
       MPM_Mesh.Phi.dJ_dt.nV[p] = dJ_dt_n1_p; /* Update soil skeleton rate of jacobian */
 
       /*
@@ -1908,7 +1908,7 @@ static void compute_Permeability_Inertial_Forces_Fluid(
       F_n1_p  = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n1.nM[p],2);
       transpose_F_n_p = transpose__TensorLib__(F_n_p);
       inverse_F_n1_p = Inverse__TensorLib__(F_n1_p);
-      J_n1_p = MPM_Mesh.Phi.J.nV[p];
+      J_n1_p = MPM_Mesh.Phi.J_n1.nV[p];
 
       /*
         Get the permeability tensor
@@ -2126,6 +2126,11 @@ static void compute_Explicit_Newmark_Corrector(
              F_n_p.N[i][j] = F_n1_p.N[i][j];
            }
        }
+
+      /*
+        Replace the determinant of the deformation gradient
+      */
+      MPM_Mesh.Phi.J_n.nV[p] = MPM_Mesh.Phi.J_n1.nV[p];
 
       /*
         Correct pressure field

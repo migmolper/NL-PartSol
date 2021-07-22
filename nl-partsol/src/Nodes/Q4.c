@@ -628,6 +628,8 @@ void local_search__Q4__(Particle MPM_Mesh, Mesh FEM_Mesh)
     {
       free__SetLib__(&FEM_Mesh.List_Particles_Element[i]); 
       FEM_Mesh.Num_Particles_Element[i] = 0;
+      FEM_Mesh.Vol_element_n[i] = 0.0;
+      FEM_Mesh.Vol_element_n1[i] = 0.0;
     }
   }
 
@@ -726,60 +728,24 @@ double compute_Jacobian_patch__Q4__(
   int p,
   Particle MPM_Mesh,
   ChainPtr * NodeNeighbour,
-  ChainPtr * List_Particles_Element)
+  double * Vol_element_n,
+  double * Vol_element_n1)
 {
-
-  int q;
-  int Ndim = NumberDimensions;
-  int MatIndx_p = MPM_Mesh.MatIdx[p];
-  int I0_p = MPM_Mesh.I0[p];
   int Element_p;
-  double J_n_p_patch;
-  double J_n1_q_patch;
-  double Vol_0_q;
-  double Vol_n1_q;
-  double V0_patch;
+  double Vn_patch;
   double Vn1_patch;
-  double J_p;
-  double J_n1_patch;
-  double J_averaged;
-  double averaged_F_vol;
+  double J_patch;
 
-  double alpha = MPM_Mesh.Mat[MatIndx_p].alpha_Fbar;
 
-  ChainPtr Particles_Patch_p;
-
-  Tensor F_n1_p;
-  Tensor Fbar;
-
-  V0_patch = 0.0;
-  Vn1_patch = 0.0;
-
-  // Element of the particle
+  // Get the volume of the element
   Element_p = MPM_Mesh.Element_p[p];
-
-  // Get the list of particles inside of the element
-  Particles_Patch_p = List_Particles_Element[Element_p];
-
-  while(Particles_Patch_p != NULL)
-  {
-    q = Particles_Patch_p->I;
-    Vol_0_q = MPM_Mesh.Phi.Vol_0.nV[q];
-
-    J_n1_q_patch = MPM_Mesh.Phi.J.nV[q];
-    Vol_n1_q = Vol_0_q*J_n1_q_patch;
-
-    V0_patch += Vol_0_q;
-    Vn1_patch += Vol_n1_q;
-
-    Particles_Patch_p = Particles_Patch_p->next;
-  }
+  Vn_patch = Vol_element_n[Element_p];
+  Vn1_patch = Vol_element_n1[Element_p];
 
   // Compute the averaged jacobian of the deformation gradient
-  J_n1_patch = Vn1_patch/V0_patch;
+  J_patch = Vn1_patch/Vn_patch;
 
-  return J_n1_patch;
+  return J_patch;
 }
-
 
 /*********************************************************************/

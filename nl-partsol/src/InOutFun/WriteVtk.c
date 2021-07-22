@@ -201,7 +201,7 @@ void particle_results_vtk__InOutFun__(Particle MPM_Mesh, int TimeStep_i, int Res
   /* Print particle pore water pressure */
   if(Out_Pw)
   {
-    vtk_Out_Pw(Vtk_file, MPM_Mesh.Phi.Pw, MPM_Mesh.Phi.J, NumParticles);
+    vtk_Out_Pw(Vtk_file, MPM_Mesh.Phi.Pw, MPM_Mesh.Phi.J_n1, NumParticles);
   }
 
   /* Print particle rate of pore water pressure */

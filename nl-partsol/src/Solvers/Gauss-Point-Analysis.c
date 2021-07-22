@@ -46,7 +46,7 @@ void NonLinear_Gauss_Point_Analysis(Particle PointAnalysis)
     else if(strcmp(PointAnalysis.Mat[0].Type,"Neo-Hookean-Wriggers") == 0)
     {
       Input_SP.Stress = PointAnalysis.Phi.Stress.nM[k];
-      Input_SP.J = PointAnalysis.Phi.J.nV[k];
+      Input_SP.J = PointAnalysis.Phi.J_n1.nV[k];
       Output_SP = compute_1PK_Stress_Tensor_Neo_Hookean_Wriggers(Input_SP, PointAnalysis.Mat[0]);
     }
     else if(strcmp(PointAnalysis.Mat[0].Type,"Von-Mises") == 0)

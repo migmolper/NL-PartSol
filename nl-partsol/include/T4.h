@@ -25,5 +25,5 @@ void   element_to_particles__T4__(Matrix, Mesh, int);
 double min_DeltaX__T4__(ChainPtr, Matrix);
 double volume__T4__(Matrix);
 void   local_search__T4__(Particle, Mesh);
-double compute_Jacobian_patch__T4__(int,Particle,ChainPtr *,ChainPtr *);
+double compute_Jacobian_patch__T4__(int,Particle,ChainPtr *,double *,double *);
 #endif
