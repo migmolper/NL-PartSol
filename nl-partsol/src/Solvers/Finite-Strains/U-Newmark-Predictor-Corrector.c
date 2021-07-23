@@ -725,6 +725,17 @@ static void update_Local_State(
     MPM_Mesh.Phi.J_n1.nV[p] = I3__TensorLib__(F_n1_p);
 
     /*
+      Check non-pentrability condition
+    */
+    if(MPM_Mesh.Phi.J_n1.nV[p] <= 0.0)
+    {
+      fprintf(stderr,"%s : %s %i\n",
+        "Error in update_Local_State()",
+        "Negative jacobian in particle",p);
+      exit(EXIT_FAILURE);
+    }
+
+    /*
       Update patch
     */
     MatIndx_p = MPM_Mesh.MatIdx[p];

@@ -851,6 +851,8 @@ static ChainPtr tributary__T6__(
     Free memory
   */
   free(List_Nodes);
+  free__MatrixLib__(Xi);
+  free__MatrixLib__(Macro_Element);
 
   return Triburary_Nodes;
 

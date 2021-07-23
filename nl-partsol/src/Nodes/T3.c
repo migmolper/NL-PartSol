@@ -392,6 +392,17 @@ void element_to_particles__T3__(
     Xi_p.nM[2][1] =  0.66666666666;
     break;
 
+    case 4:
+    Xi_p.nM[0][0] =  0.16666666666;
+    Xi_p.nM[0][1] =  0.16666666666;
+    Xi_p.nM[1][0] =  0.66666666666;
+    Xi_p.nM[1][1] =  0.16666666666;
+    Xi_p.nM[2][0] =  0.16666666666;
+    Xi_p.nM[2][1] =  0.66666666666;
+    Xi_p.nM[3][0] =  0.33333333333;
+    Xi_p.nM[3][1] =  0.33333333333;    
+    break;    
+
     default :
     fprintf(stderr,"%s : %s \n","Error in element_to_particles__T3__()","Wrong number of particles per element");
     exit(EXIT_FAILURE);
