@@ -792,7 +792,7 @@ typedef struct {
   /*
    * Function of compute natural coordinate
   */
-  void (* X_to_Xi)(Matrix, Matrix, Matrix);
+//  void (* X_to_Xi)(Matrix, Matrix, Matrix);
 
   /* !
   * Function to compute the volume of an element
@@ -815,9 +815,8 @@ typedef struct {
    * */
   int * Num_Particles_Element;
   ChainPtr * List_Particles_Element;    
-  double (* compute_Jacobian_patch)(int,Particle,ChainPtr *,double *,double *);
-  double * Vol_element_n;
-  double * Vol_element_n1;
+  double * Vol_patch_n;
+  double * Vol_patch_n1;
 
 } Mesh;
 

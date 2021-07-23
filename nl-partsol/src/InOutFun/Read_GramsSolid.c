@@ -291,10 +291,15 @@ Particle GramsSolid(char * Name_File, Mesh FEM_Mesh, int * STATUS)
     puts("*************************************************");
     if(strcmp(ShapeFunctionGP,"FEM") == 0)
     {
-      if(strcmp(FEM_Mesh.TypeElem,"Triangle") == 0)
+      if((strcmp(FEM_Mesh.TypeElem,"Triangle") == 0) && (FEM_Mesh.NumNodesElem[0] == 3))
       {
         printf("\t * %s \n","Start FEM-T3 shape functions initialisation ...");
         initialize__T3__(MPM_Mesh, FEM_Mesh);
+      }
+      if((strcmp(FEM_Mesh.TypeElem,"Triangle") == 0) && (FEM_Mesh.NumNodesElem[0] == 6))
+      {
+        printf("\t * %s \n","Start FEM-T6 shape functions initialisation ...");
+        initialize__T6__(MPM_Mesh, FEM_Mesh);
       }
       else if(strcmp(FEM_Mesh.TypeElem,"Quadrilateral") == 0)
       {

@@ -6,7 +6,7 @@
 */
 
 int ResultsTimeStep;
-//int NumTimeStep//////;
+// int NumTimeStep //
 
 char OutputDir[MAXC];
 char OutputParticlesFile[MAXC];

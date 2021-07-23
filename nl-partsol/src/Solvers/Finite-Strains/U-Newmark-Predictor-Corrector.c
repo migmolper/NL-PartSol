@@ -157,6 +157,7 @@ void U_Newmark_Predictor_Corrector_Finite_Strains(
       free__MatrixLib__(Reactions);
       free(ActiveNodes.Nodes2Mask); 
       free(Free_and_Restricted_Dofs.Nodes2Mask);
+
     }
   
 }
@@ -669,6 +670,8 @@ static void update_Local_State(
   int Element_p;
   double rho_n_p;
   double Delta_J_p;
+  double Vn_patch;
+  double Vn1_patch;
   double J_patch;
   Element Nodes_p;
   Material MatProp_p;
@@ -724,11 +727,14 @@ static void update_Local_State(
     /*
       Update patch
     */
+    MatIndx_p = MPM_Mesh.MatIdx[p];
+    MatProp_p = MPM_Mesh.Mat[MatIndx_p];
+
     if(MatProp_p.Locking_Control_Fbar)
     {
       Element_p = MPM_Mesh.Element_p[p];
-      FEM_Mesh.Vol_element_n[Element_p] += MPM_Mesh.Phi.J_n.nV[p]*MPM_Mesh.Phi.Vol_0.nV[p];
-      FEM_Mesh.Vol_element_n1[Element_p] += MPM_Mesh.Phi.J_n1.nV[p]*MPM_Mesh.Phi.Vol_0.nV[p];
+      FEM_Mesh.Vol_patch_n[Element_p] += MPM_Mesh.Phi.J_n.nV[p]*MPM_Mesh.Phi.Vol_0.nV[p];
+      FEM_Mesh.Vol_patch_n1[Element_p] += MPM_Mesh.Phi.J_n1.nV[p]*MPM_Mesh.Phi.Vol_0.nV[p];
     }
 
     /*
@@ -754,10 +760,15 @@ static void update_Local_State(
   {
     MatIndx_p = MPM_Mesh.MatIdx[p];
     MatProp_p = MPM_Mesh.Mat[MatIndx_p];
-
+    
     if(MatProp_p.Locking_Control_Fbar)
     {
-      J_patch = FEM_Mesh.compute_Jacobian_patch(p,MPM_Mesh,FEM_Mesh.NodeNeighbour,FEM_Mesh.Vol_element_n,FEM_Mesh.Vol_element_n1);
+      Element_p = MPM_Mesh.Element_p[p];
+
+      Vn_patch = FEM_Mesh.Vol_patch_n[Element_p];
+      Vn1_patch = FEM_Mesh.Vol_patch_n1[Element_p];
+      J_patch = Vn1_patch/Vn_patch;
+
       get_locking_free_Deformation_Gradient_n1__Particles__(p,J_patch,MPM_Mesh);
     }
 
@@ -765,10 +776,9 @@ static void update_Local_State(
       Update the first Piola-Kirchhoff stress tensor with an apropiate
       integration rule.
     */
-    Stress_integration__Particles__(p,MPM_Mesh,FEM_Mesh,MatProp_p); 
+     Stress_integration__Particles__(p,MPM_Mesh,FEM_Mesh,MatProp_p); 
 
   }
-
   
 }
 

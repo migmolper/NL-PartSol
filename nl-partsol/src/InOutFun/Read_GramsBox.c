@@ -110,8 +110,8 @@ Mesh GramsBox(char * Name_File)
   compute_nodal_distance_local(FEM_Mesh);
   printf("\t \t %s : %s \n","-> Compute local nodal distance","Done");
 
-  FEM_Mesh.Vol_element_n = (double *)Allocate_ArrayZ(FEM_Mesh.NumElemMesh,sizeof(double));
-  FEM_Mesh.Vol_element_n1 = (double *)Allocate_ArrayZ(FEM_Mesh.NumElemMesh,sizeof(double));
+  FEM_Mesh.Vol_patch_n = (double *)Allocate_ArrayZ(FEM_Mesh.NumElemMesh,sizeof(double));
+  FEM_Mesh.Vol_patch_n1 = (double *)Allocate_ArrayZ(FEM_Mesh.NumElemMesh,sizeof(double));
   printf("\t \t %s : %s \n","-> Allocate volume of each element (F-bar)","Done");
 
   FEM_Mesh.DeltaX = mesh_size(FEM_Mesh);
@@ -537,16 +537,20 @@ static double mesh_size(Mesh FEM_Mesh)
   /* Loop over the elements in the mesh */
   for(int i = 0 ; i<NumElemMesh ; i++)
   {
-
     /* Connectivity of the element */
     NumNodesElem = FEM_Mesh.NumNodesElem[i];
     Element_Connectivity = copy__SetLib__(FEM_Mesh.Connectivity[i]);
     Element_Connectivity_Circular = create_circular_set__SetLib__(Element_Connectivity);
-    
+
+
     /* Get the gradient of the element for each node */
     if((Ndim == 2) && (strcmp(FEM_Mesh.TypeElem,"Triangle") == 0) && (NumNodesElem == 3))
     {
       MinElementSize = DMIN(MinElementSize,min_DeltaX__T3__(Element_Connectivity_Circular, FEM_Mesh.Coordinates));
+    }
+    else if((Ndim == 2) && (strcmp(FEM_Mesh.TypeElem,"Triangle") == 0) && (NumNodesElem == 6))
+    {
+      MinElementSize = DMIN(MinElementSize,min_DeltaX__T6__(Element_Connectivity_Circular, FEM_Mesh.Coordinates));
     }
     else if((Ndim == 2) && (strcmp(FEM_Mesh.TypeElem,"Quadrilateral") == 0) && (NumNodesElem == 4))
     { 
@@ -570,7 +574,7 @@ static double mesh_size(Mesh FEM_Mesh)
     /* Free memory */
     free__SetLib__(&Element_Connectivity);
   }
-
+    
   return MinElementSize;
 
 }

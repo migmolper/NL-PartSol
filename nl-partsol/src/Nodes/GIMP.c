@@ -11,6 +11,9 @@ double Thickness_Plain_Stress;
 static Matrix voxel__GIMP__(Matrix, double);
 static double Sip__GIMP__(double, double, double);
 static double dSip__GIMP__(double, double, double);
+static Matrix F_Ref__GIMP__(Matrix, Matrix);
+static void   X_to_Xi__GIMP__(Matrix, Matrix, Matrix);
+static Matrix Xi_to_X__GIMP__(Matrix, Matrix);
 
 /*********************************************************************/
 
@@ -72,7 +75,7 @@ void initialize__GIMP__(
 
       /* If the GP is in the element, get its natural coordinates */
       Xi_p.nV = MPM_Mesh.Phi.x_EC.nM[i];
-      X_to_Xi__Q4__(Xi_p,X_p,Elem_p_Coordinates);
+      X_to_Xi__GIMP__(Xi_p,X_p,Elem_p_Coordinates);
 
       /* Initialize the voxel lenght */
       l_p = voxel__GIMP__(l_p, A_p);
@@ -128,6 +131,124 @@ static Matrix voxel__GIMP__(
 
   return l_p;
   
+}
+
+/*********************************************************************/
+
+/* Jacobian of the transformation for the four-nodes quadrilateral */
+static Matrix F_Ref__GIMP__(
+  Matrix X_NC_GP, 
+  Matrix X_GC_Nodes)
+/*
+  Get the jacobian of the transformation of the reference element :
+
+  J = grad(N_{\alpha}) \cdot x_{\alpha}
+  
+  Inputs :
+  - X_g -> This are the coordinates of the nodes (4x2)
+  - dNdX_Ref_GP -> Derivative gradient evaluated in the GP (2x4)
+
+  Output :
+  - Jacobian -> Jacobian of the reference element
+  evaluated in the GP
+*/
+{
+  int Ndim = NumberDimensions;
+  /* Variable declaration */
+  Matrix dNdX_Ref_GP;
+  Tensor X_I;
+  Tensor dNdx_I;
+  Tensor F_Ref_I;
+  Matrix F_Ref = allocZ__MatrixLib__(Ndim,Ndim);
+
+  /* 1º Evaluate the derivarive of the shape function in the GP */
+  dNdX_Ref_GP = dN_Ref__Q4__(X_NC_GP);
+
+  /* 2º Get the F_Ref doing a loop over the nodes of the element */
+  for(int I = 0 ; I<4 ; I++)
+  {
+
+    /* 3º Fill arrays for the tensorial product */
+    X_I = memory_to_tensor__TensorLib__(X_GC_Nodes.nM[I],1);
+    dNdx_I = memory_to_tensor__TensorLib__(dNdX_Ref_GP.nM[I],1);
+
+    /* 4º Get the nodal contribution */
+    F_Ref_I = dyadic_Product__TensorLib__(X_I,dNdx_I);
+
+    /* 5º Increment the reference deformation gradient */
+    for(int i = 0 ; i<Ndim ; i++)
+    {
+      for(int j = 0 ; j<Ndim ; j++)
+      {
+        F_Ref.nM[i][j] += F_Ref_I.N[i][j];
+      }
+    }
+    /* 6º Free data of the nodal contribution */
+    free__TensorLib__(F_Ref_I);    
+  }
+  
+  /* 7º Free memory */
+  free__MatrixLib__(dNdX_Ref_GP);
+
+  /* 8º Output */
+  return F_Ref;
+}
+
+/*********************************************************************/
+
+/* Global coordinates of the four nodes quadrilateral */
+static Matrix Xi_to_X__GIMP__(
+  Matrix Xi,
+  Matrix Element)
+/*
+  This function evaluate the position of the GP in the element,
+  and get it global coordiantes    
+*/
+{
+  int Ndim = NumberDimensions;
+  /* 1º Evaluate the Q4 element in the element coordinates */
+  Matrix N = N__Q4__(Xi);
+
+  /* 2º Allocate the output coordinates */
+  Matrix X = allocZ__MatrixLib__(Ndim,1);
+
+  /* 3º Get the global coordinates for this element coordiantes in this element */
+  for(int I = 0 ; I<4 ; I++)
+  {
+    for(int i = 0 ; i<Ndim ; i++)
+    {
+      X.nV[i] += N.nV[I]*Element.nM[I][i];
+    }
+  }
+
+  /* 4º Free memory */
+  free__MatrixLib__(N);
+
+  /* 5º Output */
+  return X;
+ 
+}
+
+/*********************************************************************/
+
+static void X_to_Xi__GIMP__(
+  Matrix Xi,
+  Matrix X,
+  Matrix Element)
+/* 
+   The function return the natural coordinates of a point 
+   inside of the element.
+ 
+   Inputs :
+   - Coordinates of the element nodes
+   - Initial coordinate of the point to start the search 
+   - Derivative function of the element
+
+   Depending of the kind of element, we employ differents types
+   of shape functions
+*/
+{  
+  Xi = Newton_Rapson(Xi_to_X__GIMP__, Element, F_Ref__GIMP__, Element, X, Xi);  
 }
 
 /*********************************************************************/
