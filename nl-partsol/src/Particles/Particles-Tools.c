@@ -117,8 +117,8 @@ void asign_to_nodes__Particles__(
   /*!
    * Assign particle to an element of the background mesh
    * */
-  push__SetLib__(&FEM_Mesh.List_Particles_Element[E_p],p);
-  FEM_Mesh.Num_Particles_Element[E_p] += 1;
+//  push__SetLib__(&FEM_Mesh.List_Particles_Element[E_p],p);
+//  FEM_Mesh.Num_Particles_Element[E_p] += 1;
   
   /*!
    * Assign particle to a node of the background mesh
@@ -127,10 +127,6 @@ void asign_to_nodes__Particles__(
   FEM_Mesh.Num_Particles_Node[I0] += 1;
   
 }
-
-/*********************************************************************/
-
-
 
 /*********************************************************************/
 

@@ -296,6 +296,7 @@ typedef struct {
    * F-bar
    * */
   Matrix Fbar;
+  Matrix Jbar;
 
   /*!
    * Inverse of the plastic deformation gradient
@@ -792,7 +793,7 @@ typedef struct {
   /*
    * Function of compute natural coordinate
   */
-  void (* X_to_Xi)(Matrix, Matrix, Matrix);
+//  void (* X_to_Xi)(Matrix, Matrix, Matrix);
 
   /* !
   * Function to compute the volume of an element
@@ -813,11 +814,13 @@ typedef struct {
   /*!
    * Variables and function for F-bar calculation
    * */
-  int * Num_Particles_Element;
-  ChainPtr * List_Particles_Element;    
-  double (* compute_Jacobian_patch)(int,Particle,ChainPtr *,double *,double *);
-  double * Vol_element_n;
-  double * Vol_element_n1;
+//  int * Num_Particles_Element;
+//  ChainPtr * List_Particles_Element;
+  bool Locking_Control_Fbar;
+  int Num_Patch_Mesh;
+  int * Idx_Patch;
+  double * Vol_Patch_n;
+  double * Vol_Patch_n1;
 
 } Mesh;
 

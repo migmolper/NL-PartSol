@@ -7,7 +7,7 @@
  */
 static Matrix F_Ref__T4__(Matrix, Matrix);
 static Matrix Xi_to_X__T4__(Matrix, Matrix);
-
+static void   X_to_Xi__T4__(Matrix,Matrix,Matrix);
 /*********************************************************************/
 
 void initialize__T4__(
@@ -285,7 +285,7 @@ static Matrix Xi_to_X__T4__(
 
 /*********************************************************************/
 
-void X_to_Xi__T4__(
+static void X_to_Xi__T4__(
   Matrix Xi,
   Matrix X,
   Matrix Element)
@@ -637,17 +637,17 @@ void local_search__T4__(Particle MPM_Mesh, Mesh FEM_Mesh)
 
   }
 
-  for(int i = 0 ; i<FEM_Mesh.NumElemMesh ; i++)
+  for(int i = 0 ; i<FEM_Mesh.Num_Patch_Mesh ; i++)
   {
-    Num_Particles_Element_i = FEM_Mesh.Num_Particles_Element[i];
+//    Num_Particles_Element_i = FEM_Mesh.Num_Particles_Element[i];
 
-    if(Num_Particles_Element_i != 0)
-    {
-      free__SetLib__(&FEM_Mesh.List_Particles_Element[i]); 
-      FEM_Mesh.Num_Particles_Element[i] = 0;
-      FEM_Mesh.Vol_element_n[i] = 0.0;
-      FEM_Mesh.Vol_element_n1[i] = 0.0;
-    }
+//    if(Num_Particles_Element_i != 0)
+//    {
+//      free__SetLib__(&FEM_Mesh.List_Particles_Element[i]); 
+//      FEM_Mesh.Num_Particles_Element[i] = 0;
+      FEM_Mesh.Vol_Patch_n[i] = 0.0;
+      FEM_Mesh.Vol_Patch_n1[i] = 0.0;
+//    }
   }
 
   // Loop over the particles
@@ -696,7 +696,7 @@ void local_search__T4__(Particle MPM_Mesh, Mesh FEM_Mesh)
       CoordElement = get_nodes_coordinates__MeshTools__(MPM_Mesh.ListNodes[p],FEM_Mesh.Coordinates);
 
       // Compute local coordinates of the particle in this element
-      FEM_Mesh.X_to_Xi(Xi_p,X_p,CoordElement);
+      X_to_Xi__T4__(Xi_p,X_p,CoordElement);
 
       // Free coordinates of the element
       free__MatrixLib__(CoordElement);
@@ -739,49 +739,5 @@ void local_search__T4__(Particle MPM_Mesh, Mesh FEM_Mesh)
 
 
 }
-
-/*********************************************************************/
-
-double compute_Jacobian_patch__T4__(
-  int p,
-  Particle MPM_Mesh,
-  ChainPtr * NodeNeighbour,
-  double * Vol_element_n,
-  double * Vol_element_n1)
-{
-
-  int q;
-  int Ndim = NumberDimensions;
-  int I0_p = MPM_Mesh.I0[p];
-  double Vn_patch;
-  double Vn1_patch;
-  double J_patch;
-
-  ChainPtr Elements_Near_I0;
-
-  Vn_patch = 0.0;
-  Vn1_patch = 0.0;
-
-  // List of elements near the particle
-  Elements_Near_I0 = NodeNeighbour[I0_p];
-
-  // Loop in the sourrounding elements to get the deformed and reference volumes
-  while(Elements_Near_I0 != NULL)
-  {
-
-    Vn_patch += Vol_element_n[Elements_Near_I0->I];
-    Vn1_patch += Vol_element_n1[Elements_Near_I0->I];
-
-    Elements_Near_I0 = Elements_Near_I0->next; 
-
-  }
-
-  // Compute the averaged jacobian of the deformation gradient
-  J_patch = Vn1_patch/Vn_patch;
-
-  return J_patch;
-}
-
-
 
 /*********************************************************************/

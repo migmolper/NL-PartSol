@@ -7,6 +7,7 @@
  */
 static Matrix F_Ref__H8__(Matrix, Matrix);
 static Matrix Xi_to_X__H8__(Matrix, Matrix);
+static void   X_to_Xi__H8__(Matrix,Matrix,Matrix);
 
 /*********************************************************************/
 
@@ -74,7 +75,7 @@ void initialize__H8__(
         /* Active those nodes that interact with the particle */
         asign_to_nodes__Particles__(p, MPM_Mesh.Element_p[p], MPM_Mesh.I0[p], MPM_Mesh.ListNodes[p], FEM_Mesh);
 
-        /* Compute local coordinates of the particle in this element */
+        /* Compute locstatic al coordinates of the particle in this element */
         X_to_Xi__H8__(Xi_p,X_p,Elem_p_Coordinates);
 
         /* Free coordinates of the element */
@@ -314,7 +315,7 @@ static Matrix Xi_to_X__H8__(
 
 /*********************************************************************/
 
-void X_to_Xi__H8__(
+static void X_to_Xi__H8__(
   Matrix Xi, 
   Matrix X, 
   Matrix Element)
@@ -758,17 +759,17 @@ void local_search__H8__(Particle MPM_Mesh, Mesh FEM_Mesh)
 
   }
 
-  for(int i = 0 ; i<FEM_Mesh.NumElemMesh ; i++)
+  for(int i = 0 ; i<FEM_Mesh.Num_Patch_Mesh ; i++)
   {
-    Num_Particles_Element_i = FEM_Mesh.Num_Particles_Element[i];
+//    Num_Particles_Element_i = FEM_Mesh.Num_Particles_Element[i];
 
-    if(Num_Particles_Element_i != 0)
-    {
-      free__SetLib__(&FEM_Mesh.List_Particles_Element[i]); 
-      FEM_Mesh.Num_Particles_Element[i] = 0;
-      FEM_Mesh.Vol_element_n[i] = 0.0;
-      FEM_Mesh.Vol_element_n1[i] = 0.0;
-    }
+//    if(Num_Particles_Element_i != 0)
+//    {
+//      free__SetLib__(&FEM_Mesh.List_Particles_Element[i]); 
+//      FEM_Mesh.Num_Particles_Element[i] = 0;
+      FEM_Mesh.Vol_Patch_n[i] = 0.0;
+      FEM_Mesh.Vol_Patch_n1[i] = 0.0;
+//    }
   }
 
   // Loop over the particles
@@ -817,7 +818,7 @@ void local_search__H8__(Particle MPM_Mesh, Mesh FEM_Mesh)
       CoordElement = get_nodes_coordinates__MeshTools__(MPM_Mesh.ListNodes[p],FEM_Mesh.Coordinates);
 
       // Compute local coordinates of the particle in this element
-      FEM_Mesh.X_to_Xi(Xi_p,X_p,CoordElement);
+      X_to_Xi__H8__(Xi_p,X_p,CoordElement);
 
       // Free coordinates of the element
       free__MatrixLib__(CoordElement);
@@ -860,33 +861,5 @@ void local_search__H8__(Particle MPM_Mesh, Mesh FEM_Mesh)
 
 
 }
-
-/*********************************************************************/
-
-double compute_Jacobian_patch__H8__(
-  int p,
-  Particle MPM_Mesh,
-  ChainPtr * NodeNeighbour,
-  double * Vol_element_n,
-  double * Vol_element_n1)
-{
-  int Element_p;
-  double Vn_patch;
-  double Vn1_patch;
-  double J_patch;
-
-
-  // Get the volume of the element
-  Element_p = MPM_Mesh.Element_p[p];
-  Vn_patch = Vol_element_n[Element_p];
-  Vn1_patch = Vol_element_n1[Element_p];
-
-  // Compute the averaged jacobian of the deformation gradient
-  J_patch = Vn1_patch/Vn_patch;
-
-  return J_patch;
-}
-
-
 
 /*********************************************************************/

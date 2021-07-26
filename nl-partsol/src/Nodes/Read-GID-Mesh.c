@@ -35,7 +35,8 @@ static char Error_message[MAXW];
 
 static Mesh_Information Read_Mesh_Information(char *);
 static void Fill_Coordinates(char * , Mesh_Information, Matrix);
-static void Fill_Conectivity(char * , Mesh_Information, ChainPtr *, int *);
+static void Fill_Linear_Conectivity(char * , Mesh_Information, ChainPtr *, int *);
+static void Fill_Quadratic_Conectivity(char *,Mesh_Information,ChainPtr *, int *, int *);
 static void standard_error(int, char *);
 static void standard_output(char *);
 static FILE * Open_and_Check_simulation_file(char *);
@@ -53,78 +54,118 @@ Mesh ReadGidMesh__MeshTools__(char * MeshName)
     Read information of the mesh such as number of nodes, number of elements, etc
   */
   Mesh_Information Mesh_Info = Read_Mesh_Information(MeshName);
-
-  /*
-    Fill information of the mesh
-  */
-  GID_Mesh.NumNodesMesh = Mesh_Info.NumNodesMesh;
-  GID_Mesh.NumElemMesh = Mesh_Info.NumElemMesh;
-  GID_Mesh.Dimension = Mesh_Info.Dimension;
-  strcpy(GID_Mesh.TypeElem,Mesh_Info.ElemType);
   
+
+
   /*
     Select the kind of element of the mesh and assign functions
   */
-  if((strcmp(GID_Mesh.TypeElem,"Triangle") == 0) && (Mesh_Info.NumNodesElem == 3))
+  if((strcmp(Mesh_Info.ElemType,"Triangle") == 0) && (Mesh_Info.NumNodesElem == 3))
   {
     GID_Mesh.N_ref = N__T3__;
     GID_Mesh.dNdX_ref = dN_Ref__T3__;
     GID_Mesh.dNdX = dN__T3__;
     GID_Mesh.volume_Element = volume__T3__;
     GID_Mesh.In_Out_Element = in_out__T3__;
-    GID_Mesh.X_to_Xi = X_to_Xi__T3__;
-    GID_Mesh.compute_Jacobian_patch = compute_Jacobian_patch__T3__;
+    GID_Mesh.NumNodesMesh = Mesh_Info.NumNodesMesh;
+    GID_Mesh.NumElemMesh = Mesh_Info.NumElemMesh;
+    GID_Mesh.Dimension = Mesh_Info.Dimension;
+    strcpy(GID_Mesh.TypeElem,Mesh_Info.ElemType);
+    GID_Mesh.Coordinates  = alloc__MatrixLib__(GID_Mesh.NumNodesMesh,GID_Mesh.Dimension);
+    GID_Mesh.Connectivity = alloc_table__SetLib__(GID_Mesh.NumElemMesh);  
+    GID_Mesh.NumNodesElem = (int *)Allocate_ArrayZ(GID_Mesh.NumElemMesh,sizeof(int));
+    GID_Mesh.Num_Particles_Node = (int *)Allocate_ArrayZ(GID_Mesh.NumNodesMesh,sizeof(int));
+    GID_Mesh.Locking_Control_Fbar = false;
+    Fill_Coordinates(MeshName,Mesh_Info,GID_Mesh.Coordinates);
+    Fill_Linear_Conectivity(MeshName,Mesh_Info,GID_Mesh.Connectivity,GID_Mesh.NumNodesElem);
   }
-  else if((strcmp(GID_Mesh.TypeElem,"Quadrilateral") == 0) && (Mesh_Info.NumNodesElem == 4))
+  else if((strcmp(Mesh_Info.ElemType,"Triangle") == 0) && (Mesh_Info.NumNodesElem == 6))
+  {
+    GID_Mesh.N_ref = N__T3__;
+    GID_Mesh.dNdX_ref = dN_Ref__T3__;
+    GID_Mesh.dNdX = dN__T3__;
+    GID_Mesh.volume_Element = volume__T3__;
+    GID_Mesh.In_Out_Element = in_out__T3__;
+    GID_Mesh.NumNodesMesh = Mesh_Info.NumNodesMesh;
+    GID_Mesh.NumElemMesh = Mesh_Info.NumElemMesh*4;
+    GID_Mesh.Num_Patch_Mesh = Mesh_Info.NumElemMesh;
+    GID_Mesh.Dimension = Mesh_Info.Dimension;
+    strcpy(GID_Mesh.TypeElem,Mesh_Info.ElemType);
+    GID_Mesh.Coordinates  = alloc__MatrixLib__(GID_Mesh.NumNodesMesh,GID_Mesh.Dimension);
+    GID_Mesh.Connectivity = alloc_table__SetLib__(GID_Mesh.NumElemMesh);  
+    GID_Mesh.NumNodesElem = (int *)Allocate_ArrayZ(GID_Mesh.NumElemMesh,sizeof(int));
+    GID_Mesh.Num_Particles_Node = (int *)Allocate_ArrayZ(GID_Mesh.NumNodesMesh,sizeof(int));
+    GID_Mesh.Locking_Control_Fbar = true;
+    GID_Mesh.Idx_Patch = (int *)Allocate_ArrayZ(GID_Mesh.NumElemMesh,sizeof(int));
+    GID_Mesh.Vol_Patch_n = (double *)Allocate_ArrayZ(Mesh_Info.NumElemMesh,sizeof(double));
+    GID_Mesh.Vol_Patch_n1 = (double *)Allocate_ArrayZ(Mesh_Info.NumElemMesh,sizeof(double));
+    Fill_Coordinates(MeshName,Mesh_Info,GID_Mesh.Coordinates);
+    Fill_Quadratic_Conectivity(MeshName,Mesh_Info,GID_Mesh.Connectivity,GID_Mesh.Idx_Patch,GID_Mesh.NumNodesElem);
+  }
+  else if((strcmp(Mesh_Info.ElemType,"Quadrilateral") == 0) && (Mesh_Info.NumNodesElem == 4))
   {
     GID_Mesh.N_ref = N__Q4__;
     GID_Mesh.dNdX_ref = dN_Ref__Q4__;
     GID_Mesh.dNdX = dN__Q4__;
     GID_Mesh.volume_Element = volume__Q4__;
     GID_Mesh.In_Out_Element = in_out__Q4__;
-    GID_Mesh.X_to_Xi = X_to_Xi__Q4__;
-    GID_Mesh.compute_Jacobian_patch = compute_Jacobian_patch__Q4__;
+    GID_Mesh.NumNodesMesh = Mesh_Info.NumNodesMesh;
+    GID_Mesh.NumElemMesh = Mesh_Info.NumElemMesh;
+    GID_Mesh.Dimension = Mesh_Info.Dimension;
+    strcpy(GID_Mesh.TypeElem,Mesh_Info.ElemType);
+    GID_Mesh.Coordinates  = alloc__MatrixLib__(GID_Mesh.NumNodesMesh,GID_Mesh.Dimension);
+    GID_Mesh.Connectivity = alloc_table__SetLib__(GID_Mesh.NumElemMesh);  
+    GID_Mesh.NumNodesElem = (int *)Allocate_ArrayZ(GID_Mesh.NumElemMesh,sizeof(int));
+    GID_Mesh.Num_Particles_Node = (int *)Allocate_ArrayZ(GID_Mesh.NumNodesMesh,sizeof(int));
+    GID_Mesh.Locking_Control_Fbar = false;
+    Fill_Coordinates(MeshName,Mesh_Info,GID_Mesh.Coordinates);
+    Fill_Linear_Conectivity(MeshName,Mesh_Info,GID_Mesh.Connectivity,GID_Mesh.NumNodesElem);
   }
-  else if((strcmp(GID_Mesh.TypeElem,"Tetrahedra") == 0) && (Mesh_Info.NumNodesElem == 4))
+  else if((strcmp(Mesh_Info.ElemType,"Tetrahedra") == 0) && (Mesh_Info.NumNodesElem == 4))
   {
     GID_Mesh.N_ref = N__T4__;
     GID_Mesh.dNdX_ref = dN_Ref__T4__;
     GID_Mesh.dNdX = dN__T4__;
     GID_Mesh.volume_Element = volume__T4__;
     GID_Mesh.In_Out_Element = in_out__T4__;
-    GID_Mesh.X_to_Xi = X_to_Xi__T4__;
-    GID_Mesh.compute_Jacobian_patch = compute_Jacobian_patch__T4__;
+    GID_Mesh.NumNodesMesh = Mesh_Info.NumNodesMesh;
+    GID_Mesh.NumElemMesh = Mesh_Info.NumElemMesh;
+    GID_Mesh.Dimension = Mesh_Info.Dimension;
+    strcpy(GID_Mesh.TypeElem,Mesh_Info.ElemType);
+    GID_Mesh.Coordinates  = alloc__MatrixLib__(GID_Mesh.NumNodesMesh,GID_Mesh.Dimension);
+    GID_Mesh.Connectivity = alloc_table__SetLib__(GID_Mesh.NumElemMesh);  
+    GID_Mesh.NumNodesElem = (int *)Allocate_ArrayZ(GID_Mesh.NumElemMesh,sizeof(int));
+    GID_Mesh.Num_Particles_Node = (int *)Allocate_ArrayZ(GID_Mesh.NumNodesMesh,sizeof(int));
+    GID_Mesh.Locking_Control_Fbar = false;
+    Fill_Coordinates(MeshName,Mesh_Info,GID_Mesh.Coordinates);
+    Fill_Linear_Conectivity(MeshName,Mesh_Info,GID_Mesh.Connectivity,GID_Mesh.NumNodesElem);
   }
-  else if((strcmp(GID_Mesh.TypeElem,"Hexahedra") == 0) && (Mesh_Info.NumNodesElem == 8))
+  else if((strcmp(Mesh_Info.ElemType,"Hexahedra") == 0) && (Mesh_Info.NumNodesElem == 8))
   {
     GID_Mesh.N_ref = N__H8__;
     GID_Mesh.dNdX_ref = dN_Ref__H8__;
     GID_Mesh.dNdX = dN__H8__;
     GID_Mesh.volume_Element = volume__H8__;
     GID_Mesh.In_Out_Element = in_out__H8__;
-    GID_Mesh.X_to_Xi = X_to_Xi__H8__;
-    GID_Mesh.compute_Jacobian_patch = compute_Jacobian_patch__H8__;
+    GID_Mesh.NumNodesMesh = Mesh_Info.NumNodesMesh;
+    GID_Mesh.NumElemMesh = Mesh_Info.NumElemMesh;
+    GID_Mesh.Dimension = Mesh_Info.Dimension;
+    strcpy(GID_Mesh.TypeElem,Mesh_Info.ElemType);
+    GID_Mesh.Coordinates  = alloc__MatrixLib__(GID_Mesh.NumNodesMesh,GID_Mesh.Dimension);
+    GID_Mesh.Connectivity = alloc_table__SetLib__(GID_Mesh.NumElemMesh);  
+    GID_Mesh.NumNodesElem = (int *)Allocate_ArrayZ(GID_Mesh.NumElemMesh,sizeof(int));
+    GID_Mesh.Num_Particles_Node = (int *)Allocate_ArrayZ(GID_Mesh.NumNodesMesh,sizeof(int));
+    GID_Mesh.Locking_Control_Fbar = false;
+    Fill_Coordinates(MeshName,Mesh_Info,GID_Mesh.Coordinates);
+    Fill_Linear_Conectivity(MeshName,Mesh_Info,GID_Mesh.Connectivity,GID_Mesh.NumNodesElem);
   }
   else
   {
-    sprintf(Error_message,"This kind of element is not suported");
+    sprintf(Error_message,"Non suported element -> TypeElem : %s ; NumNodesElem : %i\n",
+     Mesh_Info.ElemType,Mesh_Info.NumNodesElem);
     standard_error(0, MeshName);
   }
 
-  /* 
-    Allocate data 
-  */
-  GID_Mesh.Coordinates  = alloc__MatrixLib__(GID_Mesh.NumNodesMesh,GID_Mesh.Dimension);
-  GID_Mesh.Connectivity = alloc_table__SetLib__(GID_Mesh.NumElemMesh);  
-  GID_Mesh.NumNodesElem = (int *)Allocate_ArrayZ(GID_Mesh.NumElemMesh,sizeof(int));
-  GID_Mesh.Num_Particles_Node = (int *)Allocate_ArrayZ(GID_Mesh.NumNodesMesh,sizeof(int));
-
-
-  /*  
-    Fill coordinates and connectivity
-  */
-  Fill_Coordinates(MeshName,Mesh_Info,GID_Mesh.Coordinates);
-  Fill_Conectivity(MeshName,Mesh_Info,GID_Mesh.Connectivity,GID_Mesh.NumNodesElem);
 
   return GID_Mesh;
 }
@@ -219,7 +260,6 @@ static Mesh_Information Read_Mesh_Information(char * MeshName)
     Num_line++;
   }
 
-  
   /* At the end close the mesh file */
   fclose(MeshFile);
 
@@ -296,7 +336,7 @@ static void Fill_Coordinates(
 
 /***************************************************************************/
 
-static void Fill_Conectivity(
+static void Fill_Linear_Conectivity(
   char * MeshName,
   Mesh_Information Mesh_Info,
   ChainPtr * Connectivity, 
@@ -362,6 +402,69 @@ static void Fill_Conectivity(
     At the end close the mesh file
   */
   fclose(MeshFile);
+
+}
+
+/***************************************************************************/
+
+static void Fill_Quadratic_Conectivity(
+  char * MeshName,
+  Mesh_Information Quadratic_Mesh_Info,
+  ChainPtr * Connectivity, 
+  int * Idx_Patch,
+  int * NumNodesElem)
+{
+
+  ChainPtr * Quadratic_Connectivity = alloc_table__SetLib__(Quadratic_Mesh_Info.NumElemMesh);
+
+  int NumInternalElements = 4;
+  int Num_Linear_Element_Mesh = NumInternalElements*Quadratic_Mesh_Info.NumElemMesh;
+  int * Quadratic_Connectivity_i;
+
+  Fill_Linear_Conectivity(MeshName,Quadratic_Mesh_Info,Quadratic_Connectivity,NumNodesElem);
+
+  for(int i = 0 ; i<Quadratic_Mesh_Info.NumElemMesh ; i++)
+  {
+
+    Quadratic_Connectivity_i = set_to_memory__SetLib__(Quadratic_Connectivity[i], 6);
+
+    // Internal element 1
+    push__SetLib__(&Connectivity[i*NumInternalElements + 0],Quadratic_Connectivity_i[5]);
+    push__SetLib__(&Connectivity[i*NumInternalElements + 0],Quadratic_Connectivity_i[2]);
+    push__SetLib__(&Connectivity[i*NumInternalElements + 0],Quadratic_Connectivity_i[0]);
+    Idx_Patch[i*NumInternalElements + 0] = i;
+
+    // Internal element 2
+    push__SetLib__(&Connectivity[i*NumInternalElements + 1],Quadratic_Connectivity_i[4]);
+    push__SetLib__(&Connectivity[i*NumInternalElements + 1],Quadratic_Connectivity_i[2]);
+    push__SetLib__(&Connectivity[i*NumInternalElements + 1],Quadratic_Connectivity_i[1]);
+    Idx_Patch[i*NumInternalElements + 1] = i;
+
+    // Internal element 3
+    push__SetLib__(&Connectivity[i*NumInternalElements + 2],Quadratic_Connectivity_i[3]);
+    push__SetLib__(&Connectivity[i*NumInternalElements + 2],Quadratic_Connectivity_i[1]);
+    push__SetLib__(&Connectivity[i*NumInternalElements + 2],Quadratic_Connectivity_i[0]);
+    Idx_Patch[i*NumInternalElements + 2] = i;
+
+    // Internal element 4
+    push__SetLib__(&Connectivity[i*NumInternalElements + 3],Quadratic_Connectivity_i[2]);
+    push__SetLib__(&Connectivity[i*NumInternalElements + 3],Quadratic_Connectivity_i[1]);
+    push__SetLib__(&Connectivity[i*NumInternalElements + 3],Quadratic_Connectivity_i[0]);
+    Idx_Patch[i*NumInternalElements + 3] = i;
+
+    free(Quadratic_Connectivity_i);
+
+  }
+
+  /*
+    Fill number of nodes per element
+  */
+  for(int i = 0 ; i<Num_Linear_Element_Mesh ; i++)
+  {
+    NumNodesElem[i] = 3;
+  }
+  
+  free_table__SetLib__(Quadratic_Connectivity,Quadratic_Mesh_Info.NumElemMesh); 
 
 }
 

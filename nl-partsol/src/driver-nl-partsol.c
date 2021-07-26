@@ -320,6 +320,7 @@ puts("The creator of NL-PartSol is Miguel Molinos");
 puts("mails to : m.molinos@alumnos.upm.es (Madrid-Spain)");
 
 exit(EXIT_SUCCESS);
+
 }
 
 
@@ -340,8 +341,15 @@ static void globalfree(Mesh FEM_Mesh, Particle MPM_Mesh)
   free_table__SetLib__(FEM_Mesh.NodalLocality,FEM_Mesh.NumNodesMesh);
   free(FEM_Mesh.Num_Particles_Node);
   free_table__SetLib__(FEM_Mesh.List_Particles_Node,FEM_Mesh.NumNodesMesh);
-  free(FEM_Mesh.Num_Particles_Element);
-  free_table__SetLib__(FEM_Mesh.List_Particles_Element,FEM_Mesh.NumElemMesh); 
+//  free(FEM_Mesh.Num_Particles_Element);
+//  free_table__SetLib__(FEM_Mesh.List_Particles_Element,FEM_Mesh.NumElemMesh); 
+
+  if(FEM_Mesh.Locking_Control_Fbar)
+  {
+    free(FEM_Mesh.Idx_Patch);
+    free(FEM_Mesh.Vol_Patch_n);
+    free(FEM_Mesh.Vol_Patch_n1);
+  }
 
   /* FEM_Mesh.Bounds */
 

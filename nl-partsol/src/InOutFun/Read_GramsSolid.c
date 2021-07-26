@@ -394,9 +394,17 @@ Particle GramsSolid(char * Name_File, Mesh FEM_Mesh, int * STATUS)
     {
       free__SetLib__(&MPM_GID_Mesh.Connectivity[i]); 
     }   
+
     free(MPM_GID_Mesh.Connectivity);
     free__MatrixLib__(MPM_GID_Mesh.Coordinates);
     free(MPM_GID_Mesh.Num_Particles_Node);
+
+    if(MPM_GID_Mesh.Locking_Control_Fbar == true)
+    {
+      free(MPM_GID_Mesh.Idx_Patch);
+      free(MPM_GID_Mesh.Vol_Patch_n);
+      free(MPM_GID_Mesh.Vol_Patch_n1);
+    }
 
   } 
   else

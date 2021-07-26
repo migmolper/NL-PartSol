@@ -14,6 +14,8 @@ static void order_logZ_simplex_Nelder_Mead__LME__(Matrix, Matrix);
 static void expansion_Nelder_Mead__LME__(Matrix,Matrix,Matrix,Matrix,Matrix,Matrix,double,double);
 static void contraction_Nelder_Mead__LME__(Matrix,Matrix,Matrix,Matrix,Matrix,Matrix,double,double);
 static void shrinkage_Nelder_Mead__LME__(Matrix,Matrix,Matrix,Matrix,double);
+static ChainPtr tributary__LME__(int,Matrix, Matrix, double, int, Mesh);
+/****************************************************************************/
 
 // Call global var¡ables
 char wrapper_LME[MAXC];
@@ -1088,17 +1090,17 @@ void local_search__LME__(Particle MPM_Mesh, Mesh FEM_Mesh)
 
   }
 
-  for(int i = 0 ; i<FEM_Mesh.NumElemMesh ; i++)
+  for(int i = 0 ; i<FEM_Mesh.Num_Patch_Mesh ; i++)
   {
-    Num_Particles_Element_i = FEM_Mesh.Num_Particles_Element[i];
+//    Num_Particles_Element_i = FEM_Mesh.Num_Particles_Element[i];
 
-    if(Num_Particles_Element_i != 0)
-    {
-      free__SetLib__(&FEM_Mesh.List_Particles_Element[i]); 
-      FEM_Mesh.Num_Particles_Element[i] = 0;
-      FEM_Mesh.Vol_element_n[i] = 0.0;
-      FEM_Mesh.Vol_element_n1[i] = 0.0;
-    }
+//    if(Num_Particles_Element_i != 0)
+//    {
+//      free__SetLib__(&FEM_Mesh.List_Particles_Element[i]); 
+//      FEM_Mesh.Num_Particles_Element[i] = 0;
+      FEM_Mesh.Vol_Patch_n[i] = 0.0;
+      FEM_Mesh.Vol_Patch_n1[i] = 0.0;
+//    }
   }
 
 
@@ -1224,13 +1226,24 @@ void local_search__LME__(Particle MPM_Mesh, Mesh FEM_Mesh)
 
 /****************************************************************************/
 
-ChainPtr tributary__LME__(
+static ChainPtr tributary__LME__(
   int Indx_p,
   Matrix X_p,
   Matrix Metric,
   double Beta_p,
   int I0,
   Mesh FEM_Mesh)
+/*!
+  \fn Matrix tributary__LME__(Matrix X_p, Matrix Metric, double Beta_p, int I0, Mesh FEM_Mesh);
+
+  \brief Compute a set with the sourrounding nodes of the particle
+
+  \param X_p : Coordinates of the particle
+  \param Metric : Measure for the norm definition
+  \param Beta_p : Thermalization parameter of the particle
+  \param I0 : Index of the closest node to the particle
+  \param FEM_Mesh : Variable wih information of the background set of nodes
+*/
 {
 
   /* Define output */
