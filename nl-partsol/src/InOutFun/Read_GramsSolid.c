@@ -291,7 +291,7 @@ Particle GramsSolid(char * Name_File, Mesh FEM_Mesh, int * STATUS)
     puts("*************************************************");
     if(strcmp(ShapeFunctionGP,"FEM") == 0)
     {
-      if((strcmp(FEM_Mesh.TypeElem,"Triangle") == 0) && (FEM_Mesh.NumNodesElem[0] == 3))
+      if(strcmp(FEM_Mesh.TypeElem,"Triangle") == 0)
       {
         printf("\t * %s \n","Start FEM-T3 shape functions initialisation ...");
         initialize__T3__(MPM_Mesh, FEM_Mesh);
@@ -394,9 +394,17 @@ Particle GramsSolid(char * Name_File, Mesh FEM_Mesh, int * STATUS)
     {
       free__SetLib__(&MPM_GID_Mesh.Connectivity[i]); 
     }   
+
     free(MPM_GID_Mesh.Connectivity);
     free__MatrixLib__(MPM_GID_Mesh.Coordinates);
     free(MPM_GID_Mesh.Num_Particles_Node);
+
+    if(MPM_GID_Mesh.Locking_Control_Fbar == true)
+    {
+      free(MPM_GID_Mesh.Idx_Patch);
+      free(MPM_GID_Mesh.Vol_Patch_n);
+      free(MPM_GID_Mesh.Vol_Patch_n1);
+    }
 
   } 
   else
