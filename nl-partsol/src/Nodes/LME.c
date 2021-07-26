@@ -1090,17 +1090,17 @@ void local_search__LME__(Particle MPM_Mesh, Mesh FEM_Mesh)
 
   }
 
-  for(int i = 0 ; i<FEM_Mesh.NumElemMesh ; i++)
+  for(int i = 0 ; i<FEM_Mesh.Num_Patch_Mesh ; i++)
   {
-    Num_Particles_Element_i = FEM_Mesh.Num_Particles_Element[i];
+//    Num_Particles_Element_i = FEM_Mesh.Num_Particles_Element[i];
 
-    if(Num_Particles_Element_i != 0)
-    {
-      free__SetLib__(&FEM_Mesh.List_Particles_Element[i]); 
-      FEM_Mesh.Num_Particles_Element[i] = 0;
-      FEM_Mesh.Vol_patch_n[i] = 0.0;
-      FEM_Mesh.Vol_patch_n1[i] = 0.0;
-    }
+//    if(Num_Particles_Element_i != 0)
+//    {
+//      free__SetLib__(&FEM_Mesh.List_Particles_Element[i]); 
+//      FEM_Mesh.Num_Particles_Element[i] = 0;
+      FEM_Mesh.Vol_Patch_n[i] = 0.0;
+      FEM_Mesh.Vol_Patch_n1[i] = 0.0;
+//    }
   }
 
 

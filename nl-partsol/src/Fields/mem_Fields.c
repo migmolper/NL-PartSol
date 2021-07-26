@@ -112,6 +112,13 @@ Fields allocate_U_vars__Fields__(int NumParticles)
     }
   }
 
+  Phi.Jbar = allocZ__MatrixLib__(NumParticles,1);
+  strcpy(Phi.Jbar.Info,"Jacobian of the particle");  
+
+  for(int p = 0 ; p<NumParticles ; p++)
+  {
+    Phi.Jbar.nV[p] = 1.0;
+  }
 
   /*!
     Strain_If field (Scalar) 
@@ -200,6 +207,7 @@ void free_U_vars__Fields__(Fields Phi)
   free__MatrixLib__(Phi.dt_F_n1);
   free__MatrixLib__(Phi.dt_DF);
   free__MatrixLib__(Phi.Fbar);
+  free__MatrixLib__(Phi.Jbar);
   free__MatrixLib__(Phi.DF);
   free__MatrixLib__(Phi.W);
   free__MatrixLib__(Phi.Vol_0);
@@ -322,6 +330,14 @@ Fields allocate_Up_vars__Fields__(int NumParticles)
     }
   }
 
+  Phi.Jbar = allocZ__MatrixLib__(NumParticles,1);
+  strcpy(Phi.Jbar.Info,"Jacobian of the particle");  
+
+  for(int p = 0 ; p<NumParticles ; p++)
+  {
+    Phi.Jbar.nV[p] = 1.0;
+  }
+
   /*!
     Strain_If field (Scalar) 
   */
@@ -419,6 +435,8 @@ void free_Up_vars__Fields__(Fields Phi)
   free__MatrixLib__(Phi.dt_F_n1);
   free__MatrixLib__(Phi.dt_DF);
   free__MatrixLib__(Phi.Fbar);
+  free__MatrixLib__(Phi.Jbar);
+  free__MatrixLib__(Phi.Jbar);
   free__MatrixLib__(Phi.DF);
   free__MatrixLib__(Phi.W);
   free__MatrixLib__(Phi.Vol_0);
@@ -542,6 +560,14 @@ Fields allocate_upw_vars__Fields__(int NumParticles)
     {
       Phi.Fbar.nM[p][i + i*Ndim] = 1.0;   
     }
+  }
+
+  Phi.Jbar = allocZ__MatrixLib__(NumParticles,1);
+  strcpy(Phi.Jbar.Info,"Jacobian of the particle");  
+
+  for(int p = 0 ; p<NumParticles ; p++)
+  {
+    Phi.Jbar.nV[p] = 1.0;
   }
   
   /*!
@@ -677,6 +703,8 @@ void free_upw_vars__Fields__(Fields Phi)
   free__MatrixLib__(Phi.J_n1);
   free__MatrixLib__(Phi.dJ_dt);
   free__MatrixLib__(Phi.Fbar);
+  free__MatrixLib__(Phi.Jbar);
+  free__MatrixLib__(Phi.Jbar);
   free__MatrixLib__(Phi.W);
   free__MatrixLib__(Phi.phi_s);
   free__MatrixLib__(Phi.phi_f);

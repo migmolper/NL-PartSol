@@ -101,7 +101,7 @@ void Stress_integration__Particles__(
     if(MatProp_p.Locking_Control_Fbar)
     {
       Input_SP.F_n1_p = MPM_Mesh.Phi.Fbar.nM[p];
-//      Input_SP.J = MPM_Mesh.Phi.Jbar.nV[p];
+      Input_SP.J = MPM_Mesh.Phi.Jbar.nV[p];
     }
     else
     {

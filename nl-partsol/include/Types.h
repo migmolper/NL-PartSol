@@ -296,6 +296,7 @@ typedef struct {
    * F-bar
    * */
   Matrix Fbar;
+  Matrix Jbar;
 
   /*!
    * Inverse of the plastic deformation gradient
@@ -813,10 +814,13 @@ typedef struct {
   /*!
    * Variables and function for F-bar calculation
    * */
-  int * Num_Particles_Element;
-  ChainPtr * List_Particles_Element;    
-  double * Vol_patch_n;
-  double * Vol_patch_n1;
+//  int * Num_Particles_Element;
+//  ChainPtr * List_Particles_Element;
+  bool Locking_Control_Fbar;
+  int Num_Patch_Mesh;
+  int * Idx_Patch;
+  double * Vol_Patch_n;
+  double * Vol_Patch_n1;
 
 } Mesh;
 

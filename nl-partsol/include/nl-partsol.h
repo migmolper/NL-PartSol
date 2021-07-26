@@ -61,7 +61,6 @@
 #include "Constitutive.h"
 #include "Particles.h"
 #include "T3.h"
-#include "T6.h"
 #include "T4.h"
 #include "Q4.h"
 #include "H8.h"

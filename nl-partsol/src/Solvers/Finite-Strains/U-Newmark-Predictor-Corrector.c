@@ -667,7 +667,8 @@ static void update_Local_State(
   int Nnodes_mask = ActiveNodes.Nactivenodes;
   int Nnodes_p;
   int MatIndx_p;
-  int Element_p;
+  int Idx_Element_p;
+  int Idx_Patch_p;
   double rho_n_p;
   double Delta_J_p;
   double Vn_patch;
@@ -738,14 +739,12 @@ static void update_Local_State(
     /*
       Update patch
     */
-    MatIndx_p = MPM_Mesh.MatIdx[p];
-    MatProp_p = MPM_Mesh.Mat[MatIndx_p];
-
-    if(MatProp_p.Locking_Control_Fbar)
+    if(FEM_Mesh.Locking_Control_Fbar)
     {
-      Element_p = MPM_Mesh.Element_p[p];
-      FEM_Mesh.Vol_patch_n[Element_p] += MPM_Mesh.Phi.J_n.nV[p]*MPM_Mesh.Phi.Vol_0.nV[p];
-      FEM_Mesh.Vol_patch_n1[Element_p] += MPM_Mesh.Phi.J_n1.nV[p]*MPM_Mesh.Phi.Vol_0.nV[p];
+      Idx_Element_p = MPM_Mesh.Element_p[p];
+      Idx_Patch_p = FEM_Mesh.Idx_Patch[Idx_Element_p];
+      FEM_Mesh.Vol_Patch_n[Idx_Patch_p] += MPM_Mesh.Phi.J_n.nV[p]*MPM_Mesh.Phi.Vol_0.nV[p];
+      FEM_Mesh.Vol_Patch_n1[Idx_Patch_p] += MPM_Mesh.Phi.J_n1.nV[p]*MPM_Mesh.Phi.Vol_0.nV[p];
     }
 
     /*
@@ -772,15 +771,18 @@ static void update_Local_State(
     MatIndx_p = MPM_Mesh.MatIdx[p];
     MatProp_p = MPM_Mesh.Mat[MatIndx_p];
     
-    if(MatProp_p.Locking_Control_Fbar)
+    if(FEM_Mesh.Locking_Control_Fbar)
     {
-      Element_p = MPM_Mesh.Element_p[p];
+      Idx_Element_p = MPM_Mesh.Element_p[p];
+      Idx_Patch_p = FEM_Mesh.Idx_Patch[Idx_Element_p];
 
-      Vn_patch = FEM_Mesh.Vol_patch_n[Element_p];
-      Vn1_patch = FEM_Mesh.Vol_patch_n1[Element_p];
+      Vn_patch = FEM_Mesh.Vol_Patch_n[Idx_Patch_p];
+      Vn1_patch = FEM_Mesh.Vol_Patch_n1[Idx_Patch_p];
       J_patch = Vn1_patch/Vn_patch;
 
       get_locking_free_Deformation_Gradient_n1__Particles__(p,J_patch,MPM_Mesh);
+
+      MPM_Mesh.Phi.Jbar.nV[p] *= J_patch;
     }
 
     /*
@@ -1203,8 +1205,17 @@ static void compute_Explicit_Newmark_Corrector(
       Replace the deformation gradient at t = n with the new one
     */
     F_n_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n.nM[p],2);
-    F_n1_p  = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n1.nM[p],2);
-      
+
+    if(MPM_Mesh.Mat[MPM_Mesh.MatIdx[p]].Locking_Control_Fbar)
+    {
+      F_n1_p  = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.Fbar.nM[p],2);
+    }
+    else
+    {
+      F_n1_p  = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n1.nM[p],2);
+    }
+
+
     /*
       Replace the determinant of the deformation gradient
     */

@@ -102,17 +102,13 @@ Mesh GramsBox(char * Name_File)
   FEM_Mesh.List_Particles_Node = (ChainPtr *)malloc(FEM_Mesh.NumNodesMesh*sizeof(ChainPtr));
   printf("\t \t %s : %s \n","-> Allocate list of particles per node","Done");
 
-  FEM_Mesh.Num_Particles_Element = (int *)Allocate_ArrayZ(FEM_Mesh.NumElemMesh,sizeof(int));
-  FEM_Mesh.List_Particles_Element = (ChainPtr *)malloc(FEM_Mesh.NumElemMesh*sizeof(ChainPtr));
-  printf("\t \t %s : %s \n","-> Allocate list of particle per element","Done");
+//  FEM_Mesh.Num_Particles_Element = (int *)Allocate_ArrayZ(FEM_Mesh.NumElemMesh,sizeof(int));
+//  FEM_Mesh.List_Particles_Element = (ChainPtr *)malloc(FEM_Mesh.NumElemMesh*sizeof(ChainPtr));
+//  printf("\t \t %s : %s \n","-> Allocate list of particle per element","Done");
 
   FEM_Mesh.h_avg = (double *)Allocate_ArrayZ(FEM_Mesh.NumNodesMesh,sizeof(double));
   compute_nodal_distance_local(FEM_Mesh);
   printf("\t \t %s : %s \n","-> Compute local nodal distance","Done");
-
-  FEM_Mesh.Vol_patch_n = (double *)Allocate_ArrayZ(FEM_Mesh.NumElemMesh,sizeof(double));
-  FEM_Mesh.Vol_patch_n1 = (double *)Allocate_ArrayZ(FEM_Mesh.NumElemMesh,sizeof(double));
-  printf("\t \t %s : %s \n","-> Allocate volume of each element (F-bar)","Done");
 
   FEM_Mesh.DeltaX = mesh_size(FEM_Mesh);
   printf("\t \t %s : %f \n","-> Compute mesh size",FEM_Mesh.DeltaX);
@@ -550,7 +546,7 @@ static double mesh_size(Mesh FEM_Mesh)
     }
     else if((Ndim == 2) && (strcmp(FEM_Mesh.TypeElem,"Triangle") == 0) && (NumNodesElem == 6))
     {
-      MinElementSize = DMIN(MinElementSize,min_DeltaX__T6__(Element_Connectivity_Circular, FEM_Mesh.Coordinates));
+      MinElementSize = DMIN(MinElementSize,min_DeltaX__T3__(Element_Connectivity_Circular, FEM_Mesh.Coordinates));
     }
     else if((Ndim == 2) && (strcmp(FEM_Mesh.TypeElem,"Quadrilateral") == 0) && (NumNodesElem == 4))
     { 

@@ -14,9 +14,9 @@ void local_search__MeshTools__(Particle MPM_Mesh, Mesh FEM_Mesh)
     {
       local_search__T3__(MPM_Mesh, FEM_Mesh);
     }
-    if((strcmp(FEM_Mesh.TypeElem,"Triangle") == 0) && (FEM_Mesh.NumNodesElem[0] == 6))
+    else if((strcmp(FEM_Mesh.TypeElem,"Triangle") == 0) && (FEM_Mesh.NumNodesElem[0] == 6))
     {
-      local_search__T6__(MPM_Mesh, FEM_Mesh);
+      local_search__T3__(MPM_Mesh, FEM_Mesh);
     }
     else if(strcmp(FEM_Mesh.TypeElem,"Quadrilateral") == 0)
     {
