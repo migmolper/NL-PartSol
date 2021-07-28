@@ -157,50 +157,27 @@ void U_Newmark_beta_Finite_Strains(
       print_Status("*************************************************",TimeStep);
       print_Status("Four step : Compute equilibrium ... WORKING",TimeStep);
            
-      /*
-	      Set the convergence false by default and start the iterations to compute
-      	the incement of velocity and displacement in the nodes of the mesh
-      */
       Convergence = false;
       Iter = 0;
+
       while(Convergence == false)
       {
-        /*
-          Compute the nodal forces
-        */
+
+        update_Local_State(D_U,ActiveNodes,MPM_Mesh,FEM_Mesh,DeltaTimeStep);
+
         Forces = compute_Nodal_Forces(ActiveNodes,MPM_Mesh,FEM_Mesh,TimeStep);
 
-        /*
-          Compute nodal reactions and set to zero those DOF of the
-          nodal forces with imposed displacements.
-        */
         Reactions = compute_Nodal_Reactions(FEM_Mesh,Forces,ActiveNodes);
 
-        /*
-          Compute the numerical residual to check the equilibrium
-        */
         Residual = compute_Nodal_Residual(U_n,D_U,ActiveNodes,Forces,Effective_Mass,Params);
 
-        /*
-          If the norm of the residual for each nodal value is below a tolerace skip
-        */
         Convergence = check_convergence(Residual,TOL,Iter,MaxIter,TimeStep);
 
-        /*
-          If not, solve the linearized equilibrium to compute the next step
-        */
         if(Convergence == false)
         {
 
-          /*
-		        Assemble the tangent stiffness matrix as a sum of the material tangent
-		        stiffness and the geometrical tangent stiffness.
-	        */
 	        Tangent_Stiffness = assemble_Nodal_Tangent_Stiffness(ActiveNodes,MPM_Mesh,FEM_Mesh,Params);
 
-          /*
-        		Solve the resulting equation 
-	        */
 	        if((Free_and_Restricted_Dofs.Nactivenodes - Ndim*Nactivenodes) == 0)
 		      {
 		        solve_non_reducted_system(D_U,Tangent_Stiffness,Effective_Mass,Residual,Params);
@@ -212,11 +189,6 @@ void U_Newmark_beta_Finite_Strains(
 
           update_Newmark_Nodal_Increments(D_U,U_n,Params);
 
-          /*
-            Compute the stress-strain state for each particle
-          */
-          update_Local_State(D_U,ActiveNodes,MPM_Mesh,FEM_Mesh,DeltaTimeStep);
-
 	        Iter++;
 
 	        free__MatrixLib__(Forces);
@@ -225,7 +197,7 @@ void U_Newmark_beta_Finite_Strains(
 	        free__MatrixLib__(Tangent_Stiffness);
         }
       }
-
+      
       print_Status("DONE !!!",TimeStep);
 
 
@@ -664,7 +636,7 @@ static Nodal_Field initialise_Nodal_Increments(
         */
         if(FEM_Mesh.Bounds.BCC_i[i].Dir[k] == 1)
         {
-    
+
           /* 
             Check if the curve it is on time 
           */

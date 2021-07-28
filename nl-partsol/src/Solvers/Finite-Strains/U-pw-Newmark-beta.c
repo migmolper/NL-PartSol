@@ -165,11 +165,13 @@ void upw_Newmark_beta_Finite_Strains(
     print_Status("*************************************************",TimeStep);
     print_Status("Four step : Compute equilibrium ... WORKING",TimeStep);
     
-
     Convergence = false;
     Iter = 0;
+
     while(Convergence == false)
     {
+
+      update_Local_State(D_upw,ActiveNodes,MPM_Mesh,FEM_Mesh);
 
       Residual = compute_Residual(upw_n,D_upw,Effective_Mass,ActiveNodes,MPM_Mesh,FEM_Mesh,Params,TimeStep);
 
@@ -187,8 +189,6 @@ void upw_Newmark_beta_Finite_Strains(
         solve_system(D_upw,Tangent_Stiffness,Residual);
 
         update_Newmark_Nodal_Increments(D_upw,upw_n,Params);
-
-        update_Local_State(D_upw,ActiveNodes,MPM_Mesh,FEM_Mesh);
         
         Iter++;
 
