@@ -1135,8 +1135,6 @@ void local_search__LME__(Particle MPM_Mesh, Mesh FEM_Mesh)
     /* Active those nodes that interact with the particle */
     asign_to_nodes__Particles__(p, MPM_Mesh.Element_p[p], MPM_Mesh.I0[p], MPM_Mesh.ListNodes[p], FEM_Mesh);
   }
-
-
 }
 
 /****************************************************************************/

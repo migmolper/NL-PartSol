@@ -317,6 +317,11 @@ Particle GramsSolid(char * Name_File, Mesh FEM_Mesh, int * STATUS)
       printf("\t * %s \n","Initialize LME shape functions ...");
       initialize__LME__(MPM_Mesh,FEM_Mesh);
     }
+    else if(strcmp(ShapeFunctionGP,"aLME") == 0)
+    {
+      printf("\t * %s \n","Initialize aLME shape functions ...");
+      initialize__aLME__(MPM_Mesh,FEM_Mesh);
+    }
     else
     {
       fprintf(stderr,"%s : %s \n","Error in GramsSolid()","Undefined kind of shape function");
