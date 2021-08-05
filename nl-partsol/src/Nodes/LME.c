@@ -51,7 +51,7 @@ void initialize__LME__(
   Matrix X_p; // Particle coordinates  
   Matrix Delta_Xip; // Distance from GP to the nodes
   Matrix lambda_p; // Lagrange multiplier
-  Tensor F_m1_plastic; // Particle deformation gradient, only for anysotropic
+  Tensor F_n; // Particle deformation gradient, only for anysotropic
   double Beta_p; // Thermalization or regularization parameter
   ChainPtr Locality_I0; // List of nodes close to the node I0_p
 
@@ -146,8 +146,8 @@ void initialize__LME__(
     Beta_p = MPM_Mesh.Beta.nV[p];
 
     // Get the metric tensor
-    F_m1_plastic = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_m1_plastic.nM[p],2);
-    Metric_p = metric__LME__(F_m1_plastic);
+    F_n = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n.nM[p],2);
+    Metric_p = metric__LME__(F_n);
 
     // Get the initial connectivity of the particle
     MPM_Mesh.ListNodes[p] = tributary__LME__(p,X_p,Metric_p,Beta_p,MPM_Mesh.I0[p],FEM_Mesh);
@@ -207,43 +207,45 @@ double beta__LME__(
 
 /****************************************************************************/
 
- Matrix metric__LME__(Tensor F_m1_plastic)
+ Matrix metric__LME__(Tensor F)
  /*!
   * Return the metric tensor intrucing curvature as a convex combination of the 
   * right Cauch-Green tensor (C = F^{T}F) and the identiy (Euclidean norm).   
   * */
  {
     int Ndim = NumberDimensions;
-    double C_plastic_ij;
     Matrix Metric = allocZ__MatrixLib__(Ndim,Ndim);
-  
-    for(int i = 0 ; i < Ndim ; i++)
+   
+    if(curvature_LME > 0.0) // Include include non-Euclidean metric
     {
+      double Metric_ij;
+      Tensor Fm1 = Inverse__TensorLib__(F);
 
-      // Include include non-Euclidean metric
-      if(curvature_LME > 0.0)
+      for(int i = 0 ; i < Ndim ; i++)
       {
-
         for(int j = 0 ; j < Ndim ; j++)
         {
-          C_plastic_ij = 0.0;
+          Metric_ij = 0.0;
 
           for(int k = 0 ; k < Ndim ; k++)
           {
-            C_plastic_ij += F_m1_plastic.N[k][i]*F_m1_plastic.N[k][j];
+            Metric_ij += Fm1.N[k][i]*Fm1.N[k][j];
           }
 
-          Metric.nM[i][j] += curvature_LME*C_plastic_ij;
+          Metric.nM[i][j] = Metric_ij;
         
         }
       }
-      else
-      {
-        // Introduce Euclidean metric contribution
-        Metric.nM[i][i] += 1.0;
-      }
-   }
 
+      free__TensorLib__(Fm1);
+   }
+   else  // Introduce Euclidean metric contribution
+   {
+      for(int i = 0 ; i < Ndim ; i++)
+      {
+        Metric.nM[i][i] = 1.0;
+      }
+    }
 
    return Metric;
  }
@@ -1166,7 +1168,7 @@ void local_search__LME__(Particle MPM_Mesh, Mesh FEM_Mesh)
     Matrix Metric_p; // Define a metric tensor
     Matrix Delta_Xip; // Distance from particles to the nodes
     Matrix lambda_p = memory_to_matrix__MatrixLib__(Ndim,1,MPM_Mesh.lambda.nM[p]);
-    Tensor F_m1_plastic; // Particle deformation gradient
+    Tensor F_n; // Particle deformation gradient
     double Beta_p = MPM_Mesh.Beta.nV[p]; // Thermalization parameter
 
     /* 
@@ -1177,8 +1179,8 @@ void local_search__LME__(Particle MPM_Mesh, Mesh FEM_Mesh)
     /*
       Compute the metric tensor
     */
-    F_m1_plastic = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_m1_plastic.nM[p],2);
-    Metric_p = metric__LME__(F_m1_plastic);
+    F_n = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n.nM[p],2);
+    Metric_p = metric__LME__(F_n);
 
     /*
       Free previous list of tributary nodes to the particle

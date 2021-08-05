@@ -238,7 +238,7 @@ void U_Discrete_Energy_Momentum(
   */
   if(TimeStep % ResultsTimeStep == 0)
   {
-	 nodal_results_vtk__InOutFun__(FEM_Mesh, ActiveNodes, Reactions,TimeStep, ResultsTimeStep);
+	 // nodal_results_vtk__InOutFun__(FEM_Mesh, ActiveNodes, Reactions,TimeStep, ResultsTimeStep);
    particle_results_vtk__InOutFun__(MPM_Mesh,TimeStep,ResultsTimeStep);
  }
 

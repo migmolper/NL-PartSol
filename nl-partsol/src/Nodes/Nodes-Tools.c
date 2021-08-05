@@ -408,7 +408,7 @@ Matrix compute_N__MeshTools__(
   Matrix l_Ip; // Just for GIMP/LME -> Distance from GP to the nodes
   Matrix lambda_p; // Just for LME -> Lagrange multipliers
   Matrix Metric_p; // Just for LME -> Metric tensor
-  Tensor F_m1_plastic; // Just for LME -> Deformation gradient
+  Tensor F_n; // Just for LME -> Deformation gradient
   double Beta_p; // Just for LME -> Thermalization parameter
     
   /* 
@@ -482,8 +482,8 @@ Matrix compute_N__MeshTools__(
     /*
       Compute the metric tensor
     */
-    F_m1_plastic = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_m1_plastic.nM[i_GP],2);
-    Metric_p = metric__LME__(F_m1_plastic);
+    F_n = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n.nM[i_GP],2);
+    Metric_p = metric__LME__(F_n);
 
     /*
       Get lambda and beta
@@ -534,7 +534,7 @@ Matrix compute_dN__MeshTools__(Element GP_Element,Particle MPM_Mesh,
   Matrix ShapeFunction_p; // Just for LME -> Matrix with the nodal shape functions
   Matrix lambda_p; // Just for LME -> Lagrange multipliers
   Matrix Metric_p; // Just for LME -> Metric tensor
-  Tensor F_m1_plastic; // Just for LME -> Deformation gradient
+  Tensor F_n; // Just for LME -> Deformation gradient
   double Beta_p; // Just for LME -> Thermalization parameter
 
   /*  
@@ -621,8 +621,8 @@ Matrix compute_dN__MeshTools__(Element GP_Element,Particle MPM_Mesh,
     /*
       Compute the metric tensor
     */
-    F_m1_plastic = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_m1_plastic.nM[i_GP],2);
-    Metric_p = metric__LME__(F_m1_plastic);
+    F_n = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n.nM[i_GP],2);
+    Metric_p = metric__LME__(F_n);
 
     /*
       Get lambda and beta

@@ -30,7 +30,10 @@ bool Out_dPw_dt = false;
 bool Out_strain = false;
 bool Out_eigenvalues_strain = false;
 bool Out_deformation_gradient = false;
+bool Out_green_lagrange = false;
+bool Out_right_cauchy_green = false;
 bool Out_plastic_deformation_gradient = false;
+bool Out_Metric = false;
 bool Out_plastic_jacobian = false;
 bool Out_energy = false;
 bool Out_Von_Mises = false;
@@ -215,9 +218,17 @@ void GramsOutputs(char * Name_File)
 	  {
 		Out_deformation_gradient = Is_Output_Activate(Parse_Out_Prop[0],Parse_Out_Prop[1]);
 	  }		  
+	  else if(strcmp(Parse_Out_Prop[0],"Out-green-lagrange") == 0)
+	  {
+	  	Out_green_lagrange = Is_Output_Activate(Parse_Out_Prop[0],Parse_Out_Prop[1]);
+	  }
 	  else if(strcmp(Parse_Out_Prop[0],"Out-plastic-deformation-gradient") == 0)
 	  {
 	  	Out_plastic_deformation_gradient = Is_Output_Activate(Parse_Out_Prop[0],Parse_Out_Prop[1]);
+	  }
+	  else if(strcmp(Parse_Out_Prop[0],"Out-Metric") == 0)
+	  {
+		Out_Metric = Is_Output_Activate(Parse_Out_Prop[0],Parse_Out_Prop[1]);
 	  }
 	  else if(strcmp(Parse_Out_Prop[0],"Out-plastic-jacobian") == 0)
 	  {

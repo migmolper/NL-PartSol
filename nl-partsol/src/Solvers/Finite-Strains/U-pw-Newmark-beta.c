@@ -51,7 +51,7 @@ static Newmark_parameters compute_Newmark_parameters(double, double, double);
 static Matrix compute_Nodal_Effective_Mass(Particle, Mesh, Mask, double);
 static  void  compute_Gravity_field(Mask, Particle, int);
 static Nodal_Field compute_Nodal_Field(Matrix, Particle, Mesh, Mask);
-static Nodal_Field initialise_Nodal_Increments(Mask, Mesh, int);
+static Nodal_Field initialise_Nodal_Increments(Nodal_Field, Mask, Mesh, Newmark_parameters, int);
 static  void  update_Local_State(Nodal_Field, Mask, Particle, Mesh);
 static Matrix compute_Residual(Nodal_Field,Nodal_Field,Matrix,Mask,Particle,Mesh,Newmark_parameters,int);
 static  void  compute_Inertial_Forces_Mixture(Nodal_Field,Nodal_Field,Matrix,Matrix,Mask,Particle,Newmark_parameters);
@@ -129,7 +129,7 @@ void upw_Newmark_beta_Finite_Strains(
     not required to be satisfied. The only purpose of it is to use the existing
     software interfase.
   */
-  DeltaTimeStep = DeltaT_Coussy__SolversLib__(MPM_Mesh, DeltaX, 1.0, CFL); 
+  DeltaTimeStep = 0.01;//DeltaT_Coussy__SolversLib__(MPM_Mesh, DeltaX, 1.0, CFL); 
   Params = compute_Newmark_parameters(beta, gamma, DeltaTimeStep);
 
   for(int TimeStep = InitialStep ; TimeStep<NumTimeStep ; TimeStep++ )
@@ -158,7 +158,7 @@ void upw_Newmark_beta_Finite_Strains(
   
     compute_Gravity_field(ActiveNodes, MPM_Mesh, TimeStep);
     upw_n = compute_Nodal_Field(Effective_Mass,MPM_Mesh,FEM_Mesh,ActiveNodes);
-    D_upw = initialise_Nodal_Increments(ActiveNodes, FEM_Mesh, TimeStep);
+    D_upw = initialise_Nodal_Increments(upw_n, ActiveNodes, FEM_Mesh, Params, TimeStep);
 
     print_Status("DONE !!!",TimeStep);  
 
@@ -197,6 +197,8 @@ void upw_Newmark_beta_Finite_Strains(
         free__MatrixLib__(Tangent_Stiffness);
       }
     }
+
+    print__MatrixLib__(D_upw.value,ActiveNodes.Nactivenodes,3);
 
     print_Status("DONE !!!",TimeStep);
 
@@ -596,8 +598,10 @@ static Nodal_Field compute_Nodal_Field(
 /**************************************************************/
 
 static Nodal_Field initialise_Nodal_Increments(
+  Nodal_Field upw_n,
   Mask ActiveNodes,
   Mesh FEM_Mesh,
+  Newmark_parameters Params,
   int TimeStep)
 /*
   Allocate the increments nodal values for the time integration scheme,
@@ -613,9 +617,14 @@ static Nodal_Field initialise_Nodal_Increments(
   int Id_BCC; /* Index of the node where we apply the BCC */
   int Id_BCC_mask;
 
-  /* 
-    Allocate memory
-  */
+  double alpha_1 = Params.alpha_1;
+  double alpha_2 = Params.alpha_2;
+  double alpha_3 = Params.alpha_3;
+  double alpha_4 = Params.alpha_4;
+  double alpha_5 = Params.alpha_5;
+  double alpha_6 = Params.alpha_6;
+
+  double D_upw_value_It;
   Nodal_Field D_upw;
   D_upw.value        = allocZ__MatrixLib__(Nnodes_mask,Ndof);
   D_upw.d_value_dt   = allocZ__MatrixLib__(Nnodes_mask,Ndof);
@@ -676,11 +685,28 @@ static Nodal_Field initialise_Nodal_Increments(
           }
 
           /* 
-            Assign the boundary condition 
+            Assign the boundary condition :
+            First remove the value obtained during the projection and compute the value
+            using the evolution of the boundary condition
           */
-          D_upw.value.nM[Id_BCC_mask][k] = FEM_Mesh.Bounds.BCC_i[i].Value[k].Fx[TimeStep]*(double)FEM_Mesh.Bounds.BCC_i[i].Dir[k];  
-          D_upw.d_value_dt.nM[Id_BCC_mask][k] = 0.0;
-          D_upw.d2_value_dt2.nM[Id_BCC_mask][k] = 0.0;
+          upw_n.value.nM[Id_BCC_mask][k] = 0.0;
+          upw_n.d_value_dt.nM[Id_BCC_mask][k] = 0.0;
+          upw_n.d2_value_dt2.nM[Id_BCC_mask][k] = 0.0;
+
+          for(int t = 0 ; t<TimeStep ; t++)
+          {
+            D_upw_value_It = FEM_Mesh.Bounds.BCC_i[i].Value[k].Fx[t]*(double)FEM_Mesh.Bounds.BCC_i[i].Dir[k];
+            upw_n.value.nM[Id_BCC_mask][k] += D_upw_value_It;                    
+            upw_n.d2_value_dt2.nM[Id_BCC_mask][k] += alpha_1*D_upw_value_It - alpha_2*upw_n.d_value_dt.nM[Id_BCC_mask][k] - (alpha_3 + 1)*upw_n.d2_value_dt2.nM[Id_BCC_mask][k];
+            upw_n.d_value_dt.nM[Id_BCC_mask][k]   += alpha_4*D_upw_value_It + (alpha_5-1)*upw_n.d_value_dt.nM[Id_BCC_mask][k] + alpha_6*upw_n.d2_value_dt2.nM[Id_BCC_mask][k];
+          }
+
+          /*
+            Initialise increments using newmark and the value of the boundary condition
+          */
+          D_upw.value.nM[Id_BCC_mask][k] = FEM_Mesh.Bounds.BCC_i[i].Value[k].Fx[TimeStep]*(double)FEM_Mesh.Bounds.BCC_i[i].Dir[k];                    
+          D_upw.d2_value_dt2.nM[Id_BCC_mask][k] = alpha_1*D_upw.value.nM[Id_BCC_mask][k] - alpha_2*upw_n.d_value_dt.nM[Id_BCC_mask][k] - (alpha_3 + 1)*upw_n.d2_value_dt2.nM[Id_BCC_mask][k];
+          D_upw.d_value_dt.nM[Id_BCC_mask][k]   = alpha_4*D_upw.value.nM[Id_BCC_mask][k] + (alpha_5-1)*upw_n.d_value_dt.nM[Id_BCC_mask][k] + alpha_6*upw_n.d2_value_dt2.nM[Id_BCC_mask][k];
                
         }
       }
@@ -1259,7 +1285,7 @@ static void compute_Flow_contribution_Fluid(
   Tensor k_p; /* Spatial permebility tensor */
 
   /* Variables to compute the relative flux */
-  double g = - 10.0;
+  double g = 10.0;
   double intrinsic_rho_f_p;
   double J_n1_p; /* Determianant of the soil skeleton deformation gradient at t = n + 1 */
   Tensor gradient_theta_n1_p;
@@ -2236,7 +2262,7 @@ static Matrix compute_water_flux_density(
 {
   int Ndim = NumberDimensions;
   int Ndof = NumberDOF;
-  double g = - 10.0; // Gravity constant
+  double g = 10.0; // Gravity constant
 
   Matrix water_flux_density = allocZ__MatrixLib__(1,Ndof);
 

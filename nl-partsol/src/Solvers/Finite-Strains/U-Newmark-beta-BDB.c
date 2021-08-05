@@ -2094,6 +2094,7 @@ static void output_selector(
   int ResultsTimeStep)
 {
 
+  Matrix ShapeFunction;
   /*
     vtk results
   */
@@ -2101,7 +2102,7 @@ static void output_selector(
   {
     particle_results_vtk__InOutFun__(MPM_Mesh,TimeStep,ResultsTimeStep);
 
-    nodal_results_vtk__InOutFun__(FEM_Mesh, ActiveNodes, Reactions, TimeStep, ResultsTimeStep);
+    nodal_results_vtk__InOutFun__(FEM_Mesh, ActiveNodes, Reactions, ShapeFunction, TimeStep, ResultsTimeStep);
   }
 
   /* 

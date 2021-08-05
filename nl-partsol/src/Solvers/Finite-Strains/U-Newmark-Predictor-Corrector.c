@@ -1262,14 +1262,33 @@ static void output_selector(
   int ResultsTimeStep)
 {
 
+
   /*
     vtk results
   */
   if(TimeStep % ResultsTimeStep == 0)
   {
+
+    int Nnodes = ActiveNodes.Nactivenodes;
+    int p_idx = 17714;
+    int NumNodes_p = MPM_Mesh.NumberNodes[p_idx];
+    Element Nodes_p = nodal_set__Particles__(p_idx, MPM_Mesh.ListNodes[p_idx], NumNodes_p);
+    Matrix ShapeFunction_p = compute_N__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
+    Matrix ShapeFunction_Ip = allocZ__MatrixLib__(Nnodes,1);
+
+    for(int A = 0; A<NumNodes_p; A++)
+    {
+      ShapeFunction_Ip.nV[ActiveNodes.Nodes2Mask[Nodes_p.Connectivity[A]]] = ShapeFunction_p.nV[A];
+    }
+
     particle_results_vtk__InOutFun__(MPM_Mesh,TimeStep,ResultsTimeStep);
 
-    nodal_results_vtk__InOutFun__(FEM_Mesh, ActiveNodes, Reactions, TimeStep, ResultsTimeStep);
+    nodal_results_vtk__InOutFun__(FEM_Mesh, ActiveNodes, Reactions, ShapeFunction_Ip, TimeStep, ResultsTimeStep);
+
+    free(Nodes_p.Connectivity);
+    free__MatrixLib__(ShapeFunction_p);
+    free__MatrixLib__(ShapeFunction_Ip);
+
   }
 
   /* 
