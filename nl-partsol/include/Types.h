@@ -677,9 +677,8 @@ typedef struct {
    * LME shape function parameters:
    * */
   Matrix lambda; // Lagrange multiplier
-  Matrix Beta; // Thermalization or regularization parameter
-  void (* update_lambda)(int, Matrix, Matrix, Matrix, double);
-
+  Matrix Beta; // Thermalization or regularization parameter (scalar/matrix)
+  Matrix Cut_off_Ellipsoid;
 
   /*!
    * Function to compute the stress state of the particle

@@ -224,21 +224,16 @@ Particle GramsSolid(char * Name_File, Mesh FEM_Mesh, int * STATUS)
         strcpy(MPM_Mesh.lambda.Info,"Lagrange Multiplier");
         MPM_Mesh.Beta = allocZ__MatrixLib__(NumParticles,1);
         strcpy(MPM_Mesh.Beta.Info,"Beta parameter");
-
-        if(strcmp(wrapper_LME,"Newton-Raphson") == 0)
-        {
-          MPM_Mesh.update_lambda = update_lambda_Newton_Rapson__LME__;
-        }
-        else if(strcmp(wrapper_LME,"Nelder-Mead") == 0)
-        {
-          MPM_Mesh.update_lambda = update_lambda_Nelder_Mead__LME__;
-        }
-        else
-        {
-          fprintf(stderr,"%s : %s \n",
-            "Error in GramsSolid()","Unrecognaised wrapper");
-          exit(EXIT_FAILURE);      
-        }
+      }
+      /* Lagrange Multipliers / Beta / Cut_off_Ellipsoid (Only aLME ) */
+      if(strcmp(ShapeFunctionGP,"aLME") == 0)
+      {
+        MPM_Mesh.lambda = allocZ__MatrixLib__(NumParticles,Ndim);
+        strcpy(MPM_Mesh.lambda.Info,"Lagrange Multiplier");
+        MPM_Mesh.Beta = allocZ__MatrixLib__(NumParticles,Ndim*Ndim);
+        strcpy(MPM_Mesh.Beta.Info,"Beta parameter");
+        MPM_Mesh.Cut_off_Ellipsoid = allocZ__MatrixLib__(NumParticles,Ndim*Ndim);
+        strcpy(MPM_Mesh.Cut_off_Ellipsoid.Info,"Cut-off Ellipsoid");
       }
     }
     else

@@ -407,8 +407,6 @@ Matrix compute_N__MeshTools__(
   Matrix lp; // Just for GIMP -> Particle voxel 
   Matrix l_Ip; // Just for GIMP/LME -> Distance from GP to the nodes
   Matrix lambda_p; // Just for LME -> Lagrange multipliers
-  Matrix Metric_p; // Just for LME -> Metric tensor
-  Tensor F_n; // Just for LME -> Deformation gradient
   double Beta_p; // Just for LME -> Thermalization parameter
     
   /* 
@@ -480,12 +478,6 @@ Matrix compute_N__MeshTools__(
     }
 
     /*
-      Compute the metric tensor
-    */
-    F_n = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n.nM[i_GP],2);
-    Metric_p = metric__LME__(F_n);
-
-    /*
       Get lambda and beta
     */
     lambda_p = memory_to_matrix__MatrixLib__(Ndim,1,MPM_Mesh.lambda.nM[i_GP]);
@@ -494,13 +486,12 @@ Matrix compute_N__MeshTools__(
     /*
       Evaluate the shape function
     */
-    ShapeFunction_p = p__LME__(l_Ip, lambda_p, Metric_p, Beta_p);
+    ShapeFunction_p = p__LME__(l_Ip, lambda_p, Beta_p);
     
     /*
       Free memory
     */
     free__MatrixLib__(l_Ip);
-    free__MatrixLib__(Metric_p);
   }
 
   else{
@@ -533,8 +524,6 @@ Matrix compute_dN__MeshTools__(Element GP_Element,Particle MPM_Mesh,
   Matrix l_Ip; // Just for GIMP/LME -> Distance from GP to the nodes
   Matrix ShapeFunction_p; // Just for LME -> Matrix with the nodal shape functions
   Matrix lambda_p; // Just for LME -> Lagrange multipliers
-  Matrix Metric_p; // Just for LME -> Metric tensor
-  Tensor F_n; // Just for LME -> Deformation gradient
   double Beta_p; // Just for LME -> Thermalization parameter
 
   /*  
@@ -619,12 +608,6 @@ Matrix compute_dN__MeshTools__(Element GP_Element,Particle MPM_Mesh,
     }   
 
     /*
-      Compute the metric tensor
-    */
-    F_n = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n.nM[i_GP],2);
-    Metric_p = metric__LME__(F_n);
-
-    /*
       Get lambda and beta
     */
     lambda_p = memory_to_matrix__MatrixLib__(Ndim,1,MPM_Mesh.lambda.nM[i_GP]);
@@ -633,14 +616,13 @@ Matrix compute_dN__MeshTools__(Element GP_Element,Particle MPM_Mesh,
     /*
       Evaluate the shape function gradient
     */
-    ShapeFunction_p = p__LME__(l_Ip, lambda_p, Metric_p, Beta_p);
+    ShapeFunction_p = p__LME__(l_Ip, lambda_p, Beta_p);
     Gradient_p = dp__LME__(l_Ip, ShapeFunction_p);
    
     /*
       Free memory
     */
     free__MatrixLib__(ShapeFunction_p);
-    free__MatrixLib__(Metric_p);
     free__MatrixLib__(l_Ip);
   }
 

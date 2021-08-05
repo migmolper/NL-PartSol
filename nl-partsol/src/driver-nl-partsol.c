@@ -378,16 +378,27 @@ static void globalfree(Mesh FEM_Mesh, Particle MPM_Mesh)
     free(MPM_Mesh.MixtIdx);
   }
 
-
-  if(strcmp(ShapeFunctionGP,"uGIMP") == 0){
+  /* Voxel size (Only uGIMP) */
+  if(strcmp(ShapeFunctionGP,"uGIMP") == 0)
+  {
     free__MatrixLib__(MPM_Mesh.lp);
   }
-  /* Lagrange Multipliers / Beta (Only LME ) */
-  if(strcmp(ShapeFunctionGP,"LME") == 0){
+
+  /* Lagrange Multipliers / Beta (Only LME) */
+  if(strcmp(ShapeFunctionGP,"LME") == 0)
+  {
     free__MatrixLib__(MPM_Mesh.lambda);
     free__MatrixLib__(MPM_Mesh.Beta);
   }
-      
+
+  /* Lagrange Multipliers / Beta / Cut_off_Ellipsoid (Only aLME) */
+  if(strcmp(ShapeFunctionGP,"aLME") == 0)
+  {
+    free__MatrixLib__(MPM_Mesh.lambda);
+    free__MatrixLib__(MPM_Mesh.Beta);
+    free__MatrixLib__(MPM_Mesh.Cut_off_Ellipsoid);
+  }
+
 }
 
 /***************************************************************************/

@@ -66,6 +66,7 @@
 #include "H8.h"
 #include "GIMP.h"
 #include "LME.h"
+#include "aLME.h"
 #include "Nodes.h"
 #include "InOutFun.h"
 #include "Solvers.h"

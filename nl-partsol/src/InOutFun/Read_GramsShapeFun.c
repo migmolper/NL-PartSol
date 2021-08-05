@@ -22,7 +22,11 @@ void GramsShapeFun(char * Name_File)
   }
   GramsShapeFun (Type=LME) {
 	gamma=2.3
-  	curvature=0
+  	TOL_zero_LME=10e-6
+  }
+  GramsShapeFun (Type=aLME) {
+	gamma=2.3
+	curvature=1.0
   	TOL_zero_LME=10e-6
   }
 */

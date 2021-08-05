@@ -200,21 +200,6 @@ Particle Generate_Soil_Water_Coupling_Analysis__InOutFun__(char * Name_File, Mes
         strcpy(MPM_Mesh.lambda.Info,"Lagrange Multiplier");
         MPM_Mesh.Beta = allocZ__MatrixLib__(NumParticles,1);
         strcpy(MPM_Mesh.Beta.Info,"Beta");
-
-        if(strcmp(wrapper_LME,"Newton-Raphson") == 0)
-        {
-          MPM_Mesh.update_lambda = update_lambda_Newton_Rapson__LME__;
-        }
-        else if(strcmp(wrapper_LME,"Nelder-Mead") == 0)
-        {
-          MPM_Mesh.update_lambda = update_lambda_Nelder_Mead__LME__;
-        }
-        else
-        {
-          fprintf(stderr,"%s : %s \n",
-            "Error in GramsSolid()","Unrecognaised wrapper");
-          exit(EXIT_FAILURE);      
-        }
       }
     }
     else

@@ -195,6 +195,21 @@ Matrix allocZ__MatrixLib__(int NumberRows,int NumberColumns)
 }
 
 /*********************************************************************/
+
+Matrix Identity__MatrixLib__(int Size)
+{
+  Matrix I = allocZ__MatrixLib__(Size,Size);
+
+  for(int i = 0 ; i<Size ; i++)
+  {
+    I.nM[i][i] = 1.0;
+  }
+
+  return I;
+}
+
+/*********************************************************************/
+
 Matrix memory_to_matrix__MatrixLib__(int N_rows,int N_cols,double * nV)
 /*
   Define general parameters of a matrix for auxiliar

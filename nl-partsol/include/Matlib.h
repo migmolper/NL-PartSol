@@ -68,6 +68,7 @@ double StatsIntMatrix(int *, int, char *);
 */
 Matrix alloc__MatrixLib__(int,int);
 Matrix allocZ__MatrixLib__(int,int);
+Matrix Identity__MatrixLib__(int);
 Matrix memory_to_matrix__MatrixLib__(int,int,double *);
 void   free__MatrixLib__(Matrix);
 void   print__MatrixLib__(Matrix, int, int);
