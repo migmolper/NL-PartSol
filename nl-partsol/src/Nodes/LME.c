@@ -20,7 +20,6 @@ static ChainPtr tributary__LME__(int, Matrix, double, int, Mesh);
 // Call global var¡ables
 char wrapper_LME[MAXC];
 double gamma_LME;
-double curvature_LME;
 double TOL_zero_LME;
 double TOL_wrapper_LME;
 int max_iter_LME;

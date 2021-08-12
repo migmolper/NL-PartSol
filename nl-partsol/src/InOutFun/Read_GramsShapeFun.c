@@ -4,7 +4,6 @@
   Call global variables
 */
 char * ShapeFunctionGP;
-double curvature_LME;
 double gamma_LME;
 double TOL_zero_LME;
 double TOL_wrapper_LME;
@@ -26,7 +25,6 @@ void GramsShapeFun(char * Name_File)
   }
   GramsShapeFun (Type=aLME) {
 	gamma=2.3
-	curvature=1.0
   	TOL_zero_LME=10e-6
   }
 */
@@ -98,7 +96,6 @@ void GramsShapeFun(char * Name_File)
       gamma_LME = 3;
       TOL_zero_LME = 1e-10;
       TOL_wrapper_LME = 1e-10;
-      curvature_LME = 0.0;
       max_iter_LME = 10;
       strcpy(wrapper_LME,"Newton-Raphson");
 
@@ -133,13 +130,20 @@ void GramsShapeFun(char * Name_File)
 
 	/* In case GramsShapeFun (Type=*) {
 	   } */
-	if(strcmp(Parse_Shf_Prop[0],"}") == 0){
+	if(strcmp(Parse_Shf_Prop[0],"}") == 0)
+	{
 	  /* Check gamma */
-	  if((strcmp(ShapeFunctionGP,"LME") == 0) &&
-	     (gamma_LME == 0)){
+	  if((strcmp(ShapeFunctionGP,"LME") == 0) && (gamma_LME == 0)){
 	    fprintf(stderr,"%s : %s \n",
 		    "Error in GramsShapeFun()",
 		    "gamma parameter required for LME !!!");
+	    exit(EXIT_FAILURE);
+	  }
+	  /* Check gamma */
+	  if((strcmp(ShapeFunctionGP,"aLME") == 0) && (gamma_LME == 0)){
+	    fprintf(stderr,"%s : %s \n",
+		    "Error in GramsShapeFun()",
+		    "gamma parameter required for aLME !!!");
 	    exit(EXIT_FAILURE);
 	  }
 	  /* Check number of time steps */
@@ -175,16 +179,6 @@ void GramsShapeFun(char * Name_File)
 	  else if(strcmp(Parse_Shf_Prop[0],"TOL-Wrapper") == 0)
 	  {
 	  	TOL_wrapper_LME = atof(Parse_Shf_Prop[1]);
-	  }
-	  else if(strcmp(Parse_Shf_Prop[0],"curvature") == 0){
-	  	curvature_LME = atof(Parse_Shf_Prop[1]);
-	  	if((curvature_LME > 1) || (curvature_LME < 0))
-	  	{
-	  		fprintf(stderr,"%s : %s \n",
-		   	"Error in GramsShapeFun()",
-		   	"curvature takes values in the range [0,1] !!!");
-	    	exit(EXIT_FAILURE);
-	  	}
 	  }
 	  else{
 	    fprintf(stderr,"%s : %s %s \n",

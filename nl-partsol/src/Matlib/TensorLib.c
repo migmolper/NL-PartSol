@@ -873,7 +873,7 @@ Tensor symmetrise__TensorLib__(Tensor A)
 
 /*************************************************************/
 
-Tensor covariant_push_forward_tensor__TensorLib__(Tensor A, Tensor F)
+void covariant_push_forward_tensor__TensorLib__(Tensor a, Tensor A, Tensor F)
 /* 
   Covariant push forward operation for any tensor. 
   a = F^-T A F^-1
@@ -884,18 +884,28 @@ Tensor covariant_push_forward_tensor__TensorLib__(Tensor A, Tensor F)
   F (in)
 */
 {
-  int Ndim = NumberDimensions;
   Tensor F_m1 = Inverse__TensorLib__(F);
-  Tensor F_mT = transpose__TensorLib__(F_m1);
 
-  Tensor A__x__F_m1 = matrix_product__TensorLib__(A,F_m1);
-  Tensor F_mT__x__A__x__F_m1 = matrix_product__TensorLib__(F_mT,A__x__F_m1);
+#if NumberDimensions == 2
+    double aux_1 = A.N[0][0]*F_m1.N[0][0] + A.N[0][1]*F_m1.N[1][0];
+    double aux_2 = A.N[0][0]*F_m1.N[0][1] + A.N[0][1]*F_m1.N[1][1];
+    double aux_3 = A.N[1][0]*F_m1.N[0][0] + A.N[1][1]*F_m1.N[1][0];
+    double aux_4 = A.N[1][0]*F_m1.N[0][1] + A.N[1][1]*F_m1.N[1][1];
+
+    a.N[0][0] = F_m1.N[0][0]*aux_1 + F_m1.N[1][0]*aux_3;
+    a.N[0][1] = F_m1.N[0][0]*aux_2 + F_m1.N[1][0]*aux_4;
+    a.N[1][0] = F_m1.N[0][1]*aux_1 + F_m1.N[1][1]*aux_3;
+    a.N[1][1] = F_m1.N[0][1]*aux_2 + F_m1.N[1][1]*aux_4;
+#endif
+
+#if NumberDimensions == 3 
+      fprintf(stderr,"%s : %s !!! \n",
+        "Error in covariant_pull_back_tensor__TensorLib__()",
+        "This operation it is not implemented for 3D");
+      exit(EXIT_FAILURE);  
+#endif
 
   free__TensorLib__(F_m1);
-  free__TensorLib__(F_mT);
-  free__TensorLib__(A__x__F_m1);
-
-  return F_mT__x__A__x__F_m1;
 
 }
 
@@ -912,10 +922,8 @@ void contravariant_push_forward_tensor__TensorLib__(Tensor a, Tensor A, Tensor F
   F (in)
 */
 {
-  int Ndim = NumberDimensions;
 
-  if (Ndim == 2)
-  {
+#if NumberDimensions == 2
     double aux_1 = A.N[0][0]*F.N[0][0] + A.N[0][1]*F.N[0][1];
     double aux_2 = A.N[0][0]*F.N[1][0] + A.N[0][1]*F.N[1][1];
     double aux_3 = A.N[1][0]*F.N[0][0] + A.N[1][1]*F.N[0][1];
@@ -925,21 +933,14 @@ void contravariant_push_forward_tensor__TensorLib__(Tensor a, Tensor A, Tensor F
     a.N[0][1] = F.N[0][0]*aux_2 + F.N[0][1]*aux_4;
     a.N[1][0] = F.N[1][0]*aux_1 + F.N[1][1]*aux_3;
     a.N[1][1] = F.N[1][0]*aux_2 + F.N[1][1]*aux_4;
-  }
-    else if(Ndim == 3)
-  {
+#endif
+
+#if NumberDimensions == 3 
       fprintf(stderr,"%s : %s !!! \n",
         "Error in contravariant_push_forward_tensor__TensorLib__()",
         "This operation it is not implemented for 3D");
       exit(EXIT_FAILURE);  
-  }
-  else
-  {
-      fprintf(stderr,"%s : %s !!! \n",
-        "Error in contravariant_push_forward_tensor__TensorLib__()",
-        "Wrong number of dimensions");
-      exit(EXIT_FAILURE);  
-  }
+#endif
 
 }
 
@@ -957,11 +958,8 @@ void covariant_pull_back_tensor__TensorLib__(Tensor A, Tensor a, Tensor F)
   F (int)
 */
 {
-  int Ndim = NumberDimensions;
 
-  if (Ndim == 2)
-  {
-
+#if NumberDimensions == 2
     double aux_1 = a.N[0][0]*F.N[0][0] + a.N[0][1]*F.N[1][0];
     double aux_2 = a.N[0][0]*F.N[0][1] + a.N[0][1]*F.N[1][1];
     double aux_3 = a.N[1][0]*F.N[0][0] + a.N[1][1]*F.N[1][0];
@@ -971,28 +969,20 @@ void covariant_pull_back_tensor__TensorLib__(Tensor A, Tensor a, Tensor F)
     A.N[0][1] = F.N[0][0]*aux_2 + F.N[1][0]*aux_4;
     A.N[1][0] = F.N[0][1]*aux_1 + F.N[1][1]*aux_3;
     A.N[1][1] = F.N[0][1]*aux_2 + F.N[1][1]*aux_4;
-  }
-    else if(Ndim == 3)
-  {
+#endif
+
+#if NumberDimensions == 3 
       fprintf(stderr,"%s : %s !!! \n",
         "Error in covariant_pull_back_tensor__TensorLib__()",
         "This operation it is not implemented for 3D");
       exit(EXIT_FAILURE);  
-  }
-  else
-  {
-      fprintf(stderr,"%s : %s !!! \n",
-        "Error in covariant_pull_back_tensor__TensorLib__()",
-        "Wrong number of dimensions");
-      exit(EXIT_FAILURE);  
-  }
+#endif
 
 }
 
-
 /*********************************************************************/
 
-Tensor contravariant_pull_back_tensor__TensorLib__(Tensor a, Tensor F)
+void contravariant_pull_back_tensor__TensorLib__(Tensor A, Tensor a, Tensor F)
 /* 
   Contravariant pull back operation for any tensor. 
   A = F^-1 a F^-T
@@ -1005,16 +995,28 @@ Tensor contravariant_pull_back_tensor__TensorLib__(Tensor a, Tensor F)
 {
   int Ndim = NumberDimensions;
   Tensor F_m1 = Inverse__TensorLib__(F);
-  Tensor F_mT = transpose__TensorLib__(F_m1);
 
-  Tensor a__x__F_mT = matrix_product__TensorLib__(a,F_mT);
-  Tensor F_m1__x__a__x__F_mT = matrix_product__TensorLib__(F_m1,a__x__F_mT);
+#if NumberDimensions == 2
+    double aux_1 = a.N[0][0]*F_m1.N[0][0] + a.N[0][1]*F_m1.N[0][1];
+    double aux_2 = a.N[0][0]*F_m1.N[1][0] + a.N[0][1]*F_m1.N[1][1];
+    double aux_3 = a.N[1][0]*F_m1.N[0][0] + a.N[1][1]*F_m1.N[0][1];
+    double aux_4 = a.N[1][0]*F_m1.N[1][0] + a.N[1][1]*F_m1.N[1][1];
+
+    A.N[0][0] = F_m1.N[0][0]*aux_1 + F_m1.N[0][1]*aux_3;
+    A.N[0][1] = F_m1.N[0][0]*aux_2 + F_m1.N[0][1]*aux_4;
+    A.N[1][0] = F_m1.N[1][0]*aux_1 + F_m1.N[1][1]*aux_3;
+    A.N[1][1] = F_m1.N[1][0]*aux_2 + F_m1.N[1][1]*aux_4;
+#endif
+
+#if NumberDimensions == 3 
+      fprintf(stderr,"%s : %s !!! \n",
+        "Error in contravariant_push_forward_tensor__TensorLib__()",
+        "This operation it is not implemented for 3D");
+      exit(EXIT_FAILURE);  
+#endif
 
   free__TensorLib__(F_m1);
-  free__TensorLib__(F_mT);
-  free__TensorLib__(a__x__F_mT);
 
-  return F_m1__x__a__x__F_mT;
 }
 
 /*********************************************************************/

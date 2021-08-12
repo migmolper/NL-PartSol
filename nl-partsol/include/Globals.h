@@ -25,7 +25,6 @@ extern int max_iter_LME;
 extern double TOL_zero_LME;
 extern double TOL_wrapper_LME;
 extern double gamma_LME;
-extern double curvature_LME;
 extern char   wrapper_LME[MAXC];
 
 // Parameter for plain stress simulations
