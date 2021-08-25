@@ -533,6 +533,7 @@ Matrix compute_N__MeshTools__(
       Free memory
     */
     free__MatrixLib__(l_Ip);
+    free(Beta_p.nM);
   }
 
   else{
@@ -705,6 +706,7 @@ Matrix compute_dN__MeshTools__(Element GP_Element,Particle MPM_Mesh,
     */
     free__MatrixLib__(ShapeFunction_p);
     free__MatrixLib__(l_Ip);
+    free(Beta_p.nM);
   }
 
   else{

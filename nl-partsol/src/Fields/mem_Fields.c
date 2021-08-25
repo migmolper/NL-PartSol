@@ -60,6 +60,7 @@ Fields allocate_U_vars__Fields__(int NumParticles)
     {
       Phi.F_n.nM[p][i + i*Ndim] = 1.0;	  
       Phi.F_n1.nM[p][i + i*Ndim] = 1.0;
+      Phi.DF.nM[p][i + i*Ndim] = 1.0;
     }  
   }
 
@@ -278,6 +279,7 @@ Fields allocate_Up_vars__Fields__(int NumParticles)
     {
       Phi.F_n.nM[p][i + i*Ndim] = 1.0;    
       Phi.F_n1.nM[p][i + i*Ndim] = 1.0;
+      Phi.DF.nM[p][i + i*Ndim] = 1.0;
     }  
   }
 
@@ -507,6 +509,7 @@ Fields allocate_upw_vars__Fields__(int NumParticles)
     {
       Phi.F_n.nM[p][i + i*Ndim] = 1.0;   
       Phi.F_n1.nM[p][i + i*Ndim] = 1.0;
+      Phi.DF.nM[p][i + i*Ndim] = 1.0;
     }
   }
 
@@ -703,7 +706,6 @@ void free_upw_vars__Fields__(Fields Phi)
   free__MatrixLib__(Phi.J_n1);
   free__MatrixLib__(Phi.dJ_dt);
   free__MatrixLib__(Phi.Fbar);
-  free__MatrixLib__(Phi.Jbar);
   free__MatrixLib__(Phi.Jbar);
   free__MatrixLib__(Phi.W);
   free__MatrixLib__(Phi.phi_s);

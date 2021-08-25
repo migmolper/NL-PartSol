@@ -198,8 +198,6 @@ void upw_Newmark_beta_Finite_Strains(
       }
     }
 
-    print__MatrixLib__(D_upw.value,ActiveNodes.Nactivenodes,3);
-
     print_Status("DONE !!!",TimeStep);
 
     print_Status("*************************************************",TimeStep);
@@ -852,6 +850,7 @@ static void update_Local_State(
       Update state parameters
     */
     Pw_0 = MPM_Mesh.Phi.Pw_0.nV[p]; /* Get the initial pressure */
+
     Pw_n1 = MPM_Mesh.Phi.Pw_n1.nV[p]/J_n1_p; /* From the Kirchhoff pressure compure the cauchy pore water pressure */
 
     MPM_Mesh.Phi.rho_f.nV[p] = rho_f_0*exp((Pw_n1-Pw_0)/K_f); /* Update the fluid density */
@@ -1285,7 +1284,7 @@ static void compute_Flow_contribution_Fluid(
   Tensor k_p; /* Spatial permebility tensor */
 
   /* Variables to compute the relative flux */
-  double g = 10.0;
+  double g = - 10.0;
   double intrinsic_rho_f_p;
   double J_n1_p; /* Determianant of the soil skeleton deformation gradient at t = n + 1 */
   Tensor gradient_theta_n1_p;
@@ -1754,15 +1753,15 @@ static bool check_convergence(
   else if(Iter > MaxIter)
   {
     Error_relative = Error/Error0;
-    fprintf(stderr,"%s : %s !!! \n","Error in check_convergence()",
-          "Convergence not reached in the maximum number of iterations");
-    fprintf(stderr,"Absolute error : %e | Relative error %e \n",Error,Error_relative);
-//    exit(EXIT_FAILURE);
+    fprintf(stderr,"\t Convergence no reached after : %i interations \n",Iter);
+    fprintf(stderr,"\t Initial error : %1.4e \n",Error0);
+    fprintf(stderr,"\t Total error : %1.4e \n",Error);
+    fprintf(stderr,"\t Relative error : %1.4e \n",Error_relative);
     return true;
   }
   else
   {
-        Error_relative = Error/Error0;
+      Error_relative = Error/Error0;
   }
       
   /*
@@ -1774,7 +1773,7 @@ static bool check_convergence(
   }
   else
   {
-    print_convergence_stats(Step, Iter, Error, Error_relative);
+    print_convergence_stats(Step, Iter, Error0, Error, Error_relative);
     return true;
   }
 
@@ -2262,7 +2261,7 @@ static Matrix compute_water_flux_density(
 {
   int Ndim = NumberDimensions;
   int Ndof = NumberDOF;
-  double g = 10.0; // Gravity constant
+  double g = - 10.0; // Gravity constant
 
   Matrix water_flux_density = allocZ__MatrixLib__(1,Ndof);
 

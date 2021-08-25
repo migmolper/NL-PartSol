@@ -238,7 +238,7 @@ void print_step(int,double);
   \param Error_relative
 
  */
-void print_convergence_stats(int Time, int Iter, double Error_total, double Error_relative);
+void print_convergence_stats(int, int, double, double, double);
 
 /*****************************************************************/
 

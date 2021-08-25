@@ -221,6 +221,15 @@ Matrix memory_to_matrix__MatrixLib__(int N_rows,int N_cols,double * nV)
   M.N_cols = N_cols;
   M.nV = nV;
   
+  if((N_rows > 1) && (N_cols > 1))
+  {
+    M.nM = (double **)malloc(N_rows*sizeof(double *));
+    for(int i = 0 ; i<N_rows ; i++)
+  	{
+  	  M.nM[i] = M.nV + i*N_cols;
+  	}
+  }
+
   return M;
 }
 

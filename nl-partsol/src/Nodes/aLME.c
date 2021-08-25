@@ -186,7 +186,7 @@ void initialize__aLME__(
 
     // Get some properties for each particle
     X_p = memory_to_matrix__MatrixLib__(Ndim,1,MPM_Mesh.Phi.x_GC.nM[p]);
-    Beta_p = memory_to_matrix__MatrixLib__(Ndim,1,MPM_Mesh.Beta.nM[p]);
+    Beta_p = memory_to_matrix__MatrixLib__(Ndim,Ndim,MPM_Mesh.Beta.nM[p]);
 
     // Loop over the element mesh
     for(int i = 0 ; i<Nelem ; i++)
@@ -241,6 +241,8 @@ void initialize__aLME__(
 
     }
 
+    free(Beta_p.nM);
+
     if(!Init_p)
     {
       fprintf(stderr,"%s : %s %i\n",
@@ -249,7 +251,7 @@ void initialize__aLME__(
       exit(EXIT_FAILURE);
     }
 
-  } 
+  }
 
   for(int p = 0 ; p<Np ; p++)
   {
@@ -290,6 +292,7 @@ void initialize__aLME__(
     asign_to_nodes__Particles__(p, MPM_Mesh.Element_p[p], MPM_Mesh.I0[p], MPM_Mesh.ListNodes[p], FEM_Mesh);
 
     free__MatrixLib__(Delta_Xip);
+    free(Cut_off_Ellipsoid.nM);
   }
 
 
@@ -309,6 +312,7 @@ static void initialize_beta__aLME__(
   {
     Beta.nM[i][i] = aux;
   }
+  
 }
 
 /****************************************************************************/
@@ -1114,7 +1118,6 @@ void local_search__aLME__(
   // Loop over the particles to compute the tributary nodes.
   for(int p = 0 ; p<MPM_Mesh.NumGP ; p++)
   {
-    Matrix Metric_p; // Define a metric tensor
     Matrix Delta_Xip; // Distance from particles to the nodes
     Matrix lambda_p = memory_to_matrix__MatrixLib__(Ndim,1,MPM_Mesh.lambda.nM[p]);
     Matrix DF_p = memory_to_matrix__MatrixLib__(Ndim,Ndim,MPM_Mesh.Phi.DF.nM[p]); // Particle deformation gradient
@@ -1156,8 +1159,9 @@ void local_search__aLME__(
       exit(EXIT_FAILURE);      
     }
     
-    free__MatrixLib__(Metric_p);
     free__MatrixLib__(Delta_Xip);
+    free(Cut_off_Ellipsoid_p.nM);
+    free(Beta_p.nM);
 
     // Active those nodes that interact with the particle.
     asign_to_nodes__Particles__(p, MPM_Mesh.Element_p[p], MPM_Mesh.I0[p], MPM_Mesh.ListNodes[p], FEM_Mesh);
@@ -1177,10 +1181,6 @@ static void update_beta__aLME__(
     Matrix updated_Beta = allocZ__MatrixLib__(Ndim,Ndim);
 
 #if NumberDimensions == 2
-    double aux_00 = Beta.nM[0][0]*Delta_F_m1.nM[0][0] + Beta.nM[0][1]*Delta_F_m1.nM[1][0];
-    double aux_01 = Beta.nM[0][0]*Delta_F_m1.nM[0][1] + Beta.nM[0][1]*Delta_F_m1.nM[1][1];
-    double aux_10 = Beta.nM[1][0]*Delta_F_m1.nM[0][0] + Beta.nM[1][1]*Delta_F_m1.nM[1][0];
-    double aux_11 = Beta.nM[1][0]*Delta_F_m1.nM[0][1] + Beta.nM[1][1]*Delta_F_m1.nM[1][1];
 
     updated_Beta.nM[0][0] = 
       Delta_F_m1.nM[0][0]*Beta.nM[0][0]*Delta_F_m1.nM[0][0] + 
@@ -1188,9 +1188,23 @@ static void update_beta__aLME__(
       Delta_F_m1.nM[1][0]*Beta.nM[1][0]*Delta_F_m1.nM[0][0] + 
       Delta_F_m1.nM[1][0]*Beta.nM[1][1]*Delta_F_m1.nM[1][0];
 
-    updated_Beta.nM[0][1] = Delta_F_m1.nM[0][0]*aux_01 + Delta_F_m1.nM[1][0]*aux_11;
-    updated_Beta.nM[1][0] = Delta_F_m1.nM[0][1]*(Beta.nM[0][0]*Delta_F_m1.nM[0][0] + Beta.nM[0][1]*Delta_F_m1.nM[1][0]) + Delta_F_m1.nM[1][1]*aux_10;
-    updated_Beta.nM[1][1] = Delta_F_m1.nM[0][1]*aux_01 + Delta_F_m1.nM[1][1]*aux_11;
+    updated_Beta.nM[0][1] = 
+      Delta_F_m1.nM[0][0]*Beta.nM[0][0]*Delta_F_m1.nM[0][1] + 
+      Delta_F_m1.nM[0][0]*Beta.nM[0][1]*Delta_F_m1.nM[1][1] + 
+      Delta_F_m1.nM[1][0]*Beta.nM[1][0]*Delta_F_m1.nM[0][1] + 
+      Delta_F_m1.nM[1][0]*Beta.nM[1][1]*Delta_F_m1.nM[1][1];
+    
+    updated_Beta.nM[1][0] = 
+      Delta_F_m1.nM[0][1]*Beta.nM[0][0]*Delta_F_m1.nM[0][0] + 
+      Delta_F_m1.nM[0][1]*Beta.nM[0][1]*Delta_F_m1.nM[1][0] + 
+      Delta_F_m1.nM[1][1]*Beta.nM[1][0]*Delta_F_m1.nM[0][0] + 
+      Delta_F_m1.nM[1][1]*Beta.nM[1][1]*Delta_F_m1.nM[1][0];
+    
+    updated_Beta.nM[1][1] = 
+      Delta_F_m1.nM[0][1]*Beta.nM[0][0]*Delta_F_m1.nM[0][1] + 
+      Delta_F_m1.nM[0][1]*Beta.nM[0][1]*Delta_F_m1.nM[1][1] + 
+      Delta_F_m1.nM[1][1]*Beta.nM[1][0]*Delta_F_m1.nM[0][1] + 
+      Delta_F_m1.nM[1][1]*Beta.nM[1][1]*Delta_F_m1.nM[1][1];
 #endif
 
 #if NumberDimensions == 3 
@@ -1199,7 +1213,6 @@ static void update_beta__aLME__(
         "This operation it is not implemented for 3D");
     exit(EXIT_FAILURE);  
 #endif
-
 
   for(int i = 0 ; i<Ndim ; i++)
   {
@@ -1225,15 +1238,29 @@ static void update_cut_off_ellipsoid__aLME__(
     Matrix updated_Cut_off_Ellipsoid = allocZ__MatrixLib__(Ndim,Ndim);
 
 #if NumberDimensions == 2
-    double aux_00 = Cut_off_Ellipsoid.nM[0][0]*Delta_F_m1.nM[0][0] + Cut_off_Ellipsoid.nM[0][1]*Delta_F_m1.nM[1][0];
-    double aux_01 = Cut_off_Ellipsoid.nM[0][0]*Delta_F_m1.nM[0][1] + Cut_off_Ellipsoid.nM[0][1]*Delta_F_m1.nM[1][1];
-    double aux_10 = Cut_off_Ellipsoid.nM[1][0]*Delta_F_m1.nM[0][0] + Cut_off_Ellipsoid.nM[1][1]*Delta_F_m1.nM[1][0];
-    double aux_11 = Cut_off_Ellipsoid.nM[1][0]*Delta_F_m1.nM[0][1] + Cut_off_Ellipsoid.nM[1][1]*Delta_F_m1.nM[1][1];
+    updated_Cut_off_Ellipsoid.nM[0][0] = 
+      Delta_F_m1.nM[0][0]*Cut_off_Ellipsoid.nM[0][0]*Delta_F_m1.nM[0][0] + 
+      Delta_F_m1.nM[0][0]*Cut_off_Ellipsoid.nM[0][1]*Delta_F_m1.nM[1][0] +
+      Delta_F_m1.nM[1][0]*Cut_off_Ellipsoid.nM[1][0]*Delta_F_m1.nM[0][0] + 
+      Delta_F_m1.nM[1][0]*Cut_off_Ellipsoid.nM[1][1]*Delta_F_m1.nM[1][0];
 
-    updated_Cut_off_Ellipsoid.nM[0][0] = Delta_F_m1.nM[0][0]*aux_00 + Delta_F_m1.nM[1][0]*aux_10;
-    updated_Cut_off_Ellipsoid.nM[0][1] = Delta_F_m1.nM[0][0]*aux_01 + Delta_F_m1.nM[1][0]*aux_11;
-    updated_Cut_off_Ellipsoid.nM[1][0] = Delta_F_m1.nM[0][1]*aux_00 + Delta_F_m1.nM[1][1]*aux_10;
-    updated_Cut_off_Ellipsoid.nM[1][1] = Delta_F_m1.nM[0][1]*aux_01 + Delta_F_m1.nM[1][1]*aux_11;
+    updated_Cut_off_Ellipsoid.nM[0][1] = 
+      Delta_F_m1.nM[0][0]*Cut_off_Ellipsoid.nM[0][0]*Delta_F_m1.nM[0][1] + 
+      Delta_F_m1.nM[0][0]*Cut_off_Ellipsoid.nM[0][1]*Delta_F_m1.nM[1][1] + 
+      Delta_F_m1.nM[1][0]*Cut_off_Ellipsoid.nM[1][0]*Delta_F_m1.nM[0][1] + 
+      Delta_F_m1.nM[1][0]*Cut_off_Ellipsoid.nM[1][1]*Delta_F_m1.nM[1][1];
+    
+    updated_Cut_off_Ellipsoid.nM[1][0] = 
+      Delta_F_m1.nM[0][1]*Cut_off_Ellipsoid.nM[0][0]*Delta_F_m1.nM[0][0] + 
+      Delta_F_m1.nM[0][1]*Cut_off_Ellipsoid.nM[0][1]*Delta_F_m1.nM[1][0] + 
+      Delta_F_m1.nM[1][1]*Cut_off_Ellipsoid.nM[1][0]*Delta_F_m1.nM[0][0] + 
+      Delta_F_m1.nM[1][1]*Cut_off_Ellipsoid.nM[1][1]*Delta_F_m1.nM[1][0];
+    
+    updated_Cut_off_Ellipsoid.nM[1][1] = 
+      Delta_F_m1.nM[0][1]*Cut_off_Ellipsoid.nM[0][0]*Delta_F_m1.nM[0][1] + 
+      Delta_F_m1.nM[0][1]*Cut_off_Ellipsoid.nM[0][1]*Delta_F_m1.nM[1][1] + 
+      Delta_F_m1.nM[1][1]*Cut_off_Ellipsoid.nM[1][0]*Delta_F_m1.nM[0][1] + 
+      Delta_F_m1.nM[1][1]*Cut_off_Ellipsoid.nM[1][1]*Delta_F_m1.nM[1][1];
 #endif
 
 #if NumberDimensions == 3 

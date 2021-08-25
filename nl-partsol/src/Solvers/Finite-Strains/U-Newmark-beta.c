@@ -1389,7 +1389,7 @@ static bool check_convergence(
       }
       else
       {
-        print_convergence_stats(Step, Iter, Error, Error_relative);
+        print_convergence_stats(Step, Iter, Error0, Error, Error_relative);
         return true;
       }
     }

@@ -26,11 +26,12 @@ void print_step(int Time,double DeltaTimeStep)
 
 /*********************************************************************/
 
-void print_convergence_stats(int Time, int Iter, double Error_total, double Error_relative)
+void print_convergence_stats(int Time, int Iter, double Error0, double Error_total, double Error_relative)
 {
   if(Time%ResultsTimeStep == 0)
     {
       printf("\t Convergence reached after : %i interations \n",Iter);
+      printf("\t Initial error : %1.4e \n",Error0);
       printf("\t Total error : %1.4e \n",Error_total);
       printf("\t Relative error : %1.4e \n",Error_relative);
     }
