@@ -471,7 +471,14 @@ typedef struct {
   */
   double yield_stress_0;
   double Hardening_modulus;
-  
+  double atmospheric_pressure;
+
+  /*!
+   * Smooth Mohr-Coulomb parameters (Borja et al. 2003)
+   * */
+  double m_Smooth_Mohr_Coulomb;
+  double c0_Smooth_Mohr_Coulomb;
+
   /*!
   * Hardening Hughes
   */
@@ -500,6 +507,11 @@ typedef struct {
   double theta_Hardening_Voce;
 
   /*!
+   * Hardening Borja et al. 2003
+   * */
+  double a_Borja2003[3];
+
+  /*!
    * Viscoplasticity parameters
    * */
   bool Viscous_regularization;
@@ -516,7 +528,7 @@ typedef struct {
    * */
   bool Locking_Control_Fbar;
   double alpha_Fbar;
-  
+
 } Material;
 
 /*******************************************************/
