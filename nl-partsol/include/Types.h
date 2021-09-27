@@ -329,6 +329,11 @@ typedef struct {
   Matrix EPS;
 
   /*! 
+  * Hardening parameter for isotropuc hardening (plasticity)
+  */
+  Matrix Kappa_hardening;
+
+  /*! 
   * Back stress for kinematic hardening (plasticity)
   */
   Matrix Back_stress;
@@ -476,6 +481,7 @@ typedef struct {
   /*!
    * Smooth Mohr-Coulomb parameters (Borja et al. 2003)
    * */
+  char Kind_Smooth_Mohr_Coulomb [100];
   double m_Smooth_Mohr_Coulomb;
   double c0_Smooth_Mohr_Coulomb;
 
@@ -509,6 +515,7 @@ typedef struct {
   /*!
    * Hardening Borja et al. 2003
    * */
+  bool Hardening_Borja;
   double a_Borja2003[3];
   double alpha_Borja2003;
 
@@ -602,7 +609,7 @@ typedef struct
   double EPS; // Equivalent plastic strain
   double Cohesion; 
   double Yield_stress;
-  double kappa; // Hardening Parameter
+  double Kappa; // Hardening Parameter
 
 } State_Parameters;
 

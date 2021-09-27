@@ -26,9 +26,12 @@ typedef struct
 } Model_Parameters;
 
 /*
-  Define local global variable for the relative error
+  Define local global variables
 */
 double Error0;
+bool Is_Matsuoka_Nakai;
+bool Is_Lade_Duncan;
+bool Is_Modified_Lade_Duncan;
 
 /*
   Auxiliar functions 
@@ -43,7 +46,7 @@ static void eval_d_b2_d_stress(double *,double *,double,double,double,double,dou
 static void eval_kappa(double *,double,double,double,double,double,double);
 static void eval_d_kappa1_d_stress(double *,double,double,double,double,double);
 static double eval_d_kappa1_d_lambda(double,double,double,double,double);
-static double eval_f_Matsuoka_Nakai(double,double);
+static double eval_f(double,double);
 static void eval_d_f_Matsuoka_Nakai_d_stress(double *,double *,double,double);
 static double eval_g_Matsuoka_Nakai(double,double);
 static void eval_d_g_Matsuoka_Nakai_d_stress(double *,double *,double,double);
@@ -60,15 +63,15 @@ static void assemble_residual(double *,double *,double *,double *,double *,doubl
 static bool check_convergence(double *,double,int,int);
 static void assemble_tangent_matrix(double *,double *,double *,double *,double,double,Model_Parameters);
 static void update_variables(double *,double *,double *,double *,double *,double *,double,double);
-static State_Parameters fill_Outputs(double *,double *,double *,double,double);
+static State_Parameters fill_Outputs(double *,double *,double *,double,double,double);
 
 /**************************************************************/
 
-State_Parameters Matsuoka_Nakai_Monolithic(
+State_Parameters Smooth_Mohr_Coulomb_Monolithic(
   State_Parameters Inputs_SP,
   Material MatProp)
 /*	
-	Radial returning algorithm for the Von-Mises plastic criterium
+	Monolithic algorithm for a smooth Mohr-Coulomb plastic criterium
 */
 {
 
@@ -83,25 +86,14 @@ State_Parameters Matsuoka_Nakai_Monolithic(
   Model_Parameters Params = fill_model_paramters(MatProp);
 
   /*
-    Initialise solver parameters
+    Assign values from the inputs state parameters
   */
   double * Plastic_Flow = Inputs_SP.Increment_E_plastic;
   double * Stress_k  = Inputs_SP.Stress;
-  double Strain_e_tri[3]; eval_strain(Strain_e_tri,Stress_k,Params.CC);
-  double kappa_k[2] = {Inputs_SP.kappa,Params.alpha*Inputs_SP.kappa};
+  double kappa_k[2] = {Inputs_SP.Kappa,Params.alpha*Inputs_SP.Kappa};
   double Lambda_n = Inputs_SP.EPS;
   double Lambda_k = Lambda_n;
   double delta_lambda = 0.0;
-
-  /*
-    Parameters for the Newton-Raphson solver
-  */
-  double Residual[5];
-  double Tangent_Matrix[25]; 
-  double TOL = TOL_Radial_Returning;
-  int MaxIter = Max_Iterations_Radial_Returning;
-  int Iter = 0;
-  bool Convergence = false;
 
   /*
     Compute invariants
@@ -115,13 +107,29 @@ State_Parameters Matsuoka_Nakai_Monolithic(
   */
   if(eval_F(Params.c0,kappa_k[0],Params.pa,I1,I2,I3,Params.m) > 0.0)
   {
+
+    /*
+      Compute elastic trial with the inverse elastic relation
+    */
+    double Strain_e_tri[3];
+    eval_strain(Strain_e_tri,Stress_k,Params.CC);
+
+    /*
+      Initialize Newton-Raphson solver
+    */
+    double Residual[5];
+    double Tangent_Matrix[25]; 
+    double TOL = TOL_Radial_Returning;
+    int MaxIter = Max_Iterations_Radial_Returning;
+    int Iter = 0;
+    bool Convergence = false;
     
     /*
       Newton-Rapson solver
     */
     while(Convergence == false)
     {
-      
+
       assemble_residual(Residual,Stress_k,Strain_e_tri,Plastic_Flow,kappa_k,delta_lambda,Lambda_k,Params);
 
       Convergence = check_convergence(Residual,TOL,Iter,MaxIter);
@@ -142,12 +150,12 @@ State_Parameters Matsuoka_Nakai_Monolithic(
     /*
       Update equivalent plastic strain and increment of plastic deformation
     */
-    Outputs_VarCons = fill_Outputs(Inputs_SP.Increment_E_plastic,Stress_k,Plastic_Flow,kappa_k[0],delta_lambda);
+    Outputs_VarCons = fill_Outputs(Inputs_SP.Increment_E_plastic,Stress_k,Plastic_Flow,Lambda_k,delta_lambda,kappa_k[0]);
 
   }
   else
   {
-    Outputs_VarCons = fill_Outputs(Inputs_SP.Increment_E_plastic,Stress_k,Plastic_Flow,kappa_k[0],delta_lambda);
+    Outputs_VarCons = fill_Outputs(Inputs_SP.Increment_E_plastic,Stress_k,Plastic_Flow,Lambda_k,delta_lambda,kappa_k[0]);
   }
   
   return Outputs_VarCons;
@@ -159,9 +167,32 @@ static Model_Parameters fill_model_paramters(Material MatProp)
 {
   Model_Parameters Params;
 
-  Params.m = MatProp.m_Smooth_Mohr_Coulomb;
+  if(strcmp(Mat_particle.Kind_Smooth_Mohr_Coulomb,"Matsuoka-Nakai") == 0)
+  {
+    Params.m = 0.0;
+    Params.c0 = 9;
+    Is_Matsuoka_Nakai = true;
+    Is_Lade_Duncan = false;
+    Is_Modified_Lade_Duncan = false;
+  }
+  else if(strcmp(Mat_particle.Kind_Smooth_Mohr_Coulomb,"Lade-Duncan") == 0)
+  {
+    Params.m = 0.0;
+    Params.c0 = 27;
+    Is_Matsuoka_Nakai = false;
+    Is_Lade_Duncan = true;
+    Is_Modified_Lade_Duncan = false;
+  }
+  else if(strcmp(Mat_particle.Kind_Smooth_Mohr_Coulomb,"Modified-Lade-Duncan") == 0)
+  {
+    Params.m = MatProp.m_Smooth_Mohr_Coulomb;
+    Params.c0 = 27;
+    Is_Matsuoka_Nakai = false;
+    Is_Lade_Duncan = false;
+    Is_Modified_Lade_Duncan = true;
+  }
+
   Params.pa = MatProp.atmospheric_pressure;
-  Params.c0 = MatProp.c0_Smooth_Mohr_Coulomb;
   Params.alpha =  MatProp.alpha_Borja2003;
   Params.a1 = MatProp.a_Borja2003[0];
   Params.a2 = MatProp.a_Borja2003[1];
@@ -310,11 +341,24 @@ static double eval_d_kappa1_d_lambda(
     
 /**************************************************************/
 
-static double eval_f_Matsuoka_Nakai(
+static double eval_f(
   double I1,
   double I2)
   {
-    return cbrt(I1*I2);
+
+    if(Is_Matsuoka_Nakai)
+    {
+      return cbrt(I1*I2);
+    }
+    else if(Is_Lade_Duncan)
+    {
+      return I1;
+    }
+    else if(Is_Modified_Lade_Duncan)
+    {
+      return I1;
+    }
+    
   } 
 
 /**************************************************************/
@@ -336,7 +380,18 @@ static double eval_g_Matsuoka_Nakai(
   double I1,
   double I2)
   {
-    return cbrt(I1*I2);
+    if(Is_Matsuoka_Nakai)
+    {
+      return cbrt(I1*I2);
+    }
+    else if(Is_Lade_Duncan)
+    {
+      return I1;
+    }
+    else if(Is_Modified_Lade_Duncan)
+    {
+      return I1;
+    }
   } 
 
 /**************************************************************/
@@ -385,7 +440,9 @@ static double eval_F(
 {
 
   double K1 = eval_K1(c0,kappa1,pa,I1,m);
-  double f = eval_f_Matsuoka_Nakai(I1,I2);
+
+
+  double f = eval_f(I1,I2);
 
   return cbrt(K1*I3) - f;
 }
@@ -768,12 +825,14 @@ static State_Parameters fill_Outputs(
   double * Increment_E_plastic,
   double * Stress_k,
   double * Plastic_Flow, 
-  double kappa_k1,
-  double delta_lambda)
+  double Lambda_k,
+  double delta_lambda,
+  double kappa_k1)
 {
   State_Parameters Outputs_VarCons;
-    
-  Outputs_VarCons.kappa = kappa_k1;
+
+  Outputs_VarCons.EPS = Lambda_k;
+  Outputs_VarCons.Kappa = kappa_k1;
   Outputs_VarCons.Stress = Stress_k;
   Outputs_VarCons.Increment_E_plastic = Increment_E_plastic;
   Outputs_VarCons.Increment_E_plastic[0] = delta_lambda*Plastic_Flow[0];

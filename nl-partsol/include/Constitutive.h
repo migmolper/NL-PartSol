@@ -135,14 +135,14 @@ State_Parameters Drucker_Prager_backward_euler(State_Parameters, Material);
 /*******************************************************/
 
 /*!
-  \fn State_Parameters Matsuoka_Nakai_Monolithic(State_Parameters Inputs_SP,Material MatProp)
+  \fn State_Parameters Smooth_Mohr_Coulomb_Monolithic(State_Parameters Inputs_SP,Material MatProp)
 
-  \brief Compute the plastic Matsuoka-Nakai model using a monolithic algorithm
+  \brief Compute a family of smooth approximations of the Mohr-Coulomb model using a monolithic algorithm
 
   \param Input_SP : State parameters of the particle
   \param MatProp : Material properties of the model
 */
-State_Parameters Matsuoka_Nakai_Monolithic(State_Parameters,Material);
+State_Parameters Smooth_Mohr_Coulomb_Monolithic(State_Parameters,Material);
 /*******************************************************/
 
 /*!
