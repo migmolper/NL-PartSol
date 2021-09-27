@@ -211,6 +211,37 @@ void Stress_integration__Particles__(
     MPM_Mesh.Phi.EPS.nV[p] = Output_SP.EPS;
 
   }
+  else if(strcmp(MatProp_p.Type,"Matsuoka-Nakai") == 0)
+  {
+    Input_SP.Stress = MPM_Mesh.Phi.Stress.nM[p];
+    Input_SP.F_m1_plastic_p = MPM_Mesh.Phi.F_m1_plastic.nM[p];
+    Input_SP.EPS = MPM_Mesh.Phi.EPS.nV[p];
+    Input_SP.Back_stress = MPM_Mesh.Phi.Back_stress.nM[p];
+
+    if(MatProp_p.Locking_Control_Fbar)
+    {
+      Input_SP.F_n1_p = MPM_Mesh.Phi.F_n1.nM[p];
+      Input_SP.Fbar = MPM_Mesh.Phi.Fbar.nM[p];
+    }
+    else
+    {
+      Input_SP.F_n1_p = MPM_Mesh.Phi.F_n1.nM[p];
+    }
+  
+    if(strcmp(MatProp_p.Plastic_Solver,"Monolithic") == 0)
+    {
+      Output_SP = finite_strain_plasticity(Input_SP,MatProp_p,Matsuoka_Nakai_Monolithic);
+    }
+    else
+    {
+      fprintf(stderr,"%s : %s %s %s \n","Error in stress_integration__Particles__()",
+    "The solver",MatProp_p.Type,"has not been yet implemented");
+      exit(EXIT_FAILURE);
+    }
+    
+    MPM_Mesh.Phi.EPS.nV[p] = Output_SP.EPS;
+
+  }
   else
   {
     fprintf(stderr,"%s : %s %s %s \n","Error in forward_integration_Stress__Particles__()",

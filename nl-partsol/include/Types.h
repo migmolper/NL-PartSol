@@ -510,6 +510,7 @@ typedef struct {
    * Hardening Borja et al. 2003
    * */
   double a_Borja2003[3];
+  double alpha_Borja2003;
 
   /*!
    * Viscoplasticity parameters
@@ -598,9 +599,10 @@ typedef struct
   double * F_m1_plastic_p;
   double * Increment_E_plastic;
   
-  double EPS;
-  double Cohesion;
+  double EPS; // Equivalent plastic strain
+  double Cohesion; 
   double Yield_stress;
+  double kappa; // Hardening Parameter
 
 } State_Parameters;
 

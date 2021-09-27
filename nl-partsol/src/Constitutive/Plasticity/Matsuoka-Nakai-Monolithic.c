@@ -1,5 +1,14 @@
 #include "nl-partsol.h"
 
+#ifdef __linux__
+#include <lapacke.h>
+
+#elif __APPLE__
+#include <Accelerate/Accelerate.h>
+
+#endif
+
+
 /*
   Auxiliar variables
 */
@@ -12,13 +21,19 @@ typedef struct
   double a1; 
   double a2; 
   double a3;
-  double CC[3][3];
+  double CC[9];
 
 } Model_Parameters;
 
 /*
+  Define local global variable for the relative error
+*/
+double Error0;
+
+/*
   Auxiliar functions 
 */
+static Model_Parameters fill_model_paramters(Material Material);
 static double eval_K1(double,double,double,double,double);
 static double eval_K2(double,double,double,double,double);
 static void eval_d_K2_d_stress(double *,double,double,double,double);
@@ -32,23 +47,24 @@ static double eval_f_Matsuoka_Nakai(double,double);
 static void eval_d_f_Matsuoka_Nakai_d_stress(double *,double *,double,double);
 static double eval_g_Matsuoka_Nakai(double,double);
 static void eval_d_g_Matsuoka_Nakai_d_stress(double *,double *,double,double);
-static void eval_dd_g_Matsuoka_Nakai_dd_stress(double **,double *,double,double);
+static void eval_dd_g_Matsuoka_Nakai_dd_stress(double *,double *,double,double);
 static double eval_F(double,double,double,double,double,double,double);
 static void eval_d_F_d_stress(double *,double *,double,double,double,double,double,double,double);
 static double eval_d_F_d_kappa1(double,double,double,double,double,double);
 static double eval_G(double,double,double,double,double,double,double);
 static void eval_d_G_d_stress(double *,double *,double,double,double,double,double,double,double);
-static void eval_dd_G_dd_stress(double **,double *,double,double,double,double,double,double,double);
+static void eval_dd_G_dd_stress(double *,double *,double,double,double,double,double,double,double);
 static void eval_dd_G_d_stress_d_kappa2(double *, double *,double,double,double,double,double,double);
-static void eval_strain(double *,double *,double **);
-static void assemble_residual(double *,double *,double *,double *,double,double,Model_Parameters);
-static bool check_convergence(double *,double,int,int,int);
-static void assemble_tangent_matrix(double *,double *,double *,double,double,Model_Parameters);
+static void eval_strain(double *,double *,double *);
+static void assemble_residual(double *,double *,double *,double *,double *,double,double,Model_Parameters);
+static bool check_convergence(double *,double,int,int);
+static void assemble_tangent_matrix(double *,double *,double *,double *,double,double,Model_Parameters);
 static void update_variables(double *,double *,double *,double *,double *,double *,double,double);
+static State_Parameters fill_Outputs(double *,double *,double *,double,double);
 
 /**************************************************************/
 
-State_Parameters Smooth_Mohr_Coulomb_Monolithic(
+State_Parameters Matsuoka_Nakai_Monolithic(
   State_Parameters Inputs_SP,
   Material MatProp)
 /*	
@@ -62,19 +78,30 @@ State_Parameters Smooth_Mohr_Coulomb_Monolithic(
   State_Parameters Outputs_VarCons;
 
   /*
+    Get material variables
+  */
+  Model_Parameters Params = fill_model_paramters(MatProp);
+
+  /*
     Initialise solver parameters
   */
-  double EPS_k = Inputs_SP.EPS;
-  double delta_Gamma_k = 0;
+  double * Plastic_Flow = Inputs_SP.Increment_E_plastic;
+  double * Stress_k  = Inputs_SP.Stress;
+  double Strain_e_tri[3]; eval_strain(Strain_e_tri,Stress_k,Params.CC);
+  double kappa_k[2] = {Inputs_SP.kappa,Params.alpha*Inputs_SP.kappa};
+  double Lambda_n = Inputs_SP.EPS;
+  double Lambda_k = Lambda_n;
+  double delta_lambda = 0.0;
+
+  /*
+    Parameters for the Newton-Raphson solver
+  */
+  double Residual[5];
+  double Tangent_Matrix[25]; 
   double TOL = TOL_Radial_Returning;
   int MaxIter = Max_Iterations_Radial_Returning;
   int Iter = 0;
   bool Convergence = false;
-
-  /*
-    Get material variables
-  */
-  Model_Parameters Params = fill_model_paramters(Material MatProp);
 
   /*
     Compute invariants
@@ -86,7 +113,7 @@ State_Parameters Smooth_Mohr_Coulomb_Monolithic(
   /*
     Check yield condition
   */
-  if(eval_F(c0,kappa1,pa,I1,I2,I3,m) > 0.0)
+  if(eval_F(Params.c0,kappa_k[0],Params.pa,I1,I2,I3,Params.m) > 0.0)
   {
     
     /*
@@ -95,9 +122,7 @@ State_Parameters Smooth_Mohr_Coulomb_Monolithic(
     while(Convergence == false)
     {
       
-      assemble_residual(Residual,Stress_k,Strain_e_tri,kappa,delta_lambda,Lambda_k,Params);
-
-      Convergence = check_convergence(residual,Error_0,TOL,iter,MaxIter)
+      assemble_residual(Residual,Stress_k,Strain_e_tri,Plastic_Flow,kappa_k,delta_lambda,Lambda_k,Params);
 
       Convergence = check_convergence(Residual,TOL,Iter,MaxIter);
 
@@ -106,34 +131,58 @@ State_Parameters Smooth_Mohr_Coulomb_Monolithic(
         
         Iter++;
         
-        assemble_tangent_matrix(Tangent_Matrix,Stress_k,kappa_k,delta_lambda,Lambda_k,Params);
+        assemble_tangent_matrix(Tangent_Matrix,Plastic_Flow,Stress_k,kappa_k,delta_lambda,Lambda_k,Params);
         
-        update_variables(Tangent_Matrix,Residual,Stress_k,kappa_k,&delta_lambda,&lambda_k,lambda_n,alpha);
+        update_variables(Tangent_Matrix,Residual,Stress_k,kappa_k,&delta_lambda,&Lambda_k,Lambda_n,Params.alpha);
 
       }
     
     }
 
     /*
-      Update plastic deformation gradient
-    */
-    update_increment_plastic_strain_tensor(Inputs_SP.Increment_E_plastic,plastic_flow_direction, delta_Gamma_k);
-
-    /*
       Update equivalent plastic strain and increment of plastic deformation
     */
-    Outputs_VarCons.EPS = EPS_k;
-    Outputs_VarCons.Stress = Inputs_SP.Stress;
-    Outputs_VarCons.Increment_E_plastic = Inputs_SP.Increment_E_plastic;
+    Outputs_VarCons = fill_Outputs(Inputs_SP.Increment_E_plastic,Stress_k,Plastic_Flow,kappa_k[0],delta_lambda);
+
   }
   else
   {
-    Outputs_VarCons.EPS = Inputs_SP.EPS;
-    Outputs_VarCons.Stress = Inputs_SP.Stress;
-    Outputs_VarCons.Increment_E_plastic = Inputs_SP.Increment_E_plastic;
+    Outputs_VarCons = fill_Outputs(Inputs_SP.Increment_E_plastic,Stress_k,Plastic_Flow,kappa_k[0],delta_lambda);
   }
   
   return Outputs_VarCons;
+}
+
+/**************************************************************/
+
+static Model_Parameters fill_model_paramters(Material MatProp)
+{
+  Model_Parameters Params;
+
+  Params.m = MatProp.m_Smooth_Mohr_Coulomb;
+  Params.pa = MatProp.atmospheric_pressure;
+  Params.c0 = MatProp.c0_Smooth_Mohr_Coulomb;
+  Params.alpha =  MatProp.alpha_Borja2003;
+  Params.a1 = MatProp.a_Borja2003[0];
+  Params.a2 = MatProp.a_Borja2003[1];
+  Params.a3 = MatProp.a_Borja2003[2];
+
+  double E = MatProp.E;
+  double nu = MatProp.nu;
+
+  Params.CC[0] =   1.0/E;
+  Params.CC[1] = - nu/E;
+  Params.CC[2] = - nu/E;
+
+  Params.CC[3] = - nu/E;
+  Params.CC[4] =   1.0/E;
+  Params.CC[5] = - nu/E;
+
+  Params.CC[6] = - nu/E;
+  Params.CC[7] = - nu/E;
+  Params.CC[8] =   1.0/E;
+
+  return Params;
 }
 
 /**************************************************************/
@@ -212,9 +261,9 @@ static void eval_d_b2_d_stress(
 
     double b2 = eval_b2(kappa2,I1,I3,m,pa);
 
-    d_b2_d_stress[0] = (b2/I1)*(I1/(3*stress[0]) - m - 1.0);
-    d_b2_d_stress[1] = (b2/I1)*(I1/(3*stress[1]) - m - 1.0);
-    d_b2_d_stress[2] = (b2/I1)*(I1/(3*stress[2]) - m - 1.0);
+    d_b2_d_stress[0] = (b2/I1)*(I1/(3*Stress[0]) - m - 1.0);
+    d_b2_d_stress[1] = (b2/I1)*(I1/(3*Stress[1]) - m - 1.0);
+    d_b2_d_stress[2] = (b2/I1)*(I1/(3*Stress[2]) - m - 1.0);
   } 
     
 /**************************************************************/
@@ -287,7 +336,7 @@ static double eval_g_Matsuoka_Nakai(
   double I1,
   double I2)
   {
-    return cbrt(I1*I2)**2;
+    return cbrt(I1*I2);
   } 
 
 /**************************************************************/
@@ -307,7 +356,7 @@ static void eval_d_g_Matsuoka_Nakai_d_stress(
 /**************************************************************/
 
 static void eval_dd_g_Matsuoka_Nakai_dd_stress(
-  double ** dd_g_dd_stress,
+  double * dd_g_dd_stress,
   double * Stress,
   double I1,
   double I2)
@@ -316,7 +365,7 @@ static void eval_dd_g_Matsuoka_Nakai_dd_stress(
     {
       for (int B = 0; B<3; B++)
       {
-        dd_g_dd_stress[A][B] = (3.0*I1 - Stress[A] - Stress[B] - I1*(A==B))/(3.0*pow(cbrt(I1*I2),2)) 
+        dd_g_dd_stress[A*3 + B] = (3.0*I1 - Stress[A] - Stress[B] - I1*(A==B))/(3.0*pow(cbrt(I1*I2),2)) 
         - (2.0/9.0)*(I1*(I1 - Stress[A]) + I2)*(I1*(I1 - Stress[B]) + I2)/(pow(cbrt(I1*I2),5));
       }
     }
@@ -354,7 +403,7 @@ static void eval_d_F_d_stress(
   double pa,
   double m)
   {
-    double Grad_f[3], eval_d_f_Matsuoka_Nakai_d_stress(Grad_f,Stress,I1,I2);
+    double Grad_f[3]; eval_d_f_Matsuoka_Nakai_d_stress(Grad_f,Stress,I1,I2);
     double K1 = eval_K1(kappa1,I1,c0,m,pa);
     double b1 = eval_b1(kappa1,I1,I3,m,pa);
 
@@ -406,7 +455,7 @@ static void eval_d_G_d_stress(
   double pa,
   double m)
   {
-    double Grad_g[3], eval_d_g_Matsuoka_Nakai_d_stress(Grad_g,Stress,I1,I2);
+    double Grad_g[3]; eval_d_g_Matsuoka_Nakai_d_stress(Grad_g,Stress,I1,I2);
     double K2 = eval_K2(kappa2,I1,c0,m,pa);
     double b2 = eval_b2(kappa2,I1,I3,m,pa);
 
@@ -418,7 +467,7 @@ static void eval_d_G_d_stress(
 /**************************************************************/
 
 static void eval_dd_G_dd_stress(
-  double ** Hess_G,
+  double * Hess_G,
   double * Stress,
   double kappa2,
   double I1,
@@ -431,18 +480,18 @@ static void eval_dd_G_dd_stress(
 
     double K2 = eval_K2(kappa2,I1,c0,m,pa);
     double b2 = eval_b2(kappa2,I1,I3,m,pa);
-    double Grad_K2[3], eval_d_K2_d_stress(Grad_K2,kappa2,I1,m,pa);
-    double Grad_b2[3], eval_d_b2_d_stress(Grad_b2,Stress,kappa2,I1,I3,m,pa);
-    double Hess_g[3][3], eval_dd_g_Matsuoka_Nakai_dd_stress(Hess_g,Stress,I1,I2);
+    double Grad_K2[3]; eval_d_K2_d_stress(Grad_K2,kappa2,I1,m,pa);
+    double Grad_b2[3]; eval_d_b2_d_stress(Grad_b2,Stress,kappa2,I1,I3,m,pa);
+    double Hess_g[9]; eval_dd_g_Matsuoka_Nakai_dd_stress(Hess_g,Stress,I1,I2);
 
     for (int A = 0; A<3; A++)
     {
       for (int B = 0; B<3; B++)
       {
-        Hess_G[A][B] = (1.0/3.0)*cbrt(K2*I3)*(1.0/(3*Stress[A]*Stress[B]) - 1.0*(A==B)/pow(Stress[A],2)) 
+        Hess_G[A*3 + B] = (1.0/3.0)*cbrt(K2*I3)*(1.0/(3*Stress[A]*Stress[B]) - 1.0*(A==B)/pow(Stress[A],2)) 
         + (cbrt(I3)/Stress[A] + 2.0*b2/K2)*Grad_K2[B]/(9.0*pow(cbrt(K2),2)) 
         - Grad_b2[B]/(3.0*pow(cbrt(K2),2)) 
-        - Hess_g[A][B];
+        - Hess_g[A*3 + B];
       }
     }
 
@@ -451,7 +500,7 @@ static void eval_dd_G_dd_stress(
 /**************************************************************/
 
 static void eval_dd_G_d_stress_d_kappa2(
-  double * d_G_d_stress_d_kappa2, 
+  double * dd_G_d_stress_d_kappa2, 
   double * Stress,
   double I1,
   double I3,
@@ -464,13 +513,13 @@ static void eval_dd_G_d_stress_d_kappa2(
   double K2 = eval_K2(c0,kappa2,pa,I1,m);
   double b2 = eval_b2(kappa2,I1,I3,m,pa);
 
-  d_G_d_stress_d_kappa2[0] = pow((pa/I1),m)*(cbrt(I3)/(3.0*Stress[0]) 
+  dd_G_d_stress_d_kappa2[0] = pow((pa/I1),m)*(cbrt(I3)/(3.0*Stress[0]) 
   + 2.0*b2/(3.0*K2) 
   - m*cbrt(I3)/I1)/(3.0*pow(cbrt(K2),2));
-  d_G_d_stress_d_kappa2[1] = pow((pa/I1),m)*(cbrt(I3)/(3.0*Stress[1]) 
+  dd_G_d_stress_d_kappa2[1] = pow((pa/I1),m)*(cbrt(I3)/(3.0*Stress[1]) 
   + 2.0*b2/(3.0*K2) 
   - m*cbrt(I3)/I1)/(3.0*pow(cbrt(K2),2));
-  d_G_d_stress_d_kappa2[2] = pow((pa/I1),m)*(cbrt(I3)/(3.0*Stress[2]) 
+  dd_G_d_stress_d_kappa2[2] = pow((pa/I1),m)*(cbrt(I3)/(3.0*Stress[2]) 
   + 2.0*b2/(3.0*K2) 
   - m*cbrt(I3)/I1)/(3.0*pow(cbrt(K2),2));
 
@@ -481,11 +530,11 @@ static void eval_dd_G_d_stress_d_kappa2(
 static void eval_strain(
   double * Strain,
   double * Stress,
-  double ** CC)
+  double * CC)
 {
-  Strain[0] = CC[0][0]*Stress[0] + CC[0][1]*Stress[1] + CC[0][2]*Stress[2]);
-  Strain[1] = CC[1][0]*Stress[0] + CC[1][1]*Stress[1] + CC[1][2]*Stress[2]);
-  Strain[2] = CC[2][0]*Stress[0] + CC[2][1]*Stress[1] + CC[2][2]*Stress[2]);
+  Strain[0] = CC[0]*Stress[0] + CC[1]*Stress[1] + CC[2]*Stress[2];
+  Strain[1] = CC[3]*Stress[0] + CC[4]*Stress[1] + CC[5]*Stress[2];
+  Strain[2] = CC[6]*Stress[0] + CC[7]*Stress[1] + CC[8]*Stress[2];
 }
 
 /**************************************************************/
@@ -494,6 +543,7 @@ static void assemble_residual(
   double * Residual,
   double * Stress_k,
   double * Strain_e_tri,
+  double * Grad_G,
   double * kappa,
   double delta_lambda,
   double Lambda_k,
@@ -506,15 +556,17 @@ static void assemble_residual(
     double a1 = Params.a1;
     double a2 = Params.a2;
     double a3 = Params.a3;
-    double ** CC = Params.CC;
     double I1 = Stress_k[0] + Stress_k[1] + Stress_k[2];
     double I2 = Stress_k[0]*Stress_k[1] + Stress_k[1]*Stress_k[2] + Stress_k[0]*Stress_k[2];
     double I3 = Stress_k[0]*Stress_k[1]*Stress_k[2];
-    double Strain_e_k[3], eval_strain(Strain_e_k,Stress_k,CC);
-    double kappa_hat[3], eval_kappa(kappa_hat,Lambda_k,I1,a1,a2,a3,alpha);
-    double Grad_G[3], eval_d_G_d_stress(Grad_G,Stress_k,I1,I2,I3,c0,kappa[1],pa,m);
+    double Strain_e_k[3];
+    double kappa_hat[3];
+    double F;
 
-    double F = eval_F(c0,kappa[0],pa,I1,I2,I3,m);
+    eval_strain(Strain_e_k,Stress_k,Params.CC);
+    eval_kappa(kappa_hat,Lambda_k,I1,a1,a2,a3,alpha);
+    eval_d_G_d_stress(Grad_G,Stress_k,I1,I2,I3,c0,kappa[1],pa,m);
+    F = eval_F(c0,kappa[0],pa,I1,I2,I3,m);
 
     Residual[0] = Strain_e_k[0] - Strain_e_tri[0] + delta_lambda*Grad_G[0];
     Residual[1] = Strain_e_k[1] - Strain_e_tri[1] + delta_lambda*Grad_G[1];
@@ -529,17 +581,13 @@ static bool check_convergence(
   double * Residual,
   double TOL,
   int Iter,
-  int MaxIter,
-  int Step)
+  int MaxIter)
 {
   bool convergence;
   int Ndim = NumberDimensions;
-  int Ndof = NumberDOF;
-  int Nnodes_mask = Residual.N_cols;
   double Error = 0.0;
   double Error_relative = 0.0;
 
-  
   /*
     Compute absolute error 
   */
@@ -562,15 +610,11 @@ static bool check_convergence(
   else if(Iter > MaxIter)
   {
     Error_relative = Error/Error0;
-    fprintf(stderr,"\t Convergence no reached after : %i interations \n",Iter);
-    fprintf(stderr,"\t Initial error : %1.4e \n",Error0);
-    fprintf(stderr,"\t Total error : %1.4e \n",Error);
-    fprintf(stderr,"\t Relative error : %1.4e \n",Error_relative);
     return true;
   }
   else
   {
-      Error_relative = Error/Error0;
+    Error_relative = Error/Error0;
   }
       
   /*
@@ -582,7 +626,6 @@ static bool check_convergence(
   }
   else
   {
-    print_convergence_stats(Step, Iter, Error0, Error, Error_relative);
     return true;
   }
 
@@ -592,6 +635,7 @@ static bool check_convergence(
 
 static void assemble_tangent_matrix(
   double * Tangent_Matrix,
+  double * d_G_d_stress,
   double * Stress_k, 
   double * kappa_k, 
   double delta_lambda,
@@ -606,36 +650,34 @@ static void assemble_tangent_matrix(
     double a1 = Params.a1;
     double a2 = Params.a2;
     double a3 = Params.a3;
-    double ** CC = Params.CC;
     double I1 = Stress_k[0] + Stress_k[1] + Stress_k[2];
     double I2 = Stress_k[0]*Stress_k[1] + Stress_k[1]*Stress_k[2] + Stress_k[0]*Stress_k[2];
     double I3 = Stress_k[0]*Stress_k[1]*Stress_k[2];
-    double d_G_d_stress[3], eval_d_G_d_stress(d_G_d_stress,Stress_k,I1,I2,I3,c0,kappa_k[1],pa,m);
-    double dd_G_dd_stress[3][3], eval_dd_G_dd_stress(dd_G_dd_stress,Stress_k,kappa_k[1],I1,I2,I3,m,pa,c0);
-    double dd_G_d_stress_d_kappa2[3], eval_dd_G_d_stress_d_kappa2(d_G_d_stress_d_kappa2,Stress_k,I1,I3,m,pa,c0,kappa_k[1]);
-    double d_kappa1_d_stress[3], eval_d_kappa1_d_stress(d_kappa1_d_stress,Lambda_k,I1,a1,a2,a3);
+    double dd_G_dd_stress[9]; eval_dd_G_dd_stress(dd_G_dd_stress,Stress_k,kappa_k[1],I1,I2,I3,m,pa,c0);
+    double dd_G_d_stress_d_kappa2[3]; eval_dd_G_d_stress_d_kappa2(dd_G_d_stress_d_kappa2,Stress_k,I1,I3,m,pa,c0,kappa_k[1]);
+    double d_kappa1_d_stress[3]; eval_d_kappa1_d_stress(d_kappa1_d_stress,Lambda_k,I1,a1,a2,a3);
     double d_kappa1_d_lambda = eval_d_kappa1_d_lambda(Lambda_k,I1,a1,a2,a3);
-    double d_F_d_stress[3], eval_d_F_d_stress(d_F_d_stress,Stress_k,I1,I2,I3,c0,kappa_k[0],pa,m);
-    double d_F_d_kappa1 = eval_d_F_d_kappa1(I1,I3,c0,m,pa,kappa_k[0];
+    double d_F_d_stress[3]; eval_d_F_d_stress(d_F_d_stress,Stress_k,I1,I2,I3,c0,kappa_k[0],pa,m);
+    double d_F_d_kappa1 = eval_d_F_d_kappa1(I1,I3,c0,m,pa,kappa_k[0]);
     
     /* First row */
-    Tangent_Matrix[0] = CC[0][0] + delta_lambda*dd_G_dd_stress[0][0];
-    Tangent_Matrix[1] = CC[0][1] + delta_lambda*dd_G_dd_stress[0][1];
-    Tangent_Matrix[2] = CC[0][2] + delta_lambda*dd_G_dd_stress[0][2];
+    Tangent_Matrix[0] = Params.CC[0] + delta_lambda*dd_G_dd_stress[0];
+    Tangent_Matrix[1] = Params.CC[1] + delta_lambda*dd_G_dd_stress[1];
+    Tangent_Matrix[2] = Params.CC[2] + delta_lambda*dd_G_dd_stress[2];
     Tangent_Matrix[3] = alpha*delta_lambda*dd_G_d_stress_d_kappa2[0];
     Tangent_Matrix[4] = d_G_d_stress[0];
 
     /* Second row */
-    Tangent_Matrix[5] = CC[1][0] + delta_lambda*dd_G_dd_stress[1][0];
-    Tangent_Matrix[6] = CC[1][1] + delta_lambda*dd_G_dd_stress[1][1];
-    Tangent_Matrix[7] = CC[1][2] + delta_lambda*dd_G_dd_stress[1][2];
+    Tangent_Matrix[5] = Params.CC[3] + delta_lambda*dd_G_dd_stress[3];
+    Tangent_Matrix[6] = Params.CC[4] + delta_lambda*dd_G_dd_stress[4];
+    Tangent_Matrix[7] = Params.CC[5] + delta_lambda*dd_G_dd_stress[5];
     Tangent_Matrix[8] = alpha*delta_lambda*dd_G_d_stress_d_kappa2[1];
     Tangent_Matrix[9] = d_G_d_stress[1];
 
     /* Third row */    
-    Tangent_Matrix[10] = CC[2][0] + delta_lambda*dd_G_dd_stress[2][0];
-    Tangent_Matrix[11] = CC[2][1] + delta_lambda*dd_G_dd_stress[2][1];
-    Tangent_Matrix[12] = CC[2][2] + delta_lambda*dd_G_dd_stress[2][2];
+    Tangent_Matrix[10] = Params.CC[6] + delta_lambda*dd_G_dd_stress[6];
+    Tangent_Matrix[11] = Params.CC[7] + delta_lambda*dd_G_dd_stress[7];
+    Tangent_Matrix[12] = Params.CC[8] + delta_lambda*dd_G_dd_stress[8];
     Tangent_Matrix[13] = alpha*delta_lambda*dd_G_d_stress_d_kappa2[2];
     Tangent_Matrix[14] = d_G_d_stress[2];
 
@@ -660,7 +702,7 @@ static void assemble_tangent_matrix(
 
 static void update_variables(
   double * Tangent_Matrix,
-  double * Residual
+  double * Residual,
   double * Stress_k,
   double * kappa_k,
   double * delta_lambda,
@@ -718,6 +760,27 @@ static void update_variables(
   kappa_k[1] = alpha*kappa_k[0];
   *delta_lambda -= Residual[4];
   *lambda_k = *delta_lambda + lambda_n;
+}
+
+/**************************************************************/
+
+static State_Parameters fill_Outputs(
+  double * Increment_E_plastic,
+  double * Stress_k,
+  double * Plastic_Flow, 
+  double kappa_k1,
+  double delta_lambda)
+{
+  State_Parameters Outputs_VarCons;
+    
+  Outputs_VarCons.kappa = kappa_k1;
+  Outputs_VarCons.Stress = Stress_k;
+  Outputs_VarCons.Increment_E_plastic = Increment_E_plastic;
+  Outputs_VarCons.Increment_E_plastic[0] = delta_lambda*Plastic_Flow[0];
+  Outputs_VarCons.Increment_E_plastic[1] = delta_lambda*Plastic_Flow[1];
+  Outputs_VarCons.Increment_E_plastic[2] = delta_lambda*Plastic_Flow[2];
+
+  return Outputs_VarCons;
 }
 
 /**************************************************************/
