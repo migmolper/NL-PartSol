@@ -50,7 +50,7 @@ void U_Forward_Euler(
     {
 
       print_Status("*************************************************",TimeStep);
-      DeltaTimeStep = U_DeltaT__SolversLib__(MPM_Mesh, FEM_Mesh.DeltaX, CFL);
+      DeltaTimeStep = U_DeltaT__SolversLib__(MPM_Mesh, FEM_Mesh.DeltaX, Parameters_Solver);
       print_step(TimeStep,DeltaTimeStep);
       local_search__MeshTools__(MPM_Mesh,FEM_Mesh);
 

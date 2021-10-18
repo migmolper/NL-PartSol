@@ -18,33 +18,6 @@ typedef struct
 
 } Param_Index_and_Model;
 
-typedef struct
-{
-
-  bool Is_rho; // Reference fensity
-  bool Is_E; // Young modulus
-  bool Is_nu; // Poisson cefficient
-  bool Is_Cel; // Material Celerity
-  bool Is_Compressibility; // Bulk stiffness
-  bool Is_Plastic_solver; // FE or BE solver
-  bool Is_yield_stress; // Initial Yield stress
-  bool Is_friction_angle; // Friction angle
-  bool Is_dilatancy_angle; // Dilatancy angle
-
-  bool Is_Hardening_modulus;
-  bool Is_Hardening;
-  bool Is_Hardening_Hughes;
-  bool Is_Parameter_Hardening_Hughes;
-  bool Is_Hardening_Cervera;
-  bool Is_Hardening_Ortiz;
-  bool Is_Exponent_Hardening_Ortiz;
-  bool Is_Reference_Plastic_Strain_Ortiz;
-
-  bool Is_Viscous_regularization;
-  bool Is_fluidity_param;
-
-} Check_Material;
-
 /*
   Auxiliar functions and variables
 */
@@ -62,7 +35,6 @@ static char Error_message[MAXW];
 
 static Param_Index_and_Model Read_Index_and_Model(char *,char *);
 static bool Activate_Options(char *, char *);
-static Check_Material Initialise_Check_Material();
 static void standard_error();
 static void standard_output(char *);
 static FILE * Open_and_Check_simulation_file(char *);

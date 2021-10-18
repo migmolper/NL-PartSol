@@ -379,6 +379,14 @@ Material * GramsMaterials(char *, Particle, int);
 Material * Read_Materials__InOutFun__(char *, int);
 /*****************************************************************/
 
+
+/*!
+  \fn Particle Generate_One_Phase_Analysis__InOutFun__(char * Name_File, Mesh FEM_Mesh)
+
+*/
+Particle Generate_One_Phase_Analysis__InOutFun__(char *, Mesh);
+/*****************************************************************/
+
 /*!
 \fn Mixture * Read_Soil_Water_Mixtures__InOutFun__(char * SimulationFile, int Number_Soil_Water_Mixtures);
 

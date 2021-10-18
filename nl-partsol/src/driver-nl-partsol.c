@@ -87,16 +87,9 @@ int main(int argc, char * argv[])
       Parameters_Solver = Solver_selector__InOutFun__(SimulationFile,FEM_Mesh.DeltaX);
 
       puts("*************************************************");
-//      if(Is_New_Simulation)
-//      {
+
       puts("Generating new MPM simulation ...");
-      MPM_Mesh = GramsSolid(SimulationFile,FEM_Mesh,&INFO_GramsSolid);
-//      }
-//      if(Is_Restart_Simulation)
-//      {
-//        puts("Restarting old MPM simulation ...");
-//        MPM_Mesh = restart_Simulation(SimulationFile,RestartFile,FEM_Mesh);
-//      }
+      MPM_Mesh = Generate_One_Phase_Analysis__InOutFun__(SimulationFile,FEM_Mesh);
 
       puts("*************************************************");
       puts("Read outputs ...");

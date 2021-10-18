@@ -18,15 +18,15 @@ void NonLinear_Gauss_Point_Analysis(Particle PointAnalysis);
 
 
 /*!
-  \fn double U_DeltaT__SolversLib__(Particle MPM_Mesh, double DeltaX, double CFL)
+  \fn double U_DeltaT__SolversLib__(Particle MPM_Mesh, double DeltaX, Time_Int_Params Parameters_Solver)
 
   \brief  Get the time step using \cite Anderson_1987
 
   \param MPM_Mesh : Variable with the particle information
   \param DeltaX : Minimum mesh size
-  \param CFL : Courant Number
+  \param Parameters_Solver : Parameters
 */
-double U_DeltaT__SolversLib__(Particle, double, double);
+double U_DeltaT__SolversLib__(Particle, double, Time_Int_Params);
 
 /*!
   \fn double DeltaT_Coussy__SolversLib__(Particle MPM_Mesh, double h, double xi)

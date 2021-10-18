@@ -909,14 +909,6 @@ static void check_Von_Mises_Material(Material Mat_particle)
 	}
 }
 
-
-/**********************************************************************/
-
-static void check_Drucker_Prager_Material(Material Mat_particle)
-{
-
-}
-
 /**********************************************************************/
 
 static void check_Eigenerosion(Material Mat_particle)

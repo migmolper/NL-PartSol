@@ -8,20 +8,22 @@ GramsBox (Type=GID,File=FEM_Mesh.msh) {
 GramsTime (Type=NPC-FS) {
     CFL=0.01
     N=15000
+    Cel=70.71
+}
+
+
+Define-Material (idx=0 , Model=Saint-Venant-Kirchhoff)
+{
+  E=1.0E5
+  nu=0.3
+  rho=20
 }
 
 # Material points definitions
-GramsSolid (File=MPM_Mesh.msh,GPxElement=3) {
+One-Phase-Analysis (File=MPM_Mesh.msh,GPxElement=3) {
 
     # List of materials for the GPs
-    GramsMaterials (Particles=Material.txt) {
-	    Type=Saint-Venant-Kirchhoff
-	    Cel=70.71
-	    rho=20
-	    E=1.e5
-	    nu=0.3
-	    Id=0
-    }
+    Assign-material-to-particles(MatIdx=0,Particles=Material.txt)
     
     # Shape function definition
     GramsShapeFun (Type=FEM) {

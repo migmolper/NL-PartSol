@@ -21,10 +21,13 @@ typedef struct
   bool Is_E; // Young modulus
   bool Is_nu; // Poisson cefficient
   bool Is_Yield_Function_Frictional; // Kind of yield function
+  bool Is_m; // 
+  bool Is_c0; //
   bool Is_alpha_Hardening_Borja; // Hardening parameter
   bool Is_a1_Hardening_Borja; // Hardening parameter
   bool Is_a2_Hardening_Borja; // Hardening parameter
   bool Is_a3_Hardening_Borja; // Hardening parameter
+  bool Is_atmospheric_pressure; // Reference pressure
   bool Is_friction_angle; // Friction angle
   bool Is_dilatancy_angle; // Dilatancy angle
 
@@ -88,6 +91,37 @@ Material Define_Frictional(
       Frictional_Material.nu = atof(Parameter_pars[1]);
     }
     /**************************************************/
+    else if(strcmp(Parameter_pars[0],"Yield-Function") == 0)
+    {
+
+		  if((strcmp(Parameter_pars[1],"Matsuoka-Nakai") == 0) 
+      || (strcmp(Parameter_pars[1],"Lade-Duncan") == 0) 
+      || (strcmp(Parameter_pars[1],"Modified-Lade-Duncan") == 0))
+      {
+        strcpy(Frictional_Material.Yield_Function_Frictional,Parameter_pars[1]);
+        ChkMat.Is_Yield_Function_Frictional = true;
+      }
+      else 
+      {
+        fprintf(stderr,"%s : %s \n",
+        "Error in GramsMaterials()","Unrecognized yield function");
+        exit(EXIT_FAILURE);	
+      }
+
+    }
+    /**************************************************/
+    else if(strcmp(Parameter_pars[0],"m") == 0)
+    {
+      ChkMat.Is_m = true;
+      Frictional_Material.m_Frictional = atof(Parameter_pars[1]);
+    }
+    /**************************************************/
+    else if(strcmp(Parameter_pars[0],"c0") == 0)
+    {
+      ChkMat.Is_c0 = true;
+      Frictional_Material.c0_Frictional = atof(Parameter_pars[1]);
+    }
+    /**************************************************/
     else if(strcmp(Parameter_pars[0],"alpha-Hardening-Borja") == 0)
     {
       ChkMat.Is_alpha_Hardening_Borja = true;
@@ -110,6 +144,12 @@ Material Define_Frictional(
     {
       ChkMat.Is_a3_Hardening_Borja = true;
       Frictional_Material.a_Hardening_Borja[2] = atof(Parameter_pars[1]);
+    }
+    /**************************************************/
+    else if(strcmp(Parameter_pars[0],"Atmospheric-pressure") == 0)
+    {
+      ChkMat.Is_atmospheric_pressure = true;
+      Frictional_Material.atmospheric_pressure = atof(Parameter_pars[1]);
     }
     /**************************************************/
     else if(strcmp(Parameter_pars[0],"Friction-angle") == 0)
@@ -158,10 +198,13 @@ static Check_Material Initialise_Check_Material()
   ChkMat.Is_E = false; // Young modulus
   ChkMat.Is_nu = false; // Poisson cefficient
   ChkMat.Is_Yield_Function_Frictional = false; // Kind of yield function
+  ChkMat.Is_m = false; // 
+  ChkMat.Is_c0 = false; //
   ChkMat.Is_alpha_Hardening_Borja = false; // Hardening parameter
   ChkMat.Is_a1_Hardening_Borja = false; // Hardening parameter
   ChkMat.Is_a2_Hardening_Borja = false; // Hardening parameter
   ChkMat.Is_a3_Hardening_Borja = false; // Hardening parameter
+  ChkMat.Is_atmospheric_pressure = false; // Reference pressure
   ChkMat.Is_friction_angle = false; // Friction angle
   ChkMat.Is_dilatancy_angle = false; // Dilatancy angle
 
@@ -173,100 +216,37 @@ static Check_Material Initialise_Check_Material()
 static void check_Frictional_Material(Material Mat_particle, Check_Material ChkMat, int Idx)
 {
 	if(ChkMat.Is_rho 
-    && ChkMat.Is_E 
-    && ChkMat.Is_nu 
-    && ChkMat.Is_Yield_Function_Frictional)
+  && ChkMat.Is_E 
+  && ChkMat.Is_nu 
+  && ChkMat.Is_Yield_Function_Frictional
+  && ChkMat.Is_atmospheric_pressure
+  && ChkMat.Is_alpha_Hardening_Borja
+  && ChkMat.Is_a1_Hardening_Borja
+  && ChkMat.Is_a2_Hardening_Borja
+  && ChkMat.Is_a3_Hardening_Borja
+  && ChkMat.Is_friction_angle
+  && ChkMat.Is_dilatancy_angle)
 	{
+
 		printf("\t -> %s \n","Frictional material");
 		printf("\t \t -> %s : %f \n","Density",Mat_particle.rho);
 		printf("\t \t -> %s : %f \n","Elastic modulus",Mat_particle.E);
 		printf("\t \t -> %s : %f \n","Poisson modulus",Mat_particle.nu);
 		printf("\t \t -> %s : %s \n","Yield function",Mat_particle.Yield_Function_Frictional);
+    printf("\t \t -> %s : %f \n","Atmospheric-pressure",Mat_particle.atmospheric_pressure);
+    printf("\t \t -> %s : %f \n","alpha-Hardening-Borja",Mat_particle.alpha_Hardening_Borja);
+    printf("\t \t -> %s : %f \n","a1-Hardening-Borja",Mat_particle.a_Hardening_Borja[0]);	
+    printf("\t \t -> %s : %f \n","a2-Hardening-Borja",Mat_particle.a_Hardening_Borja[1]);	
+    printf("\t \t -> %s : %f \n","a3-Hardening-Borja",Mat_particle.a_Hardening_Borja[2]);	
+    printf("\t \t -> %s : %f \n","Friction-angle",Mat_particle.phi_Frictional*(180/PI__MatrixLib__));	
+    printf("\t \t -> %s : %f \n","Dilatancy-angle",Mat_particle.psi_Frictional*(180/PI__MatrixLib__));	
 
-		if(strcmp(Mat_particle.Yield_Function_Frictional,"Matsuoka-Nakai") == 0)
-		{
-
-			if(Mat_particle.Hardening_Borja)
-			{
-				if(ChkMat.Is_alpha_Hardening_Borja 
-                && ChkMat.Is_a1_Hardening_Borja 
-                && ChkMat.Is_a2_Hardening_Borja 
-                && ChkMat.Is_a3_Hardening_Borja)
-				{
-					printf("\t \t -> %s : %f \n","alpha-Hardening-Borja",Mat_particle.alpha_Hardening_Borja);
-					printf("\t \t -> %s : %f \n","a1-Hardening-Borja",Mat_particle.a_Hardening_Borja[0]);	
-					printf("\t \t -> %s : %f \n","a2-Hardening-Borja",Mat_particle.a_Hardening_Borja[1]);	
-					printf("\t \t -> %s : %f \n","a3-Hardening-Borja",Mat_particle.a_Hardening_Borja[2]);	
-				}
-				else
-				{
-					fprintf(stderr,"%s : %s \n","Error in GramsMaterials()",
-					"Some parameter is missed for Borja Hardening");
-					fputs(ChkMat.Is_alpha_Hardening_Borja ? "alpha-Hardening-Borja : true \n" : "alpha-Hardening-Borja : false \n", stdout);
-					fputs(ChkMat.Is_a1_Hardening_Borja ? "a1-Hardening-Borja : true \n" : "a1-Hardening-Borja : false \n", stdout);
-					fputs(ChkMat.Is_a2_Hardening_Borja ? "a2-Hardening-Borja : true \n" : "a2-Hardening-Borja : false \n", stdout);
-					fputs(ChkMat.Is_a3_Hardening_Borja ? "a3-Hardening-Borja : true \n" : "a3-Hardening-Borja : false \n", stdout);
-				}
-
-			}
-
-		}
-		else if(strcmp(Mat_particle.Yield_Function_Frictional,"Lade-Duncan") == 0)
-		{
-
-
-				if(ChkMat.Is_alpha_Hardening_Borja 
-                && ChkMat.Is_a1_Hardening_Borja 
-                && ChkMat.Is_a2_Hardening_Borja 
-                && ChkMat.Is_a3_Hardening_Borja)
-				{
-					printf("\t \t -> %s : %f \n","alpha-Hardening-Borja",Mat_particle.alpha_Hardening_Borja);
-					printf("\t \t -> %s : %f \n","a1-Hardening-Borja",Mat_particle.a_Hardening_Borja[0]);	
-					printf("\t \t -> %s : %f \n","a2-Hardening-Borja",Mat_particle.a_Hardening_Borja[1]);	
-					printf("\t \t -> %s : %f \n","a3-Hardening-Borja",Mat_particle.a_Hardening_Borja[2]);	
-				}
-				else
-				{
-					fprintf(stderr,"%s : %s \n","Error in GramsMaterials()",
-					"Some parameter is missed for Borja Hardening");
-					fputs(ChkMat.Is_alpha_Hardening_Borja ? "alpha-Hardening-Borja : true \n" : "alpha-Hardening-Borja : false \n", stdout);
-					fputs(ChkMat.Is_a1_Hardening_Borja ? "a1-Hardening-Borja : true \n" : "a1-Hardening-Borja : false \n", stdout);
-					fputs(ChkMat.Is_a2_Hardening_Borja ? "a2-Hardening-Borja : true \n" : "a2-Hardening-Borja : false \n", stdout);
-					fputs(ChkMat.Is_a3_Hardening_Borja ? "a3-Hardening-Borja : true \n" : "a3-Hardening-Borja : false \n", stdout);
-				}
-
-		}
-		else if(strcmp(Mat_particle.Yield_Function_Frictional,"Modified-Lade-Duncan") == 0)
-		{
-
-			if(ChkMat.Is_alpha_Hardening_Borja 
-            && ChkMat.Is_a1_Hardening_Borja 
-            && ChkMat.Is_a2_Hardening_Borja 
-            && ChkMat.Is_a3_Hardening_Borja)
-			{
-				printf("\t \t -> %s : %f \n","alpha-Hardening-Borja",Mat_particle.alpha_Hardening_Borja);
-				printf("\t \t -> %s : %f \n","a1-Hardening-Borja",Mat_particle.a_Hardening_Borja[0]);	
-				printf("\t \t -> %s : %f \n","a2-Hardening-Borja",Mat_particle.a_Hardening_Borja[1]);	
-				printf("\t \t -> %s : %f \n","a3-Hardening-Borja",Mat_particle.a_Hardening_Borja[2]);	
-			}
-			else
-			{
-				fprintf(stderr,"%s : %s \n","Error in GramsMaterials()",
-				"Some parameter is missed for Borja Hardening");
-				fputs(ChkMat.Is_alpha_Hardening_Borja ? "alpha-Hardening-Borja : true \n" : "alpha-Hardening-Borja : false \n", stdout);
-				fputs(ChkMat.Is_a1_Hardening_Borja ? "a1-Hardening-Borja : true \n" : "a1-Hardening-Borja : false \n", stdout);
-				fputs(ChkMat.Is_a2_Hardening_Borja ? "a2-Hardening-Borja : true \n" : "a2-Hardening-Borja : false \n", stdout);
-				fputs(ChkMat.Is_a3_Hardening_Borja ? "a3-Hardening-Borja : true \n" : "a3-Hardening-Borja : false \n", stdout);
-                exit(EXIT_FAILURE);
-			}
-
-		}
-		else
-		{
-			fprintf(stderr,"%s : %s \n",
-			"Error in GramsMaterials()","Unrecognized yield function");
-			exit(EXIT_FAILURE);	
-		}		
+    if(ChkMat.Is_m 
+    && ChkMat.Is_c0)
+    {
+      printf("\t \t -> %s : %f \n","m",Mat_particle.m_Frictional);
+      printf("\t \t -> %s : %f \n","c0",Mat_particle.c0_Frictional);
+    }
 
 
 	}
@@ -279,6 +259,15 @@ static void check_Frictional_Material(Material Mat_particle, Check_Material ChkM
 		fputs(ChkMat.Is_E   ? "Elastic modulus : true \n" : "Elastic modulus : false \n", stdout);
 		fputs(ChkMat.Is_nu  ? "Poisson modulus : true \n" : "Poisson modulus : false \n", stdout);
 		fputs(ChkMat.Is_Yield_Function_Frictional ? "Yield Function : true \n" : "Yield Function : false \n", stdout);
+    fputs(ChkMat.Is_m ? "m : true \n" : "m : false \n", stdout);
+    fputs(ChkMat.Is_c0 ? "c0 : true \n" : "c0 : false \n", stdout);
+    fputs(ChkMat.Is_atmospheric_pressure ? "Atmospheric-pressure : true \n" : "Atmospheric-pressure : false \n", stdout);
+		fputs(ChkMat.Is_alpha_Hardening_Borja ? "alpha-Hardening-Borja : true \n" : "alpha-Hardening-Borja : false \n", stdout);
+		fputs(ChkMat.Is_a1_Hardening_Borja ? "a1-Hardening-Borja : true \n" : "a1-Hardening-Borja : false \n", stdout);
+		fputs(ChkMat.Is_a2_Hardening_Borja ? "a2-Hardening-Borja : true \n" : "a2-Hardening-Borja : false \n", stdout);
+		fputs(ChkMat.Is_a3_Hardening_Borja ? "a3-Hardening-Borja : true \n" : "a3-Hardening-Borja : false \n", stdout);
+    fputs(ChkMat.Is_friction_angle ? "Friction-angle : true \n" : "Friction-angle: false \n", stdout);
+    fputs(ChkMat.Is_dilatancy_angle ? "Dilatancy-angle : true \n" : "Dilatancy-angle: false \n", stdout);
 		exit(EXIT_FAILURE);
 	}
 }
