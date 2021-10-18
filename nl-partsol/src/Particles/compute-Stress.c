@@ -231,7 +231,7 @@ void Stress_integration__Particles__(
   
     if(strcmp(MatProp_p.Plastic_Solver,"Monolithic") == 0)
     {
-      Output_SP = finite_strain_plasticity(Input_SP,MatProp_p,Smooth_Mohr_Coulomb_Monolithic);
+      Output_SP = finite_strain_plasticity(Input_SP,MatProp_p,Frictional_Monolithic);
     }
     else
     {

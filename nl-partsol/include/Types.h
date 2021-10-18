@@ -479,11 +479,13 @@ typedef struct {
   double atmospheric_pressure;
 
   /*!
-   * Smooth Mohr-Coulomb parameters (Borja et al. 2003)
+   * Frictional material (Borja et al. 2003)
    * */
-  char Kind_Smooth_Mohr_Coulomb [100];
-  double m_Smooth_Mohr_Coulomb;
-  double c0_Smooth_Mohr_Coulomb;
+  char Yield_Function_Frictional [100];
+  double m_Frictional;
+  double c0_Frictional;
+  double phi_Frictional;
+  double psi_Frictional;
 
   /*!
   * Hardening Hughes
@@ -516,20 +518,14 @@ typedef struct {
    * Hardening Borja et al. 2003
    * */
   bool Hardening_Borja;
-  double a_Borja2003[3];
-  double alpha_Borja2003;
+  double a_Hardening_Borja[3];
+  double alpha_Hardening_Borja;
 
   /*!
    * Viscoplasticity parameters
    * */
   bool Viscous_regularization;
   double fluidity_param;
-
-  /*!
-   * Soil parameters
-   * */
-  double friction_angle;
-  double dilatancy_angle;
 
   /*!
    * Activate auxiliar techniques

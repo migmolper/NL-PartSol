@@ -47,10 +47,10 @@ static void eval_kappa(double *,double,double,double,double,double,double);
 static void eval_d_kappa1_d_stress(double *,double,double,double,double,double);
 static double eval_d_kappa1_d_lambda(double,double,double,double,double);
 static double eval_f(double,double);
-static void eval_d_f_Matsuoka_Nakai_d_stress(double *,double *,double,double);
-static double eval_g_Matsuoka_Nakai(double,double);
-static void eval_d_g_Matsuoka_Nakai_d_stress(double *,double *,double,double);
-static void eval_dd_g_Matsuoka_Nakai_dd_stress(double *,double *,double,double);
+static void eval_d_f_d_stress(double *,double *,double,double);
+static double eval_g(double,double);
+static void eval_d_g_d_stress(double *,double *,double,double);
+static void eval_dd_g_dd_stress(double *,double *,double,double);
 static double eval_F(double,double,double,double,double,double,double);
 static void eval_d_F_d_stress(double *,double *,double,double,double,double,double,double,double);
 static double eval_d_F_d_kappa1(double,double,double,double,double,double);
@@ -67,7 +67,7 @@ static State_Parameters fill_Outputs(double *,double *,double *,double,double,do
 
 /**************************************************************/
 
-State_Parameters Smooth_Mohr_Coulomb_Monolithic(
+State_Parameters Frictional_Monolithic(
   State_Parameters Inputs_SP,
   Material MatProp)
 /*	
@@ -167,7 +167,7 @@ static Model_Parameters fill_model_paramters(Material MatProp)
 {
   Model_Parameters Params;
 
-  if(strcmp(Mat_particle.Kind_Smooth_Mohr_Coulomb,"Matsuoka-Nakai") == 0)
+  if(strcmp(MatProp.Yield_Function_Frictional,"Matsuoka-Nakai") == 0)
   {
     Params.m = 0.0;
     Params.c0 = 9;
@@ -175,7 +175,7 @@ static Model_Parameters fill_model_paramters(Material MatProp)
     Is_Lade_Duncan = false;
     Is_Modified_Lade_Duncan = false;
   }
-  else if(strcmp(Mat_particle.Kind_Smooth_Mohr_Coulomb,"Lade-Duncan") == 0)
+  else if(strcmp(MatProp.Yield_Function_Frictional,"Lade-Duncan") == 0)
   {
     Params.m = 0.0;
     Params.c0 = 27;
@@ -183,9 +183,9 @@ static Model_Parameters fill_model_paramters(Material MatProp)
     Is_Lade_Duncan = true;
     Is_Modified_Lade_Duncan = false;
   }
-  else if(strcmp(Mat_particle.Kind_Smooth_Mohr_Coulomb,"Modified-Lade-Duncan") == 0)
+  else if(strcmp(MatProp.Yield_Function_Frictional,"Modified-Lade-Duncan") == 0)
   {
-    Params.m = MatProp.m_Smooth_Mohr_Coulomb;
+    Params.m = MatProp.m_Frictional;
     Params.c0 = 27;
     Is_Matsuoka_Nakai = false;
     Is_Lade_Duncan = false;
@@ -193,10 +193,10 @@ static Model_Parameters fill_model_paramters(Material MatProp)
   }
 
   Params.pa = MatProp.atmospheric_pressure;
-  Params.alpha =  MatProp.alpha_Borja2003;
-  Params.a1 = MatProp.a_Borja2003[0];
-  Params.a2 = MatProp.a_Borja2003[1];
-  Params.a3 = MatProp.a_Borja2003[2];
+  Params.alpha =  MatProp.alpha_Hardening_Borja;
+  Params.a1 = MatProp.a_Hardening_Borja[0];
+  Params.a2 = MatProp.a_Hardening_Borja[1];
+  Params.a3 = MatProp.a_Hardening_Borja[2];
 
   double E = MatProp.E;
   double nu = MatProp.nu;
@@ -358,25 +358,48 @@ static double eval_f(
     {
       return I1;
     }
+    else
+    {
+      fprintf(stderr,"%s : %s !!! \n",
+	    "Error in eval_f()",
+	    "Undefined kind of function for f");
+      exit(EXIT_FAILURE);    
+    }  
     
   } 
 
 /**************************************************************/
 
-static void eval_d_f_Matsuoka_Nakai_d_stress(
+static void eval_d_f_d_stress(
   double * d_f_Matsuoka_Nakai_d_stress,
   double * Stress,
   double I1,
   double I2)
   {
-    d_f_Matsuoka_Nakai_d_stress[0] = (I1*(I1 - Stress[0]) + I2)/(3*pow(cbrt(I1*I2),2));
-    d_f_Matsuoka_Nakai_d_stress[1] = (I1*(I1 - Stress[1]) + I2)/(3*pow(cbrt(I1*I2),2));
-    d_f_Matsuoka_Nakai_d_stress[2] = (I1*(I1 - Stress[2]) + I2)/(3*pow(cbrt(I1*I2),2));
+    if(Is_Matsuoka_Nakai)
+    {
+      d_f_Matsuoka_Nakai_d_stress[0] = (I1*(I1 - Stress[0]) + I2)/(3*pow(cbrt(I1*I2),2));
+      d_f_Matsuoka_Nakai_d_stress[1] = (I1*(I1 - Stress[1]) + I2)/(3*pow(cbrt(I1*I2),2));
+      d_f_Matsuoka_Nakai_d_stress[2] = (I1*(I1 - Stress[2]) + I2)/(3*pow(cbrt(I1*I2),2));
+    }
+    else if(Is_Lade_Duncan)
+    {
+      d_f_Matsuoka_Nakai_d_stress[0] = 1.0;
+      d_f_Matsuoka_Nakai_d_stress[1] = 1.0;
+      d_f_Matsuoka_Nakai_d_stress[2] = 1.0;
+    }
+    else if(Is_Modified_Lade_Duncan)
+    {
+      d_f_Matsuoka_Nakai_d_stress[0] = 1.0;
+      d_f_Matsuoka_Nakai_d_stress[1] = 1.0;
+      d_f_Matsuoka_Nakai_d_stress[2] = 1.0;
+    }
+
   } 
 
 /**************************************************************/
 
-static double eval_g_Matsuoka_Nakai(
+static double eval_g(
   double I1,
   double I2)
   {
@@ -392,38 +415,84 @@ static double eval_g_Matsuoka_Nakai(
     {
       return I1;
     }
+    else
+    {
+      fprintf(stderr,"%s : %s !!! \n",
+	    "Error in eval_g()",
+	    "Undefined kind of function for g");
+      exit(EXIT_FAILURE);    
+    }  
   } 
 
 /**************************************************************/
 
-static void eval_d_g_Matsuoka_Nakai_d_stress(
+static void eval_d_g_d_stress(
   double * d_g_d_stress,
   double * Stress,
   double I1,
   double I2)
   {
-    d_g_d_stress[0] = (I1*(I1 - Stress[0]) + I2)/(3*pow(cbrt(I1*I2),2));
-    d_g_d_stress[1] = (I1*(I1 - Stress[1]) + I2)/(3*pow(cbrt(I1*I2),2));
-    d_g_d_stress[2] = (I1*(I1 - Stress[2]) + I2)/(3*pow(cbrt(I1*I2),2));
+    if(Is_Matsuoka_Nakai)
+    {
+      d_g_d_stress[0] = (I1*(I1 - Stress[0]) + I2)/(3*pow(cbrt(I1*I2),2));
+      d_g_d_stress[1] = (I1*(I1 - Stress[1]) + I2)/(3*pow(cbrt(I1*I2),2));
+      d_g_d_stress[2] = (I1*(I1 - Stress[2]) + I2)/(3*pow(cbrt(I1*I2),2));
+    }
+    else if(Is_Lade_Duncan)
+    {
+      d_g_d_stress[0] = 1.0;
+      d_g_d_stress[1] = 1.0;
+      d_g_d_stress[2] = 1.0;
+    }
+    else if(Is_Modified_Lade_Duncan)
+    {
+      d_g_d_stress[0] = 1.0;
+      d_g_d_stress[1] = 1.0;
+      d_g_d_stress[2] = 1.0;
+    }
   } 
 
 
 /**************************************************************/
 
-static void eval_dd_g_Matsuoka_Nakai_dd_stress(
+static void eval_dd_g_dd_stress(
   double * dd_g_dd_stress,
   double * Stress,
   double I1,
   double I2)
   {
-    for (int A = 0; A<3; A++)
+    if(Is_Matsuoka_Nakai)
     {
-      for (int B = 0; B<3; B++)
+      for (int A = 0; A<3; A++)
       {
-        dd_g_dd_stress[A*3 + B] = (3.0*I1 - Stress[A] - Stress[B] - I1*(A==B))/(3.0*pow(cbrt(I1*I2),2)) 
-        - (2.0/9.0)*(I1*(I1 - Stress[A]) + I2)*(I1*(I1 - Stress[B]) + I2)/(pow(cbrt(I1*I2),5));
+        for (int B = 0; B<3; B++)
+        {
+          dd_g_dd_stress[A*3 + B] = (3.0*I1 - Stress[A] - Stress[B] - I1*(A==B))/(3.0*pow(cbrt(I1*I2),2)) 
+          - (2.0/9.0)*(I1*(I1 - Stress[A]) + I2)*(I1*(I1 - Stress[B]) + I2)/(pow(cbrt(I1*I2),5));
+        }
       }
     }
+    else if(Is_Lade_Duncan)
+    {
+      for (int A = 0; A<3; A++)
+      {
+        for (int B = 0; B<3; B++)
+        {
+          dd_g_dd_stress[A*3 + B] = 0.0;
+        }
+      }
+    }
+    else if(Is_Modified_Lade_Duncan)
+    {
+      for (int A = 0; A<3; A++)
+      {
+        for (int B = 0; B<3; B++)
+        {
+          dd_g_dd_stress[A*3 + B] = 0.0;
+        }
+      }
+    }
+
   }
 
 
@@ -440,7 +509,6 @@ static double eval_F(
 {
 
   double K1 = eval_K1(c0,kappa1,pa,I1,m);
-
 
   double f = eval_f(I1,I2);
 
@@ -460,7 +528,7 @@ static void eval_d_F_d_stress(
   double pa,
   double m)
   {
-    double Grad_f[3]; eval_d_f_Matsuoka_Nakai_d_stress(Grad_f,Stress,I1,I2);
+    double Grad_f[3]; eval_d_f_d_stress(Grad_f,Stress,I1,I2);
     double K1 = eval_K1(kappa1,I1,c0,m,pa);
     double b1 = eval_b1(kappa1,I1,I3,m,pa);
 
@@ -495,7 +563,7 @@ static double eval_G(
   double m)
   {
     double K2 = eval_K2(kappa2,I1,c0,m,pa);
-    double g = eval_g_Matsuoka_Nakai(I1,I2);
+    double g = eval_g(I1,I2);
     return cbrt(K2*I3) - g;
   } 
 
@@ -512,7 +580,7 @@ static void eval_d_G_d_stress(
   double pa,
   double m)
   {
-    double Grad_g[3]; eval_d_g_Matsuoka_Nakai_d_stress(Grad_g,Stress,I1,I2);
+    double Grad_g[3]; eval_d_g_d_stress(Grad_g,Stress,I1,I2);
     double K2 = eval_K2(kappa2,I1,c0,m,pa);
     double b2 = eval_b2(kappa2,I1,I3,m,pa);
 
@@ -539,7 +607,7 @@ static void eval_dd_G_dd_stress(
     double b2 = eval_b2(kappa2,I1,I3,m,pa);
     double Grad_K2[3]; eval_d_K2_d_stress(Grad_K2,kappa2,I1,m,pa);
     double Grad_b2[3]; eval_d_b2_d_stress(Grad_b2,Stress,kappa2,I1,I3,m,pa);
-    double Hess_g[9]; eval_dd_g_Matsuoka_Nakai_dd_stress(Hess_g,Stress,I1,I2);
+    double Hess_g[9]; eval_dd_g_dd_stress(Hess_g,Stress,I1,I2);
 
     for (int A = 0; A<3; A++)
     {

@@ -22,10 +22,9 @@ bool Is_heps = false;
 bool Is_Wc = false;
 
 bool Is_Plastic_solver = true;
-
 bool Is_yield_stress = false;
-
 bool Is_Hardening_modulus = false;
+bool Is_Yield_Function_Frictional = false;
 
 bool Is_Hardening = false;
 bool Is_Parameter_Hardening_Hughes = false;
@@ -35,6 +34,10 @@ bool Is_theta_Hardening_Voce = false;
 bool Is_delta_Hardening_Voce = false;
 bool Is_K_inf_Hardening_Voce = false;
 bool Is_K_0_Hardening_Voce = false;
+bool Is_alpha_Hardening_Borja = false;
+bool Is_a1_Hardening_Borja = false;
+bool Is_a2_Hardening_Borja = false;
+bool Is_a3_Hardening_Borja = false;
 
 bool Is_Viscous_regularization = false;
 bool Is_fluidity_param = false;
@@ -58,7 +61,6 @@ static void check_Neo_Hookean_Wriggers_Material(Material);
 static void check_Newtonian_Fluid_Compressible_Material(Material);
 static void check_Von_Mises_Material(Material);
 static void check_Von_Mises_Perzyna_Material(Material);
-static void check_Drucker_Prager_Material(Material);
 static void check_Eigenerosion(Material);
 static void check_Eigensoftening(Material);
 static void standard_error(char *);
@@ -195,12 +197,16 @@ GramsMaterials (Particles=route.txt) {
       Mat_GP.Wc = NAN;
       /* Parameters for plastic simulations */
       Mat_GP.yield_stress_0 = NAN;
-      Mat_GP.friction_angle = NAN;
-      Mat_GP.dilatancy_angle = NAN;
       Mat_GP.Hardening_modulus = NAN;
 
-	 	 	/* Parameters for isotropic/kinematic hardening */
-		  Mat_GP.Hardening_Hughes = false;
+	/* Parameters for frictional materials */
+	  Mat_GP.m_Frictional = NAN;
+ 	  Mat_GP.c0_Frictional = NAN;
+	  Mat_GP.phi_Frictional = NAN;
+      Mat_GP.psi_Frictional = NAN;
+
+	/* Parameters for isotropic/kinematic hardening */
+		Mat_GP.Hardening_Hughes = false;
 		  Mat_GP.Parameter_Hardening_Hughes = 1.0;
 	  	Mat_GP.Hardening_Cervera = false;
 	  	Mat_GP.Hardening_Ortiz = false;
@@ -323,7 +329,7 @@ GramsMaterials (Particles=route.txt) {
 	   	else
 	   	{
 	   		sprintf(Error_message,"The input was %s. Please, use : true/false",Parse_Mat_Prop[1]);
-	   		standard_error(Error_message); 
+	   		standard_error(Error_message);
 	   	}
 	  }
 	  /**************************************************/
@@ -484,15 +490,15 @@ GramsMaterials (Particles=route.txt) {
 	  else if(strcmp(Parse_Mat_Prop[0],"Friction-angle") == 0)
 	  {
 	    Is_friction_angle = true;
-	    Mat_GP.friction_angle = atof(Parse_Mat_Prop[1]);
-	    rad_friction_angle  = (PI__MatrixLib__/180)*Mat_GP.friction_angle;
+	    Mat_GP.phi_Frictional = atof(Parse_Mat_Prop[1]);
+	    rad_friction_angle  = (PI__MatrixLib__/180)*Mat_GP.phi_Frictional;
 	  }
 	  /**************************************************/
 	  else if(strcmp(Parse_Mat_Prop[0],"Dilatancy-angle") == 0)
 	  {
 	    Is_dilatancy_angle = true;
-	    Mat_GP.dilatancy_angle = atof(Parse_Mat_Prop[1]);
-	    rad_dilatancy_angle = (PI__MatrixLib__/180)*Mat_GP.dilatancy_angle;
+	    Mat_GP.psi_Frictional = atof(Parse_Mat_Prop[1]);
+	    rad_dilatancy_angle = (PI__MatrixLib__/180)*Mat_GP.psi_Frictional;
 	  }
 	  /**************************************************/
 	  else if(strcmp(Parse_Mat_Prop[0],"Compressibility") == 0)
@@ -578,23 +584,6 @@ GramsMaterials (Particles=route.txt) {
 	  	check_Von_Mises_Material(Mat_GP);	
 	  	TOL_Radial_Returning = 1E-10;
 	  	Max_Iterations_Radial_Returning = 300;
-	  }
-	  /* Parameters for a Drucker-Prager Yield criterium */
-	  else if(strcmp(Mat_GP.Type,"Drucker-Prager-Plane-Strain") == 0)
-	  { 
-	  	check_Drucker_Prager_Material(Mat_GP);
-
-			/*	Plane strain yield surface */
-			TOL_Radial_Returning = 1E-10;
-			Max_Iterations_Radial_Returning = 30;
-	  }
-	  else if(strcmp(Mat_GP.Type,"Drucker-Prager-Outer-cone") == 0)
-	  { 
-	  	check_Drucker_Prager_Material(Mat_GP);
-
-	  	/*	Outer cone yield surface */
-			TOL_Radial_Returning = 1E-10;
-			Max_Iterations_Radial_Returning = 30;
 	  }
 	  else
 	  {
@@ -920,94 +909,12 @@ static void check_Von_Mises_Material(Material Mat_particle)
 	}
 }
 
-/**********************************************************************/
-
-
-static void check_Matsuoka_Nakai_Material(Material Mat_particle)
-{
-	if(Is_rho && Is_Cel && Is_E && 
-	 Is_nu && m_Smooth_Mohr_Coulomb &&  && Is_Plastic_solver)
-	{
-		printf("\t -> %s \n","Matsuoka-Nakai material");
-		printf("\t \t -> %s : %f \n","Celerity",Mat_particle.Cel);
-		printf("\t \t -> %s : %f \n","Density",Mat_particle.rho);
-		printf("\t \t -> %s : %f \n","Elastic modulus",Mat_particle.E);
-		printf("\t \t -> %s : %f \n","Poisson modulus",Mat_particle.nu);
-		printf("\t \t -> %s : %f \n","Yield stress",Mat_particle.yield_stress_0);
-		printf("\t \t -> %s : %s \n","Plastic solver",Mat_particle.Plastic_Solver);
-		
-
-		if(Mat_particle.Hardening_Borja)
-		{
-
-			if(strcmp(Mat_particle.Plastic_Solver,"Monolithic") != 0)
-			{
-				fprintf(stderr,"%s : %s \n",
-					"Error in GramsMaterials()",
-					"Switch to Monolithic for Borja's model)");
-				exit(EXIT_FAILURE);	
-			}
-
-			if(Is_alpha_Borja2003 && Is_a1_Borja2003 && Is_a2_Borja2003 && Is_a3_Borja2003)
-			{
-				printf("\t \t -> %s : %f \n","Exponent-Hardening-Ortiz",Mat_particle.Exponent_Hardening_Ortiz);
-				printf("\t \t -> %s : %f \n","Reference-Plastic-Strain_Ortiz",Mat_particle.Reference_Plastic_Strain_Ortiz);	
-			}
-			else
-			{
-				fprintf(stderr,"%s : %s \n",
-				"Error in GramsMaterials()",
-				"Some parameter is missed for Matsuoka-Nakai material (Borja Hardening)");
-				fputs(Is_Exponent_Hardening_Ortiz  ? "Exponent-Hardening-Ortiz : true \n" : "Exponent-Hardening-Ortiz : false \n", stdout);
-				fputs(Is_Reference_Plastic_Strain_Ortiz  ? "Reference-Plastic-Strain_Ortiz : true \n" : "Reference-Plastic-Strain_Ortiz : false \n", stdout);
-			}
-
-		}
-
-
-	}
-	else
-	{
-		fprintf(stderr,"%s : %s \n",
-			"Error in GramsMaterials()",
-			"Some parameter is missed for Von-Mises material");
-		fputs(Is_rho ? "Density : true \n" : "Density : false \n", stdout);
-		fputs(Is_Cel ? "Celerity : true \n" : "Celerity : false \n", stdout);
-		fputs(Is_E   ? "Elastic modulus : true \n" : "Elastic modulus : false \n", stdout);
-		fputs(Is_nu  ? "Poisson modulus : true \n" : "Poisson modulus : false \n", stdout);
-		fputs(Is_yield_stress  ? "Yield stress : true \n" : "Yield stress : false \n", stdout);
-		exit(EXIT_FAILURE);
-	}
-}
 
 /**********************************************************************/
 
 static void check_Drucker_Prager_Material(Material Mat_particle)
 {
-	if(Is_rho && Is_Cel && Is_E && Is_nu && Is_Exponent_Hardening_Ortiz && Is_friction_angle && Is_dilatancy_angle)
-	{
-		printf("\t -> %s \n","Drucker-Prager material");
-		printf("\t \t -> %s : %f \n","Celerity",Mat_particle.Cel);
-		printf("\t \t -> %s : %f \n","Density",Mat_particle.rho);
-		printf("\t \t -> %s : %f \n","Elastic modulus",Mat_particle.E);
-		printf("\t \t -> %s : %f \n","Poisson modulus",Mat_particle.nu);
-		printf("\t \t -> %s : %f \n","Friction angle",Mat_particle.friction_angle);
-		printf("\t \t -> %s : %f \n","Dilatancy angle",Mat_particle.dilatancy_angle);
-	}
-	else
-	{
-		fprintf(stderr,"%s : %s \n",
-			"Error in GramsMaterials()",
-			"Some parameter is missed for Drucker-Prager material");
-		fputs(Is_rho ? "Density : true \n" : "Density : false \n", stdout);
-		fputs(Is_Cel ? "Celerity : true \n" : "Celerity : false \n", stdout);
-		fputs(Is_E   ? "Elastic modulus : true \n" : "Elastic modulus : false \n", stdout);
-		fputs(Is_nu  ? "Poisson modulus : true \n" : "Poisson modulus : false \n", stdout);
-		fputs(Is_Exponent_Hardening_Ortiz  ? "Hardening exponent : true \n" : "Hardening exponent : false \n", stdout);
-		fputs(Is_friction_angle  ? "Friction angle : true \n" : "Friction angle : false \n", stdout);
-		fputs(Is_dilatancy_angle  ? "Dilatancy angle : true \n" : "Dilatancy angle : false \n", stdout);
-		exit(EXIT_FAILURE);
-	}
+
 }
 
 /**********************************************************************/

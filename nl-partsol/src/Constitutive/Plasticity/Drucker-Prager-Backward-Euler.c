@@ -64,8 +64,8 @@ State_Parameters Drucker_Prager_backward_euler(
   /*
     Compute material parameters for the D-P
   */
-  double rad_friction_angle  = (PI__MatrixLib__/180)*MatProp.friction_angle;
-  double rad_dilatancy_angle = (PI__MatrixLib__/180)*MatProp.dilatancy_angle;
+  double rad_friction_angle  = (PI__MatrixLib__/180)*MatProp.phi_Frictional;
+  double rad_dilatancy_angle = (PI__MatrixLib__/180)*MatProp.psi_Frictional;
   
   double alpha_F, alpha_Q, beta;
 

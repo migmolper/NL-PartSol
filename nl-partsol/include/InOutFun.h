@@ -523,5 +523,15 @@ void Gauss_Point_evolution__InOutFun__(Particle, Event, char *, int, int);
 
 
 void Hidrostatic_condition_particles__InOutFun__(char *, Particle, int,int *);
+/*****************************************************************/
+
+Material Define_Solid_Rigid(FILE *,char *,int);
+Material Define_Linear_Elastic(FILE *,char *,int);
+Material Define_Saint_Venant_Kirchhoff(FILE *,char *,int);
+Material Define_Neo_Hookean_Wriggers(FILE *,char *,int);
+Material Define_Von_Mises(FILE *,char *,int);
+Material Define_Frictional(FILE *,char *,int);
+Material Define_Compressible_Newtonian_Fluid(FILE *,char *,int);
+/*****************************************************************/
 
 #endif
