@@ -51,10 +51,10 @@ static void eval_d_f_d_stress(double *,double *,double,double);
 static double eval_g(double,double);
 static void eval_d_g_d_stress(double *,double *,double,double);
 static void eval_dd_g_dd_stress(double *,double *,double,double);
-static double eval_F(double,double,double,double,double,double,double);
+static double eval_Yield_Function(double,double,double,double,double,double,double);
 static void eval_d_F_d_stress(double *,double *,double,double,double,double,double,double,double);
 static double eval_d_F_d_kappa1(double,double,double,double,double,double);
-static double eval_G(double,double,double,double,double,double,double);
+static double eval_Plastic_Potential(double,double,double,double,double,double,double);
 static void eval_d_G_d_stress(double *,double *,double,double,double,double,double,double,double);
 static void eval_dd_G_dd_stress(double *,double *,double,double,double,double,double,double,double);
 static void eval_dd_G_d_stress_d_kappa2(double *, double *,double,double,double,double,double,double);
@@ -102,11 +102,13 @@ State_Parameters Frictional_Monolithic(
   double I2 = Stress_k[0]*Stress_k[1] + Stress_k[1]*Stress_k[2] + Stress_k[0]*Stress_k[2];
   double I3 = Stress_k[0]*Stress_k[1]*Stress_k[2];
 
+
   /*
     Check yield condition
   */
-  if(eval_F(Params.c0,kappa_k[0],Params.pa,I1,I2,I3,Params.m) > 0.0)
+  if(eval_Yield_Function(Params.c0,kappa_k[0],Params.pa,I1,I2,I3,Params.m) > 0.0)
   {
+
 
     /*
       Compute elastic trial with the inverse elastic relation
@@ -140,7 +142,7 @@ State_Parameters Frictional_Monolithic(
         Iter++;
         
         assemble_tangent_matrix(Tangent_Matrix,Plastic_Flow,Stress_k,kappa_k,delta_lambda,Lambda_k,Params);
-        
+
         update_variables(Tangent_Matrix,Residual,Stress_k,kappa_k,&delta_lambda,&Lambda_k,Lambda_n,Params.alpha);
 
       }
@@ -157,6 +159,7 @@ State_Parameters Frictional_Monolithic(
   {
     Outputs_VarCons = fill_Outputs(Inputs_SP.Increment_E_plastic,Stress_k,Plastic_Flow,Lambda_k,delta_lambda,kappa_k[0]);
   }
+
   
   return Outputs_VarCons;
 }
@@ -498,7 +501,7 @@ static void eval_dd_g_dd_stress(
 
 /**************************************************************/
 
-static double eval_F(
+static double eval_Yield_Function(
   double c0,
   double kappa1,
   double pa,
@@ -508,7 +511,7 @@ static double eval_F(
   double m)
 {
 
-  double K1 = eval_K1(c0,kappa1,pa,I1,m);
+  double K1 = eval_K1(kappa1,I1,c0,m,pa);
 
   double f = eval_f(I1,I2);
 
@@ -635,7 +638,7 @@ static void eval_dd_G_d_stress_d_kappa2(
   double kappa2)
 {
 
-  double K2 = eval_K2(c0,kappa2,pa,I1,m);
+  double K2 = eval_K2(kappa2,I1,c0,m,pa);
   double b2 = eval_b2(kappa2,I1,I3,m,pa);
 
   dd_G_d_stress_d_kappa2[0] = pow((pa/I1),m)*(cbrt(I3)/(3.0*Stress[0]) 
@@ -691,7 +694,7 @@ static void assemble_residual(
     eval_strain(Strain_e_k,Stress_k,Params.CC);
     eval_kappa(kappa_hat,Lambda_k,I1,a1,a2,a3,alpha);
     eval_d_G_d_stress(Grad_G,Stress_k,I1,I2,I3,c0,kappa[1],pa,m);
-    F = eval_F(c0,kappa[0],pa,I1,I2,I3,m);
+    F = eval_Yield_Function(c0,kappa[0],pa,I1,I2,I3,m);
 
     Residual[0] = Strain_e_k[0] - Strain_e_tri[0] + delta_lambda*Grad_G[0];
     Residual[1] = Strain_e_k[1] - Strain_e_tri[1] + delta_lambda*Grad_G[1];

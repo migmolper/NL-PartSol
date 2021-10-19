@@ -179,6 +179,7 @@ void Stress_integration__Particles__(
   }
     else if(strcmp(MatProp_p.Type,"Granular") == 0)
     {
+      Input_SP.Particle_Idx = p;
       Input_SP.Stress = MPM_Mesh.Phi.Stress.nM[p];
       Input_SP.F_m1_plastic_p = MPM_Mesh.Phi.F_m1_plastic.nM[p];
       Input_SP.Kappa = MPM_Mesh.Phi.Kappa_hardening.nV[p];
@@ -195,7 +196,7 @@ void Stress_integration__Particles__(
  //     }
   
       Output_SP = finite_strain_plasticity(Input_SP,MatProp_p,Frictional_Monolithic);
-
+      
       MPM_Mesh.Phi.Kappa_hardening.nV[p] = Output_SP.Kappa;
       MPM_Mesh.Phi.EPS.nV[p] = Output_SP.EPS;
       

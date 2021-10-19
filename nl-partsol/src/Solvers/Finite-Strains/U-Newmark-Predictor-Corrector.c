@@ -161,6 +161,14 @@ void U_Newmark_Predictor_Corrector_Finite_Strains(
       free(ActiveNodes.Nodes2Mask); 
       free(Free_and_Restricted_Dofs.Nodes2Mask);
       print_Status("DONE !!!",TimeStep);
+
+
+      if(TimeStep == 20)
+      {
+        exit(0);
+      }
+
+
     }
   
 }

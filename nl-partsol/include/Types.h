@@ -581,6 +581,11 @@ typedef struct {
 typedef struct
 {
   /*!
+   * Particle identifier
+   * */
+  int Particle_Idx;
+  
+  /*!
    * Stress/strain parameters
    * */
   double * Stress;
