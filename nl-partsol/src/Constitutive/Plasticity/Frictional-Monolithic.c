@@ -883,6 +883,7 @@ static void update_variables(
   *lambda_k = *delta_lambda + lambda_n;
 }
 
+
 /**************************************************************/
 
 static State_Parameters fill_Outputs(
