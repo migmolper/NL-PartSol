@@ -733,25 +733,20 @@ static bool check_convergence(
       return true;
     }
   }
-  else if(Iter > MaxIter)
-  {
-    Error_relative = Error/Error0;
-    return true;
-  }
-  else
-  {
-    Error_relative = Error/Error0;
-  }
-      
-  /*
-    Check convergence using the relative error
-  */
-  if(Error_relative > TOL)
+
+  if((Error > TOL*100) 
+  && (Error_relative > TOL) 
+  && (Iter < MaxIter))
   {
     return false;
   }
   else
   {
+    if(Iter >= MaxIter) 
+    {
+      fprintf(stderr,"Maximm number of iteration reached \n");
+    }
+
     return true;
   }
 

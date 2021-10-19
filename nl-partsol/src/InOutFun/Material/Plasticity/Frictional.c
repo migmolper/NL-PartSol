@@ -207,7 +207,7 @@ Material Define_Frictional(
   
   check_Frictional_Material(Frictional_Material,ChkMat,Material_Idx);
 
-  TOL_Radial_Returning = 1E-10;
+  TOL_Radial_Returning = 1E-12;
   Max_Iterations_Radial_Returning = 30;
 
   /* Return outputs */
