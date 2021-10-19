@@ -34,9 +34,12 @@ typedef struct
   bool Is_Viscous_regularization;
   bool Is_fluidity_param;
 
+  bool Is_Locking_Control_Fbar; // Locking control
+  bool Is_alpha_Fbar; // Tunning paramer for the F-bar
+
 } Check_Material;
 
-static bool Activate_Options(char *, char *);
+static bool Activate_Options(char *);
 static void standard_error();
 static Check_Material Initialise_Check_Material();
 static void check_Von_Mises_Material(Material,Check_Material,int);
@@ -71,6 +74,8 @@ Material Define_Von_Mises(
   New_Material.Hardening_Cervera = false;
   New_Material.Exponent_Hardening_Ortiz = false;
   New_Material.Viscous_regularization = false;
+  New_Material.Locking_Control_Fbar = false;
+  New_Material.alpha_Fbar = 0.0;
 
   while(fgets(Parameter_line, sizeof(Parameter_line), Simulation_file) != NULL)
   {
@@ -190,7 +195,7 @@ Material Define_Von_Mises(
     /**************************************************/
     else if(strcmp(Parameter_pars[0],"Hardening-Ortiz") == 0)
     {
-      New_Material.Hardening_Ortiz = Activate_Options("Hardening-Ortiz", Parameter_pars[1]);
+      New_Material.Hardening_Ortiz = Activate_Options(Parameter_pars[1]);
     }
     /**************************************************/
     else if((strcmp(Parameter_pars[0],"}") == 0) && (Parser_status == 1))
@@ -236,8 +241,10 @@ static Check_Material Initialise_Check_Material()
   ChkMat.Is_Hardening_Ortiz = false;
   ChkMat.Is_Exponent_Hardening_Ortiz = false;
   ChkMat.Is_Reference_Plastic_Strain_Ortiz = false;
-  ChkMat.Is_Viscous_regularization = false;
-  ChkMat.Is_fluidity_param = false;
+  ChkMat.Is_Viscous_regularization = false; // Viscous regularization
+  ChkMat.Is_fluidity_param = false; // Viscoplasticity parameter
+  ChkMat.Is_Locking_Control_Fbar = false; // Locking control
+  ChkMat.Is_alpha_Fbar = false; // Tunning parameter for the F-bar
 
   return ChkMat;
 }
@@ -258,7 +265,21 @@ static void check_Von_Mises_Material(Material Mat_particle, Check_Material ChkMa
     printf("\t \t -> %s : %f \n","Poisson modulus",Mat_particle.nu);
     printf("\t \t -> %s : %f \n","Yield stress",Mat_particle.yield_stress_0);
     printf("\t \t -> %s : %s \n","Plastic solver",Mat_particle.Plastic_Solver);
-    
+
+    if(ChkMat.Is_Locking_Control_Fbar)
+    {
+      printf("\t \t -> %s : %s \n","F-bar","Enabled");
+
+      if(ChkMat.Is_alpha_Fbar)
+      {
+        printf("\t \t -> %s : %f \n","alpha F-bar",Mat_particle.alpha_Fbar);
+      }
+    }
+    else
+    {
+      printf("\t \t -> %s : %s \n","F-bar","Disabled");
+    }    
+
     if(ChkMat.Is_Hardening)
     {
       if(ChkMat.Is_Hardening_Hughes)
@@ -367,18 +388,16 @@ static void check_Von_Mises_Material(Material Mat_particle, Check_Material ChkMa
 
 /***************************************************************************/
 
-static bool Activate_Options(char * Option, char * status_text)
+static bool Activate_Options(char * status_text)
 {
   bool status;
 
   if(strcmp(status_text,"true") == 0)
   {
-    printf("\t -> %s : True \n", Option);
     return true;
   }
   else if(strcmp(status_text,"false") == 0)
   {
-    printf("\t -> %s : False \n", Option);
     return false;
   }
   else

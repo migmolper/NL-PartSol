@@ -185,15 +185,15 @@ void Stress_integration__Particles__(
       Input_SP.Kappa = MPM_Mesh.Phi.Kappa_hardening.nV[p];
       Input_SP.EPS = MPM_Mesh.Phi.EPS.nV[p];
 
- //     if(MatProp_p.Locking_Control_Fbar)
- //     {
- //       Input_SP.F_n1_p = MPM_Mesh.Phi.F_n1.nM[p];
- //       Input_SP.Fbar = MPM_Mesh.Phi.Fbar.nM[p];
- //     }
- //     else
- //     {
+      if(MatProp_p.Locking_Control_Fbar)
+      {
         Input_SP.F_n1_p = MPM_Mesh.Phi.F_n1.nM[p];
- //     }
+        Input_SP.Fbar = MPM_Mesh.Phi.Fbar.nM[p];
+      }
+      else
+      {
+        Input_SP.F_n1_p = MPM_Mesh.Phi.F_n1.nM[p];
+      }
   
       Output_SP = finite_strain_plasticity(Input_SP,MatProp_p,Frictional_Monolithic);
       

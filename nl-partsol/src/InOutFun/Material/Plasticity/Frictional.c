@@ -30,10 +30,13 @@ typedef struct
   bool Is_atmospheric_pressure; // Reference pressure
   bool Is_friction_angle; // Friction angle
   bool Is_dilatancy_angle; // Dilatancy angle
+  bool Is_Locking_Control_Fbar; // Locking control
+  bool Is_alpha_Fbar; // Tunning paramer for the F-bar
 
 } Check_Material;
 
 static void standard_error();
+static bool Activate_Options(char *);
 static Check_Material Initialise_Check_Material();
 static void check_Frictional_Material(Material,Check_Material,int);
 
@@ -62,6 +65,10 @@ Material Define_Frictional(
   /* Auxiliar parameters for granular materials */
   double rad_friction_angle;
   double rad_dilatancy_angle;
+
+  /* Default parameters */
+  Frictional_Material.Locking_Control_Fbar = false;
+  Frictional_Material.alpha_Fbar = 0.0;
 
   while(fgets(Parameter_line, sizeof(Parameter_line), Simulation_file) != NULL)
   {
@@ -164,6 +171,25 @@ Material Define_Frictional(
       Frictional_Material.psi_Frictional = (PI__MatrixLib__/180)*atof(Parameter_pars[1]);
     }
     /**************************************************/
+    else if(strcmp(Parameter_pars[0],"Fbar") == 0)
+	  {
+      ChkMat.Is_Locking_Control_Fbar = true;
+      Frictional_Material.Locking_Control_Fbar = Activate_Options(Parameter_pars[1]);
+	  }
+	  /**************************************************/
+	  else if(strcmp(Parameter_pars[0],"Fbar-alpha") == 0)
+	  {
+      ChkMat.Is_alpha_Fbar = true;
+			Frictional_Material.alpha_Fbar = atof(Parameter_pars[1]);
+
+			if((Frictional_Material.alpha_Fbar < 0.0) 
+      || (Frictional_Material.alpha_Fbar > 1.0))
+			{
+				sprintf(Error_message,"The range for Fbar-alpha is [0,1]");
+	   		standard_error(Error_message); 
+			}
+	  }
+	  /**************************************************/
     else if((strcmp(Parameter_pars[0],"}") == 0) && (Parser_status == 1))
     {
         Is_Close = true;
@@ -207,6 +233,8 @@ static Check_Material Initialise_Check_Material()
   ChkMat.Is_atmospheric_pressure = false; // Reference pressure
   ChkMat.Is_friction_angle = false; // Friction angle
   ChkMat.Is_dilatancy_angle = false; // Dilatancy angle
+  ChkMat.Is_Locking_Control_Fbar = false; // Locking control
+  ChkMat.Is_alpha_Fbar = false; // Tunning parameter for the F-bar
 
   return ChkMat;
 }
@@ -240,6 +268,21 @@ static void check_Frictional_Material(Material Mat_particle, Check_Material ChkM
     printf("\t \t -> %s : %f \n","a3-Hardening-Borja",Mat_particle.a_Hardening_Borja[2]);	
     printf("\t \t -> %s : %f \n","Friction-angle",Mat_particle.phi_Frictional*(180/PI__MatrixLib__));	
     printf("\t \t -> %s : %f \n","Dilatancy-angle",Mat_particle.psi_Frictional*(180/PI__MatrixLib__));	
+    
+    if(ChkMat.Is_Locking_Control_Fbar)
+    {
+      printf("\t \t -> %s : %s \n","F-bar","Enabled");
+
+      if(ChkMat.Is_alpha_Fbar)
+      {
+        printf("\t \t -> %s : %f \n","alpha F-bar",Mat_particle.alpha_Fbar);
+      }
+    }
+    else
+    {
+      printf("\t \t -> %s : %s \n","F-bar","Disabled");
+    }
+        
 
     if(ChkMat.Is_m 
     && ChkMat.Is_c0)
@@ -273,6 +316,29 @@ static void check_Frictional_Material(Material Mat_particle, Check_Material ChkM
 }
 
 /***************************************************************************/
+
+static bool Activate_Options(char * status_text)
+{
+  bool status;
+
+  if(strcmp(status_text,"true") == 0)
+  {
+    return true;
+  }
+  else if(strcmp(status_text,"false") == 0)
+  {
+    return false;
+  }
+  else
+  {
+    sprintf(Error_message,"The status was %s. Please, use : true/false",status_text);
+    standard_error(); 
+  }
+
+  return status;
+}
+
+/**********************************************************************/
 
 static void standard_error()
 {
