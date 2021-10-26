@@ -538,7 +538,10 @@ Material Define_Linear_Elastic(FILE *,char *,int);
 Material Define_Saint_Venant_Kirchhoff(FILE *,char *,int);
 Material Define_Neo_Hookean_Wriggers(FILE *,char *,int);
 Material Define_Von_Mises(FILE *,char *,int);
+
 Material Define_Frictional(FILE *,char *,int);
+void Initialize_Frictional(double *,double *,Material);
+
 Material Define_Compressible_Newtonian_Fluid(FILE *,char *,int);
 /*****************************************************************/
 

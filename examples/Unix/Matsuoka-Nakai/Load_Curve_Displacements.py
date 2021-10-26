@@ -3,8 +3,8 @@ import matplotlib.pyplot as plt
 
 uf = 0.04
 tf = 4.0
-CFL = 0.5
-h = 0.093242
+CFL = 0.1
+h = 0.186484
 CEL = 163.66
 DT = CFL*h/CEL
 Nsteps = (int)(tf/DT)

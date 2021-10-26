@@ -15,42 +15,44 @@ GramsBox (Type=GID,File=Nodes.msh) {
 		 BcDirichlet V.y Curve_Load.txt 
 	 } 
 
-} 
+}
+
+Define-Material(idx=0,Model=Granular)
+{
+  rho=2000.0
+  E=5E6
+  nu=0.3
+  Yield-Function=Matsuoka-Nakai
+  alpha-Hardening-Borja=0.5
+  a1-Hardening-Borja=0.1E6
+  a2-Hardening-Borja=0.0
+  a3-Hardening-Borja=35.0
+  Atmospheric-pressure=-100
+  Friction-angle=30
+  Dilatancy-angle=30
+  Fbar=false 
+  Fbar-alpha=0.1 
+}
+ 
 
 GramsTime (Type=NPC-FS) {
-	 CFL=0.5 
-	 Tend=4.0 
-	 Cel=163.66 
+  CFL=0.1 
+	Tend=4.0 
+	Cel=163.66 
 } 
 
-GramsSolid (File=Particles.msh,GPxElement=9) {
+One-Phase-Analysis (File=Particles.msh,GPxElement=3) {
 
-	 GramsMaterials (Particles=Particles_Soil.txt) {
-		 Type=Von-Mises 
-		 Cel=163.66 
-		 rho=2000 
-		 E=25000000.0 
-		 nu=0.4 
-		 Yield-stress=15.0E3 
-		 Plastic-Solver=Backward-Euler 
-		 Hardening-Criteria=Hughes 
-		 Hardening-Modulus=0.0 
-		 Parameter-Hardening-Hughes=1.0 
-		 Viscous-regularization=false 
-		 Fluidity-Parameter=0.0 
-		 Fbar=true 
-		 Fbar-alpha=0.07 
-		 Id=0 
-	 } 
+   Assign-material-to-particles (MatIdx=0, Particles=Particles_Soil.txt)
 
-	 GramsShapeFun (Type=LME) { 
-		 gamma=4.0 
-	 } 
+   GramsShapeFun (Type=LME) {
+       gamma=3.0
+   } 
 
 } 
 
-GramsOutputs (i=50) { 
-		 DIR=Gamma_4.0_Fbar_0.07 
+GramsOutputs (i=10) { 
+		 DIR=Resultados 
 		 Out-displacement=true 
 		 Out-Equivalent-Plastic-Strain=true 
 		 Out-stress=true 

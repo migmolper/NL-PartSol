@@ -348,3 +348,35 @@ static void standard_error()
 }
 
 /***************************************************************************/
+
+void Initialize_Frictional(
+  double * kappa,
+  double * EPS, 
+  Material MatProp)
+{
+  double square_Sin_Phi = DSQR(sin(MatProp.phi_Frictional));
+
+  *kappa = 8*square_Sin_Phi/(1 - square_Sin_Phi);
+
+  double a1 = MatProp.a_Hardening_Borja[0];
+  double a3 = MatProp.a_Hardening_Borja[2];
+  double f = 1;
+  double df = 1;
+  int iter = 0;
+
+  while(fabs(f) > TOL_Radial_Returning)
+  {
+    iter++;
+    f = (*kappa) - a1*(*EPS)*exp(-a3*(*EPS));
+    df = (a3*(*EPS) - 1)*a1*exp(-a3*(*EPS));
+    *EPS -= f/df;
+
+    if(iter > 10)
+    {
+      sprintf(Error_message,"Failure during the initialization of the Matsuoka-Nakai \n");
+      standard_error(); 
+    }
+  }
+}
+
+/**********************************************************************/
