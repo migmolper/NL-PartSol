@@ -667,10 +667,7 @@ static void initialise_particles(
 
     /* Assign the mass parameter */
       MPM_Mesh.Phi.mass.nV[p] = m_p;
-
-      /* Assign hardening */
-      MPM_Mesh.Phi.Kappa_hardening.nV[p] = 11.67;
-
+    
     }    
 
   }

@@ -1,0 +1,61 @@
+GramsBox (Type=GID,File=Nodes.msh) { 
+
+	 GramsBoundary (File=Bottom.txt) { 
+		 BcDirichlet V.x Curve_Constant.txt 
+		 BcDirichlet V.y Curve_Constant.txt 
+	 } 
+
+	 GramsBoundary (File=Sides.txt) { 
+		 BcDirichlet V.x Curve_Constant.txt 
+		 BcDirichlet V.y NULL 
+	 } 
+
+	 GramsBoundary (File=Load_Nodes.txt) { 
+		 BcDirichlet V.x Curve_Constant.txt 
+		 BcDirichlet V.y Curve_Load.txt 
+	 } 
+
+}
+
+Define-Material(idx=0,Model=Granular)
+{
+  rho=2000.0
+  E=5E6
+  nu=0.3
+  Yield-Function=Matsuoka-Nakai
+  alpha-Hardening-Borja=0.5
+  a1-Hardening-Borja=0.1E6
+  a2-Hardening-Borja=0.0
+  a3-Hardening-Borja=0.0
+  Atmospheric-pressure=-100
+  Friction-angle=30
+  Dilatancy-angle=30
+	Fbar=true 
+	Fbar-alpha=0.0 
+}
+ 
+
+GramsTime (Type=NPC-FS) {
+  CFL=0.5 
+	Tend=4.0 
+	Cel=163.66 
+} 
+
+One-Phase-Analysis (File=Particles.msh,GPxElement=9) {
+
+   Assign-material-to-particles (MatIdx=0, Particles=Particles_Soil.txt)
+
+	 GramsShapeFun (Type=FEM) { 
+	 } 
+
+} 
+
+GramsOutputs (i=10) { 
+		 DIR=Resultados 
+		 Out-displacement=true 
+		 Out-Equivalent-Plastic-Strain=true 
+		 Out-stress=true 
+		 Out-Metric=true 
+		 Out-volumetric-stress=true 
+		 Out-Von-Mises=true 
+} 
