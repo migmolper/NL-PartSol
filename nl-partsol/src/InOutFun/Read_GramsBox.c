@@ -410,7 +410,7 @@ static ChainPtr ring_search_nodal_locality(ChainPtr * Set_k, ChainPtr Search_Set
     /*
       For each node in the set, get the closest node
     */
-    aux_Set = node_I_locality(i_Search_Set->I, FEM_Mesh);
+    aux_Set = node_I_locality(i_Search_Set->Idx, FEM_Mesh);
 
     /*
       Loop in the closest set of nodes of the original set
@@ -420,10 +420,10 @@ static ChainPtr ring_search_nodal_locality(ChainPtr * Set_k, ChainPtr Search_Set
       /*
         Update the set with the new node and the search set
       */
-      if (!inout__SetLib__(*Set_k, aux_Set->I))
+      if (!inout__SetLib__(*Set_k, aux_Set->Idx))
       {
-        push__SetLib__(Set_k, aux_Set->I);
-        push__SetLib__(&new_Search_Set, aux_Set->I);
+        push__SetLib__(Set_k, aux_Set->Idx);
+        push__SetLib__(&new_Search_Set, aux_Set->Idx);
       }
 
       /*
@@ -482,7 +482,7 @@ static void compute_nodal_distance_local(Mesh FEM_Mesh)
       /*
         Get the index of the node
       */
-      B = NodalLocality_A->I;
+      B = NodalLocality_A->Idx;
 
       if (A != B)
       {

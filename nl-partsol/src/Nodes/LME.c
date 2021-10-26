@@ -100,9 +100,9 @@ void initialize__LME__(
 
         while(Locality_I0 != NULL)
         {
-          if(FEM_Mesh.ActiveNode[Locality_I0->I] == false)
+          if(FEM_Mesh.ActiveNode[Locality_I0->Idx] == false)
           {
-            FEM_Mesh.ActiveNode[Locality_I0->I] = true;
+            FEM_Mesh.ActiveNode[Locality_I0->Idx] = true;
           }
 
           Locality_I0 = Locality_I0->next; 
@@ -1057,9 +1057,9 @@ void local_search__LME__(Particle MPM_Mesh, Mesh FEM_Mesh)
     */
     while(Locality_I0 != NULL)
     {
-      if(FEM_Mesh.ActiveNode[Locality_I0->I] == false)
+      if(FEM_Mesh.ActiveNode[Locality_I0->Idx] == false)
       {
-        FEM_Mesh.ActiveNode[Locality_I0->I] = true;
+        FEM_Mesh.ActiveNode[Locality_I0->Idx] = true;
       }
 
       Locality_I0 = Locality_I0->next; 

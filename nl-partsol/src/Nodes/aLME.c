@@ -223,9 +223,9 @@ void initialize__aLME__(
 
         while(Locality_I0 != NULL)
         {
-          if(FEM_Mesh.ActiveNode[Locality_I0->I] == false)
+          if(FEM_Mesh.ActiveNode[Locality_I0->Idx] == false)
           {
-            FEM_Mesh.ActiveNode[Locality_I0->I] = true;
+            FEM_Mesh.ActiveNode[Locality_I0->Idx] = true;
           }
 
           Locality_I0 = Locality_I0->next; 
@@ -1106,9 +1106,9 @@ void local_search__aLME__(
     // Activate the nodes near the particle.
     while(Locality_I0 != NULL)
     {
-      if(FEM_Mesh.ActiveNode[Locality_I0->I] == false)
+      if(FEM_Mesh.ActiveNode[Locality_I0->Idx] == false)
       {
-        FEM_Mesh.ActiveNode[Locality_I0->I] = true;
+        FEM_Mesh.ActiveNode[Locality_I0->Idx] = true;
       }
       Locality_I0 = Locality_I0->next; 
     }

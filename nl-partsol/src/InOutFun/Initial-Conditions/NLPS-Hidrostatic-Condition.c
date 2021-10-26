@@ -294,7 +294,7 @@ static void assign_hidrostatic_condition(
 	{
 		for(int i = 0 ; i<GPxElement ; i++)
 		{
-			p = (Particles_List->I)*GPxElement+i;
+			p = (Particles_List->Idx)*GPxElement+i;
 
 			if((p < 0) || (p >= MPM_Mesh.NumGP))
 			{

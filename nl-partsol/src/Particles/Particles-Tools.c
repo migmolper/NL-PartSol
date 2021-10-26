@@ -63,8 +63,8 @@ int search_particle_in_surrounding_elements__Particles__(
   while(Ixd != NULL)
   {
 
-    Nn = FEM_Mesh.NumNodesElem[Ixd->I];
-    Nodes = FEM_Mesh.Connectivity[Ixd->I];
+    Nn = FEM_Mesh.NumNodesElem[Ixd->Idx];
+    Nodes = FEM_Mesh.Connectivity[Ixd->Idx];
 
     Element_Coordinates = get_nodes_coordinates__MeshTools__(Nodes, FEM_Mesh.Coordinates);
 
@@ -72,7 +72,7 @@ int search_particle_in_surrounding_elements__Particles__(
     if(FEM_Mesh.In_Out_Element(X_p,Element_Coordinates))
     {
       free__MatrixLib__(Element_Coordinates);
-      I_element = Ixd->I;
+      I_element = Ixd->Idx;
       break; 
     }
     

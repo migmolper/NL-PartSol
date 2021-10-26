@@ -460,7 +460,7 @@ static void ComputeBeps(
     while(Particles_Beps != NULL){
 
       /* Get the index of each particle */
-      q_Beps = Particles_Beps->I;
+      q_Beps = Particles_Beps->Idx;
 
       /* In Beps only those particles of the same material */
       if(Mat_p == MPM_Mesh.MatIdx[q_Beps]){

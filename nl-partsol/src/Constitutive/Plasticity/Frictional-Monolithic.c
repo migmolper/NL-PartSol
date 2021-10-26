@@ -1,14 +1,18 @@
 
-#include <stdbool.h>
-#include "Macros.h"
-#include "Types.h"
-#include "Globals.h"
 #ifdef __linux__
+#include <stdio.h>
+#include <string.h>
+#include <math.h>
+#include <stdbool.h>
 #include <lapacke.h>
 #elif __APPLE__
+#include <stdbool.h>
 #include <Accelerate/Accelerate.h>
 #endif
 
+#include "Macros.h"
+#include "Types.h"
+#include "Globals.h"
 
 /*
   Auxiliar variables

@@ -745,7 +745,7 @@ Matrix get_nodes_coordinates__MeshTools__(
     /* Fill the elelemtn coordinates */
     for(int l = 0 ; l<Ndim ; l++)
     {
-      Element_Coordinates.nM[I_Idx][l] = Coordinates.nM[Idx->I][l];
+      Element_Coordinates.nM[I_Idx][l] = Coordinates.nM[Idx->Idx][l];
     }
     
     /* Cycle */
@@ -811,7 +811,7 @@ Matrix compute_distance__MeshTools__(
     /* Get coordinates local coodinates of each node in the set */
     for(int i = 0 ; i<Ndim ; i++)
     {
-      Set_Coordinates.nM[I][i] =  X0.nV[i] - Coordinates.nM[Aux_Set->I][i];
+      Set_Coordinates.nM[I][i] =  X0.nV[i] - Coordinates.nM[Aux_Set->Idx][i];
     }
     /* Update index */
     I++;	
@@ -881,7 +881,7 @@ int get_closest_node__MeshTools__(
   Node_I = Nodes;
 
   /* Get the index of the first node */
-  I = Node_I->I;
+  I = Node_I->Idx;
   
   /* Get the coordinates of the first node */
   X_I = memory_to_matrix__MatrixLib__(Ndim,1,Coordinates.nM[I]);
@@ -891,7 +891,7 @@ int get_closest_node__MeshTools__(
       
   /* Get the distance from the node to the particle */
   DistMin = Distance_I;
-  I_DistMin = Node_I->I;
+  I_DistMin = Node_I->Idx;
       
   /* Search in the reamaining nodes */      
   Node_I = Node_I->next;
@@ -900,7 +900,7 @@ int get_closest_node__MeshTools__(
   {
 
     /* Get the index of the node */
-    I = Node_I->I;
+    I = Node_I->Idx;
 
     /* Get the coordinates of the node */
     X_I = memory_to_matrix__MatrixLib__(Ndim,1,Coordinates.nM[I]);
@@ -912,7 +912,7 @@ int get_closest_node__MeshTools__(
     if(Distance_I < DistMin)
     {
       DistMin = Distance_I;
-      I_DistMin = Node_I->I;
+      I_DistMin = Node_I->Idx;
     }
       
     /* Continue iterating */      

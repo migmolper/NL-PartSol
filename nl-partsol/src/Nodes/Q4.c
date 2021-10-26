@@ -93,9 +93,9 @@ void initialize__Q4__(
 
         while(Locality_I0 != NULL)
         {
-          if(FEM_Mesh.ActiveNode[Locality_I0->I] == false)
+          if(FEM_Mesh.ActiveNode[Locality_I0->Idx] == false)
           {
-            FEM_Mesh.ActiveNode[Locality_I0->I] = true;
+            FEM_Mesh.ActiveNode[Locality_I0->Idx] = true;
           }
 
           Locality_I0 = Locality_I0->next;
@@ -522,8 +522,8 @@ double min_DeltaX__Q4__(ChainPtr Element_Connectivity, Matrix Coordinates)
   for(int k = 0; k<NumNodesElem; k++)
   {
 
-    Node_k = Element_Connectivity->I;
-    Node_k1 = Element_Connectivity->next->I;
+    Node_k = Element_Connectivity->Idx;
+    Node_k1 = Element_Connectivity->next->Idx;
 
     sqr_lenght = 0.0;
     
@@ -697,9 +697,9 @@ void local_search__Q4__(Particle MPM_Mesh, Mesh FEM_Mesh)
       Connectivity_p = MPM_Mesh.ListNodes[p];
       while(Connectivity_p != NULL)
       {
-        if(FEM_Mesh.ActiveNode[Connectivity_p->I] == false)
+        if(FEM_Mesh.ActiveNode[Connectivity_p->Idx] == false)
         {
-          FEM_Mesh.ActiveNode[Connectivity_p->I] = true;
+          FEM_Mesh.ActiveNode[Connectivity_p->Idx] = true;
         }
 
         Connectivity_p = Connectivity_p->next;
@@ -715,9 +715,9 @@ void local_search__Q4__(Particle MPM_Mesh, Mesh FEM_Mesh)
       Connectivity_p = MPM_Mesh.ListNodes[p];
       while(Connectivity_p != NULL)
       {
-        if(FEM_Mesh.ActiveNode[Connectivity_p->I] == false)
+        if(FEM_Mesh.ActiveNode[Connectivity_p->Idx] == false)
         {
-          FEM_Mesh.ActiveNode[Connectivity_p->I] = true;
+          FEM_Mesh.ActiveNode[Connectivity_p->Idx] = true;
         }
 
         Connectivity_p = Connectivity_p->next;

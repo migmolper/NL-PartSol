@@ -57,7 +57,7 @@ typedef struct Chain {
   /*! 
    * Index of a node in the set 
    */
-  int I;
+  int Idx;
 
   /*!
    * Pointer to the next node in the set
