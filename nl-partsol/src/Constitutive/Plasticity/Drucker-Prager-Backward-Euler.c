@@ -92,7 +92,7 @@ State_Parameters Drucker_Prager_backward_euler(
   /*
     Initialise solver parameters
   */
-  double EPS_k = Inputs_SP.EPS;
+  double EPS_k = Inputs_SP.Equiv_Plast_Str;
   double delta_Gamma_k = 0;
   double TOL = TOL_Radial_Returning;
   int MaxIter = Max_Iterations_Radial_Returning;
@@ -158,7 +158,7 @@ State_Parameters Drucker_Prager_backward_euler(
   }
   else
   {
-    Outputs_VarCons.EPS = Inputs_SP.EPS;
+    Outputs_VarCons.Equiv_Plast_Str = Inputs_SP.Equiv_Plast_Str;
   }
 
   /*

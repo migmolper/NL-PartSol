@@ -269,7 +269,7 @@ void particle_results_vtk__InOutFun__(Particle MPM_Mesh, int TimeStep_i, int Res
   /* print equivalent plastic strain */
   if(Out_EPS)
   {
-    vtk_Out_Equiv_Plastic_Strain(Vtk_file, MPM_Mesh.Phi.EPS, NumParticles);
+    vtk_Out_Equiv_Plastic_Strain(Vtk_file, MPM_Mesh.Phi.Equiv_Plast_Str, NumParticles);
   }
 
   /* Close the file */

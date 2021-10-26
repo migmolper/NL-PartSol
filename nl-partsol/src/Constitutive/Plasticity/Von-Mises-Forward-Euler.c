@@ -63,14 +63,14 @@ State_Parameters Von_Mises_forward_euler(
   /*
     Yield condition : Starting from incremental plastic strain equal to zero
   */
-  Phi_tr = compute_yield_surface(relative_stress_norm, Inputs_SP.EPS, MatProp);
+  Phi_tr = compute_yield_surface(relative_stress_norm, Inputs_SP.Equiv_Plast_Str, MatProp);
 
   if(Phi_tr > TOL)
   {
 
     delta_Gamma = compute_increment_flow_rule(Phi_tr,MatProp);
 
-    Outputs_VarCons.EPS = update_equivalent_plastic_strain(Inputs_SP.EPS, delta_Gamma);
+    Outputs_VarCons.Equiv_Plast_Str = update_equivalent_plastic_strain(Inputs_SP.Equiv_Plast_Str, delta_Gamma);
 
     compute_increment_plastic_strain_tensor(Outputs_VarCons.Increment_E_plastic,plastic_flow_direction, delta_Gamma);
 
@@ -82,7 +82,7 @@ State_Parameters Von_Mises_forward_euler(
   }
   else
   {
-    Outputs_VarCons.EPS = Inputs_SP.EPS;
+    Outputs_VarCons.Equiv_Plast_Str = Inputs_SP.Equiv_Plast_Str;
     Outputs_VarCons.Increment_E_plastic = Inputs_SP.Increment_E_plastic;
   }
   

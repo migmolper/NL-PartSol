@@ -326,7 +326,7 @@ typedef struct {
   /*!
    * Equivalent plastic strain of the particle (plasticity) 
    */
-  Matrix EPS;
+  Matrix Equiv_Plast_Str;
 
   /*! 
   * Hardening parameter for isotropuc hardening (plasticity)
@@ -607,7 +607,7 @@ typedef struct
   double * F_m1_plastic_p;
   double * Increment_E_plastic;
   
-  double EPS; // Equivalent plastic strain
+  double Equiv_Plast_Str; // Equivalent plastic strain
   double Cohesion; 
   double Yield_stress;
   double Kappa; // Hardening Parameter

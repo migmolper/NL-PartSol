@@ -34,7 +34,7 @@ Tensor explicit_integration_stress__Particles__(
     Output_SP = compute_kirchhoff_isotropic_linear_elasticity(Input_SP,MatProp);
 
     Input_SP.Stress = MPM_Mesh.Phi.Stress.nM[p];
-    Input_SP.EPS = MPM_Mesh.Phi.EPS.nV[p];
+    Input_SP.Equiv_Plast_Str = MPM_Mesh.Phi.Equiv_Plast_Str.nV[p];
     Input_SP.Back_stress = MPM_Mesh.Phi.Back_stress.nM[p];
 
     if(strcmp(MatProp.Plastic_Solver,"Backward-Euler") == 0)
@@ -52,7 +52,7 @@ Tensor explicit_integration_stress__Particles__(
       exit(EXIT_FAILURE);
     }
 
-    MPM_Mesh.Phi.EPS.nV[p] = Output_SP.EPS;
+    MPM_Mesh.Phi.Equiv_Plast_Str.nV[p] = Output_SP.Equiv_Plast_Str;
 
     free(Output_SP.Increment_E_plastic);
   }
@@ -147,7 +147,7 @@ void Stress_integration__Particles__(
 
     Input_SP.Stress = MPM_Mesh.Phi.Stress.nM[p];
     Input_SP.F_m1_plastic_p = MPM_Mesh.Phi.F_m1_plastic.nM[p];
-    Input_SP.EPS = MPM_Mesh.Phi.EPS.nV[p];
+    Input_SP.Equiv_Plast_Str = MPM_Mesh.Phi.Equiv_Plast_Str.nV[p];
     Input_SP.Back_stress = MPM_Mesh.Phi.Back_stress.nM[p];
 
     if(MatProp_p.Locking_Control_Fbar)
@@ -175,7 +175,7 @@ void Stress_integration__Particles__(
       exit(EXIT_FAILURE);
     }
 
-    MPM_Mesh.Phi.EPS.nV[p] = Output_SP.EPS;
+    MPM_Mesh.Phi.Equiv_Plast_Str.nV[p] = Output_SP.Equiv_Plast_Str;
   }
     else if(strcmp(MatProp_p.Type,"Granular") == 0)
     {
@@ -183,7 +183,7 @@ void Stress_integration__Particles__(
       Input_SP.Stress = MPM_Mesh.Phi.Stress.nM[p];
       Input_SP.F_m1_plastic_p = MPM_Mesh.Phi.F_m1_plastic.nM[p];
       Input_SP.Kappa = MPM_Mesh.Phi.Kappa_hardening.nV[p];
-      Input_SP.EPS = MPM_Mesh.Phi.EPS.nV[p];
+      Input_SP.Equiv_Plast_Str = MPM_Mesh.Phi.Equiv_Plast_Str.nV[p];
 
       if(MatProp_p.Locking_Control_Fbar)
       {
@@ -198,7 +198,7 @@ void Stress_integration__Particles__(
       Output_SP = finite_strain_plasticity(Input_SP,MatProp_p,Frictional_Monolithic);
       
       MPM_Mesh.Phi.Kappa_hardening.nV[p] = Output_SP.Kappa;
-      MPM_Mesh.Phi.EPS.nV[p] = Output_SP.EPS;
+      MPM_Mesh.Phi.Equiv_Plast_Str.nV[p] = Output_SP.Equiv_Plast_Str;
       
     }
 
@@ -270,7 +270,7 @@ Tensor average_strain_integration_Stress__Particles__(
 {
   
   /*
-    Compute the right Cauchy-Green tensor in diferent time steps
+    Compute the right Cauchy-Green tensor in diferent time step
   */
   Tensor C_n_p  = right_Cauchy_Green__Particles__(F_n_p);
   Tensor C_n1_p = right_Cauchy_Green__Particles__(F_n1_p);

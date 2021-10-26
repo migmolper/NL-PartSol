@@ -53,7 +53,7 @@ void NonLinear_Gauss_Point_Analysis(Particle PointAnalysis)
     {
       Input_SP.Stress = PointAnalysis.Phi.Stress.nM[k];
       Input_SP.F_m1_plastic_p = PointAnalysis.Phi.F_m1_plastic.nM[k-1];
-      Input_SP.EPS = PointAnalysis.Phi.EPS.nV[k-1];
+      Input_SP.Equiv_Plast_Str = PointAnalysis.Phi.Equiv_Plast_Str.nV[k-1];
       Input_SP.Back_stress = PointAnalysis.Phi.Back_stress.nM[k-1];
       Input_SP.F_n1_p = PointAnalysis.Phi.F_n.nM[k];
   
@@ -78,7 +78,7 @@ void NonLinear_Gauss_Point_Analysis(Particle PointAnalysis)
         PointAnalysis.Phi.Back_stress.nM[k][i] = PointAnalysis.Phi.Back_stress.nM[k-1][i];
       }
 
-      PointAnalysis.Phi.EPS.nV[k] = Output_SP.EPS;
+      PointAnalysis.Phi.Equiv_Plast_Str.nV[k] = Output_SP.Equiv_Plast_Str;
 
     }
     else if(strcmp(PointAnalysis.Mat[0].Type,"Granular") == 0)
@@ -86,7 +86,7 @@ void NonLinear_Gauss_Point_Analysis(Particle PointAnalysis)
       Input_SP.Stress = PointAnalysis.Phi.Stress.nM[k];
       Input_SP.F_m1_plastic_p = PointAnalysis.Phi.F_m1_plastic.nM[k-1];
       Input_SP.Kappa = PointAnalysis.Phi.Kappa_hardening.nV[k-1];
-      Input_SP.EPS = PointAnalysis.Phi.EPS.nV[k-1];
+      Input_SP.Equiv_Plast_Str = PointAnalysis.Phi.Equiv_Plast_Str.nV[k-1];
       Input_SP.F_n1_p = PointAnalysis.Phi.F_n1.nM[k];
   
       Output_SP = finite_strain_plasticity(Input_SP,PointAnalysis.Mat[0],Frictional_Monolithic);
@@ -97,7 +97,7 @@ void NonLinear_Gauss_Point_Analysis(Particle PointAnalysis)
       }
 
       PointAnalysis.Phi.Kappa_hardening.nV[k] = Output_SP.Kappa;
-      PointAnalysis.Phi.EPS.nV[k] = Output_SP.EPS;
+      PointAnalysis.Phi.Equiv_Plast_Str.nV[k] = Output_SP.Equiv_Plast_Str;
 
       exit(0);
     }

@@ -211,14 +211,14 @@ Fields allocate_upw_vars__Fields__(int NumParticles)
   /*!
     Equivalent plastic strain (Plasticity)
   */
-  Phi.EPS = allocZ__MatrixLib__(NumParticles,1);
-  strcpy(Phi.EPS.Info,"EPS GP");
+  Phi.Equiv_Plast_Str = allocZ__MatrixLib__(NumParticles,1);
+  strcpy(Phi.Equiv_Plast_Str.Info,"EPS GP");
 
   /*! 
   * Back stress for kinematic hardening (plasticity)
   */
   Phi.Back_stress = allocZ__MatrixLib__(NumParticles,3);
-  strcpy(Phi.EPS.Info,"Back stress GP");
+  strcpy(Phi.Back_stress.Info,"Back stress GP");
 
   return Phi;
 }
@@ -265,7 +265,7 @@ void free_upw_vars__Fields__(Fields Phi)
   free__MatrixLib__(Phi.phi_f);
   free__MatrixLib__(Phi.chi);
   free__MatrixLib__(Phi.cohesion);
-  free__MatrixLib__(Phi.EPS);
+  free__MatrixLib__(Phi.Equiv_Plast_Str);
   free__MatrixLib__(Phi.Back_stress);
 }
 
