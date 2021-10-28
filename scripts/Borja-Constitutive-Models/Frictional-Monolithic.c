@@ -1,4 +1,55 @@
+/* 
+C file to simulate granular materials
+with a smooth Mohr-Coulomb model.
+One single point is initially confined with an 
+hydrostatic stress state of -200 kPa. Before that,
+the stress in the II direction is incresed using 
+strain control.
+-------------------------------------------------------------------
+Written by Miguel Molinos, 2021
+Universidad Politécnica de Madrid
+-------------------------------------------------------------------
+Useful information is in Borja et al. (2003):
+'On the numerical integration of three-invariant elastoplastic constitutive models'
+https://doi.org/10.1016/S0045-7825(02)00620-5
+------------------------------------------------------------------- 
+Requires:
+  * accelerate library (solver)
+  * gnuplot (plots)
+-------------------------------------------------------------------
+Compilation recipy (MacOSX):
+gcc -framework Accelerate Frictional-Monolithic.c -o Frictional-Monolithic
+-------------------------------------------------------------------
+Compilation recipy (Linux)
+gcc Frictional-Monolithic.c -o Frictional-Monolithic -llapack -lm
+-------------------------------------------------------------------
+*/
 
+/**************************************************************/
+/******************** Solver Parameters ***********************/
+/**************************************************************/
+#define TOL_Radial_Returning 10E-12
+#define Max_Iterations_Radial_Returning 10
+
+/**************************************************************/
+/******************* Material Parameters **********************/
+/**************************************************************/
+#define YoungMouduls 100E3
+#define PoissonRatio 0.2
+#define AtmosphericPressure -100
+#define m_Parameter 0.0
+#define c0_Parameter 9.0
+#define a1_Parameter 20000
+#define a2_Parameter 0.005
+#define a3_Parameter 35
+#define alpha_Parameter - 0.7
+#define NumberSteps 2500
+#define Delta_strain_II - 0.00001
+#define Yield_Function "Matsuoka-Nakai"
+
+/**************************************************************/
+/********************* Required Libraries *********************/
+/**************************************************************/
 #ifdef __linux__
 #include <stdio.h>
 #include <string.h>
@@ -10,13 +61,35 @@
 #include <Accelerate/Accelerate.h>
 #endif
 
-#include "Macros.h"
-#include "Types.h"
-#include "Globals.h"
+//#include "stdio.h"
+//#include <Accelerate/Accelerate.h>
 
-/*
-  Auxiliar variables
-*/
+/**************************************************************/
+/******************** Auxiliar variables **********************/
+/**************************************************************/
+
+typedef struct {
+  double rho;
+  double E;
+  double nu;
+  double atmospheric_pressure;
+  char Yield_Function_Frictional [100];
+  double m_Frictional;
+  double c0_Frictional;
+  double a_Hardening_Borja[3];
+  double alpha_Hardening_Borja;
+} Material;
+
+typedef struct
+{
+  double * Stress;
+  double * Strain;
+  double * Increment_E_plastic;
+  double Lambda; 
+  double Cohesion;
+  double Kappa; 
+} State_Parameters;
+
 typedef struct
 {
   double alpha;
@@ -27,21 +100,31 @@ typedef struct
   double a2; 
   double a3;
   double CC[9];
-
 } Model_Parameters;
 
 /*
   Define local global variables
 */
-int Particle_Idx;
 double Error0;
 bool Is_Matsuoka_Nakai;
 bool Is_Lade_Duncan;
 bool Is_Modified_Lade_Duncan;
 
-/*
-  Auxiliar functions 
-*/
+
+/**************************************************************/
+/******************** Auxiliar functions **********************/
+/**************************************************************/
+
+static double dsqr_arg;
+#define DSQR(a) ((dsqr_arg=(a)) == 0.0 ? 0.0 : dsqr_arg*dsqr_arg)
+static int imax_arg1, imax_arg2;
+#define IMAX(a,b) (imax_arg1=(a),imax_arg2=(b),(imax_arg1) > (imax_arg2) ?	\
+		   (imax_arg1) : (imax_arg2))
+static int imin_arg1, imin_arg2;
+#define IMIN(a,b) (imin_arg1=(a),imin_arg2=(b),(imin_arg1) < (imin_arg2) ?	\
+		   (imin_arg1) : (imin_arg2))
+
+static State_Parameters Frictional_Monolithic(State_Parameters,Material);
 static Model_Parameters fill_model_paramters(Material Material);
 static double eval_K1(double,double,double,double,double);
 static double eval_K2(double,double,double,double,double);
@@ -66,11 +149,97 @@ static void eval_dd_Plastic_Potential_dd_stress(double *,double *,double,double,
 static void eval_dd_Plastic_Potential_d_stress_d_kappa2(double *, double *,double,double,double,double,double,double);
 static void eval_strain(double *,double *,double *);
 static void assemble_residual(double *,double *,double *,double *,double *,double,double,Model_Parameters);
-static bool check_convergence(double *,double,int,int);
 static double compute_condition_number(double *);
+static bool check_convergence(double *,double,int,int);
 static void assemble_tangent_matrix(double *,double *,double *,double *,double,double,Model_Parameters);
 static void update_variables(double *,double *,double *,double *,double *,double *,double,double);
 static State_Parameters fill_Outputs(double *,double *,double *,double,double,double);
+
+/**************************************************************/
+
+int main()
+{
+  State_Parameters Input;
+  State_Parameters Output;
+  Material MatProp;
+
+  // Define material variables
+  MatProp.E = YoungMouduls;
+  MatProp.nu = PoissonRatio;
+  MatProp.atmospheric_pressure = AtmosphericPressure;
+  strcpy(MatProp.Yield_Function_Frictional,Yield_Function);
+  MatProp.m_Frictional = m_Parameter;
+  MatProp.c0_Frictional = c0_Parameter;
+  MatProp.a_Hardening_Borja[0] = a1_Parameter;
+  MatProp.a_Hardening_Borja[1] = a2_Parameter;
+  MatProp.a_Hardening_Borja[2] = a3_Parameter;
+  MatProp.alpha_Hardening_Borja = alpha_Parameter;
+
+  // Initialize state variables
+  double * stress = (double *)calloc(3*NumberSteps,sizeof(double));
+  double * strain = (double *)calloc(3*NumberSteps,sizeof(double));
+  double * kappa1 = (double *)calloc(NumberSteps,sizeof(double));
+  double * Lambda = (double *)calloc(NumberSteps,sizeof(double));
+  double Increment_E_plastic[3] = {0.0, 0.0, 0.0};
+
+  // Set initial stress and strain
+  double stress_tr[3] = {0.0, 0.0, 0.0};
+  for(int i = 0 ; i<3 ; i++)
+  {
+    stress[i] = -200;
+    strain[i] = 0.0;
+  }
+
+  // Start time integration
+  for(int i = 1 ; i<NumberSteps ; i++)
+  {
+    // Trial strain
+    strain[i*3 + 1] = strain[(i-1)*3 + 1] + Delta_strain_II;
+
+    // Trial stress
+    stress[i*3 + 0] = - 200;
+    stress[i*3 + 1] = stress[(i-1)*3 + 1] + YoungMouduls*Delta_strain_II;
+    stress[i*3 + 2] = - 200;
+
+    // Asign variables to the solver
+    Input.Stress = &stress[i*3];
+    Input.Strain = &strain[i*3];
+    Input.Increment_E_plastic = Increment_E_plastic;
+    Input.Lambda = Lambda[i-1]; 
+    Input.Kappa = kappa1[i-1]; 
+
+    // Run solver
+    Output = Frictional_Monolithic(Input,MatProp);
+
+    // Update scalar state variables
+    Lambda[i] = Output.Lambda; 
+    kappa1[i] = Output.Kappa; 
+  }
+
+
+  // Svae data in a csv file
+  FILE * MN_output = fopen("MN_output.csv","w");
+  for (int i = 0; i < NumberSteps; i++)
+  {
+    fprintf(MN_output,"%e, %e\n", - strain[i*3 + 1], fabs(stress[i*3 + 1] - stress[i*3 + 0]));
+  }
+  fclose(MN_output);
+
+  // Print data with gnuplot
+  FILE * gnuplot = popen("gnuplot -persistent", "w");
+  fprintf(gnuplot, "set termoption enhanced \n");
+  fprintf(gnuplot, "set datafile separator ',' \n");
+  fprintf(gnuplot, "set xlabel '- {/Symbol e}_{II}' font ',20' enhanced \n");
+  fprintf(gnuplot, "set ylabel 'abs({/Symbol s}_{II} - {/Symbol s}_{I})' font ',20' enhanced \n");
+  fprintf(gnuplot, "plot %s, %s \n",
+	  "'Borja_compression.csv' title 'Borja et al. (2003)' with line lt rgb 'blue' lw 2",
+	  "'MN_output.csv' title 'Us' with line lt rgb 'red' lw 2");
+  fflush(gnuplot);
+
+  return 0;
+}
+
+
 
 /**************************************************************/
 
@@ -93,18 +262,13 @@ State_Parameters Frictional_Monolithic(
   Model_Parameters Params = fill_model_paramters(MatProp);
 
   /*
-    Get the index of the particle
-  */
-  Particle_Idx = Inputs_SP.Particle_Idx;
-
-  /*
     Assign values from the inputs state parameters
   */
   double * Increment_E_plastic = Inputs_SP.Increment_E_plastic;
   double * Stress_k  = Inputs_SP.Stress;
   double Plastic_Flow[3] = {0.0, 0.0, 0.0};
   double kappa_k[2] = {Inputs_SP.Kappa, Params.alpha*Inputs_SP.Kappa};
-  double Lambda_n = Inputs_SP.Equiv_Plast_Str;
+  double Lambda_n = Inputs_SP.Lambda;
   double Lambda_k = Lambda_n;
   double delta_lambda = 0.0;
 
@@ -741,16 +905,17 @@ static bool check_convergence(
 
     if(Error0 < TOL)
     {
+      printf("Iter: %i | Error0: %e | Error: %e | Erro_rel: %f \n",Iter,Error0,Error,Error_relative);
+      
       return true;
     }
   }
 
- /*
+  /*
     Compute residual error
    */
   Error_relative = Error/Error0;
-
-
+  
   if((Error > TOL*100) 
   && (Error_relative > TOL) 
   && (Iter < MaxIter))
@@ -759,21 +924,22 @@ static bool check_convergence(
   }
   else
   {
-
     if(Iter >= MaxIter) 
     {
-      fprintf(stderr,"%s: %s %i \n",
-      "Error in Frictional_Monolithic",
-      "Maximm number of iteration reached in particle",Particle_Idx);
-      fprintf(stderr,"Iter: %i | Error0: %e | Error: %e | Erro_rel: %f \n",Iter,Error0,Error,Error_relative);
+      fprintf(stderr,"Maximm number of iteration reached \n");
     }
+
+    printf("Iter: %i | Error0: %e | Error: %e | Erro_rel: %f \n",Iter,Error0,Error,Error_relative);
 
     return true;
   }
 
 }
 
+
+
 /**************************************************************/
+
 
 static void assemble_tangent_matrix(
   double * Tangent_Matrix,
@@ -838,6 +1004,7 @@ static void assemble_tangent_matrix(
     Tangent_Matrix[24] = 0.0;
 
   } 
+
 
 /**************************************************************/
 
@@ -928,16 +1095,16 @@ static void update_variables(
   int NRHS = 1;
 
 
+  
   double rcond = compute_condition_number(Tangent_Matrix);
-  /*
+  
+  if(rcond < 1E-10)
   {
-    fprintf(stderr,"%s: %s %i, %s: %e\n",
-    "Error in Frictional_Monolithic",
-    "Tangent_Matrix is near to singular matrix for particle",
-    Particle_Idx,"rcond",rcond);
+    fprintf(stderr,"%s: %s, rcond: %e\n",
+    "Error in Frictional_Monolithic","Tangent_Matrix is near to singular matrix",rcond);
+     exit(EXIT_FAILURE);
   }
-*/
-
+    
   /*
     Compute the LU factorization 
   */
@@ -949,7 +1116,7 @@ static void update_variables(
   if(INFO)
   {
     fprintf(stderr,"%s : %s %s %s \n",
-      "Error in Frictional_Monolithic",
+      "Error in solve_system",
       "The function","dgetrf_","returned an error message !!!" );
     exit(EXIT_FAILURE);
   }
@@ -965,7 +1132,7 @@ static void update_variables(
   */
   if(INFO)
   {
-    fprintf(stderr,"%s : %s %s %s \n","Error in Frictional_Monolithic",
+    fprintf(stderr,"%s : %s %s %s \n","Error in solve_system",
       "The function","dgetrs_","returned an error message !!!" );
     exit(EXIT_FAILURE);
   }
@@ -978,8 +1145,8 @@ static void update_variables(
   Stress_k[2] -= Residual[2];
   kappa_k[0] -= Residual[3];
   kappa_k[1] = alpha*kappa_k[0];
-  (*delta_lambda) -= Residual[4];
-  (*lambda_k) = (*delta_lambda) + lambda_n;
+  *delta_lambda -= Residual[4];
+  *lambda_k = *delta_lambda + lambda_n;
 }
 
 
@@ -995,7 +1162,7 @@ static State_Parameters fill_Outputs(
 {
   State_Parameters Outputs_VarCons;
 
-  Outputs_VarCons.Equiv_Plast_Str = Lambda_k;
+  Outputs_VarCons.Lambda = Lambda_k;
   Outputs_VarCons.Kappa = kappa_k1;
   Outputs_VarCons.Stress = Stress_k;
   Outputs_VarCons.Increment_E_plastic = Increment_E_plastic;

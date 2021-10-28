@@ -20,13 +20,15 @@ Requires:
 Compilation recipy (MacOSX):
 gcc -framework Accelerate Frictional-Monolithic.c -o Frictional-Monolithic
 -------------------------------------------------------------------
+Compilation recipy (Linux)
+gcc Frictional-Monolithic.c -o Frictional-Monolithic -llapack -lm
+-------------------------------------------------------------------
 */
-
 
 /**************************************************************/
 /******************** Solver Parameters ***********************/
 /**************************************************************/
-#define TOL_Radial_Returning 10E-10
+#define TOL_Radial_Returning 10E-12
 #define Max_Iterations_Radial_Returning 10
 
 /**************************************************************/
@@ -41,15 +43,26 @@ gcc -framework Accelerate Frictional-Monolithic.c -o Frictional-Monolithic
 #define a2_Parameter 0.005
 #define a3_Parameter 35
 #define alpha_Parameter 0.5
-#define NumberSteps 1600
+#define NumberSteps 1800
 #define Delta_strain_II - 0.00001
 #define Yield_Function "Matsuoka-Nakai"
 
 /**************************************************************/
 /********************* Required Libraries *********************/
 /**************************************************************/
-#include "stdio.h"
+#ifdef __linux__
+#include <stdio.h>
+#include <string.h>
+#include <math.h>
+#include <stdbool.h>
+#include <lapacke.h>
+#elif __APPLE__
+#include <stdbool.h>
 #include <Accelerate/Accelerate.h>
+#endif
+
+//#include "stdio.h"
+//#include <Accelerate/Accelerate.h>
 
 /**************************************************************/
 /******************** Auxiliar variables **********************/
@@ -104,6 +117,12 @@ bool Is_Modified_Lade_Duncan;
 
 static double dsqr_arg;
 #define DSQR(a) ((dsqr_arg=(a)) == 0.0 ? 0.0 : dsqr_arg*dsqr_arg)
+static int imax_arg1, imax_arg2;
+#define IMAX(a,b) (imax_arg1=(a),imax_arg2=(b),(imax_arg1) > (imax_arg2) ?	\
+		   (imax_arg1) : (imax_arg2))
+static int imin_arg1, imin_arg2;
+#define IMIN(a,b) (imin_arg1=(a),imin_arg2=(b),(imin_arg1) < (imin_arg2) ?	\
+		   (imin_arg1) : (imin_arg2))
 
 static State_Parameters Frictional_Monolithic(State_Parameters,Material);
 static Model_Parameters fill_model_paramters(Material Material);
@@ -130,6 +149,7 @@ static void eval_dd_Plastic_Potential_dd_stress(double *,double *,double,double,
 static void eval_dd_Plastic_Potential_d_stress_d_kappa2(double *, double *,double,double,double,double,double,double);
 static void eval_strain(double *,double *,double *);
 static void assemble_residual(double *,double *,double *,double *,double *,double,double,Model_Parameters);
+static double compute_condition_number(double *);
 static bool check_convergence(double *,double,int,int);
 static void assemble_tangent_matrix(double *,double *,double *,double *,double,double,Model_Parameters);
 static void update_variables(double *,double *,double *,double *,double *,double *,double,double);
@@ -198,14 +218,16 @@ int main()
 
   // Print data
   FILE * gnuplot = popen("gnuplot -persistent", "w");
+  fprintf(gnuplot, " set datafile separator ',' \n");
   fprintf(gnuplot, "set termoption enhanced \n");  
   fprintf(gnuplot, "set xlabel '- {/Symbol e}_{II}' font ',20' enhanced \n");
   fprintf(gnuplot, "set ylabel 'abs({/Symbol s}_{II} - {/Symbol s}_{I})' font ',20' enhanced \n");
-  fprintf(gnuplot, "plot '-'\n");
-  for (int i = 0; i < NumberSteps; i++)
-  {
-    fprintf(gnuplot, "%g %g\n", - strain[i*3 + 1], fabs(stress[i*3 + 1] - stress[i*3 + 0]));
-  }  
+  fprintf(gnuplot, "plot 'Borja_compression.csv' with line lt -1 lw 2 \n");
+  // fprintf(gnuplot, "plot '-'\n");
+  //for (int i = 0; i < NumberSteps; i++)
+  //{
+  //  fprintf(gnuplot, "%g %g\n", - strain[i*3 + 1], fabs(stress[i*3 + 1] - stress[i*3 + 0]));
+  //}  
   fprintf(gnuplot, "e\n");
   fflush(gnuplot);
 
@@ -878,10 +900,17 @@ static bool check_convergence(
 
     if(Error0 < TOL)
     {
+      printf("Iter: %i | Error0: %e | Error: %e | Erro_rel: %f \n",Iter,Error0,Error,Error_relative);
+      
       return true;
     }
   }
 
+  /*
+    Compute residual error
+   */
+  Error_relative = Error/Error0;
+  
   if((Error > TOL*100) 
   && (Error_relative > TOL) 
   && (Iter < MaxIter))
@@ -895,12 +924,17 @@ static bool check_convergence(
       fprintf(stderr,"Maximm number of iteration reached \n");
     }
 
+    printf("Iter: %i | Error0: %e | Error: %e | Erro_rel: %f \n",Iter,Error0,Error,Error_relative);
+
     return true;
   }
 
 }
 
+
+
 /**************************************************************/
+
 
 static void assemble_tangent_matrix(
   double * Tangent_Matrix,
@@ -969,6 +1003,74 @@ static void assemble_tangent_matrix(
 
 /**************************************************************/
 
+static double compute_condition_number(double * Tangent_Matrix)
+/*
+  C = rcond(Tangent_Matrix) returns an estimate for the reciprocal condition of Tangent_Matrix in 1-norm. 
+*/
+{
+
+  double RCOND; 
+  double ANORM;
+  int INFO;
+  int N_rows = 5;
+  int N_cols = 5;
+  int LDA = IMAX(N_rows,N_cols);
+  double * AUX_MEMORY = (double *)calloc(N_rows*N_cols,sizeof(double));
+  double * WORK_ANORM = (double *)calloc(IMAX(1,N_rows),sizeof(double));
+  double * WORK_RCOND = (double *)calloc(4*N_rows,sizeof(double));
+  int * IPIV = (int *)calloc(IMIN(N_rows,N_cols),sizeof(int));
+  int * IWORK_RCOND = (int *)calloc(N_rows,sizeof(int));
+
+  // Copy matrix because dgetrf_ is a destructive operation
+  memcpy(AUX_MEMORY, Tangent_Matrix, N_rows*N_cols*sizeof(double));
+
+  // Compute 1-norm
+  ANORM = dlange_("1", &N_rows, &N_cols, AUX_MEMORY, &LDA, WORK_ANORM);
+
+  // The factors L and U from the factorization A = P*L*U
+  dgetrf_(&N_rows,&N_cols,AUX_MEMORY,&LDA,IPIV,&INFO);
+
+  // Check output of dgetrf
+  if(INFO != 0)
+  {
+    if(INFO < 0)
+    {
+      printf("%s : \n","Error in Frictional_Monolithic()");
+      printf("the %i-th argument had an illegal value",abs(INFO));
+    }
+    else if(INFO > 0)
+    {
+      printf("%s :\n","Error in Frictional_Monolithic()");
+      printf(" M(%i,%i) %s \n %s \n %s \n %s \n",INFO,INFO,"is exactly zero. The factorization",
+        "has been completed, but the factor M is exactly",
+        "singular, and division by zero will occur if it is used",
+        "to solve a system of equations.");
+    
+    }    
+    exit(EXIT_FAILURE);
+  }
+
+  // Compute the Reciprocal condition number
+  dgecon_("1", &N_rows, AUX_MEMORY, &LDA, &ANORM, &RCOND, WORK_RCOND, IWORK_RCOND, &INFO);
+
+ if(INFO<0)
+ {
+  printf("Error in Frictional_Monolithic() : the %i-th argument of dgecon_ had an illegal value\n",abs(INFO));
+  exit(EXIT_FAILURE);
+ }
+
+ // Free auxiliar memory
+ free(IPIV);
+ free(WORK_ANORM);
+ free(WORK_RCOND);
+ free(IWORK_RCOND);
+ free(AUX_MEMORY);
+
+ return RCOND;
+}
+
+/**************************************************************/
+
 static void update_variables(
   double * Tangent_Matrix,
   double * Residual,
@@ -987,6 +1089,17 @@ static void update_variables(
   int * IPIV = (int *)malloc(Order*sizeof(int));
   int NRHS = 1;
 
+
+  
+  double rcond = compute_condition_number(Tangent_Matrix);
+  
+  if(rcond < 1E-10)
+  {
+    fprintf(stderr,"%s: %s, rcond: %e\n",
+    "Error in Frictional_Monolithic","Tangent_Matrix is near to singular matrix",rcond);
+     exit(EXIT_FAILURE);
+  }
+    
   /*
     Compute the LU factorization 
   */

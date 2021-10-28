@@ -20,13 +20,13 @@ GramsBox (Type=GID,File=Nodes.msh) {
 Define-Material(idx=0,Model=Granular)
 {
   rho=2000.0
-  E=5E6
-  nu=0.3
+  E=100E6
+  nu=0.2
   Yield-Function=Matsuoka-Nakai
   alpha-Hardening-Borja=0.5
-  a1-Hardening-Borja=0.1E6
+  a1-Hardening-Borja=20000
   a2-Hardening-Borja=0.005
-  a3-Hardening-Borja=35.0
+  a3-Hardening-Borja=35
   Atmospheric-pressure=-100
   Friction-angle=30
   Dilatancy-angle=30
@@ -36,12 +36,12 @@ Define-Material(idx=0,Model=Granular)
  
 
 GramsTime (Type=NPC-FS) {
-  CFL=0.1 
-	Tend=4.0 
-	Cel=163.66 
+  CFL=0.5 
+  Tend=4.0 
+  Cel=223.6 
 } 
 
-One-Phase-Analysis (File=Particles.msh,GPxElement=4) {
+One-Phase-Analysis (File=Particles.msh,GPxElement=9) {
 
    Assign-material-to-particles (MatIdx=0, Particles=Particles_Soil.txt)
 
@@ -52,11 +52,11 @@ One-Phase-Analysis (File=Particles.msh,GPxElement=4) {
 } 
 
 GramsOutputs (i=10) { 
-		 DIR=Resultados 
-		 Out-displacement=true 
-		 Out-Equivalent-Plastic-Strain=true 
-		 Out-stress=true 
-		 Out-Metric=true 
-		 Out-volumetric-stress=true 
-		 Out-Von-Mises=true 
+    DIR=Resultados
+    Out-material-idx=true
+    Out-displacement=true
+    Out-Equivalent-Plastic-Strain=true
+    Out-stress=true
+    Out-volumetric-stress=true
+    Out-Von-Mises=true 
 } 

@@ -674,7 +674,7 @@ static void initialise_particles(
       Initialize_Frictional(&MPM_Mesh.Phi.Kappa_hardening.nV[p],&MPM_Mesh.Phi.Equiv_Plast_Str.nV[p],MPM_Mesh.Mat[MatIdx_p]);
     }
 
-    }    
+    }
 
   }
 }

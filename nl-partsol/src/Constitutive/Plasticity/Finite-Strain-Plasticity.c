@@ -113,6 +113,15 @@ State_Parameters finite_strain_plasticity(
     }
   }
 
+
+  if(I3__TensorLib__(F_m1_plastic) < 0)
+  {
+    fprintf(stderr,"%s : %s !!! \n",
+	    "Error in finite_strain_plasticity()",
+	    "The Jacobian of the resulting plastic deformation gradient is less than 0");
+    exit(EXIT_FAILURE);
+  }
+
   /*
     Rotate the kirchhoff stress tensor in the spectral representation
     to obtain its value in the cartesian representation. Note that we are employing the same
