@@ -65,7 +65,7 @@ static void eval_d_Plastic_Potential_d_stress(double *,double *,double,double,do
 static void eval_dd_Plastic_Potential_dd_stress(double *,double *,double,double,double,double,double,double,double);
 static void eval_dd_Plastic_Potential_d_stress_d_kappa2(double *, double *,double,double,double,double,double,double);
 static void eval_strain(double *,double *,double *);
-static void assemble_residual(double *,double *,double *,double *,double *,double,double,Model_Parameters);
+static bool assemble_residual(double *,double *,double *,double *,double *,double,double, double,int,int,Model_Parameters);
 static bool check_convergence(double *,double,int,int);
 static double compute_condition_number(double *);
 static void assemble_tangent_matrix(double *,double *,double *,double *,double,double,Model_Parameters);
@@ -109,6 +109,16 @@ State_Parameters Frictional_Monolithic(
   double delta_lambda = 0.0;
 
   /*
+    Initialize Newton-Raphson solver
+  */
+  double Residual[5];
+  double Tangent_Matrix[25]; 
+  double TOL = TOL_Radial_Returning;
+  int MaxIter = Max_Iterations_Radial_Returning;
+  int Iter = 0;
+  bool Convergence = false;
+
+  /*
     Compute invariants
   */
   double I1 = Stress_k[0] + Stress_k[1] + Stress_k[2];
@@ -126,16 +136,6 @@ State_Parameters Frictional_Monolithic(
     */
     double Strain_e_tri[3];
     eval_strain(Strain_e_tri,Stress_k,Params.CC);
-
-    /*
-      Initialize Newton-Raphson solver
-    */
-    double Residual[5];
-    double Tangent_Matrix[25]; 
-    double TOL = TOL_Radial_Returning;
-    int MaxIter = Max_Iterations_Radial_Returning;
-    int Iter = 0;
-    bool Convergence = false;
     
     /*
       Newton-Rapson solver
@@ -143,9 +143,7 @@ State_Parameters Frictional_Monolithic(
     while(Convergence == false)
     {
 
-      assemble_residual(Residual,Stress_k,Strain_e_tri,Plastic_Flow,kappa_k,delta_lambda,Lambda_k,Params);
-
-      Convergence = check_convergence(Residual,TOL,Iter,MaxIter);
+      Convergence = assemble_residual(Residual,Stress_k,Strain_e_tri,Plastic_Flow,kappa_k,delta_lambda,Lambda_k,TOL,Iter,MaxIter,Params);
 
       if(Convergence == false)
       {
@@ -375,7 +373,7 @@ static double eval_f(
     else
     {
       fprintf(stderr,"%s : %s !!! \n",
-	    "Error in eval_f()",
+	    "Error in Frictional_Monolithic()",
 	    "Undefined kind of function for f");
       exit(EXIT_FAILURE);    
     }  
@@ -408,7 +406,13 @@ static void eval_d_f_d_stress(
       d_f_Matsuoka_Nakai_d_stress[1] = 1.0;
       d_f_Matsuoka_Nakai_d_stress[2] = 1.0;
     }
-
+    else
+    {
+      fprintf(stderr,"%s : %s !!! \n",
+	    "Error in Frictional_Monolithic()",
+	    "Undefined kind of function for df");
+      exit(EXIT_FAILURE);    
+    } 
   } 
 
 /**************************************************************/
@@ -432,7 +436,7 @@ static double eval_g(
     else
     {
       fprintf(stderr,"%s : %s !!! \n",
-	    "Error in eval_g()",
+	    "Error in Frictional_Monolithic()",
 	    "Undefined kind of function for g");
       exit(EXIT_FAILURE);    
     }  
@@ -464,6 +468,14 @@ static void eval_d_g_d_stress(
       d_g_d_stress[1] = 1.0;
       d_g_d_stress[2] = 1.0;
     }
+    else
+    {
+      fprintf(stderr,"%s : %s !!! \n",
+	    "Error in Frictional_Monolithic()",
+	    "Undefined kind of function for dg");
+      exit(EXIT_FAILURE);    
+    } 
+
   } 
 
 
@@ -672,7 +684,7 @@ static void eval_strain(
 
 /**************************************************************/
 
-static void assemble_residual(
+static bool assemble_residual(
   double * Residual,
   double * Stress_k,
   double * Strain_e_tri,
@@ -680,6 +692,9 @@ static void assemble_residual(
   double * kappa,
   double delta_lambda,
   double Lambda_k,
+  double TOL,
+  int Iter,
+  int MaxIter,
   Model_Parameters Params)
   {
     double alpha = Params.alpha;
@@ -695,8 +710,15 @@ static void assemble_residual(
     double Strain_e_k[3];
     double kappa_hat[3];
     double F;
+    
+    if(fabs(I1/3.0) < TOL)
+    {
+      fprintf(stderr,"%s: %s %i %s \n",
+      "Error in Frictional_Monolithic()",
+      "The stress state of particle",Particle_Idx,"has reach the apex");
+      exit(EXIT_FAILURE);
+    }
 
-    eval_strain(Strain_e_k,Stress_k,Params.CC);
     eval_kappa(kappa_hat,Lambda_k,I1,a1,a2,a3,alpha);
     eval_d_Plastic_Potential_d_stress(Grad_G,Stress_k,I1,I2,I3,c0,kappa[1],pa,m);
     F = eval_Yield_Function(c0,kappa[0],pa,I1,I2,I3,m);
@@ -706,6 +728,10 @@ static void assemble_residual(
     Residual[2] = Strain_e_k[2] - Strain_e_tri[2] + delta_lambda*Grad_G[2];
     Residual[3] = kappa[0] - kappa_hat[0];
     Residual[4] = F;
+    
+    
+    return check_convergence(Residual,TOL,Iter,MaxIter);
+
   }
 
 /**************************************************************/
@@ -763,7 +789,7 @@ static bool check_convergence(
     if(Iter >= MaxIter) 
     {
       fprintf(stderr,"%s: %s %i \n",
-      "Error in Frictional_Monolithic",
+      "Error in Frictional_Monolithic()",
       "Maximm number of iteration reached in particle",Particle_Idx);
       fprintf(stderr,"Iter: %i | Error0: %e | Error: %e | Erro_rel: %f \n",Iter,Error0,Error,Error_relative);
     }

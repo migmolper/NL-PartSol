@@ -20,14 +20,14 @@ GramsBox (Type=GID,File=Nodes.msh) {
 Define-Material(idx=0,Model=Granular)
 {
   rho=2000.0
-  E=100E6
-  nu=0.2
+  E=5E6
+  nu=0.3
   Yield-Function=Matsuoka-Nakai
-  alpha-Hardening-Borja=0.5
-  a1-Hardening-Borja=20000
-  a2-Hardening-Borja=0.005
-  a3-Hardening-Borja=35
-  Atmospheric-pressure=-100
+  alpha-Hardening-Borja=-0.71
+  a1-Hardening-Borja=100E3
+  a2-Hardening-Borja=0.0
+  a3-Hardening-Borja=0.0
+  Atmospheric-pressure=-100E3
   Friction-angle=30
   Dilatancy-angle=30
   Fbar=false 
