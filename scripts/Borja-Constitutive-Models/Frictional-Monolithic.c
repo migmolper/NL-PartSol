@@ -42,8 +42,8 @@ gcc Frictional-Monolithic.c -o Frictional-Monolithic -llapack -lm
 #define a1_Parameter 20000
 #define a2_Parameter 0.005
 #define a3_Parameter 35
-#define alpha_Parameter - 0.71
-#define NumberSteps 2500
+#define alpha_Parameter - 0.71 // -0.71
+#define NumberSteps 4000//2500
 #define Delta_strain_II - 0.00001
 #define Yield_Function "Matsuoka-Nakai"
 
@@ -57,6 +57,7 @@ gcc Frictional-Monolithic.c -o Frictional-Monolithic -llapack -lm
 #include <stdbool.h>
 #include <lapacke.h>
 #elif __APPLE__
+#include <stdio.h>
 #include <stdbool.h>
 #include <Accelerate/Accelerate.h>
 #endif
@@ -226,8 +227,8 @@ int main()
   FILE * gnuplot = popen("gnuplot -persistent", "w");
   fprintf(gnuplot, "set termoption enhanced \n");
   fprintf(gnuplot, "set datafile separator ',' \n");
-  fprintf(gnuplot, "set xlabel '- {/Symbol e}_{II}' font ',20' enhanced \n");
-  fprintf(gnuplot, "set ylabel 'abs({/Symbol s}_{II} - {/Symbol s}_{I})' font ',20' enhanced \n");
+  fprintf(gnuplot, "set xlabel '- {/Symbol e}_{II}' font 'Times,20' enhanced \n");
+  fprintf(gnuplot, "set ylabel 'abs({/Symbol s}_{II} - {/Symbol s}_{I})' font 'Times,20' enhanced \n");
   fprintf(gnuplot, "plot %s, %s \n",
 	  "'Borja_compression.csv' title 'Borja et al. (2003)' with line lt rgb 'blue' lw 2",
 	  "'MN_output.csv' title 'Us' with line lt rgb 'red' lw 2");
@@ -270,12 +271,22 @@ State_Parameters Frictional_Monolithic(
   double delta_lambda = 0.0;
 
   /*
+    Initialize Newton-Raphson solver
+  */
+  double Strain_e_tri[3];
+  double Residual[5];
+  double Tangent_Matrix[25]; 
+  double TOL = TOL_Radial_Returning;
+  int MaxIter = Max_Iterations_Radial_Returning;
+  int Iter = 0;
+  bool Convergence = false;
+
+  /*
     Compute invariants
   */
   double I1 = Stress_k[0] + Stress_k[1] + Stress_k[2];
   double I2 = Stress_k[0]*Stress_k[1] + Stress_k[1]*Stress_k[2] + Stress_k[0]*Stress_k[2];
   double I3 = Stress_k[0]*Stress_k[1]*Stress_k[2];
-
 
   /*
     Check yield condition
@@ -285,18 +296,7 @@ State_Parameters Frictional_Monolithic(
     /*
       Compute elastic trial with the inverse elastic relation
     */
-    double Strain_e_tri[3];
     eval_strain(Strain_e_tri,Stress_k,Params.CC);
-
-    /*
-      Initialize Newton-Raphson solver
-    */
-    double Residual[5];
-    double Tangent_Matrix[25]; 
-    double TOL = TOL_Radial_Returning;
-    int MaxIter = Max_Iterations_Radial_Returning;
-    int Iter = 0;
-    bool Convergence = false;
     
     /*
       Newton-Rapson solver
@@ -304,9 +304,7 @@ State_Parameters Frictional_Monolithic(
     while(Convergence == false)
     {
 
-      Convergence = assemble_residual(Residual,Stress_k,Strain_e_tri,Plastic_Flow,kappa_k,delta_lambda,Lambda_k,TOL,Iter,MaxIter,Params);
-
-      
+      Convergence = assemble_residual(Residual,Stress_k,Strain_e_tri,Plastic_Flow,kappa_k,delta_lambda,Lambda_k,TOL,Iter,MaxIter,Params);     
 
       if(Convergence == false)
       {
@@ -320,6 +318,10 @@ State_Parameters Frictional_Monolithic(
       }
     
     }
+    
+    /*
+
+    */
 
     /*
       Update equivalent plastic strain and increment of plastic deformation
@@ -876,6 +878,7 @@ static bool assemble_residual(
     double kappa_hat[3];
     double F;
 
+    // Check if we are in the apex
     if(fabs(I1/3.0) < TOL)
     {
       fprintf(stderr,"%s: %s \n",
@@ -894,6 +897,16 @@ static bool assemble_residual(
     Residual[2] = Strain_e_k[2] - Strain_e_tri[2] + delta_lambda*Grad_G[2];
     Residual[3] = kappa[0] - kappa_hat[0];
     Residual[4] = F;
+
+    // Check if the particle is failed
+    if((Lambda_k > TOL) && (fabs(kappa[0]) < 1000*TOL))
+    {
+      Stress_k[0] = 0.0;
+      Stress_k[1] = 0.0;
+      Stress_k[2] = 0.0;
+
+      return true;
+    }
 
     return check_convergence(Residual,TOL,Iter,MaxIter);
   }
