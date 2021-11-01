@@ -43,7 +43,7 @@ gcc Frictional-Monolithic.c -o Frictional-Monolithic -llapack -lm
 #define a2_Parameter 0.005
 #define a3_Parameter 35
 #define alpha_Parameter - 0.71 // -0.71
-#define NumberSteps 4000//2500
+#define NumberSteps 5000 // 3500 // 2500 // 
 #define Delta_strain_II - 0.00001
 #define Yield_Function "Matsuoka-Nakai"
 
@@ -146,11 +146,12 @@ static void eval_d_Plastic_Potential_d_stress(double *,double *,double,double,do
 static void eval_dd_Plastic_Potential_dd_stress(double *,double *,double,double,double,double,double,double,double);
 static void eval_dd_Plastic_Potential_d_stress_d_kappa2(double *, double *,double,double,double,double,double,double);
 static void eval_strain(double *,double *,double *);
-static bool assemble_residual(double *,double *,double *,double *,double *,double,double,double,int,int,Model_Parameters);
+static double assemble_residual(double *,double *,double *,double *,double *,double,double,Model_Parameters);
 static double compute_condition_number(double *);
-static bool check_convergence(double *,double,int,int);
+static bool check_convergence(double,int,int);
 static void assemble_tangent_matrix(double *,double *,double *,double *,double,double,Model_Parameters);
-static void update_variables(double *,double *,double *,double *,double *,double *,double,double);
+static void solver(double *,double *,double *);
+static void update_variables(double *,double *,double *,double *,double *,double,double,double);
 static State_Parameters fill_Outputs(double *,double *,double *,double,double,double);
 
 /**************************************************************/
@@ -264,19 +265,30 @@ State_Parameters Frictional_Monolithic(
   */
   double * Increment_E_plastic = Inputs_SP.Increment_E_plastic;
   double * Stress_k  = Inputs_SP.Stress;
-  double Plastic_Flow[3] = {0.0, 0.0, 0.0};
+  double Plastic_Flow_k[3] = {0.0, 0.0, 0.0};
   double kappa_k[2] = {Inputs_SP.Kappa, Params.alpha*Inputs_SP.Kappa};
   double Lambda_n = Inputs_SP.Lambda;
   double Lambda_k = Lambda_n;
-  double delta_lambda = 0.0;
+  double delta_lambda_k = 0.0;
+
+  /*
+    Duplicated variables for the line search algorithm
+  */
+  double Stress_k2[3];
+  double kappa_k2[2];
+  double Lambda_k2 = Lambda_k;
+  double delta_lambda_k2 = delta_lambda_k;
 
   /*
     Initialize Newton-Raphson solver
   */
   double Strain_e_tri[3];
   double Residual[5];
+  double D_Residual[5];
   double Tangent_Matrix[25]; 
-  double TOL = TOL_Radial_Returning;
+  double Norm_Residual_1;
+  double Norm_Residual_2;
+  double delta = 1;
   int MaxIter = Max_Iterations_Radial_Returning;
   int Iter = 0;
   bool Convergence = false;
@@ -299,39 +311,99 @@ State_Parameters Frictional_Monolithic(
     eval_strain(Strain_e_tri,Stress_k,Params.CC);
     
     /*
-      Newton-Rapson solver
+      Newton-Rapson with line search
     */
+    Norm_Residual_1 = assemble_residual(Residual,Stress_k,Strain_e_tri,Plastic_Flow_k,kappa_k,delta_lambda_k,Lambda_k,Params); 
+
+    Convergence = check_convergence(Norm_Residual_1,Iter,MaxIter);
+        
     while(Convergence == false)
     {
 
-      Convergence = assemble_residual(Residual,Stress_k,Strain_e_tri,Plastic_Flow,kappa_k,delta_lambda,Lambda_k,TOL,Iter,MaxIter,Params);     
-
       if(Convergence == false)
       {
-        
+
+        delta = 1;
+
         Iter++;
         
-        assemble_tangent_matrix(Tangent_Matrix,Plastic_Flow,Stress_k,kappa_k,delta_lambda,Lambda_k,Params);
+        assemble_tangent_matrix(Tangent_Matrix,Plastic_Flow_k,Stress_k,kappa_k,delta_lambda_k,Lambda_k,Params);
+        
+        solver(Tangent_Matrix,Residual,D_Residual);
 
-        update_variables(Tangent_Matrix,Residual,Stress_k,kappa_k,&delta_lambda,&Lambda_k,Lambda_n,Params.alpha);
+        Stress_k2[0] = Stress_k[0]; 
+        Stress_k2[1] = Stress_k[1];
+        Stress_k2[2] = Stress_k[2];
+        kappa_k2[0] = kappa_k[0];
+        kappa_k2[1] = kappa_k[1];
+        Lambda_k2 = Lambda_k;
+        delta_lambda_k2 = delta_lambda_k;
 
+        update_variables(D_Residual,Stress_k2,kappa_k2,&delta_lambda_k2,&Lambda_k2,Lambda_n,Params.alpha,delta);
+
+        Norm_Residual_2 = assemble_residual(Residual,Stress_k2,Strain_e_tri,Plastic_Flow_k,kappa_k2,delta_lambda_k2,Lambda_k2,Params);
+          
+        if((Norm_Residual_2 - Norm_Residual_1) > TOL_Radial_Returning)
+        {
+          while((Norm_Residual_2 - Norm_Residual_1) > TOL_Radial_Returning)
+          {
+
+            delta = pow(delta,2)*0.5*Norm_Residual_1/(Norm_Residual_2 - delta*Norm_Residual_1 + Norm_Residual_1);
+
+            if(delta < TOL_Radial_Returning)
+            {
+              Stress_k2[0] = Stress_k[0]; 
+              Stress_k2[1] = Stress_k[1];
+              Stress_k2[2] = Stress_k[2];
+              kappa_k2[0] = kappa_k[0];
+              kappa_k2[1] = kappa_k[1];
+              Lambda_k2 = Lambda_k;
+              delta_lambda_k2 = delta_lambda_k;
+              break;
+            }
+            else
+            {
+              Stress_k2[0] = Stress_k[0]; 
+              Stress_k2[1] = Stress_k[1];
+              Stress_k2[2] = Stress_k[2];
+              kappa_k2[0] = kappa_k[0];
+              kappa_k2[1] = kappa_k[1];
+              Lambda_k2 = Lambda_k;
+              delta_lambda_k2 = delta_lambda_k;
+
+              update_variables(D_Residual,Stress_k2,kappa_k2,&delta_lambda_k2,&Lambda_k2,Lambda_n,Params.alpha,delta);
+
+              Norm_Residual_2 = assemble_residual(Residual,Stress_k2,Strain_e_tri,Plastic_Flow_k,kappa_k2,delta_lambda_k2,Lambda_k2,Params);
+            }
+
+          }
+
+        }
+
+        Stress_k[0] = Stress_k2[0]; 
+        Stress_k[1] = Stress_k2[1];
+        Stress_k[2] = Stress_k2[2];
+        kappa_k[0] = kappa_k2[0];
+        kappa_k[1] = kappa_k2[1];
+        Lambda_k = Lambda_k2;
+        delta_lambda_k = delta_lambda_k2;
+        Norm_Residual_1 = Norm_Residual_2;
+
+        Convergence = check_convergence(Norm_Residual_1,Iter,MaxIter);
+        
       }
-    
-    }
-    
-    /*
 
-    */
+    }
 
     /*
       Update equivalent plastic strain and increment of plastic deformation
     */
-    Outputs_VarCons = fill_Outputs(Increment_E_plastic,Stress_k,Plastic_Flow,Lambda_k,delta_lambda,kappa_k[0]);
+    Outputs_VarCons = fill_Outputs(Increment_E_plastic,Stress_k,Plastic_Flow_k,Lambda_k,delta_lambda_k,kappa_k[0]);
 
   }
   else
   {
-    Outputs_VarCons = fill_Outputs(Increment_E_plastic,Stress_k,Plastic_Flow,Lambda_k,delta_lambda,kappa_k[0]);
+    Outputs_VarCons = fill_Outputs(Increment_E_plastic,Stress_k,Plastic_Flow_k,Lambda_k,delta_lambda_k,kappa_k[0]);
   }
 
   
@@ -851,7 +923,7 @@ static void eval_strain(
 
 /**************************************************************/
 
-static bool assemble_residual(
+static double assemble_residual(
   double * Residual,
   double * Stress_k,
   double * Strain_e_tri,
@@ -859,9 +931,6 @@ static bool assemble_residual(
   double * kappa,
   double delta_lambda,
   double Lambda_k,
-  double TOL,
-  int Iter,
-  int MaxIter,
   Model_Parameters Params)
   {
     double alpha = Params.alpha;
@@ -877,9 +946,10 @@ static bool assemble_residual(
     double Strain_e_k[3];
     double kappa_hat[3];
     double F;
+    double Error;
 
     // Check if we are in the apex
-    if(fabs(I1/3.0) < TOL)
+    if(fabs(I1/3.0) < TOL_Radial_Returning)
     {
       fprintf(stderr,"%s: %s \n",
       "Error in Frictional_Monolithic",
@@ -898,41 +968,28 @@ static bool assemble_residual(
     Residual[3] = kappa[0] - kappa_hat[0];
     Residual[4] = F;
 
-    // Check if the particle is failed
-    if((Lambda_k > TOL) && (fabs(kappa[0]) < 1000*TOL))
+    /*
+      Compute absolute error from the residual
+    */
+    for(int A = 0 ; A<5 ; A++)
     {
-      Stress_k[0] = 0.0;
-      Stress_k[1] = 0.0;
-      Stress_k[2] = 0.0;
-
-      return true;
+      Error += DSQR(Residual[A]);
     }
 
-    return check_convergence(Residual,TOL,Iter,MaxIter);
+    Error = pow(Error,0.5);
+
+    return Error;
   }
 
 /**************************************************************/
 
 static bool check_convergence(
-  double * Residual,
-  double TOL,
+  double Error,
   int Iter,
   int MaxIter)
 {
   bool convergence;
-  double Error = 0.0;
   double Error_relative = 0.0;
-
-  /*
-    Compute absolute error 
-  */
-  for(int A = 0 ; A<5 ; A++)
-  {
-    Error += DSQR(Residual[A]);
-  }
-
-  Error = pow(Error,0.5);
-
 
   /*
     Compute relative error
@@ -942,7 +999,7 @@ static bool check_convergence(
     Error0 = Error;
     Error_relative = Error/Error0;      
 
-    if(Error0 < TOL)
+    if(Error0 < TOL_Radial_Returning)
     {
       printf("Iter: %i | Error0: %e | Error: %e | Erro_rel: %e \n",Iter,Error0,Error,Error_relative);
       
@@ -955,8 +1012,8 @@ static bool check_convergence(
    */
   Error_relative = Error/Error0;
   
-  if((Error > TOL*100) 
-  && (Error_relative > TOL) 
+  if((Error > TOL_Radial_Returning*100) 
+  && (Error_relative > TOL_Radial_Returning) 
   && (Iter < MaxIter))
   {
     return false;
@@ -1115,15 +1172,10 @@ static double compute_condition_number(double * Tangent_Matrix)
 
 /**************************************************************/
 
-static void update_variables(
+static void solver(
   double * Tangent_Matrix,
   double * Residual,
-  double * Stress_k,
-  double * kappa_k,
-  double * delta_lambda,
-  double * lambda_k,
-  double lambda_n,
-  double alpha)
+  double * D_Residual)
 {
   int Order = 5;
   int LDA   = 5;
@@ -1132,8 +1184,6 @@ static void update_variables(
   int   INFO = 3;
   int * IPIV = (int *)malloc(Order*sizeof(int));
   int NRHS = 1;
-
-
   
   double rcond = compute_condition_number(Tangent_Matrix);
   
@@ -1141,9 +1191,14 @@ static void update_variables(
   {
     fprintf(stderr,"%s: %s, rcond: %e\n",
     "Error in Frictional_Monolithic","Tangent_Matrix is near to singular matrix",rcond);
-    //     exit(EXIT_FAILURE);
+//    exit(EXIT_FAILURE);
   }
-    
+
+  /*
+    Generate auxiliar copy of the mass matrix to avoid destructive operations
+  */
+  memcpy(D_Residual, Residual, 5*sizeof(double));
+
   /*
     Compute the LU factorization 
   */
@@ -1163,7 +1218,7 @@ static void update_variables(
   /*
     Solve
   */
-  dgetrs_(&TRANS,&Order,&NRHS,Tangent_Matrix,&LDA,IPIV,Residual,&LDB,&INFO);
+  dgetrs_(&TRANS,&Order,&NRHS,Tangent_Matrix,&LDA,IPIV,D_Residual,&LDB,&INFO);
   free(IPIV);
 
   /*
@@ -1175,21 +1230,73 @@ static void update_variables(
       "The function","dgetrs_","returned an error message !!!" );
     exit(EXIT_FAILURE);
   }
-
-  /*
-    Update 
-  */
-  Stress_k[0] -= Residual[0];
-  Stress_k[1] -= Residual[1];
-  Stress_k[2] -= Residual[2];
-  kappa_k[0] -= Residual[3];
-  kappa_k[1] = alpha*kappa_k[0];
-  *delta_lambda -= Residual[4];
-  *lambda_k = *delta_lambda + lambda_n;
 }
 
 
 /**************************************************************/
+
+static void update_variables(
+  double * D_Residual,
+  double * Stress_k,
+  double * kappa_k,
+  double * delta_lambda,
+  double * lambda_k,
+  double lambda_n,
+  double alpha,
+  double delta)
+{
+
+  Stress_k[0] -= delta*D_Residual[0];
+  Stress_k[1] -= delta*D_Residual[1];
+  Stress_k[2] -= delta*D_Residual[2];
+  kappa_k[0] -= delta*D_Residual[3];
+  kappa_k[1] = alpha*kappa_k[0];
+  *delta_lambda -= delta*D_Residual[4];
+  *lambda_k = *delta_lambda + lambda_n; 
+}
+
+
+/**************************************************************/
+
+static void update_k2_variables(
+  double * D_Residual,
+  double * Stress_k,
+  double * kappa_k,
+  double * delta_lambda,
+  double * lambda_k,
+  double lambda_n,
+  double alpha,
+  double delta)
+{
+
+  /*
+    Update 
+  */
+  if(delta < 1)
+  {
+    Stress_k[0] -= delta*D_Residual[0];
+    Stress_k[1] -= delta*D_Residual[1];
+    Stress_k[2] -= delta*D_Residual[2];
+    kappa_k[0] -= delta*D_Residual[3];
+    kappa_k[1] = alpha*kappa_k[0];
+    *delta_lambda -= delta*D_Residual[4];
+    *lambda_k = *delta_lambda + lambda_n;
+  }
+  else
+  {
+    Stress_k[0] -= D_Residual[0];
+    Stress_k[1] -= D_Residual[1];
+    Stress_k[2] -= D_Residual[2];
+    kappa_k[0] -= D_Residual[3];
+    kappa_k[1] = alpha*kappa_k[0];
+    *delta_lambda -= D_Residual[4];
+    *lambda_k = *delta_lambda + lambda_n; 
+  }
+}
+
+
+/**************************************************************/
+
 
 static State_Parameters fill_Outputs(
   double * Increment_E_plastic,
