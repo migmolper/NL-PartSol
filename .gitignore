@@ -8,8 +8,7 @@
 *~
 
 # Common build directory
-nl-partsol/build/*
-nl-partsol/out/*
+build/*
 
 # Prerequisites
 *.d
