@@ -14,7 +14,7 @@ Useful information is in Borja et al. (2003):
 https://doi.org/10.1016/S0045-7825(02)00620-5
 ------------------------------------------------------------------- 
 Requires:
-  * accelerate library (solver)
+  * accelerate library or LAPACK (solver)
   * gnuplot (plots)
 -------------------------------------------------------------------
 Compilation recipy (MacOSX):
@@ -80,6 +80,7 @@ typedef struct {
 
 typedef struct
 {
+  int Particle_Idx;
   double * Stress;
   double * Strain;
   double * Increment_E_plastic;
@@ -103,6 +104,7 @@ typedef struct
 /*
   Define local global variables
 */
+int Particle_Idx;
 double Error0;
 bool Is_Matsuoka_Nakai;
 bool Is_Lade_Duncan;
@@ -201,6 +203,7 @@ int main()
     stress[i*3 + 2] = - 200;
 
     // Asign variables to the solver
+    Input.Particle_Idx = 0;
     Input.Stress = &stress[i*3];
     Input.Strain = &strain[i*3];
     Input.Increment_E_plastic = Increment_E_plastic;
@@ -235,6 +238,12 @@ int main()
 	  "'MN_output.csv' title 'Us' with line lt rgb 'red' lw 2");
   fflush(gnuplot);
 
+  // Free memory 
+  free(stress);
+  free(strain);
+  free(kappa1);
+  free(Lambda);
+
   return 0;
 }
 
@@ -259,6 +268,11 @@ State_Parameters Frictional_Monolithic(
     Get material variables
   */
   Model_Parameters Params = fill_model_paramters(MatProp);
+
+  /*
+    Get the index of the particle
+  */
+  Particle_Idx = Inputs_SP.Particle_Idx;
 
   /*
     Assign values from the inputs state parameters
@@ -1189,9 +1203,10 @@ static void solver(
   
   if(rcond < 1E-10)
   {
-    fprintf(stderr,"%s: %s, rcond: %e\n",
-    "Error in Frictional_Monolithic","Tangent_Matrix is near to singular matrix",rcond);
-//    exit(EXIT_FAILURE);
+    fprintf(stderr,"%s: %s %i, %s: %e\n",
+    "Error in Frictional_Monolithic",
+    "Tangent_Matrix is near to singular matrix for particle",
+    Particle_Idx,"rcond",rcond);
   }
 
   /*
@@ -1210,7 +1225,7 @@ static void solver(
   if(INFO)
   {
     fprintf(stderr,"%s : %s %s %s \n",
-      "Error in solve_system",
+      "Error in Frictional_Monolithic",
       "The function","dgetrf_","returned an error message !!!" );
     exit(EXIT_FAILURE);
   }
@@ -1226,7 +1241,7 @@ static void solver(
   */
   if(INFO)
   {
-    fprintf(stderr,"%s : %s %s %s \n","Error in solve_system",
+    fprintf(stderr,"%s : %s %s %s \n","Error in Frictional_Monolithic",
       "The function","dgetrs_","returned an error message !!!" );
     exit(EXIT_FAILURE);
   }
@@ -1253,45 +1268,6 @@ static void update_variables(
   kappa_k[1] = alpha*kappa_k[0];
   *delta_lambda -= delta*D_Residual[4];
   *lambda_k = *delta_lambda + lambda_n; 
-}
-
-
-/**************************************************************/
-
-static void update_k2_variables(
-  double * D_Residual,
-  double * Stress_k,
-  double * kappa_k,
-  double * delta_lambda,
-  double * lambda_k,
-  double lambda_n,
-  double alpha,
-  double delta)
-{
-
-  /*
-    Update 
-  */
-  if(delta < 1)
-  {
-    Stress_k[0] -= delta*D_Residual[0];
-    Stress_k[1] -= delta*D_Residual[1];
-    Stress_k[2] -= delta*D_Residual[2];
-    kappa_k[0] -= delta*D_Residual[3];
-    kappa_k[1] = alpha*kappa_k[0];
-    *delta_lambda -= delta*D_Residual[4];
-    *lambda_k = *delta_lambda + lambda_n;
-  }
-  else
-  {
-    Stress_k[0] -= D_Residual[0];
-    Stress_k[1] -= D_Residual[1];
-    Stress_k[2] -= D_Residual[2];
-    kappa_k[0] -= D_Residual[3];
-    kappa_k[1] = alpha*kappa_k[0];
-    *delta_lambda -= D_Residual[4];
-    *lambda_k = *delta_lambda + lambda_n; 
-  }
 }
 
 
