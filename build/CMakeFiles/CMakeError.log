@@ -1,22 +1,22 @@
 Determining if the pthread_create exist failed with the following output:
 Change Dir: /home/migmolper/NL-PartSol/build/CMakeFiles/CMakeTmp
 
-Run Build Command:"/usr/bin/make" "cmTC_120ca/fast"
-/usr/bin/make -f CMakeFiles/cmTC_120ca.dir/build.make CMakeFiles/cmTC_120ca.dir/build
+Run Build Command:"/usr/bin/make" "cmTC_a3422/fast"
+/usr/bin/make -f CMakeFiles/cmTC_a3422.dir/build.make CMakeFiles/cmTC_a3422.dir/build
 make[1]: se entra en el directorio '/home/migmolper/NL-PartSol/build/CMakeFiles/CMakeTmp'
-Building C object CMakeFiles/cmTC_120ca.dir/CheckSymbolExists.c.o
-/usr/bin/cc    -o CMakeFiles/cmTC_120ca.dir/CheckSymbolExists.c.o   -c /home/migmolper/NL-PartSol/build/CMakeFiles/CMakeTmp/CheckSymbolExists.c
-Linking C executable cmTC_120ca
-/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_120ca.dir/link.txt --verbose=1
-/usr/bin/cc      -rdynamic CMakeFiles/cmTC_120ca.dir/CheckSymbolExists.c.o  -o cmTC_120ca 
-CMakeFiles/cmTC_120ca.dir/CheckSymbolExists.c.o: En la función `main':
+Building C object CMakeFiles/cmTC_a3422.dir/CheckSymbolExists.c.o
+/usr/bin/cc    -o CMakeFiles/cmTC_a3422.dir/CheckSymbolExists.c.o   -c /home/migmolper/NL-PartSol/build/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+Linking C executable cmTC_a3422
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_a3422.dir/link.txt --verbose=1
+/usr/bin/cc      CMakeFiles/cmTC_a3422.dir/CheckSymbolExists.c.o  -o cmTC_a3422 
+CMakeFiles/cmTC_a3422.dir/CheckSymbolExists.c.o: En la función `main':
 CheckSymbolExists.c:(.text+0x1b): referencia a `pthread_create' sin definir
 collect2: error: ld returned 1 exit status
-CMakeFiles/cmTC_120ca.dir/build.make:97: fallo en las instrucciones para el objetivo 'cmTC_120ca'
-make[1]: *** [cmTC_120ca] Error 1
+CMakeFiles/cmTC_a3422.dir/build.make:97: fallo en las instrucciones para el objetivo 'cmTC_a3422'
+make[1]: *** [cmTC_a3422] Error 1
 make[1]: se sale del directorio '/home/migmolper/NL-PartSol/build/CMakeFiles/CMakeTmp'
-Makefile:126: fallo en las instrucciones para el objetivo 'cmTC_120ca/fast'
-make: *** [cmTC_120ca/fast] Error 2
+Makefile:126: fallo en las instrucciones para el objetivo 'cmTC_a3422/fast'
+make: *** [cmTC_a3422/fast] Error 2
 
 File /home/migmolper/NL-PartSol/build/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
 /* */
@@ -36,20 +36,20 @@ int main(int argc, char** argv)
 Determining if the function pthread_create exists in the pthreads failed with the following output:
 Change Dir: /home/migmolper/NL-PartSol/build/CMakeFiles/CMakeTmp
 
-Run Build Command:"/usr/bin/make" "cmTC_c811a/fast"
-/usr/bin/make -f CMakeFiles/cmTC_c811a.dir/build.make CMakeFiles/cmTC_c811a.dir/build
+Run Build Command:"/usr/bin/make" "cmTC_de174/fast"
+/usr/bin/make -f CMakeFiles/cmTC_de174.dir/build.make CMakeFiles/cmTC_de174.dir/build
 make[1]: se entra en el directorio '/home/migmolper/NL-PartSol/build/CMakeFiles/CMakeTmp'
-Building C object CMakeFiles/cmTC_c811a.dir/CheckFunctionExists.c.o
-/usr/bin/cc   -DCHECK_FUNCTION_EXISTS=pthread_create   -o CMakeFiles/cmTC_c811a.dir/CheckFunctionExists.c.o   -c /usr/share/cmake-3.10/Modules/CheckFunctionExists.c
-Linking C executable cmTC_c811a
-/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_c811a.dir/link.txt --verbose=1
-/usr/bin/cc  -DCHECK_FUNCTION_EXISTS=pthread_create    -rdynamic CMakeFiles/cmTC_c811a.dir/CheckFunctionExists.c.o  -o cmTC_c811a -lpthreads 
+Building C object CMakeFiles/cmTC_de174.dir/CheckFunctionExists.c.o
+/usr/bin/cc   -DCHECK_FUNCTION_EXISTS=pthread_create   -o CMakeFiles/cmTC_de174.dir/CheckFunctionExists.c.o   -c /usr/share/cmake-3.10/Modules/CheckFunctionExists.c
+Linking C executable cmTC_de174
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_de174.dir/link.txt --verbose=1
+/usr/bin/cc  -DCHECK_FUNCTION_EXISTS=pthread_create    CMakeFiles/cmTC_de174.dir/CheckFunctionExists.c.o  -o cmTC_de174 -lpthreads 
 /usr/bin/ld: no se puede encontrar -lpthreads
 collect2: error: ld returned 1 exit status
-CMakeFiles/cmTC_c811a.dir/build.make:97: fallo en las instrucciones para el objetivo 'cmTC_c811a'
-make[1]: *** [cmTC_c811a] Error 1
+CMakeFiles/cmTC_de174.dir/build.make:97: fallo en las instrucciones para el objetivo 'cmTC_de174'
+make[1]: *** [cmTC_de174] Error 1
 make[1]: se sale del directorio '/home/migmolper/NL-PartSol/build/CMakeFiles/CMakeTmp'
-Makefile:126: fallo en las instrucciones para el objetivo 'cmTC_c811a/fast'
-make: *** [cmTC_c811a/fast] Error 2
+Makefile:126: fallo en las instrucciones para el objetivo 'cmTC_de174/fast'
+make: *** [cmTC_de174/fast] Error 2
 
 
