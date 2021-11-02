@@ -1,6 +1,5 @@
 /* 
-C file to simulate granular materials
-with a smooth Mohr-Coulomb model.
+Unitary test for the smooth Mohr-Coulomb model.
 One single point is initially confined with an 
 hydrostatic stress state of -200 kPa. Before that,
 the stress in the II direction is incresed using 
@@ -24,6 +23,9 @@ Compilation recipy (Linux)
 gcc Frictional-Monolithic.c -o Frictional-Monolithic -llapack -lm
 -------------------------------------------------------------------
 */
+
+#include <check.h>
+
 
 /**************************************************************/
 /******************** Solver Parameters ***********************/
@@ -50,6 +52,7 @@ gcc Frictional-Monolithic.c -o Frictional-Monolithic -llapack -lm
 /**************************************************************/
 /********************* Required Libraries *********************/
 /**************************************************************/
+
 #ifdef __linux__
 #include <stdio.h>
 #include <string.h>
@@ -126,7 +129,7 @@ static int imin_arg1, imin_arg2;
 #define IMIN(a,b) (imin_arg1=(a),imin_arg2=(b),(imin_arg1) < (imin_arg2) ?	\
 		   (imin_arg1) : (imin_arg2))
 
-int main()
+START_TEST (test_frictional_monolitic)
 {
   State_Parameters Input;
   State_Parameters Output;
@@ -212,7 +215,7 @@ int main()
   free(kappa1);
   free(Lambda);
 
-  return 0;
 }
+END_TEST
 
 /**************************************************************/

@@ -1,21 +1,41 @@
-cmake_minimum_required(VERSION 3.10.2)
-project("nl-partsol")
 
-#Bring the headers
-include_directories(include)
+###############################################################################
+## file globbing ##############################################################
+###############################################################################
 
-# Wildcard additions
-# file(GLOB_RECURSE SOURCES "src/*.c")
-file(GLOB_RECURSE SOURCES RELATIVE ${CMAKE_SOURCE_DIR} "src/*.c")
+# these instructions search the directory tree when cmake is
+# invoked and put all files that match the pattern in the variables 
+# `sources` and `data`
+file(GLOB_RECURSE SOURCES src/*.c include/*.h)
+file(GLOB_RECURSE DATA ../build/*)
+# you can use set(SOURCES src/main.c) etc if you don't want to
+# use globing to find files automatically
 
+
+###############################################################################
+## target definitions #########################################################
+###############################################################################
+
+# add the data to the target, so it becomes visible in some IDE
 add_executable(${PROJECT_NAME} ${SOURCES})
 
-# Add compilation options
+# Add include folder
+target_include_directories(${PROJECT_NAME} PUBLIC include)
+
+# Add some compiler flags
 set(default_flags "-Wall -fno-rtti")
 set_target_properties("${PROJECT_NAME}" PROPERTIES
   debug "${default_flags} -O0 -g -Wall -Wpedantic -Wextra"
   release "${default_flags} -O2 "
   )
+
+# this copies all resource files in the build directory
+# we need this, because we want to work with paths relative to the executable
+file(COPY ${DATA} DESTINATION build)
+
+###############################################################################
+## dependencies ###############################################################
+###############################################################################
 
 # Add math library
 target_link_libraries(${PROJECT_NAME} m)
@@ -46,3 +66,5 @@ add_custom_target(release
   COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target all
   COMMENT "Switch CMAKE_BUILD_TYPE to Release"
   )
+
+
