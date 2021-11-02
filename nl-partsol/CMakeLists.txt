@@ -31,7 +31,7 @@ set_target_properties("${PROJECT_NAME}" PROPERTIES
 
 # this copies all resource files in the build directory
 # we need this, because we want to work with paths relative to the executable
-file(COPY ${DATA} DESTINATION build)
+# file(COPY ${DATA} DESTINATION build)
 
 ###############################################################################
 ## dependencies ###############################################################

@@ -1,5 +1,0 @@
-/home/migmolper/NL-PartSol/build/CMakeFiles/rebuild_cache.dir
-/home/migmolper/NL-PartSol/build/CMakeFiles/edit_cache.dir
-/home/migmolper/NL-PartSol/build/CMakeFiles/release.dir
-/home/migmolper/NL-PartSol/build/CMakeFiles/Project.dir
-/home/migmolper/NL-PartSol/build/CMakeFiles/debug.dir
