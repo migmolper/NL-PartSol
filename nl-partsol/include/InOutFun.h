@@ -288,6 +288,18 @@ Boundaries Read_u_Neumann_Boundary_Conditions__InOutFun__(char *,int,int);
 
 /*****************************************************************/
 
+/*!
+  \fn void Check_u_Neumann_Boundary_Conditions__InOutFun__(Boundaries Neumann_Contours,int NumParticles)
+  
+  \brief Check if the Neumann boundary condition is well applied
+
+  \param Neumann_Contours : List with the properties of the boundary condition
+  \param NumParticles : Number of particles in the all simulation
+*/
+void Check_u_Neumann_Boundary_Conditions__InOutFun__(Boundaries,int);
+
+/*****************************************************************/
+
 
 /*!
 

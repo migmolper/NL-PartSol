@@ -96,6 +96,7 @@ void Stress_integration__Particles__(
   }
   else if(strcmp(MatProp_p.Type,"Neo-Hookean-Wriggers") == 0)
   {
+    Input_SP.Particle_Idx = p;
     Input_SP.Stress = MPM_Mesh.Phi.Stress.nM[p];
         
     if(MatProp_p.Locking_Control_Fbar)

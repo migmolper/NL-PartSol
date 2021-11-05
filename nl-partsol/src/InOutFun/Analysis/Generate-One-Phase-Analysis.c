@@ -175,6 +175,16 @@ Particle Generate_One_Phase_Analysis__InOutFun__(char * Name_File, Mesh FEM_Mesh
         MPM_Mesh.Beta = allocZ__MatrixLib__(NumParticles,1);
         strcpy(MPM_Mesh.Beta.Info,"Beta");
       }
+      /* Lagrange Multipliers / Beta / Cut_off_Ellipsoid (Only aLME ) */
+      if(strcmp(ShapeFunctionGP,"aLME") == 0)
+      {
+        MPM_Mesh.lambda = allocZ__MatrixLib__(NumParticles,Ndim);
+        strcpy(MPM_Mesh.lambda.Info,"Lagrange Multiplier");
+        MPM_Mesh.Beta = allocZ__MatrixLib__(NumParticles,Ndim*Ndim);
+        strcpy(MPM_Mesh.Beta.Info,"Beta parameter");
+        MPM_Mesh.Cut_off_Ellipsoid = allocZ__MatrixLib__(NumParticles,Ndim*Ndim);
+        strcpy(MPM_Mesh.Cut_off_Ellipsoid.Info,"Cut-off Ellipsoid");
+      }
     }
     else
     {
@@ -244,6 +254,16 @@ Particle Generate_One_Phase_Analysis__InOutFun__(char * Name_File, Mesh FEM_Mesh
       printf("\t * %s \n","Start LME shape functions initialisation ...");
       initialize__LME__(MPM_Mesh,FEM_Mesh);
     }
+    else if(strcmp(ShapeFunctionGP,"aLME") == 0)
+    {
+      printf("\t * %s \n","Start aLME shape functions initialisation ...");
+      initialize__aLME__(MPM_Mesh,FEM_Mesh);
+    }
+    else
+    {
+      fprintf(stderr,"%s : %s \n","Error in GramsShapeFun()","Undefined kind of shape function");
+      exit(EXIT_FAILURE);
+    }
     printf("\t %s \n","Success !!");
 
     /*
@@ -269,7 +289,17 @@ Particle Generate_One_Phase_Analysis__InOutFun__(char * Name_File, Mesh FEM_Mesh
     {
       puts("*************************************************");
       printf("\t * %s \n","Read Newmann boundary conditions :");
-      MPM_Mesh.Neumann_Contours = Read_u_Neumann_Boundary_Conditions__InOutFun__(Name_File,Sim_Params.Counter_GramsNeumannBC,Msh_Parms.GPxElement);
+      if(strcmp(Formulation,"-u") == 0)
+      {
+        MPM_Mesh.Neumann_Contours = Read_u_Neumann_Boundary_Conditions__InOutFun__(Name_File,Sim_Params.Counter_GramsNeumannBC,Msh_Parms.GPxElement);
+        Check_u_Neumann_Boundary_Conditions__InOutFun__(MPM_Mesh.Neumann_Contours,NumParticles);
+      }
+      else if(strcmp(Formulation,"-upw") == 0)
+      {
+        MPM_Mesh.Neumann_Contours = Read_upw_Neumann_Boundary_Conditions__InOutFun__(Name_File,Sim_Params.Counter_GramsNeumannBC,Msh_Parms.GPxElement);
+      }
+
+
     }
     else
     {

@@ -241,7 +241,6 @@ void initialize__aLME__(
 
     }
 
-    free(Beta_p.nM);
 
     if(!Init_p)
     {
@@ -259,7 +258,8 @@ void initialize__aLME__(
     // Get some properties for each particle
     X_p = memory_to_matrix__MatrixLib__(Ndim,1,MPM_Mesh.Phi.x_GC.nM[p]);
     lambda_p = memory_to_matrix__MatrixLib__(Ndim,1,MPM_Mesh.lambda.nM[p]);
-    
+    Beta_p = memory_to_matrix__MatrixLib__(Ndim,Ndim,MPM_Mesh.Beta.nM[p]);
+
     // Get the metric tensor and initialize it
     Cut_off_Ellipsoid = memory_to_matrix__MatrixLib__(Ndim,Ndim,MPM_Mesh.Cut_off_Ellipsoid.nM[p]);
     initialize_Cut_off_Ellipsoid__aLME__(Cut_off_Ellipsoid,gamma_LME,FEM_Mesh.h_avg[MPM_Mesh.I0[p]]);
@@ -276,7 +276,9 @@ void initialize__aLME__(
     // Update lagrange multiplier with Newton-Rapson or with Nelder-Mead
     if(strcmp(wrapper_LME,"Newton-Raphson") == 0)
     {
+
       update_lambda_Newton_Rapson__aLME__(p, Delta_Xip, lambda_p, Beta_p);
+
     }
     else if(strcmp(wrapper_LME,"Nelder-Mead") == 0)
     {
@@ -294,7 +296,6 @@ void initialize__aLME__(
     free__MatrixLib__(Delta_Xip);
     free(Cut_off_Ellipsoid.nM);
   }
-
 
 }
 
@@ -1073,10 +1074,13 @@ void local_search__aLME__(
 
   }
 
-  for(int i = 0 ; i<FEM_Mesh.Num_Patch_Mesh ; i++)
+  if(FEM_Mesh.Locking_Control_Fbar)
   {
-    FEM_Mesh.Vol_Patch_n[i] = 0.0;
-    FEM_Mesh.Vol_Patch_n1[i] = 0.0;
+    for(int i = 0 ; i<FEM_Mesh.Num_Patch_Mesh ; i++)
+    {
+      FEM_Mesh.Vol_Patch_n[i] = 0.0;
+      FEM_Mesh.Vol_Patch_n1[i] = 0.0;
+    }
   }
 
 

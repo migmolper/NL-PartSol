@@ -34,6 +34,7 @@ static double mesh_size(Mesh);
 static void standard_error(int, char *);
 static void standard_output(char *);
 static FILE * Open_and_Check_simulation_file(char * );
+static void Check_Dirichlet_Boundary_Conditions(Boundaries,int);
 
 /**********************************************************************/
 
@@ -130,6 +131,8 @@ Mesh GramsBox(char * Name_File)
     {
       FEM_Mesh.Bounds = Read_upw_Dirichlet_Boundary_Conditions__InOutFun__(Name_File,Nodes_Info.Number_Boundaries);
     }
+
+    Check_Dirichlet_Boundary_Conditions(FEM_Mesh.Bounds,FEM_Mesh.NumNodesMesh);
   }
 
   return FEM_Mesh;
@@ -623,6 +626,37 @@ static FILE * Open_and_Check_simulation_file(
   }  
 
   return Simulation_file;
+}
+
+/***************************************************************************/
+
+static void Check_Dirichlet_Boundary_Conditions(
+  Boundaries Dirichlet_BCC,
+  int NumNodesMesh)
+{
+    /* 
+    Define auxilar variables 
+  */
+  int Number_of_BCC = Dirichlet_BCC.NumBounds;
+  int NumNodesBound; /* Number of nodes of the bound */
+
+
+  for(int i = 0 ; i<Number_of_BCC ; i++)
+    {
+
+      NumNodesBound = Dirichlet_BCC.BCC_i[i].NumNodes;
+
+      for(int j = 0 ; j<NumNodesBound ; j++)
+        {
+          if((Dirichlet_BCC.BCC_i[i].Nodes[j] > NumNodesMesh) 
+          || (Dirichlet_BCC.BCC_i[i].Nodes[j] < 0))
+          {
+            fprintf(stderr,"%s : %s 0 - %i \n",
+            "Error in GramsBox()","The index of the nodes with Dirichlet BCC should be between",NumNodesMesh);
+            exit(EXIT_FAILURE);
+          }
+        }    
+    }
 }
 
 /***************************************************************************/
