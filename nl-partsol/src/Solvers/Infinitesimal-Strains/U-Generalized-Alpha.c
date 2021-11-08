@@ -68,7 +68,7 @@ void U_Generalized_alpha(
     {
 
       print_Status("*************************************************",TimeStep);
-      DeltaTimeStep = U_DeltaT__SolversLib__(MPM_Mesh, DeltaX, CFL);
+      DeltaTimeStep = U_DeltaT__SolversLib__(MPM_Mesh, DeltaX, Parameters_Solver);
       print_step(TimeStep,DeltaTimeStep);
       local_search__MeshTools__(MPM_Mesh,FEM_Mesh);
       print_Status("*************************************************",TimeStep);

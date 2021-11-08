@@ -61,7 +61,7 @@ int * set_to_memory__SetLib__(ChainPtr A_chain, int NumNodes){
   for(int i = 0;
       (i<NumNodes) || (iChain != NULL) ;
       i++, iChain = iChain->next){
-    A_Array[i] = iChain->I;
+    A_Array[i] = iChain->Idx;
   }
 
   /* Return the array */
@@ -161,7 +161,7 @@ bool inout__SetLib__(ChainPtr Node, int I)
   /* Loop in the chain */
   while (INode != NULL)
   { 
-    if (INode->I == I)
+    if (INode->Idx == I)
     {
       return 1;
     }
@@ -185,7 +185,7 @@ void push__SetLib__ (ChainPtr * TopNodePtr, int I_new)
   if(NewNodePtr != NULL)
   {
     /* put in the data */
-    NewNodePtr->I = I_new;
+    NewNodePtr->Idx = I_new;
     /* link the old list off the new node */
     NewNodePtr->next = (* TopNodePtr);
     /* move the head to point to the new node */
@@ -210,7 +210,7 @@ void pop__SetLib__(ChainPtr * TopNodePtr, int I_trash)
   while(iPtr != NULL){
 
     /* If the node is the one we want to extract */
-    if(iPtr->I == I_trash)
+    if(iPtr->Idx == I_trash)
     {
       /* If the node is the first in the chain */
       if(PrevPtr == NULL)
@@ -249,7 +249,7 @@ ChainPtr copy__SetLib__(ChainPtr start1)
   {
   
     ChainPtr temp = malloc (sizeof(ChainPtr));
-    temp->I=start1->I;
+    temp->Idx=start1->Idx;
     temp->next=NULL;
 
     if(start2==NULL)
@@ -280,7 +280,7 @@ ChainPtr create_circular_set__SetLib__(ChainPtr A)
   {
   
     New_Node = malloc (sizeof(ChainPtr));
-    New_Node->I=A->I;
+    New_Node->Idx=A->Idx;
     New_Node->next=Head;
 
     if(A_circular == NULL)
@@ -315,8 +315,8 @@ ChainPtr union__SetLib__(ChainPtr * Table, int NumTable)
       iTable = Table[i];
       while (iTable != NULL){
 	/* Introduce a new element in the new chain */
-	if (!inout__SetLib__(A, iTable->I)){
-	  push__SetLib__(&A, iTable->I);
+	if (!inout__SetLib__(A, iTable->Idx)){
+	  push__SetLib__(&A, iTable->Idx);
 	}
 	/* Updtate the iterator index */
 	iTable = iTable->next;
@@ -340,8 +340,8 @@ ChainPtr intersection__SetLib__(ChainPtr A,ChainPtr B)
     /* B. If the element is present in B, then  */
     /* insert the element to result  */
     while (iPtrA != NULL){ 
-      if (inout__SetLib__(B, iPtrA->I)) 
-	push__SetLib__(&C, iPtrA->I); 
+      if (inout__SetLib__(B, iPtrA->Idx)) 
+	push__SetLib__(&C, iPtrA->Idx); 
       iPtrA = iPtrA->next; 
     }
     
@@ -354,7 +354,7 @@ ChainPtr intersection__SetLib__(ChainPtr A,ChainPtr B)
 void print__SetLib__(ChainPtr A) 
 {  
   while (A != NULL){ 
-    printf ("%d -> ", A->I); 
+    printf ("%d -> ", A->Idx); 
     A = A->next; 
   } 
   printf("NULL \n");
@@ -379,9 +379,9 @@ void order__SetLib__(ChainPtr * List1, ChainPtr * List0, Matrix Dist)
     /* Loop over the chain */
     while(INode != NULL){
       /* Get the max distance of the matrix */
-      if(Dist.nV[INode->I] > DistMax){
-	DistMax = Dist.nV[INode->I];
-	I_DistMax = INode->I;
+      if(Dist.nV[INode->Idx] > DistMax){
+	DistMax = Dist.nV[INode->Idx];
+	I_DistMax = INode->Idx;
       }
       /* Continue iterating */      
       INode = INode->next; 

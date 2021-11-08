@@ -80,7 +80,7 @@ void U_Newmark_Predictor_Corrector_Finite_Strains(
     {
 
       print_Status("*************************************************",TimeStep);
-      DeltaTimeStep = U_DeltaT__SolversLib__(MPM_Mesh, DeltaX, CFL);
+      DeltaTimeStep = U_DeltaT__SolversLib__(MPM_Mesh, DeltaX, Parameters_Solver);
       print_step(TimeStep,DeltaTimeStep);
       local_search__MeshTools__(MPM_Mesh,FEM_Mesh);
       ActiveNodes = generate_NodalMask__MeshTools__(FEM_Mesh);
@@ -139,7 +139,7 @@ void U_Newmark_Predictor_Corrector_Finite_Strains(
       print_Status("DONE !!!",TimeStep);
       
       print_Status("*************************************************",TimeStep);
-      print_Status("Seven step : Output variables and reset nodal values",TimeStep);
+      print_Status("Seven step : Output variables",TimeStep);
       print_Status("WORKING ...",TimeStep);
 
       output_selector(MPM_Mesh, FEM_Mesh, ActiveNodes, Velocity, D_Displacement,Forces, Reactions, DeltaTimeStep, TimeStep, ResultsTimeStep);
@@ -149,6 +149,9 @@ void U_Newmark_Predictor_Corrector_Finite_Strains(
       /*
       	Free memory
       */
+      print_Status("*************************************************",TimeStep);
+      print_Status("Eight step : Reset nodal values",TimeStep);
+      print_Status("WORKING ...",TimeStep);
       free__MatrixLib__(Lumped_Mass); 
       free__MatrixLib__(Gravity_field);
       free__MatrixLib__(Velocity);
@@ -157,6 +160,7 @@ void U_Newmark_Predictor_Corrector_Finite_Strains(
       free__MatrixLib__(Reactions);
       free(ActiveNodes.Nodes2Mask); 
       free(Free_and_Restricted_Dofs.Nodes2Mask);
+      print_Status("DONE !!!",TimeStep);
 
     }
   
@@ -1270,7 +1274,7 @@ static void output_selector(
   {
 
     int Nnodes = ActiveNodes.Nactivenodes;
-    int p_idx = 17714;
+    int p_idx = 1;
     int NumNodes_p = MPM_Mesh.NumberNodes[p_idx];
     Element Nodes_p = nodal_set__Particles__(p_idx, MPM_Mesh.ListNodes[p_idx], NumNodes_p);
     Matrix ShapeFunction_p = compute_N__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);

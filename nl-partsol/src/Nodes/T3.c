@@ -508,7 +508,7 @@ double min_DeltaX__T3__(ChainPtr Element_Connectivity, Matrix Coordinates)
 
   for(int k = 0; k<NumNodesElem; k++)
   {
-    Node_k = Element_Connectivity->I;
+    Node_k = Element_Connectivity->Idx;
 
     for(int l = 0 ; l<Ndim ; l++)
     {
@@ -695,9 +695,9 @@ void local_search__T3__(Particle MPM_Mesh, Mesh FEM_Mesh)
       Connectivity_p = MPM_Mesh.ListNodes[p];
       while(Connectivity_p != NULL)
       {
-        if(FEM_Mesh.ActiveNode[Connectivity_p->I] == false)
+        if(FEM_Mesh.ActiveNode[Connectivity_p->Idx] == false)
         {
-          FEM_Mesh.ActiveNode[Connectivity_p->I] = true;
+          FEM_Mesh.ActiveNode[Connectivity_p->Idx] = true;
         }
 
         Connectivity_p = Connectivity_p->next;
@@ -713,9 +713,9 @@ void local_search__T3__(Particle MPM_Mesh, Mesh FEM_Mesh)
       Connectivity_p = MPM_Mesh.ListNodes[p];
       while(Connectivity_p != NULL)
       {
-        if(FEM_Mesh.ActiveNode[Connectivity_p->I] == false)
+        if(FEM_Mesh.ActiveNode[Connectivity_p->Idx] == false)
         {
-          FEM_Mesh.ActiveNode[Connectivity_p->I] = true;
+          FEM_Mesh.ActiveNode[Connectivity_p->Idx] = true;
         }
 
         Connectivity_p = Connectivity_p->next;

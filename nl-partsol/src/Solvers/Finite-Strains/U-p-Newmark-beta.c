@@ -125,7 +125,7 @@ void Up_Newmark_beta_Finite_Strains(
     not required to be satisfied. The only purpose of it is to use the existing
     software interfase.
   */
-  DeltaTimeStep = U_DeltaT__SolversLib__(MPM_Mesh, DeltaX, CFL);
+  DeltaTimeStep = U_DeltaT__SolversLib__(MPM_Mesh, DeltaX, Parameters_Solver);
   Params = compute_Newmark_parameters(beta, gamma, DeltaTimeStep);
 
   for(int TimeStep = InitialStep ; TimeStep<NumTimeStep ; TimeStep++ )

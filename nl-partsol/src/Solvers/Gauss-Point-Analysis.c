@@ -53,7 +53,7 @@ void NonLinear_Gauss_Point_Analysis(Particle PointAnalysis)
     {
       Input_SP.Stress = PointAnalysis.Phi.Stress.nM[k];
       Input_SP.F_m1_plastic_p = PointAnalysis.Phi.F_m1_plastic.nM[k-1];
-      Input_SP.EPS = PointAnalysis.Phi.EPS.nV[k-1];
+      Input_SP.Equiv_Plast_Str = PointAnalysis.Phi.Equiv_Plast_Str.nV[k-1];
       Input_SP.Back_stress = PointAnalysis.Phi.Back_stress.nM[k-1];
       Input_SP.F_n1_p = PointAnalysis.Phi.F_n.nM[k];
   
@@ -78,46 +78,40 @@ void NonLinear_Gauss_Point_Analysis(Particle PointAnalysis)
         PointAnalysis.Phi.Back_stress.nM[k][i] = PointAnalysis.Phi.Back_stress.nM[k-1][i];
       }
 
-      PointAnalysis.Phi.EPS.nV[k] = Output_SP.EPS;
+      PointAnalysis.Phi.Equiv_Plast_Str.nV[k] = Output_SP.Equiv_Plast_Str;
 
     }
-    else if((strcmp(PointAnalysis.Mat[0].Type,"Drucker-Prager-Plane-Strain") == 0) || 
-              (strcmp(PointAnalysis.Mat[0].Type,"Drucker-Prager-Outer-Cone") == 0))
+    else if(strcmp(PointAnalysis.Mat[0].Type,"Granular") == 0)
     {
-      Input_SP.F_m1_plastic_p = PointAnalysis.Phi.F_m1_plastic.nM[k];
-      Input_SP.Cohesion = PointAnalysis.Phi.cohesion.nV[k];
-      Input_SP.EPS = PointAnalysis.Phi.EPS.nV[k];
+      Input_SP.Stress = PointAnalysis.Phi.Stress.nM[k];
+      Input_SP.F_m1_plastic_p = PointAnalysis.Phi.F_m1_plastic.nM[k-1];
+      Input_SP.Kappa = PointAnalysis.Phi.Kappa_hardening.nV[k-1];
+      Input_SP.Equiv_Plast_Str = PointAnalysis.Phi.Equiv_Plast_Str.nV[k-1];
       Input_SP.F_n1_p = PointAnalysis.Phi.F_n1.nM[k];
   
-      if(strcmp(PointAnalysis.Mat[0].Plastic_Solver,"Backward-Euler") == 0)
+      Output_SP = finite_strain_plasticity(Input_SP,PointAnalysis.Mat[0],Frictional_Monolithic);
+
+      for(int i = 0 ; i<Ndim*Ndim ; i++)
       {
-        Output_SP = finite_strain_plasticity(Input_SP,PointAnalysis.Mat[0],Drucker_Prager_backward_euler);
-      }
-      else
-      {
-        fprintf(stderr,"%s : %s %s %s \n","Error in stress_integration__Particles__()",
-      "The solver",PointAnalysis.Mat[0].Type,"has not been yet implemented");
-        exit(EXIT_FAILURE);
+        PointAnalysis.Phi.F_m1_plastic.nM[k][i] = PointAnalysis.Phi.F_m1_plastic.nM[k-1][i];
       }
 
-      PointAnalysis.Phi.cohesion.nV[k] = Output_SP.Cohesion;
-      PointAnalysis.Phi.EPS.nV[k] = Output_SP.EPS;
+      PointAnalysis.Phi.Kappa_hardening.nV[k] = Output_SP.Kappa;
+      PointAnalysis.Phi.Equiv_Plast_Str.nV[k] = Output_SP.Equiv_Plast_Str;
+
+      exit(0);
     }
-	else
-	{
-
-	  sprintf(Error_message,"%s %s %s","The material",PointAnalysis.Mat[0].Type,"has not been yet implemnented");
-    standard_error(); 
-
-  }
-
-	/* Output stress trajectory */
-	for(int i = 0 ; i<Number_Out_Gauss_Point_evolution_csv; i++)
-  	{
-
-    	Gauss_Point_evolution__InOutFun__(PointAnalysis,Out_Gauss_Point_evolution_csv[i],"Particle_evolution", k,i);
-       
-	  }
+    else
+    {
+      sprintf(Error_message,"%s %s %s","The material",PointAnalysis.Mat[0].Type,"has not been yet implemnented");
+      standard_error();
+    }
+    
+    /* Output stress trajectory */
+    for(int i = 0 ; i<Number_Out_Gauss_Point_evolution_csv; i++)
+    {
+      Gauss_Point_evolution__InOutFun__(PointAnalysis,Out_Gauss_Point_evolution_csv[i],"Particle_evolution", k,i);       
+    }
 
   }
       

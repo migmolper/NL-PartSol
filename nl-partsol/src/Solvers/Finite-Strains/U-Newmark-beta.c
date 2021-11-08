@@ -111,7 +111,7 @@ void U_Newmark_beta_Finite_Strains(
     not required to be satisfied. The only purpose of it is to use the existing
     software interfase.
   */
-  DeltaTimeStep = U_DeltaT__SolversLib__(MPM_Mesh, DeltaX, CFL);
+  DeltaTimeStep = U_DeltaT__SolversLib__(MPM_Mesh, DeltaX, Parameters_Solver);
  
   /*
     Compute alpha parameters
@@ -771,7 +771,6 @@ static void update_Local_State(
       */
       MPM_Mesh.Phi.J_n1.nV[p] = I3__TensorLib__(F_n1_p);
 
-
       /*
         Check non-pentrability condition
       */
@@ -937,7 +936,7 @@ static void compute_Nodal_Internal_Forces(
 	  */
 	  gradient_pA = memory_to_tensor__TensorLib__(gradient_p.nM[A], 1);
 	  GRADIENT_pA = vector_linear_mapping__TensorLib__(transpose_F_n_p,gradient_pA);
-      
+        
 	  /*
 	    Compute the nodal forces of the particle 
 	  */
@@ -1374,6 +1373,12 @@ static bool check_convergence(
       {
         Error0 = Error;
         Error_relative = Error/Error0;
+
+        if(Error0 < TOL)
+        {
+          return true;
+        }
+
       }
       else
       {
@@ -1383,7 +1388,9 @@ static bool check_convergence(
       /*
         Check convergence using the relative error
       */
-      if(Error_relative > TOL)
+      if((Error > TOL*100) 
+      && (Error_relative > TOL) 
+      && (Iter < MaxIter))
       {
         return false;
       }
@@ -1981,9 +1988,27 @@ static void output_selector(
   */
   if(TimeStep % ResultsTimeStep == 0)
   {
+
+    int Nnodes = ActiveNodes.Nactivenodes;
+    int p_idx = 752;
+    int NumNodes_p = MPM_Mesh.NumberNodes[p_idx];
+    Element Nodes_p = nodal_set__Particles__(p_idx, MPM_Mesh.ListNodes[p_idx], NumNodes_p);
+    Matrix ShapeFunction_p = compute_N__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
+    Matrix ShapeFunction_Ip = allocZ__MatrixLib__(Nnodes,1);
+
+    for(int A = 0; A<NumNodes_p; A++)
+    {
+      ShapeFunction_Ip.nV[ActiveNodes.Nodes2Mask[Nodes_p.Connectivity[A]]] = ShapeFunction_p.nV[A];
+    }
+
     particle_results_vtk__InOutFun__(MPM_Mesh,TimeStep,ResultsTimeStep);
 
-    nodal_results_vtk__InOutFun__(FEM_Mesh, ActiveNodes, Reactions, ShapeFunction, TimeStep, ResultsTimeStep);
+    nodal_results_vtk__InOutFun__(FEM_Mesh, ActiveNodes, Reactions, ShapeFunction_Ip, TimeStep, ResultsTimeStep);
+
+    free(Nodes_p.Connectivity);
+    free__MatrixLib__(ShapeFunction_p);
+    free__MatrixLib__(ShapeFunction_Ip);
+
   }
 
   // /* 

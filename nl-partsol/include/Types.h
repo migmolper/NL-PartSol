@@ -57,7 +57,7 @@ typedef struct Chain {
   /*! 
    * Index of a node in the set 
    */
-  int I;
+  int Idx;
 
   /*!
    * Pointer to the next node in the set
@@ -326,7 +326,12 @@ typedef struct {
   /*!
    * Equivalent plastic strain of the particle (plasticity) 
    */
-  Matrix EPS;
+  Matrix Equiv_Plast_Str;
+
+  /*! 
+  * Hardening parameter for isotropuc hardening (plasticity)
+  */
+  Matrix Kappa_hardening;
 
   /*! 
   * Back stress for kinematic hardening (plasticity)
@@ -471,7 +476,17 @@ typedef struct {
   */
   double yield_stress_0;
   double Hardening_modulus;
-  
+  double atmospheric_pressure;
+
+  /*!
+   * Frictional material (Borja et al. 2003)
+   * */
+  char Yield_Function_Frictional [100];
+  double m_Frictional;
+  double c0_Frictional;
+  double phi_Frictional;
+  double psi_Frictional;
+
   /*!
   * Hardening Hughes
   */
@@ -500,23 +515,24 @@ typedef struct {
   double theta_Hardening_Voce;
 
   /*!
+   * Hardening Borja et al. 2003
+   * */
+  bool Hardening_Borja;
+  double a_Hardening_Borja[3];
+  double alpha_Hardening_Borja;
+
+  /*!
    * Viscoplasticity parameters
    * */
   bool Viscous_regularization;
   double fluidity_param;
 
   /*!
-   * Soil parameters
-   * */
-  double friction_angle;
-  double dilatancy_angle;
-
-  /*!
    * Activate auxiliar techniques
    * */
   bool Locking_Control_Fbar;
   double alpha_Fbar;
-  
+
 } Material;
 
 /*******************************************************/
@@ -565,6 +581,11 @@ typedef struct {
 typedef struct
 {
   /*!
+   * Particle identifier
+   * */
+  int Particle_Idx;
+  
+  /*!
    * Stress/strain parameters
    * */
   double * Stress;
@@ -586,9 +607,10 @@ typedef struct
   double * F_m1_plastic_p;
   double * Increment_E_plastic;
   
-  double EPS;
-  double Cohesion;
+  double Equiv_Plast_Str; // Equivalent plastic strain
+  double Cohesion; 
   double Yield_stress;
+  double Kappa; // Hardening Parameter
 
 } State_Parameters;
 

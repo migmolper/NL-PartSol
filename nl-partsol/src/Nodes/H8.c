@@ -629,8 +629,8 @@ double min_DeltaX__H8__(
   for(int k = 0; k<NumNodesElem; k++)
   {
 
-    Node_k  = Element_Connectivity->I;
-    Node_k1 = Element_Connectivity->next->I;
+    Node_k  = Element_Connectivity->Idx;
+    Node_k1 = Element_Connectivity->next->Idx;
 
     sqr_lenght = 0.0;
     
@@ -648,8 +648,8 @@ double min_DeltaX__H8__(
   for(int k = 0; k<4; k++)
   {
 
-    Node_k  = Element_Connectivity->I;
-    Node_k4 = Element_Connectivity->next->next->next->next->I;
+    Node_k  = Element_Connectivity->Idx;
+    Node_k4 = Element_Connectivity->next->next->next->next->Idx;
 
     sqr_lenght = 0.0;
     
@@ -827,9 +827,9 @@ void local_search__H8__(Particle MPM_Mesh, Mesh FEM_Mesh)
       Connectivity_p = MPM_Mesh.ListNodes[p];
       while(Connectivity_p != NULL)
       {
-        if(FEM_Mesh.ActiveNode[Connectivity_p->I] == false)
+        if(FEM_Mesh.ActiveNode[Connectivity_p->Idx] == false)
         {
-          FEM_Mesh.ActiveNode[Connectivity_p->I] = true;
+          FEM_Mesh.ActiveNode[Connectivity_p->Idx] = true;
         }
 
         Connectivity_p = Connectivity_p->next;
@@ -845,9 +845,9 @@ void local_search__H8__(Particle MPM_Mesh, Mesh FEM_Mesh)
       Connectivity_p = MPM_Mesh.ListNodes[p];
       while(Connectivity_p != NULL)
       {
-        if(FEM_Mesh.ActiveNode[Connectivity_p->I] == false)
+        if(FEM_Mesh.ActiveNode[Connectivity_p->Idx] == false)
         {
-          FEM_Mesh.ActiveNode[Connectivity_p->I] = true;
+          FEM_Mesh.ActiveNode[Connectivity_p->Idx] = true;
         }
 
         Connectivity_p = Connectivity_p->next;

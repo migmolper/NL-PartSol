@@ -406,16 +406,21 @@ double Generalised_norm__TensorLib__(const Tensor a, const Tensor G)
   return norm;
 }
 
+
 /*************************************************************/
 
 Tensor Identity__TensorLib__()
 {
   int Ndim = NumberDimensions;
-  Tensor I = alloc__TensorLib__(2);
-  for(int i = 0 ; i<Ndim ; i++){
-    I.N[i][i] = 1;
+
+  Tensor Identity = alloc__TensorLib__(2);
+
+  for(int i = 0 ; i<Ndim ; i++)
+  {
+    Identity.N[i][i] = 1;
   }
-  return I;
+  
+  return Identity;
 }
 
 /*************************************************************/

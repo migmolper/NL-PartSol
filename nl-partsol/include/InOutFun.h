@@ -288,6 +288,18 @@ Boundaries Read_u_Neumann_Boundary_Conditions__InOutFun__(char *,int,int);
 
 /*****************************************************************/
 
+/*!
+  \fn void Check_u_Neumann_Boundary_Conditions__InOutFun__(Boundaries Neumann_Contours,int NumParticles)
+  
+  \brief Check if the Neumann boundary condition is well applied
+
+  \param Neumann_Contours : List with the properties of the boundary condition
+  \param NumParticles : Number of particles in the all simulation
+*/
+void Check_u_Neumann_Boundary_Conditions__InOutFun__(Boundaries,int);
+
+/*****************************************************************/
+
 
 /*!
 
@@ -377,6 +389,14 @@ Material * GramsMaterials(char *, Particle, int);
 
 */
 Material * Read_Materials__InOutFun__(char *, int);
+/*****************************************************************/
+
+
+/*!
+  \fn Particle Generate_One_Phase_Analysis__InOutFun__(char * Name_File, Mesh FEM_Mesh)
+
+*/
+Particle Generate_One_Phase_Analysis__InOutFun__(char *, Mesh);
 /*****************************************************************/
 
 /*!
@@ -523,5 +543,18 @@ void Gauss_Point_evolution__InOutFun__(Particle, Event, char *, int, int);
 
 
 void Hidrostatic_condition_particles__InOutFun__(char *, Particle, int,int *);
+/*****************************************************************/
+
+Material Define_Solid_Rigid(FILE *,char *,int);
+Material Define_Linear_Elastic(FILE *,char *,int);
+Material Define_Saint_Venant_Kirchhoff(FILE *,char *,int);
+Material Define_Neo_Hookean_Wriggers(FILE *,char *,int);
+Material Define_Von_Mises(FILE *,char *,int);
+
+Material Define_Frictional(FILE *,char *,int);
+void Initialize_Frictional(double *,double *,Material);
+
+Material Define_Compressible_Newtonian_Fluid(FILE *,char *,int);
+/*****************************************************************/
 
 #endif

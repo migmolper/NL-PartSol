@@ -37,7 +37,9 @@ State_Parameters finite_strain_plasticity(
   State_Parameters Output_SP_infinitesimal;
 
   /* Defin the input parameters for the infinitesimal elasticity */
-  Input_SP_infinitesimal.EPS = Inputs_SP_finite.EPS;
+  Input_SP_infinitesimal.Particle_Idx = Inputs_SP_finite.Particle_Idx;
+  Input_SP_infinitesimal.Kappa = Inputs_SP_finite.Kappa;
+  Input_SP_infinitesimal.Equiv_Plast_Str = Inputs_SP_finite.Equiv_Plast_Str;
   Input_SP_infinitesimal.Back_stress = Inputs_SP_finite.Back_stress;
   Input_SP_infinitesimal.Stress = (double *)calloc(3,sizeof(double));
   Input_SP_infinitesimal.Strain = (double *)calloc(3,sizeof(double));
@@ -111,6 +113,15 @@ State_Parameters finite_strain_plasticity(
     }
   }
 
+
+  if(I3__TensorLib__(F_m1_plastic) < 0)
+  {
+    fprintf(stderr,"%s : %s !!! \n",
+	    "Error in finite_strain_plasticity()",
+	    "The Jacobian of the resulting plastic deformation gradient is less than 0");
+    exit(EXIT_FAILURE);
+  }
+
   /*
     Rotate the kirchhoff stress tensor in the spectral representation
     to obtain its value in the cartesian representation. Note that we are employing the same
@@ -168,7 +179,8 @@ State_Parameters finite_strain_plasticity(
   /*
     Update state paramers
   */
-  Output_SP.EPS = Output_SP_infinitesimal.EPS;
+  Output_SP.Kappa = Output_SP_infinitesimal.Kappa;
+  Output_SP.Equiv_Plast_Str = Output_SP_infinitesimal.Equiv_Plast_Str;
   Output_SP.Back_stress = Output_SP_infinitesimal.Back_stress;
 
 
@@ -184,13 +196,20 @@ static void elastic_trial(
 
   double nu = MatProp_p.nu; 
   double E = MatProp_p.E;
-  double G = E/(2*(1+nu));
-  double K = 3*E/(1-2*nu);
-  double Strain_trace = Intput_SP.Strain[0] + Intput_SP.Strain[1] + Intput_SP.Strain[2];
+  double Lame_param = E*nu/((1 + nu)*(1 - 2*nu));
+  double Shear_modulus = E/(2*(1 + nu));
 
-  Intput_SP.Stress[0] = 2*G*(Intput_SP.Strain[0] - Strain_trace/3.0) + K*Strain_trace;
-  Intput_SP.Stress[1] = 2*G*(Intput_SP.Strain[1] - Strain_trace/3.0) + K*Strain_trace;
-  Intput_SP.Stress[2] = 2*G*(Intput_SP.Strain[2] - Strain_trace/3.0) + K*Strain_trace;
+  Intput_SP.Stress[0] = (Lame_param + 2*Shear_modulus)*Intput_SP.Strain[0] 
+  + Lame_param*Intput_SP.Strain[1] 
+  + Lame_param*Intput_SP.Strain[2];
+
+  Intput_SP.Stress[1] = Lame_param*Intput_SP.Strain[0] 
+  + (Lame_param + 2*Shear_modulus)*Intput_SP.Strain[1] 
+  + Lame_param*Intput_SP.Strain[2];
+
+  Intput_SP.Stress[2] = Lame_param*Intput_SP.Strain[0] 
+  + Lame_param*Intput_SP.Strain[1] 
+  + (Lame_param + 2*Shear_modulus)*Intput_SP.Strain[2];
  
 }
 

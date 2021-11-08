@@ -224,6 +224,36 @@ Boundaries Read_u_Neumann_Boundary_Conditions__InOutFun__(
 
 /**********************************************************************/
 
+void Check_u_Neumann_Boundary_Conditions__InOutFun__(
+	Boundaries Neumann_Contours,
+	int NumParticles)
+{
+
+  int NumContactForces = Neumann_Contours.NumBounds;
+  int NumNodesLoad;
+  
+  for(int i = 0 ; i<NumContactForces; i++)
+  {
+
+    NumNodesLoad = Neumann_Contours.BCC_i[i].NumNodes;
+      
+    for(int j = 0 ; j<NumNodesLoad ; j++)
+    {
+        if((Neumann_Contours.BCC_i[i].Nodes[j] > NumParticles) 
+          || (Neumann_Contours.BCC_i[i].Nodes[j] < 0))
+        {
+            fprintf(stderr,"%s : %s 0 - %i \n",
+            "Error in Define-Neumann-Boundary()","The index of the particle with Neumann BCC should be between",NumParticles);
+            exit(EXIT_FAILURE);
+        }
+	}
+      
+  }
+
+}
+
+/**********************************************************************/
+
 static BCC_Properties Read_Boundary_Conditions_Properties(FILE * Simulation_file, char * Name_File, int NumNodes)
 {
 	int Ndim = NumberDimensions;

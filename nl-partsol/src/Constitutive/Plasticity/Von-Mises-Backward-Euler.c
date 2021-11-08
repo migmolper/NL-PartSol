@@ -68,7 +68,8 @@ State_Parameters Von_Mises_backward_euler(
   /*
     Initialise solver parameters
   */
-  double EPS_k = Inputs_SP.EPS;
+  double alpha_n = Inputs_SP.Equiv_Plast_Str;
+  double alpha_k = alpha_n;
   double delta_Gamma_k = 0;
   double TOL = TOL_Radial_Returning;
   int MaxIter = Max_Iterations_Radial_Returning;
@@ -92,7 +93,7 @@ State_Parameters Von_Mises_backward_euler(
   /*
     Check yield condition
   */
-  Phi = compute_yield_surface(relative_stress_norm, Inputs_SP.EPS, MatProp);
+  Phi = compute_yield_surface(relative_stress_norm, alpha_n, MatProp);
 
   if(Phi > TOL)
   {   
@@ -103,15 +104,15 @@ State_Parameters Von_Mises_backward_euler(
     while(Convergence == false)
     {
           
-      G = compute_objective_function(relative_stress_norm, delta_Gamma_k, EPS_k, MatProp);
+      G = compute_objective_function(relative_stress_norm, delta_Gamma_k, alpha_k, MatProp);
 
       Convergence = check_convergence(G,TOL,Iter,MaxIter);
     
-      d_G = compute_derivative_objective_function(EPS_k,MatProp);
+      d_G = compute_derivative_objective_function(alpha_k,MatProp);
 
       delta_Gamma_k = update_increment_plastic_strain(delta_Gamma_k, G, d_G);
 
-      EPS_k = update_equivalent_plastic_strain(Inputs_SP.EPS, delta_Gamma_k);
+      alpha_k = update_equivalent_plastic_strain(alpha_n, delta_Gamma_k);
 
       Iter++;
 
@@ -135,13 +136,13 @@ State_Parameters Von_Mises_backward_euler(
     /*
       Update equivalent plastic strain and increment of plastic deformation
     */
-    Outputs_VarCons.EPS = EPS_k;
+    Outputs_VarCons.Equiv_Plast_Str = alpha_k;
     Outputs_VarCons.Stress = Inputs_SP.Stress;
     Outputs_VarCons.Increment_E_plastic = Inputs_SP.Increment_E_plastic;
   }
   else
   {
-    Outputs_VarCons.EPS = Inputs_SP.EPS;
+    Outputs_VarCons.Equiv_Plast_Str = Inputs_SP.Equiv_Plast_Str;
     Outputs_VarCons.Stress = Inputs_SP.Stress;
     Outputs_VarCons.Increment_E_plastic = Inputs_SP.Increment_E_plastic;
   }
@@ -237,13 +238,13 @@ static void compute_plastic_flow_direction(
 
 static double compute_yield_surface(
   double relative_stress_norm,
-  double EPS,
+  double alpha,
   Material MatProp)
 {
   double nu = MatProp.nu; /* Poisson modulus */
   double E = MatProp.E; /* Elastic modulus */
   double G = E/(2*(1+nu));
-  double K = compute_K(EPS,MatProp); /* Isotropic hardening */
+  double K = compute_K(alpha,MatProp); /* Isotropic hardening */
 
   return relative_stress_norm - sqrt(2./3.)*K;
 }
@@ -253,13 +254,13 @@ static double compute_yield_surface(
 static double compute_objective_function(
   double relative_stress_norm,
   double delta_Gamma,
-  double EPS_k,
+  double alpha_k,
   Material MatProp)
 {
   double nu = MatProp.nu; /* Poisson modulus */
   double E = MatProp.E; /* Elastic modulus */
   double G = E/(2*(1+nu));
-  double K = compute_K(EPS_k,MatProp); /* Isotropic hardening */
+  double K = compute_K(alpha_k,MatProp); /* Isotropic hardening */
   double DeltaH = compute_DeltaH(delta_Gamma,MatProp); /* Kinematic hardening */
 
   if(MatProp.Viscous_regularization)
@@ -279,13 +280,13 @@ static double compute_objective_function(
 
 
 static double compute_derivative_objective_function(
-  double EPS_k,
+  double alpha_k,
   Material MatProp)
 {
   double nu = MatProp.nu; /* Poisson modulus */
   double E = MatProp.E; /* Elastic modulus */
   double G = E/(2*(1+nu));
-  double D_K = compute_D_K(EPS_k,MatProp); /* Derivative of the isotropic hardening */
+  double D_K = compute_D_K(alpha_k,MatProp); /* Derivative of the isotropic hardening */
   double D_DeltaH = compute_D_DeltaH(MatProp); /* Derivative of the kinematic hardening */
 
   if(MatProp.Viscous_regularization)
@@ -305,7 +306,7 @@ static double compute_derivative_objective_function(
 /**************************************************************/
 
 static double compute_K(
-  double EPS,
+  double alpha,
   Material MatProp)
 /*
   Isotropic hardening function
@@ -318,13 +319,13 @@ static double compute_K(
     double Hardening_modulus = MatProp.Hardening_modulus;
     double theta = MatProp.Parameter_Hardening_Hughes;
 
-    return Sigma_y + theta*Hardening_modulus*EPS;
+    return Sigma_y + theta*Hardening_modulus*alpha;
   }
   else if(MatProp.Hardening_Cervera)
   {
     double Hardening_modulus = MatProp.Hardening_modulus;
 
-    return Sigma_y*exp(-2*Hardening_modulus*EPS/Sigma_y);
+    return Sigma_y*exp(-2*Hardening_modulus*alpha/Sigma_y);
   }
   else if(MatProp.Hardening_Ortiz)
   {
@@ -332,7 +333,7 @@ static double compute_K(
     double Exponent = MatProp.Exponent_Hardening_Ortiz;
     double Ref_PS = MatProp.Reference_Plastic_Strain_Ortiz;
 
-    return Sigma_y*pow(1 + EPS/Ref_PS,1.0/Exponent);
+    return Sigma_y*pow(1 + alpha/Ref_PS,1.0/Exponent);
   }
   else if(MatProp.Hardening_Voce)
   {
@@ -342,7 +343,7 @@ static double compute_K(
     double K_inf = MatProp.K_inf_Hardening_Voce;
     double delta = MatProp.delta_Hardening_Voce;
 
-    return Sigma_y + theta*Hardening_modulus*EPS + (K_inf - K_0)*(1 - exp(- delta*EPS));
+    return Sigma_y + theta*Hardening_modulus*alpha + (K_inf - K_0)*(1 - exp(- delta*alpha));
   }
   else
   {
@@ -355,7 +356,7 @@ static double compute_K(
 /**************************************************************/
 
 static double compute_D_K(
-  double EPS,
+  double alpha,
   Material MatProp)
 /*
   Derivative of the isotropic hardening function
@@ -374,7 +375,7 @@ static double compute_D_K(
     double Hardening_modulus = MatProp.Hardening_modulus;
     double Sigma_y = MatProp.yield_stress_0;
 
-    return -2.0*sqrt(2./3.)*Hardening_modulus*exp(-2.0*Hardening_modulus*EPS/Sigma_y);
+    return -2.0*sqrt(2./3.)*Hardening_modulus*exp(-2.0*Hardening_modulus*alpha/Sigma_y);
   }
   else if(MatProp.Hardening_Ortiz)
   {
@@ -383,7 +384,7 @@ static double compute_D_K(
     double Ref_PS = MatProp.Reference_Plastic_Strain_Ortiz;
     double Sigma_y = MatProp.yield_stress_0;
 
-    return sqrt(2./3.)*(Sigma_y/(Ref_PS*Exponent))*pow(1 + EPS/Ref_PS,1.0/Exponent - 1);
+    return sqrt(2./3.)*(Sigma_y/(Ref_PS*Exponent))*pow(1 + alpha/Ref_PS,1.0/Exponent - 1);
   }
   else if(MatProp.Hardening_Voce)
   {
@@ -393,7 +394,7 @@ static double compute_D_K(
     double K_inf = MatProp.K_inf_Hardening_Voce;
     double delta = MatProp.delta_Hardening_Voce;
 
-    return sqrt(2./3.)*(theta*Hardening_modulus + delta*(K_inf - K_0)*exp(- delta*EPS));
+    return sqrt(2./3.)*(theta*Hardening_modulus + delta*(K_inf - K_0)*exp(- delta*alpha));
   }
   else
   {
@@ -476,10 +477,10 @@ static double update_increment_plastic_strain(
 /**************************************************************/
 
 static double update_equivalent_plastic_strain(
-  double EPS,
+  double alpha,
   double delta_Gamma)
 {
-  return EPS + sqrt(2./3.)*delta_Gamma;
+  return alpha + sqrt(2./3.)*delta_Gamma;
 }
 
 /**************************************************************/

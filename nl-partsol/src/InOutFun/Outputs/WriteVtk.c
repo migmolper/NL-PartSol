@@ -269,7 +269,7 @@ void particle_results_vtk__InOutFun__(Particle MPM_Mesh, int TimeStep_i, int Res
   /* print equivalent plastic strain */
   if(Out_EPS)
   {
-    vtk_Out_Equiv_Plastic_Strain(Vtk_file, MPM_Mesh.Phi.EPS, NumParticles);
+    vtk_Out_Equiv_Plastic_Strain(Vtk_file, MPM_Mesh.Phi.Equiv_Plast_Str, NumParticles);
   }
 
   /* Close the file */
@@ -584,17 +584,17 @@ static void vtk_Out_Stress(FILE * Vtk_file, Matrix Stress, int NumParticles)
       {
         if((j<Ndim) && (k<Ndim))
         {
-          fprintf(Vtk_file,"%lf ",Stress.nM[i][j*Ndim+k]);
+          fprintf(Vtk_file,"%e ",Stress.nM[i][j*Ndim+k]);
         }
         else
         {
           if((j==2) && (k==2))
           {
-            fprintf(Vtk_file,"%lf ",Stress.nM[i][4]);
+            fprintf(Vtk_file,"%e ",Stress.nM[i][4]);
           }
           else
           {
-            fprintf(Vtk_file,"%lf ",0.0);
+            fprintf(Vtk_file,"%e ",0.0);
           }
         }
       }

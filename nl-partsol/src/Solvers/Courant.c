@@ -12,24 +12,22 @@ int Number_Soil_Water_Mixtures;
 double U_DeltaT__SolversLib__(
   Particle MPM_Mesh,
   double h,
-  double CFL)
+  Time_Int_Params Parameters_Solver)
 {
 
   double DeltaT;
-  double CEL_MAT = 0;
   double CEL_MAX = 0;
   double C[3] = {0,0,0};
   int Ndim = NumberDimensions;
   int Nmat = MPM_Mesh.NumberMaterials;
   bool DynamicTimeStep = false;
 
+
   /*
-    Get the maximum material celerity
-   */
-  for(int i = 0 ; i<Nmat ; i++)
-  {
-    CEL_MAT = DMAX(MPM_Mesh.Mat[i].Cel,CEL_MAT);
-  }
+    Read paramter solver
+  */
+ double CFL = Parameters_Solver.CFL;
+ double CEL_MAT = Parameters_Solver.Cel;
 
   /*
     Consider the velocity of the particles for the courant. In
