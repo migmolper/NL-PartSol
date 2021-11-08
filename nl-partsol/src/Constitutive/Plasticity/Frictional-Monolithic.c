@@ -314,7 +314,15 @@ static double eval_K1(
   double m,
   double pa)
 {
-  return c0 + kappa1*pow(pa/I1,m);
+  if(m == 0)
+  {
+    return c0 + kappa1;
+  }
+  else
+  {
+    return c0 + kappa1*pow(pa/I1,m);
+  }
+  
 }
 
 /**************************************************************/
@@ -326,7 +334,14 @@ static double eval_K2(
   double m,
   double pa)
 {
-  return c0 + kappa2*pow(pa/I1,m);
+  if(m == 0)
+  {
+    return c0 + kappa2;
+  }
+  else
+  {
+    return c0 + kappa2*pow(pa/I1,m);
+  }
 }
 
 /**************************************************************/

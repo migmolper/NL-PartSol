@@ -30,22 +30,25 @@ gcc Frictional-Monolithic.c -o Frictional-Monolithic -llapack -lm
 /**************************************************************/
 #define TOL_Radial_Returning 10E-12
 #define Max_Iterations_Radial_Returning 10
+#define PI 3.14159265358979323846
 
 /**************************************************************/
 /******************* Material Parameters **********************/
 /**************************************************************/
 #define YoungMouduls 100E3
 #define PoissonRatio 0.2
-#define AtmosphericPressure -100
+#define AtmosphericPressure - 100
 #define m_Parameter 0.0
 #define c0_Parameter 9.0
 #define a1_Parameter 20000
 #define a2_Parameter 0.005
 #define a3_Parameter 35
-#define alpha_Parameter - 0.71 // -0.71
-#define NumberSteps 5000 // 3500 // 2500 // 
+#define alpha_Parameter 0.5
+#define NumberSteps  3500
 #define Delta_strain_II - 0.00001
 #define Yield_Function "Matsuoka-Nakai"
+#define Confining_pressure -20
+#define FrictionAngle 35
 
 /**************************************************************/
 /********************* Required Libraries *********************/
@@ -76,6 +79,7 @@ typedef struct {
   double c0_Frictional;
   double a_Hardening_Borja[3];
   double alpha_Hardening_Borja;
+  double phi_Frictional;
 } Material;
 
 typedef struct
@@ -155,6 +159,7 @@ static void assemble_tangent_matrix(double *,double *,double *,double *,double,d
 static void solver(double *,double *,double *);
 static void update_variables(double *,double *,double *,double *,double *,double,double,double);
 static State_Parameters fill_Outputs(double *,double *,double *,double,double,double);
+static void Initialize_Frictional(double *,double *,Material);
 
 /**************************************************************/
 
@@ -175,6 +180,7 @@ int main()
   MatProp.a_Hardening_Borja[1] = a2_Parameter;
   MatProp.a_Hardening_Borja[2] = a3_Parameter;
   MatProp.alpha_Hardening_Borja = alpha_Parameter;
+  MatProp.phi_Frictional = (PI/180)*FrictionAngle;
 
   // Initialize state variables
   double * stress = (double *)calloc(3*NumberSteps,sizeof(double));
@@ -187,9 +193,30 @@ int main()
   double stress_tr[3] = {0.0, 0.0, 0.0};
   for(int i = 0 ; i<3 ; i++)
   {
-    stress[i] = -200;
+    stress[i] = Confining_pressure;
     strain[i] = 0.0;
   }
+
+  // Set initial kappa and lambda to adjust the shape of the yield criterium
+  Initialize_Frictional(&kappa1[0],&Lambda[0],MatProp);
+
+  // Check parameters
+  
+  printf("Simulation parameters for the %s yield surface:\n",MatProp.Yield_Function_Frictional);
+  printf("\t * Young Modulus: %e\n",MatProp.E);
+  printf("\t * Poisson Modulus: %f\n",MatProp.nu);
+  printf("\t * Atmospheric pressure: %e\n",MatProp.atmospheric_pressure);
+  printf("\t * m (pressure sensitive parameter): %f\n",MatProp.m_Frictional);
+  printf("\t * c0: %f \n",MatProp.c0_Frictional);
+  printf("\t * alpha (dilatancy parameter): %f\n",MatProp.alpha_Hardening_Borja);
+  printf("\t * Hardening parameters: [a1 : %f, a2 : %f, a3 : %f]\n",
+  MatProp.a_Hardening_Borja[0],MatProp.a_Hardening_Borja[1],MatProp.a_Hardening_Borja[2]);
+  printf("\t * Parameters related with the friction angle (%2.2d):\n",FrictionAngle);
+  printf("\t \t - Initial value of kappa: %f\n",kappa1[0]);
+  printf("\t \t - Initial value of Lambda: %f\n",Lambda[0]);
+  printf("Press Any Key to Continue or Crtl+c to abort\n");
+
+  getchar(); 
 
   // Start time integration
   for(int i = 1 ; i<NumberSteps ; i++)
@@ -198,9 +225,9 @@ int main()
     strain[i*3 + 1] = strain[(i-1)*3 + 1] + Delta_strain_II;
 
     // Trial stress
-    stress[i*3 + 0] = - 200;
+    stress[i*3 + 0] = Confining_pressure;
     stress[i*3 + 1] = stress[(i-1)*3 + 1] + YoungMouduls*Delta_strain_II;
-    stress[i*3 + 2] = - 200;
+    stress[i*3 + 2] = Confining_pressure;
 
     // Asign variables to the solver
     Input.Particle_Idx = 0;
@@ -219,15 +246,31 @@ int main()
   }
 
 
-  // Save data in a csv file
-  FILE * MN_output = fopen("MN_output.csv","w");
+  // Save p-q in a csv file
+  FILE * strain_stress_output = fopen("MN_strain_stress_output.csv","w");
+  FILE * p_q_output = fopen("MN_p_q_output.csv","w");
+  FILE * p_vm_output = fopen("MN_p_vm_output.csv","w");
+
   for (int i = 0; i < NumberSteps; i++)
   {
-    fprintf(MN_output,"%e, %e\n", - strain[i*3 + 1], fabs(stress[i*3 + 1] - stress[i*3 + 0]));
+    fprintf(strain_stress_output,"%e, %e\n", - strain[i*3 + 1], fabs(stress[i*3 + 1] - stress[i*3 + 0]));
+
+    fprintf(p_q_output,"%e, %e\n", fabs(0.5*stress[i*3 + 0] + 0.5*stress[i*3 + 1]), fabs(0.5*stress[i*3 + 0] - 0.5*stress[i*3 + 1]));
+
+    fprintf(p_vm_output,"%e, %e\n", 0.3333*(stress[i*3 + 0] + stress[i*3 + 1] + stress[i*3 + 2]), 
+    sqrt(0.5*( 
+      (stress[i*3 + 0] - stress[i*3 + 1])*(stress[i*3 + 0] - stress[i*3 + 1]) + 
+      (stress[i*3 + 1] - stress[i*3 + 2])*(stress[i*3 + 1] - stress[i*3 + 2]) +
+      (stress[i*3 + 2] - stress[i*3 + 0])*(stress[i*3 + 2] - stress[i*3 + 0]))));
   }
-  fclose(MN_output);
+
+  fclose(strain_stress_output);
+  fclose(p_q_output);
+  fclose(p_vm_output);
+
 
   // Print data with gnuplot
+  /*
   FILE * gnuplot = popen("gnuplot -persistent", "w");
   fprintf(gnuplot, "set termoption enhanced \n");
   fprintf(gnuplot, "set datafile separator ',' \n");
@@ -235,7 +278,41 @@ int main()
   fprintf(gnuplot, "set ylabel 'abs({/Symbol s}_{II} - {/Symbol s}_{I})' font 'Times,20' enhanced \n");
   fprintf(gnuplot, "plot %s, %s \n",
 	  "'Borja_compression.csv' title 'Borja et al. (2003)' with line lt rgb 'blue' lw 2",
-	  "'MN_output.csv' title 'Us' with line lt rgb 'red' lw 2");
+	  "'MN_strain_stress_output.csv' title 'Us' with line lt rgb 'red' lw 2");
+  fflush(gnuplot);
+  */
+
+  // Generate pipe for the gnuplot
+
+  FILE * gnuplot = popen("gnuplot -persistent", "w");
+  fprintf(gnuplot, "set size 1.0,4.0 \n");
+  fprintf(gnuplot, "set multiplot \n");
+//  fprintf(gnuplot, "set termoption enhanced \n");
+
+  fprintf(gnuplot, "set origin 0.0,0.0 \n");
+  fprintf(gnuplot, "set size 1.8,1.4 \n");
+  fprintf(gnuplot, "set xlabel '- {/Symbol e}_{II}' font 'Times,20' enhanced \n");
+  fprintf(gnuplot, "set ylabel 'abs({/Symbol s}_{II} - {/Symbol s}_{I})' font 'Times,20' enhanced \n");
+  fprintf(gnuplot, "set datafile separator ',' \n");
+  fprintf(gnuplot, "plot %s \n",
+	  "'MN_strain_stress_output.csv' title 'Us' with line lt rgb 'red' lw 2");
+
+  fprintf(gnuplot, "set origin 0.0,1.4 \n");
+  fprintf(gnuplot, "set size 1.8,1.4 \n");
+  fprintf(gnuplot, "set xlabel 'abs({/Symbol s}_{II} + {/Symbol s}_{I})/2' font 'Times,20' enhanced \n");
+  fprintf(gnuplot, "set ylabel 'abs({/Symbol s}_{II} - {/Symbol s}_{I})/2' font 'Times,20' enhanced \n");
+  fprintf(gnuplot, "set datafile separator ',' \n");
+  fprintf(gnuplot, "plot %s \n",
+	  "'MN_p_q_output.csv' title 'Us' with line lt rgb 'red' lw 2");
+
+  fprintf(gnuplot, "set origin 0.0,1.8 \n");
+  fprintf(gnuplot, "set size 1.8,1.4 \n");
+  fprintf(gnuplot, "set xlabel 'p' font 'Times,20' enhanced \n");
+  fprintf(gnuplot, "set ylabel 'VM' font 'Times,20' enhanced \n");
+  fprintf(gnuplot, "set datafile separator ',' \n");
+  fprintf(gnuplot, "plot %s \n",
+	  "'MN_p_vm_output.csv' title 'Us' with line lt rgb 'red' lw 2");
+
   fflush(gnuplot);
 
   // Free memory 
@@ -488,7 +565,14 @@ static double eval_K1(
   double m,
   double pa)
 {
-  return c0 + kappa1*pow(pa/I1,m);
+  if(m == 0)
+  {
+    return c0 + kappa1;
+  }
+  else
+  {
+    return c0 + kappa1*pow(pa/I1,m);
+  }
 }
 
 /**************************************************************/
@@ -500,7 +584,14 @@ static double eval_K2(
   double m,
   double pa)
 {
-  return c0 + kappa2*pow(pa/I1,m);
+  if(m == 0)
+  {
+    return c0 + kappa2;
+  }
+  else
+  {
+    return c0 + kappa2*pow(pa/I1,m);
+  }
 }
 
 /**************************************************************/
@@ -512,9 +603,19 @@ static void eval_d_K2_d_stress(
   double m,
   double pa)
 {
-  d_K2_d_stress[0] = - (m*kappa2/I1)*pow(pa/I1,m);
-  d_K2_d_stress[1] = - (m*kappa2/I1)*pow(pa/I1,m);
-  d_K2_d_stress[2] = - (m*kappa2/I1)*pow(pa/I1,m);
+  if(m == 0)
+  {
+    d_K2_d_stress[0] = 0.0;
+    d_K2_d_stress[1] = 0.0;
+    d_K2_d_stress[2] = 0.0;
+  }
+  else
+  {
+    d_K2_d_stress[0] = - (m*kappa2/I1)*pow(pa/I1,m);
+    d_K2_d_stress[1] = - (m*kappa2/I1)*pow(pa/I1,m);
+    d_K2_d_stress[2] = - (m*kappa2/I1)*pow(pa/I1,m);
+  }
+
 }
 
 /**************************************************************/
@@ -526,7 +627,14 @@ static double eval_b1(
   double m,
   double pa)
 {
-  return m*kappa1*(pow(pa/I1,m))*(cbrt(I3)/I1);
+  if(m == 0)
+  {
+    return 0.0;
+  }
+  else
+  {
+    return m*kappa1*(pow(pa/I1,m))*(cbrt(I3)/I1);
+  }
 }
 
 /**************************************************************/
@@ -538,7 +646,14 @@ static double eval_b2(
   double m,
   double pa)
 {
-  return m*kappa2*(pow(pa/I1,m))*(cbrt(I3)/I1);
+  if(m == 0)
+  {
+    return 0.0;
+  }
+  else
+  {
+    return m*kappa2*(pow(pa/I1,m))*(cbrt(I3)/I1);
+  }
 }
 
 /**************************************************************/
@@ -552,12 +667,21 @@ static void eval_d_b2_d_stress(
   double m,
   double pa)
   {
+    
+    if(m == 0)
+    {
+      d_b2_d_stress[0] = 0.0;
+      d_b2_d_stress[1] = 0.0;
+      d_b2_d_stress[2] = 0.0;
+    }
+    else
+    {
+      double b2 = eval_b2(kappa2,I1,I3,m,pa);
 
-    double b2 = eval_b2(kappa2,I1,I3,m,pa);
-
-    d_b2_d_stress[0] = (b2/I1)*(I1/(3*Stress[0]) - m - 1.0);
-    d_b2_d_stress[1] = (b2/I1)*(I1/(3*Stress[1]) - m - 1.0);
-    d_b2_d_stress[2] = (b2/I1)*(I1/(3*Stress[2]) - m - 1.0);
+      d_b2_d_stress[0] = (b2/I1)*(I1/(3*Stress[0]) - m - 1.0);
+      d_b2_d_stress[1] = (b2/I1)*(I1/(3*Stress[1]) - m - 1.0);
+      d_b2_d_stress[2] = (b2/I1)*(I1/(3*Stress[2]) - m - 1.0);
+    }
   } 
     
 /**************************************************************/
@@ -917,9 +1041,18 @@ static void eval_dd_Plastic_Potential_d_stress_d_kappa2(
   double K2 = eval_K2(kappa2,I1,c0,m,pa);
   double b2 = eval_b2(kappa2,I1,I3,m,pa);
 
-  dd_G_d_stress_d_kappa2[0] = pow((pa/I1),m)*(cbrt(I3)/(3.0*Stress[0]) + 2.0*b2/(3.0*K2) - m*cbrt(I3)/I1)/(3.0*pow(cbrt(K2),2));
-  dd_G_d_stress_d_kappa2[1] = pow((pa/I1),m)*(cbrt(I3)/(3.0*Stress[1]) + 2.0*b2/(3.0*K2) - m*cbrt(I3)/I1)/(3.0*pow(cbrt(K2),2));
-  dd_G_d_stress_d_kappa2[2] = pow((pa/I1),m)*(cbrt(I3)/(3.0*Stress[2]) + 2.0*b2/(3.0*K2) - m*cbrt(I3)/I1)/(3.0*pow(cbrt(K2),2));
+  if(m == 0)
+  {
+    dd_G_d_stress_d_kappa2[0] = (cbrt(I3)/(3.0*Stress[0]) + 2.0*b2/(3.0*K2))/(3.0*pow(cbrt(K2),2));
+    dd_G_d_stress_d_kappa2[1] = (cbrt(I3)/(3.0*Stress[1]) + 2.0*b2/(3.0*K2))/(3.0*pow(cbrt(K2),2));
+    dd_G_d_stress_d_kappa2[2] = (cbrt(I3)/(3.0*Stress[2]) + 2.0*b2/(3.0*K2))/(3.0*pow(cbrt(K2),2));
+  }
+  else
+  {
+    dd_G_d_stress_d_kappa2[0] = pow((pa/I1),m)*(cbrt(I3)/(3.0*Stress[0]) + 2.0*b2/(3.0*K2) - m*cbrt(I3)/I1)/(3.0*pow(cbrt(K2),2));
+    dd_G_d_stress_d_kappa2[1] = pow((pa/I1),m)*(cbrt(I3)/(3.0*Stress[1]) + 2.0*b2/(3.0*K2) - m*cbrt(I3)/I1)/(3.0*pow(cbrt(K2),2));
+    dd_G_d_stress_d_kappa2[2] = pow((pa/I1),m)*(cbrt(I3)/(3.0*Stress[2]) + 2.0*b2/(3.0*K2) - m*cbrt(I3)/I1)/(3.0*pow(cbrt(K2),2));
+  } 
 
 }
 
@@ -963,7 +1096,8 @@ static double assemble_residual(
     double Error;
 
     // Check if we are in the apex
-    if(fabs(I1/3.0) < TOL_Radial_Returning)
+    if((m != 0) &&
+      (fabs(I1/3.0) < TOL_Radial_Returning))
     {
       fprintf(stderr,"%s: %s \n",
       "Error in Frictional_Monolithic",
@@ -1293,6 +1427,32 @@ static State_Parameters fill_Outputs(
   Outputs_VarCons.Increment_E_plastic[2] = delta_lambda*Plastic_Flow[2];
 
   return Outputs_VarCons;
+}
+
+/**************************************************************/
+
+static void Initialize_Frictional(
+  double * kappa,
+  double * EPS, 
+  Material MatProp)
+{
+  double square_Sin_Phi = sin(MatProp.phi_Frictional)*sin(MatProp.phi_Frictional);
+
+  *kappa = 8*square_Sin_Phi/(1 - square_Sin_Phi);
+
+  double a1 = MatProp.a_Hardening_Borja[0];
+  double a3 = MatProp.a_Hardening_Borja[2];
+  double f = 1;
+  double df = 1;
+  int iter = 0;
+
+  while(fabs(f) > TOL_Radial_Returning)
+  {
+    iter++;
+    f = (*kappa) - a1*(*EPS)*exp(-a3*(*EPS));
+    df = (a3*(*EPS) - 1)*a1*exp(-a3*(*EPS));
+    *EPS -= f/df;
+  }
 }
 
 /**************************************************************/
