@@ -121,7 +121,8 @@ int main(int argc, char * argv[])
       }
       else if(strcmp(TimeIntegrationScheme,"Newmark-beta-Finite-Strains") == 0 )
       {
-        U_Newmark_beta_Finite_Strains(FEM_Mesh, MPM_Mesh, Parameters_Solver);
+        U_Newmark_beta_Finite_Strains_HPC(FEM_Mesh, MPM_Mesh, Parameters_Solver);
+//        U_Newmark_beta_Finite_Strains(FEM_Mesh, MPM_Mesh, Parameters_Solver);
       }
       else if(strcmp(TimeIntegrationScheme,"Newmark-beta-Finite-Strains-BDB") == 0 )
       {
