@@ -1,3 +1,6 @@
+extern int argc_copy;
+extern char ** argv_copy;
+
 
 extern char * SimulationFile;
 extern char * RestartFile;

@@ -13,9 +13,15 @@
 
 #include "nl-partsol.h"
 
+#include <petscsys.h>
+#include <petscmat.h>
+#include <petscviewer.h>
+
 /*
   Call global variables 
 */
+extern int argc_copy;
+extern char ** argv_copy;
 char * SimulationFile;
 char * RestartFile;
 char * TimeIntegrationScheme;
@@ -24,13 +30,15 @@ char * Formulation;
 /*
   Auxiliar functions for the main
 */
+static void copy_main_arguments(int, char **);
 static void nlpartsol_help_message();
 static void globalfree(Mesh,Particle);
-static void standard_error(char * Error_message);
+static void standard_error(char *);
+
+int main(int argc, char ** argv)
+{ 
 
 
-int main(int argc, char * argv[])
-{  
   char Error_message[MAXW];
   bool Is_New_Simulation = false;
   bool Is_Restart_Simulation = false;
@@ -38,6 +46,8 @@ int main(int argc, char * argv[])
   Mesh FEM_Mesh;
   Particle MPM_Mesh;
   Time_Int_Params Parameters_Solver;
+
+  copy_main_arguments(argc,argv);
 
   /*********************************************************************/
   /************ Read simulation file and kind of simulation ************/
@@ -282,7 +292,27 @@ int main(int argc, char * argv[])
    
 }
 
-/*********************************************************************/
+/*******************************************************************/
+
+static void copy_main_arguments(
+  int argc,
+  char ** argv)
+{
+
+  argc_copy = argc;
+
+  argv_copy = malloc((argc_copy+1)*sizeof*argv_copy);
+  
+  for(int i = 0 ; i<argc_copy ; i++)
+  {
+    argv_copy[i] = strdup(argv[i]);
+  }
+
+  argv_copy[argc_copy] = NULL;
+
+}
+
+/*******************************************************************/
 
 static void nlpartsol_help_message()
 {

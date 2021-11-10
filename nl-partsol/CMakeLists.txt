@@ -44,16 +44,14 @@ target_link_libraries(${PROJECT_NAME} m)
 find_package(PkgConfig REQUIRED)
 
 # Add LAPACK
-pkg_search_module(LAPACK lapack IMPORTED_TARGET REQUIRED)
+pkg_check_modules(LAPACK lapack IMPORTED_TARGET REQUIRED)
 if(LAPACK_FOUND)
-  message(STATUS "Found Lapack ${LAPACK_VERSION}")
   target_link_libraries(${PROJECT_NAME} ${LAPACK_LIBRARIES})
 endif()
 
 # Add PETSc
-pkg_check_modules(PETSC petsc)
+pkg_check_modules(PETSC PETSc IMPORTED_TARGET REQUIRED)
 if(PETSC_FOUND)
-  message(STATUS "Found PETSc ${PETSC_VERSION}")
   
   list(APPEND COMPILE_OPTIONS ${PETSC_CFLAGS})
 
@@ -89,5 +87,4 @@ add_custom_target(release
   COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target all
   COMMENT "Switch CMAKE_BUILD_TYPE to Release"
   )
-
 

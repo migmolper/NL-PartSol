@@ -1,0 +1,47 @@
+
+GramsBox (Type=GID,File=Nodes.msh) { 
+
+	 GramsBoundary (File=Support.txt) { 
+		 BcDirichlet V.x Curve_Constant.txt 
+		 BcDirichlet V.y Curve_Constant.txt 
+	 } 
+
+} 
+
+
+
+Define-Material(idx=0,Model=Neo-Hookean-Wriggers)
+{
+  rho=1050
+  E=1e6
+  nu=0.3
+
+}
+
+GramsTime (Type=Newmark-beta-Finite-Strains) { 
+	 CFL=0.018516
+	 N=3000 
+	 Epsilon=1.0
+	 Cel=30.86
+} 
+
+
+One-Phase-Analysis (File=Particles.msh,GPxElement=4) {
+
+   Assign-material-to-particles (MatIdx=0, Particles=Block.txt)
+
+   GramsShapeFun (Type=LME) {
+       gamma=2.0
+   }
+
+   GramsBodyForces (Nodes=Block.txt) { 
+       b.y Gravity_Load.txt 
+   } 
+
+} 
+
+GramsOutputs (i=50) { 
+    DIR=Resultados
+    Out-displacement=true
+    Out-stress=true
+} 
