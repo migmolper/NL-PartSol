@@ -106,7 +106,7 @@ void U_Newmark_beta_Finite_Strains(Mesh, Particle, Time_Int_Params);
   \param Particle MPM_Mesh : Variable with the particle information
   \param InitialStep
 */
-void U_Newmark_beta_Finite_Strains_HPC(Mesh,Particle,Time_Int_Params);
+int U_Newmark_beta_Finite_Strains_HPC(Mesh,Particle,Time_Int_Params);
 
 
 /*

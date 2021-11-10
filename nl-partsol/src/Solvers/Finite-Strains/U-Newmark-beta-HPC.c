@@ -1,21 +1,19 @@
 #include "nl-partsol.h"
 
+#include <petsc.h>
 #include <petscsys.h>
 #include <petscmat.h>
 #include <petscviewer.h>
 
+
 /*
   Call global variables
 */
-int argc_copy;
-char ** argv_copy;
 double Thickness_Plain_Stress;
 Event * Out_nodal_path_csv;
 Event * Out_particles_path_csv;
 int Number_Out_nodal_path_csv;
 int Number_Out_particles_path_csv;
-
-static char help[] = "Test VecConcatenate both in serial and parallel.\n";
 
 /*
   Define local global variable for the relative error
@@ -46,31 +44,19 @@ typedef struct
   Auxiliar functions 
 */
 static Newmark_parameters compute_Newmark_parameters(double, double, double);
-static PetscErrorCode Generate_List_Nonzero_Entries(PetscInt *,Particle,Mesh,Mask);
+static void Generate_List_Nonzero_Entries(PetscInt *,Particle,Mesh,Mask);
 static PetscErrorCode compute_Nodal_Effective_Mass(Mat *,PetscInt *,Particle,Mesh,Mask,double);
 
 /**************************************************************/
 
-void U_Newmark_beta_Finite_Strains_HPC(
+int U_Newmark_beta_Finite_Strains_HPC(
   Mesh FEM_Mesh,
   Particle MPM_Mesh,
   Time_Int_Params Parameters_Solver)
 {
 
-  /*
-    Initializes the PETSc data base and MPI
-  */
+  /* Error varible for PETSc */
   PetscErrorCode ierr;
-//  PetscInitialize(&argc_copy,&argv_copy,(char*)0,help);
-  PetscInitializeNoArguments();
-
-  if(ierr)
-  {
-    fprintf(stderr,"%s : %s %s \n \t -> %s \n",
-    "Error in U_Newmark_beta_Finite_Strains_HPC",
-    "The function","  PetscInitializeNoArguments() returned an error message !!!",help);
-    exit(EXIT_FAILURE);
-  }
 
   /*
     Auxiliar variables for the solver
@@ -92,8 +78,10 @@ void U_Newmark_beta_Finite_Strains_HPC(
 
   bool Convergence;
 
+  PetscInt Order;
+
   PetscInt * nnz;
-  Mat * Effective_MassMatrix;
+  Mat Effective_MassMatrix;
 
 
   Matrix Tangent_Stiffness;
@@ -124,12 +112,9 @@ void U_Newmark_beta_Finite_Strains_HPC(
 
 
   for(int TimeStep = InitialStep ; TimeStep<NumTimeStep ; TimeStep++ )
-    {
-      print_Status("*************************************************",TimeStep);
+  {
       print_step(TimeStep,DeltaTimeStep);
 
-      print_Status("*************************************************",TimeStep);
-      print_Status("First step : Generate Mask ... WORKING",TimeStep);
       /*
 	       With the active set of nodes generate a mask to help the algorithm to compute
 	       the equilibrium only in the active nodes
@@ -138,21 +123,25 @@ void U_Newmark_beta_Finite_Strains_HPC(
       ActiveNodes = generate_NodalMask__MeshTools__(FEM_Mesh);
       Nactivenodes = ActiveNodes.Nactivenodes;
       Free_and_Restricted_Dofs = generate_Mask_for_static_condensation__MeshTools__(ActiveNodes,FEM_Mesh);
+      Order = NumberDOF*ActiveNodes.Nactivenodes;
+
+      /*
+        Generate an array with non-zeros in the matrix
+      */
+      ierr = PetscMalloc1(Order,&nnz); if(ierr) CHKERRQ(ierr);
+
       Generate_List_Nonzero_Entries(nnz,MPM_Mesh,FEM_Mesh,ActiveNodes);
-      print_Status("DONE !!!",TimeStep);
 
-//exit(0);
-
-      print_Status("*************************************************",TimeStep);
-      print_Status("Second step : Compute effective mass ... WORKING",TimeStep);
       /*
 	       Compute the effective mass matrix as a convex combination of the consistent mass
 	       matrix and the lumped mass matrix.
       */
-     compute_Nodal_Effective_Mass(Effective_MassMatrix,nnz,MPM_Mesh,FEM_Mesh,ActiveNodes,epsilon);
-      print_Status("DONE !!!",TimeStep);
+      ierr = MatCreateSeqAIJ(PETSC_COMM_SELF,Order,Order,0,nnz,&Effective_MassMatrix); if(ierr) CHKERRQ(ierr);
 
-exit(0);
+      ierr = compute_Nodal_Effective_Mass(&Effective_MassMatrix,nnz,MPM_Mesh,FEM_Mesh,ActiveNodes,epsilon); if(ierr) CHKERRQ(ierr);
+
+
+      exit(0);
 
 //      print_Status("*************************************************",TimeStep);
 //      print_Status("Third step : Compute nodal kinetics ... WORKING",TimeStep);
@@ -245,6 +234,7 @@ exit(0);
 //      print_Status("DONE !!!",TimeStep);
     }
 
+
 }
 
 /**************************************************************/
@@ -268,8 +258,8 @@ static Newmark_parameters compute_Newmark_parameters(
 
 /**************************************************************/
 
-static PetscErrorCode Generate_List_Nonzero_Entries(
-  PetscInt *nnz,
+static void Generate_List_Nonzero_Entries(
+  PetscInt * nnz,
   Particle MPM_Mesh,
   Mesh FEM_Mesh,
   Mask ActiveNodes)
@@ -290,17 +280,6 @@ static PetscErrorCode Generate_List_Nonzero_Entries(
   Element Nodes_p;
 
   int * Matrix_Layout = (int *)calloc(Order*Order,sizeof(int));
-
-  PetscMalloc1(Order,&nnz);
-
-  if(ierr)
-  {
-    fprintf(stderr,"%s : %s %s %s \n",
-    "Error in Generate_List_Nonzero_Entries",
-    "The function","PetscMalloc1",
-    "returned an error message !!!" );
-    return ierr;
-  }
 
   /* Iterate over the particles to get the nodal values */
   for(int p = 0 ; p<Np ; p++)
@@ -353,7 +332,6 @@ static PetscErrorCode Generate_List_Nonzero_Entries(
     }
   }
 
-  return ierr;
 }
 
 /**************************************************************/
@@ -375,6 +353,7 @@ static PetscErrorCode compute_Nodal_Effective_Mass(
   |    0  | M_eff |	         |   0    | M_cons |	      |   0    | M_lump |
 */
 {
+  PetscErrorCode ierr;
 
   PetscInt Nnodes_mask = ActiveNodes.Nactivenodes;
   PetscInt Ndof = NumberDOF;
@@ -400,9 +379,6 @@ static PetscErrorCode compute_Nodal_Effective_Mass(
   PetscScalar m_AB_p;
   /* Element for each particle */
   Element Nodes_p;
-
-  /* Allocate the effective mass matrix */
-  MatCreateSeqAIJ(PETSC_COMM_SELF,Order,Order,Order,nnz,Effective_MassMatrix);
 
   /* Iterate over the particles to get the nodal values */
   for(PetscInt p = 0 ; p<Np ; p++)
@@ -447,7 +423,7 @@ static PetscErrorCode compute_Nodal_Effective_Mass(
           idx_A_mask_i = A_mask*Ndof+i;
           idx_B_mask_i = B_mask*Ndof+i;
           
-          MatSetValues(*Effective_MassMatrix,1,&idx_A_mask_i,1,&idx_B_mask_i,&m_AB_p,ADD_VALUES);
+          ierr = MatSetValues(*Effective_MassMatrix,1,&idx_A_mask_i,1,&idx_B_mask_i,&m_AB_p,ADD_VALUES); if(ierr) return ierr;
 
         }
 
@@ -463,10 +439,10 @@ static PetscErrorCode compute_Nodal_Effective_Mass(
     /*
       Start assembling process
     */
-   MatAssemblyBegin(*Effective_MassMatrix,MAT_FINAL_ASSEMBLY);
-   MatAssemblyEnd(*Effective_MassMatrix,MAT_FINAL_ASSEMBLY);
+   ierr = MatAssemblyBegin(*Effective_MassMatrix,MAT_FINAL_ASSEMBLY);
+   ierr = MatAssemblyEnd(*Effective_MassMatrix,MAT_FINAL_ASSEMBLY);
 
-   MatView(*Effective_MassMatrix,PETSC_VIEWER_STDOUT_SELF);
+   MatView(*Effective_MassMatrix,PETSC_VIEWER_DRAW_WORLD);
 
   /*
     At this point the effective mass matrix coincides with the consistent mass
