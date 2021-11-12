@@ -285,7 +285,7 @@ static void check_Von_Mises_Material(Material Mat_particle, Check_Material ChkMa
     printf("\t \t -> %s : %f \n","Yield stress",Mat_particle.yield_stress_0);
     printf("\t \t -> %s : %s \n","Plastic solver",Mat_particle.Plastic_Solver);
 
-    if(ChkMat.Is_Locking_Control_Fbar)
+    if(Mat_particle.Locking_Control_Fbar)
     {
       printf("\t \t -> %s : %s \n","F-bar","Enabled");
 

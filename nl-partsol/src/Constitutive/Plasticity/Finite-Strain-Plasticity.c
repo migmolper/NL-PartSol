@@ -113,7 +113,6 @@ State_Parameters finite_strain_plasticity(
     }
   }
 
-
   if(I3__TensorLib__(F_m1_plastic) < 0)
   {
     fprintf(stderr,"%s : %s !!! \n",
