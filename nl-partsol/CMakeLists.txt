@@ -46,7 +46,7 @@ find_package(PkgConfig REQUIRED)
 # Add LAPACK
 pkg_check_modules(LAPACK lapack IMPORTED_TARGET REQUIRED)
 if(LAPACK_FOUND)
-  target_link_libraries(${PROJECT_NAME} ${LAPACK_LIBRARIES})
+  target_link_libraries(${PROJECT_NAME} PkgConfig::LAPACK)
 endif()
 
 # Add PETSc

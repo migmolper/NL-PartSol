@@ -12,6 +12,6 @@ mkdir build
 
 cd build
 
-cmake ..
+cmake -D CMAKE_C_COMPILER=$CC CMAKE_CXX_CMPILER=$CXX ..
 
 make -k
