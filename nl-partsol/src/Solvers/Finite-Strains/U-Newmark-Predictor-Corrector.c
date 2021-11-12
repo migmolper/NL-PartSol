@@ -1274,7 +1274,7 @@ static void output_selector(
   {
 
     int Nnodes = ActiveNodes.Nactivenodes;
-    int p_idx = 1;
+    int p_idx = 2075;
     int NumNodes_p = MPM_Mesh.NumberNodes[p_idx];
     Element Nodes_p = nodal_set__Particles__(p_idx, MPM_Mesh.ListNodes[p_idx], NumNodes_p);
     Matrix ShapeFunction_p = compute_N__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);

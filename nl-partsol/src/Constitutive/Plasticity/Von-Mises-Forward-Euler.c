@@ -72,7 +72,7 @@ State_Parameters Von_Mises_forward_euler(
 
     Outputs_VarCons.Equiv_Plast_Str = update_equivalent_plastic_strain(Inputs_SP.Equiv_Plast_Str, delta_Gamma);
 
-    compute_increment_plastic_strain_tensor(Outputs_VarCons.Increment_E_plastic,plastic_flow_direction, delta_Gamma);
+    compute_increment_plastic_strain_tensor(Inputs_SP.Increment_E_plastic,plastic_flow_direction, delta_Gamma);
 
     update_back_stress(Inputs_SP.Back_stress,plastic_flow_direction,delta_Gamma,MatProp);
 

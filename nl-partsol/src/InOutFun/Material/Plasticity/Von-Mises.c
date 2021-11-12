@@ -198,6 +198,25 @@ Material Define_Von_Mises(
       New_Material.Hardening_Ortiz = Activate_Options(Parameter_pars[1]);
     }
     /**************************************************/
+    else if(strcmp(Parameter_pars[0],"Fbar") == 0)
+	  {
+      ChkMat.Is_Locking_Control_Fbar = true;
+      New_Material.Locking_Control_Fbar = Activate_Options(Parameter_pars[1]);
+	  }
+	  /**************************************************/
+	  else if(strcmp(Parameter_pars[0],"Fbar-alpha") == 0)
+	  {
+      ChkMat.Is_alpha_Fbar = true;
+			New_Material.alpha_Fbar = atof(Parameter_pars[1]);
+
+			if((New_Material.alpha_Fbar < 0.0) 
+      || (New_Material.alpha_Fbar > 1.0))
+			{
+				sprintf(Error_message,"The range for Fbar-alpha is [0,1]");
+	   		standard_error(Error_message); 
+			}
+	  }  
+    /**************************************************/
     else if((strcmp(Parameter_pars[0],"}") == 0) && (Parser_status == 1))
     {
         Is_Close = true;
