@@ -51,21 +51,11 @@ endif()
 
 # Add PETSc
 pkg_check_modules(PETSC PETSc IMPORTED_TARGET REQUIRED)
+
 if(PETSC_FOUND)
-  
-  list(APPEND COMPILE_OPTIONS ${PETSC_CFLAGS})
 
-  include_directories(${PETSC_INCLUDE_DIRS})
-  
-  set(LINK_FLAGS "${LINK_FLAGS} ${PETSC_LDFLAGS}")   
-  
-  list(APPEND LIBRARIES ${PETSC_LINK_LIBRARIES})   
-  
-  set(CMAKE_REQUIRED_FLAGS ${PETSC_CFLAGS})   
-  
-  set(CMAKE_REQUIRED_INCLUDES "${PETSC_INCLUDE_DIRS}")
+target_link_libraries(${PROJECT_NAME} PkgConfig::PETSC)
 
-  target_link_libraries(${PROJECT_NAME} ${PETSC_LIBRARIES})
 endif()
 
 # Add OpenMP
