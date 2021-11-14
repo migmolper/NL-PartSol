@@ -67,7 +67,6 @@ State_Parameters Von_Mises_forward_euler(
 
   if(Phi_tr > TOL)
   {
-
     delta_Gamma = compute_increment_flow_rule(Phi_tr,MatProp);
 
     Inputs_SP.Equiv_Plast_Str= update_equivalent_plastic_strain(Inputs_SP.Equiv_Plast_Str, delta_Gamma);
@@ -77,7 +76,6 @@ State_Parameters Von_Mises_forward_euler(
     update_back_stress(Inputs_SP.Back_stress,plastic_flow_direction,delta_Gamma,MatProp);
 
     apply_plastic_corrector_stress_tensor(Inputs_SP.Stress,plastic_flow_direction,delta_Gamma,MatProp);
-
   }
 
   Outputs_VarCons.Stress = Inputs_SP.Stress;

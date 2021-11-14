@@ -28,6 +28,7 @@ typedef struct
   bool Is_a2_Hardening_Borja; // Hardening parameter
   bool Is_a3_Hardening_Borja; // Hardening parameter
   bool Is_atmospheric_pressure; // Reference pressure
+  bool Is_Cohesion; // COhesion of the material
   bool Is_friction_angle; // Friction angle
   bool Is_dilatancy_angle; // Dilatancy angle
   bool Is_Locking_Control_Fbar; // Locking control
@@ -67,6 +68,7 @@ Material Define_Frictional(
   double rad_dilatancy_angle;
 
   /* Default parameters */
+  Frictional_Material.yield_stress_0 = 0.0; // Cohesionless
   Frictional_Material.Locking_Control_Fbar = false;
   Frictional_Material.alpha_Fbar = 0.0;
 
@@ -159,6 +161,12 @@ Material Define_Frictional(
       Frictional_Material.atmospheric_pressure = atof(Parameter_pars[1]);
     }
     /**************************************************/
+    else if(strcmp(Parameter_pars[0],"Cohesion") == 0)
+    {
+      ChkMat.Is_Cohesion = true;
+      Frictional_Material.yield_stress_0 = atof(Parameter_pars[1]);
+    }
+    /**************************************************/
     else if(strcmp(Parameter_pars[0],"Friction-angle") == 0)
     {
       ChkMat.Is_friction_angle = true;
@@ -231,6 +239,7 @@ static Check_Material Initialise_Check_Material()
   ChkMat.Is_a2_Hardening_Borja = false; // Hardening parameter
   ChkMat.Is_a3_Hardening_Borja = false; // Hardening parameter
   ChkMat.Is_atmospheric_pressure = false; // Reference pressure
+  ChkMat.Is_Cohesion = false; // Initial cohesion
   ChkMat.Is_friction_angle = false; // Friction angle
   ChkMat.Is_dilatancy_angle = false; // Dilatancy angle
   ChkMat.Is_Locking_Control_Fbar = false; // Locking control
@@ -268,6 +277,11 @@ static void check_Frictional_Material(Material Mat_particle, Check_Material ChkM
     printf("\t \t -> %s : %f \n","a3-Hardening-Borja",Mat_particle.a_Hardening_Borja[2]);	
     printf("\t \t -> %s : %f \n","Friction-angle",Mat_particle.phi_Frictional*(180/PI__MatrixLib__));	
     printf("\t \t -> %s : %f \n","Dilatancy-angle",Mat_particle.psi_Frictional*(180/PI__MatrixLib__));	
+
+    if(ChkMat.Is_Cohesion)
+    {
+      printf("\t \t -> %s : %f \n","Cohesion",Mat_particle.yield_stress_0);
+    }
     
     if(ChkMat.Is_Locking_Control_Fbar)
     {

@@ -1334,7 +1334,8 @@ static void solver(
   int NRHS = 1;
   
   double rcond = compute_condition_number(Tangent_Matrix);
-  
+
+
   if(rcond < 1E-10)
   {
     fprintf(stderr,"%s: %s %i, %s: %e\n",

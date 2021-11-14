@@ -28,6 +28,8 @@ typedef struct
   double a1; 
   double a2; 
   double a3;
+  double cohesion;
+  double friction_angle;
   double CC[9];
 
 } Model_Parameters;
@@ -59,7 +61,7 @@ static void eval_d_f_d_stress(double *,double *,double,double);
 static double eval_g(double,double);
 static void eval_d_g_d_stress(double *,double *,double,double);
 static void eval_dd_g_dd_stress(double *,double *,double,double);
-static double eval_Yield_Function(double,double,double,double,double,double,double);
+static double eval_Yield_Function(double,double,double,double,double,double,double,double,double);
 static void eval_d_Yield_Function_d_stress(double *,double *,double,double,double,double,double,double,double);
 static double eval_d_Yield_Function_d_kappa1(double,double,double,double,double,double);
 static double eval_Plastic_Potential(double,double,double,double,double,double,double);
@@ -143,7 +145,7 @@ State_Parameters Frictional_Monolithic(
   /*
     Check yield condition
   */
-  if(eval_Yield_Function(Params.c0,kappa_k[0],Params.pa,I1,I2,I3,Params.m) > 0.0)
+  if(eval_Yield_Function(Params.c0,kappa_k[0],Params.pa,I1,I2,I3,Params.m,Params.cohesion,Params.friction_angle) > 0.0)
   {
     /*
       Compute elastic trial with the inverse elastic relation
@@ -182,7 +184,7 @@ State_Parameters Frictional_Monolithic(
         update_variables(D_Residual,Stress_k2,kappa_k2,&delta_lambda_k2,&Lambda_k2,Lambda_n,Params.alpha,delta);
 
         Norm_Residual_2 = assemble_residual(Residual,Stress_k2,Strain_e_tri,Plastic_Flow_k,kappa_k2,delta_lambda_k2,Lambda_k2,Params);
-          
+        
         if((Norm_Residual_2 - Norm_Residual_1) > TOL_Radial_Returning)
         {
           while((Norm_Residual_2 - Norm_Residual_1) > TOL_Radial_Returning)
@@ -286,9 +288,13 @@ static Model_Parameters fill_model_paramters(Material MatProp)
   Params.a1 = MatProp.a_Hardening_Borja[0];
   Params.a2 = MatProp.a_Hardening_Borja[1];
   Params.a3 = MatProp.a_Hardening_Borja[2];
+  Params.cohesion = MatProp.yield_stress_0;
+  Params.friction_angle = MatProp.phi_Frictional;
 
   double E = MatProp.E;
   double nu = MatProp.nu;
+
+#if NumberDimensions == 3 
 
   Params.CC[0] =   1.0/E;
   Params.CC[1] = - nu/E;
@@ -301,6 +307,24 @@ static Model_Parameters fill_model_paramters(Material MatProp)
   Params.CC[6] = - nu/E;
   Params.CC[7] = - nu/E;
   Params.CC[8] =   1.0/E;
+
+#endif
+
+#if NumberDimensions == 2
+
+  Params.CC[0] =   1.0/E;
+  Params.CC[1] = - nu/E;
+  Params.CC[2] = 0.0;
+
+  Params.CC[3] = - nu/E;
+  Params.CC[4] =   1.0/E;
+  Params.CC[5] = 0.0;
+
+  Params.CC[6] = 0.0;
+  Params.CC[7] = 0.0;
+  Params.CC[8] = (2*(1 + nu))/E;
+
+#endif
 
   return Params;
 }
@@ -353,9 +377,18 @@ static void eval_d_K2_d_stress(
   double m,
   double pa)
 {
-  d_K2_d_stress[0] = - (m*kappa2/I1)*pow(pa/I1,m);
-  d_K2_d_stress[1] = - (m*kappa2/I1)*pow(pa/I1,m);
-  d_K2_d_stress[2] = - (m*kappa2/I1)*pow(pa/I1,m);
+  if(m == 0)
+  {
+    d_K2_d_stress[0] = 0.0;
+    d_K2_d_stress[1] = 0.0;
+    d_K2_d_stress[2] = 0.0;
+  }
+  else
+  {
+    d_K2_d_stress[0] = - (m*kappa2/I1)*pow(pa/I1,m);
+    d_K2_d_stress[1] = - (m*kappa2/I1)*pow(pa/I1,m);
+    d_K2_d_stress[2] = - (m*kappa2/I1)*pow(pa/I1,m);
+  }
 }
 
 /**************************************************************/
@@ -367,7 +400,14 @@ static double eval_b1(
   double m,
   double pa)
 {
-  return m*kappa1*(pow(pa/I1,m))*(cbrt(I3)/I1);
+  if(m == 0)
+  {
+    return 0.0;
+  }
+  else
+  {
+    return m*kappa1*(pow(pa/I1,m))*(cbrt(I3)/I1);
+  }
 }
 
 /**************************************************************/
@@ -379,7 +419,14 @@ static double eval_b2(
   double m,
   double pa)
 {
-  return m*kappa2*(pow(pa/I1,m))*(cbrt(I3)/I1);
+  if(m == 0)
+  {
+    return 0.0;
+  }
+  else
+  {
+    return m*kappa2*(pow(pa/I1,m))*(cbrt(I3)/I1);
+  }
 }
 
 /**************************************************************/
@@ -394,11 +441,20 @@ static void eval_d_b2_d_stress(
   double pa)
   {
 
-    double b2 = eval_b2(kappa2,I1,I3,m,pa);
+    if(m == 0)
+    {
+      d_b2_d_stress[0] = 0.0;
+      d_b2_d_stress[1] = 0.0;
+      d_b2_d_stress[2] = 0.0;
+    }
+    else
+    {
+      double b2 = eval_b2(kappa2,I1,I3,m,pa);
 
-    d_b2_d_stress[0] = (b2/I1)*(I1/(3*Stress[0]) - m - 1.0);
-    d_b2_d_stress[1] = (b2/I1)*(I1/(3*Stress[1]) - m - 1.0);
-    d_b2_d_stress[2] = (b2/I1)*(I1/(3*Stress[2]) - m - 1.0);
+      d_b2_d_stress[0] = (b2/I1)*(I1/(3*Stress[0]) - m - 1.0);
+      d_b2_d_stress[1] = (b2/I1)*(I1/(3*Stress[1]) - m - 1.0);
+      d_b2_d_stress[2] = (b2/I1)*(I1/(3*Stress[2]) - m - 1.0);
+    }
   } 
     
 /**************************************************************/
@@ -625,14 +681,16 @@ static double eval_Yield_Function(
   double I1,
   double I2,
   double I3,
-  double m)
+  double m,
+  double cohesion,
+  double friction_angle)
 {
 
   double K1 = eval_K1(kappa1,I1,c0,m,pa);
 
   double f = eval_f(I1,I2);
 
-  return cbrt(K1*I3) - f;
+  return cbrt(K1*I3) - f - 2*cohesion*cos(friction_angle);
 }
 
 /**************************************************************/
@@ -795,6 +853,8 @@ static double assemble_residual(
     double a1 = Params.a1;
     double a2 = Params.a2;
     double a3 = Params.a3;
+    double cohesion = Params.cohesion;
+    double friction_angle = Params.friction_angle;
     double I1 = Stress_k[0] + Stress_k[1] + Stress_k[2];
     double I2 = Stress_k[0]*Stress_k[1] + Stress_k[1]*Stress_k[2] + Stress_k[0]*Stress_k[2];
     double I3 = Stress_k[0]*Stress_k[1]*Stress_k[2];
@@ -803,7 +863,7 @@ static double assemble_residual(
     double F;
     double Error;
     
-    if(fabs(I1/3.0) < TOL_Radial_Returning)
+    if((fabs(I1/3.0) < TOL_Radial_Returning) && (m != 0))
     {
       fprintf(stderr,"%s: %s %i %s \n",
       "Error in Frictional_Monolithic()",
@@ -813,7 +873,7 @@ static double assemble_residual(
 
     eval_kappa(kappa_hat,Lambda_k,I1,a1,a2,a3,alpha);
     eval_d_Plastic_Potential_d_stress(Grad_G,Stress_k,I1,I2,I3,c0,kappa[1],pa,m);
-    F = eval_Yield_Function(c0,kappa[0],pa,I1,I2,I3,m);
+    F = eval_Yield_Function(c0,kappa[0],pa,I1,I2,I3,m,cohesion,friction_angle);
 
     Residual[0] = Strain_e_k[0] - Strain_e_tri[0] + delta_lambda*Grad_G[0];
     Residual[1] = Strain_e_k[1] - Strain_e_tri[1] + delta_lambda*Grad_G[1];
@@ -878,7 +938,7 @@ static bool check_convergence(
       fprintf(stderr,"%s: %s %i \n",
       "Error in Frictional_Monolithic()",
       "Maximm number of iteration reached in particle",Particle_Idx);
-      fprintf(stderr,"Iter: %i | Error0: %e | Error: %e | Erro_rel: %f \n",Iter,Error0,Error,Error_relative);
+      fprintf(stderr,"Iter: %i | Error0: %e | Error: %e | Erro_rel: %e \n",Iter,Error0,Error,Error_relative);
     }
 
     return true;
@@ -1036,6 +1096,7 @@ static void solver(
   
   double rcond = compute_condition_number(Tangent_Matrix);
   
+  /*
   if(rcond < 1E-10)
   {
     fprintf(stderr,"%s: %s %i, %s: %e\n",
@@ -1043,6 +1104,7 @@ static void solver(
     "Tangent_Matrix is near to singular matrix for particle",
     Particle_Idx,"rcond",rcond);
   }
+*/
 
   /*
     Generate auxiliar copy of the mass matrix to avoid destructive operations

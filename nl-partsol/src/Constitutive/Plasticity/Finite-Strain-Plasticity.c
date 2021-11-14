@@ -198,6 +198,7 @@ static void elastic_trial(
   double Lame_param = E*nu/((1 + nu)*(1 - 2*nu));
   double Shear_modulus = E/(2*(1 + nu));
 
+#if NumberDimensions == 3 
   Intput_SP.Stress[0] = (Lame_param + 2*Shear_modulus)*Intput_SP.Strain[0] 
   + Lame_param*Intput_SP.Strain[1] 
   + Lame_param*Intput_SP.Strain[2];
@@ -209,7 +210,20 @@ static void elastic_trial(
   Intput_SP.Stress[2] = Lame_param*Intput_SP.Strain[0] 
   + Lame_param*Intput_SP.Strain[1] 
   + (Lame_param + 2*Shear_modulus)*Intput_SP.Strain[2];
- 
+
+#endif
+
+#if NumberDimensions == 2
+
+  Intput_SP.Stress[0] = (Lame_param + 2*Shear_modulus)*Intput_SP.Strain[0] 
+  + Lame_param*Intput_SP.Strain[1];
+
+  Intput_SP.Stress[1] = Lame_param*Intput_SP.Strain[0] 
+  + (Lame_param + 2*Shear_modulus)*Intput_SP.Strain[1];
+
+  Intput_SP.Stress[2] = E/(2*(1 + nu))*Intput_SP.Strain[2];
+
+#endif
 }
 
 /**************************************************************/
