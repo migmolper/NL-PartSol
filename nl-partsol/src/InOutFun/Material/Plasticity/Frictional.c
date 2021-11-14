@@ -277,11 +277,7 @@ static void check_Frictional_Material(Material Mat_particle, Check_Material ChkM
     printf("\t \t -> %s : %f \n","a3-Hardening-Borja",Mat_particle.a_Hardening_Borja[2]);	
     printf("\t \t -> %s : %f \n","Friction-angle",Mat_particle.phi_Frictional*(180/PI__MatrixLib__));	
     printf("\t \t -> %s : %f \n","Dilatancy-angle",Mat_particle.psi_Frictional*(180/PI__MatrixLib__));	
-
-    if(ChkMat.Is_Cohesion)
-    {
-      printf("\t \t -> %s : %f \n","Cohesion",Mat_particle.yield_stress_0);
-    }
+    printf("\t \t -> %s : %f \n","Cohesion",Mat_particle.yield_stress_0);
     
     if(ChkMat.Is_Locking_Control_Fbar)
     {
