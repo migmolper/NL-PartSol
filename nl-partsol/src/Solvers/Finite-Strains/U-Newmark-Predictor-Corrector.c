@@ -2,7 +2,7 @@
 
 #ifdef _OPENMP
     #include <omp.h>
-    #define UD_Num_THREADS 6
+    #define UD_Num_THREADS 10
 #else
     #define omp_get_thread_num() 0
 #endif
