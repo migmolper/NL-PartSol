@@ -26,7 +26,7 @@ Define-Material(idx=0,Model=Granular)
   a2-Hardening-Borja=0.0005
   a3-Hardening-Borja=35.0
   Atmospheric-pressure=-100E3
-  Cohesion=0.0
+  Cohesion=10E3
   Friction-angle=20
   Dilatancy-angle=0
 }

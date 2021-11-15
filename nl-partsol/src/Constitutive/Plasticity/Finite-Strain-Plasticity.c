@@ -221,7 +221,7 @@ static void elastic_trial(
   Intput_SP.Stress[1] = Lame_param*Intput_SP.Strain[0] 
   + (Lame_param + 2*Shear_modulus)*Intput_SP.Strain[1];
 
-  Intput_SP.Stress[2] = Lame_param*(Intput_SP.Stress[0] + Intput_SP.Stress[1]);
+  Intput_SP.Stress[2] = nu*(Intput_SP.Stress[0] + Intput_SP.Stress[1]);
 
 #endif
 }
