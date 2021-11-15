@@ -294,8 +294,6 @@ static Model_Parameters fill_model_paramters(Material MatProp)
   double E = MatProp.E;
   double nu = MatProp.nu;
 
-#if NumberDimensions == 3 
-
   Params.CC[0] =   1.0/E;
   Params.CC[1] = - nu/E;
   Params.CC[2] = - nu/E;
@@ -307,24 +305,6 @@ static Model_Parameters fill_model_paramters(Material MatProp)
   Params.CC[6] = - nu/E;
   Params.CC[7] = - nu/E;
   Params.CC[8] =   1.0/E;
-
-#endif
-
-#if NumberDimensions == 2
-
-  Params.CC[0] =   1.0/E;
-  Params.CC[1] = - nu/E;
-  Params.CC[2] = 0.0;
-
-  Params.CC[3] = - nu/E;
-  Params.CC[4] =   1.0/E;
-  Params.CC[5] = 0.0;
-
-  Params.CC[6] = 0.0;
-  Params.CC[7] = 0.0;
-  Params.CC[8] = (2*(1 + nu))/E;
-
-#endif
 
   return Params;
 }
@@ -1096,7 +1076,6 @@ static void solver(
   
   double rcond = compute_condition_number(Tangent_Matrix);
   
-  /*
   if(rcond < 1E-10)
   {
     fprintf(stderr,"%s: %s %i, %s: %e\n",
@@ -1104,7 +1083,6 @@ static void solver(
     "Tangent_Matrix is near to singular matrix for particle",
     Particle_Idx,"rcond",rcond);
   }
-*/
 
   /*
     Generate auxiliar copy of the mass matrix to avoid destructive operations

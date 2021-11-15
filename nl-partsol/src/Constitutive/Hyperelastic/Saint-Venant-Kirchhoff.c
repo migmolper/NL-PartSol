@@ -61,6 +61,15 @@ State_Parameters compute_1PK_Stress_Tensor_Saint_Venant_Kirchhoff(
   }
   
   /*
+    Plane strain conditions
+  */
+  if(Ndim == 2)
+  {
+    Intput_SP.Stress[4] = lambda*0.5*(tr__Ft_x_F - Ndim);
+  }
+  
+
+  /*
     Free tensors 
   */
   free__TensorLib__(Ft);
