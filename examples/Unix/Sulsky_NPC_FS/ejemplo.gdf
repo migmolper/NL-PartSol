@@ -1,8 +1,10 @@
 
 # Background mesh definition
-GramsBox (Type=GID,File=FEM_Mesh.msh) {
+
+GramsBox (Type=GID,File=Nodes.msh) { 
 
 }
+
 
 # Time integration
 GramsTime (Type=NPC-FS) {
@@ -23,8 +25,10 @@ Define-Material (idx=0 , Model=Saint-Venant-Kirchhoff)
 One-Phase-Analysis (File=MPM_Mesh.msh,GPxElement=3) {
 
     # List of materials for the GPs
-    Assign-material-to-particles(MatIdx=0,Particles=Material.txt)
-    
+    Assign-material-to-particles(MatIdx=0,Particles=Disc1.txt)
+    Assign-material-to-particles(MatIdx=0,Particles=Disc2.txt)
+   
+ 
     # Shape function definition
     GramsShapeFun (Type=FEM) {
     }

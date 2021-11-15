@@ -1,7 +1,7 @@
-BeginZE /home/miguelmolinos/GraMS/GraMS_V1/test/Sulsky_MPM/FEM_mesh_GID.gid/FEM_mesh_GID.vv
-   x -0.660069465637207031 1.58161342144012451
-   y 1.06796610355377197 -0.273972958326339722
-   z -1.43358993530273438 1.43358993530273438
+BeginZE /home/migmolper/NL-PartSol/examples/Unix/Sulsky_NPC_FS/FEM_mesh_GID.gid/FEM_mesh_GID.vv
+   x -1.37683725357055664 2.27639007568359375
+   y 1.46469426155090332 -0.572020888328552246
+   z -2.17944955825805664 2.17944955825805664
    e 0.726483166217803955
    v 0 0 0
    r 1
@@ -29,5 +29,9 @@ BeginZE /home/miguelmolinos/GraMS/GraMS_V1/test/Sulsky_MPM/FEM_mesh_GID.gid/FEM_
    OGLStereo(EyeDistance) 0.075
    OGLStereo(LeftEyeDistance) 1 0 0 1
    OGLStereo(RightEyeDistance) 0 1 1 1
-EndZE /home/miguelmolinos/GraMS/GraMS_V1/test/Sulsky_MPM/FEM_mesh_GID.gid/FEM_mesh_GID.vv
+EndZE /home/migmolper/NL-PartSol/examples/Unix/Sulsky_NPC_FS/FEM_mesh_GID.gid/FEM_mesh_GID.vv
+
+BeginMirror
+   Mirror 0 Angle 0.0 AngleFake -15.0 SizeFactor 2.0 HeightOffset 0.25 Color #d9e5f24d Backlight Off EdgeStyle No Type Scene DrawMode Mirror
+EndMirror
 

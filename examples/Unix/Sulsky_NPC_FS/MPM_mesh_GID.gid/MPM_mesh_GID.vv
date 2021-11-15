@@ -1,6 +1,6 @@
-BeginZE /home/miguelmolinos/GraMS/GraMS_V1/test/Sulsky_MPM/MPM_mesh_GID.gid/MPM_mesh_GID.vv
-   x -0.622027397155761719 1.50960826873779297
-   y 1.0684276819229126 -0.207633450627326965
+BeginZE /home/migmolper/NL-PartSol/examples/Unix/Sulsky_NPC_FS/MPM_mesh_GID.gid/MPM_mesh_GID.vv
+   x -0.324934571981430054 1.14425313472747803
+   y 1.37354052066802979 -0.516617953777313232
    z -1.43517470359802246 1.43517470359802246
    e 0.726098358631134033
    v 0 0 0
@@ -29,5 +29,9 @@ BeginZE /home/miguelmolinos/GraMS/GraMS_V1/test/Sulsky_MPM/MPM_mesh_GID.gid/MPM_
    OGLStereo(EyeDistance) 0.075
    OGLStereo(LeftEyeDistance) 1 0 0 1
    OGLStereo(RightEyeDistance) 0 1 1 1
-EndZE /home/miguelmolinos/GraMS/GraMS_V1/test/Sulsky_MPM/MPM_mesh_GID.gid/MPM_mesh_GID.vv
+EndZE /home/migmolper/NL-PartSol/examples/Unix/Sulsky_NPC_FS/MPM_mesh_GID.gid/MPM_mesh_GID.vv
+
+BeginMirror
+   Mirror 0 Angle 0.0 AngleFake -15.0 SizeFactor 2.0 HeightOffset 0.25 Color #d9e5f24d Backlight Off EdgeStyle No Type Scene DrawMode Mirror
+EndMirror
 

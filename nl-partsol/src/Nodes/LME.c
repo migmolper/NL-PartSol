@@ -1,5 +1,12 @@
 #include "nl-partsol.h"
 
+#ifdef _OPENMP
+    #include <omp.h>
+    #define UD_Num_THREADS 6
+#else
+    #define omp_get_thread_num() 0
+#endif
+
 
 // Auxiliar functions to compute the shape functions
 static double fa__LME__(Matrix, Matrix, double);
@@ -988,6 +995,7 @@ void local_search__LME__(Particle MPM_Mesh, Mesh FEM_Mesh)
 
   /* Number of dimensions */
   int Ndim = NumberDimensions;
+  int NumGP = NumGP;
   int Num_Particles_Node_i;
   int Num_Particles_Element_i;
   /* Velocity and position of the particle */
@@ -1021,7 +1029,7 @@ void local_search__LME__(Particle MPM_Mesh, Mesh FEM_Mesh)
   /* 
     Loop over the particles to create the list with active nodes
   */
-  for(int p = 0 ; p<MPM_Mesh.NumGP ; p++)
+  for(int p = 0 ; p<NumGP ; p++)
   {
 
     /* 
@@ -1069,56 +1077,71 @@ void local_search__LME__(Particle MPM_Mesh, Mesh FEM_Mesh)
   /* 
     Loop over the particles to compute the tributary nodes
   */
-  for(int p = 0 ; p<MPM_Mesh.NumGP ; p++)
+
+
+#pragma omp parallel 
+{
+  /* Particle variables */
+  unsigned idx_p;
+  double * D_dis_p = MPM_Mesh.Phi.D_dis.nV;
+  double * Vel_p = MPM_Mesh.Phi.vel.nV;
+  double * Acc_p = MPM_Mesh.Phi.acc.nV;
+
+#ifdef _OPENMP
+
+  unsigned Machine_threads = omp_get_max_threads();
+  unsigned Threads = IMIN(UD_Num_THREADS,Machine_threads);
+
+  // Additional work to set the number of threads.
+	// We hard-code to 4 for illustration purposes only.
+	omp_set_num_threads(Threads);
+
+	// determine how many elements each process will work on
+	unsigned n_per_thread = NumGP/Threads;
+
+#endif
+
+  #pragma omp parallel for shared (D_dis_p,Vel_p,Acc_p) private(idx_p) schedule(static,n_per_thread)
+  for(idx_p = 0 ; idx_p<NumGP ; idx_p++)
   {
     /* 
       Auxiliar variables for LME
     */
     Matrix Delta_Xip; // Distance from particles to the nodes
-    Matrix lambda_p = memory_to_matrix__MatrixLib__(Ndim,1,MPM_Mesh.lambda.nM[p]);
-    double Beta_p = MPM_Mesh.Beta.nV[p]; // Thermalization parameter
+    Matrix lambda_p = memory_to_matrix__MatrixLib__(Ndim,1,MPM_Mesh.lambda.nM[idx_p]);
+    double Beta_p = MPM_Mesh.Beta.nV[idx_p]; // Thermalization parameter
 
-    /* 
-      Get the global coordinates of the particle
-    */
-    X_p = memory_to_matrix__MatrixLib__(Ndim,1,MPM_Mesh.Phi.x_GC.nM[p]);
+    /* Get the global coordinates of the particle */
+    X_p = memory_to_matrix__MatrixLib__(Ndim,1,MPM_Mesh.Phi.x_GC.nM[idx_p]);
 
-    /*
-      Free previous list of tributary nodes to the particle
-    */
-    free__SetLib__(&MPM_Mesh.ListNodes[p]);
-    MPM_Mesh.ListNodes[p] = NULL;
+    /* Free previous list of tributary nodes to the particle */
+    free__SetLib__(&MPM_Mesh.ListNodes[idx_p]);
+    MPM_Mesh.ListNodes[idx_p] = NULL;
 
-    /*
-      Calculate the new connectivity with the previous value of beta
-    */
-    MPM_Mesh.ListNodes[p] = tributary__LME__(p,X_p,Beta_p,MPM_Mesh.I0[p],FEM_Mesh);
+    /* Calculate the new connectivity with the previous value of beta */
+    MPM_Mesh.ListNodes[idx_p] = tributary__LME__(idx_p,X_p,Beta_p,MPM_Mesh.I0[idx_p],FEM_Mesh);
 
-    /*
-      Calculate number of nodes
-    */
-    MPM_Mesh.NumberNodes[p] = lenght__SetLib__(MPM_Mesh.ListNodes[p]);
+    /* Calculate number of nodes */
+    MPM_Mesh.NumberNodes[idx_p] = lenght__SetLib__(MPM_Mesh.ListNodes[idx_p]);
 
-    /* 
-      Generate nodal distance list
-    */
-    Delta_Xip = compute_distance__MeshTools__(MPM_Mesh.ListNodes[p], X_p, FEM_Mesh.Coordinates);            
+    /* Generate nodal distance list */
+    Delta_Xip = compute_distance__MeshTools__(MPM_Mesh.ListNodes[idx_p], X_p, FEM_Mesh.Coordinates);            
 
     /*
       Compute the thermalization parameter for the new set of nodes
       and update it
     */
-    Beta_p = beta__LME__(gamma_LME, FEM_Mesh.h_avg[MPM_Mesh.I0[p]]);
-    MPM_Mesh.Beta.nV[p] = Beta_p;
+    Beta_p = beta__LME__(gamma_LME, FEM_Mesh.h_avg[MPM_Mesh.I0[idx_p]]);
+    MPM_Mesh.Beta.nV[idx_p] = Beta_p;
 
     // Update lagrange multiplier with Newton-Rapson or with Nelder-Mead
     if(strcmp(wrapper_LME,"Newton-Raphson") == 0)
     {
-      update_lambda_Newton_Rapson__LME__(p, Delta_Xip, lambda_p, Beta_p);
+      update_lambda_Newton_Rapson__LME__(idx_p, Delta_Xip, lambda_p, Beta_p);
     }
     else if(strcmp(wrapper_LME,"Nelder-Mead") == 0)
     {
-      update_lambda_Nelder_Mead__LME__(p, Delta_Xip, lambda_p, Beta_p);
+      update_lambda_Nelder_Mead__LME__(idx_p, Delta_Xip, lambda_p, Beta_p);
     }
     else
     {
@@ -1130,8 +1153,10 @@ void local_search__LME__(Particle MPM_Mesh, Mesh FEM_Mesh)
     free__MatrixLib__(Delta_Xip);
 
     /* Active those nodes that interact with the particle */
-    asign_to_nodes__Particles__(p, MPM_Mesh.Element_p[p], MPM_Mesh.I0[p], MPM_Mesh.ListNodes[p], FEM_Mesh);
+    asign_to_nodes__Particles__(idx_p, MPM_Mesh.Element_p[idx_p], MPM_Mesh.I0[idx_p], MPM_Mesh.ListNodes[idx_p], FEM_Mesh);
   }
+}
+
 }
 
 /****************************************************************************/

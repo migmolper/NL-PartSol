@@ -1,6 +1,11 @@
 #include "nl-partsol.h"
 
-#include <omp.h>
+#ifdef _OPENMP
+    #include <omp.h>
+    #define UD_Num_THREADS 6
+#else
+    #define omp_get_thread_num() 0
+#endif
 
 #ifdef __linux__
 #include <lapacke.h>
@@ -8,7 +13,6 @@
 #elif __APPLE__
 #include <Accelerate/Accelerate.h>
 #endif
-
 
 /*
   Call global variables
@@ -177,39 +181,47 @@ static Matrix compute_Mass_Matrix(
 */
 {
 
-  int Nnodes_mask = ActiveNodes.Nactivenodes;
-  int Ndim = NumberDimensions;
-  int Np = MPM_Mesh.NumGP;
-  int Order = Ndim*Nnodes_mask;
-  int Ap;
-  int A_mask;
-  int idx_A_mask_i;
+unsigned Nnodes_mask = ActiveNodes.Nactivenodes;
+unsigned Ndim = NumberDimensions;
+unsigned Np = MPM_Mesh.NumGP;
 
-  /* Value of the shape-function */
-  Matrix ShapeFunction_p;  
+/* Define and allocate the lumped mass matrix */
+Matrix Lumped_MassMatrix = allocZ__MatrixLib__(Nnodes_mask,Ndim);
 
-  /* Evaluation of the particle in the node */
-  double ShapeFunction_pA;
-  /* Mass of the particle */
-  double m_p;
-  /* Nodal contribution A of the particle p */
-  double m_A_p;
-  /* Element for each particle */
+
+#pragma omp parallel 
+{
+  /* Particle variables */
   Element Nodes_p;
+  Matrix ShapeFunction_p;
+  double ShapeFunction_pA;
+  double m_p;
+  unsigned Idx_p;
 
-  /* Define and allocate the lumped mass matrix */
-  Matrix Lumped_MassMatrix = allocZ__MatrixLib__(Order, Order);
+#ifdef _OPENMP
 
-  /*
-    Iterate over the particles to get the nodal values 
-  */
-  for(int p = 0 ; p<Np ; p++)
+  unsigned Machine_threads = omp_get_max_threads();
+  unsigned Threads = IMIN(UD_Num_THREADS,Machine_threads);
+
+  // Additional work to set the number of threads.
+	// We hard-code to 4 for illustration purposes only.
+	omp_set_num_threads(Threads);
+
+	// determine how many elements each process will work on
+	unsigned n_per_thread = Np/Threads;
+
+#endif
+
+  double * M_IJ = Lumped_MassMatrix.nV;
+
+  #pragma omp parallel for shared (M_IJ) schedule(static,n_per_thread)
+  for(Idx_p = 0 ; Idx_p<Np ; Idx_p++)
     {
 
       /*
         Define tributary nodes of the particle 
       */
-      Nodes_p = nodal_set__Particles__(p, MPM_Mesh.ListNodes[p], MPM_Mesh.NumberNodes[p]);
+      Nodes_p = nodal_set__Particles__(Idx_p, MPM_Mesh.ListNodes[Idx_p], MPM_Mesh.NumberNodes[Idx_p]);
 
       /* 
         Evaluate the shape function in the coordinates of the particle
@@ -219,7 +231,7 @@ static Matrix compute_Mass_Matrix(
       /*
        Get the mass of the particle 
       */
-      m_p = MPM_Mesh.Phi.mass.nV[p];
+      m_p = MPM_Mesh.Phi.mass.nV[Idx_p];
 
 
       for(int A = 0 ; A<Nodes_p.NumberNodes ; A++)
@@ -228,8 +240,8 @@ static Matrix compute_Mass_Matrix(
           /* 
              Get the node in the mass matrix with the mask
           */
-          Ap = Nodes_p.Connectivity[A];
-          A_mask = ActiveNodes.Nodes2Mask[Ap];
+          unsigned Ap = Nodes_p.Connectivity[A];
+          unsigned A_mask = ActiveNodes.Nodes2Mask[Ap];
 
           /* 
             Get the value of the shape function 
@@ -239,14 +251,14 @@ static Matrix compute_Mass_Matrix(
           /*
             Compute the nodal A contribution of the particle p
           */
-          m_A_p = m_p*ShapeFunction_pA;
+          double m_A_p = m_p*ShapeFunction_pA;
 
           /* 
              Fill the Lumped mass matrix considering the number of dofs
           */
           for(int i = 0 ; i<Ndim ; i++)
             {
-              Lumped_MassMatrix.nM[A_mask*Ndim + i][A_mask*Ndim + i] += m_A_p;       
+              Lumped_MassMatrix.nV[A_mask*Ndim + i] += m_A_p;       
             }
 
           }
@@ -255,7 +267,7 @@ static Matrix compute_Mass_Matrix(
           Free the value of the shape functions 
         */
         free__MatrixLib__(ShapeFunction_p);
-        free(Nodes_p.Connectivity);      
+        free(Nodes_p.Connectivity);   
 
     }
 
@@ -264,9 +276,11 @@ static Matrix compute_Mass_Matrix(
   */
   strcpy(Lumped_MassMatrix.Info,"Lumped-Mass-Matrix");
 
+}
+  
+
   return Lumped_MassMatrix; 
 }
-
 
 /**************************************************************/
 
@@ -280,25 +294,39 @@ static void compute_Explicit_Newmark_Predictor(
 
   int Ndim = NumberDimensions;
   int Np = MPM_Mesh.NumGP;
+  int Order = Ndim*Np;
 
-  for(int p = 0 ; p<Np ; p++)
-    {
+#pragma omp parallel 
+{
+  /* Particle variables */
+  unsigned idx_p;
+  double * D_dis_p = MPM_Mesh.Phi.D_dis.nV;
+  double * Vel_p = MPM_Mesh.Phi.vel.nV;
+  double * Acc_p = MPM_Mesh.Phi.acc.nV;
 
-    /* 
-      Compute velocity predictor and increment of displacements 
-    */
-    for(int i = 0 ; i<Ndim ; i++)
-    {
+#ifdef _OPENMP
 
-      MPM_Mesh.Phi.D_dis.nM[p][i] = DeltaTimeStep*MPM_Mesh.Phi.vel.nM[p][i] + 0.5*DSQR(DeltaTimeStep)*MPM_Mesh.Phi.acc.nM[p][i];
+  unsigned Machine_threads = omp_get_max_threads();
+  unsigned Threads = IMIN(UD_Num_THREADS,Machine_threads);
 
-      MPM_Mesh.Phi.vel.nM[p][i] += (1-gamma)*DeltaTimeStep*MPM_Mesh.Phi.acc.nM[p][i];
+  // Additional work to set the number of threads.
+	// We hard-code to 4 for illustration purposes only.
+	omp_set_num_threads(Threads);
 
-    }
+	// determine how many elements each process will work on
+	unsigned n_per_thread = Order/Threads;
 
+#endif
 
+  #pragma omp parallel for shared (D_dis_p,Vel_p,Acc_p) private(idx_p) schedule(static,n_per_thread)
+  for(idx_p = 0 ; idx_p<Order ; idx_p++)
+  {
+    D_dis_p[idx_p] = DeltaTimeStep*Vel_p[idx_p] + 0.5*DSQR(DeltaTimeStep)*Acc_p[idx_p];
+
+    Vel_p[idx_p] += (1-gamma)*DeltaTimeStep*Acc_p[idx_p];
   }
 
+}
 }
 
 /**************************************************************/
@@ -378,13 +406,12 @@ static Matrix compute_Nodal_D_Displacement(
   | 0 M | * |D_u.y| = | M*D_u.y |
 */
 {
-  int Ndim = NumberDimensions;
-  int Nnodes_mask = ActiveNodes.Nactivenodes;
-  int Np = MPM_Mesh.NumGP;
-  int Order = Nnodes_mask*Ndim;
-  int Ap;
-  int A_mask;
-  int AB;
+  unsigned Ndim = NumberDimensions;
+  unsigned Nnodes_mask = ActiveNodes.Nactivenodes;
+  unsigned Np = MPM_Mesh.NumGP;
+  unsigned Order = Nnodes_mask*Ndim;
+  unsigned Ap;
+  unsigned A_mask;
   Element Nodes_p; /* Element for each particle */
   Matrix ShapeFunction_p; /* Value of the shape-function */
   double ShapeFunction_pA; /* Evaluation of the particle in the node */
@@ -447,13 +474,28 @@ static Matrix compute_Nodal_D_Displacement(
   /*
     Compute the D_Displacements
   */
-  for(int A = 0 ; A<Nnodes_mask ; A++)
+#ifdef _OPENMP
+
+  unsigned Machine_threads = omp_get_max_threads();
+  unsigned Threads = IMIN(UD_Num_THREADS,Machine_threads);
+
+  // Additional work to set the number of threads.
+	// We hard-code to 4 for illustration purposes only.
+	omp_set_num_threads(Threads);
+
+	// determine how many elements each process will work on
+	unsigned n_per_thread = Order/Threads;
+
+#endif
+
+  unsigned idx;
+  double * D_dis_I = D_Displacement.nV;
+  double * Mass_IJ = Lumped_Mass.nV;
+
+  #pragma omp parallel for shared (D_dis_I,Mass_IJ,Order) private(idx) schedule(static,n_per_thread)
+  for(idx = 0 ; idx<Order ; idx++)
   {
-    for(int i = 0 ; i<Ndim ; i++)
-    {
-      AB = A*Ndim + i;
-      D_Displacement.nM[A][i] = D_Displacement.nM[A][i]/Lumped_Mass.nM[AB][AB];
-    }
+    D_dis_I[idx] = D_dis_I[idx]/Mass_IJ[idx];
   }
 
 
@@ -481,13 +523,12 @@ static Matrix compute_Nodal_Velocity(
 
 */
 {
-  int Ndim = NumberDimensions;
-  int Nnodes_mask = ActiveNodes.Nactivenodes;
-  int Np = MPM_Mesh.NumGP;
-  int Order = Ndim*Nnodes_mask;
-  int Ap;
-  int A_mask;
-  int AB;
+  unsigned Ndim = NumberDimensions;
+  unsigned Nnodes_mask = ActiveNodes.Nactivenodes;
+  unsigned Np = MPM_Mesh.NumGP;
+  unsigned Order = Ndim*Nnodes_mask;
+  unsigned Ap;
+  unsigned A_mask;
   Element Nodes_p; /* Element for each particle */
   Matrix ShapeFunction_p; /* Value of the shape-function */
   double ShapeFunction_pA; /* Evaluation of the particle in the node */
@@ -548,16 +589,30 @@ static Matrix compute_Nodal_Velocity(
   /*
     Compute the nodal velocities
   */
-  for(int A = 0 ; A<Nnodes_mask ; A++)
+ #ifdef _OPENMP
+
+  unsigned Machine_threads = omp_get_max_threads();
+  unsigned Threads = IMIN(UD_Num_THREADS,Machine_threads);
+
+  // Additional work to set the number of threads.
+	// We hard-code to 4 for illustration purposes only.
+	omp_set_num_threads(Threads);
+
+	// determine how many elements each process will work on
+	unsigned n_per_thread = Order/Threads;
+
+#endif
+
+  unsigned idx;
+  double * Vel_I = Velocity.nV;
+  double * Mass_IJ = Lumped_Mass.nV;
+
+  #pragma omp parallel for shared (Vel_I,Mass_IJ,Order) private(idx) schedule(static,n_per_thread)
+  for(idx = 0 ; idx<Order ; idx++)
   {
-    for(int i = 0 ; i<Ndim ; i++)
-    {
-      AB = A*Ndim + i;
-      Velocity.nM[A][i] = Velocity.nM[A][i]/Lumped_Mass.nM[AB][AB];
-    }
+    Vel_I[idx] = Vel_I[idx]/Mass_IJ[idx];
   }
 
- 
   /*
     Add some usefulll info
   */
@@ -1080,15 +1135,15 @@ static Matrix solve_Nodal_Equilibrium(
   /*
     General varibles
   */
-  int Ndim = NumberDimensions;
-  int Ndof = NumberDOF;
-  int Np = MPM_Mesh.NumGP;
-  int Nnodes = ActiveNodes.Nactivenodes;
-  int NumNodes_p;
-  int Order = Nnodes*Ndim;
-  int AB;
-  int Ap;
-  int A_mask;
+  unsigned Ndim = NumberDimensions;
+  unsigned Ndof = NumberDOF;
+  unsigned Np = MPM_Mesh.NumGP;
+  unsigned Nnodes = ActiveNodes.Nactivenodes;
+  unsigned NumNodes_p;
+  unsigned Order = Nnodes*Ndim;
+  unsigned AB;
+  unsigned Ap;
+  unsigned A_mask;
   Element Nodes_p; /* Element for each Gauss-Point */
   Matrix ShapeFunction_p;
   double ShapeFunction_pA;
@@ -1107,23 +1162,42 @@ static Matrix solve_Nodal_Equilibrium(
   /*
     The solution is now stored in the internal forces vector
   */
-  for(int A = 0; A<Nnodes; A++)
+ #ifdef _OPENMP
+
+  unsigned Machine_threads = omp_get_max_threads();
+  unsigned Threads = IMIN(UD_Num_THREADS,Machine_threads);
+
+  // Additional work to set the number of threads.
+	// We hard-code to 4 for illustration purposes only.
+	omp_set_num_threads(Threads);
+
+	// determine how many elements each process will work on
+	unsigned n_per_thread = Order/Threads;
+
+#endif
+
+  unsigned idx;
+  int * Nodes2Mask = Free_and_Restricted_Dofs.Nodes2Mask;
+  double * Force_I = Total_Forces.nV;
+  double * Reaction_I = Reactions.nV;
+  double * Acc_I = Acceleration.nV;
+  double * Grav_I = Gravity_field.nV;
+  double * Mass_IJ = Lumped_Mass.nV;
+
+  #pragma omp parallel for shared (Reaction_I,Force_I,Acc_I,Grav_I,Mass_IJ,Order) private(idx) schedule(static,n_per_thread)
+  for(idx = 0 ; idx<Order ; idx++)
   {
-    for(int i = 0 ; i<Ndim ; i++)
+    if(Nodes2Mask[idx] != -1)
     {
-      if(Free_and_Restricted_Dofs.Nodes2Mask[A*Ndof + i] != -1)
-      {
-        AB = A*Ndim + i;
-        Acceleration.nM[A][i] = Gravity_field.nM[A][i] + Total_Forces.nM[A][i]/Lumped_Mass.nM[AB][AB];
-      }
-      else
-      {
-        Acceleration.nM[A][i] = 0.0;
-        Reactions.nM[A][i] = Total_Forces.nM[A][i];
-      }
-      
+      Acc_I[idx] = Grav_I[idx] + Force_I[idx]/Mass_IJ[idx];
+    }
+    else
+    {
+      Acc_I[idx] = 0.0;
+      Reaction_I[idx] = Force_I[idx];
     }
   }
+
 
   /*
     Update particle acceleration
@@ -1131,40 +1205,28 @@ static Matrix solve_Nodal_Equilibrium(
   for(int p = 0 ; p<Np ; p++)
   {
 
-    /*
-      Set to zero particle acceleration for interpolation
-    */
+    /* Set to zero particle acceleration for interpolation */
     for(int i = 0 ; i<Ndim ; i++)
     {
       MPM_Mesh.Phi.acc.nM[p][i] = 0.0;
       MPM_Mesh.Phi.D_dis.nM[p][i] = 0.0;
     }
 
-    /*
-      Define element of the particle 
-    */
+    /* Define element of the particle */
     NumNodes_p = MPM_Mesh.NumberNodes[p];
     Nodes_p = nodal_set__Particles__(p, MPM_Mesh.ListNodes[p], NumNodes_p);
 
-    /*
-      Evaluate the shape function in the coordinates of the particle 
-    */
+    /* Evaluate the shape function in the coordinates of the particle */
     ShapeFunction_p = compute_N__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
 
-    /*
-      Interpolate the new value of the acceleration
-    */
+    /* Interpolate the new value of the acceleration */
     for(int A = 0; A<NumNodes_p; A++)
     {
-      /*
-        Get the node in the nodal momentum with the mask
-      */
+      /* Get the node in the nodal momentum with the mask */
       Ap = Nodes_p.Connectivity[A];
       A_mask = ActiveNodes.Nodes2Mask[Ap];
     
-      /*
-        Evaluate the GP function in the node 
-      */
+      /* Evaluate the GP function in the node */
       ShapeFunction_pA = ShapeFunction_p.nV[A];
       
       for(int i = 0 ; i<Ndim ; i++)
@@ -1174,19 +1236,14 @@ static Matrix solve_Nodal_Equilibrium(
        }
     }
 
-    /*
-      Free auxiliar data
-    */
+    /* Free auxiliar data */
     free__MatrixLib__(ShapeFunction_p);
     free(Nodes_p.Connectivity);
 
   }
 
-  /*
-    Free acceleration vector
-  */
+  /* Free acceleration vector */
   free__MatrixLib__(Acceleration);
-
 
   return Reactions;
 }
