@@ -1,24 +1,24 @@
 #include "nl-partsol.h"
 
-static void elastic_trial(State_Parameters,Material);
+static void elastic_trial(State_Parameters *,Material);
 
 /**************************************************************/
 
-State_Parameters finite_strain_plasticity(
-  State_Parameters Inputs_SP_finite, 
+int finite_strain_plasticity(
+  State_Parameters * ptr_SP_p, 
   Material MatProp,
-  State_Parameters(* infinitesimal_plasticity)(State_Parameters,Material))
+  int (* infinitesimal_plasticity)(State_Parameters *,Material))
 /*
   Finite strains plasticity following the apporach of Ortiz and Camacho
 */
 {
   int Ndim = NumberDimensions;
+  int status = 0;
 
   /* Define auxiliar variables */
-  State_Parameters Output_SP;
-  Tensor P_p = memory_to_tensor__TensorLib__(Inputs_SP_finite.Stress,2);
-  Tensor F_m1_plastic = memory_to_tensor__TensorLib__(Inputs_SP_finite.F_m1_plastic_p,2);
-  Tensor F_total = memory_to_tensor__TensorLib__(Inputs_SP_finite.F_n1_p,2);
+  Tensor P_p = memory_to_tensor__TensorLib__(ptr_SP_p->Stress,2);
+  Tensor F_m1_plastic = memory_to_tensor__TensorLib__(ptr_SP_p->F_m1_plastic_p,2);
+  Tensor F_total = memory_to_tensor__TensorLib__(ptr_SP_p->F_n1_p,2);
   Tensor F_m1_total;
   Tensor F_trial_elastic;
   Tensor C_trial_elastic;
@@ -33,29 +33,24 @@ State_Parameters finite_strain_plasticity(
   Tensor kirchhoff_spectral_p = alloc__TensorLib__(2);
   Tensor kirchhoff_p;
 
-  State_Parameters Input_SP_infinitesimal;
-  State_Parameters Output_SP_infinitesimal;
+  /* Set to zero memory */
+  memset(ptr_SP_p->Stress, 0, 12 * sizeof(double));
 
-  /* Defin the input parameters for the infinitesimal elasticity */
-  Input_SP_infinitesimal.Particle_Idx = Inputs_SP_finite.Particle_Idx;
-  Input_SP_infinitesimal.Kappa = Inputs_SP_finite.Kappa;
-  Input_SP_infinitesimal.Equiv_Plast_Str = Inputs_SP_finite.Equiv_Plast_Str;
-  Input_SP_infinitesimal.Back_stress = Inputs_SP_finite.Back_stress;
-  Input_SP_infinitesimal.Stress = (double *)calloc(3,sizeof(double));
-  Input_SP_infinitesimal.Strain = (double *)calloc(3,sizeof(double));
-  Input_SP_infinitesimal.Increment_E_plastic = (double *)calloc(3,sizeof(double));
+  /* Define auxiliar memory */
+  ptr_SP_p->Strain = (double *)calloc(3,sizeof(double));
+  ptr_SP_p->Increment_E_plastic = (double *)calloc(3,sizeof(double));
 
   /*
     Compute the trial right Cauchy-Green tensor
   */
   if(MatProp.Locking_Control_Fbar)
   {
-    Tensor Fbar = memory_to_tensor__TensorLib__(Inputs_SP_finite.Fbar,2);
+    Tensor Fbar = memory_to_tensor__TensorLib__(ptr_SP_p->Fbar,2);
     F_trial_elastic = matrix_product__TensorLib__(Fbar,F_m1_plastic);
   }
   else
   {
-    F_total = memory_to_tensor__TensorLib__(Inputs_SP_finite.F_n1_p,2);
+    F_total = memory_to_tensor__TensorLib__(ptr_SP_p->F_n1_p,2);
     F_trial_elastic = matrix_product__TensorLib__(F_total,F_m1_plastic); 
   }
 
@@ -71,26 +66,26 @@ State_Parameters finite_strain_plasticity(
   */ 
   for(int i = 0 ; i<Ndim ; i++)
   {
-    Input_SP_infinitesimal.Strain[i] = 0.5*log(Eigen_C_trial_elastic.Value.n[i]);
+    ptr_SP_p->Strain[i] = 0.5*log(Eigen_C_trial_elastic.Value.n[i]);
   }
 
   /*
     Calculation of the trial stress tensor using the trial small strain tensor
     with a linear elastic material
   */
-  elastic_trial(Input_SP_infinitesimal, MatProp);
+  elastic_trial(ptr_SP_p, MatProp);
 
   /*
     Start plastic corrector algorithm in infinitesimal strains
   */
-  Output_SP_infinitesimal = infinitesimal_plasticity(Input_SP_infinitesimal, MatProp);
+  status = infinitesimal_plasticity(ptr_SP_p, MatProp);
 
   /*
     Get the increment of plastic finite strains following the Cuitiño & Ortiz exponential maping
   */
   for(int i = 0 ; i<Ndim ; i++)
   {
-    D_F_plastic_spectral.N[i][i] = exp( - Output_SP_infinitesimal.Increment_E_plastic[i]);
+    D_F_plastic_spectral.N[i][i] = exp( - ptr_SP_p->Increment_E_plastic[i]);
   }
 
   /*
@@ -118,7 +113,7 @@ State_Parameters finite_strain_plasticity(
     fprintf(stderr,"%s : %s !!! \n",
 	    "Error in finite_strain_plasticity()",
 	    "The Jacobian of the resulting plastic deformation gradient is less than 0");
-    exit(EXIT_FAILURE);
+    return EXIT_FAILURE;
   }
 
   /*
@@ -128,7 +123,7 @@ State_Parameters finite_strain_plasticity(
   */
   for(int i = 0 ; i<Ndim ; i++)
   {
-    kirchhoff_spectral_p.N[i][i] = Output_SP_infinitesimal.Stress[i];
+    kirchhoff_spectral_p.N[i][i] = ptr_SP_p->Stress[i];
   }
 
   kirchhoff_p = rotate__TensorLib__(kirchhoff_spectral_p, Eigen_C_trial_elastic.Vector);
@@ -137,6 +132,8 @@ State_Parameters finite_strain_plasticity(
     Get the First Piola-Kirchhoff stress tensor from the Kirchhoff stress.
   */
   F_m1_total = Inverse__TensorLib__(F_total);
+
+#if NumberDimensions == 3
 
   for(int i = 0 ; i < Ndim  ; i++)
   {
@@ -152,18 +149,31 @@ State_Parameters finite_strain_plasticity(
     }
   }
 
+#endif
+
+#if NumberDimensions == 2
+
+  ptr_SP_p->Stress[0] = ;
+  ptr_SP_p->Stress[1] = ;
+
+  ptr_SP_p->Stress[2] = ;
+  ptr_SP_p->Stress[3] = ;
+
+  ptr_SP_p->Stress[4] = ;
+
+#endif
+
   /*
     Plane strain conditions
   */
   if(Ndim == 2)
   {
-    Inputs_SP_finite.Stress[4] = Input_SP_infinitesimal.Stress[2];
+    ptr_SP_p->Stress[4] = ptr_SP_p->Stress[2];
   }
 
   /* Free memory */
-  free(Input_SP_infinitesimal.Stress);
-  free(Input_SP_infinitesimal.Strain);
-  free(Input_SP_infinitesimal.Increment_E_plastic);
+  free(ptr_SP_p->Strain);
+  free(ptr_SP_p->Increment_E_plastic);
   free__TensorLib__(F_trial_elastic);
   free__TensorLib__(C_trial_elastic);
   free__TensorLib__(Eigen_C_trial_elastic.Value);
@@ -175,21 +185,14 @@ State_Parameters finite_strain_plasticity(
   free__TensorLib__(F_m1_plastic_new);
   free__TensorLib__(F_m1_total);
 
-  /*
-    Update state paramers
-  */
-  Output_SP.Kappa = Output_SP_infinitesimal.Kappa;
-  Output_SP.Equiv_Plast_Str = Output_SP_infinitesimal.Equiv_Plast_Str;
-  Output_SP.Back_stress = Output_SP_infinitesimal.Back_stress;
 
-
-  return Output_SP;
+  return EXIT_FAILURE;
 }
 
 /**************************************************************/
 
 static void elastic_trial(
-  State_Parameters Intput_SP,
+  State_Parameters * ptr_SP_p,
   Material MatProp_p)
 {
 
@@ -199,29 +202,22 @@ static void elastic_trial(
   double Shear_modulus = E/(2*(1 + nu));
 
 #if NumberDimensions == 3 
-  Intput_SP.Stress[0] = (Lame_param + 2*Shear_modulus)*Intput_SP.Strain[0] 
-  + Lame_param*Intput_SP.Strain[1] 
-  + Lame_param*Intput_SP.Strain[2];
 
-  Intput_SP.Stress[1] = Lame_param*Intput_SP.Strain[0] 
-  + (Lame_param + 2*Shear_modulus)*Intput_SP.Strain[1] 
-  + Lame_param*Intput_SP.Strain[2];
+  ptr_SP_p->Stress[0] = (Lame_param + 2*Shear_modulus)*ptr_SP_p->Strain[0] + Lame_param*ptr_SP_p->Strain[1] + Lame_param*ptr_SP_p->Strain[2];
 
-  Intput_SP.Stress[2] = Lame_param*Intput_SP.Strain[0] 
-  + Lame_param*Intput_SP.Strain[1] 
-  + (Lame_param + 2*Shear_modulus)*Intput_SP.Strain[2];
+  ptr_SP_p->Stress[1] = Lame_param*ptr_SP_p->Strain[0] + (Lame_param + 2*Shear_modulus)*ptr_SP_p->Strain[1] + Lame_param*ptr_SP_p->Strain[2];
+
+  ptr_SP_p->Stress[2] = Lame_param*ptr_SP_p->Strain[0] + Lame_param*ptr_SP_p->Strain[1] + (Lame_param + 2*Shear_modulus)*ptr_SP_p->Strain[2];
 
 #endif
 
 #if NumberDimensions == 2
 
-  Intput_SP.Stress[0] = (Lame_param + 2*Shear_modulus)*Intput_SP.Strain[0] 
-  + Lame_param*Intput_SP.Strain[1];
+  ptr_SP_p->Stress[0] = (Lame_param + 2*Shear_modulus)*ptr_SP_p->Strain[0] + Lame_param*ptr_SP_p->Strain[1];
 
-  Intput_SP.Stress[1] = Lame_param*Intput_SP.Strain[0] 
-  + (Lame_param + 2*Shear_modulus)*Intput_SP.Strain[1];
-
-  Intput_SP.Stress[2] = nu*(Intput_SP.Stress[0] + Intput_SP.Stress[1]);
+  ptr_SP_p->Stress[1] = Lame_param*ptr_SP_p->Strain[0] + (Lame_param + 2*Shear_modulus)*ptr_SP_p->Strain[1];
+  
+  ptr_SP_p->Stress[2] = nu*(ptr_SP_p->Stress[0] + ptr_SP_p->Stress[1]);
 
 #endif
 }

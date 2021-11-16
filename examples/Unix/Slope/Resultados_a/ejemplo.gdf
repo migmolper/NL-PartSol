@@ -18,7 +18,7 @@ GramsBox (Type=GID,File=Nodes.msh) {
 Define-Material(idx=0,Model=Granular)
 {
   rho=2100.0
-  E=1E4
+  E=70E4
   nu=0.3
   Yield-Function=Lade-Duncan
   alpha-Hardening-Borja=1.0

@@ -31,6 +31,7 @@ static void standard_error(char * Error_message);
 
 int main(int argc, char * argv[])
 {  
+  int status = 0;
   char Error_message[MAXW];
   bool Is_New_Simulation = false;
   bool Is_Restart_Simulation = false;
@@ -113,7 +114,7 @@ int main(int argc, char * argv[])
       }
       else if(strcmp(TimeIntegrationScheme,"NPC-FS") == 0 )
       { 
-        U_Newmark_Predictor_Corrector_Finite_Strains(FEM_Mesh, MPM_Mesh, Parameters_Solver);
+        status = U_Newmark_Predictor_Corrector_Finite_Strains(FEM_Mesh, MPM_Mesh, Parameters_Solver);
       }
       else if(strcmp(TimeIntegrationScheme,"Discrete-Energy-Momentum") == 0 )
       { 
@@ -139,7 +140,7 @@ int main(int argc, char * argv[])
 
       printf("Computation finished at : %s \n",__TIME__);  
       puts("Exiting of the program...");
-      exit(EXIT_SUCCESS);
+      exit(status);
 
     }
     else if(strcmp(Formulation,"-up") == 0)

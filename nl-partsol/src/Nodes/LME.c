@@ -1,5 +1,12 @@
 #include "nl-partsol.h"
 
+#ifdef _OPENMP
+    #include <omp.h>
+    #define UD_Num_THREADS 10
+#else
+    #define omp_get_thread_num() 0
+#endif
+
 
 // Auxiliar functions to compute the shape functions
 static double fa__LME__(Matrix, Matrix, double);

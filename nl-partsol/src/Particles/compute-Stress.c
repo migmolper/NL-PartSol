@@ -67,12 +67,13 @@ Tensor explicit_integration_stress__Particles__(
 
 /**************************************************************/
 
-void Stress_integration__Particles__(
+int Stress_integration__Particles__(
   int p,
   Particle MPM_Mesh,
   Mesh FEM_Mesh,
   Material MatProp_p)
 {
+  int status = 0;
   int Ndim = NumberDimensions;
 
   State_Parameters Input_SP;
@@ -176,7 +177,7 @@ void Stress_integration__Particles__(
     {
       fprintf(stderr,"%s : %s %s %s \n","Error in stress_integration__Particles__()",
     "The solver",MatProp_p.Type,"has not been yet implemented");
-      exit(EXIT_FAILURE);
+      return EXIT_FAILURE;
     }
 
     MPM_Mesh.Phi.Equiv_Plast_Str.nV[p] = Output_SP.Equiv_Plast_Str;
@@ -199,8 +200,16 @@ void Stress_integration__Particles__(
         Input_SP.F_n1_p = MPM_Mesh.Phi.F_n1.nM[p];
       }
   
-      Output_SP = finite_strain_plasticity(Input_SP,MatProp_p,Frictional_Monolithic);
-      
+      status = finite_strain_plasticity(&Input_SP,MatProp_p,Frictional_Monolithic);
+      if(status)
+      {
+        fprintf(stderr,"%s %i %s %s : \n\t %s %s %s \n",
+        "Error in the line",__LINE__,"of the file",__FILE__, 
+        "The function","finite_strain_plasticity(Frictional_Monolithic)",
+        "returned an error message !!!" );
+        return EXIT_FAILURE;
+      }
+
       MPM_Mesh.Phi.Kappa_hardening.nV[p] = Output_SP.Kappa;
       MPM_Mesh.Phi.Equiv_Plast_Str.nV[p] = Output_SP.Equiv_Plast_Str;
       
@@ -210,9 +219,10 @@ void Stress_integration__Particles__(
   {
     fprintf(stderr,"%s : %s %s %s \n","Error in forward_integration_Stress__Particles__()",
     "The material",MatProp_p.Type,"has not been yet implemnented");
-    exit(EXIT_FAILURE);
+    return EXIT_FAILURE;
   }
 
+  return EXIT_SUCCESS;
 }
 
 /**************************************************************/

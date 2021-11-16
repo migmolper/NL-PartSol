@@ -75,7 +75,7 @@ void U_Generalized_alpha(Mesh, Particle, Time_Int_Params);
 void U_Newmark_Predictor_Corrector(Mesh, Particle, Time_Int_Params);
 
 /*!
-  \fn void U_Newmark_Predictor_Corrector_Finite_Strains(Mesh FEM_Mesh, Particle MPM_Mesh, Time_Int_Params Parameters_Solver)
+  \fn int U_Newmark_Predictor_Corrector_Finite_Strains(Mesh FEM_Mesh, Particle MPM_Mesh, Time_Int_Params Parameters_Solver)
 
   \brief Finite strains explicit predictor-corrector gamma = 0.5
  
@@ -83,7 +83,7 @@ void U_Newmark_Predictor_Corrector(Mesh, Particle, Time_Int_Params);
   \param Particle MPM_Mesh : Variable with the particle information
   \param InitialStep
  */
-void U_Newmark_Predictor_Corrector_Finite_Strains(Mesh, Particle, Time_Int_Params);
+int U_Newmark_Predictor_Corrector_Finite_Strains(Mesh, Particle, Time_Int_Params);
 
 /*
   \fn void U_Newmark_beta_Finite_Strains(Mesh FEM_Mesh, Particle MPM_Mesh, Time_Int_Params Parameters_Solver)

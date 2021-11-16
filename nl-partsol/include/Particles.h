@@ -155,9 +155,9 @@ Tensor explicit_integration_stress__Particles__(int, Particle, Material);
 
 /*******************************************************/
 /*
-\fn void Stress_integration__Particles__()
+\fn int Stress_integration__Particles__()
 */
-void Stress_integration__Particles__(int,Particle,Mesh,Material);
+int Stress_integration__Particles__(int,Particle,Mesh,Material);
 
 /*******************************************************/
 /*!
