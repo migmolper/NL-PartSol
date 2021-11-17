@@ -16,6 +16,10 @@
 #include "Types.h"
 #include "Globals.h"
 
+#define TOL_Error_0 1E-7
+#define TOL_Error_i 1E-10
+#define MAX_Iter 10
+
 /*
   Auxiliar variables
 */
@@ -71,7 +75,7 @@ static void eval_dd_Plastic_Potential_d_stress_d_kappa2(double *, double *,doubl
 static void eval_strain(double *,double *,double *);
 static int assemble_residual(double *,double *,double *,double *,double *,double *,double,double,Model_Parameters);
 static int compute_condition_number(double *,double *);
-static bool check_convergence(double,int,int);
+static bool check_convergence(double,int);
 static int assemble_tangent_matrix(double *,double *,double *,double *,double,double,Model_Parameters);
 static int solver(double *,double *,double *);
 static void update_variables(double *,double *,double *,double *,double *,double,double);
@@ -118,7 +122,6 @@ int Frictional_Monolithic__Constitutive__(
   double D_Residual[5];
   double Tangent_Matrix[25]; 
   double Norm_Residual;
-  int MaxIter = Max_Iterations_Radial_Returning;
   int Iter = 0;
   bool Convergence = false;
 
@@ -151,7 +154,7 @@ int Frictional_Monolithic__Constitutive__(
     
     status = assemble_residual(&Norm_Residual,Residual,Stress_k,Strain_e_tri,Plastic_Flow_k,kappa_k,delta_lambda_k,Lambda_k,Params); 
 
-    Convergence = check_convergence(Norm_Residual,Iter,MaxIter);
+    Convergence = check_convergence(Norm_Residual,Iter);
 
     /*
       Newton-Rapson
@@ -182,7 +185,7 @@ int Frictional_Monolithic__Constitutive__(
 
       status = assemble_residual(&Norm_Residual,Residual,Stress_k,Strain_e_tri,Plastic_Flow_k,kappa_k,delta_lambda_k,Lambda_k,Params); 
 
-      Convergence = check_convergence(Norm_Residual,Iter,MaxIter);
+      Convergence = check_convergence(Norm_Residual,Iter);
     }
 
     /*
@@ -938,8 +941,7 @@ static int assemble_residual(
 
 static bool check_convergence(
   double Error,
-  int Iter,
-  int MaxIter)
+  int Iter)
 {
   bool convergence;
   double Error_relative = 0.0;
@@ -952,7 +954,7 @@ static bool check_convergence(
     Error0 = Error;
     Error_relative = Error/Error0;      
 
-    if(Error0 < TOL_Radial_Returning*100)
+    if(Error0 < TOL_Error_0)
     {
       return true;
     }
@@ -963,16 +965,11 @@ static bool check_convergence(
   }
 
 
-  if((Error > TOL_Radial_Returning*100) 
-  && (Error_relative > TOL_Radial_Returning) 
-  && (Iter < MaxIter))
+  if((Error < TOL_Error_0) 
+  || (Error_relative < TOL_Error_i) 
+  || (Iter > MAX_Iter))
   {
-    return false;
-  }
-  else
-  {
-
-    if(Iter >= MaxIter) 
+    if(Iter >= MAX_Iter) 
     {
       fprintf(stderr,"%s %s: %s %i \n",
       "Error in",__func__,
@@ -981,6 +978,10 @@ static bool check_convergence(
     }
 
     return true;
+  }
+  else
+  {
+    return false;
   }
 
 }
@@ -1108,7 +1109,7 @@ static int assemble_tangent_matrix(
         printf("\n");
       }
 
-      printf("delta_lambda: %e, Lambda_k: %e\n",delta_lambda,Lambda_k);
+      printf("I1: %e, delta_lambda: %e, Lambda_k: %e\n",I1,delta_lambda,Lambda_k);
       
       return EXIT_FAILURE;
     }

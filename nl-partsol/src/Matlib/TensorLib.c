@@ -312,18 +312,18 @@ int Eigen_analysis__TensorLib__(
   dgeev_("N", "V", &n, a, &lda, wr, wi, vl, &ldvl, vr, &ldvr, &wkopt, &lwork, &INFO );
   if(INFO>0)
   {
-    fprintf(stderr,"%s %s: %s \n%s %s\n",
+    fprintf(stderr,"%s %s: %s \n%s %s, %s %i\n",
     "Error in the function",__func__,
     "The function dgeev_ failed to compute eigenvalues",
-    "File",__FILE__);
+    "File",__FILE__,"Line",__LINE__);
     return EXIT_FAILURE;
   }
   else if(INFO<0)
   {
-    fprintf(stderr,"%s %s: %s %i %s \n%s %s\n",
+    fprintf(stderr,"%s %s: %s %i %s \n%s %s, %s %i\n",
     "Error in the function",__func__,
     "The",-INFO,"argument of dgeev_ had an illegal value",
-    "File",__FILE__);
+    "File",__FILE__,"Line",__LINE__);
     return EXIT_FAILURE;
   }
 
@@ -334,18 +334,20 @@ int Eigen_analysis__TensorLib__(
   dgeev_("N","V", &n, a, &lda, wr, wi, vl, &ldvl, vr, &ldvr,work, &lwork, &INFO);
   if(INFO>0)
   {
-    fprintf(stderr,"%s %s: %s \n%s %s\n",
+    free(work);
+    fprintf(stderr,"%s %s: %s \n%s %s, %s %i\n",
     "Error in the function",__func__,
     "The function dgeev_ failed to compute eigenvalues",
-    "File",__FILE__);
+    "File",__FILE__,"Line",__LINE__);
     return EXIT_FAILURE;
   }
   else if(INFO<0)
   {
-    fprintf(stderr,"%s %s: %s %i %s \n%s %s\n",
+    free(work);
+    fprintf(stderr,"%s %s: %s %i %s \n%s %s, %s %i\n",
     "Error in the function",__func__,
     "The",-INFO,"argument of dgeev_ had an illegal value",
-    "File",__FILE__);
+    "File",__FILE__,"Line",__LINE__);
     return EXIT_FAILURE;
   }
 

@@ -1247,6 +1247,18 @@ static void assemble_tangent_matrix(
     Tangent_Matrix[23] = d_F_d_kappa1;
     Tangent_Matrix[24] = 0.0;
 
+
+      fprintf(stderr,"Tangent Matrix: \n");
+      for(int i = 0 ; i<5 ; i++)
+      {
+        for(int j = 0 ; j<5 ; j++)
+        {
+          printf("%e ",Tangent_Matrix[i*5+j]);
+        }
+        printf("\n");
+      }
+
+
   } 
 
 
@@ -1359,7 +1371,7 @@ static void solver(
     "Error in the function",__func__,
     "The function dgetrf_ returned an error message !!!",
     "File",__FILE__);
-    return EXIT_FAILURE;
+    exit(EXIT_FAILURE);
   }
 
   /*
@@ -1373,7 +1385,7 @@ static void solver(
     "Error in the function",__func__,
     "The function dgetrs_ returned an error message !!!",
     "File",__FILE__);
-    return EXIT_FAILURE;
+    exit(EXIT_FAILURE);
   }
 
   free(IPIV);

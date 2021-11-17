@@ -23,7 +23,7 @@ Define-Material(idx=0,Model=Granular)
   Yield-Function=Matsuoka-Nakai
   alpha-Hardening-Borja=1.0
   a1-Hardening-Borja=1.4E2
-  a2-Hardening-Borja=0.0005
+  a2-Hardening-Borja=0.0001
   a3-Hardening-Borja=35.0
   Atmospheric-pressure=-100E3
   Cohesion=0.0
