@@ -89,7 +89,7 @@ void initialize__Q4__(
         /* 
           Activate the nodes near the particle
         */
-        Locality_I0 = FEM_Mesh.NodalLocality_0[MPM_Mesh.I0[p]];
+        Locality_I0 = FEM_Mesh.Connectivity[i];
 
         while(Locality_I0 != NULL)
         {
@@ -614,7 +614,7 @@ void local_search__Q4__(Particle MPM_Mesh, Mesh FEM_Mesh)
   // List of nodes close to the node I0_p 
   ChainPtr Locality_I0;
 
-  // Set to zero the active/non-active node, and the GPs in each element */
+  // Set to zero the active/non-active node, and the GPs in each element
   for(int i = 0 ; i<FEM_Mesh.NumNodesMesh ; i++)
   {
     Num_Particles_Node_i = FEM_Mesh.Num_Particles_Node[i];
@@ -624,22 +624,15 @@ void local_search__Q4__(Particle MPM_Mesh, Mesh FEM_Mesh)
       FEM_Mesh.Num_Particles_Node[i] = 0;
       free__SetLib__(&FEM_Mesh.List_Particles_Node[i]);
     }
-
-    FEM_Mesh.ActiveNode[i] = false;
-
   }
 
-  for(int i = 0 ; i<FEM_Mesh.Num_Patch_Mesh ; i++)
+  if(FEM_Mesh.Locking_Control_Fbar)
   {
-//    Num_Particles_Element_i = FEM_Mesh.Num_Particles_Element[i];
-
-//    if(Num_Particles_Element_i != 0)
-//    {
-//      free__SetLib__(&FEM_Mesh.List_Particles_Element[i]); 
-//      FEM_Mesh.Num_Particles_Element[i] = 0;
+    for(int i = 0 ; i<FEM_Mesh.Num_Patch_Mesh ; i++)
+    {
       FEM_Mesh.Vol_Patch_n[i] = 0.0;
       FEM_Mesh.Vol_Patch_n1[i] = 0.0;
-//    }
+    }
   }
 
   // Loop over the particles

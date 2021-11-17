@@ -21,7 +21,7 @@ Define-Material(idx=0,Model=Granular)
   E=1E4
   nu=0.3
   Yield-Function=Matsuoka-Nakai
-  alpha-Hardening-Borja=1.0
+  alpha-Hardening-Borja=0.5
   a1-Hardening-Borja=1.4E2
   a2-Hardening-Borja=0.0001
   a3-Hardening-Borja=35.0
@@ -38,12 +38,12 @@ GramsTime (Type=NPC-FS) {
 	 Cel=182.57
 }
 
-One-Phase-Analysis (File=Particles.msh,GPxElement=4) {
+One-Phase-Analysis (File=Particles.msh,GPxElement=9) {
 
    Assign-material-to-particles (MatIdx=0, Particles=Soil.txt)
 
    GramsShapeFun (Type=LME) {
-       gamma=3.0
+	gamma=3.0
    }
 
    GramsBodyForces (Nodes=Soil.txt) { 

@@ -88,7 +88,6 @@ int U_Newmark_Predictor_Corrector_Finite_Strains(
       print_Status("*************************************************",TimeStep);
       DeltaTimeStep = U_DeltaT__SolversLib__(MPM_Mesh, DeltaX, Parameters_Solver);
       print_step(TimeStep,DeltaTimeStep);
-      local_search__MeshTools__(MPM_Mesh,FEM_Mesh);
       ActiveNodes = generate_NodalMask__MeshTools__(FEM_Mesh);
       Nactivenodes = ActiveNodes.Nactivenodes;
       Free_and_Restricted_Dofs = generate_Mask_for_static_condensation__MeshTools__(ActiveNodes,FEM_Mesh);
@@ -190,6 +189,8 @@ int U_Newmark_Predictor_Corrector_Finite_Strains(
         "File",__FILE__);
         return EXIT_FAILURE;
       }
+
+      local_search__MeshTools__(MPM_Mesh,FEM_Mesh);
 
       output_selector(MPM_Mesh, FEM_Mesh, ActiveNodes, Velocity, D_Displacement,Forces, Reactions, DeltaTimeStep, TimeStep, ResultsTimeStep);
       if(status)
@@ -1195,6 +1196,7 @@ static int solve_Nodal_Equilibrium(
   Element Nodes_p; /* Element for each Gauss-Point */
   Matrix ShapeFunction_p;
   double ShapeFunction_pA;
+  double M_err;
 
   /* 
     Solution nodal variable
@@ -1221,7 +1223,7 @@ static int solve_Nodal_Equilibrium(
   unsigned idx;
   int * Nodes2Mask = Free_and_Restricted_Dofs.Nodes2Mask;
 
-  #pragma omp parallel for shared (R_I,F_I,Acc_I,G_I,Mass_IJ,Order) private(idx) schedule(static,n_per_thread)
+  #pragma omp parallel for shared (R_I,F_I,Acc_I,G_I,Mass_IJ,Order) private(M_err,status,idx) schedule(static,n_per_thread)
   for(idx = 0 ; idx<Order ; idx++)
   {
     if(Nodes2Mask[idx] != -1)
@@ -1230,6 +1232,7 @@ static int solve_Nodal_Equilibrium(
       if(Mass_IJ[idx] < TOL_zero)
       {
         status = idx;
+        M_err = Mass_IJ[idx];
       }
 
       Acc_I[idx] = G_I[idx] + F_I[idx]/Mass_IJ[idx];
@@ -1243,9 +1246,9 @@ static int solve_Nodal_Equilibrium(
 
   if(status > 0)
   {
-    fprintf(stderr,"%s %s %s %s : \n\t %s M[%i] %s \n",
+    fprintf(stderr,"%s %s %s %s : \n\t %s M[%i] = %e %s \n",
     "Error in the function",__func__,"of the file",__FILE__,
-    "The component of",idx,"is singular !" );
+    "The mass matrix",idx,M_err,"is singular !" );
     return EXIT_FAILURE;
   }
 

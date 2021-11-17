@@ -77,8 +77,8 @@ static int assemble_residual(double *,double *,double *,double *,double *,double
 static int compute_condition_number(double *,double *);
 static bool check_convergence(double,int);
 static int assemble_tangent_matrix(double *,double *,double *,double *,double,double,Model_Parameters);
-static int solver(double *,double *,double *);
-static void update_variables(double *,double *,double *,double *,double *,double,double);
+static int solver(double *,double *);
+static int update_variables(double *,double *,double *,double *,double *,double,double);
 static void update_state_variables(State_Parameters *,double *,double *,double *,double,double,double);
 
 /**************************************************************/
@@ -111,7 +111,7 @@ int Frictional_Monolithic__Constitutive__(
   double kappa_k[2] = {ptr_SP_p->Kappa, Params.alpha*ptr_SP_p->Kappa};
   double Lambda_n = ptr_SP_p->Equiv_Plast_Str;
   double Lambda_k = Lambda_n;
-  double delta_lambda_k = 0.0;
+  double delta_lambda_k = 1.0;
 
   /*
     Initialize Newton-Raphson solver
@@ -119,7 +119,6 @@ int Frictional_Monolithic__Constitutive__(
   double F = 0;
   double Strain_e_tri[3];
   double Residual[5];
-  double D_Residual[5];
   double Tangent_Matrix[25]; 
   double Norm_Residual;
   int Iter = 0;
@@ -153,6 +152,13 @@ int Frictional_Monolithic__Constitutive__(
     eval_strain(Strain_e_tri,Stress_k,Params.CC);
     
     status = assemble_residual(&Norm_Residual,Residual,Stress_k,Strain_e_tri,Plastic_Flow_k,kappa_k,delta_lambda_k,Lambda_k,Params); 
+    if(status)
+    {
+      fprintf(stderr,"%s %s \n%s %s\n",
+      "Error in the function",__func__,
+      "File",__FILE__);
+      return EXIT_FAILURE;
+    }
 
     Convergence = check_convergence(Norm_Residual,Iter);
 
@@ -172,7 +178,7 @@ int Frictional_Monolithic__Constitutive__(
         return EXIT_FAILURE;
       }
 
-      status = solver(Tangent_Matrix,Residual,D_Residual);
+      status = solver(Tangent_Matrix,Residual);
       if(status)
       {
         fprintf(stderr,"%s %s \n%s %s\n",
@@ -181,9 +187,23 @@ int Frictional_Monolithic__Constitutive__(
         return EXIT_FAILURE;
       }
 
-      update_variables(D_Residual,Stress_k,kappa_k,&delta_lambda_k,&Lambda_k,Lambda_n,Params.alpha);
+      status = update_variables(Residual,Stress_k,kappa_k,&delta_lambda_k,&Lambda_k,Lambda_n,Params.alpha);
+      if(status)
+      {
+        fprintf(stderr,"%s %s \n%s %s\n",
+        "Error in the function",__func__,
+        "File",__FILE__);
+        return EXIT_FAILURE;
+      }
 
       status = assemble_residual(&Norm_Residual,Residual,Stress_k,Strain_e_tri,Plastic_Flow_k,kappa_k,delta_lambda_k,Lambda_k,Params); 
+      if(status)
+      {
+        fprintf(stderr,"%s %s \n%s %s\n",
+        "Error in the function",__func__,
+        "File",__FILE__);
+        return EXIT_FAILURE;
+      }
 
       Convergence = check_convergence(Norm_Residual,Iter);
     }
@@ -1187,8 +1207,7 @@ static int compute_condition_number(double * RCOND, double * Tangent_Matrix)
 /**************************************************************/
 static int solver(
   double * Tangent_Matrix,
-  double * Residual,
-  double * D_Residual)
+  double * Residual)
 {
   int status = 0;
   int Order = 5;
@@ -1198,11 +1217,6 @@ static int solver(
   int   INFO = 3;
   int * IPIV = (int *)malloc(Order*sizeof(int));
   int NRHS = 1;
-
-  /*
-    Generate auxiliar copy of the mass matrix to avoid destructive operations
-  */
-  memcpy(D_Residual, Residual, 5*sizeof(double));
 
   /*
     Compute the LU factorization 
@@ -1230,7 +1244,7 @@ static int solver(
   /*
     Solve
   */
-  dgetrs_(&TRANS,&Order,&NRHS,Tangent_Matrix,&LDA,IPIV,D_Residual,&LDB,&INFO);
+  dgetrs_(&TRANS,&Order,&NRHS,Tangent_Matrix,&LDA,IPIV,Residual,&LDB,&INFO);
   if(INFO<0)
   {
     free(IPIV);
@@ -1249,8 +1263,8 @@ static int solver(
 
 /**************************************************************/
 
-static void update_variables(
-  double * D_Residual,
+static int update_variables(
+  double * Residual,
   double * Stress_k,
   double * kappa_k,
   double * delta_lambda,
@@ -1259,13 +1273,33 @@ static void update_variables(
   double alpha)
 {
 
-  Stress_k[0] -= D_Residual[0];
-  Stress_k[1] -= D_Residual[1];
-  Stress_k[2] -= D_Residual[2];
-  kappa_k[0] -= D_Residual[3];
+  Stress_k[0] -= Residual[0];
+  Stress_k[1] -= Residual[1];
+  Stress_k[2] -= Residual[2];
+  kappa_k[0] -= Residual[3];
   kappa_k[1] = alpha*kappa_k[0];
-  *delta_lambda -= D_Residual[4];
-  *lambda_k = *delta_lambda + lambda_n; 
+  (*delta_lambda) -= Residual[4];
+  (*lambda_k) = (*delta_lambda) + lambda_n; 
+
+  if((*delta_lambda) < 0)
+  {
+    fprintf(stderr,"%s %s: %s \n%s %s\n",
+    "Error in the function",__func__,
+    "The increment of the discrete plastic multiplier (delta_lambda) is less than 0",
+    "File",__FILE__);
+    return EXIT_FAILURE;
+  }
+
+  if(kappa_k[0] < 0)
+  {
+    fprintf(stderr,"%s %s: %s \n%s %s\n",
+    "Error in the function",__func__,
+    "The internal hardening parameter (kappa) is less than 0",
+    "File",__FILE__);
+    return EXIT_FAILURE;
+  }
+
+  return EXIT_SUCCESS;
 }
 
 

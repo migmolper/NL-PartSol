@@ -103,7 +103,7 @@ void initialize__LME__(
         }
 
         // Select the closest nodes to the particle and activate them
-        Locality_I0 = FEM_Mesh.NodalLocality_0[MPM_Mesh.I0[p]];
+        Locality_I0 = FEM_Mesh.Connectivity[i];
 
         while(Locality_I0 != NULL)
         {
