@@ -96,7 +96,7 @@ static void Eigenerosion(
     For the current particle get first principal stress 
   */	
   Stress_p = memory_to_tensor__TensorLib__(Stress.nM[p], 2);
-  Eigen_Stress_p = Eigen_analysis__TensorLib__(Stress_p);
+  Eigen_analysis__TensorLib__(&Eigen_Stress_p,Stress_p);
 
   /*!
     Non broken GP Only traction 
@@ -277,7 +277,7 @@ static void Eigensoftening(
 	    For the current particle get first principal stress 
 	  */	
 	  Stress_p = memory_to_tensor__TensorLib__(Stress.nM[p], 2);
-	  Eigen_Stress_p = Eigen_analysis__TensorLib__(Stress_p);
+	  Eigen_analysis__TensorLib__(&Eigen_Stress_p,Stress_p);
       
 	  /*!
 	    Add the first term to the sumation 
@@ -310,7 +310,7 @@ static void Eigensoftening(
 	      if(chi.nV[q] != 1.0)
 		{
 		  Stress_q = memory_to_tensor__TensorLib__(Stress.nM[q], 2);
-		  Eigen_Stress_q = Eigen_analysis__TensorLib__(Stress_q);
+		  Eigen_analysis__TensorLib__(&Eigen_Stress_q,Stress_q);
 	    
 		  /*!
 		    Get sum_p 
@@ -343,11 +343,9 @@ static void Eigensoftening(
 	    {
 
 	      Strain_p = memory_to_tensor__TensorLib__(Strain.nM[p], 2);
-	      Eigen_Strain_p = Eigen_analysis__TensorLib__(Strain_p);
+	      Eigen_analysis__TensorLib__(&Eigen_Strain_p,Strain_p);
 	  	  
-	      /*!
-		Strain during fracture 
-	      */
+	      /* Strain during fracture */
 	      Strain_If.nV[p] = Eigen_Strain_p.Value.n[0];
 
 	      /* Free eigenvalues */
@@ -366,7 +364,7 @@ static void Eigensoftening(
     {
 
       Strain_p = memory_to_tensor__TensorLib__(Strain.nM[p], 2);
-      Eigen_Strain_p = Eigen_analysis__TensorLib__(Strain_p);
+      Eigen_analysis__TensorLib__(&Eigen_Strain_p,Strain_p);
 	  	  
       /*!
 	Fracture criterium 

@@ -1334,10 +1334,9 @@ static void solver(
   int NRHS = 1;
   
   double rcond = compute_condition_number(Tangent_Matrix);
-
-
   if(rcond < 1E-10)
   {
+    free(IPIV);
     fprintf(stderr,"%s: %s %i, %s: %e\n",
     "Error in Frictional_Monolithic",
     "Tangent_Matrix is near to singular matrix for particle",
@@ -1353,35 +1352,32 @@ static void solver(
     Compute the LU factorization 
   */
   dgetrf_(&Order,&Order,Tangent_Matrix,&LDA,IPIV,&INFO);
-
-  /*
-    Check error messages in the LAPACK LU descomposition  
-  */
   if(INFO)
   {
-    fprintf(stderr,"%s : %s %s %s \n",
-      "Error in Frictional_Monolithic",
-      "The function","dgetrf_","returned an error message !!!" );
-    exit(EXIT_FAILURE);
+    free(IPIV);
+    fprintf(stderr,"%s %s: %s \n%s %s\n",
+    "Error in the function",__func__,
+    "The function dgetrf_ returned an error message !!!",
+    "File",__FILE__);
+    return EXIT_FAILURE;
   }
 
   /*
     Solve
   */
   dgetrs_(&TRANS,&Order,&NRHS,Tangent_Matrix,&LDA,IPIV,D_Residual,&LDB,&INFO);
-  free(IPIV);
-
-  /*
-    Check error messages in the LAPACK solver  
-  */
   if(INFO)
   {
-    fprintf(stderr,"%s : %s %s %s \n","Error in Frictional_Monolithic",
-      "The function","dgetrs_","returned an error message !!!" );
-    exit(EXIT_FAILURE);
+    free(IPIV);
+    fprintf(stderr,"%s %s: %s \n%s %s\n",
+    "Error in the function",__func__,
+    "The function dgetrs_ returned an error message !!!",
+    "File",__FILE__);
+    return EXIT_FAILURE;
   }
-}
 
+  free(IPIV);
+}
 
 /**************************************************************/
 

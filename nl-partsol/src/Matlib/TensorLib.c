@@ -267,19 +267,17 @@ double J3__TensorLib__(const Tensor A)
 
 /*************************************************************/
 
-EigenTensor Eigen_analysis__TensorLib__(const Tensor A)
+int Eigen_analysis__TensorLib__(
+  EigenTensor * EigenA,
+  const Tensor A)
 {
-
-  /* Output variable */
-  EigenTensor EigenA;
-
-  /* Locals */
+  int status = 0;
   int Ndim = NumberDimensions;
   int n = Ndim;
   int lda = Ndim;
   int ldvl = Ndim;
   int ldvr = Ndim;
-  int info; 
+  int INFO; 
   int lwork;
   double wkopt;
   double * work;
@@ -311,25 +309,44 @@ EigenTensor Eigen_analysis__TensorLib__(const Tensor A)
     Query and allocate the optimal workspace
   */
   lwork = -1;
-  dgeev_("N", "V", &n, a, &lda, wr, wi, vl, &ldvl, vr, &ldvr, &wkopt, &lwork, &info );
+  dgeev_("N", "V", &n, a, &lda, wr, wi, vl, &ldvl, vr, &ldvr, &wkopt, &lwork, &INFO );
+  if(INFO>0)
+  {
+    fprintf(stderr,"%s %s: %s \n%s %s\n",
+    "Error in the function",__func__,
+    "The function dgeev_ failed to compute eigenvalues",
+    "File",__FILE__);
+    return EXIT_FAILURE;
+  }
+  else if(INFO<0)
+  {
+    fprintf(stderr,"%s %s: %s %i %s \n%s %s\n",
+    "Error in the function",__func__,
+    "The",-INFO,"argument of dgeev_ had an illegal value",
+    "File",__FILE__);
+    return EXIT_FAILURE;
+  }
+
   lwork = (int)wkopt;
   work = (double*)malloc(lwork*sizeof(double));
-
-  /* Check for convergence */
-  if(info > 0)
-  {
-    printf("Error in Eigen_analysis__TensorLib__() : The algorithm failed to compute eigenvalues.\n" );
-    exit(EXIT_FAILURE); 
-  }
         
   /* Solve eigenproblem */
-  dgeev_("N","V", &n, a, &lda, wr, wi, vl, &ldvl, vr, &ldvr,work, &lwork, &info );
-  
-  /* Check for convergence */
-  if(info > 0)
+  dgeev_("N","V", &n, a, &lda, wr, wi, vl, &ldvl, vr, &ldvr,work, &lwork, &INFO);
+  if(INFO>0)
   {
-    printf("Error in Eigen_analysis__TensorLib__() : The algorithm failed to compute eigenvalues.\n" );
-    exit(EXIT_FAILURE); 
+    fprintf(stderr,"%s %s: %s \n%s %s\n",
+    "Error in the function",__func__,
+    "The function dgeev_ failed to compute eigenvalues",
+    "File",__FILE__);
+    return EXIT_FAILURE;
+  }
+  else if(INFO<0)
+  {
+    fprintf(stderr,"%s %s: %s %i %s \n%s %s\n",
+    "Error in the function",__func__,
+    "The",-INFO,"argument of dgeev_ had an illegal value",
+    "File",__FILE__);
+    return EXIT_FAILURE;
   }
 
   free(work);
@@ -337,20 +354,20 @@ EigenTensor Eigen_analysis__TensorLib__(const Tensor A)
   /*
     Fill output
   */
-  EigenA.Value = alloc__TensorLib__(1);
-  EigenA.Vector = alloc__TensorLib__(2);
+  EigenA->Value = alloc__TensorLib__(1);
+  EigenA->Vector = alloc__TensorLib__(2);
   
   for(int i = 0 ; i<Ndim ; i++)
   {
-    EigenA.Value.n[i] = wr[i];
+    EigenA->Value.n[i] = wr[i];
 
     for(int j = 0 ; j<Ndim ; j++)
     {
-      EigenA.Vector.N[i][j] = vr[i+j*Ndim];
+      EigenA->Vector.N[i][j] = vr[i+j*Ndim];
     }
   }
 
-  return EigenA;
+  return EXIT_SUCCESS;
 }
 
 

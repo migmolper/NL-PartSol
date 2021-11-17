@@ -91,7 +91,7 @@ double J1__TensorLib__(const Tensor);
 double J2__TensorLib__(const Tensor);
 double J3__TensorLib__(const Tensor);
 
-EigenTensor Eigen_analysis__TensorLib__(const Tensor);
+int Eigen_analysis__TensorLib__(EigenTensor *,const Tensor);
 
 double EuclideanNorm__TensorLib__(const Tensor);
 double Generalised_norm__TensorLib__(const Tensor, const Tensor);

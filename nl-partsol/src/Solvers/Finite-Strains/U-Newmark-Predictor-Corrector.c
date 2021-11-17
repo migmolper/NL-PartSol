@@ -41,8 +41,8 @@ static int impose_Dirichlet_Boundary_Conditions(double *, double *,Mesh,Mask,dou
 static int update_Local_State(double *,Mask,Particle,Mesh);
 /* Step 5 */
 static int compute_Nodal_Forces(double *,Mask,Particle,Mesh,int);
-static void   compute_Nodal_Internal_Forces(Matrix,Mask,Particle,Mesh);
-static void   compute_Nodal_Nominal_traction_Forces(Matrix,Mask,Particle,Mesh,int);
+static void compute_Nodal_Internal_Forces(Matrix,Mask,Particle,Mesh);
+static int compute_Nodal_Nominal_traction_Forces(Matrix,Mask,Particle,Mesh,int);
 static int solve_Nodal_Equilibrium(double *,double *,double *,double *,double *,Particle,Mesh,Mask,Mask);
 /* Step 6 */
 static int compute_Explicit_Newmark_Corrector(Particle,double);
@@ -104,113 +104,101 @@ int U_Newmark_Predictor_Corrector_Finite_Strains(
       status = compute_Mass_Matrix(Lumped_Mass,MPM_Mesh,FEM_Mesh,ActiveNodes);
       if(status)
       {
-        fprintf(stderr,"%s %i %s %s : \n\t %s %s %s \n",
-        "Error in the line",__LINE__,"of the file",__FILE__, 
-        "The function","compute_Mass_Matrix",
-        "returned an error message !!!" );
+        fprintf(stderr,"%s %s \n%s %s\n",
+        "Error in the function",__func__,
+        "File",__FILE__);
         return EXIT_FAILURE;
       }
       
       status = compute_Explicit_Newmark_Predictor(MPM_Mesh, gamma);
       if(status)
       {
-        fprintf(stderr,"%s %i %s %s : \n\t %s %s %s \n",
-        "Error in the line",__LINE__,"of the file",__FILE__, 
-        "The function","compute_Explicit_Newmark_Predictor",
-        "returned an error message !!!" );
+        fprintf(stderr,"%s %s \n%s %s\n",
+        "Error in the function",__func__,
+        "File",__FILE__);
         return EXIT_FAILURE;
       }
 
       status = compute_Nodal_Gravity_field(Gravity_field, ActiveNodes, MPM_Mesh, TimeStep);
       if(status)
       {
-        fprintf(stderr,"%s %i %s %s : \n\t %s %s %s \n",
-        "Error in the line",__LINE__,"of the file",__FILE__, 
-        "The function","compute_Nodal_Gravity_field",
-        "returned an error message !!!" );
+        fprintf(stderr,"%s %s \n%s %s\n",
+        "Error in the function",__func__,
+        "File",__FILE__);
         return EXIT_FAILURE;
       }
 
       status = compute_Nodal_D_Displacement(D_Displacement,Lumped_Mass,MPM_Mesh,FEM_Mesh,ActiveNodes);
       if(status)
       {
-        fprintf(stderr,"%s %i %s %s : \n\t %s %s %s \n",
-        "Error in the line",__LINE__,"of the file",__FILE__, 
-        "The function","compute_Nodal_D_Displacement",
-        "returned an error message !!!" );
+        fprintf(stderr,"%s %s \n%s %s\n",
+        "Error in the function",__func__,
+        "File",__FILE__);
         return EXIT_FAILURE;
       }
 
       status = compute_Nodal_Velocity(Velocity,Lumped_Mass,MPM_Mesh,FEM_Mesh,ActiveNodes);
       if(status)
       {
-        fprintf(stderr,"%s %i %s %s : \n\t %s %s %s \n",
-        "Error in the line",__LINE__,"of the file",__FILE__, 
-        "The function","compute_Nodal_Velocity",
-        "returned an error message !!!" );
+        fprintf(stderr,"%s %s \n%s %s\n",
+        "Error in the function",__func__,
+        "File",__FILE__);
         return EXIT_FAILURE;
       }
 
       status = impose_Dirichlet_Boundary_Conditions(D_Displacement,Velocity,FEM_Mesh,ActiveNodes,DeltaTimeStep,TimeStep);
       if(status)
       {
-        fprintf(stderr,"%s %i %s %s : \n\t %s %s %s \n",
-        "Error in the line",__LINE__,"of the file",__FILE__, 
-        "The function","impose_Dirichlet_Boundary_Conditions",
-        "returned an error message !!!" );
+        fprintf(stderr,"%s %s \n%s %s\n",
+        "Error in the function",__func__,
+        "File",__FILE__);
         return EXIT_FAILURE;
       }
 
       status = update_Local_State(D_Displacement, ActiveNodes, MPM_Mesh, FEM_Mesh);
       if(status)
       {
-        fprintf(stderr,"%s %i %s %s : \n\t %s %s %s \n",
-        "Error in the line",__LINE__,"of the file",__FILE__, 
-        "The function","update_Local_State",
-        "returned an error message !!!" );
+        fprintf(stderr,"%s %s \n%s %s\n",
+        "Error in the function",__func__,
+        "File",__FILE__);
         return EXIT_FAILURE;
       }
 
       status = compute_Nodal_Forces(Forces,ActiveNodes, MPM_Mesh, FEM_Mesh, TimeStep);
       if(status)
       {
-        fprintf(stderr,"%s %i %s %s : \n\t %s %s %s \n",
-        "Error in the line",__LINE__,"of the file",__FILE__, 
-        "The function","compute_Nodal_Forces",
-        "returned an error message !!!" );
+        fprintf(stderr,"%s %s \n%s %s\n",
+        "Error in the function",__func__,
+        "File",__FILE__);
         return EXIT_FAILURE;
       }
 
       status = solve_Nodal_Equilibrium(Lumped_Mass,Gravity_field,Forces,Reactions,D_Displacement,MPM_Mesh,FEM_Mesh,ActiveNodes,Free_and_Restricted_Dofs);
       if(status)
       {
-        fprintf(stderr,"%s %i %s %s : \n\t %s %s %s \n",
-        "Error in the line",__LINE__,"of the file",__FILE__, 
-        "The function","solve_Nodal_Equilibrium",
-        "returned an error message !!!" );
+        fprintf(stderr,"%s %s \n%s %s\n",
+        "Error in the function",__func__,
+        "File",__FILE__);
         return EXIT_FAILURE;
       }
         
       status = compute_Explicit_Newmark_Corrector(MPM_Mesh,gamma);
       if(status)
       {
-        fprintf(stderr,"%s %i %s %s : \n\t %s %s %s \n",
-        "Error in the line",__LINE__,"of the file",__FILE__, 
-        "The function","compute_Explicit_Newmark_Corrector",
-        "returned an error message !!!" );
+        fprintf(stderr,"%s %s \n%s %s\n",
+        "Error in the function",__func__,
+        "File",__FILE__);
         return EXIT_FAILURE;
       }
 
       output_selector(MPM_Mesh, FEM_Mesh, ActiveNodes, Velocity, D_Displacement,Forces, Reactions, DeltaTimeStep, TimeStep, ResultsTimeStep);
       if(status)
       {
-        fprintf(stderr,"%s %i %s %s : \n\t %s %s %s \n",
-        "Error in the line",__LINE__,"of the file",__FILE__, 
-        "The function","output_selector",
-        "returned an error message !!!" );
-        return EXIT_FAILURE; 
+        fprintf(stderr,"%s %s \n%s %s\n",
+        "Error in the function",__func__,
+        "File",__FILE__);
+        return EXIT_FAILURE;
       }
-
 
       free(Lumped_Mass); 
       free(Gravity_field);
@@ -412,8 +400,10 @@ static int compute_Nodal_Gravity_field(
        {
          if( (TimeStep < 0) || (TimeStep > B[i].Value[k].Num))
          {
-            printf("%s : %s\n", "Error in compute_Nodal_Gravity_field()","The time step is out of the curve !!");
-            exit(EXIT_FAILURE);
+            fprintf(stderr,"%s %s %s %s : \n\t %s \n",
+            "Error in the function",__func__,"of the file",__FILE__,
+            "The time step is out of the curve !!" );
+            return EXIT_FAILURE;
          }
          
          b.n[k] += B[i].Value[k].Fx[TimeStep];
@@ -722,7 +712,9 @@ static int impose_Dirichlet_Boundary_Conditions(
           */
           if( (TimeStep < 0) || (TimeStep > FEM_Mesh.Bounds.BCC_i[i].Value[k].Num))
           {
-            printf("%s : %s \n","Error in initialise_Nodal_Increments()","The time step is out of the curve !!");
+            fprintf(stderr,"%s %s %s %s : \n\t %s \n",
+            "Error in the function",__func__,"of the file",__FILE__,
+            "The time step is out of the curve !!" );
             return EXIT_FAILURE;
           }
 
@@ -824,9 +816,9 @@ static int update_Local_State(
     */
     if(MPM_Mesh.Phi.J_n1.nV[p] <= 0.0)
     {
-      fprintf(stderr,"%s : %s %i\n",
-        "Error in update_Local_State()",
-        "Negative jacobian in particle",p);
+      fprintf(stderr,"%s %s %s %s : \n\t %s %i \n",
+      "Error in the function",__func__,"of the file",__FILE__,
+      "Negative jacobian in particle",p);
       return EXIT_FAILURE;
     }
 
@@ -886,10 +878,9 @@ static int update_Local_State(
     status = Stress_integration__Particles__(p,MPM_Mesh,FEM_Mesh,MatProp_p); 
     if(status)
     {
-      fprintf(stderr,"%s %i %s %s : \n\t %s %s %s \n",
-      "Error in the line",__LINE__,"of the file",__FILE__, 
-      "The function","Stress_integration__Particles__",
-      "returned an error message !!!" );
+      fprintf(stderr,"%s %s \n%s %s\n",
+      "Error in the function",__func__,
+      "File",__FILE__);
       return EXIT_FAILURE;
     }
 
@@ -908,6 +899,7 @@ static int compute_Nodal_Forces(
   Mesh FEM_Mesh,
   int TimeStep)
 {
+  int status = 0;
   int Ndim = NumberDimensions;
   int Nnodes_mask = ActiveNodes.Nactivenodes;
 
@@ -921,8 +913,13 @@ static int compute_Nodal_Forces(
   /*
     Add contact forces contribution
   */
-  compute_Nodal_Nominal_traction_Forces(Forces,ActiveNodes,MPM_Mesh,FEM_Mesh,TimeStep);
-
+  status = compute_Nodal_Nominal_traction_Forces(Forces,ActiveNodes,MPM_Mesh,FEM_Mesh,TimeStep);
+  if(status)
+  {
+    fprintf(stderr,"%s %s %s %s\n",
+    "Error in the function",__func__,"of the file",__FILE__);
+    return EXIT_FAILURE;
+  }
   
   return EXIT_SUCCESS;
 }
@@ -1039,7 +1036,7 @@ static void compute_Nodal_Internal_Forces(
 /**************************************************************/
 
 
-static void compute_Nodal_Nominal_traction_Forces(
+static int compute_Nodal_Nominal_traction_Forces(
   Matrix Forces,
   Mask ActiveNodes,
   Particle MPM_Mesh,
@@ -1112,10 +1109,10 @@ static void compute_Nodal_Nominal_traction_Forces(
         {
           if((TimeStep < 0) || (TimeStep > Load_i.Value[k].Num))
           {
-            printf("%s : %s",
-              "Error in compute_Nodal_Nominal_traction_Forces()",
-              "The time step is out of the curve !!");
-            exit(EXIT_FAILURE);
+            fprintf(stderr,"%s %s %s %s : \n\t %s \n",
+            "Error in the function",__func__,"of the file",__FILE__,
+            "The time step is out of the curve !!" );
+            return EXIT_FAILURE;
           }
 
           T.n[k] = Load_i.Value[k].Fx[TimeStep];
@@ -1159,6 +1156,8 @@ static void compute_Nodal_Nominal_traction_Forces(
 
   free__TensorLib__(T);
 
+  return EXIT_SUCCESS;
+
 }
 
 /**************************************************************/
@@ -1183,6 +1182,7 @@ static int solve_Nodal_Equilibrium(
   /*
     General varibles
   */
+  int status = 0;
   unsigned Ndim = NumberDimensions;
   unsigned Ndof = NumberDOF;
   unsigned Np = MPM_Mesh.NumGP;
@@ -1226,6 +1226,12 @@ static int solve_Nodal_Equilibrium(
   {
     if(Nodes2Mask[idx] != -1)
     {
+
+      if(Mass_IJ[idx] < TOL_zero)
+      {
+        status = idx;
+      }
+
       Acc_I[idx] = G_I[idx] + F_I[idx]/Mass_IJ[idx];
     }
     else
@@ -1235,6 +1241,13 @@ static int solve_Nodal_Equilibrium(
     }
   }
 
+  if(status > 0)
+  {
+    fprintf(stderr,"%s %s %s %s : \n\t %s M[%i] %s \n",
+    "Error in the function",__func__,"of the file",__FILE__,
+    "The component of",idx,"is singular !" );
+    return EXIT_FAILURE;
+  }
 
   /*
     Update particle acceleration

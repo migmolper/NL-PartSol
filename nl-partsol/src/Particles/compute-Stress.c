@@ -167,11 +167,11 @@ int Stress_integration__Particles__(
   
     if(strcmp(MatProp_p.Plastic_Solver,"Backward-Euler") == 0)
     {
-      Output_SP = finite_strain_plasticity(Input_SP,MatProp_p,Von_Mises_backward_euler);
+//      Output_SP = finite_strain_plasticity__Constitutive__(Input_SP,MatProp_p,Von_Mises_backward_euler);
     }
     else if(strcmp(MatProp_p.Plastic_Solver,"Forward-Euler") == 0)
     {
-      Output_SP = finite_strain_plasticity(Input_SP,MatProp_p,Von_Mises_forward_euler);
+//      Output_SP = finite_strain_plasticity__Constitutive__(Input_SP,MatProp_p,Von_Mises_forward_euler);
     }
     else
     {
@@ -200,18 +200,17 @@ int Stress_integration__Particles__(
         Input_SP.F_n1_p = MPM_Mesh.Phi.F_n1.nM[p];
       }
   
-      status = finite_strain_plasticity(&Input_SP,MatProp_p,Frictional_Monolithic);
+      status = finite_strain_plasticity__Constitutive__(&Input_SP,MatProp_p,Frictional_Monolithic__Constitutive__);
       if(status)
       {
-        fprintf(stderr,"%s %i %s %s : \n\t %s %s %s \n",
-        "Error in the line",__LINE__,"of the file",__FILE__, 
-        "The function","finite_strain_plasticity(Frictional_Monolithic)",
-        "returned an error message !!!" );
+        fprintf(stderr,"%s %s \n%s %s\n",
+        "Error in the function",__func__,
+        "File",__FILE__);
         return EXIT_FAILURE;
       }
 
-      MPM_Mesh.Phi.Kappa_hardening.nV[p] = Output_SP.Kappa;
-      MPM_Mesh.Phi.Equiv_Plast_Str.nV[p] = Output_SP.Equiv_Plast_Str;
+      MPM_Mesh.Phi.Kappa_hardening.nV[p] = Input_SP.Kappa;
+      MPM_Mesh.Phi.Equiv_Plast_Str.nV[p] = Input_SP.Equiv_Plast_Str;
       
     }
 

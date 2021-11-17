@@ -135,25 +135,23 @@ State_Parameters Drucker_Prager_backward_euler(State_Parameters, Material);
 /*******************************************************/
 
 /*!
-  \fn State_Parameters Frictional_Monolithic(State_Parameters Inputs_SP,Material MatProp)
+  \fn int Frictional_Monolithic__Constitutive__(State_Parameters * Inputs_SP,Material MatProp)
 
   \brief Compute a family of smooth approximations of the Mohr-Coulomb model using a monolithic algorithm
 
   \param Input_SP : State parameters of the particle
   \param MatProp : Material properties of the model
 */
-State_Parameters Frictional_Monolithic(State_Parameters,Material);
+int Frictional_Monolithic__Constitutive__(State_Parameters *,Material);
 /*******************************************************/
 
 /*!
-  \fn State_Parameters Von_Mises_forward_euler(State_Parameters Input_SP, Material MatProp)
-
-  \brief Compute the plastic Von Mises model using an explicit forward euler radial returning 
+  \fn int finite_strain_plasticity__Constitutive__(State_Parameters * Input_SP, Material MatProp)
 
   \param Input_SP : State parameters of the particle
   \param MatProp : Material properties of the model
 */
-State_Parameters finite_strain_plasticity(State_Parameters,Material,State_Parameters(* infinitesimal_plasticity)(State_Parameters,Material));
+int finite_strain_plasticity__Constitutive__(State_Parameters *,Material,int(* infinitesimal_plasticity)(State_Parameters *,Material));
 /*******************************************************/
 
 /*!

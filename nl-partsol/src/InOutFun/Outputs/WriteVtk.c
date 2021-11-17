@@ -615,7 +615,7 @@ static void vtk_Out_Stress_EV(FILE * Vtk_file, Matrix Stress, int NumParticles)
   fprintf(Vtk_file,"VECTORS STRESS_EV double \n");
   for(int i =  0 ; i<NumParticles ; i++){
     Stress_p = memory_to_tensor__TensorLib__(Stress.nM[i], 2);
-    Eigen_Stress_p = Eigen_analysis__TensorLib__(Stress_p);
+    Eigen_analysis__TensorLib__(&Eigen_Stress_p,Stress_p);
     for(int j = 0 ; j<3 ; j++){
       if(j<Ndim){
   fprintf(Vtk_file,"%lf ",Eigen_Stress_p.Value.n[j]);
@@ -719,7 +719,7 @@ static void vtk_Out_Strain_EV(FILE * Vtk_file, Matrix Strain, int NumParticles)
     fprintf(Vtk_file,"VECTORS STRAIN_EV double \n");
   for(int i =  0 ; i<NumParticles ; i++){
     Strain_p = memory_to_tensor__TensorLib__(Strain.nM[i], 2);
-    Eigen_Strain_p = Eigen_analysis__TensorLib__(Strain_p);
+    Eigen_analysis__TensorLib__(&Eigen_Strain_p,Strain_p);
     for(int j = 0 ; j<3 ; j++){
       if(j<Ndim){
   fprintf(Vtk_file,"%lf ",Eigen_Strain_p.Value.n[j]);
@@ -956,7 +956,7 @@ static void vtk_Out_Von_Mises(FILE * Vtk_file, Matrix F_n, Matrix P_n, int NumPa
       }
     }
 
-    Eigen_Cauchy = Eigen_analysis__TensorLib__(Cauchy_p);
+    Eigen_analysis__TensorLib__(&Eigen_Cauchy,Cauchy_p);
 
     if(Ndim == 2)
     {

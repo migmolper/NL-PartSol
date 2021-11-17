@@ -1,0 +1,233 @@
+Error in Frictional_Monolithic(): Maximm number of iteration reached in particle 73 
+Iter: 60 | Error0: 2.446932e-08 | Error: 4.393554e-08 | Erro_rel: 1.795536e+00 
+Error in Frictional_Monolithic(): Maximm number of iteration reached in particle 73 
+Iter: 60 | Error0: 2.774538e-08 | Error: 7.260404e-08 | Erro_rel: 2.616797e+00 
+Error in Frictional_Monolithic(): Maximm number of iteration reached in particle 73 
+Iter: 60 | Error0: 2.979660e-08 | Error: 1.139768e-07 | Erro_rel: 3.825160e+00 
+Error in Frictional_Monolithic(): Maximm number of iteration reached in particle 73 
+Iter: 60 | Error0: 1.656666e-07 | Error: 2.884111e-07 | Erro_rel: 1.740913e+00 
+Error in Frictional_Monolithic(): Maximm number of iteration reached in particle 73 
+Iter: 60 | Error0: 5.575342e-08 | Error: 2.096490e-08 | Erro_rel: 3.760289e-01 
+Error in Frictional_Monolithic(): Maximm number of iteration reached in particle 73 
+Iter: 60 | Error0: 2.595150e-08 | Error: 1.283661e-08 | Erro_rel: 4.946386e-01 
+Error in Frictional_Monolithic(): Maximm number of iteration reached in particle 84 
+Iter: 60 | Error0: 2.523914e-08 | Error: 4.308158e-08 | Erro_rel: 1.706935e+00 
+Error in Frictional_Monolithic(): Maximm number of iteration reached in particle 84 
+Iter: 60 | Error0: 2.689491e-08 | Error: 6.431962e-08 | Erro_rel: 2.391516e+00 
+Error in Frictional_Monolithic(): Maximm number of iteration reached in particle 72 
+Iter: 60 | Error0: 2.489180e-08 | Error: 4.308212e-08 | Erro_rel: 1.730775e+00 
+Error in Frictional_Monolithic(): Maximm number of iteration reached in particle 84 
+Iter: 60 | Error0: 2.457794e-08 | Error: 9.969027e-08 | Erro_rel: 4.056087e+00 
+Error in Frictional_Monolithic(): Maximm number of iteration reached in particle 92 
+Iter: 60 | Error0: 2.614054e-08 | Error: 4.462021e-08 | Erro_rel: 1.706935e+00 
+Error in Frictional_Monolithic(): Maximm number of iteration reached in particle 85 
+Iter: 60 | Error0: 3.632141e-08 | Error: 4.931177e-08 | Erro_rel: 1.357650e+00 
+Error in Frictional_Monolithic(): Maximm number of iteration reached in particle 93 
+Iter: 60 | Error0: 3.019094e-08 | Error: 4.224231e-08 | Erro_rel: 1.399172e+00 
+Error in Frictional_Monolithic(): Maximm number of iteration reached in particle 72 
+Iter: 60 | Error0: 2.860371e-08 | Error: 6.858215e-08 | Erro_rel: 2.397666e+00 
+Error in Frictional_Monolithic(): Maximm number of iteration reached in particle 84 
+Iter: 60 | Error0: 3.145046e-08 | Error: 1.350677e-07 | Erro_rel: 4.294615e+00 
+Error in Frictional_Monolithic(): Maximm number of iteration reached in particle 72 
+Iter: 60 | Error0: 2.829462e-08 | Error: 1.042434e-07 | Erro_rel: 3.684213e+00 
+Error in Frictional_Monolithic(): Maximm number of iteration reached in particle 93 
+Iter: 60 | Error0: 2.694124e-08 | Error: 6.044319e-08 | Erro_rel: 2.243519e+00 
+Error in Frictional_Monolithic(): Maximm number of iteration reached in particle 92 
+Iter: 60 | Error0: 3.334736e-08 | Error: 7.580054e-08 | Erro_rel: 2.273060e+00 
+Error in Frictional_Monolithic(): Maximm number of iteration reached in particle 85 
+Iter: 60 | Error0: 3.013300e-08 | Error: 7.216607e-08 | Erro_rel: 2.394918e+00 
+Error in Frictional_Monolithic(): Maximm number of iteration reached in particle 93 
+Iter: 60 | Error0: 2.449722e-08 | Error: 9.001523e-08 | Erro_rel: 3.674507e+00 
+Error in Frictional_Monolithic(): Maximm number of iteration reached in particle 72 
+Iter: 60 | Error0: 1.855552e-08 | Error: 1.483665e-07 | Erro_rel: 7.995814e+00 
+Error in Frictional_Monolithic(): Maximm number of iteration reached in particle 92 
+Iter: 60 | Error0: 2.714162e-08 | Error: 8.138383e-08 | Erro_rel: 2.998488e+00 
+Error in Frictional_Monolithic(): Maximm number of iteration reached in particle 92 
+Iter: 60 | Error0: 6.210094e-08 | Error: 1.802519e-07 | Erro_rel: 2.902563e+00 
+Error in Frictional_Monolithic(): Maximm number of iteration reached in particle 85 
+Iter: 60 | Error0: 4.088835e-08 | Error: 1.131594e-07 | Erro_rel: 2.767521e+00 
+Error in Frictional_Monolithic(): Maximm number of iteration reached in particle 93 
+Iter: 60 | Error0: 6.550401e-08 | Error: 1.532559e-07 | Erro_rel: 2.339641e+00 
+Error in Frictional_Monolithic(): Maximm number of iteration reached in particle 94 
+Iter: 60 | Error0: 2.700713e-08 | Error: 4.185598e-08 | Erro_rel: 1.549812e+00 
+Error in Frictional_Monolithic(): Maximm number of iteration reached in particle 94 
+Iter: 60 | Error0: 3.035735e-08 | Error: 5.930342e-08 | Erro_rel: 1.953511e+00 
+*************************************************
+Generating the background mesh ...
+*************************************************
+ 	 * Read GID mesh in : ./Nodes.msh 
+	 	 -> Compute sourrounding elements : Done 
+	 	 -> Compute nodal neighborhood : Done 
+	 	 -> Compute extended nodal neighborhood : Done 
+	 	 -> Allocate list of active nodes : Done 
+	 	 -> Allocate list of particles per node : Done 
+	 	 -> Compute local nodal distance : Done 
+	 	 -> Compute mesh size : 2.200000 
+*************************************************
+ 	 * Number of boundaries : 2 
+ 	 -> BcDirichlet  (V.x) : 
+ 	 	 Number of nodes = 51 
+ 	 	 File curve ./Curve_Constant.txt 
+ 	 -> BcDirichlet  (V.y) : 
+ 	 	 Number of nodes = 51 
+ 	 	 File curve ./Curve_Constant.txt 
+ 	 -> BcDirichlet  (V.x) : 
+ 	 	 Number of nodes = 38 
+ 	 	 File curve ./Curve_Constant.txt 
+*************************************************
+Read solver ...
+*************************************************
+ 	 * Read time integration properties in : ejemplo_CFL_05_b.gdf 
+	 	 -> Time integrator : NPC-FS 
+	 	 -> CFL condition : 0.010000 
+	 	 -> Final time step : 1.000000e+05 
+	 	 -> Celerity : 182.570000 
+	 	 -> Number of time-steps : 829863636 
+*************************************************
+Generating new MPM simulation ...
+*************************************************
+ 	 * Read materials properties : 
+	 -> Frictional material 
+	 	 -> Density : 2100.000000 
+	 	 -> Elastic modulus : 1000000.000000 
+	 	 -> Poisson modulus : 0.300000 
+	 	 -> Yield function : Lade-Duncan 
+	 	 -> Atmospheric-pressure : -100000.000000 
+	 	 -> alpha-Hardening-Borja : 1.000000 
+	 	 -> a1-Hardening-Borja : 140.000000 
+	 	 -> a2-Hardening-Borja : 0.000000 
+	 	 -> a3-Hardening-Borja : 0.000000 
+	 	 -> Friction-angle : 20.000000 
+	 	 -> Dilatancy-angle : 0.000000 
+	 	 -> Cohesion : 0.000000 
+	 	 -> F-bar : Disabled 
+*************************************************
+ 	 * Read mesh properties for particles : 
+	 -> File : ./Particles.msh 
+	 -> Particles per element : 9 
+*************************************************
+ 	 * Read shape function properties  : 
+	 -> Type of shape function : LME 
+*************************************************
+ 	 * Start material assignement to particles ... 
+	 -> Material 0 has been assigned to 5706 particles 
+ 	 Success !! 
+*************************************************
+ 	 * Start particles initialisation ... 
+ 	 Success !! 
+*************************************************
+	 * Start LME shape functions initialisation ... 
+	 Success !! 
+*************************************************
+	 * No initial conditions defined 
+*************************************************
+ 	 * No Neumann boundary conditions defined 
+*************************************************
+ 	 * Body BC (5706) : 
+ 	 Gravity_Load.txt ./Gravity_Load.txt 
+*************************************************
+Read outputs ...
+	 -> Output values each : 100 
+	 -> Output directory : ./Resultados_CFL_05_b 
+	 -> Out-material-idx : true 
+	 -> Out-displacement : true 
+	 -> Out-Equivalent-Plastic-Strain : true 
+	 -> Out-stress : true 
+	 -> Out-volumetric-stress : true 
+	 -> Out-Von-Mises : true 
+	 * No nodal path results were defined 
+	 * No particle path results were defined 
+*************************************************
+Run simulation ...
+*************************************************
+************* STEP : 0 , DeltaT : 1.205017e-04 
+*************************************************
+************* STEP : 100 , DeltaT : 1.205017e-04 
+*************************************************
+************* STEP : 200 , DeltaT : 1.205017e-04 
+*************************************************
+************* STEP : 300 , DeltaT : 1.205017e-04 
+*************************************************
+************* STEP : 400 , DeltaT : 1.205017e-04 
+*************************************************
+************* STEP : 500 , DeltaT : 1.205017e-04 
+*************************************************
+************* STEP : 600 , DeltaT : 1.205017e-04 
+*************************************************
+************* STEP : 700 , DeltaT :Error in Frictional_Monolithic(): Maximm number of iteration reached in particle 72 
+Iter: 60 | Error0: 2.972836e-08 | Error: 2.130045e-07 | Erro_rel: 7.165026e+00 
+Error in Frictional_Monolithic(): Maximm number of iteration reached in particle 72 
+Iter: 60 | Error0: 4.735234e-08 | Error: 2.082507e-08 | Erro_rel: 4.397897e-01 
+Error in Frictional_Monolithic(): Maximm number of iteration reached in particle 72 
+Iter: 60 | Error0: 2.403881e-08 | Error: 1.346648e-08 | Erro_rel: 5.601977e-01 
+Error in Frictional_Monolithic(): Maximm number of iteration reached in particle 84 
+Iter: 60 | Error0: 4.024924e-08 | Error: 2.032636e-07 | Erro_rel: 5.050122e+00 
+Error in Frictional_Monolithic(): Maximm number of iteration reached in particle 94 
+Iter: 60 | Error0: 2.603959e-08 | Error: 8.755817e-08 | Erro_rel: 3.362502e+00 
+Error in Frictional_Monolithic(): Maximm number of iteration reached in particle 94 
+Iter: 60 | Error0: 3.044244e-08 | Error: 1.372636e-07 | Erro_rel: 4.508957e+00 
+Error in Frictional_Monolithic(): Maximm number of iteration reached in particle 94 
+Iter: 60 | Error0: 8.397188e-08 | Error: 1.409053e-08 | Erro_rel: 1.678006e-01 
+Error in Frictional_Monolithic(): Maximm number of iteration reached in particle 110 
+Iter: 60 | Error0: 2.441585e-08 | Error: 4.274018e-08 | Erro_rel: 1.750509e+00 
+Error in Frictional_Monolithic(): Maximm number of iteration reached in particle 137 
+Iter: 60 | Error0: 2.391790e-08 | Error: 4.342162e-08 | Erro_rel: 1.815445e+00 
+Error in Frictional_Monolithic(): Maximm number of iteration reached in particle 139 
+Iter: 60 | Error0: 3.418403e-08 | Error: 4.362703e-08 | Erro_rel: 1.276240e+00 
+Error in Frictional_Monolithic(): Maximm number of iteration reached in particle 121 
+Iter: 60 | Error0: 2.447629e-08 | Error: 4.291111e-08 | Erro_rel: 1.753170e+00 
+Error in Frictional_Monolithic(): Maximm number of iteration reached in particle 128 
+Iter: 60 | Error0: 2.359196e-08 | Error: 4.359038e-08 | Erro_rel: 1.847680e+00 
+Error in Frictional_Monolithic(): Maximm number of iteration reached in particle 147 
+Iter: 60 | Error0: 3.520389e-08 | Error: 4.341963e-08 | Erro_rel: 1.233376e+00 
+Error in Frictional_Monolithic(): Maximm number of iteration reached in particle 101 
+Iter: 60 | Error0: 2.391790e-08 | Error: 4.342162e-08 | Erro_rel: 1.815445e+00 
+Error in Frictional_Monolithic(): Maximm number of iteration reached in particle 111 
+Iter: 60 | Error0: 2.499048e-08 | Error: 4.239730e-08 | Erro_rel: 1.696538e+00 
+Error in Frictional_Monolithic(): Maximm number of iteration reached in particle 84 
+Iter: 60 | Error0: 5.457062e-08 | Error: 3.103510e-07 | Erro_rel: 5.687146e+00 
+Error in Frictional_Monolithic(): Maximm number of iteration reached in particle 101 
+Iter: 60 | Error0: 2.621098e-08 | Error: 6.395875e-08 | Erro_rel: 2.440151e+00 
+Error in Frictional_Monolithic(): Maximm number of iteration reached in particle 130 
+Iter: 60 | Error0: 2.409270e-08 | Error: 4.393397e-08 | Erro_rel: 1.823539e+00 
+Error in Frictional_Monolithic(): Maximm number of iteration reached in particle 120 
+Iter: 60 | Error0: 2.226703e-08 | Error: 4.459985e-08 | Erro_rel: 2.002955e+00 
+Error in Frictional_Monolithic(): Maximm number of iteration reached in particle 121 
+Iter: 60 | Error0: 2.708069e-08 | Error: 6.988572e-08 | Erro_rel: 2.580648e+00 
+Error in Frictional_Monolithic(): Maximm number of iteration reached in particle 110 
+Iter: 60 | Error0: 2.003982e-08 | Error: 7.183469e-08 | Erro_rel: 3.584597e+00 
+Error in Frictional_Monolithic(): Maximm number of iteration reached in particle 111 
+Iter: 60 | Error0: 2.580980e-08 | Error: 6.478793e-08 | Erro_rel: 2.510206e+00 
+Error in Frictional_Monolithic(): Maximm number of iteration reached in particle 129 
+Iter: 60 | Error0: 2.312448e-08 | Error: 4.460843e-08 | Erro_rel: 1.929057e+00 
+Error in Frictional_Monolithic(): Maximm number of iteration reached in particle 110 
+Iter: 60 | Error0: 3.227357e-08 | Error: 1.132684e-07 | Erro_rel: 3.509634e+00 
+Error in Frictional_Monolithic(): Maximm number of iteration reached in particle 77 
+Iter: 60 | Error0: 2.609930e-08 | Error: 4.187266e-08 | Erro_rel: 1.604360e+00 
+Error in Frictional_Monolithic(): Maximm number of iteration reached in particle 101 
+Iter: 60 | Error0: 2.189872e-08 | Error: 1.056179e-07 | Erro_rel: 4.823016e+00 
+Error in Frictional_Monolithic(): Maximm number of iteration reached in particle 120 
+Iter: 60 | Error0: 2.900568e-08 | Error: 7.010886e-08 | Erro_rel: 2.417073e+00 
+Error in Frictional_Monolithic(): Maximm number of iteration reached in particle 128 
+Iter: 60 | Error0: 2.887213e-08 | Error: 7.448811e-08 | Erro_rel: 2.579932e+00 
+Error in Frictional_Monolithic(): Maximm number of iteration reached in particle 129 
+Iter: 60 | Error0: 3.002122e-08 | Error: 6.963852e-08 | Erro_rel: 2.319644e+00 
+Error in Frictional_Monolithic(): Maximm number of iteration reached in particle 121 
+Iter: 60 | Error0: 2.749499e-08 | Error: 1.097234e-07 | Erro_rel: 3.990668e+00 
+Error in Frictional_Monolithic(): Maximm number of iteration reached in particle 146 
+Iter: 60 | Error0: 2.438794e-08 | Error: 4.598025e-08 | Erro_rel: 1.885368e+00 
+Error in Frictional_Monolithic(): Maximm number of iteration reached in particle 130 
+Iter: 60 | Error0: 2.887778e-08 | Error: 7.195466e-08 | Erro_rel: 2.491696e+00 
+Error in Frictional_Monolithic: Tangent_Matrix is near to singular matrix for particle 100, rcond: 3.299699e-16
+Error in the line 167 of the file /home/migmolper/NL-PartSol/nl-partsol/src/Constitutive/Plasticity/Frictional-Monolithic.c : 
+	 The function Frictional_Monolithic returned an error message !!! 
+ 1.205017e-04 
+*************************************************
+************* STEP : 800 , DeltaT : 1.205017e-04 
+*************************************************
+************* STEP : 900 , DeltaT : 1.205017e-04 
+1.000000e-06 -3.000000e-07 -3.000000e-07 0.000000e+00 2.121405e+09 
+-3.000000e-07 1.000000e-06 -3.000000e-07 0.000000e+00 -9.999879e-01 
+-3.000000e-07 -3.000000e-07 1.000000e-06 0.000000e+00 -9.999596e-01 
+-0.000000e+00 -0.000000e+00 -0.000000e+00 1.000000e+00 -1.400000e+02 
+2.121405e+09 -9.999879e-01 -9.999596e-01 -3.689704e-15 0.000000e+00 

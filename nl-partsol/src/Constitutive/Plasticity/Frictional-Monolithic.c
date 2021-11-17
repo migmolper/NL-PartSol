@@ -54,44 +54,39 @@ static double eval_b1(double,double,double,double,double);
 static double eval_b2(double,double,double,double,double);
 static void eval_d_b2_d_stress(double *,double *,double,double,double,double,double);
 static void eval_kappa(double *,double,double,double,double,double,double);
-static void eval_d_kappa1_d_stress(double *,double,double,double,double,double);
+static int eval_d_kappa1_d_stress(double *,double,double,double,double,double);
 static double eval_d_kappa1_d_lambda(double,double,double,double,double);
-static double eval_f(double,double);
-static void eval_d_f_d_stress(double *,double *,double,double);
-static double eval_g(double,double);
-static void eval_d_g_d_stress(double *,double *,double,double);
-static void eval_dd_g_dd_stress(double *,double *,double,double);
-static double eval_Yield_Function(double,double,double,double,double,double,double,double,double);
-static void eval_d_Yield_Function_d_stress(double *,double *,double,double,double,double,double,double,double);
+static int eval_f(double *,double,double);
+static int eval_d_f_d_stress(double *,double *,double,double);
+static int eval_g(double *,double,double);
+static int eval_d_g_d_stress(double *,double *,double,double);
+static int eval_dd_g_dd_stress(double *,double *,double,double);
+static int eval_Yield_Function(double *,double,double,double,double,double,double,double,double,double);
+static int eval_d_Yield_Function_d_stress(double *,double *,double,double,double,double,double,double,double);
 static double eval_d_Yield_Function_d_kappa1(double,double,double,double,double,double);
-static double eval_Plastic_Potential(double,double,double,double,double,double,double);
-static void eval_d_Plastic_Potential_d_stress(double *,double *,double,double,double,double,double,double,double);
-static void eval_dd_Plastic_Potential_dd_stress(double *,double *,double,double,double,double,double,double,double);
+static int eval_Plastic_Potential(double*,double,double,double,double,double,double,double);
+static int eval_d_Plastic_Potential_d_stress(double *,double *,double,double,double,double,double,double,double);
+static int eval_dd_Plastic_Potential_dd_stress(double *,double *,double,double,double,double,double,double,double);
 static void eval_dd_Plastic_Potential_d_stress_d_kappa2(double *, double *,double,double,double,double,double,double);
 static void eval_strain(double *,double *,double *);
-static double assemble_residual(double *,double *,double *,double *,double *,double,double,Model_Parameters);
-static double compute_condition_number(double *);
+static int assemble_residual(double *,double *,double *,double *,double *,double *,double,double,Model_Parameters);
+static int compute_condition_number(double *,double *);
 static bool check_convergence(double,int,int);
-static void assemble_tangent_matrix(double *,double *,double *,double *,double,double,Model_Parameters);
+static int assemble_tangent_matrix(double *,double *,double *,double *,double,double,Model_Parameters);
 static int solver(double *,double *,double *);
 static void update_variables(double *,double *,double *,double *,double *,double,double);
-static State_Parameters fill_Outputs(double *,double *,double *,double,double,double);
+static void update_state_variables(State_Parameters *,double *,double *,double *,double,double,double);
 
 /**************************************************************/
 
-State_Parameters Frictional_Monolithic(
-  State_Parameters Inputs_SP,
+int Frictional_Monolithic__Constitutive__(
+  State_Parameters * ptr_SP_p,
   Material MatProp)
 /*	
 	Monolithic algorithm for a smooth Mohr-Coulomb plastic criterium
 */
 {
   int status = 0;
-
-  /*
-    Define output state parameters
-  */
-  State_Parameters Outputs_VarCons;
 
   /*
     Get material variables
@@ -101,22 +96,23 @@ State_Parameters Frictional_Monolithic(
   /*
     Get the index of the particle
   */
-  Particle_Idx = Inputs_SP.Particle_Idx;
+  Particle_Idx = ptr_SP_p->Particle_Idx;
 
   /*
     Assign values from the inputs state parameters
   */
-  double * Increment_E_plastic = Inputs_SP.Increment_E_plastic;
-  double * Stress_k  = Inputs_SP.Stress;
+  double * Increment_E_plastic = ptr_SP_p->Increment_E_plastic;
+  double * Stress_k  = ptr_SP_p->Stress;
   double Plastic_Flow_k[3] = {0.0, 0.0, 0.0};
-  double kappa_k[2] = {Inputs_SP.Kappa, Params.alpha*Inputs_SP.Kappa};
-  double Lambda_n = Inputs_SP.Equiv_Plast_Str;
+  double kappa_k[2] = {ptr_SP_p->Kappa, Params.alpha*ptr_SP_p->Kappa};
+  double Lambda_n = ptr_SP_p->Equiv_Plast_Str;
   double Lambda_k = Lambda_n;
   double delta_lambda_k = 0.0;
 
   /*
     Initialize Newton-Raphson solver
   */
+  double F = 0;
   double Strain_e_tri[3];
   double Residual[5];
   double D_Residual[5];
@@ -136,7 +132,14 @@ State_Parameters Frictional_Monolithic(
   /*
     Check yield condition
   */
-  double F = eval_Yield_Function(Params.c0,kappa_k[0],Params.pa,I1,I2,I3,Params.m,Params.cohesion,Params.friction_angle);
+  status = eval_Yield_Function(&F,Params.c0,kappa_k[0],Params.pa,I1,I2,I3,Params.m,Params.cohesion,Params.friction_angle);
+  if(status)
+  {
+    fprintf(stderr,"%s %s \n%s %s\n",
+    "Error in the function",__func__,
+    "File",__FILE__);
+    return EXIT_FAILURE;
+  }
 
   if(F > 1E-8)
   {
@@ -146,7 +149,7 @@ State_Parameters Frictional_Monolithic(
     */
     eval_strain(Strain_e_tri,Stress_k,Params.CC);
     
-    Norm_Residual = assemble_residual(Residual,Stress_k,Strain_e_tri,Plastic_Flow_k,kappa_k,delta_lambda_k,Lambda_k,Params); 
+    status = assemble_residual(&Norm_Residual,Residual,Stress_k,Strain_e_tri,Plastic_Flow_k,kappa_k,delta_lambda_k,Lambda_k,Params); 
 
     Convergence = check_convergence(Norm_Residual,Iter,MaxIter);
 
@@ -157,22 +160,27 @@ State_Parameters Frictional_Monolithic(
     {
       Iter++;
              
-      assemble_tangent_matrix(Tangent_Matrix,Plastic_Flow_k,Stress_k,kappa_k,delta_lambda_k,Lambda_k,Params);
-        
-      status = solver(Tangent_Matrix,Residual,D_Residual);
-
+      status = assemble_tangent_matrix(Tangent_Matrix,Plastic_Flow_k,Stress_k,kappa_k,delta_lambda_k,Lambda_k,Params);
       if(status)
       {
-        fprintf(stderr,"%s %i %s %s : \n\t %s %s %s \n",
-        "Error in the line",__LINE__,"of the file",__FILE__, 
-        "The function",__func__,
-        "returned an error message !!!" );
-        exit(0);
+        fprintf(stderr,"%s %s \n%s %s\n",
+        "Error in the function",__func__,
+        "File",__FILE__);
+        return EXIT_FAILURE;
+      }
+
+      status = solver(Tangent_Matrix,Residual,D_Residual);
+      if(status)
+      {
+        fprintf(stderr,"%s %s \n%s %s\n",
+        "Error in the function",__func__,
+        "File",__FILE__);
+        return EXIT_FAILURE;
       }
 
       update_variables(D_Residual,Stress_k,kappa_k,&delta_lambda_k,&Lambda_k,Lambda_n,Params.alpha);
 
-      Norm_Residual = assemble_residual(Residual,Stress_k,Strain_e_tri,Plastic_Flow_k,kappa_k,delta_lambda_k,Lambda_k,Params); 
+      status = assemble_residual(&Norm_Residual,Residual,Stress_k,Strain_e_tri,Plastic_Flow_k,kappa_k,delta_lambda_k,Lambda_k,Params); 
 
       Convergence = check_convergence(Norm_Residual,Iter,MaxIter);
     }
@@ -180,16 +188,16 @@ State_Parameters Frictional_Monolithic(
     /*
       Update equivalent plastic strain and increment of plastic deformation
     */
-    Outputs_VarCons = fill_Outputs(Increment_E_plastic,Stress_k,Plastic_Flow_k,Lambda_k,delta_lambda_k,kappa_k[0]);
+    update_state_variables(ptr_SP_p,Increment_E_plastic,Stress_k,Plastic_Flow_k,Lambda_k,delta_lambda_k,kappa_k[0]);
 
   }
   else
   {
-    Outputs_VarCons = fill_Outputs(Increment_E_plastic,Stress_k,Plastic_Flow_k,Lambda_k,delta_lambda_k,kappa_k[0]);
+    update_state_variables(ptr_SP_p,Increment_E_plastic,Stress_k,Plastic_Flow_k,Lambda_k,delta_lambda_k,kappa_k[0]);
   }
 
   
-  return Outputs_VarCons;
+  return EXIT_SUCCESS;
 }
 
 /**************************************************************/
@@ -394,7 +402,7 @@ static void eval_kappa(
 
 /**************************************************************/
 
-static void eval_d_kappa1_d_stress(
+static int eval_d_kappa1_d_stress(
   double * d_kappa1_d_stress,
   double Lambda,
   double I1,
@@ -405,6 +413,8 @@ static void eval_d_kappa1_d_stress(
   d_kappa1_d_stress[0] = a1*a2*Lambda*exp(a2*I1)*exp(-a3*Lambda);
   d_kappa1_d_stress[1] = a1*a2*Lambda*exp(a2*I1)*exp(-a3*Lambda);
   d_kappa1_d_stress[2] = a1*a2*Lambda*exp(a2*I1)*exp(-a3*Lambda);
+
+  return EXIT_SUCCESS;
 }
 
 /**************************************************************/
@@ -421,36 +431,39 @@ static double eval_d_kappa1_d_lambda(
     
 /**************************************************************/
 
-static double eval_f(
+static int eval_f(
+  double * f,
   double I1,
   double I2)
   {
 
     if(Is_Matsuoka_Nakai)
     {
-      return cbrt(I1*I2);
+      (*f) = cbrt(I1*I2);
     }
     else if(Is_Lade_Duncan)
     {
-      return I1;
+      (*f) = I1;
     }
     else if(Is_Modified_Lade_Duncan)
     {
-      return I1;
+      (*f) = I1;
     }
     else
     {
-      fprintf(stderr,"%s : %s !!! \n",
-	    "Error in Frictional_Monolithic()",
-	    "Undefined kind of function for f");
-      exit(EXIT_FAILURE);    
+      fprintf(stderr,"%s %s: %s \n%s %s\n",
+      "Error in the function",__func__,
+      "Undefined kind of function for f",
+      "File",__FILE__);
+      return EXIT_FAILURE; 
     }  
     
+    return EXIT_SUCCESS;
   } 
 
 /**************************************************************/
 
-static void eval_d_f_d_stress(
+static int eval_d_f_d_stress(
   double * d_f_Matsuoka_Nakai_d_stress,
   double * Stress,
   double I1,
@@ -476,43 +489,51 @@ static void eval_d_f_d_stress(
     }
     else
     {
-      fprintf(stderr,"%s : %s !!! \n",
-	    "Error in Frictional_Monolithic()",
-	    "Undefined kind of function for df");
-      exit(EXIT_FAILURE);    
+      fprintf(stderr,"%s %s: %s \n%s %s\n",
+      "Error in the function",__func__,
+      "Undefined kind of function for df",
+      "File",__FILE__);
+      return EXIT_FAILURE;
     } 
+
+    return EXIT_SUCCESS;
+
   } 
 
 /**************************************************************/
 
-static double eval_g(
+static int eval_g(
+  double * g,
   double I1,
   double I2)
   {
     if(Is_Matsuoka_Nakai)
     {
-      return cbrt(I1*I2);
+      (*g) = cbrt(I1*I2);
     }
     else if(Is_Lade_Duncan)
     {
-      return I1;
+      (*g) = I1;
     }
     else if(Is_Modified_Lade_Duncan)
     {
-      return I1;
+      (*g) = I1;
     }
     else
     {
-      fprintf(stderr,"%s : %s !!! \n",
-	    "Error in Frictional_Monolithic()",
-	    "Undefined kind of function for g");
-      exit(EXIT_FAILURE);    
+      fprintf(stderr,"%s %s: %s \n%s %s\n",
+      "Error in the function",__func__,
+      "Undefined kind of function for g",
+      "File",__FILE__);
+      return EXIT_FAILURE;  
     }  
+
+    return EXIT_SUCCESS;
   } 
 
 /**************************************************************/
 
-static void eval_d_g_d_stress(
+static int eval_d_g_d_stress(
   double * d_g_d_stress,
   double * Stress,
   double I1,
@@ -538,26 +559,40 @@ static void eval_d_g_d_stress(
     }
     else
     {
-      fprintf(stderr,"%s : %s !!! \n",
-	    "Error in Frictional_Monolithic()",
-	    "Undefined kind of function for dg");
-      exit(EXIT_FAILURE);    
+      fprintf(stderr,"%s %s: %s \n%s %s\n",
+      "Error in the function",__func__,
+      "Undefined kind of function for dg",
+      "File",__FILE__);
+      return EXIT_FAILURE;
     } 
 
+    return EXIT_SUCCESS;
   } 
 
 
 /**************************************************************/
 
-static void eval_dd_g_dd_stress(
+static int eval_dd_g_dd_stress(
   double * dd_g_dd_stress,
   double * Stress,
   double I1,
   double I2)
   {
+    int status = 0;
+
     if(Is_Matsuoka_Nakai)
     {
-      double dg_d_stress[3]; eval_d_g_d_stress(dg_d_stress,Stress,I1,I2);
+
+      double dg_d_stress[3]; 
+      
+      status = eval_d_g_d_stress(dg_d_stress,Stress,I1,I2);
+      if(status)
+      {
+        fprintf(stderr,"%s %s \n%s %s\n",
+        "Error in the function",__func__,
+        "File",__FILE__);
+        return EXIT_FAILURE;
+      }
 
       for (int A = 0; A<3; A++)
       {
@@ -589,12 +624,15 @@ static void eval_dd_g_dd_stress(
       }
     }
 
-  }
+  
+  return EXIT_SUCCESS;
+}
 
 
 /**************************************************************/
 
-static double eval_Yield_Function(
+static int eval_Yield_Function(
+  double * Yield_Function,
   double c0,
   double kappa1,
   double pa,
@@ -605,17 +643,29 @@ static double eval_Yield_Function(
   double cohesion,
   double friction_angle)
 {
+  int status = 0;
+  double f = 0; 
+  double K1 = 0;
 
-  double K1 = eval_K1(kappa1,I1,c0,m,pa);
+  K1 = eval_K1(kappa1,I1,c0,m,pa);
 
-  double f = eval_f(I1,I2);
+  status = eval_f(&f,I1,I2);
+  if(status)
+  {
+    fprintf(stderr,"%s %s \n%s %s\n",
+    "Error in the function",__func__,
+    "File",__FILE__);
+    return EXIT_FAILURE;
+  }
 
-  return cbrt(K1*I3) - f - 2*cohesion*cos(friction_angle);
+  (*Yield_Function) = cbrt(K1*I3) - f - 2*cohesion*cos(friction_angle);
+
+  return EXIT_SUCCESS;
 }
 
 /**************************************************************/
 
-static void eval_d_Yield_Function_d_stress(
+static int eval_d_Yield_Function_d_stress(
   double * d_F_d_stress,
   double * Stress,
   double I1,
@@ -626,13 +676,26 @@ static void eval_d_Yield_Function_d_stress(
   double pa,
   double m)
   {
-    double Grad_f[3]; eval_d_f_d_stress(Grad_f,Stress,I1,I2);
+    int status = 0;
+    double Grad_f[3]; 
+    
     double K1 = eval_K1(kappa1,I1,c0,m,pa);
     double b1 = eval_b1(kappa1,I1,I3,m,pa);
+
+    status = eval_d_f_d_stress(Grad_f,Stress,I1,I2);
+    if(status)
+    {
+      fprintf(stderr,"%s %s \n%s %s\n",
+      "Error in the function",__func__,
+      "File",__FILE__);
+      return EXIT_FAILURE;
+    }
 
     d_F_d_stress[0] = cbrt(K1*I3)/(3*Stress[0]) - b1/(3*pow(cbrt(K1),2)) - Grad_f[0];
     d_F_d_stress[1] = cbrt(K1*I3)/(3*Stress[1]) - b1/(3*pow(cbrt(K1),2)) - Grad_f[1];
     d_F_d_stress[2] = cbrt(K1*I3)/(3*Stress[2]) - b1/(3*pow(cbrt(K1),2)) - Grad_f[2];
+
+    return EXIT_SUCCESS;
   } 
 
 /**************************************************************/
@@ -651,7 +714,8 @@ static double eval_d_Yield_Function_d_kappa1(
 
 /**************************************************************/
 
-static double eval_Plastic_Potential(
+static int eval_Plastic_Potential(
+  double * Plastic_Potential,
   double c0,
   double kappa2,
   double pa,
@@ -660,14 +724,27 @@ static double eval_Plastic_Potential(
   double I3,
   double m)
   {
+    int status = 0;
     double K2 = eval_K2(kappa2,I1,c0,m,pa);
-    double g = eval_g(I1,I2);
-    return cbrt(K2*I3) - g;
+    double g = 0;
+    
+    status = eval_g(&g,I1,I2);
+    if(status)
+    {
+      fprintf(stderr,"%s %s \n%s %s\n",
+      "Error in the function",__func__,
+      "File",__FILE__);
+      return EXIT_FAILURE;
+    }
+
+    (*Plastic_Potential) = cbrt(K2*I3) - g;
+    
+    return EXIT_SUCCESS;
   } 
 
 /**************************************************************/
 
-static void eval_d_Plastic_Potential_d_stress(
+static int eval_d_Plastic_Potential_d_stress(
   double * d_G_d_stress,
   double * Stress,
   double I1,
@@ -678,18 +755,31 @@ static void eval_d_Plastic_Potential_d_stress(
   double pa,
   double m)
   {
-    double Grad_g[3]; eval_d_g_d_stress(Grad_g,Stress,I1,I2);
+    int status = 0;
+    double Grad_g[3]; 
+    
+    status = eval_d_g_d_stress(Grad_g,Stress,I1,I2);
+    if(status)
+    {
+      fprintf(stderr,"%s %s \n%s %s\n",
+      "Error in the function",__func__,
+      "File",__FILE__);
+      return EXIT_FAILURE;
+    }    
+    
     double K2 = eval_K2(kappa2,I1,c0,m,pa);
     double b2 = eval_b2(kappa2,I1,I3,m,pa);
 
     d_G_d_stress[0] = cbrt(K2*I3)/(3*Stress[0]) - b2/(3*pow(cbrt(K2),2)) - Grad_g[0];
     d_G_d_stress[1] = cbrt(K2*I3)/(3*Stress[1]) - b2/(3*pow(cbrt(K2),2)) - Grad_g[1];
     d_G_d_stress[2] = cbrt(K2*I3)/(3*Stress[2]) - b2/(3*pow(cbrt(K2),2)) - Grad_g[2];
+
+    return EXIT_SUCCESS;
   } 
 
 /**************************************************************/
 
-static void eval_dd_Plastic_Potential_dd_stress(
+static int eval_dd_Plastic_Potential_dd_stress(
   double * Hess_G,
   double * Stress,
   double kappa2,
@@ -700,12 +790,21 @@ static void eval_dd_Plastic_Potential_dd_stress(
   double pa,
   double c0)
   {
-
+    int status = 0;
     double K2 = eval_K2(kappa2,I1,c0,m,pa);
     double b2 = eval_b2(kappa2,I1,I3,m,pa);
     double Grad_K2[3]; eval_d_K2_d_stress(Grad_K2,kappa2,I1,m,pa);
     double Grad_b2[3]; eval_d_b2_d_stress(Grad_b2,Stress,kappa2,I1,I3,m,pa);
-    double Hess_g[9]; eval_dd_g_dd_stress(Hess_g,Stress,I1,I2);
+    double Hess_g[9]; 
+    
+    status = eval_dd_g_dd_stress(Hess_g,Stress,I1,I2);
+    if(status)
+    {
+      fprintf(stderr,"%s %s \n%s %s\n",
+      "Error in the function",__func__,
+      "File",__FILE__);
+      return EXIT_FAILURE;
+    }
 
     for (int A = 0; A<3; A++)
     {
@@ -718,6 +817,7 @@ static void eval_dd_Plastic_Potential_dd_stress(
       }
     }
 
+    return EXIT_SUCCESS;
   }
 
 /**************************************************************/
@@ -756,7 +856,8 @@ static void eval_strain(
 
 /**************************************************************/
 
-static double assemble_residual(
+static int assemble_residual(
+  double * Norm_Residual,
   double * Residual,
   double * Stress_k,
   double * Strain_e_tri,
@@ -766,6 +867,7 @@ static double assemble_residual(
   double Lambda_k,
   Model_Parameters Params)
   {
+    int status = 0;
     double alpha = Params.alpha;
     double m =  Params.m;
     double pa = Params.pa;
@@ -780,9 +882,8 @@ static double assemble_residual(
     double I3 = Stress_k[0]*Stress_k[1]*Stress_k[2];
     double Strain_e_k[3];
     double kappa_hat[3];
-    double F;
-    double Error;
-    
+    double F = 0;
+
     if((fabs(I1/3.0) < TOL_Radial_Returning) && (m != 0))
     {
       fprintf(stderr,"%s: %s %i %s \n",
@@ -793,8 +894,24 @@ static double assemble_residual(
 
     eval_strain(Strain_e_k,Stress_k,Params.CC);
     eval_kappa(kappa_hat,Lambda_k,I1,a1,a2,a3,alpha);
-    eval_d_Plastic_Potential_d_stress(Grad_G,Stress_k,I1,I2,I3,c0,kappa[1],pa,m);
-    F = eval_Yield_Function(c0,kappa[0],pa,I1,I2,I3,m,cohesion,friction_angle);
+    
+    status = eval_d_Plastic_Potential_d_stress(Grad_G,Stress_k,I1,I2,I3,c0,kappa[1],pa,m);
+    if(status)
+    {
+      fprintf(stderr,"%s %s \n%s %s\n",
+      "Error in the function",__func__,
+      "File",__FILE__);
+      return EXIT_FAILURE;
+    }
+
+    status = eval_Yield_Function(&F,c0,kappa[0],pa,I1,I2,I3,m,cohesion,friction_angle);
+    if(status)
+    {
+      fprintf(stderr,"%s %s \n%s %s\n",
+      "Error in the function",__func__,
+      "File",__FILE__);
+      return EXIT_FAILURE;
+    }
 
     Residual[0] = Strain_e_k[0] - Strain_e_tri[0] + delta_lambda*Grad_G[0];
     Residual[1] = Strain_e_k[1] - Strain_e_tri[1] + delta_lambda*Grad_G[1];
@@ -805,15 +922,16 @@ static double assemble_residual(
     /*
       Compute absolute error from the residual
     */
+   (*Norm_Residual) = 0.0;
+   
     for(int A = 0 ; A<5 ; A++)
     {
-      Error += DSQR(Residual[A]);
+      (*Norm_Residual) += DSQR(Residual[A]);
     }
 
-    Error = pow(Error,0.5);
+    (*Norm_Residual) = pow((*Norm_Residual),0.5);
 
-    return Error;
-
+    return EXIT_SUCCESS;
   }
 
 /**************************************************************/
@@ -856,8 +974,8 @@ static bool check_convergence(
 
     if(Iter >= MaxIter) 
     {
-      fprintf(stderr,"%s: %s %i \n",
-      "Error in Frictional_Monolithic()",
+      fprintf(stderr,"%s %s: %s %i \n",
+      "Error in",__func__,
       "Maximm number of iteration reached in particle",Particle_Idx);
       fprintf(stderr,"Iter: %i | Error0: %e | Error: %e | Erro_rel: %e \n",Iter,Error0,Error,Error_relative);
     }
@@ -869,7 +987,7 @@ static bool check_convergence(
 
 /**************************************************************/
 
-static void assemble_tangent_matrix(
+static int assemble_tangent_matrix(
   double * Tangent_Matrix,
   double * d_G_d_stress,
   double * Stress_k, 
@@ -878,7 +996,8 @@ static void assemble_tangent_matrix(
   double Lambda_k, 
   Model_Parameters Params)
   {
-
+    int status = 0;
+    double rcond = 0;
     double alpha = Params.alpha;
     double m =  Params.m;
     double pa = Params.pa;
@@ -889,12 +1008,43 @@ static void assemble_tangent_matrix(
     double I1 = Stress_k[0] + Stress_k[1] + Stress_k[2];
     double I2 = Stress_k[0]*Stress_k[1] + Stress_k[1]*Stress_k[2] + Stress_k[0]*Stress_k[2];
     double I3 = Stress_k[0]*Stress_k[1]*Stress_k[2];
-    double dd_G_dd_stress[9]; eval_dd_Plastic_Potential_dd_stress(dd_G_dd_stress,Stress_k,kappa_k[1],I1,I2,I3,m,pa,c0);
-    double dd_G_d_stress_d_kappa2[3]; eval_dd_Plastic_Potential_d_stress_d_kappa2(dd_G_d_stress_d_kappa2,Stress_k,I1,I3,m,pa,c0,kappa_k[1]);
-    double d_kappa1_d_stress[3]; eval_d_kappa1_d_stress(d_kappa1_d_stress,Lambda_k,I1,a1,a2,a3);
+    double dd_G_dd_stress[9]; 
+    double dd_G_d_stress_d_kappa2[3] = {0.0, 0.0, 0.0}; 
+    double d_kappa1_d_stress[3] = {0.0, 0.0, 0.0};
+    double d_F_d_stress[3] = {0.0, 0.0, 0.0};
+
+    eval_dd_Plastic_Potential_d_stress_d_kappa2(dd_G_d_stress_d_kappa2,Stress_k,I1,I3,m,pa,c0,kappa_k[1]);
+    
     double d_kappa1_d_lambda = eval_d_kappa1_d_lambda(Lambda_k,I1,a1,a2,a3);
-    double d_F_d_stress[3]; eval_d_Yield_Function_d_stress(d_F_d_stress,Stress_k,I1,I2,I3,c0,kappa_k[0],pa,m);
+    
     double d_F_d_kappa1 = eval_d_Yield_Function_d_kappa1(I1,I3,c0,m,pa,kappa_k[0]);
+
+    status = eval_dd_Plastic_Potential_dd_stress(dd_G_dd_stress,Stress_k,kappa_k[1],I1,I2,I3,m,pa,c0); 
+    if(status)
+    {
+      fprintf(stderr,"%s %s \n%s %s\n",
+      "Error in the function",__func__,
+      "File",__FILE__);
+      return EXIT_FAILURE;
+    }
+
+    status = eval_d_kappa1_d_stress(d_kappa1_d_stress,Lambda_k,I1,a1,a2,a3);
+    if(status)
+    {
+      fprintf(stderr,"%s %s \n%s %s\n",
+      "Error in the function",__func__,
+      "File",__FILE__);
+      return EXIT_FAILURE;
+    }
+
+    status = eval_d_Yield_Function_d_stress(d_F_d_stress,Stress_k,I1,I2,I3,c0,kappa_k[0],pa,m);
+    if(status)
+    {
+      fprintf(stderr,"%s %s \n%s %s\n",
+      "Error in the function",__func__,
+      "File",__FILE__);
+      return EXIT_FAILURE;
+    }
 
     /* First row */
     Tangent_Matrix[0] = Params.CC[0] + delta_lambda*dd_G_dd_stress[0];
@@ -930,18 +1080,51 @@ static void assemble_tangent_matrix(
     Tangent_Matrix[22] = d_F_d_stress[2];
     Tangent_Matrix[23] = d_F_d_kappa1;
     Tangent_Matrix[24] = 0.0;
+    
+    
+    status = compute_condition_number(&rcond,Tangent_Matrix);
+    if(status)
+    {
+      fprintf(stderr,"%s %s \n%s %s\n",
+      "Error in the function",__func__,
+      "File",__FILE__);
+      return EXIT_FAILURE;
+    }
+    
+    if(rcond < 1E-12)
+    {
+      fprintf(stderr,"%s %s: %s %i \n%s %s\n",
+      "Error in the function",__func__,
+      "Tangent_Matrix is near to singular matrix for particle",
+      Particle_Idx,"File",__FILE__);
+      
+      fprintf(stderr,"Tangent Matrix: \n");
+      for(int i = 0 ; i<5 ; i++)
+      {
+        for(int j = 0 ; j<5 ; j++)
+        {
+          printf("%e ",Tangent_Matrix[i*5+j]);
+        }
+        printf("\n");
+      }
 
+      printf("delta_lambda: %e, Lambda_k: %e\n",delta_lambda,Lambda_k);
+      
+      return EXIT_FAILURE;
+    }
+
+
+    return EXIT_SUCCESS;
   } 
 
 /**************************************************************/
 
-static double compute_condition_number(double * Tangent_Matrix)
+static int compute_condition_number(double * RCOND, double * Tangent_Matrix)
 /*
   C = rcond(Tangent_Matrix) returns an estimate for the reciprocal condition of Tangent_Matrix in 1-norm. 
 */
 {
 
-  double RCOND; 
   double ANORM;
   int INFO;
   int N_rows = 5;
@@ -961,44 +1144,43 @@ static double compute_condition_number(double * Tangent_Matrix)
 
   // The factors L and U from the factorization A = P*L*U
   dgetrf_(&N_rows,&N_cols,AUX_MEMORY,&LDA,IPIV,&INFO);
-
-  // Check output of dgetrf
-  if(INFO != 0)
+  if(INFO<0)
   {
-    if(INFO < 0)
-    {
-      printf("%s : \n","Error in Frictional_Monolithic()");
-      printf("the %i-th argument had an illegal value",abs(INFO));
-    }
-    else if(INFO > 0)
-    {
-      printf("%s :\n","Error in Frictional_Monolithic()");
-      printf(" M(%i,%i) %s \n %s \n %s \n %s \n",INFO,INFO,"is exactly zero. The factorization",
-        "has been completed, but the factor M is exactly",
-        "singular, and division by zero will occur if it is used",
-        "to solve a system of equations.");
-    
-    }    
-    exit(EXIT_FAILURE);
+    free(IPIV); free(WORK_ANORM);
+    free(WORK_RCOND); free(IWORK_RCOND); free(AUX_MEMORY);
+    fprintf(stderr,"%s %s: %s %i %s \n%s %s\n",
+    "Error in the function",__func__,
+    "The",-INFO,"argument of dgetrf_ had an illegal value",
+    "File",__FILE__);
+  }
+  else if(INFO > 0)
+  {
+    free(IPIV); free(WORK_ANORM);
+    free(WORK_RCOND); free(IWORK_RCOND); free(AUX_MEMORY);
+    fprintf(stderr,"%s %s: %s M[%i][%i] %s \n%s %s\n",
+    "Error in the function",__func__,
+    "The function dgetrf_ return",INFO,INFO,"is singular,",
+    "File",__FILE__);
+    return EXIT_FAILURE;
   }
 
   // Compute the Reciprocal condition number
-  dgecon_("1", &N_rows, AUX_MEMORY, &LDA, &ANORM, &RCOND, WORK_RCOND, IWORK_RCOND, &INFO);
+  dgecon_("1", &N_rows, AUX_MEMORY, &LDA, &ANORM, RCOND, WORK_RCOND, IWORK_RCOND, &INFO);
+  if(INFO < 0)
+  {
+    free(IPIV); free(WORK_ANORM);
+    free(WORK_RCOND); free(IWORK_RCOND); free(AUX_MEMORY);
+    fprintf(stderr,"%s %s: %s %i %s \n%s %s\n",
+    "Error in the function",__func__,
+    "The",-INFO,"argument of dgecon_ had an illegal value",
+    "File",__FILE__);
+  }
+  
+  // Free auxiliar memory
+  free(IPIV); free(WORK_ANORM);
+  free(WORK_RCOND); free(IWORK_RCOND); free(AUX_MEMORY);
 
- if(INFO<0)
- {
-  printf("Error in Frictional_Monolithic() : the %i-th argument of dgecon_ had an illegal value\n",abs(INFO));
-  exit(EXIT_FAILURE);
- }
-
- // Free auxiliar memory
- free(IPIV);
- free(WORK_ANORM);
- free(WORK_RCOND);
- free(IWORK_RCOND);
- free(AUX_MEMORY);
-
- return RCOND;
+ return EXIT_SUCCESS;
 }
 
 /**************************************************************/
@@ -1007,35 +1189,14 @@ static int solver(
   double * Residual,
   double * D_Residual)
 {
+  int status = 0;
   int Order = 5;
   int LDA   = 5;
   int LDB   = 5;
-  char  TRANS = 'T'; /* (Transpose) */
+  char  TRANS = 'N';
   int   INFO = 3;
   int * IPIV = (int *)malloc(Order*sizeof(int));
   int NRHS = 1;
-  
-  double rcond = compute_condition_number(Tangent_Matrix);
-  
-  if(rcond < 1E-12)
-  {
-
-    for(int i = 0 ; i<5 ; i++)
-    {
-      for(int j = 0 ; j<5 ; j++)
-      {
-        printf("%e ",Tangent_Matrix[i*5+j]);
-      }
-      printf("\n");
-    }
-
-    fprintf(stderr,"%s: %s %i, %s: %e\n",
-    "Error in Frictional_Monolithic",
-    "Tangent_Matrix is near to singular matrix for particle",
-    Particle_Idx,"rcond",rcond);
-
-    return EXIT_FAILURE;
-  }
 
   /*
     Generate auxiliar copy of the mass matrix to avoid destructive operations
@@ -1046,15 +1207,22 @@ static int solver(
     Compute the LU factorization 
   */
   dgetrf_(&Order,&Order,Tangent_Matrix,&LDA,IPIV,&INFO);
-
-  /*
-    Check error messages in the LAPACK LU descomposition  
-  */
-  if(INFO)
+  if(INFO<0)
   {
-    fprintf(stderr,"%s : %s %s %s \n",
-      "Error in Frictional_Monolithic",
-      "The function","dgetrf_","returned an error message !!!" );
+    free(IPIV);
+    fprintf(stderr,"%s %s: %s %i %s \n%s %s\n",
+    "Error in the function",__func__,
+    "The",-INFO,"argument of dgetrf_ had an illegal value",
+    "File",__FILE__);
+    return EXIT_FAILURE;
+  }
+  else if(INFO>0)
+  {
+    free(IPIV);
+    fprintf(stderr,"%s %s: %s M[%i][%i] %s \n%s %s\n",
+    "Error in the function",__func__,
+    "The function dgetrf_ return",INFO,INFO,"is singular,",
+    "File",__FILE__);
     return EXIT_FAILURE;
   }
 
@@ -1062,17 +1230,17 @@ static int solver(
     Solve
   */
   dgetrs_(&TRANS,&Order,&NRHS,Tangent_Matrix,&LDA,IPIV,D_Residual,&LDB,&INFO);
-  free(IPIV);
-
-  /*
-    Check error messages in the LAPACK solver  
-  */
-  if(INFO)
+  if(INFO<0)
   {
-    fprintf(stderr,"%s : %s %s %s \n","Error in Frictional_Monolithic",
-      "The function","dgetrs_","returned an error message !!!" );
+    free(IPIV);
+    fprintf(stderr,"%s %s: %s %i %s \n%s %s\n",
+    "Error in the function",__func__,
+    "The",-INFO,"argument of dgetrs_ had an illegal value",
+    "File",__FILE__);
     return EXIT_FAILURE;
   }
+
+  free(IPIV);
 
   return EXIT_SUCCESS;
 }
@@ -1092,7 +1260,7 @@ static void update_variables(
 
   Stress_k[0] -= D_Residual[0];
   Stress_k[1] -= D_Residual[1];
-  Stress_k[2] = 0.3*(Stress_k[0] + Stress_k[1]);
+  Stress_k[2] -= D_Residual[2];
   kappa_k[0] -= D_Residual[3];
   kappa_k[1] = alpha*kappa_k[0];
   *delta_lambda -= D_Residual[4];
@@ -1102,7 +1270,8 @@ static void update_variables(
 
 /**************************************************************/
 
-static State_Parameters fill_Outputs(
+static void update_state_variables(
+  State_Parameters * ptr_SP_p,
   double * Increment_E_plastic,
   double * Stress_k,
   double * Plastic_Flow, 
@@ -1110,17 +1279,15 @@ static State_Parameters fill_Outputs(
   double delta_lambda,
   double kappa_k1)
 {
-  State_Parameters Outputs_VarCons;
 
-  Outputs_VarCons.Equiv_Plast_Str = Lambda_k;
-  Outputs_VarCons.Kappa = kappa_k1;
-  Outputs_VarCons.Stress = Stress_k;
-  Outputs_VarCons.Increment_E_plastic = Increment_E_plastic;
-  Outputs_VarCons.Increment_E_plastic[0] = delta_lambda*Plastic_Flow[0];
-  Outputs_VarCons.Increment_E_plastic[1] = delta_lambda*Plastic_Flow[1];
-  Outputs_VarCons.Increment_E_plastic[2] = delta_lambda*Plastic_Flow[2];
+  ptr_SP_p->Equiv_Plast_Str = Lambda_k;
+  ptr_SP_p->Kappa = kappa_k1;
+  ptr_SP_p->Stress = Stress_k;
+  ptr_SP_p->Increment_E_plastic = Increment_E_plastic;
+  ptr_SP_p->Increment_E_plastic[0] = delta_lambda*Plastic_Flow[0];
+  ptr_SP_p->Increment_E_plastic[1] = delta_lambda*Plastic_Flow[1];
+  ptr_SP_p->Increment_E_plastic[2] = delta_lambda*Plastic_Flow[2];
 
-  return Outputs_VarCons;
 }
 
 /**************************************************************/

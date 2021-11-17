@@ -59,11 +59,11 @@ void NonLinear_Gauss_Point_Analysis(Particle PointAnalysis)
   
       if(strcmp(PointAnalysis.Mat[0].Plastic_Solver,"Backward-Euler") == 0)
       {
-        Output_SP = finite_strain_plasticity(Input_SP,PointAnalysis.Mat[0],Von_Mises_backward_euler);
+//        Output_SP = finite_strain_plasticity(Input_SP,PointAnalysis.Mat[0],Von_Mises_backward_euler);
       }
       else if(strcmp(PointAnalysis.Mat[0].Plastic_Solver,"Forward-Euler") == 0)
       {
-        Output_SP = finite_strain_plasticity(Input_SP,PointAnalysis.Mat[0],Von_Mises_forward_euler);
+//        Output_SP = finite_strain_plasticity(Input_SP,PointAnalysis.Mat[0],Von_Mises_forward_euler);
       }
       else
       {
@@ -89,7 +89,7 @@ void NonLinear_Gauss_Point_Analysis(Particle PointAnalysis)
       Input_SP.Equiv_Plast_Str = PointAnalysis.Phi.Equiv_Plast_Str.nV[k-1];
       Input_SP.F_n1_p = PointAnalysis.Phi.F_n1.nM[k];
   
-      Output_SP = finite_strain_plasticity(Input_SP,PointAnalysis.Mat[0],Frictional_Monolithic);
+//      Output_SP = finite_strain_plasticity(Input_SP,PointAnalysis.Mat[0],Frictional_Monolithic);
 
       for(int i = 0 ; i<Ndim*Ndim ; i++)
       {
