@@ -74,4 +74,5 @@ extern bool Out_Metric;
 extern bool Out_energy;
 extern bool Out_Von_Mises;
 extern bool Out_EPS;
+extern bool Out_Partition_Unity;
 

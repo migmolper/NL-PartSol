@@ -1273,26 +1273,38 @@ static void output_selector(
   if(TimeStep % ResultsTimeStep == 0)
   {
 
-    int Nnodes = ActiveNodes.Nactivenodes;
-    int p_idx = 2075;
-    int NumNodes_p = MPM_Mesh.NumberNodes[p_idx];
-    Element Nodes_p = nodal_set__Particles__(p_idx, MPM_Mesh.ListNodes[p_idx], NumNodes_p);
-    Matrix ShapeFunction_p = compute_N__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
-    Matrix ShapeFunction_Ip = allocZ__MatrixLib__(Nnodes,1);
-
-    for(int A = 0; A<NumNodes_p; A++)
+    int Ngp = MPM_Mesh.NumGP;
+    int NumNodes_p;
+    Element Nodes_p;
+    Matrix ShapeFunction_p;
+    
+    if(Out_Partition_Unity)
     {
-      ShapeFunction_Ip.nV[ActiveNodes.Nodes2Mask[Nodes_p.Connectivity[A]]] = ShapeFunction_p.nV[A];
+      MPM_Mesh.Phi.PU = allocZ__MatrixLib__(Ngp,1);
+      for(int p_idx = 0 ; p_idx<Ngp ; p_idx ++ )
+      {
+        NumNodes_p = MPM_Mesh.NumberNodes[p_idx];
+        Nodes_p = nodal_set__Particles__(p_idx, MPM_Mesh.ListNodes[p_idx], NumNodes_p);
+        ShapeFunction_p = compute_N__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
+        
+        for(int A = 0; A<NumNodes_p; A++)
+        {
+          MPM_Mesh.Phi.PU.nV[p_idx] += ShapeFunction_p.nV[A];
+        }
+
+        free(Nodes_p.Connectivity);
+        free__MatrixLib__(ShapeFunction_p);
+      }
     }
 
     particle_results_vtk__InOutFun__(MPM_Mesh,TimeStep,ResultsTimeStep);
 
-    nodal_results_vtk__InOutFun__(FEM_Mesh, ActiveNodes, Reactions, ShapeFunction_Ip, TimeStep, ResultsTimeStep);
+    nodal_results_vtk__InOutFun__(FEM_Mesh, ActiveNodes, Reactions, TimeStep, ResultsTimeStep);
 
-    free(Nodes_p.Connectivity);
-    free__MatrixLib__(ShapeFunction_p);
-    free__MatrixLib__(ShapeFunction_Ip);
-
+    if(Out_Partition_Unity)
+    {
+      free__MatrixLib__(MPM_Mesh.Phi.PU);
+    }
   }
 
   /* 

@@ -32,6 +32,7 @@ bool Out_plastic_jacobian;
 bool Out_energy;
 bool Out_Von_Mises;
 bool Out_EPS;
+bool Out_Partition_Unity;
 
 /*
   Auxiliar functions 
@@ -62,6 +63,7 @@ static void vtk_Out_plastic_jacobian(FILE *, Matrix, int);
 static void vtk_Out_Kinetic_Energy(FILE *, Matrix, Matrix, int);
 static void vtk_Out_Von_Mises(FILE *, Matrix, Matrix, int);
 static void vtk_Out_Equiv_Plastic_Strain(FILE *, Matrix, int);
+static void vtk_Out_Check_Partition_Unity(FILE *, Matrix, int);
 
 /*****************************************************************/
 
@@ -272,6 +274,12 @@ void particle_results_vtk__InOutFun__(Particle MPM_Mesh, int TimeStep_i, int Res
     vtk_Out_Equiv_Plastic_Strain(Vtk_file, MPM_Mesh.Phi.Equiv_Plast_Str, NumParticles);
   }
 
+  /* Parition of unity */
+  if(Out_Partition_Unity)
+  {
+    vtk_Out_Check_Partition_Unity(Vtk_file, MPM_Mesh.Phi.PU, NumParticles);
+  }
+
   /* Close the file */
   fclose(Vtk_file);
   
@@ -283,7 +291,6 @@ void nodal_results_vtk__InOutFun__(
   Mesh ElementMesh,
   Mask ActiveNodes,
   Matrix REACTIONS,
-  Matrix ShapeFun,
   int TimeStep_i,
   int ResultsTimeStep)
 {
@@ -398,17 +405,6 @@ void nodal_results_vtk__InOutFun__(
   
   /* Cell data */  
   fprintf(Vtk_file,"CELL_DATA %i \n",ActiveNodes.Nactivenodes);
-
-	fprintf(Vtk_file,"SCALARS %s double \n","SHAPE-FUN");
-  fprintf(Vtk_file,"LOOKUP_TABLE default \n");
-	for(int i =  0 ; i<ElementMesh.NumNodesMesh ; i++)
-  {
-    i_mask = ActiveNodes.Nodes2Mask[i];
-    if(i_mask != -1)
-    {
-	    fprintf(Vtk_file,"%lf \n",ShapeFun.nV[i_mask]);
-    }
-	}
 
   /* Close the file */
   fclose(Vtk_file);
@@ -998,6 +994,21 @@ static void vtk_Out_Equiv_Plastic_Strain(FILE * Vtk_file, Matrix EPS, int NumPar
   {
     fprintf(Vtk_file,"%lf \n",EPS.nV[i]); 
   }
+}
+
+/*********************************************************************/
+
+
+static void vtk_Out_Check_Partition_Unity(FILE * Vtk_file, Matrix PU, int NumParticles)
+{
+
+  fprintf(Vtk_file,"SCALARS PU double \n");
+  fprintf(Vtk_file,"LOOKUP_TABLE default \n");
+  for(int i =  0 ; i<NumParticles ; i++)
+  {
+    fprintf(Vtk_file,"%lf \n",PU.nV[i]); 
+  }
+
 }
 
 /*********************************************************************/

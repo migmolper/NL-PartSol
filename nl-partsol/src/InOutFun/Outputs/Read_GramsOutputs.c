@@ -38,6 +38,7 @@ bool Out_plastic_jacobian = false;
 bool Out_energy = false;
 bool Out_Von_Mises = false;
 bool Out_EPS = false;
+bool Out_Partition_Unity = false;
 
 /*
   Auxiliar functions 
@@ -245,6 +246,10 @@ void GramsOutputs(char * Name_File)
 	  else if(strcmp(Parse_Out_Prop[0],"Out-Equivalent-Plastic-Strain") == 0)
 	  {
 		Out_EPS = Is_Output_Activate(Parse_Out_Prop[0],Parse_Out_Prop[1]);	  	
+	  }
+	  else if(strcmp(Parse_Out_Prop[0],"Out-Check-Partition-Unity") == 0)
+	  {
+		Out_Partition_Unity = Is_Output_Activate(Parse_Out_Prop[0],Parse_Out_Prop[1]);
 	  }
 	  else
 	  {

@@ -338,6 +338,11 @@ typedef struct {
   */
   Matrix Back_stress;
 
+
+  /*!
+  * Partition of unity property
+  */
+  Matrix PU;
   
 } Fields;
 

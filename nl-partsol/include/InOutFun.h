@@ -507,7 +507,7 @@ void particle_results_vtk__InOutFun__(Particle, int, int);
 
 /*****************************************************************/
 
-void nodal_results_vtk__InOutFun__(Mesh, Mask, Matrix, Matrix, int, int);
+void nodal_results_vtk__InOutFun__(Mesh, Mask, Matrix, int, int);
 
 /*****************************************************************/
 
