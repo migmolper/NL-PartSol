@@ -699,10 +699,10 @@ static void initialise_particles(
       MPM_Mesh.Phi.mass.nV[p] = m_p;
 
      /* Initialize frictional material */ 
-    if(strcmp(MPM_Mesh.Mat[MatIdx_p].Type,"Granular") == 0)
-    {
-      Initialize_Frictional(&MPM_Mesh.Phi.Kappa_hardening.nV[p],&MPM_Mesh.Phi.Equiv_Plast_Str.nV[p],MPM_Mesh.Mat[MatIdx_p]);
-    }
+ //   if(strcmp(MPM_Mesh.Mat[MatIdx_p].Type,"Granular") == 0)
+ //   {
+ //     Initialize_Frictional(&MPM_Mesh.Phi.Kappa_hardening.nV[p],&MPM_Mesh.Phi.Equiv_Plast_Str.nV[p],MPM_Mesh.Mat[MatIdx_p]);
+ //   }
 
     }
 

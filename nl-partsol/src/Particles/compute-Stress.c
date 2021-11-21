@@ -199,7 +199,17 @@ int Stress_integration__Particles__(
       {
         Input_SP.F_n1_p = MPM_Mesh.Phi.F_n1.nM[p];
       }
-  
+
+      status = finite_strain_plasticity__Constitutive__(&Input_SP,MatProp_p,Matsuoka_Nakai__Constitutive__);
+      if(status)
+      {
+        fprintf(stderr,"%s %s \n%s %s\n",
+        "Error in the function",__func__,
+        "File",__FILE__);
+        return EXIT_FAILURE;
+      }
+
+/*
       status = finite_strain_plasticity__Constitutive__(&Input_SP,MatProp_p,Frictional_Monolithic__Constitutive__);
       if(status)
       {
@@ -209,6 +219,7 @@ int Stress_integration__Particles__(
         return EXIT_FAILURE;
       }
 
+*/
       MPM_Mesh.Phi.Kappa_hardening.nV[p] = Input_SP.Kappa;
       MPM_Mesh.Phi.Equiv_Plast_Str.nV[p] = Input_SP.Equiv_Plast_Str;
       

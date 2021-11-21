@@ -996,7 +996,7 @@ static void vtk_Out_Equiv_Plastic_Strain(FILE * Vtk_file, Matrix EPS, int NumPar
   fprintf(Vtk_file,"LOOKUP_TABLE default \n");
   for(int i =  0 ; i<NumParticles ; i++)
   {
-    fprintf(Vtk_file,"%lf \n",EPS.nV[i]); 
+    fprintf(Vtk_file,"%e \n",EPS.nV[i]); 
   }
 }
 

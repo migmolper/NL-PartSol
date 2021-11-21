@@ -1,11 +1,11 @@
 #include "nl-partsol.h"
 
-#ifdef _OPENMP
-    #include <omp.h>
-    #define UD_Num_THREADS 10
-#else
-    #define omp_get_thread_num() 0
-#endif
+//#ifdef _OPENMP
+//    #include <omp.h>
+//    #define UD_Num_THREADS 10
+//#else
+//    #define omp_get_thread_num() 0
+//#endif
 
 #ifdef __linux__
 #include <lapacke.h>
@@ -231,30 +231,31 @@ unsigned Nnodes_mask = ActiveNodes.Nactivenodes;
 unsigned Ndim = NumberDimensions;
 unsigned Np = MPM_Mesh.NumGP;
 
-#pragma omp parallel 
-{
+//#pragma omp parallel 
+//{
   /* Particle variables */
   Element Nodes_p;
   Matrix ShapeFunction_p;
   double ShapeFunction_pA;
+  double m_A_p;
   double m_p;
   unsigned Idx_p;
 
-#ifdef _OPENMP
+//#ifdef _OPENMP
 
-  unsigned Machine_threads = omp_get_max_threads();
-  unsigned Threads = IMIN(UD_Num_THREADS,Machine_threads);
+//  unsigned Machine_threads = omp_get_max_threads();
+//  unsigned Threads = IMIN(UD_Num_THREADS,Machine_threads);
 
   // Additional work to set the number of threads.
 	// We hard-code to 4 for illustration purposes only.
-	omp_set_num_threads(Threads);
+//	omp_set_num_threads(Threads);
 
 	// determine how many elements each process will work on
-	unsigned n_per_thread = Np/Threads;
+//	unsigned n_per_thread = Np/Threads;
 
-#endif
+//#endif
 
-  #pragma omp parallel for shared (M_IJ) schedule(static,n_per_thread)
+//  #pragma omp parallel for shared (M_IJ) schedule(static,n_per_thread)
   for(Idx_p = 0 ; Idx_p<Np ; Idx_p++)
     {
 
@@ -291,7 +292,7 @@ unsigned Np = MPM_Mesh.NumGP;
           /*
             Compute the nodal A contribution of the particle p
           */
-          double m_A_p = m_p*ShapeFunction_pA;
+          m_A_p = m_p*ShapeFunction_pA;
 
           /* 
              Fill the Lumped mass matrix considering the number of dofs
@@ -312,7 +313,7 @@ unsigned Np = MPM_Mesh.NumGP;
     }
 
 
-}
+//}
   
   return EXIT_SUCCESS; 
 }
@@ -331,29 +332,29 @@ static int compute_Explicit_Newmark_Predictor(
   int Np = MPM_Mesh.NumGP;
   int Order = Ndim*Np;
 
-#pragma omp parallel 
-{
+//#pragma omp parallel 
+//{
   /* Particle variables */
   unsigned idx_p;
   double * D_dis_p = MPM_Mesh.Phi.D_dis.nV;
   double * Vel_p = MPM_Mesh.Phi.vel.nV;
   double * Acc_p = MPM_Mesh.Phi.acc.nV;
 
-#ifdef _OPENMP
+//#ifdef _OPENMP
 
-  unsigned Machine_threads = omp_get_max_threads();
-  unsigned Threads = IMIN(UD_Num_THREADS,Machine_threads);
+//  unsigned Machine_threads = omp_get_max_threads();
+//  unsigned Threads = IMIN(UD_Num_THREADS,Machine_threads);
 
   // Additional work to set the number of threads.
 	// We hard-code to 4 for illustration purposes only.
-	omp_set_num_threads(Threads);
+//	omp_set_num_threads(Threads);
 
 	// determine how many elements each process will work on
-	unsigned n_per_thread = Order/Threads;
+//	unsigned n_per_thread = Order/Threads;
 
-#endif
+//#endif
 
-  #pragma omp parallel for shared (D_dis_p,Vel_p,Acc_p) private(idx_p) schedule(static,n_per_thread)
+//  #pragma omp parallel for shared (D_dis_p,Vel_p,Acc_p) private(idx_p) schedule(static,n_per_thread)
   for(idx_p = 0 ; idx_p<Order ; idx_p++)
   {
     D_dis_p[idx_p] = DeltaTimeStep*Vel_p[idx_p] + 0.5*DSQR(DeltaTimeStep)*Acc_p[idx_p];
@@ -361,7 +362,7 @@ static int compute_Explicit_Newmark_Predictor(
     Vel_p[idx_p] += (1-gamma)*DeltaTimeStep*Acc_p[idx_p];
   }
 
-}
+//}
 
   return EXIT_SUCCESS; 
 }
@@ -504,35 +505,35 @@ static int compute_Nodal_D_Displacement(
       free(Nodes_p.Connectivity);
     }
 
-#pragma omp parallel 
-{
+//#pragma omp parallel 
+//{
 
   /*
     Compute the D_Displacements
   */
-#ifdef _OPENMP
+//#ifdef _OPENMP
 
-  unsigned Machine_threads = omp_get_max_threads();
-  unsigned Threads = IMIN(UD_Num_THREADS,Machine_threads);
+//  unsigned Machine_threads = omp_get_max_threads();
+//  unsigned Threads = IMIN(UD_Num_THREADS,Machine_threads);
 
   // Additional work to set the number of threads.
 	// We hard-code to 4 for illustration purposes only.
-	omp_set_num_threads(Threads);
+//	omp_set_num_threads(Threads);
 
 	// determine how many elements each process will work on
-	unsigned n_per_thread = Order/Threads;
+//	unsigned n_per_thread = Order/Threads;
 
-#endif
+//#endif
 
   unsigned idx;
 
-  #pragma omp parallel for shared (D_dis_I,Mass_IJ,Order) private(idx) schedule(static,n_per_thread)
+//  #pragma omp parallel for shared (D_dis_I,Mass_IJ,Order) private(idx) schedule(static,n_per_thread)
   for(idx = 0 ; idx<Order ; idx++)
   {
     D_dis_I[idx] = D_dis_I[idx]/Mass_IJ[idx];
   }
 
-}
+//}
 
  return EXIT_SUCCESS; 
 }
@@ -615,23 +616,23 @@ static int compute_Nodal_Velocity(
   /*
     Compute the nodal velocities
   */
- #ifdef _OPENMP
+// #ifdef _OPENMP
 
-  unsigned Machine_threads = omp_get_max_threads();
-  unsigned Threads = IMIN(UD_Num_THREADS,Machine_threads);
+//  unsigned Machine_threads = omp_get_max_threads();
+//  unsigned Threads = IMIN(UD_Num_THREADS,Machine_threads);
 
   // Additional work to set the number of threads.
 	// We hard-code to 4 for illustration purposes only.
-	omp_set_num_threads(Threads);
+//	omp_set_num_threads(Threads);
 
 	// determine how many elements each process will work on
-	unsigned n_per_thread = Order/Threads;
+//	unsigned n_per_thread = Order/Threads;
 
-#endif
+//#endif
 
   unsigned idx;
 
-  #pragma omp parallel for shared (Vel_I,Mass_IJ,Order) private(idx) schedule(static,n_per_thread)
+//  #pragma omp parallel for shared (Vel_I,Mass_IJ,Order) private(idx) schedule(static,n_per_thread)
   for(idx = 0 ; idx<Order ; idx++)
   {
     Vel_I[idx] = Vel_I[idx]/Mass_IJ[idx];
@@ -1206,24 +1207,24 @@ static int solve_Nodal_Equilibrium(
   /*
     The solution is now stored in the internal forces vector
   */
- #ifdef _OPENMP
+// #ifdef _OPENMP
 
-  unsigned Machine_threads = omp_get_max_threads();
-  unsigned Threads = IMIN(UD_Num_THREADS,Machine_threads);
+//  unsigned Machine_threads = omp_get_max_threads();
+//  unsigned Threads = IMIN(UD_Num_THREADS,Machine_threads);
 
   // Additional work to set the number of threads.
 	// We hard-code to 4 for illustration purposes only.
-	omp_set_num_threads(Threads);
+//	omp_set_num_threads(Threads);
 
 	// determine how many elements each process will work on
-	unsigned n_per_thread = Order/Threads;
+//	unsigned n_per_thread = Order/Threads;
 
-#endif
+//#endif
 
   unsigned idx;
   int * Nodes2Mask = Free_and_Restricted_Dofs.Nodes2Mask;
 
-  #pragma omp parallel for shared (R_I,F_I,Acc_I,G_I,Mass_IJ,Order) private(M_err,status,idx) schedule(static,n_per_thread)
+//  #pragma omp parallel for shared (R_I,F_I,Acc_I,G_I,Mass_IJ,Order) private(M_err,status,idx) schedule(static,n_per_thread)
   for(idx = 0 ; idx<Order ; idx++)
   {
     if(Nodes2Mask[idx] != -1)
@@ -1240,7 +1241,7 @@ static int solve_Nodal_Equilibrium(
     else
     {
       Acc_I[idx] = 0.0;
-      R_I[idx] = F_I[idx];
+      R_I[idx] = F_I[idx] + G_I[idx]*Mass_IJ[idx];
     }
   }
 
@@ -1390,26 +1391,37 @@ static int output_selector(
   {
 
     int Nnodes = ActiveNodes.Nactivenodes;
-    int p_idx = 2075;
-    int NumNodes_p = MPM_Mesh.NumberNodes[p_idx];
-    Element Nodes_p = nodal_set__Particles__(p_idx, MPM_Mesh.ListNodes[p_idx], NumNodes_p);
-    Matrix ShapeFunction_p = compute_N__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
-    Matrix ShapeFunction_Ip = allocZ__MatrixLib__(Nnodes,1);
+    int NumNodes_p;
+    Matrix Reactions;
+    Matrix ShapeFunction_Ip;
+    Matrix ShapeFunction_p;
+    Element Nodes_p;
 
-    for(int A = 0; A<NumNodes_p; A++)
+    ShapeFunction_Ip = allocZ__MatrixLib__(Nnodes,1);
+    
+    for(int p_idx = 0 ; p_idx<MPM_Mesh.NumGP ; p_idx++)
     {
-      ShapeFunction_Ip.nV[ActiveNodes.Nodes2Mask[Nodes_p.Connectivity[A]]] = ShapeFunction_p.nV[A];
+      NumNodes_p = MPM_Mesh.NumberNodes[p_idx];
+      Nodes_p = nodal_set__Particles__(p_idx, MPM_Mesh.ListNodes[p_idx], NumNodes_p);
+      ShapeFunction_p = compute_N__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
+      
+      for(int A = 0; A<4; A++)
+      {
+        ShapeFunction_Ip.nV[ActiveNodes.Nodes2Mask[Nodes_p.Connectivity[A]]] += ShapeFunction_p.nV[A];
+      }
+      
+      free(Nodes_p.Connectivity);
+      free__MatrixLib__(ShapeFunction_p);
     }
 
-    Matrix Reactions = memory_to_matrix__MatrixLib__(Nnodes,NumberDimensions,R_I);
-
-    particle_results_vtk__InOutFun__(MPM_Mesh,TimeStep,ResultsTimeStep);
+    Reactions = memory_to_matrix__MatrixLib__(Nnodes,NumberDimensions,F_I);
 
     nodal_results_vtk__InOutFun__(FEM_Mesh, ActiveNodes, Reactions, ShapeFunction_Ip, TimeStep, ResultsTimeStep);
 
-    free(Nodes_p.Connectivity);
-    free__MatrixLib__(ShapeFunction_p);
     free__MatrixLib__(ShapeFunction_Ip);
+
+    particle_results_vtk__InOutFun__(MPM_Mesh,TimeStep,ResultsTimeStep);
+
 
   }
 

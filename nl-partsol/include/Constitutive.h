@@ -134,6 +134,17 @@ State_Parameters Von_Mises_forward_euler(State_Parameters, Material);
 State_Parameters Drucker_Prager_backward_euler(State_Parameters, Material);
 /*******************************************************/
 
+/*! 
+  \fn int Matsuoka_Nakai__Constitutive__(State_Parameters * ptr_SP_p,Material MatProp)
+
+  \brief Matsuoka-Nakai model
+
+  \param Input_SP : State parameters of the particle
+  \param MatProp : Material properties of the model
+*/
+int Matsuoka_Nakai__Constitutive__(State_Parameters *,Material);
+/*******************************************************/
+
 /*!
   \fn int Frictional_Monolithic__Constitutive__(State_Parameters * Inputs_SP,Material MatProp)
 
