@@ -1365,7 +1365,7 @@ static bool check_convergence(
         Error += DSQR(Residual.nV[A]);
       }
       Error = pow(Error,0.5);
-
+    
       /*
         Compute relative error
       */

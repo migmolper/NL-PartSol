@@ -53,7 +53,6 @@ Material Define_Neo_Hookean_Wriggers(
   bool Is_Close = false;
   Check_Material ChkMat = Initialise_Check_Material();
 
-
   /* Default parameters */
   New_Material.Locking_Control_Fbar = false;
   New_Material.alpha_Fbar = 0.0;

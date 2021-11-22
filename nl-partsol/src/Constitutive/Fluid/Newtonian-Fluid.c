@@ -51,13 +51,15 @@ State_Parameters compute_1PK_Stress_Tensor_Newtonian_Fluid(
     for(int j = 0 ; j < Ndim ; j++)
     {
       P.N[i][j] = 
-      - J*p0*FmT.N[i][j]
-      - J*(K/n)*(pow(J,-n) - 1)*FmT.N[i][j]
+      - J*(p0 + (K/n)*(pow(J,-n) - 1))*FmT.N[i][j]
       + 2*J*mu*d__x__FmT.N[i][j]
-      - (2.0/((double)Ndim))*J*mu*tr_d*FmT.N[i][j];
+      - (2.0/3.0)*J*mu*tr_d*FmT.N[i][j];
     }
   }
-  
+
+  #if NumberDimensions == 2
+    Intput_SP.Stress[4] = J*p0 + J*(K/n)*(pow(J,-n) - 1);
+  #endif
   /*
     Free tensors 
   */
@@ -126,14 +128,14 @@ Tensor compute_stiffness_density_Newtonian_Fluid(
     for(int j = 0 ; j<Ndim ; j++)
     {
       A.N[i][j] = 
-      + (- J*p0 - J*(K/n)*(pow(J,-n) - 1) + K*pow(J,1-n) - (2.0/((double)Ndim))*alpha4*J*mu)*Fm1GRAD_o_FmTGRAD_IJ.N[i][j]
+      + (- J*p0 - J*(K/n)*(pow(J,-n) - 1) + K*pow(J,1-n) - (2.0/3.0)*alpha4*J*mu)*Fm1GRAD_o_FmTGRAD_IJ.N[i][j]
       + 2*J*mu*d_Fm1GRAD_o_FmTGRAD_IJ.N[i][j]
       + (J*p0 + J*(K/n)*(pow(J,-n)-1) + alpha4*J*mu)*Fm1GRAD_o_FmTGRAD_JI.N[i][j]
       - 2*J*mu*d_Fm1GRAD_o_FmTGRAD_JI.N[i][j]
       + alpha4*J*mu*(i==j)*GRAD_I_dot_GRAD_J
       - J*mu*GRAD_I_dot_GRAD_J*dFdt_Fm1.N[i][j]
       - J*mu*Fm1GRAD_o_FmTGRAD_JI_dFdt_Fm1.N[i][j]
-      + (2.0/((double)Ndim))*J*mu*Fm1GRAD_o_FmTGRAD_IJ_dFdt_Fm1.N[i][j];
+      + (2.0/3.0)*J*mu*Fm1GRAD_o_FmTGRAD_IJ_dFdt_Fm1.N[i][j];
     }
   }
 

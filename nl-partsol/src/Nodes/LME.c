@@ -1007,6 +1007,8 @@ void local_search__LME__(Particle MPM_Mesh, Mesh FEM_Mesh)
       FEM_Mesh.Num_Particles_Node[i] = 0;
       free__SetLib__(&FEM_Mesh.List_Particles_Node[i]);
     }
+
+    FEM_Mesh.ActiveNode[i] = false;
   }
 
   if(FEM_Mesh.Locking_Control_Fbar)

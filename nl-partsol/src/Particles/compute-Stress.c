@@ -118,18 +118,19 @@ void Stress_integration__Particles__(
   }
   else if(strcmp(MatProp_p.Type,"Newtonian-Fluid-Compressible") == 0)
   {
+    Input_SP.Particle_Idx = p;
     Input_SP.Stress = MPM_Mesh.Phi.Stress.nM[p];
     Input_SP.dFdt = MPM_Mesh.Phi.dt_F_n1.nM[p];
     
-    if(MatProp_p.Locking_Control_Fbar)
+   if(MatProp_p.Locking_Control_Fbar)
     {
-//      Input_SP.J = MPM_Mesh.Phi.Jbar.nV[p];
       Input_SP.F_n1_p = MPM_Mesh.Phi.Fbar.nM[p];
+      Input_SP.J = MPM_Mesh.Phi.Jbar.nV[p];
     }
     else
     {
-      Input_SP.J = MPM_Mesh.Phi.J_n1.nV[p];
       Input_SP.F_n1_p = MPM_Mesh.Phi.F_n1.nM[p];
+      Input_SP.J = MPM_Mesh.Phi.J_n1.nV[p];
     }
 
     Output_SP = compute_1PK_Stress_Tensor_Newtonian_Fluid(Input_SP,MatProp_p);

@@ -129,7 +129,7 @@ Define-Material(idx=0,Model=Drucker-Prager-Plane-Strain)
         { 
           List_Materials[idx] = Define_Frictional(Sim_dat,Index_and_Model.Model,Index_and_Model.Idx);
         }
-        else if(strcmp(Index_and_Model.Model,"Compressible-Newtonian-Fluid") == 0)
+        else if(strcmp(Index_and_Model.Model,"Newtonian-Fluid-Compressible") == 0)
         {
           List_Materials[idx] = Define_Compressible_Newtonian_Fluid(Sim_dat,Index_and_Model.Model,Index_and_Model.Idx);
         }

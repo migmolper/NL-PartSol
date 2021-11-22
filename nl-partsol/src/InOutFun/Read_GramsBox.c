@@ -77,21 +77,20 @@ Mesh GramsBox(char * Name_File)
   puts("*************************************************");
   printf(" \t %s : %s \n","* Read GID mesh in",Nodes_Info.Mesh_File);
   FEM_Mesh = ReadGidMesh__MeshTools__(Nodes_Info.Mesh_File);
-
   FEM_Mesh.NumNeighbour = (int *)Allocate_ArrayZ(FEM_Mesh.NumNodesMesh,sizeof(int)); 
-  FEM_Mesh.NodeNeighbour = (ChainPtr *)malloc(FEM_Mesh.NumNodesMesh*sizeof(ChainPtr));
+  FEM_Mesh.NodeNeighbour = alloc_table__SetLib__(FEM_Mesh.NumNodesMesh); 
   get_sourrounding_elements(FEM_Mesh);
   printf("\t \t %s : %s \n","-> Compute sourrounding elements","Done");
 
   FEM_Mesh.SizeNodalLocality_0 = (int *)Allocate_ArrayZ(FEM_Mesh.NumNodesMesh,sizeof(int));
-  FEM_Mesh.NodalLocality_0 = (ChainPtr *)malloc(FEM_Mesh.NumNodesMesh*sizeof(ChainPtr));
+  FEM_Mesh.NodalLocality_0 = alloc_table__SetLib__(FEM_Mesh.NumNodesMesh);
   fill_nodal_locality(FEM_Mesh,1);
   printf("\t \t %s : %s \n","-> Compute nodal neighborhood","Done");
 
   if(Num_nodal_rings > 1)
   {
     FEM_Mesh.SizeNodalLocality = (int *)Allocate_ArrayZ(FEM_Mesh.NumNodesMesh,sizeof(int));
-    FEM_Mesh.NodalLocality = (ChainPtr *)malloc(FEM_Mesh.NumNodesMesh*sizeof(ChainPtr));
+    FEM_Mesh.NodalLocality = alloc_table__SetLib__(FEM_Mesh.NumNodesMesh);
     fill_nodal_locality(FEM_Mesh,Num_nodal_rings);
     printf("\t \t %s : %s \n","-> Compute extended nodal neighborhood","Done");
   }
@@ -100,7 +99,7 @@ Mesh GramsBox(char * Name_File)
   printf("\t \t %s : %s \n","-> Allocate list of active nodes","Done");
 
   FEM_Mesh.Num_Particles_Node = (int *)Allocate_ArrayZ(FEM_Mesh.NumNodesMesh,sizeof(int));
-  FEM_Mesh.List_Particles_Node = (ChainPtr *)malloc(FEM_Mesh.NumNodesMesh*sizeof(ChainPtr));
+  FEM_Mesh.List_Particles_Node = alloc_table__SetLib__(FEM_Mesh.NumNodesMesh);
   printf("\t \t %s : %s \n","-> Allocate list of particles per node","Done");
 
 //  FEM_Mesh.Num_Particles_Element = (int *)Allocate_ArrayZ(FEM_Mesh.NumElemMesh,sizeof(int));

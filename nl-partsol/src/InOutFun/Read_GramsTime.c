@@ -104,7 +104,7 @@ GramsTime(Scheme=FE){
       Parameters.InitialTimeStep = 0;
       Parameters.NumTimeStep = 0;
       Parameters.FinalTime = 0.0;
-      Parameters.epsilon_Mass_Matrix = 0.0;
+      Parameters.epsilon_Mass_Matrix = 1.0;
 
       Parameters.TOL_Conserving_Energy_Momentum = 1E-10;
 

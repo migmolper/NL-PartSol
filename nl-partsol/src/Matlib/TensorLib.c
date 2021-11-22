@@ -857,20 +857,27 @@ Tensor symmetrise__TensorLib__(Tensor A)
 
   int Ndim = NumberDimensions;
 
-  for(int i = 0 ; i<Ndim ; i++)
-  {
-    for(int j = 0 ; j<Ndim ; j++)
-    {
-      if(i != j)
-      {
-        symA.N[i][j] = 0.5*(A.N[i][j] + A.N[j][i]);
-      }
-      else
-      {
-        symA.N[i][j] = A.N[i][j];
-      }
-    }
-  }
+#if NumberDimensions == 2
+
+  symA.N[0][0] = A.N[0][0];
+  symA.N[1][1] = A.N[1][1];
+
+
+  symA.N[0][1] = symA.N[1][0] = 0.5*(A.N[0][1] + A.N[1][0]);
+
+#endif
+
+#if NumberDimensions == 3
+
+  symA.N[0][0] = A.N[0][0];
+  symA.N[1][1] = A.N[1][1];
+  symA.N[2][2] = A.N[2][2];
+
+  symA.N[0][1] = symA.N[1][0] = 0.5*(A.N[0][1] + A.N[1][0]);
+  symA.N[0][2] = symA.N[2][0] = 0.5*(A.N[0][2] + A.N[2][0]);
+  symA.N[1][2] = symA.N[2][1] = 0.5*(A.N[1][2] + A.N[2][1]);
+
+#endif
 
   return symA;
 }
