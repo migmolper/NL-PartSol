@@ -638,12 +638,12 @@ static void vtk_Out_Stress_P(FILE * Vtk_file, Matrix Stress, int NumParticles)
   {
     if(Ndim == 2)
     {
-      pressure = Stress.nM[i][0] + Stress.nM[i][3] + Stress.nM[i][4];  
+      pressure = (1.0/3.0)*(Stress.nM[i][0] + Stress.nM[i][3] + Stress.nM[i][4]);  
       fprintf(Vtk_file,"%lf \n",pressure);
     }
     else
     { 
-      pressure = Stress.nM[i][0] + Stress.nM[i][4] + Stress.nM[i][8]; 
+      pressure = (1.0/3.0)*(Stress.nM[i][0] + Stress.nM[i][4] + Stress.nM[i][8]); 
       fprintf(Vtk_file,"%lf \n",pressure);
     }
     

@@ -1131,7 +1131,8 @@ static void compute_Nodal_Body_Forces(
       /* Get the number of particles with the body load i */
       NumParticles_i = B[i].NumNodes;
 
-      for(int j = 0 ; j<NumParticles_i ; j++){
+      for(int j = 0 ; j<NumParticles_i ; j++)
+      {
 
 	/* Get the index of the Gauss-Point */
 	p = B[i].Nodes[j];
