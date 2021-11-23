@@ -138,6 +138,7 @@ void Stress_integration__Particles__(
   }
   else if(strcmp(MatProp_p.Type,"Newtonian-Fluid-Incompressible") == 0)
   {
+    Input_SP.Particle_Idx = p;
     Input_SP.Stress = MPM_Mesh.Phi.Stress.nM[p];
     Input_SP.dFdt = MPM_Mesh.Phi.dt_F_n1.nM[p];
     Input_SP.J = MPM_Mesh.Phi.J_n1.nV[p];

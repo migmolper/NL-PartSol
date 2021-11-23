@@ -145,7 +145,7 @@ int main(int argc, char * argv[])
     else if(strcmp(Formulation,"-up") == 0)
     {
 
-      NumberDOF = NumberDimensions + 1;
+      NumberDOF = NumberDimensions;
 
       puts("*************************************************");
       puts("Generating the background mesh ...");
@@ -156,8 +156,9 @@ int main(int argc, char * argv[])
       Parameters_Solver = Solver_selector__InOutFun__(SimulationFile,FEM_Mesh.DeltaX);
 
       puts("*************************************************");
+
       puts("Generating new MPM simulation ...");
-      MPM_Mesh = GramsSolid(SimulationFile,FEM_Mesh,&INFO_GramsSolid);
+      MPM_Mesh = Generate_One_Phase_Analysis__InOutFun__(SimulationFile,FEM_Mesh);
 
       puts("*************************************************");
       puts("Read outputs ...");

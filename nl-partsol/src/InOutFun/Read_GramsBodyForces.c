@@ -126,7 +126,6 @@ Load * GramsBodyForces(char * Name_File, int NumBodyForces, int GPxElement)
 	}
 	if((Num_words_line > 0) &&
 	   (strcmp(Parse_Properties[0],"}") != 0 )){
-	    if(strcmp(Formulation,"-u") == 0){ 
 	      if(strcmp(Parse_Properties[0],"b.x") == 0){
 		/* Fill the direction of the BCC */
 		B[IndexLoad].Dir[0] = 1;
@@ -184,7 +183,6 @@ Load * GramsBodyForces(char * Name_File, int NumBodyForces, int GPxElement)
 			"Error in GramsBodyForces()", "Use -> b.x, b.y, b.z");
 		exit(EXIT_FAILURE);
 	      }
-	    }
 	}
 	else{
 	  break;

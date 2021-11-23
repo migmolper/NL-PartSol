@@ -88,7 +88,7 @@ void Up_Newmark_beta_Finite_Strains(
     Auxiliar variables for the solver
   */
   int Ndim = NumberDimensions;
-  int Ndof = NumberDOF;
+  int Ndof = NumberDimensions + 1;
   int Nactivenodes;
   int InitialStep = Parameters_Solver.InitialTimeStep;
   int NumTimeStep = Parameters_Solver.NumTimeStep;  
@@ -388,7 +388,7 @@ static void compute_Gravity_field(
   for(int k = 0 ; k<Ndim ; k++)
   {
     MPM_Mesh.b.n[k] = 0.0;
-  } 
+  }
   
   for(int i = 0 ; i<NumBodyForces ; i++)
   {
@@ -443,7 +443,7 @@ static Nodal_Field compute_Nodal_Field(
 {
 
   int Ndim = NumberDimensions;
-  int Ndof = NumberDOF;
+  int Ndof = NumberDimensions + 1;
   int Nnodes_mask = ActiveNodes.Nactivenodes;
   int Np = MPM_Mesh.NumGP;
   int Ap;
@@ -620,7 +620,7 @@ static Nodal_Field initialise_Nodal_Increments(
   int Nnodes_mask = ActiveNodes.Nactivenodes;
   int NumNodesBound; /* Number of nodes of the bound */
   int Ndim = NumberDimensions; /* Number of dimensions */
-  int Ndof = NumberDOF; /* Number of degree of freedom */
+  int Ndof = NumberDimensions + 1; /* Number of degree of freedom */
   int Id_BCC; /* Index of the node where we apply the BCC */
   int Id_BCC_mask;
 
@@ -927,8 +927,7 @@ static Matrix compute_Residual(
   Newmark_parameters Params,
   int TimeStep)
 {
-
-  int Ndof = NumberDOF;
+  int Ndof = NumberDimensions + 1;
   int Nnodes_mask = ActiveNodes.Nactivenodes;
 
   Matrix Residual = allocZ__MatrixLib__(Nnodes_mask,Ndof);
@@ -956,7 +955,7 @@ static void compute_Inertial_Forces(
   Newmark_parameters Params)
 {
   int Ndim = NumberDimensions;
-  int Ndof = NumberDOF;
+  int Ndof = NumberDimensions + 1;
   int Nnodes_mask = ActiveNodes.Nactivenodes;
   int Order = Ndim*Nnodes_mask;
   Matrix Acceleration_n1 = allocZ__MatrixLib__(Nnodes_mask,Ndim);
@@ -978,6 +977,7 @@ static void compute_Inertial_Forces(
       MPM_Mesh.b.n[i];
     }
   }
+
 
   /*
     Compute inertial forces
@@ -1205,7 +1205,7 @@ static void compute_Nodal_Nominal_traction_Forces(
   int TimeStep)
 {
   int Ndim = NumberDimensions;
-  int Ndof = NumberDOF;
+  int Ndof = NumberDimensions + 1;
   Load Load_i;
   Element Nodes_p; /* Element for each Gauss-Point */
   Matrix N_p; /* Nodal values of the sahpe function */
@@ -1339,7 +1339,7 @@ static Matrix compute_Nodal_Reactions(
 
   /* 1º Define auxilar variables */
   int Ndim = NumberDimensions;
-  int Ndof = NumberDOF;
+  int Ndof = NumberDimensions + 1;
   int NumNodesBound; /* Number of nodes of the bound */
   int NumDimBound; /* Number of dimensions */
   int Nnodes_mask = ActiveNodes.Nactivenodes;
@@ -1414,8 +1414,8 @@ static bool check_convergence(
 {
   bool convergence;
   int Ndim = NumberDimensions;
-  int Ndof = NumberDOF;
-  int Nnodes_mask = Residual.N_cols;
+  int Ndof = NumberDimensions + 1;
+  int Nnodes_mask = Residual.N_rows;
   double Error = 0.0;
   double Error_relative = 0.0;
 
@@ -1433,6 +1433,8 @@ static bool check_convergence(
 
   Error = pow(Error,0.5);
 
+  printf("%e\n",Error);
+//  exit(0);
 
   /*
     Compute relative error
@@ -1488,7 +1490,7 @@ static Matrix assemble_Tangent_Stiffness(
 {
 
   int Ndim = NumberDimensions;
-  int Ndof = NumberDOF;
+  int Ndof = NumberDimensions + 1;
   int Nnodes_mask = ActiveNodes.Nactivenodes;
   int Order = Ndof*Nnodes_mask;
   int Np = MPM_Mesh.NumGP;
@@ -1632,14 +1634,15 @@ static Matrix assemble_Tangent_Stiffness(
 
           // Cross terms for the irredectuble formulation
           Tangent_Stiffness.nM[A_mask*Ndof+i][B_mask*Ndof+Ndim] -= J_p*FmTGRADIENT_N_pA.n[i]*N_pB*V0_p;
-          Tangent_Stiffness.nM[A_mask*Ndof+Ndim][B_mask*Ndof+i] -= J_p*N_pA*FmTGRADIENT_N_pB.n[i]*V0_p;
-
+          
           // Stiffness and intertial density
           for(int j = 0 ; j<Ndim ; j++)
           {
             Tangent_Stiffness.nM[A_mask*Ndof+i][B_mask*Ndof+j] += 
             + alpha_1*(i==j)*((1-epsilon)*N_pA*N_pB + (A_mask==B_mask)*epsilon*N_pA)*m_p 
             + Stiffness_density_p.N[i][j]*V0_p;
+
+            Tangent_Stiffness.nM[A_mask*Ndof+Ndim][B_mask*Ndof+j] -= J_p*N_pA*FmTGRADIENT_N_pB.n[j]*V0_p;
           }
         }
 
@@ -1686,7 +1689,7 @@ static void system_reduction(
     Define auxilar variables 
   */
   int Ndim = NumberDimensions;
-  int Ndof = NumberDOF;
+  int Ndof = NumberDimensions + 1;
   int Nnodes_mask = ActiveNodes.Nactivenodes;
   int Order = Nnodes_mask*Ndof;
   int Number_of_BCC = FEM_Mesh.Bounds.NumBounds;
@@ -1761,7 +1764,7 @@ static void solve_system(
 {
   int Nnodes_mask = Residual.N_rows;
   int Ndim = NumberDimensions;
-  int Ndof = NumberDOF;
+  int Ndof = NumberDimensions + 1;
   int Order = Nnodes_mask*Ndof;
   int LDA   = Nnodes_mask*Ndof;
   int LDB   = Nnodes_mask*Ndof;
@@ -1769,6 +1772,9 @@ static void solve_system(
   int   INFO = 3;
   int * IPIV = (int *)Allocate_Array(Order,sizeof(int));
   int NRHS = 1;
+
+  print__MatrixLib__(Tangent_Stiffness,Order,Order);
+
 
   /*
     Compute the LU factorization 
@@ -1805,7 +1811,7 @@ static void solve_system(
   /*
     Update 
   */
-  for(int idx_A_i = 0 ; idx_A_i < Order ; idx_A_i++)
+  for(int idx_A_i = 0 ; idx_A_i < Nnodes_mask ; idx_A_i++)
   {
     for(int i = 0 ; i<Ndim ; i++)
     {
@@ -1857,15 +1863,13 @@ static void update_Particles(
   Mask ActiveNodes)
 {
   int Ndim = NumberDimensions;
-  int Ndof = NumberDOF;
+  int Ndof = NumberDimensions + 1;
   int Np = MPM_Mesh.NumGP;
   int Nnodes_mask = ActiveNodes.Nactivenodes;
   int Ap;
   int A_mask;
   int idx_A_mask_i;
   int idx_ij;
-  int Mixture_idx;
-  int Material_Soil_idx;
   Element Nodes_p; /* Element for each particle */
   Material MatProp_Soil_p;
   Matrix N_p; /* Value of the shape-function in the particle */
@@ -1915,13 +1919,6 @@ static void update_Particles(
     */
     MPM_Mesh.Phi.J_n.nV[p] = MPM_Mesh.Phi.J_n1.nV[p];
     
-    /*
-      Compute the deformation energy (reference volume + material properties (solid phase))
-    */
-    Vol_0_p = MPM_Mesh.Phi.Vol_0.nV[p];
-    Mixture_idx = MPM_Mesh.MixtIdx[p];
-    Material_Soil_idx = Soil_Water_Mixtures[Mixture_idx].Soil_Idx;
-    MatProp_Soil_p = MPM_Mesh.Mat[Material_Soil_idx];
       
     /*
       Iterate over the nodes of the particle
@@ -1975,7 +1972,7 @@ static void output_selector(
   int TimeStep,
   int ResultsTimeStep)
 {
-  int Ndof = NumberDOF;
+  int Ndof = NumberDimensions + 1;
 //  int Nnodes_mask = ;
 
   /*

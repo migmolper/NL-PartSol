@@ -195,7 +195,15 @@ Particle Generate_One_Phase_Analysis__InOutFun__(char * Name_File, Mesh FEM_Mesh
     /*
       Allocate vectorial/tensorial fields 
     */
-    MPM_Mesh.Phi = allocate_U_vars__Fields__(NumParticles);
+    if(strcmp(Formulation,"-u") == 0)
+    {
+      MPM_Mesh.Phi = allocate_U_vars__Fields__(NumParticles);
+    }
+    else if(strcmp(Formulation,"-up") == 0)
+    {
+      MPM_Mesh.Phi = allocate_Up_vars__Fields__(NumParticles);
+    }
+
 
     /*
       Assign material for each material point
@@ -294,9 +302,10 @@ Particle Generate_One_Phase_Analysis__InOutFun__(char * Name_File, Mesh FEM_Mesh
         MPM_Mesh.Neumann_Contours = Read_u_Neumann_Boundary_Conditions__InOutFun__(Name_File,Sim_Params.Counter_GramsNeumannBC,Msh_Parms.GPxElement);
         Check_u_Neumann_Boundary_Conditions__InOutFun__(MPM_Mesh.Neumann_Contours,NumParticles);
       }
-      else if(strcmp(Formulation,"-upw") == 0)
+      else if(strcmp(Formulation,"-up") == 0)
       {
-        MPM_Mesh.Neumann_Contours = Read_upw_Neumann_Boundary_Conditions__InOutFun__(Name_File,Sim_Params.Counter_GramsNeumannBC,Msh_Parms.GPxElement);
+        MPM_Mesh.Neumann_Contours = Read_u_Neumann_Boundary_Conditions__InOutFun__(Name_File,Sim_Params.Counter_GramsNeumannBC,Msh_Parms.GPxElement);
+        Check_u_Neumann_Boundary_Conditions__InOutFun__(MPM_Mesh.Neumann_Contours,NumParticles);
       }
 
 

@@ -46,19 +46,20 @@ State_Parameters compute_1PK_Stress_Tensor_Newtonian_Fluid(
   */
   double tr_d = I1__TensorLib__(d);
 
+
   for(int i = 0 ; i < Ndim ; i++)
   {
     for(int j = 0 ; j < Ndim ; j++)
     {
       P.N[i][j] = 
       - J*(p0 + (K/n)*(pow(J,-n) - 1))*FmT.N[i][j]
-      + 2*J*mu*d__x__FmT.N[i][j]
+      + 2.0*J*mu*d__x__FmT.N[i][j]
       - (2.0/3.0)*J*mu*tr_d*FmT.N[i][j];
     }
   }
 
   #if NumberDimensions == 2
-    Intput_SP.Stress[4] = J*p0 + J*(K/n)*(pow(J,-n) - 1);
+    Intput_SP.Stress[4] = - (J*p0 + J*(K/n)*(pow(J,-n) - 1));
   #endif
   /*
     Free tensors 

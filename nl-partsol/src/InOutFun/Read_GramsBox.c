@@ -126,6 +126,10 @@ Mesh GramsBox(char * Name_File)
     {
       FEM_Mesh.Bounds = Read_u_Dirichlet_Boundary_Conditions__InOutFun__(Name_File,Nodes_Info.Number_Boundaries);  
     }
+    else if(strcmp(Formulation,"-up") == 0)
+    {
+      FEM_Mesh.Bounds = Read_u_Dirichlet_Boundary_Conditions__InOutFun__(Name_File,Nodes_Info.Number_Boundaries);  
+    }
     else if(strcmp(Formulation,"-upw") == 0)
     {
       FEM_Mesh.Bounds = Read_upw_Dirichlet_Boundary_Conditions__InOutFun__(Name_File,Nodes_Info.Number_Boundaries);

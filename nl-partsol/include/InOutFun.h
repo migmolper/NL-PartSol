@@ -555,6 +555,7 @@ Material Define_Frictional(FILE *,char *,int);
 void Initialize_Frictional(double *,double *,Material);
 
 Material Define_Compressible_Newtonian_Fluid(FILE *,char *,int);
+Material Define_Incompressible_Newtonian_Fluid(FILE *,char *,int);
 /*****************************************************************/
 
 #endif
