@@ -130,7 +130,7 @@ void U_Newmark_beta_Finite_Strains_BDB(
       local_search__MeshTools__(MPM_Mesh,FEM_Mesh);
       ActiveNodes = generate_NodalMask__MeshTools__(FEM_Mesh);
       Nactivenodes = ActiveNodes.Nactivenodes;
-      Free_and_Restricted_Dofs = generate_Mask_for_static_condensation__MeshTools__(ActiveNodes,FEM_Mesh);
+      Free_and_Restricted_Dofs = generate_Mask_for_static_condensation__MeshTools__(ActiveNodes,FEM_Mesh,TimeStep);
       print_Status("DONE !!!",TimeStep);
 
       print_Status("*************************************************",TimeStep);
@@ -656,7 +656,12 @@ static Matrix compute_Nodal_Acceleration(Matrix Mass,Particle MPM_Mesh, Mesh FEM
 
 /**************************************************************/
 
-static void imposse_Nodal_Kinetics(Mesh FEM_Mesh,Matrix Velocity,Matrix Acceleration,Mask ActiveNodes,int TimeStep)
+static void imposse_Nodal_Kinetics(
+  Mesh FEM_Mesh,
+  Matrix Velocity,
+  Matrix Acceleration,
+  Mask ActiveNodes,
+  int TimeStep)
 /*
   Apply the boundary conditions over the nodes 
 */
@@ -710,7 +715,7 @@ static void imposse_Nodal_Kinetics(Mesh FEM_Mesh,Matrix Velocity,Matrix Accelera
 	      /* 
   		 Apply only if the direction is active (1) 
 	      */
-	      if(FEM_Mesh.Bounds.BCC_i[i].Dir[k] == 1)
+	      if(FEM_Mesh.Bounds.BCC_i[i].Dir[TimeStep][k] == 1)
 		{
 
 		  /* 
@@ -727,7 +732,7 @@ static void imposse_Nodal_Kinetics(Mesh FEM_Mesh,Matrix Velocity,Matrix Accelera
 		  /* 
   		     Assign the boundary condition 
 		  */
-		  Velocity.nM[Id_BCC_mask][k] = FEM_Mesh.Bounds.BCC_i[i].Value[k].Fx[TimeStep]*(double)FEM_Mesh.Bounds.BCC_i[i].Dir[k];
+		  Velocity.nM[Id_BCC_mask][k] = FEM_Mesh.Bounds.BCC_i[i].Value[k].Fx[TimeStep];
 		  Acceleration.nM[Id_BCC_mask][k] = 0.0;
 		}
 	    }
@@ -782,7 +787,7 @@ static void imposed_Nodal_Displacements(Matrix D_Displacement, Mask ActiveNodes,
 	  for(int i_dim = 0 ; i_dim<NumDimBound ; i_dim++)
 	    {
     
-	      if(FEM_Mesh.Bounds.BCC_i[i_boundary].Dir[i_dim] == 1)
+	      if(FEM_Mesh.Bounds.BCC_i[i_boundary].Dir[TimeStep][i_dim] == 1)
 		{
 		  /*
 		    Check if the curve it is on time 
@@ -798,7 +803,7 @@ static void imposed_Nodal_Displacements(Matrix D_Displacement, Mask ActiveNodes,
 		  /* 
 		     Assign the boundary condition 
 		  */
-		  D_Displacement.nM[A_mask_BCC][i_dim] = FEM_Mesh.Bounds.BCC_i[i_boundary].Value[i_dim].Fx[TimeStep]*(double)FEM_Mesh.Bounds.BCC_i[i_boundary].Dir[i_dim];
+		  D_Displacement.nM[A_mask_BCC][i_dim] = FEM_Mesh.Bounds.BCC_i[i_boundary].Value[i_dim].Fx[TimeStep];
     
 		}
 	    }

@@ -14,10 +14,10 @@ void local_search__MeshTools__(Particle, Mesh);
 Mask     generate_NodalMask__MeshTools__(Mesh);
 /********************************************************************/
 
-Mask     generate_Mask_for_static_condensation__MeshTools__(Mask, Mesh);
+Mask generate_Mask_for_static_condensation__MeshTools__(Mask, Mesh, int);
 /********************************************************************/
 
-Mask generate_Mask_for_static_condensation_upw__MeshTools__(Mask, Mesh);
+Mask generate_Mask_for_static_condensation_upw__MeshTools__(Mask, Mesh, int);
 /********************************************************************/
 
 Matrix   get_set_field__MeshTools__(Matrix, Element, Mask);

@@ -1,6 +1,7 @@
 #include "nl-partsol.h"
 #include <sys/stat.h>
 
+
 /*
   Local structures
 */
@@ -234,8 +235,12 @@ static BCC_Properties Read_Boundary_Conditions_Properties(FILE * Simulation_file
 	/*
 		Initialise and allocate Dir vector for each DOF
 	*/
-	Properties.Dir = (int *)Allocate_ArrayZ(NumberDOF,sizeof(int));
-
+	Properties.Dir = (int **)malloc(1000 * sizeof(int *));
+	for(int i = 0 ; i<1000 ; i++)
+	{
+		Properties.Dir[i] = malloc((unsigned) NumberDOF*sizeof(double));
+    }
+	
 	/*
       	Initialise and allocate curve for each DOF
     */

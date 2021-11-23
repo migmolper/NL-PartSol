@@ -30,7 +30,7 @@ static void   update_Local_State(Matrix,Mask,Particle,Mesh,double);
 static Matrix compute_Nodal_Forces(Matrix, Mask, Particle, Mesh, int);
 static void   compute_Nodal_Internal_Forces(Matrix,Matrix,Mask,Particle, Mesh);
 static void   compute_Nodal_Body_Forces(Matrix, Mask, Particle, Mesh, int);
-static Matrix compute_Nodal_Reactions(Mesh, Matrix, Mask);
+static Matrix compute_Nodal_Reactions(Mesh, Matrix, Mask, int);
 static Matrix compute_Nodal_Residual(Matrix, Matrix, Matrix, Matrix, double);
 static bool   check_convergence(Matrix,double,int,int,int);
 static Matrix assemble_Nodal_Tangent_Stiffness(Mask, Particle, Mesh);
@@ -100,7 +100,7 @@ void U_Discrete_Energy_Momentum(
     local_search__MeshTools__(MPM_Mesh,FEM_Mesh);
     ActiveNodes = generate_NodalMask__MeshTools__(FEM_Mesh);
     Nactivenodes = ActiveNodes.Nactivenodes;
-    Free_and_Restricted_Dofs = generate_Mask_for_static_condensation__MeshTools__(ActiveNodes,FEM_Mesh);
+    Free_and_Restricted_Dofs = generate_Mask_for_static_condensation__MeshTools__(ActiveNodes,FEM_Mesh,TimeStep);
 
     print_Status("DONE !!!",TimeStep);
 
@@ -163,7 +163,7 @@ void U_Discrete_Energy_Momentum(
 	    Compute nodal reactions and set to zero those DOF of the
 	    nodal forces with imposed displacements.
 	  */
-     Reactions = compute_Nodal_Reactions(FEM_Mesh,Forces,ActiveNodes);
+     Reactions = compute_Nodal_Reactions(FEM_Mesh,Forces,ActiveNodes,TimeStep);
 
 
 	  /*
@@ -589,7 +589,7 @@ static void imposse_Nodal_Velocity(Mesh FEM_Mesh,Matrix Velocity, Mask ActiveNod
                 /* 
   		 Apply only if the direction is active (1) 
                 */
-      if(FEM_Mesh.Bounds.BCC_i[i].Dir[k] == 1)
+      if(FEM_Mesh.Bounds.BCC_i[i].Dir[TimeStep][k] == 1)
       {
 
                     /* 
@@ -606,7 +606,7 @@ static void imposse_Nodal_Velocity(Mesh FEM_Mesh,Matrix Velocity, Mask ActiveNod
                     /* 
   		     Assign the boundary condition 
                     */
-        Velocity.nM[Id_BCC_mask][k] = FEM_Mesh.Bounds.BCC_i[i].Value[k].Fx[TimeStep]*(double)FEM_Mesh.Bounds.BCC_i[i].Dir[k];
+        Velocity.nM[Id_BCC_mask][k] = FEM_Mesh.Bounds.BCC_i[i].Value[k].Fx[TimeStep];
       }
     }
   }    
@@ -661,7 +661,7 @@ static void imposed_Nodal_Displacements(Matrix D_Displacement, Mask ActiveNodes,
     for(int i_dim = 0 ; i_dim<NumDimBound ; i_dim++)
       {
     
-        if(FEM_Mesh.Bounds.BCC_i[i_boundary].Dir[i_dim] == 1)
+        if(FEM_Mesh.Bounds.BCC_i[i_boundary].Dir[TimeStep][i_dim] == 1)
     {
       /*
         Check if the curve it is on time 
@@ -677,7 +677,7 @@ static void imposed_Nodal_Displacements(Matrix D_Displacement, Mask ActiveNodes,
       /* 
          Assign the boundary condition 
       */
-      D_Displacement.nM[A_mask_BCC][i_dim] = FEM_Mesh.Bounds.BCC_i[i_boundary].Value[i_dim].Fx[TimeStep]*(double)FEM_Mesh.Bounds.BCC_i[i_boundary].Dir[i_dim];
+      D_Displacement.nM[A_mask_BCC][i_dim] = FEM_Mesh.Bounds.BCC_i[i_boundary].Value[i_dim].Fx[TimeStep];
     
     }
       }
@@ -1004,7 +1004,7 @@ static void compute_Nodal_Body_Forces(Matrix Forces, Mask ActiveNodes, Particle 
 
 /**********************************************************************/
 
-static Matrix compute_Nodal_Reactions(Mesh FEM_Mesh, Matrix Forces, Mask ActiveNodes)
+static Matrix compute_Nodal_Reactions(Mesh FEM_Mesh, Matrix Forces, Mask ActiveNodes, int TimeStep)
 /*
   Compute the nodal reactions
 */
@@ -1062,7 +1062,7 @@ static Matrix compute_Nodal_Reactions(Mesh FEM_Mesh, Matrix Forces, Mask ActiveN
 	      /* 
 		 Apply only if the direction is active (1) 
 	      */
-	      if(FEM_Mesh.Bounds.BCC_i[i].Dir[k] == 1)
+	      if(FEM_Mesh.Bounds.BCC_i[i].Dir[TimeStep][k] == 1)
 		{
 		  /* 
 		     Set to zero the forces in the nodes where velocity is fixed 

@@ -678,7 +678,7 @@ static Nodal_Field initialise_Nodal_Increments(
         /* 
           Apply only if the direction is active (1) 
         */
-        if(FEM_Mesh.Bounds.BCC_i[i].Dir[k] == 1)
+        if(FEM_Mesh.Bounds.BCC_i[i].Dir[TimeStep][k] == 1)
         {
     
           /* 
@@ -701,7 +701,7 @@ static Nodal_Field initialise_Nodal_Increments(
 
           for(int t = 0 ; t<TimeStep ; t++)
           {
-            D_U_value_It = FEM_Mesh.Bounds.BCC_i[i].Value[k].Fx[t]*(double)FEM_Mesh.Bounds.BCC_i[i].Dir[k];
+            D_U_value_It = FEM_Mesh.Bounds.BCC_i[i].Value[k].Fx[t];
             Up_n.U.nM[Id_BCC_mask][k] += D_U_value_It;                    
             Up_n.d2_U_dt2.nM[Id_BCC_mask][k] += alpha_1*D_U_value_It - alpha_2*Up_n.d_U_dt.nM[Id_BCC_mask][k] - (alpha_3 + 1)*Up_n.d2_U_dt2.nM[Id_BCC_mask][k];
             Up_n.d_U_dt.nM[Id_BCC_mask][k]   += alpha_4*D_U_value_It + (alpha_5-1)*Up_n.d_U_dt.nM[Id_BCC_mask][k] + alpha_6*Up_n.d2_U_dt2.nM[Id_BCC_mask][k];
@@ -710,7 +710,7 @@ static Nodal_Field initialise_Nodal_Increments(
           /*
             Initialise increments using newmark and the U of the boundary condition
           */
-          D_Up.U.nM[Id_BCC_mask][k] = FEM_Mesh.Bounds.BCC_i[i].Value[k].Fx[TimeStep]*(double)FEM_Mesh.Bounds.BCC_i[i].Dir[k];                    
+          D_Up.U.nM[Id_BCC_mask][k] = FEM_Mesh.Bounds.BCC_i[i].Value[k].Fx[TimeStep];                    
           D_Up.d2_U_dt2.nM[Id_BCC_mask][k] = alpha_1*D_Up.U.nM[Id_BCC_mask][k] - alpha_2*Up_n.d_U_dt.nM[Id_BCC_mask][k] - (alpha_3 + 1)*Up_n.d2_U_dt2.nM[Id_BCC_mask][k];
           D_Up.d_U_dt.nM[Id_BCC_mask][k]   = alpha_4*D_Up.U.nM[Id_BCC_mask][k] + (alpha_5-1)*Up_n.d_U_dt.nM[Id_BCC_mask][k] + alpha_6*Up_n.d2_U_dt2.nM[Id_BCC_mask][k];
                

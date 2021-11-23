@@ -17,7 +17,7 @@ static void   update_LocalState(Matrix, Particle,Mesh, double);
 static Matrix compute_InternalForces(Matrix, Particle,Mesh);
 static Matrix compute_BodyForces(Matrix, Particle, Mesh, int);
 static Matrix compute_ContacForces(Matrix, Particle, Mesh, int);
-static Matrix compute_Reactions(Mesh, Matrix);
+static Matrix compute_Reactions(Mesh, Matrix, int);
 
 /**************************************************************/
 
@@ -65,7 +65,7 @@ void U_Newmark_Predictor_Corrector(
       Forces = compute_InternalForces(Forces, MPM_Mesh, FEM_Mesh);    
       Forces = compute_BodyForces(Forces, MPM_Mesh, FEM_Mesh, TimeStep);
       Forces = compute_ContacForces(Forces, MPM_Mesh, FEM_Mesh, TimeStep);
-      Reactions = compute_Reactions(FEM_Mesh, Forces);
+      Reactions = compute_Reactions(FEM_Mesh, Forces,TimeStep);
       print_Status("DONE !!!",TimeStep);
     
       print_Status("*************************************************",TimeStep);
@@ -268,7 +268,7 @@ static void imposse_Velocity(
       for(int k = 0 ; k<NumDimBound ; k++)
       {
 	/* 7º Apply only if the direction is active (1) */
-	if(FEM_Mesh.Bounds.BCC_i[i].Dir[k] == 1)
+	if(FEM_Mesh.Bounds.BCC_i[i].Dir[TimeStep][k] == 1)
   {
 	  /* 8º Check if the curve it is on time */
 	  if( (TimeStep < 0) ||
@@ -281,8 +281,7 @@ static void imposse_Velocity(
 	  }
 	  /* 9º Assign the boundary condition */
 	  V_I.nM[Id_BCC][k] =
-	    FEM_Mesh.Bounds.BCC_i[i].Value[k].Fx[TimeStep]*
-	    (double)FEM_Mesh.Bounds.BCC_i[i].Dir[k];
+	    FEM_Mesh.Bounds.BCC_i[i].Value[k].Fx[TimeStep];
 	}
       }
     }    
@@ -727,7 +726,10 @@ static Matrix compute_ContacForces(
 
 /**********************************************************************/
 
-static Matrix compute_Reactions(Mesh FEM_Mesh, Matrix F_I)
+static Matrix compute_Reactions(
+  Mesh FEM_Mesh,
+  Matrix F_I,
+  int TimeStep)
 /*
   Compute the nodal reactions
 */
@@ -753,7 +755,7 @@ static Matrix compute_Reactions(Mesh FEM_Mesh, Matrix F_I)
       /* 6º Loop over the dimensions of the boundary condition */
       for(int k = 0 ; k<NumDimBound ; k++){
 	/* 7º Apply only if the direction is active (1) */
-	if(FEM_Mesh.Bounds.BCC_i[i].Dir[k] == 1){
+	if(FEM_Mesh.Bounds.BCC_i[i].Dir[TimeStep][k] == 1){
 	  /* 8º Set to zero the forces in the nodes where velocity is fixed */
 	  R_I.nM[Id_BCC][k] = F_I.nM[Id_BCC][k];
 	  F_I.nM[Id_BCC][k] = 0;

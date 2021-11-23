@@ -85,7 +85,7 @@ void U_Newmark_Predictor_Corrector_Finite_Strains(
       local_search__MeshTools__(MPM_Mesh,FEM_Mesh);
       ActiveNodes = generate_NodalMask__MeshTools__(FEM_Mesh);
       Nactivenodes = ActiveNodes.Nactivenodes;
-      Free_and_Restricted_Dofs = generate_Mask_for_static_condensation__MeshTools__(ActiveNodes,FEM_Mesh);
+      Free_and_Restricted_Dofs = generate_Mask_for_static_condensation__MeshTools__(ActiveNodes,FEM_Mesh,TimeStep);
       print_Status("DONE !!!",TimeStep);
 
       print_Status("*************************************************",TimeStep);
@@ -630,7 +630,7 @@ static void impose_Dirichlet_Boundary_Conditions(
         /* 
           Apply only if the direction is active (1) 
         */
-        if(FEM_Mesh.Bounds.BCC_i[i].Dir[k] == 1)
+        if(FEM_Mesh.Bounds.BCC_i[i].Dir[TimeStep][k] == 1)
         {
     
           /* 
@@ -645,7 +645,7 @@ static void impose_Dirichlet_Boundary_Conditions(
           /*
             Initialise increments using newmark and the value of the boundary condition
           */
-          D_Displacement.nM[Id_BCC_mask][k] = FEM_Mesh.Bounds.BCC_i[i].Value[k].Fx[TimeStep]*(double)FEM_Mesh.Bounds.BCC_i[i].Dir[k];                    
+          D_Displacement.nM[Id_BCC_mask][k] = FEM_Mesh.Bounds.BCC_i[i].Value[k].Fx[TimeStep];                    
 
         }
       }
@@ -1006,7 +1006,7 @@ static void compute_Nodal_Nominal_traction_Forces(
       */
       for(int k = 0 ; k<Ndim ; k++)
       {
-        if(Load_i.Dir[k] == 1)
+        if(Load_i.Dir[TimeStep][k] == 1)
         {
           if((TimeStep < 0) || (TimeStep > Load_i.Value[k].Num))
           {

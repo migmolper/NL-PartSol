@@ -94,7 +94,7 @@ void upw_Newmark_Predictor_Corrector_Finite_Strains(
       local_search__MeshTools__(MPM_Mesh,FEM_Mesh);
       ActiveNodes = generate_NodalMask__MeshTools__(FEM_Mesh);
       Nactivenodes = ActiveNodes.Nactivenodes;
-      Free_and_Restricted_Dofs = generate_Mask_for_static_condensation__MeshTools__(ActiveNodes,FEM_Mesh);
+      Free_and_Restricted_Dofs = generate_Mask_for_static_condensation__MeshTools__(ActiveNodes,FEM_Mesh,TimeStep);
       print_step(TimeStep,DeltaTimeStep);
 
       print_Status("*************************************************",TimeStep);
@@ -907,7 +907,7 @@ static void impose_Dirichlet_Boundary_Conditions(
         /* 
 		      Apply only if the direction is active (1) 
         */
-        if(FEM_Mesh.Bounds.BCC_i[i].Dir[k] == 1)
+        if(FEM_Mesh.Bounds.BCC_i[i].Dir[TimeStep][k] == 1)
         {
     
           /* 
@@ -924,11 +924,11 @@ static void impose_Dirichlet_Boundary_Conditions(
           */
           if(k<Ndim)
           {
-            Velocity.nM[Id_BCC_mask][k] = FEM_Mesh.Bounds.BCC_i[i].Value[k].Fx[TimeStep]*(double)FEM_Mesh.Bounds.BCC_i[i].Dir[k];                    
+            Velocity.nM[Id_BCC_mask][k] = FEM_Mesh.Bounds.BCC_i[i].Value[k].Fx[TimeStep];                    
           }
           else
           {
-            Pore_water_pressure.nV[Id_BCC_mask] = FEM_Mesh.Bounds.BCC_i[i].Value[k].Fx[TimeStep]*(double)FEM_Mesh.Bounds.BCC_i[i].Dir[k];
+            Pore_water_pressure.nV[Id_BCC_mask] = FEM_Mesh.Bounds.BCC_i[i].Value[k].Fx[TimeStep];
           }                
         }
       }

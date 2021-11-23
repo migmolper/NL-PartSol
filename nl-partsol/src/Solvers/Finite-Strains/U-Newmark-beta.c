@@ -133,7 +133,7 @@ void U_Newmark_beta_Finite_Strains(
       local_search__MeshTools__(MPM_Mesh,FEM_Mesh);
       ActiveNodes = generate_NodalMask__MeshTools__(FEM_Mesh);
       Nactivenodes = ActiveNodes.Nactivenodes;
-      Free_and_Restricted_Dofs = generate_Mask_for_static_condensation__MeshTools__(ActiveNodes,FEM_Mesh);
+      Free_and_Restricted_Dofs = generate_Mask_for_static_condensation__MeshTools__(ActiveNodes,FEM_Mesh,TimeStep);
       print_Status("DONE !!!",TimeStep);
 
       print_Status("*************************************************",TimeStep);
@@ -598,6 +598,7 @@ static Nodal_Field initialise_Nodal_Increments(
   for(int i = 0 ; i<FEM_Mesh.Bounds.NumBounds ; i++)
     {
 
+
     /* 
       Get the number of nodes of this boundarie 
     */
@@ -634,7 +635,7 @@ static Nodal_Field initialise_Nodal_Increments(
         /* 
           Apply only if the direction is active (1) 
         */
-        if(FEM_Mesh.Bounds.BCC_i[i].Dir[k] == 1)
+        if(FEM_Mesh.Bounds.BCC_i[i].Dir[TimeStep][k] == 1)
         {
 
           /* 
@@ -657,7 +658,7 @@ static Nodal_Field initialise_Nodal_Increments(
 
           for(int t = 0 ; t<TimeStep ; t++)
           {
-            D_U_value_It = FEM_Mesh.Bounds.BCC_i[i].Value[k].Fx[t]*(double)FEM_Mesh.Bounds.BCC_i[i].Dir[k];
+            D_U_value_It = FEM_Mesh.Bounds.BCC_i[i].Value[k].Fx[t];
             U_n.value.nM[Id_BCC_mask][k] += D_U_value_It;                    
             U_n.d2_value_dt2.nM[Id_BCC_mask][k] += alpha_1*D_U_value_It - alpha_2*U_n.d_value_dt.nM[Id_BCC_mask][k] - (alpha_3 + 1)*U_n.d2_value_dt2.nM[Id_BCC_mask][k];
             U_n.d_value_dt.nM[Id_BCC_mask][k]   += alpha_4*D_U_value_It + (alpha_5-1)*U_n.d_value_dt.nM[Id_BCC_mask][k] + alpha_6*U_n.d2_value_dt2.nM[Id_BCC_mask][k];
@@ -666,13 +667,15 @@ static Nodal_Field initialise_Nodal_Increments(
           /*
             Initialise increments using newmark and the value of the boundary condition
           */
-          D_U.value.nM[Id_BCC_mask][k] = FEM_Mesh.Bounds.BCC_i[i].Value[k].Fx[TimeStep]*(double)FEM_Mesh.Bounds.BCC_i[i].Dir[k];                    
+          D_U.value.nM[Id_BCC_mask][k] = FEM_Mesh.Bounds.BCC_i[i].Value[k].Fx[TimeStep];                    
           D_U.d2_value_dt2.nM[Id_BCC_mask][k] = alpha_1*D_U.value.nM[Id_BCC_mask][k] - alpha_2*U_n.d_value_dt.nM[Id_BCC_mask][k] - (alpha_3 + 1)*U_n.d2_value_dt2.nM[Id_BCC_mask][k];
           D_U.d_value_dt.nM[Id_BCC_mask][k]   = alpha_4*D_U.value.nM[Id_BCC_mask][k] + (alpha_5-1)*U_n.d_value_dt.nM[Id_BCC_mask][k] + alpha_6*U_n.d2_value_dt2.nM[Id_BCC_mask][k];
 
         }
-      }
-    }    
+      } 
+    
+    }
+
   }
 
   /*
