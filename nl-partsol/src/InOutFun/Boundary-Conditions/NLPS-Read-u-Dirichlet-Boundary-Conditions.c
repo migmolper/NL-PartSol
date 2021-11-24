@@ -236,7 +236,7 @@ static BCC_Properties Read_Boundary_Conditions_Properties(FILE * Simulation_file
 		Initialise and allocate Dir vector for each DOF
 	*/
 	Properties.Dir = (int **)calloc(NumberDOF, sizeof(int *));
-	for(int i = 0 ; i<1000 ; i++)
+	for(int i = 0 ; i<NumberDOF ; i++)
 	{
 		Properties.Dir[i] = (int *)calloc(1000,sizeof(int));
     }
