@@ -205,7 +205,7 @@ static void imposed_Momentum(Mesh FEM_Mesh, Matrix Phi_I, int TimeStep)
       /* 6º Loop over the dimensions of the boundary condition */
       for(int k = 0 ; k<NumDimBound ; k++){
 	/* 7º Apply only if the direction is active (1) */
-	if(FEM_Mesh.Bounds.BCC_i[i].Dir[TimeStep][k] == 1){
+	if(FEM_Mesh.Bounds.BCC_i[i].Dir[k][TimeStep] == 1){
 	  /* 8º Check if the curve it is on time */
 	  if( (TimeStep < 0) ||
 	      (TimeStep > FEM_Mesh.Bounds.BCC_i[i].Value[k].Num)){
@@ -524,7 +524,8 @@ static Matrix compute_BodyForces(Matrix F_I, Particle MPM_Mesh,
 
       /* Fill vector of body forces */
       for(int k = 0 ; k<Ndim ; k++){
-	if(B[i].Dir[k]){
+	if(B[i].Dir[k][TimeStep])
+  {
 	  if( (TimeStep < 0) || (TimeStep > B[i].Value[k].Num)){
 	    printf("%s : %s\n",
 		   "Error in compute_BodyForces()",
@@ -626,7 +627,7 @@ static Matrix compute_ContacForces(
       /* Fill vector of body forces */
       for(int k = 0 ; k<Ndim ; k++)
       {
-        if(Load_i.Dir[k])
+        if(Load_i.Dir[k][TimeStep])
         {
           if( (TimeStep < 0) || (TimeStep > Load_i.Value[k].Num))
           {
@@ -700,7 +701,7 @@ static Matrix compute_Reactions(
       /* 6º Loop over the dimensions of the boundary condition */
       for(int k = 0 ; k<NumDimBound ; k++){
 	/* 7º Apply only if the direction is active (1) */
-	if(FEM_Mesh.Bounds.BCC_i[i].Dir[TimeStep][k] == 1){
+	if(FEM_Mesh.Bounds.BCC_i[i].Dir[k][TimeStep] == 1){
 	  /* 8º Set to zero the forces in the nodes where velocity is fixed */
 	  R_I.nM[Id_BCC][k] = F_I.nM[Id_BCC][k];
 	  F_I.nM[Id_BCC][k] = 0;

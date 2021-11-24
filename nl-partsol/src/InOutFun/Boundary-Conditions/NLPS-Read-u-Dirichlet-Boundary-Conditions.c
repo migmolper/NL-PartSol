@@ -235,10 +235,10 @@ static BCC_Properties Read_Boundary_Conditions_Properties(FILE * Simulation_file
 	/*
 		Initialise and allocate Dir vector for each DOF
 	*/
-	Properties.Dir = (int **)malloc(1000 * sizeof(int *));
+	Properties.Dir = (int **)calloc(NumberDOF, sizeof(int *));
 	for(int i = 0 ; i<1000 ; i++)
 	{
-		Properties.Dir[i] = malloc((unsigned) NumberDOF*sizeof(double));
+		Properties.Dir[i] = calloc(1000,sizeof(double));
     }
 	
 	/*
@@ -269,9 +269,9 @@ static BCC_Properties Read_Boundary_Conditions_Properties(FILE * Simulation_file
     		{
     			if(strcmp(Parameter_pars[2],"NULL") != 0)
     			{
-	    			Properties.Dir[0] = 1;
     				sprintf(FileLoadRoute,"%s%s",Route_Nodes,Parameter_pars[2]);
     				Properties.Value[0] = ReadCurve(FileLoadRoute);
+					memset(Properties.Dir[0],1,Properties.Value[0].Num);
 					printf(" \t %s (%s) : \n \t \t Number of nodes = %i \n \t \t File curve %s \n",
 						"-> BcDirichlet ",Parameter_pars[1],NumNodes,FileLoadRoute);
     			}
@@ -280,9 +280,9 @@ static BCC_Properties Read_Boundary_Conditions_Properties(FILE * Simulation_file
     		{
     			if(strcmp(Parameter_pars[2],"NULL") != 0)
     			{
-	    			Properties.Dir[1] = 1;
     				sprintf(FileLoadRoute,"%s%s",Route_Nodes,Parameter_pars[2]);
     				Properties.Value[1] = ReadCurve(FileLoadRoute);
+					memset(Properties.Dir[1],1,Properties.Value[1].Num);
 					printf(" \t %s (%s) : \n \t \t Number of nodes = %i \n \t \t File curve %s \n",
 						"-> BcDirichlet ",Parameter_pars[1],NumNodes,FileLoadRoute);
     			}
@@ -291,9 +291,9 @@ static BCC_Properties Read_Boundary_Conditions_Properties(FILE * Simulation_file
     		{
     			if(strcmp(Parameter_pars[2],"NULL") != 0)
     			{
-	    			Properties.Dir[2] = 1;
     				sprintf(FileLoadRoute,"%s%s",Route_Nodes,Parameter_pars[2]);
     				Properties.Value[2] = ReadCurve(FileLoadRoute);
+					memset(Properties.Dir[2],1,Properties.Value[2].Num);
 					printf("\t \t %s (%s) : \n \t \t Number of nodes = %i \n \t \t File curve %s \n",
 						"-> BcDirichlet ",Parameter_pars[1],NumNodes,FileLoadRoute);
     			}

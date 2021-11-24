@@ -589,7 +589,7 @@ static void imposse_Nodal_Velocity(Mesh FEM_Mesh,Matrix Velocity, Mask ActiveNod
                 /* 
   		 Apply only if the direction is active (1) 
                 */
-      if(FEM_Mesh.Bounds.BCC_i[i].Dir[TimeStep][k] == 1)
+      if(FEM_Mesh.Bounds.BCC_i[i].Dir[k][TimeStep] == 1)
       {
 
                     /* 
@@ -661,7 +661,7 @@ static void imposed_Nodal_Displacements(Matrix D_Displacement, Mask ActiveNodes,
     for(int i_dim = 0 ; i_dim<NumDimBound ; i_dim++)
       {
     
-        if(FEM_Mesh.Bounds.BCC_i[i_boundary].Dir[TimeStep][i_dim] == 1)
+        if(FEM_Mesh.Bounds.BCC_i[i_boundary].Dir[i_dim][TimeStep] == 1)
     {
       /*
         Check if the curve it is on time 
@@ -954,7 +954,8 @@ static void compute_Nodal_Body_Forces(Matrix Forces, Mask ActiveNodes, Particle 
 
 	/* Fill vector of body forces */
 	for(int k = 0 ; k<Ndim ; k++){
-	  if(B[i].Dir[k]){
+	  if(B[i].Dir[k][TimeStep])
+    {
 	    if( (TimeStep < 0) || (TimeStep > B[i].Value[k].Num)){
 	      printf("%s : %s\n",
 		     "Error in compute_Nodal_Body_Forces()",
@@ -1062,7 +1063,7 @@ static Matrix compute_Nodal_Reactions(Mesh FEM_Mesh, Matrix Forces, Mask ActiveN
 	      /* 
 		 Apply only if the direction is active (1) 
 	      */
-	      if(FEM_Mesh.Bounds.BCC_i[i].Dir[TimeStep][k] == 1)
+	      if(FEM_Mesh.Bounds.BCC_i[i].Dir[k][TimeStep] == 1)
 		{
 		  /* 
 		     Set to zero the forces in the nodes where velocity is fixed 

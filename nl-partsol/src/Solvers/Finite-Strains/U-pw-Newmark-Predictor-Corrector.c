@@ -489,7 +489,7 @@ static Matrix compute_Nodal_Gravity_field(
      /* Fill vector b of body acclerations */
      for(int k = 0 ; k<Ndim ; k++)
      {
-       if(B[i].Dir[k])
+       if(B[i].Dir[k][TimeStep])
        {
          if( (TimeStep < 0) || (TimeStep > B[i].Value[k].Num))
          {
@@ -907,7 +907,7 @@ static void impose_Dirichlet_Boundary_Conditions(
         /* 
 		      Apply only if the direction is active (1) 
         */
-        if(FEM_Mesh.Bounds.BCC_i[i].Dir[TimeStep][k] == 1)
+        if(FEM_Mesh.Bounds.BCC_i[i].Dir[k][TimeStep] == 1)
         {
     
           /* 
@@ -1357,7 +1357,7 @@ static void compute_Contact_Forces_Mixture(
       */
       for(int k = 0 ; k<Ndim ; k++)
       {
-        if(T_i.Dir[k])
+        if(T_i.Dir[k][TimeStep])
         {
           if( (TimeStep < 0) || (TimeStep > T_i.Value[k].Num))
           {

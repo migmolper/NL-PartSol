@@ -59,11 +59,11 @@ static  void  compute_Inertial_Forces(Nodal_Field,Nodal_Field,Matrix,Matrix,Mask
 static  void  compute_Internal_Forces(Matrix,Mask,Particle,Mesh);
 static  void  compute_Volumetric_Constrain_Forces(Matrix,Mask,Particle,Mesh);
 static  void  compute_Nodal_Nominal_traction_Forces(Matrix,Mask,Particle,Mesh,int);
-static Matrix compute_Nodal_Reactions(Mesh,Matrix,Mask);
+static Matrix compute_Nodal_Reactions(Mesh,Matrix,Mask,int);
 static  bool  check_convergence(Matrix,double,int,int,int);
 
 static Matrix assemble_Tangent_Stiffness(Mask,Particle,Mesh,double,Newmark_parameters);
-static  void  system_reduction(Matrix,Matrix,Mask,Mesh);
+static  void  system_reduction(Matrix,Matrix,Mask,Mesh,int);
 static  void  solve_system(Nodal_Field,Matrix,Matrix);
 
 static  void  update_Newmark_Nodal_Increments(Nodal_Field,Nodal_Field,Newmark_parameters);
@@ -169,7 +169,7 @@ void Up_Newmark_beta_Finite_Strains(
 
       Residual = compute_Residual(Up_n,D_Up,Effective_Mass,ActiveNodes,MPM_Mesh,FEM_Mesh,Params,TimeStep);
 
-      Reactions = compute_Nodal_Reactions(FEM_Mesh,Residual,ActiveNodes);
+      Reactions = compute_Nodal_Reactions(FEM_Mesh,Residual,ActiveNodes,TimeStep);
 
       Convergence = check_convergence(Residual,TOL,Iter,MaxIter,TimeStep);
 
@@ -178,7 +178,7 @@ void Up_Newmark_beta_Finite_Strains(
 
         Tangent_Stiffness = assemble_Tangent_Stiffness(ActiveNodes,MPM_Mesh,FEM_Mesh,epsilon,Params);
 
-        system_reduction(Tangent_Stiffness,Residual,ActiveNodes,FEM_Mesh);
+        system_reduction(Tangent_Stiffness,Residual,ActiveNodes,FEM_Mesh,TimeStep);
 
         solve_system(D_Up,Tangent_Stiffness,Residual);
 
@@ -396,7 +396,7 @@ static void compute_Gravity_field(
     /* Fill vector b of body acclerations */
     for(int k = 0 ; k<Ndim ; k++)
     {
-      if(B[i].Dir[k])
+      if(B[i].Dir[k][TimeStep])
       {
         if( (TimeStep < 0) || (TimeStep > B[i].Value[k].Num))
         {
@@ -678,7 +678,7 @@ static Nodal_Field initialise_Nodal_Increments(
         /* 
           Apply only if the direction is active (1) 
         */
-        if(FEM_Mesh.Bounds.BCC_i[i].Dir[TimeStep][k] == 1)
+        if(FEM_Mesh.Bounds.BCC_i[i].Dir[k][TimeStep] == 1)
         {
     
           /* 
@@ -1266,7 +1266,7 @@ static void compute_Nodal_Nominal_traction_Forces(
       */
       for(int k = 0 ; k<Ndim ; k++)
       {
-        if(Load_i.Dir[k] == 1)
+        if(Load_i.Dir[k][TimeStep] == 1)
         {
           if((TimeStep < 0) || (TimeStep > Load_i.Value[k].Num))
           {
@@ -1331,7 +1331,8 @@ static void compute_Nodal_Nominal_traction_Forces(
 static Matrix compute_Nodal_Reactions(
   Mesh FEM_Mesh,
   Matrix Residual,
-  Mask ActiveNodes)
+  Mask ActiveNodes,
+  int TimeStep)
 /*
   Compute the nodal reactions
 */
@@ -1387,7 +1388,7 @@ static Matrix compute_Nodal_Reactions(
         /* 
           Apply only if the direction is active (1) 
         */
-        if(FEM_Mesh.Bounds.BCC_i[i].Dir[k] == 1)
+        if(FEM_Mesh.Bounds.BCC_i[i].Dir[k][TimeStep] == 1)
         {
 
           /* 
@@ -1682,7 +1683,8 @@ static void system_reduction(
   Matrix Tangent_Stiffness,
   Matrix Residual,
   Mask ActiveNodes,
-  Mesh FEM_Mesh)
+  Mesh FEM_Mesh,
+  int TimeStep)
 {
 
   /* 
@@ -1728,7 +1730,7 @@ static void system_reduction(
             */
             for(int k = 0 ; k<Ndim ; k++)
             {
-              if(FEM_Mesh.Bounds.BCC_i[i].Dir[k] == 1)
+              if(FEM_Mesh.Bounds.BCC_i[i].Dir[k][TimeStep] == 1)
               {
 
                 for(int A_mask = 0 ; A_mask < Nnodes_mask ; A_mask++)
