@@ -7,7 +7,7 @@
 */
 typedef struct
 {
-  int * Dir;
+  int ** Dir;
   Curve * Value;
 
 } BCC_Properties;
@@ -238,7 +238,7 @@ static BCC_Properties Read_Boundary_Conditions_Properties(FILE * Simulation_file
 	Properties.Dir = (int **)calloc(NumberDOF, sizeof(int *));
 	for(int i = 0 ; i<1000 ; i++)
 	{
-		Properties.Dir[i] = calloc(1000,sizeof(double));
+		Properties.Dir[i] = (int *)calloc(1000,sizeof(int));
     }
 	
 	/*

@@ -6,7 +6,7 @@
 */
 typedef struct
 {
-  int * Dir;
+  int ** Dir;
   Curve * Value;
 
 } BCC_Properties;
@@ -234,7 +234,11 @@ static BCC_Properties Read_Boundary_Conditions_Properties(FILE * Simulation_file
 	/*
 		Initialise and allocate Dir vector for each DOF
 	*/
-	Properties.Dir = (int *)Allocate_ArrayZ(NumberDOF,sizeof(int));
+	Properties.Dir = (int **)calloc(NumberDOF, sizeof(int *));
+	for(int i = 0 ; i<NumberDOF ; i++)
+	{
+		Properties.Dir[i] = (int *)calloc(1000,sizeof(int));
+    }
 
 	/*
       	Initialise and allocate curve for each DOF
@@ -264,9 +268,9 @@ static BCC_Properties Read_Boundary_Conditions_Properties(FILE * Simulation_file
     		{
     			if(strcmp(Parameter_pars[2],"NULL") != 0)
     			{
-	    			Properties.Dir[0] = 1;
     				sprintf(FileLoadRoute,"%s%s",Route_Nodes,Parameter_pars[2]);
     				Properties.Value[0] = ReadCurve(FileLoadRoute);
+					memset(Properties.Dir[0],1,Properties.Value[0].Num);
 					printf(" \t %s (%s) : \n \t \t Number of nodes = %i \n \t \t File curve %s \n",
 						"-> BcDirichlet ",Parameter_pars[1],NumNodes,FileLoadRoute);
     			}
@@ -275,9 +279,9 @@ static BCC_Properties Read_Boundary_Conditions_Properties(FILE * Simulation_file
     		{
     			if(strcmp(Parameter_pars[2],"NULL") != 0)
     			{
-	    			Properties.Dir[1] = 1;
     				sprintf(FileLoadRoute,"%s%s",Route_Nodes,Parameter_pars[2]);
     				Properties.Value[1] = ReadCurve(FileLoadRoute);
+					memset(Properties.Dir[1],1,Properties.Value[1].Num);
 					printf(" \t %s (%s) : \n \t \t Number of nodes = %i \n \t \t File curve %s \n",
 						"-> BcDirichlet ",Parameter_pars[1],NumNodes,FileLoadRoute);
     			}
@@ -286,9 +290,9 @@ static BCC_Properties Read_Boundary_Conditions_Properties(FILE * Simulation_file
     		{
     			if(strcmp(Parameter_pars[2],"NULL") != 0)
     			{
-	    			Properties.Dir[Ndim-1] = 1;
     				sprintf(FileLoadRoute,"%s%s",Route_Nodes,Parameter_pars[2]);
     				Properties.Value[Ndim-1] = ReadCurve(FileLoadRoute);
+					memset(Properties.Dir[Ndim-1],1,Properties.Value[Ndim-1].Num);
 					printf("\t \t %s (%s) : \n \t \t Number of nodes = %i \n \t \t File curve %s \n",
 						"-> BcDirichlet ",Parameter_pars[1],NumNodes,FileLoadRoute);
     			}
@@ -297,9 +301,9 @@ static BCC_Properties Read_Boundary_Conditions_Properties(FILE * Simulation_file
     		{
     			if(strcmp(Parameter_pars[2],"NULL") != 0)
     			{
-	    			Properties.Dir[Ndim] = 1;
     				sprintf(FileLoadRoute,"%s%s",Route_Nodes,Parameter_pars[2]);
     				Properties.Value[Ndim] = ReadCurve(FileLoadRoute);
+					memset(Properties.Dir[Ndim],1,Properties.Value[Ndim].Num);
 					printf(" \t %s (%s) : \n \t \t Number of nodes = %i \n \t \t File curve %s \n",
 						"-> BcDirichlet ",Parameter_pars[1],NumNodes,FileLoadRoute);
     			}
