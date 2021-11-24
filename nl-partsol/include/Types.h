@@ -947,7 +947,12 @@ typedef struct {
   * Maximum number of interations
   */
   int MaxIter;
-  
+
+  /*!
+  * Time integration scheme
+  */
+  char TimeIntegrationScheme [100]; 
+
 } Time_Int_Params;
 
 /*******************************************************/

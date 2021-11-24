@@ -7,7 +7,11 @@ int NumberDOF;
 
 /**********************************************************************/
 
-Load * GramsBodyForces(char * Name_File, int NumBodyForces, int GPxElement)
+Load * GramsBodyForces(
+	char * Name_File, 
+	int NumBodyForces, 
+	int GPxElement,
+	int NumTimeStep)
 {
   /* Define new load case for the body forces */
   Load * B = (Load *)Allocate_Array(NumBodyForces, sizeof(Load));
@@ -107,7 +111,7 @@ Load * GramsBodyForces(char * Name_File, int NumBodyForces, int GPxElement)
       B[IndexLoad].Dir = (int **)calloc(NumberDOF, sizeof(int *));
 	for(int i = 0 ; i<NumberDOF ; i++)
 	{
-		B[IndexLoad].Dir[i] = (int *)calloc(1000,sizeof(int));
+		B[IndexLoad].Dir[i] = (int *)calloc(NumTimeStep,sizeof(int));
     }
 
       /* Curve for each dimension */
@@ -137,7 +141,7 @@ Load * GramsBodyForces(char * Name_File, int NumBodyForces, int GPxElement)
 		if(strcmp(Parse_Properties[1],"NULL") != 0){
 		  sprintf(FileLoadRoute,"%s%s",Route_Nodes,Parse_Properties[1]);
 		  B[IndexLoad].Value[0] = ReadCurve(FileLoadRoute);
-		  memset(B[IndexLoad].Dir[0],1,B[IndexLoad].Value[0].Num);
+		  memset(B[IndexLoad].Dir[0],1,IMIN(NumTimeStep,B[IndexLoad].Value[0].Num));
 		  puts("*************************************************");
 		  printf(" \t %s (%i) : \n \t %s %s \n",
 			 "* Body BC",
@@ -151,7 +155,7 @@ Load * GramsBodyForces(char * Name_File, int NumBodyForces, int GPxElement)
 		if(strcmp(Parse_Properties[1],"NULL") != 0){
 		  sprintf(FileLoadRoute,"%s%s",Route_Nodes,Parse_Properties[1]);
 		  B[IndexLoad].Value[1] = ReadCurve(FileLoadRoute);
-		  memset(B[IndexLoad].Dir[1],1,B[IndexLoad].Value[1].Num);
+		  memset(B[IndexLoad].Dir[1],1,IMIN(NumTimeStep,B[IndexLoad].Value[1].Num));
 		  puts("*************************************************");
 		  printf(" \t %s (%i) : \n \t %s %s \n",
 			 "* Body BC",
@@ -166,7 +170,7 @@ Load * GramsBodyForces(char * Name_File, int NumBodyForces, int GPxElement)
 		{
 		  sprintf(FileLoadRoute,"%s%s",Route_Nodes,Parse_Properties[1]);
 		  B[IndexLoad].Value[2] = ReadCurve(FileLoadRoute);
-		  memset(B[IndexLoad].Dir[2],1,B[IndexLoad].Value[2].Num);
+		  memset(B[IndexLoad].Dir[2],1,IMIN(NumTimeStep,B[IndexLoad].Value[2].Num));
 		  puts("*************************************************");
 		  printf(" \t %s (%i) : \n \t %s %s \n",
 			 "* Body BC",

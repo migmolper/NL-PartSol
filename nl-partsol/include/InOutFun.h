@@ -244,47 +244,42 @@ void print_convergence_stats(int, int, double, double, double);
 
 /*!
 
-  \fn Mesh GramsBox(char * File)
+  \fn Mesh GramsBox(char * File,Time_Int_Params Parameters_Solver)
   
   \brief Function devoted to generate the computational grid of nodes
   
   \param File: Name of the file with the instructions
 
 */
-Mesh GramsBox(char *);
+Mesh GramsBox(char *,Time_Int_Params);
 /*****************************************************************/
 
 /*!
 
-  \fn Boundaries Read_u_Dirichlet_Boundary_Conditions__InOutFun__(char * File,int NumBounds)
+  \fn Boundaries Read_u_Dirichlet_Boundary_Conditions__InOutFun__(char * File,int NumBounds,int NumTimeSteps)
 
   \brief Function that reads the boundary conditions for the mesh
 
   \param File: Name of the file with the instructions
   \param NumBounds : Numerb of boundary defined in the domain
+  \param NumTimeSteps
 
 */
-Boundaries Read_u_Dirichlet_Boundary_Conditions__InOutFun__(char *,int);
+Boundaries Read_u_Dirichlet_Boundary_Conditions__InOutFun__(char *,int,int);
 /*****************************************************************/
 
 /*!
 
-  \fn Boundaries Read_u_Neumann_Boundary_Conditions__InOutFun__(char * Name_File,int NumBounds,int GPxElement)
+  \fn Boundaries Read_u_Neumann_Boundary_Conditions__InOutFun__(char * Name_File,int NumBounds,int GPxElement, int NumTimeSteps)
   
   \brief Generate the load state
-
-  Example
-  Define-Neumann-Boundary (Nodes=ListNodes.txt) {
-  T.x Load_x.txt
-  T.y Load_x.txt
-  }
 
   \param File: Name of the file with the instructions
   \param NumNeumannBC : Number of loads
   \param GPxElement : As the particle discretization is performed thorouht 
-
+  \param NumTimeSteps
 */
-Boundaries Read_u_Neumann_Boundary_Conditions__InOutFun__(char *,int,int);
+Boundaries Read_u_Neumann_Boundary_Conditions__InOutFun__(char *,int,int,int);
 
 /*****************************************************************/
 
@@ -303,28 +298,29 @@ void Check_u_Neumann_Boundary_Conditions__InOutFun__(Boundaries,int);
 
 /*!
 
-  \fn Boundaries Read_upw_Dirichlet_Boundary_Conditions__InOutFun__(char * Name_File,int NumBounds)
+  \fn Boundaries Read_upw_Dirichlet_Boundary_Conditions__InOutFun__(char * Name_File,int NumBounds, int NumTimeSteps)
 
   \brief Function that reads the boundary conditions for the mesh
 
   \param File: Name of the file with the instructions
   \param NumBounds : Numerb of boundary defined in the domain
+  \param NumTimeSteps : 
 
 */
-Boundaries Read_upw_Dirichlet_Boundary_Conditions__InOutFun__(char *,int);
+Boundaries Read_upw_Dirichlet_Boundary_Conditions__InOutFun__(char *,int,int);
 /*****************************************************************/
 
 /*!
-  \fn Boundaries Read_upw_Neumann_Boundary_Conditions__InOutFun__(char * Name_File,int NumBounds,int GPxElement)
+  \fn Boundaries Read_upw_Neumann_Boundary_Conditions__InOutFun__(char * Name_File,int NumBounds,int GPxElement, int NumTimeSteps)
 
   \brief Function that reads the neumann boundary conditions for the mesh
 
   \param File: Name of the file with the instructions
   \param NumBounds : Numerb of boundary defined in the domain
   \param GPxElement
-
+  \param NumTimeSteps:
 */
-Boundaries Read_upw_Neumann_Boundary_Conditions__InOutFun__(char *,int,int);
+Boundaries Read_upw_Neumann_Boundary_Conditions__InOutFun__(char *,int,int,int);
 /*****************************************************************/
 
 
@@ -332,45 +328,29 @@ Particle Generate_Gauss_Point_Analysis__InOutFun__(char *);
 /*****************************************************************/
 
 /*!
-
-  \fn Particle GramsSolid(char * File, Mesh Nodes)
-
-  \brief Function that generate a set of material points
-
-  \param File: Name of the file with the instructions
-  \param Nodes : Set of background nodes
-
-*/
-Particle GramsSolid(char *,Mesh,int *);
-/*****************************************************************/
-
-/*
-  \fn Particle Generate_Soil_Water_Coupling_Analysis__InOutFun__(char * Name_File, Mesh FEM_Mesh);
+  \fn Particle Generate_Soil_Water_Coupling_Analysis__InOutFun__(char * Name_File, Mesh FEM_Mesh, Time_Int_Params Parameters_Solver);
  
   \brief Function that generate a set of material points for soil-water coupling applications
 
   \param File: Name of the file with the instructions
   \param Nodes : Set of background nodes
+  \param Parameters_Solver
 */
-Particle Generate_Soil_Water_Coupling_Analysis__InOutFun__(char *, Mesh);
+Particle Generate_Soil_Water_Coupling_Analysis__InOutFun__(char *, Mesh, Time_Int_Params);
 /*****************************************************************/
 
 /*!
-
-  \fn void Solver_selector__InOutFun__(char * File, double DeltaX)
+  \fn void Solver_selector__InOutFun__(char * File)
 
   \brief Function to define the solver
   
   \param File: Name of the file with the instructions
-  \param DeltaX : Minimum mesh size
-
 }
 */
-Time_Int_Params Solver_selector__InOutFun__(char *, double);
+Time_Int_Params Solver_selector__InOutFun__(char *);
 /*****************************************************************/
 
 /*!
-
   \fn Material * GramsMaterials(char * File, Particle Particles, int GPxElement)
 
   \brief Generate the libreary of materials
@@ -378,25 +358,20 @@ Time_Int_Params Solver_selector__InOutFun__(char *, double);
   \param File: Name of the file with the instructions
   \param Particles : Particle discretization
   \param GPxElement : As the particle discretization is performed thorouht 
-
 */
 Material * GramsMaterials(char *, Particle, int);
 /*****************************************************************/
 
 /*!
-
   \fn Material * Read_Materials__InOutFun__(char * SimulationFile, int NumberMaterials);
-
 */
 Material * Read_Materials__InOutFun__(char *, int);
 /*****************************************************************/
 
-
 /*!
-  \fn Particle Generate_One_Phase_Analysis__InOutFun__(char * Name_File, Mesh FEM_Mesh)
-
+  \fn Particle Generate_One_Phase_Analysis__InOutFun__(char * Name_File, Mesh FEM_Mesh, Time_Int_Params Parameters_Solver)
 */
-Particle Generate_One_Phase_Analysis__InOutFun__(char *, Mesh);
+Particle Generate_One_Phase_Analysis__InOutFun__(char *, Mesh,Time_Int_Params);
 /*****************************************************************/
 
 /*!
@@ -484,22 +459,16 @@ void OutputSimulation(Particle,int,double,double,Event);
 
 /*!
 
-  \fn Load * GramsBodyForces(char * File, int NumBodyForces, int GPxElement)
+  \fn Load * GramsBodyForces(char * File, int NumBodyForces, int GPxElement, int NumTimeSteps)
   
   \brief Generate the load state
-
-  Example
-  GramsBodyForces (Nodes=ListNodes.txt) {
-  b.x Load_x.txt
-  b.y Load_x.txt
-  }
 
   \param File: Name of the file with the instructions
   \param NumBodyForces : Number of body forces
   \param GPxElement : As the particle discretization is performed thorouht 
-
+  \param NumTimeSteps:
 */
-Load * GramsBodyForces(char *, int, int);
+Load * GramsBodyForces(char *, int, int, int);
 
 /*****************************************************************/
 

@@ -43,242 +43,237 @@ int main(int argc, char * argv[])
   /************ Read simulation file and kind of simulation ************/
   /*********************************************************************/
   if(argc == 2)
-    {      
-      if((strcmp(argv[1],"--help") == 0) || (strcmp(argv[1],"-h") == 0))
-      { 
-        nlpartsol_help_message();
-      }      
-    }
+  {      
+    if((strcmp(argv[1],"--help") == 0) || (strcmp(argv[1],"-h") == 0))
+    { 
+      nlpartsol_help_message();
+    }      
+  }
   if(argc == 3)
-    {      
-      Formulation = argv[1];
-      SimulationFile = argv[2];
-      Is_New_Simulation = true;
+  {      
+    Formulation = argv[1];
+    SimulationFile = argv[2];
+    Is_New_Simulation = true;
 //      Is_Restart_Simulation = false;
 //      InitialStep = 0;
-    }
+  }
   else if(argc == 4)
-    {      
-      Formulation = argv[1];
-      SimulationFile = argv[2];
-      RestartFile = argv[3];
-      Is_New_Simulation = false;
+  {      
+    Formulation = argv[1];
+    SimulationFile = argv[2];
+    RestartFile = argv[3];
+    Is_New_Simulation = false;
 //      Is_Restart_Simulation = true;
 //      InitialStep = get_ResultStep(RestartFile);
-    }
+  }
   else
-    {
-      sprintf(Error_message,"%s","Wrong inputs, try to tip : nl-partsol --help");
-      standard_error(Error_message); 
-    }
+  {
+    sprintf(Error_message,"%s","Wrong inputs, try to tip : nl-partsol --help");
+    standard_error(Error_message); 
+  }
     
   /* Select kinf of formulation  */
   if(strcmp(Formulation,"-u") == 0)
-    {
+  {
 
-      NumberDOF = NumberDimensions;
+    NumberDOF = NumberDimensions;
 
-      puts("*************************************************");
-      puts("Generating the background mesh ...");
-      FEM_Mesh = GramsBox(SimulationFile);
+    puts("*************************************************");
+    puts("Read solver ...");
+    Parameters_Solver = Solver_selector__InOutFun__(SimulationFile);
 
-      puts("*************************************************");
-      puts("Read solver ...");
-      Parameters_Solver = Solver_selector__InOutFun__(SimulationFile,FEM_Mesh.DeltaX);
+    puts("*************************************************");
+    puts("Generating the background mesh ...");
+    FEM_Mesh = GramsBox(SimulationFile,Parameters_Solver);
 
-      puts("*************************************************");
+    puts("*************************************************");
+    puts("Generating new MPM simulation ...");
+    MPM_Mesh = Generate_One_Phase_Analysis__InOutFun__(SimulationFile,FEM_Mesh,Parameters_Solver);
 
-      puts("Generating new MPM simulation ...");
-      MPM_Mesh = Generate_One_Phase_Analysis__InOutFun__(SimulationFile,FEM_Mesh);
+    puts("*************************************************");
+    puts("Read outputs ...");
+    GramsOutputs(SimulationFile);
+    NLPS_Out_nodal_path_csv__InOutFun__(SimulationFile);
+    NLPS_Out_particles_path_csv__InOutFun__(SimulationFile);
 
-      puts("*************************************************");
-      puts("Read outputs ...");
-      GramsOutputs(SimulationFile);
-      NLPS_Out_nodal_path_csv__InOutFun__(SimulationFile);
-      NLPS_Out_particles_path_csv__InOutFun__(SimulationFile);
-
-      puts("*************************************************");
-      puts("Run simulation ...");
-      if(strcmp(TimeIntegrationScheme,"FE") == 0 )
-      { 
-        U_Forward_Euler(FEM_Mesh, MPM_Mesh, Parameters_Solver);
-      }
-      else if(strcmp(TimeIntegrationScheme,"GA") == 0 )
-      { 
-        U_Generalized_alpha(FEM_Mesh, MPM_Mesh, Parameters_Solver);
-      }
-      else if(strcmp(TimeIntegrationScheme,"NPC") == 0 )
-      { 
-        U_Newmark_Predictor_Corrector(FEM_Mesh, MPM_Mesh, Parameters_Solver);
-      }
-      else if(strcmp(TimeIntegrationScheme,"NPC-FS") == 0 )
-      { 
-        U_Newmark_Predictor_Corrector_Finite_Strains(FEM_Mesh, MPM_Mesh, Parameters_Solver);
-      }
-      else if(strcmp(TimeIntegrationScheme,"Discrete-Energy-Momentum") == 0 )
-      { 
-        U_Discrete_Energy_Momentum(FEM_Mesh, MPM_Mesh, Parameters_Solver);
-      }
-      else if(strcmp(TimeIntegrationScheme,"Newmark-beta-Finite-Strains") == 0 )
-      {
-        U_Newmark_beta_Finite_Strains(FEM_Mesh, MPM_Mesh, Parameters_Solver);
-      }
-      else if(strcmp(TimeIntegrationScheme,"Newmark-beta-Finite-Strains-BDB") == 0 )
-      {
-        U_Newmark_beta_Finite_Strains_BDB(FEM_Mesh, MPM_Mesh, Parameters_Solver);
-      } 
-      else
-      {
-        sprintf(Error_message,"%s","Wrong time integration scheme");
-        standard_error(Error_message); 
-      }
-
-      puts("*************************************************");
-      puts("Free memory ...");
-      globalfree(FEM_Mesh, MPM_Mesh);       
-
-      printf("Computation finished at : %s \n",__TIME__);  
-      puts("Exiting of the program...");
-      exit(EXIT_SUCCESS);
-
+    puts("*************************************************");
+    puts("Run simulation ...");
+    if(strcmp(Parameters_Solver.TimeIntegrationScheme,"FE") == 0 )
+    { 
+      U_Forward_Euler(FEM_Mesh, MPM_Mesh, Parameters_Solver);
     }
-    else if(strcmp(Formulation,"-up") == 0)
-    {
-
-      NumberDOF = NumberDimensions;
-
-      puts("*************************************************");
-      puts("Generating the background mesh ...");
-      FEM_Mesh = GramsBox(SimulationFile);
-
-      puts("*************************************************");
-      puts("Read solver ...");
-      Parameters_Solver = Solver_selector__InOutFun__(SimulationFile,FEM_Mesh.DeltaX);
-
-      puts("*************************************************");
-
-      puts("Generating new MPM simulation ...");
-      MPM_Mesh = Generate_One_Phase_Analysis__InOutFun__(SimulationFile,FEM_Mesh);
-
-      puts("*************************************************");
-      puts("Read outputs ...");
-      GramsOutputs(SimulationFile);
-      NLPS_Out_nodal_path_csv__InOutFun__(SimulationFile);
-      NLPS_Out_particles_path_csv__InOutFun__(SimulationFile);
-
-      puts("*************************************************");
-      puts("Run simulation ...");
-      if(strcmp(TimeIntegrationScheme,"Newmark-beta-Finite-Strains") == 0 )
-      {
-        Up_Newmark_beta_Finite_Strains(FEM_Mesh, MPM_Mesh, Parameters_Solver);
-      }
-      else
-      {
-        sprintf(Error_message,"%s","Wrong time integration scheme");
-        standard_error(Error_message); 
-      }
-
-      puts("*************************************************");
-      puts("Free memory ...");
-      globalfree(FEM_Mesh, MPM_Mesh);       
-
-      printf("Computation finished at : %s \n",__TIME__);  
-      puts("Exiting of the program...");
-      exit(EXIT_SUCCESS);
-
+    else if(strcmp(Parameters_Solver.TimeIntegrationScheme,"Generalized-alpha") == 0 )
+    { 
+      U_Generalized_alpha(FEM_Mesh, MPM_Mesh, Parameters_Solver);
     }
-    else if(strcmp(Formulation,"-upw") == 0)
-    {
-
-      NumberDOF = NumberDimensions + 1;
-
-      puts("*************************************************");
-      puts("Generating the background mesh ...");
-      FEM_Mesh = GramsBox(SimulationFile);
-
-      puts("*************************************************");
-      puts("Read solver ...");
-      Parameters_Solver = Solver_selector__InOutFun__(SimulationFile,FEM_Mesh.DeltaX);      
-
-      puts("*************************************************");
-      if(Is_New_Simulation)
-      {
-        puts("Generating new MPM simulation ...");
-        MPM_Mesh = Generate_Soil_Water_Coupling_Analysis__InOutFun__(SimulationFile,FEM_Mesh);
-      }
-      if(Is_Restart_Simulation)
-      {
-        puts("Restarting old MPM simulation ...");
-        MPM_Mesh = restart_Simulation(SimulationFile,RestartFile,FEM_Mesh);
-      }
-
-      puts("*************************************************");
-      puts("Read VTK output directives ...");
-      GramsOutputs(SimulationFile);
-
-      puts("*************************************************");
-      puts("Read nodal path output directives ...");
-      NLPS_Out_nodal_path_csv__InOutFun__(SimulationFile);
-
-      puts("*************************************************");
-      puts("Read particle path output directives ...");
-      NLPS_Out_particles_path_csv__InOutFun__(SimulationFile);
-
-      puts("*************************************************");
-      puts("Run simulation ...");
-      if(strcmp(TimeIntegrationScheme,"NPC-FS") == 0)
-      { 
-        upw_Newmark_Predictor_Corrector_Finite_Strains(FEM_Mesh, MPM_Mesh, Parameters_Solver);
-      }
-      else if(strcmp(TimeIntegrationScheme,"Newmark-beta-Finite-Strains") == 0)
-      {
-        upw_Newmark_beta_Finite_Strains(FEM_Mesh, MPM_Mesh, Parameters_Solver);
-      }
-      else
-      {
-        sprintf(Error_message,"%s","Wrong time integration scheme");
-        standard_error(Error_message); 
-      }
-
-      puts("*************************************************");
-      puts("Free memory ...");
-      globalfree(FEM_Mesh, MPM_Mesh);       
-
-      printf("Computation finished at : %s \n",__TIME__);  
-      puts("Exiting of the program...");
-      exit(EXIT_SUCCESS);
-
+    else if(strcmp(Parameters_Solver.TimeIntegrationScheme,"NPC") == 0 )
+    { 
+      U_Newmark_Predictor_Corrector(FEM_Mesh, MPM_Mesh, Parameters_Solver);
     }
-    else if(strcmp(Formulation,"-GP") == 0)
-    {
-      /* Define variable */
-      Particle PointAnalysis;
-
-      puts("*************************************************");
-      puts("Read solver ...");
-      Parameters_Solver = Solver_selector__InOutFun__(SimulationFile, FEM_Mesh.DeltaX);
-
-      puts("*************************************************");
-      puts("Generating new Gauss Point simulation ...");
-      PointAnalysis = Generate_Gauss_Point_Analysis__InOutFun__(SimulationFile);
-
-      puts("*************************************************");
-      puts("Run simulation ...");
-      NonLinear_Gauss_Point_Analysis(PointAnalysis);
-
-      puts("*************************************************");
-      printf("Computation finished at : %s \n",__TIME__);  
-      puts("Exiting of the program...");
-      exit(EXIT_SUCCESS);
+    else if(strcmp(Parameters_Solver.TimeIntegrationScheme,"NPC-FS") == 0 )
+    { 
+      U_Newmark_Predictor_Corrector_Finite_Strains(FEM_Mesh, MPM_Mesh, Parameters_Solver);
     }
+    else if(strcmp(Parameters_Solver.TimeIntegrationScheme,"Discrete-Energy-Momentum") == 0 )
+    {
+      U_Discrete_Energy_Momentum(FEM_Mesh, MPM_Mesh, Parameters_Solver);
+    }
+    else if(strcmp(Parameters_Solver.TimeIntegrationScheme,"Newmark-beta-Finite-Strains") == 0 )
+    {
+      U_Newmark_beta_Finite_Strains(FEM_Mesh, MPM_Mesh, Parameters_Solver);
+    }
+    else if(strcmp(Parameters_Solver.TimeIntegrationScheme,"Newmark-beta-Finite-Strains-BDB") == 0 )
+    {
+      U_Newmark_beta_Finite_Strains_BDB(FEM_Mesh, MPM_Mesh, Parameters_Solver);
+    } 
     else
     {
-      sprintf(Error_message,"%s","This formulation has not been yet implemented");
+      sprintf(Error_message,"%s","Wrong time integration scheme");
       standard_error(Error_message); 
     }
 
-        
-  
+    puts("*************************************************");
+    puts("Free memory ...");
+    globalfree(FEM_Mesh, MPM_Mesh);       
+
+    printf("Computation finished at : %s \n",__TIME__);  
+    puts("Exiting of the program...");
+    exit(EXIT_SUCCESS);
+
+  }
+  else if(strcmp(Formulation,"-up") == 0)
+  {
+
+    NumberDOF = NumberDimensions;
+
+    puts("*************************************************");
+    puts("Read solver ...");
+    Parameters_Solver = Solver_selector__InOutFun__(SimulationFile);
+
+    puts("*************************************************");
+    puts("Generating the background mesh ...");
+    FEM_Mesh = GramsBox(SimulationFile,Parameters_Solver);
+
+    puts("*************************************************");
+    puts("Generating new MPM simulation ...");
+    MPM_Mesh = Generate_One_Phase_Analysis__InOutFun__(SimulationFile,FEM_Mesh,Parameters_Solver);
+
+    puts("*************************************************");
+    puts("Read outputs ...");
+    GramsOutputs(SimulationFile);
+    NLPS_Out_nodal_path_csv__InOutFun__(SimulationFile);
+    NLPS_Out_particles_path_csv__InOutFun__(SimulationFile);
+
+    puts("*************************************************");
+    puts("Run simulation ...");
+    if(strcmp(Parameters_Solver.TimeIntegrationScheme,"Newmark-beta-Finite-Strains") == 0 )
+    {
+      Up_Newmark_beta_Finite_Strains(FEM_Mesh, MPM_Mesh, Parameters_Solver);
+    }
+    else
+    {
+      sprintf(Error_message,"%s","Wrong time integration scheme");
+      standard_error(Error_message); 
+    }
+
+    puts("*************************************************");
+    puts("Free memory ...");
+    globalfree(FEM_Mesh, MPM_Mesh);       
+
+    printf("Computation finished at : %s \n",__TIME__);  
+    puts("Exiting of the program...");
+    exit(EXIT_SUCCESS);
+
+  }
+  else if(strcmp(Formulation,"-upw") == 0)
+  {
+
+    NumberDOF = NumberDimensions + 1;
+
+    puts("*************************************************");
+    puts("Read solver ...");
+    Parameters_Solver = Solver_selector__InOutFun__(SimulationFile);
+
+    puts("*************************************************");
+    puts("Generating the background mesh ...");
+    FEM_Mesh = GramsBox(SimulationFile,Parameters_Solver);
+    
+    puts("*************************************************");
+    if(Is_New_Simulation)
+    {
+      puts("Generating new MPM simulation ...");
+      MPM_Mesh = Generate_Soil_Water_Coupling_Analysis__InOutFun__(SimulationFile,FEM_Mesh,Parameters_Solver);
+    }
+    if(Is_Restart_Simulation)
+    {
+      puts("Restarting old MPM simulation ...");
+      MPM_Mesh = restart_Simulation(SimulationFile,RestartFile,FEM_Mesh);
+    }
+
+    puts("*************************************************");
+    puts("Read VTK output directives ...");
+    GramsOutputs(SimulationFile);
+
+    puts("*************************************************");
+    puts("Read nodal path output directives ...");
+    NLPS_Out_nodal_path_csv__InOutFun__(SimulationFile);
+
+    puts("*************************************************");
+    puts("Read particle path output directives ...");
+    NLPS_Out_particles_path_csv__InOutFun__(SimulationFile);
+
+    puts("*************************************************");
+    puts("Run simulation ...");
+    if(strcmp(Parameters_Solver.TimeIntegrationScheme,"NPC-FS") == 0)
+    { 
+      upw_Newmark_Predictor_Corrector_Finite_Strains(FEM_Mesh, MPM_Mesh, Parameters_Solver);
+    }
+    else if(strcmp(Parameters_Solver.TimeIntegrationScheme,"Newmark-beta-Finite-Strains") == 0)
+    {
+      upw_Newmark_beta_Finite_Strains(FEM_Mesh, MPM_Mesh, Parameters_Solver);
+    }
+    else
+    {
+      sprintf(Error_message,"%s","Wrong time integration scheme");
+      standard_error(Error_message); 
+    }
+
+    puts("*************************************************");
+    puts("Free memory ...");
+    globalfree(FEM_Mesh, MPM_Mesh);       
+
+    printf("Computation finished at : %s \n",__TIME__);  
+    puts("Exiting of the program...");
+    exit(EXIT_SUCCESS);
+
+  }
+  else if(strcmp(Formulation,"-GP") == 0)
+  {
+    /* Define variable */
+    Particle PointAnalysis;
+
+    puts("*************************************************");
+    puts("Read solver ...");
+    Parameters_Solver = Solver_selector__InOutFun__(SimulationFile);
+
+    puts("*************************************************");
+    puts("Generating new Gauss Point simulation ...");
+    PointAnalysis = Generate_Gauss_Point_Analysis__InOutFun__(SimulationFile);
+
+    puts("*************************************************");
+    puts("Run simulation ...");
+    NonLinear_Gauss_Point_Analysis(PointAnalysis);
+
+    puts("*************************************************");
+    printf("Computation finished at : %s \n",__TIME__);  
+    puts("Exiting of the program...");
+    exit(EXIT_SUCCESS);
+  }
+  else
+  {
+    sprintf(Error_message,"%s","This formulation has not been yet implemented");
+    standard_error(Error_message); 
+  }
    
 }
 
