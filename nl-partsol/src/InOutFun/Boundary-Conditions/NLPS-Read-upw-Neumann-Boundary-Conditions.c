@@ -6,7 +6,7 @@
 */
 typedef struct
 {
-  int ** Dir;
+  int * Dir;
   Curve * Value;
 
 } BCC_Properties;
@@ -267,11 +267,7 @@ static BCC_Properties Read_Boundary_Conditions_Properties(
 	/*
 		Initialise and allocate Dir vector for each DOF
 	*/
-	Properties.Dir = (int **)calloc(NumberDOF, sizeof(int *));
-	for(int i = 0 ; i<NumberDOF ; i++)
-	{
-		Properties.Dir[i] = (int *)calloc(NumTimeStep,sizeof(int));
-    }
+	Properties.Dir = (int *)calloc(NumTimeStep*NumberDOF, sizeof(int));
 
 	/*
       	Initialise and allocate curve for each DOF
@@ -301,7 +297,7 @@ static BCC_Properties Read_Boundary_Conditions_Properties(
     		{
     			sprintf(FileLoadRoute,"%s%s",Route_Nodes,Parameter_pars[1]);
     			Properties.Value[0] = ReadCurve(FileLoadRoute);
-				memset(Properties.Dir[0],1,IMIN(NumTimeStep,Properties.Value[0].Num));
+				memset(&Properties.Dir[NumTimeStep*0],1,sizeof(int)*IMIN(NumTimeStep,Properties.Value[0].Num));
 				printf(" \t %s (%s) : \n \t \t Number of particles = %i \n \t \t File curve %s \n",
 					"-> BcNeumann ",Parameter_pars[0],NumNodes,FileLoadRoute);
     		}
@@ -312,7 +308,7 @@ static BCC_Properties Read_Boundary_Conditions_Properties(
     		{
     			sprintf(FileLoadRoute,"%s%s",Route_Nodes,Parameter_pars[1]);
     			Properties.Value[1] = ReadCurve(FileLoadRoute);
-				memset(Properties.Dir[1],1,IMIN(NumTimeStep,Properties.Value[1].Num));
+				memset(&Properties.Dir[NumTimeStep*1],1,sizeof(int)*IMIN(NumTimeStep,Properties.Value[1].Num));
 				printf(" \t %s (%s) : \n \t \t Number of particles = %i \n \t \t File curve %s \n",
 					"-> BcNeumann ",Parameter_pars[0],NumNodes,FileLoadRoute);
     		}
@@ -323,7 +319,7 @@ static BCC_Properties Read_Boundary_Conditions_Properties(
     		{
     			sprintf(FileLoadRoute,"%s%s",Route_Nodes,Parameter_pars[1]);
     			Properties.Value[Ndim-1] = ReadCurve(FileLoadRoute);
-				memset(Properties.Dir[Ndim-1],1,IMIN(NumTimeStep,Properties.Value[Ndim-1].Num));
+				memset(&Properties.Dir[NumTimeStep*(Ndim-1)],1,sizeof(int)*IMIN(NumTimeStep,Properties.Value[Ndim-1].Num));
 				printf("\t \t %s (%s) : \n \t \t Number of particles = %i \n \t \t File curve %s \n",
 					"-> BcNeumann ",Parameter_pars[0],NumNodes,FileLoadRoute);
     		}
@@ -334,7 +330,7 @@ static BCC_Properties Read_Boundary_Conditions_Properties(
     		{
     			sprintf(FileLoadRoute,"%s%s",Route_Nodes,Parameter_pars[1]);
     			Properties.Value[Ndim] = ReadCurve(FileLoadRoute);
-				memset(Properties.Dir[Ndim],1,IMIN(NumTimeStep,Properties.Value[Ndim].Num));
+				memset(&Properties.Dir[NumTimeStep*Ndim],1,sizeof(int)*IMIN(NumTimeStep,Properties.Value[Ndim].Num));
 				printf(" \t %s (%s) : \n \t \t Number of particles = %i \n \t \t File curve %s \n",
 					"-> BcNeumann ",Parameter_pars[0],NumNodes,FileLoadRoute);
     		}

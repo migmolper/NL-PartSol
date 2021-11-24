@@ -23,17 +23,17 @@ static Matrix compute_Compressibility_Matrix_Fluid(Particle, Mesh, Mask);
 /* Step 2 */
 static  void  compute_Explicit_Newmark_Predictor(Particle,double,double);
 /* Step 3 */
-static Matrix compute_Nodal_Gravity_field(Mask, Particle, int);
+static Matrix compute_Nodal_Gravity_field(Mask, Particle, int, int);
 static Matrix compute_Nodal_D_Displacement(Particle,Mesh,Mask,Matrix);
 static Matrix compute_Nodal_Velocity(Particle,Mesh,Mask,Matrix);
 static Matrix compute_Nodal_Pore_water_pressure(Particle,Mesh,Mask,Matrix);
-static  void  impose_Dirichlet_Boundary_Conditions(Mesh,Matrix,Matrix,Mask,int);
+static  void  impose_Dirichlet_Boundary_Conditions(Mesh,Matrix,Matrix,Mask,int,int);
 /* Step 4 */
 static  void  update_Local_State(Matrix,Matrix,Mask,Particle,Mesh);
 /* Step 5 */
-static Matrix compute_Total_Forces_Mixture(Mask,Particle,Mesh,int);
+static Matrix compute_Total_Forces_Mixture(Mask,Particle,Mesh,int,int);
 static  void  compute_Internal_Forces_Mixture(Matrix,Mask,Particle,Mesh);
-static  void  compute_Contact_Forces_Mixture(Matrix,Mask,Particle,Mesh,int);
+static  void  compute_Contact_Forces_Mixture(Matrix,Mask,Particle,Mesh,int,int);
 static Tensor compute_total_first_Piola_Kirchhoff_stress(Tensor,double,Tensor);
 static Matrix solve_Nodal_Equilibrium_Mixture(Matrix,Matrix,Matrix,Particle,Mesh,Mask,Mask);
 /* Step 6 */
@@ -86,7 +86,7 @@ void upw_Newmark_Predictor_Corrector_Finite_Strains(
   Mask ActiveNodes;
   Mask Free_and_Restricted_Dofs;
 
-  for(int TimeStep = InitialStep ; TimeStep<NumTimeStep ; TimeStep++ )
+  for(unsigned TimeStep = InitialStep ; TimeStep<NumTimeStep ; TimeStep++ )
     {
 
       print_Status("*************************************************",TimeStep);
@@ -94,7 +94,7 @@ void upw_Newmark_Predictor_Corrector_Finite_Strains(
       local_search__MeshTools__(MPM_Mesh,FEM_Mesh);
       ActiveNodes = generate_NodalMask__MeshTools__(FEM_Mesh);
       Nactivenodes = ActiveNodes.Nactivenodes;
-      Free_and_Restricted_Dofs = generate_Mask_for_static_condensation__MeshTools__(ActiveNodes,FEM_Mesh,TimeStep);
+      Free_and_Restricted_Dofs = generate_Mask_for_static_condensation__MeshTools__(ActiveNodes,FEM_Mesh,TimeStep,NumTimeStep);
       print_step(TimeStep,DeltaTimeStep);
 
       print_Status("*************************************************",TimeStep);
@@ -119,7 +119,7 @@ void upw_Newmark_Predictor_Corrector_Finite_Strains(
       print_Status("Third step : Compute nodal magnitudes",TimeStep);
       print_Status("WORKING ...",TimeStep);
 
-      Gravity_field = compute_Nodal_Gravity_field(ActiveNodes, MPM_Mesh, TimeStep);
+      Gravity_field = compute_Nodal_Gravity_field(ActiveNodes, MPM_Mesh, TimeStep, NumTimeStep);
 
       D_Displacement = compute_Nodal_D_Displacement(MPM_Mesh, FEM_Mesh, ActiveNodes, Mass_Matrix_Mixture);
 
@@ -127,7 +127,7 @@ void upw_Newmark_Predictor_Corrector_Finite_Strains(
       
       Pore_water_pressure = compute_Nodal_Pore_water_pressure(MPM_Mesh, FEM_Mesh, ActiveNodes, Compressibility_Matrix_Fluid);
 
-      impose_Dirichlet_Boundary_Conditions(FEM_Mesh,Velocity,Pore_water_pressure,ActiveNodes,TimeStep);
+      impose_Dirichlet_Boundary_Conditions(FEM_Mesh,Velocity,Pore_water_pressure,ActiveNodes,TimeStep,NumTimeStep);
 
       print_Status("DONE !!!",TimeStep);
 
@@ -143,7 +143,7 @@ void upw_Newmark_Predictor_Corrector_Finite_Strains(
       print_Status("Five step : Compute equilibrium mixture",TimeStep);
       print_Status("WORKING ...",TimeStep);
 
-      Total_Forces_Mixture = compute_Total_Forces_Mixture(ActiveNodes, MPM_Mesh, FEM_Mesh, TimeStep);
+      Total_Forces_Mixture = compute_Total_Forces_Mixture(ActiveNodes, MPM_Mesh, FEM_Mesh, TimeStep, NumTimeStep);
 
       Reactions_Mixture = solve_Nodal_Equilibrium_Mixture(Mass_Matrix_Mixture,Gravity_field,Total_Forces_Mixture,MPM_Mesh,FEM_Mesh,
                                                           ActiveNodes,Free_and_Restricted_Dofs);
@@ -460,7 +460,8 @@ static void compute_Explicit_Newmark_Predictor(
 static Matrix compute_Nodal_Gravity_field(
   Mask ActiveNodes,
   Particle MPM_Mesh,
-  int TimeStep)
+  int TimeStep,
+  int NumTimeStep)
 /*
 
 */
@@ -489,16 +490,9 @@ static Matrix compute_Nodal_Gravity_field(
      /* Fill vector b of body acclerations */
      for(int k = 0 ; k<Ndim ; k++)
      {
-       if(B[i].Dir[k][TimeStep])
+       if(B[i].Dir[k*NumTimeStep + TimeStep])
        {
-         if( (TimeStep < 0) || (TimeStep > B[i].Value[k].Num))
-         {
-            printf("%s : %s\n", "Error in compute_Nodal_Gravity_field()","The time step is out of the curve !!");
-            exit(EXIT_FAILURE);
-         }
-         
          MPM_Mesh.b.n[k] += B[i].Value[k].Fx[TimeStep];
-
        }
      }
       
@@ -853,7 +847,8 @@ static void impose_Dirichlet_Boundary_Conditions(
   Matrix Velocity,
   Matrix Pore_water_pressure,
   Mask ActiveNodes,
-  int TimeStep)
+  int TimeStep,
+  int NumTimeStep)
 /*
   Apply the boundary conditions over the nodes 
 */
@@ -907,18 +902,8 @@ static void impose_Dirichlet_Boundary_Conditions(
         /* 
 		      Apply only if the direction is active (1) 
         */
-        if(FEM_Mesh.Bounds.BCC_i[i].Dir[k][TimeStep] == 1)
+        if(FEM_Mesh.Bounds.BCC_i[i].Dir[k*NumTimeStep + TimeStep] == 1)
         {
-    
-          /* 
-		        Check if the curve it is on time 
-          */
-          if( (TimeStep < 0) || (TimeStep > FEM_Mesh.Bounds.BCC_i[i].Value[k].Num))
-          {
-            printf("%s : %s \n","Error in imposse_NodalMomentum()","The time step is out of the curve !!");
-            exit(EXIT_FAILURE);
-          }
-
           /* 
             Assign the boundary condition 
           */
@@ -1107,7 +1092,8 @@ static Matrix compute_Total_Forces_Mixture(
   Mask ActiveNodes,
   Particle MPM_Mesh,
   Mesh FEM_Mesh,
-  int TimeStep)
+  int TimeStep,
+  int NumTimeStep)
 {
   
   int Ndim = NumberDimensions;
@@ -1122,7 +1108,7 @@ static Matrix compute_Total_Forces_Mixture(
   /*
     Add contact forces contribution
   */
-  compute_Contact_Forces_Mixture(Forces,ActiveNodes,MPM_Mesh,FEM_Mesh,TimeStep);
+  compute_Contact_Forces_Mixture(Forces,ActiveNodes,MPM_Mesh,FEM_Mesh,TimeStep,NumTimeStep);
   
   return Forces;
 }
@@ -1289,7 +1275,8 @@ static void compute_Contact_Forces_Mixture(
   Mask ActiveNodes,
   Particle MPM_Mesh,
   Mesh FEM_Mesh,
-  int TimeStep)
+  int TimeStep,
+  int NumTimeStep)
 {
   int Ndim = NumberDimensions;
   Load T_i;
@@ -1357,15 +1344,8 @@ static void compute_Contact_Forces_Mixture(
       */
       for(int k = 0 ; k<Ndim ; k++)
       {
-        if(T_i.Dir[k][TimeStep])
+        if(T_i.Dir[k*NumTimeStep + TimeStep])
         {
-          if( (TimeStep < 0) || (TimeStep > T_i.Value[k].Num))
-          {
-            sprintf(Error_message,"%s : %s",
-              "Error in compute_Contact_Forces_Mixture()",
-              "The time step is out of the curve !!");
-            standard_error();
-          }
           t.n[k] = T_i.Value[k].Fx[TimeStep];
         }
       }

@@ -314,12 +314,11 @@ static void check_Solver(
   && ChkParam.Is_Cel
   && ChkParam.Is_CFL)
   {
-    printf("\t -> %s \n","Compressible Newtonian Fluid material");
     printf("\t \t -> %s : %i \n","Number of TimeStep",Parameters.NumTimeStep);
     printf("\t \t -> %s : %f \n","Celerity",Parameters.Cel);
     printf("\t \t -> %s : %f \n","Courant condition",Parameters.CFL);
 
-    if(strcmp(TimeIntegrationScheme,"Newmark-beta-Finite-Strains") == 0)
+    if(strcmp(Parameters.TimeIntegrationScheme,"Newmark-beta-Finite-Strains") == 0)
     {
 		if(ChkParam.Is_beta_Newmark_beta  
 		&& ChkParam.Is_gamma_Newmark_beta
@@ -343,7 +342,7 @@ static void check_Solver(
 			exit(EXIT_FAILURE);
 		}
 	}
-	else if(strcmp(TimeIntegrationScheme,"Generalized-alpha") == 0)
+	else if(strcmp(Parameters.TimeIntegrationScheme,"Generalized-alpha") == 0)
 	{
 		if(ChkParam.Is_rb_Generalized_alpha 
 		&& ChkParam.Is_TOL_Generalized_alpha)
@@ -362,7 +361,7 @@ static void check_Solver(
 		}
 
 	}
-	else if(strcmp(TimeIntegrationScheme,"Discrete-Energy-Momentum") == 0)
+	else if(strcmp(Parameters.TimeIntegrationScheme,"Discrete-Energy-Momentum") == 0)
 	{
 		if(ChkParam.Is_rb_Generalized_alpha 
 		&& ChkParam.Is_TOL_Generalized_alpha

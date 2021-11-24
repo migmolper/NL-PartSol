@@ -372,7 +372,7 @@ typedef struct {
   /*!
    * Direction of the load {0,0} {1,0} {0,1} {1,1} 
    */
-  int ** Dir;
+  int * Dir;
 
   /*!
    * List of nodes with this load 
