@@ -32,6 +32,7 @@ static void Check_Curve_File(char *);
 static void standard_error();
 static void standard_output(char *);
 static FILE * Open_and_Check_simulation_file(char *);
+static void active_direction(int *,int);
 
 /**********************************************************************/
 
@@ -326,7 +327,7 @@ static BCC_Properties Read_Boundary_Conditions_Properties(
     		{
     			sprintf(FileLoadRoute,"%s%s",Route_Nodes,Parameter_pars[1]);
     			Properties.Value[0] = ReadCurve(FileLoadRoute);
-				memset(&Properties.Dir[NumTimeStep*0],1,sizeof(int)*IMIN(NumTimeStep,Properties.Value[0].Num));
+				active_direction(&Properties.Dir[NumTimeStep*0],IMIN(NumTimeStep,Properties.Value[0].Num));
 				printf(" \t %s (%s) : \n \t \t Number of particles = %i \n \t \t File curve %s \n",
 					"-> BcNeumann ",Parameter_pars[0],NumNodes,FileLoadRoute);
     		}
@@ -337,7 +338,7 @@ static BCC_Properties Read_Boundary_Conditions_Properties(
     		{
     			sprintf(FileLoadRoute,"%s%s",Route_Nodes,Parameter_pars[1]);
     			Properties.Value[1] = ReadCurve(FileLoadRoute);
-				memset(&Properties.Dir[NumTimeStep*1],1,sizeof(int)*IMIN(NumTimeStep,Properties.Value[1].Num));
+				active_direction(&Properties.Dir[NumTimeStep*1],IMIN(NumTimeStep,Properties.Value[1].Num));
 				printf(" \t %s (%s) : \n \t \t Number of particles = %i \n \t \t File curve %s \n",
 					"-> BcNeumann ",Parameter_pars[0],NumNodes,FileLoadRoute);
     		}
@@ -348,7 +349,7 @@ static BCC_Properties Read_Boundary_Conditions_Properties(
     		{
     			sprintf(FileLoadRoute,"%s%s",Route_Nodes,Parameter_pars[1]);
     			Properties.Value[Ndim-1] = ReadCurve(FileLoadRoute);
-				memset(&Properties.Dir[NumTimeStep*2],1,sizeof(int)*IMIN(NumTimeStep,Properties.Value[2].Num));
+				active_direction(&Properties.Dir[NumTimeStep*2],IMIN(NumTimeStep,Properties.Value[2].Num));
 				printf("\t \t %s (%s) : \n \t \t Number of particles = %i \n \t \t File curve %s \n",
 					"-> BcNeumann ",Parameter_pars[0],NumNodes,FileLoadRoute);
     		}
@@ -416,3 +417,16 @@ static FILE * Open_and_Check_simulation_file(char * Name_File)
 
 /***************************************************************************/
   
+static void active_direction(
+	int * Dir,
+	int Num)
+{
+	for(unsigned i = 0 ; i<Num ; i++)
+	{
+		Dir[i] = 1;
+	}
+}
+
+
+/**********************************************************************/
+

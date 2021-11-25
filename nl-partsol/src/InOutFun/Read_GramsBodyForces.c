@@ -5,6 +5,11 @@
 */
 int NumberDOF;
 
+/*
+  Auxiliar functions and variables
+*/
+static void active_direction(int *,int);
+
 /**********************************************************************/
 
 Load * GramsBodyForces(
@@ -137,7 +142,7 @@ Load * GramsBodyForces(
 		if(strcmp(Parse_Properties[1],"NULL") != 0){
 		  sprintf(FileLoadRoute,"%s%s",Route_Nodes,Parse_Properties[1]);
 		  B[IndexLoad].Value[0] = ReadCurve(FileLoadRoute);
-		  memset(&B[IndexLoad].Dir[NumTimeStep*0],1,sizeof(int)*IMIN(NumTimeStep,B[IndexLoad].Value[0].Num));
+		  active_direction(&B[IndexLoad].Dir[NumTimeStep*0],sizeof(int)*IMIN(NumTimeStep,B[IndexLoad].Value[0].Num));
 		  puts("*************************************************");
 		  printf(" \t %s (%i) : \n \t %s %s \n",
 			 "* Body BC",
@@ -152,19 +157,12 @@ Load * GramsBodyForces(
 		{
 		  sprintf(FileLoadRoute,"%s%s",Route_Nodes,Parse_Properties[1]);
 		  B[IndexLoad].Value[1] = ReadCurve(FileLoadRoute);
-		  memset(&B[IndexLoad].Dir[NumTimeStep*1],1,sizeof(int)*IMIN(NumTimeStep,B[IndexLoad].Value[1].Num));
+		  active_direction(&(B[IndexLoad].Dir[NumTimeStep*1]),sizeof(int)*IMIN(NumTimeStep,B[IndexLoad].Value[1].Num));
 		  puts("*************************************************");
 		  printf(" \t %s (%i) : \n \t %s %s \n",
 			 "* Body BC",
 			 B[IndexLoad].NumNodes,
 			 Parse_Properties[1],FileLoadRoute);
-
-			for(int i = 0 ; i<NumTimeStep ; i++)
-			{
-				printf("%i\n",B[IndexLoad].Dir[1*NumTimeStep + i]);
-			}
-
-			 exit(0);
 		}
 	      }
 	      else if(strcmp(Parse_Properties[0],"b.z") == 0)
@@ -174,7 +172,7 @@ Load * GramsBodyForces(
 		{
 		  sprintf(FileLoadRoute,"%s%s",Route_Nodes,Parse_Properties[1]);
 		  B[IndexLoad].Value[2] = ReadCurve(FileLoadRoute);
-		  memset(&B[IndexLoad].Dir[NumTimeStep*2],1,sizeof(int)*IMIN(NumTimeStep,B[IndexLoad].Value[2].Num));
+		  active_direction(&B[IndexLoad].Dir[NumTimeStep*2],sizeof(int)*IMIN(NumTimeStep,B[IndexLoad].Value[2].Num));
 		  puts("*************************************************");
 		  printf(" \t %s (%i) : \n \t %s %s \n",
 			 "* Body BC",
@@ -207,3 +205,15 @@ Load * GramsBodyForces(
 
 /**********************************************************************/
 
+static void active_direction(
+	int * Dir,
+	int Num)
+{
+	for(unsigned i = 0 ; i<Num ; i++)
+	{
+		Dir[i] = 1;
+	}
+}
+
+
+/**********************************************************************/

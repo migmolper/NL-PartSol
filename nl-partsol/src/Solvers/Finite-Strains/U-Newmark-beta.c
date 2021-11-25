@@ -136,14 +136,17 @@ void U_Newmark_beta_Finite_Strains(
       Free_and_Restricted_Dofs = generate_Mask_for_static_condensation__MeshTools__(ActiveNodes,FEM_Mesh,TimeStep,NumTimeStep);
       print_Status("DONE !!!",TimeStep);
 
+
+
+  printf("%i \n",Free_and_Restricted_Dofs.Nactivenodes);
+
+ 
       print_Status("*************************************************",TimeStep);
       print_Status("Second step : Compute effective mass ... WORKING",TimeStep);
-      /*
-	       Compute the effective mass matrix as a convex combination of the consistent mass
-	       matrix and the lumped mass matrix.
-      */
       Effective_Mass = compute_Nodal_Effective_Mass(MPM_Mesh,FEM_Mesh,ActiveNodes,epsilon);
       print_Status("DONE !!!",TimeStep);
+
+ exit(0);
 
       print_Status("*************************************************",TimeStep);
       print_Status("Third step : Compute nodal kinetics ... WORKING",TimeStep);
@@ -153,6 +156,8 @@ void U_Newmark_beta_Finite_Strains(
       U_n = compute_Nodal_Field(Effective_Mass,MPM_Mesh,FEM_Mesh,ActiveNodes);
       D_U = initialise_Nodal_Increments(U_n,FEM_Mesh,ActiveNodes,Params,TimeStep,NumTimeStep);
       print_Status("DONE !!!",TimeStep);
+
+exit(0);
 
       print_Status("*************************************************",TimeStep);
       print_Status("Four step : Compute equilibrium ... WORKING",TimeStep);
@@ -300,12 +305,15 @@ static Matrix compute_Nodal_Effective_Mass(
   /* Element for each particle */
   Element Nodes_p;
 
+  puts("hola");
+
   /* Define and allocate the effective mass matrix */
   Matrix Effective_MassMatrix = allocZ__MatrixLib__(Order, Order);
 
   /* Define and allocate the lumped mass matrix */
-  Matrix Lumped_MassMatrix = allocZ__MatrixLib__(Order, 1);
+  Matrix Lumped_MassMatrix;// = allocZ__MatrixLib__(Order, 1);
 
+exit(0);
   /*
     Iterate over the particles to get the nodal values 
   */
