@@ -62,6 +62,7 @@ static void   solve_reducted_system(Nodal_Field,Matrix,Matrix,Matrix,Mask,Newmar
 static void   update_Newmark_Nodal_Increments(Nodal_Field,Nodal_Field,Newmark_parameters);
 static void   update_Particles(Nodal_Field,Particle,Mesh,Mask);
 static void output_selector(Particle,Mesh,Mask,Nodal_Field,Nodal_Field,Matrix,Matrix,Matrix,int,int);
+static int hot_start(Mesh,Particle,Mask,Mask,Time_Int_Params,Newmark_parameters,int);
 /**************************************************************/
 
 void U_Newmark_beta_Finite_Strains(
@@ -117,33 +118,24 @@ void U_Newmark_beta_Finite_Strains(
     Compute alpha parameters
   */
   Params = compute_Newmark_parameters(beta, gamma, DeltaTimeStep);
+  local_search__MeshTools__(MPM_Mesh,FEM_Mesh);
+  ActiveNodes = generate_NodalMask__MeshTools__(FEM_Mesh);
+  Nactivenodes = ActiveNodes.Nactivenodes;
+  Free_and_Restricted_Dofs = generate_Mask_for_static_condensation__MeshTools__(ActiveNodes,FEM_Mesh,InitialStep,NumTimeStep);
+  hot_start(FEM_Mesh,MPM_Mesh,ActiveNodes,Free_and_Restricted_Dofs,Parameters_Solver,Params,InitialStep);
 
-
-  for(unsigned TimeStep = InitialStep ; TimeStep<NumTimeStep ; TimeStep++ )
+  for(unsigned TimeStep = InitialStep ; TimeStep<NumTimeStep ; TimeStep++)
     {
       print_Status("*************************************************",TimeStep);
       print_step(TimeStep,DeltaTimeStep);
 
       print_Status("*************************************************",TimeStep);
-      print_Status("First step : Generate Mask ... WORKING",TimeStep);
-      /*
-	       With the active set of nodes generate a mask to help the algorithm to compute
-	       the equilibrium only in the active nodes
-      */
-      local_search__MeshTools__(MPM_Mesh,FEM_Mesh);
-      ActiveNodes = generate_NodalMask__MeshTools__(FEM_Mesh);
-      Nactivenodes = ActiveNodes.Nactivenodes;
-      Free_and_Restricted_Dofs = generate_Mask_for_static_condensation__MeshTools__(ActiveNodes,FEM_Mesh,TimeStep,NumTimeStep);
-      print_Status("DONE !!!",TimeStep);
-
-
-      print_Status("*************************************************",TimeStep);
-      print_Status("Second step : Compute effective mass ... WORKING",TimeStep);
+      print_Status("First step : Compute effective mass ... WORKING",TimeStep);
       Effective_Mass = compute_Nodal_Effective_Mass(MPM_Mesh,FEM_Mesh,ActiveNodes,epsilon);
       print_Status("DONE !!!",TimeStep);
 
       print_Status("*************************************************",TimeStep);
-      print_Status("Third step : Compute nodal kinetics ... WORKING",TimeStep);
+      print_Status("Second step : Compute nodal kinetics ... WORKING",TimeStep);
       /*
         Compute the nodal values of velocity and acceleration
       */
@@ -153,15 +145,13 @@ void U_Newmark_beta_Finite_Strains(
 
 
       print_Status("*************************************************",TimeStep);
-      print_Status("Four step : Compute equilibrium ... WORKING",TimeStep);
+      print_Status("Third step : Compute equilibrium ... WORKING",TimeStep);
            
       Convergence = false;
       Iter = 0;
 
       while(Convergence == false)
       {
-
-        update_Local_State(D_U,ActiveNodes,MPM_Mesh,FEM_Mesh,DeltaTimeStep);
 
         Forces = compute_Nodal_Forces(ActiveNodes,MPM_Mesh,FEM_Mesh,TimeStep,NumTimeStep);
 
@@ -187,6 +177,8 @@ void U_Newmark_beta_Finite_Strains(
 
           update_Newmark_Nodal_Increments(D_U,U_n,Params);
 
+          update_Local_State(D_U,ActiveNodes,MPM_Mesh,FEM_Mesh,DeltaTimeStep);
+          
 	        Iter++;
 
 	        free__MatrixLib__(Forces);
@@ -195,26 +187,22 @@ void U_Newmark_beta_Finite_Strains(
 	        free__MatrixLib__(Tangent_Stiffness);
         }
       }
-      
+
       print_Status("DONE !!!",TimeStep);
 
 
       print_Status("*************************************************",TimeStep);
-      print_Status("Seven step : Update particles lagrangian ... WORKING",TimeStep);
+      print_Status("Four step : Update particles ... WORKING",TimeStep);
 
       update_Particles(D_U,MPM_Mesh,FEM_Mesh,ActiveNodes);
     
-      print_Status("DONE !!!",TimeStep);
-
       /*
-	Outputs
+	      Outputs
       */
-      output_selector(MPM_Mesh, FEM_Mesh, ActiveNodes, D_U, U_n, Forces, Reactions, Residual,TimeStep, ResultsTimeStep);
-
-    
+      output_selector(MPM_Mesh, FEM_Mesh, ActiveNodes, D_U, U_n, Forces, Reactions, Residual,TimeStep, ResultsTimeStep);    
 
       print_Status("*************************************************",TimeStep);
-      print_Status("Eight step : Reset nodal values ... WORKING",TimeStep);
+      print_Status("Five step : Reset nodal values ... WORKING",TimeStep);
       /*
 	Free memory.
       */
@@ -232,6 +220,16 @@ void U_Newmark_beta_Finite_Strains(
       free(Free_and_Restricted_Dofs.Nodes2Mask);
 
       print_Status("DONE !!!",TimeStep);
+
+
+      print_Status("*************************************************",TimeStep);
+      print_Status("Six step : Generate Mask ... WORKING",TimeStep);
+      local_search__MeshTools__(MPM_Mesh,FEM_Mesh);
+      ActiveNodes = generate_NodalMask__MeshTools__(FEM_Mesh);
+      Nactivenodes = ActiveNodes.Nactivenodes;
+      Free_and_Restricted_Dofs = generate_Mask_for_static_condensation__MeshTools__(ActiveNodes,FEM_Mesh,TimeStep,NumTimeStep);
+      print_Status("DONE !!!",TimeStep);
+
     }
 
 }
@@ -785,7 +783,6 @@ static void update_Local_State(
         FEM_Mesh.Vol_Patch_n1[Idx_Patch_p] += MPM_Mesh.Phi.J_n1.nV[p]*MPM_Mesh.Phi.Vol_0.nV[p];
       }
 
-            
       /*
 	       Free memory 
       */
@@ -2088,5 +2085,96 @@ static void output_selector(
   // }
 
 }
+
+/**************************************************************/
+
+static int hot_start(
+  Mesh FEM_Mesh,
+  Particle MPM_Mesh,
+  Mask ActiveNodes,
+  Mask Free_and_Restricted_Dofs,
+  Time_Int_Params Parameters_Solver,
+  Newmark_parameters Params,
+  int TimeStep)
+{
+             
+  bool Convergence = false;
+
+  int Iter = 0;
+  int Ndim = NumberDimensions;
+  int Nactivenodes;
+  int InitialStep = Parameters_Solver.InitialTimeStep;
+  int NumTimeStep = Parameters_Solver.NumTimeStep;  
+  int MaxIter = Parameters_Solver.MaxIter;
+
+  double TOL = Parameters_Solver.TOL_Newmark_beta;
+  double epsilon = Parameters_Solver.epsilon_Mass_Matrix;
+  double beta = Parameters_Solver.beta_Newmark_beta;
+  double gamma = Parameters_Solver.gamma_Newmark_beta;
+  double CFL = Parameters_Solver.CFL;
+  double DeltaTimeStep;
+  double DeltaX = FEM_Mesh.DeltaX;
+
+  Matrix Effective_Mass;
+  Matrix Tangent_Stiffness;
+  Matrix Forces;
+  Matrix Reactions;
+  Nodal_Field U_n;
+  Nodal_Field D_U;
+  Matrix D_Displacement;
+  Matrix Residual;
+
+  print_Status("*************************************************",TimeStep);
+  print_Status("Initialize simulation ... WORKING",TimeStep);
+
+  Effective_Mass = compute_Nodal_Effective_Mass(MPM_Mesh,FEM_Mesh,ActiveNodes,epsilon);
+
+  U_n = compute_Nodal_Field(Effective_Mass,MPM_Mesh,FEM_Mesh,ActiveNodes);
+  
+  D_U = initialise_Nodal_Increments(U_n,FEM_Mesh,ActiveNodes,Params,TimeStep,NumTimeStep);
+
+
+  while(Convergence == false)
+  {
+
+    Forces = compute_Nodal_Forces(ActiveNodes,MPM_Mesh,FEM_Mesh,TimeStep,NumTimeStep);
+
+    Reactions = compute_Nodal_Reactions(FEM_Mesh,Forces,ActiveNodes,TimeStep,NumTimeStep);
+
+    Residual = compute_Nodal_Residual(U_n,D_U,ActiveNodes,Forces,Effective_Mass,Params);
+
+    Convergence = check_convergence(Residual,TOL,Iter,MaxIter,TimeStep);
+
+    if(Convergence == false)
+    {
+
+	    Tangent_Stiffness = assemble_Nodal_Tangent_Stiffness(ActiveNodes,MPM_Mesh,FEM_Mesh,Params);
+
+	    if((Free_and_Restricted_Dofs.Nactivenodes - Ndim*Nactivenodes) == 0)
+      {
+		    solve_non_reducted_system(D_U,Tangent_Stiffness,Effective_Mass,Residual,Params);
+		  }
+	    else
+		  {
+		    solve_reducted_system(D_U,Tangent_Stiffness,Effective_Mass,Residual,Free_and_Restricted_Dofs,Params);
+		  }
+
+      update_Newmark_Nodal_Increments(D_U,U_n,Params);
+          
+	    Iter++;
+
+	    free__MatrixLib__(Forces);
+	    free__MatrixLib__(Reactions);
+	    free__MatrixLib__(Residual);
+	    free__MatrixLib__(Tangent_Stiffness);
+    }
+  }
+
+  update_Particles(D_U,MPM_Mesh,FEM_Mesh,ActiveNodes);
+
+  return EXIT_SUCCESS;    
+}
+
+
 
 /**************************************************************/

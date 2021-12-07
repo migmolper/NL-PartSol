@@ -511,7 +511,7 @@ void Gauss_Point_evolution__InOutFun__(Particle, Event, char *, int, int);
 /*****************************************************************/
 
 
-void Hidrostatic_condition_particles__InOutFun__(char *, Particle, int,int *);
+int Hidrostatic_condition_particles__InOutFun__(char *, Particle, int);
 /*****************************************************************/
 
 Material Define_Solid_Rigid(FILE *,char *,int);

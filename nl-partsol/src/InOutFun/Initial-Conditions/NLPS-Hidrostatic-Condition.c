@@ -29,16 +29,15 @@ static char * delimiters = " =\t\r\n";
 static char * delimiters = " =\t\n"; 
 #endif
 
-static Parameters Read_Hidrostatic_Parameters__InOutFun__(FILE *,int *);
-static void assign_hidrostatic_condition(Parameters,Particle,int,int *);
+static int Read_Hidrostatic_Parameters__InOutFun__(Parameters *, FILE *);
+static int assign_hidrostatic_condition(Parameters,Particle,int);
 
 /*****************************************************************/
 
-void Hidrostatic_condition_particles__InOutFun__(
+int Hidrostatic_condition_particles__InOutFun__(
 	char * Name_File, 
 	Particle MPM_Mesh, 
-	int GPxElement,
-	int * STATUS)
+	int GPxElement)
 /*!
  * Hydrostatic-condition
  * {
@@ -54,6 +53,7 @@ void Hidrostatic_condition_particles__InOutFun__(
 	FILE * Simulation_file;
 
 	// Error variables
+	int status = 0;
 	int INFO_Read_file = 0;
 	int INFO_Read_Parser = 0;
 	int INFO_Read_Parameters = 0;
@@ -78,8 +78,7 @@ void Hidrostatic_condition_particles__InOutFun__(
 	{
 		fprintf(stderr,"Error in : %s\n",
 		"Hidrostatic_condition_particles__InOutFun__");
-		(*STATUS) = 1;
-		return;
+		return EXIT_FAILURE;
 	}
 
 	// Read the file line by line
@@ -91,35 +90,27 @@ void Hidrostatic_condition_particles__InOutFun__(
     
     if(INFO_Read_Parser)
     {
-   		fprintf(stderr,"Error in : %s\n",
-				"Hidrostatic_condition_particles__InOutFun__");
-      (*STATUS) = 1;
-      return;
+   		fprintf(stderr,"Error in : %s\n","Hidrostatic_condition_particles__InOutFun__");
+		return EXIT_FAILURE;
     }
 
 		// Read Hydrostatic-condition
     if ((nkwords > 0) && (strcmp(kwords[0],"Hydrostatic-condition") == 0 ))
     {
 
-   		hidrostatic_parameters = Read_Hidrostatic_Parameters__InOutFun__(Simulation_file,&INFO_Read_Parameters);
-
-   		if(INFO_Read_Parameters)
+   		status = Read_Hidrostatic_Parameters__InOutFun__(&hidrostatic_parameters,Simulation_file);
+   		if(status)
    		{
-   			fprintf(stderr,"Error in : %s\n",
-					"Hidrostatic_condition_particles__InOutFun__");
-      	(*STATUS) = 1;
-      	return;
+   			fprintf(stderr,"Error in : %s\n","Hidrostatic_condition_particles__InOutFun__");
+      		return EXIT_FAILURE;
    		}
 
-		  assign_hidrostatic_condition(hidrostatic_parameters,MPM_Mesh,GPxElement,&INFO_Assign_Parameters);
-
-		  if(INFO_Assign_Parameters)
-			{
-				fprintf(stderr,"Error in : %s\n",
-					"Hidrostatic_condition_particles__InOutFun__");
-      	(*STATUS) = 1;
-      	return;
-      }
+		status = assign_hidrostatic_condition(hidrostatic_parameters,MPM_Mesh,GPxElement);
+        if(status)
+		{
+			fprintf(stderr,"Error in : %s\n","Hidrostatic_condition_particles__InOutFun__");
+	      	return EXIT_FAILURE;
+    	}
 
 	   	free__SetLib__(&hidrostatic_parameters.Particles_List);
 	   	free__TensorLib__(hidrostatic_parameters.Origin);
@@ -132,13 +123,14 @@ void Hidrostatic_condition_particles__InOutFun__(
   // Close .dat file
   fclose(Simulation_file);
 
+	return EXIT_SUCCESS;
 }
 
 /***************************************************************************/
 
-static Parameters Read_Hidrostatic_Parameters__InOutFun__(
-	FILE * Simulation_file,
-	int * STATUS)
+static int Read_Hidrostatic_Parameters__InOutFun__(
+	Parameters * hidrostatic_parameters,
+	FILE * Simulation_file)
 /*!
  *
  * Hydrostatic-condition
@@ -157,8 +149,6 @@ static Parameters Read_Hidrostatic_Parameters__InOutFun__(
   int INFO_Particles = 0;
   int INFO_Origin = 0;
 	int INFO_Direction = 0;
-
-	Parameters hidrostatic_parameters;
 
   /* Variables for reading purposes */
   char Parameter_line[MAXC] = {0};
@@ -187,45 +177,40 @@ static Parameters Read_Hidrostatic_Parameters__InOutFun__(
     else if(strcmp(Parameter_pars[0],"Particles") == 0)
     {
     	Is_Particle_File = true;
-      hidrostatic_parameters.Particles_List = File_to_Chain__InOutFun__(Parameter_pars[1], &INFO_Particles);
+      hidrostatic_parameters->Particles_List = File_to_Chain__InOutFun__(Parameter_pars[1], &INFO_Particles);
     }
     else if(strcmp(Parameter_pars[0],"Origin") == 0)
     {
     	Is_Origin = true;
-			hidrostatic_parameters.Origin = Read_Vector__InOutFun__(Parameter_pars[1],&INFO_Origin);
-
-      if(INFO_Origin)
-      {
-      	fprintf(stderr,"Error in : %s. %s\n",
-				"Read_Hidrostatic_Parameters__InOutFun__","Incorrect number of dimensions for the origin vector");
-       	(*STATUS) = 1;
-      	return hidrostatic_parameters;
-      }
+		hidrostatic_parameters->Origin = Read_Vector__InOutFun__(Parameter_pars[1],&INFO_Origin);
+		
+		if(INFO_Origin)
+		{
+			fprintf(stderr,"Error in : %s. %s\n","Read_Hidrostatic_Parameters__InOutFun__","Incorrect number of dimensions for the origin vector");
+	      	return EXIT_FAILURE;
+    	}
 
     }
     else if(strcmp(Parameter_pars[0],"Direction") == 0)
     {
-    	Is_Direction = true;
-      hidrostatic_parameters.Direction = Read_Vector__InOutFun__(Parameter_pars[1],&INFO_Direction);
-
-      if(INFO_Direction)
-      {
-      	fprintf(stderr,"Error in : %s. %s\n",
-				"Read_Hidrostatic_Parameters__InOutFun__","Incorrect number of dimensions for the direction vector");
-       	(*STATUS) = 1;
-      	return hidrostatic_parameters;
-      }
+		Is_Direction = true;
+      	hidrostatic_parameters->Direction = Read_Vector__InOutFun__(Parameter_pars[1],&INFO_Direction);
+	    if(INFO_Direction)
+		{
+			fprintf(stderr,"Error in : %s. %s\n","Read_Hidrostatic_Parameters__InOutFun__","Incorrect number of dimensions for the direction vector");
+	      	return EXIT_FAILURE;
+     	}
 
     }
     else if(strcmp(Parameter_pars[0],"Gravity") == 0)
     {
     	Is_Gravity = true;
-      hidrostatic_parameters.Gravity = atof(Parameter_pars[1]);
+      hidrostatic_parameters->Gravity = atof(Parameter_pars[1]);
     } 
     else if(strcmp(Parameter_pars[0],"MatIndx") == 0)
     {
     	Is_MatIndx = true;
-      hidrostatic_parameters.MatIndx = atoi(Parameter_pars[1]);
+      hidrostatic_parameters->MatIndx = atoi(Parameter_pars[1]);
     }
     else if((strcmp(Parameter_pars[0],"}") == 0) && (Parser_status == 1))
     {
@@ -236,8 +221,7 @@ static Parameters Read_Hidrostatic_Parameters__InOutFun__(
     {
 			fprintf(stderr,"Error in : %s. %s %s\n",
 				"Read_Hidrostatic_Parameters__InOutFun__","Undefined paramter",Parameter_pars[0]);
-      (*STATUS) = 1;
-      return hidrostatic_parameters;
+      return EXIT_FAILURE;
     }
 
   }
@@ -245,8 +229,7 @@ static Parameters Read_Hidrostatic_Parameters__InOutFun__(
   if(!Is_Open || !Is_Close)
   {
   	fprintf(stderr,"Error in : %s. %s\n","Read_Hidrostatic_Parameters__InOutFun__","Unbalanced braces");
-  	(*STATUS) = 1;
-  	return hidrostatic_parameters;
+  	return EXIT_FAILURE;
   }
 
   if(!Is_Particle_File || 
@@ -261,20 +244,18 @@ static Parameters Read_Hidrostatic_Parameters__InOutFun__(
     fputs(Is_Direction ? "Direction : true \n" : "Direction : false \n", stdout);
     fputs(Is_Gravity ? "Gravity : true \n" : "Gravity : false \n", stdout);
     fputs(Is_MatIndx ? "MatIndx : true \n" : "MatIndx : false \n", stdout);
-		(*STATUS) = 1;
-    return hidrostatic_parameters;
+	return EXIT_FAILURE;
   }
 
-	return hidrostatic_parameters;
+	return EXIT_SUCCESS;
 }
 
 /***************************************************************************/
 
-static void assign_hidrostatic_condition(
+static int assign_hidrostatic_condition(
 	Parameters hidrostatic_parameters,
 	Particle MPM_Mesh,
-	int GPxElement,
-	int * STATUS)
+	int GPxElement)
 {
 	int Ndim = NumberDimensions;
 	int p;
@@ -298,11 +279,8 @@ static void assign_hidrostatic_condition(
 
 			if((p < 0) || (p >= MPM_Mesh.NumGP))
 			{
-				fprintf(stderr,"%s : %s %i %s \n",
-					"assign_hidrostatic_condition",
-					"The particle",p,"does not exists");
-				(*STATUS) = 1;
-				return;
+				fprintf(stderr,"%s : %s %i %s \n","assign_hidrostatic_condition","The particle",p,"does not exists");
+				return EXIT_FAILURE;
 			}
 
 			X_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.x_GC.nM[p],1);
@@ -311,12 +289,16 @@ static void assign_hidrostatic_condition(
 
 			distance = inner_product__TensorLib__(X_0p, Direction);
 
-			Pressure = gamma*distance + P0;
+			Pressure = - gamma*distance + P0;
 
 		  for(int j = 0 ; j<Ndim ; j++)
 		  {
 		    MPM_Mesh.Phi.Stress.nM[p][j*Ndim + j] += Pressure;
 		  }
+		  
+		  #if NumberDimensions == 2
+		  MPM_Mesh.Phi.Stress.nM[p][4] += Pressure;
+		  #endif
 
 		  free__TensorLib__(X_0p);
 
@@ -324,6 +306,8 @@ static void assign_hidrostatic_condition(
 
 		Particles_List = Particles_List->next;
 	}
+
+	return EXIT_SUCCESS;
 
 }
 

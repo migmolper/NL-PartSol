@@ -15,6 +15,7 @@ typedef struct
   bool Is_GramsShapeFun;
   bool Is_Materials;
   bool Is_Particle_Initial;
+  bool Is_Hydrostatic_conditions;
   bool Is_Nodal_Initial;
   bool Is_GramsBodyForces;
   bool Is_GramsNeumannBC;
@@ -65,6 +66,7 @@ Particle Generate_One_Phase_Analysis__InOutFun__(
 {
   int Ndim = NumberDimensions;
   int NumParticles;
+  int status = 0;
   
   /* Parser num chars */
   int Num_words_parse;
@@ -292,6 +294,19 @@ Particle Generate_One_Phase_Analysis__InOutFun__(
     }
 
     /*
+      Read hydrostatic conditions 
+    */  
+     if(Sim_Params.Is_Hydrostatic_conditions)
+     {
+       status = Hidrostatic_condition_particles__InOutFun__(Name_File,MPM_Mesh,Msh_Parms.GPxElement);
+       if(status)
+       {
+         exit(0);
+       }
+     }
+    
+
+    /*
       Read external forces 
     */    
     if(Sim_Params.Is_GramsNeumannBC)
@@ -372,6 +387,7 @@ static Simulation_Key_Words Check_Simulation_Key_Words(char * Name_File)
   Sim_Key_Wrds.Is_GramsShapeFun = false;
   Sim_Key_Wrds.Is_Materials = false;
   Sim_Key_Wrds.Is_Particle_Initial = false;
+  Sim_Key_Wrds.Is_Hydrostatic_conditions = false;
   Sim_Key_Wrds.Is_Nodal_Initial = false;
   Sim_Key_Wrds.Is_GramsBodyForces = false;
   Sim_Key_Wrds.Is_GramsNeumannBC = false;
@@ -418,6 +434,10 @@ static Simulation_Key_Words Check_Simulation_Key_Words(char * Name_File)
     else if ((Num_words > 0) && (strcmp(Words[0],"GramsInitials") == 0))
     {
       Sim_Key_Wrds.Is_Particle_Initial = true;
+    }
+    else if((Num_words > 0) && (strcmp(Words[0],"Hydrostatic-condition") == 0))
+    {
+      Sim_Key_Wrds.Is_Hydrostatic_conditions = true;
     }
     else if ((Num_words > 0) && (strcmp(Words[0],"Initial-nodal-values") == 0))
     {
