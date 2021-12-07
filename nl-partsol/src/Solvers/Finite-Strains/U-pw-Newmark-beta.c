@@ -49,19 +49,19 @@ typedef struct
 
 static Newmark_parameters compute_Newmark_parameters(double, double, double);
 static Matrix compute_Nodal_Effective_Mass(Particle, Mesh, Mask, double);
-static  void  compute_Gravity_field(Mask, Particle, int);
+static  void  compute_Gravity_field(Mask, Particle, int, int);
 static Nodal_Field compute_Nodal_Field(Matrix, Particle, Mesh, Mask);
-static Nodal_Field initialise_Nodal_Increments(Nodal_Field, Mask, Mesh, Newmark_parameters, int);
+static Nodal_Field initialise_Nodal_Increments(Nodal_Field, Mask, Mesh, Newmark_parameters, int, int);
 static  void  update_Local_State(Nodal_Field, Mask, Particle, Mesh);
-static Matrix compute_Residual(Nodal_Field,Nodal_Field,Matrix,Mask,Particle,Mesh,Newmark_parameters,int);
+static Matrix compute_Residual(Nodal_Field,Nodal_Field,Matrix,Mask,Particle,Mesh,Newmark_parameters,int,int);
 static  void  compute_Inertial_Forces_Mixture(Nodal_Field,Nodal_Field,Matrix,Matrix,Mask,Particle,Newmark_parameters);
 static  void  compute_Internal_Forces_Mixture(Matrix,Mask,Particle,Mesh);
 static Tensor compute_total_first_Piola_Kirchhoff_stress(Tensor,double,Tensor);
 static  void  compute_Rate_Mass_Fluid(Matrix,Mask,Particle,Mesh);
 static  void  compute_Flow_contribution_Fluid(Nodal_Field, Nodal_Field,Matrix,Mask,Particle,Mesh);
 static Tensor compute_Kirchoff_Pore_water_pressure_gradient_n1(Matrix,Matrix,Matrix);
-static  void  compute_nominal_traction_and_fluid_flux(Matrix,Mask,Particle,Mesh,int);
-static Matrix compute_Nodal_Reactions(Mesh,Matrix,Mask);
+static  void  compute_nominal_traction_and_fluid_flux(Matrix,Mask,Particle,Mesh,int,int);
+static Matrix compute_Nodal_Reactions(Mesh,Matrix,Mask,int,int);
 static  bool  check_convergence(Matrix,double,int,int,int);
 
 static Matrix assemble_Tangent_Stiffness(Nodal_Field,Nodal_Field,Matrix,Mask,Particle,Mesh,double,Newmark_parameters);
@@ -71,7 +71,7 @@ static Matrix compute_mixture_inertial_density(Tensor,Tensor,double,double,doubl
 static Matrix compute_water_flux_density(Tensor,Tensor,Tensor,Tensor,Tensor,double,double,double,double,double,double);
 static Matrix compute_water_inertial_density(Tensor,Tensor,double,double,double,double,double,double,double,double,double,double,double);
 
-static  void  system_reduction(Matrix,Matrix,Mask,Mesh);
+static  void  system_reduction(Matrix,Matrix,Mask,Mesh,int,int);
 static  void  solve_system(Nodal_Field,Matrix,Matrix);
 
 static  void  update_Newmark_Nodal_Increments(Nodal_Field,Nodal_Field,Newmark_parameters);
@@ -156,9 +156,9 @@ void upw_Newmark_beta_Finite_Strains(
     print_Status("*************************************************",TimeStep);
     print_Status("Third step : Compute nodal kinetics ... WORKING",TimeStep);
   
-    compute_Gravity_field(ActiveNodes, MPM_Mesh, TimeStep);
+    compute_Gravity_field(ActiveNodes, MPM_Mesh, TimeStep,NumTimeStep);
     upw_n = compute_Nodal_Field(Effective_Mass,MPM_Mesh,FEM_Mesh,ActiveNodes);
-    D_upw = initialise_Nodal_Increments(upw_n, ActiveNodes, FEM_Mesh, Params, TimeStep);
+    D_upw = initialise_Nodal_Increments(upw_n, ActiveNodes, FEM_Mesh, Params, TimeStep,NumTimeStep);
 
     print_Status("DONE !!!",TimeStep);  
 
@@ -173,9 +173,9 @@ void upw_Newmark_beta_Finite_Strains(
 
       update_Local_State(D_upw,ActiveNodes,MPM_Mesh,FEM_Mesh);
 
-      Residual = compute_Residual(upw_n,D_upw,Effective_Mass,ActiveNodes,MPM_Mesh,FEM_Mesh,Params,TimeStep);
+      Residual = compute_Residual(upw_n,D_upw,Effective_Mass,ActiveNodes,MPM_Mesh,FEM_Mesh,Params,TimeStep,NumTimeStep);
 
-      Reactions = compute_Nodal_Reactions(FEM_Mesh,Residual,ActiveNodes);
+      Reactions = compute_Nodal_Reactions(FEM_Mesh,Residual,ActiveNodes,TimeStep,NumTimeStep);
 
       Convergence = check_convergence(Residual,TOL,Iter,MaxIter,TimeStep);
 
@@ -184,7 +184,7 @@ void upw_Newmark_beta_Finite_Strains(
 
         Tangent_Stiffness = assemble_Tangent_Stiffness(upw_n,D_upw,Effective_Mass,ActiveNodes,MPM_Mesh,FEM_Mesh,epsilon,Params);
 
-        system_reduction(Tangent_Stiffness,Residual,ActiveNodes,FEM_Mesh);
+        system_reduction(Tangent_Stiffness,Residual,ActiveNodes,FEM_Mesh,TimeStep,NumTimeStep);
 
         solve_system(D_upw,Tangent_Stiffness,Residual);
 
@@ -371,7 +371,8 @@ static Matrix compute_Nodal_Effective_Mass(
 static void compute_Gravity_field(
   Mask ActiveNodes,
   Particle MPM_Mesh,
-  int TimeStep)
+  int TimeStep,
+  int NumTimeStep)
 /*
 
 */
@@ -398,14 +399,8 @@ static void compute_Gravity_field(
     /* Fill vector b of body acclerations */
     for(int k = 0 ; k<Ndim ; k++)
     {
-      if(B[i].Dir[k])
-      {
-        if( (TimeStep < 0) || (TimeStep > B[i].Value[k].Num))
-        {
-          printf("%s : %s\n", "Error in compute_Gravity_field()","The time step is out of the curve !!");
-          exit(EXIT_FAILURE);
-        }
-         
+      if(B[i].Dir[k*NumTimeStep + TimeStep])
+      {         
         MPM_Mesh.b.n[k] += B[i].Value[k].Fx[TimeStep];
       }
     }
@@ -600,7 +595,8 @@ static Nodal_Field initialise_Nodal_Increments(
   Mask ActiveNodes,
   Mesh FEM_Mesh,
   Newmark_parameters Params,
-  int TimeStep)
+  int TimeStep,
+  int NumTimeStep)
 /*
   Allocate the increments nodal values for the time integration scheme,
   and apply the boundary conditions over the nodes.
@@ -670,18 +666,8 @@ static Nodal_Field initialise_Nodal_Increments(
         /* 
           Apply only if the direction is active (1) 
         */
-        if(FEM_Mesh.Bounds.BCC_i[i].Dir[k] == 1)
+        if(FEM_Mesh.Bounds.BCC_i[i].Dir[k*NumTimeStep + TimeStep] == 1)
         {
-    
-          /* 
-            Check if the curve it is on time 
-          */
-          if( (TimeStep < 0) || (TimeStep > FEM_Mesh.Bounds.BCC_i[i].Value[k].Num))
-          {
-            printf("%s : %s \n","Error in initialise_Nodal_Increments()","The time step is out of the curve !!");
-            exit(EXIT_FAILURE);
-          }
-
           /* 
             Assign the boundary condition :
             First remove the value obtained during the projection and compute the value
@@ -693,7 +679,7 @@ static Nodal_Field initialise_Nodal_Increments(
 
           for(int t = 0 ; t<TimeStep ; t++)
           {
-            D_upw_value_It = FEM_Mesh.Bounds.BCC_i[i].Value[k].Fx[t]*(double)FEM_Mesh.Bounds.BCC_i[i].Dir[k];
+            D_upw_value_It = FEM_Mesh.Bounds.BCC_i[i].Value[k].Fx[t];
             upw_n.value.nM[Id_BCC_mask][k] += D_upw_value_It;                    
             upw_n.d2_value_dt2.nM[Id_BCC_mask][k] += alpha_1*D_upw_value_It - alpha_2*upw_n.d_value_dt.nM[Id_BCC_mask][k] - (alpha_3 + 1)*upw_n.d2_value_dt2.nM[Id_BCC_mask][k];
             upw_n.d_value_dt.nM[Id_BCC_mask][k]   += alpha_4*D_upw_value_It + (alpha_5-1)*upw_n.d_value_dt.nM[Id_BCC_mask][k] + alpha_6*upw_n.d2_value_dt2.nM[Id_BCC_mask][k];
@@ -702,7 +688,7 @@ static Nodal_Field initialise_Nodal_Increments(
           /*
             Initialise increments using newmark and the value of the boundary condition
           */
-          D_upw.value.nM[Id_BCC_mask][k] = FEM_Mesh.Bounds.BCC_i[i].Value[k].Fx[TimeStep]*(double)FEM_Mesh.Bounds.BCC_i[i].Dir[k];                    
+          D_upw.value.nM[Id_BCC_mask][k] = FEM_Mesh.Bounds.BCC_i[i].Value[k].Fx[TimeStep];
           D_upw.d2_value_dt2.nM[Id_BCC_mask][k] = alpha_1*D_upw.value.nM[Id_BCC_mask][k] - alpha_2*upw_n.d_value_dt.nM[Id_BCC_mask][k] - (alpha_3 + 1)*upw_n.d2_value_dt2.nM[Id_BCC_mask][k];
           D_upw.d_value_dt.nM[Id_BCC_mask][k]   = alpha_4*D_upw.value.nM[Id_BCC_mask][k] + (alpha_5-1)*upw_n.d_value_dt.nM[Id_BCC_mask][k] + alpha_6*upw_n.d2_value_dt2.nM[Id_BCC_mask][k];
                
@@ -906,7 +892,8 @@ static Matrix compute_Residual(
   Particle MPM_Mesh,
   Mesh FEM_Mesh,
   Newmark_parameters Params,
-  int TimeStep)
+  int TimeStep,
+  int NumTimeStep)
 {
 
   int Ndof = NumberDOF;
@@ -922,7 +909,7 @@ static Matrix compute_Residual(
 
   compute_Flow_contribution_Fluid(upw_n, D_upw, Residual, ActiveNodes, MPM_Mesh, FEM_Mesh);
 
-  compute_nominal_traction_and_fluid_flux(Residual,ActiveNodes,MPM_Mesh,FEM_Mesh,TimeStep);
+  compute_nominal_traction_and_fluid_flux(Residual,ActiveNodes,MPM_Mesh,FEM_Mesh,TimeStep,NumTimeStep);
 
   return Residual;
 }
@@ -1492,7 +1479,8 @@ static void compute_nominal_traction_and_fluid_flux(
   Mask ActiveNodes,
   Particle MPM_Mesh,
   Mesh FEM_Mesh,
-  int TimeStep)
+  int TimeStep,
+  int NumTimeStep)
 {
   int Ndim = NumberDimensions;
   int Ndof = NumberDOF;
@@ -1557,16 +1545,8 @@ static void compute_nominal_traction_and_fluid_flux(
       */
       for(int k = 0 ; k<Ndof ; k++)
       {
-        if(Load_i.Dir[k] == 1)
+        if(Load_i.Dir[k*NumTimeStep + TimeStep] == 1)
         {
-          if((TimeStep < 0) || (TimeStep > Load_i.Value[k].Num))
-          {
-            sprintf(Error_message,"%s : %s",
-              "Error in compute_Contact_Forces_Mixture()",
-              "The time step is out of the curve !!");
-            standard_error();
-          }
-
           if(k<Ndim)
           {
             T.n[k] = Load_i.Value[k].Fx[TimeStep];
@@ -1637,7 +1617,9 @@ static void compute_nominal_traction_and_fluid_flux(
 static Matrix compute_Nodal_Reactions(
   Mesh FEM_Mesh,
   Matrix Residual,
-  Mask ActiveNodes)
+  Mask ActiveNodes,
+  int TimeStep,
+  int NumTimeStep)
 /*
   Compute the nodal reactions
 */
@@ -1696,7 +1678,7 @@ static Matrix compute_Nodal_Reactions(
         /* 
      Apply only if the direction is active (1) 
         */
-        if(FEM_Mesh.Bounds.BCC_i[i].Dir[k] == 1)
+        if(FEM_Mesh.Bounds.BCC_i[i].Dir[k*NumTimeStep + TimeStep] == 1)
     {
       /* 
          Set to zero the Residual in the nodes where velocity is fixed 
@@ -2313,7 +2295,9 @@ static void system_reduction(
   Matrix Tangent_Stiffness,
   Matrix Residual,
   Mask ActiveNodes,
-  Mesh FEM_Mesh)
+  Mesh FEM_Mesh,
+  int TimeStep,
+  int NumTimeStep)
 {
 
     /* 
@@ -2363,7 +2347,7 @@ static void system_reduction(
             */
             for(int k = 0 ; k<NumDimBound ; k++)
             {
-              if(FEM_Mesh.Bounds.BCC_i[i].Dir[k] == 1)
+              if(FEM_Mesh.Bounds.BCC_i[i].Dir[k*NumTimeStep + TimeStep] == 1)
               {
 
                 for(int A_mask = 0 ; A_mask < Nnodes_mask ; A_mask++)

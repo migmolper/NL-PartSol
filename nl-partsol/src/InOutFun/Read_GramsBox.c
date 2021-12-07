@@ -38,17 +38,9 @@ static void Check_Dirichlet_Boundary_Conditions(Boundaries,int);
 
 /**********************************************************************/
 
-Mesh GramsBox(char * Name_File)
-/*    
-      GramsBox (Type=GID,File=FEM_Mesh.msh) { 
-
-        GramsBoundary (File=Top.txt) {
-          BcDirichlet V.x NULL
-          BcDirichlet V.y CurveConstat.txt
-        }
-
-      }
-*/
+Mesh GramsBox(
+  char * Name_File,
+  Time_Int_Params Parameters_Solver)
 {
   // Define mesh variable
   Mesh FEM_Mesh;
@@ -124,15 +116,15 @@ Mesh GramsBox(char * Name_File)
   {
     if(strcmp(Formulation,"-u") == 0)
     {
-      FEM_Mesh.Bounds = Read_u_Dirichlet_Boundary_Conditions__InOutFun__(Name_File,Nodes_Info.Number_Boundaries);  
+      FEM_Mesh.Bounds = Read_u_Dirichlet_Boundary_Conditions__InOutFun__(Name_File,Nodes_Info.Number_Boundaries,Parameters_Solver.NumTimeStep);  
     }
     else if(strcmp(Formulation,"-up") == 0)
     {
-      FEM_Mesh.Bounds = Read_u_Dirichlet_Boundary_Conditions__InOutFun__(Name_File,Nodes_Info.Number_Boundaries);  
+      FEM_Mesh.Bounds = Read_u_Dirichlet_Boundary_Conditions__InOutFun__(Name_File,Nodes_Info.Number_Boundaries,Parameters_Solver.NumTimeStep);  
     }
     else if(strcmp(Formulation,"-upw") == 0)
     {
-      FEM_Mesh.Bounds = Read_upw_Dirichlet_Boundary_Conditions__InOutFun__(Name_File,Nodes_Info.Number_Boundaries);
+      FEM_Mesh.Bounds = Read_upw_Dirichlet_Boundary_Conditions__InOutFun__(Name_File,Nodes_Info.Number_Boundaries,Parameters_Solver.NumTimeStep);
     }
 
     Check_Dirichlet_Boundary_Conditions(FEM_Mesh.Bounds,FEM_Mesh.NumNodesMesh);

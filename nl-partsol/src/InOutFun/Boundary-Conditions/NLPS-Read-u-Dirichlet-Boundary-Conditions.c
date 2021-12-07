@@ -1,6 +1,7 @@
 #include "nl-partsol.h"
 #include <sys/stat.h>
 
+
 /*
   Local structures
 */
@@ -27,15 +28,19 @@ static char * delimiters_3 = "=";
 
 static char Error_message[MAXW];
 
-static BCC_Properties Read_Boundary_Conditions_Properties(FILE *, char *, int);
+static BCC_Properties Read_Boundary_Conditions_Properties(FILE *, char *, int,int);
 static void Check_Curve_File(char *);
 static void standard_error();
 static void standard_output(char *);
 static FILE * Open_and_Check_simulation_file(char *);
+static void active_direction(int *,int);
 
 /**********************************************************************/
 
-Boundaries Read_u_Dirichlet_Boundary_Conditions__InOutFun__(char * Name_File,int NumBounds)
+Boundaries Read_u_Dirichlet_Boundary_Conditions__InOutFun__(
+	char * Name_File,
+	int NumBounds,
+	int NumTimeStep)
 /*
 
 GramsBoundary (File=Right_contour.txt) 
@@ -165,7 +170,7 @@ GramsBoundary (File=Right_contour.txt)
 			/*
 				Read parameters
 			*/
-			BCC_Properties Parameters = Read_Boundary_Conditions_Properties(Sim_dat, Name_File, Bounds.BCC_i[IndexBoundary].NumNodes);
+			BCC_Properties Parameters = Read_Boundary_Conditions_Properties(Sim_dat, Name_File, Bounds.BCC_i[IndexBoundary].NumNodes,NumTimeStep);
 
       		/*
       			Direction of the BCC 
@@ -197,7 +202,11 @@ GramsBoundary (File=Right_contour.txt)
 
 /**********************************************************************/
 
-static BCC_Properties Read_Boundary_Conditions_Properties(FILE * Simulation_file, char * Name_File, int NumNodes)
+static BCC_Properties Read_Boundary_Conditions_Properties(
+	FILE * Simulation_file, 
+	char * Name_File,
+	int NumNodes,
+	int NumTimeStep)
 {
 	int Ndim = NumberDimensions;
 
@@ -234,8 +243,8 @@ static BCC_Properties Read_Boundary_Conditions_Properties(FILE * Simulation_file
 	/*
 		Initialise and allocate Dir vector for each DOF
 	*/
-	Properties.Dir = (int *)Allocate_ArrayZ(NumberDOF,sizeof(int));
-
+	Properties.Dir = (int *)calloc(NumTimeStep*NumberDOF, sizeof(int));
+	
 	/*
       	Initialise and allocate curve for each DOF
     */
@@ -264,9 +273,9 @@ static BCC_Properties Read_Boundary_Conditions_Properties(FILE * Simulation_file
     		{
     			if(strcmp(Parameter_pars[2],"NULL") != 0)
     			{
-	    			Properties.Dir[0] = 1;
     				sprintf(FileLoadRoute,"%s%s",Route_Nodes,Parameter_pars[2]);
     				Properties.Value[0] = ReadCurve(FileLoadRoute);
+					active_direction(&Properties.Dir[NumTimeStep*0],IMIN(NumTimeStep,Properties.Value[0].Num));
 					printf(" \t %s (%s) : \n \t \t Number of nodes = %i \n \t \t File curve %s \n",
 						"-> BcDirichlet ",Parameter_pars[1],NumNodes,FileLoadRoute);
     			}
@@ -275,9 +284,9 @@ static BCC_Properties Read_Boundary_Conditions_Properties(FILE * Simulation_file
     		{
     			if(strcmp(Parameter_pars[2],"NULL") != 0)
     			{
-	    			Properties.Dir[1] = 1;
     				sprintf(FileLoadRoute,"%s%s",Route_Nodes,Parameter_pars[2]);
     				Properties.Value[1] = ReadCurve(FileLoadRoute);
+					active_direction(&Properties.Dir[NumTimeStep*1],IMIN(NumTimeStep,Properties.Value[1].Num));
 					printf(" \t %s (%s) : \n \t \t Number of nodes = %i \n \t \t File curve %s \n",
 						"-> BcDirichlet ",Parameter_pars[1],NumNodes,FileLoadRoute);
     			}
@@ -286,9 +295,9 @@ static BCC_Properties Read_Boundary_Conditions_Properties(FILE * Simulation_file
     		{
     			if(strcmp(Parameter_pars[2],"NULL") != 0)
     			{
-	    			Properties.Dir[2] = 1;
     				sprintf(FileLoadRoute,"%s%s",Route_Nodes,Parameter_pars[2]);
     				Properties.Value[2] = ReadCurve(FileLoadRoute);
+					active_direction(&Properties.Dir[NumTimeStep*2],IMIN(NumTimeStep,Properties.Value[2].Num));
 					printf("\t \t %s (%s) : \n \t \t Number of nodes = %i \n \t \t File curve %s \n",
 						"-> BcDirichlet ",Parameter_pars[1],NumNodes,FileLoadRoute);
     			}
@@ -367,3 +376,14 @@ static FILE * Open_and_Check_simulation_file(char * Name_File)
 
 /***************************************************************************/
 
+static void active_direction(
+	int * Dir,
+	int Num)
+{
+	for(unsigned i = 0 ; i<Num ; i++)
+	{
+		Dir[i] = 1;
+	}
+}
+
+/**********************************************************************/

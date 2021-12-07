@@ -63,7 +63,10 @@ static FILE * Open_and_Check_simulation_file(char *);
 
 /*********************************************************************/
 
-Particle Generate_Soil_Water_Coupling_Analysis__InOutFun__(char * Name_File, Mesh FEM_Mesh)
+Particle Generate_Soil_Water_Coupling_Analysis__InOutFun__(
+  char * Name_File,
+  Mesh FEM_Mesh,
+  Time_Int_Params Parameters_Solver)
 /*
  */
 {
@@ -295,7 +298,7 @@ Particle Generate_Soil_Water_Coupling_Analysis__InOutFun__(char * Name_File, Mes
     {
       puts("*************************************************");
       printf("\t * %s \n","Read Newmann boundary conditions :");
-      MPM_Mesh.Neumann_Contours = Read_upw_Neumann_Boundary_Conditions__InOutFun__(Name_File,Sim_Params.Counter_GramsNeumannBC,Msh_Parms.GPxElement);
+      MPM_Mesh.Neumann_Contours = Read_upw_Neumann_Boundary_Conditions__InOutFun__(Name_File,Sim_Params.Counter_GramsNeumannBC,Msh_Parms.GPxElement,Parameters_Solver.NumTimeStep);
     }
     else
     {
@@ -311,7 +314,7 @@ Particle Generate_Soil_Water_Coupling_Analysis__InOutFun__(char * Name_File, Mes
     if(Sim_Params.Is_GramsBodyForces)
     {
       MPM_Mesh.NumberBodyForces = Sim_Params.Counter_BodyForces;
-      MPM_Mesh.B = GramsBodyForces(Name_File,Sim_Params.Counter_BodyForces,Msh_Parms.GPxElement); 
+      MPM_Mesh.B = GramsBodyForces(Name_File,Sim_Params.Counter_BodyForces,Msh_Parms.GPxElement,Parameters_Solver.NumTimeStep); 
     }
     else
     {

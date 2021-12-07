@@ -27,18 +27,20 @@ static char * delimiters_3 = "=";
 
 static char Error_message[MAXW];
 
-static BCC_Properties Read_Boundary_Conditions_Properties(FILE *, char *, int);
+static BCC_Properties Read_Boundary_Conditions_Properties(FILE *, char *, int,int);
 static void Check_Curve_File(char *);
 static void standard_error();
 static void standard_output(char *);
 static FILE * Open_and_Check_simulation_file(char *);
+static void active_direction(int *,int);
 
 /**********************************************************************/
 
 Boundaries Read_upw_Neumann_Boundary_Conditions__InOutFun__(
 	char * Name_File,
 	int NumBounds,
-	int GPxElement)
+	int GPxElement,
+	int NumTimeStep)
 /*
 
 	Define-Neumann-Boundary(File=Right_contour.txt) 
@@ -193,7 +195,7 @@ Boundaries Read_upw_Neumann_Boundary_Conditions__InOutFun__(
 			/*
 				Read parameters
 			*/
-			BCC_Properties Parameters = Read_Boundary_Conditions_Properties(Sim_dat, Name_File, Bounds.BCC_i[IndexBoundary].NumNodes);
+			BCC_Properties Parameters = Read_Boundary_Conditions_Properties(Sim_dat, Name_File, Bounds.BCC_i[IndexBoundary].NumNodes,NumTimeStep);
 
       		/*
       			Direction of the BCC 
@@ -225,7 +227,11 @@ Boundaries Read_upw_Neumann_Boundary_Conditions__InOutFun__(
 
 /**********************************************************************/
 
-static BCC_Properties Read_Boundary_Conditions_Properties(FILE * Simulation_file, char * Name_File, int NumNodes)
+static BCC_Properties Read_Boundary_Conditions_Properties(
+	FILE * Simulation_file, 
+	char * Name_File,
+	int NumNodes,
+	int NumTimeStep)
 {
 	int Ndim = NumberDimensions;
 
@@ -262,7 +268,7 @@ static BCC_Properties Read_Boundary_Conditions_Properties(FILE * Simulation_file
 	/*
 		Initialise and allocate Dir vector for each DOF
 	*/
-	Properties.Dir = (int *)Allocate_ArrayZ(NumberDOF,sizeof(int));
+	Properties.Dir = (int *)calloc(NumTimeStep*NumberDOF, sizeof(int));
 
 	/*
       	Initialise and allocate curve for each DOF
@@ -290,9 +296,9 @@ static BCC_Properties Read_Boundary_Conditions_Properties(FILE * Simulation_file
     	{
     		if(strcmp(Parameter_pars[1],"NULL") != 0)
     		{
-	    		Properties.Dir[0] = 1;
     			sprintf(FileLoadRoute,"%s%s",Route_Nodes,Parameter_pars[1]);
     			Properties.Value[0] = ReadCurve(FileLoadRoute);
+				active_direction(&Properties.Dir[NumTimeStep*0],IMIN(NumTimeStep,Properties.Value[0].Num));
 				printf(" \t %s (%s) : \n \t \t Number of particles = %i \n \t \t File curve %s \n",
 					"-> BcNeumann ",Parameter_pars[0],NumNodes,FileLoadRoute);
     		}
@@ -301,9 +307,9 @@ static BCC_Properties Read_Boundary_Conditions_Properties(FILE * Simulation_file
     	{
     		if(strcmp(Parameter_pars[1],"NULL") != 0)
     		{
-	    		Properties.Dir[1] = 1;
     			sprintf(FileLoadRoute,"%s%s",Route_Nodes,Parameter_pars[1]);
     			Properties.Value[1] = ReadCurve(FileLoadRoute);
+				active_direction(&Properties.Dir[NumTimeStep*1],IMIN(NumTimeStep,Properties.Value[1].Num));
 				printf(" \t %s (%s) : \n \t \t Number of particles = %i \n \t \t File curve %s \n",
 					"-> BcNeumann ",Parameter_pars[0],NumNodes,FileLoadRoute);
     		}
@@ -312,9 +318,9 @@ static BCC_Properties Read_Boundary_Conditions_Properties(FILE * Simulation_file
     	{
     		if(strcmp(Parameter_pars[1],"NULL") != 0)
     		{
-	    		Properties.Dir[Ndim-1] = 1;
     			sprintf(FileLoadRoute,"%s%s",Route_Nodes,Parameter_pars[1]);
     			Properties.Value[Ndim-1] = ReadCurve(FileLoadRoute);
+				active_direction(&Properties.Dir[NumTimeStep*(Ndim-1)],IMIN(NumTimeStep,Properties.Value[Ndim-1].Num));
 				printf("\t \t %s (%s) : \n \t \t Number of particles = %i \n \t \t File curve %s \n",
 					"-> BcNeumann ",Parameter_pars[0],NumNodes,FileLoadRoute);
     		}
@@ -323,9 +329,9 @@ static BCC_Properties Read_Boundary_Conditions_Properties(FILE * Simulation_file
     	{
     		if(strcmp(Parameter_pars[1],"NULL") != 0)
     		{
-	    		Properties.Dir[Ndim] = 1;
     			sprintf(FileLoadRoute,"%s%s",Route_Nodes,Parameter_pars[1]);
     			Properties.Value[Ndim] = ReadCurve(FileLoadRoute);
+				active_direction(&Properties.Dir[NumTimeStep*Ndim],IMIN(NumTimeStep,Properties.Value[Ndim].Num));
 				printf(" \t %s (%s) : \n \t \t Number of particles = %i \n \t \t File curve %s \n",
 					"-> BcNeumann ",Parameter_pars[0],NumNodes,FileLoadRoute);
     		}
@@ -393,4 +399,15 @@ static FILE * Open_and_Check_simulation_file(char * Name_File)
 
 /***************************************************************************/
   
+static void active_direction(
+	int * Dir,
+	int Num)
+{
+	for(unsigned i = 0 ; i<Num ; i++)
+	{
+		Dir[i] = 1;
+	}
+}
 
+
+/**********************************************************************/

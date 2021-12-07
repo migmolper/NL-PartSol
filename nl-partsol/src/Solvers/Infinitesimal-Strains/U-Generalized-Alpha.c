@@ -14,9 +14,9 @@ static Matrix GetNodalVelocityDisplacement(Particle, Mesh);
 static void update_Particles(Particle, Mesh, Matrix, double, double);
 static void update_LocalState(Matrix, Particle,Mesh, double);
 static Matrix compute_InternalForces(Matrix, Particle,Mesh);
-static Matrix compute_BodyForces(Matrix, Particle, Mesh, int);
-static Matrix compute_ContacForces(Matrix, Particle, Mesh, int);
-static Matrix compute_Reactions(Mesh, Matrix);
+static Matrix compute_BodyForces(Matrix, Particle, Mesh, int, int);
+static Matrix compute_ContacForces(Matrix, Particle, Mesh, int, int);
+static Matrix compute_Reactions(Mesh, Matrix,int,int);
 
 /**************************************************************/
 
@@ -80,9 +80,9 @@ void U_Generalized_alpha(
       print_Status("Second step : Compute equilibrium ... WORKING",TimeStep);
       F_I = allocZ__MatrixLib__(Nnodes,Ndim);    
       F_I = compute_InternalForces(F_I, MPM_Mesh, FEM_Mesh);    
-      F_I = compute_BodyForces(F_I, MPM_Mesh, FEM_Mesh, TimeStep);
-      F_I = compute_ContacForces(F_I, MPM_Mesh, FEM_Mesh, TimeStep);
-      R_I = compute_Reactions(FEM_Mesh, F_I);
+      F_I = compute_BodyForces(F_I, MPM_Mesh, FEM_Mesh, TimeStep, NumTimeStep);
+      F_I = compute_ContacForces(F_I, MPM_Mesh, FEM_Mesh, TimeStep, NumTimeStep);
+      R_I = compute_Reactions(FEM_Mesh, F_I, TimeStep, NumTimeStep);
       print_Status("DONE !!!",TimeStep);
     
       print_Status("*************************************************",TimeStep);
@@ -738,9 +738,10 @@ static Matrix compute_InternalForces(
 
 static Matrix compute_BodyForces(
   Matrix F_I, 
-Particle MPM_Mesh,
-Mesh FEM_Mesh,
-int TimeStep)
+  Particle MPM_Mesh,
+  Mesh FEM_Mesh,
+  int TimeStep,
+  int NumTimeStep)
 {
   int Ndim = NumberDimensions;
   Load * B = MPM_Mesh.B;
@@ -776,13 +777,8 @@ int TimeStep)
 
       /* Fill vector of body forces */
       for(int k = 0 ; k<Ndim ; k++){
-	if(B[i].Dir[k]){
-	  if( (TimeStep < 0) || (TimeStep > B[i].Value[k].Num)){
-	    printf("%s : %s\n",
-		   "Error in compute_BodyForces()",
-		   "The time step is out of the curve !!");
-	    exit(EXIT_FAILURE);
-	  }
+	if(B[i].Dir[k*NumTimeStep + TimeStep])
+  {
 	  b.n[k] = B[i].Value[k].Fx[TimeStep];
 	}
       }
@@ -824,7 +820,8 @@ static Matrix compute_ContacForces(
   Matrix F_I,
   Particle MPM_Mesh,
   Mesh FEM_Mesh,
-  int TimeStep)
+  int TimeStep,
+  int NumTimeStep)
 {
   int Ndim = NumberDimensions;
   Load * F = MPM_Mesh.F;
@@ -872,12 +869,8 @@ static Matrix compute_ContacForces(
 
       /* Fill vector of body forces */
       for(int k = 0 ; k<Ndim ; k++){
-	if(F[i].Dir[k]){
-	  if( (TimeStep < 0) || (TimeStep > F[i].Value[k].Num)){
-	    printf("%s : %s\n",
-		   "Error in compute_ContacForces()",
-		   "The time step is out of the curve !!");
-	  }
+	if(F[i].Dir[k*NumTimeStep + TimeStep])
+  {
 	  t.n[k] = F[i].Value[k].Fx[TimeStep];
 	}
       }
@@ -917,7 +910,9 @@ static Matrix compute_ContacForces(
 
 static Matrix compute_Reactions(
   Mesh FEM_Mesh,
-  Matrix F_I)
+  Matrix F_I,
+  int TimeStep,
+  int NumTimeStep)
 /*
   Compute the nodal reactions
 */
@@ -943,7 +938,8 @@ static Matrix compute_Reactions(
       /* 6º Loop over the dimensions of the boundary condition */
       for(int k = 0 ; k<NumDimBound ; k++){
 	/* 7º Apply only if the direction is active (1) */
-	if(FEM_Mesh.Bounds.BCC_i[i].Dir[k] == 1){
+	if(FEM_Mesh.Bounds.BCC_i[i].Dir[k*NumTimeStep + TimeStep] == 1)
+  {
 	  /* 8º Set to zero the forces in the nodes where velocity is fixed */
 	  R_I.nM[Id_BCC][k] = F_I.nM[Id_BCC][k];
 	  F_I.nM[Id_BCC][k] = 0;

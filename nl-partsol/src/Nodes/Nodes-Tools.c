@@ -81,7 +81,9 @@ Mask generate_NodalMask__MeshTools__(
 
 Mask generate_Mask_for_static_condensation__MeshTools__(
   Mask ActiveNodes,
-  Mesh FEM_Mesh)
+  Mesh FEM_Mesh,
+  int Step,
+  int NumTimeStep)
 {
 
   /* 
@@ -110,9 +112,9 @@ Mask generate_Mask_for_static_condensation__MeshTools__(
   for(int i = 0 ; i<Number_of_BCC ; i++)
     {
 
-      /* 
-        Get the number of nodes of this boundary
-      */
+        /* 
+          Get the number of nodes of this boundary
+        */
       NumNodesBound = FEM_Mesh.Bounds.BCC_i[i].NumNodes;
 
       /* 
@@ -142,7 +144,7 @@ Mask generate_Mask_for_static_condensation__MeshTools__(
                 /* 
                   Apply only if the direction is active
                 */
-                if(FEM_Mesh.Bounds.BCC_i[i].Dir[k] == 1)
+                if(FEM_Mesh.Bounds.BCC_i[i].Dir[k*NumTimeStep + Step] == 1)
                   {
                     Id_BCC_mask_k = Id_BCC_mask*Ndof + k;
                     Nodes2Mask[Id_BCC_mask_k] = -1;
@@ -151,6 +153,7 @@ Mask generate_Mask_for_static_condensation__MeshTools__(
           }
 
         }    
+      
     }
 
   /* 
@@ -179,7 +182,9 @@ Mask generate_Mask_for_static_condensation__MeshTools__(
 
 Mask generate_Mask_for_static_condensation_upw__MeshTools__(
   Mask ActiveNodes,
-  Mesh FEM_Mesh)
+  Mesh FEM_Mesh,
+  int Step,
+  int NumTimeStep)
 {
 
   /* 
@@ -240,7 +245,7 @@ Mask generate_Mask_for_static_condensation_upw__MeshTools__(
                 /* 
                   Apply only if the direction is active
                 */
-                if(FEM_Mesh.Bounds.BCC_i[i].Dir[k] == 1)
+                if(FEM_Mesh.Bounds.BCC_i[i].Dir[k*NumTimeStep + Step] == 1)
                   {
                     Id_BCC_mask_k = Id_BCC_mask + Nnodes_mask*k;
                     Nodes2Mask[Id_BCC_mask_k] = -1;

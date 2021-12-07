@@ -5,9 +5,18 @@
 */
 int NumberDOF;
 
+/*
+  Auxiliar functions and variables
+*/
+static void active_direction(int *,int);
+
 /**********************************************************************/
 
-Load * GramsBodyForces(char * Name_File, int NumBodyForces, int GPxElement)
+Load * GramsBodyForces(
+	char * Name_File, 
+	int NumBodyForces, 
+	int GPxElement,
+	int NumTimeStep)
 {
   /* Define new load case for the body forces */
   Load * B = (Load *)Allocate_Array(NumBodyForces, sizeof(Load));
@@ -91,19 +100,21 @@ Load * GramsBodyForces(char * Name_File, int NumBodyForces, int GPxElement)
 
       /* Fill GPs */
       B[IndexLoad].NumNodes = Num_Nodes*GPxElement; 
-      B[IndexLoad].Nodes =
-	(int *)Allocate_ArrayZ(B[IndexLoad].NumNodes,sizeof(int));
-      for(int i = 0 ; i<Num_Nodes ; i++){
-	for(int j = 0 ; j<GPxElement ; j++){
-	  B[IndexLoad].Nodes[i*GPxElement+j] = Array_Nodes[i]*GPxElement+j;
-	}
+      B[IndexLoad].Nodes = (int *)Allocate_ArrayZ(B[IndexLoad].NumNodes,sizeof(int));
+	  for(int i = 0 ; i<Num_Nodes ; i++)
+	  {
+		  for(int j = 0 ; j<GPxElement ; j++)
+		  {
+			B[IndexLoad].Nodes[i*GPxElement+j] = Array_Nodes[i]*GPxElement+j;
+		}
       }
 
       /* Number of dimensions of the BCC */
       B[IndexLoad].Dim = NumberDOF;
+
       /* Direction of the BCC */
-      B[IndexLoad].Dir =
-	(int *)Allocate_ArrayZ(NumberDOF,sizeof(int));
+      B[IndexLoad].Dir = (int *)calloc(NumTimeStep*NumberDOF, sizeof(int));
+
       /* Curve for each dimension */
       B[IndexLoad].Value =
 	(Curve *)Allocate_Array(NumberDOF,sizeof(Curve));
@@ -127,47 +138,41 @@ Load * GramsBodyForces(char * Name_File, int NumBodyForces, int GPxElement)
 	if((Num_words_line > 0) &&
 	   (strcmp(Parse_Properties[0],"}") != 0 )){
 	      if(strcmp(Parse_Properties[0],"b.x") == 0){
-		/* Fill the direction of the BCC */
-		B[IndexLoad].Dir[0] = 1;
 		/* Read the curve to impose the boundary condition */
 		if(strcmp(Parse_Properties[1],"NULL") != 0){
 		  sprintf(FileLoadRoute,"%s%s",Route_Nodes,Parse_Properties[1]);
-		  B[IndexLoad].Value[0] =
-		    ReadCurve(FileLoadRoute);
+		  B[IndexLoad].Value[0] = ReadCurve(FileLoadRoute);
+		  active_direction(&B[IndexLoad].Dir[NumTimeStep*0],IMIN(NumTimeStep,B[IndexLoad].Value[0].Num));
 		  puts("*************************************************");
 		  printf(" \t %s (%i) : \n \t %s %s \n",
 			 "* Body BC",
 			 B[IndexLoad].NumNodes,
 			 Parse_Properties[1],FileLoadRoute);
 		}
-		else{
-		  B[IndexLoad].Dir[0] = 0;
-		}
 	      }
-	      else if(strcmp(Parse_Properties[0],"b.y") == 0){
-		/* Fill the direction of the BCC */
-		B[IndexLoad].Dir[1] = 1;
+	      else if(strcmp(Parse_Properties[0],"b.y") == 0)
+		  {
 		/* Read the curve to impose the boundary condition */
-		if(strcmp(Parse_Properties[1],"NULL") != 0){
+		if(strcmp(Parse_Properties[1],"NULL") != 0)
+		{
 		  sprintf(FileLoadRoute,"%s%s",Route_Nodes,Parse_Properties[1]);
 		  B[IndexLoad].Value[1] = ReadCurve(FileLoadRoute);
+		  active_direction(&(B[IndexLoad].Dir[NumTimeStep*1]),IMIN(NumTimeStep,B[IndexLoad].Value[1].Num));
 		  puts("*************************************************");
 		  printf(" \t %s (%i) : \n \t %s %s \n",
 			 "* Body BC",
 			 B[IndexLoad].NumNodes,
 			 Parse_Properties[1],FileLoadRoute);
 		}
-		else{
-		  B[IndexLoad].Dir[1] = 0;
-		}
 	      }
-	      else if(strcmp(Parse_Properties[0],"b.z") == 0){
-		/* Fill the direction of the BCC */
-		B[IndexLoad].Dir[2] = 1;
+	      else if(strcmp(Parse_Properties[0],"b.z") == 0)
+		  {
 		/* Read the curve to impose the boundary condition */
-		if(strcmp(Parse_Properties[1],"NULL") != 0){
+		if(strcmp(Parse_Properties[1],"NULL") != 0)
+		{
 		  sprintf(FileLoadRoute,"%s%s",Route_Nodes,Parse_Properties[1]);
 		  B[IndexLoad].Value[2] = ReadCurve(FileLoadRoute);
+		  active_direction(&B[IndexLoad].Dir[NumTimeStep*2],IMIN(NumTimeStep,B[IndexLoad].Value[2].Num));
 		  puts("*************************************************");
 		  printf(" \t %s (%i) : \n \t %s %s \n",
 			 "* Body BC",
@@ -200,3 +205,15 @@ Load * GramsBodyForces(char * Name_File, int NumBodyForces, int GPxElement)
 
 /**********************************************************************/
 
+static void active_direction(
+	int * Dir,
+	int Num)
+{
+	for(unsigned i = 0 ; i<Num ; i++)
+	{
+		Dir[i] = 1;
+	}
+}
+
+
+/**********************************************************************/

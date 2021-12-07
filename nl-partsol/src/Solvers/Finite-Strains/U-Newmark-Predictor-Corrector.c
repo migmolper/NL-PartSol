@@ -29,16 +29,16 @@ static Matrix compute_Mass_Matrix(Particle MPM_Mesh, Mesh FEM_Mesh, Mask ActiveN
 /* Step 2 */
 static  void  compute_Explicit_Newmark_Predictor(Particle,double);
 /* Step 3 */
-static Matrix compute_Nodal_Gravity_field(Mask, Particle, int);
+static Matrix compute_Nodal_Gravity_field(Mask, Particle, int, int);
 static Matrix compute_Nodal_D_Displacement(Particle,Mesh,Mask,Matrix);
 static Matrix compute_Nodal_Velocity(Particle,Mesh,Mask,Matrix);
-static void   impose_Dirichlet_Boundary_Conditions(Mesh,Matrix,Matrix,Mask,int);
+static void   impose_Dirichlet_Boundary_Conditions(Mesh,Matrix,Matrix,Mask,int,int);
 /* Step 4 */
 static void   update_Local_State(Matrix,Mask,Particle,Mesh);
 /* Step 5 */
-static Matrix compute_Nodal_Forces(Mask,Particle,Mesh,int);
+static Matrix compute_Nodal_Forces(Mask,Particle,Mesh,int,int);
 static void   compute_Nodal_Internal_Forces(Matrix,Mask,Particle,Mesh);
-static void   compute_Nodal_Nominal_traction_Forces(Matrix,Mask,Particle,Mesh,int);
+static void   compute_Nodal_Nominal_traction_Forces(Matrix,Mask,Particle,Mesh,int,int);
 static Matrix solve_Nodal_Equilibrium(Matrix,Matrix,Matrix,Matrix,Particle,Mesh,Mask,Mask);
 /* Step 6 */
 static  void  compute_Explicit_Newmark_Corrector(Particle,double);
@@ -85,7 +85,7 @@ void U_Newmark_Predictor_Corrector_Finite_Strains(
       local_search__MeshTools__(MPM_Mesh,FEM_Mesh);
       ActiveNodes = generate_NodalMask__MeshTools__(FEM_Mesh);
       Nactivenodes = ActiveNodes.Nactivenodes;
-      Free_and_Restricted_Dofs = generate_Mask_for_static_condensation__MeshTools__(ActiveNodes,FEM_Mesh);
+      Free_and_Restricted_Dofs = generate_Mask_for_static_condensation__MeshTools__(ActiveNodes,FEM_Mesh,TimeStep,NumTimeStep);
       print_Status("DONE !!!",TimeStep);
 
       print_Status("*************************************************",TimeStep);
@@ -107,13 +107,13 @@ void U_Newmark_Predictor_Corrector_Finite_Strains(
       print_Status("Third step : Compute nodal magnitudes",TimeStep);
       print_Status("WORKING ...",TimeStep);
 
-      Gravity_field = compute_Nodal_Gravity_field(ActiveNodes, MPM_Mesh, TimeStep);
+      Gravity_field = compute_Nodal_Gravity_field(ActiveNodes, MPM_Mesh, TimeStep, NumTimeStep);
 
       D_Displacement = compute_Nodal_D_Displacement(MPM_Mesh,FEM_Mesh,ActiveNodes,Lumped_Mass);
 
       Velocity = compute_Nodal_Velocity(MPM_Mesh,FEM_Mesh,ActiveNodes,Lumped_Mass);
 
-      impose_Dirichlet_Boundary_Conditions(FEM_Mesh,D_Displacement,Velocity,ActiveNodes,TimeStep);
+      impose_Dirichlet_Boundary_Conditions(FEM_Mesh,D_Displacement,Velocity,ActiveNodes,TimeStep,NumTimeStep);
 
       print_Status("DONE !!!",TimeStep);
 
@@ -126,7 +126,7 @@ void U_Newmark_Predictor_Corrector_Finite_Strains(
       print_Status("*************************************************",TimeStep);
       print_Status("Five step : Compute equilibrium ... WORKING",TimeStep);
 
-      Forces = compute_Nodal_Forces(ActiveNodes, MPM_Mesh, FEM_Mesh, TimeStep);
+      Forces = compute_Nodal_Forces(ActiveNodes, MPM_Mesh, FEM_Mesh, TimeStep, NumTimeStep);
 
       Reactions = solve_Nodal_Equilibrium(Lumped_Mass,Gravity_field,Forces,D_Displacement,MPM_Mesh,FEM_Mesh,ActiveNodes,Free_and_Restricted_Dofs);
 
@@ -306,7 +306,8 @@ static void compute_Explicit_Newmark_Predictor(
 static Matrix compute_Nodal_Gravity_field(
   Mask ActiveNodes,
   Particle MPM_Mesh,
-  int TimeStep)
+  int TimeStep,
+  int NumTimeStep)
 /*
 
 */
@@ -333,13 +334,8 @@ static Matrix compute_Nodal_Gravity_field(
      /* Fill vector b of body acclerations */
      for(int k = 0 ; k<Ndim ; k++)
      {
-       if(B[i].Dir[k])
+       if(B[i].Dir[k*NumTimeStep + TimeStep])
        {
-         if( (TimeStep < 0) || (TimeStep > B[i].Value[k].Num))
-         {
-            printf("%s : %s\n", "Error in compute_Nodal_Gravity_field()","The time step is out of the curve !!");
-            exit(EXIT_FAILURE);
-         }
          
          b.n[k] += B[i].Value[k].Fx[TimeStep];
 
@@ -574,7 +570,8 @@ static void impose_Dirichlet_Boundary_Conditions(
   Matrix D_Displacement,
   Matrix Velocity,
   Mask ActiveNodes,
-  int TimeStep)
+  int TimeStep,
+  int NumTimeStep)
 /*
   Apply the boundary conditions over the nodes 
 */
@@ -630,22 +627,12 @@ static void impose_Dirichlet_Boundary_Conditions(
         /* 
           Apply only if the direction is active (1) 
         */
-        if(FEM_Mesh.Bounds.BCC_i[i].Dir[k] == 1)
+        if(FEM_Mesh.Bounds.BCC_i[i].Dir[k*NumTimeStep + TimeStep] == 1)
         {
-    
-          /* 
-            Check if the curve it is on time 
-          */
-          if( (TimeStep < 0) || (TimeStep > FEM_Mesh.Bounds.BCC_i[i].Value[k].Num))
-          {
-            printf("%s : %s \n","Error in initialise_Nodal_Increments()","The time step is out of the curve !!");
-            exit(EXIT_FAILURE);
-          }
-
           /*
             Initialise increments using newmark and the value of the boundary condition
           */
-          D_Displacement.nM[Id_BCC_mask][k] = FEM_Mesh.Bounds.BCC_i[i].Value[k].Fx[TimeStep]*(double)FEM_Mesh.Bounds.BCC_i[i].Dir[k];                    
+          D_Displacement.nM[Id_BCC_mask][k] = FEM_Mesh.Bounds.BCC_i[i].Value[k].Fx[TimeStep];                    
 
         }
       }
@@ -805,7 +792,8 @@ static Matrix compute_Nodal_Forces(
   Mask ActiveNodes,
   Particle MPM_Mesh,
   Mesh FEM_Mesh,
-  int TimeStep)
+  int TimeStep,
+  int NumTimeStep)
 {
   int Ndim = NumberDimensions;
   int Nnodes_mask = ActiveNodes.Nactivenodes;
@@ -819,7 +807,7 @@ static Matrix compute_Nodal_Forces(
   /*
     Add contact forces contribution
   */
-  compute_Nodal_Nominal_traction_Forces(Forces,ActiveNodes,MPM_Mesh,FEM_Mesh,TimeStep);
+  compute_Nodal_Nominal_traction_Forces(Forces,ActiveNodes,MPM_Mesh,FEM_Mesh,TimeStep,NumTimeStep);
 
   
   return Forces;
@@ -942,7 +930,8 @@ static void compute_Nodal_Nominal_traction_Forces(
   Mask ActiveNodes,
   Particle MPM_Mesh,
   Mesh FEM_Mesh,
-  int TimeStep)
+  int TimeStep,
+  int NumTimeStep)
 {
 
   int Ndim = NumberDimensions;
@@ -1006,16 +995,8 @@ static void compute_Nodal_Nominal_traction_Forces(
       */
       for(int k = 0 ; k<Ndim ; k++)
       {
-        if(Load_i.Dir[k] == 1)
+        if(Load_i.Dir[k*NumTimeStep + TimeStep] == 1)
         {
-          if((TimeStep < 0) || (TimeStep > Load_i.Value[k].Num))
-          {
-            printf("%s : %s",
-              "Error in compute_Nodal_Nominal_traction_Forces()",
-              "The time step is out of the curve !!");
-            exit(EXIT_FAILURE);
-          }
-
           T.n[k] = Load_i.Value[k].Fx[TimeStep];
         }
       }

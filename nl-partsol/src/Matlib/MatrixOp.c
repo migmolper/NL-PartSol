@@ -73,23 +73,23 @@ void ** Allocate_Matrix(int NumberRows,int NumberColumns,int SizeType)
   void ** M = (void **)malloc((unsigned) NumberRows * sizeof(void *));
 
   if (M == NULL)
+  {
+    puts("Error in matrix declaration");
+    exit(EXIT_FAILURE);
+  }
+  
+  for(int i = 0 ; i<NumberRows ; i++)
+  {
+      
+    M[i] = malloc((unsigned) NumberColumns*SizeType);
+      
+    if (M[i] == NULL)
     {
       puts("Error in matrix declaration");
       exit(EXIT_FAILURE);
     }
-  
-  for(int i = 0 ; i<NumberRows ; i++)
-    {
       
-      M[i] = malloc((unsigned) NumberColumns*SizeType);
-      
-      if (M[i] == NULL)
-	{
-	  puts("Error in matrix declaration");
-	  exit(EXIT_FAILURE);
-	}
-      
-    }
+  }
   
   return M;
 }

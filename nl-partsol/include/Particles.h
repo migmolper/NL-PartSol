@@ -10,18 +10,6 @@
 /*!
 
 */
-Matrix body_loads__Particles__(Load *, int, int, int);
-/*******************************************************/
-
-/*!
-
-*/
-Matrix contact_loads__Particles__(Load *, int, int, int);
-/*******************************************************/
-
-/*!
-
-*/
 Tensor rate_inifinitesimal_Strain__Particles__(Matrix, Matrix);
 /*******************************************************/
 

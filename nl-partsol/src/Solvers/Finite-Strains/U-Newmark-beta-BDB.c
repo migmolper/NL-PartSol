@@ -39,13 +39,13 @@ static Newmark_parameters compute_Newmark_parameters(double, double, double);
 static Matrix compute_Nodal_Effective_Mass(Particle, Mesh, Mask, double);
 static Matrix compute_Nodal_Velocity(Matrix,Particle, Mesh, Mask);
 static Matrix compute_Nodal_Acceleration(Matrix,Particle, Mesh, Mask);
-static void   imposse_Nodal_Kinetics(Mesh,Matrix,Matrix,Mask,int);
-static void   imposed_Nodal_Displacements(Matrix, Mask, Mesh, int);
+static void   imposse_Nodal_Kinetics(Mesh,Matrix,Matrix,Mask,int,int);
+static void   imposed_Nodal_Displacements(Matrix, Mask, Mesh, int, int);
 static void   update_Local_State(Matrix,Mask,Particle,Mesh,double);
-static Matrix compute_Nodal_Forces(Matrix, Mask, Particle, Mesh, int);
+static Matrix compute_Nodal_Forces(Matrix, Mask, Particle, Mesh, int, int);
 static void   compute_Nodal_Internal_Forces(Matrix,Matrix,Mask,Particle, Mesh);
-static void   compute_Nodal_Body_Forces(Matrix, Mask, Particle, Mesh, int);
-static Matrix compute_Nodal_Reactions(Mesh, Matrix, Mask);
+static void   compute_Nodal_Body_Forces(Matrix, Mask, Particle, Mesh, int, int);
+static Matrix compute_Nodal_Reactions(Mesh, Matrix, Mask, int, int);
 static Matrix compute_Nodal_Residual(Matrix, Matrix, Matrix, Matrix, Matrix, Newmark_parameters);
 static bool   check_convergence(Matrix,double,int,int,int);
 static Matrix assemble_Nodal_Tangent_Stiffness(Mask, Particle, Mesh);
@@ -130,7 +130,7 @@ void U_Newmark_beta_Finite_Strains_BDB(
       local_search__MeshTools__(MPM_Mesh,FEM_Mesh);
       ActiveNodes = generate_NodalMask__MeshTools__(FEM_Mesh);
       Nactivenodes = ActiveNodes.Nactivenodes;
-      Free_and_Restricted_Dofs = generate_Mask_for_static_condensation__MeshTools__(ActiveNodes,FEM_Mesh);
+      Free_and_Restricted_Dofs = generate_Mask_for_static_condensation__MeshTools__(ActiveNodes,FEM_Mesh,TimeStep,NumTimeStep);
       print_Status("DONE !!!",TimeStep);
 
       print_Status("*************************************************",TimeStep);
@@ -150,14 +150,14 @@ void U_Newmark_beta_Finite_Strains_BDB(
       Velocity = compute_Nodal_Velocity(Effective_Mass,MPM_Mesh,FEM_Mesh,ActiveNodes);
       Acceleration = compute_Nodal_Acceleration(Effective_Mass,MPM_Mesh,FEM_Mesh,ActiveNodes);
 
-      imposse_Nodal_Kinetics(FEM_Mesh,Velocity,Acceleration,ActiveNodes,TimeStep);
+      imposse_Nodal_Kinetics(FEM_Mesh,Velocity,Acceleration,ActiveNodes,TimeStep,NumTimeStep);
       print_Status("DONE !!!",TimeStep);  
 
       print_Status("*************************************************",TimeStep);
       print_Status("Four step : Compute equilibrium ... WORKING",TimeStep);
       
       D_Displacement = allocZ__MatrixLib__(Nactivenodes,Ndim);
-      imposed_Nodal_Displacements(D_Displacement, ActiveNodes, FEM_Mesh, TimeStep);      
+      imposed_Nodal_Displacements(D_Displacement, ActiveNodes, FEM_Mesh, TimeStep, NumTimeStep);      
       /*
 	Set the convergence false by default and start the iterations to compute
 	the incement of velocity and displacement in the nodes of the mesh
@@ -175,13 +175,13 @@ void U_Newmark_beta_Finite_Strains_BDB(
 	  /*
 	    Compute the nodal forces
 	  */
-	  Forces = compute_Nodal_Forces(D_Displacement,ActiveNodes,MPM_Mesh,FEM_Mesh,TimeStep);
+	  Forces = compute_Nodal_Forces(D_Displacement,ActiveNodes,MPM_Mesh,FEM_Mesh,TimeStep,NumTimeStep);
 
 	  /*
 	    Compute nodal reactions and set to zero those DOF of the
 	    nodal forces with imposed displacements.
 	  */
-	  Reactions = compute_Nodal_Reactions(FEM_Mesh,Forces,ActiveNodes);
+	  Reactions = compute_Nodal_Reactions(FEM_Mesh,Forces,ActiveNodes,TimeStep,NumTimeStep);
 
 	  /*
 	    Compute the numerical residual to check the equilibrium
@@ -656,7 +656,13 @@ static Matrix compute_Nodal_Acceleration(Matrix Mass,Particle MPM_Mesh, Mesh FEM
 
 /**************************************************************/
 
-static void imposse_Nodal_Kinetics(Mesh FEM_Mesh,Matrix Velocity,Matrix Acceleration,Mask ActiveNodes,int TimeStep)
+static void imposse_Nodal_Kinetics(
+  Mesh FEM_Mesh,
+  Matrix Velocity,
+  Matrix Acceleration,
+  Mask ActiveNodes,
+  int TimeStep,
+  int NumTimeStep)
 /*
   Apply the boundary conditions over the nodes 
 */
@@ -710,24 +716,12 @@ static void imposse_Nodal_Kinetics(Mesh FEM_Mesh,Matrix Velocity,Matrix Accelera
 	      /* 
   		 Apply only if the direction is active (1) 
 	      */
-	      if(FEM_Mesh.Bounds.BCC_i[i].Dir[k] == 1)
+	      if(FEM_Mesh.Bounds.BCC_i[i].Dir[k*NumTimeStep + TimeStep] == 1)
 		{
-
-		  /* 
-  		     Check if the curve it is on time 
-		  */
-		  if( (TimeStep < 0) || (TimeStep > FEM_Mesh.Bounds.BCC_i[i].Value[k].Num))
-		    {
-		      printf("%s : %s \n",
-			     "Error in imposse_Nodal_Velocity()",
-			     "The time step is out of the curve !!");
-		      exit(EXIT_FAILURE);
-		    }
-
 		  /* 
   		     Assign the boundary condition 
 		  */
-		  Velocity.nM[Id_BCC_mask][k] = FEM_Mesh.Bounds.BCC_i[i].Value[k].Fx[TimeStep]*(double)FEM_Mesh.Bounds.BCC_i[i].Dir[k];
+		  Velocity.nM[Id_BCC_mask][k] = FEM_Mesh.Bounds.BCC_i[i].Value[k].Fx[TimeStep];
 		  Acceleration.nM[Id_BCC_mask][k] = 0.0;
 		}
 	    }
@@ -738,7 +732,12 @@ static void imposse_Nodal_Kinetics(Mesh FEM_Mesh,Matrix Velocity,Matrix Accelera
 
 /**************************************************************/
 
-static void imposed_Nodal_Displacements(Matrix D_Displacement, Mask ActiveNodes, Mesh FEM_Mesh, int TimeStep)
+static void imposed_Nodal_Displacements(
+  Matrix D_Displacement, 
+  Mask ActiveNodes, 
+  Mesh FEM_Mesh, 
+  int TimeStep,
+  int NumTimeStep)
 /*
   Apply the boundary conditions over the nodes 
 */
@@ -782,23 +781,12 @@ static void imposed_Nodal_Displacements(Matrix D_Displacement, Mask ActiveNodes,
 	  for(int i_dim = 0 ; i_dim<NumDimBound ; i_dim++)
 	    {
     
-	      if(FEM_Mesh.Bounds.BCC_i[i_boundary].Dir[i_dim] == 1)
+	      if(FEM_Mesh.Bounds.BCC_i[i_boundary].Dir[i_dim*NumTimeStep + TimeStep] == 1)
 		{
-		  /*
-		    Check if the curve it is on time 
-		  */
-		  if( (TimeStep < 0) ||
-		      (TimeStep > FEM_Mesh.Bounds.BCC_i[i_boundary].Value[i_dim].Num))
-		    {
-		      printf("%s : %s \n",
-			     "Error in imposed_displacements()",
-			     "The time step is out of the curve !!");
-		      exit(EXIT_FAILURE);
-		    }
 		  /* 
 		     Assign the boundary condition 
 		  */
-		  D_Displacement.nM[A_mask_BCC][i_dim] = FEM_Mesh.Bounds.BCC_i[i_boundary].Value[i_dim].Fx[TimeStep]*(double)FEM_Mesh.Bounds.BCC_i[i_boundary].Dir[i_dim];
+		  D_Displacement.nM[A_mask_BCC][i_dim] = FEM_Mesh.Bounds.BCC_i[i_boundary].Value[i_dim].Fx[TimeStep];
     
 		}
 	    }
@@ -898,7 +886,8 @@ static Matrix compute_Nodal_Forces(Matrix D_Displacement,
 				   Mask ActiveNodes,
 				   Particle MPM_Mesh,
 				   Mesh FEM_Mesh,
-				   int TimeStep)
+				   int TimeStep,
+           int NumTimeStep)
 {
   int Ndim = NumberDimensions;
   int Nnodes_mask = ActiveNodes.Nactivenodes;
@@ -913,7 +902,7 @@ static Matrix compute_Nodal_Forces(Matrix D_Displacement,
   /*
     Add body forces contribution
   */
-  compute_Nodal_Body_Forces(Forces, ActiveNodes, MPM_Mesh, FEM_Mesh, TimeStep);
+  compute_Nodal_Body_Forces(Forces, ActiveNodes, MPM_Mesh, FEM_Mesh, TimeStep, NumTimeStep);
   
   return Forces;
 }
@@ -1038,7 +1027,8 @@ static void compute_Nodal_Body_Forces(Matrix Forces,
 				      Mask ActiveNodes,
 				      Particle MPM_Mesh,
 				      Mesh FEM_Mesh,
-				      int TimeStep)
+				      int TimeStep,
+              int NumTimeStep)
 {
   /* Define auxilar variables */
   int Ndim = NumberDimensions;
@@ -1082,13 +1072,8 @@ static void compute_Nodal_Body_Forces(Matrix Forces,
 
 	/* Fill vector of body forces */
 	for(int k = 0 ; k<Ndim ; k++){
-	  if(B[i].Dir[k]){
-	    if( (TimeStep < 0) || (TimeStep > B[i].Value[k].Num)){
-	      printf("%s : %s\n",
-		     "Error in compute_Nodal_Body_Forces()",
-		     "The time step is out of the curve !!");
-	      exit(EXIT_FAILURE);
-	    }
+	  if(B[i].Dir[k*NumTimeStep + TimeStep])
+    {
 	    b.n[k] = B[i].Value[k].Fx[TimeStep];
 	  }
 	}
@@ -1132,9 +1117,12 @@ static void compute_Nodal_Body_Forces(Matrix Forces,
 
 /**********************************************************************/
 
-static Matrix compute_Nodal_Reactions(Mesh FEM_Mesh,
-				      Matrix Forces,
-				      Mask ActiveNodes)
+static Matrix compute_Nodal_Reactions(
+  Mesh FEM_Mesh,
+  Matrix Forces,
+  Mask ActiveNodes,
+  int TimeStep,
+  int NumTimeStep)
 /*
   Compute the nodal reactions
 */
@@ -1192,7 +1180,7 @@ static Matrix compute_Nodal_Reactions(Mesh FEM_Mesh,
 	      /* 
 		 Apply only if the direction is active (1) 
 	      */
-	      if(FEM_Mesh.Bounds.BCC_i[i].Dir[k] == 1)
+	      if(FEM_Mesh.Bounds.BCC_i[i].Dir[k*NumTimeStep + TimeStep] == 1)
 		{
 		  /* 
 		     Set to zero the forces in the nodes where velocity is fixed 

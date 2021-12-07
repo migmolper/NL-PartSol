@@ -1,7 +1,7 @@
 #include "nl-partsol.h"
 #include <sys/stat.h>
 
-static char * vector_delimiter = " {,}";
+static char * vector_delimiter = " {;}";
 
 /***************************************************************************/
 

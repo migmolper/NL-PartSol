@@ -9,6 +9,7 @@
 
 # Common build directory
 build/*
+nl-partsol/build/*
 
 # Prerequisites
 *.d
