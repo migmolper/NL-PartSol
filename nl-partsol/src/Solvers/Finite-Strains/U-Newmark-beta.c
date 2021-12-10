@@ -74,12 +74,14 @@ void U_Newmark_beta_Finite_Strains(
   /*
     Auxiliar variables for the solver
   */
-  int Ndim = NumberDimensions;
+  int Ndim = NumberDimensions;  
   int Nactivenodes;
   int InitialStep = Parameters_Solver.InitialTimeStep;
   int NumTimeStep = Parameters_Solver.NumTimeStep;  
   int MaxIter = Parameters_Solver.MaxIter;
   int Iter;
+
+  unsigned TimeStep = InitialStep;
 
   double TOL = Parameters_Solver.TOL_Newmark_beta;
   double epsilon = Parameters_Solver.epsilon_Mass_Matrix;
@@ -124,7 +126,7 @@ void U_Newmark_beta_Finite_Strains(
   Free_and_Restricted_Dofs = generate_Mask_for_static_condensation__MeshTools__(ActiveNodes,FEM_Mesh,InitialStep,NumTimeStep);
   hot_start(FEM_Mesh,MPM_Mesh,ActiveNodes,Free_and_Restricted_Dofs,Parameters_Solver,Params,InitialStep);
 
-  for(unsigned TimeStep = InitialStep ; TimeStep<NumTimeStep ; TimeStep++)
+  while(TimeStep<NumTimeStep)
     {
       print_Status("*************************************************",TimeStep);
       print_step(TimeStep,DeltaTimeStep);
@@ -229,6 +231,9 @@ void U_Newmark_beta_Finite_Strains(
       Nactivenodes = ActiveNodes.Nactivenodes;
       Free_and_Restricted_Dofs = generate_Mask_for_static_condensation__MeshTools__(ActiveNodes,FEM_Mesh,TimeStep,NumTimeStep);
       print_Status("DONE !!!",TimeStep);
+
+      /* Update time step */  
+      TimeStep++;
 
     }
 
@@ -650,7 +655,7 @@ static Nodal_Field initialise_Nodal_Increments(
             U_n.d2_value_dt2.nM[Id_BCC_mask][k] += alpha_1*D_U_value_It - alpha_2*U_n.d_value_dt.nM[Id_BCC_mask][k] - (alpha_3 + 1)*U_n.d2_value_dt2.nM[Id_BCC_mask][k];
             U_n.d_value_dt.nM[Id_BCC_mask][k]   += alpha_4*D_U_value_It + (alpha_5-1)*U_n.d_value_dt.nM[Id_BCC_mask][k] + alpha_6*U_n.d2_value_dt2.nM[Id_BCC_mask][k];
           }
-
+         
           /*
             Initialise increments using newmark and the value of the boundary condition
           */
