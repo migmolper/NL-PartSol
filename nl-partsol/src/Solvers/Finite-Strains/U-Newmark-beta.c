@@ -501,7 +501,7 @@ static Nodal_Field compute_Nodal_Field(
   int Order = Nnodes_mask*Ndim;
   int LDA   = Order;
   int LDB = Order;
-  char  TRANS = 'T'; /* (Transpose) */
+  char  TRANS = 'N'; /* (Transpose) */
   int   INFO= 3;
   int * IPIV = (int *)Allocate_Array(Order,sizeof(int));
   int NRHS = 1;
@@ -1586,7 +1586,7 @@ static void solve_non_reducted_system(
   int Order = Nnodes_mask*Ndof;
   int LDA   = Nnodes_mask*Ndof;
   int LDB   = Nnodes_mask*Ndof;
-  char  TRANS = 'T'; /* (Transpose) */
+  char  TRANS = 'N'; /* (Transpose) */
   int   INFO = 3;
   int * IPIV = (int *)Allocate_Array(Order,sizeof(int));
   int NRHS = 1;
@@ -1728,7 +1728,7 @@ for(idx_A_ij = 0 ; idx_A_ij < Order ; idx_A_ij++)
  int LDA   = Num_Free_dofs;
  int LDB   = Num_Free_dofs;
  int Order_FF = Num_Free_dofs;
- char  TRANS = 'T'; /* (Transpose) */
+ char  TRANS = 'N'; /* (Transpose) */
  int   INFO = 3;
  int * IPIV = (int *)Allocate_Array(Num_Free_dofs,sizeof(int));
  int NRHS = 1;
