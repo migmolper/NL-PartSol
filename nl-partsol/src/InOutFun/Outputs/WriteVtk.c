@@ -67,7 +67,10 @@ static void vtk_Out_Check_Partition_Unity(FILE *, Matrix, int);
 
 /*****************************************************************/
 
-void particle_results_vtk__InOutFun__(Particle MPM_Mesh, int TimeStep_i, int ResultsTimeStep)
+void particle_results_vtk__InOutFun__(
+  Particle MPM_Mesh, 
+  int TimeStep_i, 
+  int ResultsTimeStep)
 {
 
   /* Number of dimensions */
@@ -405,6 +408,26 @@ void nodal_results_vtk__InOutFun__(
   
   /* Cell data */  
   fprintf(Vtk_file,"CELL_DATA %i \n",ActiveNodes.Nactivenodes);
+
+  fprintf(Vtk_file,"SCALARS Boundary double \n");
+  fprintf(Vtk_file,"LOOKUP_TABLE default \n");
+  for(int i = 0 ; i<ElementMesh.NumNodesMesh ; i++)
+  {
+    i_mask = ActiveNodes.Nodes2Mask[i];
+
+    if(i_mask != -1)
+    {
+      if(ElementMesh.BoundaryNode[i])
+      {
+        fprintf(Vtk_file,"1.0 \n");
+      }
+      else
+      {
+        fprintf(Vtk_file,"0.0 \n");
+      }
+    }
+  }
+
 
   /* Close the file */
   fclose(Vtk_file);

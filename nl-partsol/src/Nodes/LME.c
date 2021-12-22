@@ -131,7 +131,11 @@ void initialize__LME__(
     }
 
   } 
-
+  
+  /*
+    Generate list with the active nodes
+  */
+  generate_contour_nodes(FEM_Mesh);
 
   for(int p = 0 ; p<Np ; p++)
   {
@@ -1067,6 +1071,11 @@ void local_search__LME__(Particle MPM_Mesh, Mesh FEM_Mesh)
     }
 
   }
+
+  /*
+    Generate list with the active nodes
+  */
+  generate_contour_nodes(FEM_Mesh);
 
   /* 
     Loop over the particles to compute the tributary nodes

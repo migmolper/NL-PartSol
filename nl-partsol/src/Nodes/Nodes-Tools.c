@@ -46,6 +46,59 @@ void local_search__MeshTools__(Particle MPM_Mesh, Mesh FEM_Mesh)
 
 }
 
+/**************************************************************/
+
+void generate_contour_nodes(
+  Mesh FEM_Mesh)
+{
+
+ unsigned Nnodes = FEM_Mesh.NumNodesMesh;
+ unsigned ContourNodes = 0;
+ unsigned SizeNodalLocality_A = 0;
+ unsigned NumActiveNodes_A = 0;
+ unsigned B;
+ ChainPtr NodalLocality_A;
+
+ for(unsigned A = 0 ; A<Nnodes ; A++)
+ {
+    if(FEM_Mesh.ActiveNode[A])
+    {
+      SizeNodalLocality_A = FEM_Mesh.SizeNodalLocality_0[A];
+      NodalLocality_A = FEM_Mesh.NodalLocality_0[A];
+      NumActiveNodes_A = 0;
+
+      while (NodalLocality_A != NULL)
+      {
+        
+        B = NodalLocality_A->Idx;
+        
+        if(FEM_Mesh.ActiveNode[B])
+        {
+          NumActiveNodes_A++;
+        }
+
+        NodalLocality_A = NodalLocality_A->next;
+
+      } 
+
+      if(NumActiveNodes_A < 9)
+      {
+        FEM_Mesh.BoundaryNode[A] = true;
+      }
+      else
+      {
+        FEM_Mesh.BoundaryNode[A] = false;
+      }
+
+    }
+    else
+    {
+      FEM_Mesh.BoundaryNode[A] = false;
+    }
+ }
+
+
+}
 
 /**************************************************************/
 

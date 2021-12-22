@@ -90,6 +90,9 @@ Mesh GramsBox(
   FEM_Mesh.ActiveNode = (bool *)malloc(FEM_Mesh.NumNodesMesh*sizeof(bool));
   printf("\t \t %s : %s \n","-> Allocate list of active nodes","Done");
 
+  FEM_Mesh.BoundaryNode = (bool *)malloc(FEM_Mesh.NumNodesMesh*sizeof(bool));
+  printf("\t \t %s : %s \n","-> Allocate list of boundary nodes","Done");
+
   FEM_Mesh.Num_Particles_Node = (int *)Allocate_ArrayZ(FEM_Mesh.NumNodesMesh,sizeof(int));
   FEM_Mesh.List_Particles_Node = alloc_table__SetLib__(FEM_Mesh.NumNodesMesh);
   printf("\t \t %s : %s \n","-> Allocate list of particles per node","Done");
