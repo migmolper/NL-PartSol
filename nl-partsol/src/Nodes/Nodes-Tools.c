@@ -79,7 +79,7 @@ void generate_contour_nodes(
 
         NodalLocality_A = NodalLocality_A->next;
 
-      } 
+      }
 
       if(NumActiveNodes_A < 9)
       {

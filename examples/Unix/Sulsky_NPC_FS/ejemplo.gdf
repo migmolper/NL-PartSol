@@ -1,14 +1,13 @@
+# Time integration
+NLPS-Solver (Type=NPC-FS) {
+    CFL=0.01
+    N=15000
+    Cel=70.71
+}
 
 # Background mesh definition
 GramsBox (Type=GID,File=FEM_Mesh.msh) {
 
-}
-
-# Time integration
-GramsTime (Type=NPC-FS) {
-    CFL=0.01
-    N=15000
-    Cel=70.71
 }
 
 
@@ -26,7 +25,8 @@ One-Phase-Analysis (File=MPM_Mesh.msh,GPxElement=3) {
     Assign-material-to-particles(MatIdx=0,Particles=Material.txt)
     
     # Shape function definition
-    GramsShapeFun (Type=FEM) {
+    GramsShapeFun (Type=LME) {
+	gamma=3.0
     }
 
     # Initial conditions for the GPs

@@ -96,7 +96,8 @@ void initialize__LME__(
         }
 
         // Select the closest nodes to the particle and activate them
-        Locality_I0 = FEM_Mesh.NodalLocality_0[MPM_Mesh.I0[p]];
+//        Locality_I0 = FEM_Mesh.NodalLocality_0[MPM_Mesh.I0[p]];
+        Locality_I0 = FEM_Mesh.Connectivity[MPM_Mesh.Element_p[p]];
 
         while(Locality_I0 != NULL)
         {
@@ -159,18 +160,13 @@ void initialize__LME__(
     MPM_Mesh.Beta.nV[p] = Beta_p;
 
     // Update lagrange multiplier with Newton-Rapson or with Nelder-Mead
-    if(strcmp(wrapper_LME,"Newton-Raphson") == 0)
-    {
-      update_lambda_Newton_Rapson__LME__(p, Delta_Xip, lambda_p, Beta_p);
-    }
-    else if(strcmp(wrapper_LME,"Nelder-Mead") == 0)
+    if(FEM_Mesh.BoundaryNode[MPM_Mesh.I0[p]])
     {
       update_lambda_Nelder_Mead__LME__(p, Delta_Xip, lambda_p, Beta_p);
     }
     else
     {
-      fprintf(stderr,"%s : %s \n","Error in initialize__LME__","Unrecognaised wrapper");
-      exit(EXIT_FAILURE);      
+      update_lambda_Newton_Rapson__LME__(p, Delta_Xip, lambda_p, Beta_p);  
     }
 
     // Active those nodes that interact with the particle
@@ -407,7 +403,7 @@ void update_lambda_Nelder_Mead__LME__(
 {
   int Ndim = NumberDimensions;
   int Nnodes_simplex = Ndim + 1;
-  int MaxIter = max_iter_LME;
+  int MaxIter = 100;//max_iter_LME;
   int NumIter = 0;
 
   // Simplex generated with lagrange multipliers
@@ -516,7 +512,7 @@ void update_lambda_Nelder_Mead__LME__(
       "Warning in lambda_Nelder_Mead__LME__ for particle",Idx_particle,
       "No convergence reached in the maximum number of interations",MaxIter);
     fprintf(stderr,"%s : %e\n", "Total Error",fabs(logZ_0 - logZ_n1));
-    exit(EXIT_FAILURE);
+//    exit(EXIT_FAILURE);
   }
 
   // Update the value of lambda
@@ -1054,7 +1050,8 @@ void local_search__LME__(Particle MPM_Mesh, Mesh FEM_Mesh)
     }
   
     // Select the closest nodes to the particle
-     Locality_I0 = FEM_Mesh.NodalLocality_0[MPM_Mesh.I0[p]];
+//     Locality_I0 = FEM_Mesh.NodalLocality_0[MPM_Mesh.I0[p]];
+       Locality_I0 = FEM_Mesh.Connectivity[MPM_Mesh.Element_p[p]];
 
     /* 
       Activate the nodes near the particle
@@ -1123,18 +1120,13 @@ void local_search__LME__(Particle MPM_Mesh, Mesh FEM_Mesh)
     MPM_Mesh.Beta.nV[p] = Beta_p;
 
     // Update lagrange multiplier with Newton-Rapson or with Nelder-Mead
-    if(strcmp(wrapper_LME,"Newton-Raphson") == 0)
-    {
-      update_lambda_Newton_Rapson__LME__(p, Delta_Xip, lambda_p, Beta_p);
-    }
-    else if(strcmp(wrapper_LME,"Nelder-Mead") == 0)
+    if(FEM_Mesh.BoundaryNode[MPM_Mesh.I0[p]])
     {
       update_lambda_Nelder_Mead__LME__(p, Delta_Xip, lambda_p, Beta_p);
     }
     else
     {
-      fprintf(stderr,"%s : %s \n","Error in local_search__LME__","Unrecognaised wrapper");
-      exit(EXIT_FAILURE);      
+      update_lambda_Newton_Rapson__LME__(p, Delta_Xip, lambda_p, Beta_p);  
     }
     
     /* Free memory */
