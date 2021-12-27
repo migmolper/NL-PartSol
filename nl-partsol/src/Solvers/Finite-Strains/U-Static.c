@@ -40,7 +40,7 @@ typedef struct
   double alpha_5;
   double alpha_6;
 } Newmark_parameters;
-  
+
 /*
   Auxiliar functions 
 */
@@ -64,23 +64,20 @@ static void   update_Particles(Nodal_Field,Particle,Mesh,Mask);
 static void output_selector(Particle,Mesh,Mask,Nodal_Field,Nodal_Field,Matrix,Matrix,Matrix,int,int);
 /**************************************************************/
 
-void U_Newmark_beta_Finite_Strains(
+int U_Static_Finite_Strains(
   Mesh FEM_Mesh,
   Particle MPM_Mesh,
   Time_Int_Params Parameters_Solver)
 {
+             
+  bool Convergence = false;
 
-  /*
-    Auxiliar variables for the solver
-  */
-  int Ndim = NumberDimensions;  
+  int Iter = 0;
+  int Ndim = NumberDimensions;
   int Nactivenodes;
   int InitialStep = Parameters_Solver.InitialTimeStep;
   int NumTimeStep = Parameters_Solver.NumTimeStep;  
   int MaxIter = Parameters_Solver.MaxIter;
-  int Iter;
-
-  unsigned TimeStep = InitialStep;
 
   double TOL = Parameters_Solver.TOL_Newmark_beta;
   double epsilon = Parameters_Solver.epsilon_Mass_Matrix;
@@ -89,8 +86,6 @@ void U_Newmark_beta_Finite_Strains(
   double CFL = Parameters_Solver.CFL;
   double DeltaTimeStep;
   double DeltaX = FEM_Mesh.DeltaX;
-
-  bool Convergence;
 
   Matrix Effective_Mass;
   Matrix Tangent_Stiffness;
@@ -106,128 +101,89 @@ void U_Newmark_beta_Finite_Strains(
 
   Newmark_parameters Params;
 
-  /*
-    Time step is defined at the init of the simulation throught the
-    CFL condition. Notice that for this kind of solver, CFL confition is
-    not required to be satisfied. The only purpose of it is to use the existing
-    software interfase.
-  */
+  puts("*************************************************");
+  puts("Run static conditions ...");
+
   DeltaTimeStep = U_DeltaT__SolversLib__(MPM_Mesh, DeltaX, Parameters_Solver);
- 
-  /*
-    Compute alpha parameters
-  */
+
   Params = compute_Newmark_parameters(beta, gamma, DeltaTimeStep);
+  local_search__MeshTools__(MPM_Mesh,FEM_Mesh);
+  ActiveNodes = generate_NodalMask__MeshTools__(FEM_Mesh);
+  Nactivenodes = ActiveNodes.Nactivenodes;
+  Free_and_Restricted_Dofs = generate_Mask_for_static_condensation__MeshTools__(ActiveNodes,FEM_Mesh,InitialStep,NumTimeStep);
 
-//  U_Static_Finite_Strains(FEM_Mesh,MPM_Mesh,ActiveNodes,Parameters_Solver);
+  Effective_Mass = compute_Nodal_Effective_Mass(MPM_Mesh,FEM_Mesh,ActiveNodes,epsilon);
 
-  while(TimeStep<NumTimeStep)
+  U_n = compute_Nodal_Field(Effective_Mass,MPM_Mesh,FEM_Mesh,ActiveNodes);
+  
+  D_U = initialise_Nodal_Increments(U_n,FEM_Mesh,ActiveNodes,Params,0,NumTimeStep);
+
+  while(Convergence == false)
+  {
+
+    Forces = compute_Nodal_Forces(ActiveNodes,MPM_Mesh,FEM_Mesh,0,NumTimeStep);
+
+    Reactions = compute_Nodal_Reactions(FEM_Mesh,Forces,ActiveNodes,0,NumTimeStep);
+
+    Residual = compute_Nodal_Residual(U_n,D_U,ActiveNodes,Forces,Effective_Mass,Params);
+
+    Convergence = check_convergence(Residual,TOL,Iter,MaxIter,0);
+
+    if(Convergence == false)
     {
-      print_Status("*************************************************",TimeStep);
-      print_step(TimeStep,DeltaTimeStep);
 
-      local_search__MeshTools__(MPM_Mesh,FEM_Mesh);
-      ActiveNodes = generate_NodalMask__MeshTools__(FEM_Mesh);
-      Nactivenodes = ActiveNodes.Nactivenodes;
-      Free_and_Restricted_Dofs = generate_Mask_for_static_condensation__MeshTools__(ActiveNodes,FEM_Mesh,TimeStep,NumTimeStep);
+	    Tangent_Stiffness = assemble_Nodal_Tangent_Stiffness(ActiveNodes,MPM_Mesh,FEM_Mesh,Params);
 
-      print_Status("*************************************************",TimeStep);
-      print_Status("First step : Compute effective mass ... WORKING",TimeStep);
-      Effective_Mass = compute_Nodal_Effective_Mass(MPM_Mesh,FEM_Mesh,ActiveNodes,epsilon);
-      print_Status("DONE !!!",TimeStep);
-
-      print_Status("*************************************************",TimeStep);
-      print_Status("Second step : Compute nodal kinetics ... WORKING",TimeStep);
-      /*
-        Compute the nodal values of velocity and acceleration
-      */
-      U_n = compute_Nodal_Field(Effective_Mass,MPM_Mesh,FEM_Mesh,ActiveNodes);
-      D_U = initialise_Nodal_Increments(U_n,FEM_Mesh,ActiveNodes,Params,TimeStep,NumTimeStep);
-      print_Status("DONE !!!",TimeStep);
-
-
-      print_Status("*************************************************",TimeStep);
-      print_Status("Third step : Compute equilibrium ... WORKING",TimeStep);
-           
-      Convergence = false;
-      Iter = 0;
-
-      while(Convergence == false)
+	    if((Free_and_Restricted_Dofs.Nactivenodes - Ndim*Nactivenodes) == 0)
       {
+		    solve_non_reducted_system(D_U,Tangent_Stiffness,Effective_Mass,Residual,Params);
+		  }
+	    else
+		  {
+		    solve_reducted_system(D_U,Tangent_Stiffness,Effective_Mass,Residual,Free_and_Restricted_Dofs,Params);
+		  }
 
-        Forces = compute_Nodal_Forces(ActiveNodes,MPM_Mesh,FEM_Mesh,TimeStep,NumTimeStep);
+      update_Newmark_Nodal_Increments(D_U,U_n,Params);
 
-        Reactions = compute_Nodal_Reactions(FEM_Mesh,Forces,ActiveNodes,TimeStep,NumTimeStep);
-
-        Residual = compute_Nodal_Residual(U_n,D_U,ActiveNodes,Forces,Effective_Mass,Params);
-
-        Convergence = check_convergence(Residual,TOL,Iter,MaxIter,TimeStep);
-
-        if(Convergence == false)
-        {
-
-	        Tangent_Stiffness = assemble_Nodal_Tangent_Stiffness(ActiveNodes,MPM_Mesh,FEM_Mesh,Params);
-
-	        if((Free_and_Restricted_Dofs.Nactivenodes - Ndim*Nactivenodes) == 0)
-		      {
-		        solve_non_reducted_system(D_U,Tangent_Stiffness,Effective_Mass,Residual,Params);
-		      }
-	        else
-		      {
-		        solve_reducted_system(D_U,Tangent_Stiffness,Effective_Mass,Residual,Free_and_Restricted_Dofs,Params);
-		      }
-
-          update_Newmark_Nodal_Increments(D_U,U_n,Params);
-
-          update_Local_State(D_U,ActiveNodes,MPM_Mesh,FEM_Mesh,DeltaTimeStep);
+      update_Local_State(D_U,ActiveNodes,MPM_Mesh,FEM_Mesh,DeltaTimeStep);
           
-	        Iter++;
+	    Iter++;
 
-	        free__MatrixLib__(Forces);
-	        free__MatrixLib__(Reactions);
-	        free__MatrixLib__(Residual);
-	        free__MatrixLib__(Tangent_Stiffness);
-        }
-      }
-
-      print_Status("DONE !!!",TimeStep);
-
-
-      print_Status("*************************************************",TimeStep);
-      print_Status("Four step : Update particles ... WORKING",TimeStep);
-
-      update_Particles(D_U,MPM_Mesh,FEM_Mesh,ActiveNodes);
-    
-      /*
-	      Outputs
-      */
-      output_selector(MPM_Mesh, FEM_Mesh, ActiveNodes, D_U, U_n, Forces, Reactions, Residual,TimeStep, ResultsTimeStep);    
-
-      print_Status("*************************************************",TimeStep);
-      print_Status("Five step : Reset nodal values ... WORKING",TimeStep);
-      /*
-	Free memory.
-      */
-      free__MatrixLib__(Effective_Mass); 
-      free__MatrixLib__(U_n.value);
-      free__MatrixLib__(U_n.d_value_dt);
-      free__MatrixLib__(U_n.d2_value_dt2);
-      free__MatrixLib__(D_U.value);
-      free__MatrixLib__(D_U.d_value_dt);
-      free__MatrixLib__(D_U.d2_value_dt2);
-      free__MatrixLib__(Forces);
-      free__MatrixLib__(Reactions);
-      free__MatrixLib__(Residual);
-      free(ActiveNodes.Nodes2Mask);
-      free(Free_and_Restricted_Dofs.Nodes2Mask);
-
-      print_Status("DONE !!!",TimeStep);
-
-      /* Update time step */  
-      TimeStep++;
-
+	    free__MatrixLib__(Forces);
+	    free__MatrixLib__(Reactions);
+	    free__MatrixLib__(Residual);
+	    free__MatrixLib__(Tangent_Stiffness);
     }
+  }
 
+  update_Particles(D_U,MPM_Mesh,FEM_Mesh,ActiveNodes);
+
+  /*
+	  Outputs
+  */
+  output_selector(MPM_Mesh, FEM_Mesh, ActiveNodes, D_U, U_n, Forces, Reactions, Residual,0, ResultsTimeStep);    
+
+
+
+  /*
+	  Free memory.
+  */
+  free__MatrixLib__(Effective_Mass); 
+  free__MatrixLib__(U_n.value);
+  free__MatrixLib__(U_n.d_value_dt);
+  free__MatrixLib__(U_n.d2_value_dt2);
+  free__MatrixLib__(D_U.value);
+  free__MatrixLib__(D_U.d_value_dt);
+  free__MatrixLib__(D_U.d2_value_dt2);
+  free__MatrixLib__(Forces);
+  free__MatrixLib__(Reactions);
+  free__MatrixLib__(Residual);
+  free(ActiveNodes.Nodes2Mask);
+  free(Free_and_Restricted_Dofs.Nodes2Mask);
+
+  puts("*************************************************");
+
+  return EXIT_SUCCESS;    
 }
 
 /**************************************************************/
@@ -817,6 +773,7 @@ static void update_Local_State(
       integration rule.
     */
     Stress_integration__Particles__(p,MPM_Mesh,FEM_Mesh,MatProp_p); 
+
   }
   
 }
@@ -1268,30 +1225,11 @@ static Matrix compute_Nodal_Residual(
   int Ndof = NumberDOF;
   int Nnodes_mask = ActiveNodes.Nactivenodes;
   int Order = Ndim*Nnodes_mask;
-  Matrix Acceleration_n1 = allocZ__MatrixLib__(Nnodes_mask,Ndim);
-  Matrix Inertial_Forces = allocZ__MatrixLib__(Nnodes_mask,Ndim);
   Matrix Residual = allocZ__MatrixLib__(Nnodes_mask,Ndim);
   double alpha_1 = Params.alpha_1;
   double alpha_2 = Params.alpha_2;
   double alpha_3 = Params.alpha_3;
 
-  /*
-    Compute nodal acceleration (Vectorized)
-  */
-  for(int idx_B = 0 ; idx_B<Order ; idx_B++)
-    {
-      Acceleration_n1.nV[idx_B] = alpha_1*D_U.value.nV[idx_B] - alpha_2*U_n.d_value_dt.nV[idx_B] - alpha_3*U_n.d2_value_dt2.nV[idx_B];
-    }
-  /*
-    Compute inertial forces (Vectorized)
-  */
-  for(int idx_A = 0 ; idx_A<Order ; idx_A++)
-    {
-      for(int idx_B = 0 ; idx_B<Order ; idx_B++)
-      {
-        Inertial_Forces.nV[idx_A] += Mass.nM[idx_A][idx_B]*Acceleration_n1.nV[idx_B];
-      }
-    }
 
   /*
     Compute (-) residual (Vectorized). The minus symbol is due to
@@ -1299,15 +1237,8 @@ static Matrix compute_Nodal_Residual(
   */
   for(int idx_A = 0 ; idx_A<Order ; idx_A++)
     {
-      Residual.nV[idx_A] = Inertial_Forces.nV[idx_A] + Forces.nV[idx_A];
+      Residual.nV[idx_A] = Forces.nV[idx_A];
     }
-
-  /*
-    Free Memory 
-  */
-  free__MatrixLib__(Acceleration_n1);
-  free__MatrixLib__(Inertial_Forces);
-
   
   return Residual;
 }
@@ -1363,6 +1294,8 @@ static bool check_convergence(
       {
         Error_relative = Error/Error0;
       }
+
+      printf("Iter: %i, Total Error: %e, Relative Error: %e \n",Iter,Error,Error_relative);
       
       /*
         Check convergence using the relative error
@@ -1589,7 +1522,7 @@ static void solve_non_reducted_system(
   */
   for(int idx_AB_ij = 0 ; idx_AB_ij<Order*Order ; idx_AB_ij++)
   {
-    K_Global.nV[idx_AB_ij] = alpha_1*Effective_Mass.nV[idx_AB_ij] + Tangent_Stiffness.nV[idx_AB_ij];
+    K_Global.nV[idx_AB_ij] = Tangent_Stiffness.nV[idx_AB_ij];
   }
 
 
@@ -1705,7 +1638,7 @@ for(idx_A_ij = 0 ; idx_A_ij < Order ; idx_A_ij++)
       */
       if((Mask_idx_A_ij != - 1) && (Mask_idx_B_ij != - 1))
       {
-        K_Global_FF.nM[Mask_idx_A_ij][Mask_idx_B_ij] = alpha_1*Effective_Mass.nM[idx_A_ij][idx_B_ij] + Tangent_Stiffness.nM[idx_A_ij][idx_B_ij];
+        K_Global_FF.nM[Mask_idx_A_ij][Mask_idx_B_ij] = Tangent_Stiffness.nM[idx_A_ij][idx_B_ij];
       }
 
     }
@@ -2081,9 +2014,3 @@ static void output_selector(
   // }
 
 }
-
-/**************************************************************/
-
-
-
-

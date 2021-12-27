@@ -96,8 +96,8 @@ void initialize__LME__(
         }
 
         // Select the closest nodes to the particle and activate them
-//        Locality_I0 = FEM_Mesh.NodalLocality_0[MPM_Mesh.I0[p]];
-        Locality_I0 = FEM_Mesh.Connectivity[MPM_Mesh.Element_p[p]];
+        Locality_I0 = FEM_Mesh.NodalLocality_0[MPM_Mesh.I0[p]];
+//        Locality_I0 = FEM_Mesh.Connectivity[MPM_Mesh.Element_p[p]];
 
         while(Locality_I0 != NULL)
         {
@@ -160,14 +160,14 @@ void initialize__LME__(
     MPM_Mesh.Beta.nV[p] = Beta_p;
 
     // Update lagrange multiplier with Newton-Rapson or with Nelder-Mead
-    if(FEM_Mesh.BoundaryNode[MPM_Mesh.I0[p]])
-    {
-      update_lambda_Nelder_Mead__LME__(p, Delta_Xip, lambda_p, Beta_p);
-    }
-    else
-    {
-      update_lambda_Newton_Rapson__LME__(p, Delta_Xip, lambda_p, Beta_p);  
-    }
+//    if(FEM_Mesh.BoundaryNode[MPM_Mesh.I0[p]])
+//    {
+//      update_lambda_Nelder_Mead__LME__(p, Delta_Xip, lambda_p, Beta_p);
+//   }
+//    else
+//    {
+    update_lambda_Newton_Rapson__LME__(p, Delta_Xip, lambda_p, Beta_p);  
+//    }
 
     // Active those nodes that interact with the particle
     asign_to_nodes__Particles__(p, MPM_Mesh.Element_p[p], MPM_Mesh.I0[p], MPM_Mesh.ListNodes[p], FEM_Mesh);
@@ -403,7 +403,7 @@ void update_lambda_Nelder_Mead__LME__(
 {
   int Ndim = NumberDimensions;
   int Nnodes_simplex = Ndim + 1;
-  int MaxIter = 100;//max_iter_LME;
+  int MaxIter = 500;//max_iter_LME;
   int NumIter = 0;
 
   // Simplex generated with lagrange multipliers
@@ -1050,8 +1050,8 @@ void local_search__LME__(Particle MPM_Mesh, Mesh FEM_Mesh)
     }
   
     // Select the closest nodes to the particle
-//     Locality_I0 = FEM_Mesh.NodalLocality_0[MPM_Mesh.I0[p]];
-       Locality_I0 = FEM_Mesh.Connectivity[MPM_Mesh.Element_p[p]];
+     Locality_I0 = FEM_Mesh.NodalLocality_0[MPM_Mesh.I0[p]];
+//       Locality_I0 = FEM_Mesh.Connectivity[MPM_Mesh.Element_p[p]];
 
     /* 
       Activate the nodes near the particle
@@ -1120,14 +1120,14 @@ void local_search__LME__(Particle MPM_Mesh, Mesh FEM_Mesh)
     MPM_Mesh.Beta.nV[p] = Beta_p;
 
     // Update lagrange multiplier with Newton-Rapson or with Nelder-Mead
-    if(FEM_Mesh.BoundaryNode[MPM_Mesh.I0[p]])
-    {
-      update_lambda_Nelder_Mead__LME__(p, Delta_Xip, lambda_p, Beta_p);
-    }
-    else
-    {
-      update_lambda_Newton_Rapson__LME__(p, Delta_Xip, lambda_p, Beta_p);  
-    }
+//    if(FEM_Mesh.BoundaryNode[MPM_Mesh.I0[p]])
+//    {
+//      update_lambda_Nelder_Mead__LME__(p, Delta_Xip, lambda_p, Beta_p);
+//    }
+//    else
+//    {
+    update_lambda_Newton_Rapson__LME__(p, Delta_Xip, lambda_p, Beta_p);  
+//    }
     
     /* Free memory */
     free__MatrixLib__(Delta_Xip);

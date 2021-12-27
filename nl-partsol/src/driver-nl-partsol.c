@@ -96,22 +96,26 @@ int main(int argc, char * argv[])
     NLPS_Out_nodal_path_csv__InOutFun__(SimulationFile);
     NLPS_Out_particles_path_csv__InOutFun__(SimulationFile);
 
+    U_Static_Finite_Strains(FEM_Mesh,MPM_Mesh,Parameters_Solver);
+
+    exit(0);
+
     puts("*************************************************");
     puts("Run simulation ...");
     if(strcmp(Parameters_Solver.TimeIntegrationScheme,"FE") == 0 )
-    { 
+    {
       U_Forward_Euler(FEM_Mesh, MPM_Mesh, Parameters_Solver);
     }
     else if(strcmp(Parameters_Solver.TimeIntegrationScheme,"Generalized-alpha") == 0 )
-    { 
+    {
       U_Generalized_alpha(FEM_Mesh, MPM_Mesh, Parameters_Solver);
     }
     else if(strcmp(Parameters_Solver.TimeIntegrationScheme,"NPC") == 0 )
-    { 
+    {
       U_Newmark_Predictor_Corrector(FEM_Mesh, MPM_Mesh, Parameters_Solver);
     }
     else if(strcmp(Parameters_Solver.TimeIntegrationScheme,"NPC-FS") == 0 )
-    { 
+    {
       U_Newmark_Predictor_Corrector_Finite_Strains(FEM_Mesh, MPM_Mesh, Parameters_Solver);
     }
     else if(strcmp(Parameters_Solver.TimeIntegrationScheme,"Discrete-Energy-Momentum") == 0 )
