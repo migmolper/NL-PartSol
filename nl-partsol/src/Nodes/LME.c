@@ -1030,7 +1030,7 @@ void local_search__LME__(Particle MPM_Mesh, Mesh FEM_Mesh)
       Get the global coordinates and velocity of the particle
     */
     X_p = memory_to_matrix__MatrixLib__(Ndim,1,MPM_Mesh.Phi.x_GC.nM[p]);
-    V_p = memory_to_matrix__MatrixLib__(Ndim,1,MPM_Mesh.Phi.vel.nM[p]);
+    V_p = memory_to_matrix__MatrixLib__(Ndim,1,MPM_Mesh.Phi.dis.nM[p]);
 
 
     /* 

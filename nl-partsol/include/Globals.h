@@ -1,6 +1,6 @@
 
 extern char * SimulationFile;
-extern char * RestartFile;
+extern char * Static_conditons;
 extern char * FEM_MeshFileName;
 extern char * MPM_MeshFileName;
 extern char * TimeIntegrationScheme;
@@ -62,6 +62,7 @@ extern bool Out_displacement;
 extern bool Out_stress;
 extern bool Out_eigenvalues_stress;
 extern bool Out_volumetric_stress;
+extern bool Out_water_pressure;
 extern bool Out_Pw;
 extern bool Out_dPw_dt;
 extern bool Out_strain;
@@ -75,4 +76,11 @@ extern bool Out_energy;
 extern bool Out_Von_Mises;
 extern bool Out_EPS;
 extern bool Out_Partition_Unity;
+
+
+/* Variables for the backups */
+extern char Output_Backup_File[MAXC];
+extern bool Backup_damage;
+extern bool Backup_plastic_deformation_gradient;
+extern bool Backup_EPS;
 

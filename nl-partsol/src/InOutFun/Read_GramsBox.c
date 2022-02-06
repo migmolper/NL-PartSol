@@ -111,7 +111,6 @@ Mesh GramsBox(
   /*  
     -> Compute the boundary conditions
   */
-  puts("*************************************************");
   printf(" \t %s : %i \n","* Number of boundaries",Nodes_Info.Number_Boundaries);
   FEM_Mesh.Bounds.NumBounds = Nodes_Info.Number_Boundaries;
 

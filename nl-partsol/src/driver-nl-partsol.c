@@ -17,7 +17,7 @@
   Call global variables 
 */
 char * SimulationFile;
-char * RestartFile;
+char * Static_conditons;
 char * TimeIntegrationScheme;
 char * Formulation;
 
@@ -25,14 +25,15 @@ char * Formulation;
   Auxiliar functions for the main
 */
 static void nlpartsol_help_message();
-static void globalfree(Mesh,Particle);
+static void free_nodes(Mesh);
+static void free_particles(Particle);
 static void standard_error(char * Error_message);
 
 
 int main(int argc, char * argv[])
 {  
   char Error_message[MAXW];
-  bool Is_New_Simulation = false;
+  bool Is_Static_Initialization = false;
   bool Is_Restart_Simulation = false;
   int INFO_GramsSolid = 3;
   Mesh FEM_Mesh;
@@ -53,18 +54,14 @@ int main(int argc, char * argv[])
   {      
     Formulation = argv[1];
     SimulationFile = argv[2];
-    Is_New_Simulation = true;
-//      Is_Restart_Simulation = false;
-//      InitialStep = 0;
+    Is_Static_Initialization = false;
   }
   else if(argc == 4)
   {      
     Formulation = argv[1];
-    SimulationFile = argv[2];
-    RestartFile = argv[3];
-    Is_New_Simulation = false;
-//      Is_Restart_Simulation = true;
-//      InitialStep = get_ResultStep(RestartFile);
+    Static_conditons = argv[2];    
+    SimulationFile = argv[3];
+    Is_Static_Initialization = true;
   }
   else
   {
@@ -78,30 +75,85 @@ int main(int argc, char * argv[])
 
     NumberDOF = NumberDimensions;
 
-    puts("*************************************************");
-    puts("Read solver ...");
-    Parameters_Solver = Solver_selector__InOutFun__(SimulationFile);
+    if(Is_Static_Initialization)
+    {
+      puts("*************************************************");
+      puts("Read solver ...");
+      Parameters_Solver = Solver_selector__InOutFun__(Static_conditons);
+
+      puts("*************************************************");
+      puts("Generating the background mesh ...");
+      FEM_Mesh = GramsBox(Static_conditons,Parameters_Solver);
+
+      puts("*************************************************");
+      puts("Generating new MPM simulation ...");
+      MPM_Mesh = Generate_One_Phase_Analysis__InOutFun__(Static_conditons,FEM_Mesh,Parameters_Solver);
+
+
+      puts("*************************************************");
+      puts("Read outputs ...");
+      GramsOutputs(Static_conditons);
+      NLPS_Out_nodal_path_csv__InOutFun__(Static_conditons);
+      NLPS_Out_particles_path_csv__InOutFun__(Static_conditons);
+
+      puts("*************************************************");
+      printf("Start %s shape functions initialisation ... \n",ShapeFunctionGP);
+      initialise_shapefun__MeshTools__(MPM_Mesh,FEM_Mesh);  
+
+    }
+    else
+    {
+      puts("*************************************************");
+      puts("Read solver ...");
+      Parameters_Solver = Solver_selector__InOutFun__(SimulationFile);
+
+      puts("*************************************************");
+      puts("Generating the background mesh ...");
+      FEM_Mesh = GramsBox(SimulationFile,Parameters_Solver);
+
+      puts("*************************************************");
+      puts("Generating new MPM simulation ...");
+      MPM_Mesh = Generate_One_Phase_Analysis__InOutFun__(SimulationFile,FEM_Mesh,Parameters_Solver);      
+
+      puts("*************************************************");
+      puts("Read outputs ...");
+      GramsOutputs(SimulationFile);
+      NLPS_Out_nodal_path_csv__InOutFun__(SimulationFile);
+      NLPS_Out_particles_path_csv__InOutFun__(SimulationFile);
+
+      puts("*************************************************");
+      printf("Start %s shape functions initialisation ... \n",ShapeFunctionGP);
+      initialise_shapefun__MeshTools__(MPM_Mesh,FEM_Mesh);  
+    }
+ 
+    if(Is_Static_Initialization)
+    {
+      U_Static_Finite_Strains(FEM_Mesh,MPM_Mesh,Parameters_Solver);
+
+      puts("*************************************************");
+      puts("Read solver ...");
+      Parameters_Solver = Solver_selector__InOutFun__(SimulationFile);
+
+      puts("*************************************************");
+      puts("Generating the background mesh ...");
+      free_nodes(FEM_Mesh);
+      FEM_Mesh = GramsBox(SimulationFile,Parameters_Solver);
+
+      puts("*************************************************");
+      printf("Start %s shape functions initialisation ... \n",ShapeFunctionGP);
+
+      for(int p = 0 ; p<MPM_Mesh.NumGP ; p++)
+      {
+        // Free previous connectivity
+        free__SetLib__(&MPM_Mesh.ListNodes[p]);
+        MPM_Mesh.ListNodes[p] = NULL;  
+      }
+
+      initialise_shapefun__MeshTools__(MPM_Mesh,FEM_Mesh);  
+    }
 
     puts("*************************************************");
-    puts("Generating the background mesh ...");
-    FEM_Mesh = GramsBox(SimulationFile,Parameters_Solver);
-
-    puts("*************************************************");
-    puts("Generating new MPM simulation ...");
-    MPM_Mesh = Generate_One_Phase_Analysis__InOutFun__(SimulationFile,FEM_Mesh,Parameters_Solver);
-
-    puts("*************************************************");
-    puts("Read outputs ...");
-    GramsOutputs(SimulationFile);
-    NLPS_Out_nodal_path_csv__InOutFun__(SimulationFile);
-    NLPS_Out_particles_path_csv__InOutFun__(SimulationFile);
-
-    U_Static_Finite_Strains(FEM_Mesh,MPM_Mesh,Parameters_Solver);
-
-    exit(0);
-
-    puts("*************************************************");
-    puts("Run simulation ...");
+    puts("Run dynamic simulation ...");
     if(strcmp(Parameters_Solver.TimeIntegrationScheme,"FE") == 0 )
     {
       U_Forward_Euler(FEM_Mesh, MPM_Mesh, Parameters_Solver);
@@ -138,7 +190,8 @@ int main(int argc, char * argv[])
 
     puts("*************************************************");
     puts("Free memory ...");
-    globalfree(FEM_Mesh, MPM_Mesh);       
+    free_nodes(FEM_Mesh);
+    free_particles(MPM_Mesh);     
 
     printf("Computation finished at : %s \n",__TIME__);  
     puts("Exiting of the program...");
@@ -182,7 +235,8 @@ int main(int argc, char * argv[])
 
     puts("*************************************************");
     puts("Free memory ...");
-    globalfree(FEM_Mesh, MPM_Mesh);       
+    free_nodes(FEM_Mesh);
+    free_particles(MPM_Mesh);         
 
     printf("Computation finished at : %s \n",__TIME__);  
     puts("Exiting of the program...");
@@ -203,16 +257,8 @@ int main(int argc, char * argv[])
     FEM_Mesh = GramsBox(SimulationFile,Parameters_Solver);
     
     puts("*************************************************");
-    if(Is_New_Simulation)
-    {
-      puts("Generating new MPM simulation ...");
-      MPM_Mesh = Generate_Soil_Water_Coupling_Analysis__InOutFun__(SimulationFile,FEM_Mesh,Parameters_Solver);
-    }
-    if(Is_Restart_Simulation)
-    {
-      puts("Restarting old MPM simulation ...");
-      MPM_Mesh = restart_Simulation(SimulationFile,RestartFile,FEM_Mesh);
-    }
+    puts("Generating new MPM simulation ...");
+    MPM_Mesh = Generate_Soil_Water_Coupling_Analysis__InOutFun__(SimulationFile,FEM_Mesh,Parameters_Solver);
 
     puts("*************************************************");
     puts("Read VTK output directives ...");
@@ -244,7 +290,8 @@ int main(int argc, char * argv[])
 
     puts("*************************************************");
     puts("Free memory ...");
-    globalfree(FEM_Mesh, MPM_Mesh);       
+    free_nodes(FEM_Mesh);
+    free_particles(MPM_Mesh);       
 
     printf("Computation finished at : %s \n",__TIME__);  
     puts("Exiting of the program...");
@@ -319,7 +366,7 @@ exit(EXIT_SUCCESS);
 
 /*********************************************************************/
 
-static void globalfree(Mesh FEM_Mesh, Particle MPM_Mesh)
+static void free_nodes(Mesh FEM_Mesh)
 /*
   Function to free the reamaining memory
 */
@@ -330,8 +377,16 @@ static void globalfree(Mesh FEM_Mesh, Particle MPM_Mesh)
   free_table__SetLib__(FEM_Mesh.Connectivity,FEM_Mesh.NumElemMesh);
   free(FEM_Mesh.NumNeighbour);
   free_table__SetLib__(FEM_Mesh.NodeNeighbour,FEM_Mesh.NumNodesMesh);
+
+  free(FEM_Mesh.SizeNodalLocality_0);
   free(FEM_Mesh.SizeNodalLocality);
+
+  free_table__SetLib__(FEM_Mesh.NodalLocality_0,FEM_Mesh.NumNodesMesh);
   free_table__SetLib__(FEM_Mesh.NodalLocality,FEM_Mesh.NumNodesMesh);
+
+  free(FEM_Mesh.ActiveNode);
+  free(FEM_Mesh.BoundaryNode);
+
   free(FEM_Mesh.Num_Particles_Node);
   free_table__SetLib__(FEM_Mesh.List_Particles_Node,FEM_Mesh.NumNodesMesh);
 //  free(FEM_Mesh.Num_Particles_Element);
@@ -345,6 +400,17 @@ static void globalfree(Mesh FEM_Mesh, Particle MPM_Mesh)
   }
 
   /* FEM_Mesh.Bounds */
+
+}
+
+/*********************************************************************/
+
+static void free_particles(Particle MPM_Mesh)
+/*
+  Function to free the reamaining memory
+*/
+{
+
 
   /* Free malloc in MPM_Mesh */
   free(MPM_Mesh.I0);

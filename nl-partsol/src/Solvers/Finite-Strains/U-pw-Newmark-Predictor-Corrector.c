@@ -97,27 +97,11 @@ void upw_Newmark_Predictor_Corrector_Finite_Strains(
       Free_and_Restricted_Dofs = generate_Mask_for_static_condensation__MeshTools__(ActiveNodes,FEM_Mesh,TimeStep,NumTimeStep);
       print_step(TimeStep,DeltaTimeStep);
 
-      print_Status("*************************************************",TimeStep);
-      print_Status("First step : Compute mass and compressibility matrix",TimeStep);
-      print_Status("WORKING ...",TimeStep);
-
       Mass_Matrix_Mixture = compute_Mass_Matrix_Mixture(MPM_Mesh,FEM_Mesh,ActiveNodes);
 
       Compressibility_Matrix_Fluid = compute_Compressibility_Matrix_Fluid(MPM_Mesh,FEM_Mesh,ActiveNodes);
-
-      print_Status("DONE !!!",TimeStep);
-   
-      print_Status("*************************************************",TimeStep);
-      print_Status("Second step : Explicit Newmark predictor",TimeStep);
-      print_Status("WORKING ...",TimeStep);
-      
+     
       compute_Explicit_Newmark_Predictor(MPM_Mesh, gamma, DeltaTimeStep);
-
-      print_Status("DONE !!!",TimeStep);
-
-      print_Status("*************************************************",TimeStep);
-      print_Status("Third step : Compute nodal magnitudes",TimeStep);
-      print_Status("WORKING ...",TimeStep);
 
       Gravity_field = compute_Nodal_Gravity_field(ActiveNodes, MPM_Mesh, TimeStep, NumTimeStep);
 
@@ -129,53 +113,22 @@ void upw_Newmark_Predictor_Corrector_Finite_Strains(
 
       impose_Dirichlet_Boundary_Conditions(FEM_Mesh,Velocity,Pore_water_pressure,ActiveNodes,TimeStep,NumTimeStep);
 
-      print_Status("DONE !!!",TimeStep);
-
-      print_Status("*************************************************",TimeStep);
-      print_Status("Four step : Update local state",TimeStep);
-      print_Status("WORKING ...",TimeStep);
-
       update_Local_State(D_Displacement, Velocity, ActiveNodes, MPM_Mesh, FEM_Mesh);
-
-      print_Status("DONE !!!",TimeStep);
-
-      print_Status("*************************************************",TimeStep);
-      print_Status("Five step : Compute equilibrium mixture",TimeStep);
-      print_Status("WORKING ...",TimeStep);
 
       Total_Forces_Mixture = compute_Total_Forces_Mixture(ActiveNodes, MPM_Mesh, FEM_Mesh, TimeStep, NumTimeStep);
 
       Reactions_Mixture = solve_Nodal_Equilibrium_Mixture(Mass_Matrix_Mixture,Gravity_field,Total_Forces_Mixture,MPM_Mesh,FEM_Mesh,
                                                           ActiveNodes,Free_and_Restricted_Dofs);
 
-      print_Status("DONE !!!",TimeStep);
-
-      print_Status("*************************************************",TimeStep);
-      print_Status("Six step : Compute equilibrium fluid",TimeStep);
-      print_Status("WORKING ...",TimeStep);
-
       Mass_Exchanges_Source_Terms = compute_Mass_exchanges_Source_Terms(Pore_water_pressure,ActiveNodes,MPM_Mesh,FEM_Mesh,TimeStep);
 
       solve_Nodal_Mass_Balance(Compressibility_Matrix_Fluid,Mass_Exchanges_Source_Terms,MPM_Mesh,FEM_Mesh,ActiveNodes,Free_and_Restricted_Dofs);
 
-      print_Status("*************************************************",TimeStep);
-      print_Status("Seven step : Compute corrector",TimeStep);
-      print_Status("WORKING ...",TimeStep);
-
       compute_Explicit_Newmark_Corrector(MPM_Mesh,gamma,DeltaTimeStep);
-
-      print_Status("DONE !!!",TimeStep);
-      
-      print_Status("*************************************************",TimeStep);
-      print_Status("Eight step : Output variables and reset nodal values",TimeStep);
-      print_Status("WORKING ...",TimeStep);
 
       output_selector(MPM_Mesh, FEM_Mesh, ActiveNodes, Velocity, D_Displacement,
                     Total_Forces_Mixture, Reactions_Mixture, DeltaTimeStep, TimeStep, ResultsTimeStep);
 
-      /*
-      	Free memory.
-      */
       free__MatrixLib__(Mass_Matrix_Mixture); 
       free__MatrixLib__(Compressibility_Matrix_Fluid);
       free__MatrixLib__(Gravity_field);

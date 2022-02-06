@@ -20,6 +20,7 @@ bool Out_displacement;
 bool Out_stress;
 bool Out_eigenvalues_stress;
 bool Out_volumetric_stress;
+bool Out_water_pressure;
 bool Out_Pw;
 bool Out_dPw_dt;
 bool Out_strain;
@@ -99,11 +100,11 @@ void particle_results_vtk__InOutFun__(
     {
       if(j<Ndim)
       {
-        fprintf(Vtk_file,"%lf ",MPM_Mesh.Phi.x_GC.nM[i][j]);
+        fprintf(Vtk_file,"%.20g ",MPM_Mesh.Phi.x_GC.nM[i][j]);
       }
       else
       {
-        fprintf(Vtk_file,"%lf ",0.0);
+        fprintf(Vtk_file,"%.20g ",0.0);
       }
     }
     fprintf(Vtk_file,"\n");
@@ -329,11 +330,11 @@ void nodal_results_vtk__InOutFun__(
           {
             if(j<Ndim)
             {
-	             fprintf(Vtk_file,"%lf ",ElementMesh.Coordinates.nM[i][j]);
+	             fprintf(Vtk_file,"%.20g ",ElementMesh.Coordinates.nM[i][j]);
             }
             else
             {
-	             fprintf(Vtk_file,"%lf ",0.0);
+	             fprintf(Vtk_file,"%.20g ",0.0);
             }
           }
         fprintf(Vtk_file,"\n");
@@ -365,11 +366,11 @@ void nodal_results_vtk__InOutFun__(
         {
           if(j<Ndim)
           {
-            fprintf(Vtk_file,"%lf ",ElementMesh.Coordinates.nM[i][j]);
+            fprintf(Vtk_file,"%.20g ",ElementMesh.Coordinates.nM[i][j]);
           }
           else
           {
-            fprintf(Vtk_file,"%lf ",0.0);
+            fprintf(Vtk_file,"%.20g ",0.0);
           }
         }
         fprintf(Vtk_file,"\n");
@@ -395,11 +396,11 @@ void nodal_results_vtk__InOutFun__(
            {
 	           if(j<Ndim)
                 {
-	                 fprintf(Vtk_file,"%lf ",REACTIONS.nM[i_mask][j]);
+	                 fprintf(Vtk_file,"%.20g ",REACTIONS.nM[i_mask][j]);
 	              }
 	           else
                 {
-            	      fprintf(Vtk_file,"%lf ",0.0);
+            	      fprintf(Vtk_file,"%.20g ",0.0);
 	              }    
 	         }
 	         fprintf(Vtk_file,"\n");	
@@ -444,10 +445,10 @@ static void vtk_Out_X_GC(FILE * Vtk_file, Matrix x_GC, int NumParticles)
   for(int i =  0 ; i<NumParticles ; i++){
     for(int j = 0 ; j<3 ; j++){
       if(j<Ndim){
-        fprintf(Vtk_file,"%lf ",x_GC.nM[i][j]);
+        fprintf(Vtk_file,"%.20g ",x_GC.nM[i][j]);
       }
       else{
-        fprintf(Vtk_file,"%lf ",0.0);
+        fprintf(Vtk_file,"%.20g ",0.0);
       }
     }
     fprintf(Vtk_file,"\n");
@@ -464,10 +465,10 @@ static void vtk_Out_X_EC(FILE * Vtk_file, Matrix x_EC, int NumParticles)
   for(int i =  0 ; i<NumParticles ; i++){
     for(int j = 0 ; j<3 ; j++){
       if(j<Ndim){
-  fprintf(Vtk_file,"%lf ",x_EC.nM[i][j]);
+  fprintf(Vtk_file,"%.20g ",x_EC.nM[i][j]);
       }
       else{
-  fprintf(Vtk_file,"%lf ",0.0);
+  fprintf(Vtk_file,"%.20g ",0.0);
       }
     }
     fprintf(Vtk_file,"\n");
@@ -481,7 +482,7 @@ static void vtk_Out_mass(FILE * Vtk_file, Matrix mass, int NumParticles)
   fprintf(Vtk_file,"SCALARS MASS double \n");
   fprintf(Vtk_file,"LOOKUP_TABLE default \n");
   for(int i =  0 ; i<NumParticles ; i++){
-    fprintf(Vtk_file,"%lf \n",mass.nV[i]);
+    fprintf(Vtk_file,"%.20g \n",mass.nV[i]);
   }
 }
 
@@ -492,7 +493,7 @@ static void vtk_Out_density(FILE * Vtk_file, Matrix rho, int NumParticles)
   fprintf(Vtk_file,"SCALARS DENSITY double \n");
   fprintf(Vtk_file,"LOOKUP_TABLE default \n");
   for(int i =  0 ; i<NumParticles ; i++){
-    fprintf(Vtk_file,"%lf \n",rho.nV[i]); 
+    fprintf(Vtk_file,"%.20g \n",rho.nV[i]); 
   }
 }
 
@@ -503,7 +504,7 @@ static void vtk_Out_damage(FILE * Vtk_file, Matrix chi, int NumParticles)
   fprintf(Vtk_file,"SCALARS Damage double \n");
   fprintf(Vtk_file,"LOOKUP_TABLE default \n");
   for(int i =  0 ; i<NumParticles ; i++){
-    fprintf(Vtk_file,"%lf \n",chi.nV[i]); 
+    fprintf(Vtk_file,"%.20g \n",chi.nV[i]); 
   }
 }
 
@@ -538,10 +539,10 @@ static void vtk_Out_vel(FILE * Vtk_file, Matrix vel, int NumParticles)
   for(int i =  0 ; i<NumParticles ; i++){
     for(int j = 0 ; j<3 ; j++){
       if(j<Ndim){
-  fprintf(Vtk_file,"%lf ",vel.nM[i][j]);
+  fprintf(Vtk_file,"%.20g ",vel.nM[i][j]);
       }
       else{
-  fprintf(Vtk_file,"%lf ",0.0);
+  fprintf(Vtk_file,"%.20g ",0.0);
       }
     }
     fprintf(Vtk_file,"\n");
@@ -558,10 +559,10 @@ static void vtk_Out_acc(FILE * Vtk_file, Matrix acc, int NumParticles)
   for(int i =  0 ; i<NumParticles ; i++){
     for(int j = 0 ; j<3 ; j++){
       if(j<Ndim){
-  fprintf(Vtk_file,"%lf ",acc.nM[i][j]);
+  fprintf(Vtk_file,"%.20g ",acc.nM[i][j]);
       }
       else{
-  fprintf(Vtk_file,"%lf ",0.0);
+  fprintf(Vtk_file,"%.20g ",0.0);
       }
     }
     fprintf(Vtk_file,"\n");
@@ -578,10 +579,10 @@ static void vtk_Out_dis(FILE * Vtk_file, Matrix dis, int NumParticles)
   for(int i =  0 ; i<NumParticles ; i++){
     for(int j = 0 ; j<3 ; j++){
       if(j<Ndim){
-  fprintf(Vtk_file,"%e ",dis.nM[i][j]);
+  fprintf(Vtk_file,"%.20g ",dis.nM[i][j]);
       }
       else{
-  fprintf(Vtk_file,"%e ",0.0);
+  fprintf(Vtk_file,"%.20g ",0.0);
       }
     }
     fprintf(Vtk_file,"\n");
@@ -603,17 +604,17 @@ static void vtk_Out_Stress(FILE * Vtk_file, Matrix Stress, int NumParticles)
       {
         if((j<Ndim) && (k<Ndim))
         {
-          fprintf(Vtk_file,"%e ",Stress.nM[i][j*Ndim+k]);
+          fprintf(Vtk_file,"%.20g ",Stress.nM[i][j*Ndim+k]);
         }
         else
         {
           if((j==2) && (k==2))
           {
-            fprintf(Vtk_file,"%e ",Stress.nM[i][4]);
+            fprintf(Vtk_file,"%.20g ",Stress.nM[i][4]);
           }
           else
           {
-            fprintf(Vtk_file,"%e ",0.0);
+            fprintf(Vtk_file,"%.20g ",0.0);
           }
         }
       }
@@ -637,10 +638,10 @@ static void vtk_Out_Stress_EV(FILE * Vtk_file, Matrix Stress, int NumParticles)
     Eigen_Stress_p = Eigen_analysis__TensorLib__(Stress_p);
     for(int j = 0 ; j<3 ; j++){
       if(j<Ndim){
-  fprintf(Vtk_file,"%lf ",Eigen_Stress_p.Value.n[j]);
+  fprintf(Vtk_file,"%.20g ",Eigen_Stress_p.Value.n[j]);
       }
       else{
-  fprintf(Vtk_file,"%lf ",0.0);
+  fprintf(Vtk_file,"%.20g ",0.0);
       }
     }
     fprintf(Vtk_file,"\n");
@@ -662,12 +663,12 @@ static void vtk_Out_Stress_P(FILE * Vtk_file, Matrix Stress, int NumParticles)
     if(Ndim == 2)
     {
       pressure = (1.0/3.0)*(Stress.nM[i][0] + Stress.nM[i][3] + Stress.nM[i][4]);  
-      fprintf(Vtk_file,"%lf \n",pressure);
+      fprintf(Vtk_file,"%.20g \n",pressure);
     }
     else
     { 
       pressure = (1.0/3.0)*(Stress.nM[i][0] + Stress.nM[i][4] + Stress.nM[i][8]); 
-      fprintf(Vtk_file,"%lf \n",pressure);
+      fprintf(Vtk_file,"%.20g \n",pressure);
     }
     
   }
@@ -685,7 +686,7 @@ static void vtk_Out_Pw(FILE * Vtk_file, Matrix Pw, Matrix J, int NumParticles)
   fprintf(Vtk_file,"LOOKUP_TABLE default \n");
   for(int i =  0 ; i<NumParticles ; i++)
   {  
-    fprintf(Vtk_file,"%lf \n",Pw.nV[i]/J.nV[i]);
+    fprintf(Vtk_file,"%.20g \n",Pw.nV[i]/J.nV[i]);
   }
 }
 
@@ -700,7 +701,7 @@ static void  vtk_Out_dPw_dt(FILE * Vtk_file, Matrix d_Pw, int NumParticles)
   fprintf(Vtk_file,"LOOKUP_TABLE default \n");
   for(int i =  0 ; i<NumParticles ; i++)
   {  
-    fprintf(Vtk_file,"%lf \n",d_Pw.nV[i]);
+    fprintf(Vtk_file,"%.20g \n",d_Pw.nV[i]);
   }
 }
 
@@ -715,10 +716,10 @@ static void vtk_Out_Strain(FILE * Vtk_file, Matrix Strain, int NumParticles)
     for(int j = 0 ; j<3 ; j++){
       for(int k = 0 ; k<3 ; k++){
   if((j<Ndim) && (k<Ndim)){
-    fprintf(Vtk_file,"%lf ",Strain.nM[i][j*Ndim+k]);
+    fprintf(Vtk_file,"%.20g ",Strain.nM[i][j*Ndim+k]);
   }
   else{
-    fprintf(Vtk_file,"%lf ",0.0);
+    fprintf(Vtk_file,"%.20g ",0.0);
   }
       }
       fprintf(Vtk_file,"\n");
@@ -741,10 +742,10 @@ static void vtk_Out_Strain_EV(FILE * Vtk_file, Matrix Strain, int NumParticles)
     Eigen_Strain_p = Eigen_analysis__TensorLib__(Strain_p);
     for(int j = 0 ; j<3 ; j++){
       if(j<Ndim){
-  fprintf(Vtk_file,"%lf ",Eigen_Strain_p.Value.n[j]);
+  fprintf(Vtk_file,"%.20g ",Eigen_Strain_p.Value.n[j]);
       }
       else{
-  fprintf(Vtk_file,"%lf ",0.0);
+  fprintf(Vtk_file,"%.20g ",0.0);
       }
     }
     fprintf(Vtk_file,"\n");
@@ -764,10 +765,10 @@ static void vtk_Out_Deformation_Gradient(FILE * Vtk_file, Matrix F_n, int NumPar
     for(int j = 0 ; j<3 ; j++){
       for(int k = 0 ; k<3 ; k++){
   if((j<Ndim) && (k<Ndim)){
-    fprintf(Vtk_file,"%lf ",F_n.nM[i][j*Ndim+k]);
+    fprintf(Vtk_file,"%.20g ",F_n.nM[i][j*Ndim+k]);
   }
   else{
-    fprintf(Vtk_file,"%lf ",0.0);
+    fprintf(Vtk_file,"%.20g ",0.0);
   }
       }
       fprintf(Vtk_file,"\n");
@@ -799,11 +800,11 @@ static void vtk_Out_Green_Lagrange(FILE * Vtk_file, Matrix F_n, int NumParticles
       {
         if((j<Ndim) && (k<Ndim))
         {
-          fprintf(Vtk_file,"%lf ",E_p.N[j][k]);
+          fprintf(Vtk_file,"%.20g ",E_p.N[j][k]);
         }
         else
         {
-          fprintf(Vtk_file,"%lf ",0.0);
+          fprintf(Vtk_file,"%.20g ",0.0);
         }
       }
       fprintf(Vtk_file,"\n");
@@ -828,10 +829,10 @@ static void vtk_Out_plastic_deformation_gradient(FILE * Vtk_file, Matrix F_m1_pl
     for(int j = 0 ; j<3 ; j++){
       for(int k = 0 ; k<3 ; k++){
   if((j<Ndim) && (k<Ndim)){
-    fprintf(Vtk_file,"%lf ",F_plastic.nM[i][j*Ndim+k]);
+    fprintf(Vtk_file,"%.20g ",F_plastic.nM[i][j*Ndim+k]);
   }
   else{
-    fprintf(Vtk_file,"%lf ",0.0);
+    fprintf(Vtk_file,"%.20g ",0.0);
   }
       }
       fprintf(Vtk_file,"\n");
@@ -867,11 +868,11 @@ static void vtk_Out_Metric(FILE * Vtk_file, Matrix F_n, int NumParticles)
       {
         if((j<Ndim) && (k<Ndim))
         {
-          fprintf(Vtk_file,"%lf ",M.N[j][k]);
+          fprintf(Vtk_file,"%.20g ",M.N[j][k]);
         }
         else
         {
-          fprintf(Vtk_file,"%lf ",0.0);
+          fprintf(Vtk_file,"%.20g ",0.0);
         }
       }
       fprintf(Vtk_file,"\n");
@@ -900,7 +901,7 @@ static void vtk_Out_plastic_jacobian(FILE * Vtk_file, Matrix Field_F_m1_plastic,
     F_m1_plastic = memory_to_tensor__TensorLib__(Field_F_m1_plastic.nM[i],2);
     F_plastic = Inverse__TensorLib__(F_m1_plastic);
 
-    fprintf(Vtk_file,"%lf \n",I3__TensorLib__(F_plastic)); 
+    fprintf(Vtk_file,"%.20g \n",I3__TensorLib__(F_plastic)); 
 
     free__TensorLib__(F_plastic);
   }
@@ -915,7 +916,7 @@ static void vtk_Out_Deformation_Energy(FILE * Vtk_file, Matrix W, int NumParticl
   fprintf(Vtk_file,"LOOKUP_TABLE default \n");
   for(int i =  0 ; i<NumParticles ; i++)
   {
-    fprintf(Vtk_file,"%lf \n",W.nV[i]); 
+    fprintf(Vtk_file,"%.20g \n",W.nV[i]); 
   }
 }
 
@@ -935,7 +936,7 @@ static void vtk_Out_Kinetic_Energy(FILE * Vtk_file, Matrix vel, Matrix mass, int
     {
       K_p += DSQR(vel.nM[i][j]);
     }
-    fprintf(Vtk_file,"%lf \n",0.5*K_p*mass.nV[i]); 
+    fprintf(Vtk_file,"%.20g \n",0.5*K_p*mass.nV[i]); 
   }
 }
 
@@ -997,7 +998,7 @@ static void vtk_Out_Von_Mises(FILE * Vtk_file, Matrix F_n, Matrix P_n, int NumPa
 
     SVM = sqrt(2.0*J2);  
 
-    fprintf(Vtk_file,"%lf \n",SVM); 
+    fprintf(Vtk_file,"%.20g \n",SVM); 
 
     free__TensorLib__(F_pT);
     free__TensorLib__(Cauchy_p);
@@ -1015,7 +1016,7 @@ static void vtk_Out_Equiv_Plastic_Strain(FILE * Vtk_file, Matrix EPS, int NumPar
   fprintf(Vtk_file,"LOOKUP_TABLE default \n");
   for(int i =  0 ; i<NumParticles ; i++)
   {
-    fprintf(Vtk_file,"%lf \n",EPS.nV[i]); 
+    fprintf(Vtk_file,"%.20g \n",EPS.nV[i]); 
   }
 }
 
@@ -1029,7 +1030,7 @@ static void vtk_Out_Check_Partition_Unity(FILE * Vtk_file, Matrix PU, int NumPar
   fprintf(Vtk_file,"LOOKUP_TABLE default \n");
   for(int i =  0 ; i<NumParticles ; i++)
   {
-    fprintf(Vtk_file,"%lf \n",PU.nV[i]); 
+    fprintf(Vtk_file,"%.20g \n",PU.nV[i]); 
   }
 
 }

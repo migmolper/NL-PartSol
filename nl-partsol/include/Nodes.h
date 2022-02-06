@@ -8,6 +8,9 @@
 Mesh     ReadGidMesh__MeshTools__(char *);
 /********************************************************************/
 
+void initialise_shapefun__MeshTools__(Particle,Mesh);
+/*******************************************************/
+
 void local_search__MeshTools__(Particle, Mesh);
 /*******************************************************/
 
