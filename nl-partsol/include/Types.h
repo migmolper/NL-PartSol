@@ -777,6 +777,11 @@ typedef struct {
   bool * ActiveNode;
 
   /*!
+  * Defines if a node belongs to a boundary or not
+  */
+  bool * BoundaryNode;
+
+  /*!
    * List of boundaries of the domain
    */
   Boundaries Bounds;

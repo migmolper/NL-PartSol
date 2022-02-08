@@ -2,7 +2,50 @@
 
 /*********************************************************************/
 
-void local_search__MeshTools__(Particle MPM_Mesh, Mesh FEM_Mesh)
+void initialise_shapefun__MeshTools__(
+  Particle MPM_Mesh, 
+  Mesh FEM_Mesh)
+{
+
+    if(strcmp(ShapeFunctionGP,"FEM") == 0)
+    {
+      if(strcmp(FEM_Mesh.TypeElem,"Triangle") == 0)
+      {
+        initialize__T3__(MPM_Mesh, FEM_Mesh);
+      }
+      else if(strcmp(FEM_Mesh.TypeElem,"Quadrilateral") == 0)
+      {
+        initialize__Q4__(MPM_Mesh, FEM_Mesh);
+      }
+      else if(strcmp(FEM_Mesh.TypeElem,"Tetrahedra") == 0)
+      {
+        initialize__T4__(MPM_Mesh, FEM_Mesh);
+      }
+      else if(strcmp(FEM_Mesh.TypeElem,"Hexahedra") == 0)
+      {
+        initialize__H8__(MPM_Mesh, FEM_Mesh);
+      }
+    }
+    else if(strcmp(ShapeFunctionGP,"uGIMP") == 0)
+    {
+      initialize__GIMP__(MPM_Mesh,FEM_Mesh);
+    }
+    else if(strcmp(ShapeFunctionGP,"LME") == 0)
+    {
+      initialize__LME__(MPM_Mesh,FEM_Mesh);
+    }
+    else if(strcmp(ShapeFunctionGP,"aLME") == 0)
+    {
+      initialize__aLME__(MPM_Mesh,FEM_Mesh);
+    }
+
+}
+
+/*********************************************************************/
+
+void local_search__MeshTools__(
+  Particle MPM_Mesh, 
+  Mesh FEM_Mesh)
 /*
   Search the closest node to the particle based in its previous position.
 */
@@ -46,6 +89,59 @@ void local_search__MeshTools__(Particle MPM_Mesh, Mesh FEM_Mesh)
 
 }
 
+/**************************************************************/
+
+void generate_contour_nodes(
+  Mesh FEM_Mesh)
+{
+
+ unsigned Nnodes = FEM_Mesh.NumNodesMesh;
+ unsigned ContourNodes = 0;
+ unsigned SizeNodalLocality_A = 0;
+ unsigned NumActiveNodes_A = 0;
+ unsigned B;
+ ChainPtr NodalLocality_A;
+
+ for(unsigned A = 0 ; A<Nnodes ; A++)
+ {
+    if(FEM_Mesh.ActiveNode[A])
+    {
+      SizeNodalLocality_A = FEM_Mesh.SizeNodalLocality_0[A];
+      NodalLocality_A = FEM_Mesh.NodalLocality_0[A];
+      NumActiveNodes_A = 0;
+
+      while (NodalLocality_A != NULL)
+      {
+        
+        B = NodalLocality_A->Idx;
+        
+        if(FEM_Mesh.ActiveNode[B])
+        {
+          NumActiveNodes_A++;
+        }
+
+        NodalLocality_A = NodalLocality_A->next;
+
+      }
+
+      if(NumActiveNodes_A < 9)
+      {
+        FEM_Mesh.BoundaryNode[A] = true;
+      }
+      else
+      {
+        FEM_Mesh.BoundaryNode[A] = false;
+      }
+
+    }
+    else
+    {
+      FEM_Mesh.BoundaryNode[A] = false;
+    }
+ }
+
+
+}
 
 /**************************************************************/
 

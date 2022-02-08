@@ -8,38 +8,11 @@
 int ResultsTimeStep;
 // int NumTimeStep //
 
-char OutputDir[MAXC];
-char OutputParticlesFile[MAXC];
-char OutputNodesFile[MAXC];
+char Output_Backup_File[MAXC];
 
-bool Out_global_coordinates = false;
-bool Out_element_coordinates = false;
-bool Out_mass = false;
-bool Out_density = false;
-bool Out_damage = false;
-bool Out_nodal_idx = false;
-bool Out_material_idx = false;
-bool Out_velocity = false;
-bool Out_acceleration = false;
-bool Out_displacement = false;
-bool Out_stress = false;
-bool Out_eigenvalues_stress = false;
-bool Out_water_pressure = false;
-bool Out_volumetric_stress = false;
-bool Out_Pw = false;
-bool Out_dPw_dt = false;
-bool Out_strain = false;
-bool Out_eigenvalues_strain = false;
-bool Out_deformation_gradient = false;
-bool Out_green_lagrange = false;
-bool Out_right_cauchy_green = false;
-bool Out_plastic_deformation_gradient = false;
-bool Out_Metric = false;
-bool Out_plastic_jacobian = false;
-bool Out_energy = false;
-bool Out_Von_Mises = false;
-bool Out_EPS = false;
-bool Out_Partition_Unity = false;
+bool Backup_damage = false;
+bool Backup_plastic_deformation_gradient = false;
+bool Backup_EPS = false;
 
 /*
   Auxiliar functions 
@@ -52,10 +25,10 @@ static bool Check_Output_directory(char *);
 
 /**********************************************************************/
 
-void GramsOutputs(char * Name_File)
+void Read_Backup(char * Name_File)
 /*
   Example : 
-  GramsOutputs (i=100) {
+  Backup (i=100) {
   	DIR=test/Sulsky_MPM	
   }
 */
@@ -89,8 +62,7 @@ void GramsOutputs(char * Name_File)
   Sim_dat = Open_and_Check_simulation_file(Name_File);
 
   /* Set output file names to default */
-  strcpy(OutputParticlesFile,"Particles");
-  strcpy(OutputNodesFile,"Nodes");
+  strcpy(Output_Backup_File,"Backup");
     
   /* Read the file line by line */
   while( fgets(line, sizeof line, Sim_dat) != NULL ){
@@ -140,121 +112,20 @@ void GramsOutputs(char * Name_File)
 	  }
 	  else if(strcmp(Parse_Out_Prop[0],"Particles-file") == 0)
 	  {
-	  	strcpy(OutputParticlesFile,Parse_Out_Prop[1]);
+	  	strcpy(Output_Backup_File,Parse_Out_Prop[1]);
 	  	printf("\t -> %s : %s \n","Particles files name",OutputParticlesFile);
 	  }
-	  else if(strcmp(Parse_Out_Prop[0],"Nodes-file") == 0)
+	  else if(strcmp(Parse_Out_Prop[0],"Damage") == 0)
 	  {
-	  	strcpy(OutputNodesFile,Parse_Out_Prop[1]);
-	  	printf("\t -> %s : %s \n","Nodes files name",OutputNodesFile);
+		Backup_damage = Is_Output_Activate(Parse_Out_Prop[0],Parse_Out_Prop[1]);
 	  }
-	  else if(strcmp(Parse_Out_Prop[0],"Out-global-coordinates") == 0)
+	  else if(strcmp(Parse_Out_Prop[0],"Plastic-Deformation-Gradient") == 0)
 	  {
-		Out_global_coordinates = Is_Output_Activate(Parse_Out_Prop[0],Parse_Out_Prop[1]);
+	  	Backup_plastic_deformation_gradient = Is_Output_Activate(Parse_Out_Prop[0],Parse_Out_Prop[1]);
 	  }
-	  else if(strcmp(Parse_Out_Prop[0],"Out-element-coordinates") == 0)
+	  else if(strcmp(Parse_Out_Prop[0],"Equivalent-Plastic-Strain") == 0)
 	  {
-		Out_element_coordinates = Is_Output_Activate(Parse_Out_Prop[0],Parse_Out_Prop[1]);
-	  }
-  	  else if(strcmp(Parse_Out_Prop[0],"Out-mass") == 0)
-	  {
-		Out_mass = Is_Output_Activate(Parse_Out_Prop[0],Parse_Out_Prop[1]);
-	  }
-	  else if(strcmp(Parse_Out_Prop[0],"Out-density") == 0)
-	  {
-		Out_density = Is_Output_Activate(Parse_Out_Prop[0],Parse_Out_Prop[1]);
-	  }
-	  else if(strcmp(Parse_Out_Prop[0],"Out-damage") == 0)
-	  {
-		Out_damage = Is_Output_Activate(Parse_Out_Prop[0],Parse_Out_Prop[1]);
-	  }
-	  else if(strcmp(Parse_Out_Prop[0],"Out-nodal-idx") == 0)
-	  {
-		Out_nodal_idx = Is_Output_Activate(Parse_Out_Prop[0],Parse_Out_Prop[1]);
-	  }
-	  else if(strcmp(Parse_Out_Prop[0],"Out-material-idx") == 0)
-	  {
-		Out_material_idx = Is_Output_Activate(Parse_Out_Prop[0],Parse_Out_Prop[1]);
-	  }
-	  else if(strcmp(Parse_Out_Prop[0],"Out-velocity") == 0)
-	  {
-		Out_velocity = Is_Output_Activate(Parse_Out_Prop[0],Parse_Out_Prop[1]);
-	  }
-	  else if(strcmp(Parse_Out_Prop[0],"Out-acceleration") == 0)
-	  {
-		Out_acceleration = Is_Output_Activate(Parse_Out_Prop[0],Parse_Out_Prop[1]);
-	  }
-	  else if(strcmp(Parse_Out_Prop[0],"Out-displacement") == 0)
-	  {
-		Out_displacement = Is_Output_Activate(Parse_Out_Prop[0],Parse_Out_Prop[1]);
-	  }
-	  else if(strcmp(Parse_Out_Prop[0],"Out-stress") == 0)
-	  {
-		Out_stress = Is_Output_Activate(Parse_Out_Prop[0],Parse_Out_Prop[1]);
-	  }
-	  else if(strcmp(Parse_Out_Prop[0],"Out-eigenvalues-stress") == 0)
-	  {
-		Out_eigenvalues_stress = Is_Output_Activate(Parse_Out_Prop[0],Parse_Out_Prop[1]);
-	  }
-	  else if(strcmp(Parse_Out_Prop[0],"Out-volumetric-stress") == 0)
-	  {
-		Out_volumetric_stress = Is_Output_Activate(Parse_Out_Prop[0],Parse_Out_Prop[1]);
-	  }	  
-	  else if(strcmp(Parse_Out_Prop[0],"Out-water-pressure") == 0)
-	  {
-		Out_water_pressure = Is_Output_Activate(Parse_Out_Prop[0],Parse_Out_Prop[1]);
-	  }	  
-	  else if(strcmp(Parse_Out_Prop[0],"Out-Pore-water-pressure") == 0)
-	  {
-	  	Out_Pw = Is_Output_Activate(Parse_Out_Prop[0],Parse_Out_Prop[1]);
-	  }
-	  else if(strcmp(Parse_Out_Prop[0],"Out-Rate-Pore-water-pressure") == 0)
-	  {
-	  	Out_dPw_dt = Is_Output_Activate(Parse_Out_Prop[0],Parse_Out_Prop[1]);
-	  }
-	  else if(strcmp(Parse_Out_Prop[0],"Out-strain") == 0)
-	  {
-		Out_strain = Is_Output_Activate(Parse_Out_Prop[0],Parse_Out_Prop[1]);
-	  }
-	  else if(strcmp(Parse_Out_Prop[0],"Out-eigenvalues-strain") == 0)
-	  {
-		Out_eigenvalues_strain = Is_Output_Activate(Parse_Out_Prop[0],Parse_Out_Prop[1]);
-	  }	
-	  else if(strcmp(Parse_Out_Prop[0],"Out-deformation-gradient") == 0)
-	  {
-		Out_deformation_gradient = Is_Output_Activate(Parse_Out_Prop[0],Parse_Out_Prop[1]);
-	  }		  
-	  else if(strcmp(Parse_Out_Prop[0],"Out-green-lagrange") == 0)
-	  {
-	  	Out_green_lagrange = Is_Output_Activate(Parse_Out_Prop[0],Parse_Out_Prop[1]);
-	  }
-	  else if(strcmp(Parse_Out_Prop[0],"Out-plastic-deformation-gradient") == 0)
-	  {
-	  	Out_plastic_deformation_gradient = Is_Output_Activate(Parse_Out_Prop[0],Parse_Out_Prop[1]);
-	  }
-	  else if(strcmp(Parse_Out_Prop[0],"Out-Metric") == 0)
-	  {
-		Out_Metric = Is_Output_Activate(Parse_Out_Prop[0],Parse_Out_Prop[1]);
-	  }
-	  else if(strcmp(Parse_Out_Prop[0],"Out-plastic-jacobian") == 0)
-	  {
-	  	Out_plastic_jacobian = Is_Output_Activate(Parse_Out_Prop[0],Parse_Out_Prop[1]);
-	  }
-	  else if(strcmp(Parse_Out_Prop[0],"Out-energy") == 0)
-	  {
-		Out_energy = Is_Output_Activate(Parse_Out_Prop[0],Parse_Out_Prop[1]);
-	  }	
-	  else if(strcmp(Parse_Out_Prop[0],"Out-Von-Mises") == 0)
-	  {
-	  	Out_Von_Mises = Is_Output_Activate(Parse_Out_Prop[0],Parse_Out_Prop[1]);
-	  }
-	  else if(strcmp(Parse_Out_Prop[0],"Out-Equivalent-Plastic-Strain") == 0)
-	  {
-		Out_EPS = Is_Output_Activate(Parse_Out_Prop[0],Parse_Out_Prop[1]);	  	
-	  }
-	  else if(strcmp(Parse_Out_Prop[0],"Out-Check-Partition-Unity") == 0)
-	  {
-		Out_Partition_Unity = Is_Output_Activate(Parse_Out_Prop[0],Parse_Out_Prop[1]);
+		Backup_EPS = Is_Output_Activate(Parse_Out_Prop[0],Parse_Out_Prop[1]);	  	
 	  }
 	  else
 	  {

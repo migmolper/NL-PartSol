@@ -50,7 +50,6 @@ void GramsShapeFun(char * Name_File)
   char * STATUS_LINE;
 
   /* Initial message */  
-  puts("*************************************************");
   printf(" \t %s : \n","* Read shape function properties ");
   
   /* Open and check file */

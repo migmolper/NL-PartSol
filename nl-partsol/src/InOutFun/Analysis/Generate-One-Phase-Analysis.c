@@ -85,7 +85,6 @@ Particle Generate_One_Phase_Analysis__InOutFun__(
   /*
     Define materials
   */
-  puts("*************************************************");
   printf(" \t %s \n","* Read materials properties :");
   if(Sim_Params.Is_Materials)
   {
@@ -108,7 +107,6 @@ Particle Generate_One_Phase_Analysis__InOutFun__(
     /*
       Read particle mesh preliminar information
     */
-    puts("*************************************************");
     printf(" \t %s \n","* Read mesh properties for particles :");
     Msh_Parms = Read_Mesh_Parameters(Name_File);
 
@@ -160,26 +158,24 @@ Particle Generate_One_Phase_Analysis__InOutFun__(
         Read Shape functions parameters 
       */
       GramsShapeFun(Name_File);
-      /* 
-        Lenght of the Voxel (Only GIMP) 
-      */
-      if(strcmp(ShapeFunctionGP,"uGIMP") == 0)
+
+      if(strcmp(ShapeFunctionGP,"FEM") == 0)
+      {
+
+      }
+      else if(strcmp(ShapeFunctionGP,"uGIMP") == 0)
       {
         MPM_Mesh.lp = allocZ__MatrixLib__(NumParticles,Ndim);
         strcpy(MPM_Mesh.lp.Info,"Voxel lenght GP");
       }
-      /*
-         Lagrange Multipliers / Beta (Only LME ) 
-      */
-      if(strcmp(ShapeFunctionGP,"LME") == 0)
+      else if(strcmp(ShapeFunctionGP,"LME") == 0)
       {
         MPM_Mesh.lambda = allocZ__MatrixLib__(NumParticles,Ndim);
         strcpy(MPM_Mesh.lambda.Info,"Lagrange Multiplier");
         MPM_Mesh.Beta = allocZ__MatrixLib__(NumParticles,1);
         strcpy(MPM_Mesh.Beta.Info,"Beta");
       }
-      /* Lagrange Multipliers / Beta / Cut_off_Ellipsoid (Only aLME ) */
-      if(strcmp(ShapeFunctionGP,"aLME") == 0)
+      else if(strcmp(ShapeFunctionGP,"aLME") == 0)
       {
         MPM_Mesh.lambda = allocZ__MatrixLib__(NumParticles,Ndim);
         strcpy(MPM_Mesh.lambda.Info,"Lagrange Multiplier");
@@ -188,12 +184,21 @@ Particle Generate_One_Phase_Analysis__InOutFun__(
         MPM_Mesh.Cut_off_Ellipsoid = allocZ__MatrixLib__(NumParticles,Ndim*Ndim);
         strcpy(MPM_Mesh.Cut_off_Ellipsoid.Info,"Cut-off Ellipsoid");
       }
+      else
+      {
+        fprintf(stderr,"%s : %s \n","Error in GramsShapeFun()","Undefined kind of shape function");
+        exit(EXIT_FAILURE);
+      }
     }
     else
     {
       sprintf(Error_message,"%s","GramsShapeFun no defined");
       standard_error(); 
     }
+
+    /*
+      Allocate variables for the shape function    
+    */
     
     /*
       Allocate vectorial/tensorial fields 
@@ -211,7 +216,6 @@ Particle Generate_One_Phase_Analysis__InOutFun__(
     /*
       Assign material for each material point
     */
-    puts("*************************************************");
     printf(" \t %s \n","* Start material assignement to particles ...");
     MPM_Mesh.MatIdx = assign_material_to_particles(Name_File,MPM_Mesh.NumberMaterials,NumParticles,Msh_Parms.GPxElement);
     printf(" \t %s \n","Success !!");
@@ -219,7 +223,6 @@ Particle Generate_One_Phase_Analysis__InOutFun__(
     /*
       Initialise particle 
     */    
-    puts("*************************************************");
     printf(" \t %s \n","* Start particles initialisation ...");
     initial_position__Particles__(MPM_Mesh.Phi.x_GC,MPM_GID_Mesh,Msh_Parms.GPxElement); 
     if(Ndim == 2)
@@ -228,55 +231,6 @@ Particle Generate_One_Phase_Analysis__InOutFun__(
     }
     printf(" \t %s \n","Success !!");
  
-    /*
-      Initialise shape functions 
-    */
-    puts("*************************************************");
-    if(strcmp(ShapeFunctionGP,"FEM") == 0)
-    {
-      if(strcmp(FEM_Mesh.TypeElem,"Triangle") == 0)
-      {
-        printf("\t * %s \n","Start FEM-T3 shape functions initialisation ...");
-        initialize__T3__(MPM_Mesh, FEM_Mesh);
-      }
-      else if(strcmp(FEM_Mesh.TypeElem,"Quadrilateral") == 0)
-      {
-        printf("\t * %s \n","Start FEM-Q4 shape functions initialisation ...");
-        initialize__Q4__(MPM_Mesh, FEM_Mesh);
-      }
-      else if(strcmp(FEM_Mesh.TypeElem,"Tetrahedra") == 0)
-      {
-        printf("\t * %s \n","Start FEM-T4 shape functions initialisation ...");
-        initialize__T4__(MPM_Mesh, FEM_Mesh);
-      }
-      else if(strcmp(FEM_Mesh.TypeElem,"Hexahedra") == 0)
-      {
-        printf("\t * %s \n","Start FEM-H8 shape functions initialisation ...");
-        initialize__H8__(MPM_Mesh, FEM_Mesh);
-      }
-    }
-    else if(strcmp(ShapeFunctionGP,"uGIMP") == 0)
-    {
-      printf("\t * %s \n","Start uGIMP shape functions initialisation ...");      
-      initialize__GIMP__(MPM_Mesh,FEM_Mesh);
-    }
-    else if(strcmp(ShapeFunctionGP,"LME") == 0)
-    {
-      printf("\t * %s \n","Start LME shape functions initialisation ...");
-      initialize__LME__(MPM_Mesh,FEM_Mesh);
-    }
-    else if(strcmp(ShapeFunctionGP,"aLME") == 0)
-    {
-      printf("\t * %s \n","Start aLME shape functions initialisation ...");
-      initialize__aLME__(MPM_Mesh,FEM_Mesh);
-    }
-    else
-    {
-      fprintf(stderr,"%s : %s \n","Error in GramsShapeFun()","Undefined kind of shape function");
-      exit(EXIT_FAILURE);
-    }
-    printf("\t %s \n","Success !!");
-
     /*
       Read initial values 
     */    
@@ -289,7 +243,6 @@ Particle Generate_One_Phase_Analysis__InOutFun__(
       Initial_condition_nodes__InOutFun__(Name_File,MPM_Mesh,FEM_Mesh);
     }
     else{
-      puts("*************************************************");
       printf("\t * %s \n","No initial conditions defined");
     }
 
@@ -311,7 +264,6 @@ Particle Generate_One_Phase_Analysis__InOutFun__(
     */    
     if(Sim_Params.Is_GramsNeumannBC)
     {
-      puts("*************************************************");
       printf("\t * %s \n","Read Newmann boundary conditions :");
       if(strcmp(Formulation,"-u") == 0)
       {
@@ -327,7 +279,6 @@ Particle Generate_One_Phase_Analysis__InOutFun__(
     else
     {
       MPM_Mesh.Neumann_Contours.NumBounds = 0;
-      puts("*************************************************");
       printf(" \t %s \n","* No Neumann boundary conditions defined");
     }
 
@@ -343,7 +294,6 @@ Particle Generate_One_Phase_Analysis__InOutFun__(
     else
     {
       MPM_Mesh.NumberBodyForces = Sim_Params.Counter_BodyForces;
-      puts("*************************************************");
       printf(" \t %s \n","* No body forces defined");
     }
    

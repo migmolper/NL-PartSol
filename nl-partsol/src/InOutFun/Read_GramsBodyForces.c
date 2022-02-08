@@ -143,7 +143,6 @@ Load * GramsBodyForces(
 		  sprintf(FileLoadRoute,"%s%s",Route_Nodes,Parse_Properties[1]);
 		  B[IndexLoad].Value[0] = ReadCurve(FileLoadRoute);
 		  active_direction(&B[IndexLoad].Dir[NumTimeStep*0],IMIN(NumTimeStep,B[IndexLoad].Value[0].Num));
-		  puts("*************************************************");
 		  printf(" \t %s (%i) : \n \t %s %s \n",
 			 "* Body BC",
 			 B[IndexLoad].NumNodes,
@@ -158,7 +157,6 @@ Load * GramsBodyForces(
 		  sprintf(FileLoadRoute,"%s%s",Route_Nodes,Parse_Properties[1]);
 		  B[IndexLoad].Value[1] = ReadCurve(FileLoadRoute);
 		  active_direction(&(B[IndexLoad].Dir[NumTimeStep*1]),IMIN(NumTimeStep,B[IndexLoad].Value[1].Num));
-		  puts("*************************************************");
 		  printf(" \t %s (%i) : \n \t %s %s \n",
 			 "* Body BC",
 			 B[IndexLoad].NumNodes,
@@ -173,7 +171,6 @@ Load * GramsBodyForces(
 		  sprintf(FileLoadRoute,"%s%s",Route_Nodes,Parse_Properties[1]);
 		  B[IndexLoad].Value[2] = ReadCurve(FileLoadRoute);
 		  active_direction(&B[IndexLoad].Dir[NumTimeStep*2],IMIN(NumTimeStep,B[IndexLoad].Value[2].Num));
-		  puts("*************************************************");
 		  printf(" \t %s (%i) : \n \t %s %s \n",
 			 "* Body BC",
 			 B[IndexLoad].NumNodes,

@@ -40,45 +40,43 @@ typedef struct
   double alpha_5;
   double alpha_6;
 } Newmark_parameters;
-  
+
 /*
   Auxiliar functions 
 */
 static Newmark_parameters compute_Newmark_parameters(double, double, double);
 static Matrix compute_Nodal_Effective_Mass(Particle, Mesh, Mask, double);
 static Nodal_Field compute_Nodal_Field(Matrix,Particle, Mesh, Mask);
-static Nodal_Field initialise_Nodal_Increments(Nodal_Field,Mesh,Mask,Newmark_parameters,int,int);
+static Nodal_Field initialise_Nodal_Increments(Mesh,Mask,int,int);
 static void   update_Local_State(Nodal_Field,Mask,Particle,Mesh,double);
 static Matrix compute_Nodal_Forces(Mask, Particle, Mesh, int,int);
 static void compute_Nodal_Internal_Forces(Matrix,Mask,Particle, Mesh);
 static void compute_Nodal_Nominal_traction_Forces(Matrix,Mask,Particle,Mesh,int,int);
 static void compute_Nodal_Body_Forces(Matrix,Mask,Particle,Mesh,int,int);
 static Matrix compute_Nodal_Reactions(Mesh,Matrix,Mask,int,int);
-static Matrix compute_Nodal_Residual(Nodal_Field,Nodal_Field,Mask,Matrix, Matrix, Newmark_parameters);
+static Matrix compute_Nodal_Residual(Mask,Matrix, Matrix);
 static bool   check_convergence(Matrix,double,int,int,int);
-static Matrix assemble_Nodal_Tangent_Stiffness(Mask,Particle,Mesh,Newmark_parameters);
-static void   solve_non_reducted_system(Nodal_Field,Matrix, Matrix, Matrix, Newmark_parameters);
-static void   solve_reducted_system(Nodal_Field,Matrix,Matrix,Matrix,Mask,Newmark_parameters);
-static void   update_Newmark_Nodal_Increments(Nodal_Field,Nodal_Field,Mask,Newmark_parameters);
+static Matrix assemble_Nodal_Tangent_Stiffness(Mask,Particle,Mesh);
+static void   solve_non_reducted_system(Nodal_Field,Matrix, Matrix, Matrix);
+static void   solve_reducted_system(Nodal_Field,Matrix,Matrix,Matrix,Mask);
 static void   update_Particles(Nodal_Field,Particle,Mesh,Mask);
-static void output_selector(Particle,Mesh,Mask,Nodal_Field,Nodal_Field,Matrix,Matrix,Matrix,int,int);
+static void output_selector(Particle,Mesh,Mask,Nodal_Field,Matrix,Matrix,Matrix,int,int);
 /**************************************************************/
 
-void U_Newmark_beta_Finite_Strains(
+int U_Static_Finite_Strains(
   Mesh FEM_Mesh,
   Particle MPM_Mesh,
   Time_Int_Params Parameters_Solver)
 {
+             
+  bool Convergence = false;
 
-  /*
-    Auxiliar variables for the solver
-  */
-  int Ndim = NumberDimensions;  
+  int Iter = 0;
+  int Ndim = NumberDimensions;
   int Nactivenodes;
   int InitialStep = Parameters_Solver.InitialTimeStep;
   int NumTimeStep = Parameters_Solver.NumTimeStep;  
   int MaxIter = Parameters_Solver.MaxIter;
-  int Iter;
 
   unsigned TimeStep = InitialStep;
 
@@ -90,13 +88,10 @@ void U_Newmark_beta_Finite_Strains(
   double DeltaTimeStep;
   double DeltaX = FEM_Mesh.DeltaX;
 
-  bool Convergence;
-
   Matrix Effective_Mass;
   Matrix Tangent_Stiffness;
   Matrix Forces;
   Matrix Reactions;
-  Nodal_Field U_n;
   Nodal_Field D_U;
   Matrix D_Displacement;
   Matrix Residual;
@@ -104,98 +99,84 @@ void U_Newmark_beta_Finite_Strains(
   Mask ActiveNodes;
   Mask Free_and_Restricted_Dofs;
 
-  Newmark_parameters Params;
+  puts("*************************************************");
+  puts("Run static conditions ...");
 
-  /*
-    Time step is defined at the init of the simulation throught the
-    CFL condition. Notice that for this kind of solver, CFL confition is
-    not required to be satisfied. The only purpose of it is to use the existing
-    software interfase.
-  */
   DeltaTimeStep = U_DeltaT__SolversLib__(MPM_Mesh, DeltaX, Parameters_Solver);
- 
-  /*
-    Compute alpha parameters
-  */
-  Params = compute_Newmark_parameters(beta, gamma, DeltaTimeStep);
 
   while(TimeStep<NumTimeStep)
-    {
-      print_Status("*************************************************",TimeStep);
-      print_step(TimeStep,DeltaTimeStep);
+  {
 
-      local_search__MeshTools__(MPM_Mesh,FEM_Mesh);
-      ActiveNodes = generate_NodalMask__MeshTools__(FEM_Mesh);
-      Nactivenodes = ActiveNodes.Nactivenodes;
-      Free_and_Restricted_Dofs = generate_Mask_for_static_condensation__MeshTools__(ActiveNodes,FEM_Mesh,TimeStep,NumTimeStep);
-
-      Effective_Mass = compute_Nodal_Effective_Mass(MPM_Mesh,FEM_Mesh,ActiveNodes,epsilon);
-
-      U_n = compute_Nodal_Field(Effective_Mass,MPM_Mesh,FEM_Mesh,ActiveNodes);
-
-      D_U = initialise_Nodal_Increments(U_n,FEM_Mesh,ActiveNodes,Params,TimeStep,NumTimeStep);
-           
-      Convergence = false;
-      Iter = 0;
-
-      while(Convergence == false)
-      {
-        Forces = compute_Nodal_Forces(ActiveNodes,MPM_Mesh,FEM_Mesh,TimeStep,NumTimeStep);
-
-        Reactions = compute_Nodal_Reactions(FEM_Mesh,Forces,ActiveNodes,TimeStep,NumTimeStep);
-
-        Residual = compute_Nodal_Residual(U_n,D_U,ActiveNodes,Forces,Effective_Mass,Params);
-
-        Convergence = check_convergence(Residual,TOL,Iter,MaxIter,TimeStep);
-
-        if(Convergence == false)
-        {
-
-	        Tangent_Stiffness = assemble_Nodal_Tangent_Stiffness(ActiveNodes,MPM_Mesh,FEM_Mesh,Params);
-
-	        if((Free_and_Restricted_Dofs.Nactivenodes - Ndim*Nactivenodes) == 0)
-		      {
-		        solve_non_reducted_system(D_U,Tangent_Stiffness,Effective_Mass,Residual,Params);
-		      }
-	        else
-		      {
-		        solve_reducted_system(D_U,Tangent_Stiffness,Effective_Mass,Residual,Free_and_Restricted_Dofs,Params);
-		      }
-
-          update_Newmark_Nodal_Increments(D_U,U_n,Free_and_Restricted_Dofs,Params);
-
-          update_Local_State(D_U,ActiveNodes,MPM_Mesh,FEM_Mesh,DeltaTimeStep);
-          
-	        Iter++;
-
-	        free__MatrixLib__(Forces);
-	        free__MatrixLib__(Reactions);
-	        free__MatrixLib__(Residual);
-	        free__MatrixLib__(Tangent_Stiffness);
-        }
-      }
-
-      update_Particles(D_U,MPM_Mesh,FEM_Mesh,ActiveNodes);
+    print_Status("*************************************************",TimeStep);
+    print_step(TimeStep,DeltaTimeStep);
     
-      output_selector(MPM_Mesh, FEM_Mesh, ActiveNodes, D_U, U_n, Forces, Reactions, Residual,TimeStep, ResultsTimeStep);    
+    local_search__MeshTools__(MPM_Mesh,FEM_Mesh);
 
-      TimeStep++;
+    ActiveNodes = generate_NodalMask__MeshTools__(FEM_Mesh);
+    Nactivenodes = ActiveNodes.Nactivenodes;
+    Free_and_Restricted_Dofs = generate_Mask_for_static_condensation__MeshTools__(ActiveNodes,FEM_Mesh,TimeStep,NumTimeStep);
 
-      free__MatrixLib__(Effective_Mass); 
-      free__MatrixLib__(U_n.value);
-      free__MatrixLib__(U_n.d_value_dt);
-      free__MatrixLib__(U_n.d2_value_dt2);
-      free__MatrixLib__(D_U.value);
-      free__MatrixLib__(D_U.d_value_dt);
-      free__MatrixLib__(D_U.d2_value_dt2);
-      free__MatrixLib__(Forces);
-      free__MatrixLib__(Reactions);
-      free__MatrixLib__(Residual);
-      free(ActiveNodes.Nodes2Mask);
-      free(Free_and_Restricted_Dofs.Nodes2Mask);
+    Effective_Mass = compute_Nodal_Effective_Mass(MPM_Mesh,FEM_Mesh,ActiveNodes,epsilon);
 
+    D_U = initialise_Nodal_Increments(FEM_Mesh,ActiveNodes,TimeStep,NumTimeStep);
+
+    Convergence = false;
+    Iter = 0;
+
+    while(Convergence == false)
+    {
+
+      Forces = compute_Nodal_Forces(ActiveNodes,MPM_Mesh,FEM_Mesh,TimeStep,NumTimeStep);
+
+      Reactions = compute_Nodal_Reactions(FEM_Mesh,Forces,ActiveNodes,TimeStep,NumTimeStep);
+
+      Residual = compute_Nodal_Residual(ActiveNodes,Forces,Effective_Mass);
+
+      Convergence = check_convergence(Residual,TOL,Iter,MaxIter,TimeStep);
+
+      if(Convergence == false)
+      {
+
+	      Tangent_Stiffness = assemble_Nodal_Tangent_Stiffness(ActiveNodes,MPM_Mesh,FEM_Mesh);
+
+	      if((Free_and_Restricted_Dofs.Nactivenodes - Ndim*Nactivenodes) == 0)
+        {
+		      solve_non_reducted_system(D_U,Tangent_Stiffness,Effective_Mass,Residual);
+		    }
+	      else
+		    {
+		      solve_reducted_system(D_U,Tangent_Stiffness,Effective_Mass,Residual,Free_and_Restricted_Dofs);
+		    }
+
+        update_Local_State(D_U,ActiveNodes,MPM_Mesh,FEM_Mesh,DeltaTimeStep);
+          
+	      Iter++;
+
+	      free__MatrixLib__(Forces);
+	      free__MatrixLib__(Reactions);
+	      free__MatrixLib__(Residual);
+	      free__MatrixLib__(Tangent_Stiffness);
+      }
     }
 
+    update_Particles(D_U,MPM_Mesh,FEM_Mesh,ActiveNodes);
+
+    output_selector(MPM_Mesh, FEM_Mesh, ActiveNodes, D_U, Forces, Reactions, Residual,TimeStep, ResultsTimeStep);    
+ 
+    TimeStep++;
+
+    free__MatrixLib__(Effective_Mass);
+    free__MatrixLib__(D_U.value);
+    free__MatrixLib__(D_U.d_value_dt);
+    free__MatrixLib__(D_U.d2_value_dt2);    
+    free__MatrixLib__(Forces);
+    free__MatrixLib__(Reactions);
+    free__MatrixLib__(Residual);
+    free(ActiveNodes.Nodes2Mask);
+    free(Free_and_Restricted_Dofs.Nodes2Mask);
+  }
+
+  return EXIT_SUCCESS;    
 }
 
 /**************************************************************/
@@ -443,8 +424,8 @@ static Nodal_Field compute_Nodal_Field(
 	  for(int i = 0 ; i<Ndim ; i++)
     {
         U_n.value.nM[A_mask][i]        += m_p*ShapeFunction_pA*MPM_Mesh.Phi.dis.nM[p][i];
-        U_n.d_value_dt.nM[A_mask][i]   += m_p*ShapeFunction_pA*MPM_Mesh.Phi.vel.nM[p][i];
-        U_n.d2_value_dt2.nM[A_mask][i] += m_p*ShapeFunction_pA*MPM_Mesh.Phi.acc.nM[p][i];
+//        U_n.d_value_dt.nM[A_mask][i]   += m_p*ShapeFunction_pA*MPM_Mesh.Phi.vel.nM[p][i];
+//        U_n.d2_value_dt2.nM[A_mask][i] += m_p*ShapeFunction_pA*MPM_Mesh.Phi.acc.nM[p][i];
       }
 	}
 
@@ -521,10 +502,8 @@ static Nodal_Field compute_Nodal_Field(
 /**************************************************************/
 
 static Nodal_Field initialise_Nodal_Increments(
-  Nodal_Field U_n,
   Mesh FEM_Mesh,
   Mask ActiveNodes,
-  Newmark_parameters Params,
   int TimeStep,
   int NumTimeStep)
 /*
@@ -539,13 +518,6 @@ static Nodal_Field initialise_Nodal_Increments(
   int Ndof = NumberDOF; /* Number of degree of freedom */
   int Id_BCC; /* Index of the node where we apply the BCC */
   int Id_BCC_mask;
-
-  double alpha_1 = Params.alpha_1;
-  double alpha_2 = Params.alpha_2;
-  double alpha_3 = Params.alpha_3;
-  double alpha_4 = Params.alpha_4;
-  double alpha_5 = Params.alpha_5;
-  double alpha_6 = Params.alpha_6;
 
   double D_U_value_It;
   Nodal_Field D_U;
@@ -598,30 +570,12 @@ static Nodal_Field initialise_Nodal_Increments(
         */
         if(FEM_Mesh.Bounds.BCC_i[i].Dir[k*NumTimeStep + TimeStep] == 1)
         {
-          /* 
-            Assign the boundary condition :
-            First remove the value obtained during the projection and compute the value
-            using the evolution of the boundary condition
-          */
-          U_n.value.nM[Id_BCC_mask][k] = 0.0;
-          U_n.d_value_dt.nM[Id_BCC_mask][k] = 0.0;
-          U_n.d2_value_dt2.nM[Id_BCC_mask][k] = 0.0;
-
           for(int t = 0 ; t<TimeStep ; t++)
           {
             D_U_value_It = FEM_Mesh.Bounds.BCC_i[i].Value[k].Fx[t];
-            U_n.value.nM[Id_BCC_mask][k] += D_U_value_It;                    
-            U_n.d2_value_dt2.nM[Id_BCC_mask][k] += alpha_1*D_U_value_It - alpha_2*U_n.d_value_dt.nM[Id_BCC_mask][k] - (alpha_3 + 1)*U_n.d2_value_dt2.nM[Id_BCC_mask][k];
-            U_n.d_value_dt.nM[Id_BCC_mask][k]   += alpha_4*D_U_value_It + (alpha_5-1)*U_n.d_value_dt.nM[Id_BCC_mask][k] + alpha_6*U_n.d2_value_dt2.nM[Id_BCC_mask][k];
           }
          
-          /*
-            Initialise increments using newmark and the value of the boundary condition
-          */
           D_U.value.nM[Id_BCC_mask][k] = FEM_Mesh.Bounds.BCC_i[i].Value[k].Fx[TimeStep];                    
-          D_U.d2_value_dt2.nM[Id_BCC_mask][k] = alpha_1*D_U.value.nM[Id_BCC_mask][k] - alpha_2*U_n.d_value_dt.nM[Id_BCC_mask][k] - (alpha_3 + 1)*U_n.d2_value_dt2.nM[Id_BCC_mask][k];
-          D_U.d_value_dt.nM[Id_BCC_mask][k]   = alpha_4*D_U.value.nM[Id_BCC_mask][k] + (alpha_5-1)*U_n.d_value_dt.nM[Id_BCC_mask][k] + alpha_6*U_n.d2_value_dt2.nM[Id_BCC_mask][k];
-
         }
       } 
     
@@ -733,7 +687,7 @@ static void update_Local_State(
         fprintf(stderr,"%s : %s %i\n",
           "Error in update_Local_State()",
           "Negative jacobian in particle",p);
-//        exit(EXIT_FAILURE);
+        exit(EXIT_FAILURE);
       }
 
       /*
@@ -785,6 +739,7 @@ static void update_Local_State(
       integration rule.
     */
     Stress_integration__Particles__(p,MPM_Mesh,FEM_Mesh,MatProp_p); 
+
   }
   
 }
@@ -906,9 +861,9 @@ static void compute_Nodal_Internal_Forces(
 	    Asign the nodal forces contribution to the node 
 	  */
 	  for(int i = 0 ; i<Ndim ; i++)
-	  {
-	    Forces.nM[A_mask][i] += InternalForcesDensity_Ap.n[i]*V0_p;
-	  }
+	    {
+	      Forces.nM[A_mask][i] += InternalForcesDensity_Ap.n[i]*V0_p;
+	    }
 
 	  /*
 	    Free memory 
@@ -924,7 +879,7 @@ static void compute_Nodal_Internal_Forces(
       free__MatrixLib__(gradient_p);
       free(Nodes_p.Connectivity);
     }
-   
+
 }
 
 /**************************************************************/
@@ -1064,7 +1019,7 @@ static void compute_Nodal_Body_Forces(
   int A_mask; /* Index of the node where we apply the body force */
   int idx_A_mask_k; /* Index of the node where we apply the body force */
   int Ap; /* Tributary node A of particle p */
-//  int p; /* Particle index */
+  int p; /* Particle index */
   
   double m_p; /* Mass of the particle */
   Load * B = MPM_Mesh.B; /* List with the load cases */
@@ -1074,24 +1029,40 @@ static void compute_Nodal_Body_Forces(
   
   Tensor b = alloc__TensorLib__(1); /* Body forces vector */
   
-  b.n[0] = 0.0;
-  b.n[1] = -1000;
+  for(int i = 0 ; i<NumBodyForces ; i++)
+    {
+      /* Get the number of particles with the body load i */
+      NumParticles_i = B[i].NumNodes;
 
-  for(int p = 0 ; p<MPM_Mesh.NumGP ; p++)
-  {
+      for(int j = 0 ; j<NumParticles_i ; j++)
+      {
+
+	/* Get the index of the Gauss-Point */
+	p = B[i].Nodes[j];
 	
-  	/* Get the value of the mass */
-	  m_p = MPM_Mesh.Phi.mass.nV[p];
+	/* Get the value of the mass */
+	m_p = MPM_Mesh.Phi.mass.nV[p];
 
-  	/* Define tributary nodes of the particle */
-	  NumNodes_p = MPM_Mesh.NumberNodes[p];
-	  Nodes_p = nodal_set__Particles__(p, MPM_Mesh.ListNodes[p], NumNodes_p);
+	/* Define tributary nodes of the particle */
+	NumNodes_p = MPM_Mesh.NumberNodes[p];
+	Nodes_p = nodal_set__Particles__(p, MPM_Mesh.ListNodes[p], NumNodes_p);
 
-  	/* Compute shape functions */
-	  ShapeFunction_p = compute_N__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
+	/* Compute shape functions */
+	ShapeFunction_p = compute_N__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
 
-	  /* Get the node of the mesh for the contribution */
-	  for(int A = 0 ; A<NumNodes_p ; A++)
+
+	/* Fill vector of body forces */
+	for(int k = 0 ; k<Ndim ; k++)
+  {
+	  if(B[i].Dir[k*NumTimeStep + TimeStep])
+    {
+	    b.n[k] = B[i].Value[k].Fx[TimeStep];
+	  }
+	}
+
+
+	/* Get the node of the mesh for the contribution */
+	for(int A = 0 ; A<NumNodes_p ; A++)
 	  {
 	    
 	    /* Pass the value of the nodal shape function to a scalar */
@@ -1104,22 +1075,24 @@ static void compute_Nodal_Body_Forces(
 	    /* Compute body forces */
 	    for(int k = 0 ; k<Ndim ; k++)
 	      {
-          Forces.nM[A_mask][k] -= ShapeFunction_pA*b.n[k]*m_p;         
+          Forces.nM[A_mask][k] -= ShapeFunction_pA*b.n[k]*m_p;
 	      } 
 	    
 	  }
 	
-   	/* Free the matrix with the nodal gradient of the element */
-	  free__MatrixLib__(ShapeFunction_p);
-	  free(Nodes_p.Connectivity);
+	/* Free the matrix with the nodal gradient of the element */
+	free__MatrixLib__(ShapeFunction_p);
+	free(Nodes_p.Connectivity);
 	
-  }
+      }
       
+    }
+
   /*
     Free auxiliar tensor
   */
   free__TensorLib__(b);
-  
+
 }
 
 
@@ -1206,42 +1179,15 @@ static Matrix compute_Nodal_Reactions(
 /**************************************************************/
 
 static Matrix compute_Nodal_Residual(
-  Nodal_Field U_n,
-  Nodal_Field D_U,
   Mask ActiveNodes,
   Matrix Forces,
-  Matrix Mass,
-  Newmark_parameters Params)
+  Matrix Mass)
 {
   int Ndim = NumberDimensions;
   int Ndof = NumberDOF;
   int Nnodes_mask = ActiveNodes.Nactivenodes;
   int Order = Ndim*Nnodes_mask;
-  Matrix Acceleration_n1 = allocZ__MatrixLib__(Nnodes_mask,Ndim);
-  Matrix Inertial_Forces = allocZ__MatrixLib__(Nnodes_mask,Ndim);
   Matrix Residual = allocZ__MatrixLib__(Nnodes_mask,Ndim);
-  double alpha_1 = Params.alpha_1;
-  double alpha_2 = Params.alpha_2;
-  double alpha_3 = Params.alpha_3;
-
-  /*
-    Compute nodal acceleration (Vectorized)
-  */
-  for(int idx_B = 0 ; idx_B<Order ; idx_B++)
-    {
-      Acceleration_n1.nV[idx_B] = alpha_1*D_U.value.nV[idx_B] - alpha_2*U_n.d_value_dt.nV[idx_B] - alpha_3*U_n.d2_value_dt2.nV[idx_B];
-    }
-
-  /*
-    Compute inertial forces (Vectorized)
-  */
-  for(int idx_A = 0 ; idx_A<Order ; idx_A++)
-    {
-      for(int idx_B = 0 ; idx_B<Order ; idx_B++)
-      {
-        Inertial_Forces.nV[idx_A] += Mass.nM[idx_A][idx_B]*Acceleration_n1.nV[idx_B];
-      }
-    }
 
   /*
     Compute (-) residual (Vectorized). The minus symbol is due to
@@ -1249,16 +1195,9 @@ static Matrix compute_Nodal_Residual(
   */
   for(int idx_A = 0 ; idx_A<Order ; idx_A++)
     {
-      Residual.nV[idx_A] = Inertial_Forces.nV[idx_A] + Forces.nV[idx_A];
+      Residual.nV[idx_A] = Forces.nV[idx_A];
     }
 
-  /*
-    Free Memory 
-  */
-  free__MatrixLib__(Acceleration_n1);
-  free__MatrixLib__(Inertial_Forces);
-
-  
   return Residual;
 }
 
@@ -1316,7 +1255,7 @@ static bool check_convergence(
 
       printf("Iter: [%i/%i], Total Error: %e, Relative Error: %e \n",
       Iter,MaxIter,Error,Error_relative);
-
+      
       /*
         Check convergence using the relative error
       */
@@ -1339,8 +1278,7 @@ static bool check_convergence(
 static Matrix assemble_Nodal_Tangent_Stiffness(
   Mask ActiveNodes,
   Particle MPM_Mesh,
-  Mesh FEM_Mesh,
-  Newmark_parameters Params)
+  Mesh FEM_Mesh)
 
 /*
   This function computes the tangent stiffness matrix. 
@@ -1376,7 +1314,6 @@ static Matrix assemble_Nodal_Tangent_Stiffness(
   Material MatProp_p;
   double V0_p; /* Volume of the particle in the reference configuration */
   double J_p; /* Jacobian of the deformation gradient */
-  double alpha_4 = Params.alpha_4; /* Newmark parameter (rate-dependent models) */
 
   Matrix Tangent_Stiffness = allocZ__MatrixLib__(Order, Order);
 
@@ -1462,7 +1399,7 @@ static Matrix assemble_Nodal_Tangent_Stiffness(
         }
         else if(strcmp(MatProp_p.Type,"Newtonian-Fluid-Compressible") == 0)
         {
-          Stiffness_density_p = compute_stiffness_density_Newtonian_Fluid(GRADIENT_pA,GRADIENT_pB,F_n1_p,dFdt_n1_p,J_p,alpha_4,MatProp_p);
+          Stiffness_density_p = compute_stiffness_density_Newtonian_Fluid(GRADIENT_pA,GRADIENT_pB,F_n1_p,dFdt_n1_p,J_p,0.0,MatProp_p);
         }
         else
         {
@@ -1515,15 +1452,7 @@ static void solve_non_reducted_system(
   Nodal_Field D_U,
 	Matrix Tangent_Stiffness,
 	Matrix Effective_Mass,
-	Matrix Residual,
-  Newmark_parameters Params)
-/*
-  This function is deboted to update the vector with the nodal displacement by
-  solving :
-  
-  ((2/Dt^2)*M_AB + K_AB)*delta_B + R_A = 0_A 
-  
-*/
+	Matrix Residual)
 {
   int Nnodes_mask = Residual.N_rows;
   int Ndof = NumberDOF;
@@ -1534,7 +1463,6 @@ static void solve_non_reducted_system(
   int   INFO = 3;
   int * IPIV = (int *)Allocate_Array(Order,sizeof(int));
   int NRHS = 1;
-  double alpha_1 = Params.alpha_1;
   Matrix K_Global = allocZ__MatrixLib__(Order,Order);
 
   /*
@@ -1542,7 +1470,7 @@ static void solve_non_reducted_system(
   */
   for(int idx_AB_ij = 0 ; idx_AB_ij<Order*Order ; idx_AB_ij++)
   {
-    K_Global.nV[idx_AB_ij] = alpha_1*Effective_Mass.nV[idx_AB_ij] + Tangent_Stiffness.nV[idx_AB_ij];
+    K_Global.nV[idx_AB_ij] = Tangent_Stiffness.nV[idx_AB_ij];
   }
 
 
@@ -1607,8 +1535,7 @@ static void solve_reducted_system(
   Matrix Tangent_Stiffness,
   Matrix Effective_Mass,
   Matrix Residual,
-  Mask Free_and_Restricted_Dofs,
-  Newmark_parameters Params)
+  Mask Free_and_Restricted_Dofs)
 /*
   This function is deboted to update the vector with the nodal displacement by
   solving :
@@ -1625,7 +1552,6 @@ static void solve_reducted_system(
   int idx_A_ij, idx_B_ij;
   int Mask_idx_A_ij, Mask_idx_B_ij;
 
-  double alpha_1 = Params.alpha_1;
   /*
     Guyan reduction : static condensation
     Here, we will work directly with vectorized matrix
@@ -1658,7 +1584,7 @@ for(idx_A_ij = 0 ; idx_A_ij < Order ; idx_A_ij++)
       */
       if((Mask_idx_A_ij != - 1) && (Mask_idx_B_ij != - 1))
       {
-        K_Global_FF.nM[Mask_idx_A_ij][Mask_idx_B_ij] = alpha_1*Effective_Mass.nM[idx_A_ij][idx_B_ij] + Tangent_Stiffness.nM[idx_A_ij][idx_B_ij];
+        K_Global_FF.nM[Mask_idx_A_ij][Mask_idx_B_ij] = Tangent_Stiffness.nM[idx_A_ij][idx_B_ij];
       }
 
     }
@@ -1726,6 +1652,7 @@ for(idx_A_ij = 0 ; idx_A_ij < Order ; idx_A_ij++)
     */
       if(Mask_idx_A_ij != - 1)
       {
+
         D_U.value.nV[idx_A_ij] -= Residual_F.nV[Mask_idx_A_ij];
       } 
       
@@ -1737,51 +1664,6 @@ for(idx_A_ij = 0 ; idx_A_ij < Order ; idx_A_ij++)
   free__MatrixLib__(K_Global_FF);
   free__MatrixLib__(Residual_F);
 
-}
-
-/**************************************************************/
-
-static void update_Newmark_Nodal_Increments(
-  Nodal_Field D_U,
-  Nodal_Field U_n,
-  Mask Free_and_Restricted_Dofs,
-  Newmark_parameters Params)
-{
-
-  int Nnodes = U_n.value.N_rows;
-  int Ndim = NumberDimensions;
-  int Ndof = NumberDOF;
-  int Total_dof = Nnodes*NumberDOF;
-  int Mask_idx_A_i;
-  double alpha_1 = Params.alpha_1;
-  double alpha_2 = Params.alpha_2;
-  double alpha_3 = Params.alpha_3;
-  double alpha_4 = Params.alpha_4;
-  double alpha_5 = Params.alpha_5;
-  double alpha_6 = Params.alpha_6;
-
-  /*
-    Update nodal variables
-  */
-  for(int A = 0 ; A<Nnodes ; A++)
-  {  
-    for(int i = 0 ; i<Ndim ; i++)
-    {
-
-      Mask_idx_A_i = Free_and_Restricted_Dofs.Nodes2Mask[A*Ndim + i];
-
-      if(Mask_idx_A_i == -1)
-      {
-        D_U.d2_value_dt2.nM[A][i] = 0.0;
-        D_U.d_value_dt.nM[A][i]   = alpha_4*D_U.value.nM[A][i] + (alpha_5-1)*U_n.d_value_dt.nM[A][i] + alpha_6*U_n.d2_value_dt2.nM[A][i];
-      }
-      else
-      {
-        D_U.d2_value_dt2.nM[A][i] = alpha_1*D_U.value.nM[A][i] - alpha_2*U_n.d_value_dt.nM[A][i] - (alpha_3 + 1)*U_n.d2_value_dt2.nM[A][i];
-        D_U.d_value_dt.nM[A][i]   = alpha_4*D_U.value.nM[A][i] + (alpha_5-1)*U_n.d_value_dt.nM[A][i] + alpha_6*U_n.d2_value_dt2.nM[A][i];
-      }
-    }
-  }
 }
 
 /**************************************************************/
@@ -1852,6 +1734,8 @@ static void update_Particles(
       */
       for(int i = 0 ; i<Ndim  ; i++)
 	     {
+        MPM_Mesh.Phi.acc.nM[p][i]  = 0.0;
+
 	     for(int j = 0 ; j<Ndim  ; j++)
 	       {
 	         F_n_p.N[i][j] = F_n1_p.N[i][j];
@@ -1891,11 +1775,11 @@ static void update_Particles(
 	  for(int i = 0 ; i<Ndim ; i++)
 	    {
 	      D_U_pI = ShapeFunction_pI*D_U.value.nM[A_mask][i];
-	      D_V_pI = ShapeFunction_pI*D_U.d_value_dt.nM[A_mask][i];
-	      D_A_pI = ShapeFunction_pI*D_U.d2_value_dt2.nM[A_mask][i];
-	      	      
-	      MPM_Mesh.Phi.acc.nM[p][i]  += D_A_pI;
-	      MPM_Mesh.Phi.vel.nM[p][i]  += D_V_pI;
+//	      D_V_pI = ShapeFunction_pI*D_U.d_value_dt.nM[A_mask][i];
+//	      D_A_pI = ShapeFunction_pI*D_U.d2_value_dt2.nM[A_mask][i];
+
+//        MPM_Mesh.Phi.acc.nM[p][i]  += D_A_pI;
+//	      MPM_Mesh.Phi.vel.nM[p][i]  += D_V_pI;
         MPM_Mesh.Phi.dis.nM[p][i]  += D_U_pI;
 	      MPM_Mesh.Phi.x_GC.nM[p][i] += D_U_pI;
 	    } 
@@ -1917,7 +1801,6 @@ static void output_selector(
   Mesh FEM_Mesh,
   Mask ActiveNodes,
   Nodal_Field D_U,
-  Nodal_Field U_n,
   Matrix Forces,
   Matrix Reactions,
   Matrix Residual,
@@ -1966,13 +1849,6 @@ static void output_selector(
       free__MatrixLib__(MPM_Mesh.Phi.PU);
     }
 
-  }
-
-  int Backup_TimeStep = 100;
-
-  if(TimeStep % Backup_TimeStep == 0)
-  {
-    particle_backup_vtk__InOutFun__(MPM_Mesh,TimeStep,Backup_TimeStep);
   }
 
   // /* 
@@ -2053,9 +1929,3 @@ static void output_selector(
   // }
 
 }
-
-/**************************************************************/
-
-
-
-

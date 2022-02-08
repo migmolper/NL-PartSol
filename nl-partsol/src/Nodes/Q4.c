@@ -42,7 +42,6 @@ void initialize__Q4__(
   /* Loop over the particles to initialize them */
   for(int p = 0 ; p<Np ; p++)
   {
-
     /* Supose that the particle was not initilise */
     Init_p = false;
 
@@ -421,6 +420,19 @@ void element_to_particles__Q4__(
     Xi_p.nM[3][1] = - 1./sqrt(3.0);
     break;
 
+    case 5:
+    Xi_p.nM[0][0] =   0.5;
+    Xi_p.nM[0][1] =   0.5;
+    Xi_p.nM[1][0] =   0.5;
+    Xi_p.nM[1][1] = - 0.5;
+    Xi_p.nM[2][0] = - 0.5;
+    Xi_p.nM[2][1] =   0.5;
+    Xi_p.nM[3][0] = - 0.5;
+    Xi_p.nM[3][1] = - 0.5;
+    Xi_p.nM[4][0] =   0.0;
+    Xi_p.nM[4][1] =   0.0;
+    break;
+
     case 9:
     Xi_p.nM[0][0] =   0.0;
     Xi_p.nM[0][1] =   0.0;
@@ -644,7 +656,7 @@ void local_search__Q4__(Particle MPM_Mesh, Mesh FEM_Mesh)
 
     // Get the global coordinates and velocity of the particle
     X_p = memory_to_matrix__MatrixLib__(Ndim,1,MPM_Mesh.Phi.x_GC.nM[p]);
-    V_p = memory_to_matrix__MatrixLib__(Ndim,1,MPM_Mesh.Phi.vel.nM[p]);
+    V_p = memory_to_matrix__MatrixLib__(Ndim,1,MPM_Mesh.Phi.dis.nM[p]);
     Xi_p = memory_to_matrix__MatrixLib__(Ndim,1,MPM_Mesh.Phi.x_EC.nM[p]);
 
     // Check if the particle is static or is in movement
