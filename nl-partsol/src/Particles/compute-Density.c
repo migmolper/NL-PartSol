@@ -3,23 +3,20 @@
 /*******************************************************/
 
 double update_density__Particles__(double rho_n, double TimeStep,
-		      Tensor Rate_Strain)
-{
+                                   Tensor Rate_Strain) {
   /* Define output variable */
-  double rho_n1;  
+  double rho_n1;
   /* Check if the input is ok*/
-  if (Rate_Strain.Order == 2){
+  if (Rate_Strain.Order == 2) {
     /* Update the density */
-    rho_n1 = rho_n/(1 + TimeStep*I1__TensorLib__(Rate_Strain));
+    rho_n1 = rho_n / (1 + TimeStep * I1__TensorLib__(Rate_Strain));
+  } else {
+    fprintf(stderr, "%s : %s %s !!! \n",
+            "Error in update_density__Particles__()", "The input should be",
+            "a 2nd order tensor and a scalar");
+    exit(EXIT_FAILURE);
   }
-  else{
-    fprintf(stderr,"%s : %s %s !!! \n",
-	    "Error in update_density__Particles__()",
-	    "The input should be",
-	    "a 2nd order tensor and a scalar");
-    exit(EXIT_FAILURE);    
-  }
-  return rho_n1;  
+  return rho_n1;
 }
 
-/*******************************************************/ 
+/*******************************************************/

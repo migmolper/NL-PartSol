@@ -3,84 +3,67 @@
 /*
   Call global variables
 */
-Mixture * Soil_Water_Mixtures;
+Mixture *Soil_Water_Mixtures;
 int Number_Soil_Water_Mixtures;
-
 
 /*********************************************************************/
 
-double U_DeltaT__SolversLib__(
-  Particle MPM_Mesh,
-  double h,
-  Time_Int_Params Parameters_Solver)
-{
+double U_DeltaT__SolversLib__(Particle MPM_Mesh, double h,
+                              Time_Int_Params Parameters_Solver) {
 
   double DeltaT;
   double CEL_MAX = 0;
-  double C[3] = {0,0,0};
+  double C[3] = {0, 0, 0};
   int Ndim = NumberDimensions;
   int Nmat = MPM_Mesh.NumberMaterials;
   bool DynamicTimeStep = false;
 
-
   /*
     Read paramter solver
   */
- double CFL = Parameters_Solver.CFL;
- double CEL_MAT = Parameters_Solver.Cel;
+  double CFL = Parameters_Solver.CFL;
+  double CEL_MAT = Parameters_Solver.Cel;
 
   /*
     Consider the velocity of the particles for the courant. In
     some cases, for instance Fr>1 is important.
    */
-  if(DynamicTimeStep)
-  {
+  if (DynamicTimeStep) {
     /*
       Get the maximum wave speed in any direction
     */
-    for(int i = 0 ; i<MPM_Mesh.NumGP ; i++)
-    {
-      for(int j = 0 ; j<Ndim ; j++)
-      {
-        C[j] = DMAX(C[j],CEL_MAT+fabs(MPM_Mesh.Phi.vel.nM[i][j]));
+    for (int i = 0; i < MPM_Mesh.NumGP; i++) {
+      for (int j = 0; j < Ndim; j++) {
+        C[j] = DMAX(C[j], CEL_MAT + fabs(MPM_Mesh.Phi.vel.nM[i][j]));
       }
     }
 
     /*
       Get the absolute maximum value of the celerity
     */
-    for(int j = 0 ; j<Ndim ; j++)
-    {
-      CEL_MAX = DMAX(CEL_MAX,C[j]);
+    for (int j = 0; j < Ndim; j++) {
+      CEL_MAX = DMAX(CEL_MAX, C[j]);
     }
 
-  }
-  else
-  {
+  } else {
     CEL_MAX = CEL_MAT;
   }
 
-  
   /*
-    Get the minimum value of the time step 
+    Get the minimum value of the time step
   */
-  DeltaT = CFL*h/CEL_MAX;
-
+  DeltaT = CFL * h / CEL_MAX;
 
   /*
-    Return new time step 
+    Return new time step
   */
   return DeltaT;
 }
 
 /*********************************************************************/
 
-double DeltaT_Coussy__SolversLib__(
-  Particle MPM_Mesh,
-  double h,
-  double xi,
-  double CFL)
-{
+double DeltaT_Coussy__SolversLib__(Particle MPM_Mesh, double h, double xi,
+                                   double CFL) {
 
   bool DynamicTimeStep = false;
   double DeltaT;
@@ -92,7 +75,7 @@ double DeltaT_Coussy__SolversLib__(
   double rho_mixture;
   double CEL_MAT = 0;
   double CEL_MAX = 0;
-  double C[3] = {0,0,0};
+  double C[3] = {0, 0, 0};
   int Ndim = NumberDimensions;
   int Nmixt = Number_Soil_Water_Mixtures;
   int Np = MPM_Mesh.NumGP;
@@ -102,8 +85,7 @@ double DeltaT_Coussy__SolversLib__(
   /*
     Get the maximum material celerity
   */
-  for(int p = 0 ; p<Np ; p++)
-  {
+  for (int p = 0; p < Np; p++) {
     /*
       Load the elastic modulus os the soil phase
     */
@@ -122,55 +104,45 @@ double DeltaT_Coussy__SolversLib__(
     /*
       Compute the mixture density
     */
-    rho_mixture =rho_s*phi_s + xi*rho_f*phi_f;
+    rho_mixture = rho_s * phi_s + xi * rho_f * phi_f;
 
     /*
       Compute the celerity of the material for the particle p
     */
-    CEL_MAT = DMAX(sqrt(E/rho_mixture),CEL_MAT);
-
+    CEL_MAT = DMAX(sqrt(E / rho_mixture), CEL_MAT);
   }
-
 
   /*
     Consider the velocity of the particles for the courant. In
     some cases, for instance Fr>1 is important.
    */
-  if(DynamicTimeStep)
-    {
+  if (DynamicTimeStep) {
     /*
       Get the maximum wave speed in any direction
     */
-    for(int i = 0 ; i<MPM_Mesh.NumGP ; i++)
-      {
-  for(int j = 0 ; j<Ndim ; j++)
-    {
-      C[j] = DMAX(C[j],CEL_MAT+fabs(MPM_Mesh.Phi.vel.nM[i][j]));
-    }
+    for (int i = 0; i < MPM_Mesh.NumGP; i++) {
+      for (int j = 0; j < Ndim; j++) {
+        C[j] = DMAX(C[j], CEL_MAT + fabs(MPM_Mesh.Phi.vel.nM[i][j]));
       }
+    }
 
     /*
       Get the absolute maximum value of the celerity
     */
-    for(int j = 0 ; j<Ndim ; j++)
-      {
-  CEL_MAX = DMAX(CEL_MAX,C[j]);
-      }
-  }
-  else
-    {
-      CEL_MAX = CEL_MAT;
+    for (int j = 0; j < Ndim; j++) {
+      CEL_MAX = DMAX(CEL_MAX, C[j]);
     }
+  } else {
+    CEL_MAX = CEL_MAT;
+  }
 
-  
   /*
-    Get the minimum value of the time step 
+    Get the minimum value of the time step
   */
-  DeltaT = CFL*h/CEL_MAX;
-
+  DeltaT = CFL * h / CEL_MAX;
 
   /*
-    Return new time step 
+    Return new time step
   */
   return DeltaT;
 }

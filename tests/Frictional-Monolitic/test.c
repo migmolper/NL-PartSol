@@ -1,17 +1,17 @@
-/* 
+/*
 Unitary test for the smooth Mohr-Coulomb model.
-One single point is initially confined with an 
+One single point is initially confined with an
 hydrostatic stress state of -200 kPa. Before that,
-the stress in the II direction is incresed using 
+the stress in the II direction is incresed using
 strain control.
 -------------------------------------------------------------------
 Written by Miguel Molinos, 2021
 Universidad Politécnica de Madrid
 -------------------------------------------------------------------
 Useful information is in Borja et al. (2003):
-'On the numerical integration of three-invariant elastoplastic constitutive models'
-https://doi.org/10.1016/S0045-7825(02)00620-5
-------------------------------------------------------------------- 
+'On the numerical integration of three-invariant elastoplastic constitutive
+models' https://doi.org/10.1016/S0045-7825(02)00620-5
+-------------------------------------------------------------------
 Requires:
   * accelerate library or LAPACK (solver)
   * gnuplot (plots)
@@ -25,7 +25,6 @@ gcc Frictional-Monolithic.c -o Frictional-Monolithic -llapack -lm
 */
 
 #include <check.h>
-
 
 /**************************************************************/
 /******************** Solver Parameters ***********************/
@@ -44,9 +43,9 @@ gcc Frictional-Monolithic.c -o Frictional-Monolithic -llapack -lm
 #define a1_Parameter 20000
 #define a2_Parameter 0.005
 #define a3_Parameter 35
-#define alpha_Parameter - 0.71 // -0.71
-#define NumberSteps 5000 // 3500 // 2500 // 
-#define Delta_strain_II - 0.00001
+#define alpha_Parameter -0.71 // -0.71
+#define NumberSteps 5000      // 3500 // 2500 //
+#define Delta_strain_II -0.00001
 #define Yield_Function "Matsuoka-Nakai"
 
 /**************************************************************/
@@ -54,15 +53,15 @@ gcc Frictional-Monolithic.c -o Frictional-Monolithic -llapack -lm
 /**************************************************************/
 
 #ifdef __linux__
-#include <stdio.h>
-#include <string.h>
+#include <lapacke.h>
 #include <math.h>
 #include <stdbool.h>
-#include <lapacke.h>
-#elif __APPLE__
 #include <stdio.h>
-#include <stdbool.h>
+#include <string.h>
+#elif __APPLE__
 #include <Accelerate/Accelerate.h>
+#include <stdbool.h>
+#include <stdio.h>
 #endif
 
 #include "Constitutive.h"
@@ -76,32 +75,30 @@ typedef struct {
   double E;
   double nu;
   double atmospheric_pressure;
-  char Yield_Function_Frictional [100];
+  char Yield_Function_Frictional[100];
   double m_Frictional;
   double c0_Frictional;
   double a_Hardening_Borja[3];
   double alpha_Hardening_Borja;
 } Material;
 
-typedef struct
-{
+typedef struct {
   int Particle_Idx;
-  double * Stress;
-  double * Strain;
-  double * Increment_E_plastic;
-  double Lambda; 
+  double *Stress;
+  double *Strain;
+  double *Increment_E_plastic;
+  double Lambda;
   double Cohesion;
-  double Kappa; 
+  double Kappa;
 } State_Parameters;
 
-typedef struct
-{
+typedef struct {
   double alpha;
-  double m; 
-  double pa; 
-  double c0; 
-  double a1; 
-  double a2; 
+  double m;
+  double pa;
+  double c0;
+  double a1;
+  double a2;
   double a3;
   double CC[9];
 } Model_Parameters;
@@ -115,22 +112,22 @@ bool Is_Matsuoka_Nakai;
 bool Is_Lade_Duncan;
 bool Is_Modified_Lade_Duncan;
 
-
 /**************************************************************/
 /******************** Auxiliar functions **********************/
 /**************************************************************/
 
 static double dsqr_arg;
-#define DSQR(a) ((dsqr_arg=(a)) == 0.0 ? 0.0 : dsqr_arg*dsqr_arg)
+#define DSQR(a) ((dsqr_arg = (a)) == 0.0 ? 0.0 : dsqr_arg * dsqr_arg)
 static int imax_arg1, imax_arg2;
-#define IMAX(a,b) (imax_arg1=(a),imax_arg2=(b),(imax_arg1) > (imax_arg2) ?	\
-		   (imax_arg1) : (imax_arg2))
+#define IMAX(a, b)                                                             \
+  (imax_arg1 = (a), imax_arg2 = (b),                                           \
+   (imax_arg1) > (imax_arg2) ? (imax_arg1) : (imax_arg2))
 static int imin_arg1, imin_arg2;
-#define IMIN(a,b) (imin_arg1=(a),imin_arg2=(b),(imin_arg1) < (imin_arg2) ?	\
-		   (imin_arg1) : (imin_arg2))
+#define IMIN(a, b)                                                             \
+  (imin_arg1 = (a), imin_arg2 = (b),                                           \
+   (imin_arg1) < (imin_arg2) ? (imin_arg1) : (imin_arg2))
 
-START_TEST (test_frictional_monolitic)
-{
+START_TEST(test_frictional_monolitic) {
   State_Parameters Input;
   State_Parameters Output;
   Material MatProp;
@@ -139,7 +136,7 @@ START_TEST (test_frictional_monolitic)
   MatProp.E = YoungMouduls;
   MatProp.nu = PoissonRatio;
   MatProp.atmospheric_pressure = AtmosphericPressure;
-  strcpy(MatProp.Yield_Function_Frictional,Yield_Function);
+  strcpy(MatProp.Yield_Function_Frictional, Yield_Function);
   MatProp.m_Frictional = m_Parameter;
   MatProp.c0_Frictional = c0_Parameter;
   MatProp.a_Hardening_Borja[0] = a1_Parameter;
@@ -148,73 +145,73 @@ START_TEST (test_frictional_monolitic)
   MatProp.alpha_Hardening_Borja = alpha_Parameter;
 
   // Initialize state variables
-  double * stress = (double *)calloc(3*NumberSteps,sizeof(double));
-  double * strain = (double *)calloc(3*NumberSteps,sizeof(double));
-  double * kappa1 = (double *)calloc(NumberSteps,sizeof(double));
-  double * Lambda = (double *)calloc(NumberSteps,sizeof(double));
+  double *stress = (double *)calloc(3 * NumberSteps, sizeof(double));
+  double *strain = (double *)calloc(3 * NumberSteps, sizeof(double));
+  double *kappa1 = (double *)calloc(NumberSteps, sizeof(double));
+  double *Lambda = (double *)calloc(NumberSteps, sizeof(double));
   double Increment_E_plastic[3] = {0.0, 0.0, 0.0};
 
   // Set initial stress and strain
   double stress_tr[3] = {0.0, 0.0, 0.0};
-  for(int i = 0 ; i<3 ; i++)
-  {
+  for (int i = 0; i < 3; i++) {
     stress[i] = -200;
     strain[i] = 0.0;
   }
 
   // Start time integration
-  for(int i = 1 ; i<NumberSteps ; i++)
-  {
+  for (int i = 1; i < NumberSteps; i++) {
     // Trial strain
-    strain[i*3 + 1] = strain[(i-1)*3 + 1] + Delta_strain_II;
+    strain[i * 3 + 1] = strain[(i - 1) * 3 + 1] + Delta_strain_II;
 
     // Trial stress
-    stress[i*3 + 0] = - 200;
-    stress[i*3 + 1] = stress[(i-1)*3 + 1] + YoungMouduls*Delta_strain_II;
-    stress[i*3 + 2] = - 200;
+    stress[i * 3 + 0] = -200;
+    stress[i * 3 + 1] =
+        stress[(i - 1) * 3 + 1] + YoungMouduls * Delta_strain_II;
+    stress[i * 3 + 2] = -200;
 
     // Asign variables to the solver
     Input.Particle_Idx = 0;
-    Input.Stress = &stress[i*3];
-    Input.Strain = &strain[i*3];
+    Input.Stress = &stress[i * 3];
+    Input.Strain = &strain[i * 3];
     Input.Increment_E_plastic = Increment_E_plastic;
-    Input.Lambda = Lambda[i-1]; 
-    Input.Kappa = kappa1[i-1]; 
+    Input.Lambda = Lambda[i - 1];
+    Input.Kappa = kappa1[i - 1];
 
     // Run solver
-    Output = Frictional_Monolithic(Input,MatProp);
+    Output = Frictional_Monolithic(Input, MatProp);
 
     // Update scalar state variables
-    Lambda[i] = Output.Lambda; 
-    kappa1[i] = Output.Kappa; 
+    Lambda[i] = Output.Lambda;
+    kappa1[i] = Output.Kappa;
   }
 
-
   // Save data in a csv file
-  FILE * MN_output = fopen("MN_output.csv","w");
-  for (int i = 0; i < NumberSteps; i++)
-  {
-    fprintf(MN_output,"%e, %e\n", - strain[i*3 + 1], fabs(stress[i*3 + 1] - stress[i*3 + 0]));
+  FILE *MN_output = fopen("MN_output.csv", "w");
+  for (int i = 0; i < NumberSteps; i++) {
+    fprintf(MN_output, "%e, %e\n", -strain[i * 3 + 1],
+            fabs(stress[i * 3 + 1] - stress[i * 3 + 0]));
   }
   fclose(MN_output);
 
   // Print data with gnuplot
-  FILE * gnuplot = popen("gnuplot -persistent", "w");
+  FILE *gnuplot = popen("gnuplot -persistent", "w");
   fprintf(gnuplot, "set termoption enhanced \n");
   fprintf(gnuplot, "set datafile separator ',' \n");
-  fprintf(gnuplot, "set xlabel '- {/Symbol e}_{II}' font 'Times,20' enhanced \n");
-  fprintf(gnuplot, "set ylabel 'abs({/Symbol s}_{II} - {/Symbol s}_{I})' font 'Times,20' enhanced \n");
+  fprintf(gnuplot,
+          "set xlabel '- {/Symbol e}_{II}' font 'Times,20' enhanced \n");
+  fprintf(gnuplot, "set ylabel 'abs({/Symbol s}_{II} - {/Symbol s}_{I})' font "
+                   "'Times,20' enhanced \n");
   fprintf(gnuplot, "plot %s, %s \n",
-	  "'Borja_compression.csv' title 'Borja et al. (2003)' with line lt rgb 'blue' lw 2",
-	  "'MN_output.csv' title 'Us' with line lt rgb 'red' lw 2");
+          "'Borja_compression.csv' title 'Borja et al. (2003)' with line lt "
+          "rgb 'blue' lw 2",
+          "'MN_output.csv' title 'Us' with line lt rgb 'red' lw 2");
   fflush(gnuplot);
 
-  // Free memory 
+  // Free memory
   free(stress);
   free(strain);
   free(kappa1);
   free(Lambda);
-
 }
 END_TEST
 
