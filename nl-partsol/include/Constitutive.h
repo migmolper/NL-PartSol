@@ -131,7 +131,7 @@ State_Parameters Von_Mises_forward_euler(State_Parameters, Material);
 /*******************************************************/
 
 
-State_Parameters Drucker_Prager_backward_euler(State_Parameters, Material);
+int Drucker_Prager_backward_euler(State_Parameters IO_State, Material MatProp);
 /*******************************************************/
 
 /*!

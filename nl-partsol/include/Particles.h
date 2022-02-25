@@ -147,6 +147,15 @@ Tensor explicit_integration_stress__Particles__(int, Particle, Material);
 */
 void Stress_integration__Particles__(int,Particle,Mesh,Material);
 
+
+Tensor tangent_matrix__Particles__(Tensor GRADIENT_pA,
+ Tensor GRADIENT_pB, 
+ Tensor F_n1_p,
+ Tensor dFdt_n1_p,
+ double J_p,
+ double alpha_4,
+ Material MatProp_p);
+
 /*******************************************************/
 /*!
   \fn Tensor configurational_midpoint_integration_Stress__Particles__(Tensor T_n1,Tensor T_n,double alpha)

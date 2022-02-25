@@ -1,5 +1,6 @@
-#include "nl-partsol.h"
 #include <sys/stat.h>
+#include <string.h>
+#include "nl-partsol.h"
 
 /*
   Local structures and variables

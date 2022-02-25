@@ -1,3 +1,4 @@
+#include <math.h>
 #include "nl-partsol.h"
 
 #ifdef __linux__
@@ -49,11 +50,11 @@ typedef struct {
 static Newmark_parameters compute_Newmark_parameters(double, double, double);
 static Matrix compute_Nodal_Effective_Mass(Particle, Mesh, Mask, double);
 static void compute_Gravity_field(Mask, Particle, int, int);
-static Nodal_Field compute_Nodal_Field(Matrix, Particle, Mesh, Mask);
+static Nodal_Field compute_Nodal_Field(Particle, Mesh, Mask);
 static Nodal_Field initialise_Nodal_Increments(Nodal_Field, Mask, Mesh,
                                                Newmark_parameters, int, int);
 
-static Matrix compute_Residual(Nodal_Field, Nodal_Field, Matrix, Mask, Particle,
+static Matrix compute_Residual(Nodal_Field, Nodal_Field, Mask, Particle,
                                Mesh, Newmark_parameters, int, int);
 static void compute_Inertial_Forces(Nodal_Field, Nodal_Field, Matrix, Matrix,
                                     Mask, Particle, Newmark_parameters);
@@ -107,7 +108,6 @@ void Up_Newmark_beta_Finite_Strains(Mesh FEM_Mesh, Particle MPM_Mesh,
 
   bool Convergence;
 
-  Matrix Effective_Mass;
   Nodal_Field D_Up;
   Nodal_Field Up_n;
   Matrix Residual;
@@ -141,21 +141,11 @@ void Up_Newmark_beta_Finite_Strains(Mesh FEM_Mesh, Particle MPM_Mesh,
     ActiveNodes = generate_NodalMask__MeshTools__(FEM_Mesh);
     Nactivenodes = ActiveNodes.Nactivenodes;
 
-    print_Status("DONE !!!", TimeStep);
-
-    print_Status("*************************************************", TimeStep);
-    print_Status("Second step : Compute effective mass ... WORKING", TimeStep);
-
-    Effective_Mass =
-        compute_Nodal_Effective_Mass(MPM_Mesh, FEM_Mesh, ActiveNodes, epsilon);
-
-    print_Status("DONE !!!", TimeStep);
-
     print_Status("*************************************************", TimeStep);
     print_Status("Third step : Compute nodal kinetics ... WORKING", TimeStep);
 
     compute_Gravity_field(ActiveNodes, MPM_Mesh, TimeStep, NumTimeStep);
-    Up_n = compute_Nodal_Field(Effective_Mass, MPM_Mesh, FEM_Mesh, ActiveNodes);
+    Up_n = compute_Nodal_Field(MPM_Mesh, FEM_Mesh, ActiveNodes);
     D_Up = initialise_Nodal_Increments(Up_n, ActiveNodes, FEM_Mesh, Params,
                                        TimeStep, NumTimeStep);
 
@@ -169,7 +159,7 @@ void Up_Newmark_beta_Finite_Strains(Mesh FEM_Mesh, Particle MPM_Mesh,
     while (Convergence == false) {
 
       Residual =
-          compute_Residual(Up_n, D_Up, Effective_Mass, ActiveNodes, MPM_Mesh,
+          compute_Residual(Up_n, D_Up, ActiveNodes, MPM_Mesh,
                            FEM_Mesh, Params, TimeStep, NumTimeStep);
 
       Reactions = compute_Nodal_Reactions(FEM_Mesh, Residual, ActiveNodes,
@@ -221,8 +211,6 @@ void Up_Newmark_beta_Finite_Strains(Mesh FEM_Mesh, Particle MPM_Mesh,
     /*
       Free memory.
     */
-    free__MatrixLib__(Effective_Mass);
-
     free__MatrixLib__(Up_n.U);
     free__MatrixLib__(Up_n.d_U_dt);
     free__MatrixLib__(Up_n.d2_U_dt2);
@@ -352,10 +340,6 @@ static Matrix compute_Nodal_Effective_Mass(Particle MPM_Mesh, Mesh FEM_Mesh,
     free(Nodes_p.Connectivity);
   }
 
-  /*
-    Add some usefulll info
-  */
-  strcpy(Effective_MassMatrix.Info, "Effective-Mass-Matrix");
 
   return Effective_MassMatrix;
 }
@@ -396,8 +380,7 @@ static void compute_Gravity_field(Mask ActiveNodes, Particle MPM_Mesh,
 
 /**************************************************************/
 
-static Nodal_Field compute_Nodal_Field(Matrix Effective_Mass, Particle MPM_Mesh,
-                                       Mesh FEM_Mesh, Mask ActiveNodes)
+static Nodal_Field compute_Nodal_Field(Particle MPM_Mesh,Mesh FEM_Mesh, Mask ActiveNodes)
 /*
   Call the LAPACK solver to compute simultanesly :
 
@@ -427,6 +410,7 @@ static Nodal_Field compute_Nodal_Field(Matrix Effective_Mass, Particle MPM_Mesh,
   int Ap;
   int A_mask;
   int idx_A_mask_i;
+  double epsilon = 1;
 
   /* Value of the shape-function */
   Matrix N_p;
@@ -515,17 +499,17 @@ static Nodal_Field compute_Nodal_Field(Matrix Effective_Mass, Particle MPM_Mesh,
   int INFO = 3;
   int *IPIV = (int *)Allocate_Array(Order, sizeof(int));
   int NRHS = 1;
-  double *AUX_MEMORY = (double *)calloc(Order * Order, sizeof(double));
 
   /*
     Generate auxiliar copy of the mass matrix to avoid destructive operations
   */
-  memcpy(AUX_MEMORY, Effective_Mass.nV, Order * Order * sizeof(double));
+  Matrix Effective_Mass =
+        compute_Nodal_Effective_Mass(MPM_Mesh, FEM_Mesh, ActiveNodes, epsilon);
 
   /*
     Compute the LU factorization for the mass matrix
   */
-  dgetrf_(&Order, &Order, AUX_MEMORY, &LDA, IPIV, &INFO);
+  dgetrf_(&Order, &Order, Effective_Mass.nV, &LDA, IPIV, &INFO);
 
   if (INFO != 0) {
     if (INFO < 0) {
@@ -545,11 +529,11 @@ static Nodal_Field compute_Nodal_Field(Matrix Effective_Mass, Particle MPM_Mesh,
   /*
     Solve for the displacemen field and derivates fields
   */
-  dgetrs_(&TRANS, &Order, &NRHS, AUX_MEMORY, &LDA, IPIV, Up_n.U.nV, &LDB,
+  dgetrs_(&TRANS, &Order, &NRHS, Effective_Mass.nV, &LDA, IPIV, Up_n.U.nV, &LDB,
           &INFO);
-  dgetrs_(&TRANS, &Order, &NRHS, AUX_MEMORY, &LDA, IPIV, Up_n.d_U_dt.nV, &LDB,
+  dgetrs_(&TRANS, &Order, &NRHS, Effective_Mass.nV, &LDA, IPIV, Up_n.d_U_dt.nV, &LDB,
           &INFO);
-  dgetrs_(&TRANS, &Order, &NRHS, AUX_MEMORY, &LDA, IPIV, Up_n.d2_U_dt2.nV, &LDB,
+  dgetrs_(&TRANS, &Order, &NRHS, Effective_Mass.nV, &LDA, IPIV, Up_n.d2_U_dt2.nV, &LDB,
           &INFO);
 
   /*
@@ -564,16 +548,8 @@ static Nodal_Field compute_Nodal_Field(Matrix Effective_Mass, Particle MPM_Mesh,
     Free auxiliar memory
   */
   free__MatrixLib__(Lumped_MassMatrix);
-  free(AUX_MEMORY);
+  free__MatrixLib__(Effective_Mass);
   free(IPIV);
-
-  /*
-    Add some usefulll info
-  */
-  strcpy(Up_n.U.Info, "Nodal-Displacement");
-  strcpy(Up_n.d_U_dt.Info, "First-time-derivative-nodal-Displacement");
-  strcpy(Up_n.d2_U_dt2.Info, "Second-time-derivative-nodal-Displacement");
-  strcpy(Up_n.lambda_pressure.Info, "Pressure-lagrange-multiplier");
 
   return Up_n;
 }
@@ -690,12 +666,6 @@ static Nodal_Field initialise_Nodal_Increments(Nodal_Field Up_n,
     }
   }
 
-  /*
-    Add some usefull info
-  */
-  strcpy(D_Up.U.Info, "Nodal-fields");
-  strcpy(D_Up.d_U_dt.Info, "First-time-derivative-nodal-fields");
-  strcpy(D_Up.d2_U_dt2.Info, "Second-time-derivative-nodal-fields");
 
   return D_Up;
 }
@@ -877,15 +847,17 @@ static Matrix get_P_set_field_Up(Matrix Field_lambda_pressure, Element Nodes_p,
 
 /**************************************************************/
 
-static Matrix compute_Residual(Nodal_Field up_n, Nodal_Field D_up,
-                               Matrix Effective_Mass, Mask ActiveNodes,
+static Matrix compute_Residual(Nodal_Field up_n, Nodal_Field D_up, Mask ActiveNodes,
                                Particle MPM_Mesh, Mesh FEM_Mesh,
                                Newmark_parameters Params, int TimeStep,
                                int NumTimeStep) {
   int Ndof = NumberDimensions + 1;
   int Nnodes_mask = ActiveNodes.Nactivenodes;
+  double epsilon = 1;
 
   Matrix Residual = allocZ__MatrixLib__(Nnodes_mask, Ndof);
+  Matrix Effective_Mass =
+        compute_Nodal_Effective_Mass(MPM_Mesh, FEM_Mesh, ActiveNodes, epsilon);
 
   compute_Inertial_Forces(D_up, up_n, Effective_Mass, Residual, ActiveNodes,
                           MPM_Mesh, Params);
@@ -897,6 +869,8 @@ static Matrix compute_Residual(Nodal_Field up_n, Nodal_Field D_up,
 
   compute_Nodal_Nominal_traction_Forces(Residual, ActiveNodes, MPM_Mesh,
                                         FEM_Mesh, TimeStep, NumTimeStep);
+
+free__MatrixLib__(Effective_Mass);
 
   return Residual;
 }
@@ -1250,7 +1224,6 @@ static Matrix compute_Nodal_Reactions(Mesh FEM_Mesh, Matrix Residual,
   int Id_BCC_mask_k;
 
   Matrix Reactions = allocZ__MatrixLib__(Nnodes_mask, Ndof);
-  strcpy(Reactions.Info, "REACTIONS");
 
   /*
     Loop over the the boundaries
@@ -1492,17 +1465,7 @@ static Matrix assemble_Tangent_Stiffness(Mask ActiveNodes, Particle MPM_Mesh,
         /*
           Get the stiffness density of each particle
         */
-        if (strcmp(MatProp_p.Type, "Newtonian-Fluid-Incompressible") == 0) {
-          Stiffness_density_p =
-              compute_stiffness_density_Newtonian_Fluid_Incompressible(
-                  GRADIENT_N_pA, GRADIENT_N_pB, F_n1_p, dFdt_n1_p, J_p, alpha_4,
-                  MatProp_p);
-        } else {
-          fprintf(stderr, "%s : %s %s %s \n",
-                  "Error in assemble_Tangent_Stiffness()", "The material",
-                  MatProp_p.Type, "has not been yet implemnented");
-          exit(EXIT_FAILURE);
-        }
+       Stiffness_density_p = tangent_matrix__Particles__(GRADIENT_N_pA,GRADIENT_N_pB,F_n1_p,dFdt_n1_p,J_p,alpha_4,MatProp_p);
 
         /*
           Start assembling process

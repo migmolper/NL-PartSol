@@ -1,3 +1,4 @@
+#include <math.h>
 #include "nl-partsol.h"
 
 /*
@@ -282,11 +283,7 @@ static Matrix compute_Nodal_Kinetics(Particle MPM_Mesh, Mesh FEM_Mesh)
   double SizeKinetics = N_Kinetics_dim * sizeof(double *);
 
   Matrix Nodal_Kinetics;
-  /*   MatAssign(N_Kinetics_dim,N_Nodes_Mesh,NAN,NULL, */
-  /* 	      (double**)malloc(SizeKinetics)); */
-  /* strcpy(Nodal_Kinetics.Info, */
-  /* 	 "MASS;ACCELERATION_t0;ACCELERATION_t1;VELOCITY"); */
-
+  
   Nodal_Kinetics.nM[0] = Nodal_Mass.nV;
   for (int i = 0; i < Ndim; i++) {
     Nodal_Kinetics.nM[1 + i] = Nodal_Acceleration_t0.nM[i];
@@ -412,10 +409,6 @@ static Matrix GetNodalVelocityDisplacement(Particle MPM_Mesh, Mesh FEM_Mesh)
   double SizeKinetics = N_Kinetics_dim * sizeof(double *);
 
   Matrix Nodal_Kinetics;
-  /*   MatAssign(N_Kinetics_dim,N_Nodes_Mesh,NAN,NULL, */
-  /* 	      (double**)malloc(SizeKinetics)); */
-  /* strcpy(Nodal_Kinetics.Info, */
-  /* 	 "MASS;DISPLACEMENT;VELOCITY;ACCELERATION"); */
 
   Nodal_Kinetics.nM[0] = Nodal_Mass.nV;
   for (int i = 0; i < Ndim; i++) {
@@ -876,7 +869,6 @@ static Matrix compute_Reactions(Mesh FEM_Mesh, Matrix F_I, int TimeStep,
   int Ndim = NumberDimensions;
 
   Matrix R_I = allocZ__MatrixLib__(FEM_Mesh.NumNodesMesh, Ndim);
-  strcpy(R_I.Info, "REACTIONS");
 
   /* 2º Loop over the the boundaries */
   for (int i = 0; i < FEM_Mesh.Bounds.NumBounds; i++) {

@@ -1,3 +1,4 @@
+#include <math.h>
 #include "nl-partsol.h"
 
 /*
@@ -177,7 +178,6 @@ static Matrix compute_Velocity_Predictor(Particle MPM_Mesh, Mesh FEM_Mesh,
 
   /* Matrix Vel_Mesh */
   Velocity = allocZ__MatrixLib__(Nnodes, Ndim);
-  strcpy(Velocity.Info, "VELOCITY");
 
   /* 2º Iterate over the GP to get the nodal values */
   for (int p = 0; p < Np; p++) {
@@ -672,7 +672,6 @@ static Matrix compute_Reactions(Mesh FEM_Mesh, Matrix F_I, int TimeStep,
   int Ndim = NumberDimensions;
 
   Matrix R_I = allocZ__MatrixLib__(FEM_Mesh.NumNodesMesh, Ndim);
-  strcpy(R_I.Info, "REACTIONS");
 
   /* 2º Loop over the the boundaries */
   for (int i = 0; i < FEM_Mesh.Bounds.NumBounds; i++) {

@@ -1,3 +1,4 @@
+#include <math.h>
 #include "nl-partsol.h"
 
 #ifdef __linux__
@@ -410,11 +411,7 @@ static Matrix compute_Nodal_Effective_Mass(Particle MPM_Mesh, Mesh FEM_Mesh,
   */
   free__MatrixLib__(Lumped_MassMatrix);
 
-  /*
-     Add some usefulll info
-  */
-  strcpy(Effective_MassMatrix.Info, "Effective-Mass-Matrix");
-
+  
   return Effective_MassMatrix;
 }
 
@@ -483,10 +480,6 @@ static Matrix compute_Nodal_Momentum(Particle MPM_Mesh, Mesh FEM_Mesh,
     free(Nodes_p.Connectivity);
   }
 
-  /*
-    Add some usefulll info
-  */
-  strcpy(Momentum.Info, "Nodal-Momentum");
 
   return Momentum;
 }
@@ -526,10 +519,6 @@ static Matrix compute_Nodal_Velocity(Matrix Mass, Matrix Momentum)
 
   Velocity = Momentum;
 
-  /*
-    Add some usefulll info
-  */
-  strcpy(Velocity.Info, "Nodal-Velocity");
 
   return Velocity;
 }
@@ -974,7 +963,6 @@ static Matrix compute_Nodal_Reactions(Mesh FEM_Mesh, Matrix Forces,
   int Id_BCC_mask_k;
 
   Matrix Reactions = allocZ__MatrixLib__(Nnodes_mask, Ndim);
-  strcpy(Reactions.Info, "REACTIONS");
 
   /*
     Loop over the the boundaries
@@ -1412,8 +1400,7 @@ static void assemble_Nodal_Tangent_Stiffness_Material(Matrix Tangent_Stiffness,
         /*
           Get the nodal contribution of the material mass matrix
         */
-        C_AB = compute_stiffness_density(GRADIENT_pA, GRADIENT_pB, F_n12_p, J_p,
-                                         MatProp_p);
+//        C_AB = compute_stiffness_density(GRADIENT_pA, GRADIENT_pB, F_n12_p, J_p, MatProp_p);
 
         /*
           Compute the nodal matrix with the contribution to each degree of
@@ -1459,6 +1446,7 @@ static void assemble_Nodal_Tangent_Stiffness_Material(Matrix Tangent_Stiffness,
 
 /**************************************************************/
 
+/*
 static Tensor compute_stiffness_density(Tensor GRADIENT_pA, Tensor GRADIENT_pB,
                                         Tensor F_p, double J_p,
                                         Material MatProp_p) {

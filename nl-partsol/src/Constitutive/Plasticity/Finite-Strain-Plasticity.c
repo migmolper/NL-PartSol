@@ -1,3 +1,4 @@
+#include <math.h>
 #include "nl-partsol.h"
 
 static void elastic_trial(State_Parameters, Material);

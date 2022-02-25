@@ -1,3 +1,4 @@
+#include <string.h>
 #include "nl-partsol.h"
 
 double internal_energy__Particles__(Tensor Strain, Tensor Stress) {

@@ -11,6 +11,7 @@
   \section Usage
  */
 
+#include <string.h>
 #include "nl-partsol.h"
 
 /*
@@ -157,9 +158,6 @@ int main(int argc, char *argv[]) {
     } else if (strcmp(Parameters_Solver.TimeIntegrationScheme,
                       "Newmark-beta-Finite-Strains") == 0) {
       U_Newmark_beta_Finite_Strains(FEM_Mesh, MPM_Mesh, Parameters_Solver);
-    } else if (strcmp(Parameters_Solver.TimeIntegrationScheme,
-                      "Newmark-beta-Finite-Strains-BDB") == 0) {
-      U_Newmark_beta_Finite_Strains_BDB(FEM_Mesh, MPM_Mesh, Parameters_Solver);
     } else {
       sprintf(Error_message, "%s", "Wrong time integration scheme");
       standard_error(Error_message);

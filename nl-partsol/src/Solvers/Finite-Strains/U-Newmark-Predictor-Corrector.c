@@ -263,11 +263,6 @@ static Matrix compute_Mass_Matrix(
     free(Nodes_p.Connectivity);
   }
 
-  /*
-     Add some usefulll info
-  */
-  strcpy(Lumped_MassMatrix.Info, "Lumped-Mass-Matrix");
-
   return Lumped_MassMatrix;
 }
 
@@ -432,10 +427,6 @@ static Matrix compute_Nodal_D_Displacement(Particle MPM_Mesh, Mesh FEM_Mesh,
     }
   }
 
-  /*
-    Add some usefulll info
-  */
-  strcpy(D_Displacement.Info, "Nodal-D-Displacement");
 
   return D_Displacement;
 }
@@ -523,10 +514,6 @@ static Matrix compute_Nodal_Velocity(Particle MPM_Mesh, Mesh FEM_Mesh,
     }
   }
 
-  /*
-    Add some usefulll info
-  */
-  strcpy(Velocity.Info, "Nodal-Velocity");
 
   return Velocity;
 }
@@ -1004,7 +991,6 @@ static Matrix solve_Nodal_Equilibrium(Matrix Lumped_Mass, Matrix Gravity_field,
     Output
   */
   Matrix Reactions = allocZ__MatrixLib__(Nnodes, Ndim);
-  strcpy(Reactions.Info, "REACTIONS");
 
   /*
     The solution is now stored in the internal forces vector

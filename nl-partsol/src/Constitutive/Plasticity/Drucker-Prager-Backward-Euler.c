@@ -1,3 +1,4 @@
+#include <math.h>
 #include "nl-partsol.h"
 
 static int __trial_elastic(

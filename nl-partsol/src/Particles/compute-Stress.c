@@ -1,3 +1,4 @@
+#include <string.h>
 #include "nl-partsol.h"
 
 /*************************************************************/
@@ -178,44 +179,43 @@ void Stress_integration__Particles__(int p, Particle MPM_Mesh, Mesh FEM_Mesh,
 
 /**************************************************************/
 
-Tensor configurational_midpoint_integration_Stress__Particles__(
-    Tensor S_p, Tensor F_n1_p, Tensor F_n_p, Material MatProp_p) {
+Tensor tangent_matrix__Particles__(Tensor GRADIENT_pA,
+ Tensor GRADIENT_pB, 
+ Tensor F_n1_p,
+ Tensor dFdt_n1_p,
+ double J_p,
+ double alpha_4,
+ Material MatProp_p)
+{
 
-  /*
-    Compute the midpoint deformation gradient
-   */
-  Tensor F_n12_p = Convex_combination__TensorLib__(F_n1_p, F_n_p, 0.5);
+Tensor Stiffness_density_p;
 
-  /*
-    Compute the right Cauchy Green tensor
-   */
-  Tensor C_n12_p = right_Cauchy_Green__Particles__(F_n12_p);
+if (strcmp(MatProp_p.Type, "Neo-Hookean-Wriggers") == 0) {
 
-  /*
-    Compute the Stress tensor
-   */
-  if (strcmp(MatProp_p.Type, "Saint-Venant-Kirchhoff") == 0) {
-    S_p = grad_energy_Saint_Venant_Kirchhoff(S_p, C_n12_p, MatProp_p);
-  } else if (strcmp(MatProp_p.Type, "Neo-Hookean-Wriggers") == 0) {
-    double J_n12_p = I3__TensorLib__(F_n12_p);
-    S_p = compute_2PK_Stress_Tensor_Neo_Hookean_Wriggers(S_p, C_n12_p, J_n12_p,
-                                                         MatProp_p);
-  } else {
-    fprintf(
-        stderr, "%s : %s %s %s \n",
-        "Error in configurational_midpoint_integration_Stress__Particles__()",
-        "The material", MatProp_p.Type, "has not been yet implemnented");
-    exit(EXIT_FAILURE);
-  }
+  Stiffness_density_p = compute_stiffness_density_Neo_Hookean_Wriggers(GRADIENT_pA, GRADIENT_pB, F_n1_p, J_p, MatProp_p);
 
-  /*
-    Free auxiliar variables
-   */
-  free__TensorLib__(F_n12_p);
-  free__TensorLib__(C_n12_p);
+        } else if (strcmp(MatProp_p.Type, "Newtonian-Fluid-Compressible") ==
+                   0) {
+          Stiffness_density_p = compute_stiffness_density_Newtonian_Fluid(
+              GRADIENT_pA, GRADIENT_pB, F_n1_p, dFdt_n1_p, J_p, alpha_4, MatProp_p);
+        } 
+        else if (strcmp(MatProp_p.Type, "Newtonian-Fluid-Incompressible") == 0) {
+          Stiffness_density_p =
+              compute_stiffness_density_Newtonian_Fluid_Incompressible(
+                  GRADIENT_pA, GRADIENT_pB, F_n1_p, dFdt_n1_p, J_p, alpha_4,
+                  MatProp_p);
+        }
+        else {
+          fprintf(stderr, "%s : %s %s %s \n",
+                  "Error in assemble_Nodal_Tangent_Stiffness()", "The material",
+                  MatProp_p.Type, "has not been yet implemnented");
+          exit(EXIT_FAILURE);
+        }
 
-  return S_p;
+return Stiffness_density_p;
+
 }
+
 
 /**************************************************************/
 

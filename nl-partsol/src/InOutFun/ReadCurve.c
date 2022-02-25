@@ -1,3 +1,4 @@
+#include <string.h>
 #include "nl-partsol.h"
 
 Curve ReadCurve(char *Name_File) {

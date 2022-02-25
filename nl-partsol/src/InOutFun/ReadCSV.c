@@ -1,3 +1,4 @@
+#include <string.h>
 #include "nl-partsol.h"
 
 Matrix Read_CSV(char *Name_File, int NumData)

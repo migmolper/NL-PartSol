@@ -12,9 +12,9 @@
 #include <string.h>
 #endif
 
-#include "Globals.h"
 #include "Macros.h"
 #include "Types.h"
+#include "Globals.h"
 
 /*
   Auxiliar variables

@@ -1,3 +1,4 @@
+#include <string.h>
 #include "nl-partsol.h"
 
 #define MAXVAL(A, B) ((A) > (B) ? (A) : (B))

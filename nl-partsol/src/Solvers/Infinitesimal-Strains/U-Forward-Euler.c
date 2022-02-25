@@ -1,3 +1,4 @@
+#include <math.h>
 #include "nl-partsol.h"
 
 /*
@@ -38,7 +39,6 @@ void U_Forward_Euler(Mesh FEM_Mesh, Particle MPM_Mesh,
     Auxiliar variable for the mass and momentum
   */
   Matrix Phi_I;
-  strcpy(Phi_I.Info, "MOMENTUM;MASS");
   Matrix V_I;
   Matrix F_I;
   Matrix R_I;
@@ -282,7 +282,6 @@ static Matrix compute_Nodal_Velocity(Mesh FEM_Mesh, Matrix Phi_I) {
 
   /* Define output */
   Matrix V_I = allocZ__MatrixLib__(Nnodes, Ndim);
-  strcpy(V_I.Info, "VELOCITY");
 
   /* Value of the nodal mass */
   double M_I;
@@ -636,7 +635,7 @@ static Matrix compute_Reactions(Mesh FEM_Mesh, Matrix F_I, int TimeStep,
   int Ndim = NumberDimensions;
 
   Matrix R_I = allocZ__MatrixLib__(FEM_Mesh.NumNodesMesh, Ndim);
-  strcpy(R_I.Info, "REACTIONS");
+
 
   /* 2º Loop over the the boundaries */
   for (int i = 0; i < FEM_Mesh.Bounds.NumBounds; i++) {

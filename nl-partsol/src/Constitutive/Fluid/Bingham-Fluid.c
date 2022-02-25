@@ -1,3 +1,4 @@
+#include <math.h>
 #include "nl-partsol.h"
 
 static double compute_Bingham_viscosity(Tensor, Material);

@@ -612,10 +612,12 @@ typedef struct
   double * F_m1_plastic_p;
   double * Increment_E_plastic;
   
-  double Equiv_Plast_Str; // Equivalent plastic strain
   double Cohesion; 
   double Yield_stress;
-  double Kappa; // Hardening Parameter
+  
+  // Internal variables
+  double * Equiv_Plast_Str; // Equivalent plastic strain
+  double * Kappa; // Hardening Parameter
 
 } State_Parameters;
 

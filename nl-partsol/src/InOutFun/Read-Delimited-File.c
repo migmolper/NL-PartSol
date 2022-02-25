@@ -1,5 +1,6 @@
-#include "nl-partsol.h"
+#include <string.h>
 #include <ctype.h>
+#include "nl-partsol.h"
 
 /*
   Local structures

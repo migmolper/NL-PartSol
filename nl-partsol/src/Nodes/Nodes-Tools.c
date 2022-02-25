@@ -1,3 +1,5 @@
+#include <string.h>
+#include <math.h>
 #include "nl-partsol.h"
 
 /*********************************************************************/

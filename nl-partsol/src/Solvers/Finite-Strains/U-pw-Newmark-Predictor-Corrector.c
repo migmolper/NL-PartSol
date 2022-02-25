@@ -1,3 +1,4 @@
+#include <math.h>
 #include "nl-partsol.h"
 
 /*
@@ -252,10 +253,6 @@ static Matrix compute_Mass_Matrix_Mixture(
     free(Nodes_p.Connectivity);
   }
 
-  /*
-     Add some usefulll info
-  */
-  strcpy(Lumped_MassMatrix.Info, "Lumped-Mass-Matrix");
 
   return Lumped_MassMatrix;
 }
@@ -374,8 +371,6 @@ static Matrix compute_Compressibility_Matrix_Fluid(
     free(Nodes_p.Connectivity);
   }
 
-  /* Add some usefulll info */
-  strcpy(Lumped_Compressibility_Matrix_Fluid.Info, "Lumped-Matrix");
 
   return Lumped_Compressibility_Matrix_Fluid;
 }
@@ -549,10 +544,6 @@ static Matrix compute_Nodal_D_Displacement(Particle MPM_Mesh, Mesh FEM_Mesh,
     }
   }
 
-  /*
-    Add some usefulll info
-  */
-  strcpy(D_Displacement.Info, "Nodal-D-Displacement");
 
   return D_Displacement;
 }
@@ -640,11 +631,6 @@ static Matrix compute_Nodal_Velocity(Particle MPM_Mesh, Mesh FEM_Mesh,
       Velocity.nM[A][i] = Velocity.nM[A][i] / Mass_Matrix_Mixture.nM[AB][AB];
     }
   }
-
-  /*
-    Add some usefulll info
-  */
-  strcpy(Velocity.Info, "Nodal-Velocity");
 
   return Velocity;
 }
@@ -769,10 +755,6 @@ compute_Nodal_Pore_water_pressure(Particle MPM_Mesh, Mesh FEM_Mesh,
         Pore_water_pressure.nV[A] / Compressibility_Matrix_Fluid.nM[A][A];
   }
 
-  /*
-    Add some usefulll info
-  */
-  strcpy(Pore_water_pressure.Info, "Nodal-Pore-water-pressure");
 
   return Pore_water_pressure;
 }
@@ -1346,7 +1328,6 @@ static Matrix solve_Nodal_Equilibrium_Mixture(Matrix Mass_Matrix_Mixture,
     Output
   */
   Matrix Reactions = allocZ__MatrixLib__(Nnodes, Ndim);
-  strcpy(Reactions.Info, "REACTIONS");
 
   /*
     The solution is now stored in the internal forces vector
