@@ -64,33 +64,16 @@ gcc Frictional-Monolithic.c -o Frictional-Monolithic -llapack -lm
 #include <stdio.h>
 #endif
 
-#include "Constitutive.h"
+//#include "CUnit/Basic.h"
+
+#include "../../include/Macros.h"
+//#include "../../include/Globals.h"
+#include "../../include/Types.h"
+#include "../../include/Constitutive.h"
 
 /**************************************************************/
 /******************** Auxiliar variables **********************/
 /**************************************************************/
-
-typedef struct {
-  double rho;
-  double E;
-  double nu;
-  double atmospheric_pressure;
-  char Yield_Function_Frictional[100];
-  double m_Frictional;
-  double c0_Frictional;
-  double a_Hardening_Borja[3];
-  double alpha_Hardening_Borja;
-} Material;
-
-typedef struct {
-  int Particle_Idx;
-  double *Stress;
-  double *Strain;
-  double *Increment_E_plastic;
-  double Lambda;
-  double Cohesion;
-  double Kappa;
-} State_Parameters;
 
 typedef struct {
   double alpha;
@@ -112,22 +95,13 @@ bool Is_Matsuoka_Nakai;
 bool Is_Lade_Duncan;
 bool Is_Modified_Lade_Duncan;
 
-/**************************************************************/
-/******************** Auxiliar functions **********************/
-/**************************************************************/
 
-static double dsqr_arg;
-#define DSQR(a) ((dsqr_arg = (a)) == 0.0 ? 0.0 : dsqr_arg * dsqr_arg)
-static int imax_arg1, imax_arg2;
-#define IMAX(a, b)                                                             \
-  (imax_arg1 = (a), imax_arg2 = (b),                                           \
-   (imax_arg1) > (imax_arg2) ? (imax_arg1) : (imax_arg2))
-static int imin_arg1, imin_arg2;
-#define IMIN(a, b)                                                             \
-  (imin_arg1 = (a), imin_arg2 = (b),                                           \
-   (imin_arg1) < (imin_arg2) ? (imin_arg1) : (imin_arg2))
+//START_TEST(test_frictional_monolitic) {
+//  State_Parameters Input;
+//  State_Parameters Output;
+//  Material MatProp;
 
-START_TEST(test_frictional_monolitic) {
+void main(){
   State_Parameters Input;
   State_Parameters Output;
   Material MatProp;
@@ -148,7 +122,7 @@ START_TEST(test_frictional_monolitic) {
   double *stress = (double *)calloc(3 * NumberSteps, sizeof(double));
   double *strain = (double *)calloc(3 * NumberSteps, sizeof(double));
   double *kappa1 = (double *)calloc(NumberSteps, sizeof(double));
-  double *Lambda = (double *)calloc(NumberSteps, sizeof(double));
+  double *Equiv_Plast_Str = (double *)calloc(NumberSteps, sizeof(double));
   double Increment_E_plastic[3] = {0.0, 0.0, 0.0};
 
   // Set initial stress and strain
@@ -174,15 +148,15 @@ START_TEST(test_frictional_monolitic) {
     Input.Stress = &stress[i * 3];
     Input.Strain = &strain[i * 3];
     Input.Increment_E_plastic = Increment_E_plastic;
-    Input.Lambda = Lambda[i - 1];
-    Input.Kappa = kappa1[i - 1];
+    Input.Equiv_Plast_Str = &Equiv_Plast_Str[i - 1];
+    Input.Kappa = &kappa1[i - 1];
 
     // Run solver
     Output = Frictional_Monolithic(Input, MatProp);
 
     // Update scalar state variables
-    Lambda[i] = Output.Lambda;
-    kappa1[i] = Output.Kappa;
+    Equiv_Plast_Str[i] = *Output.Equiv_Plast_Str;
+    kappa1[i] = *Output.Kappa;
   }
 
   // Save data in a csv file
@@ -211,8 +185,8 @@ START_TEST(test_frictional_monolitic) {
   free(stress);
   free(strain);
   free(kappa1);
-  free(Lambda);
+  free(Equiv_Plast_Str);
 }
-END_TEST
+//END_TEST
 
 /**************************************************************/

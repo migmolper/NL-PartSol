@@ -21,7 +21,8 @@ static int __compute_plastic_flow_direction(
     const double *T_trial_dev /**< [in] Deviatoric elastic stress tensor */,
     double J2 /**< [in] Second invariant of the deviatoric stress tensor */);
 
-static double __compute_eps(
+static int __compute_eps(
+    double *eps_k /**< [out] Equivalent plastic strain*/,
     double d_gamma_k /**< [in] Discrete plastic multiplier */,
     double eps_n /**< [in] Equivalent plastic strain in the last step */,
     double alpha_Q /**< [in] Plastic potential parameter */);
@@ -112,6 +113,7 @@ static int __update_internal_variables_apex(
     double eps_k /**< [in] Equivalent plastic strain*/,
     double kappa_k /**< [in] Hardening function. */);
 
+
 /**************************************************************/
 
 int Drucker_Prager_backward_euler(State_Parameters IO_State, Material MatProp)
@@ -119,8 +121,7 @@ int Drucker_Prager_backward_euler(State_Parameters IO_State, Material MatProp)
   Backward Euler algorithm for the Drucker-Prager (Lorenzo Sanavia)
 */
 {
-
-  int Ndim = NumberDimensions;
+  int STATUS = EXIT_SUCCESS;
 
   // Read input/output parameters
   double *E_trial = IO_State.Strain;
@@ -128,21 +129,24 @@ int Drucker_Prager_backward_euler(State_Parameters IO_State, Material MatProp)
   double T_trial_dev[3] = {0.0, 0.0, 0.0};
 
   // Material parameters
-  double K = MatProp.E / (3 * (1 - 2 * MatProp.nu));
-  double G = MatProp.E / (2 * (1 + MatProp.nu));
+  double K = MatProp.E / (3.0 * (1.0 - 2.0 * MatProp.nu));
+  double G = MatProp.E / (2.0 * (1.0 + MatProp.nu));
   double p_ref = MatProp.ReferencePressure;
-  double rad_friction_angle = (PI__MatrixLib__ / 180) * MatProp.phi_Frictional;
-  double rad_dilatancy_angle = (PI__MatrixLib__ / 180) * MatProp.psi_Frictional;
+  double rad_friction_angle =
+      (PI__MatrixLib__ / 180.0) * MatProp.phi_Frictional;
+  double rad_dilatancy_angle =
+      (PI__MatrixLib__ / 180.0) * MatProp.psi_Frictional;
   double exp_param = MatProp.Exponent_Hardening_Ortiz;
   double kappa_0 = MatProp.yield_stress_0;
   double eps_0 = MatProp.Reference_Plastic_Strain_Ortiz;
 
 #if NumberDimensions == 2
-  double alpha_F = sqrt(2 / 3.) * tan(rad_friction_angle) /
-                   sqrt(3 + 4 * DSQR(tan(rad_friction_angle)));
-  double alpha_Q = sqrt(2 / 3.) * tan(rad_dilatancy_angle) /
-                   sqrt(3 + 4 * DSQR(tan(rad_dilatancy_angle)));
-  double beta = sqrt(2 / 3.) * 3 / sqrt(3 + 4 * DSQR(tan(rad_friction_angle)));
+  double alpha_F = sqrt(2. / 3.) * tan(rad_friction_angle) /
+                   sqrt(3. + 4. * DSQR(tan(rad_friction_angle)));
+  double alpha_Q = sqrt(2. / 3.) * tan(rad_dilatancy_angle) /
+                   sqrt(3. + 4. * DSQR(tan(rad_dilatancy_angle)));
+  double beta =
+      sqrt(2. / 3.) * 3. / sqrt(3. + 4. * DSQR(tan(rad_friction_angle)));
 #else
   double alpha_F = sqrt(2 / 3.) * 2 * sin(rad_friction_angle) /
                    (3 - sin(rad_friction_angle));
@@ -167,33 +171,55 @@ int Drucker_Prager_backward_euler(State_Parameters IO_State, Material MatProp)
   double kappa_k = *IO_State.Kappa;
   double d_kappa_k = 0.0;
 
+#ifdef DEBUG_MODE
+#if DEBUG_MODE + 0
+  printf("Equivalent Plastic Strain: %f \n", *IO_State.Equiv_Plast_Str);
+  printf("Kappa: %f \n", *IO_State.Kappa);
+#endif
+#endif
+
   // Initialise solver parameters
   double TOL = TOL_Radial_Returning;
   int MaxIter = Max_Iterations_Radial_Returning;
   int Iter = 0;
   bool Convergence = false;
 
-  __trial_elastic(T_trial_vol, T_trial_dev, &pressure, &J2, E_trial, K, G,
-                  p_ref);
+  STATUS = __trial_elastic(T_trial_vol, T_trial_dev, &pressure, &J2, E_trial, K,
+                           G, p_ref);
+
+#ifdef DEBUG_MODE
+#if DEBUG_MODE + 0
+  printf("Trial strain tensor: [%e, %e, %e] \n", IO_State.Strain[0],
+         IO_State.Strain[1], IO_State.Strain[2]);
+#endif
+#endif
 
   PHI_0 = __yield_function_classical(pressure, J2, d_gamma_k, kappa_k, alpha_F,
                                      alpha_Q, beta, K, G);
-  // Elastic
-  if (PHI <= 0.0) {
 
-    __update_internal_variables_elastic(IO_State, T_trial_vol, T_trial_dev);
+#ifdef DEBUG_MODE
+#if DEBUG_MODE + 0
+  printf("Initial value of the yield function: %f \n", PHI_0);
+#endif
+#endif
+
+  // Elastic
+  if (PHI_0 <= 0.0) {
+
+    STATUS =
+        __update_internal_variables_elastic(IO_State, T_trial_vol, T_trial_dev);
   }
   // Plastic (check yield condition)
   else {
 
     PHI = PHI_0;
 
-    __compute_plastic_flow_direction(n, T_trial_dev, J2);
+    STATUS = __compute_plastic_flow_direction(n, T_trial_dev, J2);
 
-    __compute_d_kappa(&d_kappa_k, kappa_0, eps_n, eps_0, exp_param);
+    STATUS = __compute_d_kappa(&d_kappa_k, kappa_0, eps_n, eps_0, exp_param);
 
-    __compute_pressure_limit(&pressure_limit, J2, kappa_k, d_kappa_k, K, G,
-                             alpha_F, alpha_Q, beta);
+    STATUS = __compute_pressure_limit(&pressure_limit, J2, kappa_k, d_kappa_k,
+                                      K, G, alpha_F, alpha_Q, beta);
 
     // Classic radial returning algorithm
     if (-pressure < pressure_limit) {
@@ -210,12 +236,13 @@ int Drucker_Prager_backward_euler(State_Parameters IO_State, Material MatProp)
 
         d_gamma_k += -PHI / d_PHI;
 
-        eps_k = __compute_eps(d_gamma_k, eps_n, alpha_Q);
+        STATUS = __compute_eps(&eps_k, d_gamma_k, eps_n, alpha_Q);
 
-        __compute_kappa(&kappa_k, kappa_0, exp_param, eps_k, eps_0);
+        STATUS = __compute_kappa(&kappa_k, kappa_0, exp_param, eps_k, eps_0);
 
         if (kappa_k > 0) {
-          __compute_d_kappa(&d_kappa_k, kappa_0, eps_k, eps_0, exp_param);
+          STATUS =
+              __compute_d_kappa(&d_kappa_k, kappa_0, eps_k, eps_0, exp_param);
         } else {
           kappa_k = 0.0;
           d_kappa_k = 0.0;
@@ -225,9 +252,9 @@ int Drucker_Prager_backward_euler(State_Parameters IO_State, Material MatProp)
                                          alpha_F, alpha_Q, beta, K, G);
       }
 
-      __update_internal_variables_classical(IO_State, T_trial_vol, T_trial_dev,
-                                            n, d_gamma_k, alpha_Q, K, G, eps_k,
-                                            kappa_k);
+      STATUS = __update_internal_variables_classical(
+          IO_State, T_trial_vol, T_trial_dev, n, d_gamma_k, alpha_Q, K, G,
+          eps_k, kappa_k);
 
     }
     // Apex radial returning algorithm
@@ -255,14 +282,34 @@ int Drucker_Prager_backward_euler(State_Parameters IO_State, Material MatProp)
                                     d_kappa_k, K, alpha_F, alpha_Q, beta);
       }
 
-      eps_k = __compute_eps(d_gamma_k, eps_n, alpha_Q);
+      __compute_eps(&eps_k, d_gamma_k, eps_n, alpha_Q);
 
       __update_internal_variables_apex(IO_State, T_trial_vol, n, d_gamma_k,
                                        d_gamma_1, alpha_Q, K, eps_k, kappa_k);
     }
+
+#ifdef DEBUG_MODE
+#if DEBUG_MODE + 0
+    printf("Number of iterations: %i \n", Iter);
+    printf("Final value of the yield function: %f \n", PHI);
+
+    if (Iter == MaxIter) {
+      return EXIT_FAILURE;
+    }
+#endif
+#endif
   }
 
-  return EXIT_SUCCESS;
+#ifdef DEBUG_MODE
+#if DEBUG_MODE + 0
+  printf("Out stress tensor: [%f, %f, %f] \n", IO_State.Stress[0],
+         IO_State.Stress[1], IO_State.Stress[2]);
+  printf("Out strain tensor: [%e, %e, %e] \n", IO_State.Strain[0],
+         IO_State.Strain[1], IO_State.Strain[2]);
+#endif
+#endif
+
+  return STATUS;
 }
 /***************************************************************************/
 
@@ -274,8 +321,8 @@ static int __trial_elastic(double *T_trial_vol, double *T_trial_dev,
   double tr_E_trial = E_trial[0] + E_trial[1] + E_trial[2];
 
   E_trial_vol[0] = (1.0 / 3.0) * tr_E_trial;
-  E_trial_vol[0] = (1.0 / 3.0) * tr_E_trial;
-  E_trial_vol[0] = (1.0 / 3.0) * tr_E_trial;
+  E_trial_vol[1] = (1.0 / 3.0) * tr_E_trial;
+  E_trial_vol[2] = (1.0 / 3.0) * tr_E_trial;
 
   T_trial_vol[0] = -K * E_trial_vol[0] - p_ref;
   T_trial_vol[1] = -K * E_trial_vol[1] - p_ref;
@@ -324,11 +371,15 @@ static int __compute_plastic_flow_direction(double *n,
 
 /**************************************************************/
 
-static double __compute_eps(double d_gamma_k, double eps_n, double alpha_Q) {
+static int __compute_eps(double *eps_k, double d_gamma_k, double eps_n,
+                         double alpha_Q) {
 
-  double eps_k = eps_n + d_gamma_k * sqrt(3 * alpha_Q * alpha_Q + 1);
+  *eps_k = eps_n + d_gamma_k * sqrt(3 * alpha_Q * alpha_Q + 1);
 
-  return eps_k;
+  if (*eps_k < 0.0)
+    return EXIT_FAILURE;
+
+  return EXIT_SUCCESS;
 }
 
 /**************************************************************/

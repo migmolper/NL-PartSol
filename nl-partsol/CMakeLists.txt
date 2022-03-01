@@ -6,9 +6,9 @@
 # these instructions search the directory tree when cmake is
 # invoked and put all files that match the pattern in the variables 
 # `sources` and `data`
-file(GLOB_RECURSE SOURCES src/*.c include/*.h)
+file(GLOB_RECURSE NL_PartSol_src src/*.c include/*.h)
 file(GLOB_RECURSE DATA ../build/*)
-# you can use set(SOURCES src/main.c) etc if you don't want to
+# you can use set(NL_PartSol_src src/main.c) etc if you don't want to
 # use globing to find files automatically
 
 
@@ -17,7 +17,7 @@ file(GLOB_RECURSE DATA ../build/*)
 ###############################################################################
 
 # add the data to the target, so it becomes visible in some IDE
-add_executable(${PROJECT_NAME} ${SOURCES})
+add_executable(${PROJECT_NAME} ${NL_PartSol_src})
 
 # Add include folder
 target_include_directories(${PROJECT_NAME} PUBLIC include)
@@ -56,7 +56,7 @@ endif()
 
 
 add_custom_target(debug
-  COMMAND ${CMAKE_COMMAND} -DCMAKE_BUILD_TYPE=Debug ${CMAKE_SOURCE_DIR}
+  COMMAND ${CMAKE_COMMAND} -DDEBUG_MODE=0 -DCMAKE_BUILD_TYPE=Debug ${CMAKE_SOURCE_DIR}
   COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target all
   COMMENT "Switch CMAKE_BUILD_TYPE to Debug"
   )
@@ -68,3 +68,4 @@ add_custom_target(release
   )
 
 
+  

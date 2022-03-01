@@ -5,6 +5,19 @@ static void elastic_trial(State_Parameters, Material);
 
 /**************************************************************/
 
+int compute_henky_strain(double * Dphi, double * Dphi_m1_p)
+{
+
+  double Dphi_e[3][3] = {{0, 0, 0},
+    {0, 0, 0},
+    {0, 0, 0}};
+    
+
+    
+}
+
+/**************************************************************/
+
 State_Parameters finite_strain_plasticity(
     State_Parameters Inputs_SP_finite, Material MatProp,
     State_Parameters (*infinitesimal_plasticity)(State_Parameters, Material))
