@@ -78,6 +78,7 @@ typedef struct {
   double yield_stress_0;
   double Hardening_modulus;
   double atmospheric_pressure;
+  double J2_degradated;
 
   /*!
    * Frictional material (Borja et al. 2003)
@@ -156,9 +157,9 @@ typedef struct {
    * Finite strain kinematic parameters
    * */
   double *d_phi;
-  double *D_phi_n1;
+  double *D_phi;
   double *Fbar;
-  double *rate_D_phi_n1;
+  double *rate_D_phi;
   double J;
 
   /*!
@@ -171,9 +172,12 @@ typedef struct {
   double Cohesion;
   double Yield_stress;
 
-  // Internal variables
+  // Internal hardening variables
   double *Equiv_Plast_Str; // Equivalent plastic strain
   double *Kappa;           // Hardening Parameter
+
+  //
+  bool *Failure;
 
 } State_Parameters;
 
@@ -190,8 +194,8 @@ static int __corrector_b_e(
     const double *Increment_E_plastic /**< [in] Increment plastic strain */);
 
 static int __trial_elastic(
-    double *kirchhoff_tr_vol /**< [in/out] Volumetric elastic stress tensor. */,
-    double *kirchhoff_tr_dev /**< [in/out] Deviatoric elastic stress tensor. */,
+    double *T_tr_vol /**< [in/out] Volumetric elastic stress tensor. */,
+    double *T_tr_dev /**< [in/out] Deviatoric elastic stress tensor. */,
     double *pressure /**< [out] First invariant of the stress tensor */,
     double *J2 /**< [out] Second invariant of the deviatoric stress tensor */,
     const double *E_hencky_trial, /**< [in] Trial elastic strain tensor. */
@@ -200,16 +204,16 @@ static int __trial_elastic(
     double p_ref /**< [in] Reference pressure. */);
 
 static int __update_internal_variables_elastic(
-    State_Parameters IO_State /**< [in/out] List of internal variables */,
-    const double
-        *kirchhoff_tr_vol /**< [in] Volumetric elastic stress tensor */,
-    const double
-        *kirchhoff_tr_dev /**< [in] Deviatoric elastic stress tensor */);
+    double *Increment_E_plastic /**< [in/out] Increment plastic strain */,
+    double *Stress /**< [in/out] Nominal stress tensor */,
+    const double *D_phi /**< [in] Total deformation gradient. */,
+    const double *T_tr_vol /**< [in] Volumetric elastic stress tensor */,
+    const double *T_tr_dev /**< [in] Deviatoric elastic stress tensor */,
+    const double *eigvec_b_e_tr /**< [in] Eigenvector of b elastic trial. */);
 
 static int __compute_plastic_flow_direction(
     double *n /**< [out] Plastic flow direction */,
-    const double
-        *kirchhoff_tr_dev /**< [in] Deviatoric elastic stress tensor */,
+    const double *T_tr_dev /**< [in] Deviatoric elastic stress tensor */,
     double J2 /**< [in] Second invariant of the deviatoric stress tensor */);
 
 static int __compute_eps(
@@ -262,11 +266,14 @@ static double __d_yield_function_classical(
     double beta /**< [in] Yield surface parameter II. */);
 
 static int __update_internal_variables_classical(
-    State_Parameters IO_State /**< [in/out] List of internal variables. */,
-    const double
-        *kirchhoff_tr_vol /**< [in] Volumetric elastic stress tensor. */,
-    const double
-        *kirchhoff_tr_dev /**< [in] Deviatoric elastic stress tensor. */,
+    double *Increment_E_plastic /**< [in/out] Increment plastic strain */,
+    double *Stress /**< [in/out] Nominal stress tensor */,
+    double *eps_n1 /**< [in/out] Equivalent plastic strain*/,
+    double *kappa_n1 /**< [in/out] Hardening function. */,
+    const double *D_phi /**< [in] Total deformation gradient. */,
+    const double *T_tr_vol /**< [in] Volumetric elastic stress tensor. */,
+    const double *T_tr_dev /**< [in] Deviatoric elastic stress tensor. */,
+    const double *eigvec_b_e_tr /**< [in] Eigenvector of b elastic trial. */,
     const double *n /**< [out] Plastic flow direction. */,
     double d_gamma_k /**< [in] Discrete plastic multiplier */,
     double alpha_Q /**< [in] Plastic potential parameter. */,
@@ -296,16 +303,26 @@ static double __d_yield_function_apex(
     double beta /**< [in] Yield surface parameter II. */);
 
 static int __update_internal_variables_apex(
-    State_Parameters IO_State /**< [in/out] List of internal variables. */,
-    const double
-        *kirchhoff_tr_vol /**< [in] Volumetric elastic stress tensor. */,
+    double *Increment_E_plastic /**< [in/out] Increment plastic strain */,
+    double *Stress /**< [in/out] Nominal stress tensor */,
+    double *eps_n1 /**< [in/out] Equivalent plastic strain*/,
+    double *kappa_n1 /**< [in/out] Hardening function. */,
+    const double *D_phi /**< [in] Total deformation gradient. */,
+    const double *T_tr_vol /**< [in] Volumetric elastic stress tensor. */,
+    const double *T_tr_dev /**< [in] Deviatoric elastic stress tensor. */,
+    const double *eigvec_b_e_tr /**< [in] Eigenvector of b elastic trial. */,
     const double *n /**< [out] Plastic flow direction. */,
     double d_gamma_k /**< [in] Discrete plastic multiplier */,
     double d_gamma_1 /**< [in] Discrete plastic multiplier I */,
     double alpha_Q /**< [in] Plastic potential parameter. */,
     double K /**< [in] First Lamé invariant. */,
+    double G /**< [in] Second Lamé invariant. */,
     double eps_k /**< [in] Equivalent plastic strain*/,
     double kappa_k /**< [in] Hardening function. */);
+
+static bool __degradated(
+    const double *Stress /**< [in/out] Nominal stress tensor */,
+    double J2_degradated /**< [in] Critical value of the J2 invariant */);
 
 void ERROR() { fprintf(stderr, "\033[1;31m"); }
 void SUCCES() { fprintf(stdout, "\033[1;33m"); }
@@ -374,6 +391,7 @@ static int imin_arg1, imin_arg2;
 #define NumberSteps 50 // 50 // 3500 // 2500 //
 #define Delta_strain_II -0.000001
 #define dF_yy 0.99999
+#define J2_degradated_value 5
 
 int main() {
   int STATUS = EXIT_SUCCESS;
@@ -386,14 +404,17 @@ int main() {
   MatProp.yield_stress_0 = param_kappa_0;
   MatProp.phi_Frictional = phi;
   MatProp.psi_Frictional = psi;
+  MatProp.Hardening_modulus = hardening_modulus;
   MatProp.Exponent_Hardening_Ortiz = hardening_exp;
   MatProp.Reference_Plastic_Strain_Ortiz =
       (param_kappa_0 / (hardening_exp * hardening_modulus)) *
       pow(1, (1.0 / hardening_exp - 1.0));
   MatProp.ReferencePressure = 0.0;
+  MatProp.J2_degradated = J2_degradated_value;
 
   // Initialize state variables
-  double *stress = (double *)calloc(3 * NumberSteps, sizeof(double));
+  bool Status_particle = false;
+  double *stress = (double *)calloc(5 * NumberSteps, sizeof(double));
   double d_phi[5] = {1.0, 0.0, 0.0, dF_yy, 1.0};
   double *D_phi = (double *)calloc(5 * NumberSteps, sizeof(double));
   double *b_e = (double *)calloc(5 * NumberSteps, sizeof(double));
@@ -425,21 +446,31 @@ int main() {
 
     // Asign variables to the solver
     IO_State.Particle_Idx = 0;
-    IO_State.Stress = &stress[i * 3];
+    IO_State.Stress = &stress[i * 5];
     IO_State.b_e = &b_e[i * 5];
     IO_State.Increment_E_plastic = &Increment_E_plastic[i * 3];
     IO_State.Equiv_Plast_Str = &Equiv_Plast_Str[i];
     IO_State.Kappa = &kappa1[i];
     IO_State.d_phi = d_phi;
+    IO_State.D_phi = &D_phi[i * 5];
+    IO_State.Failure = &Status_particle;
 
     // Initialize
+    IO_State.Stress[0] = stress[(i - 1) * 5 + 0];
+    IO_State.Stress[1] = stress[(i - 1) * 5 + 1];
+    IO_State.Stress[2] = stress[(i - 1) * 5 + 2];
+    IO_State.Stress[3] = stress[(i - 1) * 5 + 3];
+    IO_State.Stress[4] = stress[(i - 1) * 5 + 4];
+
     IO_State.b_e[0] = b_e[(i - 1) * 5 + 0];
     IO_State.b_e[1] = b_e[(i - 1) * 5 + 1];
     IO_State.b_e[2] = b_e[(i - 1) * 5 + 2];
     IO_State.b_e[3] = b_e[(i - 1) * 5 + 3];
     IO_State.b_e[4] = b_e[(i - 1) * 5 + 4];
 
-    D_phi[i * 5 + 3] = D_phi[(i - 1) * 5 + 3] * d_phi[3];
+    IO_State.D_phi[0] = D_phi[(i - 1) * 5 + 0] * d_phi[0];
+    IO_State.D_phi[3] = D_phi[(i - 1) * 5 + 3] * d_phi[3];
+    IO_State.D_phi[4] = D_phi[(i - 1) * 5 + 4] * d_phi[4];
 
     *IO_State.Equiv_Plast_Str = Equiv_Plast_Str[i - 1];
     *IO_State.Kappa = kappa1[i - 1];
@@ -461,15 +492,26 @@ int main() {
   }
 
   // Save data in a csv file
+
   FILE *DP_output = fopen("DP_output.csv", "w");
   for (int i = 0; i < NumberSteps; i++) {
     fprintf(DP_output, "%e, %e\n",
             -0.5 * (D_phi[i * 5 + 3] * D_phi[i * 5 + 3] - 1.0),
-            sqrt(0.5 * (pow((stress[i * 3 + 0] - stress[i * 3 + 1]), 2.0) +
-                        pow((stress[i * 3 + 1] - stress[i * 3 + 2]), 2.0) +
-                        pow((stress[i * 3 + 2] - stress[i * 3 + 0]), 2.0))));
+            sqrt(0.5 * (pow((stress[i * 5 + 0] - stress[i * 5 + 3]), 2.0) +
+                        pow((stress[i * 5 + 3] - stress[i * 5 + 4]), 2.0) +
+                        pow((stress[i * 5 + 4] - stress[i * 5 + 0]), 2.0))));
   }
   fclose(DP_output);
+
+  /*
+    FILE *DP_output = fopen("DP_output.csv", "w");
+    for (int i = 0; i < NumberSteps; i++) {
+      fprintf(DP_output, "%e, %e\n",
+              -0.5 * (D_phi[i * 5 + 3] * D_phi[i * 5 + 3] - 1.0),
+              0.5 * ((stress[i * 5 + 0] - stress[i * 5 + 3])));
+    }
+    fclose(DP_output);
+  */
 
   // Print data with gnuplot
   FILE *gnuplot = popen("gnuplot -persistent", "w");
@@ -502,12 +544,17 @@ int Drucker_Prager_backward_euler(State_Parameters IO_State, Material MatProp)
 {
   int STATUS = EXIT_SUCCESS;
 
+  // If the particle is failed do not enter
+  if (*IO_State.Failure) {
+    return STATUS;
+  }
+
   // Read input/output parameters
   double eigval_b_e_tr[3] = {0.0, 0.0, 0.0};
   double eigvec_b_e_tr[9] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
   double E_hencky_trial[3] = {0.0, 0.0, 0.0};
-  double kirchhoff_tr_vol[3] = {0.0, 0.0, 0.0};
-  double kirchhoff_tr_dev[3] = {0.0, 0.0, 0.0};
+  double T_tr_vol[3] = {0.0, 0.0, 0.0};
+  double T_tr_dev[3] = {0.0, 0.0, 0.0};
 
 #ifdef DEBUG_MODE
 #if DEBUG_MODE + 0
@@ -606,8 +653,8 @@ int Drucker_Prager_backward_euler(State_Parameters IO_State, Material MatProp)
   int Iter = 0;
   bool Convergence = false;
 
-  STATUS = __trial_elastic(kirchhoff_tr_vol, kirchhoff_tr_dev, &pressure, &J2,
-                           E_hencky_trial, K, G, p_ref);
+  STATUS = __trial_elastic(T_tr_vol, T_tr_dev, &pressure, &J2, E_hencky_trial,
+                           K, G, p_ref);
   if (STATUS) {
     ERROR();
     fprintf(stderr, "__trial_elastic\n");
@@ -627,8 +674,9 @@ int Drucker_Prager_backward_euler(State_Parameters IO_State, Material MatProp)
   // Elastic
   if (PHI_0 <= 0.0) {
 
-    STATUS = __update_internal_variables_elastic(IO_State, kirchhoff_tr_vol,
-                                                 kirchhoff_tr_dev);
+    STATUS = __update_internal_variables_elastic(
+        IO_State.Increment_E_plastic, IO_State.Stress, IO_State.D_phi, T_tr_vol,
+        T_tr_dev, eigvec_b_e_tr);
     if (STATUS) {
       ERROR();
       fprintf(stderr, "__update_internal_variables_elastic\n");
@@ -642,7 +690,7 @@ int Drucker_Prager_backward_euler(State_Parameters IO_State, Material MatProp)
 
     PHI = PHI_0;
 
-    STATUS = __compute_plastic_flow_direction(n, kirchhoff_tr_dev, J2);
+    STATUS = __compute_plastic_flow_direction(n, T_tr_dev, J2);
     if (STATUS) {
       ERROR();
       fprintf(stderr, "__compute_plastic_flow_direction\n");
@@ -718,8 +766,9 @@ int Drucker_Prager_backward_euler(State_Parameters IO_State, Material MatProp)
       }
 
       STATUS = __update_internal_variables_classical(
-          IO_State, kirchhoff_tr_vol, kirchhoff_tr_dev, n, d_gamma_k, alpha_Q,
-          K, G, eps_k, kappa_k);
+          IO_State.Increment_E_plastic, IO_State.Stress,
+          IO_State.Equiv_Plast_Str, IO_State.Kappa, IO_State.D_phi, T_tr_vol,
+          T_tr_dev, eigvec_b_e_tr, n, d_gamma_k, alpha_Q, K, G, eps_k, kappa_k);
       if (STATUS) {
         ERROR();
         fprintf(stderr, "__update_internal_variables_classical\n");
@@ -761,15 +810,24 @@ int Drucker_Prager_backward_euler(State_Parameters IO_State, Material MatProp)
         return STATUS;
       }
 
-      STATUS = __update_internal_variables_apex(IO_State, kirchhoff_tr_vol, n,
-                                                d_gamma_k, d_gamma_1, alpha_Q,
-                                                K, eps_k, kappa_k);
+      STATUS = __update_internal_variables_apex(
+          IO_State.Increment_E_plastic, IO_State.Stress,
+          IO_State.Equiv_Plast_Str, IO_State.Kappa, IO_State.D_phi, T_tr_vol,
+          T_tr_dev, eigvec_b_e_tr, n, d_gamma_k, d_gamma_1, alpha_Q, K, G,
+          eps_k, kappa_k);
       if (STATUS) {
         ERROR();
         fprintf(stderr, "__update_internal_variables_apex\n");
         RESET_ERROR();
         return STATUS;
       }
+    }
+
+    if (__degradated(IO_State.Stress, MatProp.J2_degradated)) {
+      ERROR();
+      fprintf(stderr, "Failed material\n");
+      RESET_ERROR();
+      *IO_State.Failure = true;
     }
   }
 
@@ -793,8 +851,6 @@ int Drucker_Prager_backward_euler(State_Parameters IO_State, Material MatProp)
     RESET_ERROR();
   }
 
-  printf("Out stress tensor: [%f, %f, %f] \n", IO_State.Stress[0],
-         IO_State.Stress[1], IO_State.Stress[2]);
   printf("Increment of the plastic tensor: [%e, %e, %e] \n",
          IO_State.Increment_E_plastic[0], IO_State.Increment_E_plastic[1],
          IO_State.Increment_E_plastic[2]);
@@ -872,8 +928,10 @@ static int __compute_trial_b_e(double *eigval_b_e_tr, double *eigvec_b_e_tr,
   /* Check for convergence */
   if (info > 0) {
     free(work);
+    ERROR();
     printf("Error in Eigen_analysis__TensorLib__() : The algorithm failed to "
            "compute eigenvalues.\n");
+    RESET_ERROR();
     return EXIT_FAILURE;
   }
 
@@ -884,15 +942,19 @@ static int __compute_trial_b_e(double *eigval_b_e_tr, double *eigvec_b_e_tr,
   /* Check for convergence */
   if (info > 0) {
     free(work);
+    ERROR();
     printf("Error in Eigen_analysis__TensorLib__() : The algorithm failed to "
            "compute eigenvalues.\n");
+    RESET_ERROR();
     return EXIT_FAILURE;
   }
   if (info < 0) {
     free(work);
+    ERROR();
     printf("Error in Eigen_analysis__TensorLib__() : the %i-th argument had an "
            "illegal value.\n",
            abs(info));
+    RESET_ERROR();
     return EXIT_FAILURE;
   }
 
@@ -943,10 +1005,9 @@ static int __corrector_b_e(double *b_e, const double *eigval_b_e_tr,
 
 /***************************************************************************/
 
-static int __trial_elastic(double *kirchhoff_tr_vol, double *kirchhoff_tr_dev,
-                           double *pressure, double *J2,
-                           const double *E_hencky_trial, double K, double G,
-                           double p_ref) {
+static int __trial_elastic(double *T_tr_vol, double *T_tr_dev, double *pressure,
+                           double *J2, const double *E_hencky_trial, double K,
+                           double G, double p_ref) {
 
   double E_hencky_trial_vol[3];
   double tr_E_hencky_trial =
@@ -956,49 +1017,159 @@ static int __trial_elastic(double *kirchhoff_tr_vol, double *kirchhoff_tr_dev,
   E_hencky_trial_vol[1] = (1.0 / 3.0) * tr_E_hencky_trial;
   E_hencky_trial_vol[2] = (1.0 / 3.0) * tr_E_hencky_trial;
 
-  kirchhoff_tr_vol[0] = -K * E_hencky_trial_vol[0] - p_ref;
-  kirchhoff_tr_vol[1] = -K * E_hencky_trial_vol[1] - p_ref;
-  kirchhoff_tr_vol[2] = -K * E_hencky_trial_vol[2] - p_ref;
+  T_tr_vol[0] = -K * E_hencky_trial_vol[0] - p_ref;
+  T_tr_vol[1] = -K * E_hencky_trial_vol[1] - p_ref;
+  T_tr_vol[2] = -K * E_hencky_trial_vol[2] - p_ref;
 
-  kirchhoff_tr_dev[0] = 2 * G * (E_hencky_trial[0] - E_hencky_trial_vol[0]);
-  kirchhoff_tr_dev[1] = 2 * G * (E_hencky_trial[1] - E_hencky_trial_vol[1]);
-  kirchhoff_tr_dev[2] = 2 * G * (E_hencky_trial[2] - E_hencky_trial_vol[2]);
+  T_tr_dev[0] = 2 * G * (E_hencky_trial[0] - E_hencky_trial_vol[0]);
+  T_tr_dev[1] = 2 * G * (E_hencky_trial[1] - E_hencky_trial_vol[1]);
+  T_tr_dev[2] = 2 * G * (E_hencky_trial[2] - E_hencky_trial_vol[2]);
 
-  *pressure =
-      (kirchhoff_tr_vol[0] + kirchhoff_tr_vol[1] + kirchhoff_tr_vol[2]) / 3.0;
-  *J2 = sqrt(kirchhoff_tr_dev[0] * kirchhoff_tr_dev[0] +
-             kirchhoff_tr_dev[1] * kirchhoff_tr_dev[1] +
-             kirchhoff_tr_dev[2] * kirchhoff_tr_dev[2]);
+  *pressure = (T_tr_vol[0] + T_tr_vol[1] + T_tr_vol[2]) / 3.0;
+  *J2 = sqrt(T_tr_dev[0] * T_tr_dev[0] + T_tr_dev[1] * T_tr_dev[1] +
+             T_tr_dev[2] * T_tr_dev[2]);
 
   return EXIT_SUCCESS;
 }
 
 /***************************************************************************/
 
-static int __update_internal_variables_elastic(State_Parameters IO_State,
-                                               const double *kirchhoff_tr_vol,
-                                               const double *kirchhoff_tr_dev) {
+static int __update_internal_variables_elastic(double *Increment_E_plastic,
+                                               double *Stress,
+                                               const double *D_phi,
+                                               const double *T_tr_vol,
+                                               const double *T_tr_dev,
+                                               const double *eigvec_b_e_tr) {
 
-  IO_State.Increment_E_plastic[0] = 0.0;
-  IO_State.Increment_E_plastic[1] = 0.0;
-  IO_State.Increment_E_plastic[2] = 0.0;
+  // Update the increment of the plastic strain tensor
+  Increment_E_plastic[0] = 0.0;
+  Increment_E_plastic[1] = 0.0;
+  Increment_E_plastic[2] = 0.0;
 
-  IO_State.Stress[0] = -kirchhoff_tr_vol[0] + kirchhoff_tr_dev[0];
-  IO_State.Stress[1] = -kirchhoff_tr_vol[1] + kirchhoff_tr_dev[1];
-  IO_State.Stress[2] = -kirchhoff_tr_vol[2] + kirchhoff_tr_dev[2];
+  // Compute the transpose of D_phi
+  double D_phi_mT[9] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+
+#if NumberDimensions == 2
+
+  D_phi_mT[0] = D_phi[0];
+  D_phi_mT[1] = D_phi[2];
+  D_phi_mT[3] = D_phi[1];
+  D_phi_mT[4] = D_phi[3];
+  D_phi_mT[8] = D_phi[4];
+
+#else
+  No esta implementado
+#endif
+
+  // compute the inverse of D_phi
+  int INFO;
+  int N = 3;
+  int LDA = 3;
+  int LWORK = 3;
+  int IPIV[3] = {0, 0, 0};
+  double WORK[3] = {0, 0, 0};
+
+  // The factors L and U from the factorization A = P*L*U
+  dgetrf_(&N, &N, D_phi_mT, &LDA, IPIV, &INFO);
+  // Check output of dgetrf
+  if (INFO != 0) {
+    if (INFO < 0) {
+      ERROR();
+      printf("%s : \n", "Error in __update_internal_variables_elastic()");
+      printf("the %i-th argument had an illegal value", abs(INFO));
+      RESET_ERROR();
+    } else if (INFO > 0) {
+
+      ERROR();
+      printf("%s :\n", "Error in __update_internal_variables_elastic()");
+      printf(" M(%i,%i) %s \n %s \n %s \n %s \n", INFO, INFO,
+             "is exactly zero. The factorization",
+             "has been completed, but the factor M is exactly",
+             "singular, and division by zero will occur if it is used",
+             "to solve a system of equations.");
+      RESET_ERROR();
+    }
+    return EXIT_FAILURE;
+  }
+
+  dgetri_(&N, D_phi_mT, &LDA, IPIV, WORK, &LWORK, &INFO);
+  if (INFO != 0) {
+    if (INFO < 0) {
+      ERROR();
+      printf("%s : \n", "Error in __update_internal_variables_elastic()");
+      printf("the %i-th argument of dgetrf_ had an illegal value", abs(INFO));
+      RESET_ERROR();
+    } else if (INFO > 0) {
+      ERROR();
+      printf("%s :\n", "Error in __update_internal_variables_elastic()");
+      printf(" A(%i,%i) %s \n %s \n %s \n %s \n", INFO, INFO,
+             "is exactly zero. The factorization",
+             "has been completed, but the factor A is exactly",
+             "singular, and division by zero will occur if it is used",
+             "to solve a system of equations.");
+      RESET_ERROR();
+    }
+    return EXIT_FAILURE;
+  }
+
+#ifdef DEBUG_MODE
+#if DEBUG_MODE + 0
+
+  puts("Adjunt of the deformation gradient");
+  printf("%f %f %f \n", D_phi_mT[0], D_phi_mT[1], D_phi_mT[2]);
+  printf("%f %f %f \n", D_phi_mT[3], D_phi_mT[4], D_phi_mT[5]);
+  printf("%f %f %f \n", D_phi_mT[6], D_phi_mT[7], D_phi_mT[8]);
+
+#endif
+#endif
+
+  double T[9] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+
+  for (unsigned i = 0; i < 3; i++) {
+
+    double T_i = -T_tr_vol[i] + T_tr_dev[i];
+
+    T[0] += T_i * eigvec_b_e_tr[i * 3 + 0] * eigvec_b_e_tr[i * 3 + 0];
+    T[1] += T_i * eigvec_b_e_tr[i * 3 + 0] * eigvec_b_e_tr[i * 3 + 1];
+    T[3] += T_i * eigvec_b_e_tr[i * 3 + 1] * eigvec_b_e_tr[i * 3 + 0];
+    T[4] += T_i * eigvec_b_e_tr[i * 3 + 1] * eigvec_b_e_tr[i * 3 + 1];
+    T[8] += T_i * eigvec_b_e_tr[i * 3 + 2] * eigvec_b_e_tr[i * 3 + 2];
+  }
+
+#if NumberDimensions == 2
+
+  Stress[0] = T[0] * D_phi_mT[0] + T[1] * D_phi_mT[3];
+  Stress[1] = T[0] * D_phi_mT[1] + T[1] * D_phi_mT[4];
+  Stress[2] = T[3] * D_phi_mT[0] + T[4] * D_phi_mT[3];
+  Stress[3] = T[3] * D_phi_mT[1] + T[4] * D_phi_mT[4];
+  Stress[4] = T[8] * D_phi_mT[8];
+
+#else
+  No esta implementado
+#endif
+
+#ifdef DEBUG_MODE
+#if DEBUG_MODE + 0
+#if NumberDimensions == 2
+  puts("Nominal stress tensor");
+  printf("%f %f %f \n", Stress[0], Stress[1], 0.0);
+  printf("%f %f %f \n", Stress[2], Stress[3], 0.0);
+  printf("%f %f %f \n", 0.0, 0.0, Stress[4]);
+#endif
+#endif
+#endif
 
   return EXIT_SUCCESS;
 }
 
 /***************************************************************************/
 
-static int __compute_plastic_flow_direction(double *n,
-                                            const double *kirchhoff_tr_dev,
+static int __compute_plastic_flow_direction(double *n, const double *T_tr_dev,
                                             double J2) {
 
-  n[0] = kirchhoff_tr_dev[0] / J2;
-  n[1] = kirchhoff_tr_dev[1] / J2;
-  n[2] = kirchhoff_tr_dev[2] / J2;
+  n[0] = T_tr_dev[0] / J2;
+  n[1] = T_tr_dev[1] / J2;
+  n[2] = T_tr_dev[2] / J2;
 
   return EXIT_SUCCESS;
 }
@@ -1100,23 +1271,134 @@ static double __d_yield_function_classical(double d_kappa_k, double K, double G,
 /***************************************************************************/
 
 static int __update_internal_variables_classical(
-    State_Parameters IO_State, const double *kirchhoff_tr_vol,
-    const double *kirchhoff_tr_dev, const double *n, double d_gamma_k,
-    double alpha_Q, double K, double G, double eps_k, double kappa_k) {
+    double *Increment_E_plastic, double *Stress, double *eps_n1,
+    double *kappa_n1, const double *D_phi, const double *T_tr_vol,
+    const double *T_tr_dev, const double *eigvec_b_e_tr, const double *n,
+    double d_gamma_k, double alpha_Q, double K, double G, double eps_k,
+    double kappa_k) {
 
-  IO_State.Increment_E_plastic[0] = d_gamma_k * (alpha_Q + n[0]);
-  IO_State.Increment_E_plastic[1] = d_gamma_k * (alpha_Q + n[1]);
-  IO_State.Increment_E_plastic[2] = d_gamma_k * (alpha_Q + n[2]);
+  // Update hardening parameters
+  *eps_n1 = eps_k;
+  *kappa_n1 = kappa_k;
 
-  IO_State.Stress[0] = -kirchhoff_tr_vol[0] + kirchhoff_tr_dev[0] -
-                       d_gamma_k * (3 * K * alpha_Q + 2 * G * n[0]);
-  IO_State.Stress[1] = -kirchhoff_tr_vol[1] + kirchhoff_tr_dev[1] -
-                       d_gamma_k * (3 * K * alpha_Q + 2 * G * n[1]);
-  IO_State.Stress[2] = -kirchhoff_tr_vol[2] + kirchhoff_tr_dev[2] -
-                       d_gamma_k * (3 * K * alpha_Q + 2 * G * n[2]);
+  // Update the increment of the plastic strain tensor
+  Increment_E_plastic[0] = d_gamma_k * (alpha_Q + n[0]);
+  Increment_E_plastic[1] = d_gamma_k * (alpha_Q + n[1]);
+  Increment_E_plastic[2] = d_gamma_k * (alpha_Q + n[2]);
 
-  *IO_State.Equiv_Plast_Str = eps_k;
-  *IO_State.Kappa = kappa_k;
+  // Compute the transpose of D_phi
+  double D_phi_mT[9] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+
+#if NumberDimensions == 2
+
+  D_phi_mT[0] = D_phi[0];
+  D_phi_mT[1] = D_phi[2];
+  D_phi_mT[3] = D_phi[1];
+  D_phi_mT[4] = D_phi[3];
+  D_phi_mT[8] = D_phi[4];
+
+#else
+  No esta implementado
+#endif
+
+  // compute the inverse of D_phi
+  int INFO;
+  int N = 3;
+  int LDA = 3;
+  int LWORK = 3;
+  int IPIV[3] = {0, 0, 0};
+  double WORK[3] = {0, 0, 0};
+
+  // The factors L and U from the factorization A = P*L*U
+  dgetrf_(&N, &N, D_phi_mT, &LDA, IPIV, &INFO);
+  // Check output of dgetrf
+  if (INFO != 0) {
+    if (INFO < 0) {
+      ERROR();
+      printf("%s : \n", "Error in __update_internal_variables_elastic()");
+      printf("the %i-th argument had an illegal value", abs(INFO));
+      RESET_ERROR();
+    } else if (INFO > 0) {
+
+      ERROR();
+      printf("%s :\n", "Error in __update_internal_variables_elastic()");
+      printf(" M(%i,%i) %s \n %s \n %s \n %s \n", INFO, INFO,
+             "is exactly zero. The factorization",
+             "has been completed, but the factor M is exactly",
+             "singular, and division by zero will occur if it is used",
+             "to solve a system of equations.");
+      RESET_ERROR();
+    }
+    return EXIT_FAILURE;
+  }
+
+  dgetri_(&N, D_phi_mT, &LDA, IPIV, WORK, &LWORK, &INFO);
+  if (INFO != 0) {
+    if (INFO < 0) {
+      ERROR();
+      printf("%s : \n", "Error in __update_internal_variables_elastic()");
+      printf("the %i-th argument of dgetrf_ had an illegal value", abs(INFO));
+      RESET_ERROR();
+    } else if (INFO > 0) {
+      ERROR();
+      printf("%s :\n", "Error in __update_internal_variables_elastic()");
+      printf(" A(%i,%i) %s \n %s \n %s \n %s \n", INFO, INFO,
+             "is exactly zero. The factorization",
+             "has been completed, but the factor A is exactly",
+             "singular, and division by zero will occur if it is used",
+             "to solve a system of equations.");
+      RESET_ERROR();
+    }
+    return EXIT_FAILURE;
+  }
+
+#ifdef DEBUG_MODE
+#if DEBUG_MODE + 0
+
+  puts("Adjunt of the deformation gradient");
+  printf("%f %f %f \n", D_phi_mT[0], D_phi_mT[1], D_phi_mT[2]);
+  printf("%f %f %f \n", D_phi_mT[3], D_phi_mT[4], D_phi_mT[5]);
+  printf("%f %f %f \n", D_phi_mT[6], D_phi_mT[7], D_phi_mT[8]);
+
+#endif
+#endif
+
+  double T[9] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+
+  for (unsigned i = 0; i < 3; i++) {
+
+    double T_i = -T_tr_vol[i] + T_tr_dev[i] -
+                 d_gamma_k * (3 * K * alpha_Q + 2 * G * n[i]);
+
+    T[0] += T_i * eigvec_b_e_tr[i * 3 + 0] * eigvec_b_e_tr[i * 3 + 0];
+    T[1] += T_i * eigvec_b_e_tr[i * 3 + 0] * eigvec_b_e_tr[i * 3 + 1];
+    T[3] += T_i * eigvec_b_e_tr[i * 3 + 1] * eigvec_b_e_tr[i * 3 + 0];
+    T[4] += T_i * eigvec_b_e_tr[i * 3 + 1] * eigvec_b_e_tr[i * 3 + 1];
+    T[8] += T_i * eigvec_b_e_tr[i * 3 + 2] * eigvec_b_e_tr[i * 3 + 2];
+  }
+
+#if NumberDimensions == 2
+
+  Stress[0] = T[0] * D_phi_mT[0] + T[1] * D_phi_mT[3];
+  Stress[1] = T[0] * D_phi_mT[1] + T[1] * D_phi_mT[4];
+  Stress[2] = T[3] * D_phi_mT[0] + T[4] * D_phi_mT[3];
+  Stress[3] = T[3] * D_phi_mT[1] + T[4] * D_phi_mT[4];
+  Stress[4] = T[8] * D_phi_mT[8];
+
+#else
+  No esta implementado
+#endif
+
+#ifdef DEBUG_MODE
+#if DEBUG_MODE + 0
+#if NumberDimensions == 2
+  puts("Nominal stress tensor");
+  printf("%f %f %f \n", Stress[0], Stress[1], 0.0);
+  printf("%f %f %f \n", Stress[2], Stress[3], 0.0);
+  printf("%f %f %f \n", 0.0, 0.0, Stress[4]);
+#endif
+#endif
+#endif
 
   return EXIT_SUCCESS;
 }
@@ -1156,25 +1438,157 @@ static double __d_yield_function_apex(double d_gamma_k, double d_gamma_1,
 
 /***************************************************************************/
 
-static int __update_internal_variables_apex(State_Parameters IO_State,
-                                            const double *kirchhoff_tr_vol,
-                                            const double *n, double d_gamma_k,
-                                            double d_gamma_1, double alpha_Q,
-                                            double K, double eps_k,
-                                            double kappa_k) {
+static int __update_internal_variables_apex(
+    double *Increment_E_plastic, double *Stress, double *eps_n1,
+    double *kappa_n1, const double *D_phi, const double *T_tr_vol,
+    const double *T_tr_dev, const double *eigvec_b_e_tr, const double *n,
+    double d_gamma_k, double d_gamma_1, double alpha_Q, double K, double G,
+    double eps_k, double kappa_k) {
 
-  IO_State.Increment_E_plastic[0] = d_gamma_k * alpha_Q + d_gamma_1 * n[0];
-  IO_State.Increment_E_plastic[1] = d_gamma_k * alpha_Q + d_gamma_1 * n[1];
-  IO_State.Increment_E_plastic[2] = d_gamma_k * alpha_Q + d_gamma_1 * n[2];
+  // Update hardening parameters
+  *eps_n1 = eps_k;
+  *kappa_n1 = kappa_k;
 
-  IO_State.Stress[0] = -kirchhoff_tr_vol[0] - d_gamma_k * 3 * K * alpha_Q;
-  IO_State.Stress[1] = -kirchhoff_tr_vol[1] - d_gamma_k * 3 * K * alpha_Q;
-  IO_State.Stress[2] = -kirchhoff_tr_vol[2] - d_gamma_k * 3 * K * alpha_Q;
+  // Update the increment of the plastic strain tensor
+  Increment_E_plastic[0] = d_gamma_k * alpha_Q + d_gamma_1 * n[0];
+  Increment_E_plastic[1] = d_gamma_k * alpha_Q + d_gamma_1 * n[1];
+  Increment_E_plastic[2] = d_gamma_k * alpha_Q + d_gamma_1 * n[2];
 
-  *IO_State.Equiv_Plast_Str = eps_k;
-  *IO_State.Kappa = kappa_k;
+  // Compute the transpose of D_phi
+  double D_phi_mT[9] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+
+#if NumberDimensions == 2
+
+  D_phi_mT[0] = D_phi[0];
+  D_phi_mT[1] = D_phi[2];
+  D_phi_mT[3] = D_phi[1];
+  D_phi_mT[4] = D_phi[3];
+  D_phi_mT[8] = D_phi[4];
+
+#else
+  No esta implementado
+#endif
+
+  // compute the inverse of D_phi
+  int INFO;
+  int N = 3;
+  int LDA = 3;
+  int LWORK = 3;
+  int IPIV[3] = {0, 0, 0};
+  double WORK[3] = {0, 0, 0};
+
+  // The factors L and U from the factorization A = P*L*U
+  dgetrf_(&N, &N, D_phi_mT, &LDA, IPIV, &INFO);
+  // Check output of dgetrf
+  if (INFO != 0) {
+    if (INFO < 0) {
+      ERROR();
+      printf("%s : \n", "Error in __update_internal_variables_elastic()");
+      printf("the %i-th argument had an illegal value", abs(INFO));
+      RESET_ERROR();
+    } else if (INFO > 0) {
+
+      ERROR();
+      printf("%s :\n", "Error in __update_internal_variables_elastic()");
+      printf(" M(%i,%i) %s \n %s \n %s \n %s \n", INFO, INFO,
+             "is exactly zero. The factorization",
+             "has been completed, but the factor M is exactly",
+             "singular, and division by zero will occur if it is used",
+             "to solve a system of equations.");
+      RESET_ERROR();
+    }
+    return EXIT_FAILURE;
+  }
+
+  dgetri_(&N, D_phi_mT, &LDA, IPIV, WORK, &LWORK, &INFO);
+  if (INFO != 0) {
+    if (INFO < 0) {
+      ERROR();
+      printf("%s : \n", "Error in __update_internal_variables_elastic()");
+      printf("the %i-th argument of dgetrf_ had an illegal value", abs(INFO));
+      RESET_ERROR();
+    } else if (INFO > 0) {
+      ERROR();
+      printf("%s :\n", "Error in __update_internal_variables_elastic()");
+      printf(" A(%i,%i) %s \n %s \n %s \n %s \n", INFO, INFO,
+             "is exactly zero. The factorization",
+             "has been completed, but the factor A is exactly",
+             "singular, and division by zero will occur if it is used",
+             "to solve a system of equations.");
+      RESET_ERROR();
+    }
+    return EXIT_FAILURE;
+  }
+
+#ifdef DEBUG_MODE
+#if DEBUG_MODE + 0
+
+  puts("Adjunt of the deformation gradient");
+  printf("%f %f %f \n", D_phi_mT[0], D_phi_mT[1], D_phi_mT[2]);
+  printf("%f %f %f \n", D_phi_mT[3], D_phi_mT[4], D_phi_mT[5]);
+  printf("%f %f %f \n", D_phi_mT[6], D_phi_mT[7], D_phi_mT[8]);
+
+#endif
+#endif
+
+  double T[9] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+
+  for (unsigned i = 0; i < 3; i++) {
+
+    double T_i = -T_tr_vol[i] - d_gamma_k * 3 * K * alpha_Q;
+
+    T[0] += T_i * eigvec_b_e_tr[i * 3 + 0] * eigvec_b_e_tr[i * 3 + 0];
+    T[1] += T_i * eigvec_b_e_tr[i * 3 + 0] * eigvec_b_e_tr[i * 3 + 1];
+    T[3] += T_i * eigvec_b_e_tr[i * 3 + 1] * eigvec_b_e_tr[i * 3 + 0];
+    T[4] += T_i * eigvec_b_e_tr[i * 3 + 1] * eigvec_b_e_tr[i * 3 + 1];
+    T[8] += T_i * eigvec_b_e_tr[i * 3 + 2] * eigvec_b_e_tr[i * 3 + 2];
+  }
+
+#if NumberDimensions == 2
+
+  Stress[0] = T[0] * D_phi_mT[0] + T[1] * D_phi_mT[3];
+  Stress[1] = T[0] * D_phi_mT[1] + T[1] * D_phi_mT[4];
+  Stress[2] = T[3] * D_phi_mT[0] + T[4] * D_phi_mT[3];
+  Stress[3] = T[3] * D_phi_mT[1] + T[4] * D_phi_mT[4];
+  Stress[4] = T[8] * D_phi_mT[8];
+
+#else
+  No esta implementado
+#endif
+
+#ifdef DEBUG_MODE
+#if DEBUG_MODE + 0
+#if NumberDimensions == 2
+  puts("Nominal stress tensor");
+  printf("%f %f %f \n", Stress[0], Stress[1], 0.0);
+  printf("%f %f %f \n", Stress[2], Stress[3], 0.0);
+  printf("%f %f %f \n", 0.0, 0.0, Stress[4]);
+#endif
+#endif
+#endif
 
   return EXIT_SUCCESS;
+}
+
+/***************************************************************************/
+
+static bool __degradated(const double *Stress, double J2_degradated) {
+
+  double J2 = 0.0;
+
+#if NumberDimensions == 2
+  J2 = sqrt(0.5 * (pow((Stress[0] - Stress[3]), 2.0) +
+                   pow((Stress[3] - Stress[4]), 2.0) +
+                   pow((Stress[4] - Stress[0]), 2.0)));
+#else
+  No esta implementado
+#endif
+
+  if (J2 <= J2_degradated) {
+    return true;
+  } else {
+    return false;
+  }
 }
 
 /***************************************************************************/

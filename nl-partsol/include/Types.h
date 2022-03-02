@@ -600,7 +600,9 @@ typedef struct
   /*!
    * Finite strain kinematic parameters
    * */
-  double * F_n1_p;
+  double * D_phi; /**< Total deformation gradient */
+  double * d_phi; /**< Incremental deformation gradient */
+  double * b_e; /**< Elastic left Cauchy-Green tensor */
   double * Fbar;
   double * dFdt;
   double J;
@@ -609,15 +611,13 @@ typedef struct
    * Plasticity parameters
    * */
   double * Back_stress;
-  double * F_m1_plastic_p;
   double * Increment_E_plastic;
-  
+  double * Equiv_Plast_Str; // Equivalent plastic strain
+  double * Kappa; // Hardening Parameter
+
   double Cohesion; 
   double Yield_stress;
   
-  // Internal variables
-  double * Equiv_Plast_Str; // Equivalent plastic strain
-  double * Kappa; // Hardening Parameter
 
 } State_Parameters;
 

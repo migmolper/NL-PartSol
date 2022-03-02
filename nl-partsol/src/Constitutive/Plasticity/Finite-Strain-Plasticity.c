@@ -30,9 +30,7 @@ State_Parameters finite_strain_plasticity(
   /* Define auxiliar variables */
   State_Parameters Output_SP;
   Tensor P_p = memory_to_tensor__TensorLib__(Inputs_SP_finite.Stress, 2);
-  Tensor F_m1_plastic =
-      memory_to_tensor__TensorLib__(Inputs_SP_finite.F_m1_plastic_p, 2);
-  Tensor F_total = memory_to_tensor__TensorLib__(Inputs_SP_finite.F_n1_p, 2);
+  Tensor F_total = memory_to_tensor__TensorLib__(Inputs_SP_finite.D_phi, 2);
   Tensor F_m1_total;
   Tensor F_trial_elastic;
   Tensor C_trial_elastic;
@@ -63,13 +61,13 @@ State_Parameters finite_strain_plasticity(
   /*
     Compute the trial right Cauchy-Green tensor
   */
-  if (MatProp.Locking_Control_Fbar) {
-    Tensor Fbar = memory_to_tensor__TensorLib__(Inputs_SP_finite.Fbar, 2);
-    F_trial_elastic = matrix_product__TensorLib__(Fbar, F_m1_plastic);
-  } else {
-    F_total = memory_to_tensor__TensorLib__(Inputs_SP_finite.F_n1_p, 2);
-    F_trial_elastic = matrix_product__TensorLib__(F_total, F_m1_plastic);
-  }
+//  if (MatProp.Locking_Control_Fbar) {
+//    Tensor Fbar = memory_to_tensor__TensorLib__(Inputs_SP_finite.Fbar, 2);
+//    F_trial_elastic = matrix_product__TensorLib__(Fbar, F_m1_plastic);
+//  } else {
+//    F_total = memory_to_tensor__TensorLib__(Inputs_SP_finite.F_n1_p, 2);
+//    F_trial_elastic = matrix_product__TensorLib__(F_total, F_m1_plastic);
+//  }
 
   C_trial_elastic = right_Cauchy_Green__Particles__(F_trial_elastic);
 
@@ -119,20 +117,7 @@ State_Parameters finite_strain_plasticity(
   /*
     Compute the new value of the plastic deformation gradient and update it
   */
-  F_m1_plastic_new = matrix_product__TensorLib__(F_m1_plastic, D_F_plastic);
-
-  for (int i = 0; i < Ndim; i++) {
-    for (int j = 0; j < Ndim; j++) {
-      F_m1_plastic.N[i][j] = F_m1_plastic_new.N[i][j];
-    }
-  }
-
-  if (I3__TensorLib__(F_m1_plastic) < 0) {
-    fprintf(stderr, "%s : %s !!! \n", "Error in finite_strain_plasticity()",
-            "The Jacobian of the resulting plastic deformation gradient is "
-            "less than 0");
-    exit(EXIT_FAILURE);
-  }
+//  F_m1_plastic_new = matrix_product__TensorLib__(F_m1_plastic, D_F_plastic);
 
   /*
     Rotate the kirchhoff stress tensor in the spectral representation

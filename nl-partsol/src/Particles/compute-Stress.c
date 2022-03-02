@@ -68,10 +68,10 @@ void Stress_integration__Particles__(int p, Particle MPM_Mesh, Mesh FEM_Mesh,
     Input_SP.Stress = MPM_Mesh.Phi.Stress.nM[p];
 
     if (MatProp_p.Locking_Control_Fbar) {
-      Input_SP.F_n1_p = MPM_Mesh.Phi.Fbar.nM[p];
+      Input_SP.D_phi = MPM_Mesh.Phi.Fbar.nM[p];
       Input_SP.J = MPM_Mesh.Phi.Jbar.nV[p];
     } else {
-      Input_SP.F_n1_p = MPM_Mesh.Phi.F_n1.nM[p];
+      Input_SP.D_phi = MPM_Mesh.Phi.F_n1.nM[p];
       Input_SP.J = MPM_Mesh.Phi.J_n1.nV[p];
     }
 
@@ -83,10 +83,10 @@ void Stress_integration__Particles__(int p, Particle MPM_Mesh, Mesh FEM_Mesh,
     Input_SP.Stress = MPM_Mesh.Phi.Stress.nM[p];
 
     if (MatProp_p.Locking_Control_Fbar) {
-      Input_SP.F_n1_p = MPM_Mesh.Phi.Fbar.nM[p];
+      Input_SP.D_phi = MPM_Mesh.Phi.Fbar.nM[p];
       Input_SP.J = MPM_Mesh.Phi.Jbar.nV[p];
     } else {
-      Input_SP.F_n1_p = MPM_Mesh.Phi.F_n1.nM[p];
+      Input_SP.D_phi = MPM_Mesh.Phi.F_n1.nM[p];
       Input_SP.J = MPM_Mesh.Phi.J_n1.nV[p];
     }
 
@@ -99,10 +99,10 @@ void Stress_integration__Particles__(int p, Particle MPM_Mesh, Mesh FEM_Mesh,
     Input_SP.dFdt = MPM_Mesh.Phi.dt_F_n1.nM[p];
 
     if (MatProp_p.Locking_Control_Fbar) {
-      Input_SP.F_n1_p = MPM_Mesh.Phi.Fbar.nM[p];
+      Input_SP.D_phi = MPM_Mesh.Phi.Fbar.nM[p];
       Input_SP.J = MPM_Mesh.Phi.Jbar.nV[p];
     } else {
-      Input_SP.F_n1_p = MPM_Mesh.Phi.F_n1.nM[p];
+      Input_SP.D_phi = MPM_Mesh.Phi.F_n1.nM[p];
       Input_SP.J = MPM_Mesh.Phi.J_n1.nV[p];
     }
 
@@ -113,7 +113,7 @@ void Stress_integration__Particles__(int p, Particle MPM_Mesh, Mesh FEM_Mesh,
     Input_SP.Stress = MPM_Mesh.Phi.Stress.nM[p];
     Input_SP.dFdt = MPM_Mesh.Phi.dt_F_n1.nM[p];
     Input_SP.J = MPM_Mesh.Phi.J_n1.nV[p];
-    Input_SP.F_n1_p = MPM_Mesh.Phi.F_n1.nM[p];
+    Input_SP.D_phi = MPM_Mesh.Phi.F_n1.nM[p];
     Input_SP.Pressure = MPM_Mesh.Phi.lambda_pressure_n1.nV[p];
 
     Output_SP = compute_1PK_Stress_Tensor_Newtonian_Fluid_Incompressible(
@@ -122,15 +122,15 @@ void Stress_integration__Particles__(int p, Particle MPM_Mesh, Mesh FEM_Mesh,
   } else if (strcmp(MatProp_p.Type, "Von-Mises") == 0) {
 
     Input_SP.Stress = MPM_Mesh.Phi.Stress.nM[p];
-    Input_SP.F_m1_plastic_p = MPM_Mesh.Phi.F_m1_plastic.nM[p];
+//    Input_SP.F_m1_plastic_p = MPM_Mesh.Phi.F_m1_plastic.nM[p];
     Input_SP.Equiv_Plast_Str = &MPM_Mesh.Phi.Equiv_Plast_Str.nV[p];
     Input_SP.Back_stress = MPM_Mesh.Phi.Back_stress.nM[p];
 
     if (MatProp_p.Locking_Control_Fbar) {
-      Input_SP.F_n1_p = MPM_Mesh.Phi.F_n1.nM[p];
+      Input_SP.D_phi = MPM_Mesh.Phi.F_n1.nM[p];
       Input_SP.Fbar = MPM_Mesh.Phi.Fbar.nM[p];
     } else {
-      Input_SP.F_n1_p = MPM_Mesh.Phi.F_n1.nM[p];
+      Input_SP.D_phi = MPM_Mesh.Phi.F_n1.nM[p];
     }
 
     if (strcmp(MatProp_p.Plastic_Solver, "Backward-Euler") == 0) {
@@ -150,15 +150,15 @@ void Stress_integration__Particles__(int p, Particle MPM_Mesh, Mesh FEM_Mesh,
   } else if (strcmp(MatProp_p.Type, "Granular") == 0) {
     Input_SP.Particle_Idx = p;
     Input_SP.Stress = MPM_Mesh.Phi.Stress.nM[p];
-    Input_SP.F_m1_plastic_p = MPM_Mesh.Phi.F_m1_plastic.nM[p];
+//    Input_SP.F_m1_plastic_p = MPM_Mesh.Phi.F_m1_plastic.nM[p];
     Input_SP.Kappa = &MPM_Mesh.Phi.Kappa_hardening.nV[p];
     Input_SP.Equiv_Plast_Str = &MPM_Mesh.Phi.Equiv_Plast_Str.nV[p];
 
     if (MatProp_p.Locking_Control_Fbar) {
-      Input_SP.F_n1_p = MPM_Mesh.Phi.F_n1.nM[p];
+      Input_SP.D_phi = MPM_Mesh.Phi.F_n1.nM[p];
       Input_SP.Fbar = MPM_Mesh.Phi.Fbar.nM[p];
     } else {
-      Input_SP.F_n1_p = MPM_Mesh.Phi.F_n1.nM[p];
+      Input_SP.D_phi = MPM_Mesh.Phi.F_n1.nM[p];
     }
 
     Output_SP =
