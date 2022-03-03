@@ -216,18 +216,10 @@ void particle_results_vtk__InOutFun__(Particle MPM_Mesh, int TimeStep_i,
     vtk_Out_Green_Lagrange(Vtk_file, MPM_Mesh.Phi.F_n, NumParticles);
   }
 
-  if (Out_plastic_deformation_gradient) {
-    vtk_Out_plastic_deformation_gradient(Vtk_file, MPM_Mesh.Phi.F_m1_plastic,
-                                         NumParticles);
-  }
-
   if (Out_Metric) {
     vtk_Out_Metric(Vtk_file, MPM_Mesh.Phi.F_n, NumParticles);
   }
 
-  if (Out_plastic_jacobian) {
-    vtk_Out_plastic_jacobian(Vtk_file, MPM_Mesh.Phi.F_m1_plastic, NumParticles);
-  }
 
   /* Print particle energy */
   if (Out_energy) {
@@ -248,10 +240,18 @@ void particle_results_vtk__InOutFun__(Particle MPM_Mesh, int TimeStep_i,
                                  NumParticles);
   }
 
+#ifdef DEBUG_MODE
+#if DEBUG_MODE + 0
+
   /* Parition of unity */
   if (Out_Partition_Unity) {
     vtk_Out_Check_Partition_Unity(Vtk_file, MPM_Mesh.Phi.PU, NumParticles);
   }
+
+  #endif
+#endif
+
+
 
   /* Close the file */
   fclose(Vtk_file);

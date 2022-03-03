@@ -142,10 +142,10 @@ double update_density__Particles__(double, double, Tensor);
 Tensor explicit_integration_stress__Particles__(int, Particle, Material);
 
 /*******************************************************/
-/*
-\fn void Stress_integration__Particles__()
-*/
-void Stress_integration__Particles__(int,Particle,Mesh,Material);
+
+int Stress_integration__Particles__(int p, Particle MPM_Mesh, Mesh FEM_Mesh,
+                                     Material MatProp_p);
+/*******************************************************/
 
 
 Tensor tangent_matrix__Particles__(Tensor GRADIENT_pA,

@@ -1771,7 +1771,10 @@ static void output_selector(Particle MPM_Mesh, Mesh FEM_Mesh, Mask ActiveNodes,
     Element Nodes_p;
     Matrix ShapeFunction_p;
 
-    if (Out_Partition_Unity) {
+#ifdef DEBUG_MODE
+#if DEBUG_MODE + 0
+
+      if (Out_Partition_Unity) {
       MPM_Mesh.Phi.PU = allocZ__MatrixLib__(Ngp, 1);
       for (int p_idx = 0; p_idx < Ngp; p_idx++) {
         NumNodes_p = MPM_Mesh.NumberNodes[p_idx];
@@ -1788,14 +1791,24 @@ static void output_selector(Particle MPM_Mesh, Mesh FEM_Mesh, Mask ActiveNodes,
       }
     }
 
+  #endif
+#endif
+
     particle_results_vtk__InOutFun__(MPM_Mesh, TimeStep, ResultsTimeStep);
 
     nodal_results_vtk__InOutFun__(FEM_Mesh, ActiveNodes, Reactions, TimeStep,
                                   ResultsTimeStep);
 
-    if (Out_Partition_Unity) {
+#ifdef DEBUG_MODE
+#if DEBUG_MODE + 0
+
+  if (Out_Partition_Unity) {
       free__MatrixLib__(MPM_Mesh.Phi.PU);
     }
+
+  #endif
+#endif
+
   }
 
   int Backup_TimeStep = 100;

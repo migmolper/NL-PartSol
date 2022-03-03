@@ -56,12 +56,14 @@ Tensor explicit_integration_stress__Particles__(int p, Particle MPM_Mesh,
 
 /**************************************************************/
 
-void Stress_integration__Particles__(int p, Particle MPM_Mesh, Mesh FEM_Mesh,
+int Stress_integration__Particles__(int p, Particle MPM_Mesh, Mesh FEM_Mesh,
                                      Material MatProp_p) {
   int Ndim = NumberDimensions;
+  int STATUS = EXIT_FAILURE;
 
   State_Parameters Input_SP;
   State_Parameters Output_SP;
+  State_Parameters IO_State;
 
   if (strcmp(MatProp_p.Type, "Saint-Venant-Kirchhoff") == 0) {
     Input_SP.Particle_Idx = p;
@@ -147,7 +149,41 @@ void Stress_integration__Particles__(int p, Particle MPM_Mesh, Mesh FEM_Mesh,
     }
 
     MPM_Mesh.Phi.Equiv_Plast_Str.nV[p] = *Output_SP.Equiv_Plast_Str;
-  } else if (strcmp(MatProp_p.Type, "Granular") == 0) {
+  } 
+  
+  else if (strcmp(MatProp_p.Type, "Drucker-Prager") == 0) {
+
+    // Asign variables to the solver
+    IO_State.Particle_Idx = p;
+    IO_State.Stress = MPM_Mesh.Phi.Stress.nM[p];
+    IO_State.b_e = MPM_Mesh.Phi.b_e_n1.nM[p];
+    IO_State.Equiv_Plast_Str = &MPM_Mesh.Phi.Equiv_Plast_Str.nV[p];
+    IO_State.Kappa = &MPM_Mesh.Phi.Kappa_hardening.nV[p];
+    IO_State.d_phi = MPM_Mesh.Phi.DF.nM[p];
+    IO_State.D_phi = MPM_Mesh.Phi.F_n1.nM[p];
+    IO_State.Failure = &(MPM_Mesh.Phi.Status_particle[p]);
+
+#if NumberDimensions == 2
+  for (unsigned i = 0 ; i<5 ; i++) IO_State.b_e[i] = MPM_Mesh.Phi.b_e_n.nM[p][i]; 
+#else
+  for (unsigned i = 0 ; i<9 ; i++) IO_State.b_e[i] = MPM_Mesh.Phi.b_e_n.nM[p][i]; 
+#endif
+
+  STATUS = Drucker_Prager_backward_euler(IO_State, MatProp_p);
+
+#if NumberDimensions == 2
+  for (unsigned i = 0 ; i<5 ; i++) MPM_Mesh.Phi.b_e_n.nM[p][i] = IO_State.b_e[i];
+#else
+  for (unsigned i = 0 ; i<9 ; i++) MPM_Mesh.Phi.b_e_n.nM[p][i] = IO_State.b_e[i]; 
+#endif
+
+  if(STATUS == EXIT_FAILURE){
+    fprintf(stderr, ""RED"Error in Drucker_Prager_backward_euler(,)"RESET" \n");
+    return EXIT_FAILURE;
+  }
+
+  }  
+  else if (strcmp(MatProp_p.Type, "Granular") == 0) {
     Input_SP.Particle_Idx = p;
     Input_SP.Stress = MPM_Mesh.Phi.Stress.nM[p];
 //    Input_SP.F_m1_plastic_p = MPM_Mesh.Phi.F_m1_plastic.nM[p];
@@ -175,6 +211,8 @@ void Stress_integration__Particles__(int p, Particle MPM_Mesh, Mesh FEM_Mesh,
             "The material", MatProp_p.Type, "has not been yet implemnented");
     exit(EXIT_FAILURE);
   }
+
+  return STATUS;
 }
 
 /**************************************************************/

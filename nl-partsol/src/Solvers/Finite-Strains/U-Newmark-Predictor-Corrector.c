@@ -34,8 +34,8 @@ static Matrix compute_Nodal_D_Displacement(Particle, Mesh, Mask, Matrix);
 static Matrix compute_Nodal_Velocity(Particle, Mesh, Mask, Matrix);
 static void impose_Dirichlet_Boundary_Conditions(Mesh, Matrix, Matrix, Mask,
                                                  int, int);
-/* Step 4 */
-static void update_Local_State(Matrix, Mask, Particle, Mesh);
+/* Step 4 */    
+static int __update_Local_State(Matrix, Mask, Particle, Mesh);
 /* Step 5 */
 static Matrix compute_Nodal_Forces(Mask, Particle, Mesh, int, int);
 static void compute_Nodal_Internal_Forces(Matrix, Mask, Particle, Mesh);
@@ -51,12 +51,13 @@ static void output_selector(Particle, Mesh, Mask, Matrix, Matrix, Matrix,
 
 /**************************************************************/
 
-void U_Newmark_Predictor_Corrector_Finite_Strains(
+int U_Newmark_Predictor_Corrector_Finite_Strains(
     Mesh FEM_Mesh, Particle MPM_Mesh, Time_Int_Params Parameters_Solver) {
 
   /*
     Auxiliar variables for the solver
   */
+  int STATUS = EXIT_SUCCESS;
   int Ndim = NumberDimensions;
   int Nactivenodes;
   int InitialStep = Parameters_Solver.InitialTimeStep;
@@ -87,26 +88,10 @@ void U_Newmark_Predictor_Corrector_Finite_Strains(
     Free_and_Restricted_Dofs =
         generate_Mask_for_static_condensation__MeshTools__(
             ActiveNodes, FEM_Mesh, TimeStep, NumTimeStep);
-    print_Status("DONE !!!", TimeStep);
-
-    print_Status("*************************************************", TimeStep);
-    print_Status("First step : Compute effective mass ... WORKING", TimeStep);
 
     Lumped_Mass = compute_Mass_Matrix(MPM_Mesh, FEM_Mesh, ActiveNodes);
 
-    print_Status("DONE !!!", TimeStep);
-
-    print_Status("*************************************************", TimeStep);
-    print_Status("Second step : Explicit Newmark predictor", TimeStep);
-    print_Status("WORKING ...", TimeStep);
-
     compute_Explicit_Newmark_Predictor(MPM_Mesh, gamma);
-
-    print_Status("DONE !!!", TimeStep);
-
-    print_Status("*************************************************", TimeStep);
-    print_Status("Third step : Compute nodal magnitudes", TimeStep);
-    print_Status("WORKING ...", TimeStep);
 
     Gravity_field = compute_Nodal_Gravity_field(ActiveNodes, MPM_Mesh, TimeStep,
                                                 NumTimeStep);
@@ -120,16 +105,12 @@ void U_Newmark_Predictor_Corrector_Finite_Strains(
     impose_Dirichlet_Boundary_Conditions(FEM_Mesh, D_Displacement, Velocity,
                                          ActiveNodes, TimeStep, NumTimeStep);
 
-    print_Status("DONE !!!", TimeStep);
-
-    print_Status("*************************************************", TimeStep);
-    print_Status("Four step : Update local state", TimeStep);
-    print_Status("WORKING ...", TimeStep);
-
-    update_Local_State(D_Displacement, ActiveNodes, MPM_Mesh, FEM_Mesh);
-
-    print_Status("*************************************************", TimeStep);
-    print_Status("Five step : Compute equilibrium ... WORKING", TimeStep);
+    STATUS = __update_Local_State(D_Displacement, ActiveNodes, MPM_Mesh, FEM_Mesh);
+    if(STATUS == EXIT_FAILURE)
+    {
+      fprintf(stderr,""RED"Error in __update_Local_State"RESET" \n");
+      return EXIT_FAILURE;
+    }
 
     Forces = compute_Nodal_Forces(ActiveNodes, MPM_Mesh, FEM_Mesh, TimeStep,
                                   NumTimeStep);
@@ -138,30 +119,13 @@ void U_Newmark_Predictor_Corrector_Finite_Strains(
                                         D_Displacement, MPM_Mesh, FEM_Mesh,
                                         ActiveNodes, Free_and_Restricted_Dofs);
 
-    print_Status("*************************************************", TimeStep);
-    print_Status("Six step : Compute corrector", TimeStep);
-    print_Status("WORKING ...", TimeStep);
-
     compute_Explicit_Newmark_Corrector(MPM_Mesh, gamma);
 
-    print_Status("DONE !!!", TimeStep);
-
-    print_Status("*************************************************", TimeStep);
-    print_Status("Seven step : Output variables", TimeStep);
-    print_Status("WORKING ...", TimeStep);
 
     output_selector(MPM_Mesh, FEM_Mesh, ActiveNodes, Velocity, D_Displacement,
                     Forces, Reactions, DeltaTimeStep, TimeStep,
                     ResultsTimeStep);
 
-    print_Status("DONE !!!", TimeStep);
-
-    /*
-      Free memory
-    */
-    print_Status("*************************************************", TimeStep);
-    print_Status("Eight step : Reset nodal values", TimeStep);
-    print_Status("WORKING ...", TimeStep);
     free__MatrixLib__(Lumped_Mass);
     free__MatrixLib__(Gravity_field);
     free__MatrixLib__(Velocity);
@@ -172,6 +136,8 @@ void U_Newmark_Predictor_Corrector_Finite_Strains(
     free(Free_and_Restricted_Dofs.Nodes2Mask);
     print_Status("DONE !!!", TimeStep);
   }
+
+  return EXIT_SUCCESS;
 }
 
 /**************************************************************/
@@ -590,12 +556,13 @@ impose_Dirichlet_Boundary_Conditions(Mesh FEM_Mesh, Matrix D_Displacement,
 
 /**************************************************************/
 
-static void update_Local_State(Matrix D_Displacement, Mask ActiveNodes,
+static int __update_Local_State(Matrix D_Displacement, Mask ActiveNodes,
                                Particle MPM_Mesh, Mesh FEM_Mesh) {
 
   /*
     Auxiliar variables
   */
+  int STATUS = EXIT_SUCCESS;
   int Ndim = NumberDimensions;
   int Np = MPM_Mesh.NumGP;
   int Nnodes_mask = ActiveNodes.Nactivenodes;
@@ -661,13 +628,11 @@ static void update_Local_State(Matrix D_Displacement, Mask ActiveNodes,
     */
     MPM_Mesh.Phi.J_n1.nV[p] = I3__TensorLib__(F_n1_p);
 
-    /*
-      Check non-pentrability condition
-    */
     if (MPM_Mesh.Phi.J_n1.nV[p] <= 0.0) {
-      fprintf(stderr, "%s : %s %i\n", "Error in update_Local_State()",
-              "Negative jacobian in particle", p);
-      exit(EXIT_FAILURE);
+      fprintf(stderr, ""RED"%s : %s %i"RESET" \n", 
+      "Error in I3__TensorLib__(F_n1_p)",
+      "Negative jacobian in particle", p);
+      return EXIT_FAILURE;
     }
 
     /*
@@ -722,8 +687,15 @@ static void update_Local_State(Matrix D_Displacement, Mask ActiveNodes,
       Update the first Piola-Kirchhoff stress tensor with an apropiate
       integration rule.
     */
-    Stress_integration__Particles__(p, MPM_Mesh, FEM_Mesh, MatProp_p);
+    STATUS = Stress_integration__Particles__(p, MPM_Mesh, FEM_Mesh, MatProp_p);
+    if (STATUS == EXIT_FAILURE) {
+      fprintf(stderr, ""RED"Error in Stress_integration__Particles__(%i,,,)"RESET" \n",p);
+      return EXIT_FAILURE;
+    }
+
   }
+
+  return STATUS;
 }
 
 /**************************************************************/
@@ -1074,23 +1046,19 @@ static Matrix solve_Nodal_Equilibrium(Matrix Lumped_Mass, Matrix Gravity_field,
 
 static void compute_Explicit_Newmark_Corrector(Particle MPM_Mesh,
                                                double gamma) {
-  int Ndim = NumberDimensions;
-  int Np = MPM_Mesh.NumGP;
-  Tensor F_n_p;
-  Tensor F_n1_p;
 
-  for (int p = 0; p < Np; p++) {
+  unsigned Np = MPM_Mesh.NumGP;
 
-    /*
-      Replace the deformation gradient at t = n with the new one
-    */
-    F_n_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n.nM[p], 2);
+#if NumberDimensions == 2
+unsigned Size_vector = 2;
+unsigned Size_tensor = 5;
+#else
+unsigned Size_vector = 3;
+unsigned Size_tensor = 9;
+#endif
+  
 
-    if (MPM_Mesh.Mat[MPM_Mesh.MatIdx[p]].Locking_Control_Fbar) {
-      F_n1_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.Fbar.nM[p], 2);
-    } else {
-      F_n1_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n1.nM[p], 2);
-    }
+  for (unsigned p = 0; p < Np; p++) {
 
     /*
       Replace the determinant of the deformation gradient
@@ -1098,9 +1066,9 @@ static void compute_Explicit_Newmark_Corrector(Particle MPM_Mesh,
     MPM_Mesh.Phi.J_n.nV[p] = MPM_Mesh.Phi.J_n1.nV[p];
 
     /*
-      Update/correct tensor and vector variables
+      Update/correct vector variables
     */
-    for (int i = 0; i < Ndim; i++) {
+    for (unsigned i = 0; i < Size_vector; i++) {
       /*
         Correct particle velocity
       */
@@ -1112,12 +1080,16 @@ static void compute_Explicit_Newmark_Corrector(Particle MPM_Mesh,
       */
       MPM_Mesh.Phi.x_GC.nM[p][i] += MPM_Mesh.Phi.D_dis.nM[p][i];
       MPM_Mesh.Phi.dis.nM[p][i] += MPM_Mesh.Phi.D_dis.nM[p][i];
-
-      /* Update deformation gradient tensor */
-      for (int j = 0; j < Ndim; j++) {
-        F_n_p.N[i][j] = F_n1_p.N[i][j];
-      }
+  
     }
+
+    /*
+      Update/correct tensor variables
+    */
+    for (unsigned i = 0; i < Size_tensor; i++) {
+      MPM_Mesh.Phi.F_n.nM[p][i] = MPM_Mesh.Phi.F_n1.nM[p][i];
+    }
+
   }
 }
 
@@ -1139,7 +1111,10 @@ static void output_selector(Particle MPM_Mesh, Mesh FEM_Mesh, Mask ActiveNodes,
     Element Nodes_p;
     Matrix ShapeFunction_p;
 
-    if (Out_Partition_Unity) {
+#ifdef DEBUG_MODE
+#if DEBUG_MODE + 0
+
+  if (Out_Partition_Unity) {
       MPM_Mesh.Phi.PU = allocZ__MatrixLib__(Ngp, 1);
       for (int p_idx = 0; p_idx < Ngp; p_idx++) {
         NumNodes_p = MPM_Mesh.NumberNodes[p_idx];
@@ -1156,14 +1131,27 @@ static void output_selector(Particle MPM_Mesh, Mesh FEM_Mesh, Mask ActiveNodes,
       }
     }
 
+  #endif
+#endif
+
     particle_results_vtk__InOutFun__(MPM_Mesh, TimeStep, ResultsTimeStep);
 
     nodal_results_vtk__InOutFun__(FEM_Mesh, ActiveNodes, Reactions, TimeStep,
                                   ResultsTimeStep);
 
-    if (Out_Partition_Unity) {
+
+#ifdef DEBUG_MODE
+#if DEBUG_MODE + 0
+
+  if (Out_Partition_Unity) {
       free__MatrixLib__(MPM_Mesh.Phi.PU);
     }
+
+  #endif
+#endif
+    
+
+
   }
 
   /*

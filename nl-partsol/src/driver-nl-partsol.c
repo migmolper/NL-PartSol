@@ -35,6 +35,7 @@ int main(int argc, char *argv[]) {
   bool Is_Static_Initialization = false;
   bool Is_Restart_Simulation = false;
   int INFO_GramsSolid = 3;
+  int STATUS = EXIT_SUCCESS;
   Mesh FEM_Mesh;
   Particle MPM_Mesh;
   Time_Int_Params Parameters_Solver;
@@ -132,7 +133,6 @@ int main(int argc, char *argv[]) {
       printf("Start %s shape functions initialisation ... \n", ShapeFunctionGP);
 
       for (int p = 0; p < MPM_Mesh.NumGP; p++) {
-        // Free previous connectivity
         free__SetLib__(&MPM_Mesh.ListNodes[p]);
         MPM_Mesh.ListNodes[p] = NULL;
       }
@@ -150,7 +150,7 @@ int main(int argc, char *argv[]) {
     } else if (strcmp(Parameters_Solver.TimeIntegrationScheme, "NPC") == 0) {
       U_Newmark_Predictor_Corrector(FEM_Mesh, MPM_Mesh, Parameters_Solver);
     } else if (strcmp(Parameters_Solver.TimeIntegrationScheme, "NPC-FS") == 0) {
-      U_Newmark_Predictor_Corrector_Finite_Strains(FEM_Mesh, MPM_Mesh,
+      STATUS = U_Newmark_Predictor_Corrector_Finite_Strains(FEM_Mesh, MPM_Mesh,
                                                    Parameters_Solver);
     } else if (strcmp(Parameters_Solver.TimeIntegrationScheme,
                       "Discrete-Energy-Momentum") == 0) {
@@ -164,13 +164,22 @@ int main(int argc, char *argv[]) {
     }
 
     puts("*************************************************");
-    puts("Free memory ...");
     free_nodes(FEM_Mesh);
     free_particles(MPM_Mesh);
 
-    printf("Computation finished at : %s \n", __TIME__);
-    puts("Exiting of the program...");
-    exit(EXIT_SUCCESS);
+    if(STATUS == EXIT_SUCCESS)
+    {
+      printf("Computation "GREEN"succesfully"RESET" finished at : %s \n", __TIME__);
+      puts("Exiting of the program...");
+      return EXIT_SUCCESS;
+    }
+    else
+    {
+      printf(""RED"Error in %s"RESET" \n",Parameters_Solver.TimeIntegrationScheme);
+      printf("Computation "RED"abnormally"RESET" finished at : %s \n", __TIME__);
+      puts("Exiting the program...");
+      return EXIT_FAILURE;
+    }
 
   } else if (strcmp(Formulation, "-up") == 0) {
 

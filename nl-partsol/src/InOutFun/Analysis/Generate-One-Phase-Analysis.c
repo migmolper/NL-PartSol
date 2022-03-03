@@ -179,9 +179,6 @@ Generate_One_Phase_Analysis__InOutFun__(char *Name_File, Mesh FEM_Mesh,
       standard_error();
     }
 
-    /*
-      Allocate variables for the shape function
-    */
 
     /*
       Allocate vectorial/tensorial fields
@@ -608,6 +605,9 @@ static void initialise_particles(Mesh MPM_GID_Mesh, Particle MPM_Mesh,
 
       /* Assign the mass parameter */
       MPM_Mesh.Phi.mass.nV[p] = m_p;
+
+      /* Initial value of the yield */
+      MPM_Mesh.Phi.Kappa_hardening.nV[p] = MPM_Mesh.Mat[MatIdx_p].yield_stress_0;
 
       /* Initialize frictional material */
       if (strcmp(MPM_Mesh.Mat[MatIdx_p].Type, "Granular") == 0) {

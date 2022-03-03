@@ -104,9 +104,9 @@ void particle_backup_vtk__InOutFun__(Particle MPM_Mesh, int TimeStep_i,
   /* Print particle material index */
   vtk_Out_material_idx(Vtk_file, MPM_Mesh.MatIdx, NumParticles);
 
-  /* Print plastic deformation gradient */
+  /* Print elastic left Cauchy-Green tensor */
   if (Backup_plastic_deformation_gradient) {
-    vtk_Out_plastic_deformation_gradient(Vtk_file, MPM_Mesh.Phi.F_m1_plastic,
+    vtk_Out_plastic_deformation_gradient(Vtk_file, MPM_Mesh.Phi.b_e_n,
                                          NumParticles);
   }
 

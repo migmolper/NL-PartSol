@@ -146,10 +146,6 @@ void Gauss_Point_evolution__InOutFun__(Particle PointAnalysis,
     double EPS_k = PointAnalysis.Phi.Equiv_Plast_Str.nV[k];
     print_Gauss_Point_scalar_variable_to_csv(csv_file, EPS_k);
   }
-  if (Output_Commands.Out_csv_Gauss_Point_evolution_Cohesion) {
-    double cohesion_k = PointAnalysis.Phi.cohesion.nV[k];
-    print_Gauss_Point_scalar_variable_to_csv(csv_file, cohesion_k);
-  }
 
   /* New line */
   fprintf(csv_file, "\n");

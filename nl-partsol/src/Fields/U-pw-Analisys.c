@@ -88,17 +88,28 @@ Fields allocate_upw_vars__Fields__(int NumParticles) {
   }
 
   /*!
-    Inverse plastic deformation gradient field (Tensor) + Initialise it with the
-    indentity
+    Elastic left Cauchy-Green tensor
   */
-  Phi.F_m1_plastic = allocZ__MatrixLib__(NumParticles, Ndim * Ndim);
-  strcpy(Phi.F_m1_plastic.Info, "Inverse plastic deformation gradient");
+#if NumberDimensions == 2
+  Phi.b_e_n = allocZ__MatrixLib__(NumParticles, 5);
+  Phi.b_e_n1 = allocZ__MatrixLib__(NumParticles, 5);
+#else
+  Phi.b_e_n = allocZ__MatrixLib__(NumParticles, 9);
+  Phi.b_e_n1 = allocZ__MatrixLib__(NumParticles, 9);
+#endif
 
   for (int p = 0; p < NumParticles; p++) {
-    for (int i = 0; i < Ndim; i++) {
-      Phi.F_m1_plastic.nM[p][i + i * Ndim] = 1.0;
-    }
+#if NumberDimensions == 2
+  Phi.b_e_n.nM[p][0] = 0.0;
+  Phi.b_e_n.nM[p][3] = 0.0;
+  Phi.b_e_n.nM[p][4] = 0.0;
+#else
+  Phi.b_e_n.nM[p][0] = 0.0;
+  Phi.b_e_n.nM[p][4] = 0.0;
+  Phi.b_e_n.nM[p][9] = 0.0;
+#endif
   }
+
 
   /*!
    * F-bar variables
@@ -199,12 +210,6 @@ Fields allocate_upw_vars__Fields__(int NumParticles) {
   strcpy(Phi.chi.Info, "Damage parameter GP");
 
   /*!
-    Cohesion (Plasticity)
-  */
-  Phi.cohesion = allocZ__MatrixLib__(NumParticles, 1);
-  strcpy(Phi.cohesion.Info, "Cohesion GP");
-
-  /*!
     Equivalent plastic strain (Plasticity)
   */
   Phi.Equiv_Plast_Str = allocZ__MatrixLib__(NumParticles, 1);
@@ -243,7 +248,8 @@ void free_upw_vars__Fields__(Fields Phi) {
   free__MatrixLib__(Phi.d2_Pw_dt2);
   free__MatrixLib__(Phi.Strain);
   free__MatrixLib__(Phi.Strain_If);
-  free__MatrixLib__(Phi.F_m1_plastic);
+  free__MatrixLib__(Phi.b_e_n);
+  free__MatrixLib__(Phi.b_e_n1);
   free__MatrixLib__(Phi.F_n);
   free__MatrixLib__(Phi.F_n1);
   free__MatrixLib__(Phi.DF);
@@ -259,7 +265,6 @@ void free_upw_vars__Fields__(Fields Phi) {
   free__MatrixLib__(Phi.phi_s);
   free__MatrixLib__(Phi.phi_f);
   free__MatrixLib__(Phi.chi);
-  free__MatrixLib__(Phi.cohesion);
   free__MatrixLib__(Phi.Equiv_Plast_Str);
   free__MatrixLib__(Phi.Back_stress);
 }

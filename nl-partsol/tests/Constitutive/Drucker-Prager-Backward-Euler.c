@@ -167,7 +167,6 @@ typedef struct {
    * */
   double *Back_stress;
   double *b_e;
-  double *Increment_E_plastic;
 
   double Cohesion;
   double Yield_stress;
@@ -420,8 +419,6 @@ int main() {
   double *b_e = (double *)calloc(5 * NumberSteps, sizeof(double));
   double *kappa1 = (double *)calloc(NumberSteps, sizeof(double));
   double *Equiv_Plast_Str = (double *)calloc(NumberSteps, sizeof(double));
-  double *Increment_E_plastic =
-      (double *)calloc(3 * NumberSteps, sizeof(double));
 
   // Set initial values
   double stress_tr[3] = {0.0, 0.0, 0.0};
@@ -448,7 +445,6 @@ int main() {
     IO_State.Particle_Idx = 0;
     IO_State.Stress = &stress[i * 5];
     IO_State.b_e = &b_e[i * 5];
-    IO_State.Increment_E_plastic = &Increment_E_plastic[i * 3];
     IO_State.Equiv_Plast_Str = &Equiv_Plast_Str[i];
     IO_State.Kappa = &kappa1[i];
     IO_State.d_phi = d_phi;
@@ -627,6 +623,7 @@ int Drucker_Prager_backward_euler(State_Parameters IO_State, Material MatProp)
 
   // Define tensorial internal variables
   double n[3] = {0.0, 0.0, 0.0};
+  double Increment_E_plastic[3] = {0.0, 0.0, 0.0};
 
   // Define scalar internal variables
   double PHI, PHI_0 = 0.0;
@@ -675,7 +672,7 @@ int Drucker_Prager_backward_euler(State_Parameters IO_State, Material MatProp)
   if (PHI_0 <= 0.0) {
 
     STATUS = __update_internal_variables_elastic(
-        IO_State.Increment_E_plastic, IO_State.Stress, IO_State.D_phi, T_tr_vol,
+        Increment_E_plastic, IO_State.Stress, IO_State.D_phi, T_tr_vol,
         T_tr_dev, eigvec_b_e_tr);
     if (STATUS) {
       ERROR();
@@ -766,9 +763,9 @@ int Drucker_Prager_backward_euler(State_Parameters IO_State, Material MatProp)
       }
 
       STATUS = __update_internal_variables_classical(
-          IO_State.Increment_E_plastic, IO_State.Stress,
-          IO_State.Equiv_Plast_Str, IO_State.Kappa, IO_State.D_phi, T_tr_vol,
-          T_tr_dev, eigvec_b_e_tr, n, d_gamma_k, alpha_Q, K, G, eps_k, kappa_k);
+          Increment_E_plastic, IO_State.Stress, IO_State.Equiv_Plast_Str,
+          IO_State.Kappa, IO_State.D_phi, T_tr_vol, T_tr_dev, eigvec_b_e_tr, n,
+          d_gamma_k, alpha_Q, K, G, eps_k, kappa_k);
       if (STATUS) {
         ERROR();
         fprintf(stderr, "__update_internal_variables_classical\n");
@@ -811,10 +808,9 @@ int Drucker_Prager_backward_euler(State_Parameters IO_State, Material MatProp)
       }
 
       STATUS = __update_internal_variables_apex(
-          IO_State.Increment_E_plastic, IO_State.Stress,
-          IO_State.Equiv_Plast_Str, IO_State.Kappa, IO_State.D_phi, T_tr_vol,
-          T_tr_dev, eigvec_b_e_tr, n, d_gamma_k, d_gamma_1, alpha_Q, K, G,
-          eps_k, kappa_k);
+          Increment_E_plastic, IO_State.Stress, IO_State.Equiv_Plast_Str,
+          IO_State.Kappa, IO_State.D_phi, T_tr_vol, T_tr_dev, eigvec_b_e_tr, n,
+          d_gamma_k, d_gamma_1, alpha_Q, K, G, eps_k, kappa_k);
       if (STATUS) {
         ERROR();
         fprintf(stderr, "__update_internal_variables_apex\n");
@@ -832,7 +828,7 @@ int Drucker_Prager_backward_euler(State_Parameters IO_State, Material MatProp)
   }
 
   STATUS = __corrector_b_e(IO_State.b_e, eigval_b_e_tr, eigvec_b_e_tr,
-                           IO_State.Increment_E_plastic);
+                           Increment_E_plastic);
   if (STATUS) {
     ERROR();
     fprintf(stderr, "__corrector_b_e\n");
@@ -852,8 +848,8 @@ int Drucker_Prager_backward_euler(State_Parameters IO_State, Material MatProp)
   }
 
   printf("Increment of the plastic tensor: [%e, %e, %e] \n",
-         IO_State.Increment_E_plastic[0], IO_State.Increment_E_plastic[1],
-         IO_State.Increment_E_plastic[2]);
+         Increment_E_plastic[0], Increment_E_plastic[1],
+         Increment_E_plastic[2]);
   puts("t = n + 1 elastic left Cauchy-Green tensor");
   printf("%e, %e, %e \n", IO_State.b_e[0], IO_State.b_e[1], 0.0);
   printf("%e, %e, %e \n", IO_State.b_e[2], IO_State.b_e[3], 0.0);
