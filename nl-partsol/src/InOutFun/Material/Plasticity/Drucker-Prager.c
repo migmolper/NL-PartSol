@@ -55,8 +55,8 @@ int Define_Drucker_Prager(Material *DP_Material,FILE *Simulation_file, char *Mat
   (*DP_Material).yield_stress_0 = 0.0;
   (*DP_Material).ReferencePressure = 0.0; 
   (*DP_Material).J2_degradated = 0.0;
-  TOL_Radial_Returning = 1E-10;
-  Max_Iterations_Radial_Returning = 60;
+  TOL_Radial_Returning = 1E-14;
+  Max_Iterations_Radial_Returning = 10;
 
   while (fgets(Parameter_line, sizeof(Parameter_line), Simulation_file) !=
          NULL) {
@@ -102,19 +102,41 @@ int Define_Drucker_Prager(Material *DP_Material,FILE *Simulation_file, char *Mat
       (*DP_Material).yield_stress_0 = atof(Parameter_pars[1]);
     }
     /**************************************************/
-    else if (strcmp(Parameter_pars[0], "Friction-angle") == 0) {
+    else if (strcmp(Parameter_pars[0], "[Friction-angle]") == 0) {
       ChkMat.Is_friction_angle = true;
       (*DP_Material).phi_Frictional = atof(Parameter_pars[1]);
+
+      if(((*DP_Material).phi_Frictional > 90.0) && ((*DP_Material).phi_Frictional < 0.0))
+      {
+        fprintf(stderr, ""RED" Invalid value of the [Friction-angle] "RESET" \n");
+        STATUS = EXIT_FAILURE;
+        return EXIT_FAILURE;
+      }
     }
     /**************************************************/
-    else if (strcmp(Parameter_pars[0], "Dilatancy-angle") == 0) {
+    else if (strcmp(Parameter_pars[0], "[Dilatancy-angle]") == 0) {
       ChkMat.Is_dilatancy_angle = true;
       (*DP_Material).psi_Frictional = atof(Parameter_pars[1]);
+
+     if(((*DP_Material).psi_Frictional > 90.0) && ((*DP_Material).psi_Frictional < 0.0))
+      {
+        fprintf(stderr, ""RED" Invalid value of the [Dilatancy-angle] "RESET" \n");
+        STATUS = EXIT_FAILURE;
+        return EXIT_FAILURE;
+      }
     }
     /**************************************************/
-    else if (strcmp(Parameter_pars[0], "J2-degradated") == 0) {
+    else if (strcmp(Parameter_pars[0], "[J2-degradated]") == 0) {
       ChkMat.Is_J2_degradated = true;
       (*DP_Material).J2_degradated = atof(Parameter_pars[1]);
+
+      if(((*DP_Material).psi_Frictional > 90.0) && ((*DP_Material).psi_Frictional < 0.0))
+      {
+        fprintf(stderr, ""RED" Invalid value of the [Dilatancy-angle] "RESET" \n");
+        STATUS = EXIT_FAILURE;
+        return EXIT_FAILURE;
+      }
+
     }
     /**************************************************/
     else if ((strcmp(Parameter_pars[0], "}") == 0) && (Parser_status == 1)) {

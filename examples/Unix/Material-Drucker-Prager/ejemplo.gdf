@@ -1,5 +1,5 @@
 NLPS-Solver (Type=NPC-FS) {
-    CFL=0.3
+    CFL=0.01
     N=200
     Cel=50
     i0=0
@@ -36,7 +36,7 @@ Define-Material(idx=0,Model=Drucker-Prager)
   nu=0.3
   m=-4.0
   Hardening-modulus=-10000.0
-  Reference-pressure=-200.0
+  Reference-pressure=0.0
   kappa-0=100.0
   Friction-angle=30
   Dilatancy-angle=30
@@ -49,8 +49,7 @@ One-Phase-Analysis (File=Particles.msh,GPxElement=4) {
 
    Assign-material-to-particles (MatIdx=0, Particles=Particles_Soil.txt)
 
-   GramsShapeFun (Type=LME) {
-       gamma=2.5
+   GramsShapeFun (Type=FEM) {
    }
 
   
@@ -63,4 +62,5 @@ GramsOutputs (i=1) {
     Out-Equivalent-Plastic-Strain=true
     Out-stress=true
     Out-volumetric-stress=true
+    Out-deformation-gradient=true
 } 

@@ -616,7 +616,6 @@ static int __update_Local_State(Matrix D_Displacement, Mask ActiveNodes,
     */
     update_increment_Deformation_Gradient__Particles__(DF_p, D_Displacement_Ap,
                                                        gradient_p);
-
     /*
       Update the deformation gradient in t = n + 1 with the information
       from t = n and the increment of deformation gradient.

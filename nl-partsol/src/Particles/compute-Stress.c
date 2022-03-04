@@ -59,7 +59,7 @@ Tensor explicit_integration_stress__Particles__(int p, Particle MPM_Mesh,
 int Stress_integration__Particles__(int p, Particle MPM_Mesh, Mesh FEM_Mesh,
                                      Material MatProp_p) {
   int Ndim = NumberDimensions;
-  int STATUS = EXIT_FAILURE;
+  int STATUS = EXIT_SUCCESS;
 
   State_Parameters Input_SP;
   State_Parameters Output_SP;

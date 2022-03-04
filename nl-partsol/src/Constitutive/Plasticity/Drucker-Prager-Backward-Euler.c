@@ -186,11 +186,9 @@ int Drucker_Prager_backward_euler(State_Parameters IO_State, Material MatProp)
 
   STATUS = __compute_trial_b_e(eigval_b_e_tr, eigvec_b_e_tr, IO_State.b_e,
                                IO_State.d_phi);
-  if (STATUS) {
-    __ERROR_MESSAGE();
-    fprintf(stderr, "__compute_trial_b_e\n");
-    __RESET_MESSAGE();
-    return STATUS;
+  if (STATUS == EXIT_FAILURE) {
+    fprintf(stderr, ""RED"Error in __compute_trial_b_e"RESET"\n");
+    return EXIT_FAILURE;
   }
 
   E_hencky_trial[0] = 0.5 * log(eigval_b_e_tr[0]);
@@ -273,11 +271,9 @@ int Drucker_Prager_backward_euler(State_Parameters IO_State, Material MatProp)
 
   STATUS = __trial_elastic(T_tr_vol, T_tr_dev, &pressure, &J2, E_hencky_trial,
                            K, G, p_ref);
-  if (STATUS) {
-    __ERROR_MESSAGE();
-    fprintf(stderr, "__trial_elastic\n");
-    __RESET_MESSAGE();
-    return STATUS;
+  if (STATUS == EXIT_FAILURE) {
+    fprintf(stderr, ""RED"Error in __trial_elastic"RESET"\n");
+    return EXIT_FAILURE;
   }
 
   PHI_0 = __yield_function_classical(pressure, J2, d_gamma_k, kappa_k, alpha_F,
@@ -295,9 +291,9 @@ int Drucker_Prager_backward_euler(State_Parameters IO_State, Material MatProp)
     STATUS = __update_internal_variables_elastic(
         Increment_E_plastic, IO_State.Stress, IO_State.D_phi, T_tr_vol,
         T_tr_dev, eigvec_b_e_tr);
-    if (STATUS) {
+    if (STATUS == EXIT_FAILURE) {
       fprintf(stderr,""RED"Error in __update_internal_variables_elastic()"RESET"\n");
-      return STATUS;
+      return EXIT_FAILURE;
     }
 
   }
@@ -307,28 +303,22 @@ int Drucker_Prager_backward_euler(State_Parameters IO_State, Material MatProp)
     PHI = PHI_0;
 
     STATUS = __compute_plastic_flow_direction(n, T_tr_dev, J2);
-    if (STATUS) {
-      __ERROR_MESSAGE();
-      fprintf(stderr, "__compute_plastic_flow_direction\n");
-      __RESET_MESSAGE();
-      return STATUS;
+    if (STATUS == EXIT_FAILURE) {
+      fprintf(stderr, ""RED" Error in __compute_plastic_flow_direction"RESET"\n");
+      return EXIT_FAILURE;
     }
 
     STATUS = __compute_d_kappa(&d_kappa_k, kappa_0, eps_n, eps_0, exp_param);
-    if (STATUS) {
-      __ERROR_MESSAGE();
-      fprintf(stderr, "__compute_d_kappa\n");
-      __RESET_MESSAGE();
-      return STATUS;
+    if (STATUS == EXIT_FAILURE) {
+      fprintf(stderr, ""RED"Error in __compute_d_kappa"RESET"\n");
+      return EXIT_FAILURE;
     }
 
     STATUS = __compute_pressure_limit(&pressure_limit, J2, kappa_k, d_kappa_k,
                                       K, G, alpha_F, alpha_Q, beta);
-    if (STATUS) {
-      __ERROR_MESSAGE();
-      fprintf(stderr, "__compute_pressure_limit\n");
-      __RESET_MESSAGE();
-      return STATUS;
+    if (STATUS == EXIT_FAILURE) {
+      fprintf(stderr, ""RED"Error in __compute_pressure_limit"RESET"\n");
+      return EXIT_FAILURE;
     }
 
     // Classic radial returning algorithm
@@ -347,27 +337,25 @@ int Drucker_Prager_backward_euler(State_Parameters IO_State, Material MatProp)
         d_gamma_k += -PHI / d_PHI;
 
         STATUS = __compute_eps(&eps_k, d_gamma_k, eps_n, alpha_Q);
-        if (STATUS) {
+        if (STATUS == EXIT_FAILURE) {
           fprintf(stderr,""RED"Error in __compute_eps (apex loop)"RESET"\n");
-          return STATUS;
+          return EXIT_FAILURE;
         }
 
         STATUS = __compute_kappa(&kappa_k, kappa_0, exp_param, eps_k, eps_0);
-        if (STATUS) {
-          __ERROR_MESSAGE();
-          fprintf(stderr, "__compute_kappa\n");
-          __RESET_MESSAGE();
-          return STATUS;
+        if (STATUS == EXIT_FAILURE) {
+          fprintf(stderr, ""RED"Error in __compute_kappa"RESET"\n");
+          return EXIT_FAILURE;
         }
 
         if (kappa_k > 0) {
           STATUS =
               __compute_d_kappa(&d_kappa_k, kappa_0, eps_k, eps_0, exp_param);
-          if (STATUS) {
+          if (STATUS == EXIT_FAILURE) {
             __ERROR_MESSAGE();
             fprintf(stderr, "__compute_d_kappa\n");
             __RESET_MESSAGE();
-            return STATUS;
+            return EXIT_FAILURE;
           }
 
         } else {
@@ -384,9 +372,7 @@ int Drucker_Prager_backward_euler(State_Parameters IO_State, Material MatProp)
           IO_State.Kappa, IO_State.D_phi, T_tr_vol, T_tr_dev, eigvec_b_e_tr, n,
           d_gamma_k, alpha_Q, K, G, eps_k, kappa_k);
       if (STATUS == EXIT_FAILURE) {
-        __ERROR_MESSAGE();
-        fprintf(stderr, "__update_internal_variables_classical\n");
-        __RESET_MESSAGE();
+        fprintf(stderr, ""RED"Error in __update_internal_variables_classical"RESET"\n");
         return EXIT_FAILURE;
       }
 
@@ -417,18 +403,18 @@ int Drucker_Prager_backward_euler(State_Parameters IO_State, Material MatProp)
       }
 
       STATUS = __compute_eps(&eps_k, d_gamma_k, eps_n, alpha_Q);
-      if (STATUS) {
+      if (STATUS == EXIT_FAILURE) {
         fprintf(stderr,""RED"Error in __compute_eps (apex loop)"RESET"\n");
-        return STATUS;
+        return EXIT_FAILURE;
       }
 
       STATUS = __update_internal_variables_apex(
           Increment_E_plastic, IO_State.Stress, IO_State.Equiv_Plast_Str,
           IO_State.Kappa, IO_State.D_phi, T_tr_vol, T_tr_dev, eigvec_b_e_tr, n,
           d_gamma_k, d_gamma_1, alpha_Q, K, G, eps_k, kappa_k);
-      if (STATUS) {
+      if (STATUS == EXIT_FAILURE) {
         fprintf(stderr,""RED"Error in__update_internal_variables_apex"RESET"\n");
-        return STATUS;
+        return EXIT_FAILURE;
       }
 
     }
@@ -466,7 +452,7 @@ int Drucker_Prager_backward_euler(State_Parameters IO_State, Material MatProp)
 #endif
 #endif
 
-  return STATUS;
+  return EXIT_SUCCESS;
 }
 
 /**************************************************************/
@@ -533,10 +519,10 @@ static int __compute_trial_b_e(double *eigval_b_e_tr, double *eigvec_b_e_tr,
   /* Check for convergence */
   if (info > 0) {
     free(work);
-    __ERROR_MESSAGE();
-    printf("Error in Eigen_analysis__TensorLib__() : The algorithm failed to "
-           "compute eigenvalues.\n");
-    __RESET_MESSAGE();
+    fprintf(stderr,""RED"Error in dgeev_(): %s\n %s; \n %i+1:N \n %s "RESET"\n",
+    "the QR algorithm failed to compute all the", 
+    "eigenvalues, and no eigenvectors have been computed elements",
+    info,"of WR and WI contain eigenvalues which have converged.");
     return EXIT_FAILURE;
   }
 
@@ -547,19 +533,17 @@ static int __compute_trial_b_e(double *eigval_b_e_tr, double *eigvec_b_e_tr,
   /* Check for convergence */
   if (info > 0) {
     free(work);
-    __ERROR_MESSAGE();
-    printf("Error in Eigen_analysis__TensorLib__() : The algorithm failed to "
-           "compute eigenvalues.\n");
-    __RESET_MESSAGE();
+    fprintf(stderr,""RED"Error in dgeev_(): %s\n %s; \n %i+1:N \n %s "RESET"\n",
+    "the QR algorithm failed to compute all the", 
+    "eigenvalues, and no eigenvectors have been computed elements",
+    info,"of WR and WI contain eigenvalues which have converged.");
     return EXIT_FAILURE;
   }
   if (info < 0) {
     free(work);
-    __ERROR_MESSAGE();
-    printf("Error in Eigen_analysis__TensorLib__() : the %i-th argument had an "
-           "illegal value.\n",
+    fprintf(stderr,""RED"Error in dgeev_(): the %i-th argument had an "
+           "illegal value."RESET"\n",
            abs(info));
-    __RESET_MESSAGE();
     return EXIT_FAILURE;
   }
 
@@ -694,19 +678,14 @@ static int __update_internal_variables_elastic(double *Increment_E_plastic,
   dgetri_(&N, D_phi_mT, &LDA, IPIV, WORK, &LWORK, &INFO);
   if (INFO != 0) {
     if (INFO < 0) {
-      __ERROR_MESSAGE();
-      printf("%s : \n", "Error in dgetri_()");
-      printf("the %i-th argument of dgetrf_ had an illegal value", abs(INFO));
-      __RESET_MESSAGE();
+      fprintf(stderr,""RED"%s: the %i-th argument %s"RESET"\n",
+      "Error in dgetri_()",abs(INFO),"had an illegal value");
     } else if (INFO > 0) {
-      __ERROR_MESSAGE();
-      printf("%s :\n", "Error in dgetri_()");
-      printf(" D_phi_mT(%i,%i) %s \n %s \n %s \n %s \n", INFO, INFO,
-             "is exactly zero. The factorization",
-             "has been completed, but the factor D_phi_mT is exactly",
-             "singular, and division by zero will occur if it is used",
-             "to solve a system of equations.");
-      __RESET_MESSAGE();
+      fprintf(stderr,""RED"Error in dgetri_(): D_phi_mT(%i,%i) %s \n %s \n %s \n %s "RESET"\n", 
+      INFO, INFO,"is exactly zero. The factorization",
+      "has been completed, but the factor D_phi_mT is exactly",
+      "singular, and division by zero will occur if it is used",
+      "to solve a system of equations.");
     }
     return EXIT_FAILURE;
   }
@@ -917,20 +896,14 @@ static int __update_internal_variables_classical(
   // Check output of dgetrf
   if (INFO != 0) {
     if (INFO < 0) {
-      __ERROR_MESSAGE();
-      printf("%s : \n", "Error in dgetrf_()");
-      printf("the %i-th argument had an illegal value", abs(INFO));
-      __RESET_MESSAGE();
+      fprintf(stderr,""RED"Error in dgetrf_(): the %i-th argument had an illegal value"RESET"",
+       abs(INFO));
     } else if (INFO > 0) {
-
-      __ERROR_MESSAGE();
-      printf("%s :\n", "Error in dgetrf_()");
-      printf(" D_phi_mT(%i,%i) %s \n %s \n %s \n %s \n", INFO, INFO,
-             "is exactly zero. The factorization",
-             "has been completed, but the factor D_phi_mT is exactly",
-             "singular, and division by zero will occur if it is used",
-             "to solve a system of equations.");
-      __RESET_MESSAGE();
+      fprintf(stderr,""RED"Error in dgetrf_(): D_phi_mT(%i,%i) %s \n %s \n %s \n %s"RESET" \n",
+       INFO, INFO,"is exactly zero. The factorization",
+       "has been completed, but the factor D_phi_mT is exactly",
+       "singular, and division by zero will occur if it is used",
+       "to solve a system of equations.");
     }
     return EXIT_FAILURE;
   }
@@ -938,19 +911,14 @@ static int __update_internal_variables_classical(
   dgetri_(&N, D_phi_mT, &LDA, IPIV, WORK, &LWORK, &INFO);
   if (INFO != 0) {
     if (INFO < 0) {
-      __ERROR_MESSAGE();
-      printf("%s : \n", "Error in dgetri_()");
-      printf("the %i-th argument of dgetrf_ had an illegal value", abs(INFO));
-      __RESET_MESSAGE();
+      fprintf(stderr,""RED"Error in dgetri_(): the %i-th argument of dgetrf_ had an illegal value"RESET"\n",
+      abs(INFO));
     } else if (INFO > 0) {
-      __ERROR_MESSAGE();
-      printf("%s :\n", "Error in dgetri_()");
-      printf(" D_phi_mT(%i,%i) %s \n %s \n %s \n %s \n", INFO, INFO,
-             "is exactly zero. The factorization",
-             "has been completed, but the factor D_phi_mT is exactly",
-             "singular, and division by zero will occur if it is used",
-             "to solve a system of equations.");
-      __RESET_MESSAGE();
+      fprintf(stderr,""RED"Error in dgetri_(): D_phi_mT(%i,%i) %s \n %s \n %s \n %s "RESET"\n", 
+      INFO, INFO,"is exactly zero. The factorization",
+      "has been completed, but the factor D_phi_mT is exactly",
+      "singular, and division by zero will occur if it is used",
+      "to solve a system of equations.");
     }
     return EXIT_FAILURE;
   }
@@ -1085,20 +1053,14 @@ static int __update_internal_variables_apex(
   // Check output of dgetrf
   if (INFO != 0) {
     if (INFO < 0) {
-      __ERROR_MESSAGE();
-      printf("%s : \n", "Error in dgetrf_()");
-      printf("the %i-th argument had an illegal value", abs(INFO));
-      __RESET_MESSAGE();
+      fprintf(stderr,""RED"Error in dgetrf_(): the %i-th argument had an illegal value"RESET"",
+       abs(INFO));
     } else if (INFO > 0) {
-
-      __ERROR_MESSAGE();
-      printf("%s :\n", "Error in dgetrf_()");
-      printf(" D_phi_mT(%i,%i) %s \n %s \n %s \n %s \n", INFO, INFO,
-             "is exactly zero. The factorization",
-             "has been completed, but the factor D_phi_mT is exactly",
-             "singular, and division by zero will occur if it is used",
-             "to solve a system of equations.");
-      __RESET_MESSAGE();
+      fprintf(stderr,""RED"Error in dgetrf_(): D_phi_mT(%i,%i) %s \n %s \n %s \n %s"RESET" \n",
+       INFO, INFO,"is exactly zero. The factorization",
+       "has been completed, but the factor D_phi_mT is exactly",
+       "singular, and division by zero will occur if it is used",
+       "to solve a system of equations.");
     }
     return EXIT_FAILURE;
   }
@@ -1106,19 +1068,14 @@ static int __update_internal_variables_apex(
   dgetri_(&N, D_phi_mT, &LDA, IPIV, WORK, &LWORK, &INFO);
   if (INFO != 0) {
     if (INFO < 0) {
-      __ERROR_MESSAGE();
-      printf("%s : \n", "Error in dgetri_()");
-      printf("the %i-th argument of dgetrf_ had an illegal value", abs(INFO));
-      __RESET_MESSAGE();
+      fprintf(stderr,""RED"Error in dgetri_(): the %i-th argument of dgetrf_ had an illegal value"RESET"\n",
+      abs(INFO));
     } else if (INFO > 0) {
-      __ERROR_MESSAGE();
-      printf("%s :\n", "Error in dgetri_()");
-      printf(" D_phi_mT(%i,%i) %s \n %s \n %s \n %s \n", INFO, INFO,
-             "is exactly zero. The factorization",
-             "has been completed, but the factor D_phi_mT is exactly",
-             "singular, and division by zero will occur if it is used",
-             "to solve a system of equations.");
-      __RESET_MESSAGE();
+      fprintf(stderr,""RED"Error in dgetri_(): D_phi_mT(%i,%i) %s \n %s \n %s \n %s "RESET"\n", 
+      INFO, INFO,"is exactly zero. The factorization",
+      "has been completed, but the factor D_phi_mT is exactly",
+      "singular, and division by zero will occur if it is used",
+      "to solve a system of equations.");
     }
     return EXIT_FAILURE;
   }
