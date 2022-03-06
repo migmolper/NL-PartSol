@@ -6,8 +6,24 @@ NLPS-Solver (Type=NPC-FS) {
 }
 
 # Background mesh definition
-GramsBox (Type=GID,File=FEM_Mesh.msh) {
+GramsBox (Type=GID,File=Nodes.msh) {
 
+   
+	 GramsBoundary (File=Walls_x.txt) { 
+	 	BcDirichlet V.x NULL
+	 	BcDirichlet V.y Curve_Constant.txt
+	 }
+	 
+	 GramsBoundary (File=Walls_y.txt)  {
+    		BcDirichlet V.y NULL
+    		BcDirichlet V.x Curve_Constant.txt
+  	 }
+
+	 GramsBoundary (File=Support.txt)  {
+    		BcDirichlet V.y Curve_Constant.txt
+    		BcDirichlet V.x Curve_Constant.txt
+  	 }
+ 
 }
 
 Define-Material(idx=0,Model=Drucker-Prager)

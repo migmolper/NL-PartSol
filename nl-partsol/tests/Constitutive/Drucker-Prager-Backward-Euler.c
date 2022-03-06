@@ -9,6 +9,9 @@
 #include <Accelerate/Accelerate.h>
 #endif
 
+#define RESET "\033[0m"
+#define RED "\033[31m" /* Red */
+
 /*! \struct Material
  * Properties of a general material model
  */
@@ -188,9 +191,8 @@ static int __compute_trial_b_e(
 
 static int __corrector_b_e(
     double *b_e /**< [out] (n+1) Elastic deformation gradient. */,
-    const double *eigval_b_e_tr /**< [in] Eigenvalues of b elastic trial. */,
     const double *eigvec_b_e_tr /**< [in] Eigenvector of b elastic trial. */,
-    const double *Increment_E_plastic /**< [in] Increment plastic strain */);
+    const double *E_hencky_trial /**< [in] Corrected Henky strain */);
 
 static int __trial_elastic(
     double *T_tr_vol /**< [in/out] Volumetric elastic stress tensor. */,
@@ -203,7 +205,6 @@ static int __trial_elastic(
     double p_ref /**< [in] Reference pressure. */);
 
 static int __update_internal_variables_elastic(
-    double *Increment_E_plastic /**< [in/out] Increment plastic strain */,
     double *Stress /**< [in/out] Nominal stress tensor */,
     const double *D_phi /**< [in] Total deformation gradient. */,
     const double *T_tr_vol /**< [in] Volumetric elastic stress tensor */,
@@ -323,10 +324,6 @@ static bool __degradated(
     const double *Stress /**< [in/out] Nominal stress tensor */,
     double J2_degradated /**< [in] Critical value of the J2 invariant */);
 
-void ERROR() { fprintf(stderr, "\033[1;31m"); }
-void SUCCES() { fprintf(stdout, "\033[1;33m"); }
-void RESET_ERROR() { fprintf(stderr, "\033[0m"); }
-
 int Drucker_Prager_backward_euler(State_Parameters IO_State, Material MatProp);
 
 /**************************************************************/
@@ -380,17 +377,17 @@ static int imin_arg1, imin_arg2;
 /******************* Material Parameters **********************/
 /**************************************************************/
 #define NumberDimensions 2
-#define YoungMouduls 100E3
-#define PoissonRatio 0.3
-#define param_kappa_0 10.0
+#define YoungMouduls 100.0E3
+#define PoissonRatio 0.2
+#define kappa0 20.0
 #define phi 30.0
-#define psi 30.0
-#define hardening_modulus -10000.0
-#define hardening_exp -4.0
-#define NumberSteps 50 // 50 // 3500 // 2500 //
-#define Delta_strain_II -0.000001
+#define psi -20.0
+#define H -1000.0
+#define m -1.0
+#define NumberSteps 800 // 50 // 3500 // 2500 //
 #define dF_yy 0.99999
-#define J2_degradated_value 5
+#define J2_degradated_value 5.0
+#define Confining_pressure -20
 
 int main() {
   int STATUS = EXIT_SUCCESS;
@@ -400,15 +397,14 @@ int main() {
   // Define material variables
   MatProp.E = YoungMouduls;
   MatProp.nu = PoissonRatio;
-  MatProp.yield_stress_0 = param_kappa_0;
+  MatProp.yield_stress_0 = kappa0;
   MatProp.phi_Frictional = phi;
   MatProp.psi_Frictional = psi;
-  MatProp.Hardening_modulus = hardening_modulus;
-  MatProp.Exponent_Hardening_Ortiz = hardening_exp;
+  MatProp.Hardening_modulus = H;
+  MatProp.Exponent_Hardening_Ortiz = m;
   MatProp.Reference_Plastic_Strain_Ortiz =
-      (param_kappa_0 / (hardening_exp * hardening_modulus)) *
-      pow(1, (1.0 / hardening_exp - 1.0));
-  MatProp.ReferencePressure = 0.0;
+      (kappa0 / (m * H)) * pow(1.0, (1.0 / m - 1.0));
+  MatProp.ReferencePressure = Confining_pressure;
   MatProp.J2_degradated = J2_degradated_value;
 
   // Initialize state variables
@@ -421,12 +417,11 @@ int main() {
   double *Equiv_Plast_Str = (double *)calloc(NumberSteps, sizeof(double));
 
   // Set initial values
-  double stress_tr[3] = {0.0, 0.0, 0.0};
-  for (int i = 0; i < 3; i++) {
-    stress[i] = MatProp.ReferencePressure;
-  }
+  stress[0] = MatProp.ReferencePressure;
+  stress[3] = MatProp.ReferencePressure;
+  stress[4] = MatProp.ReferencePressure;
 
-  kappa1[0] = param_kappa_0;
+  kappa1[0] = kappa0;
 
   D_phi[0] = 1.0;
   D_phi[3] = 1.0;
@@ -451,13 +446,6 @@ int main() {
     IO_State.D_phi = &D_phi[i * 5];
     IO_State.Failure = &Status_particle;
 
-    // Initialize
-    IO_State.Stress[0] = stress[(i - 1) * 5 + 0];
-    IO_State.Stress[1] = stress[(i - 1) * 5 + 1];
-    IO_State.Stress[2] = stress[(i - 1) * 5 + 2];
-    IO_State.Stress[3] = stress[(i - 1) * 5 + 3];
-    IO_State.Stress[4] = stress[(i - 1) * 5 + 4];
-
     IO_State.b_e[0] = b_e[(i - 1) * 5 + 0];
     IO_State.b_e[1] = b_e[(i - 1) * 5 + 1];
     IO_State.b_e[2] = b_e[(i - 1) * 5 + 2];
@@ -475,9 +463,7 @@ int main() {
     STATUS = Drucker_Prager_backward_euler(IO_State, MatProp);
 
     if (STATUS) {
-      ERROR();
       fprintf(stderr, "Failure\n");
-      RESET_ERROR();
       free(stress);
       free(D_phi);
       free(b_e);
@@ -488,37 +474,64 @@ int main() {
   }
 
   // Save data in a csv file
-
-  FILE *DP_output = fopen("DP_output.csv", "w");
+  FILE *E2_vs_VM = fopen("E2_vs_VM.csv", "w");
   for (int i = 0; i < NumberSteps; i++) {
-    fprintf(DP_output, "%e, %e\n",
+    fprintf(E2_vs_VM, "%e, %e\n",
             -0.5 * (D_phi[i * 5 + 3] * D_phi[i * 5 + 3] - 1.0),
             sqrt(0.5 * (pow((stress[i * 5 + 0] - stress[i * 5 + 3]), 2.0) +
                         pow((stress[i * 5 + 3] - stress[i * 5 + 4]), 2.0) +
                         pow((stress[i * 5 + 4] - stress[i * 5 + 0]), 2.0))));
   }
-  fclose(DP_output);
+  fclose(E2_vs_VM);
 
-  /*
-    FILE *DP_output = fopen("DP_output.csv", "w");
-    for (int i = 0; i < NumberSteps; i++) {
-      fprintf(DP_output, "%e, %e\n",
-              -0.5 * (D_phi[i * 5 + 3] * D_phi[i * 5 + 3] - 1.0),
-              0.5 * ((stress[i * 5 + 0] - stress[i * 5 + 3])));
-    }
-    fclose(DP_output);
-  */
+  FILE *p_vs_q = fopen("p_vs_q.csv.csv", "w");
+  for (int i = 0; i < NumberSteps; i++) {
+    fprintf(p_vs_q, "%e, %e\n", -0.5 * (stress[i * 5 + 0] + stress[i * 5 + 3]),
+            0.5 * ((stress[i * 5 + 0] - stress[i * 5 + 3])));
+  }
+  fclose(p_vs_q);
+
+  FILE *kappa_vs_eps = fopen("kappa_vs_eps.csv", "w");
+  for (int i = 0; i < NumberSteps; i++) {
+    fprintf(kappa_vs_eps, "%e, %e\n", Equiv_Plast_Str[i], kappa1[i]);
+  }
+  fclose(kappa_vs_eps);
 
   // Print data with gnuplot
-  FILE *gnuplot = popen("gnuplot -persistent", "w");
+  FILE *gnuplot;
+
+  gnuplot = popen("gnuplot -persistent", "w");
+  fprintf(gnuplot, "set termoption enhanced \n");
+  fprintf(gnuplot, "set datafile separator ',' \n");
+  fprintf(gnuplot, "set xlabel '- p' font 'Times,20' enhanced \n");
+  fprintf(gnuplot, "set ylabel 'q' font "
+                   "'Times,20' enhanced \n");
+  fprintf(gnuplot, "plot %s \n",
+          "'p_vs_q.csv.csv' title 'Us' with line lt rgb 'red' lw 2");
+  fflush(gnuplot);
+
+  // Print data with gnuplot
+  gnuplot = popen("gnuplot -persistent", "w");
   fprintf(gnuplot, "set termoption enhanced \n");
   fprintf(gnuplot, "set datafile separator ',' \n");
   fprintf(gnuplot,
           "set xlabel '- {/Symbol e}_{II}' font 'Times,20' enhanced \n");
   fprintf(gnuplot, "set ylabel '{/Symbol s}_{VM}' font "
                    "'Times,20' enhanced \n");
+  //  fprintf(gnuplot, "plot %s \n",
+  //          "'E2_vs_VM.csv' title 'Us' with line lt rgb 'red' lw 2");
+  fprintf(gnuplot, "plot %s \n", "'E2_vs_VM.csv' title 'Us'  with points pt 7");
+  fflush(gnuplot);
+
+  // Print data with gnuplot
+  gnuplot = popen("gnuplot -persistent", "w");
+  fprintf(gnuplot, "set termoption enhanced \n");
+  fprintf(gnuplot, "set datafile separator ',' \n");
+  fprintf(gnuplot, "set xlabel 'eps' font 'Times,20' enhanced \n");
+  fprintf(gnuplot, "set ylabel 'kappa' font "
+                   "'Times,20' enhanced \n");
   fprintf(gnuplot, "plot %s \n",
-          "'DP_output.csv' title 'Us' with line lt rgb 'red' lw 2");
+          "'kappa_vs_eps.csv' title 'Us' with line lt rgb 'red' lw 2");
   fflush(gnuplot);
 
   // Free memory
@@ -531,19 +544,13 @@ int main() {
   return STATUS;
 }
 
-/**************************************************************/
-
+/**************************************************************/ 
 int Drucker_Prager_backward_euler(State_Parameters IO_State, Material MatProp)
 /*
   Backward Euler algorithm for the Drucker-Prager (Lorenzo Sanavia)
 */
 {
   int STATUS = EXIT_SUCCESS;
-
-  // If the particle is failed do not enter
-  if (*IO_State.Failure) {
-    return STATUS;
-  }
 
   // Read input/output parameters
   double eigval_b_e_tr[3] = {0.0, 0.0, 0.0};
@@ -565,11 +572,9 @@ int Drucker_Prager_backward_euler(State_Parameters IO_State, Material MatProp)
 
   STATUS = __compute_trial_b_e(eigval_b_e_tr, eigvec_b_e_tr, IO_State.b_e,
                                IO_State.d_phi);
-  if (STATUS) {
-    ERROR();
-    fprintf(stderr, "__compute_trial_b_e\n");
-    RESET_ERROR();
-    return STATUS;
+  if (STATUS == EXIT_FAILURE) {
+    fprintf(stderr, "" RED "Error in __compute_trial_b_e" RESET "\n");
+    return EXIT_FAILURE;
   }
 
   E_hencky_trial[0] = 0.5 * log(eigval_b_e_tr[0]);
@@ -652,19 +657,20 @@ int Drucker_Prager_backward_euler(State_Parameters IO_State, Material MatProp)
 
   STATUS = __trial_elastic(T_tr_vol, T_tr_dev, &pressure, &J2, E_hencky_trial,
                            K, G, p_ref);
-  if (STATUS) {
-    ERROR();
-    fprintf(stderr, "__trial_elastic\n");
-    RESET_ERROR();
-    return STATUS;
+  if (STATUS == EXIT_FAILURE) {
+    fprintf(stderr, "" RED "Error in __trial_elastic" RESET "\n");
+    return EXIT_FAILURE;
   }
 
-  PHI_0 = __yield_function_classical(pressure, J2, d_gamma_k, kappa_k, alpha_F,
-                                     alpha_Q, beta, K, G);
+  PHI = PHI_0 = __yield_function_classical(pressure, J2, d_gamma_k, kappa_k,
+                                           alpha_F, alpha_Q, beta, K, G);
 
 #ifdef DEBUG_MODE
 #if DEBUG_MODE + 0
   printf("Initial value of the yield function: %f \n", PHI_0);
+  printf("T trial: [%f, %f, %f] \n", -T_tr_vol[0] + T_tr_dev[0],
+         -T_tr_vol[1] + T_tr_dev[1], -T_tr_vol[2] + T_tr_dev[2]);
+
 #endif
 #endif
 
@@ -672,44 +678,35 @@ int Drucker_Prager_backward_euler(State_Parameters IO_State, Material MatProp)
   if (PHI_0 <= 0.0) {
 
     STATUS = __update_internal_variables_elastic(
-        Increment_E_plastic, IO_State.Stress, IO_State.D_phi, T_tr_vol,
-        T_tr_dev, eigvec_b_e_tr);
-    if (STATUS) {
-      ERROR();
-      fprintf(stderr, "__update_internal_variables_elastic\n");
-      RESET_ERROR();
-      return STATUS;
+        IO_State.Stress, IO_State.D_phi, T_tr_vol, T_tr_dev, eigvec_b_e_tr);
+    if (STATUS == EXIT_FAILURE) {
+      fprintf(stderr,
+              "" RED "Error in __update_internal_variables_elastic()" RESET
+              "\n");
+      return EXIT_FAILURE;
     }
-
   }
   // Plastic (check yield condition)
   else {
 
-    PHI = PHI_0;
-
     STATUS = __compute_plastic_flow_direction(n, T_tr_dev, J2);
-    if (STATUS) {
-      ERROR();
-      fprintf(stderr, "__compute_plastic_flow_direction\n");
-      RESET_ERROR();
-      return STATUS;
+    if (STATUS == EXIT_FAILURE) {
+      fprintf(stderr,
+              "" RED " Error in __compute_plastic_flow_direction" RESET "\n");
+      return EXIT_FAILURE;
     }
 
     STATUS = __compute_d_kappa(&d_kappa_k, kappa_0, eps_n, eps_0, exp_param);
-    if (STATUS) {
-      ERROR();
-      fprintf(stderr, "__compute_d_kappa\n");
-      RESET_ERROR();
-      return STATUS;
+    if (STATUS == EXIT_FAILURE) {
+      fprintf(stderr, "" RED "Error in __compute_d_kappa" RESET "\n");
+      return EXIT_FAILURE;
     }
 
     STATUS = __compute_pressure_limit(&pressure_limit, J2, kappa_k, d_kappa_k,
                                       K, G, alpha_F, alpha_Q, beta);
-    if (STATUS) {
-      ERROR();
-      fprintf(stderr, "__compute_pressure_limit\n");
-      RESET_ERROR();
-      return STATUS;
+    if (STATUS == EXIT_FAILURE) {
+      fprintf(stderr, "" RED "Error in __compute_pressure_limit" RESET "\n");
+      return EXIT_FAILURE;
     }
 
     // Classic radial returning algorithm
@@ -728,34 +725,23 @@ int Drucker_Prager_backward_euler(State_Parameters IO_State, Material MatProp)
         d_gamma_k += -PHI / d_PHI;
 
         STATUS = __compute_eps(&eps_k, d_gamma_k, eps_n, alpha_Q);
-        if (STATUS) {
-          ERROR();
-          fprintf(stderr, "__compute_eps\n");
-          RESET_ERROR();
-          return STATUS;
+        if (STATUS == EXIT_FAILURE) {
+          fprintf(stderr,
+                  "" RED "Error in __compute_eps (apex loop)" RESET "\n");
+          return EXIT_FAILURE;
         }
 
         STATUS = __compute_kappa(&kappa_k, kappa_0, exp_param, eps_k, eps_0);
-        if (STATUS) {
-          ERROR();
-          fprintf(stderr, "__compute_kappa\n");
-          RESET_ERROR();
-          return STATUS;
+        if (STATUS == EXIT_FAILURE) {
+          fprintf(stderr, "" RED "Error in __compute_kappa" RESET "\n");
+          return EXIT_FAILURE;
         }
 
-        if (kappa_k > 0) {
-          STATUS =
-              __compute_d_kappa(&d_kappa_k, kappa_0, eps_k, eps_0, exp_param);
-          if (STATUS) {
-            ERROR();
-            fprintf(stderr, "__compute_d_kappa\n");
-            RESET_ERROR();
-            return STATUS;
-          }
-
-        } else {
-          kappa_k = 0.0;
-          d_kappa_k = 0.0;
+        STATUS =
+            __compute_d_kappa(&d_kappa_k, kappa_0, eps_k, eps_0, exp_param);
+        if (STATUS == EXIT_FAILURE) {
+          fprintf(stderr, "" RED "Error in __compute_d_kappa" RESET "\n");
+          return EXIT_FAILURE;
         }
 
         PHI = __yield_function_classical(pressure, J2, d_gamma_k, kappa_k,
@@ -766,11 +752,11 @@ int Drucker_Prager_backward_euler(State_Parameters IO_State, Material MatProp)
           Increment_E_plastic, IO_State.Stress, IO_State.Equiv_Plast_Str,
           IO_State.Kappa, IO_State.D_phi, T_tr_vol, T_tr_dev, eigvec_b_e_tr, n,
           d_gamma_k, alpha_Q, K, G, eps_k, kappa_k);
-      if (STATUS) {
-        ERROR();
-        fprintf(stderr, "__update_internal_variables_classical\n");
-        RESET_ERROR();
-        return STATUS;
+      if (STATUS == EXIT_FAILURE) {
+        fprintf(stderr,
+                "" RED "Error in __update_internal_variables_classical" RESET
+                "\n");
+        return EXIT_FAILURE;
       }
 
     }
@@ -800,52 +786,42 @@ int Drucker_Prager_backward_euler(State_Parameters IO_State, Material MatProp)
       }
 
       STATUS = __compute_eps(&eps_k, d_gamma_k, eps_n, alpha_Q);
-      if (STATUS) {
-        ERROR();
-        fprintf(stderr, "__compute_eps\n");
-        RESET_ERROR();
-        return STATUS;
+      if (STATUS == EXIT_FAILURE) {
+        fprintf(stderr, "" RED "Error in __compute_eps (apex loop)" RESET "\n");
+        return EXIT_FAILURE;
       }
 
       STATUS = __update_internal_variables_apex(
           Increment_E_plastic, IO_State.Stress, IO_State.Equiv_Plast_Str,
           IO_State.Kappa, IO_State.D_phi, T_tr_vol, T_tr_dev, eigvec_b_e_tr, n,
           d_gamma_k, d_gamma_1, alpha_Q, K, G, eps_k, kappa_k);
-      if (STATUS) {
-        ERROR();
-        fprintf(stderr, "__update_internal_variables_apex\n");
-        RESET_ERROR();
-        return STATUS;
+      if (STATUS == EXIT_FAILURE) {
+        fprintf(stderr,
+                "" RED "Error in__update_internal_variables_apex" RESET "\n");
+        return EXIT_FAILURE;
       }
-    }
-
-    if (__degradated(IO_State.Stress, MatProp.J2_degradated)) {
-      ERROR();
-      fprintf(stderr, "Failed material\n");
-      RESET_ERROR();
-      *IO_State.Failure = true;
     }
   }
 
-  STATUS = __corrector_b_e(IO_State.b_e, eigval_b_e_tr, eigvec_b_e_tr,
-                           Increment_E_plastic);
-  if (STATUS) {
-    ERROR();
-    fprintf(stderr, "__corrector_b_e\n");
-    RESET_ERROR();
-    return STATUS;
+  E_hencky_trial[0] -= Increment_E_plastic[0];
+  E_hencky_trial[1] -= Increment_E_plastic[1];
+  E_hencky_trial[2] -= Increment_E_plastic[2];
+
+  // Update elastic left Cauchy-Green tensor
+  STATUS = __corrector_b_e(IO_State.b_e, eigvec_b_e_tr, E_hencky_trial);
+  if (STATUS == EXIT_FAILURE) {
+    fprintf(stderr, "" RED "Error in __corrector_b_e" RESET "\n");
+    return EXIT_FAILURE;
+  }
+
+  printf("Numer of iterations: %i, error: %e \n", Iter, PHI);
+  if (Iter == MaxIter) {
+    printf("Number of iterations: %i \n", Iter);
+    printf("Final value of the yield function: %e \n", PHI);
   }
 
 #ifdef DEBUG_MODE
 #if DEBUG_MODE + 0
-
-  printf("Numer of iterations: %i, error: %e \n", Iter, PHI);
-  if (Iter == MaxIter) {
-    ERROR();
-    printf("Number of iterations: %i \n", Iter);
-    printf("Final value of the yield function: %e \n", PHI);
-    RESET_ERROR();
-  }
 
   printf("Increment of the plastic tensor: [%e, %e, %e] \n",
          Increment_E_plastic[0], Increment_E_plastic[1],
@@ -857,7 +833,7 @@ int Drucker_Prager_backward_euler(State_Parameters IO_State, Material MatProp)
 #endif
 #endif
 
-  return STATUS;
+  return EXIT_SUCCESS;
 }
 
 /**************************************************************/
@@ -924,10 +900,11 @@ static int __compute_trial_b_e(double *eigval_b_e_tr, double *eigvec_b_e_tr,
   /* Check for convergence */
   if (info > 0) {
     free(work);
-    ERROR();
-    printf("Error in Eigen_analysis__TensorLib__() : The algorithm failed to "
-           "compute eigenvalues.\n");
-    RESET_ERROR();
+    fprintf(stderr,
+            "" RED "Error in dgeev_(): %s\n %s; \n %i+1:N \n %s " RESET "\n",
+            "the QR algorithm failed to compute all the",
+            "eigenvalues, and no eigenvectors have been computed elements",
+            info, "of WR and WI contain eigenvalues which have converged.");
     return EXIT_FAILURE;
   }
 
@@ -938,19 +915,19 @@ static int __compute_trial_b_e(double *eigval_b_e_tr, double *eigvec_b_e_tr,
   /* Check for convergence */
   if (info > 0) {
     free(work);
-    ERROR();
-    printf("Error in Eigen_analysis__TensorLib__() : The algorithm failed to "
-           "compute eigenvalues.\n");
-    RESET_ERROR();
+    fprintf(stderr,
+            "" RED "Error in dgeev_(): %s\n %s; \n %i+1:N \n %s " RESET "\n",
+            "the QR algorithm failed to compute all the",
+            "eigenvalues, and no eigenvectors have been computed elements",
+            info, "of WR and WI contain eigenvalues which have converged.");
     return EXIT_FAILURE;
   }
   if (info < 0) {
     free(work);
-    ERROR();
-    printf("Error in Eigen_analysis__TensorLib__() : the %i-th argument had an "
-           "illegal value.\n",
-           abs(info));
-    RESET_ERROR();
+    fprintf(stderr,
+            "" RED "Error in dgeev_(): the %i-th argument had an "
+            "illegal value." RESET "\n",
+            abs(info));
     return EXIT_FAILURE;
   }
 
@@ -961,15 +938,14 @@ static int __compute_trial_b_e(double *eigval_b_e_tr, double *eigvec_b_e_tr,
 
 /***************************************************************************/
 
-static int __corrector_b_e(double *b_e, const double *eigval_b_e_tr,
-                           const double *eigvec_b_e_tr,
-                           const double *Increment_E_plastic) {
+static int __corrector_b_e(double *b_e, const double *eigvec_b_e_tr,
+                           const double *E_hencky_trial) {
 
   double eigval_b_e[3] = {0.0, 0.0, 0.0};
 
-  eigval_b_e[0] = eigval_b_e_tr[0] * exp(-2 * Increment_E_plastic[0]);
-  eigval_b_e[1] = eigval_b_e_tr[1] * exp(-2 * Increment_E_plastic[1]);
-  eigval_b_e[2] = eigval_b_e_tr[2] * exp(-2 * Increment_E_plastic[2]);
+  eigval_b_e[0] = exp(2 * E_hencky_trial[0]);
+  eigval_b_e[1] = exp(2 * E_hencky_trial[1]);
+  eigval_b_e[2] = exp(2 * E_hencky_trial[2]);
 
 #if NumberDimensions == 2
 
@@ -981,15 +957,15 @@ static int __corrector_b_e(double *b_e, const double *eigval_b_e_tr,
 
   for (unsigned i = 0; i < 3; i++) {
     b_e[0] +=
-        eigval_b_e_tr[i] * eigvec_b_e_tr[i * 3 + 0] * eigvec_b_e_tr[i * 3 + 0];
+        eigval_b_e[i] * eigvec_b_e_tr[i * 3 + 0] * eigvec_b_e_tr[i * 3 + 0];
     b_e[1] +=
-        eigval_b_e_tr[i] * eigvec_b_e_tr[i * 3 + 0] * eigvec_b_e_tr[i * 3 + 1];
+        eigval_b_e[i] * eigvec_b_e_tr[i * 3 + 0] * eigvec_b_e_tr[i * 3 + 1];
     b_e[2] +=
-        eigval_b_e_tr[i] * eigvec_b_e_tr[i * 3 + 1] * eigvec_b_e_tr[i * 3 + 0];
+        eigval_b_e[i] * eigvec_b_e_tr[i * 3 + 1] * eigvec_b_e_tr[i * 3 + 0];
     b_e[3] +=
-        eigval_b_e_tr[i] * eigvec_b_e_tr[i * 3 + 1] * eigvec_b_e_tr[i * 3 + 1];
+        eigval_b_e[i] * eigvec_b_e_tr[i * 3 + 1] * eigvec_b_e_tr[i * 3 + 1];
     b_e[4] +=
-        eigval_b_e_tr[i] * eigvec_b_e_tr[i * 3 + 2] * eigvec_b_e_tr[i * 3 + 2];
+        eigval_b_e[i] * eigvec_b_e_tr[i * 3 + 2] * eigvec_b_e_tr[i * 3 + 2];
   }
 
 #else
@@ -1013,13 +989,15 @@ static int __trial_elastic(double *T_tr_vol, double *T_tr_dev, double *pressure,
   E_hencky_trial_vol[1] = (1.0 / 3.0) * tr_E_hencky_trial;
   E_hencky_trial_vol[2] = (1.0 / 3.0) * tr_E_hencky_trial;
 
-  T_tr_vol[0] = -K * E_hencky_trial_vol[0] - p_ref;
-  T_tr_vol[1] = -K * E_hencky_trial_vol[1] - p_ref;
-  T_tr_vol[2] = -K * E_hencky_trial_vol[2] - p_ref;
+  T_tr_vol[0] = -p_ref; //-K * E_hencky_trial_vol[0];
+  T_tr_vol[1] = -p_ref; //-K * E_hencky_trial_vol[1];
+  T_tr_vol[2] = -p_ref; //-K * E_hencky_trial_vol[2];
 
-  T_tr_dev[0] = 2 * G * (E_hencky_trial[0] - E_hencky_trial_vol[0]);
-  T_tr_dev[1] = 2 * G * (E_hencky_trial[1] - E_hencky_trial_vol[1]);
-  T_tr_dev[2] = 2 * G * (E_hencky_trial[2] - E_hencky_trial_vol[2]);
+  T_tr_dev[0] = 0.0; // 2 * G * (E_hencky_trial[0] - E_hencky_trial_vol[0]);
+  T_tr_dev[1] =
+      YoungMouduls * (E_hencky_trial[1]); // 2 * G * (E_hencky_trial[1] -
+                                          // E_hencky_trial_vol[1]);
+  T_tr_dev[2] = 0.0; // 2 * G * (E_hencky_trial[2] - E_hencky_trial_vol[2]);
 
   *pressure = (T_tr_vol[0] + T_tr_vol[1] + T_tr_vol[2]) / 3.0;
   *J2 = sqrt(T_tr_dev[0] * T_tr_dev[0] + T_tr_dev[1] * T_tr_dev[1] +
@@ -1030,17 +1008,11 @@ static int __trial_elastic(double *T_tr_vol, double *T_tr_dev, double *pressure,
 
 /***************************************************************************/
 
-static int __update_internal_variables_elastic(double *Increment_E_plastic,
-                                               double *Stress,
+static int __update_internal_variables_elastic(double *Stress,
                                                const double *D_phi,
                                                const double *T_tr_vol,
                                                const double *T_tr_dev,
                                                const double *eigvec_b_e_tr) {
-
-  // Update the increment of the plastic strain tensor
-  Increment_E_plastic[0] = 0.0;
-  Increment_E_plastic[1] = 0.0;
-  Increment_E_plastic[2] = 0.0;
 
   // Compute the transpose of D_phi
   double D_phi_mT[9] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
@@ -1070,20 +1042,20 @@ static int __update_internal_variables_elastic(double *Increment_E_plastic,
   // Check output of dgetrf
   if (INFO != 0) {
     if (INFO < 0) {
-      ERROR();
-      printf("%s : \n", "Error in __update_internal_variables_elastic()");
-      printf("the %i-th argument had an illegal value", abs(INFO));
-      RESET_ERROR();
+      printf(
+          "" RED
+          "Error in dgetrf_(): the %i-th argument had an illegal value " RESET
+          "\n",
+          abs(INFO));
     } else if (INFO > 0) {
 
-      ERROR();
-      printf("%s :\n", "Error in __update_internal_variables_elastic()");
-      printf(" M(%i,%i) %s \n %s \n %s \n %s \n", INFO, INFO,
-             "is exactly zero. The factorization",
-             "has been completed, but the factor M is exactly",
+      printf("" RED
+             "Error in dgetrf_(): D_phi_mT(%i,%i) %s \n %s \n %s \n %s " RESET
+             "\n",
+             INFO, INFO, "is exactly zero. The factorization",
+             "has been completed, but the factor D_phi_mT is exactly",
              "singular, and division by zero will occur if it is used",
              "to solve a system of equations.");
-      RESET_ERROR();
     }
     return EXIT_FAILURE;
   }
@@ -1091,19 +1063,17 @@ static int __update_internal_variables_elastic(double *Increment_E_plastic,
   dgetri_(&N, D_phi_mT, &LDA, IPIV, WORK, &LWORK, &INFO);
   if (INFO != 0) {
     if (INFO < 0) {
-      ERROR();
-      printf("%s : \n", "Error in __update_internal_variables_elastic()");
-      printf("the %i-th argument of dgetrf_ had an illegal value", abs(INFO));
-      RESET_ERROR();
+      fprintf(stderr, "" RED "%s: the %i-th argument %s" RESET "\n",
+              "Error in dgetri_()", abs(INFO), "had an illegal value");
     } else if (INFO > 0) {
-      ERROR();
-      printf("%s :\n", "Error in __update_internal_variables_elastic()");
-      printf(" A(%i,%i) %s \n %s \n %s \n %s \n", INFO, INFO,
-             "is exactly zero. The factorization",
-             "has been completed, but the factor A is exactly",
-             "singular, and division by zero will occur if it is used",
-             "to solve a system of equations.");
-      RESET_ERROR();
+      fprintf(stderr,
+              "" RED
+              "Error in dgetri_(): D_phi_mT(%i,%i) %s \n %s \n %s \n %s " RESET
+              "\n",
+              INFO, INFO, "is exactly zero. The factorization",
+              "has been completed, but the factor D_phi_mT is exactly",
+              "singular, and division by zero will occur if it is used",
+              "to solve a system of equations.");
     }
     return EXIT_FAILURE;
   }
@@ -1139,7 +1109,6 @@ static int __update_internal_variables_elastic(double *Increment_E_plastic,
   Stress[2] = T[3] * D_phi_mT[0] + T[4] * D_phi_mT[3];
   Stress[3] = T[3] * D_phi_mT[1] + T[4] * D_phi_mT[4];
   Stress[4] = T[8] * D_phi_mT[8];
-
 #else
   No esta implementado
 #endif
@@ -1175,10 +1144,13 @@ static int __compute_plastic_flow_direction(double *n, const double *T_tr_dev,
 static int __compute_eps(double *eps_k, double d_gamma_k, double eps_n,
                          double alpha_Q) {
 
-  *eps_k = eps_n + d_gamma_k * sqrt(3 * alpha_Q * alpha_Q + 1);
+  *eps_k = eps_n + d_gamma_k * sqrt(3.0 * alpha_Q * alpha_Q + 1.0);
 
-  if (*eps_k < 0.0)
+  if (*eps_k < 0.0) {
+    fprintf(stderr, "" RED "Negative value of the EPS_k: %f " RESET "\n",
+            *eps_k);
     return EXIT_FAILURE;
+  }
 
   return EXIT_SUCCESS;
 }
@@ -1310,20 +1282,21 @@ static int __update_internal_variables_classical(
   // Check output of dgetrf
   if (INFO != 0) {
     if (INFO < 0) {
-      ERROR();
-      printf("%s : \n", "Error in __update_internal_variables_elastic()");
-      printf("the %i-th argument had an illegal value", abs(INFO));
-      RESET_ERROR();
+      fprintf(
+          stderr,
+          "" RED
+          "Error in dgetrf_(): the %i-th argument had an illegal value" RESET
+          "",
+          abs(INFO));
     } else if (INFO > 0) {
-
-      ERROR();
-      printf("%s :\n", "Error in __update_internal_variables_elastic()");
-      printf(" M(%i,%i) %s \n %s \n %s \n %s \n", INFO, INFO,
-             "is exactly zero. The factorization",
-             "has been completed, but the factor M is exactly",
-             "singular, and division by zero will occur if it is used",
-             "to solve a system of equations.");
-      RESET_ERROR();
+      fprintf(stderr,
+              "" RED
+              "Error in dgetrf_(): D_phi_mT(%i,%i) %s \n %s \n %s \n %s" RESET
+              " \n",
+              INFO, INFO, "is exactly zero. The factorization",
+              "has been completed, but the factor D_phi_mT is exactly",
+              "singular, and division by zero will occur if it is used",
+              "to solve a system of equations.");
     }
     return EXIT_FAILURE;
   }
@@ -1331,19 +1304,19 @@ static int __update_internal_variables_classical(
   dgetri_(&N, D_phi_mT, &LDA, IPIV, WORK, &LWORK, &INFO);
   if (INFO != 0) {
     if (INFO < 0) {
-      ERROR();
-      printf("%s : \n", "Error in __update_internal_variables_elastic()");
-      printf("the %i-th argument of dgetrf_ had an illegal value", abs(INFO));
-      RESET_ERROR();
+      fprintf(stderr,
+              "" RED "Error in dgetri_(): the %i-th argument of dgetrf_ had an "
+              "illegal value" RESET "\n",
+              abs(INFO));
     } else if (INFO > 0) {
-      ERROR();
-      printf("%s :\n", "Error in __update_internal_variables_elastic()");
-      printf(" A(%i,%i) %s \n %s \n %s \n %s \n", INFO, INFO,
-             "is exactly zero. The factorization",
-             "has been completed, but the factor A is exactly",
-             "singular, and division by zero will occur if it is used",
-             "to solve a system of equations.");
-      RESET_ERROR();
+      fprintf(stderr,
+              "" RED
+              "Error in dgetri_(): D_phi_mT(%i,%i) %s \n %s \n %s \n %s " RESET
+              "\n",
+              INFO, INFO, "is exactly zero. The factorization",
+              "has been completed, but the factor D_phi_mT is exactly",
+              "singular, and division by zero will occur if it is used",
+              "to solve a system of equations.");
     }
     return EXIT_FAILURE;
   }
@@ -1478,20 +1451,21 @@ static int __update_internal_variables_apex(
   // Check output of dgetrf
   if (INFO != 0) {
     if (INFO < 0) {
-      ERROR();
-      printf("%s : \n", "Error in __update_internal_variables_elastic()");
-      printf("the %i-th argument had an illegal value", abs(INFO));
-      RESET_ERROR();
+      fprintf(
+          stderr,
+          "" RED
+          "Error in dgetrf_(): the %i-th argument had an illegal value" RESET
+          "",
+          abs(INFO));
     } else if (INFO > 0) {
-
-      ERROR();
-      printf("%s :\n", "Error in __update_internal_variables_elastic()");
-      printf(" M(%i,%i) %s \n %s \n %s \n %s \n", INFO, INFO,
-             "is exactly zero. The factorization",
-             "has been completed, but the factor M is exactly",
-             "singular, and division by zero will occur if it is used",
-             "to solve a system of equations.");
-      RESET_ERROR();
+      fprintf(stderr,
+              "" RED
+              "Error in dgetrf_(): D_phi_mT(%i,%i) %s \n %s \n %s \n %s" RESET
+              " \n",
+              INFO, INFO, "is exactly zero. The factorization",
+              "has been completed, but the factor D_phi_mT is exactly",
+              "singular, and division by zero will occur if it is used",
+              "to solve a system of equations.");
     }
     return EXIT_FAILURE;
   }
@@ -1499,19 +1473,19 @@ static int __update_internal_variables_apex(
   dgetri_(&N, D_phi_mT, &LDA, IPIV, WORK, &LWORK, &INFO);
   if (INFO != 0) {
     if (INFO < 0) {
-      ERROR();
-      printf("%s : \n", "Error in __update_internal_variables_elastic()");
-      printf("the %i-th argument of dgetrf_ had an illegal value", abs(INFO));
-      RESET_ERROR();
+      fprintf(stderr,
+              "" RED "Error in dgetri_(): the %i-th argument of dgetrf_ had an "
+              "illegal value" RESET "\n",
+              abs(INFO));
     } else if (INFO > 0) {
-      ERROR();
-      printf("%s :\n", "Error in __update_internal_variables_elastic()");
-      printf(" A(%i,%i) %s \n %s \n %s \n %s \n", INFO, INFO,
-             "is exactly zero. The factorization",
-             "has been completed, but the factor A is exactly",
-             "singular, and division by zero will occur if it is used",
-             "to solve a system of equations.");
-      RESET_ERROR();
+      fprintf(stderr,
+              "" RED
+              "Error in dgetri_(): D_phi_mT(%i,%i) %s \n %s \n %s \n %s " RESET
+              "\n",
+              INFO, INFO, "is exactly zero. The factorization",
+              "has been completed, but the factor D_phi_mT is exactly",
+              "singular, and division by zero will occur if it is used",
+              "to solve a system of equations.");
     }
     return EXIT_FAILURE;
   }
