@@ -377,14 +377,14 @@ static int imin_arg1, imin_arg2;
 /******************* Material Parameters **********************/
 /**************************************************************/
 #define NumberDimensions 2
-#define YoungMouduls 100.0E3
+#define YoungMouduls 10.0E3
 #define PoissonRatio 0.2
-#define kappa0 20.0
-#define phi 30.0
-#define psi -20.0
-#define H -1000.0
-#define m -1.0
-#define NumberSteps 800 // 50 // 3500 // 2500 //
+#define kappa0 40.0
+#define phi 39.0
+#define psi -30.0
+#define H -200.0 //-300.0
+#define m -0.2
+#define NumberSteps 30000 // 50 // 3500 // 2500 //
 #define dF_yy 0.99999
 #define J2_degradated_value 5.0
 #define Confining_pressure -20
@@ -477,7 +477,7 @@ int main() {
   FILE *E2_vs_VM = fopen("E2_vs_VM.csv", "w");
   for (int i = 0; i < NumberSteps; i++) {
     fprintf(E2_vs_VM, "%e, %e\n",
-            -0.5 * (D_phi[i * 5 + 3] * D_phi[i * 5 + 3] - 1.0),
+            -100 * 0.5 * (D_phi[i * 5 + 3] * D_phi[i * 5 + 3] - 1.0),
             sqrt(0.5 * (pow((stress[i * 5 + 0] - stress[i * 5 + 3]), 2.0) +
                         pow((stress[i * 5 + 3] - stress[i * 5 + 4]), 2.0) +
                         pow((stress[i * 5 + 4] - stress[i * 5 + 0]), 2.0))));
@@ -544,7 +544,7 @@ int main() {
   return STATUS;
 }
 
-/**************************************************************/ 
+/**************************************************************/
 int Drucker_Prager_backward_euler(State_Parameters IO_State, Material MatProp)
 /*
   Backward Euler algorithm for the Drucker-Prager (Lorenzo Sanavia)

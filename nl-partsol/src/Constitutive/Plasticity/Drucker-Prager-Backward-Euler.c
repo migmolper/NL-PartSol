@@ -418,11 +418,6 @@ int Drucker_Prager_backward_euler(State_Parameters IO_State, Material MatProp)
     return EXIT_FAILURE;
   }
 
-  printf("Numer of iterations: %i, error: %e \n", Iter, PHI);
-  if (Iter == MaxIter) {
-    printf("Number of iterations: %i \n", Iter);
-    printf("Final value of the yield function: %e \n", PHI);
-  }
 
 #ifdef DEBUG_MODE
 #if DEBUG_MODE + 0

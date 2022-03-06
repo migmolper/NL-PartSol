@@ -123,13 +123,6 @@ int Define_Drucker_Prager(Material *DP_Material,FILE *Simulation_file, char *Mat
     else if (strcmp(Parameter_pars[0], "Dilatancy-angle") == 0) {
       ChkMat.Is_dilatancy_angle = true;
       (*DP_Material).psi_Frictional = atof(Parameter_pars[1]);
-
-     if(((*DP_Material).psi_Frictional > 90.0) && ((*DP_Material).psi_Frictional < 0.0))
-      {
-        fprintf(stderr, ""RED" Invalid value of the [Dilatancy-angle] "RESET" \n");
-        STATUS = EXIT_FAILURE;
-        return EXIT_FAILURE;
-      }
     }
     /**************************************************/
     else if (strcmp(Parameter_pars[0], "J2-degradated") == 0) {
