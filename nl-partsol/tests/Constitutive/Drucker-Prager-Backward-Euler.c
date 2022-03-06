@@ -216,24 +216,24 @@ static int __compute_plastic_flow_direction(
     const double *T_tr_dev /**< [in] Deviatoric elastic stress tensor */,
     double J2 /**< [in] Second invariant of the deviatoric stress tensor */);
 
-static int __compute_eps(
-    double *eps_k /**< [out] Equivalent plastic strain*/,
-    double d_gamma_k /**< [in] Discrete plastic multiplier */,
-    double eps_n /**< [in] Equivalent plastic strain in the last step */,
-    double alpha_Q /**< [in] Plastic potential parameter */);
+static int
+__eps(double *eps_k /**< [out] Equivalent plastic strain*/,
+      double d_gamma_k /**< [in] Discrete plastic multiplier */,
+      double eps_n /**< [in] Equivalent plastic strain in the last step */,
+      double alpha_Q /**< [in] Plastic potential parameter */);
 
-static int __compute_kappa(double *kappa_k /**< [out] Hardening function. */,
-                           double kappa_0 /**< [in] Reference hardening */,
-                           double exp_param /**< [in] Hardening exponential*/,
-                           double eps_k /**< [in] Equivalent plastic strain*/,
-                           double eps_0 /**< [in] Reference plastic strain */);
+static int __kappa(double *kappa_k /**< [out] Hardening function. */,
+                   double kappa_0 /**< [in] Reference hardening */,
+                   double exp_param /**< [in] Hardening exponential*/,
+                   double eps_k /**< [in] Equivalent plastic strain*/,
+                   double eps_0 /**< [in] Reference plastic strain */);
 
-static int __compute_d_kappa(
-    double *d_kappa /**< [out] Derivative of the hardening function. */,
-    double kappa_0 /**< [in] Reference hardening */,
-    double eps_k /**< [in] Equivalent plastic strain*/,
-    double eps_0 /**< [in] Reference plastic strain */,
-    double exp_param /**< [in] Hardening exponential*/);
+static int
+__d_kappa(double *d_kappa /**< [out] Derivative of the hardening function. */,
+          double kappa_0 /**< [in] Reference hardening */,
+          double eps_k /**< [in] Equivalent plastic strain*/,
+          double eps_0 /**< [in] Reference plastic strain */,
+          double exp_param /**< [in] Hardening exponential*/);
 
 static int __compute_pressure_limit(
     double *pressure_limit /**< [out] Limit for the apex region. */,
@@ -381,9 +381,9 @@ static int imin_arg1, imin_arg2;
 #define PoissonRatio 0.2
 #define kappa0 40.0
 #define phi 39.0
-#define psi -30.0
+#define psi 6.0
 #define H -200.0 //-300.0
-#define m -0.2
+#define m -0.5
 #define NumberSteps 30000 // 50 // 3500 // 2500 //
 #define dF_yy 0.99999
 #define J2_degradated_value 5.0
@@ -696,9 +696,9 @@ int Drucker_Prager_backward_euler(State_Parameters IO_State, Material MatProp)
       return EXIT_FAILURE;
     }
 
-    STATUS = __compute_d_kappa(&d_kappa_k, kappa_0, eps_n, eps_0, exp_param);
+    STATUS = __d_kappa(&d_kappa_k, kappa_0, eps_n, eps_0, exp_param);
     if (STATUS == EXIT_FAILURE) {
-      fprintf(stderr, "" RED "Error in __compute_d_kappa" RESET "\n");
+      fprintf(stderr, "" RED "Error in __d_kappa" RESET "\n");
       return EXIT_FAILURE;
     }
 
@@ -723,24 +723,28 @@ int Drucker_Prager_backward_euler(State_Parameters IO_State, Material MatProp)
                                              beta);
 
         d_gamma_k += -PHI / d_PHI;
-
-        STATUS = __compute_eps(&eps_k, d_gamma_k, eps_n, alpha_Q);
-        if (STATUS == EXIT_FAILURE) {
+        if (d_gamma_k < 0.0) {
           fprintf(stderr,
-                  "" RED "Error in __compute_eps (apex loop)" RESET "\n");
+                  "" RED "d_gamma_k = %f < 0 (classical loop)" RESET "\n",
+                  d_gamma_k);
           return EXIT_FAILURE;
         }
 
-        STATUS = __compute_kappa(&kappa_k, kappa_0, exp_param, eps_k, eps_0);
+        STATUS = __eps(&eps_k, d_gamma_k, eps_n, alpha_Q);
         if (STATUS == EXIT_FAILURE) {
-          fprintf(stderr, "" RED "Error in __compute_kappa" RESET "\n");
+          fprintf(stderr, "" RED "Error in __eps (classical loop)" RESET "\n");
           return EXIT_FAILURE;
         }
 
-        STATUS =
-            __compute_d_kappa(&d_kappa_k, kappa_0, eps_k, eps_0, exp_param);
+        STATUS = __kappa(&kappa_k, kappa_0, exp_param, eps_k, eps_0);
         if (STATUS == EXIT_FAILURE) {
-          fprintf(stderr, "" RED "Error in __compute_d_kappa" RESET "\n");
+          fprintf(stderr, "" RED "Error in __kappa" RESET "\n");
+          return EXIT_FAILURE;
+        }
+
+        STATUS = __d_kappa(&d_kappa_k, kappa_0, eps_k, eps_0, exp_param);
+        if (STATUS == EXIT_FAILURE) {
+          fprintf(stderr, "" RED "Error in __d_kappa" RESET "\n");
           return EXIT_FAILURE;
         }
 
@@ -785,9 +789,14 @@ int Drucker_Prager_backward_euler(State_Parameters IO_State, Material MatProp)
                                     d_kappa_k, K, alpha_F, alpha_Q, beta);
       }
 
-      STATUS = __compute_eps(&eps_k, d_gamma_k, eps_n, alpha_Q);
+      if (d_gamma_k < 0.0) {
+        d_gamma_k = 0.0;
+        d_gamma_1 = 0.0;
+      }
+
+      STATUS = __eps(&eps_k, d_gamma_k, eps_n, alpha_Q);
       if (STATUS == EXIT_FAILURE) {
-        fprintf(stderr, "" RED "Error in __compute_eps (apex loop)" RESET "\n");
+        fprintf(stderr, "" RED "Error in __eps (apex loop)" RESET "\n");
         return EXIT_FAILURE;
       }
 
@@ -812,12 +821,6 @@ int Drucker_Prager_backward_euler(State_Parameters IO_State, Material MatProp)
   if (STATUS == EXIT_FAILURE) {
     fprintf(stderr, "" RED "Error in __corrector_b_e" RESET "\n");
     return EXIT_FAILURE;
-  }
-
-  printf("Numer of iterations: %i, error: %e \n", Iter, PHI);
-  if (Iter == MaxIter) {
-    printf("Number of iterations: %i \n", Iter);
-    printf("Final value of the yield function: %e \n", PHI);
   }
 
 #ifdef DEBUG_MODE
@@ -989,15 +992,15 @@ static int __trial_elastic(double *T_tr_vol, double *T_tr_dev, double *pressure,
   E_hencky_trial_vol[1] = (1.0 / 3.0) * tr_E_hencky_trial;
   E_hencky_trial_vol[2] = (1.0 / 3.0) * tr_E_hencky_trial;
 
-  T_tr_vol[0] = -p_ref; //-K * E_hencky_trial_vol[0];
-  T_tr_vol[1] = -p_ref; //-K * E_hencky_trial_vol[1];
-  T_tr_vol[2] = -p_ref; //-K * E_hencky_trial_vol[2];
+  T_tr_vol[0] = -p_ref; // - K * E_hencky_trial_vol[0];
+  T_tr_vol[1] = -p_ref; // - K * E_hencky_trial_vol[1];
+  T_tr_vol[2] = -p_ref; // - K * E_hencky_trial_vol[2];
 
   T_tr_dev[0] = 0.0; // 2 * G * (E_hencky_trial[0] - E_hencky_trial_vol[0]);
   T_tr_dev[1] =
-      YoungMouduls * (E_hencky_trial[1]); // 2 * G * (E_hencky_trial[1] -
-                                          // E_hencky_trial_vol[1]);
-  T_tr_dev[2] = 0.0; // 2 * G * (E_hencky_trial[2] - E_hencky_trial_vol[2]);
+      YoungMouduls *
+      E_hencky_trial[1]; // 2 * G * (E_hencky_trial[1] - E_hencky_trial_vol[1]);
+  T_tr_dev[2] = 0.0;     // 2 * G * (E_hencky_trial[2] - E_hencky_trial_vol[2]);
 
   *pressure = (T_tr_vol[0] + T_tr_vol[1] + T_tr_vol[2]) / 3.0;
   *J2 = sqrt(T_tr_dev[0] * T_tr_dev[0] + T_tr_dev[1] * T_tr_dev[1] +
@@ -1141,8 +1144,8 @@ static int __compute_plastic_flow_direction(double *n, const double *T_tr_dev,
 
 /**************************************************************/
 
-static int __compute_eps(double *eps_k, double d_gamma_k, double eps_n,
-                         double alpha_Q) {
+static int __eps(double *eps_k, double d_gamma_k, double eps_n,
+                 double alpha_Q) {
 
   *eps_k = eps_n + d_gamma_k * sqrt(3.0 * alpha_Q * alpha_Q + 1.0);
 
@@ -1157,8 +1160,8 @@ static int __compute_eps(double *eps_k, double d_gamma_k, double eps_n,
 
 /**************************************************************/
 
-static int __compute_kappa(double *kappa_k, double kappa_0, double exp_param,
-                           double eps_k, double eps_0) {
+static int __kappa(double *kappa_k, double kappa_0, double exp_param,
+                   double eps_k, double eps_0) {
   double base = 1.0 + eps_k / eps_0;
   double exp = 1.0 / exp_param;
 
@@ -1175,8 +1178,8 @@ static int __compute_kappa(double *kappa_k, double kappa_0, double exp_param,
 
 /**************************************************************/
 
-static int __compute_d_kappa(double *d_kappa, double kappa_0, double eps_k,
-                             double eps_0, double exp_param) {
+static int __d_kappa(double *d_kappa, double kappa_0, double eps_k,
+                     double eps_0, double exp_param) {
 
   double base = 1.0 + eps_k / eps_0;
   double exp = 1.0 / exp_param - 1.0;
@@ -1336,8 +1339,8 @@ static int __update_internal_variables_classical(
 
   for (unsigned i = 0; i < 3; i++) {
 
-    double T_i = -T_tr_vol[i] + T_tr_dev[i] -
-                 d_gamma_k * (3 * K * alpha_Q + 2 * G * n[i]);
+    double T_i = -T_tr_vol[i] + T_tr_dev[i] +
+                 d_gamma_k * (3 * K * alpha_Q - 2 * G * n[i]);
 
     T[0] += T_i * eigvec_b_e_tr[i * 3 + 0] * eigvec_b_e_tr[i * 3 + 0];
     T[1] += T_i * eigvec_b_e_tr[i * 3 + 0] * eigvec_b_e_tr[i * 3 + 1];
@@ -1505,7 +1508,7 @@ static int __update_internal_variables_apex(
 
   for (unsigned i = 0; i < 3; i++) {
 
-    double T_i = -T_tr_vol[i] - d_gamma_k * 3 * K * alpha_Q;
+    double T_i = -T_tr_vol[i] + d_gamma_k * 3 * K * alpha_Q;
 
     T[0] += T_i * eigvec_b_e_tr[i * 3 + 0] * eigvec_b_e_tr[i * 3 + 0];
     T[1] += T_i * eigvec_b_e_tr[i * 3 + 0] * eigvec_b_e_tr[i * 3 + 1];

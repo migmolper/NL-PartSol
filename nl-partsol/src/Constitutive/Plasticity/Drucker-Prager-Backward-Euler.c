@@ -387,12 +387,14 @@ int Drucker_Prager_backward_euler(State_Parameters IO_State, Material MatProp)
         d_gamma_2_k += -PHI / d_PHI;
 
         d_gamma_k = d_gamma_1 + d_gamma_2_k;
-        if (d_gamma_k < 0.0) {
-          d_gamma_k = 0.0;
-        }
 
         PHI = __yield_function_apex(pressure, d_gamma_k, d_gamma_1, kappa_k,
                                     d_kappa_k, K, alpha_F, alpha_Q, beta);
+      }
+
+      if (d_gamma_k < 0.0) {
+        d_gamma_k = 0.0;
+        d_gamma_1 = 0.0;
       }
 
       STATUS = __eps(&eps_k, d_gamma_k, eps_n, alpha_Q);
