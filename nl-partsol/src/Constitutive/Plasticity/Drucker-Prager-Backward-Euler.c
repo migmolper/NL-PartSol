@@ -40,19 +40,19 @@ static int __compute_plastic_flow_direction(
     const double *T_tr_dev /**< [in] Deviatoric elastic stress tensor */,
     double J2 /**< [in] Second invariant of the deviatoric stress tensor */);
 
-static int __compute_eps(
+static int __eps(
     double *eps_k /**< [out] Equivalent plastic strain*/,
     double d_gamma_k /**< [in] Discrete plastic multiplier */,
     double eps_n /**< [in] Equivalent plastic strain in the last step */,
     double alpha_Q /**< [in] Plastic potential parameter */);
 
-static int __compute_kappa(double *kappa_k /**< [out] Hardening function. */,
+static int __kappa(double *kappa_k /**< [out] Hardening function. */,
                            double kappa_0 /**< [in] Reference hardening */,
                            double exp_param /**< [in] Hardening exponential*/,
                            double eps_k /**< [in] Equivalent plastic strain*/,
                            double eps_0 /**< [in] Reference plastic strain */);
 
-static int __compute_d_kappa(
+static int __d_kappa(
     double *d_kappa /**< [out] Derivative of the hardening function. */,
     double kappa_0 /**< [in] Reference hardening */,
     double eps_k /**< [in] Equivalent plastic strain*/,
@@ -300,9 +300,9 @@ int Drucker_Prager_backward_euler(State_Parameters IO_State, Material MatProp)
       return EXIT_FAILURE;
     }
 
-    STATUS = __compute_d_kappa(&d_kappa_k, kappa_0, eps_n, eps_0, exp_param);
+    STATUS = __d_kappa(&d_kappa_k, kappa_0, eps_n, eps_0, exp_param);
     if (STATUS == EXIT_FAILURE) {
-      fprintf(stderr, "" RED "Error in __compute_d_kappa" RESET "\n");
+      fprintf(stderr, "" RED "Error in __d_kappa" RESET "\n");
       return EXIT_FAILURE;
     }
 
@@ -327,24 +327,27 @@ int Drucker_Prager_backward_euler(State_Parameters IO_State, Material MatProp)
                                              beta);
 
         d_gamma_k += -PHI / d_PHI;
+        if (d_gamma_k < 0.0) {
+          fprintf(stderr, "" RED "d_gamma_k = %f < 0 (classical loop)" RESET "\n",d_gamma_k);
+          return EXIT_FAILURE;
+        }
 
-        STATUS = __compute_eps(&eps_k, d_gamma_k, eps_n, alpha_Q);
+        STATUS = __eps(&eps_k, d_gamma_k, eps_n, alpha_Q);
         if (STATUS == EXIT_FAILURE) {
           fprintf(stderr,
-                  "" RED "Error in __compute_eps (apex loop)" RESET "\n");
+                  "" RED "Error in __eps (classical loop)" RESET "\n");
           return EXIT_FAILURE;
         }
 
-        STATUS = __compute_kappa(&kappa_k, kappa_0, exp_param, eps_k, eps_0);
+        STATUS = __kappa(&kappa_k, kappa_0, exp_param, eps_k, eps_0);
         if (STATUS == EXIT_FAILURE) {
-          fprintf(stderr, "" RED "Error in __compute_kappa" RESET "\n");
+          fprintf(stderr, "" RED "Error in __kappa" RESET "\n");
           return EXIT_FAILURE;
         }
 
-        STATUS =
-            __compute_d_kappa(&d_kappa_k, kappa_0, eps_k, eps_0, exp_param);
+        STATUS = __d_kappa(&d_kappa_k, kappa_0, eps_k, eps_0, exp_param);
         if (STATUS == EXIT_FAILURE) {
-          fprintf(stderr, "" RED "Error in __compute_d_kappa" RESET "\n");
+          fprintf(stderr, "" RED "Error in __d_kappa" RESET "\n");
           return EXIT_FAILURE;
         }
 
@@ -384,14 +387,17 @@ int Drucker_Prager_backward_euler(State_Parameters IO_State, Material MatProp)
         d_gamma_2_k += -PHI / d_PHI;
 
         d_gamma_k = d_gamma_1 + d_gamma_2_k;
+        if (d_gamma_k < 0.0) {
+          d_gamma_k = 0.0;
+        }
 
         PHI = __yield_function_apex(pressure, d_gamma_k, d_gamma_1, kappa_k,
                                     d_kappa_k, K, alpha_F, alpha_Q, beta);
       }
 
-      STATUS = __compute_eps(&eps_k, d_gamma_k, eps_n, alpha_Q);
+      STATUS = __eps(&eps_k, d_gamma_k, eps_n, alpha_Q);
       if (STATUS == EXIT_FAILURE) {
-        fprintf(stderr, "" RED "Error in __compute_eps (apex loop)" RESET "\n");
+        fprintf(stderr, "" RED "Error in __eps (apex loop)" RESET "\n");
         return EXIT_FAILURE;
       }
 
@@ -738,7 +744,7 @@ static int __compute_plastic_flow_direction(double *n, const double *T_tr_dev,
 
 /**************************************************************/
 
-static int __compute_eps(double *eps_k, double d_gamma_k, double eps_n,
+static int __eps(double *eps_k, double d_gamma_k, double eps_n,
                          double alpha_Q) {
 
   *eps_k = eps_n + d_gamma_k * sqrt(3.0 * alpha_Q * alpha_Q + 1.0);
@@ -754,7 +760,7 @@ static int __compute_eps(double *eps_k, double d_gamma_k, double eps_n,
 
 /**************************************************************/
 
-static int __compute_kappa(double *kappa_k, double kappa_0, double exp_param,
+static int __kappa(double *kappa_k, double kappa_0, double exp_param,
                            double eps_k, double eps_0) {
   double base = 1.0 + eps_k / eps_0;
   double exp = 1.0 / exp_param;
@@ -772,7 +778,7 @@ static int __compute_kappa(double *kappa_k, double kappa_0, double exp_param,
 
 /**************************************************************/
 
-static int __compute_d_kappa(double *d_kappa, double kappa_0, double eps_k,
+static int __d_kappa(double *d_kappa, double kappa_0, double eps_k,
                              double eps_0, double exp_param) {
 
   double base = 1.0 + eps_k / eps_0;
@@ -933,8 +939,8 @@ static int __update_internal_variables_classical(
 
   for (unsigned i = 0; i < 3; i++) {
 
-    double T_i = -T_tr_vol[i] + T_tr_dev[i] -
-                 d_gamma_k * (3 * K * alpha_Q + 2 * G * n[i]);
+    double T_i = -T_tr_vol[i] + T_tr_dev[i] +
+                 d_gamma_k * (3 * K * alpha_Q - 2 * G * n[i]);
 
     T[0] += T_i * eigvec_b_e_tr[i * 3 + 0] * eigvec_b_e_tr[i * 3 + 0];
     T[1] += T_i * eigvec_b_e_tr[i * 3 + 0] * eigvec_b_e_tr[i * 3 + 1];
@@ -1102,7 +1108,7 @@ static int __update_internal_variables_apex(
 
   for (unsigned i = 0; i < 3; i++) {
 
-    double T_i = -T_tr_vol[i] - d_gamma_k * 3 * K * alpha_Q;
+    double T_i = -T_tr_vol[i] + d_gamma_k * 3 * K * alpha_Q;
 
     T[0] += T_i * eigvec_b_e_tr[i * 3 + 0] * eigvec_b_e_tr[i * 3 + 0];
     T[1] += T_i * eigvec_b_e_tr[i * 3 + 0] * eigvec_b_e_tr[i * 3 + 1];

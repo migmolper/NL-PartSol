@@ -6,38 +6,22 @@ NLPS-Solver (Type=NPC-FS) {
 }
 
 # Background mesh definition
-GramsBox (Type=GID,File=Nodes.msh) {
+GramsBox (Type=GID,File=FEM_Mesh.msh) {
 
-   
-	 GramsBoundary (File=Walls_x.txt) { 
-	 	BcDirichlet V.x NULL
-	 	BcDirichlet V.y Curve_Constant.txt
-	 }
-	 
-	 GramsBoundary (File=Walls_y.txt)  {
-    		BcDirichlet V.y NULL
-    		BcDirichlet V.x Curve_Constant.txt
-  	 }
-
-	 GramsBoundary (File=Support.txt)  {
-    		BcDirichlet V.y Curve_Constant.txt
-    		BcDirichlet V.x Curve_Constant.txt
-  	 }
- 
 }
+
 
 Define-Material(idx=0,Model=Drucker-Prager)
 {
   rho=20.0
   E=1.0E5
   nu=0.3
-  m=-2.0
-  Hardening-modulus=-1.0E3
-  Reference-pressure=00.0
-  kappa-0=200.0
-  Friction-angle=30
-  Dilatancy-angle=30
-  J2-degradated=10.0
+  m=-0.2
+  Hardening-modulus=-2.0E4
+  Reference-pressure=0.0
+  kappa-0=4.0E2
+  Friction-angle=39.0
+  Dilatancy-angle=20.0
 }
 
 # Material points definitions
