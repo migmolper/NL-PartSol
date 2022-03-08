@@ -202,6 +202,7 @@ int Drucker_Prager_backward_euler(State_Parameters IO_State, Material MatProp)
 #endif
 #endif
 
+
   // Material parameters
   double K = MatProp.E / (3.0 * (1.0 - 2.0 * MatProp.nu));
   double G = MatProp.E / (2.0 * (1.0 + MatProp.nu));
@@ -393,6 +394,7 @@ int Drucker_Prager_backward_euler(State_Parameters IO_State, Material MatProp)
       }
 
       if (d_gamma_k < 0.0) {
+        fprintf(stderr, "" RED "Breackage (apex loop)" RESET "\n");
         d_gamma_k = 0.0;
         d_gamma_1 = 0.0;
       }
@@ -448,23 +450,21 @@ int Drucker_Prager_backward_euler(State_Parameters IO_State, Material MatProp)
 static int __compute_trial_b_e(double *eigval_b_e_tr, double *eigvec_b_e_tr,
                                const double *b_e, const double *d_phi) {
 
-  double b_e_tr[9] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
-
 #if NumberDimensions == 2
 
-  b_e_tr[0] = d_phi[0] * b_e[0] * d_phi[0] + d_phi[0] * b_e[1] * d_phi[1] +
+  eigvec_b_e_tr[0] = d_phi[0] * b_e[0] * d_phi[0] + d_phi[0] * b_e[1] * d_phi[1] +
               d_phi[1] * b_e[2] * d_phi[0] + d_phi[1] * b_e[3] * d_phi[1];
 
-  b_e_tr[1] = d_phi[0] * b_e[0] * d_phi[2] + d_phi[0] * b_e[1] * d_phi[3] +
+  eigvec_b_e_tr[1] = d_phi[0] * b_e[0] * d_phi[2] + d_phi[0] * b_e[1] * d_phi[3] +
               d_phi[1] * b_e[2] * d_phi[2] + d_phi[1] * b_e[3] * d_phi[3];
 
-  b_e_tr[3] = d_phi[2] * b_e[0] * d_phi[0] + d_phi[2] * b_e[1] * d_phi[1] +
+  eigvec_b_e_tr[3] = d_phi[2] * b_e[0] * d_phi[0] + d_phi[2] * b_e[1] * d_phi[1] +
               d_phi[3] * b_e[2] * d_phi[0] + d_phi[3] * b_e[3] * d_phi[1];
 
-  b_e_tr[4] = d_phi[2] * b_e[0] * d_phi[2] + d_phi[2] * b_e[1] * d_phi[3] +
+  eigvec_b_e_tr[4] = d_phi[2] * b_e[0] * d_phi[2] + d_phi[2] * b_e[1] * d_phi[3] +
               d_phi[3] * b_e[2] * d_phi[2] + d_phi[3] * b_e[3] * d_phi[3];
 
-  b_e_tr[8] = b_e[4];
+  eigvec_b_e_tr[8] = b_e[4];
 
 #else
   No esta implementado
@@ -473,10 +473,10 @@ static int __compute_trial_b_e(double *eigval_b_e_tr, double *eigvec_b_e_tr,
 #ifdef DEBUG_MODE
 #if DEBUG_MODE + 0
 
-  puts("Trial elastic left Cauchy-Gree");
-  printf("%f %f %f \n", b_e_tr[0], b_e_tr[1], b_e_tr[2]);
-  printf("%f %f %f \n", b_e_tr[3], b_e_tr[4], b_e_tr[5]);
-  printf("%f %f %f \n", b_e_tr[6], b_e_tr[7], b_e_tr[8]);
+  puts("Trial elastic left Cauchy-Green");
+  printf("%e %e %e \n", eigvec_b_e_tr[0], eigvec_b_e_tr[1], eigvec_b_e_tr[2]);
+  printf("%e %e %e \n", eigvec_b_e_tr[3], eigvec_b_e_tr[4], eigvec_b_e_tr[5]);
+  printf("%e %e %e \n", eigvec_b_e_tr[6], eigvec_b_e_tr[7], eigvec_b_e_tr[8]);
 
 #endif
 #endif
@@ -490,8 +490,9 @@ static int __compute_trial_b_e(double *eigval_b_e_tr, double *eigvec_b_e_tr,
   int lwork;
   double wkopt;
   double *work;
-
+    
   /* Local arrays */
+  int IPIV[3] = {0, 0, 0};
   double wi[3];
   double vl[9];
 
@@ -499,8 +500,7 @@ static int __compute_trial_b_e(double *eigval_b_e_tr, double *eigvec_b_e_tr,
     Query and allocate the optimal workspace
   */
   lwork = -1;
-  dgeev_("N", "V", &n, b_e_tr, &lda, eigval_b_e_tr, wi, vl, &ldvl,
-         eigvec_b_e_tr, &ldvr, &wkopt, &lwork, &info);
+  dsyev_("V","L",&n, eigvec_b_e_tr, &lda, eigval_b_e_tr,&wkopt, &lwork,&info);
   lwork = (int)wkopt;
   work = (double *)malloc(lwork * sizeof(double));
 
@@ -508,22 +508,7 @@ static int __compute_trial_b_e(double *eigval_b_e_tr, double *eigvec_b_e_tr,
   if (info > 0) {
     free(work);
     fprintf(stderr,
-            "" RED "Error in dgeev_(): %s\n %s; \n %i+1:N \n %s " RESET "\n",
-            "the QR algorithm failed to compute all the",
-            "eigenvalues, and no eigenvectors have been computed elements",
-            info, "of WR and WI contain eigenvalues which have converged.");
-    return EXIT_FAILURE;
-  }
-
-  /* Solve eigenproblem */
-  dgeev_("N", "V", &n, b_e_tr, &lda, eigval_b_e_tr, wi, vl, &ldvl,
-         eigvec_b_e_tr, &ldvr, work, &lwork, &info);
-
-  /* Check for convergence */
-  if (info > 0) {
-    free(work);
-    fprintf(stderr,
-            "" RED "Error in dgeev_(): %s\n %s; \n %i+1:N \n %s " RESET "\n",
+            "" RED "Error in dsyev_(): %s\n %s; \n %i+1:N \n %s " RESET "\n",
             "the QR algorithm failed to compute all the",
             "eigenvalues, and no eigenvectors have been computed elements",
             info, "of WR and WI contain eigenvalues which have converged.");
@@ -532,11 +517,32 @@ static int __compute_trial_b_e(double *eigval_b_e_tr, double *eigvec_b_e_tr,
   if (info < 0) {
     free(work);
     fprintf(stderr,
-            "" RED "Error in dgeev_(): the %i-th argument had an "
+            "" RED "Error in dsyev_(): the %i-th argument had an "
             "illegal value." RESET "\n",
             abs(info));
     return EXIT_FAILURE;
   }
+
+  dsyev_("V","L",&n, eigvec_b_e_tr, &lda, eigval_b_e_tr,work, &lwork,&info);
+  /* Check for convergence */
+  if (info > 0) {
+    free(work);
+    fprintf(stderr,
+            "" RED "Error in dsyev_(): %s\n %s; \n %i+1:N \n %s " RESET "\n",
+            "the QR algorithm failed to compute all the",
+            "eigenvalues, and no eigenvectors have been computed elements",
+            info, "of WR and WI contain eigenvalues which have converged.");
+    return EXIT_FAILURE;
+  }
+  if (info < 0) {
+    free(work);
+    fprintf(stderr,
+            "" RED "Error in dsyev_(): the %i-th argument had an "
+            "illegal value." RESET "\n",
+            abs(info));
+    return EXIT_FAILURE;
+  }
+
 
   free(work);
 
@@ -714,6 +720,8 @@ static int __update_internal_variables_elastic(double *Stress,
   Stress[2] = T[3] * D_phi_mT[0] + T[4] * D_phi_mT[3];
   Stress[3] = T[3] * D_phi_mT[1] + T[4] * D_phi_mT[4];
   Stress[4] = T[8] * D_phi_mT[8];
+
+
 #else
   No esta implementado
 #endif
