@@ -275,7 +275,6 @@ int Drucker_Prager_backward_euler(State_Parameters IO_State, Material MatProp)
   printf("Initial value of the yield function: %f \n", PHI_0);
   printf("T trial: [%f, %f, %f] \n", -T_tr_vol[0] + T_tr_dev[0],
          -T_tr_vol[1] + T_tr_dev[1], -T_tr_vol[2] + T_tr_dev[2]);
-
 #endif
 #endif
 
@@ -326,6 +325,10 @@ int Drucker_Prager_backward_euler(State_Parameters IO_State, Material MatProp)
 
         d_PHI = __d_yield_function_classical(d_kappa_k, K, G, alpha_F, alpha_Q,
                                              beta);
+        if (fabs(d_PHI) < TOL) {
+          fprintf(stderr, "" RED "|d_PHI| = %f < TOL (classical loop)" RESET "\n",fabs(d_PHI));
+          return EXIT_FAILURE;
+        }
 
         d_gamma_k += -PHI / d_PHI;
         if (d_gamma_k < 0.0) {
@@ -384,20 +387,29 @@ int Drucker_Prager_backward_euler(State_Parameters IO_State, Material MatProp)
 
         d_PHI = __d_yield_function_apex(d_gamma_k, d_gamma_1, d_kappa_k, K,
                                         alpha_F, alpha_Q, beta);
+        if (fabs(d_PHI) < TOL) {
+          fprintf(stderr, "" RED "|d_PHI| = %f < TOL (apex loop)" RESET "\n",fabs(d_PHI));
+          return EXIT_FAILURE;
+        }
 
         d_gamma_2_k += -PHI / d_PHI;
+        
+        if (d_gamma_2_k < 0.0) {
+          fprintf(stderr, "" RED "Breackage (apex loop)" RESET "\n");
+          d_gamma_k = 0.0;
+          d_gamma_1 = 0.0;
+        }
+        else
+        {
+          d_gamma_k = d_gamma_1 + d_gamma_2_k;
+        }
 
-        d_gamma_k = d_gamma_1 + d_gamma_2_k;
+        
 
         PHI = __yield_function_apex(pressure, d_gamma_k, d_gamma_1, kappa_k,
                                     d_kappa_k, K, alpha_F, alpha_Q, beta);
       }
 
-      if (d_gamma_k < 0.0) {
-        fprintf(stderr, "" RED "Breackage (apex loop)" RESET "\n");
-        d_gamma_k = 0.0;
-        d_gamma_1 = 0.0;
-      }
 
       STATUS = __eps(&eps_k, d_gamma_k, eps_n, alpha_Q);
       if (STATUS == EXIT_FAILURE) {
@@ -417,6 +429,7 @@ int Drucker_Prager_backward_euler(State_Parameters IO_State, Material MatProp)
     }
   }
 
+  // Plastic corrector step for the left Cauchy-Green tensor
   E_hencky_trial[0] -= Increment_E_plastic[0];
   E_hencky_trial[1] -= Increment_E_plastic[1];
   E_hencky_trial[2] -= Increment_E_plastic[2];
