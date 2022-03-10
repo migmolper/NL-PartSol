@@ -169,7 +169,7 @@ int Stress_integration__Particles__(int p, Particle MPM_Mesh, Mesh FEM_Mesh,
   for (unsigned i = 0 ; i<9 ; i++) IO_State.b_e[i] = MPM_Mesh.Phi.b_e_n.nM[p][i]; 
 #endif
 
-  STATUS = Drucker_Prager_backward_euler(IO_State, MatProp_p);
+  STATUS = compute_1PK_Drucker_Prager(IO_State, MatProp_p);
 
 #if NumberDimensions == 2
   for (unsigned i = 0 ; i<5 ; i++) MPM_Mesh.Phi.b_e_n.nM[p][i] = IO_State.b_e[i];
@@ -178,33 +178,44 @@ int Stress_integration__Particles__(int p, Particle MPM_Mesh, Mesh FEM_Mesh,
 #endif
 
   if(STATUS == EXIT_FAILURE){
-    fprintf(stderr, ""RED"Error in Drucker_Prager_backward_euler(,)"RESET" \n");
+    fprintf(stderr, ""RED"Error in compute_1PK_Drucker_Prager(,)"RESET" \n");
     return EXIT_FAILURE;
   }
 
   }  
-  else if (strcmp(MatProp_p.Type, "Granular") == 0) {
-    Input_SP.Particle_Idx = p;
-    Input_SP.Stress = MPM_Mesh.Phi.Stress.nM[p];
-//    Input_SP.F_m1_plastic_p = MPM_Mesh.Phi.F_m1_plastic.nM[p];
-    Input_SP.Kappa = &MPM_Mesh.Phi.Kappa_hardening.nV[p];
-    Input_SP.Equiv_Plast_Str = &MPM_Mesh.Phi.Equiv_Plast_Str.nV[p];
+  else if (strcmp(MatProp_p.Type, "Matsuoka-Nakai") == 0) {
 
-    if (MatProp_p.Locking_Control_Fbar) {
-      Input_SP.D_phi = MPM_Mesh.Phi.F_n1.nM[p];
-      Input_SP.Fbar = MPM_Mesh.Phi.Fbar.nM[p];
-    } else {
-      Input_SP.D_phi = MPM_Mesh.Phi.F_n1.nM[p];
-    }
+    // Asign variables to the solver
+    IO_State.Particle_Idx = p;
+    IO_State.Stress = MPM_Mesh.Phi.Stress.nM[p];
+    IO_State.b_e = MPM_Mesh.Phi.b_e_n1.nM[p];
+    IO_State.Equiv_Plast_Str = &MPM_Mesh.Phi.Equiv_Plast_Str.nV[p];
+    IO_State.Kappa = &MPM_Mesh.Phi.Kappa_hardening.nV[p];
+    IO_State.d_phi = MPM_Mesh.Phi.DF.nM[p];
+    IO_State.D_phi = MPM_Mesh.Phi.F_n1.nM[p];
+    IO_State.Failure = &(MPM_Mesh.Phi.Status_particle[p]);
 
-    Output_SP =
-        finite_strain_plasticity(Input_SP, MatProp_p, Frictional_Monolithic);
+#if NumberDimensions == 2
+  for (unsigned i = 0 ; i<5 ; i++) IO_State.b_e[i] = MPM_Mesh.Phi.b_e_n.nM[p][i]; 
+#else
+  for (unsigned i = 0 ; i<9 ; i++) IO_State.b_e[i] = MPM_Mesh.Phi.b_e_n.nM[p][i]; 
+#endif
 
-    MPM_Mesh.Phi.Kappa_hardening.nV[p] = *Output_SP.Kappa;
-    MPM_Mesh.Phi.Equiv_Plast_Str.nV[p] = *Output_SP.Equiv_Plast_Str;
+  STATUS = compute_1PK_Matsuoka_Nakai(IO_State, MatProp_p);
 
+#if NumberDimensions == 2
+  for (unsigned i = 0 ; i<5 ; i++) MPM_Mesh.Phi.b_e_n.nM[p][i] = IO_State.b_e[i];
+#else
+  for (unsigned i = 0 ; i<9 ; i++) MPM_Mesh.Phi.b_e_n.nM[p][i] = IO_State.b_e[i]; 
+#endif
+
+  if(STATUS == EXIT_FAILURE){
+    fprintf(stderr, ""RED"Error in compute_1PK_Matsuoka_Nakai(,)"RESET" \n");
+    return EXIT_FAILURE;
   }
 
+
+  }
   else {
     fprintf(stderr, "%s : %s %s %s \n",
             "Error in forward_integration_Stress__Particles__()",

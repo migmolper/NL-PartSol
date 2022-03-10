@@ -131,18 +131,40 @@ State_Parameters Von_Mises_forward_euler(State_Parameters, Material);
 /*******************************************************/
 
 
-int Drucker_Prager_backward_euler(State_Parameters IO_State, Material MatProp);
+int compute_1PK_Drucker_Prager(State_Parameters IO_State, Material MatProp);
 /*******************************************************/
 
 /*!
-  \fn State_Parameters Frictional_Monolithic(State_Parameters Inputs_SP,Material MatProp)
+  \fn int compute_1PK_Matsuoka_Nakai(State_Parameters IO_State, Material MatProp)
 
   \brief Compute a family of smooth approximations of the Mohr-Coulomb model using a monolithic algorithm
 
   \param Input_SP : State parameters of the particle
   \param MatProp : Material properties of the model
 */
-State_Parameters Frictional_Monolithic(State_Parameters,Material);
+int compute_1PK_Matsuoka_Nakai(State_Parameters IO_State, Material MatProp);
+/*******************************************************/
+
+/*!
+  \fn int compute_1PK_Lade_Duncan(State_Parameters IO_State, Material MatProp)
+
+  \brief Compute a family of smooth approximations of the Mohr-Coulomb model using a monolithic algorithm
+
+  \param Input_SP : State parameters of the particle
+  \param MatProp : Material properties of the model
+*/
+int compute_1PK_Lade_Duncan(State_Parameters IO_State, Material MatProp);
+/*******************************************************/
+
+/*!
+  \fn int compute_1PK_Modified_Lade_Duncan(State_Parameters IO_State, Material MatProp)
+
+  \brief Compute a family of smooth approximations of the Mohr-Coulomb model using a monolithic algorithm
+
+  \param Input_SP : State parameters of the particle
+  \param MatProp : Material properties of the model
+*/
+int compute_1PK_Modified_Lade_Duncan(State_Parameters IO_State, Material MatProp);
 /*******************************************************/
 
 /*!

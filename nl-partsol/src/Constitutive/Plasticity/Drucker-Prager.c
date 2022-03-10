@@ -149,7 +149,7 @@ static bool __degradated(
     double J2_degradated /**< [in] Critical value of the J2 invariant */);
 
 /**************************************************************/ 
-int Drucker_Prager_backward_euler(State_Parameters IO_State, Material MatProp)
+int compute_1PK_Drucker_Prager(State_Parameters IO_State, Material MatProp)
 /*
   Backward Euler algorithm for the Drucker-Prager (Lorenzo Sanavia)
 */
