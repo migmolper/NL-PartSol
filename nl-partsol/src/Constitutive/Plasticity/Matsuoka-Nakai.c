@@ -1018,19 +1018,9 @@ static int __d_G_d_stress(double *d_G_d_stress,
   double K2 = c0 + kappa_psi * pow(pa / I1, m);
   double b2 = m * kappa_psi * (pow(pa / I1, m)) * (cbrt(I3) / I1);
 
-  if (Is_Matsuoka_Nakai) {
-    Grad_g[0] = (I1 * (I1 -  T_k[0]) + I2) / (3 * pow(cbrt(I1 * I2), 2));
-    Grad_g[1] = (I1 * (I1 -  T_k[1]) + I2) / (3 * pow(cbrt(I1 * I2), 2));
-    Grad_g[2] = (I1 * (I1 -  T_k[2]) + I2) / (3 * pow(cbrt(I1 * I2), 2));
-  } else if (Is_Lade_Duncan) {
-    Grad_g[0] = 1.0;
-    Grad_g[1] = 1.0;
-    Grad_g[2] = 1.0;
-  } else if (Is_Modified_Lade_Duncan) {
-    Grad_g[0] = 1.0;
-    Grad_g[1] = 1.0;
-    Grad_g[2] = 1.0;
-  }
+  Grad_g[0] = (I1 * (I1 -  T_k[0]) + I2) / (3 * pow(cbrt(I1 * I2), 2));
+  Grad_g[1] = (I1 * (I1 -  T_k[1]) + I2) / (3 * pow(cbrt(I1 * I2), 2));
+  Grad_g[2] = (I1 * (I1 -  T_k[2]) + I2) / (3 * pow(cbrt(I1 * I2), 2));
 
   d_G_d_stress[0] =
       cbrt(K2 * I3) / (3 *  T_k[0]) - b2 / (3 * pow(cbrt(K2), 2)) - Grad_g[0];

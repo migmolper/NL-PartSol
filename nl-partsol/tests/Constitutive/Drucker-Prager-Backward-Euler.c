@@ -327,8 +327,6 @@ static bool __degradated(
 int Drucker_Prager_backward_euler(State_Parameters IO_State, Material MatProp);
 
 /**************************************************************/
-
-/**************************************************************/
 /******************** Solver Parameters ***********************/
 /**************************************************************/
 #define TOL_Radial_Returning 10E-14
