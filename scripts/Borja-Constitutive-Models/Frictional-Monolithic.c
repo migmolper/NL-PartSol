@@ -1,3 +1,21 @@
+/**************************************************************/
+/******************* Material Parameters **********************/
+/**************************************************************/
+#define YoungMouduls 100E3
+#define PoissonRatio 0.2
+#define AtmosphericPressure -100
+#define m_Parameter 0.0
+#define c0_Parameter 9.0
+#define a1_Parameter 20000
+#define a2_Parameter 0.005
+#define a3_Parameter 35.0
+#define alpha_Parameter 0.5
+#define NumberSteps 2101 // 3500
+#define Delta_strain_II -0.00001
+#define Yield_Function "Matsuoka-Nakai"
+#define Confining_pressure -200.0
+#define FrictionAngle 0
+
 /*
 C file to simulate granular materials
 with a smooth Mohr-Coulomb model.
@@ -31,24 +49,6 @@ gcc Frictional-Monolithic.c -o Frictional-Monolithic -llapack -lm
 #define TOL_Radial_Returning 10E-12
 #define Max_Iterations_Radial_Returning 10
 #define PI 3.14159265358979323846
-
-/**************************************************************/
-/******************* Material Parameters **********************/
-/**************************************************************/
-#define YoungMouduls 100E3
-#define PoissonRatio 0.2
-#define AtmosphericPressure -100
-#define m_Parameter 0.0
-#define c0_Parameter 9.0
-#define a1_Parameter 20000
-#define a2_Parameter 0.005
-#define a3_Parameter 35
-#define alpha_Parameter 0.5
-#define NumberSteps 3500
-#define Delta_strain_II -0.00001
-#define Yield_Function "Matsuoka-Nakai"
-#define Confining_pressure -20
-#define FrictionAngle 35
 
 /**************************************************************/
 /********************* Required Libraries *********************/
@@ -165,8 +165,8 @@ static void eval_dd_Plastic_Potential_d_stress_d_kappa2(double *, double *,
                                                         double, double, double,
                                                         double, double, double);
 static void eval_strain(double *, double *, double *);
-static double assemble_residual(double *, double *, double *, double *,
-                                double *, double, double, Model_Parameters);
+static double __residual(double *, double *, double *, double *, double *,
+                         double, double, Model_Parameters);
 static double compute_condition_number(double *);
 static bool check_convergence(double, int, int);
 static void assemble_tangent_matrix(double *, double *, double *, double *,
@@ -216,29 +216,34 @@ int main() {
   Initialize_Frictional(&kappa1[0], &Lambda[0], MatProp);
 
   // Check parameters
+  /*
+    printf("Simulation parameters for the %s yield surface:\n",
+           MatProp.Yield_Function_Frictional);
+    printf("\t * Young Modulus: %e\n", MatProp.E);
+    printf("\t * Poisson Modulus: %f\n", MatProp.nu);
+    printf("\t * Atmospheric pressure: %e\n", MatProp.atmospheric_pressure);
+    printf("\t * m (pressure sensitive parameter): %f\n", MatProp.m_Frictional);
+    printf("\t * c0: %f \n", MatProp.c0_Frictional);
+    printf("\t * alpha (dilatancy parameter): %f\n",
+           MatProp.alpha_Hardening_Borja);
+    printf("\t * Hardening parameters: [a1 : %f, a2 : %f, a3 : %f]\n",
+           MatProp.a_Hardening_Borja[0], MatProp.a_Hardening_Borja[1],
+           MatProp.a_Hardening_Borja[2]);
+    printf("\t * Parameters related with the friction angle (%2.2d):\n",
+           FrictionAngle);
+    printf("\t \t - Initial value of kappa: %f\n", kappa1[0]);
+    printf("\t \t - Initial value of Lambda: %f\n", Lambda[0]);
 
-  printf("Simulation parameters for the %s yield surface:\n",
-         MatProp.Yield_Function_Frictional);
-  printf("\t * Young Modulus: %e\n", MatProp.E);
-  printf("\t * Poisson Modulus: %f\n", MatProp.nu);
-  printf("\t * Atmospheric pressure: %e\n", MatProp.atmospheric_pressure);
-  printf("\t * m (pressure sensitive parameter): %f\n", MatProp.m_Frictional);
-  printf("\t * c0: %f \n", MatProp.c0_Frictional);
-  printf("\t * alpha (dilatancy parameter): %f\n",
-         MatProp.alpha_Hardening_Borja);
-  printf("\t * Hardening parameters: [a1 : %f, a2 : %f, a3 : %f]\n",
-         MatProp.a_Hardening_Borja[0], MatProp.a_Hardening_Borja[1],
-         MatProp.a_Hardening_Borja[2]);
-  printf("\t * Parameters related with the friction angle (%2.2d):\n",
-         FrictionAngle);
-  printf("\t \t - Initial value of kappa: %f\n", kappa1[0]);
-  printf("\t \t - Initial value of Lambda: %f\n", Lambda[0]);
-  printf("Press Any Key to Continue or Crtl+c to abort\n");
+    printf("Press Any Key to Continue or Crtl+c to abort\n");
+    getchar();
 
-  getchar();
+  */
 
   // Start time integration
   for (int i = 1; i < NumberSteps; i++) {
+    printf("*********************\n");
+    printf("Step: %i \n", i);
+
     // Trial strain
     strain[i * 3 + 1] = strain[(i - 1) * 3 + 1] + Delta_strain_II;
 
@@ -255,6 +260,15 @@ int main() {
     Input.Increment_E_plastic = Increment_E_plastic;
     Input.Lambda = Lambda[i - 1];
     Input.Kappa = kappa1[i - 1];
+
+#ifdef DEBUG_MODE
+#if DEBUG_MODE + 0
+
+    printf("E_hencky_trial: [%e, %e, %e] \n", strain[i * 3 + 0],
+           strain[i * 3 + 1], strain[i * 3 + 2]);
+
+#endif
+#endif
 
     // Run solver
     Output = Frictional_Monolithic(Input, MatProp);
@@ -293,22 +307,24 @@ int main() {
   fclose(p_vm_output);
 
   // Print data with gnuplot
-  /*
-  FILE * gnuplot = popen("gnuplot -persistent", "w");
+  FILE *gnuplot;
+  gnuplot = popen("gnuplot -persistent", "w");
   fprintf(gnuplot, "set termoption enhanced \n");
   fprintf(gnuplot, "set datafile separator ',' \n");
-  fprintf(gnuplot, "set xlabel '- {/Symbol e}_{II}' font 'Times,20' enhanced
-  \n"); fprintf(gnuplot, "set ylabel 'abs({/Symbol s}_{II} - {/Symbol s}_{I})'
-  font 'Times,20' enhanced \n"); fprintf(gnuplot, "plot %s, %s \n",
-          "'Borja_compression.csv' title 'Borja et al. (2003)' with line lt rgb
-  'blue' lw 2",
-          "'MN_strain_stress_output.csv' title 'Us' with line lt rgb 'red' lw
-  2"); fflush(gnuplot);
-  */
+  fprintf(gnuplot,
+          "set xlabel '- {/Symbol e}_{II}' font 'Times,20' enhanced \n");
+  fprintf(gnuplot, "set ylabel 'abs({/Symbol s}_{II} - {/Symbol s}_{I})' font "
+                   "'Times,20' enhanced \n");
+  fprintf(
+      gnuplot, "plot %s, %s \n",
+      "'Borja_compression.csv' title 'Borja et al. (2003)' with line lt rgb "
+      "'blue' lw 2",
+      "'MN_strain_stress_output.csv' title 'Us' with line lt rgb 'red' lw 2");
+  fflush(gnuplot);
 
   // Generate pipe for the gnuplot
 
-  FILE *gnuplot = popen("gnuplot -persistent", "w");
+  gnuplot = popen("gnuplot -persistent", "w");
   fprintf(gnuplot, "set size 1.0,4.0 \n");
   fprintf(gnuplot, "set multiplot \n");
   //  fprintf(gnuplot, "set termoption enhanced \n");
@@ -387,6 +403,7 @@ State_Parameters Frictional_Monolithic(State_Parameters Inputs_SP,
   double Lambda_n = Inputs_SP.Lambda;
   double Lambda_k = Lambda_n;
   double delta_lambda_k = 0.0;
+  double F_0 = 0.0;
 
   /*
     Duplicated variables for the line search algorithm
@@ -418,11 +435,20 @@ State_Parameters Frictional_Monolithic(State_Parameters Inputs_SP,
               Stress_k[0] * Stress_k[2];
   double I3 = Stress_k[0] * Stress_k[1] * Stress_k[2];
 
+  F_0 = eval_Yield_Function(Params.c0, kappa_k[0], Params.pa, I1, I2, I3,
+                            Params.m);
+
+#ifdef DEBUG_MODE
+#if DEBUG_MODE + 0
+  printf("Initial value of the yield function: %e \n", F_0);
+  printf("T trial: [%e, %e, %e] \n", Stress_k[0], Stress_k[1], Stress_k[2]);
+#endif
+#endif
+
   /*
     Check yield condition
   */
-  if (eval_Yield_Function(Params.c0, kappa_k[0], Params.pa, I1, I2, I3,
-                          Params.m) > 0.0) {
+  if (F_0 > 0.0) {
     /*
       Compute elastic trial with the inverse elastic relation
     */
@@ -432,8 +458,8 @@ State_Parameters Frictional_Monolithic(State_Parameters Inputs_SP,
       Newton-Rapson with line search
     */
     Norm_Residual_1 =
-        assemble_residual(Residual, Stress_k, Strain_e_tri, Plastic_Flow_k,
-                          kappa_k, delta_lambda_k, Lambda_k, Params);
+        __residual(Residual, Stress_k, Strain_e_tri, Plastic_Flow_k, kappa_k,
+                   delta_lambda_k, Lambda_k, Params);
 
     Convergence = check_convergence(Norm_Residual_1, Iter, MaxIter);
 
@@ -448,7 +474,44 @@ State_Parameters Frictional_Monolithic(State_Parameters Inputs_SP,
         assemble_tangent_matrix(Tangent_Matrix, Plastic_Flow_k, Stress_k,
                                 kappa_k, delta_lambda_k, Lambda_k, Params);
 
+#ifdef DEBUG_MODE
+#if DEBUG_MODE + 0
+
+        printf("Invariants: %e; %e ; %e \n", I1, I2, I3);
+
+        printf("Plastic flow: %e, %e, %e \n", Plastic_Flow_k[0],
+               Plastic_Flow_k[1], Plastic_Flow_k[2]);
+
+        printf("Residual: [%e, %e, %e, %e, %e] \n", Residual[0], Residual[1],
+               Residual[2], Residual[3], Residual[4]);
+        printf("Norm of the residual: %e \n", Norm_Residual_1);
+        printf("Tangent matrix: \n");
+        printf("\t %e, %e, %e, %e, %e \n", Tangent_Matrix[0], Tangent_Matrix[1],
+               Tangent_Matrix[2], Tangent_Matrix[3], Tangent_Matrix[4]);
+        printf("\t %e, %e, %e, %e, %e \n", Tangent_Matrix[5], Tangent_Matrix[6],
+               Tangent_Matrix[7], Tangent_Matrix[8], Tangent_Matrix[9]);
+        printf("\t %e, %e, %e, %e, %e \n", Tangent_Matrix[10],
+               Tangent_Matrix[11], Tangent_Matrix[12], Tangent_Matrix[13],
+               Tangent_Matrix[14]);
+        printf("\t %e, %e, %e, %e, %e \n", Tangent_Matrix[15],
+               Tangent_Matrix[16], Tangent_Matrix[17], Tangent_Matrix[18],
+               Tangent_Matrix[19]);
+        printf("\t %e, %e, %e, %e, %e \n", Tangent_Matrix[20],
+               Tangent_Matrix[21], Tangent_Matrix[22], Tangent_Matrix[23],
+               Tangent_Matrix[24]);
+#endif
+#endif
+
         solver(Tangent_Matrix, Residual, D_Residual);
+
+#ifdef DEBUG_MODE
+#if DEBUG_MODE + 0
+
+        printf("Increment of the residual: [%e, %e, %e, %e, %e] \n",
+               D_Residual[0], D_Residual[1], D_Residual[2], D_Residual[3],
+               D_Residual[4]);
+#endif
+#endif
 
         Stress_k2[0] = Stress_k[0];
         Stress_k2[1] = Stress_k[1];
@@ -458,12 +521,23 @@ State_Parameters Frictional_Monolithic(State_Parameters Inputs_SP,
         Lambda_k2 = Lambda_k;
         delta_lambda_k2 = delta_lambda_k;
 
+#ifdef DEBUG_MODE
+#if DEBUG_MODE + 0
+
+        printf("Stress (iter:%i): [%e, %e, %e] \n", Iter, Stress_k[0],
+               Stress_k[1], Stress_k[2]);
+        printf("kappa (iter:%i): [%e, %e]\n", Iter, kappa_k[0], kappa_k[1]);
+        printf("Lambda (Iter:%i): %e \n", Iter, Lambda_k);
+        printf("delta_lambda_k1 (Iter:%i): %e \n", Iter, Lambda_k);
+#endif
+#endif
+
         update_variables(D_Residual, Stress_k2, kappa_k2, &delta_lambda_k2,
                          &Lambda_k2, Lambda_n, Params.alpha, delta);
 
         Norm_Residual_2 =
-            assemble_residual(Residual, Stress_k2, Strain_e_tri, Plastic_Flow_k,
-                              kappa_k2, delta_lambda_k2, Lambda_k2, Params);
+            __residual(Residual, Stress_k2, Strain_e_tri, Plastic_Flow_k,
+                       kappa_k2, delta_lambda_k2, Lambda_k2, Params);
 
         if ((Norm_Residual_2 - Norm_Residual_1) > TOL_Radial_Returning) {
           while ((Norm_Residual_2 - Norm_Residual_1) > TOL_Radial_Returning) {
@@ -494,9 +568,9 @@ State_Parameters Frictional_Monolithic(State_Parameters Inputs_SP,
                                &delta_lambda_k2, &Lambda_k2, Lambda_n,
                                Params.alpha, delta);
 
-              Norm_Residual_2 = assemble_residual(
-                  Residual, Stress_k2, Strain_e_tri, Plastic_Flow_k, kappa_k2,
-                  delta_lambda_k2, Lambda_k2, Params);
+              Norm_Residual_2 =
+                  __residual(Residual, Stress_k2, Strain_e_tri, Plastic_Flow_k,
+                             kappa_k2, delta_lambda_k2, Lambda_k2, Params);
             }
           }
         }
@@ -942,10 +1016,10 @@ static void eval_strain(double *Strain, double *Stress, double *CC) {
 
 /**************************************************************/
 
-static double assemble_residual(double *Residual, double *Stress_k,
-                                double *Strain_e_tri, double *Grad_G,
-                                double *kappa, double delta_lambda,
-                                double Lambda_k, Model_Parameters Params) {
+static double __residual(double *Residual, double *Stress_k,
+                         double *Strain_e_tri, double *Grad_G, double *kappa,
+                         double delta_lambda, double Lambda_k,
+                         Model_Parameters Params) {
   double alpha = Params.alpha;
   double m = Params.m;
   double pa = Params.pa;
@@ -960,7 +1034,7 @@ static double assemble_residual(double *Residual, double *Stress_k,
   double Strain_e_k[3];
   double kappa_hat[3];
   double F;
-  double Error;
+  double Error = 0.0;
 
   // Check if we are in the apex
   if ((m != 0) && (fabs(I1 / 3.0) < TOL_Radial_Returning)) {
@@ -980,6 +1054,22 @@ static double assemble_residual(double *Residual, double *Stress_k,
   Residual[2] = Strain_e_k[2] - Strain_e_tri[2] + delta_lambda * Grad_G[2];
   Residual[3] = kappa[0] - kappa_hat[0];
   Residual[4] = F;
+
+#ifdef DEBUG_MODE
+#if DEBUG_MODE + 0
+  printf("*********************************\n");
+  printf("__residual(): \n");
+  printf("d_lambda: %e \n", delta_lambda);
+  printf("F: %e \n", F);
+  printf("E_hencky_tr: [%e, %e, %e] \n", Strain_e_tri[0], Strain_e_tri[1],
+         Strain_e_tri[2]);
+  printf("E_hencky_k: [%e, %e, %e] \n", Strain_e_k[0], Strain_e_k[1],
+         Strain_e_k[2]);
+  printf("Kappa_phi: %e, kappa_phi_hat: %e \n", kappa[0], kappa_hat[0]);
+  printf("Plastic flow: [%e, %e, %e] \n", Grad_G[0], Grad_G[1], Grad_G[2]);
+  printf("*********************************\n");
+#endif
+#endif
 
   /*
     Compute absolute error from the residual

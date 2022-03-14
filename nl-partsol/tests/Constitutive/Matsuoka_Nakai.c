@@ -1,3 +1,18 @@
+/**************************************************************/
+/******************* Material Parameters **********************/
+/**************************************************************/
+#define NumberDimensions 2
+#define YoungMouduls 100.0E3
+#define PoissonRatio 0.2
+#define AtmosphericPressure -100.0
+#define a1_Parameter 20000.0
+#define a2_Parameter 0.005
+#define a3_Parameter 35.0
+#define alpha_Parameter -0.5
+#define NumberSteps 3000 // 1000 // 5000 // 3500 // 2500 //
+#define Delta_strain_II -0.00001
+#define Confining_pressure -200.0
+
 /*
 Unitary test for the smooth Mohr-Coulomb model.
 One single point is initially confined with an
@@ -182,6 +197,7 @@ typedef struct {
    * */
   double *Stress;
   double *Strain;
+  double *Strain_e;
   double Pressure;
 
   /*!
@@ -369,7 +385,6 @@ static int __tangent_matrix(
     double delta_lambda_k /**< [in] Discrete plastic multiplier (iter k) */);
 
 static int __update_internal_variables_plastic(
-    double *Increment_E_plastic /**< [out] Plastic corrector */,
     double *Stress /**< [out] Nominal stress tensor */,
     double *eps_n1 /**< [out] Equivalent plastic strain */,
     double *kappa_n1 /**< [out] Friction angle hardening */,
@@ -387,7 +402,7 @@ static int
 __solver(double *Tangent_Matrix /**< [in/out] Tangent matrix of the problem */,
          double *Residual /**< [in/out] Residual of the problem */);
 
-static int __condition_number(
+static int __reciprocal_condition_number(
     double *RCOND /**< [out] Condition number of the tangent matrix */,
     double *Tangent_Matrix /**< [in/out] Tangent matrix of the problem */);
 
@@ -396,7 +411,7 @@ int compute_1PK_Matsuoka_Nakai(State_Parameters IO_State, Material MatProp);
 /**************************************************************/
 /******************** Solver Parameters ***********************/
 /**************************************************************/
-#define TOL_Radial_Returning 10E-14
+#define TOL_Radial_Returning 10E-10
 #define Max_Iterations_Radial_Returning 10
 #define PI__MatrixLib__ 3.14159265358979323846
 
@@ -438,21 +453,6 @@ static int imin_arg1, imin_arg2;
    (imin_arg1) < (imin_arg2) ? (imin_arg1) : (imin_arg2))
 #define SIGN(a, b) ((b) >= 0.0 ? fabs(a) : -fabs(a)) s
 
-/**************************************************************/
-/******************* Material Parameters **********************/
-/**************************************************************/
-#define NumberDimensions 2
-#define YoungMouduls 100.0E3
-#define PoissonRatio 0.2
-#define AtmosphericPressure -100.0
-#define a1_Parameter 20000.0
-#define a2_Parameter 0.005
-#define a3_Parameter 35.0
-#define alpha_Parameter 0.5
-#define NumberSteps 30 // 5000 // 3500 // 2500 //
-#define dF_yy 0.999
-#define Confining_pressure -200.0
-
 int main() {
   int STATUS = EXIT_SUCCESS;
   State_Parameters IO_State;
@@ -469,25 +469,16 @@ int main() {
 
   // Initialize state variables
   bool Status_particle = false;
-  double *stress = (double *)calloc(5 * NumberSteps, sizeof(double));
-  double d_phi[5] = {1.0, 0.0, 0.0, dF_yy, 1.0};
-  double *D_phi = (double *)calloc(5 * NumberSteps, sizeof(double));
-  double *b_e = (double *)calloc(5 * NumberSteps, sizeof(double));
+  double *stress = (double *)calloc(3 * NumberSteps, sizeof(double));
+  double *strain = (double *)calloc(3 * NumberSteps, sizeof(double));
+  double *strain_e = (double *)calloc(3 * NumberSteps, sizeof(double));
   double *kappa1 = (double *)calloc(NumberSteps, sizeof(double));
   double *Equiv_Plast_Str = (double *)calloc(NumberSteps, sizeof(double));
 
   // Set initial values
-  stress[0] = MatProp.ReferencePressure;
-  stress[3] = MatProp.ReferencePressure;
-  stress[4] = MatProp.ReferencePressure;
-
-  D_phi[0] = 1.0;
-  D_phi[3] = 1.0;
-  D_phi[4] = 1.0;
-
-  b_e[0] = 1.0;
-  b_e[3] = 1.0;
-  b_e[4] = 1.0;
+  stress[0] = Confining_pressure;
+  stress[1] = Confining_pressure;
+  stress[2] = Confining_pressure;
 
   // Start time integration
   for (int i = 1; i < NumberSteps; i++) {
@@ -497,26 +488,34 @@ int main() {
 
     // Asign variables to the solver
     IO_State.Particle_Idx = 0;
-    IO_State.Stress = &stress[i * 5];
-    IO_State.b_e = &b_e[i * 5];
+    IO_State.Stress = &stress[i * 3];
+    IO_State.Strain = &strain[i * 3];
+    IO_State.Strain_e = &strain_e[i * 3];
     IO_State.Equiv_Plast_Str = &Equiv_Plast_Str[i];
     IO_State.Kappa = &kappa1[i];
-    IO_State.d_phi = d_phi;
-    IO_State.D_phi = &D_phi[i * 5];
     IO_State.Failure = &Status_particle;
 
-    IO_State.b_e[0] = b_e[(i - 1) * 5 + 0];
-    IO_State.b_e[1] = b_e[(i - 1) * 5 + 1];
-    IO_State.b_e[2] = b_e[(i - 1) * 5 + 2];
-    IO_State.b_e[3] = b_e[(i - 1) * 5 + 3];
-    IO_State.b_e[4] = b_e[(i - 1) * 5 + 4];
+    // Trial strain
+    IO_State.Strain[1] = strain[(i - 1) * 3 + 1] + Delta_strain_II;
+    IO_State.Strain_e[1] = IO_State.Strain[1];
 
-    IO_State.D_phi[0] = D_phi[(i - 1) * 5 + 0] * d_phi[0];
-    IO_State.D_phi[3] = D_phi[(i - 1) * 5 + 3] * d_phi[3];
-    IO_State.D_phi[4] = D_phi[(i - 1) * 5 + 4] * d_phi[4];
+    // Trial stress
+    IO_State.Stress[0] = Confining_pressure;
+    IO_State.Stress[1] =
+        stress[(i - 1) * 3 + 1] + YoungMouduls * Delta_strain_II;
+    IO_State.Stress[2] = Confining_pressure;
 
     *IO_State.Equiv_Plast_Str = Equiv_Plast_Str[i - 1];
     *IO_State.Kappa = kappa1[i - 1];
+
+#ifdef DEBUG_MODE
+#if DEBUG_MODE + 0
+
+    printf("E_hencky_trial: [%e, %e, %e] \n", IO_State.Strain[0],
+           IO_State.Strain[1], IO_State.Strain[2]);
+
+#endif
+#endif
 
     // Run solver
     STATUS = compute_1PK_Matsuoka_Nakai(IO_State, MatProp);
@@ -524,8 +523,7 @@ int main() {
     if (STATUS) {
       fprintf(stderr, "Failure\n");
       free(stress);
-      free(D_phi);
-      free(b_e);
+      free(strain);
       free(kappa1);
       free(Equiv_Plast_Str);
       return STATUS;
@@ -535,18 +533,15 @@ int main() {
   // Save data in a csv file
   FILE *E2_vs_VM = fopen("E2_vs_VM.csv", "w");
   for (int i = 0; i < NumberSteps; i++) {
-    fprintf(E2_vs_VM, "%e, %e\n",
-            -100 * 0.5 * (D_phi[i * 5 + 3] * D_phi[i * 5 + 3] - 1.0),
-            sqrt(0.5 * (pow((stress[i * 5 + 0] - stress[i * 5 + 3]), 2.0) +
-                        pow((stress[i * 5 + 3] - stress[i * 5 + 4]), 2.0) +
-                        pow((stress[i * 5 + 4] - stress[i * 5 + 0]), 2.0))));
+    fprintf(E2_vs_VM, "%e, %e\n", -strain[i * 3 + 1],
+            fabs(stress[i * 3 + 1] - stress[i * 3 + 0]));
   }
   fclose(E2_vs_VM);
 
   FILE *p_vs_q = fopen("p_vs_q.csv.csv", "w");
   for (int i = 0; i < NumberSteps; i++) {
-    fprintf(p_vs_q, "%e, %e\n", -0.5 * (stress[i * 5 + 0] + stress[i * 5 + 3]),
-            0.5 * ((stress[i * 5 + 0] - stress[i * 5 + 3])));
+    fprintf(p_vs_q, "%e, %e\n", -0.5 * (stress[i * 3 + 0] + stress[i * 3 + 1]),
+            0.5 * ((stress[i * 3 + 0] - stress[i * 3 + 1])));
   }
   fclose(p_vs_q);
 
@@ -562,24 +557,21 @@ int main() {
   gnuplot = popen("gnuplot -persistent", "w");
   fprintf(gnuplot, "set termoption enhanced \n");
   fprintf(gnuplot, "set datafile separator ',' \n");
+  fprintf(gnuplot, "set xlabel '-E2' font 'Times,20' enhanced \n");
+  fprintf(gnuplot, "set ylabel 'abs(s2 - s1)' font "
+                   "'Times,20' enhanced \n");
+  fprintf(gnuplot, "plot %s \n",
+          "'E2_vs_VM.csv' title 'Us' with line lt rgb 'red' lw 2");
+  fflush(gnuplot);
+
+  gnuplot = popen("gnuplot -persistent", "w");
+  fprintf(gnuplot, "set termoption enhanced \n");
+  fprintf(gnuplot, "set datafile separator ',' \n");
   fprintf(gnuplot, "set xlabel '- p' font 'Times,20' enhanced \n");
   fprintf(gnuplot, "set ylabel 'q' font "
                    "'Times,20' enhanced \n");
   fprintf(gnuplot, "plot %s \n",
           "'p_vs_q.csv.csv' title 'Us' with line lt rgb 'red' lw 2");
-  fflush(gnuplot);
-
-  // Print data with gnuplot
-  gnuplot = popen("gnuplot -persistent", "w");
-  fprintf(gnuplot, "set termoption enhanced \n");
-  fprintf(gnuplot, "set datafile separator ',' \n");
-  fprintf(gnuplot,
-          "set xlabel '- {/Symbol e}_{II}' font 'Times,20' enhanced \n");
-  fprintf(gnuplot, "set ylabel '{/Symbol s}_{VM}' font "
-                   "'Times,20' enhanced \n");
-  //  fprintf(gnuplot, "plot %s \n",
-  //          "'E2_vs_VM.csv' title 'Us' with line lt rgb 'red' lw 2");
-  fprintf(gnuplot, "plot %s \n", "'E2_vs_VM.csv' title 'Us'  with points pt 7");
   fflush(gnuplot);
 
   // Print data with gnuplot
@@ -595,8 +587,7 @@ int main() {
 
   // Free memory
   free(stress);
-  free(D_phi);
-  free(b_e);
+  free(strain);
   free(kappa1);
   free(Equiv_Plast_Str);
 
@@ -614,50 +605,13 @@ int compute_1PK_Matsuoka_Nakai(State_Parameters IO_State, Material MatProp)
   int STATUS = EXIT_SUCCESS;
 
   // Read input/output parameters
-  double eigval_b_e_tr[3] = {0.0, 0.0, 0.0};
-  double eigvec_b_e_tr[9] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
   double E_hencky_trial[3] = {0.0, 0.0, 0.0};
   double E_hencky_k1[3] = {0.0, 0.0, 0.0};
   double E_hencky_k2[3] = {0.0, 0.0, 0.0};
 
-#ifdef DEBUG_MODE
-#if DEBUG_MODE + 0
-
-  puts("t = n elastic left Cauchy-Green tensor");
-  printf("%f %f %f \n", IO_State.b_e[0], IO_State.b_e[1], 0.0);
-  printf("%f %f %f \n", IO_State.b_e[2], IO_State.b_e[3], 0.0);
-  printf("%f %f %f \n", 0.0, 0.0, IO_State.b_e[4]);
-
-#endif
-#endif
-
-  STATUS = __compute_trial_b_e(eigval_b_e_tr, eigvec_b_e_tr, IO_State.b_e,
-                               IO_State.d_phi);
-  if (STATUS == EXIT_FAILURE) {
-    fprintf(stderr, "" RED "Error in __compute_trial_b_e" RESET "\n");
-    return EXIT_FAILURE;
-  }
-
-  E_hencky_trial[0] = 0.5 * log(eigval_b_e_tr[0]);
-  E_hencky_trial[1] = 0.5 * log(eigval_b_e_tr[1]);
-  E_hencky_trial[2] = 0.5 * log(eigval_b_e_tr[2]);
-
-#ifdef DEBUG_MODE
-#if DEBUG_MODE + 0
-
-  printf("Eigenvalues left Cauchy-Green tensor: [%f, %f, %f] \n",
-         eigval_b_e_tr[0], eigval_b_e_tr[1], eigval_b_e_tr[2]);
-
-  puts("Eigenvectors (files) left Cauchy-Green tensor");
-  printf("%f %f %f \n", eigvec_b_e_tr[0], eigvec_b_e_tr[1], eigvec_b_e_tr[2]);
-  printf("%f %f %f \n", eigvec_b_e_tr[3], eigvec_b_e_tr[4], eigvec_b_e_tr[5]);
-  printf("%f %f %f \n", eigvec_b_e_tr[6], eigvec_b_e_tr[7], eigvec_b_e_tr[8]);
-
-  printf("E_hencky_trial: [%f, %f, %f] \n", E_hencky_trial[0],
-         E_hencky_trial[1], E_hencky_trial[2]);
-
-#endif
-#endif
+  E_hencky_trial[0] = IO_State.Strain[0];
+  E_hencky_trial[1] = IO_State.Strain[1];
+  E_hencky_trial[2] = IO_State.Strain[2];
 
   // Material parameters
   double E = MatProp.E;
@@ -688,7 +642,6 @@ int compute_1PK_Matsuoka_Nakai(State_Parameters IO_State, Material MatProp)
   double delta_lambda_k2;
 
   // Define tensorial internal variables
-  double Increment_E_plastic[3] = {0.0, 0.0, 0.0};
   double T_tr[3] = {0.0, 0.0, 0.0}; // Trial elastic stress
   double T_k1[3];                   // Stress iteration k
   double T_k2[3];                   // Stress iteration k (line search)
@@ -714,15 +667,18 @@ int compute_1PK_Matsuoka_Nakai(State_Parameters IO_State, Material MatProp)
   double Residual_k2[5] = {0.0, 0.0, 0.0};
   double Tangent_Matrix[25];
   double rcond;
+  double Norm_Residual_k0;
   double Norm_Residual_k1;
   double Norm_Residual_k2;
   double delta = 1;
   int MaxIter_k1 = Max_Iterations_Radial_Returning;
   int MaxIter_k2 = 10 * Max_Iterations_Radial_Returning;
-  int Iter_k1;
-  int Iter_k2;
+  int Iter_k1 = 0;
+  int Iter_k2 = 0;
 
-  __trial_elastic(T_tr, E_hencky_trial, AA);
+  T_tr[0] = IO_State.Stress[0];
+  T_tr[1] = IO_State.Stress[1];
+  T_tr[2] = IO_State.Stress[2];
 
   I1 = T_tr[0] + T_tr[1] + T_tr[2];
   I2 = T_tr[0] * T_tr[1] + T_tr[1] * T_tr[2] + T_tr[0] * T_tr[2];
@@ -737,21 +693,34 @@ int compute_1PK_Matsuoka_Nakai(State_Parameters IO_State, Material MatProp)
 #endif
 #endif
 
+  // Assign trial (elastic) stress-strain values
+  T_k1[0] = T_tr[0];
+  T_k1[1] = T_tr[1];
+  T_k1[2] = T_tr[2];
+
   // Elastic
   if (F_0 <= 0.0) {
 
-    STATUS = __update_internal_variables_elastic(
-        IO_State.Stress, IO_State.D_phi, T_tr, eigvec_b_e_tr);
-    if (STATUS == EXIT_FAILURE) {
-      fprintf(stderr,
-              "" RED "Error in __update_internal_variables_elastic()" RESET
-              "\n");
-      return EXIT_FAILURE;
-    }
+    IO_State.Stress[0] = T_k1[0];
+    IO_State.Stress[1] = T_k1[1];
+    IO_State.Stress[2] = T_k1[2];
+    IO_State.Strain_e[0] = IO_State.Strain[0];
+    IO_State.Strain_e[1] = IO_State.Strain[1];
+    IO_State.Strain_e[2] = IO_State.Strain[2];
 
   }
   // Plastic (monolithic solver with line search)
   else {
+
+    STATUS = __E_hencky(E_hencky_k1, T_k1, CC);
+    if (STATUS == EXIT_FAILURE) {
+      fprintf(stderr, "" RED "Error in __E_hencky" RESET "\n");
+      return EXIT_FAILURE;
+    }
+
+    E_hencky_trial[0] = E_hencky_k1[0];
+    E_hencky_trial[1] = E_hencky_k1[1];
+    E_hencky_trial[2] = E_hencky_k1[2];
 
     STATUS = __kappa(kappa_hat, a, Lambda_n, I1, alpha);
     if (STATUS == EXIT_FAILURE) {
@@ -766,26 +735,24 @@ int compute_1PK_Matsuoka_Nakai(State_Parameters IO_State, Material MatProp)
       return EXIT_FAILURE;
     }
 
-    STATUS = __residual(Residual_k1, &Norm_Residual_k1, E_hencky_trial,
-                        E_hencky_trial, d_G_d_stress, kappa_n, kappa_hat, F_0,
-                        delta_lambda_k0);
+    STATUS =
+        __residual(Residual_k1, &Norm_Residual_k0, E_hencky_trial, E_hencky_k1,
+                   d_G_d_stress, kappa_n, kappa_hat, F_0, delta_lambda_k0);
     if (STATUS == EXIT_FAILURE) {
       fprintf(stderr, "" RED "Error in __residual (trial)" RESET "\n");
       return EXIT_FAILURE;
     }
 
     // Assign values to the k iteration
-    T_k1[0] = T_tr[0];
-    T_k1[1] = T_tr[1];
-    T_k1[2] = T_tr[2];
     kappa_k1[0] = kappa_n[0];
     kappa_k1[1] = kappa_n[1];
     F_k1 = F_0;
-    delta_lambda_k1 = 0.0;
+    delta_lambda_k1 = delta_lambda_k0;
     Lambda_k1 = Lambda_n;
+    Norm_Residual_k1 = Norm_Residual_k0;
     Iter_k1 = 0;
 
-    while (fabs(F_k1 / F_0) >= TOL) {
+    while (fabs(Norm_Residual_k1 / Norm_Residual_k0) >= TOL) {
 
       delta = 1.0;
 
@@ -842,6 +809,10 @@ int compute_1PK_Matsuoka_Nakai(State_Parameters IO_State, Material MatProp)
 
 #ifdef DEBUG_MODE
 #if DEBUG_MODE + 0
+      printf("Invariants: %e; %e ; %e \n", I1, I2, I3);
+
+      printf("Plastic flow: %e, %e, %e \n", d_G_d_stress[0], d_G_d_stress[1],
+             d_G_d_stress[2]);
 
       printf("Residual: [%e, %e, %e, %e, %e] \n", Residual_k1[0],
              Residual_k1[1], Residual_k1[2], Residual_k1[3], Residual_k1[4]);
@@ -888,10 +859,11 @@ int compute_1PK_Matsuoka_Nakai(State_Parameters IO_State, Material MatProp)
 
 #ifdef DEBUG_MODE
 #if DEBUG_MODE + 0
-
-      printf("Stress (iter:%i): [%e, %e, %e] \n", Iter_k1, T_k2[0], T_k2[1],
-             T_k2[2]);
-      printf("kappa (iter:%i): [%e, %e]\n", Iter_k1, kappa_k2[0], kappa_k2[1]);
+      printf("Stress (iter:%i): [%e, %e, %e] \n", Iter_k1, T_k1[0], T_k1[1],
+             T_k1[2]);
+      printf("E_hencky (iter:%i): [%e, %e, %e] \n", Iter_k1, E_hencky_k1[0],
+             E_hencky_k1[1], E_hencky_k1[2]);
+      printf("kappa (iter:%i): [%e, %e]\n", Iter_k1, kappa_k1[0], kappa_k1[1]);
       printf("Lambda (Iter:%i): %e \n", Iter_k1, Lambda_k1);
       printf("delta_lambda_k1 (Iter:%i): %e \n", Iter_k1, Lambda_k1);
       printf("F (Iter:%i): %e \n", Iter_k1, F_k1);
@@ -944,7 +916,6 @@ int compute_1PK_Matsuoka_Nakai(State_Parameters IO_State, Material MatProp)
       }
 
       while ((Norm_Residual_k2 - Norm_Residual_k1) > TOL_Radial_Returning) {
-
         delta =
             pow(delta, 2.0) * 0.5 * Norm_Residual_k1 /
             (Norm_Residual_k2 - delta * Norm_Residual_k1 + Norm_Residual_k1);
@@ -952,13 +923,25 @@ int compute_1PK_Matsuoka_Nakai(State_Parameters IO_State, Material MatProp)
         if (delta < TOL_Radial_Returning)
           break;
 
-        T_k2[0] = T_k1[0] - delta * Residual_k1[0];
-        T_k2[1] = T_k1[1] - delta * Residual_k1[1];
-        T_k2[2] = T_k1[2] - delta * Residual_k1[2];
-        kappa_k2[0] = kappa_k1[0] - delta * Residual_k1[3];
+        T_k2[0] = T_k1[0] - delta * Residual_k2[0];
+        T_k2[1] = T_k1[1] - delta * Residual_k2[1];
+        T_k2[2] = T_k1[2] - delta * Residual_k2[2];
+        kappa_k2[0] = kappa_k1[0] - delta * Residual_k2[3];
         kappa_k2[1] = alpha * kappa_k2[0];
-        delta_lambda_k2 = delta_lambda_k1 - delta * Residual_k1[4];
+        delta_lambda_k2 = delta_lambda_k1 - delta * Residual_k2[4];
         Lambda_k2 = Lambda_n + delta_lambda_k2;
+
+        I1 = T_k2[0] + T_k2[1] + T_k2[2];
+        I2 = T_k2[0] * T_k2[1] + T_k2[1] * T_k2[2] + T_k2[0] * T_k2[2];
+        I3 = T_k2[0] * T_k2[1] * T_k2[2];
+
+        if (Lambda_k2 < 0.0) {
+          fprintf(stderr,
+                  "" RED "Negative value of Lambda (line search): %f " RESET
+                  "\n",
+                  Lambda_k2);
+          return EXIT_FAILURE;
+        }
 
         STATUS = __E_hencky(E_hencky_k2, T_k2, CC);
         if (STATUS == EXIT_FAILURE) {
@@ -986,6 +969,7 @@ int compute_1PK_Matsuoka_Nakai(State_Parameters IO_State, Material MatProp)
         STATUS = __residual(Residual_k2, &Norm_Residual_k2, E_hencky_trial,
                             E_hencky_k2, d_G_d_stress, kappa_k2, kappa_hat,
                             F_k2, delta_lambda_k2);
+
         if (STATUS == EXIT_FAILURE) {
           fprintf(stderr,
                   "" RED "Error in __residual (line search loop)" RESET "\n");
@@ -1003,6 +987,9 @@ int compute_1PK_Matsuoka_Nakai(State_Parameters IO_State, Material MatProp)
       T_k1[0] = T_k2[0];
       T_k1[1] = T_k2[1];
       T_k1[2] = T_k2[2];
+      E_hencky_k1[0] = E_hencky_k2[0];
+      E_hencky_k1[1] = E_hencky_k2[1];
+      E_hencky_k1[2] = E_hencky_k2[2];
       kappa_k1[0] = kappa_k2[0];
       kappa_k1[1] = kappa_k2[1];
       Lambda_k1 = Lambda_k2;
@@ -1017,15 +1004,18 @@ int compute_1PK_Matsuoka_Nakai(State_Parameters IO_State, Material MatProp)
       Iter_k1++;
 
       if (Iter_k1 == MaxIter_k1) {
-        STATUS = __condition_number(&rcond, Tangent_Matrix);
+        STATUS = __reciprocal_condition_number(&rcond, Tangent_Matrix);
         if (STATUS == EXIT_FAILURE) {
-          fprintf(stderr, "" RED "Error in __condition_number" RESET "\n");
+          fprintf(stderr,
+                  "" RED "Error in __reciprocal_condition_number" RESET "\n");
           return EXIT_FAILURE;
         }
 
         if (rcond < 1E-10) {
-          fprintf(stderr, "%s: %s, %s: %e\n", "Error in Frictional_Monolithic",
-                  "Tangent_Matrix is near to singular", "rcond", rcond);
+          fprintf(stderr,
+                  "" RED "Reciprocal condition number below 1E-4: %e" RESET
+                  "\n",
+                  rcond);
         }
         break;
       }
@@ -1034,38 +1024,22 @@ int compute_1PK_Matsuoka_Nakai(State_Parameters IO_State, Material MatProp)
     /*
       Update equivalent plastic strain and increment of plastic deformation
     */
-    __update_internal_variables_plastic(
-        Increment_E_plastic, IO_State.Stress, IO_State.Equiv_Plast_Str,
-        IO_State.Kappa, IO_State.D_phi, T_k1, eigvec_b_e_tr, d_G_d_stress,
-        Lambda_k1, delta_lambda_k1, kappa_k1[0]);
+    IO_State.Stress[0] = T_k1[0];
+    IO_State.Stress[1] = T_k1[1];
+    IO_State.Stress[2] = T_k1[2];
+    IO_State.Strain_e[0] = E_hencky_k1[0];
+    IO_State.Strain_e[1] = E_hencky_k1[1];
+    IO_State.Strain_e[2] = E_hencky_k1[2];
+    *IO_State.Equiv_Plast_Str = Lambda_k1;
+    *IO_State.Kappa = kappa_k1[0];
+
+    if (Iter_k1 == MaxIter_k1) {
+      *IO_State.Equiv_Plast_Str = Lambda_n;
+      *IO_State.Kappa = kappa_n[0];
+    }
   }
-
-  // Plastic corrector step for the left Cauchy-Green tensor
-  E_hencky_trial[0] -= Increment_E_plastic[0];
-  E_hencky_trial[1] -= Increment_E_plastic[1];
-  E_hencky_trial[2] -= Increment_E_plastic[2];
-
-  // Update elastic left Cauchy-Green tensor
-  STATUS = __corrector_b_e(IO_State.b_e, eigvec_b_e_tr, E_hencky_trial);
-  if (STATUS == EXIT_FAILURE) {
-    fprintf(stderr, "" RED "Error in __corrector_b_e" RESET "\n");
-    return EXIT_FAILURE;
-  }
-
-#ifdef DEBUG_MODE
-#if DEBUG_MODE + 0
 
   printf("Number of iterations: %i \n", Iter_k1);
-
-  printf("Increment of the plastic tensor: [%e, %e, %e] \n",
-         Increment_E_plastic[0], Increment_E_plastic[1],
-         Increment_E_plastic[2]);
-  puts("t = n + 1 elastic left Cauchy-Green tensor");
-  printf("%e, %e, %e \n", IO_State.b_e[0], IO_State.b_e[1], 0.0);
-  printf("%e, %e, %e \n", IO_State.b_e[2], IO_State.b_e[3], 0.0);
-  printf("%e, %e, %e \n", 0.0, 0.0, IO_State.b_e[4]);
-#endif
-#endif
 
   return EXIT_SUCCESS;
 }
@@ -1097,17 +1071,6 @@ static int __compute_trial_b_e(double *eigval_b_e_tr, double *eigvec_b_e_tr,
 
 #else
   No esta implementado
-#endif
-
-#ifdef DEBUG_MODE
-#if DEBUG_MODE + 0
-
-  puts("Trial elastic left Cauchy-Green");
-  printf("%e %e %e \n", eigvec_b_e_tr[0], eigvec_b_e_tr[1], eigvec_b_e_tr[2]);
-  printf("%e %e %e \n", eigvec_b_e_tr[3], eigvec_b_e_tr[4], eigvec_b_e_tr[5]);
-  printf("%e %e %e \n", eigvec_b_e_tr[6], eigvec_b_e_tr[7], eigvec_b_e_tr[8]);
-
-#endif
 #endif
 
   /* Locals */
@@ -1254,12 +1217,12 @@ static int __trial_elastic(double *T_tr, const double *E_hencky_trial,
                            const double *AA) {
 
 #if NumberDimensions == 2
-  T_tr[0] = Confining_pressure + AA[0] * E_hencky_trial[0] +
-            AA[1] * E_hencky_trial[1] + AA[2] * E_hencky_trial[2];
-  T_tr[1] = Confining_pressure + AA[3] * E_hencky_trial[0] +
-            AA[4] * E_hencky_trial[1] + AA[5] * E_hencky_trial[2];
-  T_tr[2] = Confining_pressure + AA[6] * E_hencky_trial[0] +
-            AA[7] * E_hencky_trial[1] + AA[8] * E_hencky_trial[2];
+  T_tr[0] = AA[0] * E_hencky_trial[0] + AA[1] * E_hencky_trial[1] +
+            AA[2] * E_hencky_trial[2];
+  T_tr[1] = AA[3] * E_hencky_trial[0] + AA[4] * E_hencky_trial[1] +
+            AA[5] * E_hencky_trial[2];
+  T_tr[2] = AA[6] * E_hencky_trial[0] + AA[7] * E_hencky_trial[1] +
+            AA[8] * E_hencky_trial[2];
 
 #else
   No esta implementado
@@ -1349,17 +1312,6 @@ static int __update_internal_variables_elastic(double *Stress,
     }
     return EXIT_FAILURE;
   }
-
-#ifdef DEBUG_MODE
-#if DEBUG_MODE + 0
-
-  puts("Adjunt of the deformation gradient");
-  printf("%f %f %f \n", D_phi_mT[0], D_phi_mT[1], D_phi_mT[2]);
-  printf("%f %f %f \n", D_phi_mT[3], D_phi_mT[4], D_phi_mT[5]);
-  printf("%f %f %f \n", D_phi_mT[6], D_phi_mT[7], D_phi_mT[8]);
-
-#endif
-#endif
 
   double T[9] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
 
@@ -1618,6 +1570,23 @@ static int __residual(double *Residual, double *Error_k,
   Residual[3] = kappa_k[0] - kappa_hat[0];
   Residual[4] = F_k;
 
+#ifdef DEBUG_MODE
+#if DEBUG_MODE + 0
+  printf("*********************************\n");
+  printf("__residual(): \n");
+  printf("d_lambda_k: %e \n", delta_lambda_k);
+  printf("F_k: %e \n", F_k);
+  printf("E_hencky_tr: [%e, %e, %e] \n", E_hencky_trial[0], E_hencky_trial[1],
+         E_hencky_trial[2]);
+  printf("E_hencky_k: [%e, %e, %e] \n", E_hencky_k[0], E_hencky_k[1],
+         E_hencky_k[2]);
+  printf("Kappa_phi: %e, kappa_phi_hat: %e \n", kappa_k[0], kappa_hat[0]);
+  printf("Plastic flow: [%e, %e, %e] \n", d_G_d_stress[0], d_G_d_stress[1],
+         d_G_d_stress[2]);
+  printf("*********************************\n");
+#endif
+#endif
+
   /*
     Compute absolute error from the residual
   */
@@ -1682,7 +1651,7 @@ static int __tangent_matrix(double *Tangent_Matrix, const double *CC,
 
 /**************************************************************/
 
-static int __condition_number(double *RCOND, double *Tangent_Matrix)
+static int __reciprocal_condition_number(double *RCOND, double *Tangent_Matrix)
 /*
   C = rcond(Tangent_Matrix) returns an estimate for the reciprocal condition of
   Tangent_Matrix in 1-norm.
@@ -1695,7 +1664,7 @@ static int __condition_number(double *RCOND, double *Tangent_Matrix)
   int N_cols = 5;
   int LDA = 5;
   double WORK_ANORM[5] = {0.0, 0.0, 0.0, 0.0, 0.0};
-  double WORK_RCOND[5] = {0.0, 0.0, 0.0, 0.0, 0.0};
+  double WORK_RCOND[20];
   int IPIV[5] = {0, 0, 0, 0, 0};
   int IWORK_RCOND[5] = {0, 0, 0, 0, 0};
 
@@ -1740,7 +1709,7 @@ static int __solver(double *Tangent_Matrix, double *Residual) {
   int Order = 5;
   int LDA = 5;
   int LDB = 5;
-  char TRANS = 'N'; /* (Transpose) */
+  char TRANS = 'T'; /* (Transpose) */
   int INFO = 3;
   int IPIV[5] = {0, 0, 0, 0, 0};
   int NRHS = 1;
@@ -1776,19 +1745,14 @@ static int __solver(double *Tangent_Matrix, double *Residual) {
 /**************************************************************/
 
 static int __update_internal_variables_plastic(
-    double *Increment_E_plastic, double *Stress, double *eps_n1,
-    double *kappa_n1, const double *D_phi, const double *T_tr_k,
-    const double *eigvec_b_e_tr, const double *d_G_d_stress, double Lambda_k,
-    double delta_lambda_k, double kappa_phi_k) {
+    double *Stress, double *eps_n1, double *kappa_n1, const double *D_phi,
+    const double *T_tr_k, const double *eigvec_b_e_tr,
+    const double *d_G_d_stress, double Lambda_k, double delta_lambda_k,
+    double kappa_phi_k) {
 
   // Update hardening parameters
   *eps_n1 = Lambda_k;
   *kappa_n1 = kappa_phi_k;
-
-  // Update the increment of the plastic strain tensor
-  Increment_E_plastic[0] = delta_lambda_k * d_G_d_stress[0];
-  Increment_E_plastic[1] = delta_lambda_k * d_G_d_stress[1];
-  Increment_E_plastic[2] = delta_lambda_k * d_G_d_stress[2];
 
   // Compute the transpose of D_phi
   double D_phi_mT[9] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
@@ -1857,17 +1821,6 @@ static int __update_internal_variables_plastic(
     return EXIT_FAILURE;
   }
 
-#ifdef DEBUG_MODE
-#if DEBUG_MODE + 0
-
-  puts("Adjunt of the deformation gradient");
-  printf("%f %f %f \n", D_phi_mT[0], D_phi_mT[1], D_phi_mT[2]);
-  printf("%f %f %f \n", D_phi_mT[3], D_phi_mT[4], D_phi_mT[5]);
-  printf("%f %f %f \n", D_phi_mT[6], D_phi_mT[7], D_phi_mT[8]);
-
-#endif
-#endif
-
   double T[9] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
 
   for (unsigned i = 0; i < 3; i++) {
@@ -1881,11 +1834,17 @@ static int __update_internal_variables_plastic(
 
 #if NumberDimensions == 2
 
-  Stress[0] = T[0] * D_phi_mT[0] + T[1] * D_phi_mT[3];
-  Stress[1] = T[0] * D_phi_mT[1] + T[1] * D_phi_mT[4];
-  Stress[2] = T[3] * D_phi_mT[0] + T[4] * D_phi_mT[3];
-  Stress[3] = T[3] * D_phi_mT[1] + T[4] * D_phi_mT[4];
-  Stress[4] = T[8] * D_phi_mT[8];
+  //  Stress[0] = T[0] * D_phi_mT[0] + T[1] * D_phi_mT[3];
+  //  Stress[1] = T[0] * D_phi_mT[1] + T[1] * D_phi_mT[4];
+  //  Stress[2] = T[3] * D_phi_mT[0] + T[4] * D_phi_mT[3];
+  //  Stress[3] = T[3] * D_phi_mT[1] + T[4] * D_phi_mT[4];
+  //  Stress[4] = T[8] * D_phi_mT[8];
+
+  Stress[0] = T[0];
+  Stress[1] = T[1];
+  Stress[2] = T[3];
+  Stress[3] = T[4];
+  Stress[4] = T[8];
 
 #else
   No esta implementado
@@ -1895,9 +1854,9 @@ static int __update_internal_variables_plastic(
 #if DEBUG_MODE + 0
 #if NumberDimensions == 2
   puts("Nominal stress tensor");
-  printf("%f %f %f \n", Stress[0], Stress[1], 0.0);
-  printf("%f %f %f \n", Stress[2], Stress[3], 0.0);
-  printf("%f %f %f \n", 0.0, 0.0, Stress[4]);
+  printf("%e %e %e \n", Stress[0], Stress[1], 0.0);
+  printf("%e %e %e \n", Stress[2], Stress[3], 0.0);
+  printf("%e %e %e \n", 0.0, 0.0, Stress[4]);
 #endif
 #endif
 #endif
