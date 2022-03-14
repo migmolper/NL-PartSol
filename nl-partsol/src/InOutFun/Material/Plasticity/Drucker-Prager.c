@@ -30,7 +30,6 @@ typedef struct {
 
 } Check_Material;
 
-static bool Activate_Options(char *);
 static Check_Material __Initialise_Check_Material();
 static int __check_DP_Material(Material *, Check_Material, int);
 
@@ -115,7 +114,6 @@ int Define_Drucker_Prager(Material *DP_Material,FILE *Simulation_file, char *Mat
       if(((*DP_Material).phi_Frictional > 90.0) && ((*DP_Material).phi_Frictional < 0.0))
       {
         fprintf(stderr, ""RED" Invalid value of the [Friction-angle] "RESET" \n");
-        STATUS = EXIT_FAILURE;
         return EXIT_FAILURE;
       }
     }
@@ -132,7 +130,6 @@ int Define_Drucker_Prager(Material *DP_Material,FILE *Simulation_file, char *Mat
       if(((*DP_Material).psi_Frictional > 90.0) && ((*DP_Material).psi_Frictional < 0.0))
       {
         fprintf(stderr, ""RED" Invalid value of the [Dilatancy-angle] "RESET" \n");
-        STATUS = EXIT_FAILURE;
         return EXIT_FAILURE;
       }
 
@@ -168,6 +165,11 @@ int Define_Drucker_Prager(Material *DP_Material,FILE *Simulation_file, char *Mat
   }
 
   STATUS = __check_DP_Material(DP_Material, ChkMat, Material_Idx);
+  if(STATUS == EXIT_FAILURE)
+  {
+        fprintf(stderr, ""RED" Error in __check_DP_Material() "RESET" \n");
+    return EXIT_FAILURE;
+  }
 
   return STATUS;
 }
@@ -203,7 +205,7 @@ int STATUS = EXIT_SUCCESS;
       ChkMat.Is_friction_angle && ChkMat.Is_dilatancy_angle) {
 
 
-    printf("\t -> %s \n", "Frictional material");
+    printf("\t -> %s \n", "Drucker-Prager material");
 
     printf("\t \t -> %s : %f \n", ""MAGENTA"[rho]"RESET"", (*DP_Material).rho);
 
@@ -227,12 +229,13 @@ int STATUS = EXIT_SUCCESS;
 
     printf("\t \t -> %s : %f \n", ""MAGENTA"[J2-degradated]"RESET"", (*DP_Material).J2_degradated);
 
+    printf("\t \t -> %s : %f \n", ""MAGENTA"[Reference-pressure]"RESET"", (*DP_Material).ReferencePressure);
 
   } else {
     
     
     fprintf(stderr,""RED" %s : %s "RESET" \n", "Error in GramsMaterials()",
-            "Some parameter is missed for Frictional material");
+            "Some parameter is missed for Drucker-Prager");
     
     fputs(ChkMat.Is_rho ? 
     ""MAGENTA"[rho]"RESET" : "GREEN"true"RESET" \n" : 
@@ -281,23 +284,6 @@ int STATUS = EXIT_SUCCESS;
   }
 
   return STATUS;
-}
-
-/***************************************************************************/
-
-static bool Activate_Options(char *status_text) {
-  bool status;
-
-  if (strcmp(status_text, "true") == 0) {
-    return true;
-  } else if (strcmp(status_text, "false") == 0) {
-    return false;
-  } else {
-    fprintf(stderr,""RED"The status was %s. Please, use : true/false"RESET"\n",
-            status_text);
-  }
-
-  return status;
 }
 
 /**********************************************************************/
