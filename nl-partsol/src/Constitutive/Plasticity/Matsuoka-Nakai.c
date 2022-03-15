@@ -327,7 +327,6 @@ int compute_1PK_Matsuoka_Nakai(State_Parameters IO_State, Material MatProp)
   I3 = T_tr[0] * T_tr[1] * T_tr[2];
 
   // Update lambda for a given value of kappa
-  double rad_friction_angle = (PI__MatrixLib__ / 180.0) * friction_angle;
   double f, df;
   int iter = 0;
   f = kappa_n[0] - a[0] * Lambda_n * exp(a[1] * I1) * exp(-a[2] * Lambda_n);
@@ -536,7 +535,7 @@ int compute_1PK_Matsuoka_Nakai(State_Parameters IO_State, Material MatProp)
       }
 
       if (I1 > 0.0) {
-        fprintf(stderr, "" RED "Positive value of I1: %f " RESET "\n", I1);
+        fprintf(stderr, "" RED "Positive value of I1: %e " RESET "\n", I1);
         return EXIT_FAILURE;
       }
 
@@ -668,7 +667,7 @@ int compute_1PK_Matsuoka_Nakai(State_Parameters IO_State, Material MatProp)
 
         if (rcond < 1E-10) {
           fprintf(stderr,
-                  "" RED "Reciprocal condition number below 1E-4: %e" RESET
+                  "" RED "Reciprocal condition number below 1E-10: %e" RESET
                   "\n",
                   rcond);
         }

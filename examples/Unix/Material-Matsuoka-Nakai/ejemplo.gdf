@@ -36,8 +36,8 @@ Define-Material(idx=0,Model=Matsuoka-Nakai)
   nu=0.3
   alpha=0.5
   a1=100E3
-  a2=0.0
-  a3=0.0
+  a2=0.01
+  a3=5.0
   Atmospheric-pressure=-100E3
   Friction-angle=30
 }

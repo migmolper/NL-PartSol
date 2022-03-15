@@ -737,7 +737,6 @@ int compute_1PK_Matsuoka_Nakai(State_Parameters IO_State, Material MatProp)
   I3 = T_tr[0] * T_tr[1] * T_tr[2];
 
   // Update lambda for a given value of kappa
-  double rad_friction_angle = (PI__MatrixLib__ / 180.0) * phi_Parameter;
   double f, df;
   int iter = 0;
   f = kappa_n[0] - a[0] * Lambda_n * exp(a[1] * I1) * exp(-a[2] * Lambda_n);
