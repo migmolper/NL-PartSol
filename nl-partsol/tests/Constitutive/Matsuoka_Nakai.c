@@ -11,7 +11,8 @@
 #define a3_Parameter 5.0
 #define phi_Parameter 37.0
 #define alpha_Parameter 0.10 // psi: 6.0
-#define NumberSteps 2000     // 1000 // 5000 // 3500 // 2500 //
+#define c_cotphi_value 8.0
+#define NumberSteps 2000 // 1000 // 5000 // 3500 // 2500 //
 #define Delta_strain_II -0.00001
 #define Confining_pressure -20.0
 
@@ -276,12 +277,14 @@ static int __elastic_tangent(double *CC /**< [out] Elastic compliance */,
 static int
 __trial_elastic(double *T_tr /**< [out] Trial elastic stress tensor*/,
                 const double *E_hencky_trial /**< [in] Henky strain (trial) */,
-                const double *AA /**< [in] Elastic matrix */);
+                const double *AA /**< [in] Elastic matrix */,
+                double c_cotphi /**< [in] Cohesion parameter */);
 
 static int
 __E_hencky(double *E_hencky_k /**< [out] Henky strain (iter k) */,
            const double *T_k /**< [in] Local stress tensor (iter k) */,
-           const double *CC /**< [in] Elastic compliance */);
+           const double *CC /**< [in] Elastic compliance */,
+           double c_cotphi /**< [in] Cohesion parameter */);
 
 static int __update_internal_variables_elastic(
     double *Stress /**< [in/out] Nominal stress tensor */,
@@ -671,6 +674,7 @@ int compute_1PK_Matsuoka_Nakai(State_Parameters IO_State, Material MatProp)
   double K = E / (3.0 * (1.0 - 2.0 * nu));
   double G = E / (2.0 * (1.0 + nu));
   double alpha = MatProp.alpha_Hardening_Borja;
+  double c_cotphi = c_cotphi_value;
   double pa = MatProp.atmospheric_pressure;
   double m = 0.0;
   double c0 = 9.0;
@@ -728,9 +732,9 @@ int compute_1PK_Matsuoka_Nakai(State_Parameters IO_State, Material MatProp)
   int Iter_k1 = 0;
   int Iter_k2 = 0;
 
-  T_tr[0] = IO_State.Stress[0];
-  T_tr[1] = IO_State.Stress[1];
-  T_tr[2] = IO_State.Stress[2];
+  T_tr[0] = IO_State.Stress[0] - c_cotphi;
+  T_tr[1] = IO_State.Stress[1] - c_cotphi;
+  T_tr[2] = IO_State.Stress[2] - c_cotphi;
 
   I1 = T_tr[0] + T_tr[1] + T_tr[2];
   I2 = T_tr[0] * T_tr[1] + T_tr[1] * T_tr[2] + T_tr[0] * T_tr[2];
@@ -770,9 +774,9 @@ int compute_1PK_Matsuoka_Nakai(State_Parameters IO_State, Material MatProp)
   // Elastic
   if (F_0 <= 0.0) {
 
-    IO_State.Stress[0] = T_k1[0];
-    IO_State.Stress[1] = T_k1[1];
-    IO_State.Stress[2] = T_k1[2];
+    IO_State.Stress[0] = T_k1[0] + c_cotphi;
+    IO_State.Stress[1] = T_k1[1] + c_cotphi;
+    IO_State.Stress[2] = T_k1[2] + c_cotphi;
     IO_State.Strain_e[0] = IO_State.Strain[0];
     IO_State.Strain_e[1] = IO_State.Strain[1];
     IO_State.Strain_e[2] = IO_State.Strain[2];
@@ -781,7 +785,7 @@ int compute_1PK_Matsuoka_Nakai(State_Parameters IO_State, Material MatProp)
   // Plastic (monolithic solver with line search)
   else {
 
-    STATUS = __E_hencky(E_hencky_k1, T_k1, CC);
+    STATUS = __E_hencky(E_hencky_k1, T_k1, CC, c_cotphi);
     if (STATUS == EXIT_FAILURE) {
       fprintf(stderr, "" RED "Error in __E_hencky" RESET "\n");
       return EXIT_FAILURE;
@@ -955,7 +959,7 @@ int compute_1PK_Matsuoka_Nakai(State_Parameters IO_State, Material MatProp)
       }
 
       // Compute the residual of the next step
-      STATUS = __E_hencky(E_hencky_k2, T_k2, CC);
+      STATUS = __E_hencky(E_hencky_k2, T_k2, CC, c_cotphi);
       if (STATUS == EXIT_FAILURE) {
         fprintf(stderr, "" RED "Error in __E_hencky" RESET "\n");
         return EXIT_FAILURE;
@@ -1012,7 +1016,7 @@ int compute_1PK_Matsuoka_Nakai(State_Parameters IO_State, Material MatProp)
           return EXIT_FAILURE;
         }
 
-        STATUS = __E_hencky(E_hencky_k2, T_k2, CC);
+        STATUS = __E_hencky(E_hencky_k2, T_k2, CC, c_cotphi);
         if (STATUS == EXIT_FAILURE) {
           fprintf(stderr,
                   "" RED "Error in __E_hencky (line search)" RESET "\n");
@@ -1093,9 +1097,9 @@ int compute_1PK_Matsuoka_Nakai(State_Parameters IO_State, Material MatProp)
     /*
       Update equivalent plastic strain and increment of plastic deformation
     */
-    IO_State.Stress[0] = T_k1[0];
-    IO_State.Stress[1] = T_k1[1];
-    IO_State.Stress[2] = T_k1[2];
+    IO_State.Stress[0] = T_k1[0] + c_cotphi;
+    IO_State.Stress[1] = T_k1[1] + c_cotphi;
+    IO_State.Stress[2] = T_k1[2] + c_cotphi;
     IO_State.Strain_e[0] = E_hencky_k1[0];
     IO_State.Strain_e[1] = E_hencky_k1[1];
     IO_State.Strain_e[2] = E_hencky_k1[2];
@@ -1283,25 +1287,29 @@ static int __elastic_tangent(double *CC, double *AA, double E, double nu,
 /**************************************************************/
 
 static int __trial_elastic(double *T_tr, const double *E_hencky_trial,
-                           const double *AA) {
+                           const double *AA, double c_cotphi) {
 
   T_tr[0] = AA[0] * E_hencky_trial[0] + AA[1] * E_hencky_trial[1] +
-            AA[2] * E_hencky_trial[2];
+            AA[2] * E_hencky_trial[2] - c_cotphi;
   T_tr[1] = AA[3] * E_hencky_trial[0] + AA[4] * E_hencky_trial[1] +
-            AA[5] * E_hencky_trial[2];
+            AA[5] * E_hencky_trial[2] - c_cotphi;
   T_tr[2] = AA[6] * E_hencky_trial[0] + AA[7] * E_hencky_trial[1] +
-            AA[8] * E_hencky_trial[2];
+            AA[8] * E_hencky_trial[2] - c_cotphi;
 
   return EXIT_SUCCESS;
 }
 
 /**************************************************************/
 
-static int __E_hencky(double *E_hencky_k, const double *T_k, const double *CC) {
+static int __E_hencky(double *E_hencky_k, const double *T_k, const double *CC,
+                      double c_cotphi) {
 
-  E_hencky_k[0] = CC[0] * T_k[0] + CC[1] * T_k[1] + CC[2] * T_k[2];
-  E_hencky_k[1] = CC[3] * T_k[0] + CC[4] * T_k[1] + CC[5] * T_k[2];
-  E_hencky_k[2] = CC[6] * T_k[0] + CC[7] * T_k[1] + CC[8] * T_k[2];
+  E_hencky_k[0] = CC[0] * (T_k[0] + c_cotphi) + CC[1] * (T_k[1] + c_cotphi) +
+                  CC[2] * (T_k[2] + c_cotphi);
+  E_hencky_k[1] = CC[3] * (T_k[0] + c_cotphi) + CC[4] * (T_k[1] + c_cotphi) +
+                  CC[5] * (T_k[2] + c_cotphi);
+  E_hencky_k[2] = CC[6] * (T_k[0] + c_cotphi) + CC[7] * (T_k[1] + c_cotphi) +
+                  CC[8] * (T_k[2] + c_cotphi);
 
   return EXIT_SUCCESS;
 }

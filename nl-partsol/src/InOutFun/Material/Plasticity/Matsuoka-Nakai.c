@@ -31,6 +31,7 @@ typedef struct {
   bool Is_Reference_plastic_strain; // Reference Plastic Strain
   bool Is_kappa_0;                   // Initial yield
   bool Is_J2_degradated; // Degradation limit
+  bool Is_cohesion;
 
 } Check_Material;
 
@@ -60,6 +61,7 @@ int Define_Matsuoka_Nakai(Material * MN_Material,FILE *Simulation_file, char *Ma
   (*MN_Material).kappa_0 = 0.0; // Cohesionless
   (*MN_Material).ReferencePressure = 0.0; 
   (*MN_Material).J2_degradated = 0.0;
+  (*MN_Material).Cohesion = 0.0;
   TOL_Radial_Returning = 1E-14;
   Max_Iterations_Radial_Returning = 10;
 
@@ -138,6 +140,11 @@ int Define_Matsuoka_Nakai(Material * MN_Material,FILE *Simulation_file, char *Ma
       (*MN_Material).kappa_0 = atof(Parameter_pars[1]);
     }    
     /**************************************************/
+    else if (strcmp(Parameter_pars[0], "Cohesion") == 0) {
+      ChkMat.Is_cohesion = true;
+      (*MN_Material).Cohesion = atof(Parameter_pars[1]);
+    }    
+    /**************************************************/
     else if ((strcmp(Parameter_pars[0], "}") == 0) && (Parser_status == 1)) {
       Is_Close = true;
       break;
@@ -152,13 +159,14 @@ int Define_Matsuoka_Nakai(Material * MN_Material,FILE *Simulation_file, char *Ma
   if(ChkMat.Is_friction_angle == true)
   {
     double rad_friction_angle = (PI__MatrixLib__ / 180.0) * (*MN_Material).phi_Frictional;  
+    double c_cotphi = (*MN_Material).Cohesion/tan(rad_friction_angle);
     double a1 = (*MN_Material).a_Hardening_Borja[0];
     double a2 = (*MN_Material).a_Hardening_Borja[1];
     double a3 = (*MN_Material).a_Hardening_Borja[2];
     double f, df;
-    double I1 = 3*(*MN_Material).ReferencePressure;
+    double I1 = 3*((*MN_Material).ReferencePressure - c_cotphi);
     double EPS_0 = 0.0;
-    double kappa_0 = 8 * sin(rad_friction_angle)*sin(rad_friction_angle) / (1 - sin(rad_friction_angle)*sin(rad_friction_angle));
+    double kappa_0 = 8.0 * sin(rad_friction_angle)*sin(rad_friction_angle) / (1.0 - sin(rad_friction_angle)*sin(rad_friction_angle));
     int iter = 0;
 
     f = kappa_0 - a1 * EPS_0 * exp(a2*I1) * exp(-a3 * EPS_0);
@@ -230,7 +238,8 @@ static Check_Material Initialise_Check_Material() {
   ChkMat.Is_J2_degradated = false;
   ChkMat.Is_kappa_0 == false;
   ChkMat.Is_Reference_plastic_strain = false;
-  
+  ChkMat.Is_cohesion = false;
+
   return ChkMat;
 }
 
@@ -271,6 +280,9 @@ static int __check_material(Material * MN_Material, Check_Material ChkMat, int I
     printf("\t \t -> %s : %f \n", ""MAGENTA"[J2-degradated]"RESET"", (*MN_Material).J2_degradated);
 
     printf("\t \t -> %s : %f \n", ""MAGENTA"[Reference-pressure]"RESET"", (*MN_Material).ReferencePressure);
+
+    printf("\t \t -> %s : %f \n", ""MAGENTA"[Cohesion]"RESET"", (*MN_Material).Cohesion);
+
 
   } else {
     fprintf(stderr, "%s : %s \n", "Error in GramsMaterials()",

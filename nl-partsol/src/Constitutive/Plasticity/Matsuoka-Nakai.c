@@ -52,12 +52,14 @@ static int __elastic_tangent(
 static int __trial_elastic(
     double *T_tr /**< [out] Trial elastic stress tensor*/, 
     const double * E_hencky_trial /**< [in] Henky strain (trial) */, 
-    const double * AA /**< [in] Elastic matrix */); 
+    const double * AA /**< [in] Elastic matrix */,
+    double c_cotphi /**< [in] Cohesion parameter */); 
 
 static int __E_hencky(
     double * E_hencky_k /**< [out] Henky strain (iter k) */, 
     const double * T_k  /**< [in] Local stress tensor (iter k) */, 
-    const double * CC /**< [in] Elastic compliance */);
+    const double * CC /**< [in] Elastic compliance */,
+    double c_cotphi /**< [in] Cohesion parameter */);
 
 static int __update_internal_variables_elastic(
     double *Stress /**< [in/out] Nominal stress tensor */,
@@ -65,7 +67,8 @@ static int __update_internal_variables_elastic(
     const double *D_phi /**< [in] Total deformation gradient. */,
     const double *T_tr /**< [in] Elastic stress tensor */,
     const double *eigvec_b_e_tr /**< [in] Eigenvector of b elastic trial. */,
-    double Lambda_n /**< [in] Total plastic multiplier (iter k) */);
+    double Lambda_n /**< [in] Total plastic multiplier (iter k) */,
+    double c_cotphi /**< [in] Cohesion parameter */);
 
 static int __kappa(
     double *kappa /**< [out] Hardening vector */, 
@@ -188,7 +191,8 @@ static int __update_internal_variables_plastic(
     const double *T_tr_k /**< [in] Stress tensor (iter k). */,
     const double *eigvec_b_e_tr /**< [in] Eigenvector of b elastic trial. */, 
     double Lambda_k /**< [in] Total plastic multiplier (iter k) */,
-    double kappa_phi_k /**< [out] Friction angle hardening (iter k)*/);
+    double kappa_phi_k /**< [out] Friction angle hardening (iter k)*/,
+    double c_cotphi /**< [in] Cohesion parameter */);
 
 static int __solver(
   double *Tangent_Matrix /**< [in/out] Tangent matrix of the problem */,
@@ -261,6 +265,8 @@ int compute_1PK_Matsuoka_Nakai(State_Parameters IO_State, Material MatProp)
   double K = E / (3.0 * (1.0 - 2.0 * nu));
   double G = E / (2.0 * (1.0 + nu));
   double friction_angle = MatProp.phi_Frictional;
+  double rad_friction_angle = (PI__MatrixLib__ / 180.0) * friction_angle;  
+  double c_cotphi = MatProp.Cohesion/tan(rad_friction_angle);
   double alpha = MatProp.alpha_Hardening_Borja;
   double pa = MatProp.atmospheric_pressure;
   double m = 0.0;
@@ -320,11 +326,16 @@ int compute_1PK_Matsuoka_Nakai(State_Parameters IO_State, Material MatProp)
   int Iter_k1 = 0;
   int Iter_k2 = 0;
 
-  __trial_elastic(T_tr, E_hencky_trial, AA);
+  __trial_elastic(T_tr, E_hencky_trial, AA, c_cotphi);
 
   I1 = T_tr[0] + T_tr[1] + T_tr[2];
   I2 = T_tr[0] * T_tr[1] + T_tr[1] * T_tr[2] + T_tr[0] * T_tr[2];
   I3 = T_tr[0] * T_tr[1] * T_tr[2];
+
+  if (I1 > 0.0) {
+    fprintf(stderr, "" RED "Positive value of I1: %e " RESET "\n", I1);
+    return EXIT_FAILURE;
+  }
 
   // Update lambda for a given value of kappa
   double f, df;
@@ -356,7 +367,9 @@ int compute_1PK_Matsuoka_Nakai(State_Parameters IO_State, Material MatProp)
   if (F_0 <= 0.0) {
 
     STATUS = __update_internal_variables_elastic(
-        IO_State.Stress, IO_State.Equiv_Plast_Str, IO_State.D_phi, T_tr, eigvec_b_e_tr, Lambda_n);
+        IO_State.Stress, IO_State.Equiv_Plast_Str,
+        IO_State.D_phi, T_tr, eigvec_b_e_tr, 
+        Lambda_n, c_cotphi);
     if (STATUS == EXIT_FAILURE) {
       fprintf(stderr,
               "" RED "Error in __update_internal_variables_elastic()" RESET
@@ -540,7 +553,7 @@ int compute_1PK_Matsuoka_Nakai(State_Parameters IO_State, Material MatProp)
       }
 
       // Compute the residual of the next step
-      STATUS = __E_hencky(E_hencky_k2, T_k2, CC);
+      STATUS = __E_hencky(E_hencky_k2, T_k2, CC, c_cotphi);
       if (STATUS == EXIT_FAILURE) {
         fprintf(stderr, "" RED "Error in __E_hencky" RESET "\n");
         return EXIT_FAILURE;
@@ -597,7 +610,7 @@ int compute_1PK_Matsuoka_Nakai(State_Parameters IO_State, Material MatProp)
           return EXIT_FAILURE;
         }
 
-        STATUS = __E_hencky(E_hencky_k2, T_k2, CC);
+        STATUS = __E_hencky(E_hencky_k2, T_k2, CC, c_cotphi);
         if (STATUS == EXIT_FAILURE) {
           fprintf(stderr,
                   "" RED "Error in __E_hencky (line search)" RESET "\n");
@@ -679,7 +692,7 @@ int compute_1PK_Matsuoka_Nakai(State_Parameters IO_State, Material MatProp)
       Update equivalent plastic strain and increment of plastic deformation
     */
     STATUS = __update_internal_variables_plastic(IO_State.Stress,IO_State.Equiv_Plast_Str,
-     IO_State.Kappa,IO_State.D_phi,T_k1,eigvec_b_e_tr,Lambda_k1, kappa_k1[0]);    
+     IO_State.Kappa,IO_State.D_phi,T_k1,eigvec_b_e_tr,Lambda_k1, kappa_k1[0], c_cotphi);    
     if (STATUS == EXIT_FAILURE) {
       fprintf(stderr, "" RED "Error in __update_internal_variables_plastic" RESET "\n");
       return EXIT_FAILURE;
@@ -868,14 +881,14 @@ static int __elastic_tangent(double *CC, double *AA, double E, double nu,
 /**************************************************************/
 
 static int __trial_elastic(double *T_tr, const double *E_hencky_trial,
-                           const double *AA) {
+                           const double *AA, double c_cotphi) {
 
   T_tr[0] = AA[0] * E_hencky_trial[0] + AA[1] * E_hencky_trial[1] +
-            AA[2] * E_hencky_trial[2];
+            AA[2] * E_hencky_trial[2] - c_cotphi;
   T_tr[1] = AA[3] * E_hencky_trial[0] + AA[4] * E_hencky_trial[1] +
-            AA[5] * E_hencky_trial[2];
+            AA[5] * E_hencky_trial[2] - c_cotphi;
   T_tr[2] = AA[6] * E_hencky_trial[0] + AA[7] * E_hencky_trial[1] +
-            AA[8] * E_hencky_trial[2];
+            AA[8] * E_hencky_trial[2] - c_cotphi;
 
 
   return EXIT_SUCCESS;
@@ -883,11 +896,14 @@ static int __trial_elastic(double *T_tr, const double *E_hencky_trial,
 
 /**************************************************************/
 
-static int __E_hencky(double *E_hencky_k, const double *T_k, const double *CC) {
+static int __E_hencky(double *E_hencky_k, 
+                      const double *T_k, 
+                      const double *CC, 
+                      double c_cotphi) {
 
-  E_hencky_k[0] = CC[0] * T_k[0] + CC[1] * T_k[1] + CC[2] * T_k[2];
-  E_hencky_k[1] = CC[3] * T_k[0] + CC[4] * T_k[1] + CC[5] * T_k[2];
-  E_hencky_k[2] = CC[6] * T_k[0] + CC[7] * T_k[1] + CC[8] * T_k[2];
+  E_hencky_k[0] = CC[0] * (T_k[0] + c_cotphi) + CC[1] * (T_k[1] + c_cotphi) + CC[2] * (T_k[2] + c_cotphi);
+  E_hencky_k[1] = CC[3] * (T_k[0] + c_cotphi) + CC[4] * (T_k[1] + c_cotphi) + CC[5] * (T_k[2] + c_cotphi);
+  E_hencky_k[2] = CC[6] * (T_k[0] + c_cotphi) + CC[7] * (T_k[1] + c_cotphi) + CC[8] * (T_k[2] + c_cotphi);
 
   return EXIT_SUCCESS;
 }
@@ -900,7 +916,8 @@ static int __update_internal_variables_elastic(double *Stress,
                                                const double *D_phi,
                                                const double *T_tr,
                                                const double *eigvec_b_e_tr,
-                                               double Lambda_n) {
+                                               double Lambda_n,
+                                               double c_cotphi) {
 
   // Update hardening parameters
   *eps_n1 = Lambda_n;
@@ -970,14 +987,17 @@ static int __update_internal_variables_elastic(double *Stress,
   }
 
   double T[9] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+  double T_tr_i;
 
   for (unsigned i = 0; i < 3; i++) {
 
-    T[0] += T_tr[i] * eigvec_b_e_tr[i * 3 + 0] * eigvec_b_e_tr[i * 3 + 0];
-    T[1] += T_tr[i] * eigvec_b_e_tr[i * 3 + 0] * eigvec_b_e_tr[i * 3 + 1];
-    T[3] += T_tr[i] * eigvec_b_e_tr[i * 3 + 1] * eigvec_b_e_tr[i * 3 + 0];
-    T[4] += T_tr[i] * eigvec_b_e_tr[i * 3 + 1] * eigvec_b_e_tr[i * 3 + 1];
-    T[8] += T_tr[i] * eigvec_b_e_tr[i * 3 + 2] * eigvec_b_e_tr[i * 3 + 2];
+    T_tr_i = T_tr[i] + c_cotphi;
+
+    T[0] += T_tr_i * eigvec_b_e_tr[i * 3 + 0] * eigvec_b_e_tr[i * 3 + 0];
+    T[1] += T_tr_i * eigvec_b_e_tr[i * 3 + 0] * eigvec_b_e_tr[i * 3 + 1];
+    T[3] += T_tr_i * eigvec_b_e_tr[i * 3 + 1] * eigvec_b_e_tr[i * 3 + 0];
+    T[4] += T_tr_i * eigvec_b_e_tr[i * 3 + 1] * eigvec_b_e_tr[i * 3 + 1];
+    T[8] += T_tr_i * eigvec_b_e_tr[i * 3 + 2] * eigvec_b_e_tr[i * 3 + 2];
   }
 
 #if NumberDimensions == 2
@@ -1417,7 +1437,7 @@ static int __solver(double *Tangent_Matrix, double *Residual) {
 static int __update_internal_variables_plastic(
     double *Stress, double *eps_n1, double *kappa_n1, const double *D_phi,
     const double *T_tr_k, const double *eigvec_b_e_tr, double Lambda_k,
-    double kappa_phi_k) {
+    double kappa_phi_k, double c_cotphi) {
 
   // Update hardening parameters
   *eps_n1 = Lambda_k;
@@ -1502,14 +1522,16 @@ static int __update_internal_variables_plastic(
 #endif
 
   double T[9] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+  double T_tr_k_i;
 
   for (unsigned i = 0; i < 3; i++) {
+    T_tr_k_i = T_tr_k[i] + c_cotphi;
 
-    T[0] += T_tr_k[i] * eigvec_b_e_tr[i * 3 + 0] * eigvec_b_e_tr[i * 3 + 0];
-    T[1] += T_tr_k[i] * eigvec_b_e_tr[i * 3 + 0] * eigvec_b_e_tr[i * 3 + 1];
-    T[3] += T_tr_k[i] * eigvec_b_e_tr[i * 3 + 1] * eigvec_b_e_tr[i * 3 + 0];
-    T[4] += T_tr_k[i] * eigvec_b_e_tr[i * 3 + 1] * eigvec_b_e_tr[i * 3 + 1];
-    T[8] += T_tr_k[i] * eigvec_b_e_tr[i * 3 + 2] * eigvec_b_e_tr[i * 3 + 2];
+    T[0] += T_tr_k_i * eigvec_b_e_tr[i * 3 + 0] * eigvec_b_e_tr[i * 3 + 0];
+    T[1] += T_tr_k_i * eigvec_b_e_tr[i * 3 + 0] * eigvec_b_e_tr[i * 3 + 1];
+    T[3] += T_tr_k_i * eigvec_b_e_tr[i * 3 + 1] * eigvec_b_e_tr[i * 3 + 0];
+    T[4] += T_tr_k_i * eigvec_b_e_tr[i * 3 + 1] * eigvec_b_e_tr[i * 3 + 1];
+    T[8] += T_tr_k_i * eigvec_b_e_tr[i * 3 + 2] * eigvec_b_e_tr[i * 3 + 2];
   }
 
 #if NumberDimensions == 2

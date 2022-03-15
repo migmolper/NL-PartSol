@@ -411,6 +411,7 @@ typedef struct {
   double Plastic_Strain_0;
   double atmospheric_pressure;
   double J2_degradated;
+  double Cohesion;
 
   /*!
    * Frictional material (Borja et al. 2003)
