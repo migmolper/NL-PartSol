@@ -212,8 +212,8 @@ int compute_1PK_Drucker_Prager(State_Parameters IO_State, Material MatProp)
   double rad_dilatancy_angle =
       (PI__MatrixLib__ / 180.0) * MatProp.psi_Frictional;
   double exp_param = MatProp.Exponent_Hardening_Ortiz;
-  double kappa_0 = MatProp.yield_stress_0;
-  double eps_0 = MatProp.Reference_Plastic_Strain_Ortiz;
+  double kappa_0 = MatProp.kappa_0;
+  double eps_0 = MatProp.Plastic_Strain_0;
 
 #if NumberDimensions == 2
   double alpha_F = sqrt(2. / 3.) * tan(rad_friction_angle) /

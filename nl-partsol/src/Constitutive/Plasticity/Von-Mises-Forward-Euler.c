@@ -122,7 +122,7 @@ static double compute_yield_surface(double relative_stress_norm, double EPS_n,
   double nu = MatProp.nu; /* Poisson modulus */
   double E = MatProp.E;   /* Elastic modulus */
   double G = E / (2 * (1 + nu));
-  double Sigma_y = MatProp.yield_stress_0;
+  double Sigma_y = MatProp.kappa_0;
 
   if (MatProp.Hardening_Hughes) {
     double Hardening_modulus = MatProp.Hardening_modulus;

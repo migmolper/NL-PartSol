@@ -281,7 +281,7 @@ static double compute_K(double alpha, Material MatProp)
   Isotropic hardening function
 */
 {
-  double Sigma_y = MatProp.yield_stress_0;
+  double Sigma_y = MatProp.kappa_0;
 
   if (MatProp.Hardening_Hughes) {
     double Hardening_modulus = MatProp.Hardening_modulus;
@@ -295,7 +295,7 @@ static double compute_K(double alpha, Material MatProp)
   } else if (MatProp.Hardening_Ortiz) {
     double Hardening_modulus = MatProp.Hardening_modulus;
     double Exponent = MatProp.Exponent_Hardening_Ortiz;
-    double Ref_PS = MatProp.Reference_Plastic_Strain_Ortiz;
+    double Ref_PS = MatProp.Plastic_Strain_0;
 
     return Sigma_y * pow(1 + alpha / Ref_PS, 1.0 / Exponent);
   } else if (MatProp.Hardening_Voce) {
@@ -327,15 +327,15 @@ static double compute_D_K(double alpha, Material MatProp)
     return sqrt(2. / 3.) * theta * Hardening_modulus;
   } else if (MatProp.Hardening_Cervera) {
     double Hardening_modulus = MatProp.Hardening_modulus;
-    double Sigma_y = MatProp.yield_stress_0;
+    double Sigma_y = MatProp.kappa_0;
 
     return -2.0 * sqrt(2. / 3.) * Hardening_modulus *
            exp(-2.0 * Hardening_modulus * alpha / Sigma_y);
   } else if (MatProp.Hardening_Ortiz) {
     double Hardening_modulus = MatProp.Hardening_modulus;
     double Exponent = MatProp.Exponent_Hardening_Ortiz;
-    double Ref_PS = MatProp.Reference_Plastic_Strain_Ortiz;
-    double Sigma_y = MatProp.yield_stress_0;
+    double Ref_PS = MatProp.Plastic_Strain_0;
+    double Sigma_y = MatProp.kappa_0;
 
     return sqrt(2. / 3.) * (Sigma_y / (Ref_PS * Exponent)) *
            pow(1 + alpha / Ref_PS, 1.0 / Exponent - 1);

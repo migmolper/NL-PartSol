@@ -1216,7 +1216,6 @@ static int __elastic_tangent(double *CC, double *AA, double E, double nu,
 static int __trial_elastic(double *T_tr, const double *E_hencky_trial,
                            const double *AA) {
 
-#if NumberDimensions == 2
   T_tr[0] = AA[0] * E_hencky_trial[0] + AA[1] * E_hencky_trial[1] +
             AA[2] * E_hencky_trial[2];
   T_tr[1] = AA[3] * E_hencky_trial[0] + AA[4] * E_hencky_trial[1] +
@@ -1224,9 +1223,6 @@ static int __trial_elastic(double *T_tr, const double *E_hencky_trial,
   T_tr[2] = AA[6] * E_hencky_trial[0] + AA[7] * E_hencky_trial[1] +
             AA[8] * E_hencky_trial[2];
 
-#else
-  No esta implementado
-#endif
 
   return EXIT_SUCCESS;
 }
@@ -1360,7 +1356,7 @@ static int __kappa(double *kappa, const double *a, double Lambda, double I1,
 
   if (kappa[0] < 0.0) {
     fprintf(stderr, "" RED "Negative value of kappa: %f " RESET "\n", kappa[0]);
-    //    return EXIT_FAILURE;
+    return EXIT_FAILURE;
   }
 
   return EXIT_SUCCESS;
@@ -1834,17 +1830,11 @@ static int __update_internal_variables_plastic(
 
 #if NumberDimensions == 2
 
-  //  Stress[0] = T[0] * D_phi_mT[0] + T[1] * D_phi_mT[3];
-  //  Stress[1] = T[0] * D_phi_mT[1] + T[1] * D_phi_mT[4];
-  //  Stress[2] = T[3] * D_phi_mT[0] + T[4] * D_phi_mT[3];
-  //  Stress[3] = T[3] * D_phi_mT[1] + T[4] * D_phi_mT[4];
-  //  Stress[4] = T[8] * D_phi_mT[8];
-
-  Stress[0] = T[0];
-  Stress[1] = T[1];
-  Stress[2] = T[3];
-  Stress[3] = T[4];
-  Stress[4] = T[8];
+  Stress[0] = T[0] * D_phi_mT[0] + T[1] * D_phi_mT[3];
+  Stress[1] = T[0] * D_phi_mT[1] + T[1] * D_phi_mT[4];
+  Stress[2] = T[3] * D_phi_mT[0] + T[4] * D_phi_mT[3];
+  Stress[3] = T[3] * D_phi_mT[1] + T[4] * D_phi_mT[4];
+  Stress[4] = T[8] * D_phi_mT[8];
 
 #else
   No esta implementado

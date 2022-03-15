@@ -406,8 +406,9 @@ typedef struct {
   /*!
   * General plastic parameters
   */
-  double yield_stress_0;
+  double kappa_0;
   double Hardening_modulus;
+  double Plastic_Strain_0;
   double atmospheric_pressure;
   double J2_degradated;
 
@@ -436,7 +437,6 @@ typedef struct {
    * */
   bool Hardening_Ortiz;
   double Exponent_Hardening_Ortiz;
-  double Reference_Plastic_Strain_Ortiz;
 
   /*!
    * Hardening Voce

@@ -524,9 +524,11 @@ Material Define_Saint_Venant_Kirchhoff(FILE *,char *,int);
 Material Define_Neo_Hookean_Wriggers(FILE *,char *,int);
 Material Define_Von_Mises(FILE *,char *,int);
 
-Material Define_Frictional(FILE *,char *,int);
-void Initialize_Frictional(double *,double *,Material);
-
+int Define_Matsuoka_Nakai(
+  Material *MN_Material /**< [out] List with the material properties */,
+  FILE *Simulation_file /**< [in] Simulation file */,
+  char *Material_Model /**< [in] Character identifier for the material */, 
+  int Material_Idx /**< [in] Index identifier for the material */);
 
 int Define_Drucker_Prager(
   Material *DP_Material /**< [out] List with the material properties */,

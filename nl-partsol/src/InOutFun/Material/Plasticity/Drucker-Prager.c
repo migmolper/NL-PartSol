@@ -31,7 +31,7 @@ typedef struct {
 } Check_Material;
 
 static Check_Material __Initialise_Check_Material();
-static int __check_DP_Material(Material *, Check_Material, int);
+static int __check_material(Material *, Check_Material, int);
 
 /**********************************************************************/
 
@@ -52,7 +52,7 @@ int Define_Drucker_Prager(Material *DP_Material,FILE *Simulation_file, char *Mat
   Check_Material ChkMat = __Initialise_Check_Material();
 
   /* Default parameters */
-  (*DP_Material).yield_stress_0 = 0.0;
+  (*DP_Material).kappa_0 = 0.0;
   (*DP_Material).ReferencePressure = 0.0; 
   (*DP_Material).J2_degradated = 0.0;
   TOL_Radial_Returning = 1E-14;
@@ -99,12 +99,12 @@ int Define_Drucker_Prager(Material *DP_Material,FILE *Simulation_file, char *Mat
     /**************************************************/
     else if (strcmp(Parameter_pars[0], "Reference-plastic-strain") == 0) {
       ChkMat.Is_Reference_plastic_strain = true;
-      (*DP_Material).Reference_Plastic_Strain_Ortiz = atof(Parameter_pars[1]);
+      (*DP_Material).Plastic_Strain_0 = atof(Parameter_pars[1]);
     }
     /**************************************************/
     else if (strcmp(Parameter_pars[0], "kappa-0") == 0) {
       ChkMat.Is_kappa_0 = true;
-      (*DP_Material).yield_stress_0 = atof(Parameter_pars[1]);
+      (*DP_Material).kappa_0 = atof(Parameter_pars[1]);
     }
     /**************************************************/
     else if (strcmp(Parameter_pars[0], "Friction-angle") == 0) {
@@ -146,7 +146,7 @@ int Define_Drucker_Prager(Material *DP_Material,FILE *Simulation_file, char *Mat
 
   strcpy((*DP_Material).Type, Material_Model);
 
-  double kappa0 = (*DP_Material).yield_stress_0;
+  double kappa0 = (*DP_Material).kappa_0;
   double m = (*DP_Material).Exponent_Hardening_Ortiz;
   double H = (*DP_Material).Hardening_modulus;
 
@@ -154,7 +154,7 @@ int Define_Drucker_Prager(Material *DP_Material,FILE *Simulation_file, char *Mat
   {
     if(ChkMat.Is_Reference_plastic_strain == false)
     {
-      (*DP_Material).Reference_Plastic_Strain_Ortiz = (kappa0 / (m * H)) *
+      (*DP_Material).Plastic_Strain_0 = (kappa0 / (m * H)) *
       pow(1, (1.0 / m - 1.0));
     }
   }
@@ -164,10 +164,10 @@ int Define_Drucker_Prager(Material *DP_Material,FILE *Simulation_file, char *Mat
     return EXIT_FAILURE;
   }
 
-  STATUS = __check_DP_Material(DP_Material, ChkMat, Material_Idx);
+  STATUS = __check_material(DP_Material, ChkMat, Material_Idx);
   if(STATUS == EXIT_FAILURE)
   {
-        fprintf(stderr, ""RED" Error in __check_DP_Material() "RESET" \n");
+        fprintf(stderr, ""RED" Error in __check_material() "RESET" \n");
     return EXIT_FAILURE;
   }
 
@@ -196,7 +196,7 @@ static Check_Material __Initialise_Check_Material() {
 
 /**********************************************************************/
 
-static int __check_DP_Material(Material * DP_Material,
+static int __check_material(Material * DP_Material,
                                       Check_Material ChkMat, int Idx) {
 
 int STATUS = EXIT_SUCCESS;
@@ -219,9 +219,9 @@ int STATUS = EXIT_SUCCESS;
     printf("\t \t -> %s : %f \n", ""MAGENTA"[Dilatancy-angle]"RESET"",
            (*DP_Material).psi_Frictional);
 
-    printf("\t \t -> %s : %f \n", ""MAGENTA"[Kappa-0]"RESET"", (*DP_Material).yield_stress_0);
+    printf("\t \t -> %s : %f \n", ""MAGENTA"[Kappa-0]"RESET"", (*DP_Material).kappa_0);
 
-    printf("\t \t -> %s : %f \n", ""MAGENTA"[Reference-plastic-strain]"RESET"", (*DP_Material).Reference_Plastic_Strain_Ortiz);
+    printf("\t \t -> %s : %f \n", ""MAGENTA"[Reference-plastic-strain]"RESET"", (*DP_Material).Plastic_Strain_0);
 
     printf("\t \t -> %s : %f \n", ""MAGENTA"[Hardening-modulus]"RESET"", (*DP_Material).Hardening_modulus);
 

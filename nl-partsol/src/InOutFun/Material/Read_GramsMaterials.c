@@ -31,7 +31,7 @@ bool Is_Yield_Function_Frictional = false;
 bool Is_Hardening = false;
 bool Is_Parameter_Hardening_Hughes = false;
 bool Is_Exponent_Hardening_Ortiz = false;
-bool Is_Reference_Plastic_Strain_Ortiz = false;
+bool Is_Plastic_Strain_0 = false;
 bool Is_theta_Hardening_Voce = false;
 bool Is_delta_Hardening_Voce = false;
 bool Is_K_inf_Hardening_Voce = false;
@@ -194,7 +194,7 @@ GramsMaterials (Particles=route.txt) {
       Mat_GP.heps = NAN;
       Mat_GP.Wc = NAN;
       /* Parameters for plastic simulations */
-      Mat_GP.yield_stress_0 = NAN;
+      Mat_GP.kappa_0 = NAN;
       Mat_GP.Hardening_modulus = NAN;
 
       /* Parameters for frictional materials */
@@ -209,7 +209,7 @@ GramsMaterials (Particles=route.txt) {
       Mat_GP.Hardening_Cervera = false;
       Mat_GP.Hardening_Ortiz = false;
       Mat_GP.Exponent_Hardening_Ortiz = 1.0;
-      Mat_GP.Reference_Plastic_Strain_Ortiz = 0.0;
+      Mat_GP.Plastic_Strain_0 = 0.0;
       Mat_GP.Hardening_Voce = false;
       Mat_GP.K_0_Hardening_Voce = 0.0;
       Mat_GP.K_inf_Hardening_Voce = 0.0;
@@ -353,7 +353,7 @@ GramsMaterials (Particles=route.txt) {
           /**************************************************/
           else if (strcmp(Parse_Mat_Prop[0], "Yield-stress") == 0) {
             Is_yield_stress = true;
-            Mat_GP.yield_stress_0 = atof(Parse_Mat_Prop[1]);
+            Mat_GP.kappa_0 = atof(Parse_Mat_Prop[1]);
           }
           /**************************************************/
           else if (strcmp(Parse_Mat_Prop[0], "Hardening-Criteria") == 0) {
@@ -393,9 +393,9 @@ GramsMaterials (Particles=route.txt) {
           }
           /**************************************************/
           else if (strcmp(Parse_Mat_Prop[0],
-                          "Reference-Plastic-Strain-Ortiz") == 0) {
-            Is_Reference_Plastic_Strain_Ortiz = true;
-            Mat_GP.Reference_Plastic_Strain_Ortiz = atof(Parse_Mat_Prop[1]);
+                          "Plastic-Strain-0") == 0) {
+            Is_Plastic_Strain_0 = true;
+            Mat_GP.Plastic_Strain_0 = atof(Parse_Mat_Prop[1]);
           }
           /**************************************************/
           else if (strcmp(Parse_Mat_Prop[0], "K-0-Voce") == 0) {
@@ -693,7 +693,7 @@ static void check_Von_Mises_Material(Material Mat_particle) {
     printf("\t \t -> %s : %f \n", "Density", Mat_particle.rho);
     printf("\t \t -> %s : %f \n", "Elastic modulus", Mat_particle.E);
     printf("\t \t -> %s : %f \n", "Poisson modulus", Mat_particle.nu);
-    printf("\t \t -> %s : %f \n", "Yield stress", Mat_particle.yield_stress_0);
+    printf("\t \t -> %s : %f \n", "Yield stress", Mat_particle.kappa_0);
     printf("\t \t -> %s : %s \n", "Plastic solver",
            Mat_particle.Plastic_Solver);
 
@@ -744,11 +744,11 @@ static void check_Von_Mises_Material(Material Mat_particle) {
           exit(EXIT_FAILURE);
         }
 
-        if (Is_Exponent_Hardening_Ortiz && Is_Reference_Plastic_Strain_Ortiz) {
+        if (Is_Exponent_Hardening_Ortiz && Is_Plastic_Strain_0) {
           printf("\t \t -> %s : %f \n", "Exponent-Hardening-Ortiz",
                  Mat_particle.Exponent_Hardening_Ortiz);
           printf("\t \t -> %s : %f \n", "Reference-Plastic-Strain_Ortiz",
-                 Mat_particle.Reference_Plastic_Strain_Ortiz);
+                 Mat_particle.Plastic_Strain_0);
         } else {
           fprintf(stderr, "%s : %s \n", "Error in GramsMaterials()",
                   "Some parameter is missed for Von-Mises material (Ortiz "
@@ -757,7 +757,7 @@ static void check_Von_Mises_Material(Material Mat_particle) {
                     ? "Exponent-Hardening-Ortiz : true \n"
                     : "Exponent-Hardening-Ortiz : false \n",
                 stdout);
-          fputs(Is_Reference_Plastic_Strain_Ortiz
+          fputs(Is_Plastic_Strain_0
                     ? "Reference-Plastic-Strain_Ortiz : true \n"
                     : "Reference-Plastic-Strain_Ortiz : false \n",
                 stdout);

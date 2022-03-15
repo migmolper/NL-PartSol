@@ -115,11 +115,14 @@ Define-Material(idx=0,Model=Drucker-Prager-Plane-Strain)
       } else if (strcmp(Index_and_Model.Model, "Von-Mises") == 0) {
         List_Materials[idx] = Define_Von_Mises(Sim_dat, Index_and_Model.Model,
                                                Index_and_Model.Idx);
-      } else if (strcmp(Index_and_Model.Model, "Granular") == 0) {
-        List_Materials[idx] = Define_Frictional(Sim_dat, Index_and_Model.Model,
-                                                Index_and_Model.Idx);
+      } else if (strcmp(Index_and_Model.Model, "Matsuoka-Nakai") == 0) {
+
+        STATUS = Define_Matsuoka_Nakai(&List_Materials[idx],Sim_dat,Index_and_Model.Model,Index_and_Model.Idx);
+
       } else if (strcmp(Index_and_Model.Model, "Drucker-Prager") == 0) {
+
         STATUS = Define_Drucker_Prager(&List_Materials[idx],Sim_dat,Index_and_Model.Model,Index_and_Model.Idx);
+
       } else if (strcmp(Index_and_Model.Model,
                         "Newtonian-Fluid-Compressible") == 0) {
         List_Materials[idx] = Define_Compressible_Newtonian_Fluid(

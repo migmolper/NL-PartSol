@@ -29,7 +29,7 @@ typedef struct {
   bool Is_Hardening_Cervera;
   bool Is_Hardening_Ortiz;
   bool Is_Exponent_Hardening_Ortiz;
-  bool Is_Reference_Plastic_Strain_Ortiz;
+  bool Is_Plastic_Strain_0;
 
   bool Is_Viscous_regularization;
   bool Is_fluidity_param;
@@ -105,7 +105,7 @@ Material Define_Von_Mises(FILE *Simulation_file, char *Material_Model,
     /**************************************************/
     else if (strcmp(Parameter_pars[0], "Yield-stress") == 0) {
       ChkMat.Is_yield_stress = true;
-      New_Material.yield_stress_0 = atof(Parameter_pars[1]);
+      New_Material.kappa_0 = atof(Parameter_pars[1]);
     }
     /**************************************************/
     else if (strcmp(Parameter_pars[0], "Hardening-Criteria") == 0) {
@@ -143,9 +143,9 @@ Material Define_Von_Mises(FILE *Simulation_file, char *Material_Model,
       New_Material.Exponent_Hardening_Ortiz = atof(Parameter_pars[1]);
     }
     /**************************************************/
-    else if (strcmp(Parameter_pars[0], "Reference-Plastic-Strain-Ortiz") == 0) {
-      ChkMat.Is_Reference_Plastic_Strain_Ortiz = true;
-      New_Material.Reference_Plastic_Strain_Ortiz = atof(Parameter_pars[1]);
+    else if (strcmp(Parameter_pars[0], "Plastic-Strain-0") == 0) {
+      ChkMat.Is_Plastic_Strain_0 = true;
+      New_Material.Plastic_Strain_0 = atof(Parameter_pars[1]);
     }
     /**************************************************/
     else if (strcmp(Parameter_pars[0], "Viscous-regularization") == 0) {
@@ -222,7 +222,7 @@ static Check_Material Initialise_Check_Material() {
   ChkMat.Is_Hardening_Cervera = false;
   ChkMat.Is_Hardening_Ortiz = false;
   ChkMat.Is_Exponent_Hardening_Ortiz = false;
-  ChkMat.Is_Reference_Plastic_Strain_Ortiz = false;
+  ChkMat.Is_Plastic_Strain_0 = false;
   ChkMat.Is_Viscous_regularization = false; // Viscous regularization
   ChkMat.Is_fluidity_param = false;         // Viscoplasticity parameter
   ChkMat.Is_Locking_Control_Fbar = false;   // Locking control
@@ -241,7 +241,7 @@ static void check_Von_Mises_Material(Material Mat_particle,
     printf("\t \t -> %s : %f \n", "Density", Mat_particle.rho);
     printf("\t \t -> %s : %f \n", "Elastic modulus", Mat_particle.E);
     printf("\t \t -> %s : %f \n", "Poisson modulus", Mat_particle.nu);
-    printf("\t \t -> %s : %f \n", "Yield stress", Mat_particle.yield_stress_0);
+    printf("\t \t -> %s : %f \n", "Yield stress", Mat_particle.kappa_0);
     printf("\t \t -> %s : %s \n", "Plastic solver",
            Mat_particle.Plastic_Solver);
 
@@ -306,11 +306,11 @@ static void check_Von_Mises_Material(Material Mat_particle,
         }
 
         if (ChkMat.Is_Exponent_Hardening_Ortiz &&
-            ChkMat.Is_Reference_Plastic_Strain_Ortiz) {
+            ChkMat.Is_Plastic_Strain_0) {
           printf("\t \t -> %s : %f \n", "Exponent-Hardening-Ortiz",
                  Mat_particle.Exponent_Hardening_Ortiz);
           printf("\t \t -> %s : %f \n", "Reference-Plastic-Strain_Ortiz",
-                 Mat_particle.Reference_Plastic_Strain_Ortiz);
+                 Mat_particle.Plastic_Strain_0);
         } else {
           fprintf(stderr, "%s : %s \n", "Error in GramsMaterials()",
                   "Some parameter is missed for Von-Mises material (Ortiz "
@@ -319,7 +319,7 @@ static void check_Von_Mises_Material(Material Mat_particle,
                     ? "Exponent-Hardening-Ortiz : true \n"
                     : "Exponent-Hardening-Ortiz : false \n",
                 stdout);
-          fputs(ChkMat.Is_Reference_Plastic_Strain_Ortiz
+          fputs(ChkMat.Is_Plastic_Strain_0
                     ? "Reference-Plastic-Strain_Ortiz : true \n"
                     : "Reference-Plastic-Strain_Ortiz : false \n",
                 stdout);

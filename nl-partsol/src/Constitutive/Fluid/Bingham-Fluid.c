@@ -76,7 +76,7 @@ static double compute_p_Tait_Murnaghan(double J, Material MatProp_p) {
 
 static double compute_Bingham_viscosity(Tensor d, Material MatProp_p) {
   double mu_0 = MatProp_p.Viscosity;
-  double taub_yield = MatProp_p.yield_stress_0;
+  double taub_yield = MatProp_p.kappa_0;
   double m = MatProp_p.fluidity_param;
   double EVPS = sqrt(2 * inner_product__TensorLib__(d, d));
 
