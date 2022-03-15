@@ -1,6 +1,30 @@
 /**************************************************************/
 /******************* Material Parameters **********************/
 /**************************************************************/
+// Kenichi
+#define NumberDimensions 2
+#define YoungMouduls 10.0E3
+#define PoissonRatio 0.2
+#define AtmosphericPressure -100.0
+#define a1_Parameter 370.0
+#define a2_Parameter 0.01
+#define a3_Parameter 5.0
+#define phi_Parameter 37.0
+#define alpha_Parameter 0.10 // psi: 6.0
+#define NumberSteps 2000     // 1000 // 5000 // 3500 // 2500 //
+#define Delta_strain_II -0.00001
+#define Confining_pressure -20.0
+
+/*
+#define kappa0 40.0
+#define H -200.0 //-300.0
+#define m -0.5
+#define J2_degradated_value 5.0
+
+*/
+
+/*
+//Borja
 #define NumberDimensions 2
 #define YoungMouduls 100.0E3
 #define PoissonRatio 0.2
@@ -12,6 +36,7 @@
 #define NumberSteps 3000 // 1000 // 5000 // 3500 // 2500 //
 #define Delta_strain_II -0.00001
 #define Confining_pressure -200.0
+*/
 
 /*
 Unitary test for the smooth Mohr-Coulomb model.
@@ -411,7 +436,7 @@ int compute_1PK_Matsuoka_Nakai(State_Parameters IO_State, Material MatProp);
 /**************************************************************/
 /******************** Solver Parameters ***********************/
 /**************************************************************/
-#define TOL_Radial_Returning 10E-10
+#define TOL_Radial_Returning 10E-14
 #define Max_Iterations_Radial_Returning 10
 #define PI__MatrixLib__ 3.14159265358979323846
 
@@ -475,10 +500,37 @@ int main() {
   double *kappa1 = (double *)calloc(NumberSteps, sizeof(double));
   double *Equiv_Plast_Str = (double *)calloc(NumberSteps, sizeof(double));
 
-  // Set initial values
+  // Set initial value stress
   stress[0] = Confining_pressure;
   stress[1] = Confining_pressure;
   stress[2] = Confining_pressure;
+
+  double rad_friction_angle = (PI__MatrixLib__ / 180.0) * phi_Parameter;
+  double a1 = MatProp.a_Hardening_Borja[0];
+  double a2 = MatProp.a_Hardening_Borja[1];
+  double a3 = MatProp.a_Hardening_Borja[2];
+  double f, df;
+  double I1 = 3.0 * Confining_pressure;
+  double EPS_0 = 0.0;
+  double kappa_0 = 8.0 * sin(rad_friction_angle) * sin(rad_friction_angle) /
+                   (1.0 - sin(rad_friction_angle) * sin(rad_friction_angle));
+  int iter = 0;
+
+  f = kappa_0 - a1 * EPS_0 * exp(a2 * I1) * exp(-a3 * EPS_0);
+
+  while (fabs(f) > TOL_Radial_Returning) {
+    iter++;
+    df = (a3 * EPS_0 - 1.0) * a1 * exp(a2 * I1) * exp(-a3 * EPS_0);
+    EPS_0 += -f / df;
+    f = kappa_0 - a1 * EPS_0 * exp(a2 * I1) * exp(-a3 * EPS_0);
+    if (iter > 10) {
+      fprintf(stderr, "" RED " Iter (%e) > 10 " RESET " \n", f);
+      return EXIT_FAILURE;
+    }
+  }
+
+  kappa1[0] = kappa_0;
+  Equiv_Plast_Str[0] = EPS_0;
 
   // Start time integration
   for (int i = 1; i < NumberSteps; i++) {
@@ -533,7 +585,7 @@ int main() {
   // Save data in a csv file
   FILE *E2_vs_VM = fopen("E2_vs_VM.csv", "w");
   for (int i = 0; i < NumberSteps; i++) {
-    fprintf(E2_vs_VM, "%e, %e\n", -strain[i * 3 + 1],
+    fprintf(E2_vs_VM, "%e, %e\n", -100 * strain[i * 3 + 1],
             fabs(stress[i * 3 + 1] - stress[i * 3 + 0]));
   }
   fclose(E2_vs_VM);
@@ -684,6 +736,24 @@ int compute_1PK_Matsuoka_Nakai(State_Parameters IO_State, Material MatProp)
   I2 = T_tr[0] * T_tr[1] + T_tr[1] * T_tr[2] + T_tr[0] * T_tr[2];
   I3 = T_tr[0] * T_tr[1] * T_tr[2];
 
+  // Update lambda for a given value of kappa
+  double rad_friction_angle = (PI__MatrixLib__ / 180.0) * phi_Parameter;
+  double f, df;
+  int iter = 0;
+  f = kappa_n[0] - a[0] * Lambda_n * exp(a[1] * I1) * exp(-a[2] * Lambda_n);
+  while (fabs(f) > TOL_Radial_Returning) {
+    iter++;
+    df =
+        (a[2] * Lambda_n - 1.0) * a[0] * exp(a[1] * I1) * exp(-a[2] * Lambda_n);
+    Lambda_n += -f / df;
+    f = kappa_n[0] - a[0] * Lambda_n * exp(a[1] * I1) * exp(-a[2] * Lambda_n);
+    if (iter > 10) {
+      fprintf(stderr, "" RED " Iter (%e) > 10 " RESET " \n", f);
+      return EXIT_FAILURE;
+    }
+  }
+
+  // Check yield
   F_0 = __F(c0, kappa_n[0], pa, I1, I2, I3, m);
 
 #ifdef DEBUG_MODE
@@ -707,7 +777,7 @@ int compute_1PK_Matsuoka_Nakai(State_Parameters IO_State, Material MatProp)
     IO_State.Strain_e[0] = IO_State.Strain[0];
     IO_State.Strain_e[1] = IO_State.Strain[1];
     IO_State.Strain_e[2] = IO_State.Strain[2];
-
+    *IO_State.Equiv_Plast_Str = Lambda_n;
   }
   // Plastic (monolithic solver with line search)
   else {
@@ -1222,7 +1292,6 @@ static int __trial_elastic(double *T_tr, const double *E_hencky_trial,
             AA[5] * E_hencky_trial[2];
   T_tr[2] = AA[6] * E_hencky_trial[0] + AA[7] * E_hencky_trial[1] +
             AA[8] * E_hencky_trial[2];
-
 
   return EXIT_SUCCESS;
 }

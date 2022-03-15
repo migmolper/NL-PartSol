@@ -112,6 +112,11 @@ int Define_Matsuoka_Nakai(Material * MN_Material,FILE *Simulation_file, char *Ma
       (*MN_Material).atmospheric_pressure = atof(Parameter_pars[1]);
     }
     /**************************************************/
+    else if (strcmp(Parameter_pars[0], "Reference-pressure") == 0) {
+      ChkMat.Is_atmospheric_pressure = true;
+      (*MN_Material).ReferencePressure = atof(Parameter_pars[1]);
+    }
+    /**************************************************/
     else if (strcmp(Parameter_pars[0], "Friction-angle") == 0) {
       ChkMat.Is_friction_angle = true;
       (*MN_Material).phi_Frictional = atof(Parameter_pars[1]);
@@ -148,18 +153,20 @@ int Define_Matsuoka_Nakai(Material * MN_Material,FILE *Simulation_file, char *Ma
   {
     double rad_friction_angle = (PI__MatrixLib__ / 180.0) * (*MN_Material).phi_Frictional;  
     double a1 = (*MN_Material).a_Hardening_Borja[0];
+    double a2 = (*MN_Material).a_Hardening_Borja[1];
     double a3 = (*MN_Material).a_Hardening_Borja[2];
     double f, df;
+    double I1 = 3*(*MN_Material).ReferencePressure;
     double EPS_0 = 0.0;
     double kappa_0 = 8 * sin(rad_friction_angle)*sin(rad_friction_angle) / (1 - sin(rad_friction_angle)*sin(rad_friction_angle));
     int iter = 0;
 
-    f = kappa_0 - a1 * EPS_0 * exp(-a3 * EPS_0);
+    f = kappa_0 - a1 * EPS_0 * exp(a2*I1) * exp(-a3 * EPS_0);
     while (fabs(f) > TOL_Radial_Returning) {
       iter++;
-      df = (a3 * EPS_0 - 1) * a1 * exp(-a3 * EPS_0);
+      df = (a3 * EPS_0 - 1) * a1 * exp(a2*I1) * exp(-a3 * EPS_0);
       EPS_0 += - f / df;
-      f = kappa_0 - a1 * EPS_0 * exp(-a3 * EPS_0);
+      f = kappa_0 - a1 * EPS_0 * exp(a2*I1) * exp(-a3 * EPS_0);
       if (iter > 10) {
         fprintf(stderr, ""RED" Iter > 10 "RESET" \n");
         return EXIT_FAILURE;
@@ -170,7 +177,7 @@ int Define_Matsuoka_Nakai(Material * MN_Material,FILE *Simulation_file, char *Ma
     (*MN_Material).Plastic_Strain_0 = EPS_0;  
   }
   else if((ChkMat.Is_Reference_plastic_strain = true) 
-  && (ChkMat.Is_friction_angle == true))
+  && (ChkMat.Is_kappa_0 == true))
   {
     (*MN_Material).phi_Frictional = asin(sqrt((*MN_Material).kappa_0/((*MN_Material).kappa_0+8)));
   }

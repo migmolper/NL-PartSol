@@ -61,9 +61,11 @@ static int __E_hencky(
 
 static int __update_internal_variables_elastic(
     double *Stress /**< [in/out] Nominal stress tensor */,
+    double *eps_n1 /**< [in/out] Equivalent plastic strain */,
     const double *D_phi /**< [in] Total deformation gradient. */,
     const double *T_tr /**< [in] Elastic stress tensor */,
-    const double *eigvec_b_e_tr /**< [in] Eigenvector of b elastic trial. */);
+    const double *eigvec_b_e_tr /**< [in] Eigenvector of b elastic trial. */,
+    double Lambda_n /**< [in] Total plastic multiplier (iter k) */);
 
 static int __kappa(
     double *kappa /**< [out] Hardening vector */, 
@@ -258,6 +260,7 @@ int compute_1PK_Matsuoka_Nakai(State_Parameters IO_State, Material MatProp)
   double nu = MatProp.nu;
   double K = E / (3.0 * (1.0 - 2.0 * nu));
   double G = E / (2.0 * (1.0 + nu));
+  double friction_angle = MatProp.phi_Frictional;
   double alpha = MatProp.alpha_Hardening_Borja;
   double pa = MatProp.atmospheric_pressure;
   double m = 0.0;
@@ -323,6 +326,24 @@ int compute_1PK_Matsuoka_Nakai(State_Parameters IO_State, Material MatProp)
   I2 = T_tr[0] * T_tr[1] + T_tr[1] * T_tr[2] + T_tr[0] * T_tr[2];
   I3 = T_tr[0] * T_tr[1] * T_tr[2];
 
+  // Update lambda for a given value of kappa
+  double rad_friction_angle = (PI__MatrixLib__ / 180.0) * friction_angle;
+  double f, df;
+  int iter = 0;
+  f = kappa_n[0] - a[0] * Lambda_n * exp(a[1] * I1) * exp(-a[2] * Lambda_n);
+  while (fabs(f) > TOL_Radial_Returning) {
+    iter++;
+    df =
+        (a[2] * Lambda_n - 1.0) * a[0] * exp(a[1] * I1) * exp(-a[2] * Lambda_n);
+    Lambda_n += -f / df;
+    f = kappa_n[0] - a[0] * Lambda_n * exp(a[1] * I1) * exp(-a[2] * Lambda_n);
+    if (iter > 10) {
+      fprintf(stderr, "" RED " Iter (%e) > 10 " RESET " \n", f);
+      return EXIT_FAILURE;
+    }
+  }
+
+  // Check yield
   F_0 = __F(c0, kappa_n[0], pa, I1, I2, I3, m);
 
 #ifdef DEBUG_MODE
@@ -336,7 +357,7 @@ int compute_1PK_Matsuoka_Nakai(State_Parameters IO_State, Material MatProp)
   if (F_0 <= 0.0) {
 
     STATUS = __update_internal_variables_elastic(
-        IO_State.Stress, IO_State.D_phi, T_tr, eigvec_b_e_tr);
+        IO_State.Stress, IO_State.Equiv_Plast_Str, IO_State.D_phi, T_tr, eigvec_b_e_tr, Lambda_n);
     if (STATUS == EXIT_FAILURE) {
       fprintf(stderr,
               "" RED "Error in __update_internal_variables_elastic()" RESET
@@ -876,9 +897,14 @@ static int __E_hencky(double *E_hencky_k, const double *T_k, const double *CC) {
 
 
 static int __update_internal_variables_elastic(double *Stress,
+                                               double *eps_n1,
                                                const double *D_phi,
                                                const double *T_tr,
-                                               const double *eigvec_b_e_tr) {
+                                               const double *eigvec_b_e_tr,
+                                               double Lambda_n) {
+
+  // Update hardening parameters
+  *eps_n1 = Lambda_n;
 
   // Compute the transpose of D_phi
   double D_phi_mT[9] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
