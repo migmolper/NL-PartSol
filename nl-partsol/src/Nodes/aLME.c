@@ -999,7 +999,6 @@ void local_search__aLME__(Particle MPM_Mesh, Mesh FEM_Mesh) {
 
     // Free previous list of tributary nodes to the particle.
     free__SetLib__(&MPM_Mesh.ListNodes[p]);
-    MPM_Mesh.ListNodes[p] = NULL;
 
     // Calculate the new connectivity with the previous value of beta.
     MPM_Mesh.ListNodes[p] = tributary__aLME__(p, X_p, Cut_off_Ellipsoid_p,
@@ -1026,6 +1025,7 @@ void local_search__aLME__(Particle MPM_Mesh, Mesh FEM_Mesh) {
     free__MatrixLib__(Delta_Xip);
     free(Cut_off_Ellipsoid_p.nM);
     free(Beta_p.nM);
+    free(DF_p.nM);
 
     // Active those nodes that interact with the particle.
     asign_to_nodes__Particles__(p, MPM_Mesh.Element_p[p], MPM_Mesh.I0[p],
