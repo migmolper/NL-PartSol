@@ -543,6 +543,7 @@ typedef struct
   double * Increment_E_plastic;
   double * Equiv_Plast_Str; // Equivalent plastic strain
   double * Kappa; // Hardening Parameter
+  double * e_ep; // Elastoplastic tangent matrix
 
   double Cohesion; 
   double Yield_stress;
