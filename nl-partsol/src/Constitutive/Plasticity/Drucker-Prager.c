@@ -388,8 +388,8 @@ int compute_1PK_Drucker_Prager(State_Parameters IO_State, Material MatProp)
         d_PHI = __d_yield_function_apex(d_gamma_k, d_gamma_1, d_kappa_k, K,
                                         alpha_F, alpha_Q, beta);
         if (fabs(d_PHI) < TOL) {
-          fprintf(stderr, "" RED "|d_PHI| = %f < TOL (apex loop)" RESET "\n",fabs(d_PHI));
-          return EXIT_FAILURE;
+          fprintf(stderr, "" RED "|d_PHI| = %e < TOL (apex loop)" RESET "\n",fabs(d_PHI));
+          break;
         }
 
         d_gamma_2_k += -PHI / d_PHI;
@@ -403,8 +403,6 @@ int compute_1PK_Drucker_Prager(State_Parameters IO_State, Material MatProp)
         {
           d_gamma_k = d_gamma_1 + d_gamma_2_k;
         }
-
-        
 
         PHI = __yield_function_apex(pressure, d_gamma_k, d_gamma_1, kappa_k,
                                     d_kappa_k, K, alpha_F, alpha_Q, beta);

@@ -26,17 +26,19 @@ static int __eigenvalues_kirchhoff(
 
 /**************************************************************/ 
 int compute_1PK_elastoplastic_tangent_matrix(
-    const double * dN_alpha,
-    const double * dN_beta,
-    State_Parameters IO_State)
+  double * A_ep,
+  const double * dN_alpha,
+  const double * dN_beta,
+  const State_Parameters IO_State)
 {
 
   int STATUS = EXIT_SUCCESS;
+  int Ndim = NumberDimensions;
 
 #if NumberDimensions == 2
 
-double u[2] = {0.0,0.0};
-double v[2] = {0.0,0.0};
+  double u[2] = {0.0,0.0};
+  double v[2] = {0.0,0.0};
 
 #else
   No esta implementado
@@ -52,7 +54,6 @@ double v[2] = {0.0,0.0};
   double eigval_b_e[3] = {0.0, 0.0, 0.0};
   double eigvec_b_e[9] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
   
-
   STATUS = __spectral_decomposition_b_e(eigval_b_e, eigvec_b_e, IO_State.b_e);
   if (STATUS == EXIT_FAILURE) {
       fprintf(stderr, "" RED "Error in __spectral_decomposition_b_e" RESET "\n");
@@ -67,35 +68,91 @@ double v[2] = {0.0,0.0};
 
 #if NumberDimensions == 2
 
- double nI[2] = {0.0,0.0};  
- double nII[2] = {0.0,0.0};
- double nI_nI[4] = {0.0,0.0,0.0};
- double nI_nII[4] = {0.0,0.0,0.0};
- double nII_nI[4] = {0.0,0.0,0.0};
- double nII_nII[4] = {0.0,0.0,0.0};
+  double n1[2] = {0.0,0.0};  
+  double n2[2] = {0.0,0.0};
  
- nI[0] = eigvec_b_e[0];
- nI[1] = eigvec_b_e[1];
- nII[0] = eigvec_b_e[3];
- nII[1] = eigvec_b_e[4];
+  int m[4][4] =
+  {
+      {0.0,0.0,0.0},
+      {0.0,0.0,0.0},
+      {0.0,0.0,0.0},
+      {0.0,0.0,0.0},
+  };
 
-for(unsigned i = 0 ; i<2; i++)
-{
-    for(unsigned j = 0 ; j<2; j++)
-    {
-        nI_nI[i*2 + j] = nI[i]*nI[j];
-        nI_nII[i*2 + j] = nI[i]*nII[j];
-        nII_nI[i*2 + j] = nII[i]*nI[j];
-        nII_nII[i*2 + j] = nII[i]*nII[j];
-    }
-}
+  double mu[4][2] = 
+  {
+    {0.0,0.0},
+    {0.0,0.0},
+    {0.0,0.0},
+    {0.0,0.0}
+  };
+
+  double mv[4][2] =
+  {
+    {0.0,0.0},
+    {0.0,0.0},
+    {0.0,0.0},
+    {0.0,0.0}
+  }; 
+
+  n1[0] = eigvec_b_e[0];
+  n1[1] = eigvec_b_e[1];
+  n2[0] = eigvec_b_e[3];
+  n2[1] = eigvec_b_e[4];
 
 #else
   No esta implementado
 #endif
 
+  // Generate the 
+  for(unsigned A = 0 ; A<Ndim; A++)
+  {
+    for(unsigned B = 0 ; B<Ndim; B++)
+    {
+      for (unsigned i = 0; i < Ndim; i++)
+      {
+        for (unsigned j = 0; j < Ndim; j++)
+        {      
+          m[A*Ndim + B][i*Ndim + j] = n1[i]*n1[j];
+        }
+      }
+    }
+  }
 
-return EXIT_SUCCESS;
+  for (unsigned A = 0; A < Ndim; A++)
+  {
+    for (unsigned B = 0; B < Ndim; B++)
+    {
+      for (unsigned i = 0; i < Ndim; i++)
+      {
+        for (unsigned j = 0; j < Ndim; j++)
+        {
+          mv[A*Ndim + B][i] += m[A*Ndim + B][i*Ndim+j]*v[j];
+          mu[A*Ndim + B][i] += m[A*Ndim + B][i*Ndim+j]*u[j];
+        }
+      }  
+    }  
+  }
+  
+
+  for(unsigned A = 0 ; A<Ndim; A++)
+  {
+    for (unsigned B = 0; B < Ndim; B++)
+    {
+      for (unsigned i = 0; i < Ndim; i++)
+      {
+        for (unsigned j = 0; j < Ndim; j++)
+        {      
+          A_ep[A*Ndim + B] += IO_State.e_ep[A*Ndim + B]*(mv[A*Ndim + A][i] * mv[B*Ndim + B][j]) 
+          + (A != B)*0.5*((eigval_T[B] - eigval_T[A])/(eigval_b_e[B] - eigval_b_e[A]))*
+          (eigval_T[B]*(mv[A*Ndim + B][i] * mv[A*Ndim + B][j]) + eigval_T[A]*(mv[A*Ndim + B][i] * mv[B*Ndim + A][j]));
+        }
+      }
+    }
+  }
+
+
+  return EXIT_SUCCESS;
 }
 
 /**************************************************************/
