@@ -1064,6 +1064,19 @@ unsigned Size_tensor = 9;
     */
     MPM_Mesh.Phi.J_n.nV[p] = MPM_Mesh.Phi.J_n1.nV[p];
 
+    // Update hardening
+    MPM_Mesh.Phi.Kappa_n[p] = MPM_Mesh.Phi.Kappa_n1[p];
+    
+    // Update equivalent plastic strains
+    MPM_Mesh.Phi.EPS_n[p] = MPM_Mesh.Phi.EPS_n1[p];
+
+    // Update elastic left Cauchy-Green tensor
+#if NumberDimensions == 2
+    for (unsigned i = 0 ; i<5 ; i++) MPM_Mesh.Phi.b_e_n.nM[p][i] = MPM_Mesh.Phi.b_e_n1.nM[p][i]; 
+#else
+    for (unsigned i = 0 ; i<9 ; i++) MPM_Mesh.Phi.b_e_n.nM[p][i] = MPM_Mesh.Phi.b_e_n1.nM[p][i];
+#endif
+
     /*
       Update/correct vector variables
     */
@@ -1183,12 +1196,16 @@ static void output_selector(Particle MPM_Mesh, Mesh FEM_Mesh, Mask ActiveNodes,
     }
   }
 
+
   for (int i = 0; i < Number_Out_particles_path_csv; i++) {
+
+/*
     if (Out_particles_path_csv[i].Out_csv_particles_path_Damage) {
       path_particles_analysis_csv__InOutFun__(
           MPM_Mesh.Phi.chi, MPM_Mesh.Phi.x_GC, "Particles_path_damage_csv",
           Out_particles_path_csv[i], i, TimeStep, DeltaTimeStep);
     }
+*/
 
     if (Out_particles_path_csv[i].Out_csv_particles_path_Velocity) {
       path_particles_analysis_csv__InOutFun__(

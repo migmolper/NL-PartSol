@@ -1471,7 +1471,7 @@ static Tensor compute_stiffness_density(Tensor GRADIENT_pA, Tensor GRADIENT_pB,
 
   return C_AB;
 }
-
+*/
 /**************************************************************/
 
 static Tensor compute_Nodal_Tangent_Stiffness_Material(Tensor F_n12_p,

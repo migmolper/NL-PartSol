@@ -14,7 +14,7 @@ bool Backup_EPS;
 */
 static void vtk_Out_mass(FILE *, Matrix, int);
 static void vtk_Out_density(FILE *, Matrix, int);
-static void vtk_Out_damage(FILE *, Matrix, int);
+static void vtk_Out_damage(FILE *, const double *, int);
 static void vtk_Out_nodal_idx(FILE *, int *, int);
 static void vtk_Out_material_idx(FILE *, int *, int);
 static void vtk_Out_vel(FILE *, Matrix, int);
@@ -24,7 +24,7 @@ static void vtk_Out_Pw(FILE *, Matrix, Matrix, int);
 static void vtk_Out_dPw_dt(FILE *, Matrix, int);
 static void vtk_Out_Deformation_Gradient(FILE *, Matrix, int);
 static void vtk_Out_plastic_deformation_gradient(FILE *, Matrix, int);
-static void vtk_Out_Equiv_Plastic_Strain(FILE *, Matrix, int);
+static void vtk_Out_Equiv_Plastic_Strain(FILE *, const double *, int);
 /*********************************************************************/
 
 void particle_backup_vtk__InOutFun__(Particle MPM_Mesh, int TimeStep_i,
@@ -112,12 +112,12 @@ void particle_backup_vtk__InOutFun__(Particle MPM_Mesh, int TimeStep_i,
 
   /* Print particle damage */
   if (Backup_damage) {
-    vtk_Out_damage(Vtk_file, MPM_Mesh.Phi.chi, NumParticles);
+    vtk_Out_damage(Vtk_file, MPM_Mesh.Phi.Chi, NumParticles);
   }
 
   /* print equivalent plastic strain */
   if (Backup_EPS) {
-    vtk_Out_Equiv_Plastic_Strain(Vtk_file, MPM_Mesh.Phi.Equiv_Plast_Str,
+    vtk_Out_Equiv_Plastic_Strain(Vtk_file, MPM_Mesh.Phi.EPS_n,
                                  NumParticles);
   }
 
@@ -153,11 +153,11 @@ static void vtk_Out_density(FILE *Vtk_file, Matrix rho, int NumParticles) {
 
 /*********************************************************************/
 
-static void vtk_Out_damage(FILE *Vtk_file, Matrix chi, int NumParticles) {
+static void vtk_Out_damage(FILE *Vtk_file, const double * chi, int NumParticles) {
   fprintf(Vtk_file, "SCALARS Damage double \n");
   fprintf(Vtk_file, "LOOKUP_TABLE default \n");
   for (int i = 0; i < NumParticles; i++) {
-    fprintf(Vtk_file, "%.20g \n", chi.nV[i]);
+    fprintf(Vtk_file, "%.20g \n", chi[i]);
   }
 }
 
@@ -312,13 +312,13 @@ static void vtk_Out_plastic_deformation_gradient(FILE *Vtk_file,
 
 /*********************************************************************/
 
-static void vtk_Out_Equiv_Plastic_Strain(FILE *Vtk_file, Matrix EPS,
+static void vtk_Out_Equiv_Plastic_Strain(FILE *Vtk_file, const double * EPS,
                                          int NumParticles) {
 
   fprintf(Vtk_file, "SCALARS EPS double \n");
   fprintf(Vtk_file, "LOOKUP_TABLE default \n");
   for (int i = 0; i < NumParticles; i++) {
-    fprintf(Vtk_file, "%.20g \n", EPS.nV[i]);
+    fprintf(Vtk_file, "%.20g \n", EPS[i]);
   }
 }
 

@@ -2033,11 +2033,14 @@ static void output_selector(Particle MPM_Mesh, Mesh FEM_Mesh, Mask ActiveNodes,
   }
 
   for (int i = 0; i < Number_Out_particles_path_csv; i++) {
+
+/*    
     if (Out_particles_path_csv[i].Out_csv_particles_path_Damage) {
       path_particles_analysis_csv__InOutFun__(
           MPM_Mesh.Phi.chi, MPM_Mesh.Phi.x_GC, "Particles_path_damage_csv",
           Out_particles_path_csv[i], i, TimeStep, DeltaTimeStep);
     }
+*/
 
     if (Out_particles_path_csv[i].Out_csv_particles_path_Velocity) {
       path_particles_analysis_csv__InOutFun__(

@@ -29,7 +29,7 @@ Tensor explicit_integration_stress__Particles__(int p, Particle MPM_Mesh,
         compute_kirchhoff_isotropic_linear_elasticity(Input_SP, MatProp);
 
     Input_SP.Stress = MPM_Mesh.Phi.Stress.nM[p];
-    Input_SP.Equiv_Plast_Str = &MPM_Mesh.Phi.Equiv_Plast_Str.nV[p];
+    Input_SP.EPS = &MPM_Mesh.Phi.EPS_n1[p];
     Input_SP.Back_stress = MPM_Mesh.Phi.Back_stress.nM[p];
 
     if (strcmp(MatProp.Plastic_Solver, "Backward-Euler") == 0) {
@@ -42,8 +42,6 @@ Tensor explicit_integration_stress__Particles__(int p, Particle MPM_Mesh,
               MatProp.Type, "has not been yet implemented");
       exit(EXIT_FAILURE);
     }
-
-    MPM_Mesh.Phi.Equiv_Plast_Str.nV[p] = *Output_SP.Equiv_Plast_Str;
 
     free(Output_SP.Increment_E_plastic);
   } else {
@@ -125,7 +123,7 @@ int Stress_integration__Particles__(int p, Particle MPM_Mesh, Mesh FEM_Mesh,
 
     Input_SP.Stress = MPM_Mesh.Phi.Stress.nM[p];
 //    Input_SP.F_m1_plastic_p = MPM_Mesh.Phi.F_m1_plastic.nM[p];
-    Input_SP.Equiv_Plast_Str = &MPM_Mesh.Phi.Equiv_Plast_Str.nV[p];
+    IO_State.EPS = &MPM_Mesh.Phi.EPS_n1[p];
     Input_SP.Back_stress = MPM_Mesh.Phi.Back_stress.nM[p];
 
     if (MatProp_p.Locking_Control_Fbar) {
@@ -134,6 +132,8 @@ int Stress_integration__Particles__(int p, Particle MPM_Mesh, Mesh FEM_Mesh,
     } else {
       Input_SP.D_phi = MPM_Mesh.Phi.F_n1.nM[p];
     }
+
+    *(IO_State.EPS) = MPM_Mesh.Phi.EPS_n[p];
 
     if (strcmp(MatProp_p.Plastic_Solver, "Backward-Euler") == 0) {
       Output_SP = finite_strain_plasticity(Input_SP, MatProp_p,
@@ -148,7 +148,6 @@ int Stress_integration__Particles__(int p, Particle MPM_Mesh, Mesh FEM_Mesh,
       exit(EXIT_FAILURE);
     }
 
-    MPM_Mesh.Phi.Equiv_Plast_Str.nV[p] = *Output_SP.Equiv_Plast_Str;
   } 
   
   else if (strcmp(MatProp_p.Type, "Drucker-Prager") == 0) {
@@ -157,8 +156,8 @@ int Stress_integration__Particles__(int p, Particle MPM_Mesh, Mesh FEM_Mesh,
     IO_State.Particle_Idx = p;
     IO_State.Stress = MPM_Mesh.Phi.Stress.nM[p];
     IO_State.b_e = MPM_Mesh.Phi.b_e_n1.nM[p];
-    IO_State.Equiv_Plast_Str = &MPM_Mesh.Phi.Equiv_Plast_Str.nV[p];
-    IO_State.Kappa = &MPM_Mesh.Phi.Kappa_hardening.nV[p];
+    IO_State.EPS = &MPM_Mesh.Phi.EPS_n1[p];
+    IO_State.Kappa = &MPM_Mesh.Phi.Kappa_n1[p];
     IO_State.d_phi = MPM_Mesh.Phi.DF.nM[p];
     IO_State.D_phi = MPM_Mesh.Phi.F_n1.nM[p];
     IO_State.Failure = &(MPM_Mesh.Phi.Status_particle[p]);
@@ -168,15 +167,10 @@ int Stress_integration__Particles__(int p, Particle MPM_Mesh, Mesh FEM_Mesh,
 #else
   for (unsigned i = 0 ; i<9 ; i++) IO_State.b_e[i] = MPM_Mesh.Phi.b_e_n.nM[p][i]; 
 #endif
+  *(IO_State.Kappa) = MPM_Mesh.Phi.Kappa_n[p];
+  *(IO_State.EPS) = MPM_Mesh.Phi.EPS_n[p];
 
   STATUS = compute_1PK_Drucker_Prager(IO_State, MatProp_p);
-
-#if NumberDimensions == 2
-  for (unsigned i = 0 ; i<5 ; i++) MPM_Mesh.Phi.b_e_n.nM[p][i] = IO_State.b_e[i];
-#else
-  for (unsigned i = 0 ; i<9 ; i++) MPM_Mesh.Phi.b_e_n.nM[p][i] = IO_State.b_e[i]; 
-#endif
-
   if(STATUS == EXIT_FAILURE){
     fprintf(stderr, ""RED"Error in compute_1PK_Drucker_Prager(,)"RESET" \n");
     return EXIT_FAILURE;
@@ -189,8 +183,8 @@ int Stress_integration__Particles__(int p, Particle MPM_Mesh, Mesh FEM_Mesh,
     IO_State.Particle_Idx = p;
     IO_State.Stress = MPM_Mesh.Phi.Stress.nM[p];
     IO_State.b_e = MPM_Mesh.Phi.b_e_n1.nM[p];
-    IO_State.Equiv_Plast_Str = &MPM_Mesh.Phi.Equiv_Plast_Str.nV[p];
-    IO_State.Kappa = &MPM_Mesh.Phi.Kappa_hardening.nV[p];
+    IO_State.EPS = &MPM_Mesh.Phi.EPS_n1[p];
+    IO_State.Kappa = &MPM_Mesh.Phi.Kappa_n1[p];
     IO_State.d_phi = MPM_Mesh.Phi.DF.nM[p];
     IO_State.D_phi = MPM_Mesh.Phi.F_n1.nM[p];
     IO_State.Failure = &(MPM_Mesh.Phi.Status_particle[p]);
@@ -200,20 +194,14 @@ int Stress_integration__Particles__(int p, Particle MPM_Mesh, Mesh FEM_Mesh,
 #else
   for (unsigned i = 0 ; i<9 ; i++) IO_State.b_e[i] = MPM_Mesh.Phi.b_e_n.nM[p][i]; 
 #endif
+    *(IO_State.Kappa) = MPM_Mesh.Phi.Kappa_n[p];
+    *(IO_State.EPS) = MPM_Mesh.Phi.EPS_n[p];
 
   STATUS = compute_1PK_Matsuoka_Nakai(IO_State, MatProp_p);
-
-#if NumberDimensions == 2
-  for (unsigned i = 0 ; i<5 ; i++) MPM_Mesh.Phi.b_e_n.nM[p][i] = IO_State.b_e[i];
-#else
-  for (unsigned i = 0 ; i<9 ; i++) MPM_Mesh.Phi.b_e_n.nM[p][i] = IO_State.b_e[i]; 
-#endif
-
   if(STATUS == EXIT_FAILURE){
     fprintf(stderr, ""RED"Error in compute_1PK_Matsuoka_Nakai(,)"RESET" \n");
     return EXIT_FAILURE;
   }
-
 
   }
   else {
@@ -240,26 +228,20 @@ Tensor tangent_matrix__Particles__(Tensor GRADIENT_pA,
 Tensor Stiffness_density_p;
 
 if (strcmp(MatProp_p.Type, "Neo-Hookean-Wriggers") == 0) {
-
   Stiffness_density_p = compute_stiffness_density_Neo_Hookean_Wriggers(GRADIENT_pA, GRADIENT_pB, F_n1_p, J_p, MatProp_p);
-
-        } else if (strcmp(MatProp_p.Type, "Newtonian-Fluid-Compressible") ==
-                   0) {
-          Stiffness_density_p = compute_stiffness_density_Newtonian_Fluid(
-              GRADIENT_pA, GRADIENT_pB, F_n1_p, dFdt_n1_p, J_p, alpha_4, MatProp_p);
-        } 
-        else if (strcmp(MatProp_p.Type, "Newtonian-Fluid-Incompressible") == 0) {
-          Stiffness_density_p =
-              compute_stiffness_density_Newtonian_Fluid_Incompressible(
-                  GRADIENT_pA, GRADIENT_pB, F_n1_p, dFdt_n1_p, J_p, alpha_4,
-                  MatProp_p);
-        }
-        else {
-          fprintf(stderr, "%s : %s %s %s \n",
-                  "Error in assemble_Nodal_Tangent_Stiffness()", "The material",
-                  MatProp_p.Type, "has not been yet implemnented");
-          exit(EXIT_FAILURE);
-        }
+} 
+else if (strcmp(MatProp_p.Type, "Newtonian-Fluid-Compressible") == 0) {
+  Stiffness_density_p = compute_stiffness_density_Newtonian_Fluid(GRADIENT_pA, GRADIENT_pB, F_n1_p, dFdt_n1_p, J_p, alpha_4, MatProp_p);
+} 
+else if (strcmp(MatProp_p.Type, "Newtonian-Fluid-Incompressible") == 0) {
+  Stiffness_density_p = compute_stiffness_density_Newtonian_Fluid_Incompressible(GRADIENT_pA, GRADIENT_pB, F_n1_p, dFdt_n1_p, J_p, alpha_4,MatProp_p);
+}
+else {
+  fprintf(stderr, "%s : %s %s %s \n",
+   "Error in assemble_Nodal_Tangent_Stiffness()", "The material",
+   MatProp_p.Type, "has not been yet implemnented");
+   exit(EXIT_FAILURE);
+}
 
 return Stiffness_density_p;
 

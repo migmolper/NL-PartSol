@@ -46,14 +46,13 @@ typedef struct {
    * */
   double *Back_stress;
   double *b_e;
-
+  double *a_ep;            // Elastoplastic tangent matrix
   double Cohesion;
   double Yield_stress;
 
   // Internal hardening variables
   double *Equiv_Plast_Str; // Equivalent plastic strain
   double *Kappa;           // Hardening Parameter
-  double *a_ep;            // Elastoplastic tangent matrix
   //
   bool *Failure;
 

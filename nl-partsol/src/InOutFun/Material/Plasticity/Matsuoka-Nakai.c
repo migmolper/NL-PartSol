@@ -115,7 +115,7 @@ int Define_Matsuoka_Nakai(Material * MN_Material,FILE *Simulation_file, char *Ma
     }
     /**************************************************/
     else if (strcmp(Parameter_pars[0], "Reference-pressure") == 0) {
-      ChkMat.Is_atmospheric_pressure = true;
+      ChkMat.Is_Reference_pressure = true;
       (*MN_Material).ReferencePressure = atof(Parameter_pars[1]);
     }
     /**************************************************/
@@ -228,7 +228,7 @@ static Check_Material Initialise_Check_Material() {
   ChkMat.Is_rho = false;
   ChkMat.Is_E = false;
   ChkMat.Is_nu = false;
-  ChkMat.Is_Reference_pressure;
+  ChkMat.Is_Reference_pressure = false;
   ChkMat.Is_a1_Hardening_Borja = false;
   ChkMat.Is_a2_Hardening_Borja = false;
   ChkMat.Is_a3_Hardening_Borja = false;
@@ -236,7 +236,7 @@ static Check_Material Initialise_Check_Material() {
   ChkMat.Is_kappa_0 = false;
   ChkMat.Is_dilatancy_parameter = false;
   ChkMat.Is_J2_degradated = false;
-  ChkMat.Is_kappa_0 == false;
+  ChkMat.Is_kappa_0 = false;
   ChkMat.Is_Reference_plastic_strain = false;
   ChkMat.Is_cohesion = false;
 

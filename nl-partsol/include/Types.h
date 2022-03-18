@@ -251,11 +251,11 @@ typedef struct {
   
   Matrix W; /**< Deformation Energy */
 
-  Matrix chi; /**< Damage parameter (Fracture) */
+  double * Chi; /**< Damage parameter (Fracture) */
 
-  Matrix Equiv_Plast_Str; /**< Equivalent plastic strain. */
+  double * EPS_n, * EPS_n1; /**< Equivalent plastic strain. */
 
-  Matrix Kappa_hardening; /**< Isotropic hardening (stress like) variable. */
+  double * Kappa_n, * Kappa_n1; /**< Isotropic hardening (stress like) variable. */
 
   Matrix Back_stress;  /**< Kinematic hardening variable. */
 
@@ -541,9 +541,9 @@ typedef struct
    * */
   double * Back_stress;
   double * Increment_E_plastic;
-  double * Equiv_Plast_Str; // Equivalent plastic strain
+  double * EPS; // Equivalent plastic strain
   double * Kappa; // Hardening Parameter
-  double * e_ep; // Elastoplastic tangent matrix
+  double * a_ep; // Elastoplastic tangent matrix
 
   double Cohesion; 
   double Yield_stress;

@@ -143,7 +143,7 @@ void Gauss_Point_evolution__InOutFun__(Particle PointAnalysis,
     print_Gauss_Point_tensorial_variable_to_csv(csv_file, F_k);
   }
   if (Output_Commands.Out_csv_Gauss_Point_evolution_EPS) {
-    double EPS_k = PointAnalysis.Phi.Equiv_Plast_Str.nV[k];
+    double EPS_k = PointAnalysis.Phi.EPS_n[k];
     print_Gauss_Point_scalar_variable_to_csv(csv_file, EPS_k);
   }
 

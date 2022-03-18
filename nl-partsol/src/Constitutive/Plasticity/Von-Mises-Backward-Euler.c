@@ -68,7 +68,7 @@ State_Parameters Von_Mises_backward_euler(State_Parameters Inputs_SP,
   /*
     Initialise solver parameters
   */
-  double alpha_n = *Inputs_SP.Equiv_Plast_Str;
+  double alpha_n = *Inputs_SP.EPS;
   double alpha_k = alpha_n;
   double delta_Gamma_k = 0;
   double TOL = TOL_Radial_Returning;
@@ -138,11 +138,11 @@ State_Parameters Von_Mises_backward_euler(State_Parameters Inputs_SP,
     /*
       Update equivalent plastic strain and increment of plastic deformation
     */
-    *Outputs_VarCons.Equiv_Plast_Str = alpha_k;
+    *Outputs_VarCons.EPS = alpha_k;
     Outputs_VarCons.Stress = Inputs_SP.Stress;
     Outputs_VarCons.Increment_E_plastic = Inputs_SP.Increment_E_plastic;
   } else {
-    Outputs_VarCons.Equiv_Plast_Str = Inputs_SP.Equiv_Plast_Str;
+    Outputs_VarCons.EPS = Inputs_SP.EPS;
     Outputs_VarCons.Stress = Inputs_SP.Stress;
     Outputs_VarCons.Increment_E_plastic = Inputs_SP.Increment_E_plastic;
   }

@@ -1714,6 +1714,20 @@ static void update_Particles(Nodal_Field D_U, Particle MPM_Mesh, Mesh FEM_Mesh,
     //      finite_strains_internal_energy__Particles__(F_n_p,
     //      MatProp_p,Vol_0_p);
 
+    // Update hardening
+    MPM_Mesh.Phi.Kappa_n[p] = MPM_Mesh.Phi.Kappa_n1[p];
+    
+    // Update equivalent plastic strains
+    MPM_Mesh.Phi.EPS_n[p] = MPM_Mesh.Phi.EPS_n1[p];
+
+    // Update elastic left Cauchy-Green tensor
+#if NumberDimensions == 2
+    for (unsigned i = 0 ; i<5 ; i++) MPM_Mesh.Phi.b_e_n.nM[p][i] = MPM_Mesh.Phi.b_e_n1.nM[p][i]; 
+#else
+    for (unsigned i = 0 ; i<9 ; i++) MPM_Mesh.Phi.b_e_n.nM[p][i] = MPM_Mesh.Phi.b_e_n1.nM[p][i];
+#endif
+
+
     /* Iterate over the nodes of the particle */
     for (int A = 0; A < Nodes_p.NumberNodes; A++) {
 

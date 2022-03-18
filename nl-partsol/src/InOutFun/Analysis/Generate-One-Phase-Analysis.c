@@ -607,11 +607,11 @@ static void initialise_particles(Mesh MPM_GID_Mesh, Particle MPM_Mesh,
       MPM_Mesh.Phi.mass.nV[p] = m_p;
 
       /* Initial value of the yield */
-      MPM_Mesh.Phi.Kappa_hardening.nV[p] = MPM_Mesh.Mat[MatIdx_p].kappa_0;
+      MPM_Mesh.Phi.Kappa_n[p] = MPM_Mesh.Mat[MatIdx_p].kappa_0;
 
       /* Initial value of the equivalent plastic strain */
       if (strcmp(MPM_Mesh.Mat[MatIdx_p].Type, "Matsuoka-Nakai") == 0) {
-        MPM_Mesh.Phi.Equiv_Plast_Str.nV[p] = MPM_Mesh.Mat[MatIdx_p].Plastic_Strain_0;
+        MPM_Mesh.Phi.EPS_n[p] = MPM_Mesh.Mat[MatIdx_p].Plastic_Strain_0;
       }
     }
   }

@@ -299,7 +299,7 @@ int compute_1PK_Lade_Duncan(State_Parameters IO_State, Material MatProp)
   // Define scalar variables internal variables
   double F_k1, F_k2, F_0 = 0.0;
   double I1, I2, I3 = 0.0;
-  double Lambda_n = *IO_State.Equiv_Plast_Str;
+  double Lambda_n = *IO_State.EPS;
   double Lambda_k1, Lambda_k2 = Lambda_n;
   double delta_lambda_k1, delta_lambda_k2 =  0.0;
 
@@ -535,7 +535,7 @@ int compute_1PK_Lade_Duncan(State_Parameters IO_State, Material MatProp)
       Update equivalent plastic strain and increment of plastic deformation
     */
     __update_internal_variables_plastic(Increment_E_plastic,IO_State.Stress,
-                                        IO_State.Equiv_Plast_Str, IO_State.Kappa,
+                                        IO_State.EPS, IO_State.Kappa,
                                         IO_State.D_phi,T_k1,eigvec_b_e_tr, d_G_d_stress,
                                         Lambda_k1,delta_lambda_k1,kappa_k1[0]);
     

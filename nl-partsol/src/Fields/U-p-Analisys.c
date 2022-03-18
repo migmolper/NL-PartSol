@@ -126,11 +126,15 @@ Fields allocate_Up_vars__Fields__(int NumParticles) {
   
   Phi.Vol_0 = allocZ__MatrixLib__(NumParticles, 1);
   
-  Phi.chi = allocZ__MatrixLib__(NumParticles, 1);
+  Phi.Chi = (double *)calloc(NumParticles,sizeof(double));
 
-  Phi.Equiv_Plast_Str = allocZ__MatrixLib__(NumParticles, 1);
+  Phi.EPS_n = (double *)calloc(NumParticles,sizeof(double));
 
-  Phi.Kappa_hardening = allocZ__MatrixLib__(NumParticles, 1);
+  Phi.EPS_n1 = (double *)calloc(NumParticles,sizeof(double));
+
+  Phi.Kappa_n = (double *)calloc(NumParticles,sizeof(double));
+
+  Phi.Kappa_n1 = (double *)calloc(NumParticles,sizeof(double));
   
   Phi.Back_stress = allocZ__MatrixLib__(NumParticles, 3);
   
@@ -168,9 +172,11 @@ void free_Up_vars__Fields__(Fields Phi) {
   free__MatrixLib__(Phi.DF);
   free__MatrixLib__(Phi.W);
   free__MatrixLib__(Phi.Vol_0);
-  free__MatrixLib__(Phi.chi);
-  free__MatrixLib__(Phi.Equiv_Plast_Str);
-  free__MatrixLib__(Phi.Kappa_hardening);
+  free(Phi.Chi);
+  free(Phi.EPS_n);
+  free(Phi.EPS_n1);  
+  free(Phi.Kappa_n);
+  free(Phi.Kappa_n1);
   free__MatrixLib__(Phi.Back_stress);
 }
 

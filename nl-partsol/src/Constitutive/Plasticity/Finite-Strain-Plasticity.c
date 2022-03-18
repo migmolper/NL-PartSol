@@ -51,7 +51,7 @@ State_Parameters finite_strain_plasticity(
   /* Defin the input parameters for the infinitesimal elasticity */
   Input_SP_infinitesimal.Particle_Idx = Inputs_SP_finite.Particle_Idx;
   Input_SP_infinitesimal.Kappa = Inputs_SP_finite.Kappa;
-  Input_SP_infinitesimal.Equiv_Plast_Str = Inputs_SP_finite.Equiv_Plast_Str;
+  Input_SP_infinitesimal.EPS = Inputs_SP_finite.EPS;
   Input_SP_infinitesimal.Back_stress = Inputs_SP_finite.Back_stress;
   Input_SP_infinitesimal.Stress = (double *)calloc(3, sizeof(double));
   Input_SP_infinitesimal.Strain = (double *)calloc(3, sizeof(double));
@@ -174,7 +174,7 @@ State_Parameters finite_strain_plasticity(
     Update state paramers
   */
   Output_SP.Kappa = Output_SP_infinitesimal.Kappa;
-  Output_SP.Equiv_Plast_Str = Output_SP_infinitesimal.Equiv_Plast_Str;
+  Output_SP.EPS = Output_SP_infinitesimal.EPS;
   Output_SP.Back_stress = Output_SP_infinitesimal.Back_stress;
 
   return Output_SP;

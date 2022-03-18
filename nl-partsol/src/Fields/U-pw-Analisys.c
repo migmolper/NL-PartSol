@@ -203,17 +203,12 @@ Fields allocate_upw_vars__Fields__(int NumParticles) {
   Phi.phi_f = allocZ__MatrixLib__(NumParticles, 1);
   strcpy(Phi.phi_s.Info, "Volume fraction water");
 
-  /*!
-    Damage parameter (Fracture)
-  */
-  Phi.chi = allocZ__MatrixLib__(NumParticles, 1);
-  strcpy(Phi.chi.Info, "Damage parameter GP");
 
-  /*!
-    Equivalent plastic strain (Plasticity)
-  */
-  Phi.Equiv_Plast_Str = allocZ__MatrixLib__(NumParticles, 1);
-  strcpy(Phi.Equiv_Plast_Str.Info, "EPS GP");
+  Phi.Chi = (double *)calloc(NumParticles,sizeof(double));
+
+  Phi.EPS_n = (double *)calloc(NumParticles,sizeof(double));
+
+  Phi.EPS_n1 = (double *)calloc(NumParticles,sizeof(double));
 
   /*!
    * Back stress for kinematic hardening (plasticity)
@@ -264,8 +259,9 @@ void free_upw_vars__Fields__(Fields Phi) {
   free__MatrixLib__(Phi.W);
   free__MatrixLib__(Phi.phi_s);
   free__MatrixLib__(Phi.phi_f);
-  free__MatrixLib__(Phi.chi);
-  free__MatrixLib__(Phi.Equiv_Plast_Str);
+  free(Phi.Chi);
+  free(Phi.EPS_n);
+  free(Phi.EPS_n1);  
   free__MatrixLib__(Phi.Back_stress);
 }
 

@@ -242,7 +242,7 @@ int compute_1PK_Drucker_Prager(State_Parameters IO_State, Material MatProp)
   double pressure = 0.0;
   double pressure_limit = 0.0;
   double d_gamma_k = 0;
-  double eps_n = *IO_State.Equiv_Plast_Str;
+  double eps_n = *IO_State.EPS;
   double eps_k = eps_n;
   double kappa_k = *IO_State.Kappa;
   double d_kappa_k = 0.0;
@@ -360,7 +360,7 @@ int compute_1PK_Drucker_Prager(State_Parameters IO_State, Material MatProp)
       }
 
       STATUS = __update_internal_variables_classical(
-          Increment_E_plastic, IO_State.Stress, IO_State.Equiv_Plast_Str,
+          Increment_E_plastic, IO_State.Stress, IO_State.EPS,
           IO_State.Kappa, IO_State.D_phi, T_tr_vol, T_tr_dev, eigvec_b_e_tr, n,
           d_gamma_k, alpha_Q, K, G, eps_k, kappa_k);
       if (STATUS == EXIT_FAILURE) {
@@ -416,7 +416,7 @@ int compute_1PK_Drucker_Prager(State_Parameters IO_State, Material MatProp)
       }
 
       STATUS = __update_internal_variables_apex(
-          Increment_E_plastic, IO_State.Stress, IO_State.Equiv_Plast_Str,
+          Increment_E_plastic, IO_State.Stress, IO_State.EPS,
           IO_State.Kappa, IO_State.D_phi, T_tr_vol, T_tr_dev, eigvec_b_e_tr, n,
           d_gamma_k, d_gamma_1, alpha_Q, K, G, eps_k, kappa_k);
       if (STATUS == EXIT_FAILURE) {
