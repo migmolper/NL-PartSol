@@ -119,6 +119,10 @@ Define-Material(idx=0,Model=Drucker-Prager-Plane-Strain)
 
         STATUS = Define_Matsuoka_Nakai(&List_Materials[idx],Sim_dat,Index_and_Model.Model,Index_and_Model.Idx);
 
+      } else if (strcmp(Index_and_Model.Model, "Lade-Duncan") == 0) {
+
+        STATUS = Define_Lade_Duncan(&List_Materials[idx],Sim_dat,Index_and_Model.Model,Index_and_Model.Idx);
+
       } else if (strcmp(Index_and_Model.Model, "Drucker-Prager") == 0) {
 
         STATUS = Define_Drucker_Prager(&List_Materials[idx],Sim_dat,Index_and_Model.Model,Index_and_Model.Idx);

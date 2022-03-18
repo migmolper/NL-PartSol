@@ -204,6 +204,33 @@ int Stress_integration__Particles__(int p, Particle MPM_Mesh, Mesh FEM_Mesh,
   }
 
   }
+  else if (strcmp(MatProp_p.Type, "Lade-Duncan") == 0) {
+
+    // Asign variables to the solver
+    IO_State.Particle_Idx = p;
+    IO_State.Stress = MPM_Mesh.Phi.Stress.nM[p];
+    IO_State.b_e = MPM_Mesh.Phi.b_e_n1.nM[p];
+    IO_State.EPS = &MPM_Mesh.Phi.EPS_n1[p];
+    IO_State.Kappa = &MPM_Mesh.Phi.Kappa_n1[p];
+    IO_State.d_phi = MPM_Mesh.Phi.DF.nM[p];
+    IO_State.D_phi = MPM_Mesh.Phi.F_n1.nM[p];
+    IO_State.Failure = &(MPM_Mesh.Phi.Status_particle[p]);
+
+#if NumberDimensions == 2
+  for (unsigned i = 0 ; i<5 ; i++) IO_State.b_e[i] = MPM_Mesh.Phi.b_e_n.nM[p][i]; 
+#else
+  for (unsigned i = 0 ; i<9 ; i++) IO_State.b_e[i] = MPM_Mesh.Phi.b_e_n.nM[p][i]; 
+#endif
+    *(IO_State.Kappa) = MPM_Mesh.Phi.Kappa_n[p];
+    *(IO_State.EPS) = MPM_Mesh.Phi.EPS_n[p];
+
+  STATUS = compute_1PK_Lade_Duncan(IO_State, MatProp_p);
+  if(STATUS == EXIT_FAILURE){
+    fprintf(stderr, ""RED"Error in compute_1PK_Lade_Duncan(,)"RESET" \n");
+    return EXIT_FAILURE;
+  }
+
+  }
   else {
     fprintf(stderr, "%s : %s %s %s \n",
             "Error in forward_integration_Stress__Particles__()",

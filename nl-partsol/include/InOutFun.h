@@ -530,6 +530,12 @@ int Define_Matsuoka_Nakai(
   char *Material_Model /**< [in] Character identifier for the material */, 
   int Material_Idx /**< [in] Index identifier for the material */);
 
+int Define_Lade_Duncan(
+  Material *MN_Material /**< [out] List with the material properties */,
+  FILE *Simulation_file /**< [in] Simulation file */,
+  char *Material_Model /**< [in] Character identifier for the material */, 
+  int Material_Idx /**< [in] Index identifier for the material */);  
+
 int Define_Drucker_Prager(
   Material *DP_Material /**< [out] List with the material properties */,
   FILE *Simulation_file /**< [in] Simulation file */,
