@@ -337,22 +337,6 @@ int compute_1PK_Matsuoka_Nakai(State_Parameters IO_State, Material MatProp)
     return EXIT_FAILURE;
   }
 
-  // Update lambda for a given value of kappa
-  double f, df;
-  int iter = 0;
-  f = kappa_n[0] - a[0] * Lambda_n * exp(a[1] * I1) * exp(-a[2] * Lambda_n);
-  while (fabs(f) > TOL_Radial_Returning) {
-    iter++;
-    df =
-        (a[2] * Lambda_n - 1.0) * a[0] * exp(a[1] * I1) * exp(-a[2] * Lambda_n);
-    Lambda_n += -f / df;
-    f = kappa_n[0] - a[0] * Lambda_n * exp(a[1] * I1) * exp(-a[2] * Lambda_n);
-    if (iter > 10) {
-      fprintf(stderr, "" RED " Iter (%e) > 10 " RESET " \n", f);
-      return EXIT_FAILURE;
-    }
-  }
-
   // Check yield
   F_0 = __F(c0, kappa_n[0], pa, I1, I2, I3, m);
 
@@ -552,6 +536,14 @@ int compute_1PK_Matsuoka_Nakai(State_Parameters IO_State, Material MatProp)
         return EXIT_FAILURE;
       }
 
+      if(fabs(I1) < TOL)
+      {
+        T_k1[0] = 0.0; 
+        T_k1[1] = 0.0;
+        T_k1[2] = 0.0;
+        break;
+      }
+
       // Compute the residual of the next step
       STATUS = __E_hencky(E_hencky_k2, T_k2, CC, c_cotphi);
       if (STATUS == EXIT_FAILURE) {
@@ -608,6 +600,19 @@ int compute_1PK_Matsuoka_Nakai(State_Parameters IO_State, Material MatProp)
                   "\n",
                   Lambda_k2);
           return EXIT_FAILURE;
+        }
+
+        if (I1 > 0.0) {
+          fprintf(stderr, "" RED "Positive value of I1 (line search): %e " RESET "\n", I1);
+          return EXIT_FAILURE;
+        }
+
+        if(fabs(I1) < TOL)
+        {
+          T_k1[0] = 0.0; 
+          T_k1[1] = 0.0;
+          T_k1[2] = 0.0;
+          break;
         }
 
         STATUS = __E_hencky(E_hencky_k2, T_k2, CC, c_cotphi);

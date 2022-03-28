@@ -264,14 +264,19 @@ void nodal_results_vtk__InOutFun__(Mesh ElementMesh, Mask ActiveNodes,
                                    int ResultsTimeStep) {
 
   /* Number of dimensions */
-  int Ndim = NumberDimensions;
+  unsigned Ndim = NumberDimensions;
+  unsigned Nnodes = ElementMesh.NumNodesMesh;
+  unsigned Ncell = ElementMesh.NumElemMesh;
+  unsigned Num_Nodes_x_Elem_i;
+  unsigned Size_Connectivity = Ncell;
+
   FILE *Vtk_file;
   char Name_file_t[80];
   int NumberFields;
   char *FieldsList[MAXW] = {NULL};
   int i_mask;
   int NumNodesElem;
-  ChainPtr Elem_Conn;
+  ChainPtr Connectivity_i;
 
   sprintf(Name_file_t, "%s/%s_%i.vtk", OutputDir, OutputNodesFile, TimeStep_i);
 
@@ -284,78 +289,115 @@ void nodal_results_vtk__InOutFun__(Mesh ElementMesh, Mask ActiveNodes,
   fprintf(Vtk_file, "DATASET UNSTRUCTURED_GRID \n");
 
   /* Coordinates */
-  fprintf(Vtk_file, "POINTS %i double \n", ActiveNodes.Nactivenodes);
-  for (int i = 0; i < ElementMesh.NumNodesMesh; i++) {
-    i_mask = ActiveNodes.Nodes2Mask[i];
-    if (i_mask != -1) {
-      for (int j = 0; j < 3; j++) {
-        if (j < Ndim) {
-          fprintf(Vtk_file, "%.20g ", ElementMesh.Coordinates.nM[i][j]);
-        } else {
-          fprintf(Vtk_file, "%.20g ", 0.0);
-        }
-      }
-      fprintf(Vtk_file, "\n");
-    }
+  fprintf(Vtk_file, "POINTS %i float \n", Nnodes);
+  for(unsigned i = 0; i<Nnodes; i++)
+  {
+      #if NumberDimensions == 2      
+      fprintf(Vtk_file, "%f %f %f\n", 
+      ElementMesh.Coordinates.nM[i][0],
+      ElementMesh.Coordinates.nM[i][1],
+      0.0);
+      #else
+      fprintf(Vtk_file, "%f %f %f\n", 
+      ElementMesh.Coordinates.nM[i][0],
+      ElementMesh.Coordinates.nM[i][1],
+      ElementMesh.Coordinates.nM[i][2]);
+      #endif
   }
+  fprintf(Vtk_file, "\n");
 
   /* Connectivity */
-  fprintf(Vtk_file, "CELLS %i %i \n", ActiveNodes.Nactivenodes,
-          2 * ActiveNodes.Nactivenodes);
-  for (int i = 0; i < ActiveNodes.Nactivenodes; i++) {
-    fprintf(Vtk_file, "%i %i \n", 1, i);
+  for (unsigned i = 0; i < Ncell; i++) {
+    Size_Connectivity += ElementMesh.NumNodesElem[i];
   }
+
+  fprintf(Vtk_file, "CELLS %i %i \n", Ncell, Size_Connectivity);
+  for (unsigned i = 0; i < Ncell; i++) {
+
+    Num_Nodes_x_Elem_i = ElementMesh.NumNodesElem[i];
+    Connectivity_i = ElementMesh.Connectivity[i];
+
+    fprintf(Vtk_file, "%i", ElementMesh.NumNodesElem[i]);
+    while (Connectivity_i != NULL)
+    {
+      fprintf(Vtk_file, " ");
+      fprintf(Vtk_file, "%i", Connectivity_i->Idx);
+      Connectivity_i = Connectivity_i->next;      
+    }
+    fprintf(Vtk_file, "\n");
+
+  }
+  fprintf(Vtk_file, "\n");
 
   /* Type of element */
-  fprintf(Vtk_file, "CELL_TYPES %i \n", ActiveNodes.Nactivenodes);
-  for (int i = 0; i < ActiveNodes.Nactivenodes; i++) {
-    fprintf(Vtk_file, "%i \n", 1);
+  fprintf(Vtk_file, "CELL_TYPES %i \n", Ncell);
+  for (unsigned i = 0; i < Ncell; i++) {
+
+    if((strcmp(ElementMesh.TypeElem, "Triangle") == 0) && 
+    (ElementMesh.NumNodesElem[i] == 3))
+    {
+      fprintf(Vtk_file, "%i \n", 5);
+    }
+    else if((strcmp(ElementMesh.TypeElem, "Quadrilateral") == 0) &&
+             (ElementMesh.NumNodesElem[i] == 4))
+    {
+      fprintf(Vtk_file, "%i \n", 9);
+    }
+    
   }
+  fprintf(Vtk_file, "\n");
 
   /* Point data */
-  fprintf(Vtk_file, "POINT_DATA %i \n", ActiveNodes.Nactivenodes);
-  fprintf(Vtk_file, "VECTORS %s double \n", "X_GC");
+  fprintf(Vtk_file, "POINT_DATA %i \n", Nnodes);
+
+
+  fprintf(Vtk_file,"SCALARS Mask int \n");
+  fprintf(Vtk_file,"LOOKUP_TABLE default \n");
   for (int i = 0; i < ElementMesh.NumNodesMesh; i++) {
     i_mask = ActiveNodes.Nodes2Mask[i];
     if (i_mask != -1) {
-      for (int j = 0; j < 3; j++) {
-        if (j < Ndim) {
-          fprintf(Vtk_file, "%.20g ", ElementMesh.Coordinates.nM[i][j]);
-        } else {
-          fprintf(Vtk_file, "%.20g ", 0.0);
-        }
-      }
-      fprintf(Vtk_file, "\n");
+      fprintf(Vtk_file,"%i\n", 1);
+    }
+    else{
+      fprintf(Vtk_file,"%i\n", 0);
     }
   }
+  
 
-  //  /* Active nodes */
-  //  fprintf(Vtk_file,"SCALARS Active_Nod_Active int \n");
-  //  fprintf(Vtk_file,"LOOKUP_TABLE default \n");
-  //  for(int i = 0 ; i<ElementMesh.NumNodesMesh ; i++){
-  //    fprintf(Vtk_file,"%i\n",
-  //	    ElementMesh.NumParticles[i]);
-  //  }
+  fprintf(Vtk_file, "VECTORS %s float \n", "REACTIONS");
+  for (unsigned i = 0; i < Nnodes; i++) {
 
-  fprintf(Vtk_file, "VECTORS %s double \n", "REACTIONS");
-  for (int i = 0; i < ElementMesh.NumNodesMesh; i++) {
     i_mask = ActiveNodes.Nodes2Mask[i];
+
     if (i_mask != -1) {
-      /* Print the dimensions of the array */
-      for (int j = 0; j < 3; j++) {
-        if (j < Ndim) {
-          fprintf(Vtk_file, "%.20g ", REACTIONS.nM[i_mask][j]);
-        } else {
-          fprintf(Vtk_file, "%.20g ", 0.0);
-        }
-      }
-      fprintf(Vtk_file, "\n");
+      
+      #if NumberDimensions == 2      
+      fprintf(Vtk_file, "%.20g %.20g %.20g\n", 
+      REACTIONS.nM[i_mask][0],
+      REACTIONS.nM[i_mask][1],
+      0.0);
+      #else
+      fprintf(Vtk_file, "%.20g %.20g %.20g\n", 
+      REACTIONS.nM[i_mask][0],
+      REACTIONS.nM[i_mask][1],
+      REACTIONS.nM[i_mask][2]);
+      #endif
+    }
+    else
+    {
+      fprintf(Vtk_file, "%.20g %.20g %.20g \n", 
+      0.0, 
+      0.0, 
+      0.0);
     }
   }
 
-  /* Cell data */
-  fprintf(Vtk_file, "CELL_DATA %i \n", ActiveNodes.Nactivenodes);
 
+
+ // Cell data
+//  fprintf(Vtk_file, "CELL_DATA %i \n", Ncell);
+
+/*
   fprintf(Vtk_file, "SCALARS Boundary double \n");
   fprintf(Vtk_file, "LOOKUP_TABLE default \n");
   for (int i = 0; i < ElementMesh.NumNodesMesh; i++) {
@@ -369,6 +411,7 @@ void nodal_results_vtk__InOutFun__(Mesh ElementMesh, Mask ActiveNodes,
       }
     }
   }
+  */
 
   /* Close the file */
   fclose(Vtk_file);

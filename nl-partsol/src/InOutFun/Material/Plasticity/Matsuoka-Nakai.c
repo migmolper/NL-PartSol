@@ -58,7 +58,9 @@ int Define_Matsuoka_Nakai(Material * MN_Material,FILE *Simulation_file, char *Ma
   Check_Material ChkMat = Initialise_Check_Material();
 
   /* Default parameters */
-  (*MN_Material).kappa_0 = 0.0; // Cohesionless
+  (*MN_Material).kappa_0 = 0.0;
+  (*MN_Material).Plastic_Strain_0 = 0.0;
+  (*MN_Material).phi_Frictional = 0.0;
   (*MN_Material).ReferencePressure = 0.0; 
   (*MN_Material).J2_degradated = 0.0;
   (*MN_Material).Cohesion = 0.0;
@@ -154,60 +156,7 @@ int Define_Matsuoka_Nakai(Material * MN_Material,FILE *Simulation_file, char *Ma
     }
   }
 
-  strcpy((*MN_Material).Type, Material_Model);
-
-  if(ChkMat.Is_friction_angle == true)
-  {
-    double rad_friction_angle = (PI__MatrixLib__ / 180.0) * (*MN_Material).phi_Frictional;  
-    double c_cotphi = (*MN_Material).Cohesion/tan(rad_friction_angle);
-    double a1 = (*MN_Material).a_Hardening_Borja[0];
-    double a2 = (*MN_Material).a_Hardening_Borja[1];
-    double a3 = (*MN_Material).a_Hardening_Borja[2];
-    double f, df;
-    double I1 = 3*((*MN_Material).ReferencePressure - c_cotphi);
-    double EPS_0 = 0.0;
-    double kappa_0 = 8.0 * sin(rad_friction_angle)*sin(rad_friction_angle) / (1.0 - sin(rad_friction_angle)*sin(rad_friction_angle));
-    int iter = 0;
-
-    f = kappa_0 - a1 * EPS_0 * exp(a2*I1) * exp(-a3 * EPS_0);
-    while (fabs(f) > TOL_Radial_Returning) {
-      iter++;
-      df = (a3 * EPS_0 - 1) * a1 * exp(a2*I1) * exp(-a3 * EPS_0);
-      EPS_0 += - f / df;
-      f = kappa_0 - a1 * EPS_0 * exp(a2*I1) * exp(-a3 * EPS_0);
-      if (iter > 10) {
-        fprintf(stderr, ""RED" Iter > 10 "RESET" \n");
-        return EXIT_FAILURE;
-      }
-    }
-
-    (*MN_Material).kappa_0 = kappa_0;
-    (*MN_Material).Plastic_Strain_0 = EPS_0;  
-  }
-  else if((ChkMat.Is_Reference_plastic_strain = true) 
-  && (ChkMat.Is_kappa_0 == true))
-  {
-    (*MN_Material).phi_Frictional = asin(sqrt((*MN_Material).kappa_0/((*MN_Material).kappa_0+8)));
-  }
-  else {
-    fprintf(stderr, "%s : %s \n", "Error in GramsMaterials()",
-            "Some parameters are missed for Matsuoka-Nakai initialization");
-
-    fputs(ChkMat.Is_Reference_plastic_strain ? 
-    ""MAGENTA"[EPS-0]"RESET" : "GREEN"true"RESET" \n":
-    ""MAGENTA"[EPS-0]"RESET" : "RED"false"RESET" \n",stderr);
-
-    fputs(ChkMat.Is_friction_angle ? 
-    ""MAGENTA"[Friction-angle]"RESET" : "GREEN"true"RESET" \n":
-    ""MAGENTA"[Friction-angle]"RESET" : "RED"false"RESET" \n",stderr);
-
-    fputs(ChkMat.Is_kappa_0 ? 
-    ""MAGENTA"[kappa-0]"RESET" : "GREEN"true"RESET" \n":
-    ""MAGENTA"[kappa-0]"RESET" : "RED"false"RESET" \n",stderr);
-
-    return EXIT_FAILURE;
-  }
-  
+  strcpy((*MN_Material).Type, Material_Model); 
 
   STATUS = __check_material(MN_Material, ChkMat, Material_Idx);
   if(STATUS == EXIT_FAILURE)
@@ -304,6 +253,10 @@ static int __check_material(Material * MN_Material, Check_Material ChkMat, int I
     ""MAGENTA"[Atmospheric-pressure]"RESET" : "GREEN"true \n":
     ""MAGENTA"[Atmospheric-pressure]"RESET" : "RED"false \n",stdout);
 
+    fputs(ChkMat.Is_friction_angle ? 
+    ""MAGENTA"[Friction-angle]"RESET" : "GREEN"true"RESET" \n":
+    ""MAGENTA"[Friction-angle]"RESET" : "RED"false"RESET" \n",stderr);
+
     fputs(ChkMat.Is_dilatancy_parameter ? 
     ""MAGENTA"[alpha]"RESET" : "GREEN"true"RESET" \n":
     ""MAGENTA"[alpha]"RESET" : "RED"false"RESET" \n",stdout);
@@ -324,6 +277,14 @@ static int __check_material(Material * MN_Material, Check_Material ChkMat, int I
     ""MAGENTA"[J2-degradated]"RESET" : "GREEN"true"RESET" \n" :
     ""MAGENTA"[J2-degradated]"RESET" : "RED"false"RESET" \n",stderr);
     
+    fputs(ChkMat.Is_Reference_plastic_strain ? 
+    ""MAGENTA"[EPS-0]"RESET" : "GREEN"true"RESET" \n":
+    ""MAGENTA"[EPS-0]"RESET" : "RED"false"RESET" \n",stderr);
+
+    fputs(ChkMat.Is_kappa_0 ? 
+    ""MAGENTA"[kappa-0]"RESET" : "GREEN"true"RESET" \n":
+    ""MAGENTA"[kappa-0]"RESET" : "RED"false"RESET" \n",stderr);
+
     return EXIT_FAILURE;
   }
 

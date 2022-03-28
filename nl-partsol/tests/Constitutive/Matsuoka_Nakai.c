@@ -2,42 +2,55 @@
 /******************* Material Parameters **********************/
 /**************************************************************/
 // Kenichi
+/*
 #define NumberDimensions 2
 #define YoungMouduls 10.0E3
 #define PoissonRatio 0.2
 #define AtmosphericPressure -100.0
 #define a1_Parameter 370.0
 #define a2_Parameter 0.01
-#define a3_Parameter 5.0
+#define a//3_Parameter 5.0
 #define phi_Parameter 37.0
 #define alpha_Parameter 0.10 // psi: 6.0
 #define c_cotphi_value 8.0
 #define NumberSteps 2000 // 1000 // 5000 // 3500 // 2500 //
 #define Delta_strain_II -0.00001
 #define Confining_pressure -20.0
-
-/*
-#define kappa0 40.0
-#define H -200.0 //-300.0
-#define m -0.5
-#define J2_degradated_value 5.0
-
 */
 
 /*
-//Borja
+// Borja
 #define NumberDimensions 2
 #define YoungMouduls 100.0E3
 #define PoissonRatio 0.2
 #define AtmosphericPressure -100.0
+#define c_cotphi_value 0.0
 #define a1_Parameter 20000.0
 #define a2_Parameter 0.005
 #define a3_Parameter 35.0
-#define alpha_Parameter -0.5
+#define alpha_Parameter 0.5
 #define NumberSteps 3000 // 1000 // 5000 // 3500 // 2500 //
 #define Delta_strain_II -0.00001
 #define Confining_pressure -200.0
+#define EPS_0 0.0
+#define kappa_0 0.0
 */
+
+// Borja
+#define NumberDimensions 2
+#define YoungMouduls 10.0E3
+#define PoissonRatio 0.2
+#define AtmosphericPressure -100.0
+#define c_cotphi_value 0.0
+#define a1_Parameter 10.0
+#define a2_Parameter 0.0
+#define a3_Parameter 0.8
+#define alpha_Parameter 0.162
+#define NumberSteps 20000 // 1000 // 5000 // 3500 // 2500 //
+#define Delta_strain_II -0.00001
+#define Confining_pressure -20.0
+#define EPS_0 1.065199
+#define kappa_0 4.543
 
 /*
 Unitary test for the smooth Mohr-Coulomb model.
@@ -508,30 +521,32 @@ int main() {
   stress[1] = Confining_pressure;
   stress[2] = Confining_pressure;
 
-  double rad_friction_angle = (PI__MatrixLib__ / 180.0) * phi_Parameter;
+  //  double rad_friction_angle = (PI__MatrixLib__ / 180.0) * phi_Parameter;
   double a1 = MatProp.a_Hardening_Borja[0];
   double a2 = MatProp.a_Hardening_Borja[1];
   double a3 = MatProp.a_Hardening_Borja[2];
   double f, df;
   double I1 = 3.0 * Confining_pressure;
-  double EPS_0 = 0.0;
-  double kappa_0 = 8.0 * sin(rad_friction_angle) * sin(rad_friction_angle) /
-                   (1.0 - sin(rad_friction_angle) * sin(rad_friction_angle));
   int iter = 0;
 
-  f = kappa_0 - a1 * EPS_0 * exp(a2 * I1) * exp(-a3 * EPS_0);
+  /*
+    EPS_0 = 0.0;
+    kappa_0 = 8.0 * sin(rad_friction_angle) * sin(rad_friction_angle) /
+                     (1.0 - sin(rad_friction_angle) * sin(rad_friction_angle));
 
-  while (fabs(f) > TOL_Radial_Returning) {
-    iter++;
-    df = (a3 * EPS_0 - 1.0) * a1 * exp(a2 * I1) * exp(-a3 * EPS_0);
-    EPS_0 += -f / df;
     f = kappa_0 - a1 * EPS_0 * exp(a2 * I1) * exp(-a3 * EPS_0);
-    if (iter > 10) {
-      fprintf(stderr, "" RED " Iter (%e) > 10 " RESET " \n", f);
-      return EXIT_FAILURE;
-    }
-  }
 
+    while (fabs(f) > TOL_Radial_Returning) {
+      iter++;
+      df = (a3 * EPS_0 - 1.0) * a1 * exp(a2 * I1) * exp(-a3 * EPS_0);
+      EPS_0 += -f / df;
+      f = kappa_0 - a1 * EPS_0 * exp(a2 * I1) * exp(-a3 * EPS_0);
+      if (iter > 10) {
+        fprintf(stderr, "" RED " Iter (%e) > 10 " RESET " \n", f);
+        return EXIT_FAILURE;
+      }
+    }
+  */
   kappa1[0] = kappa_0;
   Equiv_Plast_Str[0] = EPS_0;
 
@@ -602,7 +617,9 @@ int main() {
 
   FILE *kappa_vs_eps = fopen("kappa_vs_eps.csv", "w");
   for (int i = 0; i < NumberSteps; i++) {
-    fprintf(kappa_vs_eps, "%e, %e\n", Equiv_Plast_Str[i], kappa1[i]);
+    fprintf(kappa_vs_eps, "%e, %e, %e\n", Equiv_Plast_Str[i], kappa1[i],
+            (180.0 / PI__MatrixLib__) *
+                asin(sqrt(kappa1[i] / (kappa1[i] + 8))));
   }
   fclose(kappa_vs_eps);
 
@@ -636,8 +653,9 @@ int main() {
   fprintf(gnuplot, "set xlabel 'eps' font 'Times,20' enhanced \n");
   fprintf(gnuplot, "set ylabel 'kappa' font "
                    "'Times,20' enhanced \n");
-  fprintf(gnuplot, "plot %s \n",
-          "'kappa_vs_eps.csv' title 'Us' with line lt rgb 'red' lw 2");
+  fprintf(
+      gnuplot, "plot %s \n",
+      "'kappa_vs_eps.csv' using 1:3 title 'Us' with line lt rgb 'red' lw 2");
   fflush(gnuplot);
 
   // Free memory
@@ -741,6 +759,7 @@ int compute_1PK_Matsuoka_Nakai(State_Parameters IO_State, Material MatProp)
   I3 = T_tr[0] * T_tr[1] * T_tr[2];
 
   // Update lambda for a given value of kappa
+  /*
   double f, df;
   int iter = 0;
   f = kappa_n[0] - a[0] * Lambda_n * exp(a[1] * I1) * exp(-a[2] * Lambda_n);
@@ -755,6 +774,7 @@ int compute_1PK_Matsuoka_Nakai(State_Parameters IO_State, Material MatProp)
       return EXIT_FAILURE;
     }
   }
+*/
 
   // Check yield
   F_0 = __F(c0, kappa_n[0], pa, I1, I2, I3, m);
