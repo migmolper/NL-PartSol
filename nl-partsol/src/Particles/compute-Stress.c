@@ -32,16 +32,8 @@ Tensor explicit_integration_stress__Particles__(int p, Particle MPM_Mesh,
     Input_SP.EPS = &MPM_Mesh.Phi.EPS_n1[p];
     Input_SP.Back_stress = MPM_Mesh.Phi.Back_stress.nM[p];
 
-    if (strcmp(MatProp.Plastic_Solver, "Backward-Euler") == 0) {
-      Output_SP = Von_Mises_backward_euler(Input_SP, MatProp);
-    } else if (strcmp(MatProp.Plastic_Solver, "Forward-Euler") == 0) {
-      Output_SP = Von_Mises_forward_euler(Input_SP, MatProp);
-    } else {
-      fprintf(stderr, "%s : %s %s %s \n",
-              "Error in stress_integration__Particles__()", "The solver",
-              MatProp.Type, "has not been yet implemented");
-      exit(EXIT_FAILURE);
-    }
+    Output_SP = Von_Mises_forward_euler(Input_SP, MatProp);
+
 
     free(Output_SP.Increment_E_plastic);
   } else {
@@ -121,32 +113,29 @@ int Stress_integration__Particles__(int p, Particle MPM_Mesh, Mesh FEM_Mesh,
 
   } else if (strcmp(MatProp_p.Type, "Von-Mises") == 0) {
 
-    Input_SP.Stress = MPM_Mesh.Phi.Stress.nM[p];
-//    Input_SP.F_m1_plastic_p = MPM_Mesh.Phi.F_m1_plastic.nM[p];
+    // Asign variables to the solver
+    IO_State.Particle_Idx = p;
+    IO_State.Stress = MPM_Mesh.Phi.Stress.nM[p];
+    IO_State.Back_stress = MPM_Mesh.Phi.Back_stress.nM[p];
+    IO_State.b_e = MPM_Mesh.Phi.b_e_n1.nM[p];
     IO_State.EPS = &MPM_Mesh.Phi.EPS_n1[p];
-    Input_SP.Back_stress = MPM_Mesh.Phi.Back_stress.nM[p];
+    IO_State.d_phi = MPM_Mesh.Phi.DF.nM[p];
+    IO_State.D_phi = MPM_Mesh.Phi.F_n1.nM[p];
 
-    if (MatProp_p.Locking_Control_Fbar) {
-      Input_SP.D_phi = MPM_Mesh.Phi.F_n1.nM[p];
-      Input_SP.Fbar = MPM_Mesh.Phi.Fbar.nM[p];
-    } else {
-      Input_SP.D_phi = MPM_Mesh.Phi.F_n1.nM[p];
-    }
+#if NumberDimensions == 2
+  for (unsigned i = 0 ; i<5 ; i++) IO_State.b_e[i] = MPM_Mesh.Phi.b_e_n.nM[p][i]; 
+#else
+  for (unsigned i = 0 ; i<9 ; i++) IO_State.b_e[i] = MPM_Mesh.Phi.b_e_n.nM[p][i]; 
+#endif
+  *(IO_State.EPS) = MPM_Mesh.Phi.EPS_n[p];
 
-    *(IO_State.EPS) = MPM_Mesh.Phi.EPS_n[p];
+    
+      STATUS = compute_1PK_Von_Mises(IO_State, MatProp_p);
+  if(STATUS == EXIT_FAILURE){
+    fprintf(stderr, ""RED"Error in compute_1PK_Von_Mises(,)"RESET" \n");
+    return EXIT_FAILURE;
+  }
 
-    if (strcmp(MatProp_p.Plastic_Solver, "Backward-Euler") == 0) {
-      Output_SP = finite_strain_plasticity(Input_SP, MatProp_p,
-                                           Von_Mises_backward_euler);
-    } else if (strcmp(MatProp_p.Plastic_Solver, "Forward-Euler") == 0) {
-      Output_SP = finite_strain_plasticity(Input_SP, MatProp_p,
-                                           Von_Mises_forward_euler);
-    } else {
-      fprintf(stderr, "%s : %s %s %s \n",
-              "Error in stress_integration__Particles__()", "The solver",
-              MatProp_p.Type, "has not been yet implemented");
-      exit(EXIT_FAILURE);
-    }
 
   } 
   

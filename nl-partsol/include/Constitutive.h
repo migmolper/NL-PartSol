@@ -108,16 +108,6 @@ Tensor compute_stiffness_density_Neo_Hookean_Wriggers(Tensor, Tensor, Tensor, do
 Matrix compute_D_matrix_Neo_Hookean_Wriggers(Tensor, double, Material);
 /*******************************************************/
 
-/*!
-  \fn State_Parameters Von_Mises_backward_euler(State_Parameters Input_SP, Material MatProp)
-
-  \brief Compute the plastic Von Mises model using an implicit backward euler radial returning 
-
-  \param Input_SP : State parameters of the particle
-  \param MatProp : Material properties of the model
-*/
-State_Parameters Von_Mises_backward_euler(State_Parameters, Material);
-/*******************************************************/
 
 /*!
   \fn State_Parameters Von_Mises_forward_euler(State_Parameters Input_SP, Material MatProp)
@@ -128,6 +118,19 @@ State_Parameters Von_Mises_backward_euler(State_Parameters, Material);
   \param MatProp : Material properties of the model
 */
 State_Parameters Von_Mises_forward_euler(State_Parameters, Material);
+/*******************************************************/
+
+
+/*!
+  \fn int compute_1PK_Von_Mises(State_Parameters IO_State, Material MatProp)
+  
+  \brief Compute Von Mises yield
+
+  \param Input_SP : State parameters of the particle
+  \param MatProp : Material properties of the model
+
+*/
+int compute_1PK_Von_Mises(State_Parameters IO_State, Material MatProp);
 /*******************************************************/
 
 

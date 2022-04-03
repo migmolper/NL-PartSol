@@ -284,8 +284,14 @@ static void X_to_Xi__T3__(Matrix X_EC_GP, Matrix X_GC_GP, Matrix Element_GC_Nod)
 /*********************************************************************/
 
 bool in_out__T3__(Matrix X, Matrix Element) {
-  double min[2] = {Element.nM[0][0], Element.nM[0][1]};
-  double max[2] = {Element.nM[0][0], Element.nM[0][1]};
+  double min[2] = {0.0,0.0};
+  double max[2] = {0.0,0.0};
+
+  min[0] = Element.nM[0][0];
+  min[1] = Element.nM[0][1];
+
+  max[0] = Element.nM[0][0];
+  max[1] = Element.nM[0][1];
 
   for (int a = 1; a < 3; a++) {
     for (int i = 0; i < 2; i++) {
@@ -304,8 +310,17 @@ bool in_out__T3__(Matrix X, Matrix Element) {
 
     X_to_Xi__T3__(Xi, X, Element);
 
+
+    for(unsigned i = 0 ; i<2 ; i++)
+    {
+      if(fabs(Xi.nV[i]) < TOL_NR)
+      {
+        Xi.nV[i] = 0.0;
+      }
+    }
+
     if ((Xi.nV[0] >= 0.0) && (Xi.nV[1] >= 0.0) &&
-        (Xi.nV[1] + Xi.nV[0] - 1 <= 0.0)) {
+        (fabs(Xi.nV[1] + Xi.nV[0]) <= 1.0)) {
       free__MatrixLib__(Xi);
       return true;
     } else {
@@ -574,7 +589,7 @@ void local_search__T3__(Particle MPM_Mesh, Mesh FEM_Mesh) {
 
     // Get the global coordinates and velocity of the particle
     X_p = memory_to_matrix__MatrixLib__(Ndim, 1, MPM_Mesh.Phi.x_GC.nM[p]);
-    V_p = memory_to_matrix__MatrixLib__(Ndim, 1, MPM_Mesh.Phi.vel.nM[p]);
+    V_p = memory_to_matrix__MatrixLib__(Ndim, 1, MPM_Mesh.Phi.dis.nM[p]);
     Xi_p = memory_to_matrix__MatrixLib__(Ndim, 1, MPM_Mesh.Phi.x_EC.nM[p]);
 
     // Check if the particle is static or is in movement
@@ -600,7 +615,7 @@ void local_search__T3__(Particle MPM_Mesh, Mesh FEM_Mesh) {
                 "Error in local_search__T3__ -> "
                 "search_particle_in_surrounding_elements__Particles__",
                 "Not posible to find the particle", p);
-        exit(EXIT_FAILURE);
+                exit(EXIT_FAILURE);
       }
 
       // Free previous connectivity

@@ -149,6 +149,7 @@ static bool __degradated(
     double J2_degradated /**< [in] Critical value of the J2 invariant */);
 
 /**************************************************************/ 
+
 int compute_1PK_Drucker_Prager(State_Parameters IO_State, Material MatProp)
 /*
   Backward Euler algorithm for the Drucker-Prager (Lorenzo Sanavia)
@@ -258,7 +259,6 @@ int compute_1PK_Drucker_Prager(State_Parameters IO_State, Material MatProp)
   double TOL = TOL_Radial_Returning;
   int MaxIter = Max_Iterations_Radial_Returning;
   int Iter = 0;
-  bool Convergence = false;
 
   STATUS = __trial_elastic(T_tr_vol, T_tr_dev, &pressure, &J2, E_hencky_trial,
                            K, G, p_ref);
