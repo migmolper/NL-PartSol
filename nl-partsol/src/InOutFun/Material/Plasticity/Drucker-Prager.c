@@ -280,7 +280,7 @@ int STATUS = EXIT_SUCCESS;
     ""MAGENTA"[kappa-0]"RESET" : "RED"false"RESET" \n",
           stderr);
 
-    STATUS = EXIT_SUCCESS;
+    STATUS = EXIT_FAILURE;
   }
 
   return STATUS;

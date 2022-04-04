@@ -1,19 +1,11 @@
 #include <math.h>
 #include "nl-partsol.h"
 
-/*
-  Call global variables
-*/
-double TOL_Radial_Returning;
-int Max_Iterations_Radial_Returning;
-double DeltaTimeStep;
-
-/*
-  Define local global variable for the relative error
-*/
-double Error0;
-
-
+#ifdef __linux__
+#include <lapacke.h>
+#elif __APPLE__
+#include <Accelerate/Accelerate.h>
+#endif
 
 static int __compute_trial_b_e(
     double *eigval_b_e_tr /**< [out] Eigenvalues of b elastic trial. */,
@@ -190,7 +182,7 @@ int compute_1PK_Von_Mises(State_Parameters IO_State, Material MatProp)
     return EXIT_FAILURE;
   }
 
-  STATUS = __kappa(&kappa_n,sigma_y, eps_n, H, theta, K_0, K_inf, delta);
+  STATUS = __kappa(kappa_n,sigma_y, eps_n, H, theta, K_0, K_inf, delta);
   if (STATUS == EXIT_FAILURE) {
     fprintf(stderr, "" RED "Error in __kappa" RESET "\n");
     return EXIT_FAILURE;
@@ -228,7 +220,7 @@ int compute_1PK_Von_Mises(State_Parameters IO_State, Material MatProp)
 
     while (fabs(PHI / PHI_0) >= TOL) {
 
-      STATUS = __d_kappa(&d_kappa_k,eps_k, H, theta, K_0, K_inf, delta);
+      STATUS = __d_kappa(d_kappa_k,eps_k, H, theta, K_0, K_inf, delta);
       if (STATUS == EXIT_FAILURE) {
         fprintf(stderr, "" RED "Error in __d_kappa" RESET "\n");
         return EXIT_FAILURE;
@@ -240,7 +232,7 @@ int compute_1PK_Von_Mises(State_Parameters IO_State, Material MatProp)
 
       eps_k = eps_n + sqrt(2. / 3.) * d_gamma_k;
 
-      STATUS = __kappa(&kappa_k,sigma_y, eps_k, H, theta, K_0, K_inf, delta);
+      STATUS = __kappa(kappa_k,sigma_y, eps_k, H, theta, K_0, K_inf, delta);
       if (STATUS == EXIT_FAILURE) {
         fprintf(stderr, "" RED "Error in __kappa" RESET "\n");
         return EXIT_FAILURE;

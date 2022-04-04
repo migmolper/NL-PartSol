@@ -120,7 +120,6 @@ Matrix compute_D_matrix_Neo_Hookean_Wriggers(Tensor, double, Material);
 State_Parameters Von_Mises_forward_euler(State_Parameters, Material);
 /*******************************************************/
 
-
 /*!
   \fn int compute_1PK_Von_Mises(State_Parameters IO_State, Material MatProp)
   

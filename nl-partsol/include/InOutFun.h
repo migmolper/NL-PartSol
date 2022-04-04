@@ -522,7 +522,12 @@ Material Define_Solid_Rigid(FILE *,char *,int);
 Material Define_Linear_Elastic(FILE *,char *,int);
 Material Define_Saint_Venant_Kirchhoff(FILE *,char *,int);
 Material Define_Neo_Hookean_Wriggers(FILE *,char *,int);
-Material Define_Von_Mises(FILE *,char *,int);
+
+int Define_Von_Mises(
+  Material *VM_Material /**< [out] List with the material properties */,
+  FILE *Simulation_file /**< [in] Simulation file */,
+  char *Material_Model /**< [in] Character identifier for the material */, 
+  int Material_Idx /**< [in] Index identifier for the material */);
 
 int Define_Matsuoka_Nakai(
   Material *MN_Material /**< [out] List with the material properties */,
@@ -531,7 +536,7 @@ int Define_Matsuoka_Nakai(
   int Material_Idx /**< [in] Index identifier for the material */);
 
 int Define_Lade_Duncan(
-  Material *MN_Material /**< [out] List with the material properties */,
+  Material *LD_Material /**< [out] List with the material properties */,
   FILE *Simulation_file /**< [in] Simulation file */,
   char *Material_Model /**< [in] Character identifier for the material */, 
   int Material_Idx /**< [in] Index identifier for the material */);  
