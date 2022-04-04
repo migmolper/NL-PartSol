@@ -25,7 +25,7 @@ static int __eigenvalues_kirchhoff(
     const double *D_phi /**< [in] Total deformation gradient. */);
 
 /**************************************************************/ 
-int compute_1PK_elastoplastic_tangent_matrix(double *A_ep,
+int compute_1PK_elastoplastic_tangent_matrix(double *C_ep,
                                              const double *dN_alpha,
                                              const double *dN_beta,
                                              const State_Parameters IO_State) {
@@ -154,11 +154,11 @@ int compute_1PK_elastoplastic_tangent_matrix(double *A_ep,
 
       for (unsigned i = 0; i < Ndim; i++) {
         for (unsigned j = 0; j < Ndim; j++) {
-          A_ep[i * Ndim + j] += IO_State.a_ep[A * Ndim + B] *
+          C_ep[i * Ndim + j] += IO_State.a_ep[A * Ndim + B] *
                                 (mv[A * Ndim + A][i] * mu[B * Ndim + B][j]);
 
           if (A != B) {
-            A_ep[i * Ndim + j] +=
+            C_ep[i * Ndim + j] +=
                 0.5 *
                 ((eigval_T[B] - eigval_T[A]) /
                  (eigval_b_e[B] - eigval_b_e[A])) *
@@ -174,16 +174,16 @@ int compute_1PK_elastoplastic_tangent_matrix(double *A_ep,
   for (unsigned i = 0; i < Ndim; i++) {
     for (unsigned j = 0; j < Ndim; j++) {
       for (unsigned k = 0; k < Ndim; k++) {
-        A_ep[i * Ndim + j] += -IO_State.Stress[i * Ndim + k] * u__o__v[k][j];
+        C_ep[i * Ndim + j] += -IO_State.Stress[i * Ndim + k] * u__o__v[k][j];
       }
     }
   }
 
 #ifdef DEBUG_MODE
 #if DEBUG_MODE + 0
-  puts("A_ep: ");
-  printf("%e, %e\n", A_ep[0], A_ep[1]);
-  printf("%e, %e\n", A_ep[2], A_ep[3]);
+  puts("C_ep: ");
+  printf("%e, %e\n", C_ep[0], C_ep[1]);
+  printf("%e, %e\n", C_ep[2], C_ep[3]);
 #endif
 #endif
 

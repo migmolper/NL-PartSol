@@ -186,6 +186,12 @@ int Define_Von_Mises(Material * VM_Material, FILE *Simulation_file, char *Materi
     }
   }
 
+  if((*VM_Material).K_inf_Hardening_Voce < (*VM_Material).K_0_Hardening_Voce)
+  {
+    fprintf(stderr, ""RED" [K-inf] should be larger or equal than [K-0] "RESET" \n");
+    return EXIT_FAILURE;
+  }
+
   strcpy((*VM_Material).Type, Material_Model);
 
   __check_material(VM_Material, ChkMat, Material_Idx);

@@ -98,7 +98,13 @@ int compute_1PK_Von_Mises(State_Parameters IO_State, Material MatProp)
 
   // Read input/output parameters
   double eigval_b_e_tr[3] = {0.0, 0.0, 0.0};
+
+#if NumberDimensions == 2
+  double eigvec_b_e_tr[4] = {0.0, 0.0, 0.0, 0.0};
+#else
   double eigvec_b_e_tr[9] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+#endif
+
   double E_hencky_trial[3] = {0.0, 0.0, 0.0};
   double T_tr_vol[3] = {0.0, 0.0, 0.0};
   double T_tr_dev[3] = {0.0, 0.0, 0.0};
@@ -132,9 +138,15 @@ int compute_1PK_Von_Mises(State_Parameters IO_State, Material MatProp)
          eigval_b_e_tr[0], eigval_b_e_tr[1], eigval_b_e_tr[2]);
 
   puts("Eigenvectors (files) left Cauchy-Green tensor");
+#if NumberDimensions == 2
+  printf("%f %f %f \n", eigvec_b_e_tr[0], eigvec_b_e_tr[1], 0.0);
+  printf("%f %f %f \n", eigvec_b_e_tr[2], eigvec_b_e_tr[3], 0.0);
+  printf("%f %f %f \n", 0.0, 0.0, 1.0);
+#else
   printf("%f %f %f \n", eigvec_b_e_tr[0], eigvec_b_e_tr[1], eigvec_b_e_tr[2]);
   printf("%f %f %f \n", eigvec_b_e_tr[3], eigvec_b_e_tr[4], eigvec_b_e_tr[5]);
   printf("%f %f %f \n", eigvec_b_e_tr[6], eigvec_b_e_tr[7], eigvec_b_e_tr[8]);
+#endif
 
   printf("E_hencky_trial: [%f, %f, %f] \n", E_hencky_trial[0],
          E_hencky_trial[1], E_hencky_trial[2]);
@@ -165,24 +177,25 @@ int compute_1PK_Von_Mises(State_Parameters IO_State, Material MatProp)
 
   // Define scalar internal variables
   double PHI, PHI_0 = 0.0;
-  double d_PHI = 0.0;  
+  double d_PHI = 0.0;
   double J2 = 0.0;
   double eps_n = *IO_State.EPS;
-  double eps_k = eps_n;  
-  double d_gamma_k = 0.0;  
+  double eps_k = eps_n;
+  double d_gamma_k = 0.0;
 
   // Initialise solver parameters
   double TOL = TOL_Radial_Returning;
   int MaxIter = Max_Iterations_Radial_Returning;
   int Iter = 0;
 
-  STATUS = __trial_elastic(T_tr_vol, T_tr_dev, T_back, &J2, E_hencky_trial, K, G);
+  STATUS =
+      __trial_elastic(T_tr_vol, T_tr_dev, T_back, &J2, E_hencky_trial, K, G);
   if (STATUS == EXIT_FAILURE) {
     fprintf(stderr, "" RED "Error in __trial_elastic" RESET "\n");
     return EXIT_FAILURE;
   }
 
-  STATUS = __kappa(kappa_n,sigma_y, eps_n, H, theta, K_0, K_inf, delta);
+  STATUS = __kappa(kappa_n, sigma_y, eps_n, H, theta, K_0, K_inf, delta);
   if (STATUS == EXIT_FAILURE) {
     fprintf(stderr, "" RED "Error in __kappa" RESET "\n");
     return EXIT_FAILURE;
@@ -192,8 +205,7 @@ int compute_1PK_Von_Mises(State_Parameters IO_State, Material MatProp)
   PHI_0 = __yield_function(kappa_n, kappa_n, J2, d_gamma_k, eps_n, G);
 
   // Elastic
-  if (PHI_0 <= 0.0) 
-  {
+  if (PHI_0 <= 0.0) {
     STATUS = __update_internal_variables_elastic(
         IO_State.Stress, IO_State.D_phi, T_tr_vol, T_tr_dev, eigvec_b_e_tr);
     if (STATUS == EXIT_FAILURE) {
@@ -204,7 +216,7 @@ int compute_1PK_Von_Mises(State_Parameters IO_State, Material MatProp)
     }
   }
   // Plastic (check yield condition)
-  else{
+  else {
 
     STATUS = __compute_plastic_flow_direction(n, T_tr_dev, J2);
     if (STATUS == EXIT_FAILURE) {
@@ -215,12 +227,17 @@ int compute_1PK_Von_Mises(State_Parameters IO_State, Material MatProp)
 
     kappa_k[0] = kappa_n[0];
     kappa_k[1] = kappa_n[1];
-    
+
     PHI = PHI_0;
 
     while (fabs(PHI / PHI_0) >= TOL) {
 
-      STATUS = __d_kappa(d_kappa_k,eps_k, H, theta, K_0, K_inf, delta);
+      Iter++;
+
+      if (Iter == MaxIter)
+        break;
+
+      STATUS = __d_kappa(d_kappa_k, eps_k, H, theta, K_0, K_inf, delta);
       if (STATUS == EXIT_FAILURE) {
         fprintf(stderr, "" RED "Error in __d_kappa" RESET "\n");
         return EXIT_FAILURE;
@@ -228,35 +245,31 @@ int compute_1PK_Von_Mises(State_Parameters IO_State, Material MatProp)
 
       d_PHI = __d_yield_function(d_kappa_k, G);
 
-      d_gamma_k += - PHI / d_PHI;
+      d_gamma_k += -PHI / d_PHI;
 
       eps_k = eps_n + sqrt(2. / 3.) * d_gamma_k;
 
-      STATUS = __kappa(kappa_k,sigma_y, eps_k, H, theta, K_0, K_inf, delta);
+      STATUS = __kappa(kappa_k, sigma_y, eps_k, H, theta, K_0, K_inf, delta);
       if (STATUS == EXIT_FAILURE) {
         fprintf(stderr, "" RED "Error in __kappa" RESET "\n");
         return EXIT_FAILURE;
       }
 
       PHI = __yield_function(kappa_k, kappa_n, J2, d_gamma_k, eps_k, G);
-
-      Iter++;
     }
 
     double d_K_kin = kappa_k[1] - kappa_n[1];
 
-    STATUS = __update_internal_variables_plastic(Increment_E_plastic, IO_State.Stress, 
-                                                 IO_State.Back_stress, IO_State.EPS, IO_State.D_phi,
-                                                 T_tr_vol,T_tr_dev,eigvec_b_e_tr,n,d_gamma_k,G, eps_k, 
-                                                 d_K_kin);
+    STATUS = __update_internal_variables_plastic(
+        Increment_E_plastic, IO_State.Stress, IO_State.Back_stress,
+        IO_State.EPS, IO_State.D_phi, T_tr_vol, T_tr_dev, eigvec_b_e_tr, n,
+        d_gamma_k, G, eps_k, d_K_kin);
     if (STATUS == EXIT_FAILURE) {
       fprintf(stderr,
-                "" RED "Error in __update_internal_variables_plastic" RESET
-                "\n");
+              "" RED "Error in __update_internal_variables_plastic" RESET "\n");
       return EXIT_FAILURE;
     }
-
-  } 
+  }
 
   // Plastic corrector step for the left Cauchy-Green tensor
   E_hencky_trial[0] -= Increment_E_plastic[0];
@@ -269,7 +282,6 @@ int compute_1PK_Von_Mises(State_Parameters IO_State, Material MatProp)
     fprintf(stderr, "" RED "Error in __corrector_b_e" RESET "\n");
     return EXIT_FAILURE;
   }
-
 
 #ifdef DEBUG_MODE
 #if DEBUG_MODE + 0
@@ -284,7 +296,6 @@ int compute_1PK_Von_Mises(State_Parameters IO_State, Material MatProp)
 #endif
 #endif
 
-
   return EXIT_SUCCESS;
 }
 
@@ -293,36 +304,36 @@ int compute_1PK_Von_Mises(State_Parameters IO_State, Material MatProp)
 static int __compute_trial_b_e(double *eigval_b_e_tr, double *eigvec_b_e_tr,
                                const double *b_e, const double *d_phi) {
 
+  unsigned Ndim = NumberDimensions;
+
+  for (unsigned i = 0; i < Ndim; i++) {
+    for (unsigned j = 0; j < Ndim; j++) {
+      for (unsigned k = 0; k < Ndim; k++) {
+        for (unsigned l = 0; l < Ndim; l++) {
+          eigvec_b_e_tr[i * Ndim + j] +=
+              d_phi[i * Ndim + k] * b_e[k * Ndim + l] * d_phi[j * Ndim + l];
+        }
+      }
+    }
+  }
+
 #if NumberDimensions == 2
+  /* Locals */
+  int n = 2;
+  int lda = 2;
+  int ldvl = 2;
+  int ldvr = 2;
+  int info;
+  int lwork;
+  double wkopt;
+  double *work;
 
-  eigvec_b_e_tr[0] = d_phi[0] * b_e[0] * d_phi[0] + d_phi[0] * b_e[1] * d_phi[1] +
-              d_phi[1] * b_e[2] * d_phi[0] + d_phi[1] * b_e[3] * d_phi[1];
-
-  eigvec_b_e_tr[1] = d_phi[0] * b_e[0] * d_phi[2] + d_phi[0] * b_e[1] * d_phi[3] +
-              d_phi[1] * b_e[2] * d_phi[2] + d_phi[1] * b_e[3] * d_phi[3];
-
-  eigvec_b_e_tr[3] = d_phi[2] * b_e[0] * d_phi[0] + d_phi[2] * b_e[1] * d_phi[1] +
-              d_phi[3] * b_e[2] * d_phi[0] + d_phi[3] * b_e[3] * d_phi[1];
-
-  eigvec_b_e_tr[4] = d_phi[2] * b_e[0] * d_phi[2] + d_phi[2] * b_e[1] * d_phi[3] +
-              d_phi[3] * b_e[2] * d_phi[2] + d_phi[3] * b_e[3] * d_phi[3];
-
-  eigvec_b_e_tr[8] = b_e[4];
+  /* Local arrays */
+  int IPIV[2] = {0, 0};
+  double wi[2];
+  double vl[4];
 
 #else
-  No esta implementado
-#endif
-
-#ifdef DEBUG_MODE
-#if DEBUG_MODE + 0
-
-  puts("Trial elastic left Cauchy-Green");
-  printf("%e %e %e \n", eigvec_b_e_tr[0], eigvec_b_e_tr[1], eigvec_b_e_tr[2]);
-  printf("%e %e %e \n", eigvec_b_e_tr[3], eigvec_b_e_tr[4], eigvec_b_e_tr[5]);
-  printf("%e %e %e \n", eigvec_b_e_tr[6], eigvec_b_e_tr[7], eigvec_b_e_tr[8]);
-
-#endif
-#endif
 
   /* Locals */
   int n = 3;
@@ -333,17 +344,20 @@ static int __compute_trial_b_e(double *eigval_b_e_tr, double *eigvec_b_e_tr,
   int lwork;
   double wkopt;
   double *work;
-    
+
   /* Local arrays */
   int IPIV[3] = {0, 0, 0};
   double wi[3];
   double vl[9];
 
+#endif
+
   /*
     Query and allocate the optimal workspace
   */
   lwork = -1;
-  dsyev_("V","L",&n, eigvec_b_e_tr, &lda, eigval_b_e_tr,&wkopt, &lwork,&info);
+  dsyev_("V", "L", &n, eigvec_b_e_tr, &lda, eigval_b_e_tr, &wkopt, &lwork,
+         &info);
   lwork = (int)wkopt;
   work = (double *)malloc(lwork * sizeof(double));
 
@@ -366,7 +380,7 @@ static int __compute_trial_b_e(double *eigval_b_e_tr, double *eigvec_b_e_tr,
     return EXIT_FAILURE;
   }
 
-  dsyev_("V","L",&n, eigvec_b_e_tr, &lda, eigval_b_e_tr,work, &lwork,&info);
+  dsyev_("V", "L", &n, eigvec_b_e_tr, &lda, eigval_b_e_tr, work, &lwork, &info);
   /* Check for convergence */
   if (info > 0) {
     free(work);
@@ -386,8 +400,11 @@ static int __compute_trial_b_e(double *eigval_b_e_tr, double *eigvec_b_e_tr,
     return EXIT_FAILURE;
   }
 
-
   free(work);
+
+#if NumberDimensions == 2
+  eigval_b_e_tr[2] = b_e[4];
+#endif
 
   return EXIT_SUCCESS;
 }
@@ -396,6 +413,8 @@ static int __compute_trial_b_e(double *eigval_b_e_tr, double *eigvec_b_e_tr,
 
 static int __corrector_b_e(double *b_e, const double *eigvec_b_e_tr,
                            const double *E_hencky_trial) {
+
+  int Ndim = NumberDimensions;
 
   double eigval_b_e[3] = {0.0, 0.0, 0.0};
 
@@ -411,21 +430,31 @@ static int __corrector_b_e(double *b_e, const double *eigvec_b_e_tr,
   b_e[3] = 0.0;
   b_e[4] = 0.0;
 
-  for (unsigned i = 0; i < 3; i++) {
-    b_e[0] +=
-        eigval_b_e[i] * eigvec_b_e_tr[i * 3 + 0] * eigvec_b_e_tr[i * 3 + 0];
-    b_e[1] +=
-        eigval_b_e[i] * eigvec_b_e_tr[i * 3 + 0] * eigvec_b_e_tr[i * 3 + 1];
-    b_e[2] +=
-        eigval_b_e[i] * eigvec_b_e_tr[i * 3 + 1] * eigvec_b_e_tr[i * 3 + 0];
-    b_e[3] +=
-        eigval_b_e[i] * eigvec_b_e_tr[i * 3 + 1] * eigvec_b_e_tr[i * 3 + 1];
-    b_e[4] +=
-        eigval_b_e[i] * eigvec_b_e_tr[i * 3 + 2] * eigvec_b_e_tr[i * 3 + 2];
+#else
+
+  b_e[0] = 0.0;
+  b_e[1] = 0.0;
+  b_e[2] = 0.0;
+  b_e[3] = 0.0;
+  b_e[4] = 0.0;
+  b_e[5] = 0.0;
+  b_e[6] = 0.0;
+  b_e[7] = 0.0;
+  b_e[8] = 0.0;
+
+#endif
+
+  for (unsigned A = 0; A < Ndim; A++) {
+    for (unsigned i = 0; i < Ndim; i++) {
+      for (unsigned j = 0; j < Ndim; j++) {
+        b_e[i * Ndim + j] += eigval_b_e[A] * eigvec_b_e_tr[A + i * Ndim] *
+                             eigvec_b_e_tr[A + j * Ndim];
+      }
+    }
   }
 
-#else
-  No esta implementado
+#if NumberDimensions == 2
+  b_e[4] = eigval_b_e[2];
 #endif
 
   return EXIT_SUCCESS;
@@ -433,9 +462,9 @@ static int __corrector_b_e(double *b_e, const double *eigvec_b_e_tr,
 
 /**************************************************************/
 
-static int __trial_elastic(double *T_tr_vol, double *T_tr_dev, const double *T_back,
-                           double *J2, const double *E_hencky_trial, double K,
-                           double G) {
+static int __trial_elastic(double *T_tr_vol, double *T_tr_dev,
+                           const double *T_back, double *J2,
+                           const double *E_hencky_trial, double K, double G) {
 
   double E_hencky_trial_vol[3];
   double tr_E_hencky_trial =
@@ -467,28 +496,48 @@ static int __update_internal_variables_elastic(double *Stress,
                                                const double *T_tr_dev,
                                                const double *eigvec_b_e_tr) {
 
+  int Ndim = NumberDimensions;
+
   // Compute the transpose of D_phi
-  double D_phi_mT[9] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
 
 #if NumberDimensions == 2
 
+  double D_phi_mT[4] = {0.0, 0.0, 0.0, 0.0};
   D_phi_mT[0] = D_phi[0];
   D_phi_mT[1] = D_phi[2];
-  D_phi_mT[3] = D_phi[1];
-  D_phi_mT[4] = D_phi[3];
-  D_phi_mT[8] = D_phi[4];
+  D_phi_mT[2] = D_phi[1];
+  D_phi_mT[3] = D_phi[3];
+
+  // Parameters for dgetrf_ and dgetri_
+  int INFO;
+  int N = 2;
+  int LDA = 2;
+  int LWORK = 2;
+  int IPIV[2] = {0, 0};
+  double WORK[2] = {0, 0};
 
 #else
-  No esta implementado
-#endif
+  double D_phi_mT[9] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
 
-  // compute the inverse of D_phi
+  D_phi_mT[0] = D_phi[0];
+  D_phi_mT[1] = D_phi[3];
+  D_phi_mT[2] = D_phi[6];
+  D_phi_mT[3] = D_phi[1];
+  D_phi_mT[4] = D_phi[4];
+  D_phi_mT[5] = D_phi[7];
+  D_phi_mT[6] = D_phi[2];
+  D_phi_mT[7] = D_phi[5];
+  D_phi_mT[8] = D_phi[8];
+
+  // Parameters for dgetrf_ and dgetri_
   int INFO;
   int N = 3;
   int LDA = 3;
   int LWORK = 3;
   int IPIV[3] = {0, 0, 0};
   double WORK[3] = {0, 0, 0};
+
+#endif
 
   // The factors L and U from the factorization A = P*L*U
   dgetrf_(&N, &N, D_phi_mT, &LDA, IPIV, &INFO);
@@ -535,37 +584,50 @@ static int __update_internal_variables_elastic(double *Stress,
 #if DEBUG_MODE + 0
 
   puts("Adjunt of the deformation gradient");
+#if NumberDimensions == 2
+  printf("%f %f %f \n", D_phi_mT[0], D_phi_mT[1], 0.0);
+  printf("%f %f %f \n", D_phi_mT[2], D_phi_mT[3], 0.0);
+  printf("%f %f %f \n", 0.0, 0.0, 1.0);
+#else
   printf("%f %f %f \n", D_phi_mT[0], D_phi_mT[1], D_phi_mT[2]);
   printf("%f %f %f \n", D_phi_mT[3], D_phi_mT[4], D_phi_mT[5]);
   printf("%f %f %f \n", D_phi_mT[6], D_phi_mT[7], D_phi_mT[8]);
+#endif
 
 #endif
 #endif
 
-  double T[9] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+#if NumberDimensions == 2
+  double T_aux[4] = {0.0, 0.0, 0.0, 0.0};
+#else
+  double T_aux[9] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+#endif
+  double T_A = 0.0;
 
-  for (unsigned i = 0; i < 3; i++) {
+  for (unsigned A = 0; A < Ndim; A++) {
 
-    double T_i = T_tr_vol[i] + T_tr_dev[i];
+    T_A = T_tr_vol[A] + T_tr_dev[A];
 
-    T[0] += T_i * eigvec_b_e_tr[i * 3 + 0] * eigvec_b_e_tr[i * 3 + 0];
-    T[1] += T_i * eigvec_b_e_tr[i * 3 + 0] * eigvec_b_e_tr[i * 3 + 1];
-    T[3] += T_i * eigvec_b_e_tr[i * 3 + 1] * eigvec_b_e_tr[i * 3 + 0];
-    T[4] += T_i * eigvec_b_e_tr[i * 3 + 1] * eigvec_b_e_tr[i * 3 + 1];
-    T[8] += T_i * eigvec_b_e_tr[i * 3 + 2] * eigvec_b_e_tr[i * 3 + 2];
+    for (unsigned i = 0; i < Ndim; i++) {
+      for (unsigned j = 0; j < Ndim; j++) {
+        T_aux[i * Ndim + j] +=
+            T_A * eigvec_b_e_tr[A + i * Ndim] * eigvec_b_e_tr[A + j * Ndim];
+      }
+    }
+  }
+
+  for (unsigned i = 0; i < Ndim; i++) {
+    for (unsigned j = 0; j < Ndim; j++) {
+      Stress[i * Ndim + j] = 0.0;
+
+      for (unsigned k = 0; k < Ndim; k++) {
+        Stress[i * Ndim + j] += T_aux[i * Ndim + k] * D_phi_mT[k * Ndim + j];
+      }
+    }
   }
 
 #if NumberDimensions == 2
-
-  Stress[0] = T[0] * D_phi_mT[0] + T[1] * D_phi_mT[3];
-  Stress[1] = T[0] * D_phi_mT[1] + T[1] * D_phi_mT[4];
-  Stress[2] = T[3] * D_phi_mT[0] + T[4] * D_phi_mT[3];
-  Stress[3] = T[3] * D_phi_mT[1] + T[4] * D_phi_mT[4];
-  Stress[4] = T[8] * D_phi_mT[8];
-
-
-#else
-  No esta implementado
+  Stress[4] = T_tr_vol[2] + T_tr_dev[2];
 #endif
 
 #ifdef DEBUG_MODE
@@ -584,9 +646,8 @@ static int __update_internal_variables_elastic(double *Stress,
 
 /**************************************************************/
 
-static int __compute_plastic_flow_direction(double *n,
-                                           const double *T_tr_dev,
-                                           double J2) {
+static int __compute_plastic_flow_direction(double *n, const double *T_tr_dev,
+                                            double J2) {
   n[0] = T_tr_dev[0] / J2;
   n[1] = T_tr_dev[1] / J2;
   n[2] = T_tr_dev[2] / J2;
@@ -596,16 +657,14 @@ static int __compute_plastic_flow_direction(double *n,
 
 /**************************************************************/
 
-static int __kappa(double *kappa_k, double sigma_y, double eps_k, 
-                  double H, double theta, double K_0,
-                  double K_inf, double delta)
-{
+static int __kappa(double *kappa_k, double sigma_y, double eps_k, double H,
+                   double theta, double K_0, double K_inf, double delta) {
   if (eps_k < 0.0)
-  return EXIT_FAILURE;
-  
+    return EXIT_FAILURE;
+
   // Isotropic hardening
-  kappa_k[0] = sigma_y + theta * H * eps_k +
-           (K_inf - K_0) * (1 - exp(-delta * eps_k));
+  kappa_k[0] =
+      sigma_y + theta * H * eps_k + (K_inf - K_0) * (1 - exp(-delta * eps_k));
 
   // Kinematic hardening
   kappa_k[1] = (1 - theta) * H * eps_k;
@@ -613,15 +672,12 @@ static int __kappa(double *kappa_k, double sigma_y, double eps_k,
   return EXIT_SUCCESS;
 }
 
-
 /**************************************************************/
 
-static int __d_kappa(double *d_kappa, double eps_k, double H, 
-                     double theta, double K_0,
-                     double K_inf, double delta)
-{
+static int __d_kappa(double *d_kappa, double eps_k, double H, double theta,
+                     double K_0, double K_inf, double delta) {
   if (eps_k < 0.0)
-  return EXIT_FAILURE;
+    return EXIT_FAILURE;
 
   // Isotropic hardening
   d_kappa[0] = (theta * H + delta * (K_inf - K_0) * exp(-delta * eps_k));
@@ -634,42 +690,35 @@ static int __d_kappa(double *d_kappa, double eps_k, double H,
 
 /**************************************************************/
 
-static double __yield_function(const double * kappa_k, const double * kappa_n,
-                               double J2, double d_gamma_k, double eps_k,  
+static double __yield_function(const double *kappa_k, const double *kappa_n,
+                               double J2, double d_gamma_k, double eps_k,
                                double G) {
   double K_iso_k = kappa_k[0];
   double K_kin_k = kappa_k[1];
   double K_kin_n = kappa_n[1];
 
-  return J2 - sqrt(2. / 3.) * (K_iso_k + K_kin_k - K_kin_n) - 2.0 * G * d_gamma_k;
+  return J2 - sqrt(2. / 3.) * (K_iso_k + K_kin_k - K_kin_n) -
+         2.0 * G * d_gamma_k;
 }
 
 /**************************************************************/
 
-static double __d_yield_function(const double * d_kappa_k, double G)
-{ 
-  double d_K_iso_k = d_kappa_k[0];   
+static double __d_yield_function(const double *d_kappa_k, double G) {
+  double d_K_iso_k = d_kappa_k[0];
   double d_K_kin_k = d_kappa_k[1];
 
-  return - 2.0 * G *(1.0 + (d_K_iso_k + d_K_kin_k)/(3*G));
+  return -2.0 * G * (1.0 + (d_K_iso_k + d_K_kin_k) / (3 * G));
 }
 
 /**************************************************************/
 
 static int __update_internal_variables_plastic(
-    double *Increment_E_plastic,
-    double *Stress, 
-    double * T_back,
-    double *eps_n1, 
-    const double *D_phi, 
-    const double *T_tr_vol,
-    const double *T_tr_dev, 
-    const double *eigvec_b_e_tr,
-    const double *n,
-    double d_gamma_k, 
-    double G, 
-    double eps_k,
-    double d_K_kin) {
+    double *Increment_E_plastic, double *Stress, double *T_back, double *eps_n1,
+    const double *D_phi, const double *T_tr_vol, const double *T_tr_dev,
+    const double *eigvec_b_e_tr, const double *n, double d_gamma_k, double G,
+    double eps_k, double d_K_kin) {
+
+  int Ndim = NumberDimensions;
 
   // Update equivalent plastic strain
   *eps_n1 = eps_k;
@@ -680,27 +729,44 @@ static int __update_internal_variables_plastic(
   Increment_E_plastic[2] = d_gamma_k * n[2];
 
   // Compute the transpose of D_phi
-  double D_phi_mT[9] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
-
 #if NumberDimensions == 2
 
+  double D_phi_mT[4] = {0.0, 0.0, 0.0, 0.0};
   D_phi_mT[0] = D_phi[0];
   D_phi_mT[1] = D_phi[2];
-  D_phi_mT[3] = D_phi[1];
-  D_phi_mT[4] = D_phi[3];
-  D_phi_mT[8] = D_phi[4];
+  D_phi_mT[2] = D_phi[1];
+  D_phi_mT[3] = D_phi[3];
+
+  // Parameters for dgetrf_ and dgetri_
+  int INFO;
+  int N = 2;
+  int LDA = 2;
+  int LWORK = 2;
+  int IPIV[2] = {0, 0};
+  double WORK[2] = {0, 0};
 
 #else
-  No esta implementado
-#endif
+  double D_phi_mT[9] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
 
-  // compute the inverse of D_phi
+  D_phi_mT[0] = D_phi[0];
+  D_phi_mT[1] = D_phi[3];
+  D_phi_mT[2] = D_phi[6];
+  D_phi_mT[3] = D_phi[1];
+  D_phi_mT[4] = D_phi[4];
+  D_phi_mT[5] = D_phi[7];
+  D_phi_mT[6] = D_phi[2];
+  D_phi_mT[7] = D_phi[5];
+  D_phi_mT[8] = D_phi[8];
+
+  // Parameters for dgetrf_ and dgetri_
   int INFO;
   int N = 3;
   int LDA = 3;
   int LWORK = 3;
   int IPIV[3] = {0, 0, 0};
   double WORK[3] = {0, 0, 0};
+
+#endif
 
   // The factors L and U from the factorization A = P*L*U
   dgetrf_(&N, &N, D_phi_mT, &LDA, IPIV, &INFO);
@@ -750,37 +816,50 @@ static int __update_internal_variables_plastic(
 #if DEBUG_MODE + 0
 
   puts("Adjunt of the deformation gradient");
+#if NumberDimensions == 2
+  printf("%f %f %f \n", D_phi_mT[0], D_phi_mT[1], 0.0);
+  printf("%f %f %f \n", D_phi_mT[2], D_phi_mT[3], 0.0);
+  printf("%f %f %f \n", 0.0, 0.0, 1.0);
+#else
   printf("%f %f %f \n", D_phi_mT[0], D_phi_mT[1], D_phi_mT[2]);
   printf("%f %f %f \n", D_phi_mT[3], D_phi_mT[4], D_phi_mT[5]);
   printf("%f %f %f \n", D_phi_mT[6], D_phi_mT[7], D_phi_mT[8]);
+#endif
 
 #endif
 #endif
 
-  double T[9] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+#if NumberDimensions == 2
+  double T_aux[4] = {0.0, 0.0, 0.0, 0.0};
+#else
+  double T_aux[9] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+#endif
+  double T_A = 0.0;
 
-  for (unsigned i = 0; i < 3; i++) {
+  for (unsigned A = 0; A < Ndim; A++) {
 
-    double T_i = -T_tr_vol[i] + T_tr_dev[i] + T_back[i] -
-                 d_gamma_k * 2 * G * n[i];
+    T_A = -T_tr_vol[A] + T_tr_dev[A] + T_back[A] - d_gamma_k * 2 * G * n[A];
 
-    T[0] += T_i * eigvec_b_e_tr[i * 3 + 0] * eigvec_b_e_tr[i * 3 + 0];
-    T[1] += T_i * eigvec_b_e_tr[i * 3 + 0] * eigvec_b_e_tr[i * 3 + 1];
-    T[3] += T_i * eigvec_b_e_tr[i * 3 + 1] * eigvec_b_e_tr[i * 3 + 0];
-    T[4] += T_i * eigvec_b_e_tr[i * 3 + 1] * eigvec_b_e_tr[i * 3 + 1];
-    T[8] += T_i * eigvec_b_e_tr[i * 3 + 2] * eigvec_b_e_tr[i * 3 + 2];
+    for (unsigned i = 0; i < Ndim; i++) {
+      for (unsigned j = 0; j < Ndim; j++) {
+        T_aux[i * Ndim + j] +=
+            T_A * eigvec_b_e_tr[A * Ndim + i] * eigvec_b_e_tr[A * Ndim + j];
+      }
+    }
+  }
+
+  for (unsigned i = 0; i < Ndim; i++) {
+    for (unsigned j = 0; j < Ndim; j++) {
+      Stress[i * Ndim + j] = 0.0;
+
+      for (unsigned k = 0; k < Ndim; k++) {
+        Stress[i * Ndim + j] += T_aux[i * Ndim + k] * D_phi_mT[k * Ndim + j];
+      }
+    }
   }
 
 #if NumberDimensions == 2
-
-  Stress[0] = T[0] * D_phi_mT[0] + T[1] * D_phi_mT[3];
-  Stress[1] = T[0] * D_phi_mT[1] + T[1] * D_phi_mT[4];
-  Stress[2] = T[3] * D_phi_mT[0] + T[4] * D_phi_mT[3];
-  Stress[3] = T[3] * D_phi_mT[1] + T[4] * D_phi_mT[4];
-  Stress[4] = T[8] * D_phi_mT[8];
-
-#else
-  No esta implementado
+  Stress[4] = -T_tr_vol[2] + T_tr_dev[2] + T_back[2] - d_gamma_k * 2 * G * n[2];
 #endif
 
   // Update back stress
@@ -801,5 +880,39 @@ static int __update_internal_variables_plastic(
 
   return EXIT_SUCCESS;
 }
+
+/**************************************************************/
+
+/*
+static int __tangent_moduli(double * C_ep, const double * n, const double * kappa_k,
+                            double d_gamma_k, double J2, double K, double G)
+{
+
+  int STATUS = EXIT_SUCCESS;  
+  int Ndim = NumberDimensions;
+
+  double Identity[3][3] = {
+    {1.0,0.0,0.0},
+    {0.0,1.0,0.0},
+    {0.0,0.0,1.0}
+  };
+
+  double K_iso_k = kappa_k[0];
+  double K_kin_k = kappa_k[1];
+  double theta = 1.0 - 2.0*G*d_gamma_k/J2;
+  double theta_bar = 1.0/(1.0 + (K_iso_k + K_kin_k)/(3.0*G)) - (1.0 - theta);
+
+  for (unsigned i = 0; i < 3; i++)
+  {
+    for (unsigned j = 0; j < 3; j++)
+    {
+      C_ep[i*3 + j] = K + 2*G*theta*(Identity[i][j] - (1.0/3.0)) - 2*G*theta_bar*n[i]*n[j];
+    }
+  }
+  
+  return STATUS;
+}
+
+*/
 
 /**************************************************************/

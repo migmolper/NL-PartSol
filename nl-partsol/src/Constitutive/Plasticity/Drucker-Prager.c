@@ -159,7 +159,13 @@ int compute_1PK_Drucker_Prager(State_Parameters IO_State, Material MatProp)
 
   // Read input/output parameters
   double eigval_b_e_tr[3] = {0.0, 0.0, 0.0};
+
+#if NumberDimensions == 2
+  double eigvec_b_e_tr[4] = {0.0, 0.0, 0.0, 0.0};
+#else
   double eigvec_b_e_tr[9] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+#endif
+
   double E_hencky_trial[3] = {0.0, 0.0, 0.0};
   double T_tr_vol[3] = {0.0, 0.0, 0.0};
   double T_tr_dev[3] = {0.0, 0.0, 0.0};
@@ -461,36 +467,36 @@ int compute_1PK_Drucker_Prager(State_Parameters IO_State, Material MatProp)
 static int __compute_trial_b_e(double *eigval_b_e_tr, double *eigvec_b_e_tr,
                                const double *b_e, const double *d_phi) {
 
+  unsigned Ndim = NumberDimensions;
+
+  for (unsigned i = 0; i < Ndim; i++) {
+    for (unsigned j = 0; j < Ndim; j++) {
+      for (unsigned k = 0; k < Ndim; k++) {
+        for (unsigned l = 0; l < Ndim; l++) {
+          eigvec_b_e_tr[i * Ndim + j] +=
+              d_phi[i * Ndim + k] * b_e[k * Ndim + l] * d_phi[j * Ndim + l];
+        }
+      }
+    }
+  }
+
 #if NumberDimensions == 2
+  /* Locals */
+  int n = 2;
+  int lda = 2;
+  int ldvl = 2;
+  int ldvr = 2;
+  int info;
+  int lwork;
+  double wkopt;
+  double *work;
 
-  eigvec_b_e_tr[0] = d_phi[0] * b_e[0] * d_phi[0] + d_phi[0] * b_e[1] * d_phi[1] +
-              d_phi[1] * b_e[2] * d_phi[0] + d_phi[1] * b_e[3] * d_phi[1];
-
-  eigvec_b_e_tr[1] = d_phi[0] * b_e[0] * d_phi[2] + d_phi[0] * b_e[1] * d_phi[3] +
-              d_phi[1] * b_e[2] * d_phi[2] + d_phi[1] * b_e[3] * d_phi[3];
-
-  eigvec_b_e_tr[3] = d_phi[2] * b_e[0] * d_phi[0] + d_phi[2] * b_e[1] * d_phi[1] +
-              d_phi[3] * b_e[2] * d_phi[0] + d_phi[3] * b_e[3] * d_phi[1];
-
-  eigvec_b_e_tr[4] = d_phi[2] * b_e[0] * d_phi[2] + d_phi[2] * b_e[1] * d_phi[3] +
-              d_phi[3] * b_e[2] * d_phi[2] + d_phi[3] * b_e[3] * d_phi[3];
-
-  eigvec_b_e_tr[8] = b_e[4];
+  /* Local arrays */
+  int IPIV[2] = {0, 0};
+  double wi[2];
+  double vl[4];
 
 #else
-  No esta implementado
-#endif
-
-#ifdef DEBUG_MODE
-#if DEBUG_MODE + 0
-
-  puts("Trial elastic left Cauchy-Green");
-  printf("%e %e %e \n", eigvec_b_e_tr[0], eigvec_b_e_tr[1], eigvec_b_e_tr[2]);
-  printf("%e %e %e \n", eigvec_b_e_tr[3], eigvec_b_e_tr[4], eigvec_b_e_tr[5]);
-  printf("%e %e %e \n", eigvec_b_e_tr[6], eigvec_b_e_tr[7], eigvec_b_e_tr[8]);
-
-#endif
-#endif
 
   /* Locals */
   int n = 3;
@@ -501,17 +507,20 @@ static int __compute_trial_b_e(double *eigval_b_e_tr, double *eigvec_b_e_tr,
   int lwork;
   double wkopt;
   double *work;
-    
+
   /* Local arrays */
   int IPIV[3] = {0, 0, 0};
   double wi[3];
   double vl[9];
 
+#endif
+
   /*
     Query and allocate the optimal workspace
   */
   lwork = -1;
-  dsyev_("V","L",&n, eigvec_b_e_tr, &lda, eigval_b_e_tr,&wkopt, &lwork,&info);
+  dsyev_("V", "L", &n, eigvec_b_e_tr, &lda, eigval_b_e_tr, &wkopt, &lwork,
+         &info);
   lwork = (int)wkopt;
   work = (double *)malloc(lwork * sizeof(double));
 
@@ -534,7 +543,7 @@ static int __compute_trial_b_e(double *eigval_b_e_tr, double *eigvec_b_e_tr,
     return EXIT_FAILURE;
   }
 
-  dsyev_("V","L",&n, eigvec_b_e_tr, &lda, eigval_b_e_tr,work, &lwork,&info);
+  dsyev_("V", "L", &n, eigvec_b_e_tr, &lda, eigval_b_e_tr, work, &lwork, &info);
   /* Check for convergence */
   if (info > 0) {
     free(work);
@@ -554,16 +563,20 @@ static int __compute_trial_b_e(double *eigval_b_e_tr, double *eigvec_b_e_tr,
     return EXIT_FAILURE;
   }
 
-
   free(work);
+
+#if NumberDimensions == 2
+  eigval_b_e_tr[2] = b_e[4];
+#endif
 
   return EXIT_SUCCESS;
 }
-
 /***************************************************************************/
 
 static int __corrector_b_e(double *b_e, const double *eigvec_b_e_tr,
                            const double *E_hencky_trial) {
+
+  int Ndim = NumberDimensions;
 
   double eigval_b_e[3] = {0.0, 0.0, 0.0};
 
@@ -579,26 +592,35 @@ static int __corrector_b_e(double *b_e, const double *eigvec_b_e_tr,
   b_e[3] = 0.0;
   b_e[4] = 0.0;
 
-  for (unsigned i = 0; i < 3; i++) {
-    b_e[0] +=
-        eigval_b_e[i] * eigvec_b_e_tr[i * 3 + 0] * eigvec_b_e_tr[i * 3 + 0];
-    b_e[1] +=
-        eigval_b_e[i] * eigvec_b_e_tr[i * 3 + 0] * eigvec_b_e_tr[i * 3 + 1];
-    b_e[2] +=
-        eigval_b_e[i] * eigvec_b_e_tr[i * 3 + 1] * eigvec_b_e_tr[i * 3 + 0];
-    b_e[3] +=
-        eigval_b_e[i] * eigvec_b_e_tr[i * 3 + 1] * eigvec_b_e_tr[i * 3 + 1];
-    b_e[4] +=
-        eigval_b_e[i] * eigvec_b_e_tr[i * 3 + 2] * eigvec_b_e_tr[i * 3 + 2];
+#else
+
+  b_e[0] = 0.0;
+  b_e[1] = 0.0;
+  b_e[2] = 0.0;
+  b_e[3] = 0.0;
+  b_e[4] = 0.0;
+  b_e[5] = 0.0;
+  b_e[6] = 0.0;
+  b_e[7] = 0.0;
+  b_e[8] = 0.0;
+
+#endif
+
+  for (unsigned A = 0; A < Ndim; A++) {
+    for (unsigned i = 0; i < Ndim; i++) {
+      for (unsigned j = 0; j < Ndim; j++) {
+        b_e[i * Ndim + j] += eigval_b_e[A] * eigvec_b_e_tr[A + i * Ndim] *
+                             eigvec_b_e_tr[A + j * Ndim];
+      }
+    }
   }
 
-#else
-  No esta implementado
+#if NumberDimensions == 2
+  b_e[4] = eigval_b_e[2];
 #endif
 
   return EXIT_SUCCESS;
 }
-
 /***************************************************************************/
 
 static int __trial_elastic(double *T_tr_vol, double *T_tr_dev, double *pressure,
@@ -636,28 +658,48 @@ static int __update_internal_variables_elastic(double *Stress,
                                                const double *T_tr_dev,
                                                const double *eigvec_b_e_tr) {
 
+  int Ndim = NumberDimensions;
+
   // Compute the transpose of D_phi
-  double D_phi_mT[9] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
 
 #if NumberDimensions == 2
 
+  double D_phi_mT[4] = {0.0, 0.0, 0.0, 0.0};
   D_phi_mT[0] = D_phi[0];
   D_phi_mT[1] = D_phi[2];
-  D_phi_mT[3] = D_phi[1];
-  D_phi_mT[4] = D_phi[3];
-  D_phi_mT[8] = D_phi[4];
+  D_phi_mT[2] = D_phi[1];
+  D_phi_mT[3] = D_phi[3];
+
+  // Parameters for dgetrf_ and dgetri_
+  int INFO;
+  int N = 2;
+  int LDA = 2;
+  int LWORK = 2;
+  int IPIV[2] = {0, 0};
+  double WORK[2] = {0, 0};
 
 #else
-  No esta implementado
-#endif
+  double D_phi_mT[9] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
 
-  // compute the inverse of D_phi
+  D_phi_mT[0] = D_phi[0];
+  D_phi_mT[1] = D_phi[3];
+  D_phi_mT[2] = D_phi[6];
+  D_phi_mT[3] = D_phi[1];
+  D_phi_mT[4] = D_phi[4];
+  D_phi_mT[5] = D_phi[7];
+  D_phi_mT[6] = D_phi[2];
+  D_phi_mT[7] = D_phi[5];
+  D_phi_mT[8] = D_phi[8];
+
+  // Parameters for dgetrf_ and dgetri_
   int INFO;
   int N = 3;
   int LDA = 3;
   int LWORK = 3;
   int IPIV[3] = {0, 0, 0};
   double WORK[3] = {0, 0, 0};
+
+#endif
 
   // The factors L and U from the factorization A = P*L*U
   dgetrf_(&N, &N, D_phi_mT, &LDA, IPIV, &INFO);
@@ -704,37 +746,50 @@ static int __update_internal_variables_elastic(double *Stress,
 #if DEBUG_MODE + 0
 
   puts("Adjunt of the deformation gradient");
+#if NumberDimensions == 2
+  printf("%f %f %f \n", D_phi_mT[0], D_phi_mT[1], 0.0);
+  printf("%f %f %f \n", D_phi_mT[2], D_phi_mT[3], 0.0);
+  printf("%f %f %f \n", 0.0, 0.0, 1.0);
+#else
   printf("%f %f %f \n", D_phi_mT[0], D_phi_mT[1], D_phi_mT[2]);
   printf("%f %f %f \n", D_phi_mT[3], D_phi_mT[4], D_phi_mT[5]);
   printf("%f %f %f \n", D_phi_mT[6], D_phi_mT[7], D_phi_mT[8]);
+#endif
 
 #endif
 #endif
 
-  double T[9] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+#if NumberDimensions == 2
+  double T_aux[4] = {0.0, 0.0, 0.0, 0.0};
+#else
+  double T_aux[9] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+#endif
+  double T_A = 0.0;
 
-  for (unsigned i = 0; i < 3; i++) {
+  for (unsigned A = 0; A < Ndim; A++) {
 
-    double T_i = -T_tr_vol[i] + T_tr_dev[i];
+    T_A = -T_tr_vol[A] + T_tr_dev[A];
 
-    T[0] += T_i * eigvec_b_e_tr[i * 3 + 0] * eigvec_b_e_tr[i * 3 + 0];
-    T[1] += T_i * eigvec_b_e_tr[i * 3 + 0] * eigvec_b_e_tr[i * 3 + 1];
-    T[3] += T_i * eigvec_b_e_tr[i * 3 + 1] * eigvec_b_e_tr[i * 3 + 0];
-    T[4] += T_i * eigvec_b_e_tr[i * 3 + 1] * eigvec_b_e_tr[i * 3 + 1];
-    T[8] += T_i * eigvec_b_e_tr[i * 3 + 2] * eigvec_b_e_tr[i * 3 + 2];
+    for (unsigned i = 0; i < Ndim; i++) {
+      for (unsigned j = 0; j < Ndim; j++) {
+        T_aux[i * Ndim + j] +=
+            T_A * eigvec_b_e_tr[A + i * Ndim] * eigvec_b_e_tr[A + j * Ndim];
+      }
+    }
+  }
+
+  for (unsigned i = 0; i < Ndim; i++) {
+    for (unsigned j = 0; j < Ndim; j++) {
+      Stress[i * Ndim + j] = 0.0;
+
+      for (unsigned k = 0; k < Ndim; k++) {
+        Stress[i * Ndim + j] += T_aux[i * Ndim + k] * D_phi_mT[k * Ndim + j];
+      }
+    }
   }
 
 #if NumberDimensions == 2
-
-  Stress[0] = T[0] * D_phi_mT[0] + T[1] * D_phi_mT[3];
-  Stress[1] = T[0] * D_phi_mT[1] + T[1] * D_phi_mT[4];
-  Stress[2] = T[3] * D_phi_mT[0] + T[4] * D_phi_mT[3];
-  Stress[3] = T[3] * D_phi_mT[1] + T[4] * D_phi_mT[4];
-  Stress[4] = T[8] * D_phi_mT[8];
-
-
-#else
-  No esta implementado
+  Stress[4] = -T_tr_vol[2] + T_tr_dev[2];
 #endif
 
 #ifdef DEBUG_MODE
@@ -766,7 +821,7 @@ static int __compute_plastic_flow_direction(double *n, const double *T_tr_dev,
 /**************************************************************/
 
 static int __eps(double *eps_k, double d_gamma_k, double eps_n,
-                         double alpha_Q) {
+                 double alpha_Q) {
 
   *eps_k = eps_n + d_gamma_k * sqrt(3.0 * alpha_Q * alpha_Q + 1.0);
 
@@ -782,7 +837,7 @@ static int __eps(double *eps_k, double d_gamma_k, double eps_n,
 /**************************************************************/
 
 static int __kappa(double *kappa_k, double kappa_0, double exp_param,
-                           double eps_k, double eps_0) {
+                   double eps_k, double eps_0) {
   double base = 1.0 + eps_k / eps_0;
   double exp = 1.0 / exp_param;
 
@@ -800,7 +855,7 @@ static int __kappa(double *kappa_k, double kappa_0, double exp_param,
 /**************************************************************/
 
 static int __d_kappa(double *d_kappa, double kappa_0, double eps_k,
-                             double eps_0, double exp_param) {
+                     double eps_0, double exp_param) {
 
   double base = 1.0 + eps_k / eps_0;
   double exp = 1.0 / exp_param - 1.0;
@@ -869,6 +924,8 @@ static int __update_internal_variables_classical(
     double d_gamma_k, double alpha_Q, double K, double G, double eps_k,
     double kappa_k) {
 
+  int Ndim = NumberDimensions;
+
   // Update hardening parameters
   *eps_n1 = eps_k;
   *kappa_n1 = kappa_k;
@@ -879,27 +936,44 @@ static int __update_internal_variables_classical(
   Increment_E_plastic[2] = d_gamma_k * (alpha_Q + n[2]);
 
   // Compute the transpose of D_phi
-  double D_phi_mT[9] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
-
 #if NumberDimensions == 2
 
+  double D_phi_mT[4] = {0.0, 0.0, 0.0, 0.0};
   D_phi_mT[0] = D_phi[0];
   D_phi_mT[1] = D_phi[2];
-  D_phi_mT[3] = D_phi[1];
-  D_phi_mT[4] = D_phi[3];
-  D_phi_mT[8] = D_phi[4];
+  D_phi_mT[2] = D_phi[1];
+  D_phi_mT[3] = D_phi[3];
+
+  // Parameters for dgetrf_ and dgetri_
+  int INFO;
+  int N = 2;
+  int LDA = 2;
+  int LWORK = 2;
+  int IPIV[2] = {0, 0};
+  double WORK[2] = {0, 0};
 
 #else
-  No esta implementado
-#endif
+  double D_phi_mT[9] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
 
-  // compute the inverse of D_phi
+  D_phi_mT[0] = D_phi[0];
+  D_phi_mT[1] = D_phi[3];
+  D_phi_mT[2] = D_phi[6];
+  D_phi_mT[3] = D_phi[1];
+  D_phi_mT[4] = D_phi[4];
+  D_phi_mT[5] = D_phi[7];
+  D_phi_mT[6] = D_phi[2];
+  D_phi_mT[7] = D_phi[5];
+  D_phi_mT[8] = D_phi[8];
+
+  // Parameters for dgetrf_ and dgetri_
   int INFO;
   int N = 3;
   int LDA = 3;
   int LWORK = 3;
   int IPIV[3] = {0, 0, 0};
   double WORK[3] = {0, 0, 0};
+
+#endif
 
   // The factors L and U from the factorization A = P*L*U
   dgetrf_(&N, &N, D_phi_mT, &LDA, IPIV, &INFO);
@@ -949,37 +1023,52 @@ static int __update_internal_variables_classical(
 #if DEBUG_MODE + 0
 
   puts("Adjunt of the deformation gradient");
+#if NumberDimensions == 2
+  printf("%f %f %f \n", D_phi_mT[0], D_phi_mT[1], 0.0);
+  printf("%f %f %f \n", D_phi_mT[2], D_phi_mT[3], 0.0);
+  printf("%f %f %f \n", 0.0, 0.0, 1.0);
+#else
   printf("%f %f %f \n", D_phi_mT[0], D_phi_mT[1], D_phi_mT[2]);
   printf("%f %f %f \n", D_phi_mT[3], D_phi_mT[4], D_phi_mT[5]);
   printf("%f %f %f \n", D_phi_mT[6], D_phi_mT[7], D_phi_mT[8]);
+#endif
 
 #endif
 #endif
 
-  double T[9] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+#if NumberDimensions == 2
+  double T_aux[4] = {0.0, 0.0, 0.0, 0.0};
+#else
+  double T_aux[9] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+#endif
+  double T_A = 0.0;
 
-  for (unsigned i = 0; i < 3; i++) {
+  for (unsigned A = 0; A < Ndim; A++) {
 
-    double T_i = -T_tr_vol[i] + T_tr_dev[i] +
-                 d_gamma_k * (3 * K * alpha_Q - 2 * G * n[i]);
+    T_A = -T_tr_vol[A] + T_tr_dev[A] +
+          d_gamma_k * (3 * K * alpha_Q - 2 * G * n[A]);
 
-    T[0] += T_i * eigvec_b_e_tr[i * 3 + 0] * eigvec_b_e_tr[i * 3 + 0];
-    T[1] += T_i * eigvec_b_e_tr[i * 3 + 0] * eigvec_b_e_tr[i * 3 + 1];
-    T[3] += T_i * eigvec_b_e_tr[i * 3 + 1] * eigvec_b_e_tr[i * 3 + 0];
-    T[4] += T_i * eigvec_b_e_tr[i * 3 + 1] * eigvec_b_e_tr[i * 3 + 1];
-    T[8] += T_i * eigvec_b_e_tr[i * 3 + 2] * eigvec_b_e_tr[i * 3 + 2];
+    for (unsigned i = 0; i < Ndim; i++) {
+      for (unsigned j = 0; j < Ndim; j++) {
+        T_aux[i * Ndim + j] +=
+            T_A * eigvec_b_e_tr[A * Ndim + i] * eigvec_b_e_tr[A * Ndim + j];
+      }
+    }
+  }
+
+  for (unsigned i = 0; i < Ndim; i++) {
+    for (unsigned j = 0; j < Ndim; j++) {
+      Stress[i * Ndim + j] = 0.0;
+
+      for (unsigned k = 0; k < Ndim; k++) {
+        Stress[i * Ndim + j] += T_aux[i * Ndim + k] * D_phi_mT[k * Ndim + j];
+      }
+    }
   }
 
 #if NumberDimensions == 2
-
-  Stress[0] = T[0] * D_phi_mT[0] + T[1] * D_phi_mT[3];
-  Stress[1] = T[0] * D_phi_mT[1] + T[1] * D_phi_mT[4];
-  Stress[2] = T[3] * D_phi_mT[0] + T[4] * D_phi_mT[3];
-  Stress[3] = T[3] * D_phi_mT[1] + T[4] * D_phi_mT[4];
-  Stress[4] = T[8] * D_phi_mT[8];
-
-#else
-  No esta implementado
+  Stress[4] =
+      -T_tr_vol[2] + T_tr_dev[2] + d_gamma_k * (3 * K * alpha_Q - 2 * G * n[2]);
 #endif
 
 #ifdef DEBUG_MODE
@@ -1038,6 +1127,8 @@ static int __update_internal_variables_apex(
     double d_gamma_k, double d_gamma_1, double alpha_Q, double K, double G,
     double eps_k, double kappa_k) {
 
+  int Ndim = NumberDimensions;
+
   // Update hardening parameters
   *eps_n1 = eps_k;
   *kappa_n1 = kappa_k;
@@ -1048,27 +1139,44 @@ static int __update_internal_variables_apex(
   Increment_E_plastic[2] = d_gamma_k * alpha_Q + d_gamma_1 * n[2];
 
   // Compute the transpose of D_phi
-  double D_phi_mT[9] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
-
 #if NumberDimensions == 2
 
+  double D_phi_mT[4] = {0.0, 0.0, 0.0, 0.0};
   D_phi_mT[0] = D_phi[0];
   D_phi_mT[1] = D_phi[2];
-  D_phi_mT[3] = D_phi[1];
-  D_phi_mT[4] = D_phi[3];
-  D_phi_mT[8] = D_phi[4];
+  D_phi_mT[2] = D_phi[1];
+  D_phi_mT[3] = D_phi[3];
+
+  // Parameters for dgetrf_ and dgetri_
+  int INFO;
+  int N = 2;
+  int LDA = 2;
+  int LWORK = 2;
+  int IPIV[2] = {0, 0};
+  double WORK[2] = {0, 0};
 
 #else
-  No esta implementado
-#endif
+  double D_phi_mT[9] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
 
-  // compute the inverse of D_phi
+  D_phi_mT[0] = D_phi[0];
+  D_phi_mT[1] = D_phi[3];
+  D_phi_mT[2] = D_phi[6];
+  D_phi_mT[3] = D_phi[1];
+  D_phi_mT[4] = D_phi[4];
+  D_phi_mT[5] = D_phi[7];
+  D_phi_mT[6] = D_phi[2];
+  D_phi_mT[7] = D_phi[5];
+  D_phi_mT[8] = D_phi[8];
+
+  // Parameters for dgetrf_ and dgetri_
   int INFO;
   int N = 3;
   int LDA = 3;
   int LWORK = 3;
   int IPIV[3] = {0, 0, 0};
   double WORK[3] = {0, 0, 0};
+
+#endif
 
   // The factors L and U from the factorization A = P*L*U
   dgetrf_(&N, &N, D_phi_mT, &LDA, IPIV, &INFO);
@@ -1118,36 +1226,50 @@ static int __update_internal_variables_apex(
 #if DEBUG_MODE + 0
 
   puts("Adjunt of the deformation gradient");
+#if NumberDimensions == 2
+  printf("%f %f %f \n", D_phi_mT[0], D_phi_mT[1], 0.0);
+  printf("%f %f %f \n", D_phi_mT[2], D_phi_mT[3], 0.0);
+  printf("%f %f %f \n", 0.0, 0.0, 1.0);
+#else
   printf("%f %f %f \n", D_phi_mT[0], D_phi_mT[1], D_phi_mT[2]);
   printf("%f %f %f \n", D_phi_mT[3], D_phi_mT[4], D_phi_mT[5]);
   printf("%f %f %f \n", D_phi_mT[6], D_phi_mT[7], D_phi_mT[8]);
+#endif
 
 #endif
 #endif
 
-  double T[9] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+#if NumberDimensions == 2
+  double T_aux[4] = {0.0, 0.0, 0.0, 0.0};
+#else
+  double T_aux[9] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+#endif
+  double T_A = 0.0;
 
-  for (unsigned i = 0; i < 3; i++) {
+  for (unsigned A = 0; A < Ndim; A++) {
 
-    double T_i = -T_tr_vol[i] + d_gamma_k * 3 * K * alpha_Q;
+    T_A = -T_tr_vol[A] + d_gamma_k * 3 * K * alpha_Q;
 
-    T[0] += T_i * eigvec_b_e_tr[i * 3 + 0] * eigvec_b_e_tr[i * 3 + 0];
-    T[1] += T_i * eigvec_b_e_tr[i * 3 + 0] * eigvec_b_e_tr[i * 3 + 1];
-    T[3] += T_i * eigvec_b_e_tr[i * 3 + 1] * eigvec_b_e_tr[i * 3 + 0];
-    T[4] += T_i * eigvec_b_e_tr[i * 3 + 1] * eigvec_b_e_tr[i * 3 + 1];
-    T[8] += T_i * eigvec_b_e_tr[i * 3 + 2] * eigvec_b_e_tr[i * 3 + 2];
+    for (unsigned i = 0; i < Ndim; i++) {
+      for (unsigned j = 0; j < Ndim; j++) {
+        T_aux[i * Ndim + j] +=
+            T_A * eigvec_b_e_tr[A * Ndim + i] * eigvec_b_e_tr[A * Ndim + j];
+      }
+    }
+  }
+
+  for (unsigned i = 0; i < Ndim; i++) {
+    for (unsigned j = 0; j < Ndim; j++) {
+      Stress[i * Ndim + j] = 0.0;
+
+      for (unsigned k = 0; k < Ndim; k++) {
+        Stress[i * Ndim + j] += T_aux[i * Ndim + k] * D_phi_mT[k * Ndim + j];
+      }
+    }
   }
 
 #if NumberDimensions == 2
-
-  Stress[0] = T[0] * D_phi_mT[0] + T[1] * D_phi_mT[3];
-  Stress[1] = T[0] * D_phi_mT[1] + T[1] * D_phi_mT[4];
-  Stress[2] = T[3] * D_phi_mT[0] + T[4] * D_phi_mT[3];
-  Stress[3] = T[3] * D_phi_mT[1] + T[4] * D_phi_mT[4];
-  Stress[4] = T[8] * D_phi_mT[8];
-
-#else
-  No esta implementado
+  Stress[4] = -T_tr_vol[2] + d_gamma_k * 3 * K * alpha_Q;
 #endif
 
 #ifdef DEBUG_MODE
