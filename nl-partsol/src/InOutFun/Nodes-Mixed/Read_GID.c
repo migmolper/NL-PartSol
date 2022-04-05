@@ -1,0 +1,614 @@
+#include <string.h>
+#include <math.h>
+#include "nl-partsol.h"
+
+/*
+  Local structures
+*/
+typedef struct {
+  int Dimension;
+  char ElemType[100];
+  int NumNodesElem;
+  int NumNodesMesh;
+  int NumElemMesh;
+
+} Mesh_Information;
+
+/*
+  Auxiliar functions and variables
+*/
+
+#ifdef __linux__
+static char *delimiters = " \t\n";
+#endif
+
+#ifdef __APPLE__
+static char *delimiters = " \t\n";
+#endif
+
+#ifdef _WIN32
+static char *delimiters = " \r\n\t";
+#endif
+
+static char Error_message[MAXW];
+
+static int __read_mesh_information(Mesh_Information * Mesh_Info, char *MeshName);
+static int __open_and_check_simulation_file(FILE *Simulation_file, char *Name_File);
+
+static int __fill_Coordinates(char *, Mesh_Information, Matrix);
+
+static int __fill_T3_Conectivity(char *, Mesh_Information, ChainPtr *,
+                                    int *);
+static int __fill_u_Conectivity(char *, Mesh_Information, ChainPtr *, int *, int *);
+static int Fill_Quadratic_Conectivity_Tetrahedra(char *, Mesh_Information,
+                                                  ChainPtr *, int *, int *);
+/***************************************************************************/
+
+int Read_GID_Mesh_Mixed(Mesh * GID_Mesh,
+                        char *MeshName) {
+
+  int STATUS = EXIT_SUCCESS;  
+
+  /*
+    Read information of the mesh such as number of nodes, number of elements,
+    etc
+  */
+  Mesh_Information Mesh_Info;
+  
+  STATUS = __read_mesh_information(&Mesh_Info,MeshName);
+  if (STATUS == EXIT_FAILURE) {
+    fprintf(stderr, "" RED "Error in __read_mesh_information" RESET "\n");
+    return EXIT_FAILURE;
+  }
+
+  /*
+    Select the kind of element of the mesh and assign functions
+  */
+  if ((strcmp(Mesh_Info.ElemType, "Triangle") == 0) &&
+             (Mesh_Info.NumNodesElem == 6)) {
+
+    (*GID_Mesh).N_ref = N__T3__;
+    (*GID_Mesh).dNdX_ref = dN_Ref__T3__;
+    (*GID_Mesh).dNdX = dN__T3__;
+    (*GID_Mesh).volume_Element = volume__T3__;
+    (*GID_Mesh).In_Out_Element = in_out__T3__;
+    (*GID_Mesh).NumNodesMesh = Mesh_Info.NumNodesMesh;
+    (*GID_Mesh).NumElemMesh = Mesh_Info.NumElemMesh * 4;
+    (*GID_Mesh).Num_Patch_Mesh = Mesh_Info.NumElemMesh;
+    (*GID_Mesh).Dimension = Mesh_Info.Dimension;
+    strcpy((*GID_Mesh).TypeElem, Mesh_Info.ElemType);
+    (*GID_Mesh).Coordinates =
+        alloc__MatrixLib__((*GID_Mesh).NumNodesMesh, (*GID_Mesh).Dimension);
+    (*GID_Mesh).Connectivity = alloc_table__SetLib__((*GID_Mesh).NumElemMesh);
+    (*GID_Mesh).NumNodesElem =
+        (int *)Allocate_ArrayZ((*GID_Mesh).NumElemMesh, sizeof(int));
+    (*GID_Mesh).Num_Particles_Node =
+        (int *)Allocate_ArrayZ((*GID_Mesh).NumNodesMesh, sizeof(int));
+    (*GID_Mesh).Locking_Control_Fbar = true;
+    (*GID_Mesh).Idx_Patch =
+        (int *)Allocate_ArrayZ((*GID_Mesh).NumElemMesh, sizeof(int));
+    (*GID_Mesh).Vol_Patch_n =
+        (double *)Allocate_ArrayZ(Mesh_Info.NumElemMesh, sizeof(double));
+    (*GID_Mesh).Vol_Patch_n1 =
+        (double *)Allocate_ArrayZ(Mesh_Info.NumElemMesh, sizeof(double));
+
+    STATUS = __fill_Coordinates(MeshName, Mesh_Info, (*GID_Mesh).Coordinates);
+    if (STATUS == EXIT_FAILURE) {
+      fprintf(stderr, "" RED "Error in __fill_Coordinates" RESET "\n");
+      return EXIT_FAILURE;
+    }
+
+    __fill_u_Conectivity(
+        MeshName, Mesh_Info, (*GID_Mesh).Connectivity, (*GID_Mesh).Idx_Patch,
+        (*GID_Mesh).NumNodesElem);
+
+  } else if ((strcmp(Mesh_Info.ElemType, "Quadrilateral") == 0) &&
+             (Mesh_Info.NumNodesElem == 8)) {
+    (*GID_Mesh).N_ref = N__Q4__;
+    (*GID_Mesh).dNdX_ref = dN_Ref__Q4__;
+    (*GID_Mesh).dNdX = dN__Q4__;
+    (*GID_Mesh).volume_Element = volume__Q4__;
+    (*GID_Mesh).In_Out_Element = in_out__Q4__;
+    (*GID_Mesh).NumNodesMesh = Mesh_Info.NumNodesMesh;
+    (*GID_Mesh).NumElemMesh = Mesh_Info.NumElemMesh;
+    (*GID_Mesh).Dimension = Mesh_Info.Dimension;
+    strcpy((*GID_Mesh).TypeElem, Mesh_Info.ElemType);
+    (*GID_Mesh).Coordinates =
+        alloc__MatrixLib__((*GID_Mesh).NumNodesMesh, (*GID_Mesh).Dimension);
+    (*GID_Mesh).Connectivity = alloc_table__SetLib__((*GID_Mesh).NumElemMesh);
+    (*GID_Mesh).NumNodesElem =
+        (int *)Allocate_ArrayZ((*GID_Mesh).NumElemMesh, sizeof(int));
+    (*GID_Mesh).Num_Particles_Node =
+        (int *)Allocate_ArrayZ((*GID_Mesh).NumNodesMesh, sizeof(int));
+    (*GID_Mesh).Locking_Control_Fbar = false;
+
+    STATUS = __fill_Coordinates(MeshName, Mesh_Info, (*GID_Mesh).Coordinates);
+    if (STATUS == EXIT_FAILURE) {
+      fprintf(stderr, "" RED "Error in __fill_Coordinates" RESET "\n");
+      return EXIT_FAILURE;
+    }
+
+    STATUS = __fill_T3_Conectivity(MeshName, Mesh_Info, (*GID_Mesh).Connectivity,
+                            (*GID_Mesh).NumNodesElem);
+    if (STATUS == EXIT_FAILURE) {
+      fprintf(stderr, "" RED "Error in __fill_T3_Conectivity" RESET "\n");
+      return EXIT_FAILURE;
+    }
+
+
+  } else {
+  
+    fprintf(stderr, "" RED "Non suported element -> %s; NumNodesElem : %i "RESET "\n",
+      Mesh_Info.ElemType, Mesh_Info.NumNodesElem);
+    return EXIT_FAILURE;
+
+  }
+
+  return STATUS;
+}
+
+/***************************************************************************/
+
+static int __read_mesh_information(Mesh_Information * Mesh_Info, char *MeshName) {
+
+  int STATUS = EXIT_SUCCESS;
+
+  /* Variables to read file */
+  char line[MAXC] = {0};
+  char *words[MAXW] = {NULL};
+  int nwords;
+  int Num_line = 0;
+
+  /*
+    Auxiliar variable to count the number of
+    nodes and elements of the mesh
+  */
+  bool Count_Nodes = false;
+  bool Count_Elements = false;
+
+  /* Open the mesh file */
+  FILE *MeshFile;
+  STATUS = __open_and_check_simulation_file(MeshFile, MeshName);
+  if(STATUS)
+  {
+    fprintf(stderr, ""RED"Error in __open_and_check_simulation_file "RESET "\n");
+    return STATUS;
+  }
+
+  /*
+    Read the file line by line
+  */
+  while (fgets(line, sizeof(line), MeshFile) != NULL) {
+
+    // Parse the conten of the line
+    nwords = parse(words, line, delimiters);
+
+    //  Read the first line with the header
+    if (Num_line == 0) {
+      if ((nwords == 7) && (strcmp(words[0], "MESH") == 0) &&
+          (strcmp(words[1], "dimension") == 0) &&
+          (strcmp(words[3], "ElemType") == 0) &&
+          (strcmp(words[5], "Nnode") == 0)) {
+        (*Mesh_Info).Dimension = atoi(words[2]);
+        strcpy((*Mesh_Info).ElemType, words[4]);
+        (*Mesh_Info).NumNodesElem = atoi(words[6]);
+      } else {
+        sprintf(Error_message,
+                "The header of a GID has a non-suported structure");
+        fclose(MeshFile);
+        return EXIT_FAILURE;
+      }
+    }
+
+    // Start counting the number of nodes
+    if ((nwords == 1) && (strcmp(words[0], "Coordinates") == 0)) {
+      (*Mesh_Info).NumNodesMesh = -2;
+      Count_Nodes = true;
+    }
+
+    if (Count_Nodes) {
+      (*Mesh_Info).NumNodesMesh++;
+    }
+
+    if ((nwords == 2) && (strcmp(words[0], "End") == 0) &&
+        (strcmp(words[1], "Coordinates") == 0)) {
+      Count_Nodes = false;
+    }
+
+    // Start counting the number of elements
+    if ((nwords == 1) && (strcmp(words[0], "Elements") == 0)) {
+      (*Mesh_Info).NumElemMesh = -2;
+      Count_Elements = true;
+    }
+
+    if (Count_Elements) {
+      (*Mesh_Info).NumElemMesh++;
+    }
+
+    if ((nwords == 2) && (strcmp(words[0], "End") == 0) &&
+        (strcmp(words[1], "Elements") == 0)) {
+      Count_Elements = false;
+    }
+
+    // Update the linea counter
+    Num_line++;
+  }
+
+  /* At the end close the mesh file */
+  fclose(MeshFile);
+
+  return EXIT_SUCCESS;
+}
+
+/***************************************************************************/
+
+static int __fill_Coordinates(char *MeshName, Mesh_Information Mesh_Info,
+                             Matrix Coordinates) {
+
+  int STATUS = EXIT_SUCCESS;
+
+  /* Variables to read file */
+  char line[MAXC] = {0};
+  char *words[MAXW] = {NULL};
+  int nwords;
+  int Num_line = 0;
+  int Node_i = 0;
+
+  /*
+    Auxiliar variable to count the number of
+    nodes and elements of the mesh
+  */
+  bool Read_Coordinates_Nodes = false;
+
+  /* Open the mesh file */
+  FILE *MeshFile;
+  STATUS = __open_and_check_simulation_file(MeshFile, MeshName);
+  if(STATUS)
+  {
+    fprintf(stderr, ""RED"Error in __open_and_check_simulation_file "RESET "\n");
+    return STATUS;
+  }
+
+  /*
+    Read the file line by line
+  */
+  while (fgets(line, sizeof(line), MeshFile) != NULL) {
+
+    // Parse the conten of the line
+    nwords = parse(words, line, delimiters);
+
+    // Start reading the coordinates of the nodes
+    if ((nwords == 1) && (strcmp(words[0], "Coordinates") == 0)) {
+      Read_Coordinates_Nodes = true;
+    }
+
+    if ((Read_Coordinates_Nodes == true) && (nwords == 4)) {
+
+      for (int j = 0; j < Mesh_Info.Dimension; j++) {
+        Coordinates.nM[Node_i][j] = atof(words[j + 1]);
+      }
+
+      Node_i++;
+    }
+
+    if ((nwords == 2) && (strcmp(words[0], "End") == 0) &&
+        (strcmp(words[1], "Coordinates") == 0)) {
+      Read_Coordinates_Nodes = false;
+    }
+
+    /*
+      Update the linea counter
+    */
+    Num_line++;
+  }
+
+  /*
+    At the end close the mesh file
+  */
+  fclose(MeshFile);
+
+
+  return STATUS;
+}
+
+/***************************************************************************/
+
+static int __fill_T3_Conectivity(char *MeshName, Mesh_Information Mesh_Info,
+                                    ChainPtr *Connectivity, int *NumNodesElem) {
+
+  int STATUS = EXIT_SUCCESS;
+
+  /* Variables to read file */
+  char line[MAXC] = {0};
+  char *words[MAXW] = {NULL};
+  int nwords;
+  int Num_line = 0;
+  int Element_i = 0;
+
+  /*
+    Auxiliar variable to count the number of
+    nodes and elements of the mesh
+  */
+  bool Read_Element_Connectivity = false;
+
+  /* Open the mesh file */
+  FILE *MeshFile;
+  STATUS = __open_and_check_simulation_file(MeshFile, MeshName);
+  if(STATUS)
+  {
+    fprintf(stderr, ""RED"Error in __open_and_check_simulation_file "RESET "\n");
+    return STATUS;
+  }
+
+  /*
+    Read the file line by line
+  */
+  while (fgets(line, sizeof(line), MeshFile) != NULL) {
+
+    // Parse the conten of the line
+    nwords = parse(words, line, delimiters);
+
+    // Start reading the coordinates of the nodes
+    if ((nwords == 1) && (strcmp(words[0], "Elements") == 0)) {
+      Read_Element_Connectivity = true;
+    }
+
+    if ((Read_Element_Connectivity == true) &&
+        (nwords == (Mesh_Info.NumNodesElem + 1))) {
+
+      for (int j = 0; j < Mesh_Info.NumNodesElem; j++) {
+        push__SetLib__(&Connectivity[Element_i], atoi(words[j + 1]) - 1);
+      }
+
+      NumNodesElem[Element_i] = Mesh_Info.NumNodesElem;
+
+      Element_i++;
+    }
+
+    if ((nwords == 2) && (strcmp(words[0], "End") == 0) &&
+        (strcmp(words[1], "Elements") == 0)) {
+      Read_Element_Connectivity = false;
+    }
+
+    /*
+      Update the linea counter
+    */
+    Num_line++;
+  }
+
+  /*
+    At the end close the mesh file
+  */
+  fclose(MeshFile);
+
+  return STATUS;
+}
+
+/***************************************************************************/
+
+static int __fill_u_Conectivity(
+    char *MeshName, Mesh_Information Quadratic_Mesh_Info,
+    ChainPtr *Connectivity, int *Idx_Patch, int *NumNodesElem) {
+
+  int STATUS = EXIT_SUCCESS;
+
+  ChainPtr *Quadratic_Connectivity =
+      alloc_table__SetLib__(Quadratic_Mesh_Info.NumElemMesh);
+
+  int NumInternalElements = 4;
+  int Num_Linear_Element_Mesh =
+      NumInternalElements * Quadratic_Mesh_Info.NumElemMesh;
+  int *Quadratic_Connectivity_i;
+
+  STATUS = __fill_T3_Conectivity(MeshName, Quadratic_Mesh_Info, Quadratic_Connectivity,
+                          NumNodesElem);
+  if(STATUS)
+  {
+    fprintf(stderr, ""RED"Error in __fill_T3_Conectivity "RESET "\n");
+    return STATUS;
+  }
+
+  for (int i = 0; i < Quadratic_Mesh_Info.NumElemMesh; i++) {
+
+    Quadratic_Connectivity_i =
+        set_to_memory__SetLib__(Quadratic_Connectivity[i], 6);
+
+    // Internal element 1
+    push__SetLib__(&Connectivity[i * NumInternalElements + 0],
+                   Quadratic_Connectivity_i[5]);
+    push__SetLib__(&Connectivity[i * NumInternalElements + 0],
+                   Quadratic_Connectivity_i[2]);
+    push__SetLib__(&Connectivity[i * NumInternalElements + 0],
+                   Quadratic_Connectivity_i[0]);
+    Idx_Patch[i * NumInternalElements + 0] = i;
+
+    // Internal element 2
+    push__SetLib__(&Connectivity[i * NumInternalElements + 1],
+                   Quadratic_Connectivity_i[4]);
+    push__SetLib__(&Connectivity[i * NumInternalElements + 1],
+                   Quadratic_Connectivity_i[2]);
+    push__SetLib__(&Connectivity[i * NumInternalElements + 1],
+                   Quadratic_Connectivity_i[1]);
+    Idx_Patch[i * NumInternalElements + 1] = i;
+
+    // Internal element 3
+    push__SetLib__(&Connectivity[i * NumInternalElements + 2],
+                   Quadratic_Connectivity_i[3]);
+    push__SetLib__(&Connectivity[i * NumInternalElements + 2],
+                   Quadratic_Connectivity_i[1]);
+    push__SetLib__(&Connectivity[i * NumInternalElements + 2],
+                   Quadratic_Connectivity_i[0]);
+    Idx_Patch[i * NumInternalElements + 2] = i;
+
+    // Internal element 4
+    push__SetLib__(&Connectivity[i * NumInternalElements + 3],
+                   Quadratic_Connectivity_i[2]);
+    push__SetLib__(&Connectivity[i * NumInternalElements + 3],
+                   Quadratic_Connectivity_i[1]);
+    push__SetLib__(&Connectivity[i * NumInternalElements + 3],
+                   Quadratic_Connectivity_i[0]);
+    Idx_Patch[i * NumInternalElements + 3] = i;
+
+    free(Quadratic_Connectivity_i);
+  }
+
+  /*
+    Fill number of nodes per element
+  */
+  for (int i = 0; i < Num_Linear_Element_Mesh; i++) {
+    NumNodesElem[i] = 3;
+  }
+
+  free_table__SetLib__(Quadratic_Connectivity, Quadratic_Mesh_Info.NumElemMesh);
+
+  return STATUS;
+}
+
+/***************************************************************************/
+
+static int Fill_Quadratic_Conectivity_Tetrahedra(
+    char *MeshName, Mesh_Information Quadratic_Mesh_Info,
+    ChainPtr *Connectivity, int *Idx_Patch, int *NumNodesElem) {
+
+    int STATUS = EXIT_SUCCESS;
+
+  ChainPtr *Quadratic_Connectivity =
+      alloc_table__SetLib__(Quadratic_Mesh_Info.NumElemMesh);
+
+  int NumInternalElements = 8;
+  int Num_Linear_Element_Mesh =
+      NumInternalElements * Quadratic_Mesh_Info.NumElemMesh;
+  int *Quadratic_Connectivity_i;
+
+    STATUS = __fill_T3_Conectivity(MeshName, Quadratic_Mesh_Info, Quadratic_Connectivity,
+                          NumNodesElem);
+    if (STATUS == EXIT_FAILURE) {
+      fprintf(stderr, "" RED "Error in __fill_T3_Conectivity" RESET "\n");
+      return EXIT_FAILURE;
+    }                          
+
+  for (int i = 0; i < Quadratic_Mesh_Info.NumElemMesh; i++) {
+
+    Quadratic_Connectivity_i =
+        set_to_memory__SetLib__(Quadratic_Connectivity[i], 6);
+
+    // Internal element 1
+    push__SetLib__(&Connectivity[i * NumInternalElements + 0],
+                   Quadratic_Connectivity_i[9]);
+    push__SetLib__(&Connectivity[i * NumInternalElements + 0],
+                   Quadratic_Connectivity_i[5]);
+    push__SetLib__(&Connectivity[i * NumInternalElements + 0],
+                   Quadratic_Connectivity_i[3]);
+    push__SetLib__(&Connectivity[i * NumInternalElements + 0],
+                   Quadratic_Connectivity_i[2]);
+    Idx_Patch[i * NumInternalElements + 0] = i;
+
+    // Internal element 2
+    push__SetLib__(&Connectivity[i * NumInternalElements + 1],
+                   Quadratic_Connectivity_i[8]);
+    push__SetLib__(&Connectivity[i * NumInternalElements + 1],
+                   Quadratic_Connectivity_i[5]);
+    push__SetLib__(&Connectivity[i * NumInternalElements + 1],
+                   Quadratic_Connectivity_i[4]);
+    push__SetLib__(&Connectivity[i * NumInternalElements + 1],
+                   Quadratic_Connectivity_i[1]);
+    Idx_Patch[i * NumInternalElements + 1] = i;
+
+    // Internal element 3
+    push__SetLib__(&Connectivity[i * NumInternalElements + 2],
+                   Quadratic_Connectivity_i[7]);
+    push__SetLib__(&Connectivity[i * NumInternalElements + 2],
+                   Quadratic_Connectivity_i[4]);
+    push__SetLib__(&Connectivity[i * NumInternalElements + 2],
+                   Quadratic_Connectivity_i[3]);
+    push__SetLib__(&Connectivity[i * NumInternalElements + 2],
+                   Quadratic_Connectivity_i[0]);
+    Idx_Patch[i * NumInternalElements + 2] = i;
+
+    // Internal element 4
+    push__SetLib__(&Connectivity[i * NumInternalElements + 3],
+                   Quadratic_Connectivity_i[6]);
+    push__SetLib__(&Connectivity[i * NumInternalElements + 3],
+                   Quadratic_Connectivity_i[2]);
+    push__SetLib__(&Connectivity[i * NumInternalElements + 3],
+                   Quadratic_Connectivity_i[1]);
+    push__SetLib__(&Connectivity[i * NumInternalElements + 3],
+                   Quadratic_Connectivity_i[0]);
+    Idx_Patch[i * NumInternalElements + 3] = i;
+
+    // Internal element 5
+    push__SetLib__(&Connectivity[i * NumInternalElements + 4],
+                   Quadratic_Connectivity_i[5]);
+    push__SetLib__(&Connectivity[i * NumInternalElements + 4],
+                   Quadratic_Connectivity_i[3]);
+    push__SetLib__(&Connectivity[i * NumInternalElements + 4],
+                   Quadratic_Connectivity_i[2]);
+    push__SetLib__(&Connectivity[i * NumInternalElements + 4],
+                   Quadratic_Connectivity_i[1]);
+    Idx_Patch[i * NumInternalElements + 4] = i;
+
+    // Internal element 6
+    push__SetLib__(&Connectivity[i * NumInternalElements + 5],
+                   Quadratic_Connectivity_i[5]);
+    push__SetLib__(&Connectivity[i * NumInternalElements + 5],
+                   Quadratic_Connectivity_i[4]);
+    push__SetLib__(&Connectivity[i * NumInternalElements + 5],
+                   Quadratic_Connectivity_i[3]);
+    push__SetLib__(&Connectivity[i * NumInternalElements + 5],
+                   Quadratic_Connectivity_i[1]);
+    Idx_Patch[i * NumInternalElements + 5] = i;
+
+    // Internal element 7
+    push__SetLib__(&Connectivity[i * NumInternalElements + 6],
+                   Quadratic_Connectivity_i[4]);
+    push__SetLib__(&Connectivity[i * NumInternalElements + 6],
+                   Quadratic_Connectivity_i[3]);
+    push__SetLib__(&Connectivity[i * NumInternalElements + 6],
+                   Quadratic_Connectivity_i[1]);
+    push__SetLib__(&Connectivity[i * NumInternalElements + 6],
+                   Quadratic_Connectivity_i[0]);
+    Idx_Patch[i * NumInternalElements + 6] = i;
+
+    // Internal element 8
+    push__SetLib__(&Connectivity[i * NumInternalElements + 7],
+                   Quadratic_Connectivity_i[3]);
+    push__SetLib__(&Connectivity[i * NumInternalElements + 7],
+                   Quadratic_Connectivity_i[2]);
+    push__SetLib__(&Connectivity[i * NumInternalElements + 7],
+                   Quadratic_Connectivity_i[1]);
+    push__SetLib__(&Connectivity[i * NumInternalElements + 7],
+                   Quadratic_Connectivity_i[0]);
+    Idx_Patch[i * NumInternalElements + 7] = i;
+
+    free(Quadratic_Connectivity_i);
+  }
+
+  /*
+    Fill number of nodes per element
+  */
+  for (int i = 0; i < Num_Linear_Element_Mesh; i++) {
+    NumNodesElem[i] = 4;
+  }
+
+  free_table__SetLib__(Quadratic_Connectivity, Quadratic_Mesh_Info.NumElemMesh);
+
+  return STATUS;
+}
+
+/**********************************************************************/
+
+static int __open_and_check_simulation_file(FILE *Simulation_file, char *Name_File) {
+  
+  Simulation_file = fopen(Name_File, "r");
+
+  if (Simulation_file == NULL) {
+    
+    fprintf(stderr, "" RED "Incorrect lecture of file %s "RESET "\n",Name_File);
+
+    return EXIT_FAILURE;
+  }
+
+  return EXIT_SUCCESS;
+}
+
+/***************************************************************************/

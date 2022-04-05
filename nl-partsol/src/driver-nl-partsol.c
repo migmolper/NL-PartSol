@@ -149,14 +149,13 @@ int main(int argc, char *argv[]) {
       U_Generalized_alpha(FEM_Mesh, MPM_Mesh, Parameters_Solver);
     } else if (strcmp(Parameters_Solver.TimeIntegrationScheme, "NPC") == 0) {
       U_Newmark_Predictor_Corrector(FEM_Mesh, MPM_Mesh, Parameters_Solver);
-    } else if (strcmp(Parameters_Solver.TimeIntegrationScheme, "NPC-FS") == 0) {
-      STATUS = U_Newmark_Predictor_Corrector_Finite_Strains(FEM_Mesh, MPM_Mesh,
-                                                   Parameters_Solver);
+    } else if (strcmp(Parameters_Solver.TimeIntegrationScheme, "Verlet-FS") == 0) {
+      STATUS = U_Verlet_Finite_Strains(FEM_Mesh, MPM_Mesh, Parameters_Solver);
     } else if (strcmp(Parameters_Solver.TimeIntegrationScheme,
                       "Discrete-Energy-Momentum") == 0) {
       U_Discrete_Energy_Momentum(FEM_Mesh, MPM_Mesh, Parameters_Solver);
     } else if (strcmp(Parameters_Solver.TimeIntegrationScheme,
-                      "Newmark-beta-Finite-Strains") == 0) {
+                      "Newmark-beta-FS") == 0) {
       U_Newmark_beta_Finite_Strains(FEM_Mesh, MPM_Mesh, Parameters_Solver);
     } else {
       sprintf(Error_message, "%s", "Wrong time integration scheme");

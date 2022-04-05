@@ -51,7 +51,7 @@ static void output_selector(Particle, Mesh, Mask, Matrix, Matrix, Matrix,
 
 /**************************************************************/
 
-int U_Newmark_Predictor_Corrector_Finite_Strains(
+int U_Verlet_Finite_Strains(
     Mesh FEM_Mesh, Particle MPM_Mesh, Time_Int_Params Parameters_Solver) {
 
   /*
