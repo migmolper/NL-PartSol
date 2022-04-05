@@ -159,13 +159,11 @@ int compute_1PK_Drucker_Prager(State_Parameters IO_State, Material MatProp)
 
   // Read input/output parameters
   double eigval_b_e_tr[3] = {0.0, 0.0, 0.0};
-
 #if NumberDimensions == 2
   double eigvec_b_e_tr[4] = {0.0, 0.0, 0.0, 0.0};
 #else
   double eigvec_b_e_tr[9] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
 #endif
-
   double E_hencky_trial[3] = {0.0, 0.0, 0.0};
   double T_tr_vol[3] = {0.0, 0.0, 0.0};
   double T_tr_dev[3] = {0.0, 0.0, 0.0};
