@@ -170,17 +170,6 @@ int compute_1PK_Modified_Lade_Duncan(State_Parameters IO_State, Material MatProp
 /*******************************************************/
 
 /*!
-  \fn State_Parameters Von_Mises_forward_euler(State_Parameters Input_SP, Material MatProp)
-
-  \brief Compute the plastic Von Mises model using an explicit forward euler radial returning 
-
-  \param Input_SP : State parameters of the particle
-  \param MatProp : Material properties of the model
-*/
-State_Parameters finite_strain_plasticity(State_Parameters,Material,State_Parameters(* infinitesimal_plasticity)(State_Parameters,Material));
-/*******************************************************/
-
-/*!
 
   \fn State_Parameters compute_1PK_Stress_Tensor_Newtonian_Fluid(Tensor P,State_Parameters Input_SP, Material MatProp_p)
 
