@@ -85,6 +85,15 @@ static int __update_internal_variables_plastic(
     double eps_k /**< [in] Equivalent plastic strain */,
     double d_K_kin /**< [in] Increment of the kinematic hardening */);
 
+static int __tangent_moduli(
+  double * C_ep/**< [out] Elastoplastic tangent moduli */, 
+  const double * n/**< [in] Plastic flow direction */, 
+  const double * kappa_k /**< [in] Hardening function (isotropic,kinematic), t = k */,
+  double d_gamma_k /**< [in] Discrete plastic multiplier */, 
+  double J2 /**< [in] Second invariant of the deviatoric stress tensor */, 
+  double K /**< [in] First Lamé invariant. */, 
+  double G /**< [in] Second Lamé invariant. */);
+
 
 /**************************************************************/
 
@@ -281,6 +290,15 @@ int compute_1PK_Von_Mises(State_Parameters IO_State, Material MatProp)
   if (STATUS == EXIT_FAILURE) {
     fprintf(stderr, "" RED "Error in __corrector_b_e" RESET "\n");
     return EXIT_FAILURE;
+  }
+
+  if(IO_State.compute_C_ep)
+  {
+    STATUS = __tangent_moduli(IO_State.C_ep, n, kappa_k,d_gamma_k, J2, K, G);
+    if (STATUS == EXIT_FAILURE) {
+      fprintf(stderr, "" RED "Error in __tangent_moduli" RESET "\n");
+      return EXIT_FAILURE;
+    }
   }
 
 #ifdef DEBUG_MODE
@@ -883,7 +901,6 @@ static int __update_internal_variables_plastic(
 
 /**************************************************************/
 
-/*
 static int __tangent_moduli(double * C_ep, const double * n, const double * kappa_k,
                             double d_gamma_k, double J2, double K, double G)
 {
@@ -891,28 +908,40 @@ static int __tangent_moduli(double * C_ep, const double * n, const double * kapp
   int STATUS = EXIT_SUCCESS;  
   int Ndim = NumberDimensions;
 
-  double Identity[3][3] = {
+#if NumberDimensions == 2
+  double R2_Identity[2] = {1.0,1.0};
+
+  double R4_Identity[2][2] = {
+      {1.0,0.0},
+      {0.0,1.0}
+  };
+#else
+  double R2_Identity[3] = {1.0,1.0,1.0};
+
+  double R4_Identity[3][3] = {
     {1.0,0.0,0.0},
     {0.0,1.0,0.0},
     {0.0,0.0,1.0}
   };
+#endif
 
   double K_iso_k = kappa_k[0];
   double K_kin_k = kappa_k[1];
   double theta = 1.0 - 2.0*G*d_gamma_k/J2;
   double theta_bar = 1.0/(1.0 + (K_iso_k + K_kin_k)/(3.0*G)) - (1.0 - theta);
 
-  for (unsigned i = 0; i < 3; i++)
+  for (unsigned i = 0; i < Ndim; i++)
   {
-    for (unsigned j = 0; j < 3; j++)
+    for (unsigned j = 0; j < Ndim; j++)
     {
-      C_ep[i*3 + j] = K + 2*G*theta*(Identity[i][j] - (1.0/3.0)) - 2*G*theta_bar*n[i]*n[j];
+      C_ep[i*Ndim + j] = 
+      K*R2_Identity[i]*R2_Identity[j] +
+      2.0*G*theta*(R4_Identity[i][j] - (1.0/3.0)*R2_Identity[i]*R2_Identity[j]) -
+      2.0*G*theta_bar*n[i]*n[j];
     }
   }
   
   return STATUS;
 }
-
-*/
 
 /**************************************************************/

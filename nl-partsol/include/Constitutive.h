@@ -99,15 +99,17 @@ Tensor compute_2PK_Stress_Tensor_Neo_Hookean_Wriggers(Tensor, Tensor, double, Ma
 Tensor compute_material_stiffness_density_Neo_Hookean_Wriggers(Tensor, Tensor, Tensor, double, Material);
 /*******************************************************/
 
-/*
-Tensor compute_stiffness_density_Neo_Hookean_Wriggers(Tensor GRAD_I, Tensor GRAD_J, Tensor F, double J,Material MatProp)
-*/
-Tensor compute_stiffness_density_Neo_Hookean_Wriggers(Tensor, Tensor, Tensor, double, Material);
+
+int compute_stiffness_density_Neo_Hookean_Wriggers(
+  double * Stiffness_Density,
+  const double * dN_alpha_n,
+  const double * dN_beta_n, 
+  State_Parameters IO_State_p,
+  Material MatProp);
 /*******************************************************/  
 
 Matrix compute_D_matrix_Neo_Hookean_Wriggers(Tensor, double, Material);
 /*******************************************************/
-
 
 /*!
   \fn State_Parameters Von_Mises_forward_euler(State_Parameters Input_SP, Material MatProp)
@@ -206,6 +208,10 @@ State_Parameters compute_1PK_Stress_Tensor_Bingham_Fluid(State_Parameters,Materi
  * */ 
 Tensor compute_stiffness_density_Bingham_Fluid(Tensor,Tensor,Tensor,Tensor,double, double,Material);
 /*******************************************************/
+
+
+
+int compute_1PK_elastoplastic_tangent_matrix(double *Stiffness_density, const double *dN_alpha, const double *dN_beta, const State_Parameters IO_State);
 
 #endif
 

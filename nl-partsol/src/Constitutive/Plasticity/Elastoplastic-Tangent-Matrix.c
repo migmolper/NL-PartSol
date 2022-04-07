@@ -25,7 +25,7 @@ static int __eigenvalues_kirchhoff(
     const double *D_phi /**< [in] Total deformation gradient. */);
 
 /**************************************************************/ 
-int compute_1PK_elastoplastic_tangent_matrix(double *C_ep,
+int compute_1PK_elastoplastic_tangent_matrix(double *Stiffness_density,
                                              const double *dN_alpha,
                                              const double *dN_beta,
                                              const State_Parameters IO_State) {
@@ -154,11 +154,11 @@ int compute_1PK_elastoplastic_tangent_matrix(double *C_ep,
 
       for (unsigned i = 0; i < Ndim; i++) {
         for (unsigned j = 0; j < Ndim; j++) {
-          C_ep[i * Ndim + j] += IO_State.a_ep[A * Ndim + B] *
+          Stiffness_density[i * Ndim + j] += IO_State.C_ep[A * Ndim + B] *
                                 (mv[A * Ndim + A][i] * mu[B * Ndim + B][j]);
 
           if (A != B) {
-            C_ep[i * Ndim + j] +=
+            Stiffness_density[i * Ndim + j] +=
                 0.5 *
                 ((eigval_T[B] - eigval_T[A]) /
                  (eigval_b_e[B] - eigval_b_e[A])) *
@@ -174,16 +174,16 @@ int compute_1PK_elastoplastic_tangent_matrix(double *C_ep,
   for (unsigned i = 0; i < Ndim; i++) {
     for (unsigned j = 0; j < Ndim; j++) {
       for (unsigned k = 0; k < Ndim; k++) {
-        C_ep[i * Ndim + j] += -IO_State.Stress[i * Ndim + k] * u__o__v[k][j];
+        Stiffness_density[i * Ndim + j] += -IO_State.Stress[i * Ndim + k] * u__o__v[k][j];
       }
     }
   }
 
 #ifdef DEBUG_MODE
 #if DEBUG_MODE + 0
-  puts("C_ep: ");
-  printf("%e, %e\n", C_ep[0], C_ep[1]);
-  printf("%e, %e\n", C_ep[2], C_ep[3]);
+  puts("Stiffness_density_p: ");
+  printf("%e, %e\n", Stiffness_density_p[0], Stiffness_density_p[1]);
+  printf("%e, %e\n", Stiffness_density_p[2], Stiffness_density_p[3]);
 #endif
 #endif
 
@@ -288,7 +288,15 @@ static int __spectral_decomposition_b_e(double *eigval_b_e, double *eigvec_b_e,
   eigvec_b_e[3] = b_e[3];
 
 #else
-  No esta implementado
+  eigvec_b_e[0] = b_e[0];
+  eigvec_b_e[1] = b_e[1];
+  eigvec_b_e[2] = b_e[2];
+  eigvec_b_e[3] = b_e[3];
+  eigvec_b_e[4] = b_e[4];
+  eigvec_b_e[5] = b_e[5];
+  eigvec_b_e[6] = b_e[6];
+  eigvec_b_e[7] = b_e[7];
+  eigvec_b_e[8] = b_e[8];
 #endif
 
   /* Locals */
@@ -359,16 +367,25 @@ static int __spectral_decomposition_b_e(double *eigval_b_e, double *eigvec_b_e,
 static int __eigenvalues_kirchhoff(double *eigval_T, const double *P,
                                    const double *D_phi) {
 
+unsigned Ndim = NumberDimensions;
+
 #if NumberDimensions == 2
   double T[4] = {0.0, 0.0, 0.0, 0.0};
-  T[0] = P[0] * D_phi[0] + P[1] * D_phi[1];
-  T[1] = P[0] * D_phi[2] + P[1] * D_phi[3];
-  T[2] = P[2] * D_phi[0] + P[3] * D_phi[1];
-  T[3] = P[2] * D_phi[2] + P[3] * D_phi[3];
 #else
   double T[9] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
-  No esta implementado
 #endif
+
+  for (unsigned i = 0; i < Ndim; i++)
+  {
+    for (unsigned j = 0; j < Ndim; j++)
+    {
+      for (unsigned k = 0; k < Ndim; k++)
+      {
+        T[i*Ndim + j] += P[i*Ndim + k]*D_phi[j*Ndim + k];
+      }      
+    }
+  }
+  
 
   /* Locals */
   int n = NumberDimensions;

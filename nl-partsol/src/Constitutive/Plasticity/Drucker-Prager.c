@@ -106,6 +106,18 @@ static int __update_internal_variables_classical(
     double eps_k /**< [in] Equivalent plastic strain*/,
     double kappa_k /**< [in] Hardening function. */);
 
+static int __tangent_moduli_classical(
+  double *  C_ep /**< [out] Elastoplastic tanget moduli */, 
+  const double * n /**< [in] Plastic flow direction. */,
+  double d_gamma_k /**< [in] Derivative of the hardening function. */, 
+  double J2 /**< [in] Second invariant of the deviatoric stress tensor */, 
+  double d_kappa_k /**< [in] Discrete plastic multiplier */,
+  double K /**< [in] First Lamé invariant. */, 
+  double G /**< [in] Second Lamé invariant. */, 
+  double beta/**< [in] Yield surface parameter II. */, 
+  double alpha_F /**< [in] Yield surface parameter I. */, 
+  double alpha_Q /**< [in] Plastic potential parameter. */);
+
 static double __yield_function_apex(
     double pressure /**< [in] First invariant of the stress tensor */,
     double d_gamma_k /**< [in] Discrete plastic multiplier */,
@@ -120,7 +132,7 @@ static double __yield_function_apex(
 static double __d_yield_function_apex(
     double d_gamma_k /**< [in] Discrete plastic multiplier */,
     double d_gamma_1 /**< [in] Discrete plastic multiplier I */,
-    double d_kappa_k /**< [in] Discrete plastic multiplier */,
+    double d_kappa_k /**< [in] Derivative of the hardening function */,
     double K /**< [in] First Lamé invariant. */,
     double alpha_F /**< [in] Yield surface parameter I. */,
     double alpha_Q /**< [in] Plastic potential parameter. */,
@@ -144,9 +156,17 @@ static int __update_internal_variables_apex(
     double eps_k /**< [in] Equivalent plastic strain*/,
     double kappa_k /**< [in] Hardening function. */);
 
-static bool __degradated(
-    const double *Stress /**< [in/out] Nominal stress tensor */,
-    double J2_degradated /**< [in] Critical value of the J2 invariant */);
+static int __tangent_moduli_apex(
+  double *C_ep /**< [out] Elastoplastic tanget moduli */, 
+  const double *n /**< [in] Plastic flow direction. */, 
+  double d_gamma_k /**< [in] Discrete plastic multiplier */, 
+  double d_gamma_1 /**< [in] Discrete plastic multiplier I */, 
+  double d_kappa_k /**< [in] Derivative of the hardening function */,
+  double K /**< [in] First Lamé invariant. */, 
+  double G /**< [in] Second Lamé invariant. */, 
+  double beta /**< [in] Yield surface parameter II. */, 
+  double alpha_F /**< [in] Yield surface parameter I. */, 
+  double alpha_Q /**< [in] Plastic potential parameter. */);    
 
 /**************************************************************/ 
 
@@ -374,6 +394,17 @@ int compute_1PK_Drucker_Prager(State_Parameters IO_State, Material MatProp)
         return EXIT_FAILURE;
       }
 
+      if(IO_State.compute_C_ep)
+      {
+        STATUS = __tangent_moduli_classical(
+          IO_State.C_ep,n,d_gamma_k,J2,d_kappa_k,
+          K,G,beta,alpha_F,alpha_Q);
+        if (STATUS == EXIT_FAILURE) {
+          fprintf(stderr, "" RED "Error in __tangent_moduli_classical" RESET "\n");
+          return EXIT_FAILURE;
+        }
+      }
+
     }
     // Apex radial returning algorithm
     else {
@@ -428,6 +459,18 @@ int compute_1PK_Drucker_Prager(State_Parameters IO_State, Material MatProp)
                 "" RED "Error in__update_internal_variables_apex" RESET "\n");
         return EXIT_FAILURE;
       }
+
+      if(IO_State.compute_C_ep)
+      {
+        STATUS = __tangent_moduli_apex(
+          IO_State.C_ep, n, d_gamma_k, d_gamma_1, d_kappa_k,
+          K, G, beta, alpha_F, alpha_Q);
+        if (STATUS == EXIT_FAILURE) {
+          fprintf(stderr, "" RED "Error in __tangent_moduli_apex" RESET "\n");
+          return EXIT_FAILURE;
+        }
+      }
+
     }
   }
 
@@ -1286,23 +1329,98 @@ static int __update_internal_variables_apex(
 
 /***************************************************************************/
 
-static bool __degradated(const double *Stress, double J2_degradated) {
+static int __tangent_moduli_classical(
+          double *  C_ep, 
+          const double * n, 
+          double d_gamma_k, 
+          double J2, 
+          double d_kappa_k,
+          double K, 
+          double G, 
+          double beta, 
+          double alpha_F, 
+          double alpha_Q)
+{
 
-  double J2 = 0.0;
+  int STATUS = EXIT_SUCCESS;  
+  int Ndim = NumberDimensions;
 
 #if NumberDimensions == 2
-  J2 = sqrt(0.5 * (pow((Stress[0] - Stress[3]), 2.0) +
-                   pow((Stress[3] - Stress[4]), 2.0) +
-                   pow((Stress[4] - Stress[0]), 2.0)));
+  double R2_Identity[2] = {1.0,1.0};
+
+  double R4_Identity[2][2] = {
+      {1.0,0.0},
+      {0.0,1.0}
+  };
 #else
-  No esta implementado
+  double R2_Identity[3] = {1.0,1.0,1.0};
+
+  double R4_Identity[3][3] = {
+    {1.0,0.0,0.0},
+    {0.0,1.0,0.0},
+    {0.0,0.0,1.0}
+  };
 #endif
 
-  if (J2 <= J2_degradated) {
-    return true;
-  } else {
-    return false;
+
+  double c2 = 9*alpha_F*alpha_Q*K + 2*G + beta*d_kappa_k*sqrt(2./3. * (1 + 3*alpha_Q*alpha_Q));
+  double c1 = 1.0 - 9.0*alpha_F*alpha_Q*K/c2; 
+
+  for (unsigned i = 0; i < Ndim; i++)
+  {
+    for (unsigned j = 0; j < Ndim; j++)
+    {
+      C_ep[i*Ndim + j] = 
+      c1*K*R2_Identity[i]*R2_Identity[j] 
+      + 2*G*(R4_Identity[i][j] - (1./3.)*(1.0 - 2.0*G*d_gamma_k/J2)*R2_Identity[i]*R2_Identity[j]) 
+      - (6.0*alpha_Q*K*G/c2)*R2_Identity[i]*n[j] 
+      - (6.0*alpha_Q*K*G/c2)*n[i]*R2_Identity[j] 
+      - 4*G*G*(1.0/c2 - d_gamma_k/J2)*n[i]*n[j];
+    }
   }
+  
+  return STATUS;
 }
 
 /***************************************************************************/
+
+static int __tangent_moduli_apex(
+          double *  C_ep, 
+          const double * n, 
+          double d_gamma_k, 
+          double d_gamma_1, 
+          double d_kappa_k,
+          double K, 
+          double G, 
+          double beta, 
+          double alpha_F, 
+          double alpha_Q)
+{
+
+  int STATUS = EXIT_SUCCESS;  
+  int Ndim = NumberDimensions;
+
+#if NumberDimensions == 2
+    double Identity[2] = {1.0,1.0};
+#else
+    double Identity[3] = {1.0,1.0,1.0};
+#endif
+
+  double c3 = (alpha_Q*beta*sqrt(2./3.)*d_kappa_k*d_gamma_k)/
+  (3.0*alpha_F*K*sqrt(d_gamma_1*d_gamma_1 + 3.0*alpha_Q*alpha_Q*d_gamma_k*d_gamma_k) + 
+  alpha_Q*beta*sqrt(2./3.)*d_kappa_k*d_gamma_k);
+
+  double c4 = c3*K/(2.0*alpha_Q*G*d_gamma_k);
+
+  for (unsigned i = 0; i < Ndim; i++)
+  {
+    for (unsigned j = 0; j < Ndim; j++)
+    {
+      C_ep[i*Ndim + j] =c3*K*Identity[i]*Identity[j] + c4*Identity[i]*n[j];
+    }
+  }
+  
+  return STATUS;
+}
+
+/**************************************************************/

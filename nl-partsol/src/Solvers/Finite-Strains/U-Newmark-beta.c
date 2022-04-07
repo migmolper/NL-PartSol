@@ -1,4 +1,5 @@
 #include <math.h>
+#include <string.h>
 #include "nl-partsol.h"
 
 #ifdef __linux__
@@ -1014,8 +1015,8 @@ static void compute_Nodal_Body_Forces(Matrix Forces, Mask ActiveNodes,
 
   Tensor b = alloc__TensorLib__(1); /* Body forces vector */
 
-  b.n[0] = 0.0;
-  b.n[1] = -1000;
+//  b.n[0] = 0.0;
+//  b.n[1] = -1000;
 
   for (int p = 0; p < MPM_Mesh.NumGP; p++) {
 
@@ -1243,19 +1244,19 @@ static Matrix assemble_Nodal_Tangent_Stiffness(Mask ActiveNodes,
 
 */
 {
-
-  int Ndim = NumberDimensions;
-  int Ndof = NumberDOF;
-  int Nnodes_mask = ActiveNodes.Nactivenodes;
-  int Order = Ndof * Nnodes_mask;
-  int Np = MPM_Mesh.NumGP;
-  int Ap;
-  int A_mask;
-  int Bp;
-  int B_mask;
-  int NumNodes_p;
-  int MatIndx_p;
-  int idx_AB_mask_ij;
+  int STATUS = EXIT_SUCCESS;
+  unsigned Ndim = NumberDimensions;
+  unsigned Ndof = NumberDOF;
+  unsigned Nnodes_mask = ActiveNodes.Nactivenodes;
+  unsigned Order = Ndof * Nnodes_mask;
+  unsigned Np = MPM_Mesh.NumGP;
+  unsigned Ap;
+  unsigned A_mask;
+  unsigned Bp;
+  unsigned B_mask;
+  unsigned NumNodes_p;
+  unsigned MatIndx_p;
+  unsigned idx_AB_mask_ij;
 
   Element Nodes_p;   /* List of nodes for particle */
   Matrix gradient_p; /* Shape functions gradients */
@@ -1267,9 +1268,15 @@ static Matrix assemble_Nodal_Tangent_Stiffness(Mask ActiveNodes,
   Tensor F_n1_p;
   Tensor dFdt_n1_p;
   Tensor transpose_F_n_p;
-  Tensor Stiffness_density_p;
+
+#if NumberDimensions == 2
+  double Stiffness_density_p[4] = {0.0,0.0,0.0,0.0};
+#else
+  double Stiffness_density_p[9] = {0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0};
+#endif
 
   Material MatProp_p;
+  State_Parameters IO_State_p;
   double V0_p; /* Volume of the particle in the reference configuration */
   double J_p;  /* Jacobian of the deformation gradient */
   double alpha_4 =
@@ -1280,7 +1287,7 @@ static Matrix assemble_Nodal_Tangent_Stiffness(Mask ActiveNodes,
   /*
     Loop in the particles for the assembling process
   */
-  for (int p = 0; p < Np; p++) {
+  for (unsigned p = 0; p < Np; p++) {
 
     /*
       Get the volume of the particle in the reference configuration
@@ -1320,7 +1327,7 @@ static Matrix assemble_Nodal_Tangent_Stiffness(Mask ActiveNodes,
     */
     J_p = I3__TensorLib__(F_n1_p);
 
-    for (int A = 0; A < NumNodes_p; A++) {
+    for (unsigned A = 0; A < NumNodes_p; A++) {
       /*
         Compute the gradient in the reference configuration
       */
@@ -1334,14 +1341,13 @@ static Matrix assemble_Nodal_Tangent_Stiffness(Mask ActiveNodes,
       Ap = Nodes_p.Connectivity[A];
       A_mask = ActiveNodes.Nodes2Mask[Ap];
 
-      for (int B = 0; B < NumNodes_p; B++) {
+      for (unsigned B = 0; B < NumNodes_p; B++) {
 
         /*
           Compute the gradient in the reference configuration
         */
         gradient_pB = memory_to_tensor__TensorLib__(gradient_p.nM[B], 1);
-        GRADIENT_pB =
-            vector_linear_mapping__TensorLib__(transpose_F_n_p, gradient_pB);
+        GRADIENT_pB = vector_linear_mapping__TensorLib__(transpose_F_n_p, gradient_pB);
 
         /*
           Get the node of the mesh for the contribution
@@ -1349,18 +1355,40 @@ static Matrix assemble_Nodal_Tangent_Stiffness(Mask ActiveNodes,
         Bp = Nodes_p.Connectivity[B];
         B_mask = ActiveNodes.Nodes2Mask[Bp];
 
-        /*
-          Get the stiffness density of each particle
-        */
-       Stiffness_density_p = tangent_matrix__Particles__(GRADIENT_pA,GRADIENT_pB,F_n1_p,dFdt_n1_p,J_p,alpha_4,MatProp_p);
+        // 
+        IO_State_p.D_phi = MPM_Mesh.Phi.F_n.nM[p]; 
+        IO_State_p.d_phi = MPM_Mesh.Phi.DF.nM[p];
+//        IO_State_p.b_e = MPM_Mesh.Phi.b_e_n1.nM[p];
+//        IO_State_p.C_ep = ;
+        IO_State_p.J = J_p;
+//        IO_State_p.dFdt = MPM_Mesh.Phi.dt_F_n1.nM[p];
+
+        /* Get the stiffness density of each particle */
+        if (strcmp(MatProp_p.Type, "Neo-Hookean-Wriggers") == 0) {
+          STATUS = compute_stiffness_density_Neo_Hookean_Wriggers(Stiffness_density_p, gradient_pA.n, gradient_pB.n, IO_State_p, MatProp_p);
+        } 
+        else if (strcmp(MatProp_p.Type, "Newtonian-Fluid-Compressible") == 0) {
+//          STATUS = compute_stiffness_density_Newtonian_Fluid(Stiffness_density_p, GRADIENT_pA, GRADIENT_pB, F_n1_p, dFdt_n1_p, J_p, alpha_4, MatProp_p);
+        } 
+        else if (strcmp(MatProp_p.Type, "Newtonian-Fluid-Incompressible") == 0) {
+//          STATUS = compute_stiffness_density_Newtonian_Fluid_Incompressible(Stiffness_density_p, GRADIENT_pA, GRADIENT_pB, F_n1_p, dFdt_n1_p, J_p, alpha_4,MatProp_p);
+        }
+        else if (strcmp(MatProp_p.Type, "Drucker-Prager") == 0) {
+          STATUS = compute_1PK_elastoplastic_tangent_matrix(Stiffness_density_p, gradient_pA.n, gradient_pB.n,IO_State_p);
+        }        
+        else {
+          fprintf(stderr, "%s : %s %s %s \n",
+          "Error in assemble_Nodal_Tangent_Stiffness()", "The material",
+          MatProp_p.Type, "has not been yet implemnented");
+          exit(EXIT_FAILURE);
+        }
 
         /*
-          Add the geometric contribution to each dof for the assembling process
+          Assembling process
         */
-        for (int i = 0; i < Ndim; i++) {
-          for (int j = 0; j < Ndim; j++) {
-            Tangent_Stiffness.nM[A_mask * Ndim + i][B_mask * Ndim + j] +=
-                Stiffness_density_p.N[i][j] * V0_p;
+        for (unsigned i = 0; i < Ndim; i++) {
+          for (unsigned j = 0; j < Ndim; j++) {
+            Tangent_Stiffness.nM[A_mask * Ndim + i][B_mask * Ndim + j] += Stiffness_density_p[i*Ndim + j] * V0_p;
           }
         }
 
@@ -1368,7 +1396,6 @@ static Matrix assemble_Nodal_Tangent_Stiffness(Mask ActiveNodes,
           Free memory
         */
         free__TensorLib__(GRADIENT_pB);
-        free__TensorLib__(Stiffness_density_p);
       }
 
       /*

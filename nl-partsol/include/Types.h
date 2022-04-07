@@ -539,11 +539,11 @@ typedef struct
   /*!
    * Plasticity parameters
    * */
-  double * Back_stress;
-  double * Increment_E_plastic;
-  double * EPS; // Equivalent plastic strain
-  double * Kappa; // Hardening Parameter
-  double * a_ep; // Elastoplastic tangent matrix
+  double * Back_stress; /**< State varible for kinematic hardening*/
+  double * Kappa; /**<  Hardening Parameter */
+  double * EPS; /**<  Equivalent plastic strain */
+  double * C_ep; /**<  Elastoplastic tangent matrix */
+  bool compute_C_ep;
 
   double Cohesion; 
   double Yield_stress;

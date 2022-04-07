@@ -1,6 +1,12 @@
 #include <math.h>
 #include "nl-partsol.h"
 
+#ifdef __linux__
+#include <lapacke.h>
+#elif __APPLE__
+#include <Accelerate/Accelerate.h>
+#endif
+
 /**************************************************************/
 
 double energy_Neo_Hookean_Wriggers(Tensor C, double J, Material MatProp_p) {
@@ -74,10 +80,12 @@ compute_1PK_Stress_Tensor_Neo_Hookean_Wriggers(State_Parameters Intput_SP,
 
 /**************************************************************/
 
-Tensor compute_stiffness_density_Neo_Hookean_Wriggers(Tensor GRAD_I,
-                                                      Tensor GRAD_J, Tensor F,
-                                                      double J,
-                                                      Material MatProp) {
+int compute_stiffness_density_Neo_Hookean_Wriggers(
+  double * Stiffness_Density,
+  const double * dN_alpha_n,
+  const double * dN_beta_n, 
+  State_Parameters IO_State_p,
+  Material MatProp) {
 
   /*
     Number of dimensions
@@ -91,44 +99,145 @@ Tensor compute_stiffness_density_Neo_Hookean_Wriggers(Tensor GRAD_I,
   double nu = MatProp.nu;
   double G = ElasticModulus / (2 * (1 + nu));
   double lambda = nu * ElasticModulus / ((1 - nu * 2) * (1 + nu));
-  double J2 = J * J;
-  double alpha = lambda * J2;
-  double beta = G - 0.5 * lambda * (J2 - 1);
+  double J = IO_State_p.J;
+  double sqr_J = J*J;
+  double alpha = lambda * sqr_J;
+  double beta = G - 0.5 * lambda * (sqr_J - 1);
 
-  /*
-    Stifness density tensor
-  */
-  Tensor A = alloc__TensorLib__(2);
+  double * D_phi_n = IO_State_p.D_phi;
+  double * d_phi = IO_State_p.d_phi;
 
-  /*
-    Auxiliar variables
-  */
-  Tensor Fm1 = transpose__TensorLib__(F);
-  Tensor FmT = Inverse__TensorLib__(Fm1);
-  Tensor FmTGRAD_I = vector_linear_mapping__TensorLib__(FmT, GRAD_I);
-  Tensor FmTGRAD_J = vector_linear_mapping__TensorLib__(FmT, GRAD_J);
-  Tensor Fm1GRAD_o_FmTGRAD_IJ =
-      dyadic_Product__TensorLib__(FmTGRAD_I, FmTGRAD_J);
-  double GRAD_I_dot_GRAD_J = inner_product__TensorLib__(GRAD_I, GRAD_J);
+#if NumberDimensions == 2
+  double d_phi_mT[4] = {
+    d_phi[0], d_phi[2], 
+    d_phi[1], d_phi[3]};
 
-  for (int i = 0; i < Ndim; i++) {
-    for (int j = 0; j < Ndim; j++) {
-      A.N[i][j] += alpha * Fm1GRAD_o_FmTGRAD_IJ.N[i][j] +
-                   G * GRAD_I_dot_GRAD_J * (i == j) +
-                   beta * Fm1GRAD_o_FmTGRAD_IJ.N[j][i];
+  // Parameters for dgetrf_ and dgetri_
+  int INFO;
+  int N = 2;
+  int LDA = 2;
+  int LWORK = 2;
+  int IPIV[2] = {0, 0};
+  double WORK[2] = {0, 0};
+#else
+  double d_phi_mT[9] = {
+    d_phi[0], d_phi[3], d_phi[6],
+    d_phi[1], d_phi[4], d_phi[7], 
+    d_phi[2], d_phi[5], d_phi[8]};
+  
+  // Parameters for dgetrf_ and dgetri_
+  int INFO;
+  int N = 3;
+  int LDA = 3;
+  int LWORK = 3;
+  int IPIV[3] = {0, 0, 0};
+  double WORK[3] = {0, 0, 0};
+#endif
+
+  // The factors L and U from the factorization A = P*L*U
+  dgetrf_(&N, &N, d_phi_mT, &LDA, IPIV, &INFO);
+  // Check output of dgetrf
+  if (INFO != 0) {
+    if (INFO < 0) {
+      printf(
+          "" RED
+          "Error in dgetrf_(): the %i-th argument had an illegal value " RESET
+          "\n",
+          abs(INFO));
+    } else if (INFO > 0) {
+
+      printf("" RED
+             "Error in dgetrf_(): d_phi_mT(%i,%i) %s \n %s \n %s \n %s " RESET
+             "\n",
+             INFO, INFO, "is exactly zero. The factorization",
+             "has been completed, but the factor d_phi_mT is exactly",
+             "singular, and division by zero will occur if it is used",
+             "to solve a system of equations.");
+    }
+    return EXIT_FAILURE;
+  }
+
+  dgetri_(&N, d_phi_mT, &LDA, IPIV, WORK, &LWORK, &INFO);
+  if (INFO != 0) {
+    if (INFO < 0) {
+      fprintf(stderr, "" RED "%s: the %i-th argument %s" RESET "\n",
+              "Error in dgetri_()", abs(INFO), "had an illegal value");
+    } else if (INFO > 0) {
+      fprintf(stderr,
+              "" RED
+              "Error in dgetri_(): d_phi_mT(%i,%i) %s \n %s \n %s \n %s " RESET
+              "\n",
+              INFO, INFO, "is exactly zero. The factorization",
+              "has been completed, but the factor d_phi_mT is exactly",
+              "singular, and division by zero will occur if it is used",
+              "to solve a system of equations.");
+    }
+    return EXIT_FAILURE;
+  }
+
+  // Do the projection of the shape function gradient to the n + 1 configuration
+#if NumberDimensions == 2
+  double dN_alpha_n1[2] = {0.0,0.0};
+  double dN_beta_n1[2] = {0.0,0.0};
+#else  
+  double dN_alpha_n1[3] = {0.0,0.0,0.0};
+  double dN_beta_n1[3] = {0.0,0.0,0.0};
+#endif
+
+  for (unsigned i = 0; i < Ndim; i++)
+  {
+    for (unsigned j = 0; j < Ndim; j++)
+    {
+      dN_alpha_n1[i] += d_phi_mT[i*Ndim + j]*dN_alpha_n[j];
+      dN_beta_n1[i] += d_phi_mT[i*Ndim + j]*dN_beta_n[j];
+    }
+  }
+  
+  // Compute the left Cauchy-Green (t = n)
+#if NumberDimensions == 2
+  double b_n[4] = {
+    0.0,0.0,
+    0.0,0.0};
+#else  
+  double b_n[9] = {
+    0.0,0.0,0.0,
+    0.0,0.0,0.0,
+    0.0,0.0,0.0};
+#endif
+  for (unsigned i = 0; i < Ndim; i++)
+  {
+    for (unsigned j = 0; j < Ndim; j++)
+    {
+      for (unsigned k = 0; k < Ndim; k++)
+      {
+        b_n[i*Ndim + j] += D_phi_n[i*Ndim + k]*D_phi_n[j*Ndim + k];
+      }      
     }
   }
 
-  /*
-    Free memory
-   */
-  free__TensorLib__(Fm1);
-  free__TensorLib__(FmT);
-  free__TensorLib__(FmTGRAD_I);
-  free__TensorLib__(FmTGRAD_J);
-  free__TensorLib__(Fm1GRAD_o_FmTGRAD_IJ);
+  double lenght_0 = 0.0;
+  double lenght_0_aux = 0.0;
+  for (unsigned i = 0; i < Ndim; i++)
+  {
+    for (unsigned j = 0; j < Ndim; j++)
+    {
+      lenght_0_aux += b_n[i*Ndim + j]*dN_alpha_n[j];
+    }
+    lenght_0 += dN_beta_n[i]*lenght_0;  
+    lenght_0_aux = 0.0;
+  }
 
-  return A;
+
+  for (unsigned i = 0; i < Ndim; i++) {
+    for (unsigned j = 0; j < Ndim; j++) {
+      Stiffness_Density[i*Ndim + j] += 
+      alpha * dN_alpha_n1[i]*dN_beta_n1[j] 
+      + G * lenght_0 * (i == j) 
+      + beta * dN_alpha_n1[j]*dN_beta_n1[i];
+    }
+  }
+
+  return EXIT_SUCCESS;
 }
 
 /**************************************************************/
@@ -149,20 +258,20 @@ Tensor compute_2PK_Stress_Tensor_Neo_Hookean_Wriggers(Tensor grad_e, Tensor C,
   /*
     Auxiliar tensors
   */
-  Tensor I = Identity__TensorLib__();
+  Tensor Identity = Identity__TensorLib__();
   Tensor C_m1 = Inverse__TensorLib__(C);
 
   for (int i = 0; i < Ndim; i++) {
     for (int j = 0; j < Ndim; j++) {
       grad_e.N[i][j] = lambda * 0.5 * (J2 - 1) * C_m1.N[i][j] +
-                       G * (I.N[i][j] - C_m1.N[i][j]);
+                       G * (Identity.N[i][j] - C_m1.N[i][j]);
     }
   }
 
   /*
     Free tensors
   */
-  free__TensorLib__(I);
+  free__TensorLib__(Identity);
   free__TensorLib__(C_m1);
 
   return grad_e;

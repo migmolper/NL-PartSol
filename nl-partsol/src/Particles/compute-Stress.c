@@ -24,18 +24,6 @@ Tensor explicit_integration_stress__Particles__(int p, Particle MPM_Mesh,
 
     Output_SP =
         compute_kirchhoff_isotropic_linear_elasticity(Input_SP, MatProp);
-  } else if (strcmp(MatProp.Type, "Von-Mises") == 0) {
-    Output_SP =
-        compute_kirchhoff_isotropic_linear_elasticity(Input_SP, MatProp);
-
-    Input_SP.Stress = MPM_Mesh.Phi.Stress.nM[p];
-    Input_SP.EPS = &MPM_Mesh.Phi.EPS_n1[p];
-    Input_SP.Back_stress = MPM_Mesh.Phi.Back_stress.nM[p];
-
-    Output_SP = Von_Mises_forward_euler(Input_SP, MatProp);
-
-
-    free(Output_SP.Increment_E_plastic);
   } else {
     exit(EXIT_FAILURE);
   }
@@ -243,10 +231,7 @@ Tensor tangent_matrix__Particles__(Tensor GRADIENT_pA,
 
 Tensor Stiffness_density_p;
 
-if (strcmp(MatProp_p.Type, "Neo-Hookean-Wriggers") == 0) {
-  Stiffness_density_p = compute_stiffness_density_Neo_Hookean_Wriggers(GRADIENT_pA, GRADIENT_pB, F_n1_p, J_p, MatProp_p);
-} 
-else if (strcmp(MatProp_p.Type, "Newtonian-Fluid-Compressible") == 0) {
+if (strcmp(MatProp_p.Type, "Newtonian-Fluid-Compressible") == 0) {
   Stiffness_density_p = compute_stiffness_density_Newtonian_Fluid(GRADIENT_pA, GRADIENT_pB, F_n1_p, dFdt_n1_p, J_p, alpha_4, MatProp_p);
 } 
 else if (strcmp(MatProp_p.Type, "Newtonian-Fluid-Incompressible") == 0) {

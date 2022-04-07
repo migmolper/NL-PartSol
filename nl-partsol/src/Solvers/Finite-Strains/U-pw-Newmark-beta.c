@@ -1954,8 +1954,8 @@ static Matrix assemble_Tangent_Stiffness(Nodal_Field upw_n, Nodal_Field D_upw,
         Bp = Nodes_p.Connectivity[B];
         B_mask = ActiveNodes.Nodes2Mask[Bp];
 
-        Stiffness_density_pAB = compute_stiffness_density_Neo_Hookean_Wriggers(
-                  GRADIENT_Na_p, GRADIENT_Nb_p, F_n1_p, J_p, MatProp_Soil_p);
+//        Stiffness_density_pAB = compute_stiffness_density_Neo_Hookean_Wriggers(
+//                  GRADIENT_Na_p, GRADIENT_Nb_p, F_n1_p, J_p, MatProp_Soil_p);
 
         /*
           Compute the contribution of the mixture to the tangent matrix
