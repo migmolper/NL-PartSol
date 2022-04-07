@@ -1270,9 +1270,9 @@ static Matrix assemble_Nodal_Tangent_Stiffness(Mask ActiveNodes,
   Tensor transpose_F_n_p;
 
 #if NumberDimensions == 2
-  double Stiffness_density_p[4] = {0.0,0.0,0.0,0.0};
+  double Stiffness_density_p[4];
 #else
-  double Stiffness_density_p[9] = {0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0};
+  double Stiffness_density_p[9];
 #endif
 
   Material MatProp_p;

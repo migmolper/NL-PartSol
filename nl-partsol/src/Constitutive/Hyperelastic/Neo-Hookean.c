@@ -230,7 +230,7 @@ int compute_stiffness_density_Neo_Hookean_Wriggers(
 
   for (unsigned i = 0; i < Ndim; i++) {
     for (unsigned j = 0; j < Ndim; j++) {
-      Stiffness_Density[i*Ndim + j] += 
+      Stiffness_Density[i*Ndim + j] = 
       alpha * dN_alpha_n1[i]*dN_beta_n1[j] 
       + G * lenght_0 * (i == j) 
       + beta * dN_alpha_n1[j]*dN_beta_n1[i];

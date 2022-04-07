@@ -1607,7 +1607,7 @@ static int __update_internal_variables_plastic(
   }
 
 #if NumberDimensions == 2
-  Stress[4] == T_tr_k[2] + c_cotphi;
+  Stress[4] = T_tr_k[2] + c_cotphi;
 #endif
 
 #ifdef DEBUG_MODE
