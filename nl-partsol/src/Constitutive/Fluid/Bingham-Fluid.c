@@ -33,7 +33,7 @@ compute_1PK_Stress_Tensor_Bingham_Fluid(State_Parameters Intput_SP,
   Tensor Fm1 = Inverse__TensorLib__(F);
   Tensor FmT = transpose__TensorLib__(Fm1);
   Tensor dFdt__x__Fm1 = matrix_product__TensorLib__(dFdt, Fm1);
-  Tensor d = symmetrise__TensorLib__(dFdt__x__Fm1);
+  Tensor d;// = symmetrise__TensorLib__(dFdt__x__Fm1);
   Tensor d__x__FmT = matrix_product__TensorLib__(d, FmT);
   double tr_d = I1__TensorLib__(d);
 
@@ -107,7 +107,7 @@ Tensor compute_stiffness_density_Bingham_Fluid(Tensor GRAD_I, Tensor GRAD_J,
   Tensor FmT = transpose__TensorLib__(Fm1);
 
   Tensor dFdt_Fm1 = matrix_product__TensorLib__(dFdt, Fm1);
-  Tensor d = symmetrise__TensorLib__(dFdt_Fm1);
+  Tensor d;// = symmetrise__TensorLib__(dFdt_Fm1);
 
   Tensor FmTGRAD_I = vector_linear_mapping__TensorLib__(FmT, GRAD_I);
   Tensor FmTGRAD_J = vector_linear_mapping__TensorLib__(FmT, GRAD_J);

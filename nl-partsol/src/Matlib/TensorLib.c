@@ -731,37 +731,6 @@ Tensor rotate__TensorLib__(Tensor In, Tensor R)
 
 /*************************************************************/
 
-Tensor symmetrise__TensorLib__(Tensor A) {
-  Tensor symA = alloc__TensorLib__(2);
-
-  int Ndim = NumberDimensions;
-
-#if NumberDimensions == 2
-
-  symA.N[0][0] = A.N[0][0];
-  symA.N[1][1] = A.N[1][1];
-
-  symA.N[0][1] = symA.N[1][0] = 0.5 * (A.N[0][1] + A.N[1][0]);
-
-#endif
-
-#if NumberDimensions == 3
-
-  symA.N[0][0] = A.N[0][0];
-  symA.N[1][1] = A.N[1][1];
-  symA.N[2][2] = A.N[2][2];
-
-  symA.N[0][1] = symA.N[1][0] = 0.5 * (A.N[0][1] + A.N[1][0]);
-  symA.N[0][2] = symA.N[2][0] = 0.5 * (A.N[0][2] + A.N[2][0]);
-  symA.N[1][2] = symA.N[2][1] = 0.5 * (A.N[1][2] + A.N[2][1]);
-
-#endif
-
-  return symA;
-}
-
-/*************************************************************/
-
 void covariant_push_forward_tensor__TensorLib__(Tensor a, Tensor A, Tensor F)
 /*
   Covariant push forward operation for any tensor.
@@ -782,9 +751,7 @@ void covariant_push_forward_tensor__TensorLib__(Tensor a, Tensor A, Tensor F)
   a.N[0][1] = F_m1.N[0][0] * aux_2 + F_m1.N[1][0] * aux_4;
   a.N[1][0] = F_m1.N[0][1] * aux_1 + F_m1.N[1][1] * aux_3;
   a.N[1][1] = F_m1.N[0][1] * aux_2 + F_m1.N[1][1] * aux_4;
-#endif
-
-#if NumberDimensions == 3
+#else  
   fprintf(stderr, "%s : %s !!! \n",
           "Error in covariant_pull_back_tensor__TensorLib__()",
           "This operation it is not implemented for 3D");
@@ -816,9 +783,7 @@ void contravariant_push_forward_tensor__TensorLib__(Tensor a, Tensor A,
   a.N[0][1] = F.N[0][0] * aux_2 + F.N[0][1] * aux_4;
   a.N[1][0] = F.N[1][0] * aux_1 + F.N[1][1] * aux_3;
   a.N[1][1] = F.N[1][0] * aux_2 + F.N[1][1] * aux_4;
-#endif
-
-#if NumberDimensions == 3
+#else  
   fprintf(stderr, "%s : %s !!! \n",
           "Error in contravariant_push_forward_tensor__TensorLib__()",
           "This operation it is not implemented for 3D");
@@ -847,9 +812,7 @@ void covariant_pull_back_tensor__TensorLib__(Tensor A, Tensor a, Tensor F)
   A.N[0][1] = F.N[0][0] * aux_2 + F.N[1][0] * aux_4;
   A.N[1][0] = F.N[0][1] * aux_1 + F.N[1][1] * aux_3;
   A.N[1][1] = F.N[0][1] * aux_2 + F.N[1][1] * aux_4;
-#endif
-
-#if NumberDimensions == 3
+#else  
   fprintf(stderr, "%s : %s !!! \n",
           "Error in covariant_pull_back_tensor__TensorLib__()",
           "This operation it is not implemented for 3D");
@@ -881,9 +844,7 @@ void contravariant_pull_back_tensor__TensorLib__(Tensor A, Tensor a, Tensor F)
   A.N[0][1] = F_m1.N[0][0] * aux_2 + F_m1.N[0][1] * aux_4;
   A.N[1][0] = F_m1.N[1][0] * aux_1 + F_m1.N[1][1] * aux_3;
   A.N[1][1] = F_m1.N[1][0] * aux_2 + F_m1.N[1][1] * aux_4;
-#endif
-
-#if NumberDimensions == 3
+#else  
   fprintf(stderr, "%s : %s !!! \n",
           "Error in contravariant_push_forward_tensor__TensorLib__()",
           "This operation it is not implemented for 3D");
@@ -911,6 +872,111 @@ void print__TensorLib__(Tensor A) {
     }
     printf("\n");
   }
+}
+
+/*************************************************************/
+
+int compute_adjunt__TensorLib__(double * A_mT, const double * A)
+{
+
+#if NumberDimensions == 2
+  A_mT[0] = A[0];
+  A_mT[1] = A[2];
+  A_mT[2] = A[1];
+  A_mT[3] = A[3];
+
+  int INFO;
+  int N = 2;
+  int LDA = 2;
+  int LWORK = 2;
+  int IPIV[2] = {0, 0};
+  double WORK[2] = {0, 0};
+#else
+  A_mT[0] = A[0]; 
+  A_mT[1] = A[3];
+  A_mT[2] = A[6],
+  A_mT[3] = A[1]; 
+  A_mT[4] = A[4];
+  A_mT[5] = A[7];
+  A_mT[6] = A[2];
+  A_mT[7] = A[5];
+  A_mT[8] = A[8]};
+  
+  int INFO;
+  int N = 3;
+  int LDA = 3;
+  int LWORK = 3;
+  int IPIV[3] = {0, 0, 0};
+  double WORK[3] = {0, 0, 0};
+#endif
+
+  // The factors L and U from the factorization A = P*L*U
+  dgetrf_(&N, &N, A_mT, &LDA, IPIV, &INFO);
+  // Check output of dgetrf
+  if (INFO != 0) {
+    if (INFO < 0) {
+      printf(
+          "" RED
+          "Error in dgetrf_(): the %i-th argument had an illegal value " RESET
+          "\n",
+          abs(INFO));
+    } else if (INFO > 0) {
+
+      printf("" RED
+             "Error in dgetrf_(): A_mT(%i,%i) %s \n %s \n %s \n %s " RESET
+             "\n",
+             INFO, INFO, "is exactly zero. The factorization",
+             "has been completed, but the factor A_mT is exactly",
+             "singular, and division by zero will occur if it is used",
+             "to solve a system of equations.");
+    }
+    return EXIT_FAILURE;
+  }
+
+  dgetri_(&N, A_mT, &LDA, IPIV, WORK, &LWORK, &INFO);
+  if (INFO != 0) {
+    if (INFO < 0) {
+      fprintf(stderr, "" RED "%s: the %i-th argument %s" RESET "\n",
+              "Error in dgetri_()", abs(INFO), "had an illegal value");
+    } else if (INFO > 0) {
+      fprintf(stderr,
+              "" RED
+              "Error in dgetri_(): A_mT(%i,%i) %s \n %s \n %s \n %s " RESET
+              "\n",
+              INFO, INFO, "is exactly zero. The factorization",
+              "has been completed, but the factor A_mT is exactly",
+              "singular, and division by zero will occur if it is used",
+              "to solve a system of equations.");
+    }
+    return EXIT_FAILURE;
+  }
+
+  return EXIT_SUCCESS;
+}
+
+/*************************************************************/
+
+void symmetrise__TensorLib__(double * symA, const double * A) {
+
+  int Ndim = NumberDimensions;
+
+#if NumberDimensions == 2
+
+  symA[0] = A[0];
+  symA[1] = symA[2] = 0.5 * (A[1] + A[2]);  
+  symA[3] = A[3];
+
+#else  
+
+  symA.N[0] = A.N[0];
+  symA.N[1] = symA.N[3] = 0.5 * (A.N[1] + A.N[3]);
+  symA.N[2] = symA.N[6] = 0.5 * (A.N[2] + A.N[6]);
+  symA.N[4] = A.N[4];
+  symA.N[5] = symA.N[7] = 0.5 * (A.N[5] + A.N[7]);
+  symA.N[8] = A.N[8];
+  
+#endif
+
 }
 
 /*************************************************************/

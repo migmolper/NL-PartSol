@@ -526,19 +526,17 @@ typedef struct
   double * Strain;
   double Pressure;
 
-  /*!
-   * Finite strain kinematic parameters
-   * */
+  double * D_phi_n1;  /**< Total deformation gradient (t = n + 1) */
   double * D_phi; /**< Total deformation gradient */
   double * d_phi; /**< Incremental deformation gradient */
   double * b_e; /**< Elastic left Cauchy-Green tensor */
   double * Fbar;
-  double * dFdt;
-  double J;
+  double J; /**<z Jocobian */
 
-  /*!
-   * Plasticity parameters
-   * */
+  double * dFdt; /**< Rate of the deformation gradient */
+  double DeltaTimeStep; /**< Increment of the time step */
+  double alpha_4; /**< Time integation paramter (Newmark-beta) */
+
   double * Back_stress; /**< State varible for kinematic hardening*/
   double * Kappa; /**<  Hardening Parameter */
   double * EPS; /**<  Equivalent plastic strain */

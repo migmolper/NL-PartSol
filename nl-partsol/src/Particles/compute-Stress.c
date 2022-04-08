@@ -231,10 +231,7 @@ Tensor tangent_matrix__Particles__(Tensor GRADIENT_pA,
 
 Tensor Stiffness_density_p;
 
-if (strcmp(MatProp_p.Type, "Newtonian-Fluid-Compressible") == 0) {
-  Stiffness_density_p = compute_stiffness_density_Newtonian_Fluid(GRADIENT_pA, GRADIENT_pB, F_n1_p, dFdt_n1_p, J_p, alpha_4, MatProp_p);
-} 
-else if (strcmp(MatProp_p.Type, "Newtonian-Fluid-Incompressible") == 0) {
+if (strcmp(MatProp_p.Type, "Newtonian-Fluid-Incompressible") == 0) {
   Stiffness_density_p = compute_stiffness_density_Newtonian_Fluid_Incompressible(GRADIENT_pA, GRADIENT_pB, F_n1_p, dFdt_n1_p, J_p, alpha_4,MatProp_p);
 }
 else {

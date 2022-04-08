@@ -108,9 +108,6 @@ int compute_stiffness_density_Neo_Hookean_Wriggers(
   Material MatProp);
 /*******************************************************/  
 
-Matrix compute_D_matrix_Neo_Hookean_Wriggers(Tensor, double, Material);
-/*******************************************************/
-
 /*!
   \fn State_Parameters Von_Mises_forward_euler(State_Parameters Input_SP, Material MatProp)
 
@@ -179,10 +176,12 @@ int compute_1PK_Modified_Lade_Duncan(State_Parameters IO_State, Material MatProp
 State_Parameters compute_1PK_Stress_Tensor_Newtonian_Fluid(State_Parameters,Material);
 /*******************************************************/
 
-/*!
-\fn Tensor compute_stiffness_density_Newtonian_Fluid(Tensor GRAD_I,Tensor GRAD_J,Tensor F,Tensor dFdt,double J,double alpha4,Material MatProp_p)
-*/
-Tensor compute_stiffness_density_Newtonian_Fluid(Tensor,Tensor,Tensor,Tensor,double,double,Material);
+int compute_stiffness_density_Newtonian_Fluid(
+  double * Stiffness_Density,
+  const double * dN_alpha_n,
+  const double * dN_beta_n, 
+  State_Parameters IO_State,
+  Material MatProp);
 /*******************************************************/
 
 /*!

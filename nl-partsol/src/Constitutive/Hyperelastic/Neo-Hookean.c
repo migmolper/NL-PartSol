@@ -87,105 +87,49 @@ int compute_stiffness_density_Neo_Hookean_Wriggers(
   State_Parameters IO_State_p,
   Material MatProp) {
 
-  /*
-    Number of dimensions
-  */
+  int STATUS = EXIT_SUCCESS;
+
+  //  Number of dimensions
   int Ndim = NumberDimensions;
 
-  /*
-    Material parameters
-  */
+  //  Material parameters
   double ElasticModulus = MatProp.E;
   double nu = MatProp.nu;
   double G = ElasticModulus / (2 * (1 + nu));
   double lambda = nu * ElasticModulus / ((1 - nu * 2) * (1 + nu));
   double J = IO_State_p.J;
   double sqr_J = J*J;
-  double alpha = lambda * sqr_J;
-  double beta = G - 0.5 * lambda * (sqr_J - 1);
+  double c0 = lambda * sqr_J;
+  double c1 = G - 0.5 * lambda * (sqr_J - 1);
 
   double * D_phi_n = IO_State_p.D_phi;
   double * d_phi = IO_State_p.d_phi;
 
+  // Define auxiliar variables
 #if NumberDimensions == 2
-  double d_phi_mT[4] = {
-    d_phi[0], d_phi[2], 
-    d_phi[1], d_phi[3]};
-
-  // Parameters for dgetrf_ and dgetri_
-  int INFO;
-  int N = 2;
-  int LDA = 2;
-  int LWORK = 2;
-  int IPIV[2] = {0, 0};
-  double WORK[2] = {0, 0};
+  double d_phi_mT[4];
+  double dN_alpha_n1[2];
+  double dN_beta_n1[2];
+  double b_n[4];
 #else
-  double d_phi_mT[9] = {
-    d_phi[0], d_phi[3], d_phi[6],
-    d_phi[1], d_phi[4], d_phi[7], 
-    d_phi[2], d_phi[5], d_phi[8]};
-  
-  // Parameters for dgetrf_ and dgetri_
-  int INFO;
-  int N = 3;
-  int LDA = 3;
-  int LWORK = 3;
-  int IPIV[3] = {0, 0, 0};
-  double WORK[3] = {0, 0, 0};
+  double d_phi_mT[9];
+  double dN_alpha_n1[3];
+  double dN_beta_n1[3];  
+  double b_n[9];
 #endif
 
-  // The factors L and U from the factorization A = P*L*U
-  dgetrf_(&N, &N, d_phi_mT, &LDA, IPIV, &INFO);
-  // Check output of dgetrf
-  if (INFO != 0) {
-    if (INFO < 0) {
-      printf(
-          "" RED
-          "Error in dgetrf_(): the %i-th argument had an illegal value " RESET
-          "\n",
-          abs(INFO));
-    } else if (INFO > 0) {
-
-      printf("" RED
-             "Error in dgetrf_(): d_phi_mT(%i,%i) %s \n %s \n %s \n %s " RESET
-             "\n",
-             INFO, INFO, "is exactly zero. The factorization",
-             "has been completed, but the factor d_phi_mT is exactly",
-             "singular, and division by zero will occur if it is used",
-             "to solve a system of equations.");
-    }
-    return EXIT_FAILURE;
-  }
-
-  dgetri_(&N, d_phi_mT, &LDA, IPIV, WORK, &LWORK, &INFO);
-  if (INFO != 0) {
-    if (INFO < 0) {
-      fprintf(stderr, "" RED "%s: the %i-th argument %s" RESET "\n",
-              "Error in dgetri_()", abs(INFO), "had an illegal value");
-    } else if (INFO > 0) {
-      fprintf(stderr,
-              "" RED
-              "Error in dgetri_(): d_phi_mT(%i,%i) %s \n %s \n %s \n %s " RESET
-              "\n",
-              INFO, INFO, "is exactly zero. The factorization",
-              "has been completed, but the factor d_phi_mT is exactly",
-              "singular, and division by zero will occur if it is used",
-              "to solve a system of equations.");
-    }
+  // Compute the adjunt of the incremental deformation gradient
+  STATUS = compute_adjunt__TensorLib__(d_phi_mT, d_phi);
+  if (STATUS == EXIT_FAILURE) {
+    fprintf(stderr,"" RED "Error in compute_adjunt__TensorLib__" RESET "\n");
     return EXIT_FAILURE;
   }
 
   // Do the projection of the shape function gradient to the n + 1 configuration
-#if NumberDimensions == 2
-  double dN_alpha_n1[2] = {0.0,0.0};
-  double dN_beta_n1[2] = {0.0,0.0};
-#else  
-  double dN_alpha_n1[3] = {0.0,0.0,0.0};
-  double dN_beta_n1[3] = {0.0,0.0,0.0};
-#endif
-
   for (unsigned i = 0; i < Ndim; i++)
   {
+    dN_alpha_n1[i] = 0.0;
+    dN_beta_n1[i] = 0.0;
     for (unsigned j = 0; j < Ndim; j++)
     {
       dN_alpha_n1[i] += d_phi_mT[i*Ndim + j]*dN_alpha_n[j];
@@ -194,27 +138,9 @@ int compute_stiffness_density_Neo_Hookean_Wriggers(
   }
   
   // Compute the left Cauchy-Green (t = n)
-#if NumberDimensions == 2
-  double b_n[4] = {
-    0.0,0.0,
-    0.0,0.0};
-#else  
-  double b_n[9] = {
-    0.0,0.0,0.0,
-    0.0,0.0,0.0,
-    0.0,0.0,0.0};
-#endif
-  for (unsigned i = 0; i < Ndim; i++)
-  {
-    for (unsigned j = 0; j < Ndim; j++)
-    {
-      for (unsigned k = 0; k < Ndim; k++)
-      {
-        b_n[i*Ndim + j] += D_phi_n[i*Ndim + k]*D_phi_n[j*Ndim + k];
-      }      
-    }
-  }
+  left_Cauchy_Green__Particles__(b_n, D_phi_n);
 
+  // Compute
   double lenght_0 = 0.0;
   double lenght_0_aux = 0.0;
   for (unsigned i = 0; i < Ndim; i++)
@@ -228,16 +154,17 @@ int compute_stiffness_density_Neo_Hookean_Wriggers(
   }
 
 
+  // Assemble Stiffness Density matrix
   for (unsigned i = 0; i < Ndim; i++) {
     for (unsigned j = 0; j < Ndim; j++) {
       Stiffness_Density[i*Ndim + j] = 
-      alpha * dN_alpha_n1[i]*dN_beta_n1[j] 
+      c0 * dN_alpha_n1[i]*dN_beta_n1[j] 
       + G * lenght_0 * (i == j) 
-      + beta * dN_alpha_n1[j]*dN_beta_n1[i];
+      + c1 * dN_alpha_n1[j]*dN_beta_n1[i];
     }
   }
 
-  return EXIT_SUCCESS;
+  return STATUS;
 }
 
 /**************************************************************/
@@ -335,50 +262,6 @@ Tensor compute_material_stiffness_density_Neo_Hookean_Wriggers(
   free__TensorLib__(Cm1_dot_v_o_Cm1_dot_w);
 
   return C_mat;
-}
-
-/**************************************************************/
-
-Matrix compute_D_matrix_Neo_Hookean_Wriggers(Tensor C, double J,
-                                             Material MatProp)
-/*
-
-*/
-{
-
-  /*
-    Material parameters
-  */
-  double ElasticModulus = MatProp.E;
-  double nu = MatProp.nu;
-  double G = ElasticModulus / (2 * (1 + nu));
-  double lambda = nu * ElasticModulus / ((1 - nu * 2) * (1 + nu));
-  double J2 = J * J;
-
-  Tensor Cm1 = Inverse__TensorLib__(C);
-
-  Matrix D = allocZ__MatrixLib__(3, 3);
-
-  D.nM[0][0] = lambda * J2 * Cm1.N[0][0] * Cm1.N[0][0] -
-               (lambda * (J2 - 1) - 2 * G) * Cm1.N[0][0] * Cm1.N[0][0];
-  D.nM[0][1] = lambda * J2 * Cm1.N[0][0] * Cm1.N[1][1] -
-               (lambda * (J2 - 1) - 2 * G) * Cm1.N[0][1] * Cm1.N[1][0];
-  D.nM[1][0] = D.nM[0][1];
-  D.nM[0][2] = lambda * J2 * Cm1.N[0][0] * Cm1.N[0][1] -
-               (lambda * (J2 - 1) - 2 * G) * Cm1.N[0][0] * Cm1.N[1][0];
-  D.nM[2][0] = D.nM[0][2];
-  D.nM[1][1] = lambda * J2 * Cm1.N[1][1] * Cm1.N[1][1] -
-               (lambda * (J2 - 1) - 2 * G) * Cm1.N[1][1] * Cm1.N[1][1];
-  D.nM[1][2] = lambda * J2 * Cm1.N[1][1] * Cm1.N[0][1] -
-               (lambda * (J2 - 1) - 2 * G) * Cm1.N[1][0] * Cm1.N[1][1];
-  D.nM[2][1] = D.nM[1][2];
-  D.nM[2][2] = lambda * J2 * Cm1.N[0][1] * Cm1.N[0][1] -
-               0.5 * (lambda * (J2 - 1) - 2 * G) *
-                   (Cm1.N[0][0] * Cm1.N[1][1] + Cm1.N[0][1] * Cm1.N[0][1]);
-
-  free__TensorLib__(Cm1);
-
-  return D;
 }
 
 /**************************************************************/

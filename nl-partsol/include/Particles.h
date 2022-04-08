@@ -101,12 +101,35 @@ Tensor right_Cauchy_Green__Particles__(Tensor);
 /*******************************************************/
 
 /*!
+  \fn void left_Cauchy_Green__Particles__(double * b, const double * F);
+
+  \brief Compute the left Cauchy-Green tensor
+
+  \param b : [out] Left Cauchy-Green tensor
+  \param F : [in] Deformation gradient
+*/
+void left_Cauchy_Green__Particles__(double * b, const double * F);
+/*******************************************************/
+
+/*!
   \fn Tensor rate_of_deformation__Particles__(Tensor dFdt, Tensor Fm1)  
 
   \param dFdt : Temporal derivative of the deformation gradient
   \param Fm1 : Inverse of the deformation gradient  
 */
 Tensor rate_of_deformation__Particles__(Tensor, Tensor);
+/*******************************************************/
+
+/*!
+  \fn int spatial_velocity_gradient__Particles__(double * L,const double * dFdt,const double * F);
+
+  \brief Compute the spatial velocity gradient
+
+  \param L : [out] Spatial velocity gradient
+  \param dFdt : [in] Rate of the deformation tensor
+  \param F : [in] Deformation gradient
+*/
+int spatial_velocity_gradient__Particles__(double * L,const double * dFdt,const double * F);
 /*******************************************************/
 
 /*!
@@ -121,13 +144,6 @@ Tensor rate_of_deformation__Particles__(Tensor, Tensor);
   \return The Lagrangian Strain tensor 
 */
 Tensor strain_Green_Lagrange__Particles__(Tensor);
-/*******************************************************/
-
-/*!
-
-*/
-Matrix compute_B_matrix__Particles__(Tensor, Tensor);
-Matrix compute_BT_matrix__Particles__(Tensor, Tensor);
 /*******************************************************/
 
 /*!

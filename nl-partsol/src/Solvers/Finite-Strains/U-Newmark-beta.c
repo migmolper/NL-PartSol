@@ -1356,6 +1356,7 @@ static Matrix assemble_Nodal_Tangent_Stiffness(Mask ActiveNodes,
         B_mask = ActiveNodes.Nodes2Mask[Bp];
 
         // 
+//        IO_State_p.D_phi_n1 = MPM_Mesh.Phi.F_n1.nM[p];
         IO_State_p.D_phi = MPM_Mesh.Phi.F_n.nM[p]; 
         IO_State_p.d_phi = MPM_Mesh.Phi.DF.nM[p];
 //        IO_State_p.b_e = MPM_Mesh.Phi.b_e_n1.nM[p];

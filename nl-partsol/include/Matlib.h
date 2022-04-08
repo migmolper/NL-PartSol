@@ -110,7 +110,7 @@ Tensor Convex_combination__TensorLib__(Tensor, Tensor, double);
 Tensor volumetric_component__TensorLib__(Tensor);
 Tensor deviatoric_component__TensorLib__(Tensor, Tensor);
 Tensor rotate__TensorLib__(Tensor, Tensor);
-Tensor symmetrise__TensorLib__(Tensor);
+
 void covariant_push_forward_tensor__TensorLib__(Tensor, Tensor, Tensor);
 void contravariant_push_forward_tensor__TensorLib__(Tensor, Tensor, Tensor);
 void covariant_pull_back_tensor__TensorLib__(Tensor, Tensor, Tensor);
@@ -119,6 +119,27 @@ void print__TensorLib__(Tensor);
 
 /*******************************************************/
 
+/*!
+  \fn int compute_adjunt__TensorLib__(double * A_mT, const double * A);
+
+  \brief Compute the adjunt of a tensor
+
+  \param b : [out] Adjunt of the tensor
+  \param F : [in] Tensor
+*/
+int compute_adjunt__TensorLib__(double * A_mT, const double * A);
+/*******************************************************/
+
+/*!
+  \fn void symmetrise__TensorLib__(double * symA, const double * A);
+
+  \brief Compute the symmetric conterpart of a tensor
+
+  \param symA : [out] Symmetric part of a tensor
+  \param A : [in] Tensor
+*/
+void symmetrise__TensorLib__(double * symA, const double * A);
+/*******************************************************/
 
 /* LAPACK interfase of the program */
 Matrix solve_system_LAPACK(Matrix,Matrix);
