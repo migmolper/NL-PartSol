@@ -59,34 +59,41 @@ int Stress_integration__Particles__(int p, Particle MPM_Mesh, Mesh FEM_Mesh,
         compute_1PK_Stress_Tensor_Saint_Venant_Kirchhoff(Input_SP, MatProp_p);
 
   } else if (strcmp(MatProp_p.Type, "Neo-Hookean-Wriggers") == 0) {
-    Input_SP.Particle_Idx = p;
-    Input_SP.Stress = MPM_Mesh.Phi.Stress.nM[p];
+    IO_State.Particle_Idx = p;
+    IO_State.Stress = MPM_Mesh.Phi.Stress.nM[p];
 
     if (MatProp_p.Locking_Control_Fbar) {
-      Input_SP.D_phi = MPM_Mesh.Phi.Fbar.nM[p];
-      Input_SP.J = MPM_Mesh.Phi.Jbar.nV[p];
+      IO_State.D_phi_n1 = MPM_Mesh.Phi.Fbar.nM[p];
+      IO_State.J = MPM_Mesh.Phi.Jbar.nV[p];
     } else {
-      Input_SP.D_phi = MPM_Mesh.Phi.F_n1.nM[p];
-      Input_SP.J = MPM_Mesh.Phi.J_n1.nV[p];
+      IO_State.D_phi_n1 = MPM_Mesh.Phi.F_n1.nM[p];
+      IO_State.J = MPM_Mesh.Phi.J_n1.nV[p];
     }
 
-    Output_SP =
-        compute_1PK_Stress_Tensor_Neo_Hookean_Wriggers(Input_SP, MatProp_p);
+    STATUS = compute_1PK_Stress_Tensor_Neo_Hookean_Wriggers(IO_State, MatProp_p);
+    if(STATUS == EXIT_FAILURE){
+      fprintf(stderr, ""RED"Error in compute_1PK_Stress_Tensor_Neo_Hookean_Wriggers(,)"RESET" \n");
+      return EXIT_FAILURE;
+    }
 
   } else if (strcmp(MatProp_p.Type, "Newtonian-Fluid-Compressible") == 0) {
-    Input_SP.Particle_Idx = p;
-    Input_SP.Stress = MPM_Mesh.Phi.Stress.nM[p];
-    Input_SP.dFdt = MPM_Mesh.Phi.dt_F_n1.nM[p];
+    IO_State.Particle_Idx = p;
+    IO_State.Stress = MPM_Mesh.Phi.Stress.nM[p];
+    IO_State.dFdt = MPM_Mesh.Phi.dt_F_n1.nM[p];
 
     if (MatProp_p.Locking_Control_Fbar) {
-      Input_SP.D_phi = MPM_Mesh.Phi.Fbar.nM[p];
-      Input_SP.J = MPM_Mesh.Phi.Jbar.nV[p];
+      IO_State.D_phi_n1 = MPM_Mesh.Phi.Fbar.nM[p];
+      IO_State.J = MPM_Mesh.Phi.Jbar.nV[p];
     } else {
-      Input_SP.D_phi = MPM_Mesh.Phi.F_n1.nM[p];
-      Input_SP.J = MPM_Mesh.Phi.J_n1.nV[p];
+      IO_State.D_phi_n1 = MPM_Mesh.Phi.F_n1.nM[p];
+      IO_State.J = MPM_Mesh.Phi.J_n1.nV[p];
     }
 
-    Output_SP = compute_1PK_Stress_Tensor_Newtonian_Fluid(Input_SP, MatProp_p);
+    STATUS = compute_1PK_Stress_Tensor_Newtonian_Fluid(IO_State, MatProp_p);
+    if(STATUS == EXIT_FAILURE){
+      fprintf(stderr, ""RED"Error in compute_1PK_Stress_Tensor_Newtonian_Fluid(,)"RESET" \n");
+      return EXIT_FAILURE;
+    }
 
   } else if (strcmp(MatProp_p.Type, "Newtonian-Fluid-Incompressible") == 0) {
     Input_SP.Particle_Idx = p;

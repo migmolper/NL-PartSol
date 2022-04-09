@@ -9,13 +9,13 @@
 
 /**************************************************************/
 
-double energy_Neo_Hookean_Wriggers(Tensor C, double J, Material MatProp_p) {
+double energy_Neo_Hookean_Wriggers(Tensor C, double J, Material MatProp) {
   /* Number of dimensions */
   int Ndim = NumberDimensions;
 
   /* Material parameters */
-  double ElasticModulus = MatProp_p.E;
-  double nu = MatProp_p.nu;
+  double ElasticModulus = MatProp.E;
+  double nu = MatProp.nu;
   double G = ElasticModulus / (2 * (1 + nu));
   double lambda = nu * ElasticModulus / ((1 - nu * 2) * (1 + nu));
   double I1_C = I1__TensorLib__(C);
@@ -28,54 +28,55 @@ double energy_Neo_Hookean_Wriggers(Tensor C, double J, Material MatProp_p) {
 
 /**************************************************************/
 
-State_Parameters
-compute_1PK_Stress_Tensor_Neo_Hookean_Wriggers(State_Parameters Intput_SP,
-                                               Material MatProp_p) {
-  /* Number of dimensions */
-  int Ndim = NumberDimensions;
+int compute_1PK_Stress_Tensor_Neo_Hookean_Wriggers(
+  State_Parameters IO_State,
+  Material MatProp) {
 
-  /*
-    Output state parameter
-  */
-  State_Parameters Output_SP;
 
-  /* Get information from the state parameter */
-  Tensor F = memory_to_tensor__TensorLib__(Intput_SP.D_phi, 2);
-  Tensor P = memory_to_tensor__TensorLib__(Intput_SP.Stress, 2);
-  double J = Intput_SP.J;
+  int STATUS = EXIT_SUCCESS;
+  unsigned Ndim = NumberDimensions;
 
-  /* Material parameters */
-  double ElasticModulus = MatProp_p.E;
-  double nu = MatProp_p.nu;
+  // Material parameters
+  double ElasticModulus = MatProp.E;
+  double nu = MatProp.nu;
   double G = ElasticModulus / (2 * (1 + nu));
   double lambda = nu * ElasticModulus / ((1 - nu * 2) * (1 + nu));
+  double J = IO_State.J;
   double J2 = J * J;
 
-  /*
-    Auxiliar tensors
-  */
-  Tensor Fm1 = Inverse__TensorLib__(F);
+  // Get information from the state parameter
+  double * P = IO_State.Stress;
+  double * F = IO_State.D_phi_n1;
 
-  for (int i = 0; i < Ndim; i++) {
-    for (int j = 0; j < Ndim; j++) {
-      P.N[i][j] =
-          lambda * 0.5 * (J2 - 1) * Fm1.N[j][i] + G * (F.N[i][j] - Fm1.N[j][i]);
+  // Define auxiliar tensor
+#if NumberDimensions == 2  
+  double FmT[4];
+#else
+  double FmT[9];
+#endif
+
+  compute_adjunt__TensorLib__(FmT,F);
+  if (STATUS == EXIT_FAILURE) {
+    fprintf(stderr,"" RED "Error in compute_adjunt__TensorLib__" RESET "\n");
+    return EXIT_FAILURE;
+  }
+
+  for (unsigned i = 0; i < Ndim; i++) {
+    for (unsigned j = 0; j < Ndim; j++) {
+      P[i*Ndim + j] =
+          lambda * 0.5 * (J2 - 1) * FmT[i*Ndim + j] 
+          + G * (F[i*Ndim + j] - FmT[i*Ndim + j]);
     }
   }
 
   /*
     Plane strain conditions
   */
-  if (Ndim == 2) {
-    Intput_SP.Stress[4] = lambda * 0.5 * (J2 - 1);
-  }
+#if NumberDimensions == 2
+    P[4] = lambda * 0.5 * (J2 - 1.0);
+#endif
 
-  /*
-    Free tensors
-  */
-  free__TensorLib__(Fm1);
-
-  return Output_SP;
+  return STATUS;
 }
 
 /**************************************************************/
@@ -171,13 +172,13 @@ int compute_stiffness_density_Neo_Hookean_Wriggers(
 
 Tensor compute_2PK_Stress_Tensor_Neo_Hookean_Wriggers(Tensor grad_e, Tensor C,
                                                       double J,
-                                                      Material MatProp_p) {
+                                                      Material MatProp) {
   /* Number of dimensions */
   int Ndim = NumberDimensions;
 
   /* Material parameters */
-  double ElasticModulus = MatProp_p.E;
-  double nu = MatProp_p.nu;
+  double ElasticModulus = MatProp.E;
+  double nu = MatProp.nu;
   double G = ElasticModulus / (2 * (1 + nu));
   double lambda = nu * ElasticModulus / ((1 - nu * 2) * (1 + nu));
   double J2 = J * J;

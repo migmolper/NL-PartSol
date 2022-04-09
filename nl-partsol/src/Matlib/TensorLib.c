@@ -680,57 +680,6 @@ Tensor Convex_combination__TensorLib__(Tensor F_n1, Tensor F_n, double alpha) {
 
 /*************************************************************/
 
-Tensor volumetric_component__TensorLib__(Tensor A) {
-  int Ndim = NumberDimensions;
-  Tensor A_vol = alloc__TensorLib__(2);
-  double trA = I1__TensorLib__(A);
-
-  for (int i = 0; i < Ndim; i++) {
-    A_vol.N[i][i] = trA / (double)Ndim;
-  }
-
-  return A_vol;
-}
-
-/*************************************************************/
-
-Tensor deviatoric_component__TensorLib__(Tensor A, Tensor A_vol) {
-  int Ndim = NumberDimensions;
-  Tensor A_dev = alloc__TensorLib__(2);
-
-  for (int i = 0; i < Ndim; i++) {
-    for (int j = 0; j < Ndim; j++) {
-      A_dev.N[i][j] = A.N[i][j] - A_vol.N[i][j];
-    }
-  }
-
-  return A_dev;
-}
-
-/*************************************************************/
-
-Tensor rotate__TensorLib__(Tensor In, Tensor R)
-/*
-  Return the rotated tensor of the imput using the
-  rotation matrix R.
-*/
-{
-  int Ndim = NumberDimensions;
-
-  Tensor Rm1 = Inverse__TensorLib__(R);
-
-  Tensor In__x__Rm1 = matrix_product__TensorLib__(In, Rm1);
-
-  Tensor Out = matrix_product__TensorLib__(R, In__x__Rm1);
-
-  free__TensorLib__(Rm1);
-  free__TensorLib__(In__x__Rm1);
-
-  return Out;
-}
-
-/*************************************************************/
-
 void covariant_push_forward_tensor__TensorLib__(Tensor a, Tensor A, Tensor F)
 /*
   Covariant push forward operation for any tensor.
