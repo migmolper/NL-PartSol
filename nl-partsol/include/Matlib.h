@@ -117,6 +117,18 @@ void covariant_pull_back_tensor__TensorLib__(Tensor, Tensor, Tensor);
 void contravariant_pull_back_tensor__TensorLib__(Tensor, Tensor, Tensor);
 void print__TensorLib__(Tensor);
 
+
+/*******************************************************/
+
+/*!
+  \fn int compute_inverse__TensorLib__(double * A_m1, const double * A);
+
+  \brief Compute the inverse of a tensor
+
+  \param b : [out] Inverse of the tensor
+  \param F : [in] Tensor
+*/
+int compute_inverse__TensorLib__(double * A_m1, const double * A);
 /*******************************************************/
 
 /*!

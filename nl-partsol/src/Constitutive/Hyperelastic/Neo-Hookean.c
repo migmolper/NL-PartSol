@@ -149,7 +149,7 @@ int compute_stiffness_density_Neo_Hookean_Wriggers(
     {
       lenght_0_aux += b_n[i*Ndim + j]*dN_alpha_n[j];
     }
-    lenght_0 += dN_beta_n[i]*lenght_0;  
+    lenght_0 += dN_beta_n[i]*lenght_0_aux;  
     lenght_0_aux = 0.0;
   }
 

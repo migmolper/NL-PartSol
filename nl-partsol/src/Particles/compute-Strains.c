@@ -410,7 +410,7 @@ void left_Cauchy_Green__Particles__(double * b, const double * F) {
 #if NumberDimensions == 2
   b[0] = F[0]*F[0] + F[1]*F[1];
   b[1] = F[0]*F[2] + F[1]*F[3];
-  b[2] = F[0]*F[2] + F[1]*F[3];
+  b[2] = b[1];
   b[3] = F[2]*F[2] + F[3]*F[3];
 #else  
   b[0] = F[0]*F[0] + F[1]*F[1] + F[2]*F[2];

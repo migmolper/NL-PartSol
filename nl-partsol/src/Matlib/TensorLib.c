@@ -876,6 +876,87 @@ void print__TensorLib__(Tensor A) {
 
 /*************************************************************/
 
+int compute_inverse__TensorLib__(double * A_m1, const double * A)
+{
+
+#if NumberDimensions == 2
+  A_m1[0] = A[0];
+  A_m1[1] = A[1];
+  A_m1[2] = A[2];
+  A_m1[3] = A[3];
+
+  int INFO;
+  int N = 2;
+  int LDA = 2;
+  int LWORK = 2;
+  int IPIV[2] = {0, 0};
+  double WORK[2] = {0, 0};
+#else
+  A_m1[0] = A[0]; 
+  A_m1[1] = A[1];
+  A_m1[2] = A[2],
+  A_m1[3] = A[3]; 
+  A_m1[4] = A[4];
+  A_m1[5] = A[5];
+  A_m1[6] = A[6];
+  A_m1[7] = A[7];
+  A_m1[8] = A[8]};
+  
+  int INFO;
+  int N = 3;
+  int LDA = 3;
+  int LWORK = 3;
+  int IPIV[3] = {0, 0, 0};
+  double WORK[3] = {0, 0, 0};
+#endif
+
+  // The factors L and U from the factorization A = P*L*U
+  dgetrf_(&N, &N, A_m1, &LDA, IPIV, &INFO);
+  // Check output of dgetrf
+  if (INFO != 0) {
+    if (INFO < 0) {
+      printf(
+          "" RED
+          "Error in dgetrf_(): the %i-th argument had an illegal value " RESET
+          "\n",
+          abs(INFO));
+    } else if (INFO > 0) {
+
+      printf("" RED
+             "Error in dgetrf_(): A_m1(%i,%i) %s \n %s \n %s \n %s " RESET
+             "\n",
+             INFO, INFO, "is exactly zero. The factorization",
+             "has been completed, but the factor A_m1 is exactly",
+             "singular, and division by zero will occur if it is used",
+             "to solve a system of equations.");
+    }
+    return EXIT_FAILURE;
+  }
+
+  dgetri_(&N, A_m1, &LDA, IPIV, WORK, &LWORK, &INFO);
+  if (INFO != 0) {
+    if (INFO < 0) {
+      fprintf(stderr, "" RED "%s: the %i-th argument %s" RESET "\n",
+              "Error in dgetri_()", abs(INFO), "had an illegal value");
+    } else if (INFO > 0) {
+      fprintf(stderr,
+              "" RED
+              "Error in dgetri_(): A_m1(%i,%i) %s \n %s \n %s \n %s " RESET
+              "\n",
+              INFO, INFO, "is exactly zero. The factorization",
+              "has been completed, but the factor A_m1 is exactly",
+              "singular, and division by zero will occur if it is used",
+              "to solve a system of equations.");
+    }
+    return EXIT_FAILURE;
+  }
+
+  return EXIT_SUCCESS;
+}
+
+
+/*************************************************************/
+
 int compute_adjunt__TensorLib__(double * A_mT, const double * A)
 {
 
