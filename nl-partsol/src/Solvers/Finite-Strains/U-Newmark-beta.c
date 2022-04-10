@@ -1015,8 +1015,8 @@ static void compute_Nodal_Body_Forces(Matrix Forces, Mask ActiveNodes,
 
   Tensor b = alloc__TensorLib__(1); /* Body forces vector */
 
-//  b.n[0] = 0.0;
-//  b.n[1] = -1000;
+  b.n[0] = 0.0;
+  b.n[1] = -9.81;
 
   for (int p = 0; p < MPM_Mesh.NumGP; p++) {
 
