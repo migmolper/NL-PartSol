@@ -1260,14 +1260,8 @@ static Matrix assemble_Nodal_Tangent_Stiffness(Mask ActiveNodes,
 
   Element Nodes_p;   /* List of nodes for particle */
   Matrix gradient_p; /* Shape functions gradients */
-  Tensor gradient_pA;
-  Tensor GRADIENT_pA;
-  Tensor gradient_pB;
-  Tensor GRADIENT_pB;
-  Tensor F_n_p;
-  Tensor F_n1_p;
-  Tensor dFdt_n1_p;
-  Tensor transpose_F_n_p;
+  double * gradient_pA;
+  double * gradient_pB;
 
 #if NumberDimensions == 2
   double Stiffness_density_p[4];
@@ -1284,98 +1278,62 @@ static Matrix assemble_Nodal_Tangent_Stiffness(Mask ActiveNodes,
 
   Matrix Tangent_Stiffness = allocZ__MatrixLib__(Order, Order);
 
-  /*
-    Loop in the particles for the assembling process
-  */
   for (unsigned p = 0; p < Np; p++) {
 
-    /*
-      Get the volume of the particle in the reference configuration
-     */
+    // Get the volume of the particle in the reference configuration and
+    // the jacobian of the deformation gradient
     V0_p = MPM_Mesh.Phi.Vol_0.nV[p];
+    J_p = MPM_Mesh.Phi.J_n1.nV[p];
 
-    /*
-      Material properties of the particle
-     */
+    // Material properties of the particle
     MatIndx_p = MPM_Mesh.MatIdx[p];
     MatProp_p = MPM_Mesh.Mat[MatIndx_p];
 
-    /*
-      Define nodes for each particle
-    */
+    //  Define nodal connectivity for each particle 
+    //  and compute gradient of the shape function
     NumNodes_p = MPM_Mesh.NumberNodes[p];
     Nodes_p = nodal_set__Particles__(p, MPM_Mesh.ListNodes[p], NumNodes_p);
-
-    /*
-      Compute gradient of the shape function in each node
-    */
     gradient_p = compute_dN__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
 
-    /*
-      Take the values of the deformation gradient ant t = n and t = n + 1.
-      Later compute the midpoint deformation gradient and
-      the transpose of the deformation gradient at the midpoint.
-    */
-    F_n_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n.nM[p], 2);
-    F_n1_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n1.nM[p], 2);
-    dFdt_n1_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.dt_F_n1.nM[p], 2);
-    transpose_F_n_p = transpose__TensorLib__(F_n_p);
-
-    /*
-      Compute the jacobian of the deformation gradient in the deformed
-      configuration
-    */
-    J_p = I3__TensorLib__(F_n1_p);
-
     for (unsigned A = 0; A < NumNodes_p; A++) {
-      /*
-        Compute the gradient in the reference configuration
-      */
-      gradient_pA = memory_to_tensor__TensorLib__(gradient_p.nM[A], 1);
-      GRADIENT_pA =
-          vector_linear_mapping__TensorLib__(transpose_F_n_p, gradient_pA);
-
-      /*
-        Get the node of the mesh for the contribution
-      */
+      
+      // Get the gradient evaluation in node A
+      // and the masked index of the node A
+      gradient_pA = gradient_p.nM[A];
       Ap = Nodes_p.Connectivity[A];
       A_mask = ActiveNodes.Nodes2Mask[Ap];
 
       for (unsigned B = 0; B < NumNodes_p; B++) {
 
-        /*
-          Compute the gradient in the reference configuration
-        */
-        gradient_pB = memory_to_tensor__TensorLib__(gradient_p.nM[B], 1);
-        GRADIENT_pB = vector_linear_mapping__TensorLib__(transpose_F_n_p, gradient_pB);
-
-        /*
-          Get the node of the mesh for the contribution
-        */
+        // Get the gradient evaluation in node B
+        // and the masked index of the node B
+        gradient_pB = gradient_p.nM[B];
         Bp = Nodes_p.Connectivity[B];
         B_mask = ActiveNodes.Nodes2Mask[Bp];
 
-        // 
-//        IO_State_p.D_phi_n1 = MPM_Mesh.Phi.F_n1.nM[p];
-        IO_State_p.D_phi = MPM_Mesh.Phi.F_n.nM[p]; 
-        IO_State_p.d_phi = MPM_Mesh.Phi.DF.nM[p];
-//        IO_State_p.b_e = MPM_Mesh.Phi.b_e_n1.nM[p];
-//        IO_State_p.C_ep = ;
-        IO_State_p.J = J_p;
-//        IO_State_p.dFdt = MPM_Mesh.Phi.dt_F_n1.nM[p];
-
-        /* Get the stiffness density of each particle */
+        // Compute particle evaluation of the stiffness matrix for each node
         if (strcmp(MatProp_p.Type, "Neo-Hookean-Wriggers") == 0) {
-          STATUS = compute_stiffness_density_Neo_Hookean_Wriggers(Stiffness_density_p, gradient_pA.n, gradient_pB.n, IO_State_p, MatProp_p);
+          IO_State_p.D_phi = MPM_Mesh.Phi.F_n.nM[p]; 
+          IO_State_p.d_phi = MPM_Mesh.Phi.DF.nM[p];          
+          IO_State_p.J = J_p;          
+          STATUS = compute_stiffness_density_Neo_Hookean_Wriggers(Stiffness_density_p, gradient_pA, gradient_pB, IO_State_p, MatProp_p);
         } 
         else if (strcmp(MatProp_p.Type, "Newtonian-Fluid-Compressible") == 0) {
-//          STATUS = compute_stiffness_density_Newtonian_Fluid(Stiffness_density_p, GRADIENT_pA, GRADIENT_pB, F_n1_p, dFdt_n1_p, J_p, alpha_4, MatProp_p);
+          IO_State_p.D_phi_n1 = MPM_Mesh.Phi.F_n1.nM[p]; 
+          IO_State_p.D_phi = MPM_Mesh.Phi.F_n.nM[p]; 
+          IO_State_p.d_phi = MPM_Mesh.Phi.DF.nM[p];          
+          IO_State_p.dFdt = MPM_Mesh.Phi.dt_F_n1.nM[p];
+          IO_State_p.J = J_p;   
+          IO_State_p.alpha_4 = alpha_4;
+          STATUS = compute_stiffness_density_Newtonian_Fluid(Stiffness_density_p, gradient_pA, gradient_pB,IO_State_p,MatProp_p);
         } 
         else if (strcmp(MatProp_p.Type, "Newtonian-Fluid-Incompressible") == 0) {
 //          STATUS = compute_stiffness_density_Newtonian_Fluid_Incompressible(Stiffness_density_p, GRADIENT_pA, GRADIENT_pB, F_n1_p, dFdt_n1_p, J_p, alpha_4,MatProp_p);
         }
         else if (strcmp(MatProp_p.Type, "Drucker-Prager") == 0) {
-          STATUS = compute_1PK_elastoplastic_tangent_matrix(Stiffness_density_p, gradient_pA.n, gradient_pB.n,IO_State_p);
+//        IO_State_p.b_e = MPM_Mesh.Phi.b_e_n1.nM[p];
+//        IO_State_p.C_ep = ;
+          STATUS = compute_1PK_elastoplastic_tangent_matrix(Stiffness_density_p, gradient_pA, gradient_pB,IO_State_p);
         }        
         else {
           fprintf(stderr, "%s : %s %s %s \n",
@@ -1384,31 +1342,16 @@ static Matrix assemble_Nodal_Tangent_Stiffness(Mask ActiveNodes,
           exit(EXIT_FAILURE);
         }
 
-        /*
-          Assembling process
-        */
+        //  Assembling process
         for (unsigned i = 0; i < Ndim; i++) {
           for (unsigned j = 0; j < Ndim; j++) {
             Tangent_Stiffness.nM[A_mask * Ndim + i][B_mask * Ndim + j] += Stiffness_density_p[i*Ndim + j] * V0_p;
           }
         }
 
-        /*
-          Free memory
-        */
-        free__TensorLib__(GRADIENT_pB);
       }
-
-      /*
-        Free memory
-      */
-      free__TensorLib__(GRADIENT_pA);
     }
 
-    /*
-       Free memory
-    */
-    free__TensorLib__(transpose_F_n_p);
     free__MatrixLib__(gradient_p);
     free(Nodes_p.Connectivity);
   }

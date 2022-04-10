@@ -14,7 +14,6 @@ int compute_1PK_Stress_Tensor_Newtonian_Fluid(
   Material MatProp_p) {
 
   int STATUS = EXIT_SUCCESS;
-
   unsigned Ndim = NumberDimensions;
 
   //  Take information from input state parameters
@@ -31,7 +30,7 @@ int compute_1PK_Stress_Tensor_Newtonian_Fluid(
   double c0 = -J * (p0 + (K / n) * (pow(J, -n) - 1.0));
   double c1 = J * mu;
 
-  // Define auxiliar tensor
+  // Define and compute auxiliar tensor
 #if NumberDimensions == 2  
   double D_phi_mT[4];
   double L[4];
@@ -63,11 +62,10 @@ int compute_1PK_Stress_Tensor_Newtonian_Fluid(
   double trace_E = E[0] + E[4] + E[8];
 #endif
 
-  /*
-    Auxiliar tensors
-  */
-  //E__x__D_phi_mT = matrix_product__TensorLib__(E, D_phi_mT);
+  matrix_product__TensorLib__(E__x__D_phi_mT,E,D_phi_mT); 
 
+
+  // Compute stress
   for (unsigned i = 0; i < Ndim; i++) {
     for (unsigned j = 0; j < Ndim; j++) {
       P[i*Ndim + j] = c0 * D_phi_mT[i*Ndim + j] +
@@ -94,25 +92,24 @@ int compute_stiffness_density_Newtonian_Fluid(
   Material MatProp) {
 
   int STATUS = EXIT_SUCCESS;
-
-  // Number of dimensions
   int Ndim = NumberDimensions;
+
+  // State parameters
+  double * D_phi_n1 = IO_State.D_phi_n1;
+  double * D_phi_n = IO_State.D_phi;
+  double * d_phi = IO_State.d_phi;
+  double * dFdt = IO_State.dFdt;
+  double J = IO_State.J;
+  double alpha4 = IO_State.alpha_4;
 
   // Material parameters
   double p0 = MatProp.ReferencePressure;
   double mu = MatProp.Viscosity;
   double n = MatProp.n_Macdonald_model;
   double K = MatProp.Compressibility;
-  double J = IO_State.J;
-  double alpha4 = IO_State.alpha_4;
   double c0 = J * mu;
   double c1 = J * p0 + J * (K / n) * (pow(J, -n) - 1.0) - K * pow(J, 1.0 - n) + (2.0 / 3.0) * alpha4 * c0;
   double c2 = J * p0 + J * (K / n) * (pow(J, -n) - 1) + alpha4 * c0;
-
-  double * D_phi_n1 = IO_State.D_phi_n1;
-  double * D_phi_n = IO_State.D_phi;
-  double * d_phi = IO_State.d_phi;
-  double * dFdt = IO_State.dFdt;
 
   // Define auxiliar variables
 #if NumberDimensions == 2

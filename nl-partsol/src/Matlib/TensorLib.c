@@ -640,7 +640,7 @@ Tensor vector_linear_mapping__TensorLib__(Tensor A, Tensor b) {
 
 /*************************************************************/
 
-Tensor matrix_product__TensorLib__(Tensor A, Tensor B) {
+Tensor matrix_product_old__TensorLib__(Tensor A, Tensor B) {
   int Ndim = NumberDimensions;
   Tensor A_x_B = alloc__TensorLib__(2);
 
@@ -653,12 +653,40 @@ Tensor matrix_product__TensorLib__(Tensor A, Tensor B) {
       }
     }
   } else {
-    fprintf(stderr, "%s : %s !!! \n", "Error in matrix_product__TensorLib__()",
+    fprintf(stderr, "%s : %s !!! \n", "Error in matrix_product_old__TensorLib__()",
             "The input should be two second order tensors");
     exit(EXIT_FAILURE);
   }
 
   return A_x_B;
+}
+
+/*************************************************************/
+
+void matrix_product__TensorLib__(
+  double * Output, 
+  const double * input_A, 
+  const double * input_B) {
+
+#if NumberDimensions == 2 
+
+  Output[0] = input_A[0]*input_B[0] + input_A[1]*input_B[2];
+  Output[1] = input_A[0]*input_B[1] + input_A[1]*input_B[3];
+  Output[2] = input_A[2]*input_B[0] + input_A[3]*input_B[2];
+  Output[3] = input_A[2]*input_B[1] + input_A[3]*input_B[3];
+
+#else 
+  Output[0] = input_A[0]*input_B[0] + input_A[1]*input_B[3] + input_A[2]*input_B[6];
+  Output[1] = input_A[0]*input_B[1] + input_A[1]*input_B[4] + input_A[2]*input_B[7];
+  Output[2] = input_A[0]*input_B[2] + input_A[1]*input_B[5] + input_A[2]*input_B[8];
+  Output[3] = input_A[3]*input_B[0] + input_A[4]*input_B[3] + input_A[5]*input_B[6];
+  Output[4] = input_A[3]*input_B[1] + input_A[4]*input_B[4] + input_A[5]*input_B[7];
+  Output[5] = input_A[3]*input_B[2] + input_A[4]*input_B[5] + input_A[5]*input_B[8];
+  Output[6] = input_A[6]*input_B[0] + input_A[7]*input_B[3] + input_A[8]*input_B[6];
+  Output[7] = input_A[6]*input_B[1] + input_A[7]*input_B[4] + input_A[8]*input_B[7];
+  Output[8] = input_A[6]*input_B[2] + input_A[7]*input_B[5] + input_A[8]*input_B[8];
+#endif
+
 }
 
 /*************************************************************/

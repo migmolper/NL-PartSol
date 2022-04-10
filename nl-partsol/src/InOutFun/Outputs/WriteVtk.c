@@ -794,7 +794,7 @@ static void vtk_Out_Metric(FILE *Vtk_file, Matrix F_n, int NumParticles) {
     F_p = memory_to_tensor__TensorLib__(F_n.nM[i], 2);
     Fm1_p = Inverse__TensorLib__(F_p);
     FmT_p = transpose__TensorLib__(Fm1_p);
-    M = matrix_product__TensorLib__(FmT_p, Fm1_p);
+    M = matrix_product_old__TensorLib__(FmT_p, Fm1_p);
 
     for (int j = 0; j < 3; j++) {
       for (int k = 0; k < 3; k++) {
@@ -889,7 +889,7 @@ static void vtk_Out_Von_Mises(FILE *Vtk_file, Matrix F_n, Matrix P_n,
     F_p = memory_to_tensor__TensorLib__(F_n.nM[i], 2);
     J_p = I3__TensorLib__(F_p);
     F_pT = transpose__TensorLib__(F_p);
-    Cauchy_p = matrix_product__TensorLib__(P_p, F_pT);
+    Cauchy_p = matrix_product_old__TensorLib__(P_p, F_pT);
 
     for (int j = 0; j < Ndim; j++) {
       for (int k = 0; k < Ndim; k++) {

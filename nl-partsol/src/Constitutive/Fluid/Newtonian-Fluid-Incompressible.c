@@ -33,9 +33,9 @@ State_Parameters compute_1PK_Stress_Tensor_Newtonian_Fluid_Incompressible(
   */
   Tensor Fm1 = Inverse__TensorLib__(F);
   Tensor FmT = transpose__TensorLib__(Fm1);
-  Tensor dFdt__x__Fm1 = matrix_product__TensorLib__(dFdt, Fm1);
+  Tensor dFdt__x__Fm1 = matrix_product_old__TensorLib__(dFdt, Fm1);
   Tensor d;// = symmetrise__TensorLib__(dFdt__x__Fm1);
-  Tensor d__x__FmT = matrix_product__TensorLib__(d, FmT);
+  Tensor d__x__FmT = matrix_product_old__TensorLib__(d, FmT);
 
   /*
     Auxiliar parameters
@@ -86,7 +86,7 @@ Tensor compute_stiffness_density_Newtonian_Fluid_Incompressible(
   Tensor Fm1 = Inverse__TensorLib__(F);
   Tensor FmT = transpose__TensorLib__(Fm1);
 
-  Tensor dFdt_Fm1 = matrix_product__TensorLib__(dFdt, Fm1);
+  Tensor dFdt_Fm1 = matrix_product_old__TensorLib__(dFdt, Fm1);
   Tensor d;// = symmetrise__TensorLib__(dFdt_Fm1);
 
   Tensor FmTGRAD_pA = vector_linear_mapping__TensorLib__(FmT, GRAD_pA);
@@ -98,14 +98,14 @@ Tensor compute_stiffness_density_Newtonian_Fluid_Incompressible(
       dyadic_Product__TensorLib__(FmTGRAD_pB, FmTGRAD_pA);
 
   Tensor d_Fm1GRAD_o_FmTGRAD_pAB =
-      matrix_product__TensorLib__(d, Fm1GRAD_o_FmTGRAD_pAB);
+      matrix_product_old__TensorLib__(d, Fm1GRAD_o_FmTGRAD_pAB);
   Tensor d_Fm1GRAD_o_FmTGRAD_pBA =
-      matrix_product__TensorLib__(d, Fm1GRAD_o_FmTGRAD_pBA);
+      matrix_product_old__TensorLib__(d, Fm1GRAD_o_FmTGRAD_pBA);
 
   Tensor Fm1GRAD_o_FmTGRAD_pAB_dFdt_Fm1 =
-      matrix_product__TensorLib__(Fm1GRAD_o_FmTGRAD_pAB, dFdt_Fm1);
+      matrix_product_old__TensorLib__(Fm1GRAD_o_FmTGRAD_pAB, dFdt_Fm1);
   Tensor Fm1GRAD_o_FmTGRAD_pBA_dFdt_Fm1 =
-      matrix_product__TensorLib__(Fm1GRAD_o_FmTGRAD_pBA, dFdt_Fm1);
+      matrix_product_old__TensorLib__(Fm1GRAD_o_FmTGRAD_pBA, dFdt_Fm1);
 
   double GRAD_A_dot_GRAD_B = inner_product__TensorLib__(GRAD_pA, GRAD_pB);
 

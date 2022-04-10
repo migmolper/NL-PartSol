@@ -46,8 +46,8 @@ compute_1PK_Stress_Tensor_Saint_Venant_Kirchhoff(State_Parameters Intput_SP,
     Auxiliar tensors and variables
   */
   Tensor Ft = transpose__TensorLib__(F);
-  Tensor Ft_x_F = matrix_product__TensorLib__(Ft, F);
-  Tensor F_x_Ft_x_F = matrix_product__TensorLib__(F, Ft_x_F);
+  Tensor Ft_x_F = matrix_product_old__TensorLib__(Ft, F);
+  Tensor F_x_Ft_x_F = matrix_product_old__TensorLib__(F, Ft_x_F);
   double tr__Ft_x_F = I1__TensorLib__(Ft_x_F);
 
   for (int i = 0; i < Ndim; i++) {

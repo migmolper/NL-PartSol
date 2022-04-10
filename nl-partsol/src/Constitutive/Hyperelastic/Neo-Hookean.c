@@ -32,48 +32,46 @@ int compute_1PK_Stress_Tensor_Neo_Hookean_Wriggers(
   State_Parameters IO_State,
   Material MatProp) {
 
-
   int STATUS = EXIT_SUCCESS;
   unsigned Ndim = NumberDimensions;
+
+  // Get information from the state parameter
+  double * P = IO_State.Stress;
+  double * D_phi_n1 = IO_State.D_phi_n1;
+  double J = IO_State.J;
 
   // Material parameters
   double ElasticModulus = MatProp.E;
   double nu = MatProp.nu;
   double G = ElasticModulus / (2 * (1 + nu));
   double lambda = nu * ElasticModulus / ((1 - nu * 2) * (1 + nu));
-  double J = IO_State.J;
-  double J2 = J * J;
+  double J2 = J * J; 
+  double c0 = lambda * 0.5 * (J2 - 1.0);
 
-  // Get information from the state parameter
-  double * P = IO_State.Stress;
-  double * F = IO_State.D_phi_n1;
-
-  // Define auxiliar tensor
+  // Define and compute auxiliar tensor
 #if NumberDimensions == 2  
-  double FmT[4];
+  double D_phi_mT[4];
 #else
-  double FmT[9];
+  double D_phi_mT[9];
 #endif
 
-  compute_adjunt__TensorLib__(FmT,F);
+  compute_adjunt__TensorLib__(D_phi_mT,D_phi_n1);
   if (STATUS == EXIT_FAILURE) {
     fprintf(stderr,"" RED "Error in compute_adjunt__TensorLib__" RESET "\n");
     return EXIT_FAILURE;
   }
 
+  // Compute stress
   for (unsigned i = 0; i < Ndim; i++) {
     for (unsigned j = 0; j < Ndim; j++) {
       P[i*Ndim + j] =
-          lambda * 0.5 * (J2 - 1) * FmT[i*Ndim + j] 
-          + G * (F[i*Ndim + j] - FmT[i*Ndim + j]);
+          c0 * D_phi_mT[i*Ndim + j] 
+          + G * (D_phi_n1[i*Ndim + j] - D_phi_mT[i*Ndim + j]);
     }
   }
 
-  /*
-    Plane strain conditions
-  */
 #if NumberDimensions == 2
-    P[4] = lambda * 0.5 * (J2 - 1.0);
+    P[4] = c0;
 #endif
 
   return STATUS;
@@ -89,22 +87,21 @@ int compute_stiffness_density_Neo_Hookean_Wriggers(
   Material MatProp) {
 
   int STATUS = EXIT_SUCCESS;
-
-  //  Number of dimensions
   int Ndim = NumberDimensions;
+
+  // State parameters
+  double * D_phi_n = IO_State_p.D_phi;
+  double * d_phi = IO_State_p.d_phi;  
+  double J = IO_State_p.J;
 
   //  Material parameters
   double ElasticModulus = MatProp.E;
   double nu = MatProp.nu;
   double G = ElasticModulus / (2 * (1 + nu));
   double lambda = nu * ElasticModulus / ((1 - nu * 2) * (1 + nu));
-  double J = IO_State_p.J;
   double sqr_J = J*J;
   double c0 = lambda * sqr_J;
   double c1 = G - 0.5 * lambda * (sqr_J - 1);
-
-  double * D_phi_n = IO_State_p.D_phi;
-  double * d_phi = IO_State_p.d_phi;
 
   // Define auxiliar variables
 #if NumberDimensions == 2

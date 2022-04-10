@@ -1343,8 +1343,8 @@ static void compute_Flow_contribution_Fluid(Nodal_Field upw_n,
     /*
       Compute intermediate values
     */
-    Fm1__x__k_p = matrix_product__TensorLib__(Fm1_n1_p, k_p);
-    Fm1__x__k__x__FmT_p = matrix_product__TensorLib__(Fm1__x__k_p, FmT_n1_p);
+    Fm1__x__k_p = matrix_product_old__TensorLib__(Fm1_n1_p, k_p);
+    Fm1__x__k__x__FmT_p = matrix_product_old__TensorLib__(Fm1__x__k_p, FmT_n1_p);
     Fm1K__x__dyn_p = vector_linear_mapping__TensorLib__(Fm1__x__k_p, dyn_p);
     Fm1KFmT__x__GRAD_theta = vector_linear_mapping__TensorLib__(
         Fm1__x__k__x__FmT_p, GRADIENT_theta_n1_p);
@@ -1877,7 +1877,7 @@ static Matrix assemble_Tangent_Stiffness(Nodal_Field upw_n, Nodal_Field D_upw,
       Get some usefull intermediate results
     */
     div_v_p = inner_product__TensorLib__(FmT_n1_p, dFdt_n1_p);
-    grad_v_p = matrix_product__TensorLib__(dFdt_n1_p, Fm1_n1_p);
+    grad_v_p = matrix_product_old__TensorLib__(dFdt_n1_p, Fm1_n1_p);
     transpose_grad_v_p = transpose__TensorLib__(grad_v_p);
 
     /*

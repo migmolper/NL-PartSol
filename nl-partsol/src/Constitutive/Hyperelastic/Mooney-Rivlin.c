@@ -48,7 +48,7 @@ compute_1PK_Stress_Tensor_Mooney_Rivlin(State_Parameters Intput_SP,
   */
   Tensor Fm1 = Inverse__TensorLib__(F);
   Tensor C = right_Cauchy_Green__Particles__(F);
-  Tensor FC = matrix_product__TensorLib__(F, C);
+  Tensor FC = matrix_product_old__TensorLib__(F, C);
 
   /* Material parameters */
   //  double mu_1 = MatProp_p.mu_Ogden[0];
@@ -99,7 +99,7 @@ Tensor compute_stiffness_density_Mooney_Rivlin(Tensor GRAD_I, Tensor GRAD_J,
   Tensor Fm1 = Inverse__TensorLib__(F);
   Tensor C = right_Cauchy_Green__Particles__(F);
   //  Tensor b = left_Cauchy_Green__Particles__(F);
-  Tensor FC = matrix_product__TensorLib__(F, C);
+  Tensor FC = matrix_product_old__TensorLib__(F, C);
 
   /* Material parameters */
   //  double mu_1 = MatProp.mu_Ogden[0];

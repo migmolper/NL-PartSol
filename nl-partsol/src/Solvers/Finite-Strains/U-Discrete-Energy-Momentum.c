@@ -818,7 +818,7 @@ static void compute_Nodal_Internal_Forces(Matrix Forces, Matrix D_Displacement,
       Compute the first Piola-Kirchhoff stress tensor
     */
     S_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.Stress.nM[p], 2);
-    P_p = matrix_product__TensorLib__(F_n12_p, S_p);
+    P_p = matrix_product_old__TensorLib__(F_n12_p, S_p);
 
     for (int A = 0; A < NumNodes_p; A++) {
 
@@ -1478,8 +1478,8 @@ static Tensor compute_Nodal_Tangent_Stiffness_Material(Tensor F_n12_p,
                                                        Tensor C_AB,
                                                        Tensor Ft_beta_p) {
   int Ndim = NumberDimensions;
-  Tensor C_x_Ft = matrix_product__TensorLib__(C_AB, Ft_beta_p);
-  Tensor F_x_C_x_Ft = matrix_product__TensorLib__(F_n12_p, C_x_Ft);
+  Tensor C_x_Ft = matrix_product_old__TensorLib__(C_AB, Ft_beta_p);
+  Tensor F_x_C_x_Ft = matrix_product_old__TensorLib__(F_n12_p, C_x_Ft);
 
   free__TensorLib__(C_x_Ft);
 

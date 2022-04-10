@@ -105,7 +105,20 @@ double inner_product__TensorLib__(Tensor, Tensor);
 Tensor vector_product__TensorLib__(Tensor, Tensor);
 Tensor dyadic_Product__TensorLib__(Tensor, Tensor);
 Tensor vector_linear_mapping__TensorLib__(Tensor, Tensor);
-Tensor matrix_product__TensorLib__(Tensor, Tensor);
+Tensor matrix_product_old__TensorLib__(Tensor, Tensor);
+/*******************************************************/
+/*!
+  \fn void matrix_product__TensorLib__(double * Output,const double * input_A,const double * input_B);
+
+  \brief Compute the product between two second order tensors
+
+  \param Output: [out] Result of the matrix multiplication
+  \param input_A : [in] Tensor A
+  \param input_B : [in] Tensor B
+*/
+void matrix_product__TensorLib__(double * Output,const double * input_A,const double * input_B);
+/*******************************************************/
+
 Tensor Convex_combination__TensorLib__(Tensor, Tensor, double);
 
 void covariant_push_forward_tensor__TensorLib__(Tensor, Tensor, Tensor);
@@ -122,8 +135,8 @@ void print__TensorLib__(Tensor);
 
   \brief Compute the inverse of a tensor
 
-  \param b : [out] Inverse of the tensor
-  \param F : [in] Tensor
+  \param A_m1 : [out] Inverse of the tensor
+  \param A : [in] Tensor
 */
 int compute_inverse__TensorLib__(double * A_m1, const double * A);
 /*******************************************************/

@@ -1599,7 +1599,7 @@ compute_Permeability_Mass_Balance(Matrix Mass_Exchanges_Source_Terms,
     /*
       Intermediate result 1
     */
-    Fk_p = matrix_product__TensorLib__(inverse_F_n1_p, k_p);
+    Fk_p = matrix_product_old__TensorLib__(inverse_F_n1_p, k_p);
 
     /*
       Compute particle pore water pressure gradient
@@ -1778,7 +1778,7 @@ compute_Permeability_Inertial_Forces_Fluid(Matrix Mass_Exchanges_Source_Terms,
     /*
       Compute intermediate result
     */
-    Fk_p = matrix_product__TensorLib__(inverse_F_n1_p, k_p);
+    Fk_p = matrix_product_old__TensorLib__(inverse_F_n1_p, k_p);
 
     /*
       Compute total particle acceleration

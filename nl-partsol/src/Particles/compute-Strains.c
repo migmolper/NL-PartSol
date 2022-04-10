@@ -225,7 +225,7 @@ void get_locking_free_Deformation_Gradient_n1__Particles__(int p,
   }
 
   // Compute the new F-bar
-  Tensor Fbar_n1 = matrix_product__TensorLib__(DF_bar_p, Fbar_n);
+  Tensor Fbar_n1 = matrix_product_old__TensorLib__(DF_bar_p, Fbar_n);
 
   // Update the deformation gradient to avoid locking (F-bar)
   for (int i = 0; i < Ndim; i++) {
