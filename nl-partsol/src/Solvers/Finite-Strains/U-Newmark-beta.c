@@ -4,10 +4,8 @@
 
 #ifdef __linux__
 #include <lapacke.h>
-
 #elif __APPLE__
 #include <Accelerate/Accelerate.h>
-
 #endif
 
 /*
@@ -61,7 +59,7 @@ static Matrix compute_Nodal_Residual(Nodal_Field, Nodal_Field, Mask, Matrix,
 static bool check_convergence(Matrix, double, int, int, int);
 static Matrix assemble_Nodal_Tangent_Stiffness(Mask, Particle, Mesh,
                                                Newmark_parameters);
-static void solve_non_reducted_system(Nodal_Field, Matrix, Matrix, Matrix,
+static int solve_non_reducted_system(Nodal_Field, Matrix, Matrix, Matrix,
                                       Newmark_parameters);
 static void solve_reducted_system(Nodal_Field, Matrix, Matrix, Matrix, Mask,
                                   Newmark_parameters);
@@ -1356,7 +1354,7 @@ static Matrix assemble_Nodal_Tangent_Stiffness(Mask ActiveNodes,
         //  Assembling process
         for (unsigned i = 0; i < Ndim; i++) {
           for (unsigned j = 0; j < Ndim; j++) {
-            Tangent_Stiffness.nM[A_mask * Ndim + i][B_mask * Ndim + j] += Stiffness_density_p[i*Ndim + j] * V0_p;
+            Tangent_Stiffness.nV[(A_mask * Ndim + i)*Order + (B_mask * Ndim + j)] += Stiffness_density_p[i*Ndim + j] * V0_p;
           }
         }
 
@@ -1372,17 +1370,12 @@ static Matrix assemble_Nodal_Tangent_Stiffness(Mask ActiveNodes,
 
 /**************************************************************/
 
-static void solve_non_reducted_system(Nodal_Field D_U, Matrix Tangent_Stiffness,
+static int solve_non_reducted_system(Nodal_Field D_U, Matrix Tangent_Stiffness,
                                       Matrix Effective_Mass, Matrix Residual,
                                       Newmark_parameters Params)
-/*
-  This function is deboted to update the vector with the nodal displacement by
-  solving :
-
-  ((2/Dt^2)*M_AB + K_AB)*delta_B + R_A = 0_A
-
-*/
 {
+  int STATUS = EXIT_SUCCESS;
+
   int Nnodes_mask = Residual.N_rows;
   int Ndof = NumberDOF;
   int Order = Nnodes_mask * Ndof;
@@ -1414,7 +1407,7 @@ static void solve_non_reducted_system(Nodal_Field D_U, Matrix Tangent_Stiffness,
   if (INFO) {
     fprintf(stderr, "%s : %s %s %s \n", "Error in solve_non_reducted_system",
             "The function", "dgetrf_", "returned an error message !!!");
-    exit(EXIT_FAILURE);
+    return EXIT_FAILURE;
   }
 
   /*
@@ -1430,7 +1423,7 @@ static void solve_non_reducted_system(Nodal_Field D_U, Matrix Tangent_Stiffness,
   if (INFO) {
     fprintf(stderr, "%s : %s %s %s \n", "Error in solve_non_reducted_system",
             "The function", "dgetrs_", "returned an error message !!!");
-    exit(EXIT_FAILURE);
+    return EXIT_FAILURE;
   }
 
   /*
@@ -1444,6 +1437,9 @@ static void solve_non_reducted_system(Nodal_Field D_U, Matrix Tangent_Stiffness,
     Free auxiliar global matrix
   */
   free__MatrixLib__(K_Global);
+
+
+  return STATUS;
 }
 
 /**************************************************************/
@@ -1615,86 +1611,31 @@ static void update_Newmark_Nodal_Increments(Nodal_Field D_U, Nodal_Field U_n,
 
 static void update_Particles(Nodal_Field D_U, Particle MPM_Mesh, Mesh FEM_Mesh,
                              Mask ActiveNodes) {
-  int Ndim = NumberDimensions;
-  int Np = MPM_Mesh.NumGP;
-  int Nnodes_mask = ActiveNodes.Nactivenodes;
-  int Ap;
-  int A_mask;
-  int idx_A_mask_i;
-  int idx_ij;
-  int MatIndx_p;
-  Material MatProp_p;
+  unsigned Ndim = NumberDimensions;
+  unsigned Np = MPM_Mesh.NumGP;
+  unsigned Nnodes_mask = ActiveNodes.Nactivenodes;
+  unsigned NumNodes_p;
+  unsigned Ap;
+  unsigned A_mask;
+  unsigned idx_A_mask_i;
+  unsigned idx_ij;
+
   Matrix D_Displacement_Ap;
   Matrix ShapeFunction_p; /* Value of the shape-function in the particle */
-  Matrix gradient_p;
   double ShapeFunction_pI; /* Nodal value for the particle */
-  Tensor F_n_p;
-  Tensor F_n1_p;
-  Tensor DF_p;
-  Tensor dFdt_n_p;
-  Tensor dFdt_n1_p;
-  double Delta_J_p;
-  double rho_n_p;
   Element Nodes_p; /* Element for each particle */
   double D_U_pI;
   double D_V_pI;
   double D_A_pI;
-  double Vol_0_p;
 
   /* iterate over the particles */
-  for (int p = 0; p < Np; p++) {
+  for (unsigned p = 0; p < Np; p++) {
 
-    /* Define element of the particle */
-    Nodes_p = nodal_set__Particles__(p, MPM_Mesh.ListNodes[p],
-                                     MPM_Mesh.NumberNodes[p]);
+    // Update the determinant of the deformation gradient
+    MPM_Mesh.Phi.J_n.nV[p] = MPM_Mesh.Phi.J_n1.nV[p];
 
-    /*
-      Evaluate the shape function and gradient in the coordinates of the
-      particle
-    */
-    ShapeFunction_p = compute_N__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
-    gradient_p = compute_dN__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
-
-    /*
-      Take the values of the deformation gradient from the previous step
-    */
-    F_n_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n.nM[p], 2);
-    F_n1_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n1.nM[p], 2);
-    DF_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.DF.nM[p], 2);
-    dFdt_n_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.dt_F_n.nM[p], 2);
-    dFdt_n1_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.dt_F_n1.nM[p], 2);
-
-    /*
-           Update density with the jacobian of the increment deformation
-       gradient
-    */
-    Delta_J_p = I3__TensorLib__(DF_p);
-    rho_n_p = MPM_Mesh.Phi.rho.nV[p];
-    MPM_Mesh.Phi.rho.nV[p] = rho_n_p / Delta_J_p;
-
-    /*
-           Replace the deformation gradient at t = n with the converged
-       deformation gradient
-    */
-    for (int i = 0; i < Ndim; i++) {
-      for (int j = 0; j < Ndim; j++) {
-        F_n_p.N[i][j] = F_n1_p.N[i][j];
-        dFdt_n_p.N[i][j] = dFdt_n1_p.N[i][j];
-      }
-    }
-
-    /*
-      Replace the determinant of the deformation gradient
-    */
-    MPM_Mesh.Phi.J_n = MPM_Mesh.Phi.J_n1;
-
-    /* Compute the deformation energy */
-    Vol_0_p = MPM_Mesh.Phi.Vol_0.nV[p];
-    MatIndx_p = MPM_Mesh.MatIdx[p];
-    MatProp_p = MPM_Mesh.Mat[MatIndx_p];
-    //      MPM_Mesh.Phi.W.nV[p]=
-    //      finite_strains_internal_energy__Particles__(F_n_p,
-    //      MatProp_p,Vol_0_p);
+    // Update density
+    MPM_Mesh.Phi.rho.nV[p] = MPM_Mesh.Phi.mass.nV[p]/(MPM_Mesh.Phi.Vol_0.nV[p]*MPM_Mesh.Phi.J_n.nV[p]);
 
     // Update hardening
     MPM_Mesh.Phi.Kappa_n[p] = MPM_Mesh.Phi.Kappa_n1[p];
@@ -1709,25 +1650,36 @@ static void update_Particles(Nodal_Field D_U, Particle MPM_Mesh, Mesh FEM_Mesh,
     for (unsigned i = 0 ; i<9 ; i++) MPM_Mesh.Phi.b_e_n.nM[p][i] = MPM_Mesh.Phi.b_e_n1.nM[p][i];
 #endif
 
+    // Update deformation gradient
+#if NumberDimensions == 2
+    for (unsigned i = 0 ; i<5 ; i++) MPM_Mesh.Phi.F_n.nM[p][i] = MPM_Mesh.Phi.F_n1.nM[p][i]; 
+#else
+    for (unsigned i = 0 ; i<9 ; i++) MPM_Mesh.Phi.F_n.nM[p][i] = MPM_Mesh.Phi.F_n1.nM[p][i];
+#endif 
 
-    /* Iterate over the nodes of the particle */
-    for (int A = 0; A < Nodes_p.NumberNodes; A++) {
+    // Update rate of deformation gradient
+#if NumberDimensions == 2
+    for (unsigned i = 0 ; i<5 ; i++) MPM_Mesh.Phi.dt_F_n.nM[p][i] = MPM_Mesh.Phi.dt_F_n1.nM[p][i]; 
+#else
+    for (unsigned i = 0 ; i<9 ; i++) MPM_Mesh.Phi.dt_F_n.nM[p][i] = MPM_Mesh.Phi.dt_F_n1.nM[p][i];
+#endif 
 
-      /*
-        Get the node in the nodal momentum with the mask
-      */
+    //  Define nodal connectivity for each particle 
+    //  and compute the shape function
+    NumNodes_p = MPM_Mesh.NumberNodes[p];
+    Nodes_p = nodal_set__Particles__(p, MPM_Mesh.ListNodes[p],NumNodes_p);
+    ShapeFunction_p = compute_N__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
+
+    for (unsigned A = 0; A < NumNodes_p; A++) {
+
+      // Get the shape function evaluation in node A
+      // and the masked index of the node A
+      ShapeFunction_pI = ShapeFunction_p.nV[A];
       Ap = Nodes_p.Connectivity[A];
       A_mask = ActiveNodes.Nodes2Mask[Ap];
 
-      /*
-        Evaluate the GP function in the node
-      */
-      ShapeFunction_pI = ShapeFunction_p.nV[A];
-
-      /*
-        Update velocity position and deformation gradient of the particles
-      */
-      for (int i = 0; i < Ndim; i++) {
+      //  Update acceleration, velocity and position of the particles
+      for (unsigned i = 0; i < Ndim; i++) {
         D_U_pI = ShapeFunction_pI * D_U.value.nM[A_mask][i];
         D_V_pI = ShapeFunction_pI * D_U.d_value_dt.nM[A_mask][i];
         D_A_pI = ShapeFunction_pI * D_U.d2_value_dt2.nM[A_mask][i];
@@ -1739,12 +1691,8 @@ static void update_Particles(Nodal_Field D_U, Particle MPM_Mesh, Mesh FEM_Mesh,
       }
     }
 
-    /*
-      Free memory
-    */
     free(Nodes_p.Connectivity);
     free__MatrixLib__(ShapeFunction_p);
-    free__MatrixLib__(gradient_p);
   }
 }
 

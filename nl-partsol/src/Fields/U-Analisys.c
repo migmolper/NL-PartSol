@@ -134,6 +134,12 @@ Fields allocate_U_vars__Fields__(int NumParticles) {
   
   Phi.Back_stress = allocZ__MatrixLib__(NumParticles, 3);
 
+#if NumberDimensions == 2
+  Phi.C_ep = allocZ__MatrixLib__(NumParticles, 4);
+#else
+  Phi.C_ep = allocZ__MatrixLib__(NumParticles, 9);
+#endif
+
   Phi.Status_particle = (bool *)malloc(NumParticles*sizeof(bool));
 
   for (int p = 0; p < NumParticles; p++) {
@@ -177,6 +183,7 @@ void free_U_vars__Fields__(Fields Phi) {
   free(Phi.Kappa_n);
   free(Phi.Kappa_n1);
   free__MatrixLib__(Phi.Back_stress);
+  free__MatrixLib__(Phi.C_ep);
   free(Phi.Status_particle);
 }
 

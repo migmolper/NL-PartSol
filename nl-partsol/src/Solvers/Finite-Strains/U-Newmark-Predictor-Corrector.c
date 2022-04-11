@@ -1048,20 +1048,9 @@ static void compute_Explicit_Newmark_Corrector(Particle MPM_Mesh,
 
   unsigned Np = MPM_Mesh.NumGP;
 
-#if NumberDimensions == 2
-unsigned Size_vector = 2;
-unsigned Size_tensor = 5;
-#else
-unsigned Size_vector = 3;
-unsigned Size_tensor = 9;
-#endif
-  
-
   for (unsigned p = 0; p < Np; p++) {
 
-    /*
-      Replace the determinant of the deformation gradient
-    */
+    // Update the determinant of the deformation gradient
     MPM_Mesh.Phi.J_n.nV[p] = MPM_Mesh.Phi.J_n1.nV[p];
 
     // Update hardening
@@ -1077,30 +1066,32 @@ unsigned Size_tensor = 9;
     for (unsigned i = 0 ; i<9 ; i++) MPM_Mesh.Phi.b_e_n.nM[p][i] = MPM_Mesh.Phi.b_e_n1.nM[p][i];
 #endif
 
-    /*
-      Update/correct vector variables
-    */
-    for (unsigned i = 0; i < Size_vector; i++) {
-      /*
-        Correct particle velocity
-      */
-      MPM_Mesh.Phi.vel.nM[p][i] +=
-          gamma * DeltaTimeStep * MPM_Mesh.Phi.acc.nM[p][i];
+    // Update deformation gradient
+#if NumberDimensions == 2
+    for (unsigned i = 0 ; i<5 ; i++) MPM_Mesh.Phi.F_n.nM[p][i] = MPM_Mesh.Phi.F_n1.nM[p][i]; 
+#else
+    for (unsigned i = 0 ; i<9 ; i++) MPM_Mesh.Phi.F_n.nM[p][i] = MPM_Mesh.Phi.F_n1.nM[p][i];
+#endif    
 
-      /*
-        Update the particles position and displacement
-      */
+    // Correct particle velocity
+#if NumberDimensions == 2
+    for (unsigned i = 0 ; i<2 ; i++) MPM_Mesh.Phi.vel.nM[p][i] += gamma * DeltaTimeStep * MPM_Mesh.Phi.acc.nM[p][i]; 
+#else
+    for (unsigned i = 0 ; i<3 ; i++) MPM_Mesh.Phi.vel.nM[p][i] += gamma * DeltaTimeStep * MPM_Mesh.Phi.acc.nM[p][i];
+#endif   
+    
+    // Update the particles position and displacement
+#if NumberDimensions == 2
+    for (unsigned i = 0; i < 2; i++) {
       MPM_Mesh.Phi.x_GC.nM[p][i] += MPM_Mesh.Phi.D_dis.nM[p][i];
       MPM_Mesh.Phi.dis.nM[p][i] += MPM_Mesh.Phi.D_dis.nM[p][i];
-  
     }
-
-    /*
-      Update/correct tensor variables
-    */
-    for (unsigned i = 0; i < Size_tensor; i++) {
-      MPM_Mesh.Phi.F_n.nM[p][i] = MPM_Mesh.Phi.F_n1.nM[p][i];
+#else
+    for (unsigned i = 0; i < 3; i++) {
+      MPM_Mesh.Phi.x_GC.nM[p][i] += MPM_Mesh.Phi.D_dis.nM[p][i];
+      MPM_Mesh.Phi.dis.nM[p][i] += MPM_Mesh.Phi.D_dis.nM[p][i];
     }
+#endif   
 
   }
 }
