@@ -35,6 +35,12 @@ static int __update_internal_variables_elastic(
     const double *T_tr_dev /**< [in] Deviatoric elastic stress tensor */,
     const double *eigvec_b_e_tr /**< [in] Eigenvector of b elastic trial. */);
 
+static int __tangent_moduli_elastic(
+    double * C_ep /**< [out] Elastoplastic tanget moduli */,
+    const double * n /**< [in] Plastic flow direction. */, 
+    double K /**< [in] First Lamé invariant. */,
+    double G /**< [in] Second Lamé invariant. */);
+
 static int __compute_plastic_flow_direction(
     double *n /**< [out] Plastic flow direction */,
     const double *T_tr_dev /**< [in] Deviatoric elastic stress tensor */,
@@ -196,6 +202,11 @@ int compute_1PK_Drucker_Prager(State_Parameters IO_State, Material MatProp)
   printf("%f %f %f \n", IO_State.b_e[2], IO_State.b_e[3], 0.0);
   printf("%f %f %f \n", 0.0, 0.0, IO_State.b_e[4]);
 
+  puts("t = n Increment of the deformation gradient");
+  printf("%f %f %f \n", IO_State.d_phi[0], IO_State.d_phi[1], 0.0);
+  printf("%f %f %f \n", IO_State.d_phi[2], IO_State.d_phi[3], 0.0);
+  printf("%f %f %f \n", 0.0, 0.0, 1.0);  
+
 #endif
 #endif
 
@@ -217,9 +228,9 @@ int compute_1PK_Drucker_Prager(State_Parameters IO_State, Material MatProp)
          eigval_b_e_tr[0], eigval_b_e_tr[1], eigval_b_e_tr[2]);
 
   puts("Eigenvectors (files) left Cauchy-Green tensor");
-  printf("%f %f %f \n", eigvec_b_e_tr[0], eigvec_b_e_tr[1], eigvec_b_e_tr[2]);
-  printf("%f %f %f \n", eigvec_b_e_tr[3], eigvec_b_e_tr[4], eigvec_b_e_tr[5]);
-  printf("%f %f %f \n", eigvec_b_e_tr[6], eigvec_b_e_tr[7], eigvec_b_e_tr[8]);
+  printf("%f %f %f \n", eigvec_b_e_tr[0], eigvec_b_e_tr[1], 0.0);
+  printf("%f %f %f \n", eigvec_b_e_tr[2], eigvec_b_e_tr[3], 0.0);
+  printf("%f %f %f \n", 0.0, 0.0, 1.0);
 
   printf("E_hencky_trial: [%f, %f, %f] \n", E_hencky_trial[0],
          E_hencky_trial[1], E_hencky_trial[2]);
@@ -313,6 +324,17 @@ int compute_1PK_Drucker_Prager(State_Parameters IO_State, Material MatProp)
               "\n");
       return EXIT_FAILURE;
     }
+
+    if(IO_State.compute_C_ep)
+    {
+      STATUS = __tangent_moduli_elastic(IO_State.C_ep, n, K, G);
+      if (STATUS == EXIT_FAILURE) {
+        fprintf(stderr,
+        "" RED "Error in __tangent_moduli_elastic()" RESET"\n");
+        return EXIT_FAILURE;
+      }
+    }
+
   }
   // Plastic (check yield condition)
   else {
@@ -462,7 +484,9 @@ int compute_1PK_Drucker_Prager(State_Parameters IO_State, Material MatProp)
 
       if(IO_State.compute_C_ep)
       {
-        STATUS = __tangent_moduli_apex(
+          printf("%e, %e \n", d_gamma_k,d_gamma_1);
+
+          STATUS = __tangent_moduli_apex(
           IO_State.C_ep, n, d_gamma_k, d_gamma_1, d_kappa_k,
           K, G, beta, alpha_F, alpha_Q);
         if (STATUS == EXIT_FAILURE) {
@@ -1328,6 +1352,45 @@ static int __update_internal_variables_apex(
 }
 
 /***************************************************************************/
+
+static int __tangent_moduli_elastic(double * C_ep, const double * n, double K, double G)
+{
+
+  int STATUS = EXIT_SUCCESS;  
+  int Ndim = NumberDimensions;
+
+#if NumberDimensions == 2
+  double R2_Identity[2] = {1.0,1.0};
+
+  double R4_Identity[2][2] = {
+      {1.0,0.0},
+      {0.0,1.0}
+  };
+#else
+  double R2_Identity[3] = {1.0,1.0,1.0};
+
+  double R4_Identity[3][3] = {
+    {1.0,0.0,0.0},
+    {0.0,1.0,0.0},
+    {0.0,0.0,1.0}
+  };
+#endif
+
+  for (unsigned i = 0; i < Ndim; i++)
+  {
+    for (unsigned j = 0; j < Ndim; j++)
+    {
+      C_ep[i*Ndim + j] = 
+      K*R2_Identity[i]*R2_Identity[j] +
+      2.0*G*(R4_Identity[i][j] - (1.0/3.0)*R2_Identity[i]*R2_Identity[j]) -
+      2.0*G*n[i]*n[j];
+    }
+  }
+  
+  return STATUS;
+}
+
+/**************************************************************/
 
 static int __tangent_moduli_classical(
           double *  C_ep, 

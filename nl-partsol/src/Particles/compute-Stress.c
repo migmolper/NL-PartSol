@@ -116,6 +116,8 @@ int Stress_integration__Particles__(int p, Particle MPM_Mesh, Mesh FEM_Mesh,
     IO_State.EPS = &MPM_Mesh.Phi.EPS_n1[p];
     IO_State.d_phi = MPM_Mesh.Phi.DF.nM[p];
     IO_State.D_phi_n1 = MPM_Mesh.Phi.F_n1.nM[p];
+    IO_State.compute_C_ep = true;
+    IO_State.C_ep = MPM_Mesh.Phi.C_ep.nM[p];
 
 #if NumberDimensions == 2
   for (unsigned i = 0 ; i<5 ; i++) IO_State.b_e[i] = MPM_Mesh.Phi.b_e_n.nM[p][i]; 
@@ -123,7 +125,6 @@ int Stress_integration__Particles__(int p, Particle MPM_Mesh, Mesh FEM_Mesh,
   for (unsigned i = 0 ; i<9 ; i++) IO_State.b_e[i] = MPM_Mesh.Phi.b_e_n.nM[p][i]; 
 #endif
   *(IO_State.EPS) = MPM_Mesh.Phi.EPS_n[p];
-
     
       STATUS = compute_1PK_Von_Mises(IO_State, MatProp_p);
   if(STATUS == EXIT_FAILURE){
@@ -146,6 +147,7 @@ int Stress_integration__Particles__(int p, Particle MPM_Mesh, Mesh FEM_Mesh,
     IO_State.D_phi_n1 = MPM_Mesh.Phi.F_n1.nM[p];
     IO_State.Failure = &(MPM_Mesh.Phi.Status_particle[p]);
     IO_State.compute_C_ep = true;
+    IO_State.C_ep = MPM_Mesh.Phi.C_ep.nM[p];
 
 #if NumberDimensions == 2
   for (unsigned i = 0 ; i<5 ; i++) IO_State.b_e[i] = MPM_Mesh.Phi.b_e_n.nM[p][i]; 
@@ -173,6 +175,8 @@ int Stress_integration__Particles__(int p, Particle MPM_Mesh, Mesh FEM_Mesh,
     IO_State.d_phi = MPM_Mesh.Phi.DF.nM[p];
     IO_State.D_phi_n1 = MPM_Mesh.Phi.F_n1.nM[p];
     IO_State.Failure = &(MPM_Mesh.Phi.Status_particle[p]);
+    IO_State.compute_C_ep = true;
+    IO_State.C_ep = MPM_Mesh.Phi.C_ep.nM[p];
 
 #if NumberDimensions == 2
   for (unsigned i = 0 ; i<5 ; i++) IO_State.b_e[i] = MPM_Mesh.Phi.b_e_n.nM[p][i]; 
@@ -200,6 +204,8 @@ int Stress_integration__Particles__(int p, Particle MPM_Mesh, Mesh FEM_Mesh,
     IO_State.d_phi = MPM_Mesh.Phi.DF.nM[p];
     IO_State.D_phi_n1 = MPM_Mesh.Phi.F_n1.nM[p];
     IO_State.Failure = &(MPM_Mesh.Phi.Status_particle[p]);
+    IO_State.compute_C_ep = true;
+    IO_State.C_ep = MPM_Mesh.Phi.C_ep.nM[p];
 
 #if NumberDimensions == 2
   for (unsigned i = 0 ; i<5 ; i++) IO_State.b_e[i] = MPM_Mesh.Phi.b_e_n.nM[p][i]; 

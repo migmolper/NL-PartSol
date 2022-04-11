@@ -734,9 +734,6 @@ static void update_Local_State(Nodal_Field D_U, Mask ActiveNodes,
   */
   for (int p = 0; p < Np; p++) {
 
-    MatIndx_p = MPM_Mesh.MatIdx[p];
-    MatProp_p = MPM_Mesh.Mat[MatIndx_p];
-
     if (FEM_Mesh.Locking_Control_Fbar) {
       Idx_Element_p = MPM_Mesh.Element_p[p];
       Idx_Patch_p = FEM_Mesh.Idx_Patch[Idx_Element_p];
@@ -750,12 +747,6 @@ static void update_Local_State(Nodal_Field D_U, Mask ActiveNodes,
 
       MPM_Mesh.Phi.Jbar.nV[p] *= J_patch;
     }
-
-    /*
-      Update the first Piola-Kirchhoff stress tensor with an apropiate
-      integration rule.
-    */
-    Stress_integration__Particles__(p, MPM_Mesh, FEM_Mesh, MatProp_p);
   }
 }
 
@@ -800,11 +791,13 @@ static void compute_Nodal_Internal_Forces(Matrix Forces, Mask ActiveNodes,
   int A_mask;
   int NumNodes_p;
   int idx_A_mask_i;
+  int MatIndx_p;
 
   Tensor P_p; /* First Piola-Kirchhoff Stress tensor */
   Tensor InternalForcesDensity_Ap;
 
   Element Nodes_p;   /* List of nodes for particle */
+  Material MatProp_p;  
   Matrix gradient_p; /* Shape functions gradients */
   Tensor gradient_pA;
   Tensor GRADIENT_pA;
@@ -838,6 +831,14 @@ static void compute_Nodal_Internal_Forces(Matrix Forces, Mask ActiveNodes,
     */
     F_n_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n.nM[p], 2);
     transpose_F_n_p = transpose__TensorLib__(F_n_p);
+
+    /*
+      Update the first Piola-Kirchhoff stress tensor with an apropiate
+      integration rule.
+    */
+    MatIndx_p = MPM_Mesh.MatIdx[p];
+    MatProp_p = MPM_Mesh.Mat[MatIndx_p];   
+    Stress_integration__Particles__(p, MPM_Mesh, FEM_Mesh, MatProp_p);
 
     /*
       Get the first Piola-Kirchhoff stress tensor
@@ -1013,8 +1014,8 @@ static void compute_Nodal_Body_Forces(Matrix Forces, Mask ActiveNodes,
 
   Tensor b = alloc__TensorLib__(1); /* Body forces vector */
 
-  b.n[0] = 0.0;
-  b.n[1] = -9.81;
+//  b.n[0] = 0.0;
+//  b.n[1] = -9.81;
 
   for (int p = 0; p < MPM_Mesh.NumGP; p++) {
 
