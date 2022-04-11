@@ -48,10 +48,10 @@ int Stress_integration__Particles__(int p, Particle MPM_Mesh, Mesh FEM_Mesh,
     Input_SP.Stress = MPM_Mesh.Phi.Stress.nM[p];
 
     if (MatProp_p.Locking_Control_Fbar) {
-      Input_SP.D_phi = MPM_Mesh.Phi.Fbar.nM[p];
+      Input_SP.D_phi_n1 = MPM_Mesh.Phi.Fbar.nM[p];
       Input_SP.J = MPM_Mesh.Phi.Jbar.nV[p];
     } else {
-      Input_SP.D_phi = MPM_Mesh.Phi.F_n1.nM[p];
+      Input_SP.D_phi_n1 = MPM_Mesh.Phi.F_n1.nM[p];
       Input_SP.J = MPM_Mesh.Phi.J_n1.nV[p];
     }
 
@@ -100,7 +100,7 @@ int Stress_integration__Particles__(int p, Particle MPM_Mesh, Mesh FEM_Mesh,
     Input_SP.Stress = MPM_Mesh.Phi.Stress.nM[p];
     Input_SP.dFdt = MPM_Mesh.Phi.dt_F_n1.nM[p];
     Input_SP.J = MPM_Mesh.Phi.J_n1.nV[p];
-    Input_SP.D_phi = MPM_Mesh.Phi.F_n1.nM[p];
+    Input_SP.D_phi_n1 = MPM_Mesh.Phi.F_n1.nM[p];
     Input_SP.Pressure = MPM_Mesh.Phi.lambda_pressure_n1.nV[p];
 
     Output_SP = compute_1PK_Stress_Tensor_Newtonian_Fluid_Incompressible(
@@ -115,7 +115,7 @@ int Stress_integration__Particles__(int p, Particle MPM_Mesh, Mesh FEM_Mesh,
     IO_State.b_e = MPM_Mesh.Phi.b_e_n1.nM[p];
     IO_State.EPS = &MPM_Mesh.Phi.EPS_n1[p];
     IO_State.d_phi = MPM_Mesh.Phi.DF.nM[p];
-    IO_State.D_phi = MPM_Mesh.Phi.F_n1.nM[p];
+    IO_State.D_phi_n1 = MPM_Mesh.Phi.F_n1.nM[p];
 
 #if NumberDimensions == 2
   for (unsigned i = 0 ; i<5 ; i++) IO_State.b_e[i] = MPM_Mesh.Phi.b_e_n.nM[p][i]; 
@@ -143,8 +143,9 @@ int Stress_integration__Particles__(int p, Particle MPM_Mesh, Mesh FEM_Mesh,
     IO_State.EPS = &MPM_Mesh.Phi.EPS_n1[p];
     IO_State.Kappa = &MPM_Mesh.Phi.Kappa_n1[p];
     IO_State.d_phi = MPM_Mesh.Phi.DF.nM[p];
-    IO_State.D_phi = MPM_Mesh.Phi.F_n1.nM[p];
+    IO_State.D_phi_n1 = MPM_Mesh.Phi.F_n1.nM[p];
     IO_State.Failure = &(MPM_Mesh.Phi.Status_particle[p]);
+    IO_State.compute_C_ep = true;
 
 #if NumberDimensions == 2
   for (unsigned i = 0 ; i<5 ; i++) IO_State.b_e[i] = MPM_Mesh.Phi.b_e_n.nM[p][i]; 
@@ -170,7 +171,7 @@ int Stress_integration__Particles__(int p, Particle MPM_Mesh, Mesh FEM_Mesh,
     IO_State.EPS = &MPM_Mesh.Phi.EPS_n1[p];
     IO_State.Kappa = &MPM_Mesh.Phi.Kappa_n1[p];
     IO_State.d_phi = MPM_Mesh.Phi.DF.nM[p];
-    IO_State.D_phi = MPM_Mesh.Phi.F_n1.nM[p];
+    IO_State.D_phi_n1 = MPM_Mesh.Phi.F_n1.nM[p];
     IO_State.Failure = &(MPM_Mesh.Phi.Status_particle[p]);
 
 #if NumberDimensions == 2
@@ -197,7 +198,7 @@ int Stress_integration__Particles__(int p, Particle MPM_Mesh, Mesh FEM_Mesh,
     IO_State.EPS = &MPM_Mesh.Phi.EPS_n1[p];
     IO_State.Kappa = &MPM_Mesh.Phi.Kappa_n1[p];
     IO_State.d_phi = MPM_Mesh.Phi.DF.nM[p];
-    IO_State.D_phi = MPM_Mesh.Phi.F_n1.nM[p];
+    IO_State.D_phi_n1 = MPM_Mesh.Phi.F_n1.nM[p];
     IO_State.Failure = &(MPM_Mesh.Phi.Status_particle[p]);
 
 #if NumberDimensions == 2

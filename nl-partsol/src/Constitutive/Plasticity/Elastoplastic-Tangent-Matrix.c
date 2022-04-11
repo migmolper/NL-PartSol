@@ -40,7 +40,7 @@ int compute_1PK_elastoplastic_tangent_matrix(double *Stiffness_density,
   No esta implementado
 #endif
 
-  STATUS = __compute_u_v(u, v, dN_alpha, dN_beta, IO_State.D_phi);
+  STATUS = __compute_u_v(u, v, dN_alpha, dN_beta, IO_State.D_phi_n);
   if (STATUS == EXIT_FAILURE) {
     fprintf(stderr, "" RED "Error in __compute_u_v" RESET "\n");
     return EXIT_FAILURE;
@@ -82,7 +82,7 @@ int compute_1PK_elastoplastic_tangent_matrix(double *Stiffness_density,
   double eigval_T[3] = {0.0, 0.0, 0.0};
 #endif
 
-  STATUS = __eigenvalues_kirchhoff(eigval_T, IO_State.Stress, IO_State.D_phi);
+  STATUS = __eigenvalues_kirchhoff(eigval_T, IO_State.Stress, IO_State.D_phi_n1);
   if (STATUS == EXIT_FAILURE) {
     fprintf(stderr, "" RED "Error in __eigenvalues_kirchhoff" RESET "\n");
     return EXIT_FAILURE;

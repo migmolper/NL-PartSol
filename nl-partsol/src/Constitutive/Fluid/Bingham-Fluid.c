@@ -23,7 +23,7 @@ compute_1PK_Stress_Tensor_Bingham_Fluid(State_Parameters Intput_SP,
     Take information from input state parameters
   */
   Tensor P = memory_to_tensor__TensorLib__(Intput_SP.Stress, 2);
-  Tensor F = memory_to_tensor__TensorLib__(Intput_SP.D_phi, 2);
+  Tensor F = memory_to_tensor__TensorLib__(Intput_SP.D_phi_n1, 2);
   Tensor dFdt = memory_to_tensor__TensorLib__(Intput_SP.dFdt, 2);
   double J = Intput_SP.J;
 

@@ -90,7 +90,7 @@ int compute_stiffness_density_Neo_Hookean_Wriggers(
   int Ndim = NumberDimensions;
 
   // State parameters
-  double * D_phi_n = IO_State_p.D_phi;
+  double * D_phi_n = IO_State_p.D_phi_n;
   double * d_phi = IO_State_p.d_phi;  
   double J = IO_State_p.J;
 

@@ -18,7 +18,7 @@ State_Parameters compute_1PK_Stress_Tensor_Newtonian_Fluid_Incompressible(
     Take information from input state parameters
   */
   Tensor P = memory_to_tensor__TensorLib__(Input_SP.Stress, 2);
-  Tensor F = memory_to_tensor__TensorLib__(Input_SP.D_phi, 2);
+  Tensor F = memory_to_tensor__TensorLib__(Input_SP.D_phi_n1, 2);
   Tensor dFdt = memory_to_tensor__TensorLib__(Input_SP.dFdt, 2);
   double Pressure = Input_SP.Pressure;
   double J = Input_SP.J;

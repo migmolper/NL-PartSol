@@ -1015,145 +1015,127 @@ static Matrix assemble_Nodal_Tangent_Stiffness(Mask ActiveNodes,
 
 /*
   This function computes the tangent stiffness matrix.
-
 */
 {
-
-  int Ndim = NumberDimensions;
-  int Ndof = NumberDOF;
-  int Nnodes_mask = ActiveNodes.Nactivenodes;
-  int Order = Ndof * Nnodes_mask;
-  int Np = MPM_Mesh.NumGP;
-  int Ap;
-  int A_mask;
-  int Bp;
-  int B_mask;
-  int NumNodes_p;
-  int MatIndx_p;
-  int idx_AB_mask_ij;
+  int STATUS = EXIT_SUCCESS;
+  unsigned Ndim = NumberDimensions;
+  unsigned Ndof = NumberDOF;
+  unsigned Nnodes_mask = ActiveNodes.Nactivenodes;
+  unsigned Order = Ndof * Nnodes_mask;
+  unsigned Np = MPM_Mesh.NumGP;
+  unsigned Ap;
+  unsigned A_mask;
+  unsigned Bp;
+  unsigned B_mask;
+  unsigned NumNodes_p;
+  unsigned MatIndx_p;
+  unsigned idx_AB_mask_ij;
 
   Element Nodes_p;   /* List of nodes for particle */
   Matrix gradient_p; /* Shape functions gradients */
-  Tensor gradient_pA;
-  Tensor GRADIENT_pA;
-  Tensor gradient_pB;
-  Tensor GRADIENT_pB;
-  Tensor F_n_p;
-  Tensor F_n1_p;
-  Tensor dFdt_n1_p;
-  Tensor transpose_F_n_p;
-  Tensor Stiffness_density_p;
+  double * gradient_pA;
+  double * gradient_pB;
+
+#if NumberDimensions == 2
+  double Stiffness_density_p[4];
+#else
+  double Stiffness_density_p[9];
+#endif
 
   Material MatProp_p;
+  State_Parameters IO_State_p;
   double V0_p; /* Volume of the particle in the reference configuration */
   double J_p;  /* Jacobian of the deformation gradient */
+  double alpha_4 = 0.0; /* Newmark parameter (rate-dependent models) */
 
   Matrix Tangent_Stiffness = allocZ__MatrixLib__(Order, Order);
 
-  /*
-    Loop in the particles for the assembling process
-  */
-  for (int p = 0; p < Np; p++) {
+  for (unsigned p = 0; p < Np; p++) {
 
-    /*
-      Get the volume of the particle in the reference configuration
-     */
+    // Get the volume of the particle in the reference configuration and
+    // the jacobian of the deformation gradient
     V0_p = MPM_Mesh.Phi.Vol_0.nV[p];
+    J_p = MPM_Mesh.Phi.J_n1.nV[p];
 
-    /*
-      Material properties of the particle
-     */
+    // Material properties of the particle
     MatIndx_p = MPM_Mesh.MatIdx[p];
     MatProp_p = MPM_Mesh.Mat[MatIndx_p];
 
-    /*
-      Define nodes for each particle
-    */
+    //  Define nodal connectivity for each particle 
+    //  and compute gradient of the shape function
     NumNodes_p = MPM_Mesh.NumberNodes[p];
     Nodes_p = nodal_set__Particles__(p, MPM_Mesh.ListNodes[p], NumNodes_p);
-
-    /*
-      Compute gradient of the shape function in each node
-    */
     gradient_p = compute_dN__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
 
-    /*
-      Take the values of the deformation gradient ant t = n and t = n + 1.
-      Later compute the midpoint deformation gradient and
-      the transpose of the deformation gradient at the midpoint.
-    */
-    F_n_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n.nM[p], 2);
-    F_n1_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n1.nM[p], 2);
-    dFdt_n1_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.dt_F_n1.nM[p], 2);
-    transpose_F_n_p = transpose__TensorLib__(F_n_p);
-
-    /*
-      Compute the jacobian of the deformation gradient in the deformed
-      configuration
-    */
-    J_p = I3__TensorLib__(F_n1_p);
-
-    for (int A = 0; A < NumNodes_p; A++) {
-      /*
-        Compute the gradient in the reference configuration
-      */
-      gradient_pA = memory_to_tensor__TensorLib__(gradient_p.nM[A], 1);
-      GRADIENT_pA =
-          vector_linear_mapping__TensorLib__(transpose_F_n_p, gradient_pA);
-
-      /*
-        Get the node of the mesh for the contribution
-      */
+    for (unsigned A = 0; A < NumNodes_p; A++) {
+      
+      // Get the gradient evaluation in node A
+      // and the masked index of the node A
+      gradient_pA = gradient_p.nM[A];
       Ap = Nodes_p.Connectivity[A];
       A_mask = ActiveNodes.Nodes2Mask[Ap];
 
-      for (int B = 0; B < NumNodes_p; B++) {
+      for (unsigned B = 0; B < NumNodes_p; B++) {
 
-        /*
-          Compute the gradient in the reference configuration
-        */
-        gradient_pB = memory_to_tensor__TensorLib__(gradient_p.nM[B], 1);
-        GRADIENT_pB =
-            vector_linear_mapping__TensorLib__(transpose_F_n_p, gradient_pB);
-
-        /*
-          Get the node of the mesh for the contribution
-        */
+        // Get the gradient evaluation in node B
+        // and the masked index of the node B
+        gradient_pB = gradient_p.nM[B];
         Bp = Nodes_p.Connectivity[B];
         B_mask = ActiveNodes.Nodes2Mask[Bp];
 
-        /*
-          Get the stiffness density of each particle
-        */
-        Stiffness_density_p = tangent_matrix__Particles__(GRADIENT_pA,GRADIENT_pB,F_n1_p,dFdt_n1_p,J_p,0.0,MatProp_p);
+        // Compute particle evaluation of the stiffness matrix for each node
+        if (strcmp(MatProp_p.Type, "Neo-Hookean-Wriggers") == 0) {
+          IO_State_p.D_phi_n = MPM_Mesh.Phi.F_n.nM[p]; 
+          IO_State_p.d_phi = MPM_Mesh.Phi.DF.nM[p];          
+          IO_State_p.J = J_p;          
+          STATUS = compute_stiffness_density_Neo_Hookean_Wriggers(Stiffness_density_p, gradient_pA, gradient_pB, IO_State_p, MatProp_p);
+          if (STATUS == EXIT_FAILURE) {
+            fprintf(stderr, "" RED "Error in compute_stiffness_density_Neo_Hookean_Wriggers" RESET "\n");
+//            return EXIT_FAILURE;
+          }
+        } 
+        else if (strcmp(MatProp_p.Type, "Newtonian-Fluid-Compressible") == 0) {
+          IO_State_p.D_phi_n1 = MPM_Mesh.Phi.F_n1.nM[p]; 
+          IO_State_p.D_phi_n = MPM_Mesh.Phi.F_n.nM[p]; 
+          IO_State_p.d_phi = MPM_Mesh.Phi.DF.nM[p];          
+          IO_State_p.dFdt = MPM_Mesh.Phi.dt_F_n1.nM[p];
+          IO_State_p.J = J_p;   
+          IO_State_p.alpha_4 = alpha_4;
+          STATUS = compute_stiffness_density_Newtonian_Fluid(Stiffness_density_p, gradient_pA, gradient_pB,IO_State_p,MatProp_p);
+          if (STATUS == EXIT_FAILURE) {
+            fprintf(stderr, "" RED "Error in compute_stiffness_density_Newtonian_Fluid" RESET "\n");
+//            return EXIT_FAILURE;
+          }          
+        }
+        else if (strcmp(MatProp_p.Type, "Drucker-Prager") == 0) {
+          IO_State_p.D_phi_n1 = MPM_Mesh.Phi.F_n1.nM[p]; 
+          IO_State_p.D_phi_n = MPM_Mesh.Phi.F_n.nM[p];
+          IO_State_p.b_e = MPM_Mesh.Phi.b_e_n1.nM[p];
+          IO_State_p.Stress = MPM_Mesh.Phi.Stress.nM[p];
+          IO_State_p.C_ep = MPM_Mesh.Phi.C_ep.nM[p];
+          STATUS = compute_1PK_elastoplastic_tangent_matrix(Stiffness_density_p, gradient_pA, gradient_pB,IO_State_p);
+          if (STATUS == EXIT_FAILURE) {
+            fprintf(stderr, "" RED "Error in compute_1PK_elastoplastic_tangent_matrix" RESET "\n");
+//            return EXIT_FAILURE;
+          }
+        }        
+        else {
+          fprintf(stderr, "%s : %s %s %s \n",
+          "Error in assemble_Nodal_Tangent_Stiffness()", "The material",
+          MatProp_p.Type, "has not been yet implemnented");
+          exit(EXIT_FAILURE);
+        }
 
-        /*
-          Add the geometric contribution to each dof for the assembling process
-        */
-        for (int i = 0; i < Ndim; i++) {
-          for (int j = 0; j < Ndim; j++) {
-            Tangent_Stiffness.nM[A_mask * Ndim + i][B_mask * Ndim + j] +=
-                Stiffness_density_p.N[i][j] * V0_p;
+        //  Assembling process
+        for (unsigned i = 0; i < Ndim; i++) {
+          for (unsigned j = 0; j < Ndim; j++) {
+            Tangent_Stiffness.nM[A_mask * Ndim + i][B_mask * Ndim + j] += Stiffness_density_p[i*Ndim + j] * V0_p;
           }
         }
 
-        /*
-          Free memory
-        */
-        free__TensorLib__(GRADIENT_pB);
-        free__TensorLib__(Stiffness_density_p);
       }
-
-      /*
-        Free memory
-      */
-      free__TensorLib__(GRADIENT_pA);
     }
 
-    /*
-       Free memory
-    */
-    free__TensorLib__(transpose_F_n_p);
     free__MatrixLib__(gradient_p);
     free(Nodes_p.Connectivity);
   }

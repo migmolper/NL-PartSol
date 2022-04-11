@@ -344,7 +344,7 @@ int compute_1PK_Matsuoka_Nakai(State_Parameters IO_State, Material MatProp)
   if (F_0 <= 0.0) {
 
     STATUS = __update_internal_variables_elastic(
-        IO_State.Stress, IO_State.D_phi, T_tr, eigvec_b_e_tr, c_cotphi);
+        IO_State.Stress, IO_State.D_phi_n1, T_tr, eigvec_b_e_tr, c_cotphi);
     if (STATUS == EXIT_FAILURE) {
       fprintf(stderr,
               "" RED "Error in __update_internal_variables_elastic()" RESET
@@ -688,7 +688,7 @@ int compute_1PK_Matsuoka_Nakai(State_Parameters IO_State, Material MatProp)
       Update equivalent plastic strain and increment of plastic deformation
     */
     STATUS = __update_internal_variables_plastic(IO_State.Stress,IO_State.EPS,
-     IO_State.Kappa,IO_State.D_phi,T_k1,eigvec_b_e_tr,Lambda_k1, kappa_k1[0], c_cotphi);    
+     IO_State.Kappa,IO_State.D_phi_n1,T_k1,eigvec_b_e_tr,Lambda_k1, kappa_k1[0], c_cotphi);    
     if (STATUS == EXIT_FAILURE) {
       fprintf(stderr, "" RED "Error in __update_internal_variables_plastic" RESET "\n");
       return EXIT_FAILURE;

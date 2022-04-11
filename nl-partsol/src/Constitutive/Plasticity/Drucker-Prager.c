@@ -306,7 +306,7 @@ int compute_1PK_Drucker_Prager(State_Parameters IO_State, Material MatProp)
   if (PHI_0 <= 0.0) {
 
     STATUS = __update_internal_variables_elastic(
-        IO_State.Stress, IO_State.D_phi, T_tr_vol, T_tr_dev, eigvec_b_e_tr);
+        IO_State.Stress, IO_State.D_phi_n1, T_tr_vol, T_tr_dev, eigvec_b_e_tr);
     if (STATUS == EXIT_FAILURE) {
       fprintf(stderr,
               "" RED "Error in __update_internal_variables_elastic()" RESET
@@ -385,7 +385,7 @@ int compute_1PK_Drucker_Prager(State_Parameters IO_State, Material MatProp)
 
       STATUS = __update_internal_variables_classical(
           Increment_E_plastic, IO_State.Stress, IO_State.EPS,
-          IO_State.Kappa, IO_State.D_phi, T_tr_vol, T_tr_dev, eigvec_b_e_tr, n,
+          IO_State.Kappa, IO_State.D_phi_n1, T_tr_vol, T_tr_dev, eigvec_b_e_tr, n,
           d_gamma_k, alpha_Q, K, G, eps_k, kappa_k);
       if (STATUS == EXIT_FAILURE) {
         fprintf(stderr,
@@ -452,7 +452,7 @@ int compute_1PK_Drucker_Prager(State_Parameters IO_State, Material MatProp)
 
       STATUS = __update_internal_variables_apex(
           Increment_E_plastic, IO_State.Stress, IO_State.EPS,
-          IO_State.Kappa, IO_State.D_phi, T_tr_vol, T_tr_dev, eigvec_b_e_tr, n,
+          IO_State.Kappa, IO_State.D_phi_n1, T_tr_vol, T_tr_dev, eigvec_b_e_tr, n,
           d_gamma_k, d_gamma_1, alpha_Q, K, G, eps_k, kappa_k);
       if (STATUS == EXIT_FAILURE) {
         fprintf(stderr,
@@ -1363,8 +1363,8 @@ static int __tangent_moduli_classical(
 #endif
 
 
-  double c2 = 9*alpha_F*alpha_Q*K + 2*G + beta*d_kappa_k*sqrt(2./3. * (1 + 3*alpha_Q*alpha_Q));
-  double c1 = 1.0 - 9.0*alpha_F*alpha_Q*K/c2; 
+  double c0 = 9*alpha_F*alpha_Q*K + 2*G + beta*d_kappa_k*sqrt(2./3. * (1 + 3*alpha_Q*alpha_Q));
+  double c1 = 1.0 - 9.0*alpha_F*alpha_Q*K/c0; 
 
   for (unsigned i = 0; i < Ndim; i++)
   {
@@ -1373,9 +1373,9 @@ static int __tangent_moduli_classical(
       C_ep[i*Ndim + j] = 
       c1*K*R2_Identity[i]*R2_Identity[j] 
       + 2*G*(R4_Identity[i][j] - (1./3.)*(1.0 - 2.0*G*d_gamma_k/J2)*R2_Identity[i]*R2_Identity[j]) 
-      - (6.0*alpha_Q*K*G/c2)*R2_Identity[i]*n[j] 
-      - (6.0*alpha_Q*K*G/c2)*n[i]*R2_Identity[j] 
-      - 4*G*G*(1.0/c2 - d_gamma_k/J2)*n[i]*n[j];
+      - (6.0*alpha_Q*K*G/c0)*R2_Identity[i]*n[j] 
+      - (6.0*alpha_Q*K*G/c0)*n[i]*R2_Identity[j] 
+      - 4*G*G*(1.0/c0 - d_gamma_k/J2)*n[i]*n[j];
     }
   }
   
@@ -1401,22 +1401,22 @@ static int __tangent_moduli_apex(
   int Ndim = NumberDimensions;
 
 #if NumberDimensions == 2
-    double Identity[2] = {1.0,1.0};
+    double R2_Identity[2] = {1.0,1.0};
 #else
-    double Identity[3] = {1.0,1.0,1.0};
+    double R2_Identity[3] = {1.0,1.0,1.0};
 #endif
 
-  double c3 = (alpha_Q*beta*sqrt(2./3.)*d_kappa_k*d_gamma_k)/
+  double c0 = (alpha_Q*beta*sqrt(2./3.)*d_kappa_k*d_gamma_k)/
   (3.0*alpha_F*K*sqrt(d_gamma_1*d_gamma_1 + 3.0*alpha_Q*alpha_Q*d_gamma_k*d_gamma_k) + 
   alpha_Q*beta*sqrt(2./3.)*d_kappa_k*d_gamma_k);
 
-  double c4 = c3*K/(2.0*alpha_Q*G*d_gamma_k);
+  double c1 = c0*K/(2.0*alpha_Q*G*d_gamma_k);
 
   for (unsigned i = 0; i < Ndim; i++)
   {
     for (unsigned j = 0; j < Ndim; j++)
     {
-      C_ep[i*Ndim + j] =c3*K*Identity[i]*Identity[j] + c4*Identity[i]*n[j];
+      C_ep[i*Ndim + j] =c0*K*R2_Identity[i]*R2_Identity[j] + c1*R2_Identity[i]*n[j];
     }
   }
   

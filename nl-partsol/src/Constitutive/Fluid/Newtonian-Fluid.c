@@ -96,7 +96,7 @@ int compute_stiffness_density_Newtonian_Fluid(
 
   // State parameters
   double * D_phi_n1 = IO_State.D_phi_n1;
-  double * D_phi_n = IO_State.D_phi;
+  double * D_phi_n = IO_State.D_phi_n;
   double * d_phi = IO_State.d_phi;
   double * dFdt = IO_State.dFdt;
   double J = IO_State.J;

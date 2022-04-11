@@ -216,7 +216,7 @@ int compute_1PK_Von_Mises(State_Parameters IO_State, Material MatProp)
   // Elastic
   if (PHI_0 <= 0.0) {
     STATUS = __update_internal_variables_elastic(
-        IO_State.Stress, IO_State.D_phi, T_tr_vol, T_tr_dev, eigvec_b_e_tr);
+        IO_State.Stress, IO_State.D_phi_n1, T_tr_vol, T_tr_dev, eigvec_b_e_tr);
     if (STATUS == EXIT_FAILURE) {
       fprintf(stderr,
               "" RED "Error in __update_internal_variables_elastic()" RESET
@@ -271,7 +271,7 @@ int compute_1PK_Von_Mises(State_Parameters IO_State, Material MatProp)
 
     STATUS = __update_internal_variables_plastic(
         Increment_E_plastic, IO_State.Stress, IO_State.Back_stress,
-        IO_State.EPS, IO_State.D_phi, T_tr_vol, T_tr_dev, eigvec_b_e_tr, n,
+        IO_State.EPS, IO_State.D_phi_n1, T_tr_vol, T_tr_dev, eigvec_b_e_tr, n,
         d_gamma_k, G, eps_k, d_K_kin);
     if (STATUS == EXIT_FAILURE) {
       fprintf(stderr,

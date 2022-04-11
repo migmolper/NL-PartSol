@@ -1241,7 +1241,6 @@ static Matrix assemble_Nodal_Tangent_Stiffness(Mask ActiveNodes,
 
 /*
   This function computes the tangent stiffness matrix.
-
 */
 {
   int STATUS = EXIT_SUCCESS;
@@ -1313,27 +1312,39 @@ static Matrix assemble_Nodal_Tangent_Stiffness(Mask ActiveNodes,
 
         // Compute particle evaluation of the stiffness matrix for each node
         if (strcmp(MatProp_p.Type, "Neo-Hookean-Wriggers") == 0) {
-          IO_State_p.D_phi = MPM_Mesh.Phi.F_n.nM[p]; 
+          IO_State_p.D_phi_n = MPM_Mesh.Phi.F_n.nM[p]; 
           IO_State_p.d_phi = MPM_Mesh.Phi.DF.nM[p];          
           IO_State_p.J = J_p;          
           STATUS = compute_stiffness_density_Neo_Hookean_Wriggers(Stiffness_density_p, gradient_pA, gradient_pB, IO_State_p, MatProp_p);
+          if (STATUS == EXIT_FAILURE) {
+            fprintf(stderr, "" RED "Error in compute_stiffness_density_Neo_Hookean_Wriggers" RESET "\n");
+//            return EXIT_FAILURE;
+          }
         } 
         else if (strcmp(MatProp_p.Type, "Newtonian-Fluid-Compressible") == 0) {
           IO_State_p.D_phi_n1 = MPM_Mesh.Phi.F_n1.nM[p]; 
-          IO_State_p.D_phi = MPM_Mesh.Phi.F_n.nM[p]; 
+          IO_State_p.D_phi_n = MPM_Mesh.Phi.F_n.nM[p]; 
           IO_State_p.d_phi = MPM_Mesh.Phi.DF.nM[p];          
           IO_State_p.dFdt = MPM_Mesh.Phi.dt_F_n1.nM[p];
           IO_State_p.J = J_p;   
           IO_State_p.alpha_4 = alpha_4;
           STATUS = compute_stiffness_density_Newtonian_Fluid(Stiffness_density_p, gradient_pA, gradient_pB,IO_State_p,MatProp_p);
-        } 
-        else if (strcmp(MatProp_p.Type, "Newtonian-Fluid-Incompressible") == 0) {
-//          STATUS = compute_stiffness_density_Newtonian_Fluid_Incompressible(Stiffness_density_p, GRADIENT_pA, GRADIENT_pB, F_n1_p, dFdt_n1_p, J_p, alpha_4,MatProp_p);
+          if (STATUS == EXIT_FAILURE) {
+            fprintf(stderr, "" RED "Error in compute_stiffness_density_Newtonian_Fluid" RESET "\n");
+//            return EXIT_FAILURE;
+          }          
         }
         else if (strcmp(MatProp_p.Type, "Drucker-Prager") == 0) {
-//        IO_State_p.b_e = MPM_Mesh.Phi.b_e_n1.nM[p];
-//        IO_State_p.C_ep = ;
+          IO_State_p.D_phi_n1 = MPM_Mesh.Phi.F_n1.nM[p]; 
+          IO_State_p.D_phi_n = MPM_Mesh.Phi.F_n.nM[p];
+          IO_State_p.b_e = MPM_Mesh.Phi.b_e_n1.nM[p];
+          IO_State_p.Stress = MPM_Mesh.Phi.Stress.nM[p];
+          IO_State_p.C_ep = MPM_Mesh.Phi.C_ep.nM[p];
           STATUS = compute_1PK_elastoplastic_tangent_matrix(Stiffness_density_p, gradient_pA, gradient_pB,IO_State_p);
+          if (STATUS == EXIT_FAILURE) {
+            fprintf(stderr, "" RED "Error in compute_1PK_elastoplastic_tangent_matrix" RESET "\n");
+//            return EXIT_FAILURE;
+          }
         }        
         else {
           fprintf(stderr, "%s : %s %s %s \n",

@@ -39,7 +39,7 @@ compute_1PK_Stress_Tensor_Mooney_Rivlin(State_Parameters Intput_SP,
   State_Parameters Output_SP;
 
   /* Get information from the state parameter */
-  Tensor F = memory_to_tensor__TensorLib__(Intput_SP.D_phi, 2);
+  Tensor F = memory_to_tensor__TensorLib__(Intput_SP.D_phi_n1, 2);
   Tensor P = memory_to_tensor__TensorLib__(Intput_SP.Stress, 2);
   double J = Intput_SP.J;
 

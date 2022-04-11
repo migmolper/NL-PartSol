@@ -261,7 +261,10 @@ typedef struct {
 
   Matrix b_e_n, b_e_n1; /**< Elastic left deformation gradient */
 
+  Matrix C_ep; /**< Elastoplastic tangent matrix */
+
   bool * Status_particle; /**< Check if the particle is consider failed or not */
+
 
 #ifdef DEBUG_MODE
 #if DEBUG_MODE + 0
@@ -527,7 +530,7 @@ typedef struct
   double Pressure;
 
   double * D_phi_n1;  /**< Total deformation gradient (t = n + 1) */
-  double * D_phi; /**< Total deformation gradient */
+  double * D_phi_n; /**< Total deformation gradient (t = n) */
   double * d_phi; /**< Incremental deformation gradient */
   double * b_e; /**< Elastic left Cauchy-Green tensor */
   double * Fbar;
