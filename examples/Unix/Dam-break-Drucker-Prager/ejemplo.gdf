@@ -39,7 +39,7 @@ Define-Material(idx=0,Model=Drucker-Prager)
 }
 
 
-One-Phase-Analysis (File=Particles.msh,GPxElement=9) {
+One-Phase-Analysis (File=Particles.msh,GPxElement=1) {
 
 	Assign-material-to-particles (MatIdx=0, Particles=Soil.txt)
 

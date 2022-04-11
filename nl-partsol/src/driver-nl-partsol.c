@@ -157,7 +157,10 @@ int main(int argc, char *argv[]) {
       U_Discrete_Energy_Momentum(FEM_Mesh, MPM_Mesh, Parameters_Solver);
     } else if (strcmp(Parameters_Solver.TimeIntegrationScheme,
                       "Newmark-beta-Finite-Strains") == 0) {
-      U_Newmark_beta_Finite_Strains(FEM_Mesh, MPM_Mesh, Parameters_Solver);
+      STATUS = U_Newmark_beta_Finite_Strains(FEM_Mesh, MPM_Mesh, Parameters_Solver);
+      if(STATUS == EXIT_FAILURE){
+        fprintf(stderr, ""RED"Error in U_Newmark_beta_Finite_Strains(,)"RESET" \n");
+      }      
     } else {
       sprintf(Error_message, "%s", "Wrong time integration scheme");
       standard_error(Error_message);
@@ -175,7 +178,6 @@ int main(int argc, char *argv[]) {
     }
     else
     {
-      printf(""RED"Error in %s"RESET" \n",Parameters_Solver.TimeIntegrationScheme);
       printf("Computation "RED"abnormally"RESET" finished at : %s \n", __TIME__);
       puts("Exiting the program...");
       return EXIT_FAILURE;

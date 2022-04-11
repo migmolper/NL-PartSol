@@ -484,11 +484,8 @@ int compute_1PK_Drucker_Prager(State_Parameters IO_State, Material MatProp)
 
       if(IO_State.compute_C_ep)
       {
-          printf("%e, %e \n", d_gamma_k,d_gamma_1);
-
-          STATUS = __tangent_moduli_apex(
-          IO_State.C_ep, n, d_gamma_k, d_gamma_1, d_kappa_k,
-          K, G, beta, alpha_F, alpha_Q);
+        STATUS = __tangent_moduli_apex(IO_State.C_ep, n, d_gamma_k, d_gamma_1,
+         d_kappa_k, K, G, beta, alpha_F, alpha_Q);
         if (STATUS == EXIT_FAILURE) {
           fprintf(stderr, "" RED "Error in __tangent_moduli_apex" RESET "\n");
           return EXIT_FAILURE;
