@@ -257,7 +257,6 @@ int U_Newmark_beta_Finite_Strains(Mesh FEM_Mesh, Particle MPM_Mesh,
     if(Iter > MaxIter)
     {
       fprintf(stderr, ""RED"Convergence not reached in the maximum number of iterations"RESET" \n");
-      return EXIT_FAILURE;
     }
 
     __update_Particles(D_U, MPM_Mesh, FEM_Mesh, ActiveNodes);
@@ -280,7 +279,6 @@ int U_Newmark_beta_Finite_Strains(Mesh FEM_Mesh, Particle MPM_Mesh,
     free(ActiveNodes.Nodes2Mask);
     free(Free_and_Restricted_Dofs.Nodes2Mask);
 
-//    return EXIT_FAILURE;
   }
 
   return EXIT_SUCCESS;
@@ -1091,8 +1089,8 @@ static void compute_Nodal_Body_Forces(Matrix Forces, Mask ActiveNodes,
 
   Tensor b = alloc__TensorLib__(1); /* Body forces vector */
 
-  b.n[0] = 0.0;
-  b.n[1] = -9.81;
+//  b.n[0] = 0.0;
+//  b.n[1] = -9.81;
 
   for (int p = 0; p < MPM_Mesh.NumGP; p++) {
 
@@ -1395,6 +1393,7 @@ static int __assemble_tangent_stiffness(
           return EXIT_FAILURE;
         }
 
+
         //  Assembling process
         for (unsigned i = 0; i < Ndim; i++) {
           for (unsigned j = 0; j < Ndim; j++) {
@@ -1402,7 +1401,6 @@ static int __assemble_tangent_stiffness(
             Stiffness_density_p[i*Ndim + j] * V0_p;
           }
         }
-
       }
     }
 

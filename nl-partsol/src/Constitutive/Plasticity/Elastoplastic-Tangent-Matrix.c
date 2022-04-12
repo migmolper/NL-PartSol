@@ -24,6 +24,9 @@ static int __eigenvalues_kirchhoff(
     const double *P /**< [in] Nominal stress tensor */,
     const double *D_phi /**< [in] Total deformation gradient. */);
 
+static double __compute_J2(
+  const double *T /**< [in] Eigenvalues of the Kirchhoff stress tensor. */);
+
 /**************************************************************/ 
 int compute_1PK_elastoplastic_tangent_matrix(double *Stiffness_density,
                                              const double *dN_alpha,
@@ -36,8 +39,22 @@ int compute_1PK_elastoplastic_tangent_matrix(double *Stiffness_density,
 #if NumberDimensions == 2
   double u[2] = {0.0, 0.0};
   double v[2] = {0.0, 0.0};
+  Stiffness_density[0] = 0.0;
+  Stiffness_density[1] = 0.0;
+  Stiffness_density[2] = 0.0;
+  Stiffness_density[3] = 0.0;
 #else
-  No esta implementado
+  double u[3] = {0.0, 0.0, 0.0};
+  double v[3] = {0.0, 0.0, 0.0};
+  Stiffness_density[0] = 0.0;
+  Stiffness_density[1] = 0.0;
+  Stiffness_density[2] = 0.0;
+  Stiffness_density[3] = 0.0;
+  Stiffness_density[4] = 0.0;
+  Stiffness_density[5] = 0.0;
+  Stiffness_density[6] = 0.0;
+  Stiffness_density[7] = 0.0;
+  Stiffness_density[8] = 0.0;
 #endif
 
   STATUS = __compute_u_v(u, v, dN_alpha, dN_beta, IO_State.D_phi_n);
@@ -76,11 +93,8 @@ int compute_1PK_elastoplastic_tangent_matrix(double *Stiffness_density,
 #endif
 #endif
 
-#if NumberDimensions == 2
-  double eigval_T[2] = {0.0, 0.0};
-#else
+
   double eigval_T[3] = {0.0, 0.0, 0.0};
-#endif
 
   STATUS = __eigenvalues_kirchhoff(eigval_T, IO_State.Stress, IO_State.D_phi_n1);
   if (STATUS == EXIT_FAILURE) {
@@ -88,9 +102,12 @@ int compute_1PK_elastoplastic_tangent_matrix(double *Stiffness_density,
     return EXIT_FAILURE;
   }
 
+  double J2 = __compute_J2(eigval_T);
+
 #ifdef DEBUG_MODE
 #if DEBUG_MODE + 0
-  printf("eigval_T: [%e, %e] \n", eigval_T[0], eigval_T[1]);
+  printf("eigval_T: [%e, %e, %e] \n", eigval_T[0], eigval_T[1], eigval_T[2]);
+  printf("J2: %f\n",J2);
 #endif
 #endif
 
@@ -158,12 +175,19 @@ int compute_1PK_elastoplastic_tangent_matrix(double *Stiffness_density,
                                 (mv[A * Ndim + A][i] * mu[B * Ndim + B][j]);
 
           if (A != B) {
-            Stiffness_density[i * Ndim + j] +=
-                0.5 *
-                ((eigval_T[B] - eigval_T[A]) /
-                 (eigval_b_e[B] - eigval_b_e[A])) *
-                (eigval_b_e[B] * (mv[A * Ndim + B][i] * mu[A * Ndim + B][j]) +
-                 eigval_b_e[A] * (mv[A * Ndim + B][i] * mu[B * Ndim + A][j]));
+            if(J2 > TOL_NR)
+            {
+              Stiffness_density[i * Ndim + j] +=
+                  0.5 *
+                  ((eigval_T[B] - eigval_T[A]) /
+                  (eigval_b_e[B] - eigval_b_e[A])) *
+                  (eigval_b_e[B] * (mv[A * Ndim + B][i] * mu[A * Ndim + B][j]) +
+                  eigval_b_e[A] * (mv[A * Ndim + B][i] * mu[B * Ndim + A][j]));
+            }
+            else
+            {
+              Stiffness_density[i * Ndim + j] += 0.0;
+            }
           }
         }
       }
@@ -182,8 +206,8 @@ int compute_1PK_elastoplastic_tangent_matrix(double *Stiffness_density,
 #ifdef DEBUG_MODE
 #if DEBUG_MODE + 0
   puts("Stiffness_density_p: ");
-  printf("%e, %e\n", Stiffness_density_p[0], Stiffness_density_p[1]);
-  printf("%e, %e\n", Stiffness_density_p[2], Stiffness_density_p[3]);
+  printf("%e, %e\n", Stiffness_density[0], Stiffness_density[1]);
+  printf("%e, %e\n", Stiffness_density[2], Stiffness_density[3]);
 #endif
 #endif
 
@@ -457,7 +481,34 @@ unsigned Ndim = NumberDimensions;
 
   free(work);
 
+#if NumberDimensions == 2
+  eigval_T[2] = P[4];
+#endif
+
   return EXIT_SUCCESS;
+}
+
+/**************************************************************/
+
+static double __compute_J2(const double *T) {
+
+
+  double T_vol[3];
+  double T_dev[3];
+  double tr_T = T[0] + T[1] + T[2];
+
+  T_vol[0] = (1.0 / 3.0) * tr_T;
+  T_vol[1] = (1.0 / 3.0) * tr_T;
+  T_vol[2] = (1.0 / 3.0) * tr_T;
+
+  T_dev[0] = T[0] - T_vol[0];
+  T_dev[1] = T[1] - T_vol[1];
+  T_dev[2] = T[2] - T_vol[2];
+
+  double J2 = sqrt(T_dev[0] * T_dev[0] + T_dev[1] * T_dev[1] +
+             T_dev[2] * T_dev[2]);
+
+  return J2;
 }
 
 /**************************************************************/

@@ -1,6 +1,6 @@
 NLPS-Solver (Type=Newmark-beta-Finite-Strains) {
-    CFL=1.0
-    N=1530
+    CFL=0.1
+    N=1500
     Cel=70.71
     Epsilon=1.0
     Beta-Newmark-beta=0.25
@@ -48,7 +48,7 @@ One-Phase-Analysis (File=MPM_Mesh.msh,GPxElement=3) {
 }
 
 # Outputs 
-GramsOutputs (i=100) {
+GramsOutputs (i=10) {
   DIR=Resultados
   Out-stress=true
   Out-Equivalent-Plastic-Strain=true
