@@ -186,11 +186,11 @@ int Stress_integration__Particles__(int p, Particle MPM_Mesh, Mesh FEM_Mesh,
     *(IO_State.Kappa) = MPM_Mesh.Phi.Kappa_n[p];
     *(IO_State.EPS) = MPM_Mesh.Phi.EPS_n[p];
 
-  STATUS = compute_1PK_Matsuoka_Nakai(IO_State, MatProp_p);
-  if(STATUS == EXIT_FAILURE){
-    fprintf(stderr, ""RED"Error in compute_1PK_Matsuoka_Nakai(,)"RESET" \n");
-    return EXIT_FAILURE;
-  }
+    STATUS = compute_1PK_Matsuoka_Nakai(IO_State, MatProp_p);
+    if(STATUS == EXIT_FAILURE){
+      fprintf(stderr, ""RED"Error in compute_1PK_Matsuoka_Nakai(,)"RESET" \n");
+      return EXIT_FAILURE;
+    }
 
   }
   else if (strcmp(MatProp_p.Type, "Lade-Duncan") == 0) {

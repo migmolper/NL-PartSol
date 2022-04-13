@@ -37,7 +37,6 @@ static int __update_internal_variables_elastic(
 
 static int __tangent_moduli_elastic(
     double * C_ep /**< [out] Elastoplastic tanget moduli */,
-    const double * n /**< [in] Plastic flow direction. */, 
     double K /**< [in] First Lamé invariant. */,
     double G /**< [in] Second Lamé invariant. */);
 
@@ -335,7 +334,7 @@ int compute_1PK_Drucker_Prager(State_Parameters IO_State, Material MatProp)
         return EXIT_FAILURE;
       }
 
-      STATUS = __tangent_moduli_elastic(IO_State.C_ep, n, K, G);
+      STATUS = __tangent_moduli_elastic(IO_State.C_ep, K, G);
       if (STATUS == EXIT_FAILURE) {
         fprintf(stderr,
         "" RED "Error in __tangent_moduli_elastic()" RESET"\n");
@@ -1366,7 +1365,7 @@ static int __update_internal_variables_apex(
 
 /***************************************************************************/
 
-static int __tangent_moduli_elastic(double * C_ep, const double * n, double K, double G)
+static int __tangent_moduli_elastic(double * C_ep, double K, double G)
 {
 
   int STATUS = EXIT_SUCCESS;  
@@ -1395,8 +1394,7 @@ static int __tangent_moduli_elastic(double * C_ep, const double * n, double K, d
     {
       C_ep[i*Ndim + j] = 
       K*R2_Identity[i]*R2_Identity[j] +
-      2.0*G*(R4_Identity[i][j] - (1.0/3.0)*R2_Identity[i]*R2_Identity[j]) -
-      2.0*G*n[i]*n[j];
+      2.0*G*(R4_Identity[i][j] - (1.0/3.0)*R2_Identity[i]*R2_Identity[j]);
     }
   }
   

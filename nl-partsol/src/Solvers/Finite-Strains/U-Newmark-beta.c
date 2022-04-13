@@ -251,7 +251,8 @@ int U_Newmark_beta_Finite_Strains(Mesh FEM_Mesh, Particle MPM_Mesh,
       Iter, MaxIter, Error_i, Error_relative);
 
     }
-    
+
+
     print_convergence_stats(TimeStep, Iter, Error_0, Error_i, Error_relative);
 
     if(Iter > MaxIter)
@@ -1385,7 +1386,19 @@ static int __assemble_tangent_stiffness(
             fprintf(stderr, "" RED "Error in compute_1PK_elastoplastic_tangent_matrix" RESET "\n");
             return EXIT_FAILURE;
           }
-        }        
+        }  
+        else if (strcmp(MatProp_p.Type, "Matsuoka-Nakai") == 0) {
+          IO_State_p.D_phi_n1 = MPM_Mesh.Phi.F_n1.nM[p]; 
+          IO_State_p.D_phi_n = MPM_Mesh.Phi.F_n.nM[p];
+          IO_State_p.b_e = MPM_Mesh.Phi.b_e_n1.nM[p];
+          IO_State_p.Stress = MPM_Mesh.Phi.Stress.nM[p];
+          IO_State_p.C_ep = MPM_Mesh.Phi.C_ep.nM[p];
+          STATUS = compute_1PK_elastoplastic_tangent_matrix(Stiffness_density_p, d_shapefunction_pA, d_shapefunction_pB,IO_State_p);
+          if (STATUS == EXIT_FAILURE) {
+            fprintf(stderr, "" RED "Error in compute_1PK_elastoplastic_tangent_matrix" RESET "\n");
+            return EXIT_FAILURE;
+          }          
+        }      
         else {
           fprintf(stderr, "%s : %s %s %s \n",
           "Error in __assemble_tangent_stiffness()", "The material",
