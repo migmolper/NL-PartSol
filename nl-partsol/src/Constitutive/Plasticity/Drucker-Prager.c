@@ -452,7 +452,6 @@ int compute_1PK_Drucker_Prager(State_Parameters IO_State, Material MatProp)
         d_PHI = __d_yield_function_apex(d_gamma_k, d_gamma_1, d_kappa_k, K,
                                         alpha_F, alpha_Q, beta);
         if (fabs(d_PHI) < TOL) {
-          fprintf(stderr, "" RED "|d_PHI| = %e < TOL (apex loop)" RESET "\n",fabs(d_PHI));
           break;
         }
 

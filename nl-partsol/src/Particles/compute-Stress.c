@@ -183,8 +183,8 @@ int Stress_integration__Particles__(int p, Particle MPM_Mesh, Mesh FEM_Mesh,
 #else
   for (unsigned i = 0 ; i<9 ; i++) IO_State.b_e[i] = MPM_Mesh.Phi.b_e_n.nM[p][i]; 
 #endif
-    *(IO_State.Kappa) = MPM_Mesh.Phi.Kappa_n[p];
-    *(IO_State.EPS) = MPM_Mesh.Phi.EPS_n[p];
+  *(IO_State.Kappa) = MPM_Mesh.Phi.Kappa_n[p];
+  *(IO_State.EPS) = MPM_Mesh.Phi.EPS_n[p];
 
     STATUS = compute_1PK_Matsuoka_Nakai(IO_State, MatProp_p);
     if(STATUS == EXIT_FAILURE){

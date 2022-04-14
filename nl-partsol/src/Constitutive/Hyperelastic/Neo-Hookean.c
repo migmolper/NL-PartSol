@@ -55,7 +55,7 @@ int compute_1PK_Stress_Tensor_Neo_Hookean_Wriggers(
   double D_phi_mT[9];
 #endif
 
-  compute_adjunt__TensorLib__(D_phi_mT,D_phi_n1);
+  STATUS = compute_adjunt__TensorLib__(D_phi_mT,D_phi_n1);
   if (STATUS == EXIT_FAILURE) {
     fprintf(stderr,"" RED "Error in compute_adjunt__TensorLib__" RESET "\n");
     return EXIT_FAILURE;

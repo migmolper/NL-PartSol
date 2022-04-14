@@ -25,7 +25,6 @@ typedef struct {
   bool Is_a1_Hardening_Borja;        // Hardening parameter
   bool Is_a2_Hardening_Borja;        // Hardening parameter
   bool Is_a3_Hardening_Borja;        // Hardening parameter
-  bool Is_atmospheric_pressure;      // Reference pressure
   bool Is_friction_angle;           // Friction angle
   bool Is_dilatancy_parameter;        // dilatancy parameter
   bool Is_Reference_plastic_strain; // Reference Plastic Strain
@@ -111,11 +110,6 @@ int Define_Matsuoka_Nakai(Material * MN_Material,FILE *Simulation_file, char *Ma
       (*MN_Material).a_Hardening_Borja[2] = atof(Parameter_pars[1]);
     }
     /**************************************************/
-    else if (strcmp(Parameter_pars[0], "Atmospheric-pressure") == 0) {
-      ChkMat.Is_atmospheric_pressure = true;
-      (*MN_Material).atmospheric_pressure = atof(Parameter_pars[1]);
-    }
-    /**************************************************/
     else if (strcmp(Parameter_pars[0], "Reference-pressure") == 0) {
       ChkMat.Is_Reference_pressure = true;
       (*MN_Material).ReferencePressure = atof(Parameter_pars[1]);
@@ -158,6 +152,12 @@ int Define_Matsuoka_Nakai(Material * MN_Material,FILE *Simulation_file, char *Ma
 
   strcpy((*MN_Material).Type, Material_Model); 
 
+  if(ChkMat.Is_friction_angle == false)
+  {
+    (*MN_Material).phi_Frictional = 
+    (180.0 / PI__MatrixLib__)*asin(sqrt((*MN_Material).kappa_0/((*MN_Material).kappa_0+8.0)));
+  }
+  
   STATUS = __check_material(MN_Material, ChkMat, Material_Idx);
   if(STATUS == EXIT_FAILURE)
   {
@@ -181,7 +181,6 @@ static Check_Material Initialise_Check_Material() {
   ChkMat.Is_a1_Hardening_Borja = false;
   ChkMat.Is_a2_Hardening_Borja = false;
   ChkMat.Is_a3_Hardening_Borja = false;
-  ChkMat.Is_atmospheric_pressure = false;
   ChkMat.Is_kappa_0 = false;
   ChkMat.Is_dilatancy_parameter = false;
   ChkMat.Is_J2_degradated = false;
@@ -198,7 +197,7 @@ static int __check_material(Material * MN_Material, Check_Material ChkMat, int I
 
   int STATUS = EXIT_SUCCESS;
 
-  if (ChkMat.Is_rho && ChkMat.Is_E && ChkMat.Is_nu && ChkMat.Is_atmospheric_pressure &&
+  if (ChkMat.Is_rho && ChkMat.Is_E && ChkMat.Is_nu && 
       ChkMat.Is_dilatancy_parameter && ChkMat.Is_a1_Hardening_Borja &&
       ChkMat.Is_a2_Hardening_Borja && ChkMat.Is_a3_Hardening_Borja) {
 
@@ -210,8 +209,6 @@ static int __check_material(Material * MN_Material, Check_Material ChkMat, int I
 
     printf("\t \t -> %s : %f \n", ""MAGENTA"[nu]"RESET"", (*MN_Material).nu);
  
-    printf("\t \t -> %s : %f \n", ""MAGENTA"[Atmospheric-pressure]"RESET"", (*MN_Material).atmospheric_pressure);
-
     printf("\t \t -> %s : %f \n", ""MAGENTA"[Friction-angle]"RESET"", (*MN_Material).phi_Frictional);
 
     printf("\t \t -> %s : %f \n", ""MAGENTA"[Kappa-0]"RESET"", (*MN_Material).kappa_0);
@@ -249,10 +246,6 @@ static int __check_material(Material * MN_Material, Check_Material ChkMat, int I
     ""MAGENTA"[nu]"RESET" : "GREEN"true"RESET" \n"  : 
     ""MAGENTA"[nu]"RESET" : "RED"false"RESET" \n",stderr);
     
-    fputs(ChkMat.Is_atmospheric_pressure ? 
-    ""MAGENTA"[Atmospheric-pressure]"RESET" : "GREEN"true \n":
-    ""MAGENTA"[Atmospheric-pressure]"RESET" : "RED"false \n",stdout);
-
     fputs(ChkMat.Is_friction_angle ? 
     ""MAGENTA"[Friction-angle]"RESET" : "GREEN"true"RESET" \n":
     ""MAGENTA"[Friction-angle]"RESET" : "RED"false"RESET" \n",stderr);
