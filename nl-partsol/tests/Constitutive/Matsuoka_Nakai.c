@@ -673,7 +673,9 @@ int compute_1PK_Matsuoka_Nakai(State_Parameters IO_State, Material MatProp)
   int Iter_k1 = 0;
   int Iter_k2 = 0;
 
-  __trial_elastic(T_tr, E_hencky_trial, AA, c_cotphi);
+  T_tr[0] = IO_State.Stress[0] - c_cotphi;
+  T_tr[1] = IO_State.Stress[1] - c_cotphi;
+  T_tr[2] = IO_State.Stress[2] - c_cotphi;
 
   I1 = T_tr[0] + T_tr[1] + T_tr[2];
   I2 = T_tr[0] * T_tr[1] + T_tr[1] * T_tr[2] + T_tr[0] * T_tr[2];
@@ -681,6 +683,18 @@ int compute_1PK_Matsuoka_Nakai(State_Parameters IO_State, Material MatProp)
 
   // Check yield
   __F(&F_0, kappa_n[0], I1, I2, I3);
+
+#ifdef DEBUG_MODE
+#if DEBUG_MODE + 0
+  printf("Initial value of the yield function: %e \n", F_0);
+  printf("T trial: [%e, %e, %e] \n", T_tr[0], T_tr[1], T_tr[2]);
+#endif
+#endif
+
+  // Assign trial (elastic) stress-strain values
+  T_k1[0] = T_tr[0];
+  T_k1[1] = T_tr[1];
+  T_k1[2] = T_tr[2];
 
   // Elastic
   if (F_0 <= TOL) {
