@@ -17,10 +17,7 @@
 #include "Globals.h"
 #include "Matlib.h"
 
-
-/*
-  Auxiliar functions
-*/
+/**************************************************************/
 
 static int __compute_trial_b_e(
     double *eigval_b_e_tr /**< [out] Eigenvalues of b elastic trial. */,
@@ -166,9 +163,6 @@ static int __reciprocal_condition_number(
 /**************************************************************/
 
 int compute_1PK_Matsuoka_Nakai(State_Parameters IO_State, Material MatProp)
-/*
-  Monolithic algorithm for a smooth Mohr-Coulomb plastic criterium
-*/
 {
 
   int STATUS = EXIT_SUCCESS;
@@ -226,7 +220,7 @@ int compute_1PK_Matsuoka_Nakai(State_Parameters IO_State, Material MatProp)
   double delta_lambda_k1;
   double delta_lambda_k2;
 
-   // Define tensorial internal variables
+  // Define tensorial internal variables
   double T_tr[3] = {0.0, 0.0, 0.0}; // Trial elastic stress
   double T_k1[3];                   // Stress iteration k
   double T_k2[3];                   // Stress iteration k (line search)
@@ -244,9 +238,7 @@ int compute_1PK_Matsuoka_Nakai(State_Parameters IO_State, Material MatProp)
   double d_F_d_stress[3] = {0.0, 0.0, 0.0};
   double d_F_d_kappa_phi = 0;
 
-  /*
-    Initialize Newton-Raphson solver
-  */
+  // Initialize Newton-Raphson solver
   double TOL = 1E-10;// TOL_Radial_Returning;
   double Residual_k1[5] = {0.0, 0.0, 0.0};
   double Residual_k2[5] = {0.0, 0.0, 0.0};
@@ -276,7 +268,7 @@ int compute_1PK_Matsuoka_Nakai(State_Parameters IO_State, Material MatProp)
   T_k1[2] = T_tr[2];  
 
   // Elastic
-  if (F_0 <= TOL) {
+  if (F_0 <= 0.0) {
 
     STATUS = __update_internal_variables_elastic(
         IO_State.Stress, IO_State.D_phi_n1, T_k1, eigvec_b_e_tr, c_cotphi);
@@ -330,6 +322,7 @@ int compute_1PK_Matsuoka_Nakai(State_Parameters IO_State, Material MatProp)
       // Evaluate hardening derivatives
       __d_kappa_phi_d_stress(d_kappa_phi_d_stress, a, Lambda_k1, I1);
       __d_kappa_phi_d_lambda(&d_kappa_phi_d_lambda, a, Lambda_k1, I1);
+
       // Evaluate yield function derivatives
       __d_F_d_stress(d_F_d_stress, T_k1, I1, I2, I3, kappa_k1[0]);
       __d_F_d_kappa_phi(&d_F_d_kappa_phi, I1, I3, kappa_k1[0]);
@@ -372,7 +365,14 @@ int compute_1PK_Matsuoka_Nakai(State_Parameters IO_State, Material MatProp)
       Tangent_Matrix[22] = d_F_d_stress[2];
       Tangent_Matrix[23] = d_F_d_kappa_phi;
       Tangent_Matrix[24] = 0.0;
-      
+
+      // Introduce a preconditioner
+      Tangent_Matrix[0] += Residual_k1[0];
+      Tangent_Matrix[6] += Residual_k1[1];
+      Tangent_Matrix[12] += Residual_k1[2];
+      Tangent_Matrix[18] += Residual_k1[3];
+      Tangent_Matrix[24] += Residual_k1[4];
+
       // Compute increments and update variables
       STATUS = __solver(Tangent_Matrix, Residual_k1);
       if (STATUS == EXIT_FAILURE) {
@@ -460,7 +460,10 @@ int compute_1PK_Matsuoka_Nakai(State_Parameters IO_State, Material MatProp)
         I3 = T_k2[0] * T_k2[1] * T_k2[2];
 
         if (Lambda_k2 < 0.0) {
-          fprintf(stderr, "" RED "Lambda_k < 0.0" RESET "\n");
+          fprintf(stderr,
+                  "" RED "Negative value of Lambda (line search): %f " RESET
+                  "\n",
+                  Lambda_k2);
           return EXIT_FAILURE;
         }
 
@@ -523,14 +526,13 @@ int compute_1PK_Matsuoka_Nakai(State_Parameters IO_State, Material MatProp)
                   rcond);
                   return EXIT_FAILURE;
         }
+
+        Lambda_k1 = Lambda_n;
+        kappa_k1[0] = kappa_n[0];
+
         break;
       }
     }
-
-    if (Iter_k1 == MaxIter_k1) {
-      Lambda_k1 = Lambda_n;
-      kappa_k1[0] = kappa_n[0];
-    }    
 
     STATUS = __update_internal_variables_plastic(IO_State.Stress,IO_State.EPS,
      IO_State.Kappa,IO_State.D_phi_n1,T_k1,eigvec_b_e_tr,Lambda_k1, kappa_k1[0], c_cotphi);    
@@ -547,9 +549,9 @@ int compute_1PK_Matsuoka_Nakai(State_Parameters IO_State, Material MatProp)
         return EXIT_FAILURE;
       }
     }
+
   }
   
-
   __corrector_b_e(IO_State.b_e, eigvec_b_e_tr, E_hencky_k1);
 
   return EXIT_SUCCESS;
@@ -560,7 +562,6 @@ int compute_1PK_Matsuoka_Nakai(State_Parameters IO_State, Material MatProp)
 
 static int __compute_trial_b_e(double *eigval_b_e_tr, double *eigvec_b_e_tr,
                                const double *b_e, const double *d_phi) {
-
   unsigned Ndim = NumberDimensions;
 
   for (unsigned i = 0; i < Ndim; i++) {
@@ -670,7 +671,6 @@ static int __compute_trial_b_e(double *eigval_b_e_tr, double *eigvec_b_e_tr,
 
 static void __corrector_b_e(double *b_e, const double *eigvec_b_e_tr,
                            const double *E_hencky_trial) {
-
   unsigned Ndim = NumberDimensions;
 
   double eigval_b_e[3] = {0.0, 0.0, 0.0};
@@ -713,7 +713,6 @@ static void __corrector_b_e(double *b_e, const double *eigvec_b_e_tr,
 #if NumberDimensions == 2
   b_e[4] = eigval_b_e[2];
 #endif
-
 }
 
 /**************************************************************/
@@ -770,7 +769,6 @@ static void __E_hencky(double *E_hencky_k,
                       const double *T_k, 
                       const double *CC, 
                       double c_cotphi) {
-
   E_hencky_k[0] = CC[0] * (T_k[0] + c_cotphi) 
                 + CC[1] * (T_k[1] + c_cotphi) 
                 + CC[2] * (T_k[2] + c_cotphi);
@@ -789,19 +787,14 @@ static int __update_internal_variables_elastic(double *Stress,
                                                const double *T_tr,
                                                const double *eigvec_b_e_tr,
                                                double c_cotphi) {
-
-
   int STATUS = EXIT_SUCCESS;
   int Ndim = NumberDimensions;
 
   // Compute the adjunt of D_phi
 #if NumberDimensions == 2
-
   double D_phi_mT[4] = {0.0, 0.0, 0.0, 0.0};
-
 #else
   double D_phi_mT[9] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
-
 #endif
 STATUS = compute_adjunt__TensorLib__(D_phi_mT, D_phi);
 if (STATUS == EXIT_FAILURE) {
@@ -880,7 +873,6 @@ static void __elastic_tangent_moduli(
   double * C_ep, 
   const double * AA)
 {
-
 #if NumberDimensions == 2
     C_ep[0] = AA[0];
     C_ep[1] = AA[1];
@@ -897,15 +889,12 @@ static void __elastic_tangent_moduli(
     C_ep[7] = AA[7];
     C_ep[8] = AA[8];           
 #endif
-  
 }
-
 
 /**************************************************************/
 
 static void __kappa(double *kappa, const double *a, double Lambda, double I1,
                    double alpha) {
-
   kappa[0] = a[0] * Lambda * exp(a[1] * I1) * exp(-a[2] * Lambda);
   kappa[1] = alpha * kappa[0];
 }
@@ -914,7 +903,6 @@ static void __kappa(double *kappa, const double *a, double Lambda, double I1,
 
 static void __d_kappa_phi_d_stress(double *d_kappa_phi_d_stress, const double *a,
                                   double Lambda, double I1) {
-
   d_kappa_phi_d_stress[0] =
       a[0] * a[1] * Lambda * exp(a[1] * I1) * exp(-a[2] * Lambda);
   d_kappa_phi_d_stress[1] =
@@ -927,7 +915,6 @@ static void __d_kappa_phi_d_stress(double *d_kappa_phi_d_stress, const double *a
 
 static void __d_kappa_phi_d_lambda(double *d_kappa_phi_d_lambda, const double *a,
                                   double Lambda, double I1) {
-
   *d_kappa_phi_d_lambda =
       (1 - a[2] * Lambda) * a[0] * exp(a[1] * I1) * exp(-a[2] * Lambda);
 }
@@ -935,7 +922,6 @@ static void __d_kappa_phi_d_lambda(double *d_kappa_phi_d_lambda, const double *a
 /**************************************************************/
 
 static double __F(double * F, double kappa_phi, double I1, double I2, double I3) {
-
   double K1 = 9.0 + kappa_phi;
 
   *F = cbrt(K1 * I3) - cbrt(I1 * I2);
@@ -956,14 +942,12 @@ static void __d_F_d_stress(double *d_F_d_stress, const double *T_k, double I1,
   d_F_d_stress[0] = cbrt(K1 * I3) / (3.0 * T_k[0]) - Grad_f[0];
   d_F_d_stress[1] = cbrt(K1 * I3) / (3.0 * T_k[1]) - Grad_f[1];
   d_F_d_stress[2] = cbrt(K1 * I3) / (3.0 * T_k[2]) - Grad_f[2];
-
 }
 
 /**************************************************************/
 
 static void __d_F_d_kappa_phi(double *d_F_d_kappa_phi, double I1, double I3,
                              double kappa_phi) {
-
   double K1 = 9.0 + kappa_phi;
 
   *d_F_d_kappa_phi = (1.0 / 3.0) * pow(cbrt(K1), -2.0) * cbrt(I3);
@@ -973,7 +957,6 @@ static void __d_F_d_kappa_phi(double *d_F_d_kappa_phi, double I1, double I3,
 
 static void __d_G_d_stress(double *d_G_d_stress, const double *T_k, double I1,
                           double I2, double I3, double kappa_psi) {
-
   double Grad_g[3] = {0.0, 0.0, 0.0};
   double K2 = 9.0 + kappa_psi;
 
@@ -990,7 +973,6 @@ static void __d_G_d_stress(double *d_G_d_stress, const double *T_k, double I1,
 
 static void __dd_G_dd_stress(double *dd_G_dd_stress, const double *T_k,
                             double kappa_psi, double I1, double I2, double I3) {
-
   double K2 = 9.0 + kappa_psi;
 
   double d_g_d_stress[3];
@@ -1023,7 +1005,6 @@ static void __dd_G_dd_stress(double *dd_G_dd_stress, const double *T_k,
 static void __dd_G_d_stress_d_kappa_psi(double *dd_G_d_stress_d_kappa_psi,
                                        const double *T_k, double I1, double I3,
                                        double kappa_psi) {
-
   double K2 = 9.0 + kappa_psi;
 
   dd_G_d_stress_d_kappa_psi[0] = (cbrt(I3) / (3.0 * T_k[0])) / (3.0 * pow(cbrt(K2), 2));
@@ -1038,7 +1019,6 @@ static int __residual(double *Residual, double *Error_k,
                       const double *d_G_d_stress, const double *kappa_k,
                       const double *kappa_hat, double F_k,
                       double delta_lambda_k) {
-
   Residual[0] =
       E_hencky_k[0] - E_hencky_trial[0] + delta_lambda_k * d_G_d_stress[0];
   Residual[1] =
@@ -1086,7 +1066,6 @@ static int __reciprocal_condition_number(double *RCOND, double *Tangent_Matrix)
   Tangent_Matrix in 1-norm.
 */
 {
-
   double ANORM;
   int INFO;
   int N_rows = 5;
@@ -1203,7 +1182,6 @@ static int __update_internal_variables_plastic(
 
   // Compute the transpose of D_phi
 #if NumberDimensions == 2
-
   double D_phi_mT[4] = {0.0, 0.0, 0.0, 0.0};
   D_phi_mT[0] = D_phi[0];
   D_phi_mT[1] = D_phi[2];
@@ -1238,7 +1216,6 @@ static int __update_internal_variables_plastic(
   int LWORK = 3;
   int IPIV[3] = {0, 0, 0};
   double WORK[3] = {0, 0, 0};
-
 #endif
 
   // The factors L and U from the factorization A = P*L*U
@@ -1287,7 +1264,6 @@ static int __update_internal_variables_plastic(
 
 #ifdef DEBUG_MODE
 #if DEBUG_MODE + 0
-
   puts("Adjunt of the deformation gradient");
 #if NumberDimensions == 2
   printf("%f %f %f \n", D_phi_mT[0], D_phi_mT[1], 0.0);
@@ -1357,7 +1333,6 @@ static int __elastoplastic_tangent_moduli(
   const double * dd_G_dd_stress,
   double delta_lambda_k)
 {
-
   double C_ep_aux[9];
 
   C_ep_aux[0] = CC[0] + delta_lambda_k * dd_G_dd_stress[0];

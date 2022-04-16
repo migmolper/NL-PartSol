@@ -24,8 +24,8 @@ Define-Material(idx=0,Model=Matsuoka-Nakai)
   a2=0.0
   a3=0.0
   Reference-pressure=0.0
-  EPS-0=1.065199
-  kappa-0=4.543
+  EPS-0=0.001335
+  kappa-0=2.67
   Cohesion=10.0
 }
 

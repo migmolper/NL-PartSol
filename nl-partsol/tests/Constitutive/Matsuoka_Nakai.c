@@ -17,7 +17,7 @@
 #define Delta_strain_II -0.00001
 #define Confining_pressure -20.0
 */
-
+/*
 // Borja
 #define NumberDimensions 2
 #define YoungMouduls 100.0E3
@@ -33,8 +33,8 @@
 #define Confining_pressure -200.0
 #define EPS_0 0.0
 #define kappa_0 0.0
+*/
 
-/*
 // Borja
 #define NumberDimensions 2
 #define YoungMouduls 10.0E3
@@ -50,7 +50,6 @@
 #define Confining_pressure -20.0
 #define EPS_0 1.065199
 #define kappa_0 4.543
-*/
 
 /*
 Unitary test for the smooth Mohr-Coulomb model.
@@ -705,7 +704,7 @@ int compute_1PK_Matsuoka_Nakai(State_Parameters IO_State, Material MatProp)
     IO_State.Strain_e[0] = IO_State.Strain[0];
     IO_State.Strain_e[1] = IO_State.Strain[1];
     IO_State.Strain_e[2] = IO_State.Strain[2];
-    *IO_State.EPS = Lambda_n;
+    //    *IO_State.EPS = Lambda_n;
 
   }
   // Plastic (monolithic solver with line search)
