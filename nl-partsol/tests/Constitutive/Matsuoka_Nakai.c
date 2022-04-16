@@ -697,7 +697,7 @@ int compute_1PK_Matsuoka_Nakai(State_Parameters IO_State, Material MatProp)
   T_k1[2] = T_tr[2];
 
   // Elastic
-  if (F_0 <= TOL) {
+  if (F_0 <= 0.0) {
 
     IO_State.Stress[0] = T_k1[0] + c_cotphi;
     IO_State.Stress[1] = T_k1[1] + c_cotphi;
