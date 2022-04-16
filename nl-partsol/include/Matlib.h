@@ -105,20 +105,63 @@ double inner_product__TensorLib__(Tensor, Tensor);
 Tensor vector_product__TensorLib__(Tensor, Tensor);
 Tensor dyadic_Product__TensorLib__(Tensor, Tensor);
 Tensor vector_linear_mapping__TensorLib__(Tensor, Tensor);
-Tensor matrix_product__TensorLib__(Tensor, Tensor);
+Tensor matrix_product_old__TensorLib__(Tensor, Tensor);
+/*******************************************************/
+/*!
+  \fn void matrix_product__TensorLib__(double * Output,const double * input_A,const double * input_B);
+
+  \brief Compute the product between two second order tensors
+
+  \param Output: [out] Result of the matrix multiplication
+  \param input_A : [in] Tensor A
+  \param input_B : [in] Tensor B
+*/
+void matrix_product__TensorLib__(double * Output,const double * input_A,const double * input_B);
+/*******************************************************/
+
 Tensor Convex_combination__TensorLib__(Tensor, Tensor, double);
-Tensor volumetric_component__TensorLib__(Tensor);
-Tensor deviatoric_component__TensorLib__(Tensor, Tensor);
-Tensor rotate__TensorLib__(Tensor, Tensor);
-Tensor symmetrise__TensorLib__(Tensor);
+
 void covariant_push_forward_tensor__TensorLib__(Tensor, Tensor, Tensor);
 void contravariant_push_forward_tensor__TensorLib__(Tensor, Tensor, Tensor);
 void covariant_pull_back_tensor__TensorLib__(Tensor, Tensor, Tensor);
 void contravariant_pull_back_tensor__TensorLib__(Tensor, Tensor, Tensor);
 void print__TensorLib__(Tensor);
 
+
 /*******************************************************/
 
+/*!
+  \fn int compute_inverse__TensorLib__(double * A_m1, const double * A);
+
+  \brief Compute the inverse of a tensor
+
+  \param A_m1 : [out] Inverse of the tensor
+  \param A : [in] Tensor
+*/
+int compute_inverse__TensorLib__(double * A_m1, const double * A);
+/*******************************************************/
+
+/*!
+  \fn int compute_adjunt__TensorLib__(double * A_mT, const double * A);
+
+  \brief Compute the adjunt of a tensor
+
+  \param b : [out] Adjunt of the tensor
+  \param F : [in] Tensor
+*/
+int compute_adjunt__TensorLib__(double * A_mT, const double * A);
+/*******************************************************/
+
+/*!
+  \fn void symmetrise__TensorLib__(double * symA, const double * A);
+
+  \brief Compute the symmetric conterpart of a tensor
+
+  \param symA : [out] Symmetric part of a tensor
+  \param A : [in] Tensor
+*/
+void symmetrise__TensorLib__(double * symA, const double * A);
+/*******************************************************/
 
 /* LAPACK interfase of the program */
 Matrix solve_system_LAPACK(Matrix,Matrix);

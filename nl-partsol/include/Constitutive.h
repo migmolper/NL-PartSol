@@ -76,11 +76,20 @@ Tensor compute_stiffness_density_Saint_Venant_Kirchhoff(Tensor, Tensor, Material
 double energy_Neo_Hookean_Wriggers(Tensor, double, Material);
 /*******************************************************/
 
-
 /*!
+  \fn int compute_1PK_Stress_Tensor_Neo_Hookean_Wriggers(State_Parameters IO_State,Material MatProp);
 
+  \brief Compute the First Piola-Kirchhoff stress tensor of a Neo-Hookean material 
+
+  \param Input_SP : State parameters of the particle
+  \param MatProp : Material properties of the model
 */
-State_Parameters compute_1PK_Stress_Tensor_Neo_Hookean_Wriggers(State_Parameters, Material);
+int compute_1PK_Stress_Tensor_Neo_Hookean_Wriggers(
+  State_Parameters IO_State,
+  Material MatProp);
+/*******************************************************/
+
+
 Tensor compute_2PK_Stress_Tensor_Neo_Hookean_Wriggers(Tensor, Tensor, double, Material);
 /*******************************************************/
 
@@ -99,25 +108,14 @@ Tensor compute_2PK_Stress_Tensor_Neo_Hookean_Wriggers(Tensor, Tensor, double, Ma
 Tensor compute_material_stiffness_density_Neo_Hookean_Wriggers(Tensor, Tensor, Tensor, double, Material);
 /*******************************************************/
 
-/*
-Tensor compute_stiffness_density_Neo_Hookean_Wriggers(Tensor GRAD_I, Tensor GRAD_J, Tensor F, double J,Material MatProp)
-*/
-Tensor compute_stiffness_density_Neo_Hookean_Wriggers(Tensor, Tensor, Tensor, double, Material);
+
+int compute_stiffness_density_Neo_Hookean_Wriggers(
+  double * Stiffness_Density,
+  const double * dN_alpha_n,
+  const double * dN_beta_n, 
+  State_Parameters IO_State_p,
+  Material MatProp);
 /*******************************************************/  
-
-Matrix compute_D_matrix_Neo_Hookean_Wriggers(Tensor, double, Material);
-/*******************************************************/
-
-/*!
-  \fn State_Parameters Von_Mises_backward_euler(State_Parameters Input_SP, Material MatProp)
-
-  \brief Compute the plastic Von Mises model using an implicit backward euler radial returning 
-
-  \param Input_SP : State parameters of the particle
-  \param MatProp : Material properties of the model
-*/
-State_Parameters Von_Mises_backward_euler(State_Parameters, Material);
-/*******************************************************/
 
 /*!
   \fn State_Parameters Von_Mises_forward_euler(State_Parameters Input_SP, Material MatProp)
@@ -130,44 +128,74 @@ State_Parameters Von_Mises_backward_euler(State_Parameters, Material);
 State_Parameters Von_Mises_forward_euler(State_Parameters, Material);
 /*******************************************************/
 
+/*!
+  \fn int compute_1PK_Von_Mises(State_Parameters IO_State, Material MatProp)
+  
+  \brief Compute Von Mises yield
 
-State_Parameters Drucker_Prager_backward_euler(State_Parameters, Material);
+  \param Input_SP : State parameters of the particle
+  \param MatProp : Material properties of the model
+
+*/
+int compute_1PK_Von_Mises(State_Parameters IO_State, Material MatProp);
+/*******************************************************/
+
+
+int compute_1PK_Drucker_Prager(State_Parameters IO_State, Material MatProp);
 /*******************************************************/
 
 /*!
-  \fn State_Parameters Frictional_Monolithic(State_Parameters Inputs_SP,Material MatProp)
+  \fn int compute_1PK_Matsuoka_Nakai(State_Parameters IO_State, Material MatProp)
 
   \brief Compute a family of smooth approximations of the Mohr-Coulomb model using a monolithic algorithm
 
   \param Input_SP : State parameters of the particle
   \param MatProp : Material properties of the model
 */
-State_Parameters Frictional_Monolithic(State_Parameters,Material);
+int compute_1PK_Matsuoka_Nakai(State_Parameters IO_State, Material MatProp);
 /*******************************************************/
 
 /*!
-  \fn State_Parameters Von_Mises_forward_euler(State_Parameters Input_SP, Material MatProp)
+  \fn int compute_1PK_Lade_Duncan(State_Parameters IO_State, Material MatProp)
 
-  \brief Compute the plastic Von Mises model using an explicit forward euler radial returning 
+  \brief Compute a family of smooth approximations of the Mohr-Coulomb model using a monolithic algorithm
 
   \param Input_SP : State parameters of the particle
   \param MatProp : Material properties of the model
 */
-State_Parameters finite_strain_plasticity(State_Parameters,Material,State_Parameters(* infinitesimal_plasticity)(State_Parameters,Material));
+int compute_1PK_Lade_Duncan(State_Parameters IO_State, Material MatProp);
+/*******************************************************/
+
+/*!
+  \fn int compute_1PK_Modified_Lade_Duncan(State_Parameters IO_State, Material MatProp)
+
+  \brief Compute a family of smooth approximations of the Mohr-Coulomb model using a monolithic algorithm
+
+  \param Input_SP : State parameters of the particle
+  \param MatProp : Material properties of the model
+*/
+int compute_1PK_Modified_Lade_Duncan(State_Parameters IO_State, Material MatProp);
 /*******************************************************/
 
 /*!
 
-  \fn State_Parameters compute_1PK_Stress_Tensor_Newtonian_Fluid(Tensor P,State_Parameters Input_SP, Material MatProp_p)
+  \fn int compute_1PK_Stress_Tensor_Newtonian_Fluid(State_Parameters IO_State,Material MatProp_p);
+
+  \brief Compute the First Piola-Kirchhoff stress tensor of a Newtonian fluid 
+
+  \param Input_SP : State parameters of the particle
+  \param MatProp : Material properties of the model
 
 */
-State_Parameters compute_1PK_Stress_Tensor_Newtonian_Fluid(State_Parameters,Material);
+int compute_1PK_Stress_Tensor_Newtonian_Fluid(State_Parameters IO_State,Material MatProp_p);
 /*******************************************************/
 
-/*!
-\fn Tensor compute_stiffness_density_Newtonian_Fluid(Tensor GRAD_I,Tensor GRAD_J,Tensor F,Tensor dFdt,double J,double alpha4,Material MatProp_p)
-*/
-Tensor compute_stiffness_density_Newtonian_Fluid(Tensor,Tensor,Tensor,Tensor,double,double,Material);
+int compute_stiffness_density_Newtonian_Fluid(
+  double * Stiffness_Density,
+  const double * dN_alpha_n,
+  const double * dN_beta_n, 
+  State_Parameters IO_State,
+  Material MatProp);
 /*******************************************************/
 
 /*!
@@ -193,6 +221,10 @@ State_Parameters compute_1PK_Stress_Tensor_Bingham_Fluid(State_Parameters,Materi
  * */ 
 Tensor compute_stiffness_density_Bingham_Fluid(Tensor,Tensor,Tensor,Tensor,double, double,Material);
 /*******************************************************/
+
+
+
+int compute_1PK_elastoplastic_tangent_matrix(double *Stiffness_density, const double *dN_alpha, const double *dN_beta, const State_Parameters IO_State);
 
 #endif
 

@@ -1,0 +1,65 @@
+NLPS-Solver (Type=NPC-FS) {
+    CFL=0.01
+    N=200
+    Cel=50
+    i0=0
+}
+
+GramsBox (Type=GID,File=Nodes.msh) { 
+
+	 GramsBoundary (File=Bottom.txt) { 
+		 BcDirichlet V.x Curve_Constant.txt 
+		 BcDirichlet V.y Curve_Constant.txt 
+	 } 
+
+	 GramsBoundary (File=Sides.txt) { 
+		 BcDirichlet V.x Curve_Constant.txt 
+		 BcDirichlet V.y NULL 
+	 } 
+
+	 GramsBoundary (File=Surface_I.txt) { 
+		 BcDirichlet V.x Curve_Constant.txt
+		 BcDirichlet V.y Curve_Surface_I.txt
+	 }
+
+	 GramsBoundary (File=Surface_II.txt) { 
+		 BcDirichlet V.x Curve_Constant.txt 
+		 BcDirichlet V.y Curve_Surface_II.txt 
+	 } 
+	 
+}
+
+Define-Material(idx=0,Model=Matsuoka-Nakai)
+{
+  rho=2000.0
+  E=5E6
+  nu=0.3
+  alpha=0.5
+  a1=100E3
+  a2=0.01
+  a3=5.0
+  Atmospheric-pressure=-100E3
+  Friction-angle=30
+}
+ 
+
+
+One-Phase-Analysis (File=Particles.msh,GPxElement=4) {
+
+   Assign-material-to-particles (MatIdx=0, Particles=Particles_Soil.txt)
+
+   GramsShapeFun (Type=FEM) {
+   }
+
+  
+} 
+
+GramsOutputs (i=1) { 
+    DIR=Resultados
+    Out-material-idx=true
+    Out-displacement=true
+    Out-Equivalent-Plastic-Strain=true
+    Out-stress=true
+    Out-volumetric-stress=true
+    Out-deformation-gradient=true
+} 

@@ -1,0 +1,58 @@
+
+NLPS-Solver (Type=Newmark-beta-Finite-Strains) {
+    CFL=1.0
+    N=1530
+    Cel=44.77
+    Epsilon=1.0
+    Beta-Newmark-beta=0.25
+    Gamma-Newmark-beta=0.5
+    TOL-Newmark-beta=1E-10
+}
+
+# Background mesh definition
+GramsBox (Type=GID,File=Nodes.msh) {
+
+	 GramsBoundary (File=Walls_x.txt) { 
+	 	BcDirichlet V.x NULL
+	 	BcDirichlet V.y Curve_Constant.txt
+	 }
+	 
+	 GramsBoundary (File=Walls_y.txt)  {
+    		BcDirichlet V.y NULL
+    		BcDirichlet V.x Curve_Constant.txt
+  	 }
+
+}
+
+
+Define-Material(idx=0,Model=Newtonian-Fluid-Compressible)
+{
+	rho=997.5
+	Compressibility=2E6
+	Reference-Pressure=0.0
+	Viscosity=0.001
+	Macdonald-parameter=7
+}
+
+
+One-Phase-Analysis (File=Particles.msh,GPxElement=9) {
+
+	Assign-material-to-particles (MatIdx=0, Particles=Water.txt)
+
+	GramsShapeFun (Type=FEM) {
+    	}
+
+    	GramsBodyForces (Nodes=Water.txt) {
+		b.y Gravity_Load.txt
+    	}
+  
+}
+
+# Outputs 
+GramsOutputs (i=10) {
+  DIR=Resultados
+  Out-displacement=true
+  Out-velocity=true 
+  Out-stress=true
+  Out-volumetric-stress=true
+}

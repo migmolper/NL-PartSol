@@ -15,7 +15,7 @@ GramsBox (Type=GID,File=FEM_Mesh.msh) {
 }
 
 
-Define-Material (idx=0 , Model=Saint-Venant-Kirchhoff)
+Define-Material (idx=0 , Model=Neo-Hookean-Wriggers)
 {
   E=1.0E5
   nu=0.3
@@ -29,8 +29,7 @@ One-Phase-Analysis (File=MPM_Mesh.msh,GPxElement=3) {
     Assign-material-to-particles(MatIdx=0,Particles=Material.txt)
     
     # Shape function definition
-    GramsShapeFun (Type=LME) {
-	gamma=3.0
+    GramsShapeFun (Type=FEM) {
     }
 
     # Initial conditions for the GPs

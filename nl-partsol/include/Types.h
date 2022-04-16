@@ -185,64 +185,30 @@ typedef struct{
  */
 typedef struct {
 
-  /*!
-   * Initial Volume and area
-   */
-  Matrix Vol_0;
-  Matrix Area_0;
 
-  /*!
-   * Density field (mixture)
-   */
-  Matrix rho;
+  Matrix Vol_0; /**< Reference volume */
 
-  /*!
-   * Intrinsic density field (solid/water) 
-   */
-  Matrix rho_s;
-  Matrix rho_f;
+  Matrix Area_0; /**< Reference area */
 
-  /*!
-  * Volume fraction occupied for each material
-  */
-  Matrix phi_s;
-  Matrix phi_f;
+  Matrix rho; /**< Density field */
+
+  Matrix rho_s, rho_f; /**< Intrinsic density field (solid/fluid) */
+
+  Matrix phi_s, phi_f; /**< Volume fraction (solid/fluid) */
   
-  /*!
-   * Mass field 
-   */
-  Matrix mass;
+  Matrix mass; /**< Mass field */
   
-  /*!
-   * Position in global coordinates 
-   */
-  Matrix x_GC;
+  Matrix x_GC; /**< Position in global coordinates */
   
-  /*!
-   * Position in element coordiantes 
-   */
-  Matrix x_EC;
+  Matrix x_EC; /**< Position in element coordinates */
   
-  /*!
-   * Displacement field 
-   */
-  Matrix dis;
-  Matrix D_dis;
+  Matrix dis, D_dis; /**< Displacement field */
   
-  /*! 
-   * Velocity field 
-   */
-  Matrix vel;
+  Matrix vel; /**< Velocity field */
   
-  /*!
-   * Acceleration fields 
-   */
-  Matrix acc;
+  Matrix acc; /**< Acceleration fields */
   
-  /*!
-   * Stress field
-   */
-  Matrix Stress;
+  Matrix Stress; /**< Stress field */
 
   /*!
   * Lagrange multiplier for incompressible formulations
@@ -258,6 +224,7 @@ typedef struct {
   Matrix Pw_0;
   Matrix Pw_n1;
   Matrix D_Pw;
+
   /*!
   * Rates of the pore water pressure
   */
@@ -266,84 +233,47 @@ typedef struct {
 
   Matrix d2_Pw_dt2;
   
-  /*!
-   * Strain field 
-   */
-  Matrix Strain;
+  Matrix Strain; /**< Strain field */
 
-  /*!
-   * Deformation gradient at t = n, t = n + 1
-   */
-  Matrix F_n;
-  Matrix F_n1;
-  Matrix DF;
+  Matrix F_n, F_n1; /**< Total deformation gradient */
 
-  /*!
-   * Rate of the deformation gradient
-  */
-  Matrix dt_F_n;
-  Matrix dt_F_n1;
-  Matrix dt_DF;
+  Matrix DF; /**< Incremental deformation gradient */
 
-  /*!
-  * Jacobian of the deformation gradient and its rate
-  */
-  Matrix J_n;
-  Matrix J_n1;
-  Matrix dJ_dt;
+  Matrix dt_F_n, dt_F_n1, dt_DF; /**< Rate deformation gradient */
 
-  /*!
-   * F-bar
-   * */
-  Matrix Fbar;
-  Matrix Jbar;
+  Matrix J_n, J_n1, dJ_dt; /**< Jacobian of the deformation gradient */
 
-  /*!
-   * Inverse of the plastic deformation gradient
-   */
-  Matrix F_m1_plastic;
+  Matrix Fbar;  /**< Locking-free deformation gradient (F-bar) */
   
-  /*!
-   * Strain during crack 
-   */
-  Matrix Strain_If;
+  Matrix Jbar; /**< Jacobian of the F-bar */
   
-  /*!
-   * Deformation Energy 
-   */
-  Matrix W;
+  Matrix Strain_If; /**< Strain during crack */
   
-  /*! 
-   * Damage parameter (Fracture) 
-   */
-  Matrix chi;
+  Matrix W; /**< Deformation Energy */
 
-  /*!
-   * Cohesion/yield stress of the particle (plasticity) 
-   */
-  Matrix cohesion;
+  double * Chi; /**< Damage parameter (Fracture) */
 
-  /*!
-   * Equivalent plastic strain of the particle (plasticity) 
-   */
-  Matrix Equiv_Plast_Str;
+  double * EPS_n, * EPS_n1; /**< Equivalent plastic strain. */
 
-  /*! 
-  * Hardening parameter for isotropuc hardening (plasticity)
-  */
-  Matrix Kappa_hardening;
+  double * Kappa_n, * Kappa_n1; /**< Isotropic hardening (stress like) variable. */
 
-  /*! 
-  * Back stress for kinematic hardening (plasticity)
-  */
-  Matrix Back_stress;
+  Matrix Back_stress;  /**< Kinematic hardening variable. */
+
+  Matrix b_e_n, b_e_n1; /**< Elastic left deformation gradient */
+
+  Matrix C_ep; /**< Elastoplastic tangent matrix */
+
+  bool * Status_particle; /**< Check if the particle is consider failed or not */
 
 
-  /*!
-  * Partition of unity property
-  */
-  Matrix PU;
-  
+#ifdef DEBUG_MODE
+#if DEBUG_MODE + 0
+
+  Matrix PU; /**< Partition of unity property. */
+
+  #endif
+#endif
+
 } Fields;
 
 /*******************************************************/
@@ -479,9 +409,12 @@ typedef struct {
   /*!
   * General plastic parameters
   */
-  double yield_stress_0;
+  double kappa_0;
   double Hardening_modulus;
+  double Plastic_Strain_0;
   double atmospheric_pressure;
+  double J2_degradated;
+  double Cohesion;
 
   /*!
    * Frictional material (Borja et al. 2003)
@@ -508,7 +441,6 @@ typedef struct {
    * */
   bool Hardening_Ortiz;
   double Exponent_Hardening_Ortiz;
-  double Reference_Plastic_Strain_Ortiz;
 
   /*!
    * Hardening Voce
@@ -597,25 +529,28 @@ typedef struct
   double * Strain;
   double Pressure;
 
-  /*!
-   * Finite strain kinematic parameters
-   * */
-  double * F_n1_p;
+  double * D_phi_n1;  /**< Total deformation gradient (t = n + 1) */
+  double * D_phi_n; /**< Total deformation gradient (t = n) */
+  double * d_phi; /**< Incremental deformation gradient */
+  double * b_e; /**< Elastic left Cauchy-Green tensor */
   double * Fbar;
-  double * dFdt;
-  double J;
+  double J; /**<z Jocobian */
 
-  /*!
-   * Plasticity parameters
-   * */
-  double * Back_stress;
-  double * F_m1_plastic_p;
-  double * Increment_E_plastic;
-  
-  double Equiv_Plast_Str; // Equivalent plastic strain
+  double * dFdt; /**< Rate of the deformation gradient */
+  double DeltaTimeStep; /**< Increment of the time step */
+  double alpha_4; /**< Time integation paramter (Newmark-beta) */
+
+  double * Back_stress; /**< State varible for kinematic hardening*/
+  double * Kappa; /**<  Hardening Parameter */
+  double * EPS; /**<  Equivalent plastic strain */
+  double * C_ep; /**<  Elastoplastic tangent matrix */
+  bool compute_C_ep;
+
   double Cohesion; 
   double Yield_stress;
-  double Kappa; // Hardening Parameter
+  
+  // Failed material point
+  bool *Failure;
 
 } State_Parameters;
 

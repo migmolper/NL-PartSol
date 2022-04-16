@@ -1,203 +1,160 @@
+#include <string.h>
 #include "nl-partsol.h"
 
 /*********************************************************************/
 
-Fields allocate_U_vars__Fields__(int NumParticles)
-{
+Fields allocate_U_vars__Fields__(int NumParticles) {
   int Ndim = NumberDimensions;
   Fields Phi;
 
-  /*!
-    Global coordinates 
-  */
-  Phi.x_GC = allocZ__MatrixLib__(NumParticles,Ndim);
-  strcpy(Phi.x_GC.Info,"Global Coordinates");
-  
-  /*!
-    Natural coordinates (Vectorial) 
-  */
-  Phi.x_EC = allocZ__MatrixLib__(NumParticles,Ndim);
-  strcpy(Phi.x_EC.Info,"Element Coordinates GP");
-  
-  /*!
-    Displacement field (Vectorial) 
-  */
-  Phi.dis = allocZ__MatrixLib__(NumParticles,Ndim);
-  strcpy(Phi.dis.Info,"Displacement field GP");
-  Phi.D_dis = allocZ__MatrixLib__(NumParticles,Ndim);
-  strcpy(Phi.D_dis.Info,"Increment of displacement field GP");
+  Phi.x_GC = allocZ__MatrixLib__(NumParticles, Ndim);
 
-  /*!
-    Velocity field (Vectorial) 
-  */
-  Phi.vel = allocZ__MatrixLib__(NumParticles,Ndim);
-  strcpy(Phi.vel.Info,"Velocity field GP");
-  
-  /*!
-    Acceleration field (Vectorial) 
-  */
-  Phi.acc = allocZ__MatrixLib__(NumParticles,Ndim);
-  strcpy(Phi.acc.Info,"Acceleration field GP");
-  
-  /*!
-    Strain field (Tensor)
-  */
-  Phi.Strain = allocZ__MatrixLib__(NumParticles,Ndim*Ndim);
-  strcpy(Phi.Strain.Info,"Strain field GP");
+  Phi.x_EC = allocZ__MatrixLib__(NumParticles, Ndim);
 
-  /*!
-    Deformation gradient field (Tensor) + Initialise it with the indentity
-  */  
-  Phi.F_n = allocZ__MatrixLib__(NumParticles,Ndim*Ndim);
-  strcpy(Phi.F_n.Info,"Deformation gradient at t = n");
-  Phi.F_n1 = allocZ__MatrixLib__(NumParticles,Ndim*Ndim);
-  strcpy(Phi.F_n1.Info,"Deformation gradient at t = n + 1");
-  Phi.DF = allocZ__MatrixLib__(NumParticles,Ndim*Ndim);
-  strcpy(Phi.DF.Info,"Increment deformation gradient");
+  Phi.dis = allocZ__MatrixLib__(NumParticles, Ndim);
 
-  for(int p = 0 ; p<NumParticles ; p++)
-  {
-    for(int i = 0 ; i<Ndim ; i++)
-    {
-      Phi.F_n.nM[p][i + i*Ndim] = 1.0;	  
-      Phi.F_n1.nM[p][i + i*Ndim] = 1.0;
-      Phi.DF.nM[p][i + i*Ndim] = 1.0;
-    }  
+  Phi.D_dis = allocZ__MatrixLib__(NumParticles, Ndim);
+
+  Phi.vel = allocZ__MatrixLib__(NumParticles, Ndim);
+  
+  Phi.acc = allocZ__MatrixLib__(NumParticles, Ndim);
+
+  Phi.Strain = allocZ__MatrixLib__(NumParticles, Ndim * Ndim);
+
+#if NumberDimensions == 2
+  Phi.F_n = allocZ__MatrixLib__(NumParticles, 5);
+  Phi.F_n1 = allocZ__MatrixLib__(NumParticles, 5);
+  Phi.DF = allocZ__MatrixLib__(NumParticles, 5);
+#else
+  Phi.F_n = allocZ__MatrixLib__(NumParticles, 9);
+  Phi.F_n1 = allocZ__MatrixLib__(NumParticles, 9);
+  Phi.DF = allocZ__MatrixLib__(NumParticles, 9);
+#endif
+
+  for (int p = 0; p < NumParticles; p++) {
+#if NumberDimensions == 2
+  Phi.F_n.nM[p][0] = Phi.F_n1.nM[p][0] = Phi.DF.nM[p][0] = 1.0;
+  Phi.F_n.nM[p][3] = Phi.F_n1.nM[p][3] = Phi.DF.nM[p][3] = 1.0;
+  Phi.F_n.nM[p][4] = Phi.F_n1.nM[p][4] = Phi.DF.nM[p][4] = 1.0;
+#else
+  Phi.F_n.nM[p][0] = Phi.F_n1.nM[p][0] = Phi.DF.nM[p][0] = 1.0;
+  Phi.F_n.nM[p][4] = Phi.F_n1.nM[p][4] = Phi.DF.nM[p][4] = 1.0;
+  Phi.F_n.nM[p][9] = Phi.F_n1.nM[p][9] = Phi.DF.nM[p][9] = 1.0;
+#endif
   }
 
-  Phi.dt_F_n = allocZ__MatrixLib__(NumParticles,Ndim*Ndim);
-  strcpy(Phi.dt_F_n.Info,"Rate of deformation gradient at t = n");
-  Phi.dt_F_n1 = allocZ__MatrixLib__(NumParticles,Ndim*Ndim);
-  strcpy(Phi.dt_F_n1.Info,"Rate of deformation gradient at t = n + 1");
-  Phi.dt_DF = allocZ__MatrixLib__(NumParticles,Ndim*Ndim);
-  strcpy(Phi.dt_DF.Info,"Rate of increment deformation gradient");
+#if NumberDimensions == 2
+  Phi.dt_F_n = allocZ__MatrixLib__(NumParticles, 5);
+  Phi.dt_F_n1 = allocZ__MatrixLib__(NumParticles, 5);
+  Phi.dt_DF = allocZ__MatrixLib__(NumParticles, 5);
+#else
+  Phi.dt_F_n = allocZ__MatrixLib__(NumParticles, 9);
+  Phi.dt_F_n1 = allocZ__MatrixLib__(NumParticles, 9);
+  Phi.dt_DF = allocZ__MatrixLib__(NumParticles, 9);
+#endif
+  
+#if NumberDimensions == 2
+  Phi.b_e_n = allocZ__MatrixLib__(NumParticles, 5);
+  Phi.b_e_n1 = allocZ__MatrixLib__(NumParticles, 5);
+#else
+  Phi.b_e_n = allocZ__MatrixLib__(NumParticles, 9);
+  Phi.b_e_n1 = allocZ__MatrixLib__(NumParticles, 9);
+#endif
 
-  /*!
-    Inverse plastic deformation gradient field (Tensor) + Initialise it with the indentity
-  */
-  Phi.F_m1_plastic = allocZ__MatrixLib__(NumParticles,Ndim*Ndim);
-  strcpy(Phi.F_m1_plastic.Info,"Inverse plastic deformation gradient");
- 
-  for(int p = 0 ; p<NumParticles ; p++)
-  {
-    for(int i = 0 ; i<Ndim ; i++)
-    {
-      Phi.F_m1_plastic.nM[p][i + i*Ndim] = 1.0;	  
-    }
+  for (int p = 0; p < NumParticles; p++) {
+#if NumberDimensions == 2
+  Phi.b_e_n.nM[p][0] = 1.0;
+  Phi.b_e_n.nM[p][3] = 1.0;
+  Phi.b_e_n.nM[p][4] = 1.0;
+#else
+  Phi.b_e_n.nM[p][0] = 1.0;
+  Phi.b_e_n.nM[p][4] = 1.0;
+  Phi.b_e_n.nM[p][9] = 1.0;
+#endif
   }
 
-  /*!
-    Jacobian field (Scalar) 
-  */
-  Phi.J_n = allocZ__MatrixLib__(NumParticles,1);
-  strcpy(Phi.J_n.Info,"Jacobian of the particle");  
-  Phi.J_n1 = allocZ__MatrixLib__(NumParticles,1);
-  strcpy(Phi.J_n1.Info,"Jacobian of the particle");  
+  Phi.J_n = allocZ__MatrixLib__(NumParticles, 1);
 
-  for(int p = 0 ; p<NumParticles ; p++)
-  {
+  Phi.J_n1 = allocZ__MatrixLib__(NumParticles, 1);
+
+  for (int p = 0; p < NumParticles; p++) {
     Phi.J_n.nV[p] = 1.0;
-    Phi.J_n1.nV[p] = 1.0;  
-  }
-  
-  /*!
-   * F-bar variables
-   * */
-  Phi.Fbar = allocZ__MatrixLib__(NumParticles,Ndim*Ndim);
-  strcpy(Phi.Fbar.Info,"Fbar deformation gradient");
-
-  for(int p = 0 ; p<NumParticles ; p++)
-  {
-    for(int i = 0 ; i<Ndim ; i++)
-    {
-      Phi.Fbar.nM[p][i + i*Ndim] = 1.0;   
-    }
+    Phi.J_n1.nV[p] = 1.0;
   }
 
-  Phi.Jbar = allocZ__MatrixLib__(NumParticles,1);
-  strcpy(Phi.Jbar.Info,"Jacobian of the particle");  
+#if NumberDimensions == 2
+  Phi.Fbar = allocZ__MatrixLib__(NumParticles, 5);
+#else
+  Phi.Fbar = allocZ__MatrixLib__(NumParticles, 9);
+#endif
 
-  for(int p = 0 ; p<NumParticles ; p++)
-  {
+  for (int p = 0; p < NumParticles; p++) {
+#if NumberDimensions == 2
+  Phi.Fbar.nM[p][0] = 0.0;
+  Phi.Fbar.nM[p][3] = 0.0;
+  Phi.Fbar.nM[p][4] = 0.0;
+#else
+  Phi.Fbar.nM[p][0] = 0.0;
+  Phi.Fbar.nM[p][4] = 0.0;
+  Phi.Fbar.nM[p][9] = 0.0;
+#endif
+  }
+
+  Phi.Jbar = allocZ__MatrixLib__(NumParticles, 1);
+
+  for (int p = 0; p < NumParticles; p++) {
     Phi.Jbar.nV[p] = 1.0;
   }
 
-  /*!
-    Strain_If field (Scalar) 
-  */
-  Phi.Strain_If = allocZ__MatrixLib__(NumParticles,1);
-  strcpy(Phi.Strain_If.Info,"Strain in fracture GP");
+  Phi.Strain_If = allocZ__MatrixLib__(NumParticles, 1);
 
-  /*!
-    Stress field (Tensor)
-  */
-  Phi.Stress = allocZ__MatrixLib__(NumParticles,Ndim*Ndim + (Ndim == 2? 1 : 0));
-  strcpy(Phi.Stress.Info,"Stress field GP");
+#if NumberDimensions == 2
+  Phi.Stress = allocZ__MatrixLib__(NumParticles, 5);
+#else
+  Phi.Stress = allocZ__MatrixLib__(NumParticles, 9);
+#endif
 
-  /*!
-    Deformation Energy (Scalar) 
-  */
-  Phi.W = allocZ__MatrixLib__(NumParticles,1);
-  strcpy(Phi.W.Info,"Deformation Energy GP");
+  Phi.W = allocZ__MatrixLib__(NumParticles, 1);
 
-  /*!
-    Mass 
-  */
-  Phi.mass = allocZ__MatrixLib__(NumParticles,1);
-  strcpy(Phi.mass.Info,"Mass GP");
+  Phi.mass = allocZ__MatrixLib__(NumParticles, 1);
 
-  /*!
-    Density 
-  */
-  Phi.rho = allocZ__MatrixLib__(NumParticles,1);
-  strcpy(Phi.rho.Info,"Density GP");
+  Phi.rho = allocZ__MatrixLib__(NumParticles, 1);
 
-  /*!
-    Inital volume
-  */
-  Phi.Vol_0 = allocZ__MatrixLib__(NumParticles,1);
-  strcpy(Phi.Vol_0.Info,"Inital volume GP");
+  Phi.Vol_0 = allocZ__MatrixLib__(NumParticles, 1);
 
-  /*!
-    Damage parameter (Fracture) 
-  */
-  Phi.chi = allocZ__MatrixLib__(NumParticles,1);
-  strcpy(Phi.chi.Info,"Damage parameter GP");
+  Phi.Chi = (double *)calloc(NumParticles,sizeof(double));
 
-  /*!
-    Cohesion (Plasticity)
-  */
-  Phi.cohesion = allocZ__MatrixLib__(NumParticles,1);
-  strcpy(Phi.cohesion.Info,"Cohesion GP");
- 
-  /*!
-    Equivalent plastic strain (Plasticity)
-  */
-  Phi.Equiv_Plast_Str = allocZ__MatrixLib__(NumParticles,1);
-  strcpy(Phi.Equiv_Plast_Str.Info,"EPS GP");
+  Phi.EPS_n = (double *)calloc(NumParticles,sizeof(double));
 
-  /*!
-   Isotropic hardeing parameter
-   */
-  Phi.Kappa_hardening = allocZ__MatrixLib__(NumParticles,1);
-  strcpy(Phi.Kappa_hardening.Info,"Kappa hardening GP");
+  Phi.EPS_n1 = (double *)calloc(NumParticles,sizeof(double));  
 
-  /*! 
-  * Back stress for kinematic hardening (plasticity)
-  */
-  Phi.Back_stress = allocZ__MatrixLib__(NumParticles,3);
-  strcpy(Phi.Back_stress.Info,"Back stress GP");
+  Phi.Kappa_n = (double *)calloc(NumParticles,sizeof(double));
+
+  Phi.Kappa_n1 = (double *)calloc(NumParticles,sizeof(double));
+  
+  Phi.Back_stress = allocZ__MatrixLib__(NumParticles, 3);
+
+#if NumberDimensions == 2
+  Phi.C_ep = allocZ__MatrixLib__(NumParticles, 4);
+#else
+  Phi.C_ep = allocZ__MatrixLib__(NumParticles, 9);
+#endif
+
+  Phi.Status_particle = (bool *)malloc(NumParticles*sizeof(bool));
+
+  for (int p = 0; p < NumParticles; p++) {
+    Phi.Status_particle[p] = false;
+  }
 
   return Phi;
 }
 
 /*********************************************************************/
 
-void free_U_vars__Fields__(Fields Phi)
-{
+void free_U_vars__Fields__(Fields Phi) {
   free__MatrixLib__(Phi.rho);
   free__MatrixLib__(Phi.mass);
-  free__MatrixLib__(Phi.x_GC);  
+  free__MatrixLib__(Phi.x_GC);
   free__MatrixLib__(Phi.x_EC);
   free__MatrixLib__(Phi.dis);
   free__MatrixLib__(Phi.D_dis);
@@ -206,7 +163,8 @@ void free_U_vars__Fields__(Fields Phi)
   free__MatrixLib__(Phi.Stress);
   free__MatrixLib__(Phi.Strain);
   free__MatrixLib__(Phi.Strain_If);
-  free__MatrixLib__(Phi.F_m1_plastic);
+  free__MatrixLib__(Phi.b_e_n);
+  free__MatrixLib__(Phi.b_e_n1);
   free__MatrixLib__(Phi.F_n);
   free__MatrixLib__(Phi.F_n1);
   free__MatrixLib__(Phi.J_n);
@@ -219,10 +177,14 @@ void free_U_vars__Fields__(Fields Phi)
   free__MatrixLib__(Phi.DF);
   free__MatrixLib__(Phi.W);
   free__MatrixLib__(Phi.Vol_0);
-  free__MatrixLib__(Phi.chi);
-  free__MatrixLib__(Phi.cohesion);
-  free__MatrixLib__(Phi.Equiv_Plast_Str);
+  free(Phi.Chi);
+  free(Phi.EPS_n);
+  free(Phi.EPS_n1);  
+  free(Phi.Kappa_n);
+  free(Phi.Kappa_n1);
   free__MatrixLib__(Phi.Back_stress);
+  free__MatrixLib__(Phi.C_ep);
+  free(Phi.Status_particle);
 }
 
 /*********************************************************************/
