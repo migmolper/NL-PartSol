@@ -821,8 +821,13 @@ int compute_1PK_Matsuoka_Nakai(State_Parameters IO_State, Material MatProp)
       I3 = T_k2[0] * T_k2[1] * T_k2[2];
 
       if (Lambda_k2 < 0.0) {
-        fprintf(stderr, "" RED "Lambda_k < 0.0" RESET "\n");
-        Lambda_k2 = 0.0;
+        fprintf(stderr, "" RED "Negative value of Lambda: %f " RESET "\n",
+                Lambda_k2);
+        return EXIT_FAILURE;
+      }
+
+      if (I1 > 0.0) {
+        fprintf(stderr, "" RED "Positive value of I1: %f " RESET "\n", I1);
         return EXIT_FAILURE;
       }
 
@@ -875,7 +880,10 @@ int compute_1PK_Matsuoka_Nakai(State_Parameters IO_State, Material MatProp)
         I3 = T_k2[0] * T_k2[1] * T_k2[2];
 
         if (Lambda_k2 < 0.0) {
-          fprintf(stderr, "" RED "Lambda_k < 0.0" RESET "\n");
+          fprintf(stderr,
+                  "" RED "Negative value of Lambda (line search): %f " RESET
+                  "\n",
+                  Lambda_k2);
           return EXIT_FAILURE;
         }
 
@@ -942,11 +950,22 @@ int compute_1PK_Matsuoka_Nakai(State_Parameters IO_State, Material MatProp)
       }
     }
 
+    /*
+      Update equivalent plastic strain and increment of plastic deformation
+    */
+    IO_State.Stress[0] = T_k1[0] + c_cotphi;
+    IO_State.Stress[1] = T_k1[1] + c_cotphi;
+    IO_State.Stress[2] = T_k1[2] + c_cotphi;
+    IO_State.Strain_e[0] = E_hencky_k1[0];
+    IO_State.Strain_e[1] = E_hencky_k1[1];
+    IO_State.Strain_e[2] = E_hencky_k1[2];
     *IO_State.EPS = Lambda_k1;
     *IO_State.Kappa = kappa_k1[0];
-    IO_State.Stress[0] = T_k1[0];
-    IO_State.Stress[1] = T_k1[1];
-    IO_State.Stress[2] = T_k1[2];
+
+    if (Iter_k1 == MaxIter_k1) {
+      *IO_State.EPS = Lambda_n;
+      *IO_State.Kappa = kappa_n[0];
+    }
   }
 
   printf("Iter: %i\n", Iter_k1);
