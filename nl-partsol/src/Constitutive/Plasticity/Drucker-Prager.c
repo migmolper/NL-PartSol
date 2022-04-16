@@ -313,7 +313,7 @@ int compute_1PK_Drucker_Prager(State_Parameters IO_State, Material MatProp)
 #endif
 
   // Elastic
-  if (PHI_0 <= 0.0) {
+  if (PHI_0 <= TOL_NR) {
 
     STATUS = __update_internal_variables_elastic(
         IO_State.Stress, IO_State.D_phi_n1, T_tr_vol, T_tr_dev, eigvec_b_e_tr);
@@ -326,14 +326,6 @@ int compute_1PK_Drucker_Prager(State_Parameters IO_State, Material MatProp)
 
     if(IO_State.compute_C_ep)
     {
-
-      STATUS = __compute_plastic_flow_direction(n, T_tr_dev, J2);
-      if (STATUS == EXIT_FAILURE) {
-        fprintf(stderr,
-              "" RED " Error in __compute_plastic_flow_direction" RESET "\n");
-        return EXIT_FAILURE;
-      }
-
       STATUS = __tangent_moduli_elastic(IO_State.C_ep, K, G);
       if (STATUS == EXIT_FAILURE) {
         fprintf(stderr,

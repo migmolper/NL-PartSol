@@ -1,11 +1,8 @@
-NLPS-Solver (Type=Newmark-beta-Finite-Strains) {
-    CFL=0.1
-    N=1500
+# Time integration
+NLPS-Solver (Type=NPC-FS) {
+    CFL=0.01
+    N=15000
     Cel=70.71
-    Epsilon=1.0
-    Beta-Newmark-beta=0.25
-    Gamma-Newmark-beta=0.5
-    TOL-Newmark-beta=1E-10
 }
 
 # Background mesh definition
@@ -34,8 +31,7 @@ One-Phase-Analysis (File=MPM_Mesh.msh,GPxElement=3) {
     Assign-material-to-particles(MatIdx=0,Particles=Material.txt)
     
     # Shape function definition
-    GramsShapeFun (Type=LME) {
-	gamma=3.5
+    GramsShapeFun (Type=FEM) {
     }
 
     # Initial conditions for the GPs
@@ -49,7 +45,7 @@ One-Phase-Analysis (File=MPM_Mesh.msh,GPxElement=3) {
 }
 
 # Outputs 
-GramsOutputs (i=10) {
+GramsOutputs (i=100) {
   DIR=Resultados
   Out-stress=true
   Out-Equivalent-Plastic-Strain=true

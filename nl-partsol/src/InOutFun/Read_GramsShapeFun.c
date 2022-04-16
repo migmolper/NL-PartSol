@@ -91,7 +91,7 @@ void GramsShapeFun(char *Name_File)
 
       /* Set to default all it properties */
       gamma_LME = 3;
-      TOL_zero_LME = 1e-10;
+      TOL_zero_LME = 1e-6;
       TOL_wrapper_LME = 1e-10;
       max_iter_LME = 10;
       strcpy(wrapper_LME, "Newton-Raphson");

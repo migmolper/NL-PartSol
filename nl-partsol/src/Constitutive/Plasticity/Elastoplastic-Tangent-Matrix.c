@@ -24,8 +24,6 @@ static int __eigenvalues_kirchhoff(
     const double *P /**< [in] Nominal stress tensor */,
     const double *D_phi /**< [in] Total deformation gradient. */);
 
-static double __compute_J2(
-  const double *T /**< [in] Eigenvalues of the Kirchhoff stress tensor. */);
 
 /**************************************************************/ 
 int compute_1PK_elastoplastic_tangent_matrix(double *Stiffness_density,
@@ -102,14 +100,6 @@ int compute_1PK_elastoplastic_tangent_matrix(double *Stiffness_density,
     return EXIT_FAILURE;
   }
 
-  double J2 = __compute_J2(eigval_T);
-
-#ifdef DEBUG_MODE
-#if DEBUG_MODE + 0
-  printf("eigval_T: [%e, %e, %e] \n", eigval_T[0], eigval_T[1], eigval_T[2]);
-  printf("J2: %f\n",J2);
-#endif
-#endif
 
 #if NumberDimensions == 2
 
@@ -175,7 +165,7 @@ int compute_1PK_elastoplastic_tangent_matrix(double *Stiffness_density,
                                 (mv[A * Ndim + A][i] * mu[B * Ndim + B][j]);
 
           if (A != B) {
-            if(J2 > TOL_NR)
+            if(fabs(eigval_b_e[B] - eigval_b_e[A]) > 1E-10)
             {
               Stiffness_density[i * Ndim + j] +=
                   0.5 *
@@ -193,6 +183,7 @@ int compute_1PK_elastoplastic_tangent_matrix(double *Stiffness_density,
       }
     }
   }
+
 
   // Assemble the geometrical contribution to the tanget matrix
   for (unsigned i = 0; i < Ndim; i++) {
@@ -490,25 +481,3 @@ unsigned Ndim = NumberDimensions;
 
 /**************************************************************/
 
-static double __compute_J2(const double *T) {
-
-
-  double T_vol[3];
-  double T_dev[3];
-  double tr_T = T[0] + T[1] + T[2];
-
-  T_vol[0] = (1.0 / 3.0) * tr_T;
-  T_vol[1] = (1.0 / 3.0) * tr_T;
-  T_vol[2] = (1.0 / 3.0) * tr_T;
-
-  T_dev[0] = T[0] - T_vol[0];
-  T_dev[1] = T[1] - T_vol[1];
-  T_dev[2] = T[2] - T_vol[2];
-
-  double J2 = sqrt(T_dev[0] * T_dev[0] + T_dev[1] * T_dev[1] +
-             T_dev[2] * T_dev[2]);
-
-  return J2;
-}
-
-/**************************************************************/

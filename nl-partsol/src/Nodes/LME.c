@@ -2,22 +2,7 @@
 #include <math.h>
 #include "nl-partsol.h"
 
-// Auxiliar functions to compute the shape functions
-static double fa__LME__(Matrix, Matrix, double);
-static double logZ__LME__(Matrix, Matrix, double);
-static Matrix r__LME__(Matrix, Matrix);
-static Matrix J__LME__(Matrix, Matrix, Matrix);
 
-// Auxiliar functions for the Neldel Mead in the LME
-static void initialise_lambda__LME__(int, Matrix, Matrix, Matrix, double);
-static Matrix gravity_center_Nelder_Mead__LME__(Matrix);
-static void order_logZ_simplex_Nelder_Mead__LME__(Matrix, Matrix);
-static void expansion_Nelder_Mead__LME__(Matrix, Matrix, Matrix, Matrix, Matrix,
-                                         double, double);
-static void contraction_Nelder_Mead__LME__(Matrix, Matrix, Matrix, Matrix,
-                                           Matrix, double, double);
-static void shrinkage_Nelder_Mead__LME__(Matrix, Matrix, Matrix, double);
-static ChainPtr tributary__LME__(int, Matrix, double, int, Mesh);
 /****************************************************************************/
 
 // Call global var¡ables
