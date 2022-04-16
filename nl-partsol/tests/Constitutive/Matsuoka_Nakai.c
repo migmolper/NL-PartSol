@@ -711,13 +711,11 @@ int compute_1PK_Matsuoka_Nakai(State_Parameters IO_State, Material MatProp)
   // Plastic (monolithic solver with line search)
   else {
 
-    T_k1[0] = T_tr[0];
-    T_k1[1] = T_tr[1];
-    T_k1[2] = T_tr[2];
+    __E_hencky(E_hencky_k1, T_k1, CC, c_cotphi);
 
-    E_hencky_k1[0] = E_hencky_trial[0];
-    E_hencky_k1[1] = E_hencky_trial[1];
-    E_hencky_k1[2] = E_hencky_trial[2];
+    E_hencky_trial[0] = E_hencky_k1[0];
+    E_hencky_trial[1] = E_hencky_k1[1];
+    E_hencky_trial[2] = E_hencky_k1[2];
 
     __kappa(kappa_hat, a, Lambda_n, I1, alpha);
 
