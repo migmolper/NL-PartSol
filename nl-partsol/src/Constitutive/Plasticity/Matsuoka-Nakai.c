@@ -270,11 +270,16 @@ int compute_1PK_Matsuoka_Nakai(State_Parameters IO_State, Material MatProp)
   // Check yield
   __F(&F_0, kappa_n[0], I1, I2, I3);
 
+  // Assign trial (elastic) stress-strain values
+  T_k1[0] = T_tr[0];
+  T_k1[1] = T_tr[1];
+  T_k1[2] = T_tr[2];  
+
   // Elastic
   if (F_0 <= TOL) {
 
     STATUS = __update_internal_variables_elastic(
-        IO_State.Stress, IO_State.D_phi_n1, T_tr, eigvec_b_e_tr, c_cotphi);
+        IO_State.Stress, IO_State.D_phi_n1, T_k1, eigvec_b_e_tr, c_cotphi);
     if (STATUS == EXIT_FAILURE) {
       fprintf(stderr,
               "" RED "Error in __update_internal_variables_elastic()" RESET
@@ -291,13 +296,11 @@ int compute_1PK_Matsuoka_Nakai(State_Parameters IO_State, Material MatProp)
   // Plastic (monolithic solver with line search)
   else {
 
-    T_k1[0] = T_tr[0];
-    T_k1[1] = T_tr[1];
-    T_k1[2] = T_tr[2];
+    __E_hencky(E_hencky_k1, T_k1, CC, c_cotphi);
 
-    E_hencky_k1[0] = E_hencky_trial[0];
-    E_hencky_k1[1] = E_hencky_trial[1];
-    E_hencky_k1[2] = E_hencky_trial[2];
+    E_hencky_trial[0] = E_hencky_k1[0];
+    E_hencky_trial[1] = E_hencky_k1[1];
+    E_hencky_trial[2] = E_hencky_k1[2];
 
     __kappa(kappa_hat, a, Lambda_n, I1, alpha);
 
@@ -333,25 +336,29 @@ int compute_1PK_Matsuoka_Nakai(State_Parameters IO_State, Material MatProp)
 
       // Evaluate plastic flow rule derivatives
       __dd_G_dd_stress(dd_G_dd_stress, T_k1, kappa_k1[1], I1, I2, I3);
-      __dd_G_d_stress_d_kappa_psi(dd_G_d_stress_d_kappa_psi, T_k1, I1, I3, kappa_k1[1]);
+      __dd_G_d_stress_d_kappa_psi(dd_G_d_stress_d_kappa_psi, T_k1, I1, I3,
+                                  kappa_k1[1]);
 
       // Assemble tangent matrix
       Tangent_Matrix[0] = CC[0] + delta_lambda_k1 * dd_G_dd_stress[0];
       Tangent_Matrix[1] = CC[1] + delta_lambda_k1 * dd_G_dd_stress[1];
       Tangent_Matrix[2] = CC[2] + delta_lambda_k1 * dd_G_dd_stress[2];
-      Tangent_Matrix[3] = alpha * delta_lambda_k1 * dd_G_d_stress_d_kappa_psi[0];
+      Tangent_Matrix[3] =
+          alpha * delta_lambda_k1 * dd_G_d_stress_d_kappa_psi[0];
       Tangent_Matrix[4] = d_G_d_stress[0];
 
       Tangent_Matrix[5] = CC[3] + delta_lambda_k1 * dd_G_dd_stress[3];
       Tangent_Matrix[6] = CC[4] + delta_lambda_k1 * dd_G_dd_stress[4];
       Tangent_Matrix[7] = CC[5] + delta_lambda_k1 * dd_G_dd_stress[5];
-      Tangent_Matrix[8] = alpha * delta_lambda_k1 * dd_G_d_stress_d_kappa_psi[1];
+      Tangent_Matrix[8] =
+          alpha * delta_lambda_k1 * dd_G_d_stress_d_kappa_psi[1];
       Tangent_Matrix[9] = d_G_d_stress[1];
 
       Tangent_Matrix[10] = CC[6] + delta_lambda_k1 * dd_G_dd_stress[6];
       Tangent_Matrix[11] = CC[7] + delta_lambda_k1 * dd_G_dd_stress[7];
       Tangent_Matrix[12] = CC[8] + delta_lambda_k1 * dd_G_dd_stress[8];
-      Tangent_Matrix[13] = alpha * delta_lambda_k1 * dd_G_d_stress_d_kappa_psi[2];
+      Tangent_Matrix[13] =
+          alpha * delta_lambda_k1 * dd_G_d_stress_d_kappa_psi[2];
       Tangent_Matrix[14] = d_G_d_stress[2];
 
       Tangent_Matrix[15] = -d_kappa_phi_d_stress[0];
@@ -383,12 +390,8 @@ int compute_1PK_Matsuoka_Nakai(State_Parameters IO_State, Material MatProp)
       Lambda_k2 = Lambda_n + delta_lambda_k2;
       Iter_k2 = 0;
 
-      if(Activate_CutOff)
-      {
-        if((T_k2[0] > CutOff) 
-        && (T_k2[1] > CutOff) 
-        && (T_k2[2] > CutOff))
-        {
+      if (Activate_CutOff) {
+        if ((T_k2[0] > CutOff) && (T_k2[1] > CutOff) && (T_k2[2] > CutOff)) {
           T_k2[0] = T_k2[1] = T_k2[2] = CutOff;
           Lambda_k2 = Lambda_n;
           kappa_k2[0] = kappa_n[0];
@@ -403,8 +406,8 @@ int compute_1PK_Matsuoka_Nakai(State_Parameters IO_State, Material MatProp)
       I3 = T_k2[0] * T_k2[1] * T_k2[2];
 
       if (Lambda_k2 < 0.0) {
-        fprintf(stderr, "" RED "Lambda_k < 0.0" RESET "\n");
-        Lambda_k2 = 0.0;
+        fprintf(stderr, "" RED "Negative value of Lambda: %f " RESET "\n",
+                Lambda_k2);
         return EXIT_FAILURE;
       }
 
@@ -441,12 +444,8 @@ int compute_1PK_Matsuoka_Nakai(State_Parameters IO_State, Material MatProp)
         delta_lambda_k2 = delta_lambda_k1 - delta * Residual_k2[4];
         Lambda_k2 = Lambda_n + delta_lambda_k2;
 
-        if(Activate_CutOff)
-        {
-          if((T_k2[0] > CutOff) 
-          && (T_k2[1] > CutOff) 
-          && (T_k2[2] > CutOff))
-          {
+        if (Activate_CutOff) {
+          if ((T_k2[0] > CutOff) && (T_k2[1] > CutOff) && (T_k2[2] > CutOff)) {
             T_k2[0] = T_k2[1] = T_k2[2] = CutOff;
             Lambda_k2 = Lambda_n;
             kappa_k2[0] = kappa_n[0];
@@ -527,6 +526,11 @@ int compute_1PK_Matsuoka_Nakai(State_Parameters IO_State, Material MatProp)
         break;
       }
     }
+
+    if (Iter_k1 == MaxIter_k1) {
+      Lambda_k1 = Lambda_n;
+      kappa_k1[0] = kappa_n[0];
+    }    
 
     STATUS = __update_internal_variables_plastic(IO_State.Stress,IO_State.EPS,
      IO_State.Kappa,IO_State.D_phi_n1,T_k1,eigvec_b_e_tr,Lambda_k1, kappa_k1[0], c_cotphi);    
