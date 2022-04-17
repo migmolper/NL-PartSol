@@ -40,6 +40,9 @@ set_target_properties("${PROJECT_NAME}" PROPERTIES
 # Add math library
 target_link_libraries(${PROJECT_NAME} m)
 
+# Add PkgConfig
+find_package(PkgConfig REQUIRED)
+
 # Add LAPACK
 find_package(LAPACK REQUIRED)
 if(LAPACK_FOUND)
@@ -52,6 +55,13 @@ find_package(OpenMP REQUIRED)
 if (OPENMP_FOUND)
   message("Found OpenMP")
   target_link_libraries(${PROJECT_NAME} OpenMP::OpenMP_C)
+endif()
+
+# Add PETSC
+pkg_search_module(PETSC REQUIRED IMPORTED_TARGET PETSc)
+if (PETSC_FOUND)
+  message("Found PETSc")
+  target_link_libraries(${PROJECT_NAME} PkgConfig::PETSC)
 endif()
 
 

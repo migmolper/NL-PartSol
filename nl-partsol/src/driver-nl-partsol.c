@@ -13,6 +13,7 @@
 
 #include <string.h>
 #include "nl-partsol.h"
+#include "petscsys.h"
 
 /*
   Call global variables
@@ -21,6 +22,8 @@ char *SimulationFile;
 char *Static_conditons;
 char *TimeIntegrationScheme;
 char *Formulation;
+
+static char help[] = "Appends to an ASCII file.\n\n";
 
 /*
   Auxiliar functions for the main
@@ -31,6 +34,9 @@ static void free_particles(Particle);
 static void standard_error(char *Error_message);
 
 int main(int argc, char *argv[]) {
+
+  PetscInitialize(&argc,&argv,(char*)0,help);
+
   char Error_message[MAXW];
   bool Is_Static_Initialization = false;
   bool Is_Restart_Simulation = false;
@@ -166,23 +172,6 @@ int main(int argc, char *argv[]) {
       standard_error(Error_message);
     }
 
-    puts("*************************************************");
-    free_nodes(FEM_Mesh);
-    free_particles(MPM_Mesh);
-
-    if(STATUS == EXIT_SUCCESS)
-    {
-      printf("Computation "GREEN"succesfully"RESET" finished at : %s \n", __TIME__);
-      puts("Exiting of the program...");
-      return EXIT_SUCCESS;
-    }
-    else
-    {
-      printf("Computation "RED"abnormally"RESET" finished at : %s \n", __TIME__);
-      puts("Exiting the program...");
-      return EXIT_FAILURE;
-    }
-
   } else if (strcmp(Formulation, "-up") == 0) {
 
     NumberDOF = NumberDimensions;
@@ -215,15 +204,6 @@ int main(int argc, char *argv[]) {
       sprintf(Error_message, "%s", "Wrong time integration scheme");
       standard_error(Error_message);
     }
-
-    puts("*************************************************");
-    puts("Free memory ...");
-    free_nodes(FEM_Mesh);
-    free_particles(MPM_Mesh);
-
-    printf("Computation finished at : %s \n", __TIME__);
-    puts("Exiting of the program...");
-    exit(EXIT_SUCCESS);
 
   } else if (strcmp(Formulation, "-upw") == 0) {
 
@@ -267,20 +247,32 @@ int main(int argc, char *argv[]) {
       standard_error(Error_message);
     }
 
-    puts("*************************************************");
-    puts("Free memory ...");
-    free_nodes(FEM_Mesh);
-    free_particles(MPM_Mesh);
-
-    printf("Computation finished at : %s \n", __TIME__);
-    puts("Exiting of the program...");
-    exit(EXIT_SUCCESS);
-
   } else {
     sprintf(Error_message, "%s",
             "This formulation has not been yet implemented");
     standard_error(Error_message);
   }
+
+  
+  PetscFinalize();
+
+  puts("*************************************************");
+  puts("Free memory ...");
+  free_nodes(FEM_Mesh);
+  free_particles(MPM_Mesh);  
+
+  if(STATUS == EXIT_SUCCESS)
+  {
+    printf("Computation "GREEN"succesfully"RESET" finished at : %s \n", __TIME__);
+    puts("Exiting of the program...");
+    return EXIT_SUCCESS;
+  }
+  else
+  {
+    printf("Computation "RED"abnormally"RESET" finished at : %s \n", __TIME__);
+    puts("Exiting the program...");
+    return EXIT_FAILURE;
+  }  
 }
 
 /*********************************************************************/
