@@ -67,96 +67,57 @@ Tensor infinitesimal_Strain__Particles__(Tensor Strain, Tensor Rate_Strain,
 
 /*******************************************************/
 
-void update_increment_Deformation_Gradient__Particles__(Tensor DF_p,
-                                                        Matrix DeltaU,
-                                                        Matrix gradient_p) {
+void update_increment_Deformation_Gradient__Particles__(
+  Tensor DF_p,
+  const double * DeltaU,
+  const double * gradient_p,
+  unsigned Nnodes_p) {
 
-  /* Variable definition */
   unsigned Ndim = NumberDimensions;
-  unsigned Nnodes_p = DeltaU.N_rows;
-  Tensor f_n1;
-  Tensor DeltaU_A;
-  Tensor gradient_A;
-  Tensor gradient_DeltaU_A;
-
-  /*
-    Compute increment of the deformation gradient
-    f_n1 = I + Delta_u 0 gradient_N
-  */
-
-  /* Initialise with the identity tensor */
+  
+  // Initialise with the identity tensor
   for (unsigned i = 0; i < Ndim; i++) {
     for (unsigned j = 0; j < Ndim; j++) {
-      DF_p.N[i][j] = 1 * (i == j);
+      DF_p.N[i][j] = 1.0 * (i == j);
     }
   }
 
+  // Ad the nodal contribution to the train tensor
   for (unsigned A = 0; A < Nnodes_p; A++) {
-
-    /* Assign from matrix to tensor */
-    DeltaU_A = memory_to_tensor__TensorLib__(DeltaU.nM[A], 1);
-    gradient_A = memory_to_tensor__TensorLib__(gradient_p.nM[A], 1);
-
-    /* Compute the dyadic product of the nodal velocity and the
-    gradient of the shape functions */
-    gradient_DeltaU_A = dyadic_Product__TensorLib__(DeltaU_A, gradient_A);
-
-    /* Ad the nodal contribution to the train tensor */
     for (unsigned i = 0; i < Ndim; i++) {
       for (unsigned j = 0; j < Ndim; j++) {
-        DF_p.N[i][j] += gradient_DeltaU_A.N[i][j];
+        DF_p.N[i][j] += DeltaU[A*Ndim + i]* gradient_p[A*Ndim + j];
       }
     }
 
-    /* Free memory */
-    free__TensorLib__(gradient_DeltaU_A);
   }
 }
 
 /*******************************************************/
 
 void update_rate_increment_Deformation_Gradient__Particles__(
-    Tensor dt_DF_p, Matrix DeltaV, Matrix gradient_p) {
+  Tensor dt_DF_p, 
+  const double * DeltaV, 
+  const double * gradient_p,
+  unsigned Nnodes_p) {
 
   /* Variable definition */
   unsigned Ndim = NumberDimensions;
-  unsigned Nnodes_p = DeltaV.N_rows;
-  Tensor f_n1;
-  Tensor DeltaV_A;
-  Tensor gradient_A;
-  Tensor gradient_DeltaV_A;
 
-  /*
-    Compute increment of the deformation gradient
-    dt_f_n1 = I + (Delta_V o gradient_N)
-  */
-
-  /* Initialise with the identity tensor */
+  // Initialise with the identity tensor
   for (unsigned i = 0; i < Ndim; i++) {
     for (unsigned j = 0; j < Ndim; j++) {
       dt_DF_p.N[i][j] = 0.0;
     }
   }
 
+  // Ad the nodal contribution to the train tensor
   for (unsigned A = 0; A < Nnodes_p; A++) {
-
-    /* Assign from matrix to tensor */
-    DeltaV_A = memory_to_tensor__TensorLib__(DeltaV.nM[A], 1);
-    gradient_A = memory_to_tensor__TensorLib__(gradient_p.nM[A], 1);
-
-    /* Compute the dyadic product of the nodal velocity and the
-        gradient of the shape functions */
-    gradient_DeltaV_A = dyadic_Product__TensorLib__(DeltaV_A, gradient_A);
-
-    /* Ad the nodal contribution to the train tensor */
     for (unsigned i = 0; i < Ndim; i++) {
       for (unsigned j = 0; j < Ndim; j++) {
-        dt_DF_p.N[i][j] += gradient_DeltaV_A.N[i][j];
+        dt_DF_p.N[i][j] += DeltaV[A*Ndim + i]* gradient_p[A*Ndim + j];
       }
     }
-
-    /* Free memory */
-    free__TensorLib__(gradient_DeltaV_A);
   }
 }
 

@@ -20,7 +20,7 @@ Tensor infinitesimal_Strain__Particles__(Tensor, Tensor, double);
 /*******************************************************/
 
 /*!
-  \fn void update_DeformationGradient(Tensor F_n1,Tensor F_n,Matrix DeltaU,Matrix gradient_p)
+  \fn void update_increment_Deformation_Gradient__Particles__(Tensor DF_p, const double * DeltaU, const double * gradient_p, unsigned Nnodes_p)
 
   \brief Function to update the deformation gradient 
   as in \cite Love_and_Sulsky_2006_a. Takes the values from the previous step, 
@@ -37,7 +37,11 @@ Tensor infinitesimal_Strain__Particles__(Tensor, Tensor, double);
   \param gradient_p : Shape function gradient for each node evaluated
   in the particle position
 */
-void update_increment_Deformation_Gradient__Particles__(Tensor, Matrix, Matrix);
+void update_increment_Deformation_Gradient__Particles__(
+  Tensor DF_p, 
+  const double * DeltaU, 
+  const double * gradient_p, 
+  unsigned Nnodes_p);
 /*******************************************************/
 
 /*!
@@ -67,10 +71,29 @@ void update_Deformation_Gradient_n1__Particles__(Tensor, Tensor, Tensor);
 void get_locking_free_Deformation_Gradient_n1__Particles__(int,double,Particle);
 /*******************************************************/
 
-/*
-  \fn void update_rate_increment_Deformation_Gradient__Particles__(Tensor dt_DF_p,Matrix DeltaV,Matrix gradient_p);
+/*!
+  \fn void update_rate_increment_Deformation_Gradient__Particles__(Tensor DF_p, const double * DeltaV, const double * gradient_p, unsigned Nnodes_p)
+
+  \brief Function to update the deformation gradient rate 
+  as in \cite Love_and_Sulsky_2006_a. Takes the values from the previous step, 
+  and update it
+
+  \f[
+  f_{n+1} = 1 + grad ( \Delta \phi )\\
+  F_{n+1} = f_{n+1} F_{n}
+  \f]
+
+  \param F_n1 : Deformation gradient at t = n + 1
+  \param F_n : Deformation gradient at t = n
+  \param DeltaV : Nodal velocity increment (iterate)
+  \param gradient_p : Shape function gradient for each node evaluated
+  in the particle position
 */
-void update_rate_increment_Deformation_Gradient__Particles__(Tensor,Matrix,Matrix);
+void update_rate_increment_Deformation_Gradient__Particles__(
+  Tensor dt_DF_p, 
+  const double * DeltaV, 
+  const double * gradient_p,
+  unsigned Nnodes_p);
 /*******************************************************/
 
 /*

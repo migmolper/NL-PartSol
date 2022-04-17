@@ -26,7 +26,11 @@ Mask generate_Mask_for_static_condensation__MeshTools__(Mask, Mesh, int, int);
 Mask generate_Mask_for_static_condensation_upw__MeshTools__(Mask, Mesh, int, int);
 /********************************************************************/
 
-Matrix   get_set_field__MeshTools__(Matrix, Element, Mask);
+void get_set_field__MeshTools__(
+  double * Field_Ap,
+  const double * Field, 
+  Element Nodes_p,
+  Mask ActiveNodes);
 /********************************************************************/
 
 /*
