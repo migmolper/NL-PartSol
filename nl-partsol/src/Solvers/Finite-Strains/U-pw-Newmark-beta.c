@@ -790,10 +790,10 @@ static void update_Local_State(
     /*
       Compute the increment of the deformation gradient and its rate
     */
-    update_increment_Deformation_Gradient__Particles__(
-        DF_p, Nodal_D_Displacement_p, gradient_p);
-    update_rate_increment_Deformation_Gradient__Particles__(
-        dt_DF_p, Nodal_D_Velocity_p, gradient_p);
+//    update_increment_Deformation_Gradient__Particles__(
+//        DF_p, Nodal_D_Displacement_p, gradient_p);
+//    update_rate_increment_Deformation_Gradient__Particles__(
+//        dt_DF_p, Nodal_D_Velocity_p, gradient_p);
 
     /*
       Update the deformation gradient in t = n + 1 with the information

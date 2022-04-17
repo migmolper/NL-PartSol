@@ -64,15 +64,15 @@ void U_Forward_Euler(Mesh, Particle, Time_Int_Params);
 void U_Generalized_alpha(Mesh, Particle, Time_Int_Params);
 
 /*!
-  \fn void U_Newmark_Predictor_Corrector(Mesh FEM_Mesh, Particle MPM_Mesh, Time_Int_Params Parameters_Solver)
+  \fn int U_Verlet_Finite_Strains(Mesh FEM_Mesh, Particle MPM_Mesh, Time_Int_Params Parameters_Solver);
 
-  \brief Explicit predictor-corrector gamma = 0.5
+  \brief Verlet time integration scheme
  
   \param Mesh FEM_Mesh : Variable with the nodal information
   \param Particle MPM_Mesh : Variable with the particle information
   \param InitialStep
  */
-void U_Newmark_Predictor_Corrector(Mesh, Particle, Time_Int_Params);
+int U_Verlet_Finite_Strains(Mesh FEM_Mesh, Particle MPM_Mesh, Time_Int_Params Parameters_Solver);
 
 /*!
   \brief Finite strains explicit predictor-corrector gamma = 0.5

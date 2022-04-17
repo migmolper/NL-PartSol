@@ -42,7 +42,12 @@ static Newmark_parameters compute_Newmark_parameters(
   double gamma /**< Second Newmark-beta parameter */,
   double DeltaTimeStep /**< Timestep increment */);
 
-static Matrix compute_Nodal_Effective_Mass(Particle, Mesh, Mask, double);
+static int __compute_nodal_effective_mass(
+  double * Effective_MassMatrix /**< */,
+  Particle MPM_Mesh /**< */, 
+  Mesh FEM_Mesh /**< */,
+  Mask ActiveNodes /**< */, 
+  double epsilon /**< */);
 
 static int __get_nodal_field_tn(
   Nodal_Field U_n /**< */,
@@ -90,10 +95,10 @@ static void __Nodal_Reactions(
 
 static void __Nodal_Inertial_Forces(
   double * Residual /**< */,
+  double * Mass /**< */,
   Nodal_Field U_n /**< */, 
   Nodal_Field D_U /**< */,
-  Mask ActiveNodes /**< */, 
-  Matrix Mass /**< */, 
+  Mask ActiveNodes /**< */,  
   Newmark_parameters Params /**< */);
 
 static double __error_residual(
@@ -183,13 +188,12 @@ int U_Newmark_beta_Finite_Strains(Mesh FEM_Mesh, Particle MPM_Mesh,
   double Error_i;
   double Error_relative;
 
-  Matrix Effective_Mass;
+  double * Effective_Mass;
   double * Tangent_Stiffness;
   double * Residual;
   double * Reactions;
   Nodal_Field U_n;
   Nodal_Field D_U;
-  Matrix D_Displacement;
 
   Mask ActiveNodes;
   Mask Free_and_Restricted_Dofs;
@@ -204,9 +208,7 @@ int U_Newmark_beta_Finite_Strains(Mesh FEM_Mesh, Particle MPM_Mesh,
   */
   DeltaTimeStep = U_DeltaT__SolversLib__(MPM_Mesh, DeltaX, Parameters_Solver);
 
-  /*
-    Compute alpha parameters
-  */
+  //  Compute time integrator parameters
   Params = compute_Newmark_parameters(beta, gamma, DeltaTimeStep);
 
   while (TimeStep < NumTimeStep) {
@@ -252,8 +254,17 @@ int U_Newmark_beta_Finite_Strains(Mesh FEM_Mesh, Particle MPM_Mesh,
     __initialise_nodal_increments(D_U, U_n, FEM_Mesh, ActiveNodes, Params);
     
     
-    // 
-    Effective_Mass = compute_Nodal_Effective_Mass(MPM_Mesh, FEM_Mesh, ActiveNodes, epsilon);
+    // Define and allocate the effective mass matrix
+    Effective_Mass = (double *)calloc(Order*Order, __SIZEOF_DOUBLE__);
+    if(Effective_Mass == NULL){
+      fprintf(stderr, ""RED"Error in calloc(): Out of memory"RESET" \n");
+      return EXIT_FAILURE;
+    }
+    STATUS = __compute_nodal_effective_mass(Effective_Mass, MPM_Mesh, FEM_Mesh, ActiveNodes, epsilon);
+    if(STATUS == EXIT_FAILURE){
+      fprintf(stderr, ""RED"Error in __compute_nodal_effective_mass()"RESET" \n");
+      return EXIT_FAILURE;
+    }
 
     // Trial residual
     Residual = (double *)calloc(Order, __SIZEOF_DOUBLE__);
@@ -276,7 +287,7 @@ int U_Newmark_beta_Finite_Strains(Mesh FEM_Mesh, Particle MPM_Mesh,
 
     __Nodal_Reactions(Reactions, Residual, FEM_Mesh, ActiveNodes);
 
-    __Nodal_Inertial_Forces(Residual, U_n, D_U, ActiveNodes, Effective_Mass, Params);
+    __Nodal_Inertial_Forces(Residual, Effective_Mass, U_n, D_U, ActiveNodes, Params);
 
     // Compute error
     Error_0 = Error_i = __error_residual(Residual,Order);  
@@ -298,7 +309,7 @@ int U_Newmark_beta_Finite_Strains(Mesh FEM_Mesh, Particle MPM_Mesh,
       } 
 
       STATUS = __assemble_tangent_stiffness(
-        Tangent_Stiffness, Effective_Mass.nV,
+        Tangent_Stiffness, Effective_Mass,
         ActiveNodes, MPM_Mesh, FEM_Mesh, Params);
       if(STATUS == EXIT_FAILURE){
           fprintf(stderr, ""RED"Error in __assemble_tangent_stiffness()"RESET" \n");
@@ -347,7 +358,7 @@ int U_Newmark_beta_Finite_Strains(Mesh FEM_Mesh, Particle MPM_Mesh,
 
       __Nodal_Reactions(Reactions, Residual, FEM_Mesh, ActiveNodes);
 
-      __Nodal_Inertial_Forces(Residual, U_n, D_U, ActiveNodes, Effective_Mass, Params);
+      __Nodal_Inertial_Forces(Residual, Effective_Mass, U_n, D_U, ActiveNodes, Params);
 
       // Get stats for the convergence
       Error_i = __error_residual(Residual,Order);
@@ -370,7 +381,7 @@ int U_Newmark_beta_Finite_Strains(Mesh FEM_Mesh, Particle MPM_Mesh,
 
     TimeStep++;
 
-    free__MatrixLib__(Effective_Mass);
+    free(Effective_Mass);
     free(U_n.value);
     free(U_n.d_value_dt);
     free(U_n.d2_value_dt2);
@@ -408,24 +419,23 @@ static Newmark_parameters compute_Newmark_parameters(
 
 /**************************************************************/
 
-static Matrix compute_Nodal_Effective_Mass(Particle MPM_Mesh, Mesh FEM_Mesh,
-                                           Mask ActiveNodes, double epsilon)
+static int __compute_nodal_effective_mass(
+  double * Effective_MassMatrix,
+  Particle MPM_Mesh, 
+  Mesh FEM_Mesh,
+  Mask ActiveNodes, 
+  double epsilon)
 /*
   This function computes the effective mass matrix as a convex combination
   of the lumped mass matrix and the consistent mass matrix. Later assemble
   a total mass matrix with the contribution of each degree of freedom.
-
-  | M_eff |   0   |              | M_cons |   0    |          | M_lump |   0 |
-  -----------------  = (1-eps) * -------------------  + eps *
-  ------------------- |    0  | M_eff |	         |   0    | M_cons |	      |
-  0    | M_lump |
 */
 {
 
-  int Nnodes_mask = ActiveNodes.Nactivenodes;
-  int Ndof = NumberDOF;
-  int Np = MPM_Mesh.NumGP;
-  int Order = Ndof * Nnodes_mask;
+  unsigned Nnodes_mask = ActiveNodes.Nactivenodes;
+  unsigned Ndim = NumberDimensions;
+  unsigned Np = MPM_Mesh.NumGP;
+  unsigned Order = Ndim * Nnodes_mask;
   int Ap;
   int Bp;
   int A_mask;
@@ -447,16 +457,18 @@ static Matrix compute_Nodal_Effective_Mass(Particle MPM_Mesh, Mesh FEM_Mesh,
   /* Element for each particle */
   Element Nodes_p;
 
-  /* Define and allocate the effective mass matrix */
-  Matrix Effective_MassMatrix = allocZ__MatrixLib__(Order, Order);
 
-  /* Define and allocate the lumped mass matrix */
-  Matrix Lumped_MassMatrix = allocZ__MatrixLib__(Order, 1);
+  // Define and allocate the lumped mass matrix 
+  double * Lumped_MassMatrix = (double *)calloc(Order, __SIZEOF_DOUBLE__);
+  if(Lumped_MassMatrix == NULL){
+      fprintf(stderr, ""RED"Error in calloc(): Out of memory"RESET" \n");
+      return EXIT_FAILURE;
+  }
 
   /*
     Iterate over the particles to get the nodal values
   */
-  for (int p = 0; p < Np; p++) {
+  for (unsigned p = 0; p < Np; p++) {
 
     /*
       Define tributary nodes of the particle
@@ -474,7 +486,7 @@ static Matrix compute_Nodal_Effective_Mass(Particle MPM_Mesh, Mesh FEM_Mesh,
     */
     m_p = MPM_Mesh.Phi.mass.nV[p];
 
-    for (int A = 0; A < Nodes_p.NumberNodes; A++) {
+    for (unsigned A = 0; A < Nodes_p.NumberNodes; A++) {
 
       /*
          Get the node in the mass matrix with the mask
@@ -493,11 +505,11 @@ static Matrix compute_Nodal_Effective_Mass(Particle MPM_Mesh, Mesh FEM_Mesh,
       /*
          Fill the Lumped mass matrix considering the number of dofs
       */
-      for (int i = 0; i < Ndof; i++) {
-        Lumped_MassMatrix.nV[A_mask * Ndof + i] += m_A_p;
+      for (unsigned i = 0; i < Ndim; i++) {
+        Lumped_MassMatrix[A_mask * Ndim + i] += m_A_p;
       }
 
-      for (int B = 0; B < Nodes_p.NumberNodes; B++) {
+      for (unsigned B = 0; B < Nodes_p.NumberNodes; B++) {
         /*
            Get the node in the mass matrix with the mask
         */
@@ -515,12 +527,11 @@ static Matrix compute_Nodal_Effective_Mass(Particle MPM_Mesh, Mesh FEM_Mesh,
         /*
            Fill the effective mass matrix considering the number of dofs
         */
-        for (int i = 0; i < Ndof; i++) {
+        for (unsigned i = 0; i < Ndim; i++) {
           /*
             Compute the vectorized index
           */
-          Effective_MassMatrix.nM[A_mask * Ndof + i][B_mask * Ndof + i] +=
-              m_AB_p;
+          Effective_MassMatrix[(A_mask * Ndim + i)*Order + (B_mask * Ndim + i)] += m_AB_p;
         }
       }
     }
@@ -536,19 +547,16 @@ static Matrix compute_Nodal_Effective_Mass(Particle MPM_Mesh, Mesh FEM_Mesh,
   */
   for (int A = 0; A < Order; A++) {
     for (int B = 0; B < Order; B++) {
-      Effective_MassMatrix.nM[A][B] =
-          (1 - epsilon) * Effective_MassMatrix.nM[A][B] +
-          (A == B) * epsilon * Lumped_MassMatrix.nV[A];
+      Effective_MassMatrix[A*Order + B] =
+          (1 - epsilon) * Effective_MassMatrix[A*Order + B] +
+          (A == B) * epsilon * Lumped_MassMatrix[A];
     }
   }
 
-  /*
-    Free lumped mass matrix.
-  */
-  free__MatrixLib__(Lumped_MassMatrix);
 
+  free(Lumped_MassMatrix);
 
-  return Effective_MassMatrix;
+  return EXIT_SUCCESS;
 }
 
 /**************************************************************/
@@ -635,14 +643,19 @@ static int __get_nodal_field_tn(
   int *IPIV = (int *)Allocate_Array(Order, sizeof(int));
   int NRHS = 1;
 
-  /*
-    Generate auxiliar copy of the mass matrix to avoid destructive operations
-  */
- Matrix Effective_Mass =
-        compute_Nodal_Effective_Mass(MPM_Mesh, FEM_Mesh, ActiveNodes, epsilon);
+  double * Effective_Mass = (double *)calloc(Order*Order, __SIZEOF_DOUBLE__);
+  if(Effective_Mass == NULL){
+    fprintf(stderr, ""RED"Error in calloc(): Out of memory"RESET" \n");
+    return EXIT_FAILURE;
+  }
+  STATUS = __compute_nodal_effective_mass(Effective_Mass, MPM_Mesh, FEM_Mesh, ActiveNodes, epsilon);
+  if(STATUS == EXIT_FAILURE){
+    fprintf(stderr, ""RED"Error in __compute_nodal_effective_mass()"RESET" \n");
+    return EXIT_FAILURE;
+  }
 
   //  Compute the LU factorization for the mass matrix
-  dgetrf_(&Order, &Order, Effective_Mass.nV, &LDA, IPIV, &INFO);
+  dgetrf_(&Order, &Order, Effective_Mass, &LDA, IPIV, &INFO);
   if (INFO != 0) {
     if (INFO < 0) {
       printf(
@@ -663,31 +676,28 @@ static int __get_nodal_field_tn(
     return EXIT_FAILURE;
   }
 
-  /*
-    Solve for the velocity
-  */
-  dgetrs_(&TRANS, &Order, &NRHS, Effective_Mass.nV, &LDA, IPIV, U_n.value, &LDB, &INFO);
+
+  dgetrs_(&TRANS, &Order, &NRHS, Effective_Mass, &LDA, IPIV, U_n.value, &LDB, &INFO);
   if (INFO) {
     fprintf(stderr, ""RED"Error in dgetrs_() "RESET"\n");
     return EXIT_FAILURE;
   }
 
-  dgetrs_(&TRANS, &Order, &NRHS, Effective_Mass.nV, &LDA, IPIV, U_n.d_value_dt, &LDB, &INFO);
+  dgetrs_(&TRANS, &Order, &NRHS, Effective_Mass, &LDA, IPIV, U_n.d_value_dt, &LDB, &INFO);
   if (INFO) {
     fprintf(stderr, ""RED"Error in dgetrs_() "RESET"\n");
     return EXIT_FAILURE;
   }
 
-  dgetrs_(&TRANS, &Order, &NRHS, Effective_Mass.nV, &LDA, IPIV, U_n.d2_value_dt2, &LDB, &INFO);
+  dgetrs_(&TRANS, &Order, &NRHS, Effective_Mass, &LDA, IPIV, U_n.d2_value_dt2, &LDB, &INFO);
   if (INFO) {
     fprintf(stderr, ""RED"Error in dgetrs_() "RESET"\n");
     return EXIT_FAILURE;
   }
 
-  /*
-    Free auxiliar memory
-  */
-  free__MatrixLib__(Effective_Mass);
+
+  //  Free auxiliar memory
+  free(Effective_Mass);
   free(IPIV);
 
   return STATUS;
@@ -705,13 +715,10 @@ static void __initialise_nodal_increments(
   Apply the boundary conditions over the nodes
 */
 {
-
-  /* 1º Define auxilar variables */
-  int Nnodes_mask = ActiveNodes.Nactivenodes;
-  int NumNodesBound;           /* Number of nodes of the bound */
-  int Ndim = NumberDimensions; /* Number of dimensions */
-  int Ndof = NumberDOF;        /* Number of degree of freedom */
-  int Id_BCC;                  /* Index of the node where we apply the BCC */
+  unsigned Nnodes_mask = ActiveNodes.Nactivenodes;
+  unsigned NumNodesBound;          
+  unsigned Ndim = NumberDimensions;
+  int Id_BCC;                  
   int Id_BCC_mask;
 
   double alpha_1 = Params.alpha_1;
@@ -733,11 +740,6 @@ static void __initialise_nodal_increments(
     */
     NumNodesBound = FEM_Mesh.Bounds.BCC_i[i].NumNodes;
 
-    /*
-      Get the number of dimensions where the BCC it is applied
-    */
-    Ndof = FEM_Mesh.Bounds.BCC_i[i].Dim;
-
     for (unsigned j = 0; j < NumNodesBound; j++) {
       /*
         Get the index of the node
@@ -756,7 +758,7 @@ static void __initialise_nodal_increments(
       /*
         Loop over the dimensions of the boundary condition
       */
-      for (unsigned k = 0; k < Ndof; k++) {
+      for (unsigned k = 0; k < Ndim; k++) {
 
         /*
           Apply only if the direction is active (1)
@@ -818,16 +820,12 @@ static int __local_deformation(
   unsigned Ndim = NumberDimensions;
   unsigned Np = MPM_Mesh.NumGP;
   unsigned Nnodes_mask = ActiveNodes.Nactivenodes;
-  int MatIndx_p;
   unsigned NumberNodes_p;
   unsigned Order_p;
   int Idx_Element_p;
   int Idx_Patch_p;
-  double Vn_patch;
-  double Vn1_patch;
-  double J_patch;
+
   Element Nodes_p;
-  Material MatProp_p;
   Matrix gradient_p;
   double * D_Displacement_Ap;
   double * D_Velocity_Ap;
@@ -841,16 +839,16 @@ static int __local_deformation(
   /*
     Loop in the material point set
   */
-  for (int p = 0; p < Np; p++) {
+  for (unsigned p = 0; p < Np; p++) {
     
     //  Define tributary nodes of the particle
     NumberNodes_p = MPM_Mesh.NumberNodes[p];
     Nodes_p = nodal_set__Particles__(p, MPM_Mesh.ListNodes[p],NumberNodes_p);
     Order_p = NumberNodes_p*Ndim;
 
-
     //  Get the nodal increment of displacement using the mask
     D_Displacement_Ap = (double *)calloc(Order_p, __SIZEOF_DOUBLE__);
+    D_Velocity_Ap = (double *)calloc(Order_p, __SIZEOF_DOUBLE__);    
       if((D_Displacement_Ap == NULL) 
       || (D_Velocity_Ap == NULL)){
         fprintf(stderr, ""RED"Error in calloc(): Out of memory"RESET" \n");
@@ -911,12 +909,16 @@ static int __local_deformation(
     free(Nodes_p.Connectivity);
   }
 
-  /*
-    Loop in the material point set to update stress
-  */
-  for (int p = 0; p < Np; p++) {
 
-    if (FEM_Mesh.Locking_Control_Fbar) {
+  // F-bar
+  if (FEM_Mesh.Locking_Control_Fbar) {
+
+    double Vn_patch;
+    double Vn1_patch;
+    double J_patch;
+
+    for (int p = 0; p < Np; p++) {
+
       Idx_Element_p = MPM_Mesh.Element_p[p];
       Idx_Patch_p = FEM_Mesh.Idx_Patch[Idx_Element_p];
 
@@ -946,11 +948,11 @@ static int __Nodal_Internal_Forces(
   unsigned Ndim = NumberDimensions;
   unsigned Nnodes_mask = ActiveNodes.Nactivenodes;
   unsigned Np = MPM_Mesh.NumGP;
-  unsigned Ap;
-  unsigned A_mask;
   unsigned NumNodes_p;
-  unsigned idx_A_mask_i;
   unsigned MatIndx_p;
+
+  int Ap;
+  int A_mask;
 
   Tensor P_p; /* First Piola-Kirchhoff Stress tensor */
   Tensor InternalForcesDensity_Ap;
@@ -1062,22 +1064,28 @@ static void __Nodal_Traction_Forces(
   Particle MPM_Mesh,
   Mesh FEM_Mesh) {
 
-  int Ndim = NumberDimensions;
+  unsigned Ndim = NumberDimensions;
+  unsigned NumContactForces = MPM_Mesh.Neumann_Contours.NumBounds;
+  unsigned NumNodesLoad;
+
   Load Load_i;
   Element Nodes_p; /* Element for each Gauss-Point */
   Matrix N_p;      /* Nodal values of the sahpe function */
   double N_pa;
-  Tensor T = alloc__TensorLib__(1); // Nominal traction
   double A0_p; /* Area of the particle in the reference configuration */
 
-  int NumContactForces = MPM_Mesh.Neumann_Contours.NumBounds;
-  int NumNodesLoad;
+#if NumberDimensions == 2
+  double T[2] = {0.0, 0.0};
+#else
+  double T[3] = {0.0, 0.0};
+#endif
+
   int p;
   int Ap;
   int A_mask;
   int NumNodes_p; /* Number of nodes of each particle */
 
-  for (int i = 0; i < NumContactForces; i++) {
+  for (unsigned i = 0; i < NumContactForces; i++) {
 
     /*
       Read load i
@@ -1086,7 +1094,7 @@ static void __Nodal_Traction_Forces(
 
     NumNodesLoad = Load_i.NumNodes;
 
-    for (int j = 0; j < NumNodesLoad; j++) {
+    for (unsigned j = 0; j < NumNodesLoad; j++) {
 
       /*
         Get the index of the particle
@@ -1096,12 +1104,12 @@ static void __Nodal_Traction_Forces(
       /*
         Get the area of each particle
       */
-      if (Ndim == 2) {
-        A0_p = MPM_Mesh.Phi.Vol_0.nV[p] / Thickness_Plain_Stress;
-      } else if (Ndim == 3) {
-        A0_p = MPM_Mesh.Phi.Area_0.nV[p];
-      }
-
+#if NumberDimensions == 2
+      A0_p = MPM_Mesh.Phi.Vol_0.nV[p] / Thickness_Plain_Stress;
+#else
+      A0_p = MPM_Mesh.Phi.Area_0.nV[p];
+#endif     
+      
       /*
         Define tributary nodes of the particle
       */
@@ -1116,16 +1124,16 @@ static void __Nodal_Traction_Forces(
       /*
         Fill vector of contact forces
       */
-      for (int k = 0; k < Ndim; k++) {
+      for (unsigned k = 0; k < Ndim; k++) {
         if (Load_i.Dir[k * NumTimeStep + TimeStep] == 1) {
-          T.n[k] = Load_i.Value[k].Fx[TimeStep];
+          T[k] = Load_i.Value[k].Fx[TimeStep];
         }
       }
 
       /*
         Get the node of the mesh for the contribution
       */
-      for (int A = 0; A < NumNodes_p; A++) {
+      for (unsigned A = 0; A < NumNodes_p; A++) {
 
         /*
           Pass the value of the nodal shape function to a scalar
@@ -1141,8 +1149,8 @@ static void __Nodal_Traction_Forces(
         /*
           Compute Contact forces
         */
-        for (int k = 0; k < Ndim; k++) {
-          Residual[A_mask*Ndim + k] -= N_pa * T.n[k] * A0_p;
+        for (unsigned k = 0; k < Ndim; k++) {
+          Residual[A_mask*Ndim + k] -= N_pa * T[k] * A0_p;
         }
       }
 
@@ -1152,7 +1160,6 @@ static void __Nodal_Traction_Forces(
     }
   }
 
-  free__TensorLib__(T);
 }
 
 /**************************************************************/
@@ -1163,29 +1170,33 @@ static void __Nodal_Body_Forces(
   Particle MPM_Mesh, 
   Mesh FEM_Mesh) {
   
+#if NumberDimensions == 2
+  double b[2] = {0.0, 0.0};
+#else
+  double b[3] = {0.0, 0.0};
+#endif
+
   /* Define auxilar variables */
-  int Ndim = NumberDimensions;
-  int Nnodes_mask = ActiveNodes.Nactivenodes;
-  int NumBodyForces = MPM_Mesh.NumberBodyForces;
-  int NumParticles_i; /* Number of particles with the */
-  int NumNodes_p;     /* Number of tributary nodes of p */
+  unsigned Ndim = NumberDimensions;
+  unsigned Nnodes_mask = ActiveNodes.Nactivenodes;
+  unsigned NumBodyForces = MPM_Mesh.NumberBodyForces;
+  unsigned NumNodes_p;
+
   int A_mask;         /* Index of the node where we apply the body force */
   int idx_A_mask_k;   /* Index of the node where we apply the body force */
   int Ap;             /* Tributary node A of particle p */
-                      //  int p; /* Particle index */
 
-  double m_p;              /* Mass of the particle */
   Load *B = MPM_Mesh.B;    /* List with the load cases */
   Element Nodes_p;         /* Element for each particle */
   Matrix ShapeFunction_p;  /* Nodal values of the sahpe function */
   double ShapeFunction_pA; /* Evaluation in the node I for the particle p */
+  double m_p;              /* Mass of the particle */
 
-  Tensor b = alloc__TensorLib__(1); /* Body forces vector */
 
-//  b.n[0] = 0.0;
-//  b.n[1] = -9.81;
 
-  for (int p = 0; p < MPM_Mesh.NumGP; p++) {
+//  b[1] = -9.81;
+
+  for (unsigned p = 0; p < MPM_Mesh.NumGP; p++) {
 
     /* Get the value of the mass */
     m_p = MPM_Mesh.Phi.mass.nV[p];
@@ -1198,7 +1209,7 @@ static void __Nodal_Body_Forces(
     ShapeFunction_p = compute_N__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
 
     /* Get the node of the mesh for the contribution */
-    for (int A = 0; A < NumNodes_p; A++) {
+    for (unsigned A = 0; A < NumNodes_p; A++) {
 
       /* Pass the value of the nodal shape function to a scalar */
       ShapeFunction_pA = ShapeFunction_p.nV[A];
@@ -1208,8 +1219,8 @@ static void __Nodal_Body_Forces(
       A_mask = ActiveNodes.Nodes2Mask[Ap];
 
       /* Compute body forces */
-      for (int k = 0; k < Ndim; k++) {
-        Residual[A_mask*Ndim + k] -= ShapeFunction_pA * b.n[k] * m_p;
+      for (unsigned k = 0; k < Ndim; k++) {
+        Residual[A_mask*Ndim + k] -= ShapeFunction_pA * b[k] * m_p;
       }
     }
 
@@ -1218,10 +1229,6 @@ static void __Nodal_Body_Forces(
     free(Nodes_p.Connectivity);
   }
 
-  /*
-    Free auxiliar tensor
-  */
-  free__TensorLib__(b);
 }
 
 /**********************************************************************/
@@ -1236,10 +1243,10 @@ static void __Nodal_Reactions(
 */
 {
   /* 1º Define auxilar variables */
-  int Ndim = NumberDimensions;
-  int NumNodesBound; /* Number of nodes of the bound */
-  int NumDimBound;   /* Number of dimensions */
-  int Nnodes_mask = ActiveNodes.Nactivenodes;
+  unsigned Ndim = NumberDimensions;
+  unsigned NumNodesBound; /* Number of nodes of the bound */
+  unsigned NumDimBound;   /* Number of dimensions */
+  unsigned Nnodes_mask = ActiveNodes.Nactivenodes;
   int Id_BCC; /* Index of the node where we apply the BCC */
   int Id_BCC_mask;
   int Id_BCC_mask_k;
@@ -1247,7 +1254,7 @@ static void __Nodal_Reactions(
   /*
     Loop over the the boundaries
   */
-  for (int i = 0; i < FEM_Mesh.Bounds.NumBounds; i++) {
+  for (unsigned i = 0; i < FEM_Mesh.Bounds.NumBounds; i++) {
     /*
        Get the number of nodes of this boundarie
     */
@@ -1258,7 +1265,7 @@ static void __Nodal_Reactions(
     */
     NumDimBound = FEM_Mesh.Bounds.BCC_i[i].Dim;
 
-    for (int j = 0; j < NumNodesBound; j++) {
+    for (unsigned j = 0; j < NumNodesBound; j++) {
       /*
          Get the index of the node
       */
@@ -1276,7 +1283,7 @@ static void __Nodal_Reactions(
       /*
          Loop over the dimensions of the boundary condition
       */
-      for (int k = 0; k < NumDimBound; k++) {
+      for (unsigned k = 0; k < NumDimBound; k++) {
 
         /*
            Apply only if the direction is active (1)
@@ -1298,10 +1305,10 @@ static void __Nodal_Reactions(
 
 static void __Nodal_Inertial_Forces(
   double * Residual,
+  double * Mass,  
   Nodal_Field U_n, 
   Nodal_Field D_U,
-  Mask ActiveNodes, 
-  Matrix Mass, 
+  Mask ActiveNodes,  
   Newmark_parameters Params) {
   
   unsigned Ndim = NumberDimensions;
@@ -1313,7 +1320,7 @@ static void __Nodal_Inertial_Forces(
 
   for (unsigned idx_A = 0; idx_A < Order; idx_A++) {
     for (unsigned idx_B = 0; idx_B < Order; idx_B++) {
-      Residual[idx_A] += Mass.nM[idx_A][idx_B] * 
+      Residual[idx_A] += Mass[idx_A*Order + idx_B] * 
       (alpha_1 * D_U.value[idx_B] -
       alpha_2 * U_n.d_value_dt[idx_B] -
       alpha_3 * U_n.d2_value_dt2[idx_B]);
@@ -1350,13 +1357,14 @@ static int __assemble_tangent_stiffness(
   unsigned Nnodes_mask = ActiveNodes.Nactivenodes;
   unsigned Order = Ndof * Nnodes_mask;
   unsigned Np = MPM_Mesh.NumGP;
-  unsigned Ap;
-  unsigned A_mask;
-  unsigned Bp;
-  unsigned B_mask;
   unsigned NumNodes_p;
   unsigned MatIndx_p;
-  unsigned idx_AB_mask_ij;
+
+  int Ap;
+  int A_mask;
+  int Bp;
+  int B_mask;
+  int idx_AB_mask_ij;
 
   Element Nodes_p;   /* List of nodes for particle */
   Matrix d_shapefunction_p; /* Shape functions gradients */
@@ -1502,7 +1510,8 @@ static void system_reduction(
   unsigned Number_of_BCC = FEM_Mesh.Bounds.NumBounds;
   unsigned NumNodesBound; /* Number of nodes of the bound */
   unsigned NumDimBound;   /* Number of dimensions */
-  unsigned Id_BCC;        /* Index of the node where we apply the BCC */
+  
+  int Id_BCC;        /* Index of the node where we apply the BCC */
   int Id_BCC_mask;
   int Id_BCC_mask_k;
 
@@ -1561,10 +1570,10 @@ static int __solve_equilibrium(
   double * Residual,
   int Nnodes_mask)
 {
-  int Ndof = NumberDOF;
-  int Order = Nnodes_mask * Ndof;
-  int LDA = Nnodes_mask * Ndof;
-  int LDB = Nnodes_mask * Ndof;
+  unsigned Ndof = NumberDOF;
+  unsigned Order = Nnodes_mask * Ndof;
+  unsigned LDA = Nnodes_mask * Ndof;
+  unsigned LDB = Nnodes_mask * Ndof;
   char TRANS = 'T'; /* (Transpose) */
   int INFO = 3;
   int *IPIV = (int *)Allocate_Array(Order, sizeof(int));
@@ -1655,10 +1664,11 @@ static void __update_Particles(
   unsigned Np = MPM_Mesh.NumGP;
   unsigned Nnodes_mask = ActiveNodes.Nactivenodes;
   unsigned NumNodes_p;
-  unsigned Ap;
+  
+  int Ap;
   int A_mask;
-  unsigned idx_A_mask_i;
-  unsigned idx_ij;
+  int idx_A_mask_i;
+  int idx_ij;
 
   Matrix D_Displacement_Ap;
   Matrix ShapeFunction_p; /* Value of the shape-function in the particle */

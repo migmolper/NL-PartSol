@@ -737,10 +737,10 @@ Define tributary nodes of the particle
     /*
       Compute the increment of the deformation gradient
     */
-    update_increment_Deformation_Gradient__Particles__(DF_p, D_Displacement_Ap,
-                                                       gradient_p);
-    update_rate_increment_Deformation_Gradient__Particles__(
-        dt_DF_p, D_Velocity_Ap, gradient_p);
+//    update_increment_Deformation_Gradient__Particles__(DF_p, D_Displacement_Ap,
+//                                                       gradient_p);
+//    update_rate_increment_Deformation_Gradient__Particles__(
+//        dt_DF_p, D_Velocity_Ap, gradient_p);
 
     /*
       Update the deformation gradient in t = n + 1 with the information

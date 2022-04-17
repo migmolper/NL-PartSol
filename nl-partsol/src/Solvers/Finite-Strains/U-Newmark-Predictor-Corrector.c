@@ -22,20 +22,47 @@ int Number_Out_particles_path_csv;
 /*
   Auxiliar functions
 */
+static int __mass_NODES(
+    double * Lumped_MassMatrix /**< [out] Lumped mass matrix */,
+    Particle MPM_Mesh /**< [in] Information of the particles */,
+    Mesh FEM_Mesh /**< [in] Information of the nodes */,   
+    Mask ActiveNodes /**< [in] Information of the active nodes */); 
 
-/* Step 1 */
-static Matrix compute_Mass_Matrix(Particle MPM_Mesh, Mesh FEM_Mesh,
-                                  Mask ActiveNodes);
-/* Step 2 */
-static void compute_Explicit_Newmark_Predictor(Particle, double);
-/* Step 3 */
-static Matrix compute_Nodal_Gravity_field(Mask, Particle, int, int);
-static Matrix compute_Nodal_D_Displacement(Particle, Mesh, Mask, Matrix);
+static int __predictor_PARTICLES(
+  double * D_dis /**< [in/out] Vector with particle increment of displacement */,
+  double * vel /**< [in/out] Vector with particle velocity */,
+  const double * acc /**< [in] Vector with particle acceleration */, 
+  double gamma /**< [in] Parameter for the time integration scheme */,
+  unsigned Np /**< [in] Number of particles */);
+
+static int __gravity_NODES(
+  double * Gravity_field /**< [in/out] Vector with the gravity field */,
+  const Mask ActiveNodes /**< [in] Information of the active nodes */, 
+  const Load * B /**< [in] List of distance forces  */,
+  unsigned NumBodyForces /**< [in] Number of distance forces */,
+  unsigned TimeStep /**< [in] Current time step */, 
+  unsigned NumTimeStep /**< [in] Number of time steps of the simulation */);
+
+static int __d_displacement_NODES(
+  double * D_dis_NODES /**< [out] Vector with nodal displacement */,
+  const double * Mass_NODES /**< [in] Vector with nodal mass */,
+  const double * D_dis_PARTICLES /**< [in] Vector with particle displacement */,
+  const double * Mass_PARTICLES /**< [in] Vector with particle mass */,  
+  Particle MPM_Mesh /**< [in] Information of the particles */, 
+  Mesh FEM_Mesh /**< [in] Information of the nodes */,
+  const Mask ActiveNodes /**< [in] Information of the active nodes */);
+
 static Matrix compute_Nodal_Velocity(Particle, Mesh, Mask, Matrix);
-static void impose_Dirichlet_Boundary_Conditions(Mesh, Matrix, Matrix, Mask,
-                                                 int, int);
+
+static void impose_Dirichlet_Boundary_Conditions(
+  double * D_Displacement,
+  Mesh FEM_Mesh, 
+  Mask ActiveNodes,
+  int TimeStep, 
+  int NumTimeStep);
+
 /* Step 4 */    
-static int __update_Local_State(Matrix, Mask, Particle, Mesh);
+static int __update_Local_State(const double *, Mask, Particle, Mesh);
 /* Step 5 */
 static Matrix compute_Nodal_Forces(Mask, Particle, Mesh, int, int);
 static void compute_Nodal_Internal_Forces(Matrix, Mask, Particle, Mesh);
@@ -51,7 +78,7 @@ static void output_selector(Particle, Mesh, Mask, Matrix, Matrix, Matrix,
 
 /**************************************************************/
 
-int U_Newmark_Predictor_Corrector_Finite_Strains(
+int U_Verlet_Finite_Strains(
     Mesh FEM_Mesh, Particle MPM_Mesh, Time_Int_Params Parameters_Solver) {
 
   /*
@@ -67,12 +94,11 @@ int U_Newmark_Predictor_Corrector_Finite_Strains(
   double CFL = Parameters_Solver.CFL;
   double DeltaX = FEM_Mesh.DeltaX;
 
-  Matrix Lumped_Mass;
-  Matrix Gravity_field;
-  Matrix Velocity;
-  Matrix D_Displacement;
-  Matrix Forces;
-  Matrix Reactions;
+  double * Lumped_Mass;
+  double * Gravity_field;
+  double * D_Displacement;
+  double * Forces;
+  double * Reactions;
 
   Mask ActiveNodes;
   Mask Free_and_Restricted_Dofs;
@@ -89,21 +115,45 @@ int U_Newmark_Predictor_Corrector_Finite_Strains(
         generate_Mask_for_static_condensation__MeshTools__(
             ActiveNodes, FEM_Mesh, TimeStep, NumTimeStep);
 
-    Lumped_Mass = compute_Mass_Matrix(MPM_Mesh, FEM_Mesh, ActiveNodes);
+    STATUS = __mass_NODES(Lumped_Mass, MPM_Mesh, FEM_Mesh, ActiveNodes);
+    if(STATUS == EXIT_FAILURE)
+    {
+      fprintf(stderr,""RED"Error in __mass_NODES"RESET" \n");
+      return EXIT_FAILURE;
+    }
 
-    compute_Explicit_Newmark_Predictor(MPM_Mesh, gamma);
+    STATUS = __predictor_PARTICLES(MPM_Mesh.Phi.D_dis.nV,
+                         MPM_Mesh.Phi.vel.nV,
+                         MPM_Mesh.Phi.acc.nV,
+                         gamma, MPM_Mesh.NumGP);
+    if(STATUS == EXIT_FAILURE)
+    {
+      fprintf(stderr,""RED"Error in __predictor_PARTICLES"RESET" \n");
+      return EXIT_FAILURE;
+    }
 
-    Gravity_field = compute_Nodal_Gravity_field(ActiveNodes, MPM_Mesh, TimeStep,
-                                                NumTimeStep);
+    
+    STATUS = __gravity_NODES(Gravity_field, ActiveNodes, 
+                       MPM_Mesh.B, MPM_Mesh.NumberBodyForces, 
+                       TimeStep, NumTimeStep);
+    if(STATUS == EXIT_FAILURE)
+    {
+      fprintf(stderr,""RED"Error in __gravity_NODES"RESET" \n");
+      return EXIT_FAILURE;
+    }
 
-    D_Displacement = compute_Nodal_D_Displacement(MPM_Mesh, FEM_Mesh,
-                                                  ActiveNodes, Lumped_Mass);
+    STATUS = __d_displacement_NODES(
+      D_Displacement, Lumped_Mass, 
+      MPM_Mesh.Phi.D_dis.nV, MPM_Mesh.Phi.mass.nV,
+      MPM_Mesh, FEM_Mesh, ActiveNodes);
+    if(STATUS == EXIT_FAILURE)
+    {
+      fprintf(stderr,""RED"Error in __d_displacement_NODES"RESET" \n");
+      return EXIT_FAILURE;
+    }
 
-    Velocity =
-        compute_Nodal_Velocity(MPM_Mesh, FEM_Mesh, ActiveNodes, Lumped_Mass);
-
-    impose_Dirichlet_Boundary_Conditions(FEM_Mesh, D_Displacement, Velocity,
-                                         ActiveNodes, TimeStep, NumTimeStep);
+    impose_Dirichlet_Boundary_Conditions(D_Displacement, FEM_Mesh,
+    ActiveNodes, TimeStep, NumTimeStep);
 
     STATUS = __update_Local_State(D_Displacement, ActiveNodes, MPM_Mesh, FEM_Mesh);
     if(STATUS == EXIT_FAILURE)
@@ -112,26 +162,25 @@ int U_Newmark_Predictor_Corrector_Finite_Strains(
       return EXIT_FAILURE;
     }
 
-    Forces = compute_Nodal_Forces(ActiveNodes, MPM_Mesh, FEM_Mesh, TimeStep,
-                                  NumTimeStep);
+//    Forces = compute_Nodal_Forces(ActiveNodes, MPM_Mesh, FEM_Mesh, TimeStep,
+//                                  NumTimeStep);
 
-    Reactions = solve_Nodal_Equilibrium(Lumped_Mass, Gravity_field, Forces,
-                                        D_Displacement, MPM_Mesh, FEM_Mesh,
-                                        ActiveNodes, Free_and_Restricted_Dofs);
+//    Reactions = solve_Nodal_Equilibrium(Lumped_Mass, Gravity_field, Forces,
+//                                        D_Displacement, MPM_Mesh, FEM_Mesh,
+//                                        ActiveNodes, Free_and_Restricted_Dofs);
 
     compute_Explicit_Newmark_Corrector(MPM_Mesh, gamma);
 
 
-    output_selector(MPM_Mesh, FEM_Mesh, ActiveNodes, Velocity, D_Displacement,
-                    Forces, Reactions, DeltaTimeStep, TimeStep,
-                    ResultsTimeStep);
+//    output_selector(MPM_Mesh, FEM_Mesh, ActiveNodes, D_Displacement,
+//                    Forces, Reactions, DeltaTimeStep, TimeStep,
+//                    ResultsTimeStep);
 
-    free__MatrixLib__(Lumped_Mass);
-    free__MatrixLib__(Gravity_field);
-    free__MatrixLib__(Velocity);
-    free__MatrixLib__(D_Displacement);
-    free__MatrixLib__(Forces);
-    free__MatrixLib__(Reactions);
+    free(Lumped_Mass);
+    free(Gravity_field);
+    free(D_Displacement);
+    free(Forces);
+    free(Reactions);
     free(ActiveNodes.Nodes2Mask);
     free(Free_and_Restricted_Dofs.Nodes2Mask);
     print_Status("DONE !!!", TimeStep);
@@ -142,259 +191,207 @@ int U_Newmark_Predictor_Corrector_Finite_Strains(
 
 /**************************************************************/
 
-static Matrix compute_Mass_Matrix(
-    Particle MPM_Mesh, // Variable with information of the particles
-    Mesh FEM_Mesh,     // Variable with information of the nodes
-    Mask ActiveNodes)  // Variable with information of the active nodes
-/*
-  This function computes the lumped mass matrix with the displacements degree of
-  freedom
-*/
+static int __mass_NODES(
+    double * Lumped_MassMatrix,
+    Particle MPM_Mesh,
+    Mesh FEM_Mesh,
+    Mask ActiveNodes)
 {
 
-  int Nnodes_mask = ActiveNodes.Nactivenodes;
-  int Ndim = NumberDimensions;
-  int Np = MPM_Mesh.NumGP;
-  int Order = Ndim * Nnodes_mask;
-  int Ap;
-  int A_mask;
-  int idx_A_mask_i;
-
-  /* Value of the shape-function */
-  Matrix ShapeFunction_p;
-
-  /* Evaluation of the particle in the node */
-  double ShapeFunction_pA;
-  /* Mass of the particle */
-  double m_p;
-  /* Nodal contribution A of the particle p */
-  double m_A_p;
-  /* Element for each particle */
+  int STATUS = EXIT_FAILURE;
+  unsigned Nnodes_mask = ActiveNodes.Nactivenodes;
+  unsigned Ndim = NumberDimensions;
+  unsigned NumGP = MPM_Mesh.NumGP;
+  unsigned Size_connectivity_p;
+  unsigned Order = Ndim * Nnodes_mask;
+  unsigned Ap;
+  unsigned A_mask;
+  unsigned idx_A_mask_i;
+  Matrix N_p;
   Element Nodes_p;
+  double N_pA;
+  double m_p;
+  double m_A_p;  
 
-  /* Define and allocate the lumped mass matrix */
-  Matrix Lumped_MassMatrix = allocZ__MatrixLib__(Order, Order);
 
-  /*
-    Iterate over the particles to get the nodal values
-  */
-  for (int p = 0; p < Np; p++) {
+  Lumped_MassMatrix = (double *)calloc(Order, __SIZEOF_DOUBLE__);
+  if (Lumped_MassMatrix == NULL) {
+    fprintf(stderr, "" RED "Out of memory" RESET "\n");
+    return EXIT_FAILURE;
+  }
 
-    /*
-      Define tributary nodes of the particle
-    */
-    Nodes_p = nodal_set__Particles__(p, MPM_Mesh.ListNodes[p],
-                                     MPM_Mesh.NumberNodes[p]);
+  for (unsigned p = 0; p < NumGP; p++) {
 
-    /*
-      Evaluate the shape function in the coordinates of the particle
-    */
-    ShapeFunction_p = compute_N__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
+    Nodes_p = nodal_set__Particles__(p, MPM_Mesh.ListNodes[p], MPM_Mesh.NumberNodes[p]);
 
-    /*
-     Get the mass of the particle
-    */
+    N_p = compute_N__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
+
     m_p = MPM_Mesh.Phi.mass.nV[p];
 
-    for (int A = 0; A < Nodes_p.NumberNodes; A++) {
+    Size_connectivity_p = Nodes_p.NumberNodes;
 
-      /*
-         Get the node in the mass matrix with the mask
-      */
+    for (unsigned A = 0; A < Size_connectivity_p; A++) {
+
       Ap = Nodes_p.Connectivity[A];
+
       A_mask = ActiveNodes.Nodes2Mask[Ap];
 
-      /*
-        Get the value of the shape function
-      */
-      ShapeFunction_pA = ShapeFunction_p.nV[A];
+      N_pA = N_p.nV[A];
 
-      /*
-        Compute the nodal A contribution of the particle p
-      */
-      m_A_p = m_p * ShapeFunction_pA;
+      m_A_p = m_p * N_pA;
 
-      /*
-         Fill the Lumped mass matrix considering the number of dofs
-      */
-      for (int i = 0; i < Ndim; i++) {
-        Lumped_MassMatrix.nM[A_mask * Ndim + i][A_mask * Ndim + i] += m_A_p;
+      for (unsigned i = 0; i < Ndim; i++) {
+        Lumped_MassMatrix[A_mask * Ndim + i] += m_A_p;
       }
     }
 
-    /*
-      Free the value of the shape functions
-    */
-    free__MatrixLib__(ShapeFunction_p);
+    free__MatrixLib__(N_p);
     free(Nodes_p.Connectivity);
   }
 
-  return Lumped_MassMatrix;
+  return STATUS;
 }
 
 /**************************************************************/
 
-static void compute_Explicit_Newmark_Predictor(Particle MPM_Mesh, double gamma)
-/*
-  The predictor stage is computed in the particles
-*/
+static int __predictor_PARTICLES(
+  double * D_dis,
+  double * vel,
+  const double * acc, 
+  double gamma,
+  unsigned NumGP)
 {
 
-  int Ndim = NumberDimensions;
-  int Np = MPM_Mesh.NumGP;
+  unsigned Ndim = NumberDimensions;
+  unsigned idx;
 
-  for (int p = 0; p < Np; p++) {
+  for (unsigned p = 0; p < NumGP; p++) {
 
-    /*
-      Compute velocity predictor and increment of displacements
-    */
-    for (int i = 0; i < Ndim; i++) {
+    for (unsigned i = 0; i < Ndim; i++) {
 
-      MPM_Mesh.Phi.D_dis.nM[p][i] =
-          DeltaTimeStep * MPM_Mesh.Phi.vel.nM[p][i] +
-          0.5 * DSQR(DeltaTimeStep) * MPM_Mesh.Phi.acc.nM[p][i];
+      idx = p*Ndim + i;
 
-      MPM_Mesh.Phi.vel.nM[p][i] +=
-          (1 - gamma) * DeltaTimeStep * MPM_Mesh.Phi.acc.nM[p][i];
+      D_dis[idx] = DeltaTimeStep * vel[idx] + 0.5 * DSQR(DeltaTimeStep) * acc[idx];
+
+      vel[idx] += (1 - gamma) * DeltaTimeStep * acc[idx];
     }
   }
+
+  return EXIT_SUCCESS;
 }
 
 /**************************************************************/
 
-static Matrix compute_Nodal_Gravity_field(Mask ActiveNodes, Particle MPM_Mesh,
-                                          int TimeStep, int NumTimeStep)
-/*
-
-*/
+static int __gravity_NODES(double * Gravity_field,
+                    const Mask ActiveNodes, 
+                    const Load *B,
+                    unsigned NumBodyForces,
+                    unsigned TimeStep, 
+                    unsigned NumTimeStep)
 {
-  /* Define auxilar variables */
-  int Ndim = NumberDimensions;
-  int Nnodes_mask = ActiveNodes.Nactivenodes;
-  int NumBodyForces = MPM_Mesh.NumberBodyForces;
+  // Define auxilar variables */
+  unsigned Ndim = NumberDimensions;
+  unsigned Nnodes_mask = ActiveNodes.Nactivenodes;
+  double m_p; 
+#if NumberDimensions == 2
+  double b[2] = {0.0,0.0};
+#else
+  double b[3] = {0.0,0.0,0.0};
+#endif 
 
-  double m_p;           /* Mass of the particle */
-  Load *B = MPM_Mesh.B; /* List with the load cases */
+  Gravity_field = (double *)calloc(Nnodes_mask*Ndim,__SIZEOF_DOUBLE__);
+  if (Gravity_field == NULL) {
+    fprintf(stderr, "" RED "Out of memory" RESET "\n");
+    return EXIT_FAILURE;
+  }  
 
-  Matrix Gravity_field = allocZ__MatrixLib__(Nnodes_mask, Ndim);
-
-  /*
-    Initialise distance accelerations
-  */
-  Tensor b = alloc__TensorLib__(1);
-
-  for (int i = 0; i < NumBodyForces; i++) {
-
-    /* Fill vector b of body acclerations */
-    for (int k = 0; k < Ndim; k++) {
+  // Fill vector b of body acclerations
+  for (unsigned i = 0; i < NumBodyForces; i++) {
+    for (unsigned k = 0; k < Ndim; k++) {
       if (B[i].Dir[k * NumTimeStep + TimeStep]) {
-
-        b.n[k] += B[i].Value[k].Fx[TimeStep];
+        b[k] += B[i].Value[k].Fx[TimeStep];
       }
     }
   }
 
-  /* Get the node of the mesh for the contribution */
-  for (int A = 0; A < Nnodes_mask; A++) {
-    /* Compute body forces */
-    for (int k = 0; k < Ndim; k++) {
-      Gravity_field.nM[A][k] = b.n[k];
+  // Add nodal contribution
+  for (unsigned A = 0; A < Nnodes_mask; A++) {
+    for (unsigned k = 0; k < Ndim; k++) {
+      Gravity_field[A*Ndim + k] = b[k];
     }
   }
 
-  free__TensorLib__(b);
-
-  return Gravity_field;
+  return EXIT_SUCCESS;
 }
 
 /**************************************************************/
 
-static Matrix compute_Nodal_D_Displacement(Particle MPM_Mesh, Mesh FEM_Mesh,
-                                           Mask ActiveNodes, Matrix Lumped_Mass)
-/*
-  Compute the nodal increment of displacement. The operation is linearized and
-  all the dof split the increment of displacement array in n components like :
-  | M 0 |   |D_u.x|   | M*D_u.x |
-  | 0 M | * |D_u.y| = | M*D_u.y |
-*/
+static int __d_displacement_NODES(
+  double * D_dis_NODES,
+  const double * Mass_NODES,
+  const double * D_dis_PARTICLES,
+  const double * Mass_PARTICLES,  
+  Particle MPM_Mesh, 
+  Mesh FEM_Mesh,
+  const Mask ActiveNodes)
 {
-  int Ndim = NumberDimensions;
-  int Nnodes_mask = ActiveNodes.Nactivenodes;
-  int Np = MPM_Mesh.NumGP;
-  int Order = Nnodes_mask * Ndim;
-  int Ap;
-  int A_mask;
-  int AB;
-  Element Nodes_p;         /* Element for each particle */
-  Matrix ShapeFunction_p;  /* Value of the shape-function */
-  double ShapeFunction_pA; /* Evaluation of the particle in the node */
-  double m_p;              /* Mass of the particle */
 
-  /*
-    Define and allocate the nodal increment of displacement vector
-  */
-  Matrix D_Displacement = allocZ__MatrixLib__(Nnodes_mask, Ndim);
+  // Define auxilar variables */
+  unsigned Ndim = NumberDimensions;
+  unsigned Nnodes_mask = ActiveNodes.Nactivenodes;
+  unsigned NumGP = MPM_Mesh.NumGP;
+  unsigned Size_connectivity_p;
+  unsigned Order = Nnodes_mask * Ndim;
+  unsigned Ap;
+  unsigned A_mask;
+  Element Nodes_p;         
+  Matrix N_p;  
+  double N_pA; 
+  double m_p;              
 
-  for (int p = 0; p < Np; p++) {
+  D_dis_NODES = (double *)calloc(Nnodes_mask*Ndim,__SIZEOF_DOUBLE__);
+  if (D_dis_NODES == NULL) {
+    fprintf(stderr, "" RED "Out of memory" RESET "\n");
+    return EXIT_FAILURE;
+  } 
 
-    /*
-      Define element of the particle
-    */
-    Nodes_p = nodal_set__Particles__(p, MPM_Mesh.ListNodes[p],
-                                     MPM_Mesh.NumberNodes[p]);
+  // Compute N_Ip * m_p * d_dis_p
+  for (unsigned p = 0; p < NumGP; p++) {
 
-    /*
-      Evaluate the shape function in the coordinates of the particle
-    */
-    ShapeFunction_p = compute_N__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
+    Nodes_p = nodal_set__Particles__(p, MPM_Mesh.ListNodes[p], MPM_Mesh.NumberNodes[p]);
 
-    /*
-      Get the mass of the GP
-    */
-    m_p = MPM_Mesh.Phi.mass.nV[p];
+    N_p = compute_N__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
 
-    for (int A = 0; A < Nodes_p.NumberNodes; A++) {
+    m_p = Mass_PARTICLES[p];
 
-      /*
-        Get the node in the nodal momentum with the mask
-      */
+    Size_connectivity_p = Nodes_p.NumberNodes;
+
+    for (unsigned A = 0; A < Size_connectivity_p; A++) {
+
       Ap = Nodes_p.Connectivity[A];
+
       A_mask = ActiveNodes.Nodes2Mask[Ap];
 
-      /*
-         Evaluate the GP function in the node
-      */
-      ShapeFunction_pA = ShapeFunction_p.nV[A];
+      N_pA = N_p.nV[A];
 
-      /*
-        Nodal velocity and D_Displacement
-      */
-      for (int i = 0; i < Ndim; i++) {
-        D_Displacement.nM[A_mask][i] +=
-            m_p * ShapeFunction_pA * MPM_Mesh.Phi.D_dis.nM[p][i];
+      for (unsigned i = 0; i < Ndim; i++) {
+        D_dis_NODES[A_mask*Ndim + i] += m_p * N_pA * D_dis_PARTICLES[p*Ndim + i];
       }
     }
 
-    /*
-      Free the value of the shape functions
-    */
-    free__MatrixLib__(ShapeFunction_p);
+    free__MatrixLib__(N_p);
     free(Nodes_p.Connectivity);
   }
 
-  /*
-    Compute the D_Displacements
-  */
+  // Solve M_IJ * d_dis_J = N_Ip * m_p * d_dis_p
   for (int A = 0; A < Nnodes_mask; A++) {
     for (int i = 0; i < Ndim; i++) {
-      AB = A * Ndim + i;
-      D_Displacement.nM[A][i] =
-          D_Displacement.nM[A][i] / Lumped_Mass.nM[AB][AB];
+      D_dis_NODES[A*Ndim + i] = D_dis_NODES[A*Ndim + i] / Mass_NODES[A*Ndim + i];
     }
   }
 
 
-  return D_Displacement;
+  return EXIT_SUCCESS;
 }
 
 /**************************************************************/
@@ -486,10 +483,12 @@ static Matrix compute_Nodal_Velocity(Particle MPM_Mesh, Mesh FEM_Mesh,
 
 /**************************************************************/
 
-static void
-impose_Dirichlet_Boundary_Conditions(Mesh FEM_Mesh, Matrix D_Displacement,
-                                     Matrix Velocity, Mask ActiveNodes,
-                                     int TimeStep, int NumTimeStep)
+static void impose_Dirichlet_Boundary_Conditions(
+  double * D_Displacement,
+  Mesh FEM_Mesh, 
+  Mask ActiveNodes,
+  int TimeStep, 
+  int NumTimeStep)
 /*
   Apply the boundary conditions over the nodes
 */
@@ -546,7 +545,7 @@ impose_Dirichlet_Boundary_Conditions(Mesh FEM_Mesh, Matrix D_Displacement,
             Initialise increments using newmark and the value of the boundary
             condition
           */
-          D_Displacement.nM[Id_BCC_mask][k] =
+          D_Displacement[Id_BCC_mask*Ndim + k] =
               FEM_Mesh.Bounds.BCC_i[i].Value[k].Fx[TimeStep];
         }
       }
@@ -556,8 +555,11 @@ impose_Dirichlet_Boundary_Conditions(Mesh FEM_Mesh, Matrix D_Displacement,
 
 /**************************************************************/
 
-static int __update_Local_State(Matrix D_Displacement, Mask ActiveNodes,
-                               Particle MPM_Mesh, Mesh FEM_Mesh) {
+static int __update_Local_State(
+  const double * D_Displacement,
+  Mask ActiveNodes,
+  Particle MPM_Mesh, 
+  Mesh FEM_Mesh) {
 
   /*
     Auxiliar variables
@@ -568,6 +570,8 @@ static int __update_Local_State(Matrix D_Displacement, Mask ActiveNodes,
   int Nnodes_mask = ActiveNodes.Nactivenodes;
   int Nnodes_p;
   int MatIndx_p;
+  unsigned NumberNodes_p;
+  unsigned Order_p;  
   int Idx_Element_p;
   int Idx_Patch_p;
   double rho_n_p;
@@ -578,7 +582,7 @@ static int __update_Local_State(Matrix D_Displacement, Mask ActiveNodes,
   Element Nodes_p;
   Material MatProp_p;
   Matrix gradient_p;
-  Matrix D_Displacement_Ap;
+  double * D_Displacement_Ap;
   Tensor F_n_p;
   Tensor F_n1_p;
   Tensor DF_p;
@@ -586,18 +590,20 @@ static int __update_Local_State(Matrix D_Displacement, Mask ActiveNodes,
   /*
     Loop in the material point set to update kinematics
   */
-  for (int p = 0; p < Np; p++) {
-    /*
-      Define tributary nodes of the particle
-    */
-    Nodes_p = nodal_set__Particles__(p, MPM_Mesh.ListNodes[p],
-                                     MPM_Mesh.NumberNodes[p]);
+  for (unsigned p = 0; p < Np; p++) {
 
-    /*
-      Get the nodal increment of displacement using the mask
-    */
-    D_Displacement_Ap =
-        get_set_field__MeshTools__(D_Displacement, Nodes_p, ActiveNodes);
+    //  Define tributary nodes of the particle
+    NumberNodes_p = MPM_Mesh.NumberNodes[p];
+    Nodes_p = nodal_set__Particles__(p, MPM_Mesh.ListNodes[p],NumberNodes_p);
+    Order_p = NumberNodes_p*Ndim;
+
+    //  Get the nodal increment of displacement using the mask
+    D_Displacement_Ap = (double *)calloc(Order_p, __SIZEOF_DOUBLE__);
+      if(D_Displacement_Ap == NULL){
+        fprintf(stderr, ""RED"Error in calloc(): Out of memory"RESET" \n");
+        return EXIT_FAILURE;
+      } 
+    get_set_field__MeshTools__(D_Displacement_Ap, D_Displacement, Nodes_p, ActiveNodes);
 
     /*
       Evaluate the shape function gradient in the coordinates of the particle
@@ -614,8 +620,8 @@ static int __update_Local_State(Matrix D_Displacement, Mask ActiveNodes,
     /*
       Compute the increment of the deformation gradient
     */
-    update_increment_Deformation_Gradient__Particles__(DF_p, D_Displacement_Ap,
-                                                       gradient_p);
+    update_increment_Deformation_Gradient__Particles__(DF_p, D_Displacement_Ap, gradient_p.nV,NumberNodes_p);
+
     /*
       Update the deformation gradient in t = n + 1 with the information
       from t = n and the increment of deformation gradient.
@@ -656,7 +662,7 @@ static int __update_Local_State(Matrix D_Displacement, Mask ActiveNodes,
     /*
       Free memory
     */
-    free__MatrixLib__(D_Displacement_Ap);
+    free(D_Displacement_Ap);
     free__MatrixLib__(gradient_p);
     free(Nodes_p.Connectivity);
   }
@@ -1048,9 +1054,20 @@ static void compute_Explicit_Newmark_Corrector(Particle MPM_Mesh,
 
   unsigned Np = MPM_Mesh.NumGP;
 
+#if NumberDimensions == 2
+unsigned Size_vector = 2;
+unsigned Size_tensor = 5;
+#else
+unsigned Size_vector = 3;
+unsigned Size_tensor = 9;
+#endif
+  
+
   for (unsigned p = 0; p < Np; p++) {
 
-    // Update the determinant of the deformation gradient
+    /*
+      Replace the determinant of the deformation gradient
+    */
     MPM_Mesh.Phi.J_n.nV[p] = MPM_Mesh.Phi.J_n1.nV[p];
 
     // Update hardening
@@ -1066,32 +1083,30 @@ static void compute_Explicit_Newmark_Corrector(Particle MPM_Mesh,
     for (unsigned i = 0 ; i<9 ; i++) MPM_Mesh.Phi.b_e_n.nM[p][i] = MPM_Mesh.Phi.b_e_n1.nM[p][i];
 #endif
 
-    // Update deformation gradient
-#if NumberDimensions == 2
-    for (unsigned i = 0 ; i<5 ; i++) MPM_Mesh.Phi.F_n.nM[p][i] = MPM_Mesh.Phi.F_n1.nM[p][i]; 
-#else
-    for (unsigned i = 0 ; i<9 ; i++) MPM_Mesh.Phi.F_n.nM[p][i] = MPM_Mesh.Phi.F_n1.nM[p][i];
-#endif    
+    /*
+      Update/correct vector variables
+    */
+    for (unsigned i = 0; i < Size_vector; i++) {
+      /*
+        Correct particle velocity
+      */
+      MPM_Mesh.Phi.vel.nM[p][i] +=
+          gamma * DeltaTimeStep * MPM_Mesh.Phi.acc.nM[p][i];
 
-    // Correct particle velocity
-#if NumberDimensions == 2
-    for (unsigned i = 0 ; i<2 ; i++) MPM_Mesh.Phi.vel.nM[p][i] += gamma * DeltaTimeStep * MPM_Mesh.Phi.acc.nM[p][i]; 
-#else
-    for (unsigned i = 0 ; i<3 ; i++) MPM_Mesh.Phi.vel.nM[p][i] += gamma * DeltaTimeStep * MPM_Mesh.Phi.acc.nM[p][i];
-#endif   
-    
-    // Update the particles position and displacement
-#if NumberDimensions == 2
-    for (unsigned i = 0; i < 2; i++) {
+      /*
+        Update the particles position and displacement
+      */
       MPM_Mesh.Phi.x_GC.nM[p][i] += MPM_Mesh.Phi.D_dis.nM[p][i];
       MPM_Mesh.Phi.dis.nM[p][i] += MPM_Mesh.Phi.D_dis.nM[p][i];
+  
     }
-#else
-    for (unsigned i = 0; i < 3; i++) {
-      MPM_Mesh.Phi.x_GC.nM[p][i] += MPM_Mesh.Phi.D_dis.nM[p][i];
-      MPM_Mesh.Phi.dis.nM[p][i] += MPM_Mesh.Phi.D_dis.nM[p][i];
+
+    /*
+      Update/correct tensor variables
+    */
+    for (unsigned i = 0; i < Size_tensor; i++) {
+      MPM_Mesh.Phi.F_n.nM[p][i] = MPM_Mesh.Phi.F_n1.nM[p][i];
     }
-#endif   
 
   }
 }

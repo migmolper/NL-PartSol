@@ -156,13 +156,10 @@ int main(int argc, char *argv[]) {
     } else if (strcmp(Parameters_Solver.TimeIntegrationScheme, "NPC") == 0) {
       U_Newmark_Predictor_Corrector(FEM_Mesh, MPM_Mesh, Parameters_Solver);
     } else if (strcmp(Parameters_Solver.TimeIntegrationScheme, "NPC-FS") == 0) {
-      STATUS = U_Newmark_Predictor_Corrector_Finite_Strains(FEM_Mesh, MPM_Mesh,
-                                                   Parameters_Solver);
-    } else if (strcmp(Parameters_Solver.TimeIntegrationScheme,
-                      "Discrete-Energy-Momentum") == 0) {
+      STATUS = U_Verlet_Finite_Strains(FEM_Mesh, MPM_Mesh, Parameters_Solver);
+    } else if (strcmp(Parameters_Solver.TimeIntegrationScheme, "Discrete-Energy-Momentum") == 0) {
       U_Discrete_Energy_Momentum(FEM_Mesh, MPM_Mesh, Parameters_Solver);
-    } else if (strcmp(Parameters_Solver.TimeIntegrationScheme,
-                      "Newmark-beta-Finite-Strains") == 0) {
+    } else if (strcmp(Parameters_Solver.TimeIntegrationScheme, "Newmark-beta-Finite-Strains") == 0) {
       STATUS = U_Newmark_beta_Finite_Strains(FEM_Mesh, MPM_Mesh, Parameters_Solver);
       if(STATUS == EXIT_FAILURE){
         fprintf(stderr, ""RED"Error in U_Newmark_beta_Finite_Strains(,)"RESET" \n");

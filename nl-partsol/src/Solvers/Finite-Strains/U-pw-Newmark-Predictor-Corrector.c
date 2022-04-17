@@ -915,10 +915,10 @@ static void update_Local_State(
     /*
       Get the nodal increment of displacement using the mask
     */
-    D_Displacement_Ap =
-        get_set_field__MeshTools__(D_Displacement, Nodes_p, ActiveNodes);
-    Nodal_Velocity_p =
-        get_set_field__MeshTools__(Velocity, Nodes_p, ActiveNodes);
+//    D_Displacement_Ap =
+//        get_set_field__MeshTools__(D_Displacement, Nodes_p, ActiveNodes);
+//    Nodal_Velocity_p =
+//        get_set_field__MeshTools__(Velocity, Nodes_p, ActiveNodes);
 
     /*
              Evaluate the shape function gradient in the coordinates of the
@@ -938,9 +938,9 @@ static void update_Local_State(
       Compute the increment of the deformation gradient to compute the
       deformation gradient
     */
-    update_increment_Deformation_Gradient__Particles__(DF_p, D_Displacement_Ap,
-                                                       gradient_p);
-    update_Deformation_Gradient_n1__Particles__(F_n1_p, F_n_p, DF_p);
+//    update_increment_Deformation_Gradient__Particles__(DF_p, D_Displacement_Ap,
+//                                                       gradient_p);
+//    update_Deformation_Gradient_n1__Particles__(F_n1_p, F_n_p, DF_p);
 
     /*
       Compute the Jacobian of the deformation gradient
@@ -1604,10 +1604,10 @@ compute_Permeability_Mass_Balance(Matrix Mass_Exchanges_Source_Terms,
     /*
       Compute particle pore water pressure gradient
     */
-    Nodal_Pore_water_pressure_p =
-        get_set_field__MeshTools__(Pore_water_pressure, Nodes_p, ActiveNodes);
-    gradPw = compute_Pore_water_pressure_gradient(Nodal_Pore_water_pressure_p,
-                                                  gradient_p);
+//    Nodal_Pore_water_pressure_p =
+//        get_set_field__MeshTools__(Pore_water_pressure, Nodes_p, ActiveNodes);
+//    gradPw = compute_Pore_water_pressure_gradient(Nodal_Pore_water_pressure_p,
+//                                                  gradient_p);
 
     /*
       Intermediate result 1

@@ -454,10 +454,10 @@ static void update_Local_State(Nodal_Field D_U, Mask ActiveNodes,
     /*
       Get the nodal increment of displacement using the mask
     */
-    D_Displacement_Ap =
-        get_set_field__MeshTools__(D_U.value, Nodes_p, ActiveNodes);
-    D_Velocity_Ap =
-        get_set_field__MeshTools__(D_U.d_value_dt, Nodes_p, ActiveNodes);
+//    D_Displacement_Ap =
+//        get_set_field__MeshTools__(D_U.value, Nodes_p, ActiveNodes);
+//    D_Velocity_Ap =
+//        get_set_field__MeshTools__(D_U.d_value_dt, Nodes_p, ActiveNodes);
 
     /*
       Evaluate the shape function gradient in the coordinates of the particle
@@ -477,10 +477,10 @@ static void update_Local_State(Nodal_Field D_U, Mask ActiveNodes,
     /*
       Compute the increment of the deformation gradient
     */
-    update_increment_Deformation_Gradient__Particles__(DF_p, D_Displacement_Ap,
-                                                       gradient_p);
-    update_rate_increment_Deformation_Gradient__Particles__(
-        dt_DF_p, D_Velocity_Ap, gradient_p);
+//    update_increment_Deformation_Gradient__Particles__(DF_p, D_Displacement_Ap,
+//                                                       gradient_p);
+//    update_rate_increment_Deformation_Gradient__Particles__(
+//        dt_DF_p, D_Velocity_Ap, gradient_p);
 
     /*
       Update the deformation gradient in t = n + 1 with the information
