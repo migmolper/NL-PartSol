@@ -1193,8 +1193,7 @@ static void __Nodal_Body_Forces(
   double m_p;              /* Mass of the particle */
 
 
-
-//  b[1] = -9.81;
+  b[1] = -9.81;
 
   for (unsigned p = 0; p < MPM_Mesh.NumGP; p++) {
 
@@ -1242,7 +1241,7 @@ static void __Nodal_Reactions(
   Compute the nodal reactions
 */
 {
-  /* 1º Define auxilar variables */
+  // Auxilar variables */
   unsigned Ndim = NumberDimensions;
   unsigned NumNodesBound; /* Number of nodes of the bound */
   unsigned NumDimBound;   /* Number of dimensions */
@@ -1251,13 +1250,10 @@ static void __Nodal_Reactions(
   int Id_BCC_mask;
   int Id_BCC_mask_k;
 
-  /*
-    Loop over the the boundaries
-  */
+  //  Loop over the the boundaries
   for (unsigned i = 0; i < FEM_Mesh.Bounds.NumBounds; i++) {
-    /*
-       Get the number of nodes of this boundarie
-    */
+
+    //   Get the number of nodes of this boundarie
     NumNodesBound = FEM_Mesh.Bounds.BCC_i[i].NumNodes;
 
     /*

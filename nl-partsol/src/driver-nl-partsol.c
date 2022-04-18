@@ -13,7 +13,10 @@
 
 #include <string.h>
 #include "nl-partsol.h"
-#include "petscsys.h"
+
+#ifdef USE_PETSC
+#include <petscksp.h>
+#endif
 
 /*
   Call global variables
@@ -22,8 +25,6 @@ char *SimulationFile;
 char *Static_conditons;
 char *TimeIntegrationScheme;
 char *Formulation;
-
-static char help[] = "Appends to an ASCII file.\n\n";
 
 /*
   Auxiliar functions for the main
@@ -35,7 +36,10 @@ static void standard_error(char *Error_message);
 
 int main(int argc, char *argv[]) {
 
-  PetscInitialize(&argc,&argv,(char*)0,help);
+#ifdef USE_PETSC
+  // Initialize PETSc
+  PetscInitialize(&argc, &argv, 0, 0);
+#endif
 
   char Error_message[MAXW];
   bool Is_Static_Initialization = false;
@@ -251,7 +255,10 @@ int main(int argc, char *argv[]) {
   }
 
   
-  PetscFinalize();
+#ifdef USE_PETSC
+    // Finalize PETSc
+    PetscFinalize();
+#endif
 
   puts("*************************************************");
   puts("Free memory ...");

@@ -51,17 +51,25 @@ if(LAPACK_FOUND)
 endif()
 
 # Add OpenMP
-find_package(OpenMP REQUIRED)
+option(USE_OpenMP "Use OpenMP solver library" OFF)
+if (USE_OpenMP)
+  find_package(OpenMP REQUIRED)
+endif()
 if (OPENMP_FOUND)
   message("Found OpenMP")
   target_link_libraries(${PROJECT_NAME} OpenMP::OpenMP_C)
+  add_definitions("-DUSE_OPENMP")
 endif()
 
 # Add PETSC
-pkg_search_module(PETSC REQUIRED IMPORTED_TARGET PETSc)
+option(USE_PETSC "Use PETSC solver library" ON)
+if (USE_PETSC)
+  pkg_search_module(PETSC REQUIRED IMPORTED_TARGET PETSc)
+endif()
 if (PETSC_FOUND)
   message("Found PETSc")
   target_link_libraries(${PROJECT_NAME} PkgConfig::PETSC)
+  add_definitions("-DUSE_PETSC")
 endif()
 
 
