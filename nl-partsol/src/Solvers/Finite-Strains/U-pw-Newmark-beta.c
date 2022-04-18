@@ -157,7 +157,7 @@ void upw_Newmark_beta_Finite_Strains(Mesh FEM_Mesh, Particle MPM_Mesh,
     print_Status("*************************************************", TimeStep);
     print_Status("First step : Generate Mask ... WORKING", TimeStep);
     local_search__MeshTools__(MPM_Mesh, FEM_Mesh);
-    ActiveNodes = generate_NodalMask__MeshTools__(FEM_Mesh);
+    ActiveNodes = get_active_nodes__MeshTools__(FEM_Mesh);
     Nactivenodes = ActiveNodes.Nactivenodes;
 
     print_Status("DONE !!!", TimeStep);

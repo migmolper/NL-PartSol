@@ -17,10 +17,10 @@ void local_search__MeshTools__(Particle, Mesh);
 void generate_contour_nodes(Mesh);
 /*******************************************************/
 
-Mask     generate_NodalMask__MeshTools__(Mesh);
+Mask     get_active_nodes__MeshTools__(Mesh);
 /********************************************************************/
 
-Mask generate_Mask_for_static_condensation__MeshTools__(Mask, Mesh, int, int);
+Mask get_active_dofs__MeshTools__(Mask, Mesh, int, int);
 /********************************************************************/
 
 Mask generate_Mask_for_static_condensation_upw__MeshTools__(Mask, Mesh, int, int);

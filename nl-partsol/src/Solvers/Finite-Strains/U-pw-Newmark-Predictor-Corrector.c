@@ -97,10 +97,10 @@ void upw_Newmark_Predictor_Corrector_Finite_Strains(
     print_Status("*************************************************", TimeStep);
     DeltaTimeStep = DeltaT_Coussy__SolversLib__(MPM_Mesh, DeltaX, 1.0, CFL);
     local_search__MeshTools__(MPM_Mesh, FEM_Mesh);
-    ActiveNodes = generate_NodalMask__MeshTools__(FEM_Mesh);
+    ActiveNodes = get_active_nodes__MeshTools__(FEM_Mesh);
     Nactivenodes = ActiveNodes.Nactivenodes;
     Free_and_Restricted_Dofs =
-        generate_Mask_for_static_condensation__MeshTools__(
+        get_active_dofs__MeshTools__(
             ActiveNodes, FEM_Mesh, TimeStep, NumTimeStep);
     print_step(TimeStep, DeltaTimeStep);
 

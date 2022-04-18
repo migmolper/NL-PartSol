@@ -98,7 +98,7 @@ void generate_contour_nodes(Mesh FEM_Mesh) {
 
 /**************************************************************/
 
-Mask generate_NodalMask__MeshTools__(Mesh FEM_Mesh) {
+Mask get_active_nodes__MeshTools__(Mesh FEM_Mesh) {
   int Nnodes = FEM_Mesh.NumNodesMesh;
   int Nactivenodes = 0;
   int *Nodes2Mask = (int *)Allocate_ArrayZ(Nnodes, sizeof(int));
@@ -122,7 +122,7 @@ Mask generate_NodalMask__MeshTools__(Mesh FEM_Mesh) {
 
 /**************************************************************/
 
-Mask generate_Mask_for_static_condensation__MeshTools__(Mask ActiveNodes,
+Mask get_active_dofs__MeshTools__(Mask ActiveNodes,
                                                         Mesh FEM_Mesh, int Step,
                                                         int NumTimeStep) {
 

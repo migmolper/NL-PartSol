@@ -106,10 +106,10 @@ int U_Static_Finite_Strains(Mesh FEM_Mesh, Particle MPM_Mesh,
 
     local_search__MeshTools__(MPM_Mesh, FEM_Mesh);
 
-    ActiveNodes = generate_NodalMask__MeshTools__(FEM_Mesh);
+    ActiveNodes = get_active_nodes__MeshTools__(FEM_Mesh);
     Nactivenodes = ActiveNodes.Nactivenodes;
     Free_and_Restricted_Dofs =
-        generate_Mask_for_static_condensation__MeshTools__(
+        get_active_dofs__MeshTools__(
             ActiveNodes, FEM_Mesh, TimeStep, NumTimeStep);
 
     D_U = initialise_Nodal_Increments(FEM_Mesh, ActiveNodes, TimeStep,

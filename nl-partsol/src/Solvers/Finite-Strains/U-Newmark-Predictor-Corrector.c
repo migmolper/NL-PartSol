@@ -109,10 +109,10 @@ int U_Verlet_Finite_Strains(
     DeltaTimeStep = U_DeltaT__SolversLib__(MPM_Mesh, DeltaX, Parameters_Solver);
     print_step(TimeStep, DeltaTimeStep);
     local_search__MeshTools__(MPM_Mesh, FEM_Mesh);
-    ActiveNodes = generate_NodalMask__MeshTools__(FEM_Mesh);
+    ActiveNodes = get_active_nodes__MeshTools__(FEM_Mesh);
     Nactivenodes = ActiveNodes.Nactivenodes;
     Free_and_Restricted_Dofs =
-        generate_Mask_for_static_condensation__MeshTools__(
+        get_active_dofs__MeshTools__(
             ActiveNodes, FEM_Mesh, TimeStep, NumTimeStep);
 
     STATUS = __mass_NODES(Lumped_Mass, MPM_Mesh, FEM_Mesh, ActiveNodes);
