@@ -528,6 +528,7 @@ typedef struct
   double * Stress;
   double * Strain;
   double Pressure;
+  double pw;
 
   double * D_phi_n1;  /**< Total deformation gradient (t = n + 1) */
   double * D_phi_n; /**< Total deformation gradient (t = n) */

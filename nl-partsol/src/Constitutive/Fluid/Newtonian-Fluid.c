@@ -206,7 +206,7 @@ int compute_stiffness_density_Newtonian_Fluid(
     }
   }
 
-  return EXIT_SUCCESS;
+  return STATUS;
 }
 
 /**************************************************************/
