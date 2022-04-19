@@ -138,7 +138,7 @@ void Up_Newmark_beta_Finite_Strains(Mesh FEM_Mesh, Particle MPM_Mesh,
     print_Status("*************************************************", TimeStep);
     print_Status("First step : Generate Mask ... WORKING", TimeStep);
     local_search__MeshTools__(MPM_Mesh, FEM_Mesh);
-    ActiveNodes = generate_NodalMask__MeshTools__(FEM_Mesh);
+    ActiveNodes = get_active_nodes__MeshTools__(FEM_Mesh);
     Nactivenodes = ActiveNodes.Nactivenodes;
 
     print_Status("*************************************************", TimeStep);
@@ -737,10 +737,10 @@ Define tributary nodes of the particle
     /*
       Compute the increment of the deformation gradient
     */
-    update_increment_Deformation_Gradient__Particles__(DF_p, D_Displacement_Ap,
-                                                       gradient_p);
-    update_rate_increment_Deformation_Gradient__Particles__(
-        dt_DF_p, D_Velocity_Ap, gradient_p);
+//    update_increment_Deformation_Gradient__Particles__(DF_p, D_Displacement_Ap,
+//                                                       gradient_p);
+//    update_rate_increment_Deformation_Gradient__Particles__(
+//        dt_DF_p, D_Velocity_Ap, gradient_p);
 
     /*
       Update the deformation gradient in t = n + 1 with the information

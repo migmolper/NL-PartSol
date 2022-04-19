@@ -98,7 +98,7 @@ void generate_contour_nodes(Mesh FEM_Mesh) {
 
 /**************************************************************/
 
-Mask generate_NodalMask__MeshTools__(Mesh FEM_Mesh) {
+Mask get_active_nodes__MeshTools__(Mesh FEM_Mesh) {
   int Nnodes = FEM_Mesh.NumNodesMesh;
   int Nactivenodes = 0;
   int *Nodes2Mask = (int *)Allocate_ArrayZ(Nnodes, sizeof(int));
@@ -122,7 +122,7 @@ Mask generate_NodalMask__MeshTools__(Mesh FEM_Mesh) {
 
 /**************************************************************/
 
-Mask generate_Mask_for_static_condensation__MeshTools__(Mask ActiveNodes,
+Mask get_active_dofs__MeshTools__(Mask ActiveNodes,
                                                         Mesh FEM_Mesh, int Step,
                                                         int NumTimeStep) {
 
@@ -299,8 +299,11 @@ Mask generate_Mask_for_static_condensation_upw__MeshTools__(Mask ActiveNodes,
 
 /**************************************************************/
 
-Matrix get_set_field__MeshTools__(Matrix Field, Element Nodes_p,
-                                  Mask ActiveNodes)
+void get_set_field__MeshTools__(
+  double * Field_Ap,
+  const double * Field, 
+  Element Nodes_p,
+  Mask ActiveNodes)
 /*
   This function performs two operations. First takes the nodal connectivity of
   the particle, and translate it to the mask numeration. Second, generate a
@@ -309,37 +312,19 @@ Matrix get_set_field__MeshTools__(Matrix Field, Element Nodes_p,
  */
 {
   int Nnodes = Nodes_p.NumberNodes;
-  int Ndim = Field.N_cols;
-  Matrix Field_Ap = allocZ__MatrixLib__(Nnodes, Ndim);
+  int Ndim = NumberDimensions;
   int Ap;
   int A_mask;
 
-  if (Ndim > 1) {
-    for (int A = 0; A < Nnodes; A++) {
-
-      /*
-           Get the node in the mass matrix with the mask
-      */
-      Ap = Nodes_p.Connectivity[A];
-      A_mask = ActiveNodes.Nodes2Mask[Ap];
-
-      for (int i = 0; i < Ndim; i++) {
-        Field_Ap.nM[A][i] = Field.nM[A_mask][i];
-      }
-    }
-  } else {
-    for (int A = 0; A < Nnodes; A++) {
-      /*
-        Get the node in the mass matrix with the mask
-      */
-      Ap = Nodes_p.Connectivity[A];
-      A_mask = ActiveNodes.Nodes2Mask[Ap];
-
-      Field_Ap.nV[A] = Field.nV[A_mask];
+  for (unsigned A = 0; A < Nnodes; A++) {
+  
+    Ap = Nodes_p.Connectivity[A];
+    A_mask = ActiveNodes.Nodes2Mask[Ap];
+    
+    for (unsigned i = 0; i < Ndim; i++) {
+      Field_Ap[A*Ndim + i] = Field[A_mask*Ndim + i];
     }
   }
-
-  return Field_Ap;
 }
 
 /*********************************************************************/

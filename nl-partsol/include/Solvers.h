@@ -81,7 +81,7 @@ void U_Newmark_Predictor_Corrector(Mesh, Particle, Time_Int_Params);
   \param Particle MPM_Mesh : Variable with the particle information
   \param InitialStep
  */
-int U_Newmark_Predictor_Corrector_Finite_Strains(Mesh FEM_Mesh, Particle MPM_Mesh, Time_Int_Params Parameters_Solver);
+int U_Verlet_Finite_Strains(Mesh FEM_Mesh, Particle MPM_Mesh, Time_Int_Params Parameters_Solver);
 
 /*
   \fn int U_Newmark_beta_Finite_Strains(Mesh FEM_Mesh, Particle MPM_Mesh, Time_Int_Params Parameters_Solver)

@@ -1,5 +1,8 @@
 #!/bin/bash
 
+export PETSC_DIR=$HOME/petsc
+export PETSC_ARCH=arch-classic-docs
+
 clear
 
 CC=/usr/bin/gcc
@@ -12,7 +15,7 @@ fi
 
 cd ${DIR}
 
-FILE="Makefile"
+FILE="Makefile" 
 if [ -f "$FILE" ]; then
     make -k
 else 

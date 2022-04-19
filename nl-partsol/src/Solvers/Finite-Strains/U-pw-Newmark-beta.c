@@ -146,7 +146,7 @@ void upw_Newmark_beta_Finite_Strains(Mesh FEM_Mesh, Particle MPM_Mesh,
     print_step(TimeStep, DeltaTimeStep);
 
     local_search__MeshTools__(MPM_Mesh, FEM_Mesh);
-    ActiveNodes = generate_NodalMask__MeshTools__(FEM_Mesh);
+    ActiveNodes = get_active_nodes__MeshTools__(FEM_Mesh);
     Nactivenodes = ActiveNodes.Nactivenodes;
 
     compute_Gravity_field(ActiveNodes, MPM_Mesh, TimeStep, NumTimeStep);
@@ -779,10 +779,10 @@ static void update_Local_State(
     /*
       Compute the increment of the deformation gradient and its rate
     */
-    update_increment_Deformation_Gradient__Particles__(
-        DF_p, Nodal_D_Displacement_p, gradient_p);
-    update_rate_increment_Deformation_Gradient__Particles__(
-        dt_DF_p, Nodal_D_Velocity_p, gradient_p);
+//    update_increment_Deformation_Gradient__Particles__(
+//        DF_p, Nodal_D_Displacement_p, gradient_p);
+//    update_rate_increment_Deformation_Gradient__Particles__(
+//        dt_DF_p, Nodal_D_Velocity_p, gradient_p);
 
     /*
       Update the deformation gradient in t = n + 1 with the information
