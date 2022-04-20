@@ -8,13 +8,9 @@
 /*******************************************************/
 
 /* Solvers library */
-/* Matrix Nelder_Mead(); */
 Matrix Newton_Rapson(Matrix(* Function)(Matrix, Matrix), Matrix,
 		     Matrix(* Jacobian)(Matrix, Matrix), Matrix,
 		     Matrix,Matrix);
-Matrix Conjugate_Gradient_Method(Matrix,Matrix,Matrix);
-Matrix Jacobi_Conjugate_Gradient_Method(Matrix,Matrix,Matrix);
-Matrix One_Iteration_Lumped(Matrix, Matrix, Matrix);
 
 /*******************************************************/
 
@@ -162,9 +158,6 @@ int compute_adjunt__TensorLib__(double * A_mT, const double * A);
 */
 void symmetrise__TensorLib__(double * symA, const double * A);
 /*******************************************************/
-
-/* LAPACK interfase of the program */
-Matrix solve_system_LAPACK(Matrix,Matrix);
 
 
 #endif
