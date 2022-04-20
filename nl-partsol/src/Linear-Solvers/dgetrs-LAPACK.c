@@ -1,14 +1,5 @@
-#include <stdlib.h>
-#include <stdio.h>
-#include "Macros.h"
 
-#ifdef __linux__
-#include <lapacke.h>
-#elif __APPLE__
-#include <Accelerate/Accelerate.h>
-#endif
-
-/**************************************************************/
+#include "Linear-Solvers/dgetrs-LAPACK.h"
 
 int dgetrs_LAPACK(
     double * Tangent_Stiffness,
@@ -53,5 +44,3 @@ int dgetrs_LAPACK(
 
   return STATUS;
 }
-
-/**************************************************************/
