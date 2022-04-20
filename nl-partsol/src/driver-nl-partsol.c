@@ -18,6 +18,8 @@
 #include <petscksp.h>
 #endif
 
+#include "Solvers/Finite-Strains/U-Newmark-beta.h"
+
 /*
   Call global variables
 */

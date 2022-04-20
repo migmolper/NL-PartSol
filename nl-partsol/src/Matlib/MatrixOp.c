@@ -1089,13 +1089,6 @@ Matrix solve__MatrixLib__(Matrix K, Matrix F)
     U = matrix_product__MatrixLib__(Km1, F);
     free__MatrixLib__(Km1);
     return U;
-
-  case 1:
-    puts("fix U");
-    exit(EXIT_FAILURE);
-    U = Conjugate_Gradient_Method(K, F, U);
-    return U;
-
   default:
     exit(EXIT_FAILURE);
   }
