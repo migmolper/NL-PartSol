@@ -945,7 +945,7 @@ static void update_Local_State(
     /*
       Compute the Jacobian of the deformation gradient
     */
-    J_n1_p = I3__TensorLib__(F_n1_p);
+//    J_n1_p = I3__TensorLib__(F_n1_p);
 
     /*
       Compute the rate of the jacobian

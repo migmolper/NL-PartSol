@@ -82,10 +82,11 @@ Tensor memory_to_tensor__TensorLib__(double *, int);
 void   free__TensorLib__(Tensor);
 double I1__TensorLib__(const Tensor);
 double I2__TensorLib__(const Tensor);
-double I3__TensorLib__(const Tensor);
+
+double I3__TensorLib__(const double * A);
+
 double J1__TensorLib__(const Tensor);
 double J2__TensorLib__(const Tensor);
-double J3__TensorLib__(const Tensor);
 
 EigenTensor Eigen_analysis__TensorLib__(const Tensor);
 
@@ -104,15 +105,16 @@ Tensor vector_linear_mapping__TensorLib__(Tensor, Tensor);
 Tensor matrix_product_old__TensorLib__(Tensor, Tensor);
 /*******************************************************/
 /*!
-  \fn void matrix_product__TensorLib__(double * Output,const double * input_A,const double * input_B);
-
   \brief Compute the product between two second order tensors
 
-  \param Output: [out] Result of the matrix multiplication
-  \param input_A : [in] Tensor A
-  \param input_B : [in] Tensor B
+  \param[out] Output Result of the matrix multiplication
+  \param[in] input_A Tensor A
+  \param[in] input_B Tensor B
 */
-void matrix_product__TensorLib__(double * Output,const double * input_A,const double * input_B);
+void matrix_product__TensorLib__(
+  double * Output,
+  const double * input_A,
+  const double * input_B);
 /*******************************************************/
 
 Tensor Convex_combination__TensorLib__(Tensor, Tensor, double);
@@ -121,6 +123,8 @@ void covariant_push_forward_tensor__TensorLib__(Tensor, Tensor, Tensor);
 void contravariant_push_forward_tensor__TensorLib__(Tensor, Tensor, Tensor);
 void covariant_pull_back_tensor__TensorLib__(Tensor, Tensor, Tensor);
 void contravariant_pull_back_tensor__TensorLib__(Tensor, Tensor, Tensor);
+
+
 void print__TensorLib__(Tensor);
 
 
@@ -131,8 +135,8 @@ void print__TensorLib__(Tensor);
 
   \brief Compute the inverse of a tensor
 
-  \param A_m1 : [out] Inverse of the tensor
-  \param A : [in] Tensor
+  \param[out] A_m1 Inverse of the tensor
+  \param[in] A Tensor
 */
 int compute_inverse__TensorLib__(double * A_m1, const double * A);
 /*******************************************************/
@@ -142,8 +146,8 @@ int compute_inverse__TensorLib__(double * A_m1, const double * A);
 
   \brief Compute the adjunt of a tensor
 
-  \param b : [out] Adjunt of the tensor
-  \param F : [in] Tensor
+  \param[out] A_mT Adjunt of the tensor
+  \param[in] A Tensor
 */
 int compute_adjunt__TensorLib__(double * A_mT, const double * A);
 /*******************************************************/
@@ -153,8 +157,8 @@ int compute_adjunt__TensorLib__(double * A_mT, const double * A);
 
   \brief Compute the symmetric conterpart of a tensor
 
-  \param symA : [out] Symmetric part of a tensor
-  \param A : [in] Tensor
+  \param[out] symA Symmetric part of a tensor
+  \param[in] A Tensor
 */
 void symmetrise__TensorLib__(double * symA, const double * A);
 /*******************************************************/

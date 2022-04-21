@@ -697,6 +697,7 @@ static void update_Local_State(
   /*
     Auxiliar variables
   */
+  int STATUS = EXIT_SUCCESS;
   int Ndim = NumberDimensions;
   int Np = MPM_Mesh.NumGP;
   int Nnodes_mask = ActiveNodes.Nactivenodes;
@@ -722,14 +723,14 @@ static void update_Local_State(
   Matrix Nodal_D_Velocity_p;
   Matrix Nodal_D_theta_p;
   Matrix Nodal_D_theta_dt;
-  Tensor F_n_p;  /* Deformation gradient of the soil skeleton (t = n) */
-  Tensor F_n1_p; /* Deformation gradient of the soil skeleton (t = n + 1) */
-  Tensor DF_p; /* Increment of the deformation gradient of the soil skeleton */
-  Tensor dFdt_n_p; /* Rate of the deformation gradient of the soil skeleton (t =
+  double * F_n_p;  /* Deformation gradient of the soil skeleton (t = n) */
+  double * F_n1_p; /* Deformation gradient of the soil skeleton (t = n + 1) */
+  double * DF_p; /* Increment of the deformation gradient of the soil skeleton */
+  double * dFdt_n_p; /* Rate of the deformation gradient of the soil skeleton (t =
                       n) */
-  Tensor dFdt_n1_p; /* Rate of the deformation gradient of the soil skeleton (t
+  double * dFdt_n1_p; /* Rate of the deformation gradient of the soil skeleton (t
                        = n + 1) */
-  Tensor dt_DF_p;   /* Rate of the increment of the deformation gradient of the
+  double * dt_DF_p;   /* Rate of the increment of the deformation gradient of the
                        soil skeleton */
   double Pw_0;      /* Cauchy pore water pressure at t = 0 */
   double Pw_n1;     /* Cauchy pore water pressure at t = n + 1 */
@@ -780,12 +781,12 @@ static void update_Local_State(
       Take the values of the deformation gradient and its rates from the
       previous step
     */
-    F_n_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n.nM[p], 2);
-    F_n1_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n1.nM[p], 2);
-    DF_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.DF.nM[p], 2);
-    dFdt_n_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.dt_F_n.nM[p], 2);
-    dFdt_n1_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.dt_F_n1.nM[p], 2);
-    dt_DF_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.dt_DF.nM[p], 2);
+    F_n_p = MPM_Mesh.Phi.F_n.nM[p];
+    F_n1_p = MPM_Mesh.Phi.F_n1.nM[p];
+    DF_p = MPM_Mesh.Phi.DF.nM[p];
+    dFdt_n_p = MPM_Mesh.Phi.dt_F_n.nM[p];
+    dFdt_n1_p = MPM_Mesh.Phi.dt_F_n1.nM[p];
+    dt_DF_p = MPM_Mesh.Phi.dt_DF.nM[p];
 
     /*
       Compute the increment of the deformation gradient and its rate
@@ -807,7 +808,11 @@ static void update_Local_State(
       Compute the Jacobian of the deformation gradient and its rate
     */
     J_n1_p = I3__TensorLib__(F_n1_p);
-    dJ_dt_n1_p = compute_Jacobian_Rate__Particles__(J_n1_p, F_n1_p, dFdt_n1_p);
+    STATUS = compute_Jacobian_Rate__Particles__(&dJ_dt_n1_p, J_n1_p, F_n1_p, dFdt_n1_p);
+    if(STATUS == EXIT_FAILURE){
+      fprintf(stderr, ""RED"Error in compute_adjunt__TensorLib__()"RESET" \n");
+//      return EXIT_FAILURE;
+    }
 
     /*
       Get the Kirchhoff pore water pressure at t = n + 1

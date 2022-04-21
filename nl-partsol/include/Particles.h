@@ -20,60 +20,55 @@ Tensor infinitesimal_Strain__Particles__(Tensor, Tensor, double);
 /*******************************************************/
 
 /*!
-  \fn void update_increment_Deformation_Gradient__Particles__(Tensor DF_p, const double * DeltaU, const double * gradient_p, unsigned Nnodes_p)
-
-  \brief Function to update the deformation gradient 
-  as in \cite Love_and_Sulsky_2006_a. Takes the values from the previous step, 
-  and update it
+  \brief Function to compute the increment of the deformation gradient
 
   \f[
-  f_{n+1} = 1 + grad ( \Delta \phi )\\
-  F_{n+1} = f_{n+1} F_{n}
+  f_{n+1} = 1 + grad ( \Delta \phi )
   \f]
 
-  \param F_n1 : Deformation gradient at t = n + 1
-  \param F_n : Deformation gradient at t = n
-  \param DeltaU : Nodal displacement increment (iterate)
-  \param gradient_p : Shape function gradient for each node evaluated
-  in the particle position
+  \param[out] f_n1 : Increment of the deformation gradient
+  \param[in] DeltaU : Nodal displacement increment
+  \param[in] gradient_p : Shape function gradient
+  \param[in] Nnodes_p : Number of nodes
 */
 void update_increment_Deformation_Gradient__Particles__(
-  Tensor DF_p, 
+  double * f_n1, 
   const double * DeltaU, 
   const double * gradient_p, 
   unsigned Nnodes_p);
 /*******************************************************/
 
 /*!
-  \fn void update_DeformationGradient(Tensor F_n1,Tensor F_n,Matrix DeltaU,Matrix gradient_p)
-
   \brief Function to update the deformation gradient 
   as in \cite Love_and_Sulsky_2006_a. Takes the values from the previous step, 
   and update it
 
   \f[
-  f_{n+1} = 1 + grad ( \Delta \phi )\\
   F_{n+1} = f_{n+1} F_{n}
   \f]
 
-  \param F_n1 : Deformation gradient at t = n + 1
-  \param F_n : Deformation gradient at t = n
-  \param DeltaU : Nodal displacement increment (iterate)
-  \param gradient_p : Shape function gradient for each node evaluated
-  in the particle position
+  \param[out] F_n1 Deformation gradient at t = n + 1
+  \param[in] F_n Deformation gradient at t = n
+  \param[in] f_n1 Increment of the deformation gadient
 */
-void update_Deformation_Gradient_n1__Particles__(Tensor, Tensor, Tensor);
-/*******************************************************/
-
-/*
-  \fn void get_locking_free_Deformation_Gradient_n1__Particles__(int p,Tensor F_n1,Particle MPM_Mesh,Mesh FEM_Mesh);
-*/
-void get_locking_free_Deformation_Gradient_n1__Particles__(int,double,Particle);
+void update_Deformation_Gradient_n1__Particles__(
+  double * F_n1, 
+  const double * F_n,
+  const double * f_n1);
 /*******************************************************/
 
 /*!
-  \fn void update_rate_increment_Deformation_Gradient__Particles__(Tensor DF_p, const double * DeltaV, const double * gradient_p, unsigned Nnodes_p)
+  \brief Function to compute the F-bar using the approach proposed
+  by Ortiz
 
+*/
+int get_locking_free_Deformation_Gradient_n1__Particles__(
+  unsigned p,
+  double DJ_patch,
+  Particle MPM_Mesh);
+/*******************************************************/
+
+/*!
   \brief Function to update the deformation gradient rate 
   as in \cite Love_and_Sulsky_2006_a. Takes the values from the previous step, 
   and update it
@@ -83,30 +78,60 @@ void get_locking_free_Deformation_Gradient_n1__Particles__(int,double,Particle);
   F_{n+1} = f_{n+1} F_{n}
   \f]
 
-  \param F_n1 : Deformation gradient at t = n + 1
-  \param F_n : Deformation gradient at t = n
-  \param DeltaV : Nodal velocity increment (iterate)
-  \param gradient_p : Shape function gradient for each node evaluated
-  in the particle position
+  \param[out] dt_f_n1 Deformation gradient at t = n + 1
+  \param[in] DeltaV Nodal velocity increment
+  \param[in] gradient_p Shape function gradient 
+  \param[in] Nnodes_p Number of nodes
 */
 void update_rate_increment_Deformation_Gradient__Particles__(
-  Tensor dt_DF_p, 
+  double * dt_f_n1, 
   const double * DeltaV, 
   const double * gradient_p,
   unsigned Nnodes_p);
 /*******************************************************/
 
-/*
-  \fn void update_rate_Deformation_Gradient_n1__Particles__(Tensor dt_F_n1, Tensor dt_f_n1, Tensor F_n, Tensor f_n1, Tensor dt_F_n)
+/*!
+  \brief Function to update the deformation gradient rate 
+  as in \cite Love_and_Sulsky_2006_a. Takes the values from the previous step, 
+  and update it
+
+  \f[
+  f_{n+1} = 1 + grad ( \Delta \phi )\\
+  F_{n+1} = f_{n+1} F_{n}
+  \f]
+
+  \param[out] dt_F_n1 Deformation gradient rate at t = n + 1
+  \param[in] dt_f_n1 Rate of the increment of the deformation gradient 
+  \param[in] F_n Deformation gradient at t = n
+  \param[in] f_n1 Increment of the deformation gradient
+  \param[in] dt_F_n Rate of the deformation gradient t = n
 */
-void update_rate_Deformation_Gradient_n1__Particles__(Tensor, Tensor, Tensor, Tensor, Tensor);
+void update_rate_Deformation_Gradient_n1__Particles__(
+  double * dt_F_n1,
+  const double * dt_f_n1,
+  const double * F_n, 
+  const double * f_n1,
+  const double * dt_F_n);
 /*******************************************************/
 
 /*!
-  \fn double compute_Jacobian_Rate__Particles__(double J_p, Tensor F_p, Tensor dt_F_p)
+  \brief Function to compute the rate of the Jacobian,
+  see Marsden and Hughes
 
+  \f[
+  d_J_dt = J (FmT : dFdt)
+  \f]
+
+  \param[out] d_J_dt Jacobian rate
+  \param[in] J Jacobial 
+  \param[in] F Deformation gradient
+  \param[in] d_F_dt Deformation gradient rate
 */
-double compute_Jacobian_Rate__Particles__(double, Tensor, Tensor);
+int compute_Jacobian_Rate__Particles__(
+  double * d_J_dt,
+  double J, 
+  const double * F,
+  const double * d_F_dt);
 /*******************************************************/
 
 /*!
@@ -116,7 +141,7 @@ double compute_Jacobian_Rate__Particles__(double, Tensor, Tensor);
   C = (F)^T F
   \f]
   
-  \param F : Deformation gradient 
+  \param F Deformation gradient 
 
   \return The right Cauchy-Green tensor
 */
@@ -128,8 +153,8 @@ Tensor right_Cauchy_Green__Particles__(Tensor);
 
   \brief Compute the left Cauchy-Green tensor
 
-  \param b : [out] Left Cauchy-Green tensor
-  \param F : [in] Deformation gradient
+  \param[out] b Left Cauchy-Green tensor
+  \param[in] F Deformation gradient
 */
 void left_Cauchy_Green__Particles__(double * b, const double * F);
 /*******************************************************/
@@ -137,8 +162,8 @@ void left_Cauchy_Green__Particles__(double * b, const double * F);
 /*!
   \fn Tensor rate_of_deformation__Particles__(Tensor dFdt, Tensor Fm1)  
 
-  \param dFdt : Temporal derivative of the deformation gradient
-  \param Fm1 : Inverse of the deformation gradient  
+  \param dFdt Temporal derivative of the deformation gradient
+  \param Fm1 Inverse of the deformation gradient  
 */
 Tensor rate_of_deformation__Particles__(Tensor, Tensor);
 /*******************************************************/
@@ -148,9 +173,9 @@ Tensor rate_of_deformation__Particles__(Tensor, Tensor);
 
   \brief Compute the spatial velocity gradient
 
-  \param L : [out] Spatial velocity gradient
-  \param dFdt : [in] Rate of the deformation tensor
-  \param F : [in] Deformation gradient
+  \param[out] L Spatial velocity gradient
+  \param[in] dFdt Rate of the deformation tensor
+  \param[in] F Deformation gradient
 */
 int spatial_velocity_gradient__Particles__(double * L,const double * dFdt,const double * F);
 /*******************************************************/
@@ -162,7 +187,7 @@ int spatial_velocity_gradient__Particles__(double * L,const double * dFdt,const 
   E = \frac{1}{2} [ C - I ]
   \f]
   
-  \param C : right Cauchy-Green tensor
+  \param C right Cauchy-Green tensor
 
   \return The Lagrangian Strain tensor 
 */
@@ -227,12 +252,12 @@ Tensor configurational_midpoint_integration_Stress__Particles__(Tensor,Tensor, T
   S =  2 \cdot \Delta \hat{e}(C^{n + 1/2 )}) 
   \f]
 
-  \param PK2  : Previous value of the stress tensor
-  \param C_n1 : Right Cauchy-Green tensor at t = n + 1
-  \param C_n  : Right Cauchy-Green tensor at t = n
-  \param Mat  : Material properties.
+  \param[in] PK2  Previous value of the stress tensor
+  \param[in] C_n1 Right Cauchy-Green tensor at t = n + 1
+  \param[in] C_n  Right Cauchy-Green tensor at t = n
+  \param[in] Mat  Material properties.
 */
-Tensor average_strain_integration_Stress__Particles__(Tensor, Tensor, Tensor, Material);
+//Tensor average_strain_integration_Stress__Particles__(Tensor, Tensor, Tensor, Material);
 /*******************************************************/
 
 /*!
@@ -242,9 +267,21 @@ double internal_energy__Particles__(Tensor, Tensor);
 /*******************************************************/
 
 /*!
-  \fn double finite_strains_internal_energy__Particles__(Tensor F_p, Material MatProp_p)
+  \brief update the internal energy of the particle using
+  \f[
+  W_n1 = W_n + dt * (P : dfdt)
+  \f]
+
+  \param[out] W Internal energy
+  \param[in] P First Piola-Kichhoff stress tensor
+  \param[in] dFdt Deformation gradient rate
+  \param[in] dt Time step for the time integration
 */
-double finite_strains_internal_energy__Particles__(Tensor, Material, double);
+void finite_strains_internal_energy__Particles__(
+  double * W,
+  const double * P,
+  const double * dFdt,
+  double dt);
 /*******************************************************/
 /*!
 

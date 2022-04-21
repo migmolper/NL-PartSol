@@ -710,7 +710,7 @@ static void update_Local_State(Matrix D_Displacement, Mask ActiveNodes,
       Update the deformation gradient in t = n + 1 with the information
       from t = n and the increment of deformation gradient.
     */
-    update_Deformation_Gradient_n1__Particles__(F_n1_p, F_n_p, DF_p);
+//    update_Deformation_Gradient_n1__Particles__(F_n1_p, F_n_p, DF_p);
 
     /*
       Update the second Piola-Kirchhoff stress tensor (S) with an apropiate
@@ -719,8 +719,8 @@ static void update_Local_State(Matrix D_Displacement, Mask ActiveNodes,
     MatIndx_p = MPM_Mesh.MatIdx[p];
     MatProp_p = MPM_Mesh.Mat[MatIndx_p];
     S_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.Stress.nM[p], 2);
-    S_p = average_strain_integration_Stress__Particles__(S_p, F_n1_p, F_n_p,
-                                                         MatProp_p);
+//    S_p = average_strain_integration_Stress__Particles__(S_p, F_n1_p, F_n_p,
+//                                                         MatProp_p);
 
     /*
       Free memory
@@ -1366,7 +1366,7 @@ static void assemble_Nodal_Tangent_Stiffness_Material(Matrix Tangent_Stiffness,
       Compute the jacobian of the deformation gradient in the
       intermediate configuration
     */
-    J_p = I3__TensorLib__(F_n12_p);
+//    J_p = I3__TensorLib__(F_n12_p);
 
     for (int A = 0; A < NumNodes_p; A++) {
       /*
@@ -1761,7 +1761,7 @@ static void update_Particles(Matrix D_Displacement, Matrix D_Velocity,
     /*
       Update density with the jacobian of the increment deformation gradient
     */
-    Delta_J_p = I3__TensorLib__(DF_p);
+//    Delta_J_p = I3__TensorLib__(DF_p);
     rho_n_p = MPM_Mesh.Phi.rho.nV[p];
     MPM_Mesh.Phi.rho.nV[p] = rho_n_p / Delta_J_p;
 
@@ -1779,8 +1779,8 @@ static void update_Particles(Matrix D_Displacement, Matrix D_Velocity,
     Vol_0_p = MPM_Mesh.Phi.Vol_0.nV[p];
     MatIndx_p = MPM_Mesh.MatIdx[p];
     MatProp_p = MPM_Mesh.Mat[MatIndx_p];
-    MPM_Mesh.Phi.W.nV[p] =
-        finite_strains_internal_energy__Particles__(F_n_p, MatProp_p, Vol_0_p);
+//    MPM_Mesh.Phi.W.nV[p] =
+//        finite_strains_internal_energy__Particles__(F_n_p, MatProp_p, Vol_0_p);
 
     /* Iterate over the nodes of the particle */
     for (int A = 0; A < Nodes_p.NumberNodes; A++) {

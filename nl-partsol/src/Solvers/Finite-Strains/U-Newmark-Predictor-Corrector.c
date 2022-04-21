@@ -583,9 +583,9 @@ static int __update_Local_State(
   Material MatProp_p;
   Matrix gradient_p;
   double * D_Displacement_Ap;
-  Tensor F_n_p;
-  Tensor F_n1_p;
-  Tensor DF_p;
+  double * F_n_p;
+  double * F_n1_p;
+  double * DF_p;
 
   /*
     Loop in the material point set to update kinematics
@@ -613,9 +613,9 @@ static int __update_Local_State(
     /*
       Take the values of the deformation gradient from the previous step
     */
-    F_n_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n.nM[p], 2);
-    F_n1_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n1.nM[p], 2);
-    DF_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.DF.nM[p], 2);
+    F_n_p = MPM_Mesh.Phi.F_n.nM[p];
+    F_n1_p = MPM_Mesh.Phi.F_n1.nM[p];
+    DF_p = MPM_Mesh.Phi.DF.nM[p];
 
     /*
       Compute the increment of the deformation gradient

@@ -118,7 +118,8 @@ static int __Nodal_Internal_Forces(
   Mask ActiveNodes /**< */, 
   Mask ActiveDOFs /**< */,
   Particle MPM_Mesh /**< */, 
-  Mesh FEM_Mesh /**< */);
+  Mesh FEM_Mesh /**< */,
+  double TimeStep /**< */);
 
 static void __internal_force_density(
   double * InternalForcesDensity_Ap,
