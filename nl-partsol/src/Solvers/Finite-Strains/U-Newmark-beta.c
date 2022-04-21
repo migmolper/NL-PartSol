@@ -35,10 +35,19 @@ int U_Newmark_beta_Finite_Strains(Mesh FEM_Mesh, Particle MPM_Mesh,
   double Error_i;
   double Error_relative;
 
+
+//#ifdef USE_PETSC
+//  Mat Effective_Mass;
+//  Mat Tangent_Stiffness;
+//  Vec Residual;
+//  Vec Reactions;
+//#else
   double * Effective_Mass;
   double * Tangent_Stiffness;
   double * Residual;
   double * Reactions;
+//#endif
+
   Nodal_Field U_n;
   Nodal_Field D_U;
 
@@ -151,26 +160,30 @@ int U_Newmark_beta_Finite_Strains(Mesh FEM_Mesh, Particle MPM_Mesh,
         return EXIT_FAILURE;
       } 
 
-#ifdef USE_PETSC
+//#ifdef USE_PETSC
 
-#else
+//#else
       STATUS = __assemble_tangent_stiffness(
         Tangent_Stiffness, ActiveNodes, ActiveDOFs, MPM_Mesh, FEM_Mesh, Params);
       if(STATUS == EXIT_FAILURE){
           fprintf(stderr, ""RED"Error in __assemble_tangent_stiffness()"RESET" \n");
           return EXIT_FAILURE;
       } 
-#endif
+//#endif
 
-#ifdef USE_PETSC
-
-#else 
+//#ifdef USE_PETSC
+//      STATUS = krylov_PETSC(Tangent_Stiffness, Residual, Nactivedofs);
+//      if(STATUS == EXIT_FAILURE){
+//        fprintf(stderr, ""RED"Error in dgetrs_LAPACK()"RESET" \n");
+//        return EXIT_FAILURE;
+//      }
+//#else 
       STATUS = dgetrs_LAPACK(Tangent_Stiffness, Residual, Nactivedofs);
       if(STATUS == EXIT_FAILURE){
         fprintf(stderr, ""RED"Error in dgetrs_LAPACK()"RESET" \n");
         return EXIT_FAILURE;
       }
-#endif
+//#endif
 
       __update_Nodal_Increments(Residual, D_U, U_n, ActiveDOFs, Params, Ntotaldofs);
 

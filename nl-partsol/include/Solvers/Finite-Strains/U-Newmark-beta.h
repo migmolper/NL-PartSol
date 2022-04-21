@@ -16,17 +16,23 @@
 #include "Nodes.h"
 #include "InOutFun.h"
 
-#ifdef USE_PETSC
+//#ifdef USE_PETSC
 
-#else 
-  #include "Linear-Solvers/dgetrs-LAPACK.h"
-#endif
+#include <petscksp.h>
+//  #include "Linear-Solvers/"
+
+//#else
 
 #ifdef __linux__
 #include <lapacke.h>
-#elif __APPLE__
+#elif __APPLE__ 
 #include <Accelerate/Accelerate.h>
 #endif
+
+#include "Linear-Solvers/dgetrs-LAPACK.h"
+
+//#endif
+
 
 /*
   Call global variables
@@ -45,9 +51,15 @@ unsigned NumTimeStep;
 
 typedef struct {
 
+//#ifdef USE_PETSC
+//  Vec value;
+//  Vec d_value_dt;
+//  Vec d2_value_dt2;
+//#else 
   double * value;
   double * d_value_dt;
   double * d2_value_dt2;
+//#endif
 
 } Nodal_Field;
 
@@ -166,9 +178,9 @@ static void compute_local_intertia(
   unsigned A /**< */, 
   unsigned B /**< */);  
 
-#ifdef USE_PETSC
+//#ifdef USE_PETSC
 
-#else
+//#else
 static int __assemble_tangent_stiffness(
   double * Tangent_Stiffness /**< */,
   Mask ActiveNodes /**< */,
@@ -176,12 +188,8 @@ static int __assemble_tangent_stiffness(
   Particle MPM_Mesh /**< */, 
   Mesh FEM_Mesh /**< */,
   Newmark_parameters Params /**< */);
-#endif
+//#endif
 
-static int __solve_equilibrium(
-  double * Tangent_Stiffness /**< */,
-  double * Residual /**< */,
-  unsigned Nactivedofs /**< */);
 
 static void __update_Nodal_Increments(
   const double * Residual /**< */,
