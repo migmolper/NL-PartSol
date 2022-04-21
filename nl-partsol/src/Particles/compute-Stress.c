@@ -262,20 +262,19 @@ return Stiffness_density_p;
 
 /**************************************************************/
 
+/*
 Tensor average_strain_integration_Stress__Particles__(Tensor S_p, Tensor F_n1_p,
                                                       Tensor F_n_p,
                                                       Material MatProp_p) {
 
-  /*
-    Compute the right Cauchy-Green tensor in diferent time step
-  */
+
+  //  Compute the right Cauchy-Green tensor in diferent time step
   Tensor C_n_p = right_Cauchy_Green__Particles__(F_n_p);
   Tensor C_n1_p = right_Cauchy_Green__Particles__(F_n1_p);
   Tensor C_n12_p = Convex_combination__TensorLib__(C_n1_p, C_n_p, 0.5);
 
-  /*
-    Compute the Stress tensor
-  */
+
+  //  Compute the Stress tensor
   if (strcmp(MatProp_p.Type, "Saint-Venant-Kirchhoff") == 0) {
     S_p = grad_energy_Saint_Venant_Kirchhoff(S_p, C_n12_p, MatProp_p);
   } else if (strcmp(MatProp_p.Type, "Neo-Hookean-Wriggers") == 0) {
@@ -289,9 +288,8 @@ Tensor average_strain_integration_Stress__Particles__(Tensor S_p, Tensor F_n1_p,
     exit(EXIT_FAILURE);
   }
 
-  /*
-    Free auxiliar variables
-   */
+
+  //  Free auxiliar variables
   free__TensorLib__(C_n_p);
   free__TensorLib__(C_n1_p);
   free__TensorLib__(C_n12_p);
@@ -299,4 +297,5 @@ Tensor average_strain_integration_Stress__Particles__(Tensor S_p, Tensor F_n1_p,
   return S_p;
 }
 
+*/
 /**************************************************************/

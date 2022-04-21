@@ -746,9 +746,9 @@ Define tributary nodes of the particle
       Update the deformation gradient in t = n + 1 with the information
       from t = n and the increment of deformation gradient.
     */
-    update_Deformation_Gradient_n1__Particles__(F_n1_p, F_n_p, DF_p);
-    update_rate_Deformation_Gradient_n1__Particles__(dFdt_n1_p, dt_DF_p, F_n_p,
-                                                     DF_p, dFdt_n_p);
+//    update_Deformation_Gradient_n1__Particles__(F_n1_p, F_n_p, DF_p);
+//    update_rate_Deformation_Gradient_n1__Particles__(dFdt_n1_p, dt_DF_p, F_n_p,
+//                                                     DF_p, dFdt_n_p);
 
     /*
       Update pressure lagrange multiplier
@@ -762,7 +762,7 @@ Define tributary nodes of the particle
     /*
       Compute Jacobian of the deformation gradient
     */
-    MPM_Mesh.Phi.J_n1.nV[p] = I3__TensorLib__(F_n1_p);
+//    MPM_Mesh.Phi.J_n1.nV[p] = I3__TensorLib__(F_n1_p);
 
     /*
        Free memory
@@ -1424,7 +1424,7 @@ static Matrix assemble_Tangent_Stiffness(Mask ActiveNodes, Particle MPM_Mesh,
       Compute the jacobian of the deformation gradient in the deformed
       configuration
     */
-    J_p = I3__TensorLib__(F_n1_p);
+//    J_p = I3__TensorLib__(F_n1_p);
 
     for (int A = 0; A < NumNodes_p; A++) {
 

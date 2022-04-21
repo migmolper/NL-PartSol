@@ -486,14 +486,14 @@ static void update_Local_State(Nodal_Field D_U, Mask ActiveNodes,
       Update the deformation gradient in t = n + 1 with the information
       from t = n and the increment of deformation gradient.
     */
-    update_Deformation_Gradient_n1__Particles__(F_n1_p, F_n_p, DF_p);
-    update_rate_Deformation_Gradient_n1__Particles__(dFdt_n1_p, dt_DF_p, F_n_p,
-                                                     DF_p, dFdt_n_p);
+//    update_Deformation_Gradient_n1__Particles__(F_n1_p, F_n_p, DF_p);
+//    update_rate_Deformation_Gradient_n1__Particles__(dFdt_n1_p, dt_DF_p, F_n_p,
+//                                                     DF_p, dFdt_n_p);
 
     /*
       Compute Jacobian of the deformation gradient
     */
-    MPM_Mesh.Phi.J_n1.nV[p] = I3__TensorLib__(F_n1_p);
+//    MPM_Mesh.Phi.J_n1.nV[p] = I3__TensorLib__(F_n1_p);
 
     /*
       Check non-pentrability condition
@@ -1382,7 +1382,7 @@ static void update_Particles(Nodal_Field D_U, Particle MPM_Mesh, Mesh FEM_Mesh,
            Update density with the jacobian of the increment deformation
        gradient
     */
-    Delta_J_p = I3__TensorLib__(DF_p);
+//    Delta_J_p = I3__TensorLib__(DF_p);
     rho_n_p = MPM_Mesh.Phi.rho.nV[p];
     MPM_Mesh.Phi.rho.nV[p] = rho_n_p / Delta_J_p;
 

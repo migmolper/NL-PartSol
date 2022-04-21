@@ -149,28 +149,19 @@ double I2__TensorLib__(const Tensor A) {
 
 /*************************************************************/
 
-double I3__TensorLib__(const Tensor A) {
-  int Ndim = NumberDimensions;
-  /* Define output */
-  double I3 = 0;
-  /* Check if is the order is order 2 */
-  if (A.Order == 2) {
-
-#if NumberDimensions == 3
-    I3 = A.N[0][0] * A.N[1][1] * A.N[2][2] - A.N[0][0] * A.N[1][2] * A.N[2][1] +
-         A.N[0][1] * A.N[1][2] * A.N[2][0] - A.N[0][1] * A.N[1][0] * A.N[2][2] +
-         A.N[0][2] * A.N[1][0] * A.N[2][1] - A.N[0][2] * A.N[1][1] * A.N[2][0];
-#endif
-
+double I3__TensorLib__(const double * A) {
+  double I3;
 #if NumberDimensions == 2
-    I3 = A.N[0][0] * A.N[1][1] - A.N[0][1] * A.N[1][0];
+    I3 = A[0] * A[3] - A[1] * A[2];
+#else 
+    I3 = A[0] * A[4] * A[8] 
+       - A[0] * A[5] * A[7] 
+       + A[1] * A[5] * A[6] 
+       - A[1] * A[3] * A[8] 
+       + A[2] * A[3] * A[7] 
+       - A[2] * A[4] * A[6];
 #endif
 
-  } else {
-    fprintf(stderr, "%s : %s !!! \n", "Error in I3__TensorLib__()",
-            "The input should be of order 2");
-    exit(EXIT_FAILURE);
-  }
   return I3;
 }
 
@@ -206,25 +197,6 @@ double J2__TensorLib__(const Tensor A) {
     exit(EXIT_FAILURE);
   }
   return J2;
-}
-
-/*************************************************************/
-
-double J3__TensorLib__(const Tensor A) {
-  /* Define output */
-  double J3;
-  /* Check if is the order is order 2 */
-  if (A.Order == 2) {
-    double I1 = I1__TensorLib__(A);
-    double I2 = I2__TensorLib__(A);
-    double I3 = I3__TensorLib__(A);
-    J3 = pow(I1, 3) - 3 * I1 * I2 + 3 * I3;
-  } else {
-    fprintf(stderr, "%s : %s !!! \n", "Error in J3__TensorLib__()",
-            "The input should be of order 2");
-    exit(EXIT_FAILURE);
-  }
-  return J3;
 }
 
 /*************************************************************/
@@ -373,15 +345,17 @@ Tensor Inverse__TensorLib__(const Tensor A) {
   Tensor Am1 = alloc__TensorLib__(2);
   /* Check if the input is a second order tensor */
   if (A.Order == 2) {
-    /* Get the determinant of the matrix */
-    double detA = I3__TensorLib__(A);
-    if (fabs(detA) < TOL_zero) {
-      fprintf(stderr, "%s\n", "Error in Inverse__TensorLib__(A)");
-      printf("%s\n", "Input tensor A should be invertible");
-      printf("det(A) : %e\n", detA);
-      print__TensorLib__(A);
-      exit(EXIT_FAILURE);
-    }
+
+#if NumberDimensions == 2
+    double detA = A.N[0][0] * A.N[1][1] - A.N[0][1] * A.N[1][0];
+#else 
+    double detA.N = A.N[0] * A.N[4] * A.N[8] 
+       - A.N[0] * A.N[5] * A.N[7] 
+       + A.N[1] * A.N[5] * A.N[6] 
+       - A.N[1] * A.N[3] * A.N[8] 
+       + A.N[2] * A.N[3] * A.N[7] 
+       - A.N[2] * A.N[4] * A.N[6];
+#endif
 
 #if NumberDimensions == 3
     Am1.N[0][0] =

@@ -120,7 +120,7 @@ int U_Newmark_beta_Finite_Strains(Mesh FEM_Mesh, Particle MPM_Mesh,
       return EXIT_FAILURE;
     } 
 
-    STATUS = __Nodal_Internal_Forces(Residual, Reactions, ActiveNodes, ActiveDOFs, MPM_Mesh, FEM_Mesh);
+    STATUS = __Nodal_Internal_Forces(Residual, Reactions, ActiveNodes, ActiveDOFs, MPM_Mesh, FEM_Mesh, DeltaTimeStep);
     if(STATUS == EXIT_FAILURE){
       fprintf(stderr, ""RED"Error in __Nodal_Internal_Forces()"RESET" \n");
       return EXIT_FAILURE;
@@ -194,7 +194,7 @@ int U_Newmark_beta_Finite_Strains(Mesh FEM_Mesh, Particle MPM_Mesh,
         return EXIT_FAILURE;
       } 
 
-      STATUS = __Nodal_Internal_Forces(Residual, Reactions, ActiveNodes, ActiveDOFs, MPM_Mesh, FEM_Mesh);
+      STATUS = __Nodal_Internal_Forces(Residual, Reactions, ActiveNodes, ActiveDOFs, MPM_Mesh, FEM_Mesh, DeltaTimeStep);
       if(STATUS == EXIT_FAILURE){
         fprintf(stderr, ""RED"Error in __Nodal_Internal_Forces()"RESET" \n");
         return EXIT_FAILURE;
@@ -737,12 +737,12 @@ static int __local_deformation(
   Matrix gradient_p;
   double * D_Displacement_Ap;
   double * D_Velocity_Ap;
-  Tensor F_n_p;
-  Tensor F_n1_p;
-  Tensor DF_p;
-  Tensor dFdt_n_p;
-  Tensor dFdt_n1_p;
-  Tensor dt_DF_p;
+  double * F_n_p;
+  double * F_n1_p;
+  double * DF_p;
+  double * dFdt_n_p;
+  double * dFdt_n1_p;
+  double * dt_DF_p;
 
   /*
     Loop in the material point set
@@ -774,12 +774,12 @@ static int __local_deformation(
     /*
       Take the values of the deformation gradient from the previous step
     */
-    F_n_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n.nM[p], 2);
-    F_n1_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n1.nM[p], 2);
-    DF_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.DF.nM[p], 2);
-    dFdt_n_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.dt_F_n.nM[p], 2);
-    dFdt_n1_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.dt_F_n1.nM[p], 2);
-    dt_DF_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.dt_DF.nM[p], 2);
+    F_n_p = MPM_Mesh.Phi.F_n.nM[p];
+    F_n1_p = MPM_Mesh.Phi.F_n1.nM[p];
+    DF_p = MPM_Mesh.Phi.DF.nM[p];
+    dFdt_n_p = MPM_Mesh.Phi.dt_F_n.nM[p];
+    dFdt_n1_p = MPM_Mesh.Phi.dt_F_n1.nM[p];
+    dt_DF_p = MPM_Mesh.Phi.dt_DF.nM[p];
 
     update_increment_Deformation_Gradient__Particles__(DF_p, D_Displacement_Ap, gradient_p.nV,NumberNodes_p);
 
@@ -790,19 +790,16 @@ static int __local_deformation(
       from t = n and the increment of deformation gradient.
     */
     update_Deformation_Gradient_n1__Particles__(F_n1_p, F_n_p, DF_p);
-    update_rate_Deformation_Gradient_n1__Particles__(dFdt_n1_p, dt_DF_p, F_n_p,
-                                                     DF_p, dFdt_n_p);
+    update_rate_Deformation_Gradient_n1__Particles__(dFdt_n1_p, dt_DF_p, F_n_p, DF_p, dFdt_n_p);
 
     //  Compute Jacobian of the deformation gradient
     MPM_Mesh.Phi.J_n1.nV[p] = I3__TensorLib__(F_n1_p);
     if (MPM_Mesh.Phi.J_n1.nV[p] <= 0.0) {
-      fprintf(stderr, "%s %i\n", "Negative jacobian in particle", p);
+      fprintf(stderr, ""RED"Negative jacobian in particle %i"RESET" \n",p);
       return EXIT_FAILURE;
     }
-
-    /*
-      Update patch
-    */
+        
+    // F-bar  Update patch
     if (FEM_Mesh.Locking_Control_Fbar) {
       Idx_Element_p = MPM_Mesh.Element_p[p];
       Idx_Patch_p = FEM_Mesh.Idx_Patch[Idx_Element_p];
@@ -835,7 +832,11 @@ static int __local_deformation(
       Vn1_patch = FEM_Mesh.Vol_Patch_n1[Idx_Patch_p];
       J_patch = Vn1_patch / Vn_patch;
 
-      get_locking_free_Deformation_Gradient_n1__Particles__(p, J_patch,MPM_Mesh);
+      STATUS = get_locking_free_Deformation_Gradient_n1__Particles__(p, J_patch, MPM_Mesh);
+      if(STATUS == EXIT_FAILURE){
+        fprintf(stderr, ""RED"Error in get_locking_free_Deformation_Gradient_n1__Particles__()"RESET" \n");
+        return EXIT_FAILURE;
+      }      
 
       MPM_Mesh.Phi.Jbar.nV[p] *= J_patch;
     }
@@ -853,7 +854,8 @@ static int __Nodal_Internal_Forces(
   Mask ActiveNodes, 
   Mask ActiveDOFs,
   Particle MPM_Mesh, 
-  Mesh FEM_Mesh) {
+  Mesh FEM_Mesh,
+  double dt) {
 
   int STATUS = EXIT_SUCCESS;
   unsigned Ndim = NumberDimensions;
@@ -864,9 +866,11 @@ static int __Nodal_Internal_Forces(
 
   int Ap, Mask_node_A, Mask_total_dof_Ai, Mask_active_dof_Ai;
 
-  double V0_p; /* Volume of the particle in the reference configuration */
-  double * P_p; /* First Piola-Kirchhoff Stress tensor */
-  double * F_n_p; /* Deformation gradient t = n */
+  double V0_p; // Volume of the particle in the reference configuration
+  double W_n1, W_n; // Internal energy
+  double * P_p; // First Piola-Kirchhoff Stress tensor
+  double * F_n_p; // Deformation gradient t = n
+  double * dFdt_n1_p; // Deformation gradient rate t = n + 1
 
   #if NumberDimensions == 2
   double InternalForcesDensity_Ap[2];
@@ -901,9 +905,16 @@ static int __Nodal_Internal_Forces(
       return EXIT_FAILURE;
     }
 
-    //  Get the first Piola-Kirchhoff stress tensor
+    // Get the first Piola-Kirchhoff stress tensor
     P_p = MPM_Mesh.Phi.Stress.nM[p];
     F_n_p = MPM_Mesh.Phi.F_n.nM[p];
+    dFdt_n1_p = MPM_Mesh.Phi.dt_F_n1.nM[p];
+
+    // Update energy
+//    W_n = MPM_Mesh.Phi.W.nV[p];
+//    W_n1 = MPM_Mesh.Phi.W.nV[p];
+//    W_n1 = W_n; 
+//    finite_strains_internal_energy__Particles__(&W_n1, P_p, dFdt_n1_p, dt);
 
     for (unsigned A = 0; A < NumNodes_p; A++) {
 
