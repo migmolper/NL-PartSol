@@ -35,7 +35,7 @@ One-Phase-Analysis (File=MPM_Mesh.msh,GPxElement=3) {
     
     # Shape function definition
     GramsShapeFun (Type=LME) {
-	gamma=3.5
+	gamma=2.5
     }
 
     # Initial conditions for the GPs

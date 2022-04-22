@@ -168,6 +168,12 @@ static double __error_residual(
   const double * Residual /**< */,
   int Total_dof /**< */);
 
+static void __preallocation_tangent_matrix(
+  int * nnz /**< */,
+  Mask ActiveNodes /**< */,
+  Mask ActiveDOFs /**< */,
+  Particle MPM_Mesh /**< */);
+
 static void compute_local_intertia(
   double * Inertia_density_p /**< */, 
   double Na_p /**< */,
@@ -178,9 +184,15 @@ static void compute_local_intertia(
   unsigned A /**< */, 
   unsigned B /**< */);  
 
-//#ifdef USE_PETSC
-
-//#else
+#ifdef USE_PETSC
+static int __assemble_tangent_stiffness(
+  Mat Tangent_Stiffness /**< */,
+  Mask ActiveNodes /**< */,
+  Mask ActiveDOFs /**< */,
+  Particle MPM_Mesh /**< */, 
+  Mesh FEM_Mesh /**< */,
+  Newmark_parameters Params /**< */);
+#else
 static int __assemble_tangent_stiffness(
   double * Tangent_Stiffness /**< */,
   Mask ActiveNodes /**< */,
@@ -188,7 +200,7 @@ static int __assemble_tangent_stiffness(
   Particle MPM_Mesh /**< */, 
   Mesh FEM_Mesh /**< */,
   Newmark_parameters Params /**< */);
-//#endif
+#endif
 
 
 static void __update_Nodal_Increments(

@@ -42,7 +42,7 @@ Mesh GramsBox(char *Name_File, Time_Int_Params Parameters_Solver) {
   // Define mesh variable
   Mesh FEM_Mesh;
 
-  int Num_nodal_rings = 4;
+  int Num_nodal_rings = 2;
 
   // Read information in GramsBox and check sintax
   Nodes_Information Nodes_Info = Read_Nodal_Set_Information(Name_File);

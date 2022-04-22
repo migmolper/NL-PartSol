@@ -1,0 +1,55 @@
+NLPS-Solver (Type=Newmark-beta-Finite-Strains) {
+    CFL=0.1
+    N=1500
+    Cel=70.71
+    Epsilon=1.0
+    Beta-Newmark-beta=0.25
+    Gamma-Newmark-beta=0.5
+    TOL-Newmark-beta=1E-10
+}
+
+# Background mesh definition
+GramsBox (Type=GID,File=FEM_Mesh.msh) {
+
+}
+
+
+Define-Material(idx=0,Model=Drucker-Prager)
+{
+  rho=20.0
+  E=1.0E5
+  nu=0.3
+  m=-0.2
+  Hardening-modulus=-2.0E4
+  Reference-pressure=0.0
+  kappa-0=4.0E2
+  Friction-angle=39.0
+  Dilatancy-angle=20.0
+}
+
+# Material points definitions
+One-Phase-Analysis (File=MPM_Mesh.msh,GPxElement=3) {
+
+    # List of materials for the GPs
+    Assign-material-to-particles(MatIdx=0,Particles=Material.txt)
+    
+    # Shape function definition
+    GramsShapeFun (Type=FEM) {
+    }
+
+    # Initial conditions for the GPs
+    GramsInitials (Nodes=Disc1.txt) {
+	Value=[1.0,1.0]
+    }
+    GramsInitials (Nodes=Disc2.txt) {
+	Value=[-1.0,-1.0]
+    }
+  
+}
+
+# Outputs 
+GramsOutputs (i=10) {
+  DIR=Resultados
+  Out-stress=true
+  Out-Equivalent-Plastic-Strain=true
+}
