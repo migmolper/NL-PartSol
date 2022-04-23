@@ -23,14 +23,13 @@
 /*
   Call global variables
 */
-char *SimulationFile;
-char *Static_conditons;
+char SimulationFile[MAXC];
+char Static_conditons[MAXC];
+char Formulation[MAXC];
 char *TimeIntegrationScheme;
-char *Formulation;
 
-/*
-  Auxiliar functions for the main
-*/
+
+//  Auxiliar functions for the main
 static void nlpartsol_help_message();
 static void free_nodes(Mesh);
 static void free_particles(Particle);
@@ -44,82 +43,119 @@ int main(int argc, char *argv[]) {
 #endif
 
   char Error_message[MAXW];
-  bool Is_Static_Initialization = false;
-  bool Is_Restart_Simulation = false;
+  bool If_formulation = false;
+  bool If_f_option = false;
+  bool If_ff_option = false;
   int INFO_GramsSolid = 3;
   int STATUS = EXIT_SUCCESS;
   Mesh FEM_Mesh;
   Particle MPM_Mesh;
   Time_Int_Params Parameters_Solver;
 
-  /*********************************************************************/
-  /************ Read simulation file and kind of simulation ************/
-  /*********************************************************************/
-  if (argc == 2) {
-    if ((strcmp(argv[1], "--help") == 0) || (strcmp(argv[1], "-h") == 0)) {
+  
+  // Read simulation file and kind of simulation
+  for (unsigned i = 0; i < argc; i++)
+  {
+    if((strcmp(argv[i], "--help") == 0) 
+    || (strcmp(argv[i], "-h") == 0)) {
       nlpartsol_help_message();
+      return EXIT_SUCCESS;
+    }
+
+    if(strcmp(argv[i], "--FORMULATION-U") == 0) {
+      strcpy(Formulation,"-u");
+      If_formulation = true;
+    }
+
+    if(strcmp(argv[i], "--FORMULATION-Up") == 0) {
+      strcpy(Formulation,"-up");
+      If_formulation = true;   
+    }
+
+    if(strcmp(argv[i], "--FORMULATION-Upw") == 0) {
+      strcpy(Formulation,"-upw");
+      If_formulation = true;         
+    }
+
+    if(strcmp(argv[i], "-f") == 0) {
+      i++;
+      strcpy(SimulationFile,argv[i]);
+      If_f_option = true;
+      break;
+    }
+
+    if(strcmp(argv[i], "-ff") == 0) {
+      i++;
+      strcpy(Static_conditons,argv[i]);
+      i++;
+      strcpy(SimulationFile,argv[i]);
+      If_ff_option = true;
+      break;
     }
   }
-  if (argc == 3) {
-    Formulation = argv[1];
-    SimulationFile = argv[2];
-    Is_Static_Initialization = false;
-  } else if (argc == 4) {
-    Formulation = argv[1];
-    Static_conditons = argv[2];
-    SimulationFile = argv[3];
-    Is_Static_Initialization = true;
-  } else {
-    sprintf(Error_message, "%s",
-            "Wrong inputs, try to tip : nl-partsol --help");
-    standard_error(Error_message);
+  
+  if((If_f_option == false) 
+  && (If_ff_option == false)) {
+    fprintf(stderr, ""RED"Wrong inputs : non input file"RESET" \n");
+    return EXIT_FAILURE;
   }
+
+  if(If_formulation == false){
+    fprintf(stderr, ""RED"Wrong inputs : select formulation "RESET" \n");
+    return EXIT_FAILURE;
+  }
+  
 
   /* Select kinf of formulation  */
   if (strcmp(Formulation, "-u") == 0) {
 
     NumberDOF = NumberDimensions;
 
-    if (Is_Static_Initialization) {
+    if (If_ff_option) {
       puts("*************************************************");
-      puts("Read solver ...");
+      puts(""GREEN"Read solver"RESET" ...");
       Parameters_Solver = Solver_selector__InOutFun__(Static_conditons);
 
       puts("*************************************************");
-      puts("Generating the background mesh ...");
+      puts(""GREEN"Generating the background mesh"RESET" ...");
       FEM_Mesh = GramsBox(Static_conditons, Parameters_Solver);
 
       puts("*************************************************");
-      puts("Generating new MPM simulation ...");
+      puts(""GREEN"Generating new MPM simulation"RESET" ...");
       MPM_Mesh = Generate_One_Phase_Analysis__InOutFun__(
           Static_conditons, FEM_Mesh, Parameters_Solver);
 
       puts("*************************************************");
-      puts("Read outputs ...");
+      puts(""GREEN"Read outputs"RESET" ...");
       GramsOutputs(Static_conditons);
       NLPS_Out_nodal_path_csv__InOutFun__(Static_conditons);
       NLPS_Out_particles_path_csv__InOutFun__(Static_conditons);
 
       puts("*************************************************");
-      printf("Start %s shape functions initialisation ... \n", ShapeFunctionGP);
+      printf(""GREEN"Start %s shape functions initialisation"RESET" ... \n", ShapeFunctionGP);
       initialise_shapefun__MeshTools__(MPM_Mesh, FEM_Mesh);
 
-    } else {
+    } 
+    
+    if (If_f_option) {
       puts("*************************************************");
-      puts("Read solver ...");
+      puts(""GREEN"Read solver"RESET" ...");
+      puts("*************************************************");
       Parameters_Solver = Solver_selector__InOutFun__(SimulationFile);
 
       puts("*************************************************");
-      puts("Generating the background mesh ...");
+      puts(""GREEN"Generating the background mesh"RESET" ...");
+      puts("*************************************************");
       FEM_Mesh = GramsBox(SimulationFile, Parameters_Solver);
 
       puts("*************************************************");
-      puts("Generating new MPM simulation ...");
+      puts(""GREEN"Generating new MPM simulation"RESET" ...");
+      puts("*************************************************");
       MPM_Mesh = Generate_One_Phase_Analysis__InOutFun__(
           SimulationFile, FEM_Mesh, Parameters_Solver);
-
+      
       puts("*************************************************");
-      puts("Read outputs ...");
+      puts(""GREEN"Read outputs"RESET" ...");
       GramsOutputs(SimulationFile);
       NLPS_Out_nodal_path_csv__InOutFun__(SimulationFile);
       NLPS_Out_particles_path_csv__InOutFun__(SimulationFile);
@@ -129,20 +165,22 @@ int main(int argc, char *argv[]) {
       initialise_shapefun__MeshTools__(MPM_Mesh, FEM_Mesh);
     }
 
-    if (Is_Static_Initialization) {
+    if (If_ff_option) {
       U_Static_Finite_Strains(FEM_Mesh, MPM_Mesh, Parameters_Solver);
 
       puts("*************************************************");
-      puts("Read solver ...");
+      puts(""GREEN"Read solver"RESET" ...");
+      puts("*************************************************");
       Parameters_Solver = Solver_selector__InOutFun__(SimulationFile);
 
       puts("*************************************************");
-      puts("Generating the background mesh ...");
+      puts(""GREEN"Generating the background mesh"RESET" ...");
+      puts("*************************************************");
       free_nodes(FEM_Mesh);
       FEM_Mesh = GramsBox(SimulationFile, Parameters_Solver);
 
       puts("*************************************************");
-      printf("Start %s shape functions initialisation ... \n", ShapeFunctionGP);
+      printf(""GREEN"Start %s shape functions initialisation"RESET" ... \n", ShapeFunctionGP);
 
       for (int p = 0; p < MPM_Mesh.NumGP; p++) {
         free__SetLib__(&MPM_Mesh.ListNodes[p]);
@@ -153,7 +191,7 @@ int main(int argc, char *argv[]) {
     }
 
     puts("*************************************************");
-    puts("Run dynamic simulation ...");
+    puts(""GREEN"Run dynamic simulation"RESET" ...");
     if (strcmp(Parameters_Solver.TimeIntegrationScheme, "FE") == 0) {
       U_Forward_Euler(FEM_Mesh, MPM_Mesh, Parameters_Solver);
     } else if (strcmp(Parameters_Solver.TimeIntegrationScheme,
@@ -180,15 +218,18 @@ int main(int argc, char *argv[]) {
     NumberDOF = NumberDimensions;
 
     puts("*************************************************");
-    puts("Read solver ...");
+    puts(""GREEN"Read solver"RESET" ...");
+    puts("*************************************************");
     Parameters_Solver = Solver_selector__InOutFun__(SimulationFile);
 
     puts("*************************************************");
-    puts("Generating the background mesh ...");
+    puts(""GREEN"Generating the background mesh"RESET" ...");
+    puts("*************************************************");
     FEM_Mesh = GramsBox(SimulationFile, Parameters_Solver);
 
     puts("*************************************************");
-    puts("Generating new MPM simulation ...");
+    puts(""GREEN"Generating new MPM simulation"RESET" ...");
+    puts("*************************************************");
     MPM_Mesh = Generate_One_Phase_Analysis__InOutFun__(SimulationFile, FEM_Mesh,
                                                        Parameters_Solver);
 
@@ -300,17 +341,22 @@ static void nlpartsol_help_message() {
   puts("Windows version.");
 #endif
 
-  puts("Usage : nl-partsol -Flag [commands.nlp]");
+#ifdef USE_PETSC
+  puts("Usage : nl-partsol -Flags -f [commands.nlp]");
   puts("Flag values:");
-  puts(" * -u   : Displacement formulation");
-  puts(" * -up  : Velocity-Pressure formulation");
-  puts(" * -upw : Soil-water mixture displacement-pressure formulation");
-  puts(" * -uU  : Soil-water mixture velocity formulation (Not developed yet)");
+  puts(" * --FORMULATION-U : Displacement formulation");
+  puts(" * --FORMULATION-Up : Velocity-Pressure formulation");
+  puts(" * --FORMULATION-Upw : Soil-water mixture displacement-pressure formulation");
+#else
+  puts("Usage : nl-partsol -Flag -f [commands.nlp]");
+  puts("Flag values:");
+  puts(" * --FORMULATION-U : Displacement formulation");
+  puts(" * --FORMULATION-Up : Velocity-Pressure formulation");
+  puts(" * --FORMULATION-Upw : Soil-water mixture displacement-pressure formulation");
+#endif
+
   puts("The creator of NL-PartSol is Miguel Molinos");
-
   puts("mails to : m.molinos@alumnos.upm.es (Madrid-Spain)");
-
-  exit(EXIT_SUCCESS);
 }
 
 /*********************************************************************/

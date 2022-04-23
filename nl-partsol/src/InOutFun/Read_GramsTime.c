@@ -73,7 +73,6 @@ Time_Int_Params Solver_selector__InOutFun__(char *Name_File) {
   char *STATUS_LINE;
 
   /* Initial message */
-  puts("*************************************************");
   printf(" \t %s : %s \n", "* Read time integration properties in", Name_File);
 
   /* Open and check file */

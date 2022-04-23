@@ -694,6 +694,51 @@ Matrix compute_dN__MeshTools__(Element GP_Element, Particle MPM_Mesh,
 
 /*********************************************************************/
 
+int push_forward_dN__MeshTools__(
+  double * Gradient_n1_p,
+  const double * Gradient_n_p,
+  const double * d_phi,
+  unsigned NumNodes)
+{
+
+  unsigned Ndim = NumberDimensions;
+  int STATUS = EXIT_SUCCESS;
+
+#if NumberDimensions == 2
+  double d_phi_mT[4];
+#else
+  double d_phi_mT[9];
+#endif
+
+  // Compute the adjunt of the incremental deformation gradient
+  STATUS = compute_adjunt__TensorLib__(d_phi_mT, d_phi);
+  if(STATUS == EXIT_FAILURE)
+  {
+    fprintf(stderr, ""RED"Error in compute_adjunt__TensorLib__()"RESET" \n");
+    return EXIT_FAILURE;  
+  }
+
+  // Push-forward the shape function gradient using
+  // the incremental deformation gradient
+  for (unsigned A = 0; A < NumNodes; A++) 
+  {
+    for (unsigned i = 0; i < Ndim; i++)
+    {
+
+      Gradient_n1_p[A*Ndim + i] = 0.0;
+
+      for (unsigned j = 0; j < Ndim; j++)
+      {
+        Gradient_n1_p[A*Ndim + i] += d_phi_mT[i*Ndim + j]*Gradient_n_p[A*Ndim + j];
+      }
+    }   
+  }
+
+  return STATUS;
+}
+
+/*********************************************************************/
+
 Matrix get_nodes_coordinates__MeshTools__(ChainPtr Element_p,
                                           Matrix Coordinates)
 /*

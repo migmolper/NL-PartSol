@@ -21,8 +21,7 @@ static int __spectral_decomposition_b_e(
 
 static int __eigenvalues_kirchhoff(
     double *eigval_T /**< [out] Eigenvalues of the Kirchhoff stress tensor. */,
-    const double *P /**< [in] Nominal stress tensor */,
-    const double *D_phi /**< [in] Total deformation gradient. */);
+    const double *T /**< [in] Kirchhoff stress tensor */);
 
 
 /**************************************************************/ 
@@ -94,7 +93,7 @@ int compute_1PK_elastoplastic_tangent_matrix(double *Stiffness_density,
 
   double eigval_T[3] = {0.0, 0.0, 0.0};
 
-  STATUS = __eigenvalues_kirchhoff(eigval_T, IO_State.Stress, IO_State.D_phi_n1);
+  STATUS = __eigenvalues_kirchhoff(eigval_T, IO_State.Stress);
   if (STATUS == EXIT_FAILURE) {
     fprintf(stderr, "" RED "Error in __eigenvalues_kirchhoff" RESET "\n");
     return EXIT_FAILURE;
@@ -379,28 +378,21 @@ static int __spectral_decomposition_b_e(double *eigval_b_e, double *eigvec_b_e,
 
 /**************************************************************/
 
-static int __eigenvalues_kirchhoff(double *eigval_T, const double *P,
-                                   const double *D_phi) {
+static int __eigenvalues_kirchhoff(double *eigval_T, const double *T) {
 
 unsigned Ndim = NumberDimensions;
 
 #if NumberDimensions == 2
-  double T[4] = {0.0, 0.0, 0.0, 0.0};
+  double T_aux[4] = {
+    T[0], T[1],
+    T[2], T[3]};
 #else
-  double T[9] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+  double T_aux[9] = {
+    T[0], T[1], T[2],
+    T[3], T[4], T[5],
+    T[6], T[7], T[8]};
 #endif
 
-  for (unsigned i = 0; i < Ndim; i++)
-  {
-    for (unsigned j = 0; j < Ndim; j++)
-    {
-      for (unsigned k = 0; k < Ndim; k++)
-      {
-        T[i*Ndim + j] += P[i*Ndim + k]*D_phi[j*Ndim + k];
-      }      
-    }
-  }
-  
 
   /* Locals */
   int n = NumberDimensions;
@@ -427,7 +419,7 @@ unsigned Ndim = NumberDimensions;
     Query and allocate the optimal workspace
   */
   lwork = -1;
-  dsyev_("N", "L", &n, T, &lda, eigval_T, &wkopt, &lwork, &info);
+  dsyev_("N", "L", &n, T_aux, &lda, eigval_T, &wkopt, &lwork, &info);
   lwork = (int)wkopt;
   work = (double *)malloc(lwork * sizeof(double));
 
@@ -450,7 +442,7 @@ unsigned Ndim = NumberDimensions;
     return EXIT_FAILURE;
   }
 
-  dsyev_("N", "L", &n, T, &lda, eigval_T, work, &lwork, &info);
+  dsyev_("N", "L", &n, T_aux, &lda, eigval_T, work, &lwork, &info);
   /* Check for convergence */
   if (info > 0) {
     free(work);
@@ -473,7 +465,7 @@ unsigned Ndim = NumberDimensions;
   free(work);
 
 #if NumberDimensions == 2
-  eigval_T[2] = P[4];
+  eigval_T[2] = T[4];
 #endif
 
   return EXIT_SUCCESS;

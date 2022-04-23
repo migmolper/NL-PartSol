@@ -22,13 +22,6 @@ add_executable(${PROJECT_NAME} ${NL_PartSol_src})
 # Add include folder
 target_include_directories(${PROJECT_NAME} PUBLIC include)
 
-# Add some compiler flags
-set(default_flags "-Wall -fno-rtti")
-set_target_properties("${PROJECT_NAME}" PROPERTIES
-  debug "${default_flags} -O0 -g -Wall -Wpedantic -Wextra"
-  release "${default_flags} -O2 "
-  )
-
 # this copies all resource files in the build directory
 # we need this, because we want to work with paths relative to the executable
 # file(COPY ${DATA} DESTINATION build)
@@ -71,19 +64,4 @@ if (PETSC_FOUND)
   target_link_libraries(${PROJECT_NAME} PkgConfig::PETSC)
   add_definitions("-DUSE_PETSC")
 endif()
-
-
-add_custom_target(debug
-  COMMAND ${CMAKE_COMMAND} -DDEBUG_MODE=0 -DCMAKE_BUILD_TYPE=Debug ${CMAKE_SOURCE_DIR}
-  COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target all
-  COMMENT "Switch CMAKE_BUILD_TYPE to Debug"
-  )
-
-add_custom_target(release
-  COMMAND ${CMAKE_COMMAND} -DCMAKE_BUILD_TYPE=Release ${CMAKE_SOURCE_DIR}
-  COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target all
-  COMMENT "Switch CMAKE_BUILD_TYPE to Release"
-  )
-
-
-  
+ 
