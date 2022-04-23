@@ -17,7 +17,7 @@ int compute_1PK_Stress_Tensor_Newtonian_Fluid(
   unsigned Ndim = NumberDimensions;
 
   //  Take information from input state parameters
-  double * P = IO_State.Stress;
+  double * T = IO_State.Stress;
   double * D_phi_n1 = IO_State.D_phi_n1;
   double * dFdt = IO_State.dFdt;
   double J = IO_State.J;
@@ -32,22 +32,14 @@ int compute_1PK_Stress_Tensor_Newtonian_Fluid(
 
   // Define and compute auxiliar tensor
 #if NumberDimensions == 2  
-  double D_phi_mT[4];
   double L[4];
   double E[4];  
-  double E__x__D_phi_mT[4];
+  double Identity[4] = {1.0,0.0,0.0,1.0};  
 #else
-  double D_phi_mT[9];
   double L[9];
   double E[9];  
-  double E__x__D_phi_mT[9];
+  double Identity[9] = {1.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,1.0};  
 #endif
-
-  STATUS = compute_adjunt__TensorLib__(D_phi_mT,D_phi_n1);
-  if (STATUS == EXIT_FAILURE) {
-    fprintf(stderr,"" RED "Error in compute_adjunt__TensorLib__" RESET "\n");
-    return EXIT_FAILURE;
-  }
 
   STATUS = spatial_velocity_gradient__Particles__(L, dFdt, D_phi_n1);
   if (STATUS == EXIT_FAILURE) {
@@ -62,20 +54,17 @@ int compute_1PK_Stress_Tensor_Newtonian_Fluid(
   double trace_E = E[0] + E[4] + E[8];
 #endif
 
-  matrix_product__TensorLib__(E__x__D_phi_mT,E,D_phi_mT); 
-
-
   // Compute stress
   for (unsigned i = 0; i < Ndim; i++) {
     for (unsigned j = 0; j < Ndim; j++) {
-      P[i*Ndim + j] = c0 * D_phi_mT[i*Ndim + j] +
-                  2.0 * c1 * E__x__D_phi_mT[i*Ndim + j] -
-                  (2.0 / 3.0) * c1 * trace_E * D_phi_mT[i*Ndim + j];
+      T[i*Ndim + j] = c0 * Identity[i*Ndim + j] +
+                  2.0 * c1 * E[i*Ndim + j] -
+                  (2.0 / 3.0) * c1 * trace_E * Identity[i*Ndim + j];
     }
   }
 
 #if NumberDimensions == 2
-  IO_State.Stress[4] = c0;
+  IO_State.Stress[4] = c0 - (2.0 / 3.0) * c1 * trace_E;
 #endif
 
 
@@ -86,8 +75,10 @@ int compute_1PK_Stress_Tensor_Newtonian_Fluid(
 
 int compute_stiffness_density_Newtonian_Fluid(
   double * Stiffness_Density,
+  const double * dN_alpha_n1,
+  const double * dN_beta_n1,
   const double * dN_alpha_n,
-  const double * dN_beta_n, 
+  const double * dN_beta_n,   
   State_Parameters IO_State,
   Material MatProp) {
 
@@ -97,7 +88,6 @@ int compute_stiffness_density_Newtonian_Fluid(
   // State parameters
   double * D_phi_n1 = IO_State.D_phi_n1;
   double * D_phi_n = IO_State.D_phi_n;
-  double * d_phi = IO_State.d_phi;
   double * dFdt = IO_State.dFdt;
   double J = IO_State.J;
   double alpha4 = IO_State.alpha_4;
@@ -113,35 +103,22 @@ int compute_stiffness_density_Newtonian_Fluid(
 
   // Define auxiliar variables
 #if NumberDimensions == 2
-  double d_phi_mT[4];
   double L[4];
   double E[4];
   double b_n[4];
-  double dN_alpha_n1[2] = {0.0,0.0};
-  double dN_beta_n1[2] = {0.0,0.0};
   double E_dN_alpha_n1[2] = {0.0,0.0};
   double E_dN_beta_n1[2] = {0.0,0.0};  
   double Lt_dN_alpha_n1[2] = {0.0,0.0};
   double Lt_dN_beta_n1[2] = {0.0,0.0};
 #else  
-  double d_phi_mT[9];
   double L[9];
   double E[9];
   double b_n[9];
-  double dN_alpha_n1[3] = {0.0,0.0,0.0};
-  double dN_beta_n1[3] = {0.0,0.0,0.0};
   double E_dN_alpha_n1[3] = {0.0,0.0,0.0};
   double E_dN_beta_n1[3] = {0.0,0.0,0.0};  
   double Lt_dN_alpha_n1[3] = {0.0,0.0,0.0};
   double Lt_dN_beta_n1[3] = {0.0,0.0,0.0};  
 #endif
-
-  // Compute the adjunt of the incremental deformation gradient
-  STATUS = compute_adjunt__TensorLib__(d_phi_mT, d_phi);
-  if (STATUS == EXIT_FAILURE) {
-    fprintf(stderr,"" RED "Error in compute_adjunt__TensorLib__" RESET "\n");
-    return EXIT_FAILURE;
-  }
 
   // Compute rate tensors
   STATUS = spatial_velocity_gradient__Particles__(L, dFdt, D_phi_n1);
@@ -151,18 +128,7 @@ int compute_stiffness_density_Newtonian_Fluid(
   }
   symmetrise__TensorLib__(E, L);
 
-
-  // Do the projection of the shape function gradient to the n + 1 configuration
-  for (unsigned i = 0; i < Ndim; i++)
-  {
-    for (unsigned j = 0; j < Ndim; j++)
-    {
-      dN_alpha_n1[i] += d_phi_mT[i*Ndim + j]*dN_alpha_n[j];
-      dN_beta_n1[i] += d_phi_mT[i*Ndim + j]*dN_beta_n[j];
-    }
-  }
-
-  // 
+  // Compute auxliar variables
   for (unsigned i = 0; i < Ndim; i++)
   {
     for (unsigned j = 0; j < Ndim; j++)

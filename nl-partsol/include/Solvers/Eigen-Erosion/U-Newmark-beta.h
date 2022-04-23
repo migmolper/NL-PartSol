@@ -1,6 +1,6 @@
 
-#ifndef _U_NEWMARK_BETA_FINITE_STRAINS_H_
-#define _U_NEWMARK_BETA_FINITE_STRAINS_H_
+#ifndef _U_NEWMARK_BETA_EIGEN_EROSION_H_
+#define _U_NEWMARK_BETA_EIGEN_EROSION_H_
 
 #include <stdlib.h>
 #include <stdbool.h>
@@ -16,27 +16,17 @@
 #include "Nodes.h"
 #include "InOutFun.h"
 
-// Material libraries
-#include "Constitutive/Fluid/Newtonian-Fluid.h"
-#include "Constitutive/Hyperelastic/Neo-Hookean.h"
-
 #ifdef USE_PETSC
 
-#include <petscksp.h>
-//  #include "Linear-Solvers/"
-
-#else
+#else 
+  #include "Linear-Solvers/dgetrs-LAPACK.h"
+#endif
 
 #ifdef __linux__
 #include <lapacke.h>
-#elif __APPLE__ 
+#elif __APPLE__
 #include <Accelerate/Accelerate.h>
 #endif
-
-#include "Linear-Solvers/dgetrs-LAPACK.h"
-
-#endif
-
 
 /*
   Call global variables
@@ -55,15 +45,9 @@ unsigned NumTimeStep;
 
 typedef struct {
 
-//#ifdef USE_PETSC
-//  Vec value;
-//  Vec d_value_dt;
-//  Vec d2_value_dt2;
-//#else 
   double * value;
   double * d_value_dt;
   double * d2_value_dt2;
-//#endif
 
 } Nodal_Field;
 
@@ -128,6 +112,23 @@ static int __local_deformation(
   Mesh FEM_Mesh /**< */,
   double TimeStep /**< */);
 
+/*!
+  \brief Function to compute is a material point is or not eroded.
+  Here the notation is the same as in \cite Pandolfi_2012
+
+  \param[in] p Index of the particle
+  \param[in] Phi Particles fields
+  \param[in] Properties Define the material properties of the particle
+  \param[in] B_eps Define the particles close to each particle
+  \param[in] DeltaX Mesh size
+*/
+static void Eigenerosion(
+  int p, 
+  Fields Phi, 
+  Material MatPro, 
+  ChainPtr *Beps,
+  double DeltaX);
+
 static int __Nodal_Internal_Forces(
   double * Residual /**< */, 
   double * Reactions /**< */,
@@ -139,8 +140,9 @@ static int __Nodal_Internal_Forces(
 
 static void __internal_force_density(
   double * InternalForcesDensity_Ap,
-  const double * kirchhoff_p,
-  const double * gradient_n1_pA);
+  const double * P_p,
+  const double * F_n_p,
+  const double * gradient_pA);
 
 static void __Nodal_Traction_Forces(
   double * Residual /**< */, 
@@ -171,12 +173,6 @@ static double __error_residual(
   const double * Residual /**< */,
   int Total_dof /**< */);
 
-static void __preallocation_tangent_matrix(
-  int * nnz /**< */,
-  Mask ActiveNodes /**< */,
-  Mask ActiveDOFs /**< */,
-  Particle MPM_Mesh /**< */);
-
 static void compute_local_intertia(
   double * Inertia_density_p /**< */, 
   double Na_p /**< */,
@@ -188,13 +184,7 @@ static void compute_local_intertia(
   unsigned B /**< */);  
 
 #ifdef USE_PETSC
-static int __assemble_tangent_stiffness(
-  Mat Tangent_Stiffness /**< */,
-  Mask ActiveNodes /**< */,
-  Mask ActiveDOFs /**< */,
-  Particle MPM_Mesh /**< */, 
-  Mesh FEM_Mesh /**< */,
-  Newmark_parameters Params /**< */);
+
 #else
 static int __assemble_tangent_stiffness(
   double * Tangent_Stiffness /**< */,
@@ -205,6 +195,10 @@ static int __assemble_tangent_stiffness(
   Newmark_parameters Params /**< */);
 #endif
 
+static int __solve_equilibrium(
+  double * Tangent_Stiffness /**< */,
+  double * Residual /**< */,
+  unsigned Nactivedofs /**< */);
 
 static void __update_Nodal_Increments(
   const double * Residual /**< */,
@@ -238,7 +232,7 @@ static void __output(
   \param Particle MPM_Mesh : Variable with the particle information
   \param InitialStep
 */
-int U_Newmark_beta_Finite_Strains(
+int U_Newmark_beta_Eigen_Erosion(
     Mesh FEM_Mesh, 
     Particle MPM_Mesh,
     Time_Int_Params Parameters_Solver);
