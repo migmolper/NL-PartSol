@@ -185,11 +185,13 @@ int U_Newmark_beta_Finite_Strains(Mesh FEM_Mesh, Particle MPM_Mesh,
       return EXIT_FAILURE;
     } 
 
+
     STATUS = __Nodal_Internal_Forces(Residual, Reactions, ActiveNodes, ActiveDOFs, MPM_Mesh, FEM_Mesh, DeltaTimeStep);
     if(STATUS == EXIT_FAILURE){
       fprintf(stderr, ""RED"Error in __Nodal_Internal_Forces()"RESET" \n");
       return EXIT_FAILURE;
     }
+
 
     __Nodal_Traction_Forces(Residual, Reactions, ActiveNodes, ActiveDOFs, MPM_Mesh, FEM_Mesh);
 
@@ -208,7 +210,6 @@ int U_Newmark_beta_Finite_Strains(Mesh FEM_Mesh, Particle MPM_Mesh,
     Error_0 = Error_i = __error_residual(Residual,Nactivedofs);  
     Error_relative = Error_i/Error_0;
     Iter = 0;
-
 
     nnz = (int *)calloc(Nactivedofs, __SIZEOF_INT__);
     __preallocation_tangent_matrix(nnz,ActiveNodes,ActiveDOFs, MPM_Mesh);
@@ -267,8 +268,9 @@ int U_Newmark_beta_Finite_Strains(Mesh FEM_Mesh, Particle MPM_Mesh,
  #endif
  #endif 
 
-
+ #ifdef USE_PETSC 
      return EXIT_SUCCESS;
+#endif 
 
  #ifdef USE_PETSC
  #if defined(PETSC_USE_LOG)
@@ -295,7 +297,7 @@ int U_Newmark_beta_Finite_Strains(Mesh FEM_Mesh, Particle MPM_Mesh,
  #endif
 
 
-      __update_Nodal_Increments(Residual, D_U, U_n, ActiveDOFs, Params, Ntotaldofs);
+  __update_Nodal_Increments(Residual, D_U, U_n, ActiveDOFs, Params, Ntotaldofs);
 
  #ifdef USE_PETSC
  #if defined(PETSC_USE_LOG)
@@ -1003,10 +1005,8 @@ static int __Nodal_Internal_Forces(
   int Ap, Mask_node_A, Mask_total_dof_Ai, Mask_active_dof_Ai;
 
   double V0_p; // Volume of the particle in the reference configuration
-  double W_n1, W_n; // Internal energy
-  double * P_p; // First Piola-Kirchhoff Stress tensor
-  double * F_n_p; // Deformation gradient t = n
-  double * dFdt_n1_p; // Deformation gradient rate t = n + 1
+  double * kirchhoff_p; // Kirchhoff Stress tensor
+  double * DF_p;
 
   #if NumberDimensions == 2
   double InternalForcesDensity_Ap[2];
@@ -1016,8 +1016,9 @@ static int __Nodal_Internal_Forces(
 
   Element Nodes_p;   /* List of nodes for particle */
   Material MatProp_p;  
-  Matrix gradient_p; /* Shape functions gradients */
-  double * gradient_pA;
+  Matrix d_shapefunction_n_p; /* Shape functions gradients */
+  double * d_shapefunction_n1_p;
+  double * d_shapefunction_n1_pA;
 
   
   for (unsigned p = 0; p < Np; p++) {
@@ -1025,13 +1026,31 @@ static int __Nodal_Internal_Forces(
     //  Get the volume of the particle in the reference configuration
     V0_p = MPM_Mesh.Phi.Vol_0.nV[p];
 
+    // Get the incremental deformation gradient
+    DF_p = MPM_Mesh.Phi.DF.nM[p];
+    
+
     //  Define nodal connectivity for each particle 
     //  and compute gradient of the shape function
     NumNodes_p = MPM_Mesh.NumberNodes[p];
     Nodes_p = nodal_set__Particles__(p, MPM_Mesh.ListNodes[p], NumNodes_p);
-    gradient_p = compute_dN__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
+    d_shapefunction_n_p = compute_dN__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
 
-    //  Update the first Piola-Kirchhoff stress tensor with an apropiate
+    // Pushforward the shape functions  
+    d_shapefunction_n1_p = (double *)calloc(NumNodes_p*Ndim,__SIZEOF_DOUBLE__);
+    if(d_shapefunction_n1_p == NULL)
+    {
+      fprintf(stderr, ""RED"Error in calloc()"RESET" \n");
+      return EXIT_FAILURE;  
+    }
+    STATUS = push_forward_dN__MeshTools__(d_shapefunction_n1_p,d_shapefunction_n_p.nV,DF_p,NumNodes_p);
+    if(STATUS == EXIT_FAILURE)
+    {
+      fprintf(stderr, ""RED"Error in push_forward_dN__MeshTools__()"RESET" \n");
+      return STATUS;  
+    }
+
+    //  Update the Kirchhoff stress tensor with an apropiate
     //  integration rule.
     MatIndx_p = MPM_Mesh.MatIdx[p];
     MatProp_p = MPM_Mesh.Mat[MatIndx_p];   
@@ -1041,24 +1060,16 @@ static int __Nodal_Internal_Forces(
       return EXIT_FAILURE;
     }
 
-    // Get the first Piola-Kirchhoff stress tensor
-    P_p = MPM_Mesh.Phi.Stress.nM[p];
-    F_n_p = MPM_Mesh.Phi.F_n.nM[p];
-    dFdt_n1_p = MPM_Mesh.Phi.dt_F_n1.nM[p];
-
-    // Update energy
-//    W_n = MPM_Mesh.Phi.W.nV[p];
-//    W_n1 = MPM_Mesh.Phi.W.nV[p];
-//    W_n1 = W_n; 
-//    finite_strains_internal_energy__Particles__(&W_n1, P_p, dFdt_n1_p, dt);
+    // Get the Kirchhoff stress tensor
+    kirchhoff_p = MPM_Mesh.Phi.Stress.nM[p];
 
     for (unsigned A = 0; A < NumNodes_p; A++) {
 
       //  Compute the gradient in the reference configuration
-      gradient_pA = gradient_p.nM[A];
+      d_shapefunction_n1_pA = &d_shapefunction_n1_p[A*Ndim];
 
       //  Compute the nodal forces of the particle
-      __internal_force_density(InternalForcesDensity_Ap, P_p, F_n_p, gradient_pA);
+      __internal_force_density(InternalForcesDensity_Ap, kirchhoff_p, d_shapefunction_n1_pA);
 
       //  Get the node of the mesh for the contribution
       Ap = Nodes_p.Connectivity[A];
@@ -1083,7 +1094,8 @@ static int __Nodal_Internal_Forces(
     }
 
     //   Free memory
-    free__MatrixLib__(gradient_p);
+    free__MatrixLib__(d_shapefunction_n_p);
+    free(d_shapefunction_n1_p);
     free(Nodes_p.Connectivity);
   }
 
@@ -1094,37 +1106,16 @@ static int __Nodal_Internal_Forces(
 
 static void __internal_force_density(
   double * InternalForcesDensity_Ap,
-  const double * P_p,
-  const double * F_n_p,
-  const double * gradient_pA)
+  const double * kirchhoff_p,
+  const double * gradient_n1_pA)
 {
 #if NumberDimensions == 2 
-  double P__x__FnT[4];
-
-  P__x__FnT[0] = P_p[0]*F_n_p[0] + P_p[1]*F_n_p[1];
-  P__x__FnT[1] = P_p[0]*F_n_p[2] + P_p[1]*F_n_p[3];
-  P__x__FnT[2] = P_p[2]*F_n_p[0] + P_p[3]*F_n_p[1];
-  P__x__FnT[3] = P_p[2]*F_n_p[2] + P_p[3]*F_n_p[3];
-
-  InternalForcesDensity_Ap[0] = P__x__FnT[0]*gradient_pA[0] + P__x__FnT[1]*gradient_pA[1];
-  InternalForcesDensity_Ap[1] = P__x__FnT[2]*gradient_pA[0] + P__x__FnT[3]*gradient_pA[1];
-
+  InternalForcesDensity_Ap[0] = kirchhoff_p[0]*gradient_n1_pA[0] + kirchhoff_p[1]*gradient_n1_pA[1];
+  InternalForcesDensity_Ap[1] = kirchhoff_p[2]*gradient_n1_pA[0] + kirchhoff_p[3]*gradient_n1_pA[1];
 #else 
-  double P__x__FnT[9];
-  P__x__FnT[0] = P_p[0]*F_n_p[0] + P_p[1]*F_n_p[1] + P_p[2]*F_n_p[2];
-  P__x__FnT[1] = P_p[0]*F_n_p[3] + P_p[1]*F_n_p[4] + P_p[2]*F_n_p[5];
-  P__x__FnT[2] = P_p[0]*F_n_p[6] + P_p[1]*F_n_p[7] + P_p[2]*F_n_p[8];
-  P__x__FnT[3] = P_p[3]*F_n_p[0] + P_p[4]*F_n_p[1] + P_p[5]*F_n_p[2];
-  P__x__FnT[4] = P_p[3]*F_n_p[3] + P_p[4]*F_n_p[4] + P_p[5]*F_n_p[5];
-  P__x__FnT[5] = P_p[3]*F_n_p[6] + P_p[4]*F_n_p[7] + P_p[5]*F_n_p[8];
-  P__x__FnT[6] = P_p[6]*F_n_p[0] + P_p[7]*F_n_p[1] + P_p[8]*F_n_p[2];
-  P__x__FnT[7] = P_p[6]*F_n_p[3] + P_p[7]*F_n_p[4] + P_p[8]*F_n_p[5];
-  P__x__FnT[8] = P_p[6]*F_n_p[6] + P_p[7]*F_n_p[7] + P_p[8]*F_n_p[8];
-
-  InternalForcesDensity_Ap[0] = P__x__FnT[0]*gradient_pA[0] + P__x__FnT[1]*gradient_pA[1] + P__x__FnT[2]*gradient_pA[2];
-  InternalForcesDensity_Ap[1] = P__x__FnT[3]*gradient_pA[0] + P__x__FnT[4]*gradient_pA[1] + P__x__FnT[5]*gradient_pA[2];
-  InternalForcesDensity_Ap[2] = P__x__FnT[6]*gradient_pA[0] + P__x__FnT[7]*gradient_pA[1] + P__x__FnT[8]*gradient_pA[2];
-
+  InternalForcesDensity_Ap[0] = kirchhoff_p[0]*gradient_n1_pA[0] + kirchhoff_p[1]*gradient_n1_pA[1] + kirchhoff_p[2]*gradient_n1_pA[2];
+  InternalForcesDensity_Ap[1] = kirchhoff_p[3]*gradient_n1_pA[0] + kirchhoff_p[4]*gradient_n1_pA[1] + kirchhoff_p[5]*gradient_n1_pA[2];
+  InternalForcesDensity_Ap[2] = kirchhoff_p[6]*gradient_n1_pA[0] + kirchhoff_p[7]*gradient_n1_pA[1] + kirchhoff_p[8]*gradient_n1_pA[2];
 #endif
 }
 
@@ -1525,8 +1516,10 @@ static int __assemble_tangent_stiffness(
   Matrix shapefunction_n_p;
   Matrix d_shapefunction_n_p;
   double * d_shapefunction_n1_p;
+
   double * d_shapefunction_n_pA;
   double * d_shapefunction_n_pB;    
+
   double shapefunction_n_pA;
   double shapefunction_n_pB;
 
@@ -1578,8 +1571,16 @@ static int __assemble_tangent_stiffness(
     shapefunction_n_p = compute_N__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
     d_shapefunction_n_p = compute_dN__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
     
+
+    // Pushforward the shape function gradient  
+    d_shapefunction_n1_p = (double *)calloc(NumNodes_p*Ndim,__SIZEOF_DOUBLE__);
+    if(d_shapefunction_n1_p == NULL)
+    {
+      fprintf(stderr, ""RED"Error in calloc()"RESET" \n");
+      return EXIT_FAILURE;  
+    }
     STATUS = push_forward_dN__MeshTools__(d_shapefunction_n1_p,d_shapefunction_n_p.nV,DF_p,NumNodes_p);
-    if(STATUS = EXIT_FAILURE)
+    if(STATUS == EXIT_FAILURE)
     {
       fprintf(stderr, ""RED"Error in push_forward_dN__MeshTools__()"RESET" \n");
       return STATUS;  
@@ -1605,10 +1606,16 @@ static int __assemble_tangent_stiffness(
 
         // Compute local stiffness density
         if (strcmp(MatProp_p.Type, "Neo-Hookean-Wriggers") == 0) {
-          IO_State_p.D_phi_n = MPM_Mesh.Phi.F_n.nM[p]; 
-          IO_State_p.d_phi = DF_p;       
+          IO_State_p.D_phi_n = MPM_Mesh.Phi.F_n.nM[p];   
           IO_State_p.J = J_p;          
-          STATUS = compute_stiffness_density_Neo_Hookean_Wriggers(Stiffness_density_p, d_shapefunction_n_pA, d_shapefunction_n_pB, IO_State_p, MatProp_p);
+          STATUS = compute_stiffness_density_Neo_Hookean_Wriggers(
+            Stiffness_density_p,
+            &d_shapefunction_n1_p[A*Ndim], 
+            &d_shapefunction_n1_p[B*Ndim],
+            d_shapefunction_n_pA, 
+            d_shapefunction_n_pB, 
+            IO_State_p, 
+            MatProp_p);
           if (STATUS == EXIT_FAILURE) {
             fprintf(stderr, "" RED "Error in compute_stiffness_density_Neo_Hookean_Wriggers" RESET "\n");
             return EXIT_FAILURE;
@@ -1616,12 +1623,18 @@ static int __assemble_tangent_stiffness(
         } 
         else if (strcmp(MatProp_p.Type, "Newtonian-Fluid-Compressible") == 0) {
           IO_State_p.D_phi_n1 = MPM_Mesh.Phi.F_n1.nM[p]; 
-          IO_State_p.D_phi_n = MPM_Mesh.Phi.F_n.nM[p]; 
-          IO_State_p.d_phi = DF_p;       
+          IO_State_p.D_phi_n = MPM_Mesh.Phi.F_n.nM[p];      
           IO_State_p.dFdt = MPM_Mesh.Phi.dt_F_n1.nM[p];
           IO_State_p.J = J_p;   
           IO_State_p.alpha_4 = alpha_4;
-          STATUS = compute_stiffness_density_Newtonian_Fluid(Stiffness_density_p, d_shapefunction_n_pA, d_shapefunction_n_pB,IO_State_p,MatProp_p);
+          STATUS = compute_stiffness_density_Newtonian_Fluid(
+            Stiffness_density_p, 
+            &d_shapefunction_n1_p[A*Ndim], 
+            &d_shapefunction_n1_p[B*Ndim],
+            d_shapefunction_n_pA, 
+            d_shapefunction_n_pB,
+            IO_State_p,
+            MatProp_p);
           if (STATUS == EXIT_FAILURE) {
             fprintf(stderr, "" RED "Error in compute_stiffness_density_Newtonian_Fluid" RESET "\n");
             return EXIT_FAILURE;

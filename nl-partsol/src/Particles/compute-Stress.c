@@ -1,5 +1,8 @@
 #include <string.h>
 #include "nl-partsol.h"
+#include "Constitutive/Fluid/Newtonian-Fluid.h"
+#include "Constitutive/Hyperelastic/Neo-Hookean.h"
+#include "Constitutive/Plasticity/Drucker-Prager.h"
 
 /*************************************************************/
 

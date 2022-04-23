@@ -55,7 +55,7 @@ if (OPENMP_FOUND)
 endif()
 
 # Add PETSC
-option(USE_PETSC "Use PETSC solver library" ON)
+option(USE_PETSC "Use PETSC solver library" OFF)
 if (USE_PETSC)
   pkg_search_module(PETSC REQUIRED IMPORTED_TARGET PETSc)
 endif()

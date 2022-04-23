@@ -53,8 +53,8 @@ Matrix   compute_dN__MeshTools__(Element, Particle, Mesh);
 
 int push_forward_dN__MeshTools__(
   double * Gradient_n1_p,
-  double * Gradient_n_p,
-  double * d_phi,
+  const double * Gradient_n_p,
+  const double * d_phi,
   unsigned NumNodes);
 /********************************************************************/
 

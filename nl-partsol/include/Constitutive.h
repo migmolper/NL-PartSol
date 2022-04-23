@@ -70,52 +70,7 @@ Tensor compute_stiffness_density_Saint_Venant_Kirchhoff(Tensor, Tensor, Material
 /*******************************************************/
 
 
-/*!
 
-*/
-double energy_Neo_Hookean_Wriggers(Tensor, double, Material);
-/*******************************************************/
-
-/*!
-  \fn int compute_1PK_Stress_Tensor_Neo_Hookean_Wriggers(State_Parameters IO_State,Material MatProp);
-
-  \brief Compute the First Piola-Kirchhoff stress tensor of a Neo-Hookean material 
-
-  \param Input_SP : State parameters of the particle
-  \param MatProp : Material properties of the model
-*/
-int compute_1PK_Stress_Tensor_Neo_Hookean_Wriggers(
-  State_Parameters IO_State,
-  Material MatProp);
-/*******************************************************/
-
-
-Tensor compute_2PK_Stress_Tensor_Neo_Hookean_Wriggers(Tensor, Tensor, double, Material);
-/*******************************************************/
-
-
-/*!
-  \fn Tensor compute_material_stiffness_density_Neo_Hookean_Wriggers(Tensor v, Tensor w, Tensor C, double J, Material MatProp)
-
-  \brief Assemble the factorised material tensor 
-
-  \param Tensor v
-  \param Tensor w
-  \param Tensor C
-  \param double J
-  \param Material MatProp
-*/
-Tensor compute_material_stiffness_density_Neo_Hookean_Wriggers(Tensor, Tensor, Tensor, double, Material);
-/*******************************************************/
-
-
-int compute_stiffness_density_Neo_Hookean_Wriggers(
-  double * Stiffness_Density,
-  const double * dN_alpha_n,
-  const double * dN_beta_n, 
-  State_Parameters IO_State_p,
-  Material MatProp);
-/*******************************************************/  
 
 /*!
   \fn State_Parameters Von_Mises_forward_euler(State_Parameters Input_SP, Material MatProp)
@@ -141,8 +96,7 @@ int compute_1PK_Von_Mises(State_Parameters IO_State, Material MatProp);
 /*******************************************************/
 
 
-int compute_1PK_Drucker_Prager(State_Parameters IO_State, Material MatProp);
-/*******************************************************/
+
 
 /*!
   \fn int compute_1PK_Matsuoka_Nakai(State_Parameters IO_State, Material MatProp)
@@ -175,27 +129,6 @@ int compute_1PK_Lade_Duncan(State_Parameters IO_State, Material MatProp);
   \param MatProp : Material properties of the model
 */
 int compute_1PK_Modified_Lade_Duncan(State_Parameters IO_State, Material MatProp);
-/*******************************************************/
-
-/*!
-
-  \fn int compute_1PK_Stress_Tensor_Newtonian_Fluid(State_Parameters IO_State,Material MatProp_p);
-
-  \brief Compute the First Piola-Kirchhoff stress tensor of a Newtonian fluid 
-
-  \param Input_SP : State parameters of the particle
-  \param MatProp : Material properties of the model
-
-*/
-int compute_1PK_Stress_Tensor_Newtonian_Fluid(State_Parameters IO_State,Material MatProp_p);
-/*******************************************************/
-
-int compute_stiffness_density_Newtonian_Fluid(
-  double * Stiffness_Density,
-  const double * dN_alpha_n,
-  const double * dN_beta_n, 
-  State_Parameters IO_State,
-  Material MatProp);
 /*******************************************************/
 
 /*!

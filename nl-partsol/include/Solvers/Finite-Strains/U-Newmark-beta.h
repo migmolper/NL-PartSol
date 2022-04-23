@@ -16,12 +16,16 @@
 #include "Nodes.h"
 #include "InOutFun.h"
 
-//#ifdef USE_PETSC
+// Material libraries
+#include "Constitutive/Fluid/Newtonian-Fluid.h"
+#include "Constitutive/Hyperelastic/Neo-Hookean.h"
+
+#ifdef USE_PETSC
 
 #include <petscksp.h>
 //  #include "Linear-Solvers/"
 
-//#else
+#else
 
 #ifdef __linux__
 #include <lapacke.h>
@@ -31,7 +35,7 @@
 
 #include "Linear-Solvers/dgetrs-LAPACK.h"
 
-//#endif
+#endif
 
 
 /*
@@ -135,9 +139,8 @@ static int __Nodal_Internal_Forces(
 
 static void __internal_force_density(
   double * InternalForcesDensity_Ap,
-  const double * P_p,
-  const double * F_n_p,
-  const double * gradient_pA);
+  const double * kirchhoff_p,
+  const double * gradient_n1_pA);
 
 static void __Nodal_Traction_Forces(
   double * Residual /**< */, 
