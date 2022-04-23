@@ -80,7 +80,11 @@ static int __kappa(double *kappa_k /**< [out] Hardening function. */,
 /**************************************************************/
 
 /*!
-
+    \param[out] d_kappa Derivative of the hardening function.
+    \param[in] kappa_0 Reference hardening
+    \param[in] eps_k Equivalent plastic strain
+    \param[in] eps_0 Reference plastic strain
+    \param[in] exp_param Hardening exponential
 */
 static int __d_kappa(
     double *d_kappa /**< [out] Derivative of the hardening function. */,
