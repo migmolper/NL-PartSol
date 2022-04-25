@@ -1,101 +1,105 @@
-#include <math.h>
-#include "nl-partsol.h"
 
-#ifdef __linux__
-#include <lapacke.h>
-#elif __APPLE__
-#include <Accelerate/Accelerate.h>
-#endif
-
-static int __compute_trial_b_e(
-    double *eigval_b_e_tr /**< [out] Eigenvalues of b elastic trial. */,
-    double *eigvec_b_e_tr /**< [out] Eigenvector of b elastic trial. */,
-    const double *b_e /**< [in] (n) Elastic left Cauchy-Green.*/,
-    const double *d_phi /**< [in] Incremental deformation gradient. */);
-
-static int __corrector_b_e(
-    double *b_e /**< [out] (n+1) Elastic deformation gradient. */,
-    const double *eigvec_b_e_tr /**< [in] Eigenvector of b elastic trial. */,
-    const double *E_hencky_trial /**< [in] Corrected Henky strain */);
-
-static int __trial_elastic(
-    double *T_tr_vol /**< [in/out] Volumetric elastic stress tensor. */,
-    double *T_tr_dev /**< [in/out] Deviatoric elastic stress tensor. */,
-    const double *T_back /**< [in] Back-stress (kinematic hardening) */,
-    double *J2 /**< [out] Second invariant of the deviatoric stress tensor */,
-    const double *E_hencky_trial, /**< [in] Trial elastic strain tensor. */
-    double K /**< [in] First Lamé invariant. */,
-    double G /**< [in] Second Lamé invariant. */);
-
-static int __update_internal_variables_elastic(
-    double *Stress /**< [in/out] Nominal stress tensor */,
-    const double *D_phi /**< [in] Total deformation gradient. */,
-    const double *T_tr_vol /**< [in] Volumetric elastic stress tensor */,
-    const double *T_tr_dev /**< [in] Deviatoric elastic stress tensor */,
-    const double *eigvec_b_e_tr /**< [in] Eigenvector of b elastic trial. */);
-
-static int __compute_plastic_flow_direction(
-    double *n /**< [out] Plastic flow direction */,
-    const double *T_tr_dev /**< [in] Deviatoric elastic stress tensor */,
-    double J2 /**< [in] Second invariant of the deviatoric stress tensor */);
-
-static int __kappa(
-    double *kappa_k /**< [out] Hardening function (isotropic,kinematic). */,
-    double sigma_y /**< [in] Reference hardening */, 
-    double eps_k /**< [in] Equivalent plastic strain */,
-    double H /**< [in] Hardening modulus */, 
-    double theta /**< [in] Ratio isotropic/kinematic hardening */, 
-    double K_0 /**< [in] Reference non-linear hardening (saturation parameter) */,
-    double K_inf /**< [in] Saturation non-linear hardening (saturation parameter) */, 
-    double delta /**< [in] Saturation eps (saturation parameter) */);
-
-static int __d_kappa(
-    double *d_kappa /**< [out] Derivative of the hardening function (isotropic,kinematic) */, 
-    double eps_k /**< [in] Equivalent plastic strain*/, 
-    double H /**< [in] Hardening modulus */,
-    double theta/**< [in] Ratio isotropic/kinematic hardening */, 
-    double K_0 /**< [in] Reference non-linear hardening (saturation parameter) */,
-    double K_inf /**< [in] Saturation non-linear hardening (saturation parameter) */,
-    double delta /**< [in] Saturation eps (saturation parameter) */);
-
-static double __yield_function(
-    const double * kappa_k /**< [in] Hardening function (isotropic,kinematic), t = k */, 
-    const double * kappa_n /**< [in] Hardening function (isotropic,kinematic), t = n */,  
-    double J2 /**< [in] Second invariant of the deviatoric stress tensor */, 
-    double d_gamma_k /**< [in] Increment of the discrete plastic multiplier */, 
-    double eps_k /**< [in] Equivalent plastic strain*/,
-    double G /**< [in] Second Lamé invariant. */);
-
-static double __d_yield_function(
-    const double * d_kappa_k /**< [in] Hardening function derivative (isotropic,kinematic), t = k */, 
-    double G /**< [in] Second Lamé invariant. */);
-
-static int __update_internal_variables_plastic(
-    double *Increment_E_plastic /**< [in/out] Increment plastic strain */,
-    double *Stress /**< [in/out] Nominal stress tensor */, 
-    double * T_back /**< [in] Back-stress (kinematic hardening) */,
-    double *eps_n1 /**< [in/out] Equivalent plastic strain*/, 
-    const double *D_phi /**< [in] Total deformation gradient. */, 
-    const double *T_tr_vol /**< [in] Volumetric elastic stress tensor. */,
-    const double *T_tr_dev /**< [in] Deviatoric elastic stress tensor. */, 
-    const double *eigvec_b_e_tr /**< [in] Eigenvector of b elastic trial. */,
-    const double *n /**< [out] Plastic flow direction. */,
-    double d_gamma_k /**< [in] Discrete plastic multiplier */, 
-    double G /**< [in] Second Lamé invariant. */, 
-    double eps_k /**< [in] Equivalent plastic strain */,
-    double d_K_kin /**< [in] Increment of the kinematic hardening */);
-
-static int __tangent_moduli(
-  double * C_ep/**< [out] Elastoplastic tangent moduli */, 
-  const double * n/**< [in] Plastic flow direction */, 
-  const double * kappa_k /**< [in] Hardening function (isotropic,kinematic), t = k */,
-  double d_gamma_k /**< [in] Discrete plastic multiplier */, 
-  double J2 /**< [in] Second invariant of the deviatoric stress tensor */, 
-  double K /**< [in] First Lamé invariant. */, 
-  double G /**< [in] Second Lamé invariant. */);
-
+#include "Constitutive/Plasticity/Von-Mises.h"
 
 /**************************************************************/
+
+static int __compute_trial_b_e(
+    double *eigval_b_e_tr /*! \param[out] Eigenvalues of b elastic trial. */,
+    double *eigvec_b_e_tr /*! \param[out] Eigenvector of b elastic trial. */,
+    const double *b_e /*! \param[in] (n) Elastic left Cauchy-Green.*/,
+    const double *d_phi /*! \param[in] Incremental deformation gradient. */);
+/*******************************************************/
+
+static int __corrector_b_e(
+    double *b_e /*! \param[out] (n+1) Elastic deformation gradient. */,
+    const double *eigvec_b_e_tr /*! \param[in] Eigenvector of b elastic trial. */,
+    const double *E_hencky_trial /*! \param[in] Corrected Henky strain */);
+/*******************************************************/
+
+static int __trial_elastic(
+    double *T_tr_vol /*! \param[in/out] Volumetric elastic stress tensor. */,
+    double *T_tr_dev /*! \param[in/out] Deviatoric elastic stress tensor. */,
+    const double *T_back /*! \param[in] Back-stress (kinematic hardening) */,
+    double *J2 /*! \param[out] Second invariant of the deviatoric stress tensor */,
+    const double *E_hencky_trial, /*! \param[in] Trial elastic strain tensor. */
+    double K /*! \param[in] First Lamé invariant. */,
+    double G /*! \param[in] Second Lamé invariant. */);
+/*******************************************************/
+
+static int __update_internal_variables_elastic(
+    double *Stress /*! \param[in/out] Nominal stress tensor */,
+    const double *D_phi /*! \param[in] Total deformation gradient. */,
+    const double *T_tr_vol /*! \param[in] Volumetric elastic stress tensor */,
+    const double *T_tr_dev /*! \param[in] Deviatoric elastic stress tensor */,
+    const double *eigvec_b_e_tr /*! \param[in] Eigenvector of b elastic trial. */);
+/*******************************************************/
+
+static int __compute_plastic_flow_direction(
+    double *n /*! \param[out] Plastic flow direction */,
+    const double *T_tr_dev /*! \param[in] Deviatoric elastic stress tensor */,
+    double J2 /*! \param[in] Second invariant of the deviatoric stress tensor */);
+/*******************************************************/
+
+static int __kappa(
+    double *kappa_k /*! \param[out] Hardening function (isotropic,kinematic). */,
+    double sigma_y /*! \param[in] Reference hardening */, 
+    double eps_k /*! \param[in] Equivalent plastic strain */,
+    double H /*! \param[in] Hardening modulus */, 
+    double theta /*! \param[in] Ratio isotropic/kinematic hardening */, 
+    double K_0 /*! \param[in] Reference non-linear hardening (saturation parameter) */,
+    double K_inf /*! \param[in] Saturation non-linear hardening (saturation parameter) */, 
+    double delta /*! \param[in] Saturation eps (saturation parameter) */);
+/*******************************************************/
+
+static int __d_kappa(
+    double *d_kappa /*! \param[out] Derivative of the hardening function (isotropic,kinematic) */, 
+    double eps_k /*! \param[in] Equivalent plastic strain*/, 
+    double H /*! \param[in] Hardening modulus */,
+    double theta/*! \param[in] Ratio isotropic/kinematic hardening */, 
+    double K_0 /*! \param[in] Reference non-linear hardening (saturation parameter) */,
+    double K_inf /*! \param[in] Saturation non-linear hardening (saturation parameter) */,
+    double delta /*! \param[in] Saturation eps (saturation parameter) */);
+/*******************************************************/
+
+static double __yield_function(
+    const double * kappa_k /*! \param[in] Hardening function (isotropic,kinematic), t = k */, 
+    const double * kappa_n /*! \param[in] Hardening function (isotropic,kinematic), t = n */,  
+    double J2 /*! \param[in] Second invariant of the deviatoric stress tensor */, 
+    double d_gamma_k /*! \param[in] Increment of the discrete plastic multiplier */, 
+    double eps_k /*! \param[in] Equivalent plastic strain*/,
+    double G /*! \param[in] Second Lamé invariant. */);
+/*******************************************************/
+
+static double __d_yield_function(
+    const double * d_kappa_k /*! \param[in] Hardening function derivative (isotropic,kinematic), t = k */, 
+    double G /*! \param[in] Second Lamé invariant. */);
+/*******************************************************/
+
+static int __update_internal_variables_plastic(
+    double *Increment_E_plastic /*! \param[in/out] Increment plastic strain */,
+    double *Stress /*! \param[in/out] Nominal stress tensor */, 
+    double * T_back /*! \param[in] Back-stress (kinematic hardening) */,
+    double *eps_n1 /*! \param[in/out] Equivalent plastic strain*/, 
+    const double *D_phi /*! \param[in] Total deformation gradient. */, 
+    const double *T_tr_vol /*! \param[in] Volumetric elastic stress tensor. */,
+    const double *T_tr_dev /*! \param[in] Deviatoric elastic stress tensor. */, 
+    const double *eigvec_b_e_tr /*! \param[in] Eigenvector of b elastic trial. */,
+    const double *n /*! \param[out] Plastic flow direction. */,
+    double d_gamma_k /*! \param[in] Discrete plastic multiplier */, 
+    double G /*! \param[in] Second Lamé invariant. */, 
+    double eps_k /*! \param[in] Equivalent plastic strain */,
+    double d_K_kin /*! \param[in] Increment of the kinematic hardening */);
+/*******************************************************/
+
+static int __tangent_moduli(
+  double * C_ep/*! \param[out] Elastoplastic tangent moduli */, 
+  const double * n/*! \param[in] Plastic flow direction */, 
+  const double * kappa_k /*! \param[in] Hardening function (isotropic,kinematic), t = k */,
+  double d_gamma_k /*! \param[in] Discrete plastic multiplier */, 
+  double J2 /*! \param[in] Second invariant of the deviatoric stress tensor */, 
+  double K /*! \param[in] First Lamé invariant. */, 
+  double G /*! \param[in] Second Lamé invariant. */);
+/*******************************************************/
 
 int compute_1PK_Von_Mises(State_Parameters IO_State, Material MatProp)
 /*

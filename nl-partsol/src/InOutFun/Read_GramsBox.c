@@ -1,13 +1,27 @@
+#include <stdio.h>
+#include <stdlib.h>
 #include <sys/stat.h>
 #include <string.h>
-#include "nl-partsol.h"
+#include <stdbool.h>
+#include "Macros.h"
+#include "Types.h"
+#include "Globals.h"
+#include "Matlib.h"
+
+// Shape functions and auxilar tools
+#include "Nodes/Nodes-Tools.h"
+#include "Nodes/Shape-Functions.h"
+#include "Nodes/Read-GID-Mesh.h"
+
+#include "Particles.h"
+#include "InOutFun.h"
 
 /*
   Local structures and variables
 */
 typedef struct {
   char Mesh_Generator[100];
-  char Mesh_File[100];
+  char Mesh_File[10000];
   int Number_Boundaries;
 
 } Nodes_Information;

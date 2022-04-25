@@ -1,11 +1,5 @@
-#include <math.h>
-#include "nl-partsol.h"
 
-#ifdef __linux__
-#include <lapacke.h>
-#elif __APPLE__
-#include <Accelerate/Accelerate.h>
-#endif
+#include "Constitutive/Hyperelastic/Neo-Hookean.h"
 
 /**************************************************************/
 
@@ -28,7 +22,7 @@ double energy_Neo_Hookean_Wriggers(Tensor C, double J, Material MatProp) {
 
 /**************************************************************/
 
-int compute_1PK_Stress_Tensor_Neo_Hookean_Wriggers(
+int compute_Kirchhoff_Stress_Neo_Hookean(
   State_Parameters IO_State,
   Material MatProp) {
 
@@ -78,7 +72,7 @@ int compute_1PK_Stress_Tensor_Neo_Hookean_Wriggers(
 
 /**************************************************************/
 
-int compute_stiffness_density_Neo_Hookean_Wriggers(
+int compute_stiffness_density_Neo_Hookean(
   double * Stiffness_Density,
   const double * dN_alpha_n1,
   const double * dN_beta_n1,

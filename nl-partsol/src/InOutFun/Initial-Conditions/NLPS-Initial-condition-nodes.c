@@ -1,6 +1,19 @@
+#include <stdio.h>
+#include <stdlib.h>
 #include <sys/stat.h>
 #include <string.h>
-#include "nl-partsol.h"
+#include <stdbool.h>
+#include "Macros.h"
+#include "Types.h"
+#include "Globals.h"
+#include "Matlib.h"
+
+// Shape functions and auxilar tools
+#include "Nodes/Nodes-Tools.h"
+#include "Nodes/Shape-Functions.h"
+
+#include "Particles.h"
+#include "InOutFun.h"
 
 /*
   Auxiliar functions

@@ -5,18 +5,11 @@
 #ifndef _PARTICLES_H_
 #define _PARTICLES_H_
 
-/*******************************************************/
+#include "Nodes/H8.h"
+#include "Nodes/Q4.h"
+#include "Nodes/T3.h"
+#include "Nodes/T4.h"
 
-/*!
-
-*/
-Tensor rate_inifinitesimal_Strain__Particles__(Matrix, Matrix);
-/*******************************************************/
-
-/*!
-
-*/
-Tensor infinitesimal_Strain__Particles__(Tensor, Tensor, double);
 /*******************************************************/
 
 /*!
@@ -200,71 +193,7 @@ Tensor strain_Green_Lagrange__Particles__(Tensor);
 double update_density__Particles__(double, double, Tensor);
 /*******************************************************/
 
-/*!
 
-*/
-Tensor explicit_integration_stress__Particles__(int, Particle, Material);
-
-/*******************************************************/
-
-int Stress_integration__Particles__(int p, Particle MPM_Mesh, Mesh FEM_Mesh,
-                                     Material MatProp_p);
-/*******************************************************/
-
-
-Tensor tangent_matrix__Particles__(Tensor GRADIENT_pA,
- Tensor GRADIENT_pB, 
- Tensor F_n1_p,
- Tensor dFdt_n1_p,
- double J_p,
- double alpha_4,
- Material MatProp_p);
-
-/*******************************************************/
-/*!
-  \fn Tensor configurational_midpoint_integration_Stress__Particles__(Tensor T_n1,Tensor T_n,double alpha)
-
-  \brief Function to cumpute a midpoint tensor as in
-  \cite Simo_and_Tarnow_1992.
-
-  \f[
-  T_{n+1} = \alpha T_{n+1} + (1 - \alpha) T_{n}
-  \f]
-
-  \param T_n1 : Tensor at t = n + 1
-  \param T_n : Tensor at t = n
-  \param alpha : Define the evaluation point t = n + \f$\alpha\f$
-*/
-Tensor configurational_midpoint_integration_Stress__Particles__(Tensor,Tensor, Tensor, Material);
-/*******************************************************/
-
-/*!
-    \fn void average_strain_integration_Stress__Particles__(Tensor PK2,Tensor C_n1,Tensor C_n,Material Mat);
-
-  \brief Compute the second Piola-Kirchhoff stress tensor
-  with an average value of the right Cauchy-Green tensors in 
-  t = n and t = n + 1
-  \f[
-  C^{n + 1/2} = \frac{C^{n+1} + C^{n}}{2}
-  \f]
-  And evaluating it the gradient of the internal energy function
-  \f[
-  S =  2 \cdot \Delta \hat{e}(C^{n + 1/2 )}) 
-  \f]
-
-  \param[in] PK2  Previous value of the stress tensor
-  \param[in] C_n1 Right Cauchy-Green tensor at t = n + 1
-  \param[in] C_n  Right Cauchy-Green tensor at t = n
-  \param[in] Mat  Material properties.
-*/
-//Tensor average_strain_integration_Stress__Particles__(Tensor, Tensor, Tensor, Material);
-/*******************************************************/
-
-/*!
-
-*/
-double internal_energy__Particles__(Tensor, Tensor);
-/*******************************************************/
 
 /*!
   \brief update the internal energy of the particle using

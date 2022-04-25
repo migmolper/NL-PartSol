@@ -1,190 +1,191 @@
 
-#ifdef __linux__
-#include <lapacke.h>
-#include <math.h>
-#include <stdbool.h>
-#include <stdio.h>
-#include <string.h>
-#elif __APPLE__
-#include <Accelerate/Accelerate.h>
-#include <stdbool.h>
-#include <stdio.h>
-#include <string.h>
-#endif
+#include "Constitutive/Plasticity/Lade-Duncan.h"
 
-#include "Macros.h"
-#include "Types.h"
-#include "Globals.h"
-
-
-/*
-  Auxiliar functions
-*/
-
+/**************************************************************/
 static int __compute_trial_b_e(
-    double *eigval_b_e_tr /**< [out] Eigenvalues of b elastic trial. */,
-    double *eigvec_b_e_tr /**< [out] Eigenvector of b elastic trial. */,
-    const double *b_e /**< [in] (n) Elastic left Cauchy-Green.*/,
-    const double *d_phi /**< [in] Incremental deformation gradient. */);
+    double *eigval_b_e_tr /*! \param[out] Eigenvalues of b elastic trial. */,
+    double *eigvec_b_e_tr /*! \param[out] Eigenvector of b elastic trial. */,
+    const double *b_e /*! \param[in] (n) Elastic left Cauchy-Green.*/,
+    const double *d_phi /*! \param[in] Incremental deformation gradient. */);
+/**************************************************************/
 
 static int __corrector_b_e(
-    double *b_e /**< [out] (n+1) Elastic deformation gradient. */,
-    const double *eigvec_b_e_tr /**< [in] Eigenvector of b elastic trial. */,
-    const double *E_hencky_trial /**< [in] Corrected Henky strain */);
+    double *b_e /*! \param[out] (n+1) Elastic deformation gradient. */,
+    const double *eigvec_b_e_tr /*! \param[in] Eigenvector of b elastic trial. */,
+    const double *E_hencky_trial /*! \param[in] Corrected Henky strain */);
+/**************************************************************/
 
 static int __elastic_tangent(
-    double * CC /**< [out] Elastic compliance */, 
-    double * AA /**< [out] Elastic matrix */,
-    double E /**< [in] Young modulus */, 
-    double nu /**< [in] Poisson ratio */,
-    double K /**< [in] Lamé parameter */, 
-    double G /**< [in] Shear modulus */);
+    double * CC /*! \param[out] Elastic compliance */, 
+    double * AA /*! \param[out] Elastic matrix */,
+    double E /*! \param[in] Young modulus */, 
+    double nu /*! \param[in] Poisson ratio */,
+    double K /*! \param[in] Lamé parameter */, 
+    double G /*! \param[in] Shear modulus */);
+/**************************************************************/
 
 static int __trial_elastic(
-    double *T_tr /**< [out] Trial elastic stress tensor*/, 
-    const double * E_hencky_trial /**< [in] Henky strain (trial) */, 
-    const double * AA /**< [in] Elastic matrix */,
-    double c_cotphi /**< [in] Cohesion parameter */); 
+    double *T_tr /*! \param[out] Trial elastic stress tensor*/, 
+    const double * E_hencky_trial /*! \param[in] Henky strain (trial) */, 
+    const double * AA /*! \param[in] Elastic matrix */,
+    double c_cotphi /*! \param[in] Cohesion parameter */); 
+/**************************************************************/
 
 static int __E_hencky(
-    double * E_hencky_k /**< [out] Henky strain (iter k) */, 
-    const double * T_k  /**< [in] Local stress tensor (iter k) */, 
-    const double * CC /**< [in] Elastic compliance */,
-    double c_cotphi /**< [in] Cohesion parameter */);
+    double * E_hencky_k /*! \param[out] Henky strain (iter k) */, 
+    const double * T_k  /*! \param[in] Local stress tensor (iter k) */, 
+    const double * CC /*! \param[in] Elastic compliance */,
+    double c_cotphi /*! \param[in] Cohesion parameter */);
+/**************************************************************/
 
 static int __update_internal_variables_elastic(
-    double *Stress /**< [in/out] Nominal stress tensor */,
-    const double *D_phi /**< [in] Total deformation gradient. */,
-    const double *T_tr /**< [in] Elastic stress tensor */,
-    const double *eigvec_b_e_tr /**< [in] Eigenvector of b elastic trial. */,
-    double c_cotphi /**< [in] Cohesion parameter */);
+    double *Stress /*! \param[in/out] Nominal stress tensor */,
+    const double *D_phi /*! \param[in] Total deformation gradient. */,
+    const double *T_tr /*! \param[in] Elastic stress tensor */,
+    const double *eigvec_b_e_tr /*! \param[in] Eigenvector of b elastic trial. */,
+    double c_cotphi /*! \param[in] Cohesion parameter */);
+/**************************************************************/
 
 static int __kappa(
-    double *kappa /**< [out] Hardening vector */, 
-    const double * a /**< [in] Vector with fit parameters (hardening) */, 
-    double Lambda /**< [in] Total plastic multiplier */, 
-    double I1 /**< [in] First invariant of the stress tensor */, 
-    double alpha /**< [in] Dilatance parameter*/);
+    double *kappa /*! \param[out] Hardening vector */, 
+    const double * a /*! \param[in] Vector with fit parameters (hardening) */, 
+    double Lambda /*! \param[in] Total plastic multiplier */, 
+    double I1 /*! \param[in] First invariant of the stress tensor */, 
+    double alpha /*! \param[in] Dilatance parameter*/);
+/**************************************************************/
 
 static int __d_kappa_phi_d_stress(
-    double *d_kappa_phi_d_stress /**< [out] Stress derivative of kappa[0] */, 
-    const double * a /**< [in] Vector with fit parameters (hardening) */,
-    double Lambda /**< [in] Total plastic multiplier */, 
-    double I1 /**< [in] First invariant of the stress tensor */);
+    double *d_kappa_phi_d_stress /*! \param[out] Stress derivative of kappa[0] */, 
+    const double * a /*! \param[in] Vector with fit parameters (hardening) */,
+    double Lambda /*! \param[in] Total plastic multiplier */, 
+    double I1 /*! \param[in] First invariant of the stress tensor */);
+/**************************************************************/
 
 static int __d_kappa_phi_d_lambda(
-    double * d_kappa_phi_d_lambda /**< [out] Lambda derivative of kappa[0] */, 
-    const double * a /**< [in] Vector with fit parameters (hardening) */,
-    double Lambda /**< [in] Total plastic multiplier */, 
-    double I1 /**< [in] First invariant of the stress tensor */);
+    double * d_kappa_phi_d_lambda /*! \param[out] Lambda derivative of kappa[0] */, 
+    const double * a /*! \param[in] Vector with fit parameters (hardening) */,
+    double Lambda /*! \param[in] Total plastic multiplier */, 
+    double I1 /*! \param[in] First invariant of the stress tensor */);
+/**************************************************************/
 
 static double __F(
-    double c0 /**< [in] Yield function fit parameter */, 
-    double kappa_phi /**< [in] Friction angle hardening */, 
-    double pa /**< [in] Atmospheric pressure */,
-    double I1 /**< [in] First invariant of the stress tensor */, 
-    double I3 /**< [in] Third invariant of the stress tensor */, 
-    double m /**< [in] Yield function fit parameter */);
+    double c0 /*! \param[in] Yield function fit parameter */, 
+    double kappa_phi /*! \param[in] Friction angle hardening */, 
+    double pa /*! \param[in] Atmospheric pressure */,
+    double I1 /*! \param[in] First invariant of the stress tensor */, 
+    double I3 /*! \param[in] Third invariant of the stress tensor */, 
+    double m /*! \param[in] Yield function fit parameter */);
+/**************************************************************/
 
 static int __d_F_d_stress(
-    double *d_F_d_stress /**< [out] Yield function derivative (stress) */, 
-    const double *T_k /**< [in] Local stress tensor (iter k) */,
-    double I1 /**< [in] First invariant of the stress tensor */, 
-    double I3 /**< [in] Third invariant of the stress tensor */,
-    double c0 /**< [in] Yield function fit parameter */, 
-    double kappa_phi /**< [in] Friction angle hardening */, 
-    double pa /**< [in] Atmospheric pressure */,
-    double m /**< [in] Yield function fit parameter */);
+    double *d_F_d_stress /*! \param[out] Yield function derivative (stress) */, 
+    const double *T_k /*! \param[in] Local stress tensor (iter k) */,
+    double I1 /*! \param[in] First invariant of the stress tensor */, 
+    double I3 /*! \param[in] Third invariant of the stress tensor */,
+    double c0 /*! \param[in] Yield function fit parameter */, 
+    double kappa_phi /*! \param[in] Friction angle hardening */, 
+    double pa /*! \param[in] Atmospheric pressure */,
+    double m /*! \param[in] Yield function fit parameter */);
+/**************************************************************/
 
 static int __d_F_d_kappa_phi(
-    double * d_F_d_kappa_phi /**< [out] Yield function derivative (kappa[0]) */,
-    double I1 /**< [in] First invariant of the stress tensor */,
-    double I3 /**< [in] Third invariant of the stress tensor */, 
-    double c0 /**< [in] Yield function fit parameter */,
-    double m /**< [in] Yield function fit parameter */, 
-    double pa /**< [in] Atmospheric pressure */,
-    double kappa_phi /**< [in] Friction angle hardening */);
+    double * d_F_d_kappa_phi /*! \param[out] Yield function derivative (kappa[0]) */,
+    double I1 /*! \param[in] First invariant of the stress tensor */,
+    double I3 /*! \param[in] Third invariant of the stress tensor */, 
+    double c0 /*! \param[in] Yield function fit parameter */,
+    double m /*! \param[in] Yield function fit parameter */, 
+    double pa /*! \param[in] Atmospheric pressure */,
+    double kappa_phi /*! \param[in] Friction angle hardening */);
+/**************************************************************/
 
 static double __G(
-    double c0 /**< [in] Yield function fit parameter */, 
-    double kappa_psi /**< [in] Dilatance angle hardening */, 
-    double pa /**< [in] Atmospheric pressure */,
-    double I1 /**< [in] First invariant of the stress tensor */, 
-    double I3 /**< [in] Third invariant of the stress tensor */,
-    double m /**< [in] Yield function fit parameter */);
+    double c0 /*! \param[in] Yield function fit parameter */, 
+    double kappa_psi /*! \param[in] Dilatance angle hardening */, 
+    double pa /*! \param[in] Atmospheric pressure */,
+    double I1 /*! \param[in] First invariant of the stress tensor */, 
+    double I3 /*! \param[in] Third invariant of the stress tensor */,
+    double m /*! \param[in] Yield function fit parameter */);
+/**************************************************************/
 
 static int __d_G_d_stress(
-    double *d_G_d_stress /**< [out] Plastic potential function derivative (stress) */,
-    const double *T_k /**< [in] Local stress tensor (iter k) */, 
-    double I1 /**< [in] First invariant of the stress tensor */,
-    double I3 /**< [in] Third invariant of the stress tensor */, 
-    double c0 /**< [in] Yield function fit parameter */,
-    double kappa_psi /**< [in] Dilatance angle hardening */, 
-    double pa /**< [in] Atmospheric pressure */, 
-    double m /**< [in] Yield function fit parameter */);
+    double *d_G_d_stress /*! \param[out] Plastic potential function derivative (stress) */,
+    const double *T_k /*! \param[in] Local stress tensor (iter k) */, 
+    double I1 /*! \param[in] First invariant of the stress tensor */,
+    double I3 /*! \param[in] Third invariant of the stress tensor */, 
+    double c0 /*! \param[in] Yield function fit parameter */,
+    double kappa_psi /*! \param[in] Dilatance angle hardening */, 
+    double pa /*! \param[in] Atmospheric pressure */, 
+    double m /*! \param[in] Yield function fit parameter */);
+/**************************************************************/
 
 static int __dd_G_dd_stress(
-    double *dd_G_dd_stress /**< [out] Plastic potential hessian (stress) */, 
-    const double *T_k /**< [in] Local stress tensor (iter k) */,
-    double kappa_psi /**< [in] Dilatance angle hardening */, 
-    double I1 /**< [in] First invariant of the stress tensor */,
-    double I3 /**< [in] Third invariant of the stress tensor */, 
-    double m /**< [in] Yield function fit parameter */,
-    double pa /**< [in] Atmospheric pressure */, 
-    double c0 /**< [in] Yield function fit parameter */);
+    double *dd_G_dd_stress /*! \param[out] Plastic potential hessian (stress) */, 
+    const double *T_k /*! \param[in] Local stress tensor (iter k) */,
+    double kappa_psi /*! \param[in] Dilatance angle hardening */, 
+    double I1 /*! \param[in] First invariant of the stress tensor */,
+    double I3 /*! \param[in] Third invariant of the stress tensor */, 
+    double m /*! \param[in] Yield function fit parameter */,
+    double pa /*! \param[in] Atmospheric pressure */, 
+    double c0 /*! \param[in] Yield function fit parameter */);
+/**************************************************************/
 
 static int __dd_G_d_stress_d_kappa_psi(
-    double *dd_G_d_stress_d_kappa_psi /**< [out] Plastic potential deriv */, 
-    const double *T_k /**< [in] Local stress tensor (iter k) */, 
-    double I1 /**< [in] First invariant of the stress tensor */, 
-    double I3 /**< [in] Third invariant of the stress tensor */,
-    double m /**< [in] Yield function fit parameter */, 
-    double pa /**< [in] Atmospheric pressure */, 
-    double c0 /**< [in] Yield function fit parameter */, 
-    double kappa_psi /**< [in] Dilatance angle hardening */); 
+    double *dd_G_d_stress_d_kappa_psi /*! \param[out] Plastic potential deriv */, 
+    const double *T_k /*! \param[in] Local stress tensor (iter k) */, 
+    double I1 /*! \param[in] First invariant of the stress tensor */, 
+    double I3 /*! \param[in] Third invariant of the stress tensor */,
+    double m /*! \param[in] Yield function fit parameter */, 
+    double pa /*! \param[in] Atmospheric pressure */, 
+    double c0 /*! \param[in] Yield function fit parameter */, 
+    double kappa_psi /*! \param[in] Dilatance angle hardening */); 
+/**************************************************************/
 
 static int __residual(
-    double *Residual /**< [out] Residual of the problem */, 
-    double * Error_k /**< [out] Norm of the residual */,
-    const double *E_hencky_trial /**< [in] Henky strain (trial) */,
-    const double * E_hencky_k /**< [in] Henky strain (iter k) */,
-    const double *d_G_d_stress /**< [in] Plastic potential function derivative (stress) */,
-    const double *kappa_k /**< [in] Hardening vector (iter k) */,
-    const double *kappa_hat /**< [in] Hardening vector (eval) */, 
-    double F_k /**< [in] Yield function evaluation (iter k) */,
-    double delta_lambda_k /**< [in] Discrete plastic multiplier (iter k) */); 
+    double *Residual /*! \param[out] Residual of the problem */, 
+    double * Error_k /*! \param[out] Norm of the residual */,
+    const double *E_hencky_trial /*! \param[in] Henky strain (trial) */,
+    const double * E_hencky_k /*! \param[in] Henky strain (iter k) */,
+    const double *d_G_d_stress /*! \param[in] Plastic potential function derivative (stress) */,
+    const double *kappa_k /*! \param[in] Hardening vector (iter k) */,
+    const double *kappa_hat /*! \param[in] Hardening vector (eval) */, 
+    double F_k /*! \param[in] Yield function evaluation (iter k) */,
+    double delta_lambda_k /*! \param[in] Discrete plastic multiplier (iter k) */); 
+/**************************************************************/
 
 static int __tangent_matrix(
-    double *Tangent_Matrix /**< [out] Tangent matrix of the problem */, 
-    const double * CC /**< [in] Elastic compliance */,
-    const double *d_F_d_stress /**< [in] Yield gradient (stress) */, 
-    double d_F_d_kappa_phi /**< [in] Yield gradient (kappa-phi) */,
-    const double *d_G_d_stress /**< [in] Plastic potential gradient (stress) */, 
-    const double *dd_G_dd_stress /**< [in] Plastic potential hessian (stress) */,
-    const double *dd_G_d_stress_d_kappa2 /**< [in] Plastic potential hessian (stress-kappa) */,
-    const double *d_kappa_phi_d_stress /**< [in] Hardening friction gradient (stress) */, 
-    double d_kappa_phi_d_lambda /**< [in] Hardening friction gradient (lambda) */, 
-    double alpha /**< [in] Dilatance parameter*/,
-    double delta_lambda_k /**< [in] Discrete plastic multiplier (iter k) */);
+    double *Tangent_Matrix /*! \param[out] Tangent matrix of the problem */, 
+    const double * CC /*! \param[in] Elastic compliance */,
+    const double *d_F_d_stress /*! \param[in] Yield gradient (stress) */, 
+    double d_F_d_kappa_phi /*! \param[in] Yield gradient (kappa-phi) */,
+    const double *d_G_d_stress /*! \param[in] Plastic potential gradient (stress) */, 
+    const double *dd_G_dd_stress /*! \param[in] Plastic potential hessian (stress) */,
+    const double *dd_G_d_stress_d_kappa2 /*! \param[in] Plastic potential hessian (stress-kappa) */,
+    const double *d_kappa_phi_d_stress /*! \param[in] Hardening friction gradient (stress) */, 
+    double d_kappa_phi_d_lambda /*! \param[in] Hardening friction gradient (lambda) */, 
+    double alpha /*! \param[in] Dilatance parameter*/,
+    double delta_lambda_k /*! \param[in] Discrete plastic multiplier (iter k) */);
+/**************************************************************/
 
 static int __update_internal_variables_plastic(
-    double *Stress /**< [out] Nominal stress tensor */, 
-    double *eps_n1 /**< [out] Equivalent plastic strain */,
-    double *kappa_n1 /**< [out] Friction angle hardening */, 
-    const double *D_phi /**< [in] Total deformation gradient. */, 
-    const double *T_tr_k /**< [in] Stress tensor (iter k). */,
-    const double *eigvec_b_e_tr /**< [in] Eigenvector of b elastic trial. */, 
-    double Lambda_k /**< [in] Total plastic multiplier (iter k) */,
-    double kappa_phi_k /**< [out] Friction angle hardening (iter k)*/,
-    double c_cotphi /**< [in] Cohesion parameter */);
+    double *Stress /*! \param[out] Nominal stress tensor */, 
+    double *eps_n1 /*! \param[out] Equivalent plastic strain */,
+    double *kappa_n1 /*! \param[out] Friction angle hardening */, 
+    const double *D_phi /*! \param[in] Total deformation gradient. */, 
+    const double *T_tr_k /*! \param[in] Stress tensor (iter k). */,
+    const double *eigvec_b_e_tr /*! \param[in] Eigenvector of b elastic trial. */, 
+    double Lambda_k /*! \param[in] Total plastic multiplier (iter k) */,
+    double kappa_phi_k /*! \param[out] Friction angle hardening (iter k)*/,
+    double c_cotphi /*! \param[in] Cohesion parameter */);
+/**************************************************************/
 
 static int __solver(
-  double *Tangent_Matrix /**< [in/out] Tangent matrix of the problem */,
-  double *Residual /**< [in/out] Residual of the problem */) ;
+  double *Tangent_Matrix /*! \param[in/out] Tangent matrix of the problem */,
+  double *Residual /*! \param[in/out] Residual of the problem */) ;
+/**************************************************************/
 
 static int __reciprocal_condition_number(
-    double *RCOND /**< [out] Condition number of the tangent matrix */,
-    double *Tangent_Matrix /**< [in/out] Tangent matrix of the problem */);
+    double *RCOND /*! \param[out] Condition number of the tangent matrix */,
+    double *Tangent_Matrix /*! \param[in/out] Tangent matrix of the problem */);
 
 /**************************************************************/
 

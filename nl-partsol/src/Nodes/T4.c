@@ -1,6 +1,4 @@
-
-#include <math.h>
-#include "nl-partsol.h"
+#include "Nodes/T4.h"
 
 /*
   Auxiliar functions
