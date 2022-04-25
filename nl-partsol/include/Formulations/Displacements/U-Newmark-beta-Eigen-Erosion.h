@@ -1,6 +1,6 @@
 
-#ifndef _U_NEWMARK_BETA_EIGEN_FRACTURE_H_
-#define _U_NEWMARK_BETA_EIGEN_FRACTURE_H_
+#ifndef _U_NEWMARK_BETA_EIGEN_EROSION_H_
+#define _U_NEWMARK_BETA_EIGEN_EROSION_H_
 
 #include <stdlib.h>
 #include <stdbool.h>
