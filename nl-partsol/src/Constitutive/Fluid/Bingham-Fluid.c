@@ -1,7 +1,7 @@
-#include <math.h>
-#include "nl-partsol.h"
+#include "Constitutive/Fluid/Bingham-Fluid.h"
 
 static double compute_Bingham_viscosity(Tensor, Material);
+
 static double compute_p_Tait_Murnaghan(double, Material);
 
 /**************************************************************/

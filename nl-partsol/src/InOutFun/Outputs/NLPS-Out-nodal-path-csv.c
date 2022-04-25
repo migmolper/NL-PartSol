@@ -171,7 +171,7 @@ static FILE *Open_and_Check_simulation_file(char *Name_File) {
 static bool Check_Output_directory(char *Output_directory) {
   struct stat info;
   stat(Output_directory, &info);
-  char Error_message[MAXW];
+  char Error_message[10000];
   bool status_check;
 
   if (S_ISDIR(info.st_mode)) {
@@ -191,7 +191,7 @@ static bool Check_Output_directory(char *Output_directory) {
 static bool Check_Path(char *PATH_Name) {
   struct stat info;
   stat(PATH_Name, &info);
-  char Error_message[MAXW];
+  char Error_message[10000];
   bool status_check;
 
   if (S_ISREG(info.st_mode)) {

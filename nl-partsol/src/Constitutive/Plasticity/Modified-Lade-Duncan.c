@@ -1,25 +1,5 @@
 
-#ifdef __linux__
-#include <lapacke.h>
-#include <math.h>
-#include <stdbool.h>
-#include <stdio.h>
-#include <string.h>
-#elif __APPLE__
-#include <Accelerate/Accelerate.h>
-#include <stdbool.h>
-#include <stdio.h>
-#include <string.h>
-#endif
-
-#include "Macros.h"
-#include "Types.h"
-#include "Globals.h"
-
-
-/*
-  Auxiliar functions
-*/
+#include "Constitutive/Plasticity/Modified-Lade-Duncan.h"
 
 static int __compute_trial_b_e(
     double *eigval_b_e_tr /**< [out] Eigenvalues of b elastic trial. */,

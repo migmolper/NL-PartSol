@@ -75,9 +75,10 @@ Curve ReadCurve(char *Name_File) {
     */
     if (strcmp(kwords[0], "CUSTOM_CURVE") == 0) {
       for (int i = 0; i < DatCurve.Num; i++) {
-        fgets(line, sizeof line, Sim_dat);
-        nkwords = parse(kwords, line, " \n\t");
-        DatCurve.Fx[i] += atof(kwords[0]);
+        if(fgets(line, sizeof line, Sim_dat) !=NULL) {
+          nkwords = parse(kwords, line, " \n\t");
+          DatCurve.Fx[i] += atof(kwords[0]);
+        }
       }
     }
 

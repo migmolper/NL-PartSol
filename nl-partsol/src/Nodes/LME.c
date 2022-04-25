@@ -1,7 +1,4 @@
-#include <string.h>
-#include <math.h>
-#include "nl-partsol.h"
-
+#include "Nodes/LME.h"
 
 /****************************************************************************/
 

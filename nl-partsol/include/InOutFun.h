@@ -488,19 +488,6 @@ void WriteGnuplot(Matrix, Matrix, double, double, int, int, char[20]);
 
 /*****************************************************************/
 
-/*!
-\fn Particle restart_Simulation(char * Parameters,char * Restart,Mesh Nodes)
-
-\brief Generate simulation structure from previous results
-
-\param Parameters
-\param Restart
-\param Nodes
-*/
-Particle restart_Simulation(char *,char *,Mesh);
-
-/*****************************************************************/
-
 void path_nodes_analysis_csv__InOutFun__(Matrix, Matrix, char *, Mask, Event, int, int, double);
 void path_particles_analysis_csv__InOutFun__(Matrix, Matrix, char *, Event, int, int, double);
 /*****************************************************************/

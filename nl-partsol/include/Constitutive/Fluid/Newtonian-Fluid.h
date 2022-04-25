@@ -1,13 +1,20 @@
 #ifndef _NEWTONIAN_FLUID_CONSTITUTIVE_H_
 #define _NEWTONIAN_FLUID_CONSTITUTIVE_H_
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdbool.h>
+#include <math.h>
+#include "Macros.h"
 #include "Types.h"
 #include "Globals.h"
 #include "Matlib.h"
+#include "Particles.h"
 
 /*!
 
-  \fn int compute_1PK_Stress_Tensor_Newtonian_Fluid(State_Parameters IO_State,Material MatProp_p);
+  \fn int compute_Kirchhoff_Stress_Tensor_Newtonian_Fluid(State_Parameters IO_State,Material MatProp_p);
 
   \brief Compute the First Piola-Kirchhoff stress tensor of a Newtonian fluid 
 
@@ -15,7 +22,9 @@
   \param MatProp : Material properties of the model
 
 */
-int compute_1PK_Stress_Tensor_Newtonian_Fluid(State_Parameters IO_State,Material MatProp_p);
+int compute_Kirchhoff_Stress_Tensor_Newtonian_Fluid(
+  State_Parameters IO_State,
+  Material MatProp_p);
 /*******************************************************/
 
 /*!

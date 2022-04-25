@@ -7,67 +7,6 @@
 #include <Accelerate/Accelerate.h>
 #endif
 
-/*************************************************************/
-
-Tensor rate_inifinitesimal_Strain__Particles__(Matrix Velocity,
-                                               Matrix Gradient) {
-  unsigned Ndim = NumberDimensions;
-  Tensor Rate_Strain = alloc__TensorLib__(2);
-  Tensor Velocity_A;
-  Tensor Gradient_A;
-  Tensor VoG_A;
-
-  unsigned NodesElem = Gradient.N_rows;
-
-  /* Compute rate of strain */
-  for (unsigned A = 0; A < NodesElem; A++) {
-    /* Assign from matrix to tensor */
-    Velocity_A = memory_to_tensor__TensorLib__(Velocity.nM[A], 1);
-    Gradient_A = memory_to_tensor__TensorLib__(Gradient.nM[A], 1);
-
-    /* Compute the dyadic product of the nodal velocity and the
-       gradient of the shape functions */
-    VoG_A = dyadic_Product__TensorLib__(Velocity_A, Gradient_A);
-
-    /* Ad the nodal contribution to the train tensor */
-    for (unsigned i = 0; i < Ndim; i++) {
-      for (unsigned j = 0; j < Ndim; j++) {
-        Rate_Strain.N[i][j] += 0.5 * (VoG_A.N[i][j] + VoG_A.N[j][i]);
-      }
-    }
-    /* Free memory */
-    free__TensorLib__(VoG_A);
-  }
-
-  return Rate_Strain;
-}
-
-/*******************************************************/
-
-Tensor infinitesimal_Strain__Particles__(
-  Tensor Strain, 
-  Tensor Rate_Strain,
-  double TimeStep) {
-  
-  int Ndim = NumberDimensions;
-  /* Check in the input its is ok */
-  if ((Strain.Order == 2) && (Rate_Strain.Order == 2)) {
-    /* Update strain tensor with the rate of strain tensor */
-    for (int i = 0; i < Ndim; i++) {
-      for (int j = 0; j < Ndim; j++) {
-        Strain.N[i][j] += TimeStep * Rate_Strain.N[i][j];
-      }
-    }
-  } else {
-    fprintf(stderr, "%s : %s %s !!! \n",
-            "Error in infinitesimal_Strain__Particles__()",
-            "The input should be", "two tensors of 2nd order and a scalar");
-    exit(EXIT_FAILURE);
-  }
-
-  return Strain;
-}
-
 /*******************************************************/
 
 void update_increment_Deformation_Gradient__Particles__(

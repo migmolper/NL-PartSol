@@ -23,7 +23,7 @@ void print_convergence_stats(int Time, int Iter, double Error0,
   printf("\t Relative error : %1.4e \n", Error_relative);
 
   FILE *Stats_Solver;
-  char Name_file_t[80];
+  char Name_file_t[10000];
   sprintf(Name_file_t, "%s/Stats_Solver.csv", OutputDir);
   Stats_Solver = fopen(Name_file_t, "a");
 

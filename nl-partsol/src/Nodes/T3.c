@@ -1,5 +1,4 @@
-#include <math.h>
-#include "nl-partsol.h"
+#include "Nodes/T3.h"
 
 /*
   Global variables

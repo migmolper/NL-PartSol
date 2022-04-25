@@ -18,7 +18,20 @@
 #include <petscksp.h>
 #endif
 
-#include "Solvers/Finite-Strains/U-Newmark-beta.h"
+#include "Formulations/Displacements/U-Analisys.h"
+#include "Formulations/Displacements/U-Static.h"
+#include "Formulations/Displacements/U-Discrete-Energy-Momentum.h"
+#include "Formulations/Displacements/U-Generalized-Alpha.h"
+#include "Formulations/Displacements/U-Forward-Euler.h"
+#include "Formulations/Displacements/U-Verlet.h"
+#include "Formulations/Displacements/U-Newmark-beta.h"
+
+#include "Formulations/Displacements-Pressure/U-p-Analisys.h"
+#include "Formulations/Displacements-Pressure/U-p-Newmark-beta.h"
+
+#include "Formulations/Displacements-WaterPressure/U-pw-Analisys.h"
+#include "Formulations/Displacements-WaterPressure/U-pw-Verlet.h"
+#include "Formulations/Displacements-WaterPressure/U-pw-Newmark-beta.h"
 
 /*
   Call global variables
@@ -42,7 +55,7 @@ int main(int argc, char *argv[]) {
   PetscInitialize(&argc, &argv, 0, 0);
 #endif
 
-  char Error_message[MAXW];
+  char Error_message[10000];
   bool If_formulation = false;
   bool If_f_option = false;
   bool If_ff_option = false;
@@ -166,7 +179,7 @@ int main(int argc, char *argv[]) {
     }
 
     if (If_ff_option) {
-      U_Static_Finite_Strains(FEM_Mesh, MPM_Mesh, Parameters_Solver);
+      U_Static(FEM_Mesh, MPM_Mesh, Parameters_Solver);
 
       puts("*************************************************");
       puts(""GREEN"Read solver"RESET" ...");
@@ -197,16 +210,14 @@ int main(int argc, char *argv[]) {
     } else if (strcmp(Parameters_Solver.TimeIntegrationScheme,
                       "Generalized-alpha") == 0) {
       U_Generalized_alpha(FEM_Mesh, MPM_Mesh, Parameters_Solver);
-    } else if (strcmp(Parameters_Solver.TimeIntegrationScheme, "NPC") == 0) {
-      U_Newmark_Predictor_Corrector(FEM_Mesh, MPM_Mesh, Parameters_Solver);
     } else if (strcmp(Parameters_Solver.TimeIntegrationScheme, "NPC-FS") == 0) {
-      STATUS = U_Verlet_Finite_Strains(FEM_Mesh, MPM_Mesh, Parameters_Solver);
+      STATUS = U_Verlet(FEM_Mesh, MPM_Mesh, Parameters_Solver);
     } else if (strcmp(Parameters_Solver.TimeIntegrationScheme, "Discrete-Energy-Momentum") == 0) {
       U_Discrete_Energy_Momentum(FEM_Mesh, MPM_Mesh, Parameters_Solver);
     } else if (strcmp(Parameters_Solver.TimeIntegrationScheme, "Newmark-beta-Finite-Strains") == 0) {
-      STATUS = U_Newmark_beta_Finite_Strains(FEM_Mesh, MPM_Mesh, Parameters_Solver);
+      STATUS = U_Newmark_Beta(FEM_Mesh, MPM_Mesh, Parameters_Solver);
       if(STATUS == EXIT_FAILURE){
-        fprintf(stderr, ""RED"Error in U_Newmark_beta_Finite_Strains(,)"RESET" \n");
+        fprintf(stderr, ""RED"Error in U_Newmark_Beta(,)"RESET" \n");
       }      
     } else {
       sprintf(Error_message, "%s", "Wrong time integration scheme");
@@ -281,7 +292,7 @@ int main(int argc, char *argv[]) {
     puts("*************************************************");
     puts("Run simulation ...");
     if (strcmp(Parameters_Solver.TimeIntegrationScheme, "NPC-FS") == 0) {
-      upw_Newmark_Predictor_Corrector_Finite_Strains(FEM_Mesh, MPM_Mesh,
+      upw_Verlet(FEM_Mesh, MPM_Mesh,
                                                      Parameters_Solver);
     } else if (strcmp(Parameters_Solver.TimeIntegrationScheme,
                       "Newmark-beta-Finite-Strains") == 0) {
