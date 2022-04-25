@@ -1,6 +1,21 @@
+#include <stdio.h>
+#include <stdlib.h>
 #include <sys/stat.h>
 #include <string.h>
-#include "nl-partsol.h"
+#include <stdbool.h>
+#include "Macros.h"
+#include "Types.h"
+#include "Globals.h"
+#include "Matlib.h"
+#include "Particles.h"
+#include "InOutFun.h"
+
+// Shape functions and auxilar tools
+#include "Nodes/Nodes-Tools.h"
+#include "Nodes/Shape-Functions.h"
+#include "Nodes/Read-GID-Mesh.h"
+
+#include "Formulations/Displacements-WaterPressure/U-pw-Analisys.h"
 
 /*
   Call global variables

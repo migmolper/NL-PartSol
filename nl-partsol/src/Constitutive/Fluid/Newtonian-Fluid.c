@@ -1,15 +1,9 @@
-#include <math.h>
-#include "nl-partsol.h"
 
-#ifdef __linux__
-#include <lapacke.h>
-#elif __APPLE__
-#include <Accelerate/Accelerate.h>
-#endif
+#include "Constitutive/Fluid/Newtonian-Fluid.h"
 
 /**************************************************************/
 
-int compute_1PK_Stress_Tensor_Newtonian_Fluid(
+int compute_Kirchhoff_Stress_Tensor_Newtonian_Fluid(
   State_Parameters IO_State,
   Material MatProp_p) {
 
@@ -27,8 +21,10 @@ int compute_1PK_Stress_Tensor_Newtonian_Fluid(
   double mu = MatProp_p.Viscosity;
   double n = MatProp_p.n_Macdonald_model;
   double K = MatProp_p.Compressibility;
-  double c0 = -J * (p0 + (K / n) * (pow(J, -n) - 1.0));
-  double c1 = J * mu;
+  double pressure = J * (p0 + (K / n) * (pow(J, -n) - 1.0));
+//  double pressure = IO_State.Pressure;
+
+  double c0 = J * mu;
 
   // Define and compute auxiliar tensor
 #if NumberDimensions == 2  
@@ -57,14 +53,14 @@ int compute_1PK_Stress_Tensor_Newtonian_Fluid(
   // Compute stress
   for (unsigned i = 0; i < Ndim; i++) {
     for (unsigned j = 0; j < Ndim; j++) {
-      T[i*Ndim + j] = c0 * Identity[i*Ndim + j] +
-                  2.0 * c1 * E[i*Ndim + j] -
-                  (2.0 / 3.0) * c1 * trace_E * Identity[i*Ndim + j];
+      T[i*Ndim + j] = - pressure * Identity[i*Ndim + j] +
+                  2.0 * c0 * E[i*Ndim + j] -
+                  (2.0 / 3.0) * c0 * trace_E * Identity[i*Ndim + j];
     }
   }
 
 #if NumberDimensions == 2
-  IO_State.Stress[4] = c0 - (2.0 / 3.0) * c1 * trace_E;
+  IO_State.Stress[4] = - pressure - (2.0 / 3.0) * c0 * trace_E;
 #endif
 
 
@@ -97,9 +93,16 @@ int compute_stiffness_density_Newtonian_Fluid(
   double mu = MatProp.Viscosity;
   double n = MatProp.n_Macdonald_model;
   double K = MatProp.Compressibility;
+
+  double pressure = J * (p0 + (K / n) * (pow(J, -n) - 1.0));
+  double d_pressure_J = - K * pow(J, 1.0 - n);
+
+  // double pressure = IO_State.Pressure; 
+  // double d_pressure_J = 0.0;
+
   double c0 = J * mu;
-  double c1 = J * p0 + J * (K / n) * (pow(J, -n) - 1.0) - K * pow(J, 1.0 - n) + (2.0 / 3.0) * alpha4 * c0;
-  double c2 = J * p0 + J * (K / n) * (pow(J, -n) - 1) + alpha4 * c0;
+  double c1 = pressure + d_pressure_J + (2.0 / 3.0) * alpha4 * c0;
+  double c2 = pressure + alpha4 * c0;
 
   // Define auxiliar variables
 #if NumberDimensions == 2
@@ -176,3 +179,4 @@ int compute_stiffness_density_Newtonian_Fluid(
 }
 
 /**************************************************************/
+

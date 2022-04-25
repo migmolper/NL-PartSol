@@ -82,7 +82,7 @@ void particle_results_vtk__InOutFun__(Particle MPM_Mesh, int TimeStep_i,
   int NumParticles = MPM_Mesh.NumGP;
 
   FILE *Vtk_file;
-  char Name_file_t[80];
+  char Name_file_t[10000];
 
   sprintf(Name_file_t, "%s/%s_%i.vtk", OutputDir, OutputParticlesFile,
           TimeStep_i);
@@ -270,7 +270,7 @@ void nodal_results_vtk__InOutFun__(Mesh ElementMesh, Mask ActiveNodes,
   unsigned Size_Connectivity = Ncell;
 
   FILE *Vtk_file;
-  char Name_file_t[80];
+  char Name_file_t[10000];
   int NumberFields;
   char *FieldsList[MAXW] = {NULL};
   int i_mask;

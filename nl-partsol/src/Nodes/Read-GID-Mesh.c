@@ -1,13 +1,12 @@
-#include <string.h>
-#include <math.h>
-#include "nl-partsol.h"
+#include "Nodes/Read-GID-Mesh.h"
+#include "InOutFun.h"
 
 /*
   Local structures
 */
 typedef struct {
   int Dimension;
-  char ElemType[100];
+  char ElemType[20];
   int NumNodesElem;
   int NumNodesMesh;
   int NumElemMesh;

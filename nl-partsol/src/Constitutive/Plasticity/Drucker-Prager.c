@@ -3,6 +3,352 @@
 #include "Constitutive/Plasticity/Drucker-Prager.h"
 
 /**************************************************************/ 
+/*!
+    \param[out] eigval_b_e_tr Eigenvalues of b elastic trial.
+    \param[out] eigvec_b_e_tr Eigenvector of b elastic trial.
+    \param[in] b_e (n) Elastic left Cauchy-Green.
+    \param[in] d_phi Incremental deformation gradient.
+*/
+static int __compute_trial_b_e(
+    double *eigval_b_e_tr,
+    double *eigvec_b_e_tr,
+    const double *b_e,
+    const double *d_phi);
+/**************************************************************/
+
+/*!
+    \param[out] b_e (n+1) Elastic deformation gradient.
+    \param[in] eigvec_b_e_tr Eigenvector of b elastic trial.
+    \param[in] E_hencky_trial Corrected Henky strain
+*/
+static int __corrector_b_e(
+    double *b_e,
+    const double *eigvec_b_e_tr,
+    const double *E_hencky_trial);
+/**************************************************************/
+
+/*!
+    \param[out] T_tr_vol Volumetric elastic stress tensor.
+    \param[out] T_tr_dev Deviatoric elastic stress tensor.
+    \param[out] pressure First invariant of the stress tensor
+    \param[out] J2 Second invariant of the deviatoric stress tensor
+    \param[in] E_hencky_trial, Trial elastic strain tensor.
+    \param[in] K First Lamé invariant.
+    \param[in] G Second Lamé invariant.
+    \param[in] p_ref Reference pressure.
+*/
+static int __trial_elastic(
+    double *T_tr_vol,
+    double *T_tr_dev,
+    double *pressure,
+    double *J2,
+    const double *E_hencky_trial,
+    double K,
+    double G,
+    double p_ref);
+/**************************************************************/
+
+/*!
+    \param[out] Stress Nominal stress tensor
+    \param[in] T_tr_vol Volumetric elastic stress tensor
+    \param[in] T_tr_dev Deviatoric elastic stress tensor
+    \param[in] eigvec_b_e_tr Eigenvector of b elastic trial.
+*/
+static int __update_internal_variables_elastic(
+    double *Stress,
+    const double *T_tr_vol,
+    const double *T_tr_dev,
+    const double *eigvec_b_e_tr);
+/**************************************************************/
+
+/*!
+    \param[out] C_ep Elastoplastic tanget moduli
+    \param[in] K First Lamé invariant.
+    \param[in] G Second Lamé invariant.
+*/
+static int __tangent_moduli_elastic(
+    double * C_ep,
+    double K,
+    double G);
+/**************************************************************/
+
+/*!
+    \param[out] n Plastic flow direction
+    \param[in] T_tr_dev Deviatoric elastic stress tensor
+    \param[in] J2 Second invariant of the deviatoric stress tensor
+*/
+static int __compute_plastic_flow_direction(
+    double *n,
+    const double *T_tr_dev,
+    double J2);
+/**************************************************************/
+
+/*!
+    \param[out] eps_k Equivalent plastic strain 
+    \param[in] d_gamma_k Discrete plastic multiplier 
+    \param[in] eps_n Equivalent plastic strain in the last step 
+    \param[in] alpha_Q Plastic potential parameter 
+*/
+static int __eps(
+    double *eps_k,
+    double d_gamma_k,
+    double eps_n,
+    double alpha_Q);
+/**************************************************************/    
+
+/*!
+    \param[out] kappa_k Hardening function. 
+    \param[in] kappa_0 Reference hardening 
+    \param[in] exp_param Hardening exponential 
+    \param[in] eps_k Equivalent plastic strain 
+    \param[in] eps_0 Reference plastic strain 
+*/
+static int __kappa(
+    double *kappa_k,
+    double kappa_0,
+    double exp_param,
+    double eps_k,
+    double eps_0);
+/**************************************************************/
+
+/*!
+    \param[out] d_kappa Derivative of the hardening function.
+    \param[in] kappa_0 Reference hardening
+    \param[in] eps_k Equivalent plastic strain
+    \param[in] eps_0 Reference plastic strain
+    \param[in] exp_param Hardening exponential
+*/
+static int __d_kappa(
+    double *d_kappa,
+    double kappa_0,
+    double eps_k,
+    double eps_0,
+    double exp_param);
+/**************************************************************/
+
+/*!
+    \param[out] pressure_limit Limit for the apex region.
+    \param[in] J2 Second invariant of the deviatoric stress tensor
+    \param[in] kappa_n Hardening function.
+    \param[in] d_kappa Derivative of the hardening function.
+    \param[in] K First Lamé invariant.
+    \param[in] G Second Lamé invariant.
+    \param[in] alpha_F Yield surface parameter I.
+    \param[in] alpha_Q Plastic potential parameter.
+    \param[in] beta Yield surface parameter II.
+*/
+static int __compute_pressure_limit(
+    double *pressure_limit,
+    double J2,
+    double kappa_n,
+    double d_kappa,
+    double K,
+    double G,
+    double alpha_F,
+    double alpha_Q,
+    double beta);
+/**************************************************************/
+
+/*!
+    \param[in] pressure First invariant of the stress tensor
+    \param[in] J2 Second invariant of the deviatoric stress tensor
+    \param[in] d_gamma_k Discrete plastic multiplier
+    \param[in] kappa_k Hardening function.
+    \param[in] alpha_F Yield surface parameter I.
+    \param[in] alpha_Q Plastic potential parameter.
+    \param[in] beta Yield surface parameter II.
+    \param[in] K First Lamé invariant.
+    \param[in] G Second Lamé invariant.
+*/
+static double __yield_function_classical(
+    double pressure,
+    double J2,
+    double d_gamma_k,
+    double kappa_k,
+    double alpha_F,
+    double alpha_Q,
+    double beta,
+    double K,
+    double G);
+/**************************************************************/
+
+/*!
+    \param[in] d_kappa_k Derivative of the hardening function.
+    \param[in] K First Lamé invariant.
+    \param[in] G Second Lamé invariant.
+    \param[in] alpha_F Yield surface parameter I.
+    \param[in] alpha_Q Plastic potential parameter.
+    \param[in] beta Yield surface parameter II.
+*/
+static double __d_yield_function_classical(
+    double d_kappa_k,
+    double K,
+    double G,
+    double alpha_F,
+    double alpha_Q,
+    double beta);
+/**************************************************************/
+
+/*!
+    \param[out] Increment_E_plastic  Increment plastic strain
+    \param[out] Stress  Nominal stress tensor
+    \param[out] eps_n1  Equivalent plastic strain
+    \param[out] kappa_n1  Hardening function.
+    \param[in] T_tr_vol Volumetric elastic stress tensor.
+    \param[in] T_tr_dev Deviatoric elastic stress tensor.
+    \param[in] eigvec_b_e_tr Eigenvector of b elastic trial.
+    \param[in] n Plastic flow direction.
+    \param[in] d_gamma_k Discrete plastic multiplier
+    \param[in] alpha_Q Plastic potential parameter.
+    \param[in] K First Lamé invariant.
+    \param[in] G Second Lamé invariant.
+    \param[in] eps_k Equivalent plastic strain
+    \param[in] kappa_k Hardening function.
+*/
+static int __update_internal_variables_classical(
+    double *Increment_E_plastic,
+    double *Stress,
+    double *eps_n1,
+    double *kappa_n1,
+    const double *T_tr_vol,
+    const double *T_tr_dev,
+    const double *eigvec_b_e_tr,
+    const double *n,
+    double d_gamma_k,
+    double alpha_Q,
+    double K,
+    double G,
+    double eps_k,
+    double kappa_k);
+/**************************************************************/
+
+/*!
+  \param[out] C_ep  Elastoplastic tanget moduli 
+  \param[in] n  Plastic flow direction.
+  \param[in] d_gamma_k  Derivative of the hardening function. 
+  \param[in] J2  Second invariant of the deviatoric stress tensor 
+  \param[in] d_kappa_k  Discrete plastic multiplier
+  \param[in] K  First Lamé invariant. 
+  \param[in] G  Second Lamé invariant. 
+  \param[in] beta Yield surface parameter II. 
+  \param[in] alpha_F  Yield surface parameter I. 
+  \param[in] alpha_Q  Plastic potential parameter.
+*/
+static int __tangent_moduli_classical(
+  double *  C_ep, 
+  const double * n,
+  double d_gamma_k, 
+  double J2, 
+  double d_kappa_k,
+  double K, 
+  double G, 
+  double beta, 
+  double alpha_F, 
+  double alpha_Q);
+/**************************************************************/
+
+/*!
+    \param[in] pressure First invariant of the stress tensor
+    \param[in] d_gamma_k Discrete plastic multiplier
+    \param[in] d_gamma_1 Discrete plastic multiplier I
+    \param[in] kappa_k Hardening function.
+    \param[in] d_kappa_k Discrete plastic multiplier
+    \param[in] K First Lamé invariant.
+    \param[in] alpha_F Yield surface parameter I.
+    \param[in] alpha_Q Plastic potential parameter.
+    \param[in] beta Yield surface parameter II.
+*/
+static double __yield_function_apex(
+    double pressure,
+    double d_gamma_k,
+    double d_gamma_1,
+    double kappa_k,
+    double d_kappa_k,
+    double K,
+    double alpha_F,
+    double alpha_Q,
+    double beta);
+/**************************************************************/
+
+/*!
+    \param[in] d_gamma_k Discrete plastic multiplier
+    \param[in] d_gamma_1 Discrete plastic multiplier I
+    \param[in] d_kappa_k Derivative of the hardening function
+    \param[in] K First Lamé invariant.
+    \param[in] alpha_F Yield surface parameter I.
+    \param[in] alpha_Q Plastic potential parameter.
+    \param[in] beta Yield surface parameter II.
+*/
+static double __d_yield_function_apex(
+    double d_gamma_k,
+    double d_gamma_1,
+    double d_kappa_k,
+    double K,
+    double alpha_F,
+    double alpha_Q,
+    double beta);
+/**************************************************************/
+
+/*!
+    \param[out] Increment_E_plastic Increment plastic strain
+    \param[out] Stress Nominal stress tensor
+    \param[out] eps_n1 Equivalent plastic strain
+    \param[out] kappa_n1 Hardening function.
+    \param[in] T_tr_vol Volumetric elastic stress tensor.
+    \param[in] T_tr_dev Deviatoric elastic stress tensor.
+    \param[in] eigvec_b_e_tr Eigenvector of b elastic trial.
+    \param[in] n Plastic flow direction.
+    \param[in] d_gamma_k Discrete plastic multiplier
+    \param[in] d_gamma_1 Discrete plastic multiplier I
+    \param[in] alpha_Q Plastic potential parameter.
+    \param[in] K First Lamé invariant.
+    \param[in] G Second Lamé invariant.
+    \param[in] eps_k Equivalent plastic strain*
+    \param[in] kappa_k Hardening function.
+*/
+static int __update_internal_variables_apex(
+    double *Increment_E_plastic,
+    double *Stress,
+    double *eps_n1,
+    double *kappa_n1,
+    const double *T_tr_vol,
+    const double *T_tr_dev,
+    const double *eigvec_b_e_tr,
+    const double *n,
+    double d_gamma_k,
+    double d_gamma_1,
+    double alpha_Q,
+    double K,
+    double G,
+    double eps_k,
+    double kappa_k);
+/**************************************************************/
+
+/*!
+  \param[out] C_ep Elastoplastic tanget moduli 
+  \param[in] n Plastic flow direction 
+  \param[in] d_gamma_k Discrete plastic multiplier  
+  \param[in] d_gamma_1 Discrete plastic multiplier I  
+  \param[in] d_kappa_k Derivative of the hardening function 
+  \param[in] K First Lamé invariant
+  \param[in] G Second Lamé invariant  
+  \param[in] beta Yield surface parameter II  
+  \param[in] alpha_F Yield surface parameter I  
+  \param[in] alpha_Q Plastic potential parameter
+*/
+static int __tangent_moduli_apex(
+  double *C_ep, 
+  const double *n, 
+  double d_gamma_k, 
+  double d_gamma_1, 
+  double d_kappa_k,
+  double K,
+  double G, 
+  double beta, 
+  double alpha_F, 
+  double alpha_Q);    
+
+/**************************************************************/
 
 int compute_1PK_Drucker_Prager(State_Parameters IO_State, Material MatProp)
 /*
