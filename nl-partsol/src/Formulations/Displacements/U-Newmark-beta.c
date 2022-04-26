@@ -47,7 +47,8 @@ static Newmark_parameters __compute_Newmark_parameters(
   double epsilon);
 /**************************************************************/
 
-/*
+/*!
+  \param[in,out] Effective_MassMatrix
 */
 static int __compute_nodal_effective_mass(
   double * Effective_MassMatrix /**< */,
@@ -78,6 +79,19 @@ static int __local_deformation(
   Particle MPM_Mesh /**< */, 
   Mesh FEM_Mesh /**< */,
   double TimeStep /**< */);
+/**************************************************************/
+
+static double * __assemble_residual(
+  Nodal_Field U_n,
+  Nodal_Field D_U,
+  double * Reactions,
+  double * Effective_Mass,
+  Mask ActiveNodes,
+  Mask ActiveDOFs,
+  Particle MPM_Mesh,
+  Mesh FEM_Mesh,
+  Newmark_parameters Params,
+  int * STATUS);
 /**************************************************************/
 
 static int __Nodal_Internal_Forces(
@@ -148,21 +162,23 @@ static void compute_local_intertia(
 /**************************************************************/
 
 #ifdef USE_PETSC
-static int __assemble_tangent_stiffness(
-  Mat Tangent_Stiffness /**< */,
+static Mat __assemble_tangent_stiffness(
+  int * nnz /**< */,
   Mask ActiveNodes /**< */,
   Mask ActiveDOFs /**< */,
   Particle MPM_Mesh /**< */, 
   Mesh FEM_Mesh /**< */,
-  Newmark_parameters Params /**< */);
+  Newmark_parameters Params /**< */,
+  int * STATUS /**< */);
 #else
-static int __assemble_tangent_stiffness(
-  double * Tangent_Stiffness /**< */,
+static double * __assemble_tangent_stiffness(
+  int * nnz /**< */,
   Mask ActiveNodes /**< */,
   Mask ActiveDOFs /**< */,
   Particle MPM_Mesh /**< */, 
   Mesh FEM_Mesh /**< */,
-  Newmark_parameters Params /**< */);
+  Newmark_parameters Params /**< */,
+  int * STATUS /**< */);
 #endif
 /**************************************************************/
 
@@ -230,7 +246,7 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
 #ifdef USE_PETSC
 //  Mat Effective_Mass;
   Mat Tangent_Stiffness;
-//  Vec Residual;
+  Vec Residual;
 //  Vec Reactions;
   double * Effective_Mass;
   double * Residual;
@@ -251,6 +267,14 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
   Mask ActiveDOFs;
 
   Newmark_parameters Params;
+
+
+  // InoutParameters
+  #ifdef USE_PETSC
+  PetscViewer viewer;
+  #else
+
+  #endif
 
   /*
     Time step is defined at the init of the simulation throught the
@@ -367,28 +391,20 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
  #endif
  #endif 
 
-    // Trial residual
-    Residual = (double *)calloc(Nactivedofs, __SIZEOF_DOUBLE__);
     Reactions = (double *)calloc(Ntotaldofs, __SIZEOF_DOUBLE__);
-    if((Residual == NULL) 
-    || (Reactions == NULL)){
+    if(Reactions == NULL){
       fprintf(stderr, ""RED"Error in calloc(): Out of memory"RESET" \n");
       return EXIT_FAILURE;
     } 
 
-
-    STATUS = __Nodal_Internal_Forces(Residual, Reactions, ActiveNodes, ActiveDOFs, MPM_Mesh, FEM_Mesh, DeltaTimeStep);
+    // Trial residual
+    Residual = __assemble_residual(
+      U_n,D_U, Reactions, Effective_Mass,
+      ActiveNodes, ActiveDOFs, MPM_Mesh, FEM_Mesh, Params, &STATUS);
     if(STATUS == EXIT_FAILURE){
-      fprintf(stderr, ""RED"Error in __Nodal_Internal_Forces()"RESET" \n");
+      fprintf(stderr, ""RED"Error in __assemble_residual()"RESET" \n");
       return EXIT_FAILURE;
     }
-
-
-    __Nodal_Traction_Forces(Residual, Reactions, ActiveNodes, ActiveDOFs, MPM_Mesh, FEM_Mesh);
-
-    __Nodal_Body_Forces(Residual, Reactions, ActiveNodes, ActiveDOFs, MPM_Mesh, FEM_Mesh);
-
-    __Nodal_Inertial_Forces(Residual, Effective_Mass, U_n, D_U, ActiveNodes, ActiveDOFs, Params);
 
  #ifdef USE_PETSC
  #if defined(PETSC_USE_LOG)
@@ -420,36 +436,23 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
  #endif
  #endif 
 
+  Tangent_Stiffness = __assemble_tangent_stiffness(
+  nnz, ActiveNodes, ActiveDOFs, MPM_Mesh, FEM_Mesh, Params, &STATUS);
+  if(STATUS == EXIT_FAILURE){
+      fprintf(stderr, ""RED"Error in __assemble_tangent_stiffness()"RESET" \n");
+      return EXIT_FAILURE;
+  }
+
+
+EXIT_SUCCESS;
 
  #ifdef USE_PETSC
-    MatCreate(PETSC_COMM_WORLD,&Tangent_Stiffness);
-    MatSetSizes(Tangent_Stiffness,PETSC_DECIDE,PETSC_DECIDE,Nactivedofs,Nactivedofs);
-    MatSetFromOptions(Tangent_Stiffness);
-    MatSetUp(Tangent_Stiffness);
-
-    STATUS = __assemble_tangent_stiffness(
-      Tangent_Stiffness, ActiveNodes, ActiveDOFs, MPM_Mesh, FEM_Mesh, Params);
-    if(STATUS == EXIT_FAILURE){
-        fprintf(stderr, ""RED"Error in __assemble_tangent_stiffness()"RESET" \n");
-        return EXIT_FAILURE;
-    }
- #else
-      Tangent_Stiffness = (double *)calloc(Nactivedofs * Nactivedofs, __SIZEOF_DOUBLE__);
-      if(Tangent_Stiffness == NULL){
-        fprintf(stderr, ""RED"Error in calloc(): Out of memory"RESET" \n");
-        return EXIT_FAILURE;
-      } 
-
-      STATUS = __assemble_tangent_stiffness(
-        Tangent_Stiffness, ActiveNodes, ActiveDOFs, MPM_Mesh, FEM_Mesh, Params);
-      if(STATUS == EXIT_FAILURE){
-          fprintf(stderr, ""RED"Error in __assemble_tangent_stiffness()"RESET" \n");
-          return EXIT_FAILURE;
-      }
- #endif 
-
- #ifdef USE_PETSC
-  MatView(Tangent_Stiffness,PETSC_VIEWER_DRAW_WORLD);
+ /* Create the HDF5 viewer */
+// PetscViewer H5viewer;
+// PetscViewerHDF5Open(PETSC_COMM_WORLD,"TangentMatrix.h5",FILE_MODE_WRITE,&H5viewer);
+// PetscViewerSetFromOptions(H5viewer);
+// MatView(Tangent_Stiffness,H5viewer);
+MatView(Tangent_Stiffness,PETSC_VIEWER_DRAW_WORLD);
 #endif
 
  #ifdef USE_PETSC
@@ -471,7 +474,11 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
  #endif 
 
   #ifdef USE_PETSC
- 
+//    STATUS = krylov_PETSC(&Tangent_Stiffness,&Residual, Nactivedofs);
+//    if(STATUS == EXIT_FAILURE){
+//      fprintf(stderr, ""RED"Error in krylov_PETSC()"RESET" \n");
+//      return EXIT_FAILURE;
+//    }
   #else
       STATUS = dgetrs_LAPACK(Tangent_Stiffness, Residual, Nactivedofs);
       if(STATUS == EXIT_FAILURE){
@@ -513,26 +520,20 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
       free(Reactions);
       free(Tangent_Stiffness);
 
-      // Compute residual (NR-loop)
-      Residual = (double *)calloc(Nactivedofs, __SIZEOF_DOUBLE__);
       Reactions = (double *)calloc(Ntotaldofs, __SIZEOF_DOUBLE__);
-      if((Residual == NULL) 
-      || (Reactions == NULL)){
+      if(Reactions == NULL){
         fprintf(stderr, ""RED"Error in calloc(): Out of memory"RESET" \n");
         return EXIT_FAILURE;
       } 
 
-      STATUS = __Nodal_Internal_Forces(Residual, Reactions, ActiveNodes, ActiveDOFs, MPM_Mesh, FEM_Mesh, DeltaTimeStep);
-      if(STATUS == EXIT_FAILURE){
-        fprintf(stderr, ""RED"Error in __Nodal_Internal_Forces()"RESET" \n");
-        return EXIT_FAILURE;
-      }
-
-      __Nodal_Traction_Forces(Residual, Reactions, ActiveNodes, ActiveDOFs, MPM_Mesh, FEM_Mesh);
-
-      __Nodal_Body_Forces(Residual, Reactions, ActiveNodes, ActiveDOFs, MPM_Mesh, FEM_Mesh);
-
-      __Nodal_Inertial_Forces(Residual, Effective_Mass, U_n, D_U, ActiveNodes, ActiveDOFs, Params);
+      // Compute residual (NR-loop)
+      Residual = __assemble_residual(
+        U_n,D_U, Reactions, Effective_Mass,
+        ActiveNodes, ActiveDOFs, MPM_Mesh, FEM_Mesh, Params, &STATUS);
+        if(STATUS == EXIT_FAILURE){
+          fprintf(stderr, ""RED"Error in __assemble_residual()"RESET" \n");
+          return EXIT_FAILURE;
+        }
 
       // Get stats for the convergence
       Error_i = __error_residual(Residual,Nactivedofs);
@@ -1177,6 +1178,43 @@ static int __local_deformation(
 
 /**************************************************************/
 
+  static double * __assemble_residual(
+    Nodal_Field U_n,
+    Nodal_Field D_U,
+    double * Reactions,
+    double * Effective_Mass,
+    Mask ActiveNodes,
+    Mask ActiveDOFs,
+    Particle MPM_Mesh,
+    Mesh FEM_Mesh,
+    Newmark_parameters Params,
+    int * STATUS) {
+    
+    unsigned Nactivedofs = ActiveDOFs.Nactivenodes;
+    double * Residual = (double *)calloc(Nactivedofs, __SIZEOF_DOUBLE__);
+    if(Residual == NULL){
+      fprintf(stderr, ""RED"Error in calloc(): Out of memory"RESET" \n");
+      *STATUS = EXIT_FAILURE;
+      return Residual;
+    }  
+
+    *STATUS = __Nodal_Internal_Forces(Residual, Reactions, ActiveNodes, ActiveDOFs, MPM_Mesh, FEM_Mesh, DeltaTimeStep);
+    if(*STATUS == EXIT_FAILURE){
+      fprintf(stderr, ""RED"Error in __Nodal_Internal_Forces()"RESET" \n");
+      return Residual;
+    }
+
+    __Nodal_Traction_Forces(Residual, Reactions, ActiveNodes, ActiveDOFs, MPM_Mesh, FEM_Mesh);
+
+    __Nodal_Body_Forces(Residual, Reactions, ActiveNodes, ActiveDOFs, MPM_Mesh, FEM_Mesh);
+
+    __Nodal_Inertial_Forces(Residual, Effective_Mass, U_n, D_U, ActiveNodes, ActiveDOFs, Params);
+
+    return Residual;
+  }
+
+/**************************************************************/
+
 static int __Nodal_Internal_Forces(
   double * Residual, 
   double * Reactions,
@@ -1456,7 +1494,7 @@ static void __Nodal_Body_Forces(
   double ShapeFunction_pA; /* Evaluation in the node I for the particle p */
   double m_p;              /* Mass of the particle */
 
-  b[1] = -9.81;
+//  b[1] = -9.81;
 
   for (unsigned p = 0; p < MPM_Mesh.NumGP; p++) {
 
@@ -1666,25 +1704,27 @@ Inertia_density_p[8] = ID_AB_p;
 /**************************************************************/
 
 #ifdef USE_PETSC
-static int __assemble_tangent_stiffness(
-  Mat Tangent_Stiffness,
+static Mat __assemble_tangent_stiffness(
+  int * nnz,
   Mask ActiveNodes,
   Mask ActiveDOFs,
   Particle MPM_Mesh, 
   Mesh FEM_Mesh,
-  Newmark_parameters Params)
+  Newmark_parameters Params,
+  int * STATUS)
 #else
-static int __assemble_tangent_stiffness(
-  double * Tangent_Stiffness,
+static double * __assemble_tangent_stiffness(
+  int * nnz,
   Mask ActiveNodes,
   Mask ActiveDOFs,
   Particle MPM_Mesh, 
   Mesh FEM_Mesh,
-  Newmark_parameters Params)
+  Newmark_parameters Params,
+  int * STATUS)
 #endif
 {
  
-  int STATUS = EXIT_SUCCESS;
+  *STATUS = EXIT_SUCCESS;
   unsigned Ndim = NumberDimensions;
   unsigned Nactivenodes = ActiveNodes.Nactivenodes;
   unsigned Ntotaldofs = Ndim*Nactivenodes;
@@ -1696,11 +1736,21 @@ static int __assemble_tangent_stiffness(
   int Ap, Mask_node_A, Mask_total_dof_Ai, Mask_active_dof_Ai;
   int Bp, Mask_node_B, Mask_total_dof_Bj, Mask_active_dof_Bj;
 
-
-#ifdef USE_PETSC
+ #ifdef USE_PETSC
+  Mat Tangent_Stiffness;
+  MatCreateSeqAIJ(PETSC_COMM_SELF,Nactivedofs,Nactivedofs,0,nnz,&Tangent_Stiffness);
+  MatSetOption(Tangent_Stiffness,MAT_IGNORE_ZERO_ENTRIES,PETSC_TRUE);  
   PetscInt Istart, Iend;
   MatGetOwnershipRange(Tangent_Stiffness,&Istart,&Iend);
-#endif
+ #else
+  
+  double * Tangent_Stiffness = (double *)calloc(Nactivedofs * Nactivedofs, __SIZEOF_DOUBLE__);
+  if(Tangent_Stiffness == NULL){
+    fprintf(stderr, ""RED"Error in calloc(): Out of memory"RESET" \n");
+    *STATUS = EXIT_FAILURE;
+    return Tangent_Stiffness;
+  } 
+  #endif 
 
   // Spatial discretization variables
   Element Nodes_p;
@@ -1766,13 +1816,15 @@ static int __assemble_tangent_stiffness(
     if(d_shapefunction_n1_p == NULL)
     {
       fprintf(stderr, ""RED"Error in calloc()"RESET" \n");
-      return EXIT_FAILURE;  
+      *STATUS = EXIT_FAILURE;
+      return Tangent_Stiffness;
     }
-    STATUS = push_forward_dN__MeshTools__(d_shapefunction_n1_p,d_shapefunction_n_p.nV,DF_p,NumNodes_p);
-    if(STATUS == EXIT_FAILURE)
+    *STATUS = push_forward_dN__MeshTools__(d_shapefunction_n1_p,d_shapefunction_n_p.nV,DF_p,NumNodes_p);
+    if(*STATUS == EXIT_FAILURE)
     {
       fprintf(stderr, ""RED"Error in push_forward_dN__MeshTools__()"RESET" \n");
-      return STATUS;  
+      *STATUS = EXIT_FAILURE;
+      return Tangent_Stiffness;
     }
 
     for (unsigned A = 0; A < NumNodes_p; A++) {
@@ -1794,13 +1846,13 @@ static int __assemble_tangent_stiffness(
         Mask_node_B = ActiveNodes.Nodes2Mask[Bp];
 
         // Compute the stiffness density matrix
-        STATUS = stiffness_density__Constitutive__(p, Stiffness_density_p,
+        *STATUS = stiffness_density__Constitutive__(p, Stiffness_density_p,
         &d_shapefunction_n1_p[A*Ndim], &d_shapefunction_n1_p[B*Ndim],
         d_shapefunction_n_pA, d_shapefunction_n_pB, alpha_4,
         MPM_Mesh, MatProp_p);
-        if (STATUS == EXIT_FAILURE) {
-            fprintf(stderr, "" RED "Error in stiffness_density__Constitutive__" RESET "\n");
-            return EXIT_FAILURE;
+        if (*STATUS == EXIT_FAILURE) {
+          fprintf(stderr, "" RED "Error in stiffness_density__Constitutive__" RESET "\n");
+          return Tangent_Stiffness;
         }          
 
         // Local mass matrix
@@ -1847,7 +1899,7 @@ static int __assemble_tangent_stiffness(
   MatSetOption(Tangent_Stiffness,MAT_SYMMETRIC,PETSC_TRUE);
 #endif
 
-  return EXIT_SUCCESS;
+  return Tangent_Stiffness;
 }
 
 
