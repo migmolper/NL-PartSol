@@ -573,7 +573,7 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
 #endif
 
 
-          __local_compatibility_conditions(D_U, ActiveNodes, MPM_Mesh, FEM_Mesh,
+      __local_compatibility_conditions(D_U, ActiveNodes, MPM_Mesh, FEM_Mesh,
                                            &STATUS);
       if (STATUS == EXIT_FAILURE) {
         fprintf(stderr,
@@ -1154,35 +1154,27 @@ static void __local_compatibility_conditions(Nodal_Field D_U, Mask ActiveNodes,
   unsigned Np = MPM_Mesh.NumGP;
   unsigned NumberNodes_p;
   unsigned Order_p;
+  unsigned p;
   int Idx_Element_p;
   int Idx_Patch_p;
-
-  Element Nodes_p;
-  Matrix gradient_p;
-  double *D_Displacement_Ap;
-  double *D_Velocity_Ap;
-  double *F_n_p;
-  double *F_n1_p;
-  double *DF_p;
-  double *dFdt_n_p;
-  double *dFdt_n1_p;
-  double *dt_DF_p;
 
   /*
     Loop in the material point set
   */
-  unsigned p;
-#pragma omp parallel for private(p)
-  for (p = 0; p < Np; p++) {
+  #pragma omp parallel private(NumberNodes_p,Order_p)
+  {
+
+    #pragma omp for private(p)
+    for (p = 0; p < Np; p++) {
 
     //  Define tributary nodes of the particle
     NumberNodes_p = MPM_Mesh.NumberNodes[p];
-    Nodes_p = nodal_set__Particles__(p, MPM_Mesh.ListNodes[p], NumberNodes_p);
+    Element Nodes_p = nodal_set__Particles__(p, MPM_Mesh.ListNodes[p], NumberNodes_p);
     Order_p = NumberNodes_p * Ndim;
 
     //  Get the nodal increment of displacement using the mask
-    D_Displacement_Ap = (double *)calloc(Order_p, __SIZEOF_DOUBLE__);
-    D_Velocity_Ap = (double *)calloc(Order_p, __SIZEOF_DOUBLE__);
+    double *D_Displacement_Ap = (double *)calloc(Order_p, __SIZEOF_DOUBLE__);
+    double *D_Velocity_Ap = (double *)calloc(Order_p, __SIZEOF_DOUBLE__);
     if ((D_Displacement_Ap == NULL) || (D_Velocity_Ap == NULL)) {
       fprintf(stderr, "" RED "Error in calloc(): Out of memory" RESET " \n");
       *STATUS = EXIT_FAILURE;
@@ -1196,17 +1188,18 @@ static void __local_compatibility_conditions(Nodal_Field D_U, Mask ActiveNodes,
     /*
       Evaluate the shape function gradient in the coordinates of the particle
     */
-    gradient_p = compute_dN__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
+    Matrix gradient_p = compute_dN__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
 
     /*
       Take the values of the deformation gradient from the previous step
     */
-    F_n_p = MPM_Mesh.Phi.F_n.nM[p];
-    F_n1_p = MPM_Mesh.Phi.F_n1.nM[p];
-    DF_p = MPM_Mesh.Phi.DF.nM[p];
-    dFdt_n_p = MPM_Mesh.Phi.dt_F_n.nM[p];
-    dFdt_n1_p = MPM_Mesh.Phi.dt_F_n1.nM[p];
-    dt_DF_p = MPM_Mesh.Phi.dt_DF.nM[p];
+    double *F_n_p = MPM_Mesh.Phi.F_n.nM[p];
+    double *F_n1_p = MPM_Mesh.Phi.F_n1.nM[p];
+    double *DF_p = MPM_Mesh.Phi.DF.nM[p];
+    double *dFdt_n_p = MPM_Mesh.Phi.dt_F_n.nM[p];
+    double *dFdt_n1_p = MPM_Mesh.Phi.dt_F_n1.nM[p];
+    double *dt_DF_p = MPM_Mesh.Phi.dt_DF.nM[p];
+
 
     update_increment_Deformation_Gradient__Particles__(
         DF_p, D_Displacement_Ap, gradient_p.nV, NumberNodes_p);
@@ -1245,14 +1238,17 @@ static void __local_compatibility_conditions(Nodal_Field D_U, Mask ActiveNodes,
     free(Nodes_p.Connectivity);
   }
 
+      
   // F-bar
+  #pragma omp barrier
   if (FEM_Mesh.Locking_Control_Fbar) {
 
     double Vn_patch;
     double Vn1_patch;
     double J_patch;
 
-    for (unsigned p = 0; p < Np; p++) {
+    #pragma omp for private(p,Vn_patch,Vn1_patch,J_patch,Idx_Element_p,Idx_Patch_p)
+    for (p = 0; p < Np; p++) {
 
       Idx_Element_p = MPM_Mesh.Element_p[p];
       Idx_Patch_p = FEM_Mesh.Idx_Patch[Idx_Element_p];
@@ -1273,6 +1269,8 @@ static void __local_compatibility_conditions(Nodal_Field D_U, Mask ActiveNodes,
 
       MPM_Mesh.Phi.Jbar.nV[p] *= J_patch;
     }
+  }
+
   }
 }
 
