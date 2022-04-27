@@ -25,21 +25,25 @@
 // Material lib
 #include "Constitutive/Constitutive.h"
 
-// Linear-Solver libs
-#ifdef USE_PETSC
-#include <petscksp.h>
-//  #include "Linear-Solvers/"
-#else
 #ifdef __linux__
 #include <lapacke.h>
 #elif __APPLE__ 
 #include <Accelerate/Accelerate.h>
 #endif
+
+// Linear-Solver libs
+#ifdef USE_PETSC
+#include "Linear-Solvers/ksp-PETSC.h"
+#else
 #include "Linear-Solvers/dgetrs-LAPACK.h"
 #endif
 
 // 
 #include "InOutFun.h"
+
+#ifdef USE_PETSC
+#include "petscviewerhdf5.h" 
+#endif
 
 /*
   Call global variables

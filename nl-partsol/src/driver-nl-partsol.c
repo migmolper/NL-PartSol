@@ -50,6 +50,29 @@ static void standard_error(char *Error_message);
 
 int main(int argc, char *argv[]) {
 
+#ifdef USE_MPI
+  // Initialise MPI
+  MPI_Init(&argc, &argv);
+  int mpi_rank;
+  MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
+  // Get number of MPI ranks
+  int mpi_size;
+  MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
+
+  // Allocate enough space to issue the buffered send
+  int mpi_buffer_size = 2000000000;
+  void* mpi_buffer = malloc(mpi_buffer_size);
+  // Pass the buffer allocated to MPI so it uses it when we issue MPI_Bsend
+  MPI_Buffer_attach(mpi_buffer, mpi_buffer_size);
+
+#endif
+
+#ifdef USE_OpenMP
+//    omp_set_num_threads(nthreads > 0 ? nthreads : omp_get_max_threads());
+omp_set_num_threads(4);
+#endif
+
+
 #ifdef USE_PETSC
   // Initialize PETSc
   PetscInitialize(&argc, &argv, 0, 0);
@@ -312,6 +335,12 @@ int main(int argc, char *argv[]) {
 #ifdef USE_PETSC
     // Finalize PETSc
     PetscFinalize();
+#endif
+
+#ifdef USE_MPI
+  free(mpi_buffer);
+  MPI_Buffer_detach(&mpi_buffer, &mpi_buffer_size);
+  MPI_Finalize();
 #endif
 
   puts("*************************************************");
