@@ -23,6 +23,7 @@ typedef struct {
   double alpha_5;
   double alpha_6;
   double epsilon;
+  double DeltaTimeStep;
 } Newmark_parameters;
 
 
@@ -65,6 +66,9 @@ static int __get_nodal_field_tn(
   Mask ActiveNodes /**< */);
 /**************************************************************/
 
+/*!
+
+*/
 static void __initialise_nodal_increments(
   Nodal_Field DU,
   Nodal_Field U_n /**< */, 
@@ -73,36 +77,47 @@ static void __initialise_nodal_increments(
   Newmark_parameters Params /**< */);
 /**************************************************************/
 
-static int __local_deformation(
-  const Nodal_Field D_U /**< */, 
-  Mask ActiveNodes /**< */,
-  Particle MPM_Mesh /**< */, 
-  Mesh FEM_Mesh /**< */,
-  double TimeStep /**< */);
+/*!
+  \brief Update the local deformation of the particles \n
+  ensuring the local compatibility conditions
+  \param[in] D_U Increment of nodal kinetics
+  \param[in] ActiveNodes List of nodes which takes place in the computation
+  \param[in] MPM_Mesh Information of the particles
+  \param[in] FEM_Mesh Information of the background nodes
+  \param[in] Params Time integration parameters
+*/
+static int __local_compatibility_conditions(
+  const Nodal_Field D_U, Mask ActiveNodes, Particle MPM_Mesh, 
+  Mesh FEM_Mesh, Newmark_parameters Params);
 /**************************************************************/
+
+/*!
+  \brief Function used to compute the equilibrium residual
+
+  \param[in] U_n Nodal kinetics information from the step n
+  \param[in] D_U Increment of nodal kinetics
+  \param[in] Effective_Mass Effective mass matrix
+  \param[in] ActiveNodes List of nodes which takes place in the computation
+  \param[in] ActiveDOFs List of dofs which takes place in the computation
+  \param[in] MPM_Mesh Information of the particles
+  \param[in] FEM_Mesh Information of the background nodes
+  \param[in] Params Time integration parameters
+  \param[in] Is_compute_Residual The function computes the residual
+  \param[in] Is_compute_Reactions The function computes the reaction  
+  \param[out] STATUS Returns failure or success
+  \return Residual vector
+*/
 #ifdef USE_PETSC
 static Vec __assemble_residual(
-  Nodal_Field U_n,
-  Nodal_Field D_U,
-  double * Reactions,
-  double * Effective_Mass,
-  Mask ActiveNodes,
-  Mask ActiveDOFs,
-  Particle MPM_Mesh,
-  Mesh FEM_Mesh,
-  Newmark_parameters Params,
+  Nodal_Field U_n, Nodal_Field D_U, double * Effective_Mass,
+  Mask ActiveNodes, Mask ActiveDOFs, Particle MPM_Mesh, Mesh FEM_Mesh,
+  Newmark_parameters Params, bool Is_compute_Residual, bool Is_compute_Reactions,
   int * STATUS);
 #else
 static double * __assemble_residual(
-  Nodal_Field U_n,
-  Nodal_Field D_U,
-  double * Reactions,
-  double * Effective_Mass,
-  Mask ActiveNodes,
-  Mask ActiveDOFs,
-  Particle MPM_Mesh,
-  Mesh FEM_Mesh,
-  Newmark_parameters Params,
+  Nodal_Field U_n, Nodal_Field D_U, double * Effective_Mass,
+  Mask ActiveNodes, Mask ActiveDOFs, Particle MPM_Mesh, Mesh FEM_Mesh,
+  Newmark_parameters Params, bool Is_compute_Residual, bool Is_compute_Reactions,
   int * STATUS);
 #endif
 /**************************************************************/
@@ -111,22 +126,25 @@ static double * __assemble_residual(
   \brief Function used to compute the contribution of the \n
   internal forces to the residual
 
-  \param[in,out] Residual Residual vector
-  \param[in,out] Reactions Reaction forces
+  \param[in,out] Residual Residual/reaction vector
   \param[in] ActiveNodes List of nodes which takes place in the computation
   \param[in] ActiveDOFs List of dofs which takes place in the computation
   \param[in] MPM_Mesh Information of the particles
   \param[in] FEM_Mesh Information of the background nodes
-  \param[in] dt Time step
+  \param[in] Params Time integration parameters
+  \param[in] Is_compute_Residual The function computes the residual
+  \param[in] Is_compute_Reactions The function computes the reaction
 */
  #ifdef USE_PETSC
 static int __Nodal_Internal_Forces(
-  Vec Residual, double * Reactions, Mask ActiveNodes, 
-  Mask ActiveDOFs, Particle MPM_Mesh, Mesh FEM_Mesh, double dt);
+  Vec Residual, Mask ActiveNodes, Mask ActiveDOFs, 
+  Particle MPM_Mesh, Mesh FEM_Mesh, Newmark_parameters Params,
+  bool Is_compute_Residual, bool Is_compute_Reactions);
   #else
 static int __Nodal_Internal_Forces(
-  double * Residual, double * Reactions, Mask ActiveNodes, 
-  Mask ActiveDOFs, Particle MPM_Mesh, Mesh FEM_Mesh, double dt);
+  double * Residual, Mask ActiveNodes, 
+  Mask ActiveDOFs, Particle MPM_Mesh, Mesh FEM_Mesh, Newmark_parameters Params,
+  bool Is_compute_Residual, bool Is_compute_Reactions);
   #endif 
 /**************************************************************/
 
@@ -141,20 +159,23 @@ static void __internal_force_density(
   contact forces to the residual
 
   \param[in,out] Residual Residual vector
-  \param[in,out] Reactions Reaction forces
   \param[in] ActiveNodes List of nodes which takes place in the computation
   \param[in] ActiveDOFs List of dofs which takes place in the computation
   \param[in] MPM_Mesh Information of the particles
   \param[in] FEM_Mesh Information of the background nodes
+  \param[in] Is_compute_Residual The function computes the residual
+  \param[in] Is_compute_Reactions The function computes the reaction
 */
 #ifdef USE_PETSC
 static void __Nodal_Traction_Forces(
-  Vec Residual, double * Reactions, Mask ActiveNodes, 
-  Mask ActiveDOFs, Particle MPM_Mesh, Mesh FEM_Mesh);
+  Vec Residual, Mask ActiveNodes, 
+  Mask ActiveDOFs, Particle MPM_Mesh, Mesh FEM_Mesh,
+  bool Is_compute_Residual, bool Is_compute_Reactions);
 #else
 static void __Nodal_Traction_Forces(
-  double * Residual, double * Reactions, Mask ActiveNodes, 
-  Mask ActiveDOFs, Particle MPM_Mesh, Mesh FEM_Mesh);
+  double * Residual, Mask ActiveNodes, 
+  Mask ActiveDOFs, Particle MPM_Mesh, Mesh FEM_Mesh,
+  bool Is_compute_Residual, bool Is_compute_Reactions);
 #endif 
 /**************************************************************/
 
@@ -163,20 +184,23 @@ static void __Nodal_Traction_Forces(
   body (distance) forces to the residual
 
   \param[in,out] Residual Residual vector
-  \param[in,out] Reactions Reaction forces
   \param[in] ActiveNodes List of nodes which takes place in the computation
   \param[in] ActiveDOFs List of dofs which takes place in the computation
   \param[in] MPM_Mesh Information of the particles
   \param[in] FEM_Mesh Information of the background nodes
+  \param[in] Is_compute_Residual The function computes the residual
+  \param[in] Is_compute_Reactions The function computes the reaction  
 */
 #ifdef USE_PETSC
 static void __Nodal_Body_Forces(
-  Vec Residual, double * Reactions, Mask ActiveNodes, 
-  Mask ActiveDOFs, Particle MPM_Mesh, Mesh FEM_Mesh);
+  Vec Residual, Mask ActiveNodes, Mask ActiveDOFs,
+  Particle MPM_Mesh, Mesh FEM_Mesh,
+  bool Is_compute_Residual, bool Is_compute_Reactions);
 #else
 static void __Nodal_Body_Forces(
-  double * Residual, double * Reactions, Mask ActiveNodes, 
-  Mask ActiveDOFs, Particle MPM_Mesh, Mesh FEM_Mesh);
+  double * Residual, Mask ActiveNodes, Mask ActiveDOFs, 
+  Particle MPM_Mesh, Mesh FEM_Mesh,
+  bool Is_compute_Residual, bool Is_compute_Reactions);
 #endif  
 /**************************************************************/
 
@@ -234,34 +258,47 @@ static void compute_local_intertia(
   unsigned B /**< */);  
 /**************************************************************/
 
+/*!
+  \param[in] nnz Array for the Yale format storage
+  \param[in] ActiveNodes List of nodes which takes place in the computation
+  \param[in] ActiveDOFs List of dofs which takes place in the computation
+  \param[in] MPM_Mesh Information of the particles
+  \param[in] FEM_Mesh Information of the background nodes
+  \param[in] Params Time integration parameters
+  \param[out] STATUS Returns failure or success
+  \return The tangent matrix for the problem
+*/
 #ifdef USE_PETSC
 static Mat __assemble_tangent_stiffness(
-  int * nnz /**< */,
-  Mask ActiveNodes /**< */,
-  Mask ActiveDOFs /**< */,
-  Particle MPM_Mesh /**< */, 
-  Mesh FEM_Mesh /**< */,
-  Newmark_parameters Params /**< */,
-  int * STATUS /**< */);
+  int * nnz, Mask ActiveNodes, Mask ActiveDOFs, Particle MPM_Mesh, 
+  Mesh FEM_Mesh, Newmark_parameters Params, int * STATUS);
 #else
 static double * __assemble_tangent_stiffness(
-  int * nnz /**< */,
-  Mask ActiveNodes /**< */,
-  Mask ActiveDOFs /**< */,
-  Particle MPM_Mesh /**< */, 
-  Mesh FEM_Mesh /**< */,
-  Newmark_parameters Params /**< */,
-  int * STATUS /**< */);
+  int * nnz, Mask ActiveNodes, Mask ActiveDOFs, Particle MPM_Mesh, 
+  Mesh FEM_Mesh, Newmark_parameters Params, int * STATUS);
 #endif
 /**************************************************************/
 
+/*!
+  \brief This function takes the nodal increments comming from \n
+  the linear solver and computes the updated nodal increments \n
+  for the nodal kinetics
+  \param[in] Residual Increments during the k iteration
+  \param[in,out] D_U Nodal incremented (displacement,velocity,acceleration)
+  \param[in] U_n Previously converged nodal kinetics
+  \param[in] ActiveDOFs List of dofs which takes place in the computation
+  \param[in] Params Time integration parameters
+  \param[in] Ntotaldofs Number of dofs 
+*/
+#ifdef USE_PETSC
 static void __update_Nodal_Increments(
-  const double * Residual /**< */,
-  Nodal_Field D_U /**< */,
-  Nodal_Field U_n /**< */,
-  Mask ActiveDOFs /**< */,
-  Newmark_parameters Params /**< */,
-  unsigned Ntotaldofs /**< */);
+  const Vec Residual, Nodal_Field D_U, Nodal_Field U_n,
+  Mask ActiveDOFs, Newmark_parameters Params, unsigned Ntotaldofs);
+#else
+static void __update_Nodal_Increments(
+  const double * Residual, Nodal_Field D_U, Nodal_Field U_n,
+  Mask ActiveDOFs, Newmark_parameters Params, unsigned Ntotaldofs);
+#endif  
 /**************************************************************/
 
 static void __update_Particles(
@@ -271,17 +308,6 @@ static void __update_Particles(
   Mask ActiveNodes /**< */);
 /**************************************************************/
 
-static void __output(
-  Particle MPM_Mesh /**< */, 
-  Mesh FEM_Mesh /**< */, 
-  Mask ActiveNodes /**< */,
-  Nodal_Field D_U /**< */, 
-  Nodal_Field U_n /**< */, 
-  double * Reactions /**< */, 
-  int TimeStep /**< */,
-  int ResultsTimeStep /**< */);
-
-/**************************************************************/
 
 int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
                                    Time_Int_Params Parameters_Solver) {
@@ -321,15 +347,14 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
 //  Mat Effective_Mass;
   Mat Tangent_Stiffness;
   Vec Residual;
-//  Vec Reactions;
+  Vec Reactions;
   double * Effective_Mass;
-  double * Reactions;
   int * nnz;
 #else
-  double * Effective_Mass;
   double * Tangent_Stiffness;
   double * Residual;
   double * Reactions;
+  double * Effective_Mass;
   int * nnz;
 #endif
 
@@ -339,7 +364,7 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
   Mask ActiveNodes;
   Mask ActiveDOFs;
 
-  Newmark_parameters Params;
+  Newmark_parameters Time_Integration_Params;
 
 
   // InoutParameters
@@ -358,7 +383,7 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
   DeltaTimeStep = __compute_deltat(MPM_Mesh, DeltaX, Parameters_Solver);
 
   //  Compute time integrator parameters
-  Params = __compute_Newmark_parameters(beta, gamma, DeltaTimeStep,epsilon);
+  Time_Integration_Params = __compute_Newmark_parameters(beta, gamma, DeltaTimeStep,epsilon);
 
  #ifdef USE_PETSC
  #if defined(PETSC_USE_LOG)
@@ -435,7 +460,7 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
       fprintf(stderr, ""RED"Error in calloc(): Out of memory"RESET" \n");
       return EXIT_FAILURE;
     }
-    __initialise_nodal_increments(D_U, U_n, FEM_Mesh, ActiveNodes, Params);
+    __initialise_nodal_increments(D_U, U_n, FEM_Mesh, ActiveNodes, Time_Integration_Params);
     
  #ifdef USE_PETSC
  #if defined(PETSC_USE_LOG)
@@ -464,16 +489,11 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
  #endif
  #endif 
 
-    Reactions = (double *)calloc(Ntotaldofs, __SIZEOF_DOUBLE__);
-    if(Reactions == NULL){
-      fprintf(stderr, ""RED"Error in calloc(): Out of memory"RESET" \n");
-      return EXIT_FAILURE;
-    } 
-
     // Trial residual
     Residual = __assemble_residual(
-      U_n,D_U, Reactions, Effective_Mass,
-      ActiveNodes, ActiveDOFs, MPM_Mesh, FEM_Mesh, Params, &STATUS);
+      U_n,D_U, Effective_Mass, ActiveNodes, 
+      ActiveDOFs, MPM_Mesh, FEM_Mesh, 
+      Time_Integration_Params, true, false, &STATUS);
     if(STATUS == EXIT_FAILURE){
       fprintf(stderr, ""RED"Error in __assemble_residual()"RESET" \n");
       return EXIT_FAILURE;
@@ -510,20 +530,12 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
  #endif 
 
   Tangent_Stiffness = __assemble_tangent_stiffness(
-  nnz, ActiveNodes, ActiveDOFs, MPM_Mesh, FEM_Mesh, Params, &STATUS);
+  nnz, ActiveNodes, ActiveDOFs, MPM_Mesh, FEM_Mesh, Time_Integration_Params, &STATUS);
   if(STATUS == EXIT_FAILURE){
       fprintf(stderr, ""RED"Error in __assemble_tangent_stiffness()"RESET" \n");
       return EXIT_FAILURE;
   }
 
- #ifdef USE_PETSC
- /* Create the HDF5 viewer */
-// PetscViewer H5viewer;
-// PetscViewerHDF5Open(PETSC_COMM_WORLD,"TangentMatrix.h5",FILE_MODE_WRITE,&H5viewer);
-// PetscViewerSetFromOptions(H5viewer);
-// MatView(Tangent_Stiffness,H5viewer);
-MatView(Tangent_Stiffness,PETSC_VIEWER_DRAW_WORLD);
-#endif
 
  #ifdef USE_PETSC
  #if defined(PETSC_USE_LOG)
@@ -560,19 +572,7 @@ MatView(Tangent_Stiffness,PETSC_VIEWER_DRAW_WORLD);
  #endif
  #endif
 
- #ifdef USE_PETSC 
-     Error_increment_i = __error_residual(Residual,Nactivedofs); 
-     printf("%e \n",Error_increment_i);
-     VecView(Residual,PETSC_VIEWER_STDOUT_SELF);
-     return EXIT_SUCCESS;
-#else
-     Error_increment_i = __error_residual(Residual,Nactivedofs); 
-     printf("%e \n",Error_increment_i);
-     return EXIT_SUCCESS;
-#endif 
-
-
-//  __update_Nodal_Increments(Residual, D_U, U_n, ActiveDOFs, Params, Ntotaldofs);
+  __update_Nodal_Increments(Residual, D_U, U_n, ActiveDOFs, Time_Integration_Params, Ntotaldofs);
 
  #ifdef USE_PETSC
  #if defined(PETSC_USE_LOG)
@@ -580,9 +580,9 @@ MatView(Tangent_Stiffness,PETSC_VIEWER_DRAW_WORLD);
     PetscLogEventBegin(event_6,0,0,0,0);
  #endif
  #endif 
-      STATUS = __local_deformation(D_U, ActiveNodes, MPM_Mesh, FEM_Mesh, DeltaTimeStep);
+      STATUS = __local_compatibility_conditions(D_U, ActiveNodes, MPM_Mesh, FEM_Mesh, Time_Integration_Params);
       if(STATUS == EXIT_FAILURE){
-        fprintf(stderr, ""RED"Error in __local_deformation()"RESET" \n");
+        fprintf(stderr, ""RED"Error in __local_compatibility_conditions()"RESET" \n");
         return EXIT_FAILURE;
       } 
  #ifdef USE_PETSC
@@ -594,29 +594,22 @@ MatView(Tangent_Stiffness,PETSC_VIEWER_DRAW_WORLD);
 
       // Free memory
   #ifdef USE_PETSC       
-      free(Reactions);
       VecDestroy(&Residual);
       MatDestroy(&Tangent_Stiffness);
   #else
       free(Residual);
-      free(Reactions);
       free(Tangent_Stiffness);
   #endif 
-  
-      Reactions = (double *)calloc(Ntotaldofs, __SIZEOF_DOUBLE__);
-      if(Reactions == NULL){
-        fprintf(stderr, ""RED"Error in calloc(): Out of memory"RESET" \n");
-        return EXIT_FAILURE;
-      } 
 
       // Compute residual (NR-loop)
       Residual = __assemble_residual(
-        U_n,D_U, Reactions, Effective_Mass,
-        ActiveNodes, ActiveDOFs, MPM_Mesh, FEM_Mesh, Params, &STATUS);
-        if(STATUS == EXIT_FAILURE){
-          fprintf(stderr, ""RED"Error in __assemble_residual()"RESET" \n");
-          return EXIT_FAILURE;
-        }
+        U_n, D_U, Effective_Mass, ActiveNodes,
+        ActiveDOFs, MPM_Mesh, FEM_Mesh,
+        Time_Integration_Params, true, false, &STATUS);
+      if(STATUS == EXIT_FAILURE){
+        fprintf(stderr, ""RED"Error in __assemble_residual()"RESET" \n");
+        return EXIT_FAILURE;
+      }
 
       // Get stats for the convergence
       Error_i = __error_residual(Residual,Nactivedofs);
@@ -635,14 +628,37 @@ MatView(Tangent_Stiffness,PETSC_VIEWER_DRAW_WORLD);
 
     __update_Particles(D_U, MPM_Mesh, FEM_Mesh, ActiveNodes);
 
-    __output(MPM_Mesh, FEM_Mesh, ActiveNodes, D_U, U_n, Reactions, TimeStep, ResultsTimeStep);
+    
+    if (TimeStep % ResultsTimeStep == 0) {
+      Reactions = __assemble_residual(
+        U_n, D_U, Effective_Mass, ActiveNodes,
+        ActiveDOFs, MPM_Mesh, FEM_Mesh,
+        Time_Integration_Params, false, true, &STATUS);
+      if(STATUS == EXIT_FAILURE){
+        fprintf(stderr, ""RED"Error in __assemble_residual()"RESET" \n");
+        return EXIT_FAILURE;
+      }
+
+//      Matrix Reactions_aux = memory_to_matrix__MatrixLib__(Nactivenodes,Ndim,Reactions);
+
+//      nodal_results_vtk__InOutFun__(FEM_Mesh, ActiveNodes, Reactions_aux, TimeStep, ResultsTimeStep);
+
+      particle_results_vtk__InOutFun__(MPM_Mesh, TimeStep, ResultsTimeStep);
+
+      #ifdef USE_PETSC      
+      VecDestroy(&Reactions);
+      #else
+      free(Reactions);
+      #endif 
+//      free(Reactions_aux.nM);
+    }
 
     TimeStep++;
 
 
-  #ifdef USE_PETSC       
-      free(Reactions);
+  #ifdef USE_PETSC      
       VecDestroy(&Residual);
+      VecDestroy(&Reactions);
       MatDestroy(&Tangent_Stiffness);
   #else
       free(Residual);
@@ -740,6 +756,7 @@ static Newmark_parameters __compute_Newmark_parameters(
   Params.alpha_5 = 1 - gamma / beta;
   Params.alpha_6 = (1 - gamma / (2 * beta)) * DeltaTimeStep;
   Params.epsilon = epsilon;
+  Params.DeltaTimeStep = DeltaTimeStep;
 
   return Params;
 }
@@ -1139,12 +1156,9 @@ static void __initialise_nodal_increments(
 
 /**************************************************************/
 
-static int __local_deformation(
-  Nodal_Field D_U, 
-  Mask ActiveNodes,
-  Particle MPM_Mesh, 
-  Mesh FEM_Mesh,
-  double TimeStep) {
+static int __local_compatibility_conditions(
+  Nodal_Field D_U, Mask ActiveNodes, Particle MPM_Mesh, 
+  Mesh FEM_Mesh, Newmark_parameters Params) {
 
   int STATUS = EXIT_SUCCESS;
   unsigned Ndim = NumberDimensions;
@@ -1154,6 +1168,8 @@ static int __local_deformation(
   unsigned Order_p;
   int Idx_Element_p;
   int Idx_Patch_p;
+  
+  double TimeStep = Params.DeltaTimeStep;
 
   Element Nodes_p;
   Matrix gradient_p;
@@ -1272,36 +1288,34 @@ static int __local_deformation(
 
 #ifdef USE_PETSC
 static Vec __assemble_residual(
-  Nodal_Field U_n,
-  Nodal_Field D_U,
-  double * Reactions,
-  double * Effective_Mass,
-  Mask ActiveNodes,
-  Mask ActiveDOFs,
-  Particle MPM_Mesh,
-  Mesh FEM_Mesh,
-  Newmark_parameters Params,
+  Nodal_Field U_n, Nodal_Field D_U, double * Effective_Mass,
+  Mask ActiveNodes, Mask ActiveDOFs, Particle MPM_Mesh, Mesh FEM_Mesh,
+  Newmark_parameters Params, bool Is_compute_Residual, bool Is_compute_Reactions,
   int * STATUS)
 #else
 static double * __assemble_residual(
-  Nodal_Field U_n,
-  Nodal_Field D_U,
-  double * Reactions,
-  double * Effective_Mass,
-  Mask ActiveNodes,
-  Mask ActiveDOFs,
-  Particle MPM_Mesh,
-  Mesh FEM_Mesh,
-  Newmark_parameters Params,
+  Nodal_Field U_n, Nodal_Field D_U, double * Effective_Mass,
+  Mask ActiveNodes, Mask ActiveDOFs, Particle MPM_Mesh, Mesh FEM_Mesh,
+  Newmark_parameters Params, bool Is_compute_Residual, bool Is_compute_Reactions,
   int * STATUS) 
 #endif
   {
-    unsigned Nactivedofs = ActiveDOFs.Nactivenodes;
+    
+    unsigned Size;
 
+    if((Is_compute_Residual == true) 
+    && (Is_compute_Reactions == false)) {
+      Size = ActiveDOFs.Nactivenodes;
+    }
+    else if((Is_compute_Residual == false) 
+    && (Is_compute_Reactions == true)) {
+      Size = ActiveNodes.Nactivenodes*NumberDimensions;
+    }
+    
  #ifdef USE_PETSC
   Vec Residual;
   VecCreate(PETSC_COMM_WORLD,&Residual);
-  VecSetSizes(Residual, PETSC_DECIDE, Nactivedofs);
+  VecSetSizes(Residual, PETSC_DECIDE, Size);
   VecSetFromOptions(Residual);
  #else
     double * Residual = (double *)calloc(Nactivedofs, __SIZEOF_DOUBLE__);
@@ -1312,17 +1326,29 @@ static double * __assemble_residual(
     }  
   #endif 
 
-    *STATUS = __Nodal_Internal_Forces(Residual, Reactions, ActiveNodes, ActiveDOFs, MPM_Mesh, FEM_Mesh, DeltaTimeStep);
+    *STATUS = __Nodal_Internal_Forces(
+      Residual, ActiveNodes, ActiveDOFs, 
+      MPM_Mesh, FEM_Mesh, Params,
+      Is_compute_Residual, Is_compute_Reactions);
     if(*STATUS == EXIT_FAILURE){
       fprintf(stderr, ""RED"Error in __Nodal_Internal_Forces()"RESET" \n");
       return Residual;
     }
 
-    __Nodal_Traction_Forces(Residual, Reactions, ActiveNodes, ActiveDOFs, MPM_Mesh, FEM_Mesh);
+    __Nodal_Traction_Forces(
+      Residual, ActiveNodes, ActiveDOFs, MPM_Mesh, FEM_Mesh,
+      Is_compute_Residual, Is_compute_Reactions);
 
-    __Nodal_Body_Forces(Residual, Reactions, ActiveNodes, ActiveDOFs, MPM_Mesh, FEM_Mesh);
+    __Nodal_Body_Forces(
+      Residual, ActiveNodes, ActiveDOFs, MPM_Mesh, FEM_Mesh,
+      Is_compute_Residual, Is_compute_Reactions);
 
-    __Nodal_Inertial_Forces(Residual, Effective_Mass, U_n, D_U, ActiveNodes, ActiveDOFs, Params);
+    if((Is_compute_Residual == true) 
+    && (Is_compute_Reactions == false)) {
+      __Nodal_Inertial_Forces(
+        Residual, Effective_Mass, U_n, D_U, 
+        ActiveNodes, ActiveDOFs, Params);
+    }
 
    #ifdef USE_PETSC
     VecAssemblyBegin(Residual);
@@ -1335,12 +1361,14 @@ static double * __assemble_residual(
 
  #ifdef USE_PETSC
 static int __Nodal_Internal_Forces(
-  Vec Residual, double * Reactions, Mask ActiveNodes, 
-  Mask ActiveDOFs, Particle MPM_Mesh, Mesh FEM_Mesh, double dt) 
+  Vec Residual, Mask ActiveNodes, Mask ActiveDOFs, 
+  Particle MPM_Mesh, Mesh FEM_Mesh, Newmark_parameters Params,
+  bool Is_compute_Residual, bool Is_compute_Reactions) 
   #else
 static int __Nodal_Internal_Forces(
-  double * Residual, double * Reactions, Mask ActiveNodes, 
-  Mask ActiveDOFs, Particle MPM_Mesh, Mesh FEM_Mesh, double dt)
+  double * Residual, Mask ActiveNodes, 
+  Mask ActiveDOFs, Particle MPM_Mesh, Mesh FEM_Mesh, Newmark_parameters Params,
+  bool Is_compute_Residual, bool Is_compute_Reactions)
   #endif 
   {
 
@@ -1350,6 +1378,7 @@ static int __Nodal_Internal_Forces(
   unsigned Np = MPM_Mesh.NumGP;
   unsigned NumNodes_p;
   unsigned MatIndx_p;
+  double dt = Params.DeltaTimeStep;
 
   int Ap, Mask_node_A, Mask_total_dof_Ai, Mask_active_dof_Ai;
 
@@ -1433,7 +1462,8 @@ static int __Nodal_Internal_Forces(
 
         Residual_val = InternalForcesDensity_Ap[i] * V0_p;
 
-        if(Mask_active_dof_Ai != -1)
+        // Compute residual or reactions
+        if((Mask_active_dof_Ai != -1) && (Is_compute_Residual == true))
         {
           #ifdef USE_PETSC
           VecSetValues(Residual,1,&Mask_active_dof_Ai, &Residual_val,ADD_VALUES);
@@ -1441,9 +1471,13 @@ static int __Nodal_Internal_Forces(
           Residual[Mask_active_dof_Ai] += InternalForcesDensity_Ap[i] * V0_p;
           #endif          
         }
-        else
+        else if((Mask_active_dof_Ai == -1) && (Is_compute_Reactions == true))
         {
-          Reactions[Mask_total_dof_Ai] += Residual_val;
+          #ifdef USE_PETSC
+          VecSetValues(Residual,1,&Mask_total_dof_Ai, &Residual_val,ADD_VALUES);
+          #else
+          Residual[Mask_total_dof_Ai] += InternalForcesDensity_Ap[i] * V0_p;
+          #endif
         }
       }
 
@@ -1480,12 +1514,14 @@ static void __internal_force_density(
 
 #ifdef USE_PETSC
 static void __Nodal_Traction_Forces(
-  Vec Residual, double * Reactions, Mask ActiveNodes, 
-  Mask ActiveDOFs, Particle MPM_Mesh, Mesh FEM_Mesh)
+  Vec Residual, Mask ActiveNodes, 
+  Mask ActiveDOFs, Particle MPM_Mesh, Mesh FEM_Mesh,
+  bool Is_compute_Residual, bool Is_compute_Reactions)
 #else
 static void __Nodal_Traction_Forces(
-  double * Residual, double * Reactions, Mask ActiveNodes, 
-  Mask ActiveDOFs, Particle MPM_Mesh, Mesh FEM_Mesh)
+  double * Residual, Mask ActiveNodes, 
+  Mask ActiveDOFs, Particle MPM_Mesh, Mesh FEM_Mesh,
+  bool Is_compute_Residual, bool Is_compute_Reactions)
 #endif 
    {
 
@@ -1577,7 +1613,7 @@ static void __Nodal_Traction_Forces(
 
           Residual_val = - N_pa * T[i] * A0_p;
 
-          if(Mask_active_dof_Ai != -1)
+          if((Mask_active_dof_Ai != -1) && (Is_compute_Residual == true))
           {
             #ifdef USE_PETSC
             VecSetValues(Residual,1,&Mask_active_dof_Ai, &Residual_val,ADD_VALUES);
@@ -1585,9 +1621,13 @@ static void __Nodal_Traction_Forces(
             Residual[Mask_active_dof_Ai] += Residual_val;
             #endif    
           }
-          else
+          else if((Mask_active_dof_Ai == -1) && (Is_compute_Reactions == true))
           {
-            Reactions[Mask_total_dof_Ai] += Residual_val;
+            #ifdef USE_PETSC
+            VecSetValues(Residual,1,&Mask_total_dof_Ai, &Residual_val,ADD_VALUES);
+            #else
+            Residual[Mask_total_dof_Ai] += Residual_val;
+            #endif              
           }
 
         }
@@ -1605,12 +1645,14 @@ static void __Nodal_Traction_Forces(
 
 #ifdef USE_PETSC
 static void __Nodal_Body_Forces(
-  Vec Residual, double * Reactions, Mask ActiveNodes, 
-  Mask ActiveDOFs, Particle MPM_Mesh, Mesh FEM_Mesh)
+  Vec Residual, Mask ActiveNodes, Mask ActiveDOFs,
+  Particle MPM_Mesh, Mesh FEM_Mesh,
+  bool Is_compute_Residual, bool Is_compute_Reactions)
 #else
 static void __Nodal_Body_Forces(
-  double * Residual, double * Reactions, Mask ActiveNodes, 
-  Mask ActiveDOFs, Particle MPM_Mesh, Mesh FEM_Mesh)
+  double * Residual, Mask ActiveNodes, Mask ActiveDOFs, 
+  Particle MPM_Mesh, Mesh FEM_Mesh,
+  bool Is_compute_Residual, bool Is_compute_Reactions)
 #endif  
    {
   
@@ -1667,7 +1709,7 @@ static void __Nodal_Body_Forces(
 
         Residual_val = - ShapeFunction_pA * b[i] * m_p;
 
-        if(Mask_active_dof_Ai != -1)
+        if((Mask_active_dof_Ai != -1) && (Is_compute_Residual == true))
         {
           #ifdef USE_PETSC
           VecSetValues(Residual,1,&Mask_active_dof_Ai, &Residual_val,ADD_VALUES);
@@ -1675,9 +1717,13 @@ static void __Nodal_Body_Forces(
           Residual[Mask_active_dof_Ai] += Residual_val;
           #endif
         }
-        else
+        else if((Mask_active_dof_Ai == -1) && (Is_compute_Reactions == true))
         {
-          Reactions[Mask_total_dof_Ai] += Residual_val;
+          #ifdef USE_PETSC
+          VecSetValues(Residual,1,&Mask_total_dof_Ai, &Residual_val,ADD_VALUES);
+          #else
+          Residual[Mask_total_dof_Ai] += Residual_val;
+          #endif          
         }
       }
     }
@@ -1870,22 +1916,12 @@ Inertia_density_p[8] = ID_AB_p;
 
 #ifdef USE_PETSC
 static Mat __assemble_tangent_stiffness(
-  int * nnz,
-  Mask ActiveNodes,
-  Mask ActiveDOFs,
-  Particle MPM_Mesh, 
-  Mesh FEM_Mesh,
-  Newmark_parameters Params,
-  int * STATUS)
+  int * nnz, Mask ActiveNodes, Mask ActiveDOFs, Particle MPM_Mesh, 
+  Mesh FEM_Mesh, Newmark_parameters Params, int * STATUS)
 #else
 static double * __assemble_tangent_stiffness(
-  int * nnz,
-  Mask ActiveNodes,
-  Mask ActiveDOFs,
-  Particle MPM_Mesh, 
-  Mesh FEM_Mesh,
-  Newmark_parameters Params,
-  int * STATUS)
+  int * nnz, Mask ActiveNodes, Mask ActiveDOFs, Particle MPM_Mesh, 
+  Mesh FEM_Mesh, Newmark_parameters Params, int * STATUS)
 #endif
 {
  
@@ -2071,13 +2107,16 @@ static double * __assemble_tangent_stiffness(
 
 /**************************************************************/
 
+#ifdef USE_PETSC
 static void __update_Nodal_Increments(
-  const double * Residual,
-  Nodal_Field D_U,
-  Nodal_Field U_n,
-  Mask ActiveDOFs,
-  Newmark_parameters Params,
-  unsigned Ntotaldofs) {
+  const Vec Residual, Nodal_Field D_U, Nodal_Field U_n,
+  Mask ActiveDOFs, Newmark_parameters Params, unsigned Ntotaldofs) 
+#else
+static void __update_Nodal_Increments(
+  const double * Residual, Nodal_Field D_U, Nodal_Field U_n,
+  Mask ActiveDOFs, Newmark_parameters Params, unsigned Ntotaldofs)
+#endif  
+  {
 
   unsigned Ndim = NumberDimensions;
   int Mask_active_dof_Ai;
@@ -2087,6 +2126,11 @@ static void __update_Nodal_Increments(
   double alpha_4 = Params.alpha_4;
   double alpha_5 = Params.alpha_5;
   double alpha_6 = Params.alpha_6;
+
+  #ifdef USE_PETSC
+  const PetscScalar * aux_Residual;
+  VecGetArrayRead(Residual, &aux_Residual);
+  #endif  
 
   /*
     Update nodal variables
@@ -2106,7 +2150,11 @@ static void __update_Nodal_Increments(
 
       } else {
 
+        #ifdef USE_PETSC
+        D_U.value[Mask_total_dof_Ai] -= aux_Residual[Mask_active_dof_Ai];
+        #else
         D_U.value[Mask_total_dof_Ai] -= Residual[Mask_active_dof_Ai];
+        #endif  
 
         D_U.d2_value_dt2[Mask_total_dof_Ai] = 
         alpha_1 * D_U.value[Mask_total_dof_Ai] 
@@ -2118,7 +2166,12 @@ static void __update_Nodal_Increments(
         + (alpha_5 - 1) * U_n.d_value_dt[Mask_total_dof_Ai] 
         + alpha_6 * U_n.d2_value_dt2[Mask_total_dof_Ai];
       }
-    }
+  }
+
+  #ifdef USE_PETSC
+  VecRestoreArrayRead(Residual, &aux_Residual);  
+  #endif
+
 }
 
 /**************************************************************/
@@ -2213,185 +2266,6 @@ static void __update_Particles(
     free(Nodes_p.Connectivity);
     free__MatrixLib__(ShapeFunction_p);
   }
-}
-
-/**************************************************************/
-
-static void __output(
-  Particle MPM_Mesh, 
-  Mesh FEM_Mesh, 
-  Mask ActiveNodes,
-  Nodal_Field D_U, 
-  Nodal_Field U_n, 
-  double * Reactions, 
-  int TimeStep,
-  int ResultsTimeStep) {
-
-  unsigned Ndim = NumberDimensions;
-  unsigned Nactivenodes = ActiveNodes.Nactivenodes;
-  Matrix ShapeFunction;
-
-  /*
-    vtk results
-  */
-  if (TimeStep % ResultsTimeStep == 0) {
-
-    int Ngp = MPM_Mesh.NumGP;
-    int NumNodes_p;
-    Element Nodes_p;
-    Matrix ShapeFunction_p;
-
-#ifdef DEBUG_MODE
-#if DEBUG_MODE + 0
-
-      if (Out_Partition_Unity) {
-      MPM_Mesh.Phi.PU = allocZ__MatrixLib__(Ngp, 1);
-      for (int p_idx = 0; p_idx < Ngp; p_idx++) {
-        NumNodes_p = MPM_Mesh.NumberNodes[p_idx];
-        Nodes_p = nodal_set__Particles__(p_idx, MPM_Mesh.ListNodes[p_idx],
-                                         NumNodes_p);
-        ShapeFunction_p = compute_N__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
-
-        for (int A = 0; A < NumNodes_p; A++) {
-          MPM_Mesh.Phi.PU.nV[p_idx] += ShapeFunction_p.nV[A];
-        }
-
-        free(Nodes_p.Connectivity);
-        free__MatrixLib__(ShapeFunction_p);
-      }
-    }
-
-  #endif
-#endif
-
-    Matrix Reactions_aux = memory_to_matrix__MatrixLib__(Nactivenodes,Ndim,Reactions);
-
-    particle_results_vtk__InOutFun__(MPM_Mesh, TimeStep, ResultsTimeStep);
-
-    nodal_results_vtk__InOutFun__(FEM_Mesh, ActiveNodes, Reactions_aux, TimeStep,
-                                  ResultsTimeStep);
-
-    free(Reactions_aux.nM);
-
-#ifdef DEBUG_MODE
-#if DEBUG_MODE + 0
-
-  if (Out_Partition_Unity) {
-      free__MatrixLib__(MPM_Mesh.Phi.PU);
-    }
-
-  #endif
-#endif
-
-  }
-
-  int Backup_TimeStep = 100;
-
-  if (TimeStep % Backup_TimeStep == 0) {
-    particle_backup_vtk__InOutFun__(MPM_Mesh, TimeStep, Backup_TimeStep);
-  }
-
-  // /*
-  //   csv results
-  // */
-  // for(int i = 0 ; i<Number_Out_nodal_path_csv ; i++)
-  // {
-
-  //   if(Out_nodal_path_csv[i].Out_csv_nodes_path_Velocity)
-  //   {
-  //     path_nodes_analysis_csv__InOutFun__(Velocity,
-  //     FEM_Mesh.Coordinates,"Nodal_path_velocity_csv", ActiveNodes,
-  //     Out_nodal_path_csv[i], i, TimeStep, DeltaTimeStep);
-  //   }
-
-  //   if(Out_nodal_path_csv[i].Out_csv_nodes_path_Acceleration)
-  //   {
-  //     path_nodes_analysis_csv__InOutFun__(Acceleration,
-  //     FEM_Mesh.Coordinates,"Nodal_path_acceleration_csv", ActiveNodes,
-  //     Out_nodal_path_csv[i], i, TimeStep, DeltaTimeStep);
-  //   }
-
-  //   if(Out_nodal_path_csv[i].Out_csv_nodes_path_D_Displacement)
-  //   {
-  //     path_nodes_analysis_csv__InOutFun__(D_Displacement,
-  //     FEM_Mesh.Coordinates,"Nodal_path_displacement_csv", ActiveNodes,
-  //     Out_nodal_path_csv[i], i, TimeStep, DeltaTimeStep);
-  //   }
-
-  //   if(Out_nodal_path_csv[i].Out_csv_nodes_path_Forces)
-  //   {
-  //     path_nodes_analysis_csv__InOutFun__(Forces,
-  //     FEM_Mesh.Coordinates,"Nodal_path_forces_csv", ActiveNodes,
-  //     Out_nodal_path_csv[i], i, TimeStep, DeltaTimeStep);
-  //   }
-
-  //   if(Out_nodal_path_csv[i].Out_csv_nodes_path_Reactions)
-  //   {
-  //     path_nodes_analysis_csv__InOutFun__(Reactions,
-  //     FEM_Mesh.Coordinates,"Nodal_path_reactions_csv", ActiveNodes,
-  //     Out_nodal_path_csv[i], i, TimeStep, DeltaTimeStep);
-  //   }
-
-  //   if(Out_nodal_path_csv[i].Out_csv_nodes_path_Residual)
-  //   {
-  //     path_nodes_analysis_csv__InOutFun__(Residual,
-  //     FEM_Mesh.Coordinates,"Nodal_path_residual_csv", ActiveNodes,
-  //     Out_nodal_path_csv[i], i, TimeStep, DeltaTimeStep);
-  //   }
-  // }
-
-  // for(int i = 0 ; i<Number_Out_particles_path_csv ; i++)
-  // {
-  //   if(Out_particles_path_csv[i].Out_csv_particles_path_Damage)
-  //   {
-  //     path_particles_analysis_csv__InOutFun__(MPM_Mesh.Phi.chi,
-  //     MPM_Mesh.Phi.x_GC, "Particles_path_damage_csv",
-  //     Out_particles_path_csv[i], i, TimeStep, DeltaTimeStep);
-  //   }
-
-  //   if(Out_particles_path_csv[i].Out_csv_particles_path_Velocity)
-  //   {
-  //     path_particles_analysis_csv__InOutFun__(MPM_Mesh.Phi.vel,
-  //     MPM_Mesh.Phi.x_GC, "Particles_path_velocity_csv",
-  //     Out_particles_path_csv[i], i, TimeStep, DeltaTimeStep);
-  //   }
-
-  //   if(Out_particles_path_csv[i].Out_csv_particles_path_Acceleration)
-  //   {
-  //     path_particles_analysis_csv__InOutFun__(MPM_Mesh.Phi.acc,
-  //     MPM_Mesh.Phi.x_GC, "Particles_path_acceleration_csv",
-  //     Out_particles_path_csv[i], i, TimeStep, DeltaTimeStep);
-  //   }
-
-  //   if(Out_particles_path_csv[i].Out_csv_particles_path_Displacement)
-  //   {
-  //     path_particles_analysis_csv__InOutFun__(MPM_Mesh.Phi.dis,
-  //     MPM_Mesh.Phi.x_GC, "Particles_path_displacement_csv",
-  //     Out_particles_path_csv[i], i, TimeStep, DeltaTimeStep);
-  //   }
-
-  //   if(Out_particles_path_csv[i].Out_csv_particles_path_Stress)
-  //   {
-  //     path_particles_analysis_csv__InOutFun__(MPM_Mesh.Phi.Stress,
-  //     MPM_Mesh.Phi.x_GC, "Particles_path_stress_csv",
-  //     Out_particles_path_csv[i], i, TimeStep, DeltaTimeStep);
-  //   }
-
-  //   if(Out_particles_path_csv[i].Out_csv_particles_path_Strain)
-  //   {
-  //     path_particles_analysis_csv__InOutFun__(MPM_Mesh.Phi.Strain,
-  //     MPM_Mesh.Phi.x_GC, "Particles_path_strain_csv",
-  //     Out_particles_path_csv[i], i, TimeStep, DeltaTimeStep);
-  //   }
-
-  //   if(Out_particles_path_csv[i].Out_csv_particles_path_Deformation_gradient)
-  //   {
-  //     path_particles_analysis_csv__InOutFun__(MPM_Mesh.Phi.F_n,
-  //     MPM_Mesh.Phi.x_GC, "Particles_path_deformation_gradient_csv",
-  //     Out_particles_path_csv[i], i, TimeStep, DeltaTimeStep);
-  //   }
-
-  // }
 }
 
 /**************************************************************/
