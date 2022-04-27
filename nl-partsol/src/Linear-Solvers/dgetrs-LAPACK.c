@@ -7,9 +7,9 @@ int dgetrs_LAPACK(
     unsigned Nactivedofs)
 {
   int STATUS = EXIT_SUCCESS;
-  unsigned Order = Nactivedofs;
-  unsigned LDA = Nactivedofs;
-  unsigned LDB = Nactivedofs;
+  int Order = Nactivedofs;
+  int LDA = Nactivedofs;
+  int LDB = Nactivedofs;
   char TRANS = 'T'; /* (Transpose) */
   int INFO = 3;
   int NRHS = 1;
