@@ -573,14 +573,8 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
 #endif
 
 
-#pragma omp sections
-      {
-#pragma omp section
-        {
           __local_compatibility_conditions(D_U, ActiveNodes, MPM_Mesh, FEM_Mesh,
                                            &STATUS);
-        }
-      }
       if (STATUS == EXIT_FAILURE) {
         fprintf(stderr,
                 "" RED "Error in __local_compatibility_conditions()" RESET

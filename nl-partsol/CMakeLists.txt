@@ -44,7 +44,7 @@ if(LAPACK_FOUND)
 endif()
 
 # Add OpenMP
-option(USE_OpenMP "Use OpenMP solver library" OFF)
+option(USE_OpenMP "Use OpenMP solver library" ON)
 if (USE_OpenMP)
   find_package(OpenMP REQUIRED)
 endif()
