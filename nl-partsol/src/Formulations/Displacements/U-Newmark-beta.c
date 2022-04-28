@@ -1396,14 +1396,7 @@ static int __Nodal_Internal_Forces(double *Residual, Mask ActiveNodes,
     d_shapefunction_n_p = compute_dN__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
 
     // Pushforward the shape functions
-    double *d_shapefunction_n1_p = push_forward_dN__MeshTools__(
-        d_shapefunction_n_p.nV, DF_p, NumNodes_p, &STATUS);
-    if (d_shapefunction_n1_p == NULL) {
-      fprintf(stderr, "" RED "Error in calloc()" RESET " \n");
-      return EXIT_FAILURE;
-    }
-    STATUS = push_forward_dN__MeshTools__(
-        d_shapefunction_n1_p, d_shapefunction_n_p.nV, DF_p, NumNodes_p);
+    d_shapefunction_n1_p = push_forward_dN__MeshTools__(d_shapefunction_n_p.nV, DF_p, NumNodes_p,&STATUS);
     if (STATUS == EXIT_FAILURE) {
       fprintf(stderr,
               "" RED "Error in push_forward_dN__MeshTools__()" RESET " \n");
@@ -1977,15 +1970,7 @@ __assemble_tangent_stiffness(int *nnz, Mask ActiveNodes, Mask ActiveDOFs,
     d_shapefunction_n_p = compute_dN__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
 
     // Pushforward the shape function gradient
-    d_shapefunction_n1_p =
-        (double *)calloc(NumNodes_p * Ndim, __SIZEOF_DOUBLE__);
-    if (d_shapefunction_n1_p == NULL) {
-      fprintf(stderr, "" RED "Error in calloc()" RESET " \n");
-      *STATUS = EXIT_FAILURE;
-      return Tangent_Stiffness;
-    }
-    *STATUS = push_forward_dN__MeshTools__(
-        d_shapefunction_n1_p, d_shapefunction_n_p.nV, DF_p, NumNodes_p);
+    d_shapefunction_n1_p = push_forward_dN__MeshTools__(d_shapefunction_n_p.nV, DF_p, NumNodes_p,STATUS);
     if (*STATUS == EXIT_FAILURE) {
       fprintf(stderr,
               "" RED "Error in push_forward_dN__MeshTools__()" RESET " \n");
