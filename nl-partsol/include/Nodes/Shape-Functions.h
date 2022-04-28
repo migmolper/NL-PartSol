@@ -25,11 +25,20 @@ Matrix   compute_N__MeshTools__(Element, Particle, Mesh);
 Matrix   compute_dN__MeshTools__(Element, Particle, Mesh);
 /********************************************************************/
 
-int push_forward_dN__MeshTools__(
-  double * Gradient_n1_p,
+/*!
+  \brief Extrapolate the shape function gradient of the n configuration to the 
+  n+1 configuration using the incremental deformation gradient
+  \param[in] Gradient_n_p Shape function gradient in the n configuration
+  \param[in] d_phi Incremental deformation gradient
+  \param[in] NumNodes Number of nodes of the shape function gradient
+  \param[out] STATUS Status variables 
+  \returns The shape function gradient in the n+1 configuration
+*/
+double * push_forward_dN__MeshTools__(
   const double * Gradient_n_p,
   const double * d_phi,
-  unsigned NumNodes);
+  unsigned NumNodes,
+  int * STATUS);
 /********************************************************************/
 
 #endif

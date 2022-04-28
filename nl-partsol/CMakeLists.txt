@@ -44,8 +44,7 @@ if(LAPACK_FOUND)
 endif()
 
 # Add OpenMP
-option(USE_OpenMP "Use OpenMP solver library" OFF)
-if (USE_OpenMP)
+if (USE_OPENMP)
   find_package(OpenMP REQUIRED)
 endif()
 if (OPENMP_FOUND)
@@ -55,7 +54,6 @@ if (OPENMP_FOUND)
 endif()
 
 # Add PETSC
-option(USE_PETSC "Use PETSC solver library" OFF)
 if (USE_PETSC)
   pkg_search_module(PETSC REQUIRED IMPORTED_TARGET PETSc)
 endif()
