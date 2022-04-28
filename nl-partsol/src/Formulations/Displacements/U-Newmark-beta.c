@@ -1892,6 +1892,7 @@ __assemble_tangent_stiffness(int *nnz, Mask ActiveNodes, Mask ActiveDOFs,
   unsigned Nactivedofs = ActiveDOFs.Nactivenodes;
   unsigned Np = MPM_Mesh.NumGP;
   unsigned NumNodes_p;
+  unsigned MatIndx_p;
 
   unsigned p;
 
@@ -1928,109 +1929,122 @@ __assemble_tangent_stiffness(int *nnz, Mask ActiveNodes, Mask ActiveDOFs,
   double alpha_4 = Params.alpha_4;
   double epsilon = Params.epsilon;
 
-  for (p = 0; p < Np; p++) {
+#pragma omp parallel private(NumNodes_p, MatIndx_p, Stiffness_density_p,       \
+                             Inertia_density_p, Tangent_Stiffness_val)
+  {
+#pragma omp for private(p)
+    for (p = 0; p < Np; p++) {
 
-    // Get mass and the volume of the particle in the reference configuration
-    // and the jacobian of the deformation gradient
-    double m_p = MPM_Mesh.Phi.mass.nV[p];
-    double V0_p = MPM_Mesh.Phi.Vol_0.nV[p];
+      // Get mass and the volume of the particle in the reference configuration
+      // and the jacobian of the deformation gradient
+      double m_p = MPM_Mesh.Phi.mass.nV[p];
+      double V0_p = MPM_Mesh.Phi.Vol_0.nV[p];
 
-    // Material properties of the particle
-    unsigned MatIndx_p = MPM_Mesh.MatIdx[p];
-    Material MatProp_p = MPM_Mesh.Mat[MatIndx_p];
+      // Material properties of the particle
+      MatIndx_p = MPM_Mesh.MatIdx[p];
+      Material MatProp_p = MPM_Mesh.Mat[MatIndx_p];
 
-    // Pointer to the incremental deformation gradient
-    double *DF_p = MPM_Mesh.Phi.DF.nM[p];
+      // Pointer to the incremental deformation gradient
+      double *DF_p = MPM_Mesh.Phi.DF.nM[p];
 
-    //  Define nodal connectivity for each particle
-    //  and compute gradient of the shape function
-    NumNodes_p = MPM_Mesh.NumberNodes[p];
-    Element Nodes_p =
-        nodal_set__Particles__(p, MPM_Mesh.ListNodes[p], NumNodes_p);
-    Matrix shapefunction_n_p =
-        compute_N__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
-    Matrix d_shapefunction_n_p =
-        compute_dN__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
+      //  Define nodal connectivity for each particle
+      //  and compute gradient of the shape function
+      NumNodes_p = MPM_Mesh.NumberNodes[p];
+      Element Nodes_p =
+          nodal_set__Particles__(p, MPM_Mesh.ListNodes[p], NumNodes_p);
+      Matrix shapefunction_n_p =
+          compute_N__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
+      Matrix d_shapefunction_n_p =
+          compute_dN__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
 
-    // Pushforward the shape function gradient
-    double *d_shapefunction_n1_p = push_forward_dN__MeshTools__(
-        d_shapefunction_n_p.nV, DF_p, NumNodes_p, STATUS);
-    if (*STATUS == EXIT_FAILURE) {
-      fprintf(stderr,
-              "" RED "Error in push_forward_dN__MeshTools__()" RESET " \n");
-      *STATUS = EXIT_FAILURE;
-    }
+      // Pushforward the shape function gradient
+      double *d_shapefunction_n1_p = push_forward_dN__MeshTools__(
+          d_shapefunction_n_p.nV, DF_p, NumNodes_p, STATUS);
+      if (*STATUS == EXIT_FAILURE) {
+        fprintf(stderr,
+                "" RED "Error in push_forward_dN__MeshTools__()" RESET " \n");
+        *STATUS = EXIT_FAILURE;
+      }
 
-    for (unsigned A = 0; A < NumNodes_p; A++) {
+      for (unsigned A = 0; A < NumNodes_p; A++) {
 
-      // Get the gradient evaluation in node A
-      // and the masked index of the node A
-      double shapefunction_n_pA = shapefunction_n_p.nV[A];
-      double *d_shapefunction_n_pA = d_shapefunction_n_p.nM[A];
-      int Ap = Nodes_p.Connectivity[A];
-      int Mask_node_A = ActiveNodes.Nodes2Mask[Ap];
+        // Get the gradient evaluation in node A
+        // and the masked index of the node A
+        double shapefunction_n_pA = shapefunction_n_p.nV[A];
+        double *d_shapefunction_n_pA = d_shapefunction_n_p.nM[A];
+        int Ap = Nodes_p.Connectivity[A];
+        int Mask_node_A = ActiveNodes.Nodes2Mask[Ap];
 
-      for (unsigned B = 0; B < NumNodes_p; B++) {
+        for (unsigned B = 0; B < NumNodes_p; B++) {
 
-        // Get the gradient evaluation in node B
-        // and the masked index of the node B
-        double shapefunction_n_pB = shapefunction_n_p.nV[B];
-        double *d_shapefunction_n_pB = d_shapefunction_n_p.nM[B];
-        int Bp = Nodes_p.Connectivity[B];
-        int Mask_node_B = ActiveNodes.Nodes2Mask[Bp];
+          // Get the gradient evaluation in node B
+          // and the masked index of the node B
+          double shapefunction_n_pB = shapefunction_n_p.nV[B];
+          double *d_shapefunction_n_pB = d_shapefunction_n_p.nM[B];
+          int Bp = Nodes_p.Connectivity[B];
+          int Mask_node_B = ActiveNodes.Nodes2Mask[Bp];
 
-        // Compute the stiffness density matrix
-        *STATUS = stiffness_density__Constitutive__(
-            p, Stiffness_density_p, &d_shapefunction_n1_p[A * Ndim],
-            &d_shapefunction_n1_p[B * Ndim], d_shapefunction_n_pA,
-            d_shapefunction_n_pB, alpha_4, MPM_Mesh, MatProp_p);
-        if (*STATUS == EXIT_FAILURE) {
-          fprintf(stderr,
-                  "" RED "Error in stiffness_density__Constitutive__" RESET
-                  "\n");
-        }
+          // Compute the stiffness density matrix
+          *STATUS = stiffness_density__Constitutive__(
+              p, Stiffness_density_p, &d_shapefunction_n1_p[A * Ndim],
+              &d_shapefunction_n1_p[B * Ndim], d_shapefunction_n_pA,
+              d_shapefunction_n_pB, alpha_4, MPM_Mesh, MatProp_p);
+          if (*STATUS == EXIT_FAILURE) {
+            fprintf(stderr,
+                    "" RED "Error in stiffness_density__Constitutive__" RESET
+                    "\n");
+          }
 
-        // Local mass matrix
-        compute_local_intertia(Inertia_density_p, shapefunction_n_pA,
-                               shapefunction_n_pB, m_p, alpha_1, epsilon,
-                               Mask_node_A, Mask_node_B);
+          // Local mass matrix
+          compute_local_intertia(Inertia_density_p, shapefunction_n_pA,
+                                 shapefunction_n_pB, m_p, alpha_1, epsilon,
+                                 Mask_node_A, Mask_node_B);
 
-        //  Assembling process
-        for (unsigned i = 0; i < Ndim; i++) {
+          //  Assembling process
+          for (unsigned i = 0; i < Ndim; i++) {
 
-          int Mask_total_dof_Ai = Mask_node_A * Ndim + i;
-          int Mask_active_dof_Ai = ActiveDOFs.Nodes2Mask[Mask_total_dof_Ai];
+            int Mask_total_dof_Ai = Mask_node_A * Ndim + i;
+            int Mask_active_dof_Ai = ActiveDOFs.Nodes2Mask[Mask_total_dof_Ai];
 
-          for (unsigned j = 0; j < Ndim; j++) {
+            for (unsigned j = 0; j < Ndim; j++) {
 
-            int Mask_total_dof_Bj = Mask_node_B * Ndim + j;
-            int Mask_active_dof_Bj = ActiveDOFs.Nodes2Mask[Mask_total_dof_Bj];
+              int Mask_total_dof_Bj = Mask_node_B * Ndim + j;
+              int Mask_active_dof_Bj = ActiveDOFs.Nodes2Mask[Mask_total_dof_Bj];
 
-            if ((Mask_active_dof_Ai != -1) && (Mask_active_dof_Bj != -1)) {
+#pragma omp critical
+              {
 
-              Tangent_Stiffness_val = Stiffness_density_p[i * Ndim + j] * V0_p +
-                                      Inertia_density_p[i * Ndim + j];
+                if ((Mask_active_dof_Ai != -1) && (Mask_active_dof_Bj != -1)) {
+
+                  Tangent_Stiffness_val =
+                      Stiffness_density_p[i * Ndim + j] * V0_p +
+                      Inertia_density_p[i * Ndim + j];
 
 #ifdef USE_PETSC
-              MatSetValues(Tangent_Stiffness, 1, &Mask_active_dof_Ai, 1,
-                           &Mask_active_dof_Bj, &Tangent_Stiffness_val,
-                           ADD_VALUES);
+                  MatSetValues(Tangent_Stiffness, 1, &Mask_active_dof_Ai, 1,
+                               &Mask_active_dof_Bj, &Tangent_Stiffness_val,
+                               ADD_VALUES);
 #else
 
-              Tangent_Stiffness[Mask_active_dof_Ai * Nactivedofs +
-                                Mask_active_dof_Bj] += Tangent_Stiffness_val;
+                  Tangent_Stiffness[Mask_active_dof_Ai * Nactivedofs +
+                                    Mask_active_dof_Bj] +=
+                      Tangent_Stiffness_val;
 #endif
-            }
-          }
-        }
-      }
-    }
+                }
+              } // #pragma omp critical
+            }   // for j (dof)
+          }     // for i (dof)
+        }       // for B (node)
+      }         // for A (node)
 
-    free__MatrixLib__(shapefunction_n_p);
-    free__MatrixLib__(d_shapefunction_n_p);
-    free(d_shapefunction_n1_p);
-    free(Nodes_p.Connectivity);
-  }
+      // Free memory
+      free__MatrixLib__(shapefunction_n_p);
+      free__MatrixLib__(d_shapefunction_n_p);
+      free(d_shapefunction_n1_p);
+      free(Nodes_p.Connectivity);
+
+    } // for p (particle)
+  }   // #pragma omp parallel
 
 #ifdef USE_PETSC
   MatAssemblyBegin(Tangent_Stiffness, MAT_FINAL_ASSEMBLY);
