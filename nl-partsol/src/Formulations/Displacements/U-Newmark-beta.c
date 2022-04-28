@@ -129,17 +129,18 @@ static double *__assemble_residual(Nodal_Field U_n, Nodal_Field D_U,
   \param[in] FEM_Mesh Information of the background nodes
   \param[in] Is_compute_Residual The function computes the residual
   \param[in] Is_compute_Reactions The function computes the reaction
+  \param[out] STATUS Returns failure or success
 */
 #ifdef USE_PETSC
-static int __Nodal_Internal_Forces(Vec Residual, Mask ActiveNodes,
-                                   Mask ActiveDOFs, Particle MPM_Mesh,
-                                   Mesh FEM_Mesh, bool Is_compute_Residual,
-                                   bool Is_compute_Reactions);
+static void __Nodal_Internal_Forces(Vec Residual, Mask ActiveNodes,
+                                    Mask ActiveDOFs, Particle MPM_Mesh,
+                                    Mesh FEM_Mesh, bool Is_compute_Residual,
+                                    bool Is_compute_Reactions, int *STATUS);
 #else
-static int __Nodal_Internal_Forces(double *Residual, Mask ActiveNodes,
-                                   Mask ActiveDOFs, Particle MPM_Mesh,
-                                   Mesh FEM_Mesh, bool Is_compute_Residual,
-                                   bool Is_compute_Reactions);
+static void __Nodal_Internal_Forces(double *Residual, Mask ActiveNodes,
+                                    Mask ActiveDOFs, Particle MPM_Mesh,
+                                    Mesh FEM_Mesh, bool Is_compute_Residual,
+                                    bool Is_compute_Reactions, int *STATUS);
 #endif
 /**************************************************************/
 
@@ -1315,9 +1316,8 @@ static double *__assemble_residual(Nodal_Field U_n, Nodal_Field D_U,
   }
 #endif
 
-  *STATUS = __Nodal_Internal_Forces(Residual, ActiveNodes, ActiveDOFs, MPM_Mesh,
-                                    FEM_Mesh, Is_compute_Residual,
-                                    Is_compute_Reactions);
+  __Nodal_Internal_Forces(Residual, ActiveNodes, ActiveDOFs, MPM_Mesh, FEM_Mesh,
+                          Is_compute_Residual, Is_compute_Reactions, STATUS);
   if (*STATUS == EXIT_FAILURE) {
     fprintf(stderr, "" RED "Error in __Nodal_Internal_Forces()" RESET " \n");
     return Residual;
@@ -1344,19 +1344,19 @@ static double *__assemble_residual(Nodal_Field U_n, Nodal_Field D_U,
 /**************************************************************/
 
 #ifdef USE_PETSC
-static int __Nodal_Internal_Forces(Vec Residual, Mask ActiveNodes,
-                                   Mask ActiveDOFs, Particle MPM_Mesh,
-                                   Mesh FEM_Mesh, bool Is_compute_Residual,
-                                   bool Is_compute_Reactions)
+static void __Nodal_Internal_Forces(Vec Residual, Mask ActiveNodes,
+                                    Mask ActiveDOFs, Particle MPM_Mesh,
+                                    Mesh FEM_Mesh, bool Is_compute_Residual,
+                                    bool Is_compute_Reactions, int *STATUS)
 #else
-static int __Nodal_Internal_Forces(double *Residual, Mask ActiveNodes,
-                                   Mask ActiveDOFs, Particle MPM_Mesh,
-                                   Mesh FEM_Mesh, bool Is_compute_Residual,
-                                   bool Is_compute_Reactions)
+static void __Nodal_Internal_Forces(double *Residual, Mask ActiveNodes,
+                                    Mask ActiveDOFs, Particle MPM_Mesh,
+                                    Mesh FEM_Mesh, bool Is_compute_Residual,
+                                    bool Is_compute_Reactions, int *STATUS)
 #endif
 {
 
-  int STATUS = EXIT_SUCCESS;
+  *STATUS = EXIT_SUCCESS;
   unsigned Ndim = NumberDimensions;
   unsigned Np = MPM_Mesh.NumGP;
   unsigned NumNodes_p;
@@ -1393,8 +1393,8 @@ static int __Nodal_Internal_Forces(double *Residual, Mask ActiveNodes,
 
       // Pushforward the shape functions
       double *d_shapefunction_n1_p = push_forward_dN__MeshTools__(
-          d_shapefunction_n_p.nV, DF_p, NumNodes_p, &STATUS);
-      if (STATUS == EXIT_FAILURE) {
+          d_shapefunction_n_p.nV, DF_p, NumNodes_p, STATUS);
+      if (*STATUS == EXIT_FAILURE) {
         fprintf(stderr,
                 "" RED "Error in push_forward_dN__MeshTools__()" RESET " \n");
       }
@@ -1403,8 +1403,8 @@ static int __Nodal_Internal_Forces(double *Residual, Mask ActiveNodes,
       //  integration rule.
       MatIndx_p = MPM_Mesh.MatIdx[p];
       Material MatProp_p = MPM_Mesh.Mat[MatIndx_p];
-      STATUS = Stress_integration__Constitutive__(p, MPM_Mesh, MatProp_p);
-      if (STATUS == EXIT_FAILURE) {
+      *STATUS = Stress_integration__Constitutive__(p, MPM_Mesh, MatProp_p);
+      if (*STATUS == EXIT_FAILURE) {
         fprintf(stderr,
                 "" RED "Error in Stress_integration__Constitutive__(,)" RESET
                 " \n");
@@ -1464,8 +1464,6 @@ static int __Nodal_Internal_Forces(double *Residual, Mask ActiveNodes,
       free(Nodes_p.Connectivity);
     }
   }
-
-  return STATUS;
 }
 
 /**************************************************************/
