@@ -572,9 +572,8 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
 #endif
 #endif
 
-
       __local_compatibility_conditions(D_U, ActiveNodes, MPM_Mesh, FEM_Mesh,
-                                           &STATUS);
+                                       &STATUS);
       if (STATUS == EXIT_FAILURE) {
         fprintf(stderr,
                 "" RED "Error in __local_compatibility_conditions()" RESET
@@ -1158,119 +1157,120 @@ static void __local_compatibility_conditions(Nodal_Field D_U, Mask ActiveNodes,
   int Idx_Element_p;
   int Idx_Patch_p;
 
-  /*
-    Loop in the material point set
-  */
-  #pragma omp parallel private(NumberNodes_p,Order_p)
+/*
+  Loop in the material point set
+*/
+#pragma omp parallel private(NumberNodes_p, Order_p)
   {
 
-    #pragma omp for private(p)
+#pragma omp for private(p)
     for (p = 0; p < Np; p++) {
 
-    //  Define tributary nodes of the particle
-    NumberNodes_p = MPM_Mesh.NumberNodes[p];
-    Element Nodes_p = nodal_set__Particles__(p, MPM_Mesh.ListNodes[p], NumberNodes_p);
-    Order_p = NumberNodes_p * Ndim;
+      //  Define tributary nodes of the particle
+      NumberNodes_p = MPM_Mesh.NumberNodes[p];
+      Element Nodes_p =
+          nodal_set__Particles__(p, MPM_Mesh.ListNodes[p], NumberNodes_p);
+      Order_p = NumberNodes_p * Ndim;
 
-    //  Get the nodal increment of displacement using the mask
-    double *D_Displacement_Ap = (double *)calloc(Order_p, __SIZEOF_DOUBLE__);
-    double *D_Velocity_Ap = (double *)calloc(Order_p, __SIZEOF_DOUBLE__);
-    if ((D_Displacement_Ap == NULL) || (D_Velocity_Ap == NULL)) {
-      fprintf(stderr, "" RED "Error in calloc(): Out of memory" RESET " \n");
-      *STATUS = EXIT_FAILURE;
-    }
-
-    get_set_field__MeshTools__(D_Displacement_Ap, D_U.value, Nodes_p,
-                               ActiveNodes);
-    get_set_field__MeshTools__(D_Velocity_Ap, D_U.d_value_dt, Nodes_p,
-                               ActiveNodes);
-
-    /*
-      Evaluate the shape function gradient in the coordinates of the particle
-    */
-    Matrix gradient_p = compute_dN__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
-
-    /*
-      Take the values of the deformation gradient from the previous step
-    */
-    double *F_n_p = MPM_Mesh.Phi.F_n.nM[p];
-    double *F_n1_p = MPM_Mesh.Phi.F_n1.nM[p];
-    double *DF_p = MPM_Mesh.Phi.DF.nM[p];
-    double *dFdt_n_p = MPM_Mesh.Phi.dt_F_n.nM[p];
-    double *dFdt_n1_p = MPM_Mesh.Phi.dt_F_n1.nM[p];
-    double *dt_DF_p = MPM_Mesh.Phi.dt_DF.nM[p];
-
-
-    update_increment_Deformation_Gradient__Particles__(
-        DF_p, D_Displacement_Ap, gradient_p.nV, NumberNodes_p);
-
-    update_rate_increment_Deformation_Gradient__Particles__(
-        dt_DF_p, D_Velocity_Ap, gradient_p.nV, NumberNodes_p);
-
-    /*
-      Update the deformation gradient in t = n + 1 with the information
-      from t = n and the increment of deformation gradient.
-    */
-    update_Deformation_Gradient_n1__Particles__(F_n1_p, F_n_p, DF_p);
-    update_rate_Deformation_Gradient_n1__Particles__(dFdt_n1_p, dt_DF_p, F_n_p,
-                                                     DF_p, dFdt_n_p);
-
-    //  Compute Jacobian of the deformation gradient
-    MPM_Mesh.Phi.J_n1.nV[p] = I3__TensorLib__(F_n1_p);
-    if (MPM_Mesh.Phi.J_n1.nV[p] <= 0.0) {
-      fprintf(stderr, "" RED "Negative jacobian in particle %i" RESET " \n", p);
-      *STATUS = EXIT_FAILURE;
-    }
-
-    // F-bar  Update patch
-    if (FEM_Mesh.Locking_Control_Fbar) {
-      Idx_Element_p = MPM_Mesh.Element_p[p];
-      Idx_Patch_p = FEM_Mesh.Idx_Patch[Idx_Element_p];
-      FEM_Mesh.Vol_Patch_n[Idx_Patch_p] +=
-          MPM_Mesh.Phi.J_n.nV[p] * MPM_Mesh.Phi.Vol_0.nV[p];
-      FEM_Mesh.Vol_Patch_n1[Idx_Patch_p] +=
-          MPM_Mesh.Phi.J_n1.nV[p] * MPM_Mesh.Phi.Vol_0.nV[p];
-    }
-
-    free(D_Displacement_Ap);
-    free(D_Velocity_Ap);
-    free__MatrixLib__(gradient_p);
-    free(Nodes_p.Connectivity);
-  }
-
-      
-  // F-bar
-  #pragma omp barrier
-  if (FEM_Mesh.Locking_Control_Fbar) {
-
-    double Vn_patch;
-    double Vn1_patch;
-    double J_patch;
-
-    #pragma omp for private(p,Vn_patch,Vn1_patch,J_patch,Idx_Element_p,Idx_Patch_p)
-    for (p = 0; p < Np; p++) {
-
-      Idx_Element_p = MPM_Mesh.Element_p[p];
-      Idx_Patch_p = FEM_Mesh.Idx_Patch[Idx_Element_p];
-
-      Vn_patch = FEM_Mesh.Vol_Patch_n[Idx_Patch_p];
-      Vn1_patch = FEM_Mesh.Vol_Patch_n1[Idx_Patch_p];
-      J_patch = Vn1_patch / Vn_patch;
-
-      *STATUS = get_locking_free_Deformation_Gradient_n1__Particles__(
-          p, J_patch, MPM_Mesh);
-      if (*STATUS == EXIT_FAILURE) {
-        fprintf(stderr,
-                "" RED "Error in "
-                "get_locking_free_Deformation_Gradient_n1__Particles__()" RESET
-                " \n");
+      //  Get the nodal increment of displacement using the mask
+      double *D_Displacement_Ap = (double *)calloc(Order_p, __SIZEOF_DOUBLE__);
+      double *D_Velocity_Ap = (double *)calloc(Order_p, __SIZEOF_DOUBLE__);
+      if ((D_Displacement_Ap == NULL) || (D_Velocity_Ap == NULL)) {
+        fprintf(stderr, "" RED "Error in calloc(): Out of memory" RESET " \n");
         *STATUS = EXIT_FAILURE;
       }
 
-      MPM_Mesh.Phi.Jbar.nV[p] *= J_patch;
-    }
-  }
+      get_set_field__MeshTools__(D_Displacement_Ap, D_U.value, Nodes_p,
+                                 ActiveNodes);
+      get_set_field__MeshTools__(D_Velocity_Ap, D_U.d_value_dt, Nodes_p,
+                                 ActiveNodes);
 
+      /*
+        Evaluate the shape function gradient in the coordinates of the particle
+      */
+      Matrix gradient_p = compute_dN__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
+
+      /*
+        Take the values of the deformation gradient from the previous step
+      */
+      double *F_n_p = MPM_Mesh.Phi.F_n.nM[p];
+      double *F_n1_p = MPM_Mesh.Phi.F_n1.nM[p];
+      double *DF_p = MPM_Mesh.Phi.DF.nM[p];
+      double *dFdt_n_p = MPM_Mesh.Phi.dt_F_n.nM[p];
+      double *dFdt_n1_p = MPM_Mesh.Phi.dt_F_n1.nM[p];
+      double *dt_DF_p = MPM_Mesh.Phi.dt_DF.nM[p];
+
+      update_increment_Deformation_Gradient__Particles__(
+          DF_p, D_Displacement_Ap, gradient_p.nV, NumberNodes_p);
+
+      update_rate_increment_Deformation_Gradient__Particles__(
+          dt_DF_p, D_Velocity_Ap, gradient_p.nV, NumberNodes_p);
+
+      /*
+        Update the deformation gradient in t = n + 1 with the information
+        from t = n and the increment of deformation gradient.
+      */
+      update_Deformation_Gradient_n1__Particles__(F_n1_p, F_n_p, DF_p);
+      update_rate_Deformation_Gradient_n1__Particles__(dFdt_n1_p, dt_DF_p,
+                                                       F_n_p, DF_p, dFdt_n_p);
+
+      //  Compute Jacobian of the deformation gradient
+      MPM_Mesh.Phi.J_n1.nV[p] = I3__TensorLib__(F_n1_p);
+      if (MPM_Mesh.Phi.J_n1.nV[p] <= 0.0) {
+        fprintf(stderr, "" RED "Negative jacobian in particle %i" RESET " \n",
+                p);
+        *STATUS = EXIT_FAILURE;
+      }
+
+      // F-bar  Update patch
+      if (FEM_Mesh.Locking_Control_Fbar) {
+        Idx_Element_p = MPM_Mesh.Element_p[p];
+        Idx_Patch_p = FEM_Mesh.Idx_Patch[Idx_Element_p];
+        FEM_Mesh.Vol_Patch_n[Idx_Patch_p] +=
+            MPM_Mesh.Phi.J_n.nV[p] * MPM_Mesh.Phi.Vol_0.nV[p];
+        FEM_Mesh.Vol_Patch_n1[Idx_Patch_p] +=
+            MPM_Mesh.Phi.J_n1.nV[p] * MPM_Mesh.Phi.Vol_0.nV[p];
+      }
+
+      free(D_Displacement_Ap);
+      free(D_Velocity_Ap);
+      free__MatrixLib__(gradient_p);
+      free(Nodes_p.Connectivity);
+    }
+
+// F-bar
+#pragma omp barrier
+    if (FEM_Mesh.Locking_Control_Fbar) {
+
+      double Vn_patch;
+      double Vn1_patch;
+      double J_patch;
+
+#pragma omp for private(p, Vn_patch, Vn1_patch, J_patch, Idx_Element_p,        \
+                        Idx_Patch_p)
+      for (p = 0; p < Np; p++) {
+
+        Idx_Element_p = MPM_Mesh.Element_p[p];
+        Idx_Patch_p = FEM_Mesh.Idx_Patch[Idx_Element_p];
+
+        Vn_patch = FEM_Mesh.Vol_Patch_n[Idx_Patch_p];
+        Vn1_patch = FEM_Mesh.Vol_Patch_n1[Idx_Patch_p];
+        J_patch = Vn1_patch / Vn_patch;
+
+        *STATUS = get_locking_free_Deformation_Gradient_n1__Particles__(
+            p, J_patch, MPM_Mesh);
+        if (*STATUS == EXIT_FAILURE) {
+          fprintf(
+              stderr,
+              "" RED "Error in "
+              "get_locking_free_Deformation_Gradient_n1__Particles__()" RESET
+              " \n");
+          *STATUS = EXIT_FAILURE;
+        }
+
+        MPM_Mesh.Phi.Jbar.nV[p] *= J_patch;
+      }
+    }
   }
 }
 
@@ -1362,107 +1362,107 @@ static int __Nodal_Internal_Forces(double *Residual, Mask ActiveNodes,
   unsigned NumNodes_p;
   unsigned MatIndx_p;
 
-  int Ap, Mask_node_A, Mask_total_dof_Ai, Mask_active_dof_Ai;
-
-  double V0_p;         // Volume of the particle in the reference configuration
-  double *kirchhoff_p; // Kirchhoff Stress tensor
-  double *DF_p;
+  unsigned p;
 
 #if NumberDimensions == 2
   double InternalForcesDensity_Ap[2];
 #else
   double InternalForcesDensity_Ap[3];
 #endif
-  double Residual_val;
+  double Residual_val_p;
 
-  Element Nodes_p; /* List of nodes for particle */
-  Material MatProp_p;
-  Matrix d_shapefunction_n_p; /* Shape functions gradients */
-  double *d_shapefunction_n1_p;
-  double *d_shapefunction_n1_pA;
+#pragma omp parallel private(NumNodes_p, MatIndx_p, InternalForcesDensity_Ap,  \
+                             Residual_val_p)
+  {
+#pragma omp for private(p)
+    for (p = 0; p < Np; p++) {
 
-  for (unsigned p = 0; p < Np; p++) {
+      //  Get the volume of the particle in the reference configuration
+      double V0_p = MPM_Mesh.Phi.Vol_0.nV[p];
 
-    //  Get the volume of the particle in the reference configuration
-    V0_p = MPM_Mesh.Phi.Vol_0.nV[p];
+      // Get the incremental deformation gradient
+      double *DF_p = MPM_Mesh.Phi.DF.nM[p];
 
-    // Get the incremental deformation gradient
-    DF_p = MPM_Mesh.Phi.DF.nM[p];
+      //  Define nodal connectivity for each particle
+      //  and compute gradient of the shape function
+      NumNodes_p = MPM_Mesh.NumberNodes[p];
+      Element Nodes_p =
+          nodal_set__Particles__(p, MPM_Mesh.ListNodes[p], NumNodes_p);
+      Matrix d_shapefunction_n_p =
+          compute_dN__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
 
-    //  Define nodal connectivity for each particle
-    //  and compute gradient of the shape function
-    NumNodes_p = MPM_Mesh.NumberNodes[p];
-    Nodes_p = nodal_set__Particles__(p, MPM_Mesh.ListNodes[p], NumNodes_p);
-    d_shapefunction_n_p = compute_dN__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
+      // Pushforward the shape functions
+      double *d_shapefunction_n1_p = push_forward_dN__MeshTools__(
+          d_shapefunction_n_p.nV, DF_p, NumNodes_p, &STATUS);
+      if (STATUS == EXIT_FAILURE) {
+        fprintf(stderr,
+                "" RED "Error in push_forward_dN__MeshTools__()" RESET " \n");
+      }
 
-    // Pushforward the shape functions
-    d_shapefunction_n1_p = push_forward_dN__MeshTools__(d_shapefunction_n_p.nV, DF_p, NumNodes_p,&STATUS);
-    if (STATUS == EXIT_FAILURE) {
-      fprintf(stderr,
-              "" RED "Error in push_forward_dN__MeshTools__()" RESET " \n");
-      return STATUS;
-    }
+      //  Update the Kirchhoff stress tensor with an apropiate
+      //  integration rule.
+      MatIndx_p = MPM_Mesh.MatIdx[p];
+      Material MatProp_p = MPM_Mesh.Mat[MatIndx_p];
+      STATUS = Stress_integration__Constitutive__(p, MPM_Mesh, MatProp_p);
+      if (STATUS == EXIT_FAILURE) {
+        fprintf(stderr,
+                "" RED "Error in Stress_integration__Constitutive__(,)" RESET
+                " \n");
+      }
 
-    //  Update the Kirchhoff stress tensor with an apropiate
-    //  integration rule.
-    MatIndx_p = MPM_Mesh.MatIdx[p];
-    MatProp_p = MPM_Mesh.Mat[MatIndx_p];
-    STATUS = Stress_integration__Constitutive__(p, MPM_Mesh, MatProp_p);
-    if (STATUS == EXIT_FAILURE) {
-      fprintf(stderr,
-              "" RED "Error in Stress_integration__Constitutive__(,)" RESET
-              " \n");
-      return EXIT_FAILURE;
-    }
+      // Get the Kirchhoff stress tensor
+      double *kirchhoff_p = MPM_Mesh.Phi.Stress.nM[p];
 
-    // Get the Kirchhoff stress tensor
-    kirchhoff_p = MPM_Mesh.Phi.Stress.nM[p];
+      for (unsigned A = 0; A < NumNodes_p; A++) {
 
-    for (unsigned A = 0; A < NumNodes_p; A++) {
+        //  Compute the gradient in the reference configuration
+        double *d_shapefunction_n1_pA = &d_shapefunction_n1_p[A * Ndim];
 
-      //  Compute the gradient in the reference configuration
-      d_shapefunction_n1_pA = &d_shapefunction_n1_p[A * Ndim];
+        //  Compute the nodal forces of the particle
+        __internal_force_density(InternalForcesDensity_Ap, kirchhoff_p,
+                                 d_shapefunction_n1_pA);
 
-      //  Compute the nodal forces of the particle
-      __internal_force_density(InternalForcesDensity_Ap, kirchhoff_p,
-                               d_shapefunction_n1_pA);
+        //  Get the node of the mesh for the contribution
+        int Ap = Nodes_p.Connectivity[A];
+        int Mask_node_A = ActiveNodes.Nodes2Mask[Ap];
 
-      //  Get the node of the mesh for the contribution
-      Ap = Nodes_p.Connectivity[A];
-      Mask_node_A = ActiveNodes.Nodes2Mask[Ap];
+        //  Asign the nodal forces contribution to the node
+        for (unsigned i = 0; i < Ndim; i++) {
 
-      //  Asign the nodal forces contribution to the node
-      for (unsigned i = 0; i < Ndim; i++) {
+          int Mask_total_dof_Ai = Mask_node_A * Ndim + i;
+          int Mask_active_dof_Ai = ActiveDOFs.Nodes2Mask[Mask_total_dof_Ai];
 
-        Mask_total_dof_Ai = Mask_node_A * Ndim + i;
-        Mask_active_dof_Ai = ActiveDOFs.Nodes2Mask[Mask_total_dof_Ai];
+          Residual_val_p = InternalForcesDensity_Ap[i] * V0_p;
 
-        Residual_val = InternalForcesDensity_Ap[i] * V0_p;
+#pragma omp critical
+          {
+            // Compute residual or reactions
+            if ((Mask_active_dof_Ai != -1) && (Is_compute_Residual == true)) {
 
-        // Compute residual or reactions
-        if ((Mask_active_dof_Ai != -1) && (Is_compute_Residual == true)) {
 #ifdef USE_PETSC
-          VecSetValues(Residual, 1, &Mask_active_dof_Ai, &Residual_val,
-                       ADD_VALUES);
+              VecSetValues(Residual, 1, &Mask_active_dof_Ai, &Residual_val_p,
+                           ADD_VALUES);
 #else
-          Residual[Mask_active_dof_Ai] += Residual_val;
+              Residual[Mask_active_dof_Ai] += Residual_val_p;
 #endif
-        } else if ((Mask_active_dof_Ai == -1) &&
-                   (Is_compute_Reactions == true)) {
+            } else if ((Mask_active_dof_Ai == -1) &&
+                       (Is_compute_Reactions == true)) {
 #ifdef USE_PETSC
-          VecSetValues(Residual, 1, &Mask_total_dof_Ai, &Residual_val,
-                       ADD_VALUES);
+              VecSetValues(Residual, 1, &Mask_total_dof_Ai, &Residual_val_p,
+                           ADD_VALUES);
 #else
-          Residual[Mask_total_dof_Ai] += Residual_val;
+              Residual[Mask_total_dof_Ai] += Residual_val_p;
 #endif
+            }
+          }
         }
       }
-    }
 
-    //   Free memory
-    free__MatrixLib__(d_shapefunction_n_p);
-    free(d_shapefunction_n1_p);
-    free(Nodes_p.Connectivity);
+      //   Free memory
+      free__MatrixLib__(d_shapefunction_n_p);
+      free(d_shapefunction_n1_p);
+      free(Nodes_p.Connectivity);
+    }
   }
 
   return STATUS;
@@ -1894,12 +1894,8 @@ __assemble_tangent_stiffness(int *nnz, Mask ActiveNodes, Mask ActiveDOFs,
   unsigned Nactivedofs = ActiveDOFs.Nactivenodes;
   unsigned Np = MPM_Mesh.NumGP;
   unsigned NumNodes_p;
-  unsigned MatIndx_p;
 
   unsigned p;
-  unsigned A,B,i,j;
-  int Ap, Mask_node_A, Mask_total_dof_Ai, Mask_active_dof_Ai;
-  int Bp, Mask_node_B, Mask_total_dof_Bj, Mask_active_dof_Bj;
 
 #ifdef USE_PETSC
   Mat Tangent_Stiffness;
@@ -1918,7 +1914,6 @@ __assemble_tangent_stiffness(int *nnz, Mask ActiveNodes, Mask ActiveDOFs,
     return Tangent_Stiffness;
   }
 #endif
-  
 
 #if NumberDimensions == 2
   double Stiffness_density_p[4];
@@ -1943,7 +1938,7 @@ __assemble_tangent_stiffness(int *nnz, Mask ActiveNodes, Mask ActiveDOFs,
     double V0_p = MPM_Mesh.Phi.Vol_0.nV[p];
 
     // Material properties of the particle
-    MatIndx_p = MPM_Mesh.MatIdx[p];
+    unsigned MatIndx_p = MPM_Mesh.MatIdx[p];
     Material MatProp_p = MPM_Mesh.Mat[MatIndx_p];
 
     // Pointer to the incremental deformation gradient
@@ -1952,36 +1947,39 @@ __assemble_tangent_stiffness(int *nnz, Mask ActiveNodes, Mask ActiveDOFs,
     //  Define nodal connectivity for each particle
     //  and compute gradient of the shape function
     NumNodes_p = MPM_Mesh.NumberNodes[p];
-    Element Nodes_p = nodal_set__Particles__(p, MPM_Mesh.ListNodes[p], NumNodes_p);
-    Matrix shapefunction_n_p = compute_N__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
-    Matrix d_shapefunction_n_p = compute_dN__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
+    Element Nodes_p =
+        nodal_set__Particles__(p, MPM_Mesh.ListNodes[p], NumNodes_p);
+    Matrix shapefunction_n_p =
+        compute_N__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
+    Matrix d_shapefunction_n_p =
+        compute_dN__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
 
     // Pushforward the shape function gradient
-    double *d_shapefunction_n1_p = push_forward_dN__MeshTools__(d_shapefunction_n_p.nV, DF_p, NumNodes_p,STATUS);
+    double *d_shapefunction_n1_p = push_forward_dN__MeshTools__(
+        d_shapefunction_n_p.nV, DF_p, NumNodes_p, STATUS);
     if (*STATUS == EXIT_FAILURE) {
       fprintf(stderr,
               "" RED "Error in push_forward_dN__MeshTools__()" RESET " \n");
       *STATUS = EXIT_FAILURE;
-      return Tangent_Stiffness;
     }
 
-    for (A = 0; A < NumNodes_p; A++) {
+    for (unsigned A = 0; A < NumNodes_p; A++) {
 
       // Get the gradient evaluation in node A
       // and the masked index of the node A
       double shapefunction_n_pA = shapefunction_n_p.nV[A];
       double *d_shapefunction_n_pA = d_shapefunction_n_p.nM[A];
-      Ap = Nodes_p.Connectivity[A];
-      Mask_node_A = ActiveNodes.Nodes2Mask[Ap];
+      int Ap = Nodes_p.Connectivity[A];
+      int Mask_node_A = ActiveNodes.Nodes2Mask[Ap];
 
-      for (B = 0; B < NumNodes_p; B++) {
+      for (unsigned B = 0; B < NumNodes_p; B++) {
 
         // Get the gradient evaluation in node B
         // and the masked index of the node B
         double shapefunction_n_pB = shapefunction_n_p.nV[B];
         double *d_shapefunction_n_pB = d_shapefunction_n_p.nM[B];
-        Bp = Nodes_p.Connectivity[B];
-        Mask_node_B = ActiveNodes.Nodes2Mask[Bp];
+        int Bp = Nodes_p.Connectivity[B];
+        int Mask_node_B = ActiveNodes.Nodes2Mask[Bp];
 
         // Compute the stiffness density matrix
         *STATUS = stiffness_density__Constitutive__(
@@ -1992,7 +1990,6 @@ __assemble_tangent_stiffness(int *nnz, Mask ActiveNodes, Mask ActiveDOFs,
           fprintf(stderr,
                   "" RED "Error in stiffness_density__Constitutive__" RESET
                   "\n");
-          return Tangent_Stiffness;
         }
 
         // Local mass matrix
@@ -2001,24 +1998,27 @@ __assemble_tangent_stiffness(int *nnz, Mask ActiveNodes, Mask ActiveDOFs,
                                Mask_node_A, Mask_node_B);
 
         //  Assembling process
-        for (i = 0; i < Ndim; i++) {
+        for (unsigned i = 0; i < Ndim; i++) {
 
-          Mask_total_dof_Ai = Mask_node_A * Ndim + i;
-          Mask_active_dof_Ai = ActiveDOFs.Nodes2Mask[Mask_total_dof_Ai];
+          int Mask_total_dof_Ai = Mask_node_A * Ndim + i;
+          int Mask_active_dof_Ai = ActiveDOFs.Nodes2Mask[Mask_total_dof_Ai];
 
-          for (j = 0; j < Ndim; j++) {
+          for (unsigned j = 0; j < Ndim; j++) {
 
-            Mask_total_dof_Bj = Mask_node_B * Ndim + j;
-            Mask_active_dof_Bj = ActiveDOFs.Nodes2Mask[Mask_total_dof_Bj];
+            int Mask_total_dof_Bj = Mask_node_B * Ndim + j;
+            int Mask_active_dof_Bj = ActiveDOFs.Nodes2Mask[Mask_total_dof_Bj];
 
             if ((Mask_active_dof_Ai != -1) && (Mask_active_dof_Bj != -1)) {
+
               Tangent_Stiffness_val = Stiffness_density_p[i * Ndim + j] * V0_p +
                                       Inertia_density_p[i * Ndim + j];
+
 #ifdef USE_PETSC
               MatSetValues(Tangent_Stiffness, 1, &Mask_active_dof_Ai, 1,
                            &Mask_active_dof_Bj, &Tangent_Stiffness_val,
                            ADD_VALUES);
 #else
+
               Tangent_Stiffness[Mask_active_dof_Ai * Nactivedofs +
                                 Mask_active_dof_Bj] += Tangent_Stiffness_val;
 #endif
