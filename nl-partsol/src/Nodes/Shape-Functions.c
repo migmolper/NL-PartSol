@@ -368,15 +368,22 @@ Matrix compute_dN__MeshTools__(Element GP_Element, Particle MPM_Mesh,
 
 /*********************************************************************/
 
-int push_forward_dN__MeshTools__(
-  double * Gradient_n1_p,
+double * push_forward_dN__MeshTools__(
   const double * Gradient_n_p,
   const double * d_phi,
-  unsigned NumNodes)
+  unsigned NumNodes,
+  int * STATUS)
 {
 
   unsigned Ndim = NumberDimensions;
-  int STATUS = EXIT_SUCCESS;
+  *STATUS = EXIT_SUCCESS;
+
+  double * Gradient_n1_p = (double *)calloc(NumNodes * Ndim, __SIZEOF_DOUBLE__);
+  if (Gradient_n1_p == NULL) {
+    fprintf(stderr, "" RED "Error in calloc()" RESET " \n");
+    *STATUS = EXIT_FAILURE;
+    return Gradient_n1_p;
+  }
 
 #if NumberDimensions == 2
   double d_phi_mT[4];
@@ -385,11 +392,11 @@ int push_forward_dN__MeshTools__(
 #endif
 
   // Compute the adjunt of the incremental deformation gradient
-  STATUS = compute_adjunt__TensorLib__(d_phi_mT, d_phi);
-  if(STATUS == EXIT_FAILURE)
+  *STATUS = compute_adjunt__TensorLib__(d_phi_mT, d_phi);
+  if(*STATUS == EXIT_FAILURE)
   {
     fprintf(stderr, ""RED"Error in compute_adjunt__TensorLib__()"RESET" \n");
-    return EXIT_FAILURE;  
+    return Gradient_n1_p;  
   }
 
   // Push-forward the shape function gradient using
@@ -408,7 +415,7 @@ int push_forward_dN__MeshTools__(
     }   
   }
 
-  return STATUS;
+  return Gradient_n1_p;
 }
 
 /*********************************************************************/

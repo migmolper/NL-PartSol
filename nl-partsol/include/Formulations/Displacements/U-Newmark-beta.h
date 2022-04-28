@@ -25,6 +25,11 @@
 // Material lib
 #include "Constitutive/Constitutive.h"
 
+// HPC libs
+#ifdef USE_OPENMP
+#include <omp.h>
+#endif
+
 #ifdef __linux__
 #include <lapacke.h>
 #elif __APPLE__ 
