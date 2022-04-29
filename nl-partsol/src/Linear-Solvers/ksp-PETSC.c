@@ -11,15 +11,6 @@ int krylov_PETSC(
   Mat Tangent_Stiffness = *ptr_Tangent_Stiffness;
   Vec Residual = *ptr_Residual;
 
-/* // Initialise MPI mpi_rank and size
-    int mpi_rank = 0;
-    int mpi_size = 1;
-
-    // Get MPI mpi_rank
-    MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
-   // Get number of MPI mpi_ranks
-    MPI_Comm_size(MPI_COMM_WORLD, &mpi_size); */
-
     // Solver start
 //    auto solver_begin = std::chrono::steady_clock::now();
 //    if (verbosity_ > 0 && mpi_rank == 0)
@@ -86,10 +77,9 @@ int krylov_PETSC(
     // Solve linear system of equation x = A^(-1) b
     KSPSolve(solver, Residual, Residual);
     KSPGetConvergedReason(solver, &reason);
-
-    // Print residual in each iteration
-    /*    
-    if (verbosity_ >= 1) {
+/*
+    // Print residual in each iteration   
+    if (1) {
       PetscViewerAndFormat* vf;
       PetscViewerAndFormatCreate(PETSC_VIEWER_STDOUT_WORLD,
                                  PETSC_VIEWER_DEFAULT, &vf);
@@ -98,13 +88,13 @@ int krylov_PETSC(
       PetscPrintf(PETSC_COMM_WORLD, "\nConvergence in %d iterations.\n",
                   (int)its);
       PetscReal rnorm;
-      if (verbosity_ >= 2) {
+      if (1) {
         for (int i = 0; i < its; i++) {
           KSPMonitorTrueResidual(solver, i, rnorm, vf);
         }
       }
     } 
-    */
+*/
 
 /*     // Warn if solver does not converge
     if (reason < 0) {
