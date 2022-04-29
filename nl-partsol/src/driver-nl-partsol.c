@@ -55,10 +55,11 @@ int main(int argc, char *argv[]) {
 #ifdef USE_OPENMP
 puts(""GREEN"Initialize OpenMP"RESET" ...");
 //    omp_set_num_threads(nthreads > 0 ? nthreads : omp_get_max_threads());
-omp_set_num_threads(6);
+// omp_set_num_threads(6);
+omp_set_num_threads(omp_get_max_threads());
 #endif
 
-// Initialize PETSc
+  // Initialize PETSc
 #ifdef USE_PETSC
   puts(""GREEN"Initialize PETSc"RESET" ...");
   PetscInitialize(&argc, &argv, 0, 0);

@@ -86,6 +86,16 @@ static void __local_compatibility_conditions(const Nodal_Field D_U,
 /**************************************************************/
 
 /*!
+  \brief Update the stress tensor of the particle
+  \param[in] MPM_Mesh Information of the particles
+  \param[in] FEM_Mesh Information of the background nodes
+  \param[out] STATUS Returns failure or success
+*/
+static void __constitutive_update(Particle MPM_Mesh, Mesh FEM_Mesh,
+                                  int *STATUS);
+/**************************************************************/
+
+/*!
   \brief Function used to compute the equilibrium residual
 
   \param[in] U_n Nodal kinetics information from the step n
@@ -294,8 +304,8 @@ static void local_tangent_stiffness(double *Tangent_Stiffness_p,
 #ifndef USE_PETSC
 static void MatSetValues(double *Tangent_Stiffness,
                          const double *Tangent_Stiffness_p,
-                         int *Mask_active_dofs_A, int *Mask_active_dofs_B,
-                         int Nactivedofs);
+                         const int *Mask_active_dofs_A,
+                         const int *Mask_active_dofs_B, int Nactivedofs);
 #endif
 /**************************************************************/
 
@@ -569,6 +579,8 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
                 " \n");
         return EXIT_FAILURE;
       }
+
+      __constitutive_update(MPM_Mesh, FEM_Mesh, &STATUS);
 
       // Free memory
 #ifdef USE_PETSC
@@ -1262,6 +1274,31 @@ static void __local_compatibility_conditions(Nodal_Field D_U, Mask ActiveNodes,
 
 /**************************************************************/
 
+static void __constitutive_update(Particle MPM_Mesh, Mesh FEM_Mesh,
+                                  int *STATUS) {
+  *STATUS = EXIT_SUCCESS;
+  unsigned Np = MPM_Mesh.NumGP;
+  unsigned MatIndx_p;
+  unsigned p;
+
+#pragma omp for private(p, MatIndx_p)
+  for (p = 0; p < Np; p++) {
+
+    //  Update the Kirchhoff stress tensor with an apropiate
+    //  integration rule.
+    MatIndx_p = MPM_Mesh.MatIdx[p];
+    Material MatProp_p = MPM_Mesh.Mat[MatIndx_p];
+    *STATUS = Stress_integration__Constitutive__(p, MPM_Mesh, MatProp_p);
+    if (*STATUS == EXIT_FAILURE) {
+      fprintf(stderr,
+              "" RED "Error in Stress_integration__Constitutive__(,)" RESET
+              " \n");
+    }
+  }
+}
+
+/**************************************************************/
+
 #ifdef USE_PETSC
 static Vec __assemble_residual(Nodal_Field U_n, Nodal_Field D_U,
                                double *Effective_Mass, Mask ActiveNodes,
@@ -1345,7 +1382,6 @@ static void __Nodal_Internal_Forces(double *Residual, Mask ActiveNodes,
   unsigned Ndim = NumberDimensions;
   unsigned Np = MPM_Mesh.NumGP;
   unsigned NumNodes_p;
-  unsigned MatIndx_p;
 
   unsigned p;
 
@@ -1356,7 +1392,7 @@ static void __Nodal_Internal_Forces(double *Residual, Mask ActiveNodes,
 #endif
   double Residual_val_p;
 
-#pragma omp parallel private(NumNodes_p, MatIndx_p, InternalForcesDensity_Ap,  \
+#pragma omp parallel private(NumNodes_p, InternalForcesDensity_Ap,             \
                              Residual_val_p)
   {
 #pragma omp for private(p)
@@ -1384,18 +1420,7 @@ static void __Nodal_Internal_Forces(double *Residual, Mask ActiveNodes,
                 "" RED "Error in push_forward_dN__MeshTools__()" RESET " \n");
       }
 
-      //  Update the Kirchhoff stress tensor with an apropiate
-      //  integration rule.
-      MatIndx_p = MPM_Mesh.MatIdx[p];
-      Material MatProp_p = MPM_Mesh.Mat[MatIndx_p];
-      *STATUS = Stress_integration__Constitutive__(p, MPM_Mesh, MatProp_p);
-      if (*STATUS == EXIT_FAILURE) {
-        fprintf(stderr,
-                "" RED "Error in Stress_integration__Constitutive__(,)" RESET
-                " \n");
-      }
-
-      // Get the Kirchhoff stress tensor
+      // Get the Kirchhoff stress tensor pointer
       double *kirchhoff_p = MPM_Mesh.Phi.Stress.nM[p];
 
       for (unsigned A = 0; A < NumNodes_p; A++) {
@@ -1938,8 +1963,8 @@ static void local_tangent_stiffness(double *Tangent_Stiffness_p,
 #ifndef USE_PETSC
 static void MatSetValues(double *Tangent_Stiffness,
                          const double *Tangent_Stiffness_p,
-                         int *Mask_active_dofs_A, int *Mask_active_dofs_B,
-                         int Nactivedofs) {
+                         const int *Mask_active_dofs_A,
+                         const int *Mask_active_dofs_B, int Nactivedofs) {
 
   unsigned Ndim = NumberDimensions;
   int Mask_active_dof_Ai;
@@ -1951,7 +1976,7 @@ static void MatSetValues(double *Tangent_Stiffness,
 
     for (unsigned idx_B = 0; idx_B < Ndim; idx_B++) {
 
-      Mask_active_dof_Bj = Mask_active_dofs_A[idx_B];
+      Mask_active_dof_Bj = Mask_active_dofs_B[idx_B];
 
       if ((Mask_active_dof_Ai != -1) && (Mask_active_dof_Bj != -1)) {
         Tangent_Stiffness[Mask_active_dof_Ai * Nactivedofs +
@@ -2004,7 +2029,7 @@ static void __assemble_tangent_stiffness(double *Tangent_Stiffness,
 #ifdef USE_PETSC
     MatZeroEntries(Tangent_Stiffness);
 #else
-    #pragma omp for
+#pragma omp for
     for (unsigned idx = 0; idx < Nactivedofs * Nactivedofs; idx++) {
       Tangent_Stiffness[idx] = 0.0;
     }
