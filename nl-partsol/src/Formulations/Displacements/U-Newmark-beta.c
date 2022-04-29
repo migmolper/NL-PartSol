@@ -250,6 +250,50 @@ static void compute_local_intertia(double *Inertia_density_p /**< */,
 /**************************************************************/
 
 /*!
+  \brief Returns a mask with the position of the stifness in the global tangent
+  \n matrix for an eeficient assembly process \param[out] Mask_active_dofs_A
+  Global dofs positions for node A \param[in] Mask_node_A Index of the node A
+  with mask \param[out] Mask_active_dofs_B Global dofs positions for node B
+  \param[in] Mask_node_B Index of the node B with mask
+  \param[in] ActiveDOFs List of dofs which takes place in the computation
+*/
+static void get_assembling_locations(int *Mask_active_dofs_A, int Mask_node_A,
+                                     int *Mask_active_dofs_B, int Mask_node_B,
+                                     Mask ActiveDOFs);
+/**************************************************************/
+
+/*!
+  \brief Computes the local tangent stiffness as the addition of the \n
+  local tangent stiffness density and the intertia density matrix
+  \param[out] Tangent_Stiffness_p Local tangent stiffness
+  \param[in] Stiffness_density_p Local stiffness density
+  \param[in] Inertia_density_p Inertia density matrix, a.k.a mass matrix
+  \param[in] V0_p Particle volume
+*/
+static void local_tangent_stiffness(double *Tangent_Stiffness_p,
+                                    const double *Stiffness_density_p,
+                                    const double *Inertia_density_p,
+                                    double V0_p);
+/**************************************************************/
+
+/*!
+  \brief Do the global assembly process. Replaces a PETSc function \n
+  with the same name in case PETSc is not defined.
+  \param[in,out] Tangent_Stiffness Global tangent stiffness
+  \param[in] Tangent_Stiffness_p Local tangent stiffness
+  \param[in] Mask_active_dofs_A Global dofs positions for node A
+  \param[in] Mask_active_dofs_B Global dofs positions for node B
+  \param[in] Nactivedofs Number of active dofs in the Global tangent matrix
+*/
+#ifndef USE_PETSC
+static void MatSetValues(double *Tangent_Stiffness,
+                         const double *Tangent_Stiffness_p,
+                         int *Mask_active_dofs_A, int *Mask_active_dofs_B,
+                         int Nactivedofs);
+#endif
+/**************************************************************/
+
+/*!
   \param[in] nnz Array for the Yale format storage
   \param[in] ActiveNodes List of nodes which takes place in the computation
   \param[in] ActiveDOFs List of dofs which takes place in the computation
@@ -1654,7 +1698,7 @@ static void __Nodal_Body_Forces(double *Residual, Mask ActiveNodes,
   double m_p;              /* Mass of the particle */
   double Residual_val;
 
-  //  b[1] = -9.81;
+  // b[1] = -9.81;
 
   for (unsigned p = 0; p < NumGP; p++) {
 
@@ -1864,13 +1908,90 @@ static void compute_local_intertia(double *Inertia_density_p, double Na_p,
 
 #if NumberDimensions == 2
   Inertia_density_p[0] = ID_AB_p;
-  Inertia_density_p[3] = ID_AB_p;
+  Inertia_density_p[1] = ID_AB_p;
 #else
   Inertia_density_p[0] = ID_AB_p;
-  Inertia_density_p[4] = ID_AB_p;
-  Inertia_density_p[8] = ID_AB_p;
+  Inertia_density_p[1] = ID_AB_p;
+  Inertia_density_p[2] = ID_AB_p;
 #endif
 }
+
+/**************************************************************/
+
+static void get_assembling_locations(int *Mask_active_dofs_A, int Mask_node_A,
+                                     int *Mask_active_dofs_B, int Mask_node_B,
+                                     Mask ActiveDOFs) {
+  unsigned Ndim = NumberDimensions;
+
+#if NumberDimensions == 2
+  Mask_active_dofs_A[0] = ActiveDOFs.Nodes2Mask[Mask_node_A * Ndim + 0];
+  Mask_active_dofs_A[1] = ActiveDOFs.Nodes2Mask[Mask_node_A * Ndim + 1];
+
+  Mask_active_dofs_B[0] = ActiveDOFs.Nodes2Mask[Mask_node_B * Ndim + 0];
+  Mask_active_dofs_B[1] = ActiveDOFs.Nodes2Mask[Mask_node_B * Ndim + 1];
+#else
+  Mask_active_dofs_A[0] = ActiveDOFs.Nodes2Mask[Mask_node_A * Ndim + 0];
+  Mask_active_dofs_A[1] = ActiveDOFs.Nodes2Mask[Mask_node_A * Ndim + 1];
+  Mask_active_dofs_A[2] = ActiveDOFs.Nodes2Mask[Mask_node_A * Ndim + 2];
+
+  Mask_active_dofs_B[0] = ActiveDOFs.Nodes2Mask[Mask_node_B * Ndim + 0];
+  Mask_active_dofs_B[1] = ActiveDOFs.Nodes2Mask[Mask_node_B * Ndim + 1];
+  Mask_active_dofs_B[2] = ActiveDOFs.Nodes2Mask[Mask_node_B * Ndim + 2];
+#endif
+}
+
+/**************************************************************/
+
+static void local_tangent_stiffness(double *Tangent_Stiffness_p,
+                                    const double *Stiffness_density_p,
+                                    const double *Inertia_density_p,
+                                    double V0_p) {
+#if NumberDimensions == 2
+  Tangent_Stiffness_p[0] = Stiffness_density_p[0] * V0_p + Inertia_density_p[0];
+  Tangent_Stiffness_p[1] = Stiffness_density_p[1] * V0_p;
+  Tangent_Stiffness_p[2] = Stiffness_density_p[2] * V0_p;
+  Tangent_Stiffness_p[3] = Stiffness_density_p[3] * V0_p + Inertia_density_p[1];
+#else
+  Tangent_Stiffness_p[0] = Stiffness_density_p[0] * V0_p + Inertia_density_p[0];
+  Tangent_Stiffness_p[1] = Stiffness_density_p[1] * V0_p;
+  Tangent_Stiffness_p[2] = Stiffness_density_p[2] * V0_p;
+  Tangent_Stiffness_p[3] = Stiffness_density_p[3] * V0_p;
+  Tangent_Stiffness_p[4] = Stiffness_density_p[4] * V0_p + Inertia_density_p[1];
+  Tangent_Stiffness_p[5] = Stiffness_density_p[5] * V0_p;
+  Tangent_Stiffness_p[6] = Stiffness_density_p[6] * V0_p;
+  Tangent_Stiffness_p[7] = Stiffness_density_p[7] * V0_p;
+  Tangent_Stiffness_p[8] = Stiffness_density_p[8] * V0_p + Inertia_density_p[2];
+#endif
+}
+
+/**************************************************************/
+#ifndef USE_PETSC
+static void MatSetValues(double *Tangent_Stiffness,
+                         const double *Tangent_Stiffness_p,
+                         int *Mask_active_dofs_A, int *Mask_active_dofs_B,
+                         int Nactivedofs) {
+
+  unsigned Ndim = NumberDimensions;
+  int Mask_active_dof_Ai;
+  int Mask_active_dof_Bj;
+
+  for (unsigned idx_A = 0; idx_A < Ndim; idx_A++) {
+
+    Mask_active_dof_Ai = Mask_active_dofs_A[idx_A];
+
+    for (unsigned idx_B = 0; idx_B < Ndim; idx_B++) {
+
+      Mask_active_dof_Bj = Mask_active_dofs_A[idx_B];
+
+      if ((Mask_active_dof_Ai != -1) && (Mask_active_dof_Bj != -1)) {
+        Tangent_Stiffness[Mask_active_dof_Ai * Nactivedofs +
+                          Mask_active_dof_Bj] +=
+            Tangent_Stiffness_p[idx_A * Ndim + idx_B];
+      }
+    }
+  }
+}
+#endif
 
 /**************************************************************/
 
@@ -1904,7 +2025,6 @@ __assemble_tangent_stiffness(int *nnz, Mask ActiveNodes, Mask ActiveDOFs,
   PetscInt Istart, Iend;
   MatGetOwnershipRange(Tangent_Stiffness, &Istart, &Iend);
 #else
-
   double *Tangent_Stiffness =
       (double *)calloc(Nactivedofs * Nactivedofs, __SIZEOF_DOUBLE__);
   if (Tangent_Stiffness == NULL) {
@@ -1916,21 +2036,21 @@ __assemble_tangent_stiffness(int *nnz, Mask ActiveNodes, Mask ActiveDOFs,
 
 #if NumberDimensions == 2
   double Stiffness_density_p[4];
-  double Inertia_density_p[4] = {0.0, 0.0, 0.0, 0.0};
+  double Inertia_density_p[2];
+  double Tangent_Stiffness_p[4];
 #else
   double Stiffness_density_p[9];
-  double Inertia_density_p[9] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+  double Inertia_density_p[3];
+  double Tangent_Stiffness_p[9];
 #endif
-  double Tangent_Stiffness_val;
 
-  // Auxiliar pointers to tensors
-
+  // Time integartion parameters
   double alpha_1 = Params.alpha_1;
   double alpha_4 = Params.alpha_4;
   double epsilon = Params.epsilon;
 
 #pragma omp parallel private(NumNodes_p, MatIndx_p, Stiffness_density_p,       \
-                             Inertia_density_p, Tangent_Stiffness_val)
+                             Inertia_density_p, Tangent_Stiffness_p)
   {
 #pragma omp for private(p)
     for (p = 0; p < Np; p++) {
@@ -1968,8 +2088,8 @@ __assemble_tangent_stiffness(int *nnz, Mask ActiveNodes, Mask ActiveDOFs,
 
       for (unsigned A = 0; A < NumNodes_p; A++) {
 
-        // Get the gradient evaluation in node A
-        // and the masked index of the node A
+        //! Get the gradient evaluation in node A
+        //! and the masked index of the node A
         double shapefunction_n_pA = shapefunction_n_p.nV[A];
         double *d_shapefunction_n_pA = d_shapefunction_n_p.nM[A];
         int Ap = Nodes_p.Connectivity[A];
@@ -1977,14 +2097,14 @@ __assemble_tangent_stiffness(int *nnz, Mask ActiveNodes, Mask ActiveDOFs,
 
         for (unsigned B = 0; B < NumNodes_p; B++) {
 
-          // Get the gradient evaluation in node B
-          // and the masked index of the node B
+          //! Get the gradient evaluation in node B \n
+          //! and the masked index of the node B
           double shapefunction_n_pB = shapefunction_n_p.nV[B];
           double *d_shapefunction_n_pB = d_shapefunction_n_p.nM[B];
           int Bp = Nodes_p.Connectivity[B];
           int Mask_node_B = ActiveNodes.Nodes2Mask[Bp];
 
-          // Compute the stiffness density matrix
+          //! Do the local and global assembly process for the tangent matrix
           *STATUS = stiffness_density__Constitutive__(
               p, Stiffness_density_p, &d_shapefunction_n1_p[A * Ndim],
               &d_shapefunction_n1_p[B * Ndim], d_shapefunction_n_pA,
@@ -1995,47 +2115,39 @@ __assemble_tangent_stiffness(int *nnz, Mask ActiveNodes, Mask ActiveDOFs,
                     "\n");
           }
 
-          // Local mass matrix
           compute_local_intertia(Inertia_density_p, shapefunction_n_pA,
                                  shapefunction_n_pB, m_p, alpha_1, epsilon,
                                  Mask_node_A, Mask_node_B);
 
-          //  Assembling process
-          for (unsigned i = 0; i < Ndim; i++) {
+          local_tangent_stiffness(Tangent_Stiffness_p, Stiffness_density_p,
+                                  Inertia_density_p, V0_p);
 
-            int Mask_total_dof_Ai = Mask_node_A * Ndim + i;
-            int Mask_active_dof_Ai = ActiveDOFs.Nodes2Mask[Mask_total_dof_Ai];
+#if NumberDimensions == 2
+          int Mask_active_dofs_A[2];
+          int Mask_active_dofs_B[2];
+#else
+          int Mask_active_dofs_A[3];
+          int Mask_active_dofs_B[3];
+#endif
 
-            for (unsigned j = 0; j < Ndim; j++) {
-
-              int Mask_total_dof_Bj = Mask_node_B * Ndim + j;
-              int Mask_active_dof_Bj = ActiveDOFs.Nodes2Mask[Mask_total_dof_Bj];
+          get_assembling_locations(Mask_active_dofs_A, Mask_node_A,
+                                   Mask_active_dofs_B, Mask_node_B, ActiveDOFs);
 
 #pragma omp critical
-              {
-
-                if ((Mask_active_dof_Ai != -1) && (Mask_active_dof_Bj != -1)) {
-
-                  Tangent_Stiffness_val =
-                      Stiffness_density_p[i * Ndim + j] * V0_p +
-                      Inertia_density_p[i * Ndim + j];
+          {
 
 #ifdef USE_PETSC
-                  MatSetValues(Tangent_Stiffness, 1, &Mask_active_dof_Ai, 1,
-                               &Mask_active_dof_Bj, &Tangent_Stiffness_val,
-                               ADD_VALUES);
+            MatSetValues(Tangent_Stiffness, Ndim, Mask_active_dofs_A, Ndim,
+                         Mask_active_dofs_B, Tangent_Stiffness_p, ADD_VALUES);
 #else
 
-                  Tangent_Stiffness[Mask_active_dof_Ai * Nactivedofs +
-                                    Mask_active_dof_Bj] +=
-                      Tangent_Stiffness_val;
+            MatSetValues(Tangent_Stiffness, Tangent_Stiffness_p,
+                         Mask_active_dofs_A, Mask_active_dofs_B, Nactivedofs);
 #endif
-                }
-              } // #pragma omp critical
-            }   // for j (dof)
-          }     // for i (dof)
-        }       // for B (node)
-      }         // for A (node)
+
+          } // #pragma omp critical
+        }   // for B (node)
+      }     // for A (node)
 
       // Free memory
       free__MatrixLib__(shapefunction_n_p);
