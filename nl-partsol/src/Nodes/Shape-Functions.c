@@ -32,6 +32,27 @@ void local_search__MeshTools__(Particle MPM_Mesh, Mesh FEM_Mesh)
 */
 {
 
+  // Set to zero the active/non-active node, and the GPs in each element
+  int Num_Particles_Node_i;
+  for (unsigned i = 0; i < FEM_Mesh.NumNodesMesh; i++) {
+    Num_Particles_Node_i = FEM_Mesh.Num_Particles_Node[i];
+
+    if (Num_Particles_Node_i != 0) {
+      FEM_Mesh.Num_Particles_Node[i] = 0;
+      free__SetLib__(&FEM_Mesh.List_Particles_Node[i]);
+    }
+
+    FEM_Mesh.ActiveNode[i] = false;
+  }
+
+  if (FEM_Mesh.Locking_Control_Fbar) {
+    for (unsigned i = 0; i < FEM_Mesh.Num_Patch_Mesh; i++) {
+      FEM_Mesh.Vol_Patch_n[i] = 0.0;
+      FEM_Mesh.Vol_Patch_n1[i] = 0.0;
+    }
+  }
+
+
   if (strcmp(ShapeFunctionGP, "FEM") == 0) {
     if ((strcmp(FEM_Mesh.TypeElem, "Triangle") == 0) &&
         (FEM_Mesh.NumNodesElem[0] == 3)) {
