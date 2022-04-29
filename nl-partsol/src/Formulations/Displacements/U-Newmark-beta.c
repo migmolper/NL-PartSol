@@ -236,10 +236,16 @@ static double __error_residual(const double *Residual, unsigned Total_dof);
 #endif
 /**************************************************************/
 
-static void __preallocation_tangent_matrix(int *nnz /**< */,
-                                           Mask ActiveNodes /**< */,
-                                           Mask ActiveDOFs /**< */,
-                                           Particle MPM_Mesh /**< */);
+/*!
+
+*/
+#ifdef USE_PETSC
+static Mat __preallocation_tangent_matrix(Mask ActiveNodes, Mask ActiveDOFs,
+                                          Particle MPM_Mesh, int *STATUS);
+#else
+static double *__preallocation_tangent_matrix(Mask ActiveNodes, Mask ActiveDOFs,
+                                              Particle MPM_Mesh, int *STATUS);
+#endif
 /**************************************************************/
 
 static void compute_local_intertia(double *Inertia_density_p /**< */,
@@ -294,26 +300,27 @@ static void MatSetValues(double *Tangent_Stiffness,
 /**************************************************************/
 
 /*!
-  \param[in] nnz Array for the Yale format storage
+  \param[in,out] Tangent_Stiffness The tangent matrix for the problem
   \param[in] ActiveNodes List of nodes which takes place in the computation
   \param[in] ActiveDOFs List of dofs which takes place in the computation
   \param[in] MPM_Mesh Information of the particles
   \param[in] FEM_Mesh Information of the background nodes
   \param[in] Params Time integration parameters
+  \param[in] Iter Current iteration of the solver
   \param[out] STATUS Returns failure or success
-  \return The tangent matrix for the problem
 */
 #ifdef USE_PETSC
-static Mat __assemble_tangent_stiffness(int *nnz, Mask ActiveNodes,
-                                        Mask ActiveDOFs, Particle MPM_Mesh,
-                                        Mesh FEM_Mesh,
-                                        Newmark_parameters Params, int *STATUS);
+static void __assemble_tangent_stiffness(Mat Tangent_Stiffness,
+                                         Mask ActiveNodes, Mask ActiveDOFs,
+                                         Particle MPM_Mesh, Mesh FEM_Mesh,
+                                         Newmark_parameters Params,
+                                         unsigned Iter, int *STATUS);
 #else
-static double *__assemble_tangent_stiffness(int *nnz, Mask ActiveNodes,
-                                            Mask ActiveDOFs, Particle MPM_Mesh,
-                                            Mesh FEM_Mesh,
-                                            Newmark_parameters Params,
-                                            int *STATUS);
+static void __assemble_tangent_stiffness(double *Tangent_Stiffness,
+                                         Mask ActiveNodes, Mask ActiveDOFs,
+                                         Particle MPM_Mesh, Mesh FEM_Mesh,
+                                         Newmark_parameters Params,
+                                         unsigned Iter, int *STATUS);
 #endif
 /**************************************************************/
 
@@ -384,13 +391,11 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
   Vec Residual;
   Vec Reactions;
   double *Effective_Mass;
-  int *nnz;
 #else
   double *Tangent_Stiffness;
   double *Residual;
   double *Reactions;
   double *Effective_Mass;
-  int *nnz;
 #endif
 
   Nodal_Field U_n;
@@ -441,13 +446,7 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
     print_Status("*************************************************", TimeStep);
     print_step(TimeStep, DeltaTimeStep);
 
-#ifdef USE_PETSC
-#if defined(PETSC_USE_LOG)
-    PetscLogEventRegister("Set shape functions", 0, &event_1);
-    PetscLogEventBegin(event_1, 0, 0, 0, 0);
-#endif
-#endif
-
+    //! Local search and compute list of active nodes and dofs
     local_search__MeshTools__(MPM_Mesh, FEM_Mesh);
     ActiveNodes = get_active_nodes__MeshTools__(FEM_Mesh);
     Nactivenodes = ActiveNodes.Nactivenodes;
@@ -456,21 +455,7 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
                                               NumTimeStep);
     Nactivedofs = ActiveDOFs.Nactivenodes;
 
-#ifdef USE_PETSC
-#if defined(PETSC_USE_LOG)
-    PetscLogFlops(event_1_flops);
-    PetscLogEventEnd(event_1, 0, 0, 0, 0);
-#endif
-#endif
-
-#ifdef USE_PETSC
-#if defined(PETSC_USE_LOG)
-    PetscLogEventRegister("Set Initial nodal kinetics", 0, &event_2);
-    PetscLogEventBegin(event_2, 0, 0, 0, 0);
-#endif
-#endif
-
-    // Get the previous converged nodal value
+    //! Get the previous converged nodal value
     U_n.value = (double *)calloc(Ntotaldofs, __SIZEOF_DOUBLE__);
     U_n.d_value_dt = (double *)calloc(Ntotaldofs, __SIZEOF_DOUBLE__);
     U_n.d2_value_dt2 = (double *)calloc(Ntotaldofs, __SIZEOF_DOUBLE__);
@@ -485,7 +470,7 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
       return EXIT_FAILURE;
     }
 
-    // Compute kinematic nodal values
+    //! Compute kinematic nodal values
     D_U.value = (double *)calloc(Ntotaldofs, __SIZEOF_DOUBLE__);
     D_U.d_value_dt = (double *)calloc(Ntotaldofs, __SIZEOF_DOUBLE__);
     D_U.d2_value_dt2 = (double *)calloc(Ntotaldofs, __SIZEOF_DOUBLE__);
@@ -497,14 +482,7 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
     __initialise_nodal_increments(D_U, U_n, FEM_Mesh, ActiveNodes,
                                   Time_Integration_Params);
 
-#ifdef USE_PETSC
-#if defined(PETSC_USE_LOG)
-    PetscLogFlops(event_2_flops);
-    PetscLogEventEnd(event_2, 0, 0, 0, 0);
-#endif
-#endif
-
-    // Define and allocate the effective mass matrix
+    //! Define and allocate the effective mass matrix
     Effective_Mass =
         (double *)calloc(Ntotaldofs * Ntotaldofs, __SIZEOF_DOUBLE__);
     if (Effective_Mass == NULL) {
@@ -519,14 +497,7 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
       return EXIT_FAILURE;
     }
 
-#ifdef USE_PETSC
-#if defined(PETSC_USE_LOG)
-    PetscLogEventRegister("Set Initial Residual", 0, &event_3);
-    PetscLogEventBegin(event_3, 0, 0, 0, 0);
-#endif
-#endif
-
-    // Trial residual
+    //! Trial residual
     Residual = __assemble_residual(
         U_n, D_U, Effective_Mass, ActiveNodes, ActiveDOFs, MPM_Mesh, FEM_Mesh,
         Time_Integration_Params, true, false, &STATUS);
@@ -535,56 +506,43 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
       return EXIT_FAILURE;
     }
 
-#ifdef USE_PETSC
-#if defined(PETSC_USE_LOG)
-    PetscLogFlops(event_3_flops);
-    PetscLogEventEnd(event_3, 0, 0, 0, 0);
-#endif
-#endif
-
-    // Compute error
+    //! Compute initial error
     Error_0 = Error_i = __error_residual(Residual, Nactivedofs);
-    Error_relative = Error_i / Error_0;
     Iter = 0;
 
-    nnz = (int *)calloc(Nactivedofs, __SIZEOF_INT__);
-    __preallocation_tangent_matrix(nnz, ActiveNodes, ActiveDOFs, MPM_Mesh);
+    if (Error_0 < TOL) {
+#ifdef USE_PETSC
+      VecDestroy(&Residual);
+#else
+      free(Residual);
+#endif
+      Error_relative = 0.0;
+    } else {
+      Error_relative = Error_i / Error_0;
+      Tangent_Stiffness = __preallocation_tangent_matrix(
+          ActiveNodes, ActiveDOFs, MPM_Mesh, &STATUS);
+      if (STATUS == EXIT_FAILURE) {
+        fprintf(stderr,
+                "" RED "Error in __preallocation_tangent_matrix()" RESET " \n");
+        return EXIT_FAILURE;
+      }
+    }
 
+    //! Start Newton-Raphson
     while (Error_relative > TOL) {
 
       if ((Error_i < TOL * 100) || (Error_relative < TOL) || (Iter > MaxIter)) {
         break;
       }
 
-#ifdef USE_PETSC
-#if defined(PETSC_USE_LOG)
-      PetscLogEventRegister("Assemble tangent matrix", 0, &event_4);
-      PetscLogEventBegin(event_4, 0, 0, 0, 0);
-#endif
-#endif
-
-      Tangent_Stiffness = __assemble_tangent_stiffness(
-          nnz, ActiveNodes, ActiveDOFs, MPM_Mesh, FEM_Mesh,
-          Time_Integration_Params, &STATUS);
+      __assemble_tangent_stiffness(Tangent_Stiffness, ActiveNodes, ActiveDOFs,
+                                   MPM_Mesh, FEM_Mesh, Time_Integration_Params,
+                                   Iter, &STATUS);
       if (STATUS == EXIT_FAILURE) {
         fprintf(stderr,
                 "" RED "Error in __assemble_tangent_stiffness()" RESET " \n");
         return EXIT_FAILURE;
       }
-
-#ifdef USE_PETSC
-#if defined(PETSC_USE_LOG)
-      PetscLogFlops(event_4_flops);
-      PetscLogEventEnd(event_4, 0, 0, 0, 0);
-#endif
-#endif
-
-#ifdef USE_PETSC
-#if defined(PETSC_USE_LOG)
-      PetscLogEventRegister("Solve linear system", 0, &event_5);
-      PetscLogEventBegin(event_5, 0, 0, 0, 0);
-#endif
-#endif
 
 #ifdef USE_PETSC
       STATUS = krylov_PETSC(&Tangent_Stiffness, &Residual, Nactivedofs);
@@ -600,22 +558,8 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
       }
 #endif
 
-#ifdef USE_PETSC
-#if defined(PETSC_USE_LOG)
-      PetscLogFlops(event_5_flops);
-      PetscLogEventEnd(event_5, 0, 0, 0, 0);
-#endif
-#endif
-
       __update_Nodal_Increments(Residual, D_U, U_n, ActiveDOFs,
                                 Time_Integration_Params, Ntotaldofs);
-
-#ifdef USE_PETSC
-#if defined(PETSC_USE_LOG)
-      PetscLogEventRegister("Update local deformation", 0, &event_6);
-      PetscLogEventBegin(event_6, 0, 0, 0, 0);
-#endif
-#endif
 
       __local_compatibility_conditions(D_U, ActiveNodes, MPM_Mesh, FEM_Mesh,
                                        &STATUS);
@@ -625,20 +569,12 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
                 " \n");
         return EXIT_FAILURE;
       }
-#ifdef USE_PETSC
-#if defined(PETSC_USE_LOG)
-      PetscLogFlops(event_6_flops);
-      PetscLogEventEnd(event_6, 0, 0, 0, 0);
-#endif
-#endif
 
       // Free memory
 #ifdef USE_PETSC
       VecDestroy(&Residual);
-      MatDestroy(&Tangent_Stiffness);
 #else
       free(Residual);
-      free(Tangent_Stiffness);
 #endif
 
       // Compute residual (NR-loop)
@@ -656,6 +592,17 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
       Iter++;
       printf("Iter: [%i/%i]. Total Error: %e, Relative Error: %e \n", Iter,
              MaxIter, Error_i, Error_relative);
+    }
+
+    //! Free residual and tangent matrix
+    if (Iter > 0) {
+#ifdef USE_PETSC
+      VecDestroy(&Residual);
+      MatDestroy(&Tangent_Stiffness);
+#else
+      free(Residual);
+      free(Tangent_Stiffness);
+#endif
     }
 
     print_convergence_stats(TimeStep, Iter, Error_0, Error_i, Error_relative);
@@ -695,13 +642,8 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
       //      free(Reactions_aux.nM);
     }
 
+    //! Update time step
     TimeStep++;
-
-#ifdef USE_PETSC
-    VecDestroy(&Residual);
-#else
-    free(Residual);
-#endif
 
     free(Effective_Mass);
     free(U_n.value);
@@ -712,7 +654,6 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
     free(D_U.d2_value_dt2);
     free(ActiveNodes.Nodes2Mask);
     free(ActiveDOFs.Nodes2Mask);
-    free(nnz);
   }
 
   return EXIT_SUCCESS;
@@ -1698,7 +1639,7 @@ static void __Nodal_Body_Forces(double *Residual, Mask ActiveNodes,
   double m_p;              /* Mass of the particle */
   double Residual_val;
 
-  // b[1] = -9.81;
+  b[1] = -9.81;
 
   for (unsigned p = 0; p < NumGP; p++) {
 
@@ -1829,8 +1770,15 @@ static double __error_residual(const double *Residual, unsigned Total_dof)
 
 /**************************************************************/
 
-static void __preallocation_tangent_matrix(int *nnz, Mask ActiveNodes,
-                                           Mask ActiveDOFs, Particle MPM_Mesh) {
+#ifdef USE_PETSC
+static Mat __preallocation_tangent_matrix(Mask ActiveNodes, Mask ActiveDOFs,
+                                          Particle MPM_Mesh, int *STATUS)
+#else
+static double *__preallocation_tangent_matrix(Mask ActiveNodes, Mask ActiveDOFs,
+                                              Particle MPM_Mesh, int *STATUS)
+#endif
+
+{
   unsigned Ndim = NumberDimensions;
   unsigned Nactivedofs = ActiveDOFs.Nactivenodes;
   unsigned Np = MPM_Mesh.NumGP;
@@ -1888,6 +1836,8 @@ static void __preallocation_tangent_matrix(int *nnz, Mask ActiveNodes,
     free(Nodes_p.Connectivity);
   }
 
+  int *nnz = (int *)calloc(Nactivedofs, __SIZEOF_INT__);
+
   for (unsigned A = 0; A < Nactivedofs; A++) {
     for (unsigned B = 0; B < Nactivedofs; B++) {
       nnz[A] += Active_dof_Mat[A * Nactivedofs + B];
@@ -1895,6 +1845,26 @@ static void __preallocation_tangent_matrix(int *nnz, Mask ActiveNodes,
   }
 
   free(Active_dof_Mat);
+
+#ifdef USE_PETSC
+  Mat Tangent_Stiffness;
+  MatCreateSeqAIJ(PETSC_COMM_SELF, Nactivedofs, Nactivedofs, 0, nnz,
+                  &Tangent_Stiffness);
+  MatSetOption(Tangent_Stiffness, MAT_IGNORE_ZERO_ENTRIES, PETSC_TRUE);
+  PetscInt Istart, Iend;
+  MatGetOwnershipRange(Tangent_Stiffness, &Istart, &Iend);
+#else
+  double *Tangent_Stiffness =
+      (double *)calloc(Nactivedofs * Nactivedofs, __SIZEOF_DOUBLE__);
+  if (Tangent_Stiffness == NULL) {
+    fprintf(stderr, "" RED "Error in calloc(): Out of memory" RESET " \n");
+    *STATUS = EXIT_FAILURE;
+  }
+#endif
+
+  free(nnz);
+
+  return Tangent_Stiffness;
 }
 
 /**************************************************************/
@@ -1996,15 +1966,17 @@ static void MatSetValues(double *Tangent_Stiffness,
 /**************************************************************/
 
 #ifdef USE_PETSC
-static Mat __assemble_tangent_stiffness(int *nnz, Mask ActiveNodes,
-                                        Mask ActiveDOFs, Particle MPM_Mesh,
-                                        Mesh FEM_Mesh,
-                                        Newmark_parameters Params, int *STATUS)
+static void __assemble_tangent_stiffness(Mat Tangent_Stiffness,
+                                         Mask ActiveNodes, Mask ActiveDOFs,
+                                         Particle MPM_Mesh, Mesh FEM_Mesh,
+                                         Newmark_parameters Params,
+                                         unsigned Iter, int *STATUS)
 #else
-static double *
-__assemble_tangent_stiffness(int *nnz, Mask ActiveNodes, Mask ActiveDOFs,
-                             Particle MPM_Mesh, Mesh FEM_Mesh,
-                             Newmark_parameters Params, int *STATUS)
+static void __assemble_tangent_stiffness(double *Tangent_Stiffness,
+                                         Mask ActiveNodes, Mask ActiveDOFs,
+                                         Particle MPM_Mesh, Mesh FEM_Mesh,
+                                         Newmark_parameters Params,
+                                         unsigned Iter, int *STATUS)
 #endif
 {
 
@@ -2017,23 +1989,6 @@ __assemble_tangent_stiffness(int *nnz, Mask ActiveNodes, Mask ActiveDOFs,
 
   unsigned p;
 
-#ifdef USE_PETSC
-  Mat Tangent_Stiffness;
-  MatCreateSeqAIJ(PETSC_COMM_SELF, Nactivedofs, Nactivedofs, 0, nnz,
-                  &Tangent_Stiffness);
-  MatSetOption(Tangent_Stiffness, MAT_IGNORE_ZERO_ENTRIES, PETSC_TRUE);
-  PetscInt Istart, Iend;
-  MatGetOwnershipRange(Tangent_Stiffness, &Istart, &Iend);
-#else
-  double *Tangent_Stiffness =
-      (double *)calloc(Nactivedofs * Nactivedofs, __SIZEOF_DOUBLE__);
-  if (Tangent_Stiffness == NULL) {
-    fprintf(stderr, "" RED "Error in calloc(): Out of memory" RESET " \n");
-    *STATUS = EXIT_FAILURE;
-    return Tangent_Stiffness;
-  }
-#endif
-
 #if NumberDimensions == 2
   double Stiffness_density_p[4];
   double Inertia_density_p[2];
@@ -2043,6 +1998,18 @@ __assemble_tangent_stiffness(int *nnz, Mask ActiveNodes, Mask ActiveDOFs,
   double Inertia_density_p[3];
   double Tangent_Stiffness_p[9];
 #endif
+
+  // Set tangent matrix to zero if it is necessary
+  if (Iter > 0) {
+#ifdef USE_PETSC
+    MatZeroEntries(Tangent_Stiffness);
+#else
+    #pragma omp for
+    for (unsigned idx = 0; idx < Nactivedofs * Nactivedofs; idx++) {
+      Tangent_Stiffness[idx] = 0.0;
+    }
+#endif
+  }
 
   // Time integartion parameters
   double alpha_1 = Params.alpha_1;
@@ -2055,20 +2022,20 @@ __assemble_tangent_stiffness(int *nnz, Mask ActiveNodes, Mask ActiveDOFs,
 #pragma omp for private(p)
     for (p = 0; p < Np; p++) {
 
-      // Get mass and the volume of the particle in the reference configuration
-      // and the jacobian of the deformation gradient
+      //! Get mass and the volume of the particle in the reference configuration
+      //! and the jacobian of the deformation gradient
       double m_p = MPM_Mesh.Phi.mass.nV[p];
       double V0_p = MPM_Mesh.Phi.Vol_0.nV[p];
 
-      // Material properties of the particle
+      //! Material properties of the particle
       MatIndx_p = MPM_Mesh.MatIdx[p];
       Material MatProp_p = MPM_Mesh.Mat[MatIndx_p];
 
-      // Pointer to the incremental deformation gradient
+      //! Pointer to the incremental deformation gradient
       double *DF_p = MPM_Mesh.Phi.DF.nM[p];
 
-      //  Define nodal connectivity for each particle
-      //  and compute gradient of the shape function
+      //!  Define nodal connectivity for each particle
+      //!  and compute gradient of the shape function
       NumNodes_p = MPM_Mesh.NumberNodes[p];
       Element Nodes_p =
           nodal_set__Particles__(p, MPM_Mesh.ListNodes[p], NumNodes_p);
@@ -2077,7 +2044,7 @@ __assemble_tangent_stiffness(int *nnz, Mask ActiveNodes, Mask ActiveDOFs,
       Matrix d_shapefunction_n_p =
           compute_dN__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
 
-      // Pushforward the shape function gradient
+      //! Pushforward the shape function gradient
       double *d_shapefunction_n1_p = push_forward_dN__MeshTools__(
           d_shapefunction_n_p.nV, DF_p, NumNodes_p, STATUS);
       if (*STATUS == EXIT_FAILURE) {
@@ -2163,8 +2130,6 @@ __assemble_tangent_stiffness(int *nnz, Mask ActiveNodes, Mask ActiveDOFs,
   MatAssemblyEnd(Tangent_Stiffness, MAT_FINAL_ASSEMBLY);
   MatSetOption(Tangent_Stiffness, MAT_SYMMETRIC, PETSC_TRUE);
 #endif
-
-  return Tangent_Stiffness;
 }
 
 /**************************************************************/
