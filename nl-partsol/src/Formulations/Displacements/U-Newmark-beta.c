@@ -1664,7 +1664,7 @@ static void __Nodal_Body_Forces(double *Residual, Mask ActiveNodes,
   double m_p;              /* Mass of the particle */
   double Residual_val;
 
-  b[1] = -9.81;
+ // b[1] = -9.81;
 
   for (unsigned p = 0; p < NumGP; p++) {
 
