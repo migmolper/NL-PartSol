@@ -212,6 +212,10 @@ void print_Status(char *,int);
 
 /*****************************************************************/
 
+void DoProgress( char label[], int step, int total );
+
+/*****************************************************************/
+
 /*! 
 
   \fn void print_step(int Time,double DeltaTimeStep)
@@ -222,7 +226,7 @@ void print_Status(char *,int);
   \param DeltaTimeStep : Current time step
 
  */
-void print_step(int,double);
+void print_step(int Time, int NumTimeStep, double DeltaTimeStep);
 
 /*****************************************************************/
 
@@ -238,7 +242,7 @@ void print_step(int,double);
   \param Error_relative
 
  */
-void print_convergence_stats(int, int, double, double, double);
+void print_convergence_stats(int, int, int, double, double, double);
 
 /*****************************************************************/
 

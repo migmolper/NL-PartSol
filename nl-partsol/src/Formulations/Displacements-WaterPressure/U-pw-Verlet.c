@@ -83,7 +83,6 @@ void upw_Verlet(
 
   for (unsigned TimeStep = InitialStep; TimeStep < NumTimeStep; TimeStep++) {
 
-    print_Status("*************************************************", TimeStep);
     DeltaTimeStep = DeltaT_Coussy__SolversLib__(MPM_Mesh, DeltaX, 1.0, CFL);
     local_search__MeshTools__(MPM_Mesh, FEM_Mesh);
     ActiveNodes = get_active_nodes__MeshTools__(FEM_Mesh);
@@ -91,7 +90,7 @@ void upw_Verlet(
     Free_and_Restricted_Dofs =
         get_active_dofs__MeshTools__(
             ActiveNodes, FEM_Mesh, TimeStep, NumTimeStep);
-    print_step(TimeStep, DeltaTimeStep);
+    print_step(TimeStep, NumTimeStep, DeltaTimeStep);
 
     Mass_Matrix_Mixture =
         compute_Mass_Matrix_Mixture(MPM_Mesh, FEM_Mesh, ActiveNodes);

@@ -453,8 +453,8 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
 #endif
 
   while (TimeStep < NumTimeStep) {
-    print_Status("*************************************************", TimeStep);
-    print_step(TimeStep, DeltaTimeStep);
+
+    DoProgress("Simulation:", TimeStep, NumTimeStep);
 
     //! Local search and compute list of active nodes and dofs
     local_search__MeshTools__(MPM_Mesh, FEM_Mesh);
@@ -602,8 +602,9 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
       Error_i = __error_residual(Residual, Nactivedofs);
       Error_relative = Error_i / Error_0;
       Iter++;
-      printf("Iter: [%i/%i]. Total Error: %e, Relative Error: %e \n", Iter,
-             MaxIter, Error_i, Error_relative);
+      //      printf("Iter: [%i/%i]. Total Error: %e, Relative Error: %e \n",
+      //      Iter,
+      //             MaxIter, Error_i, Error_relative);
     }
 
     //! Free residual and tangent matrix
@@ -617,7 +618,7 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
 #endif
     }
 
-    print_convergence_stats(TimeStep, Iter, Error_0, Error_i, Error_relative);
+    print_convergence_stats(TimeStep, NumTimeStep, Iter, Error_0, Error_i, Error_relative);
 
     if (Iter > MaxIter) {
       fprintf(
@@ -1664,7 +1665,7 @@ static void __Nodal_Body_Forces(double *Residual, Mask ActiveNodes,
   double m_p;              /* Mass of the particle */
   double Residual_val;
 
- // b[1] = -9.81;
+  // b[1] = -9.81;
 
   for (unsigned p = 0; p < NumGP; p++) {
 

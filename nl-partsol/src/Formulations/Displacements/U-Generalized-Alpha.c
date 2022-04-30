@@ -55,9 +55,8 @@ void U_Generalized_alpha(Mesh FEM_Mesh, Particle MPM_Mesh,
 
   for (TimeStep = InitialStep; TimeStep < NumTimeStep; TimeStep++) {
 
-    print_Status("*************************************************", TimeStep);
     DeltaTimeStep = U_DeltaT__SolversLib__(MPM_Mesh, DeltaX, Parameters_Solver);
-    print_step(TimeStep, DeltaTimeStep);
+    print_step(TimeStep,NumTimeStep, DeltaTimeStep);
     local_search__MeshTools__(MPM_Mesh, FEM_Mesh);
     print_Status("*************************************************", TimeStep);
     print_Status("First step : Compute nodal kinetics ... WORKING", TimeStep);

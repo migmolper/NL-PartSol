@@ -112,8 +112,7 @@ void Up_Newmark_beta_Finite_Strains(Mesh FEM_Mesh, Particle MPM_Mesh,
 
   for (unsigned TimeStep = InitialStep; TimeStep < NumTimeStep; TimeStep++) {
 
-    print_Status("*************************************************", TimeStep);
-    print_step(TimeStep, DeltaTimeStep);
+    print_step(TimeStep,NumTimeStep, DeltaTimeStep);
 
     print_Status("*************************************************", TimeStep);
     print_Status("First step : Generate Mask ... WORKING", TimeStep);
@@ -1301,7 +1300,7 @@ static bool check_convergence(Matrix Residual, double TOL, int Iter,
   if (Error_relative > TOL) {
     return false;
   } else {
-    print_convergence_stats(Step, Iter, Error0, Error, Error_relative);
+    print_convergence_stats(Step, 100,Iter, Error0, Error, Error_relative);
     return true;
   }
 }

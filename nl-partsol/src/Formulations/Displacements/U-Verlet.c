@@ -86,9 +86,8 @@ int U_Verlet(
 
   for (int TimeStep = InitialStep; TimeStep < NumTimeStep; TimeStep++) {
 
-    print_Status("*************************************************", TimeStep);
     DeltaTimeStep = U_DeltaT__SolversLib__(MPM_Mesh, DeltaX, Parameters_Solver);
-    print_step(TimeStep, DeltaTimeStep);
+    print_step(TimeStep, NumTimeStep, DeltaTimeStep);
     local_search__MeshTools__(MPM_Mesh, FEM_Mesh);
     ActiveNodes = get_active_nodes__MeshTools__(FEM_Mesh);
     Nactivenodes = ActiveNodes.Nactivenodes;
