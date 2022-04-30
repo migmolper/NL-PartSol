@@ -84,8 +84,7 @@ int U_Static(Mesh FEM_Mesh, Particle MPM_Mesh,
 
   while (TimeStep < NumTimeStep) {
 
-    print_Status("*************************************************", TimeStep);
-    print_step(TimeStep, DeltaTimeStep);
+    print_step(TimeStep, NumTimeStep, DeltaTimeStep);
 
     local_search__MeshTools__(MPM_Mesh, FEM_Mesh);
 
@@ -984,7 +983,7 @@ static bool check_convergence(Matrix Residual, double TOL, int Iter,
     if ((Error > TOL * 100) && (Error_relative > TOL) && (Iter < MaxIter)) {
       return false;
     } else {
-      print_convergence_stats(Step, Iter, Error0, Error, Error_relative);
+      print_convergence_stats(Step, 10, Iter, Error0, Error, Error_relative);
       return true;
     }
   }
