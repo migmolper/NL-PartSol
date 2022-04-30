@@ -56,9 +56,9 @@ void print_convergence_stats(int Time, int NumTimeStep, int Iter, double Error0,
                              double Error_total, double Error_relative) {
 
   fprintf(stdout,
-          "" GREEN "Step" RESET ": [%04d/%04d] | " GREEN "Iterations" RESET ": [%02d/%02d] | " GREEN "Initial E" RESET
-          ": %1.2e | " GREEN "Total E" RESET ": %1.2e | " GREEN
-          "Relative E" RESET ": %1.2e \n",
+          "" GREEN "Step" RESET ": [%04d/%04d] | " GREEN "Iterations" RESET
+          ": [%02d/%02d] | " GREEN "Initial E" RESET ": %1.2e | " GREEN
+          "Total E" RESET ": %1.2e | " GREEN "Relative E" RESET ": %1.2e \n",
           Time, NumTimeStep, Iter, 10, Error0, Error_total, Error_relative);
 
   FILE *Stats_Solver;
