@@ -40,10 +40,9 @@ void U_Forward_Euler(Mesh FEM_Mesh, Particle MPM_Mesh,
 
   for (int TimeStep = InitialTimeStep; TimeStep < NumTimeStep; TimeStep++) {
 
-    print_Status("*************************************************", TimeStep);
     DeltaTimeStep =
         U_DeltaT__SolversLib__(MPM_Mesh, FEM_Mesh.DeltaX, Parameters_Solver);
-    print_step(TimeStep, DeltaTimeStep);
+    print_step(TimeStep, NumTimeStep, DeltaTimeStep);
     local_search__MeshTools__(MPM_Mesh, FEM_Mesh);
 
     print_Status("*************************************************", TimeStep);
