@@ -55,11 +55,56 @@ void DoProgress(char label[], int step, int total) {
 void print_convergence_stats(int Time, int NumTimeStep, int Iter, double Error0,
                              double Error_total, double Error_relative) {
 
+  if(NumTimeStep < 10)
+  {
   fprintf(stdout,
-          "" GREEN "Step" RESET ": [%04d/%04d] | " GREEN "Iterations" RESET ": [%02d/%02d] | " GREEN "Initial E" RESET
-          ": %1.2e | " GREEN "Total E" RESET ": %1.2e | " GREEN
-          "Relative E" RESET ": %1.2e \n",
+          "" GREEN "Step" RESET ": [%01d/%01d] | " GREEN "Iterations" RESET
+          ": [%02d/%02d] | " GREEN "Initial E" RESET ": %1.2e | " GREEN
+          "Total E" RESET ": %1.2e | " GREEN "Relative E" RESET ": %1.2e \n",
           Time, NumTimeStep, Iter, 10, Error0, Error_total, Error_relative);
+  }
+  else if (NumTimeStep < 100)
+  {
+      fprintf(stdout,
+          "" GREEN "Step" RESET ": [%02d/%02d] | " GREEN "Iterations" RESET
+          ": [%02d/%02d] | " GREEN "Initial E" RESET ": %1.2e | " GREEN
+          "Total E" RESET ": %1.2e | " GREEN "Relative E" RESET ": %1.2e \n",
+          Time, NumTimeStep, Iter, 10, Error0, Error_total, Error_relative);
+  }
+  else if(NumTimeStep < 1000)
+  {
+  fprintf(stdout,
+          "" GREEN "Step" RESET ": [%03d/%03d] | " GREEN "Iterations" RESET
+          ": [%02d/%02d] | " GREEN "Initial E" RESET ": %1.2e | " GREEN
+          "Total E" RESET ": %1.2e | " GREEN "Relative E" RESET ": %1.2e \n",
+          Time, NumTimeStep, Iter, 10, Error0, Error_total, Error_relative);
+  }
+  else if (NumTimeStep < 10000)
+  {
+      fprintf(stdout,
+          "" GREEN "Step" RESET ": [%04d/%04d] | " GREEN "Iterations" RESET
+          ": [%02d/%02d] | " GREEN "Initial E" RESET ": %1.2e | " GREEN
+          "Total E" RESET ": %1.2e | " GREEN "Relative E" RESET ": %1.2e \n",
+          Time, NumTimeStep, Iter, 10, Error0, Error_total, Error_relative);
+  }
+  else if (NumTimeStep < 100000)
+  {
+      fprintf(stdout,
+          "" GREEN "Step" RESET ": [%05d/%05d] | " GREEN "Iterations" RESET
+          ": [%02d/%02d] | " GREEN "Initial E" RESET ": %1.2e | " GREEN
+          "Total E" RESET ": %1.2e | " GREEN "Relative E" RESET ": %1.2e \n",
+          Time, NumTimeStep, Iter, 10, Error0, Error_total, Error_relative);
+  }
+  else if (NumTimeStep < 1000000)
+  {
+  fprintf(stdout,
+          "" GREEN "Step" RESET ": [%i/%i] | " GREEN "Iterations" RESET
+          ": [%02d/%02d] | " GREEN "Initial E" RESET ": %1.2e | " GREEN
+          "Total E" RESET ": %1.2e | " GREEN "Relative E" RESET ": %1.2e \n",
+          Time, NumTimeStep, Iter, 10, Error0, Error_total, Error_relative);
+  }
+  
+
 
   FILE *Stats_Solver;
   char Name_file_t[10000];

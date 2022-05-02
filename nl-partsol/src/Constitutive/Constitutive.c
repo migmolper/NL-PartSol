@@ -251,7 +251,6 @@ int stiffness_density__Constitutive__(
       STATUS = compute_1PK_elastoplastic_tangent_matrix(
         Stiffness_density, 
         dN_alpha_n1, dN_beta_n1,
-        dN_alpha_n, dN_beta_n,
         IO_State);
       if (STATUS == EXIT_FAILURE) {
         fprintf(stderr, "" RED "Error in compute_1PK_elastoplastic_tangent_matrix" RESET "\n");
@@ -267,7 +266,6 @@ int stiffness_density__Constitutive__(
       STATUS = compute_1PK_elastoplastic_tangent_matrix(
         Stiffness_density, 
         dN_alpha_n1, dN_beta_n1,
-        dN_alpha_n, dN_beta_n,
         IO_State);
       if (STATUS == EXIT_FAILURE) {
         fprintf(stderr, "" RED "Error in compute_1PK_elastoplastic_tangent_matrix" RESET "\n");

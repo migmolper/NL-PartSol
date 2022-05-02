@@ -28,8 +28,6 @@ int compute_1PK_elastoplastic_tangent_matrix(
   double *Stiffness_density,
   const double *dN_alpha_n1,
   const double *dN_beta_n1,  
-  const double *dN_alpha_n,
-  const double *dN_beta_n,
   const State_Parameters IO_State) {
 
   int STATUS = EXIT_SUCCESS;
@@ -133,7 +131,7 @@ int compute_1PK_elastoplastic_tangent_matrix(
       for (unsigned i = 0; i < Ndim; i++) {
         for (unsigned j = 0; j < Ndim; j++) {
           mv[A * Ndim + B][i] += m[A * Ndim + B][i * Ndim + j] * dN_alpha_n1[j];
-          mu[A * Ndim + B][i] += m[A * Ndim + B][i * Ndim + j] * dN_beta_n[j];
+          mu[A * Ndim + B][i] += m[A * Ndim + B][i * Ndim + j] * dN_beta_n1[j];
         }
       }
     }
@@ -142,7 +140,7 @@ int compute_1PK_elastoplastic_tangent_matrix(
   // Do the diadic product of gradient directions
   for (unsigned i = 0; i < Ndim; i++) {
     for (unsigned j = 0; j < Ndim; j++) {
-      u__o__v[i][j] = dN_beta_n[i] * dN_alpha_n1[j];
+      u__o__v[i][j] = dN_beta_n1[i] * dN_alpha_n1[j];
     }
   }
 
