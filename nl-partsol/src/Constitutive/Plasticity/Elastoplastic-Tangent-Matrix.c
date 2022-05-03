@@ -2,33 +2,28 @@
 
 #include "Constitutive/Plasticity/Elastoplastic-Tangent-Matrix.h"
 
-/**************************************************************/ 
+/**************************************************************/
 
 /*!
     \param[out] eigval_b_e Eigenvalues of b elastic trial.
     \param[out] eigvec_b_e Eigenvector of b elastic trial.
     \param[in] b_e (n) Elastic left Cauchy-Green.
 */
-static int __spectral_decomposition_b_e(
-    double *eigval_b_e /**< [out] Eigenvalues of b elastic trial. */,
-    double *eigvec_b_e /**< [out] Eigenvector of b elastic trial. */,
-    const double *b_e /**< [in] (n) Elastic left Cauchy-Green.*/);
+static int __spectral_decomposition_b_e(double *eigval_b_e, double *eigvec_b_e,
+                                        const double *b_e);
 /**************************************************************/
 
 /*!
    \param[out] eigval_T Eigenvalues of the Kirchhoff stress tensor.
    \param[in] T Kirchhoff stress tensor
 */
-static int __eigenvalues_kirchhoff(
-    double *eigval_T,
-    const double *T);
+static int __eigenvalues_kirchhoff(double *eigval_T, const double *T);
 /**************************************************************/
 
-int compute_1PK_elastoplastic_tangent_matrix(
-  double *Stiffness_density,
-  const double *dN_alpha_n1,
-  const double *dN_beta_n1,  
-  const State_Parameters IO_State) {
+int compute_1PK_elastoplastic_tangent_matrix(double *Stiffness_density,
+                                             const double *dN_alpha_n1,
+                                             const double *dN_beta_n1,
+                                             const State_Parameters IO_State) {
 
   int STATUS = EXIT_SUCCESS;
   int Ndim = NumberDimensions;
@@ -80,7 +75,6 @@ int compute_1PK_elastoplastic_tangent_matrix(
 #endif
 #endif
 
-
   double eigval_T[3] = {0.0, 0.0, 0.0};
 
   STATUS = __eigenvalues_kirchhoff(eigval_T, IO_State.Stress);
@@ -89,18 +83,15 @@ int compute_1PK_elastoplastic_tangent_matrix(
     return EXIT_FAILURE;
   }
 
-
 #if NumberDimensions == 2
 
   double n1[2] = {0.0, 0.0};
   double n2[2] = {0.0, 0.0};
 
-  double m[4][4] = {
-      {0.0, 0.0, 0.0},
-      {0.0, 0.0, 0.0},
-      {0.0, 0.0, 0.0},
-      {0.0, 0.0, 0.0},
-  };
+  double m[4][4] = {{0.0, 0.0, 0.0, 0.0},
+                    {0.0, 0.0, 0.0, 0.0},
+                    {0.0, 0.0, 0.0, 0.0},
+                    {0.0, 0.0, 0.0, 0.0}};
 
   double mu[4][2] = {{0.0, 0.0}, {0.0, 0.0}, {0.0, 0.0}, {0.0, 0.0}};
 
@@ -150,21 +141,19 @@ int compute_1PK_elastoplastic_tangent_matrix(
 
       for (unsigned i = 0; i < Ndim; i++) {
         for (unsigned j = 0; j < Ndim; j++) {
-          Stiffness_density[i * Ndim + j] += IO_State.C_ep[A * Ndim + B] *
-                                (mv[A * Ndim + A][i] * mu[B * Ndim + B][j]);
+          Stiffness_density[i * Ndim + j] +=
+              IO_State.C_ep[A * Ndim + B] *
+              (mv[A * Ndim + A][i] * mu[B * Ndim + B][j]);
 
           if (A != B) {
-            if(fabs(eigval_b_e[B] - eigval_b_e[A]) > 1E-10)
-            {
+            if (fabs(eigval_b_e[B] - eigval_b_e[A]) > 1E-10) {
               Stiffness_density[i * Ndim + j] +=
                   0.5 *
                   ((eigval_T[B] - eigval_T[A]) /
-                  (eigval_b_e[B] - eigval_b_e[A])) *
+                   (eigval_b_e[B] - eigval_b_e[A])) *
                   (eigval_b_e[B] * (mv[A * Ndim + B][i] * mu[A * Ndim + B][j]) +
-                  eigval_b_e[A] * (mv[A * Ndim + B][i] * mu[B * Ndim + A][j]));
-            }
-            else
-            {
+                   eigval_b_e[A] * (mv[A * Ndim + B][i] * mu[B * Ndim + A][j]));
+            } else {
               Stiffness_density[i * Ndim + j] += 0.0;
             }
           }
@@ -173,12 +162,12 @@ int compute_1PK_elastoplastic_tangent_matrix(
     }
   }
 
-
   // Assemble the geometrical contribution to the tanget matrix
   for (unsigned i = 0; i < Ndim; i++) {
     for (unsigned j = 0; j < Ndim; j++) {
       for (unsigned k = 0; k < Ndim; k++) {
-        Stiffness_density[i * Ndim + j] += -IO_State.Stress[i * Ndim + k] * u__o__v[k][j];
+        Stiffness_density[i * Ndim + j] +=
+            -IO_State.Stress[i * Ndim + k] * u__o__v[k][j];
       }
     }
   }
@@ -285,19 +274,13 @@ static int __spectral_decomposition_b_e(double *eigval_b_e, double *eigvec_b_e,
 
 static int __eigenvalues_kirchhoff(double *eigval_T, const double *T) {
 
-unsigned Ndim = NumberDimensions;
+  unsigned Ndim = NumberDimensions;
 
 #if NumberDimensions == 2
-  double T_aux[4] = {
-    T[0], T[1],
-    T[2], T[3]};
+  double T_aux[4] = {T[0], T[1], T[2], T[3]};
 #else
-  double T_aux[9] = {
-    T[0], T[1], T[2],
-    T[3], T[4], T[5],
-    T[6], T[7], T[8]};
+  double T_aux[9] = {T[0], T[1], T[2], T[3], T[4], T[5], T[6], T[7], T[8]};
 #endif
-
 
   /* Locals */
   int n = NumberDimensions;
@@ -377,4 +360,3 @@ unsigned Ndim = NumberDimensions;
 }
 
 /**************************************************************/
-
