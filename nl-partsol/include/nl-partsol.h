@@ -36,6 +36,8 @@
 #include <stddef.h>
 #endif
 
+extern bool Flag_Print_Convergence;
+
 /***************************************/
 /******** nl-partsol libraries *********/
 /***************************************/

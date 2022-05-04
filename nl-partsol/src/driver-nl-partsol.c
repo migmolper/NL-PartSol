@@ -40,6 +40,7 @@ char SimulationFile[MAXC];
 char Static_conditons[MAXC];
 char Formulation[MAXC];
 char *TimeIntegrationScheme;
+bool Flag_Print_Convergence;
 
 
 //  Auxiliar functions for the main
@@ -75,6 +76,8 @@ omp_set_num_threads(omp_get_max_threads());
   Particle MPM_Mesh;
   Time_Int_Params Parameters_Solver;
 
+  // Default values for the flags
+  Flag_Print_Convergence = false;
   
   // Read simulation file and kind of simulation
   for (unsigned i = 0; i < argc; i++)
@@ -98,6 +101,11 @@ omp_set_num_threads(omp_get_max_threads());
     if(strcmp(argv[i], "--FORMULATION-Upw") == 0) {
       strcpy(Formulation,"-upw");
       If_formulation = true;         
+    }
+
+    if(strcmp(argv[i], "--Print-Convergence") == 0)
+    {
+      Flag_Print_Convergence = true;
     }
 
     if(strcmp(argv[i], "-f") == 0) {
@@ -366,12 +374,14 @@ static void nlpartsol_help_message() {
 #ifdef USE_PETSC
   puts("Usage : nl-partsol -Flags -f [commands.nlp]");
   puts("Flag values:");
+  puts(" * --Print-Convergence: Display convergence stats.");
   puts(" * --FORMULATION-U : Displacement formulation");
   puts(" * --FORMULATION-Up : Velocity-Pressure formulation");
   puts(" * --FORMULATION-Upw : Soil-water mixture displacement-pressure formulation");
 #else
   puts("Usage : nl-partsol -Flag -f [commands.nlp]");
   puts("Flag values:");
+  puts(" * --Print-Convergence: Display convergence stats.");
   puts(" * --FORMULATION-U : Displacement formulation");
   puts(" * --FORMULATION-Up : Velocity-Pressure formulation");
   puts(" * --FORMULATION-Upw : Soil-water mixture displacement-pressure formulation");
