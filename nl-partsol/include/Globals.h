@@ -11,7 +11,6 @@ extern char   OutputNodesFile[MAXC];
 extern char   OutputDir[MAXC];
 extern char   Field[10];
 
-
 //	Global variables for simulation purposes
 extern double DeltaTimeStep;
 extern int NumberDOF;
