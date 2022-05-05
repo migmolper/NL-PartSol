@@ -275,6 +275,38 @@ void get_set_field__MeshTools__(
 
 /*********************************************************************/
 
+void gradient_vector_field__MeshTools__(
+  double * gradient_vector_field,
+  const double * field,
+  const double * gradient_Np,
+  const ChainPtr ListNodes,
+  int * STATUS){
+
+  ChainPtr I = ListNodes;
+
+  unsigned Ndim = NumberDimensions;
+  unsigned I_global_Idx = I->Idx;
+  unsigned I_local_Idx = 0;
+
+  while (I != NULL) {
+   
+    for (unsigned i = 0; i < Ndim; i++) {
+      for (unsigned j = 0; j < Ndim; j++) {
+        gradient_vector_field[i*Ndim + j] += 
+        field[I_global_Idx*Ndim + i] * 
+        gradient_Np[I_local_Idx*Ndim + j];
+      }
+    }
+
+    I = I->next;
+    I_local_Idx++;
+    I_global_Idx = I->Idx;
+  }
+
+}
+
+/*********************************************************************/
+
 Matrix get_U_set_field_upw__MeshTools__(Matrix Field_upw, Element Nodes_p,
                                         Mask ActiveNodes) {
   int Nnodes = Nodes_p.NumberNodes;
