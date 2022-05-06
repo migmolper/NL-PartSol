@@ -1,5 +1,5 @@
-#include <math.h>
-#include "nl-partsol.h"
+
+#include "Constitutive/Hyperelastic/Mooney-Rivlin.h"
 
 /**************************************************************/
 

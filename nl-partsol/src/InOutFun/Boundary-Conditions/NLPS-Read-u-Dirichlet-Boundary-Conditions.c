@@ -1,6 +1,13 @@
+#include <stdio.h>
+#include <stdlib.h>
 #include <sys/stat.h>
 #include <string.h>
-#include "nl-partsol.h"
+#include <stdbool.h>
+#include "Macros.h"
+#include "Types.h"
+#include "Globals.h"
+#include "Matlib.h"
+#include "InOutFun.h"
 
 /*
   Local structures

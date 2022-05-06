@@ -14,100 +14,179 @@
 #include <string.h>
 #include "nl-partsol.h"
 
+#ifdef USE_PETSC
+#include <petscksp.h>
+#endif
+
+#include "Formulations/Displacements/U-Analisys.h"
+#include "Formulations/Displacements/U-Static.h"
+#include "Formulations/Displacements/U-Discrete-Energy-Momentum.h"
+#include "Formulations/Displacements/U-Generalized-Alpha.h"
+#include "Formulations/Displacements/U-Forward-Euler.h"
+#include "Formulations/Displacements/U-Verlet.h"
+#include "Formulations/Displacements/U-Newmark-beta.h"
+
+#include "Formulations/Displacements-Pressure/U-p-Analisys.h"
+#include "Formulations/Displacements-Pressure/U-p-Newmark-beta.h"
+
+#include "Formulations/Displacements-WaterPressure/U-pw-Analisys.h"
+#include "Formulations/Displacements-WaterPressure/U-pw-Verlet.h"
+#include "Formulations/Displacements-WaterPressure/U-pw-Newmark-beta.h"
+
 /*
   Call global variables
 */
-char *SimulationFile;
-char *Static_conditons;
+char SimulationFile[MAXC];
+char Static_conditons[MAXC];
+char Formulation[MAXC];
 char *TimeIntegrationScheme;
-char *Formulation;
+bool Flag_Print_Convergence;
 
-/*
-  Auxiliar functions for the main
-*/
+
+//  Auxiliar functions for the main
 static void nlpartsol_help_message();
 static void free_nodes(Mesh);
 static void free_particles(Particle);
 static void standard_error(char *Error_message);
 
 int main(int argc, char *argv[]) {
-  char Error_message[MAXW];
-  bool Is_Static_Initialization = false;
-  bool Is_Restart_Simulation = false;
+
+
+// Initialize OpenMP
+#ifdef USE_OPENMP
+puts(""GREEN"Initialize OpenMP"RESET" ...");
+//    omp_set_num_threads(nthreads > 0 ? nthreads : omp_get_max_threads());
+// omp_set_num_threads(6);
+omp_set_num_threads(omp_get_max_threads());
+#endif
+
+  // Initialize PETSc
+#ifdef USE_PETSC
+  puts(""GREEN"Initialize PETSc"RESET" ...");
+  PetscInitialize(&argc, &argv, 0, 0);
+#endif
+
+  char Error_message[10000];
+  bool If_formulation = false;
+  bool If_f_option = false;
+  bool If_ff_option = false;
   int INFO_GramsSolid = 3;
   int STATUS = EXIT_SUCCESS;
   Mesh FEM_Mesh;
   Particle MPM_Mesh;
   Time_Int_Params Parameters_Solver;
 
-  /*********************************************************************/
-  /************ Read simulation file and kind of simulation ************/
-  /*********************************************************************/
-  if (argc == 2) {
-    if ((strcmp(argv[1], "--help") == 0) || (strcmp(argv[1], "-h") == 0)) {
+  // Default values for the flags
+  Flag_Print_Convergence = false;
+  
+  // Read simulation file and kind of simulation
+  for (unsigned i = 0; i < argc; i++)
+  {
+    if((strcmp(argv[i], "--help") == 0) 
+    || (strcmp(argv[i], "-h") == 0)) {
       nlpartsol_help_message();
+      return EXIT_SUCCESS;
+    }
+
+    if(strcmp(argv[i], "--FORMULATION-U") == 0) {
+      strcpy(Formulation,"-u");
+      If_formulation = true;
+    }
+
+    if(strcmp(argv[i], "--FORMULATION-Up") == 0) {
+      strcpy(Formulation,"-up");
+      If_formulation = true;   
+    }
+
+    if(strcmp(argv[i], "--FORMULATION-Upw") == 0) {
+      strcpy(Formulation,"-upw");
+      If_formulation = true;         
+    }
+
+    if(strcmp(argv[i], "--Print-Convergence") == 0)
+    {
+      Flag_Print_Convergence = true;
+    }
+
+    if(strcmp(argv[i], "-f") == 0) {
+      i++;
+      strcpy(SimulationFile,argv[i]);
+      If_f_option = true;
+      break;
+    }
+
+    if(strcmp(argv[i], "-ff") == 0) {
+      i++;
+      strcpy(Static_conditons,argv[i]);
+      i++;
+      strcpy(SimulationFile,argv[i]);
+      If_ff_option = true;
+      break;
     }
   }
-  if (argc == 3) {
-    Formulation = argv[1];
-    SimulationFile = argv[2];
-    Is_Static_Initialization = false;
-  } else if (argc == 4) {
-    Formulation = argv[1];
-    Static_conditons = argv[2];
-    SimulationFile = argv[3];
-    Is_Static_Initialization = true;
-  } else {
-    sprintf(Error_message, "%s",
-            "Wrong inputs, try to tip : nl-partsol --help");
-    standard_error(Error_message);
+  
+  if((If_f_option == false) 
+  && (If_ff_option == false)) {
+    fprintf(stderr, ""RED"Wrong inputs : non input file"RESET" \n");
+    return EXIT_FAILURE;
   }
+
+  if(If_formulation == false){
+    fprintf(stderr, ""RED"Wrong inputs : select formulation "RESET" \n");
+    return EXIT_FAILURE;
+  }
+  
 
   /* Select kinf of formulation  */
   if (strcmp(Formulation, "-u") == 0) {
 
     NumberDOF = NumberDimensions;
 
-    if (Is_Static_Initialization) {
+    if (If_ff_option) {
       puts("*************************************************");
-      puts("Read solver ...");
+      puts(""GREEN"Read solver"RESET" ...");
       Parameters_Solver = Solver_selector__InOutFun__(Static_conditons);
 
       puts("*************************************************");
-      puts("Generating the background mesh ...");
+      puts(""GREEN"Generating the background mesh"RESET" ...");
       FEM_Mesh = GramsBox(Static_conditons, Parameters_Solver);
 
       puts("*************************************************");
-      puts("Generating new MPM simulation ...");
+      puts(""GREEN"Generating new MPM simulation"RESET" ...");
       MPM_Mesh = Generate_One_Phase_Analysis__InOutFun__(
           Static_conditons, FEM_Mesh, Parameters_Solver);
 
       puts("*************************************************");
-      puts("Read outputs ...");
+      puts(""GREEN"Read outputs"RESET" ...");
       GramsOutputs(Static_conditons);
       NLPS_Out_nodal_path_csv__InOutFun__(Static_conditons);
       NLPS_Out_particles_path_csv__InOutFun__(Static_conditons);
 
       puts("*************************************************");
-      printf("Start %s shape functions initialisation ... \n", ShapeFunctionGP);
+      printf(""GREEN"Start %s shape functions initialisation"RESET" ... \n", ShapeFunctionGP);
       initialise_shapefun__MeshTools__(MPM_Mesh, FEM_Mesh);
 
-    } else {
+    } 
+    
+    if (If_f_option) {
       puts("*************************************************");
-      puts("Read solver ...");
+      puts(""GREEN"Read solver"RESET" ...");
+      puts("*************************************************");
       Parameters_Solver = Solver_selector__InOutFun__(SimulationFile);
 
       puts("*************************************************");
-      puts("Generating the background mesh ...");
+      puts(""GREEN"Generating the background mesh"RESET" ...");
+      puts("*************************************************");
       FEM_Mesh = GramsBox(SimulationFile, Parameters_Solver);
 
       puts("*************************************************");
-      puts("Generating new MPM simulation ...");
+      puts(""GREEN"Generating new MPM simulation"RESET" ...");
+      puts("*************************************************");
       MPM_Mesh = Generate_One_Phase_Analysis__InOutFun__(
           SimulationFile, FEM_Mesh, Parameters_Solver);
-
+      
       puts("*************************************************");
-      puts("Read outputs ...");
+      puts(""GREEN"Read outputs"RESET" ...");
       GramsOutputs(SimulationFile);
       NLPS_Out_nodal_path_csv__InOutFun__(SimulationFile);
       NLPS_Out_particles_path_csv__InOutFun__(SimulationFile);
@@ -117,20 +196,22 @@ int main(int argc, char *argv[]) {
       initialise_shapefun__MeshTools__(MPM_Mesh, FEM_Mesh);
     }
 
-    if (Is_Static_Initialization) {
-      U_Static_Finite_Strains(FEM_Mesh, MPM_Mesh, Parameters_Solver);
+    if (If_ff_option) {
+      U_Static(FEM_Mesh, MPM_Mesh, Parameters_Solver);
 
       puts("*************************************************");
-      puts("Read solver ...");
+      puts(""GREEN"Read solver"RESET" ...");
+      puts("*************************************************");
       Parameters_Solver = Solver_selector__InOutFun__(SimulationFile);
 
       puts("*************************************************");
-      puts("Generating the background mesh ...");
+      puts(""GREEN"Generating the background mesh"RESET" ...");
+      puts("*************************************************");
       free_nodes(FEM_Mesh);
       FEM_Mesh = GramsBox(SimulationFile, Parameters_Solver);
 
       puts("*************************************************");
-      printf("Start %s shape functions initialisation ... \n", ShapeFunctionGP);
+      printf(""GREEN"Start %s shape functions initialisation"RESET" ... \n", ShapeFunctionGP);
 
       for (int p = 0; p < MPM_Mesh.NumGP; p++) {
         free__SetLib__(&MPM_Mesh.ListNodes[p]);
@@ -141,46 +222,24 @@ int main(int argc, char *argv[]) {
     }
 
     puts("*************************************************");
-    puts("Run dynamic simulation ...");
+    puts(""GREEN"Run dynamic simulation"RESET" ...");
     if (strcmp(Parameters_Solver.TimeIntegrationScheme, "FE") == 0) {
       U_Forward_Euler(FEM_Mesh, MPM_Mesh, Parameters_Solver);
     } else if (strcmp(Parameters_Solver.TimeIntegrationScheme,
                       "Generalized-alpha") == 0) {
       U_Generalized_alpha(FEM_Mesh, MPM_Mesh, Parameters_Solver);
-    } else if (strcmp(Parameters_Solver.TimeIntegrationScheme, "NPC") == 0) {
-      U_Newmark_Predictor_Corrector(FEM_Mesh, MPM_Mesh, Parameters_Solver);
     } else if (strcmp(Parameters_Solver.TimeIntegrationScheme, "NPC-FS") == 0) {
-      STATUS = U_Newmark_Predictor_Corrector_Finite_Strains(FEM_Mesh, MPM_Mesh,
-                                                   Parameters_Solver);
-    } else if (strcmp(Parameters_Solver.TimeIntegrationScheme,
-                      "Discrete-Energy-Momentum") == 0) {
+      STATUS = U_Verlet(FEM_Mesh, MPM_Mesh, Parameters_Solver);
+    } else if (strcmp(Parameters_Solver.TimeIntegrationScheme, "Discrete-Energy-Momentum") == 0) {
       U_Discrete_Energy_Momentum(FEM_Mesh, MPM_Mesh, Parameters_Solver);
-    } else if (strcmp(Parameters_Solver.TimeIntegrationScheme,
-                      "Newmark-beta-Finite-Strains") == 0) {
-      STATUS = U_Newmark_beta_Finite_Strains(FEM_Mesh, MPM_Mesh, Parameters_Solver);
+    } else if (strcmp(Parameters_Solver.TimeIntegrationScheme, "Newmark-beta-Finite-Strains") == 0) {
+      STATUS = U_Newmark_Beta(FEM_Mesh, MPM_Mesh, Parameters_Solver);
       if(STATUS == EXIT_FAILURE){
-        fprintf(stderr, ""RED"Error in U_Newmark_beta_Finite_Strains(,)"RESET" \n");
+        fprintf(stderr, ""RED"Error in U_Newmark_Beta(,)"RESET" \n");
       }      
     } else {
       sprintf(Error_message, "%s", "Wrong time integration scheme");
       standard_error(Error_message);
-    }
-
-    puts("*************************************************");
-    free_nodes(FEM_Mesh);
-    free_particles(MPM_Mesh);
-
-    if(STATUS == EXIT_SUCCESS)
-    {
-      printf("Computation "GREEN"succesfully"RESET" finished at : %s \n", __TIME__);
-      puts("Exiting of the program...");
-      return EXIT_SUCCESS;
-    }
-    else
-    {
-      printf("Computation "RED"abnormally"RESET" finished at : %s \n", __TIME__);
-      puts("Exiting the program...");
-      return EXIT_FAILURE;
     }
 
   } else if (strcmp(Formulation, "-up") == 0) {
@@ -188,15 +247,18 @@ int main(int argc, char *argv[]) {
     NumberDOF = NumberDimensions;
 
     puts("*************************************************");
-    puts("Read solver ...");
+    puts(""GREEN"Read solver"RESET" ...");
+    puts("*************************************************");
     Parameters_Solver = Solver_selector__InOutFun__(SimulationFile);
 
     puts("*************************************************");
-    puts("Generating the background mesh ...");
+    puts(""GREEN"Generating the background mesh"RESET" ...");
+    puts("*************************************************");
     FEM_Mesh = GramsBox(SimulationFile, Parameters_Solver);
 
     puts("*************************************************");
-    puts("Generating new MPM simulation ...");
+    puts(""GREEN"Generating new MPM simulation"RESET" ...");
+    puts("*************************************************");
     MPM_Mesh = Generate_One_Phase_Analysis__InOutFun__(SimulationFile, FEM_Mesh,
                                                        Parameters_Solver);
 
@@ -215,15 +277,6 @@ int main(int argc, char *argv[]) {
       sprintf(Error_message, "%s", "Wrong time integration scheme");
       standard_error(Error_message);
     }
-
-    puts("*************************************************");
-    puts("Free memory ...");
-    free_nodes(FEM_Mesh);
-    free_particles(MPM_Mesh);
-
-    printf("Computation finished at : %s \n", __TIME__);
-    puts("Exiting of the program...");
-    exit(EXIT_SUCCESS);
 
   } else if (strcmp(Formulation, "-upw") == 0) {
 
@@ -257,7 +310,7 @@ int main(int argc, char *argv[]) {
     puts("*************************************************");
     puts("Run simulation ...");
     if (strcmp(Parameters_Solver.TimeIntegrationScheme, "NPC-FS") == 0) {
-      upw_Newmark_Predictor_Corrector_Finite_Strains(FEM_Mesh, MPM_Mesh,
+      upw_Verlet(FEM_Mesh, MPM_Mesh,
                                                      Parameters_Solver);
     } else if (strcmp(Parameters_Solver.TimeIntegrationScheme,
                       "Newmark-beta-Finite-Strains") == 0) {
@@ -267,20 +320,36 @@ int main(int argc, char *argv[]) {
       standard_error(Error_message);
     }
 
-    puts("*************************************************");
-    puts("Free memory ...");
-    free_nodes(FEM_Mesh);
-    free_particles(MPM_Mesh);
-
-    printf("Computation finished at : %s \n", __TIME__);
-    puts("Exiting of the program...");
-    exit(EXIT_SUCCESS);
-
   } else {
     sprintf(Error_message, "%s",
             "This formulation has not been yet implemented");
     standard_error(Error_message);
   }
+
+  
+#ifdef USE_PETSC
+    // Finalize PETSc
+    PetscFinalize();
+#endif
+
+
+  puts("*************************************************");
+  puts("Free memory ...");
+  free_nodes(FEM_Mesh);
+  free_particles(MPM_Mesh);  
+
+  if(STATUS == EXIT_SUCCESS)
+  {
+    printf("Computation "GREEN"succesfully"RESET" finished at : %s \n", __TIME__);
+    puts("Exiting of the program...");
+    return EXIT_SUCCESS;
+  }
+  else
+  {
+    printf("Computation "RED"abnormally"RESET" finished at : %s \n", __TIME__);
+    puts("Exiting the program...");
+    return EXIT_FAILURE;
+  }  
 }
 
 /*********************************************************************/
@@ -302,17 +371,24 @@ static void nlpartsol_help_message() {
   puts("Windows version.");
 #endif
 
-  puts("Usage : nl-partsol -Flag [commands.nlp]");
+#ifdef USE_PETSC
+  puts("Usage : nl-partsol -Flags -f [commands.nlp]");
   puts("Flag values:");
-  puts(" * -u   : Displacement formulation");
-  puts(" * -up  : Velocity-Pressure formulation");
-  puts(" * -upw : Soil-water mixture displacement-pressure formulation");
-  puts(" * -uU  : Soil-water mixture velocity formulation (Not developed yet)");
+  puts(" * --Print-Convergence: Display convergence stats.");
+  puts(" * --FORMULATION-U : Displacement formulation");
+  puts(" * --FORMULATION-Up : Velocity-Pressure formulation");
+  puts(" * --FORMULATION-Upw : Soil-water mixture displacement-pressure formulation");
+#else
+  puts("Usage : nl-partsol -Flag -f [commands.nlp]");
+  puts("Flag values:");
+  puts(" * --Print-Convergence: Display convergence stats.");
+  puts(" * --FORMULATION-U : Displacement formulation");
+  puts(" * --FORMULATION-Up : Velocity-Pressure formulation");
+  puts(" * --FORMULATION-Upw : Soil-water mixture displacement-pressure formulation");
+#endif
+
   puts("The creator of NL-PartSol is Miguel Molinos");
-
   puts("mails to : m.molinos@alumnos.upm.es (Madrid-Spain)");
-
-  exit(EXIT_SUCCESS);
 }
 
 /*********************************************************************/
@@ -340,9 +416,7 @@ static void free_nodes(Mesh FEM_Mesh)
 
   free(FEM_Mesh.Num_Particles_Node);
   free_table__SetLib__(FEM_Mesh.List_Particles_Node, FEM_Mesh.NumNodesMesh);
-  //  free(FEM_Mesh.Num_Particles_Element);
-  //  free_table__SetLib__(FEM_Mesh.List_Particles_Element,FEM_Mesh.NumElemMesh);
-
+  
   if (FEM_Mesh.Locking_Control_Fbar) {
     free(FEM_Mesh.Idx_Patch);
     free(FEM_Mesh.Vol_Patch_n);

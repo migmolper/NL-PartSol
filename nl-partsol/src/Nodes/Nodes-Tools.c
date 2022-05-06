@@ -1,60 +1,4 @@
-#include <string.h>
-#include <math.h>
-#include "nl-partsol.h"
-
-/*********************************************************************/
-
-void initialise_shapefun__MeshTools__(Particle MPM_Mesh, Mesh FEM_Mesh) {
-
-  if (strcmp(ShapeFunctionGP, "FEM") == 0) {
-    if (strcmp(FEM_Mesh.TypeElem, "Triangle") == 0) {
-      initialize__T3__(MPM_Mesh, FEM_Mesh);
-    } else if (strcmp(FEM_Mesh.TypeElem, "Quadrilateral") == 0) {
-      initialize__Q4__(MPM_Mesh, FEM_Mesh);
-    } else if (strcmp(FEM_Mesh.TypeElem, "Tetrahedra") == 0) {
-      initialize__T4__(MPM_Mesh, FEM_Mesh);
-    } else if (strcmp(FEM_Mesh.TypeElem, "Hexahedra") == 0) {
-      initialize__H8__(MPM_Mesh, FEM_Mesh);
-    }
-  } else if (strcmp(ShapeFunctionGP, "uGIMP") == 0) {
-    initialize__GIMP__(MPM_Mesh, FEM_Mesh);
-  } else if (strcmp(ShapeFunctionGP, "LME") == 0) {
-    initialize__LME__(MPM_Mesh, FEM_Mesh);
-  } else if (strcmp(ShapeFunctionGP, "aLME") == 0) {
-    initialize__aLME__(MPM_Mesh, FEM_Mesh);
-  }
-}
-
-/*********************************************************************/
-
-void local_search__MeshTools__(Particle MPM_Mesh, Mesh FEM_Mesh)
-/*
-  Search the closest node to the particle based in its previous position.
-*/
-{
-
-  if (strcmp(ShapeFunctionGP, "FEM") == 0) {
-    if ((strcmp(FEM_Mesh.TypeElem, "Triangle") == 0) &&
-        (FEM_Mesh.NumNodesElem[0] == 3)) {
-      local_search__T3__(MPM_Mesh, FEM_Mesh);
-    } else if ((strcmp(FEM_Mesh.TypeElem, "Triangle") == 0) &&
-               (FEM_Mesh.NumNodesElem[0] == 6)) {
-      local_search__T3__(MPM_Mesh, FEM_Mesh);
-    } else if (strcmp(FEM_Mesh.TypeElem, "Quadrilateral") == 0) {
-      local_search__Q4__(MPM_Mesh, FEM_Mesh);
-    } else if (strcmp(FEM_Mesh.TypeElem, "Tetrahedra") == 0) {
-      local_search__T4__(MPM_Mesh, FEM_Mesh);
-    } else if (strcmp(FEM_Mesh.TypeElem, "Hexahedra") == 0) {
-      local_search__H8__(MPM_Mesh, FEM_Mesh);
-    }
-  } else if (strcmp(ShapeFunctionGP, "uGIMP") == 0) {
-
-  } else if (strcmp(ShapeFunctionGP, "LME") == 0) {
-    local_search__LME__(MPM_Mesh, FEM_Mesh);
-  } else if (strcmp(ShapeFunctionGP, "aLME") == 0) {
-    local_search__aLME__(MPM_Mesh, FEM_Mesh);
-  }
-}
+#include "Nodes/Nodes-Tools.h"
 
 /**************************************************************/
 
@@ -98,7 +42,7 @@ void generate_contour_nodes(Mesh FEM_Mesh) {
 
 /**************************************************************/
 
-Mask generate_NodalMask__MeshTools__(Mesh FEM_Mesh) {
+Mask get_active_nodes__MeshTools__(Mesh FEM_Mesh) {
   int Nnodes = FEM_Mesh.NumNodesMesh;
   int Nactivenodes = 0;
   int *Nodes2Mask = (int *)Allocate_ArrayZ(Nnodes, sizeof(int));
@@ -122,9 +66,11 @@ Mask generate_NodalMask__MeshTools__(Mesh FEM_Mesh) {
 
 /**************************************************************/
 
-Mask generate_Mask_for_static_condensation__MeshTools__(Mask ActiveNodes,
-                                                        Mesh FEM_Mesh, int Step,
-                                                        int NumTimeStep) {
+Mask get_active_dofs__MeshTools__(
+  Mask ActiveNodes,
+  Mesh FEM_Mesh, 
+  int Step,
+  int NumTimeStep) {
 
   /*
     Define auxilar variables
@@ -299,8 +245,11 @@ Mask generate_Mask_for_static_condensation_upw__MeshTools__(Mask ActiveNodes,
 
 /**************************************************************/
 
-Matrix get_set_field__MeshTools__(Matrix Field, Element Nodes_p,
-                                  Mask ActiveNodes)
+void get_set_field__MeshTools__(
+  double * Field_Ap,
+  const double * Field, 
+  Element Nodes_p,
+  Mask ActiveNodes)
 /*
   This function performs two operations. First takes the nodal connectivity of
   the particle, and translate it to the mask numeration. Second, generate a
@@ -309,37 +258,51 @@ Matrix get_set_field__MeshTools__(Matrix Field, Element Nodes_p,
  */
 {
   int Nnodes = Nodes_p.NumberNodes;
-  int Ndim = Field.N_cols;
-  Matrix Field_Ap = allocZ__MatrixLib__(Nnodes, Ndim);
+  int Ndim = NumberDimensions;
   int Ap;
   int A_mask;
 
-  if (Ndim > 1) {
-    for (int A = 0; A < Nnodes; A++) {
-
-      /*
-           Get the node in the mass matrix with the mask
-      */
-      Ap = Nodes_p.Connectivity[A];
-      A_mask = ActiveNodes.Nodes2Mask[Ap];
-
-      for (int i = 0; i < Ndim; i++) {
-        Field_Ap.nM[A][i] = Field.nM[A_mask][i];
-      }
-    }
-  } else {
-    for (int A = 0; A < Nnodes; A++) {
-      /*
-        Get the node in the mass matrix with the mask
-      */
-      Ap = Nodes_p.Connectivity[A];
-      A_mask = ActiveNodes.Nodes2Mask[Ap];
-
-      Field_Ap.nV[A] = Field.nV[A_mask];
+  for (unsigned A = 0; A < Nnodes; A++) {
+  
+    Ap = Nodes_p.Connectivity[A];
+    A_mask = ActiveNodes.Nodes2Mask[Ap];
+    
+    for (unsigned i = 0; i < Ndim; i++) {
+      Field_Ap[A*Ndim + i] = Field[A_mask*Ndim + i];
     }
   }
+}
 
-  return Field_Ap;
+/*********************************************************************/
+
+void gradient_vector_field__MeshTools__(
+  double * gradient_vector_field,
+  const double * field,
+  const double * gradient_Np,
+  const ChainPtr ListNodes,
+  int * STATUS){
+
+  ChainPtr I = ListNodes;
+
+  unsigned Ndim = NumberDimensions;
+  unsigned I_global_Idx = I->Idx;
+  unsigned I_local_Idx = 0;
+
+  while (I != NULL) {
+   
+    for (unsigned i = 0; i < Ndim; i++) {
+      for (unsigned j = 0; j < Ndim; j++) {
+        gradient_vector_field[i*Ndim + j] += 
+        field[I_global_Idx*Ndim + i] * 
+        gradient_Np[I_local_Idx*Ndim + j];
+      }
+    }
+
+    I = I->next;
+    I_local_Idx++;
+    I_global_Idx = I->Idx;
+  }
+
 }
 
 /*********************************************************************/
@@ -394,317 +357,6 @@ Matrix get_Pw_set_field_upw__MeshTools__(Matrix Field_upw, Element Nodes_p,
   }
 
   return Field_pw_Ap;
-}
-
-/*********************************************************************/
-
-Matrix compute_N__MeshTools__(Element GP_Element, Particle MPM_Mesh,
-                              Mesh FEM_Mesh) {
-
-  /*
-    Auxiliar variables
-  */
-  int Ndim = NumberDimensions;
-  int i_GP = GP_Element.i_GP; // Current intex of the particle
-  int I_p; // Index of a node in the neiborhood of the particle
-  int NumNodes_p =
-      GP_Element
-          .NumberNodes; // Number of nodes in the neiborhood of the particle
-  int *Connectivity_p =
-      GP_Element
-          .Connectivity; // List of nodes in the neiborhood of the particle
-
-  /*
-    Matrix with the nodal shape functions
-  */
-  Matrix ShapeFunction_p;
-
-  if (strcmp(ShapeFunctionGP, "FEM") == 0) {
-    Matrix xi_p; // Element coordinates of the Gauss-Point
-
-    /*
-      Get the element coordinates of the GP
-    */
-    xi_p = memory_to_matrix__MatrixLib__(Ndim, 1, MPM_Mesh.Phi.x_EC.nM[i_GP]);
-
-    /*
-      Evaluate the shape function
-    */
-    ShapeFunction_p = FEM_Mesh.N_ref(xi_p);
-
-  }
-
-  else if (strcmp(ShapeFunctionGP, "uGIMP") == 0) {
-
-    Matrix lp;   // Particle voxel
-    Matrix l_Ip; // Distance from GP to the nodes
-
-    /*
-      Get the distance of the particle to the nodes
-    */
-    l_Ip = alloc__MatrixLib__(NumNodes_p, Ndim);
-    for (int k = 0; k < NumNodes_p; k++) {
-      I_p = Connectivity_p[k];
-      for (int l = 0; l < Ndim; l++) {
-        l_Ip.nM[k][l] =
-            MPM_Mesh.Phi.x_GC.nM[i_GP][l] - FEM_Mesh.Coordinates.nM[I_p][l];
-      }
-    }
-
-    /*
-      Get the GP voxel
-    */
-    lp.nV = MPM_Mesh.lp.nM[i_GP];
-
-    /*
-      Evaluate the shape function
-    */
-    ShapeFunction_p = N__GIMP__(l_Ip, lp, FEM_Mesh.DeltaX);
-
-    /*
-      Free memory
-    */
-    free__MatrixLib__(l_Ip);
-  }
-
-  else if (strcmp(ShapeFunctionGP, "LME") == 0) {
-    Matrix l_Ip;     // Distance from particle to the nodes
-    Matrix lambda_p; // Lagrange multipliers
-    double Beta_p;   // Thermalization parameter
-
-    /*
-      Get the distance of the particle to the nodes
-    */
-    l_Ip = alloc__MatrixLib__(NumNodes_p, Ndim);
-    for (int k = 0; k < NumNodes_p; k++) {
-      I_p = Connectivity_p[k];
-      for (int l = 0; l < Ndim; l++) {
-        l_Ip.nM[k][l] =
-            MPM_Mesh.Phi.x_GC.nM[i_GP][l] - FEM_Mesh.Coordinates.nM[I_p][l];
-      }
-    }
-
-    /*
-      Get lambda and beta
-    */
-    lambda_p = memory_to_matrix__MatrixLib__(Ndim, 1, MPM_Mesh.lambda.nM[i_GP]);
-    Beta_p = MPM_Mesh.Beta.nV[i_GP];
-
-    /*
-      Evaluate the shape function
-    */
-    ShapeFunction_p = p__LME__(l_Ip, lambda_p, Beta_p);
-
-    /*
-      Free memory
-    */
-    free__MatrixLib__(l_Ip);
-  } else if (strcmp(ShapeFunctionGP, "aLME") == 0) {
-    Matrix l_Ip;     // Distance from particle to the nodes
-    Matrix lambda_p; // Lagrange multipliers
-    Matrix Beta_p;   // Thermalization parameter
-
-    /*
-      Get the distance of the particle to the nodes
-    */
-    l_Ip = alloc__MatrixLib__(NumNodes_p, Ndim);
-    for (int k = 0; k < NumNodes_p; k++) {
-      I_p = Connectivity_p[k];
-      for (int l = 0; l < Ndim; l++) {
-        l_Ip.nM[k][l] =
-            MPM_Mesh.Phi.x_GC.nM[i_GP][l] - FEM_Mesh.Coordinates.nM[I_p][l];
-      }
-    }
-
-    /*
-      Get lambda and beta
-    */
-    lambda_p = memory_to_matrix__MatrixLib__(Ndim, 1, MPM_Mesh.lambda.nM[i_GP]);
-    Beta_p = memory_to_matrix__MatrixLib__(Ndim, Ndim, MPM_Mesh.Beta.nM[i_GP]);
-
-    /*
-      Evaluate the shape function
-    */
-    ShapeFunction_p = p__aLME__(l_Ip, lambda_p, Beta_p);
-
-    /*
-      Free memory
-    */
-    free__MatrixLib__(l_Ip);
-    free(Beta_p.nM);
-  }
-
-  else {
-    printf("%s : %s %s %s \n", "Error in Get_Operator()", "The shape-function ",
-           ShapeFunctionGP, "is not implemented");
-    exit(EXIT_FAILURE);
-  }
-
-  return ShapeFunction_p;
-}
-
-/*********************************************************************/
-
-Matrix compute_dN__MeshTools__(Element GP_Element, Particle MPM_Mesh,
-                               Mesh FEM_Mesh) {
-  int Ndim = NumberDimensions;
-  int i_GP = GP_Element.i_GP; // Current intex of the particle
-  int I_p; // Index of a node in the neiborhood of the particle
-  int NumNodes_p =
-      GP_Element
-          .NumberNodes; // Number of nodes in the neiborhood of the particle
-  int *Connectivity_p =
-      GP_Element
-          .Connectivity; // List of nodes in the neiborhood of the particle
-
-  /*
-    Matrix with the nodal derivatives
-  */
-  Matrix Gradient_p;
-
-  if (strcmp(ShapeFunctionGP, "FEM") == 0) {
-    Matrix xi_p; // Element coordinates of the Gauss-Point
-    Matrix X_I;  // Coordinates of the set of nodes in the neiborhood of the
-                 // particle
-
-    /*
-      Fill the poligon woth the nodal coordinates of the current element
-    */
-    X_I = allocZ__MatrixLib__(NumNodes_p, Ndim);
-    for (int k = 0; k < NumNodes_p; k++) {
-      I_p = Connectivity_p[k];
-      for (int l = 0; l < Ndim; l++) {
-        X_I.nM[k][l] = FEM_Mesh.Coordinates.nM[I_p][l];
-      }
-    }
-
-    /*
-      Get the element coordinates of the GP
-    */
-    xi_p = memory_to_matrix__MatrixLib__(Ndim, 1, MPM_Mesh.Phi.x_EC.nM[i_GP]);
-
-    /*
-      Evaluate the shape function gradient
-    */
-    Gradient_p = FEM_Mesh.dNdX(xi_p, X_I);
-
-    /* Free memory */
-    free__MatrixLib__(X_I);
-  }
-
-  else if (strcmp(ShapeFunctionGP, "uGIMP") == 0) {
-    Matrix lp;   // Particle voxel
-    Matrix l_Ip; // Distance from GP to the nodes
-    /*
-      Get the distance of the particle to the nodes
-    */
-    l_Ip = alloc__MatrixLib__(NumNodes_p, Ndim);
-    for (int k = 0; k < NumNodes_p; k++) {
-      I_p = Connectivity_p[k];
-      for (int l = 0; l < Ndim; l++) {
-        l_Ip.nM[k][l] =
-            MPM_Mesh.Phi.x_GC.nM[i_GP][l] - FEM_Mesh.Coordinates.nM[I_p][l];
-      }
-    }
-
-    /*
-      Get the GP voxel
-    */
-    lp.nV = MPM_Mesh.lp.nM[i_GP];
-
-    /*
-      Evaluate the shape function gradient
-    */
-    Gradient_p = dN__GIMP__(l_Ip, lp, FEM_Mesh.DeltaX);
-
-    /*
-      Free memory
-    */
-    free__MatrixLib__(l_Ip);
-  }
-
-  else if (strcmp(ShapeFunctionGP, "LME") == 0) {
-    Matrix l_Ip;            // Distance from GP to the nodes
-    Matrix ShapeFunction_p; // Matrix with the nodal shape functions
-    Matrix lambda_p;        // Lagrange multipliers
-    double Beta_p;          // Thermalization parameter
-
-    /*
-      Get the distance of the particle to the nodes
-    */
-    l_Ip = alloc__MatrixLib__(NumNodes_p, Ndim);
-    for (int k = 0; k < NumNodes_p; k++) {
-      I_p = Connectivity_p[k];
-      for (int l = 0; l < Ndim; l++) {
-        l_Ip.nM[k][l] =
-            MPM_Mesh.Phi.x_GC.nM[i_GP][l] - FEM_Mesh.Coordinates.nM[I_p][l];
-      }
-    }
-
-    /*
-      Get lambda and beta
-    */
-    lambda_p = memory_to_matrix__MatrixLib__(Ndim, 1, MPM_Mesh.lambda.nM[i_GP]);
-    Beta_p = MPM_Mesh.Beta.nV[i_GP];
-
-    /*
-      Evaluate the shape function gradient
-    */
-    ShapeFunction_p = p__LME__(l_Ip, lambda_p, Beta_p);
-    Gradient_p = dp__LME__(l_Ip, ShapeFunction_p);
-
-    /*
-      Free memory
-    */
-    free__MatrixLib__(ShapeFunction_p);
-    free__MatrixLib__(l_Ip);
-  }
-
-  else if (strcmp(ShapeFunctionGP, "aLME") == 0) {
-    Matrix l_Ip;            // Distance from GP to the nodes
-    Matrix ShapeFunction_p; // Matrix with the nodal shape functions
-    Matrix lambda_p;        // Lagrange multipliers
-    Matrix Beta_p;          // Thermalization parameter
-
-    /*
-      Get the distance of the particle to the nodes
-    */
-    l_Ip = alloc__MatrixLib__(NumNodes_p, Ndim);
-    for (int k = 0; k < NumNodes_p; k++) {
-      I_p = Connectivity_p[k];
-      for (int l = 0; l < Ndim; l++) {
-        l_Ip.nM[k][l] =
-            MPM_Mesh.Phi.x_GC.nM[i_GP][l] - FEM_Mesh.Coordinates.nM[I_p][l];
-      }
-    }
-
-    /*
-      Get lambda and beta
-    */
-    lambda_p = memory_to_matrix__MatrixLib__(Ndim, 1, MPM_Mesh.lambda.nM[i_GP]);
-    Beta_p = memory_to_matrix__MatrixLib__(Ndim, Ndim, MPM_Mesh.Beta.nM[i_GP]);
-
-    /*
-      Evaluate the shape function gradient
-    */
-    ShapeFunction_p = p__aLME__(l_Ip, lambda_p, Beta_p);
-    Gradient_p = dp__aLME__(l_Ip, ShapeFunction_p);
-
-    /*
-      Free memory
-    */
-    free__MatrixLib__(ShapeFunction_p);
-    free__MatrixLib__(l_Ip);
-    free(Beta_p.nM);
-  }
-
-  else {
-    printf("%s : %s %s %s \n", "Error in Get_Operator()", "The shape-function ",
-           ShapeFunctionGP, "is not implemented");
-    exit(EXIT_FAILURE);
-  }
-
-  return Gradient_p;
 }
 
 /*********************************************************************/

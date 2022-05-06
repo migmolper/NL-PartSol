@@ -1,11 +1,5 @@
-#include <math.h>
-#include "nl-partsol.h"
 
-#ifdef __linux__
-#include <lapacke.h>
-#elif __APPLE__
-#include <Accelerate/Accelerate.h>
-#endif
+#include "Constitutive/Hyperelastic/Neo-Hookean.h"
 
 /**************************************************************/
 
@@ -28,7 +22,7 @@ double energy_Neo_Hookean_Wriggers(Tensor C, double J, Material MatProp) {
 
 /**************************************************************/
 
-int compute_1PK_Stress_Tensor_Neo_Hookean_Wriggers(
+int compute_Kirchhoff_Stress_Neo_Hookean(
   State_Parameters IO_State,
   Material MatProp) {
 
@@ -36,7 +30,7 @@ int compute_1PK_Stress_Tensor_Neo_Hookean_Wriggers(
   unsigned Ndim = NumberDimensions;
 
   // Get information from the state parameter
-  double * P = IO_State.Stress;
+  double * T = IO_State.Stress;
   double * D_phi_n1 = IO_State.D_phi_n1;
   double J = IO_State.J;
 
@@ -50,28 +44,27 @@ int compute_1PK_Stress_Tensor_Neo_Hookean_Wriggers(
 
   // Define and compute auxiliar tensor
 #if NumberDimensions == 2  
-  double D_phi_mT[4];
+  double b_n1[4];
+  double Identity[4] = {1.0,0.0,0.0,1.0};
 #else
-  double D_phi_mT[9];
+  double b_n1[9];
+  double Identity[9] = {1.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,1.0};
 #endif
 
-  STATUS = compute_adjunt__TensorLib__(D_phi_mT,D_phi_n1);
-  if (STATUS == EXIT_FAILURE) {
-    fprintf(stderr,"" RED "Error in compute_adjunt__TensorLib__" RESET "\n");
-    return EXIT_FAILURE;
-  }
+  // Compute the left Cauchy-Green (t = n)
+  left_Cauchy_Green__Particles__(b_n1, D_phi_n1);
 
   // Compute stress
   for (unsigned i = 0; i < Ndim; i++) {
     for (unsigned j = 0; j < Ndim; j++) {
-      P[i*Ndim + j] =
-          c0 * D_phi_mT[i*Ndim + j] 
-          + G * (D_phi_n1[i*Ndim + j] - D_phi_mT[i*Ndim + j]);
+      T[i*Ndim + j] =
+          c0 * Identity[i*Ndim + j] 
+          + G * (b_n1[i*Ndim + j] - Identity[i*Ndim + j]);
     }
   }
 
 #if NumberDimensions == 2
-    P[4] = c0;
+    T[4] = c0;
 #endif
 
   return STATUS;
@@ -79,20 +72,21 @@ int compute_1PK_Stress_Tensor_Neo_Hookean_Wriggers(
 
 /**************************************************************/
 
-int compute_stiffness_density_Neo_Hookean_Wriggers(
+int compute_stiffness_density_Neo_Hookean(
   double * Stiffness_Density,
+  const double * dN_alpha_n1,
+  const double * dN_beta_n1,
   const double * dN_alpha_n,
-  const double * dN_beta_n, 
-  State_Parameters IO_State_p,
+  const double * dN_beta_n,   
+  State_Parameters IO_State,
   Material MatProp) {
 
   int STATUS = EXIT_SUCCESS;
   int Ndim = NumberDimensions;
 
   // State parameters
-  double * D_phi_n = IO_State_p.D_phi_n;
-  double * d_phi = IO_State_p.d_phi;  
-  double J = IO_State_p.J;
+  double * D_phi_n = IO_State.D_phi_n;
+  double J = IO_State.J;
 
   //  Material parameters
   double ElasticModulus = MatProp.E;
@@ -105,35 +99,10 @@ int compute_stiffness_density_Neo_Hookean_Wriggers(
 
   // Define auxiliar variables
 #if NumberDimensions == 2
-  double d_phi_mT[4];
-  double dN_alpha_n1[2];
-  double dN_beta_n1[2];
   double b_n[4];
 #else
-  double d_phi_mT[9];
-  double dN_alpha_n1[3];
-  double dN_beta_n1[3];  
   double b_n[9];
 #endif
-
-  // Compute the adjunt of the incremental deformation gradient
-  STATUS = compute_adjunt__TensorLib__(d_phi_mT, d_phi);
-  if (STATUS == EXIT_FAILURE) {
-    fprintf(stderr,"" RED "Error in compute_adjunt__TensorLib__" RESET "\n");
-    return EXIT_FAILURE;
-  }
-
-  // Do the projection of the shape function gradient to the n + 1 configuration
-  for (unsigned i = 0; i < Ndim; i++)
-  {
-    dN_alpha_n1[i] = 0.0;
-    dN_beta_n1[i] = 0.0;
-    for (unsigned j = 0; j < Ndim; j++)
-    {
-      dN_alpha_n1[i] += d_phi_mT[i*Ndim + j]*dN_alpha_n[j];
-      dN_beta_n1[i] += d_phi_mT[i*Ndim + j]*dN_beta_n[j];
-    }
-  }
   
   // Compute the left Cauchy-Green (t = n)
   left_Cauchy_Green__Particles__(b_n, D_phi_n);

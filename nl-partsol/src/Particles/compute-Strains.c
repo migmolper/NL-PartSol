@@ -7,163 +7,69 @@
 #include <Accelerate/Accelerate.h>
 #endif
 
-/*************************************************************/
-
-Tensor rate_inifinitesimal_Strain__Particles__(Matrix Velocity,
-                                               Matrix Gradient) {
-  unsigned Ndim = NumberDimensions;
-  Tensor Rate_Strain = alloc__TensorLib__(2);
-  Tensor Velocity_A;
-  Tensor Gradient_A;
-  Tensor VoG_A;
-
-  unsigned NodesElem = Gradient.N_rows;
-
-  /* Compute rate of strain */
-  for (unsigned A = 0; A < NodesElem; A++) {
-    /* Assign from matrix to tensor */
-    Velocity_A = memory_to_tensor__TensorLib__(Velocity.nM[A], 1);
-    Gradient_A = memory_to_tensor__TensorLib__(Gradient.nM[A], 1);
-
-    /* Compute the dyadic product of the nodal velocity and the
-       gradient of the shape functions */
-    VoG_A = dyadic_Product__TensorLib__(Velocity_A, Gradient_A);
-
-    /* Ad the nodal contribution to the train tensor */
-    for (unsigned i = 0; i < Ndim; i++) {
-      for (unsigned j = 0; j < Ndim; j++) {
-        Rate_Strain.N[i][j] += 0.5 * (VoG_A.N[i][j] + VoG_A.N[j][i]);
-      }
-    }
-    /* Free memory */
-    free__TensorLib__(VoG_A);
-  }
-
-  return Rate_Strain;
-}
-
 /*******************************************************/
 
-Tensor infinitesimal_Strain__Particles__(Tensor Strain, Tensor Rate_Strain,
-                                         double TimeStep) {
-  int Ndim = NumberDimensions;
-  /* Check in the input its is ok */
-  if ((Strain.Order == 2) && (Rate_Strain.Order == 2)) {
-    /* Update strain tensor with the rate of strain tensor */
-    for (int i = 0; i < Ndim; i++) {
-      for (int j = 0; j < Ndim; j++) {
-        Strain.N[i][j] += TimeStep * Rate_Strain.N[i][j];
-      }
-    }
-  } else {
-    fprintf(stderr, "%s : %s %s !!! \n",
-            "Error in infinitesimal_Strain__Particles__()",
-            "The input should be", "two tensors of 2nd order and a scalar");
-    exit(EXIT_FAILURE);
-  }
+void update_increment_Deformation_Gradient__Particles__(
+  double * DF_p,
+  const double * DeltaU,
+  const double * gradient_p,
+  unsigned Nnodes_p) {
 
-  return Strain;
-}
-
-/*******************************************************/
-
-void update_increment_Deformation_Gradient__Particles__(Tensor DF_p,
-                                                        Matrix DeltaU,
-                                                        Matrix gradient_p) {
-
-  /* Variable definition */
   unsigned Ndim = NumberDimensions;
-  unsigned Nnodes_p = DeltaU.N_rows;
-  Tensor f_n1;
-  Tensor DeltaU_A;
-  Tensor gradient_A;
-  Tensor gradient_DeltaU_A;
-
-  /*
-    Compute increment of the deformation gradient
-    f_n1 = I + Delta_u 0 gradient_N
-  */
-
-  /* Initialise with the identity tensor */
+  
+  // Initialise with the identity tensor
   for (unsigned i = 0; i < Ndim; i++) {
     for (unsigned j = 0; j < Ndim; j++) {
-      DF_p.N[i][j] = 1 * (i == j);
+      DF_p[i*Ndim + j] = 1.0 * (i == j);
     }
   }
 
+  // Ad the nodal contribution to the train tensor
   for (unsigned A = 0; A < Nnodes_p; A++) {
-
-    /* Assign from matrix to tensor */
-    DeltaU_A = memory_to_tensor__TensorLib__(DeltaU.nM[A], 1);
-    gradient_A = memory_to_tensor__TensorLib__(gradient_p.nM[A], 1);
-
-    /* Compute the dyadic product of the nodal velocity and the
-    gradient of the shape functions */
-    gradient_DeltaU_A = dyadic_Product__TensorLib__(DeltaU_A, gradient_A);
-
-    /* Ad the nodal contribution to the train tensor */
     for (unsigned i = 0; i < Ndim; i++) {
       for (unsigned j = 0; j < Ndim; j++) {
-        DF_p.N[i][j] += gradient_DeltaU_A.N[i][j];
+        DF_p[i*Ndim + j] += DeltaU[A*Ndim + i] * gradient_p[A*Ndim + j];
       }
     }
 
-    /* Free memory */
-    free__TensorLib__(gradient_DeltaU_A);
   }
 }
 
 /*******************************************************/
 
 void update_rate_increment_Deformation_Gradient__Particles__(
-    Tensor dt_DF_p, Matrix DeltaV, Matrix gradient_p) {
+  double * dt_DF_p, 
+  const double * DeltaV, 
+  const double * gradient_p,
+  unsigned Nnodes_p) {
 
   /* Variable definition */
   unsigned Ndim = NumberDimensions;
-  unsigned Nnodes_p = DeltaV.N_rows;
-  Tensor f_n1;
-  Tensor DeltaV_A;
-  Tensor gradient_A;
-  Tensor gradient_DeltaV_A;
 
-  /*
-    Compute increment of the deformation gradient
-    dt_f_n1 = I + (Delta_V o gradient_N)
-  */
-
-  /* Initialise with the identity tensor */
+  // Initialise with the identity tensor
   for (unsigned i = 0; i < Ndim; i++) {
     for (unsigned j = 0; j < Ndim; j++) {
-      dt_DF_p.N[i][j] = 0.0;
+      dt_DF_p[i*Ndim + j] = 0.0;
     }
   }
 
+  // Ad the nodal contribution to the train tensor
   for (unsigned A = 0; A < Nnodes_p; A++) {
-
-    /* Assign from matrix to tensor */
-    DeltaV_A = memory_to_tensor__TensorLib__(DeltaV.nM[A], 1);
-    gradient_A = memory_to_tensor__TensorLib__(gradient_p.nM[A], 1);
-
-    /* Compute the dyadic product of the nodal velocity and the
-        gradient of the shape functions */
-    gradient_DeltaV_A = dyadic_Product__TensorLib__(DeltaV_A, gradient_A);
-
-    /* Ad the nodal contribution to the train tensor */
     for (unsigned i = 0; i < Ndim; i++) {
       for (unsigned j = 0; j < Ndim; j++) {
-        dt_DF_p.N[i][j] += gradient_DeltaV_A.N[i][j];
+        dt_DF_p[i*Ndim + j] += DeltaV[A*Ndim + i]* gradient_p[A*Ndim + j];
       }
     }
-
-    /* Free memory */
-    free__TensorLib__(gradient_DeltaV_A);
   }
 }
 
 /*******************************************************/
 
-void update_Deformation_Gradient_n1__Particles__(Tensor F_n1, Tensor F_n,
-                                                 Tensor f_n1) {
+void update_Deformation_Gradient_n1__Particles__(
+  double * F_n1, 
+  const double * F_n,
+  const double * f_n1) {
+
   int Ndim = NumberDimensions;
   double aux;
 
@@ -172,119 +78,162 @@ void update_Deformation_Gradient_n1__Particles__(Tensor F_n1, Tensor F_n,
       /*
               Set to zero the deformation gradient at t = n + 1
       */
-      F_n1.N[i][j] = 0;
+      F_n1[i*Ndim + j] = 0;
 
       /*
         Compute row-column multiplication
       */
       aux = 0;
       for (int k = 0; k < Ndim; k++) {
-        aux += f_n1.N[i][k] * F_n.N[k][j];
+        aux += f_n1[i*Ndim + k] * F_n[k*Ndim + j];
       }
 
       /*
         New value
       */
-      F_n1.N[i][j] = aux;
+      F_n1[i*Ndim + j] = aux;
     }
   }
 }
 
 /*******************************************************/
 
-void get_locking_free_Deformation_Gradient_n1__Particles__(int p,
-                                                           double DJ_patch,
-                                                           Particle MPM_Mesh) {
+int get_locking_free_Deformation_Gradient_n1__Particles__(
+  unsigned p,
+  double DJ_patch,
+  Particle MPM_Mesh) {
 
-  int Ndim = NumberDimensions;
-  int MatIndx_p = MPM_Mesh.MatIdx[p];
+  int STATUS = EXIT_SUCCESS;
+  unsigned Ndim = NumberDimensions;
+  unsigned MatIndx_p = MPM_Mesh.MatIdx[p];
 
   double DJ_p;
   double DJ_averaged;
   double averaged_DF_vol;
-
   double alpha = MPM_Mesh.Mat[MatIndx_p].alpha_Fbar;
 
-  Tensor F_total = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.F_n1.nM[p], 2);
-  Tensor DF_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.DF.nM[p], 2);
-  Tensor Fbar_n = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.Fbar.nM[p], 2);
-  Tensor DF_bar_p = alloc__TensorLib__(2);
+  double * F_total = MPM_Mesh.Phi.F_n1.nM[p];
+  double * DF_p = MPM_Mesh.Phi.DF.nM[p];
+  double * Fbar_n = MPM_Mesh.Phi.Fbar.nM[p];
+
+#if NumberDimensions == 2
+  double Fbar_n1[4] = {
+    0.0,0.0,
+    0.0,0.0};
+  double DF_bar_p[4] = {
+    0.0,0.0,
+    0.0,0.0};
+#else
+  double Fbar_n1[9] = {
+    0.0,0.0,0.0,
+    0.0,0.0,0.0,
+    0.0,0.0,0.0};
+  double DF_bar_p[9] = {
+    0.0,0.0,0.0,
+    0.0,0.0,0.0,
+    0.0,0.0,0.0};
+#endif
+
 
   // Compute the averaged jacobian of the deformation gradient
   DJ_p = I3__TensorLib__(DF_p);
+  if (DJ_p <= 0.0) {
+    fprintf(stderr, ""RED"Negative jacobian in particle %i"RESET" \n",p);
+    return EXIT_FAILURE;
+  }
+
   DJ_averaged = DJ_patch / DJ_p;
 
   // Compute the averaged volume of the deformation gradient
-  averaged_DF_vol = pow(DJ_averaged, (double)1 / Ndim);
+  averaged_DF_vol = pow(DJ_averaged, (double)1.0 / Ndim);
 
   // Compute the incremental F-bar
-  for (int i = 0; i < Ndim; i++) {
-    for (int j = 0; j < Ndim; j++) {
-      DF_bar_p.N[i][j] = averaged_DF_vol * DF_p.N[i][j];
-    }
+  for (unsigned i = 0; i < Ndim*Ndim; i++) {
+      DF_bar_p[i] = averaged_DF_vol * DF_p[i];
   }
 
   // Compute the new F-bar
-  Tensor Fbar_n1 = matrix_product_old__TensorLib__(DF_bar_p, Fbar_n);
+  matrix_product__TensorLib__(Fbar_n1, DF_bar_p, Fbar_n);  
 
   // Update the deformation gradient to avoid locking (F-bar)
-  for (int i = 0; i < Ndim; i++) {
-    for (int j = 0; j < Ndim; j++) {
-      Fbar_n.N[i][j] = alpha * F_total.N[i][j] + (1 - alpha) * Fbar_n1.N[i][j];
-    }
+  for (unsigned i = 0; i < Ndim*Ndim; i++) {
+    Fbar_n[i] = alpha * F_total[i] + (1 - alpha) * Fbar_n1[i];
   }
 
-  free__TensorLib__(DF_bar_p);
-  free__TensorLib__(Fbar_n1);
+  return STATUS;
 }
 
 /*******************************************************/
 
-void update_rate_Deformation_Gradient_n1__Particles__(Tensor dt_F_n1,
-                                                      Tensor dt_f_n1,
-                                                      Tensor F_n, Tensor f_n1,
-                                                      Tensor dt_F_n) {
-  int Ndim = NumberDimensions;
+void update_rate_Deformation_Gradient_n1__Particles__(
+  double * dt_F_n1,
+  const double * dt_f_n1,
+  const double * F_n, 
+  const double * f_n1,
+  const double * dt_F_n) {
+  
+  unsigned Ndim = NumberDimensions;
   double aux;
 
-  for (int i = 0; i < Ndim; i++) {
-    for (int j = 0; j < Ndim; j++) {
+  for (unsigned i = 0; i < Ndim; i++) {
+    for (unsigned j = 0; j < Ndim; j++) {
       /*
         Set to zero the deformation gradient at t = n + 1
       */
-      dt_F_n1.N[i][j] = 0;
+      dt_F_n1[i*Ndim + j] = 0.0;
 
       /*
         Compute row-column multiplication
       */
-      aux = 0;
-      for (int k = 0; k < Ndim; k++) {
-        aux += dt_f_n1.N[i][k] * F_n.N[k][j] + f_n1.N[i][k] * dt_F_n.N[k][j];
+      aux = 0.0;
+      for (unsigned k = 0; k < Ndim; k++) {
+        aux += dt_f_n1[i*Ndim + k] * F_n[k*Ndim + j] + f_n1[i*Ndim + k] * dt_F_n[k*Ndim + j];
       }
 
       /*
         New value
       */
-      dt_F_n1.N[i][j] = aux;
+      dt_F_n1[i*Ndim + j] = aux;
     }
   }
 }
 
 /*******************************************************/
 
-double compute_Jacobian_Rate__Particles__(double J_p, Tensor F_p,
-                                          Tensor dt_F_p) {
-  /* Variable definition */
-  double dt_J_p = 0;
-  Tensor inverse_F_p = Inverse__TensorLib__(F_p);
-  Tensor transpose_inverse_F_p = transpose__TensorLib__(inverse_F_p);
+int compute_Jacobian_Rate__Particles__(
+  double * d_J_dt,
+  double J, 
+  const double * F,
+  const double * d_F_dt) {
+  
+  int STATUS = EXIT_SUCCESS;
+  unsigned Ndim = NumberDimensions;
 
-  dt_J_p = J_p * inner_product__TensorLib__(transpose_inverse_F_p, dt_F_p);
+#if NumberDimensions == 2
+  double F_mT[4] = {
+    0.0,0.0,
+    0.0,0.0};
+#else
+  double F_mT[9] = {
+    0.0,0.0,0.0,
+    0.0,0.0,0.0,
+    0.0,0.0,0.0};
+#endif
 
-  free__TensorLib__(inverse_F_p);
-  free__TensorLib__(transpose_inverse_F_p);
+  STATUS = compute_adjunt__TensorLib__(F_mT, F);
+  if(STATUS == EXIT_FAILURE){
+    fprintf(stderr, ""RED"Error in compute_adjunt__TensorLib__()"RESET" \n");
+    return EXIT_FAILURE;
+  }
 
-  return dt_J_p;
+  double F_mT__x__F = 0.0;
+  for(unsigned i = 0; i<Ndim*Ndim; i++){
+    F_mT__x__F += F_mT[i] * d_F_dt[i];
+  }
+
+  *d_J_dt = J * F_mT__x__F;
+
+  return STATUS;
 }
 
 /*******************************************************/

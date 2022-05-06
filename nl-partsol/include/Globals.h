@@ -1,16 +1,15 @@
 
-extern char * SimulationFile;
-extern char * Static_conditons;
+extern char   SimulationFile[MAXC];
+extern char   Static_conditons[MAXC];
+extern char   Formulation[MAXC];
 extern char * FEM_MeshFileName;
 extern char * MPM_MeshFileName;
 extern char * TimeIntegrationScheme;
 extern char * ShapeFunctionGP;
-extern char * Formulation;
 extern char   OutputParticlesFile[MAXC];
 extern char   OutputNodesFile[MAXC];
 extern char   OutputDir[MAXC];
 extern char   Field[10];
-
 
 //	Global variables for simulation purposes
 extern double DeltaTimeStep;

@@ -1,6 +1,5 @@
-#include <string.h>
-#include <math.h>
-#include "nl-partsol.h"
+#include "Nodes/aLME.h"
+
 
 /*!
   \fn double fa__aLME__(Matrix la,Matrix lambda,Matrix Beta)

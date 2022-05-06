@@ -212,6 +212,10 @@ void print_Status(char *,int);
 
 /*****************************************************************/
 
+void DoProgress( char label[], int step, int total );
+
+/*****************************************************************/
+
 /*! 
 
   \fn void print_step(int Time,double DeltaTimeStep)
@@ -222,7 +226,7 @@ void print_Status(char *,int);
   \param DeltaTimeStep : Current time step
 
  */
-void print_step(int,double);
+void print_step(int Time, int NumTimeStep, double DeltaTimeStep);
 
 /*****************************************************************/
 
@@ -238,7 +242,7 @@ void print_step(int,double);
   \param Error_relative
 
  */
-void print_convergence_stats(int, int, double, double, double);
+void print_convergence_stats(int, int, int, double, double, double);
 
 /*****************************************************************/
 
@@ -485,19 +489,6 @@ void nodal_results_vtk__InOutFun__(Mesh, Mask, Matrix, int, int);
 /*****************************************************************/
 
 void WriteGnuplot(Matrix, Matrix, double, double, int, int, char[20]);
-
-/*****************************************************************/
-
-/*!
-\fn Particle restart_Simulation(char * Parameters,char * Restart,Mesh Nodes)
-
-\brief Generate simulation structure from previous results
-
-\param Parameters
-\param Restart
-\param Nodes
-*/
-Particle restart_Simulation(char *,char *,Mesh);
 
 /*****************************************************************/
 

@@ -1,13 +1,27 @@
+#include <stdio.h>
+#include <stdlib.h>
 #include <sys/stat.h>
 #include <string.h>
-#include "nl-partsol.h"
+#include <stdbool.h>
+#include "Macros.h"
+#include "Types.h"
+#include "Globals.h"
+#include "Matlib.h"
+
+// Shape functions and auxilar tools
+#include "Nodes/Nodes-Tools.h"
+#include "Nodes/Shape-Functions.h"
+#include "Nodes/Read-GID-Mesh.h"
+
+#include "Particles.h"
+#include "InOutFun.h"
 
 /*
   Local structures and variables
 */
 typedef struct {
   char Mesh_Generator[100];
-  char Mesh_File[100];
+  char Mesh_File[10000];
   int Number_Boundaries;
 
 } Nodes_Information;
@@ -42,7 +56,7 @@ Mesh GramsBox(char *Name_File, Time_Int_Params Parameters_Solver) {
   // Define mesh variable
   Mesh FEM_Mesh;
 
-  int Num_nodal_rings = 4;
+  int Num_nodal_rings = 2;
 
   // Read information in GramsBox and check sintax
   Nodes_Information Nodes_Info = Read_Nodal_Set_Information(Name_File);
@@ -63,54 +77,80 @@ Mesh GramsBox(char *Name_File, Time_Int_Params Parameters_Solver) {
 
     -> Compute minimum nodal distance
   */
-  puts("*************************************************");
-  printf(" \t %s : %s \n", "* Read GID mesh in", Nodes_Info.Mesh_File);
+  fprintf(stdout,"\t * Read GID mesh in %s : ",Nodes_Info.Mesh_File);
   FEM_Mesh = ReadGidMesh__MeshTools__(Nodes_Info.Mesh_File);
+  fprintf(stdout,""GREEN"Done"RESET" \n");
+
   FEM_Mesh.NumNeighbour =
-      (int *)Allocate_ArrayZ(FEM_Mesh.NumNodesMesh, sizeof(int));
+      (int *)Allocate_ArrayZ(FEM_Mesh.NumNodesMesh, __SIZEOF_INT__);
   FEM_Mesh.NodeNeighbour = alloc_table__SetLib__(FEM_Mesh.NumNodesMesh);
+
+  fprintf(stdout,"\t \t -> Compute sourrounding elements : ");
   get_sourrounding_elements(FEM_Mesh);
-  printf("\t \t %s : %s \n", "-> Compute sourrounding elements", "Done");
+  fprintf(stdout,""GREEN"Done"RESET" \n");
 
-  FEM_Mesh.SizeNodalLocality_0 =
-      (int *)Allocate_ArrayZ(FEM_Mesh.NumNodesMesh, sizeof(int));
-  FEM_Mesh.NodalLocality_0 = alloc_table__SetLib__(FEM_Mesh.NumNodesMesh);
-  fill_nodal_locality(FEM_Mesh, 1);
-  printf("\t \t %s : %s \n", "-> Compute nodal neighborhood", "Done");
+   if (Num_nodal_rings > 1) {
 
-  if (Num_nodal_rings > 1) {
-    FEM_Mesh.SizeNodalLocality =
-        (int *)Allocate_ArrayZ(FEM_Mesh.NumNodesMesh, sizeof(int));
+    fprintf(stdout,"\t \t -> Compute extended nodal neighborhood : ");
+    FEM_Mesh.SizeNodalLocality_0 = (int *)Allocate_ArrayZ(FEM_Mesh.NumNodesMesh, __SIZEOF_INT__);
+    FEM_Mesh.NodalLocality_0 = alloc_table__SetLib__(FEM_Mesh.NumNodesMesh);
+    fill_nodal_locality(FEM_Mesh, 1);
+    FEM_Mesh.SizeNodalLocality = (int *)Allocate_ArrayZ(FEM_Mesh.NumNodesMesh, __SIZEOF_INT__);
     FEM_Mesh.NodalLocality = alloc_table__SetLib__(FEM_Mesh.NumNodesMesh);
     fill_nodal_locality(FEM_Mesh, Num_nodal_rings);
-    printf("\t \t %s : %s \n", "-> Compute extended nodal neighborhood",
-           "Done");
+    fprintf(stdout,""GREEN"Done"RESET" \n");
+  }
+  else
+  {
+    fprintf(stdout,"\t \t -> Compute nodal neighborhood : ");
+    FEM_Mesh.SizeNodalLocality_0 = (int *)Allocate_ArrayZ(FEM_Mesh.NumNodesMesh, __SIZEOF_INT__);
+    FEM_Mesh.NodalLocality_0 = alloc_table__SetLib__(FEM_Mesh.NumNodesMesh);
+    fill_nodal_locality(FEM_Mesh, 1);
+    fprintf(stdout,""GREEN"Done"RESET" \n");
   }
 
+  fprintf(stdout,"\t \t -> Allocate list of active nodes : ");
   FEM_Mesh.ActiveNode = (bool *)malloc(FEM_Mesh.NumNodesMesh * sizeof(bool));
-  printf("\t \t %s : %s \n", "-> Allocate list of active nodes", "Done");
+  if(FEM_Mesh.ActiveNode == NULL){
+    fprintf(stderr, ""RED"Error in malloc(): Out of memory"RESET" \n");
+  //    return EXIT_FAILURE;
+  }
+  else{
+    fprintf(stdout,""GREEN"Done"RESET" \n");
+  }
+  
 
+  fprintf(stdout,"\t \t -> Allocate list of boundary nodes : ");
   FEM_Mesh.BoundaryNode = (bool *)malloc(FEM_Mesh.NumNodesMesh * sizeof(bool));
-  printf("\t \t %s : %s \n", "-> Allocate list of boundary nodes", "Done");
+  if(FEM_Mesh.BoundaryNode == NULL){
+    fprintf(stderr, ""RED"Error in malloc(): Out of memory"RESET" \n");
+  //    return EXIT_FAILURE;
+  }
+  else{
+    fprintf(stdout,""GREEN"Done"RESET" \n");
+  }
 
-  FEM_Mesh.Num_Particles_Node =
-      (int *)Allocate_ArrayZ(FEM_Mesh.NumNodesMesh, sizeof(int));
+  fprintf(stdout,"\t \t -> Allocate list of particles per node : ");
+  FEM_Mesh.Num_Particles_Node = (int *)Allocate_ArrayZ(FEM_Mesh.NumNodesMesh, __SIZEOF_INT__);
   FEM_Mesh.List_Particles_Node = alloc_table__SetLib__(FEM_Mesh.NumNodesMesh);
-  printf("\t \t %s : %s \n", "-> Allocate list of particles per node", "Done");
+  if((FEM_Mesh.Num_Particles_Node == NULL) 
+  || (FEM_Mesh.List_Particles_Node == NULL)){
+    fprintf(stderr, ""RED"Error in malloc(): Out of memory"RESET" \n");
+  //    return EXIT_FAILURE;
+  }
+  else{
+    fprintf(stdout,""GREEN"Done"RESET" \n");
+  }
 
-  //  FEM_Mesh.Num_Particles_Element = (int
-  //  *)Allocate_ArrayZ(FEM_Mesh.NumElemMesh,sizeof(int));
-  //  FEM_Mesh.List_Particles_Element = (ChainPtr
-  //  *)malloc(FEM_Mesh.NumElemMesh*sizeof(ChainPtr)); printf("\t \t %s : %s
-  //  \n","-> Allocate list of particle per element","Done");
 
   FEM_Mesh.h_avg =
       (double *)Allocate_ArrayZ(FEM_Mesh.NumNodesMesh, sizeof(double));
   compute_nodal_distance_local(FEM_Mesh);
-  printf("\t \t %s : %s \n", "-> Compute local nodal distance", "Done");
 
+
+  fprintf(stdout,"\t \t -> Compute local nodal distance : ");
   FEM_Mesh.DeltaX = mesh_size(FEM_Mesh);
-  printf("\t \t %s : %f \n", "-> Compute mesh size", FEM_Mesh.DeltaX);
+  fprintf(stdout,""GREEN"Done"RESET" \n");
 
   /*
     -> Compute the boundary conditions
