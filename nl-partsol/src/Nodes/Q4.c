@@ -560,7 +560,7 @@ void local_search__Q4__(Particle MPM_Mesh, Mesh FEM_Mesh) {
                         Connectivity_p, CoordElement, Locality_I0)
     for (p = 0; p < Np; p++) {
 
-      // Get the global coordinates and velocity of the particle
+      // Get the global&local coordinates and displacement of the particle
       X_p = memory_to_matrix__MatrixLib__(Ndim, 1, MPM_Mesh.Phi.x_GC.nM[p]);
       dis_p = memory_to_matrix__MatrixLib__(Ndim, 1, MPM_Mesh.Phi.dis.nM[p]);
       Xi_p = memory_to_matrix__MatrixLib__(Ndim, 1, MPM_Mesh.Phi.x_EC.nM[p]);
@@ -613,11 +613,11 @@ void local_search__Q4__(Particle MPM_Mesh, Mesh FEM_Mesh) {
     }
   }
 
+  // Activate the nodes near the particle
   for (p = 0; p < Np; p++) {
 
     int I0 = MPM_Mesh.I0[p];
 
-    // Activate the nodes near the particle
     Connectivity_p = MPM_Mesh.ListNodes[p];
     while (Connectivity_p != NULL) {
       if (FEM_Mesh.ActiveNode[Connectivity_p->Idx] == false) {
