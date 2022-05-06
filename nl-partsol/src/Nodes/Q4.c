@@ -19,92 +19,89 @@ void initialize__Q4__(Particle MPM_Mesh, Mesh FEM_Mesh) {
   int Ndim = NumberDimensions;
   int Np = MPM_Mesh.NumGP;
   int Nelem = FEM_Mesh.NumElemMesh;
-  bool Init_p;
+  bool Is_particle_reachable;
+  unsigned p;
 
-  /*Definition of auxiliar global and local coordinates */
-  Matrix X_p, Xi_p;
+#pragma omp parallel shared(Np, Nelem)
+  {
 
-  /* Variable with stores the conectivity of the element of the particle */
-  ChainPtr Elem_p_Connectivity;
+#pragma omp for private(p, Is_particle_reachable)
+    for (p = 0; p < Np; p++) {
 
-  /* Auxiliar variable to loop in the list of tributary nodes of the particle */
-  ChainPtr ListNodes_p;
+      Is_particle_reachable = false;
+      unsigned idx_element = 0;
 
-  /* Matrix with the coordinate of the nodes in the element */
-  Matrix Elem_p_Coordinates;
+      /* Asign the number of nodes */
+      MPM_Mesh.NumberNodes[p] = 4;
 
-  ChainPtr Locality_I0; // List of nodes close to the node I0_p
+      /* Get the global and local coodinates of the particle */
+      Matrix X_p =
+          memory_to_matrix__MatrixLib__(Ndim, 1, MPM_Mesh.Phi.x_GC.nM[p]);
+      Matrix Xi_p =
+          memory_to_matrix__MatrixLib__(Ndim, 1, MPM_Mesh.Phi.x_EC.nM[p]);
 
-  /* Loop over the particles to initialize them */
-  for (int p = 0; p < Np; p++) {
-    /* Supose that the particle was not initilise */
-    Init_p = false;
+      while ((Is_particle_reachable == false) && (idx_element < Nelem)) {
 
-    /* Asign the number of nodes */
-    MPM_Mesh.NumberNodes[p] = 4;
+        /* Get connectivity of the element */
+        ChainPtr Elem_p_Connectivity = FEM_Mesh.Connectivity[idx_element];
+        Matrix Elem_p_Coordinates = get_nodes_coordinates__MeshTools__(
+            Elem_p_Connectivity, FEM_Mesh.Coordinates);
 
-    /* Get the global and local coodinates of the particle */
-    X_p = memory_to_matrix__MatrixLib__(Ndim, 1, MPM_Mesh.Phi.x_GC.nM[p]);
-    Xi_p = memory_to_matrix__MatrixLib__(Ndim, 1, MPM_Mesh.Phi.x_EC.nM[p]);
+        if (in_out__Q4__(X_p, Elem_p_Coordinates) == true) {
 
-    /* Check for each element of the mesh */
-    for (int i = 0; i < Nelem; i++) {
+          /* Particle will be initilise */
+          Is_particle_reachable = true;
 
-      /* Get connectivity of the element */
-      Elem_p_Connectivity = FEM_Mesh.Connectivity[i];
-      Elem_p_Coordinates = get_nodes_coordinates__MeshTools__(
-          Elem_p_Connectivity, FEM_Mesh.Coordinates);
+          // Assign the index of the element
+          MPM_Mesh.Element_p[p] = idx_element;
 
-      /* 5º Check out if the GP is in the Element */
-      if (in_out__Q4__(X_p, Elem_p_Coordinates) == true) {
+          /* With the element connectivity get the node close to the particle */
+          MPM_Mesh.I0[p] = get_closest_node__MeshTools__(
+              X_p, Elem_p_Connectivity, FEM_Mesh.Coordinates);
 
-        /* Particle will be initilise */
-        Init_p = true;
+          /* Asign connectivity */
+          MPM_Mesh.ListNodes[p] = copy__SetLib__(Elem_p_Connectivity);
 
-        // Assign the index of the element
-        MPM_Mesh.Element_p[p] = i;
-
-        /* With the element connectivity get the node close to the particle */
-        MPM_Mesh.I0[p] = get_closest_node__MeshTools__(X_p, Elem_p_Connectivity,
-                                                       FEM_Mesh.Coordinates);
-
-        /* Asign connectivity */
-        MPM_Mesh.ListNodes[p] = copy__SetLib__(Elem_p_Connectivity);
-
-        /* Active those nodes that interact with the particle */
-        asign_to_nodes__Particles__(p, MPM_Mesh.Element_p[p], MPM_Mesh.I0[p],
-                                    MPM_Mesh.ListNodes[p], FEM_Mesh);
-
-        /* Compute local coordinates of the particle in this element */
-        X_to_Xi__Q4__(Xi_p, X_p, Elem_p_Coordinates);
+          /* Compute local coordinates of the particle in this element */
+          X_to_Xi__Q4__(Xi_p, X_p, Elem_p_Coordinates);
+        }
 
         /* Free coordinates of the element */
         free__MatrixLib__(Elem_p_Coordinates);
 
-        /*
-          Activate the nodes near the particle
-        */
-        Locality_I0 = FEM_Mesh.NodalLocality_0[MPM_Mesh.I0[p]];
-
-        while (Locality_I0 != NULL) {
-          if (FEM_Mesh.ActiveNode[Locality_I0->Idx] == false) {
-            FEM_Mesh.ActiveNode[Locality_I0->Idx] = true;
-          }
-
-          Locality_I0 = Locality_I0->next;
-        }
-
-        break;
+        ++idx_element;
       }
 
-      /* Free coordinates of the element */
-      free__MatrixLib__(Elem_p_Coordinates);
+      if (!Is_particle_reachable) {
+        fprintf(stderr, "%s : %s %i\n", "Error in initialize__Q4__()",
+                "The search algorithm was unable to find particle", p);
+        exit(EXIT_FAILURE);
+      }
     }
+  }
 
-    if (!Init_p) {
-      fprintf(stderr, "%s : %s %i\n", "Error in initialize__Q4__()",
-              "The search algorithm was unable to find particle", p);
-      exit(EXIT_FAILURE);
+  /*
+    Activate the nodes near the particles
+  */
+  ChainPtr Locality_I0; // List of nodes close to the node I0_p
+  int I0;
+
+  for (unsigned p = 0; p < Np; p++) {
+
+    I0 = MPM_Mesh.I0[p];
+
+    Locality_I0 = FEM_Mesh.NodalLocality_0[I0];
+
+    //    push__SetLib__(&FEM_Mesh.List_Particles_Node[I0], p);
+
+    //    FEM_Mesh.Num_Particles_Node[I0] += 1;
+
+    while (Locality_I0 != NULL) {
+      if (FEM_Mesh.ActiveNode[Locality_I0->Idx] == false) {
+        FEM_Mesh.ActiveNode[Locality_I0->Idx] = true;
+      }
+
+      Locality_I0 = Locality_I0->next;
     }
   }
 }
@@ -538,11 +535,13 @@ void local_search__Q4__(Particle MPM_Mesh, Mesh FEM_Mesh) {
 
   // Number of dimensions
   int Ndim = NumberDimensions;
-  
+  unsigned Np = MPM_Mesh.NumGP;
+  unsigned p;
+
   // Velocity and position of the particle
   Matrix Xi_p;
   Matrix X_p;
-  Matrix V_p;
+  Matrix dis_p;
   // Previous closest node to the particle
   int I0_p_old;
   // New closest node to the particle
@@ -554,89 +553,82 @@ void local_search__Q4__(Particle MPM_Mesh, Mesh FEM_Mesh) {
   // List of nodes close to the node I0_p
   ChainPtr Locality_I0;
 
-  // Loop over the particles
-  for (int p = 0; p < MPM_Mesh.NumGP; p++) {
+#pragma omp parallel shared(Np)
+  {
 
-    // Get the global coordinates and velocity of the particle
-    X_p = memory_to_matrix__MatrixLib__(Ndim, 1, MPM_Mesh.Phi.x_GC.nM[p]);
-    V_p = memory_to_matrix__MatrixLib__(Ndim, 1, MPM_Mesh.Phi.dis.nM[p]);
-    Xi_p = memory_to_matrix__MatrixLib__(Ndim, 1, MPM_Mesh.Phi.x_EC.nM[p]);
+#pragma omp for private(p, Xi_p, X_p, dis_p, I0_p_old, I0_p_new,               \
+                        Connectivity_p, CoordElement, Locality_I0)
+    for (p = 0; p < Np; p++) {
 
-    // Check if the particle is static or is in movement
-    if (norm__MatrixLib__(V_p, 2) > 0) {
+      // Get the global&local coordinates and displacement of the particle
+      X_p = memory_to_matrix__MatrixLib__(Ndim, 1, MPM_Mesh.Phi.x_GC.nM[p]);
+      dis_p = memory_to_matrix__MatrixLib__(Ndim, 1, MPM_Mesh.Phi.dis.nM[p]);
+      Xi_p = memory_to_matrix__MatrixLib__(Ndim, 1, MPM_Mesh.Phi.x_EC.nM[p]);
 
-      // Get the index of the node close to the particle
-      I0_p_old = MPM_Mesh.I0[p];
+      // Check if the particle is static or is in movement
+      if (norm__MatrixLib__(dis_p, 2) > 0) {
 
-      // Get nodes close to the node I0_p
-      Locality_I0 = FEM_Mesh.NodalLocality_0[I0_p_old];
+        // Get the index of the node close to the particle
+        I0_p_old = MPM_Mesh.I0[p];
 
-      // Compute node close to the particle
-      I0_p_new =
-          get_closest_node__MeshTools__(X_p, Locality_I0, FEM_Mesh.Coordinates);
+        // Get nodes close to the node I0_p
+        Locality_I0 = FEM_Mesh.NodalLocality_0[I0_p_old];
 
-      MPM_Mesh.I0[p] = I0_p_new;
+        // Compute node close to the particle
+        I0_p_new = get_closest_node__MeshTools__(X_p, Locality_I0,
+                                                 FEM_Mesh.Coordinates);
 
-      // Update the tributary nodes of each particle
-      MPM_Mesh.Element_p[p] =
-          search_particle_in_surrounding_elements__Particles__(
-              p, X_p, FEM_Mesh.NodeNeighbour[I0_p_new], FEM_Mesh);
+        MPM_Mesh.I0[p] = I0_p_new;
 
-      if (MPM_Mesh.Element_p[p] == -999) {
-        fprintf(stderr, "%s : %s %i \n",
-                "Error in local_search__Q4__ -> "
-                "search_particle_in_surrounding_elements__Particles__",
-                "Not posible to find the particle", p);
-        exit(EXIT_FAILURE);
-      }
+        // Update the tributary nodes of each particle
+        MPM_Mesh.Element_p[p] =
+            search_particle_in_surrounding_elements__Particles__(
+                p, X_p, FEM_Mesh.NodeNeighbour[I0_p_new], FEM_Mesh);
 
-      // Free previous connectivity
-      free__SetLib__(&MPM_Mesh.ListNodes[p]);
-      MPM_Mesh.ListNodes[p] = NULL;
-
-      // Asign new connectivity
-      MPM_Mesh.ListNodes[p] =
-          copy__SetLib__(FEM_Mesh.Connectivity[MPM_Mesh.Element_p[p]]);
-
-      // Get the coordinates of the element vertex
-      CoordElement = get_nodes_coordinates__MeshTools__(MPM_Mesh.ListNodes[p],
-                                                        FEM_Mesh.Coordinates);
-
-      // Compute local coordinates of the particle in this element
-      X_to_Xi__Q4__(Xi_p, X_p, CoordElement);
-
-      // Free coordinates of the element
-      free__MatrixLib__(CoordElement);
-
-      // Activate the nodes near the particle
-      Connectivity_p = MPM_Mesh.ListNodes[p];
-      while (Connectivity_p != NULL) {
-        if (FEM_Mesh.ActiveNode[Connectivity_p->Idx] == false) {
-          FEM_Mesh.ActiveNode[Connectivity_p->Idx] = true;
+        if (MPM_Mesh.Element_p[p] == -999) {
+          fprintf(stderr, "%s : %s %i \n",
+                  "Error in local_search__Q4__ -> "
+                  "search_particle_in_surrounding_elements__Particles__",
+                  "Not posible to find the particle", p);
         }
 
-        Connectivity_p = Connectivity_p->next;
+        // Free previous connectivity
+        free__SetLib__(&MPM_Mesh.ListNodes[p]);
+        MPM_Mesh.ListNodes[p] = NULL;
+
+        // Asign new connectivity
+        MPM_Mesh.ListNodes[p] =
+            copy__SetLib__(FEM_Mesh.Connectivity[MPM_Mesh.Element_p[p]]);
+
+        // Get the coordinates of the element vertex
+        CoordElement = get_nodes_coordinates__MeshTools__(MPM_Mesh.ListNodes[p],
+                                                          FEM_Mesh.Coordinates);
+
+        // Compute local coordinates of the particle in this element
+        X_to_Xi__Q4__(Xi_p, X_p, CoordElement);
+
+        // Free coordinates of the element
+        free__MatrixLib__(CoordElement);
       }
-
-      // Active those nodes that interact with the particle
-      asign_to_nodes__Particles__(p, MPM_Mesh.Element_p[p], MPM_Mesh.I0[p],
-                                  MPM_Mesh.ListNodes[p], FEM_Mesh);
-
-    } else {
-      // Activate the nodes near the particle
-      Connectivity_p = MPM_Mesh.ListNodes[p];
-      while (Connectivity_p != NULL) {
-        if (FEM_Mesh.ActiveNode[Connectivity_p->Idx] == false) {
-          FEM_Mesh.ActiveNode[Connectivity_p->Idx] = true;
-        }
-
-        Connectivity_p = Connectivity_p->next;
-      }
-
-      // Active those nodes that interact with the particle
-      asign_to_nodes__Particles__(p, MPM_Mesh.Element_p[p], MPM_Mesh.I0[p],
-                                  MPM_Mesh.ListNodes[p], FEM_Mesh);
     }
+  }
+
+  // Activate the nodes near the particle
+  for (p = 0; p < Np; p++) {
+
+    int I0 = MPM_Mesh.I0[p];
+
+    Connectivity_p = MPM_Mesh.ListNodes[p];
+    while (Connectivity_p != NULL) {
+      if (FEM_Mesh.ActiveNode[Connectivity_p->Idx] == false) {
+        FEM_Mesh.ActiveNode[Connectivity_p->Idx] = true;
+      }
+
+      Connectivity_p = Connectivity_p->next;
+    }
+
+    //    push__SetLib__(&FEM_Mesh.List_Particles_Node[I0], p);
+    //    FEM_Mesh.Num_Particles_Node[I0] += 1;
   }
 }
 

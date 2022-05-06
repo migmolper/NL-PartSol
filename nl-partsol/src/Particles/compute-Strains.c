@@ -28,7 +28,7 @@ void update_increment_Deformation_Gradient__Particles__(
   for (unsigned A = 0; A < Nnodes_p; A++) {
     for (unsigned i = 0; i < Ndim; i++) {
       for (unsigned j = 0; j < Ndim; j++) {
-        DF_p[i*Ndim + j] += DeltaU[A*Ndim + i]* gradient_p[A*Ndim + j];
+        DF_p[i*Ndim + j] += DeltaU[A*Ndim + i] * gradient_p[A*Ndim + j];
       }
     }
 

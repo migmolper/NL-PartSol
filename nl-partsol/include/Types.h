@@ -780,8 +780,6 @@ typedef struct {
   /*!
    * Variables and function for F-bar calculation
    * */
-//  int * Num_Particles_Element;
-//  ChainPtr * List_Particles_Element;
   bool Locking_Control_Fbar;
   int Num_Patch_Mesh;
   int * Idx_Patch;
