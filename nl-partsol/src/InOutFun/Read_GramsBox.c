@@ -143,12 +143,6 @@ Mesh GramsBox(char *Name_File, Time_Int_Params Parameters_Solver) {
   }
 
 
-  //  FEM_Mesh.Num_Particles_Element = (int
-  //  *)Allocate_ArrayZ(FEM_Mesh.NumElemMesh,__SIZEOF_INT__);
-  //  FEM_Mesh.List_Particles_Element = (ChainPtr
-  //  *)malloc(FEM_Mesh.NumElemMesh*sizeof(ChainPtr)); printf("\t \t %s : %s
-  //  \n","-> Allocate list of particle per element","Done");
-
   FEM_Mesh.h_avg =
       (double *)Allocate_ArrayZ(FEM_Mesh.NumNodesMesh, sizeof(double));
   compute_nodal_distance_local(FEM_Mesh);

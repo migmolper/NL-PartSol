@@ -87,12 +87,6 @@ void asign_to_nodes__Particles__(int p, int E_p, int I0, ChainPtr ListNodes_p,
                                  Mesh FEM_Mesh) {
 
   /*!
-   * Assign particle to an element of the background mesh
-   * */
-  //  push__SetLib__(&FEM_Mesh.List_Particles_Element[E_p],p);
-  //  FEM_Mesh.Num_Particles_Element[E_p] += 1;
-
-  /*!
    * Assign particle to a node of the background mesh
    * */
   push__SetLib__(&FEM_Mesh.List_Particles_Node[I0], p);

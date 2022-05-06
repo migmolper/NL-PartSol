@@ -416,9 +416,7 @@ static void free_nodes(Mesh FEM_Mesh)
 
   free(FEM_Mesh.Num_Particles_Node);
   free_table__SetLib__(FEM_Mesh.List_Particles_Node, FEM_Mesh.NumNodesMesh);
-  //  free(FEM_Mesh.Num_Particles_Element);
-  //  free_table__SetLib__(FEM_Mesh.List_Particles_Element,FEM_Mesh.NumElemMesh);
-
+  
   if (FEM_Mesh.Locking_Control_Fbar) {
     free(FEM_Mesh.Idx_Patch);
     free(FEM_Mesh.Vol_Patch_n);

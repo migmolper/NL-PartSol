@@ -1081,6 +1081,9 @@ static Nodal_Field __get_nodal_field_tn(double *Lumped_Mass, Particle MPM_Mesh,
   VecSetFromOptions(U_n.value);
   VecSetFromOptions(U_n.d_value_dt);
   VecSetFromOptions(U_n.d2_value_dt2);
+  VecSetOption(U_n.value, VEC_IGNORE_NEGATIVE_INDICES, PETSC_TRUE);
+  VecSetOption(U_n.d_value_dt, VEC_IGNORE_NEGATIVE_INDICES, PETSC_TRUE);
+  VecSetOption(U_n.d2_value_dt2, VEC_IGNORE_NEGATIVE_INDICES, PETSC_TRUE);
 #else
   U_n.value = (double *)calloc(Ntotaldofs, __SIZEOF_DOUBLE__);
   U_n.d_value_dt = (double *)calloc(Ntotaldofs, __SIZEOF_DOUBLE__);
