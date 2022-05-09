@@ -5,7 +5,7 @@ SET(CMAKE_COLOR_MAKEFILE ON)
 SET(CMAKE_VERBOSE_MAKEFILE OFF)
 
 # Add OpenMP
-option(USE_OPENMP "Use OpenMP solver library" ON)
+option(USE_OPENMP "Use OpenMP solver library" OFF)
 
 # Add PETSC
 option(USE_PETSC "Use PETSC solver library" ON)

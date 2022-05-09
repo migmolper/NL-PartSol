@@ -41,6 +41,7 @@ char Static_conditons[MAXC];
 char Formulation[MAXC];
 char *TimeIntegrationScheme;
 bool Flag_Print_Convergence;
+Load gravity_field;
 
 
 //  Auxiliar functions for the main
@@ -148,6 +149,13 @@ omp_set_num_threads(omp_get_max_threads());
       Parameters_Solver = Solver_selector__InOutFun__(Static_conditons);
 
       puts("*************************************************");
+      puts(""GREEN"Generating gravity field"RESET" ...");
+      STATUS = GramsBodyForces(&gravity_field, Static_conditons, Parameters_Solver.NumTimeStep);
+      if(STATUS == EXIT_FAILURE){
+        fprintf(stderr, ""RED"Error in GramsBodyForces(,)"RESET" \n");
+      }    
+
+      puts("*************************************************");
       puts(""GREEN"Generating the background mesh"RESET" ...");
       FEM_Mesh = GramsBox(Static_conditons, Parameters_Solver);
 
@@ -175,6 +183,13 @@ omp_set_num_threads(omp_get_max_threads());
       Parameters_Solver = Solver_selector__InOutFun__(SimulationFile);
 
       puts("*************************************************");
+      puts(""GREEN"Generating gravity field"RESET" ...");
+      STATUS = GramsBodyForces(&gravity_field, Static_conditons, Parameters_Solver.NumTimeStep);
+      if(STATUS == EXIT_FAILURE){
+        fprintf(stderr, ""RED"Error in GramsBodyForces(,)"RESET" \n");
+      }
+
+      puts("*************************************************");
       puts(""GREEN"Generating the background mesh"RESET" ...");
       puts("*************************************************");
       FEM_Mesh = GramsBox(SimulationFile, Parameters_Solver);
@@ -193,31 +208,6 @@ omp_set_num_threads(omp_get_max_threads());
 
       puts("*************************************************");
       printf("Start %s shape functions initialisation ... \n", ShapeFunctionGP);
-      initialise_shapefun__MeshTools__(MPM_Mesh, FEM_Mesh);
-    }
-
-    if (If_ff_option) {
-      U_Static(FEM_Mesh, MPM_Mesh, Parameters_Solver);
-
-      puts("*************************************************");
-      puts(""GREEN"Read solver"RESET" ...");
-      puts("*************************************************");
-      Parameters_Solver = Solver_selector__InOutFun__(SimulationFile);
-
-      puts("*************************************************");
-      puts(""GREEN"Generating the background mesh"RESET" ...");
-      puts("*************************************************");
-      free_nodes(FEM_Mesh);
-      FEM_Mesh = GramsBox(SimulationFile, Parameters_Solver);
-
-      puts("*************************************************");
-      printf(""GREEN"Start %s shape functions initialisation"RESET" ... \n", ShapeFunctionGP);
-
-      for (int p = 0; p < MPM_Mesh.NumGP; p++) {
-        free__SetLib__(&MPM_Mesh.ListNodes[p]);
-        MPM_Mesh.ListNodes[p] = NULL;
-      }
-
       initialise_shapefun__MeshTools__(MPM_Mesh, FEM_Mesh);
     }
 
@@ -250,6 +240,13 @@ omp_set_num_threads(omp_get_max_threads());
     puts(""GREEN"Read solver"RESET" ...");
     puts("*************************************************");
     Parameters_Solver = Solver_selector__InOutFun__(SimulationFile);
+
+    puts("*************************************************");
+    puts(""GREEN"Generating gravity field"RESET" ...");
+    STATUS = GramsBodyForces(&gravity_field, Static_conditons, Parameters_Solver.NumTimeStep);
+    if(STATUS == EXIT_FAILURE){
+      fprintf(stderr, ""RED"Error in GramsBodyForces(,)"RESET" \n");
+    }
 
     puts("*************************************************");
     puts(""GREEN"Generating the background mesh"RESET" ...");
@@ -285,6 +282,13 @@ omp_set_num_threads(omp_get_max_threads());
     puts("*************************************************");
     puts("Read solver ...");
     Parameters_Solver = Solver_selector__InOutFun__(SimulationFile);
+
+    puts("*************************************************");
+    puts(""GREEN"Generating gravity field"RESET" ...");
+    STATUS = GramsBodyForces(&gravity_field, Static_conditons, Parameters_Solver);
+    if(STATUS == EXIT_FAILURE){
+      fprintf(stderr, ""RED"Error in GramsBodyForces(,)"RESET" \n");
+    }
 
     puts("*************************************************");
     puts("Generating the background mesh ...");
