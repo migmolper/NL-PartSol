@@ -41,41 +41,41 @@ int parse(char **words, char *str, char *delims) {
 
 /***************************************************************************/
 
-void generate_route(char *Route_Nodes, char *Name_File) {
+void generate_route(char *Directory, char *File) {
 
-  char *Name_File_cpy = (char *)malloc((strlen(Name_File) + 1) * sizeof(char));
+  char *File_cpy = (char *)malloc((strlen(File) + 1) * sizeof(char));
   int Num_words_route;
   char *Name_Parse[MAXW] = {NULL};
 
   /*!
     Copy the file name to avoid lost data
   */
-  strcpy(Name_File_cpy, Name_File);
+  strcpy(File_cpy, File);
 
 #ifdef __linux__
-  Num_words_route = parse(Name_Parse, Name_File_cpy, "(/)") - 1;
-  strcat(Route_Nodes, "./");
+  Num_words_route = parse(Name_Parse, File_cpy, "(/)") - 1;
+  strcat(Directory, "./");
   for (int i = 0; i < Num_words_route; i++) {
-    strcat(Route_Nodes, Name_Parse[i]);
-    strcat(Route_Nodes, "/");
+    strcat(Directory, Name_Parse[i]);
+    strcat(Directory, "/");
   }
 #endif
 
 #ifdef __APPLE__
-  Num_words_route = parse(Name_Parse, Name_File_cpy, "(/)") - 1;
-  strcat(Route_Nodes, "./");
+  Num_words_route = parse(Name_Parse, File_cpy, "(/)") - 1;
+  strcat(Directory, "./");
   for (int i = 0; i < Num_words_route; i++) {
-    strcat(Route_Nodes, Name_Parse[i]);
-    strcat(Route_Nodes, "/");
+    strcat(Directory, Name_Parse[i]);
+    strcat(Directory, "/");
   }
 #endif
 
 #ifdef _WIN32
-  strcpy(Name_File_cpy, Name_File);
-  Num_words_route = parse(Name_Parse, Name_File_cpy, "\\");
+  strcpy(File_cpy, File);
+  Num_words_route = parse(Name_Parse, File_cpy, "\\");
   for (int i = 0; i < Num_words_route - 1; i++) {
-    strcat(Route_Nodes, Name_Parse[i]);
-    strcat(Route_Nodes, "\\");
+    strcat(Directory, Name_Parse[i]);
+    strcat(Directory, "\\");
   }
 #endif
 

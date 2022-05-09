@@ -33,7 +33,6 @@ typedef struct {
   bool Is_Particle_Initial;
   bool Is_Hydrostatic_conditions;
   bool Is_Nodal_Initial;
-  bool Is_GramsBodyForces;
   bool Is_GramsNeumannBC;
 
   int Counter_Materials;
@@ -273,20 +272,6 @@ Generate_One_Phase_Analysis__InOutFun__(char *Name_File, Mesh FEM_Mesh,
       printf(" \t %s \n", "* No Neumann boundary conditions defined");
     }
 
-    /*
-      Read body forces
-    */
-    MPM_Mesh.b = alloc__TensorLib__(
-        1); // Vector with the current value of the distance accelerations
-    if (Sim_Params.Is_GramsBodyForces) {
-      MPM_Mesh.NumberBodyForces = Sim_Params.Counter_BodyForces;
-      MPM_Mesh.B =
-          GramsBodyForces(Name_File, Sim_Params.Counter_BodyForces,
-                          Msh_Parms.GPxElement, Parameters_Solver.NumTimeStep);
-    } else {
-      MPM_Mesh.NumberBodyForces = Sim_Params.Counter_BodyForces;
-      printf(" \t %s \n", "* No body forces defined");
-    }
 
     /*
       Free the input data
@@ -329,7 +314,6 @@ static Simulation_Key_Words Check_Simulation_Key_Words(char *Name_File) {
   Sim_Key_Wrds.Is_Particle_Initial = false;
   Sim_Key_Wrds.Is_Hydrostatic_conditions = false;
   Sim_Key_Wrds.Is_Nodal_Initial = false;
-  Sim_Key_Wrds.Is_GramsBodyForces = false;
   Sim_Key_Wrds.Is_GramsNeumannBC = false;
 
   Sim_Key_Wrds.Counter_Materials = 0;
@@ -370,9 +354,6 @@ static Simulation_Key_Words Check_Simulation_Key_Words(char *Name_File) {
     } else if ((Num_words > 0) &&
                (strcmp(Words[0], "Initial-nodal-values") == 0)) {
       Sim_Key_Wrds.Is_Nodal_Initial = true;
-    } else if ((Num_words > 0) && (strcmp(Words[0], "GramsBodyForces") == 0)) {
-      Sim_Key_Wrds.Is_GramsBodyForces = true;
-      Sim_Key_Wrds.Counter_BodyForces++;
     } else if ((Num_words > 0) &&
                (strcmp(Words[0], "Define-Neumann-Boundary") == 0)) {
       Sim_Key_Wrds.Is_GramsNeumannBC = true;

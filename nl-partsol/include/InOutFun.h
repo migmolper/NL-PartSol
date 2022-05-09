@@ -88,13 +88,13 @@ Matrix Read_Delimited_File__InOutLib__(char *);
 
   \brief Generate a user defined curve for loads, boundary conditions ...
 
-  List of functions and interface:
-  CONSTANT_CURVE SCALE#double
-  RAMP CURVE SCALE#double 
-  HEAVISIDE_CURVE SCALE#double Tc#integer
-  DELTA_CURVE SCALE#double Tc#integer
-  HAT_CURVE SCALE#double T0#integer T1#integer
-  CUSTOM_CURVE
+  List of functions and interface: \n
+  CONSTANT_CURVE SCALE#double \n
+  RAMP CURVE SCALE#double \n
+  HEAVISIDE_CURVE SCALE#double Tc#integer \n
+  DELTA_CURVE SCALE#double Tc#integer \n
+  HAT_CURVE SCALE#double T0#integer T1#integer \n
+  CUSTOM_CURVE \n
 
   Example :
   DAT_CURVE NUM#3
@@ -463,17 +463,18 @@ void OutputSimulation(Particle,int,double,double,Event);
 
 /*!
 
-  \fn Load * GramsBodyForces(char * File, int NumBodyForces, int GPxElement, int NumTimeSteps)
+  \fn int GramsBodyForces(Load * gravity_field, const char *Name_File, int NumTimeStep);
   
-  \brief Generate the load state
+  \brief Generate the gravity field
 
-  \param File: Name of the file with the instructions
-  \param NumBodyForces : Number of body forces
-  \param GPxElement : As the particle discretization is performed thorouht 
-  \param NumTimeSteps:
+  \param gravity_field
+  \param File Name of the file with the instructions
+  \param Parameters_Solver Time integration solver
+
+  \return STATUS 
 */
-Load * GramsBodyForces(char *, int, int, int);
-
+int GramsBodyForces(Load *gravity_field, const char *Name_File,
+                    Time_Int_Params Parameters_Solver);
 /*****************************************************************/
 
 void particle_results_vtk__InOutFun__(Particle, int, int);
