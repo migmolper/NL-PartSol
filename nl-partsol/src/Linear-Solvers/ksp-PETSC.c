@@ -113,6 +113,9 @@ int krylov_PETSC(Mat *ptr_Tangent_Stiffness, Vec *ptr_Residual,
             std::chrono::duration_cast<std::chrono::milliseconds>(solver_end -
                                                                   solver_begin)
                 .count()); */
+
+
+  return 0;
 }
 
 #endif
