@@ -12,10 +12,6 @@ fi
 #elif [ "$(expr substr $(uname -s) 1 10)" == "MINGW64_NT" ]; then
 #    # Do something under 64 bits Windows NT platform
 
-export PETSC_DIR=$HOME/petsc
-#export PETSC_ARCH=arch-classic-docs
-export PETSC_ARCH=arch-darwin-c-debug
-
 clear
 
 DIR="build"
