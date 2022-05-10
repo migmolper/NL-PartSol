@@ -30,12 +30,6 @@
 #include <omp.h>
 #endif
 
-#ifdef __linux__
-#include <lapacke.h>
-#elif __APPLE__ 
-#include <Accelerate/Accelerate.h>
-#endif
-
 // Linear-Solver libs
 #ifdef USE_PETSC
 #include "Linear-Solvers/ksp-PETSC.h"
