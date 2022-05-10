@@ -73,7 +73,7 @@ static void __d_kappa_phi_d_lambda(
     double I1 /**< [in] First invariant of the stress tensor */);
 /**************************************************************/
 
-static double __F(
+static void __F(
     double * F /**< [out] Yield function evaluation */,
     double kappa_phi /**< [in] Friction angle hardening */, 
     double I1 /**< [in] First invariant of the stress tensor */, 
@@ -899,7 +899,7 @@ static void __d_kappa_phi_d_lambda(double *d_kappa_phi_d_lambda, const double *a
 
 /**************************************************************/
 
-static double __F(double * F, double kappa_phi, double I1, double I2, double I3) {
+static void __F(double * F, double kappa_phi, double I1, double I2, double I3) {
   double K1 = 9.0 + kappa_phi;
 
   *F = cbrt(K1 * I3) - cbrt(I1 * I2);
