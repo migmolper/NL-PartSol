@@ -9,9 +9,7 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
 
   int STATUS = EXIT_SUCCESS;
 
-  /*
-    Auxiliar variables for the solver
-  */
+  // Auxiliar variables for the solver
   unsigned Ndim = NumberDimensions;
   unsigned Nactivenodes;
   unsigned Ntotaldofs;
@@ -34,7 +32,6 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
   double Error_0;
   double Error_i;
   double Error_relative;
-  //  double Error_increment_i;
 
 #ifdef USE_PETSC
   Mat Tangent_Stiffness;
@@ -54,14 +51,10 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
   Mask ActiveNodes;
   Mask ActiveDOFs;
 
-  Newmark_parameters Time_Integration_Params;
-
-// InoutParameters
-#ifdef USE_PETSC
-  PetscViewer viewer;
-#else
-
-#endif
+  /*
+    Alpha parameters for the Newmark-beta
+  */
+  Newmark_parameters Params;
 
   /*
     Time step is defined at the init of the simulation throught the
@@ -72,7 +65,7 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
   DeltaTimeStep = __compute_deltat(MPM_Mesh, DeltaX, Parameters_Solver);
 
   //  Compute time integrator parameters
-  Time_Integration_Params =
+  Params =
       __compute_Newmark_parameters(beta, gamma, DeltaTimeStep, epsilon);
 
   while (TimeStep < NumTimeStep) {
@@ -99,7 +92,7 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
 
     //! Get the previous converged nodal value
     U_n = __get_nodal_field_tn(Lumped_Mass, MPM_Mesh, FEM_Mesh, ActiveNodes,
-                               ActiveDOFs, Time_Integration_Params, &STATUS);
+                               ActiveDOFs, Params, &STATUS);
     if (STATUS == EXIT_FAILURE) {
       fprintf(stderr, "" RED "Error in __get_nodal_field_tn()" RESET " \n");
       return EXIT_FAILURE;
@@ -107,7 +100,7 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
 
     //! Compute kinematic nodal values
     D_U = __initialise_nodal_increments(U_n, FEM_Mesh, ActiveNodes,
-                                        Time_Integration_Params, &STATUS);
+                                        Params, &STATUS);
     if (STATUS == EXIT_FAILURE) {
       fprintf(stderr,
               "" RED "Error in __initialise_nodal_increments()" RESET " \n");
@@ -117,7 +110,7 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
     //! Trial residual
     Residual = __assemble_residual(
         U_n, D_U, Lumped_Mass, ActiveNodes, ActiveDOFs, MPM_Mesh, FEM_Mesh,
-        Time_Integration_Params, true, false, &STATUS);
+        Params, true, false, &STATUS);
     if (STATUS == EXIT_FAILURE) {
       fprintf(stderr, "" RED "Error in __assemble_residual()" RESET " \n");
       return EXIT_FAILURE;
@@ -127,6 +120,7 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
     Error_0 = Error_i = __error_residual(Residual, Nactivedofs);
     Iter = 0;
 
+    //! Check initial error and preallocate tangent matrix if it is necessary
     if (Error_0 < TOL) {
 #ifdef USE_PETSC
       VecDestroy(&Residual);
@@ -153,7 +147,7 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
       }
 
       __assemble_tangent_stiffness(Tangent_Stiffness, ActiveNodes, ActiveDOFs,
-                                   MPM_Mesh, FEM_Mesh, Time_Integration_Params,
+                                   MPM_Mesh, FEM_Mesh, Params,
                                    Iter, &STATUS);
       if (STATUS == EXIT_FAILURE) {
         fprintf(stderr,
@@ -176,7 +170,7 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
 #endif
 
       __update_Nodal_Increments(Residual, D_U, U_n, ActiveDOFs,
-                                Time_Integration_Params, Ntotaldofs);
+                                Params, Ntotaldofs);
 
       __local_compatibility_conditions(D_U, ActiveNodes, MPM_Mesh, FEM_Mesh,
                                        &STATUS);
@@ -199,7 +193,7 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
       // Compute residual (NR-loop)
       Residual = __assemble_residual(
           U_n, D_U, Lumped_Mass, ActiveNodes, ActiveDOFs, MPM_Mesh, FEM_Mesh,
-          Time_Integration_Params, true, false, &STATUS);
+          Params, true, false, &STATUS);
       if (STATUS == EXIT_FAILURE) {
         fprintf(stderr, "" RED "Error in __assemble_residual()" RESET " \n");
         return EXIT_FAILURE;
@@ -235,10 +229,11 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
 
     __update_Particles(D_U, MPM_Mesh, FEM_Mesh, ActiveNodes);
 
+    //!  Outputs
     if (TimeStep % ResultsTimeStep == 0) {
       Reactions = __assemble_residual(
           U_n, D_U, Lumped_Mass, ActiveNodes, ActiveDOFs, MPM_Mesh, FEM_Mesh,
-          Time_Integration_Params, false, true, &STATUS);
+          Params, false, true, &STATUS);
       if (STATUS == EXIT_FAILURE) {
         fprintf(stderr, "" RED "Error in __assemble_residual()" RESET " \n");
         return EXIT_FAILURE;
@@ -263,6 +258,8 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
     //! Update time step
     TimeStep++;
 
+
+    //!  Free memory
 #ifdef USE_PETSC
     VecDestroy(&Lumped_Mass);
     VecDestroy(&U_n.value);
@@ -370,12 +367,12 @@ static void __compute_local_mass_matrix(double *Local_Mass_Matrix_p,
   double M_AB_p = Na_p * m_p;
 
 #if NumberDimensions == 2
-  Local_Mass_Matrix_p[0] = M_AB_p;
-  Local_Mass_Matrix_p[1] = M_AB_p;
+  Local_Mass_Matrix_p[0] = M_AB_p; // u.x
+  Local_Mass_Matrix_p[1] = M_AB_p; // u.y
 #else
-  Local_Mass_Matrix_p[0] = M_AB_p;
-  Local_Mass_Matrix_p[1] = M_AB_p;
-  Local_Mass_Matrix_p[2] = M_AB_p;
+  Local_Mass_Matrix_p[0] = M_AB_p; // u.x
+  Local_Mass_Matrix_p[1] = M_AB_p; // u.y
+  Local_Mass_Matrix_p[2] = M_AB_p; // pw
 #endif
 }
 

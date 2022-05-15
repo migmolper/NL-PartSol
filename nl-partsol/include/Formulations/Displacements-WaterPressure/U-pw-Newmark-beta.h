@@ -25,16 +25,17 @@
 // Material lib
 #include "Constitutive/Constitutive.h"
 
-// Linear-Solver lib
-#ifdef __linux__
-#include <lapacke.h>
-#elif __APPLE__ 
-#include <Accelerate/Accelerate.h>
+// HPC libs
+#ifdef USE_OPENMP
+#include <omp.h>
 #endif
 
+// Linear-Solver libs
+#ifdef USE_PETSC
+#include "Linear-Solvers/ksp-PETSC.h"
+#else
 #include "Linear-Solvers/dgetrs-LAPACK.h"
-
-#include <omp.h>
+#endif
 
 // 
 #include "InOutFun.h"
@@ -47,6 +48,11 @@ Event *Out_nodal_path_csv;
 Event *Out_particles_path_csv;
 int Number_Out_nodal_path_csv;
 int Number_Out_particles_path_csv;
+
+// Global variuables
+unsigned InitialStep;
+unsigned TimeStep;
+unsigned NumTimeStep;
 
 /*!
   \fn void upw_Newmark_beta_Finite_Strains(Mesh FEM_Mesh, Particle MPM_Mesh, Time_Int_Params Parameters_Solver)
