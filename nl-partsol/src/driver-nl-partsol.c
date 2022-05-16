@@ -11,27 +11,27 @@
   \section Usage
  */
 
-#include <string.h>
 #include "nl-partsol.h"
+#include <string.h>
 
 #ifdef USE_PETSC
 #include <petscksp.h>
 #endif
 
 #include "Formulations/Displacements/U-Analisys.h"
-#include "Formulations/Displacements/U-Static.h"
 #include "Formulations/Displacements/U-Discrete-Energy-Momentum.h"
-#include "Formulations/Displacements/U-Generalized-Alpha.h"
 #include "Formulations/Displacements/U-Forward-Euler.h"
-#include "Formulations/Displacements/U-Verlet.h"
+#include "Formulations/Displacements/U-Generalized-Alpha.h"
 #include "Formulations/Displacements/U-Newmark-beta.h"
+#include "Formulations/Displacements/U-Static.h"
+#include "Formulations/Displacements/U-Verlet.h"
 
 #include "Formulations/Displacements-Pressure/U-p-Analisys.h"
 #include "Formulations/Displacements-Pressure/U-p-Newmark-beta.h"
 
 #include "Formulations/Displacements-WaterPressure/U-pw-Analisys.h"
-#include "Formulations/Displacements-WaterPressure/U-pw-Verlet.h"
 #include "Formulations/Displacements-WaterPressure/U-pw-Newmark-beta.h"
+#include "Formulations/Displacements-WaterPressure/U-pw-Verlet.h"
 
 /*
   Call global variables
@@ -43,7 +43,6 @@ char *TimeIntegrationScheme;
 bool Flag_Print_Convergence;
 Load gravity_field;
 
-
 //  Auxiliar functions for the main
 static void nlpartsol_help_message();
 static void free_nodes(Mesh);
@@ -52,18 +51,17 @@ static void standard_error(char *Error_message);
 
 int main(int argc, char *argv[]) {
 
-
 // Initialize OpenMP
 #ifdef USE_OPENMP
-puts(""GREEN"Initialize OpenMP"RESET" ...");
-//    omp_set_num_threads(nthreads > 0 ? nthreads : omp_get_max_threads());
-// omp_set_num_threads(6);
-omp_set_num_threads(omp_get_max_threads());
+  puts("" GREEN "Initialize OpenMP" RESET " ...");
+  //    omp_set_num_threads(nthreads > 0 ? nthreads : omp_get_max_threads());
+  // omp_set_num_threads(6);
+  omp_set_num_threads(omp_get_max_threads());
 #endif
 
   // Initialize PETSc
 #ifdef USE_PETSC
-  puts(""GREEN"Initialize PETSc"RESET" ...");
+  puts("" GREEN "Initialize PETSc" RESET " ...");
   PetscInitialize(&argc, &argv, 0, 0);
 #endif
 
@@ -79,64 +77,59 @@ omp_set_num_threads(omp_get_max_threads());
 
   // Default values for the flags
   Flag_Print_Convergence = false;
-  
+
   // Read simulation file and kind of simulation
-  for (unsigned i = 0; i < argc; i++)
-  {
-    if((strcmp(argv[i], "--help") == 0) 
-    || (strcmp(argv[i], "-h") == 0)) {
+  for (unsigned i = 0; i < argc; i++) {
+    if ((strcmp(argv[i], "--help") == 0) || (strcmp(argv[i], "-h") == 0)) {
       nlpartsol_help_message();
       return EXIT_SUCCESS;
     }
 
-    if(strcmp(argv[i], "--FORMULATION-U") == 0) {
-      strcpy(Formulation,"-u");
+    if (strcmp(argv[i], "--FORMULATION-U") == 0) {
+      strcpy(Formulation, "-u");
       If_formulation = true;
     }
 
-    if(strcmp(argv[i], "--FORMULATION-Up") == 0) {
-      strcpy(Formulation,"-up");
-      If_formulation = true;   
+    if (strcmp(argv[i], "--FORMULATION-Up") == 0) {
+      strcpy(Formulation, "-up");
+      If_formulation = true;
     }
 
-    if(strcmp(argv[i], "--FORMULATION-Upw") == 0) {
-      strcpy(Formulation,"-upw");
-      If_formulation = true;         
+    if (strcmp(argv[i], "--FORMULATION-Upw") == 0) {
+      strcpy(Formulation, "-upw");
+      If_formulation = true;
     }
 
-    if(strcmp(argv[i], "--Print-Convergence") == 0)
-    {
+    if (strcmp(argv[i], "--Print-Convergence") == 0) {
       Flag_Print_Convergence = true;
     }
 
-    if(strcmp(argv[i], "-f") == 0) {
+    if (strcmp(argv[i], "-f") == 0) {
       i++;
-      strcpy(SimulationFile,argv[i]);
+      strcpy(SimulationFile, argv[i]);
       If_f_option = true;
       break;
     }
 
-    if(strcmp(argv[i], "-ff") == 0) {
+    if (strcmp(argv[i], "-ff") == 0) {
       i++;
-      strcpy(Static_conditons,argv[i]);
+      strcpy(Static_conditons, argv[i]);
       i++;
-      strcpy(SimulationFile,argv[i]);
+      strcpy(SimulationFile, argv[i]);
       If_ff_option = true;
       break;
     }
   }
-  
-  if((If_f_option == false) 
-  && (If_ff_option == false)) {
-    fprintf(stderr, ""RED"Wrong inputs : non input file"RESET" \n");
+
+  if ((If_f_option == false) && (If_ff_option == false)) {
+    fprintf(stderr, "" RED "Wrong inputs : non input file" RESET " \n");
     return EXIT_FAILURE;
   }
 
-  if(If_formulation == false){
-    fprintf(stderr, ""RED"Wrong inputs : select formulation "RESET" \n");
+  if (If_formulation == false) {
+    fprintf(stderr, "" RED "Wrong inputs : select formulation " RESET " \n");
     return EXIT_FAILURE;
   }
-  
 
   /* Select kinf of formulation  */
   if (strcmp(Formulation, "-u") == 0) {
@@ -145,63 +138,71 @@ omp_set_num_threads(omp_get_max_threads());
 
     if (If_ff_option) {
       puts("*************************************************");
-      puts(""GREEN"Read solver"RESET" ...");
+      puts("" GREEN "Read solver" RESET " ...");
       Parameters_Solver = Solver_selector__InOutFun__(Static_conditons);
 
       puts("*************************************************");
-      puts(""GREEN"Generating gravity field"RESET" ...");
-      STATUS = GramsBodyForces(&gravity_field, Static_conditons, Parameters_Solver.NumTimeStep);
-      if(STATUS == EXIT_FAILURE){
-        fprintf(stderr, ""RED"Error in GramsBodyForces(,)"RESET" \n");
-      }    
+      puts("" GREEN "Generating gravity field" RESET " ...");
+      STATUS = Generate_Gravity_Field__InOutFun__(
+          &gravity_field, Static_conditons, Parameters_Solver);
+      if (STATUS == EXIT_FAILURE) {
+        fprintf(stderr,
+                "" RED "Error in Generate_Gravity_Field__InOutFun__(,)" RESET
+                " \n");
+      }
 
       puts("*************************************************");
-      puts(""GREEN"Generating the background mesh"RESET" ...");
+      puts("" GREEN "Generating the background mesh" RESET " ...");
       FEM_Mesh = GramsBox(Static_conditons, Parameters_Solver);
 
       puts("*************************************************");
-      puts(""GREEN"Generating new MPM simulation"RESET" ...");
+      puts("" GREEN "Generating new MPM simulation" RESET " ...");
       MPM_Mesh = Generate_One_Phase_Analysis__InOutFun__(
           Static_conditons, FEM_Mesh, Parameters_Solver);
 
       puts("*************************************************");
-      puts(""GREEN"Read outputs"RESET" ...");
+      puts("" GREEN "Read outputs" RESET " ...");
       GramsOutputs(Static_conditons);
       NLPS_Out_nodal_path_csv__InOutFun__(Static_conditons);
       NLPS_Out_particles_path_csv__InOutFun__(Static_conditons);
 
       puts("*************************************************");
-      printf(""GREEN"Start %s shape functions initialisation"RESET" ... \n", ShapeFunctionGP);
+      printf("" GREEN "Start %s shape functions initialisation" RESET " ... \n",
+             ShapeFunctionGP);
       initialise_shapefun__MeshTools__(MPM_Mesh, FEM_Mesh);
+    }
 
-    } 
-    
     if (If_f_option) {
       puts("*************************************************");
-      puts(""GREEN"Read solver"RESET" ...");
+      puts("" GREEN "Read solver" RESET " ...");
       puts("*************************************************");
       Parameters_Solver = Solver_selector__InOutFun__(SimulationFile);
 
       puts("*************************************************");
-      puts(""GREEN"Generating gravity field"RESET" ...");
-      STATUS = GramsBodyForces(&gravity_field, Static_conditons, Parameters_Solver.NumTimeStep);
-      if(STATUS == EXIT_FAILURE){
-        fprintf(stderr, ""RED"Error in GramsBodyForces(,)"RESET" \n");
+      puts("" GREEN "Generating gravity field" RESET " ...");
+      STATUS = Generate_Gravity_Field__InOutFun__(
+          &gravity_field, SimulationFile, Parameters_Solver);
+      if (STATUS == EXIT_FAILURE) {
+        fprintf(stderr,
+                "" RED "Error in Generate_Gravity_Field__InOutFun__(,)" RESET
+                " \n");
       }
 
+      exit(0);
+
       puts("*************************************************");
-      puts(""GREEN"Generating the background mesh"RESET" ...");
+      puts("" GREEN "Generating the background mesh" RESET " ...");
       puts("*************************************************");
       FEM_Mesh = GramsBox(SimulationFile, Parameters_Solver);
 
       puts("*************************************************");
-      puts(""GREEN"Generating new MPM simulation"RESET" ...");
+      puts("" GREEN "Generating new MPM simulation" RESET " ...");
       puts("*************************************************");
       MPM_Mesh = Generate_One_Phase_Analysis__InOutFun__(
           SimulationFile, FEM_Mesh, Parameters_Solver);
-      
+
       puts("*************************************************");
-      puts(""GREEN"Read outputs"RESET" ...");
+      puts("" GREEN "Read outputs" RESET " ...");
       GramsOutputs(SimulationFile);
       NLPS_Out_nodal_path_csv__InOutFun__(SimulationFile);
       NLPS_Out_particles_path_csv__InOutFun__(SimulationFile);
@@ -212,7 +213,7 @@ omp_set_num_threads(omp_get_max_threads());
     }
 
     puts("*************************************************");
-    puts(""GREEN"Run dynamic simulation"RESET" ...");
+    puts("" GREEN "Run dynamic simulation" RESET " ...");
     if (strcmp(Parameters_Solver.TimeIntegrationScheme, "FE") == 0) {
       U_Forward_Euler(FEM_Mesh, MPM_Mesh, Parameters_Solver);
     } else if (strcmp(Parameters_Solver.TimeIntegrationScheme,
@@ -220,13 +221,15 @@ omp_set_num_threads(omp_get_max_threads());
       U_Generalized_alpha(FEM_Mesh, MPM_Mesh, Parameters_Solver);
     } else if (strcmp(Parameters_Solver.TimeIntegrationScheme, "NPC-FS") == 0) {
       STATUS = U_Verlet(FEM_Mesh, MPM_Mesh, Parameters_Solver);
-    } else if (strcmp(Parameters_Solver.TimeIntegrationScheme, "Discrete-Energy-Momentum") == 0) {
+    } else if (strcmp(Parameters_Solver.TimeIntegrationScheme,
+                      "Discrete-Energy-Momentum") == 0) {
       U_Discrete_Energy_Momentum(FEM_Mesh, MPM_Mesh, Parameters_Solver);
-    } else if (strcmp(Parameters_Solver.TimeIntegrationScheme, "Newmark-beta-Finite-Strains") == 0) {
+    } else if (strcmp(Parameters_Solver.TimeIntegrationScheme,
+                      "Newmark-beta-Finite-Strains") == 0) {
       STATUS = U_Newmark_Beta(FEM_Mesh, MPM_Mesh, Parameters_Solver);
-      if(STATUS == EXIT_FAILURE){
-        fprintf(stderr, ""RED"Error in U_Newmark_Beta(,)"RESET" \n");
-      }      
+      if (STATUS == EXIT_FAILURE) {
+        fprintf(stderr, "" RED "Error in U_Newmark_Beta(,)" RESET " \n");
+      }
     } else {
       sprintf(Error_message, "%s", "Wrong time integration scheme");
       standard_error(Error_message);
@@ -237,24 +240,27 @@ omp_set_num_threads(omp_get_max_threads());
     NumberDOF = NumberDimensions;
 
     puts("*************************************************");
-    puts(""GREEN"Read solver"RESET" ...");
+    puts("" GREEN "Read solver" RESET " ...");
     puts("*************************************************");
     Parameters_Solver = Solver_selector__InOutFun__(SimulationFile);
 
     puts("*************************************************");
-    puts(""GREEN"Generating gravity field"RESET" ...");
-    STATUS = GramsBodyForces(&gravity_field, Static_conditons, Parameters_Solver.NumTimeStep);
-    if(STATUS == EXIT_FAILURE){
-      fprintf(stderr, ""RED"Error in GramsBodyForces(,)"RESET" \n");
+    puts("" GREEN "Generating gravity field" RESET " ...");
+    STATUS = Generate_Gravity_Field__InOutFun__(
+        &gravity_field, Static_conditons, Parameters_Solver);
+    if (STATUS == EXIT_FAILURE) {
+      fprintf(stderr,
+              "" RED "Error in Generate_Gravity_Field__InOutFun__(,)" RESET
+              " \n");
     }
 
     puts("*************************************************");
-    puts(""GREEN"Generating the background mesh"RESET" ...");
+    puts("" GREEN "Generating the background mesh" RESET " ...");
     puts("*************************************************");
     FEM_Mesh = GramsBox(SimulationFile, Parameters_Solver);
 
     puts("*************************************************");
-    puts(""GREEN"Generating new MPM simulation"RESET" ...");
+    puts("" GREEN "Generating new MPM simulation" RESET " ...");
     puts("*************************************************");
     MPM_Mesh = Generate_One_Phase_Analysis__InOutFun__(SimulationFile, FEM_Mesh,
                                                        Parameters_Solver);
@@ -284,10 +290,13 @@ omp_set_num_threads(omp_get_max_threads());
     Parameters_Solver = Solver_selector__InOutFun__(SimulationFile);
 
     puts("*************************************************");
-    puts(""GREEN"Generating gravity field"RESET" ...");
-    STATUS = GramsBodyForces(&gravity_field, Static_conditons, Parameters_Solver);
-    if(STATUS == EXIT_FAILURE){
-      fprintf(stderr, ""RED"Error in GramsBodyForces(,)"RESET" \n");
+    puts("" GREEN "Generating gravity field" RESET " ...");
+    STATUS = Generate_Gravity_Field__InOutFun__(
+        &gravity_field, Static_conditons, Parameters_Solver);
+    if (STATUS == EXIT_FAILURE) {
+      fprintf(stderr,
+              "" RED "Error in Generate_Gravity_Field__InOutFun__(,)" RESET
+              " \n");
     }
 
     puts("*************************************************");
@@ -314,8 +323,7 @@ omp_set_num_threads(omp_get_max_threads());
     puts("*************************************************");
     puts("Run simulation ...");
     if (strcmp(Parameters_Solver.TimeIntegrationScheme, "NPC-FS") == 0) {
-      upw_Verlet(FEM_Mesh, MPM_Mesh,
-                                                     Parameters_Solver);
+      upw_Verlet(FEM_Mesh, MPM_Mesh, Parameters_Solver);
     } else if (strcmp(Parameters_Solver.TimeIntegrationScheme,
                       "Newmark-beta-Finite-Strains") == 0) {
       upw_Newmark_beta_Finite_Strains(FEM_Mesh, MPM_Mesh, Parameters_Solver);
@@ -330,30 +338,27 @@ omp_set_num_threads(omp_get_max_threads());
     standard_error(Error_message);
   }
 
-  
 #ifdef USE_PETSC
-    // Finalize PETSc
-    PetscFinalize();
+  // Finalize PETSc
+  PetscFinalize();
 #endif
-
 
   puts("*************************************************");
   puts("Free memory ...");
   free_nodes(FEM_Mesh);
-  free_particles(MPM_Mesh);  
+  free_particles(MPM_Mesh);
 
-  if(STATUS == EXIT_SUCCESS)
-  {
-    printf("Computation "GREEN"succesfully"RESET" finished at : %s \n", __TIME__);
+  if (STATUS == EXIT_SUCCESS) {
+    printf("Computation " GREEN "succesfully" RESET " finished at : %s \n",
+           __TIME__);
     puts("Exiting of the program...");
     return EXIT_SUCCESS;
-  }
-  else
-  {
-    printf("Computation "RED"abnormally"RESET" finished at : %s \n", __TIME__);
+  } else {
+    printf("Computation " RED "abnormally" RESET " finished at : %s \n",
+           __TIME__);
     puts("Exiting the program...");
     return EXIT_FAILURE;
-  }  
+  }
 }
 
 /*********************************************************************/
@@ -381,14 +386,16 @@ static void nlpartsol_help_message() {
   puts(" * --Print-Convergence: Display convergence stats.");
   puts(" * --FORMULATION-U : Displacement formulation");
   puts(" * --FORMULATION-Up : Velocity-Pressure formulation");
-  puts(" * --FORMULATION-Upw : Soil-water mixture displacement-pressure formulation");
+  puts(" * --FORMULATION-Upw : Soil-water mixture displacement-pressure "
+       "formulation");
 #else
   puts("Usage : nl-partsol -Flag -f [commands.nlp]");
   puts("Flag values:");
   puts(" * --Print-Convergence: Display convergence stats.");
   puts(" * --FORMULATION-U : Displacement formulation");
   puts(" * --FORMULATION-Up : Velocity-Pressure formulation");
-  puts(" * --FORMULATION-Upw : Soil-water mixture displacement-pressure formulation");
+  puts(" * --FORMULATION-Upw : Soil-water mixture displacement-pressure "
+       "formulation");
 #endif
 
   puts("The creator of NL-PartSol is Miguel Molinos");
@@ -420,7 +427,7 @@ static void free_nodes(Mesh FEM_Mesh)
 
   free(FEM_Mesh.Num_Particles_Node);
   free_table__SetLib__(FEM_Mesh.List_Particles_Node, FEM_Mesh.NumNodesMesh);
-  
+
   if (FEM_Mesh.Locking_Control_Fbar) {
     free(FEM_Mesh.Idx_Patch);
     free(FEM_Mesh.Vol_Patch_n);

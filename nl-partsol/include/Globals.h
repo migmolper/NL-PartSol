@@ -15,6 +15,9 @@ extern char   Field[10];
 extern double DeltaTimeStep;
 extern int NumberDOF;
 
+// Gravity field
+Load gravity_field;
+
 // Material parameters
 extern int Number_Soil_Water_Mixtures;
 extern Mixture * Soil_Water_Mixtures;
@@ -36,7 +39,6 @@ extern int Max_Iterations_Radial_Returning;
 /*
 	Variables for the outputs 
 */
-
 extern int ResultsTimeStep;
 
 extern Event * Out_nodal_path_csv;

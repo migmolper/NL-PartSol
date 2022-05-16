@@ -11,7 +11,6 @@ static Matrix compute_Nodal_Velocity(Mesh, Matrix);
 static void update_Nodal_Momentum(Mesh, Matrix, Matrix, double);
 static void update_LocalState(Matrix, Particle, Mesh, double);
 static Matrix compute_InternalForces(Matrix, Particle, Mesh);
-static Matrix compute_BodyForces(Matrix, Particle, Mesh, int, int);
 static Matrix compute_ContacForces(Matrix, Particle, Mesh, int, int);
 static Matrix compute_Reactions(Mesh, Matrix, int, int);
 
@@ -57,7 +56,6 @@ void U_Forward_Euler(Mesh FEM_Mesh, Particle MPM_Mesh,
     update_LocalState(V_I, MPM_Mesh, FEM_Mesh, DeltaTimeStep);
     F_I = allocZ__MatrixLib__(Nnodes, Ndim);
     F_I = compute_InternalForces(F_I, MPM_Mesh, FEM_Mesh);
-    F_I = compute_BodyForces(F_I, MPM_Mesh, FEM_Mesh, TimeStep, NumTimeStep);
     F_I = compute_ContacForces(F_I, MPM_Mesh, FEM_Mesh, TimeStep, NumTimeStep);
     R_I = compute_Reactions(FEM_Mesh, F_I, TimeStep, NumTimeStep);
     print_Status("DONE !!!", TimeStep);
@@ -450,75 +448,6 @@ static Matrix compute_InternalForces(Matrix F_I, Particle MPM_Mesh,
     free__MatrixLib__(Gradient_p);
     free(Nodes_p.Connectivity);
   }
-
-  return F_I;
-}
-
-/*********************************************************************/
-
-static Matrix compute_BodyForces(Matrix F_I, Particle MPM_Mesh, Mesh FEM_Mesh,
-                                 int TimeStep, int NumTimeStep) {
-  int Ndim = NumberDimensions;
-  Load *B = MPM_Mesh.B;
-  Element Nodes_p;        /* Element for each Gauss-Point */
-  Matrix ShapeFunction_p; /* Nodal values of the sahpe function */
-  double ShapeFunction_pI;
-  Tensor b = alloc__TensorLib__(1); /* Body forces vector */
-  double m_p;                       /* Mass of the particle */
-  int NumBodyForces = MPM_Mesh.NumberBodyForces;
-  int NumNodesLoad;
-  int p;
-  int Ip;
-  int Nn; /* Number of nodes of each Gauss-Point */
-
-  for (int i = 0; i < NumBodyForces; i++) {
-
-    NumNodesLoad = B[i].NumNodes;
-
-    for (int j = 0; j < NumNodesLoad; j++) {
-
-      /* Get the index of the Gauss-Point */
-      p = B[i].Nodes[j];
-
-      /* Get the value of the mass */
-      m_p = MPM_Mesh.Phi.mass.nV[p];
-
-      /* Define element for each GP */
-      Nn = MPM_Mesh.NumberNodes[p];
-      Nodes_p = nodal_set__Particles__(p, MPM_Mesh.ListNodes[p], Nn);
-
-      /* Compute shape functions */
-      ShapeFunction_p = compute_N__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
-
-      /* Fill vector of body forces */
-      for (int k = 0; k < Ndim; k++) {
-        if (B[i].Dir[k * NumTimeStep + TimeStep]) {
-          b.n[k] = B[i].Value[k].Fx[TimeStep];
-        }
-      }
-
-      /* Get the node of the mesh for the contribution */
-      for (int A = 0; A < Nn; A++) {
-
-        /* Node for the contribution */
-        Ip = Nodes_p.Connectivity[A];
-
-        /* Pass the value of the nodal shape function to a scalar */
-        ShapeFunction_pI = ShapeFunction_p.nV[A];
-
-        /* Compute External forces */
-        for (int k = 0; k < Ndim; k++) {
-          F_I.nM[Ip][k] += ShapeFunction_pI * b.n[k] * m_p;
-        }
-      }
-
-      /* Free the matrix with the nodal gradient of the element */
-      free__MatrixLib__(ShapeFunction_p);
-      free(Nodes_p.Connectivity);
-    }
-  }
-
-  free__TensorLib__(b);
 
   return F_I;
 }
