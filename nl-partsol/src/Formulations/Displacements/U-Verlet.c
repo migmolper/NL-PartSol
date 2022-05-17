@@ -573,7 +573,7 @@ static int __update_Local_State(
         fprintf(stderr, ""RED"Error in calloc(): Out of memory"RESET" \n");
         return EXIT_FAILURE;
       } 
-    get_set_field__MeshTools__(D_Displacement_Ap, D_Displacement, Nodes_p, ActiveNodes);
+    get_set_vectorial_field__MeshTools__(D_Displacement_Ap, D_Displacement, Nodes_p, ActiveNodes);
 
     /*
       Evaluate the shape function gradient in the coordinates of the particle

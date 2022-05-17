@@ -894,8 +894,8 @@ __initialise_nodal_increments(Nodal_Field U_n, Mesh FEM_Mesh, Mask ActiveNodes,
   VecAssemblyEnd(D_U.d_value_dt);
   VecAssemblyBegin(D_U.d2_value_dt2);
   VecAssemblyEnd(D_U.d2_value_dt2);
-//  VecRestoreArrayRead(U_n.d_value_dt, &Un_dt);
-//  VecRestoreArrayRead(U_n.d2_value_dt2, &Un_dt2);
+  VecRestoreArrayRead(U_n.d_value_dt, &Un_dt);
+  VecRestoreArrayRead(U_n.d2_value_dt2, &Un_dt2);
 #endif
 
   return D_U;
@@ -949,17 +949,15 @@ static void __local_compatibility_conditions(Nodal_Field D_U, Mask ActiveNodes,
         *STATUS = EXIT_FAILURE;
       }
 
-      get_set_field__MeshTools__(D_Displacement_Ap, dU, Nodes_p, ActiveNodes);
-      get_set_field__MeshTools__(D_Velocity_Ap, dU_dt, Nodes_p, ActiveNodes);
+      get_set_vectorial_field__MeshTools__(D_Displacement_Ap, dU, Nodes_p, ActiveNodes);
+      get_set_vectorial_field__MeshTools__(D_Velocity_Ap, dU_dt, Nodes_p, ActiveNodes);
 
       /*
         Evaluate the shape function gradient in the coordinates of the particle
       */
       Matrix gradient_p = compute_dN__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
 
-      /*
-        Take the values of the deformation gradient from the previous step
-      */
+      //  Take the values of the deformation gradient from the previous step
       double *F_n_p = MPM_Mesh.Phi.F_n.nM[p];
       double *F_n1_p = MPM_Mesh.Phi.F_n1.nM[p];
       double *DF_p = MPM_Mesh.Phi.DF.nM[p];

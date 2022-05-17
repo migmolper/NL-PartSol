@@ -27,7 +27,31 @@ Mask get_active_dofs__MeshTools__(Mask, Mesh, int, int);
 Mask generate_Mask_for_static_condensation_upw__MeshTools__(Mask, Mesh, int, int);
 /********************************************************************/
 
-void get_set_field__MeshTools__(
+/**
+ * @brief Get the set scalar field  MeshTools object
+ * 
+ * @param Field_Ap 
+ * @param Field 
+ * @param Nodes_p 
+ * @param ActiveNodes 
+ */
+void get_set_scalar_field__MeshTools__(
+  double * Field_Ap,
+  const double * Field, 
+  Element Nodes_p,
+  Mask ActiveNodes);
+
+/********************************************************************/
+
+/**
+ * @brief Get the set vectorial field  MeshTools object
+ * 
+ * @param Field_Ap 
+ * @param Field 
+ * @param Nodes_p 
+ * @param ActiveNodes 
+ */
+void get_set_vectorial_field__MeshTools__(
   double * Field_Ap,
   const double * Field, 
   Element Nodes_p,

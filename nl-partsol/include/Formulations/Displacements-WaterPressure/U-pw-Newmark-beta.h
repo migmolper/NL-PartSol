@@ -1,3 +1,13 @@
+/**
+ * @file U-pw-Newmark-beta.h
+ * @author Miguel Molinos (@migmolper)
+ * @brief 
+ * @version 0.1
+ * @date 2022-05-17
+ * 
+ * @copyright Copyright (c) 2022
+ * 
+ */
 
 #ifndef _UPW_NEWMARK_BETA_H_
 #define _UPW_NEWMARK_BETA_H_
@@ -25,17 +35,8 @@
 // Material lib
 #include "Constitutive/Constitutive.h"
 
-// HPC libs
-#ifdef USE_OPENMP
-#include <omp.h>
-#endif
-
-// Linear-Solver libs
-#ifdef USE_PETSC
-#include "Linear-Solvers/ksp-PETSC.h"
-#else
-#include "Linear-Solvers/dgetrs-LAPACK.h"
-#endif
+// Functions to evaluate residual/jacobian
+#include "Formulations/Displacements-WaterPressure/U-pw-Functions.h"
 
 // 
 #include "InOutFun.h"
@@ -55,16 +56,17 @@ unsigned InitialStep;
 unsigned TimeStep;
 unsigned NumTimeStep;
 
-/*!
-  \fn void upw_Newmark_beta_Finite_Strains(Mesh FEM_Mesh, Particle MPM_Mesh, Time_Int_Params Parameters_Solver)
 
-  \brief u-pw formulation with one single set of material points. Implicit solver for finite strains based in the 
-    Newmark-beta, see \cite Molinos_et_al_2021_CMAME.
-
-  \param Mesh FEM_Mesh : Variable with the nodal information
-  \param Particle MPM_Mesh : Variable with the particle information
-  \param InitialStep  
-*/
-void upw_Newmark_beta_Finite_Strains(Mesh, Particle, Time_Int_Params);
+/**
+ * @brief u-pw formulation with one single set of material points. 
+ * Implicit solver for finite strains based in the  
+ * Newmark-beta, see \cite Molinos_et_al_2021_CMAME.
+ * 
+ * @param FEM_Mesh Variable with the nodal information
+ * @param MPM_Mesh  Variable with the particle information
+ * @param Parameters_Solver 
+ * @return int 
+ */
+int Newmark_beta__upw__(Mesh FEM_Mesh, Particle MPM_Mesh, Time_Int_Params Parameters_Solver);
 
 #endif

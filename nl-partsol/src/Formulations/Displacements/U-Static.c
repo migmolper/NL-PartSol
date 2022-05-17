@@ -436,9 +436,9 @@ static void update_Local_State(Nodal_Field D_U, Mask ActiveNodes,
       Get the nodal increment of displacement using the mask
     */
 //    D_Displacement_Ap =
-//        get_set_field__MeshTools__(D_U.value, Nodes_p, ActiveNodes);
+//        get_set_vectorial_field__MeshTools__(D_U.value, Nodes_p, ActiveNodes);
 //    D_Velocity_Ap =
-//        get_set_field__MeshTools__(D_U.d_value_dt, Nodes_p, ActiveNodes);
+//        get_set_vectorial_field__MeshTools__(D_U.d_value_dt, Nodes_p, ActiveNodes);
 
     /*
       Evaluate the shape function gradient in the coordinates of the particle

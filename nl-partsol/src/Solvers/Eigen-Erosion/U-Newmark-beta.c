@@ -763,8 +763,8 @@ static int __local_deformation(
         return EXIT_FAILURE;
       } 
 
-    get_set_field__MeshTools__(D_Displacement_Ap, D_U.value, Nodes_p, ActiveNodes);   
-    get_set_field__MeshTools__(D_Velocity_Ap, D_U.d_value_dt, Nodes_p, ActiveNodes);
+    get_set_vectorial_field__MeshTools__(D_Displacement_Ap, D_U.value, Nodes_p, ActiveNodes);   
+    get_set_vectorial_field__MeshTools__(D_Velocity_Ap, D_U.d_value_dt, Nodes_p, ActiveNodes);
 
     /*
       Evaluate the shape function gradient in the coordinates of the particle

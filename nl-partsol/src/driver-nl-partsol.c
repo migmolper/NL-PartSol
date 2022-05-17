@@ -324,7 +324,7 @@ int main(int argc, char *argv[]) {
       upw_Verlet(FEM_Mesh, MPM_Mesh, Parameters_Solver);
     } else if (strcmp(Parameters_Solver.TimeIntegrationScheme,
                       "Newmark-beta-Finite-Strains") == 0) {
-      upw_Newmark_beta_Finite_Strains(FEM_Mesh, MPM_Mesh, Parameters_Solver);
+      Newmark_beta__upw__(FEM_Mesh, MPM_Mesh, Parameters_Solver);
     } else {
       sprintf(Error_message, "%s", "Wrong time integration scheme");
       standard_error(Error_message);

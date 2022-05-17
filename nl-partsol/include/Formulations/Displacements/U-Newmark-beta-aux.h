@@ -30,8 +30,6 @@ typedef struct {
   double DeltaTimeStep;
 } Newmark_parameters;
 
-/**************************************************************/
-
 static double __compute_deltat(Particle MPM_Mesh /**< */, double h /**< */,
                                Time_Int_Params Parameters_Solver /**< */);
 /**************************************************************/

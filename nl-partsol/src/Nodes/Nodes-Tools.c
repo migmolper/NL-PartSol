@@ -245,7 +245,35 @@ Mask generate_Mask_for_static_condensation_upw__MeshTools__(Mask ActiveNodes,
 
 /**************************************************************/
 
-void get_set_field__MeshTools__(
+void get_set_scalar_field__MeshTools__(
+  double * Field_Ap,
+  const double * Field, 
+  Element Nodes_p,
+  Mask ActiveNodes)
+/*
+  This function performs two operations. First takes the nodal connectivity of
+  the particle, and translate it to the mask numeration. Second, generate a
+  Matrix with the nodal values. To help in the future computations. Nodal data
+  is substracted in the shape (nodesxndofs).
+ */
+{
+  int Nnodes = Nodes_p.NumberNodes;
+  int Ndim = NumberDimensions;
+  int Ap;
+  int A_mask;
+
+  for (unsigned A = 0; A < Nnodes; A++) {
+  
+    Ap = Nodes_p.Connectivity[A];
+    A_mask = ActiveNodes.Nodes2Mask[Ap];
+    
+    Field_Ap[A] = Field[A_mask];
+  }
+}
+
+/**************************************************************/
+
+void get_set_vectorial_field__MeshTools__(
   double * Field_Ap,
   const double * Field, 
   Element Nodes_p,

@@ -855,9 +855,9 @@ static void update_Local_State(
       Get the nodal increment of displacement using the mask
     */
 //    D_Displacement_Ap =
-//        get_set_field__MeshTools__(D_Displacement, Nodes_p, ActiveNodes);
+//        get_set_vectorial_field__MeshTools__(D_Displacement, Nodes_p, ActiveNodes);
 //    Nodal_Velocity_p =
-//        get_set_field__MeshTools__(Velocity, Nodes_p, ActiveNodes);
+//        get_set_vectorial_field__MeshTools__(Velocity, Nodes_p, ActiveNodes);
 
     /*
              Evaluate the shape function gradient in the coordinates of the
@@ -1544,7 +1544,7 @@ compute_Permeability_Mass_Balance(Matrix Mass_Exchanges_Source_Terms,
       Compute particle pore water pressure gradient
     */
 //    Nodal_Pore_water_pressure_p =
-//        get_set_field__MeshTools__(Pore_water_pressure, Nodes_p, ActiveNodes);
+//        get_set_vectorial_field__MeshTools__(Pore_water_pressure, Nodes_p, ActiveNodes);
 //    gradPw = compute_Pore_water_pressure_gradient(Nodal_Pore_water_pressure_p,
 //                                                  gradient_p);
 

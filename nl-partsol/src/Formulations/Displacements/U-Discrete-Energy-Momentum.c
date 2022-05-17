@@ -754,7 +754,7 @@ static void update_Local_State(Matrix D_Displacement, Mask ActiveNodes,
       Get the nodal increment of displacement using the mask
     */
 //    D_Displacement_Ap =
-//        get_set_field__MeshTools__(D_Displacement, Nodes_p, ActiveNodes);
+//        get_set_vectorial_field__MeshTools__(D_Displacement, Nodes_p, ActiveNodes);
 
     /*
       Evaluate the shape function gradient in the coordinates of the particle
@@ -1727,7 +1727,7 @@ static void update_Particles(Matrix D_Displacement, Matrix D_Velocity,
       Get the nodal increment of displacement using the mask
     */
 //    D_Displacement_Ap =
-//        get_set_field__MeshTools__(D_Displacement, Nodes_p, ActiveNodes);
+//        get_set_vectorial_field__MeshTools__(D_Displacement, Nodes_p, ActiveNodes);
 
     /*
       Evaluate the shape function and gradient in the coordinates of the
