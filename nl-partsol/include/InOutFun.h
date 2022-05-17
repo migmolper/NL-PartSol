@@ -463,7 +463,7 @@ void OutputSimulation(Particle,int,double,double,Event);
 
 /*!
 
-  \fn int GramsBodyForces(Load * gravity_field, const char *Name_File, int NumTimeStep);
+  \fn int Generate_Gravity_Field__InOutFun__(Load * gravity_field, const char *Name_File, int NumTimeStep);
   
   \brief Generate the gravity field
 
@@ -473,7 +473,7 @@ void OutputSimulation(Particle,int,double,double,Event);
 
   \return STATUS 
 */
-int GramsBodyForces(Load *gravity_field, const char *Name_File,
+int Generate_Gravity_Field__InOutFun__(Load *gravity_field, const char *Name_File,
                     Time_Int_Params Parameters_Solver);
 /*****************************************************************/
 

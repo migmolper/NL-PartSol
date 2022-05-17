@@ -315,6 +315,9 @@ typedef struct {
    */
   Curve * Value;
 
+  // On/Off variable
+  bool STATUS;
+
   /*!
    * Some information about this load 
    */
@@ -614,21 +617,9 @@ typedef struct {
   Load * F;
 
   /*!
-   * Body forces 
-   * */
-  int NumberBodyForces;
-  Load * B;
-
-
-  /*!
    * Structure to store Neumann boundary conditions will replace NumNeumannBC and F;
    * */
   Boundaries Neumann_Contours;
-
-  /*!
-   * Current vector of distance accelerations
-   * */
-  Tensor b;
 
 
   /*!

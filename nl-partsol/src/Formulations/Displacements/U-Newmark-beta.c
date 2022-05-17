@@ -110,7 +110,7 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
     //! Trial residual
     Residual = __assemble_residual(
         U_n, D_U, Lumped_Mass, ActiveNodes, ActiveDOFs, MPM_Mesh, FEM_Mesh,
-        Params, true, false, &STATUS);
+        Time_Integration_Params, TimeStep, true, false, &STATUS);
     if (STATUS == EXIT_FAILURE) {
       fprintf(stderr, "" RED "Error in __assemble_residual()" RESET " \n");
       return EXIT_FAILURE;
@@ -193,7 +193,7 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
       // Compute residual (NR-loop)
       Residual = __assemble_residual(
           U_n, D_U, Lumped_Mass, ActiveNodes, ActiveDOFs, MPM_Mesh, FEM_Mesh,
-          Params, true, false, &STATUS);
+          Time_Integration_Params, TimeStep, true, false, &STATUS);
       if (STATUS == EXIT_FAILURE) {
         fprintf(stderr, "" RED "Error in __assemble_residual()" RESET " \n");
         return EXIT_FAILURE;
@@ -233,7 +233,7 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
     if (TimeStep % ResultsTimeStep == 0) {
       Reactions = __assemble_residual(
           U_n, D_U, Lumped_Mass, ActiveNodes, ActiveDOFs, MPM_Mesh, FEM_Mesh,
-          Params, false, true, &STATUS);
+          Time_Integration_Params, TimeStep, false, true, &STATUS);
       if (STATUS == EXIT_FAILURE) {
         fprintf(stderr, "" RED "Error in __assemble_residual()" RESET " \n");
         return EXIT_FAILURE;
@@ -1078,14 +1078,14 @@ static Vec __assemble_residual(Nodal_Field U_n, Nodal_Field D_U,
                                Vec Lumped_Mass, Mask ActiveNodes,
                                Mask ActiveDOFs, Particle MPM_Mesh,
                                Mesh FEM_Mesh, Newmark_parameters Params,
-                               bool Is_compute_Residual,
+                               unsigned TimeStep, bool Is_compute_Residual,
                                bool Is_compute_Reactions, int *STATUS)
 #else
 static double *__assemble_residual(Nodal_Field U_n, Nodal_Field D_U,
                                    double *Lumped_Mass, Mask ActiveNodes,
                                    Mask ActiveDOFs, Particle MPM_Mesh,
                                    Mesh FEM_Mesh, Newmark_parameters Params,
-                                   bool Is_compute_Residual,
+                                   unsigned TimeStep, bool Is_compute_Residual,
                                    bool Is_compute_Reactions, int *STATUS)
 #endif
 {
@@ -1123,7 +1123,7 @@ static double *__assemble_residual(Nodal_Field U_n, Nodal_Field D_U,
                           Is_compute_Residual, Is_compute_Reactions);
 
   __Nodal_Body_Forces(Residual, ActiveNodes, ActiveDOFs, MPM_Mesh, FEM_Mesh,
-                      Is_compute_Residual, Is_compute_Reactions);
+                      TimeStep, Is_compute_Residual, Is_compute_Reactions);
 
   if ((Is_compute_Residual == true) && (Is_compute_Reactions == false)) {
     __Nodal_Inertial_Forces(Residual, Lumped_Mass, U_n, D_U, ActiveNodes,
@@ -1479,40 +1479,38 @@ static void __local_traction_force(double *LocalTractionForce_Ap,
 /**************************************************************/
 
 #ifdef USE_PETSC
-static void __Nodal_Body_Forces(Vec Residual, Mask ActiveNodes, Mask ActiveDOFs,
-                                Particle MPM_Mesh, Mesh FEM_Mesh,
-                                bool Is_compute_Residual,
-                                bool Is_compute_Reactions)
+static int __Nodal_Body_Forces(Vec Residual, Mask ActiveNodes, Mask ActiveDOFs,
+                               Particle MPM_Mesh, Mesh FEM_Mesh,
+                               unsigned TimeStep, bool Is_compute_Residual,
+                               bool Is_compute_Reactions)
 #else
-static void __Nodal_Body_Forces(double *Residual, Mask ActiveNodes,
-                                Mask ActiveDOFs, Particle MPM_Mesh,
-                                Mesh FEM_Mesh, bool Is_compute_Residual,
-                                bool Is_compute_Reactions)
+static int
+__Nodal_Body_Forces(double *Residual, Mask ActiveNodes, Mask ActiveDOFs,
+                    Particle MPM_Mesh, Mesh FEM_Mesh, unsigned TimeStep,
+                    bool Is_compute_Residual, bool Is_compute_Reactions)
 #endif
 {
-
-#if NumberDimensions == 2
-  double b[2] = {0.0, 0.0};
-#else
-  double b[3] = {0.0, 0.0, 0.0};
-#endif
-
-#if NumberDimensions == 2
-  double LocalBodyForce_Ap[2];
-#else
-  double LocalBodyForce_Ap[3];
-#endif
 
   /* Define auxilar variables */
   unsigned Ndim = NumberDimensions;
   //  unsigned NumBodyForces = MPM_Mesh.NumberBodyForces;
   unsigned Np = MPM_Mesh.NumGP;
   unsigned NumNodes_p;
-
   unsigned p;
 
-  //  Load *B = MPM_Mesh.B;    /* List with the load cases */
-  b[1] = -9.81;
+  if (gravity_field.STATUS == false)
+    return EXIT_SUCCESS;
+
+#if NumberDimensions == 2
+  const double b[2] = {gravity_field.Value[0].Fx[TimeStep],
+                       gravity_field.Value[1].Fx[TimeStep]};
+  double LocalBodyForce_Ap[2];
+#else
+  const double b[3] = {gravity_field.Value[0].Fx[TimeStep],
+                       gravity_field.Value[1].Fx[TimeStep],
+                       gravity_field.Value[2].Fx[TimeStep]};
+  double LocalBodyForce_Ap[3];
+#endif
 
 #ifdef USE_PETSC
   VecSetOption(Residual, VEC_IGNORE_NEGATIVE_INDICES, PETSC_TRUE);
@@ -1578,6 +1576,8 @@ static void __Nodal_Body_Forces(double *Residual, Mask ActiveNodes,
       free(Nodes_p.Connectivity);
     } // For unsigned p
   }   // #pragma omp parallel
+
+  return EXIT_SUCCESS;
 }
 
 /**************************************************************/

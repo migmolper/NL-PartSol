@@ -112,16 +112,6 @@ int U_Verlet(
       return EXIT_FAILURE;
     }
 
-    
-    STATUS = __gravity_NODES(Gravity_field, ActiveNodes, 
-                       MPM_Mesh.B, MPM_Mesh.NumberBodyForces, 
-                       TimeStep, NumTimeStep);
-    if(STATUS == EXIT_FAILURE)
-    {
-      fprintf(stderr,""RED"Error in __gravity_NODES"RESET" \n");
-      return EXIT_FAILURE;
-    }
-
     STATUS = __d_displacement_NODES(
       D_Displacement, Lumped_Mass, 
       MPM_Mesh.Phi.D_dis.nV, MPM_Mesh.Phi.mass.nV,

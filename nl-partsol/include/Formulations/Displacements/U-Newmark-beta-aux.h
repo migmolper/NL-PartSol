@@ -172,27 +172,29 @@ static void __constitutive_update(Particle MPM_Mesh, Mesh FEM_Mesh,
                                   int *STATUS);
 /**************************************************************/
 
-/*!
-  \brief Function used to compute the equilibrium residual
-
-  \param[in] U_n Nodal kinetics information from the step n
-  \param[in] D_U Increment of nodal kinetics
-  \param[in] Lumped_Mass Effective mass matrix (vector)
-  \param[in] ActiveNodes List of nodes which takes place in the computation
-  \param[in] ActiveDOFs List of dofs which takes place in the computation
-  \param[in] MPM_Mesh Information of the particles
-  \param[in] FEM_Mesh Information of the background nodes
-  \param[in] Params Time integration parameters
-  \param[in] Is_compute_Residual The function computes the residual
-  \param[in] Is_compute_Reactions The function computes the reaction
-  \param[out] STATUS Returns failure or success
-  \return Residual vector
-*/
+/**
+ * @brief Function used to compute the equilibrium residual
+ * 
+ * @param [in] U_n Nodal kinetics information from the step n 
+ * @param [in] D_U Increment of nodal kinetics
+ * @param [in] Lumped_Mass Effective mass matrix (vector)
+ * @param [in] ActiveNodes List of nodes which takes place in the computation
+ * @param [in] ActiveDOFs List of dofs which takes place in the computation
+ * @param [in] MPM_Mesh Information of the particles
+ * @param [in] FEM_Mesh Information of the background nodes
+ * @param [in] Params Time integration parameters
+ * @param [in] TimeStep Current time step for time-dependent loads
+ * @param [in] Is_compute_Residual The function computes the residual
+ * @param [in] Is_compute_Reactions The function computes the reaction
+ * @param [out] STATUS Returns failure or success
+ * @return Vec/double* 
+ */
 #ifdef USE_PETSC
 static Vec __assemble_residual(Nodal_Field U_n, Nodal_Field D_U,
                                Vec Lumped_Mass, Mask ActiveNodes,
                                Mask ActiveDOFs, Particle MPM_Mesh,
                                Mesh FEM_Mesh, Newmark_parameters Params,
+                               unsigned TimeStep,
                                bool Is_compute_Residual,
                                bool Is_compute_Reactions, int *STATUS);
 #else
@@ -200,6 +202,7 @@ static double *__assemble_residual(Nodal_Field U_n, Nodal_Field D_U,
                                    double *Lumped_Mass, Mask ActiveNodes,
                                    Mask ActiveDOFs, Particle MPM_Mesh,
                                    Mesh FEM_Mesh, Newmark_parameters Params,
+                                   unsigned TimeStep,
                                    bool Is_compute_Residual,
                                    bool Is_compute_Reactions, int *STATUS);
 #endif
@@ -302,27 +305,32 @@ static void __local_traction_force(double *LocalTractionForce_Ap,
                                    double A0_p);
 /**************************************************************/
 
-/*!
-  \brief Function used to compute the contribution of the \n
-  body (distance) forces to the residual
 
-  \param[in,out] Residual Residual vector
-  \param[in] ActiveNodes List of nodes which takes place in the computation
-  \param[in] ActiveDOFs List of dofs which takes place in the computation
-  \param[in] MPM_Mesh Information of the particles
-  \param[in] FEM_Mesh Information of the background nodes
-  \param[in] Is_compute_Residual The function computes the residual
-  \param[in] Is_compute_Reactions The function computes the reaction
-*/
+/**
+ * @brief Function used to compute the contribution of the \n 
+ * body (distance) forces to the residual
+ * 
+ * @param[in,out] Residual Residual vector
+ * @param[in] ActiveNodes List of nodes which takes place in the computation
+ * @param[in] ActiveDOFs List of dofs which takes place in the computation
+ * @param[in] MPM_Mesh Information of the particles
+ * @param[in] FEM_Mesh Information of the background nodes 
+ * @param TimeStep 
+ * @param[in] Is_compute_Residual The function computes the residual
+ * @param[in] Is_compute_Reactions The function computes the reaction
+ */
 #ifdef USE_PETSC
-static void __Nodal_Body_Forces(Vec Residual, Mask ActiveNodes, Mask ActiveDOFs,
+static int __Nodal_Body_Forces(Vec Residual, Mask ActiveNodes, Mask ActiveDOFs,
                                 Particle MPM_Mesh, Mesh FEM_Mesh,
+                                unsigned TimeStep,
                                 bool Is_compute_Residual,
                                 bool Is_compute_Reactions);
 #else
-static void __Nodal_Body_Forces(double *Residual, Mask ActiveNodes,
+static int __Nodal_Body_Forces(double *Residual, Mask ActiveNodes,
                                 Mask ActiveDOFs, Particle MPM_Mesh,
-                                Mesh FEM_Mesh, bool Is_compute_Residual,
+                                Mesh FEM_Mesh, 
+                                unsigned TimeStep,
+                                bool Is_compute_Residual,
                                 bool Is_compute_Reactions);
 #endif
 /**************************************************************/

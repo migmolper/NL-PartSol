@@ -33,7 +33,6 @@ static Matrix compute_Nodal_Forces(Mask, Particle, Mesh, int, int);
 static void compute_Nodal_Internal_Forces(Matrix, Mask, Particle, Mesh);
 static void compute_Nodal_Nominal_traction_Forces(Matrix, Mask, Particle, Mesh,
                                                   int, int);
-static void compute_Nodal_Body_Forces(Matrix, Mask, Particle, Mesh, int, int);
 static Matrix compute_Nodal_Reactions(Mesh, Matrix, Mask, int, int);
 static Matrix compute_Nodal_Residual(Mask, Matrix);
 static bool check_convergence(Matrix, double, int, int, int);
@@ -557,12 +556,6 @@ static Matrix compute_Nodal_Forces(Mask ActiveNodes, Particle MPM_Mesh,
   compute_Nodal_Nominal_traction_Forces(Forces, ActiveNodes, MPM_Mesh, FEM_Mesh,
                                         TimeStep, NumTimeStep);
 
-  /*
-    Add body forces contribution
-  */
-  compute_Nodal_Body_Forces(Forces, ActiveNodes, MPM_Mesh, FEM_Mesh, TimeStep,
-                            NumTimeStep);
-
   return Forces;
 }
 
@@ -765,84 +758,6 @@ static void compute_Nodal_Nominal_traction_Forces(Matrix Forces,
   }
 
   free__TensorLib__(T);
-}
-
-/**************************************************************/
-
-static void compute_Nodal_Body_Forces(Matrix Forces, Mask ActiveNodes,
-                                      Particle MPM_Mesh, Mesh FEM_Mesh,
-                                      int TimeStep, int NumTimeStep) {
-  /* Define auxilar variables */
-  int Ndim = NumberDimensions;
-  int Nnodes_mask = ActiveNodes.Nactivenodes;
-  int NumBodyForces = MPM_Mesh.NumberBodyForces;
-  int NumParticles_i; /* Number of particles with the */
-  int NumNodes_p;     /* Number of tributary nodes of p */
-  int A_mask;         /* Index of the node where we apply the body force */
-  int idx_A_mask_k;   /* Index of the node where we apply the body force */
-  int Ap;             /* Tributary node A of particle p */
-  int p;              /* Particle index */
-
-  double m_p;              /* Mass of the particle */
-  Load *B = MPM_Mesh.B;    /* List with the load cases */
-  Element Nodes_p;         /* Element for each particle */
-  Matrix ShapeFunction_p;  /* Nodal values of the sahpe function */
-  double ShapeFunction_pA; /* Evaluation in the node I for the particle p */
-
-  Tensor b = alloc__TensorLib__(1); /* Body forces vector */
-
-  for (int i = 0; i < NumBodyForces; i++) {
-    /* Get the number of particles with the body load i */
-    NumParticles_i = B[i].NumNodes;
-
-    for (int j = 0; j < NumParticles_i; j++) {
-
-      /* Get the index of the Gauss-Point */
-      p = B[i].Nodes[j];
-
-      /* Get the value of the mass */
-      m_p = MPM_Mesh.Phi.mass.nV[p];
-
-      /* Define tributary nodes of the particle */
-      NumNodes_p = MPM_Mesh.NumberNodes[p];
-      Nodes_p = nodal_set__Particles__(p, MPM_Mesh.ListNodes[p], NumNodes_p);
-
-      /* Compute shape functions */
-      ShapeFunction_p = compute_N__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
-
-      /* Fill vector of body forces */
-      for (int k = 0; k < Ndim; k++) {
-        if (B[i].Dir[k * NumTimeStep + TimeStep]) {
-          b.n[k] = B[i].Value[k].Fx[TimeStep];
-        }
-      }
-
-      /* Get the node of the mesh for the contribution */
-      for (int A = 0; A < NumNodes_p; A++) {
-
-        /* Pass the value of the nodal shape function to a scalar */
-        ShapeFunction_pA = ShapeFunction_p.nV[A];
-
-        /* Get the node of the mesh for the contribution */
-        Ap = Nodes_p.Connectivity[A];
-        A_mask = ActiveNodes.Nodes2Mask[Ap];
-
-        /* Compute body forces */
-        for (int k = 0; k < Ndim; k++) {
-          Forces.nM[A_mask][k] -= ShapeFunction_pA * b.n[k] * m_p;
-        }
-      }
-
-      /* Free the matrix with the nodal gradient of the element */
-      free__MatrixLib__(ShapeFunction_p);
-      free(Nodes_p.Connectivity);
-    }
-  }
-
-  /*
-    Free auxiliar tensor
-  */
-  free__TensorLib__(b);
 }
 
 /**********************************************************************/

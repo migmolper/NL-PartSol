@@ -443,59 +443,26 @@ static Matrix __compute_nodal_lumped_mass(Particle MPM_Mesh, Mesh FEM_Mesh,
 
 /**************************************************************/
 
-static void compute_Gravity_field(Mask ActiveNodes, Particle MPM_Mesh,
-                                  int TimeStep, int NumTimeStep)
+static Nodal_Field compute_Nodal_Field(Particle MPM_Mesh, Mesh FEM_Mesh, Mask ActiveNodes)
 /*
+  Call the LAPACK solver to compute simultanesly :
 
+  -> The nodal Acceleration/Second time derivative of the pore water pressure.
+  The operation is linearized and all the dof split the solution array in n
+  components like : | M 0 0 |   |d2 (u.x) dt2|   |m * d2 (u.x) dt2| | 0 M 0 | *
+  |d2 (u.y) dt2| = |m * d2 (u.y) dt2| | 0 0 M |   |d2 (p.w) dt2|   |m * d2 (p.w)
+  dt2|
+
+  -> The nodal Velocity/First time derivative of the pore water pressure.
+  The operation is linearized and all the dof split the solution array in n
+  components like : | M 0 0 |   |d (u.x) dt|   |m * d (u.x) dt| | 0 M 0 | * |d
+  (u.y) dt| = |m * d (u.y) dt| | 0 0 M |   |d (p.w) dt|   |m * d (p.w) dt|
+
+  -> The nodal displacement/pore water pressure.
+  The operation is linearized and all the dof split the solution array in n
+  components like : | M 0 0 |   |u.x|   |m * u.x| | 0 M 0 | * |u.y| = |m * u.y|
+  | 0 0 M |   |p.w|   |m * p.w|
 */
-{
-  /* Define auxilar variables */
-  int Ndim = NumberDimensions;
-  int Nnodes_mask = ActiveNodes.Nactivenodes;
-  int NumBodyForces = MPM_Mesh.NumberBodyForces;
-
-  double m_p;           /* Mass of the particle */
-  Load *B = MPM_Mesh.B; /* List with the load cases */
-
-  /*
-    Initialise distance accelerations
-  */
-  for (int k = 0; k < Ndim; k++) {
-    MPM_Mesh.b.n[k] = 0.0;
-  }
-
-  for (int i = 0; i < NumBodyForces; i++) {
-
-    /* Fill vector b of body acclerations */
-    for (int k = 0; k < Ndim; k++) {
-      if (B[i].Dir[k * NumTimeStep + TimeStep]) {
-        MPM_Mesh.b.n[k] += B[i].Value[k].Fx[TimeStep];
-      }
-    }
-  }
-}
-
-/**************************************************************/
-
-static Nodal_Field __get_nodal_field_tn(Particle MPM_Mesh, Mesh FEM_Mesh,
-                                        Mask ActiveNodes)
-/**
- * @brief
- * Call the LAPACK solver to compute simultanesly :
- * -> The nodal Acceleration/Second time derivative of the pore water pressure.
- * The operation is linearized and all the dof split the solution array in n
- * components like : | M 0 0 |   |d2 (u.x) dt2|   |m * d2 (u.x) dt2| | 0 M 0 | *
- * |d2 (u.y) dt2| = |m * d2 (u.y) dt2| | 0 0 M |   |d2 (p.w) dt2|   |m * d2
- * (p.w) dt2|
- * -> The nodal Velocity/First time derivative of the pore water pressure.
- * The operation is linearized and all the dof split the solution array in n
- * components like : | M 0 0 |   |d (u.x) dt|   |m * d (u.x) dt| | 0 M 0 | * |d
- * (u.y) dt| = |m * d (u.y) dt| | 0 0 M |   |d (p.w) dt|   |m * d (p.w) dt|
- * -> The nodal displacement/pore water pressure.
- * The operation is linearized and all the dof split the solution array in n
- * components like : | M 0 0 |   |u.x|   |m * u.x| | 0 M 0 | * |u.y| = |m * u.y|
- * | 0 0 M |   |p.w|   |m * p.w|
- */
 {
 
   int Ndim = NumberDimensions;
@@ -1176,7 +1143,7 @@ static void compute_Inertial_Forces_Mixture(Nodal_Field D_upw,
     for (int i = 0; i < Ndim; i++) {
       Acceleration_n1.nM[A][i] =
           alpha_1 * D_upw.value.nM[A][i] - alpha_2 * upw_n.d_value_dt.nM[A][i] -
-          alpha_3 * upw_n.d2_value_dt2.nM[A][i] - MPM_Mesh.b.n[i];
+          alpha_3 * upw_n.d2_value_dt2.nM[A][i];// - MPM_Mesh.b.n[i];
     }
   }
 
@@ -1432,7 +1399,7 @@ static void compute_Flow_contribution_Fluid(Nodal_Field upw_n,
                                                          N_p);
     a_n_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.acc.nM[p], 1);
     a_n1_p = addition__TensorLib__(D_a_p, a_n_p);
-    b_p = MPM_Mesh.b;
+//    b_p = MPM_Mesh.b;
     dyn_p = subtraction__TensorLib__(a_n1_p, b_p);
 
     /*
