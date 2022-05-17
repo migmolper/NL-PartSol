@@ -40,14 +40,15 @@
 // 
 #include "InOutFun.h"
 
-/*
-  Call global variables
-*/
+//  Call global variables
 double Thickness_Plain_Stress;
 Event *Out_nodal_path_csv;
 Event *Out_particles_path_csv;
 int Number_Out_nodal_path_csv;
 int Number_Out_particles_path_csv;
+
+// Gravity field 
+Load gravity_field;
 
 // Global variuables
 unsigned InitialStep;

@@ -443,7 +443,8 @@ static Matrix __compute_nodal_lumped_mass(Particle MPM_Mesh, Mesh FEM_Mesh,
 
 /**************************************************************/
 
-static Nodal_Field compute_Nodal_Field(Particle MPM_Mesh, Mesh FEM_Mesh, Mask ActiveNodes)
+static Nodal_Field compute_Nodal_Field(Particle MPM_Mesh, Mesh FEM_Mesh,
+                                       Mask ActiveNodes)
 /*
   Call the LAPACK solver to compute simultanesly :
 
@@ -911,6 +912,39 @@ static void __local_compatibility_conditions(
 
 /**************************************************************/
 
+static void __compute_total_acceleration(double *b_n1_p, const double *a_n_p,
+                                         const double *da_I,
+                                         const double *shapefunction_n_p,
+                                         const ChainPtr ListNodes_p,
+                                         Mask ActiveNodes) {
+
+  unsigned Ndim = NumberDimensions;
+
+  //  Compute mixture/fluid dynamics in the next time step
+  for (unsigned i = 0; i < Ndim; i++) {
+    b_n1_p[i] = a_n_p[i] - gravity_field.Value[i].Fx[TimeStep];
+  }
+
+  ChainPtr Idx = ListNodes_p;
+  unsigned A = 0;
+  while (Idx != NULL) {
+    // Get the shape function evaluation in node A
+    // and the masked index of the node A
+    double shapefunction_n_pA = shapefunction_n_p[A];
+    int Ap = Idx->Idx;
+    int Mask_node_A = ActiveNodes.Nodes2Mask[Ap];
+
+    for (unsigned i = 0; i < Ndim; i++) {
+      b_n1_p[i] += shapefunction_n_pA * da_I[Mask_node_A * Ndim + i];
+    }
+
+    Idx = Idx->next;
+    A++;
+  }
+}
+
+/**************************************************************/
+
 static void __constitutive_update(Particle MPM_Mesh, Mesh FEM_Mesh,
                                   int *STATUS) {
   *STATUS = EXIT_SUCCESS;
@@ -986,6 +1020,19 @@ static double *__assemble_residual(Nodal_Field U_n, Nodal_Field D_U,
   }
 #endif
 
+#ifdef USE_PETSC
+  const PetscScalar *dU;
+  VecGetArrayRead(D_U.value, &dU);
+  const PetscScalar *dU_dt;
+  VecGetArrayRead(D_U.d_value_dt, &dU_dt);
+  const PetscScalar *da_I;
+  VecGetArrayRead(D_U.d2_value_dt2, &da_I);
+#else
+  const double *dU = D_U.value;
+  const double *dU_dt = D_U.d_value_dt;
+  const double *da_I = D_U.d2_value_dt2;
+#endif
+
 #if NumberDimensions == 2
   double L0[2], L1[2], L2[2];
 #else
@@ -1012,7 +1059,12 @@ static double *__assemble_residual(Nodal_Field U_n, Nodal_Field D_U,
       double intrinsic_rho_f_p = MPM_Mesh.Phi.rho_f.nV[p];
       double relative_rho_f_p = phi_f_p * intrinsic_rho_f_p;
       const double *DF_p = MPM_Mesh.Phi.DF.nM[p];
-      const double *b;
+      const double *a_n_p = MPM_Mesh.Phi.acc.nM[p];
+#if NumberDimensions == 2
+      double b_n1[2];
+#else
+      double b_n1[3];
+#endif
 
       /*
         Load intrinsic properties for the fluid phase to
@@ -1027,8 +1079,8 @@ static double *__assemble_residual(Nodal_Field U_n, Nodal_Field D_U,
       //  Define nodal connectivity for each particle
       //  and compute gradient of the shape function
       NumNodes_p = MPM_Mesh.NumberNodes[p];
-      Element Nodes_p =
-          nodal_set__Particles__(p, MPM_Mesh.ListNodes[p], NumNodes_p);
+      const ChainPtr ListNodes = MPM_Mesh.ListNodes[p];
+      Element Nodes_p = nodal_set__Particles__(p, ListNodes, NumNodes_p);
       Matrix ShapeFunction_p =
           compute_N__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
       Matrix d_shapefunction_n_p =
@@ -1046,7 +1098,13 @@ static double *__assemble_residual(Nodal_Field U_n, Nodal_Field D_U,
       const double *kirchhoff_p = MPM_Mesh.Phi.Stress.nM[p];
       double kichhoff_pressure = MPM_Mesh.Phi.Pw_n1.nV[p];
       double rate_kichhoff_pressure = MPM_Mesh.Phi.d_Pw_dt_n1.nV[p];
+
+      //! 
       const double *grad_kichhoff_pressure = ;
+
+      //! Compute the acceleration b_n1 = a_n1 - g_n1
+      __compute_total_acceleration(b_n1, a_n_p, da_I, ShapeFunction_p.nV,
+                                   ListNodes, ActiveNodes);
 
       for (unsigned A = 0; A < NumNodes_p; A++) {
 
@@ -1062,7 +1120,7 @@ static double *__assemble_residual(Nodal_Field U_n, Nodal_Field D_U,
 
         compute_L1__upw__(L1, d_shapefunction_n1_pA, kichhoff_pressure, V0_p);
 
-        compute_L2__upw__(L2, ShapeFunction_pA, b, m_p);
+        compute_L2__upw__(L2, ShapeFunction_pA, b_n1, m_p);
 
         //! Balance of momentum of the intersticial flow + darcy law
         compute_G0__upw__(&G0, ShapeFunction_pA, intrinsic_rho_f_p,
@@ -1072,7 +1130,7 @@ static double *__assemble_residual(Nodal_Field U_n, Nodal_Field D_U,
         compute_G1__upw__(&G1, d_shapefunction_n1_pA, k_p,
                           grad_kichhoff_pressure, g, V0_p);
 
-        compute_G2__upw__(&G2, d_shapefunction_n1_pA, k_p, b, Jacobian_p,
+        compute_G2__upw__(&G2, d_shapefunction_n1_pA, k_p, b_n1, Jacobian_p,
                           intrinsic_rho_f_p, g, V0_p);
 
 #if NumberDimensions == 2
@@ -1116,6 +1174,12 @@ static double *__assemble_residual(Nodal_Field U_n, Nodal_Field D_U,
     } // For unsigned p
   }   // #pragma omp parallel
 
+#ifdef USE_PETSC
+  VecRestoreArrayRead(D_U.value, &dU);
+  VecRestoreArrayRead(D_U.d_value_dt, &dU_dt);
+  VecRestoreArrayRead(D_U.d2_value_dt2, &da_I);
+#endif
+
   return Residual;
 }
 
@@ -1143,7 +1207,7 @@ static void compute_Inertial_Forces_Mixture(Nodal_Field D_upw,
     for (int i = 0; i < Ndim; i++) {
       Acceleration_n1.nM[A][i] =
           alpha_1 * D_upw.value.nM[A][i] - alpha_2 * upw_n.d_value_dt.nM[A][i] -
-          alpha_3 * upw_n.d2_value_dt2.nM[A][i];// - MPM_Mesh.b.n[i];
+          alpha_3 * upw_n.d2_value_dt2.nM[A][i]; // - MPM_Mesh.b.n[i];
     }
   }
 
@@ -1399,7 +1463,7 @@ static void compute_Flow_contribution_Fluid(Nodal_Field upw_n,
                                                          N_p);
     a_n_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.acc.nM[p], 1);
     a_n1_p = addition__TensorLib__(D_a_p, a_n_p);
-//    b_p = MPM_Mesh.b;
+    //    b_p = MPM_Mesh.b;
     dyn_p = subtraction__TensorLib__(a_n1_p, b_p);
 
     /*
@@ -1805,7 +1869,7 @@ static Matrix __assemble_tangent_stiffness(Nodal_Field upw_n, Nodal_Field D_upw,
 
     //  Compute mixture/fluid dynamics in the next time step
     for (unsigned i = 0; i < Ndim; i++) {
-      b_p[i] = MPM_Mesh.Phi.acc.nM[p][i] - g[i];
+      b_p[i] = MPM_Mesh.Phi.acc.nM[p][i] - gravity_field.Value[i].Fx[TimeStep];
     }
     for (unsigned A = 0; A < NumNodes_p; A++) {
 

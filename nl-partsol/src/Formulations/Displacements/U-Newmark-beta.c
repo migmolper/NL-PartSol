@@ -110,7 +110,7 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
     //! Trial residual
     Residual = __assemble_residual(
         U_n, D_U, Lumped_Mass, ActiveNodes, ActiveDOFs, MPM_Mesh, FEM_Mesh,
-        Time_Integration_Params, TimeStep, true, false, &STATUS);
+        Params, TimeStep, true, false, &STATUS);
     if (STATUS == EXIT_FAILURE) {
       fprintf(stderr, "" RED "Error in __assemble_residual()" RESET " \n");
       return EXIT_FAILURE;
@@ -193,7 +193,7 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
       // Compute residual (NR-loop)
       Residual = __assemble_residual(
           U_n, D_U, Lumped_Mass, ActiveNodes, ActiveDOFs, MPM_Mesh, FEM_Mesh,
-          Time_Integration_Params, TimeStep, true, false, &STATUS);
+          Params, TimeStep, true, false, &STATUS);
       if (STATUS == EXIT_FAILURE) {
         fprintf(stderr, "" RED "Error in __assemble_residual()" RESET " \n");
         return EXIT_FAILURE;
@@ -233,7 +233,7 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
     if (TimeStep % ResultsTimeStep == 0) {
       Reactions = __assemble_residual(
           U_n, D_U, Lumped_Mass, ActiveNodes, ActiveDOFs, MPM_Mesh, FEM_Mesh,
-          Time_Integration_Params, TimeStep, false, true, &STATUS);
+          Params, TimeStep, false, true, &STATUS);
       if (STATUS == EXIT_FAILURE) {
         fprintf(stderr, "" RED "Error in __assemble_residual()" RESET " \n");
         return EXIT_FAILURE;
