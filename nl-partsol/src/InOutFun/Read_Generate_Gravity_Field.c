@@ -352,10 +352,10 @@ static int __fill_gravity_curve(FILE *Sim_dat, Gravity_curve G) {
           return EXIT_FAILURE;
         }
 
-        G.x[i] = atof(Parse_Properties[0]);
-        G.y[i] = atof(Parse_Properties[1]);
+        G.x[i] = atof(Columns_CSV[0]);
+        G.y[i] = atof(Columns_CSV[1]);
 #if NumberDimensions == 3
-        G.z[i] = atof(Parse_Properties[2]);
+        G.z[i] = atof(Columns_CSV[2]);
 #endif
       }
     }

@@ -188,8 +188,6 @@ int main(int argc, char *argv[]) {
                 " \n");
       }
 
-      exit(0);
-
       puts("*************************************************");
       puts("" GREEN "Generating the background mesh" RESET " ...");
       puts("*************************************************");
