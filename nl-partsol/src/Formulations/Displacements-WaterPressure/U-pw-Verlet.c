@@ -13,7 +13,6 @@ static Matrix compute_Compressibility_Matrix_Fluid(Particle, Mesh, Mask);
 /* Step 2 */
 static void compute_Explicit_Newmark_Predictor(Particle, double, double);
 /* Step 3 */
-static Matrix compute_Nodal_Gravity_field(Mask, Particle, int, int);
 static Matrix compute_Nodal_D_Displacement(Particle, Mesh, Mask, Matrix);
 static Matrix compute_Nodal_Velocity(Particle, Mesh, Mask, Matrix);
 static Matrix compute_Nodal_Pore_water_pressure(Particle, Mesh, Mask, Matrix);
@@ -99,9 +98,6 @@ void upw_Verlet(
         compute_Compressibility_Matrix_Fluid(MPM_Mesh, FEM_Mesh, ActiveNodes);
 
     compute_Explicit_Newmark_Predictor(MPM_Mesh, gamma, DeltaTimeStep);
-
-    Gravity_field = compute_Nodal_Gravity_field(ActiveNodes, MPM_Mesh, TimeStep,
-                                                NumTimeStep);
 
     D_Displacement = compute_Nodal_D_Displacement(
         MPM_Mesh, FEM_Mesh, ActiveNodes, Mass_Matrix_Mixture);
@@ -399,51 +395,6 @@ static void compute_Explicit_Newmark_Predictor(
   }
 }
 
-/**************************************************************/
-
-static Matrix compute_Nodal_Gravity_field(Mask ActiveNodes, Particle MPM_Mesh,
-                                          int TimeStep, int NumTimeStep)
-/*
-
-*/
-{
-  /* Define auxilar variables */
-  int Ndim = NumberDimensions;
-  int Nnodes_mask = ActiveNodes.Nactivenodes;
-  int NumBodyForces = MPM_Mesh.NumberBodyForces;
-
-  double m_p;           /* Mass of the particle */
-  Load *B = MPM_Mesh.B; /* List with the load cases */
-
-  Matrix Gravity_field = allocZ__MatrixLib__(Nnodes_mask, Ndim);
-
-  /*
-    Initialise distance accelerations
-  */
-  for (int k = 0; k < Ndim; k++) {
-    MPM_Mesh.b.n[k] = 0.0;
-  }
-
-  for (int i = 0; i < NumBodyForces; i++) {
-
-    /* Fill vector b of body acclerations */
-    for (int k = 0; k < Ndim; k++) {
-      if (B[i].Dir[k * NumTimeStep + TimeStep]) {
-        MPM_Mesh.b.n[k] += B[i].Value[k].Fx[TimeStep];
-      }
-    }
-  }
-
-  /* Get the node of the mesh for the contribution */
-  for (int A = 0; A < Nnodes_mask; A++) {
-    /* Compute body forces */
-    for (int k = 0; k < Ndim; k++) {
-      Gravity_field.nM[A][k] = MPM_Mesh.b.n[k];
-    }
-  }
-
-  return Gravity_field;
-}
 
 /**************************************************************/
 
@@ -1772,7 +1723,7 @@ compute_Permeability_Inertial_Forces_Fluid(Matrix Mass_Exchanges_Source_Terms,
       Compute total particle acceleration
     */
     a_p = memory_to_tensor__TensorLib__(MPM_Mesh.Phi.acc.nM[p], 1);
-    b_p = MPM_Mesh.b;
+//    b_p = MPM_Mesh.b;
     dyn_p = subtraction__TensorLib__(a_p, b_p);
 
     /*
