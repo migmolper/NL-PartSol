@@ -1,6 +1,7 @@
 #ifndef _NEOHOOK_CONSTITUTIVE_H_
 #define _NEOHOOK_CONSTITUTIVE_H_
 
+// clang-format off
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -11,6 +12,7 @@
 #include "Globals.h"
 #include "Matlib.h"
 #include "Particles.h"
+// clang-format on
 
 /**
  * @brief Compute the strain-energy of a Neo-Hookean material
