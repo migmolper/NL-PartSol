@@ -14,9 +14,9 @@ double energy_Mooney_Rivlin(Tensor C, double J, Material MatProp_p) {
   double E = MatProp_p.E;
   double K = E / (3 * (1 - 2 * nu));
 
-  double I1_C = I1__TensorLib__(C);
-  double I2_C = I2__TensorLib__(C);
-  double I3_C = J * J;
+//  double I1_C = I1__TensorLib__(C);
+//  double I2_C = I2__TensorLib__(C);
+//  double I3_C = J * J;
 
   double f_J = 0.5 * K * log(J) * log(J);
 
@@ -57,15 +57,15 @@ compute_1PK_Stress_Tensor_Mooney_Rivlin(State_Parameters Intput_SP,
   double E = MatProp_p.E;
   double K = E / (3 * (1 - 2 * nu));
 
-  double I1_C = I1__TensorLib__(C);
-  double I2_C = I2__TensorLib__(C);
+//  double I1_C = I1__TensorLib__(C);
+//  double I2_C = I2__TensorLib__(C);
 
-  for (int i = 0; i < Ndim; i++) {
-    for (int j = 0; j < Ndim; j++) {
+//  for (int i = 0; i < Ndim; i++) {
+//    for (int j = 0; j < Ndim; j++) {
       //      P.N[i][j] = (mu_1 - mu_2*I1_C)*F.N[i][j] - mu_2*FC.N[i][j] +
       //      (mu_2*I2_C + K*log(J))*Fm1.N[j][i];
-    }
-  }
+//    }
+//  }
 
   /*
     Free tensors
@@ -108,8 +108,8 @@ Tensor compute_stiffness_density_Mooney_Rivlin(Tensor GRAD_I, Tensor GRAD_J,
   double E = MatProp.E;
   double K = E / (3 * (1 - 2 * nu));
 
-  double I1_C = I1__TensorLib__(C);
-  double I2_C = I2__TensorLib__(C);
+//  double I1_C = I1__TensorLib__(C);
+//  double I2_C = I2__TensorLib__(C);
 
   /*
     Auxiliar variables

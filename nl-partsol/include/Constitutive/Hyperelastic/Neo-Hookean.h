@@ -12,24 +12,51 @@
 #include "Matlib.h"
 #include "Particles.h"
 
-/*!
-
-*/
-double energy_Neo_Hookean_Wriggers(Tensor, double, Material);
+/**
+ * @brief Compute the strain-energy of a Neo-Hookean material
+ * 
+ * @param F Deformation gradient
+ * @param J Jacobian
+ * @param MatProp Material properties of the model
+ * @return double 
+ */
+double compute_strain_energy_Neo_Hookean__Constitutive__(const double *F, double J,
+                                                         Material MatProp);
 /*******************************************************/
 
-/*!
-  \fn int compute_Kirchhoff_Stress_Neo_Hookean(State_Parameters IO_State,Material MatProp);
-
-  \brief Compute the First Piola-Kirchhoff stress tensor of a Neo-Hookean material 
-
-  \param[in] IO_State : State parameters of the particle
-  \param[in] MatProp : Material properties of the model
-*/
+/**
+ * @brief Compute the Kirchhoff stress tensor of a Neo-Hookean material
+ * 
+ * @param IO_State State parameters of the particle
+ * @param MatProp Material properties of the model
+ * @return int 
+ */
 int compute_Kirchhoff_Stress_Neo_Hookean(
   State_Parameters IO_State,
   Material MatProp);
 /*******************************************************/
+
+/**
+ * @brief 
+ * 
+ * @param Stiffness_Density 
+ * @param dN_alpha_n1 
+ * @param dN_beta_n1 
+ * @param dN_alpha_n 
+ * @param dN_beta_n 
+ * @param IO_State 
+ * @param MatProp 
+ * @return int 
+ */
+int compute_stiffness_density_Neo_Hookean(
+  double * Stiffness_Density,
+  const double * dN_alpha_n1,
+  const double * dN_beta_n1,
+  const double * dN_alpha_n,
+  const double * dN_beta_n,  
+  State_Parameters IO_State,
+  Material MatProp);
+/*******************************************************/ 
 
 
 Tensor compute_2PK_Stress_Tensor_Neo_Hookean_Wriggers(Tensor, Tensor, double, Material);
@@ -49,26 +76,5 @@ Tensor compute_2PK_Stress_Tensor_Neo_Hookean_Wriggers(Tensor, Tensor, double, Ma
 */
 Tensor compute_material_stiffness_density_Neo_Hookean_Wriggers(Tensor, Tensor, Tensor, double, Material);
 /*******************************************************/
-
-/*!
-  \brief Assemble the factorised material tensor 
-
-  \param[out] Stiffness_Density
-  \param[in] dN_alpha_n1
-  \param[in] dN_beta_n1
-  \param[in] dN_alpha_n
-  \param[in] dN_beta_n
-  \param[in] IO_State
-  \param[in] MatProp
-*/
-int compute_stiffness_density_Neo_Hookean(
-  double * Stiffness_Density,
-  const double * dN_alpha_n1,
-  const double * dN_beta_n1,
-  const double * dN_alpha_n,
-  const double * dN_beta_n,  
-  State_Parameters IO_State,
-  Material MatProp);
-/*******************************************************/ 
 
 #endif

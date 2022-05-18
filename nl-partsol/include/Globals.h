@@ -18,6 +18,9 @@ extern int NumberDOF;
 // Gravity field
 Load gravity_field;
 
+// Use Fracture modul
+extern bool Driver_EigenErosion;
+
 // Material parameters
 extern int Number_Soil_Water_Mixtures;
 extern Mixture * Soil_Water_Mixtures;

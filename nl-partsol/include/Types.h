@@ -249,9 +249,9 @@ typedef struct {
   
   Matrix Strain_If; /**< Strain during crack */
   
-  Matrix W; /**< Deformation Energy */
+  double * W; /**< Deformation Energy */
 
-  double * Chi; /**< Damage parameter (Fracture) */
+  double * Damage_n, * Damage_n1; /**< Damage parameter (Fracture) */
 
   double * EPS_n, * EPS_n1; /**< Equivalent plastic strain. */
 

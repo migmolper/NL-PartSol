@@ -104,20 +104,16 @@ void free__TensorLib__(Tensor A) {
 
 /*************************************************************/
 
-double I1__TensorLib__(const Tensor A) {
-  int Ndim = NumberDimensions;
-  /* Define output */
+double I1__TensorLib__(const double * A) {
+
   double I1 = 0;
-  /* Check if is the order is order 2 */
-  if (A.Order == 2) {
-    for (int i = 0; i < Ndim; i++) {
-      I1 += A.N[i][i];
-    }
-  } else {
-    fprintf(stderr, "%s : %s !!! \n", "Error in I1__TensorLib__()",
-            "The input should be of order 2");
-    exit(EXIT_FAILURE);
-  }
+
+#if NumberDimensions == 2
+    I1 = A[0] + A[3];
+#else 
+    I3 = A[0] + A[4] + A[8];
+#endif
+
   return I1;
 }
 
@@ -167,146 +163,120 @@ double I3__TensorLib__(const double * A) {
 
 /*************************************************************/
 
-double J1__TensorLib__(const Tensor A) {
-  /* Define output */
-  double J1;
-  /* Check if is the order is order 2 */
-  if (A.Order == 2) {
-    J1 = I1__TensorLib__(A);
-  } else {
-    fprintf(stderr, "%s : %s !!! \n", "Error in J1__TensorLib__()",
-            "The input should be of order 2");
-    exit(EXIT_FAILURE);
-  }
-  return J1;
-}
+int sym_eigen_analysis__TensorLib__(
+  double *eigval_A, 
+  double *eigvec_A, 
+  const double * A) {
 
-/*************************************************************/
+#if NumberDimensions == 2
 
-double J2__TensorLib__(const Tensor A) {
-  /* Define output */
-  double J2;
-  /* Check if is the order is order 2 */
-  if (A.Order == 2) {
-    double I1 = I1__TensorLib__(A);
-    double I2 = I2__TensorLib__(A);
-    J2 = pow(I1, 2) - 2 * I2;
-  } else {
-    fprintf(stderr, "%s : %s !!! \n", "Error in J2__TensorLib__()",
-            "The input should be of order 2");
-    exit(EXIT_FAILURE);
-  }
-  return J2;
-}
-
-/*************************************************************/
-
-EigenTensor Eigen_analysis__TensorLib__(const Tensor A) {
-
-  /* Output variable */
-  EigenTensor EigenA;
+  eigvec_A[0] = A[0];
+  eigvec_A[1] = A[1];
+  
+  eigvec_A[2] = A[2];
+  eigvec_A[3] = A[3];
 
   /* Locals */
-  int Ndim = NumberDimensions;
-  int n = Ndim;
-  int lda = Ndim;
-  int ldvl = Ndim;
-  int ldvr = Ndim;
+  int n = 2;
+  int lda = 2;
+  int ldvl = 2;
+  int ldvr = 2;
   int info;
   int lwork;
   double wkopt;
   double *work;
 
   /* Local arrays */
-  double wr[NumberDimensions];
-  double wi[NumberDimensions];
-  double vl[NumberDimensions * NumberDimensions];
-  double vr[NumberDimensions * NumberDimensions];
+  int IPIV[2] = {0, 0};
+  double wi[2];
+  double vl[4];
 
-#if NumberDimensions == 3
-  double a[NumberDimensions * NumberDimensions] = {
-      A.N[0][0], A.N[0][1], A.N[0][2], A.N[1][0], A.N[1][1],
-      A.N[1][2], A.N[2][0], A.N[2][1], A.N[2][2]};
-#endif
+#else
 
-#if NumberDimensions == 2
-  double a[NumberDimensions * NumberDimensions] = {A.N[0][0], A.N[0][1],
-                                                   A.N[1][0], A.N[1][1]};
+  eigvec_A[0] = A[0];
+  eigvec_A[1] = A[1];
+  eigvec_A[2] = A[2];
+
+  eigvec_A[3] = A[3];
+  eigvec_A[4] = A[4];
+  eigvec_A[5] = A[5];
+
+  eigvec_A[6] = A[6];
+  eigvec_A[7] = A[7];
+  eigvec_A[8] = A[8];
+
+  /* Locals */
+  int n = 3;
+  int lda = 3;
+  int ldvl = 3;
+  int ldvr = 3;
+  int info;
+  int lwork;
+  double wkopt;
+  double *work;
+
+  /* Local arrays */
+  int IPIV[3] = {0, 0, 0};
+  double wi[3];
+  double vl[9];
+
 #endif
 
   /*
     Query and allocate the optimal workspace
   */
   lwork = -1;
-  dgeev_("N", "V", &n, a, &lda, wr, wi, vl, &ldvl, vr, &ldvr, &wkopt, &lwork,
+  dsyev_("V", "L", &n, eigvec_A, &lda, eigval_A, &wkopt, &lwork,
          &info);
   lwork = (int)wkopt;
   work = (double *)malloc(lwork * sizeof(double));
 
   /* Check for convergence */
   if (info > 0) {
-    printf("Error in Eigen_analysis__TensorLib__() : The algorithm failed to "
-           "compute eigenvalues.\n");
-    exit(EXIT_FAILURE);
+    free(work);
+    fprintf(stderr,
+            "" RED "Error in dsyev_(): %s\n %s; \n %i+1:N \n %s " RESET "\n",
+            "the QR algorithm failed to compute all the",
+            "eigenvalues, and no eigenvectors have been computed elements",
+            info, "of WR and WI contain eigenvalues which have converged.");
+    return EXIT_FAILURE;
+  }
+  if (info < 0) {
+    free(work);
+    fprintf(stderr,
+            "" RED "Error in dsyev_(): the %i-th argument had an "
+            "illegal value." RESET "\n",
+            abs(info));
+    return EXIT_FAILURE;
   }
 
-  /* Solve eigenproblem */
-  dgeev_("N", "V", &n, a, &lda, wr, wi, vl, &ldvl, vr, &ldvr, work, &lwork,
-         &info);
-
+  dsyev_("V", "L", &n, eigvec_A, &lda, eigval_A, work, &lwork, &info);
   /* Check for convergence */
   if (info > 0) {
-    printf("Error in Eigen_analysis__TensorLib__() : The algorithm failed to "
-           "compute eigenvalues.\n");
-    exit(EXIT_FAILURE);
+    free(work);
+    fprintf(stderr,
+            "" RED "Error in dsyev_(): %s\n %s; \n %i+1:N \n %s " RESET "\n",
+            "the QR algorithm failed to compute all the",
+            "eigenvalues, and no eigenvectors have been computed elements",
+            info, "of WR and WI contain eigenvalues which have converged.");
+    return EXIT_FAILURE;
+  }
+  if (info < 0) {
+    free(work);
+    fprintf(stderr,
+            "" RED "Error in dsyev_(): the %i-th argument had an "
+            "illegal value." RESET "\n",
+            abs(info));
+    return EXIT_FAILURE;
   }
 
   free(work);
 
-  /*
-    Fill output
-  */
-  EigenA.Value = alloc__TensorLib__(1);
-  EigenA.Vector = alloc__TensorLib__(2);
+#if NumberDimensions == 2
+  eigval_A[2] = A[4];
+#endif
 
-  for (int i = 0; i < Ndim; i++) {
-    EigenA.Value.n[i] = wr[i];
-
-    for (int j = 0; j < Ndim; j++) {
-      EigenA.Vector.N[i][j] = vr[i + j * Ndim];
-    }
-  }
-
-  return EigenA;
-}
-
-/*************************************************************/
-
-double EuclideanNorm__TensorLib__(const Tensor A) {
-  int Ndim = NumberDimensions;
-  double Aux = 0;
-  /* Define output */
-  double Out;
-  /* Check if the input is a first order tensor */
-  if (A.Order == 1) {
-    /* Compute norm */
-    for (int i = 0; i < Ndim; i++) {
-      Aux += DSQR(A.n[i]);
-    }
-    Out = pow(Aux, 0.5);
-  } else if (A.Order == 2) {
-    for (int i = 0; i < Ndim; i++) {
-      for (int j = 0; j < Ndim; j++) {
-        Aux += DSQR(A.N[i][j]);
-      }
-    }
-    Out = pow(Aux, 0.5);
-  } else {
-    fprintf(stderr, "%s : %s !!! \n", "Error in EuclideanNorm__TensorLib__()",
-            "The input should be of order 1");
-    exit(EXIT_FAILURE);
-  }
-  return Out;
+return EXIT_SUCCESS;
 }
 
 /*********************************************************************/
@@ -1009,6 +979,38 @@ void symmetrise__TensorLib__(double * symA, const double * A) {
   
 #endif
 
+}
+
+/*************************************************************/
+
+double euclidean_norm__TensorLib__(const double * A) {
+
+  double sqr_norm = 0.0;
+
+  sqr_norm += DSQR(A[0]);
+  sqr_norm += DSQR(A[1]);
+#if NumberDimensions == 3  
+  sqr_norm += DSQR(A[2]);
+#endif
+
+  return sqrt(sqr_norm);
+
+}
+
+/*************************************************************/
+
+double euclidean_distance__TensorLib__(const double * X1, const double * X2)
+{
+
+  double sqr_distance = 0.0;
+
+  sqr_distance += DSQR(X1[0] - X2[0]);
+  sqr_distance += DSQR(X1[1] - X2[1]);
+#if NumberDimensions == 3  
+  sqr_distance += DSQR(X1[2] - X2[2]);
+#endif
+
+  return sqrt(sqr_distance);
 }
 
 /*************************************************************/

@@ -187,12 +187,6 @@ int spatial_velocity_gradient__Particles__(double * L,const double * dFdt,const 
 Tensor strain_Green_Lagrange__Particles__(Tensor);
 /*******************************************************/
 
-/*!
-
-*/
-double update_density__Particles__(double, double, Tensor);
-/*******************************************************/
-
 
 
 /*!

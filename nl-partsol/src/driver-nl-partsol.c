@@ -42,6 +42,7 @@ char Formulation[MAXC];
 char *TimeIntegrationScheme;
 bool Flag_Print_Convergence;
 Load gravity_field;
+bool Driver_EigenErosion;
 
 //  Auxiliar functions for the main
 static void nlpartsol_help_message();
@@ -74,6 +75,8 @@ int main(int argc, char *argv[]) {
   Mesh FEM_Mesh;
   Particle MPM_Mesh;
   Time_Int_Params Parameters_Solver;
+
+  Driver_EigenErosion = false;
 
   // Default values for the flags
   Flag_Print_Convergence = false;

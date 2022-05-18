@@ -361,8 +361,8 @@ static void update_LocalState(Matrix V_I, Particle MPM_Mesh, Mesh FEM_Mesh,
 
 
     /* Update density field */
-    MPM_Mesh.Phi.rho.nV[p] =
-        update_density__Particles__(rho_p, TimeStep, Rate_Strain_p);
+//    MPM_Mesh.Phi.rho.nV[p] =
+//        update_density__Particles__(rho_p, TimeStep, Rate_Strain_p);
     free__TensorLib__(Rate_Strain_p);
 
     /* Compute stress tensor */
@@ -372,7 +372,7 @@ static void update_LocalState(Matrix V_I, Particle MPM_Mesh, Mesh FEM_Mesh,
 //    Material MatProp_p);
 
     /* Compute deformation energy */
-    MPM_Mesh.Phi.W.nV[p] = 0.5 * inner_product__TensorLib__(Strain_p, Stress_p);
+    MPM_Mesh.Phi.W[p] = 0.5 * inner_product__TensorLib__(Strain_p, Stress_p);
 
     /* Free the matrix with the nodal velocity of the element */
     free__MatrixLib__(Nodal_Velocity_p);
