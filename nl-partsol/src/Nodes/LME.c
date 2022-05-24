@@ -237,7 +237,7 @@ static void initialise_lambda__LME__(int Idx_particle, Matrix X_p,
   }
 
   // Solve the system
-  if (rcond__MatrixLib__(A) < 1E-8) {
+  if (rcond__TensorLib__(A.nV) < 1E-8) {
     fprintf(stderr, "%s %i : %s \n",
             "Error in initialise_lambda__LME__ for particle", Idx_particle,
             "The Hessian near to singular matrix!");
@@ -306,7 +306,7 @@ void update_lambda_Newton_Rapson__LME__(
       */
       J = J__LME__(l, p, r);
 
-      if (rcond__MatrixLib__(J) < 1E-8) {
+      if (rcond__TensorLib__(J.nV) < 1E-8) {
         fprintf(stderr, "%s %i : %s \n",
                 "Error in lambda_Newton_Rapson__LME__ for particle",
                 Idx_particle, "The Hessian near to singular matrix!");

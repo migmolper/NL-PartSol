@@ -20,7 +20,7 @@ int dgetrs_LAPACK(
   }   
   
   //  Compute the LU factorization
-  dgetrf_(&Order, &Order, Tangent_Stiffness, &LDA, IPIV, &INFO);
+  INFO = LAPACKE_dgetrf(LAPACK_ROW_MAJOR,Order,Order,Tangent_Stiffness,LDA,IPIV);
   if (INFO) {
     free(IPIV);
     fprintf(stderr, "%s : %s %s %s \n", "Error in dgetrf_", "The function",
@@ -31,7 +31,7 @@ int dgetrs_LAPACK(
   /*
     Solve the system
   */
-  dgetrs_(&TRANS, &Order, &NRHS, Tangent_Stiffness, &LDA, IPIV, Residual, &LDB, &INFO);
+  INFO = LAPACKE_dgetrs(LAPACK_ROW_MAJOR,'T',Order,NRHS, Tangent_Stiffness, LDA,IPIV,Residual,LDB);
   if (INFO) {
     free(IPIV);
     fprintf(stderr, "%s : %s %s %s \n", "Error in dgetrs_", "The function",

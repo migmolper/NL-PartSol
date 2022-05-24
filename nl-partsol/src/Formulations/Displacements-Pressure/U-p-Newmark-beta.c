@@ -452,7 +452,7 @@ static Nodal_Field compute_Nodal_Field(Particle MPM_Mesh,Mesh FEM_Mesh, Mask Act
   /*
     Compute the LU factorization for the mass matrix
   */
-  dgetrf_(&Order, &Order, Effective_Mass.nV, &LDA, IPIV, &INFO);
+  INFO = LAPACKE_dgetrf(LAPACK_ROW_MAJOR,Order,Order,Effective_Mass.nV,LDA,IPIV);
 
   if (INFO != 0) {
     if (INFO < 0) {
@@ -472,12 +472,11 @@ static Nodal_Field compute_Nodal_Field(Particle MPM_Mesh,Mesh FEM_Mesh, Mask Act
   /*
     Solve for the displacemen field and derivates fields
   */
-  dgetrs_(&TRANS, &Order, &NRHS, Effective_Mass.nV, &LDA, IPIV, Up_n.U.nV, &LDB,
-          &INFO);
-  dgetrs_(&TRANS, &Order, &NRHS, Effective_Mass.nV, &LDA, IPIV, Up_n.d_U_dt.nV, &LDB,
-          &INFO);
-  dgetrs_(&TRANS, &Order, &NRHS, Effective_Mass.nV, &LDA, IPIV, Up_n.d2_U_dt2.nV, &LDB,
-          &INFO);
+  INFO = LAPACKE_dgetrs(LAPACK_ROW_MAJOR,'T',Order,NRHS, Effective_Mass.nV, LDA,IPIV,Up_n.U.nV,LDB);
+
+  INFO = LAPACKE_dgetrs(LAPACK_ROW_MAJOR,'T',Order,NRHS, Effective_Mass.nV, LDA,IPIV,Up_n.d_U_dt.nV,LDB);
+
+  INFO = LAPACKE_dgetrs(LAPACK_ROW_MAJOR,'T',Order,NRHS, Effective_Mass.nV, LDA,IPIV,Up_n.d2_U_dt2.nV,LDB);
 
   /*
     Solve for the pressure lagrange multiplier
@@ -1562,22 +1561,22 @@ static void solve_system(Nodal_Field D_up, Matrix Tangent_Stiffness,
   /*
     Compute the LU factorization
   */
-  dgetrf_(&Order, &Order, Tangent_Stiffness.nV, &LDA, IPIV, &INFO);
+  INFO = LAPACKE_dgetrf(LAPACK_ROW_MAJOR,Order,Order,Tangent_Stiffness.nV,LDA,IPIV);
 
   /*
     Check error messages in the LAPACK LU descomposition
   */
   if (INFO) {
     fprintf(stderr, "%s : %s %s %s \n", "Error in solve_system", "The function",
-            "dgetrf_", "returned an error message !!!");
+            "LAPACKE_dgetrf", "returned an error message !!!");
     exit(EXIT_FAILURE);
   }
 
   /*
     Solve
   */
-  dgetrs_(&TRANS, &Order, &NRHS, Tangent_Stiffness.nV, &LDA, IPIV, Residual.nV,
-          &LDB, &INFO);
+  INFO = LAPACKE_dgetrs(LAPACK_ROW_MAJOR,'T',Order,NRHS, Tangent_Stiffness.nV, LDA,IPIV,Residual.nV,LDB);
+
   free(IPIV);
 
   /*

@@ -327,6 +327,8 @@ static int __compute_trial_b_e(double *eigval_b_e_tr, double *eigvec_b_e_tr,
                                const double *b_e, const double *d_phi) {
 
   unsigned Ndim = NumberDimensions;
+  lapack_int n = NumberDimensions;
+  lapack_int lda = NumberDimensions;
 
   for (unsigned i = 0; i < Ndim; i++) {
     for (unsigned j = 0; j < Ndim; j++) {
@@ -339,90 +341,25 @@ static int __compute_trial_b_e(double *eigval_b_e_tr, double *eigvec_b_e_tr,
     }
   }
 
-#if NumberDimensions == 2
-  /* Locals */
-  int n = 2;
-  int lda = 2;
-  int ldvl = 2;
-  int ldvr = 2;
-  int info;
-  int lwork;
-  double wkopt;
-  double *work;
 
-  /* Local arrays */
-  int IPIV[2] = {0, 0};
-  double wi[2];
-  double vl[4];
-
-#else
-
-  /* Locals */
-  int n = 3;
-  int lda = 3;
-  int ldvl = 3;
-  int ldvr = 3;
-  int info;
-  int lwork;
-  double wkopt;
-  double *work;
-
-  /* Local arrays */
-  int IPIV[3] = {0, 0, 0};
-  double wi[3];
-  double vl[9];
-
-#endif
-
-  /*
-    Query and allocate the optimal workspace
-  */
-  lwork = -1;
-  dsyev_("V", "L", &n, eigvec_b_e_tr, &lda, eigval_b_e_tr, &wkopt, &lwork,
-         &info);
-  lwork = (int)wkopt;
-  work = (double *)malloc(lwork * sizeof(double));
+  lapack_int info = LAPACKE_dsyev(LAPACK_ROW_MAJOR, 'V', 'U', n, eigvec_b_e_tr, lda, eigval_b_e_tr);
 
   /* Check for convergence */
   if (info > 0) {
-    free(work);
     fprintf(stderr,
-            "" RED "Error in dsyev_(): %s\n %s; \n %i+1:N \n %s " RESET "\n",
+            "" RED "Error in LAPACKE_dsyev(): %s\n %s; \n %i+1:N \n %s " RESET "\n",
             "the QR algorithm failed to compute all the",
             "eigenvalues, and no eigenvectors have been computed elements",
             info, "of WR and WI contain eigenvalues which have converged.");
     return EXIT_FAILURE;
   }
   if (info < 0) {
-    free(work);
     fprintf(stderr,
-            "" RED "Error in dsyev_(): the %i-th argument had an "
+            "" RED "Error in LAPACKE_dsyev(): the %i-th argument had an "
             "illegal value." RESET "\n",
             abs(info));
     return EXIT_FAILURE;
   }
-
-  dsyev_("V", "L", &n, eigvec_b_e_tr, &lda, eigval_b_e_tr, work, &lwork, &info);
-  /* Check for convergence */
-  if (info > 0) {
-    free(work);
-    fprintf(stderr,
-            "" RED "Error in dsyev_(): %s\n %s; \n %i+1:N \n %s " RESET "\n",
-            "the QR algorithm failed to compute all the",
-            "eigenvalues, and no eigenvectors have been computed elements",
-            info, "of WR and WI contain eigenvalues which have converged.");
-    return EXIT_FAILURE;
-  }
-  if (info < 0) {
-    free(work);
-    fprintf(stderr,
-            "" RED "Error in dsyev_(): the %i-th argument had an "
-            "illegal value." RESET "\n",
-            abs(info));
-    return EXIT_FAILURE;
-  }
-
-  free(work);
 
 #if NumberDimensions == 2
   eigval_b_e_tr[2] = b_e[4];

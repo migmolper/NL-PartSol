@@ -55,7 +55,8 @@ Matrix addition__MatrixLib__(Matrix, Matrix);
 Matrix substraction__MatrixLib__(Matrix, Matrix);
 Matrix lumped__MatrixLib__(Matrix);
 Matrix solve_polynomial__MatrixLib__(Matrix);
-double rcond__MatrixLib__(Matrix);
+
+
 Matrix solve__MatrixLib__(Matrix, Matrix);
 /*******************************************************/
 
@@ -218,5 +219,14 @@ int compute_adjunt__TensorLib__(double * A_mT, const double * A);
 void symmetrise__TensorLib__(double * symA, const double * A);
 /*******************************************************/
 
+
+/**
+ * @brief Compute the condition number
+ * 
+ * @param A 
+ * @return Condition number 
+ */
+double rcond__TensorLib__(const double * A);
+/*******************************************************/
 
 #endif

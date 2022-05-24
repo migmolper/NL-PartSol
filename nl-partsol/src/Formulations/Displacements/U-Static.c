@@ -1030,7 +1030,7 @@ static void solve_non_reducted_system(Nodal_Field D_U, Matrix Tangent_Stiffness,
   /*
     Compute the LU factorization
   */
-  dgetrf_(&Order, &Order, K_Global.nV, &LDA, IPIV, &INFO);
+   INFO = LAPACKE_dgetrf(LAPACK_ROW_MAJOR,Order,Order,K_Global.nV,LDA,IPIV);
 
   /*
     Check error messages in the LAPACK LU descompistion
@@ -1044,8 +1044,8 @@ static void solve_non_reducted_system(Nodal_Field D_U, Matrix Tangent_Stiffness,
   /*
     Solve
   */
-  dgetrs_(&TRANS, &Order, &NRHS, K_Global.nV, &LDA, IPIV, Residual.nV, &LDB,
-          &INFO);
+  INFO = LAPACKE_dgetrs(LAPACK_ROW_MAJOR,'T',Order,NRHS, K_Global.nV, LDA,IPIV,Residual.nV,LDB);
+
   free(IPIV);
 
   /*
@@ -1138,7 +1138,7 @@ static void solve_reducted_system(Nodal_Field D_U, Matrix Tangent_Stiffness,Matr
   /*
     Compute the LU factorization
   */
-  dgetrf_(&Order_FF, &Order_FF, K_Global_FF.nV, &LDA, IPIV, &INFO);
+  INFO = LAPACKE_dgetrf(LAPACK_ROW_MAJOR,Order,Order,K_Global_FF.nV,LDA,IPIV);
 
   /*
     Check error messages in the LAPACK LU descompistion
@@ -1152,8 +1152,8 @@ static void solve_reducted_system(Nodal_Field D_U, Matrix Tangent_Stiffness,Matr
   /*
     Solve
   */
-  dgetrs_(&TRANS, &Order_FF, &NRHS, K_Global_FF.nV, &LDA, IPIV, Residual_F.nV,
-          &LDB, &INFO);
+  INFO = LAPACKE_dgetrs(LAPACK_ROW_MAJOR,'T',Order,NRHS, K_Global_FF.nV, LDA,IPIV,Residual.nV,LDB);
+
   free(IPIV);
 
   /*

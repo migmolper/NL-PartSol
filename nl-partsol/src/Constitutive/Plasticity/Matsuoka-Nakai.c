@@ -565,7 +565,10 @@ int compute_1PK_Matsuoka_Nakai(State_Parameters IO_State, Material MatProp)
 
 static int __compute_trial_b_e(double *eigval_b_e_tr, double *eigvec_b_e_tr,
                                const double *b_e, const double *d_phi) {
+  
   unsigned Ndim = NumberDimensions;
+  lapack_int n = NumberDimensions;
+  lapack_int lda = NumberDimensions;
 
   for (unsigned i = 0; i < Ndim; i++) {
     for (unsigned j = 0; j < Ndim; j++) {
@@ -578,53 +581,10 @@ static int __compute_trial_b_e(double *eigval_b_e_tr, double *eigvec_b_e_tr,
     }
   }
 
-#if NumberDimensions == 2
-  /* Locals */
-  int n = 2;
-  int lda = 2;
-  int ldvl = 2;
-  int ldvr = 2;
-  int info;
-  int lwork;
-  double wkopt;
-  double *work;
 
-  /* Local arrays */
-  int IPIV[2] = {0, 0};
-  double wi[2];
-  double vl[4];
+  lapack_int info = LAPACKE_dsyev(LAPACK_ROW_MAJOR, 'V', 'U', n, eigvec_b_e_tr, lda, eigval_b_e_tr);
 
-#else
-
-  /* Locals */
-  int n = 3;
-  int lda = 3;
-  int ldvl = 3;
-  int ldvr = 3;
-  int info;
-  int lwork;
-  double wkopt;
-  double *work;
-
-  /* Local arrays */
-  int IPIV[3] = {0, 0, 0};
-  double wi[3];
-  double vl[9];
-
-#endif
-
-  /*
-    Query and allocate the optimal workspace
-  */
-  lwork = -1;
-  dsyev_("V", "L", &n, eigvec_b_e_tr, &lda, eigval_b_e_tr, &wkopt, &lwork,
-         &info);
-  lwork = (int)wkopt;
-  work = (double *)malloc(lwork * sizeof(double));
-
-  /* Check for convergence */
   if (info > 0) {
-    free(work);
     fprintf(stderr,
             "" RED "Error in dsyev_(): %s\n %s; \n %i+1:N \n %s " RESET "\n",
             "the QR algorithm failed to compute all the",
@@ -633,7 +593,6 @@ static int __compute_trial_b_e(double *eigval_b_e_tr, double *eigvec_b_e_tr,
     return EXIT_FAILURE;
   }
   if (info < 0) {
-    free(work);
     fprintf(stderr,
             "" RED "Error in dsyev_(): the %i-th argument had an "
             "illegal value." RESET "\n",
@@ -641,27 +600,6 @@ static int __compute_trial_b_e(double *eigval_b_e_tr, double *eigvec_b_e_tr,
     return EXIT_FAILURE;
   }
 
-  dsyev_("V", "L", &n, eigvec_b_e_tr, &lda, eigval_b_e_tr, work, &lwork, &info);
-  /* Check for convergence */
-  if (info > 0) {
-    free(work);
-    fprintf(stderr,
-            "" RED "Error in dsyev_(): %s\n %s; \n %i+1:N \n %s " RESET "\n",
-            "the QR algorithm failed to compute all the",
-            "eigenvalues, and no eigenvectors have been computed elements",
-            info, "of WR and WI contain eigenvalues which have converged.");
-    return EXIT_FAILURE;
-  }
-  if (info < 0) {
-    free(work);
-    fprintf(stderr,
-            "" RED "Error in dsyev_(): the %i-th argument had an "
-            "illegal value." RESET "\n",
-            abs(info));
-    return EXIT_FAILURE;
-  }
-
-  free(work);
 
 #if NumberDimensions == 2
   eigval_b_e_tr[2] = b_e[4];
@@ -1045,49 +983,19 @@ static int __reciprocal_condition_number(double *RCOND, double *Tangent_Matrix)
 */
 {
   double ANORM;
-  int INFO;
-  int N_rows = 5;
-  int N_cols = 5;
-  int LDA = 5;
-  double WORK_ANORM[5] = {0.0, 0.0, 0.0, 0.0, 0.0};
-  double WORK_RCOND[20];
-  int IPIV[5] = {0, 0, 0, 0, 0};
-  int IWORK_RCOND[5] = {0, 0, 0, 0, 0};
+  lapack_int INFO;
+  lapack_int N_rows = 5;
+  lapack_int N_cols = 5;
+  lapack_int LDA = 5;
 
   // Compute 1-norm
-  ANORM = dlange_("1", &N_rows, &N_cols, Tangent_Matrix, &LDA, WORK_ANORM);
-
-  // The factors L and U from the factorization A = P*L*U
-  dgetrf_(&N_rows, &N_cols, Tangent_Matrix, &LDA, IPIV, &INFO);
-
-  // Check output of dgetrf
-  if (INFO != 0) {
-    if (INFO < 0) {
-      fprintf(
-          stderr,
-          "" RED
-          "Error in dgetrf_(): the %i-th argument had an illegal value" RESET
-          "",
-          abs(INFO));
-    } else if (INFO > 0) {
-      fprintf(stderr,
-              "" RED
-              "Error in dgetrf_(): D_phi_mT(%i,%i) %s \n %s \n %s \n %s" RESET
-              " \n",
-              INFO, INFO, "is exactly zero. The factorization",
-              "has been completed, but the factor D_phi_mT is exactly",
-              "singular, and division by zero will occur if it is used",
-              "to solve a system of equations.");
-    }
-    return EXIT_FAILURE;
-  }
+  ANORM = LAPACKE_dlange(LAPACK_ROW_MAJOR,'1',N_rows, N_cols, Tangent_Matrix,LDA); 	
 
   // Compute the Reciprocal condition number
-  dgecon_("1", &N_rows, Tangent_Matrix, &LDA, &ANORM, RCOND, WORK_RCOND,
-          IWORK_RCOND, &INFO);
+  INFO = LAPACKE_dgecon(LAPACK_ROW_MAJOR,'1', N_rows, Tangent_Matrix, LDA, ANORM, RCOND);
 
   if (INFO < 0) {
-    fprintf(stderr,""RED"Error in dgecon_() : the %i-th argument had an illegal value "RESET"\n",
+    fprintf(stderr,""RED"Error in LAPACKE_dgecon() : the %i-th argument had an illegal value "RESET"\n",
            abs(INFO));
     return EXIT_FAILURE;
   }
@@ -1098,31 +1006,29 @@ static int __reciprocal_condition_number(double *RCOND, double *Tangent_Matrix)
 /**************************************************************/
 
 static int __solver(double *Tangent_Matrix, double *Residual) {
-  int Order = 5;
-  int LDA = 5;
-  int LDB = 5;
+  lapack_int Order = 5;
+  lapack_int LDA = 5;
+  lapack_int LDB = 5;
   char TRANS = 'T'; /* (Transpose) */
-  int INFO = 3;
-  int IPIV[5] = {0, 0, 0, 0, 0};
-  int NRHS = 1;
+  lapack_int INFO = 3;
+  lapack_int IPIV[5] = {0, 0, 0, 0, 0};
+  lapack_int NRHS = 1;
 
-  /*
-    Compute the LU factorization
-  */
-  dgetrf_(&Order, &Order, Tangent_Matrix, &LDA, IPIV, &INFO);
-  // Check output of dgetrf
+  //  Compute the LU factorization
+  INFO = LAPACKE_dgetrf(LAPACK_ROW_MAJOR,Order,Order,Tangent_Matrix,LDA,IPIV);
+
   if (INFO != 0) {
     if (INFO < 0) {
       fprintf(
           stderr,
           "" RED
-          "Error in dgetrf_(): the %i-th argument had an illegal value" RESET
+          "Error in LAPACKE_dgetrf(): the %i-th argument had an illegal value" RESET
           "",
           abs(INFO));
     } else if (INFO > 0) {
       fprintf(stderr,
               "" RED
-              "Error in dgetrf_(): D_phi_mT(%i,%i) %s \n %s \n %s \n %s" RESET
+              "Error in LAPACKE_dgetrf(): D_phi_mT(%i,%i) %s \n %s \n %s \n %s" RESET
               " \n",
               INFO, INFO, "is exactly zero. The factorization",
               "has been completed, but the factor D_phi_mT is exactly",
@@ -1135,10 +1041,10 @@ static int __solver(double *Tangent_Matrix, double *Residual) {
   /*
     Solve
   */
-  dgetrs_(&TRANS, &Order, &NRHS, Tangent_Matrix, &LDA, IPIV, Residual, &LDB,
-          &INFO);
+  INFO = LAPACKE_dgetrs(LAPACK_ROW_MAJOR,'T',Order,NRHS, Tangent_Matrix, LDA,IPIV,Residual,LDB);
+
   if (INFO) {
-    fprintf(stderr, ""RED"Error in dgetrs_() "RESET"\n");
+    fprintf(stderr, ""RED"Error in LAPACKE_dgetrs() "RESET"\n");
     return EXIT_FAILURE;
   }
 

@@ -370,7 +370,7 @@ static void initialise_lambda__aLME__(int Idx_particle, Matrix X_p,
   }
 
   // Solve the system
-  if (rcond__MatrixLib__(A) < 1E-8) {
+  if (rcond__TensorLib__(A.nV) < 1E-8) {
     fprintf(stderr, "%s %i : %s \n",
             "Error in initialise_lambda__aLME__ for particle", Idx_particle,
             "The Hessian near to singular matrix!");
@@ -419,7 +419,7 @@ static void update_lambda_Newton_Rapson__aLME__(int Idx_particle, Matrix l,
       // Get the Hessian of log(Z).
       J = J__aLME__(l, p, r);
 
-      if (rcond__MatrixLib__(J) < 1E-8) {
+      if (rcond__TensorLib__(J.nV) < 1E-8) {
         fprintf(stderr, "%s %i : %s \n",
                 "Error in lambda_Newton_Rapson__aLME__ for particle",
                 Idx_particle, "The Hessian near to singular matrix!");
