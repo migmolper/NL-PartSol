@@ -1,7 +1,16 @@
 #!/bin/bash
 
+if [ "$(uname)" == "Darwin" ]; then
+export PETSC_DIR=$HOME/petsc
+export PETSC_ARCH=arch-darwin-c-debug    
+elif [ "$(expr substr $(uname -s) 1 5)" == "Linux" ]; then
 export PETSC_DIR=$HOME/petsc
 export PETSC_ARCH=arch-classic-docs
+fi
+#elif [ "$(expr substr $(uname -s) 1 10)" == "MINGW32_NT" ]; then
+#    # Do something under 32 bits Windows NT platform
+#elif [ "$(expr substr $(uname -s) 1 10)" == "MINGW64_NT" ]; then
+#    # Do something under 64 bits Windows NT platform
 
 clear
 
