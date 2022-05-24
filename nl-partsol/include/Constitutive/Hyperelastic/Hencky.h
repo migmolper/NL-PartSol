@@ -25,6 +25,14 @@
 #include "Particles.h"
 // clang-format on
 
-
+/**
+ * @brief 
+ * 
+ * @param IO_State 
+ * @param MatProp 
+ * @return int 
+ */
+int compute_Kirchhoff_Stress_Hencky(State_Parameters IO_State,
+                                    Material MatProp);
 
 #endif

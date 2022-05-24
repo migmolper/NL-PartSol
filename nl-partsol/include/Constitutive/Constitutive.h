@@ -22,6 +22,7 @@
 #include "Types.h"
 #include "Globals.h"
 #include "Constitutive/Hyperelastic/Saint-Venant-Kirchhoff.h"
+#include "Constitutive/Hyperelastic/Hencky.h"
 #include "Constitutive/Hyperelastic/Neo-Hookean.h"
 #include "Constitutive/Plasticity/Matsuoka-Nakai.h"
 #include "Constitutive/Plasticity/Lade-Duncan.h"
@@ -33,10 +34,6 @@
 #include "Constitutive/Fracture/Beps.h"
 #include "Constitutive/Fracture/EigenErosion.h"
 // clang-format on
-
-/*******************************************************/
-
-
 
 /*******************************************************/
 

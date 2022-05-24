@@ -4,42 +4,6 @@
 
 /**************************************************************/
 
-int Strain_Energy__Constitutive__(double *W, Material MatProp_p) {
-
-  int Ndim = NumberDimensions;
-  int STATUS = EXIT_SUCCESS;
-
-  const double *F;
-  double J;
-
-  if (strcmp(MatProp_p.Type, "Saint-Venant-Kirchhoff") == 0) {
-
-    *W = compute_strain_energy_Neo_Hookean__Constitutive__(F, J, MatProp_p);
-
-  } else if (strcmp(MatProp_p.Type, "Neo-Hookean-Wriggers") == 0) {
-
-  } else if (strcmp(MatProp_p.Type, "Von-Mises") == 0) {
-
-  } else if (strcmp(MatProp_p.Type, "Drucker-Prager") == 0) {
-
-  } else if (strcmp(MatProp_p.Type, "Matsuoka-Nakai") == 0) {
-
-  } else if (strcmp(MatProp_p.Type, "Lade-Duncan") == 0) {
-
-  } else {
-
-    fprintf(stderr,
-            "" RED "The material %s does not have yet a function to compute "
-                   "the strain-energy" RESET " \n",
-            MatProp_p.Type);
-    return EXIT_FAILURE;
-  }
-
-  return EXIT_SUCCESS;
-}
-
-/**************************************************************/
-
 int Stress_integration__Constitutive__(int p, Particle MPM_Mesh,
                                        Material MatProp_p) {
 
@@ -65,6 +29,24 @@ int Stress_integration__Constitutive__(int p, Particle MPM_Mesh,
     Output_SP =
         compute_1PK_Stress_Tensor_Saint_Venant_Kirchhoff(Input_SP, MatProp_p);
 
+  } else if (strcmp(MatProp_p.Type, "Hencky") == 0) {
+
+    IO_State.Particle_Idx = p;
+    IO_State.Stress = MPM_Mesh.Phi.Stress.nM[p];
+    IO_State.W = &(MPM_Mesh.Phi.W[p]);
+    IO_State.D_phi_n1 = MPM_Mesh.Phi.F_n1.nM[p];
+    IO_State.J = MPM_Mesh.Phi.J_n1.nV[p];
+    
+    STATUS = compute_Kirchhoff_Stress_Hencky(IO_State, MatProp_p);
+    if (STATUS == EXIT_FAILURE) {
+      fprintf(stderr,
+              "" RED "Error in compute_Kirchhoff_Stress_Hencky(,)" RESET
+              " \n");
+      return EXIT_FAILURE;
+    }
+
+    *(IO_State.EPS) = MPM_Mesh.Phi.EPS_n[p];
+    
   } else if (strcmp(MatProp_p.Type, "Neo-Hookean-Wriggers") == 0) {
     IO_State.Particle_Idx = p;
     IO_State.Stress = MPM_Mesh.Phi.Stress.nM[p];
