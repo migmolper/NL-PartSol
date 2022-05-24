@@ -10,12 +10,6 @@
 #include "Types.h"
 #include "Globals.h"
 
-#ifdef __linux__
-#include <lapacke.h>
-#elif __APPLE__
-#include <Accelerate/Accelerate.h>
-#endif
-
 /*!
   \param[out] Stiffness_density Elastoplastic tangent matrix
   \param[in] dN_alpha_n1 Shape function gradient node A (t = n + 1)

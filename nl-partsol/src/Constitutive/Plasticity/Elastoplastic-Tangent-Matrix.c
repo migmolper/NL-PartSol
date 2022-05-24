@@ -2,6 +2,12 @@
 
 #include "Constitutive/Plasticity/Elastoplastic-Tangent-Matrix.h"
 
+#ifdef __linux__
+#include <lapacke.h>
+#elif __APPLE__
+#include <Accelerate/Accelerate.h>
+#endif
+
 /**************************************************************/
 
 /*!
