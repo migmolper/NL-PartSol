@@ -33,16 +33,14 @@ void local_search__MeshTools__(Particle MPM_Mesh, Mesh FEM_Mesh)
 {
 
   //! Set to zero the active/non-active node, and the GPs in each element
-  int Num_Particles_Node_i;
   for (unsigned i = 0; i < FEM_Mesh.NumNodesMesh; i++) {
-    Num_Particles_Node_i = FEM_Mesh.Num_Particles_Node[i];
-
-    if (Num_Particles_Node_i != 0) {
-      FEM_Mesh.Num_Particles_Node[i] = 0;
-      free__SetLib__(&FEM_Mesh.List_Particles_Node[i]);
-    }
 
     FEM_Mesh.ActiveNode[i] = false;
+
+    if(Driver_EigenErosion)
+    {
+      free__SetLib__(&FEM_Mesh.List_Particles_Node[i]);
+    }
   }
 
   if (FEM_Mesh.Locking_Control_Fbar) {

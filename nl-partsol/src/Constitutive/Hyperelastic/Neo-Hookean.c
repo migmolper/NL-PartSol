@@ -3,7 +3,8 @@
 
 /**************************************************************/
 
-double energy_Neo_Hookean_Wriggers(Tensor C, double J, Material MatProp) {
+double compute_strain_energy_Neo_Hookean__Constitutive__(const double *F, double J,
+                                                         Material MatProp) {
   /* Number of dimensions */
   int Ndim = NumberDimensions;
 
@@ -12,26 +13,29 @@ double energy_Neo_Hookean_Wriggers(Tensor C, double J, Material MatProp) {
   double nu = MatProp.nu;
   double G = ElasticModulus / (2 * (1 + nu));
   double lambda = nu * ElasticModulus / ((1 - nu * 2) * (1 + nu));
-  double I1_C = I1__TensorLib__(C);
+
+  double b[4];
+  left_Cauchy_Green__Particles__(b, F);
+
+  double I1_b = I1__TensorLib__(b);
   double f_J = 0.25 * lambda * (J * J - 1) - 0.5 * lambda * log(J) - G * log(J);
 
-  double W = f_J + 0.5 * G * (I1_C - Ndim);
+  double W = f_J + 0.5 * G * (I1_b - Ndim);
 
   return W;
 }
 
 /**************************************************************/
 
-int compute_Kirchhoff_Stress_Neo_Hookean(
-  State_Parameters IO_State,
-  Material MatProp) {
+int compute_Kirchhoff_Stress_Neo_Hookean(State_Parameters IO_State,
+                                         Material MatProp) {
 
   int STATUS = EXIT_SUCCESS;
   unsigned Ndim = NumberDimensions;
 
   // Get information from the state parameter
-  double * T = IO_State.Stress;
-  double * D_phi_n1 = IO_State.D_phi_n1;
+  double *T = IO_State.Stress;
+  double *D_phi_n1 = IO_State.D_phi_n1;
   double J = IO_State.J;
 
   // Material parameters
@@ -39,16 +43,16 @@ int compute_Kirchhoff_Stress_Neo_Hookean(
   double nu = MatProp.nu;
   double G = ElasticModulus / (2 * (1 + nu));
   double lambda = nu * ElasticModulus / ((1 - nu * 2) * (1 + nu));
-  double J2 = J * J; 
+  double J2 = J * J;
   double c0 = lambda * 0.5 * (J2 - 1.0);
 
   // Define and compute auxiliar tensor
-#if NumberDimensions == 2  
+#if NumberDimensions == 2
   double b_n1[4];
-  double Identity[4] = {1.0,0.0,0.0,1.0};
+  double Identity[4] = {1.0, 0.0, 0.0, 1.0};
 #else
   double b_n1[9];
-  double Identity[9] = {1.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,1.0};
+  double Identity[9] = {1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0};
 #endif
 
   // Compute the left Cauchy-Green (t = n)
@@ -57,14 +61,13 @@ int compute_Kirchhoff_Stress_Neo_Hookean(
   // Compute stress
   for (unsigned i = 0; i < Ndim; i++) {
     for (unsigned j = 0; j < Ndim; j++) {
-      T[i*Ndim + j] =
-          c0 * Identity[i*Ndim + j] 
-          + G * (b_n1[i*Ndim + j] - Identity[i*Ndim + j]);
+      T[i * Ndim + j] = c0 * Identity[i * Ndim + j] +
+                        G * (b_n1[i * Ndim + j] - Identity[i * Ndim + j]);
     }
   }
 
 #if NumberDimensions == 2
-    T[4] = c0;
+  T[4] = c0;
 #endif
 
   return STATUS;
@@ -73,19 +76,15 @@ int compute_Kirchhoff_Stress_Neo_Hookean(
 /**************************************************************/
 
 int compute_stiffness_density_Neo_Hookean(
-  double * Stiffness_Density,
-  const double * dN_alpha_n1,
-  const double * dN_beta_n1,
-  const double * dN_alpha_n,
-  const double * dN_beta_n,   
-  State_Parameters IO_State,
-  Material MatProp) {
+    double *Stiffness_Density, const double *dN_alpha_n1,
+    const double *dN_beta_n1, const double *dN_alpha_n, const double *dN_beta_n,
+    State_Parameters IO_State, Material MatProp) {
 
   int STATUS = EXIT_SUCCESS;
   int Ndim = NumberDimensions;
 
   // State parameters
-  double * D_phi_n = IO_State.D_phi_n;
+  double *D_phi_n = IO_State.D_phi_n;
   double J = IO_State.J;
 
   //  Material parameters
@@ -93,7 +92,7 @@ int compute_stiffness_density_Neo_Hookean(
   double nu = MatProp.nu;
   double G = ElasticModulus / (2 * (1 + nu));
   double lambda = nu * ElasticModulus / ((1 - nu * 2) * (1 + nu));
-  double sqr_J = J*J;
+  double sqr_J = J * J;
   double c0 = lambda * sqr_J;
   double c1 = G - 0.5 * lambda * (sqr_J - 1);
 
@@ -103,31 +102,27 @@ int compute_stiffness_density_Neo_Hookean(
 #else
   double b_n[9];
 #endif
-  
+
   // Compute the left Cauchy-Green (t = n)
   left_Cauchy_Green__Particles__(b_n, D_phi_n);
 
   // Compute
   double lenght_0 = 0.0;
   double lenght_0_aux = 0.0;
-  for (unsigned i = 0; i < Ndim; i++)
-  {
-    for (unsigned j = 0; j < Ndim; j++)
-    {
-      lenght_0_aux += b_n[i*Ndim + j]*dN_alpha_n[j];
+  for (unsigned i = 0; i < Ndim; i++) {
+    for (unsigned j = 0; j < Ndim; j++) {
+      lenght_0_aux += b_n[i * Ndim + j] * dN_alpha_n[j];
     }
-    lenght_0 += dN_beta_n[i]*lenght_0_aux;  
+    lenght_0 += dN_beta_n[i] * lenght_0_aux;
     lenght_0_aux = 0.0;
   }
-
 
   // Assemble Stiffness Density matrix
   for (unsigned i = 0; i < Ndim; i++) {
     for (unsigned j = 0; j < Ndim; j++) {
-      Stiffness_Density[i*Ndim + j] = 
-      c0 * dN_alpha_n1[i]*dN_beta_n1[j] 
-      + G * lenght_0 * (i == j) 
-      + c1 * dN_alpha_n1[j]*dN_beta_n1[i];
+      Stiffness_Density[i * Ndim + j] = c0 * dN_alpha_n1[i] * dN_beta_n1[j] +
+                                        G * lenght_0 * (i == j) +
+                                        c1 * dN_alpha_n1[j] * dN_beta_n1[i];
     }
   }
 

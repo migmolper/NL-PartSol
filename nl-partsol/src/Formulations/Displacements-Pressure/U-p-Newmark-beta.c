@@ -29,7 +29,6 @@ typedef struct {
 */
 static Newmark_parameters compute_Newmark_parameters(double, double, double);
 static Matrix compute_Nodal_Effective_Mass(Particle, Mesh, Mask, double);
-static void compute_Gravity_field(Mask, Particle, int, int);
 static Nodal_Field compute_Nodal_Field(Particle, Mesh, Mask);
 static Nodal_Field initialise_Nodal_Increments(Nodal_Field, Mask, Mesh,
                                                Newmark_parameters, int, int);
@@ -123,7 +122,6 @@ void Up_Newmark_beta_Finite_Strains(Mesh FEM_Mesh, Particle MPM_Mesh,
     print_Status("*************************************************", TimeStep);
     print_Status("Third step : Compute nodal kinetics ... WORKING", TimeStep);
 
-    compute_Gravity_field(ActiveNodes, MPM_Mesh, TimeStep, NumTimeStep);
     Up_n = compute_Nodal_Field(MPM_Mesh, FEM_Mesh, ActiveNodes);
     D_Up = initialise_Nodal_Increments(Up_n, ActiveNodes, FEM_Mesh, Params,
                                        TimeStep, NumTimeStep);
@@ -321,40 +319,6 @@ static Matrix compute_Nodal_Effective_Mass(Particle MPM_Mesh, Mesh FEM_Mesh,
 
 
   return Effective_MassMatrix;
-}
-
-/**************************************************************/
-
-static void compute_Gravity_field(Mask ActiveNodes, Particle MPM_Mesh,
-                                  int TimeStep, int NumTimeStep)
-/*
-
-*/
-{
-  /* Define auxilar variables */
-  int Ndim = NumberDimensions;
-  int Nnodes_mask = ActiveNodes.Nactivenodes;
-  int NumBodyForces = MPM_Mesh.NumberBodyForces;
-
-  double m_p;           /* Mass of the particle */
-  Load *B = MPM_Mesh.B; /* List with the load cases */
-
-  /*
-    Initialise distance accelerations
-  */
-  for (int k = 0; k < Ndim; k++) {
-    MPM_Mesh.b.n[k] = 0.0;
-  }
-
-  for (int i = 0; i < NumBodyForces; i++) {
-
-    /* Fill vector b of body acclerations */
-    for (int k = 0; k < Ndim; k++) {
-      if (B[i].Dir[k * NumTimeStep + TimeStep]) {
-        MPM_Mesh.b.n[k] += B[i].Value[k].Fx[TimeStep];
-      }
-    }
-  }
 }
 
 /**************************************************************/
@@ -876,7 +840,8 @@ static void compute_Inertial_Forces(Nodal_Field D_up, Nodal_Field up_n,
     for (int i = 0; i < Ndim; i++) {
       Acceleration_n1.nM[A][i] =
           alpha_1 * D_up.U.nM[A][i] - alpha_2 * up_n.d_U_dt.nM[A][i] -
-          alpha_3 * up_n.d2_U_dt2.nM[A][i] - MPM_Mesh.b.n[i];
+          alpha_3 * up_n.d2_U_dt2.nM[A][i];// - MPM_Mesh.b.n[i]
+          
     }
   }
 

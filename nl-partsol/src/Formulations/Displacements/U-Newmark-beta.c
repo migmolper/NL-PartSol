@@ -71,6 +71,10 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
   */
   DeltaTimeStep = __compute_deltat(MPM_Mesh, DeltaX, Parameters_Solver);
 
+  if (Driver_EigenErosion) {
+    compute_Beps__Constitutive__(MPM_Mesh, FEM_Mesh, true);
+  }
+
   //  Compute time integrator parameters
   Time_Integration_Params =
       __compute_Newmark_parameters(beta, gamma, DeltaTimeStep, epsilon);
@@ -87,6 +91,10 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
     ActiveDOFs = get_active_dofs__MeshTools__(ActiveNodes, FEM_Mesh, TimeStep,
                                               NumTimeStep);
     Nactivedofs = ActiveDOFs.Nactivenodes;
+
+    if (Driver_EigenErosion) {
+      compute_Beps__Constitutive__(MPM_Mesh, FEM_Mesh, false);
+    }
 
     //! Define and allocate the effective mass matrix
     Lumped_Mass =
@@ -117,7 +125,7 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
     //! Trial residual
     Residual = __assemble_residual(
         U_n, D_U, Lumped_Mass, ActiveNodes, ActiveDOFs, MPM_Mesh, FEM_Mesh,
-        Time_Integration_Params, true, false, &STATUS);
+        Time_Integration_Params, TimeStep, true, false, &STATUS);
     if (STATUS == EXIT_FAILURE) {
       fprintf(stderr, "" RED "Error in __assemble_residual()" RESET " \n");
       return EXIT_FAILURE;
@@ -199,7 +207,7 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
       // Compute residual (NR-loop)
       Residual = __assemble_residual(
           U_n, D_U, Lumped_Mass, ActiveNodes, ActiveDOFs, MPM_Mesh, FEM_Mesh,
-          Time_Integration_Params, true, false, &STATUS);
+          Time_Integration_Params, TimeStep, true, false, &STATUS);
       if (STATUS == EXIT_FAILURE) {
         fprintf(stderr, "" RED "Error in __assemble_residual()" RESET " \n");
         return EXIT_FAILURE;
@@ -238,7 +246,7 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
     if (TimeStep % ResultsTimeStep == 0) {
       Reactions = __assemble_residual(
           U_n, D_U, Lumped_Mass, ActiveNodes, ActiveDOFs, MPM_Mesh, FEM_Mesh,
-          Time_Integration_Params, false, true, &STATUS);
+          Time_Integration_Params, TimeStep, false, true, &STATUS);
       if (STATUS == EXIT_FAILURE) {
         fprintf(stderr, "" RED "Error in __assemble_residual()" RESET " \n");
         return EXIT_FAILURE;
@@ -1071,6 +1079,9 @@ static void __constitutive_update(Particle MPM_Mesh, Mesh FEM_Mesh,
               "" RED "Error in Stress_integration__Constitutive__(,)" RESET
               " \n");
     }
+
+    // Update internal energy of the particle
+    MPM_Mesh.Phi.W[p] = 0.0;
   }
 }
 
@@ -1081,14 +1092,14 @@ static Vec __assemble_residual(Nodal_Field U_n, Nodal_Field D_U,
                                Vec Lumped_Mass, Mask ActiveNodes,
                                Mask ActiveDOFs, Particle MPM_Mesh,
                                Mesh FEM_Mesh, Newmark_parameters Params,
-                               bool Is_compute_Residual,
+                               unsigned TimeStep, bool Is_compute_Residual,
                                bool Is_compute_Reactions, int *STATUS)
 #else
 static double *__assemble_residual(Nodal_Field U_n, Nodal_Field D_U,
                                    double *Lumped_Mass, Mask ActiveNodes,
                                    Mask ActiveDOFs, Particle MPM_Mesh,
                                    Mesh FEM_Mesh, Newmark_parameters Params,
-                                   bool Is_compute_Residual,
+                                   unsigned TimeStep, bool Is_compute_Residual,
                                    bool Is_compute_Reactions, int *STATUS)
 #endif
 {
@@ -1126,7 +1137,7 @@ static double *__assemble_residual(Nodal_Field U_n, Nodal_Field D_U,
                           Is_compute_Residual, Is_compute_Reactions);
 
   __Nodal_Body_Forces(Residual, ActiveNodes, ActiveDOFs, MPM_Mesh, FEM_Mesh,
-                      Is_compute_Residual, Is_compute_Reactions);
+                      TimeStep, Is_compute_Residual, Is_compute_Reactions);
 
   if ((Is_compute_Residual == true) && (Is_compute_Reactions == false)) {
     __Nodal_Inertial_Forces(Residual, Lumped_Mass, U_n, D_U, ActiveNodes,
@@ -1214,8 +1225,9 @@ static void __Nodal_Internal_Forces(double *Residual, Mask ActiveNodes,
   unsigned Ndim = NumberDimensions;
   unsigned Np = MPM_Mesh.NumGP;
   unsigned NumNodes_p;
-
   unsigned p;
+
+  double DeltaX = FEM_Mesh.DeltaX;
 
 #if NumberDimensions == 2
   double InternalForcesDensity_Ap[2];
@@ -1227,13 +1239,19 @@ static void __Nodal_Internal_Forces(double *Residual, Mask ActiveNodes,
   VecSetOption(Residual, VEC_IGNORE_NEGATIVE_INDICES, PETSC_TRUE);
 #endif
 
+  const double *Damage_field_n = MPM_Mesh.Phi.Damage_n;
+  double *Damage_field_n1 = MPM_Mesh.Phi.Damage_n1;
+  const double *Strain_Energy_field = MPM_Mesh.Phi.W;
+  const double *J_n1 = MPM_Mesh.Phi.J_n1.nV;
+  const double *Vol_0 = MPM_Mesh.Phi.Vol_0.nV;
+
 #pragma omp parallel private(NumNodes_p, InternalForcesDensity_Ap)
   {
 #pragma omp for private(p)
     for (p = 0; p < Np; p++) {
 
       //  Get the volume of the particle in the reference configuration
-      double V0_p = MPM_Mesh.Phi.Vol_0.nV[p];
+      double V0_p = Vol_0[p];
 
       // Get the incremental deformation gradient
       double *DF_p = MPM_Mesh.Phi.DF.nM[p];
@@ -1255,7 +1273,22 @@ static void __Nodal_Internal_Forces(double *Residual, Mask ActiveNodes,
       }
 
       // Get the Kirchhoff stress tensor pointer
-      double *kirchhoff_p = MPM_Mesh.Phi.Stress.nM[p];
+      const double *kirchhoff_p = MPM_Mesh.Phi.Stress.nM[p];
+
+      // Compute damage parameter
+      if (Driver_EigenErosion) {
+        unsigned MatIndx_p = MPM_Mesh.MatIdx[p];
+        Material MatProp_p = MPM_Mesh.Mat[MatIndx_p];
+        ChainPtr Beps_p = MPM_Mesh.Beps[p];
+
+        *STATUS = Eigenerosion__Constitutive__(
+            p, Damage_field_n, Damage_field_n1, Strain_Energy_field,
+            kirchhoff_p, J_n1, Vol_0, MatProp_p, Beps_p, DeltaX);
+        if (*STATUS == EXIT_FAILURE) {
+          fprintf(stderr,
+                  "" RED "Error in Eigenerosion__Constitutive__()" RESET " \n");
+        }
+      }
 
       for (unsigned A = 0; A < NumNodes_p; A++) {
 
@@ -1265,9 +1298,17 @@ static void __Nodal_Internal_Forces(double *Residual, Mask ActiveNodes,
         int Ap = Nodes_p.Connectivity[A];
         int Mask_node_A = ActiveNodes.Nodes2Mask[Ap];
 
-        //!  Compute the nodal forces of the particle
+        //! Compute the nodal forces of the particle
         __internal_force_density(InternalForcesDensity_Ap, kirchhoff_p,
                                  d_shapefunction_n1_pA, V0_p);
+
+        //! Damage contribution of the particle to the residual
+        if (Driver_EigenErosion) {
+          double damage_p = MPM_Mesh.Phi.Damage_n1[p];
+          for (unsigned i = 0; i < Ndim; i++) {
+            InternalForcesDensity_Ap[i] *= damage_p;
+          }
+        }
 
 #if NumberDimensions == 2
         int Mask_active_dofs_A[2];
@@ -1482,40 +1523,38 @@ static void __local_traction_force(double *LocalTractionForce_Ap,
 /**************************************************************/
 
 #ifdef USE_PETSC
-static void __Nodal_Body_Forces(Vec Residual, Mask ActiveNodes, Mask ActiveDOFs,
-                                Particle MPM_Mesh, Mesh FEM_Mesh,
-                                bool Is_compute_Residual,
-                                bool Is_compute_Reactions)
+static int __Nodal_Body_Forces(Vec Residual, Mask ActiveNodes, Mask ActiveDOFs,
+                               Particle MPM_Mesh, Mesh FEM_Mesh,
+                               unsigned TimeStep, bool Is_compute_Residual,
+                               bool Is_compute_Reactions)
 #else
-static void __Nodal_Body_Forces(double *Residual, Mask ActiveNodes,
-                                Mask ActiveDOFs, Particle MPM_Mesh,
-                                Mesh FEM_Mesh, bool Is_compute_Residual,
-                                bool Is_compute_Reactions)
+static int
+__Nodal_Body_Forces(double *Residual, Mask ActiveNodes, Mask ActiveDOFs,
+                    Particle MPM_Mesh, Mesh FEM_Mesh, unsigned TimeStep,
+                    bool Is_compute_Residual, bool Is_compute_Reactions)
 #endif
 {
-
-#if NumberDimensions == 2
-  double b[2] = {0.0, 0.0};
-#else
-  double b[3] = {0.0, 0.0, 0.0};
-#endif
-
-#if NumberDimensions == 2
-  double LocalBodyForce_Ap[2];
-#else
-  double LocalBodyForce_Ap[3];
-#endif
 
   /* Define auxilar variables */
   unsigned Ndim = NumberDimensions;
   //  unsigned NumBodyForces = MPM_Mesh.NumberBodyForces;
   unsigned Np = MPM_Mesh.NumGP;
   unsigned NumNodes_p;
-
   unsigned p;
 
-  //  Load *B = MPM_Mesh.B;    /* List with the load cases */
-  b[1] = -9.81;
+  if (gravity_field.STATUS == false)
+    return EXIT_SUCCESS;
+
+#if NumberDimensions == 2
+  const double b[2] = {gravity_field.Value[0].Fx[TimeStep],
+                       gravity_field.Value[1].Fx[TimeStep]};
+  double LocalBodyForce_Ap[2];
+#else
+  const double b[3] = {gravity_field.Value[0].Fx[TimeStep],
+                       gravity_field.Value[1].Fx[TimeStep],
+                       gravity_field.Value[2].Fx[TimeStep]};
+  double LocalBodyForce_Ap[3];
+#endif
 
 #ifdef USE_PETSC
   VecSetOption(Residual, VEC_IGNORE_NEGATIVE_INDICES, PETSC_TRUE);
@@ -1581,6 +1620,8 @@ static void __Nodal_Body_Forces(double *Residual, Mask ActiveNodes,
       free(Nodes_p.Connectivity);
     } // For unsigned p
   }   // #pragma omp parallel
+
+  return EXIT_SUCCESS;
 }
 
 /**************************************************************/
@@ -2007,6 +2048,14 @@ static void __assemble_tangent_stiffness(double *Tangent_Stiffness,
                     "\n");
           }
 
+          //! Damage contribution of the particle to the residual
+          if (Driver_EigenErosion) {
+            double damage_p = MPM_Mesh.Phi.Damage_n1[p];
+            for (unsigned i = 0; i < Ndim * Ndim; i++) {
+              Stiffness_density_p[i] *= damage_p;
+            }
+          }
+
           compute_local_intertia(Inertia_density_p, shapefunction_n_pA,
                                  shapefunction_n_pB, m_p, alpha_1, epsilon,
                                  Mask_node_A, Mask_node_B);
@@ -2187,7 +2236,12 @@ static void __update_Particles(Nodal_Field D_U, Particle MPM_Mesh,
         MPM_Mesh.Phi.b_e_n.nM[p][i] = MPM_Mesh.Phi.b_e_n1.nM[p][i];
 #endif
 
-        //! Update deformation gradient
+      //! Update damage variable
+      if (Driver_EigenErosion) {
+        MPM_Mesh.Phi.Damage_n[p] = MPM_Mesh.Phi.Damage_n1[p];
+      }
+
+      //! Update deformation gradient
 #if NumberDimensions == 2
       for (unsigned i = 0; i < 5; i++)
         MPM_Mesh.Phi.F_n.nM[p][i] = MPM_Mesh.Phi.F_n1.nM[p][i];

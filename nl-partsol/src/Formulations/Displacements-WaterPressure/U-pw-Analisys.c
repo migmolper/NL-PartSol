@@ -135,7 +135,7 @@ Fields allocate_upw_vars__Fields__(int NumParticles) {
   /*!
     Deformation Energy (Scalar)
   */
-  Phi.W = allocZ__MatrixLib__(NumParticles, 1);
+  Phi.W = (double *)calloc(NumParticles,sizeof(double));
 
   /*!
     Mass
@@ -164,9 +164,16 @@ Fields allocate_upw_vars__Fields__(int NumParticles) {
   Phi.phi_s = allocZ__MatrixLib__(NumParticles, 1);
   Phi.phi_f = allocZ__MatrixLib__(NumParticles, 1);
 
+  /*!
+    Damage variable
+  */
+  Phi.Damage_n = (double *)calloc(NumParticles,sizeof(double));
 
-  Phi.Chi = (double *)calloc(NumParticles,sizeof(double));
+  Phi.Damage_n1 = (double *)calloc(NumParticles,sizeof(double));
 
+  /*!
+    Equivalent plastic strain 
+  */
   Phi.EPS_n = (double *)calloc(NumParticles,sizeof(double));
 
   Phi.EPS_n1 = (double *)calloc(NumParticles,sizeof(double));
@@ -215,10 +222,11 @@ void free_upw_vars__Fields__(Fields Phi) {
   free__MatrixLib__(Phi.dJ_dt);
   free__MatrixLib__(Phi.Fbar);
   free__MatrixLib__(Phi.Jbar);
-  free__MatrixLib__(Phi.W);
+  free(Phi.W);
   free__MatrixLib__(Phi.phi_s);
   free__MatrixLib__(Phi.phi_f);
-  free(Phi.Chi);
+  free(Phi.Damage_n);
+  free(Phi.Damage_n1);
   free(Phi.EPS_n);
   free(Phi.EPS_n1);  
   free__MatrixLib__(Phi.Back_stress);

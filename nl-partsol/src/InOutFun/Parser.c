@@ -82,7 +82,7 @@ void generate_route(char *Directory, char *File) {
   /*!
     Free auxiliar table
   */
-  free(Name_File_cpy);
+  free(File_cpy);
 }
 
 /***************************************************************************/

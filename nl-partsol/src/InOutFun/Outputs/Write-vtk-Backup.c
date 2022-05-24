@@ -112,7 +112,7 @@ void particle_backup_vtk__InOutFun__(Particle MPM_Mesh, int TimeStep_i,
 
   /* Print particle damage */
   if (Backup_damage) {
-    vtk_Out_damage(Vtk_file, MPM_Mesh.Phi.Chi, NumParticles);
+    vtk_Out_damage(Vtk_file, MPM_Mesh.Phi.Damage_n, NumParticles);
   }
 
   /* print equivalent plastic strain */

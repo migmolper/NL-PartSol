@@ -1,6 +1,13 @@
-/*! \file Matlib.h
-    \brief File with the prototype of math library
-*/
+/**
+ * @file Matlib.h
+ * @author Miguel Molinos (@migmolper)
+ * @brief 
+ * @version 0.1
+ * @date 2022-05-18
+ * 
+ * @copyright Copyright (c) 2022
+ * 
+ */
 
 #ifndef _MATLIB_H_
 #define _MATLIB_H_
@@ -80,17 +87,46 @@ void order__SetLib__(ChainPtr *, ChainPtr *, Matrix);
 Tensor alloc__TensorLib__(int);
 Tensor memory_to_tensor__TensorLib__(double *, int);
 void   free__TensorLib__(Tensor);
-double I1__TensorLib__(const Tensor);
+
+/**
+ * @brief Compute the first invariant 
+ * 
+ * @param A 
+ * @return double 
+ */
+double I1__TensorLib__(const double * A);
+
+
+/**
+ * @brief Compute the second invariant
+ * 
+ * @return double 
+ */
 double I2__TensorLib__(const Tensor);
 
+/**
+ * @brief Compute the third invariant
+ * 
+ * @param A 
+ * @return double 
+ */
 double I3__TensorLib__(const double * A);
 
-double J1__TensorLib__(const Tensor);
-double J2__TensorLib__(const Tensor);
+/**
+ * @brief Compute the eigenvectors/eigenvalues 
+ * for a symmetric matrix (2x2 + 1) or (3x3)
+ * 
+ * @param eigval_A 
+ * @param eigvec_A 
+ * @param A 
+ * @return int 
+ */
+int sym_eigen_analysis__TensorLib__(
+  double *eigval_A, 
+  double *eigvec_A, 
+  const double * A);
 
-EigenTensor Eigen_analysis__TensorLib__(const Tensor);
 
-double EuclideanNorm__TensorLib__(const Tensor);
 double Generalised_norm__TensorLib__(const Tensor, const Tensor);
 Tensor Identity__TensorLib__();
 Tensor Inverse__TensorLib__(const Tensor);
@@ -103,6 +139,25 @@ Tensor vector_product__TensorLib__(Tensor, Tensor);
 Tensor dyadic_Product__TensorLib__(Tensor, Tensor);
 Tensor vector_linear_mapping__TensorLib__(Tensor, Tensor);
 Tensor matrix_product_old__TensorLib__(Tensor, Tensor);
+
+
+/**
+ * @brief Compute the euclidean norm of a vector
+ * 
+ * @param A Input vector
+ * @return double 
+ */
+double euclidean_norm__TensorLib__(const double * A);
+
+/**
+ * @brief Compute the euclidean distance between two points
+ * 
+ * @param X1 Point 1
+ * @param X2 Point 2
+ * @return double 
+ */
+double euclidean_distance__TensorLib__(const double * X1, const double * X2);
+
 /*******************************************************/
 /*!
   \brief Compute the product between two second order tensors

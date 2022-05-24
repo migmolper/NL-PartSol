@@ -186,29 +186,29 @@ typedef struct{
 typedef struct {
 
 
-  Matrix Vol_0; /**< Reference volume */
+  Matrix Vol_0; /** @brief Reference volume */
 
-  Matrix Area_0; /**< Reference area */
+  Matrix Area_0; /** @brief Reference area */
 
-  Matrix rho; /**< Density field */
+  Matrix rho; /** @brief Density field */
 
-  Matrix rho_s, rho_f; /**< Intrinsic density field (solid/fluid) */
+  Matrix rho_s, rho_f; /** @brief Intrinsic density field (solid/fluid) */
 
-  Matrix phi_s, phi_f; /**< Volume fraction (solid/fluid) */
+  Matrix phi_s, phi_f; /** @brief Volume fraction (solid/fluid) */
   
-  Matrix mass; /**< Mass field */
+  Matrix mass; /** @brief Mass field */
   
-  Matrix x_GC; /**< Position in global coordinates */
+  Matrix x_GC; /** @brief Position in global coordinates */
   
-  Matrix x_EC; /**< Position in element coordinates */
+  Matrix x_EC; /** @brief Position in element coordinates */
   
-  Matrix dis, D_dis; /**< Displacement field */
+  Matrix dis, D_dis; /** @brief Displacement field */
   
-  Matrix vel; /**< Velocity field */
+  Matrix vel; /** @brief Velocity field */
   
-  Matrix acc; /**< Acceleration fields */
+  Matrix acc; /** @brief Acceleration fields */
   
-  Matrix Stress; /**< Stress field */
+  Matrix Stress; /** @brief Stress field */
 
   /*!
   * Lagrange multiplier for incompressible formulations
@@ -233,43 +233,43 @@ typedef struct {
 
   Matrix d2_Pw_dt2;
   
-  Matrix Strain; /**< Strain field */
+  Matrix Strain; /** @brief Strain field */
 
-  Matrix F_n, F_n1; /**< Total deformation gradient */
+  Matrix F_n, F_n1; /** @brief Total deformation gradient */
 
-  Matrix DF; /**< Incremental deformation gradient */
+  Matrix DF; /** @brief Incremental deformation gradient */
 
-  Matrix dt_F_n, dt_F_n1, dt_DF; /**< Rate deformation gradient */
+  Matrix dt_F_n, dt_F_n1, dt_DF; /** @brief Rate deformation gradient */
 
-  Matrix J_n, J_n1, dJ_dt; /**< Jacobian of the deformation gradient */
+  Matrix J_n, J_n1, dJ_dt; /** @brief Jacobian of the deformation gradient */
 
-  Matrix Fbar;  /**< Locking-free deformation gradient (F-bar) */
+  Matrix Fbar;  /** @brief Locking-free deformation gradient (F-bar) */
   
-  Matrix Jbar; /**< Jacobian of the F-bar */
+  Matrix Jbar; /** @brief Jacobian of the F-bar */
   
-  Matrix Strain_If; /**< Strain during crack */
+  Matrix Strain_If; /** @brief Strain during crack */
   
-  Matrix W; /**< Deformation Energy */
+  double * W; /** @brief Deformation Energy */
 
-  double * Chi; /**< Damage parameter (Fracture) */
+  double * Damage_n, * Damage_n1; /** @brief Damage parameter (Fracture) */
 
-  double * EPS_n, * EPS_n1; /**< Equivalent plastic strain. */
+  double * EPS_n, * EPS_n1; /** @brief Equivalent plastic strain. */
 
-  double * Kappa_n, * Kappa_n1; /**< Isotropic hardening (stress like) variable. */
+  double * Kappa_n, * Kappa_n1; /** @brief Isotropic hardening (stress like) variable. */
 
-  Matrix Back_stress;  /**< Kinematic hardening variable. */
+  Matrix Back_stress;  /** @brief Kinematic hardening variable. */
 
-  Matrix b_e_n, b_e_n1; /**< Elastic left deformation gradient */
+  Matrix b_e_n, b_e_n1; /** @brief Elastic left deformation gradient */
 
-  Matrix C_ep; /**< Elastoplastic tangent matrix */
+  Matrix C_ep; /** @brief Elastoplastic tangent matrix */
 
-  bool * Status_particle; /**< Check if the particle is consider failed or not */
+  bool * Status_particle; /** @brief Check if the particle is consider failed or not */
 
 
 #ifdef DEBUG_MODE
 #if DEBUG_MODE + 0
 
-  Matrix PU; /**< Partition of unity property. */
+  Matrix PU; /** @brief Partition of unity property. */
 
   #endif
 #endif
@@ -314,6 +314,9 @@ typedef struct {
    * value with the time 
    */
   Curve * Value;
+
+  // On/Off variable
+  bool STATUS;
 
   /*!
    * Some information about this load 
@@ -528,22 +531,23 @@ typedef struct
   double * Stress;
   double * Strain;
   double Pressure;
+  double * W; /** @brief Deformation energy */
 
-  double * D_phi_n1;  /**< Total deformation gradient (t = n + 1) */
-  double * D_phi_n; /**< Total deformation gradient (t = n) */
-  double * d_phi; /**< Incremental deformation gradient */
-  double * b_e; /**< Elastic left Cauchy-Green tensor */
+  double * D_phi_n1;  /** @brief Total deformation gradient (t = n + 1) */
+  double * D_phi_n; /** @brief Total deformation gradient (t = n) */
+  double * d_phi; /** @brief Incremental deformation gradient */
+  double * b_e; /** @brief Elastic left Cauchy-Green tensor */
   double * Fbar;
   double J; /**<z Jocobian */
 
-  double * dFdt; /**< Rate of the deformation gradient */
-  double DeltaTimeStep; /**< Increment of the time step */
-  double alpha_4; /**< Time integation paramter (Newmark-beta) */
+  double * dFdt; /** @brief Rate of the deformation gradient */
+  double DeltaTimeStep; /** @brief Increment of the time step */
+  double alpha_4; /** @brief Time integation paramter (Newmark-beta) */
 
-  double * Back_stress; /**< State varible for kinematic hardening*/
-  double * Kappa; /**<  Hardening Parameter */
-  double * EPS; /**<  Equivalent plastic strain */
-  double * C_ep; /**<  Elastoplastic tangent matrix */
+  double * Back_stress; /** @brief State varible for kinematic hardening*/
+  double * Kappa; /** @brief  Hardening Parameter */
+  double * EPS; /** @brief  Equivalent plastic strain */
+  double * C_ep; /** @brief  Elastoplastic tangent matrix */
   bool compute_C_ep;
 
   double Cohesion; 
@@ -613,21 +617,9 @@ typedef struct {
   Load * F;
 
   /*!
-   * Body forces 
-   * */
-  int NumberBodyForces;
-  Load * B;
-
-
-  /*!
    * Structure to store Neumann boundary conditions will replace NumNeumannBC and F;
    * */
   Boundaries Neumann_Contours;
-
-  /*!
-   * Current vector of distance accelerations
-   * */
-  Tensor b;
 
 
   /*!

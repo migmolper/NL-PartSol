@@ -39,9 +39,9 @@ static ChainPtr tributary__LME__(int, Matrix, double, int, Mesh);
 
 void initialize__LME__(Particle MPM_Mesh, Mesh FEM_Mesh) {
 
-  int Ndim = NumberDimensions;
-  int Np = MPM_Mesh.NumGP;          // Number of gauss-points in the simulation
-  int Nelem = FEM_Mesh.NumElemMesh; // Number of elements
+  unsigned Ndim = NumberDimensions;
+  unsigned Np = MPM_Mesh.NumGP;          // Number of gauss-points in the simulation
+  unsigned Nelem = FEM_Mesh.NumElemMesh; // Number of elements
   int I0;                           // Closest node to the particle
   unsigned p;
   bool Is_particle_reachable;
@@ -120,7 +120,7 @@ void initialize__LME__(Particle MPM_Mesh, Mesh FEM_Mesh) {
 
       Locality_I0 = FEM_Mesh.NodalLocality_0[I0];
 
-      //    push__SetLib__(&FEM_Mesh.List_Particles_Node[I0], p);
+      push__SetLib__(&FEM_Mesh.List_Particles_Node[I0], p);
 
       //    FEM_Mesh.Num_Particles_Node[I0] += 1;
 
@@ -955,8 +955,7 @@ void local_search__LME__(Particle MPM_Mesh, Mesh FEM_Mesh)
         Locality_I0 = Locality_I0->next;
       }
 
-      //    push__SetLib__(&FEM_Mesh.List_Particles_Node[I0], p);
-      //    FEM_Mesh.Num_Particles_Node[I0] += 1;
+      push__SetLib__(&FEM_Mesh.List_Particles_Node[I0], p);
     }
 
     // Update the shape function

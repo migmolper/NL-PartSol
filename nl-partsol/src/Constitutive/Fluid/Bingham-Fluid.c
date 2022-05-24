@@ -35,7 +35,7 @@ compute_1PK_Stress_Tensor_Bingham_Fluid(State_Parameters Intput_SP,
   Tensor dFdt__x__Fm1 = matrix_product_old__TensorLib__(dFdt, Fm1);
   Tensor d;// = symmetrise__TensorLib__(dFdt__x__Fm1);
   Tensor d__x__FmT = matrix_product_old__TensorLib__(d, FmT);
-  double tr_d = I1__TensorLib__(d);
+//  double tr_d = I1__TensorLib__(d);
 
   /*
     Material parameters
@@ -43,12 +43,12 @@ compute_1PK_Stress_Tensor_Bingham_Fluid(State_Parameters Intput_SP,
   double mu = compute_Bingham_viscosity(d, MatProp_p);
   double p = compute_p_Tait_Murnaghan(J, MatProp_p);
 
-  for (int i = 0; i < Ndim; i++) {
-    for (int j = 0; j < Ndim; j++) {
-      P.N[i][j] = -J * p * FmT.N[i][j] + 2 * J * mu * d__x__FmT.N[i][j] -
-                  (2.0 / ((double)Ndim)) * J * mu * tr_d * FmT.N[i][j];
-    }
-  }
+//  for (int i = 0; i < Ndim; i++) {
+//    for (int j = 0; j < Ndim; j++) {
+//      P.N[i][j] = -J * p * FmT.N[i][j] + 2 * J * mu * d__x__FmT.N[i][j] -
+//                  (2.0 / ((double)Ndim)) * J * mu * tr_d * FmT.N[i][j];
+//    }
+//  }
 
   /*
     Free tensors
