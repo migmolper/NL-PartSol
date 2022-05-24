@@ -11,7 +11,7 @@
 #include "Globals.h"
 
 #ifdef __linux__
-#include "lapacke.h"
+#include <lapacke.h>
 #elif __APPLE__
 #include <Accelerate/Accelerate.h>
 #endif
