@@ -11,15 +11,12 @@
 #include "Particles.h"
 #include "InOutFun.h"
 
-/*
-  Call global variables
-*/
-extern char *ShapeFunctionGP;
-extern double gamma_LME;
-extern double TOL_zero_LME;
-extern double TOL_wrapper_LME;
-extern int max_iter_LME;
-extern char wrapper_LME[MAXC];
+//char ShapeFunctionGP[MAXC];
+int max_iter_LME;
+double TOL_zero_LME;
+double TOL_wrapper_LME;
+double gamma_LME;
+char   wrapper_LME[MAXC];
 
 /**********************************************************************/
 
@@ -96,7 +93,7 @@ void GramsShapeFun(char *Name_File)
         exit(EXIT_FAILURE);
       }
 
-      ShapeFunctionGP = Parse_GramsShapefun_Type[1];
+      strcpy(ShapeFunctionGP, Parse_GramsShapefun_Type[1]);
       printf("\t -> %s : %s \n", "Type of shape function", ShapeFunctionGP);
 
       /* Set to default all it properties */

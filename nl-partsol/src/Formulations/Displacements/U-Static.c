@@ -1,10 +1,32 @@
+/**
+ * @file U-Static.c
+ * @author Miguel Molinos (@migmolper)
+ * @brief 
+ * @version 0.1
+ * @date 2022-05-25
+ * 
+ * @copyright Copyright (c) 2022
+ * 
+ */
+
 #include "Formulations/Displacements/U-Static.h"
+#include "Globals.h"
+
+// Linear-Solver libs
+#ifdef USE_PETSC
+#include <petscksp.h>
+//  #include "Linear-Solvers/"
+#else
+#ifdef __linux__
+#include <lapacke.h>
+#elif __APPLE__ 
+#include <Accelerate/Accelerate.h>
+#endif
+#include "Linear-Solvers/dgetrs-LAPACK.h"
+#endif
 
 // Global variuables
-extern double Error0;
-extern unsigned InitialStep;
-extern unsigned TimeStep;
-extern unsigned NumTimeStep;
+static double Error0;
 
 typedef struct {
 
@@ -1273,9 +1295,6 @@ static void update_Particles(Nodal_Field D_U, Particle MPM_Mesh, Mesh FEM_Mesh,
     Vol_0_p = MPM_Mesh.Phi.Vol_0.nV[p];
     MatIndx_p = MPM_Mesh.MatIdx[p];
     MatProp_p = MPM_Mesh.Mat[MatIndx_p];
-    //      MPM_Mesh.Phi.W.nV[p]=
-    //      finite_strains_internal_energy__Particles__(F_n_p,
-    //      MatProp_p,Vol_0_p);
 
     /* Iterate over the nodes of the particle */
     for (int A = 0; A < Nodes_p.NumberNodes; A++) {

@@ -15,8 +15,9 @@
 #include "Nodes/Shape-Functions.h"
 #include "Nodes/Read-GID-Mesh.h"
 
-extern int Number_Soil_Water_Mixtures;
-extern Mixture * Soil_Water_Mixtures;
+char * MPM_MeshFileName;
+int Number_Soil_Water_Mixtures;
+Mixture * Soil_Water_Mixtures;
 
 #include "Formulations/Displacements-WaterPressure/U-pw-Analisys.h"
 

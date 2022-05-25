@@ -1,5 +1,13 @@
+
+// clang-format off
 #include <math.h>
-#include "nl-partsol.h"
+#include <stdbool.h>
+#include "Macros.h"
+#include "Types.h"
+#include "Globals.h"
+#include "Matlib.h"
+#include "Particles.h"
+// clang-format on
 
 #ifdef __linux__
 #include <lapacke.h>

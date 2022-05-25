@@ -1,5 +1,6 @@
 #include "Formulations/Displacements/U-Verlet.h"
-#include "Globals.h"
+
+double DeltaTimeStep;
 
 /*
   Auxiliar functions

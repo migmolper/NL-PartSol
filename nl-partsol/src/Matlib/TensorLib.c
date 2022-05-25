@@ -1,12 +1,18 @@
+// clang-format off
+#include <stdlib.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include <string.h>
 #include <math.h>
-#include "nl-partsol.h"
+#include "Macros.h"
+#include "Types.h"
+#include "Matlib.h"
+// clang-format on
 
 #ifdef __linux__
 #include <lapacke.h>
-
 #elif __APPLE__
 #include <Accelerate/Accelerate.h>
-
 #endif
 
 /*************************************************************/
@@ -972,9 +978,9 @@ double rcond__TensorLib__(const double * A)
   double ANORM;
   double RCOND;
   lapack_int INFO;
-  lapack_int N_rows = 5;
-  lapack_int N_cols = 5;
-  lapack_int LDA = 5;
+  lapack_int N_rows = NumberDimensions;
+  lapack_int N_cols = NumberDimensions;
+  lapack_int LDA = NumberDimensions;
 
   // Compute 1-norm
   ANORM = LAPACKE_dlange(LAPACK_ROW_MAJOR,'1',N_rows, N_cols, A,LDA); 	

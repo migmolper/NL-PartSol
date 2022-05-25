@@ -1,14 +1,22 @@
-#include <sys/stat.h>
-#include <string.h>
-#include "nl-partsol.h"
 
-/*
-  Call global variables
-*/
-Event *Out_particles_path_csv;
-int Number_Out_particles_path_csv;
-int NumTimeStep;
-char OutputDir[MAXC];
+// clang-format off
+#include <sys/stat.h>
+#include <stdlib.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include <string.h>
+#include <math.h>
+#include "Macros.h"
+#include "Types.h"
+#include "Globals.h"
+#include "Matlib.h"
+#include "Particles.h"
+#include "Nodes/Nodes-Tools.h"
+#include "Nodes/Shape-Functions.h"
+#include "Formulations/Courant.h"
+#include "Constitutive/Constitutive.h"
+#include "InOutFun.h"
+// clang-format on
 
 /*
         Auxiliar structures
@@ -44,14 +52,14 @@ static int Number_particles_csv_events(char *);
 static FILE *Open_and_Check_simulation_file(char *);
 static bool Check_Output_directory(char *);
 static bool Check_Path(char *);
-static Intervals read_CSV_Intervals(char *);
+static Intervals read_CSV_Intervals(char *, unsigned NumTimeStep);
 static Parameters read_CSV_Parameters(FILE *, char *);
 static bool Is_Output_Activate(char *, char *);
 static Event fill_CSV_Parameters(Intervals, Parameters);
 
 /**********************************************************************/
 
-void NLPS_Out_particles_path_csv__InOutFun__(char *Name_File)
+void NLPS_Out_particles_path_csv__InOutFun__(char *Name_File, unsigned NumTimeStep)
 /*
   Example :
   Out-particles-path-csv (i_ini=0;i_step=10;i_end=100)
@@ -98,7 +106,7 @@ void NLPS_Out_particles_path_csv__InOutFun__(char *Name_File)
       if ((nkwords > 0) && (strcmp(kwords[0], "Out-particles-path-csv") == 0)) {
 
         /* Read output period */
-        CSV_Intervals = read_CSV_Intervals(kwords[1]);
+        CSV_Intervals = read_CSV_Intervals(kwords[1],NumTimeStep);
 
         /* Read csv parameters */
         CSV_Parameters = read_CSV_Parameters(Sim_dat, Name_File);
@@ -211,7 +219,7 @@ static bool Check_Path(char *PATH_Name) {
 
 /***************************************************************************/
 
-static Intervals read_CSV_Intervals(char *Interval_message) {
+static Intervals read_CSV_Intervals(char *Interval_message, unsigned NumTimeStep) {
   Intervals CSV_Intervals;
 
   char Error_message[MAXW];

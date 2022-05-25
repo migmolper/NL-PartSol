@@ -1,6 +1,17 @@
 
+/**
+ * @file Constitutive.c
+ * @author Miguel Molinos (@migmolper)
+ * @brief 
+ * @version 0.1
+ * @date 2022-05-25
+ * 
+ * @copyright Copyright (c) 2022
+ * 
+ */
 
 #include "Constitutive/Constitutive.h"
+#include "Globals.h"
 
 /**************************************************************/
 
@@ -48,6 +59,9 @@ int Stress_integration__Constitutive__(int p, Particle MPM_Mesh,
     *(IO_State.EPS) = MPM_Mesh.Phi.EPS_n[p];
     
   } else if (strcmp(MatProp_p.Type, "Neo-Hookean-Wriggers") == 0) {
+
+    puts("paso");
+    
     IO_State.Particle_Idx = p;
     IO_State.Stress = MPM_Mesh.Phi.Stress.nM[p];
 
@@ -58,6 +72,8 @@ int Stress_integration__Constitutive__(int p, Particle MPM_Mesh,
       IO_State.D_phi_n1 = MPM_Mesh.Phi.F_n1.nM[p];
       IO_State.J = MPM_Mesh.Phi.J_n1.nV[p];
     }
+
+    puts("paso");
 
     STATUS = compute_Kirchhoff_Stress_Neo_Hookean(IO_State, MatProp_p);
     if (STATUS == EXIT_FAILURE) {

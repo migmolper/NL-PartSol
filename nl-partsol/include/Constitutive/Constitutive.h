@@ -20,7 +20,6 @@
 #include <math.h>
 #include "Macros.h"
 #include "Types.h"
-#include "Globals.h"
 #include "Constitutive/Hyperelastic/Saint-Venant-Kirchhoff.h"
 #include "Constitutive/Hyperelastic/Hencky.h"
 #include "Constitutive/Hyperelastic/Neo-Hookean.h"

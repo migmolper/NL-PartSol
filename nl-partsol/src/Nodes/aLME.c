@@ -150,15 +150,6 @@ static ChainPtr tributary__aLME__(int, Matrix, Matrix, int, Mesh);
 
 /****************************************************************************/
 
-// Call global var¡ables
-extern char wrapper_LME[MAXC];
-extern double gamma_LME;
-extern double TOL_zero_LME;
-extern double TOL_wrapper_LME;
-extern int max_iter_LME;
-
-/****************************************************************************/
-
 void initialize__aLME__(Particle MPM_Mesh, Mesh FEM_Mesh) {
   int Ndim = NumberDimensions;
   int Np = MPM_Mesh.NumGP;          // Number of gauss-points in the simulation

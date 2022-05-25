@@ -1,27 +1,23 @@
 #ifndef _U_VERLET_H_
 #define _U_VERLET_H_
 
+// clang-format off
 #include <stdlib.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
-
-// Global libs
 #include "Macros.h"
 #include "Types.h"
+#include "Globals.h"
 #include "Matlib.h"
 #include "Particles.h"
-
-// Shape functions and auxilar tools
 #include "Nodes/Nodes-Tools.h"
 #include "Nodes/Shape-Functions.h"
-
-// Courant
 #include "Formulations/Courant.h"
-
-// Material lib
 #include "Constitutive/Constitutive.h"
+#include "InOutFun.h"
+// clang-format on
 
 // Linear-Solver libs
 #ifdef __linux__

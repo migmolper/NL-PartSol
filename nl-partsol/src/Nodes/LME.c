@@ -1,13 +1,19 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
+#include <string.h>
+#include <math.h>
+
+// Global libs
+#include "Macros.h"
+#include "Types.h"
+#include "Globals.h"
+#include "Matlib.h"
+#include "Particles.h"
 #include "Nodes/LME.h"
 
-/****************************************************************************/
 
-// Call global var¡ables
-char wrapper_LME[MAXC];
-double gamma_LME;
-double TOL_zero_LME;
-double TOL_wrapper_LME;
-int max_iter_LME;
+/****************************************************************************/
 
 // Nelder-Mead parameters
 double NM_rho_LME = 1.0;
@@ -50,6 +56,7 @@ void initialize__LME__(Particle MPM_Mesh, Mesh FEM_Mesh) {
   Matrix Delta_Xip;     // Distance from GP to the nodes
   Matrix lambda_p;      // Lagrange multiplier
   double Beta_p;        // Thermalization or regularization parameter
+
 
 #pragma omp parallel shared(Np, Nelem)
   {
@@ -157,7 +164,7 @@ void initialize__LME__(Particle MPM_Mesh, Mesh FEM_Mesh) {
       Beta_p = beta__LME__(gamma_LME, FEM_Mesh.h_avg[MPM_Mesh.I0[p]]);
       MPM_Mesh.Beta.nV[p] = Beta_p;
 
-      update_lambda_Newton_Rapson__LME__(p, Delta_Xip, lambda_p, Beta_p);
+      __lambda_Newton_Rapson(p, Delta_Xip, lambda_p, Beta_p);
 
       // Free memory
       free__MatrixLib__(Delta_Xip);
@@ -262,15 +269,11 @@ static void initialise_lambda__LME__(int Idx_particle, Matrix X_p,
 
 /****************************************************************************/
 
-void update_lambda_Newton_Rapson__LME__(
+static int __lambda_Newton_Rapson(
     int Idx_particle,
-    Matrix l, // Set than contanins vector form neighborhood nodes to particle.
-    Matrix lambda, // Lagrange multiplier.
-    double Beta)   // Thermalization parameter.
-/*!
- * Get the lagrange multipliers "lambda" (1 x dim) for the LME
- * shape function. The numerical method is the Newton-Rapson.
- * */
+    Matrix l, 
+    Matrix lambda,
+    double Beta)
 {
   /*
     Definition of some parameters
@@ -307,10 +310,9 @@ void update_lambda_Newton_Rapson__LME__(
       J = J__LME__(l, p, r);
 
       if (rcond__TensorLib__(J.nV) < 1E-8) {
-        fprintf(stderr, "%s %i : %s \n",
-                "Error in lambda_Newton_Rapson__LME__ for particle",
-                Idx_particle, "The Hessian near to singular matrix!");
-        exit(EXIT_FAILURE);
+        fprintf(stderr,
+                "" RED "Hessian near to singular matrix: %e" RESET " \n",rcond__TensorLib__(J.nV));
+        return EXIT_FAILURE;
       }
 
       /*
@@ -347,8 +349,10 @@ void update_lambda_Newton_Rapson__LME__(
             "No convergence reached in the maximum number of interations",
             MaxIter);
     fprintf(stderr, "%s : %e\n", "Total Error", norm_r);
-    exit(EXIT_FAILURE);
+    return EXIT_FAILURE;
   }
+
+  return EXIT_SUCCESS;
 }
 
 /****************************************************************************/
@@ -896,7 +900,7 @@ void local_search__LME__(Particle MPM_Mesh, Mesh FEM_Mesh)
   Search the closest node to the particle based in its previous position.
 */
 {
-
+  int STATUS = EXIT_SUCCESS;
   int Ndim = NumberDimensions;
   unsigned Np = MPM_Mesh.NumGP;
   unsigned p;
@@ -989,12 +993,19 @@ void local_search__LME__(Particle MPM_Mesh, Mesh FEM_Mesh)
       Beta_p = beta__LME__(gamma_LME, FEM_Mesh.h_avg[MPM_Mesh.I0[p]]);
       MPM_Mesh.Beta.nV[p] = Beta_p;
 
-      update_lambda_Newton_Rapson__LME__(p, Delta_Xip, lambda_p, Beta_p);
+      STATUS = __lambda_Newton_Rapson(p, Delta_Xip, lambda_p, Beta_p);
+      if (STATUS == EXIT_FAILURE) {
+        fprintf(stderr, "" RED "Error in __lambda_Newton_Rapson()" RESET " \n");
+      }
 
       // Free memory
       free__MatrixLib__(Delta_Xip);
     }
   }
+
+        if (STATUS == EXIT_FAILURE) {
+        exit(0);
+      }
 }
 
 /****************************************************************************/

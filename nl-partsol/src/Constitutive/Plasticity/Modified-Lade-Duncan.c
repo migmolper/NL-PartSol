@@ -1,5 +1,22 @@
+/**
+ * @file Modified-Lade-Duncan.c
+ * @author Miguel Molinos (@migmolper)
+ * @brief 
+ * @version 0.1
+ * @date 2022-05-25
+ * 
+ * @copyright Copyright (c) 2022
+ * 
+ */
 
 #include "Constitutive/Plasticity/Modified-Lade-Duncan.h"
+#include "Globals.h"
+
+#ifdef __linux__
+#include <lapacke.h>
+#elif __APPLE__
+#include <Accelerate/Accelerate.h>
+#endif
 
 static int __compute_trial_b_e(
     double *eigval_b_e_tr /**< [out] Eigenvalues of b elastic trial. */,

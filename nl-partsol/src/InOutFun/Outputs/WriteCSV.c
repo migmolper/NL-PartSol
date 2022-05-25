@@ -1,4 +1,15 @@
-#include "nl-partsol.h"
+// clang-format off
+#include <stdlib.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include <string.h>
+#include <math.h>
+#include "Macros.h"
+#include "Types.h"
+#include "Matlib.h"
+#include "Particles.h"
+#include "InOutFun.h"
+// clang-format on
 
 /*
   Call global variables

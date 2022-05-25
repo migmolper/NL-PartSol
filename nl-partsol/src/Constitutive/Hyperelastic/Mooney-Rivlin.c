@@ -1,5 +1,16 @@
+/**
+ * @file Mooney-Rivlin.c
+ * @author Miguel Molinos (@migmolper)
+ * @brief 
+ * @version 0.1
+ * @date 2022-05-25
+ * 
+ * @copyright Copyright (c) 2022
+ * 
+ */
 
 #include "Constitutive/Hyperelastic/Mooney-Rivlin.h"
+#include "Globals.h"
 
 /**************************************************************/
 

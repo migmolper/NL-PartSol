@@ -9,7 +9,6 @@
 #include <math.h>
 #include "Macros.h"
 #include "Types.h"
-#include "Globals.h"
 #include "Matlib.h"
 // clang-format on
 

@@ -12,13 +12,7 @@
 #include "Particles.h"
 #include "InOutFun.h"
 
-/*
-  Call global variables
-*/
-extern Event *Out_nodal_path_csv;
-extern int Number_Out_nodal_path_csv;
-extern int NumTimeStep;
-extern char OutputDir[MAXC];
+
 /*
         Auxiliar structures
 */
@@ -51,14 +45,14 @@ static int Number_nodal_csv_events(char *);
 static FILE *Open_and_Check_simulation_file(char *);
 static bool Check_Output_directory(char *);
 static bool Check_Path(char *);
-static Intervals read_CSV_Intervals(char *);
+static Intervals read_CSV_Intervals(char *, unsigned NumTimeStep);
 static Parameters read_CSV_Parameters(FILE *, char *);
 static bool Is_Output_Activate(char *, char *);
 static Event fill_CSV_Parameters(Intervals, Parameters);
 
 /**********************************************************************/
 
-void NLPS_Out_nodal_path_csv__InOutFun__(char *Name_File)
+void NLPS_Out_nodal_path_csv__InOutFun__(char *Name_File, unsigned NumTimeStep)
 /*
   Example :
   Out-nodal-path-csv (i_ini=0;i_step=10;i_end=100)
@@ -105,7 +99,7 @@ void NLPS_Out_nodal_path_csv__InOutFun__(char *Name_File)
       if ((nkwords > 0) && (strcmp(kwords[0], "Out-nodal-path-csv") == 0)) {
 
         /* Read output period */
-        CSV_Intervals = read_CSV_Intervals(kwords[1]);
+        CSV_Intervals = read_CSV_Intervals(kwords[1],NumTimeStep);
         /* Read csv parameters */
         CSV_Parameters = read_CSV_Parameters(Sim_dat, Name_File);
         /* Fill csv parameters and period */
@@ -217,7 +211,7 @@ static bool Check_Path(char *PATH_Name) {
 
 /***************************************************************************/
 
-static Intervals read_CSV_Intervals(char *Interval_message) {
+static Intervals read_CSV_Intervals(char *Interval_message, unsigned NumTimeStep) {
   Intervals CSV_Intervals;
 
   char Error_message[MAXW];

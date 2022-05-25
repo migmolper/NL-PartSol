@@ -6,7 +6,7 @@
 /*
   Define local global variable for the relative error
 */
-extern double Error0;
+static double Error0;
 
 typedef struct {
   double alpha_1;

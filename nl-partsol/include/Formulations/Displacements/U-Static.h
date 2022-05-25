@@ -11,7 +11,6 @@
 // Global libs
 #include "Macros.h"
 #include "Types.h"
-#include "Globals.h"
 #include "Matlib.h"
 #include "Particles.h"
 
@@ -24,19 +23,6 @@
 
 // Material lib
 #include "Constitutive/Constitutive.h"
-
-// Linear-Solver libs
-#ifdef USE_PETSC
-#include <petscksp.h>
-//  #include "Linear-Solvers/"
-#else
-#ifdef __linux__
-#include <lapacke.h>
-#elif __APPLE__ 
-#include <Accelerate/Accelerate.h>
-#endif
-#include "Linear-Solvers/dgetrs-LAPACK.h"
-#endif
 
 // 
 #include "InOutFun.h"

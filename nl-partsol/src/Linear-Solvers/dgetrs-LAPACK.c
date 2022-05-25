@@ -1,4 +1,14 @@
 
+#include <stdlib.h>
+#include <stdio.h>
+#include "Macros.h"
+
+#ifdef __linux__
+#include <lapacke.h>
+#elif __APPLE__
+#include <Accelerate/Accelerate.h>
+#endif
+
 #include "Linear-Solvers/dgetrs-LAPACK.h"
 
 int dgetrs_LAPACK(
@@ -10,7 +20,7 @@ int dgetrs_LAPACK(
   int Order = Nactivedofs;
   int LDA = Nactivedofs;
   int LDB = Nactivedofs;
-  char TRANS = 'T'; /* (Transpose) */
+  char TRANS = 'N'; /* (Transpose) */
   int INFO = 3;
   int NRHS = 1;
   int *IPIV = (int *)calloc(Order, __SIZEOF_INT__);
@@ -23,19 +33,19 @@ int dgetrs_LAPACK(
   INFO = LAPACKE_dgetrf(LAPACK_ROW_MAJOR,Order,Order,Tangent_Stiffness,LDA,IPIV);
   if (INFO) {
     free(IPIV);
-    fprintf(stderr, "%s : %s %s %s \n", "Error in dgetrf_", "The function",
-            "dgetrf_", "returned an error message !!!");
+    fprintf(stderr, "%s : %s %s %s \n", "Error in LAPACKE_dgetrf", "The function",
+            "LAPACKE_dgetrf", "returned an error message !!!");
     return EXIT_FAILURE;
   }
 
   /*
     Solve the system
   */
-  INFO = LAPACKE_dgetrs(LAPACK_ROW_MAJOR,'T',Order,NRHS, Tangent_Stiffness, LDA,IPIV,Residual,LDB);
-  if (INFO) {
+  INFO = LAPACKE_dgetrs(LAPACK_ROW_MAJOR,'N',Order, NRHS, Tangent_Stiffness, LDA,IPIV,Residual,LDB);
+  if (INFO != 0) {
     free(IPIV);
-    fprintf(stderr, "%s : %s %s %s \n", "Error in dgetrs_", "The function",
-            "dgetrs_", "returned an error message !!!");
+    fprintf(stderr, "%s : %s %s %s \n", "Error in LAPACKE_dgetrs", "The function",
+            "LAPACKE_dgetrs", "returned an error message !!!");
     return EXIT_FAILURE;
   }
 

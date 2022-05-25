@@ -20,6 +20,7 @@
 #include <math.h>
 #include "Macros.h"
 #include "Types.h"
+#include "Globals.h"
 #include "Matlib.h"
 #include "Particles.h"
 #include "Nodes/Nodes-Tools.h"

@@ -1,7 +1,8 @@
 #include "Formulations/Displacements/U-Newmark-beta.h"
 #include "Formulations/Displacements/U-Newmark-beta-aux.h"
-#include "Globals.h"
 
+
+// Global variables
 unsigned InitialStep;
 unsigned NumTimeStep;
 unsigned TimeStep;
@@ -173,6 +174,10 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
         return EXIT_FAILURE;
       }
 
+
+    puts("paso 1");
+
+
 #ifdef USE_PETSC
       STATUS = krylov_PETSC(&Tangent_Stiffness, &Residual, Nactivedofs);
       if (STATUS == EXIT_FAILURE) {
@@ -187,8 +192,12 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
       }
 #endif
 
+      puts("paso 2");
+
       __update_Nodal_Increments(Residual, D_U, U_n, ActiveDOFs,
                                 Time_Integration_Params, Ntotaldofs);
+
+      puts("paso");
 
       __local_compatibility_conditions(D_U, ActiveNodes, MPM_Mesh, FEM_Mesh,
                                        &STATUS);
@@ -199,7 +208,11 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
         return EXIT_FAILURE;
       }
 
+      puts("paso");
+
       __constitutive_update(MPM_Mesh, FEM_Mesh, &STATUS);
+
+      puts("paso");
 
       // Free memory
 #ifdef USE_PETSC
@@ -1070,13 +1083,20 @@ static void __constitutive_update(Particle MPM_Mesh, Mesh FEM_Mesh,
   unsigned MatIndx_p;
   unsigned p;
 
+  puts("paso");
+
 #pragma omp for private(p, MatIndx_p)
   for (p = 0; p < Np; p++) {
+
+    puts("paso");
 
     //  Update the Kirchhoff stress tensor with an apropiate
     //  integration rule.
     MatIndx_p = MPM_Mesh.MatIdx[p];
     Material MatProp_p = MPM_Mesh.Mat[MatIndx_p];
+
+    puts("paso");
+
     *STATUS = Stress_integration__Constitutive__(p, MPM_Mesh, MatProp_p);
     if (*STATUS == EXIT_FAILURE) {
       fprintf(stderr,
@@ -1084,8 +1104,6 @@ static void __constitutive_update(Particle MPM_Mesh, Mesh FEM_Mesh,
               " \n");
     }
 
-    // Update internal energy of the particle
-    MPM_Mesh.Phi.W[p] = 0.0;
   }
 }
 

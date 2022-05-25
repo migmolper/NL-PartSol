@@ -8,7 +8,6 @@
 #include <math.h>
 #include "Macros.h"
 #include "Types.h"
-#include "Globals.h"
 
 /*!
   \param[out] Stiffness_density Elastoplastic tangent matrix

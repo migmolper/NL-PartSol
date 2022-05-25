@@ -1,5 +1,16 @@
+/**
+ * @file Beps.c
+ * @author Miguel Molinos (@migmolper)
+ * @brief 
+ * @version 0.1
+ * @date 2022-05-25
+ * 
+ * @copyright Copyright (c) 2022
+ * 
+ */
 
 #include "Constitutive/Fracture/Beps.h"
+#include "Globals.h"
 
 void compute_Beps__Constitutive__(Particle MPM_Mesh, Mesh FEM_Mesh,
                                   bool Initialize_Beps) {

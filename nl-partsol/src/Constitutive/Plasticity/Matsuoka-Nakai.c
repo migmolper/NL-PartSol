@@ -1,5 +1,22 @@
+/**
+ * @file Matsuoka-Nakai.c
+ * @author Miguel Molinos (@migmolper)
+ * @brief 
+ * @version 0.1
+ * @date 2022-05-25
+ * 
+ * @copyright Copyright (c) 2022
+ * 
+ */
 
 #include "Constitutive/Plasticity/Matsuoka-Nakai.h"
+#include "Globals.h"
+
+#ifdef __linux__
+#include <lapacke.h>
+#elif __APPLE__
+#include <Accelerate/Accelerate.h>
+#endif
 
 /**************************************************************/
 static int __compute_trial_b_e(
