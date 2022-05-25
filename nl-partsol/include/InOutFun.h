@@ -352,18 +352,7 @@ Particle Generate_Soil_Water_Coupling_Analysis__InOutFun__(char *, Mesh, Time_In
 }
 */
 Time_Int_Params Solver_selector__InOutFun__(char *);
-/*****************************************************************/
 
-/*!
-  \fn Material * GramsMaterials(char * File, Particle Particles, int GPxElement)
-
-  \brief Generate the libreary of materials
-
-  \param File: Name of the file with the instructions
-  \param Particles : Particle discretization
-  \param GPxElement : As the particle discretization is performed thorouht 
-*/
-Material * GramsMaterials(char *, Particle, int);
 /*****************************************************************/
 
 /*!
@@ -478,10 +467,6 @@ int Generate_Gravity_Field__InOutFun__(Load *gravity_field, const char *Name_Fil
 /*****************************************************************/
 
 void particle_results_vtk__InOutFun__(Particle, int, int);
-
-/*****************************************************************/
-
-void particle_backup_vtk__InOutFun__(Particle,int,int);
 
 /*****************************************************************/
 

@@ -1,4 +1,5 @@
 #include "Formulations/Displacements/U-Generalized-Alpha.h"
+#include "Globals.h"
 
 /*
   Auxiliar functions

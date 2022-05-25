@@ -21,9 +21,8 @@
 /*
   Call global variables
 */
-char *MPM_MeshFileName;
-
-double Thickness_Plain_Stress; // For 2D cases
+extern char *MPM_MeshFileName;
+extern double Thickness_Plain_Stress; // For 2D cases
 
 typedef struct {
   bool Is_One_Phase_Analysis;

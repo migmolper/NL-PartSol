@@ -1,5 +1,5 @@
 #include "Formulations/Displacements/U-Forward-Euler.h"
-
+#include "Globals.h"
 
 /*
   Auxiliar functions

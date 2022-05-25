@@ -1,9 +1,9 @@
 #include "Formulations/Displacements-WaterPressure/U-pw-Verlet.h"
+#include "Globals.h"
 
 /*
   Auxiliar functions and variables
 */
-
 static char Error_message[MAXW];
 static void standard_error();
 

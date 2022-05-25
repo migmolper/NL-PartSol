@@ -15,17 +15,11 @@
 #include "Nodes/Shape-Functions.h"
 #include "Nodes/Read-GID-Mesh.h"
 
+extern int Number_Soil_Water_Mixtures;
+extern Mixture * Soil_Water_Mixtures;
+
 #include "Formulations/Displacements-WaterPressure/U-pw-Analisys.h"
 
-/*
-  Call global variables
-*/
-char *MPM_MeshFileName;
-
-int Number_Soil_Water_Mixtures; // Number of Soil-Water Mixtures in the sample
-Mixture *Soil_Water_Mixtures;   // Structure with the properties of the sample
-
-double Thickness_Plain_Stress; // For 2D cases
 
 typedef struct {
   bool Is_Soil_Water_Coupling;

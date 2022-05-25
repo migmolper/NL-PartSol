@@ -1,5 +1,6 @@
 
 #include "Nodes/Shape-Functions.h"
+#include "Globals.h"
 
 /*********************************************************************/
 

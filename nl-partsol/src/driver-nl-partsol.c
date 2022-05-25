@@ -11,12 +11,21 @@
   \section Usage
  */
 
-#include "nl-partsol.h"
 #include <string.h>
-
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
+#include <stddef.h>
 #ifdef USE_PETSC
 #include <petscksp.h>
 #endif
+
+#include "Macros.h"
+#include "Types.h"
+#include "Globals.h"
+#include "Matlib.h"
+#include "Particles.h"
+#include "InOutFun.h"
 
 #include "Formulations/Displacements/U-Analisys.h"
 #include "Formulations/Displacements/U-Discrete-Energy-Momentum.h"

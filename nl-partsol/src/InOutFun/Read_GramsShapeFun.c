@@ -1,15 +1,25 @@
 #include <string.h>
-#include "nl-partsol.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
+#include <stddef.h>
+
+#include "Macros.h"
+#include "Types.h"
+#include "Globals.h"
+#include "Matlib.h"
+#include "Particles.h"
+#include "InOutFun.h"
 
 /*
   Call global variables
 */
-char *ShapeFunctionGP;
-double gamma_LME;
-double TOL_zero_LME;
-double TOL_wrapper_LME;
-int max_iter_LME;
-char wrapper_LME[MAXC];
+extern char *ShapeFunctionGP;
+extern double gamma_LME;
+extern double TOL_zero_LME;
+extern double TOL_wrapper_LME;
+extern int max_iter_LME;
+extern char wrapper_LME[MAXC];
 
 /**********************************************************************/
 

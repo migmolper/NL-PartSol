@@ -1,10 +1,12 @@
 
 #include "Formulations/Displacements-Pressure/U-p-Newmark-beta.h"
+#include "Globals.h"
+
 
 /*
   Define local global variable for the relative error
 */
-double Error0;
+extern double Error0;
 
 typedef struct {
   double alpha_1;

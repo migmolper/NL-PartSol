@@ -1,10 +1,8 @@
 #include "Formulations/Displacements/U-Discrete-Energy-Momentum.h"
+#include "Globals.h"
 
-/*
-  Generate a global variable
-*/
+
 double Error0;
-
 
 /*!
     \fn void average_strain_integration_Stress__Particles__(Tensor PK2,Tensor C_n1,Tensor C_n,Material Mat);

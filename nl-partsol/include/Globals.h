@@ -16,7 +16,7 @@ extern double DeltaTimeStep;
 extern int NumberDOF;
 
 // Gravity field
-Load gravity_field;
+extern Load gravity_field;
 
 // Use Fracture modul
 extern bool Driver_EigenErosion;

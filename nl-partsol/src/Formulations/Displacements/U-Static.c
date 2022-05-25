@@ -1,9 +1,10 @@
 #include "Formulations/Displacements/U-Static.h"
 
-/*
-  Define local global variable for the relative error
-*/
-double Error0;
+// Global variuables
+extern double Error0;
+extern unsigned InitialStep;
+extern unsigned TimeStep;
+extern unsigned NumTimeStep;
 
 typedef struct {
 

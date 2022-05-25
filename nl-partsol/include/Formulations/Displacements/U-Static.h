@@ -43,21 +43,6 @@
 
 
 /*
-  Call global variables
-*/
-double Thickness_Plain_Stress;
-Event *Out_nodal_path_csv;
-Event *Out_particles_path_csv;
-int Number_Out_nodal_path_csv;
-int Number_Out_particles_path_csv;
-
-
-// Global variuables
-unsigned InitialStep;
-unsigned TimeStep;
-unsigned NumTimeStep;
-
-/*
   \brief Run the static equations using a Finite strains Newmark-beta
  
   \param Mesh FEM_Mesh : Variable with the nodal information

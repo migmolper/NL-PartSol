@@ -1,4 +1,5 @@
 #include "Formulations/Displacements/U-Verlet.h"
+#include "Globals.h"
 
 /*
   Auxiliar functions

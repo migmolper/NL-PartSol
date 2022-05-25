@@ -1,15 +1,24 @@
 #include <sys/stat.h>
 #include <string.h>
-#include "nl-partsol.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
+#include <stddef.h>
+
+#include "Macros.h"
+#include "Types.h"
+#include "Globals.h"
+#include "Matlib.h"
+#include "Particles.h"
+#include "InOutFun.h"
 
 /*
   Call global variables
 */
-Event *Out_nodal_path_csv;
-int Number_Out_nodal_path_csv;
-int NumTimeStep;
-char OutputDir[MAXC];
-
+extern Event *Out_nodal_path_csv;
+extern int Number_Out_nodal_path_csv;
+extern int NumTimeStep;
+extern char OutputDir[MAXC];
 /*
         Auxiliar structures
 */

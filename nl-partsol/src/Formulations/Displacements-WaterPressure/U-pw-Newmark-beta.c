@@ -1,4 +1,5 @@
 #include "Formulations/Displacements-WaterPressure/U-pw-Newmark-beta.h"
+#include "Globals.h"
 
 /*
   Define local global variable for the relative error
