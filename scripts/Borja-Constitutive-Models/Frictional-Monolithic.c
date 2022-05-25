@@ -107,10 +107,10 @@ typedef struct {
   Define local global variables
 */
 int Particle_Idx;
-double Error0;
 bool Is_Matsuoka_Nakai;
 bool Is_Lade_Duncan;
 bool Is_Modified_Lade_Duncan;
+static double Error0;
 
 /**************************************************************/
 /******************** Auxiliar functions **********************/

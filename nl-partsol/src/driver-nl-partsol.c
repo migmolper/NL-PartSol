@@ -11,12 +11,21 @@
   \section Usage
  */
 
-#include "nl-partsol.h"
 #include <string.h>
-
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
+#include <stddef.h>
 #ifdef USE_PETSC
 #include <petscksp.h>
 #endif
+
+#include "Macros.h"
+#include "Types.h"
+#include "Globals.h"
+#include "Matlib.h"
+#include "Particles.h"
+#include "InOutFun.h"
 
 #include "Formulations/Displacements/U-Analisys.h"
 #include "Formulations/Displacements/U-Discrete-Energy-Momentum.h"
@@ -36,6 +45,7 @@
 /*
   Call global variables
 */
+char ShapeFunctionGP[MAXC];
 char SimulationFile[MAXC];
 char Static_conditons[MAXC];
 char Formulation[MAXC];
@@ -166,8 +176,8 @@ int main(int argc, char *argv[]) {
       puts("*************************************************");
       puts("" GREEN "Read outputs" RESET " ...");
       GramsOutputs(Static_conditons);
-      NLPS_Out_nodal_path_csv__InOutFun__(Static_conditons);
-      NLPS_Out_particles_path_csv__InOutFun__(Static_conditons);
+      NLPS_Out_nodal_path_csv__InOutFun__(Static_conditons,Parameters_Solver.NumTimeStep);
+      NLPS_Out_particles_path_csv__InOutFun__(Static_conditons,Parameters_Solver.NumTimeStep);
 
       puts("*************************************************");
       printf("" GREEN "Start %s shape functions initialisation" RESET " ... \n",
@@ -205,8 +215,8 @@ int main(int argc, char *argv[]) {
       puts("*************************************************");
       puts("" GREEN "Read outputs" RESET " ...");
       GramsOutputs(SimulationFile);
-      NLPS_Out_nodal_path_csv__InOutFun__(SimulationFile);
-      NLPS_Out_particles_path_csv__InOutFun__(SimulationFile);
+      NLPS_Out_nodal_path_csv__InOutFun__(SimulationFile,Parameters_Solver.NumTimeStep);
+      NLPS_Out_particles_path_csv__InOutFun__(SimulationFile,Parameters_Solver.NumTimeStep);
 
       puts("*************************************************");
       printf("Start %s shape functions initialisation ... \n", ShapeFunctionGP);
@@ -269,8 +279,8 @@ int main(int argc, char *argv[]) {
     puts("*************************************************");
     puts("Read outputs ...");
     GramsOutputs(SimulationFile);
-    NLPS_Out_nodal_path_csv__InOutFun__(SimulationFile);
-    NLPS_Out_particles_path_csv__InOutFun__(SimulationFile);
+    NLPS_Out_nodal_path_csv__InOutFun__(SimulationFile,Parameters_Solver.NumTimeStep);
+    NLPS_Out_particles_path_csv__InOutFun__(SimulationFile,Parameters_Solver.NumTimeStep);
 
     puts("*************************************************");
     puts("Run simulation ...");
@@ -315,11 +325,11 @@ int main(int argc, char *argv[]) {
 
     puts("*************************************************");
     puts("Read nodal path output directives ...");
-    NLPS_Out_nodal_path_csv__InOutFun__(SimulationFile);
+    NLPS_Out_nodal_path_csv__InOutFun__(SimulationFile,Parameters_Solver.NumTimeStep);
 
     puts("*************************************************");
     puts("Read particle path output directives ...");
-    NLPS_Out_particles_path_csv__InOutFun__(SimulationFile);
+    NLPS_Out_particles_path_csv__InOutFun__(SimulationFile,Parameters_Solver.NumTimeStep);
 
     puts("*************************************************");
     puts("Run simulation ...");

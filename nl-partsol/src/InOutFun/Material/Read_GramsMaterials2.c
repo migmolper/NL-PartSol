@@ -1,11 +1,21 @@
 #include <string.h>
-#include "nl-partsol.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
+#include <stddef.h>
+
+#include "Macros.h"
+#include "Types.h"
+#include "Globals.h"
+#include "Matlib.h"
+#include "Particles.h"
+#include "InOutFun.h"
 
 /*
   Call global variables
 */
-double TOL_Radial_Returning;
-int Max_Iterations_Radial_Returning;
+extern double TOL_Radial_Returning;
+extern int Max_Iterations_Radial_Returning;
 
 /*
   Local structures

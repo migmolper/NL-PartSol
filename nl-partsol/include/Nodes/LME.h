@@ -42,18 +42,17 @@ double beta__LME__(double, double);
 
 /****************************************************************************/
 
-/*!
-  \fn void update_lambda_Newton_Rapson__LME__(Matrix l, Matrix lambda, double Beta)
-
-  \brief Function ot get the lagrange multipliers "lambda" (1 x dim) for the LME 
-  shape function. The numerical methodis the Newton-Rapson.
-
-  \param p : Current particle
-  \param l : Set than contanins vector form neighborhood nodes to particle.
-  \param lambda : Lagrange multiplier.
-  \param Beta : Thermalization parameter.
-*/
-void update_lambda_Newton_Rapson__LME__(int, Matrix, Matrix, double);
+/**
+ * @brief Function ot get the lagrange multipliers "lambda" (1 x dim) for the LME  
+ * shape function. The numerical methodis the Newton-Rapson.
+ * 
+ * @param Idx_particle Current particle
+ * @param l Set than contanins vector form neighborhood nodes to particle.
+ * @param lambda Lagrange multiplier.
+ * @param Beta Thermalization parameter.
+ * @return int 
+ */
+static int __lambda_Newton_Rapson(int Idx_particle,Matrix l, Matrix lambda,double Beta);
 /****************************************************************************/
 
 /*!

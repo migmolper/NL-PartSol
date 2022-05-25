@@ -3,7 +3,7 @@
 /*
   Call global variables
 */
-double Thickness_Plain_Stress;
+extern double Thickness_Plain_Stress;
 
 /*
   Auxiliar functions

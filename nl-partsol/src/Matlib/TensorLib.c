@@ -1,12 +1,18 @@
+// clang-format off
+#include <stdlib.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include <string.h>
 #include <math.h>
-#include "nl-partsol.h"
+#include "Macros.h"
+#include "Types.h"
+#include "Matlib.h"
+// clang-format on
 
 #ifdef __linux__
 #include <lapacke.h>
-
 #elif __APPLE__
 #include <Accelerate/Accelerate.h>
-
 #endif
 
 /*************************************************************/
@@ -177,20 +183,8 @@ int sym_eigen_analysis__TensorLib__(
   eigvec_A[3] = A[3];
 
   /* Locals */
-  int n = 2;
-  int lda = 2;
-  int ldvl = 2;
-  int ldvr = 2;
-  int info;
-  int lwork;
-  double wkopt;
-  double *work;
-
-  /* Local arrays */
-  int IPIV[2] = {0, 0};
-  double wi[2];
-  double vl[4];
-
+  lapack_int n = 2;
+  lapack_int lda = 2;
 #else
 
   eigvec_A[0] = A[0];
@@ -206,71 +200,30 @@ int sym_eigen_analysis__TensorLib__(
   eigvec_A[8] = A[8];
 
   /* Locals */
-  int n = 3;
-  int lda = 3;
-  int ldvl = 3;
-  int ldvr = 3;
-  int info;
-  int lwork;
-  double wkopt;
-  double *work;
-
-  /* Local arrays */
-  int IPIV[3] = {0, 0, 0};
-  double wi[3];
-  double vl[9];
-
+  lapack_int n = 3;
+  lapack_int lda = 3;
 #endif
 
-  /*
-    Query and allocate the optimal workspace
-  */
-  lwork = -1;
-  dsyev_("V", "L", &n, eigvec_A, &lda, eigval_A, &wkopt, &lwork,
-         &info);
-  lwork = (int)wkopt;
-  work = (double *)malloc(lwork * sizeof(double));
+
+  lapack_int info = LAPACKE_dsyev(LAPACK_ROW_MAJOR, 'V', 'U', n, eigvec_A, lda, eigval_A);
 
   /* Check for convergence */
   if (info > 0) {
-    free(work);
     fprintf(stderr,
-            "" RED "Error in dsyev_(): %s\n %s; \n %i+1:N \n %s " RESET "\n",
+            "" RED "Error in LAPACKE_dsyev(): %s\n %s; \n %i+1:N \n %s " RESET "\n",
             "the QR algorithm failed to compute all the",
             "eigenvalues, and no eigenvectors have been computed elements",
             info, "of WR and WI contain eigenvalues which have converged.");
     return EXIT_FAILURE;
   }
   if (info < 0) {
-    free(work);
     fprintf(stderr,
-            "" RED "Error in dsyev_(): the %i-th argument had an "
+            "" RED "Error in LAPACKE_dsyev(): the %i-th argument had an "
             "illegal value." RESET "\n",
             abs(info));
     return EXIT_FAILURE;
   }
 
-  dsyev_("V", "L", &n, eigvec_A, &lda, eigval_A, work, &lwork, &info);
-  /* Check for convergence */
-  if (info > 0) {
-    free(work);
-    fprintf(stderr,
-            "" RED "Error in dsyev_(): %s\n %s; \n %i+1:N \n %s " RESET "\n",
-            "the QR algorithm failed to compute all the",
-            "eigenvalues, and no eigenvectors have been computed elements",
-            info, "of WR and WI contain eigenvalues which have converged.");
-    return EXIT_FAILURE;
-  }
-  if (info < 0) {
-    free(work);
-    fprintf(stderr,
-            "" RED "Error in dsyev_(): the %i-th argument had an "
-            "illegal value." RESET "\n",
-            abs(info));
-    return EXIT_FAILURE;
-  }
-
-  free(work);
 
 #if NumberDimensions == 2
   eigval_A[2] = A[4];
@@ -1014,3 +967,34 @@ double euclidean_distance__TensorLib__(const double * X1, const double * X2)
 }
 
 /*************************************************************/
+
+double rcond__TensorLib__(const double * A)
+/*
+  C = rcond(A) returns an estimate for the reciprocal condition of A in 1-norm.
+  If A is well conditioned, rcond(A) is near 1.0.
+  If A is badly conditioned, rcond(A) is near 0.
+*/
+{
+  double ANORM;
+  double RCOND;
+  lapack_int INFO;
+  lapack_int N_rows = NumberDimensions;
+  lapack_int N_cols = NumberDimensions;
+  lapack_int LDA = NumberDimensions;
+
+  // Compute 1-norm
+  ANORM = LAPACKE_dlange(LAPACK_ROW_MAJOR,'1',N_rows, N_cols, A,LDA); 	
+
+  // Compute the Reciprocal condition number
+  INFO = LAPACKE_dgecon(LAPACK_ROW_MAJOR,'1', N_rows, A, LDA, ANORM, &RCOND);
+
+  if (INFO < 0) {
+    fprintf(stderr,""RED"Error in LAPACKE_dgecon() : the %i-th argument had an illegal value "RESET"\n",
+           abs(INFO));
+    return EXIT_FAILURE;
+  }
+
+  return RCOND;
+}
+
+/*********************************************************************/

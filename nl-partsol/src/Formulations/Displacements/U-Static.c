@@ -1,9 +1,32 @@
-#include "Formulations/Displacements/U-Static.h"
+/**
+ * @file U-Static.c
+ * @author Miguel Molinos (@migmolper)
+ * @brief 
+ * @version 0.1
+ * @date 2022-05-25
+ * 
+ * @copyright Copyright (c) 2022
+ * 
+ */
 
-/*
-  Define local global variable for the relative error
-*/
-double Error0;
+#include "Formulations/Displacements/U-Static.h"
+#include "Globals.h"
+
+// Linear-Solver libs
+#ifdef USE_PETSC
+#include <petscksp.h>
+//  #include "Linear-Solvers/"
+#else
+#ifdef __linux__
+#include <lapacke.h>
+#elif __APPLE__ 
+#include <Accelerate/Accelerate.h>
+#endif
+#include "Linear-Solvers/dgetrs-LAPACK.h"
+#endif
+
+// Global variuables
+static double Error0;
 
 typedef struct {
 
@@ -1030,7 +1053,7 @@ static void solve_non_reducted_system(Nodal_Field D_U, Matrix Tangent_Stiffness,
   /*
     Compute the LU factorization
   */
-  dgetrf_(&Order, &Order, K_Global.nV, &LDA, IPIV, &INFO);
+   INFO = LAPACKE_dgetrf(LAPACK_ROW_MAJOR,Order,Order,K_Global.nV,LDA,IPIV);
 
   /*
     Check error messages in the LAPACK LU descompistion
@@ -1044,8 +1067,8 @@ static void solve_non_reducted_system(Nodal_Field D_U, Matrix Tangent_Stiffness,
   /*
     Solve
   */
-  dgetrs_(&TRANS, &Order, &NRHS, K_Global.nV, &LDA, IPIV, Residual.nV, &LDB,
-          &INFO);
+  INFO = LAPACKE_dgetrs(LAPACK_ROW_MAJOR,'T',Order,NRHS, K_Global.nV, LDA,IPIV,Residual.nV,LDB);
+
   free(IPIV);
 
   /*
@@ -1138,7 +1161,7 @@ static void solve_reducted_system(Nodal_Field D_U, Matrix Tangent_Stiffness,Matr
   /*
     Compute the LU factorization
   */
-  dgetrf_(&Order_FF, &Order_FF, K_Global_FF.nV, &LDA, IPIV, &INFO);
+  INFO = LAPACKE_dgetrf(LAPACK_ROW_MAJOR,Order,Order,K_Global_FF.nV,LDA,IPIV);
 
   /*
     Check error messages in the LAPACK LU descompistion
@@ -1152,8 +1175,8 @@ static void solve_reducted_system(Nodal_Field D_U, Matrix Tangent_Stiffness,Matr
   /*
     Solve
   */
-  dgetrs_(&TRANS, &Order_FF, &NRHS, K_Global_FF.nV, &LDA, IPIV, Residual_F.nV,
-          &LDB, &INFO);
+  INFO = LAPACKE_dgetrs(LAPACK_ROW_MAJOR,'T',Order,NRHS, K_Global_FF.nV, LDA,IPIV,Residual.nV,LDB);
+
   free(IPIV);
 
   /*
@@ -1272,9 +1295,6 @@ static void update_Particles(Nodal_Field D_U, Particle MPM_Mesh, Mesh FEM_Mesh,
     Vol_0_p = MPM_Mesh.Phi.Vol_0.nV[p];
     MatIndx_p = MPM_Mesh.MatIdx[p];
     MatProp_p = MPM_Mesh.Mat[MatIndx_p];
-    //      MPM_Mesh.Phi.W.nV[p]=
-    //      finite_strains_internal_energy__Particles__(F_n_p,
-    //      MatProp_p,Vol_0_p);
 
     /* Iterate over the nodes of the particle */
     for (int A = 0; A < Nodes_p.NumberNodes; A++) {

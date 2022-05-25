@@ -21,7 +21,7 @@ ENDIF ()
 option(USE_LAPACK "Use LAPACK solver library" ON)
 
 # Add OpenMP
-option(USE_OPENMP "Use OpenMP solver library" ON)
+option(USE_OPENMP "Use OpenMP solver library" OFF)
 
 # Add PETSC
 option(USE_PETSC "Use PETSC solver library" ON)

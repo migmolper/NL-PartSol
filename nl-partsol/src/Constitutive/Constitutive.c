@@ -1,6 +1,17 @@
 
+/**
+ * @file Constitutive.c
+ * @author Miguel Molinos (@migmolper)
+ * @brief 
+ * @version 0.1
+ * @date 2022-05-25
+ * 
+ * @copyright Copyright (c) 2022
+ * 
+ */
 
 #include "Constitutive/Constitutive.h"
+#include "Globals.h"
 
 /**************************************************************/
 
@@ -48,6 +59,8 @@ int Stress_integration__Constitutive__(int p, Particle MPM_Mesh,
     *(IO_State.EPS) = MPM_Mesh.Phi.EPS_n[p];
     
   } else if (strcmp(MatProp_p.Type, "Neo-Hookean-Wriggers") == 0) {
+
+    
     IO_State.Particle_Idx = p;
     IO_State.Stress = MPM_Mesh.Phi.Stress.nM[p];
 

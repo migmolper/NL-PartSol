@@ -352,18 +352,7 @@ Particle Generate_Soil_Water_Coupling_Analysis__InOutFun__(char *, Mesh, Time_In
 }
 */
 Time_Int_Params Solver_selector__InOutFun__(char *);
-/*****************************************************************/
 
-/*!
-  \fn Material * GramsMaterials(char * File, Particle Particles, int GPxElement)
-
-  \brief Generate the libreary of materials
-
-  \param File: Name of the file with the instructions
-  \param Particles : Particle discretization
-  \param GPxElement : As the particle discretization is performed thorouht 
-*/
-Material * GramsMaterials(char *, Particle, int);
 /*****************************************************************/
 
 /*!
@@ -481,10 +470,6 @@ void particle_results_vtk__InOutFun__(Particle, int, int);
 
 /*****************************************************************/
 
-void particle_backup_vtk__InOutFun__(Particle,int,int);
-
-/*****************************************************************/
-
 void nodal_results_vtk__InOutFun__(Mesh, Mask, Matrix, int, int);
 
 /*****************************************************************/
@@ -498,8 +483,16 @@ void path_particles_analysis_csv__InOutFun__(Matrix, Matrix, char *, Event, int,
 /*****************************************************************/
 
 
-void NLPS_Out_nodal_path_csv__InOutFun__(char * Name_File);
-void NLPS_Out_particles_path_csv__InOutFun__(char * Name_File);
+/**
+ * @brief 
+ * 
+ * @param Name_File 
+ * @param NumTimeStep 
+ */
+void NLPS_Out_nodal_path_csv__InOutFun__(char *Name_File, unsigned NumTimeStep);
+
+
+void NLPS_Out_particles_path_csv__InOutFun__(char *Name_File, unsigned NumTimeStep);
 /*****************************************************************/
 
 

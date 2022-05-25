@@ -41,7 +41,7 @@ if (USE_LAPACK)
   find_package(LAPACK REQUIRED)
   
   if(LAPACK_FOUND)
-    target_link_libraries(${PROJECT_NAME} ${LAPACK_LIBRARIES})
+    target_link_libraries(${PROJECT_NAME} -llapacke -llapack -lblas)
     add_definitions("-DUSE_LAPACK")
   endif()
 

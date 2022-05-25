@@ -1,5 +1,16 @@
+/**
+ * @file Neo-Hookean.c
+ * @author Miguel Molinos (@migmolper)
+ * @brief 
+ * @version 0.1
+ * @date 2022-05-25
+ * 
+ * @copyright Copyright (c) 2022
+ * 
+ */
 
 #include "Constitutive/Hyperelastic/Neo-Hookean.h"
+#include "Globals.h"
 
 /**************************************************************/
 

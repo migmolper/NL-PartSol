@@ -185,26 +185,7 @@ int spatial_velocity_gradient__Particles__(double * L,const double * dFdt,const 
   \return The Lagrangian Strain tensor 
 */
 Tensor strain_Green_Lagrange__Particles__(Tensor);
-/*******************************************************/
 
-
-
-/*!
-  \brief update the internal energy of the particle using
-  \f[
-  W_n1 = W_n + dt * (P : dfdt)
-  \f]
-
-  \param[out] W Internal energy
-  \param[in] P First Piola-Kichhoff stress tensor
-  \param[in] dFdt Deformation gradient rate
-  \param[in] dt Time step for the time integration
-*/
-void finite_strains_internal_energy__Particles__(
-  double * W,
-  const double * P,
-  const double * dFdt,
-  double dt);
 /*******************************************************/
 /*!
 

@@ -8,13 +8,6 @@
 #include <math.h>
 #include "Macros.h"
 #include "Types.h"
-#include "Globals.h"
-
-#ifdef __linux__
-#include <lapacke.h>
-#elif __APPLE__
-#include <Accelerate/Accelerate.h>
-#endif
 
 /**************************************************************/
 

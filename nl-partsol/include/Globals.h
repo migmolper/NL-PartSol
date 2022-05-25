@@ -1,3 +1,16 @@
+/**
+ * @file Globals.h
+ * @author Miguel Molinos (@migmolper)
+ * @brief 
+ * @version 0.1
+ * @date 2022-05-25
+ * 
+ * @copyright Copyright (c) 2022
+ * 
+ */
+
+#ifndef _GLOBALS_H_
+#define _GLOBALS_H_
 
 extern char   SimulationFile[MAXC];
 extern char   Static_conditons[MAXC];
@@ -5,7 +18,7 @@ extern char   Formulation[MAXC];
 extern char * FEM_MeshFileName;
 extern char * MPM_MeshFileName;
 extern char * TimeIntegrationScheme;
-extern char * ShapeFunctionGP;
+extern char   ShapeFunctionGP[MAXC];
 extern char   OutputParticlesFile[MAXC];
 extern char   OutputNodesFile[MAXC];
 extern char   OutputDir[MAXC];
@@ -16,7 +29,7 @@ extern double DeltaTimeStep;
 extern int NumberDOF;
 
 // Gravity field
-Load gravity_field;
+extern Load gravity_field;
 
 // Use Fracture modul
 extern bool Driver_EigenErosion;
@@ -88,3 +101,4 @@ extern bool Backup_damage;
 extern bool Backup_plastic_deformation_gradient;
 extern bool Backup_EPS;
 
+#endif

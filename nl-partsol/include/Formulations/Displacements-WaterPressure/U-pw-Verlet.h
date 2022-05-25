@@ -11,7 +11,6 @@
 // Global libs
 #include "Macros.h"
 #include "Types.h"
-#include "Globals.h"
 #include "Matlib.h"
 #include "Particles.h"
 
@@ -37,14 +36,6 @@
 // 
 #include "InOutFun.h"
 
-
-//  Call global variables
-double DeltaTimeStep;
-double Thickness_Plain_Stress;
-Event *Out_nodal_path_csv;
-Event *Out_particles_path_csv;
-int Number_Out_nodal_path_csv;
-int Number_Out_particles_path_csv;
 
 /*!
   \fn void upw_Verlet(Mesh FEM_Mesh, Particle MPM_Mesh, Time_Int_Params Parameters_Solver)

@@ -1,9 +1,10 @@
 #include "Formulations/Displacements-WaterPressure/U-pw-Newmark-beta.h"
+#include "Globals.h"
 
 /*
   Define local global variable for the relative error
 */
-double Error0;
+static double Error0;
 
 typedef struct {
   double alpha_1;
@@ -468,7 +469,7 @@ static Nodal_Field compute_Nodal_Field(Particle MPM_Mesh, Mesh FEM_Mesh, Mask Ac
   /*
     Compute the LU factorization for the mass matrix
   */
-  dgetrf_(&Order, &Order, Effective_Mass.nV, &LDA, IPIV, &INFO);
+  INFO = LAPACKE_dgetrf(LAPACK_ROW_MAJOR,Order,Order,Effective_Mass.nV,LDA,IPIV);
 
   if (INFO != 0) {
     if (INFO < 0) {
@@ -488,12 +489,11 @@ static Nodal_Field compute_Nodal_Field(Particle MPM_Mesh, Mesh FEM_Mesh, Mask Ac
   /*
     Solve for the acceleration and second derivative of the pore water pressure
   */
-  dgetrs_(&TRANS, &Order, &NRHS, Effective_Mass.nV, &LDA, IPIV, upw.value.nV, &LDB,
-          &INFO);
-  dgetrs_(&TRANS, &Order, &NRHS, Effective_Mass.nV, &LDA, IPIV, upw.d_value_dt.nV,
-          &LDB, &INFO);
-  dgetrs_(&TRANS, &Order, &NRHS, Effective_Mass.nV, &LDA, IPIV, upw.d2_value_dt2.nV,
-          &LDB, &INFO);
+  INFO = LAPACKE_dgetrs(LAPACK_ROW_MAJOR,'T',Order,NRHS, Effective_Mass.nV, LDA,IPIV,upw.value.nV,LDB);
+
+  INFO = LAPACKE_dgetrs(LAPACK_ROW_MAJOR,'T',Order,NRHS, Effective_Mass.nV, LDA,IPIV,upw.d_value_dt.nV,LDB);
+
+  INFO = LAPACKE_dgetrs(LAPACK_ROW_MAJOR,'T',Order,NRHS, Effective_Mass.nV, LDA,IPIV,upw.d2_value_dt2.nV,LDB);
 
   /*
     Free auxiliar memory
@@ -2255,7 +2255,7 @@ static void solve_system(Nodal_Field D_upw, Matrix Tangent_Stiffness,
   /*
     Compute the LU factorization
   */
-  dgetrf_(&Order, &Order, Tangent_Stiffness.nV, &LDA, IPIV, &INFO);
+  INFO = LAPACKE_dgetrf(LAPACK_ROW_MAJOR,Order,Order,Tangent_Stiffness.nV,LDA,IPIV);
 
   /*
     Check error messages in the LAPACK LU descomposition
@@ -2269,8 +2269,8 @@ static void solve_system(Nodal_Field D_upw, Matrix Tangent_Stiffness,
   /*
     Solve
   */
-  dgetrs_(&TRANS, &Order, &NRHS, Tangent_Stiffness.nV, &LDA, IPIV, Residual.nV,
-          &LDB, &INFO);
+  INFO = LAPACKE_dgetrs(LAPACK_ROW_MAJOR,'T',Order,NRHS, Tangent_Stiffness.nV, LDA,IPIV,Residual.nV,LDB);
+
   free(IPIV);
 
   /*

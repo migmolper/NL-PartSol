@@ -1,10 +1,21 @@
-#include <math.h>
+// clang-format off
+#include <stdlib.h>
+#include <stdbool.h>
+#include <stdio.h>
 #include <string.h>
-#include "nl-partsol.h"
+#include <math.h>
+#include "Macros.h"
+#include "Types.h"
+#include "Globals.h"
+#include "Matlib.h"
+#include "Particles.h"
+#include "InOutFun.h"
+// clang-format on
 
 /*
   Call global variables
 */
+char   OutputDir[MAXC];
 char OutputParticlesFile[MAXC];
 char OutputNodesFile[MAXC];
 

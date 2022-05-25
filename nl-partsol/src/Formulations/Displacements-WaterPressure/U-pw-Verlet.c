@@ -1,9 +1,16 @@
 #include "Formulations/Displacements-WaterPressure/U-pw-Verlet.h"
+#include "Globals.h"
+
+// Global 
+Event * Out_nodal_path_csv;
+int Number_Out_nodal_path_csv;
+Event * Out_particles_path_csv;
+int Number_Out_particles_path_csv;
+
 
 /*
   Auxiliar functions and variables
 */
-
 static char Error_message[MAXW];
 static void standard_error();
 

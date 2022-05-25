@@ -1,10 +1,8 @@
 #include "Formulations/Displacements/U-Discrete-Energy-Momentum.h"
+#include "Globals.h"
 
-/*
-  Generate a global variable
-*/
-double Error0;
 
+static double Error0;
 
 /*!
     \fn void average_strain_integration_Stress__Particles__(Tensor PK2,Tensor C_n1,Tensor C_n,Material Mat);
@@ -577,16 +575,16 @@ static Matrix compute_Nodal_Velocity(Matrix Mass, Matrix Momentum)
   /*
     Compute the LU factorization
   */
-  dgetrf_(&Order, &Order, Mass.nV, &LDA, IPIV, &INFO);
+  INFO = LAPACKE_dgetrf(LAPACK_ROW_MAJOR,Order,Order,Mass.nV,LDA,IPIV);
 
   /*
     Solve
   */
-  dgetrs_(&TRANS, &Order, &NRHS, Mass.nV, &LDA, IPIV, Momentum.nV, &LDB, &INFO);
+  INFO = LAPACKE_dgetrs(LAPACK_ROW_MAJOR,'T',Order,NRHS, Mass.nV, LDA,IPIV,Momentum.nV,LDB);
+
   free(IPIV);
 
   Velocity = Momentum;
-
 
   return Velocity;
 }
@@ -1507,7 +1505,7 @@ solve_non_reducted_system(Matrix D_Displacement, Matrix Tangent_Stiffness,
   /*
     Compute the LU factorization
   */
-  dgetrf_(&Order, &Order, K_Global.nV, &LDA, IPIV, &INFO);
+  INFO = LAPACKE_dgetrf(LAPACK_ROW_MAJOR,Order,Order,K_Global.nV,LDA,IPIV);
 
   /*
     Check error messages in the LAPACK LU descompistion
@@ -1521,8 +1519,8 @@ solve_non_reducted_system(Matrix D_Displacement, Matrix Tangent_Stiffness,
   /*
     Solve
   */
-  dgetrs_(&TRANS, &Order, &NRHS, K_Global.nV, &LDA, IPIV, Residual.nV, &LDB,
-          &INFO);
+  INFO = LAPACKE_dgetrs(LAPACK_ROW_MAJOR,'T',Order,NRHS, K_Global.nV, LDA,IPIV,Residual.nV,LDB);
+
   free(IPIV);
 
   /*
@@ -1618,7 +1616,7 @@ solve_reducted_system(Mask Free_and_Restricted_Dofs, Matrix D_Displacement,
   /*
     Compute the LU factorization
   */
-  dgetrf_(&Order_FF, &Order_FF, K_Global_FF.nV, &LDA, IPIV, &INFO);
+  INFO = LAPACKE_dgetrf(LAPACK_ROW_MAJOR,Order,Order,K_Global_FF.nV,LDA,IPIV);
 
   /*
     Check error messages in the LAPACK LU descompistion
@@ -1632,8 +1630,8 @@ solve_reducted_system(Mask Free_and_Restricted_Dofs, Matrix D_Displacement,
   /*
     Solve
   */
-  dgetrs_(&TRANS, &Order_FF, &NRHS, K_Global_FF.nV, &LDA, IPIV, Residual_F.nV,
-          &LDB, &INFO);
+  INFO = LAPACKE_dgetrs(LAPACK_ROW_MAJOR,'T',Order,NRHS, K_Global_FF.nV, LDA,IPIV,Residual.nV,LDB);
+
   free(IPIV);
 
   /*
@@ -1764,8 +1762,6 @@ static void update_Particles(Matrix D_Displacement, Matrix D_Velocity,
     Vol_0_p = MPM_Mesh.Phi.Vol_0.nV[p];
     MatIndx_p = MPM_Mesh.MatIdx[p];
     MatProp_p = MPM_Mesh.Mat[MatIndx_p];
-//    MPM_Mesh.Phi.W.nV[p] =
-//        finite_strains_internal_energy__Particles__(F_n_p, MatProp_p, Vol_0_p);
 
     /* Iterate over the nodes of the particle */
     for (int A = 0; A < Nodes_p.NumberNodes; A++) {

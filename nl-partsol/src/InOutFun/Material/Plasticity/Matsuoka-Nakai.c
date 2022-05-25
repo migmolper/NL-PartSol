@@ -1,6 +1,17 @@
+// clang-format off
+#include <stdlib.h>
+#include <stdbool.h>
+#include <stdio.h>
 #include <string.h>
 #include <math.h>
-#include "nl-partsol.h"
+#include "Macros.h"
+#include "Types.h"
+#include "Globals.h"
+#include "Matlib.h"
+#include "Particles.h"
+#include "Constitutive/Constitutive.h"
+#include "InOutFun.h"
+// clang-format on
 
 /*
   Auxiliar functions and variables

@@ -47,20 +47,6 @@
 #endif
 
 
-// Global variables
-unsigned InitialStep;
-unsigned TimeStep;
-unsigned NumTimeStep;
-double Thickness_Plain_Stress;
-Load gravity_field;
-bool Driver_EigenErosion;
-
-// In/out global variables
-Event *Out_nodal_path_csv;
-Event *Out_particles_path_csv;
-int Number_Out_nodal_path_csv;
-int Number_Out_particles_path_csv;
-
 /*!
   \brief Finite strains Newmark-beta
 

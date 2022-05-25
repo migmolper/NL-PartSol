@@ -1,7 +1,6 @@
 // Global libs
 #include "Macros.h"
 #include "Types.h"
-#include "Globals.h"
 #include "Matlib.h"
 #include "Particles.h"
 
@@ -181,7 +180,6 @@ static void __constitutive_update(Particle MPM_Mesh, Mesh FEM_Mesh,
  * @param [in] MPM_Mesh Information of the particles
  * @param [in] FEM_Mesh Information of the background nodes
  * @param [in] Params Time integration parameters
- * @param [in] TimeStep Current time step for time-dependent loads
  * @param [in] Is_compute_Residual The function computes the residual
  * @param [in] Is_compute_Reactions The function computes the reaction
  * @param [out] STATUS Returns failure or success
@@ -192,7 +190,6 @@ static Vec __assemble_residual(Nodal_Field U_n, Nodal_Field D_U,
                                Vec Lumped_Mass, Mask ActiveNodes,
                                Mask ActiveDOFs, Particle MPM_Mesh,
                                Mesh FEM_Mesh, Newmark_parameters Params,
-                               unsigned TimeStep,
                                bool Is_compute_Residual,
                                bool Is_compute_Reactions, int *STATUS);
 #else
@@ -200,7 +197,6 @@ static double *__assemble_residual(Nodal_Field U_n, Nodal_Field D_U,
                                    double *Lumped_Mass, Mask ActiveNodes,
                                    Mask ActiveDOFs, Particle MPM_Mesh,
                                    Mesh FEM_Mesh, Newmark_parameters Params,
-                                   unsigned TimeStep,
                                    bool Is_compute_Residual,
                                    bool Is_compute_Reactions, int *STATUS);
 #endif
@@ -320,14 +316,12 @@ static void __local_traction_force(double *LocalTractionForce_Ap,
 #ifdef USE_PETSC
 static int __Nodal_Body_Forces(Vec Residual, Mask ActiveNodes, Mask ActiveDOFs,
                                 Particle MPM_Mesh, Mesh FEM_Mesh,
-                                unsigned TimeStep,
                                 bool Is_compute_Residual,
                                 bool Is_compute_Reactions);
 #else
 static int __Nodal_Body_Forces(double *Residual, Mask ActiveNodes,
                                 Mask ActiveDOFs, Particle MPM_Mesh,
                                 Mesh FEM_Mesh, 
-                                unsigned TimeStep,
                                 bool Is_compute_Residual,
                                 bool Is_compute_Reactions);
 #endif

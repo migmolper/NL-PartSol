@@ -21,9 +21,8 @@
 /*
   Call global variables
 */
-char *MPM_MeshFileName;
-
-double Thickness_Plain_Stress; // For 2D cases
+extern char *MPM_MeshFileName;
+extern double Thickness_Plain_Stress; // For 2D cases
 
 typedef struct {
   bool Is_One_Phase_Analysis;
@@ -172,10 +171,12 @@ Generate_One_Phase_Analysis__InOutFun__(char *Name_File, Mesh FEM_Mesh,
         MPM_Mesh.lp = allocZ__MatrixLib__(NumParticles, Ndim);
         strcpy(MPM_Mesh.lp.Info, "Voxel lenght GP");
       } else if (strcmp(ShapeFunctionGP, "LME") == 0) {
+
         MPM_Mesh.lambda = allocZ__MatrixLib__(NumParticles, Ndim);
         strcpy(MPM_Mesh.lambda.Info, "Lagrange Multiplier");
         MPM_Mesh.Beta = allocZ__MatrixLib__(NumParticles, 1);
         strcpy(MPM_Mesh.Beta.Info, "Beta");
+
       } else if (strcmp(ShapeFunctionGP, "aLME") == 0) {
         MPM_Mesh.lambda = allocZ__MatrixLib__(NumParticles, Ndim);
         strcpy(MPM_Mesh.lambda.Info, "Lagrange Multiplier");
@@ -193,7 +194,6 @@ Generate_One_Phase_Analysis__InOutFun__(char *Name_File, Mesh FEM_Mesh,
       sprintf(Error_message, "%s", "GramsShapeFun no defined");
       standard_error();
     }
-
 
     /*
       Allocate vectorial/tensorial fields

@@ -1,6 +1,11 @@
-
 #include "Formulations/Displacements/U-Newmark-beta.h"
 #include "Formulations/Displacements/U-Newmark-beta-aux.h"
+
+
+// Global variables
+unsigned InitialStep;
+unsigned NumTimeStep;
+unsigned TimeStep;
 
 /**************************************************************/
 
@@ -125,7 +130,7 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
     //! Trial residual
     Residual = __assemble_residual(
         U_n, D_U, Lumped_Mass, ActiveNodes, ActiveDOFs, MPM_Mesh, FEM_Mesh,
-        Time_Integration_Params, TimeStep, true, false, &STATUS);
+        Time_Integration_Params, true, false, &STATUS);
     if (STATUS == EXIT_FAILURE) {
       fprintf(stderr, "" RED "Error in __assemble_residual()" RESET " \n");
       return EXIT_FAILURE;
@@ -169,6 +174,7 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
         return EXIT_FAILURE;
       }
 
+
 #ifdef USE_PETSC
       STATUS = krylov_PETSC(&Tangent_Stiffness, &Residual, Nactivedofs);
       if (STATUS == EXIT_FAILURE) {
@@ -207,7 +213,7 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
       // Compute residual (NR-loop)
       Residual = __assemble_residual(
           U_n, D_U, Lumped_Mass, ActiveNodes, ActiveDOFs, MPM_Mesh, FEM_Mesh,
-          Time_Integration_Params, TimeStep, true, false, &STATUS);
+          Time_Integration_Params, true, false, &STATUS);
       if (STATUS == EXIT_FAILURE) {
         fprintf(stderr, "" RED "Error in __assemble_residual()" RESET " \n");
         return EXIT_FAILURE;
@@ -246,7 +252,7 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
     if (TimeStep % ResultsTimeStep == 0) {
       Reactions = __assemble_residual(
           U_n, D_U, Lumped_Mass, ActiveNodes, ActiveDOFs, MPM_Mesh, FEM_Mesh,
-          Time_Integration_Params, TimeStep, false, true, &STATUS);
+          Time_Integration_Params, false, true, &STATUS);
       if (STATUS == EXIT_FAILURE) {
         fprintf(stderr, "" RED "Error in __assemble_residual()" RESET " \n");
         return EXIT_FAILURE;
@@ -995,8 +1001,8 @@ static void __local_compatibility_conditions(Nodal_Field D_U, Mask ActiveNodes,
       //  Compute Jacobian of the deformation gradient
       MPM_Mesh.Phi.J_n1.nV[p] = I3__TensorLib__(F_n1_p);
       if (MPM_Mesh.Phi.J_n1.nV[p] <= 0.0) {
-        fprintf(stderr, "" RED "Negative jacobian in particle %i" RESET " \n",
-                p);
+        fprintf(stderr, "" RED "Negative jacobian in particle %i: %e" RESET " \n",
+                p,MPM_Mesh.Phi.J_n1.nV[p]);
         *STATUS = EXIT_FAILURE;
       }
 
@@ -1073,6 +1079,7 @@ static void __constitutive_update(Particle MPM_Mesh, Mesh FEM_Mesh,
     //  integration rule.
     MatIndx_p = MPM_Mesh.MatIdx[p];
     Material MatProp_p = MPM_Mesh.Mat[MatIndx_p];
+
     *STATUS = Stress_integration__Constitutive__(p, MPM_Mesh, MatProp_p);
     if (*STATUS == EXIT_FAILURE) {
       fprintf(stderr,
@@ -1080,8 +1087,6 @@ static void __constitutive_update(Particle MPM_Mesh, Mesh FEM_Mesh,
               " \n");
     }
 
-    // Update internal energy of the particle
-    MPM_Mesh.Phi.W[p] = 0.0;
   }
 }
 
@@ -1091,15 +1096,13 @@ static void __constitutive_update(Particle MPM_Mesh, Mesh FEM_Mesh,
 static Vec __assemble_residual(Nodal_Field U_n, Nodal_Field D_U,
                                Vec Lumped_Mass, Mask ActiveNodes,
                                Mask ActiveDOFs, Particle MPM_Mesh,
-                               Mesh FEM_Mesh, Newmark_parameters Params,
-                               unsigned TimeStep, bool Is_compute_Residual,
+                               Mesh FEM_Mesh, Newmark_parameters Params,bool Is_compute_Residual,
                                bool Is_compute_Reactions, int *STATUS)
 #else
 static double *__assemble_residual(Nodal_Field U_n, Nodal_Field D_U,
                                    double *Lumped_Mass, Mask ActiveNodes,
                                    Mask ActiveDOFs, Particle MPM_Mesh,
-                                   Mesh FEM_Mesh, Newmark_parameters Params,
-                                   unsigned TimeStep, bool Is_compute_Residual,
+                                   Mesh FEM_Mesh, Newmark_parameters Params, bool Is_compute_Residual,
                                    bool Is_compute_Reactions, int *STATUS)
 #endif
 {
@@ -1137,7 +1140,7 @@ static double *__assemble_residual(Nodal_Field U_n, Nodal_Field D_U,
                           Is_compute_Residual, Is_compute_Reactions);
 
   __Nodal_Body_Forces(Residual, ActiveNodes, ActiveDOFs, MPM_Mesh, FEM_Mesh,
-                      TimeStep, Is_compute_Residual, Is_compute_Reactions);
+                      Is_compute_Residual, Is_compute_Reactions);
 
   if ((Is_compute_Residual == true) && (Is_compute_Reactions == false)) {
     __Nodal_Inertial_Forces(Residual, Lumped_Mass, U_n, D_U, ActiveNodes,
@@ -1525,12 +1528,12 @@ static void __local_traction_force(double *LocalTractionForce_Ap,
 #ifdef USE_PETSC
 static int __Nodal_Body_Forces(Vec Residual, Mask ActiveNodes, Mask ActiveDOFs,
                                Particle MPM_Mesh, Mesh FEM_Mesh,
-                               unsigned TimeStep, bool Is_compute_Residual,
+                               bool Is_compute_Residual,
                                bool Is_compute_Reactions)
 #else
 static int
 __Nodal_Body_Forces(double *Residual, Mask ActiveNodes, Mask ActiveDOFs,
-                    Particle MPM_Mesh, Mesh FEM_Mesh, unsigned TimeStep,
+                    Particle MPM_Mesh, Mesh FEM_Mesh, 
                     bool Is_compute_Residual, bool Is_compute_Reactions)
 #endif
 {

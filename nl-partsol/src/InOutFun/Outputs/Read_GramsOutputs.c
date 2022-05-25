@@ -1,46 +1,18 @@
 #include <sys/stat.h>
 #include <string.h>
-#include "nl-partsol.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
+#include <stddef.h>
 
-/*
-  Call global variables
-*/
 
-int ResultsTimeStep;
-// int NumTimeStep //
+#include "Macros.h"
+#include "Types.h"
+#include "Globals.h"
+#include "Matlib.h"
+#include "Particles.h"
+#include "InOutFun.h"
 
-char OutputDir[MAXC];
-char OutputParticlesFile[MAXC];
-char OutputNodesFile[MAXC];
-
-bool Out_global_coordinates = false;
-bool Out_element_coordinates = false;
-bool Out_mass = false;
-bool Out_density = false;
-bool Out_damage = false;
-bool Out_nodal_idx = false;
-bool Out_material_idx = false;
-bool Out_velocity = false;
-bool Out_acceleration = false;
-bool Out_displacement = false;
-bool Out_stress = false;
-bool Out_eigenvalues_stress = false;
-bool Out_water_pressure = false;
-bool Out_volumetric_stress = false;
-bool Out_Pw = false;
-bool Out_dPw_dt = false;
-bool Out_strain = false;
-bool Out_eigenvalues_strain = false;
-bool Out_deformation_gradient = false;
-bool Out_green_lagrange = false;
-bool Out_right_cauchy_green = false;
-bool Out_plastic_deformation_gradient = false;
-bool Out_Metric = false;
-bool Out_plastic_jacobian = false;
-bool Out_energy = false;
-bool Out_Von_Mises = false;
-bool Out_EPS = false;
-bool Out_Partition_Unity = false;
 
 /*
   Auxiliar functions
@@ -61,6 +33,34 @@ void GramsOutputs(char *Name_File)
   }
 */
 {
+  Out_global_coordinates = false;
+  Out_element_coordinates = false;
+  Out_mass = false;
+  Out_density = false;
+  Out_damage = false;
+  Out_nodal_idx = false;
+  Out_material_idx = false;
+  Out_velocity = false;
+  Out_acceleration = false;
+  Out_displacement = false;
+  Out_stress = false;
+  Out_eigenvalues_stress = false;
+  Out_water_pressure = false;
+  Out_volumetric_stress = false;
+  Out_Pw = false;
+  Out_dPw_dt = false;
+  Out_strain = false;
+  Out_eigenvalues_strain = false;
+  Out_deformation_gradient = false;
+  Out_green_lagrange = false;
+  Out_plastic_deformation_gradient = false;
+  Out_Metric = false;
+  Out_plastic_jacobian = false;
+  Out_energy = false;
+  Out_Von_Mises = false;
+  Out_EPS = false;
+  Out_Partition_Unity = false;
+
   /* Simulation file */
   FILE *Sim_dat;
 
