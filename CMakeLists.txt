@@ -24,7 +24,7 @@ option(USE_LAPACK "Use LAPACK solver library" ON)
 option(USE_OPENMP "Use OpenMP solver library" OFF)
 
 # Add PETSC
-option(USE_PETSC "Use PETSC solver library" OFF)
+option(USE_PETSC "Use PETSC solver library" ON)
 
 # General compile settings
 IF (NOT CMAKE_BUILD_TYPE)

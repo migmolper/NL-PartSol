@@ -1001,8 +1001,8 @@ static void __local_compatibility_conditions(Nodal_Field D_U, Mask ActiveNodes,
       //  Compute Jacobian of the deformation gradient
       MPM_Mesh.Phi.J_n1.nV[p] = I3__TensorLib__(F_n1_p);
       if (MPM_Mesh.Phi.J_n1.nV[p] <= 0.0) {
-        fprintf(stderr, "" RED "Negative jacobian in particle %i" RESET " \n",
-                p);
+        fprintf(stderr, "" RED "Negative jacobian in particle %i: %e" RESET " \n",
+                p,MPM_Mesh.Phi.J_n1.nV[p]);
         *STATUS = EXIT_FAILURE;
       }
 
@@ -1072,19 +1072,13 @@ static void __constitutive_update(Particle MPM_Mesh, Mesh FEM_Mesh,
   unsigned MatIndx_p;
   unsigned p;
 
-  puts("paso");
-
 #pragma omp for private(p, MatIndx_p)
   for (p = 0; p < Np; p++) {
-
-    puts("paso");
 
     //  Update the Kirchhoff stress tensor with an apropiate
     //  integration rule.
     MatIndx_p = MPM_Mesh.MatIdx[p];
     Material MatProp_p = MPM_Mesh.Mat[MatIndx_p];
-
-    puts("paso");
 
     *STATUS = Stress_integration__Constitutive__(p, MPM_Mesh, MatProp_p);
     if (*STATUS == EXIT_FAILURE) {

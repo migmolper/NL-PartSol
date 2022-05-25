@@ -60,7 +60,6 @@ int Stress_integration__Constitutive__(int p, Particle MPM_Mesh,
     
   } else if (strcmp(MatProp_p.Type, "Neo-Hookean-Wriggers") == 0) {
 
-    puts("paso");
     
     IO_State.Particle_Idx = p;
     IO_State.Stress = MPM_Mesh.Phi.Stress.nM[p];
@@ -72,8 +71,6 @@ int Stress_integration__Constitutive__(int p, Particle MPM_Mesh,
       IO_State.D_phi_n1 = MPM_Mesh.Phi.F_n1.nM[p];
       IO_State.J = MPM_Mesh.Phi.J_n1.nV[p];
     }
-
-    puts("paso");
 
     STATUS = compute_Kirchhoff_Stress_Neo_Hookean(IO_State, MatProp_p);
     if (STATUS == EXIT_FAILURE) {
