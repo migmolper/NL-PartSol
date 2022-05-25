@@ -17,13 +17,13 @@ int dgetrs_LAPACK(
     unsigned Nactivedofs)
 {
   int STATUS = EXIT_SUCCESS;
-  int Order = Nactivedofs;
-  int LDA = Nactivedofs;
-  int LDB = Nactivedofs;
-  char TRANS = 'N'; /* (Transpose) */
-  int INFO = 3;
-  int NRHS = 1;
-  int *IPIV = (int *)calloc(Order, __SIZEOF_INT__);
+  lapack_int Order = Nactivedofs;
+  lapack_int LDA = Nactivedofs;
+  lapack_int LDB = Nactivedofs;
+  char TRANS = 'T'; /* (Transpose) */
+  lapack_int INFO = 3;
+  lapack_int NRHS = 1;
+  lapack_int *IPIV = (lapack_int  *)calloc(Order, sizeof(lapack_int));
   if(IPIV == NULL){
         fprintf(stderr, ""RED"Error in calloc(): Out of memory"RESET" \n");
         return EXIT_FAILURE;
@@ -31,7 +31,7 @@ int dgetrs_LAPACK(
   
   //  Compute the LU factorization
   INFO = LAPACKE_dgetrf(LAPACK_ROW_MAJOR,Order,Order,Tangent_Stiffness,LDA,IPIV);
-  if (INFO) {
+  if (INFO != 0) {
     free(IPIV);
     fprintf(stderr, "%s : %s %s %s \n", "Error in LAPACKE_dgetrf", "The function",
             "LAPACKE_dgetrf", "returned an error message !!!");
