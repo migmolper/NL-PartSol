@@ -175,9 +175,6 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
       }
 
 
-    puts("paso 1");
-
-
 #ifdef USE_PETSC
       STATUS = krylov_PETSC(&Tangent_Stiffness, &Residual, Nactivedofs);
       if (STATUS == EXIT_FAILURE) {
@@ -192,12 +189,8 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
       }
 #endif
 
-      puts("paso 2");
-
       __update_Nodal_Increments(Residual, D_U, U_n, ActiveDOFs,
                                 Time_Integration_Params, Ntotaldofs);
-
-      puts("paso");
 
       __local_compatibility_conditions(D_U, ActiveNodes, MPM_Mesh, FEM_Mesh,
                                        &STATUS);
@@ -208,11 +201,7 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
         return EXIT_FAILURE;
       }
 
-      puts("paso");
-
       __constitutive_update(MPM_Mesh, FEM_Mesh, &STATUS);
-
-      puts("paso");
 
       // Free memory
 #ifdef USE_PETSC
