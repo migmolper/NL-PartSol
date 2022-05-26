@@ -150,7 +150,9 @@ void GramsOutputs(char *Name_File)
           } else if (strcmp(Parse_Out_Prop[0], "Out-density") == 0) {
             Out_density =
                 Is_Output_Activate(Parse_Out_Prop[0], Parse_Out_Prop[1]);
-          } else if (strcmp(Parse_Out_Prop[0], "Out-damage") == 0) {
+          } else if (((Driver_EigenErosion == true) ||
+                      (Driver_EigenSoftening == true)) &&
+                     (strcmp(Parse_Out_Prop[0], "Out-damage") == 0)) {
             Out_damage =
                 Is_Output_Activate(Parse_Out_Prop[0], Parse_Out_Prop[1]);
           } else if (strcmp(Parse_Out_Prop[0], "Out-nodal-idx") == 0) {
