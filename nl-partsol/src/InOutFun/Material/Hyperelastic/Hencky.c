@@ -82,7 +82,9 @@ int Define_Hencky(Material *H_Material, FILE *Simulation_file,
       (*H_Material).nu = atof(Parameter_pars[1]);
     }
     /**************************************************/
-    else if (strcmp(Parameter_pars[0], "Eigenerosion") == 0) {
+    else if (((Driver_EigenErosion == true) ||
+              (Driver_EigenSoftening == true)) &&
+             (strcmp(Parameter_pars[0], "Eigenerosion") == 0)) {
       STATUS = __read_boolean(&(*H_Material).Eigenerosion, Parameter_pars[1]);
       if (STATUS == EXIT_FAILURE) {
         fprintf(stderr, RED "Error in __read_boolean \n" RESET);
@@ -90,12 +92,16 @@ int Define_Hencky(Material *H_Material, FILE *Simulation_file,
       }
     }
     /**************************************************/
-    else if (strcmp(Parameter_pars[0], "Ceps") == 0) {
+    else if (((Driver_EigenErosion == true) ||
+              (Driver_EigenSoftening == true)) &&
+             (strcmp(Parameter_pars[0], "Ceps") == 0)) {
       ChkMat.Is_Ceps = true;
       (*H_Material).Ceps = atof(Parameter_pars[1]);
     }
     /**************************************************/
-    else if (strcmp(Parameter_pars[0], "Gf") == 0) {
+    else if (((Driver_EigenErosion == true) ||
+              (Driver_EigenSoftening == true)) &&
+             (strcmp(Parameter_pars[0], "Gf") == 0)) {
       ChkMat.Is_Gf = true;
       (*H_Material).Gf = atof(Parameter_pars[1]);
     }

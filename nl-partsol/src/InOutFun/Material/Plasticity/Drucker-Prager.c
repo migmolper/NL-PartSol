@@ -38,11 +38,13 @@ typedef struct {
   bool Is_friction_angle;            // Friction angle
   bool Is_dilatancy_angle;           // Dilatancy angle
   bool Is_J2_degradated; // Degradation limit
-
+  bool Is_Ceps; // Normalizing constant (Eigenerosion)
+  bool Is_Gf;   // Failure energy (Eigenerosion)
 } Check_Material;
 
 static Check_Material __Initialise_Check_Material();
 static int __check_material(Material *, Check_Material, int);
+static int __read_boolean(bool *Value, char *Value_char);
 
 /**********************************************************************/
 
@@ -146,6 +148,30 @@ int Define_Drucker_Prager(Material *DP_Material,FILE *Simulation_file, char *Mat
 
     }
     /**************************************************/
+    else if (((Driver_EigenErosion == true) ||
+              (Driver_EigenSoftening == true)) &&
+             (strcmp(Parameter_pars[0], "Eigenerosion") == 0)) {
+      STATUS = __read_boolean(&(*DP_Material).Eigenerosion, Parameter_pars[1]);
+      if (STATUS == EXIT_FAILURE) {
+        fprintf(stderr, RED "Error in __read_boolean \n" RESET);
+        return EXIT_FAILURE;
+      }
+    }
+    /**************************************************/
+    else if (((Driver_EigenErosion == true) ||
+              (Driver_EigenSoftening == true)) &&
+             (strcmp(Parameter_pars[0], "Ceps") == 0)) {
+      ChkMat.Is_Ceps = true;
+      (*DP_Material).Ceps = atof(Parameter_pars[1]);
+    }
+    /**************************************************/
+    else if (((Driver_EigenErosion == true) ||
+              (Driver_EigenSoftening == true)) &&
+             (strcmp(Parameter_pars[0], "Gf") == 0)) {
+      ChkMat.Is_Gf = true;
+      (*DP_Material).Gf = atof(Parameter_pars[1]);
+    }    
+    /**************************************************/
     else if ((strcmp(Parameter_pars[0], "}") == 0) && (Parser_status == 1)) {
       Is_Close = true;
       break;
@@ -201,8 +227,28 @@ static Check_Material __Initialise_Check_Material() {
   ChkMat.Is_friction_angle = false;            
   ChkMat.Is_dilatancy_angle = false;           
   ChkMat.Is_J2_degradated = false;
+  ChkMat.Is_Ceps = true;
+  ChkMat.Is_Gf = true;
 
   return ChkMat;
+}
+
+/**********************************************************************/
+
+static int __read_boolean(bool *Value, char *Value_char) {
+  if ((strcmp(Value_char, "True") == 0) ||
+      (strcmp(Value_char, "TRUE") == 0 || (strcmp(Value_char, "true") == 0))) {
+    *Value = true;
+    return EXIT_SUCCESS;
+  } else if ((strcmp(Value_char, "False") == 0) ||
+             (strcmp(Value_char, "FALSE") == 0 ||
+              (strcmp(Value_char, "false") == 0))) {
+    *Value = false;
+    return EXIT_SUCCESS;
+  } else {
+    fprintf(stderr, RED "Undefined %s \n" RESET, Value_char);
+    return EXIT_FAILURE;
+  }
 }
 
 /**********************************************************************/
@@ -241,6 +287,14 @@ int STATUS = EXIT_SUCCESS;
     printf("\t \t -> %s : %f \n", ""MAGENTA"[J2-degradated]"RESET"", (*DP_Material).J2_degradated);
 
     printf("\t \t -> %s : %f \n", ""MAGENTA"[Reference-pressure]"RESET"", (*DP_Material).ReferencePressure);
+
+    if ((*DP_Material).Eigenerosion == true) {
+      printf("\t \t -> %s : %f \n", "" MAGENTA "[Ceps]" RESET "",
+             (*DP_Material).Ceps);
+
+      printf("\t \t -> %s : %f \n", "" MAGENTA "[Gf]" RESET "",
+             (*DP_Material).Gf);
+    }
 
   } else {
     
@@ -290,6 +344,19 @@ int STATUS = EXIT_SUCCESS;
     ""MAGENTA"[kappa-0]"RESET" : "GREEN"true"RESET" \n":
     ""MAGENTA"[kappa-0]"RESET" : "RED"false"RESET" \n",
           stderr);
+
+    if ((*DP_Material).Eigenerosion == true) {
+      fputs(ChkMat.Is_Ceps
+                ? "" MAGENTA "[Ceps]" RESET " : " GREEN "true" RESET " \n"
+                : "" MAGENTA "[Ceps]" RESET " : " RED "false" RESET " \n",
+            stderr);
+
+      fputs(ChkMat.Is_Gf
+                ? "" MAGENTA "[Gf]" RESET " : " GREEN "true" RESET " \n"
+                : "" MAGENTA "[Gf]" RESET " : " RED "false" RESET " \n",
+            stderr);
+      ;
+    }
 
     STATUS = EXIT_FAILURE;
   }

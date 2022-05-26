@@ -35,7 +35,7 @@
  * @param MatProp Material properties of the model
  * @return int STATUS
  */
-int compute_1PK_Drucker_Prager(
+int compute_Kirchhoff_Stress_Drucker_Prager__Constitutive__(
     State_Parameters IO_State, 
     Material MatProp);
 
