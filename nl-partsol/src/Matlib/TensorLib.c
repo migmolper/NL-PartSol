@@ -224,11 +224,6 @@ int sym_eigen_analysis__TensorLib__(
     return EXIT_FAILURE;
   }
 
-
-#if NumberDimensions == 2
-  eigval_A[2] = A[4];
-#endif
-
 return EXIT_SUCCESS;
 }
 

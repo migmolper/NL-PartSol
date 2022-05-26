@@ -119,6 +119,8 @@ Define-Material(idx=0,Model=Drucker-Prager-Plane-Strain)
       } else if (strcmp(Index_and_Model.Model, "Saint-Venant-Kirchhoff") == 0) {
         List_Materials[idx] = Define_Saint_Venant_Kirchhoff(
             Sim_dat, Index_and_Model.Model, Index_and_Model.Idx);
+      } else if (strcmp(Index_and_Model.Model, "Hencky") == 0) {
+        STATUS = Define_Hencky(&List_Materials[idx],Sim_dat,Index_and_Model.Model,Index_and_Model.Idx);
       } else if (strcmp(Index_and_Model.Model, "Neo-Hookean-Wriggers") == 0) {
         List_Materials[idx] = Define_Neo_Hookean_Wriggers(
             Sim_dat, Index_and_Model.Model, Index_and_Model.Idx);

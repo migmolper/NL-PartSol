@@ -31,7 +31,23 @@
  * @param MatProp 
  * @return int 
  */
-int compute_Kirchhoff_Stress_Hencky(State_Parameters IO_State,
+int compute_Kirchhoff_Stress_Hencky__Constitutive__(State_Parameters IO_State,
                                     Material MatProp);
+
+/**
+ * @brief 
+ * 
+ * @param Stiffness_density 
+ * @param dN_alpha_n1 
+ * @param dN_beta_n1 
+ * @param IO_State 
+ * @param MatProp 
+ * @return int 
+ */
+int compute_stiffness_density_Hencky__Constitutive__(double *Stiffness_density,
+                                             const double *dN_alpha_n1,
+                                             const double *dN_beta_n1,
+                                             const State_Parameters IO_State,
+                                             Material MatProp);
 
 #endif
