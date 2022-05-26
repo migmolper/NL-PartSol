@@ -1,12 +1,12 @@
 /**
  * @file Hencky.c
  * @author Miguel Molinos (@migmolper)
- * @brief 
+ * @brief
  * @version 0.1
  * @date 2022-05-25
- * 
+ *
  * @copyright Copyright (c) 2022
- * 
+ *
  */
 
 #include "Constitutive/Hyperelastic/Hencky.h"
@@ -38,7 +38,7 @@ static void __elastic_stress_xyz(double *T_xyz, const double *T_ppal,
 /**************************************************************/
 
 int compute_Kirchhoff_Stress_Hencky__Constitutive__(State_Parameters IO_State,
-                                    Material MatProp) {
+                                                    Material MatProp) {
   int STATUS = EXIT_SUCCESS;
   unsigned Ndim = NumberDimensions;
 
@@ -62,11 +62,8 @@ int compute_Kirchhoff_Stress_Hencky__Constitutive__(State_Parameters IO_State,
   double nu = MatProp.nu;
   double Lame = E * nu / ((1.0 + nu) * (1.0 - 2.0 * nu));
   double G = E / (2.0 * (1.0 + nu));
-  double AA[9] = {
-    Lame + 2 * G, Lame, Lame,
-    Lame, Lame + 2 * G, Lame,
-    Lame, Lame, Lame + 2 * G
-  };
+  double AA[9] = {Lame + 2 * G, Lame, Lame, Lame,        Lame + 2 * G,
+                  Lame,         Lame, Lame, Lame + 2 * G};
 
   //! Left cauchy-green tensor
   left_Cauchy_Green__Particles__(b, D_phi_n1);
@@ -98,11 +95,10 @@ int compute_Kirchhoff_Stress_Hencky__Constitutive__(State_Parameters IO_State,
 
 /**************************************************************/
 
-int compute_stiffness_density_Hencky__Constitutive__(double *Stiffness_density,
-                                             const double *dN_alpha_n1,
-                                             const double *dN_beta_n1,
-                                             const State_Parameters IO_State,
-                                             Material MatProp) {
+int compute_stiffness_density_Hencky__Constitutive__(
+    double *Stiffness_density, const double *dN_alpha_n1,
+    const double *dN_beta_n1, const State_Parameters IO_State,
+    Material MatProp) {
 
   int STATUS = EXIT_SUCCESS;
   int Ndim = NumberDimensions;
@@ -119,26 +115,20 @@ int compute_stiffness_density_Hencky__Constitutive__(double *Stiffness_density,
   double eigval_b[2] = {0.0, 0.0};
   double eigvec_T[4] = {0.0, 0.0, 0.0, 0.0};
   double eigval_T[2] = {0.0, 0.0};
-  double AA[4] = {
-    Lame + 2 * G, Lame,
-    Lame, Lame + 2 * G
-  };
+  double AA[4] = {Lame + 2 * G, Lame, Lame, Lame + 2 * G};
   Stiffness_density[0] = 0.0;
   Stiffness_density[1] = 0.0;
   Stiffness_density[2] = 0.0;
-  Stiffness_density[3] = 0.0;  
+  Stiffness_density[3] = 0.0;
 #else
   double b[9];
   double eigvec_b[9] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
   double eigval_b[3] = {0.0, 0.0, 0.0};
   double eigvec_T[9] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
-  double eigval_T[3] = {0.0, 0.0, 0.0};  
+  double eigval_T[3] = {0.0, 0.0, 0.0};
   double T_aux[9] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
-  double AA[9] = {
-    Lame + 2 * G, Lame, Lame,
-    Lame, Lame + 2 * G, Lame,
-    Lame, Lame, Lame + 2 * G
-  };
+  double AA[9] = {Lame + 2 * G, Lame, Lame, Lame,        Lame + 2 * G,
+                  Lame,         Lame, Lame, Lame + 2 * G};
   Stiffness_density[0] = 0.0;
   Stiffness_density[1] = 0.0;
   Stiffness_density[2] = 0.0;
@@ -168,7 +158,6 @@ int compute_stiffness_density_Hencky__Constitutive__(double *Stiffness_density,
             "" RED "Error in sym_eigen_analysis__TensorLib__()" RESET "\n");
     return EXIT_FAILURE;
   }
-
 
 #if NumberDimensions == 2
 
@@ -229,15 +218,13 @@ int compute_stiffness_density_Hencky__Constitutive__(double *Stiffness_density,
       for (unsigned i = 0; i < Ndim; i++) {
         for (unsigned j = 0; j < Ndim; j++) {
           Stiffness_density[i * Ndim + j] +=
-              AA[A * Ndim + B] *
-              (mv[A * Ndim + A][i] * mu[B * Ndim + B][j]);
+              AA[A * Ndim + B] * (mv[A * Ndim + A][i] * mu[B * Ndim + B][j]);
 
           if (A != B) {
             if (fabs(eigval_b[B] - eigval_b[A]) > 1E-14) {
               Stiffness_density[i * Ndim + j] +=
                   0.5 *
-                  ((eigval_T[B] - eigval_T[A]) /
-                   (eigval_b[B] - eigval_b[A])) *
+                  ((eigval_T[B] - eigval_T[A]) / (eigval_b[B] - eigval_b[A])) *
                   (eigval_b[B] * (mv[A * Ndim + B][i] * mu[A * Ndim + B][j]) +
                    eigval_b[A] * (mv[A * Ndim + B][i] * mu[B * Ndim + A][j]));
             } else {

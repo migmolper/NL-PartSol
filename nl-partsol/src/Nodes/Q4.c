@@ -92,8 +92,9 @@ void initialize__Q4__(Particle MPM_Mesh, Mesh FEM_Mesh) {
 
     Locality_I0 = FEM_Mesh.NodalLocality_0[I0];
 
-    push__SetLib__(&FEM_Mesh.List_Particles_Node[I0], p);
-
+    if ((Driver_EigenErosion == true) || (Driver_EigenSoftening == true)) {
+      push__SetLib__(&FEM_Mesh.List_Particles_Node[I0], p);
+    }
 
     while (Locality_I0 != NULL) {
       if (FEM_Mesh.ActiveNode[Locality_I0->Idx] == false) {
@@ -626,7 +627,9 @@ void local_search__Q4__(Particle MPM_Mesh, Mesh FEM_Mesh) {
       Connectivity_p = Connectivity_p->next;
     }
 
-    push__SetLib__(&FEM_Mesh.List_Particles_Node[I0], p);
+    if ((Driver_EigenErosion == true) || (Driver_EigenSoftening == true)) {
+      push__SetLib__(&FEM_Mesh.List_Particles_Node[I0], p);
+    }
   }
 }
 

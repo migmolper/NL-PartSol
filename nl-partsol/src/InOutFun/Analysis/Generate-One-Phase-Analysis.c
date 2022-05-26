@@ -1,3 +1,4 @@
+// clang-format off
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/stat.h>
@@ -9,14 +10,12 @@
 #include "Matlib.h"
 #include "Particles.h"
 #include "InOutFun.h"
-
-// Shape functions and auxilar tools
 #include "Nodes/Nodes-Tools.h"
 #include "Nodes/Shape-Functions.h"
 #include "Nodes/Read-GID-Mesh.h"
-
 #include "Formulations/Displacements/U-Analisys.h"
 #include "Formulations/Displacements-Pressure/U-p-Analisys.h"
+// clang-format on
 
 /*
   Call global variables
@@ -153,7 +152,10 @@ Generate_One_Phase_Analysis__InOutFun__(char *Name_File, Mesh FEM_Mesh,
     /*
       List of particles close to each particle
     */
-    MPM_Mesh.Beps = alloc_table__SetLib__(NumParticles);
+    if ((Driver_EigenErosion == true) || (Driver_EigenSoftening == true)) {
+
+      MPM_Mesh.Beps = alloc_table__SetLib__(NumParticles);
+    }
 
     /*
       Define shape functions
@@ -271,7 +273,6 @@ Generate_One_Phase_Analysis__InOutFun__(char *Name_File, Mesh FEM_Mesh,
       MPM_Mesh.Neumann_Contours.NumBounds = 0;
       printf(" \t %s \n", "* No Neumann boundary conditions defined");
     }
-
 
     /*
       Free the input data

@@ -1,17 +1,16 @@
+// clang-format off
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
 #include <math.h>
-
-// Global libs
 #include "Macros.h"
 #include "Types.h"
 #include "Globals.h"
 #include "Matlib.h"
 #include "Particles.h"
 #include "Nodes/LME.h"
-
+// clang-format on
 
 /****************************************************************************/
 
@@ -46,9 +45,9 @@ static ChainPtr tributary__LME__(int, Matrix, double, int, Mesh);
 void initialize__LME__(Particle MPM_Mesh, Mesh FEM_Mesh) {
 
   unsigned Ndim = NumberDimensions;
-  unsigned Np = MPM_Mesh.NumGP;          // Number of gauss-points in the simulation
+  unsigned Np = MPM_Mesh.NumGP; // Number of gauss-points in the simulation
   unsigned Nelem = FEM_Mesh.NumElemMesh; // Number of elements
-  int I0;                           // Closest node to the particle
+  int I0;                                // Closest node to the particle
   unsigned p;
   bool Is_particle_reachable;
 
@@ -56,7 +55,6 @@ void initialize__LME__(Particle MPM_Mesh, Mesh FEM_Mesh) {
   Matrix Delta_Xip;     // Distance from GP to the nodes
   Matrix lambda_p;      // Lagrange multiplier
   double Beta_p;        // Thermalization or regularization parameter
-
 
 #pragma omp parallel shared(Np, Nelem)
   {
@@ -127,7 +125,9 @@ void initialize__LME__(Particle MPM_Mesh, Mesh FEM_Mesh) {
 
       Locality_I0 = FEM_Mesh.NodalLocality_0[I0];
 
-      push__SetLib__(&FEM_Mesh.List_Particles_Node[I0], p);
+      if ((Driver_EigenErosion == true) || (Driver_EigenSoftening == true)) {
+        push__SetLib__(&FEM_Mesh.List_Particles_Node[I0], p);
+      }
 
       //    FEM_Mesh.Num_Particles_Node[I0] += 1;
 
@@ -269,12 +269,8 @@ static void initialise_lambda__LME__(int Idx_particle, Matrix X_p,
 
 /****************************************************************************/
 
-static int __lambda_Newton_Rapson(
-    int Idx_particle,
-    Matrix l, 
-    Matrix lambda,
-    double Beta)
-{
+static int __lambda_Newton_Rapson(int Idx_particle, Matrix l, Matrix lambda,
+                                  double Beta) {
   /*
     Definition of some parameters
   */
@@ -311,7 +307,8 @@ static int __lambda_Newton_Rapson(
 
       if (rcond__TensorLib__(J.nV) < 1E-8) {
         fprintf(stderr,
-                "" RED "Hessian near to singular matrix: %e" RESET " \n",rcond__TensorLib__(J.nV));
+                "" RED "Hessian near to singular matrix: %e" RESET " \n",
+                rcond__TensorLib__(J.nV));
         return EXIT_FAILURE;
       }
 
@@ -959,7 +956,9 @@ void local_search__LME__(Particle MPM_Mesh, Mesh FEM_Mesh)
         Locality_I0 = Locality_I0->next;
       }
 
-      push__SetLib__(&FEM_Mesh.List_Particles_Node[I0], p);
+      if ((Driver_EigenErosion == true) || (Driver_EigenSoftening == true)) {
+        push__SetLib__(&FEM_Mesh.List_Particles_Node[I0], p);
+      }
     }
 
     // Update the shape function
@@ -1003,9 +1002,9 @@ void local_search__LME__(Particle MPM_Mesh, Mesh FEM_Mesh)
     }
   }
 
-        if (STATUS == EXIT_FAILURE) {
-        exit(0);
-      }
+  if (STATUS == EXIT_FAILURE) {
+    exit(0);
+  }
 }
 
 /****************************************************************************/

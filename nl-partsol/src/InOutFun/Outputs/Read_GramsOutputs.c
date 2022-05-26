@@ -1,18 +1,17 @@
+// clang-format off
 #include <sys/stat.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
 #include <stddef.h>
-
-
 #include "Macros.h"
 #include "Types.h"
 #include "Globals.h"
 #include "Matlib.h"
 #include "Particles.h"
 #include "InOutFun.h"
-
+// clang-format on
 
 /*
   Auxiliar functions

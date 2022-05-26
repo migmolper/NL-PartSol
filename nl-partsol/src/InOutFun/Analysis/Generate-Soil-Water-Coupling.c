@@ -1,3 +1,4 @@
+// clang-format off
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/stat.h>
@@ -9,18 +10,15 @@
 #include "Matlib.h"
 #include "Particles.h"
 #include "InOutFun.h"
-
-// Shape functions and auxilar tools
 #include "Nodes/Nodes-Tools.h"
 #include "Nodes/Shape-Functions.h"
 #include "Nodes/Read-GID-Mesh.h"
-
-char * MPM_MeshFileName;
-int Number_Soil_Water_Mixtures;
-Mixture * Soil_Water_Mixtures;
-
 #include "Formulations/Displacements-WaterPressure/U-pw-Analisys.h"
+// clang-format on
 
+char *MPM_MeshFileName;
+int Number_Soil_Water_Mixtures;
+Mixture *Soil_Water_Mixtures;
 
 typedef struct {
   bool Is_Soil_Water_Coupling;
@@ -176,7 +174,10 @@ Particle Generate_Soil_Water_Coupling_Analysis__InOutFun__(
     /*
       List of particles close to each particle
     */
-    MPM_Mesh.Beps = alloc_table__SetLib__(NumParticles);
+    if ((Driver_EigenErosion == true) || (Driver_EigenSoftening == true)) {
+
+      MPM_Mesh.Beps = alloc_table__SetLib__(NumParticles);
+    }
 
     /*
       Define shape functions

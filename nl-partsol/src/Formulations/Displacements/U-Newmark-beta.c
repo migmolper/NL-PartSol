@@ -97,7 +97,7 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
                                               NumTimeStep);
     Nactivedofs = ActiveDOFs.Nactivenodes;
 
-    if (Driver_EigenErosion) {
+    if ((Driver_EigenErosion == true) || (Driver_EigenSoftening == true)) {
       compute_Beps__Constitutive__(MPM_Mesh, FEM_Mesh, false);
     }
 
@@ -1309,7 +1309,7 @@ static void __Nodal_Internal_Forces(double *Residual, Mask ActiveNodes,
         if (Driver_EigenErosion) {
           double damage_p = MPM_Mesh.Phi.Damage_n1[p];
           for (unsigned i = 0; i < Ndim; i++) {
-            InternalForcesDensity_Ap[i] *= damage_p;
+            InternalForcesDensity_Ap[i] *= (1.0 - damage_p);
           }
         }
 
@@ -2055,7 +2055,7 @@ static void __assemble_tangent_stiffness(double *Tangent_Stiffness,
           if (Driver_EigenErosion) {
             double damage_p = MPM_Mesh.Phi.Damage_n1[p];
             for (unsigned i = 0; i < Ndim * Ndim; i++) {
-              Stiffness_density_p[i] *= damage_p;
+              Stiffness_density_p[i] *= (1.0-damage_p);
             }
           }
 

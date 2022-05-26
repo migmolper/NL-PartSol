@@ -127,9 +127,12 @@ Fields allocate_U_vars__Fields__(int NumParticles) {
   /*!
     Damage variable
   */
+if ((Driver_EigenErosion == true) || (Driver_EigenSoftening == true)) {
+  
   Phi.Damage_n = (double *)calloc(NumParticles,sizeof(double));
 
   Phi.Damage_n1 = (double *)calloc(NumParticles,sizeof(double));
+}
 
   /*!
     Equivalent plastic strain
