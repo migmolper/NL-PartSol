@@ -396,8 +396,6 @@ typedef struct {
   /*!
    * Activate eigenerosion-fracture modulus (Eigenerosion/Eigensoftening)
    */
-  bool Eigenerosion;
-  bool Eigensoftening;
   double Ceps; /*! Normalizing constant (Eigenerosion/Eigensoftening) */
   double Gf; /*! Failure energy (Eigenerosion) */
   double ft; /*! Tensile strengt of the material (Eigensoftening) */

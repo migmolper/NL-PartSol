@@ -127,16 +127,7 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
       return EXIT_FAILURE;
     }
 
-    //! Trial compatibility and trial residual
-    __local_compatibility_conditions(D_U, ActiveNodes, MPM_Mesh, FEM_Mesh,
-                                       &STATUS);
-    if (STATUS == EXIT_FAILURE) {
-        fprintf(stderr,
-                "" RED "Error in __local_compatibility_conditions()" RESET
-                " \n");
-        return EXIT_FAILURE;
-    }
-
+    //! Trial constitutive 
     STATUS = __constitutive_update(MPM_Mesh, FEM_Mesh);
     if (STATUS == EXIT_FAILURE) {
         fprintf(stderr,

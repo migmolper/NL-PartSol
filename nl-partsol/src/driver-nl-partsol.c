@@ -62,25 +62,12 @@ static void standard_error(char *Error_message);
 
 int main(int argc, char *argv[]) {
 
-// Initialize OpenMP
-#ifdef USE_OPENMP
-  puts("" GREEN "Initialize OpenMP" RESET " ...");
-  //    omp_set_num_threads(nthreads > 0 ? nthreads : omp_get_max_threads());
-  // omp_set_num_threads(6);
-  omp_set_num_threads(omp_get_max_threads());
-#endif
-
-  // Initialize PETSc
-#ifdef USE_PETSC
-  puts("" GREEN "Initialize PETSc" RESET " ...");
-  PetscInitialize(&argc, &argv, 0, 0);
-#endif
-
   char Error_message[10000];
   bool If_formulation = false;
   bool If_f_option = false;
   bool If_ff_option = false;
   int INFO_GramsSolid = 3;
+  unsigned nthreads = 1;
   int STATUS = EXIT_SUCCESS;
   Mesh FEM_Mesh;
   Particle MPM_Mesh;
@@ -101,15 +88,18 @@ int main(int argc, char *argv[]) {
 
     if (strcmp(argv[i], "--FORMULATION-U") == 0) {
       strcpy(Formulation, "-u");
+      puts("" GREEN "U Formulation" RESET " ...");
       If_formulation = true;
     }
 
     if (strcmp(argv[i], "--FORMULATION-Up") == 0) {
+      puts("" GREEN "U-p Formulation" RESET " ...");
       strcpy(Formulation, "-up");
       If_formulation = true;
     }
 
     if (strcmp(argv[i], "--FORMULATION-Upw") == 0) {
+      puts("" GREEN "U-pw Formulation" RESET " ...");
       strcpy(Formulation, "-upw");
       If_formulation = true;
     }
@@ -128,6 +118,13 @@ int main(int argc, char *argv[]) {
         return EXIT_FAILURE;
       }
     }
+
+#ifdef USE_OPENMP
+    if (strcmp(argv[i], "--OPENMP-CORES") == 0) {
+      i++;
+      nthreads = atoi(argv[i]);
+    }
+#endif
 
     if (strcmp(argv[i], "--Print-Convergence") == 0) {
       Flag_Print_Convergence = true;
@@ -159,6 +156,20 @@ int main(int argc, char *argv[]) {
     fprintf(stderr, "" RED "Wrong inputs : select formulation " RESET " \n");
     return EXIT_FAILURE;
   }
+
+
+// Initialize OpenMP
+#ifdef USE_OPENMP
+  puts("" GREEN "Initialize OpenMP" RESET " ...");
+  omp_set_num_threads(nthreads > 0 ? nthreads : omp_get_max_threads());
+#endif
+
+  // Initialize PETSc
+#ifdef USE_PETSC
+  puts("" GREEN "Initialize PETSc" RESET " ...");
+  PetscInitialize(&argc, &argv, 0, 0);
+#endif
+
 
   /* Select kinf of formulation  */
   if (strcmp(Formulation, "-u") == 0) {
@@ -416,16 +427,8 @@ static void nlpartsol_help_message() {
 #endif
 
 #ifdef USE_PETSC
-  puts("Usage : nl-partsol -Flags -f [commands.nlp]");
-  puts("Flag values:");
-  puts(" * --Print-Convergence: Display convergence stats.");
-  puts(" * --FORMULATION-U : Displacement formulation");
-  puts(" * --FORMULATION-Up : Velocity-Pressure formulation");
-  puts(" * --FORMULATION-Upw : Soil-water mixture displacement-pressure "
-       "formulation");
-#else
-  puts("Usage : nl-partsol -Flag -f [commands.nlp]");
-  puts("Flag values:");
+  puts("Usage : nl-partsol [NLPARTSOL Options] -f [commands.nlp] [PETSc Options]");
+  puts("[NLPARTSOL Options]:");
   puts(" * --Print-Convergence: Display convergence stats.");
   puts(" * --FORMULATION-U : Displacement formulation");
   puts(" * --FORMULATION-Up : Velocity-Pressure formulation");
@@ -434,7 +437,19 @@ static void nlpartsol_help_message() {
   puts(" * --Fracture-Modulus Eigenerosion/Eigensoftening : Phase Field "
        "fracture "
        "formulation");
-
+  puts(" * --OPENMP-CORES i : Number of cores for OpenMP (i)");
+#else
+  puts("Usage : nl-partsol [NLPARTSOL Options] -f [commands.nlp]");
+  puts("[NLPARTSOL Options]:");
+  puts(" * --Print-Convergence: Display convergence stats.");
+  puts(" * --FORMULATION-U : Displacement formulation");
+  puts(" * --FORMULATION-Up : Velocity-Pressure formulation");
+  puts(" * --FORMULATION-Upw : Soil-water mixture displacement-pressure "
+       "formulation");
+  puts(" * --Fracture-Modulus Eigenerosion/Eigensoftening : Phase Field "
+       "fracture "
+       "formulation");
+  puts(" * --OPENMP-CORES i : Number of cores for OpenMP (i)");
 #endif
 
   puts("The creator of NL-PartSol is Miguel Molinos");

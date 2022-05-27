@@ -82,28 +82,18 @@ int Define_Hencky(Material *H_Material, FILE *Simulation_file,
       (*H_Material).nu = atof(Parameter_pars[1]);
     }
     /**************************************************/
-    else if (((Driver_EigenErosion == true) ||
-              (Driver_EigenSoftening == true)) &&
-             (strcmp(Parameter_pars[0], "Eigenerosion") == 0)) {
-      STATUS = __read_boolean(&(*H_Material).Eigenerosion, Parameter_pars[1]);
-      if (STATUS == EXIT_FAILURE) {
-        fprintf(stderr, RED "Error in __read_boolean \n" RESET);
-        return EXIT_FAILURE;
+    else if (strcmp(Parameter_pars[0], "Ceps") == 0) {
+      if ((Driver_EigenErosion == true) || (Driver_EigenSoftening == true)) {
+        ChkMat.Is_Ceps = true;
+        (*H_Material).Ceps = atof(Parameter_pars[1]);
       }
     }
     /**************************************************/
-    else if (((Driver_EigenErosion == true) ||
-              (Driver_EigenSoftening == true)) &&
-             (strcmp(Parameter_pars[0], "Ceps") == 0)) {
-      ChkMat.Is_Ceps = true;
-      (*H_Material).Ceps = atof(Parameter_pars[1]);
-    }
-    /**************************************************/
-    else if (((Driver_EigenErosion == true) ||
-              (Driver_EigenSoftening == true)) &&
-             (strcmp(Parameter_pars[0], "Gf") == 0)) {
-      ChkMat.Is_Gf = true;
-      (*H_Material).Gf = atof(Parameter_pars[1]);
+    else if (strcmp(Parameter_pars[0], "Gf") == 0) {
+      if ((Driver_EigenErosion == true) || (Driver_EigenSoftening == true)) {
+        ChkMat.Is_Gf = true;
+        (*H_Material).Gf = atof(Parameter_pars[1]);
+      }
     }
     /**************************************************/
     else if ((strcmp(Parameter_pars[0], "}") == 0) && (Parser_status == 1)) {
@@ -177,7 +167,7 @@ static int __check_material(Material *H_Material, Check_Material ChkMat,
 
     printf("\t \t -> %s : %f \n", "" MAGENTA "[nu]" RESET "", (*H_Material).nu);
 
-    if ((*H_Material).Eigenerosion == true) {
+    if ((Driver_EigenErosion == true) || (Driver_EigenSoftening == true)) {
       printf("\t \t -> %s : %f \n", "" MAGENTA "[Ceps]" RESET "",
              (*H_Material).Ceps);
 
@@ -203,7 +193,7 @@ static int __check_material(Material *H_Material, Check_Material ChkMat,
                        : "" MAGENTA "[nu]" RESET " : " RED "false" RESET " \n",
           stderr);
 
-    if ((*H_Material).Eigenerosion == true) {
+    if ((Driver_EigenErosion == true) || (Driver_EigenSoftening == true)) {
       fputs(ChkMat.Is_Ceps
                 ? "" MAGENTA "[Ceps]" RESET " : " GREEN "true" RESET " \n"
                 : "" MAGENTA "[Ceps]" RESET " : " RED "false" RESET " \n",
@@ -213,7 +203,6 @@ static int __check_material(Material *H_Material, Check_Material ChkMat,
                 ? "" MAGENTA "[Gf]" RESET " : " GREEN "true" RESET " \n"
                 : "" MAGENTA "[Gf]" RESET " : " RED "false" RESET " \n",
             stderr);
-      ;
     }
 
     STATUS = EXIT_FAILURE;
