@@ -225,12 +225,14 @@ static Check_Material __Initialise_Check_Material() {
 
 static int __read_boolean(bool *Value, char *Value_char) {
   if ((strcmp(Value_char, "True") == 0) ||
-      (strcmp(Value_char, "TRUE") == 0 || (strcmp(Value_char, "true") == 0))) {
+      (strcmp(Value_char, "TRUE") == 0 || (strcmp(Value_char, "true") == 0)) ||
+      (strcmp(Value_char, "1") == 0)) {
     *Value = true;
     return EXIT_SUCCESS;
   } else if ((strcmp(Value_char, "False") == 0) ||
              (strcmp(Value_char, "FALSE") == 0 ||
-              (strcmp(Value_char, "false") == 0))) {
+              (strcmp(Value_char, "false") == 0) ||
+              (strcmp(Value_char, "0") == 0))) {
     *Value = false;
     return EXIT_SUCCESS;
   } else {
