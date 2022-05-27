@@ -45,6 +45,10 @@ int Eigenerosion__Constitutive__(unsigned p, const double *Damage_n,
     return EXIT_FAILURE;
   }
 
+#if NumberDimensions == 2
+  eigval_stress_p[2] = Stress_p[4];
+#endif
+
   if ((Damage_n[p] < 1.0) && (eigval_stress_p[0] > 0.0)) {
 
     //! Material parameters

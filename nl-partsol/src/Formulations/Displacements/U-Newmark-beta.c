@@ -97,7 +97,7 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
                                               NumTimeStep);
     Nactivedofs = ActiveDOFs.Nactivenodes;
 
-    if (Driver_EigenErosion) {
+    if ((Driver_EigenErosion == true) || (Driver_EigenSoftening == true)) {
       compute_Beps__Constitutive__(MPM_Mesh, FEM_Mesh, false);
     }
 
@@ -125,6 +125,15 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
       fprintf(stderr,
               "" RED "Error in __initialise_nodal_increments()" RESET " \n");
       return EXIT_FAILURE;
+    }
+
+    //! Trial constitutive 
+    STATUS = __constitutive_update(MPM_Mesh, FEM_Mesh);
+    if (STATUS == EXIT_FAILURE) {
+        fprintf(stderr,
+                "" RED "Error in __constitutive_update()" RESET
+                " \n");
+        return EXIT_FAILURE;
     }
 
     //! Trial residual
@@ -201,7 +210,13 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
         return EXIT_FAILURE;
       }
 
-      __constitutive_update(MPM_Mesh, FEM_Mesh, &STATUS);
+      STATUS = __constitutive_update(MPM_Mesh, FEM_Mesh);
+      if (STATUS == EXIT_FAILURE) {
+        fprintf(stderr,
+                "" RED "Error in __constitutive_update()" RESET
+                " \n");
+        return EXIT_FAILURE;
+      }
 
       // Free memory
 #ifdef USE_PETSC
@@ -1065,14 +1080,14 @@ static void __local_compatibility_conditions(Nodal_Field D_U, Mask ActiveNodes,
 
 /**************************************************************/
 
-static void __constitutive_update(Particle MPM_Mesh, Mesh FEM_Mesh,
-                                  int *STATUS) {
-  *STATUS = EXIT_SUCCESS;
+static int __constitutive_update(Particle MPM_Mesh, Mesh FEM_Mesh) {
+  int STATUS = EXIT_SUCCESS;
+  int STATUS_p = EXIT_SUCCESS;
   unsigned Np = MPM_Mesh.NumGP;
   unsigned MatIndx_p;
   unsigned p;
 
-#pragma omp for private(p, MatIndx_p)
+#pragma omp for private(p, MatIndx_p, STATUS_p)
   for (p = 0; p < Np; p++) {
 
     //  Update the Kirchhoff stress tensor with an apropiate
@@ -1080,14 +1095,17 @@ static void __constitutive_update(Particle MPM_Mesh, Mesh FEM_Mesh,
     MatIndx_p = MPM_Mesh.MatIdx[p];
     Material MatProp_p = MPM_Mesh.Mat[MatIndx_p];
 
-    *STATUS = Stress_integration__Constitutive__(p, MPM_Mesh, MatProp_p);
-    if (*STATUS == EXIT_FAILURE) {
+    STATUS_p = Stress_integration__Constitutive__(p, MPM_Mesh, MatProp_p);
+    if (STATUS_p == EXIT_FAILURE) {
       fprintf(stderr,
-              "" RED "Error in Stress_integration__Constitutive__(,)" RESET
-              " \n");
+              "" RED "Error in Stress_integration__Constitutive__(%i,,)" RESET
+              " \n",p);
+      STATUS = STATUS_p;
     }
 
   }
+
+  return STATUS;
 }
 
 /**************************************************************/
@@ -1309,7 +1327,7 @@ static void __Nodal_Internal_Forces(double *Residual, Mask ActiveNodes,
         if (Driver_EigenErosion) {
           double damage_p = MPM_Mesh.Phi.Damage_n1[p];
           for (unsigned i = 0; i < Ndim; i++) {
-            InternalForcesDensity_Ap[i] *= damage_p;
+            InternalForcesDensity_Ap[i] *= (1.0 - damage_p);
           }
         }
 
@@ -2055,7 +2073,7 @@ static void __assemble_tangent_stiffness(double *Tangent_Stiffness,
           if (Driver_EigenErosion) {
             double damage_p = MPM_Mesh.Phi.Damage_n1[p];
             for (unsigned i = 0; i < Ndim * Ndim; i++) {
-              Stiffness_density_p[i] *= damage_p;
+              Stiffness_density_p[i] *= (1.0-damage_p);
             }
           }
 

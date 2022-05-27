@@ -165,8 +165,7 @@ static void __local_compatibility_conditions(const Nodal_Field D_U,
   \param[in] FEM_Mesh Information of the background nodes
   \param[out] STATUS Returns failure or success
 */
-static void __constitutive_update(Particle MPM_Mesh, Mesh FEM_Mesh,
-                                  int *STATUS);
+static int __constitutive_update(Particle MPM_Mesh, Mesh FEM_Mesh);
 /**************************************************************/
 
 /**

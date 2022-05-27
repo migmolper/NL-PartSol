@@ -33,6 +33,7 @@ extern Load gravity_field;
 
 // Use Fracture modul
 extern bool Driver_EigenErosion;
+extern bool Driver_EigenSoftening;
 
 // Material parameters
 extern int Number_Soil_Water_Mixtures;

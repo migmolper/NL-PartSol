@@ -48,21 +48,19 @@ int Stress_integration__Constitutive__(int p, Particle MPM_Mesh,
     IO_State.D_phi_n1 = MPM_Mesh.Phi.F_n1.nM[p];
     IO_State.J = MPM_Mesh.Phi.J_n1.nV[p];
     
-    STATUS = compute_Kirchhoff_Stress_Hencky(IO_State, MatProp_p);
+    STATUS = compute_Kirchhoff_Stress_Hencky__Constitutive__(IO_State, MatProp_p);
     if (STATUS == EXIT_FAILURE) {
       fprintf(stderr,
-              "" RED "Error in compute_Kirchhoff_Stress_Hencky(,)" RESET
+              "" RED "Error in compute_Kirchhoff_Stress_Hencky__Constitutive__(,)" RESET
               " \n");
       return EXIT_FAILURE;
     }
-
-    *(IO_State.EPS) = MPM_Mesh.Phi.EPS_n[p];
     
   } else if (strcmp(MatProp_p.Type, "Neo-Hookean-Wriggers") == 0) {
 
-    
     IO_State.Particle_Idx = p;
     IO_State.Stress = MPM_Mesh.Phi.Stress.nM[p];
+    IO_State.W = &(MPM_Mesh.Phi.W[p]);
 
     if (MatProp_p.Locking_Control_Fbar) {
       IO_State.D_phi_n1 = MPM_Mesh.Phi.Fbar.nM[p];
@@ -72,10 +70,10 @@ int Stress_integration__Constitutive__(int p, Particle MPM_Mesh,
       IO_State.J = MPM_Mesh.Phi.J_n1.nV[p];
     }
 
-    STATUS = compute_Kirchhoff_Stress_Neo_Hookean(IO_State, MatProp_p);
+    STATUS = compute_Kirchhoff_Stress_Neo_Hookean__Constitutive__(IO_State, MatProp_p);
     if (STATUS == EXIT_FAILURE) {
       fprintf(stderr,
-              "" RED "Error in compute_Kirchhoff_Stress_Neo_Hookean(,)" RESET
+              "" RED "Error in compute_Kirchhoff_Stress_Neo_Hookean__Constitutive__(,)" RESET
               " \n");
       return EXIT_FAILURE;
     }
@@ -111,6 +109,7 @@ int Stress_integration__Constitutive__(int p, Particle MPM_Mesh,
     // Asign variables to the solver
     IO_State.Particle_Idx = p;
     IO_State.Stress = MPM_Mesh.Phi.Stress.nM[p];
+    IO_State.W = &(MPM_Mesh.Phi.W[p]);
     IO_State.Back_stress = MPM_Mesh.Phi.Back_stress.nM[p];
     IO_State.b_e = MPM_Mesh.Phi.b_e_n1.nM[p];
     IO_State.EPS = &MPM_Mesh.Phi.EPS_n1[p];
@@ -141,6 +140,7 @@ int Stress_integration__Constitutive__(int p, Particle MPM_Mesh,
     // Asign variables to the solver
     IO_State.Particle_Idx = p;
     IO_State.Stress = MPM_Mesh.Phi.Stress.nM[p];
+    IO_State.W = &(MPM_Mesh.Phi.W[p]);
     IO_State.b_e = MPM_Mesh.Phi.b_e_n1.nM[p];
     IO_State.EPS = &MPM_Mesh.Phi.EPS_n1[p];
     IO_State.Kappa = &MPM_Mesh.Phi.Kappa_n1[p];
@@ -160,10 +160,10 @@ int Stress_integration__Constitutive__(int p, Particle MPM_Mesh,
     *(IO_State.Kappa) = MPM_Mesh.Phi.Kappa_n[p];
     *(IO_State.EPS) = MPM_Mesh.Phi.EPS_n[p];
 
-    STATUS = compute_1PK_Drucker_Prager(IO_State, MatProp_p);
+    STATUS = compute_Kirchhoff_Stress_Drucker_Prager__Constitutive__(IO_State, MatProp_p);
     if (STATUS == EXIT_FAILURE) {
       fprintf(stderr,
-              "" RED "Error in compute_1PK_Drucker_Prager(,)" RESET " \n");
+              "" RED "Error in compute_Kirchhoff_Stress_Drucker_Prager__Constitutive__(,)" RESET " \n");
       return EXIT_FAILURE;
     }
 
@@ -263,6 +263,22 @@ int stiffness_density__Constitutive__(int p, double *Stiffness_density,
               "\n");
       return EXIT_FAILURE;
     }
+  } else if (strcmp(MatProp_p.Type, "Hencky") == 0) {
+    IO_State.D_phi_n1 = MPM_Mesh.Phi.F_n1.nM[p];
+    IO_State.Stress = MPM_Mesh.Phi.Stress.nM[p];
+    
+    STATUS = compute_stiffness_density_Hencky__Constitutive__(
+        Stiffness_density, dN_alpha_n1, dN_beta_n1, IO_State, MatProp_p);
+    if (STATUS == EXIT_FAILURE) {
+      fprintf(stderr,
+              "" RED "Error in compute_stiffness_density_Hencky__Constitutive__" RESET
+              "\n");
+      return EXIT_FAILURE;
+    }
+    
+ //   printf(" %e, %e \n %e, %e\n",Stiffness_density[0],Stiffness_density[1],Stiffness_density[2],Stiffness_density[3]);
+
+
   } else if (strcmp(MatProp_p.Type, "Newtonian-Fluid-Compressible") == 0) {
     IO_State.D_phi_n1 = MPM_Mesh.Phi.F_n1.nM[p];
     IO_State.D_phi_n = MPM_Mesh.Phi.F_n.nM[p];
@@ -292,6 +308,7 @@ int stiffness_density__Constitutive__(int p, double *Stiffness_density,
               "\n");
       return EXIT_FAILURE;
     }
+
   } else if (strcmp(MatProp_p.Type, "Matsuoka-Nakai") == 0) {
     IO_State.D_phi_n1 = MPM_Mesh.Phi.F_n1.nM[p];
     IO_State.D_phi_n = MPM_Mesh.Phi.F_n.nM[p];

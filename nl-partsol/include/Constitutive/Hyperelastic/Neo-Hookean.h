@@ -16,12 +16,12 @@
 /**
  * @brief Compute the strain-energy of a Neo-Hookean material
  * 
- * @param F Deformation gradient
+ * @param b Left Cauchy Green tensor
  * @param J Jacobian
  * @param MatProp Material properties of the model
  * @return double 
  */
-double compute_strain_energy_Neo_Hookean__Constitutive__(const double *F, double J,
+double compute_strain_energy_Neo_Hookean__Constitutive__(const double *b, double J,
                                                          Material MatProp);
 /*******************************************************/
 
@@ -32,7 +32,7 @@ double compute_strain_energy_Neo_Hookean__Constitutive__(const double *F, double
  * @param MatProp Material properties of the model
  * @return int 
  */
-int compute_Kirchhoff_Stress_Neo_Hookean(
+int compute_Kirchhoff_Stress_Neo_Hookean__Constitutive__(
   State_Parameters IO_State,
   Material MatProp);
 /*******************************************************/

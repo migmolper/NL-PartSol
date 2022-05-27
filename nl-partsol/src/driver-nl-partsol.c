@@ -11,22 +11,22 @@
   \section Usage
  */
 
-#include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #ifdef USE_PETSC
 #include <petscksp.h>
 #endif
 
+// clang-format off
 #include "Macros.h"
 #include "Types.h"
 #include "Globals.h"
 #include "Matlib.h"
 #include "Particles.h"
 #include "InOutFun.h"
-
 #include "Formulations/Displacements/U-Analisys.h"
 #include "Formulations/Displacements/U-Discrete-Energy-Momentum.h"
 #include "Formulations/Displacements/U-Forward-Euler.h"
@@ -34,13 +34,12 @@
 #include "Formulations/Displacements/U-Newmark-beta.h"
 #include "Formulations/Displacements/U-Static.h"
 #include "Formulations/Displacements/U-Verlet.h"
-
 #include "Formulations/Displacements-Pressure/U-p-Analisys.h"
 #include "Formulations/Displacements-Pressure/U-p-Newmark-beta.h"
-
 #include "Formulations/Displacements-WaterPressure/U-pw-Analisys.h"
 #include "Formulations/Displacements-WaterPressure/U-pw-Newmark-beta.h"
 #include "Formulations/Displacements-WaterPressure/U-pw-Verlet.h"
+// clang-format on
 
 /*
   Call global variables
@@ -53,6 +52,7 @@ char *TimeIntegrationScheme;
 bool Flag_Print_Convergence;
 Load gravity_field;
 bool Driver_EigenErosion;
+bool Driver_EigenSoftening;
 
 //  Auxiliar functions for the main
 static void nlpartsol_help_message();
@@ -62,30 +62,18 @@ static void standard_error(char *Error_message);
 
 int main(int argc, char *argv[]) {
 
-// Initialize OpenMP
-#ifdef USE_OPENMP
-  puts("" GREEN "Initialize OpenMP" RESET " ...");
-  //    omp_set_num_threads(nthreads > 0 ? nthreads : omp_get_max_threads());
-  // omp_set_num_threads(6);
-  omp_set_num_threads(omp_get_max_threads());
-#endif
-
-  // Initialize PETSc
-#ifdef USE_PETSC
-  puts("" GREEN "Initialize PETSc" RESET " ...");
-  PetscInitialize(&argc, &argv, 0, 0);
-#endif
-
   char Error_message[10000];
   bool If_formulation = false;
   bool If_f_option = false;
   bool If_ff_option = false;
   int INFO_GramsSolid = 3;
+  unsigned nthreads = 1;
   int STATUS = EXIT_SUCCESS;
   Mesh FEM_Mesh;
   Particle MPM_Mesh;
   Time_Int_Params Parameters_Solver;
 
+  // Default value for optional modulus
   Driver_EigenErosion = false;
 
   // Default values for the flags
@@ -100,18 +88,43 @@ int main(int argc, char *argv[]) {
 
     if (strcmp(argv[i], "--FORMULATION-U") == 0) {
       strcpy(Formulation, "-u");
+      puts("" GREEN "U Formulation" RESET " ...");
       If_formulation = true;
     }
 
     if (strcmp(argv[i], "--FORMULATION-Up") == 0) {
+      puts("" GREEN "U-p Formulation" RESET " ...");
       strcpy(Formulation, "-up");
       If_formulation = true;
     }
 
     if (strcmp(argv[i], "--FORMULATION-Upw") == 0) {
+      puts("" GREEN "U-pw Formulation" RESET " ...");
       strcpy(Formulation, "-upw");
       If_formulation = true;
     }
+
+    if (strcmp(argv[i], "--Fracture-Modulus") == 0) {
+      i++;
+      if (strcmp(argv[i], "Eigenerosion") == 0) {
+        Driver_EigenErosion = true;
+        puts("" GREEN "Activate Eigenerosion" RESET " ...");
+      } else if (strcmp(argv[i], "Eigensoftening") == 0) {
+        puts("" GREEN "Activate Eigensoftening" RESET " ...");
+        Driver_EigenSoftening = true;
+      } else {
+        fprintf(stderr, "" RED "Wrong input for --Fracture-Modulus. Use "
+                        "Eigenerosion or Eigensoftening" RESET " \n");
+        return EXIT_FAILURE;
+      }
+    }
+
+#ifdef USE_OPENMP
+    if (strcmp(argv[i], "--OPENMP-CORES") == 0) {
+      i++;
+      nthreads = atoi(argv[i]);
+    }
+#endif
 
     if (strcmp(argv[i], "--Print-Convergence") == 0) {
       Flag_Print_Convergence = true;
@@ -143,6 +156,20 @@ int main(int argc, char *argv[]) {
     fprintf(stderr, "" RED "Wrong inputs : select formulation " RESET " \n");
     return EXIT_FAILURE;
   }
+
+
+// Initialize OpenMP
+#ifdef USE_OPENMP
+  puts("" GREEN "Initialize OpenMP" RESET " ...");
+  omp_set_num_threads(nthreads > 0 ? nthreads : omp_get_max_threads());
+#endif
+
+  // Initialize PETSc
+#ifdef USE_PETSC
+  puts("" GREEN "Initialize PETSc" RESET " ...");
+  PetscInitialize(&argc, &argv, 0, 0);
+#endif
+
 
   /* Select kinf of formulation  */
   if (strcmp(Formulation, "-u") == 0) {
@@ -176,8 +203,10 @@ int main(int argc, char *argv[]) {
       puts("*************************************************");
       puts("" GREEN "Read outputs" RESET " ...");
       GramsOutputs(Static_conditons);
-      NLPS_Out_nodal_path_csv__InOutFun__(Static_conditons,Parameters_Solver.NumTimeStep);
-      NLPS_Out_particles_path_csv__InOutFun__(Static_conditons,Parameters_Solver.NumTimeStep);
+      NLPS_Out_nodal_path_csv__InOutFun__(Static_conditons,
+                                          Parameters_Solver.NumTimeStep);
+      NLPS_Out_particles_path_csv__InOutFun__(Static_conditons,
+                                              Parameters_Solver.NumTimeStep);
 
       puts("*************************************************");
       printf("" GREEN "Start %s shape functions initialisation" RESET " ... \n",
@@ -215,8 +244,10 @@ int main(int argc, char *argv[]) {
       puts("*************************************************");
       puts("" GREEN "Read outputs" RESET " ...");
       GramsOutputs(SimulationFile);
-      NLPS_Out_nodal_path_csv__InOutFun__(SimulationFile,Parameters_Solver.NumTimeStep);
-      NLPS_Out_particles_path_csv__InOutFun__(SimulationFile,Parameters_Solver.NumTimeStep);
+      NLPS_Out_nodal_path_csv__InOutFun__(SimulationFile,
+                                          Parameters_Solver.NumTimeStep);
+      NLPS_Out_particles_path_csv__InOutFun__(SimulationFile,
+                                              Parameters_Solver.NumTimeStep);
 
       puts("*************************************************");
       printf("Start %s shape functions initialisation ... \n", ShapeFunctionGP);
@@ -279,8 +310,10 @@ int main(int argc, char *argv[]) {
     puts("*************************************************");
     puts("Read outputs ...");
     GramsOutputs(SimulationFile);
-    NLPS_Out_nodal_path_csv__InOutFun__(SimulationFile,Parameters_Solver.NumTimeStep);
-    NLPS_Out_particles_path_csv__InOutFun__(SimulationFile,Parameters_Solver.NumTimeStep);
+    NLPS_Out_nodal_path_csv__InOutFun__(SimulationFile,
+                                        Parameters_Solver.NumTimeStep);
+    NLPS_Out_particles_path_csv__InOutFun__(SimulationFile,
+                                            Parameters_Solver.NumTimeStep);
 
     puts("*************************************************");
     puts("Run simulation ...");
@@ -325,11 +358,13 @@ int main(int argc, char *argv[]) {
 
     puts("*************************************************");
     puts("Read nodal path output directives ...");
-    NLPS_Out_nodal_path_csv__InOutFun__(SimulationFile,Parameters_Solver.NumTimeStep);
+    NLPS_Out_nodal_path_csv__InOutFun__(SimulationFile,
+                                        Parameters_Solver.NumTimeStep);
 
     puts("*************************************************");
     puts("Read particle path output directives ...");
-    NLPS_Out_particles_path_csv__InOutFun__(SimulationFile,Parameters_Solver.NumTimeStep);
+    NLPS_Out_particles_path_csv__InOutFun__(SimulationFile,
+                                            Parameters_Solver.NumTimeStep);
 
     puts("*************************************************");
     puts("Run simulation ...");
@@ -392,21 +427,29 @@ static void nlpartsol_help_message() {
 #endif
 
 #ifdef USE_PETSC
-  puts("Usage : nl-partsol -Flags -f [commands.nlp]");
-  puts("Flag values:");
+  puts("Usage : nl-partsol [NLPARTSOL Options] -f [commands.nlp] [PETSc Options]");
+  puts("[NLPARTSOL Options]:");
   puts(" * --Print-Convergence: Display convergence stats.");
   puts(" * --FORMULATION-U : Displacement formulation");
   puts(" * --FORMULATION-Up : Velocity-Pressure formulation");
   puts(" * --FORMULATION-Upw : Soil-water mixture displacement-pressure "
        "formulation");
+  puts(" * --Fracture-Modulus Eigenerosion/Eigensoftening : Phase Field "
+       "fracture "
+       "formulation");
+  puts(" * --OPENMP-CORES i : Number of cores for OpenMP (i)");
 #else
-  puts("Usage : nl-partsol -Flag -f [commands.nlp]");
-  puts("Flag values:");
+  puts("Usage : nl-partsol [NLPARTSOL Options] -f [commands.nlp]");
+  puts("[NLPARTSOL Options]:");
   puts(" * --Print-Convergence: Display convergence stats.");
   puts(" * --FORMULATION-U : Displacement formulation");
   puts(" * --FORMULATION-Up : Velocity-Pressure formulation");
   puts(" * --FORMULATION-Upw : Soil-water mixture displacement-pressure "
        "formulation");
+  puts(" * --Fracture-Modulus Eigenerosion/Eigensoftening : Phase Field "
+       "fracture "
+       "formulation");
+  puts(" * --OPENMP-CORES i : Number of cores for OpenMP (i)");
 #endif
 
   puts("The creator of NL-PartSol is Miguel Molinos");
@@ -461,7 +504,11 @@ static void free_particles(Particle MPM_Mesh)
   free(MPM_Mesh.Element_p);
   free(MPM_Mesh.NumberNodes);
   free_table__SetLib__(MPM_Mesh.ListNodes, MPM_Mesh.NumGP);
-  free_table__SetLib__(MPM_Mesh.Beps, MPM_Mesh.NumGP);
+
+  if ((Driver_EigenErosion == true) || (Driver_EigenSoftening == true)) {
+
+    free_table__SetLib__(MPM_Mesh.Beps, MPM_Mesh.NumGP);
+  }
 
   if (strcmp(Formulation, "-u") == 0) {
     free_U_vars__Fields__(MPM_Mesh.Phi);

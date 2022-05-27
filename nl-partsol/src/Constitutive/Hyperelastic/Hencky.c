@@ -1,27 +1,17 @@
 /**
  * @file Hencky.c
  * @author Miguel Molinos (@migmolper)
- * @brief 
+ * @brief
  * @version 0.1
  * @date 2022-05-25
- * 
+ *
  * @copyright Copyright (c) 2022
- * 
+ *
  */
 
 #include "Constitutive/Hyperelastic/Hencky.h"
 #include "Globals.h"
 
-/**************************************************************/
-
-/**
- * @brief
- *
- * @param[out] AA Elastic matrix
- * @param[in] Lame Lamé parameter
- * @param[in] G Shear modulus
- */
-static void __elastic_tangent(double *AA, double Lame, double G);
 /**************************************************************/
 
 /**
@@ -47,8 +37,8 @@ static void __elastic_stress_xyz(double *T_xyz, const double *T_ppal,
 
 /**************************************************************/
 
-int compute_Kirchhoff_Stress_Hencky(State_Parameters IO_State,
-                                    Material MatProp) {
+int compute_Kirchhoff_Stress_Hencky__Constitutive__(State_Parameters IO_State,
+                                                    Material MatProp) {
   int STATUS = EXIT_SUCCESS;
   unsigned Ndim = NumberDimensions;
 
@@ -72,10 +62,8 @@ int compute_Kirchhoff_Stress_Hencky(State_Parameters IO_State,
   double nu = MatProp.nu;
   double Lame = E * nu / ((1.0 + nu) * (1.0 - 2.0 * nu));
   double G = E / (2.0 * (1.0 + nu));
-  double AA[9] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
-
-  //! Compute the elastic matrix and the compliance for the tangent
-  __elastic_tangent(AA, Lame, G);
+  double AA[9] = {Lame + 2 * G, Lame, Lame, Lame,        Lame + 2 * G,
+                  Lame,         Lame, Lame, Lame + 2 * G};
 
   //! Left cauchy-green tensor
   left_Cauchy_Green__Particles__(b, D_phi_n1);
@@ -98,24 +86,6 @@ int compute_Kirchhoff_Stress_Hencky(State_Parameters IO_State,
   //! Rotate stress tensor ppal --> xyz
   __elastic_stress_xyz(IO_State.Stress, T_ppal, eigvec_b);
 
-  //! Tangent matrix (ppal)
-#if NumberDimensions == 2
-  IO_State.C_ep[0] = AA[0];
-  IO_State.C_ep[1] = AA[1];
-  IO_State.C_ep[2] = AA[3];
-  IO_State.C_ep[3] = AA[4];
-#else
-  IO_State.C_ep[0] = AA[0];
-  IO_State.C_ep[1] = AA[1];
-  IO_State.C_ep[2] = AA[2];
-  IO_State.C_ep[3] = AA[3];
-  IO_State.C_ep[4] = AA[4];
-  IO_State.C_ep[5] = AA[5];
-  IO_State.C_ep[6] = AA[6];
-  IO_State.C_ep[7] = AA[7];
-  IO_State.C_ep[8] = AA[8];
-#endif
-
   //! Compute deformation energy
   *(IO_State.W) = 0.5 * (T_ppal[0] * E_hencky[0] + T_ppal[1] * E_hencky[1] +
                          T_ppal[2] * E_hencky[2]);
@@ -125,19 +95,158 @@ int compute_Kirchhoff_Stress_Hencky(State_Parameters IO_State,
 
 /**************************************************************/
 
-static void __elastic_tangent(double *AA, double Lame, double G) {
+int compute_stiffness_density_Hencky__Constitutive__(
+    double *Stiffness_density, const double *dN_alpha_n1,
+    const double *dN_beta_n1, const State_Parameters IO_State,
+    Material MatProp) {
 
-  AA[0] = Lame + 2 * G;
-  AA[1] = Lame;
-  AA[2] = Lame;
+  int STATUS = EXIT_SUCCESS;
+  int Ndim = NumberDimensions;
 
-  AA[3] = Lame;
-  AA[4] = Lame + 2 * G;
-  AA[5] = Lame;
+  // Material parameters
+  double E = MatProp.E;
+  double nu = MatProp.nu;
+  double Lame = E * nu / ((1.0 + nu) * (1.0 - 2.0 * nu));
+  double G = E / (2.0 * (1.0 + nu));
 
-  AA[6] = Lame;
-  AA[7] = Lame;
-  AA[8] = Lame + 2 * G;
+#if NumberDimensions == 2
+  double b[4];
+  double eigvec_b[4] = {0.0, 0.0, 0.0, 0.0};
+  double eigval_b[2] = {0.0, 0.0};
+  double eigvec_T[4] = {0.0, 0.0, 0.0, 0.0};
+  double eigval_T[2] = {0.0, 0.0};
+  double AA[4] = {Lame + 2 * G, Lame, Lame, Lame + 2 * G};
+  Stiffness_density[0] = 0.0;
+  Stiffness_density[1] = 0.0;
+  Stiffness_density[2] = 0.0;
+  Stiffness_density[3] = 0.0;
+#else
+  double b[9];
+  double eigvec_b[9] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+  double eigval_b[3] = {0.0, 0.0, 0.0};
+  double eigvec_T[9] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+  double eigval_T[3] = {0.0, 0.0, 0.0};
+  double T_aux[9] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+  double AA[9] = {Lame + 2 * G, Lame, Lame, Lame,        Lame + 2 * G,
+                  Lame,         Lame, Lame, Lame + 2 * G};
+  Stiffness_density[0] = 0.0;
+  Stiffness_density[1] = 0.0;
+  Stiffness_density[2] = 0.0;
+  Stiffness_density[3] = 0.0;
+  Stiffness_density[4] = 0.0;
+  Stiffness_density[5] = 0.0;
+  Stiffness_density[6] = 0.0;
+  Stiffness_density[7] = 0.0;
+  Stiffness_density[8] = 0.0;
+#endif
+  const double *D_phi_n1 = IO_State.D_phi_n1;
+
+  //! Left cauchy-green tensor
+  left_Cauchy_Green__Particles__(b, D_phi_n1);
+
+  //! Compute Hencky strain in the ppal directions
+  STATUS = sym_eigen_analysis__TensorLib__(eigval_b, eigvec_b, b);
+  if (STATUS == EXIT_FAILURE) {
+    fprintf(stderr,
+            "" RED "Error in sym_eigen_analysis__TensorLib__()" RESET "\n");
+    return EXIT_FAILURE;
+  }
+
+  STATUS = sym_eigen_analysis__TensorLib__(eigval_T, eigvec_T, IO_State.Stress);
+  if (STATUS == EXIT_FAILURE) {
+    fprintf(stderr,
+            "" RED "Error in sym_eigen_analysis__TensorLib__()" RESET "\n");
+    return EXIT_FAILURE;
+  }
+
+#if NumberDimensions == 2
+
+  double n1[2] = {0.0, 0.0};
+  double n2[2] = {0.0, 0.0};
+
+  double m[4][4] = {{0.0, 0.0, 0.0, 0.0},
+                    {0.0, 0.0, 0.0, 0.0},
+                    {0.0, 0.0, 0.0, 0.0},
+                    {0.0, 0.0, 0.0, 0.0}};
+
+  double mu[4][2] = {{0.0, 0.0}, {0.0, 0.0}, {0.0, 0.0}, {0.0, 0.0}};
+
+  double mv[4][2] = {{0.0, 0.0}, {0.0, 0.0}, {0.0, 0.0}, {0.0, 0.0}};
+
+  double u__o__v[2][2] = {{0.0, 0.0}, {0.0, 0.0}};
+
+#else
+  No esta implementado
+#endif
+
+  // Generate the matrix with the eigenbases
+  // keeping in mind that LAPACK returns column-wise matrix
+  for (unsigned A = 0; A < Ndim; A++) {
+    for (unsigned B = 0; B < Ndim; B++) {
+      for (unsigned i = 0; i < Ndim; i++) {
+        for (unsigned j = 0; j < Ndim; j++) {
+          m[A * Ndim + B][i * Ndim + j] =
+              eigvec_b[A + i * Ndim] * eigvec_b[B + j * Ndim];
+        }
+      }
+    }
+  }
+
+  // Do the projection mu and mv
+  for (unsigned A = 0; A < Ndim; A++) {
+    for (unsigned B = 0; B < Ndim; B++) {
+      for (unsigned i = 0; i < Ndim; i++) {
+        for (unsigned j = 0; j < Ndim; j++) {
+          mv[A * Ndim + B][i] += m[A * Ndim + B][i * Ndim + j] * dN_alpha_n1[j];
+          mu[A * Ndim + B][i] += m[A * Ndim + B][i * Ndim + j] * dN_beta_n1[j];
+        }
+      }
+    }
+  }
+
+  // Do the diadic product of gradient directions
+  for (unsigned i = 0; i < Ndim; i++) {
+    for (unsigned j = 0; j < Ndim; j++) {
+      u__o__v[i][j] = dN_beta_n1[i] * dN_alpha_n1[j];
+    }
+  }
+
+  // Assemble the material contribution to the tanget matrix
+  for (unsigned A = 0; A < Ndim; A++) {
+    for (unsigned B = 0; B < Ndim; B++) {
+
+      for (unsigned i = 0; i < Ndim; i++) {
+        for (unsigned j = 0; j < Ndim; j++) {
+          Stiffness_density[i * Ndim + j] +=
+              AA[A * Ndim + B] * (mv[A * Ndim + A][i] * mu[B * Ndim + B][j]);
+
+          if (A != B) {
+            if (fabs(eigval_b[B] - eigval_b[A]) > 1E-14) {
+              Stiffness_density[i * Ndim + j] +=
+                  0.5 *
+                  ((eigval_T[B] - eigval_T[A]) / (eigval_b[B] - eigval_b[A])) *
+                  (eigval_b[B] * (mv[A * Ndim + B][i] * mu[A * Ndim + B][j]) +
+                   eigval_b[A] * (mv[A * Ndim + B][i] * mu[B * Ndim + A][j]));
+            } else {
+              Stiffness_density[i * Ndim + j] += 0.0;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // Assemble the geometrical contribution to the tanget matrix
+  for (unsigned i = 0; i < Ndim; i++) {
+    for (unsigned j = 0; j < Ndim; j++) {
+      for (unsigned k = 0; k < Ndim; k++) {
+        Stiffness_density[i * Ndim + j] +=
+            -IO_State.Stress[i * Ndim + k] * u__o__v[k][j];
+      }
+    }
+  }
+
+  return EXIT_SUCCESS;
 }
 
 /**************************************************************/
@@ -172,7 +281,7 @@ static void __elastic_stress_xyz(double *T_xyz, const double *T_ppal,
     for (unsigned i = 0; i < Ndim; i++) {
       for (unsigned j = 0; j < Ndim; j++) {
         T_aux[i * Ndim + j] +=
-            T_A * eigvec_b[A * Ndim + i] * eigvec_b[A * Ndim + j];
+            T_A * eigvec_b[A + i * Ndim] * eigvec_b[A + j * Ndim];
       }
     }
   }
