@@ -1325,7 +1325,7 @@ static void __Nodal_Internal_Forces(double *Residual, Mask ActiveNodes,
 
         //! Damage contribution of the particle to the residual
         if (Driver_EigenErosion) {
-          double damage_p = MPM_Mesh.Phi.Damage_n1[p];
+          double damage_p = Damage_field_n1[p];
           for (unsigned i = 0; i < Ndim; i++) {
             InternalForcesDensity_Ap[i] *= (1.0 - damage_p);
           }
