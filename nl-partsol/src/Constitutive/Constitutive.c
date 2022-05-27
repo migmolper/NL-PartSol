@@ -60,6 +60,7 @@ int Stress_integration__Constitutive__(int p, Particle MPM_Mesh,
 
     IO_State.Particle_Idx = p;
     IO_State.Stress = MPM_Mesh.Phi.Stress.nM[p];
+    IO_State.W = &(MPM_Mesh.Phi.W[p]);
 
     if (MatProp_p.Locking_Control_Fbar) {
       IO_State.D_phi_n1 = MPM_Mesh.Phi.Fbar.nM[p];
@@ -69,10 +70,10 @@ int Stress_integration__Constitutive__(int p, Particle MPM_Mesh,
       IO_State.J = MPM_Mesh.Phi.J_n1.nV[p];
     }
 
-    STATUS = compute_Kirchhoff_Stress_Neo_Hookean(IO_State, MatProp_p);
+    STATUS = compute_Kirchhoff_Stress_Neo_Hookean__Constitutive__(IO_State, MatProp_p);
     if (STATUS == EXIT_FAILURE) {
       fprintf(stderr,
-              "" RED "Error in compute_Kirchhoff_Stress_Neo_Hookean(,)" RESET
+              "" RED "Error in compute_Kirchhoff_Stress_Neo_Hookean__Constitutive__(,)" RESET
               " \n");
       return EXIT_FAILURE;
     }

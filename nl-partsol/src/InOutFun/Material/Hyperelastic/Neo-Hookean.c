@@ -35,21 +35,24 @@ typedef struct {
   bool Is_Locking_Control_Fbar; // For incompressible materials
   bool Is_alpha_Fbar;
 
+  bool Is_Ceps; // Normalizing constant (Eigenerosion)
+  bool Is_Gf;  // Failure energy (Eigenerosion)
+
 } Check_Material;
 
 static void standard_error();
-static Check_Material Initialise_Check_Material();
-static void check_Neo_Hookean_Wriggers_Material(Material, Check_Material, int);
+static Check_Material __Initialise_Check_Material();
+static int __check_material(Material *NH_Material, Check_Material ChkMat,
+                            int Idx);
 static bool Activate_Options(char *);
 
 /***************************************************************************/
 
-Material Define_Neo_Hookean_Wriggers(FILE *Simulation_file,
+int Define_Neo_Hookean_Wriggers(Material *NH_Material, FILE *Simulation_file,
                                      char *Material_Model, int Material_Idx) {
 
+  int STATUS = EXIT_SUCCESS;
   int Ndim = NumberDimensions;
-  /* Define outputs */
-  Material New_Material;
 
   /* Variables for reading purposes */
   char Parameter_line[MAXC] = {0};
@@ -59,11 +62,11 @@ Material Define_Neo_Hookean_Wriggers(FILE *Simulation_file,
   /* Check variables for sintax */
   bool Is_Open = false;
   bool Is_Close = false;
-  Check_Material ChkMat = Initialise_Check_Material();
+  Check_Material ChkMat = __Initialise_Check_Material();
 
   /* Default parameters */
-  New_Material.Locking_Control_Fbar = false;
-  New_Material.alpha_Fbar = 0.0;
+  (*NH_Material).Locking_Control_Fbar = false;
+  (*NH_Material).alpha_Fbar = 0.0;
 
   while (fgets(Parameter_line, sizeof(Parameter_line), Simulation_file) !=
          NULL) {
@@ -76,29 +79,29 @@ Material Define_Neo_Hookean_Wriggers(FILE *Simulation_file,
     /**************************************************/
     else if (strcmp(Parameter_pars[0], "rho") == 0) {
       ChkMat.Is_rho = true;
-      New_Material.rho = atof(Parameter_pars[1]);
+      (*NH_Material).rho = atof(Parameter_pars[1]);
     }
     /**************************************************/
     else if (strcmp(Parameter_pars[0], "E") == 0) {
       ChkMat.Is_E = true;
-      New_Material.E = atof(Parameter_pars[1]);
+      (*NH_Material).E = atof(Parameter_pars[1]);
     }
     /**************************************************/
     else if (strcmp(Parameter_pars[0], "nu") == 0) {
       ChkMat.Is_nu = true;
-      New_Material.nu = atof(Parameter_pars[1]);
+      (*NH_Material).nu = atof(Parameter_pars[1]);
     }
     /**************************************************/
     else if (strcmp(Parameter_pars[0], "Fbar") == 0) {
       ChkMat.Is_Locking_Control_Fbar = true;
-      New_Material.Locking_Control_Fbar = Activate_Options(Parameter_pars[1]);
+      (*NH_Material).Locking_Control_Fbar = Activate_Options(Parameter_pars[1]);
     }
     /**************************************************/
     else if (strcmp(Parameter_pars[0], "Fbar-alpha") == 0) {
       ChkMat.Is_alpha_Fbar = true;
-      New_Material.alpha_Fbar = atof(Parameter_pars[1]);
+      (*NH_Material).alpha_Fbar = atof(Parameter_pars[1]);
 
-      if ((New_Material.alpha_Fbar < 0.0) || (New_Material.alpha_Fbar > 1.0)) {
+      if (((*NH_Material).alpha_Fbar < 0.0) || ((*NH_Material).alpha_Fbar > 1.0)) {
         sprintf(Error_message, "The range for Fbar-alpha is [0,1]");
         standard_error(Error_message);
       }
@@ -113,62 +116,106 @@ Material Define_Neo_Hookean_Wriggers(FILE *Simulation_file,
     }
   }
 
-  strcpy(New_Material.Type, Material_Model);
+  strcpy((*NH_Material).Type, Material_Model);
 
-  check_Neo_Hookean_Wriggers_Material(New_Material, ChkMat, Material_Idx);
+  STATUS = __check_material(NH_Material, ChkMat, Material_Idx);
+  if (STATUS == EXIT_FAILURE) {
+    fprintf(stderr, "" RED " Error in __check_material() " RESET " \n");
+    return EXIT_FAILURE;
+  }
 
   /* Return outputs */
-  return New_Material;
+  return STATUS;
 }
 
 /***************************************************************************/
 
-static Check_Material Initialise_Check_Material() {
+static Check_Material __Initialise_Check_Material() {
   Check_Material ChkMat;
 
-  ChkMat.Is_rho = false; // Reference fensity
-  ChkMat.Is_E = false;   // Young modulus
-  ChkMat.Is_nu = false;  // Poisson cefficient
+  ChkMat.Is_rho = false; 
+  ChkMat.Is_E = false;
+  ChkMat.Is_nu = false; 
   ChkMat.Is_Locking_Control_Fbar = false;
   ChkMat.Is_alpha_Fbar = false;
+  ChkMat.Is_Ceps = true;
+  ChkMat.Is_Gf = true;
 
   return ChkMat;
 }
 
 /**********************************************************************/
 
-static void check_Neo_Hookean_Wriggers_Material(Material Mat_particle,
+static int __check_material(Material * NH_Material,
                                                 Check_Material ChkMat,
                                                 int Idx) {
+
+  int STATUS = EXIT_SUCCESS;
+
   if (ChkMat.Is_rho && ChkMat.Is_E && ChkMat.Is_nu) {
-    printf("\t -> %s \n", "Neo-Hookean material (Wriggers model)");
-    printf("\t \t -> %s : %i \n", "Idx", Idx);
-    printf("\t \t -> %s : %f \n", "Density", Mat_particle.rho);
-    printf("\t \t -> %s : %f \n", "Elastic modulus", Mat_particle.E);
-    printf("\t \t -> %s : %f \n", "Poisson modulus", Mat_particle.nu);
+
+    printf("\t -> %s \n", "Neo-Hookean material");
+
+    printf("\t \t -> %s : %f \n", "" MAGENTA "[rho]" RESET "",
+           (*NH_Material).rho);
+
+    printf("\t \t -> %s : %f \n", "" MAGENTA "[E]" RESET "", (*NH_Material).E);
+
+    printf("\t \t -> %s : %f \n", "" MAGENTA "[nu]" RESET "", (*NH_Material).nu);
+
+    if ((Driver_EigenErosion == true) || (Driver_EigenSoftening == true)) {
+      printf("\t \t -> %s : %f \n", "" MAGENTA "[Ceps]" RESET "",
+             (*NH_Material).Ceps);
+
+      printf("\t \t -> %s : %f \n", "" MAGENTA "[Gf]" RESET "",
+             (*NH_Material).Gf);
+    }
 
     if (ChkMat.Is_Locking_Control_Fbar) {
       printf("\t \t -> %s : %s \n", "F-bar", "Enabled");
 
       if (ChkMat.Is_alpha_Fbar) {
-        printf("\t \t -> %s : %f \n", "alpha F-bar", Mat_particle.alpha_Fbar);
+        printf("\t \t -> %s : %f \n", "alpha F-bar", (*NH_Material).alpha_Fbar);
       }
     } else {
       printf("\t \t -> %s : %s \n", "F-bar", "Disabled");
     }
 
   } else {
-    fprintf(stderr, "%s : %s \n", "Error in GramsMaterials()",
-            "Some parameter is missed for Neo-Hookean material");
-    fputs(ChkMat.Is_rho ? "Density : true \n" : "Density : false \n", stdout);
-    fputs(ChkMat.Is_E ? "Elastic modulus : true \n"
-                      : "Elastic modulus : false \n",
-          stdout);
-    fputs(ChkMat.Is_nu ? "Poisson modulus : true \n"
-                       : "Poisson modulus : false \n",
-          stdout);
-    exit(EXIT_FAILURE);
+
+    fprintf(stderr, "" RED " %s : %s " RESET " \n", "Error in GramsMaterials()",
+            "Some parameter is missed for Neo-Hookean");
+
+    fputs(ChkMat.Is_rho
+              ? "" MAGENTA "[rho]" RESET " : " GREEN "true" RESET " \n"
+              : "" MAGENTA "[rho]" RESET " : " RED "false" RESET " \n",
+          stderr);
+
+    fputs(ChkMat.Is_E ? "" MAGENTA "[E]" RESET " : " GREEN "true" RESET " \n"
+                      : "" MAGENTA "[E]" RESET " : " RED "false" RESET " \n",
+          stderr);
+
+    fputs(ChkMat.Is_nu ? "" MAGENTA "[nu]" RESET " : " GREEN "true" RESET " \n"
+                       : "" MAGENTA "[nu]" RESET " : " RED "false" RESET " \n",
+          stderr);
+
+    if ((Driver_EigenErosion == true) || (Driver_EigenSoftening == true)) {
+      fputs(ChkMat.Is_Ceps
+                ? "" MAGENTA "[Ceps]" RESET " : " GREEN "true" RESET " \n"
+                : "" MAGENTA "[Ceps]" RESET " : " RED "false" RESET " \n",
+            stderr);
+
+      fputs(ChkMat.Is_Gf
+                ? "" MAGENTA "[Gf]" RESET " : " GREEN "true" RESET " \n"
+                : "" MAGENTA "[Gf]" RESET " : " RED "false" RESET " \n",
+            stderr);
+    }
+
+    STATUS = EXIT_FAILURE;
   }
+
+  return STATUS;
+
 }
 
 /***************************************************************************/

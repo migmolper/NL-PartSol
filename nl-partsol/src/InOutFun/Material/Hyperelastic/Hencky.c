@@ -37,7 +37,8 @@ typedef struct {
 } Check_Material;
 
 static Check_Material __Initialise_Check_Material();
-static int __check_material(Material *, Check_Material, int);
+static int __check_material(Material *H_Material, Check_Material ChkMat,
+                            int Idx);
 static int __read_boolean(bool *Value, char *Value_char);
 
 /**********************************************************************/
@@ -125,8 +126,8 @@ static Check_Material __Initialise_Check_Material() {
   ChkMat.Is_rho = false;
   ChkMat.Is_E = false;
   ChkMat.Is_nu = false;
-  ChkMat.Is_Ceps = true;
-  ChkMat.Is_Gf = true;
+  ChkMat.Is_Ceps = false;
+  ChkMat.Is_Gf = false;
 
   return ChkMat;
 }

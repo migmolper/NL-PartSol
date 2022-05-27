@@ -506,7 +506,19 @@ int Hidrostatic_condition_particles__InOutFun__(char *, Particle, int);
 Material Define_Solid_Rigid(FILE *,char *,int);
 Material Define_Linear_Elastic(FILE *,char *,int);
 Material Define_Saint_Venant_Kirchhoff(FILE *,char *,int);
-Material Define_Neo_Hookean_Wriggers(FILE *,char *,int);
+
+
+/**
+ * @brief 
+ * 
+ * @param DP_Material List with the material properties
+ * @param Simulation_file Simulation file
+ * @param Material_Model Character identifier for the material
+ * @param Material_Idx Index identifier for the material
+ * @return int 
+ */
+int Define_Neo_Hookean_Wriggers(Material *NH_Material, FILE *Simulation_file,
+                                     char *Material_Model, int Material_Idx);
 
 
 /**

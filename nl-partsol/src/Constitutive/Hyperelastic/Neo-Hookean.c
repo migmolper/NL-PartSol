@@ -14,7 +14,7 @@
 
 /**************************************************************/
 
-double compute_strain_energy_Neo_Hookean__Constitutive__(const double *F, double J,
+double compute_strain_energy_Neo_Hookean__Constitutive__(const double *b, double J,
                                                          Material MatProp) {
   /* Number of dimensions */
   int Ndim = NumberDimensions;
@@ -24,10 +24,6 @@ double compute_strain_energy_Neo_Hookean__Constitutive__(const double *F, double
   double nu = MatProp.nu;
   double G = ElasticModulus / (2 * (1 + nu));
   double lambda = nu * ElasticModulus / ((1 - nu * 2) * (1 + nu));
-
-  double b[4];
-  left_Cauchy_Green__Particles__(b, F);
-
   double I1_b = I1__TensorLib__(b);
   double f_J = 0.25 * lambda * (J * J - 1) - 0.5 * lambda * log(J) - G * log(J);
 
@@ -38,7 +34,7 @@ double compute_strain_energy_Neo_Hookean__Constitutive__(const double *F, double
 
 /**************************************************************/
 
-int compute_Kirchhoff_Stress_Neo_Hookean(State_Parameters IO_State,
+int compute_Kirchhoff_Stress_Neo_Hookean__Constitutive__(State_Parameters IO_State,
                                          Material MatProp) {
 
   int STATUS = EXIT_SUCCESS;
@@ -80,6 +76,9 @@ int compute_Kirchhoff_Stress_Neo_Hookean(State_Parameters IO_State,
 #if NumberDimensions == 2
   T[4] = c0;
 #endif
+
+//! Compute deformation energy
+ *(IO_State.W) = compute_strain_energy_Neo_Hookean__Constitutive__(b_n1, J, MatProp);
 
   return STATUS;
 }

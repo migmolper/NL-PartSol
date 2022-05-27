@@ -215,8 +215,8 @@ static Check_Material __Initialise_Check_Material() {
   ChkMat.Is_friction_angle = false;
   ChkMat.Is_dilatancy_angle = false;
   ChkMat.Is_J2_degradated = false;
-  ChkMat.Is_Ceps = true;
-  ChkMat.Is_Gf = true;
+  ChkMat.Is_Ceps = false;
+  ChkMat.Is_Gf = false;
 
   return ChkMat;
 }
