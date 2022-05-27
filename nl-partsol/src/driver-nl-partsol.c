@@ -118,7 +118,9 @@ int main(int argc, char *argv[]) {
       i++;
       if (strcmp(argv[i], "Eigenerosion") == 0) {
         Driver_EigenErosion = true;
+        puts("" GREEN "Activate Eigenerosion" RESET " ...");
       } else if (strcmp(argv[i], "Eigensoftening") == 0) {
+        puts("" GREEN "Activate Eigensoftening" RESET " ...");
         Driver_EigenSoftening = true;
       } else {
         fprintf(stderr, "" RED "Wrong input for --Fracture-Modulus. Use "
