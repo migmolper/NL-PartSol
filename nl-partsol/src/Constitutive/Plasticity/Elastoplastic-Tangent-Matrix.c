@@ -163,7 +163,7 @@ int compute_1PK_elastoplastic_tangent_matrix(double *Stiffness_density,
               (mv[A * Ndim + A][i] * mu[B * Ndim + B][j]);
 
           if (A != B) {
-            if (fabs(eigval_b_e[B] - eigval_b_e[A]) > 1E-14) {
+            if (fabs(eigval_b_e[B] - eigval_b_e[A]) > 1E-10) {
               Stiffness_density[i * Ndim + j] +=
                   0.5 *
                   ((eigval_T[B] - eigval_T[A]) /

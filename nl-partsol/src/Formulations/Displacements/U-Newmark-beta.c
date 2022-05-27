@@ -137,7 +137,13 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
         return EXIT_FAILURE;
     }
 
-    __constitutive_update(MPM_Mesh, FEM_Mesh, &STATUS);
+    STATUS = __constitutive_update(MPM_Mesh, FEM_Mesh);
+    if (STATUS == EXIT_FAILURE) {
+        fprintf(stderr,
+                "" RED "Error in __constitutive_update()" RESET
+                " \n");
+        return EXIT_FAILURE;
+    }
 
     //! Trial residual
     Residual = __assemble_residual(
@@ -213,7 +219,13 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
         return EXIT_FAILURE;
       }
 
-      __constitutive_update(MPM_Mesh, FEM_Mesh, &STATUS);
+      STATUS = __constitutive_update(MPM_Mesh, FEM_Mesh);
+      if (STATUS == EXIT_FAILURE) {
+        fprintf(stderr,
+                "" RED "Error in __constitutive_update()" RESET
+                " \n");
+        return EXIT_FAILURE;
+      }
 
       // Free memory
 #ifdef USE_PETSC
@@ -1077,14 +1089,14 @@ static void __local_compatibility_conditions(Nodal_Field D_U, Mask ActiveNodes,
 
 /**************************************************************/
 
-static void __constitutive_update(Particle MPM_Mesh, Mesh FEM_Mesh,
-                                  int *STATUS) {
-  *STATUS = EXIT_SUCCESS;
+static int __constitutive_update(Particle MPM_Mesh, Mesh FEM_Mesh) {
+  int STATUS = EXIT_SUCCESS;
+  int STATUS_p = EXIT_SUCCESS;
   unsigned Np = MPM_Mesh.NumGP;
   unsigned MatIndx_p;
   unsigned p;
 
-#pragma omp for private(p, MatIndx_p)
+#pragma omp for private(p, MatIndx_p, STATUS_p)
   for (p = 0; p < Np; p++) {
 
     //  Update the Kirchhoff stress tensor with an apropiate
@@ -1092,14 +1104,17 @@ static void __constitutive_update(Particle MPM_Mesh, Mesh FEM_Mesh,
     MatIndx_p = MPM_Mesh.MatIdx[p];
     Material MatProp_p = MPM_Mesh.Mat[MatIndx_p];
 
-    *STATUS = Stress_integration__Constitutive__(p, MPM_Mesh, MatProp_p);
-    if (*STATUS == EXIT_FAILURE) {
+    STATUS_p = Stress_integration__Constitutive__(p, MPM_Mesh, MatProp_p);
+    if (STATUS_p == EXIT_FAILURE) {
       fprintf(stderr,
-              "" RED "Error in Stress_integration__Constitutive__(,)" RESET
-              " \n");
+              "" RED "Error in Stress_integration__Constitutive__(%i,,)" RESET
+              " \n",p);
+      STATUS = STATUS_p;
     }
 
   }
+
+  return STATUS;
 }
 
 /**************************************************************/
