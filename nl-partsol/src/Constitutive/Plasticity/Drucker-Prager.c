@@ -789,17 +789,6 @@ static int __update_internal_variables_elastic(double *T_xyz,
   T_xyz[8] = T_aux[8];
 #endif
 
-#ifdef DEBUG_MODE
-#if DEBUG_MODE + 0
-#if NumberDimensions == 2
-  puts("Nominal stress tensor");
-  printf("%f %f %f \n", T[0], T[1], 0.0);
-  printf("%f %f %f \n", T[2], T[3], 0.0);
-  printf("%f %f %f \n", 0.0, 0.0, T[4]);
-#endif
-#endif
-#endif
-
   return EXIT_SUCCESS;
 }
 

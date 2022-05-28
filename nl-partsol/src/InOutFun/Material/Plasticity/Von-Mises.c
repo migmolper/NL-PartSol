@@ -33,11 +33,13 @@ typedef struct {
   bool Is_E;              // Young modulus
   bool Is_nu;             // Poisson cefficient
   bool Is_Yield;   // Initial Yield stress
-  bool Is_Hardening_modulus;
+  bool Is_Hardening_modulus; // Hardening modulus
   bool Is_theta;
   bool Is_K_0;
   bool Is_K_inf;
   bool Is_delta;
+  bool Is_Ceps;                     // Normalizing constant (Eigenerosion)
+  bool Is_Gf;                       // Failure energy (Eigenerosion)
 
 } Check_Material;
 
@@ -188,6 +190,20 @@ int Define_Von_Mises(Material * VM_Material, FILE *Simulation_file, char *Materi
       }
 
     }    
+    /**************************************************/
+    else if (strcmp(Parameter_pars[0], "Ceps") == 0) {
+      if ((Driver_EigenErosion == true) || (Driver_EigenSoftening == true)) {
+        ChkMat.Is_Ceps = true;
+        (*VM_Material).Ceps = atof(Parameter_pars[1]);
+      }
+    }
+    /**************************************************/
+    else if (strcmp(Parameter_pars[0], "Gf") == 0) {
+      if ((Driver_EigenErosion == true) || (Driver_EigenSoftening == true)) {
+        ChkMat.Is_Gf = true;
+        (*VM_Material).Gf = atof(Parameter_pars[1]);
+      }
+    }
     /**************************************************/    
     else if ((strcmp(Parameter_pars[0], "}") == 0) && (Parser_status == 1)) {
       Is_Close = true;
@@ -229,6 +245,8 @@ static Check_Material __Initialise_Check_Material() {
   ChkMat.Is_K_0 = false;
   ChkMat.Is_K_inf = false;
   ChkMat.Is_delta = false;
+  ChkMat.Is_Ceps = false;
+  ChkMat.Is_Gf = false;
 
   return ChkMat;
 }
@@ -262,6 +280,14 @@ static int __check_material(Material * VM_Material,
     printf("\t \t -> %s : %f \n", ""MAGENTA"[K-inf]"RESET"", (*VM_Material).K_inf_Hardening_Voce);
 
     printf("\t \t -> %s : %f \n", ""MAGENTA"[delta]"RESET"", (*VM_Material).delta_Hardening_Voce);
+
+    if ((Driver_EigenErosion == true) || (Driver_EigenSoftening == true)) {
+      printf("\t \t -> %s : %f \n", "" MAGENTA "[Ceps]" RESET "",
+             (*VM_Material).Ceps);
+
+      printf("\t \t -> %s : %f \n", "" MAGENTA "[Gf]" RESET "",
+             (*VM_Material).Gf);
+    }
 
   } else {
 
@@ -303,6 +329,18 @@ static int __check_material(Material * VM_Material,
     fputs(ChkMat.Is_delta ? 
     ""MAGENTA"[delta]"RESET" : "GREEN"true"RESET" \n"  : 
     ""MAGENTA"[delta]"RESET" : "RED"false"RESET" \n",stderr);       
+
+    if ((Driver_EigenErosion == true) || (Driver_EigenSoftening == true)) {
+      fputs(ChkMat.Is_Ceps
+                ? "" MAGENTA "[Ceps]" RESET " : " GREEN "true" RESET " \n"
+                : "" MAGENTA "[Ceps]" RESET " : " RED "false" RESET " \n",
+            stderr);
+
+      fputs(ChkMat.Is_Gf
+                ? "" MAGENTA "[Gf]" RESET " : " GREEN "true" RESET " \n"
+                : "" MAGENTA "[Gf]" RESET " : " RED "false" RESET " \n",
+            stderr);
+    }
 
     STATUS = EXIT_FAILURE;
   }

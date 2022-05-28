@@ -127,9 +127,9 @@ int Stress_integration__Constitutive__(int p, Particle MPM_Mesh,
 #endif
     *(IO_State.EPS) = MPM_Mesh.Phi.EPS_n[p];
 
-    STATUS = compute_1PK_Von_Mises(IO_State, MatProp_p);
+    STATUS = compute_Kirchhoff_Stress_Von_Mises__Constitutive__(IO_State, MatProp_p);
     if (STATUS == EXIT_FAILURE) {
-      fprintf(stderr, "" RED "Error in compute_1PK_Von_Mises(,)" RESET " \n");
+      fprintf(stderr, "" RED "Error in compute_Kirchhoff_Stress_Von_Mises__Constitutive__(,)" RESET " \n");
       return EXIT_FAILURE;
     }
 
