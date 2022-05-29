@@ -339,7 +339,7 @@ int compute_1PK_Matsuoka_Nakai__Constitutive__(State_Parameters IO_State,
 
   bool Activate_CutOff = false;
   double CutOff = 0.0;
-  bool Line_search_active = true;
+  bool Activate_line_search = true;
 
   double CC[9] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
   double AA[9] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
@@ -502,7 +502,7 @@ int compute_1PK_Matsuoka_Nakai__Constitutive__(State_Parameters IO_State,
       Tangent_Matrix[4][3] = d_F_d_kappa_phi;
       Tangent_Matrix[4][4] = 0.0;
 
-            // Introduce a preconditioner
+      // Introduce a preconditioner
       Tangent_Matrix[0][0] += Residual_k1[0];
       Tangent_Matrix[1][1] += Residual_k1[1];
       Tangent_Matrix[2][2] += Residual_k1[2];
@@ -561,7 +561,7 @@ int compute_1PK_Matsuoka_Nakai__Constitutive__(State_Parameters IO_State,
         return EXIT_FAILURE;
       }
 
-      if (Line_search_active == true) {
+      if (Activate_line_search == true) {
         while ((fabs(Norm_Residual_k2 - Norm_Residual_k1) > TOL) &&
                (fabs(F_k2 / F_0) >= TOL)) {
           delta =
@@ -570,7 +570,6 @@ int compute_1PK_Matsuoka_Nakai__Constitutive__(State_Parameters IO_State,
 
           if ((delta > 1.0) || (delta < 0.0))
             break;
-
 
           delta_lambda_k2 = delta_lambda_k1 - delta * Residual_k2[4];
           if (Lambda_n + delta_lambda_k2 < 0.0) {
@@ -583,7 +582,6 @@ int compute_1PK_Matsuoka_Nakai__Constitutive__(State_Parameters IO_State,
           T_k2[2] = T_k1[2] - delta * Residual_k2[2];
           kappa_k2[0] = kappa_k1[0] - delta * Residual_k2[3];
           kappa_k2[1] = alpha * kappa_k2[0];
-          
 
           if (fabs((T_k2[0] + T_k2[1] + T_k2[2]) / 3.0) < TOL_apex) {
             Lambda_k2 = Lambda_n;
