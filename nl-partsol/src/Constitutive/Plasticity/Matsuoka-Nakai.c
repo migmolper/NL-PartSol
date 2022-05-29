@@ -88,14 +88,12 @@ static void __E_hencky(double *E_hencky_k, const double *T_k, const double *CC,
  * @brief
  *
  * @param T Nominal stress tensor
- * @param D_phi Total deformation gradient
  * @param T_tr Elastic stress tensor
  * @param eigvec_b_e_tr Eigenvector of b elastic trial
  * @param c_cotphi Cohesion parameter
  * @return int
  */
-static int __update_internal_variables_elastic(double *T, const double *D_phi,
-                                               const double *T_tr,
+static int __update_internal_variables_elastic(double *T, const double *T_tr,
                                                const double *eigvec_b_e_tr,
                                                double c_cotphi);
 /**************************************************************/
@@ -282,7 +280,7 @@ static int __elastoplastic_tangent_moduli(double *C_ep, const double *CC,
  * @param Residual Residual of the problem
  * @return int
  */
-static int __solver(double *Tangent_Matrix, double *Residual);
+static int __solver(double (*Tangent_Matrix)[5], double *Residual);
 /**************************************************************/
 
 /**
@@ -292,10 +290,12 @@ static int __solver(double *Tangent_Matrix, double *Residual);
  * @param Tangent_Matrix Tangent matrix of the problem
  * @return int
  */
-static int __reciprocal_condition_number(double *RCOND, double *Tangent_Matrix);
+static int __reciprocal_condition_number(double *RCOND,
+                                         double (*Tangent_Matrix)[5]);
 /**************************************************************/
 
-int compute_1PK_Matsuoka_Nakai(State_Parameters IO_State, Material MatProp) {
+int compute_1PK_Matsuoka_Nakai__Constitutive__(State_Parameters IO_State,
+                                               Material MatProp) {
 
   int STATUS = EXIT_SUCCESS;
 
@@ -339,6 +339,7 @@ int compute_1PK_Matsuoka_Nakai(State_Parameters IO_State, Material MatProp) {
 
   bool Activate_CutOff = false;
   double CutOff = 0.0;
+  bool Line_search_active = true;
 
   double CC[9] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
   double AA[9] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
@@ -374,9 +375,10 @@ int compute_1PK_Matsuoka_Nakai(State_Parameters IO_State, Material MatProp) {
 
   // Initialize Newton-Raphson solver
   double TOL = 1E-10; // TOL_Radial_Returning;
+  double TOL_apex = 0.1;
   double Residual_k1[5] = {0.0, 0.0, 0.0};
   double Residual_k2[5] = {0.0, 0.0, 0.0};
-  double Tangent_Matrix[25];
+  double Tangent_Matrix[5][5];
   double rcond;
   double Norm_Residual_k0;
   double Norm_Residual_k1;
@@ -402,10 +404,10 @@ int compute_1PK_Matsuoka_Nakai(State_Parameters IO_State, Material MatProp) {
   T_k1[2] = T_tr[2];
 
   // Elastic
-  if (F_0 <= 0.0) {
+  if (F_0 <= TOL_NR) {
 
-    STATUS = __update_internal_variables_elastic(
-        IO_State.Stress, IO_State.D_phi_n1, T_k1, eigvec_b_e_tr, c_cotphi);
+    STATUS = __update_internal_variables_elastic(IO_State.Stress, T_k1,
+                                                 eigvec_b_e_tr, c_cotphi);
     if (STATUS == EXIT_FAILURE) {
       fprintf(stderr,
               "" RED "Error in __update_internal_variables_elastic()" RESET
@@ -448,7 +450,8 @@ int compute_1PK_Matsuoka_Nakai(State_Parameters IO_State, Material MatProp) {
     Norm_Residual_k1 = Norm_Residual_k0;
     Iter_k1 = 0;
 
-    while (fabs(Norm_Residual_k1 / Norm_Residual_k0) >= TOL) {
+    while ((fabs(Norm_Residual_k1 / Norm_Residual_k0) >= TOL) &&
+           (fabs(F_k1 / F_0) >= TOL)) {
 
       delta = 1.0;
 
@@ -466,45 +469,45 @@ int compute_1PK_Matsuoka_Nakai(State_Parameters IO_State, Material MatProp) {
                                   kappa_k1[1]);
 
       // Assemble tangent matrix
-      Tangent_Matrix[0] = CC[0] + delta_lambda_k1 * dd_G_dd_stress[0];
-      Tangent_Matrix[1] = CC[1] + delta_lambda_k1 * dd_G_dd_stress[1];
-      Tangent_Matrix[2] = CC[2] + delta_lambda_k1 * dd_G_dd_stress[2];
-      Tangent_Matrix[3] =
+      Tangent_Matrix[0][0] = CC[0] + delta_lambda_k1 * dd_G_dd_stress[0];
+      Tangent_Matrix[0][1] = CC[1] + delta_lambda_k1 * dd_G_dd_stress[1];
+      Tangent_Matrix[0][2] = CC[2] + delta_lambda_k1 * dd_G_dd_stress[2];
+      Tangent_Matrix[0][3] =
           alpha * delta_lambda_k1 * dd_G_d_stress_d_kappa_psi[0];
-      Tangent_Matrix[4] = d_G_d_stress[0];
+      Tangent_Matrix[0][4] = d_G_d_stress[0];
 
-      Tangent_Matrix[5] = CC[3] + delta_lambda_k1 * dd_G_dd_stress[3];
-      Tangent_Matrix[6] = CC[4] + delta_lambda_k1 * dd_G_dd_stress[4];
-      Tangent_Matrix[7] = CC[5] + delta_lambda_k1 * dd_G_dd_stress[5];
-      Tangent_Matrix[8] =
+      Tangent_Matrix[1][0] = CC[3] + delta_lambda_k1 * dd_G_dd_stress[3];
+      Tangent_Matrix[1][1] = CC[4] + delta_lambda_k1 * dd_G_dd_stress[4];
+      Tangent_Matrix[1][2] = CC[5] + delta_lambda_k1 * dd_G_dd_stress[5];
+      Tangent_Matrix[1][3] =
           alpha * delta_lambda_k1 * dd_G_d_stress_d_kappa_psi[1];
-      Tangent_Matrix[9] = d_G_d_stress[1];
+      Tangent_Matrix[1][4] = d_G_d_stress[1];
 
-      Tangent_Matrix[10] = CC[6] + delta_lambda_k1 * dd_G_dd_stress[6];
-      Tangent_Matrix[11] = CC[7] + delta_lambda_k1 * dd_G_dd_stress[7];
-      Tangent_Matrix[12] = CC[8] + delta_lambda_k1 * dd_G_dd_stress[8];
-      Tangent_Matrix[13] =
+      Tangent_Matrix[2][0] = CC[6] + delta_lambda_k1 * dd_G_dd_stress[6];
+      Tangent_Matrix[2][1] = CC[7] + delta_lambda_k1 * dd_G_dd_stress[7];
+      Tangent_Matrix[2][2] = CC[8] + delta_lambda_k1 * dd_G_dd_stress[8];
+      Tangent_Matrix[2][3] =
           alpha * delta_lambda_k1 * dd_G_d_stress_d_kappa_psi[2];
-      Tangent_Matrix[14] = d_G_d_stress[2];
+      Tangent_Matrix[2][4] = d_G_d_stress[2];
 
-      Tangent_Matrix[15] = -d_kappa_phi_d_stress[0];
-      Tangent_Matrix[16] = -d_kappa_phi_d_stress[1];
-      Tangent_Matrix[17] = -d_kappa_phi_d_stress[2];
-      Tangent_Matrix[18] = 1.0;
-      Tangent_Matrix[19] = -d_kappa_phi_d_lambda;
+      Tangent_Matrix[3][0] = -d_kappa_phi_d_stress[0];
+      Tangent_Matrix[3][1] = -d_kappa_phi_d_stress[1];
+      Tangent_Matrix[3][2] = -d_kappa_phi_d_stress[2];
+      Tangent_Matrix[3][3] = 1.0;
+      Tangent_Matrix[3][4] = -d_kappa_phi_d_lambda;
 
-      Tangent_Matrix[20] = d_F_d_stress[0];
-      Tangent_Matrix[21] = d_F_d_stress[1];
-      Tangent_Matrix[22] = d_F_d_stress[2];
-      Tangent_Matrix[23] = d_F_d_kappa_phi;
-      Tangent_Matrix[24] = 0.0;
+      Tangent_Matrix[4][0] = d_F_d_stress[0];
+      Tangent_Matrix[4][1] = d_F_d_stress[1];
+      Tangent_Matrix[4][2] = d_F_d_stress[2];
+      Tangent_Matrix[4][3] = d_F_d_kappa_phi;
+      Tangent_Matrix[4][4] = 0.0;
 
-      // Introduce a preconditioner
-      Tangent_Matrix[0] += Residual_k1[0];
-      Tangent_Matrix[6] += Residual_k1[1];
-      Tangent_Matrix[12] += Residual_k1[2];
-      Tangent_Matrix[18] += Residual_k1[3];
-      Tangent_Matrix[24] += Residual_k1[4];
+            // Introduce a preconditioner
+      Tangent_Matrix[0][0] += Residual_k1[0];
+      Tangent_Matrix[1][1] += Residual_k1[1];
+      Tangent_Matrix[2][2] += Residual_k1[2];
+      Tangent_Matrix[3][3] += Residual_k1[3];
+      Tangent_Matrix[4][4] += Residual_k1[4];
 
       // Compute increments and update variables
       STATUS = __solver(Tangent_Matrix, Residual_k1);
@@ -514,35 +517,32 @@ int compute_1PK_Matsuoka_Nakai(State_Parameters IO_State, Material MatProp) {
       }
 
       // Update values for the next step (line search)
+      delta_lambda_k2 = delta_lambda_k1 - delta * Residual_k1[4];
+      if (Lambda_n + delta_lambda_k2 < 0.0) {
+        break;
+      }
+
+      Lambda_k2 = Lambda_n + delta_lambda_k2;
       T_k2[0] = T_k1[0] - delta * Residual_k1[0];
       T_k2[1] = T_k1[1] - delta * Residual_k1[1];
       T_k2[2] = T_k1[2] - delta * Residual_k1[2];
       kappa_k2[0] = kappa_k1[0] - delta * Residual_k1[3];
       kappa_k2[1] = alpha * kappa_k2[0];
-      delta_lambda_k2 = delta_lambda_k1 - delta * Residual_k1[4];
-      Lambda_k2 = Lambda_n + delta_lambda_k2;
       Iter_k2 = 0;
 
-      if (Activate_CutOff) {
-        if ((T_k2[0] > CutOff) && (T_k2[1] > CutOff) && (T_k2[2] > CutOff)) {
-          T_k2[0] = T_k2[1] = T_k2[2] = CutOff;
-          Lambda_k2 = Lambda_n;
-          kappa_k2[0] = kappa_n[0];
-          kappa_k2[1] = alpha * kappa_k2[0];
-          delta_lambda_k2 = 0.0;
-          break;
-        }
+      if (fabs((T_k2[0] + T_k2[1] + T_k2[2]) / 3.0) < TOL_apex) {
+        Lambda_k2 = Lambda_n;
+        kappa_k2[0] = kappa_n[0];
+        kappa_k2[1] = alpha * kappa_k2[0];
+        T_k2[0] = 0.0;
+        T_k2[1] = 0.0;
+        T_k2[2] = 0.0;
+        break;
       }
 
       I1 = T_k2[0] + T_k2[1] + T_k2[2];
       I2 = T_k2[0] * T_k2[1] + T_k2[1] * T_k2[2] + T_k2[0] * T_k2[2];
       I3 = T_k2[0] * T_k2[1] * T_k2[2];
-
-      if (Lambda_k2 < 0.0) {
-        fprintf(stderr, "" RED "Negative value of Lambda: %f " RESET "\n",
-                Lambda_k2);
-        return EXIT_FAILURE;
-      }
 
       // Compute the residual of the next step
       __E_hencky(E_hencky_k2, T_k2, CC, c_cotphi);
@@ -561,66 +561,66 @@ int compute_1PK_Matsuoka_Nakai(State_Parameters IO_State, Material MatProp) {
         return EXIT_FAILURE;
       }
 
-      while ((Norm_Residual_k2 - Norm_Residual_k1) > TOL) {
-        delta =
-            pow(delta, 2.0) * 0.5 * Norm_Residual_k1 /
-            (Norm_Residual_k2 - delta * Norm_Residual_k1 + Norm_Residual_k1);
+      if (Line_search_active == true) {
+        while ((fabs(Norm_Residual_k2 - Norm_Residual_k1) > TOL) &&
+               (fabs(F_k2 / F_0) >= TOL)) {
+          delta =
+              pow(delta, 2.0) * 0.5 * Norm_Residual_k1 /
+              (Norm_Residual_k2 - delta * Norm_Residual_k1 + Norm_Residual_k1);
 
-        if (delta < TOL)
-          break;
+          if ((delta > 1.0) || (delta < 0.0))
+            break;
 
-        T_k2[0] = T_k1[0] - delta * Residual_k2[0];
-        T_k2[1] = T_k1[1] - delta * Residual_k2[1];
-        T_k2[2] = T_k1[2] - delta * Residual_k2[2];
-        kappa_k2[0] = kappa_k1[0] - delta * Residual_k2[3];
-        kappa_k2[1] = alpha * kappa_k2[0];
-        delta_lambda_k2 = delta_lambda_k1 - delta * Residual_k2[4];
-        Lambda_k2 = Lambda_n + delta_lambda_k2;
 
-        if (Activate_CutOff) {
-          if ((T_k2[0] > CutOff) && (T_k2[1] > CutOff) && (T_k2[2] > CutOff)) {
-            T_k2[0] = T_k2[1] = T_k2[2] = CutOff;
+          delta_lambda_k2 = delta_lambda_k1 - delta * Residual_k2[4];
+          if (Lambda_n + delta_lambda_k2 < 0.0) {
+            break;
+          }
+          Lambda_k2 = Lambda_n + delta_lambda_k2;
+
+          T_k2[0] = T_k1[0] - delta * Residual_k2[0];
+          T_k2[1] = T_k1[1] - delta * Residual_k2[1];
+          T_k2[2] = T_k1[2] - delta * Residual_k2[2];
+          kappa_k2[0] = kappa_k1[0] - delta * Residual_k2[3];
+          kappa_k2[1] = alpha * kappa_k2[0];
+          
+
+          if (fabs((T_k2[0] + T_k2[1] + T_k2[2]) / 3.0) < TOL_apex) {
             Lambda_k2 = Lambda_n;
             kappa_k2[0] = kappa_n[0];
             kappa_k2[1] = alpha * kappa_k2[0];
-            delta_lambda_k2 = 0.0;
+            T_k2[0] = 0.0;
+            T_k2[1] = 0.0;
+            T_k2[2] = 0.0;
             break;
           }
-        }
 
-        I1 = T_k2[0] + T_k2[1] + T_k2[2];
-        I2 = T_k2[0] * T_k2[1] + T_k2[1] * T_k2[2] + T_k2[0] * T_k2[2];
-        I3 = T_k2[0] * T_k2[1] * T_k2[2];
+          I1 = T_k2[0] + T_k2[1] + T_k2[2];
+          I2 = T_k2[0] * T_k2[1] + T_k2[1] * T_k2[2] + T_k2[0] * T_k2[2];
+          I3 = T_k2[0] * T_k2[1] * T_k2[2];
 
-        if (Lambda_k2 < 0.0) {
-          fprintf(stderr,
-                  "" RED "Negative value of Lambda (line search): %f " RESET
-                  "\n",
-                  Lambda_k2);
-          return EXIT_FAILURE;
-        }
+          __E_hencky(E_hencky_k2, T_k2, CC, c_cotphi);
 
-        __E_hencky(E_hencky_k2, T_k2, CC, c_cotphi);
+          __kappa(kappa_hat, a, Lambda_k2, I1, alpha);
 
-        __kappa(kappa_hat, a, Lambda_k2, I1, alpha);
+          __d_G_d_stress(d_G_d_stress, T_k2, I1, I2, I3, kappa_k2[1]);
 
-        __d_G_d_stress(d_G_d_stress, T_k2, I1, I2, I3, kappa_k2[1]);
+          __F(&F_k2, kappa_k2[0], I1, I2, I3);
 
-        __F(&F_k2, kappa_k2[0], I1, I2, I3);
+          STATUS = __residual(Residual_k2, &Norm_Residual_k2, E_hencky_trial,
+                              E_hencky_k2, d_G_d_stress, kappa_k2, kappa_hat,
+                              F_k2, delta_lambda_k2);
+          if (STATUS == EXIT_FAILURE) {
+            fprintf(stderr,
+                    "" RED "Error in __residual (line search loop)" RESET "\n");
+            return EXIT_FAILURE;
+          }
 
-        STATUS = __residual(Residual_k2, &Norm_Residual_k2, E_hencky_trial,
-                            E_hencky_k2, d_G_d_stress, kappa_k2, kappa_hat,
-                            F_k2, delta_lambda_k2);
-        if (STATUS == EXIT_FAILURE) {
-          fprintf(stderr,
-                  "" RED "Error in __residual (line search loop)" RESET "\n");
-          return EXIT_FAILURE;
-        }
+          Iter_k2++;
 
-        Iter_k2++;
-
-        if (Iter_k2 == MaxIter_k2) {
-          break;
+          if (Iter_k2 == MaxIter_k2) {
+            break;
+          }
         }
       }
 
@@ -644,7 +644,18 @@ int compute_1PK_Matsuoka_Nakai(State_Parameters IO_State, Material MatProp) {
       Norm_Residual_k1 = Norm_Residual_k2;
       Iter_k1++;
 
+      if (fabs((T_k1[0] + T_k1[1] + T_k1[2]) / 3.0) < TOL_apex) {
+        Lambda_k1 = Lambda_n;
+        kappa_k1[0] = kappa_n[0];
+        kappa_k1[1] = alpha * kappa_k1[0];
+        T_k1[0] = 0.0;
+        T_k1[1] = 0.0;
+        T_k1[2] = 0.0;
+        break;
+      }
+
       if (Iter_k1 == MaxIter_k1) {
+
         STATUS = __reciprocal_condition_number(&rcond, Tangent_Matrix);
         if (STATUS == EXIT_FAILURE) {
           fprintf(stderr,
@@ -652,16 +663,12 @@ int compute_1PK_Matsuoka_Nakai(State_Parameters IO_State, Material MatProp) {
           return EXIT_FAILURE;
         }
 
-        if (rcond < 1E-10) {
+        if (rcond < 1E-12) {
           fprintf(stderr,
-                  "" RED "Reciprocal condition number below 1E-10: %e" RESET
+                  "" RED "Reciprocal condition number below 1E-12: %e" RESET
                   "\n",
                   rcond);
-          return EXIT_FAILURE;
         }
-
-        Lambda_k1 = Lambda_n;
-        kappa_k1[0] = kappa_n[0];
 
         break;
       }
@@ -847,8 +854,7 @@ static void __E_hencky(double *E_hencky_k, const double *T_k, const double *CC,
 
 /**************************************************************/
 
-static int __update_internal_variables_elastic(double *T, const double *D_phi,
-                                               const double *T_tr,
+static int __update_internal_variables_elastic(double *T, const double *T_tr,
                                                const double *eigvec_b_e_tr,
                                                double c_cotphi) {
   int STATUS = EXIT_SUCCESS;
@@ -1098,7 +1104,8 @@ static int __residual(double *Residual, double *Error_k,
 
 /**************************************************************/
 
-static int __reciprocal_condition_number(double *RCOND, double *Tangent_Matrix)
+static int __reciprocal_condition_number(double *RCOND,
+                                         double (*Tangent_Matrix)[5])
 /*
   C = rcond(Tangent_Matrix) returns an estimate for the reciprocal condition of
   Tangent_Matrix in 1-norm.
@@ -1111,11 +1118,11 @@ static int __reciprocal_condition_number(double *RCOND, double *Tangent_Matrix)
   lapack_int LDA = 5;
 
   // Compute 1-norm
-  ANORM = LAPACKE_dlange(LAPACK_ROW_MAJOR, '1', N_rows, N_cols, Tangent_Matrix,
+  ANORM = LAPACKE_dlange(LAPACK_ROW_MAJOR, '1', N_rows, N_cols, *Tangent_Matrix,
                          LDA);
 
   // Compute the Reciprocal condition number
-  INFO = LAPACKE_dgecon(LAPACK_ROW_MAJOR, '1', N_rows, Tangent_Matrix, LDA,
+  INFO = LAPACKE_dgecon(LAPACK_ROW_MAJOR, '1', N_rows, *Tangent_Matrix, LDA,
                         ANORM, RCOND);
 
   if (INFO < 0) {
@@ -1131,18 +1138,17 @@ static int __reciprocal_condition_number(double *RCOND, double *Tangent_Matrix)
 
 /**************************************************************/
 
-static int __solver(double *Tangent_Matrix, double *Residual) {
+static int __solver(double (*Tangent_Matrix)[5], double *Residual) {
   lapack_int Order = 5;
   lapack_int LDA = 5;
-  lapack_int LDB = 5;
-  char TRANS = 'T'; /* (Transpose) */
+  lapack_int LDB = 1;
   lapack_int INFO = 3;
   lapack_int IPIV[5] = {0, 0, 0, 0, 0};
   lapack_int NRHS = 1;
 
   //  Compute the LU factorization
-  INFO =
-      LAPACKE_dgetrf(LAPACK_ROW_MAJOR, Order, Order, Tangent_Matrix, LDA, IPIV);
+  INFO = LAPACKE_dgetrf(LAPACK_ROW_MAJOR, Order, Order, *Tangent_Matrix, LDA,
+                        IPIV);
 
   if (INFO != 0) {
     if (INFO < 0) {
@@ -1152,10 +1158,11 @@ static int __solver(double *Tangent_Matrix, double *Residual) {
               abs(INFO));
     } else if (INFO > 0) {
       fprintf(stderr,
-              "" RED "Error in LAPACKE_dgetrf(): D_phi_mT(%i,%i) %s \n %s \n "
+              "" RED
+              "Error in LAPACKE_dgetrf(): Tangent_Matrix(%i,%i) %s \n %s \n "
               "%s \n %s" RESET " \n",
               INFO, INFO, "is exactly zero. The factorization",
-              "has been completed, but the factor D_phi_mT is exactly",
+              "has been completed, but the factor Tangent_Matrix is exactly",
               "singular, and division by zero will occur if it is used",
               "to solve a system of equations.");
     }
@@ -1165,8 +1172,8 @@ static int __solver(double *Tangent_Matrix, double *Residual) {
   /*
     Solve
   */
-  INFO = LAPACKE_dgetrs(LAPACK_ROW_MAJOR, 'T', Order, NRHS, Tangent_Matrix, LDA,
-                        IPIV, Residual, LDB);
+  INFO = LAPACKE_dgetrs(LAPACK_ROW_MAJOR, 'N', Order, NRHS, *Tangent_Matrix,
+                        LDA, IPIV, Residual, LDB);
 
   if (INFO) {
     fprintf(stderr, "" RED "Error in LAPACKE_dgetrs() " RESET "\n");

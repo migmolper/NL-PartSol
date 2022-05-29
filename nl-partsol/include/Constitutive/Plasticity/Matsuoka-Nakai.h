@@ -12,14 +12,14 @@
 /**************************************************************/
 
 /*!
-  \fn int compute_1PK_Matsuoka_Nakai(State_Parameters IO_State, Material MatProp)
+  \fn int compute_1PK_Matsuoka_Nakai__Constitutive__(State_Parameters IO_State, Material MatProp)
 
   \brief Compute a family of smooth approximations of the Mohr-Coulomb model using a monolithic algorithm
 
   \param Input_SP : State parameters of the particle
   \param MatProp : Material properties of the model
 */
-int compute_1PK_Matsuoka_Nakai(State_Parameters IO_State, Material MatProp);
+int compute_1PK_Matsuoka_Nakai__Constitutive__(State_Parameters IO_State, Material MatProp);
 /*******************************************************/
 
 
