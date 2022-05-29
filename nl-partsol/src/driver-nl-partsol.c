@@ -244,6 +244,7 @@ int main(int argc, char *argv[]) {
       puts("*************************************************");
       puts("" GREEN "Read outputs" RESET " ...");
       GramsOutputs(SimulationFile);
+
       NLPS_Out_nodal_path_csv__InOutFun__(SimulationFile,
                                           Parameters_Solver.NumTimeStep);
       NLPS_Out_particles_path_csv__InOutFun__(SimulationFile,

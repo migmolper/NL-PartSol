@@ -183,9 +183,9 @@ int Define_Von_Mises(Material * VM_Material, FILE *Simulation_file, char *Materi
       ChkMat.Is_delta = true;
       (*VM_Material).delta_Hardening_Voce = atof(Parameter_pars[1]);
 
-      if((*VM_Material).delta_Hardening_Voce <= 0.0)
+      if((*VM_Material).delta_Hardening_Voce < 0.0)
       {
-        fprintf(stderr, ""RED" Invalid value of [delta] (0,+inf)"RESET" \n");
+        fprintf(stderr, ""RED" Invalid value of [delta] [0,+inf)"RESET" \n");
         return EXIT_FAILURE;
       }
 

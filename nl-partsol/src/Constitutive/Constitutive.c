@@ -276,9 +276,6 @@ int stiffness_density__Constitutive__(int p, double *Stiffness_density,
       return EXIT_FAILURE;
     }
     
- //   printf(" %e, %e \n %e, %e\n",Stiffness_density[0],Stiffness_density[1],Stiffness_density[2],Stiffness_density[3]);
-
-
   } else if (strcmp(MatProp_p.Type, "Newtonian-Fluid-Compressible") == 0) {
     IO_State.D_phi_n1 = MPM_Mesh.Phi.F_n1.nM[p];
     IO_State.D_phi_n = MPM_Mesh.Phi.F_n.nM[p];
@@ -294,7 +291,22 @@ int stiffness_density__Constitutive__(int p, double *Stiffness_density,
               "\n");
       return EXIT_FAILURE;
     }
-  } else if (strcmp(MatProp_p.Type, "Drucker-Prager") == 0) {
+  } else if (strcmp(MatProp_p.Type, "Von-Mises") == 0) {
+    IO_State.D_phi_n1 = MPM_Mesh.Phi.F_n1.nM[p];
+    IO_State.D_phi_n = MPM_Mesh.Phi.F_n.nM[p];
+    IO_State.b_e = MPM_Mesh.Phi.b_e_n1.nM[p];
+    IO_State.Stress = MPM_Mesh.Phi.Stress.nM[p];
+    IO_State.C_ep = MPM_Mesh.Phi.C_ep.nM[p];
+    STATUS = compute_1PK_elastoplastic_tangent_matrix(
+        Stiffness_density, dN_alpha_n1, dN_beta_n1, IO_State);
+    if (STATUS == EXIT_FAILURE) {
+      fprintf(stderr,
+              "" RED "Error in compute_1PK_elastoplastic_tangent_matrix" RESET
+              "\n");
+      return EXIT_FAILURE;
+    }
+
+  }else if (strcmp(MatProp_p.Type, "Drucker-Prager") == 0) {
     IO_State.D_phi_n1 = MPM_Mesh.Phi.F_n1.nM[p];
     IO_State.D_phi_n = MPM_Mesh.Phi.F_n.nM[p];
     IO_State.b_e = MPM_Mesh.Phi.b_e_n1.nM[p];

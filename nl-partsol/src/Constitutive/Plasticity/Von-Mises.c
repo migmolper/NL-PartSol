@@ -734,7 +734,11 @@ static int __tangent_moduli(double *C_ep, const double *n,
 
   double K_iso_k = kappa_k[0];
   double K_kin_k = kappa_k[1];
-  double theta = 1.0 - 2.0 * G * d_gamma_k / J2;
+  double theta = 0.0;
+  if (J2 > TOL_NR) {
+    theta = 1.0 - 2.0 * G * d_gamma_k / J2;
+  }
+
   double theta_bar =
       1.0 / (1.0 + (K_iso_k + K_kin_k) / (3.0 * G)) - (1.0 - theta);
 
