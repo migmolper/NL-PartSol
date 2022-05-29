@@ -1,14 +1,15 @@
 /**
  * @file Matsuoka-Nakai.c
  * @author Miguel Molinos (@migmolper)
- * @brief 
+ * @brief
  * @version 0.1
  * @date 2022-05-25
- * 
+ *
  * @copyright Copyright (c) 2022
- * 
+ *
  */
 
+// clang-format off
 #include "Constitutive/Plasticity/Matsuoka-Nakai.h"
 #include "Globals.h"
 
@@ -17,173 +18,284 @@
 #elif __APPLE__
 #include <Accelerate/Accelerate.h>
 #endif
+// clang-format on
 
 /**************************************************************/
-static int __compute_trial_b_e(
-    double *eigval_b_e_tr /**< [out] Eigenvalues of b elastic trial. */,
-    double *eigvec_b_e_tr /**< [out] Eigenvector of b elastic trial. */,
-    const double *b_e /**< [in] (n) Elastic left Cauchy-Green.*/,
-    const double *d_phi /**< [in] Incremental deformation gradient. */);
+
+/**
+ * @brief
+ *
+ * @param eigval_b_e_tr Eigenvalues of b elastic trial
+ * @param eigvec_b_e_tr Eigenvector of b elastic trial
+ * @param b_e Elastic left Cauchy-Green (n)
+ * @param d_phi Incremental deformation gradient
+ * @return int
+ */
+static int __compute_trial_b_e(double *eigval_b_e_tr, double *eigvec_b_e_tr,
+                               const double *b_e, const double *d_phi);
 /**************************************************************/
 
-static void __corrector_b_e(
-    double *b_e /**< [out] (n+1) Elastic deformation gradient. */,
-    const double *eigvec_b_e_tr /**< [in] Eigenvector of b elastic trial. */,
-    const double *E_hencky_trial /**< [in] Corrected Henky strain */);
+/**
+ * @brief
+ *
+ * @param b_e Elastic deformation gradient (n+1)
+ * @param eigvec_b_e_tr Eigenvector of b elastic trial
+ * @param E_hencky_trial Corrected Henky strain
+ */
+static void __corrector_b_e(double *b_e, const double *eigvec_b_e_tr,
+                            const double *E_hencky_trial);
 /**************************************************************/
 
-static void __elastic_tangent(
-    double * CC /**< [out] Elastic compliance */, 
-    double * AA /**< [out] Elastic matrix */,
-    double E /**< [in] Young modulus */, 
-    double nu /**< [in] Poisson ratio */,
-    double Lame /**< [in] Lamé parameter */, 
-    double G /**< [in] Shear modulus */);
+/**
+ * @brief
+ *
+ * @param CC Elastic compliance
+ * @param AA Elastic matrix
+ * @param E Young modulus
+ * @param nu Poisson ratio
+ * @param Lame Lamé parameter
+ * @param G Shear modulus
+ */
+static void __elastic_tangent(double *CC, double *AA, double E, double nu,
+                              double Lame, double G);
 /**************************************************************/
 
-static void __trial_elastic(
-    double *T_tr /**< [out] Trial elastic stress tensor*/, 
-    const double * E_hencky_trial /**< [in] Henky strain (trial) */, 
-    const double * AA /**< [in] Elastic matrix */,
-    double c_cotphi /**< [in] Cohesion parameter */); 
+/**
+ * @brief
+ *
+ * @param T_tr Trial elastic stress tensor
+ * @param E_hencky_trial Henky strain (trial)
+ * @param AA Elastic matrix
+ * @param c_cotphi ohesion parameter
+ */
+static void __trial_elastic(double *T_tr, const double *E_hencky_trial,
+                            const double *AA, double c_cotphi);
 /**************************************************************/
 
-static void __E_hencky(
-    double * E_hencky_k /**< [out] Henky strain (iter k) */, 
-    const double * T_k  /**< [in] Local stress tensor (iter k) */, 
-    const double * CC /**< [in] Elastic compliance */,
-    double c_cotphi /**< [in] Cohesion parameter */);
+/**
+ * @brief
+ *
+ * @param E_hencky_k Henky strain (iter k)
+ * @param T_k Local stress tensor (iter k)
+ * @param CC Elastic compliance
+ * @param c_cotphi Cohesion parameter
+ */
+static void __E_hencky(double *E_hencky_k, const double *T_k, const double *CC,
+                       double c_cotphi);
 /**************************************************************/
 
-static int __update_internal_variables_elastic(
-    double *Stress /**< [in/out] Nominal stress tensor */,
-    const double *D_phi /**< [in] Total deformation gradient. */,
-    const double *T_tr /**< [in] Elastic stress tensor */,
-    const double *eigvec_b_e_tr /**< [in] Eigenvector of b elastic trial. */,
-    double c_cotphi /**< [in] Cohesion parameter */);
+/**
+ * @brief
+ *
+ * @param T Nominal stress tensor
+ * @param D_phi Total deformation gradient
+ * @param T_tr Elastic stress tensor
+ * @param eigvec_b_e_tr Eigenvector of b elastic trial
+ * @param c_cotphi Cohesion parameter
+ * @return int
+ */
+static int __update_internal_variables_elastic(double *T, const double *D_phi,
+                                               const double *T_tr,
+                                               const double *eigvec_b_e_tr,
+                                               double c_cotphi);
 /**************************************************************/
 
-static void __elastic_tangent_moduli(
-  double * C_ep /**< [in/out] Elastoplastic tangent matrix */, 
-  const double * AA /**< [in] Elastic matrix */);
+/**
+ * @brief
+ *
+ * @param C_ep Elastoplastic tangent matrix
+ * @param AA Elastic matrix
+ */
+static void __elastic_tangent_moduli(double *C_ep, const double *AA);
 /**************************************************************/
 
-static void __kappa(
-    double *kappa /**< [out] Hardening vector */, 
-    const double * a /**< [in] Vector with fit parameters (hardening) */, 
-    double Lambda /**< [in] Total plastic multiplier */, 
-    double I1 /**< [in] First invariant of the stress tensor */, 
-    double alpha /**< [in] Dilatance parameter*/);
+/**
+ * @brief
+ *
+ * @param kappa Hardening vector
+ * @param a Vector with fit parameters (hardening)
+ * @param Lambda Total plastic multiplier
+ * @param alpha Dilatance parameter
+ */
+static void __kappa(double *kappa, const double *a, double Lambda, double I1,
+                    double alpha);
 /**************************************************************/
 
-static void __d_kappa_phi_d_stress(
-    double *d_kappa_phi_d_stress /**< [out] Stress derivative of kappa[0] */, 
-    const double * a /**< [in] Vector with fit parameters (hardening) */,
-    double Lambda /**< [in] Total plastic multiplier */, 
-    double I1 /**< [in] First invariant of the stress tensor */);
+/**
+ * @brief
+ *
+ * @param d_kappa_phi_d_stress Stress derivative of kappa[0]
+ * @param a Vector with fit parameters (hardening)
+ * @param Lambda Total plastic multiplier
+ * @param I1 First invariant of the stress tensor
+ */
+static void __d_kappa_phi_d_stress(double *d_kappa_phi_d_stress,
+                                   const double *a, double Lambda, double I1);
 /**************************************************************/
 
-static void __d_kappa_phi_d_lambda(
-    double * d_kappa_phi_d_lambda /**< [out] Lambda derivative of kappa[0] */, 
-    const double * a /**< [in] Vector with fit parameters (hardening) */,
-    double Lambda /**< [in] Total plastic multiplier */, 
-    double I1 /**< [in] First invariant of the stress tensor */);
+/**
+ * @brief
+ *
+ * @param d_kappa_phi_d_lambda Lambda derivative of kappa[0]
+ * @param a Vector with fit parameters (hardening)
+ * @param Lambda Total plastic multiplier
+ * @param I1 First invariant of the stress tensor
+ */
+static void __d_kappa_phi_d_lambda(double *d_kappa_phi_d_lambda,
+                                   const double *a, double Lambda, double I1);
 /**************************************************************/
 
-static void __F(
-    double * F /**< [out] Yield function evaluation */,
-    double kappa_phi /**< [in] Friction angle hardening */, 
-    double I1 /**< [in] First invariant of the stress tensor */, 
-    double I2 /**< [in] Second invariant of the stress tensor */, 
-    double I3 /**< [in] Third invariant of the stress tensor */);
+/**
+ * @brief
+ *
+ * @param F Yield function evaluation
+ * @param kappa_phi Friction angle hardening
+ * @param I1 First invariant of the stress tensor
+ * @param I2 Second invariant of the stress tensor
+ * @param I3 Third invariant of the stress tensor
+ */
+static void __F(double *F, double kappa_phi, double I1, double I2, double I3);
 /**************************************************************/
 
-static void __d_F_d_stress(
-    double *d_F_d_stress /**< [out] Yield function derivative (stress) */, 
-    const double *T_k /**< [in] Local stress tensor (iter k) */,
-    double I1 /**< [in] First invariant of the stress tensor */, 
-    double I2 /**< [in] Second invariant of the stress tensor */, 
-    double I3 /**< [in] Third invariant of the stress tensor */,
-    double kappa_phi /**< [in] Friction angle hardening */);
+/**
+ * @brief
+ *
+ * @param d_F_d_stress Yield function derivative (stress)
+ * @param T_k Local stress tensor (iter k)
+ * @param I1 First invariant of the stress tensor
+ * @param I2 Second invariant of the stress tensor
+ * @param I3 Third invariant of the stress tensor
+ * @param kappa_phi Friction angle hardening
+ */
+static void __d_F_d_stress(double *d_F_d_stress, const double *T_k, double I1,
+                           double I2, double I3, double kappa_phi);
 /**************************************************************/
 
 static void __d_F_d_kappa_phi(
-    double * d_F_d_kappa_phi /**< [out] Yield function derivative (kappa[0]) */,
+    double *d_F_d_kappa_phi /**< [out] Yield function derivative (kappa[0]) */,
     double I1 /**< [in] First invariant of the stress tensor */,
-    double I3 /**< [in] Third invariant of the stress tensor */, 
+    double I3 /**< [in] Third invariant of the stress tensor */,
     double kappa_phi /**< [in] Friction angle hardening */);
 /**************************************************************/
 
-static void __d_G_d_stress(
-    double *d_G_d_stress /**< [out] Plastic potential function derivative (stress) */,
-    const double *T_k /**< [in] Local stress tensor (iter k) */, 
-    double I1 /**< [in] First invariant of the stress tensor */,
-    double I2 /**< [in] Second invariant of the stress tensor */, 
-    double I3 /**< [in] Third invariant of the stress tensor */, 
-    double kappa_psi /**< [in] Dilatance angle hardening */);
+/**
+ * @brief
+ *
+ * @param d_G_d_stress Plastic potential function derivative (stress)
+ * @param T_k Local stress tensor (iter k)
+ * @param I1 First invariant of the stress tensor
+ * @param I2 Second invariant of the stress tensor
+ * @param I3 Third invariant of the stress tensor
+ * @param kappa_psi Dilatance angle hardening
+ */
+static void __d_G_d_stress(double *d_G_d_stress, const double *T_k, double I1,
+                           double I2, double I3, double kappa_psi);
 /**************************************************************/
 
-static void __dd_G_dd_stress(
-    double *dd_G_dd_stress /**< [out] Plastic potential hessian (stress) */, 
-    const double *T_k /**< [in] Local stress tensor (iter k) */,
-    double kappa_psi /**< [in] Dilatance angle hardening */, 
-    double I1 /**< [in] First invariant of the stress tensor */,
-    double I2 /**< [in] Second invariant of the stress tensor */, 
-    double I3 /**< [in] Third invariant of the stress tensor */);
+/**
+ * @brief
+ *
+ * @param dd_G_dd_stress Plastic potential hessian (stress)
+ * @param T_k Local stress tensor (iter k)
+ * @param kappa_psi Dilatance angle hardening
+ * @param I1 First invariant of the stress tensor
+ * @param I2 Second invariant of the stress tensor
+ * @param I3 Third invariant of the stress tensor
+ */
+static void __dd_G_dd_stress(double *dd_G_dd_stress, const double *T_k,
+                             double kappa_psi, double I1, double I2, double I3);
 /**************************************************************/
 
-static void __dd_G_d_stress_d_kappa_psi(
-    double *dd_G_d_stress_d_kappa_psi /**< [out] Plastic potential deriv */, 
-    const double *T_k /**< [in] Local stress tensor (iter k) */, 
-    double I1 /**< [in] First invariant of the stress tensor */, 
-    double I3 /**< [in] Third invariant of the stress tensor */,
-    double kappa_psi /**< [in] Dilatance angle hardening */); 
+/**
+ * @brief
+ *
+ * @param dd_G_d_stress_d_kappa_psi Plastic potential deriv
+ * @param T_k Local stress tensor (iter k)
+ * @param I1 First invariant of the stress tensor
+ * @param I3 Third invariant of the stress tensor
+ * @param kappa_psi Dilatance angle hardening
+ */
+static void __dd_G_d_stress_d_kappa_psi(double *dd_G_d_stress_d_kappa_psi,
+                                        const double *T_k, double I1, double I3,
+                                        double kappa_psi);
 /**************************************************************/
 
-static int __residual(
-    double *Residual /**< [out] Residual of the problem */, 
-    double * Error_k /**< [out] Norm of the residual */,
-    const double *E_hencky_trial /**< [in] Henky strain (trial) */,
-    const double * E_hencky_k /**< [in] Henky strain (iter k) */,
-    const double *d_G_d_stress /**< [in] Plastic potential function derivative (stress) */,
-    const double *kappa_k /**< [in] Hardening vector (iter k) */,
-    const double *kappa_hat /**< [in] Hardening vector (eval) */, 
-    double F_k /**< [in] Yield function evaluation (iter k) */,
-    double delta_lambda_k /**< [in] Discrete plastic multiplier (iter k) */); 
+/**
+ * @brief
+ *
+ * @param Residual Residual of the problem
+ * @param Error_k Norm of the residual
+ * @param E_hencky_trial Henky strain (trial)
+ * @param E_hencky_k Henky strain (iter k)
+ * @param d_G_d_stress Plastic potential function derivative (stress)
+ * @param kappa_k Hardening vector (iter k)
+ * @param kappa_hat Hardening vector (eval)
+ * @param F_k Yield function evaluation (iter k)
+ * @param delta_lambda_k Discrete plastic multiplier (iter k)
+ * @return int
+ */
+static int __residual(double *Residual, double *Error_k,
+                      const double *E_hencky_trial, const double *E_hencky_k,
+                      const double *d_G_d_stress, const double *kappa_k,
+                      const double *kappa_hat, double F_k,
+                      double delta_lambda_k);
 /**************************************************************/
 
+/**
+ * @brief
+ *
+ * @param T Nominal stress tensor
+ * @param eps_n1 Equivalent plastic strain
+ * @param kappa_n1 Friction angle hardening
+ * @param D_phi Total deformation gradient
+ * @param T_tr_k Stress tensor (iter k)
+ * @param eigvec_b_e_tr Eigenvector of b elastic trial
+ * @param Lambda_k Total plastic multiplier (iter k)
+ * @param kappa_phi_k Friction angle hardening (iter k)
+ * @param c_cotphi Cohesion parameter
+ * @return int
+ */
 static int __update_internal_variables_plastic(
-    double *Stress /**< [out] Nominal stress tensor */, 
-    double *eps_n1 /**< [out] Equivalent plastic strain */,
-    double *kappa_n1 /**< [out] Friction angle hardening */, 
-    const double *D_phi /**< [in] Total deformation gradient. */, 
-    const double *T_tr_k /**< [in] Stress tensor (iter k). */,
-    const double *eigvec_b_e_tr /**< [in] Eigenvector of b elastic trial. */, 
-    double Lambda_k /**< [in] Total plastic multiplier (iter k) */,
-    double kappa_phi_k /**< [out] Friction angle hardening (iter k)*/,
-    double c_cotphi /**< [in] Cohesion parameter */);
+    double *T, double *eps_n1, double *kappa_n1, const double *D_phi,
+    const double *T_tr_k, const double *eigvec_b_e_tr, double Lambda_k,
+    double kappa_phi_k, double c_cotphi);
 /**************************************************************/
 
-static int __elastoplastic_tangent_moduli(
-  double * C_ep /**< [in/out] Elastoplastic tangent matrix */, 
-  const double * CC /**< [in] Elastic compliance */,
-  const double * dd_G_dd_stress /**< [in] Plastic potential hessian (stress) */,
-  double delta_lambda_k /**< [in] Discrete plastic multiplier (iter k) */);
+/**
+ * @brief
+ *
+ * @param C_ep Elastoplastic tangent matrix
+ * @param CC Elastic compliance
+ * @param dd_G_dd_stress Plastic potential hessian (stress)
+ * @param delta_lambda_k Discrete plastic multiplier (iter k)
+ * @return int
+ */
+static int __elastoplastic_tangent_moduli(double *C_ep, const double *CC,
+                                          const double *dd_G_dd_stress,
+                                          double delta_lambda_k);
 /**************************************************************/
 
-static int __solver(
-  double *Tangent_Matrix /**< [in/out] Tangent matrix of the problem */,
-  double *Residual /**< [in/out] Residual of the problem */) ;
+/**
+ * @brief
+ *
+ * @param Tangent_Matrix Tangent matrix of the problem
+ * @param Residual Residual of the problem
+ * @return int
+ */
+static int __solver(double *Tangent_Matrix, double *Residual);
 /**************************************************************/
 
-static int __reciprocal_condition_number(
-    double *RCOND /**< [out] Condition number of the tangent matrix */,
-    double *Tangent_Matrix /**< [in/out] Tangent matrix of the problem */);
+/**
+ * @brief
+ *
+ * @param RCOND Condition number of the tangent matrix
+ * @param Tangent_Matrix Tangent matrix of the problem
+ * @return int
+ */
+static int __reciprocal_condition_number(double *RCOND, double *Tangent_Matrix);
 /**************************************************************/
 
-
-int compute_1PK_Matsuoka_Nakai(State_Parameters IO_State, Material MatProp)
-{
+int compute_1PK_Matsuoka_Nakai(State_Parameters IO_State, Material MatProp) {
 
   int STATUS = EXIT_SUCCESS;
 
@@ -208,27 +320,29 @@ int compute_1PK_Matsuoka_Nakai(State_Parameters IO_State, Material MatProp)
   E_hencky_trial[0] = 0.5 * log(eigval_b_e_tr[0]);
   E_hencky_trial[1] = 0.5 * log(eigval_b_e_tr[1]);
   E_hencky_trial[2] = 0.5 * log(eigval_b_e_tr[2]);
-  
+
   // Material parameters
   double E = MatProp.E;
   double nu = MatProp.nu;
-  double Lame = E*nu / ((1.0 + nu)*(1.0 - 2.0 * nu));
+  double Lame = E * nu / ((1.0 + nu) * (1.0 - 2.0 * nu));
   double G = E / (2.0 * (1.0 + nu));
   double friction_angle = MatProp.phi_Frictional;
-  double rad_friction_angle = (PI__MatrixLib__ / 180.0) * friction_angle;  
-  double c_cotphi = rad_friction_angle > 0.0? MatProp.Cohesion/tan(rad_friction_angle) : 0.0;
+  double rad_friction_angle = (PI__MatrixLib__ / 180.0) * friction_angle;
+  double c_cotphi = rad_friction_angle > 0.0
+                        ? MatProp.Cohesion / tan(rad_friction_angle)
+                        : 0.0;
   double alpha = MatProp.alpha_Hardening_Borja;
   double a[3] = {0.0, 0.0, 0.0};
   a[0] = MatProp.a_Hardening_Borja[0];
   a[1] = MatProp.a_Hardening_Borja[1];
   a[2] = MatProp.a_Hardening_Borja[2];
-  
+
   bool Activate_CutOff = false;
-  double CutOff =  0.0;
-  
-  double CC[9] = {0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0};
-  double AA[9] = {0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0};
-  __elastic_tangent(CC, AA ,E,nu,Lame,G);
+  double CutOff = 0.0;
+
+  double CC[9] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+  double AA[9] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+  __elastic_tangent(CC, AA, E, nu, Lame, G);
 
   // Define scalar variables internal variables
   double F_k1, F_k2, F_0;
@@ -259,7 +373,7 @@ int compute_1PK_Matsuoka_Nakai(State_Parameters IO_State, Material MatProp)
   double d_F_d_kappa_phi = 0;
 
   // Initialize Newton-Raphson solver
-  double TOL = 1E-10;// TOL_Radial_Returning;
+  double TOL = 1E-10; // TOL_Radial_Returning;
   double Residual_k1[5] = {0.0, 0.0, 0.0};
   double Residual_k2[5] = {0.0, 0.0, 0.0};
   double Tangent_Matrix[25];
@@ -285,7 +399,7 @@ int compute_1PK_Matsuoka_Nakai(State_Parameters IO_State, Material MatProp)
   // Assign trial (elastic) stress-strain values
   T_k1[0] = T_tr[0];
   T_k1[1] = T_tr[1];
-  T_k1[2] = T_tr[2];  
+  T_k1[2] = T_tr[2];
 
   // Elastic
   if (F_0 <= 0.0) {
@@ -299,10 +413,9 @@ int compute_1PK_Matsuoka_Nakai(State_Parameters IO_State, Material MatProp)
       return EXIT_FAILURE;
     }
 
-    if(IO_State.compute_C_ep)
-    {        
+    if (IO_State.compute_C_ep) {
       __elastic_tangent_moduli(IO_State.C_ep, AA);
-    }    
+    }
 
   }
   // Plastic (monolithic solver with line search)
@@ -488,7 +601,7 @@ int compute_1PK_Matsuoka_Nakai(State_Parameters IO_State, Material MatProp)
         }
 
         __E_hencky(E_hencky_k2, T_k2, CC, c_cotphi);
-        
+
         __kappa(kappa_hat, a, Lambda_k2, I1, alpha);
 
         __d_G_d_stress(d_G_d_stress, T_k2, I1, I2, I3, kappa_k2[1]);
@@ -544,7 +657,7 @@ int compute_1PK_Matsuoka_Nakai(State_Parameters IO_State, Material MatProp)
                   "" RED "Reciprocal condition number below 1E-10: %e" RESET
                   "\n",
                   rcond);
-                  return EXIT_FAILURE;
+          return EXIT_FAILURE;
         }
 
         Lambda_k1 = Lambda_n;
@@ -554,35 +667,41 @@ int compute_1PK_Matsuoka_Nakai(State_Parameters IO_State, Material MatProp)
       }
     }
 
-    STATUS = __update_internal_variables_plastic(IO_State.Stress,IO_State.EPS,
-     IO_State.Kappa,IO_State.D_phi_n1,T_k1,eigvec_b_e_tr,Lambda_k1, kappa_k1[0], c_cotphi);    
+    STATUS = __update_internal_variables_plastic(
+        IO_State.Stress, IO_State.EPS, IO_State.Kappa, IO_State.D_phi_n1, T_k1,
+        eigvec_b_e_tr, Lambda_k1, kappa_k1[0], c_cotphi);
     if (STATUS == EXIT_FAILURE) {
-      fprintf(stderr, "" RED "Error in __update_internal_variables_plastic" RESET "\n");
+      fprintf(stderr,
+              "" RED "Error in __update_internal_variables_plastic" RESET "\n");
       return EXIT_FAILURE;
     }
 
-    if(IO_State.compute_C_ep)
-    {        
-      STATUS = __elastoplastic_tangent_moduli(IO_State.C_ep, CC, dd_G_dd_stress, delta_lambda_k1);
+    if (IO_State.compute_C_ep) {
+      STATUS = __elastoplastic_tangent_moduli(IO_State.C_ep, CC, dd_G_dd_stress,
+                                              delta_lambda_k1);
       if (STATUS == EXIT_FAILURE) {
-        fprintf(stderr, "" RED "Error in __elastoplastic_tangent_moduli" RESET "\n");
+        fprintf(stderr,
+                "" RED "Error in __elastoplastic_tangent_moduli" RESET "\n");
         return EXIT_FAILURE;
       }
     }
-
   }
-  
+
   __corrector_b_e(IO_State.b_e, eigvec_b_e_tr, E_hencky_k1);
+
+  //! Compute deformation energy
+  *(IO_State.W) = 0.5 * ((T_k1[0] + c_cotphi) * E_hencky_trial[0] +
+                         (T_k1[1] + c_cotphi) * E_hencky_trial[1] +
+                         (T_k1[2] + c_cotphi) * E_hencky_trial[2]);
 
   return EXIT_SUCCESS;
 }
-
 
 /**************************************************************/
 
 static int __compute_trial_b_e(double *eigval_b_e_tr, double *eigvec_b_e_tr,
                                const double *b_e, const double *d_phi) {
-  
+
   unsigned Ndim = NumberDimensions;
   lapack_int n = NumberDimensions;
   lapack_int lda = NumberDimensions;
@@ -598,8 +717,8 @@ static int __compute_trial_b_e(double *eigval_b_e_tr, double *eigvec_b_e_tr,
     }
   }
 
-
-  lapack_int info = LAPACKE_dsyev(LAPACK_ROW_MAJOR, 'V', 'U', n, eigvec_b_e_tr, lda, eigval_b_e_tr);
+  lapack_int info = LAPACKE_dsyev(LAPACK_ROW_MAJOR, 'V', 'U', n, eigvec_b_e_tr,
+                                  lda, eigval_b_e_tr);
 
   if (info > 0) {
     fprintf(stderr,
@@ -617,7 +736,6 @@ static int __compute_trial_b_e(double *eigval_b_e_tr, double *eigvec_b_e_tr,
     return EXIT_FAILURE;
   }
 
-
 #if NumberDimensions == 2
   eigval_b_e_tr[2] = b_e[4];
 #endif
@@ -628,7 +746,7 @@ static int __compute_trial_b_e(double *eigval_b_e_tr, double *eigvec_b_e_tr,
 /***************************************************************************/
 
 static void __corrector_b_e(double *b_e, const double *eigvec_b_e_tr,
-                           const double *E_hencky_trial) {
+                            const double *E_hencky_trial) {
   unsigned Ndim = NumberDimensions;
 
   double eigval_b_e[3] = {0.0, 0.0, 0.0};
@@ -676,7 +794,7 @@ static void __corrector_b_e(double *b_e, const double *eigvec_b_e_tr,
 /**************************************************************/
 
 static void __elastic_tangent(double *CC, double *AA, double E, double nu,
-                             double Lame, double G) {
+                              double Lame, double G) {
   CC[0] = 1.0 / E;
   CC[1] = -nu / E;
   CC[2] = -nu / E;
@@ -705,49 +823,36 @@ static void __elastic_tangent(double *CC, double *AA, double E, double nu,
 /**************************************************************/
 
 static void __trial_elastic(double *T_tr, const double *E_hencky_trial,
-                           const double *AA, double c_cotphi) {
+                            const double *AA, double c_cotphi) {
 
-  T_tr[0] = AA[0] * E_hencky_trial[0] 
-          + AA[1] * E_hencky_trial[1] 
-          + AA[2] * E_hencky_trial[2] 
-          - c_cotphi;
-  T_tr[1] = AA[3] * E_hencky_trial[0] 
-          + AA[4] * E_hencky_trial[1] 
-          + AA[5] * E_hencky_trial[2] 
-          - c_cotphi;
-  T_tr[2] = AA[6] * E_hencky_trial[0] 
-          + AA[7] * E_hencky_trial[1] 
-          + AA[8] * E_hencky_trial[2] 
-          - c_cotphi;
+  T_tr[0] = AA[0] * E_hencky_trial[0] + AA[1] * E_hencky_trial[1] +
+            AA[2] * E_hencky_trial[2] - c_cotphi;
+  T_tr[1] = AA[3] * E_hencky_trial[0] + AA[4] * E_hencky_trial[1] +
+            AA[5] * E_hencky_trial[2] - c_cotphi;
+  T_tr[2] = AA[6] * E_hencky_trial[0] + AA[7] * E_hencky_trial[1] +
+            AA[8] * E_hencky_trial[2] - c_cotphi;
 }
 
 /**************************************************************/
 
-static void __E_hencky(double *E_hencky_k, 
-                      const double *T_k, 
-                      const double *CC, 
-                      double c_cotphi) {
-  E_hencky_k[0] = CC[0] * (T_k[0] + c_cotphi) 
-                + CC[1] * (T_k[1] + c_cotphi) 
-                + CC[2] * (T_k[2] + c_cotphi);
-  E_hencky_k[1] = CC[3] * (T_k[0] + c_cotphi) 
-                + CC[4] * (T_k[1] + c_cotphi) 
-                + CC[5] * (T_k[2] + c_cotphi);
-  E_hencky_k[2] = CC[6] * (T_k[0] + c_cotphi) 
-                + CC[7] * (T_k[1] + c_cotphi) 
-                + CC[8] * (T_k[2] + c_cotphi);
+static void __E_hencky(double *E_hencky_k, const double *T_k, const double *CC,
+                       double c_cotphi) {
+  E_hencky_k[0] = CC[0] * (T_k[0] + c_cotphi) + CC[1] * (T_k[1] + c_cotphi) +
+                  CC[2] * (T_k[2] + c_cotphi);
+  E_hencky_k[1] = CC[3] * (T_k[0] + c_cotphi) + CC[4] * (T_k[1] + c_cotphi) +
+                  CC[5] * (T_k[2] + c_cotphi);
+  E_hencky_k[2] = CC[6] * (T_k[0] + c_cotphi) + CC[7] * (T_k[1] + c_cotphi) +
+                  CC[8] * (T_k[2] + c_cotphi);
 }
 
 /**************************************************************/
 
-static int __update_internal_variables_elastic(double *T,
-                                               const double *D_phi,
+static int __update_internal_variables_elastic(double *T, const double *D_phi,
                                                const double *T_tr,
                                                const double *eigvec_b_e_tr,
                                                double c_cotphi) {
   int STATUS = EXIT_SUCCESS;
   int Ndim = NumberDimensions;
-
 
 #if NumberDimensions == 2
   double T_aux[4] = {0.0, 0.0, 0.0, 0.0};
@@ -802,40 +907,37 @@ static int __update_internal_variables_elastic(double *T,
 
 /**************************************************************/
 
-static void __elastic_tangent_moduli(
-  double * C_ep, 
-  const double * AA)
-{
+static void __elastic_tangent_moduli(double *C_ep, const double *AA) {
 #if NumberDimensions == 2
-    C_ep[0] = AA[0];
-    C_ep[1] = AA[1];
-    C_ep[2] = AA[3];
-    C_ep[3] = AA[4];
+  C_ep[0] = AA[0];
+  C_ep[1] = AA[1];
+  C_ep[2] = AA[3];
+  C_ep[3] = AA[4];
 #else
-    C_ep[0] = AA[0];
-    C_ep[1] = AA[1];
-    C_ep[2] = AA[2];
-    C_ep[3] = AA[3];
-    C_ep[4] = AA[4];
-    C_ep[5] = AA[5];
-    C_ep[6] = AA[6]; 
-    C_ep[7] = AA[7];
-    C_ep[8] = AA[8];           
+  C_ep[0] = AA[0];
+  C_ep[1] = AA[1];
+  C_ep[2] = AA[2];
+  C_ep[3] = AA[3];
+  C_ep[4] = AA[4];
+  C_ep[5] = AA[5];
+  C_ep[6] = AA[6];
+  C_ep[7] = AA[7];
+  C_ep[8] = AA[8];
 #endif
 }
 
 /**************************************************************/
 
 static void __kappa(double *kappa, const double *a, double Lambda, double I1,
-                   double alpha) {
+                    double alpha) {
   kappa[0] = a[0] * Lambda * exp(a[1] * I1) * exp(-a[2] * Lambda);
   kappa[1] = alpha * kappa[0];
 }
 
 /**************************************************************/
 
-static void __d_kappa_phi_d_stress(double *d_kappa_phi_d_stress, const double *a,
-                                  double Lambda, double I1) {
+static void __d_kappa_phi_d_stress(double *d_kappa_phi_d_stress,
+                                   const double *a, double Lambda, double I1) {
   d_kappa_phi_d_stress[0] =
       a[0] * a[1] * Lambda * exp(a[1] * I1) * exp(-a[2] * Lambda);
   d_kappa_phi_d_stress[1] =
@@ -846,15 +948,15 @@ static void __d_kappa_phi_d_stress(double *d_kappa_phi_d_stress, const double *a
 
 /**************************************************************/
 
-static void __d_kappa_phi_d_lambda(double *d_kappa_phi_d_lambda, const double *a,
-                                  double Lambda, double I1) {
+static void __d_kappa_phi_d_lambda(double *d_kappa_phi_d_lambda,
+                                   const double *a, double Lambda, double I1) {
   *d_kappa_phi_d_lambda =
       (1 - a[2] * Lambda) * a[0] * exp(a[1] * I1) * exp(-a[2] * Lambda);
 }
 
 /**************************************************************/
 
-static void __F(double * F, double kappa_phi, double I1, double I2, double I3) {
+static void __F(double *F, double kappa_phi, double I1, double I2, double I3) {
   double K1 = 9.0 + kappa_phi;
 
   *F = cbrt(K1 * I3) - cbrt(I1 * I2);
@@ -863,7 +965,7 @@ static void __F(double * F, double kappa_phi, double I1, double I2, double I3) {
 /**************************************************************/
 
 static void __d_F_d_stress(double *d_F_d_stress, const double *T_k, double I1,
-                          double I2, double I3,double kappa_phi) {
+                           double I2, double I3, double kappa_phi) {
   double Grad_f[3];
 
   double K1 = 9.0 + kappa_phi;
@@ -880,7 +982,7 @@ static void __d_F_d_stress(double *d_F_d_stress, const double *T_k, double I1,
 /**************************************************************/
 
 static void __d_F_d_kappa_phi(double *d_F_d_kappa_phi, double I1, double I3,
-                             double kappa_phi) {
+                              double kappa_phi) {
   double K1 = 9.0 + kappa_phi;
 
   *d_F_d_kappa_phi = (1.0 / 3.0) * pow(cbrt(K1), -2.0) * cbrt(I3);
@@ -889,7 +991,7 @@ static void __d_F_d_kappa_phi(double *d_F_d_kappa_phi, double I1, double I3,
 /**************************************************************/
 
 static void __d_G_d_stress(double *d_G_d_stress, const double *T_k, double I1,
-                          double I2, double I3, double kappa_psi) {
+                           double I2, double I3, double kappa_psi) {
   double Grad_g[3] = {0.0, 0.0, 0.0};
   double K2 = 9.0 + kappa_psi;
 
@@ -905,7 +1007,8 @@ static void __d_G_d_stress(double *d_G_d_stress, const double *T_k, double I1,
 /**************************************************************/
 
 static void __dd_G_dd_stress(double *dd_G_dd_stress, const double *T_k,
-                            double kappa_psi, double I1, double I2, double I3) {
+                             double kappa_psi, double I1, double I2,
+                             double I3) {
   double K2 = 9.0 + kappa_psi;
 
   double d_g_d_stress[3];
@@ -925,24 +1028,26 @@ static void __dd_G_dd_stress(double *dd_G_dd_stress, const double *T_k,
 
   for (unsigned A = 0; A < 3; A++) {
     for (unsigned B = 0; B < 3; B++) {
-      dd_G_dd_stress[A * 3 + B] =
-          (1.0 / 3.0) * cbrt(K2 * I3) *
-              (1.0 / (3.0 * T_k[A] * T_k[B]) -
-               1.0 * (A == B) / pow(T_k[A], 2.0)) - 
-               dd_g_dd_stress[A * 3 + B];
+      dd_G_dd_stress[A * 3 + B] = (1.0 / 3.0) * cbrt(K2 * I3) *
+                                      (1.0 / (3.0 * T_k[A] * T_k[B]) -
+                                       1.0 * (A == B) / pow(T_k[A], 2.0)) -
+                                  dd_g_dd_stress[A * 3 + B];
     }
   }
 }
 /**************************************************************/
 
 static void __dd_G_d_stress_d_kappa_psi(double *dd_G_d_stress_d_kappa_psi,
-                                       const double *T_k, double I1, double I3,
-                                       double kappa_psi) {
+                                        const double *T_k, double I1, double I3,
+                                        double kappa_psi) {
   double K2 = 9.0 + kappa_psi;
 
-  dd_G_d_stress_d_kappa_psi[0] = (cbrt(I3) / (3.0 * T_k[0])) / (3.0 * pow(cbrt(K2), 2));
-  dd_G_d_stress_d_kappa_psi[1] = (cbrt(I3) / (3.0 * T_k[1])) / (3.0 * pow(cbrt(K2), 2));
-  dd_G_d_stress_d_kappa_psi[2] = (cbrt(I3) / (3.0 * T_k[2])) / (3.0 * pow(cbrt(K2), 2));
+  dd_G_d_stress_d_kappa_psi[0] =
+      (cbrt(I3) / (3.0 * T_k[0])) / (3.0 * pow(cbrt(K2), 2));
+  dd_G_d_stress_d_kappa_psi[1] =
+      (cbrt(I3) / (3.0 * T_k[1])) / (3.0 * pow(cbrt(K2), 2));
+  dd_G_d_stress_d_kappa_psi[2] =
+      (cbrt(I3) / (3.0 * T_k[2])) / (3.0 * pow(cbrt(K2), 2));
 }
 
 /**************************************************************/
@@ -1006,14 +1111,18 @@ static int __reciprocal_condition_number(double *RCOND, double *Tangent_Matrix)
   lapack_int LDA = 5;
 
   // Compute 1-norm
-  ANORM = LAPACKE_dlange(LAPACK_ROW_MAJOR,'1',N_rows, N_cols, Tangent_Matrix,LDA); 	
+  ANORM = LAPACKE_dlange(LAPACK_ROW_MAJOR, '1', N_rows, N_cols, Tangent_Matrix,
+                         LDA);
 
   // Compute the Reciprocal condition number
-  INFO = LAPACKE_dgecon(LAPACK_ROW_MAJOR,'1', N_rows, Tangent_Matrix, LDA, ANORM, RCOND);
+  INFO = LAPACKE_dgecon(LAPACK_ROW_MAJOR, '1', N_rows, Tangent_Matrix, LDA,
+                        ANORM, RCOND);
 
   if (INFO < 0) {
-    fprintf(stderr,""RED"Error in LAPACKE_dgecon() : the %i-th argument had an illegal value "RESET"\n",
-           abs(INFO));
+    fprintf(stderr,
+            "" RED "Error in LAPACKE_dgecon() : the %i-th argument had an "
+            "illegal value " RESET "\n",
+            abs(INFO));
     return EXIT_FAILURE;
   }
 
@@ -1032,21 +1141,19 @@ static int __solver(double *Tangent_Matrix, double *Residual) {
   lapack_int NRHS = 1;
 
   //  Compute the LU factorization
-  INFO = LAPACKE_dgetrf(LAPACK_ROW_MAJOR,Order,Order,Tangent_Matrix,LDA,IPIV);
+  INFO =
+      LAPACKE_dgetrf(LAPACK_ROW_MAJOR, Order, Order, Tangent_Matrix, LDA, IPIV);
 
   if (INFO != 0) {
     if (INFO < 0) {
-      fprintf(
-          stderr,
-          "" RED
-          "Error in LAPACKE_dgetrf(): the %i-th argument had an illegal value" RESET
-          "",
-          abs(INFO));
+      fprintf(stderr,
+              "" RED "Error in LAPACKE_dgetrf(): the %i-th argument had an "
+              "illegal value" RESET "",
+              abs(INFO));
     } else if (INFO > 0) {
       fprintf(stderr,
-              "" RED
-              "Error in LAPACKE_dgetrf(): D_phi_mT(%i,%i) %s \n %s \n %s \n %s" RESET
-              " \n",
+              "" RED "Error in LAPACKE_dgetrf(): D_phi_mT(%i,%i) %s \n %s \n "
+              "%s \n %s" RESET " \n",
               INFO, INFO, "is exactly zero. The factorization",
               "has been completed, but the factor D_phi_mT is exactly",
               "singular, and division by zero will occur if it is used",
@@ -1058,10 +1165,11 @@ static int __solver(double *Tangent_Matrix, double *Residual) {
   /*
     Solve
   */
-  INFO = LAPACKE_dgetrs(LAPACK_ROW_MAJOR,'T',Order,NRHS, Tangent_Matrix, LDA,IPIV,Residual,LDB);
+  INFO = LAPACKE_dgetrs(LAPACK_ROW_MAJOR, 'T', Order, NRHS, Tangent_Matrix, LDA,
+                        IPIV, Residual, LDB);
 
   if (INFO) {
-    fprintf(stderr, ""RED"Error in LAPACKE_dgetrs() "RESET"\n");
+    fprintf(stderr, "" RED "Error in LAPACKE_dgetrs() " RESET "\n");
     return EXIT_FAILURE;
   }
 
@@ -1116,7 +1224,7 @@ static int __update_internal_variables_plastic(
   T[6] = T_aux[6];
   T[7] = T_aux[7];
   T[8] = T_aux[8];
-#endif  
+#endif
 
 #ifdef DEBUG_MODE
 #if DEBUG_MODE + 0
@@ -1134,12 +1242,9 @@ static int __update_internal_variables_plastic(
 
 /**************************************************************/
 
-static int __elastoplastic_tangent_moduli(
-  double * C_ep, 
-  const double * CC,
-  const double * dd_G_dd_stress,
-  double delta_lambda_k)
-{
+static int __elastoplastic_tangent_moduli(double *C_ep, const double *CC,
+                                          const double *dd_G_dd_stress,
+                                          double delta_lambda_k) {
   double C_ep_aux[9];
 
   C_ep_aux[0] = CC[0] + delta_lambda_k * dd_G_dd_stress[0];
@@ -1151,7 +1256,7 @@ static int __elastoplastic_tangent_moduli(
   C_ep_aux[6] = CC[6] + delta_lambda_k * dd_G_dd_stress[6];
   C_ep_aux[7] = CC[7] + delta_lambda_k * dd_G_dd_stress[7];
   C_ep_aux[8] = CC[8] + delta_lambda_k * dd_G_dd_stress[8];
-    
+
   int INFO;
   int N = 3;
   int LDA = 3;
@@ -1201,14 +1306,13 @@ static int __elastoplastic_tangent_moduli(
   }
 
 #if NumberDimensions == 2
-    C_ep[0] = C_ep_aux[0];
-    C_ep[1] = C_ep_aux[1];
-    C_ep[2] = C_ep_aux[3];
-    C_ep[3] = C_ep_aux[4];
+  C_ep[0] = C_ep_aux[0];
+  C_ep[1] = C_ep_aux[1];
+  C_ep[2] = C_ep_aux[3];
+  C_ep[3] = C_ep_aux[4];
 #endif
-  
+
   return EXIT_SUCCESS;
 }
-
 
 /**************************************************************/

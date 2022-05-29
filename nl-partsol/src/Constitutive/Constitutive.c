@@ -172,6 +172,7 @@ int Stress_integration__Constitutive__(int p, Particle MPM_Mesh,
     // Asign variables to the solver
     IO_State.Particle_Idx = p;
     IO_State.Stress = MPM_Mesh.Phi.Stress.nM[p];
+    IO_State.W = &(MPM_Mesh.Phi.W[p]);
     IO_State.b_e = MPM_Mesh.Phi.b_e_n1.nM[p];
     IO_State.EPS = &MPM_Mesh.Phi.EPS_n1[p];
     IO_State.Kappa = &MPM_Mesh.Phi.Kappa_n1[p];
@@ -203,6 +204,7 @@ int Stress_integration__Constitutive__(int p, Particle MPM_Mesh,
     // Asign variables to the solver
     IO_State.Particle_Idx = p;
     IO_State.Stress = MPM_Mesh.Phi.Stress.nM[p];
+    IO_State.W = &(MPM_Mesh.Phi.W[p]);
     IO_State.b_e = MPM_Mesh.Phi.b_e_n1.nM[p];
     IO_State.EPS = &MPM_Mesh.Phi.EPS_n1[p];
     IO_State.Kappa = &MPM_Mesh.Phi.Kappa_n1[p];
