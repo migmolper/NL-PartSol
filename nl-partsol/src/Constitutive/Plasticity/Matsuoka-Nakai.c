@@ -169,11 +169,15 @@ static void __d_F_d_stress(double *d_F_d_stress, const double *T_k, double I1,
                            double I2, double I3, double kappa_phi);
 /**************************************************************/
 
-static void __d_F_d_kappa_phi(
-    double *d_F_d_kappa_phi /**< [out] Yield function derivative (kappa[0]) */,
-    double I1 /**< [in] First invariant of the stress tensor */,
-    double I3 /**< [in] Third invariant of the stress tensor */,
-    double kappa_phi /**< [in] Friction angle hardening */);
+/**
+ * @brief 
+ * 
+ * @param d_F_d_kappa_phi Yield function derivative (kappa[0])
+ * @param I3 Third invariant of the stress tensor
+ * @param kappa_phi Friction angle hardening
+ */
+static void __d_F_d_kappa_phi(double *d_F_d_kappa_phi, double I3,
+                              double kappa_phi);
 /**************************************************************/
 
 /**
@@ -251,9 +255,8 @@ static int __residual(double *Residual, double *Error_k,
  * @param Lambda_k Total plastic multiplier (iter k)
  * @param kappa_phi_k Friction angle hardening (iter k)
  * @param c_cotphi Cohesion parameter
- * @return int
  */
-static int __update_internal_variables_plastic(
+static void __update_internal_variables_plastic(
     double *T, double *eps_n1, double *kappa_n1, const double *D_phi,
     const double *T_tr_k, const double *eigvec_b_e_tr, double Lambda_k,
     double kappa_phi_k, double c_cotphi);
@@ -294,7 +297,7 @@ static int __reciprocal_condition_number(double *RCOND,
                                          double (*Tangent_Matrix)[5]);
 /**************************************************************/
 
-int compute_1PK_Matsuoka_Nakai__Constitutive__(State_Parameters IO_State,
+int compute_Kirchhoff_Stress_Matsuoka_Nakai__Constitutive__(State_Parameters IO_State,
                                                Material MatProp) {
 
   int STATUS = EXIT_SUCCESS;
@@ -374,7 +377,7 @@ int compute_1PK_Matsuoka_Nakai__Constitutive__(State_Parameters IO_State,
   double d_F_d_kappa_phi = 0;
 
   // Initialize Newton-Raphson solver
-  double TOL = 1E-10; // TOL_Radial_Returning;
+  double TOL = TOL_Radial_Returning;
   double TOL_apex = 0.1;
   double Residual_k1[5] = {0.0, 0.0, 0.0};
   double Residual_k2[5] = {0.0, 0.0, 0.0};
@@ -461,7 +464,7 @@ int compute_1PK_Matsuoka_Nakai__Constitutive__(State_Parameters IO_State,
 
       // Evaluate yield function derivatives
       __d_F_d_stress(d_F_d_stress, T_k1, I1, I2, I3, kappa_k1[0]);
-      __d_F_d_kappa_phi(&d_F_d_kappa_phi, I1, I3, kappa_k1[0]);
+      __d_F_d_kappa_phi(&d_F_d_kappa_phi, I3, kappa_k1[0]);
 
       // Evaluate plastic flow rule derivatives
       __dd_G_dd_stress(dd_G_dd_stress, T_k1, kappa_k1[1], I1, I2, I3);
@@ -672,14 +675,9 @@ int compute_1PK_Matsuoka_Nakai__Constitutive__(State_Parameters IO_State,
       }
     }
 
-    STATUS = __update_internal_variables_plastic(
+     __update_internal_variables_plastic(
         IO_State.Stress, IO_State.EPS, IO_State.Kappa, IO_State.D_phi_n1, T_k1,
         eigvec_b_e_tr, Lambda_k1, kappa_k1[0], c_cotphi);
-    if (STATUS == EXIT_FAILURE) {
-      fprintf(stderr,
-              "" RED "Error in __update_internal_variables_plastic" RESET "\n");
-      return EXIT_FAILURE;
-    }
 
     if (IO_State.compute_C_ep) {
       STATUS = __elastoplastic_tangent_moduli(IO_State.C_ep, CC, dd_G_dd_stress,
@@ -985,7 +983,7 @@ static void __d_F_d_stress(double *d_F_d_stress, const double *T_k, double I1,
 
 /**************************************************************/
 
-static void __d_F_d_kappa_phi(double *d_F_d_kappa_phi, double I1, double I3,
+static void __d_F_d_kappa_phi(double *d_F_d_kappa_phi, double I3,
                               double kappa_phi) {
   double K1 = 9.0 + kappa_phi;
 
@@ -1069,23 +1067,6 @@ static int __residual(double *Residual, double *Error_k,
       E_hencky_k[2] - E_hencky_trial[2] + delta_lambda_k * d_G_d_stress[2];
   Residual[3] = kappa_k[0] - kappa_hat[0];
   Residual[4] = F_k;
-
-#ifdef DEBUG_MODE
-#if DEBUG_MODE + 0
-  printf("*********************************\n");
-  printf("__residual(): \n");
-  printf("d_lambda_k: %e \n", delta_lambda_k);
-  printf("F_k: %e \n", F_k);
-  printf("E_hencky_tr: [%e, %e, %e] \n", E_hencky_trial[0], E_hencky_trial[1],
-         E_hencky_trial[2]);
-  printf("E_hencky_k: [%e, %e, %e] \n", E_hencky_k[0], E_hencky_k[1],
-         E_hencky_k[2]);
-  printf("Kappa_phi: %e, kappa_phi_hat: %e \n", kappa_k[0], kappa_hat[0]);
-  printf("Plastic flow: [%e, %e, %e] \n", d_G_d_stress[0], d_G_d_stress[1],
-         d_G_d_stress[2]);
-  printf("*********************************\n");
-#endif
-#endif
 
   /*
     Compute absolute error from the residual
@@ -1183,7 +1164,7 @@ static int __solver(double (*Tangent_Matrix)[5], double *Residual) {
 
 /**************************************************************/
 
-static int __update_internal_variables_plastic(
+static void __update_internal_variables_plastic(
     double *T, double *eps_n1, double *kappa_n1, const double *D_phi,
     const double *T_tr_k, const double *eigvec_b_e_tr, double Lambda_k,
     double kappa_phi_k, double c_cotphi) {
@@ -1231,18 +1212,6 @@ static int __update_internal_variables_plastic(
   T[8] = T_aux[8];
 #endif
 
-#ifdef DEBUG_MODE
-#if DEBUG_MODE + 0
-#if NumberDimensions == 2
-  puts("Nominal stress tensor");
-  printf("%f %f %f \n", T[0], T[1], 0.0);
-  printf("%f %f %f \n", T[2], T[3], 0.0);
-  printf("%f %f %f \n", 0.0, 0.0, T[4]);
-#endif
-#endif
-#endif
-
-  return EXIT_SUCCESS;
 }
 
 /**************************************************************/
