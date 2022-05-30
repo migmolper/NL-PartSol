@@ -75,7 +75,7 @@ static int __eigenvalues_kirchhoff(
     const double *P /**< [in] Nominal stress tensor */,
     const double *D_phi /**< [in] Total deformation gradient. */);
 
-int compute_1PK_elastoplastic_tangent_matrix(double *A_ep,
+int compute_stiffness_elastoplastic__Constitutive__(double *A_ep,
                                              const double *dN_alpha,
                                              const double *dN_beta,
                                              const State_Parameters IO_State);
@@ -171,11 +171,11 @@ int main() {
 #endif
 #endif
 
-  STATUS = compute_1PK_elastoplastic_tangent_matrix(A_ep, dN_alpha, dN_beta,
+  STATUS = compute_stiffness_elastoplastic__Constitutive__(A_ep, dN_alpha, dN_beta,
                                                     IO_State);
   if (STATUS == EXIT_FAILURE) {
     fprintf(stderr,
-            "" RED "Error in compute_1PK_elastoplastic_tangent_matrix" RESET
+            "" RED "Error in compute_stiffness_elastoplastic__Constitutive__" RESET
             "\n");
     return EXIT_FAILURE;
   }
@@ -184,7 +184,7 @@ int main() {
 }
 
 /**************************************************************/
-int compute_1PK_elastoplastic_tangent_matrix(double *A_ep,
+int compute_stiffness_elastoplastic__Constitutive__(double *A_ep,
                                              const double *dN_alpha,
                                              const double *dN_beta,
                                              const State_Parameters IO_State) {

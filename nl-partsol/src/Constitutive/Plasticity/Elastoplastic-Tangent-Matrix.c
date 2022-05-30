@@ -37,7 +37,7 @@ static int __spectral_decomposition_b_e(double *eigval_b_e, double *eigvec_b_e,
 static int __eigenvalues_kirchhoff(double *eigval_T, const double *T);
 /**************************************************************/
 
-int compute_1PK_elastoplastic_tangent_matrix(double *Stiffness_density,
+int compute_stiffness_elastoplastic__Constitutive__(double *Stiffness_density,
                                              const double *dN_alpha_n1,
                                              const double *dN_beta_n1,
                                              const State_Parameters IO_State) {

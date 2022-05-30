@@ -157,7 +157,6 @@ int main(int argc, char *argv[]) {
     return EXIT_FAILURE;
   }
 
-
 // Initialize OpenMP
 #ifdef USE_OPENMP
   puts("" GREEN "Initialize OpenMP" RESET " ...");
@@ -169,7 +168,6 @@ int main(int argc, char *argv[]) {
   puts("" GREEN "Initialize PETSc" RESET " ...");
   PetscInitialize(&argc, &argv, 0, 0);
 #endif
-
 
   /* Select kinf of formulation  */
   if (strcmp(Formulation, "-u") == 0) {
@@ -428,7 +426,8 @@ static void nlpartsol_help_message() {
 #endif
 
 #ifdef USE_PETSC
-  puts("Usage : nl-partsol [NLPARTSOL Options] -f [commands.nlp] [PETSc Options]");
+  puts("Usage : nl-partsol [NLPARTSOL Options] -f [commands.nlp] [PETSc "
+       "Options]");
   puts("[NLPARTSOL Options]:");
   puts(" * --Print-Convergence: Display convergence stats.");
   puts(" * --FORMULATION-U : Displacement formulation");
@@ -480,8 +479,10 @@ static void free_nodes(Mesh FEM_Mesh)
   free(FEM_Mesh.ActiveNode);
   free(FEM_Mesh.BoundaryNode);
 
-  free(FEM_Mesh.Num_Particles_Node);
-  free_table__SetLib__(FEM_Mesh.List_Particles_Node, FEM_Mesh.NumNodesMesh);
+  if ((Driver_EigenErosion == true) || (Driver_EigenSoftening == true)) {
+    free(FEM_Mesh.Num_Particles_Node);
+    free_table__SetLib__(FEM_Mesh.List_Particles_Node, FEM_Mesh.NumNodesMesh);
+  }
 
   if (FEM_Mesh.Locking_Control_Fbar) {
     free(FEM_Mesh.Idx_Patch);
@@ -507,7 +508,6 @@ static void free_particles(Particle MPM_Mesh)
   free_table__SetLib__(MPM_Mesh.ListNodes, MPM_Mesh.NumGP);
 
   if ((Driver_EigenErosion == true) || (Driver_EigenSoftening == true)) {
-
     free_table__SetLib__(MPM_Mesh.Beps, MPM_Mesh.NumGP);
   }
 

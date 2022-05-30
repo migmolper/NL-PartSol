@@ -2,12 +2,12 @@
 /**
  * @file Constitutive.c
  * @author Miguel Molinos (@migmolper)
- * @brief 
+ * @brief
  * @version 0.1
  * @date 2022-05-25
- * 
+ *
  * @copyright Copyright (c) 2022
- * 
+ *
  */
 
 #include "Constitutive/Constitutive.h"
@@ -37,8 +37,8 @@ int Stress_integration__Constitutive__(int p, Particle MPM_Mesh,
       Input_SP.J = MPM_Mesh.Phi.J_n1.nV[p];
     }
 
-    Output_SP =
-        compute_1PK_Stress_Tensor_Saint_Venant_Kirchhoff(Input_SP, MatProp_p);
+    Output_SP = compute_Kirchhoff_Stress_Saint_Venant__Constitutive__(
+        Input_SP, MatProp_p);
 
   } else if (strcmp(MatProp_p.Type, "Hencky") == 0) {
 
@@ -47,15 +47,18 @@ int Stress_integration__Constitutive__(int p, Particle MPM_Mesh,
     IO_State.W = &(MPM_Mesh.Phi.W[p]);
     IO_State.D_phi_n1 = MPM_Mesh.Phi.F_n1.nM[p];
     IO_State.J = MPM_Mesh.Phi.J_n1.nV[p];
-    
-    STATUS = compute_Kirchhoff_Stress_Hencky__Constitutive__(IO_State, MatProp_p);
+
+    STATUS =
+        compute_Kirchhoff_Stress_Hencky__Constitutive__(IO_State, MatProp_p);
     if (STATUS == EXIT_FAILURE) {
-      fprintf(stderr,
-              "" RED "Error in compute_Kirchhoff_Stress_Hencky__Constitutive__(,)" RESET
-              " \n");
+      fprintf(
+          stderr,
+          "" RED
+          "Error in compute_Kirchhoff_Stress_Hencky__Constitutive__(,)" RESET
+          " \n");
       return EXIT_FAILURE;
     }
-    
+
   } else if (strcmp(MatProp_p.Type, "Neo-Hookean-Wriggers") == 0) {
 
     IO_State.Particle_Idx = p;
@@ -70,10 +73,12 @@ int Stress_integration__Constitutive__(int p, Particle MPM_Mesh,
       IO_State.J = MPM_Mesh.Phi.J_n1.nV[p];
     }
 
-    STATUS = compute_Kirchhoff_Stress_Neo_Hookean__Constitutive__(IO_State, MatProp_p);
+    STATUS = compute_Kirchhoff_Stress_Neo_Hookean__Constitutive__(IO_State,
+                                                                  MatProp_p);
     if (STATUS == EXIT_FAILURE) {
       fprintf(stderr,
-              "" RED "Error in compute_Kirchhoff_Stress_Neo_Hookean__Constitutive__(,)" RESET
+              "" RED "Error in "
+              "compute_Kirchhoff_Stress_Neo_Hookean__Constitutive__(,)" RESET
               " \n");
       return EXIT_FAILURE;
     }
@@ -93,13 +98,13 @@ int Stress_integration__Constitutive__(int p, Particle MPM_Mesh,
 
     //    IO_State.Pressure = MPM_Mesh.Phi.lambda_pressure_n1.nV[p];
 
-    STATUS =
-        compute_Kirchhoff_Stress_Tensor_Newtonian_Fluid(IO_State, MatProp_p);
+    STATUS = compute_Kirchhoff_Stress_Newtonian_Fluid__Constitutive__(
+        IO_State, MatProp_p);
     if (STATUS == EXIT_FAILURE) {
       fprintf(
           stderr,
-          "" RED
-          "Error in compute_Kirchhoff_Stress_Tensor_Newtonian_Fluid(,)" RESET
+          "" RED "Error in "
+          "compute_Kirchhoff_Stress_Newtonian_Fluid__Constitutive__(,)" RESET
           " \n");
       return EXIT_FAILURE;
     }
@@ -127,9 +132,14 @@ int Stress_integration__Constitutive__(int p, Particle MPM_Mesh,
 #endif
     *(IO_State.EPS) = MPM_Mesh.Phi.EPS_n[p];
 
-    STATUS = compute_Kirchhoff_Stress_Von_Mises__Constitutive__(IO_State, MatProp_p);
+    STATUS =
+        compute_Kirchhoff_Stress_Von_Mises__Constitutive__(IO_State, MatProp_p);
     if (STATUS == EXIT_FAILURE) {
-      fprintf(stderr, "" RED "Error in compute_Kirchhoff_Stress_Von_Mises__Constitutive__(,)" RESET " \n");
+      fprintf(
+          stderr,
+          "" RED
+          "Error in compute_Kirchhoff_Stress_Von_Mises__Constitutive__(,)" RESET
+          " \n");
       return EXIT_FAILURE;
     }
 
@@ -160,10 +170,13 @@ int Stress_integration__Constitutive__(int p, Particle MPM_Mesh,
     *(IO_State.Kappa) = MPM_Mesh.Phi.Kappa_n[p];
     *(IO_State.EPS) = MPM_Mesh.Phi.EPS_n[p];
 
-    STATUS = compute_Kirchhoff_Stress_Drucker_Prager__Constitutive__(IO_State, MatProp_p);
+    STATUS = compute_Kirchhoff_Stress_Drucker_Prager__Constitutive__(IO_State,
+                                                                     MatProp_p);
     if (STATUS == EXIT_FAILURE) {
       fprintf(stderr,
-              "" RED "Error in compute_Kirchhoff_Stress_Drucker_Prager__Constitutive__(,)" RESET " \n");
+              "" RED "Error in "
+              "compute_Kirchhoff_Stress_Drucker_Prager__Constitutive__(,)" RESET
+              " \n");
       return EXIT_FAILURE;
     }
 
@@ -192,10 +205,13 @@ int Stress_integration__Constitutive__(int p, Particle MPM_Mesh,
     *(IO_State.Kappa) = MPM_Mesh.Phi.Kappa_n[p];
     *(IO_State.EPS) = MPM_Mesh.Phi.EPS_n[p];
 
-    STATUS = compute_1PK_Matsuoka_Nakai__Constitutive__(IO_State, MatProp_p);
+    STATUS = compute_Kirchhoff_Stress_Matsuoka_Nakai__Constitutive__(IO_State,
+                                                                     MatProp_p);
     if (STATUS == EXIT_FAILURE) {
       fprintf(stderr,
-              "" RED "Error in compute_1PK_Matsuoka_Nakai__Constitutive__(,)" RESET " \n");
+              "" RED "Error in "
+              "compute_Kirchhoff_Stress_Matsuoka_Nakai__Constitutive__(,)" RESET
+              " \n");
       return EXIT_FAILURE;
     }
 
@@ -224,9 +240,13 @@ int Stress_integration__Constitutive__(int p, Particle MPM_Mesh,
     *(IO_State.Kappa) = MPM_Mesh.Phi.Kappa_n[p];
     *(IO_State.EPS) = MPM_Mesh.Phi.EPS_n[p];
 
-    STATUS = compute_1PK_Lade_Duncan(IO_State, MatProp_p);
+    STATUS = compute_Kirchhoff_Stress_Lade_Duncan__Constitutive__(IO_State,
+                                                                  MatProp_p);
     if (STATUS == EXIT_FAILURE) {
-      fprintf(stderr, "" RED "Error in compute_1PK_Lade_Duncan(,)" RESET " \n");
+      fprintf(stderr,
+              "" RED "Error in "
+              "compute_Kirchhoff_Stress_Lade_Duncan__Constitutive__(,)" RESET
+              " \n");
       return EXIT_FAILURE;
     }
 
@@ -268,28 +288,30 @@ int stiffness_density__Constitutive__(int p, double *Stiffness_density,
   } else if (strcmp(MatProp_p.Type, "Hencky") == 0) {
     IO_State.D_phi_n1 = MPM_Mesh.Phi.F_n1.nM[p];
     IO_State.Stress = MPM_Mesh.Phi.Stress.nM[p];
-    
+
     STATUS = compute_stiffness_density_Hencky__Constitutive__(
         Stiffness_density, dN_alpha_n1, dN_beta_n1, IO_State, MatProp_p);
     if (STATUS == EXIT_FAILURE) {
       fprintf(stderr,
-              "" RED "Error in compute_stiffness_density_Hencky__Constitutive__" RESET
+              "" RED
+              "Error in compute_stiffness_density_Hencky__Constitutive__" RESET
               "\n");
       return EXIT_FAILURE;
     }
-    
+
   } else if (strcmp(MatProp_p.Type, "Newtonian-Fluid-Compressible") == 0) {
     IO_State.D_phi_n1 = MPM_Mesh.Phi.F_n1.nM[p];
     IO_State.D_phi_n = MPM_Mesh.Phi.F_n.nM[p];
     IO_State.dFdt = MPM_Mesh.Phi.dt_F_n1.nM[p];
     IO_State.J = MPM_Mesh.Phi.J_n1.nV[p];
     IO_State.alpha_4 = alpha_4;
-    STATUS = compute_stiffness_density_Newtonian_Fluid(
+    STATUS = compute_stiffness_density_Newtonian_Fluid__Constitutive__(
         Stiffness_density, dN_alpha_n1, dN_beta_n1, dN_alpha_n, dN_beta_n,
         IO_State, MatProp_p);
     if (STATUS == EXIT_FAILURE) {
       fprintf(stderr,
-              "" RED "Error in compute_stiffness_density_Newtonian_Fluid" RESET
+              "" RED "Error in "
+              "compute_stiffness_density_Newtonian_Fluid__Constitutive__" RESET
               "\n");
       return EXIT_FAILURE;
     }
@@ -299,26 +321,28 @@ int stiffness_density__Constitutive__(int p, double *Stiffness_density,
     IO_State.b_e = MPM_Mesh.Phi.b_e_n1.nM[p];
     IO_State.Stress = MPM_Mesh.Phi.Stress.nM[p];
     IO_State.C_ep = MPM_Mesh.Phi.C_ep.nM[p];
-    STATUS = compute_1PK_elastoplastic_tangent_matrix(
+    STATUS = compute_stiffness_elastoplastic__Constitutive__(
         Stiffness_density, dN_alpha_n1, dN_beta_n1, IO_State);
     if (STATUS == EXIT_FAILURE) {
       fprintf(stderr,
-              "" RED "Error in compute_1PK_elastoplastic_tangent_matrix" RESET
+              "" RED
+              "Error in compute_stiffness_elastoplastic__Constitutive__" RESET
               "\n");
       return EXIT_FAILURE;
     }
 
-  }else if (strcmp(MatProp_p.Type, "Drucker-Prager") == 0) {
+  } else if (strcmp(MatProp_p.Type, "Drucker-Prager") == 0) {
     IO_State.D_phi_n1 = MPM_Mesh.Phi.F_n1.nM[p];
     IO_State.D_phi_n = MPM_Mesh.Phi.F_n.nM[p];
     IO_State.b_e = MPM_Mesh.Phi.b_e_n1.nM[p];
     IO_State.Stress = MPM_Mesh.Phi.Stress.nM[p];
     IO_State.C_ep = MPM_Mesh.Phi.C_ep.nM[p];
-    STATUS = compute_1PK_elastoplastic_tangent_matrix(
+    STATUS = compute_stiffness_elastoplastic__Constitutive__(
         Stiffness_density, dN_alpha_n1, dN_beta_n1, IO_State);
     if (STATUS == EXIT_FAILURE) {
       fprintf(stderr,
-              "" RED "Error in compute_1PK_elastoplastic_tangent_matrix" RESET
+              "" RED
+              "Error in compute_stiffness_elastoplastic__Constitutive__" RESET
               "\n");
       return EXIT_FAILURE;
     }
@@ -329,11 +353,27 @@ int stiffness_density__Constitutive__(int p, double *Stiffness_density,
     IO_State.b_e = MPM_Mesh.Phi.b_e_n1.nM[p];
     IO_State.Stress = MPM_Mesh.Phi.Stress.nM[p];
     IO_State.C_ep = MPM_Mesh.Phi.C_ep.nM[p];
-    STATUS = compute_1PK_elastoplastic_tangent_matrix(
+    STATUS = compute_stiffness_elastoplastic__Constitutive__(
         Stiffness_density, dN_alpha_n1, dN_beta_n1, IO_State);
     if (STATUS == EXIT_FAILURE) {
       fprintf(stderr,
-              "" RED "Error in compute_1PK_elastoplastic_tangent_matrix" RESET
+              "" RED
+              "Error in compute_stiffness_elastoplastic__Constitutive__" RESET
+              "\n");
+      return EXIT_FAILURE;
+    }
+  } else if (strcmp(MatProp_p.Type, "Lade-Duncan") == 0) {
+    IO_State.D_phi_n1 = MPM_Mesh.Phi.F_n1.nM[p];
+    IO_State.D_phi_n = MPM_Mesh.Phi.F_n.nM[p];
+    IO_State.b_e = MPM_Mesh.Phi.b_e_n1.nM[p];
+    IO_State.Stress = MPM_Mesh.Phi.Stress.nM[p];
+    IO_State.C_ep = MPM_Mesh.Phi.C_ep.nM[p];
+    STATUS = compute_stiffness_elastoplastic__Constitutive__(
+        Stiffness_density, dN_alpha_n1, dN_beta_n1, IO_State);
+    if (STATUS == EXIT_FAILURE) {
+      fprintf(stderr,
+              "" RED
+              "Error in compute_stiffness_elastoplastic__Constitutive__" RESET
               "\n");
       return EXIT_FAILURE;
     }

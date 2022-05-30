@@ -34,7 +34,7 @@ double energy_Saint_Venant_Kirchhoff(Tensor C, Material MatProp_p) {
 /**************************************************************/
 
 State_Parameters
-compute_1PK_Stress_Tensor_Saint_Venant_Kirchhoff(State_Parameters Intput_SP,
+compute_Kirchhoff_Stress_Saint_Venant__Constitutive__(State_Parameters Intput_SP,
                                                  Material MatProp_p) {
   /* Number of dimensions */
   int Ndim = NumberDimensions;
