@@ -1294,8 +1294,8 @@ static void __Nodal_Internal_Forces(double *Residual, Mask ActiveNodes,
       double *d_shapefunction_n1_p = push_forward_dN__MeshTools__(
           d_shapefunction_n_p.nV, DF_p, NumNodes_p, STATUS);
       if (*STATUS == EXIT_FAILURE) {
-        fprintf(stderr,
-                "" RED "Error in push_forward_dN__MeshTools__()" RESET " \n");
+        fprintf(stderr, "" RED " Error in " RESET "" BOLDRED
+                        "push_forward_dN__MeshTools__() " RESET " \n");
       }
 
       // Get the Kirchhoff stress tensor pointer
@@ -1303,6 +1303,12 @@ static void __Nodal_Internal_Forces(double *Residual, Mask ActiveNodes,
 
       // Compute damage parameter (eigenerosion/eigensoftening)
       if ((Driver_EigenErosion == true) || (Driver_EigenSoftening == true)) {
+
+        *STATUS = compute_damage__Constitutive__(p, MPM_Mesh, FEM_Mesh.DeltaX);
+        if (*STATUS == EXIT_FAILURE) {
+          fprintf(stderr, "" RED " Error in " RESET "" BOLDRED
+                          "compute_damage__Constitutive__() " RESET " \n");
+        }
 
 #if NumberDimensions == 2
         for (unsigned i = 0; i < 5; i++) {
@@ -2255,8 +2261,11 @@ static void __update_Particles(Nodal_Field D_U, Particle MPM_Mesh,
 #endif
 
       //! Update damage variable
-      if (Driver_EigenErosion) {
+      if ((Driver_EigenErosion == true) || (Driver_EigenSoftening == true)) {
         MPM_Mesh.Phi.Damage_n[p] = MPM_Mesh.Phi.Damage_n1[p];
+      }
+      if (Driver_EigenSoftening == true) {
+        MPM_Mesh.Phi.Strain_f_n[p] = MPM_Mesh.Phi.Strain_f_n1[p];
       }
 
       //! Update deformation gradient

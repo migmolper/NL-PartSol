@@ -27,12 +27,14 @@ static char *delimiters_3 = "=";
 
 typedef struct {
 
-  bool Is_rho; // Reference fensity
-  bool Is_E;   // Young modulus
-  bool Is_nu;  // Poisson cefficient
-
-  bool Is_Ceps; // Normalizing constant (Eigenerosion)
-  bool Is_Gf;   // Failure energy (Eigenerosion)
+  bool Is_rho;   // Reference fensity
+  bool Is_E;     // Young modulus
+  bool Is_nu;    // Poisson cefficient
+  bool Is_Ceps;  // Normalizing constant (Eigenerosion)
+  bool Is_Gf;    // Failure energy (Eigenerosion)
+  bool Is_ft;    // Tensile strengt of the material
+  bool Is_heps;  // Bandwidth of the cohesive fracture
+  bool Is_wcrit; // Critical opening displacement
 
 } Check_Material;
 
@@ -91,9 +93,30 @@ int Define_Hencky(Material *H_Material, FILE *Simulation_file,
     }
     /**************************************************/
     else if (strcmp(Parameter_pars[0], "Gf") == 0) {
-      if ((Driver_EigenErosion == true) || (Driver_EigenSoftening == true)) {
+      if (Driver_EigenErosion == true) {
         ChkMat.Is_Gf = true;
         (*H_Material).Gf = atof(Parameter_pars[1]);
+      }
+    }
+    /**************************************************/
+    else if (strcmp(Parameter_pars[0], "ft") == 0) {
+      if (Driver_EigenSoftening == true) {
+        ChkMat.Is_ft = true;
+        (*H_Material).ft = atof(Parameter_pars[1]);
+      }
+    }
+    /**************************************************/
+    else if (strcmp(Parameter_pars[0], "heps") == 0) {
+      if (Driver_EigenSoftening == true) {
+        ChkMat.Is_heps = true;
+        (*H_Material).heps = atof(Parameter_pars[1]);
+      }
+    }
+    /**************************************************/
+    else if (strcmp(Parameter_pars[0], "wcrit") == 0) {
+      if (Driver_EigenSoftening == true) {
+        ChkMat.Is_wcrit = true;
+        (*H_Material).wcrit = atof(Parameter_pars[1]);
       }
     }
     /**************************************************/
@@ -128,6 +151,9 @@ static Check_Material __Initialise_Check_Material() {
   ChkMat.Is_nu = false;
   ChkMat.Is_Ceps = false;
   ChkMat.Is_Gf = false;
+  ChkMat.Is_ft = false;
+  ChkMat.Is_heps = false;
+  ChkMat.Is_wcrit = false;
 
   return ChkMat;
 }
@@ -171,9 +197,22 @@ static int __check_material(Material *H_Material, Check_Material ChkMat,
     if ((Driver_EigenErosion == true) || (Driver_EigenSoftening == true)) {
       printf("\t \t -> %s : %f \n", "" MAGENTA "[Ceps]" RESET "",
              (*H_Material).Ceps);
+    }
 
+    if (Driver_EigenErosion == true) {
       printf("\t \t -> %s : %f \n", "" MAGENTA "[Gf]" RESET "",
              (*H_Material).Gf);
+    }
+
+    if (Driver_EigenSoftening == true) {
+      printf("\t \t -> %s : %f \n", "" MAGENTA "[ft]" RESET "",
+             (*H_Material).ft);
+
+      printf("\t \t -> %s : %f \n", "" MAGENTA "[heps]" RESET "",
+             (*H_Material).heps);
+
+      printf("\t \t -> %s : %f \n", "" MAGENTA "[wcrit]" RESET "",
+             (*H_Material).wcrit);
     }
 
   } else {
@@ -199,10 +238,29 @@ static int __check_material(Material *H_Material, Check_Material ChkMat,
                 ? "" MAGENTA "[Ceps]" RESET " : " GREEN "true" RESET " \n"
                 : "" MAGENTA "[Ceps]" RESET " : " RED "false" RESET " \n",
             stderr);
+    }
 
+    if (Driver_EigenErosion == true) {
       fputs(ChkMat.Is_Gf
                 ? "" MAGENTA "[Gf]" RESET " : " GREEN "true" RESET " \n"
                 : "" MAGENTA "[Gf]" RESET " : " RED "false" RESET " \n",
+            stderr);
+    }
+
+    if (Driver_EigenSoftening == true) {
+      fputs(ChkMat.Is_ft
+                ? "" MAGENTA "[ft]" RESET " : " GREEN "true" RESET " \n"
+                : "" MAGENTA "[ft]" RESET " : " RED "false" RESET " \n",
+            stderr);
+
+      fputs(ChkMat.Is_heps
+                ? "" MAGENTA "[heps]" RESET " : " GREEN "true" RESET " \n"
+                : "" MAGENTA "[heps]" RESET " : " RED "false" RESET " \n",
+            stderr);
+
+      fputs(ChkMat.Is_wcrit
+                ? "" MAGENTA "[wcrit]" RESET " : " GREEN "true" RESET " \n"
+                : "" MAGENTA "[wcrit]" RESET " : " RED "false" RESET " \n",
             stderr);
     }
 

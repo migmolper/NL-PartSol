@@ -33,7 +33,7 @@ int Eigensoftening__Constitutive__(unsigned p, const double *Damage_n,
   int STATUS = EXIT_SUCCESS;
 
   //! Define auxiliar variable
-  double ft_p, Wc_p, heps_p, Teps_p, Damage_n1_aux_p;
+  double ft_p, wcrit_p, heps_p, Teps_p, Damage_n1_aux_p;
   double m_p;
   double m_q;
   double sum_m_x_T_ppal, sum_m;
@@ -70,7 +70,7 @@ int Eigensoftening__Constitutive__(unsigned p, const double *Damage_n,
   //! Material parameters
   ft_p = MatProp_p.ft;     // Tensile strengt of the material
   heps_p = MatProp_p.heps; // Bandwidth of the cohesive fracture (Bazant)
-  Wc_p = MatProp_p.Wc;     // critical opening displacement
+  wcrit_p = MatProp_p.wcrit;     // critical opening displacement
 
   if ((Damage_n[p] == 0.0) && (eigval_stress_p[0] > 0.0)) {
 
@@ -146,7 +146,7 @@ int Eigensoftening__Constitutive__(unsigned p, const double *Damage_n,
     }
 
     //! Compute particle damage
-    Damage_n1_aux_p = (eigval_strain_p[0] - *(StrainF_n_p)) * heps_p / Wc_p;
+    Damage_n1_aux_p = (eigval_strain_p[0] - *(StrainF_n_p)) * heps_p / wcrit_p;
     Damage_n1[p] = DMIN(1.0, DMAX(Damage_n1_aux_p, Damage_n[p]));
   }
 

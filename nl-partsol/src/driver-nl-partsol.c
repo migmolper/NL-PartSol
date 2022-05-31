@@ -184,9 +184,9 @@ int main(int argc, char *argv[]) {
       STATUS = Generate_Gravity_Field__InOutFun__(
           &gravity_field, Static_conditons, Parameters_Solver);
       if (STATUS == EXIT_FAILURE) {
-        fprintf(stderr,
-                "" RED "Error in Generate_Gravity_Field__InOutFun__(,)" RESET
-                " \n");
+        fprintf(stderr, "" RED " Error in " RESET "" BOLDRED
+                        "Generate_Gravity_Field__InOutFun__() " RESET " \n");
+        return EXIT_FAILURE;
       }
 
       puts("*************************************************");
@@ -195,8 +195,14 @@ int main(int argc, char *argv[]) {
 
       puts("*************************************************");
       puts("" GREEN "Generating new MPM simulation" RESET " ...");
-      MPM_Mesh = Generate_One_Phase_Analysis__InOutFun__(
-          Static_conditons, FEM_Mesh, Parameters_Solver);
+      STATUS = Generate_One_Phase_Analysis__InOutFun__(
+          &MPM_Mesh, Static_conditons, FEM_Mesh, Parameters_Solver);
+      if (STATUS == EXIT_FAILURE) {
+        fprintf(stderr,
+                "" RED " Error in " RESET "" BOLDRED
+                "Generate_One_Phase_Analysis__InOutFun__() " RESET " \n");
+        return EXIT_FAILURE;
+      }
 
       puts("*************************************************");
       puts("" GREEN "Read outputs" RESET " ...");
@@ -226,6 +232,7 @@ int main(int argc, char *argv[]) {
         fprintf(stderr,
                 "" RED "Error in Generate_Gravity_Field__InOutFun__(,)" RESET
                 " \n");
+        return EXIT_FAILURE;
       }
 
       puts("*************************************************");
@@ -236,8 +243,14 @@ int main(int argc, char *argv[]) {
       puts("*************************************************");
       puts("" GREEN "Generating new MPM simulation" RESET " ...");
       puts("*************************************************");
-      MPM_Mesh = Generate_One_Phase_Analysis__InOutFun__(
-          SimulationFile, FEM_Mesh, Parameters_Solver);
+      STATUS = Generate_One_Phase_Analysis__InOutFun__(
+          &MPM_Mesh, SimulationFile, FEM_Mesh, Parameters_Solver);
+      if (STATUS == EXIT_FAILURE) {
+        fprintf(stderr,
+                "" RED " Error in " RESET "" BOLDRED
+                "Generate_One_Phase_Analysis__InOutFun__() " RESET " \n");
+        return EXIT_FAILURE;
+      }
 
       puts("*************************************************");
       puts("" GREEN "Read outputs" RESET " ...");
@@ -290,9 +303,9 @@ int main(int argc, char *argv[]) {
     STATUS = Generate_Gravity_Field__InOutFun__(
         &gravity_field, Static_conditons, Parameters_Solver);
     if (STATUS == EXIT_FAILURE) {
-      fprintf(stderr,
-              "" RED "Error in Generate_Gravity_Field__InOutFun__(,)" RESET
-              " \n");
+      fprintf(stderr, "" RED " Error in " RESET "" BOLDRED
+                      "Generate_Gravity_Field__InOutFun__() " RESET " \n");
+      return EXIT_FAILURE;
     }
 
     puts("*************************************************");
@@ -303,8 +316,13 @@ int main(int argc, char *argv[]) {
     puts("*************************************************");
     puts("" GREEN "Generating new MPM simulation" RESET " ...");
     puts("*************************************************");
-    MPM_Mesh = Generate_One_Phase_Analysis__InOutFun__(SimulationFile, FEM_Mesh,
-                                                       Parameters_Solver);
+    STATUS = Generate_One_Phase_Analysis__InOutFun__(
+        &MPM_Mesh, SimulationFile, FEM_Mesh, Parameters_Solver);
+    if (STATUS == EXIT_FAILURE) {
+      fprintf(stderr, "" RED " Error in " RESET "" BOLDRED
+                      "Generate_One_Phase_Analysis__InOutFun__() " RESET " \n");
+      return EXIT_FAILURE;
+    }
 
     puts("*************************************************");
     puts("Read outputs ...");
@@ -337,9 +355,9 @@ int main(int argc, char *argv[]) {
     STATUS = Generate_Gravity_Field__InOutFun__(
         &gravity_field, Static_conditons, Parameters_Solver);
     if (STATUS == EXIT_FAILURE) {
-      fprintf(stderr,
-              "" RED "Error in Generate_Gravity_Field__InOutFun__(,)" RESET
-              " \n");
+      fprintf(stderr, "" RED " Error in " RESET "" BOLDRED
+                      "Generate_Gravity_Field__InOutFun__() " RESET " \n");
+      return EXIT_FAILURE;
     }
 
     puts("*************************************************");
@@ -349,7 +367,14 @@ int main(int argc, char *argv[]) {
     puts("*************************************************");
     puts("Generating new MPM simulation ...");
     MPM_Mesh = Generate_Soil_Water_Coupling_Analysis__InOutFun__(
-        SimulationFile, FEM_Mesh, Parameters_Solver);
+        SimulationFile, FEM_Mesh, Parameters_Solver, &STATUS);
+    if (STATUS == EXIT_FAILURE) {
+      fprintf(stderr,
+              "" RED " Error in " RESET "" BOLDRED
+              "Generate_Soil_Water_Coupling_Analysis__InOutFun__() " RESET
+              " \n");
+      return EXIT_FAILURE;
+    }
 
     puts("*************************************************");
     puts("Read VTK output directives ...");

@@ -50,7 +50,7 @@ static FILE *Open_and_Check_simulation_file(char *);
 
 /**********************************************************************/
 
-Material *Read_Materials__InOutFun__(char *SimulationFile, int NumberMaterials)
+int Read_Materials__InOutFun__(Material * List_Materials, char *SimulationFile)
 /*
 
 Define-Material(idx=0,Model=Drucker-Prager-Plane-Strain)
@@ -85,12 +85,7 @@ Define-Material(idx=0,Model=Drucker-Prager-Plane-Strain)
   Param_Index_and_Model Index_and_Model;
 
   /* Allocate table with the material */
-  Material *List_Materials =
-      (Material *)malloc(NumberMaterials * sizeof(Material));
-  if (List_Materials == NULL) {
-    sprintf(Error_message, "%s", "Memory error for table of material");
-    standard_error();
-  }
+
 
   /* Open and check file */
   Sim_dat = Open_and_Check_simulation_file(SimulationFile);
@@ -173,11 +168,7 @@ Define-Material(idx=0,Model=Drucker-Prager-Plane-Strain)
   /* Close  file */
   fclose(Sim_dat);
 
-  if (STATUS == EXIT_FAILURE) {
-    exit(0);
-  }
-
-  return List_Materials;
+  return STATUS;
 }
 
 /**********************************************************************/

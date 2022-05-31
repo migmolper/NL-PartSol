@@ -35,8 +35,11 @@ typedef struct {
   bool Is_Locking_Control_Fbar; // For incompressible materials
   bool Is_alpha_Fbar;
 
-  bool Is_Ceps; // Normalizing constant (Eigenerosion)
-  bool Is_Gf;  // Failure energy (Eigenerosion)
+  bool Is_Ceps;  // Normalizing constant (Eigenerosion)
+  bool Is_Gf;    // Failure energy (Eigenerosion)
+  bool Is_ft;    // Tensile strengt of the material
+  bool Is_heps;  // Bandwidth of the cohesive fracture
+  bool Is_wcrit; // Critical opening displacement
 
 } Check_Material;
 
@@ -49,7 +52,7 @@ static bool Activate_Options(char *);
 /***************************************************************************/
 
 int Define_Neo_Hookean_Wriggers(Material *NH_Material, FILE *Simulation_file,
-                                     char *Material_Model, int Material_Idx) {
+                                char *Material_Model, int Material_Idx) {
 
   int STATUS = EXIT_SUCCESS;
   int Ndim = NumberDimensions;
@@ -92,6 +95,41 @@ int Define_Neo_Hookean_Wriggers(Material *NH_Material, FILE *Simulation_file,
       (*NH_Material).nu = atof(Parameter_pars[1]);
     }
     /**************************************************/
+    else if (strcmp(Parameter_pars[0], "Ceps") == 0) {
+      if ((Driver_EigenErosion == true) || (Driver_EigenSoftening == true)) {
+        ChkMat.Is_Ceps = true;
+        (*NH_Material).Ceps = atof(Parameter_pars[1]);
+      }
+    }
+    /**************************************************/
+    else if (strcmp(Parameter_pars[0], "Gf") == 0) {
+      if (Driver_EigenErosion == true) {
+        ChkMat.Is_Gf = true;
+        (*NH_Material).Gf = atof(Parameter_pars[1]);
+      }
+    }
+    /**************************************************/
+    else if (strcmp(Parameter_pars[0], "ft") == 0) {
+      if (Driver_EigenSoftening == true) {
+        ChkMat.Is_ft = true;
+        (*NH_Material).ft = atof(Parameter_pars[1]);
+      }
+    }
+    /**************************************************/
+    else if (strcmp(Parameter_pars[0], "heps") == 0) {
+      if (Driver_EigenSoftening == true) {
+        ChkMat.Is_heps = true;
+        (*NH_Material).heps = atof(Parameter_pars[1]);
+      }
+    }
+    /**************************************************/
+    else if (strcmp(Parameter_pars[0], "wcrit") == 0) {
+      if (Driver_EigenSoftening == true) {
+        ChkMat.Is_wcrit = true;
+        (*NH_Material).wcrit = atof(Parameter_pars[1]);
+      }
+    }
+    /**************************************************/
     else if (strcmp(Parameter_pars[0], "Fbar") == 0) {
       ChkMat.Is_Locking_Control_Fbar = true;
       (*NH_Material).Locking_Control_Fbar = Activate_Options(Parameter_pars[1]);
@@ -101,7 +139,8 @@ int Define_Neo_Hookean_Wriggers(Material *NH_Material, FILE *Simulation_file,
       ChkMat.Is_alpha_Fbar = true;
       (*NH_Material).alpha_Fbar = atof(Parameter_pars[1]);
 
-      if (((*NH_Material).alpha_Fbar < 0.0) || ((*NH_Material).alpha_Fbar > 1.0)) {
+      if (((*NH_Material).alpha_Fbar < 0.0) ||
+          ((*NH_Material).alpha_Fbar > 1.0)) {
         sprintf(Error_message, "The range for Fbar-alpha is [0,1]");
         standard_error(Error_message);
       }
@@ -133,22 +172,24 @@ int Define_Neo_Hookean_Wriggers(Material *NH_Material, FILE *Simulation_file,
 static Check_Material __Initialise_Check_Material() {
   Check_Material ChkMat;
 
-  ChkMat.Is_rho = false; 
+  ChkMat.Is_rho = false;
   ChkMat.Is_E = false;
-  ChkMat.Is_nu = false; 
+  ChkMat.Is_nu = false;
   ChkMat.Is_Locking_Control_Fbar = false;
   ChkMat.Is_alpha_Fbar = false;
-  ChkMat.Is_Ceps = true;
-  ChkMat.Is_Gf = true;
+  ChkMat.Is_Ceps = false;
+  ChkMat.Is_Gf = false;
+  ChkMat.Is_ft = false;
+  ChkMat.Is_heps = false;
+  ChkMat.Is_wcrit = false;
 
   return ChkMat;
 }
 
 /**********************************************************************/
 
-static int __check_material(Material * NH_Material,
-                                                Check_Material ChkMat,
-                                                int Idx) {
+static int __check_material(Material *NH_Material, Check_Material ChkMat,
+                            int Idx) {
 
   int STATUS = EXIT_SUCCESS;
 
@@ -161,14 +202,28 @@ static int __check_material(Material * NH_Material,
 
     printf("\t \t -> %s : %f \n", "" MAGENTA "[E]" RESET "", (*NH_Material).E);
 
-    printf("\t \t -> %s : %f \n", "" MAGENTA "[nu]" RESET "", (*NH_Material).nu);
+    printf("\t \t -> %s : %f \n", "" MAGENTA "[nu]" RESET "",
+           (*NH_Material).nu);
 
     if ((Driver_EigenErosion == true) || (Driver_EigenSoftening == true)) {
       printf("\t \t -> %s : %f \n", "" MAGENTA "[Ceps]" RESET "",
              (*NH_Material).Ceps);
+    }
 
+    if (Driver_EigenErosion == true) {
       printf("\t \t -> %s : %f \n", "" MAGENTA "[Gf]" RESET "",
              (*NH_Material).Gf);
+    }
+
+    if (Driver_EigenSoftening == true) {
+      printf("\t \t -> %s : %f \n", "" MAGENTA "[ft]" RESET "",
+             (*NH_Material).ft);
+
+      printf("\t \t -> %s : %f \n", "" MAGENTA "[heps]" RESET "",
+             (*NH_Material).heps);
+
+      printf("\t \t -> %s : %f \n", "" MAGENTA "[wcrit]" RESET "",
+             (*NH_Material).wcrit);
     }
 
     if (ChkMat.Is_Locking_Control_Fbar) {
@@ -204,10 +259,29 @@ static int __check_material(Material * NH_Material,
                 ? "" MAGENTA "[Ceps]" RESET " : " GREEN "true" RESET " \n"
                 : "" MAGENTA "[Ceps]" RESET " : " RED "false" RESET " \n",
             stderr);
+    }
 
+    if (Driver_EigenErosion == true) {
       fputs(ChkMat.Is_Gf
                 ? "" MAGENTA "[Gf]" RESET " : " GREEN "true" RESET " \n"
                 : "" MAGENTA "[Gf]" RESET " : " RED "false" RESET " \n",
+            stderr);
+    }
+
+    if (Driver_EigenSoftening == true) {
+      fputs(ChkMat.Is_ft
+                ? "" MAGENTA "[ft]" RESET " : " GREEN "true" RESET " \n"
+                : "" MAGENTA "[ft]" RESET " : " RED "false" RESET " \n",
+            stderr);
+
+      fputs(ChkMat.Is_heps
+                ? "" MAGENTA "[heps]" RESET " : " GREEN "true" RESET " \n"
+                : "" MAGENTA "[heps]" RESET " : " RED "false" RESET " \n",
+            stderr);
+
+      fputs(ChkMat.Is_wcrit
+                ? "" MAGENTA "[wcrit]" RESET " : " GREEN "true" RESET " \n"
+                : "" MAGENTA "[wcrit]" RESET " : " RED "false" RESET " \n",
             stderr);
     }
 
@@ -215,7 +289,6 @@ static int __check_material(Material * NH_Material,
   }
 
   return STATUS;
-
 }
 
 /***************************************************************************/
