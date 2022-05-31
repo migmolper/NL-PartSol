@@ -386,3 +386,63 @@ int stiffness_density__Constitutive__(int p, double *Stiffness_density,
 
   return STATUS;
 }
+
+/**************************************************************/
+
+int compute_damage__Constitutive__(unsigned p, Particle MPM_Mesh,
+                                   double DeltaX) {
+  int STATUS = EXIT_SUCCESS;
+
+  const double *Damage_field_n = MPM_Mesh.Phi.Damage_n;
+  double *Damage_field_n1 = MPM_Mesh.Phi.Damage_n1;
+
+  if (Driver_EigenErosion == true) {
+    unsigned MatIndx_p = MPM_Mesh.MatIdx[p];
+    Material MatProp_p = MPM_Mesh.Mat[MatIndx_p];
+    const ChainPtr Beps_p = MPM_Mesh.Beps[p];
+    const double *kirchhoff_p = MPM_Mesh.Phi.Stress.nM[p];
+    const double *Strain_Energy_field = MPM_Mesh.Phi.W;
+    const double *J_n1 = MPM_Mesh.Phi.J_n1.nV;
+    const double *Vol_0 = MPM_Mesh.Phi.Vol_0.nV;
+
+    STATUS = Eigenerosion__Constitutive__(
+        p, Damage_field_n, Damage_field_n1, Strain_Energy_field, kirchhoff_p,
+        J_n1, Vol_0, MatProp_p, Beps_p, DeltaX);
+    if (STATUS == EXIT_FAILURE) {
+      fprintf(stderr,
+              "" RED "Error in Eigenerosion__Constitutive__()" RESET " \n");
+    }
+
+  } else if (Driver_EigenSoftening == true) {
+    unsigned MatIndx_p = MPM_Mesh.MatIdx[p];
+    Material MatProp_p = MPM_Mesh.Mat[MatIndx_p];
+    const ChainPtr Beps_p = MPM_Mesh.Beps[p];
+    const double *Stress = MPM_Mesh.Phi.Stress.nV;
+    const double *StrainF_n = &(MPM_Mesh.Phi.Strain_f_n1[p]);
+    double *StrainF_n1_p = &(MPM_Mesh.Phi.Strain_f_n1[p]);
+    const double *Mass = MPM_Mesh.Phi.mass.nV;
+    const double * F_n1_p = MPM_Mesh.Phi.F_n1.nM[p];
+
+#if NumberDimensions == 2
+  double Strain_p[4] = {
+    0.0,0.0,
+    0.0,0.0};
+#else  
+  double Strain_p[9] = {
+    0.0,0.0,0.0,
+    0.0,0.0,0.0,
+    0.0,0.0,0.0};
+#endif
+    eulerian_almansi__Particles__(Strain_p,F_n1_p);
+
+    STATUS = Eigensoftening__Constitutive__(p, Damage_field_n, Damage_field_n1,
+                                            Strain_p, StrainF_n, StrainF_n1_p,
+                                            Mass, Stress, MatProp_p, Beps_p);
+    if (STATUS == EXIT_FAILURE) {
+      fprintf(stderr,
+              "" RED "Error in Eigensoftening__Constitutive__()" RESET " \n");
+    }
+  }
+
+  return STATUS;
+}

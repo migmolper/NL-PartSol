@@ -32,6 +32,7 @@
 #include "Constitutive/Plasticity/Elastoplastic-Tangent-Matrix.h"
 #include "Constitutive/Fracture/Beps.h"
 #include "Constitutive/Fracture/EigenErosion.h"
+#include "Constitutive/Fracture/EigenSoftening.h"
 // clang-format on
 
 /*******************************************************/

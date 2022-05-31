@@ -1301,19 +1301,8 @@ static void __Nodal_Internal_Forces(double *Residual, Mask ActiveNodes,
       // Get the Kirchhoff stress tensor pointer
       double *kirchhoff_p = MPM_Mesh.Phi.Stress.nM[p];
 
-      // Compute damage parameter
-      if (Driver_EigenErosion) {
-        unsigned MatIndx_p = MPM_Mesh.MatIdx[p];
-        Material MatProp_p = MPM_Mesh.Mat[MatIndx_p];
-        ChainPtr Beps_p = MPM_Mesh.Beps[p];
-
-        *STATUS = Eigenerosion__Constitutive__(
-            p, Damage_field_n, Damage_field_n1, Strain_Energy_field,
-            kirchhoff_p, J_n1, Vol_0, MatProp_p, Beps_p, DeltaX);
-        if (*STATUS == EXIT_FAILURE) {
-          fprintf(stderr,
-                  "" RED "Error in Eigenerosion__Constitutive__()" RESET " \n");
-        }
+      // Compute damage parameter (eigenerosion/eigensoftening)
+      if ((Driver_EigenErosion == true) || (Driver_EigenSoftening == true)) {
 
 #if NumberDimensions == 2
         for (unsigned i = 0; i < 5; i++) {
@@ -2016,8 +2005,8 @@ static void __assemble_tangent_stiffness(double *Tangent_Stiffness,
 #pragma omp for private(p)
     for (p = 0; p < Np; p++) {
 
-      //! Get mass and the volume of the particle in the reference configuration
-      //! and the jacobian of the deformation gradient
+      //! Get mass and the volume of the particle in the reference
+      //! configuration and the jacobian of the deformation gradient
       double m_p = MPM_Mesh.Phi.mass.nV[p];
       double V0_p = MPM_Mesh.Phi.Vol_0.nV[p];
 
@@ -2077,7 +2066,8 @@ static void __assemble_tangent_stiffness(double *Tangent_Stiffness,
           }
 
           //! Damage contribution of the particle to the residual
-          if (Driver_EigenErosion) {
+          if ((Driver_EigenErosion == true) ||
+              (Driver_EigenSoftening == true)) {
             double damage_p = MPM_Mesh.Phi.Damage_n1[p];
             for (unsigned i = 0; i < Ndim * Ndim; i++) {
               Stiffness_density_p[i] *= (1.0 - damage_p);

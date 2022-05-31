@@ -1,7 +1,19 @@
 /**
  * @file EigenErosion.c
  * @author Miguel Molinos (@migmolper)
- * @brief 
+ * @brief A.Pandolfi & M.Ortiz.
+ * An eigenerosion approach to brittle fracture. 
+ * International Journal for Numerical Methods in Enginnering. 92:694-714, 2012.
+ * NOTE : Here the notation is the same as in the paper.
+ * Inputs :
+ * -> Damage_n : Matrix with the value of the damage parameter.
+ * -> Mass : Matrix with the mass of the GP.
+ * -> W : Incremental free-energy density per unit mass. 
+ * -> Ceps : Matrix with the normalizing parameter.
+ * -> Gf : Failure value for the energy-release rate.
+ * -> Beps : Table with the list of neighbours per GP.
+ * -> Neps : Number of neighbours per GP
+ * -> Num_GP : Number of GP of the mesh.
  * @version 0.1
  * @date 2022-05-25
  * 

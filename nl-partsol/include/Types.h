@@ -246,12 +246,12 @@ typedef struct {
   Matrix Fbar;  /** @brief Locking-free deformation gradient (F-bar) */
   
   Matrix Jbar; /** @brief Jacobian of the F-bar */
-  
-  Matrix Strain_If; /** @brief Strain during crack */
-  
+    
   double * W; /** @brief Deformation Energy */
 
   double * Damage_n, * Damage_n1; /** @brief Damage parameter (Fracture) */
+
+  double * Strain_f_n, *Strain_f_n1; /** @brief Strain during crack (Fracture) */
 
   double * EPS_n, * EPS_n1; /** @brief Equivalent plastic strain. */
 
