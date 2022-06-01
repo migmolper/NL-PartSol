@@ -201,6 +201,9 @@ int main(int argc, char *argv[]) {
         fprintf(stderr,
                 "" RED " Error in " RESET "" BOLDRED
                 "Generate_One_Phase_Analysis__InOutFun__() " RESET " \n");
+        printf("Computation " RED "abnormally" RESET " finished at : %s \n",
+               __TIME__);
+        puts("Exiting the program...");
         return EXIT_FAILURE;
       }
 
@@ -249,6 +252,11 @@ int main(int argc, char *argv[]) {
         fprintf(stderr,
                 "" RED " Error in " RESET "" BOLDRED
                 "Generate_One_Phase_Analysis__InOutFun__() " RESET " \n");
+        puts("*************************************************");
+        fprintf(stderr,
+                "Computation " RED "abnormally" RESET " finished at : %s \n",
+                __TIME__);
+        fprintf(stderr, "Exiting the program...\n");
         return EXIT_FAILURE;
       }
 

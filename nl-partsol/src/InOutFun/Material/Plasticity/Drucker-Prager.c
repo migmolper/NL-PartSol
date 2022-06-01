@@ -465,7 +465,7 @@ static void __print_miss_variables(Check_Material ChkMat) {
     }
 
     if (ChkMat.Is_wcrit == false) {
-      fputs("\t \t ->" MAGENTA "[wcrit]" RESET " : " RED "false" RESET " \n",
+      fputs("\t \t -> " MAGENTA "[wcrit]" RESET " : " RED "false" RESET " \n",
             stderr);
     }
   }
