@@ -230,19 +230,19 @@ void print_step(int Time, int NumTimeStep, double DeltaTimeStep);
 
 /*****************************************************************/
 
-/*! 
-
-  \fn void print_convergence_stats(int TimeStep,int Iter, double Error_total, double Error_relative)
- 
-  \brief Print number of iterations required.
- 
-  \param Time : Current step of the simulation 
-  \param Iter : Number of iterations required
-  \param Error_total 
-  \param Error_relative
-
+/**
+ * @brief 
+ * 
+ * @param Time Current step of the simulation 
+ * @param NumTimeStep Maximum number of time steps
+ * @param Iter Number of iterations required
+ * @param MaxIter Maximum number of iterations required
+ * @param Error0 Initial error before the newton-raphson
+ * @param Error_total Total error after convergence
+ * @param Error_relative Relative error after convergence
  */
-void print_convergence_stats(int, int, int, double, double, double);
+void print_convergence_stats(int Time, int NumTimeStep, int Iter, int MaxIter, double Error0,
+                             double Error_total, double Error_relative);
 
 /*****************************************************************/
 
@@ -331,16 +331,17 @@ Boundaries Read_upw_Neumann_Boundary_Conditions__InOutFun__(char *,int,int,int);
 Particle Generate_Gauss_Point_Analysis__InOutFun__(char *);
 /*****************************************************************/
 
-/*!
-  \fn Particle Generate_Soil_Water_Coupling_Analysis__InOutFun__(char * Name_File, Mesh FEM_Mesh, Time_Int_Params Parameters_Solver);
- 
-  \brief Function that generate a set of material points for soil-water coupling applications
-
-  \param File: Name of the file with the instructions
-  \param Nodes : Set of background nodes
-  \param Parameters_Solver
-*/
-Particle Generate_Soil_Water_Coupling_Analysis__InOutFun__(char *, Mesh, Time_Int_Params);
+/**
+ * @brief Function that generate a set of material points for soil-water coupling applications
+ * 
+ * @param Name_File 
+ * @param FEM_Mesh 
+ * @param Parameters_Solver 
+ * @param STATUS 
+ * @return Particle 
+ */
+Particle Generate_Soil_Water_Coupling_Analysis__InOutFun__(
+    char *Name_File, Mesh FEM_Mesh, Time_Int_Params Parameters_Solver, int * STATUS);
 /*****************************************************************/
 
 /*!
@@ -355,16 +356,28 @@ Time_Int_Params Solver_selector__InOutFun__(char *);
 
 /*****************************************************************/
 
-/*!
-  \fn Material * Read_Materials__InOutFun__(char * SimulationFile, int NumberMaterials);
-*/
-Material * Read_Materials__InOutFun__(char *, int);
+/**
+ * @brief 
+ * 
+ * @param List_Materials 
+ * @param SimulationFile 
+ * @return int 
+ */
+int Read_Materials__InOutFun__(Material * List_Materials, char *SimulationFile);
 /*****************************************************************/
 
-/*!
-  \fn Particle Generate_One_Phase_Analysis__InOutFun__(char * Name_File, Mesh FEM_Mesh, Time_Int_Params Parameters_Solver)
-*/
-Particle Generate_One_Phase_Analysis__InOutFun__(char *, Mesh,Time_Int_Params);
+
+/**
+ * @brief 
+ * 
+ * @param MPM_Mesh 
+ * @param Name_File 
+ * @param FEM_Mesh 
+ * @param Parameters_Solver 
+ * @return int 
+ */
+int Generate_One_Phase_Analysis__InOutFun__(Particle * MPM_Mesh, char *Name_File, Mesh FEM_Mesh,
+                                        Time_Int_Params Parameters_Solver);
 /*****************************************************************/
 
 /*!

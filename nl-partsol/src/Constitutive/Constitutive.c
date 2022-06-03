@@ -51,11 +51,9 @@ int Stress_integration__Constitutive__(int p, Particle MPM_Mesh,
     STATUS =
         compute_Kirchhoff_Stress_Hencky__Constitutive__(IO_State, MatProp_p);
     if (STATUS == EXIT_FAILURE) {
-      fprintf(
-          stderr,
-          "" RED
-          "Error in compute_Kirchhoff_Stress_Hencky__Constitutive__(,)" RESET
-          " \n");
+      fprintf(stderr,
+              "" RED " Error in " RESET "" BOLDRED
+              "compute_Kirchhoff_Stress_Hencky__Constitutive__() " RESET " \n");
       return EXIT_FAILURE;
     }
 
@@ -77,8 +75,8 @@ int Stress_integration__Constitutive__(int p, Particle MPM_Mesh,
                                                                   MatProp_p);
     if (STATUS == EXIT_FAILURE) {
       fprintf(stderr,
-              "" RED "Error in "
-              "compute_Kirchhoff_Stress_Neo_Hookean__Constitutive__(,)" RESET
+              "" RED " Error in " RESET "" BOLDRED
+              "compute_Kirchhoff_Stress_Neo_Hookean__Constitutive__() " RESET
               " \n");
       return EXIT_FAILURE;
     }
@@ -103,8 +101,8 @@ int Stress_integration__Constitutive__(int p, Particle MPM_Mesh,
     if (STATUS == EXIT_FAILURE) {
       fprintf(
           stderr,
-          "" RED "Error in "
-          "compute_Kirchhoff_Stress_Newtonian_Fluid__Constitutive__(,)" RESET
+          "" RED " Error in " RESET "" BOLDRED
+          "compute_Kirchhoff_Stress_Newtonian_Fluid__Constitutive__() " RESET
           " \n");
       return EXIT_FAILURE;
     }
@@ -135,11 +133,10 @@ int Stress_integration__Constitutive__(int p, Particle MPM_Mesh,
     STATUS =
         compute_Kirchhoff_Stress_Von_Mises__Constitutive__(IO_State, MatProp_p);
     if (STATUS == EXIT_FAILURE) {
-      fprintf(
-          stderr,
-          "" RED
-          "Error in compute_Kirchhoff_Stress_Von_Mises__Constitutive__(,)" RESET
-          " \n");
+      fprintf(stderr,
+              "" RED " Error in " RESET "" BOLDRED
+              "compute_Kirchhoff_Stress_Von_Mises__Constitutive__() " RESET
+              " \n");
       return EXIT_FAILURE;
     }
 
@@ -174,8 +171,8 @@ int Stress_integration__Constitutive__(int p, Particle MPM_Mesh,
                                                                      MatProp_p);
     if (STATUS == EXIT_FAILURE) {
       fprintf(stderr,
-              "" RED "Error in "
-              "compute_Kirchhoff_Stress_Drucker_Prager__Constitutive__(,)" RESET
+              "" RED " Error in " RESET "" BOLDRED
+              "compute_Kirchhoff_Stress_Drucker_Prager__Constitutive__() " RESET
               " \n");
       return EXIT_FAILURE;
     }
@@ -209,8 +206,8 @@ int Stress_integration__Constitutive__(int p, Particle MPM_Mesh,
                                                                      MatProp_p);
     if (STATUS == EXIT_FAILURE) {
       fprintf(stderr,
-              "" RED "Error in "
-              "compute_Kirchhoff_Stress_Matsuoka_Nakai__Constitutive__(,)" RESET
+              "" RED " Error in " RESET "" BOLDRED
+              "compute_Kirchhoff_Stress_Matsuoka_Nakai__Constitutive__() " RESET
               " \n");
       return EXIT_FAILURE;
     }
@@ -244,8 +241,8 @@ int Stress_integration__Constitutive__(int p, Particle MPM_Mesh,
                                                                   MatProp_p);
     if (STATUS == EXIT_FAILURE) {
       fprintf(stderr,
-              "" RED "Error in "
-              "compute_Kirchhoff_Stress_Lade_Duncan__Constitutive__(,)" RESET
+              "" RED " Error in " RESET "" BOLDRED
+              "compute_Kirchhoff_Stress_Lade_Duncan__Constitutive__() " RESET
               " \n");
       return EXIT_FAILURE;
     }
@@ -280,9 +277,8 @@ int stiffness_density__Constitutive__(int p, double *Stiffness_density,
         Stiffness_density, dN_alpha_n1, dN_beta_n1, dN_alpha_n, dN_beta_n,
         IO_State, MatProp_p);
     if (STATUS == EXIT_FAILURE) {
-      fprintf(stderr,
-              "" RED "Error in compute_stiffness_density_Neo_Hookean" RESET
-              "\n");
+      fprintf(stderr, "" RED " Error in " RESET "" BOLDRED
+                      "compute_stiffness_density_Neo_Hookean() " RESET " \n");
       return EXIT_FAILURE;
     }
   } else if (strcmp(MatProp_p.Type, "Hencky") == 0) {
@@ -293,9 +289,9 @@ int stiffness_density__Constitutive__(int p, double *Stiffness_density,
         Stiffness_density, dN_alpha_n1, dN_beta_n1, IO_State, MatProp_p);
     if (STATUS == EXIT_FAILURE) {
       fprintf(stderr,
-              "" RED
-              "Error in compute_stiffness_density_Hencky__Constitutive__" RESET
-              "\n");
+              "" RED " Error in " RESET "" BOLDRED
+              "compute_stiffness_density_Hencky__Constitutive__() " RESET
+              " \n");
       return EXIT_FAILURE;
     }
 
@@ -309,10 +305,11 @@ int stiffness_density__Constitutive__(int p, double *Stiffness_density,
         Stiffness_density, dN_alpha_n1, dN_beta_n1, dN_alpha_n, dN_beta_n,
         IO_State, MatProp_p);
     if (STATUS == EXIT_FAILURE) {
-      fprintf(stderr,
-              "" RED "Error in "
-              "compute_stiffness_density_Newtonian_Fluid__Constitutive__" RESET
-              "\n");
+      fprintf(
+          stderr,
+          "" RED " Error in " RESET "" BOLDRED
+          "compute_stiffness_density_Newtonian_Fluid__Constitutive__() " RESET
+          " \n");
       return EXIT_FAILURE;
     }
   } else if (strcmp(MatProp_p.Type, "Von-Mises") == 0) {
@@ -325,9 +322,8 @@ int stiffness_density__Constitutive__(int p, double *Stiffness_density,
         Stiffness_density, dN_alpha_n1, dN_beta_n1, IO_State);
     if (STATUS == EXIT_FAILURE) {
       fprintf(stderr,
-              "" RED
-              "Error in compute_stiffness_elastoplastic__Constitutive__" RESET
-              "\n");
+              "" RED " Error in " RESET "" BOLDRED
+              "compute_stiffness_elastoplastic__Constitutive__() " RESET " \n");
       return EXIT_FAILURE;
     }
 
@@ -341,9 +337,8 @@ int stiffness_density__Constitutive__(int p, double *Stiffness_density,
         Stiffness_density, dN_alpha_n1, dN_beta_n1, IO_State);
     if (STATUS == EXIT_FAILURE) {
       fprintf(stderr,
-              "" RED
-              "Error in compute_stiffness_elastoplastic__Constitutive__" RESET
-              "\n");
+              "" RED " Error in " RESET "" BOLDRED
+              "compute_stiffness_elastoplastic__Constitutive__() " RESET " \n");
       return EXIT_FAILURE;
     }
 
@@ -357,9 +352,8 @@ int stiffness_density__Constitutive__(int p, double *Stiffness_density,
         Stiffness_density, dN_alpha_n1, dN_beta_n1, IO_State);
     if (STATUS == EXIT_FAILURE) {
       fprintf(stderr,
-              "" RED
-              "Error in compute_stiffness_elastoplastic__Constitutive__" RESET
-              "\n");
+              "" RED " Error in " RESET "" BOLDRED
+              "compute_stiffness_elastoplastic__Constitutive__() " RESET " \n");
       return EXIT_FAILURE;
     }
   } else if (strcmp(MatProp_p.Type, "Lade-Duncan") == 0) {
@@ -372,9 +366,8 @@ int stiffness_density__Constitutive__(int p, double *Stiffness_density,
         Stiffness_density, dN_alpha_n1, dN_beta_n1, IO_State);
     if (STATUS == EXIT_FAILURE) {
       fprintf(stderr,
-              "" RED
-              "Error in compute_stiffness_elastoplastic__Constitutive__" RESET
-              "\n");
+              "" RED " Error in " RESET "" BOLDRED
+              "compute_stiffness_elastoplastic__Constitutive__() " RESET " \n");
       return EXIT_FAILURE;
     }
   } else {
@@ -382,6 +375,61 @@ int stiffness_density__Constitutive__(int p, double *Stiffness_density,
             "" RED "The material %s has not been yet implemnented" RESET "\n",
             MatProp_p.Type);
     return EXIT_FAILURE;
+  }
+
+  return STATUS;
+}
+
+/**************************************************************/
+
+int compute_damage__Constitutive__(unsigned p, Particle MPM_Mesh,
+                                   double DeltaX) {
+  int STATUS = EXIT_SUCCESS;
+
+  const double *Damage_field_n = MPM_Mesh.Phi.Damage_n;
+  double *Damage_field_n1 = MPM_Mesh.Phi.Damage_n1;
+
+  if (Driver_EigenErosion == true) {
+    unsigned MatIndx_p = MPM_Mesh.MatIdx[p];
+    Material MatProp_p = MPM_Mesh.Mat[MatIndx_p];
+    const ChainPtr Beps_p = MPM_Mesh.Beps[p];
+    const double *kirchhoff_p = MPM_Mesh.Phi.Stress.nM[p];
+    const double *Strain_Energy_field = MPM_Mesh.Phi.W;
+    const double *J_n1 = MPM_Mesh.Phi.J_n1.nV;
+    const double *Vol_0 = MPM_Mesh.Phi.Vol_0.nV;
+
+    STATUS = Eigenerosion__Constitutive__(
+        p, Damage_field_n, Damage_field_n1, Strain_Energy_field, kirchhoff_p,
+        J_n1, Vol_0, MatProp_p, Beps_p, DeltaX);
+    if (STATUS == EXIT_FAILURE) {
+      fprintf(stderr, "" RED " Error in " RESET "" BOLDRED
+                      "Eigenerosion__Constitutive__() " RESET " \n");
+    }
+
+  } else if (Driver_EigenSoftening == true) {
+    unsigned MatIndx_p = MPM_Mesh.MatIdx[p];
+    Material MatProp_p = MPM_Mesh.Mat[MatIndx_p];
+    const ChainPtr Beps_p = MPM_Mesh.Beps[p];
+    const double *Stress = MPM_Mesh.Phi.Stress.nV;
+    const double *StrainF_n = &(MPM_Mesh.Phi.Strain_f_n1[p]);
+    double *StrainF_n1_p = &(MPM_Mesh.Phi.Strain_f_n1[p]);
+    const double *Mass = MPM_Mesh.Phi.mass.nV;
+    const double *F_n1_p = MPM_Mesh.Phi.F_n1.nM[p];
+
+#if NumberDimensions == 2
+    double Strain_p[4] = {0.0, 0.0, 0.0, 0.0};
+#else
+    double Strain_p[9] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+#endif
+    eulerian_almansi__Particles__(Strain_p, F_n1_p);
+
+    STATUS = Eigensoftening__Constitutive__(p, Damage_field_n, Damage_field_n1,
+                                            Strain_p, StrainF_n, StrainF_n1_p,
+                                            Mass, Stress, MatProp_p, Beps_p);
+    if (STATUS == EXIT_FAILURE) {
+      fprintf(stderr, "" RED " Error in " RESET "" BOLDRED
+                      "Eigensoftening__Constitutive__() " RESET " \n");
+    }
   }
 
   return STATUS;

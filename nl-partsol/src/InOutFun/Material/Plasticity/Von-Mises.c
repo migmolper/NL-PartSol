@@ -38,8 +38,11 @@ typedef struct {
   bool Is_K_0;
   bool Is_K_inf;
   bool Is_delta;
-  bool Is_Ceps; // Normalizing constant (Eigenerosion)
-  bool Is_Gf;   // Failure energy (Eigenerosion)
+  bool Is_Ceps;  // Normalizing constant (Eigenerosion)
+  bool Is_Gf;    // Failure energy (Eigenerosion)
+  bool Is_ft;    // Tensile strengt of the material
+  bool Is_heps;  // Bandwidth of the cohesive fracture
+  bool Is_wcrit; // Critical opening displacement
 
 } Check_Material;
 
@@ -196,9 +199,30 @@ int Define_Von_Mises(Material *VM_Material, FILE *Simulation_file,
     }
     /**************************************************/
     else if (strcmp(Parameter_pars[0], "Gf") == 0) {
-      if ((Driver_EigenErosion == true) || (Driver_EigenSoftening == true)) {
+      if (Driver_EigenErosion == true) {
         ChkMat.Is_Gf = true;
         (*VM_Material).Gf = atof(Parameter_pars[1]);
+      }
+    }
+    /**************************************************/
+    else if (strcmp(Parameter_pars[0], "ft") == 0) {
+      if (Driver_EigenSoftening == true) {
+        ChkMat.Is_ft = true;
+        (*VM_Material).ft = atof(Parameter_pars[1]);
+      }
+    }
+    /**************************************************/
+    else if (strcmp(Parameter_pars[0], "heps") == 0) {
+      if (Driver_EigenSoftening == true) {
+        ChkMat.Is_heps = true;
+        (*VM_Material).heps = atof(Parameter_pars[1]);
+      }
+    }
+    /**************************************************/
+    else if (strcmp(Parameter_pars[0], "wcrit") == 0) {
+      if (Driver_EigenSoftening == true) {
+        ChkMat.Is_wcrit = true;
+        (*VM_Material).wcrit = atof(Parameter_pars[1]);
       }
     }
     /**************************************************/
@@ -244,6 +268,9 @@ static Check_Material __Initialise_Check_Material() {
   ChkMat.Is_delta = false;
   ChkMat.Is_Ceps = false;
   ChkMat.Is_Gf = false;
+  ChkMat.Is_ft = false;
+  ChkMat.Is_heps = false;
+  ChkMat.Is_wcrit = false;
 
   return ChkMat;
 }
@@ -289,9 +316,22 @@ static int __check_material(Material *VM_Material, Check_Material ChkMat,
     if ((Driver_EigenErosion == true) || (Driver_EigenSoftening == true)) {
       printf("\t \t -> %s : %f \n", "" MAGENTA "[Ceps]" RESET "",
              (*VM_Material).Ceps);
+    }
 
+    if (Driver_EigenErosion == true) {
       printf("\t \t -> %s : %f \n", "" MAGENTA "[Gf]" RESET "",
              (*VM_Material).Gf);
+    }
+
+    if (Driver_EigenSoftening == true) {
+      printf("\t \t -> %s : %f \n", "" MAGENTA "[ft]" RESET "",
+             (*VM_Material).ft);
+
+      printf("\t \t -> %s : %f \n", "" MAGENTA "[heps]" RESET "",
+             (*VM_Material).heps);
+
+      printf("\t \t -> %s : %f \n", "" MAGENTA "[wcrit]" RESET "",
+             (*VM_Material).wcrit);
     }
 
   } else {
@@ -348,10 +388,29 @@ static int __check_material(Material *VM_Material, Check_Material ChkMat,
                 ? "" MAGENTA "[Ceps]" RESET " : " GREEN "true" RESET " \n"
                 : "" MAGENTA "[Ceps]" RESET " : " RED "false" RESET " \n",
             stderr);
+    }
 
+    if (Driver_EigenErosion == true) {
       fputs(ChkMat.Is_Gf
                 ? "" MAGENTA "[Gf]" RESET " : " GREEN "true" RESET " \n"
                 : "" MAGENTA "[Gf]" RESET " : " RED "false" RESET " \n",
+            stderr);
+    }
+
+    if (Driver_EigenSoftening == true) {
+      fputs(ChkMat.Is_ft
+                ? "" MAGENTA "[ft]" RESET " : " GREEN "true" RESET " \n"
+                : "" MAGENTA "[ft]" RESET " : " RED "false" RESET " \n",
+            stderr);
+
+      fputs(ChkMat.Is_heps
+                ? "" MAGENTA "[heps]" RESET " : " GREEN "true" RESET " \n"
+                : "" MAGENTA "[heps]" RESET " : " RED "false" RESET " \n",
+            stderr);
+
+      fputs(ChkMat.Is_wcrit
+                ? "" MAGENTA "[wcrit]" RESET " : " GREEN "true" RESET " \n"
+                : "" MAGENTA "[wcrit]" RESET " : " RED "false" RESET " \n",
             stderr);
     }
 

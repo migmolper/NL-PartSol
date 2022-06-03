@@ -385,6 +385,52 @@ void left_Cauchy_Green__Particles__(double * b, const double * F) {
 
 /*******************************************************/
 
+void eulerian_almansi__Particles__(double * e, const double * F) {
+
+  unsigned Ndim = NumberDimensions;
+
+#if NumberDimensions == 2
+  double b[4] = {
+    0.0,0.0,
+    0.0,0.0};
+  double b_m1[4] = {
+    0.0,0.0,
+    0.0,0.0};
+  double Identity[4] = {
+    1.0,0.0,
+    0.0,1.0};
+#else  
+  double b[9] = {
+    0.0,0.0,0.0,
+    0.0,0.0,0.0,
+    0.0,0.0,0.0};
+  double b_m1[9] = {
+    0.0,0.0,0.0,
+    0.0,0.0,0.0,
+    0.0,0.0,0.0};
+  double Identity[9] = {
+    1.0,0.0,0.0,
+    0.0,1.0,0.0,
+    0.0,0.0,1.0};
+#endif
+
+  left_Cauchy_Green__Particles__(b, F);
+
+  compute_inverse__TensorLib__(b_m1,b);
+
+  for (unsigned i = 0; i < Ndim; i++)
+  {
+    for (unsigned j = 0; j < Ndim; j++)
+    {
+      e[i*Ndim + j] = 0.5*(Identity[i*Ndim + j] - b_m1[i*Ndim + j]);
+    }
+    
+  }
+  
+}
+
+/*******************************************************/
+
 Tensor strain_Green_Lagrange__Particles__(Tensor C) {
   /* Define output */
   Tensor E = alloc__TensorLib__(2);

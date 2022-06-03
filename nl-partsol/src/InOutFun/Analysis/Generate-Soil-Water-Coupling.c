@@ -70,10 +70,11 @@ static FILE *Open_and_Check_simulation_file(char *);
 /*********************************************************************/
 
 Particle Generate_Soil_Water_Coupling_Analysis__InOutFun__(
-    char *Name_File, Mesh FEM_Mesh, Time_Int_Params Parameters_Solver)
+    char *Name_File, Mesh FEM_Mesh, Time_Int_Params Parameters_Solver, int * STATUS)
 /*
  */
 {
+  *STATUS = EXIT_SUCCESS;      
   int Ndim = NumberDimensions;
   int NumParticles;
 
@@ -103,8 +104,19 @@ Particle Generate_Soil_Water_Coupling_Analysis__InOutFun__(
   printf(" \t %s \n", "* Read materials properties :");
   if (Sim_Params.Is_GramsMaterials) {
     MPM_Mesh.NumberMaterials = Sim_Params.Counter_Materials;
-    MPM_Mesh.Mat =
-        Read_Materials__InOutFun__(Name_File, MPM_Mesh.NumberMaterials);
+      MPM_Mesh.Mat = (Material *)malloc(Sim_Params.Counter_Materials * sizeof(Material));
+  if (MPM_Mesh.Mat == NULL) {
+      fprintf(stderr, "" RED " Error in " RESET "" BOLDRED
+                    "malloc() " RESET " \n");
+  }
+
+    *STATUS = Read_Materials__InOutFun__(MPM_Mesh.Mat, Name_File);
+    if(*STATUS == EXIT_FAILURE)
+    {
+      fprintf(stderr, "" RED " Error in " RESET "" BOLDRED
+                    "Read_Materials__InOutFun__() " RESET " \n");
+    }
+
   } else {
     sprintf(Error_message, "%s", "No materials were defined");
     standard_error();

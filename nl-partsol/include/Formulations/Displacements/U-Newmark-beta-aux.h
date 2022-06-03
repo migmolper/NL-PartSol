@@ -1,8 +1,8 @@
 // Global libs
 #include "Macros.h"
-#include "Types.h"
 #include "Matlib.h"
 #include "Particles.h"
+#include "Types.h"
 
 typedef struct {
 
@@ -170,8 +170,8 @@ static int __constitutive_update(Particle MPM_Mesh, Mesh FEM_Mesh);
 
 /**
  * @brief Function used to compute the equilibrium residual
- * 
- * @param [in] U_n Nodal kinetics information from the step n 
+ *
+ * @param [in] U_n Nodal kinetics information from the step n
  * @param [in] D_U Increment of nodal kinetics
  * @param [in] Lumped_Mass Effective mass matrix (vector)
  * @param [in] ActiveNodes List of nodes which takes place in the computation
@@ -182,7 +182,7 @@ static int __constitutive_update(Particle MPM_Mesh, Mesh FEM_Mesh);
  * @param [in] Is_compute_Residual The function computes the residual
  * @param [in] Is_compute_Reactions The function computes the reaction
  * @param [out] STATUS Returns failure or success
- * @return Vec/double* 
+ * @return Vec/double*
  */
 #ifdef USE_PETSC
 static Vec __assemble_residual(Nodal_Field U_n, Nodal_Field D_U,
@@ -223,17 +223,19 @@ static void __get_assembling_locations_reactions(int *Mask_active_dofs_A,
                                                  int Mask_node_A);
 /**************************************************************/
 
-/*!
-  \brief Do the assembly process in the global residual/reaction vector. \n
-  Replaces a PETSc function with the same name in case PETSc is not defined.
-
-  \param[in,out] Residual Global residual/reaction vector
-  \param[in] Local_Value Local contribution
-  \param[in] Mask_active_dofs_A Global dofs positions for node A
-*/
 #ifndef USE_PETSC
-static void VecSetValues(double *Residual, const double *Local_Value,
-                         const int *Mask_active_dofs_A);
+/**
+ * @brief Do the assembly process in the global residual/reaction vector. \n
+ * Replaces a PETSc function with the same name in case PETSc is not defined.
+ *
+ * @param Residual Global residual/reaction vector
+ * @param Order Size of the input vector
+ * @param Mask_active_dofs_A Global dofs positions for node A
+ * @param Local_Value Local contribution
+ */
+static void VecSetValues(double *Residual, unsigned Order,
+                         const int *Mask_active_dofs_A,
+                         const double *Local_Value);
 #endif
 /**************************************************************/
 
@@ -298,60 +300,33 @@ static void __local_traction_force(double *LocalTractionForce_Ap,
                                    double A0_p);
 /**************************************************************/
 
-
 /**
- * @brief Function used to compute the contribution of the \n 
- * body (distance) forces to the residual
- * 
+ * @brief Function used to compute the contribution of the \n
+ * inertial forces to the residual (a - b)
+ *
  * @param[in,out] Residual Residual vector
+ * @param[in] Mass Mass matrix
+ * @param[in] U_n Nodal kinetics information from the step n
+ * @param[in] D_U Increment of nodal kinetics
  * @param[in] ActiveNodes List of nodes which takes place in the computation
  * @param[in] ActiveDOFs List of dofs which takes place in the computation
- * @param[in] MPM_Mesh Information of the particles
- * @param[in] FEM_Mesh Information of the background nodes 
- * @param TimeStep 
+ * @param[in] Params Time integration parameters
  * @param[in] Is_compute_Residual The function computes the residual
  * @param[in] Is_compute_Reactions The function computes the reaction
  */
 #ifdef USE_PETSC
-static int __Nodal_Body_Forces(Vec Residual, Mask ActiveNodes, Mask ActiveDOFs,
-                                Particle MPM_Mesh, Mesh FEM_Mesh,
-                                bool Is_compute_Residual,
-                                bool Is_compute_Reactions);
-#else
-static int __Nodal_Body_Forces(double *Residual, Mask ActiveNodes,
-                                Mask ActiveDOFs, Particle MPM_Mesh,
-                                Mesh FEM_Mesh, 
-                                bool Is_compute_Residual,
-                                bool Is_compute_Reactions);
-#endif
-/**************************************************************/
-
-static void __local_body_force(double *LocalBodyForce_Ap, const double *b,
-                               double N_n1_pA, double m_p);
-
-/**************************************************************/
-
-/*!
-  \brief Function used to compute the contribution of the \n
-  inertial forces to the residual
-
-  \param[in,out] Residual Residual vector
-  \param[in] Mass Mass matrix
-  \param[in] U_n Nodal kinetics information from the step n
-  \param[in] D_U Increment of nodal kinetics
-  \param[in] ActiveNodes List of nodes which takes place in the computation
-  \param[in] ActiveDOFs List of dofs which takes place in the computation
-  \param[in] Params Time integration parameters
-*/
-#ifdef USE_PETSC
 static void __Nodal_Inertial_Forces(Vec Residual, Vec Mass, Nodal_Field U_n,
                                     Nodal_Field D_U, Mask ActiveNodes,
-                                    Mask ActiveDOFs, Newmark_parameters Params);
+                                    Mask ActiveDOFs, Newmark_parameters Params,
+                                    bool Is_compute_Residual,
+                                    bool Is_compute_Reactions);
 #else
 static void __Nodal_Inertial_Forces(double *Residual, double *Mass,
                                     Nodal_Field U_n, Nodal_Field D_U,
                                     Mask ActiveNodes, Mask ActiveDOFs,
-                                    Newmark_parameters Params);
+                                    Newmark_parameters Params,
+                                    bool Is_compute_Residual,
+                                    bool Is_compute_Reactions);
 #endif
 /**************************************************************/
 

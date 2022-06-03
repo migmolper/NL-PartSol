@@ -1,174 +1,173 @@
 #ifndef _TYPES_H_
 #define _TYPES_H_
 
-
-/*! \file Types.h
- *  \brief File with the definitions of the user-defined variables.    
+/** @brief \file Types.h
+ *  \brief File with the definitions of the user-defined variables.
  */
 
 /*******************************************************/
 
-/*! \struct Matrix
+/** @brief \struct Matrix
  * This structure is devoted to store in matricial
  * the allocated memory
  */
 typedef struct {
-  
-  /*!
-   * Number of rows 
+
+  /** @brief
+   * Number of rows
    */
   int N_rows;
 
-  /*! 
-   * Number of columns 
+  /** @brief
+   * Number of columns
    */
   int N_cols;
 
-  /*! 
-   * Value Is an scalar 
+  /** @brief
+   * Value Is an scalar
    */
   double n;
-  
-  /*!
-   * Pointer for a vector 
-   */
-  double * nV;
 
-  /*!
+  /** @brief
+   * Pointer for a vector
+   */
+  double *nV;
+
+  /** @brief
    * Table of pointers for a matrix
    */
-  double ** nM;
+  double **nM;
 
-  /*!
-   * Aditional information 
+  /** @brief
+   * Aditional information
    */
-  char Info [100]; 
+  char Info[100];
 
 } Matrix;
 
 /*******************************************************/
 
-/*! \struct Chain
+/** @brief \struct Chain
  * This structure is devoted to define
  * each component of a set
  */
 typedef struct Chain {
-  
-  /*! 
-   * Index of a node in the set 
+
+  /** @brief
+   * Index of a node in the set
    */
   int Idx;
 
-  /*!
+  /** @brief
    * Pointer to the next node in the set
    */
-  struct Chain * next;
+  struct Chain *next;
 
-  /*!
-    
-  */
-  
-} Chain; 
+} Chain;
 
-/*! \struct ChainPtr
- * Pointer to the header of the set
+/** @brief Pointer to the header of the set
  */
-typedef Chain * ChainPtr;
+typedef Chain *ChainPtr;
 
 /*******************************************************/
 
-/*! \struct Table
+/** @brief Table
  * This structure is devoted to store a table with
  * values of the type double.
  */
-typedef struct{
+typedef struct {
 
-  /*!
-   * Number of rows 
+  /** @brief
+   * Number of rows
    */
   int N_rows;
 
-  /*!
-   * Number of columns 
+  /** @brief
+   * Number of columns
    */
   int N_cols;
 
-  /*!
+  /** @brief
    * Scalar
    */
   int n;
 
-  /*!
-   * 1D list 
+  /** @brief
+   * 1D list
    */
-  int * nV;
+  int *nV;
 
-  /*!
-   * 2D list 
+  /** @brief
+   * 2D list
    */
-  int ** nM;
+  int **nM;
 
-  /*!
-   * Aditional information 
+  /** @brief
+   * Aditional information
    */
-  char Info [100];
-  
+  char Info[100];
+
 } Table;
 
 /*******************************************************/
 
-/*! \struct Curve
+/** @brief \struct Curve
  *  Curve definition
  */
-typedef struct{
+typedef struct {
 
-  /*! Number of items in the curve */
-  int Num; 
-  /*! Values for each time */
-  double * Fx; 
-  /*! Aditional information */
-  char Info [100];
-  
+  /** @brief
+   * Number of items in the curve */
+  int Num;
+
+  /** @brief
+   * Values for each time */
+  double *Fx;
+
+  /** @brief
+   * Aditional information */
+  char Info[100];
+
 } Curve;
 
 /*******************************************************/
 
-/*! \struct Tensor
+/** @brief \struct Tensor
  * This structure is devoted
  * to help the code to deal with high level functions
  * for the B-free approach
  */
-typedef struct{
-  
-  /*!
-   * Order of the tensor 
+typedef struct {
+
+  /** @brief
+   * Order of the tensor
    */
   int Order;
 
-  /*! 
-   * First order tensor 
+  /** @brief
+   * First order tensor
    */
   double *n;
 
-  /*! 
-   * Second order tensor 
+  /** @brief
+   * Second order tensor
    */
   double *N[NumberDimensions];
 
-  /*! 
-   * Aditional information 
+  /** @brief
+   * Aditional information
    */
-  char Info [100];
-  
+  char Info[100];
+
 } Tensor;
 
 /*******************************************************/
 
-/*! \struct EigenTensor
-  Structure for the output of a function wich compute eigenvalues 
+/** @brief \struct EigenTensor
+  Structure for the output of a function wich compute eigenvalues
     and eigenvectors
 */
-typedef struct{
+typedef struct {
 
   Tensor Value;
 
@@ -178,61 +177,67 @@ typedef struct{
 
 /*******************************************************/
 
-
-/*! \struct Fields
- * Variable devoted to store in the memory the physicl 
+/** @brief \struct Fields
+ * Variable devoted to store in the memory the physicl
  * information of each particle
  */
 typedef struct {
 
+  /**
+   * @brief Reference volume
+   *
+   */
+  Matrix Vol_0;
 
-  Matrix Vol_0; /** @brief Reference volume */
-
-  Matrix Area_0; /** @brief Reference area */
+  /**
+   * @brief Reference area
+   *
+   */
+  Matrix Area_0;
 
   Matrix rho; /** @brief Density field */
 
   Matrix rho_s, rho_f; /** @brief Intrinsic density field (solid/fluid) */
 
   Matrix phi_s, phi_f; /** @brief Volume fraction (solid/fluid) */
-  
+
   Matrix mass; /** @brief Mass field */
-  
+
   Matrix x_GC; /** @brief Position in global coordinates */
-  
+
   Matrix x_EC; /** @brief Position in element coordinates */
-  
+
   Matrix dis, D_dis; /** @brief Displacement field */
-  
+
   Matrix vel; /** @brief Velocity field */
-  
+
   Matrix acc; /** @brief Acceleration fields */
-  
+
   Matrix Stress; /** @brief Stress field */
 
-  /*!
-  * Lagrange multiplier for incompressible formulations
-  * */
+  /** @brief
+   * Lagrange multiplier for incompressible formulations
+   * */
   Matrix lambda_pressure_n;
   Matrix lambda_pressure_n1;
 
-  /*!
-  * Pore water pressure, initial state, and the increment
-  */
+  /** @brief
+   * Pore water pressure, initial state, and the increment
+   */
   Matrix Pw;
   Matrix d_Pw;
   Matrix Pw_0;
   Matrix Pw_n1;
   Matrix D_Pw;
 
-  /*!
-  * Rates of the pore water pressure
-  */
+  /** @brief
+   * Rates of the pore water pressure
+   */
   Matrix d_Pw_dt_n;
   Matrix d_Pw_dt_n1;
 
   Matrix d2_Pw_dt2;
-  
+
   Matrix Strain; /** @brief Strain field */
 
   Matrix F_n, F_n1; /** @brief Total deformation gradient */
@@ -243,173 +248,152 @@ typedef struct {
 
   Matrix J_n, J_n1, dJ_dt; /** @brief Jacobian of the deformation gradient */
 
-  Matrix Fbar;  /** @brief Locking-free deformation gradient (F-bar) */
-  
+  Matrix Fbar; /** @brief Locking-free deformation gradient (F-bar) */
+
   Matrix Jbar; /** @brief Jacobian of the F-bar */
-  
-  Matrix Strain_If; /** @brief Strain during crack */
-  
-  double * W; /** @brief Deformation Energy */
 
-  double * Damage_n, * Damage_n1; /** @brief Damage parameter (Fracture) */
+  double *W; /** @brief Deformation Energy */
 
-  double * EPS_n, * EPS_n1; /** @brief Equivalent plastic strain. */
+  double *Damage_n, *Damage_n1; /** @brief Damage parameter (Fracture) */
 
-  double * Kappa_n, * Kappa_n1; /** @brief Isotropic hardening (stress like) variable. */
+  double *Strain_f_n, *Strain_f_n1; /** @brief Strain during crack (Fracture) */
 
-  Matrix Back_stress;  /** @brief Kinematic hardening variable. */
+  double *EPS_n, *EPS_n1; /** @brief Equivalent plastic strain. */
+
+  double *Kappa_n,
+      *Kappa_n1; /** @brief Isotropic hardening (stress like) variable. */
+
+  Matrix Back_stress; /** @brief Kinematic hardening variable. */
 
   Matrix b_e_n, b_e_n1; /** @brief Elastic left deformation gradient */
 
   Matrix C_ep; /** @brief Elastoplastic tangent matrix */
 
-  bool * Status_particle; /** @brief Check if the particle is consider failed or not */
-
+  bool *Status_particle; /** @brief Check if the particle is consider failed or
+                            not */
 
 #ifdef DEBUG_MODE
 #if DEBUG_MODE + 0
 
   Matrix PU; /** @brief Partition of unity property. */
 
-  #endif
+#endif
 #endif
 
 } Fields;
 
 /*******************************************************/
 
-/*! \struct Load
+/** @brief \struct Load
  *   An important aclaration about this code, a force is a load,
  * or even a boundary condition is defined as a load from the
  * point of view of the code (as a structure). The idea is
- * a force and a boundary condition both of them has a direction, 
+ * a force and a boundary condition both of them has a direction,
  * a value, a list of nodes/GPs where it is applied,... So it's
  * a good idea to use this structure for both porpouses.
  */
 
 typedef struct {
 
-  /*!
-   * Number of nodes/GP with this load 
+  /** @brief
+   * Number of nodes/GP with this load
    */
   int NumNodes;
-  
-  /*! 
-   * Number of dimensions of the load 
+
+  /** @brief
+   * Number of dimensions of the load
    */
   int Dim;
 
-  /*!
-   * Direction of the load {0,0} {1,0} {0,1} {1,1} 
+  /** @brief
+   * Direction of the load {0,0} {1,0} {0,1} {1,1}
    */
-  int * Dir;
+  int *Dir;
 
-  /*!
-   * List of nodes with this load 
+  /** @brief
+   * List of nodes with this load
    */
-  int * Nodes;
+  int *Nodes;
 
-  /*! 
+  /** @brief
    * Curve for each dimension with the evolution
-   * value with the time 
+   * value with the time
    */
-  Curve * Value;
+  Curve *Value;
 
   // On/Off variable
   bool STATUS;
 
-  /*!
-   * Some information about this load 
+  /** @brief
+   * Some information about this load
    */
-  char Info [100];
+  char Info[100];
 
 } Load;
 
 /*******************************************************/
 
-/*! \struct Boundaries
- * Boundary conditions definition 
+/** @brief \struct Boundaries
+ * Boundary conditions definition
  */
 typedef struct {
 
-  /*!
-   * Number of boundaries of the domain 
+  /** @brief
+   * Number of boundaries of the domain
    */
   int NumBounds;
-  
-  /*!
-   * Table with all the boundaries and its values 
+
+  /** @brief
+   * Table with all the boundaries and its values
    */
-  Load * BCC_i;
-  
+  Load *BCC_i;
+
 } Boundaries;
 
 /*******************************************************/
 
-/*! \struct Material
- * Properties of a general material model 
+/**
+ * @brief Properties of a general material model
+ *
  */
 typedef struct {
 
-  /*!
-   * Index of the material 
-   */
-  int Id;
+  int Id; /** @brief Index of the material */
 
-  /*!
-   * Name of the material
-   */
-  char Type [100];
-  
-  /*!
-   * Material celerity 
-   */
-  double Cel;
-  
-  /*!
-   * Initial density (mixture/fluid/solid)
-   */
-  double rho;
-  
-  /*!
-   * Elastic modulus 
-   */
-  double E;
-  
-  /*!
-   * Poisson ratio 
-   */
-  double nu;
+  char Type[100]; /** @brief Name of the material */
 
-  /*!
-  * Compressibility
-  */
-  double Compressibility;
+  double Cel; /** @brief Material celerity */
 
-  /*!
-  * Fluid parameters
-  */
+  double rho; /** @brief Initial density (mixture/fluid/solid) */
+
+  double E; /** @brief Elastic modulus */
+
+  double nu; /** @brief Poisson ratio */
+
+  double Compressibility; /** @brief Compressibility */
+
+  /** @brief
+   * Fluid parameters
+   */
   double ReferencePressure;
   double Viscosity;
   double n_Macdonald_model;
 
-  /*!
-   * Activate eigenerosion-fracture modulus (Eigenerosion/Eigensoftening)
+  double Ceps; /** @brief Normalizing constant (Eigenerosion/Eigensoftening) */
+
+  double Gf; /** @brief Failure energy (Eigenerosion) */
+
+  double ft; /** @brief Tensile strengt of the material (Eigensoftening) */
+
+  double heps; /** @brief Bandwidth of the cohesive fracture (Eigensoftening) */
+
+  double wcrit; /** @brief Critical opening displacement (Eigensoftening) */
+
+  char Plastic_Solver[100]; /** @brief Integration algorithm for plasticity */
+
+  /** @brief
+   * General plastic parameters
    */
-  double Ceps; /*! Normalizing constant (Eigenerosion/Eigensoftening) */
-  double Gf; /*! Failure energy (Eigenerosion) */
-  double ft; /*! Tensile strengt of the material (Eigensoftening) */
-  double heps; /*! Bandwidth of the cohesive fracture (Eigensoftening) */
-  double Wc; /*! Critical opening displacement (Eigensoftening) */
-
-  /*!
-   * Integration algorithm for plasticity
-  */
-  char Plastic_Solver [100];
-
-  /*!
-  * General plastic parameters
-  */
   double kappa_0;
   double Hardening_modulus;
   double Plastic_Strain_0;
@@ -417,33 +401,33 @@ typedef struct {
   double J2_degradated;
   double Cohesion;
 
-  /*!
+  /** @brief
    * Frictional material (Borja et al. 2003)
    * */
-  char Yield_Function_Frictional [100];
+  char Yield_Function_Frictional[100];
   double m_Frictional;
   double c0_Frictional;
   double phi_Frictional;
   double psi_Frictional;
 
-  /*!
-  * Hardening Hughes
-  */
+  /** @brief
+   * Hardening Hughes
+   */
   bool Hardening_Hughes;
   double Parameter_Hardening_Hughes;
 
-  /*!
+  /** @brief
    * Hardening Cervera
    * */
   bool Hardening_Cervera;
 
-  /*!
+  /** @brief
    * Hardening Ortiz
    * */
   bool Hardening_Ortiz;
   double Exponent_Hardening_Ortiz;
 
-  /*!
+  /** @brief
    * Hardening Voce
    * */
   bool Hardening_Voce;
@@ -452,20 +436,20 @@ typedef struct {
   double delta_Hardening_Voce;
   double theta_Hardening_Voce;
 
-  /*!
+  /** @brief
    * Hardening Borja et al. 2003
    * */
   bool Hardening_Borja;
   double a_Hardening_Borja[3];
   double alpha_Hardening_Borja;
 
-  /*!
+  /** @brief
    * Viscoplasticity parameters
    * */
   bool Viscous_regularization;
   double fluidity_param;
 
-  /*!
+  /** @brief
    * Activate auxiliar techniques
    * */
   bool Locking_Control_Fbar;
@@ -475,37 +459,37 @@ typedef struct {
 
 /*******************************************************/
 
-/*! \struct Mixture
- * This structure is devoted to store information 
+/** @brief \struct Mixture
+ * This structure is devoted to store information
  * for a general kind of mixtures
  */
 typedef struct {
 
-  /*!
-   * Index of the mixture 
+  /** @brief
+   * Index of the mixture
    */
   int Id;
 
-  /*!
+  /** @brief
    * Name of the mixture
    */
-  char Type [100];
+  char Type[100];
 
-  /* 
+  /*
     Index for the constitutive description of each phase
     for the soil-water mixture
   */
   int Soil_Idx;
   int Water_Idx;
 
-  /*!
-  * Permeability of the soil skleleton
-  */
+  /** @brief
+   * Permeability of the soil skleleton
+   */
   Tensor Permeability;
 
-  /*!
-  * Initial volume fractions (Soil/Water)
-  */
+  /** @brief
+   * Initial volume fractions (Soil/Water)
+   */
   double phi_s_0;
   double phi_f_0;
 
@@ -513,44 +497,43 @@ typedef struct {
 
 /*******************************************************/
 
-/*! 
+/** @brief
  * \struct State_Parameters
  */
-typedef struct
-{
-  /*!
+typedef struct {
+  /** @brief
    * Particle identifier
    * */
   int Particle_Idx;
-  
-  /*!
+
+  /** @brief
    * Stress/strain parameters
    * */
-  double * Stress;
-  double * Strain;
+  double *Stress;
+  double *Strain;
   double Pressure;
-  double * W; /** @brief Deformation energy */
+  double *W; /** @brief Deformation energy */
 
-  double * D_phi_n1;  /** @brief Total deformation gradient (t = n + 1) */
-  double * D_phi_n; /** @brief Total deformation gradient (t = n) */
-  double * d_phi; /** @brief Incremental deformation gradient */
-  double * b_e; /** @brief Elastic left Cauchy-Green tensor */
-  double * Fbar;
+  double *D_phi_n1; /** @brief Total deformation gradient (t = n + 1) */
+  double *D_phi_n;  /** @brief Total deformation gradient (t = n) */
+  double *d_phi;    /** @brief Incremental deformation gradient */
+  double *b_e;      /** @brief Elastic left Cauchy-Green tensor */
+  double *Fbar;
   double J; /**<z Jocobian */
 
-  double * dFdt; /** @brief Rate of the deformation gradient */
+  double *dFdt;         /** @brief Rate of the deformation gradient */
   double DeltaTimeStep; /** @brief Increment of the time step */
-  double alpha_4; /** @brief Time integation paramter (Newmark-beta) */
+  double alpha_4;       /** @brief Time integation paramter (Newmark-beta) */
 
-  double * Back_stress; /** @brief State varible for kinematic hardening*/
-  double * Kappa; /** @brief  Hardening Parameter */
-  double * EPS; /** @brief  Equivalent plastic strain */
-  double * C_ep; /** @brief  Elastoplastic tangent matrix */
+  double *Back_stress; /** @brief State varible for kinematic hardening*/
+  double *Kappa;       /** @brief  Hardening Parameter */
+  double *EPS;         /** @brief  Equivalent plastic strain */
+  double *C_ep;        /** @brief  Elastoplastic tangent matrix */
   bool compute_C_ep;
 
-  double Cohesion; 
+  double Cohesion;
   double Yield_stress;
-  
+
   // Failed material point
   bool *Failure;
 
@@ -558,393 +541,389 @@ typedef struct
 
 /*******************************************************/
 
-/*! \struct Particle
- * This structure is devoted to store all the information 
+/** @brief \struct Particle
+ * This structure is devoted to store all the information
  * of a list of particles
  */
 typedef struct {
 
-  /*!
+  /** @brief
    * Number of particles
    * */
   int NumGP;
-  
-  /*!
-   * Index with the closest node to each particle 
-   * */
-  int * I0;
 
-  /*!
+  /** @brief
+   * Index with the closest node to each particle
+   * */
+  int *I0;
+
+  /** @brief
    * Index of the element
    * */
-  int * Element_p;
+  int *Element_p;
 
-  /*!
+  /** @brief
    * Tributary nodes variables
    * */
-  int * NumberNodes;
-  ChainPtr * ListNodes;
+  int *NumberNodes;
+  ChainPtr *ListNodes;
 
-  /*! 
-   * Set of particles close to each particle 
+  /** @brief
+   * Set of particles close to each particle
    * */
-  ChainPtr * Beps;
+  ChainPtr *Beps;
 
-  /*! 
+  /** @brief
    * Store the values of each field in the current time step
    * */
   Fields Phi;
-  
-  /*!
-   * Values from the previous step 
+
+  /** @brief
+   * Values from the previous step
    * */
-  Fields Phi_n0; 
-  
-  /*!
+  Fields Phi_n0;
+
+  /** @brief
    * Material variables
    * */
   int NumberMaterials;
-  int * MatIdx;
-  int * MixtIdx;
-  Material * Mat;
+  int *MatIdx;
+  int *MixtIdx;
+  Material *Mat;
 
-  /*!
-   * Neumann boundary conditions 
+  /** @brief
+   * Neumann boundary conditions
    * */
   int NumNeumannBC;
-  Load * F;
+  Load *F;
 
-  /*!
-   * Structure to store Neumann boundary conditions will replace NumNeumannBC and F;
+  /** @brief
+   * Structure to store Neumann boundary conditions will replace NumNeumannBC
+   * and F;
    * */
   Boundaries Neumann_Contours;
 
-
-  /*!
+  /** @brief
    * uGIMP shape function parameter
    * */
   Matrix lp;
 
-  /*!
+  /** @brief
    * LME shape function parameters:
    * */
   Matrix lambda; // Lagrange multiplier
-  Matrix Beta; // Thermalization or regularization parameter (scalar/matrix)
+  Matrix Beta;   // Thermalization or regularization parameter (scalar/matrix)
   Matrix Cut_off_Ellipsoid;
 
-  /*!
+  /** @brief
    * Function to compute the stress state of the particle
    * */
-  State_Parameters (* constitutive)(State_Parameters,Material);
-
+  State_Parameters (*constitutive)(State_Parameters, Material);
 
 } Particle;
 
-
 /*******************************************************/
 
-/*! \struct Mesh
- * This structure is devoted to store all the information 
+/** @brief \struct Mesh
+ * This structure is devoted to store all the information
  * of a list of nodes
  */
 typedef struct {
 
-  /*!
-   * Number of nodes in the mesh 
+  /** @brief
+   * Number of nodes in the mesh
    */
   int NumNodesMesh;
-  
-  /*!
-   * Number of elements in the mesh 
+
+  /** @brief
+   * Number of elements in the mesh
    */
   int NumElemMesh;
-  
-  /*!
-   * Table with the coordinates of the nodes of the mesh 
+
+  /** @brief
+   * Table with the coordinates of the nodes of the mesh
    */
   Matrix Coordinates;
-  
-  /*!
+
+  /** @brief
    * Number of nodes in a element
    */
-  int * NumNodesElem;
-    
-  /*!
-   * List of nodes for each element (Connectivity) 
+  int *NumNodesElem;
+
+  /** @brief
+   * List of nodes for each element (Connectivity)
    */
-  ChainPtr * Connectivity;
-  
-  /*!
-   * Number of elements close to each node 
+  ChainPtr *Connectivity;
+
+  /** @brief
+   * Number of elements close to each node
    */
-  int * NumNeighbour;
-  
-  /*!
-   * List of elements close to each node 
+  int *NumNeighbour;
+
+  /** @brief
+   * List of elements close to each node
    */
-  ChainPtr * NodeNeighbour;
+  ChainPtr *NodeNeighbour;
 
-  /*!
-   * Number of nodes close to a node 
+  /** @brief
+   * Number of nodes close to a node
    */
-  int * SizeNodalLocality_0;
-  int * SizeNodalLocality;
+  int *SizeNodalLocality_0;
+  int *SizeNodalLocality;
 
-  /*!
-   * List of nodes close to a node 
-   */  
-  ChainPtr * NodalLocality_0;
-  ChainPtr * NodalLocality;
+  /** @brief
+   * List of nodes close to a node
+   */
+  ChainPtr *NodalLocality_0;
+  ChainPtr *NodalLocality;
 
-  /*!
-  * Defines if a node is activated or not
-  */
-  bool * ActiveNode;
+  /** @brief
+   * Defines if a node is activated or not
+   */
+  bool *ActiveNode;
 
-  /*!
-  * Defines if a node belongs to a boundary or not
-  */
-  bool * BoundaryNode;
+  /** @brief
+   * Defines if a node belongs to a boundary or not
+   */
+  bool *BoundaryNode;
 
-  /*!
+  /** @brief
    * List of boundaries of the domain
    */
   Boundaries Bounds;
-  
-  /*! 
+
+  /** @brief
    * Number of dimensions of the element (OLD)
    */
   int Dimension;
 
-  /*!
-   * Minimum distance between nodes 
+  /** @brief
+   * Minimum distance between nodes
    */
   double DeltaX;
 
-  /*! 
-  * Nodal spacing
-  */
-  double * h_avg;
+  /** @brief
+   * Nodal spacing
+   */
+  double *h_avg;
 
-  /*! 
+  /** @brief
    * Name of the element (OLD)
    */
-  char TypeElem [20];
+  char TypeElem[20];
 
-  /*!
+  /** @brief
    * Function with the interpolation technique
    */
-  Matrix (* N_ref)(Matrix );
+  Matrix (*N_ref)(Matrix);
 
-  /*!
+  /** @brief
    * Function with the gradient of the interpolation technique
    */
-  Matrix (* dNdX_ref)(Matrix );
+  Matrix (*dNdX_ref)(Matrix);
 
-  /*!
+  /** @brief
    * Function with the gradient of the interpolation technique
    */
-  Matrix (* dNdX)(Matrix, Matrix);
+  Matrix (*dNdX)(Matrix, Matrix);
 
   /*
    * Function of compute natural coordinate
-  */
-//  void (* X_to_Xi)(Matrix, Matrix, Matrix);
-
-  /* !
-  * Function to compute the volume of an element
-  */
-  double (* volume_Element)(Matrix);
-
-  /*! 
-  * Function to check if a point is inside or outside of a elemnt
-  */
-  bool (* In_Out_Element)(Matrix, Matrix);
-
-  /*!
-   * List of particles adjacent to a node 
    */
-  int * Num_Particles_Node;
-  ChainPtr * List_Particles_Node;
+  //  void (* X_to_Xi)(Matrix, Matrix, Matrix);
 
-  /*!
+  /* * @brief
+   * Function to compute the volume of an element
+   */
+  double (*volume_Element)(Matrix);
+
+  /** @brief
+   * Function to check if a point is inside or outside of a elemnt
+   */
+  bool (*In_Out_Element)(Matrix, Matrix);
+
+  /** @brief
+   * List of particles adjacent to a node
+   */
+  int *Num_Particles_Node;
+  ChainPtr *List_Particles_Node;
+
+  /** @brief
    * Variables and function for F-bar calculation
    * */
   bool Locking_Control_Fbar;
   int Num_Patch_Mesh;
-  int * Idx_Patch;
-  double * Vol_Patch_n;
-  double * Vol_Patch_n1;
+  int *Idx_Patch;
+  double *Vol_Patch_n;
+  double *Vol_Patch_n1;
 
 } Mesh;
 
 /*******************************************************/
 
-/*! \struct Mask
+/** @brief \struct Mask
  *  Structure with the current "element" of the particle
  */
 typedef struct {
 
   int Nactivenodes;
 
-  int * Nodes2Mask;
-  
+  int *Nodes2Mask;
+
 } Mask;
 
 /*******************************************************/
 
-/*! \struct Element
+/** @brief \struct Element
  *  Structure with the current "element" of the particle
  */
 typedef struct {
 
-  /*!
+  /** @brief
    * Index of the particle
-   */ 
+   */
   int i_GP;
-  
-  /*! 
-   * Number of nodes close to the particle 
+
+  /** @brief
+   * Number of nodes close to the particle
    */
   int NumberNodes;
-  
-  /*!
-   * List of tributary nodes for the particle 
-   */ 
-  int * Connectivity;
-  
+
+  /** @brief
+   * List of tributary nodes for the particle
+   */
+  int *Connectivity;
+
 } Element;
 
 /*******************************************************/
 
-/*! \struct Time_Int_Params
+/** @brief \struct Time_Int_Params
  * Parameters of the time integration scheme
  */
 typedef struct {
 
-  /*!
-  * Courant number
-  */ 
+  /** @brief
+   * Courant number
+   */
   double CFL;
 
-  /*!
-   * Material celerity 
+  /** @brief
+   * Material celerity
    */
   double Cel;
 
-  /*!
-  * Initial step
-  */
+  /** @brief
+   * Initial step
+   */
   int InitialTimeStep;
 
-  /*!
-  * Número de pasos de tiempo
-  */
+  /** @brief
+   * Número de pasos de tiempo
+   */
   int NumTimeStep;
 
-  /*!
-  * Simulation time
-  */
+  /** @brief
+   * Simulation time
+   */
   double FinalTime;
 
-  /*!
-  * Parameter to generate a mass matrix
-  */
+  /** @brief
+   * Parameter to generate a mass matrix
+   */
   double epsilon_Mass_Matrix;
 
-  /*!
-  * Conserving Energy-Momentum parameters 
-  */
+  /** @brief
+   * Conserving Energy-Momentum parameters
+   */
   double TOL_Conserving_Energy_Momentum;
 
-  /*!
-   * Generalized alpha parameters 
+  /** @brief
+   * Generalized alpha parameters
    */
   double rb_Generalized_alpha;
   double TOL_Generalized_alpha;
 
-  /*!
-  * Newmark parameters
-  */
-  double beta_Newmark_beta;   
+  /** @brief
+   * Newmark parameters
+   */
+  double beta_Newmark_beta;
   double gamma_Newmark_beta;
   double TOL_Newmark_beta;
 
-
-  /*!
-  * Maximum number of interations
-  */
+  /** @brief
+   * Maximum number of interations
+   */
   int MaxIter;
 
-  /*!
-  * Time integration scheme
-  */
-  char TimeIntegrationScheme [100]; 
+  /** @brief
+   * Time integration scheme
+   */
+  char TimeIntegrationScheme[100];
 
 } Time_Int_Params;
 
 /*******************************************************/
 
-/*! \struct Event
+/** @brief \struct Event
   Structure with output control
  */
 typedef struct {
 
-  /*!
+  /** @brief
     Number of files of the output
   */
   int NumFiles;
 
-  /*!
+  /** @brief
     Index for the particle or node in the case of single
     node/particle analysis
   */
   int Idx;
 
-  /*!
+  /** @brief
     List of nodes or particles to get the information from
     a path of nodes/particles.
   */
-  int * Idx_Path;
+  int *Idx_Path;
   int Lenght_Path;
 
-  /*!
+  /** @brief
     Physical time to start the event. Default = 0.0
    */
   double start;
 
-  /*!
+  /** @brief
     Numerical step to start the event. Default = 0
    */
   int i_start;
 
-  /*!
+  /** @brief
     Physical time step
    */
   double step;
 
-  /*!
+  /** @brief
     Numerical time step
    */
   int i_step;
 
-  /*!
-    Physical time to finish the event    
+  /** @brief
+    Physical time to finish the event
    */
   double end;
 
-  /*!
+  /** @brief
     Numerical step to finish the event
-   */  
+   */
   int i_end;
 
-  /*!
+  /** @brief
     Name of the output directory
    */
   char Directory[MAXC];
 
-
-  /*!
+  /** @brief
     Output selector CSV
   */
   bool Out_csv_nodes_path_Velocity;
@@ -952,7 +931,7 @@ typedef struct {
   bool Out_csv_nodes_path_D_Displacement;
   bool Out_csv_nodes_path_Forces;
   bool Out_csv_nodes_path_Reactions;
-  bool Out_csv_nodes_path_Residual; 
+  bool Out_csv_nodes_path_Residual;
 
   bool Out_csv_particles_path_Damage;
   bool Out_csv_particles_path_Velocity;
@@ -969,7 +948,7 @@ typedef struct {
   bool Out_csv_Gauss_Point_evolution_EPS;
   bool Out_csv_Gauss_Point_evolution_Cohesion;
 
-  /*!
+  /** @brief
     Output selector Vtk
   */
   bool Out_vtk_nodes;
@@ -993,7 +972,6 @@ typedef struct {
   bool Out_vtk_Von_Mises;
 
 } Event;
-
 
 /*******************************************************/
 

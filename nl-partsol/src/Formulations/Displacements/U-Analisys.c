@@ -15,7 +15,7 @@ Fields allocate_U_vars__Fields__(int NumParticles) {
   Phi.D_dis = allocZ__MatrixLib__(NumParticles, Ndim);
 
   Phi.vel = allocZ__MatrixLib__(NumParticles, Ndim);
-  
+
   Phi.acc = allocZ__MatrixLib__(NumParticles, Ndim);
 
   Phi.Strain = allocZ__MatrixLib__(NumParticles, Ndim * Ndim);
@@ -32,13 +32,13 @@ Fields allocate_U_vars__Fields__(int NumParticles) {
 
   for (int p = 0; p < NumParticles; p++) {
 #if NumberDimensions == 2
-  Phi.F_n.nM[p][0] = Phi.F_n1.nM[p][0] = Phi.DF.nM[p][0] = 1.0;
-  Phi.F_n.nM[p][3] = Phi.F_n1.nM[p][3] = Phi.DF.nM[p][3] = 1.0;
-  Phi.F_n.nM[p][4] = Phi.F_n1.nM[p][4] = Phi.DF.nM[p][4] = 1.0;
+    Phi.F_n.nM[p][0] = Phi.F_n1.nM[p][0] = Phi.DF.nM[p][0] = 1.0;
+    Phi.F_n.nM[p][3] = Phi.F_n1.nM[p][3] = Phi.DF.nM[p][3] = 1.0;
+    Phi.F_n.nM[p][4] = Phi.F_n1.nM[p][4] = Phi.DF.nM[p][4] = 1.0;
 #else
-  Phi.F_n.nM[p][0] = Phi.F_n1.nM[p][0] = Phi.DF.nM[p][0] = 1.0;
-  Phi.F_n.nM[p][4] = Phi.F_n1.nM[p][4] = Phi.DF.nM[p][4] = 1.0;
-  Phi.F_n.nM[p][9] = Phi.F_n1.nM[p][9] = Phi.DF.nM[p][9] = 1.0;
+    Phi.F_n.nM[p][0] = Phi.F_n1.nM[p][0] = Phi.DF.nM[p][0] = 1.0;
+    Phi.F_n.nM[p][4] = Phi.F_n1.nM[p][4] = Phi.DF.nM[p][4] = 1.0;
+    Phi.F_n.nM[p][9] = Phi.F_n1.nM[p][9] = Phi.DF.nM[p][9] = 1.0;
 #endif
   }
 
@@ -51,7 +51,7 @@ Fields allocate_U_vars__Fields__(int NumParticles) {
   Phi.dt_F_n1 = allocZ__MatrixLib__(NumParticles, 9);
   Phi.dt_DF = allocZ__MatrixLib__(NumParticles, 9);
 #endif
-  
+
 #if NumberDimensions == 2
   Phi.b_e_n = allocZ__MatrixLib__(NumParticles, 5);
   Phi.b_e_n1 = allocZ__MatrixLib__(NumParticles, 5);
@@ -62,13 +62,13 @@ Fields allocate_U_vars__Fields__(int NumParticles) {
 
   for (int p = 0; p < NumParticles; p++) {
 #if NumberDimensions == 2
-  Phi.b_e_n.nM[p][0] = 1.0;
-  Phi.b_e_n.nM[p][3] = 1.0;
-  Phi.b_e_n.nM[p][4] = 1.0;
+    Phi.b_e_n.nM[p][0] = 1.0;
+    Phi.b_e_n.nM[p][3] = 1.0;
+    Phi.b_e_n.nM[p][4] = 1.0;
 #else
-  Phi.b_e_n.nM[p][0] = 1.0;
-  Phi.b_e_n.nM[p][4] = 1.0;
-  Phi.b_e_n.nM[p][9] = 1.0;
+    Phi.b_e_n.nM[p][0] = 1.0;
+    Phi.b_e_n.nM[p][4] = 1.0;
+    Phi.b_e_n.nM[p][9] = 1.0;
 #endif
   }
 
@@ -89,13 +89,13 @@ Fields allocate_U_vars__Fields__(int NumParticles) {
 
   for (int p = 0; p < NumParticles; p++) {
 #if NumberDimensions == 2
-  Phi.Fbar.nM[p][0] = 0.0;
-  Phi.Fbar.nM[p][3] = 0.0;
-  Phi.Fbar.nM[p][4] = 0.0;
+    Phi.Fbar.nM[p][0] = 0.0;
+    Phi.Fbar.nM[p][3] = 0.0;
+    Phi.Fbar.nM[p][4] = 0.0;
 #else
-  Phi.Fbar.nM[p][0] = 0.0;
-  Phi.Fbar.nM[p][4] = 0.0;
-  Phi.Fbar.nM[p][9] = 0.0;
+    Phi.Fbar.nM[p][0] = 0.0;
+    Phi.Fbar.nM[p][4] = 0.0;
+    Phi.Fbar.nM[p][9] = 0.0;
 #endif
   }
 
@@ -104,8 +104,6 @@ Fields allocate_U_vars__Fields__(int NumParticles) {
   for (int p = 0; p < NumParticles; p++) {
     Phi.Jbar.nV[p] = 1.0;
   }
-
-  Phi.Strain_If = allocZ__MatrixLib__(NumParticles, 1);
 
 #if NumberDimensions == 2
   Phi.Stress = allocZ__MatrixLib__(NumParticles, 5);
@@ -116,7 +114,7 @@ Fields allocate_U_vars__Fields__(int NumParticles) {
   /*!
     Deformation Energy (Scalar)
   */
-  Phi.W = (double *)calloc(NumParticles,sizeof(double));
+  Phi.W = (double *)calloc(NumParticles, sizeof(double));
 
   Phi.mass = allocZ__MatrixLib__(NumParticles, 1);
 
@@ -127,24 +125,30 @@ Fields allocate_U_vars__Fields__(int NumParticles) {
   /*!
     Damage variable
   */
-if ((Driver_EigenErosion == true) || (Driver_EigenSoftening == true)) {
-  
-  Phi.Damage_n = (double *)calloc(NumParticles,sizeof(double));
+  if ((Driver_EigenErosion == true) || (Driver_EigenSoftening == true)) {
 
-  Phi.Damage_n1 = (double *)calloc(NumParticles,sizeof(double));
-}
+    Phi.Damage_n = (double *)calloc(NumParticles, sizeof(double));
+
+    Phi.Damage_n1 = (double *)calloc(NumParticles, sizeof(double));
+  }
+
+  if (Driver_EigenSoftening == true) {
+    Phi.Strain_f_n = (double *)calloc(NumParticles, sizeof(double));
+
+    Phi.Strain_f_n1 = (double *)calloc(NumParticles, sizeof(double));
+  }
 
   /*!
     Equivalent plastic strain
   */
-  Phi.EPS_n = (double *)calloc(NumParticles,sizeof(double));
+  Phi.EPS_n = (double *)calloc(NumParticles, sizeof(double));
 
-  Phi.EPS_n1 = (double *)calloc(NumParticles,sizeof(double));  
+  Phi.EPS_n1 = (double *)calloc(NumParticles, sizeof(double));
 
-  Phi.Kappa_n = (double *)calloc(NumParticles,sizeof(double));
+  Phi.Kappa_n = (double *)calloc(NumParticles, sizeof(double));
 
-  Phi.Kappa_n1 = (double *)calloc(NumParticles,sizeof(double));
-  
+  Phi.Kappa_n1 = (double *)calloc(NumParticles, sizeof(double));
+
   Phi.Back_stress = allocZ__MatrixLib__(NumParticles, 3);
 
 #if NumberDimensions == 2
@@ -153,7 +157,7 @@ if ((Driver_EigenErosion == true) || (Driver_EigenSoftening == true)) {
   Phi.C_ep = allocZ__MatrixLib__(NumParticles, 9);
 #endif
 
-  Phi.Status_particle = (bool *)malloc(NumParticles*sizeof(bool));
+  Phi.Status_particle = (bool *)malloc(NumParticles * sizeof(bool));
 
   for (int p = 0; p < NumParticles; p++) {
     Phi.Status_particle[p] = false;
@@ -175,7 +179,6 @@ void free_U_vars__Fields__(Fields Phi) {
   free__MatrixLib__(Phi.acc);
   free__MatrixLib__(Phi.Stress);
   free__MatrixLib__(Phi.Strain);
-  free__MatrixLib__(Phi.Strain_If);
   free__MatrixLib__(Phi.b_e_n);
   free__MatrixLib__(Phi.b_e_n1);
   free__MatrixLib__(Phi.F_n);
@@ -190,10 +193,16 @@ void free_U_vars__Fields__(Fields Phi) {
   free__MatrixLib__(Phi.DF);
   free(Phi.W);
   free__MatrixLib__(Phi.Vol_0);
-  free(Phi.Damage_n);
-  free(Phi.Damage_n1);
+  if ((Driver_EigenErosion == true) || (Driver_EigenSoftening == true)) {
+    free(Phi.Damage_n);
+    free(Phi.Damage_n1);
+  }
+  if (Driver_EigenSoftening == true) {
+    free(Phi.Strain_f_n);
+    free(Phi.Strain_f_n1);
+  }
   free(Phi.EPS_n);
-  free(Phi.EPS_n1);  
+  free(Phi.EPS_n1);
   free(Phi.Kappa_n);
   free(Phi.Kappa_n1);
   free__MatrixLib__(Phi.Back_stress);

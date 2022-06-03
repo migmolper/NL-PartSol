@@ -40,10 +40,14 @@ typedef struct {
   bool Is_J2_degradated;            // Degradation limit
   bool Is_Ceps;                     // Normalizing constant (Eigenerosion)
   bool Is_Gf;                       // Failure energy (Eigenerosion)
+  bool Is_ft;                       // Tensile strengt of the material
+  bool Is_heps;                     // Bandwidth of the cohesive fracture
+  bool Is_wcrit;                    // Critical opening displacement
 } Check_Material;
 
 static Check_Material __Initialise_Check_Material();
 static int __check_material(Material *, Check_Material, int);
+static void __print_miss_variables(Check_Material ChkMat);
 static int __read_boolean(bool *Value, char *Value_char);
 
 /**********************************************************************/
@@ -157,9 +161,30 @@ int Define_Drucker_Prager(Material *DP_Material, FILE *Simulation_file,
     }
     /**************************************************/
     else if (strcmp(Parameter_pars[0], "Gf") == 0) {
-      if ((Driver_EigenErosion == true) || (Driver_EigenSoftening == true)) {
+      if (Driver_EigenErosion == true) {
         ChkMat.Is_Gf = true;
         (*DP_Material).Gf = atof(Parameter_pars[1]);
+      }
+    }
+    /**************************************************/
+    else if (strcmp(Parameter_pars[0], "ft") == 0) {
+      if (Driver_EigenSoftening == true) {
+        ChkMat.Is_ft = true;
+        (*DP_Material).ft = atof(Parameter_pars[1]);
+      }
+    }
+    /**************************************************/
+    else if (strcmp(Parameter_pars[0], "heps") == 0) {
+      if (Driver_EigenSoftening == true) {
+        ChkMat.Is_heps = true;
+        (*DP_Material).heps = atof(Parameter_pars[1]);
+      }
+    }
+    /**************************************************/
+    else if (strcmp(Parameter_pars[0], "wcrit") == 0) {
+      if (Driver_EigenSoftening == true) {
+        ChkMat.Is_wcrit = true;
+        (*DP_Material).wcrit = atof(Parameter_pars[1]);
       }
     }
     /**************************************************/
@@ -192,7 +217,9 @@ int Define_Drucker_Prager(Material *DP_Material, FILE *Simulation_file,
 
   STATUS = __check_material(DP_Material, ChkMat, Material_Idx);
   if (STATUS == EXIT_FAILURE) {
-    fprintf(stderr, "" RED " Error in __check_material() " RESET " \n");
+    fprintf(stderr, "" RED " Error in " RESET "" BOLDRED
+                    "__check_material() " RESET " \n");
+    __print_miss_variables(ChkMat);
     return EXIT_FAILURE;
   }
 
@@ -217,6 +244,9 @@ static Check_Material __Initialise_Check_Material() {
   ChkMat.Is_J2_degradated = false;
   ChkMat.Is_Ceps = false;
   ChkMat.Is_Gf = false;
+  ChkMat.Is_ft = false;
+  ChkMat.Is_heps = false;
+  ChkMat.Is_wcrit = false;
 
   return ChkMat;
 }
@@ -248,127 +278,197 @@ static int __check_material(Material *DP_Material, Check_Material ChkMat,
 
   int STATUS = EXIT_SUCCESS;
 
-  if (ChkMat.Is_rho && ChkMat.Is_E && ChkMat.Is_nu &&
-      ChkMat.Is_Reference_pressure && ChkMat.Is_friction_angle &&
-      ChkMat.Is_dilatancy_angle) {
+  printf("\t -> %s \n", "Drucker-Prager material");
 
-    printf("\t -> %s \n", "Drucker-Prager material");
-
+  if (ChkMat.Is_rho == true) {
     printf("\t \t -> %s : %f \n", "" MAGENTA "[rho]" RESET "",
            (*DP_Material).rho);
+  } else {
+    return EXIT_FAILURE;
+  }
 
+  if (ChkMat.Is_E == true) {
     printf("\t \t -> %s : %f \n", "" MAGENTA "[E]" RESET "", (*DP_Material).E);
+  } else {
+    return EXIT_FAILURE;
+  }
 
+  if (ChkMat.Is_nu == true) {
     printf("\t \t -> %s : %f \n", "" MAGENTA "[nu]" RESET "",
            (*DP_Material).nu);
+  } else {
+    return EXIT_FAILURE;
+  }
 
+  if (ChkMat.Is_friction_angle == true) {
     printf("\t \t -> %s : %f \n", "" MAGENTA "[Friction-angle]" RESET "",
            (*DP_Material).phi_Frictional);
+  } else {
+    return EXIT_FAILURE;
+  }
 
+  if (ChkMat.Is_dilatancy_angle) {
     printf("\t \t -> %s : %f \n", "" MAGENTA "[Dilatancy-angle]" RESET "",
            (*DP_Material).psi_Frictional);
+  } else {
+    return EXIT_FAILURE;
+  }
 
-    printf("\t \t -> %s : %f \n", "" MAGENTA "[Kappa-0]" RESET "",
-           (*DP_Material).kappa_0);
+  printf("\t \t -> %s : %f \n", "" MAGENTA "[Kappa-0]" RESET "",
+         (*DP_Material).kappa_0);
 
-    printf("\t \t -> %s : %f \n",
-           "" MAGENTA "[Reference-plastic-strain]" RESET "",
-           (*DP_Material).Plastic_Strain_0);
+  printf("\t \t -> %s : %e \n",
+         "" MAGENTA "[Reference-plastic-strain]" RESET "",
+         (*DP_Material).Plastic_Strain_0);
 
-    printf("\t \t -> %s : %f \n", "" MAGENTA "[Hardening-modulus]" RESET "",
-           (*DP_Material).Hardening_modulus);
+  printf("\t \t -> %s : %f \n", "" MAGENTA "[Hardening-modulus]" RESET "",
+         (*DP_Material).Hardening_modulus);
 
-    printf("\t \t -> %s : %f \n", "" MAGENTA "[m]" RESET "",
-           (*DP_Material).Exponent_Hardening_Ortiz);
+  printf("\t \t -> %s : %f \n", "" MAGENTA "[m]" RESET "",
+         (*DP_Material).Exponent_Hardening_Ortiz);
 
-    printf("\t \t -> %s : %f \n", "" MAGENTA "[J2-degradated]" RESET "",
-           (*DP_Material).J2_degradated);
+  printf("\t \t -> %s : %f \n", "" MAGENTA "[J2-degradated]" RESET "",
+         (*DP_Material).J2_degradated);
 
-    printf("\t \t -> %s : %f \n", "" MAGENTA "[Reference-pressure]" RESET "",
-           (*DP_Material).ReferencePressure);
+  printf("\t \t -> %s : %f \n", "" MAGENTA "[Reference-pressure]" RESET "",
+         (*DP_Material).ReferencePressure);
 
-    if ((Driver_EigenErosion == true) || (Driver_EigenSoftening == true)) {
+  if ((Driver_EigenErosion == true) || (Driver_EigenSoftening == true)) {
+    if (ChkMat.Is_Ceps == true) {
       printf("\t \t -> %s : %f \n", "" MAGENTA "[Ceps]" RESET "",
              (*DP_Material).Ceps);
+    } else {
+      return EXIT_FAILURE;
+    }
+  }
 
+  if (Driver_EigenErosion == true) {
+    if (ChkMat.Is_Gf == true) {
       printf("\t \t -> %s : %f \n", "" MAGENTA "[Gf]" RESET "",
              (*DP_Material).Gf);
+    } else {
+      return EXIT_FAILURE;
+    }
+  }
+
+  if (Driver_EigenSoftening == true) {
+    if (ChkMat.Is_ft == true) {
+      printf("\t \t -> %s : %f \n", "" MAGENTA "[ft]" RESET "",
+             (*DP_Material).ft);
+    } else {
+      return EXIT_FAILURE;
     }
 
-  } else {
-
-    fprintf(stderr, "" RED " %s : %s " RESET " \n", "Error in GramsMaterials()",
-            "Some parameter is missed for Drucker-Prager");
-
-    fputs(ChkMat.Is_rho
-              ? "" MAGENTA "[rho]" RESET " : " GREEN "true" RESET " \n"
-              : "" MAGENTA "[rho]" RESET " : " RED "false" RESET " \n",
-          stderr);
-
-    fputs(ChkMat.Is_E ? "" MAGENTA "[E]" RESET " : " GREEN "true" RESET " \n"
-                      : "" MAGENTA "[E]" RESET " : " RED "false" RESET " \n",
-          stderr);
-
-    fputs(ChkMat.Is_nu ? "" MAGENTA "[nu]" RESET " : " GREEN "true" RESET " \n"
-                       : "" MAGENTA "[nu]" RESET " : " RED "false" RESET " \n",
-          stderr);
-
-    fputs(ChkMat.Is_Hardening_Exponent
-              ? "" MAGENTA "[m]" RESET " : " GREEN "true" RESET " \n"
-              : "" MAGENTA "[m]" RESET " : " RED "false" RESET " \n",
-          stderr);
-
-    fputs(ChkMat.Is_Hardening_modulus ? "" MAGENTA "[Hardening-modulus]" RESET
-                                        " : " GREEN "true" RESET " \n"
-                                      : "" MAGENTA "[Hardening-modulus]" RESET
-                                        " : " RED "false" RESET " \n",
-          stderr);
-
-    fputs(ChkMat.Is_Reference_pressure ? "" MAGENTA "[Reference-pressure]" RESET
-                                         " : " GREEN "true" RESET " \n"
-                                       : "" MAGENTA "[Reference-pressure]" RESET
-                                         " : " RED "false" RESET " \n",
-          stderr);
-
-    fputs(ChkMat.Is_friction_angle ? "" MAGENTA "[Friction-angle]" RESET
-                                     " : " GREEN "true" RESET " \n"
-                                   : "" MAGENTA "[Friction-angle]" RESET
-                                     " : " RED "false" RESET " \n",
-          stderr);
-
-    fputs(ChkMat.Is_dilatancy_angle ? "" MAGENTA "[Dilatancy-angle]" RESET
-                                      " : " GREEN "true" RESET " \n"
-                                    : "" MAGENTA "[Dilatancy-angle]" RESET
-                                      " : " RED "false" RESET " \n",
-          stderr);
-
-    fputs(ChkMat.Is_J2_degradated ? "" MAGENTA "[J2-degradated]" RESET
-                                    " : " GREEN "true" RESET " \n"
-                                  : "" MAGENTA "[J2-degradated]" RESET " : " RED
-                                    "false" RESET " \n",
-          stderr);
-
-    fputs(ChkMat.Is_kappa_0
-              ? "" MAGENTA "[kappa-0]" RESET " : " GREEN "true" RESET " \n"
-              : "" MAGENTA "[kappa-0]" RESET " : " RED "false" RESET " \n",
-          stderr);
-
-    if ((Driver_EigenErosion == true) || (Driver_EigenSoftening == true)) {
-      fputs(ChkMat.Is_Ceps
-                ? "" MAGENTA "[Ceps]" RESET " : " GREEN "true" RESET " \n"
-                : "" MAGENTA "[Ceps]" RESET " : " RED "false" RESET " \n",
-            stderr);
-
-      fputs(ChkMat.Is_Gf
-                ? "" MAGENTA "[Gf]" RESET " : " GREEN "true" RESET " \n"
-                : "" MAGENTA "[Gf]" RESET " : " RED "false" RESET " \n",
-            stderr);
+    if (ChkMat.Is_heps == true) {
+      printf("\t \t -> %s : %f \n", "" MAGENTA "[heps]" RESET "",
+             (*DP_Material).heps);
+    } else {
+      return EXIT_FAILURE;
     }
 
-    STATUS = EXIT_FAILURE;
+    if (ChkMat.Is_wcrit == true) {
+      printf("\t \t -> %s : %f \n", "" MAGENTA "[wcrit]" RESET "",
+             (*DP_Material).wcrit);
+    } else {
+      return EXIT_FAILURE;
+    }
   }
 
   return STATUS;
+}
+
+/**********************************************************************/
+
+static void __print_miss_variables(Check_Material ChkMat) {
+
+  if (ChkMat.Is_rho == false) {
+    fputs("\t \t -> " MAGENTA "[rho]" RESET " : " RED "false" RESET " \n",
+          stderr);
+  }
+
+  if (ChkMat.Is_E == false) {
+    fputs("\t \t -> " MAGENTA "[E]" RESET " : " RED "false" RESET " \n",
+          stderr);
+  }
+
+  if (ChkMat.Is_nu == false) {
+    fputs("\t \t -> " MAGENTA "[nu]" RESET " : " RED "false" RESET " \n",
+          stderr);
+  }
+
+  if (ChkMat.Is_friction_angle == false) {
+    fputs("\t \t -> " MAGENTA "[Friction-angle]" RESET " : " RED "false" RESET
+          " \n",
+          stderr);
+  }
+
+  if (ChkMat.Is_dilatancy_angle == false) {
+    fputs("\t \t -> " MAGENTA "[Dilatancy-angle]" RESET " : " RED "false" RESET
+          " \n",
+          stderr);
+  }
+
+  if (ChkMat.Is_kappa_0 == false) {
+    fputs("\t \t -> " MAGENTA "[kappa-0]" RESET " : " CYAN "optional" RESET
+          " \n",
+          stderr);
+  }
+
+  if (ChkMat.Is_Hardening_modulus == false) {
+    fputs("\t \t -> " MAGENTA "[Hardening-modulus]" RESET " : " CYAN
+          "optional" RESET " \n",
+          stderr);
+  }
+
+  if (ChkMat.Is_Hardening_Exponent == false) {
+    fputs("\t \t -> " MAGENTA "[m]" RESET " : " CYAN "optional" RESET " \n",
+          stderr);
+  }
+
+  if (ChkMat.Is_J2_degradated == false) {
+    fputs("\t \t -> " MAGENTA "[J2-degradated]" RESET " : " CYAN
+          "optional" RESET " \n",
+          stderr);
+  }
+
+  if (ChkMat.Is_Reference_pressure == false) {
+    fputs("\t \t -> " MAGENTA "[Reference-pressure]" RESET " : " CYAN
+          "optional" RESET " \n",
+          stderr);
+  }
+
+  if ((Driver_EigenErosion == true) || (Driver_EigenSoftening == true)) {
+
+    if (ChkMat.Is_Ceps == false) {
+      fputs("\t \t -> " MAGENTA "[Ceps]" RESET " : " RED "false" RESET " \n",
+            stderr);
+    }
+  }
+
+  if (Driver_EigenErosion == true) {
+    if (ChkMat.Is_Gf == false) {
+      fputs("\t \t -> " MAGENTA "[Gf]" RESET " : " RED "false" RESET " \n",
+            stderr);
+    }
+  }
+
+  if (Driver_EigenSoftening == true) {
+
+    if (ChkMat.Is_ft == false) {
+      fputs("\t \t -> " MAGENTA "[ft]" RESET " : " RED "false" RESET " \n",
+            stderr);
+    }
+
+    if (ChkMat.Is_heps == false) {
+      fputs("\t \t -> " MAGENTA "[heps]" RESET " : " RED "false" RESET " \n",
+            stderr);
+    }
+
+    if (ChkMat.Is_wcrit == false) {
+      fputs("\t \t -> " MAGENTA "[wcrit]" RESET " : " RED "false" RESET " \n",
+            stderr);
+    }
+  }
 }
 
 /**********************************************************************/

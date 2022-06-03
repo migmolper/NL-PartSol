@@ -32,6 +32,7 @@
 #include "Constitutive/Plasticity/Elastoplastic-Tangent-Matrix.h"
 #include "Constitutive/Fracture/Beps.h"
 #include "Constitutive/Fracture/EigenErosion.h"
+#include "Constitutive/Fracture/EigenSoftening.h"
 // clang-format on
 
 /*******************************************************/
@@ -77,4 +78,15 @@ int stiffness_density__Constitutive__(
 
 /*******************************************************/
 
+/**
+ * @brief 
+ * 
+ * @param p 
+ * @param MPM_Mesh 
+ * @param DeltaX 
+ * @return int 
+ */
+int compute_damage__Constitutive__(unsigned p, Particle MPM_Mesh,
+                                   double DeltaX);
+/*******************************************************/
 #endif
