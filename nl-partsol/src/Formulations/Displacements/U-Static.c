@@ -921,7 +921,7 @@ static bool check_convergence(Matrix Residual, double TOL, int Iter,
     if ((Error > TOL * 100) && (Error_relative > TOL) && (Iter < MaxIter)) {
       return false;
     } else {
-      print_convergence_stats(Step, 10, Iter, Error0, Error, Error_relative);
+      print_convergence_stats(Step, 10, Iter, MaxIter, Error0, Error, Error_relative);
       return true;
     }
   }

@@ -230,19 +230,19 @@ void print_step(int Time, int NumTimeStep, double DeltaTimeStep);
 
 /*****************************************************************/
 
-/*! 
-
-  \fn void print_convergence_stats(int TimeStep,int Iter, double Error_total, double Error_relative)
- 
-  \brief Print number of iterations required.
- 
-  \param Time : Current step of the simulation 
-  \param Iter : Number of iterations required
-  \param Error_total 
-  \param Error_relative
-
+/**
+ * @brief 
+ * 
+ * @param Time Current step of the simulation 
+ * @param NumTimeStep Maximum number of time steps
+ * @param Iter Number of iterations required
+ * @param MaxIter Maximum number of iterations required
+ * @param Error0 Initial error before the newton-raphson
+ * @param Error_total Total error after convergence
+ * @param Error_relative Relative error after convergence
  */
-void print_convergence_stats(int, int, int, double, double, double);
+void print_convergence_stats(int Time, int NumTimeStep, int Iter, int MaxIter, double Error0,
+                             double Error_total, double Error_relative);
 
 /*****************************************************************/
 

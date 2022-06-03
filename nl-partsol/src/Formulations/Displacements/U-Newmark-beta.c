@@ -245,7 +245,7 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
 #endif
     }
 
-    print_convergence_stats(TimeStep, NumTimeStep, Iter, Error_0, Error_i,
+    print_convergence_stats(TimeStep, NumTimeStep, Iter, MaxIter, Error_0, Error_i,
                             Error_relative);
 
     if (Iter > MaxIter) {

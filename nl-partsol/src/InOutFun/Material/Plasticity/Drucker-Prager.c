@@ -317,7 +317,7 @@ static int __check_material(Material *DP_Material, Check_Material ChkMat,
   printf("\t \t -> %s : %f \n", "" MAGENTA "[Kappa-0]" RESET "",
          (*DP_Material).kappa_0);
 
-  printf("\t \t -> %s : %f \n",
+  printf("\t \t -> %s : %e \n",
          "" MAGENTA "[Reference-plastic-strain]" RESET "",
          (*DP_Material).Plastic_Strain_0);
 

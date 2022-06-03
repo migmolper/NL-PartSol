@@ -1637,7 +1637,7 @@ static bool check_convergence(Matrix Residual, double TOL, int Iter,
   if (Error_relative > TOL) {
     return false;
   } else {
-    print_convergence_stats(Step,10, Iter, Error0, Error, Error_relative);
+    print_convergence_stats(Step,10, Iter,10, Error0, Error, Error_relative);
     return true;
   }
 }
