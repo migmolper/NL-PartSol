@@ -159,8 +159,9 @@ int main(int argc, char *argv[]) {
 
 // Initialize OpenMP
 #ifdef USE_OPENMP
-  puts("" GREEN "Initialize OpenMP" RESET " ...");
+  fprintf(stderr,"" GREEN "Initialize OpenMP" RESET " ... ");
   omp_set_num_threads(nthreads > 0 ? nthreads : omp_get_max_threads());
+  fprintf(stderr,"%i cores\n",nthreads);
 #endif
 
   // Initialize PETSc

@@ -1585,13 +1585,22 @@ __Nodal_Inertial_Forces(double *Residual, double *Lumped_Mass, Nodal_Field U_n,
 #endif
 
 #if NumberDimensions == 2
-  const double b[2] = {gravity_field.Value[0].Fx[TimeStep],
-                       gravity_field.Value[1].Fx[TimeStep]};
+  double b[2] = {0.0, 0.0};
 #else
-  const double b[3] = {gravity_field.Value[0].Fx[TimeStep],
-                       gravity_field.Value[1].Fx[TimeStep],
-                       gravity_field.Value[2].Fx[TimeStep]};
+  double b[3] = {0.0, 0.0, 0.0};
 #endif
+
+if (gravity_field.STATUS == true)
+{
+#if NumberDimensions == 2
+  b[0] = gravity_field.Value[0].Fx[TimeStep];
+  b[1] = gravity_field.Value[1].Fx[TimeStep];
+#else
+  b[0] = gravity_field.Value[0].Fx[TimeStep];
+  b[1] = gravity_field.Value[1].Fx[TimeStep];
+  b[2] = gravity_field.Value[2].Fx[TimeStep];
+#endif
+}
 
 #ifdef USE_PETSC
   VecSetOption(Residual, VEC_IGNORE_NEGATIVE_INDICES, PETSC_TRUE);

@@ -83,15 +83,6 @@ int compute_stiffness_elastoplastic__Constitutive__(double *Stiffness_density,
     return EXIT_FAILURE;
   }
 
-#ifdef DEBUG_MODE
-#if DEBUG_MODE + 0
-  printf("eigval_b_e: [%e, %e] \n", eigval_b_e[0], eigval_b_e[1]);
-  puts("eigvec_b_e: ");
-  printf("%e, %e \n", eigvec_b_e[0], eigvec_b_e[1]);
-  printf("%e, %e \n", eigvec_b_e[2], eigvec_b_e[3]);
-#endif
-#endif
-
   double eigval_T[3] = {0.0, 0.0, 0.0};
 
   STATUS = __eigenvalues_kirchhoff(eigval_T, IO_State.Stress);
@@ -188,14 +179,6 @@ int compute_stiffness_elastoplastic__Constitutive__(double *Stiffness_density,
       }
     }
   }
-
-#ifdef DEBUG_MODE
-#if DEBUG_MODE + 0
-  puts("Stiffness_density_p: ");
-  printf("%e, %e\n", Stiffness_density[0], Stiffness_density[1]);
-  printf("%e, %e\n", Stiffness_density[2], Stiffness_density[3]);
-#endif
-#endif
 
   return EXIT_SUCCESS;
 }
