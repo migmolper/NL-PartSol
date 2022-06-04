@@ -67,11 +67,16 @@ int main(int argc, char *argv[]) {
   bool If_f_option = false;
   bool If_ff_option = false;
   int INFO_GramsSolid = 3;
-  unsigned nthreads = 1;
   int STATUS = EXIT_SUCCESS;
   Mesh FEM_Mesh;
   Particle MPM_Mesh;
   Time_Int_Params Parameters_Solver;
+
+  // OpenMP variables
+#ifdef USE_OPENMP
+  unsigned reqNumThreads = 1;
+  const int maxNumThreads = omp_get_max_threads();
+#endif
 
   // Default value for optional modulus
   Driver_EigenErosion = false;
@@ -122,7 +127,7 @@ int main(int argc, char *argv[]) {
 #ifdef USE_OPENMP
     if (strcmp(argv[i], "--OPENMP-CORES") == 0) {
       i++;
-      nthreads = atoi(argv[i]);
+      reqNumThreads = atoi(argv[i]);
     }
 #endif
 
@@ -159,9 +164,10 @@ int main(int argc, char *argv[]) {
 
 // Initialize OpenMP
 #ifdef USE_OPENMP
-  fprintf(stderr,"" GREEN "Initialize OpenMP" RESET " ... ");
-  omp_set_num_threads(nthreads > 0 ? nthreads : omp_get_max_threads());
-  fprintf(stderr,"%i cores\n",nthreads);
+  fprintf(stderr,"" GREEN "Initialize OpenMP" RESET " ... \n");
+  fprintf(stderr,"\t -> cores requested : %i \n",reqNumThreads);    
+  fprintf(stderr,"\t -> cores availables : %i \n",maxNumThreads);    
+  omp_set_num_threads(IMIN(maxNumThreads,reqNumThreads));
 #endif
 
   // Initialize PETSc
