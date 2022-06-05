@@ -165,8 +165,8 @@ int main(int argc, char *argv[]) {
 // Initialize OpenMP
 #ifdef USE_OPENMP
   fprintf(stderr,"" GREEN "Initialize OpenMP" RESET " ... \n");
-  fprintf(stderr,"\t -> cores requested : %i \n",reqNumThreads);    
-  fprintf(stderr,"\t -> cores availables : %i \n",maxNumThreads);    
+  fprintf(stderr,"\t -> Threads requested : %i \n",reqNumThreads);    
+  fprintf(stderr,"\t -> Threads availables : %i \n",maxNumThreads);    
   omp_set_num_threads(IMIN(maxNumThreads,reqNumThreads));
 #endif
 
