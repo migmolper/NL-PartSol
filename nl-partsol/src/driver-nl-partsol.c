@@ -132,6 +132,7 @@ int main(int argc, char *argv[]) {
 #endif
 
     if (strcmp(argv[i], "--Print-Convergence") == 0) {
+      puts("" GREEN "Print convergence activated" RESET " ...");
       Flag_Print_Convergence = true;
     }
 
