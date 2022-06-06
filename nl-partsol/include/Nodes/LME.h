@@ -94,16 +94,14 @@ Matrix p__LME__(Matrix, Matrix, double);
 Matrix dp__LME__(Matrix, Matrix);
 /****************************************************************************/
 
-/*!
-
- \fn void local_search__LME__(Particle MPM_Mesh, Mesh FEM_Mesh)
-
-  \brief Compute the local search for the LME (update to reduce the number of computational nodes)
-
-  \param MPM_Mesh : Variable with the particle information
-  \param FEM_Mesh : Variable wih information of the background set of nodes
-*/
-void local_search__LME__(Particle, Mesh);
+/**
+ * @brief Compute the local search for the LME (update to reduce the number of computational nodes)
+ * 
+ * @param MPM_Mesh Variable with the particle information
+ * @param FEM_Mesh Variable wih information of the background set of nodes
+ * @return int 
+ */
+int local_search__LME__(Particle MPM_Mesh, Mesh FEM_Mesh);
 /****************************************************************************/
 
 #endif

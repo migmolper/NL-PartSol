@@ -88,7 +88,13 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
     DoProgress("Simulation:", TimeStep, NumTimeStep);
 
     //! Local search and compute list of active nodes and dofs
-    local_search__MeshTools__(MPM_Mesh, FEM_Mesh);
+    STATUS = local_search__MeshTools__(MPM_Mesh, FEM_Mesh);
+    if (STATUS == EXIT_FAILURE) {
+      fprintf(stderr, "" RED " Error in " RESET "" BOLDRED
+                      "local_search__MeshTools__() " RESET " \n");
+      return EXIT_FAILURE;
+    }
+
     ActiveNodes = get_active_nodes__MeshTools__(FEM_Mesh);
     Nactivenodes = ActiveNodes.Nactivenodes;
     Ntotaldofs = Ndim * Nactivenodes;
