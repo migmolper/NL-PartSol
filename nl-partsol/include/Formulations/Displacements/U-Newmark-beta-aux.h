@@ -105,6 +105,16 @@ static void __local_projection_acceleration(double *A_N_m_IP,
                                             double m__x__ShapeFunction_pA);
 /**************************************************************/
 
+static void __local_projection_increment_displacement(
+    double *DU_N_m_IP, const double *vel_p, const double *acc_p,
+    double m__x__ShapeFunction_pA, double DeltaTimeStep);
+/**************************************************************/
+
+static void __local_projection_increment_velocity(
+    double *DV_N_m_IP, const double *acc_p,
+    double m__x__ShapeFunction_pA, double DeltaTimeStep);    
+/**************************************************************/
+
 static void __get_assembling_locations_nodal_kinetics(int *Mask_active_dofs_A,
                                                       int Mask_node_A,
                                                       Mask ActiveDOFs);
@@ -135,13 +145,28 @@ static Nodal_Field __get_nodal_field_tn(double *Lumped_Mass, Particle MPM_Mesh,
 #endif
 /**************************************************************/
 
-/*!
-
-*/
-static Nodal_Field __initialise_nodal_increments(Nodal_Field U_n, Mesh FEM_Mesh,
-                                                 Mask ActiveNodes,
-                                                 Newmark_parameters Params,
-                                                 int *STATUS);
+/**
+ * @brief
+ *
+ * @param Lumped_Mass
+ * @param MPM_Mesh
+ * @param FEM_Mesh
+ * @param U_n
+ * @param ActiveNodes
+ * @param ActiveDOFs
+ * @param Params
+ * @param STATUS
+ * @return Nodal_Field
+ */
+#ifdef USE_PETSC
+static Nodal_Field __initialise_nodal_increments(
+    Vec Lumped_Mass, Particle MPM_Mesh, Mesh FEM_Mesh, Nodal_Field U_n,
+    Mask ActiveNodes, Mask ActiveDOFs, Newmark_parameters Params, int *STATUS);
+#else
+Nodal_Field __initialise_nodal_increments(
+    double *Lumped_Mass, Particle MPM_Mesh, Mesh FEM_Mesh, Nodal_Field U_n,
+    Mask ActiveNodes, Mask ActiveDOFs, Newmark_parameters Params, int *STATUS);
+#endif
 /**************************************************************/
 
 /*!

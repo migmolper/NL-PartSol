@@ -4,9 +4,9 @@
  * @brief Incremental Newmark-beta (finite strains)
  * @version 0.1
  * @date 2022-05-18
- * 
+ *
  * @copyright Copyright (c) 2022
- * 
+ *
  */
 
 #ifndef _U_NEWMARK_BETA_H_
@@ -45,7 +45,6 @@
 #ifdef USE_PETSC
 #include "petscviewerhdf5.h"
 #endif
-
 
 /*!
   \brief Finite strains Newmark-beta

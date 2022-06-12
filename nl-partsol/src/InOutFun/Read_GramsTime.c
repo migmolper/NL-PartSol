@@ -248,6 +248,7 @@ static Time_Int_Params Initialise_Parameters() {
   Parameters.beta_Newmark_beta = 0.25;
   Parameters.gamma_Newmark_beta = 0.5;
   Parameters.TOL_Newmark_beta = 1E-10;
+  Parameters.Use_explicit_trial = true;
   Parameters.MaxIter = 10;
 
   return Parameters;

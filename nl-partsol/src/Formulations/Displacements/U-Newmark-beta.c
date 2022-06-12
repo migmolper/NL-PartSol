@@ -5,6 +5,7 @@
 unsigned InitialStep;
 unsigned NumTimeStep;
 unsigned TimeStep;
+bool Use_explicit_trial;
 
 /**************************************************************/
 
@@ -27,6 +28,7 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
   InitialStep = Parameters_Solver.InitialTimeStep;
   NumTimeStep = Parameters_Solver.NumTimeStep;
   TimeStep = InitialStep;
+  Use_explicit_trial = Parameters_Solver.Use_explicit_trial;
 
   double TOL = Parameters_Solver.TOL_Newmark_beta;
   double epsilon = Parameters_Solver.epsilon_Mass_Matrix;
@@ -124,12 +126,28 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
     }
 
     //! Compute kinematic nodal values
-    D_U = __initialise_nodal_increments(U_n, FEM_Mesh, ActiveNodes,
+    D_U = __initialise_nodal_increments(Lumped_Mass, MPM_Mesh, FEM_Mesh, U_n,
+                                        ActiveNodes, ActiveDOFs,
                                         Time_Integration_Params, &STATUS);
     if (STATUS == EXIT_FAILURE) {
       fprintf(stderr,
               "" RED "Error in __initialise_nodal_increments()" RESET " \n");
       return EXIT_FAILURE;
+    }
+
+    //! Trial local comptatibility
+    if (Use_explicit_trial == true) {
+      __update_Nodal_Increments(Residual, D_U, U_n, ActiveDOFs,
+                                Time_Integration_Params, Ntotaldofs);
+
+      __local_compatibility_conditions(D_U, ActiveNodes, MPM_Mesh, FEM_Mesh,
+                                       &STATUS);
+      if (STATUS == EXIT_FAILURE) {
+        fprintf(stderr,
+                "" RED "Error in __local_compatibility_conditions()" RESET
+                " \n");
+        return EXIT_FAILURE;
+      }
     }
 
     //! Trial constitutive
@@ -569,6 +587,47 @@ static void __local_projection_acceleration(double *A_N_m_IP,
 
 /**************************************************************/
 
+static void __local_projection_increment_displacement(
+    double *DU_N_m_IP, const double *vel_p, const double *acc_p,
+    double m__x__ShapeFunction_pA, double DeltaTimeStep) {
+#if NumberDimensions == 2
+  DU_N_m_IP[0] =
+      m__x__ShapeFunction_pA *
+      (DeltaTimeStep * vel_p[0] + 0.5 * DSQR(DeltaTimeStep) * acc_p[0]);
+  DU_N_m_IP[1] =
+      m__x__ShapeFunction_pA *
+      (DeltaTimeStep * vel_p[1] + 0.5 * DSQR(DeltaTimeStep) * acc_p[1]);
+#else
+  DU_N_m_IP[0] =
+      m__x__ShapeFunction_pA *
+      (DeltaTimeStep * vel_p[0] + 0.5 * DSQR(DeltaTimeStep) * acc_p[0]);
+  DU_N_m_IP[1] =
+      m__x__ShapeFunction_pA *
+      (DeltaTimeStep * vel_p[1] + 0.5 * DSQR(DeltaTimeStep) * acc_p[1]);
+  DU_N_m_IP[2] =
+      m__x__ShapeFunction_pA *
+      (DeltaTimeStep * vel_p[2] + 0.5 * DSQR(DeltaTimeStep) * acc_p[2]);
+#endif
+}
+
+/**************************************************************/
+
+static void __local_projection_increment_velocity(double *DV_N_m_IP,
+                                                  const double *acc_p,
+                                                  double m__x__ShapeFunction_pA,
+                                                  double DeltaTimeStep) {
+#if NumberDimensions == 2
+  DV_N_m_IP[0] = m__x__ShapeFunction_pA * 0.5 * DeltaTimeStep * acc_p[0];
+  DV_N_m_IP[1] = m__x__ShapeFunction_pA * 0.5 * DeltaTimeStep * acc_p[1];
+#else
+  DV_N_m_IP[0] = m__x__ShapeFunction_pA * 0.5 * DeltaTimeStep * acc_p[0];
+  DV_N_m_IP[1] = m__x__ShapeFunction_pA * 0.5 * DeltaTimeStep * acc_p[1];
+  DV_N_m_IP[2] = m__x__ShapeFunction_pA * 0.5 * DeltaTimeStep * acc_p[2];
+#endif
+}
+
+/**************************************************************/
+
 static void __get_assembling_locations_nodal_kinetics(int *Mask_active_dofs_A,
                                                       int Mask_node_A,
                                                       Mask ActiveDOFs) {
@@ -826,18 +885,24 @@ static Nodal_Field __get_nodal_field_tn(double *Lumped_Mass, Particle MPM_Mesh,
 
 /**************************************************************/
 
-static Nodal_Field
-__initialise_nodal_increments(Nodal_Field U_n, Mesh FEM_Mesh, Mask ActiveNodes,
-                              Newmark_parameters Params, int *STATUS)
-/*
-  Apply the boundary conditions over the nodes
-*/
+#ifdef USE_PETSC
+static Nodal_Field __initialise_nodal_increments(
+    Vec Lumped_Mass, Particle MPM_Mesh, Mesh FEM_Mesh, Nodal_Field U_n,
+    Mask ActiveNodes, Mask ActiveDOFs, Newmark_parameters Params, int *STATUS)
+#else
+Nodal_Field __initialise_nodal_increments(
+    double *Lumped_Mass, Particle MPM_Mesh, Mesh FEM_Mesh, Nodal_Field U_n,
+    Mask ActiveNodes, Mask ActiveDOFs, Newmark_parameters Params, int *STATUS)
+#endif
 {
   unsigned NumNodesBound;
   unsigned Ndim = NumberDimensions;
+  unsigned Np = MPM_Mesh.NumGP;
+  unsigned NumberNodes_p;
   unsigned NumBounds = FEM_Mesh.Bounds.NumBounds;
   unsigned Nactivenodes = ActiveNodes.Nactivenodes;
   unsigned Ntotaldofs = Ndim * Nactivenodes;
+  unsigned p;
   int Id_BCC;
   int Id_BCC_mask;
 
@@ -853,6 +918,7 @@ __initialise_nodal_increments(Nodal_Field U_n, Mesh FEM_Mesh, Mask ActiveNodes,
   VecSetFromOptions(D_U.value);
   VecSetFromOptions(D_U.d_value_dt);
   VecSetFromOptions(D_U.d2_value_dt2);
+  VecSetOption(D_U.value, VEC_IGNORE_NEGATIVE_INDICES, PETSC_TRUE);
   const PetscScalar *Un_dt;
   VecGetArrayRead(U_n.d_value_dt, &Un_dt);
   const PetscScalar *Un_dt2;
@@ -870,12 +936,91 @@ __initialise_nodal_increments(Nodal_Field U_n, Mesh FEM_Mesh, Mask ActiveNodes,
   const double *Un_dt2 = U_n.d2_value_dt2;
 #endif
 
-  double alpha_1 = Params.alpha_1;
-  double alpha_2 = Params.alpha_2;
-  double alpha_3 = Params.alpha_3;
-  double alpha_4 = Params.alpha_4;
-  double alpha_5 = Params.alpha_5;
-  double alpha_6 = Params.alpha_6;
+  const double alpha_1 = Params.alpha_1;
+  const double alpha_2 = Params.alpha_2;
+  const double alpha_3 = Params.alpha_3;
+  const double alpha_4 = Params.alpha_4;
+  const double alpha_5 = Params.alpha_5;
+  const double alpha_6 = Params.alpha_6;
+  const double DeltaTimeStep = Params.DeltaTimeStep;
+
+  /**
+   * Initialize the values of the nodal increment using
+   * an approximation based on the explicit-predictor, else
+   * keep the vector as zero.
+   */
+  if (Use_explicit_trial == true) {
+
+#if NumberDimensions == 2
+    int Mask_active_dofs_A[2];
+    double DU_N_m_IP[2];
+#else
+    int Mask_active_dofs_A[3];
+    double DU_N_m_IP[3];
+#endif
+
+#pragma omp parallel private(NumberNodes_p)
+    {
+
+#pragma omp for private(p, DU_N_m_IP, Mask_active_dofs_A)
+      for (p = 0; p < Np; p++) {
+
+        /* Define element of the particle */
+        NumberNodes_p = MPM_Mesh.NumberNodes[p];
+        Element Nodes_p =
+            nodal_set__Particles__(p, MPM_Mesh.ListNodes[p], NumberNodes_p);
+        Matrix ShapeFunction_p =
+            compute_N__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
+
+        //! Get the mass, velocity and acceleration of the GP
+        double m_p = MPM_Mesh.Phi.mass.nV[p];
+        const double *vel_p = &MPM_Mesh.Phi.vel.nV[p * Ndim];
+        const double *acc_p = &MPM_Mesh.Phi.acc.nV[p * Ndim];
+
+        for (unsigned A = 0; A < NumberNodes_p; A++) {
+
+          //  Get the node in the nodal momentum with the mask
+          unsigned Ap = Nodes_p.Connectivity[A];
+          int Mask_node_A = ActiveNodes.Nodes2Mask[Ap];
+          double ShapeFunction_pA = ShapeFunction_p.nV[A];
+          double m__x__ShapeFunction_pA = m_p * ShapeFunction_pA;
+
+          __local_projection_increment_displacement(
+              DU_N_m_IP, vel_p, acc_p, m__x__ShapeFunction_pA, DeltaTimeStep);
+
+          __get_assembling_locations_nodal_kinetics(Mask_active_dofs_A,
+                                                    Mask_node_A, ActiveDOFs);
+
+#pragma omp critical
+          {
+#ifdef USE_PETSC
+            VecSetValues(D_U.value, Ndim, Mask_active_dofs_A, DU_N_m_IP,
+                         ADD_VALUES);
+#else
+            VecSetValues(D_U.value, Ndim, Mask_active_dofs_A, DU_N_m_IP);
+#endif
+          } // #pragma omp critical
+        }   // for A
+
+        free__MatrixLib__(ShapeFunction_p);
+        free(Nodes_p.Connectivity);
+
+      } // for p
+
+    } // #pragma omp parallel
+
+#ifdef USE_PETSC
+    VecPointwiseDivide(D_U.value, D_U.value, Lumped_Mass);
+#else
+    unsigned idx;
+#pragma omp for private(idx)
+    for (idx = 0; idx < Ntotaldofs; idx++) {
+      if (ActiveDOFs.Nodes2Mask[idx] != -1) {
+        D_U.value[idx] *= 1.0 / Lumped_Mass[idx];
+      }
+    } // for idx
+#endif
+  } // Use_explicit_trial
 
   double D_U_value_It;
 
@@ -928,8 +1073,8 @@ __initialise_nodal_increments(Nodal_Field U_n, Mesh FEM_Mesh, Mask ActiveNodes,
   VecAssemblyEnd(D_U.d_value_dt);
   VecAssemblyBegin(D_U.d2_value_dt2);
   VecAssemblyEnd(D_U.d2_value_dt2);
-//  VecRestoreArrayRead(U_n.d_value_dt, &Un_dt);
-//  VecRestoreArrayRead(U_n.d2_value_dt2, &Un_dt2);
+  VecRestoreArrayRead(U_n.d_value_dt, &Un_dt);
+  VecRestoreArrayRead(U_n.d2_value_dt2, &Un_dt2);
 #endif
 
   return D_U;
@@ -1596,17 +1741,16 @@ __Nodal_Inertial_Forces(double *Residual, double *Lumped_Mass, Nodal_Field U_n,
   double b[3] = {0.0, 0.0, 0.0};
 #endif
 
-if (gravity_field.STATUS == true)
-{
+  if (gravity_field.STATUS == true) {
 #if NumberDimensions == 2
-  b[0] = gravity_field.Value[0].Fx[TimeStep];
-  b[1] = gravity_field.Value[1].Fx[TimeStep];
+    b[0] = gravity_field.Value[0].Fx[TimeStep];
+    b[1] = gravity_field.Value[1].Fx[TimeStep];
 #else
-  b[0] = gravity_field.Value[0].Fx[TimeStep];
-  b[1] = gravity_field.Value[1].Fx[TimeStep];
-  b[2] = gravity_field.Value[2].Fx[TimeStep];
+    b[0] = gravity_field.Value[0].Fx[TimeStep];
+    b[1] = gravity_field.Value[1].Fx[TimeStep];
+    b[2] = gravity_field.Value[2].Fx[TimeStep];
 #endif
-}
+  }
 
 #ifdef USE_PETSC
   VecSetOption(Residual, VEC_IGNORE_NEGATIVE_INDICES, PETSC_TRUE);
@@ -1622,8 +1766,8 @@ if (gravity_field.STATUS == true)
 
       if (Is_compute_Residual == true) {
 
-      R_Ai = M_II[idx] * (alpha_1 * dU[idx] - alpha_2 * Un_dt[idx] -
-                                 alpha_3 * Un_dt2[idx] - b[idx % Ndim]);
+        R_Ai = M_II[idx] * (alpha_1 * dU[idx] - alpha_2 * Un_dt[idx] -
+                            alpha_3 * Un_dt2[idx] - b[idx % Ndim]);
 
 #ifdef USE_PETSC
         VecSetValues(Residual, 1, &Mask_active_dof_Ai, &R_Ai, ADD_VALUES);
@@ -1632,7 +1776,7 @@ if (gravity_field.STATUS == true)
 #endif
       } else if (Is_compute_Reactions == true) {
 
-      R_Ai = - b[idx % Ndim];
+        R_Ai = -b[idx % Ndim];
 
 #ifdef USE_PETSC
         VecSetValues(Residual, 1, &idx, &R_Ai, ADD_VALUES);
