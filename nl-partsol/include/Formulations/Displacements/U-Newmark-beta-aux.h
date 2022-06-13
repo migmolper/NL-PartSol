@@ -108,11 +108,7 @@ static void __local_projection_acceleration(double *A_N_m_IP,
 static void __local_projection_increment_displacement(
     double *DU_N_m_IP, const double *vel_p, const double *acc_p,
     double m__x__ShapeFunction_pA, double DeltaTimeStep);
-/**************************************************************/
 
-static void __local_projection_increment_velocity(
-    double *DV_N_m_IP, const double *acc_p,
-    double m__x__ShapeFunction_pA, double DeltaTimeStep);    
 /**************************************************************/
 
 static void __get_assembling_locations_nodal_kinetics(int *Mask_active_dofs_A,
@@ -461,6 +457,20 @@ static void __assemble_tangent_stiffness(double *Tangent_Stiffness,
                                          unsigned Iter, int *STATUS);
 #endif
 /**************************************************************/
+
+/**
+ * @brief 
+ * 
+ * @param D_U Nodal incremented (displacement,velocity,acceleration)
+ * @param U_n Previously converged nodal kinetics
+ * @param ActiveDOFs List of dofs which takes place in the computation
+ * @param Params Time integration parameters
+ * @param Ntotaldofs Number of dofs
+ */
+static void __trial_Nodal_Increments(Nodal_Field D_U,
+                                      Nodal_Field U_n, Mask ActiveDOFs,
+                                      Newmark_parameters Params,
+                                      unsigned Ntotaldofs);
 
 /*!
   \brief This function takes the nodal increments comming from \n

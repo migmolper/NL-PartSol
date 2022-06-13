@@ -137,8 +137,9 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
 
     //! Trial local comptatibility
     if (Use_explicit_trial == true) {
-      __update_Nodal_Increments(Residual, D_U, U_n, ActiveDOFs,
-                                Time_Integration_Params, Ntotaldofs);
+
+      __trial_Nodal_Increments(D_U, U_n, ActiveDOFs, Time_Integration_Params,
+                               Ntotaldofs);
 
       __local_compatibility_conditions(D_U, ActiveNodes, MPM_Mesh, FEM_Mesh,
                                        &STATUS);
@@ -612,22 +613,6 @@ static void __local_projection_increment_displacement(
 
 /**************************************************************/
 
-static void __local_projection_increment_velocity(double *DV_N_m_IP,
-                                                  const double *acc_p,
-                                                  double m__x__ShapeFunction_pA,
-                                                  double DeltaTimeStep) {
-#if NumberDimensions == 2
-  DV_N_m_IP[0] = m__x__ShapeFunction_pA * 0.5 * DeltaTimeStep * acc_p[0];
-  DV_N_m_IP[1] = m__x__ShapeFunction_pA * 0.5 * DeltaTimeStep * acc_p[1];
-#else
-  DV_N_m_IP[0] = m__x__ShapeFunction_pA * 0.5 * DeltaTimeStep * acc_p[0];
-  DV_N_m_IP[1] = m__x__ShapeFunction_pA * 0.5 * DeltaTimeStep * acc_p[1];
-  DV_N_m_IP[2] = m__x__ShapeFunction_pA * 0.5 * DeltaTimeStep * acc_p[2];
-#endif
-}
-
-/**************************************************************/
-
 static void __get_assembling_locations_nodal_kinetics(int *Mask_active_dofs_A,
                                                       int Mask_node_A,
                                                       Mask ActiveDOFs) {
@@ -1078,6 +1063,74 @@ Nodal_Field __initialise_nodal_increments(
 #endif
 
   return D_U;
+}
+
+/**************************************************************/
+
+static void __trial_Nodal_Increments(Nodal_Field D_U, Nodal_Field U_n,
+                                     Mask ActiveDOFs, Newmark_parameters Params,
+                                     unsigned Ntotaldofs) {
+  unsigned Mask_total_dof_Ai;
+  int Mask_active_dof_Ai;
+  double alpha_1 = Params.alpha_1;
+  double alpha_2 = Params.alpha_2;
+  double alpha_3 = Params.alpha_3;
+  double alpha_4 = Params.alpha_4;
+  double alpha_5 = Params.alpha_5;
+  double alpha_6 = Params.alpha_6;
+
+#ifdef USE_PETSC
+  const PetscScalar *Un_dt;
+  VecGetArrayRead(U_n.d_value_dt, &Un_dt);
+  const PetscScalar *Un_dt2;
+  VecGetArrayRead(U_n.d2_value_dt2, &Un_dt2);
+  PetscScalar *dU;
+  VecGetArray(D_U.value, &dU);
+  PetscScalar *dU_dt;
+  VecGetArray(D_U.d_value_dt, &dU_dt);
+  PetscScalar *dU_dt2;
+  VecGetArray(D_U.d2_value_dt2, &dU_dt2);
+#else
+  const double *aux_Residual = Residual;
+  const double *Un_dt = U_n.d_value_dt;
+  const double *Un_dt2 = U_n.d2_value_dt2;
+  double *dU = D_U.value;
+  double *dU_dt = D_U.d_value_dt;
+  double *dU_dt2 = D_U.d2_value_dt2;
+#endif
+
+#pragma omp for private(Mask_total_dof_Ai, Mask_active_dof_Ai)
+  for (Mask_total_dof_Ai = 0; Mask_total_dof_Ai < Ntotaldofs;
+       Mask_total_dof_Ai++) {
+
+    Mask_active_dof_Ai = ActiveDOFs.Nodes2Mask[Mask_total_dof_Ai];
+
+    if (Mask_active_dof_Ai == -1) {
+
+      dU_dt2[Mask_total_dof_Ai] = 0.0;
+
+      dU_dt[Mask_total_dof_Ai] = alpha_4 * dU[Mask_total_dof_Ai] +
+                                 (alpha_5 - 1) * Un_dt[Mask_total_dof_Ai] +
+                                 alpha_6 * Un_dt2[Mask_total_dof_Ai];
+
+    } else {
+      dU_dt2[Mask_total_dof_Ai] = alpha_1 * dU[Mask_total_dof_Ai] -
+                                  alpha_2 * Un_dt[Mask_total_dof_Ai] -
+                                  (alpha_3 + 1) * Un_dt2[Mask_total_dof_Ai];
+
+      dU_dt[Mask_total_dof_Ai] = alpha_4 * dU[Mask_total_dof_Ai] +
+                                 (alpha_5 - 1) * Un_dt[Mask_total_dof_Ai] +
+                                 alpha_6 * Un_dt2[Mask_total_dof_Ai];
+    } // if Mask_active_dof_Ai == -1)
+  }   // #pragma omp for private (Mask_total_dof_Ai)
+
+#ifdef USE_PETSC
+  VecRestoreArrayRead(U_n.d_value_dt, &Un_dt);
+  VecRestoreArrayRead(U_n.d2_value_dt2, &Un_dt2);
+  VecRestoreArray(D_U.value, &dU);
+  VecRestoreArray(D_U.d_value_dt, &dU_dt);
+  VecRestoreArray(D_U.d2_value_dt2, &dU_dt2);
+#endif
 }
 
 /**************************************************************/
