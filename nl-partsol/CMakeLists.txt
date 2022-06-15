@@ -37,29 +37,35 @@ target_link_libraries(${PROJECT_NAME} m)
 find_package(PkgConfig REQUIRED)
 
 # Add LAPACK
-find_package(LAPACK REQUIRED)
-if(LAPACK_FOUND)
-  message("Found Lapack")
-  target_link_libraries(${PROJECT_NAME} ${LAPACK_LIBRARIES})
+if (USE_LAPACK)
+  find_package(LAPACK REQUIRED)
+  
+  if(LAPACK_FOUND)
+    target_link_libraries(${PROJECT_NAME} -llapacke -llapack -lblas)
+    add_definitions("-DUSE_LAPACK")
+  endif()
+
 endif()
 
 # Add OpenMP
 if (USE_OPENMP)
   find_package(OpenMP REQUIRED)
-endif()
-if (OPENMP_FOUND)
-  message("Found OpenMP")
-  target_link_libraries(${PROJECT_NAME} OpenMP::OpenMP_C)
-  add_definitions("-DUSE_OPENMP")
+
+  if (OPENMP_FOUND)
+    target_link_libraries(${PROJECT_NAME} OpenMP::OpenMP_C)
+    add_definitions("-DUSE_OPENMP")
+  endif()
+
 endif()
 
 # Add PETSC
 if (USE_PETSC)
   pkg_search_module(PETSC REQUIRED IMPORTED_TARGET PETSc)
-endif()
-if (PETSC_FOUND)
-  message("Found PETSc")
-  target_link_libraries(${PROJECT_NAME} PkgConfig::PETSC)
-  add_definitions("-DUSE_PETSC")
+  
+  if (PETSC_FOUND)
+    target_link_libraries(${PROJECT_NAME} PkgConfig::PETSC)
+    add_definitions("-DUSE_PETSC")
+  endif()
+
 endif()
  

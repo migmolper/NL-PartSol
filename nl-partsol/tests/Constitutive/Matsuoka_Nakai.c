@@ -377,7 +377,7 @@ static int __reciprocal_condition_number(
     double *RCOND /**< [out] Condition number of the tangent matrix */,
     double *Tangent_Matrix /**< [in/out] Tangent matrix of the problem */);
 
-int compute_1PK_Matsuoka_Nakai(State_Parameters IO_State, Material MatProp);
+int compute_Kirchhoff_Stress_Matsuoka_Nakai__Constitutive__(State_Parameters IO_State, Material MatProp);
 
 /**************************************************************/
 /******************** Solver Parameters ***********************/
@@ -502,7 +502,7 @@ int main() {
 #endif
 
     // Run solver
-    STATUS = compute_1PK_Matsuoka_Nakai(IO_State, MatProp);
+    STATUS = compute_Kirchhoff_Stress_Matsuoka_Nakai__Constitutive__(IO_State, MatProp);
 
     if (STATUS) {
       fprintf(stderr, "Failure\n");
@@ -583,7 +583,7 @@ int main() {
 
 /**************************************************************/
 
-int compute_1PK_Matsuoka_Nakai(State_Parameters IO_State, Material MatProp)
+int compute_Kirchhoff_Stress_Matsuoka_Nakai__Constitutive__(State_Parameters IO_State, Material MatProp)
 /*
   Monolithic algorithm for a smooth Mohr-Coulomb plastic criterium
 */

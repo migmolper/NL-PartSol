@@ -1,5 +1,13 @@
+// clang-format off
+#include <stdlib.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include <string.h>
 #include <math.h>
-#include "nl-partsol.h"
+#include "Macros.h"
+#include "Types.h"
+#include "Matlib.h"
+// clang-format on
 
 /* List of solver implemented :
    - Newton_Rapson

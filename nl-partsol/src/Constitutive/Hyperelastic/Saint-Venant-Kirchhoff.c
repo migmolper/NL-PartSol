@@ -1,4 +1,16 @@
+/**
+ * @file Saint-Venant-Kirchhoff.c
+ * @author Miguel Molinos (@migmolper)
+ * @brief 
+ * @version 0.1
+ * @date 2022-05-25
+ * 
+ * @copyright Copyright (c) 2022
+ * 
+ */
+
 #include "Constitutive/Hyperelastic/Saint-Venant-Kirchhoff.h"
+#include "Globals.h"
 
 /**************************************************************/
 
@@ -10,11 +22,11 @@ double energy_Saint_Venant_Kirchhoff(Tensor C, Material MatProp_p) {
   double G = ElasticModulus / (2 * (1 + nu));
 
   Tensor E = strain_Green_Lagrange__Particles__(C);
-  double I1_E = I1__TensorLib__(E);
+//  double I1_E = I1__TensorLib__(E);
 
-  double W = 0.5 * lambda * I1_E * I1_E + G * inner_product__TensorLib__(E, E);
+  double W;// = 0.5 * lambda * I1_E * I1_E + G * inner_product__TensorLib__(E, E);
 
-  free__TensorLib__(E);
+//  free__TensorLib__(E);
 
   return W;
 }
@@ -22,7 +34,7 @@ double energy_Saint_Venant_Kirchhoff(Tensor C, Material MatProp_p) {
 /**************************************************************/
 
 State_Parameters
-compute_1PK_Stress_Tensor_Saint_Venant_Kirchhoff(State_Parameters Intput_SP,
+compute_Kirchhoff_Stress_Saint_Venant__Constitutive__(State_Parameters Intput_SP,
                                                  Material MatProp_p) {
   /* Number of dimensions */
   int Ndim = NumberDimensions;
@@ -48,7 +60,7 @@ compute_1PK_Stress_Tensor_Saint_Venant_Kirchhoff(State_Parameters Intput_SP,
   Tensor Ft = transpose__TensorLib__(F);
   Tensor Ft_x_F = matrix_product_old__TensorLib__(Ft, F);
   Tensor F_x_Ft_x_F = matrix_product_old__TensorLib__(F, Ft_x_F);
-  double tr__Ft_x_F = I1__TensorLib__(Ft_x_F);
+  double tr__Ft_x_F;// = I1__TensorLib__(Ft_x_F);
 
   for (int i = 0; i < Ndim; i++) {
     for (int j = 0; j < Ndim; j++) {
@@ -92,7 +104,7 @@ Tensor grad_energy_Saint_Venant_Kirchhoff(Tensor grad_e, Tensor C,
   double nu = MatProp_p.nu;
   double lambda = nu * ElasticModulus / ((1 - nu * 2) * (1 + nu));
   double G = ElasticModulus / (2 * (1 + nu));
-  double trE = I1__TensorLib__(E);
+  double trE;// = I1__TensorLib__(E);
 
   for (int i = 0; i < Ndim; i++) {
     for (int j = 0; j < Ndim; j++) {

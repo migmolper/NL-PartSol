@@ -1,3 +1,4 @@
+// clang-format off
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/stat.h>
@@ -9,21 +10,18 @@
 #include "Matlib.h"
 #include "Particles.h"
 #include "InOutFun.h"
-
-// Shape functions and auxilar tools
 #include "Nodes/Nodes-Tools.h"
 #include "Nodes/Shape-Functions.h"
 #include "Nodes/Read-GID-Mesh.h"
-
 #include "Formulations/Displacements/U-Analisys.h"
 #include "Formulations/Displacements-Pressure/U-p-Analisys.h"
+// clang-format on
 
 /*
   Call global variables
 */
-char *MPM_MeshFileName;
-
-double Thickness_Plain_Stress; // For 2D cases
+extern char *MPM_MeshFileName;
+extern double Thickness_Plain_Stress; // For 2D cases
 
 typedef struct {
   bool Is_One_Phase_Analysis;
@@ -66,16 +64,17 @@ static char Error_message[MAXW];
 static Simulation_Key_Words Check_Simulation_Key_Words(char *);
 static Mesh_Parameters Read_Mesh_Parameters(char *);
 static int *assign_material_to_particles(char *, int, int, int);
-static void initialise_particles(Mesh, Particle, int);
+static void initialise_particles(Mesh, Particle *, int);
 static void Check_File(char *);
 static void standard_error();
 static FILE *Open_and_Check_simulation_file(char *);
 
 /*********************************************************************/
 
-Particle
-Generate_One_Phase_Analysis__InOutFun__(char *Name_File, Mesh FEM_Mesh,
-                                        Time_Int_Params Parameters_Solver) {
+int Generate_One_Phase_Analysis__InOutFun__(Particle *MPM_Mesh, char *Name_File,
+                                            Mesh FEM_Mesh,
+                                            Time_Int_Params Parameters_Solver) {
+  int STATUS = EXIT_SUCCESS;
   int Ndim = NumberDimensions;
   int NumParticles;
   int status = 0;
@@ -84,7 +83,6 @@ Generate_One_Phase_Analysis__InOutFun__(char *Name_File, Mesh FEM_Mesh,
   int Num_words_parse;
 
   Mesh MPM_GID_Mesh; /* GID mesh to define the material point mesh */
-  Particle MPM_Mesh; /* Material point mesh (Gauss-Points) */
   Simulation_Key_Words Sim_Params; /* Auxiliar varible to check key words */
   Mesh_Parameters Msh_Parms; /* Auxiliar variable to read mesh parameters */
 
@@ -99,9 +97,22 @@ Generate_One_Phase_Analysis__InOutFun__(char *Name_File, Mesh FEM_Mesh,
   */
   printf(" \t %s \n", "* Read materials properties :");
   if (Sim_Params.Is_Materials) {
-    MPM_Mesh.NumberMaterials = Sim_Params.Counter_Materials;
-    MPM_Mesh.Mat =
-        Read_Materials__InOutFun__(Name_File, MPM_Mesh.NumberMaterials);
+    (*MPM_Mesh).NumberMaterials = Sim_Params.Counter_Materials;
+    (*MPM_Mesh).Mat =
+        (Material *)malloc(Sim_Params.Counter_Materials * sizeof(Material));
+    if ((*MPM_Mesh).Mat == NULL) {
+      fprintf(stderr,
+              "" RED " Error in " RESET "" BOLDRED "malloc() " RESET " \n");
+      return EXIT_FAILURE;
+    }
+
+    STATUS = Read_Materials__InOutFun__((*MPM_Mesh).Mat, Name_File);
+    if (STATUS == EXIT_FAILURE) {
+      fprintf(stderr, "" RED " Error in " RESET "" BOLDRED
+                      "Read_Materials__InOutFun__() " RESET " \n");
+      return EXIT_FAILURE;
+    }
+
   } else {
     sprintf(Error_message, "%s", "No materials were defined");
     standard_error();
@@ -129,32 +140,35 @@ Generate_One_Phase_Analysis__InOutFun__(char *Name_File, Mesh FEM_Mesh,
       Define the number of particles
     */
     NumParticles = Msh_Parms.GPxElement * MPM_GID_Mesh.NumElemMesh;
-    MPM_Mesh.NumGP = NumParticles;
+    (*MPM_Mesh).NumGP = NumParticles;
 
     /*
       Closest node to the particle
     */
-    MPM_Mesh.I0 = (int *)Allocate_ArrayZ(NumParticles, sizeof(int));
+    (*MPM_Mesh).I0 = (int *)Allocate_ArrayZ(NumParticles, sizeof(int));
 
     /*
       Element of the particle
     */
-    MPM_Mesh.Element_p = (int *)Allocate_ArrayZ(NumParticles, sizeof(int));
+    (*MPM_Mesh).Element_p = (int *)Allocate_ArrayZ(NumParticles, sizeof(int));
 
     /*
       Number of tributary nodes for each particle
     */
-    MPM_Mesh.NumberNodes = (int *)Allocate_ArrayZ(NumParticles, sizeof(int));
+    (*MPM_Mesh).NumberNodes = (int *)Allocate_ArrayZ(NumParticles, sizeof(int));
 
     /*
       Tributary nodes for each particle
     */
-    MPM_Mesh.ListNodes = alloc_table__SetLib__(NumParticles);
+    (*MPM_Mesh).ListNodes = alloc_table__SetLib__(NumParticles);
 
     /*
       List of particles close to each particle
     */
-    MPM_Mesh.Beps = alloc_table__SetLib__(NumParticles);
+    if ((Driver_EigenErosion == true) || (Driver_EigenSoftening == true)) {
+
+      (*MPM_Mesh).Beps = alloc_table__SetLib__(NumParticles);
+    }
 
     /*
       Define shape functions
@@ -169,21 +183,23 @@ Generate_One_Phase_Analysis__InOutFun__(char *Name_File, Mesh FEM_Mesh,
       if (strcmp(ShapeFunctionGP, "FEM") == 0) {
 
       } else if (strcmp(ShapeFunctionGP, "uGIMP") == 0) {
-        MPM_Mesh.lp = allocZ__MatrixLib__(NumParticles, Ndim);
-        strcpy(MPM_Mesh.lp.Info, "Voxel lenght GP");
+        (*MPM_Mesh).lp = allocZ__MatrixLib__(NumParticles, Ndim);
+        strcpy((*MPM_Mesh).lp.Info, "Voxel lenght GP");
       } else if (strcmp(ShapeFunctionGP, "LME") == 0) {
-        MPM_Mesh.lambda = allocZ__MatrixLib__(NumParticles, Ndim);
-        strcpy(MPM_Mesh.lambda.Info, "Lagrange Multiplier");
-        MPM_Mesh.Beta = allocZ__MatrixLib__(NumParticles, 1);
-        strcpy(MPM_Mesh.Beta.Info, "Beta");
+
+        (*MPM_Mesh).lambda = allocZ__MatrixLib__(NumParticles, Ndim);
+        strcpy((*MPM_Mesh).lambda.Info, "Lagrange Multiplier");
+        (*MPM_Mesh).Beta = allocZ__MatrixLib__(NumParticles, 1);
+        strcpy((*MPM_Mesh).Beta.Info, "Beta");
+
       } else if (strcmp(ShapeFunctionGP, "aLME") == 0) {
-        MPM_Mesh.lambda = allocZ__MatrixLib__(NumParticles, Ndim);
-        strcpy(MPM_Mesh.lambda.Info, "Lagrange Multiplier");
-        MPM_Mesh.Beta = allocZ__MatrixLib__(NumParticles, Ndim * Ndim);
-        strcpy(MPM_Mesh.Beta.Info, "Beta parameter");
-        MPM_Mesh.Cut_off_Ellipsoid =
+        (*MPM_Mesh).lambda = allocZ__MatrixLib__(NumParticles, Ndim);
+        strcpy((*MPM_Mesh).lambda.Info, "Lagrange Multiplier");
+        (*MPM_Mesh).Beta = allocZ__MatrixLib__(NumParticles, Ndim * Ndim);
+        strcpy((*MPM_Mesh).Beta.Info, "Beta parameter");
+        (*MPM_Mesh).Cut_off_Ellipsoid =
             allocZ__MatrixLib__(NumParticles, Ndim * Ndim);
-        strcpy(MPM_Mesh.Cut_off_Ellipsoid.Info, "Cut-off Ellipsoid");
+        strcpy((*MPM_Mesh).Cut_off_Ellipsoid.Info, "Cut-off Ellipsoid");
       } else {
         fprintf(stderr, "%s : %s \n", "Error in GramsShapeFun()",
                 "Undefined kind of shape function");
@@ -194,22 +210,21 @@ Generate_One_Phase_Analysis__InOutFun__(char *Name_File, Mesh FEM_Mesh,
       standard_error();
     }
 
-
     /*
       Allocate vectorial/tensorial fields
     */
     if (strcmp(Formulation, "-u") == 0) {
-      MPM_Mesh.Phi = allocate_U_vars__Fields__(NumParticles);
+      (*MPM_Mesh).Phi = allocate_U_vars__Fields__(NumParticles);
     } else if (strcmp(Formulation, "-up") == 0) {
-      MPM_Mesh.Phi = allocate_Up_vars__Fields__(NumParticles);
+      (*MPM_Mesh).Phi = allocate_Up_vars__Fields__(NumParticles);
     }
 
     /*
       Assign material for each material point
     */
     printf(" \t %s \n", "* Start material assignement to particles ...");
-    MPM_Mesh.MatIdx =
-        assign_material_to_particles(Name_File, MPM_Mesh.NumberMaterials,
+    (*MPM_Mesh).MatIdx =
+        assign_material_to_particles(Name_File, (*MPM_Mesh).NumberMaterials,
                                      NumParticles, Msh_Parms.GPxElement);
     printf(" \t %s \n", "Success !!");
 
@@ -217,7 +232,7 @@ Generate_One_Phase_Analysis__InOutFun__(char *Name_File, Mesh FEM_Mesh,
       Initialise particle
     */
     printf(" \t %s \n", "* Start particles initialisation ...");
-    initial_position__Particles__(MPM_Mesh.Phi.x_GC, MPM_GID_Mesh,
+    initial_position__Particles__((*MPM_Mesh).Phi.x_GC, MPM_GID_Mesh,
                                   Msh_Parms.GPxElement);
     if (Ndim == 2) {
       initialise_particles(MPM_GID_Mesh, MPM_Mesh, Msh_Parms.GPxElement);
@@ -228,10 +243,10 @@ Generate_One_Phase_Analysis__InOutFun__(char *Name_File, Mesh FEM_Mesh,
       Read initial values
     */
     if (Sim_Params.Is_Particle_Initial) {
-      Initial_condition_particles__InOutFun__(Name_File, MPM_Mesh,
+      Initial_condition_particles__InOutFun__(Name_File, *MPM_Mesh,
                                               Msh_Parms.GPxElement);
     } else if (Sim_Params.Is_Nodal_Initial) {
-      Initial_condition_nodes__InOutFun__(Name_File, MPM_Mesh, FEM_Mesh);
+      Initial_condition_nodes__InOutFun__(Name_File, *MPM_Mesh, FEM_Mesh);
     } else {
       printf("\t * %s \n", "No initial conditions defined");
     }
@@ -241,7 +256,7 @@ Generate_One_Phase_Analysis__InOutFun__(char *Name_File, Mesh FEM_Mesh,
     */
     if (Sim_Params.Is_Hydrostatic_conditions) {
       status = Hidrostatic_condition_particles__InOutFun__(
-          Name_File, MPM_Mesh, Msh_Parms.GPxElement);
+          Name_File, *MPM_Mesh, Msh_Parms.GPxElement);
       if (status) {
         exit(0);
       }
@@ -253,25 +268,24 @@ Generate_One_Phase_Analysis__InOutFun__(char *Name_File, Mesh FEM_Mesh,
     if (Sim_Params.Is_GramsNeumannBC) {
       printf("\t * %s \n", "Read Newmann boundary conditions :");
       if (strcmp(Formulation, "-u") == 0) {
-        MPM_Mesh.Neumann_Contours =
+        (*MPM_Mesh).Neumann_Contours =
             Read_u_Neumann_Boundary_Conditions__InOutFun__(
                 Name_File, Sim_Params.Counter_GramsNeumannBC,
                 Msh_Parms.GPxElement, Parameters_Solver.NumTimeStep);
         Check_u_Neumann_Boundary_Conditions__InOutFun__(
-            MPM_Mesh.Neumann_Contours, NumParticles);
+            (*MPM_Mesh).Neumann_Contours, NumParticles);
       } else if (strcmp(Formulation, "-up") == 0) {
-        MPM_Mesh.Neumann_Contours =
+        (*MPM_Mesh).Neumann_Contours =
             Read_u_Neumann_Boundary_Conditions__InOutFun__(
                 Name_File, Sim_Params.Counter_GramsNeumannBC,
                 Msh_Parms.GPxElement, Parameters_Solver.NumTimeStep);
         Check_u_Neumann_Boundary_Conditions__InOutFun__(
-            MPM_Mesh.Neumann_Contours, NumParticles);
+            (*MPM_Mesh).Neumann_Contours, NumParticles);
       }
     } else {
-      MPM_Mesh.Neumann_Contours.NumBounds = 0;
+      (*MPM_Mesh).Neumann_Contours.NumBounds = 0;
       printf(" \t %s \n", "* No Neumann boundary conditions defined");
     }
-
 
     /*
       Free the input data
@@ -291,7 +305,7 @@ Generate_One_Phase_Analysis__InOutFun__(char *Name_File, Mesh FEM_Mesh,
     standard_error();
   }
 
-  return MPM_Mesh;
+  return STATUS;
 }
 
 /***************************************************************************/
@@ -555,7 +569,7 @@ static int *assign_material_to_particles(char *Name_File, int NumMaterials,
 
 /***************************************************************************/
 
-static void initialise_particles(Mesh MPM_GID_Mesh, Particle MPM_Mesh,
+static void initialise_particles(Mesh MPM_GID_Mesh, Particle *MPM_Mesh,
                                  int GPxElement)
 /*
    Loop in the GID mesh to create particles from an element
@@ -587,28 +601,28 @@ static void initialise_particles(Mesh MPM_GID_Mesh, Particle MPM_Mesh,
       p = i * GPxElement + j;
 
       /* Get the index of the material */
-      MatIdx_p = MPM_Mesh.MatIdx[p];
+      MatIdx_p = MPM_Mesh->MatIdx[p];
 
       /* Get material properties */
       V_p = Vol_Element / GPxElement;
-      rho_p = MPM_Mesh.Mat[MatIdx_p].rho;
+      rho_p = MPM_Mesh->Mat[MatIdx_p].rho;
       m_p = V_p * rho_p;
 
       /* Set the initial volume */
-      MPM_Mesh.Phi.Vol_0.nV[p] = V_p;
+      MPM_Mesh->Phi.Vol_0.nV[p] = V_p;
 
       /* Set the initial density */
-      MPM_Mesh.Phi.rho.nV[p] = rho_p;
+      MPM_Mesh->Phi.rho.nV[p] = rho_p;
 
       /* Assign the mass parameter */
-      MPM_Mesh.Phi.mass.nV[p] = m_p;
+      MPM_Mesh->Phi.mass.nV[p] = m_p;
 
       /* Initial value of the yield */
-      MPM_Mesh.Phi.Kappa_n[p] = MPM_Mesh.Mat[MatIdx_p].kappa_0;
+      MPM_Mesh->Phi.Kappa_n[p] = MPM_Mesh->Mat[MatIdx_p].kappa_0;
 
       /* Initial value of the equivalent plastic strain */
-      if (strcmp(MPM_Mesh.Mat[MatIdx_p].Type, "Matsuoka-Nakai") == 0) {
-        MPM_Mesh.Phi.EPS_n[p] = MPM_Mesh.Mat[MatIdx_p].Plastic_Strain_0;
+      if (strcmp(MPM_Mesh->Mat[MatIdx_p].Type, "Matsuoka-Nakai") == 0) {
+        MPM_Mesh->Phi.EPS_n[p] = MPM_Mesh->Mat[MatIdx_p].Plastic_Strain_0;
       }
     }
   }

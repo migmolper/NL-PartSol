@@ -273,7 +273,7 @@ static int __update_internal_variables_plastic(
     double eps_k /**< [in] Equivalent plastic strain */,
     double d_K_kin /**< [in] Increment of the kinematic hardening */);
 
-int compute_1PK_Von_Mises(State_Parameters IO_State, Material MatProp);
+int compute_Kirchhoff_Stress_Von_Mises__Constitutive__(State_Parameters IO_State, Material MatProp);
 
 /**************************************************************/
 /******************** Solver Parameters ***********************/
@@ -364,7 +364,7 @@ int main() {
     *IO_State.Back_stress = beta[i - 1];
 
     // Run solver
-    STATUS = compute_1PK_Von_Mises(IO_State, MatProp);
+    STATUS = compute_Kirchhoff_Stress_Von_Mises__Constitutive__(IO_State, MatProp);
 
     if (STATUS) {
       fprintf(stderr, "Failure\n");
@@ -432,7 +432,7 @@ int main() {
 }
 
 /**************************************************************/
-int compute_1PK_Von_Mises(State_Parameters IO_State, Material MatProp)
+int compute_Kirchhoff_Stress_Von_Mises__Constitutive__(State_Parameters IO_State, Material MatProp)
 /*
   Radial returning algorithm for the Von-Mises (Simo and Hughes)
 */

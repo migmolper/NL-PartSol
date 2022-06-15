@@ -8,13 +8,12 @@
 #include <math.h>
 #include "Macros.h"
 #include "Types.h"
-#include "Globals.h"
 #include "Matlib.h"
 #include "Particles.h"
 
 /*!
 
-  \fn int compute_Kirchhoff_Stress_Tensor_Newtonian_Fluid(State_Parameters IO_State,Material MatProp_p);
+  \fn int compute_Kirchhoff_Stress_Newtonian_Fluid__Constitutive__(State_Parameters IO_State,Material MatProp_p);
 
   \brief Compute the First Piola-Kirchhoff stress tensor of a Newtonian fluid 
 
@@ -22,7 +21,7 @@
   \param MatProp : Material properties of the model
 
 */
-int compute_Kirchhoff_Stress_Tensor_Newtonian_Fluid(
+int compute_Kirchhoff_Stress_Newtonian_Fluid__Constitutive__(
   State_Parameters IO_State,
   Material MatProp_p);
 /*******************************************************/
@@ -38,7 +37,7 @@ int compute_Kirchhoff_Stress_Tensor_Newtonian_Fluid(
   \param[in] IO_State
   \param[in] MatProp
 */
-int compute_stiffness_density_Newtonian_Fluid(
+int compute_stiffness_density_Newtonian_Fluid__Constitutive__(
   double * Stiffness_Density,
   const double * dN_alpha_n1,
   const double * dN_beta_n1,

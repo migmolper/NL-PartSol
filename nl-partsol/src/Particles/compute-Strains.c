@@ -1,5 +1,13 @@
+
+// clang-format off
 #include <math.h>
-#include "nl-partsol.h"
+#include <stdbool.h>
+#include "Macros.h"
+#include "Types.h"
+#include "Globals.h"
+#include "Matlib.h"
+#include "Particles.h"
+// clang-format on
 
 #ifdef __linux__
 #include <lapacke.h>
@@ -373,6 +381,52 @@ void left_Cauchy_Green__Particles__(double * b, const double * F) {
   b[8] = F[6]*F[6] + F[7]*F[7] + F[8]*F[8];
 #endif
 
+}
+
+/*******************************************************/
+
+void eulerian_almansi__Particles__(double * e, const double * F) {
+
+  unsigned Ndim = NumberDimensions;
+
+#if NumberDimensions == 2
+  double b[4] = {
+    0.0,0.0,
+    0.0,0.0};
+  double b_m1[4] = {
+    0.0,0.0,
+    0.0,0.0};
+  double Identity[4] = {
+    1.0,0.0,
+    0.0,1.0};
+#else  
+  double b[9] = {
+    0.0,0.0,0.0,
+    0.0,0.0,0.0,
+    0.0,0.0,0.0};
+  double b_m1[9] = {
+    0.0,0.0,0.0,
+    0.0,0.0,0.0,
+    0.0,0.0,0.0};
+  double Identity[9] = {
+    1.0,0.0,0.0,
+    0.0,1.0,0.0,
+    0.0,0.0,1.0};
+#endif
+
+  left_Cauchy_Green__Particles__(b, F);
+
+  compute_inverse__TensorLib__(b_m1,b);
+
+  for (unsigned i = 0; i < Ndim; i++)
+  {
+    for (unsigned j = 0; j < Ndim; j++)
+    {
+      e[i*Ndim + j] = 0.5*(Identity[i*Ndim + j] - b_m1[i*Ndim + j]);
+    }
+    
+  }
+  
 }
 
 /*******************************************************/

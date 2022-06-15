@@ -105,8 +105,6 @@ Fields allocate_Up_vars__Fields__(int NumParticles) {
     Phi.Jbar.nV[p] = 1.0;
   }
 
-  Phi.Strain_If = allocZ__MatrixLib__(NumParticles, 1);
-
 #if NumberDimensions == 2
   Phi.Stress = allocZ__MatrixLib__(NumParticles, 5);
 #else
@@ -117,7 +115,7 @@ Fields allocate_Up_vars__Fields__(int NumParticles) {
   
   Phi.lambda_pressure_n1 = allocZ__MatrixLib__(NumParticles, 1);
   
-  Phi.W = allocZ__MatrixLib__(NumParticles, 1);
+  Phi.W = (double *)calloc(NumParticles,sizeof(double));
   
   Phi.mass = allocZ__MatrixLib__(NumParticles, 1);
 
@@ -125,7 +123,19 @@ Fields allocate_Up_vars__Fields__(int NumParticles) {
   
   Phi.Vol_0 = allocZ__MatrixLib__(NumParticles, 1);
   
-  Phi.Chi = (double *)calloc(NumParticles,sizeof(double));
+if ((Driver_EigenErosion == true) || (Driver_EigenSoftening == true)) {
+  
+  Phi.Damage_n = (double *)calloc(NumParticles,sizeof(double));
+
+  Phi.Damage_n1 = (double *)calloc(NumParticles,sizeof(double));
+}
+
+if (Driver_EigenSoftening == true) {
+  Phi.Strain_f_n = (double *)calloc(NumParticles,sizeof(double));
+
+  Phi.Strain_f_n1 = (double *)calloc(NumParticles,sizeof(double));
+}
+
 
   Phi.EPS_n = (double *)calloc(NumParticles,sizeof(double));
 
@@ -155,7 +165,6 @@ void free_Up_vars__Fields__(Fields Phi) {
   free__MatrixLib__(Phi.lambda_pressure_n);
   free__MatrixLib__(Phi.lambda_pressure_n1);
   free__MatrixLib__(Phi.Strain);
-  free__MatrixLib__(Phi.Strain_If);
   free__MatrixLib__(Phi.b_e_n);
   free__MatrixLib__(Phi.b_e_n1);
   free__MatrixLib__(Phi.F_n);
@@ -169,9 +178,16 @@ void free_Up_vars__Fields__(Fields Phi) {
   free__MatrixLib__(Phi.Jbar);
   free__MatrixLib__(Phi.Jbar);
   free__MatrixLib__(Phi.DF);
-  free__MatrixLib__(Phi.W);
+  free(Phi.W);
   free__MatrixLib__(Phi.Vol_0);
-  free(Phi.Chi);
+if ((Driver_EigenErosion == true) || (Driver_EigenSoftening == true)) {
+    free(Phi.Damage_n);
+  free(Phi.Damage_n1);
+}
+if (Driver_EigenSoftening == true) {
+  free(Phi.Strain_f_n);
+  free(Phi.Strain_f_n1);
+}
   free(Phi.EPS_n);
   free(Phi.EPS_n1);  
   free(Phi.Kappa_n);

@@ -1,4 +1,16 @@
-#include "nl-partsol.h"
+ 
+// clang-format off
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
+#include <stddef.h>
+#include "Macros.h"
+#include "Types.h"
+#include "Globals.h"
+#include "Matlib.h"
+#include "Particles.h"
+#include "InOutFun.h"
+// clang-format on
 
 // Global variables
 int ResultsTimeStep;
@@ -52,46 +64,41 @@ void DoProgress(char label[], int step, int total) {
 
 /*********************************************************************/
 
-void print_convergence_stats(int Time, int NumTimeStep, int Iter, double Error0,
-                             double Error_total, double Error_relative) {
+void print_convergence_stats(int Time, int NumTimeStep, int Iter, int MaxIter,
+                             double Error0, double Error_total,
+                             double Error_relative) {
 
   if (NumTimeStep < 10) {
-    fprintf(stdout,
-            "" GREEN "Step" RESET ": [%01d/%01d] | " GREEN "Iterations" RESET
-            ": [%02d/%02d] | " GREEN "Initial E" RESET ": %1.2e | " GREEN
-            "Total E" RESET ": %1.2e | " GREEN "Relative E" RESET ": %1.2e \n",
-            Time, NumTimeStep, Iter, 10, Error0, Error_total, Error_relative);
+    fprintf(stdout, "" GREEN "Step" RESET ": [%01d/%01d] | ", Time,
+            NumTimeStep);
   } else if (NumTimeStep < 100) {
-    fprintf(stdout,
-            "" GREEN "Step" RESET ": [%02d/%02d] | " GREEN "Iterations" RESET
-            ": [%02d/%02d] | " GREEN "Initial E" RESET ": %1.2e | " GREEN
-            "Total E" RESET ": %1.2e | " GREEN "Relative E" RESET ": %1.2e \n",
-            Time, NumTimeStep, Iter, 10, Error0, Error_total, Error_relative);
+    fprintf(stdout, "" GREEN "Step" RESET ": [%02d/%02d] | ", Time,
+            NumTimeStep);
   } else if (NumTimeStep < 1000) {
-    fprintf(stdout,
-            "" GREEN "Step" RESET ": [%03d/%03d] | " GREEN "Iterations" RESET
-            ": [%02d/%02d] | " GREEN "Initial E" RESET ": %1.2e | " GREEN
-            "Total E" RESET ": %1.2e | " GREEN "Relative E" RESET ": %1.2e \n",
-            Time, NumTimeStep, Iter, 10, Error0, Error_total, Error_relative);
+    fprintf(stdout, "" GREEN "Step" RESET ": [%03d/%03d] | ", Time,
+            NumTimeStep);
   } else if (NumTimeStep < 10000) {
-    fprintf(stdout,
-            "" GREEN "Step" RESET ": [%04d/%04d] | " GREEN "Iterations" RESET
-            ": [%02d/%02d] | " GREEN "Initial E" RESET ": %1.2e | " GREEN
-            "Total E" RESET ": %1.2e | " GREEN "Relative E" RESET ": %1.2e \n",
-            Time, NumTimeStep, Iter, 10, Error0, Error_total, Error_relative);
+    fprintf(stdout, "" GREEN "Step" RESET ": [%04d/%04d] | ", Time,
+            NumTimeStep);
   } else if (NumTimeStep < 100000) {
-    fprintf(stdout,
-            "" GREEN "Step" RESET ": [%05d/%05d] | " GREEN "Iterations" RESET
-            ": [%02d/%02d] | " GREEN "Initial E" RESET ": %1.2e | " GREEN
-            "Total E" RESET ": %1.2e | " GREEN "Relative E" RESET ": %1.2e \n",
-            Time, NumTimeStep, Iter, 10, Error0, Error_total, Error_relative);
+    fprintf(stdout, "" GREEN "Step" RESET ": [%05d/%05d] | ", Time,
+            NumTimeStep);
   } else if (NumTimeStep < 1000000) {
-    fprintf(stdout,
-            "" GREEN "Step" RESET ": [%i/%i] | " GREEN "Iterations" RESET
-            ": [%02d/%02d] | " GREEN "Initial E" RESET ": %1.2e | " GREEN
-            "Total E" RESET ": %1.2e | " GREEN "Relative E" RESET ": %1.2e \n",
-            Time, NumTimeStep, Iter, 10, Error0, Error_total, Error_relative);
+    fprintf(stdout, "" GREEN "Step" RESET ": [%i/%i] | ", Time, NumTimeStep);
   }
+
+  if (MaxIter < 10) {
+    fprintf(stdout, "" GREEN "Iterations" RESET ": [%01d/%01d] | ", Iter,
+            MaxIter);
+  } else if (MaxIter < 100) {
+    fprintf(stdout, "" GREEN "Iterations" RESET ": [%02d/%02d] | ", Iter,
+            MaxIter);
+  }
+
+  fprintf(stdout,
+          "" GREEN "Initial E" RESET ": %1.2e | " GREEN "Total E" RESET
+          ": %1.2e | " GREEN "Relative E" RESET ": %1.2e \n",
+          Error0, Error_total, Error_relative);
 
   FILE *Stats_Solver;
   char Name_file_t[10000];

@@ -1,10 +1,21 @@
-#include <math.h>
+// clang-format off
+#include <stdlib.h>
+#include <stdbool.h>
+#include <stdio.h>
 #include <string.h>
-#include "nl-partsol.h"
+#include <math.h>
+#include "Macros.h"
+#include "Types.h"
+#include "Globals.h"
+#include "Matlib.h"
+#include "Particles.h"
+#include "InOutFun.h"
+// clang-format on
 
 /*
   Call global variables
 */
+char   OutputDir[MAXC];
 char OutputParticlesFile[MAXC];
 char OutputNodesFile[MAXC];
 
@@ -50,15 +61,23 @@ static void vtk_Out_vel(FILE *, Matrix, int);
 static void vtk_Out_acc(FILE *, Matrix, int);
 static void vtk_Out_dis(FILE *, Matrix, int);
 static void vtk_Out_Stress(FILE *, Matrix, int);
-static void vtk_Out_Stress_EV(FILE *, Matrix, int);
 static void vtk_Out_Stress_P(FILE *, Matrix, int);
 static void vtk_Out_Pw(FILE *, Matrix, Matrix, int);
 static void vtk_Out_dPw_dt(FILE *, Matrix, int);
 static void vtk_Out_Strain(FILE *, Matrix, int);
-static void vtk_Out_Strain_EV(FILE *, Matrix, int);
 static void vtk_Out_Deformation_Gradient(FILE *, Matrix, int);
 static void vtk_Out_Green_Lagrange(FILE *, Matrix, int);
-static void vtk_Out_Deformation_Energy(FILE *, Matrix, int);
+
+/**
+ * @brief 
+ * 
+ * @param Vtk_file 
+ * @param W 
+ * @param NumParticles 
+ */
+static void vtk_Out_Deformation_Energy(FILE *Vtk_file, const double * W,
+                                       int NumParticles);
+
 static void vtk_Out_plastic_deformation_gradient(FILE *, Matrix, int);
 static void vtk_Out_Metric(FILE *, Matrix, int);
 
@@ -148,7 +167,7 @@ void particle_results_vtk__InOutFun__(Particle MPM_Mesh, int TimeStep_i,
 
   /* Print particle damage */
   if (Out_damage) {
-    vtk_Out_damage(Vtk_file, MPM_Mesh.Phi.Chi, NumParticles);
+    vtk_Out_damage(Vtk_file, MPM_Mesh.Phi.Damage_n, NumParticles);
   }
 
   /* Print particle nodal index */
@@ -181,11 +200,6 @@ void particle_results_vtk__InOutFun__(Particle MPM_Mesh, int TimeStep_i,
     vtk_Out_Stress(Vtk_file, MPM_Mesh.Phi.Stress, NumParticles);
   }
 
-  /* Print particle eigenvalues of the stress tensor */
-  if (Out_eigenvalues_stress) {
-    vtk_Out_Stress_EV(Vtk_file, MPM_Mesh.Phi.Stress, NumParticles);
-  }
-
   /* Print particle volumetric stress tensor */
   if (Out_volumetric_stress) {
     vtk_Out_Stress_P(Vtk_file, MPM_Mesh.Phi.Stress, NumParticles);
@@ -204,11 +218,6 @@ void particle_results_vtk__InOutFun__(Particle MPM_Mesh, int TimeStep_i,
   /* Print particle strain tensor */
   if (Out_strain) {
     vtk_Out_Strain(Vtk_file, MPM_Mesh.Phi.Strain, NumParticles);
-  }
-
-  /* Print particle eigenvalues of the strain tensor */
-  if (Out_eigenvalues_strain) {
-    vtk_Out_Strain_EV(Vtk_file, MPM_Mesh.Phi.Strain, NumParticles);
   }
 
   /* Print particle deformation gradient */
@@ -583,30 +592,6 @@ static void vtk_Out_Stress(FILE *Vtk_file, Matrix Stress, int NumParticles) {
 
 /*********************************************************************/
 
-static void vtk_Out_Stress_EV(FILE *Vtk_file, Matrix Stress, int NumParticles) {
-  int Ndim = NumberDimensions;
-  Tensor Stress_p;
-  EigenTensor Eigen_Stress_p;
-
-  fprintf(Vtk_file, "VECTORS STRESS_EV double \n");
-  for (int i = 0; i < NumParticles; i++) {
-    Stress_p = memory_to_tensor__TensorLib__(Stress.nM[i], 2);
-    Eigen_Stress_p = Eigen_analysis__TensorLib__(Stress_p);
-    for (int j = 0; j < 3; j++) {
-      if (j < Ndim) {
-        fprintf(Vtk_file, "%.20g ", Eigen_Stress_p.Value.n[j]);
-      } else {
-        fprintf(Vtk_file, "%.20g ", 0.0);
-      }
-    }
-    fprintf(Vtk_file, "\n");
-    free__TensorLib__(Eigen_Stress_p.Value);
-    free__TensorLib__(Eigen_Stress_p.Vector);
-  }
-}
-
-/*********************************************************************/
-
 static void vtk_Out_Stress_P(FILE *Vtk_file, Matrix Stress, int NumParticles) {
   int Ndim = NumberDimensions;
   double pressure;
@@ -669,30 +654,6 @@ static void vtk_Out_Strain(FILE *Vtk_file, Matrix Strain, int NumParticles) {
       fprintf(Vtk_file, "\n");
     }
     fprintf(Vtk_file, "\n");
-  }
-}
-
-/*********************************************************************/
-
-static void vtk_Out_Strain_EV(FILE *Vtk_file, Matrix Strain, int NumParticles) {
-  int Ndim = NumberDimensions;
-  Tensor Strain_p;
-  EigenTensor Eigen_Strain_p;
-
-  fprintf(Vtk_file, "VECTORS STRAIN_EV double \n");
-  for (int i = 0; i < NumParticles; i++) {
-    Strain_p = memory_to_tensor__TensorLib__(Strain.nM[i], 2);
-    Eigen_Strain_p = Eigen_analysis__TensorLib__(Strain_p);
-    for (int j = 0; j < 3; j++) {
-      if (j < Ndim) {
-        fprintf(Vtk_file, "%.20g ", Eigen_Strain_p.Value.n[j]);
-      } else {
-        fprintf(Vtk_file, "%.20g ", 0.0);
-      }
-    }
-    fprintf(Vtk_file, "\n");
-    free__TensorLib__(Eigen_Strain_p.Value);
-    free__TensorLib__(Eigen_Strain_p.Vector);
   }
 }
 
@@ -852,12 +813,12 @@ static int __plastic_jacobian(
 
 /*********************************************************************/
 
-static void vtk_Out_Deformation_Energy(FILE *Vtk_file, Matrix W,
+static void vtk_Out_Deformation_Energy(FILE *Vtk_file, const double * W,
                                        int NumParticles) {
   fprintf(Vtk_file, "SCALARS Energy-Potential double \n");
   fprintf(Vtk_file, "LOOKUP_TABLE default \n");
   for (int i = 0; i < NumParticles; i++) {
-    fprintf(Vtk_file, "%.20g \n", W.nV[i]);
+    fprintf(Vtk_file, "%.20g \n", W[i]);
   }
 }
 

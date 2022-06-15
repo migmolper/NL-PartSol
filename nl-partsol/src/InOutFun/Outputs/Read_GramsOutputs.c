@@ -1,46 +1,17 @@
+// clang-format off
 #include <sys/stat.h>
 #include <string.h>
-#include "nl-partsol.h"
-
-/*
-  Call global variables
-*/
-
-int ResultsTimeStep;
-// int NumTimeStep //
-
-char OutputDir[MAXC];
-char OutputParticlesFile[MAXC];
-char OutputNodesFile[MAXC];
-
-bool Out_global_coordinates = false;
-bool Out_element_coordinates = false;
-bool Out_mass = false;
-bool Out_density = false;
-bool Out_damage = false;
-bool Out_nodal_idx = false;
-bool Out_material_idx = false;
-bool Out_velocity = false;
-bool Out_acceleration = false;
-bool Out_displacement = false;
-bool Out_stress = false;
-bool Out_eigenvalues_stress = false;
-bool Out_water_pressure = false;
-bool Out_volumetric_stress = false;
-bool Out_Pw = false;
-bool Out_dPw_dt = false;
-bool Out_strain = false;
-bool Out_eigenvalues_strain = false;
-bool Out_deformation_gradient = false;
-bool Out_green_lagrange = false;
-bool Out_right_cauchy_green = false;
-bool Out_plastic_deformation_gradient = false;
-bool Out_Metric = false;
-bool Out_plastic_jacobian = false;
-bool Out_energy = false;
-bool Out_Von_Mises = false;
-bool Out_EPS = false;
-bool Out_Partition_Unity = false;
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
+#include <stddef.h>
+#include "Macros.h"
+#include "Types.h"
+#include "Globals.h"
+#include "Matlib.h"
+#include "Particles.h"
+#include "InOutFun.h"
+// clang-format on
 
 /*
   Auxiliar functions
@@ -61,6 +32,34 @@ void GramsOutputs(char *Name_File)
   }
 */
 {
+  Out_global_coordinates = false;
+  Out_element_coordinates = false;
+  Out_mass = false;
+  Out_density = false;
+  Out_damage = false;
+  Out_nodal_idx = false;
+  Out_material_idx = false;
+  Out_velocity = false;
+  Out_acceleration = false;
+  Out_displacement = false;
+  Out_stress = false;
+  Out_eigenvalues_stress = false;
+  Out_water_pressure = false;
+  Out_volumetric_stress = false;
+  Out_Pw = false;
+  Out_dPw_dt = false;
+  Out_strain = false;
+  Out_eigenvalues_strain = false;
+  Out_deformation_gradient = false;
+  Out_green_lagrange = false;
+  Out_plastic_deformation_gradient = false;
+  Out_Metric = false;
+  Out_plastic_jacobian = false;
+  Out_energy = false;
+  Out_Von_Mises = false;
+  Out_EPS = false;
+  Out_Partition_Unity = false;
+
   /* Simulation file */
   FILE *Sim_dat;
 
@@ -152,8 +151,11 @@ void GramsOutputs(char *Name_File)
             Out_density =
                 Is_Output_Activate(Parse_Out_Prop[0], Parse_Out_Prop[1]);
           } else if (strcmp(Parse_Out_Prop[0], "Out-damage") == 0) {
-            Out_damage =
-                Is_Output_Activate(Parse_Out_Prop[0], Parse_Out_Prop[1]);
+            if ((Driver_EigenErosion == true) ||
+                (Driver_EigenSoftening == true)) {
+              Out_damage =
+                  Is_Output_Activate(Parse_Out_Prop[0], Parse_Out_Prop[1]);
+            }
           } else if (strcmp(Parse_Out_Prop[0], "Out-nodal-idx") == 0) {
             Out_nodal_idx =
                 Is_Output_Activate(Parse_Out_Prop[0], Parse_Out_Prop[1]);
@@ -230,6 +232,7 @@ void GramsOutputs(char *Name_File)
           }
           /* Read next line and check */
           STATUS_LINE = fgets(Line_Out_Prop, sizeof(Line_Out_Prop), Sim_dat);
+
           Aux_Out_id = parse(Parse_Out_Prop, Line_Out_Prop, " =\t\n");
           if (strcmp(Parse_Out_Prop[0], "}") == 0) {
             break;

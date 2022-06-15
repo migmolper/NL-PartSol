@@ -9,7 +9,6 @@
 #include <math.h>
 #include "Macros.h"
 #include "Types.h"
-#include "Globals.h"
 
 #ifdef __linux__
 #include <lapacke.h>
@@ -20,7 +19,7 @@
 /*******************************************************/
 
 /*!
-  \fn int compute_1PK_Von_Mises(State_Parameters IO_State, Material MatProp)
+  \fn int compute_Kirchhoff_Stress_Von_Mises__Constitutive__(State_Parameters IO_State, Material MatProp)
   
   \brief Compute Von Mises yield
 
@@ -28,7 +27,7 @@
   \param MatProp : Material properties of the model
 
 */
-int compute_1PK_Von_Mises(State_Parameters IO_State, Material MatProp);
+int compute_Kirchhoff_Stress_Von_Mises__Constitutive__(State_Parameters IO_State, Material MatProp);
 /*******************************************************/
 
 

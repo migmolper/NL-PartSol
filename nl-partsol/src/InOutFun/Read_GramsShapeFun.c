@@ -1,15 +1,22 @@
 #include <string.h>
-#include "nl-partsol.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
+#include <stddef.h>
 
-/*
-  Call global variables
-*/
-char *ShapeFunctionGP;
-double gamma_LME;
+#include "Macros.h"
+#include "Types.h"
+#include "Globals.h"
+#include "Matlib.h"
+#include "Particles.h"
+#include "InOutFun.h"
+
+//char ShapeFunctionGP[MAXC];
+int max_iter_LME;
 double TOL_zero_LME;
 double TOL_wrapper_LME;
-int max_iter_LME;
-char wrapper_LME[MAXC];
+double gamma_LME;
+char   wrapper_LME[MAXC];
 
 /**********************************************************************/
 
@@ -86,7 +93,7 @@ void GramsShapeFun(char *Name_File)
         exit(EXIT_FAILURE);
       }
 
-      ShapeFunctionGP = Parse_GramsShapefun_Type[1];
+      strcpy(ShapeFunctionGP, Parse_GramsShapefun_Type[1]);
       printf("\t -> %s : %s \n", "Type of shape function", ShapeFunctionGP);
 
       /* Set to default all it properties */
