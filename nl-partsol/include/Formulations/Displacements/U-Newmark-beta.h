@@ -35,16 +35,9 @@
 #include <omp.h>
 #endif
 
-// Linear-Solver libs
-#ifdef USE_PETSC
+// PETSc
 #include "Linear-Solvers/ksp-PETSC.h"
-#else
-#include "Linear-Solvers/dgetrs-LAPACK.h"
-#endif
-
-#ifdef USE_PETSC
 #include "petscviewerhdf5.h"
-#endif
 
 /*!
   \brief Finite strains Newmark-beta

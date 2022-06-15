@@ -6,15 +6,9 @@
 
 typedef struct {
 
-#ifdef USE_PETSC
   Vec value;
   Vec d_value_dt;
   Vec d2_value_dt2;
-#else
-  double *value;
-  double *d_value_dt;
-  double *d2_value_dt2;
-#endif
 
 } Nodal_Field;
 
@@ -82,13 +76,8 @@ static void __get_assembling_locations_lumped_mass(int *Mask_active_dofs_A,
   \param[out] STATUS Returns failure or success
   \return The lumped mass matrix for the active system
 */
-#ifdef USE_PETSC
 static Vec __compute_nodal_lumped_mass(Particle MPM_Mesh, Mesh FEM_Mesh,
                                        Mask ActiveNodes, int *STATUS);
-#else
-static double *__compute_nodal_lumped_mass(Particle MPM_Mesh, Mesh FEM_Mesh,
-                                           Mask ActiveNodes, int *STATUS);
-#endif
 /**************************************************************/
 
 static void __local_projection_displacement(double *U_N_m_IP,
@@ -128,17 +117,10 @@ static void __get_assembling_locations_nodal_kinetics(int *Mask_active_dofs_A,
   \param[out] STATUS Returns failure or success
   \return Nodal kinetics information from the step n
 */
-#ifdef USE_PETSC
 static Nodal_Field __get_nodal_field_tn(Vec Lumped_Mass, Particle MPM_Mesh,
                                         Mesh FEM_Mesh, Mask ActiveNodes,
                                         Mask ActiveDOFs,
                                         Newmark_parameters Params, int *STATUS);
-#else
-static Nodal_Field __get_nodal_field_tn(double *Lumped_Mass, Particle MPM_Mesh,
-                                        Mesh FEM_Mesh, Mask ActiveNodes,
-                                        Mask ActiveDOFs,
-                                        Newmark_parameters Params, int *STATUS);
-#endif
 /**************************************************************/
 
 /**
@@ -154,15 +136,9 @@ static Nodal_Field __get_nodal_field_tn(double *Lumped_Mass, Particle MPM_Mesh,
  * @param STATUS
  * @return Nodal_Field
  */
-#ifdef USE_PETSC
 static Nodal_Field __initialise_nodal_increments(
     Vec Lumped_Mass, Particle MPM_Mesh, Mesh FEM_Mesh, Nodal_Field U_n,
     Mask ActiveNodes, Mask ActiveDOFs, Newmark_parameters Params, int *STATUS);
-#else
-Nodal_Field __initialise_nodal_increments(
-    double *Lumped_Mass, Particle MPM_Mesh, Mesh FEM_Mesh, Nodal_Field U_n,
-    Mask ActiveNodes, Mask ActiveDOFs, Newmark_parameters Params, int *STATUS);
-#endif
 /**************************************************************/
 
 /*!
@@ -205,21 +181,12 @@ static int __constitutive_update(Particle MPM_Mesh, Mesh FEM_Mesh);
  * @param [out] STATUS Returns failure or success
  * @return Vec/double*
  */
-#ifdef USE_PETSC
 static Vec __assemble_residual(Nodal_Field U_n, Nodal_Field D_U,
                                Vec Lumped_Mass, Mask ActiveNodes,
                                Mask ActiveDOFs, Particle MPM_Mesh,
                                Mesh FEM_Mesh, Newmark_parameters Params,
                                bool Is_compute_Residual,
                                bool Is_compute_Reactions, int *STATUS);
-#else
-static double *__assemble_residual(Nodal_Field U_n, Nodal_Field D_U,
-                                   double *Lumped_Mass, Mask ActiveNodes,
-                                   Mask ActiveDOFs, Particle MPM_Mesh,
-                                   Mesh FEM_Mesh, Newmark_parameters Params,
-                                   bool Is_compute_Residual,
-                                   bool Is_compute_Reactions, int *STATUS);
-#endif
 /**************************************************************/
 
 /*!
@@ -242,22 +209,7 @@ static void __get_assembling_locations_residual(int *Mask_active_dofs_A,
 */
 static void __get_assembling_locations_reactions(int *Mask_active_dofs_A,
                                                  int Mask_node_A);
-/**************************************************************/
 
-#ifndef USE_PETSC
-/**
- * @brief Do the assembly process in the global residual/reaction vector. \n
- * Replaces a PETSc function with the same name in case PETSc is not defined.
- *
- * @param Residual Global residual/reaction vector
- * @param Order Size of the input vector
- * @param Mask_active_dofs_A Global dofs positions for node A
- * @param Local_Value Local contribution
- */
-static void VecSetValues(double *Residual, unsigned Order,
-                         const int *Mask_active_dofs_A,
-                         const double *Local_Value);
-#endif
 /**************************************************************/
 
 /*!
@@ -273,17 +225,10 @@ static void VecSetValues(double *Residual, unsigned Order,
   \param[in] Is_compute_Reactions The function computes the reaction
   \param[out] STATUS Returns failure or success
 */
-#ifdef USE_PETSC
 static void __Nodal_Internal_Forces(Vec Residual, Mask ActiveNodes,
                                     Mask ActiveDOFs, Particle MPM_Mesh,
                                     Mesh FEM_Mesh, bool Is_compute_Residual,
                                     bool Is_compute_Reactions, int *STATUS);
-#else
-static void __Nodal_Internal_Forces(double *Residual, Mask ActiveNodes,
-                                    Mask ActiveDOFs, Particle MPM_Mesh,
-                                    Mesh FEM_Mesh, bool Is_compute_Residual,
-                                    bool Is_compute_Reactions, int *STATUS);
-#endif
 /**************************************************************/
 
 static void __internal_force_density(double *InternalForcesDensity_Ap,
@@ -303,17 +248,10 @@ static void __internal_force_density(double *InternalForcesDensity_Ap,
   \param[in] Is_compute_Residual The function computes the residual
   \param[in] Is_compute_Reactions The function computes the reaction
 */
-#ifdef USE_PETSC
 static void __Nodal_Traction_Forces(Vec Residual, Mask ActiveNodes,
                                     Mask ActiveDOFs, Particle MPM_Mesh,
                                     Mesh FEM_Mesh, bool Is_compute_Residual,
                                     bool Is_compute_Reactions);
-#else
-static void __Nodal_Traction_Forces(double *Residual, Mask ActiveNodes,
-                                    Mask ActiveDOFs, Particle MPM_Mesh,
-                                    Mesh FEM_Mesh, bool Is_compute_Residual,
-                                    bool Is_compute_Reactions);
-#endif
 /**************************************************************/
 
 static void __local_traction_force(double *LocalTractionForce_Ap,
@@ -335,45 +273,26 @@ static void __local_traction_force(double *LocalTractionForce_Ap,
  * @param[in] Is_compute_Residual The function computes the residual
  * @param[in] Is_compute_Reactions The function computes the reaction
  */
-#ifdef USE_PETSC
 static void __Nodal_Inertial_Forces(Vec Residual, Vec Mass, Nodal_Field U_n,
                                     Nodal_Field D_U, Mask ActiveNodes,
                                     Mask ActiveDOFs, Newmark_parameters Params,
                                     bool Is_compute_Residual,
                                     bool Is_compute_Reactions);
-#else
-static void __Nodal_Inertial_Forces(double *Residual, double *Mass,
-                                    Nodal_Field U_n, Nodal_Field D_U,
-                                    Mask ActiveNodes, Mask ActiveDOFs,
-                                    Newmark_parameters Params,
-                                    bool Is_compute_Residual,
-                                    bool Is_compute_Reactions);
-#endif
 /**************************************************************/
 
 /*!
   \brief Compute the 2-norm of the residual
   \param[in] Residual
-  \param[in] Total_dof Size of the vector
   \return The norm of the residual
 */
-#ifdef USE_PETSC
-static double __error_residual(const Vec Residual, unsigned Total_dof);
-#else
-static double __error_residual(const double *Residual, unsigned Total_dof);
-#endif
+static double __error_residual(const Vec Residual);
 /**************************************************************/
 
 /*!
 
 */
-#ifdef USE_PETSC
 static Mat __preallocation_tangent_matrix(Mask ActiveNodes, Mask ActiveDOFs,
                                           Particle MPM_Mesh, int *STATUS);
-#else
-static double *__preallocation_tangent_matrix(Mask ActiveNodes, Mask ActiveDOFs,
-                                              Particle MPM_Mesh, int *STATUS);
-#endif
 /**************************************************************/
 
 static void compute_local_intertia(double *Inertia_density_p /**< */,
@@ -416,24 +335,6 @@ static void local_tangent_stiffness(double *Tangent_Stiffness_p,
 /**************************************************************/
 
 /*!
-  \brief Do the assembly process in the global tangent matrix. \n
-  Replaces a PETSc function with the same name in case PETSc is not defined.
-
-  \param[in,out] Tangent_Stiffness Global tangent stiffness
-  \param[in] Tangent_Stiffness_p Local tangent stiffness
-  \param[in] Mask_active_dofs_A Global dofs positions for node A
-  \param[in] Mask_active_dofs_B Global dofs positions for node B
-  \param[in] Nactivedofs Number of active dofs in the Global tangent matrix
-*/
-#ifndef USE_PETSC
-static void MatSetValues(double *Tangent_Stiffness,
-                         const double *Tangent_Stiffness_p,
-                         const int *Mask_active_dofs_A,
-                         const int *Mask_active_dofs_B, int Nactivedofs);
-#endif
-/**************************************************************/
-
-/*!
   \param[in,out] Tangent_Stiffness The tangent matrix for the problem
   \param[in] ActiveNodes List of nodes which takes place in the computation
   \param[in] ActiveDOFs List of dofs which takes place in the computation
@@ -443,19 +344,11 @@ static void MatSetValues(double *Tangent_Stiffness,
   \param[in] Iter Current iteration of the solver
   \param[out] STATUS Returns failure or success
 */
-#ifdef USE_PETSC
 static void __assemble_tangent_stiffness(Mat Tangent_Stiffness,
                                          Mask ActiveNodes, Mask ActiveDOFs,
                                          Particle MPM_Mesh, Mesh FEM_Mesh,
                                          Newmark_parameters Params,
                                          unsigned Iter, int *STATUS);
-#else
-static void __assemble_tangent_stiffness(double *Tangent_Stiffness,
-                                         Mask ActiveNodes, Mask ActiveDOFs,
-                                         Particle MPM_Mesh, Mesh FEM_Mesh,
-                                         Newmark_parameters Params,
-                                         unsigned Iter, int *STATUS);
-#endif
 /**************************************************************/
 
 /**
@@ -483,17 +376,10 @@ static void __trial_Nodal_Increments(Nodal_Field D_U,
   \param[in] Params Time integration parameters
   \param[in] Ntotaldofs Number of dofs
 */
-#ifdef USE_PETSC
 static void __update_Nodal_Increments(const Vec Residual, Nodal_Field D_U,
                                       Nodal_Field U_n, Mask ActiveDOFs,
                                       Newmark_parameters Params,
                                       unsigned Ntotaldofs);
-#else
-static void __update_Nodal_Increments(const double *Residual, Nodal_Field D_U,
-                                      Nodal_Field U_n, Mask ActiveDOFs,
-                                      Newmark_parameters Params,
-                                      unsigned Ntotaldofs);
-#endif
 /**************************************************************/
 
 static void __update_Particles(Nodal_Field D_U /**< */,

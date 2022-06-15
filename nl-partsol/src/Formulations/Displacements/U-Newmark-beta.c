@@ -42,17 +42,10 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
   double Error_relative;
   //  double Error_increment_i;
 
-#ifdef USE_PETSC
   Mat Tangent_Stiffness;
   Vec Lumped_Mass;
   Vec Residual;
   Vec Reactions;
-#else
-  double *Tangent_Stiffness;
-  double *Residual;
-  double *Reactions;
-  double *Lumped_Mass;
-#endif
 
   Nodal_Field U_n;
   Nodal_Field D_U;
@@ -61,13 +54,6 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
   Mask ActiveDOFs;
 
   Newmark_parameters Time_Integration_Params;
-
-// InoutParameters
-#ifdef USE_PETSC
-  PetscViewer viewer;
-#else
-
-#endif
 
   /*
     Time step is defined at the init of the simulation throught the
@@ -168,15 +154,11 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
     }
 
     //! Compute initial error
-    Error_0 = Error_i = __error_residual(Residual, Nactivedofs);
+    Error_0 = Error_i = __error_residual(Residual);
     Iter = 0;
 
     if (Error_0 < TOL) {
-#ifdef USE_PETSC
       VecDestroy(&Residual);
-#else
-      free(Residual);
-#endif
       Error_relative = 0.0;
     } else {
       Error_relative = Error_i / Error_0;
@@ -205,19 +187,11 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
         return EXIT_FAILURE;
       }
 
-#ifdef USE_PETSC
       STATUS = krylov_PETSC(&Tangent_Stiffness, &Residual, Nactivedofs);
       if (STATUS == EXIT_FAILURE) {
         fprintf(stderr, "" RED "Error in krylov_PETSC()" RESET " \n");
         return EXIT_FAILURE;
       }
-#else
-      STATUS = dgetrs_LAPACK(Tangent_Stiffness, Residual, Nactivedofs);
-      if (STATUS == EXIT_FAILURE) {
-        fprintf(stderr, "" RED "Error in dgetrs_LAPACK()" RESET " \n");
-        return EXIT_FAILURE;
-      }
-#endif
 
       __update_Nodal_Increments(Residual, D_U, U_n, ActiveDOFs,
                                 Time_Integration_Params, Ntotaldofs);
@@ -238,11 +212,7 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
       }
 
       // Free memory
-#ifdef USE_PETSC
       VecDestroy(&Residual);
-#else
-      free(Residual);
-#endif
 
       // Compute residual (NR-loop)
       Residual = __assemble_residual(
@@ -254,20 +224,15 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
       }
 
       // Get stats for the convergence
-      Error_i = __error_residual(Residual, Nactivedofs);
+      Error_i = __error_residual(Residual);
       Error_relative = Error_i / Error_0;
       Iter++;
     }
 
     //! Free residual and tangent matrix
     if (Iter > 0) {
-#ifdef USE_PETSC
       VecDestroy(&Residual);
       MatDestroy(&Tangent_Stiffness);
-#else
-      free(Residual);
-      free(Tangent_Stiffness);
-#endif
     }
 
     print_convergence_stats(TimeStep, NumTimeStep, Iter, MaxIter, Error_0,
@@ -292,26 +257,14 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
         return EXIT_FAILURE;
       }
 
-      //      Matrix Reactions_aux =
-      //      memory_to_matrix__MatrixLib__(Nactivenodes,Ndim,Reactions);
-
-      //      nodal_results_vtk__InOutFun__(FEM_Mesh, ActiveNodes,
-      //      Reactions_aux, TimeStep, ResultsTimeStep);
-
       particle_results_vtk__InOutFun__(MPM_Mesh, TimeStep, ResultsTimeStep);
 
-#ifdef USE_PETSC
       VecDestroy(&Reactions);
-#else
-      free(Reactions);
-#endif
-      //      free(Reactions_aux.nM);
     }
 
     //! Update time step
     TimeStep++;
 
-#ifdef USE_PETSC
     VecDestroy(&Lumped_Mass);
     VecDestroy(&U_n.value);
     VecDestroy(&U_n.d_value_dt);
@@ -319,15 +272,6 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
     VecDestroy(&D_U.value);
     VecDestroy(&D_U.d_value_dt);
     VecDestroy(&D_U.d2_value_dt2);
-#else
-    free(Lumped_Mass);
-    free(U_n.value);
-    free(U_n.d_value_dt);
-    free(U_n.d2_value_dt2);
-    free(D_U.value);
-    free(D_U.d_value_dt);
-    free(D_U.d2_value_dt2);
-#endif
 
     free(ActiveNodes.Nodes2Mask);
     free(ActiveDOFs.Nodes2Mask);
@@ -445,14 +389,8 @@ static void __get_assembling_locations_lumped_mass(int *Mask_active_dofs_A,
 
 /**************************************************************/
 
-#ifdef USE_PETSC
 static Vec __compute_nodal_lumped_mass(Particle MPM_Mesh, Mesh FEM_Mesh,
-                                       Mask ActiveNodes, int *STATUS)
-#else
-static double *__compute_nodal_lumped_mass(Particle MPM_Mesh, Mesh FEM_Mesh,
-                                           Mask ActiveNodes, int *STATUS)
-#endif
-{
+                                       Mask ActiveNodes, int *STATUS) {
 
   unsigned Nnodes_mask = ActiveNodes.Nactivenodes;
   unsigned Ndim = NumberDimensions;
@@ -470,19 +408,10 @@ static double *__compute_nodal_lumped_mass(Particle MPM_Mesh, Mesh FEM_Mesh,
 #endif
 
   // Define and allocate the lumped mass matrix
-#ifdef USE_PETSC
   Vec Lumped_MassMatrix;
   VecCreate(PETSC_COMM_WORLD, &Lumped_MassMatrix);
   VecSetSizes(Lumped_MassMatrix, PETSC_DECIDE, Ntotaldofs);
   VecSetFromOptions(Lumped_MassMatrix);
-#else
-  double *Lumped_MassMatrix = (double *)calloc(Ntotaldofs, __SIZEOF_DOUBLE__);
-  if (Lumped_MassMatrix == NULL) {
-    fprintf(stderr, "" RED "Error in calloc(): Out of memory" RESET " \n");
-    *STATUS = EXIT_FAILURE;
-    return Lumped_MassMatrix;
-  }
-#endif
 
 #pragma omp parallel private(NumberNodes_p, Local_Mass_Matrix_p,               \
                              Mask_active_dofs_A)
@@ -516,14 +445,8 @@ static double *__compute_nodal_lumped_mass(Particle MPM_Mesh, Mesh FEM_Mesh,
 
 #pragma omp critical
         {
-#ifdef USE_PETSC
           VecSetValues(Lumped_MassMatrix, Ndim, Mask_active_dofs_A,
                        Local_Mass_Matrix_p, ADD_VALUES);
-#else
-          VecSetValues(Lumped_MassMatrix, Ndim, Mask_active_dofs_A,
-                       Local_Mass_Matrix_p);
-#endif
-
         } // #pragma omp critical
       }   // for A
 
@@ -534,10 +457,8 @@ static double *__compute_nodal_lumped_mass(Particle MPM_Mesh, Mesh FEM_Mesh,
     } // for p
   }   // #pragma omp parallel
 
-#ifdef USE_PETSC
   VecAssemblyBegin(Lumped_MassMatrix);
   VecAssemblyEnd(Lumped_MassMatrix);
-#endif
 
   return Lumped_MassMatrix;
 }
@@ -640,18 +561,11 @@ static void __get_assembling_locations_nodal_kinetics(int *Mask_active_dofs_A,
 
 /**************************************************************/
 
-#ifdef USE_PETSC
 static Nodal_Field __get_nodal_field_tn(Vec Lumped_Mass, Particle MPM_Mesh,
                                         Mesh FEM_Mesh, Mask ActiveNodes,
                                         Mask ActiveDOFs,
-                                        Newmark_parameters Params, int *STATUS)
-#else
-static Nodal_Field __get_nodal_field_tn(double *Lumped_Mass, Particle MPM_Mesh,
-                                        Mesh FEM_Mesh, Mask ActiveNodes,
-                                        Mask ActiveDOFs,
-                                        Newmark_parameters Params, int *STATUS)
-#endif
-{
+                                        Newmark_parameters Params,
+                                        int *STATUS) {
   *STATUS = EXIT_SUCCESS;
   unsigned Ndim = NumberDimensions;
   unsigned Nactivenodes = ActiveNodes.Nactivenodes;
@@ -662,7 +576,6 @@ static Nodal_Field __get_nodal_field_tn(double *Lumped_Mass, Particle MPM_Mesh,
 
   Nodal_Field U_n;
 
-#ifdef USE_PETSC
   VecCreate(PETSC_COMM_WORLD, &U_n.value);
   VecCreate(PETSC_COMM_WORLD, &U_n.d_value_dt);
   VecCreate(PETSC_COMM_WORLD, &U_n.d2_value_dt2);
@@ -675,16 +588,6 @@ static Nodal_Field __get_nodal_field_tn(double *Lumped_Mass, Particle MPM_Mesh,
   VecSetOption(U_n.value, VEC_IGNORE_NEGATIVE_INDICES, PETSC_TRUE);
   VecSetOption(U_n.d_value_dt, VEC_IGNORE_NEGATIVE_INDICES, PETSC_TRUE);
   VecSetOption(U_n.d2_value_dt2, VEC_IGNORE_NEGATIVE_INDICES, PETSC_TRUE);
-#else
-  U_n.value = (double *)calloc(Ntotaldofs, __SIZEOF_DOUBLE__);
-  U_n.d_value_dt = (double *)calloc(Ntotaldofs, __SIZEOF_DOUBLE__);
-  U_n.d2_value_dt2 = (double *)calloc(Ntotaldofs, __SIZEOF_DOUBLE__);
-  if ((U_n.value == NULL) || (U_n.d_value_dt == NULL) ||
-      (U_n.d2_value_dt2 == NULL)) {
-    fprintf(stderr, "" RED "Error in calloc(): Out of memory" RESET " \n");
-    *STATUS = EXIT_FAILURE;
-  }
-#endif
 
 #if NumberDimensions == 2
   int Mask_active_dofs_A[2];
@@ -736,18 +639,12 @@ static Nodal_Field __get_nodal_field_tn(double *Lumped_Mass, Particle MPM_Mesh,
 
 #pragma omp critical
         {
-#ifdef USE_PETSC
           VecSetValues(U_n.value, Ndim, Mask_active_dofs_A, U_N_m_IP,
                        ADD_VALUES);
           VecSetValues(U_n.d_value_dt, Ndim, Mask_active_dofs_A, V_N_m_IP,
                        ADD_VALUES);
           VecSetValues(U_n.d2_value_dt2, Ndim, Mask_active_dofs_A, A_N_m_IP,
                        ADD_VALUES);
-#else
-          VecSetValues(U_n.value, Ndim, Mask_active_dofs_A, U_N_m_IP);
-          VecSetValues(U_n.d_value_dt, Ndim, Mask_active_dofs_A, V_N_m_IP);
-          VecSetValues(U_n.d2_value_dt2, Ndim, Mask_active_dofs_A, A_N_m_IP);
-#endif
         } // #pragma omp critical
       }   // for A
 
@@ -758,21 +655,9 @@ static Nodal_Field __get_nodal_field_tn(double *Lumped_Mass, Particle MPM_Mesh,
 
   } // #pragma omp parallel
 
-#ifdef USE_PETSC
   VecPointwiseDivide(U_n.value, U_n.value, Lumped_Mass);
   VecPointwiseDivide(U_n.d_value_dt, U_n.d_value_dt, Lumped_Mass);
   VecPointwiseDivide(U_n.d2_value_dt2, U_n.d2_value_dt2, Lumped_Mass);
-#else
-  unsigned idx;
-#pragma omp for private(idx)
-  for (idx = 0; idx < Ntotaldofs; idx++) {
-    if (ActiveDOFs.Nodes2Mask[idx] != -1) {
-      U_n.value[idx] *= 1.0 / Lumped_Mass[idx];
-      U_n.d_value_dt[idx] *= 1.0 / Lumped_Mass[idx];
-      U_n.d2_value_dt2[idx] *= 1.0 / Lumped_Mass[idx];
-    }
-  } // for idx
-#endif
 
   //! Apply boundary condition
   unsigned NumBounds = FEM_Mesh.Bounds.NumBounds;
@@ -837,49 +722,32 @@ static Nodal_Field __get_nodal_field_tn(double *Lumped_Mass, Particle MPM_Mesh,
                           (alpha_3 + 1) * A_value_In;
           }
 
-#ifdef USE_PETSC
           VecSetValues(U_n.value, 1, &Mask_restricted_dofs_A, &U_value_In1,
                        ADD_VALUES);
           VecSetValues(U_n.d_value_dt, 1, &Mask_restricted_dofs_A, &V_value_In1,
                        ADD_VALUES);
           VecSetValues(U_n.d2_value_dt2, 1, &Mask_restricted_dofs_A,
                        &A_value_In1, ADD_VALUES);
-#else
-          VecSetValues(U_n.value, 1, &Mask_restricted_dofs_A, &U_value_In1);
-          VecSetValues(U_n.d_value_dt, 1, &Mask_restricted_dofs_A, &V_value_In1,
-                       ADD_VALUES);
-          VecSetValues(U_n.d2_value_dt2, 1, &Mask_restricted_dofs_A,
-                       &A_value_In1);
-#endif
         }
       }
     }
   }
 
-#ifdef USE_PETSC
   VecAssemblyBegin(U_n.value);
   VecAssemblyEnd(U_n.value);
   VecAssemblyBegin(U_n.d_value_dt);
   VecAssemblyEnd(U_n.d_value_dt);
   VecAssemblyBegin(U_n.d2_value_dt2);
   VecAssemblyEnd(U_n.d2_value_dt2);
-#endif
 
   return U_n;
 }
 
 /**************************************************************/
 
-#ifdef USE_PETSC
 static Nodal_Field __initialise_nodal_increments(
     Vec Lumped_Mass, Particle MPM_Mesh, Mesh FEM_Mesh, Nodal_Field U_n,
-    Mask ActiveNodes, Mask ActiveDOFs, Newmark_parameters Params, int *STATUS)
-#else
-Nodal_Field __initialise_nodal_increments(
-    double *Lumped_Mass, Particle MPM_Mesh, Mesh FEM_Mesh, Nodal_Field U_n,
-    Mask ActiveNodes, Mask ActiveDOFs, Newmark_parameters Params, int *STATUS)
-#endif
-{
+    Mask ActiveNodes, Mask ActiveDOFs, Newmark_parameters Params, int *STATUS) {
   unsigned NumNodesBound;
   unsigned Ndim = NumberDimensions;
   unsigned Np = MPM_Mesh.NumGP;
@@ -893,7 +761,6 @@ Nodal_Field __initialise_nodal_increments(
 
   Nodal_Field D_U;
 
-#ifdef USE_PETSC
   VecCreate(PETSC_COMM_WORLD, &D_U.value);
   VecCreate(PETSC_COMM_WORLD, &D_U.d_value_dt);
   VecCreate(PETSC_COMM_WORLD, &D_U.d2_value_dt2);
@@ -908,18 +775,6 @@ Nodal_Field __initialise_nodal_increments(
   VecGetArrayRead(U_n.d_value_dt, &Un_dt);
   const PetscScalar *Un_dt2;
   VecGetArrayRead(U_n.d2_value_dt2, &Un_dt2);
-#else
-  D_U.value = (double *)calloc(Ntotaldofs, __SIZEOF_DOUBLE__);
-  D_U.d_value_dt = (double *)calloc(Ntotaldofs, __SIZEOF_DOUBLE__);
-  D_U.d2_value_dt2 = (double *)calloc(Ntotaldofs, __SIZEOF_DOUBLE__);
-  if ((D_U.value == NULL) || (D_U.d_value_dt == NULL) ||
-      (D_U.d2_value_dt2 == NULL)) {
-    fprintf(stderr, "" RED "Error in calloc(): Out of memory" RESET " \n");
-    *STATUS = EXIT_FAILURE;
-  }
-  const double *Un_dt = U_n.d_value_dt;
-  const double *Un_dt2 = U_n.d2_value_dt2;
-#endif
 
   const double alpha_1 = Params.alpha_1;
   const double alpha_2 = Params.alpha_2;
@@ -978,12 +833,8 @@ Nodal_Field __initialise_nodal_increments(
 
 #pragma omp critical
           {
-#ifdef USE_PETSC
             VecSetValues(D_U.value, Ndim, Mask_active_dofs_A, DU_N_m_IP,
                          ADD_VALUES);
-#else
-            VecSetValues(D_U.value, Ndim, Mask_active_dofs_A, DU_N_m_IP);
-#endif
           } // #pragma omp critical
         }   // for A
 
@@ -994,17 +845,8 @@ Nodal_Field __initialise_nodal_increments(
 
     } // #pragma omp parallel
 
-#ifdef USE_PETSC
     VecPointwiseDivide(D_U.value, D_U.value, Lumped_Mass);
-#else
-    unsigned idx;
-#pragma omp for private(idx)
-    for (idx = 0; idx < Ntotaldofs; idx++) {
-      if (ActiveDOFs.Nodes2Mask[idx] != -1) {
-        D_U.value[idx] *= 1.0 / Lumped_Mass[idx];
-      }
-    } // for idx
-#endif
+
   } // Use_explicit_trial
 
   double D_U_value_It;
@@ -1037,21 +879,14 @@ Nodal_Field __initialise_nodal_increments(
           double D_U_dt2_bcc = alpha_4 * D_U_bcc + (alpha_5 - 1) * Un_dt[idx] +
                                alpha_6 * Un_dt2[idx];
 
-#ifdef USE_PETSC
           VecSetValues(D_U.value, 1, &idx, &D_U_bcc, ADD_VALUES);
           VecSetValues(D_U.d_value_dt, 1, &idx, &D_U_dt_bcc, ADD_VALUES);
           VecSetValues(D_U.d2_value_dt2, 1, &idx, &D_U_dt2_bcc, ADD_VALUES);
-#else
-          VecSetValues(D_U.value, 1, &idx, &D_U_bcc);
-          VecSetValues(D_U.d_value_dt, 1, &idx, &D_U_dt_bcc);
-          VecSetValues(D_U.d2_value_dt2, 1, &idx, &D_U_dt2_bcc);
-#endif
         }
       }
     }
   }
 
-#ifdef USE_PETSC
   VecAssemblyBegin(D_U.value);
   VecAssemblyEnd(D_U.value);
   VecAssemblyBegin(D_U.d_value_dt);
@@ -1060,7 +895,6 @@ Nodal_Field __initialise_nodal_increments(
   VecAssemblyEnd(D_U.d2_value_dt2);
   VecRestoreArrayRead(U_n.d_value_dt, &Un_dt);
   VecRestoreArrayRead(U_n.d2_value_dt2, &Un_dt2);
-#endif
 
   return D_U;
 }
@@ -1079,7 +913,6 @@ static void __trial_Nodal_Increments(Nodal_Field D_U, Nodal_Field U_n,
   double alpha_5 = Params.alpha_5;
   double alpha_6 = Params.alpha_6;
 
-#ifdef USE_PETSC
   const PetscScalar *Un_dt;
   VecGetArrayRead(U_n.d_value_dt, &Un_dt);
   const PetscScalar *Un_dt2;
@@ -1090,14 +923,6 @@ static void __trial_Nodal_Increments(Nodal_Field D_U, Nodal_Field U_n,
   VecGetArray(D_U.d_value_dt, &dU_dt);
   PetscScalar *dU_dt2;
   VecGetArray(D_U.d2_value_dt2, &dU_dt2);
-#else
-  const double *aux_Residual = Residual;
-  const double *Un_dt = U_n.d_value_dt;
-  const double *Un_dt2 = U_n.d2_value_dt2;
-  double *dU = D_U.value;
-  double *dU_dt = D_U.d_value_dt;
-  double *dU_dt2 = D_U.d2_value_dt2;
-#endif
 
 #pragma omp for private(Mask_total_dof_Ai, Mask_active_dof_Ai)
   for (Mask_total_dof_Ai = 0; Mask_total_dof_Ai < Ntotaldofs;
@@ -1124,13 +949,11 @@ static void __trial_Nodal_Increments(Nodal_Field D_U, Nodal_Field U_n,
     } // if Mask_active_dof_Ai == -1)
   }   // #pragma omp for private (Mask_total_dof_Ai)
 
-#ifdef USE_PETSC
   VecRestoreArrayRead(U_n.d_value_dt, &Un_dt);
   VecRestoreArrayRead(U_n.d2_value_dt2, &Un_dt2);
   VecRestoreArray(D_U.value, &dU);
   VecRestoreArray(D_U.d_value_dt, &dU_dt);
   VecRestoreArray(D_U.d2_value_dt2, &dU_dt2);
-#endif
 }
 
 /**************************************************************/
@@ -1148,15 +971,10 @@ static void __local_compatibility_conditions(Nodal_Field D_U, Mask ActiveNodes,
   int Idx_Element_p;
   int Idx_Patch_p;
 
-#ifdef USE_PETSC
   const double *dU;
   VecGetArrayRead(D_U.value, &dU);
   const double *dU_dt;
   VecGetArrayRead(D_U.d_value_dt, &dU_dt);
-#else
-  const double *dU = D_U.value;
-  const double *dU_dt = D_U.d_value_dt;
-#endif
 
 /*
   Loop in the material point set
@@ -1273,10 +1091,8 @@ static void __local_compatibility_conditions(Nodal_Field D_U, Mask ActiveNodes,
     }
   }
 
-#ifdef USE_PETSC
   VecRestoreArrayRead(D_U.value, &dU);
   VecRestoreArrayRead(D_U.d_value_dt, &dU_dt);
-#endif
 }
 
 /**************************************************************/
@@ -1319,22 +1135,12 @@ static int __constitutive_update(Particle MPM_Mesh, Mesh FEM_Mesh) {
 
 /**************************************************************/
 
-#ifdef USE_PETSC
 static Vec __assemble_residual(Nodal_Field U_n, Nodal_Field D_U,
                                Vec Lumped_Mass, Mask ActiveNodes,
                                Mask ActiveDOFs, Particle MPM_Mesh,
                                Mesh FEM_Mesh, Newmark_parameters Params,
                                bool Is_compute_Residual,
-                               bool Is_compute_Reactions, int *STATUS)
-#else
-static double *__assemble_residual(Nodal_Field U_n, Nodal_Field D_U,
-                                   double *Lumped_Mass, Mask ActiveNodes,
-                                   Mask ActiveDOFs, Particle MPM_Mesh,
-                                   Mesh FEM_Mesh, Newmark_parameters Params,
-                                   bool Is_compute_Residual,
-                                   bool Is_compute_Reactions, int *STATUS)
-#endif
-{
+                               bool Is_compute_Reactions, int *STATUS) {
 
   unsigned Size;
 
@@ -1344,19 +1150,10 @@ static double *__assemble_residual(Nodal_Field U_n, Nodal_Field D_U,
     Size = ActiveNodes.Nactivenodes * NumberDimensions;
   }
 
-#ifdef USE_PETSC
   Vec Residual;
   VecCreate(PETSC_COMM_WORLD, &Residual);
   VecSetSizes(Residual, PETSC_DECIDE, Size);
   VecSetFromOptions(Residual);
-#else
-  double *Residual = (double *)calloc(Size, __SIZEOF_DOUBLE__);
-  if (Residual == NULL) {
-    fprintf(stderr, "" RED "Error in calloc(): Out of memory" RESET " \n");
-    *STATUS = EXIT_FAILURE;
-    return Residual;
-  }
-#endif
 
   __Nodal_Internal_Forces(Residual, ActiveNodes, ActiveDOFs, MPM_Mesh, FEM_Mesh,
                           Is_compute_Residual, Is_compute_Reactions, STATUS);
@@ -1372,10 +1169,9 @@ static double *__assemble_residual(Nodal_Field U_n, Nodal_Field D_U,
                           ActiveDOFs, Params, Is_compute_Residual,
                           Is_compute_Reactions);
 
-#ifdef USE_PETSC
   VecAssemblyBegin(Residual);
   VecAssemblyEnd(Residual);
-#endif
+
   return Residual;
 }
 
@@ -1414,40 +1210,10 @@ static void __get_assembling_locations_reactions(int *Mask_active_dofs_A,
 
 /**************************************************************/
 
-#ifndef USE_PETSC
-static void VecSetValues(double *Residual, unsigned Order,
-                         const int *Mask_active_dofs_A,
-                         const double *InternalForcesDensity_Ap) {
-
-  unsigned Ndim = NumberDimensions;
-  int Mask_active_dof_Ai;
-  int Mask_active_dof_Bj;
-
-  for (unsigned idx_A = 0; idx_A < Order; idx_A++) {
-
-    Mask_active_dof_Ai = Mask_active_dofs_A[idx_A];
-
-    if (Mask_active_dof_Ai != -1) {
-      Residual[Mask_active_dof_Ai] += InternalForcesDensity_Ap[idx_A];
-    }
-  }
-}
-#endif
-
-/**************************************************************/
-
-#ifdef USE_PETSC
 static void __Nodal_Internal_Forces(Vec Residual, Mask ActiveNodes,
                                     Mask ActiveDOFs, Particle MPM_Mesh,
                                     Mesh FEM_Mesh, bool Is_compute_Residual,
-                                    bool Is_compute_Reactions, int *STATUS)
-#else
-static void __Nodal_Internal_Forces(double *Residual, Mask ActiveNodes,
-                                    Mask ActiveDOFs, Particle MPM_Mesh,
-                                    Mesh FEM_Mesh, bool Is_compute_Residual,
-                                    bool Is_compute_Reactions, int *STATUS)
-#endif
-{
+                                    bool Is_compute_Reactions, int *STATUS) {
 
   *STATUS = EXIT_SUCCESS;
   unsigned Ndim = NumberDimensions;
@@ -1463,9 +1229,7 @@ static void __Nodal_Internal_Forces(double *Residual, Mask ActiveNodes,
   double InternalForcesDensity_Ap[3];
 #endif
 
-#ifdef USE_PETSC
   VecSetOption(Residual, VEC_IGNORE_NEGATIVE_INDICES, PETSC_TRUE);
-#endif
 
   const double *Damage_field_n = MPM_Mesh.Phi.Damage_n;
   double *Damage_field_n1 = MPM_Mesh.Phi.Damage_n1;
@@ -1550,13 +1314,8 @@ static void __Nodal_Internal_Forces(double *Residual, Mask ActiveNodes,
 
 #pragma omp critical
         {
-#ifdef USE_PETSC
           VecSetValues(Residual, Ndim, Mask_active_dofs_A,
                        InternalForcesDensity_Ap, ADD_VALUES);
-#else
-          VecSetValues(Residual, Ndim, Mask_active_dofs_A,
-                       InternalForcesDensity_Ap);
-#endif
         } // #pragma omp critical
       }   // for unsigned A
 
@@ -1599,18 +1358,10 @@ static void __internal_force_density(double *InternalForcesDensity_Ap,
 
 /**************************************************************/
 
-#ifdef USE_PETSC
 static void __Nodal_Traction_Forces(Vec Residual, Mask ActiveNodes,
                                     Mask ActiveDOFs, Particle MPM_Mesh,
                                     Mesh FEM_Mesh, bool Is_compute_Residual,
-                                    bool Is_compute_Reactions)
-#else
-static void __Nodal_Traction_Forces(double *Residual, Mask ActiveNodes,
-                                    Mask ActiveDOFs, Particle MPM_Mesh,
-                                    Mesh FEM_Mesh, bool Is_compute_Residual,
-                                    bool Is_compute_Reactions)
-#endif
-{
+                                    bool Is_compute_Reactions) {
 
   unsigned Ndim = NumberDimensions;
   unsigned NumContactForces = MPM_Mesh.Neumann_Contours.NumBounds;
@@ -1714,13 +1465,8 @@ static void __Nodal_Traction_Forces(double *Residual, Mask ActiveNodes,
         //  Asign the nodal contact forces contribution to the node
 #pragma omp critical
         {
-#ifdef USE_PETSC
           VecSetValues(Residual, Ndim, Mask_active_dofs_A,
                        LocalTractionForce_Ap, ADD_VALUES);
-#else
-          VecSetValues(Residual, Ndim, Mask_active_dofs_A,
-                       LocalTractionForce_Ap);
-#endif
         } // #pragma omp critical
 
       } // for unsigned A
@@ -1749,20 +1495,12 @@ static void __local_traction_force(double *LocalTractionForce_Ap,
 
 /**************************************************************/
 
-#ifdef USE_PETSC
-static void
-__Nodal_Inertial_Forces(Vec Residual, Vec Lumped_Mass, Nodal_Field U_n,
-                        Nodal_Field D_U, Mask ActiveNodes, Mask ActiveDOFs,
-                        Newmark_parameters Params, bool Is_compute_Residual,
-                        bool Is_compute_Reactions)
-#else
-static void
-__Nodal_Inertial_Forces(double *Residual, double *Lumped_Mass, Nodal_Field U_n,
-                        Nodal_Field D_U, Mask ActiveNodes, Mask ActiveDOFs,
-                        Newmark_parameters Params, bool Is_compute_Residual,
-                        bool Is_compute_Reactions)
-#endif
-{
+static void __Nodal_Inertial_Forces(Vec Residual, Vec Lumped_Mass,
+                                    Nodal_Field U_n, Nodal_Field D_U,
+                                    Mask ActiveNodes, Mask ActiveDOFs,
+                                    Newmark_parameters Params,
+                                    bool Is_compute_Residual,
+                                    bool Is_compute_Reactions) {
 
   unsigned Ndim = NumberDimensions;
   unsigned Nactivenodes = ActiveNodes.Nactivenodes;
@@ -1772,7 +1510,6 @@ __Nodal_Inertial_Forces(double *Residual, double *Lumped_Mass, Nodal_Field U_n,
   double alpha_2 = Params.alpha_2;
   double alpha_3 = Params.alpha_3;
 
-#ifdef USE_PETSC
   const PetscScalar *M_II;
   VecGetArrayRead(Lumped_Mass, &M_II);
   const PetscScalar *dU;
@@ -1781,12 +1518,6 @@ __Nodal_Inertial_Forces(double *Residual, double *Lumped_Mass, Nodal_Field U_n,
   VecGetArrayRead(U_n.d_value_dt, &Un_dt);
   const PetscScalar *Un_dt2;
   VecGetArrayRead(U_n.d2_value_dt2, &Un_dt2);
-#else
-  const double *M_II = Lumped_Mass;
-  const double *dU = D_U.value;
-  const double *Un_dt = U_n.d_value_dt;
-  const double *Un_dt2 = U_n.d2_value_dt2;
-#endif
 
 #if NumberDimensions == 2
   double b[2] = {0.0, 0.0};
@@ -1805,9 +1536,7 @@ __Nodal_Inertial_Forces(double *Residual, double *Lumped_Mass, Nodal_Field U_n,
 #endif
   }
 
-#ifdef USE_PETSC
   VecSetOption(Residual, VEC_IGNORE_NEGATIVE_INDICES, PETSC_TRUE);
-#endif
 
 #pragma omp for private(idx)
   for (idx = 0; idx < Ntotaldofs; idx++) {
@@ -1822,65 +1551,36 @@ __Nodal_Inertial_Forces(double *Residual, double *Lumped_Mass, Nodal_Field U_n,
         R_Ai = M_II[idx] * (alpha_1 * dU[idx] - alpha_2 * Un_dt[idx] -
                             alpha_3 * Un_dt2[idx] - b[idx % Ndim]);
 
-#ifdef USE_PETSC
         VecSetValues(Residual, 1, &Mask_active_dof_Ai, &R_Ai, ADD_VALUES);
-#else
-        VecSetValues(Residual, 1, &Mask_active_dof_Ai, &R_Ai);
-#endif
+
       } else if (Is_compute_Reactions == true) {
 
         R_Ai = -b[idx % Ndim];
 
-#ifdef USE_PETSC
         VecSetValues(Residual, 1, &idx, &R_Ai, ADD_VALUES);
-#else
-        VecSetValues(Residual, 1, &idx, &R_Ai);
-#endif
       }
     }
   }
 
-#ifdef USE_PETSC
   VecRestoreArrayRead(Lumped_Mass, &M_II);
   VecRestoreArrayRead(D_U.value, &dU);
   VecRestoreArrayRead(U_n.d_value_dt, &Un_dt);
   VecRestoreArrayRead(U_n.d2_value_dt2, &Un_dt2);
-#endif
 }
 
 /**************************************************************/
-#ifdef USE_PETSC
-static double __error_residual(const Vec Residual, unsigned Total_dof)
-#else
-static double __error_residual(const double *Residual, unsigned Total_dof)
-#endif
-{
+static double __error_residual(const Vec Residual) {
 
   double Error = 0;
 
-#ifdef USE_PETSC
   VecNorm(Residual, NORM_2, &Error);
-#else
-  for (unsigned A = 0; A < Total_dof; A++) {
-    Error += DSQR(Residual[A]);
-  }
-  Error = pow(Error, 0.5);
-#endif
 
   return Error;
 }
 
 /**************************************************************/
-
-#ifdef USE_PETSC
 static Mat __preallocation_tangent_matrix(Mask ActiveNodes, Mask ActiveDOFs,
-                                          Particle MPM_Mesh, int *STATUS)
-#else
-static double *__preallocation_tangent_matrix(Mask ActiveNodes, Mask ActiveDOFs,
-                                              Particle MPM_Mesh, int *STATUS)
-#endif
-
-{
+                                          Particle MPM_Mesh, int *STATUS) {
   unsigned Ndim = NumberDimensions;
   unsigned Nactivedofs = ActiveDOFs.Nactivenodes;
   unsigned Np = MPM_Mesh.NumGP;
@@ -1948,21 +1648,12 @@ static double *__preallocation_tangent_matrix(Mask ActiveNodes, Mask ActiveDOFs,
 
   free(Active_dof_Mat);
 
-#ifdef USE_PETSC
   Mat Tangent_Stiffness;
   MatCreateSeqAIJ(PETSC_COMM_SELF, Nactivedofs, Nactivedofs, 0, nnz,
                   &Tangent_Stiffness);
   MatSetOption(Tangent_Stiffness, MAT_IGNORE_ZERO_ENTRIES, PETSC_TRUE);
   PetscInt Istart, Iend;
   MatGetOwnershipRange(Tangent_Stiffness, &Istart, &Iend);
-#else
-  double *Tangent_Stiffness =
-      (double *)calloc(Nactivedofs * Nactivedofs, __SIZEOF_DOUBLE__);
-  if (Tangent_Stiffness == NULL) {
-    fprintf(stderr, "" RED "Error in calloc(): Out of memory" RESET " \n");
-    *STATUS = EXIT_FAILURE;
-  }
-#endif
 
   free(nnz);
 
@@ -2013,35 +1704,6 @@ static void local_tangent_stiffness(double *Tangent_Stiffness_p,
 }
 
 /**************************************************************/
-#ifndef USE_PETSC
-static void MatSetValues(double *Tangent_Stiffness,
-                         const double *Tangent_Stiffness_p,
-                         const int *Mask_active_dofs_A,
-                         const int *Mask_active_dofs_B, int Nactivedofs) {
-
-  unsigned Ndim = NumberDimensions;
-  int Mask_active_dof_Ai;
-  int Mask_active_dof_Bj;
-
-  for (unsigned idx_A = 0; idx_A < Ndim; idx_A++) {
-
-    Mask_active_dof_Ai = Mask_active_dofs_A[idx_A];
-
-    for (unsigned idx_B = 0; idx_B < Ndim; idx_B++) {
-
-      Mask_active_dof_Bj = Mask_active_dofs_B[idx_B];
-
-      if ((Mask_active_dof_Ai != -1) && (Mask_active_dof_Bj != -1)) {
-        Tangent_Stiffness[Mask_active_dof_Ai * Nactivedofs +
-                          Mask_active_dof_Bj] +=
-            Tangent_Stiffness_p[idx_A * Ndim + idx_B];
-      }
-    }
-  }
-}
-#endif
-
-/**************************************************************/
 
 static void __get_tangent_matrix_assembling_locations(int *Mask_active_dofs_A,
                                                       int Mask_node_A,
@@ -2069,20 +1731,11 @@ static void __get_tangent_matrix_assembling_locations(int *Mask_active_dofs_A,
 
 /**************************************************************/
 
-#ifdef USE_PETSC
 static void __assemble_tangent_stiffness(Mat Tangent_Stiffness,
                                          Mask ActiveNodes, Mask ActiveDOFs,
                                          Particle MPM_Mesh, Mesh FEM_Mesh,
                                          Newmark_parameters Params,
-                                         unsigned Iter, int *STATUS)
-#else
-static void __assemble_tangent_stiffness(double *Tangent_Stiffness,
-                                         Mask ActiveNodes, Mask ActiveDOFs,
-                                         Particle MPM_Mesh, Mesh FEM_Mesh,
-                                         Newmark_parameters Params,
-                                         unsigned Iter, int *STATUS)
-#endif
-{
+                                         unsigned Iter, int *STATUS) {
 
   *STATUS = EXIT_SUCCESS;
   unsigned Ndim = NumberDimensions;
@@ -2109,14 +1762,7 @@ static void __assemble_tangent_stiffness(double *Tangent_Stiffness,
 
   // Set tangent matrix to zero if it is necessary
   if (Iter > 0) {
-#ifdef USE_PETSC
     MatZeroEntries(Tangent_Stiffness);
-#else
-#pragma omp for
-    for (unsigned idx = 0; idx < Nactivedofs * Nactivedofs; idx++) {
-      Tangent_Stiffness[idx] = 0.0;
-    }
-#endif
   }
 
   // Time integartion parameters
@@ -2214,14 +1860,8 @@ static void __assemble_tangent_stiffness(double *Tangent_Stiffness,
 #pragma omp critical
           {
 
-#ifdef USE_PETSC
             MatSetValues(Tangent_Stiffness, Ndim, Mask_active_dofs_A, Ndim,
                          Mask_active_dofs_B, Tangent_Stiffness_p, ADD_VALUES);
-#else
-
-            MatSetValues(Tangent_Stiffness, Tangent_Stiffness_p,
-                         Mask_active_dofs_A, Mask_active_dofs_B, Nactivedofs);
-#endif
 
           } // #pragma omp critical
         }   // for B (node)
@@ -2236,27 +1876,17 @@ static void __assemble_tangent_stiffness(double *Tangent_Stiffness,
     } // for p (particle)
   }   // #pragma omp parallel
 
-#ifdef USE_PETSC
   MatAssemblyBegin(Tangent_Stiffness, MAT_FINAL_ASSEMBLY);
   MatAssemblyEnd(Tangent_Stiffness, MAT_FINAL_ASSEMBLY);
   MatSetOption(Tangent_Stiffness, MAT_SYMMETRIC, PETSC_TRUE);
-#endif
 }
 
 /**************************************************************/
 
-#ifdef USE_PETSC
 static void __update_Nodal_Increments(const Vec Residual, Nodal_Field D_U,
                                       Nodal_Field U_n, Mask ActiveDOFs,
                                       Newmark_parameters Params,
-                                      unsigned Ntotaldofs)
-#else
-static void __update_Nodal_Increments(const double *Residual, Nodal_Field D_U,
-                                      Nodal_Field U_n, Mask ActiveDOFs,
-                                      Newmark_parameters Params,
-                                      unsigned Ntotaldofs)
-#endif
-{
+                                      unsigned Ntotaldofs) {
   unsigned Mask_total_dof_Ai;
   int Mask_active_dof_Ai;
   double alpha_1 = Params.alpha_1;
@@ -2266,7 +1896,6 @@ static void __update_Nodal_Increments(const double *Residual, Nodal_Field D_U,
   double alpha_5 = Params.alpha_5;
   double alpha_6 = Params.alpha_6;
 
-#ifdef USE_PETSC
   const PetscScalar *aux_Residual;
   VecGetArrayRead(Residual, &aux_Residual);
   const PetscScalar *Un_dt;
@@ -2279,14 +1908,6 @@ static void __update_Nodal_Increments(const double *Residual, Nodal_Field D_U,
   VecGetArray(D_U.d_value_dt, &dU_dt);
   PetscScalar *dU_dt2;
   VecGetArray(D_U.d2_value_dt2, &dU_dt2);
-#else
-  const double *aux_Residual = Residual;
-  const double *Un_dt = U_n.d_value_dt;
-  const double *Un_dt2 = U_n.d2_value_dt2;
-  double *dU = D_U.value;
-  double *dU_dt = D_U.d_value_dt;
-  double *dU_dt2 = D_U.d2_value_dt2;
-#endif
 
 #pragma omp for private(Mask_total_dof_Ai, Mask_active_dof_Ai)
   for (Mask_total_dof_Ai = 0; Mask_total_dof_Ai < Ntotaldofs;
@@ -2315,14 +1936,12 @@ static void __update_Nodal_Increments(const double *Residual, Nodal_Field D_U,
     } // if Mask_active_dof_Ai == -1)
   }   // #pragma omp for private (Mask_total_dof_Ai)
 
-#ifdef USE_PETSC
   VecRestoreArrayRead(Residual, &aux_Residual);
   VecRestoreArrayRead(U_n.d_value_dt, &Un_dt);
   VecRestoreArrayRead(U_n.d2_value_dt2, &Un_dt2);
   VecRestoreArray(D_U.value, &dU);
   VecRestoreArray(D_U.d_value_dt, &dU_dt);
   VecRestoreArray(D_U.d2_value_dt2, &dU_dt2);
-#endif
 }
 
 /**************************************************************/
@@ -2339,18 +1958,12 @@ static void __update_Particles(Nodal_Field D_U, Particle MPM_Mesh,
   double D_V_pI;
   double D_A_pI;
 
-#ifdef USE_PETSC
   const PetscScalar *dU;
   VecGetArrayRead(D_U.value, &dU);
   const PetscScalar *dU_dt;
   VecGetArrayRead(D_U.d_value_dt, &dU_dt);
   const PetscScalar *dU_dt2;
   VecGetArrayRead(D_U.d2_value_dt2, &dU_dt2);
-#else
-  const double *dU = D_U.value;
-  const double *dU_dt = D_U.d_value_dt;
-  const double *dU_dt2 = D_U.d2_value_dt2;
-#endif
 
 #pragma omp parallel private(NumNodes_p, D_U_pI, D_V_pI, D_A_pI)
   {
@@ -2441,11 +2054,10 @@ static void __update_Particles(Nodal_Field D_U, Particle MPM_Mesh,
     } // #pragma omp for private(p)
   }   // #pragma omp parallel
 
-#ifdef USE_PETSC
+
   VecRestoreArrayRead(D_U.value, &dU);
   VecRestoreArrayRead(D_U.d_value_dt, &dU_dt);
   VecRestoreArrayRead(D_U.d2_value_dt2, &dU_dt2);
-#endif
 }
 
 /**************************************************************/

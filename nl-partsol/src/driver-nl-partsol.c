@@ -31,7 +31,11 @@
 #include "Formulations/Displacements/U-Discrete-Energy-Momentum.h"
 #include "Formulations/Displacements/U-Forward-Euler.h"
 #include "Formulations/Displacements/U-Generalized-Alpha.h"
+
+#ifdef USE_PETSC
 #include "Formulations/Displacements/U-Newmark-beta.h"
+#endif
+
 #include "Formulations/Displacements/U-Static.h"
 #include "Formulations/Displacements/U-Verlet.h"
 #include "Formulations/Displacements-Pressure/U-p-Analisys.h"
@@ -165,10 +169,10 @@ int main(int argc, char *argv[]) {
 
 // Initialize OpenMP
 #ifdef USE_OPENMP
-  fprintf(stderr,"" GREEN "Initialize OpenMP" RESET " ... \n");
-  fprintf(stderr,"\t -> Threads requested : %i \n",reqNumThreads);    
-  fprintf(stderr,"\t -> Threads availables : %i \n",maxNumThreads);    
-  omp_set_num_threads(IMIN(maxNumThreads,reqNumThreads));
+  fprintf(stderr, "" GREEN "Initialize OpenMP" RESET " ... \n");
+  fprintf(stderr, "\t -> Threads requested : %i \n", reqNumThreads);
+  fprintf(stderr, "\t -> Threads availables : %i \n", maxNumThreads);
+  omp_set_num_threads(IMIN(maxNumThreads, reqNumThreads));
 #endif
 
   // Initialize PETSc
@@ -296,10 +300,17 @@ int main(int argc, char *argv[]) {
       U_Discrete_Energy_Momentum(FEM_Mesh, MPM_Mesh, Parameters_Solver);
     } else if (strcmp(Parameters_Solver.TimeIntegrationScheme,
                       "Newmark-beta-Finite-Strains") == 0) {
+#ifdef USE_PETSC
       STATUS = U_Newmark_Beta(FEM_Mesh, MPM_Mesh, Parameters_Solver);
       if (STATUS == EXIT_FAILURE) {
         fprintf(stderr, "" RED "Error in U_Newmark_Beta(,)" RESET " \n");
       }
+#else
+      fprintf(stderr,
+              "" RED "To use Newmark-beta-Finite-Strains you need to use "
+                     "USE_PETSC=true during compilation" RESET " \n");
+      STATUS == EXIT_FAILURE;
+#endif
     } else {
       sprintf(Error_message, "%s", "Wrong time integration scheme");
       standard_error(Error_message);
