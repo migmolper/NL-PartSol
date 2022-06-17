@@ -19,6 +19,17 @@ typedef struct {
   double DeltaTimeStep;
 } Newmark_parameters;
 
+typedef struct {
+
+  Mask ActiveNodes;
+  Mask ActiveDOFs;
+  Particle MPM_Mesh;
+  Mesh FEM_Mesh;
+  Vec Lumped_Mass;
+  Newmark_parameters Time_Integration_Params;
+
+} Ctx;
+
 static double __compute_deltat(Particle MPM_Mesh /**< */, double h /**< */,
                                Time_Int_Params Parameters_Solver /**< */);
 /**************************************************************/
@@ -132,9 +143,24 @@ static Nodal_Field __get_nodal_field_tn(Vec Lumped_Mass, Particle MPM_Mesh,
  * @param STATUS
  * @return Nodal_Field
  */
-static Nodal_Field __initialise_nodal_increments(
-    Vec Lumped_Mass, Particle MPM_Mesh, Mesh FEM_Mesh, Nodal_Field U_n,
-    Mask ActiveNodes, Mask ActiveDOFs, Newmark_parameters Params, int *STATUS);
+static Nodal_Field __trial_nodal_increments(Vec Lumped_Mass, Particle MPM_Mesh,
+                                            Mesh FEM_Mesh, Nodal_Field U_n,
+                                            Mask ActiveNodes, Mask ActiveDOFs,
+                                            Newmark_parameters Params,
+                                            int *STATUS);
+/**************************************************************/
+
+/**
+ * @brief Evaluates nonlinear function: L(D_U)
+ *
+ * @param snes
+ * @param D_U Increment of the nodal displacement
+ * @param Residual Lagrangian in expressed in residual shape
+ * @param ctx User-defined context for the Lagrangian evaluation
+ * @return PetscErrorCode
+ */
+static PetscErrorCode __Lagrangian_evaluation(SNES snes, Vec D_U, Vec Residual,
+                                              void *ctx);
 /**************************************************************/
 
 /*!
@@ -348,18 +374,32 @@ static void __assemble_tangent_stiffness(Mat Tangent_Stiffness,
 /**************************************************************/
 
 /**
- * @brief 
- * 
+ * @brief Evaluates Jacobian matrix.
+ *
+ * @param snes the SNES context
+ * @param[in] DU Input vector
+ * @param[in,out] jac Jacobian matrix
+ * @param[out] B Optionally different preconditioning matrix
+ * @param dummy User-defined context
+ * @return PetscErrorCode
+ */
+PetscErrorCode __Jacobian_evaluation(SNES snes, Vec DU, Mat jac, Mat B,
+                                     void *dummy);
+/**************************************************************/
+
+/**
+ * @brief
+ *
  * @param D_U Nodal incremented (displacement,velocity,acceleration)
  * @param U_n Previously converged nodal kinetics
  * @param ActiveDOFs List of dofs which takes place in the computation
  * @param Params Time integration parameters
  * @param Ntotaldofs Number of dofs
  */
-static void __trial_Nodal_Increments(Nodal_Field D_U,
-                                      Nodal_Field U_n, Mask ActiveDOFs,
-                                      Newmark_parameters Params,
-                                      unsigned Ntotaldofs);
+static void __trial_Nodal_Increments(Nodal_Field D_U, Nodal_Field U_n,
+                                     Mask ActiveDOFs, Newmark_parameters Params,
+                                     unsigned Ntotaldofs);
+/**************************************************************/
 
 /*!
   \brief This function takes the nodal increments comming from \n
@@ -378,11 +418,17 @@ static void __update_Nodal_Increments(const Vec Residual, Nodal_Field D_U,
                                       unsigned Ntotaldofs);
 /**************************************************************/
 
-static void __update_Particles(Nodal_Field D_U /**< */,
-                               Particle MPM_Mesh /**< */, Mesh FEM_Mesh /**< */,
-                               Mask ActiveNodes /**< */);
+/**
+ * @brief
+ *
+ * @param D_U
+ * @param MPM_Mesh
+ * @param FEM_Mesh
+ * @param ActiveNodes
+ */
+static void __update_Particles(Nodal_Field D_U, Particle MPM_Mesh,
+                               Mesh FEM_Mesh, Mask ActiveNodes);
 /**************************************************************/
-
 
 // Global variables
 unsigned InitialStep;
@@ -430,27 +476,39 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
   Vec Residual;
   Vec Reactions;
 
-  Nodal_Field U_n;
-  Nodal_Field D_U;
+  Vec U_n;
+  Vec U_n_dt;
+  Vec U_n_dt2;
+
+  Vec DU, DU_trial;
+  Vec DU_dt;
+  Vec DU_dt2;
 
   Mask ActiveNodes;
   Mask ActiveDOFs;
 
   Newmark_parameters Time_Integration_Params;
 
-  /*
+  //
+  SNES snes; /* nonlinear solver context */
+  KSP ksp;   /* linear solver context */
+  PC pc;     /* preconditioner context */
+
+  /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     Time step is defined at the init of the simulation throught the
     CFL condition. Notice that for this kind of solver, CFL confition is
     not required to be satisfied. The only purpose of it is to use the existing
     software interfase.
-  */
+     - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
   DeltaTimeStep = __compute_deltat(MPM_Mesh, DeltaX, Parameters_Solver);
 
   if (Driver_EigenErosion) {
     compute_Beps__Constitutive__(MPM_Mesh, FEM_Mesh, true);
   }
 
-  //  Compute time integrator parameters
+  /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+     Compute time integration parameters
+     - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
   Time_Integration_Params =
       __compute_Newmark_parameters(beta, gamma, DeltaTimeStep, epsilon);
 
@@ -458,7 +516,9 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
 
     DoProgress("Simulation:", TimeStep, NumTimeStep);
 
-    //! Local search and compute list of active nodes and dofs
+    /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+       Local search and compute list of active nodes and dofs
+       - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
     STATUS = local_search__MeshTools__(MPM_Mesh, FEM_Mesh);
     if (STATUS == EXIT_FAILURE) {
       fprintf(stderr, "" RED " Error in " RESET "" BOLDRED
@@ -477,7 +537,9 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
       compute_Beps__Constitutive__(MPM_Mesh, FEM_Mesh, false);
     }
 
-    //! Define and allocate the effective mass matrix
+    /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+       Define and allocate the effective mass matrix
+       - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
     Lumped_Mass =
         __compute_nodal_lumped_mass(MPM_Mesh, FEM_Mesh, ActiveNodes, &STATUS);
     if (STATUS == EXIT_FAILURE) {
@@ -486,7 +548,9 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
       return EXIT_FAILURE;
     }
 
-    //! Get the previous converged nodal value
+    /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+       Get the previous converged nodal value
+       - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
     U_n = __get_nodal_field_tn(Lumped_Mass, MPM_Mesh, FEM_Mesh, ActiveNodes,
                                ActiveDOFs, Time_Integration_Params, &STATUS);
     if (STATUS == EXIT_FAILURE) {
@@ -494,129 +558,103 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
       return EXIT_FAILURE;
     }
 
-    //! Compute kinematic nodal values
-    D_U = __initialise_nodal_increments(Lumped_Mass, MPM_Mesh, FEM_Mesh, U_n,
-                                        ActiveNodes, ActiveDOFs,
-                                        Time_Integration_Params, &STATUS);
+    /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+       Create nonlinear solver context
+       - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+    PetscCall(SNESCreate(PETSC_COMM_WORLD, &snes));
+    PetscCall(SNESSetType(snes, SNESNEWTONLS));
+    PetscCall(SNESSetOptionsPrefix(snes, "mysolver_"));
+
+    /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+       Create matrix and vector data structures; set corresponding routines
+       - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+    /*
+       Create vectors for solution and nonlinear function
+    */
+    PetscCall(VecCreate(PETSC_COMM_WORLD, &DU));
+    PetscCall(VecSetSizes(DU, PETSC_DECIDE, Ntotaldofs));
+    PetscCall(VecSetFromOptions(DU));
+    PetscCall(VecDuplicate(DU, &Residual));
+
+    /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+       Create Jacobian matrix data structure
+       - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+    PetscCall(MatCreate(PETSC_COMM_WORLD, &Tangent_Stiffness));
+    PetscCall(MatSetSizes(Tangent_Stiffness, PETSC_DECIDE, PETSC_DECIDE,
+                          Ntotaldofs, Ntotaldofs));
+    PetscCall(MatSetFromOptions(Tangent_Stiffness));
+    PetscCall(MatSetUp(Tangent_Stiffness));
+
+    Tangent_Stiffness = __preallocation_tangent_matrix(ActiveNodes, ActiveDOFs,
+                                                       MPM_Mesh, &STATUS);
     if (STATUS == EXIT_FAILURE) {
       fprintf(stderr,
-              "" RED "Error in __initialise_nodal_increments()" RESET " \n");
+              "" RED "Error in __preallocation_tangent_matrix()" RESET " \n");
       return EXIT_FAILURE;
     }
 
-    //! Trial local comptatibility
+    /*
+     Set function evaluation routine and vector.
+    */
+    PetscCall(SNESSetFunction(snes, Residual, __Lagrangian_evaluation, NULL));
+
+    /*
+     Set Jacobian matrix data structure and Jacobian evaluation routine
+    */
+    PetscCall(SNESSetJacobian(snes, Tangent_Stiffness, Tangent_Stiffness,
+                              __Jacobian_evaluation, NULL));
+
+    /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+       Customize nonlinear solver; set runtime options
+     - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+    /*
+       Set linear solver defaults for this problem. By extracting the
+       KSP and PC contexts from the SNES context, we can then
+       directly call any KSP and PC routines to set various options.
+    */
+    PetscCall(SNESGetKSP(snes, &ksp));
+    PetscCall(KSPGetPC(ksp, &pc));
+    PetscCall(PCSetType(pc, PCNONE));
+    PetscCall(KSPSetTolerances(ksp, 1.e-4, PETSC_DEFAULT, PETSC_DEFAULT, 20));
+
+    /*
+       Set SNES/KSP/KSP/PC runtime options, e.g.,
+           -snes_view -snes_monitor -ksp_type <ksp> -pc_type <pc>
+       These options will override those specified above as long as
+       SNESSetFromOptions() is called _after_ any other customization
+       routines.
+    */
+    PetscCall(SNESSetFromOptions(snes));
+
+    /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+       Evaluate initial guess; then solve nonlinear system
+     - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
     if (Use_explicit_trial == true) {
 
-      __trial_Nodal_Increments(D_U, U_n, ActiveDOFs, Time_Integration_Params,
-                               Ntotaldofs);
-
-      __local_compatibility_conditions(D_U, ActiveNodes, MPM_Mesh, FEM_Mesh,
-                                       &STATUS);
+      __trial_nodal_increments(DU, Lumped_Mass, MPM_Mesh, FEM_Mesh, U_n,
+                               as ActiveNodes, ActiveDOFs,
+                               Time_Integration_Params, &STATUS);
       if (STATUS == EXIT_FAILURE) {
         fprintf(stderr,
-                "" RED "Error in __local_compatibility_conditions()" RESET
-                " \n");
+                "" RED "Error in __trial_nodal_increments()" RESET " \n");
         return EXIT_FAILURE;
       }
     }
 
-    //! Trial constitutive
-    STATUS = __constitutive_update(MPM_Mesh, FEM_Mesh);
-    if (STATUS == EXIT_FAILURE) {
-      fprintf(stderr, "" RED "Error in __constitutive_update()" RESET " \n");
-      return EXIT_FAILURE;
-    }
+    /*
+       Note: The user should initialize the vector, x, with the initial guess
+       for the nonlinear solver prior to calling SNESSolve().  In particular,
+       to employ an initial guess of zero, the user should explicitly set
+       this vector to zero by calling VecSet().
+    */
+    PetscCall(SNESSolve(snes, NULL, DU));
 
-    //! Trial residual
-    Residual = __assemble_residual(
-        U_n, D_U, Lumped_Mass, ActiveNodes, ActiveDOFs, MPM_Mesh, FEM_Mesh,
-        Time_Integration_Params, true, false, &STATUS);
-    if (STATUS == EXIT_FAILURE) {
-      fprintf(stderr, "" RED "Error in __assemble_residual()" RESET " \n");
-      return EXIT_FAILURE;
-    }
-
-    //! Compute initial error
-    Error_0 = Error_i = __error_residual(Residual);
-    Iter = 0;
-
-    if (Error_0 < TOL) {
-      VecDestroy(&Residual);
-      Error_relative = 0.0;
-    } else {
-      Error_relative = Error_i / Error_0;
-      Tangent_Stiffness = __preallocation_tangent_matrix(
-          ActiveNodes, ActiveDOFs, MPM_Mesh, &STATUS);
-      if (STATUS == EXIT_FAILURE) {
-        fprintf(stderr,
-                "" RED "Error in __preallocation_tangent_matrix()" RESET " \n");
-        return EXIT_FAILURE;
-      }
-    }
-
-    //! Start Newton-Raphson
-    while (Error_relative > TOL) {
-
-      if ((Error_i < TOL * 100) || (Error_relative < TOL) || (Iter > MaxIter)) {
-        break;
-      }
-
-      __assemble_tangent_stiffness(Tangent_Stiffness, ActiveNodes, ActiveDOFs,
-                                   MPM_Mesh, FEM_Mesh, Time_Integration_Params,
-                                   Iter, &STATUS);
-      if (STATUS == EXIT_FAILURE) {
-        fprintf(stderr,
-                "" RED "Error in __assemble_tangent_stiffness()" RESET " \n");
-        return EXIT_FAILURE;
-      }
-
-      STATUS = krylov_PETSC(&Tangent_Stiffness, &Residual, Nactivedofs);
-      if (STATUS == EXIT_FAILURE) {
-        fprintf(stderr, "" RED "Error in krylov_PETSC()" RESET " \n");
-        return EXIT_FAILURE;
-      }
-
-      __update_Nodal_Increments(Residual, D_U, U_n, ActiveDOFs,
-                                Time_Integration_Params, Ntotaldofs);
-
-      __local_compatibility_conditions(D_U, ActiveNodes, MPM_Mesh, FEM_Mesh,
-                                       &STATUS);
-      if (STATUS == EXIT_FAILURE) {
-        fprintf(stderr,
-                "" RED "Error in __local_compatibility_conditions()" RESET
-                " \n");
-        return EXIT_FAILURE;
-      }
-
-      STATUS = __constitutive_update(MPM_Mesh, FEM_Mesh);
-      if (STATUS == EXIT_FAILURE) {
-        fprintf(stderr, "" RED "Error in __constitutive_update()" RESET " \n");
-        return EXIT_FAILURE;
-      }
-
-      // Free memory
-      VecDestroy(&Residual);
-
-      // Compute residual (NR-loop)
-      Residual = __assemble_residual(
-          U_n, D_U, Lumped_Mass, ActiveNodes, ActiveDOFs, MPM_Mesh, FEM_Mesh,
-          Time_Integration_Params, true, false, &STATUS);
-      if (STATUS == EXIT_FAILURE) {
-        fprintf(stderr, "" RED "Error in __assemble_residual()" RESET " \n");
-        return EXIT_FAILURE;
-      }
-
-      // Get stats for the convergence
-      Error_i = __error_residual(Residual);
-      Error_relative = Error_i / Error_0;
-      Iter++;
-    }
-
-    //! Free residual and tangent matrix
-    if (Iter > 0) {
-      VecDestroy(&Residual);
-      MatDestroy(&Tangent_Stiffness);
-    }
+    /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+       Free work space.  All PETSc objects should be destroyed when they
+       are no longer needed.
+     - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+    PetscCall(MatDestroy(&Tangent_Stiffness));
+    PetscCall(SNESDestroy(&snes));
 
     print_convergence_stats(TimeStep, NumTimeStep, Iter, MaxIter, Error_0,
                             Error_i, Error_relative);
@@ -648,7 +686,11 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
     //! Update time step
     TimeStep++;
 
-    VecDestroy(&Lumped_Mass);
+
+    PetscCall(VecDestroy(&Lumped_Mass));
+    PetscCall(VecDestroy(&DU));
+    PetscCall(VecDestroy(&Residual));
+    
     VecDestroy(&U_n.value);
     VecDestroy(&U_n.d_value_dt);
     VecDestroy(&U_n.d2_value_dt2);
@@ -1128,9 +1170,11 @@ static Nodal_Field __get_nodal_field_tn(Vec Lumped_Mass, Particle MPM_Mesh,
 
 /**************************************************************/
 
-static Nodal_Field __initialise_nodal_increments(
-    Vec Lumped_Mass, Particle MPM_Mesh, Mesh FEM_Mesh, Nodal_Field U_n,
-    Mask ActiveNodes, Mask ActiveDOFs, Newmark_parameters Params, int *STATUS) {
+static Nodal_Field __trial_nodal_increments(Vec Lumped_Mass, Particle MPM_Mesh,
+                                            Mesh FEM_Mesh, Nodal_Field U_n,
+                                            Mask ActiveNodes, Mask ActiveDOFs,
+                                            Newmark_parameters Params,
+                                            int *STATUS) {
   unsigned NumNodesBound;
   unsigned Ndim = NumberDimensions;
   unsigned Np = MPM_Mesh.NumGP;
@@ -1341,10 +1385,25 @@ static void __trial_Nodal_Increments(Nodal_Field D_U, Nodal_Field U_n,
 
 /**************************************************************/
 
-PetscErrorCode FormFunction1(SNES snes,Vec x,Vec f,void *ctx)
-{
+static PetscErrorCode __Lagrangian_evaluation(SNES snes, Vec D_U, Vec Residual,
+                                              void *ctx) {
+
+  int STATUS = EXIT_SUCCESS;
+
+  Mask ActiveDOFs = ((Ctx *)ctx)->ActiveDOFs;
+  Mask ActiveNodes = ((Ctx *)ctx)->ActiveNodes;
+  Particle MPM_Mesh = ((Ctx *)ctx)->MPM_Mesh;
+  Mesh FEM_Mesh = ((Ctx *)ctx)->FEM_Mesh;
+  Vec Lumped_Mass = ((Ctx *)ctx)->Lumped_Mass;
+  Newmark_parameters Time_Integration_Params =
+      ((Ctx *)ctx)->Time_Integration_Params;
+
+  unsigned Ndim = NumberDimensions;
+  unsigned Nactivenodes = ActiveNodes.Nactivenodes;
+  unsigned Ntotaldofs = Ndim * Nactivenodes;
+
   const PetscScalar *xx;
-  PetscScalar       *ff;
+  PetscScalar *ff;
 
   /*
    Get pointers to vector data.
@@ -1353,17 +1412,40 @@ PetscErrorCode FormFunction1(SNES snes,Vec x,Vec f,void *ctx)
       - You MUST call VecRestoreArray() when you no longer need access to
         the array.
    */
-  PetscCall(VecGetArrayRead(x,&xx));
-  PetscCall(VecGetArray(f,&ff));
+  PetscCall(VecGetArrayRead(D_U, &xx));
+  PetscCall(VecGetArray(Residual, &ff));
 
-  /* Compute function */
-  ff[0] = xx[0]*xx[0] + xx[0]*xx[1] - 3.0;
-  ff[1] = xx[0]*xx[1] + xx[1]*xx[1] - 6.0;
+  __update_Nodal_Increments(Residual, D_U, U_n, ActiveDOFs,
+                            Time_Integration_Params, Ntotaldofs);
+
+  __local_compatibility_conditions(D_U, ActiveNodes, MPM_Mesh, FEM_Mesh,
+                                   &STATUS);
+  if (STATUS == EXIT_FAILURE) {
+    fprintf(stderr,
+            "" RED "Error in __local_compatibility_conditions()" RESET " \n");
+    return EXIT_FAILURE;
+  }
+
+  STATUS = __constitutive_update(MPM_Mesh, FEM_Mesh);
+  if (STATUS == EXIT_FAILURE) {
+    fprintf(stderr, "" RED "Error in __constitutive_update()" RESET " \n");
+    return EXIT_FAILURE;
+  }
+
+  // Compute residual (NR-loop)
+  Residual = __assemble_residual(U_n, D_U, Lumped_Mass, ActiveNodes, ActiveDOFs,
+                                 MPM_Mesh, FEM_Mesh, Time_Integration_Params,
+                                 true, false, &STATUS);
+  if (STATUS == EXIT_FAILURE) {
+    fprintf(stderr, "" RED "Error in __assemble_residual()" RESET " \n");
+    return EXIT_FAILURE;
+  }
 
   /* Restore vectors */
-  PetscCall(VecRestoreArrayRead(x,&xx));
-  PetscCall(VecRestoreArray(f,&ff));
-  return 0;
+  PetscCall(VecRestoreArrayRead(D_U, &xx));
+  PetscCall(VecRestoreArray(Residual, &ff));
+
+  return EXIT_SUCCESS;
 }
 
 /**************************************************************/
@@ -2293,6 +2375,65 @@ static void __assemble_tangent_stiffness(Mat Tangent_Stiffness,
 
 /**************************************************************/
 
+/*
+   FormJacobian1 - Evaluates Jacobian matrix.
+
+   Input Parameters:
+.  snes - the SNES context
+.  x - input vector
+.  dummy - optional user-defined context (not used here)
+
+   Output Parameters:
+.  jac - Jacobian matrix
+.  B - optionally different preconditioning matrix
+.  flag - flag indicating matrix structure
+*/
+PetscErrorCode __Jacobian_evaluation(SNES snes, Vec x, Mat jac, Mat B,
+                                     void *dummy) {
+  const PetscScalar *xx;
+  PetscScalar A[4];
+  PetscInt idx[2] = {0, 1};
+
+  /*
+     Get pointer to vector data
+  */
+  PetscCall(VecGetArrayRead(x, &xx));
+
+  /*
+     Compute Jacobian entries and insert into matrix.
+      - Since this is such a small problem, we set all entries for
+        the matrix at once.
+  */
+  A[0] = 2.0 * xx[0] + xx[1];
+  A[1] = xx[0];
+  A[2] = xx[1];
+  A[3] = xx[0] + 2.0 * xx[1];
+  PetscCall(MatSetValues(B, 2, idx, 2, idx, A, INSERT_VALUES));
+
+  /*
+     Restore vector
+  */
+  PetscCall(VecRestoreArrayRead(x, &xx));
+
+  /*
+     Assemble matrix
+  */
+  PetscCall(MatAssemblyBegin(B, MAT_FINAL_ASSEMBLY));
+  PetscCall(MatAssemblyEnd(B, MAT_FINAL_ASSEMBLY));
+
+  __assemble_tangent_stiffness(Tangent_Stiffness, ActiveNodes, ActiveDOFs,
+                               MPM_Mesh, FEM_Mesh, Time_Integration_Params,
+                               Iter, &STATUS);
+
+  if (jac != B) {
+    PetscCall(MatAssemblyBegin(jac, MAT_FINAL_ASSEMBLY));
+    PetscCall(MatAssemblyEnd(jac, MAT_FINAL_ASSEMBLY));
+  }
+  return 0;
+}
+
+/**************************************************************/
+
 static void __update_Nodal_Increments(const Vec Residual, Nodal_Field D_U,
                                       Nodal_Field U_n, Mask ActiveDOFs,
                                       Newmark_parameters Params,
@@ -2463,7 +2604,6 @@ static void __update_Particles(Nodal_Field D_U, Particle MPM_Mesh,
 
     } // #pragma omp for private(p)
   }   // #pragma omp parallel
-
 
   VecRestoreArrayRead(D_U.value, &dU);
   VecRestoreArrayRead(D_U.d_value_dt, &dU_dt);
