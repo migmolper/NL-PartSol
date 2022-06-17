@@ -37,6 +37,7 @@
 
 // PETSc
 #include "Linear-Solvers/ksp-PETSC.h"
+#include <petscsnes.h>
 #include "petscviewerhdf5.h"
 
 /*!
