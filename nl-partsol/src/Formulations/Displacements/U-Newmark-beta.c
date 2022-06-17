@@ -640,6 +640,9 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
         return EXIT_FAILURE;
       }
     }
+    else{
+      PetscCall(VecZeroEntries(DU));
+    }
 
     /*
        Note: The user should initialize the vector, x, with the initial guess
@@ -690,7 +693,7 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
     PetscCall(VecDestroy(&Lumped_Mass));
     PetscCall(VecDestroy(&DU));
     PetscCall(VecDestroy(&Residual));
-    
+
     VecDestroy(&U_n.value);
     VecDestroy(&U_n.d_value_dt);
     VecDestroy(&U_n.d2_value_dt2);
