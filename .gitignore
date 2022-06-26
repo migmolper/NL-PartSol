@@ -58,6 +58,7 @@ nl-partsol/build/*
 
 # Most used editor files
 *.vscode
+*.cache
 
 
 # Mac OSX
