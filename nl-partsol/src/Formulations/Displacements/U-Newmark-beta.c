@@ -489,10 +489,10 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
 
   Newmark_parameters Time_Integration_Params;
 
-  //
-  SNES snes; /* nonlinear solver context */
-  KSP ksp;   /* linear solver context */
-  PC pc;     /* preconditioner context */
+  // Define variables for the non-linear solver
+  SNES snes;
+  KSP ksp;
+  PC pc;
 
   /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     Time step is defined at the init of the simulation throught the
