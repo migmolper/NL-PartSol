@@ -632,7 +632,7 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
     if (Use_explicit_trial == true) {
 
       __trial_nodal_increments(DU, Lumped_Mass, MPM_Mesh, FEM_Mesh, U_n,
-                               as ActiveNodes, ActiveDOFs,
+                               ActiveNodes, ActiveDOFs,
                                Time_Integration_Params, &STATUS);
       if (STATUS == EXIT_FAILURE) {
         fprintf(stderr,
