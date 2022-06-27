@@ -779,6 +779,24 @@ static Newmark_parameters __compute_Newmark_parameters(double beta,
 
 /**************************************************************/
 
+static void __set_local_values_lagragian(
+    PetscScalar *lagrangian, unsigned Ndim,
+    const int *Mask_dofs_A const double *local_lagrangian) {
+
+  int Mask_dof_Ai;
+
+  for (unsigned idx_A = 0; idx_A < Ndim; idx_A++) {
+
+    Mask_dof_Ai = Mask_dofs_A[idx_A];
+
+    if (Mask_dof_Ai != -1) {
+      lagrangian[Mask_dof_Ai] += local_lagrangian[idx_A];
+    }
+  }
+}
+
+/**************************************************************/
+
 static void __compute_local_mass_matrix(double *Local_Mass_Matrix_p,
                                         double Na_p, double m_p) {
 
