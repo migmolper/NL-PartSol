@@ -75,7 +75,8 @@ else
     cmake .. \
     -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_C_COMPILER=${C_COMPILER} \
-    -DCMAKE_C_FLAGS="${C_FLAGS}"
+    -DCMAKE_C_FLAGS="${C_FLAGS}" \
+    -DCMAKE_EXPORT_COMPILE_COMMANDS=1
 
     make -j8
 

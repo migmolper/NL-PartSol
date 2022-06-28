@@ -9,6 +9,20 @@ typedef struct {
 } Nodal_Field;
 
 typedef struct {
+
+  Vec t;
+  Vec t2;
+
+} nodal_kinetics;
+
+typedef struct {
+
+  PetscScalar *t;
+  PetscScalar *t2;
+
+} ptr_nodal_kinetics;
+
+typedef struct {
   double alpha_1;
   double alpha_2;
   double alpha_3;
@@ -49,6 +63,19 @@ static Newmark_parameters __compute_Newmark_parameters(double beta,
                                                        double gamma,
                                                        double DeltaTimeStep,
                                                        double epsilon);
+/**************************************************************/
+
+/**
+ * @brief Set local lagrangian values in to the global lagrangian additively
+ *
+ * @param lagrangian Lagrangian vector
+ * @param Ndim Number of dimensions of the local lagrangian
+ * @param Mask_dofs_A
+ * @param local_lagrangian local lagrangian
+ */
+static void __set_local_values_lagragian(PetscScalar *lagrangian, unsigned Ndim,
+                                         const int *Mask_dofs_A,
+                                         const double *local_lagrangian);
 /**************************************************************/
 
 /*!
@@ -408,11 +435,10 @@ static void __trial_Nodal_Increments(Nodal_Field D_U, Nodal_Field U_n,
  * @param Params Time integration parameters
  * @param Ntotaldofs Number of dofs
  */
-static void
-__update_Nodal_Increments(const PetscScalar *dU, PetscScalar *dU_dt,
-                          PetscScalar *dU_dt2, const PetscScalar *Un_dt,
-                          const PetscScalar *Un_dt2, Mask ActiveDOFs,
-                          Newmark_parameters Params, unsigned Ntotaldofs);
+static void __compute_nodal_kinetics_increments(
+    const PetscScalar *dU, PetscScalar *dU_dt, PetscScalar *dU_dt2,
+    const PetscScalar *Un_dt, const PetscScalar *Un_dt2, Mask ActiveDOFs,
+    Newmark_parameters Params, unsigned Ntotaldofs);
 /**************************************************************/
 
 /**
@@ -779,24 +805,6 @@ static Newmark_parameters __compute_Newmark_parameters(double beta,
 
 /**************************************************************/
 
-static void __set_local_values_lagragian(
-    PetscScalar *lagrangian, unsigned Ndim,
-    const int *Mask_dofs_A const double *local_lagrangian) {
-
-  int Mask_dof_Ai;
-
-  for (unsigned idx_A = 0; idx_A < Ndim; idx_A++) {
-
-    Mask_dof_Ai = Mask_dofs_A[idx_A];
-
-    if (Mask_dof_Ai != -1) {
-      lagrangian[Mask_dof_Ai] += local_lagrangian[idx_A];
-    }
-  }
-}
-
-/**************************************************************/
-
 static void __compute_local_mass_matrix(double *Local_Mass_Matrix_p,
                                         double Na_p, double m_p) {
 
@@ -814,17 +822,17 @@ static void __compute_local_mass_matrix(double *Local_Mass_Matrix_p,
 
 /**************************************************************/
 
-static void __get_assembling_locations_lumped_mass(int *Mask_active_dofs_A,
+static void __get_assembling_locations_lumped_mass(int *Mask_dofs_A,
                                                    int Mask_node_A) {
   unsigned Ndim = NumberDimensions;
 
 #if NumberDimensions == 2
-  Mask_active_dofs_A[0] = Mask_node_A * Ndim + 0;
-  Mask_active_dofs_A[1] = Mask_node_A * Ndim + 1;
+  Mask_dofs_A[0] = Mask_node_A * Ndim + 0;
+  Mask_dofs_A[1] = Mask_node_A * Ndim + 1;
 #else
-  Mask_active_dofs_A[0] = Mask_node_A * Ndim + 0;
-  Mask_active_dofs_A[1] = Mask_node_A * Ndim + 1;
-  Mask_active_dofs_A[2] = Mask_node_A * Ndim + 2;
+  Mask_dofs_A[0] = Mask_node_A * Ndim + 0;
+  Mask_dofs_A[1] = Mask_node_A * Ndim + 1;
+  Mask_dofs_A[2] = Mask_node_A * Ndim + 2;
 #endif
 }
 
@@ -842,10 +850,10 @@ static Vec __compute_nodal_lumped_mass(Particle MPM_Mesh, Mesh FEM_Mesh,
 
 #if NumberDimensions == 2
   double Local_Mass_Matrix_p[2];
-  int Mask_active_dofs_A[2];
+  int Mask_dofs_A[2];
 #else
   double Local_Mass_Matrix_p[3];
-  int Mask_active_dofs_A[3];
+  int Mask_dofs_A[3];
 #endif
 
   // Define and allocate the lumped mass matrix
@@ -854,8 +862,7 @@ static Vec __compute_nodal_lumped_mass(Particle MPM_Mesh, Mesh FEM_Mesh,
   VecSetSizes(Lumped_MassMatrix, PETSC_DECIDE, Ntotaldofs);
   VecSetFromOptions(Lumped_MassMatrix);
 
-#pragma omp parallel private(NumberNodes_p, Local_Mass_Matrix_p,               \
-                             Mask_active_dofs_A)
+#pragma omp parallel private(NumberNodes_p, Local_Mass_Matrix_p, Mask_dofs_A)
   {
 
 #pragma omp for private(p)
@@ -882,11 +889,11 @@ static Vec __compute_nodal_lumped_mass(Particle MPM_Mesh, Mesh FEM_Mesh,
 
         __compute_local_mass_matrix(Local_Mass_Matrix_p, Na_p, m_p);
 
-        __get_assembling_locations_lumped_mass(Mask_active_dofs_A, Mask_node_A);
+        __get_assembling_locations_lumped_mass(Mask_dofs_A, Mask_node_A);
 
 #pragma omp critical
         {
-          VecSetValues(Lumped_MassMatrix, Ndim, Mask_active_dofs_A,
+          VecSetValues(Lumped_MassMatrix, Ndim, Mask_dofs_A,
                        Local_Mass_Matrix_p, ADD_VALUES);
         } // #pragma omp critical
       }   // for A
@@ -1449,9 +1456,13 @@ static PetscErrorCode __Lagrangian_evaluation(SNES snes, Vec dU, Vec Lagrangian,
   PetscCall(VecGetArrayRead(Un_dt, &Un_dt_ptr));
   PetscCall(VecGetArrayRead(Un_dt2, &Un_dt2_ptr));
 
-  __update_Nodal_Increments(dU_ptr, dU_dt_ptr, dU_dt2_ptr, Un_dt_ptr,
-                            Un_dt2_ptr, ActiveDOFs, Time_Integration_Params,
-                            Ntotaldofs);
+  ptr_nodal_kinetics ptr_Un_d;
+  ptr_Un_d.t = Un_dt_ptr;
+  ptr_Un_d.t2 = Un_dt2_ptr;
+
+  __compute_nodal_kinetics_increments(dU_ptr, dU_dt_ptr, dU_dt2_ptr, Un_dt_ptr,
+                                      Un_dt2_ptr, ActiveDOFs,
+                                      Time_Integration_Params, Ntotaldofs);
 
   __local_compatibility_conditions(dU_ptr, dU_dt_ptr, ActiveNodes, MPM_Mesh,
                                    FEM_Mesh, &STATUS);
@@ -1667,18 +1678,34 @@ static int __constitutive_update(Particle MPM_Mesh, Mesh FEM_Mesh) {
 
 /**************************************************************/
 
-static void __get_assembling_locations_lagrangian(int *Mask_active_dofs_A,
+static void __get_assembling_locations_lagrangian(int *Mask_dofs_A,
                                                   int Mask_node_A) {
   unsigned Ndim = NumberDimensions;
 
 #if NumberDimensions == 2
-  Mask_active_dofs_A[0] = Mask_node_A * Ndim + 0;
-  Mask_active_dofs_A[1] = Mask_node_A * Ndim + 1;
+  Mask_dofs_A[0] = Mask_node_A * Ndim + 0;
+  Mask_dofs_A[1] = Mask_node_A * Ndim + 1;
 #else
-  Mask_active_dofs_A[0] = Mask_node_A * Ndim + 0;
-  Mask_active_dofs_A[1] = Mask_node_A * Ndim + 1;
-  Mask_active_dofs_A[2] = Mask_node_A * Ndim + 2;
+  Mask_dofs_A[0] = Mask_node_A * Ndim + 0;
+  Mask_dofs_A[1] = Mask_node_A * Ndim + 1;
+  Mask_dofs_A[2] = Mask_node_A * Ndim + 2;
 #endif
+}
+
+/**************************************************************/
+
+static void __set_local_values_lagragian(PetscScalar *lagrangian, unsigned Ndim,
+                                         const int *Mask_dofs_A,
+                                         const double *local_lagrangian) {
+
+  int Mask_dof_Ai;
+
+  for (unsigned idx_A = 0; idx_A < Ndim; idx_A++) {
+
+    Mask_dof_Ai = Mask_dofs_A[idx_A];
+
+    lagrangian[Mask_dof_Ai] += local_lagrangian[idx_A];
+  }
 }
 
 /**************************************************************/
@@ -1770,17 +1797,17 @@ static void __nodal_internal_forces(PetscScalar *Lagrangian, Mask ActiveNodes,
                                  d_shapefunction_n1_pA, V0_p);
 
 #if NumberDimensions == 2
-        int Mask_active_dofs_A[2];
+        int Mask_dofs_A[2];
 #else
-        int Mask_active_dofs_A[3];
+        int Mask_dofs_A[3];
 #endif
 
-        __get_assembling_locations_lagrangian(Mask_active_dofs_A, Mask_node_A);
+        __get_assembling_locations_lagrangian(Mask_dofs_A, Mask_node_A);
 
 #pragma omp critical
         {
-          VecSetValues(Lagrangian, Ndim, Mask_active_dofs_A,
-                       InternalForcesDensity_Ap, ADD_VALUES);
+          __set_local_values_lagragian(Lagrangian, Ndim, Mask_dofs_A,
+                                       InternalForcesDensity_Ap);
         } // #pragma omp critical
       }   // for unsigned A
 
@@ -1912,18 +1939,18 @@ static void __nodal_traction_forces(PetscScalar *Lagrangian, Mask ActiveNodes,
         __local_traction_force(LocalTractionForce_Ap, T, N_pa, A0_p);
 
 #if NumberDimensions == 2
-        int Mask_active_dofs_A[2];
+        int Mask_dofs_A[2];
 #else
-        int Mask_active_dofs_A[3];
+        int Mask_dofs_A[3];
 #endif
 
-        __get_assembling_locations_lagrangian(Mask_active_dofs_A, Mask_node_A);
+        __get_assembling_locations_lagrangian(Mask_dofs_A, Mask_node_A);
 
         //  Asign the nodal contact forces contribution to the node
 #pragma omp critical
         {
-          VecSetValues(Lagrangian, Ndim, Mask_active_dofs_A,
-                       LocalTractionForce_Ap, ADD_VALUES);
+          __set_local_values_lagragian(Lagrangian, Ndim, Mask_dofs_A,
+                                       LocalTractionForce_Ap);
         } // #pragma omp critical
 
       } // for unsigned A
@@ -1994,7 +2021,7 @@ static void __nodal_inertial_forces(PetscScalar *Lagrangian,
       R_Ai = M_II[idx] * (alpha_1 * dU[idx] - alpha_2 * Un_dt[idx] -
                           alpha_3 * Un_dt2[idx] - b[idx % Ndim]);
 
-      VecSetValues(Lagrangian, 1, &idx, &R_Ai, ADD_VALUES);
+      __set_local_values_lagragian(Lagrangian, 1, &idx, &R_Ai);
     }
   }
 }
@@ -2373,11 +2400,54 @@ PetscErrorCode __Jacobian_evaluation(SNES snes, Vec x, Mat jac, Mat B,
 
 /**************************************************************/
 
-static void
-__update_Nodal_Increments(const PetscScalar *dU, PetscScalar *dU_dt,
-                          PetscScalar *dU_dt2, const PetscScalar *Un_dt,
-                          const PetscScalar *Un_dt2, Mask ActiveDOFs,
-                          Newmark_parameters Params, unsigned Ntotaldofs) {
+static Vec __compute_nodal_velocity_increments(const PetscScalar *dU,
+                                               const PetscScalar *Un_dt,
+                                               const PetscScalar *Un_dt2,
+                                               Newmark_parameters Params,
+                                               PetscInt Ntotaldofs) {
+
+  PetscInt Mask_total_dof_Ai;
+  PetscScalar alpha_1 = Params.alpha_1;
+  PetscScalar alpha_2 = Params.alpha_2;
+  PetscScalar alpha_3 = Params.alpha_3;
+  PetscScalar alpha_4 = Params.alpha_4;
+  PetscScalar alpha_5 = Params.alpha_5;
+  PetscScalar alpha_6 = Params.alpha_6;
+
+  Vec dU_dt;
+  VecCreate(PETSC_COMM_WORLD, &dU_dt);
+  VecSetSizes(dU_dt, PETSC_DECIDE, Ntotaldofs);
+  VecSetFromOptions(dU_dt);
+
+#pragma omp for private(Mask_total_dof_Ai)
+  for (Mask_total_dof_Ai = 0; Mask_total_dof_Ai < Ntotaldofs;
+       Mask_total_dof_Ai++) {
+
+    PetscScalar dU_dt_value;
+    dU_dt_value = alpha_4 * dU[Mask_total_dof_Ai] +
+                  (alpha_5 - 1) * Un_dt[Mask_total_dof_Ai] +
+                  alpha_6 * Un_dt2[Mask_total_dof_Ai];
+
+    VecSetValues(dU_dt, 1, &Mask_total_dof_Ai, &dU_dt_value, INSERT_VALUES);
+
+  } // #pragma omp for private (Mask_total_dof_Ai)
+
+  /**
+   * Finalize assembling process
+   * for the kinetic vector
+   */
+  VecAssemblyBegin(dU_dt);
+  VecAssemblyEnd(dU_dt);
+
+  return dU_d;
+}
+
+/**************************************************************/
+
+static Vec __compute_nodal_acceleration_increments(
+    const PetscScalar *dU, const ptr_nodal_kinetics Un_d, Mask ActiveDOFs,
+    Newmark_parameters Params, unsigned Ntotaldofs) {
+
   unsigned Mask_total_dof_Ai;
   int Mask_active_dof_Ai;
   double alpha_1 = Params.alpha_1;
@@ -2386,6 +2456,14 @@ __update_Nodal_Increments(const PetscScalar *dU, PetscScalar *dU_dt,
   double alpha_4 = Params.alpha_4;
   double alpha_5 = Params.alpha_5;
   double alpha_6 = Params.alpha_6;
+
+  nodal_kinetics dU_d;
+  VecCreate(PETSC_COMM_WORLD, &dU_d.t);
+  VecCreate(PETSC_COMM_WORLD, &dU_d.t2);
+  VecSetSizes(dU_d.t, PETSC_DECIDE, Ntotaldofs);
+  VecSetSizes(dU_d.t2, PETSC_DECIDE, Ntotaldofs);
+  VecSetFromOptions(dU_d.t);
+  VecSetFromOptions(dU_d.t2);
 
 #pragma omp for private(Mask_total_dof_Ai, Mask_active_dof_Ai)
   for (Mask_total_dof_Ai = 0; Mask_total_dof_Ai < Ntotaldofs;
@@ -2398,20 +2476,31 @@ __update_Nodal_Increments(const PetscScalar *dU, PetscScalar *dU_dt,
       dU_dt2[Mask_total_dof_Ai] = 0.0;
 
       dU_dt[Mask_total_dof_Ai] = alpha_4 * dU[Mask_total_dof_Ai] +
-                                 (alpha_5 - 1) * Un_dt[Mask_total_dof_Ai] +
-                                 alpha_6 * Un_dt2[Mask_total_dof_Ai];
+                                 (alpha_5 - 1) * Un_d.t[Mask_total_dof_Ai] +
+                                 alpha_6 * Un_d.t2[Mask_total_dof_Ai];
 
     } else {
 
       dU_dt2[Mask_total_dof_Ai] = alpha_1 * dU[Mask_total_dof_Ai] -
-                                  alpha_2 * Un_dt[Mask_total_dof_Ai] -
-                                  (alpha_3 + 1) * Un_dt2[Mask_total_dof_Ai];
+                                  alpha_2 * Un_d.t[Mask_total_dof_Ai] -
+                                  (alpha_3 + 1) * Un_d.t2[Mask_total_dof_Ai];
 
       dU_dt[Mask_total_dof_Ai] = alpha_4 * dU[Mask_total_dof_Ai] +
-                                 (alpha_5 - 1) * Un_dt[Mask_total_dof_Ai] +
-                                 alpha_6 * Un_dt2[Mask_total_dof_Ai];
+                                 (alpha_5 - 1) * Un_d.t[Mask_total_dof_Ai] +
+                                 alpha_6 * Un_d.t2[Mask_total_dof_Ai];
     } // if Mask_active_dof_Ai == -1)
   }   // #pragma omp for private (Mask_total_dof_Ai)
+
+  /**
+   * Finalize assembling process
+   * for the kinetic vector
+   */
+  VecAssemblyBegin(dU_d.t);
+  VecAssemblyEnd(dU_d.t);
+  VecAssemblyBegin(dU_d.t2);
+  VecAssemblyEnd(dU_d.t2);
+
+  return dU_d;
 }
 
 /**************************************************************/
