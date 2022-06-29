@@ -58,8 +58,10 @@ static Newmark_parameters __compute_Newmark_parameters(double beta,
                                                        double DeltaTimeStep,
                                                        double epsilon);
 
-static Vec __compute_nodal_lumped_mass(Particle MPM_Mesh, Mesh FEM_Mesh,
-                                       Mask ActiveNodes, int *STATUS);
+static PetscErrorCode __compute_nodal_lumped_mass(Vec Lumped_MassMatrix,
+                                                  Particle MPM_Mesh,
+                                                  Mesh FEM_Mesh,
+                                                  Mask ActiveNodes);
 
 static void __local_projection_displacement(double *U_N_m_IP,
                                             const double *dis_p,
@@ -125,8 +127,10 @@ static void __nodal_inertial_forces(PetscScalar *Lagrangian,
 
 static double __error_residual(const Vec Residual);
 
-static Mat __preallocation_tangent_matrix(Mask ActiveNodes, Mask ActiveDOFs,
-                                          Particle MPM_Mesh, int *STATUS);
+static PetscErrorCode __define_sparsity_pattern(int *sparsity_pattern,
+                                                Mask ActiveNodes,
+                                                Mask ActiveDOFs,
+                                                Particle MPM_Mesh);
 
 static void __compute_local_intertia(double *Inertia_density_p, double Na_p,
                                      double Nb_p, double m_p, double alpha_1,
@@ -187,9 +191,9 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
   double Error_0;
   double Error_i;
   double Error_relative;
-  //  double Error_increment_i;
 
   Mat Tangent_Stiffness;
+  int *sparsity_pattern;
   Vec Lumped_Mass;
   Vec Residual;
   Vec Reactions;
@@ -260,13 +264,17 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
     /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
        Define and allocate the effective mass matrix
        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-    Lumped_Mass =
-        __compute_nodal_lumped_mass(MPM_Mesh, FEM_Mesh, ActiveNodes, &STATUS);
-    if (STATUS == EXIT_FAILURE) {
-      fprintf(stderr,
-              "" RED "Error in __compute_nodal_lumped_mass()" RESET " \n");
-      return EXIT_FAILURE;
-    }
+    // Define and allocate the lumped mass matrix
+    Vec Lumped_Mass;
+    VecCreate(PETSC_COMM_WORLD, &Lumped_Mass);
+    VecSetSizes(Lumped_Mass, PETSC_DECIDE, Ntotaldofs);
+    VecSetFromOptions(Lumped_Mass);
+
+    PetscCall(__compute_nodal_lumped_mass(Lumped_Mass, MPM_Mesh, FEM_Mesh,
+                                          ActiveNodes));
+
+    VecAssemblyBegin(Lumped_Mass);
+    VecAssemblyEnd(Lumped_Mass);
 
     /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
        Get the previous converged nodal value
@@ -328,19 +336,22 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
     /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
        Create Jacobian matrix data structure
       - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-    PetscCall(MatCreate(PETSC_COMM_WORLD, &Tangent_Stiffness));
-    PetscCall(MatSetSizes(Tangent_Stiffness, PETSC_DECIDE, PETSC_DECIDE,
-                          Ntotaldofs, Ntotaldofs));
-    PetscCall(MatSetFromOptions(Tangent_Stiffness));
-    PetscCall(MatSetUp(Tangent_Stiffness));
+    PetscCall(__define_sparsity_pattern(sparsity_pattern, ActiveNodes,
+                                        ActiveDOFs, MPM_Mesh));
 
-    Tangent_Stiffness = __preallocation_tangent_matrix(ActiveNodes, ActiveDOFs,
-                                                       MPM_Mesh, &STATUS);
-    if (STATUS == EXIT_FAILURE) {
-      fprintf(stderr,
-              "" RED "Error in __preallocation_tangent_matrix()" RESET " \n ");
-      return EXIT_FAILURE;
-    }
+    PetscCall(MatCreateSeqAIJ(PETSC_COMM_SELF, Ntotaldofs, Ntotaldofs, 0,
+                              sparsity_pattern, &Tangent_Stiffness));
+    PetscCall(
+        MatSetOption(Tangent_Stiffness, MAT_IGNORE_ZERO_ENTRIES, PETSC_TRUE));
+    PetscCall(MatSetOption(Tangent_Stiffness, MAT_SYMMETRIC, PETSC_TRUE));
+
+    PetscCall(MatSetFromOptions(Tangent_Stiffness));
+
+    PetscInt Istart, Iend;
+    PetscCall(MatGetOwnershipRange(Tangent_Stiffness, &Istart, &Iend));
+
+    MatView(Tangent_Stiffness, PETSC_VIEWER_DRAW_WORLD);
+    exit(0);
 
     /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
      Set function evaluation routine and vector.
@@ -436,6 +447,7 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
     PetscCall(VecDestroy(&U_n_dt2));
     free(ActiveNodes.Nodes2Mask);
     free(ActiveDOFs.Nodes2Mask);
+    free(sparsity_pattern);
   }
 
   return EXIT_SUCCESS;
@@ -525,20 +537,22 @@ static Newmark_parameters __compute_Newmark_parameters(double beta,
 
 /**************************************************************/
 
-/*!
-  \brief This function returns the lumped mass matrix \n
-  in order to reduce storage, this matrix is presented as \n
-  a vector.
+/**
+ * @brief This function returns the lumped mass matrix in order to reduce
+ * storage, this matrix is presented as a vector.
+ *
+ * @param Lumped_MassMatrix
+ * @param MPM_Mesh Information of the particles
+ * @param FEM_Mesh Information of the background nodes
+ * @param ActiveNodes List of nodes which takes place in the computation
+ * @return PetscErrorCode, returns failure or success
+ */
+static PetscErrorCode __compute_nodal_lumped_mass(Vec Lumped_MassMatrix,
+                                                  Particle MPM_Mesh,
+                                                  Mesh FEM_Mesh,
+                                                  Mask ActiveNodes) {
 
-  \param[in] MPM_Mesh Information of the particles
-  \param[in] FEM_Mesh Information of the background nodes
-  \param[in] ActiveNodes List of nodes which takes place in the computation
-  \param[out] STATUS Returns failure or success
-  \return The lumped mass matrix for the active system
-*/
-static Vec __compute_nodal_lumped_mass(Particle MPM_Mesh, Mesh FEM_Mesh,
-                                       Mask ActiveNodes, int *STATUS) {
-
+  PetscErrorCode STATUS = EXIT_SUCCESS;
   unsigned Nnodes_mask = ActiveNodes.Nactivenodes;
   unsigned Ndim = NumberDimensions;
   unsigned Np = MPM_Mesh.NumGP;
@@ -553,12 +567,6 @@ static Vec __compute_nodal_lumped_mass(Particle MPM_Mesh, Mesh FEM_Mesh,
   double Local_Mass_Matrix_p[3];
   int Mask_dofs_A[3];
 #endif
-
-  // Define and allocate the lumped mass matrix
-  Vec Lumped_MassMatrix;
-  VecCreate(PETSC_COMM_WORLD, &Lumped_MassMatrix);
-  VecSetSizes(Lumped_MassMatrix, PETSC_DECIDE, Ntotaldofs);
-  VecSetFromOptions(Lumped_MassMatrix);
 
 #pragma omp parallel private(NumberNodes_p, Local_Mass_Matrix_p, Mask_dofs_A)
   {
@@ -609,10 +617,7 @@ static Vec __compute_nodal_lumped_mass(Particle MPM_Mesh, Mesh FEM_Mesh,
     } // for p
   }   // #pragma omp parallel
 
-  VecAssemblyBegin(Lumped_MassMatrix);
-  VecAssemblyEnd(Lumped_MassMatrix);
-
-  return Lumped_MassMatrix;
+  return STATUS;
 }
 
 /**************************************************************/
@@ -1570,20 +1575,33 @@ static double __error_residual(const Vec Residual) {
 }
 
 /**************************************************************/
-static Mat __preallocation_tangent_matrix(Mask ActiveNodes, Mask ActiveDOFs,
-                                          Particle MPM_Mesh, int *STATUS) {
+
+/**
+ * @brief Returns the sparsity pattern
+ *
+ * @param sparsity_pattern Number of non-zeros per row
+ * @param ActiveNodes List of nodes which takes place in the computation
+ * @param ActiveDOFs List of dofs which takes place in the computation
+ * @param MPM_Mesh Information of the particles
+ * @return PetscErrorCode
+ */
+static PetscErrorCode __define_sparsity_pattern(int *sparsity_pattern,
+                                                Mask ActiveNodes,
+                                                Mask ActiveDOFs,
+                                                Particle MPM_Mesh) {
+
+  PetscErrorCode STATUS = EXIT_SUCCESS;
   unsigned Ndim = NumberDimensions;
-  unsigned Nactivedofs = ActiveDOFs.Nactivenodes;
+  unsigned Ntotaldofs = Ndim * ActiveNodes.Nactivenodes;
   unsigned Np = MPM_Mesh.NumGP;
   unsigned NumNodes_p;
 
-  int *Active_dof_Mat =
-      (int *)calloc(Nactivedofs * Nactivedofs, __SIZEOF_INT__);
+  int *Active_dof_Mat = (int *)calloc(Ntotaldofs * Ntotaldofs, __SIZEOF_INT__);
 
   // Spatial discretization variables
   Element Nodes_p;
-  int Ap, Mask_node_A, Mask_total_dof_Ai, Mask_active_dof_Ai;
-  int Bp, Mask_node_B, Mask_total_dof_Bj, Mask_active_dof_Bj;
+  int Ap, Mask_node_A, Dof_Ai, Mask_active_dof_Ai;
+  int Bp, Mask_node_B, Dof_Bj, Mask_active_dof_Bj;
 
   for (unsigned p = 0; p < Np; p++) {
 
@@ -1609,18 +1627,19 @@ static Mat __preallocation_tangent_matrix(Mask ActiveNodes, Mask ActiveDOFs,
         //  Assembling process
         for (unsigned i = 0; i < Ndim; i++) {
 
-          Mask_total_dof_Ai = Mask_node_A * Ndim + i;
-          Mask_active_dof_Ai = ActiveDOFs.Nodes2Mask[Mask_total_dof_Ai];
+          Dof_Ai = Mask_node_A * Ndim + i;
+          Mask_active_dof_Ai = ActiveDOFs.Nodes2Mask[Dof_Ai];
 
           for (unsigned j = 0; j < Ndim; j++) {
 
-            Mask_total_dof_Bj = Mask_node_B * Ndim + j;
-            Mask_active_dof_Bj = ActiveDOFs.Nodes2Mask[Mask_total_dof_Bj];
+            Dof_Bj = Mask_node_B * Ndim + j;
+            Mask_active_dof_Bj = ActiveDOFs.Nodes2Mask[Dof_Bj];
 
-            if ((Mask_active_dof_Ai != -1) && (Mask_active_dof_Bj != -1)) {
-              Active_dof_Mat[Mask_active_dof_Ai * Nactivedofs +
-                             Mask_active_dof_Bj] = 1;
-            }
+            Active_dof_Mat[Dof_Ai * Ntotaldofs + Dof_Bj] = 1;
+
+            //            if ((Mask_active_dof_Ai != -1) && (Mask_active_dof_Bj
+            //            != -1)) {
+            //            }
           }
         }
       }
@@ -1629,26 +1648,17 @@ static Mat __preallocation_tangent_matrix(Mask ActiveNodes, Mask ActiveDOFs,
     free(Nodes_p.Connectivity);
   }
 
-  int *nnz = (int *)calloc(Nactivedofs, __SIZEOF_INT__);
+  sparsity_pattern = (int *)calloc(Ntotaldofs, __SIZEOF_INT__);
 
-  for (unsigned A = 0; A < Nactivedofs; A++) {
-    for (unsigned B = 0; B < Nactivedofs; B++) {
-      nnz[A] += Active_dof_Mat[A * Nactivedofs + B];
+  for (unsigned A = 0; A < Ntotaldofs; A++) {
+    for (unsigned B = 0; B < Ntotaldofs; B++) {
+      sparsity_pattern[A] += Active_dof_Mat[A * Ntotaldofs + B];
     }
   }
 
   free(Active_dof_Mat);
 
-  Mat Tangent_Stiffness;
-  MatCreateSeqAIJ(PETSC_COMM_SELF, Nactivedofs, Nactivedofs, 0, nnz,
-                  &Tangent_Stiffness);
-  MatSetOption(Tangent_Stiffness, MAT_IGNORE_ZERO_ENTRIES, PETSC_TRUE);
-  PetscInt Istart, Iend;
-  MatGetOwnershipRange(Tangent_Stiffness, &Istart, &Iend);
-
-  free(nnz);
-
-  return Tangent_Stiffness;
+  return STATUS;
 }
 
 /**************************************************************/
@@ -1737,19 +1747,6 @@ static void __get_tangent_matrix_assembling_locations(int *Mask_active_dofs_A,
   Mask_active_dofs_B[1] = ActiveDOFs.Nodes2Mask[Mask_node_B * Ndim + 1];
   Mask_active_dofs_B[2] = ActiveDOFs.Nodes2Mask[Mask_node_B * Ndim + 2];
 #endif
-}
-
-/**************************************************************/
-
-static void __assemble_tangent_stiffness(Mat Tangent_Stiffness,
-                                         Mask ActiveNodes, Mask ActiveDOFs,
-                                         Particle MPM_Mesh, Mesh FEM_Mesh,
-                                         Newmark_parameters Params,
-                                         unsigned Iter, int *STATUS) {
-
-  MatAssemblyBegin(Tangent_Stiffness, MAT_FINAL_ASSEMBLY);
-  MatAssemblyEnd(Tangent_Stiffness, MAT_FINAL_ASSEMBLY);
-  MatSetOption(Tangent_Stiffness, MAT_SYMMETRIC, PETSC_TRUE);
 }
 
 /**************************************************************/
