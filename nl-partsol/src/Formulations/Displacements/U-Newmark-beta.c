@@ -1,4 +1,6 @@
 #include "Formulations/Displacements/U-Newmark-beta.h"
+#include "Macros.h"
+#include <stdlib.h>
 
 typedef struct {
 
@@ -47,408 +49,103 @@ typedef struct {
 
 } Ctx;
 
-static double __compute_deltat(Particle MPM_Mesh /**< */, double h /**< */,
-                               Time_Int_Params Parameters_Solver /**< */);
 /**************************************************************/
+static double __compute_deltat(Particle MPM_Mesh, double h,
+                               Time_Int_Params Parameters_Solver);
 
-/*!
-  \brief Finite strains Newmark-beta
-
-  \param[in] beta: First Newmark-beta parameter
-  \param[in] gamma: Second Newmark-beta parameter
-  \param[in] DeltaTimeStep: Timestep increment
-  \param[in] epsilon: Preconditioner parameter for the mass matrix
-*/
 static Newmark_parameters __compute_Newmark_parameters(double beta,
                                                        double gamma,
                                                        double DeltaTimeStep,
                                                        double epsilon);
-/**************************************************************/
 
-/**
- * @brief Set local lagrangian values in to the global lagrangian additively
- *
- * @param lagrangian Lagrangian vector
- * @param Ndim Number of dimensions of the local lagrangian
- * @param Mask_dofs_A
- * @param local_lagrangian local lagrangian
- */
-static void __set_local_values_lagragian(PetscScalar *lagrangian, unsigned Ndim,
-                                         const int *Mask_dofs_A,
-                                         const double *local_lagrangian);
-/**************************************************************/
-
-/*!
-  \brief Compute the contribution of particle p to the lumped \n
-  mass matrix correspoding to node A
-
-  \param[out] Local_Mass_Matrix_p Local lumped Mass matrix
-  \param[in] Na_p Shape function evaluation at node A
-  \param[in] m_p Particle mass
-*/
-static void __compute_local_mass_matrix(double *Local_Mass_Matrix_p,
-                                        double Na_p, double m_p);
-/**************************************************************/
-
-/*!
-  \brief Returns a mask with the position of the dofs \n
-  with contributions to the lumped mass matrix for node A \n
-  and particle p.
-
-  \param[out] Mask_active_dofs_A Global dofs positions for node A.
-  \param[in] Mask_node_A Index of the node A with mask.
-*/
-static void __get_assembling_locations_lumped_mass(int *Mask_active_dofs_A,
-                                                   int Mask_node_A);
-/**************************************************************/
-
-/*!
-  \brief This function returns the lumped mass matrix \n
-  in order to reduce storage, this matrix is presented as \n
-  a vector.
-
-  \param[in] MPM_Mesh Information of the particles
-  \param[in] FEM_Mesh Information of the background nodes
-  \param[in] ActiveNodes List of nodes which takes place in the computation
-  \param[out] STATUS Returns failure or success
-  \return The lumped mass matrix for the active system
-*/
 static Vec __compute_nodal_lumped_mass(Particle MPM_Mesh, Mesh FEM_Mesh,
                                        Mask ActiveNodes, int *STATUS);
-/**************************************************************/
 
 static void __local_projection_displacement(double *U_N_m_IP,
                                             const double *dis_p,
                                             double m__x__ShapeFunction_pA);
-/**************************************************************/
 
 static void __local_projection_velocity(double *V_N_m_IP, const double *vel_p,
                                         double m__x__ShapeFunction_pA);
-/**************************************************************/
 
 static void __local_projection_acceleration(double *A_N_m_IP,
                                             const double *acc_p,
                                             double m__x__ShapeFunction_pA);
-/**************************************************************/
 
 static void __local_projection_increment_displacement(
     double *DU_N_m_IP, const double *vel_p, const double *acc_p,
     double m__x__ShapeFunction_pA, double DeltaTimeStep);
 
-/**************************************************************/
-
 static void __get_assembling_locations_nodal_kinetics(int *Mask_active_dofs_A,
                                                       int Mask_node_A,
                                                       Mask ActiveDOFs);
-/**************************************************************/
 
-/*!
-  \brief Project the kinematic information of the particles towards the nodes \n
-  of the mesh to get the nodal fields at t = n
-  \param[in] Lumped_Mass Lumped mass matrix used for the projection
-  \param[in] MPM_Mesh Information of the particles
-  \param[in] FEM_Mesh Information of the background nodes
-  \param[in] ActiveNodes List of nodes which takes place in the computation
-  \param[in] ActiveDOFs List of dofs which takes place in the computation
-  \param[in] Params Time integration parameters
-  \param[out] STATUS Returns failure or success
-  \return Nodal kinetics information from the step n
-*/
-static Nodal_Field __get_nodal_field_tn(Vec Lumped_Mass, Particle MPM_Mesh,
-                                        Mesh FEM_Mesh, Mask ActiveNodes,
-                                        Mask ActiveDOFs,
-                                        Newmark_parameters Params, int *STATUS);
-/**************************************************************/
+static PetscErrorCode __get_nodal_field_n(Vec U_n, Vec U_n_dt, Vec U_n_dt2,
+                                          Vec Lumped_Mass, Particle MPM_Mesh,
+                                          Mesh FEM_Mesh, Mask ActiveNodes,
+                                          Mask ActiveDOFs,
+                                          Newmark_parameters Params);
 
-/**
- * @brief
- *
- * @param Lumped_Mass
- * @param MPM_Mesh
- * @param FEM_Mesh
- * @param U_n
- * @param ActiveNodes
- * @param ActiveDOFs
- * @param Params
- * @param STATUS
- * @return Nodal_Field
- */
-static Nodal_Field __trial_nodal_increments(Vec Lumped_Mass, Particle MPM_Mesh,
-                                            Mesh FEM_Mesh, Nodal_Field U_n,
-                                            Mask ActiveNodes, Mask ActiveDOFs,
-                                            Newmark_parameters Params,
-                                            int *STATUS);
-/**************************************************************/
+static PetscErrorCode __trial_nodal_increments(Vec DU, Vec U_n_dt, Vec U_n_dt2,
+                                               Mesh FEM_Mesh, Mask ActiveNodes,
+                                               Newmark_parameters Params);
 
-/**
- * @brief Evaluates nonlinear function: L(D_U)
- *
- * @param snes
- * @param D_U Increment of the nodal displacement
- * @param Residual Lagrangian in expressed in residual shape
- * @param ctx User-defined context for the Lagrangian evaluation
- * @return PetscErrorCode
- */
-static PetscErrorCode __Lagrangian_evaluation(SNES snes, Vec D_U, Vec Residual,
+static PetscScalar *__compute_nodal_velocity_increments(
+    const PetscScalar *dU, const PetscScalar *Un_dt, const PetscScalar *Un_dt2,
+    Newmark_parameters Params, PetscInt Ntotaldofs);
+
+static PetscScalar *__compute_nodal_acceleration_increments(
+    const PetscScalar *dU, const ptr_nodal_kinetics Un_d, Mask ActiveDOFs,
+    Newmark_parameters Params, unsigned Ntotaldofs);
+
+static PetscErrorCode __lagrangian_evaluation(SNES snes, Vec D_U, Vec Residual,
                                               void *ctx);
-/**************************************************************/
 
-/**
- * @brief
- *
- * @param dU Incremental nodal displacement field
- * @param dU_dt Incremental nodal velocity field
- * @param ActiveNodes List of nodes which takes place in the computation
- * @param MPM_Mesh Information of the particles
- * @param FEM_Mesh Information of the background nodes
- * @param STATUS Returns failure or success
- */
-static void __local_compatibility_conditions(const PetscScalar *dU,
-                                             const PetscScalar *dU_dt,
-                                             Mask ActiveNodes,
-                                             Particle MPM_Mesh, Mesh FEM_Mesh,
-                                             int *STATUS);
+static PetscErrorCode __local_compatibility_conditions(const PetscScalar *dU,
+                                                       const PetscScalar *dU_dt,
+                                                       Mask ActiveNodes,
+                                                       Particle MPM_Mesh,
+                                                       Mesh FEM_Mesh);
 
-/**************************************************************/
+static PetscErrorCode __constitutive_update(Particle MPM_Mesh, Mesh FEM_Mesh);
 
-/*!
-  \brief Update the stress tensor of the particle
-  \param[in] MPM_Mesh Information of the particles
-  \param[in] FEM_Mesh Information of the background nodes
-  \param[out] STATUS Returns failure or success
-*/
-static int __constitutive_update(Particle MPM_Mesh, Mesh FEM_Mesh);
-/**************************************************************/
+static PetscErrorCode __nodal_internal_forces(PetscScalar *Lagrangian,
+                                              Mask ActiveNodes,
+                                              Particle MPM_Mesh, Mesh FEM_Mesh);
 
-/*!
-  \brief Returns a mask with the position of the computed values.
-
-  \param[out] Mask_active_dofs_A Global dofs positions for node A.
-  \param[in] Mask_node_A Index of the node A with mask.
-*/
-static void __get_assembling_locations_lagrangian(int *Mask_active_dofs_A,
-                                                  int Mask_node_A);
-
-/**************************************************************/
-
-/**
- * @brief Function used to compute the contribution of the \n
- * internal forces to the Lagrangian
- *
- * @param Lagrangian Lagrangian vector
- * @param ActiveNodes List of nodes which takes place in the computation
- * @param MPM_Mesh Information of the particles
- * @param FEM_Mesh Information of the background nodes
- * @param STATUS Returns failure or success
- */
-static void __nodal_internal_forces(PetscScalar *Lagrangian, Mask ActiveNodes,
-                                    Particle MPM_Mesh, Mesh FEM_Mesh,
-                                    int *STATUS);
-
-/**************************************************************/
-
-/**
- * @brief Compute the contribution to the internal forces in the node A of
- * the particle p
- *
- * @param InternalForcesDensity_Ap contribution to the internal forces in
- * the node A of the particle p
- * @param kirchhoff_p Kirchhoff stress tensor
- * @param gradient_n1_pA Shape function gradient in the n+1 time step
- * @param V0_p Volume of the particle in the reference configuration
- */
-static void __internal_force_density(double *InternalForcesDensity_Ap,
-                                     const double *kirchhoff_p,
-                                     const double *gradient_n1_pA, double V0_p);
-/**************************************************************/
-
-/**
- * @brief Function used to compute the contribution of the contact forces to the
- * residual
- *
- * @param Lagrangian Lagrangian vector
- * @param ActiveNodes List of nodes which takes place in the computation
- * @param MPM_Mesh Information of the particles
- * @param FEM_Mesh Information of the background nodes
- */
 static void __nodal_traction_forces(PetscScalar *Lagrangian, Mask ActiveNodes,
                                     Particle MPM_Mesh, Mesh FEM_Mesh);
-/**************************************************************/
 
-/**
- * @brief Compute the contribution to the local traction forces in the node A of
- * the particle p
- *
- * @param LocalTractionForce_Ap contribution to the local traction forces in
- * the node A of the particle p
- * @param T Local traction force
- * @param N_n1_pA Shape function evaluation at node A
- * @param A0_p Reference area of the particle p
- */
-static void __local_traction_force(double *LocalTractionForce_Ap,
-                                   const double *T, double N_n1_pA,
-                                   double A0_p);
-/**************************************************************/
-
-/**
- * @brief Function used to compute the contribution of the \n
- * inertial forces to the lagrangian (a - b)
- *
- * @param Lagrangian Lagrangian vector
- * @param M_II Lumped mass matrix
- * @param dU Nodal field of incremental displacements
- * @param Un_dt Nodal field of velocities at t = n
- * @param Un_dt2 Nodal field of accelerations at t = n
- * @param ActiveNodes List of nodes which takes place in the computation
- * @param Params Time integration parameters
- */
 static void __nodal_inertial_forces(PetscScalar *Lagrangian,
                                     const PetscScalar *M_II,
                                     const PetscScalar *dU,
                                     const PetscScalar *Un_dt,
                                     const PetscScalar *Un_dt2, Mask ActiveNodes,
                                     Newmark_parameters Params);
-/**************************************************************/
 
-/*!
-  \brief Compute the 2-norm of the residual
-  \param[in] Residual
-  \return The norm of the residual
-*/
 static double __error_residual(const Vec Residual);
-/**************************************************************/
 
-/*!
-
-*/
 static Mat __preallocation_tangent_matrix(Mask ActiveNodes, Mask ActiveDOFs,
                                           Particle MPM_Mesh, int *STATUS);
-/**************************************************************/
 
-static void compute_local_intertia(double *Inertia_density_p /**< */,
-                                   double Na_p /**< */, double Nb_p /**< */,
-                                   double m_p /**< */, double alpha_1 /**< */,
-                                   double epsilon /**< */, unsigned A /**< */,
-                                   unsigned B /**< */);
-/**************************************************************/
+static void __compute_local_intertia(double *Inertia_density_p, double Na_p,
+                                     double Nb_p, double m_p, double alpha_1,
+                                     double epsilon, unsigned A, unsigned B);
 
-/*!
-  \brief Returns a mask with the position of the stifness in the global tangent
-  \n matrix for an eeficient assembly process.
-
-  \param[out] Mask_active_dofs_A Global dofs positions for node A.
-  \param[in] Mask_node_A Index of the node A with mask.
-  \param[out] Mask_active_dofs_B Global dofs positions for node B
-  \param[in] Mask_node_B Index of the node B with mask
-  \param[in] ActiveDOFs List of dofs which takes place in the computation
-*/
 static void __get_tangent_matrix_assembling_locations(int *Mask_active_dofs_A,
                                                       int Mask_node_A,
                                                       int *Mask_active_dofs_B,
                                                       int Mask_node_B,
                                                       Mask ActiveDOFs);
-/**************************************************************/
 
-/*!
-  \brief Computes the local tangent stiffness as the addition of the \n
-  local tangent stiffness density and the intertia density matrix
+static void __local_tangent_stiffness(double *Tangent_Stiffness_p,
+                                      const double *Stiffness_density_p,
+                                      const double *Inertia_density_p,
+                                      double V0_p);
 
-  \param[out] Tangent_Stiffness_p Local tangent stiffness
-  \param[in] Stiffness_density_p Local stiffness density
-  \param[in] Inertia_density_p Inertia density matrix, a.k.a mass matrix
-  \param[in] V0_p Particle volume
-*/
-static void local_tangent_stiffness(double *Tangent_Stiffness_p,
-                                    const double *Stiffness_density_p,
-                                    const double *Inertia_density_p,
-                                    double V0_p);
-/**************************************************************/
+static PetscErrorCode __Jacobian_evaluation(SNES snes, Vec dU, Mat Jacobian,
+                                            Mat B, void *ctx);
 
-/*!
-  \param[in,out] Tangent_Stiffness The tangent matrix for the problem
-  \param[in] ActiveNodes List of nodes which takes place in the computation
-  \param[in] ActiveDOFs List of dofs which takes place in the computation
-  \param[in] MPM_Mesh Information of the particles
-  \param[in] FEM_Mesh Information of the background nodes
-  \param[in] Params Time integration parameters
-  \param[in] Iter Current iteration of the solver
-  \param[out] STATUS Returns failure or success
-*/
-static void __assemble_tangent_stiffness(Mat Tangent_Stiffness,
-                                         Mask ActiveNodes, Mask ActiveDOFs,
-                                         Particle MPM_Mesh, Mesh FEM_Mesh,
-                                         Newmark_parameters Params,
-                                         unsigned Iter, int *STATUS);
-/**************************************************************/
-
-/**
- * @brief Evaluates Jacobian matrix.
- *
- * @param snes the SNES context
- * @param[in] DU Input vector
- * @param[in,out] jac Jacobian matrix
- * @param[out] B Optionally different preconditioning matrix
- * @param dummy User-defined context
- * @return PetscErrorCode
- */
-PetscErrorCode __Jacobian_evaluation(SNES snes, Vec DU, Mat jac, Mat B,
-                                     void *dummy);
-/**************************************************************/
-
-/**
- * @brief
- *
- * @param D_U Nodal incremented (displacement,velocity,acceleration)
- * @param U_n Previously converged nodal kinetics
- * @param ActiveDOFs List of dofs which takes place in the computation
- * @param Params Time integration parameters
- * @param Ntotaldofs Number of dofs
- */
-static void __trial_Nodal_Increments(Nodal_Field D_U, Nodal_Field U_n,
-                                     Mask ActiveDOFs, Newmark_parameters Params,
-                                     unsigned Ntotaldofs);
-/**************************************************************/
-
-/*!
-  \brief This function takes the nodal increments comming from \n
-  the linear solver and computes the updated nodal increments \n
-  for the nodal kinetics
-  \param[in] Residual Increments during the k iteration
-  \param[in,out] D_U Nodal incremented (displacement,velocity,acceleration)
-  \param[in] U_n Previously converged nodal kinetics
-  \param[in] ActiveDOFs List of dofs which takes place in the computation
-  \param[in] Params Time integration parameters
-  \param[in] Ntotaldofs Number of dofs
-*/
-
-/**
- * @brief This function takes the nodal increments comming from \n
- * the linear solver and computes the updated nodal increments \n
- * for the nodal kinetics
- *
- * @param dU Incremental nodal displacement field
- * @param dU_dt Incremental nodal velocity field
- * @param dU_dt2 Incremental nodal acceleration field
- * @param Un_dt Nodal field of velocity at t = n
- * @param Un_dt2 Nodal field of acceleration at t = n
- * @param ActiveDOFs List of dofs which takes place in the computation
- * @param Params Time integration parameters
- * @param Ntotaldofs Number of dofs
- */
-static void __compute_nodal_kinetics_increments(
-    const PetscScalar *dU, PetscScalar *dU_dt, PetscScalar *dU_dt2,
-    const PetscScalar *Un_dt, const PetscScalar *Un_dt2, Mask ActiveDOFs,
-    Newmark_parameters Params, unsigned Ntotaldofs);
-/**************************************************************/
-
-/**
- * @brief
- *
- * @param D_U
- * @param MPM_Mesh
- * @param FEM_Mesh
- * @param ActiveNodes
- */
 static void __update_Particles(Nodal_Field D_U, Particle MPM_Mesh,
                                Mesh FEM_Mesh, Mask ActiveNodes);
 /**************************************************************/
@@ -466,9 +163,7 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
 
   int STATUS = EXIT_SUCCESS;
 
-  /*
-    Auxiliar variables for the solver
-  */
+  //  Auxiliar variables for the solver
   unsigned Ndim = NumberDimensions;
   unsigned Nactivenodes;
   unsigned Ntotaldofs;
@@ -517,6 +212,7 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
   SNES snes;
   KSP ksp;
   PC pc;
+  PetscBool preconditioner_flag;
 
   /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     Time step is defined at the init of the simulation throught the
@@ -575,130 +271,151 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
     /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
        Get the previous converged nodal value
        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-    //    U_n = __get_nodal_field_tn(Lumped_Mass, MPM_Mesh, FEM_Mesh,
-    //    ActiveNodes,
-    //                               ActiveDOFs, Time_Integration_Params,
-    //                               &STATUS);
-    //    if (STATUS == EXIT_FAILURE) {
-    //      fprintf(stderr, "" RED "Error in __get_nodal_field_tn()" RESET "
-    //      \n"); return EXIT_FAILURE;
-    //    }
+    PetscCall(VecCreate(PETSC_COMM_WORLD, &U_n));
+    PetscCall(VecCreate(PETSC_COMM_WORLD, &U_n_dt));
+    PetscCall(VecCreate(PETSC_COMM_WORLD, &U_n_dt2));
+    PetscCall(VecSetSizes(U_n, PETSC_DECIDE, Ntotaldofs));
+    PetscCall(VecSetSizes(U_n_dt, PETSC_DECIDE, Ntotaldofs));
+    PetscCall(VecSetSizes(U_n_dt2, PETSC_DECIDE, Ntotaldofs));
+    PetscCall(VecSetOption(U_n, VEC_IGNORE_NEGATIVE_INDICES, PETSC_TRUE));
+    PetscCall(VecSetOption(U_n_dt, VEC_IGNORE_NEGATIVE_INDICES, PETSC_TRUE));
+    PetscCall(VecSetOption(U_n_dt2, VEC_IGNORE_NEGATIVE_INDICES, PETSC_TRUE));
+    PetscCall(VecSetFromOptions(U_n));
+    PetscCall(VecSetFromOptions(U_n_dt));
+    PetscCall(VecSetFromOptions(U_n_dt2));
+
+    PetscCall(__get_nodal_field_n(U_n, U_n_dt, U_n_dt2, Lumped_Mass, MPM_Mesh,
+                                  FEM_Mesh, ActiveNodes, ActiveDOFs,
+                                  Time_Integration_Params));
+
+    PetscCall(VecAssemblyBegin(U_n));
+    PetscCall(VecAssemblyEnd(U_n));
+    PetscCall(VecAssemblyBegin(U_n_dt));
+    PetscCall(VecAssemblyEnd(U_n_dt));
+    PetscCall(VecAssemblyBegin(U_n_dt2));
+    PetscCall(VecAssemblyEnd(U_n_dt2));
+
+    /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+       Define user parameters for the SNES context
+       - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+    Ctx AplicationCtx;
+    AplicationCtx.ActiveNodes = ActiveNodes;
+    AplicationCtx.ActiveDOFs = ActiveDOFs;
+    AplicationCtx.MPM_Mesh = MPM_Mesh;
+    AplicationCtx.FEM_Mesh = FEM_Mesh;
+    AplicationCtx.Lumped_Mass = Lumped_Mass;
+    AplicationCtx.U_n = U_n;
+    AplicationCtx.U_n_dt = U_n_dt;
+    AplicationCtx.U_n_dt2 = U_n_dt2;
+    AplicationCtx.Time_Integration_Params = Time_Integration_Params;
 
     /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
        Create nonlinear solver context
-       - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-    //    PetscCall(SNESCreate(PETSC_COMM_WORLD, &snes));
-    //    PetscCall(SNESSetType(snes, SNESNEWTONLS));
-    //    PetscCall(SNESSetOptionsPrefix(snes, "mysolver_"));
-
-    /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-       Create matrix and vector data structures; set corresponding routines
-       - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-    /*
-       Create vectors for solution and nonlinear function
-    */
-    //    PetscCall(VecCreate(PETSC_COMM_WORLD, &DU));
-    //    PetscCall(VecSetSizes(DU, PETSC_DECIDE, Ntotaldofs));
-    //    PetscCall(VecSetFromOptions(DU));
-    //    PetscCall(VecDuplicate(DU, &Residual));
-
-    /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-       Create Jacobian matrix data structure
-       - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-    //    PetscCall(MatCreate(PETSC_COMM_WORLD, &Tangent_Stiffness));
-    //    PetscCall(MatSetSizes(Tangent_Stiffness, PETSC_DECIDE, PETSC_DECIDE,
-    //                          Ntotaldofs, Ntotaldofs));
-    //    PetscCall(MatSetFromOptions(Tangent_Stiffness));
-    //    PetscCall(MatSetUp(Tangent_Stiffness));
-
-    //    Tangent_Stiffness = __preallocation_tangent_matrix(ActiveNodes,
-    //    ActiveDOFs,
-    //                                                       MPM_Mesh, &STATUS);
-    //    if (STATUS == EXIT_FAILURE) {
-    //      fprintf(stderr,
-    //              "" RED "Error in __preallocation_tangent_matrix()" RESET "
-    //              \n");
-    //      return EXIT_FAILURE;
-    //    }
-
-    /*
-     Set function evaluation routine and vector.
-    */
-    //    PetscCall(SNESSetFunction(snes, Residual, __Lagrangian_evaluation,
-    //    NULL));
-
-    /*
-     Set Jacobian matrix data structure and Jacobian evaluation routine
-    */
-    //    PetscCall(SNESSetJacobian(snes, Tangent_Stiffness, Tangent_Stiffness,
-    //                              __Jacobian_evaluation, NULL));
+      - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+    PetscCall(SNESCreate(PETSC_COMM_WORLD, &snes));
+    PetscCall(SNESSetType(snes, SNESNEWTONLS));
+    PetscCall(SNESSetOptionsPrefix(snes, "mysolver_"));
 
     /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-       Customize nonlinear solver; set runtime options
-     - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-    /*
+       Create matrix and vector data structures; set corresponding routines
+      - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+    PetscCall(VecCreate(PETSC_COMM_WORLD, &DU));
+    PetscCall(VecSetSizes(DU, PETSC_DECIDE, Ntotaldofs));
+    PetscCall(VecSetFromOptions(DU));
+    PetscCall(VecSetOption(DU, VEC_IGNORE_NEGATIVE_INDICES, PETSC_TRUE));
+    PetscCall(VecDuplicate(DU, &Residual));
+
+    /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+       Create Jacobian matrix data structure
+      - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+    PetscCall(MatCreate(PETSC_COMM_WORLD, &Tangent_Stiffness));
+    PetscCall(MatSetSizes(Tangent_Stiffness, PETSC_DECIDE, PETSC_DECIDE,
+                          Ntotaldofs, Ntotaldofs));
+    PetscCall(MatSetFromOptions(Tangent_Stiffness));
+    PetscCall(MatSetUp(Tangent_Stiffness));
+
+    Tangent_Stiffness = __preallocation_tangent_matrix(ActiveNodes, ActiveDOFs,
+                                                       MPM_Mesh, &STATUS);
+    if (STATUS == EXIT_FAILURE) {
+      fprintf(stderr,
+              "" RED "Error in __preallocation_tangent_matrix()" RESET " \n ");
+      return EXIT_FAILURE;
+    }
+
+    /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+     Set function evaluation routine and vector.
+      - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+    PetscCall(SNESSetFunction(snes, Residual, __lagrangian_evaluation,
+                              &AplicationCtx));
+
+    /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+     Set Jacobian matrix data structure and Jacobian evaluation routine
+      - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+    PetscCall(SNESSetJacobian(snes, Tangent_Stiffness, Tangent_Stiffness,
+                              __Jacobian_evaluation, &AplicationCtx));
+
+    /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+       Customize nonlinear solver; set runtime options :
        Set linear solver defaults for this problem. By extracting the
        KSP and PC contexts from the SNES context, we can then
        directly call any KSP and PC routines to set various options.
-    */
-    //    PetscCall(SNESGetKSP(snes, &ksp));
-    //    PetscCall(KSPGetPC(ksp, &pc));
-    //    PetscCall(PCSetType(pc, PCNONE));
-    //    PetscCall(KSPSetTolerances(ksp, 1.e-4, PETSC_DEFAULT, PETSC_DEFAULT,
-    //    20));
+       Optionally allow user-provided preconditioner
+      - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+    PetscCall(SNESGetKSP(snes, &ksp));
+    PetscCall(KSPGetPC(ksp, &pc));
+    PetscCall(
+        PetscOptionsHasName(NULL, NULL, "-user_precond", &preconditioner_flag));
+    if (preconditioner_flag) {
+      PetscCall(PCSetType(pc, PCSHELL));
+      //      PetscCall(PCShellSetApply(pc,MatrixFreePreconditioner));
+    } else {
+      PetscCall(PCSetType(pc, PCNONE));
+    }
+    PetscCall(KSPSetTolerances(ksp, 1.e-10, PETSC_DEFAULT, PETSC_DEFAULT, 10));
 
-    /*
-       Set SNES/KSP/KSP/PC runtime options, e.g.,
-           -snes_view -snes_monitor -ksp_type <ksp> -pc_type <pc>
-       These options will override those specified above as long as
-       SNESSetFromOptions() is called _after_ any other customization
-       routines.
-    */
-    //    PetscCall(SNESSetFromOptions(snes));
+    /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+      Set SNES/KSP/KSP/PC runtime options, e.g.,
+          -snes_view -snes_monitor -ksp_type <ksp> -pc_type <pc>
+      These options will override those specified above as long as
+      SNESSetFromOptions() is called _after_ any other customization
+      routines.
+      - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+    PetscCall(SNESSetFromOptions(snes));
 
     /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
        Evaluate initial guess; then solve nonlinear system
      - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-    //    if (Use_explicit_trial == true) {
-    //
-    //      __trial_nodal_increments(DU, Lumped_Mass, MPM_Mesh, FEM_Mesh, U_n,
-    //                               ActiveNodes, ActiveDOFs,
-    //                               Time_Integration_Params, &STATUS);
-    //      if (STATUS == EXIT_FAILURE) {
-    //        fprintf(stderr,
-    //                "" RED "Error in __trial_nodal_increments()" RESET " \n");
-    //        return EXIT_FAILURE;
-    //      }
-    //    }
-    //    else{
-    //      PetscCall(VecZeroEntries(DU));
-    //    }
+    if (Use_explicit_trial == true) {
 
-    /*
-       Note: The user should initialize the vector, x, with the initial guess
+      PetscCall(__trial_nodal_increments(DU, U_n_dt, U_n_dt2, FEM_Mesh,
+                                         ActiveNodes, Time_Integration_Params));
+      if (STATUS == EXIT_FAILURE) {
+        fprintf(stderr,
+                "" RED "Error in __trial_nodal_increments()" RESET " \n");
+        return EXIT_FAILURE;
+      }
+    } else {
+      PetscCall(VecZeroEntries(DU));
+    }
+
+    /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+       Note: The user should initialize the vector, DU, with the initial guess
        for the nonlinear solver prior to calling SNESSolve().  In particular,
        to employ an initial guess of zero, the user should explicitly set
        this vector to zero by calling VecSet().
-    */
-    //    PetscCall(SNESSolve(snes, NULL, DU));
+     - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+    PetscCall(SNESSolve(snes, NULL, DU));
 
     /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
        Free work space.  All PETSc objects should be destroyed when they
        are no longer needed.
      - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-    //    PetscCall(MatDestroy(&Tangent_Stiffness));
-    //    PetscCall(SNESDestroy(&snes));
+    PetscCall(MatDestroy(&Tangent_Stiffness));
+    PetscCall(SNESDestroy(&snes));
 
-    //    print_convergence_stats(TimeStep, NumTimeStep, Iter, MaxIter, Error_0,
+    //    print_convergence_stats(TimeStep, NumTimeStep, Iter, MaxIter,
+    //    Error_0,
     //                            Error_i, Error_relative);
-
-    //    if (Iter > MaxIter) {
-    //      fprintf(
-    //          stderr,
-    //          "" RED
-    //          "Convergence not reached in the maximum number of iterations"
-    //          RESET " \n");
-    //    }
 
     //    __update_Particles(D_U, MPM_Mesh, FEM_Mesh, ActiveNodes);
 
@@ -712,16 +429,11 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
     TimeStep++;
 
     PetscCall(VecDestroy(&Lumped_Mass));
-    //    PetscCall(VecDestroy(&DU));
-    //    PetscCall(VecDestroy(&Residual));
-
-    //    VecDestroy(&U_n.value);
-    //    VecDestroy(&U_n.d_value_dt);
-    //    VecDestroy(&U_n.d2_value_dt2);
-    //    VecDestroy(&D_U.value);
-    //    VecDestroy(&D_U.d_value_dt);
-    //    VecDestroy(&D_U.d2_value_dt2);
-
+    PetscCall(VecDestroy(&DU));
+    PetscCall(VecDestroy(&Residual));
+    PetscCall(VecDestroy(&U_n));
+    PetscCall(VecDestroy(&U_n_dt));
+    PetscCall(VecDestroy(&U_n_dt2));
     free(ActiveNodes.Nodes2Mask);
     free(ActiveDOFs.Nodes2Mask);
   }
@@ -784,6 +496,14 @@ static double __compute_deltat(Particle MPM_Mesh, double h,
 
 /**************************************************************/
 
+/*!
+  \brief Finite strains Newmark-beta
+
+  \param[in] beta: First Newmark-beta parameter
+  \param[in] gamma: Second Newmark-beta parameter
+  \param[in] DeltaTimeStep: Timestep increment
+  \param[in] epsilon: Preconditioner parameter for the mass matrix
+*/
 static Newmark_parameters __compute_Newmark_parameters(double beta,
                                                        double gamma,
                                                        double DeltaTimeStep,
@@ -805,39 +525,17 @@ static Newmark_parameters __compute_Newmark_parameters(double beta,
 
 /**************************************************************/
 
-static void __compute_local_mass_matrix(double *Local_Mass_Matrix_p,
-                                        double Na_p, double m_p) {
+/*!
+  \brief This function returns the lumped mass matrix \n
+  in order to reduce storage, this matrix is presented as \n
+  a vector.
 
-  double M_AB_p = Na_p * m_p;
-
-#if NumberDimensions == 2
-  Local_Mass_Matrix_p[0] = M_AB_p;
-  Local_Mass_Matrix_p[1] = M_AB_p;
-#else
-  Local_Mass_Matrix_p[0] = M_AB_p;
-  Local_Mass_Matrix_p[1] = M_AB_p;
-  Local_Mass_Matrix_p[2] = M_AB_p;
-#endif
-}
-
-/**************************************************************/
-
-static void __get_assembling_locations_lumped_mass(int *Mask_dofs_A,
-                                                   int Mask_node_A) {
-  unsigned Ndim = NumberDimensions;
-
-#if NumberDimensions == 2
-  Mask_dofs_A[0] = Mask_node_A * Ndim + 0;
-  Mask_dofs_A[1] = Mask_node_A * Ndim + 1;
-#else
-  Mask_dofs_A[0] = Mask_node_A * Ndim + 0;
-  Mask_dofs_A[1] = Mask_node_A * Ndim + 1;
-  Mask_dofs_A[2] = Mask_node_A * Ndim + 2;
-#endif
-}
-
-/**************************************************************/
-
+  \param[in] MPM_Mesh Information of the particles
+  \param[in] FEM_Mesh Information of the background nodes
+  \param[in] ActiveNodes List of nodes which takes place in the computation
+  \param[out] STATUS Returns failure or success
+  \return The lumped mass matrix for the active system
+*/
 static Vec __compute_nodal_lumped_mass(Particle MPM_Mesh, Mesh FEM_Mesh,
                                        Mask ActiveNodes, int *STATUS) {
 
@@ -886,10 +584,16 @@ static Vec __compute_nodal_lumped_mass(Particle MPM_Mesh, Mesh FEM_Mesh,
         int Ap = Nodes_p.Connectivity[A];
         int Mask_node_A = ActiveNodes.Nodes2Mask[Ap];
         double Na_p = ShapeFunction_p.nV[A];
+        double M_AB_p = Na_p * m_p;
 
-        __compute_local_mass_matrix(Local_Mass_Matrix_p, Na_p, m_p);
-
-        __get_assembling_locations_lumped_mass(Mask_dofs_A, Mask_node_A);
+        //! Compute the contribution of particle p to the lumped mass matrix
+        //! correspoding to node A. Compute a mask with the position of the dofs
+        //! with contributions to the lumped mass matrix for node A and particle
+        //! p.
+        for (unsigned i = 0; i < Ndim; i++) {
+          Local_Mass_Matrix_p[i] = M_AB_p;
+          Mask_dofs_A[i] = Mask_node_A * Ndim + i;
+        }
 
 #pragma omp critical
         {
@@ -1009,33 +713,32 @@ static void __get_assembling_locations_nodal_kinetics(int *Mask_active_dofs_A,
 
 /**************************************************************/
 
-static Nodal_Field __get_nodal_field_tn(Vec Lumped_Mass, Particle MPM_Mesh,
-                                        Mesh FEM_Mesh, Mask ActiveNodes,
-                                        Mask ActiveDOFs,
-                                        Newmark_parameters Params,
-                                        int *STATUS) {
-  *STATUS = EXIT_SUCCESS;
+/**
+ * @brief Project the kinematic information of the particles towards the nodes
+ * \n of the mesh to get the nodal fields at t = n
+ *
+ * @param U_n Nodal displacement field t = n
+ * @param U_n_dt Nodal velocity field t = n
+ * @param U_n_dt2 Nodal acceleration field t = n
+ * @param Lumped_Mass Lumped mass matrix used for the projection
+ * @param MPM_Mesh Information of the particles
+ * @param FEM_Mesh Information of the background nodes
+ * @param ActiveNodes List of nodes which takes place in the computation
+ * @param ActiveDOFs List of dofs which takes place in the computation
+ * @param Params Time integration parameters
+ * @return Returns failure or success
+ */
+static PetscErrorCode __get_nodal_field_n(Vec U_n, Vec U_n_dt, Vec U_n_dt2,
+                                          Vec Lumped_Mass, Particle MPM_Mesh,
+                                          Mesh FEM_Mesh, Mask ActiveNodes,
+                                          Mask ActiveDOFs,
+                                          Newmark_parameters Params) {
   unsigned Ndim = NumberDimensions;
   unsigned Nactivenodes = ActiveNodes.Nactivenodes;
   unsigned Ntotaldofs = Ndim * Nactivenodes;
   unsigned Np = MPM_Mesh.NumGP;
   unsigned NumberNodes_p;
   unsigned p;
-
-  Nodal_Field U_n;
-
-  VecCreate(PETSC_COMM_WORLD, &U_n.value);
-  VecCreate(PETSC_COMM_WORLD, &U_n.d_value_dt);
-  VecCreate(PETSC_COMM_WORLD, &U_n.d2_value_dt2);
-  VecSetSizes(U_n.value, PETSC_DECIDE, Ntotaldofs);
-  VecSetSizes(U_n.d_value_dt, PETSC_DECIDE, Ntotaldofs);
-  VecSetSizes(U_n.d2_value_dt2, PETSC_DECIDE, Ntotaldofs);
-  VecSetFromOptions(U_n.value);
-  VecSetFromOptions(U_n.d_value_dt);
-  VecSetFromOptions(U_n.d2_value_dt2);
-  VecSetOption(U_n.value, VEC_IGNORE_NEGATIVE_INDICES, PETSC_TRUE);
-  VecSetOption(U_n.d_value_dt, VEC_IGNORE_NEGATIVE_INDICES, PETSC_TRUE);
-  VecSetOption(U_n.d2_value_dt2, VEC_IGNORE_NEGATIVE_INDICES, PETSC_TRUE);
 
 #if NumberDimensions == 2
   int Mask_active_dofs_A[2];
@@ -1087,12 +790,9 @@ static Nodal_Field __get_nodal_field_tn(Vec Lumped_Mass, Particle MPM_Mesh,
 
 #pragma omp critical
         {
-          VecSetValues(U_n.value, Ndim, Mask_active_dofs_A, U_N_m_IP,
-                       ADD_VALUES);
-          VecSetValues(U_n.d_value_dt, Ndim, Mask_active_dofs_A, V_N_m_IP,
-                       ADD_VALUES);
-          VecSetValues(U_n.d2_value_dt2, Ndim, Mask_active_dofs_A, A_N_m_IP,
-                       ADD_VALUES);
+          VecSetValues(U_n, Ndim, Mask_active_dofs_A, U_N_m_IP, ADD_VALUES);
+          VecSetValues(U_n_dt, Ndim, Mask_active_dofs_A, V_N_m_IP, ADD_VALUES);
+          VecSetValues(U_n_dt2, Ndim, Mask_active_dofs_A, A_N_m_IP, ADD_VALUES);
         } // #pragma omp critical
       }   // for A
 
@@ -1103,9 +803,9 @@ static Nodal_Field __get_nodal_field_tn(Vec Lumped_Mass, Particle MPM_Mesh,
 
   } // #pragma omp parallel
 
-  VecPointwiseDivide(U_n.value, U_n.value, Lumped_Mass);
-  VecPointwiseDivide(U_n.d_value_dt, U_n.d_value_dt, Lumped_Mass);
-  VecPointwiseDivide(U_n.d2_value_dt2, U_n.d2_value_dt2, Lumped_Mass);
+  PetscCall(VecPointwiseDivide(U_n, U_n, Lumped_Mass));
+  PetscCall(VecPointwiseDivide(U_n_dt, U_n_dt, Lumped_Mass));
+  PetscCall(VecPointwiseDivide(U_n_dt2, U_n_dt2, Lumped_Mass));
 
   //! Apply boundary condition
   unsigned NumBounds = FEM_Mesh.Bounds.NumBounds;
@@ -1115,6 +815,110 @@ static Nodal_Field __get_nodal_field_tn(Vec Lumped_Mass, Particle MPM_Mesh,
   double alpha_4 = Params.alpha_4;
   double alpha_5 = Params.alpha_5;
   double alpha_6 = Params.alpha_6;
+
+  if (TimeStep > 0) {
+
+    unsigned TimeStep_n = TimeStep - 1;
+
+    for (unsigned i = 0; i < NumBounds; i++) {
+
+      /*
+        Get the number of nodes of this boundarie
+      */
+      unsigned NumNodesBound = FEM_Mesh.Bounds.BCC_i[i].NumNodes;
+
+      for (unsigned j = 0; j < NumNodesBound; j++) {
+        /*
+          Get the index of the node
+        */
+        int Id_BCC = FEM_Mesh.Bounds.BCC_i[i].Nodes[j];
+        int Id_BCC_mask = ActiveNodes.Nodes2Mask[Id_BCC];
+
+        /*
+          The boundary condition is not affecting any active node,
+          continue interating
+        */
+        if (Id_BCC_mask == -1) {
+          continue;
+        }
+
+        /*
+          Loop over the dimensions of the boundary condition
+        */
+        for (unsigned k = 0; k < Ndim; k++) {
+
+          /*
+            Apply only if the direction is active (1)
+          */
+          if (FEM_Mesh.Bounds.BCC_i[i].Dir[k * NumTimeStep + TimeStep_n] == 1) {
+
+            int Mask_restricted_dofs_A = Id_BCC_mask * Ndim + k;
+
+            double D_U_value_It = 0.0;
+            double U_value_In1 = 0.0;
+            double V_value_In = 0.0;
+            double V_value_In1 = 0.0;
+            double A_value_In = 0.0;
+            double A_value_In1 = 0.0;
+
+            for (unsigned t = 0; t <= TimeStep_n; t++) {
+
+              V_value_In = V_value_In1;
+              A_value_In = A_value_In1;
+
+              D_U_value_It = FEM_Mesh.Bounds.BCC_i[i].Value[k].Fx[t];
+              U_value_In1 += D_U_value_It;
+              V_value_In1 = alpha_4 * D_U_value_It +
+                            (alpha_5 - 1) * V_value_In + alpha_6 * A_value_In;
+              A_value_In1 = alpha_1 * D_U_value_It - alpha_2 * V_value_In -
+                            (alpha_3 + 1) * A_value_In;
+            }
+
+            VecSetValues(U_n, 1, &Mask_restricted_dofs_A, &U_value_In1,
+                         ADD_VALUES);
+            VecSetValues(U_n_dt, 1, &Mask_restricted_dofs_A, &V_value_In1,
+                         ADD_VALUES);
+            VecSetValues(U_n_dt2, 1, &Mask_restricted_dofs_A, &A_value_In1,
+                         ADD_VALUES);
+          }
+        }
+      }
+    }
+  }
+
+  return EXIT_SUCCESS;
+}
+
+/**************************************************************/
+
+static PetscErrorCode __trial_nodal_increments(Vec DU, Vec U_n_dt, Vec U_n_dt2,
+                                               Mesh FEM_Mesh, Mask ActiveNodes,
+                                               Newmark_parameters Params) {
+
+  unsigned Ndim = NumberDimensions;
+  unsigned Nactivenodes = ActiveNodes.Nactivenodes;
+  unsigned Ntotaldofs = Ndim * Nactivenodes;
+  PetscInt Dof_Ai;
+  PetscScalar DeltaTimeStep = Params.DeltaTimeStep;
+
+  PetscScalar *DU_ptr;
+  PetscCall(VecGetArray(DU, &DU_ptr));
+  const PetscScalar *Un_dt_ptr;
+  PetscCall(VecGetArrayRead(U_n_dt, &Un_dt_ptr));
+  const PetscScalar *Un_dt2_ptr;
+  PetscCall(VecGetArrayRead(U_n_dt2, &Un_dt2_ptr));
+
+//! Compute trial
+#pragma omp for private(Dof_Ai)
+  for (Dof_Ai = 0; Dof_Ai < Ntotaldofs; Dof_Ai++) {
+
+    DU_ptr[Dof_Ai] = DeltaTimeStep * Un_dt_ptr[Dof_Ai] +
+                     0.5 * DSQR(DeltaTimeStep) * Un_dt2_ptr[Dof_Ai];
+
+  } // #pragma omp for private (Dof_Ai)
+
+  //! Apply boundary condition
+  unsigned NumBounds = FEM_Mesh.Bounds.NumBounds;
 
   for (unsigned i = 0; i < NumBounds; i++) {
 
@@ -1146,272 +950,37 @@ static Nodal_Field __get_nodal_field_tn(Vec Lumped_Mass, Particle MPM_Mesh,
         /*
           Apply only if the direction is active (1)
         */
-        if (FEM_Mesh.Bounds.BCC_i[i].Dir[k * NumTimeStep + TimeStep] == 1) {
+        if (FEM_Mesh.Bounds.BCC_i[i].Dir[k * NumTimeStep + TimeStep - 1] == 1) {
 
-          int Mask_restricted_dofs_A = Id_BCC_mask * Ndim + k;
+          Dof_Ai = Id_BCC_mask * Ndim + k;
 
-          double D_U_value_It = 0.0;
-          double U_value_In1 = 0.0;
-          double V_value_In = 0.0;
-          double V_value_In1 = 0.0;
-          double A_value_In = 0.0;
-          double A_value_In1 = 0.0;
-
-          for (unsigned t = 0; t < TimeStep; t++) {
-
-            V_value_In = V_value_In1;
-            A_value_In = A_value_In1;
-
-            D_U_value_It = FEM_Mesh.Bounds.BCC_i[i].Value[k].Fx[t];
-            U_value_In1 += D_U_value_It;
-            V_value_In1 = alpha_4 * D_U_value_It + (alpha_5 - 1) * V_value_In +
-                          alpha_6 * A_value_In;
-            A_value_In1 = alpha_1 * D_U_value_It - alpha_2 * V_value_In -
-                          (alpha_3 + 1) * A_value_In;
-          }
-
-          VecSetValues(U_n.value, 1, &Mask_restricted_dofs_A, &U_value_In1,
-                       ADD_VALUES);
-          VecSetValues(U_n.d_value_dt, 1, &Mask_restricted_dofs_A, &V_value_In1,
-                       ADD_VALUES);
-          VecSetValues(U_n.d2_value_dt2, 1, &Mask_restricted_dofs_A,
-                       &A_value_In1, ADD_VALUES);
+          DU_ptr[Dof_Ai] = FEM_Mesh.Bounds.BCC_i[i].Value[k].Fx[TimeStep];
         }
       }
     }
   }
 
-  VecAssemblyBegin(U_n.value);
-  VecAssemblyEnd(U_n.value);
-  VecAssemblyBegin(U_n.d_value_dt);
-  VecAssemblyEnd(U_n.d_value_dt);
-  VecAssemblyBegin(U_n.d2_value_dt2);
-  VecAssemblyEnd(U_n.d2_value_dt2);
+  PetscCall(VecRestoreArray(DU, &DU_ptr));
+  PetscCall(VecRestoreArrayRead(U_n_dt, &Un_dt_ptr));
+  PetscCall(VecRestoreArrayRead(U_n_dt2, &Un_dt2_ptr));
 
-  return U_n;
+  return EXIT_SUCCESS;
 }
-
 /**************************************************************/
 
-static Nodal_Field __trial_nodal_increments(Vec Lumped_Mass, Particle MPM_Mesh,
-                                            Mesh FEM_Mesh, Nodal_Field U_n,
-                                            Mask ActiveNodes, Mask ActiveDOFs,
-                                            Newmark_parameters Params,
-                                            int *STATUS) {
-  unsigned NumNodesBound;
-  unsigned Ndim = NumberDimensions;
-  unsigned Np = MPM_Mesh.NumGP;
-  unsigned NumberNodes_p;
-  unsigned NumBounds = FEM_Mesh.Bounds.NumBounds;
-  unsigned Nactivenodes = ActiveNodes.Nactivenodes;
-  unsigned Ntotaldofs = Ndim * Nactivenodes;
-  unsigned p;
-  int Id_BCC;
-  int Id_BCC_mask;
-
-  Nodal_Field D_U;
-
-  VecCreate(PETSC_COMM_WORLD, &D_U.value);
-  VecCreate(PETSC_COMM_WORLD, &D_U.d_value_dt);
-  VecCreate(PETSC_COMM_WORLD, &D_U.d2_value_dt2);
-  VecSetSizes(D_U.value, PETSC_DECIDE, Ntotaldofs);
-  VecSetSizes(D_U.d_value_dt, PETSC_DECIDE, Ntotaldofs);
-  VecSetSizes(D_U.d2_value_dt2, PETSC_DECIDE, Ntotaldofs);
-  VecSetFromOptions(D_U.value);
-  VecSetFromOptions(D_U.d_value_dt);
-  VecSetFromOptions(D_U.d2_value_dt2);
-  VecSetOption(D_U.value, VEC_IGNORE_NEGATIVE_INDICES, PETSC_TRUE);
-  const PetscScalar *Un_dt;
-  VecGetArrayRead(U_n.d_value_dt, &Un_dt);
-  const PetscScalar *Un_dt2;
-  VecGetArrayRead(U_n.d2_value_dt2, &Un_dt2);
-
-  const double alpha_1 = Params.alpha_1;
-  const double alpha_2 = Params.alpha_2;
-  const double alpha_3 = Params.alpha_3;
-  const double alpha_4 = Params.alpha_4;
-  const double alpha_5 = Params.alpha_5;
-  const double alpha_6 = Params.alpha_6;
-  const double DeltaTimeStep = Params.DeltaTimeStep;
-
-  /**
-   * Initialize the values of the nodal increment using
-   * an approximation based on the explicit-predictor, else
-   * keep the vector as zero.
-   */
-  if (Use_explicit_trial == true) {
-
-#if NumberDimensions == 2
-    int Mask_active_dofs_A[2];
-    double DU_N_m_IP[2];
-#else
-    int Mask_active_dofs_A[3];
-    double DU_N_m_IP[3];
-#endif
-
-#pragma omp parallel private(NumberNodes_p)
-    {
-
-#pragma omp for private(p, DU_N_m_IP, Mask_active_dofs_A)
-      for (p = 0; p < Np; p++) {
-
-        /* Define element of the particle */
-        NumberNodes_p = MPM_Mesh.NumberNodes[p];
-        Element Nodes_p =
-            nodal_set__Particles__(p, MPM_Mesh.ListNodes[p], NumberNodes_p);
-        Matrix ShapeFunction_p =
-            compute_N__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
-
-        //! Get the mass, velocity and acceleration of the GP
-        double m_p = MPM_Mesh.Phi.mass.nV[p];
-        const double *vel_p = &MPM_Mesh.Phi.vel.nV[p * Ndim];
-        const double *acc_p = &MPM_Mesh.Phi.acc.nV[p * Ndim];
-
-        for (unsigned A = 0; A < NumberNodes_p; A++) {
-
-          //  Get the node in the nodal momentum with the mask
-          unsigned Ap = Nodes_p.Connectivity[A];
-          int Mask_node_A = ActiveNodes.Nodes2Mask[Ap];
-          double ShapeFunction_pA = ShapeFunction_p.nV[A];
-          double m__x__ShapeFunction_pA = m_p * ShapeFunction_pA;
-
-          __local_projection_increment_displacement(
-              DU_N_m_IP, vel_p, acc_p, m__x__ShapeFunction_pA, DeltaTimeStep);
-
-          __get_assembling_locations_nodal_kinetics(Mask_active_dofs_A,
-                                                    Mask_node_A, ActiveDOFs);
-
-#pragma omp critical
-          {
-            VecSetValues(D_U.value, Ndim, Mask_active_dofs_A, DU_N_m_IP,
-                         ADD_VALUES);
-          } // #pragma omp critical
-        }   // for A
-
-        free__MatrixLib__(ShapeFunction_p);
-        free(Nodes_p.Connectivity);
-
-      } // for p
-
-    } // #pragma omp parallel
-
-    VecPointwiseDivide(D_U.value, D_U.value, Lumped_Mass);
-
-  } // Use_explicit_trial
-
-  double D_U_value_It;
-
-  //! Loop over the the boundaries to set boundary conditions
-  for (unsigned i = 0; i < NumBounds; i++) {
-
-    //! Get the number of nodes of this boundary
-    NumNodesBound = FEM_Mesh.Bounds.BCC_i[i].NumNodes;
-
-    for (unsigned j = 0; j < NumNodesBound; j++) {
-
-      //!
-      Id_BCC = FEM_Mesh.Bounds.BCC_i[i].Nodes[j];
-      Id_BCC_mask = ActiveNodes.Nodes2Mask[Id_BCC];
-
-      if (Id_BCC_mask == -1) {
-        continue;
-      }
-
-      //!
-      for (unsigned k = 0; k < Ndim; k++) {
-
-        if (FEM_Mesh.Bounds.BCC_i[i].Dir[k * NumTimeStep + TimeStep] == 1) {
-
-          int idx = Id_BCC_mask * Ndim + k;
-          double D_U_bcc = FEM_Mesh.Bounds.BCC_i[i].Value[k].Fx[TimeStep];
-          double D_U_dt_bcc = alpha_1 * D_U_bcc - alpha_2 * Un_dt[idx] -
-                              (alpha_3 + 1) * Un_dt2[idx];
-          double D_U_dt2_bcc = alpha_4 * D_U_bcc + (alpha_5 - 1) * Un_dt[idx] +
-                               alpha_6 * Un_dt2[idx];
-
-          VecSetValues(D_U.value, 1, &idx, &D_U_bcc, ADD_VALUES);
-          VecSetValues(D_U.d_value_dt, 1, &idx, &D_U_dt_bcc, ADD_VALUES);
-          VecSetValues(D_U.d2_value_dt2, 1, &idx, &D_U_dt2_bcc, ADD_VALUES);
-        }
-      }
-    }
-  }
-
-  VecAssemblyBegin(D_U.value);
-  VecAssemblyEnd(D_U.value);
-  VecAssemblyBegin(D_U.d_value_dt);
-  VecAssemblyEnd(D_U.d_value_dt);
-  VecAssemblyBegin(D_U.d2_value_dt2);
-  VecAssemblyEnd(D_U.d2_value_dt2);
-  VecRestoreArrayRead(U_n.d_value_dt, &Un_dt);
-  VecRestoreArrayRead(U_n.d2_value_dt2, &Un_dt2);
-
-  return D_U;
-}
-
-/**************************************************************/
-
-static void __trial_Nodal_Increments(Nodal_Field D_U, Nodal_Field U_n,
-                                     Mask ActiveDOFs, Newmark_parameters Params,
-                                     unsigned Ntotaldofs) {
-  unsigned Mask_total_dof_Ai;
-  int Mask_active_dof_Ai;
-  double alpha_1 = Params.alpha_1;
-  double alpha_2 = Params.alpha_2;
-  double alpha_3 = Params.alpha_3;
-  double alpha_4 = Params.alpha_4;
-  double alpha_5 = Params.alpha_5;
-  double alpha_6 = Params.alpha_6;
-
-  const PetscScalar *Un_dt;
-  VecGetArrayRead(U_n.d_value_dt, &Un_dt);
-  const PetscScalar *Un_dt2;
-  VecGetArrayRead(U_n.d2_value_dt2, &Un_dt2);
-  PetscScalar *dU;
-  VecGetArray(D_U.value, &dU);
-  PetscScalar *dU_dt;
-  VecGetArray(D_U.d_value_dt, &dU_dt);
-  PetscScalar *dU_dt2;
-  VecGetArray(D_U.d2_value_dt2, &dU_dt2);
-
-#pragma omp for private(Mask_total_dof_Ai, Mask_active_dof_Ai)
-  for (Mask_total_dof_Ai = 0; Mask_total_dof_Ai < Ntotaldofs;
-       Mask_total_dof_Ai++) {
-
-    Mask_active_dof_Ai = ActiveDOFs.Nodes2Mask[Mask_total_dof_Ai];
-
-    if (Mask_active_dof_Ai == -1) {
-
-      dU_dt2[Mask_total_dof_Ai] = 0.0;
-
-      dU_dt[Mask_total_dof_Ai] = alpha_4 * dU[Mask_total_dof_Ai] +
-                                 (alpha_5 - 1) * Un_dt[Mask_total_dof_Ai] +
-                                 alpha_6 * Un_dt2[Mask_total_dof_Ai];
-
-    } else {
-      dU_dt2[Mask_total_dof_Ai] = alpha_1 * dU[Mask_total_dof_Ai] -
-                                  alpha_2 * Un_dt[Mask_total_dof_Ai] -
-                                  (alpha_3 + 1) * Un_dt2[Mask_total_dof_Ai];
-
-      dU_dt[Mask_total_dof_Ai] = alpha_4 * dU[Mask_total_dof_Ai] +
-                                 (alpha_5 - 1) * Un_dt[Mask_total_dof_Ai] +
-                                 alpha_6 * Un_dt2[Mask_total_dof_Ai];
-    } // if Mask_active_dof_Ai == -1)
-  }   // #pragma omp for private (Mask_total_dof_Ai)
-
-  VecRestoreArrayRead(U_n.d_value_dt, &Un_dt);
-  VecRestoreArrayRead(U_n.d2_value_dt2, &Un_dt2);
-  VecRestoreArray(D_U.value, &dU);
-  VecRestoreArray(D_U.d_value_dt, &dU_dt);
-  VecRestoreArray(D_U.d2_value_dt2, &dU_dt2);
-}
-
-/**************************************************************/
-
-static PetscErrorCode __Lagrangian_evaluation(SNES snes, Vec dU, Vec Lagrangian,
+/**
+ * @brief Evaluates nonlinear function: L(D_U)
+ *
+ * @param snes
+ * @param D_U Increment of the nodal displacement
+ * @param Residual Lagrangian in expressed in residual shape
+ * @param ctx User-defined context for the Lagrangian evaluation
+ * @return PetscErrorCode
+ */
+static PetscErrorCode __lagrangian_evaluation(SNES snes, Vec dU, Vec Lagrangian,
                                               void *ctx) {
 
-  int STATUS = EXIT_SUCCESS;
+  PetscErrorCode STATUS = EXIT_SUCCESS;
 
   /**
    * Read variables from user-defined structure
@@ -1436,8 +1005,6 @@ static PetscErrorCode __Lagrangian_evaluation(SNES snes, Vec dU, Vec Lagrangian,
   PetscScalar *Lagrangian_ptr;
   const PetscScalar *Lumped_Mass_ptr;
   const PetscScalar *dU_ptr;
-  PetscScalar *dU_dt_ptr;
-  PetscScalar *dU_dt2_ptr;
   const PetscScalar *Un_dt_ptr;
   const PetscScalar *Un_dt2_ptr;
 
@@ -1451,44 +1018,24 @@ static PetscErrorCode __Lagrangian_evaluation(SNES snes, Vec dU, Vec Lagrangian,
   PetscCall(VecGetArray(Lagrangian, &Lagrangian_ptr));
   PetscCall(VecGetArrayRead(Lumped_Mass, &Lumped_Mass_ptr));
   PetscCall(VecGetArrayRead(dU, &dU_ptr));
-  PetscCall(VecGetArray(dU_dt, &dU_dt_ptr));
-  PetscCall(VecGetArray(dU_dt2, &dU_dt2_ptr));
   PetscCall(VecGetArrayRead(Un_dt, &Un_dt_ptr));
   PetscCall(VecGetArrayRead(Un_dt2, &Un_dt2_ptr));
 
-  ptr_nodal_kinetics ptr_Un_d;
-  ptr_Un_d.t = Un_dt_ptr;
-  ptr_Un_d.t2 = Un_dt2_ptr;
+  const PetscScalar *dU_dt_ptr = __compute_nodal_velocity_increments(
+      dU_ptr, Un_dt_ptr, Un_dt2_ptr, Time_Integration_Params, Ntotaldofs);
 
-  __compute_nodal_kinetics_increments(dU_ptr, dU_dt_ptr, dU_dt2_ptr, Un_dt_ptr,
-                                      Un_dt2_ptr, ActiveDOFs,
-                                      Time_Integration_Params, Ntotaldofs);
+  PetscCall(__local_compatibility_conditions(dU_ptr, dU_dt_ptr, ActiveNodes,
+                                             MPM_Mesh, FEM_Mesh));
 
-  __local_compatibility_conditions(dU_ptr, dU_dt_ptr, ActiveNodes, MPM_Mesh,
-                                   FEM_Mesh, &STATUS);
-  if (STATUS == EXIT_FAILURE) {
-    fprintf(stderr,
-            "" RED "Error in __local_compatibility_conditions()" RESET " \n");
-    return EXIT_FAILURE;
-  }
+  PetscCall(__constitutive_update(MPM_Mesh, FEM_Mesh));
 
-  STATUS = __constitutive_update(MPM_Mesh, FEM_Mesh);
-  if (STATUS == EXIT_FAILURE) {
-    fprintf(stderr, "" RED "Error in __constitutive_update()" RESET " \n");
-    return EXIT_FAILURE;
-  }
-
-  __nodal_internal_forces(Lagrangian_ptr, ActiveNodes, MPM_Mesh, FEM_Mesh,
-                          STATUS);
-  if (*STATUS == EXIT_FAILURE) {
-    fprintf(stderr, "" RED "Error in __nodal_internal_forces()" RESET " \n");
-    return EXIT_FAILURE;
-  }
+  PetscCall(
+      __nodal_internal_forces(Lagrangian_ptr, ActiveNodes, MPM_Mesh, FEM_Mesh));
 
   __nodal_traction_forces(Lagrangian_ptr, ActiveNodes, MPM_Mesh, FEM_Mesh);
 
   __nodal_inertial_forces(Lagrangian_ptr, Lumped_Mass_ptr, dU_ptr, Un_dt_ptr,
-                          Un_dt2_ptr, ActiveNodes, Params);
+                          Un_dt2_ptr, ActiveNodes, Time_Integration_Params);
 
   /**
    * Restore vectors
@@ -1497,23 +1044,33 @@ static PetscErrorCode __Lagrangian_evaluation(SNES snes, Vec dU, Vec Lagrangian,
   PetscCall(VecRestoreArray(Lagrangian, &Lagrangian_ptr));
   PetscCall(VecRestoreArrayRead(Lumped_Mass, &Lumped_Mass_ptr));
   PetscCall(VecRestoreArrayRead(dU, &dU_ptr));
-  PetscCall(VecRestoreArray(dU_dt, &dU_dt_ptr));
-  PetscCall(VecRestoreArray(dU_dt2, &dU_dt2_ptr));
   PetscCall(VecRestoreArrayRead(Un_dt, &Un_dt_ptr));
   PetscCall(VecRestoreArrayRead(Un_dt2, &Un_dt2_ptr));
 
-  return EXIT_SUCCESS;
+  PetscFree(dU_dt_ptr);
+
+  return STATUS;
 }
 
 /**************************************************************/
 
-static void __local_compatibility_conditions(const PetscScalar *dU,
-                                             const PetscScalar *dU_dt,
-                                             Mask ActiveNodes,
-                                             Particle MPM_Mesh, Mesh FEM_Mesh,
-                                             int *STATUS) {
+/**
+ * @brief
+ *
+ * @param dU Incremental nodal displacement field
+ * @param dU_dt Incremental nodal velocity field
+ * @param ActiveNodes List of nodes which takes place in the computation
+ * @param MPM_Mesh Information of the particles
+ * @param FEM_Mesh Information of the background nodes
+ * @return PetscErrorCode
+ */
+static PetscErrorCode __local_compatibility_conditions(const PetscScalar *dU,
+                                                       const PetscScalar *dU_dt,
+                                                       Mask ActiveNodes,
+                                                       Particle MPM_Mesh,
+                                                       Mesh FEM_Mesh) {
 
-  *STATUS = EXIT_SUCCESS;
+  PetscErrorCode STATUS = EXIT_SUCCESS;
   unsigned Ndim = NumberDimensions;
   unsigned Np = MPM_Mesh.NumGP;
   unsigned NumberNodes_p;
@@ -1542,14 +1099,15 @@ static void __local_compatibility_conditions(const PetscScalar *dU,
       double *D_Velocity_Ap = (double *)calloc(Order_p, __SIZEOF_DOUBLE__);
       if ((D_Displacement_Ap == NULL) || (D_Velocity_Ap == NULL)) {
         fprintf(stderr, "" RED "Error in calloc(): Out of memory" RESET " \n");
-        *STATUS = EXIT_FAILURE;
+        STATUS = EXIT_FAILURE;
       }
 
       get_set_field__MeshTools__(D_Displacement_Ap, dU, Nodes_p, ActiveNodes);
       get_set_field__MeshTools__(D_Velocity_Ap, dU_dt, Nodes_p, ActiveNodes);
 
       /*
-        Evaluate the shape function gradient in the coordinates of the particle
+        Evaluate the shape function gradient in the coordinates of the
+        particle
       */
       Matrix gradient_p = compute_dN__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
 
@@ -1583,7 +1141,7 @@ static void __local_compatibility_conditions(const PetscScalar *dU,
         fprintf(stderr,
                 "" RED "Negative jacobian in particle %i: %e" RESET " \n", p,
                 MPM_Mesh.Phi.J_n1.nV[p]);
-        *STATUS = EXIT_FAILURE;
+        STATUS = EXIT_FAILURE;
       }
 
       // F-bar  Update patch
@@ -1621,27 +1179,36 @@ static void __local_compatibility_conditions(const PetscScalar *dU,
         Vn1_patch = FEM_Mesh.Vol_Patch_n1[Idx_Patch_p];
         J_patch = Vn1_patch / Vn_patch;
 
-        *STATUS = get_locking_free_Deformation_Gradient_n1__Particles__(
+        STATUS = get_locking_free_Deformation_Gradient_n1__Particles__(
             p, J_patch, MPM_Mesh);
-        if (*STATUS == EXIT_FAILURE) {
+        if (STATUS == EXIT_FAILURE) {
           fprintf(
               stderr,
               "" RED "Error in "
               "get_locking_free_Deformation_Gradient_n1__Particles__()" RESET
               " \n");
-          *STATUS = EXIT_FAILURE;
+          STATUS = EXIT_FAILURE;
         }
 
         MPM_Mesh.Phi.Jbar.nV[p] *= J_patch;
       }
     }
   }
+
+  return STATUS;
 }
 
 /**************************************************************/
 
-static int __constitutive_update(Particle MPM_Mesh, Mesh FEM_Mesh) {
-  int STATUS = EXIT_SUCCESS;
+/**
+ * @brief Update the stress tensor of the particle
+ *
+ * @param MPM_Mesh Information of the particles
+ * @param FEM_Mesh Information of the background nodes
+ * @return PetscErrorCode
+ */
+static PetscErrorCode __constitutive_update(Particle MPM_Mesh, Mesh FEM_Mesh) {
+  PetscErrorCode STATUS = EXIT_SUCCESS;
   int STATUS_p = EXIT_SUCCESS;
   unsigned Np = MPM_Mesh.NumGP;
   unsigned MatIndx_p;
@@ -1678,43 +1245,22 @@ static int __constitutive_update(Particle MPM_Mesh, Mesh FEM_Mesh) {
 
 /**************************************************************/
 
-static void __get_assembling_locations_lagrangian(int *Mask_dofs_A,
-                                                  int Mask_node_A) {
-  unsigned Ndim = NumberDimensions;
+/**
+ * @brief Function used to compute the contribution of the \n
+ * internal forces to the Lagrangian
+ *
+ * @param Lagrangian Lagrangian vector
+ * @param ActiveNodes List of nodes which takes place in the computation
+ * @param MPM_Mesh Information of the particles
+ * @param FEM_Mesh Information of the background nodes
+ * @return PetscErrorCode
+ */
+static PetscErrorCode __nodal_internal_forces(PetscScalar *Lagrangian,
+                                              Mask ActiveNodes,
+                                              Particle MPM_Mesh,
+                                              Mesh FEM_Mesh) {
 
-#if NumberDimensions == 2
-  Mask_dofs_A[0] = Mask_node_A * Ndim + 0;
-  Mask_dofs_A[1] = Mask_node_A * Ndim + 1;
-#else
-  Mask_dofs_A[0] = Mask_node_A * Ndim + 0;
-  Mask_dofs_A[1] = Mask_node_A * Ndim + 1;
-  Mask_dofs_A[2] = Mask_node_A * Ndim + 2;
-#endif
-}
-
-/**************************************************************/
-
-static void __set_local_values_lagragian(PetscScalar *lagrangian, unsigned Ndim,
-                                         const int *Mask_dofs_A,
-                                         const double *local_lagrangian) {
-
-  int Mask_dof_Ai;
-
-  for (unsigned idx_A = 0; idx_A < Ndim; idx_A++) {
-
-    Mask_dof_Ai = Mask_dofs_A[idx_A];
-
-    lagrangian[Mask_dof_Ai] += local_lagrangian[idx_A];
-  }
-}
-
-/**************************************************************/
-
-static void __nodal_internal_forces(PetscScalar *Lagrangian, Mask ActiveNodes,
-                                    Particle MPM_Mesh, Mesh FEM_Mesh,
-                                    int *STATUS) {
-
-  *STATUS = EXIT_SUCCESS;
+  PetscErrorCode STATUS = EXIT_SUCCESS;
   unsigned Ndim = NumberDimensions;
   unsigned Np = MPM_Mesh.NumGP;
   unsigned NumNodes_p;
@@ -1724,8 +1270,10 @@ static void __nodal_internal_forces(PetscScalar *Lagrangian, Mask ActiveNodes,
 
 #if NumberDimensions == 2
   double InternalForcesDensity_Ap[2];
+  int Mask_dofs_A[2];
 #else
   double InternalForcesDensity_Ap[3];
+  int Mask_dofs_A[3];
 #endif
 
   const double *Damage_field_n = MPM_Mesh.Phi.Damage_n;
@@ -1734,10 +1282,12 @@ static void __nodal_internal_forces(PetscScalar *Lagrangian, Mask ActiveNodes,
   const double *J_n1 = MPM_Mesh.Phi.J_n1.nV;
   const double *Vol_0 = MPM_Mesh.Phi.Vol_0.nV;
 
-#pragma omp parallel private(NumNodes_p, InternalForcesDensity_Ap)
+#pragma omp parallel private(NumNodes_p, InternalForcesDensity_Ap, Mask_dofs_A)
   {
 #pragma omp for private(p)
     for (p = 0; p < Np; p++) {
+
+      PetscErrorCode STATUS_p;
 
       //  Get the volume of the particle in the reference configuration
       double V0_p = Vol_0[p];
@@ -1755,10 +1305,11 @@ static void __nodal_internal_forces(PetscScalar *Lagrangian, Mask ActiveNodes,
 
       // Pushforward the shape functions
       double *d_shapefunction_n1_p = push_forward_dN__MeshTools__(
-          d_shapefunction_n_p.nV, DF_p, NumNodes_p, STATUS);
-      if (*STATUS == EXIT_FAILURE) {
+          d_shapefunction_n_p.nV, DF_p, NumNodes_p, &STATUS_p);
+      if (STATUS_p == EXIT_FAILURE) {
         fprintf(stderr, "" RED " Error in " RESET "" BOLDRED
                         "push_forward_dN__MeshTools__() " RESET " \n");
+        STATUS = EXIT_FAILURE;
       }
 
       // Get the Kirchhoff stress tensor pointer
@@ -1767,10 +1318,11 @@ static void __nodal_internal_forces(PetscScalar *Lagrangian, Mask ActiveNodes,
       // Compute damage parameter (eigenerosion/eigensoftening)
       if ((Driver_EigenErosion == true) || (Driver_EigenSoftening == true)) {
 
-        *STATUS = compute_damage__Constitutive__(p, MPM_Mesh, FEM_Mesh.DeltaX);
-        if (*STATUS == EXIT_FAILURE) {
+        STATUS_p = compute_damage__Constitutive__(p, MPM_Mesh, FEM_Mesh.DeltaX);
+        if (STATUS_p == EXIT_FAILURE) {
           fprintf(stderr, "" RED " Error in " RESET "" BOLDRED
                           "compute_damage__Constitutive__() " RESET " \n");
+          STATUS = EXIT_FAILURE;
         }
 
 #if NumberDimensions == 2
@@ -1792,22 +1344,26 @@ static void __nodal_internal_forces(PetscScalar *Lagrangian, Mask ActiveNodes,
         int Ap = Nodes_p.Connectivity[A];
         int Mask_node_A = ActiveNodes.Nodes2Mask[Ap];
 
-        //! Compute the nodal forces of the particle
-        __internal_force_density(InternalForcesDensity_Ap, kirchhoff_p,
-                                 d_shapefunction_n1_pA, V0_p);
+        //! Compute the contribution to the internal forces in the node A of the
+        //! particle p (InternalForcesDensity_Ap). And, compute a mask
+        //! (Mask_dofs_A) with the position of the computed values.
+        for (unsigned i = 0; i < Ndim; i++) {
+          InternalForcesDensity_Ap[i] = 0.0;
+          for (unsigned j = 0; j < Ndim; j++) {
+            InternalForcesDensity_Ap[i] =
+                kirchhoff_p[i * Ndim + j] * d_shapefunction_n1_pA[j];
+          }
+          Mask_dofs_A[i] = Mask_node_A * Ndim + i;
+        }
 
-#if NumberDimensions == 2
-        int Mask_dofs_A[2];
-#else
-        int Mask_dofs_A[3];
-#endif
-
-        __get_assembling_locations_lagrangian(Mask_dofs_A, Mask_node_A);
-
+        //  Asign the local internal forces (InternalForcesDensity_Ap)
+        //  contribution to the node A using the volume of the particle as
+        //  integration weight
 #pragma omp critical
         {
-          __set_local_values_lagragian(Lagrangian, Ndim, Mask_dofs_A,
-                                       InternalForcesDensity_Ap);
+          for (unsigned i = 0; i < Ndim; i++) {
+            Lagrangian[Mask_dofs_A[i]] += InternalForcesDensity_Ap[i] * V0_p;
+          }
         } // #pragma omp critical
       }   // for unsigned A
 
@@ -1817,39 +1373,21 @@ static void __nodal_internal_forces(PetscScalar *Lagrangian, Mask ActiveNodes,
       free(Nodes_p.Connectivity);
     } // For unsigned p
   }   // #pragma omp parallel
+
+  return STATUS;
 }
 
 /**************************************************************/
 
-static void __internal_force_density(double *InternalForcesDensity_Ap,
-                                     const double *kirchhoff_p,
-                                     const double *gradient_n1_pA,
-                                     double V0_p) {
-#if NumberDimensions == 2
-  InternalForcesDensity_Ap[0] = (kirchhoff_p[0] * gradient_n1_pA[0] +
-                                 kirchhoff_p[1] * gradient_n1_pA[1]) *
-                                V0_p;
-  InternalForcesDensity_Ap[1] = (kirchhoff_p[2] * gradient_n1_pA[0] +
-                                 kirchhoff_p[3] * gradient_n1_pA[1]) *
-                                V0_p;
-#else
-  InternalForcesDensity_Ap[0] =
-      (kirchhoff_p[0] * gradient_n1_pA[0] + kirchhoff_p[1] * gradient_n1_pA[1] +
-       kirchhoff_p[2] * gradient_n1_pA[2]) *
-      V0_p;
-  InternalForcesDensity_Ap[1] =
-      (kirchhoff_p[3] * gradient_n1_pA[0] + kirchhoff_p[4] * gradient_n1_pA[1] +
-       kirchhoff_p[5] * gradient_n1_pA[2]) *
-      V0_p;
-  InternalForcesDensity_Ap[2] =
-      (kirchhoff_p[6] * gradient_n1_pA[0] + kirchhoff_p[7] * gradient_n1_pA[1] +
-       kirchhoff_p[8] * gradient_n1_pA[2]) *
-      V0_p;
-#endif
-}
-
-/**************************************************************/
-
+/**
+ * @brief Function used to compute the contribution of the contact forces to the
+ * residual
+ *
+ * @param Lagrangian Lagrangian vector
+ * @param ActiveNodes List of nodes which takes place in the computation
+ * @param MPM_Mesh Information of the particles
+ * @param FEM_Mesh Information of the background nodes
+ */
 static void __nodal_traction_forces(PetscScalar *Lagrangian, Mask ActiveNodes,
                                     Particle MPM_Mesh, Mesh FEM_Mesh) {
 
@@ -1871,8 +1409,10 @@ static void __nodal_traction_forces(PetscScalar *Lagrangian, Mask ActiveNodes,
 
 #if NumberDimensions == 2
   double LocalTractionForce_Ap[2];
+  int Mask_dofs_A[2];
 #else
   double LocalTractionForce_Ap[3];
+  int Mask_dofs_A[3];
 #endif
 
   unsigned p;
@@ -1935,22 +1475,21 @@ static void __nodal_traction_forces(PetscScalar *Lagrangian, Mask ActiveNodes,
         Ap = Nodes_p.Connectivity[A];
         Mask_node_A = ActiveNodes.Nodes2Mask[Ap];
 
-        //! Local contribution
-        __local_traction_force(LocalTractionForce_Ap, T, N_pa, A0_p);
+        //! Compute the contribution to the local traction forces in the node A
+        //! of the particle p (LocalTractionForce_Ap). And, compute a mask
+        //! (Mask_dofs_A) with the position of the computed values.
+        for (unsigned i = 0; i < Ndim; i++) {
+          LocalTractionForce_Ap[i] = -N_pa * T[i];
+          Mask_dofs_A[i] = Mask_node_A * Ndim + i;
+        }
 
-#if NumberDimensions == 2
-        int Mask_dofs_A[2];
-#else
-        int Mask_dofs_A[3];
-#endif
-
-        __get_assembling_locations_lagrangian(Mask_dofs_A, Mask_node_A);
-
-        //  Asign the nodal contact forces contribution to the node
+        //  Asign the nodal contact forces (LocalTractionForce_Ap) contribution
+        //  to the node using the area of the particle as integration weight
 #pragma omp critical
         {
-          __set_local_values_lagragian(Lagrangian, Ndim, Mask_dofs_A,
-                                       LocalTractionForce_Ap);
+          for (unsigned i = 0; i < Ndim; i++) {
+            Lagrangian[Mask_dofs_A[i]] += LocalTractionForce_Ap[i] * A0_p;
+          }
         } // #pragma omp critical
 
       } // for unsigned A
@@ -1964,21 +1503,18 @@ static void __nodal_traction_forces(PetscScalar *Lagrangian, Mask ActiveNodes,
 
 /**************************************************************/
 
-static void __local_traction_force(double *LocalTractionForce_Ap,
-                                   const double *T, double N_n1_pA,
-                                   double A0_p) {
-#if NumberDimensions == 2
-  LocalTractionForce_Ap[0] = -N_n1_pA * T[0] * A0_p;
-  LocalTractionForce_Ap[1] = -N_n1_pA * T[1] * A0_p;
-#else
-  LocalTractionForce_Ap[0] = -N_n1_pA * T[0] * A0_p;
-  LocalTractionForce_Ap[1] = -N_n1_pA * T[1] * A0_p;
-  LocalTractionForce_Ap[2] = -N_n1_pA * T[2] * A0_p;
-#endif
-}
-
-/**************************************************************/
-
+/**
+ * @brief Function used to compute the contribution of the \n
+ * inertial forces to the lagrangian (a - b)
+ *
+ * @param Lagrangian Lagrangian vector
+ * @param M_II Lumped mass matrix
+ * @param dU Nodal field of incremental displacements
+ * @param Un_dt Nodal field of velocities at t = n
+ * @param Un_dt2 Nodal field of accelerations at t = n
+ * @param ActiveNodes List of nodes which takes place in the computation
+ * @param Params Time integration parameters
+ */
 static void __nodal_inertial_forces(PetscScalar *Lagrangian,
                                     const PetscScalar *M_II,
                                     const PetscScalar *dU,
@@ -2001,14 +1537,9 @@ static void __nodal_inertial_forces(PetscScalar *Lagrangian,
 #endif
 
   if (gravity_field.STATUS == true) {
-#if NumberDimensions == 2
-    b[0] = gravity_field.Value[0].Fx[TimeStep];
-    b[1] = gravity_field.Value[1].Fx[TimeStep];
-#else
-    b[0] = gravity_field.Value[0].Fx[TimeStep];
-    b[1] = gravity_field.Value[1].Fx[TimeStep];
-    b[2] = gravity_field.Value[2].Fx[TimeStep];
-#endif
+    for (unsigned i = 0; i < Ndim; i++) {
+      b[i] = gravity_field.Value[i].Fx[TimeStep];
+    }
   }
 
 #pragma omp for private(idx)
@@ -2016,17 +1547,19 @@ static void __nodal_inertial_forces(PetscScalar *Lagrangian,
 
 #pragma omp critical
     {
-      double R_Ai;
-
-      R_Ai = M_II[idx] * (alpha_1 * dU[idx] - alpha_2 * Un_dt[idx] -
-                          alpha_3 * Un_dt2[idx] - b[idx % Ndim]);
-
-      __set_local_values_lagragian(Lagrangian, 1, &idx, &R_Ai);
+      Lagrangian[idx] += M_II[idx] * (alpha_1 * dU[idx] - alpha_2 * Un_dt[idx] -
+                                      alpha_3 * Un_dt2[idx] - b[idx % Ndim]);
     }
   }
 }
 
 /**************************************************************/
+
+/*!
+  \brief Compute the 2-norm of the residual
+  \param[in] Residual
+  \return The norm of the residual
+*/
 static double __error_residual(const Vec Residual) {
 
   double Error = 0;
@@ -2120,9 +1653,9 @@ static Mat __preallocation_tangent_matrix(Mask ActiveNodes, Mask ActiveDOFs,
 
 /**************************************************************/
 
-static void compute_local_intertia(double *Inertia_density_p, double Na_p,
-                                   double Nb_p, double m_p, double alpha_1,
-                                   double epsilon, unsigned A, unsigned B) {
+static void __compute_local_intertia(double *Inertia_density_p, double Na_p,
+                                     double Nb_p, double m_p, double alpha_1,
+                                     double epsilon, unsigned A, unsigned B) {
 
   double ID_AB_p =
       alpha_1 * ((1 - epsilon) * Na_p * Nb_p + (A == B) * epsilon * Na_p) * m_p;
@@ -2139,10 +1672,19 @@ static void compute_local_intertia(double *Inertia_density_p, double Na_p,
 
 /**************************************************************/
 
-static void local_tangent_stiffness(double *Tangent_Stiffness_p,
-                                    const double *Stiffness_density_p,
-                                    const double *Inertia_density_p,
-                                    double V0_p) {
+/*!
+  \brief Computes the local tangent stiffness as the addition of the \n
+  local tangent stiffness density and the intertia density matrix
+
+  \param[out] Tangent_Stiffness_p Local tangent stiffness
+  \param[in] Stiffness_density_p Local stiffness density
+  \param[in] Inertia_density_p Inertia density matrix, a.k.a mass matrix
+  \param[in] V0_p Particle volume
+*/
+static void __local_tangent_stiffness(double *Tangent_Stiffness_p,
+                                      const double *Stiffness_density_p,
+                                      const double *Inertia_density_p,
+                                      double V0_p) {
 #if NumberDimensions == 2
   Tangent_Stiffness_p[0] = Stiffness_density_p[0] * V0_p + Inertia_density_p[0];
   Tangent_Stiffness_p[1] = Stiffness_density_p[1] * V0_p;
@@ -2163,6 +1705,16 @@ static void local_tangent_stiffness(double *Tangent_Stiffness_p,
 
 /**************************************************************/
 
+/*!
+  \brief Returns a mask with the position of the stifness in the global tangent
+  \n matrix for an eeficient assembly process.
+
+  \param[out] Mask_active_dofs_A Global dofs positions for node A.
+  \param[in] Mask_node_A Index of the node A with mask.
+  \param[out] Mask_active_dofs_B Global dofs positions for node B
+  \param[in] Mask_node_B Index of the node B with mask
+  \param[in] ActiveDOFs List of dofs which takes place in the computation
+*/
 static void __get_tangent_matrix_assembling_locations(int *Mask_active_dofs_A,
                                                       int Mask_node_A,
                                                       int *Mask_active_dofs_B,
@@ -2195,41 +1747,69 @@ static void __assemble_tangent_stiffness(Mat Tangent_Stiffness,
                                          Newmark_parameters Params,
                                          unsigned Iter, int *STATUS) {
 
-  *STATUS = EXIT_SUCCESS;
+  MatAssemblyBegin(Tangent_Stiffness, MAT_FINAL_ASSEMBLY);
+  MatAssemblyEnd(Tangent_Stiffness, MAT_FINAL_ASSEMBLY);
+  MatSetOption(Tangent_Stiffness, MAT_SYMMETRIC, PETSC_TRUE);
+}
+
+/**************************************************************/
+
+/**
+ * @brief Evaluates Jacobian matrix.
+ *
+ * @param snes the SNES context
+ * @param[in] DU Input vector
+ * @param[in,out] jac Jacobian matrix
+ * @param[out] Jacobian Optionally different preconditioning matrix
+ * @param ctx User-defined context
+ * @return PetscErrorCode
+ */
+static PetscErrorCode __Jacobian_evaluation(SNES snes, Vec dU, Mat Jacobian,
+                                            Mat Preconditioner, void *ctx) {
+  /**
+   * Read variables from user-defined structure
+   * ctx
+   */
+  Mask ActiveDOFs = ((Ctx *)ctx)->ActiveDOFs;
+  Mask ActiveNodes = ((Ctx *)ctx)->ActiveNodes;
+  Particle MPM_Mesh = ((Ctx *)ctx)->MPM_Mesh;
+  Mesh FEM_Mesh = ((Ctx *)ctx)->FEM_Mesh;
+  Vec Lumped_Mass = ((Ctx *)ctx)->Lumped_Mass;
+  Vec Un = ((Ctx *)ctx)->U_n;
+  Vec Un_dt = ((Ctx *)ctx)->U_n_dt;
+  Vec Un_dt2 = ((Ctx *)ctx)->U_n_dt2;
+  Newmark_parameters Time_Integration_Params =
+      ((Ctx *)ctx)->Time_Integration_Params;
+
+  PetscErrorCode STATUS = EXIT_SUCCESS;
   unsigned Ndim = NumberDimensions;
   unsigned Nactivedofs = ActiveDOFs.Nactivenodes;
   unsigned Np = MPM_Mesh.NumGP;
   unsigned NumNodes_p;
   unsigned MatIndx_p;
-
   unsigned p;
 
 #if NumberDimensions == 2
   double Stiffness_density_p[4];
   double Inertia_density_p[2];
-  double Tangent_Stiffness_p[4];
+  double Jacobian_p[4];
   int Mask_active_dofs_A[2];
   int Mask_active_dofs_B[2];
 #else
   double Stiffness_density_p[9];
   double Inertia_density_p[3];
-  double Tangent_Stiffness_p[9];
+  double Jacobian_p[9];
   int Mask_active_dofs_A[3];
   int Mask_active_dofs_B[3];
 #endif
 
-  // Set tangent matrix to zero if it is necessary
-  if (Iter > 0) {
-    MatZeroEntries(Tangent_Stiffness);
-  }
-
   // Time integartion parameters
-  double alpha_1 = Params.alpha_1;
-  double alpha_4 = Params.alpha_4;
-  double epsilon = Params.epsilon;
+  double alpha_1 = Time_Integration_Params.alpha_1;
+  double alpha_4 = Time_Integration_Params.alpha_4;
+  double epsilon = Time_Integration_Params.epsilon;
 
 #pragma omp parallel private(NumNodes_p, MatIndx_p, Stiffness_density_p,       \
-                             Inertia_density_p, Tangent_Stiffness_p,           \
+                             Inertia_density_p, Jacobian_p,                    \
                              Mask_active_dofs_A, Mask_active_dofs_B)
   {
 #pragma omp for private(p)
@@ -2259,11 +1839,11 @@ static void __assemble_tangent_stiffness(Mat Tangent_Stiffness,
 
       //! Pushforward the shape function gradient
       double *d_shapefunction_n1_p = push_forward_dN__MeshTools__(
-          d_shapefunction_n_p.nV, DF_p, NumNodes_p, STATUS);
-      if (*STATUS == EXIT_FAILURE) {
+          d_shapefunction_n_p.nV, DF_p, NumNodes_p, &STATUS);
+      if (STATUS == EXIT_FAILURE) {
         fprintf(stderr,
                 "" RED "Error in push_forward_dN__MeshTools__()" RESET " \n");
-        *STATUS = EXIT_FAILURE;
+        STATUS = EXIT_FAILURE;
       }
 
       for (unsigned A = 0; A < NumNodes_p; A++) {
@@ -2285,11 +1865,11 @@ static void __assemble_tangent_stiffness(Mat Tangent_Stiffness,
           int Mask_node_B = ActiveNodes.Nodes2Mask[Bp];
 
           //! Do the local and global assembly process for the tangent matrix
-          *STATUS = stiffness_density__Constitutive__(
+          STATUS = stiffness_density__Constitutive__(
               p, Stiffness_density_p, &d_shapefunction_n1_p[A * Ndim],
               &d_shapefunction_n1_p[B * Ndim], d_shapefunction_n_pA,
               d_shapefunction_n_pB, alpha_4, MPM_Mesh, MatProp_p);
-          if (*STATUS == EXIT_FAILURE) {
+          if (STATUS == EXIT_FAILURE) {
             fprintf(stderr,
                     "" RED "Error in stiffness_density__Constitutive__" RESET
                     "\n");
@@ -2304,12 +1884,12 @@ static void __assemble_tangent_stiffness(Mat Tangent_Stiffness,
             }
           }
 
-          compute_local_intertia(Inertia_density_p, shapefunction_n_pA,
-                                 shapefunction_n_pB, m_p, alpha_1, epsilon,
-                                 Mask_node_A, Mask_node_B);
+          __compute_local_intertia(Inertia_density_p, shapefunction_n_pA,
+                                   shapefunction_n_pB, m_p, alpha_1, epsilon,
+                                   Mask_node_A, Mask_node_B);
 
-          local_tangent_stiffness(Tangent_Stiffness_p, Stiffness_density_p,
-                                  Inertia_density_p, V0_p);
+          __local_tangent_stiffness(Jacobian_p, Stiffness_density_p,
+                                    Inertia_density_p, V0_p);
 
           __get_tangent_matrix_assembling_locations(
               Mask_active_dofs_A, Mask_node_A, Mask_active_dofs_B, Mask_node_B,
@@ -2318,8 +1898,8 @@ static void __assemble_tangent_stiffness(Mat Tangent_Stiffness,
 #pragma omp critical
           {
 
-            MatSetValues(Tangent_Stiffness, Ndim, Mask_active_dofs_A, Ndim,
-                         Mask_active_dofs_B, Tangent_Stiffness_p, ADD_VALUES);
+            MatSetValues(Jacobian, Ndim, Mask_active_dofs_A, Ndim,
+                         Mask_active_dofs_B, Jacobian_p, ADD_VALUES);
 
           } // #pragma omp critical
         }   // for B (node)
@@ -2334,77 +1914,21 @@ static void __assemble_tangent_stiffness(Mat Tangent_Stiffness,
     } // for p (particle)
   }   // #pragma omp parallel
 
-  MatAssemblyBegin(Tangent_Stiffness, MAT_FINAL_ASSEMBLY);
-  MatAssemblyEnd(Tangent_Stiffness, MAT_FINAL_ASSEMBLY);
-  MatSetOption(Tangent_Stiffness, MAT_SYMMETRIC, PETSC_TRUE);
-}
-
-/**************************************************************/
-
-/*
-   FormJacobian1 - Evaluates Jacobian matrix.
-
-   Input Parameters:
-.  snes - the SNES context
-.  x - input vector
-.  dummy - optional user-defined context (not used here)
-
-   Output Parameters:
-.  jac - Jacobian matrix
-.  B - optionally different preconditioning matrix
-.  flag - flag indicating matrix structure
-*/
-PetscErrorCode __Jacobian_evaluation(SNES snes, Vec x, Mat jac, Mat B,
-                                     void *dummy) {
-  const PetscScalar *xx;
-  PetscScalar A[4];
-  PetscInt idx[2] = {0, 1};
-
-  /*
-     Get pointer to vector data
-  */
-  PetscCall(VecGetArrayRead(x, &xx));
-
-  /*
-     Compute Jacobian entries and insert into matrix.
-      - Since this is such a small problem, we set all entries for
-        the matrix at once.
-  */
-  A[0] = 2.0 * xx[0] + xx[1];
-  A[1] = xx[0];
-  A[2] = xx[1];
-  A[3] = xx[0] + 2.0 * xx[1];
-  PetscCall(MatSetValues(B, 2, idx, 2, idx, A, INSERT_VALUES));
-
-  /*
-     Restore vector
-  */
-  PetscCall(VecRestoreArrayRead(x, &xx));
-
   /*
      Assemble matrix
   */
-  PetscCall(MatAssemblyBegin(B, MAT_FINAL_ASSEMBLY));
-  PetscCall(MatAssemblyEnd(B, MAT_FINAL_ASSEMBLY));
+  PetscCall(MatAssemblyBegin(Jacobian, MAT_FINAL_ASSEMBLY));
+  PetscCall(MatAssemblyEnd(Jacobian, MAT_FINAL_ASSEMBLY));
+  PetscCall(MatSetOption(Jacobian, MAT_SYMMETRIC, PETSC_TRUE));
 
-  __assemble_tangent_stiffness(Tangent_Stiffness, ActiveNodes, ActiveDOFs,
-                               MPM_Mesh, FEM_Mesh, Time_Integration_Params,
-                               Iter, &STATUS);
-
-  if (jac != B) {
-    PetscCall(MatAssemblyBegin(jac, MAT_FINAL_ASSEMBLY));
-    PetscCall(MatAssemblyEnd(jac, MAT_FINAL_ASSEMBLY));
-  }
-  return 0;
+  return STATUS;
 }
 
 /**************************************************************/
 
-static Vec __compute_nodal_velocity_increments(const PetscScalar *dU,
-                                               const PetscScalar *Un_dt,
-                                               const PetscScalar *Un_dt2,
-                                               Newmark_parameters Params,
-                                               PetscInt Ntotaldofs) {
+static PetscScalar *__compute_nodal_velocity_increments(
+    const PetscScalar *dU, const PetscScalar *Un_dt, const PetscScalar *Un_dt2,
+    Newmark_parameters Params, PetscInt Ntotaldofs) {
 
   PetscInt Mask_total_dof_Ai;
   PetscScalar alpha_1 = Params.alpha_1;
@@ -2414,37 +1938,25 @@ static Vec __compute_nodal_velocity_increments(const PetscScalar *dU,
   PetscScalar alpha_5 = Params.alpha_5;
   PetscScalar alpha_6 = Params.alpha_6;
 
-  Vec dU_dt;
-  VecCreate(PETSC_COMM_WORLD, &dU_dt);
-  VecSetSizes(dU_dt, PETSC_DECIDE, Ntotaldofs);
-  VecSetFromOptions(dU_dt);
+  PetscScalar *dU_dt;
+  PetscMalloc(Ntotaldofs, &dU_dt);
 
 #pragma omp for private(Mask_total_dof_Ai)
   for (Mask_total_dof_Ai = 0; Mask_total_dof_Ai < Ntotaldofs;
        Mask_total_dof_Ai++) {
 
-    PetscScalar dU_dt_value;
-    dU_dt_value = alpha_4 * dU[Mask_total_dof_Ai] +
-                  (alpha_5 - 1) * Un_dt[Mask_total_dof_Ai] +
-                  alpha_6 * Un_dt2[Mask_total_dof_Ai];
-
-    VecSetValues(dU_dt, 1, &Mask_total_dof_Ai, &dU_dt_value, INSERT_VALUES);
+    dU_dt[Mask_total_dof_Ai] = alpha_4 * dU[Mask_total_dof_Ai] +
+                               (alpha_5 - 1) * Un_dt[Mask_total_dof_Ai] +
+                               alpha_6 * Un_dt2[Mask_total_dof_Ai];
 
   } // #pragma omp for private (Mask_total_dof_Ai)
 
-  /**
-   * Finalize assembling process
-   * for the kinetic vector
-   */
-  VecAssemblyBegin(dU_dt);
-  VecAssemblyEnd(dU_dt);
-
-  return dU_d;
+  return dU_dt;
 }
 
 /**************************************************************/
 
-static Vec __compute_nodal_acceleration_increments(
+static PetscScalar *__compute_nodal_acceleration_increments(
     const PetscScalar *dU, const ptr_nodal_kinetics Un_d, Mask ActiveDOFs,
     Newmark_parameters Params, unsigned Ntotaldofs) {
 
@@ -2457,13 +1969,8 @@ static Vec __compute_nodal_acceleration_increments(
   double alpha_5 = Params.alpha_5;
   double alpha_6 = Params.alpha_6;
 
-  nodal_kinetics dU_d;
-  VecCreate(PETSC_COMM_WORLD, &dU_d.t);
-  VecCreate(PETSC_COMM_WORLD, &dU_d.t2);
-  VecSetSizes(dU_d.t, PETSC_DECIDE, Ntotaldofs);
-  VecSetSizes(dU_d.t2, PETSC_DECIDE, Ntotaldofs);
-  VecSetFromOptions(dU_d.t);
-  VecSetFromOptions(dU_d.t2);
+  PetscScalar *dU_dt2;
+  PetscMalloc(Ntotaldofs, &dU_dt2);
 
 #pragma omp for private(Mask_total_dof_Ai, Mask_active_dof_Ai)
   for (Mask_total_dof_Ai = 0; Mask_total_dof_Ai < Ntotaldofs;
@@ -2475,36 +1982,28 @@ static Vec __compute_nodal_acceleration_increments(
 
       dU_dt2[Mask_total_dof_Ai] = 0.0;
 
-      dU_dt[Mask_total_dof_Ai] = alpha_4 * dU[Mask_total_dof_Ai] +
-                                 (alpha_5 - 1) * Un_d.t[Mask_total_dof_Ai] +
-                                 alpha_6 * Un_d.t2[Mask_total_dof_Ai];
-
     } else {
 
       dU_dt2[Mask_total_dof_Ai] = alpha_1 * dU[Mask_total_dof_Ai] -
                                   alpha_2 * Un_d.t[Mask_total_dof_Ai] -
                                   (alpha_3 + 1) * Un_d.t2[Mask_total_dof_Ai];
 
-      dU_dt[Mask_total_dof_Ai] = alpha_4 * dU[Mask_total_dof_Ai] +
-                                 (alpha_5 - 1) * Un_d.t[Mask_total_dof_Ai] +
-                                 alpha_6 * Un_d.t2[Mask_total_dof_Ai];
     } // if Mask_active_dof_Ai == -1)
   }   // #pragma omp for private (Mask_total_dof_Ai)
 
-  /**
-   * Finalize assembling process
-   * for the kinetic vector
-   */
-  VecAssemblyBegin(dU_d.t);
-  VecAssemblyEnd(dU_d.t);
-  VecAssemblyBegin(dU_d.t2);
-  VecAssemblyEnd(dU_d.t2);
-
-  return dU_d;
+  return dU_dt2;
 }
 
 /**************************************************************/
 
+/**
+ * @brief
+ *
+ * @param D_U
+ * @param MPM_Mesh
+ * @param FEM_Mesh
+ * @param ActiveNodes
+ */
 static void __update_Particles(Nodal_Field D_U, Particle MPM_Mesh,
                                Mesh FEM_Mesh, Mask ActiveNodes) {
 
