@@ -457,6 +457,9 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
 
     //! Update time step
     TimeStep++;
+
+
+    exit(0);
   }
 
   return EXIT_SUCCESS;
@@ -1060,6 +1063,8 @@ static PetscErrorCode __lagrangian_evaluation(SNES snes, Vec dU, Vec Lagrangian,
   PetscCall(VecRestoreArrayRead(Un_dt, &Un_dt_ptr));
   PetscCall(VecRestoreArrayRead(Un_dt2, &Un_dt2_ptr));
   PetscCall(PetscFree(dU_dt_ptr));
+
+  printf("%e \n",__error_residual(Lagrangian));
 
   return STATUS;
 }
