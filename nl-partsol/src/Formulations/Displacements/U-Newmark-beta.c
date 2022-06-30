@@ -1,28 +1,7 @@
 #include "Formulations/Displacements/U-Newmark-beta.h"
+#include "petscsnes.h"
 #include <stdio.h>
 #include <stdlib.h>
-
-typedef struct {
-
-  Vec value;
-  Vec d_value_dt;
-  Vec d2_value_dt2;
-
-} Nodal_Field;
-
-typedef struct {
-
-  Vec t;
-  Vec t2;
-
-} nodal_kinetics;
-
-typedef struct {
-
-  PetscScalar *t;
-  PetscScalar *t2;
-
-} ptr_nodal_kinetics;
 
 typedef struct {
   double alpha_1;
@@ -88,9 +67,9 @@ static PetscErrorCode __get_nodal_field_n(Vec U_n, Vec U_n_dt, Vec U_n_dt2,
                                           Mask ActiveDOFs,
                                           Newmark_parameters Params);
 
-static PetscErrorCode __trial_nodal_increments(Vec DU, Vec U_n_dt, Vec U_n_dt2,
-                                               Mesh FEM_Mesh, Mask ActiveNodes,
-                                               Newmark_parameters Params);
+static PetscErrorCode __form_initial_guess(Vec DU, Vec U_n_dt, Vec U_n_dt2,
+                                           Mesh FEM_Mesh, Mask ActiveNodes,
+                                           Newmark_parameters Params);
 
 static PetscScalar *__compute_nodal_velocity_increments(
     const PetscScalar *dU, const PetscScalar *Un_dt, const PetscScalar *Un_dt2,
@@ -151,6 +130,7 @@ static PetscErrorCode
 __update_Particles(Vec dU, Vec Un_dt, Vec Un_dt2, Particle MPM_Mesh,
                    Mesh FEM_Mesh, Mask ActiveNodes,
                    Newmark_parameters Time_Integration_Params);
+
 /**************************************************************/
 
 // Global variables
@@ -369,14 +349,8 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
        Evaluate initial guess; then solve nonlinear system
      - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
     if (Use_explicit_trial == true) {
-
-      PetscCall(__trial_nodal_increments(DU, U_n_dt, U_n_dt2, FEM_Mesh,
-                                         ActiveNodes, Time_Integration_Params));
-      if (STATUS == EXIT_FAILURE) {
-        fprintf(stderr,
-                "" RED "Error in __trial_nodal_increments()" RESET " \n");
-        return EXIT_FAILURE;
-      }
+      PetscCall(__form_initial_guess(DU, U_n_dt, U_n_dt2, FEM_Mesh, ActiveNodes,
+                                     Time_Integration_Params));
     } else {
       PetscCall(VecZeroEntries(DU));
     }
@@ -877,9 +851,9 @@ static PetscErrorCode __get_nodal_field_n(Vec U_n, Vec U_n_dt, Vec U_n_dt2,
 
 /**************************************************************/
 
-static PetscErrorCode __trial_nodal_increments(Vec DU, Vec U_n_dt, Vec U_n_dt2,
-                                               Mesh FEM_Mesh, Mask ActiveNodes,
-                                               Newmark_parameters Params) {
+static PetscErrorCode __form_initial_guess(Vec DU, Vec U_n_dt, Vec U_n_dt2,
+                                           Mesh FEM_Mesh, Mask ActiveNodes,
+                                           Newmark_parameters Params) {
 
   unsigned Ndim = NumberDimensions;
   unsigned Nactivenodes = ActiveNodes.Nactivenodes;
