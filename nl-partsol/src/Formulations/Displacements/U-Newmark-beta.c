@@ -97,7 +97,7 @@ static PetscScalar *__compute_nodal_velocity_increments(
     Newmark_parameters Params, PetscInt Ntotaldofs);
 
 static PetscScalar *__compute_nodal_acceleration_increments(
-    const PetscScalar *dU, const ptr_nodal_kinetics Un_d, Mask ActiveDOFs,
+    const PetscScalar *dU, const PetscScalar *Un_dt, const PetscScalar *Un_dt2,
     Newmark_parameters Params, unsigned Ntotaldofs);
 
 static PetscErrorCode __lagrangian_evaluation(SNES snes, Vec D_U, Vec Residual,
@@ -147,8 +147,10 @@ static void __local_tangent_stiffness(double *Tangent_Stiffness_p,
 static PetscErrorCode __jacobian_evaluation(SNES snes, Vec dU, Mat Jacobian,
                                             Mat B, void *ctx);
 
-static void __update_Particles(Nodal_Field D_U, Particle MPM_Mesh,
-                               Mesh FEM_Mesh, Mask ActiveNodes);
+static PetscErrorCode
+__update_Particles(Vec dU, Vec Un_dt, Vec Un_dt2, Particle MPM_Mesh,
+                   Mesh FEM_Mesh, Mask ActiveNodes,
+                   Newmark_parameters Time_Integration_Params);
 /**************************************************************/
 
 // Global variables
@@ -426,15 +428,22 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
     PetscCall(MatDestroy(&Tangent_Stiffness));
     PetscCall(SNESDestroy(&snes));
 
-    exit(0);
+    /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+       Update particle information
+     - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+    PetscCall(__update_Particles(DU, U_n_dt, U_n_dt2, MPM_Mesh, FEM_Mesh,
+                                 ActiveNodes, Time_Integration_Params));
 
-    //    __update_Particles(D_U, MPM_Mesh, FEM_Mesh, ActiveNodes);
+    /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+       Outputs
+     - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+    if (TimeStep % ResultsTimeStep == 0) {
+      particle_results_vtk__InOutFun__(MPM_Mesh, TimeStep, ResultsTimeStep);
+    }
 
-    particle_results_vtk__InOutFun__(MPM_Mesh, TimeStep, ResultsTimeStep);
-
-    //! Update time step
-    TimeStep++;
-
+    /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+       Free memory
+     - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
     PetscCall(VecDestroy(&Lumped_Mass));
     PetscCall(VecDestroy(&DU));
     PetscCall(VecDestroy(&Residual));
@@ -444,6 +453,11 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
     free(ActiveNodes.Nodes2Mask);
     free(ActiveDOFs.Nodes2Mask);
     free(sparsity_pattern);
+
+    //! Update time step
+    TimeStep++;
+
+    exit(0);
   }
 
   return EXIT_SUCCESS;
@@ -1046,8 +1060,7 @@ static PetscErrorCode __lagrangian_evaluation(SNES snes, Vec dU, Vec Lagrangian,
   PetscCall(VecRestoreArrayRead(dU, &dU_ptr));
   PetscCall(VecRestoreArrayRead(Un_dt, &Un_dt_ptr));
   PetscCall(VecRestoreArrayRead(Un_dt2, &Un_dt2_ptr));
-
-  PetscFree(dU_dt_ptr);
+  PetscCall(PetscFree(dU_dt_ptr));
 
   return STATUS;
 }
@@ -1940,7 +1953,7 @@ static PetscScalar *__compute_nodal_velocity_increments(
 /**************************************************************/
 
 static PetscScalar *__compute_nodal_acceleration_increments(
-    const PetscScalar *dU, const ptr_nodal_kinetics Un_d, Mask ActiveDOFs,
+    const PetscScalar *dU, const PetscScalar *Un_dt, const PetscScalar *Un_dt2,
     Newmark_parameters Params, unsigned Ntotaldofs) {
 
   unsigned Mask_total_dof_Ai;
@@ -1953,26 +1966,17 @@ static PetscScalar *__compute_nodal_acceleration_increments(
   double alpha_6 = Params.alpha_6;
 
   PetscScalar *dU_dt2;
-  PetscMalloc(Ntotaldofs, &dU_dt2);
+  PetscMalloc(sizeof(PetscScalar) * Ntotaldofs, &dU_dt2);
 
 #pragma omp for private(Mask_total_dof_Ai, Mask_active_dof_Ai)
   for (Mask_total_dof_Ai = 0; Mask_total_dof_Ai < Ntotaldofs;
        Mask_total_dof_Ai++) {
 
-    Mask_active_dof_Ai = ActiveDOFs.Nodes2Mask[Mask_total_dof_Ai];
+    dU_dt2[Mask_total_dof_Ai] = alpha_1 * dU[Mask_total_dof_Ai] -
+                                alpha_2 * Un_dt[Mask_total_dof_Ai] -
+                                (alpha_3 + 1) * Un_dt2[Mask_total_dof_Ai];
 
-    if (Mask_active_dof_Ai == -1) {
-
-      dU_dt2[Mask_total_dof_Ai] = 0.0;
-
-    } else {
-
-      dU_dt2[Mask_total_dof_Ai] = alpha_1 * dU[Mask_total_dof_Ai] -
-                                  alpha_2 * Un_d.t[Mask_total_dof_Ai] -
-                                  (alpha_3 + 1) * Un_d.t2[Mask_total_dof_Ai];
-
-    } // if Mask_active_dof_Ai == -1)
-  }   // #pragma omp for private (Mask_total_dof_Ai)
+  } // #pragma omp for private (Mask_total_dof_Ai)
 
   return dU_dt2;
 }
@@ -1982,31 +1986,45 @@ static PetscScalar *__compute_nodal_acceleration_increments(
 /**
  * @brief
  *
- * @param D_U
- * @param MPM_Mesh
- * @param FEM_Mesh
- * @param ActiveNodes
+ * @param dU Incremental nodal displacement field
+ * @param U_n_dt Nodal velocity field at t = n
+ * @param U_n_dt2 Nodal acceleration field at t = n
+ * @param MPM_Mesh Information of the particles
+ * @param FEM_Mesh Information of the background nodes
+ * @param ActiveNodes List of nodes which takes place in the computation
+ * @param Time_Integration_Params Time integration parameters for Newmark-beta
+ * @return PetscErrorCode
  */
-static void __update_Particles(Nodal_Field D_U, Particle MPM_Mesh,
-                               Mesh FEM_Mesh, Mask ActiveNodes) {
+static PetscErrorCode
+__update_Particles(Vec dU, Vec Un_dt, Vec Un_dt2, Particle MPM_Mesh,
+                   Mesh FEM_Mesh, Mask ActiveNodes,
+                   Newmark_parameters Time_Integration_Params) {
 
+  PetscErrorCode STATUS = EXIT_SUCCESS;
   unsigned Ndim = NumberDimensions;
   unsigned Np = MPM_Mesh.NumGP;
+  unsigned Ntotaldofs = Ndim * ActiveNodes.Nactivenodes;
   unsigned NumNodes_p;
   unsigned p;
 
-  double D_U_pI;
+  double DU_pI;
   double D_V_pI;
   double D_A_pI;
 
-  const PetscScalar *dU;
-  VecGetArrayRead(D_U.value, &dU);
-  const PetscScalar *dU_dt;
-  VecGetArrayRead(D_U.d_value_dt, &dU_dt);
-  const PetscScalar *dU_dt2;
-  VecGetArrayRead(D_U.d2_value_dt2, &dU_dt2);
+  const PetscScalar *dU_ptr;
+  const PetscScalar *Un_dt_ptr;
+  const PetscScalar *Un_dt2_ptr;
+  PetscCall(VecGetArrayRead(dU, &dU_ptr));
+  PetscCall(VecGetArrayRead(Un_dt, &Un_dt_ptr));
+  PetscCall(VecGetArrayRead(Un_dt2, &Un_dt2_ptr));
 
-#pragma omp parallel private(NumNodes_p, D_U_pI, D_V_pI, D_A_pI)
+  PetscScalar *dU_dt_ptr = __compute_nodal_velocity_increments(
+      dU_ptr, Un_dt_ptr, Un_dt2_ptr, Time_Integration_Params, Ntotaldofs);
+
+  PetscScalar *dU_dt2_ptr = __compute_nodal_acceleration_increments(
+      dU_ptr, Un_dt_ptr, Un_dt2_ptr, Time_Integration_Params, Ntotaldofs);
+
+#pragma omp parallel private(NumNodes_p, DU_pI, D_V_pI, D_A_pI)
   {
 #pragma omp for private(p)
     for (p = 0; p < Np; p++) {
@@ -2078,14 +2096,14 @@ static void __update_Particles(Nodal_Field D_U, Particle MPM_Mesh,
         int A_mask = ActiveNodes.Nodes2Mask[Ap];
 
         for (unsigned i = 0; i < Ndim; i++) {
-          D_U_pI = ShapeFunction_pI * dU[A_mask * Ndim + i];
-          D_V_pI = ShapeFunction_pI * dU_dt[A_mask * Ndim + i];
-          D_A_pI = ShapeFunction_pI * dU_dt2[A_mask * Ndim + i];
+          DU_pI = ShapeFunction_pI * dU_ptr[A_mask * Ndim + i];
+          D_V_pI = ShapeFunction_pI * dU_dt_ptr[A_mask * Ndim + i];
+          D_A_pI = ShapeFunction_pI * dU_dt2_ptr[A_mask * Ndim + i];
 
           MPM_Mesh.Phi.acc.nM[p][i] += D_A_pI;
           MPM_Mesh.Phi.vel.nM[p][i] += D_V_pI;
-          MPM_Mesh.Phi.dis.nM[p][i] += D_U_pI;
-          MPM_Mesh.Phi.x_GC.nM[p][i] += D_U_pI;
+          MPM_Mesh.Phi.dis.nM[p][i] += DU_pI;
+          MPM_Mesh.Phi.x_GC.nM[p][i] += DU_pI;
         }
       } // for unsigned A
 
@@ -2095,9 +2113,14 @@ static void __update_Particles(Nodal_Field D_U, Particle MPM_Mesh,
     } // #pragma omp for private(p)
   }   // #pragma omp parallel
 
-  VecRestoreArrayRead(D_U.value, &dU);
-  VecRestoreArrayRead(D_U.d_value_dt, &dU_dt);
-  VecRestoreArrayRead(D_U.d2_value_dt2, &dU_dt2);
+  PetscCall(VecRestoreArrayRead(dU, &dU_ptr));
+  PetscCall(VecRestoreArrayRead(Un_dt, &Un_dt_ptr));
+  PetscCall(VecRestoreArrayRead(Un_dt2, &Un_dt2_ptr));
+
+  PetscCall(PetscFree(dU_dt_ptr));
+  PetscCall(PetscFree(dU_dt2_ptr));
+
+  return STATUS;
 }
 
 /**************************************************************/
