@@ -1,4 +1,6 @@
 #include "Formulations/Displacements/U-Newmark-beta.h"
+#include <stdio.h>
+#include <stdlib.h>
 
 typedef struct {
 
@@ -125,10 +127,8 @@ static void __nodal_inertial_forces(PetscScalar *Lagrangian,
 
 static double __error_residual(const Vec Residual);
 
-static PetscErrorCode __define_sparsity_pattern(int *sparsity_pattern,
-                                                Mask ActiveNodes,
-                                                Mask ActiveDOFs,
-                                                Particle MPM_Mesh);
+static int *__create_sparsity_pattern(Mask ActiveNodes, Mask ActiveDOFs,
+                                      Particle MPM_Mesh);
 
 static void __compute_local_intertia(double *Inertia_density_p, double Na_p,
                                      double Nb_p, double m_p, double alpha_1,
@@ -257,6 +257,8 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
     ActiveDOFs = get_active_dofs__MeshTools__(ActiveNodes, FEM_Mesh, TimeStep,
                                               NumTimeStep);
     Nactivedofs = ActiveDOFs.Nactivenodes;
+    sparsity_pattern =
+        __create_sparsity_pattern(ActiveNodes, ActiveDOFs, MPM_Mesh);
 
     if ((Driver_EigenErosion == true) || (Driver_EigenSoftening == true)) {
       compute_Beps__Constitutive__(MPM_Mesh, FEM_Mesh, false);
@@ -265,7 +267,6 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
     /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
        Define and allocate the effective mass matrix
        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-    // Define and allocate the lumped mass matrix
     Vec Lumped_Mass;
     VecCreate(PETSC_COMM_WORLD, &Lumped_Mass);
     VecSetSizes(Lumped_Mass, PETSC_DECIDE, Ntotaldofs);
@@ -337,13 +338,8 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
     /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
        Create Jacobian matrix data structure
       - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-    PetscCall(__define_sparsity_pattern(sparsity_pattern, ActiveNodes,
-                                        ActiveDOFs, MPM_Mesh));
-
-    //    PetscCall(MatCreateSeqAIJ(PETSC_COMM_SELF, Ntotaldofs, Ntotaldofs, 0,
-    //                              sparsity_pattern, &Tangent_Stiffness));
-    PetscCall(MatCreateSeqAIJ(PETSC_COMM_SELF, Ntotaldofs, Ntotaldofs,
-                              PETSC_DEFAULT, NULL, &Tangent_Stiffness));
+    PetscCall(MatCreateSeqAIJ(PETSC_COMM_SELF, Ntotaldofs, Ntotaldofs, 0,
+                              sparsity_pattern, &Tangent_Stiffness));
 
     PetscCall(
         MatSetOption(Tangent_Stiffness, MAT_IGNORE_ZERO_ENTRIES, PETSC_TRUE));
@@ -1590,18 +1586,15 @@ static double __error_residual(const Vec Residual) {
 /**************************************************************/
 
 /**
- * @brief Returns the sparsity pattern
+ * @brief Returns the sparsity pattern (non-zeros per row)
  *
- * @param sparsity_pattern Number of non-zeros per row
  * @param ActiveNodes List of nodes which takes place in the computation
  * @param ActiveDOFs List of dofs which takes place in the computation
  * @param MPM_Mesh Information of the particles
- * @return PetscErrorCode
+ * @return sparsity pattern
  */
-static PetscErrorCode __define_sparsity_pattern(int *sparsity_pattern,
-                                                Mask ActiveNodes,
-                                                Mask ActiveDOFs,
-                                                Particle MPM_Mesh) {
+static int *__create_sparsity_pattern(Mask ActiveNodes, Mask ActiveDOFs,
+                                      Particle MPM_Mesh) {
 
   PetscErrorCode STATUS = EXIT_SUCCESS;
   unsigned Ndim = NumberDimensions;
@@ -1657,7 +1650,7 @@ static PetscErrorCode __define_sparsity_pattern(int *sparsity_pattern,
     free(Nodes_p.Connectivity);
   }
 
-  sparsity_pattern = (int *)calloc(Ntotaldofs, __SIZEOF_INT__);
+  int *sparsity_pattern = (int *)calloc(Ntotaldofs, __SIZEOF_INT__);
 
   for (unsigned A = 0; A < Ntotaldofs; A++) {
     for (unsigned B = 0; B < Ntotaldofs; B++) {
@@ -1667,7 +1660,7 @@ static PetscErrorCode __define_sparsity_pattern(int *sparsity_pattern,
 
   free(Active_dof_Mat);
 
-  return STATUS;
+  return sparsity_pattern;
 }
 
 /**************************************************************/
@@ -1811,6 +1804,7 @@ static PetscErrorCode __jacobian_evaluation(SNES snes, Vec dU, Mat Jacobian,
   double alpha_4 = Time_Integration_Params.alpha_4;
   double epsilon = Time_Integration_Params.epsilon;
 
+  // Set to zero the Jacobian
   PetscCall(MatZeroEntries(Jacobian));
 
 #pragma omp parallel private(NumNodes_p, MatIndx_p, Stiffness_density_p,       \
