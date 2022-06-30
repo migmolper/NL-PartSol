@@ -241,7 +241,7 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
 
   while (TimeStep < NumTimeStep) {
 
-//    DoProgress("Simulation:", TimeStep, NumTimeStep);
+    DoProgress("Simulation:", TimeStep, NumTimeStep);
 
     /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
        Local search and compute list of active nodes and dofs
@@ -288,9 +288,6 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
     PetscCall(VecSetSizes(U_n, PETSC_DECIDE, Ntotaldofs));
     PetscCall(VecSetSizes(U_n_dt, PETSC_DECIDE, Ntotaldofs));
     PetscCall(VecSetSizes(U_n_dt2, PETSC_DECIDE, Ntotaldofs));
-    PetscCall(VecSetOption(U_n, VEC_IGNORE_NEGATIVE_INDICES, PETSC_TRUE));
-    PetscCall(VecSetOption(U_n_dt, VEC_IGNORE_NEGATIVE_INDICES, PETSC_TRUE));
-    PetscCall(VecSetOption(U_n_dt2, VEC_IGNORE_NEGATIVE_INDICES, PETSC_TRUE));
     PetscCall(VecSetFromOptions(U_n));
     PetscCall(VecSetFromOptions(U_n_dt));
     PetscCall(VecSetFromOptions(U_n_dt2));
@@ -298,13 +295,6 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
     PetscCall(__get_nodal_field_n(U_n, U_n_dt, U_n_dt2, Lumped_Mass, MPM_Mesh,
                                   FEM_Mesh, ActiveNodes, ActiveDOFs,
                                   Time_Integration_Params));
-
-    PetscCall(VecAssemblyBegin(U_n));
-    PetscCall(VecAssemblyEnd(U_n));
-    PetscCall(VecAssemblyBegin(U_n_dt));
-    PetscCall(VecAssemblyEnd(U_n_dt));
-    PetscCall(VecAssemblyBegin(U_n_dt2));
-    PetscCall(VecAssemblyEnd(U_n_dt2));
 
     /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
        Define user parameters for the SNES context
@@ -324,7 +314,7 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
       - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
     PetscCall(SNESCreate(PETSC_COMM_WORLD, &snes));
     PetscCall(SNESSetType(snes, SNESNEWTONLS));
-    PetscCall(SNESSetOptionsPrefix(snes, "mysolver_"));
+    PetscCall(SNESSetOptionsPrefix(snes, "SolidLagragian_"));
 
     /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
        Create matrix and vector data structures; set corresponding routines
@@ -343,8 +333,6 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
 
     PetscCall(
         MatSetOption(Tangent_Stiffness, MAT_IGNORE_ZERO_ENTRIES, PETSC_TRUE));
-    //    PetscCall(MatSetOption(Tangent_Stiffness, MAT_SYMMETRIC, PETSC_TRUE));
-
     PetscCall(MatSetFromOptions(Tangent_Stiffness));
 
     /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -368,14 +356,7 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
       - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
     PetscCall(SNESGetKSP(snes, &ksp));
     PetscCall(KSPGetPC(ksp, &pc));
-    PetscCall(
-        PetscOptionsHasName(NULL, NULL, "-user_precond", &preconditioner_flag));
-    if (preconditioner_flag) {
-      PetscCall(PCSetType(pc, PCSHELL));
-      //      PetscCall(PCShellSetApply(pc,MatrixFreePreconditioner));
-    } else {
-      PetscCall(PCSetType(pc, PCNONE));
-    }
+    PetscCall(PCSetType(pc, PCJACOBI));
     PetscCall(KSPSetTolerances(ksp, TOL, 1e-9, PETSC_DEFAULT, 20));
 
     /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -404,24 +385,6 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
       Run solver
      - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
     PetscCall(SNESSolve(snes, PETSC_NULL, DU));
-
-
-    SNESGetConvergedReason(snes, &converged_reason);
-    SNESGetIterationNumber(snes, &Iter);
-    SNESGetLinearSolveIterations(snes, &Linear_Solver_Iter);
-    Avg_linear_iter = ((PetscReal)Linear_Solver_Iter) / ((PetscReal)Iter);
-    PetscPrintf(PETSC_COMM_WORLD, "%s \n",
-                SNESConvergedReasons[converged_reason]);
-    PetscPrintf(PETSC_COMM_WORLD,
-                "Number of SNES iterations = %" PetscInt_FMT "\n", Iter);
-    PetscPrintf(PETSC_COMM_WORLD,
-                "Number of Linear iterations = %" PetscInt_FMT "\n",
-                Linear_Solver_Iter);
-    PetscPrintf(PETSC_COMM_WORLD, "Average Linear its / SNES = %e\n",
-                (double)Avg_linear_iter);
-
-//        print_convergence_stats(TimeStep, NumTimeStep, Iter, MaxIter, Error_0,
-//                                Error_i, Error_relative);
 
     /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
        Free work space.
@@ -458,8 +421,7 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
     //! Update time step
     TimeStep++;
 
-
-    exit(0);
+    //    exit(0);
   }
 
   return EXIT_SUCCESS;
@@ -903,6 +865,13 @@ static PetscErrorCode __get_nodal_field_n(Vec U_n, Vec U_n_dt, Vec U_n_dt2,
     }
   }
 
+  PetscCall(VecAssemblyBegin(U_n));
+  PetscCall(VecAssemblyEnd(U_n));
+  PetscCall(VecAssemblyBegin(U_n_dt));
+  PetscCall(VecAssemblyEnd(U_n_dt));
+  PetscCall(VecAssemblyBegin(U_n_dt2));
+  PetscCall(VecAssemblyEnd(U_n_dt2));
+
   return EXIT_SUCCESS;
 }
 
@@ -1063,8 +1032,6 @@ static PetscErrorCode __lagrangian_evaluation(SNES snes, Vec dU, Vec Lagrangian,
   PetscCall(VecRestoreArrayRead(Un_dt, &Un_dt_ptr));
   PetscCall(VecRestoreArrayRead(Un_dt2, &Un_dt2_ptr));
   PetscCall(PetscFree(dU_dt_ptr));
-
-  printf("%e \n",__error_residual(Lagrangian));
 
   return STATUS;
 }
@@ -1367,7 +1334,7 @@ static PetscErrorCode __nodal_internal_forces(PetscScalar *Lagrangian,
         for (unsigned i = 0; i < Ndim; i++) {
           InternalForcesDensity_Ap[i] = 0.0;
           for (unsigned j = 0; j < Ndim; j++) {
-            InternalForcesDensity_Ap[i] =
+            InternalForcesDensity_Ap[i] +=
                 kirchhoff_p[i * Ndim + j] * d_shapefunction_n1_pA[j];
           }
           Mask_dofs_A[i] = Mask_node_A * Ndim + i;
@@ -1930,7 +1897,7 @@ static PetscScalar *__compute_nodal_velocity_increments(
     const PetscScalar *dU, const PetscScalar *Un_dt, const PetscScalar *Un_dt2,
     Newmark_parameters Params, PetscInt Ntotaldofs) {
 
-  PetscInt Mask_total_dof_Ai;
+  PetscInt Dof_Ai;
   PetscScalar alpha_1 = Params.alpha_1;
   PetscScalar alpha_2 = Params.alpha_2;
   PetscScalar alpha_3 = Params.alpha_3;
@@ -1941,15 +1908,13 @@ static PetscScalar *__compute_nodal_velocity_increments(
   PetscScalar *dU_dt;
   PetscMalloc(sizeof(PetscScalar) * Ntotaldofs, &dU_dt);
 
-#pragma omp for private(Mask_total_dof_Ai)
-  for (Mask_total_dof_Ai = 0; Mask_total_dof_Ai < Ntotaldofs;
-       Mask_total_dof_Ai++) {
+#pragma omp for private(Dof_Ai)
+  for (Dof_Ai = 0; Dof_Ai < Ntotaldofs; Dof_Ai++) {
 
-    dU_dt[Mask_total_dof_Ai] = alpha_4 * dU[Mask_total_dof_Ai] +
-                               (alpha_5 - 1) * Un_dt[Mask_total_dof_Ai] +
-                               alpha_6 * Un_dt2[Mask_total_dof_Ai];
+    dU_dt[Dof_Ai] = alpha_4 * dU[Dof_Ai] + (alpha_5 - 1) * Un_dt[Dof_Ai] +
+                    alpha_6 * Un_dt2[Dof_Ai];
 
-  } // #pragma omp for private (Mask_total_dof_Ai)
+  } // #pragma omp for private (Dof_Ai)
 
   return dU_dt;
 }
@@ -1960,8 +1925,7 @@ static PetscScalar *__compute_nodal_acceleration_increments(
     const PetscScalar *dU, const PetscScalar *Un_dt, const PetscScalar *Un_dt2,
     Newmark_parameters Params, unsigned Ntotaldofs) {
 
-  unsigned Mask_total_dof_Ai;
-  int Mask_active_dof_Ai;
+  unsigned Dof_Ai;
   double alpha_1 = Params.alpha_1;
   double alpha_2 = Params.alpha_2;
   double alpha_3 = Params.alpha_3;
@@ -1972,15 +1936,13 @@ static PetscScalar *__compute_nodal_acceleration_increments(
   PetscScalar *dU_dt2;
   PetscMalloc(sizeof(PetscScalar) * Ntotaldofs, &dU_dt2);
 
-#pragma omp for private(Mask_total_dof_Ai, Mask_active_dof_Ai)
-  for (Mask_total_dof_Ai = 0; Mask_total_dof_Ai < Ntotaldofs;
-       Mask_total_dof_Ai++) {
+#pragma omp for private(Dof_Ai)
+  for (Dof_Ai = 0; Dof_Ai < Ntotaldofs; Dof_Ai++) {
 
-    dU_dt2[Mask_total_dof_Ai] = alpha_1 * dU[Mask_total_dof_Ai] -
-                                alpha_2 * Un_dt[Mask_total_dof_Ai] -
-                                (alpha_3 + 1) * Un_dt2[Mask_total_dof_Ai];
+    dU_dt2[Dof_Ai] = alpha_1 * dU[Dof_Ai] - alpha_2 * Un_dt[Dof_Ai] -
+                     (alpha_3 + 1) * Un_dt2[Dof_Ai];
 
-  } // #pragma omp for private (Mask_total_dof_Ai)
+  } // #pragma omp for private (Dof_Ai)
 
   return dU_dt2;
 }
