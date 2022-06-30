@@ -26,11 +26,15 @@ option(USE_OPENMP "Use OpenMP solver library" ON)
 # Add PETSC
 option(USE_PETSC "Use PETSC solver library" ON)
 
-# General compile settings
-IF (NOT CMAKE_BUILD_TYPE)
- #SET(CMAKE_BUILD_TYPE "Debug")
- SET(CMAKE_BUILD_TYPE "Release")
-ENDIF (NOT CMAKE_BUILD_TYPE)
+# Compile settings
+
+if (NOT CMAKE_BUILD_TYPE)
+    message(STATUS "No build type selected, default to Release")
+    set(CMAKE_BUILD_TYPE "Release")
+endif()
+
+set(CMAKE_C_FLAGS_DEBUG "-O0 -g -Wall -Wpedantic -Wextra -Wunused-variable")
+set(CMAKE_C_FLAGS_RELEASE "-O3")
 
 add_subdirectory (nl-partsol) 
 #add_subdirectory (test)

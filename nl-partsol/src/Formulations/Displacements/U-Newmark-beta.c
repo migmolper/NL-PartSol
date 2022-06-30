@@ -1,6 +1,4 @@
 #include "Formulations/Displacements/U-Newmark-beta.h"
-#include "Macros.h"
-#include <stdlib.h>
 
 typedef struct {
 
@@ -136,18 +134,17 @@ static void __compute_local_intertia(double *Inertia_density_p, double Na_p,
                                      double Nb_p, double m_p, double alpha_1,
                                      double epsilon, unsigned A, unsigned B);
 
-static void __get_tangent_matrix_assembling_locations(int *Mask_active_dofs_A,
+static void __get_tangent_matrix_assembling_locations(int *Mask_dofs_A,
                                                       int Mask_node_A,
-                                                      int *Mask_active_dofs_B,
-                                                      int Mask_node_B,
-                                                      Mask ActiveDOFs);
+                                                      int *Mask_dofs_B,
+                                                      int Mask_node_B);
 
 static void __local_tangent_stiffness(double *Tangent_Stiffness_p,
                                       const double *Stiffness_density_p,
                                       const double *Inertia_density_p,
                                       double V0_p);
 
-static PetscErrorCode __Jacobian_evaluation(SNES snes, Vec dU, Mat Jacobian,
+static PetscErrorCode __jacobian_evaluation(SNES snes, Vec dU, Mat Jacobian,
                                             Mat B, void *ctx);
 
 static void __update_Particles(Nodal_Field D_U, Particle MPM_Mesh,
@@ -173,7 +170,6 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
   unsigned Ntotaldofs;
   unsigned Nactivedofs;
   unsigned MaxIter = Parameters_Solver.MaxIter;
-  unsigned Iter;
 
   // Time integration variables
   InitialStep = Parameters_Solver.InitialTimeStep;
@@ -217,6 +213,11 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
   KSP ksp;
   PC pc;
   PetscBool preconditioner_flag;
+  SNESConvergedReason converged_reason;
+
+  PetscInt Iter;
+  PetscInt Linear_Solver_Iter;
+  PetscReal Avg_linear_iter;
 
   /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     Time step is defined at the init of the simulation throught the
@@ -339,19 +340,16 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
     PetscCall(__define_sparsity_pattern(sparsity_pattern, ActiveNodes,
                                         ActiveDOFs, MPM_Mesh));
 
-    PetscCall(MatCreateSeqAIJ(PETSC_COMM_SELF, Ntotaldofs, Ntotaldofs, 0,
-                              sparsity_pattern, &Tangent_Stiffness));
+    //    PetscCall(MatCreateSeqAIJ(PETSC_COMM_SELF, Ntotaldofs, Ntotaldofs, 0,
+    //                              sparsity_pattern, &Tangent_Stiffness));
+    PetscCall(MatCreateSeqAIJ(PETSC_COMM_SELF, Ntotaldofs, Ntotaldofs,
+                              PETSC_DEFAULT, NULL, &Tangent_Stiffness));
+
     PetscCall(
         MatSetOption(Tangent_Stiffness, MAT_IGNORE_ZERO_ENTRIES, PETSC_TRUE));
     PetscCall(MatSetOption(Tangent_Stiffness, MAT_SYMMETRIC, PETSC_TRUE));
 
     PetscCall(MatSetFromOptions(Tangent_Stiffness));
-
-    PetscInt Istart, Iend;
-    PetscCall(MatGetOwnershipRange(Tangent_Stiffness, &Istart, &Iend));
-
-    MatView(Tangent_Stiffness, PETSC_VIEWER_DRAW_WORLD);
-    exit(0);
 
     /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
      Set function evaluation routine and vector.
@@ -363,7 +361,7 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
      Set Jacobian matrix data structure and Jacobian evaluation routine
       - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
     PetscCall(SNESSetJacobian(snes, Tangent_Stiffness, Tangent_Stiffness,
-                              __Jacobian_evaluation, &AplicationCtx));
+                              __jacobian_evaluation, &AplicationCtx));
 
     /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
        Customize nonlinear solver; set runtime options :
@@ -382,7 +380,7 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
     } else {
       PetscCall(PCSetType(pc, PCNONE));
     }
-    PetscCall(KSPSetTolerances(ksp, 1.e-10, PETSC_DEFAULT, PETSC_DEFAULT, 10));
+    PetscCall(KSPSetTolerances(ksp, TOL, 1e-6, PETSC_DEFAULT, MaxIter));
 
     /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       Set SNES/KSP/KSP/PC runtime options, e.g.,
@@ -417,12 +415,28 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
      - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
     PetscCall(SNESSolve(snes, NULL, DU));
 
+    SNESGetConvergedReason(snes, &converged_reason);
+    SNESGetIterationNumber(snes, &Iter);
+    SNESGetLinearSolveIterations(snes, &Linear_Solver_Iter);
+    Avg_linear_iter = ((PetscReal)Linear_Solver_Iter) / ((PetscReal)Iter);
+    PetscPrintf(PETSC_COMM_WORLD, "%s \n",
+                SNESConvergedReasons[converged_reason]);
+    PetscPrintf(PETSC_COMM_WORLD,
+                "Number of SNES iterations = %" PetscInt_FMT "\n", Iter);
+    PetscPrintf(PETSC_COMM_WORLD,
+                "Number of Linear iterations = %" PetscInt_FMT "\n",
+                Linear_Solver_Iter);
+    PetscPrintf(PETSC_COMM_WORLD, "Average Linear its / SNES = %e\n",
+                (double)Avg_linear_iter);
+
     /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
        Free work space.  All PETSc objects should be destroyed when they
        are no longer needed.
      - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
     PetscCall(MatDestroy(&Tangent_Stiffness));
     PetscCall(SNESDestroy(&snes));
+
+    exit(0);
 
     //    print_convergence_stats(TimeStep, NumTimeStep, Iter, MaxIter,
     //    Error_0,
@@ -991,7 +1005,6 @@ static PetscErrorCode __lagrangian_evaluation(SNES snes, Vec dU, Vec Lagrangian,
    * Read variables from user-defined structure
    * ctx
    */
-  Mask ActiveDOFs = ((Ctx *)ctx)->ActiveDOFs;
   Mask ActiveNodes = ((Ctx *)ctx)->ActiveNodes;
   Particle MPM_Mesh = ((Ctx *)ctx)->MPM_Mesh;
   Mesh FEM_Mesh = ((Ctx *)ctx)->FEM_Mesh;
@@ -1026,7 +1039,7 @@ static PetscErrorCode __lagrangian_evaluation(SNES snes, Vec dU, Vec Lagrangian,
   PetscCall(VecGetArrayRead(Un_dt, &Un_dt_ptr));
   PetscCall(VecGetArrayRead(Un_dt2, &Un_dt2_ptr));
 
-  const PetscScalar *dU_dt_ptr = __compute_nodal_velocity_increments(
+  PetscScalar *dU_dt_ptr = __compute_nodal_velocity_increments(
       dU_ptr, Un_dt_ptr, Un_dt2_ptr, Time_Integration_Params, Ntotaldofs);
 
   PetscCall(__local_compatibility_conditions(dU_ptr, dU_dt_ptr, ActiveNodes,
@@ -1636,10 +1649,6 @@ static PetscErrorCode __define_sparsity_pattern(int *sparsity_pattern,
             Mask_active_dof_Bj = ActiveDOFs.Nodes2Mask[Dof_Bj];
 
             Active_dof_Mat[Dof_Ai * Ntotaldofs + Dof_Bj] = 1;
-
-            //            if ((Mask_active_dof_Ai != -1) && (Mask_active_dof_Bj
-            //            != -1)) {
-            //            }
           }
         }
       }
@@ -1715,37 +1724,35 @@ static void __local_tangent_stiffness(double *Tangent_Stiffness_p,
 
 /**************************************************************/
 
-/*!
-  \brief Returns a mask with the position of the stifness in the global tangent
-  \n matrix for an eeficient assembly process.
-
-  \param[out] Mask_active_dofs_A Global dofs positions for node A.
-  \param[in] Mask_node_A Index of the node A with mask.
-  \param[out] Mask_active_dofs_B Global dofs positions for node B
-  \param[in] Mask_node_B Index of the node B with mask
-  \param[in] ActiveDOFs List of dofs which takes place in the computation
-*/
-static void __get_tangent_matrix_assembling_locations(int *Mask_active_dofs_A,
+/**
+ * @brief Returns a mask with the position of the stifness in the global tangent
+ * matrix for an eeficient assembly process.
+ *
+ * @param Mask_dofs_A Global dofs positions for node A.
+ * @param Mask_node_A Index of the node A with mask.
+ * @param Mask_dofs_B Global dofs positions for node B
+ * @param Mask_node_B Index of the node B with mask
+ */
+static void __get_tangent_matrix_assembling_locations(int *Mask_dofs_A,
                                                       int Mask_node_A,
-                                                      int *Mask_active_dofs_B,
-                                                      int Mask_node_B,
-                                                      Mask ActiveDOFs) {
+                                                      int *Mask_dofs_B,
+                                                      int Mask_node_B) {
   unsigned Ndim = NumberDimensions;
 
 #if NumberDimensions == 2
-  Mask_active_dofs_A[0] = ActiveDOFs.Nodes2Mask[Mask_node_A * Ndim + 0];
-  Mask_active_dofs_A[1] = ActiveDOFs.Nodes2Mask[Mask_node_A * Ndim + 1];
+  Mask_dofs_A[0] = Mask_node_A * Ndim + 0;
+  Mask_dofs_A[1] = Mask_node_A * Ndim + 1;
 
-  Mask_active_dofs_B[0] = ActiveDOFs.Nodes2Mask[Mask_node_B * Ndim + 0];
-  Mask_active_dofs_B[1] = ActiveDOFs.Nodes2Mask[Mask_node_B * Ndim + 1];
+  Mask_dofs_B[0] = Mask_node_B * Ndim + 0;
+  Mask_dofs_B[1] = Mask_node_B * Ndim + 1;
 #else
-  Mask_active_dofs_A[0] = ActiveDOFs.Nodes2Mask[Mask_node_A * Ndim + 0];
-  Mask_active_dofs_A[1] = ActiveDOFs.Nodes2Mask[Mask_node_A * Ndim + 1];
-  Mask_active_dofs_A[2] = ActiveDOFs.Nodes2Mask[Mask_node_A * Ndim + 2];
+  Mask_dofs_A[0] = Mask_node_A * Ndim + 0;
+  Mask_dofs_A[1] = Mask_node_A * Ndim + 1;
+  Mask_dofs_A[2] = Mask_node_A * Ndim + 2;
 
-  Mask_active_dofs_B[0] = ActiveDOFs.Nodes2Mask[Mask_node_B * Ndim + 0];
-  Mask_active_dofs_B[1] = ActiveDOFs.Nodes2Mask[Mask_node_B * Ndim + 1];
-  Mask_active_dofs_B[2] = ActiveDOFs.Nodes2Mask[Mask_node_B * Ndim + 2];
+  Mask_dofs_B[0] = Mask_node_B * Ndim + 0;
+  Mask_dofs_B[1] = Mask_node_B * Ndim + 1;
+  Mask_dofs_B[2] = Mask_node_B * Ndim + 2;
 #endif
 }
 
@@ -1761,13 +1768,13 @@ static void __get_tangent_matrix_assembling_locations(int *Mask_active_dofs_A,
  * @param ctx User-defined context
  * @return PetscErrorCode
  */
-static PetscErrorCode __Jacobian_evaluation(SNES snes, Vec dU, Mat Jacobian,
+static PetscErrorCode __jacobian_evaluation(SNES snes, Vec dU, Mat Jacobian,
                                             Mat Preconditioner, void *ctx) {
+
   /**
    * Read variables from user-defined structure
    * ctx
    */
-  Mask ActiveDOFs = ((Ctx *)ctx)->ActiveDOFs;
   Mask ActiveNodes = ((Ctx *)ctx)->ActiveNodes;
   Particle MPM_Mesh = ((Ctx *)ctx)->MPM_Mesh;
   Mesh FEM_Mesh = ((Ctx *)ctx)->FEM_Mesh;
@@ -1780,7 +1787,6 @@ static PetscErrorCode __Jacobian_evaluation(SNES snes, Vec dU, Mat Jacobian,
 
   PetscErrorCode STATUS = EXIT_SUCCESS;
   unsigned Ndim = NumberDimensions;
-  unsigned Nactivedofs = ActiveDOFs.Nactivenodes;
   unsigned Np = MPM_Mesh.NumGP;
   unsigned NumNodes_p;
   unsigned MatIndx_p;
@@ -1790,14 +1796,14 @@ static PetscErrorCode __Jacobian_evaluation(SNES snes, Vec dU, Mat Jacobian,
   double Stiffness_density_p[4];
   double Inertia_density_p[2];
   double Jacobian_p[4];
-  int Mask_active_dofs_A[2];
-  int Mask_active_dofs_B[2];
+  int Mask_dofs_A[2];
+  int Mask_dofs_B[2];
 #else
   double Stiffness_density_p[9];
   double Inertia_density_p[3];
   double Jacobian_p[9];
-  int Mask_active_dofs_A[3];
-  int Mask_active_dofs_B[3];
+  int Mask_dofs_A[3];
+  int Mask_dofs_B[3];
 #endif
 
   // Time integartion parameters
@@ -1805,9 +1811,11 @@ static PetscErrorCode __Jacobian_evaluation(SNES snes, Vec dU, Mat Jacobian,
   double alpha_4 = Time_Integration_Params.alpha_4;
   double epsilon = Time_Integration_Params.epsilon;
 
+  PetscCall(MatZeroEntries(Jacobian));
+
 #pragma omp parallel private(NumNodes_p, MatIndx_p, Stiffness_density_p,       \
-                             Inertia_density_p, Jacobian_p,                    \
-                             Mask_active_dofs_A, Mask_active_dofs_B)
+                             Inertia_density_p, Jacobian_p, Mask_dofs_A,       \
+                             Mask_dofs_B)
   {
 #pragma omp for private(p)
     for (p = 0; p < Np; p++) {
@@ -1888,15 +1896,14 @@ static PetscErrorCode __Jacobian_evaluation(SNES snes, Vec dU, Mat Jacobian,
           __local_tangent_stiffness(Jacobian_p, Stiffness_density_p,
                                     Inertia_density_p, V0_p);
 
-          __get_tangent_matrix_assembling_locations(
-              Mask_active_dofs_A, Mask_node_A, Mask_active_dofs_B, Mask_node_B,
-              ActiveDOFs);
+          __get_tangent_matrix_assembling_locations(Mask_dofs_A, Mask_node_A,
+                                                    Mask_dofs_B, Mask_node_B);
 
 #pragma omp critical
           {
 
-            MatSetValues(Jacobian, Ndim, Mask_active_dofs_A, Ndim,
-                         Mask_active_dofs_B, Jacobian_p, ADD_VALUES);
+            MatSetValues(Jacobian, Ndim, Mask_dofs_A, Ndim, Mask_dofs_B,
+                         Jacobian_p, ADD_VALUES);
 
           } // #pragma omp critical
         }   // for B (node)
@@ -1916,7 +1923,6 @@ static PetscErrorCode __Jacobian_evaluation(SNES snes, Vec dU, Mat Jacobian,
   */
   PetscCall(MatAssemblyBegin(Jacobian, MAT_FINAL_ASSEMBLY));
   PetscCall(MatAssemblyEnd(Jacobian, MAT_FINAL_ASSEMBLY));
-  PetscCall(MatSetOption(Jacobian, MAT_SYMMETRIC, PETSC_TRUE));
 
   return STATUS;
 }
@@ -1936,7 +1942,7 @@ static PetscScalar *__compute_nodal_velocity_increments(
   PetscScalar alpha_6 = Params.alpha_6;
 
   PetscScalar *dU_dt;
-  PetscMalloc(Ntotaldofs, &dU_dt);
+  PetscMalloc(sizeof(PetscScalar) * Ntotaldofs, &dU_dt);
 
 #pragma omp for private(Mask_total_dof_Ai)
   for (Mask_total_dof_Ai = 0; Mask_total_dof_Ai < Ntotaldofs;
