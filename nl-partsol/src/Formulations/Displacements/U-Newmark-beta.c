@@ -241,7 +241,7 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
 
   while (TimeStep < NumTimeStep) {
 
-    DoProgress("Simulation:", TimeStep, NumTimeStep);
+//    DoProgress("Simulation:", TimeStep, NumTimeStep);
 
     /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
        Local search and compute list of active nodes and dofs
@@ -343,7 +343,7 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
 
     PetscCall(
         MatSetOption(Tangent_Stiffness, MAT_IGNORE_ZERO_ENTRIES, PETSC_TRUE));
-    PetscCall(MatSetOption(Tangent_Stiffness, MAT_SYMMETRIC, PETSC_TRUE));
+    //    PetscCall(MatSetOption(Tangent_Stiffness, MAT_SYMMETRIC, PETSC_TRUE));
 
     PetscCall(MatSetFromOptions(Tangent_Stiffness));
 
@@ -376,7 +376,7 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
     } else {
       PetscCall(PCSetType(pc, PCNONE));
     }
-    PetscCall(KSPSetTolerances(ksp, TOL, 1e-6, PETSC_DEFAULT, MaxIter));
+    PetscCall(KSPSetTolerances(ksp, TOL, 1e-9, PETSC_DEFAULT, 20));
 
     /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       Set SNES/KSP/KSP/PC runtime options, e.g.,
@@ -403,7 +403,8 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
     /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       Run solver
      - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-    PetscCall(SNESSolve(snes, NULL, DU));
+    PetscCall(SNESSolve(snes, PETSC_NULL, DU));
+
 
     SNESGetConvergedReason(snes, &converged_reason);
     SNESGetIterationNumber(snes, &Iter);
@@ -419,8 +420,8 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
     PetscPrintf(PETSC_COMM_WORLD, "Average Linear its / SNES = %e\n",
                 (double)Avg_linear_iter);
 
-    //    print_convergence_stats(TimeStep, NumTimeStep, Iter, MaxIter, Error_0,
-    //                            Error_i, Error_relative);
+//        print_convergence_stats(TimeStep, NumTimeStep, Iter, MaxIter, Error_0,
+//                                Error_i, Error_relative);
 
     /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
        Free work space.
@@ -456,8 +457,6 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
 
     //! Update time step
     TimeStep++;
-
-    exit(0);
   }
 
   return EXIT_SUCCESS;
