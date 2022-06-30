@@ -214,7 +214,7 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
   PC pc;
   PetscBool preconditioner_flag;
   SNESConvergedReason converged_reason;
-
+  Ctx AplicationCtx;
   PetscInt Iter;
   PetscInt Linear_Solver_Iter;
   PetscReal Avg_linear_iter;
@@ -267,7 +267,6 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
     /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
        Define and allocate the effective mass matrix
        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-    Vec Lumped_Mass;
     VecCreate(PETSC_COMM_WORLD, &Lumped_Mass);
     VecSetSizes(Lumped_Mass, PETSC_DECIDE, Ntotaldofs);
     VecSetFromOptions(Lumped_Mass);
@@ -308,7 +307,6 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
     /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
        Define user parameters for the SNES context
        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-    Ctx AplicationCtx;
     AplicationCtx.ActiveNodes = ActiveNodes;
     AplicationCtx.ActiveDOFs = ActiveDOFs;
     AplicationCtx.MPM_Mesh = MPM_Mesh;
@@ -381,9 +379,6 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
     /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       Set SNES/KSP/KSP/PC runtime options, e.g.,
           -snes_view -snes_monitor -ksp_type <ksp> -pc_type <pc>
-      These options will override those specified above as long as
-      SNESSetFromOptions() is called _after_ any other customization
-      routines.
       - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
     PetscCall(SNESSetFromOptions(snes));
 
@@ -404,10 +399,7 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
     }
 
     /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-       Note: The user should initialize the vector, DU, with the initial guess
-       for the nonlinear solver prior to calling SNESSolve().  In particular,
-       to employ an initial guess of zero, the user should explicitly set
-       this vector to zero by calling VecSet().
+      Run solver
      - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
     PetscCall(SNESSolve(snes, NULL, DU));
 
@@ -425,26 +417,20 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
     PetscPrintf(PETSC_COMM_WORLD, "Average Linear its / SNES = %e\n",
                 (double)Avg_linear_iter);
 
+    //    print_convergence_stats(TimeStep, NumTimeStep, Iter, MaxIter, Error_0,
+    //                            Error_i, Error_relative);
+
     /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-       Free work space.  All PETSc objects should be destroyed when they
-       are no longer needed.
+       Free work space.
      - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
     PetscCall(MatDestroy(&Tangent_Stiffness));
     PetscCall(SNESDestroy(&snes));
 
     exit(0);
 
-    //    print_convergence_stats(TimeStep, NumTimeStep, Iter, MaxIter,
-    //    Error_0,
-    //                            Error_i, Error_relative);
-
     //    __update_Particles(D_U, MPM_Mesh, FEM_Mesh, ActiveNodes);
 
-    //     particle_results_vtk__InOutFun__(MPM_Mesh, TimeStep,
-    //     ResultsTimeStep);
-
-    //      VecDestroy(&Reactions);
-    //    }
+    particle_results_vtk__InOutFun__(MPM_Mesh, TimeStep, ResultsTimeStep);
 
     //! Update time step
     TimeStep++;
