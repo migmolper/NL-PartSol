@@ -1,5 +1,9 @@
 #include "Formulations/Displacements/U-Newmark-beta.h"
+#include "Macros.h"
 #include "petscsnes.h"
+#include <petscistypes.h>
+#include <petscsys.h>
+#include <petscsystypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -18,6 +22,7 @@ typedef struct {
 
   Mask ActiveNodes;
   Mask ActiveDOFs;
+  IS Dirichlet_dofs;
   Particle MPM_Mesh;
   Mesh FEM_Mesh;
   Vec Lumped_Mass;
@@ -67,14 +72,12 @@ static PetscErrorCode __get_nodal_field_n(Vec U_n, Vec U_n_dt, Vec U_n_dt2,
                                           Mask ActiveDOFs,
                                           Newmark_parameters Params);
 
+static IS __get_dirichlet_list_dofs(Mask ActiveNodes, Mesh FEM_Mesh, int Step,
+                                    int NumTimeStep);
+
 static PetscErrorCode __form_initial_guess(Vec DU, Vec U_n_dt, Vec U_n_dt2,
                                            Mesh FEM_Mesh, Mask ActiveNodes,
                                            Newmark_parameters Params);
-
-static PetscErrorCode __set_dirichlet_boundary_condition(Mat Jacobian,
-                                                         Vec Lagrangian, Vec dU,
-                                                         Mask ActiveNodes,
-                                                         Mesh FEM_Mesh);
 
 static PetscScalar *__compute_nodal_velocity_increments(
     const PetscScalar *dU, const PetscScalar *Un_dt, const PetscScalar *Un_dt2,
@@ -177,6 +180,7 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
   Vec U_n_dt;
   Vec U_n_dt2;
   Vec DU;
+  IS Dirichlet_dofs;
   Mask ActiveNodes;
   Mask ActiveDOFs;
 
@@ -262,10 +266,17 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
                                   Time_Integration_Params));
 
     /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+       Create structure to store the dirchlet boudary conditions
+       - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+    Dirichlet_dofs =
+        __get_dirichlet_list_dofs(ActiveNodes, FEM_Mesh, TimeStep, NumTimeStep);
+
+    /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
        Define user parameters for the SNES context
        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
     AplicationCtx.ActiveNodes = ActiveNodes;
     AplicationCtx.ActiveDOFs = ActiveDOFs;
+    AplicationCtx.Dirichlet_dofs = Dirichlet_dofs;
     AplicationCtx.MPM_Mesh = MPM_Mesh;
     AplicationCtx.FEM_Mesh = FEM_Mesh;
     AplicationCtx.Lumped_Mass = Lumped_Mass;
@@ -289,6 +300,7 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
     PetscCall(VecSetFromOptions(DU));
     PetscCall(VecSetOption(DU, VEC_IGNORE_NEGATIVE_INDICES, PETSC_TRUE));
     PetscCall(VecDuplicate(DU, &Residual));
+    PetscCall(VecSetOption(Residual, VEC_IGNORE_NEGATIVE_INDICES, PETSC_TRUE));    
 
     /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
        Create Jacobian matrix data structure
@@ -333,18 +345,13 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
     /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
        Evaluate initial guess; then solve nonlinear system
      - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+
     if (Use_explicit_trial == true) {
       PetscCall(__form_initial_guess(DU, U_n_dt, U_n_dt2, FEM_Mesh, ActiveNodes,
                                      Time_Integration_Params));
     } else {
       PetscCall(VecZeroEntries(DU));
     }
-
-    /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-       Set Dirichlet boundary conditions
-     - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-    PetscCall(__set_dirichlet_boundary_condition(Tangent_Stiffness, Residual,
-                                                 DU, ActiveNodes, FEM_Mesh));
 
     /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       Run solver
@@ -379,6 +386,7 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
     PetscCall(VecDestroy(&U_n));
     PetscCall(VecDestroy(&U_n_dt));
     PetscCall(VecDestroy(&U_n_dt2));
+    PetscCall(ISDestroy(&Dirichlet_dofs));
     free(ActiveNodes.Nodes2Mask);
     free(ActiveDOFs.Nodes2Mask);
     free(sparsity_pattern);
@@ -842,6 +850,107 @@ static PetscErrorCode __get_nodal_field_n(Vec U_n, Vec U_n_dt, Vec U_n_dt2,
 
 /**************************************************************/
 
+static IS __get_dirichlet_list_dofs(Mask ActiveNodes, Mesh FEM_Mesh, int Step,
+                                    int NumTimeStep) {
+
+  /*
+    Define auxilar variables
+  */
+  int Ndim = NumberDimensions;
+  int Nnodes_mask = ActiveNodes.Nactivenodes;
+  int Order = Nnodes_mask * Ndim;
+  int Order_dirichlet = 0;
+  int Number_of_BCC = FEM_Mesh.Bounds.NumBounds;
+  int NumNodesBound; /* Number of nodes of the bound */
+  int NumDimBound;   /* Number of dimensions */
+  int Id_BCC;        /* Index of the node where we apply the BCC */
+  int Id_BCC_mask;
+  int Id_BCC_mask_k;
+
+  /*
+    Generate mask for the static condensation.
+  */
+  PetscInt *List_active_dofs;
+  PetscCalloc1(Order * sizeof(PetscInt), &List_active_dofs);
+
+  /*
+    Loop over the the boundaries to find the constrained dofs
+  */
+  for (int i = 0; i < Number_of_BCC; i++) {
+
+    /*
+      Get the number of nodes of this boundary
+    */
+    NumNodesBound = FEM_Mesh.Bounds.BCC_i[i].NumNodes;
+
+    /*
+      Get the number of dimensions where the BCC it is applied
+    */
+    NumDimBound = FEM_Mesh.Bounds.BCC_i[i].Dim;
+
+    for (int j = 0; j < NumNodesBound; j++) {
+      /*
+        Get the index of the node
+      */
+      Id_BCC = FEM_Mesh.Bounds.BCC_i[i].Nodes[j];
+      Id_BCC_mask = ActiveNodes.Nodes2Mask[Id_BCC];
+
+      /*
+        If the boundary condition is under an active node
+      */
+      if (Id_BCC_mask != -1) {
+        /*
+          Loop over the dimensions of the boundary condition
+        */
+        for (int k = 0; k < NumDimBound; k++) {
+
+          /*
+            Apply only if the direction is active
+          */
+          if (FEM_Mesh.Bounds.BCC_i[i].Dir[k * NumTimeStep + Step] == 1) {
+            Id_BCC_mask_k = Id_BCC_mask * Ndim + k;
+            List_active_dofs[Id_BCC_mask_k] = 1;
+            Order_dirichlet++;
+          }
+        }
+      }
+    }
+  }
+
+  /*
+    Generate mask using the location of the constrained dofs
+  */
+  PetscInt *List_active_dirchlet_dofs;
+  PetscInt aux_idx = 0;
+
+  PetscMalloc(Order_dirichlet * sizeof(PetscInt), &List_active_dirchlet_dofs);
+
+  for (int A_i = 0; A_i < Order; A_i++) {
+    if (List_active_dofs[A_i] == 1) {
+      List_active_dirchlet_dofs[aux_idx] = A_i;
+      aux_idx++;
+    }
+  }
+
+  /*
+    Output
+  */
+  IS Dirichlet_dofs;
+
+  ISCreateGeneral(PETSC_COMM_WORLD, Order_dirichlet, List_active_dirchlet_dofs,
+                  PETSC_COPY_VALUES, &Dirichlet_dofs);
+
+  /*
+    Free auxiliar pointers
+  */
+  PetscFree(List_active_dofs);
+  PetscFree(List_active_dirchlet_dofs);
+
+  return Dirichlet_dofs;
+}
+
+/**************************************************************/
+
 static PetscErrorCode __form_initial_guess(Vec DU, Vec U_n_dt, Vec U_n_dt2,
                                            Mesh FEM_Mesh, Mask ActiveNodes,
                                            Newmark_parameters Params) {
@@ -901,7 +1010,7 @@ static PetscErrorCode __form_initial_guess(Vec DU, Vec U_n_dt, Vec U_n_dt2,
         /*
           Apply only if the direction is active (1)
         */
-        if (FEM_Mesh.Bounds.BCC_i[i].Dir[k * NumTimeStep + TimeStep - 1] == 1) {
+        if (FEM_Mesh.Bounds.BCC_i[i].Dir[k * NumTimeStep + TimeStep] == 1) {
 
           Dof_Ai = Id_BCC_mask * Ndim + k;
 
@@ -916,77 +1025,6 @@ static PetscErrorCode __form_initial_guess(Vec DU, Vec U_n_dt, Vec U_n_dt2,
   PetscCall(VecRestoreArrayRead(U_n_dt2, &Un_dt2_ptr));
 
   return EXIT_SUCCESS;
-}
-
-/**************************************************************/
-
-/**
- * @brief
- *
- * @param Jacobian
- * @param Lagrangian
- * @param dU
- * @param ActiveNodes
- * @param FEM_Mesh
- * @return PetscErrorCode
- */
-static PetscErrorCode __set_dirichlet_boundary_condition(Mat Jacobian,
-                                                         Vec Lagrangian, Vec dU,
-                                                         Mask ActiveNodes,
-                                                         Mesh FEM_Mesh) {
-
-  PetscErrorCode STATUS = EXIT_SUCCESS;
-  unsigned Ndim = NumberDimensions;
-  PetscInt Dof_Ai;
-  PetscScalar boundary_condition;
-
-  //! Apply boundary condition
-  unsigned NumBounds = FEM_Mesh.Bounds.NumBounds;
-
-  for (unsigned i = 0; i < NumBounds; i++) {
-
-    /*
-      Get the number of nodes of this boundarie
-    */
-    unsigned NumNodesBound = FEM_Mesh.Bounds.BCC_i[i].NumNodes;
-
-    for (unsigned j = 0; j < NumNodesBound; j++) {
-      /*
-        Get the index of the node
-      */
-      int Id_BCC = FEM_Mesh.Bounds.BCC_i[i].Nodes[j];
-      int Id_BCC_mask = ActiveNodes.Nodes2Mask[Id_BCC];
-
-      /*
-        The boundary condition is not affecting any active node,
-        continue interating
-      */
-      if (Id_BCC_mask == -1) {
-        continue;
-      }
-
-      /*
-        Loop over the dimensions of the boundary condition
-      */
-      for (unsigned k = 0; k < Ndim; k++) {
-
-        /*
-          Apply only if the direction is active (1)
-        */
-        if (FEM_Mesh.Bounds.BCC_i[i].Dir[k * NumTimeStep + TimeStep - 1] == 1) {
-
-          Dof_Ai = Id_BCC_mask * Ndim + k;
-
-          boundary_condition = FEM_Mesh.Bounds.BCC_i[i].Value[k].Fx[TimeStep];
-
-          PetscCall(MatZeroRowsColumns(Jacobian, 1, &Dof_Ai, boundary_condition,
-                                       dU, Lagrangian));
-        }
-      }
-    }
-  }
-
-  return STATUS;
 }
 
 /**************************************************************/
@@ -1772,6 +1810,7 @@ static PetscErrorCode __jacobian_evaluation(SNES snes, Vec dU, Mat Jacobian,
    * ctx
    */
   Mask ActiveNodes = ((Ctx *)ctx)->ActiveNodes;
+  IS Dirichlet_dofs = ((Ctx *)ctx)->Dirichlet_dofs;
   Particle MPM_Mesh = ((Ctx *)ctx)->MPM_Mesh;
   Mesh FEM_Mesh = ((Ctx *)ctx)->FEM_Mesh;
   Vec Lumped_Mass = ((Ctx *)ctx)->Lumped_Mass;
@@ -1926,6 +1965,14 @@ static PetscErrorCode __jacobian_evaluation(SNES snes, Vec dU, Mat Jacobian,
     */
     PetscCall(MatAssemblyBegin(Jacobian, MAT_FINAL_ASSEMBLY));
     PetscCall(MatAssemblyEnd(Jacobian, MAT_FINAL_ASSEMBLY));
+
+    /*
+      Dirichlet boundary conditions
+    */
+    if (Iter == 0) {
+      PetscCall(
+          MatZeroRowsColumnsIS(Jacobian, Dirichlet_dofs, 1.0, NULL, NULL));
+    }
 
   } // Lagged Jacobian
 
