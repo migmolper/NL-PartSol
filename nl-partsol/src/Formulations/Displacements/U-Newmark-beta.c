@@ -1,7 +1,9 @@
 #include "Formulations/Displacements/U-Newmark-beta.h"
 #include "Macros.h"
+#include "Types.h"
 #include "petscsnes.h"
 #include <petscistypes.h>
+#include <petscmat.h>
 #include <petscsys.h>
 #include <petscsystypes.h>
 #include <stdio.h>
@@ -62,10 +64,6 @@ static void __local_projection_increment_displacement(
     double *DU_N_m_IP, const double *vel_p, const double *acc_p,
     double m__x__ShapeFunction_pA, double DeltaTimeStep);
 
-static void __get_assembling_locations_nodal_kinetics(int *Mask_active_dofs_A,
-                                                      int Mask_node_A,
-                                                      Mask ActiveDOFs);
-
 static PetscErrorCode __get_nodal_field_n(Vec U_n, Vec U_n_dt, Vec U_n_dt2,
                                           Vec Lumped_Mass, Particle MPM_Mesh,
                                           Mesh FEM_Mesh, Mask ActiveNodes,
@@ -99,7 +97,7 @@ static PetscErrorCode __local_compatibility_conditions(const PetscScalar *dU,
 static PetscErrorCode __constitutive_update(Particle MPM_Mesh, Mesh FEM_Mesh);
 
 static PetscErrorCode __nodal_internal_forces(PetscScalar *Lagrangian,
-                                              Mask ActiveNodes,
+                                              Mask ActiveNodes, Mask ActiveDOFs,
                                               Particle MPM_Mesh, Mesh FEM_Mesh);
 
 static void __nodal_traction_forces(PetscScalar *Lagrangian, Mask ActiveNodes,
@@ -110,9 +108,7 @@ static void __nodal_inertial_forces(PetscScalar *Lagrangian,
                                     const PetscScalar *dU,
                                     const PetscScalar *Un_dt,
                                     const PetscScalar *Un_dt2, Mask ActiveNodes,
-                                    Newmark_parameters Params);
-
-static double __error_residual(const Vec Residual);
+                                    Mask ActiveDOFs, Newmark_parameters Params);
 
 static int *__create_sparsity_pattern(Mask ActiveNodes, Particle MPM_Mesh);
 
@@ -300,14 +296,13 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
     PetscCall(VecSetFromOptions(DU));
     PetscCall(VecSetOption(DU, VEC_IGNORE_NEGATIVE_INDICES, PETSC_TRUE));
     PetscCall(VecDuplicate(DU, &Residual));
-    PetscCall(VecSetOption(Residual, VEC_IGNORE_NEGATIVE_INDICES, PETSC_TRUE));    
+    PetscCall(VecSetOption(Residual, VEC_IGNORE_NEGATIVE_INDICES, PETSC_TRUE));
 
     /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
        Create Jacobian matrix data structure
       - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
     PetscCall(MatCreateSeqAIJ(PETSC_COMM_SELF, Ntotaldofs, Ntotaldofs, 0,
                               sparsity_pattern, &Tangent_Stiffness));
-
     PetscCall(
         MatSetOption(Tangent_Stiffness, MAT_IGNORE_ZERO_ENTRIES, PETSC_TRUE));
     PetscCall(MatSetFromOptions(Tangent_Stiffness));
@@ -638,33 +633,6 @@ static void __local_projection_increment_displacement(
 
 /**************************************************************/
 
-static void __get_assembling_locations_nodal_kinetics(int *Mask_active_dofs_A,
-                                                      int Mask_node_A,
-                                                      Mask ActiveDOFs) {
-  unsigned Ndim = NumberDimensions;
-
-#if NumberDimensions == 2
-  Mask_active_dofs_A[0] = ActiveDOFs.Nodes2Mask[Mask_node_A * Ndim + 0] == -1
-                              ? -1
-                              : Mask_node_A * Ndim + 0;
-  Mask_active_dofs_A[1] = ActiveDOFs.Nodes2Mask[Mask_node_A * Ndim + 1] == -1
-                              ? -1
-                              : Mask_node_A * Ndim + 1;
-#else
-  Mask_active_dofs_A[0] = ActiveDOFs.Nodes2Mask[Mask_node_A * Ndim + 0] == -1
-                              ? -1
-                              : Mask_node_A * Ndim + 0;
-  Mask_active_dofs_A[1] = ActiveDOFs.Nodes2Mask[Mask_node_A * Ndim + 1] == -1
-                              ? -1
-                              : Mask_node_A * Ndim + 1;
-  Mask_active_dofs_A[2] = ActiveDOFs.Nodes2Mask[Mask_node_A * Ndim + 2] == -1
-                              ? -1
-                              : Mask_node_A * Ndim + 2;
-#endif
-}
-
-/**************************************************************/
-
 /**
  * @brief Project the kinematic information of the particles towards the nodes
  * \n of the mesh to get the nodal fields at t = n
@@ -737,8 +705,13 @@ static PetscErrorCode __get_nodal_field_n(Vec U_n, Vec U_n_dt, Vec U_n_dt2,
         __local_projection_acceleration(A_N_m_IP, acc_p,
                                         m__x__ShapeFunction_pA);
 
-        __get_assembling_locations_nodal_kinetics(Mask_active_dofs_A,
-                                                  Mask_node_A, ActiveDOFs);
+        // get assembling locations nodal kinetics
+        for (int i = 0; i < Ndim; i++) {
+          Mask_active_dofs_A[i] =
+              ActiveDOFs.Nodes2Mask[Mask_node_A * Ndim + i] == -1
+                  ? -1
+                  : Mask_node_A * Ndim + i;
+        }
 
 #pragma omp critical
         {
@@ -1048,6 +1021,7 @@ static PetscErrorCode __lagrangian_evaluation(SNES snes, Vec dU, Vec Lagrangian,
    * ctx
    */
   Mask ActiveNodes = ((Ctx *)ctx)->ActiveNodes;
+  Mask ActiveDOFs = ((Ctx *)ctx)->ActiveDOFs;
   Particle MPM_Mesh = ((Ctx *)ctx)->MPM_Mesh;
   Mesh FEM_Mesh = ((Ctx *)ctx)->FEM_Mesh;
   Vec Lumped_Mass = ((Ctx *)ctx)->Lumped_Mass;
@@ -1067,6 +1041,11 @@ static PetscErrorCode __lagrangian_evaluation(SNES snes, Vec dU, Vec Lagrangian,
   const PetscScalar *dU_ptr;
   const PetscScalar *Un_dt_ptr;
   const PetscScalar *Un_dt2_ptr;
+
+  /*
+    Initialize the lagrangian for a new evaluation
+  */
+  PetscCall(VecZeroEntries(Lagrangian));
 
   /*
    Get pointers to vector data.
@@ -1089,13 +1068,14 @@ static PetscErrorCode __lagrangian_evaluation(SNES snes, Vec dU, Vec Lagrangian,
 
   PetscCall(__constitutive_update(MPM_Mesh, FEM_Mesh));
 
-  PetscCall(
-      __nodal_internal_forces(Lagrangian_ptr, ActiveNodes, MPM_Mesh, FEM_Mesh));
+  PetscCall(__nodal_internal_forces(Lagrangian_ptr, ActiveNodes, ActiveDOFs,
+                                    MPM_Mesh, FEM_Mesh));
 
   __nodal_traction_forces(Lagrangian_ptr, ActiveNodes, MPM_Mesh, FEM_Mesh);
 
   __nodal_inertial_forces(Lagrangian_ptr, Lumped_Mass_ptr, dU_ptr, Un_dt_ptr,
-                          Un_dt2_ptr, ActiveNodes, Time_Integration_Params);
+                          Un_dt2_ptr, ActiveNodes, ActiveDOFs,
+                          Time_Integration_Params);
 
   /**
    * Restore vectors
@@ -1315,7 +1295,7 @@ static PetscErrorCode __constitutive_update(Particle MPM_Mesh, Mesh FEM_Mesh) {
  * @return PetscErrorCode
  */
 static PetscErrorCode __nodal_internal_forces(PetscScalar *Lagrangian,
-                                              Mask ActiveNodes,
+                                              Mask ActiveNodes, Mask ActiveDOFs,
                                               Particle MPM_Mesh,
                                               Mesh FEM_Mesh) {
 
@@ -1421,7 +1401,9 @@ static PetscErrorCode __nodal_internal_forces(PetscScalar *Lagrangian,
 #pragma omp critical
         {
           for (unsigned i = 0; i < Ndim; i++) {
-            Lagrangian[Mask_dofs_A[i]] += InternalForcesDensity_Ap[i] * V0_p;
+            if (ActiveDOFs.Nodes2Mask[Mask_dofs_A[i]] != -1) {
+              Lagrangian[Mask_dofs_A[i]] += InternalForcesDensity_Ap[i] * V0_p;
+            }
           }
         } // #pragma omp critical
       }   // for unsigned A
@@ -1574,12 +1556,11 @@ static void __nodal_traction_forces(PetscScalar *Lagrangian, Mask ActiveNodes,
  * @param ActiveNodes List of nodes which takes place in the computation
  * @param Params Time integration parameters
  */
-static void __nodal_inertial_forces(PetscScalar *Lagrangian,
-                                    const PetscScalar *M_II,
-                                    const PetscScalar *dU,
-                                    const PetscScalar *Un_dt,
-                                    const PetscScalar *Un_dt2, Mask ActiveNodes,
-                                    Newmark_parameters Params) {
+static void
+__nodal_inertial_forces(PetscScalar *Lagrangian, const PetscScalar *M_II,
+                        const PetscScalar *dU, const PetscScalar *Un_dt,
+                        const PetscScalar *Un_dt2, Mask ActiveNodes,
+                        Mask ActiveDOFs, Newmark_parameters Params) {
 
   unsigned Ndim = NumberDimensions;
   unsigned Nactivenodes = ActiveNodes.Nactivenodes;
@@ -1606,26 +1587,13 @@ static void __nodal_inertial_forces(PetscScalar *Lagrangian,
 
 #pragma omp critical
     {
-      Lagrangian[idx] += M_II[idx] * (alpha_1 * dU[idx] - alpha_2 * Un_dt[idx] -
-                                      alpha_3 * Un_dt2[idx] - b[idx % Ndim]);
+      if (ActiveDOFs.Nodes2Mask[idx] != -1) {
+        Lagrangian[idx] +=
+            M_II[idx] * (alpha_1 * dU[idx] - alpha_2 * Un_dt[idx] -
+                         alpha_3 * Un_dt2[idx] - b[idx % Ndim]);
+      }
     }
   }
-}
-
-/**************************************************************/
-
-/*!
-  \brief Compute the 2-norm of the residual
-  \param[in] Residual
-  \return The norm of the residual
-*/
-static double __error_residual(const Vec Residual) {
-
-  double Error = 0;
-
-  VecNorm(Residual, NORM_2, &Error);
-
-  return Error;
 }
 
 /**************************************************************/
