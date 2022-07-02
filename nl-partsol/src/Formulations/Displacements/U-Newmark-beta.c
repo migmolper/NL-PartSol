@@ -150,7 +150,6 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
   unsigned Ndim = NumberDimensions;
   unsigned Nactivenodes;
   unsigned Ntotaldofs;
-  unsigned MaxIter = Parameters_Solver.MaxIter;
 
   // Time integration variables
   InitialStep = Parameters_Solver.InitialTimeStep;
@@ -158,7 +157,6 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
   TimeStep = InitialStep;
   Use_explicit_trial = Parameters_Solver.Use_explicit_trial;
 
-  double TOL = Parameters_Solver.TOL_Newmark_beta;
   double epsilon = Parameters_Solver.epsilon_Mass_Matrix;
   double beta = Parameters_Solver.beta_Newmark_beta;
   double gamma = Parameters_Solver.gamma_Newmark_beta;
@@ -183,6 +181,9 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
   KSP ksp;
   PC pc;
   Ctx AplicationCtx;
+  unsigned Max_Iter = Parameters_Solver.MaxIter;
+  double Relative_TOL = Parameters_Solver.TOL_Newmark_beta;
+  double Absolute_TOL = 100 * Relative_TOL;
 
   /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     Time step is defined at the init of the simulation throught the
@@ -332,7 +333,10 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
     PetscCall(SNESGetKSP(snes, &ksp));
     PetscCall(KSPGetPC(ksp, &pc));
     PetscCall(PCSetType(pc, PCJACOBI));
-    PetscCall(KSPSetTolerances(ksp, TOL, 1e-9, PETSC_DEFAULT, MaxIter));
+    PetscCall(SNESSetTolerances(snes, Absolute_TOL, Relative_TOL, PETSC_DEFAULT,
+                                Max_Iter, PETSC_DEFAULT));
+    PetscCall(KSPSetTolerances(ksp, PETSC_DEFAULT, PETSC_DEFAULT, PETSC_DEFAULT,
+                               PETSC_DEFAULT));
 
     /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       Set SNES/KSP/KSP/PC runtime options, e.g.,
@@ -1913,9 +1917,6 @@ static PetscErrorCode __jacobian_evaluation(SNES snes, Vec dU, Mat Jacobian,
 
 #pragma omp critical
           {
-
-            MatSetValues(Jacobian, 1, Mask_dofs_A, 1, Mask_dofs_B, Jacobian_p,
-                         ADD_VALUES);
 
             MatSetValues(Jacobian, Ndim, Mask_dofs_A, Ndim, Mask_dofs_B,
                          Jacobian_p, ADD_VALUES);
