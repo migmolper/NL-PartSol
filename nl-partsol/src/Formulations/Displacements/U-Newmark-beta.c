@@ -298,6 +298,7 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
     PetscCall(VecSetFromOptions(DU));
     PetscCall(VecSetOption(DU, VEC_IGNORE_NEGATIVE_INDICES, PETSC_TRUE));
     PetscCall(VecDuplicate(DU, &Residual));
+    PetscCall(VecSetFromOptions(Residual));
     PetscCall(VecSetOption(Residual, VEC_IGNORE_NEGATIVE_INDICES, PETSC_TRUE));
 
     /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -362,6 +363,7 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
     SNESGetIterationNumber(snes, &Iter);
     SNESGetLinearSolveIterations(snes, &Linear_Solver_Iter);
     Avg_linear_iter = ((PetscReal)Linear_Solver_Iter) / ((PetscReal)Iter);
+    PetscPrintf(PETSC_COMM_WORLD, "Step %i \n", TimeStep);
     PetscPrintf(PETSC_COMM_WORLD, "%s \n",
                 SNESConvergedReasons[converged_reason]);
     PetscPrintf(PETSC_COMM_WORLD,
@@ -369,7 +371,7 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
     PetscPrintf(PETSC_COMM_WORLD,
                 "Number of Linear iterations = %" PetscInt_FMT "\n",
                 Linear_Solver_Iter);
-    PetscPrintf(PETSC_COMM_WORLD, "Average Linear its / SNES = %e\n",
+    PetscPrintf(PETSC_COMM_WORLD, "Average Linear its / SNES = %e\n \n",
                 (double)Avg_linear_iter);
 
     /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -405,8 +407,8 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
     /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
        Update particle information
      - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-    PetscCall(__update_Particles(DU, dU_dt, dU_dt2, MPM_Mesh, FEM_Mesh,
-                                 ActiveNodes));
+    PetscCall(
+        __update_Particles(DU, dU_dt, dU_dt2, MPM_Mesh, FEM_Mesh, ActiveNodes));
 
     /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
        Outputs
@@ -684,6 +686,13 @@ static PetscErrorCode __get_nodal_field_n(Vec U_n, Vec U_n_dt, Vec U_n_dt2,
   double A_N_m_IP[3];
 #endif
 
+  /*
+    Use this option to impose dirichlet boundary conditions
+  */
+  VecSetOption(U_n, VEC_IGNORE_NEGATIVE_INDICES, PETSC_TRUE);
+  VecSetOption(U_n_dt, VEC_IGNORE_NEGATIVE_INDICES, PETSC_TRUE);
+  VecSetOption(U_n_dt2, VEC_IGNORE_NEGATIVE_INDICES, PETSC_TRUE);
+
 #pragma omp parallel private(NumberNodes_p)
   {
 
@@ -787,7 +796,7 @@ static PetscErrorCode __get_nodal_field_n(Vec U_n, Vec U_n_dt, Vec U_n_dt2,
           /*
             Apply only if the direction is active (1)
           */
-          if (FEM_Mesh.Bounds.BCC_i[i].Dir[k * NumTimeStep + TimeStep_n] == 1) {
+          if (FEM_Mesh.Bounds.BCC_i[i].Dir[k * NumTimeStep + TimeStep] == 1) {
 
             int Mask_restricted_dofs_A = Id_BCC_mask * Ndim + k;
 
@@ -849,7 +858,7 @@ static IS __get_dirichlet_list_dofs(Mask ActiveNodes, Mesh FEM_Mesh, int Step,
     Generate mask for the static condensation.
   */
   PetscInt *List_active_dofs;
-  PetscCalloc1(Order * sizeof(PetscInt), &List_active_dofs);
+  PetscCalloc1(Order, &List_active_dofs);
 
   /*
     Loop over the the boundaries to find the constrained dofs
@@ -901,7 +910,7 @@ static IS __get_dirichlet_list_dofs(Mask ActiveNodes, Mesh FEM_Mesh, int Step,
   PetscInt *List_active_dirchlet_dofs;
   PetscInt aux_idx = 0;
 
-  PetscMalloc(Order_dirichlet * sizeof(PetscInt), &List_active_dirchlet_dofs);
+  PetscMalloc1(Order_dirichlet, &List_active_dirchlet_dofs);
 
   for (int A_i = 0; A_i < Order; A_i++) {
     if (List_active_dofs[A_i] == 1) {
@@ -916,13 +925,12 @@ static IS __get_dirichlet_list_dofs(Mask ActiveNodes, Mesh FEM_Mesh, int Step,
   IS Dirichlet_dofs;
 
   ISCreateGeneral(PETSC_COMM_WORLD, Order_dirichlet, List_active_dirchlet_dofs,
-                  PETSC_COPY_VALUES, &Dirichlet_dofs);
+                  PETSC_USE_POINTER, &Dirichlet_dofs);
 
   /*
     Free auxiliar pointers
   */
   PetscFree(List_active_dofs);
-  PetscFree(List_active_dirchlet_dofs);
 
   return Dirichlet_dofs;
 }
@@ -1788,9 +1796,6 @@ static PetscErrorCode __jacobian_evaluation(SNES snes, Vec dU, Mat Jacobian,
   Particle MPM_Mesh = ((Ctx *)ctx)->MPM_Mesh;
   Mesh FEM_Mesh = ((Ctx *)ctx)->FEM_Mesh;
   Vec Lumped_Mass = ((Ctx *)ctx)->Lumped_Mass;
-  Vec Un = ((Ctx *)ctx)->U_n;
-  Vec Un_dt = ((Ctx *)ctx)->U_n_dt;
-  Vec Un_dt2 = ((Ctx *)ctx)->U_n_dt2;
   Newmark_parameters Time_Integration_Params =
       ((Ctx *)ctx)->Time_Integration_Params;
 
@@ -1952,8 +1957,6 @@ static PetscErrorCode __jacobian_evaluation(SNES snes, Vec dU, Mat Jacobian,
     }
 
   } // Lagged Jacobian
-
-  MatView(Jacobian, PETSC_VIEWER_DRAW_WORLD);
 
   return STATUS;
 }
