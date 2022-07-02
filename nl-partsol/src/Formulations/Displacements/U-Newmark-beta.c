@@ -338,6 +338,7 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
       Set SNES/KSP/KSP/PC runtime options, e.g.,
           -snes_view -snes_monitor -ksp_type <ksp> -pc_type <pc>
       - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+    PetscCall(SNESSetLagJacobian(snes, 1));
     PetscCall(SNESSetFromOptions(snes));
 
     /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -358,11 +359,9 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
 
     SNESConvergedReason converged_reason;
     PetscInt Iter, Linear_Solver_Iter;
-    PetscScalar Avg_linear_iter;
     SNESGetConvergedReason(snes, &converged_reason);
     SNESGetIterationNumber(snes, &Iter);
     SNESGetLinearSolveIterations(snes, &Linear_Solver_Iter);
-    Avg_linear_iter = ((PetscReal)Linear_Solver_Iter) / ((PetscReal)Iter);
     PetscPrintf(PETSC_COMM_WORLD, "Step %i \n", TimeStep);
     PetscPrintf(PETSC_COMM_WORLD, "%s \n",
                 SNESConvergedReasons[converged_reason]);
@@ -371,8 +370,6 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
     PetscPrintf(PETSC_COMM_WORLD,
                 "Number of Linear iterations = %" PetscInt_FMT "\n",
                 Linear_Solver_Iter);
-    PetscPrintf(PETSC_COMM_WORLD, "Average Linear its / SNES = %e\n \n",
-                (double)Avg_linear_iter);
 
     /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
        Free work space.
@@ -1825,138 +1822,131 @@ static PetscErrorCode __jacobian_evaluation(SNES snes, Vec dU, Mat Jacobian,
   double alpha_4 = Time_Integration_Params.alpha_4;
   double epsilon = Time_Integration_Params.epsilon;
 
-  // The jacobian is only computer each n iterations
-  PetscInt Iter;
-  PetscInt Jacobian_evaluation_frequency = 1;
-  PetscCall(SNESGetIterationNumber(snes, &Iter));
-  if (!(Iter % Jacobian_evaluation_frequency)) {
-
-    // Set to zero the Jacobian
-    PetscCall(MatZeroEntries(Jacobian));
+  // Set to zero the Jacobian
+  PetscCall(MatZeroEntries(Jacobian));
 
 #pragma omp parallel private(NumNodes_p, MatIndx_p, Stiffness_density_p,       \
                              Inertia_density_p, Jacobian_p, Mask_dofs_A,       \
                              Mask_dofs_B)
-    {
+  {
 #pragma omp for private(p)
-      for (p = 0; p < Np; p++) {
+    for (p = 0; p < Np; p++) {
 
-        //! Get mass and the volume of the particle in the reference
-        //! configuration and the jacobian of the deformation gradient
-        double m_p = MPM_Mesh.Phi.mass.nV[p];
-        double V0_p = MPM_Mesh.Phi.Vol_0.nV[p];
+      //! Get mass and the volume of the particle in the reference
+      //! configuration and the jacobian of the deformation gradient
+      double m_p = MPM_Mesh.Phi.mass.nV[p];
+      double V0_p = MPM_Mesh.Phi.Vol_0.nV[p];
 
-        //! Material properties of the particle
-        MatIndx_p = MPM_Mesh.MatIdx[p];
-        Material MatProp_p = MPM_Mesh.Mat[MatIndx_p];
+      //! Material properties of the particle
+      MatIndx_p = MPM_Mesh.MatIdx[p];
+      Material MatProp_p = MPM_Mesh.Mat[MatIndx_p];
 
-        //! Pointer to the incremental deformation gradient
-        double *DF_p = MPM_Mesh.Phi.DF.nM[p];
+      //! Pointer to the incremental deformation gradient
+      double *DF_p = MPM_Mesh.Phi.DF.nM[p];
 
-        //!  Define nodal connectivity for each particle
-        //!  and compute gradient of the shape function
-        NumNodes_p = MPM_Mesh.NumberNodes[p];
-        Element Nodes_p =
-            nodal_set__Particles__(p, MPM_Mesh.ListNodes[p], NumNodes_p);
-        Matrix shapefunction_n_p =
-            compute_N__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
-        Matrix d_shapefunction_n_p =
-            compute_dN__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
+      //!  Define nodal connectivity for each particle
+      //!  and compute gradient of the shape function
+      NumNodes_p = MPM_Mesh.NumberNodes[p];
+      Element Nodes_p =
+          nodal_set__Particles__(p, MPM_Mesh.ListNodes[p], NumNodes_p);
+      Matrix shapefunction_n_p =
+          compute_N__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
+      Matrix d_shapefunction_n_p =
+          compute_dN__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
 
-        //! Pushforward the shape function gradient
-        double *d_shapefunction_n1_p = push_forward_dN__MeshTools__(
-            d_shapefunction_n_p.nV, DF_p, NumNodes_p, &STATUS);
-        if (STATUS == EXIT_FAILURE) {
-          fprintf(stderr,
-                  "" RED "Error in push_forward_dN__MeshTools__()" RESET " \n");
-          STATUS = EXIT_FAILURE;
-        }
+      //! Pushforward the shape function gradient
+      double *d_shapefunction_n1_p = push_forward_dN__MeshTools__(
+          d_shapefunction_n_p.nV, DF_p, NumNodes_p, &STATUS);
+      if (STATUS == EXIT_FAILURE) {
+        fprintf(stderr,
+                "" RED "Error in push_forward_dN__MeshTools__()" RESET " \n");
+        STATUS = EXIT_FAILURE;
+      }
 
-        for (unsigned A = 0; A < NumNodes_p; A++) {
+      for (unsigned A = 0; A < NumNodes_p; A++) {
 
-          //! Get the gradient evaluation in node A \n
-          //! and the masked index of the node A
-          double shapefunction_n_pA = shapefunction_n_p.nV[A];
-          double *d_shapefunction_n_pA = d_shapefunction_n_p.nM[A];
-          int Ap = Nodes_p.Connectivity[A];
-          int Mask_node_A = ActiveNodes.Nodes2Mask[Ap];
+        //! Get the gradient evaluation in node A \n
+        //! and the masked index of the node A
+        double shapefunction_n_pA = shapefunction_n_p.nV[A];
+        double *d_shapefunction_n_pA = d_shapefunction_n_p.nM[A];
+        int Ap = Nodes_p.Connectivity[A];
+        int Mask_node_A = ActiveNodes.Nodes2Mask[Ap];
 
-          for (unsigned B = 0; B < NumNodes_p; B++) {
+        for (unsigned B = 0; B < NumNodes_p; B++) {
 
-            //! Get the gradient evaluation in node B \n
-            //! and the masked index of the node B
-            double shapefunction_n_pB = shapefunction_n_p.nV[B];
-            double *d_shapefunction_n_pB = d_shapefunction_n_p.nM[B];
-            int Bp = Nodes_p.Connectivity[B];
-            int Mask_node_B = ActiveNodes.Nodes2Mask[Bp];
+          //! Get the gradient evaluation in node B \n
+          //! and the masked index of the node B
+          double shapefunction_n_pB = shapefunction_n_p.nV[B];
+          double *d_shapefunction_n_pB = d_shapefunction_n_p.nM[B];
+          int Bp = Nodes_p.Connectivity[B];
+          int Mask_node_B = ActiveNodes.Nodes2Mask[Bp];
 
-            //! Do the local and global assembly process for the tangent matrix
-            STATUS = stiffness_density__Constitutive__(
-                p, Stiffness_density_p, &d_shapefunction_n1_p[A * Ndim],
-                &d_shapefunction_n1_p[B * Ndim], d_shapefunction_n_pA,
-                d_shapefunction_n_pB, alpha_4, MPM_Mesh, MatProp_p);
-            if (STATUS == EXIT_FAILURE) {
-              fprintf(stderr,
-                      "" RED "Error in stiffness_density__Constitutive__" RESET
-                      "\n");
+          //! Do the local and global assembly process for the tangent matrix
+          STATUS = stiffness_density__Constitutive__(
+              p, Stiffness_density_p, &d_shapefunction_n1_p[A * Ndim],
+              &d_shapefunction_n1_p[B * Ndim], d_shapefunction_n_pA,
+              d_shapefunction_n_pB, alpha_4, MPM_Mesh, MatProp_p);
+          if (STATUS == EXIT_FAILURE) {
+            fprintf(stderr,
+                    "" RED "Error in stiffness_density__Constitutive__" RESET
+                    "\n");
+          }
+
+          //! Damage contribution of the particle to the residual
+          if ((Driver_EigenErosion == true) ||
+              (Driver_EigenSoftening == true)) {
+            double damage_p = MPM_Mesh.Phi.Damage_n1[p];
+            for (unsigned i = 0; i < Ndim * Ndim; i++) {
+              Stiffness_density_p[i] *= (1.0 - damage_p);
             }
+          }
 
-            //! Damage contribution of the particle to the residual
-            if ((Driver_EigenErosion == true) ||
-                (Driver_EigenSoftening == true)) {
-              double damage_p = MPM_Mesh.Phi.Damage_n1[p];
-              for (unsigned i = 0; i < Ndim * Ndim; i++) {
-                Stiffness_density_p[i] *= (1.0 - damage_p);
-              }
-            }
+          __compute_local_intertia(Inertia_density_p, shapefunction_n_pA,
+                                   shapefunction_n_pB, m_p, alpha_1, epsilon,
+                                   Mask_node_A, Mask_node_B);
 
-            __compute_local_intertia(Inertia_density_p, shapefunction_n_pA,
-                                     shapefunction_n_pB, m_p, alpha_1, epsilon,
-                                     Mask_node_A, Mask_node_B);
+          __local_tangent_stiffness(Jacobian_p, Stiffness_density_p,
+                                    Inertia_density_p, V0_p);
 
-            __local_tangent_stiffness(Jacobian_p, Stiffness_density_p,
-                                      Inertia_density_p, V0_p);
-
-            __get_tangent_matrix_assembling_locations(Mask_dofs_A, Mask_node_A,
-                                                      Mask_dofs_B, Mask_node_B);
+          __get_tangent_matrix_assembling_locations(Mask_dofs_A, Mask_node_A,
+                                                    Mask_dofs_B, Mask_node_B);
 
 #pragma omp critical
-            {
+          {
 
-              MatSetValues(Jacobian, 1, Mask_dofs_A, 1, Mask_dofs_B, Jacobian_p,
-                           ADD_VALUES);
+            MatSetValues(Jacobian, 1, Mask_dofs_A, 1, Mask_dofs_B, Jacobian_p,
+                         ADD_VALUES);
 
-              MatSetValues(Jacobian, Ndim, Mask_dofs_A, Ndim, Mask_dofs_B,
-                           Jacobian_p, ADD_VALUES);
+            MatSetValues(Jacobian, Ndim, Mask_dofs_A, Ndim, Mask_dofs_B,
+                         Jacobian_p, ADD_VALUES);
 
-            } // #pragma omp critical
-          }   // for B (node)
-        }     // for A (node)
+          } // #pragma omp critical
+        }   // for B (node)
+      }     // for A (node)
 
-        // Free memory
-        free__MatrixLib__(shapefunction_n_p);
-        free__MatrixLib__(d_shapefunction_n_p);
-        free(d_shapefunction_n1_p);
-        free(Nodes_p.Connectivity);
+      // Free memory
+      free__MatrixLib__(shapefunction_n_p);
+      free__MatrixLib__(d_shapefunction_n_p);
+      free(d_shapefunction_n1_p);
+      free(Nodes_p.Connectivity);
 
-      } // for p (particle)
-    }   // #pragma omp parallel
+    } // for p (particle)
+  }   // #pragma omp parallel
 
-    /*
-       Assemble matrix
-    */
-    PetscCall(MatAssemblyBegin(Jacobian, MAT_FINAL_ASSEMBLY));
-    PetscCall(MatAssemblyEnd(Jacobian, MAT_FINAL_ASSEMBLY));
+  /*
+     Assemble matrix
+  */
+  PetscCall(MatAssemblyBegin(Jacobian, MAT_FINAL_ASSEMBLY));
+  PetscCall(MatAssemblyEnd(Jacobian, MAT_FINAL_ASSEMBLY));
 
-    /*
-      Dirichlet boundary conditions
-    */
-    if (Iter == 0) {
-      PetscCall(
-          MatZeroRowsColumnsIS(Jacobian, Dirichlet_dofs, 1.0, NULL, NULL));
-    }
-
-  } // Lagged Jacobian
+  /*
+    Dirichlet boundary conditions
+  */
+  PetscInt Iter;
+  PetscCall(SNESGetIterationNumber(snes, &Iter));
+  if (Iter == 0) {
+    PetscCall(MatZeroRowsColumnsIS(Jacobian, Dirichlet_dofs, 1.0, NULL, NULL));
+  }
 
   return STATUS;
 }
