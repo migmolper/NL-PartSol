@@ -6,6 +6,7 @@
 #include <petscmat.h>
 #include <petscsys.h>
 #include <petscsystypes.h>
+#include <petscvec.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -109,20 +110,6 @@ static void __nodal_inertial_forces(PetscScalar *Lagrangian,
                                     Mask ActiveDOFs, Newmark_parameters Params);
 
 static int *__create_sparsity_pattern(Mask ActiveNodes, Particle MPM_Mesh);
-
-static void __compute_local_intertia(double *Inertia_density_p, double Na_p,
-                                     double Nb_p, double m_p, double alpha_1,
-                                     double epsilon, unsigned A, unsigned B);
-
-static void __get_tangent_matrix_assembling_locations(int *Mask_dofs_A,
-                                                      int Mask_node_A,
-                                                      int *Mask_dofs_B,
-                                                      int Mask_node_B);
-
-static void __local_tangent_stiffness(double *Tangent_Stiffness_p,
-                                      const double *Stiffness_density_p,
-                                      const double *Inertia_density_p,
-                                      double V0_p);
 
 static PetscErrorCode __jacobian_evaluation(SNES snes, Vec dU, Mat Jacobian,
                                             Mat B, void *ctx);
@@ -1689,92 +1676,6 @@ static int *__create_sparsity_pattern(Mask ActiveNodes, Particle MPM_Mesh) {
 
 /**************************************************************/
 
-static void __compute_local_intertia(double *Inertia_density_p, double Na_p,
-                                     double Nb_p, double m_p, double alpha_1,
-                                     double epsilon, unsigned A, unsigned B) {
-
-  double ID_AB_p =
-      alpha_1 * ((1 - epsilon) * Na_p * Nb_p + (A == B) * epsilon * Na_p) * m_p;
-
-#if NumberDimensions == 2
-  Inertia_density_p[0] = ID_AB_p;
-  Inertia_density_p[1] = ID_AB_p;
-#else
-  Inertia_density_p[0] = ID_AB_p;
-  Inertia_density_p[1] = ID_AB_p;
-  Inertia_density_p[2] = ID_AB_p;
-#endif
-}
-
-/**************************************************************/
-
-/*!
-  \brief Computes the local tangent stiffness as the addition of the \n
-  local tangent stiffness density and the intertia density matrix
-
-  \param[out] Tangent_Stiffness_p Local tangent stiffness
-  \param[in] Stiffness_density_p Local stiffness density
-  \param[in] Inertia_density_p Inertia density matrix, a.k.a mass matrix
-  \param[in] V0_p Particle volume
-*/
-static void __local_tangent_stiffness(double *Tangent_Stiffness_p,
-                                      const double *Stiffness_density_p,
-                                      const double *Inertia_density_p,
-                                      double V0_p) {
-#if NumberDimensions == 2
-  Tangent_Stiffness_p[0] = Stiffness_density_p[0] * V0_p + Inertia_density_p[0];
-  Tangent_Stiffness_p[1] = Stiffness_density_p[1] * V0_p;
-  Tangent_Stiffness_p[2] = Stiffness_density_p[2] * V0_p;
-  Tangent_Stiffness_p[3] = Stiffness_density_p[3] * V0_p + Inertia_density_p[1];
-#else
-  Tangent_Stiffness_p[0] = Stiffness_density_p[0] * V0_p + Inertia_density_p[0];
-  Tangent_Stiffness_p[1] = Stiffness_density_p[1] * V0_p;
-  Tangent_Stiffness_p[2] = Stiffness_density_p[2] * V0_p;
-  Tangent_Stiffness_p[3] = Stiffness_density_p[3] * V0_p;
-  Tangent_Stiffness_p[4] = Stiffness_density_p[4] * V0_p + Inertia_density_p[1];
-  Tangent_Stiffness_p[5] = Stiffness_density_p[5] * V0_p;
-  Tangent_Stiffness_p[6] = Stiffness_density_p[6] * V0_p;
-  Tangent_Stiffness_p[7] = Stiffness_density_p[7] * V0_p;
-  Tangent_Stiffness_p[8] = Stiffness_density_p[8] * V0_p + Inertia_density_p[2];
-#endif
-}
-
-/**************************************************************/
-
-/**
- * @brief Returns a mask with the position of the stifness in the global tangent
- * matrix for an eeficient assembly process.
- *
- * @param Mask_dofs_A Global dofs positions for node A.
- * @param Mask_node_A Index of the node A with mask.
- * @param Mask_dofs_B Global dofs positions for node B
- * @param Mask_node_B Index of the node B with mask
- */
-static void __get_tangent_matrix_assembling_locations(int *Mask_dofs_A,
-                                                      int Mask_node_A,
-                                                      int *Mask_dofs_B,
-                                                      int Mask_node_B) {
-  unsigned Ndim = NumberDimensions;
-
-#if NumberDimensions == 2
-  Mask_dofs_A[0] = Mask_node_A * Ndim + 0;
-  Mask_dofs_A[1] = Mask_node_A * Ndim + 1;
-
-  Mask_dofs_B[0] = Mask_node_B * Ndim + 0;
-  Mask_dofs_B[1] = Mask_node_B * Ndim + 1;
-#else
-  Mask_dofs_A[0] = Mask_node_A * Ndim + 0;
-  Mask_dofs_A[1] = Mask_node_A * Ndim + 1;
-  Mask_dofs_A[2] = Mask_node_A * Ndim + 2;
-
-  Mask_dofs_B[0] = Mask_node_B * Ndim + 0;
-  Mask_dofs_B[1] = Mask_node_B * Ndim + 1;
-  Mask_dofs_B[2] = Mask_node_B * Ndim + 2;
-#endif
-}
-
-/**************************************************************/
-
 /**
  * @brief Evaluates Jacobian matrix.
  *
@@ -1808,15 +1709,13 @@ static PetscErrorCode __jacobian_evaluation(SNES snes, Vec dU, Mat Jacobian,
   unsigned p;
 
 #if NumberDimensions == 2
-  double Stiffness_density_p[4];
-  double Inertia_density_p[2];
   double Jacobian_p[4];
+  double Stiffness_density_p[4];
   int Mask_dofs_A[2];
   int Mask_dofs_B[2];
 #else
-  double Stiffness_density_p[9];
-  double Inertia_density_p[3];
   double Jacobian_p[9];
+  double Stiffness_density_p[9];
   int Mask_dofs_A[3];
   int Mask_dofs_B[3];
 #endif
@@ -1826,12 +1725,14 @@ static PetscErrorCode __jacobian_evaluation(SNES snes, Vec dU, Mat Jacobian,
   double alpha_4 = Time_Integration_Params.alpha_4;
   double epsilon = Time_Integration_Params.epsilon;
 
+  const PetscScalar *Lumped_Mass_ptr;
+  PetscCall(VecGetArrayRead(Lumped_Mass, &Lumped_Mass_ptr));
+
   // Set to zero the Jacobian
   PetscCall(MatZeroEntries(Jacobian));
 
 #pragma omp parallel private(NumNodes_p, MatIndx_p, Stiffness_density_p,       \
-                             Inertia_density_p, Jacobian_p, Mask_dofs_A,       \
-                             Mask_dofs_B)
+                             Jacobian_p, Mask_dofs_A, Mask_dofs_B)
   {
 #pragma omp for private(p)
     for (p = 0; p < Np; p++) {
@@ -1905,15 +1806,22 @@ static PetscErrorCode __jacobian_evaluation(SNES snes, Vec dU, Mat Jacobian,
             }
           }
 
-          __compute_local_intertia(Inertia_density_p, shapefunction_n_pA,
-                                   shapefunction_n_pB, m_p, alpha_1, epsilon,
-                                   Mask_node_A, Mask_node_B);
+          /*
+          Assemble the jacobian using the stiffness density derived from a
+          component-free aproximation and simultaneasly assemble the mask with
+          the dofs
+          */
+          for (unsigned i = 0; i < Ndim; i++) {
+            for (unsigned j = 0; j < Ndim; j++) {
 
-          __local_tangent_stiffness(Jacobian_p, Stiffness_density_p,
-                                    Inertia_density_p, V0_p);
+              /* Contribution of the internal forces to the tangent matrix */
+              Jacobian_p[i * Ndim + j] =
+                  Stiffness_density_p[i * Ndim + j] * V0_p;
+            }
 
-          __get_tangent_matrix_assembling_locations(Mask_dofs_A, Mask_node_A,
-                                                    Mask_dofs_B, Mask_node_B);
+            Mask_dofs_A[i] = Mask_node_A * Ndim + i;
+            Mask_dofs_B[i] = Mask_node_B * Ndim + i;
+          }
 
 #pragma omp critical
           {
@@ -1935,6 +1843,20 @@ static PetscErrorCode __jacobian_evaluation(SNES snes, Vec dU, Mat Jacobian,
   }   // #pragma omp parallel
 
   /*
+    Add the contribution of the lumped mass matrix to the tangent matrix
+  */
+  PetscInt Dof_Ai;
+  PetscInt TotalDofs = Ndim * ActiveNodes.Nactivenodes;
+#pragma omp parallel
+  {
+#pragma omp for private(Dof_Ai)
+    for (Dof_Ai = 0; Dof_Ai < TotalDofs; Dof_Ai++) {
+      const PetscScalar Inertia_Ai = alpha_1 * Lumped_Mass_ptr[Dof_Ai];
+      MatSetValues(Jacobian, 1, &Dof_Ai, 1, &Dof_Ai, &Inertia_Ai, ADD_VALUES);
+    }
+  }
+
+  /*
      Assemble matrix
   */
   PetscCall(MatAssemblyBegin(Jacobian, MAT_FINAL_ASSEMBLY));
@@ -1948,6 +1870,8 @@ static PetscErrorCode __jacobian_evaluation(SNES snes, Vec dU, Mat Jacobian,
   if (Iter == 0) {
     PetscCall(MatZeroRowsColumnsIS(Jacobian, Dirichlet_dofs, 1.0, NULL, NULL));
   }
+
+  PetscCall(VecRestoreArrayRead(Lumped_Mass, &Lumped_Mass_ptr));
 
   return STATUS;
 }
