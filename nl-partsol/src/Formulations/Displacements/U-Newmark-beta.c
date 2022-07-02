@@ -101,7 +101,8 @@ static PetscErrorCode __nodal_internal_forces(PetscScalar *Lagrangian,
                                               Particle MPM_Mesh, Mesh FEM_Mesh);
 
 static void __nodal_traction_forces(PetscScalar *Lagrangian, Mask ActiveNodes,
-                                    Particle MPM_Mesh, Mesh FEM_Mesh);
+                                    Mask ActiveDOFs, Particle MPM_Mesh,
+                                    Mesh FEM_Mesh);
 
 static void __nodal_inertial_forces(PetscScalar *Lagrangian,
                                     const PetscScalar *M_II,
@@ -1071,7 +1072,8 @@ static PetscErrorCode __lagrangian_evaluation(SNES snes, Vec dU, Vec Lagrangian,
   PetscCall(__nodal_internal_forces(Lagrangian_ptr, ActiveNodes, ActiveDOFs,
                                     MPM_Mesh, FEM_Mesh));
 
-  __nodal_traction_forces(Lagrangian_ptr, ActiveNodes, MPM_Mesh, FEM_Mesh);
+  __nodal_traction_forces(Lagrangian_ptr, ActiveNodes, ActiveDOFs, MPM_Mesh,
+                          FEM_Mesh);
 
   __nodal_inertial_forces(Lagrangian_ptr, Lumped_Mass_ptr, dU_ptr, Un_dt_ptr,
                           Un_dt2_ptr, ActiveNodes, ActiveDOFs,
@@ -1290,6 +1292,7 @@ static PetscErrorCode __constitutive_update(Particle MPM_Mesh, Mesh FEM_Mesh) {
  *
  * @param Lagrangian Lagrangian vector
  * @param ActiveNodes List of nodes which takes place in the computation
+ * @param ActiveDOFs List of dofs which takes place in the computation 
  * @param MPM_Mesh Information of the particles
  * @param FEM_Mesh Information of the background nodes
  * @return PetscErrorCode
@@ -1426,11 +1429,13 @@ static PetscErrorCode __nodal_internal_forces(PetscScalar *Lagrangian,
  *
  * @param Lagrangian Lagrangian vector
  * @param ActiveNodes List of nodes which takes place in the computation
+ * @param ActiveDOFs List of dofs which takes place in the computation 
  * @param MPM_Mesh Information of the particles
  * @param FEM_Mesh Information of the background nodes
  */
 static void __nodal_traction_forces(PetscScalar *Lagrangian, Mask ActiveNodes,
-                                    Particle MPM_Mesh, Mesh FEM_Mesh) {
+                                    Mask ActiveDOFs, Particle MPM_Mesh,
+                                    Mesh FEM_Mesh) {
 
   unsigned Ndim = NumberDimensions;
   unsigned NumContactForces = MPM_Mesh.Neumann_Contours.NumBounds;
@@ -1529,7 +1534,9 @@ static void __nodal_traction_forces(PetscScalar *Lagrangian, Mask ActiveNodes,
 #pragma omp critical
         {
           for (unsigned i = 0; i < Ndim; i++) {
-            Lagrangian[Mask_dofs_A[i]] += LocalTractionForce_Ap[i] * A0_p;
+            if (ActiveDOFs.Nodes2Mask[Mask_dofs_A[i]] != -1) {
+              Lagrangian[Mask_dofs_A[i]] += LocalTractionForce_Ap[i] * A0_p;
+            }
           }
         } // #pragma omp critical
 
@@ -1554,6 +1561,7 @@ static void __nodal_traction_forces(PetscScalar *Lagrangian, Mask ActiveNodes,
  * @param Un_dt Nodal field of velocities at t = n
  * @param Un_dt2 Nodal field of accelerations at t = n
  * @param ActiveNodes List of nodes which takes place in the computation
+ * @param ActiveDOFs List of dofs which takes place in the computation 
  * @param Params Time integration parameters
  */
 static void
@@ -1764,9 +1772,9 @@ static void __get_tangent_matrix_assembling_locations(int *Mask_dofs_A,
  * @brief Evaluates Jacobian matrix.
  *
  * @param snes the SNES context
- * @param[in] DU Input vector
- * @param[in,out] jac Jacobian matrix
- * @param[out] Jacobian Optionally different preconditioning matrix
+ * @param DU Input vector
+ * @param jac Jacobian matrix
+ * @param Jacobian Optionally different preconditioning matrix
  * @param ctx User-defined context
  * @return PetscErrorCode
  */
