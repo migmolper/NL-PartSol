@@ -1,4 +1,5 @@
 #include "Formulations/Courant.h"
+#include "Globals.h"
 
 /*********************************************************************/
 

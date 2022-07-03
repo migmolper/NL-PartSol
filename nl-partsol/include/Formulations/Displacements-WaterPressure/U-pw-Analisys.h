@@ -1,12 +1,15 @@
 #ifndef _UPW_ANALISYS_H_
 #define _UPW_ANALISYS_H_
 
+// clang-format off
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>
 #include "Macros.h"
 #include "Types.h"
+#include "Globals.h"
 #include "Matlib.h"
+// clang-format on
 
 
 /*!

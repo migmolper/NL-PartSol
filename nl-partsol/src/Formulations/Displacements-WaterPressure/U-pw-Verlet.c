@@ -1,9 +1,16 @@
 #include "Formulations/Displacements-WaterPressure/U-pw-Verlet.h"
+#include "Globals.h"
+
+// Global 
+Event * Out_nodal_path_csv;
+int Number_Out_nodal_path_csv;
+Event * Out_particles_path_csv;
+int Number_Out_particles_path_csv;
+
 
 /*
   Auxiliar functions and variables
 */
-
 static char Error_message[MAXW];
 static void standard_error();
 
@@ -894,7 +901,7 @@ static void update_Local_State(
                                                               gradient_p);
     GRAD_Nodal_Velocity_p =
         vector_linear_mapping__TensorLib__(FT_n1_p, grad_Nodal_Velocity_p);
-    dJ_dt_n1_p = I1__TensorLib__(GRAD_Nodal_Velocity_p);
+   // dJ_dt_n1_p = I1__TensorLib__(GRAD_Nodal_Velocity_p);
 
     /*
       Update state parameters

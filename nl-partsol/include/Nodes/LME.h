@@ -42,18 +42,17 @@ double beta__LME__(double, double);
 
 /****************************************************************************/
 
-/*!
-  \fn void update_lambda_Newton_Rapson__LME__(Matrix l, Matrix lambda, double Beta)
-
-  \brief Function ot get the lagrange multipliers "lambda" (1 x dim) for the LME 
-  shape function. The numerical methodis the Newton-Rapson.
-
-  \param p : Current particle
-  \param l : Set than contanins vector form neighborhood nodes to particle.
-  \param lambda : Lagrange multiplier.
-  \param Beta : Thermalization parameter.
-*/
-void update_lambda_Newton_Rapson__LME__(int, Matrix, Matrix, double);
+/**
+ * @brief Function ot get the lagrange multipliers "lambda" (1 x dim) for the LME  
+ * shape function. The numerical methodis the Newton-Rapson.
+ * 
+ * @param Idx_particle Current particle
+ * @param l Set than contanins vector form neighborhood nodes to particle.
+ * @param lambda Lagrange multiplier.
+ * @param Beta Thermalization parameter.
+ * @return int 
+ */
+static int __lambda_Newton_Rapson(int Idx_particle,Matrix l, Matrix lambda,double Beta);
 /****************************************************************************/
 
 /*!
@@ -95,16 +94,14 @@ Matrix p__LME__(Matrix, Matrix, double);
 Matrix dp__LME__(Matrix, Matrix);
 /****************************************************************************/
 
-/*!
-
- \fn void local_search__LME__(Particle MPM_Mesh, Mesh FEM_Mesh)
-
-  \brief Compute the local search for the LME (update to reduce the number of computational nodes)
-
-  \param MPM_Mesh : Variable with the particle information
-  \param FEM_Mesh : Variable wih information of the background set of nodes
-*/
-void local_search__LME__(Particle, Mesh);
+/**
+ * @brief Compute the local search for the LME (update to reduce the number of computational nodes)
+ * 
+ * @param MPM_Mesh Variable with the particle information
+ * @param FEM_Mesh Variable wih information of the background set of nodes
+ * @return int 
+ */
+int local_search__LME__(Particle MPM_Mesh, Mesh FEM_Mesh);
 /****************************************************************************/
 
 #endif

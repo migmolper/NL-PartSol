@@ -16,7 +16,14 @@
 void initialise_shapefun__MeshTools__(Particle,Mesh);
 /*******************************************************/
 
-void local_search__MeshTools__(Particle, Mesh);
+/**
+ * @brief Search particles in the neighbourhood of the closest node
+ * 
+ * @param MPM_Mesh Information of the particle set
+ * @param FEM_Mesh Information of the nodal set
+ * @return int 
+ */
+int local_search__MeshTools__(Particle MPM_Mesh, Mesh FEM_Mesh);
 /*******************************************************/
 
 Matrix   compute_N__MeshTools__(Element, Particle, Mesh);

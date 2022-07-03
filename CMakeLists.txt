@@ -4,17 +4,37 @@ project("nl-partsol")
 SET(CMAKE_COLOR_MAKEFILE ON)
 SET(CMAKE_VERBOSE_MAKEFILE OFF)
 
+# Check OS
+IF (APPLE)
+    message("MACOSX system")
+    add_definitions("-DSYS_MACOSX")
+    SET(BLA_VENDOR Apple)
+ELSEIF (UNIX)
+    message("UNIX system")
+    add_definitions("-DSYS_LINUX")
+    SET(BLA_VENDOR OpenBLAS)
+ELSE ()
+    message(FATAL_ERROR "Your system has not been recongnised." )
+ENDIF ()
+
+# Add LAPACK
+option(USE_LAPACK "Use LAPACK solver library" ON)
+
 # Add OpenMP
-option(USE_OPENMP "Use OpenMP solver library" OFF)
+option(USE_OPENMP "Use OpenMP solver library" ON)
 
 # Add PETSC
 option(USE_PETSC "Use PETSC solver library" ON)
 
-# General compile settings
-IF (NOT CMAKE_BUILD_TYPE)
- #SET(CMAKE_BUILD_TYPE "Debug")
- SET(CMAKE_BUILD_TYPE "Release")
-ENDIF (NOT CMAKE_BUILD_TYPE)
+# Compile settings
+
+if (NOT CMAKE_BUILD_TYPE)
+    message(STATUS "No build type selected, default to Release")
+    set(CMAKE_BUILD_TYPE "Release")
+endif()
+
+set(CMAKE_C_FLAGS_DEBUG "-O0 -g -Wall -Wpedantic -Wextra -Wunused-variable")
+set(CMAKE_C_FLAGS_RELEASE "-Ofast")
 
 add_subdirectory (nl-partsol) 
 #add_subdirectory (test)

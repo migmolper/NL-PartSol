@@ -8,13 +8,6 @@
 #include <math.h>
 #include "Macros.h"
 #include "Types.h"
-#include "Globals.h"
-
-#ifdef __linux__
-#include <lapacke.h>
-#elif __APPLE__
-#include <Accelerate/Accelerate.h>
-#endif
 
 /*!
   \param[out] Stiffness_density Elastoplastic tangent matrix
@@ -22,7 +15,7 @@
   \param[in] dN_beta_n1 Shape function gradient node B (t = n + 1)
   \param[in] IO_State State variables
 */
-int compute_1PK_elastoplastic_tangent_matrix(
+int compute_stiffness_elastoplastic__Constitutive__(
   double *Stiffness_density,
   const double *dN_alpha_n1,
   const double *dN_beta_n1,  

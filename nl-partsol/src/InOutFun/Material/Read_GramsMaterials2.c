@@ -1,11 +1,22 @@
+// clang-format off
 #include <string.h>
-#include "nl-partsol.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
+#include <stddef.h>
+#include "Macros.h"
+#include "Types.h"
+#include "Globals.h"
+#include "Matlib.h"
+#include "Particles.h"
+#include "InOutFun.h"
+// clang-format on
 
 /*
   Call global variables
 */
-double TOL_Radial_Returning;
-int Max_Iterations_Radial_Returning;
+extern double TOL_Radial_Returning;
+extern int Max_Iterations_Radial_Returning;
 
 /*
   Local structures
@@ -39,7 +50,7 @@ static FILE *Open_and_Check_simulation_file(char *);
 
 /**********************************************************************/
 
-Material *Read_Materials__InOutFun__(char *SimulationFile, int NumberMaterials)
+int Read_Materials__InOutFun__(Material * List_Materials, char *SimulationFile)
 /*
 
 Define-Material(idx=0,Model=Drucker-Prager-Plane-Strain)
@@ -74,12 +85,7 @@ Define-Material(idx=0,Model=Drucker-Prager-Plane-Strain)
   Param_Index_and_Model Index_and_Model;
 
   /* Allocate table with the material */
-  Material *List_Materials =
-      (Material *)malloc(NumberMaterials * sizeof(Material));
-  if (List_Materials == NULL) {
-    sprintf(Error_message, "%s", "Memory error for table of material");
-    standard_error();
-  }
+
 
   /* Open and check file */
   Sim_dat = Open_and_Check_simulation_file(SimulationFile);
@@ -109,24 +115,38 @@ Define-Material(idx=0,Model=Drucker-Prager-Plane-Strain)
       } else if (strcmp(Index_and_Model.Model, "Saint-Venant-Kirchhoff") == 0) {
         List_Materials[idx] = Define_Saint_Venant_Kirchhoff(
             Sim_dat, Index_and_Model.Model, Index_and_Model.Idx);
+      } else if (strcmp(Index_and_Model.Model, "Hencky") == 0) {
+
+        STATUS = Define_Hencky(&List_Materials[idx], Sim_dat,
+                               Index_and_Model.Model, Index_and_Model.Idx);
+
       } else if (strcmp(Index_and_Model.Model, "Neo-Hookean-Wriggers") == 0) {
-        List_Materials[idx] = Define_Neo_Hookean_Wriggers(
-            Sim_dat, Index_and_Model.Model, Index_and_Model.Idx);
+
+        STATUS = Define_Neo_Hookean_Wriggers(&List_Materials[idx], Sim_dat,
+                                             Index_and_Model.Model,
+                                             Index_and_Model.Idx);
+
       } else if (strcmp(Index_and_Model.Model, "Von-Mises") == 0) {
-        
-        STATUS = Define_Von_Mises(&List_Materials[idx],Sim_dat,Index_and_Model.Model,Index_and_Model.Idx);
+
+        STATUS = Define_Von_Mises(&List_Materials[idx], Sim_dat,
+                                  Index_and_Model.Model, Index_and_Model.Idx);
 
       } else if (strcmp(Index_and_Model.Model, "Matsuoka-Nakai") == 0) {
 
-        STATUS = Define_Matsuoka_Nakai(&List_Materials[idx],Sim_dat,Index_and_Model.Model,Index_and_Model.Idx);
+        STATUS =
+            Define_Matsuoka_Nakai(&List_Materials[idx], Sim_dat,
+                                  Index_and_Model.Model, Index_and_Model.Idx);
 
       } else if (strcmp(Index_and_Model.Model, "Lade-Duncan") == 0) {
 
-        STATUS = Define_Lade_Duncan(&List_Materials[idx],Sim_dat,Index_and_Model.Model,Index_and_Model.Idx);
+        STATUS = Define_Lade_Duncan(&List_Materials[idx], Sim_dat,
+                                    Index_and_Model.Model, Index_and_Model.Idx);
 
       } else if (strcmp(Index_and_Model.Model, "Drucker-Prager") == 0) {
 
-        STATUS = Define_Drucker_Prager(&List_Materials[idx],Sim_dat,Index_and_Model.Model,Index_and_Model.Idx);
+        STATUS =
+            Define_Drucker_Prager(&List_Materials[idx], Sim_dat,
+                                  Index_and_Model.Model, Index_and_Model.Idx);
 
       } else if (strcmp(Index_and_Model.Model,
                         "Newtonian-Fluid-Compressible") == 0) {
@@ -148,12 +168,7 @@ Define-Material(idx=0,Model=Drucker-Prager-Plane-Strain)
   /* Close  file */
   fclose(Sim_dat);
 
-  if(STATUS == EXIT_FAILURE)
-  {
-    exit(0);
-  }
-
-  return List_Materials;
+  return STATUS;
 }
 
 /**********************************************************************/

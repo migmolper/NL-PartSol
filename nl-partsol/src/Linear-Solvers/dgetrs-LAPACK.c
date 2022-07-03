@@ -1,4 +1,14 @@
 
+#include <stdlib.h>
+#include <stdio.h>
+#include "Macros.h"
+
+#ifdef __linux__
+#include <lapacke.h>
+#elif __APPLE__
+#include <Accelerate/Accelerate.h>
+#endif
+
 #include "Linear-Solvers/dgetrs-LAPACK.h"
 
 int dgetrs_LAPACK(
@@ -7,35 +17,35 @@ int dgetrs_LAPACK(
     unsigned Nactivedofs)
 {
   int STATUS = EXIT_SUCCESS;
-  int Order = Nactivedofs;
-  int LDA = Nactivedofs;
-  int LDB = Nactivedofs;
+  lapack_int Order = Nactivedofs;
+  lapack_int LDA = Nactivedofs;
+  lapack_int LDB = Nactivedofs;
   char TRANS = 'T'; /* (Transpose) */
-  int INFO = 3;
-  int NRHS = 1;
-  int *IPIV = (int *)calloc(Order, __SIZEOF_INT__);
+  lapack_int INFO = 3;
+  lapack_int NRHS = 1;
+  lapack_int *IPIV = (lapack_int  *)calloc(Order, sizeof(lapack_int));
   if(IPIV == NULL){
         fprintf(stderr, ""RED"Error in calloc(): Out of memory"RESET" \n");
         return EXIT_FAILURE;
   }   
   
   //  Compute the LU factorization
-  dgetrf_(&Order, &Order, Tangent_Stiffness, &LDA, IPIV, &INFO);
-  if (INFO) {
+  INFO = LAPACKE_dgetrf(LAPACK_ROW_MAJOR,Order,Order,Tangent_Stiffness,LDA,IPIV);
+  if (INFO != 0) {
     free(IPIV);
-    fprintf(stderr, "%s : %s %s %s \n", "Error in dgetrf_", "The function",
-            "dgetrf_", "returned an error message !!!");
+    fprintf(stderr, "%s : %s %s %s \n", "Error in LAPACKE_dgetrf", "The function",
+            "LAPACKE_dgetrf", "returned an error message !!!");
     return EXIT_FAILURE;
   }
 
   /*
     Solve the system
   */
-  dgetrs_(&TRANS, &Order, &NRHS, Tangent_Stiffness, &LDA, IPIV, Residual, &LDB, &INFO);
-  if (INFO) {
+  INFO = LAPACKE_dgetrs(LAPACK_ROW_MAJOR,'N',Order, NRHS, Tangent_Stiffness, LDA,IPIV,Residual,LDB);
+  if (INFO != 0) {
     free(IPIV);
-    fprintf(stderr, "%s : %s %s %s \n", "Error in dgetrs_", "The function",
-            "dgetrs_", "returned an error message !!!");
+    fprintf(stderr, "%s : %s %s %s \n", "Error in LAPACKE_dgetrs", "The function",
+            "LAPACKE_dgetrs", "returned an error message !!!");
     return EXIT_FAILURE;
   }
 

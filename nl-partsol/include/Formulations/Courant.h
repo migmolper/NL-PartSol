@@ -13,8 +13,8 @@
 /*
   Call global variables
 */
-Mixture *Soil_Water_Mixtures;
-int Number_Soil_Water_Mixtures;
+//Mixture *Soil_Water_Mixtures;
+//int Number_Soil_Water_Mixtures;
 
 
 /*!

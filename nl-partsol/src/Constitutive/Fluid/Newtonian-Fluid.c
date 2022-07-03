@@ -1,9 +1,20 @@
+/**
+ * @file Newtonian-Fluid.c
+ * @author Miguel Molinos (@migmolper)
+ * @brief 
+ * @version 0.1
+ * @date 2022-05-25
+ * 
+ * @copyright Copyright (c) 2022
+ * 
+ */
 
 #include "Constitutive/Fluid/Newtonian-Fluid.h"
+#include "Globals.h"
 
 /**************************************************************/
 
-int compute_Kirchhoff_Stress_Tensor_Newtonian_Fluid(
+int compute_Kirchhoff_Stress_Newtonian_Fluid__Constitutive__(
   State_Parameters IO_State,
   Material MatProp_p) {
 
@@ -69,7 +80,7 @@ int compute_Kirchhoff_Stress_Tensor_Newtonian_Fluid(
 
 /**************************************************************/
 
-int compute_stiffness_density_Newtonian_Fluid(
+int compute_stiffness_density_Newtonian_Fluid__Constitutive__(
   double * Stiffness_Density,
   const double * dN_alpha_n1,
   const double * dN_beta_n1,

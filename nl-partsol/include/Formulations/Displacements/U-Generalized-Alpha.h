@@ -10,7 +10,6 @@
 // Global libs
 #include "Macros.h"
 #include "Types.h"
-#include "Globals.h"
 #include "Matlib.h"
 #include "Particles.h"
 
@@ -38,7 +37,7 @@
 
 
 //  Global variables
-double Thickness_Plain_Stress;
+//double Thickness_Plain_Stress;
 
 /*!
   \brief The generalized-alpha algorithm here implemented is analogous

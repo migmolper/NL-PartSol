@@ -1,13 +1,19 @@
+// clang-format off
+#include <stdlib.h>
+#include <stdbool.h>
+#include <stdio.h>
 #include <string.h>
 #include <math.h>
-#include "nl-partsol.h"
+#include "Macros.h"
+#include "Types.h"
+#include "Matlib.h"
+// clang-format on
 
 #ifdef __linux__
 #include <lapacke.h>
 
 #elif __APPLE__
 #include <Accelerate/Accelerate.h>
-
 #endif
 
 /*********************************************************************/
@@ -1001,75 +1007,6 @@ Matrix lumped__MatrixLib__(Matrix M_in) {
     }
   }
   return M_out;
-}
-
-/*********************************************************************/
-
-double rcond__MatrixLib__(Matrix A)
-/*
-  C = rcond(A) returns an estimate for the reciprocal condition of A in 1-norm.
-  If A is well conditioned, rcond(A) is near 1.0.
-  If A is badly conditioned, rcond(A) is near 0.
-*/
-{
-
-  double RCOND;
-  double ANORM;
-  int INFO;
-  int N_rows = A.N_rows;
-  int N_cols = A.N_cols;
-  int LDA = IMAX(N_rows, N_cols);
-  double *AUX_MEMORY = (double *)calloc(N_rows * N_cols, sizeof(double));
-  double *WORK_ANORM =
-      (double *)Allocate_Array(IMAX(1, N_rows), sizeof(double));
-  double *WORK_RCOND = (double *)Allocate_Array(4 * N_rows, sizeof(double));
-  int *IPIV = (int *)Allocate_Array(IMIN(N_rows, N_cols), sizeof(int));
-  int *IWORK_RCOND = (int *)Allocate_Array(N_rows, sizeof(int));
-
-  // Copy matrix because dgetrf_ is a destructive operation
-  memcpy(AUX_MEMORY, A.nV, N_rows * N_cols * sizeof(double));
-
-  // Compute 1-norm
-  ANORM = dlange_("1", &N_rows, &N_cols, AUX_MEMORY, &LDA, WORK_ANORM);
-
-  // The factors L and U from the factorization A = P*L*U
-  dgetrf_(&N_rows, &N_cols, AUX_MEMORY, &LDA, IPIV, &INFO);
-
-  // Check output of dgetrf
-  if (INFO != 0) {
-    if (INFO < 0) {
-      printf("%s : \n", "Error in rcond__MatrixLib__()");
-      printf("the %i-th argument had an illegal value", abs(INFO));
-    } else if (INFO > 0) {
-      printf("%s :\n", "Error in rcond__MatrixLib__()");
-      printf(" M(%i,%i) %s \n %s \n %s \n %s \n", INFO, INFO,
-             "is exactly zero. The factorization",
-             "has been completed, but the factor M is exactly",
-             "singular, and division by zero will occur if it is used",
-             "to solve a system of equations.");
-    }
-    exit(EXIT_FAILURE);
-  }
-
-  // Compute the Reciprocal condition number
-  dgecon_("1", &N_rows, AUX_MEMORY, &LDA, &ANORM, &RCOND, WORK_RCOND,
-          IWORK_RCOND, &INFO);
-
-  if (INFO < 0) {
-    printf("Error in rcond__MatrixLib__() : the %i-th argument of dgecon_ had "
-           "an illegal value\n",
-           abs(INFO));
-    exit(EXIT_FAILURE);
-  }
-
-  // Free auxiliar memory
-  free(IPIV);
-  free(WORK_ANORM);
-  free(WORK_RCOND);
-  free(IWORK_RCOND);
-  free(AUX_MEMORY);
-
-  return RCOND;
 }
 
 /*********************************************************************/

@@ -1,6 +1,23 @@
 
+/**
+ * @file Elastoplastic-Tangent-Matrix.c
+ * @author Miguel Molinos (@migmolper)
+ * @brief 
+ * @version 0.1
+ * @date 2022-05-25
+ * 
+ * @copyright Copyright (c) 2022
+ * 
+ */
 
 #include "Constitutive/Plasticity/Elastoplastic-Tangent-Matrix.h"
+#include "Globals.h"
+
+#ifdef __linux__
+#include <lapacke.h>
+#elif __APPLE__
+#include <Accelerate/Accelerate.h>
+#endif
 
 /**************************************************************/
 
@@ -20,7 +37,7 @@ static int __spectral_decomposition_b_e(double *eigval_b_e, double *eigvec_b_e,
 static int __eigenvalues_kirchhoff(double *eigval_T, const double *T);
 /**************************************************************/
 
-int compute_1PK_elastoplastic_tangent_matrix(double *Stiffness_density,
+int compute_stiffness_elastoplastic__Constitutive__(double *Stiffness_density,
                                              const double *dN_alpha_n1,
                                              const double *dN_beta_n1,
                                              const State_Parameters IO_State) {
@@ -65,15 +82,6 @@ int compute_1PK_elastoplastic_tangent_matrix(double *Stiffness_density,
     fprintf(stderr, "" RED "Error in __spectral_decomposition_b_e" RESET "\n");
     return EXIT_FAILURE;
   }
-
-#ifdef DEBUG_MODE
-#if DEBUG_MODE + 0
-  printf("eigval_b_e: [%e, %e] \n", eigval_b_e[0], eigval_b_e[1]);
-  puts("eigvec_b_e: ");
-  printf("%e, %e \n", eigvec_b_e[0], eigvec_b_e[1]);
-  printf("%e, %e \n", eigvec_b_e[2], eigvec_b_e[3]);
-#endif
-#endif
 
   double eigval_T[3] = {0.0, 0.0, 0.0};
 
@@ -146,7 +154,7 @@ int compute_1PK_elastoplastic_tangent_matrix(double *Stiffness_density,
               (mv[A * Ndim + A][i] * mu[B * Ndim + B][j]);
 
           if (A != B) {
-            if (fabs(eigval_b_e[B] - eigval_b_e[A]) > 1E-10) {
+            if (fabs(eigval_b_e[B] - eigval_b_e[A]) > 1E-14) {
               Stiffness_density[i * Ndim + j] +=
                   0.5 *
                   ((eigval_T[B] - eigval_T[A]) /
@@ -172,14 +180,6 @@ int compute_1PK_elastoplastic_tangent_matrix(double *Stiffness_density,
     }
   }
 
-#ifdef DEBUG_MODE
-#if DEBUG_MODE + 0
-  puts("Stiffness_density_p: ");
-  printf("%e, %e\n", Stiffness_density[0], Stiffness_density[1]);
-  printf("%e, %e\n", Stiffness_density[2], Stiffness_density[3]);
-#endif
-#endif
-
   return EXIT_SUCCESS;
 }
 
@@ -188,13 +188,14 @@ int compute_1PK_elastoplastic_tangent_matrix(double *Stiffness_density,
 static int __spectral_decomposition_b_e(double *eigval_b_e, double *eigvec_b_e,
                                         const double *b_e) {
 
-#if NumberDimensions == 2
+  lapack_int n = NumberDimensions;
+  lapack_int lda = NumberDimensions;
 
+#if NumberDimensions == 2
   eigvec_b_e[0] = b_e[0];
   eigvec_b_e[1] = b_e[1];
   eigvec_b_e[2] = b_e[2];
   eigvec_b_e[3] = b_e[3];
-
 #else
   eigvec_b_e[0] = b_e[0];
   eigvec_b_e[1] = b_e[1];
@@ -206,26 +207,10 @@ static int __spectral_decomposition_b_e(double *eigval_b_e, double *eigvec_b_e,
   eigvec_b_e[7] = b_e[7];
   eigvec_b_e[8] = b_e[8];
 #endif
+ 
+  lapack_int info = LAPACKE_dsyev(LAPACK_ROW_MAJOR, 'V', 'U', n, eigvec_b_e, lda, eigval_b_e);
 
-  /* Locals */
-  int n = NumberDimensions;
-  int lda = NumberDimensions;
-  int ldvl = NumberDimensions;
-  int ldvr = NumberDimensions;
-  int info;
-  int lwork;
-  double wkopt;
-  double *work;
-
-  /*
-    Query and allocate the optimal workspace
-  */
-  lwork = -1;
-  dsyev_("V", "L", &n, eigvec_b_e, &lda, eigval_b_e, &wkopt, &lwork, &info);
-
-  /* Check for convergence */
   if (info > 0) {
-    free(work);
     fprintf(stderr,
             "" RED "Error in dsyev_(): %s\n %s; \n %i+1:N \n %s " RESET "\n",
             "the QR algorithm failed to compute all the",
@@ -234,38 +219,12 @@ static int __spectral_decomposition_b_e(double *eigval_b_e, double *eigvec_b_e,
     return EXIT_FAILURE;
   }
   if (info < 0) {
-    free(work);
     fprintf(stderr,
             "" RED "Error in dsyev_(): the %i-th argument had an "
             "illegal value." RESET "\n",
             abs(info));
     return EXIT_FAILURE;
   }
-
-  lwork = (int)wkopt;
-  work = (double *)malloc(lwork * sizeof(double));
-
-  dsyev_("V", "L", &n, eigvec_b_e, &lda, eigval_b_e, work, &lwork, &info);
-  /* Check for convergence */
-  if (info > 0) {
-    free(work);
-    fprintf(stderr,
-            "" RED "Error in dsyev_(): %s\n %s; \n %i+1:N \n %s " RESET "\n",
-            "the QR algorithm failed to compute all the",
-            "eigenvalues, and no eigenvectors have been computed elements",
-            info, "of WR and WI contain eigenvalues which have converged.");
-    return EXIT_FAILURE;
-  }
-  if (info < 0) {
-    free(work);
-    fprintf(stderr,
-            "" RED "Error in dsyev_(): the %i-th argument had an "
-            "illegal value." RESET "\n",
-            abs(info));
-    return EXIT_FAILURE;
-  }
-
-  free(work);
 
   return EXIT_SUCCESS;
 }
@@ -275,6 +234,8 @@ static int __spectral_decomposition_b_e(double *eigval_b_e, double *eigvec_b_e,
 static int __eigenvalues_kirchhoff(double *eigval_T, const double *T) {
 
   unsigned Ndim = NumberDimensions;
+  lapack_int n = NumberDimensions;
+  lapack_int lda = NumberDimensions;
 
 #if NumberDimensions == 2
   double T_aux[4] = {T[0], T[1], T[2], T[3]};
@@ -282,38 +243,9 @@ static int __eigenvalues_kirchhoff(double *eigval_T, const double *T) {
   double T_aux[9] = {T[0], T[1], T[2], T[3], T[4], T[5], T[6], T[7], T[8]};
 #endif
 
-  /* Locals */
-  int n = NumberDimensions;
-  int lda = NumberDimensions;
-  int ldvl = NumberDimensions;
-  int ldvr = NumberDimensions;
-  int info;
-  int lwork;
-  double wkopt;
-  double *work;
+  lapack_int info = LAPACKE_dsyev(LAPACK_ROW_MAJOR, 'V', 'U', n, T_aux, lda, eigval_T);
 
-  /* Local arrays */
-#if NumberDimensions == 2
-  int IPIV[2] = {0, 0};
-  double wi[2];
-  double vl[4];
-#else
-  int IPIV[3] = {0, 0, 0};
-  double wi[3];
-  double vl[9];
-#endif
-
-  /*
-    Query and allocate the optimal workspace
-  */
-  lwork = -1;
-  dsyev_("N", "L", &n, T_aux, &lda, eigval_T, &wkopt, &lwork, &info);
-  lwork = (int)wkopt;
-  work = (double *)malloc(lwork * sizeof(double));
-
-  /* Check for convergence */
   if (info > 0) {
-    free(work);
     fprintf(stderr,
             "" RED "Error in dsyev_(): %s\n %s; \n %i+1:N \n %s " RESET "\n",
             "the QR algorithm failed to compute all the",
@@ -322,7 +254,6 @@ static int __eigenvalues_kirchhoff(double *eigval_T, const double *T) {
     return EXIT_FAILURE;
   }
   if (info < 0) {
-    free(work);
     fprintf(stderr,
             "" RED "Error in dsyev_(): the %i-th argument had an "
             "illegal value." RESET "\n",
@@ -330,27 +261,6 @@ static int __eigenvalues_kirchhoff(double *eigval_T, const double *T) {
     return EXIT_FAILURE;
   }
 
-  dsyev_("N", "L", &n, T_aux, &lda, eigval_T, work, &lwork, &info);
-  /* Check for convergence */
-  if (info > 0) {
-    free(work);
-    fprintf(stderr,
-            "" RED "Error in dsyev_(): %s\n %s; \n %i+1:N \n %s " RESET "\n",
-            "the QR algorithm failed to compute all the",
-            "eigenvalues, and no eigenvectors have been computed elements",
-            info, "of WR and WI contain eigenvalues which have converged.");
-    return EXIT_FAILURE;
-  }
-  if (info < 0) {
-    free(work);
-    fprintf(stderr,
-            "" RED "Error in dsyev_(): the %i-th argument had an "
-            "illegal value." RESET "\n",
-            abs(info));
-    return EXIT_FAILURE;
-  }
-
-  free(work);
 
 #if NumberDimensions == 2
   eigval_T[2] = T[4];

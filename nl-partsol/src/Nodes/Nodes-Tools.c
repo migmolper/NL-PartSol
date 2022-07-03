@@ -1,4 +1,5 @@
 #include "Nodes/Nodes-Tools.h"
+#include "Globals.h"
 
 /**************************************************************/
 

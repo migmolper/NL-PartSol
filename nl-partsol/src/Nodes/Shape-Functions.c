@@ -1,5 +1,7 @@
-
+// clang-format off
 #include "Nodes/Shape-Functions.h"
+#include "Globals.h"
+// clang-format on
 
 /*********************************************************************/
 
@@ -26,23 +28,21 @@ void initialise_shapefun__MeshTools__(Particle MPM_Mesh, Mesh FEM_Mesh) {
 
 /*********************************************************************/
 
-void local_search__MeshTools__(Particle MPM_Mesh, Mesh FEM_Mesh)
+int local_search__MeshTools__(Particle MPM_Mesh, Mesh FEM_Mesh)
 /*
   Search the closest node to the particle based in its previous position.
 */
 {
+  int STATUS = EXIT_SUCCESS;
 
   //! Set to zero the active/non-active node, and the GPs in each element
-  int Num_Particles_Node_i;
   for (unsigned i = 0; i < FEM_Mesh.NumNodesMesh; i++) {
-    Num_Particles_Node_i = FEM_Mesh.Num_Particles_Node[i];
-
-    if (Num_Particles_Node_i != 0) {
-      FEM_Mesh.Num_Particles_Node[i] = 0;
-      free__SetLib__(&FEM_Mesh.List_Particles_Node[i]);
-    }
 
     FEM_Mesh.ActiveNode[i] = false;
+
+    if ((Driver_EigenErosion == true) || (Driver_EigenSoftening == true)) {
+      free__SetLib__(&FEM_Mesh.List_Particles_Node[i]);
+    }
   }
 
   if (FEM_Mesh.Locking_Control_Fbar) {
@@ -52,7 +52,7 @@ void local_search__MeshTools__(Particle MPM_Mesh, Mesh FEM_Mesh)
     }
   }
 
-  //! Local search 
+  //! Local search
   if (strcmp(ShapeFunctionGP, "FEM") == 0) {
     if ((strcmp(FEM_Mesh.TypeElem, "Triangle") == 0) &&
         (FEM_Mesh.NumNodesElem[0] == 3)) {
@@ -70,10 +70,18 @@ void local_search__MeshTools__(Particle MPM_Mesh, Mesh FEM_Mesh)
   } else if (strcmp(ShapeFunctionGP, "uGIMP") == 0) {
     exit(1);
   } else if (strcmp(ShapeFunctionGP, "LME") == 0) {
-    local_search__LME__(MPM_Mesh, FEM_Mesh);
+    STATUS = local_search__LME__(MPM_Mesh, FEM_Mesh);
+    if (STATUS == EXIT_FAILURE) {
+      fprintf(stderr, "" RED " Error in " RESET "" BOLDRED
+                      "local_search__LME__() " RESET " \n");
+      return EXIT_FAILURE;
+    }
+
   } else if (strcmp(ShapeFunctionGP, "aLME") == 0) {
     local_search__aLME__(MPM_Mesh, FEM_Mesh);
   }
+
+  return STATUS;
 }
 
 /*********************************************************************/
@@ -389,17 +397,14 @@ Matrix compute_dN__MeshTools__(Element GP_Element, Particle MPM_Mesh,
 
 /*********************************************************************/
 
-double * push_forward_dN__MeshTools__(
-  const double * Gradient_n_p,
-  const double * d_phi,
-  unsigned NumNodes,
-  int * STATUS)
-{
+double *push_forward_dN__MeshTools__(const double *Gradient_n_p,
+                                     const double *d_phi, unsigned NumNodes,
+                                     int *STATUS) {
 
   unsigned Ndim = NumberDimensions;
   *STATUS = EXIT_SUCCESS;
 
-  double * Gradient_n1_p = (double *)calloc(NumNodes * Ndim, __SIZEOF_DOUBLE__);
+  double *Gradient_n1_p = (double *)calloc(NumNodes * Ndim, __SIZEOF_DOUBLE__);
   if (Gradient_n1_p == NULL) {
     fprintf(stderr, "" RED "Error in calloc()" RESET " \n");
     *STATUS = EXIT_FAILURE;
@@ -414,26 +419,24 @@ double * push_forward_dN__MeshTools__(
 
   // Compute the adjunt of the incremental deformation gradient
   *STATUS = compute_adjunt__TensorLib__(d_phi_mT, d_phi);
-  if(*STATUS == EXIT_FAILURE)
-  {
-    fprintf(stderr, ""RED"Error in compute_adjunt__TensorLib__()"RESET" \n");
-    return Gradient_n1_p;  
+  if (*STATUS == EXIT_FAILURE) {
+    fprintf(stderr,
+            "" RED "Error in compute_adjunt__TensorLib__()" RESET " \n");
+    return Gradient_n1_p;
   }
 
   // Push-forward the shape function gradient using
   // the incremental deformation gradient
-  for (unsigned A = 0; A < NumNodes; A++) 
-  {
-    for (unsigned i = 0; i < Ndim; i++)
-    {
+  for (unsigned A = 0; A < NumNodes; A++) {
+    for (unsigned i = 0; i < Ndim; i++) {
 
-      Gradient_n1_p[A*Ndim + i] = 0.0;
+      Gradient_n1_p[A * Ndim + i] = 0.0;
 
-      for (unsigned j = 0; j < Ndim; j++)
-      {
-        Gradient_n1_p[A*Ndim + i] += d_phi_mT[i*Ndim + j]*Gradient_n_p[A*Ndim + j];
+      for (unsigned j = 0; j < Ndim; j++) {
+        Gradient_n1_p[A * Ndim + i] +=
+            d_phi_mT[i * Ndim + j] * Gradient_n_p[A * Ndim + j];
       }
-    }   
+    }
   }
 
   return Gradient_n1_p;

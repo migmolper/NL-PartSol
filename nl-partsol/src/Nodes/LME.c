@@ -1,13 +1,18 @@
+// clang-format off
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
+#include <string.h>
+#include <math.h>
+#include "Macros.h"
+#include "Types.h"
+#include "Globals.h"
+#include "Matlib.h"
+#include "Particles.h"
 #include "Nodes/LME.h"
+// clang-format on
 
 /****************************************************************************/
-
-// Call global var¡ables
-char wrapper_LME[MAXC];
-double gamma_LME;
-double TOL_zero_LME;
-double TOL_wrapper_LME;
-int max_iter_LME;
 
 // Nelder-Mead parameters
 double NM_rho_LME = 1.0;
@@ -39,10 +44,10 @@ static ChainPtr tributary__LME__(int, Matrix, double, int, Mesh);
 
 void initialize__LME__(Particle MPM_Mesh, Mesh FEM_Mesh) {
 
-  int Ndim = NumberDimensions;
-  int Np = MPM_Mesh.NumGP;          // Number of gauss-points in the simulation
-  int Nelem = FEM_Mesh.NumElemMesh; // Number of elements
-  int I0;                           // Closest node to the particle
+  unsigned Ndim = NumberDimensions;
+  unsigned Np = MPM_Mesh.NumGP; // Number of gauss-points in the simulation
+  unsigned Nelem = FEM_Mesh.NumElemMesh; // Number of elements
+  int I0;                                // Closest node to the particle
   unsigned p;
   bool Is_particle_reachable;
 
@@ -120,7 +125,9 @@ void initialize__LME__(Particle MPM_Mesh, Mesh FEM_Mesh) {
 
       Locality_I0 = FEM_Mesh.NodalLocality_0[I0];
 
-      //    push__SetLib__(&FEM_Mesh.List_Particles_Node[I0], p);
+      if ((Driver_EigenErosion == true) || (Driver_EigenSoftening == true)) {
+        push__SetLib__(&FEM_Mesh.List_Particles_Node[I0], p);
+      }
 
       //    FEM_Mesh.Num_Particles_Node[I0] += 1;
 
@@ -157,7 +164,7 @@ void initialize__LME__(Particle MPM_Mesh, Mesh FEM_Mesh) {
       Beta_p = beta__LME__(gamma_LME, FEM_Mesh.h_avg[MPM_Mesh.I0[p]]);
       MPM_Mesh.Beta.nV[p] = Beta_p;
 
-      update_lambda_Newton_Rapson__LME__(p, Delta_Xip, lambda_p, Beta_p);
+      __lambda_Newton_Rapson(p, Delta_Xip, lambda_p, Beta_p);
 
       // Free memory
       free__MatrixLib__(Delta_Xip);
@@ -237,7 +244,7 @@ static void initialise_lambda__LME__(int Idx_particle, Matrix X_p,
   }
 
   // Solve the system
-  if (rcond__MatrixLib__(A) < 1E-8) {
+  if (rcond__TensorLib__(A.nV) < 1E-8) {
     fprintf(stderr, "%s %i : %s \n",
             "Error in initialise_lambda__LME__ for particle", Idx_particle,
             "The Hessian near to singular matrix!");
@@ -262,16 +269,8 @@ static void initialise_lambda__LME__(int Idx_particle, Matrix X_p,
 
 /****************************************************************************/
 
-void update_lambda_Newton_Rapson__LME__(
-    int Idx_particle,
-    Matrix l, // Set than contanins vector form neighborhood nodes to particle.
-    Matrix lambda, // Lagrange multiplier.
-    double Beta)   // Thermalization parameter.
-/*!
- * Get the lagrange multipliers "lambda" (1 x dim) for the LME
- * shape function. The numerical method is the Newton-Rapson.
- * */
-{
+static int __lambda_Newton_Rapson(int Idx_particle, Matrix l, Matrix lambda,
+                                  double Beta) {
   /*
     Definition of some parameters
   */
@@ -306,11 +305,11 @@ void update_lambda_Newton_Rapson__LME__(
       */
       J = J__LME__(l, p, r);
 
-      if (rcond__MatrixLib__(J) < 1E-8) {
-        fprintf(stderr, "%s %i : %s \n",
-                "Error in lambda_Newton_Rapson__LME__ for particle",
-                Idx_particle, "The Hessian near to singular matrix!");
-        exit(EXIT_FAILURE);
+      if (rcond__TensorLib__(J.nV) < 1E-8) {
+        fprintf(stderr,
+                "" RED "Hessian near to singular matrix: %e" RESET " \n",
+                rcond__TensorLib__(J.nV));
+        return EXIT_FAILURE;
       }
 
       /*
@@ -347,8 +346,10 @@ void update_lambda_Newton_Rapson__LME__(
             "No convergence reached in the maximum number of interations",
             MaxIter);
     fprintf(stderr, "%s : %e\n", "Total Error", norm_r);
-    exit(EXIT_FAILURE);
+    return EXIT_FAILURE;
   }
+
+  return EXIT_SUCCESS;
 }
 
 /****************************************************************************/
@@ -891,12 +892,13 @@ Matrix dp__LME__(
 
 /****************************************************************************/
 
-void local_search__LME__(Particle MPM_Mesh, Mesh FEM_Mesh)
+int local_search__LME__(Particle MPM_Mesh, Mesh FEM_Mesh)
 /*
   Search the closest node to the particle based in its previous position.
 */
 {
-
+  int STATUS = EXIT_SUCCESS;
+  int STATUS_p = EXIT_SUCCESS;  
   int Ndim = NumberDimensions;
   unsigned Np = MPM_Mesh.NumGP;
   unsigned p;
@@ -931,10 +933,12 @@ void local_search__LME__(Particle MPM_Mesh, Mesh FEM_Mesh)
             search_particle_in_surrounding_elements__Particles__(
                 p, X_p, FEM_Mesh.NodeNeighbour[MPM_Mesh.I0[p]], FEM_Mesh);
         if (MPM_Mesh.Element_p[p] == -999) {
-          fprintf(stderr, "%s : %s %i \n",
-                  "Error in local_search__Q4__ -> "
-                  "search_particle_in_surrounding_elements__Particles__",
-                  "Not posible to find the particle", p);
+          fprintf(stderr,
+                  "" RED " Error in " RESET "" BOLDRED
+                  "search_particle_in_surrounding_elements__Particles__(%i,,)"
+                  " " RESET " \n",
+                  p);
+          STATUS = EXIT_FAILURE;
         }
       }
     }
@@ -955,8 +959,9 @@ void local_search__LME__(Particle MPM_Mesh, Mesh FEM_Mesh)
         Locality_I0 = Locality_I0->next;
       }
 
-      //    push__SetLib__(&FEM_Mesh.List_Particles_Node[I0], p);
-      //    FEM_Mesh.Num_Particles_Node[I0] += 1;
+      if ((Driver_EigenErosion == true) || (Driver_EigenSoftening == true)) {
+        push__SetLib__(&FEM_Mesh.List_Particles_Node[I0], p);
+      }
     }
 
     // Update the shape function
@@ -990,12 +995,23 @@ void local_search__LME__(Particle MPM_Mesh, Mesh FEM_Mesh)
       Beta_p = beta__LME__(gamma_LME, FEM_Mesh.h_avg[MPM_Mesh.I0[p]]);
       MPM_Mesh.Beta.nV[p] = Beta_p;
 
-      update_lambda_Newton_Rapson__LME__(p, Delta_Xip, lambda_p, Beta_p);
+      STATUS_p = __lambda_Newton_Rapson(p, Delta_Xip, lambda_p, Beta_p);
+      if (STATUS_p == EXIT_FAILURE) {
+        fprintf(stderr, "" RED " Error in " RESET "" BOLDRED
+                        "__lambda_Newton_Rapson() " RESET " \n");
+        STATUS = EXIT_FAILURE;
+      }
 
       // Free memory
       free__MatrixLib__(Delta_Xip);
     }
   }
+
+  if (STATUS == EXIT_FAILURE) {
+    return EXIT_FAILURE;
+  }
+
+  return EXIT_SUCCESS;
 }
 
 /****************************************************************************/

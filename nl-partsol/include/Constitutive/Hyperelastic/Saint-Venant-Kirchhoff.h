@@ -8,7 +8,6 @@
 #include <math.h>
 #include "Macros.h"
 #include "Types.h"
-#include "Globals.h"
 #include "Matlib.h"
 #include "Particles.h"
 
@@ -19,10 +18,10 @@ double energy_Saint_Venant_Kirchhoff(Tensor, Material);
 /*******************************************************/
 
 /*
-  \fn Tensor compute_1PK_Stress_Tensor_Saint_Venant_Kirchhoff(Tensor P, Tensor F, Material MatProp_p);
+  \fn Tensor compute_Kirchhoff_Stress_Saint_Venant__Constitutive__(Tensor P, Tensor F, Material MatProp_p);
 */
 
-State_Parameters compute_1PK_Stress_Tensor_Saint_Venant_Kirchhoff(State_Parameters,Material);
+State_Parameters compute_Kirchhoff_Stress_Saint_Venant__Constitutive__(State_Parameters,Material);
 /*******************************************************/
 
 /*!

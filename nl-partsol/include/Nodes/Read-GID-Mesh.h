@@ -8,7 +8,6 @@
 #include <stdbool.h>
 #include "Macros.h"
 #include "Types.h"
-#include "Globals.h"
 #include "Matlib.h"
 
 
@@ -16,12 +15,6 @@
 #include "Nodes/Q4.h"
 #include "Nodes/T3.h"
 #include "Nodes/T4.h"
-
-// Global libs
-#include "Macros.h"
-#include "Types.h"
-#include "Globals.h"
-#include "Matlib.h"
 
 Mesh     ReadGidMesh__MeshTools__(char *);
 /********************************************************************/
