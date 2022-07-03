@@ -36,6 +36,13 @@ typedef struct {
 
 } Ctx;
 
+typedef struct {
+  DM red1, da1, da2;
+  DM packer;
+  PetscViewer u_viewer, lambda_viewer;
+  PetscViewer fu_viewer, flambda_viewer;
+} Ctx_monitor;
+
 /**************************************************************/
 static double __compute_deltat(Particle MPM_Mesh, double h,
                                Time_Int_Params Parameters_Solver);
@@ -118,6 +125,12 @@ static PetscErrorCode __update_Particles(Vec dU, Vec dU_dt, Vec dU_dt2,
                                          Particle MPM_Mesh, Mesh FEM_Mesh,
                                          Mask ActiveNodes);
 
+static PetscErrorCode __monitor(PetscInt Time, PetscInt NumTimeStep,
+                                PetscInt SNES_Iter, PetscInt KSP_Iter,
+                                PetscInt SNES_MaxIter, PetscScalar KSP_Norm,
+                                PetscScalar SNES_Norm,
+                                SNESConvergedReason converged_reason);
+
 /**************************************************************/
 
 // Global variables
@@ -168,7 +181,7 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
   KSP ksp;
   PC pc;
   Ctx AplicationCtx;
-  unsigned Max_Iter = Parameters_Solver.MaxIter;
+  unsigned SNES_Max_Iter = Parameters_Solver.MaxIter;
   double Relative_TOL = Parameters_Solver.TOL_Newmark_beta;
   double Absolute_TOL = 100 * Relative_TOL;
 
@@ -192,7 +205,7 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
 
   while (TimeStep < NumTimeStep) {
 
-    // DoProgress("Simulation:", TimeStep, NumTimeStep);
+    DoProgress("Simulation:", TimeStep, NumTimeStep);
 
     /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
        Local search and compute list of active nodes and dofs
@@ -321,7 +334,7 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
     PetscCall(KSPGetPC(ksp, &pc));
     PetscCall(PCSetType(pc, PCJACOBI));
     PetscCall(SNESSetTolerances(snes, Absolute_TOL, Relative_TOL, PETSC_DEFAULT,
-                                Max_Iter, PETSC_DEFAULT));
+                                SNES_Max_Iter, PETSC_DEFAULT));
     PetscCall(KSPSetTolerances(ksp, PETSC_DEFAULT, PETSC_DEFAULT, PETSC_DEFAULT,
                                PETSC_DEFAULT));
 
@@ -348,19 +361,19 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
      - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
     PetscCall(SNESSolve(snes, PETSC_NULL, DU));
 
-    SNESConvergedReason converged_reason;
-    PetscInt Iter, Linear_Solver_Iter;
-    SNESGetConvergedReason(snes, &converged_reason);
-    SNESGetIterationNumber(snes, &Iter);
-    SNESGetLinearSolveIterations(snes, &Linear_Solver_Iter);
-    PetscPrintf(PETSC_COMM_WORLD, "Step %i \n", TimeStep);
-    PetscPrintf(PETSC_COMM_WORLD, "%s \n",
-                SNESConvergedReasons[converged_reason]);
-    PetscPrintf(PETSC_COMM_WORLD,
-                "Number of SNES iterations = %" PetscInt_FMT "\n", Iter);
-    PetscPrintf(PETSC_COMM_WORLD,
-                "Number of Linear iterations = %" PetscInt_FMT "\n",
-                Linear_Solver_Iter);
+    if (Flag_Print_Convergence) {
+      SNESConvergedReason converged_reason;
+      PetscInt SNES_Iter, KSP_Iter;
+      PetscScalar KSP_Norm, SNES_Norm;
+      VecNorm(Residual, NORM_2, &SNES_Norm);
+      KSPGetResidualNorm(ksp, &KSP_Norm);
+      SNESGetConvergedReason(snes, &converged_reason);
+      SNESGetIterationNumber(snes, &SNES_Iter);
+      SNESGetLinearSolveIterations(snes, &KSP_Iter);
+
+      __monitor(TimeStep, NumTimeStep, SNES_Iter, KSP_Iter, SNES_Max_Iter,
+                KSP_Norm, SNES_Norm, converged_reason);
+    }
 
     /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
        Free work space.
@@ -2083,3 +2096,70 @@ static PetscErrorCode __update_Particles(Vec dU, Vec dU_dt, Vec dU_dt2,
 }
 
 /**************************************************************/
+
+static PetscErrorCode __monitor(PetscInt Time, PetscInt NumTimeStep,
+                                PetscInt SNES_Iter, PetscInt KSP_Iter,
+                                PetscInt SNES_MaxIter, PetscScalar KSP_Norm,
+                                PetscScalar SNES_Norm,
+                                SNESConvergedReason converged_reason) {
+
+  if (NumTimeStep < 10) {
+    PetscPrintf(PETSC_COMM_WORLD, "" GREEN "Step" RESET ": [%01d/%01d] | ",
+                Time, NumTimeStep);
+  } else if (NumTimeStep < 100) {
+    PetscPrintf(PETSC_COMM_WORLD, "" GREEN "Step" RESET ": [%02d/%02d] | ",
+                Time, NumTimeStep);
+  } else if (NumTimeStep < 1000) {
+    PetscPrintf(PETSC_COMM_WORLD, "" GREEN "Step" RESET ": [%03d/%03d] | ",
+                Time, NumTimeStep);
+  } else if (NumTimeStep < 10000) {
+    PetscPrintf(PETSC_COMM_WORLD, "" GREEN "Step" RESET ": [%04d/%04d] | ",
+                Time, NumTimeStep);
+  } else if (NumTimeStep < 100000) {
+    PetscPrintf(PETSC_COMM_WORLD, "" GREEN "Step" RESET ": [%05d/%05d] | ",
+                Time, NumTimeStep);
+  } else if (NumTimeStep < 1000000) {
+    PetscPrintf(PETSC_COMM_WORLD, "" GREEN "Step" RESET ": [%i/%i] | ", Time,
+                NumTimeStep);
+  }
+
+  PetscPrintf(PETSC_COMM_WORLD, "" GREEN "SNES L2-norm" RESET ": %1.4e | ",
+              SNES_Norm);
+
+  if (SNES_MaxIter < 10) {
+    PetscPrintf(PETSC_COMM_WORLD,
+                "" GREEN "SNES Iterations" RESET ": [%01d/%01d] | ", SNES_Iter,
+                SNES_MaxIter);
+  } else if (SNES_MaxIter < 100) {
+    PetscPrintf(PETSC_COMM_WORLD,
+                "" GREEN "SNES Iterations" RESET ": [%02d/%02d] | ", SNES_Iter,
+                SNES_MaxIter);
+  }
+
+  PetscPrintf(PETSC_COMM_WORLD, "" GREEN "KSP L2-norm" RESET ": %1.4e | ",
+              KSP_Norm);
+
+  PetscPrintf(PETSC_COMM_WORLD, "" GREEN "KSP Iterations" RESET ": %02d | ",
+              KSP_Iter);
+
+  PetscPrintf(PETSC_COMM_WORLD, "" GREEN "Converged reason" RESET ": %s \n",
+              SNESConvergedReasons[converged_reason]);
+
+  FILE *Stats_Solver;
+  char Name_file_t[10000];
+  sprintf(Name_file_t, "%s/Stats_Solver.csv", OutputDir);
+  Stats_Solver = fopen(Name_file_t, "a");
+
+  if (Time == 0) {
+    fprintf(Stats_Solver, "%s,%s,%s,%s,%s\n", "SNES Iterations", "KSP Iterations",
+            "SNES L2-norm", "KSP L2-norm", "Converged reason");
+  }
+  fprintf(Stats_Solver, "%i,%i,%1.4e,%1.4e,%s\n", SNES_Iter, KSP_Iter, SNES_Norm,
+          KSP_Norm,SNESConvergedReasons[converged_reason]);
+
+  fclose(Stats_Solver);
+
+  return EXIT_SUCCESS;
+}
+
+/*********************************************************************/
