@@ -29,7 +29,6 @@ typedef struct {
   Particle MPM_Mesh;
   Mesh FEM_Mesh;
   Vec Lumped_Mass;
-  //  Vec U_n;
   Vec U_n_dt;
   Vec U_n_dt2;
   Newmark_parameters Time_Integration_Params;
