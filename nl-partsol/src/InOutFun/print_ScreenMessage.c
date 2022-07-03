@@ -1,4 +1,17 @@
-#include "nl-partsol.h"
+ 
+// clang-format off
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
+#include <stddef.h>
+#include "Macros.h"
+#include "Types.h"
+#include "Globals.h"
+#include "Matlib.h"
+#include "Particles.h"
+#include "InOutFun.h"
+#include <petscsys.h>
+// clang-format on
 
 // Global variables
 int ResultsTimeStep;
@@ -34,15 +47,16 @@ void DoProgress(char label[], int step, int total) {
 #ifdef _WIN32
   SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), FOREGROUND_GREEN);
 #endif
-  printf("%s[", label);
+
+  PetscPrintf(PETSC_COMM_WORLD,"%s[", label);
 
   // fill progress bar with =
   for (int i = 0; i < pos; i++)
-    printf("%c", '=');
+    PetscPrintf(PETSC_COMM_WORLD,"%c", '=');
 
   // fill progress bar with spaces
-  printf("% *c", width - pos + 1, ']');
-  printf(" %3d%%\r", percent);
+  PetscPrintf(PETSC_COMM_WORLD,"% *c", width - pos + 1, ']');
+  PetscPrintf(PETSC_COMM_WORLD," %3d%%\r", percent);
 
   // reset text color, only on Windows
 #ifdef _WIN32

@@ -31,7 +31,11 @@
 #include "Formulations/Displacements/U-Discrete-Energy-Momentum.h"
 #include "Formulations/Displacements/U-Forward-Euler.h"
 #include "Formulations/Displacements/U-Generalized-Alpha.h"
+
+#ifdef USE_PETSC
 #include "Formulations/Displacements/U-Newmark-beta.h"
+#endif
+
 #include "Formulations/Displacements/U-Static.h"
 #include "Formulations/Displacements/U-Verlet.h"
 #include "Formulations/Displacements-Pressure/U-p-Analisys.h"
@@ -67,11 +71,16 @@ int main(int argc, char *argv[]) {
   bool If_f_option = false;
   bool If_ff_option = false;
   int INFO_GramsSolid = 3;
-  unsigned nthreads = 1;
   int STATUS = EXIT_SUCCESS;
   Mesh FEM_Mesh;
   Particle MPM_Mesh;
   Time_Int_Params Parameters_Solver;
+
+  // OpenMP variables
+#ifdef USE_OPENMP
+  unsigned reqNumThreads = 1;
+  const int maxNumThreads = omp_get_max_threads();
+#endif
 
   // Default value for optional modulus
   Driver_EigenErosion = false;
@@ -122,11 +131,12 @@ int main(int argc, char *argv[]) {
 #ifdef USE_OPENMP
     if (strcmp(argv[i], "--OPENMP-CORES") == 0) {
       i++;
-      nthreads = atoi(argv[i]);
+      reqNumThreads = atoi(argv[i]);
     }
 #endif
 
     if (strcmp(argv[i], "--Print-Convergence") == 0) {
+      puts("" GREEN "Print convergence activated" RESET " ...");
       Flag_Print_Convergence = true;
     }
 
@@ -159,9 +169,10 @@ int main(int argc, char *argv[]) {
 
 // Initialize OpenMP
 #ifdef USE_OPENMP
-  fprintf(stderr,"" GREEN "Initialize OpenMP" RESET " ... ");
-  omp_set_num_threads(nthreads > 0 ? nthreads : omp_get_max_threads());
-  fprintf(stderr,"%i cores\n",nthreads);
+  fprintf(stderr, "" GREEN "Initialize OpenMP" RESET " ... \n");
+  fprintf(stderr, "\t -> Threads requested : %i \n", reqNumThreads);
+  fprintf(stderr, "\t -> Threads availables : %i \n", maxNumThreads);
+  omp_set_num_threads(IMIN(maxNumThreads, reqNumThreads));
 #endif
 
   // Initialize PETSc
@@ -289,10 +300,17 @@ int main(int argc, char *argv[]) {
       U_Discrete_Energy_Momentum(FEM_Mesh, MPM_Mesh, Parameters_Solver);
     } else if (strcmp(Parameters_Solver.TimeIntegrationScheme,
                       "Newmark-beta-Finite-Strains") == 0) {
+#ifdef USE_PETSC
       STATUS = U_Newmark_Beta(FEM_Mesh, MPM_Mesh, Parameters_Solver);
       if (STATUS == EXIT_FAILURE) {
         fprintf(stderr, "" RED "Error in U_Newmark_Beta(,)" RESET " \n");
       }
+#else
+      fprintf(stderr,
+              "" RED "To use Newmark-beta-Finite-Strains you need to use "
+                     "USE_PETSC=true during compilation" RESET " \n");
+      STATUS == EXIT_FAILURE;
+#endif
     } else {
       sprintf(Error_message, "%s", "Wrong time integration scheme");
       standard_error(Error_message);

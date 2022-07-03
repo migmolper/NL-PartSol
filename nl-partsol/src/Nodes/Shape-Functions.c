@@ -28,11 +28,12 @@ void initialise_shapefun__MeshTools__(Particle MPM_Mesh, Mesh FEM_Mesh) {
 
 /*********************************************************************/
 
-void local_search__MeshTools__(Particle MPM_Mesh, Mesh FEM_Mesh)
+int local_search__MeshTools__(Particle MPM_Mesh, Mesh FEM_Mesh)
 /*
   Search the closest node to the particle based in its previous position.
 */
 {
+  int STATUS = EXIT_SUCCESS;
 
   //! Set to zero the active/non-active node, and the GPs in each element
   for (unsigned i = 0; i < FEM_Mesh.NumNodesMesh; i++) {
@@ -69,10 +70,18 @@ void local_search__MeshTools__(Particle MPM_Mesh, Mesh FEM_Mesh)
   } else if (strcmp(ShapeFunctionGP, "uGIMP") == 0) {
     exit(1);
   } else if (strcmp(ShapeFunctionGP, "LME") == 0) {
-    local_search__LME__(MPM_Mesh, FEM_Mesh);
+    STATUS = local_search__LME__(MPM_Mesh, FEM_Mesh);
+    if (STATUS == EXIT_FAILURE) {
+      fprintf(stderr, "" RED " Error in " RESET "" BOLDRED
+                      "local_search__LME__() " RESET " \n");
+      return EXIT_FAILURE;
+    }
+
   } else if (strcmp(ShapeFunctionGP, "aLME") == 0) {
     local_search__aLME__(MPM_Mesh, FEM_Mesh);
   }
+
+  return STATUS;
 }
 
 /*********************************************************************/

@@ -4,9 +4,9 @@
  * @brief Incremental Newmark-beta (finite strains)
  * @version 0.1
  * @date 2022-05-18
- * 
+ *
  * @copyright Copyright (c) 2022
- * 
+ *
  */
 
 #ifndef _U_NEWMARK_BETA_H_
@@ -35,17 +35,10 @@
 #include <omp.h>
 #endif
 
-// Linear-Solver libs
-#ifdef USE_PETSC
+// PETSc
 #include "Linear-Solvers/ksp-PETSC.h"
-#else
-#include "Linear-Solvers/dgetrs-LAPACK.h"
-#endif
-
-#ifdef USE_PETSC
+#include <petscsnes.h>
 #include "petscviewerhdf5.h"
-#endif
-
 
 /*!
   \brief Finite strains Newmark-beta

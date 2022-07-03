@@ -850,6 +850,7 @@ typedef struct {
   double beta_Newmark_beta;
   double gamma_Newmark_beta;
   double TOL_Newmark_beta;
+  bool Use_explicit_trial;
 
   /** @brief
    * Maximum number of interations

@@ -892,12 +892,13 @@ Matrix dp__LME__(
 
 /****************************************************************************/
 
-void local_search__LME__(Particle MPM_Mesh, Mesh FEM_Mesh)
+int local_search__LME__(Particle MPM_Mesh, Mesh FEM_Mesh)
 /*
   Search the closest node to the particle based in its previous position.
 */
 {
   int STATUS = EXIT_SUCCESS;
+  int STATUS_p = EXIT_SUCCESS;  
   int Ndim = NumberDimensions;
   unsigned Np = MPM_Mesh.NumGP;
   unsigned p;
@@ -932,10 +933,12 @@ void local_search__LME__(Particle MPM_Mesh, Mesh FEM_Mesh)
             search_particle_in_surrounding_elements__Particles__(
                 p, X_p, FEM_Mesh.NodeNeighbour[MPM_Mesh.I0[p]], FEM_Mesh);
         if (MPM_Mesh.Element_p[p] == -999) {
-          fprintf(stderr, "%s : %s %i \n",
-                  "Error in local_search__Q4__ -> "
-                  "search_particle_in_surrounding_elements__Particles__",
-                  "Not posible to find the particle", p);
+          fprintf(stderr,
+                  "" RED " Error in " RESET "" BOLDRED
+                  "search_particle_in_surrounding_elements__Particles__(%i,,)"
+                  " " RESET " \n",
+                  p);
+          STATUS = EXIT_FAILURE;
         }
       }
     }
@@ -992,9 +995,11 @@ void local_search__LME__(Particle MPM_Mesh, Mesh FEM_Mesh)
       Beta_p = beta__LME__(gamma_LME, FEM_Mesh.h_avg[MPM_Mesh.I0[p]]);
       MPM_Mesh.Beta.nV[p] = Beta_p;
 
-      STATUS = __lambda_Newton_Rapson(p, Delta_Xip, lambda_p, Beta_p);
-      if (STATUS == EXIT_FAILURE) {
-        fprintf(stderr, "" RED "Error in __lambda_Newton_Rapson()" RESET " \n");
+      STATUS_p = __lambda_Newton_Rapson(p, Delta_Xip, lambda_p, Beta_p);
+      if (STATUS_p == EXIT_FAILURE) {
+        fprintf(stderr, "" RED " Error in " RESET "" BOLDRED
+                        "__lambda_Newton_Rapson() " RESET " \n");
+        STATUS = EXIT_FAILURE;
       }
 
       // Free memory
@@ -1003,8 +1008,10 @@ void local_search__LME__(Particle MPM_Mesh, Mesh FEM_Mesh)
   }
 
   if (STATUS == EXIT_FAILURE) {
-    exit(0);
+    return EXIT_FAILURE;
   }
+
+  return EXIT_SUCCESS;
 }
 
 /****************************************************************************/

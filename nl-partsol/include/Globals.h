@@ -56,6 +56,8 @@ extern int Max_Iterations_Radial_Returning;
 /*
 	Variables for the outputs 
 */
+extern bool Flag_Print_Convergence;
+
 extern int ResultsTimeStep;
 
 extern Event * Out_nodal_path_csv;
