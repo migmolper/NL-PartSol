@@ -409,8 +409,6 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
 
     //! Update time step
     TimeStep++;
-
-    //    exit(0);
   }
 
   return EXIT_SUCCESS;
