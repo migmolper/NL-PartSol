@@ -29,19 +29,12 @@ typedef struct {
   Particle MPM_Mesh;
   Mesh FEM_Mesh;
   Vec Lumped_Mass;
-  Vec U_n;
+  //  Vec U_n;
   Vec U_n_dt;
   Vec U_n_dt2;
   Newmark_parameters Time_Integration_Params;
 
 } Ctx;
-
-typedef struct {
-  DM red1, da1, da2;
-  DM packer;
-  PetscViewer u_viewer, lambda_viewer;
-  PetscViewer fu_viewer, flambda_viewer;
-} Ctx_monitor;
 
 /**************************************************************/
 static double __compute_deltat(Particle MPM_Mesh, double h,
@@ -52,46 +45,32 @@ static Newmark_parameters __compute_Newmark_parameters(double beta,
                                                        double DeltaTimeStep,
                                                        double epsilon);
 
+static int *__create_sparsity_pattern(Mask ActiveNodes, Particle MPM_Mesh);
+
+static IS __get_dirichlet_list_dofs(Mask ActiveNodes, Mesh FEM_Mesh, int Step,
+                                    int NumTimeStep);
+
 static PetscErrorCode __compute_nodal_lumped_mass(Vec Lumped_MassMatrix,
                                                   Particle MPM_Mesh,
                                                   Mesh FEM_Mesh,
                                                   Mask ActiveNodes);
 
-static void __local_projection_displacement(double *U_N_m_IP,
-                                            const double *dis_p,
-                                            double m__x__ShapeFunction_pA);
-
-static void __local_projection_velocity(double *V_N_m_IP, const double *vel_p,
-                                        double m__x__ShapeFunction_pA);
-
-static void __local_projection_acceleration(double *A_N_m_IP,
-                                            const double *acc_p,
-                                            double m__x__ShapeFunction_pA);
-
-static PetscErrorCode __get_nodal_field_n(Vec U_n, Vec U_n_dt, Vec U_n_dt2,
+static PetscErrorCode __get_nodal_field_n(Vec U_n_dt, Vec U_n_dt2,
                                           Vec Lumped_Mass, Particle MPM_Mesh,
                                           Mesh FEM_Mesh, Mask ActiveNodes,
                                           Mask ActiveDOFs,
                                           Newmark_parameters Params);
 
-static IS __get_dirichlet_list_dofs(Mask ActiveNodes, Mesh FEM_Mesh, int Step,
-                                    int NumTimeStep);
-
 static PetscErrorCode __form_initial_guess(Vec DU, Vec U_n_dt, Vec U_n_dt2,
                                            Mesh FEM_Mesh, Mask ActiveNodes,
                                            Newmark_parameters Params);
 
+static PetscErrorCode __lagrangian_evaluation(SNES snes, Vec D_U, Vec Residual,
+                                              void *ctx);
+
 static PetscScalar *__compute_nodal_velocity_increments(
     const PetscScalar *dU, const PetscScalar *Un_dt, const PetscScalar *Un_dt2,
     Newmark_parameters Params, PetscInt Ntotaldofs);
-
-static PetscErrorCode
-__compute_nodal_kinetic_increments(Vec dU_dt, Vec dU_dt2, Vec dU, Vec Un_dt,
-                                   Vec Un_dt2, Newmark_parameters Params,
-                                   unsigned Ntotaldofs);
-
-static PetscErrorCode __lagrangian_evaluation(SNES snes, Vec D_U, Vec Residual,
-                                              void *ctx);
 
 static PetscErrorCode __local_compatibility_conditions(const PetscScalar *dU,
                                                        const PetscScalar *dU_dt,
@@ -116,20 +95,23 @@ static void __nodal_inertial_forces(PetscScalar *Lagrangian,
                                     const PetscScalar *Un_dt2, Mask ActiveNodes,
                                     Mask ActiveDOFs, Newmark_parameters Params);
 
-static int *__create_sparsity_pattern(Mask ActiveNodes, Particle MPM_Mesh);
-
 static PetscErrorCode __jacobian_evaluation(SNES snes, Vec dU, Mat Jacobian,
                                             Mat B, void *ctx);
-
-static PetscErrorCode __update_Particles(Vec dU, Vec dU_dt, Vec dU_dt2,
-                                         Particle MPM_Mesh, Mesh FEM_Mesh,
-                                         Mask ActiveNodes);
 
 static PetscErrorCode __monitor(PetscInt Time, PetscInt NumTimeStep,
                                 PetscInt SNES_Iter, PetscInt KSP_Iter,
                                 PetscInt SNES_MaxIter, PetscScalar KSP_Norm,
                                 PetscScalar SNES_Norm,
                                 SNESConvergedReason converged_reason);
+
+static PetscErrorCode
+__compute_nodal_kinetic_increments(Vec dU_dt, Vec dU_dt2, Vec dU, Vec Un_dt,
+                                   Vec Un_dt2, Newmark_parameters Params,
+                                   unsigned Ntotaldofs);
+
+static PetscErrorCode __update_Particles(Vec dU, Vec dU_dt, Vec dU_dt2,
+                                         Particle MPM_Mesh, Mesh FEM_Mesh,
+                                         Mask ActiveNodes);
 
 /**************************************************************/
 
@@ -167,7 +149,7 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
   int *sparsity_pattern;
   Vec Lumped_Mass;
   Vec Residual;
-  Vec U_n, DU;
+  Vec DU;
   Vec U_n_dt, dU_dt;
   Vec U_n_dt2, dU_dt2;
   IS Dirichlet_dofs;
@@ -244,21 +226,16 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
     /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
        Get the previous converged nodal value
        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-    PetscCall(VecCreate(PETSC_COMM_WORLD, &U_n));
     PetscCall(VecCreate(PETSC_COMM_WORLD, &U_n_dt));
     PetscCall(VecCreate(PETSC_COMM_WORLD, &U_n_dt2));
-    PetscCall(VecSetSizes(U_n, PETSC_DECIDE, Ntotaldofs));
     PetscCall(VecSetSizes(U_n_dt, PETSC_DECIDE, Ntotaldofs));
     PetscCall(VecSetSizes(U_n_dt2, PETSC_DECIDE, Ntotaldofs));
-    PetscCall(VecSetFromOptions(U_n));
     PetscCall(VecSetFromOptions(U_n_dt));
     PetscCall(VecSetFromOptions(U_n_dt2));
 
-    PetscCall(__get_nodal_field_n(U_n, U_n_dt, U_n_dt2, Lumped_Mass, MPM_Mesh,
+    PetscCall(__get_nodal_field_n(U_n_dt, U_n_dt2, Lumped_Mass, MPM_Mesh,
                                   FEM_Mesh, ActiveNodes, ActiveDOFs,
                                   Time_Integration_Params));
-    PetscCall(VecAssemblyBegin(U_n));
-    PetscCall(VecAssemblyEnd(U_n));
     PetscCall(VecAssemblyBegin(U_n_dt));
     PetscCall(VecAssemblyEnd(U_n_dt));
     PetscCall(VecAssemblyBegin(U_n_dt2));
@@ -279,7 +256,6 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
     AplicationCtx.MPM_Mesh = MPM_Mesh;
     AplicationCtx.FEM_Mesh = FEM_Mesh;
     AplicationCtx.Lumped_Mass = Lumped_Mass;
-    AplicationCtx.U_n = U_n;
     AplicationCtx.U_n_dt = U_n_dt;
     AplicationCtx.U_n_dt2 = U_n_dt2;
     AplicationCtx.Time_Integration_Params = Time_Integration_Params;
@@ -348,7 +324,6 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
     /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
        Evaluate initial guess; then solve nonlinear system
      - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-
     if (Use_explicit_trial == true) {
       PetscCall(__form_initial_guess(DU, U_n_dt, U_n_dt2, FEM_Mesh, ActiveNodes,
                                      Time_Integration_Params));
@@ -382,6 +357,9 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
     PetscCall(VecDestroy(&Residual));
     PetscCall(SNESDestroy(&snes));
 
+    /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+      Compute kinetic nodal increments
+     - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
     PetscCall(VecCreate(PETSC_COMM_WORLD, &dU_dt));
     PetscCall(VecCreate(PETSC_COMM_WORLD, &dU_dt2));
     PetscCall(VecSetSizes(dU_dt, PETSC_DECIDE, Ntotaldofs));
@@ -401,7 +379,6 @@ int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
     /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
        Free old nodal kinetics
      - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-    PetscCall(VecDestroy(&U_n));
     PetscCall(VecDestroy(&U_n_dt));
     PetscCall(VecDestroy(&U_n_dt2));
 
@@ -606,55 +583,10 @@ static PetscErrorCode __compute_nodal_lumped_mass(Vec Lumped_MassMatrix,
 
 /**************************************************************/
 
-static void __local_projection_displacement(double *U_N_m_IP,
-                                            const double *dis_p,
-                                            double m__x__ShapeFunction_pA) {
-#if NumberDimensions == 2
-  U_N_m_IP[0] = m__x__ShapeFunction_pA * dis_p[0];
-  U_N_m_IP[1] = m__x__ShapeFunction_pA * dis_p[1];
-#else
-  U_N_m_IP[0] = m__x__ShapeFunction_pA * dis_p[0];
-  U_N_m_IP[1] = m__x__ShapeFunction_pA * dis_p[1];
-  U_N_m_IP[2] = m__x__ShapeFunction_pA * dis_p[2];
-#endif
-}
-
-/**************************************************************/
-
-static void __local_projection_velocity(double *V_N_m_IP, const double *vel_p,
-                                        double m__x__ShapeFunction_pA) {
-#if NumberDimensions == 2
-  V_N_m_IP[0] = m__x__ShapeFunction_pA * vel_p[0];
-  V_N_m_IP[1] = m__x__ShapeFunction_pA * vel_p[1];
-#else
-  V_N_m_IP[0] = m__x__ShapeFunction_pA * vel_p[0];
-  V_N_m_IP[1] = m__x__ShapeFunction_pA * vel_p[1];
-  V_N_m_IP[2] = m__x__ShapeFunction_pA * vel_p[2];
-#endif
-}
-
-/**************************************************************/
-
-static void __local_projection_acceleration(double *A_N_m_IP,
-                                            const double *acc_p,
-                                            double m__x__ShapeFunction_pA) {
-#if NumberDimensions == 2
-  A_N_m_IP[0] = m__x__ShapeFunction_pA * acc_p[0];
-  A_N_m_IP[1] = m__x__ShapeFunction_pA * acc_p[1];
-#else
-  A_N_m_IP[0] = m__x__ShapeFunction_pA * acc_p[0];
-  A_N_m_IP[1] = m__x__ShapeFunction_pA * acc_p[1];
-  A_N_m_IP[2] = m__x__ShapeFunction_pA * acc_p[2];
-#endif
-}
-
-/**************************************************************/
-
 /**
  * @brief Project the kinematic information of the particles towards the nodes
  * \n of the mesh to get the nodal fields at t = n
  *
- * @param U_n Nodal displacement field t = n
  * @param U_n_dt Nodal velocity field t = n
  * @param U_n_dt2 Nodal acceleration field t = n
  * @param Lumped_Mass Lumped mass matrix used for the projection
@@ -665,7 +597,7 @@ static void __local_projection_acceleration(double *A_N_m_IP,
  * @param Params Time integration parameters
  * @return Returns failure or success
  */
-static PetscErrorCode __get_nodal_field_n(Vec U_n, Vec U_n_dt, Vec U_n_dt2,
+static PetscErrorCode __get_nodal_field_n(Vec U_n_dt, Vec U_n_dt2,
                                           Vec Lumped_Mass, Particle MPM_Mesh,
                                           Mesh FEM_Mesh, Mask ActiveNodes,
                                           Mask ActiveDOFs,
@@ -677,12 +609,10 @@ static PetscErrorCode __get_nodal_field_n(Vec U_n, Vec U_n_dt, Vec U_n_dt2,
 
 #if NumberDimensions == 2
   int Mask_active_dofs_A[2];
-  double U_N_m_IP[2];
   double V_N_m_IP[2];
   double A_N_m_IP[2];
 #else
   int Mask_active_dofs_A[3];
-  double U_N_m_IP[3];
   double V_N_m_IP[3];
   double A_N_m_IP[3];
 #endif
@@ -690,7 +620,6 @@ static PetscErrorCode __get_nodal_field_n(Vec U_n, Vec U_n_dt, Vec U_n_dt2,
   /*
     Use this option to impose dirichlet boundary conditions
   */
-  VecSetOption(U_n, VEC_IGNORE_NEGATIVE_INDICES, PETSC_TRUE);
   VecSetOption(U_n_dt, VEC_IGNORE_NEGATIVE_INDICES, PETSC_TRUE);
   VecSetOption(U_n_dt2, VEC_IGNORE_NEGATIVE_INDICES, PETSC_TRUE);
 
@@ -709,7 +638,6 @@ static PetscErrorCode __get_nodal_field_n(Vec U_n, Vec U_n_dt, Vec U_n_dt2,
 
       //! Get the mass of the GP
       double m_p = MPM_Mesh.Phi.mass.nV[p];
-      const double *dis_p = &MPM_Mesh.Phi.dis.nV[p * Ndim];
       const double *vel_p = &MPM_Mesh.Phi.vel.nV[p * Ndim];
       const double *acc_p = &MPM_Mesh.Phi.acc.nV[p * Ndim];
 
@@ -721,14 +649,14 @@ static PetscErrorCode __get_nodal_field_n(Vec U_n, Vec U_n_dt, Vec U_n_dt2,
         double ShapeFunction_pA = ShapeFunction_p.nV[A];
         double m__x__ShapeFunction_pA = m_p * ShapeFunction_pA;
 
-        __local_projection_displacement(U_N_m_IP, dis_p,
-                                        m__x__ShapeFunction_pA);
-        __local_projection_velocity(V_N_m_IP, vel_p, m__x__ShapeFunction_pA);
-        __local_projection_acceleration(A_N_m_IP, acc_p,
-                                        m__x__ShapeFunction_pA);
-
-        // get assembling locations nodal kinetics
+        /*
+        Project particle velocity and acceleration to the nodes
+        using a variational recovery approach
+        and get the assembling locations nodal kinetics
+        */
         for (unsigned i = 0; i < Ndim; i++) {
+          V_N_m_IP[i] = m__x__ShapeFunction_pA * vel_p[i];
+          A_N_m_IP[i] = m__x__ShapeFunction_pA * acc_p[i];
           Mask_active_dofs_A[i] =
               ActiveDOFs.Nodes2Mask[Mask_node_A * Ndim + i] == -1
                   ? -1
@@ -737,7 +665,6 @@ static PetscErrorCode __get_nodal_field_n(Vec U_n, Vec U_n_dt, Vec U_n_dt2,
 
 #pragma omp critical
         {
-          VecSetValues(U_n, Ndim, Mask_active_dofs_A, U_N_m_IP, ADD_VALUES);
           VecSetValues(U_n_dt, Ndim, Mask_active_dofs_A, V_N_m_IP, ADD_VALUES);
           VecSetValues(U_n_dt2, Ndim, Mask_active_dofs_A, A_N_m_IP, ADD_VALUES);
         } // #pragma omp critical
@@ -750,7 +677,6 @@ static PetscErrorCode __get_nodal_field_n(Vec U_n, Vec U_n_dt, Vec U_n_dt2,
 
   } // #pragma omp parallel
 
-  PetscCall(VecPointwiseDivide(U_n, U_n, Lumped_Mass));
   PetscCall(VecPointwiseDivide(U_n_dt, U_n_dt, Lumped_Mass));
   PetscCall(VecPointwiseDivide(U_n_dt2, U_n_dt2, Lumped_Mass));
 
@@ -821,8 +747,6 @@ static PetscErrorCode __get_nodal_field_n(Vec U_n, Vec U_n_dt, Vec U_n_dt2,
                             (alpha_3 + 1) * A_value_In;
             }
 
-            VecSetValues(U_n, 1, &Mask_restricted_dofs_A, &U_value_In1,
-                         ADD_VALUES);
             VecSetValues(U_n_dt, 1, &Mask_restricted_dofs_A, &V_value_In1,
                          ADD_VALUES);
             VecSetValues(U_n_dt2, 1, &Mask_restricted_dofs_A, &A_value_In1,
@@ -1039,7 +963,6 @@ static PetscErrorCode __lagrangian_evaluation(SNES snes, Vec dU, Vec Lagrangian,
   Particle MPM_Mesh = ((Ctx *)ctx)->MPM_Mesh;
   Mesh FEM_Mesh = ((Ctx *)ctx)->FEM_Mesh;
   Vec Lumped_Mass = ((Ctx *)ctx)->Lumped_Mass;
-  Vec Un = ((Ctx *)ctx)->U_n;
   Vec Un_dt = ((Ctx *)ctx)->U_n_dt;
   Vec Un_dt2 = ((Ctx *)ctx)->U_n_dt2;
 
@@ -2151,11 +2074,12 @@ static PetscErrorCode __monitor(PetscInt Time, PetscInt NumTimeStep,
   Stats_Solver = fopen(Name_file_t, "a");
 
   if (Time == 0) {
-    fprintf(Stats_Solver, "%s,%s,%s,%s,%s\n", "SNES Iterations", "KSP Iterations",
-            "SNES L2-norm", "KSP L2-norm", "Converged reason");
+    fprintf(Stats_Solver, "%s,%s,%s,%s,%s\n", "SNES Iterations",
+            "KSP Iterations", "SNES L2-norm", "KSP L2-norm",
+            "Converged reason");
   }
-  fprintf(Stats_Solver, "%i,%i,%1.4e,%1.4e,%s\n", SNES_Iter, KSP_Iter, SNES_Norm,
-          KSP_Norm,SNESConvergedReasons[converged_reason]);
+  fprintf(Stats_Solver, "%i,%i,%1.4e,%1.4e,%s\n", SNES_Iter, KSP_Iter,
+          SNES_Norm, KSP_Norm, SNESConvergedReasons[converged_reason]);
 
   fclose(Stats_Solver);
 
