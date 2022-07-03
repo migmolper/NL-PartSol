@@ -624,7 +624,7 @@ static PetscErrorCode __get_nodal_field_n(Vec U_n_dt, Vec U_n_dt2,
 #pragma omp parallel private(NumberNodes_p)
   {
 
-#pragma omp for private(p, U_N_m_IP, V_N_m_IP, A_N_m_IP, Mask_active_dofs_A)
+#pragma omp for private(p, V_N_m_IP, A_N_m_IP, Mask_active_dofs_A)
     for (p = 0; p < Np; p++) {
 
       /* Define element of the particle */
