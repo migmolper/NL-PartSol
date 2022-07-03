@@ -2,6 +2,22 @@
 
 clear
 
+# Uncomment your preferred IDE
+PLATFORM="Unix Makefiles" # Generates standard UNIX makefiles.
+#PLATFORM="Ninja" # Generates build.ninja files.
+#PLATFORM="Ninja Multi-Config" # Generates build-<Config>.ninja files.
+#PLATFORM="Watcom WMake" #  Generates Watcom WMake makefiles.
+#PLATFORM="CodeBlocks - Ninja" # Generates CodeBlocks project files.
+#PLATFORM="CodeBlocks - Unix Makefiles" # Generates CodeBlocks project files.
+#PLATFORM="CodeLite - Ninja" # Generates CodeLite project files.
+#PLATFORM="CodeLite - Unix Makefiles" # Generates CodeLite project files.
+#PLATFORM="Eclipse CDT4 - Ninja" # Generates Eclipse CDT 4.0 project files.
+#PLATFORM="Eclipse CDT4 - Unix Makefiles" # Generates Eclipse CDT 4.0 project files.
+#PLATFORM="Kate - Ninja" # Generates Kate project files.
+#PLATFORM="Kate - Unix Makefiles" # Generates Kate project files.
+#PLATFORM="Sublime Text 2 - Ninja" # Generates Sublime Text 2 project files.
+#PLATFORM="Sublime Text 2 - Unix Makefiles" # Generates Sublime Text 2 project files.
+
 ## Configure environments
 if [[ "$HOSTNAME" == "Hilbert" ]]
  then
@@ -61,13 +77,8 @@ fi
 ## Navigate inside of build
 cd ${DIR}
 
-
 ## Configure and compile the project
 FILE="Makefile" 
-C_FLAGS="-O3"
-# "-O3"
-# "-O0 -g -Wall -Wpedantic -Wextra -Wunused-variable"
-# "-O3 -Wunused-variable"
 
 if [ -f "$FILE" ]; then
     make -k
@@ -75,12 +86,17 @@ else
     cmake .. \
     -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_C_COMPILER=${C_COMPILER} \
-    -DCMAKE_C_FLAGS="${C_FLAGS}"
-
-    make -j8
-
-# decomment this to have it verbose
-# make VERBOSE=1 -j4
-# make -j8 
-#    make -k
+    -DCMAKE_EXPORT_COMPILE_COMMANDS=1 \
+    -G "${PLATFORM}"
 fi
+
+if [[ "$PLATFORM" == "Unix Makefiles" ]]
+then
+cd build
+make -k
+elif [[ "$PLATFORM" == "Ninja" ]]
+then
+cd build
+ninja
+fi
+
