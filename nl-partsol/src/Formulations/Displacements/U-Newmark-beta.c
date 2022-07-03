@@ -1790,6 +1790,8 @@ static PetscErrorCode __jacobian_evaluation(SNES snes, Vec dU, Mat Jacobian,
     }
   }
 
+  PetscCall(VecRestoreArrayRead(Lumped_Mass, &Lumped_Mass_ptr));
+
   /*
      Assemble matrix
   */
@@ -1804,8 +1806,6 @@ static PetscErrorCode __jacobian_evaluation(SNES snes, Vec dU, Mat Jacobian,
   if (Iter == 0) {
     PetscCall(MatZeroRowsColumnsIS(Jacobian, Dirichlet_dofs, 1.0, NULL, NULL));
   }
-
-  PetscCall(VecRestoreArrayRead(Lumped_Mass, &Lumped_Mass_ptr));
 
   return STATUS;
 }
