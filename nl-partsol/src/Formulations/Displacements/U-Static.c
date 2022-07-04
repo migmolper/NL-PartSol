@@ -17,6 +17,7 @@ typedef struct {
   IS Dirichlet_dofs;
   Particle MPM_Mesh;
   Mesh FEM_Mesh;
+  Vec Lumped_Mass;
 
 } Ctx;
 
@@ -28,6 +29,11 @@ static int *__create_sparsity_pattern(Mask ActiveNodes, Particle MPM_Mesh);
 
 static IS __get_dirichlet_list_dofs(Mask ActiveNodes, Mesh FEM_Mesh, int Step,
                                     int NumTimeStep);
+
+static PetscErrorCode __compute_nodal_lumped_mass(Vec Lumped_MassMatrix,
+                                                  Particle MPM_Mesh,
+                                                  Mesh FEM_Mesh,
+                                                  Mask ActiveNodes);
 
 static PetscErrorCode __lagrangian_evaluation(SNES snes, Vec D_U, Vec Residual,
                                               void *ctx);
@@ -47,12 +53,10 @@ static void __nodal_traction_forces(PetscScalar *Lagrangian, Mask ActiveNodes,
                                     Mask ActiveDOFs, Particle MPM_Mesh,
                                     Mesh FEM_Mesh);
 
-static void __nodal_inertial_forces(PetscScalar *Lagrangian,
-                                    const PetscScalar *M_II,
-                                    const PetscScalar *dU,
-                                    const PetscScalar *Un_dt,
-                                    const PetscScalar *Un_dt2, Mask ActiveNodes,
-                                    Mask ActiveDOFs, Newmark_parameters Params);
+static void
+__nodal_inertial_forces(PetscScalar *Lagrangian, const PetscScalar *M_II,
+                        Mask ActiveNodes,
+                        Mask ActiveDOFs);
 
 static PetscErrorCode __jacobian_evaluation(SNES snes, Vec dU, Mat Jacobian,
                                             Mat B, void *ctx);
@@ -97,6 +101,7 @@ int U_Static(Mesh FEM_Mesh, Particle MPM_Mesh,
 
   Mat Tangent_Stiffness;
   int *sparsity_pattern;
+  Vec Lumped_Mass;
   Vec Residual;
   Vec DU;
   IS Dirichlet_dofs;
@@ -150,6 +155,19 @@ int U_Static(Mesh FEM_Mesh, Particle MPM_Mesh,
     }
 
     /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+       Define and allocate the effective mass matrix
+       - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+    VecCreate(PETSC_COMM_WORLD, &Lumped_Mass);
+    VecSetSizes(Lumped_Mass, PETSC_DECIDE, Ntotaldofs);
+    VecSetFromOptions(Lumped_Mass);
+
+    PetscCall(__compute_nodal_lumped_mass(Lumped_Mass, MPM_Mesh, FEM_Mesh,
+                                          ActiveNodes));
+
+    VecAssemblyBegin(Lumped_Mass);
+    VecAssemblyEnd(Lumped_Mass);
+
+    /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
        Create structure to store the dirchlet boudary conditions
        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
     Dirichlet_dofs =
@@ -163,6 +181,7 @@ int U_Static(Mesh FEM_Mesh, Particle MPM_Mesh,
     AplicationCtx.Dirichlet_dofs = Dirichlet_dofs;
     AplicationCtx.MPM_Mesh = MPM_Mesh;
     AplicationCtx.FEM_Mesh = FEM_Mesh;
+    AplicationCtx.Lumped_Mass = Lumped_Mass;
 
     /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
        Create nonlinear solver context
@@ -272,6 +291,7 @@ int U_Static(Mesh FEM_Mesh, Particle MPM_Mesh,
     /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
        Free memory
      - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+    PetscCall(VecDestroy(&Lumped_Mass));
     PetscCall(VecDestroy(&DU));
     PetscCall(ISDestroy(&Dirichlet_dofs));
     free(ActiveNodes.Nodes2Mask);
@@ -462,6 +482,7 @@ static PetscErrorCode __lagrangian_evaluation(SNES snes, Vec dU, Vec Lagrangian,
   Mask ActiveDOFs = ((Ctx *)ctx)->ActiveDOFs;
   Particle MPM_Mesh = ((Ctx *)ctx)->MPM_Mesh;
   Mesh FEM_Mesh = ((Ctx *)ctx)->FEM_Mesh;
+  Vec Lumped_Mass = ((Ctx *)ctx)->Lumped_Mass;  
 
   unsigned Ndim = NumberDimensions;
   unsigned Nactivenodes = ActiveNodes.Nactivenodes;
@@ -469,6 +490,7 @@ static PetscErrorCode __lagrangian_evaluation(SNES snes, Vec dU, Vec Lagrangian,
 
   PetscScalar *Lagrangian_ptr;
   const PetscScalar *dU_ptr;
+  const PetscScalar *Lumped_Mass_ptr;
 
   /*
     Initialize the lagrangian for a new evaluation
@@ -483,6 +505,7 @@ static PetscErrorCode __lagrangian_evaluation(SNES snes, Vec dU, Vec Lagrangian,
         the array.
    */
   PetscCall(VecGetArray(Lagrangian, &Lagrangian_ptr));
+  PetscCall(VecGetArrayRead(Lumped_Mass, &Lumped_Mass_ptr));
   PetscCall(VecGetArrayRead(dU, &dU_ptr));
 
   PetscCall(__local_compatibility_conditions(dU_ptr, ActiveNodes,
@@ -496,9 +519,7 @@ static PetscErrorCode __lagrangian_evaluation(SNES snes, Vec dU, Vec Lagrangian,
   __nodal_traction_forces(Lagrangian_ptr, ActiveNodes, ActiveDOFs, MPM_Mesh,
                           FEM_Mesh);
 
-  __nodal_inertial_forces(Lagrangian_ptr, Lumped_Mass_ptr, dU_ptr, Un_dt_ptr,
-                          Un_dt2_ptr, ActiveNodes, ActiveDOFs,
-                          Time_Integration_Params);
+  __nodal_inertial_forces(Lagrangian_ptr, Lumped_Mass_ptr, ActiveNodes, ActiveDOFs);
 
   /**
    * Restore vectors
@@ -957,25 +978,18 @@ static void __nodal_traction_forces(PetscScalar *Lagrangian, Mask ActiveNodes,
  * @param Lagrangian Lagrangian vector
  * @param M_II Lumped mass matrix
  * @param dU Nodal field of incremental displacements
- * @param Un_dt Nodal field of velocities at t = n
- * @param Un_dt2 Nodal field of accelerations at t = n
  * @param ActiveNodes List of nodes which takes place in the computation
  * @param ActiveDOFs List of dofs which takes place in the computation
- * @param Params Time integration parameters
  */
 static void
 __nodal_inertial_forces(PetscScalar *Lagrangian, const PetscScalar *M_II,
-                        const PetscScalar *dU, const PetscScalar *Un_dt,
-                        const PetscScalar *Un_dt2, Mask ActiveNodes,
-                        Mask ActiveDOFs, Newmark_parameters Params) {
+                        Mask ActiveNodes,
+                        Mask ActiveDOFs) {
 
   unsigned Ndim = NumberDimensions;
   unsigned Nactivenodes = ActiveNodes.Nactivenodes;
   unsigned Ntotaldofs = Ndim * Nactivenodes;
   unsigned idx;
-  double alpha_1 = Params.alpha_1;
-  double alpha_2 = Params.alpha_2;
-  double alpha_3 = Params.alpha_3;
 
 #if NumberDimensions == 2
   double b[2] = {0.0, 0.0};
@@ -996,8 +1010,7 @@ __nodal_inertial_forces(PetscScalar *Lagrangian, const PetscScalar *M_II,
     {
       if (ActiveDOFs.Nodes2Mask[idx] != -1) {
         Lagrangian[idx] +=
-            M_II[idx] * (alpha_1 * dU[idx] - alpha_2 * Un_dt[idx] -
-                         alpha_3 * Un_dt2[idx] - b[idx % Ndim]);
+          - M_II[idx] * b[idx % Ndim];
       }
     }
   }
@@ -1076,6 +1089,89 @@ static int *__create_sparsity_pattern(Mask ActiveNodes, Particle MPM_Mesh) {
   free(Active_dof_Mat);
 
   return sparsity_pattern;
+}
+
+/**************************************************************/
+
+/**
+ * @brief This function returns the lumped mass matrix in order to reduce
+ * storage, this matrix is presented as a vector.
+ *
+ * @param Lumped_MassMatrix
+ * @param MPM_Mesh Information of the particles
+ * @param FEM_Mesh Information of the background nodes
+ * @param ActiveNodes List of nodes which takes place in the computation
+ * @return PetscErrorCode, returns failure or success
+ */
+static PetscErrorCode __compute_nodal_lumped_mass(Vec Lumped_MassMatrix,
+                                                  Particle MPM_Mesh,
+                                                  Mesh FEM_Mesh,
+                                                  Mask ActiveNodes) {
+
+  PetscErrorCode STATUS = EXIT_SUCCESS;
+  unsigned Ndim = NumberDimensions;
+  unsigned Np = MPM_Mesh.NumGP;
+  unsigned NumberNodes_p;
+  unsigned p;
+
+#if NumberDimensions == 2
+  double Local_Mass_Matrix_p[2];
+  int Mask_dofs_A[2];
+#else
+  double Local_Mass_Matrix_p[3];
+  int Mask_dofs_A[3];
+#endif
+
+#pragma omp parallel private(NumberNodes_p, Local_Mass_Matrix_p, Mask_dofs_A)
+  {
+
+#pragma omp for private(p)
+    for (p = 0; p < Np; p++) {
+
+      //!  Define tributary nodes of the particle and shape function
+      NumberNodes_p = MPM_Mesh.NumberNodes[p];
+      Element Nodes_p =
+          nodal_set__Particles__(p, MPM_Mesh.ListNodes[p], NumberNodes_p);
+      Matrix ShapeFunction_p =
+          compute_N__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
+
+      //!  Get the mass of the particle
+      double m_p = MPM_Mesh.Phi.mass.nV[p];
+
+      for (unsigned A = 0; A < NumberNodes_p; A++) {
+
+        /*
+           Get the node in the mass matrix with the mask
+        */
+        int Ap = Nodes_p.Connectivity[A];
+        int Mask_node_A = ActiveNodes.Nodes2Mask[Ap];
+        double Na_p = ShapeFunction_p.nV[A];
+        double M_AB_p = Na_p * m_p;
+
+        //! Compute the contribution of particle p to the lumped mass matrix
+        //! correspoding to node A. Compute a mask with the position of the dofs
+        //! with contributions to the lumped mass matrix for node A and particle
+        //! p.
+        for (unsigned i = 0; i < Ndim; i++) {
+          Local_Mass_Matrix_p[i] = M_AB_p;
+          Mask_dofs_A[i] = Mask_node_A * Ndim + i;
+        }
+
+#pragma omp critical
+        {
+          VecSetValues(Lumped_MassMatrix, Ndim, Mask_dofs_A,
+                       Local_Mass_Matrix_p, ADD_VALUES);
+        } // #pragma omp critical
+      }   // for A
+
+      /* Free the value of the shape functions */
+      free__MatrixLib__(ShapeFunction_p);
+      free(Nodes_p.Connectivity);
+
+    } // for p
+  }   // #pragma omp parallel
+
+  return STATUS;
 }
 
 /**************************************************************/
