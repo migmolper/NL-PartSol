@@ -74,17 +74,16 @@ static PetscErrorCode __update_Particles(Vec dU,
 /**************************************************************/
 
 // Global variables
-unsigned InitialStep;
-unsigned NumTimeStep;
-unsigned TimeStep;
-bool Use_explicit_trial;
+static unsigned InitialStep;
+static unsigned NumTimeStep;
+static unsigned TimeStep;
 
 /**************************************************************/
 
-int U_Static(Mesh FEM_Mesh, Particle MPM_Mesh,
+PetscErrorCode U_Static(Mesh FEM_Mesh, Particle MPM_Mesh,
                    Time_Int_Params Parameters_Solver) {
 
-  int STATUS = EXIT_SUCCESS;
+  PetscErrorCode STATUS = EXIT_SUCCESS;
 
   //  Auxiliar variables for the solver
   unsigned Ndim = NumberDimensions;
