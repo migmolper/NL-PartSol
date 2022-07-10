@@ -244,7 +244,7 @@ int main(int argc, char *argv[]) {
       initialise_shapefun__MeshTools__(MPM_Mesh, FEM_Mesh);
 
       puts("*************************************************");
-      puts("" GREEN "Run dynamic simulation" RESET " ...");
+      puts("" GREEN "Run static simulation" RESET " ...");
 #ifdef USE_PETSC
       STATUS = U_Static(FEM_Mesh, MPM_Mesh, Parameters_Solver);
 #else
