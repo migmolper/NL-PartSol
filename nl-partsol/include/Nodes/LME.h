@@ -43,44 +43,17 @@ double beta__LME__(double, double);
 /****************************************************************************/
 
 /**
- * @brief Function ot get the lagrange multipliers "lambda" (1 x dim) for the LME  
- * shape function. The numerical methodis the Newton-Rapson.
+ * @brief Function to get the value of the shape function "pa" (1 x neighborhood) in the neighborhood nodes.
  * 
- * @param Idx_particle Current particle
- * @param l Set than contanins vector form neighborhood nodes to particle.
- * @param lambda Lagrange multiplier.
+ * @param p_a Nodal value of the shape function 
+ * @param l_a Set than contanins vector form neighborhood nodes to particle.
+ * @param lambda_tr Lagrange multiplier.
  * @param Beta Thermalization parameter.
- * @return int 
+ * @param N_a Number of nodes in the neighborhood
+ * @return PetscErrorCode 
  */
-static int __lambda_Newton_Rapson(int Idx_particle,Matrix l, Matrix lambda,double Beta);
-/****************************************************************************/
-
-/*!
-  \fn void lambda_Nelder_Mead__LME__(Matrix l, Matrix lambda, double Beta)
-
-  \brief Function ot get the lagrange multipliers "lambda" (1 x dim) for the LME 
-  shape function. The numerical method is the Nelder-Mead.
-
-  \param p : Current particle
-  \param l : Set than contanins vector form neighborhood nodes to particle.
-  \param lambda : Lagrange multiplier.
-  \param Beta : Thermalization parameter.
-*/
-void update_lambda_Nelder_Mead__LME__(int, Matrix, Matrix, double);
-/****************************************************************************/
-
-/*!
-  \fn Matrix p__LME__(Matrix l, Matrix lambda, double Beta)
-
-  \brief Function to get the value of the shape function "pa" (1 x neighborhood) in the
-  neighborhood nodes.
-
-  \param l : Set than contanins vector form neighborhood nodes to particle.
-  \param lambda : Lagrange multiplier.
-  \param Beta : Thermalization parameter.
-
-*/
-Matrix p__LME__(Matrix, Matrix, double);
+static PetscErrorCode p__LME__(double *p_a, const double *l_a,
+                               double *lambda_tr, double Beta, int N_a);
 /****************************************************************************/
 
 /*!
