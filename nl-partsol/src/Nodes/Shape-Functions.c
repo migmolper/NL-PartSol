@@ -186,7 +186,7 @@ Matrix compute_N__MeshTools__(Element GP_Element, Particle MPM_Mesh,
     /*
       Evaluate the shape function
     */
-    ShapeFunction_p = p__LME__(l_Ip, lambda_p, Beta_p);
+//    ShapeFunction_p = p__LME__(l_Ip, lambda_p, Beta_p);
 
     /*
       Free memory
@@ -318,7 +318,6 @@ Matrix compute_dN__MeshTools__(Element GP_Element, Particle MPM_Mesh,
 
   else if (strcmp(ShapeFunctionGP, "LME") == 0) {
     Matrix l_Ip;            // Distance from GP to the nodes
-    Matrix ShapeFunction_p; // Matrix with the nodal shape functions
     Matrix lambda_p;        // Lagrange multipliers
     double Beta_p;          // Thermalization parameter
 
@@ -343,13 +342,11 @@ Matrix compute_dN__MeshTools__(Element GP_Element, Particle MPM_Mesh,
     /*
       Evaluate the shape function gradient
     */
-    ShapeFunction_p = p__LME__(l_Ip, lambda_p, Beta_p);
-    Gradient_p = dp__LME__(l_Ip, ShapeFunction_p);
+//    Gradient_p = dp__LME__(l_Ip, ShapeFunction_p);
 
     /*
       Free memory
     */
-    free__MatrixLib__(ShapeFunction_p);
     free__MatrixLib__(l_Ip);
   }
 

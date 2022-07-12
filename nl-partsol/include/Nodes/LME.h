@@ -16,6 +16,7 @@
 
 // Shape functions auxilar tools
 #include "Nodes/Nodes-Tools.h"
+#include <petsctao.h>
 
 /****************************************************************************/
 
@@ -42,29 +43,36 @@ double beta__LME__(double, double);
 
 /****************************************************************************/
 
+PetscErrorCode lambda__LME__(const PetscScalar *l_a, PetscScalar *lambda_tr,
+                             PetscScalar Beta, PetscInt N_a);
+
+/****************************************************************************/
+
 /**
  * @brief Function to get the value of the shape function "pa" (1 x neighborhood) in the neighborhood nodes.
  * 
- * @param p_a Nodal value of the shape function 
  * @param l_a Set than contanins vector form neighborhood nodes to particle.
  * @param lambda_tr Lagrange multiplier.
  * @param Beta Thermalization parameter.
  * @param N_a Number of nodes in the neighborhood
- * @return PetscErrorCode 
+ * @return PetscScalar* 
  */
-static PetscErrorCode p__LME__(double *p_a, const double *l_a,
-                               double *lambda_tr, double Beta, int N_a);
+PetscScalar *p__LME__(const PetscScalar *l_a, const PetscScalar *lambda_tr,
+                      PetscScalar Beta, PetscInt N_a);
 /****************************************************************************/
 
-/*!
-  \fn Matrix dp__LME__(Matrix l, Matrix p) 
+/**
+ * @brief Compute the value of the shape function gradient "dp" (dim x neighborhood) in the neighborhood nodes
+ * 
+ * @param l_a Set than contanins vector form neighborhood nodes to particle.
+ * @param lambda_tr Lagrange multiplier.
+ * @param Beta Thermalization parameter.
+ * @param N_a Number of nodes in the neighborhood
+ * @return PetscScalar* 
+ */
+PetscScalar *dp__LME__(const PetscScalar *l_a, PetscScalar *lambda_tr,
+                              PetscScalar Beta, PetscInt N_a);
 
-  \brief Compute the value of the shape function gradient "dp" (dim x neighborhood) in the neighborhood nodes
-
-  \param l : Set than contanins vector form neighborhood nodes to particle.
-  \param p : Set with the evaluation of the shape function in the neighborhood nodes.
-*/
-Matrix dp__LME__(Matrix, Matrix);
 /****************************************************************************/
 
 /**

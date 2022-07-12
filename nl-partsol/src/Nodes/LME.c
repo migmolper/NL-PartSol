@@ -13,6 +13,7 @@
 #include "Particles.h"
 #include "Nodes/LME.h"
 #include <petsctao.h>
+#include <petscmat.h>
 // clang-format on
 
 /****************************************************************************/
@@ -23,17 +24,17 @@ typedef struct LME_ctx *LME_ctx_ptr;
 struct LME_ctx {
   PetscInt N_a;
   PetscScalar beta;
-  Vec l_a;
-  Vec p_a;
+  const PetscScalar *l_a;
+  PetscScalar *p_a;
 };
 
 /* -------------- User-defined routines ---------- */
-static PetscErrorCode __function_gradient(Tao tao, Vec lambda,
-                                           PetscScalar *log_Z, Vec r,
-                                           void *logZ_ctx);
+static PetscErrorCode __function_gradient_log_Z(Tao tao, Vec lambda,
+                                                PetscScalar *log_Z, Vec r,
+                                                void *logZ_ctx);
 
-static PetscErrorCode __hessian(Tao tao, Vec lambda, Mat H, Mat Hpre,
-                                  void *logZ_ctx);
+static PetscErrorCode __hessian_log_Z(Tao tao, Vec lambda, Mat H, Mat Hpre,
+                                      void *logZ_ctx);
 
 static PetscScalar __eval_f_a(const PetscScalar *la, const PetscScalar *lambda,
                               PetscScalar Beta);
@@ -41,7 +42,6 @@ static PetscScalar __eval_f_a(const PetscScalar *la, const PetscScalar *lambda,
 static void initialise_lambda__LME__(int, Matrix, Matrix, Matrix, double);
 
 static ChainPtr __tributary_nodes(int, Matrix, double, int, Mesh);
-
 /****************************************************************************/
 
 void initialize__LME__(Particle MPM_Mesh, Mesh FEM_Mesh) {
@@ -182,10 +182,8 @@ double beta__LME__(double Gamma, double h_avg) {
 /****************************************************************************/
 
 static void initialise_lambda__LME__(int Idx_particle, Matrix X_p,
-                                     Matrix Elem_p_Coordinates, //
-                                     Matrix lambda, // Lagrange multiplier.
-                                     double Beta)   // Thermalization parameter.
-{
+                                     Matrix Elem_p_Coordinates, Matrix lambda,
+                                     double Beta) {
 
   int Ndim = NumberDimensions;
   int Nnodes_simplex = Ndim + 1;
@@ -264,120 +262,169 @@ static void initialise_lambda__LME__(int Idx_particle, Matrix X_p,
 
 /****************************************************************************/
 
-static double * p__LME__(const double *l_a,
-                               double *lambda_tr, double Beta, unsigned N_a) {
-
-  double *p_a = (double *)calloc(N_a, sizeof(double));
+PetscErrorCode lambda__LME__(const PetscScalar *l_a, PetscScalar *lambda_tr,
+                             PetscScalar Beta, PetscInt N_a) {
+  PetscErrorCode STATUS = EXIT_SUCCESS;
+  PetscInt Ndim = NumberDimensions;
+  PetscScalar *p_a;
+  PetscMalloc(sizeof(PetscScalar) * N_a, &p_a);
 
   /* Definition of some parameters */
   LME_ctx_ptr user_ptr;
-  PetscErrorCode STATUS = EXIT_SUCCESS;
   PetscInt MaxIter = max_iter_LME;
-  PetscInt Ndim = NumberDimensions;
   PetscInt NumIter;
-  PetscScalar zero = 0.0;
-  Tao tao;
-  Mat H;
-  Vec l_aux;
-  Vec p_aux;
-  Vec lambda_aux;
+
+#if NumberDimensions == 2
+  const PetscInt ix[2] = {0, 1};
+#else
+  const PetscInt ix[3] = {0, 1, 2};
+#endif
 
   /* Create user-defined variable */
   user_ptr->beta = Beta;
-  user_ptr->l_a = l_aux;
+  user_ptr->l_a = l_a;
   user_ptr->N_a = N_a;
-  user_ptr->p_a = p_aux;
+  user_ptr->p_a = p_a;
+
+  /* Create lagrange multiplier */
+  Vec lambda_aux;
+  VecCreate(PETSC_COMM_SELF, &lambda_aux);
+  VecSetSizes(lambda_aux, PETSC_DECIDE, Ndim);
+  VecSetValues(lambda_aux, Ndim, ix, lambda_tr, INSERT_VALUES);
 
   /* Create Hessian */
-  PetscCall(MatCreate(PETSC_COMM_SELF, &H));
-  PetscCall(MatSetSizes(H, PETSC_DECIDE, PETSC_DECIDE, Ndim, Ndim));
+  Mat H;
+  MatCreate(PETSC_COMM_SELF, &H);
+  MatSetSizes(H, PETSC_DECIDE, PETSC_DECIDE, Ndim, Ndim);
+  MatSetOption(H, MAT_SYMMETRIC, PETSC_TRUE);
 
   /* Create TAO solver with desired solution method */
-  PetscCall(TaoCreate(PETSC_COMM_SELF, &tao));
-  PetscCall(TaoSetType(tao, TAONTL));
+  Tao tao;
+  TaoCreate(PETSC_COMM_SELF, &tao);
+  TaoSetType(tao, TAONTL);
 
   /* Set solution vec */
-  PetscCall(TaoSetSolution(tao, lambda_aux));
+  TaoSetSolution(tao, lambda_aux);
 
   /* Set routines for function, gradient, hessian evaluation */
-  PetscCall(
-      TaoSetObjectiveAndGradient(tao, NULL, __function_gradient, user_ptr));
-  PetscCall(TaoSetHessian(tao, H, H, __hessian, user_ptr));
+  TaoSetObjectiveAndGradient(tao, NULL, __function_gradient_log_Z, user_ptr);
+  TaoSetHessian(tao, H, H, __hessian_log_Z, user_ptr);
 
   /* Solve the system */
-  PetscCall(TaoSolve(tao));
+  TaoSolve(tao);
+
+  /* Update values of the lagrange multiplier */
+  VecGetValues(lambda_aux, Ndim, ix, lambda_tr);
 
   /* Destroy auxiliar variables */
-  PetscCall(TaoDestroy(&tao));
-  PetscCall(MatDestroy(&H));
+  TaoDestroy(&tao);
+  MatDestroy(&H);
+  VecDestroy(&lambda_aux);
+  PetscFree(p_a);
+
+  return STATUS;
+}
+
+/****************************************************************************/
+
+PetscScalar *p__LME__(const PetscScalar *l_a, const PetscScalar *lambda_tr,
+                      PetscScalar Beta, PetscInt N_a) {
+
+  PetscErrorCode STATUS = EXIT_SUCCESS;
+  PetscInt Ndim = NumberDimensions;
+  PetscScalar *p_a;
+  PetscMalloc(sizeof(PetscScalar) * N_a, &p_a);
+
+  /* Compute partition function Z and the shape function p_a */
+  PetscScalar Z = 0;
+  for (PetscInt a = 0; a < N_a; a++) {
+    p_a[a] = exp(__eval_f_a(&l_a[a * Ndim], lambda_tr, Beta));
+    Z += p_a[a];
+  }
+
+  /* Divide by Z and get the final value of the shape function */
+  PetscScalar Z_m1 = 1.0 / Z;
+  for (PetscInt a = 0; a < N_a; a++) {
+    p_a[a] *= Z_m1;
+  }
 
   return p_a;
 }
 
 /****************************************************************************/
 
-static PetscErrorCode dp__LME__(double *dp_a, const double *l_a,
-                                double *lambda_tr, double Beta, int N_a) {
+PetscScalar *dp__LME__(const PetscScalar *l_a, PetscScalar *lambda_tr,
+                       PetscScalar Beta, PetscInt N_a) {
 
-  /* Definition of some parameters */
-  LME_ctx_ptr user_ptr;
   PetscErrorCode STATUS = EXIT_SUCCESS;
-  PetscInt MaxIter = max_iter_LME;
   PetscInt Ndim = NumberDimensions;
-  PetscInt NumIter;
-  PetscScalar zero = 0.0;
-  Tao tao;
-  Mat H;
-  Vec l_aux;
-  Vec p_aux;
-  Vec lambda_aux;
 
-  /* Create user-defined variable */
-  user_ptr->beta = Beta;
-  user_ptr->l_a = l_aux;
-  user_ptr->N_a = N_a;
-  user_ptr->p_a = p_aux;
+  PetscScalar *p_a = p__LME__(l_a, lambda_tr, Beta, N_a);
 
-  /* Create Hessian */
-  PetscCall(MatCreate(PETSC_COMM_WORLD, &H));
-  PetscCall(MatSetSizes(H, PETSC_DECIDE, PETSC_DECIDE, Ndim, Ndim));
+  PetscScalar *dp_a;
+  PetscMalloc(sizeof(PetscScalar) * N_a * Ndim, &dp_a);
 
-  /* Create TAO solver with desired solution method */
-  PetscCall(TaoCreate(PETSC_COMM_SELF, &tao));
-  PetscCall(TaoSetType(tao, TAONTL));
+#if NumberDimensions == 2
+  PetscScalar r[2] = {0.0, 0.0};
+  PetscScalar H[4] = {0.0, 0.0, 0.0, 0.0};
+  PetscScalar H_m1[4];
+  PetscScalar H_m1_la[2];
+#else
+  PetscScalar r[3] = {0.0, 0.0, 0.0};
+  PetscScalar H[9] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+  PetscScalar H_m1[9];
+  PetscScalar H_m1_la[3];
+#endif
 
-  /* Set solution vec */
-  PetscCall(TaoSetSolution(tao, lambda_aux));
+  /* Compute the gradient */
+  for (int i = 0; i < Ndim; i++) {
+    for (int a = 0; a < N_a; a++) {
+      r[i] += p_a[a] * l_a[a * Ndim + i];
+    }
+  }
 
-  /* Set routines for function, gradient, hessian evaluation */
-  PetscCall(
-      TaoSetObjectiveAndGradient(tao, NULL, __function_gradient, user_ptr));
-  PetscCall(TaoSetHessian(tao, H, H, __hessian, user_ptr));
+  /* Compute the Hessian */
+  for (PetscInt i = 0; i < Ndim; i++) {
+    for (PetscInt j = 0; j < Ndim; j++) {
 
-  /* Solve the system */
-  PetscCall(TaoSolve(tao));
+      /* First component */
+      for (PetscInt a = 0; a < N_a; a++) {
+        H[i * Ndim + j] += p_a[a] * l_a[a * Ndim + i] * l_a[a * Ndim + j];
+      }
 
-  /* Inverse of the Hessian */
-  Jm1 = inverse__MatrixLib__(J);
+      /* Second component */
+      H[i * Ndim + j] += -r[i] * r[j];
+    }
+  }
+
+  /* Compute the inverse of the Hessian */
+  compute_inverse__TensorLib__(H_m1, H);
 
   /*
     Fill the gradient for each node
   */
-  for (int a = 0; a < N_a; a++) {
-    la.nV = l.nM[a];
-    Jm1_la = matrix_product__MatrixLib__(Jm1, la);
+  for (PetscInt a = 0; a < N_a; a++) {
 
-    for (int i = 0; i < Ndim; i++) {
-      dp_a[a * Ndim + i] = -p.nV[a] * Jm1_la.nV[i];
+#if NumberDimensions == 2
+    H_m1_la[0] = H_m1[0] * l_a[a * Ndim] + H_m1[1] * l_a[a * Ndim + 1];
+    H_m1_la[1] = H_m1[2] * l_a[a * Ndim] + H_m1[3] * l_a[a * Ndim + 1];
+#else
+    H_m1_la[0] = H_m1[0] * l_a[a * Ndim] + H_m1[1] * l_a[a * Ndim + 1] +
+                 H_m1[2] * l_a[a * Ndim + 2];
+    H_m1_la[1] = H_m1[3] * l_a[a * Ndim] + H_m1[4] * l_a[a * Ndim + 1] +
+                 H_m1[5] * l_a[a * Ndim + 2];
+    H_m1_la[2] = H_m1[6] * l_a[a * Ndim] + H_m1[7] * l_a[a * Ndim + 1] +
+                 H_m1[8] * l_a[a * Ndim + 2];
+#endif
+
+    for (PetscInt i = 0; i < Ndim; i++) {
+      dp_a[a * Ndim + i] = -p_a[a] * H_m1_la[i];
     }
-
-    free__MatrixLib__(Jm1_la);
   }
 
-  PetscCall(TaoDestroy(&tao));
-  PetscCall(MatDestroy(&H));
+  PetscFree(p_a);
 
-  return STATUS;
+  return dp_a;
 }
 
 /****************************************************************************/
@@ -392,10 +439,11 @@ static PetscErrorCode dp__LME__(double *dp_a, const double *l_a,
  * @param logZ_ctx
  * @return PetscErrorCode
  */
-static PetscErrorCode __function_gradient(Tao tao, Vec lambda,
-                                           PetscScalar *log_Z, Vec r,
-                                           void *logZ_ctx) {
+static PetscErrorCode __function_gradient_log_Z(Tao tao, Vec lambda,
+                                                PetscScalar *log_Z, Vec r,
+                                                void *logZ_ctx) {
   /* Definition of some parameters */
+  PetscErrorCode STATUS = EXIT_SUCCESS;
   LME_ctx_ptr user_ptr = (LME_ctx_ptr)logZ_ctx;
 
   /* Get constants */
@@ -404,24 +452,25 @@ static PetscErrorCode __function_gradient(Tao tao, Vec lambda,
   PetscInt N_a = user_ptr->N_a;
 
   /* Read auxiliar variables */
-  PetscScalar *p_a_ptr;
-  VecGetArray(user_ptr->p_a, &p_a_ptr);
+  PetscScalar *p_a = user_ptr->p_a;
+  const PetscScalar *l_a = user_ptr->l_a;
+
   PetscScalar *r_ptr;
   VecGetArray(r, &r_ptr);
-  const PetscScalar *l_a_ptr;
-  VecGetArrayRead(user_ptr->l_a, &l_a_ptr);
+  PetscScalar *lambda_ptr;
+  VecGetArray(lambda, &lambda_ptr);
 
   /* Compute partition function Z and the shape function p_a */
   PetscScalar Z = 0;
   for (PetscInt a = 0; a < N_a; a++) {
-    p_a_ptr[a] = exp(__eval_f_a(&l_a_ptr[a * Ndim], lambda, beta));
-    Z += p.nV[a];
+    p_a[a] = exp(__eval_f_a(&l_a[a * Ndim], lambda_ptr, beta));
+    Z += p_a[a];
   }
 
   /* Divide by Z and get the final value of the shape function */
   PetscScalar Z_m1 = 1.0 / Z;
   for (PetscInt a = 0; a < N_a; a++) {
-    p_a_ptr[a] *= Z_m1;
+    p_a[a] *= Z_m1;
   }
 
   /* Evaluate objective function */
@@ -429,17 +478,17 @@ static PetscErrorCode __function_gradient(Tao tao, Vec lambda,
 
   /* Compute the gradient */
   for (int i = 0; i < Ndim; i++) {
-    r_ptr[i] = 0.0 for (int a = 0; a < N_a; a++) {
-      r_ptr[i] += p_a_ptr[a] * l_a_ptr[a * Ndim + i];
+    r_ptr[i] = 0.0;
+    for (int a = 0; a < N_a; a++) {
+      r_ptr[i] += p_a[a] * l_a[a * Ndim + i];
     }
   }
 
-  /* Restore auxiliar pointers */
-  VecRestoreArray(user_ptr->p_a, &p_a_ptr);
+  /* Restore auxiliar pointer */
   VecRestoreArray(r, &r_ptr);
-  VecRestoreArrayRead(user_ptr->l_a, &l_a_ptr);
+  VecRestoreArray(lambda, &lambda_ptr);
 
-  return logZ;
+  return STATUS;
 }
 
 /****************************************************************************/
@@ -447,17 +496,18 @@ static PetscErrorCode __function_gradient(Tao tao, Vec lambda,
 /**
  * @brief
  *
- * @param tao
- * @param lambda
- * @param H
- * @param Hpre
- * @param logZ_ctx
+ * @param tao TAO context
+ * @param lambda Lagrange multiplier
+ * @param H Hessian of the log(Z) functional
+ * @param Hpre Preconditioner of the Hessian
+ * @param logZ_ctx User context function
  * @return PetscErrorCode
  */
-static PetscErrorCode __hessian(Tao tao, Vec lambda, Mat H, Mat Hpre,
-                                  void *logZ_ctx) {
+static PetscErrorCode __hessian_log_Z(Tao tao, Vec lambda, Mat H, Mat Hpre,
+                                      void *logZ_ctx) {
 
   /* Definition of some parameters */
+  PetscErrorCode STATUS = EXIT_SUCCESS;
   LME_ctx_ptr user_ptr = (LME_ctx_ptr)logZ_ctx;
 
   /* Get constants */
@@ -466,11 +516,10 @@ static PetscErrorCode __hessian(Tao tao, Vec lambda, Mat H, Mat Hpre,
   PetscScalar H_a;
 
   /* Read auxiliar variables */
-  PetscScalar *p_a_ptr;
-  VecGetArray(user_ptr->p_a, &p_a_ptr);
-  const PetscScalar *l_a_ptr;
-  VecGetArrayRead(user_ptr->l_a, &l_a_ptr);
+  PetscScalar *p_a = user_ptr->p_a;
+  const PetscScalar *l_a = user_ptr->l_a;
 
+  /* Get the value of the gradient of log(Z) */
   Vec r;
   TaoGetGradient(tao, &r, NULL, NULL);
   const PetscScalar *r_ptr;
@@ -480,22 +529,20 @@ static PetscErrorCode __hessian(Tao tao, Vec lambda, Mat H, Mat Hpre,
   PetscCall(MatZeroEntries(H));
 
   /* Fill the Hessian */
-  for (int i = 0; i < Ndim; i++) {
-    for (int j = 0; j < Ndim; j++) {
+  for (PetscInt i = 0; i < Ndim; i++) {
+    for (PetscInt j = 0; j < Ndim; j++) {
       /* First component */
-      for (int a = 0; a < N_a; a++) {
-        H_a = p_a_ptr[a] * l_a_ptr[a * Ndim + i] * l_a_ptr[a * Ndim + j];
-        MatSetValues(H, 1, i, 1, j, H_a, ADD_VALUES);
+      for (PetscInt a = 0; a < N_a; a++) {
+        H_a = p_a[a] * l_a[a * Ndim + i] * l_a[a * Ndim + j];
+        MatSetValues(H, 1, &i, 1, &j, &H_a, ADD_VALUES);
       }
       /* Second component */
       H_a = -r_ptr[i] * r_ptr[j];
-      MatSetValues(H, 1, i, 1, j, H_a, ADD_VALUES);
+      MatSetValues(H, 1, &i, 1, &j, &H_a, ADD_VALUES);
     }
   }
 
   /* Restore auxiliar pointers */
-  VecRestoreArray(user_ptr->p_a, &p_a_ptr);
-  VecRestoreArrayRead(user_ptr->l_a, &l_a_ptr);
   VecRestoreArrayRead(r, &r_ptr);
 
   MatAssemblyBegin(H, MAT_FINAL_ASSEMBLY);
@@ -504,7 +551,8 @@ static PetscErrorCode __hessian(Tao tao, Vec lambda, Mat H, Mat Hpre,
     MatAssemblyBegin(Hpre, MAT_FINAL_ASSEMBLY);
     MatAssemblyEnd(Hpre, MAT_FINAL_ASSEMBLY);
   }
-  return 0;
+
+  return STATUS;
 }
 
 /****************************************************************************/
@@ -632,7 +680,6 @@ int local_search__LME__(Particle MPM_Mesh, Mesh FEM_Mesh)
       //  and update it
       Beta_p = beta__LME__(gamma_LME, FEM_Mesh.h_avg[MPM_Mesh.I0[p]]);
       MPM_Mesh.Beta.nV[p] = Beta_p;
-
     }
   }
 
@@ -647,17 +694,16 @@ int local_search__LME__(Particle MPM_Mesh, Mesh FEM_Mesh)
 
 /**
  * @brief Compute a set with the sourrounding nodes of the particle
- * 
- * @param Indx_p 
+ *
+ * @param Indx_p
  * @param X_p Coordinates of the particle
  * @param Beta_p Thermalization parameter of the particle
  * @param I0 Index of the closest node to the particle
  * @param FEM_Mesh Variable wih information of the background set of nodes
- * @return ChainPtr 
+ * @return ChainPtr
  */
 static ChainPtr __tributary_nodes(int Indx_p, Matrix X_p, double Beta_p, int I0,
-                                 Mesh FEM_Mesh)
-{
+                                  Mesh FEM_Mesh) {
 
   /* Define output */
   ChainPtr Triburary_Nodes = NULL;

@@ -40,7 +40,7 @@ static Nodes_Information Read_Nodal_Set_Information(char *);
 static void Check_Mesh_File(char *);
 static void get_sourrounding_elements(Mesh);
 static void fill_nodal_locality(Mesh, int);
-static ChainPtr node_I_locality(int, Mesh);
+static ChainPtr node_A_locality(int, Mesh);
 static ChainPtr ring_search_nodal_locality(ChainPtr *, ChainPtr, Mesh);
 static void compute_nodal_distance_local(Mesh);
 static double mesh_size(Mesh);
@@ -341,7 +341,7 @@ static void fill_nodal_locality(Mesh FEM_Mesh, int Num_nodal_rings) {
   for (int i = 0; i < FEM_Mesh.NumNodesMesh; i++) {
 
     if (Num_nodal_rings == 1) {
-      FEM_Mesh.NodalLocality_0[i] = node_I_locality(i, FEM_Mesh);
+      FEM_Mesh.NodalLocality_0[i] = node_A_locality(i, FEM_Mesh);
       FEM_Mesh.SizeNodalLocality_0[i] =
           lenght__SetLib__(FEM_Mesh.NodalLocality_0[i]);
     } else if (Num_nodal_rings > 1) {
@@ -366,17 +366,17 @@ static void fill_nodal_locality(Mesh FEM_Mesh, int Num_nodal_rings) {
 
 /*********************************************************************/
 
-static ChainPtr node_I_locality(int I, Mesh FEM_Mesh) {
+static ChainPtr node_A_locality(int A, Mesh FEM_Mesh) {
 
   /* Define output */
   ChainPtr Nodes = NULL;
 
   /* Number of elements sourronding the node */
-  int NumNeighbour = FEM_Mesh.NumNeighbour[I];
+  int NumNeighbour = FEM_Mesh.NumNeighbour[A];
 
   /* Index of the elements sourronding the node */
   int *NodeNeighbour =
-      set_to_memory__SetLib__(FEM_Mesh.NodeNeighbour[I], NumNeighbour);
+      set_to_memory__SetLib__(FEM_Mesh.NodeNeighbour[A], NumNeighbour);
 
   /* Table with the nodes of each element */
   ChainPtr *Table_ElemNodes = malloc(NumNeighbour * sizeof(ChainPtr));
@@ -416,7 +416,7 @@ static ChainPtr ring_search_nodal_locality(ChainPtr *Set_k, ChainPtr Search_Set,
     /*
       For each node in the set, get the closest node
     */
-    aux_Set = node_I_locality(i_Search_Set->Idx, FEM_Mesh);
+    aux_Set = node_A_locality(i_Search_Set->Idx, FEM_Mesh);
 
     /*
       Loop in the closest set of nodes of the original set
@@ -469,7 +469,7 @@ static void compute_nodal_distance_local(Mesh FEM_Mesh) {
 
   for (A = 0; A < FEM_Mesh.NumNodesMesh; A++) {
 
-    NodalLocality_A = node_I_locality(A, FEM_Mesh);
+    NodalLocality_A = node_A_locality(A, FEM_Mesh);
 
     avg_h_A = 0.0;
     NumCloseNodes_A = 0;
