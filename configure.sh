@@ -25,9 +25,15 @@ if [[ "$HOSTNAME" == "Hilbert" ]]
  export PETSC_DIR=$HOME/petsc
  export PETSC_ARCH=arch-linux-c-debug
  export PKG_CONFIG_PATH=$PETSC_DIR/$PETSC_ARCH/lib/pkgconfig
-# C_COMPILER=/usr/bin/gcc
  C_COMPILER=$PETSC_DIR/$PETSC_ARCH/bin/mpicc
-# C_COMPILER=/usr/bin/clang-14
+
+elif [[ "$HOSTNAME" == "MacBook-Pro-de-Miguel.local" ]]
+ then
+ echo "We are in MM's MacBool-Pro"
+ export PETSC_DIR=$HOME/petsc
+ export PETSC_ARCH=arch-darwin-c-debug
+ export PKG_CONFIG_PATH=$PETSC_DIR/$PETSC_ARCH/lib/pkgconfig
+ C_COMPILER=$PETSC_DIR/$PETSC_ARCH/bin/mpicc
 
 elif [[ "$HOSTNAME" == "istorage-00.hpc.cica.es" ]]
  then

@@ -78,7 +78,12 @@ int local_search__MeshTools__(Particle MPM_Mesh, Mesh FEM_Mesh)
     }
 
   } else if (strcmp(ShapeFunctionGP, "aLME") == 0) {
-    local_search__aLME__(MPM_Mesh, FEM_Mesh);
+    STATUS = local_search__aLME__(MPM_Mesh, FEM_Mesh);
+    if (STATUS == EXIT_FAILURE) {
+      fprintf(stderr, "" RED " Error in " RESET "" BOLDRED
+                      "local_search__LME__() " RESET " \n");
+      return EXIT_FAILURE;
+    }    
   }
 
   return STATUS;

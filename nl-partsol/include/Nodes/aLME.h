@@ -52,12 +52,12 @@ Matrix dp__aLME__(Matrix, Matrix);
 
 /*!
 
- \fn void local_search__aLME__(Particle MPM_Mesh, Mesh FEM_Mesh)
+ \fn int local_search__aLME__(Particle MPM_Mesh, Mesh FEM_Mesh)
   \brief Compute the local search for the LME (update to reduce the number of computational nodes)
   \param MPM_Mesh : Variable with the particle information
   \param FEM_Mesh : Variable wih information of the background set of nodes
 */
-void local_search__aLME__(Particle, Mesh);
+int local_search__aLME__(Particle, Mesh);
 /****************************************************************************/
 
 #endif
