@@ -1,286 +1,179 @@
+// clang-format off
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
+#include <string.h>
+#include <math.h>
+#include "Macros.h"
+#include "Types.h"
+#include "Globals.h"
+#include "Matlib.h"
+#include "Particles.h"
 #include "Nodes/aLME.h"
+// clang-format on
 
+/****************************************************************************/
 
-/*!
-  \fn double fa__aLME__(Matrix la,Matrix lambda,Matrix Beta)
-  \brief Function with computes the scalar values which contains the
-  restrictions related with the widh and information entropy of the shape
-  function. \param la : Vector form node "a" to particle. \param lambda :
-  Lagrange multiplier. \param Beta : Thermalization tensor.
-*/
+// Auxiliar functions to compute the shape functions
 static double fa__aLME__(Matrix, Matrix, Matrix);
-
-/****************************************************************************/
-
-/*!
-  \fn double logZ__aLME__(Matrix l,Matrix lambda,Matrix Beta)
-  \brief Compute the value of the objetive function to compute the lagrange
-  multiplier. \param l : Set than contanins vector form neighborhood nodes to
-  particle. \param lambda : Lagrange multiplier. \param Beta : Thermalization
-  tensor.
-*/
 static double logZ__aLME__(Matrix, Matrix, Matrix);
-
-/****************************************************************************/
-
-/*!
-  \fn Matrix r__aLME__(Matrix l,Matrix p);
-  \brief Compute the value of the gradient of the objetive function to compute
-  the lagrange multiplier. \param l : Set than contanins vector form
-  neighborhood nodes to particle. \param p : Value of the shape function in the
-  nodes.
-*/
 static Matrix r__aLME__(Matrix, Matrix);
-
-/****************************************************************************/
-
-/*!
-  \fn Matrix J__aLME__(Matrix l,Matrix p,Matrix r)
-  \brief Compute the hessian matrix for the function logZ
-  \param l : Set than contanins vector form neighborhood nodes to particle.
-  \param p : Set with the evaluation of the shape function in the neighborhood
-  nodes. \param r : Gradient of the function logZ_dLambda "r".
-*/
 static Matrix J__aLME__(Matrix, Matrix, Matrix);
-
-/****************************************************************************/
-
-/*!
- \fn void initialize_beta__aLME__(Matrix Beta, double Gamma, double DeltaX);
- \brief Compute the value of the thermalization parameter using a circular
- support. \param Beta : Termalization tensor \param Gamma : Adimensional
- paramter to control the regularization parameter. \param DeltaX : Minimum size
- in the all nodal set.
-*/
 static void initialize_beta__aLME__(Matrix, double, double);
-
-/****************************************************************************/
-
-/*!
- \fn void update_beta__aLME__(Matrix Beta, Matrix Delta_F);
- \brief Update the termalization matrix employing the increment of the
- deformation gradient. \param Beta : Termalization matrix. \param Delta_F :
- Increment of the deformation gradient.
-*/
 static void update_beta__aLME__(Matrix, Matrix);
-
-/****************************************************************************/
-
-/*!
-  \fn void initialize_Cut_off_Ellipsoid__aLME__(Matrix Cut_off_Ellipsoid,double
-  Gamma,double h_avg); \brief Initializae the definition of the cutt-off matrix
-  \param Gamma : User define parameter to control the value of the
-  thermalization parameter. \param h_avg : Average mesh size
-*/
 static void initialize_Cut_off_Ellipsoid__aLME__(Matrix, double, double);
-
-/****************************************************************************/
-
-/*!
- \fn void update_cut_off_ellipsoid__aLME__(Matrix Cut_off_Ellipsoid, Matrix
- Delta_F); \brief  Update the shape of the cut-off region employing the
- increment of the deformation gradient. \param Cut_off_Ellipsoid : Cut-off
- matrix. \param Delta_F : Increment of the deformation gradient.
-*/
 static void update_cut_off_ellipsoid__aLME__(Matrix, Matrix);
-
-/****************************************************************************/
-
-/*!
-\fn void initialise_lambda__aLME__(int Idx_particle,Matrix X_p,Matrix
-Elem_p_Coordinates,Matrix lambda,Matrix Beta) \param Idx_particle : Index of the
-particle. \param X_p : Particle position. \param Elem_p_Coordinates :
-Coordinates of the nodes close to the particle. \param lambda: Lagrange
-multiplier of the particle. \param Beta: Thermalization matrix.
-*/
 static void initialise_lambda__aLME__(int, Matrix, Matrix, Matrix, Matrix);
-
-/****************************************************************************/
-
-/*!
-  \fn void update_lambda_Newton_Rapson__aLME__(int p,Matrix l,Matrix
-  lambda,Matrix Beta) \brief Function ot get the lagrange multipliers "lambda"
-  (1 x dim) for the LME shape function. The numerical methodis the
-  Newton-Rapson. \param p : Current particle \param l : Set than contanins
-  vector form neighborhood nodes to particle. \param lambda : Lagrange
-  multiplier. \param Beta : Thermalization tensor.
-*/
 static void update_lambda_Newton_Rapson__aLME__(int, Matrix, Matrix, Matrix);
-
-/****************************************************************************/
-
-/*!
-  \fn void lambda_Nelder_Mead__aLME__(int p,Matrix l,Matrix lambda,Matrix Beta)
-  \brief Function ot get the lagrange multipliers "lambda" (1 x dim) for the LME
-  shape function. The numerical method is the Nelder-Mead.
-  \param p : Current particle
-  \param l : Set than contanins vector form neighborhood nodes to particle.
-  \param lambda : Lagrange multiplier.
-  \param Beta : Thermalization tensor.
-*/
-void update_lambda_Nelder_Mead__aLME__(int, Matrix, Matrix, Matrix);
-
-// Auxiliar functions for the Neldel Mead in the LME
-static Matrix gravity_center_Nelder_Mead__aLME__(Matrix);
-static void order_logZ_simplex_Nelder_Mead__aLME__(Matrix, Matrix);
-static void expansion_Nelder_Mead__aLME__(Matrix, Matrix, Matrix, Matrix,
-                                          Matrix, Matrix, double);
-static void contraction_Nelder_Mead__aLME__(Matrix, Matrix, Matrix, Matrix,
-                                            Matrix, Matrix, double);
-static void shrinkage_Nelder_Mead__aLME__(Matrix, Matrix, Matrix, Matrix);
-
-// Nelder-Mead parameters
-double NM_rho_aLME = 1.0;
-double NM_chi_aLME = 2.0;
-double NM_gamma_aLME = 0.5;
-double NM_sigma_aLME = 0.5;
-double NM_tau_aLME = 1E-3;
-
-/****************************************************************************/
-
-/*!
-  \fn ChainPtr tributary__aLME__(int Indx_p,Matrix X_p,Matrix
-  Cut_off_Ellipsoid,int I0,Mesh FEM_Mesh); \brief Update the list of tributary
-  nodes for each particle \param Indx_p : Index of the particle. \param X_p :
-  Position of the particle. \param Cut_off_Ellipsoid : Cut-off matrix. \param I0
-  : Index of the closest node to the particle. \param FEM_Mesh : Information of
-  the background set of nodes.
-*/
 static ChainPtr tributary__aLME__(int, Matrix, Matrix, int, Mesh);
 
 /****************************************************************************/
 
 void initialize__aLME__(Particle MPM_Mesh, Mesh FEM_Mesh) {
-  int Ndim = NumberDimensions;
-  int Np = MPM_Mesh.NumGP;          // Number of gauss-points in the simulation
-  int Nelem = FEM_Mesh.NumElemMesh; // Number of elements
-  int I0;                           // Closest node to the particle
-  ChainPtr Elem_p_Connectivity;     // Surrounding elements
-  Matrix Elem_p_Coordinates;
-  ChainPtr Nodes_p; // Surrounding particles
-  bool Init_p;
-  Matrix X_p;               // Particle coordinates
-  Matrix Delta_Xip;         // Distance from GP to the nodes
-  Matrix lambda_p;          // Lagrange multiplier
-  Matrix Cut_off_Ellipsoid; // Ellipsoid
-  Matrix Beta_p;            // Thermalization or regularization tensor
-  ChainPtr Locality_I0;     // List of nodes close to the node I0_p
 
-  for (int p = 0; p < Np; p++) {
+  unsigned Ndim = NumberDimensions;
+  unsigned Np = MPM_Mesh.NumGP; // Number of gauss-points in the simulation
+  unsigned Nelem = FEM_Mesh.NumElemMesh; // Number of elements
+  int I0;                                // Closest node to the particle
+  unsigned p;
+  bool Is_particle_reachable;
 
-    // Supose that the particle was not initilise
-    Init_p = false;
+  ChainPtr Locality_I0; // List of nodes close to the node I0_p
+  Matrix Delta_Xip;     // Distance from GP to the nodes
+  Matrix lambda_p;      // Lagrange multiplier
 
-    // Get some properties for each particle
-    X_p = memory_to_matrix__MatrixLib__(Ndim, 1, MPM_Mesh.Phi.x_GC.nM[p]);
-    Beta_p = memory_to_matrix__MatrixLib__(Ndim, Ndim, MPM_Mesh.Beta.nM[p]);
+#pragma omp parallel shared(Np, Nelem)
+  {
 
-    // Loop over the element mesh
-    for (int i = 0; i < Nelem; i++) {
+#pragma omp for private(p, Is_particle_reachable, lambda_p)
+    for (p = 0; p < Np; p++) {
 
-      // Get the element properties
-      Elem_p_Connectivity = FEM_Mesh.Connectivity[i];
-      Elem_p_Coordinates = get_nodes_coordinates__MeshTools__(
-          Elem_p_Connectivity, FEM_Mesh.Coordinates);
+      Is_particle_reachable = false;
+      unsigned idx_element = 0;
 
-      // Check out if the GP is in the Element
-      if (FEM_Mesh.In_Out_Element(X_p, Elem_p_Coordinates) == true) {
+      // Particle position
+      Matrix X_p =
+          memory_to_matrix__MatrixLib__(Ndim, 1, MPM_Mesh.Phi.x_GC.nM[p]);
+      Matrix Beta_p =
+          memory_to_matrix__MatrixLib__(Ndim, Ndim, MPM_Mesh.Beta.nM[p]);
 
-        // Assign the index of the element
-        MPM_Mesh.Element_p[p] = i;
+      // Loop over the element mesh
+      while ((Is_particle_reachable == false) && (idx_element < Nelem)) {
 
-        // Particle will be initilise
-        Init_p = true;
+        /* Get the element properties */
+        ChainPtr Elem_p_Connectivity = FEM_Mesh.Connectivity[idx_element];
+        Matrix Elem_p_Coordinates = get_nodes_coordinates__MeshTools__(
+            Elem_p_Connectivity, FEM_Mesh.Coordinates);
 
-        // Asign to each particle the closest node in the mesh and to this node
-        // asign the particle
-        MPM_Mesh.I0[p] = get_closest_node__MeshTools__(X_p, Elem_p_Connectivity,
-                                                       FEM_Mesh.Coordinates);
+        /* Check out if the GP is in the Element */
+        if (FEM_Mesh.In_Out_Element(X_p, Elem_p_Coordinates) == true) {
 
-        // Initialize Beta
-        initialize_beta__aLME__(Beta_p, gamma_LME,
-                                FEM_Mesh.h_avg[MPM_Mesh.I0[p]]);
+          // Particle will be initilise
+          Is_particle_reachable = true;
 
-        // Initialise lambda for the Nelder-Mead using Bo-Li approach
-        if (strcmp(wrapper_LME, "Nelder-Mead") == 0) {
-          initialise_lambda__aLME__(p, X_p, Elem_p_Coordinates, lambda_p,
-                                    Beta_p);
+          // Assign the index of the element
+          MPM_Mesh.Element_p[p] = idx_element;
+
+          // Asign to each particle the closest node in the mesh and to this
+          // node asign the particle
+          MPM_Mesh.I0[p] = get_closest_node__MeshTools__(
+              X_p, Elem_p_Connectivity, FEM_Mesh.Coordinates);
+
+          // Initialize Beta
+          initialize_beta__aLME__(Beta_p, gamma_LME,
+                                  FEM_Mesh.h_avg[MPM_Mesh.I0[p]]);
         }
 
-        // Select the closest nodes to the particle and activate them
-        Locality_I0 = FEM_Mesh.NodalLocality_0[MPM_Mesh.I0[p]];
-
-        while (Locality_I0 != NULL) {
-          if (FEM_Mesh.ActiveNode[Locality_I0->Idx] == false) {
-            FEM_Mesh.ActiveNode[Locality_I0->Idx] = true;
-          }
-
-          Locality_I0 = Locality_I0->next;
-        }
-
+        /* Free coordinates of the element */
         free__MatrixLib__(Elem_p_Coordinates);
 
-        break;
+        ++idx_element;
       }
 
-      free__MatrixLib__(Elem_p_Coordinates);
+      if (!Is_particle_reachable) {
+        fprintf(stderr, "%s : %s %i\n", "Error in initialize__LME__()",
+                "The search algorithm was unable to find particle", p);
+        exit(EXIT_FAILURE);
+      }
     }
 
-    if (!Init_p) {
-      fprintf(stderr, "%s : %s %i\n", "Error in initialize__aLME__()",
-              "The search algorithm was unable to find particle", p);
-      exit(EXIT_FAILURE);
+#pragma omp barrier
+
+    /*
+      Activate the nodes near the particles
+    */
+    for (p = 0; p < Np; p++) {
+
+      I0 = MPM_Mesh.I0[p];
+
+      Locality_I0 = FEM_Mesh.NodalLocality_0[I0];
+
+      if ((Driver_EigenErosion == true) || (Driver_EigenSoftening == true)) {
+        push__SetLib__(&FEM_Mesh.List_Particles_Node[I0], p);
+      }
+
+      //    FEM_Mesh.Num_Particles_Node[I0] += 1;
+
+      while (Locality_I0 != NULL) {
+        if (FEM_Mesh.ActiveNode[Locality_I0->Idx] == false) {
+          FEM_Mesh.ActiveNode[Locality_I0->Idx] = true;
+        }
+
+        Locality_I0 = Locality_I0->next;
+      }
     }
-  }
 
-  for (int p = 0; p < Np; p++) {
+#pragma omp for private(p, Delta_Xip, lambda_p)
+    for (p = 0; p < Np; p++) {
 
-    // Get some properties for each particle
-    X_p = memory_to_matrix__MatrixLib__(Ndim, 1, MPM_Mesh.Phi.x_GC.nM[p]);
-    lambda_p = memory_to_matrix__MatrixLib__(Ndim, 1, MPM_Mesh.lambda.nM[p]);
-    Beta_p = memory_to_matrix__MatrixLib__(Ndim, Ndim, MPM_Mesh.Beta.nM[p]);
+      // Get some properties for each particle
+      Matrix X_p =
+          memory_to_matrix__MatrixLib__(Ndim, 1, MPM_Mesh.Phi.x_GC.nM[p]);
+      lambda_p = memory_to_matrix__MatrixLib__(Ndim, 1, MPM_Mesh.lambda.nM[p]);
+      Matrix Beta_p =
+          memory_to_matrix__MatrixLib__(Ndim, Ndim, MPM_Mesh.Beta.nM[p]);
 
-    // Get the metric tensor and initialize it
-    Cut_off_Ellipsoid = memory_to_matrix__MatrixLib__(
-        Ndim, Ndim, MPM_Mesh.Cut_off_Ellipsoid.nM[p]);
-    initialize_Cut_off_Ellipsoid__aLME__(Cut_off_Ellipsoid, gamma_LME,
-                                         FEM_Mesh.h_avg[MPM_Mesh.I0[p]]);
+      // Get the metric tensor and initialize it
+      Matrix Cut_off_Ellipsoid = memory_to_matrix__MatrixLib__(
+          Ndim, Ndim, MPM_Mesh.Cut_off_Ellipsoid.nM[p]);
 
-    // Get the initial connectivity of the particle
-    MPM_Mesh.ListNodes[p] =
-        tributary__aLME__(p, X_p, Cut_off_Ellipsoid, MPM_Mesh.I0[p], FEM_Mesh);
+      initialize_Cut_off_Ellipsoid__aLME__(Cut_off_Ellipsoid, gamma_LME,
+                                           FEM_Mesh.h_avg[MPM_Mesh.I0[p]]);
 
-    // Calculate number of nodes
-    MPM_Mesh.NumberNodes[p] = lenght__SetLib__(MPM_Mesh.ListNodes[p]);
+      // Get the initial connectivity of the particle
+      MPM_Mesh.ListNodes[p] = tributary__aLME__(p, X_p, Cut_off_Ellipsoid,
+                                                MPM_Mesh.I0[p], FEM_Mesh);
 
-    // Generate nodal distance list
-    Delta_Xip = compute_distance__MeshTools__(MPM_Mesh.ListNodes[p], X_p,
-                                              FEM_Mesh.Coordinates);
+      // Calculate number of nodes
+      MPM_Mesh.NumberNodes[p] = lenght__SetLib__(MPM_Mesh.ListNodes[p]);
 
-    // Update lagrange multiplier with Newton-Rapson or with Nelder-Mead
-    if (strcmp(wrapper_LME, "Newton-Raphson") == 0) {
+      // Generate nodal distance list
+      Delta_Xip = compute_distance__MeshTools__(MPM_Mesh.ListNodes[p], X_p,
+                                                FEM_Mesh.Coordinates);
+
+      // Update the value of the thermalization parameter
+      initialize_beta__aLME__(Beta_p, gamma_LME,
+                              FEM_Mesh.h_avg[MPM_Mesh.I0[p]]);
 
       update_lambda_Newton_Rapson__aLME__(p, Delta_Xip, lambda_p, Beta_p);
 
-    } else if (strcmp(wrapper_LME, "Nelder-Mead") == 0) {
-      update_lambda_Nelder_Mead__aLME__(p, Delta_Xip, lambda_p, Beta_p);
-    } else {
-      fprintf(stderr, "%s : %s \n", "Error in local_search__aLME__",
-              "Unrecognaised wrapper");
-      exit(EXIT_FAILURE);
+      // Free memory
+      free__MatrixLib__(Delta_Xip);
+      free(Beta_p.nM);
     }
-
-    // Active those nodes that interact with the particle
-    asign_to_nodes__Particles__(p, MPM_Mesh.Element_p[p], MPM_Mesh.I0[p],
-                                MPM_Mesh.ListNodes[p], FEM_Mesh);
-
-    free__MatrixLib__(Delta_Xip);
-    free(Cut_off_Ellipsoid.nM);
   }
 }
 
 /****************************************************************************/
 
+/**
+ * @brief Compute the value of the thermalization parameter using a circular
+ * support.
+ *
+ * @param Beta Termalization tensor
+ * @param Gamma Adimensional paramter to control the regularization parameter
+ * @param h_avg Minimum size in the all nodal set.
+ */
 static void initialize_beta__aLME__(Matrix Beta, double Gamma, double h_avg) {
   int Ndim = NumberDimensions;
   double aux = Gamma / (h_avg * h_avg);
@@ -292,6 +185,14 @@ static void initialize_beta__aLME__(Matrix Beta, double Gamma, double h_avg) {
 
 /****************************************************************************/
 
+/**
+ * @brief Initializae the definition of the cutt-off matrix
+ *
+ * @param Cut_off_Ellipsoid
+ * @param Gamma User define parameter to control the value of the thermalization
+ * parameter
+ * @param h_avg Average mesh size
+ */
 static void initialize_Cut_off_Ellipsoid__aLME__(Matrix Cut_off_Ellipsoid,
                                                  double Gamma, double h_avg) {
   int Ndim = NumberDimensions;
@@ -304,6 +205,15 @@ static void initialize_Cut_off_Ellipsoid__aLME__(Matrix Cut_off_Ellipsoid,
 
 /****************************************************************************/
 
+/**
+ * @brief
+ *
+ * @param Idx_particle Index of the particle.
+ * @param X_p Particle position
+ * @param Elem_p_Coordinates Coordinates of the nodes close to the particle.
+ * @param lambda Lagrange multiplier of the particle
+ * @param Beta Thermalization matrix.
+ */
 static void initialise_lambda__aLME__(int Idx_particle, Matrix X_p,
                                       Matrix Elem_p_Coordinates, Matrix lambda,
                                       Matrix Beta) {
@@ -385,6 +295,15 @@ static void initialise_lambda__aLME__(int Idx_particle, Matrix X_p,
 
 /****************************************************************************/
 
+/**
+ * @brief unction ot get the lagrange multipliers "lambda" (1 x dim) for the LME
+ * shape function. The numerical methodis the Newton-Rapson.
+ *
+ * @param Idx_particle Current particle
+ * @param l Set than contanins vector form neighborhood nodes to particle.
+ * @param lambda Lagrange multiplier.
+ * @param Beta Thermalization tensor.
+ */
 static void update_lambda_Newton_Rapson__aLME__(int Idx_particle, Matrix l,
                                                 Matrix lambda, Matrix Beta) {
   int MaxIter = max_iter_LME;
@@ -450,314 +369,16 @@ static void update_lambda_Newton_Rapson__aLME__(int Idx_particle, Matrix l,
 
 /****************************************************************************/
 
-void update_lambda_Nelder_Mead__aLME__(int Idx_particle, Matrix l,
-                                       Matrix lambda, Matrix Beta) {
-  int Ndim = NumberDimensions;
-  int Nnodes_simplex = Ndim + 1;
-  int MaxIter = max_iter_LME;
-  int NumIter = 0;
-
-  // Simplex generated with lagrange multipliers
-  Matrix simplex = allocZ__MatrixLib__(Nnodes_simplex, Ndim);
-  // Vector with the evaluation of the objective function in each vertex of the
-  // symplex
-  Matrix logZ = allocZ__MatrixLib__(Nnodes_simplex, 1);
-  // Auxiliar variables
-  Matrix simplex_a = memory_to_matrix__MatrixLib__(1, Ndim, NULL);
-  Matrix gravity_center;
-  Matrix reflected_point;
-  double logZ_reflected_point;
-  double logZ_0;
-  double logZ_n;
-  double logZ_n1;
-
-  // Compute the initial positions of the nodes in the simplex (P.Navas)
-  for (int a = 0; a < Nnodes_simplex; a++) {
-    for (int i = 0; i < Ndim; i++) {
-      if (i == a) {
-        simplex.nM[a][i] = lambda.nV[i] / 10;
-      } else {
-        simplex.nM[a][i] = lambda.nV[i];
-      }
-    }
-  }
-
-  // Compute the initial values of logZ in each vertex of the simplex.
-  for (int a = 0; a < Nnodes_simplex; a++) {
-    simplex_a.nV = simplex.nM[a];
-    logZ.nV[a] = logZ__aLME__(l, simplex_a, Beta);
-  }
-
-  // Nelder-Mead main loop.
-  while (NumIter <= MaxIter) {
-
-    order_logZ_simplex_Nelder_Mead__aLME__(logZ, simplex);
-
-    logZ_0 = logZ.nV[0];
-    logZ_n = logZ.nV[Nnodes_simplex - 2];
-    logZ_n1 = logZ.nV[Nnodes_simplex - 1];
-
-    // Check convergence.
-    if (fabs(logZ_0 - logZ_n1) > TOL_wrapper_LME) {
-
-      // Spin the simplex to get the simplex with the smallest normalized
-      // volume. spin_Nelder_Mead__aLME__(simplex);
-
-      // Compute the gravity center of the simplex.
-      gravity_center = gravity_center_Nelder_Mead__aLME__(simplex);
-
-      // Compute the reflected point and evaluate the objetive function in this
-      // point.
-      reflected_point = allocZ__MatrixLib__(1, Ndim);
-
-      for (int i = 0; i < Ndim; i++) {
-        reflected_point.nV[i] =
-            gravity_center.nV[i] +
-            NM_rho_aLME *
-                (gravity_center.nV[i] - simplex.nM[Nnodes_simplex - 1][i]);
-      }
-
-      logZ_reflected_point = logZ__aLME__(l, reflected_point, Beta);
-
-      // Do an expansion using the reflected point.
-      if (logZ_reflected_point < logZ_0) {
-        expansion_Nelder_Mead__aLME__(simplex, logZ, reflected_point,
-                                      gravity_center, l, Beta,
-                                      logZ_reflected_point);
-      }
-      // Take the reflected point.
-      else if ((logZ_reflected_point > logZ_0) &&
-               (logZ_reflected_point < logZ_n)) {
-        for (int i = 0; i < Ndim; i++) {
-          simplex.nM[Nnodes_simplex - 1][i] = reflected_point.nV[i];
-        }
-
-        logZ.nV[Nnodes_simplex - 1] = logZ_reflected_point;
-
-      }
-      // Do a contraction using the reflected point (or a shrinkage).
-      else if (logZ_reflected_point >= logZ_n) {
-        contraction_Nelder_Mead__aLME__(simplex, logZ, reflected_point,
-                                        gravity_center, l, Beta,
-                                        logZ_reflected_point);
-      }
-
-      free__MatrixLib__(reflected_point);
-      NumIter++;
-
-    } else {
-      break;
-    }
-  }
-
-  if (NumIter >= MaxIter) {
-    fprintf(stderr, "%s %i : %s (%i) \n",
-            "Warning in lambda_Nelder_Mead__aLME__ for particle", Idx_particle,
-            "No convergence reached in the maximum number of interations",
-            MaxIter);
-    fprintf(stderr, "%s : %e\n", "Total Error", fabs(logZ_0 - logZ_n1));
-    exit(EXIT_FAILURE);
-  }
-
-  // Update the value of lambda.
-  for (int i = 0; i < Ndim; i++) {
-    lambda.nV[i] = simplex.nM[0][i];
-  }
-
-  free__MatrixLib__(simplex);
-  free__MatrixLib__(logZ);
-}
-
-/****************************************************************************/
-
-static void order_logZ_simplex_Nelder_Mead__aLME__(Matrix logZ,
-                                                   Matrix simplex) {
-
-  int Ndim = NumberDimensions;
-  int Nnodes_simplex = Ndim + 1;
-  bool swapped = false;
-  double aux;
-
-  // Ordenate the list from lowest to higher (bubble sort)
-  for (int i = 1; i < Nnodes_simplex; i++) {
-    swapped = false;
-
-    for (int j = 0; j < (Nnodes_simplex - i); j++) {
-
-      if (logZ.nV[j] > logZ.nV[j + 1]) {
-
-        // swap values of logZ
-        aux = logZ.nV[j];
-        logZ.nV[j] = logZ.nV[j + 1];
-        logZ.nV[j + 1] = aux;
-
-        // swap values of logZ
-        for (int k = 0; k < Ndim; k++) {
-          aux = simplex.nM[j][k];
-          simplex.nM[j][k] = simplex.nM[j + 1][k];
-          simplex.nM[j + 1][k] = aux;
-        }
-
-        swapped = true;
-      }
-    }
-
-    if (!swapped) {
-      break;
-    }
-  }
-}
-
-/****************************************************************************/
-
-static Matrix gravity_center_Nelder_Mead__aLME__(Matrix simplex) {
-  int Ndim = NumberDimensions;
-  int Nnodes_simplex = Ndim + 1;
-
-  Matrix gravity_center = allocZ__MatrixLib__(1, Ndim);
-
-  for (int i = 0; i < Ndim; i++) {
-    for (int a = 0; a < Nnodes_simplex; a++) {
-      gravity_center.nV[i] += simplex.nM[a][i] / Nnodes_simplex;
-    }
-  }
-
-  return gravity_center;
-}
-
-/****************************************************************************/
-
-static void expansion_Nelder_Mead__aLME__(Matrix simplex, Matrix logZ,
-                                          Matrix reflected_point,
-                                          Matrix gravity_center, Matrix l,
-                                          Matrix Beta,
-                                          double logZ_reflected_point) {
-  int Ndim = NumberDimensions;
-  int Nnodes_simplex = Ndim + 1;
-  double logZ_expanded_point;
-  Matrix expanded_point;
-
-  // Compute the expanded point and evaluate the objetive function in this point
-  expanded_point = allocZ__MatrixLib__(1, Ndim);
-
-  for (int i = 0; i < Ndim; i++) {
-    expanded_point.nV[i] =
-        gravity_center.nV[i] +
-        NM_chi_aLME * (reflected_point.nV[i] - gravity_center.nV[i]);
-  }
-
-  logZ_expanded_point = logZ__aLME__(l, expanded_point, Beta);
-
-  // Take the expanded point
-  if (logZ_expanded_point < logZ_reflected_point) {
-    for (int i = 0; i < Ndim; i++) {
-      simplex.nM[Nnodes_simplex - 1][i] = expanded_point.nV[i];
-    }
-
-    logZ.nV[Nnodes_simplex - 1] = logZ_expanded_point;
-  }
-
-  // Take the reflected point
-  else {
-    for (int i = 0; i < Ndim; i++) {
-      simplex.nM[Nnodes_simplex - 1][i] = reflected_point.nV[i];
-    }
-
-    logZ.nV[Nnodes_simplex - 1] = logZ_reflected_point;
-  }
-
-  free__MatrixLib__(expanded_point);
-}
-
-/****************************************************************************/
-
-static void contraction_Nelder_Mead__aLME__(Matrix simplex, Matrix logZ,
-                                            Matrix reflected_point,
-                                            Matrix gravity_center, Matrix l,
-                                            Matrix Beta,
-                                            double logZ_reflected_point) {
-  int Ndim = NumberDimensions;
-  int Nnodes_simplex = Ndim + 1;
-  double logZ_n1 = logZ.nV[Nnodes_simplex - 1];
-  double logZ_contracted_point;
-  Matrix contracted_point;
-
-  contracted_point = allocZ__MatrixLib__(1, Ndim);
-
-  // External contraction
-  if (logZ_reflected_point < logZ_n1) {
-
-    for (int i = 0; i < Ndim; i++) {
-      contracted_point.nV[i] =
-          gravity_center.nV[i] +
-          NM_gamma_aLME * (reflected_point.nV[i] - gravity_center.nV[i]);
-    }
-
-    logZ_contracted_point = logZ__aLME__(l, contracted_point, Beta);
-
-    // Take the contracted point
-    if (logZ_contracted_point < logZ_reflected_point) {
-      for (int i = 0; i < Ndim; i++) {
-        simplex.nM[Nnodes_simplex - 1][i] = contracted_point.nV[i];
-      }
-
-      logZ.nV[Nnodes_simplex - 1] = logZ_contracted_point;
-    }
-    // Do a shrinkage
-    else {
-      shrinkage_Nelder_Mead__aLME__(simplex, logZ, l, Beta);
-    }
-  }
-  // Internal contraction
-  else if (logZ_reflected_point > logZ_n1) {
-    for (int i = 0; i < Ndim; i++) {
-      contracted_point.nV[i] =
-          gravity_center.nV[i] -
-          NM_gamma_aLME *
-              (gravity_center.nV[i] - simplex.nM[Nnodes_simplex - 1][i]);
-    }
-
-    logZ_contracted_point = logZ__aLME__(l, contracted_point, Beta);
-
-    // Take the contracted point
-    if (logZ_contracted_point < logZ_n1) {
-      for (int i = 0; i < Ndim; i++) {
-        simplex.nM[Nnodes_simplex - 1][i] = contracted_point.nV[i];
-      }
-
-      logZ.nV[Nnodes_simplex - 1] = logZ_contracted_point;
-    }
-    // Do a shrinkage
-    else {
-      shrinkage_Nelder_Mead__aLME__(simplex, logZ, l, Beta);
-    }
-  }
-
-  free__MatrixLib__(contracted_point);
-}
-
-/****************************************************************************/
-
-static void shrinkage_Nelder_Mead__aLME__(Matrix simplex, Matrix logZ, Matrix l,
-                                          Matrix Beta) {
-  int Ndim = NumberDimensions;
-  int Nnodes_simplex = Ndim + 1;
-
-  // Axiliar function to get the coordinates of the simplex in the node a
-  Matrix simplex_a = memory_to_matrix__MatrixLib__(1, Ndim, NULL);
-
-  for (int a = 0; a < Nnodes_simplex; a++) {
-    for (int i = 0; i < Ndim; i++) {
-      simplex.nM[a][i] = simplex.nM[0][i] +
-                         NM_sigma_aLME * (simplex.nM[a][i] - simplex.nM[0][i]);
-    }
-    simplex_a.nV = simplex.nM[a];
-    logZ.nV[a] = logZ__aLME__(l, simplex_a, Beta);
-  }
-}
-
-/****************************************************************************/
-
+/**
+ * @brief Function with computes the scalar values which contains the
+ * restrictions related with the widh and information entropy of the shape
+ * function.
+ *
+ * @param la Vector form node "a" to particle
+ * @param lambda Lagrange multiplier
+ * @param Beta Thermalization tensor
+ * @return double
+ */
 static double fa__aLME__(Matrix la, Matrix lambda, Matrix Beta) {
   int Ndim = NumberDimensions;
   double la_x_lambda = 0;
@@ -814,6 +435,15 @@ Matrix p__aLME__(Matrix l, Matrix lambda, Matrix Beta) {
 
 /****************************************************************************/
 
+/**
+ * @brief Compute the value of the objetive function to compute the lagrange
+ * multiplier.
+ *
+ * @param l Set than contanins vector form neighborhood nodes to particle.
+ * @param lambda Lagrange multiplier.
+ * @param Beta  Thermalization tensor.
+ * @return double
+ */
 static double logZ__aLME__(Matrix l, Matrix lambda, Matrix Beta) {
   int N_a = l.N_rows;
   int Ndim = NumberDimensions;
@@ -833,6 +463,14 @@ static double logZ__aLME__(Matrix l, Matrix lambda, Matrix Beta) {
 
 /****************************************************************************/
 
+/**
+ * @brief Compute the value of the gradient of the objetive function to compute
+ * the lagrange multiplier.
+ *
+ * @param l Set than contanins vector form neighborhood nodes to particle.
+ * @param p Value of the shape function in the nodes.
+ * @return Matrix
+ */
 static Matrix r__aLME__(Matrix l, Matrix p) {
   int N_a = l.N_rows;
   int Ndim = NumberDimensions;
@@ -849,6 +487,14 @@ static Matrix r__aLME__(Matrix l, Matrix p) {
 
 /****************************************************************************/
 
+/**
+ * @brief Compute the hessian matrix for the function logZ
+ *
+ * @param l Set than contanins vector form neighborhood nodes to particle.
+ * @param p Set with the evaluation of the shape function in the neighborhood
+ * @param r  Gradient of the function logZ_dLambda "r".
+ * @return Matrix
+ */
 static Matrix J__aLME__(Matrix l, Matrix p, Matrix r) {
   int N_a = l.N_rows;
   int Ndim = NumberDimensions;
@@ -909,122 +555,141 @@ Matrix dp__aLME__(Matrix l, Matrix p) {
 
 /****************************************************************************/
 
-void local_search__aLME__(Particle MPM_Mesh, Mesh FEM_Mesh) {
+int local_search__aLME__(Particle MPM_Mesh, Mesh FEM_Mesh)
+/*
+  Search the closest node to the particle based in its previous position.
+*/
+{
+  int STATUS = EXIT_SUCCESS;
+  int STATUS_p = EXIT_SUCCESS;
   int Ndim = NumberDimensions;
-  int Num_Particles_Node_i;
-  int Num_Particles_Element_i;
-  Matrix X_p;           // Velocity of the particle.
-  Matrix V_p;           // Velocity of the particle.
+  unsigned Np = MPM_Mesh.NumGP;
+  unsigned p;
+
+  Matrix X_p;       // Particle position
+  Matrix dis_p;     // Particle displacement
+  Matrix Delta_Xip; // Distance from particles to the nodes
+  Matrix lambda_p;  // Lagrange multiplier of the shape function
+  Matrix DF_p;      // Particle deformation gradient
+  Matrix Beta_p;
+  Matrix Cut_off_Ellipsoid_p;
+
   ChainPtr Locality_I0; // List of nodes close to the node I0_p
 
-  // Set to zero the active/non-active node, and the GPs in each element
-  for (int i = 0; i < FEM_Mesh.NumNodesMesh; i++) {
-    Num_Particles_Node_i = FEM_Mesh.Num_Particles_Node[i];
+#pragma omp parallel shared(Np)
+  {
 
-    if (Num_Particles_Node_i != 0) {
-      FEM_Mesh.Num_Particles_Node[i] = 0;
-      free__SetLib__(&FEM_Mesh.List_Particles_Node[i]);
-    }
+#pragma omp for private(p, X_p, dis_p, Locality_I0)
+    for (p = 0; p < Np; p++) {
 
-    FEM_Mesh.ActiveNode[i] = false;
-  }
+      // Get the global coordinates and displacement of the particle
+      X_p = memory_to_matrix__MatrixLib__(Ndim, 1, MPM_Mesh.Phi.x_GC.nM[p]);
+      dis_p = memory_to_matrix__MatrixLib__(Ndim, 1, MPM_Mesh.Phi.dis.nM[p]);
 
-  if (FEM_Mesh.Locking_Control_Fbar) {
-    for (int i = 0; i < FEM_Mesh.Num_Patch_Mesh; i++) {
-      FEM_Mesh.Vol_Patch_n[i] = 0.0;
-      FEM_Mesh.Vol_Patch_n1[i] = 0.0;
-    }
-  }
+      // Check if the particle is static or is in movement
+      if (norm__MatrixLib__(dis_p, 2) > 0) {
 
-  // Loop over the particles to create the list with active nodes.
-  for (int p = 0; p < MPM_Mesh.NumGP; p++) {
+        // Update the index of the closest node to the particle
+        Locality_I0 = FEM_Mesh.NodalLocality_0[MPM_Mesh.I0[p]];
+        MPM_Mesh.I0[p] = get_closest_node__MeshTools__(X_p, Locality_I0,
+                                                       FEM_Mesh.Coordinates);
 
-    // Get the global coordinates and velocity of the particle.
-    X_p = memory_to_matrix__MatrixLib__(Ndim, 1, MPM_Mesh.Phi.x_GC.nM[p]);
-    V_p = memory_to_matrix__MatrixLib__(Ndim, 1, MPM_Mesh.Phi.vel.nM[p]);
-
-    // Update the index of the node close to the particle if there is advection.
-    if (norm__MatrixLib__(V_p, 2) > 0) {
-      // Update the index of the closest node to the particle.
-      Locality_I0 = FEM_Mesh.NodalLocality_0[MPM_Mesh.I0[p]];
-      MPM_Mesh.I0[p] =
-          get_closest_node__MeshTools__(X_p, Locality_I0, FEM_Mesh.Coordinates);
-
-      // Search particle in the sourrounding elements to this node.
-      MPM_Mesh.Element_p[p] =
-          search_particle_in_surrounding_elements__Particles__(
-              p, X_p, FEM_Mesh.NodeNeighbour[MPM_Mesh.I0[p]], FEM_Mesh);
-    }
-
-    // Select the closest nodes to the particle.
-    Locality_I0 = FEM_Mesh.NodalLocality_0[MPM_Mesh.I0[p]];
-
-    // Activate the nodes near the particle.
-    while (Locality_I0 != NULL) {
-      if (FEM_Mesh.ActiveNode[Locality_I0->Idx] == false) {
-        FEM_Mesh.ActiveNode[Locality_I0->Idx] = true;
+        // Search particle in the sourrounding elements to this node
+        MPM_Mesh.Element_p[p] =
+            search_particle_in_surrounding_elements__Particles__(
+                p, X_p, FEM_Mesh.NodeNeighbour[MPM_Mesh.I0[p]], FEM_Mesh);
+        if (MPM_Mesh.Element_p[p] == -999) {
+          fprintf(stderr,
+                  "" RED " Error in " RESET "" BOLDRED
+                  "search_particle_in_surrounding_elements__Particles__(%i,,)"
+                  " " RESET " \n",
+                  p);
+          STATUS = EXIT_FAILURE;
+        }
       }
-      Locality_I0 = Locality_I0->next;
     }
-  }
 
-  // Loop over the particles to compute the tributary nodes.
-  for (int p = 0; p < MPM_Mesh.NumGP; p++) {
-    Matrix Delta_Xip; // Distance from particles to the nodes
-    Matrix lambda_p =
-        memory_to_matrix__MatrixLib__(Ndim, 1, MPM_Mesh.lambda.nM[p]);
-    Matrix DF_p = memory_to_matrix__MatrixLib__(
-        Ndim, Ndim, MPM_Mesh.Phi.DF.nM[p]); // Particle deformation gradient
-    Matrix Beta_p =
-        memory_to_matrix__MatrixLib__(Ndim, Ndim, MPM_Mesh.Beta.nM[p]);
-    Matrix Cut_off_Ellipsoid_p = memory_to_matrix__MatrixLib__(
-        Ndim, Ndim, MPM_Mesh.Cut_off_Ellipsoid.nM[p]);
+#pragma omp barrier
 
-    // Get the global coordinates of the particle.
-    X_p = memory_to_matrix__MatrixLib__(Ndim, 1, MPM_Mesh.Phi.x_GC.nM[p]);
+    // Activate the nodes near the particle
+    for (p = 0; p < Np; p++) {
 
-    // Update the termalization matrix and cut-off ellipsoid.
-    update_beta__aLME__(Beta_p, DF_p);
-    update_cut_off_ellipsoid__aLME__(Cut_off_Ellipsoid_p, DF_p);
+      int I0 = MPM_Mesh.I0[p];
 
-    // Free previous list of tributary nodes to the particle.
-    free__SetLib__(&MPM_Mesh.ListNodes[p]);
+      Locality_I0 = FEM_Mesh.NodalLocality_0[MPM_Mesh.I0[p]];
+      while (Locality_I0 != NULL) {
+        if (FEM_Mesh.ActiveNode[Locality_I0->Idx] == false) {
+          FEM_Mesh.ActiveNode[Locality_I0->Idx] = true;
+        }
 
-    // Calculate the new connectivity with the previous value of beta.
-    MPM_Mesh.ListNodes[p] = tributary__aLME__(p, X_p, Cut_off_Ellipsoid_p,
-                                              MPM_Mesh.I0[p], FEM_Mesh);
+        Locality_I0 = Locality_I0->next;
+      }
 
-    // Calculate number of nodes.
-    MPM_Mesh.NumberNodes[p] = lenght__SetLib__(MPM_Mesh.ListNodes[p]);
+      if ((Driver_EigenErosion == true) || (Driver_EigenSoftening == true)) {
+        push__SetLib__(&FEM_Mesh.List_Particles_Node[I0], p);
+      }
+    }
 
-    // Generate nodal distance list.
-    Delta_Xip = compute_distance__MeshTools__(MPM_Mesh.ListNodes[p], X_p,
-                                              FEM_Mesh.Coordinates);
+    // Update the shape function
 
-    // Update lagrange multiplier with Newton-Rapson or with Nelder-Mead.
-    if (strcmp(wrapper_LME, "Newton-Raphson") == 0) {
+#pragma omp for private(p, X_p, Delta_Xip, lambda_p, DF_p, Beta_p,             \
+                        Cut_off_Ellipsoid_p)
+    for (p = 0; p < Np; p++) {
+
+      //  Get the global coordinates of the particle
+      X_p = memory_to_matrix__MatrixLib__(Ndim, 1, MPM_Mesh.Phi.x_GC.nM[p]);
+      lambda_p = memory_to_matrix__MatrixLib__(Ndim, 1, MPM_Mesh.lambda.nM[p]);
+      DF_p = memory_to_matrix__MatrixLib__(Ndim, Ndim, MPM_Mesh.Phi.DF.nM[p]);
+      Beta_p = memory_to_matrix__MatrixLib__(Ndim, Ndim, MPM_Mesh.Beta.nM[p]);
+      Cut_off_Ellipsoid_p = memory_to_matrix__MatrixLib__(
+          Ndim, Ndim, MPM_Mesh.Cut_off_Ellipsoid.nM[p]);
+
+      // Update the termalization matrix and cut-off ellipsoid.
+      update_beta__aLME__(Beta_p, DF_p);
+      update_cut_off_ellipsoid__aLME__(Cut_off_Ellipsoid_p, DF_p);
+
+      //  Free previous list of tributary nodes to the particle
+      free__SetLib__(&MPM_Mesh.ListNodes[p]);
+      MPM_Mesh.ListNodes[p] = NULL;
+
+      // Calculate the new connectivity with the previous value of beta.
+      MPM_Mesh.ListNodes[p] = tributary__aLME__(p, X_p, Cut_off_Ellipsoid_p,
+                                                MPM_Mesh.I0[p], FEM_Mesh);
+
+      //  Calculate number of nodes
+      MPM_Mesh.NumberNodes[p] = lenght__SetLib__(MPM_Mesh.ListNodes[p]);
+
+      //  Generate nodal distance list
+      Delta_Xip = compute_distance__MeshTools__(MPM_Mesh.ListNodes[p], X_p,
+                                                FEM_Mesh.Coordinates);
+
+      // Update lagrange multiplier with Newton-Rapson or with Nelder-Mead.
       update_lambda_Newton_Rapson__aLME__(p, Delta_Xip, lambda_p, Beta_p);
-    } else if (strcmp(wrapper_LME, "Nelder-Mead") == 0) {
-      update_lambda_Nelder_Mead__aLME__(p, Delta_Xip, lambda_p, Beta_p);
-    } else {
-      fprintf(stderr, "%s : %s \n", "Error in local_search__aLME__",
-              "Unrecognaised wrapper");
-      exit(EXIT_FAILURE);
+
+      // Free memory
+      free__MatrixLib__(Delta_Xip);
+      free(Cut_off_Ellipsoid_p.nM);
+      free(Beta_p.nM);
+      free(DF_p.nM);
     }
-
-    free__MatrixLib__(Delta_Xip);
-    free(Cut_off_Ellipsoid_p.nM);
-    free(Beta_p.nM);
-    free(DF_p.nM);
-
-    // Active those nodes that interact with the particle.
-    asign_to_nodes__Particles__(p, MPM_Mesh.Element_p[p], MPM_Mesh.I0[p],
-                                MPM_Mesh.ListNodes[p], FEM_Mesh);
   }
+
+  if (STATUS == EXIT_FAILURE) {
+    return EXIT_FAILURE;
+  }
+
+  return EXIT_SUCCESS;
 }
 
 /****************************************************************************/
 
+/**
+ * @brief Update the termalization matrix employing the increment of the
+ * deformation gradient.
+ *
+ * @param Beta Termalization matrix.
+ * @param Delta_F Increment of the deformation gradient.
+ */
 static void update_beta__aLME__(Matrix Beta, Matrix Delta_F) {
   int Ndim = NumberDimensions;
   Matrix Delta_F_m1 = inverse__MatrixLib__(Delta_F);
@@ -1075,6 +740,13 @@ static void update_beta__aLME__(Matrix Beta, Matrix Delta_F) {
 
 /****************************************************************************/
 
+/**
+ * @brief Update the shape of the cut-off region employing the increment of the
+ * deformation gradient
+ *
+ * @param Cut_off_Ellipsoid Cut-off matrix.
+ * @param Delta_F Increment of the deformation gradient.
+ */
 static void update_cut_off_ellipsoid__aLME__(Matrix Cut_off_Ellipsoid,
                                              Matrix Delta_F) {
   int Ndim = NumberDimensions;
@@ -1126,6 +798,16 @@ static void update_cut_off_ellipsoid__aLME__(Matrix Cut_off_Ellipsoid,
 
 /****************************************************************************/
 
+/**
+ * @brief  Update the list of tributary nodes for each particle
+ *
+ * @param Indx_p  Index of the particle.
+ * @param X_p Position of the particle.
+ * @param Cut_off_Ellipsoid Cut-off matrix.
+ * @param I0 Index of the closest node to the particle.
+ * @param FEM_Mesh Information of the background set of nodes.
+ * @return ChainPtr
+ */
 static ChainPtr tributary__aLME__(int Indx_p, Matrix X_p,
                                   Matrix Cut_off_Ellipsoid, int I0,
                                   Mesh FEM_Mesh) {
