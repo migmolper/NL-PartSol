@@ -36,8 +36,14 @@ if (NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "Release")
 endif()
 
-set(CMAKE_C_FLAGS_DEBUG "-O0 -g -Wall -Wpedantic -Wextra -Wunused-variable -fprofile-arcs -ftest-coverage")
+if (CMAKE_BUILD_TYPE MATCHES "Debug")
+message(STATUS "Debug mode")
+add_definitions("-DDEBUG")
 set(CMAKE_C_FLAGS_RELEASE "-Ofast -fprofile-arcs -ftest-coverage")
+elseif(CMAKE_BUILD_TYPE MATCHES "Release")
+message(STATUS "Release mode")
+set(CMAKE_C_FLAGS_DEBUG "-O0 -g -Wall -Wpedantic -Wextra -Wunused-variable -fprofile-arcs -ftest-coverage")
+endif()
 
 ###############################################################################
 ## dependencies ###############################################################

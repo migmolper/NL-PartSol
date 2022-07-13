@@ -296,8 +296,8 @@ PetscErrorCode lambda__LME__(const PetscScalar *l_a, PetscScalar *lambda_tr,
 
   /* Create Hessian */
   Mat H;
-  MatCreateSeqAIJ(PETSC_COMM_SELF,Ndim,Ndim,Ndim,NULL,&H);
-  MatSetOption(H,MAT_SYMMETRIC,PETSC_TRUE);
+  MatCreateSeqAIJ(PETSC_COMM_SELF, Ndim, Ndim, Ndim, NULL, &H);
+  MatSetOption(H, MAT_SYMMETRIC, PETSC_TRUE);
   MatSetOption(H, MAT_SYMMETRIC, PETSC_TRUE);
   MatSetFromOptions(H);
 
@@ -305,6 +305,7 @@ PetscErrorCode lambda__LME__(const PetscScalar *l_a, PetscScalar *lambda_tr,
   Tao tao;
   TaoCreate(PETSC_COMM_SELF, &tao);
   TaoSetType(tao, TAONTL);
+  TaoSetFromOptions(tao);
 
   /* Set solution vec */
   TaoSetSolution(tao, lambda_aux);
@@ -315,6 +316,19 @@ PetscErrorCode lambda__LME__(const PetscScalar *l_a, PetscScalar *lambda_tr,
 
   /* Solve the system */
   TaoSolve(tao);
+
+#ifdef DEBUG
+  puts("lambda__LME__");
+  PetscInt iterate;
+  PetscReal log_Z;
+  PetscReal gnorm;
+  PetscReal cnorm;
+  PetscReal xdiff;
+  TaoConvergedReason reason;
+  TaoGetSolutionStatus(tao, &iterate, &log_Z, &gnorm, &cnorm, &xdiff, &reason);
+  printf("Number of iterations: %i \n",iterate);
+  printf("log_Z: %f \n",log_Z);
+#endif
 
   /* Update values of the lagrange multiplier */
   VecGetValues(lambda_aux, Ndim, ix, lambda_tr);
@@ -471,6 +485,7 @@ static PetscErrorCode __function_gradient_log_Z(Tao tao, Vec lambda,
 
   /* Divide by Z and get the final value of the shape function */
   PetscScalar Z_m1 = 1.0 / Z;
+
   for (PetscInt a = 0; a < N_a; a++) {
     p_a[a] *= Z_m1;
   }
@@ -515,13 +530,12 @@ static PetscErrorCode __hessian_log_Z(Tao tao, Vec lambda, Mat H, Mat Hpre,
   PetscInt Ndim = NumberDimensions;
   PetscInt N_a = ((LME_ctx *)logZ_ctx)->N_a;
 
-
 #if NumberDimensions == 2
-    PetscScalar H_a[4] = {0.0,0.0,0.0,0.0};
-    const PetscInt idx[2] = {0,1};
+  PetscScalar H_a[4] = {0.0, 0.0, 0.0, 0.0};
+  const PetscInt idx[2] = {0, 1};
 #else
-    PetscScalar H_a[9] = {0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0};
-    const PetscInt idx[3] = {0,1,2};
+  PetscScalar H_a[9] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+  const PetscInt idx[3] = {0, 1, 2};
 #endif
 
   /* Read auxiliar variables */
@@ -539,10 +553,10 @@ static PetscErrorCode __hessian_log_Z(Tao tao, Vec lambda, Mat H, Mat Hpre,
     for (PetscInt j = 0; j < Ndim; j++) {
       /* First component */
       for (PetscInt a = 0; a < N_a; a++) {
-        H_a[i*Ndim + j] += p_a[a] * l_a[a * Ndim + i] * l_a[a * Ndim + j];
+        H_a[i * Ndim + j] += p_a[a] * l_a[a * Ndim + i] * l_a[a * Ndim + j];
       }
       /* Second component */
-      H_a[i*Ndim + j] += -r_ptr[i] * r_ptr[j];
+      H_a[i * Ndim + j] += -r_ptr[i] * r_ptr[j];
     }
   }
 

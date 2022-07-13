@@ -10,9 +10,6 @@
 #include <string.h>
 
 // clang-format off
-#include "Macros.h"
-#include "Types.h"
-#include "Globals.h"
 #include "Nodes/LME.h"
 // clang-format on
 
@@ -37,7 +34,7 @@ START_TEST(test_LME_2D_shape_function) {
       -0.25, -0.25, 0.25, -0.25, 0.25, 0.25, -0.25, 0.25, 0,  0, -0,
       0,     0,     0,    0,     0,    0,    -0,    0,    -0, 0, 0,
       0,     0,     0,    0,     -0,   0,    0,     0,    0,  0};
-      
+
   PetscScalar l_a[32]; 
   for (PetscInt a = 0; a < N_a; a++) {
     for (PetscInt i = 0; i < Ndim; i++) {
@@ -54,7 +51,7 @@ START_TEST(test_LME_2D_shape_function) {
   for (PetscInt a = 0; a < N_a; a++) {
     PartitionUnity += p_a[a];
   }
-
+  
   ck_assert_double_eq_tol(PartitionUnity, 1.0, Tolerance);
 
   for (PetscInt a = 0; a < N_a; a++) {
