@@ -51,7 +51,16 @@ Matrix   get_nodes_coordinates__MeshTools__(ChainPtr, Matrix);
 double point_distance__MeshTools__(Matrix, Matrix);
 /********************************************************************/
 
-Matrix   compute_distance__MeshTools__(ChainPtr, Matrix, Matrix);
+/**
+ * @brief 
+ * 
+ * @param Set 
+ * @param X0 
+ * @param Coordinates 
+ * @param Num_nodes 
+ * @return double* 
+ */
+double * compute_distance__MeshTools__(ChainPtr Set, const double * X0, Matrix Coordinates, int Num_nodes);
 /********************************************************************/
 
 Matrix   get_set_field_old__MeshTools__(Matrix, Element);

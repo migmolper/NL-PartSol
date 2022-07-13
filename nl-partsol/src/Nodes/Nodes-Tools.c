@@ -1,5 +1,6 @@
 #include "Nodes/Nodes-Tools.h"
 #include "Globals.h"
+#include <stdlib.h>
 
 /**************************************************************/
 
@@ -421,24 +422,22 @@ double point_distance__MeshTools__(Matrix End, Matrix Init)
 
 /*********************************************************************/
 
-Matrix compute_distance__MeshTools__(ChainPtr Set, Matrix X0,
-                                     Matrix Coordinates) {
+double * compute_distance__MeshTools__(ChainPtr Set, const double * X0, Matrix Coordinates, int Num_nodes) {
   int Ndim = NumberDimensions;
-  int SizeSet = lenght__SetLib__(Set);
-  int I = 0;
+  int A = 0;
 
   /* Allocate output */
-  Matrix Set_Coordinates = allocZ__MatrixLib__(SizeSet, Ndim);
+  double * Set_Coordinates = (double *)calloc(Num_nodes, sizeof(double));
 
   /* Loop in the set */
   ChainPtr Aux_Set = Set;
   while (Aux_Set != NULL) {
     /* Get coordinates local coodinates of each node in the set */
     for (int i = 0; i < Ndim; i++) {
-      Set_Coordinates.nM[I][i] = X0.nV[i] - Coordinates.nM[Aux_Set->Idx][i];
+      Set_Coordinates[A*Num_nodes + i] = X0[i] - Coordinates.nM[Aux_Set->Idx][i];
     }
     /* Update index */
-    I++;
+    A++;
     Aux_Set = Aux_Set->next;
   }
 

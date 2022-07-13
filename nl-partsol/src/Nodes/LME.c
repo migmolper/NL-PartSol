@@ -40,34 +40,37 @@ static PetscScalar __eval_f_a(const PetscScalar *la, const PetscScalar *lambda,
 
 static void initialise_lambda__LME__(int, Matrix, Matrix, Matrix, double);
 
-static ChainPtr __tributary_nodes(int, Matrix, double, int, Mesh);
+static ChainPtr __tributary_nodes(int Indx_p, const double *X_p, double Beta_p,
+                                  int I0, Mesh FEM_Mesh);
 /****************************************************************************/
 
 void initialize__LME__(Particle MPM_Mesh, Mesh FEM_Mesh) {
 
-  unsigned Ndim = NumberDimensions;
-  unsigned Np = MPM_Mesh.NumGP; // Number of gauss-points in the simulation
+  unsigned Ndim = NumberDimensions; // Number of dimensions
+  unsigned Np = MPM_Mesh.NumGP;     // Number of gauss-points in the simulation
   unsigned Nelem = FEM_Mesh.NumElemMesh; // Number of elements
   int I0;                                // Closest node to the particle
-  unsigned p;
-  bool Is_particle_reachable;
+  unsigned p;                            // Index of the particle
+  bool Is_particle_reachable; // Boolean indicator to define if the particle is
+                              // reachable
 
   ChainPtr Locality_I0; // List of nodes close to the node I0_p
   Matrix lambda_p;      // Lagrange multiplier
-  double Beta_p;        // Thermalization or regularization parameter
+  double *Delta_Xip; // Vector with the distance between the particle p and the
+                     // nodes
+  double Beta_p;     // Thermalization or regularization parameter
 
 #pragma omp parallel shared(Np, Nelem)
   {
 
-#pragma omp for private(p, Is_particle_reachable, lambda_p, Beta_p)
+#pragma omp for private(p, Is_particle_reachable, lambda_p, Delta_Xip, Beta_p)
     for (p = 0; p < Np; p++) {
 
       Is_particle_reachable = false;
       unsigned idx_element = 0;
 
       // Particle position
-      Matrix X_p =
-          memory_to_matrix__MatrixLib__(Ndim, 1, MPM_Mesh.Phi.x_GC.nM[p]);
+      const double * X_p = MPM_Mesh.Phi.x_GC.nM[p];
 
       // Loop over the element mesh
       while ((Is_particle_reachable == false) && (idx_element < Nelem)) {
@@ -140,12 +143,11 @@ void initialize__LME__(Particle MPM_Mesh, Mesh FEM_Mesh) {
       }
     }
 
-#pragma omp for private(p, lambda_p, Beta_p)
+#pragma omp for private(p, lambda_p, Delta_Xip, Beta_p)
     for (p = 0; p < Np; p++) {
 
       // Get some properties for each particle
-      Matrix X_p =
-          memory_to_matrix__MatrixLib__(Ndim, 1, MPM_Mesh.Phi.x_GC.nM[p]);
+      const double *X_p = MPM_Mesh.Phi.x_GC.nM[p];
       lambda_p = memory_to_matrix__MatrixLib__(Ndim, 1, MPM_Mesh.lambda.nM[p]);
       Beta_p = MPM_Mesh.Beta.nV[p];
 
@@ -156,24 +158,25 @@ void initialize__LME__(Particle MPM_Mesh, Mesh FEM_Mesh) {
       // Calculate number of nodes
       MPM_Mesh.NumberNodes[p] = lenght__SetLib__(MPM_Mesh.ListNodes[p]);
 
+      // Generate nodal distance list
+      Delta_Xip = compute_distance__MeshTools__(MPM_Mesh.ListNodes[p], X_p,
+                                                FEM_Mesh.Coordinates,
+                                                MPM_Mesh.NumberNodes[p]);
+
       // Update the value of the thermalization parameter
       Beta_p = beta__LME__(gamma_LME, FEM_Mesh.h_avg[MPM_Mesh.I0[p]]);
       MPM_Mesh.Beta.nV[p] = Beta_p;
+
+      lambda__LME__(Delta_Xip, MPM_Mesh.lambda.nM[p], Beta_p,
+                    MPM_Mesh.NumberNodes[p]);
+
+      free(Delta_Xip);
     }
   }
 }
 
 /****************************************************************************/
 
-/**
- * @brief Get the thermalization parameter beta using the global variable
- * gamma_LME.
- *
- * @param Gamma User define parameter to control the value of the thermalization
- * parameter.
- * @param h_avg Average mesh size
- * @return double
- */
 double beta__LME__(double Gamma, double h_avg) {
   return Gamma / (h_avg * h_avg);
 }
@@ -316,19 +319,6 @@ PetscErrorCode lambda__LME__(const PetscScalar *l_a, PetscScalar *lambda_tr,
 
   /* Solve the system */
   TaoSolve(tao);
-
-#ifdef DEBUG
-  puts("lambda__LME__");
-  PetscInt iterate;
-  PetscReal log_Z;
-  PetscReal gnorm;
-  PetscReal cnorm;
-  PetscReal xdiff;
-  TaoConvergedReason reason;
-  TaoGetSolutionStatus(tao, &iterate, &log_Z, &gnorm, &cnorm, &xdiff, &reason);
-  printf("Number of iterations: %i \n",iterate);
-  printf("log_Z: %f \n",log_Z);
-#endif
 
   /* Update values of the lagrange multiplier */
   VecGetValues(lambda_aux, Ndim, ix, lambda_tr);
@@ -603,19 +593,15 @@ static PetscScalar __eval_f_a(const PetscScalar *la, const PetscScalar *lambda,
 
 /****************************************************************************/
 
-int local_search__LME__(Particle MPM_Mesh, Mesh FEM_Mesh)
-/*
-  Search the closest node to the particle based in its previous position.
-*/
-{
+int local_search__LME__(Particle MPM_Mesh, Mesh FEM_Mesh) {
   int STATUS = EXIT_SUCCESS;
   int STATUS_p = EXIT_SUCCESS;
   int Ndim = NumberDimensions;
   unsigned Np = MPM_Mesh.NumGP;
   unsigned p;
 
-  Matrix X_p;           // Particle position
-  Matrix dis_p;         // Particle displacement
+  double *X_p;          // Particle position
+  double *dis_p;        // Particle displacement
   Matrix lambda_p;      // Lagrange multiplier of the shape function
   double Beta_p;        // Themalization parameter
   ChainPtr Locality_I0; // List of nodes close to the node I0_p
@@ -627,8 +613,8 @@ int local_search__LME__(Particle MPM_Mesh, Mesh FEM_Mesh)
     for (p = 0; p < Np; p++) {
 
       // Get the global coordinates and displacement of the particle
-      X_p = memory_to_matrix__MatrixLib__(Ndim, 1, MPM_Mesh.Phi.x_GC.nM[p]);
-      dis_p = memory_to_matrix__MatrixLib__(Ndim, 1, MPM_Mesh.Phi.dis.nM[p]);
+      X_p = MPM_Mesh.Phi.x_GC.nM[p];
+      dis_p = MPM_Mesh.Phi.dis.nM[p];
 
       // Check if the particle is static or is in movement
       if (norm__MatrixLib__(dis_p, 2) > 0) {
@@ -683,7 +669,7 @@ int local_search__LME__(Particle MPM_Mesh, Mesh FEM_Mesh)
       Beta_p = MPM_Mesh.Beta.nV[p]; // Thermalization parameter
 
       //  Get the global coordinates of the particle
-      X_p = memory_to_matrix__MatrixLib__(Ndim, 1, MPM_Mesh.Phi.x_GC.nM[p]);
+      X_p = MPM_Mesh.Phi.x_GC.nM[p];
 
       //  Free previous list of tributary nodes to the particle
       free__SetLib__(&MPM_Mesh.ListNodes[p]);
@@ -722,17 +708,24 @@ int local_search__LME__(Particle MPM_Mesh, Mesh FEM_Mesh)
  * @param FEM_Mesh Variable wih information of the background set of nodes
  * @return ChainPtr
  */
-static ChainPtr __tributary_nodes(int Indx_p, Matrix X_p, double Beta_p, int I0,
-                                  Mesh FEM_Mesh) {
+static ChainPtr __tributary_nodes(int Indx_p, const double *X_p, double Beta_p,
+                                  int I0, Mesh FEM_Mesh) {
 
   /* Define output */
   ChainPtr Triburary_Nodes = NULL;
   /* Number of dimensionws of the problem */
   int Ndim = NumberDimensions;
 
-  Matrix Distance; /* Distance between node and GP */
-  Matrix X_I = memory_to_matrix__MatrixLib__(Ndim, 1, NULL);
-  Matrix Metric = Identity__MatrixLib__(Ndim);
+  /* Distance between node and GP */
+#if NumberDimensions == 2
+  double Distance[2] = {0.0, 0.0};
+  const double Metric[4] = {1.0, 0.0, 0.0, 1.0};
+#else
+  double Distance[3] = {0.0, 0.0, 0.0};
+  const double Metric[9] = {1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0};
+#endif
+  double *X_I;
+
   ChainPtr Set_Nodes0 = NULL;
   int *Array_Nodes0;
   int NumNodes0;
@@ -758,19 +751,16 @@ static ChainPtr __tributary_nodes(int Indx_p, Matrix X_p, double Beta_p, int I0,
 
     if (FEM_Mesh.ActiveNode[Node0] == true) {
       /* Assign to a pointer the coordinates of the nodes */
-      X_I.nV = FEM_Mesh.Coordinates.nM[Node0];
+      X_I = FEM_Mesh.Coordinates.nM[Node0];
 
       /* Get a vector from the GP to the node */
-      Distance = substraction__MatrixLib__(X_p, X_I);
+      substraction__TensorLib__(Distance, X_p, X_I);
 
       /* If the node is near the GP push in the chain */
-      if (generalised_Euclidean_distance__MatrixLib__(Distance, Metric) <= Ra) {
+      if (generalised_Euclidean_distance__TensorLib__(Distance, Metric) <= Ra) {
         push__SetLib__(&Triburary_Nodes, Node0);
         NumTributaryNodes++;
       }
-
-      /* Free memory of the distrance vector */
-      free__MatrixLib__(Distance);
     }
   }
 
@@ -784,7 +774,6 @@ static ChainPtr __tributary_nodes(int Indx_p, Matrix X_p, double Beta_p, int I0,
 
   /* Free memory */
   free(Array_Nodes0);
-  free__MatrixLib__(Metric);
 
   return Triburary_Nodes;
 }

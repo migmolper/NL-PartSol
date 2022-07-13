@@ -42,7 +42,7 @@ void   print__MatrixLib__(Matrix, int, int);
 Matrix copy__MatrixLib__(Matrix);
 double norm__MatrixLib__(Matrix, int);
 double Euclidean_distance__MatrixLib__(Matrix);
-double generalised_Euclidean_distance__MatrixLib__(Matrix, Matrix);
+
 Matrix inverse__MatrixLib__(Matrix);
 Matrix transpose__MatrixLib__(Matrix);
 double I3__MatrixLib__(Matrix);
@@ -52,7 +52,6 @@ Matrix vectorial_product__MatrixLib__(Matrix, Matrix);
 Matrix dyadic_product__MatrixLib__(Matrix,Matrix);
 Matrix increment__MatrixLib__(Matrix, Matrix);
 Matrix addition__MatrixLib__(Matrix, Matrix);
-Matrix substraction__MatrixLib__(Matrix, Matrix);
 Matrix lumped__MatrixLib__(Matrix);
 Matrix solve_polynomial__MatrixLib__(Matrix);
 
@@ -141,6 +140,24 @@ Tensor dyadic_Product__TensorLib__(Tensor, Tensor);
 Tensor vector_linear_mapping__TensorLib__(Tensor, Tensor);
 Tensor matrix_product_old__TensorLib__(Tensor, Tensor);
 
+/**
+ * @brief Compute the Euclidean distance using a general metric tensor
+ * 
+ * @param la Vector
+ * @param Metric Metric tensor
+ * @return double 
+ */
+double generalised_Euclidean_distance__TensorLib__(double * la, const double * Metric);
+
+/**
+ * @brief Substract two matrix A and B, and return the result Cs
+ * 
+ * @param C 
+ * @param A 
+ * @param B 
+ * @return int 
+ */
+int substraction__TensorLib__(double * C, double * A, double * B);
 
 /**
  * @brief Compute the euclidean norm of a vector

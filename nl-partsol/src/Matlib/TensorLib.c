@@ -743,6 +743,50 @@ void print__TensorLib__(Tensor A) {
   }
 }
 
+/*********************************************************************/
+
+double generalised_Euclidean_distance__TensorLib__(double * la, const double * Metric)
+{
+
+  int Ndim = NumberDimensions;
+  double Metric_x_la = 0;
+  double sqr_distance = 0;
+  double distance = 0;
+
+  for (int i = 0; i < Ndim; i++) {
+
+    Metric_x_la = 0;
+
+    for (int j = 0; j < Ndim; j++) {
+      Metric_x_la += Metric[i*Ndim + j] * la[j];
+    }
+
+    sqr_distance += la[i] * Metric_x_la;
+  }
+
+  distance = sqrt(sqr_distance);
+
+  return distance;
+}
+
+/*************************************************************/
+
+int substraction__TensorLib__(double * C, double * A, double * B)
+{
+  int STATUS = EXIT_SUCCESS;
+
+#if NumberDimensions == 2 
+  C[0] = A[0] - B[0];
+  C[1] = A[1] - B[1];
+#else 
+  C[0] = A[0] - B[0];
+  C[1] = A[1] - B[1];
+  C[2] = A[2] - B[2];
+#endif
+
+  return STATUS;
+}
+
 /*************************************************************/
 
 int compute_inverse__TensorLib__(double * A_m1, const double * A)

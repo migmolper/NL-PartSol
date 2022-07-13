@@ -59,6 +59,11 @@ typedef struct Chain {
   int Idx;
 
   /** @brief
+   * Pointer to the coordinate of the node
+   */
+  const double * X;
+
+  /** @brief
    * Pointer to the next node in the set
    */
   struct Chain *next;

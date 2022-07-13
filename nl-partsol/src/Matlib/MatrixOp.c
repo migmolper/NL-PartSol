@@ -784,62 +784,6 @@ Matrix addition__MatrixLib__(Matrix A, Matrix B)
 
 /*********************************************************************/
 
-Matrix substraction__MatrixLib__(Matrix A, Matrix B)
-/*
-
-  Substract two matrix A and B, and return the result C
-
-  C = A - B
-
- */
-{
-  /* Variable declaration */
-  int Rows = A.N_rows;
-  int Columns = A.N_cols;
-  Matrix C = allocZ__MatrixLib__(Rows, Columns);
-
-  /* Check if it is possible to do the addition */
-  if ((A.N_cols == B.N_cols) && (A.N_rows == B.N_rows)) {
-    Rows = A.N_rows;
-    Columns = A.N_cols;
-
-    /* Two array addition */
-    if (((Columns == 1) && (Rows > 1)) || (Columns > 1) && (Rows == 1)) {
-      for (int i = 0; i < C.N_rows * C.N_cols; i++) {
-        C.nV[i] = A.nV[i] - B.nV[i];
-      }
-    }
-
-    /* Two matrix addition */
-    else if ((Columns > 1) && (Rows > 1)) {
-      for (int i = 0; i < C.N_rows; i++) {
-        for (int j = 0; j < C.N_cols; j++) {
-          C.nM[i][j] = A.nM[i][j] - B.nM[i][j];
-        }
-      }
-    }
-
-    /* Fail */
-    else {
-      fprintf(stderr, "%s : %s \n", "Error in substraction__MatrixLib__()",
-              "Wrong input matrix!");
-      exit(EXIT_FAILURE);
-    }
-
-  }
-
-  /* Fail */
-  else {
-    fprintf(stderr, "%s : %s \n", "Error in substraction__MatrixLib__()",
-            "Wrong input matrix!");
-    exit(EXIT_FAILURE);
-  }
-
-  return C;
-}
-
-/*********************************************************************/
-
 double norm__MatrixLib__(Matrix In, int kind)
 /*
   Get the norm of a vector in a Euclidean space R2. Implemented norms :
@@ -883,35 +827,6 @@ double Euclidean_distance__MatrixLib__(Matrix la)
 
   for (int i = 0; i < Ndim; i++) {
     sqr_distance += la.nV[i] * la.nV[i];
-  }
-
-  distance = sqrt(sqr_distance);
-
-  return distance;
-}
-
-/*********************************************************************/
-
-double generalised_Euclidean_distance__MatrixLib__(Matrix la, Matrix Metric)
-/*
-  Compute the Euclidean distance using a general metric tensor
-*/
-{
-
-  int Ndim = NumberDimensions;
-  double Metric_x_la = 0;
-  double sqr_distance = 0;
-  double distance = 0;
-
-  for (int i = 0; i < Ndim; i++) {
-
-    Metric_x_la = 0;
-
-    for (int j = 0; j < Ndim; j++) {
-      Metric_x_la += Metric.nM[i][j] * la.nV[j];
-    }
-
-    sqr_distance += la.nV[i] * Metric_x_la;
   }
 
   distance = sqrt(sqr_distance);

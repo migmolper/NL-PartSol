@@ -148,8 +148,8 @@ void initialize__aLME__(Particle MPM_Mesh, Mesh FEM_Mesh) {
       MPM_Mesh.NumberNodes[p] = lenght__SetLib__(MPM_Mesh.ListNodes[p]);
 
       // Generate nodal distance list
-      Delta_Xip = compute_distance__MeshTools__(MPM_Mesh.ListNodes[p], X_p,
-                                                FEM_Mesh.Coordinates);
+//      Delta_Xip = compute_distance__MeshTools__(MPM_Mesh.ListNodes[p], X_p,
+//                                                FEM_Mesh.Coordinates);
 
       // Update the value of the thermalization parameter
       initialize_beta__aLME__(Beta_p, gamma_LME,
@@ -660,8 +660,8 @@ int local_search__aLME__(Particle MPM_Mesh, Mesh FEM_Mesh)
       MPM_Mesh.NumberNodes[p] = lenght__SetLib__(MPM_Mesh.ListNodes[p]);
 
       //  Generate nodal distance list
-      Delta_Xip = compute_distance__MeshTools__(MPM_Mesh.ListNodes[p], X_p,
-                                                FEM_Mesh.Coordinates);
+//      Delta_Xip = compute_distance__MeshTools__(MPM_Mesh.ListNodes[p], X_p,
+//                                                FEM_Mesh.Coordinates);
 
       // Update lagrange multiplier with Newton-Rapson or with Nelder-Mead.
       update_lambda_Newton_Rapson__aLME__(p, Delta_Xip, lambda_p, Beta_p);
@@ -843,14 +843,14 @@ static ChainPtr tributary__aLME__(int Indx_p, Matrix X_p,
       X_I.nV = FEM_Mesh.Coordinates.nM[Node0];
 
       // Get a vector from the GP to the node
-      Distance = substraction__MatrixLib__(X_p, X_I);
+//      Distance = substraction__MatrixLib__(X_p, X_I);
 
       // If the node is near the GP push in the chain
-      if (generalised_Euclidean_distance__MatrixLib__(
-              Distance, Cut_off_Ellipsoid) <= 1.0) {
-        push__SetLib__(&Triburary_Nodes, Node0);
-        NumTributaryNodes++;
-      }
+//      if (generalised_Euclidean_distance__TensorLib__(
+//              Distance, Cut_off_Ellipsoid) <= 1.0) {
+//        push__SetLib__(&Triburary_Nodes, Node0);
+//        NumTributaryNodes++;
+//      }
 
       free__MatrixLib__(Distance);
     }
