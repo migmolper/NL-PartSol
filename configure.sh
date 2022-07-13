@@ -106,3 +106,4 @@ cd build
 ninja
 fi
 
+#gcovr -r . --html --html-details -o coverage_report.html

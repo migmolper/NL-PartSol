@@ -20,13 +20,12 @@
 
 // Auxiliar functions to compute the shape functions
 
-typedef struct LME_ctx *LME_ctx_ptr;
-struct LME_ctx {
+typedef struct {
   PetscInt N_a;
   PetscScalar beta;
   const PetscScalar *l_a;
   PetscScalar *p_a;
-};
+} LME_ctx;
 
 /* -------------- User-defined routines ---------- */
 static PetscErrorCode __function_gradient_log_Z(Tao tao, Vec lambda,
@@ -270,7 +269,7 @@ PetscErrorCode lambda__LME__(const PetscScalar *l_a, PetscScalar *lambda_tr,
   PetscMalloc(sizeof(PetscScalar) * N_a, &p_a);
 
   /* Definition of some parameters */
-  LME_ctx_ptr user_ptr;
+  LME_ctx user_ctx;
   PetscInt MaxIter = max_iter_LME;
   PetscInt NumIter;
 
@@ -281,22 +280,26 @@ PetscErrorCode lambda__LME__(const PetscScalar *l_a, PetscScalar *lambda_tr,
 #endif
 
   /* Create user-defined variable */
-  user_ptr->beta = Beta;
-  user_ptr->l_a = l_a;
-  user_ptr->N_a = N_a;
-  user_ptr->p_a = p_a;
+  user_ctx.beta = Beta;
+  user_ctx.l_a = l_a;
+  user_ctx.N_a = N_a;
+  user_ctx.p_a = p_a;
 
   /* Create lagrange multiplier */
   Vec lambda_aux;
   VecCreate(PETSC_COMM_SELF, &lambda_aux);
   VecSetSizes(lambda_aux, PETSC_DECIDE, Ndim);
+  VecSetFromOptions(lambda_aux);
   VecSetValues(lambda_aux, Ndim, ix, lambda_tr, INSERT_VALUES);
+  VecAssemblyBegin(lambda_aux);
+  VecAssemblyEnd(lambda_aux);
 
   /* Create Hessian */
   Mat H;
-  MatCreate(PETSC_COMM_SELF, &H);
-  MatSetSizes(H, PETSC_DECIDE, PETSC_DECIDE, Ndim, Ndim);
+  MatCreateSeqAIJ(PETSC_COMM_SELF,Ndim,Ndim,Ndim,NULL,&H);
+  MatSetOption(H,MAT_SYMMETRIC,PETSC_TRUE);
   MatSetOption(H, MAT_SYMMETRIC, PETSC_TRUE);
+  MatSetFromOptions(H);
 
   /* Create TAO solver with desired solution method */
   Tao tao;
@@ -307,8 +310,8 @@ PetscErrorCode lambda__LME__(const PetscScalar *l_a, PetscScalar *lambda_tr,
   TaoSetSolution(tao, lambda_aux);
 
   /* Set routines for function, gradient, hessian evaluation */
-  TaoSetObjectiveAndGradient(tao, NULL, __function_gradient_log_Z, user_ptr);
-  TaoSetHessian(tao, H, H, __hessian_log_Z, user_ptr);
+  TaoSetObjectiveAndGradient(tao, NULL, __function_gradient_log_Z, &user_ctx);
+  TaoSetHessian(tao, H, H, __hessian_log_Z, &user_ctx);
 
   /* Solve the system */
   TaoSolve(tao);
@@ -444,16 +447,15 @@ static PetscErrorCode __function_gradient_log_Z(Tao tao, Vec lambda,
                                                 void *logZ_ctx) {
   /* Definition of some parameters */
   PetscErrorCode STATUS = EXIT_SUCCESS;
-  LME_ctx_ptr user_ptr = (LME_ctx_ptr)logZ_ctx;
 
   /* Get constants */
   PetscInt Ndim = NumberDimensions;
-  PetscScalar beta = user_ptr->beta;
-  PetscInt N_a = user_ptr->N_a;
+  PetscScalar beta = ((LME_ctx *)logZ_ctx)->beta;
+  PetscInt N_a = ((LME_ctx *)logZ_ctx)->N_a;
 
   /* Read auxiliar variables */
-  PetscScalar *p_a = user_ptr->p_a;
-  const PetscScalar *l_a = user_ptr->l_a;
+  PetscScalar *p_a = ((LME_ctx *)logZ_ctx)->p_a;
+  const PetscScalar *l_a = ((LME_ctx *)logZ_ctx)->l_a;
 
   PetscScalar *r_ptr;
   VecGetArray(r, &r_ptr);
@@ -508,16 +510,23 @@ static PetscErrorCode __hessian_log_Z(Tao tao, Vec lambda, Mat H, Mat Hpre,
 
   /* Definition of some parameters */
   PetscErrorCode STATUS = EXIT_SUCCESS;
-  LME_ctx_ptr user_ptr = (LME_ctx_ptr)logZ_ctx;
 
   /* Get constants */
   PetscInt Ndim = NumberDimensions;
-  PetscInt N_a = user_ptr->N_a;
-  PetscScalar H_a;
+  PetscInt N_a = ((LME_ctx *)logZ_ctx)->N_a;
+
+
+#if NumberDimensions == 2
+    PetscScalar H_a[4] = {0.0,0.0,0.0,0.0};
+    const PetscInt idx[2] = {0,1};
+#else
+    PetscScalar H_a[9] = {0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0};
+    const PetscInt idx[3] = {0,1,2};
+#endif
 
   /* Read auxiliar variables */
-  PetscScalar *p_a = user_ptr->p_a;
-  const PetscScalar *l_a = user_ptr->l_a;
+  PetscScalar *p_a = ((LME_ctx *)logZ_ctx)->p_a;
+  const PetscScalar *l_a = ((LME_ctx *)logZ_ctx)->l_a;
 
   /* Get the value of the gradient of log(Z) */
   Vec r;
@@ -525,22 +534,19 @@ static PetscErrorCode __hessian_log_Z(Tao tao, Vec lambda, Mat H, Mat Hpre,
   const PetscScalar *r_ptr;
   VecGetArrayRead(r, &r_ptr);
 
-  /* Set to zero the Hessian */
-  PetscCall(MatZeroEntries(H));
-
   /* Fill the Hessian */
   for (PetscInt i = 0; i < Ndim; i++) {
     for (PetscInt j = 0; j < Ndim; j++) {
       /* First component */
       for (PetscInt a = 0; a < N_a; a++) {
-        H_a = p_a[a] * l_a[a * Ndim + i] * l_a[a * Ndim + j];
-        MatSetValues(H, 1, &i, 1, &j, &H_a, ADD_VALUES);
+        H_a[i*Ndim + j] += p_a[a] * l_a[a * Ndim + i] * l_a[a * Ndim + j];
       }
       /* Second component */
-      H_a = -r_ptr[i] * r_ptr[j];
-      MatSetValues(H, 1, &i, 1, &j, &H_a, ADD_VALUES);
+      H_a[i*Ndim + j] += -r_ptr[i] * r_ptr[j];
     }
   }
+
+  MatSetValues(H, Ndim, idx, Ndim, idx, H_a, INSERT_VALUES);
 
   /* Restore auxiliar pointers */
   VecRestoreArrayRead(r, &r_ptr);
@@ -754,9 +760,7 @@ static ChainPtr __tributary_nodes(int Indx_p, Matrix X_p, double Beta_p, int I0,
     }
   }
 
-  /*
-    If the Triburary_Nodes chain lenght is less than 3 assign al the node
-  */
+  /* If the Triburary_Nodes chain lenght is less than 3 assign al the node */
   if (NumTributaryNodes < Ndim + 1) {
     fprintf(stderr, "%s %i : %s -> %i\n",
             "Warning in __tributary_nodes for particle", Indx_p,
