@@ -23,7 +23,7 @@ START_TEST(test_LME_2D_shape_function) {
   PetscScalar lambda_tr[NumberDimensions] = {0.0, 0.0};
   PetscScalar h_avg = 2.0;
   PetscScalar Gamma = 20.0;
-  PetscScalar Beta = beta__LME__(Gamma, h_avg);
+  PetscScalar Beta = Gamma / (h_avg * h_avg);
   PetscScalar X_a[32] = {-1., -1., 1.,  -1., 1.,  1.,  -1., 1., -3., -3., -1.,
                          -3., 1.,  -3., 3.,  -3., -3., -1., 3., -1., -3., 1.,
                          3.,  1.,  -3., 3.,  -1., 3.,  1.,  3., 3.,  3.};

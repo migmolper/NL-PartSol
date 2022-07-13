@@ -31,18 +31,6 @@
  * @param FEM_Mesh Structure with the nodal set information
  */
 void initialize__LME__(Particle MPM_Mesh, Mesh FEM_Mesh);
-/****************************************************************************/
-
-/**
- * @brief Get the thermalization parameter beta using the global variable
- * gamma_LME.
- *
- * @param Gamma User-defined adimensional parameter used to control the value of
- * the thermalization parameter.
- * @param h_avg Average mesh size
- * @return double
- */
-double beta__LME__(double, double);
 
 /****************************************************************************/
 

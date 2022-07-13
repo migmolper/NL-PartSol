@@ -28,6 +28,13 @@ typedef struct {
 } LME_ctx;
 
 /* -------------- User-defined routines ---------- */
+
+static PetscScalar __compute_beta(PetscScalar, PetscScalar);
+
+static PetscErrorCode __initialise_lambda(double *lambda, const double *X_p,
+                                          const double *X_a, double Beta,
+                                          unsigned Num_nodes);
+
 static PetscErrorCode __function_gradient_log_Z(Tao tao, Vec lambda,
                                                 PetscScalar *log_Z, Vec r,
                                                 void *logZ_ctx);
@@ -37,8 +44,6 @@ static PetscErrorCode __hessian_log_Z(Tao tao, Vec lambda, Mat H, Mat Hpre,
 
 static PetscScalar __eval_f_a(const PetscScalar *la, const PetscScalar *lambda,
                               PetscScalar Beta);
-
-static void initialise_lambda__LME__(int, Matrix, Matrix, Matrix, double);
 
 static ChainPtr __tributary_nodes(int Indx_p, const double *X_p, double Beta_p,
                                   int I0, Mesh FEM_Mesh);
@@ -70,7 +75,7 @@ void initialize__LME__(Particle MPM_Mesh, Mesh FEM_Mesh) {
       unsigned idx_element = 0;
 
       // Particle position
-      const double * X_p = MPM_Mesh.Phi.x_GC.nM[p];
+      const double *X_p = MPM_Mesh.Phi.x_GC.nM[p];
 
       // Loop over the element mesh
       while ((Is_particle_reachable == false) && (idx_element < Nelem)) {
@@ -95,13 +100,10 @@ void initialize__LME__(Particle MPM_Mesh, Mesh FEM_Mesh) {
               X_p, Elem_p_Connectivity, FEM_Mesh.Coordinates);
 
           // Initialize Beta
-          Beta_p = beta__LME__(gamma_LME, FEM_Mesh.h_avg[MPM_Mesh.I0[p]]);
+          Beta_p = __compute_beta(gamma_LME, FEM_Mesh.h_avg[MPM_Mesh.I0[p]]);
 
           // Initialise lambda for the Nelder-Mead using Bo-Li approach
-          if (strcmp(wrapper_LME, "Nelder-Mead") == 0) {
-            initialise_lambda__LME__(p, X_p, Elem_p_Coordinates, lambda_p,
-                                     Beta_p);
-          }
+          __initialise_lambda(lambda_p, X_p, Elem_p_Coordinates, Beta_p, unsigned Num_nodes);
         }
 
         /* Free coordinates of the element */
@@ -164,7 +166,7 @@ void initialize__LME__(Particle MPM_Mesh, Mesh FEM_Mesh) {
                                                 MPM_Mesh.NumberNodes[p]);
 
       // Update the value of the thermalization parameter
-      Beta_p = beta__LME__(gamma_LME, FEM_Mesh.h_avg[MPM_Mesh.I0[p]]);
+      Beta_p = __compute_beta(gamma_LME, FEM_Mesh.h_avg[MPM_Mesh.I0[p]]);
       MPM_Mesh.Beta.nV[p] = Beta_p;
 
       lambda__LME__(Delta_Xip, MPM_Mesh.lambda.nM[p], Beta_p,
@@ -177,55 +179,74 @@ void initialize__LME__(Particle MPM_Mesh, Mesh FEM_Mesh) {
 
 /****************************************************************************/
 
-double beta__LME__(double Gamma, double h_avg) {
-  return Gamma / (h_avg * h_avg);
+/**
+ * @brief Get the thermalization parameter beta using the global variable
+ * gamma_LME.
+ *
+ * @param Gamma User-defined adimensional parameter used to control the value of
+ * the thermalization parameter.
+ * @param h_avg Average mesh size
+ * @return double
+ */
+static PetscScalar __compute_beta(PetscScalar Gamma, PetscScalar h_avg) {
+  PetscScalar beta = Gamma / (h_avg * h_avg);
+  return beta;
 }
 
 /****************************************************************************/
 
-static void initialise_lambda__LME__(int Idx_particle, Matrix X_p,
-                                     Matrix Elem_p_Coordinates, Matrix lambda,
-                                     double Beta) {
+/**
+ * @brief Initialize the lagrange multiplier using Bo Li approach
+ *
+ * @param lambda Lagrange multiplier
+ * @param X_p
+ * @param X_a
+ * @param Beta
+ * @param Num_nodes
+ * @return PetscErrorCode
+ */
+static PetscErrorCode __initialise_lambda(double *lambda, const double *X_p,
+                                          const double *X_a, double Beta,
+                                          unsigned Num_nodes) {
 
+  PetscErrorCode STATUS = EXIT_SUCCESS;
   int Ndim = NumberDimensions;
   int Nnodes_simplex = Ndim + 1;
-  int Size_element = Elem_p_Coordinates.N_rows;
   double sqr_dist_i;
 
   int *simplex;
+  if (Num_nodes == 3) {
+    simplex = (int *)calloc(Nnodes_simplex, sizeof(int));
+    simplex[0] = 0;
+    simplex[1] = 1;
+    simplex[2] = 2;
+  } else if (Num_nodes == 4) {
+    simplex = (int *)calloc(Nnodes_simplex, sizeof(int));
+    simplex[0] = 0;
+    simplex[1] = 1;
+    simplex[2] = 2;
+  } else {
+    return EXIT_FAILURE;
+  }
 
-  Matrix Norm_l = allocZ__MatrixLib__(Size_element, 1);
-  Matrix l = allocZ__MatrixLib__(Size_element, Ndim);
+  double *l_a = (double *)calloc(Num_nodes * Ndim, sizeof(double));
 
+  Matrix Norm_l = allocZ__MatrixLib__(Num_nodes, 1);
   Matrix A = allocZ__MatrixLib__(Ndim, Ndim);
   Matrix b = allocZ__MatrixLib__(Ndim, 1);
   Matrix x;
 
   // Initialise a list with distances and order
-  for (int i = 0; i < Size_element; i++) {
+  for (int a = 0; a < Num_nodes; a++) {
 
     sqr_dist_i = 0.0;
 
     for (int j = 0; j < Ndim; j++) {
-      l.nM[i][j] = X_p.nV[i] - Elem_p_Coordinates.nM[i][j];
-      sqr_dist_i += DSQR(l.nM[i][j]);
+      l_a[a * Ndim + j] = X_p[j] - X_a[a * Ndim + j];
+      sqr_dist_i += DSQR(l_a[a * Ndim + j]);
     }
 
-    Norm_l.nV[i] = sqr_dist_i;
-  }
-
-  if (Size_element == 3) {
-    simplex = (int *)Allocate_ArrayZ(Nnodes_simplex, sizeof(int));
-    simplex[0] = 0;
-    simplex[1] = 1;
-    simplex[2] = 2;
-  } else if (Size_element == 4) {
-    simplex = (int *)Allocate_ArrayZ(Nnodes_simplex, sizeof(int));
-    simplex[0] = 0;
-    simplex[1] = 1;
-    simplex[2] = 2;
-  } else {
-    exit(0);
+    Norm_l.nV[a] = sqr_dist_i;
   }
 
   // Assemble matrix to solve the system Ax = b
@@ -238,14 +259,6 @@ static void initialise_lambda__LME__(int Idx_particle, Matrix X_p,
     }
   }
 
-  // Solve the system
-  if (rcond__TensorLib__(A.nV) < 1E-8) {
-    fprintf(stderr, "%s %i : %s \n",
-            "Error in initialise_lambda__LME__ for particle", Idx_particle,
-            "The Hessian near to singular matrix!");
-    exit(EXIT_FAILURE);
-  }
-
   x = solve__MatrixLib__(A, b);
 
   // Update the value of lambda
@@ -256,10 +269,12 @@ static void initialise_lambda__LME__(int Idx_particle, Matrix X_p,
   // Free memory
   free(simplex);
   free__MatrixLib__(Norm_l);
-  free__MatrixLib__(l);
+  free(l_a);
   free__MatrixLib__(A);
   free__MatrixLib__(b);
   free__MatrixLib__(x);
+
+  return STATUS;
 }
 
 /****************************************************************************/
@@ -684,7 +699,7 @@ int local_search__LME__(Particle MPM_Mesh, Mesh FEM_Mesh) {
 
       //  Compute the thermalization parameter for the new set of nodes
       //  and update it
-      Beta_p = beta__LME__(gamma_LME, FEM_Mesh.h_avg[MPM_Mesh.I0[p]]);
+      Beta_p = __compute_beta(gamma_LME, FEM_Mesh.h_avg[MPM_Mesh.I0[p]]);
       MPM_Mesh.Beta.nV[p] = Beta_p;
     }
   }
