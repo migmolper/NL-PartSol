@@ -11,6 +11,9 @@
 build/*
 nl-partsol/build/*
 
+# Coverage directory
+coverage/*
+
 # Prerequisites
 *.d
 

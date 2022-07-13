@@ -75,13 +75,14 @@ fi
 ## Format the project to make it prettier :-)
 #find -name '*.c' -o -name '*.h' | xargs clang-format -i --verbose
 
-DIR="build"
-if [ ! -d "$DIR" ]; then
-  mkdir ${DIR}
-fi
 
 ## Navigate inside of build
-cd ${DIR}
+DIR_build="build"
+if [ ! -d "$DIR_build" ]; then
+  mkdir ${DIR_build}
+fi
+
+cd ${DIR_build}
 
 ## Configure and compile the project
 FILE="Makefile" 
@@ -98,12 +99,22 @@ fi
 
 if [[ "$PLATFORM" == "Unix Makefiles" ]]
 then
-cd build
+cd ${DIR_build}
 make -k
 elif [[ "$PLATFORM" == "Ninja" ]]
 then
-cd build
+cd ${DIR_build}
 ninja
 fi
 
-#gcovr -r . --html --html-details -o coverage_report.html
+cd ..
+
+## Navigate inside of coverage
+DIR_coverage="coverage"
+if [ ! -d "$DIR_coverage" ]; then
+  mkdir ${DIR_coverage}
+fi
+
+cd ${DIR_coverage}
+
+gcovr -r .. --html --html-details -o coverage_report.html
