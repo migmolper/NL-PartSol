@@ -122,10 +122,10 @@ bool Use_explicit_trial;
 
 /**************************************************************/
 
-int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
+PetscErrorCode U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
                    Time_Int_Params Parameters_Solver) {
 
-  int STATUS = EXIT_SUCCESS;
+  PetscErrorCode STATUS = EXIT_SUCCESS;
 
   //  Auxiliar variables for the solver
   unsigned Ndim = NumberDimensions;

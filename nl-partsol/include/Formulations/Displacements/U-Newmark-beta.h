@@ -40,14 +40,15 @@
 #include <petscsnes.h>
 #include "petscviewerhdf5.h"
 
-/*!
-  \brief Finite strains Newmark-beta
-
-  \param Mesh FEM_Mesh : Variable with the nodal information
-  \param Particle MPM_Mesh : Variable with the particle information
-  \param InitialStep
-*/
-int U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
+/**
+ * @brief Finite strains Newmark-beta
+ * 
+ * @param FEM_Mesh Variable with the nodal information
+ * @param MPM_Mesh Variable with the particle information
+ * @param Parameters_Solver Time integration parameters
+ * @return PetscErrorCode 
+ */
+PetscErrorCode U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
                    Time_Int_Params Parameters_Solver);
 
 #endif

@@ -1,3 +1,14 @@
+/**
+ * @file driver-nl-partsol.c
+ * @author your name (@migmolper)
+ * @brief 
+ * @version 0.1
+ * @date 2022-07-08
+ * 
+ * @copyright Copyright (c) 2022
+ * 
+ */
+
 /*!
   \mainpage NL-PartSol page
 
@@ -231,6 +242,47 @@ int main(int argc, char *argv[]) {
       printf("" GREEN "Start %s shape functions initialisation" RESET " ... \n",
              ShapeFunctionGP);
       initialise_shapefun__MeshTools__(MPM_Mesh, FEM_Mesh);
+
+      puts("*************************************************");
+      puts("" GREEN "Run static simulation" RESET " ...");
+#ifdef USE_PETSC
+      STATUS = U_Static(FEM_Mesh, MPM_Mesh, Parameters_Solver);
+#else
+      fprintf(stderr,
+              "" RED "To use Static you need to use "
+                     "USE_PETSC=true during compilation" RESET " \n");
+      STATUS == EXIT_FAILURE;
+#endif
+      puts("*************************************************");
+      puts("Free memory ...");
+      free(gravity_field.Value->Fx);
+      free_nodes(FEM_Mesh);
+
+      puts("*************************************************");
+      puts("" GREEN "Read dynamic solver" RESET " ...");
+      puts("*************************************************");
+      Parameters_Solver = Solver_selector__InOutFun__(SimulationFile);
+
+      puts("*************************************************");
+      puts("" GREEN "Generating gravity field" RESET " ...");
+      STATUS = Generate_Gravity_Field__InOutFun__(
+          &gravity_field, SimulationFile, Parameters_Solver);
+      if (STATUS == EXIT_FAILURE) {
+        fprintf(stderr,
+                "" RED "Error in Generate_Gravity_Field__InOutFun__(,)" RESET
+                " \n");
+        return EXIT_FAILURE;
+      }
+
+      puts("*************************************************");
+      puts("" GREEN "Generating the background mesh" RESET " ...");
+      puts("*************************************************");
+      FEM_Mesh = GramsBox(SimulationFile, Parameters_Solver);
+
+      puts("*************************************************");
+      printf("Start %s shape functions initialisation ... \n", ShapeFunctionGP);
+      initialise_shapefun__MeshTools__(MPM_Mesh, FEM_Mesh);
+
     }
 
     if (If_f_option) {
