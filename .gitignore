@@ -10,6 +10,7 @@
 # Common build directory
 build/*
 nl-partsol/build/*
+coverage/*
 
 # Prerequisites
 *.d
