@@ -20,6 +20,9 @@ ENDIF ()
 # Add LAPACK
 option(USE_LAPACK "Use LAPACK solver library" ON)
 
+# Add MPI
+option(USE_MPI "Use MPI library" OFF)
+
 # Add OpenMP
 option(USE_OPENMP "Use OpenMP solver library" ON)
 

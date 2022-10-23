@@ -36,6 +36,16 @@ target_link_libraries(${PROJECT_NAME} m)
 # Add PkgConfig
 find_package(PkgConfig REQUIRED)
 
+# MPI
+if(USE_MPI)
+find_package(MPI)
+if (MPI_FOUND)
+  include_directories(${MPI_CXX_INCLUDE_DIRS})
+  link_libraries(${MPI_CXX_LIBRARIES})
+endif()
+endif()
+
+
 # Add LAPACK
 if (USE_LAPACK)
   find_package(LAPACK REQUIRED)

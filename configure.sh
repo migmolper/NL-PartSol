@@ -25,7 +25,7 @@ if [[ "$HOSTNAME" == "Hilbert" ]]
  export PETSC_DIR=$HOME/petsc
  export PETSC_ARCH=arch-linux-c-debug
  export PKG_CONFIG_PATH=$PETSC_DIR/$PETSC_ARCH/lib/pkgconfig
- C_COMPILER=$PETSC_DIR/$PETSC_ARCH/bin/mpicc
+ C_COMPILER=/usr/local/openmpi-4.1.2/bin/mpicc
 
 elif [[ "$HOSTNAME" == "MacBook-Pro-de-Miguel.local" ]]
  then
