@@ -87,7 +87,7 @@ cd ${DIR}
 FILE="Makefile" 
 
 if [ -f "$FILE" ]; then
-    make -k
+    make -j8
 else 
     cmake .. \
     -DCMAKE_BUILD_TYPE=Release \
@@ -99,7 +99,7 @@ fi
 if [[ "$PLATFORM" == "Unix Makefiles" ]]
 then
 cd build
-make -k
+make -j8
 elif [[ "$PLATFORM" == "Ninja" ]]
 then
 cd build

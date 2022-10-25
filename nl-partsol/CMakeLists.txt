@@ -36,6 +36,11 @@ target_link_libraries(${PROJECT_NAME} m)
 # Add PkgConfig
 find_package(PkgConfig REQUIRED)
 
+# Plain strain
+if(USE_PLAINSTRAIN)
+  add_definitions("-DUSE_PLAINSTRAIN")
+endif()
+
 # MPI
 if(USE_MPI)
 find_package(MPI)

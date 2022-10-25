@@ -17,6 +17,9 @@ ELSE ()
     message(FATAL_ERROR "Your system has not been recongnised." )
 ENDIF ()
 
+# Plain strain conditions
+option(USE_PLAINSTRAIN "Use Plain-Strain conditions" ON)
+
 # Add LAPACK
 option(USE_LAPACK "Use LAPACK solver library" ON)
 

@@ -29,7 +29,13 @@
 */
 #define MAXW 100
 #define MAXC 1000
+
+#ifdef USE_PLAINSTRAIN
 #define NumberDimensions 2
+#else
+#define NumberDimensions 3
+#endif  
+
 #define TOL_InOut 10E-23
 #define TOL_NR 10E-6
 #define TOL_zero 10E-23
