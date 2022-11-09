@@ -25,6 +25,9 @@ if [[ "$HOSTNAME" == "Hilbert" ]]
  export PETSC_DIR=$HOME/petsc
  export PETSC_ARCH=arch-linux-c-debug
  export PKG_CONFIG_PATH=$PETSC_DIR/$PETSC_ARCH/lib/pkgconfig
+# C_COMPILER=/usr/bin/gcc
+# export CC=/usr/bin/gcc  
+# export CXX=/usr/bin/g++
  C_COMPILER=/usr/local/openmpi-4.1.2/bin/mpicc
 
 elif [[ "$HOSTNAME" == "MacBook-Pro-de-Miguel.local" ]]
@@ -87,7 +90,7 @@ cd ${DIR}
 FILE="Makefile" 
 
 if [ -f "$FILE" ]; then
-    make -j8
+    make #-j8
 else 
     cmake .. \
     -DCMAKE_BUILD_TYPE=Release \
@@ -99,7 +102,7 @@ fi
 if [[ "$PLATFORM" == "Unix Makefiles" ]]
 then
 cd build
-make -j8
+make #-j8
 elif [[ "$PLATFORM" == "Ninja" ]]
 then
 cd build
