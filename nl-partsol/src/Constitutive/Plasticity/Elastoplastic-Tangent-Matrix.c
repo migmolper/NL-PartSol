@@ -93,48 +93,27 @@ int compute_stiffness_elastoplastic__Constitutive__(double *Stiffness_density,
 
 #if NumberDimensions == 2
 
-  double n1[2] = {0.0, 0.0};
-  double n2[2] = {0.0, 0.0};
-
-  double m[4][4] = {{0.0, 0.0, 0.0, 0.0},
-                    {0.0, 0.0, 0.0, 0.0},
-                    {0.0, 0.0, 0.0, 0.0},
-                    {0.0, 0.0, 0.0, 0.0}};
-
-  double mu[4][2] = {{0.0, 0.0}, {0.0, 0.0}, {0.0, 0.0}, {0.0, 0.0}};
-
-  double mv[4][2] = {{0.0, 0.0}, {0.0, 0.0}, {0.0, 0.0}, {0.0, 0.0}};
-
+  double dN_alpha_n1_ppal[2] = {0.0,0.0};
+  double dN_beta_n1_ppal[2] = {0.0,0.0};
   double u__o__v[2][2] = {{0.0, 0.0}, {0.0, 0.0}};
 
 #else
-  No esta implementado
+
+  double dN_alpha_n1_ppal[3] = {0.0,0.0,0.0};
+  double dN_beta_n1_ppal[3] = {0.0,0.0,0.0};
+  double u__o__v[3][3] = {{0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}};
+
 #endif
 
-  // Generate the matrix with the eigenbases
-  // keeping in mind that LAPACK returns column-wise matrix
-  for (unsigned A = 0; A < Ndim; A++) {
-    for (unsigned B = 0; B < Ndim; B++) {
-      for (unsigned i = 0; i < Ndim; i++) {
-        for (unsigned j = 0; j < Ndim; j++) {
-          m[A * Ndim + B][i * Ndim + j] =
-              eigvec_b_e[A + i * Ndim] * eigvec_b_e[B + j * Ndim];
-        }
-      }
+  for (unsigned int i = 0; i < Ndim; i++)
+  {
+    for (unsigned int j = 0; j < Ndim; j++)
+    {
+      dN_alpha_n1_ppal[i] += eigvec_b_e[j*Ndim + i] * dN_alpha_n1[j];
+      dN_beta_n1_ppal[i] += eigvec_b_e[j*Ndim + i] * dN_beta_n1[j];
     }
   }
 
-  // Do the projection mu and mv
-  for (unsigned A = 0; A < Ndim; A++) {
-    for (unsigned B = 0; B < Ndim; B++) {
-      for (unsigned i = 0; i < Ndim; i++) {
-        for (unsigned j = 0; j < Ndim; j++) {
-          mv[A * Ndim + B][i] += m[A * Ndim + B][i * Ndim + j] * dN_alpha_n1[j];
-          mu[A * Ndim + B][i] += m[A * Ndim + B][i * Ndim + j] * dN_beta_n1[j];
-        }
-      }
-    }
-  }
 
   // Do the diadic product of gradient directions
   for (unsigned i = 0; i < Ndim; i++) {
@@ -150,8 +129,7 @@ int compute_stiffness_elastoplastic__Constitutive__(double *Stiffness_density,
       for (unsigned i = 0; i < Ndim; i++) {
         for (unsigned j = 0; j < Ndim; j++) {
           Stiffness_density[i * Ndim + j] +=
-              IO_State.C_ep[A * Ndim + B] *
-              (mv[A * Ndim + A][i] * mu[B * Ndim + B][j]);
+              IO_State.C_ep[A * Ndim + B] * eigvec_b_e[A*Ndim + i] * eigvec_b_e[B*Ndim + j];
 
           if (A != B) {
             if (fabs(eigval_b_e[B] - eigval_b_e[A]) > 1E-14) {
