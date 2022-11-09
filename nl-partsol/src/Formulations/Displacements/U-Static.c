@@ -228,13 +228,13 @@ PetscErrorCode U_Static(Mesh FEM_Mesh, Particle MPM_Mesh,
        directly call any KSP and PC routines to set various options.
        Optionally allow user-provided preconditioner
       - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-    PetscCall(SNESGetKSP(snes, &ksp));
-    PetscCall(KSPGetPC(ksp, &pc));
-    PetscCall(PCSetType(pc, PCJACOBI));
-    PetscCall(SNESSetTolerances(snes, Absolute_TOL, Relative_TOL, PETSC_DEFAULT,
-                                SNES_Max_Iter, PETSC_DEFAULT));
-    PetscCall(KSPSetTolerances(ksp, PETSC_DEFAULT, PETSC_DEFAULT, PETSC_DEFAULT,
-                               PETSC_DEFAULT));
+    KSPSetType(ksp,KSPPREONLY);
+    KSPGetPC(ksp,&pc);
+    PCSetType(pc,PCLU);
+    PCFactorSetMatSolverType(pc,MATSOLVERPETSC);
+    PCFactorSetUpMatSolverType(pc);
+    PCFactorGetMatrix(pc,&Tangent_Stiffness);  
+
 
     /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       Set SNES/KSP/KSP/PC runtime options, e.g.,

@@ -83,4 +83,12 @@ if (USE_PETSC)
   endif()
 
 endif()
+
+# Add MPI
+find_package(MPI)
+if (MPI_FOUND)
+  add_definitions("-DUSE_MPI")
+  include_directories(${MPI_C_INCLUDE_DIRS})
+  link_libraries(${MPI_C_LIBRARIES})
+endif()
  
