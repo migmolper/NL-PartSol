@@ -108,9 +108,14 @@ __compute_nodal_kinetic_increments(Vec dU_dt, Vec dU_dt2, Vec dU, Vec Un_dt,
                                    Vec Un_dt2, Newmark_parameters Params,
                                    unsigned Ntotaldofs);
 
-static PetscErrorCode __update_Particles(Vec dU, Vec dU_dt, Vec dU_dt2,
+static PetscErrorCode __update_particles_internal_variables(Particle MPM_Mesh, Mesh FEM_Mesh);
+
+static PetscErrorCode __update_particles_kinetics_FLIP_PIC(double alpha_blend, Vec dU,  Vec U_n_dt,  Vec dU_dt, Vec dU_dt2,
                                          Particle MPM_Mesh, Mesh FEM_Mesh,
                                          Mask ActiveNodes);
+
+static PetscErrorCode __jacobian_variational_smoothing(const double * Lumped_Mass, Particle MPM_Mesh,
+                                          Mesh FEM_Mesh, Mask ActiveNodes);
 
 /**************************************************************/
 
@@ -137,10 +142,10 @@ PetscErrorCode U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
   NumTimeStep = Parameters_Solver.NumTimeStep;
   TimeStep = InitialStep;
   Use_explicit_trial = Parameters_Solver.Use_explicit_trial;
-
   double epsilon = Parameters_Solver.epsilon_Mass_Matrix;
   double beta = Parameters_Solver.beta_Newmark_beta;
   double gamma = Parameters_Solver.gamma_Newmark_beta;
+  double alpha_blend = 0.95;
   double DeltaTimeStep;
   double DeltaX = FEM_Mesh.DeltaX;
 
@@ -305,13 +310,29 @@ PetscErrorCode U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
        directly call any KSP and PC routines to set various options.
        Optionally allow user-provided preconditioner
       - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-    PetscCall(SNESGetKSP(snes, &ksp));
-    PetscCall(KSPGetPC(ksp, &pc));
-    PetscCall(PCSetType(pc, PCJACOBI));
-    PetscCall(SNESSetTolerances(snes, Absolute_TOL, Relative_TOL, PETSC_DEFAULT,
+    if(Petsc_Direct_solver)
+    {
+      PetscCall(SNESGetKSP(snes, &ksp));
+      PetscCall(KSPGetPC(ksp, &pc));
+      PetscCall(PCSetType(pc, PCCHOLESKY));
+      PCFactorSetMatSolverType(pc,MATSOLVERCHOLMOD);
+      PetscCall(SNESSetTolerances(snes, Absolute_TOL, Relative_TOL, PETSC_DEFAULT,
                                 SNES_Max_Iter, PETSC_DEFAULT));
-    PetscCall(KSPSetTolerances(ksp, PETSC_DEFAULT, PETSC_DEFAULT, PETSC_DEFAULT,
+      PetscCall(KSPSetTolerances(ksp, PETSC_DEFAULT, PETSC_DEFAULT, PETSC_DEFAULT,
                                PETSC_DEFAULT));
+    }
+    else if(Petsc_Iterative_solver)
+    {
+      PetscCall(SNESGetKSP(snes, &ksp));
+      PetscCall(KSPGetPC(ksp, &pc));
+      PetscCall(PCSetType(pc, PCJACOBI));
+      PetscCall(SNESSetTolerances(snes, Absolute_TOL, Relative_TOL, PETSC_DEFAULT,
+                                SNES_Max_Iter, PETSC_DEFAULT));
+      PetscCall(KSPSetTolerances(ksp, PETSC_DEFAULT, PETSC_DEFAULT, PETSC_DEFAULT,
+                               PETSC_DEFAULT));
+    }
+
+   
 
     /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       Set SNES/KSP/KSP/PC runtime options, e.g.,
@@ -376,16 +397,12 @@ PetscErrorCode U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
     PetscCall(VecAssemblyEnd(dU_dt2));
 
     /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-       Free old nodal kinetics
-     - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-    PetscCall(VecDestroy(&U_n_dt));
-    PetscCall(VecDestroy(&U_n_dt2));
-
-    /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
        Update particle information
      - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+    PetscCall(__update_particles_internal_variables(MPM_Mesh, FEM_Mesh)); 
+
     PetscCall(
-        __update_Particles(DU, dU_dt, dU_dt2, MPM_Mesh, FEM_Mesh, ActiveNodes));
+        __update_particles_kinetics_FLIP_PIC(alpha_blend, DU, U_n_dt, dU_dt, dU_dt2, MPM_Mesh, FEM_Mesh, ActiveNodes));
 
     /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
        Outputs
@@ -398,6 +415,8 @@ PetscErrorCode U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
        Free memory
      - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
     PetscCall(VecDestroy(&Lumped_Mass));
+    PetscCall(VecDestroy(&U_n_dt));
+    PetscCall(VecDestroy(&U_n_dt2));
     PetscCall(VecDestroy(&DU));
     PetscCall(VecDestroy(&dU_dt));
     PetscCall(VecDestroy(&dU_dt2));
@@ -1000,6 +1019,8 @@ static PetscErrorCode __lagrangian_evaluation(SNES snes, Vec dU, Vec Lagrangian,
   PetscCall(__local_compatibility_conditions(dU_ptr, dU_dt_ptr, ActiveNodes,
                                              MPM_Mesh, FEM_Mesh));
 
+//  __jacobian_variational_smoothing(Lumped_Mass_ptr, MPM_Mesh, FEM_Mesh, ActiveNodes);
+
   PetscCall(__constitutive_update(MPM_Mesh, FEM_Mesh));
 
   PetscCall(__nodal_internal_forces(Lagrangian_ptr, ActiveNodes, ActiveDOFs,
@@ -1117,6 +1138,7 @@ static PetscErrorCode __local_compatibility_conditions(const PetscScalar *dU,
                 MPM_Mesh.Phi.J_n1.nV[p]);
         STATUS = EXIT_FAILURE;
       }
+      
 
       // F-bar  Update patch
       if (FEM_Mesh.Locking_Control_Fbar) {
@@ -1800,11 +1822,8 @@ static PetscErrorCode __jacobian_evaluation(SNES snes, Vec dU, Mat Jacobian,
   /*
     Dirichlet boundary conditions
   */
-  PetscInt Iter;
-  PetscCall(SNESGetIterationNumber(snes, &Iter));
-  if (Iter == 0) {
-    PetscCall(MatZeroRowsColumnsIS(Jacobian, Dirichlet_dofs, 1.0, NULL, NULL));
-  }
+  PetscCall(MatZeroRowsColumnsIS(Jacobian, Dirichlet_dofs, 1.0, NULL, NULL));
+
 
   return STATUS;
 }
@@ -1890,40 +1909,20 @@ __compute_nodal_kinetic_increments(Vec dU_dt, Vec dU_dt2, Vec dU, Vec Un_dt,
 /**
  * @brief
  *
- * @param dU Incremental nodal displacement field
- * @param dU_dt Nodal velocity increment
- * @param dU_dt2 Nodal acceleration increment
  * @param MPM_Mesh Information of the particles
  * @param FEM_Mesh Information of the background nodes
- * @param ActiveNodes List of nodes which takes place in the computation
  * @return PetscErrorCode
  */
-static PetscErrorCode __update_Particles(Vec dU, Vec dU_dt, Vec dU_dt2,
-                                         Particle MPM_Mesh, Mesh FEM_Mesh,
-                                         Mask ActiveNodes) {
+static PetscErrorCode __update_particles_internal_variables(Particle MPM_Mesh, Mesh FEM_Mesh) {
 
   PetscErrorCode STATUS = EXIT_SUCCESS;
   unsigned Ndim = NumberDimensions;
   unsigned Np = MPM_Mesh.NumGP;
-  unsigned NumNodes_p;
   unsigned p;
 
-  double DU_pI;
-  double D_V_pI;
-  double D_A_pI;
-
-  const PetscScalar *dU_ptr;
-  PetscCall(VecGetArrayRead(dU, &dU_ptr));
-  const PetscScalar *dU_dt_ptr;
-  PetscCall(VecGetArrayRead(dU_dt, &dU_dt_ptr));
-  const PetscScalar *dU_dt2_ptr;
-  PetscCall(VecGetArrayRead(dU_dt2, &dU_dt2_ptr));
-
-#pragma omp parallel private(NumNodes_p, DU_pI, D_V_pI, D_A_pI)
-  {
 #pragma omp for private(p)
     for (p = 0; p < Np; p++) {
-
+      
       // Update the determinant of the deformation gradient
       MPM_Mesh.Phi.J_n.nV[p] = MPM_Mesh.Phi.J_n1.nV[p];
 
@@ -1972,7 +1971,54 @@ static PetscErrorCode __update_Particles(Vec dU, Vec dU_dt, Vec dU_dt2,
       for (unsigned i = 0; i < 9; i++)
         MPM_Mesh.Phi.dt_F_n.nM[p][i] = MPM_Mesh.Phi.dt_F_n1.nM[p][i];
 #endif
+    } // #pragma omp for private(p)
 
+  return STATUS;
+}
+
+/**************************************************************/
+
+/**
+ * @brief
+ *
+ * @param dU Incremental nodal displacement field
+ * @param dU_dt Nodal velocity increment
+ * @param dU_dt2 Nodal acceleration increment
+ * @param MPM_Mesh Information of the particles
+ * @param FEM_Mesh Information of the background nodes
+ * @param ActiveNodes List of nodes which takes place in the computation
+ * @return PetscErrorCode
+ */
+static PetscErrorCode __update_particles_kinetics_FLIP_PIC(double alpha_blend,Vec dU, Vec U_n_dt, Vec dU_dt, Vec dU_dt2,
+                                         Particle MPM_Mesh, Mesh FEM_Mesh,
+                                         Mask ActiveNodes) {
+
+  PetscErrorCode STATUS = EXIT_SUCCESS;
+  unsigned Ndim = NumberDimensions;
+  unsigned Np = MPM_Mesh.NumGP;
+  unsigned NumNodes_p;
+  unsigned p;
+
+  double DU_pI;
+  double V_n_pI;
+  double D_V_pI;
+  double D_A_pI;
+  double beta_blend = 1 - alpha_blend;
+
+  const PetscScalar *dU_ptr;
+  PetscCall(VecGetArrayRead(dU, &dU_ptr));
+  const PetscScalar *U_n_dt_ptr;
+  PetscCall(VecGetArrayRead(U_n_dt, &U_n_dt_ptr));
+  const PetscScalar *dU_dt_ptr;
+  PetscCall(VecGetArrayRead(dU_dt, &dU_dt_ptr));
+  const PetscScalar *dU_dt2_ptr;
+  PetscCall(VecGetArrayRead(dU_dt2, &dU_dt2_ptr));
+
+#pragma omp parallel private(NumNodes_p, DU_pI, V_n_pI, D_V_pI, D_A_pI)
+  {
+#pragma omp for private(p)
+    for (p = 0; p < Np; p++) {
+      
       //  Define nodal connectivity for each particle
       //  and compute the shape function
       NumNodes_p = MPM_Mesh.NumberNodes[p];
@@ -1980,6 +2026,13 @@ static PetscErrorCode __update_Particles(Vec dU, Vec dU_dt, Vec dU_dt2,
           nodal_set__Particles__(p, MPM_Mesh.ListNodes[p], NumNodes_p);
       Matrix ShapeFunction_p =
           compute_N__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
+
+
+      //! First part of the contribution
+      for (unsigned i = 0; i < Ndim; i++) {
+        MPM_Mesh.Phi.vel.nM[p][i] = alpha_blend*MPM_Mesh.Phi.vel.nM[p][i];
+      }
+
 
       //!  Update acceleration, velocity and position of the particles
       for (unsigned A = 0; A < NumNodes_p; A++) {
@@ -1993,10 +2046,11 @@ static PetscErrorCode __update_Particles(Vec dU, Vec dU_dt, Vec dU_dt2,
         for (unsigned i = 0; i < Ndim; i++) {
           DU_pI = ShapeFunction_pI * dU_ptr[A_mask * Ndim + i];
           D_V_pI = ShapeFunction_pI * dU_dt_ptr[A_mask * Ndim + i];
+          V_n_pI = ShapeFunction_pI * U_n_dt_ptr[A_mask * Ndim + i];
           D_A_pI = ShapeFunction_pI * dU_dt2_ptr[A_mask * Ndim + i];
 
           MPM_Mesh.Phi.acc.nM[p][i] += D_A_pI;
-          MPM_Mesh.Phi.vel.nM[p][i] += D_V_pI;
+          MPM_Mesh.Phi.vel.nM[p][i] += D_V_pI + beta_blend*V_n_pI;
           MPM_Mesh.Phi.dis.nM[p][i] += DU_pI;
           MPM_Mesh.Phi.x_GC.nM[p][i] += DU_pI;
         }
@@ -2009,6 +2063,7 @@ static PetscErrorCode __update_Particles(Vec dU, Vec dU_dt, Vec dU_dt2,
   }   // #pragma omp parallel
 
   PetscCall(VecRestoreArrayRead(dU, &dU_ptr));
+  PetscCall(VecRestoreArrayRead(U_n_dt, &U_n_dt_ptr));
   PetscCall(VecRestoreArrayRead(dU_dt, &dU_dt_ptr));
   PetscCall(VecRestoreArrayRead(dU_dt2, &dU_dt2_ptr));
 
@@ -2079,6 +2134,119 @@ static PetscErrorCode __monitor(PetscInt Time, PetscInt NumTimeStep,
           SNES_Norm, KSP_Norm, SNESConvergedReasons[converged_reason]);
 
   fclose(Stats_Solver);
+
+  return EXIT_SUCCESS;
+}
+
+/*********************************************************************/
+
+/**
+ * @brief Project the kinematic information of the particles towards the nodes
+ * \n of the mesh to get the nodal fields at t = n
+ *
+ * @param Lumped_Mass Lumped mass matrix used for the projection
+ * @param MPM_Mesh Information of the particles
+ * @param FEM_Mesh Information of the background nodes
+ * @param ActiveNodes List of nodes which takes place in the computation
+ * @return Returns failure or success
+ */
+static PetscErrorCode __jacobian_variational_smoothing(const double * Lumped_Mass, Particle MPM_Mesh,
+                                          Mesh FEM_Mesh, Mask ActiveNodes) {
+  unsigned Ndim = NumberDimensions;
+  unsigned Np = MPM_Mesh.NumGP;
+  unsigned Nactivenodes = ActiveNodes.Nactivenodes;
+  unsigned Ntotaldofs = Ndim * Nactivenodes;
+  unsigned NumberNodes_p;
+  unsigned p;
+
+#if NumberDimensions == 2
+  int Mask_dofs_A[2];
+  double local_jacobian_Ip[2];
+#else
+  int Mask_dofs_A[3];
+  double local_jacobian_Ip[3];
+#endif
+
+  double * jacobian_I = (double *)calloc(Nactivenodes,sizeof(double));
+
+#pragma omp parallel private(NumberNodes_p)
+  {
+
+#pragma omp for private(p)
+    for (p = 0; p < Np; p++) {
+
+      /* Define element of the particle */
+      NumberNodes_p = MPM_Mesh.NumberNodes[p];
+      Element Nodes_p =
+          nodal_set__Particles__(p, MPM_Mesh.ListNodes[p], NumberNodes_p);
+      Matrix ShapeFunction_p =
+          compute_N__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
+
+      //! Get the mass of the GP
+      double m_p = MPM_Mesh.Phi.mass.nV[p];      
+      double J_n1_p = MPM_Mesh.Phi.J_n1.nV[p];
+
+      for (unsigned A = 0; A < NumberNodes_p; A++) {
+
+        //  Get the node in the nodal momentum with the mask
+        unsigned Ap = Nodes_p.Connectivity[A];
+        int Mask_node_A = ActiveNodes.Nodes2Mask[Ap];
+        double ShapeFunction_pA = ShapeFunction_p.nV[A];
+        double m__x__ShapeFunction_pA = m_p * ShapeFunction_pA;
+
+#pragma omp critical
+        {
+          jacobian_I[Mask_node_A] += m__x__ShapeFunction_pA * J_n1_p;
+        } // #pragma omp critical
+      }   // for A
+
+      free__MatrixLib__(ShapeFunction_p);
+      free(Nodes_p.Connectivity);
+
+    } // for p
+
+  } // #pragma omp parallel
+
+
+#pragma omp for
+  for (unsigned int idx = 0; idx < Nactivenodes; idx++) {
+
+#pragma omp critical
+    {
+      jacobian_I[idx] = jacobian_I[idx]/Lumped_Mass[idx*Ndim];
+    }
+  }
+
+#pragma omp for private(p)
+    for (p = 0; p < Np; p++) {
+
+      MPM_Mesh.Phi.J_n1.nV[p] = 0.0;
+
+      //  Define nodal connectivity for each particle
+      //  and compute the shape function
+      unsigned int NumNodes_p = MPM_Mesh.NumberNodes[p];
+      Element Nodes_p =
+          nodal_set__Particles__(p, MPM_Mesh.ListNodes[p], NumNodes_p);
+      Matrix ShapeFunction_p =
+          compute_N__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
+
+      //!  Update acceleration, velocity and position of the particles
+      for (unsigned A = 0; A < NumNodes_p; A++) {
+
+        // Get the shape function evaluation in node A
+        // and the masked index of the node A
+        double ShapeFunction_pI = ShapeFunction_p.nV[A];
+        int Ap = Nodes_p.Connectivity[A];
+        int A_mask = ActiveNodes.Nodes2Mask[Ap];
+
+        MPM_Mesh.Phi.J_n1.nV[p] += ShapeFunction_pI * jacobian_I[A_mask];
+
+      } // for unsigned A
+
+    } // #pragma omp for private(p)
+
+
+  free(jacobian_I);  
 
   return EXIT_SUCCESS;
 }

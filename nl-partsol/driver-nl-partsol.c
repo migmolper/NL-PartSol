@@ -68,6 +68,8 @@ bool Flag_Print_Convergence;
 Load gravity_field;
 bool Driver_EigenErosion;
 bool Driver_EigenSoftening;
+bool Petsc_Direct_solver;
+bool Petsc_Iterative_solver;
 
 //  Auxiliar functions for the main
 static void nlpartsol_help_message();
@@ -98,6 +100,10 @@ int main(int argc, char *argv[]) {
 
   // Default values for the flags
   Flag_Print_Convergence = false;
+
+  // Default solver
+  Petsc_Direct_solver = false;
+  Petsc_Iterative_solver = true;
 
   // Read simulation file and kind of simulation
   for (unsigned i = 0; i < argc; i++) {

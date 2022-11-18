@@ -202,7 +202,12 @@ PetscErrorCode U_Static(Mesh FEM_Mesh, Particle MPM_Mesh,
 
     /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
        Create Jacobian matrix data structure
-      - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+      - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */                               
+//    MatCreateAIJ(PETSC_COMM_SELF, Ntotaldofs, Ntotaldofs, 
+//    PETSC_DETERMINE, PETSC_DETERMINE, 
+//    PetscInt d_nz, const PetscInt d_nnz[], 
+//    PetscInt o_nz, const PetscInt o_nnz[],&Tangent_Stiffness);
+
     PetscCall(MatCreateSeqAIJ(PETSC_COMM_SELF, Ntotaldofs, Ntotaldofs, 0,
                               sparsity_pattern, &Tangent_Stiffness));
     PetscCall(
@@ -228,14 +233,27 @@ PetscErrorCode U_Static(Mesh FEM_Mesh, Particle MPM_Mesh,
        directly call any KSP and PC routines to set various options.
        Optionally allow user-provided preconditioner
       - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-    KSPSetType(ksp,KSPPREONLY);
-    KSPGetPC(ksp,&pc);
-    PCSetType(pc,PCLU);
-    PCFactorSetMatSolverType(pc,MATSOLVERPETSC);
-    PCFactorSetUpMatSolverType(pc);
-    PCFactorGetMatrix(pc,&Tangent_Stiffness);  
-
-
+//    if(Petsc_Direct_solver)
+//    {
+      PetscCall(SNESGetKSP(snes, &ksp));
+      PetscCall(KSPGetPC(ksp, &pc));
+      PetscCall(PCSetType(pc, PCCHOLESKY));
+      PCFactorSetMatSolverType(pc,MATSOLVERCHOLMOD);
+      PetscCall(SNESSetTolerances(snes, Absolute_TOL, Relative_TOL, PETSC_DEFAULT,
+                                SNES_Max_Iter, PETSC_DEFAULT));
+      PetscCall(KSPSetTolerances(ksp, PETSC_DEFAULT, PETSC_DEFAULT, PETSC_DEFAULT,
+                               PETSC_DEFAULT));
+//    }
+//    else if(Petsc_Iterative_solver)
+//    {
+//      PetscCall(SNESGetKSP(snes, &ksp));
+//      PetscCall(KSPGetPC(ksp, &pc));
+//      PetscCall(PCSetType(pc, PCJACOBI));
+//      PetscCall(SNESSetTolerances(snes, Absolute_TOL, Relative_TOL, PETSC_DEFAULT,
+//                                SNES_Max_Iter, PETSC_DEFAULT));
+//      PetscCall(KSPSetTolerances(ksp, PETSC_DEFAULT, PETSC_DEFAULT, PETSC_DEFAULT,
+//                               PETSC_DEFAULT));
+//    }
     /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       Set SNES/KSP/KSP/PC runtime options, e.g.,
           -snes_view -snes_monitor -ksp_type <ksp> -pc_type <pc>
@@ -991,7 +1009,7 @@ __nodal_inertial_forces(PetscScalar *Lagrangian, const PetscScalar *M_II,
   unsigned idx;
 
 #if NumberDimensions == 2
-  double b[2] = {0.0, 0.0};
+  double b[2] = {0.0, -9.81};
 #else
   double b[3] = {0.0, 0.0, 0.0};
 #endif
@@ -1340,12 +1358,9 @@ static PetscErrorCode __jacobian_evaluation(SNES snes, Vec dU, Mat Jacobian,
   /*
     Dirichlet boundary conditions
   */
-  PetscInt Iter;
-  PetscCall(SNESGetIterationNumber(snes, &Iter));
-  if (Iter == 0) {
-    PetscCall(MatZeroRowsColumnsIS(Jacobian, Dirichlet_dofs, 1.0, NULL, NULL));
-  }
+  PetscCall(MatZeroRowsColumnsIS(Jacobian, Dirichlet_dofs, 1.0, NULL, NULL));
 
+  
   return STATUS;
 }
 

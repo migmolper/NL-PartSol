@@ -24,6 +24,10 @@ extern char   OutputNodesFile[MAXC];
 extern char   OutputDir[MAXC];
 extern char   Field[10];
 
+//! Select the type of solver 
+extern bool Petsc_Direct_solver;
+extern bool Petsc_Iterative_solver;
+
 //	Global variables for simulation purposes
 extern double DeltaTimeStep;
 extern int NumberDOF;
