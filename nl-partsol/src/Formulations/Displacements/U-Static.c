@@ -233,8 +233,10 @@ PetscErrorCode U_Static(Mesh FEM_Mesh, Particle MPM_Mesh,
        directly call any KSP and PC routines to set various options.
        Optionally allow user-provided preconditioner
       - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-//    if(Petsc_Direct_solver)
-//    {
+    Petsc_Direct_solver = true;
+    Petsc_Iterative_solver = false;
+    if(Petsc_Direct_solver)
+    {
       PetscCall(SNESGetKSP(snes, &ksp));
       PetscCall(KSPGetPC(ksp, &pc));
       PetscCall(PCSetType(pc, PCCHOLESKY));
@@ -243,17 +245,17 @@ PetscErrorCode U_Static(Mesh FEM_Mesh, Particle MPM_Mesh,
                                 SNES_Max_Iter, PETSC_DEFAULT));
       PetscCall(KSPSetTolerances(ksp, PETSC_DEFAULT, PETSC_DEFAULT, PETSC_DEFAULT,
                                PETSC_DEFAULT));
-//    }
-//    else if(Petsc_Iterative_solver)
-//    {
-//      PetscCall(SNESGetKSP(snes, &ksp));
-//      PetscCall(KSPGetPC(ksp, &pc));
-//      PetscCall(PCSetType(pc, PCJACOBI));
-//      PetscCall(SNESSetTolerances(snes, Absolute_TOL, Relative_TOL, PETSC_DEFAULT,
-//                                SNES_Max_Iter, PETSC_DEFAULT));
-//      PetscCall(KSPSetTolerances(ksp, PETSC_DEFAULT, PETSC_DEFAULT, PETSC_DEFAULT,
-//                               PETSC_DEFAULT));
-//    }
+    }
+    else if(Petsc_Iterative_solver)
+    {
+      PetscCall(SNESGetKSP(snes, &ksp));
+      PetscCall(KSPGetPC(ksp, &pc));
+      PetscCall(PCSetType(pc, PCJACOBI));
+      PetscCall(SNESSetTolerances(snes, Absolute_TOL, Relative_TOL, PETSC_DEFAULT,
+                                SNES_Max_Iter, PETSC_DEFAULT));
+      PetscCall(KSPSetTolerances(ksp, PETSC_DEFAULT, PETSC_DEFAULT, PETSC_DEFAULT,
+                               PETSC_DEFAULT));
+    }
     /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       Set SNES/KSP/KSP/PC runtime options, e.g.,
           -snes_view -snes_monitor -ksp_type <ksp> -pc_type <pc>
@@ -1009,7 +1011,7 @@ __nodal_inertial_forces(PetscScalar *Lagrangian, const PetscScalar *M_II,
   unsigned idx;
 
 #if NumberDimensions == 2
-  double b[2] = {0.0, -9.81};
+  double b[2] = {0.0, 0.0};
 #else
   double b[3] = {0.0, 0.0, 0.0};
 #endif

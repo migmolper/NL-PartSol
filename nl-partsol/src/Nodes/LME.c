@@ -921,7 +921,7 @@ int local_search__LME__(Particle MPM_Mesh, Mesh FEM_Mesh)
       dis_p = memory_to_matrix__MatrixLib__(Ndim, 1, MPM_Mesh.Phi.dis.nM[p]);
 
       // Check if the particle is static or is in movement
-      if (norm__MatrixLib__(dis_p, 2) > 0) {
+      if (norm__MatrixLib__(dis_p, 2) > 0.0) {
 
         // Update the index of the closest node to the particle
         Locality_I0 = FEM_Mesh.NodalLocality_0[MPM_Mesh.I0[p]];
@@ -929,17 +929,17 @@ int local_search__LME__(Particle MPM_Mesh, Mesh FEM_Mesh)
                                                        FEM_Mesh.Coordinates);
 
         // Search particle in the sourrounding elements to this node
-        MPM_Mesh.Element_p[p] =
-            search_particle_in_surrounding_elements__Particles__(
-                p, X_p, FEM_Mesh.NodeNeighbour[MPM_Mesh.I0[p]], FEM_Mesh);
-        if (MPM_Mesh.Element_p[p] == -999) {
-          fprintf(stderr,
-                  "" RED " Error in " RESET "" BOLDRED
-                  "search_particle_in_surrounding_elements__Particles__(%i,,)"
-                  " " RESET " \n",
-                  p);
-          STATUS = EXIT_FAILURE;
-        }
+   //     MPM_Mesh.Element_p[p] =
+   //         search_particle_in_surrounding_elements__Particles__(
+   //             p, X_p, FEM_Mesh.NodeNeighbour[MPM_Mesh.I0[p]], FEM_Mesh);
+   //     if (MPM_Mesh.Element_p[p] == -999) {
+   //       fprintf(stderr,
+   //               "" RED " Error in " RESET "" BOLDRED
+   //               "search_particle_in_surrounding_elements__Particles__(%i,,)"
+   //               " " RESET " \n",
+   //               p);
+   //       STATUS = EXIT_FAILURE;
+   //     }
       }
     }
 

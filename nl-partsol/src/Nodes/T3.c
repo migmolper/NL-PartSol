@@ -312,13 +312,13 @@ bool in_out__T3__(Matrix X, Matrix Element) {
 
     for(unsigned i = 0 ; i<2 ; i++)
     {
-      if(fabs(Xi.nV[i]) < TOL_NR)
+      if(fabs(Xi.nV[i]) < 1E-14)
       {
         Xi.nV[i] = 0.0;
       }
     }
 
-    if ((Xi.nV[0] >= 0.0) && (Xi.nV[1] >= 0.0) &&
+    if ((Xi.nV[0] >= 1E-14) && (Xi.nV[1] >= 1E-14) &&
         (fabs(Xi.nV[1] + Xi.nV[0]) <= 1.0)) {
       free__MatrixLib__(Xi);
       return true;

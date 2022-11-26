@@ -310,6 +310,8 @@ PetscErrorCode U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
        directly call any KSP and PC routines to set various options.
        Optionally allow user-provided preconditioner
       - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+    Petsc_Direct_solver = false;
+    Petsc_Iterative_solver = true;
     if(Petsc_Direct_solver)
     {
       PetscCall(SNESGetKSP(snes, &ksp));
@@ -1136,7 +1138,7 @@ static PetscErrorCode __local_compatibility_conditions(const PetscScalar *dU,
         fprintf(stderr,
                 "" RED "Negative jacobian in particle %i: %e" RESET " \n", p,
                 MPM_Mesh.Phi.J_n1.nV[p]);
-        STATUS = EXIT_FAILURE;
+        MPM_Mesh.Phi.J_n1.nV[p] = 0.0;
       }
       
 
