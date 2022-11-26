@@ -1107,6 +1107,9 @@ static PetscErrorCode __local_compatibility_conditions(const PetscScalar *dU,
         particle
       */
       Matrix gradient_p = compute_dN__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
+#if USE_AXIAL_SYMMETRY
+      Matrix shapefun_p = compute_N__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
+#endif
 
       /*
         Take the values of the deformation gradient from the previous step
@@ -1118,11 +1121,19 @@ static PetscErrorCode __local_compatibility_conditions(const PetscScalar *dU,
       double *dFdt_n1_p = MPM_Mesh.Phi.dt_F_n1.nM[p];
       double *dt_DF_p = MPM_Mesh.Phi.dt_DF.nM[p];
 
+      compute_strains_ctx ctx_shape_fun;
+      ctx_shape_fun.gradient_p = gradient_p.nV;
+      ctx_shape_fun.Nnodes_p = NumberNodes_p;
+#if USE_AXIAL_SYMMETRY
+      ctx_shape_fun.shapefun_p = shapefun_p.nV;
+      ctx_shape_fun.R_p = MPM_Mesh.Phi.x_GC.nM[p][0];
+#endif
+
       update_increment_Deformation_Gradient__Particles__(
-          DF_p, D_Displacement_Ap, gradient_p.nV, NumberNodes_p);
+          DF_p, D_Displacement_Ap, &ctx_shape_fun);
 
       update_rate_increment_Deformation_Gradient__Particles__(
-          dt_DF_p, D_Velocity_Ap, gradient_p.nV, NumberNodes_p);
+          dt_DF_p, D_Velocity_Ap, &ctx_shape_fun);
 
       /*
         Update the deformation gradient in t = n + 1 with the information
@@ -1155,6 +1166,9 @@ static PetscErrorCode __local_compatibility_conditions(const PetscScalar *dU,
       free(D_Displacement_Ap);
       free(D_Velocity_Ap);
       free__MatrixLib__(gradient_p);
+      #if USE_AXIAL_SYMMETRY
+      free__MatrixLib__(shapefun_p);
+      #endif
       free(Nodes_p.Connectivity);
     }
 

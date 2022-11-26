@@ -43,9 +43,9 @@ int compute_Kirchhoff_Stress_Hencky__Constitutive__(State_Parameters IO_State,
   unsigned Ndim = NumberDimensions;
 
 #if NumberDimensions == 2
-  double b[4];
-  double eigvec_b[4] = {0.0, 0.0, 0.0, 0.0};
-  double eigval_b[3] = {0.0, 0.0, 1.0};
+  double b[5];
+  double eigvec_b[9] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+  double eigval_b[3] = {0.0, 0.0, 0.0};
   double T_aux[4] = {0.0, 0.0, 0.0, 0.0};
 #else
   double b[9];

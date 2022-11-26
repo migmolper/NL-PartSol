@@ -7,6 +7,7 @@
 #include "Globals.h"
 #include "Matlib.h"
 #include "Particles.h"
+#include "Particles/compute-Strains.h"
 // clang-format on
 
 #ifdef __linux__
@@ -20,11 +21,13 @@
 void update_increment_Deformation_Gradient__Particles__(
   double * DF_p,
   const double * DeltaU,
-  const double * gradient_p,
-  unsigned Nnodes_p) {
+  void* ctx) {
 
   unsigned Ndim = NumberDimensions;
   
+  const double * gradient_p = ((compute_strains_ctx*)ctx)->gradient_p;
+  unsigned Nnodes_p = ((compute_strains_ctx*)ctx)->Nnodes_p;
+
   // Initialise with the identity tensor
   for (unsigned i = 0; i < Ndim; i++) {
     for (unsigned j = 0; j < Ndim; j++) {
@@ -39,8 +42,15 @@ void update_increment_Deformation_Gradient__Particles__(
         DF_p[i*Ndim + j] += DeltaU[A*Ndim + i] * gradient_p[A*Ndim + j];
       }
     }
-
   }
+
+#if USE_AXIAL_SYMMETRY
+  const double * shapefun_p = ((compute_strains_ctx*)ctx)->shapefun_p;
+  double R_p = ((compute_strains_ctx*)ctx)->R_p; 
+  for (unsigned A = 0; A < Nnodes_p; A++) {
+    DF_p[4] += DeltaU[A*Ndim] * shapefun_p[A]/R_p;
+  }
+#endif
 }
 
 /*******************************************************/
@@ -48,11 +58,12 @@ void update_increment_Deformation_Gradient__Particles__(
 void update_rate_increment_Deformation_Gradient__Particles__(
   double * dt_DF_p, 
   const double * DeltaV, 
-  const double * gradient_p,
-  unsigned Nnodes_p) {
+  void* ctx) {
 
   /* Variable definition */
   unsigned Ndim = NumberDimensions;
+  const double * gradient_p = ((compute_strains_ctx*)ctx)->gradient_p;
+  unsigned Nnodes_p = ((compute_strains_ctx*)ctx)->Nnodes_p;
 
   // Initialise with the identity tensor
   for (unsigned i = 0; i < Ndim; i++) {
@@ -69,6 +80,15 @@ void update_rate_increment_Deformation_Gradient__Particles__(
       }
     }
   }
+
+#if USE_AXIAL_SYMMETRY
+  const double * shapefun_p = ((compute_strains_ctx*)ctx)->shapefun_p;
+  double R_p = ((compute_strains_ctx*)ctx)->R_p; 
+  for (unsigned A = 0; A < Nnodes_p; A++) {
+    dt_DF_p[4] += DeltaV[A*Ndim] * shapefun_p[A]/R_p;
+  }
+#endif
+
 }
 
 /*******************************************************/
@@ -102,6 +122,11 @@ void update_Deformation_Gradient_n1__Particles__(
       F_n1[i*Ndim + j] = aux;
     }
   }
+
+#if USE_AXIAL_SYMMETRY
+  F_n1[4] = f_n1[4] * F_n[4];
+#endif
+
 }
 
 /*******************************************************/
@@ -168,6 +193,10 @@ int get_locking_free_Deformation_Gradient_n1__Particles__(
     Fbar_n[i] = alpha * F_total[i] + (1 - alpha) * Fbar_n1[i];
   }
 
+#if USE_AXIAL_SYMMETRY
+  Fbar_n[4] = alpha * F_total[4] + (1 - alpha) * Fbar_n1[4];
+#endif
+
   return STATUS;
 }
 
@@ -204,6 +233,11 @@ void update_rate_Deformation_Gradient_n1__Particles__(
       dt_F_n1[i*Ndim + j] = aux;
     }
   }
+
+#if USE_AXIAL_SYMMETRY
+  dt_F_n1[4] = dt_f_n1[4] * F_n[4] + f_n1[4] * dt_F_n[4];
+#endif
+
 }
 
 /*******************************************************/
@@ -239,6 +273,11 @@ int compute_Jacobian_Rate__Particles__(
     F_mT__x__F += F_mT[i] * d_F_dt[i];
   }
 
+#if USE_AXIAL_SYMMETRY
+  F_mT__x__F += F_mT[4] * d_F_dt[4];
+#endif
+
+
   *d_J_dt = J * F_mT__x__F;
 
   return STATUS;
@@ -253,14 +292,10 @@ int spatial_velocity_gradient__Particles__(
     
   int STATUS = EXIT_SUCCESS;
 
-  int Ndim = NumberDimensions;
+  unsigned int Ndim = NumberDimensions;
      
 #if NumberDimensions == 2
-
-double F_m1[4] = {
-  F[0], F[1],
-  F[2], F[3]};
-  
+  double F_m1[5] ;  
   int INFO;
   int N = 2;
   int LDA = 2;
@@ -268,12 +303,7 @@ double F_m1[4] = {
   int IPIV[2] = {0, 0};
   double WORK[2] = {0, 0};
 #else
-
-double F_m1[9] = {
-  F[0], F[1], F[2],
-  F[3], F[4], F[5],
-  F[6], F[7], F[8]};
- 
+  double F_m1[9];
   int INFO;
   int N = 3;
   int LDA = 3;
@@ -282,46 +312,16 @@ double F_m1[9] = {
   double WORK[3] = {0, 0, 0};
 #endif
 
-  // The factors L and U from the factorization A = P*L*U
-  dgetrf_(&N, &N, F_m1, &LDA, IPIV, &INFO);
-  // Check output of dgetrf
-  if (INFO != 0) {
-    if (INFO < 0) {
-      printf(
-          "" RED
-          "Error in dgetrf_(): the %i-th argument had an illegal value " RESET
-          "\n",
-          abs(INFO));
-    } else if (INFO > 0) {
 
-      printf("" RED
-             "Error in dgetrf_(): F_m1(%i,%i) %s \n %s \n %s \n %s " RESET
-             "\n",
-             INFO, INFO, "is exactly zero. The factorization",
-             "has been completed, but the factor F_m1 is exactly",
-             "singular, and division by zero will occur if it is used",
-             "to solve a system of equations.");
-    }
-    return EXIT_FAILURE;
-  }
+for (unsigned int i = 0; i < Ndim*Ndim; i++) {
+  F_m1[i] = F[i];
+}
 
-  dgetri_(&N, F_m1, &LDA, IPIV, WORK, &LWORK, &INFO);
-  if (INFO != 0) {
-    if (INFO < 0) {
-      fprintf(stderr, "" RED "%s: the %i-th argument %s" RESET "\n",
-              "Error in dgetri_()", abs(INFO), "had an illegal value");
-    } else if (INFO > 0) {
-      fprintf(stderr,
-              "" RED
-              "Error in dgetri_(): F_m1(%i,%i) %s \n %s \n %s \n %s " RESET
-              "\n",
-              INFO, INFO, "is exactly zero. The factorization",
-              "has been completed, but the factor F_m1 is exactly",
-              "singular, and division by zero will occur if it is used",
-              "to solve a system of equations.");
-    }
-    return EXIT_FAILURE;
-  }
+#if USE_AXIAL_SYMMETRY
+  F_m1[4] = F[4];
+#endif
+
+  compute_inverse__TensorLib__(F_m1,F);
 
 
   for (unsigned i = 0; i < Ndim; i++)
@@ -336,6 +336,9 @@ double F_m1[9] = {
     }
   }
   
+#if USE_AXIAL_SYMMETRY
+  L[4] = dFdt[4]*F_m1[4];
+#endif
     
   return STATUS;
 }
@@ -369,6 +372,10 @@ void left_Cauchy_Green__Particles__(double * b, const double * F) {
   b[1] = F[0]*F[2] + F[1]*F[3];
   b[2] = b[1];
   b[3] = F[2]*F[2] + F[3]*F[3];
+#if USE_AXIAL_SYMMETRY
+  b[4] = F[4]*F[4];  
+#endif
+  
 #else  
   b[0] = F[0]*F[0] + F[1]*F[1] + F[2]*F[2];
   b[1] = F[0]*F[3] + F[1]*F[4] + F[2]*F[5];
@@ -424,8 +431,11 @@ void eulerian_almansi__Particles__(double * e, const double * F) {
     {
       e[i*Ndim + j] = 0.5*(Identity[i*Ndim + j] - b_m1[i*Ndim + j]);
     }
-    
   }
+  
+#if USE_AXIAL_SYMMETRY
+  e[4] = 0.5*(Identity[4] - b_m1[4]);
+#endif  
   
 }
 

@@ -30,9 +30,11 @@
 #define MAXW 100
 #define MAXC 1000
 
-#ifdef USE_PLAINSTRAIN
+#if USE_PLAIN_STRAIN
 #define NumberDimensions 2
-#else
+#elif USE_AXIAL_SYMMETRY
+#define NumberDimensions 2
+#else 
 #define NumberDimensions 3
 #endif  
 

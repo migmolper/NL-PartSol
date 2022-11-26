@@ -154,7 +154,7 @@ double I2__TensorLib__(const Tensor A) {
 double I3__TensorLib__(const double * A) {
   double I3;
 #if NumberDimensions == 2
-    I3 = A[0] * A[3] - A[1] * A[2];
+    I3 = (A[0] * A[3] - A[1] * A[2]) * A[4];
 #else 
     I3 = A[0] * A[4] * A[8] 
        - A[0] * A[5] * A[7] 
@@ -753,6 +753,7 @@ int compute_inverse__TensorLib__(double * A_m1, const double * A)
   A_m1[1] = A[1];
   A_m1[2] = A[2];
   A_m1[3] = A[3];
+  A_m1[3] = 1.0/A[3];  
 
   int INFO;
   int N = 2;
@@ -915,7 +916,8 @@ void symmetrise__TensorLib__(double * symA, const double * A) {
   symA[0] = A[0];
   symA[1] = symA[2] = 0.5 * (A[1] + A[2]);  
   symA[3] = A[3];
-
+  symA[4] = A[4];
+  
 #else  
 
   symA.N[0] = A.N[0];

@@ -9,6 +9,7 @@
 #include "Globals.h"
 #include "Matlib.h"
 #include "Particles.h"
+#include "Particles/compute-Strains.h"
 #include "InOutFun.h"
 // clang-format on
 

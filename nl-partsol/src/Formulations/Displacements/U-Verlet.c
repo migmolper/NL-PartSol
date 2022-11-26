@@ -592,7 +592,12 @@ static int __update_Local_State(
     /*
       Compute the increment of the deformation gradient
     */
-    update_increment_Deformation_Gradient__Particles__(DF_p, D_Displacement_Ap, gradient_p.nV,NumberNodes_p);
+      compute_strains_ctx ctx_shape_fun;
+      ctx_shape_fun.gradient_p = gradient_p.nV;
+      ctx_shape_fun.Nnodes_p = NumberNodes_p;
+
+      update_increment_Deformation_Gradient__Particles__(
+          DF_p, D_Displacement_Ap, &ctx_shape_fun);
 
     /*
       Update the deformation gradient in t = n + 1 with the information

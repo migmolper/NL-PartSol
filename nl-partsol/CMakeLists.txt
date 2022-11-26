@@ -18,7 +18,11 @@ ELSE ()
 ENDIF ()
 
 # Plain strain conditions
-option(USE_PLAINSTRAIN "Use Plain-Strain conditions" ON)
+option(USE_PLAIN_STRAIN "Use Plain-Strain conditions" ON)
+
+# Axial symmetry conditions
+option(USE_AXIAL_SYMMETRY "Use Axial-Symmetry conditions" OFF)
+
 
 # Add LAPACK
 option(USE_LAPACK "Use LAPACK solver library" ON)
@@ -52,9 +56,18 @@ link_libraries(m)
 find_package(PkgConfig REQUIRED)
 
 # Plain strain
-if(USE_PLAINSTRAIN)
-  add_definitions("-DUSE_PLAINSTRAIN")
-endif()
+if(USE_PLAIN_STRAIN)
+  add_definitions("-DUSE_PLAIN_STRAIN=1")
+else(USE_PLAIN_STRAIN)
+add_definitions("-DUSE_PLAIN_STRAIN=0")
+endif(USE_PLAIN_STRAIN)
+
+# Axial symmetry
+if(USE_AXIAL_SYMMETRY)
+  add_definitions("-DUSE_AXIAL_SYMMETRY=1")
+else(USE_AXIAL_SYMMETRY)
+add_definitions("-DUSE_AXIAL_SYMMETRY=0")
+endif(USE_AXIAL_SYMMETRY)
 
 # MPI
 if(USE_MPI)

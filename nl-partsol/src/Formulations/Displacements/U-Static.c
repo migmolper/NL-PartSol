@@ -611,9 +611,13 @@ static PetscErrorCode __local_compatibility_conditions(const PetscScalar *dU,
       double *F_n_p = MPM_Mesh.Phi.F_n.nM[p];
       double *F_n1_p = MPM_Mesh.Phi.F_n1.nM[p];
       double *DF_p = MPM_Mesh.Phi.DF.nM[p];
- 
+
+      compute_strains_ctx ctx_shape_fun;
+      ctx_shape_fun.gradient_p = gradient_p.nV;
+      ctx_shape_fun.Nnodes_p = NumberNodes_p;
+
       update_increment_Deformation_Gradient__Particles__(
-          DF_p, D_Displacement_Ap, gradient_p.nV, NumberNodes_p);
+          DF_p, D_Displacement_Ap, &ctx_shape_fun);
 
       /*
         Update the deformation gradient in t = n + 1 with the information
