@@ -608,9 +608,9 @@ static int __update_Local_State(
     /*
       Compute Jacobian of the deformation gradient
     */
-    MPM_Mesh.Phi.J_n1.nV[p] = I3__TensorLib__(F_n1_p);
+    MPM_Mesh.Phi.J_n1[p] = I3__TensorLib__(F_n1_p);
 
-    if (MPM_Mesh.Phi.J_n1.nV[p] <= 0.0) {
+    if (MPM_Mesh.Phi.J_n1[p] <= 0.0) {
       fprintf(stderr, ""RED"%s : %s %i"RESET" \n", 
       "Error in I3__TensorLib__(F_n1_p)",
       "Negative jacobian in particle", p);
@@ -624,9 +624,9 @@ static int __update_Local_State(
       Idx_Element_p = MPM_Mesh.Element_p[p];
       Idx_Patch_p = FEM_Mesh.Idx_Patch[Idx_Element_p];
       FEM_Mesh.Vol_Patch_n[Idx_Patch_p] +=
-          MPM_Mesh.Phi.J_n.nV[p] * MPM_Mesh.Phi.Vol_0.nV[p];
+          MPM_Mesh.Phi.J_n[p] * MPM_Mesh.Phi.Vol_0.nV[p];
       FEM_Mesh.Vol_Patch_n1[Idx_Patch_p] +=
-          MPM_Mesh.Phi.J_n1.nV[p] * MPM_Mesh.Phi.Vol_0.nV[p];
+          MPM_Mesh.Phi.J_n1[p] * MPM_Mesh.Phi.Vol_0.nV[p];
     }
 
     /*
@@ -1045,7 +1045,7 @@ unsigned Size_tensor = 9;
     /*
       Replace the determinant of the deformation gradient
     */
-    MPM_Mesh.Phi.J_n.nV[p] = MPM_Mesh.Phi.J_n1.nV[p];
+    MPM_Mesh.Phi.J_n[p] = MPM_Mesh.Phi.J_n1[p];
 
     // Update hardening
     MPM_Mesh.Phi.Kappa_n[p] = MPM_Mesh.Phi.Kappa_n1[p];

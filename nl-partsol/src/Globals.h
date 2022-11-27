@@ -12,6 +12,10 @@
 #ifndef _GLOBALS_H_
 #define _GLOBALS_H_
 
+#include <stdbool.h>
+#include "Macros.h"
+#include "Types.h"
+
 extern char   SimulationFile[MAXC];
 extern char   Static_conditons[MAXC];
 extern char   Formulation[MAXC];
@@ -38,6 +42,9 @@ extern Load gravity_field;
 // Use Fracture modul
 extern bool Driver_EigenErosion;
 extern bool Driver_EigenSoftening;
+
+// Use F-bar 
+extern bool Driver_Fbar;
 
 // Material parameters
 extern int Number_Soil_Water_Mixtures;

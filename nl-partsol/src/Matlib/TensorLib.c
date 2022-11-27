@@ -115,7 +115,7 @@ double I1__TensorLib__(const double * A) {
   double I1 = 0;
 
 #if NumberDimensions == 2
-    I1 = A[0] + A[3];
+    I1 = A[0] + A[3] + A[4];
 #else 
     I3 = A[0] + A[4] + A[8];
 #endif

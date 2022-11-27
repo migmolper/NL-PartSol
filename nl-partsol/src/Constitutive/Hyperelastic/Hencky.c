@@ -44,7 +44,7 @@ int compute_Kirchhoff_Stress_Hencky__Constitutive__(State_Parameters IO_State,
 
 #if NumberDimensions == 2
   double b[5];
-  double eigvec_b[9] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+  double eigvec_b[4] = {0.0, 0.0, 0.0, 0.0};
   double eigval_b[3] = {0.0, 0.0, 0.0};
   double T_aux[4] = {0.0, 0.0, 0.0, 0.0};
 #else
@@ -110,7 +110,7 @@ int compute_stiffness_density_Hencky__Constitutive__(
   double G = E / (2.0 * (1.0 + nu));
 
 #if NumberDimensions == 2
-  double b[4];
+  double b[5];
   double eigvec_b[4] = {0.0, 0.0, 0.0, 0.0};
   double eigval_b[2] = {0.0, 0.0};
   double eigvec_T[4] = {0.0, 0.0, 0.0, 0.0};

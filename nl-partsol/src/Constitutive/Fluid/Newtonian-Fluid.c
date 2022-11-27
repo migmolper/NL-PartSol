@@ -55,11 +55,7 @@ int compute_Kirchhoff_Stress_Newtonian_Fluid__Constitutive__(
   }
   symmetrise__TensorLib__(E, L);  
 
-#if NumberDimensions == 2 
-  double trace_E = E[0] + E[2] + E[4];
-#else 
-  double trace_E = E[0] + E[4] + E[8];
-#endif
+  double trace_E = I1__TensorLib__(E);
 
   // Compute stress
   for (unsigned i = 0; i < Ndim; i++) {

@@ -68,6 +68,7 @@ bool Flag_Print_Convergence;
 Load gravity_field;
 bool Driver_EigenErosion;
 bool Driver_EigenSoftening;
+bool Driver_Fbar;
 bool Petsc_Direct_solver;
 bool Petsc_Iterative_solver;
 
@@ -97,6 +98,7 @@ int main(int argc, char *argv[]) {
 
   // Default value for optional modulus
   Driver_EigenErosion = false;
+  Driver_Fbar = false;
 
   // Default values for the flags
   Flag_Print_Convergence = false;

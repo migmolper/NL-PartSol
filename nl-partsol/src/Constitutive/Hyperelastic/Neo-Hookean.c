@@ -108,7 +108,7 @@ int compute_stiffness_density_Neo_Hookean(
 
   // Define auxiliar variables
 #if NumberDimensions == 2
-  double b_n[4];
+  double b_n[5];
 #else
   double b_n[9];
 #endif

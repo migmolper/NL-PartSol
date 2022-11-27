@@ -1144,12 +1144,12 @@ static PetscErrorCode __local_compatibility_conditions(const PetscScalar *dU,
                                                        F_n_p, DF_p, dFdt_n_p);
 
       //  Compute Jacobian of the deformation gradient
-      MPM_Mesh.Phi.J_n1.nV[p] = I3__TensorLib__(F_n1_p);
-      if (MPM_Mesh.Phi.J_n1.nV[p] <= 0.0) {
+      MPM_Mesh.Phi.J_n1[p] = I3__TensorLib__(F_n1_p);
+      if (MPM_Mesh.Phi.J_n1[p] <= 0.0) {
         fprintf(stderr,
                 "" RED "Negative jacobian in particle %i: %e" RESET " \n", p,
-                MPM_Mesh.Phi.J_n1.nV[p]);
-        MPM_Mesh.Phi.J_n1.nV[p] = 0.0;
+                MPM_Mesh.Phi.J_n1[p]);
+        MPM_Mesh.Phi.J_n1[p] = 0.0;
       }
       
 
@@ -1158,9 +1158,9 @@ static PetscErrorCode __local_compatibility_conditions(const PetscScalar *dU,
         Idx_Element_p = MPM_Mesh.Element_p[p];
         Idx_Patch_p = FEM_Mesh.Idx_Patch[Idx_Element_p];
         FEM_Mesh.Vol_Patch_n[Idx_Patch_p] +=
-            MPM_Mesh.Phi.J_n.nV[p] * MPM_Mesh.Phi.Vol_0.nV[p];
+            MPM_Mesh.Phi.J_n[p] * MPM_Mesh.Phi.Vol_0.nV[p];
         FEM_Mesh.Vol_Patch_n1[Idx_Patch_p] +=
-            MPM_Mesh.Phi.J_n1.nV[p] * MPM_Mesh.Phi.Vol_0.nV[p];
+            MPM_Mesh.Phi.J_n1[p] * MPM_Mesh.Phi.Vol_0.nV[p];
       }
 
       free(D_Displacement_Ap);
@@ -1300,6 +1300,11 @@ static PetscErrorCode __nodal_internal_forces(PetscScalar *Lagrangian,
       //  Get the volume of the particle in the reference configuration
       double V0_p = Vol_0[p];
 
+#if USE_AXIAL_SYMMETRY
+      // Get the radious
+      double R_p = MPM_Mesh.Phi.x_GC.nM[p][0];;
+#endif
+
       // Get the incremental deformation gradient
       double *DF_p = MPM_Mesh.Phi.DF.nM[p];
 
@@ -1310,6 +1315,9 @@ static PetscErrorCode __nodal_internal_forces(PetscScalar *Lagrangian,
           nodal_set__Particles__(p, MPM_Mesh.ListNodes[p], NumNodes_p);
       Matrix d_shapefunction_n_p =
           compute_dN__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
+#if USE_AXIAL_SYMMETRY
+      Matrix shapefun_p = compute_N__MeshTools__(Nodes_p, MPM_Mesh, FEM_Mesh);
+#endif
 
       // Pushforward the shape functions
       double *d_shapefunction_n1_p = push_forward_dN__MeshTools__(
@@ -1364,6 +1372,10 @@ static PetscErrorCode __nodal_internal_forces(PetscScalar *Lagrangian,
           Mask_dofs_A[i] = Mask_node_A * Ndim + i;
         }
 
+#if USE_AXIAL_SYMMETRY
+        InternalForcesDensity_Ap[0] += (1.0/R_p)*kirchhoff_p[4]*shapefun_p.nV[A];
+#endif
+
         //  Asign the local internal forces (InternalForcesDensity_Ap)
         //  contribution to the node A using the volume of the particle as
         //  integration weight
@@ -1379,6 +1391,9 @@ static PetscErrorCode __nodal_internal_forces(PetscScalar *Lagrangian,
 
       //   Free memory
       free__MatrixLib__(d_shapefunction_n_p);
+#if USE_AXIAL_SYMMETRY
+      free__MatrixLib__(shapefun_p);
+#endif      
       free(d_shapefunction_n1_p);
       free(Nodes_p.Connectivity);
     } // For unsigned p
@@ -1940,12 +1955,12 @@ static PetscErrorCode __update_particles_internal_variables(Particle MPM_Mesh, M
     for (p = 0; p < Np; p++) {
       
       // Update the determinant of the deformation gradient
-      MPM_Mesh.Phi.J_n.nV[p] = MPM_Mesh.Phi.J_n1.nV[p];
+      MPM_Mesh.Phi.J_n[p] = MPM_Mesh.Phi.J_n1[p];
 
       //! Update density
       MPM_Mesh.Phi.rho.nV[p] =
           MPM_Mesh.Phi.mass.nV[p] /
-          (MPM_Mesh.Phi.Vol_0.nV[p] * MPM_Mesh.Phi.J_n.nV[p]);
+          (MPM_Mesh.Phi.Vol_0.nV[p] * MPM_Mesh.Phi.J_n[p]);
 
       //! Update hardening
       MPM_Mesh.Phi.Kappa_n[p] = MPM_Mesh.Phi.Kappa_n1[p];
@@ -2200,7 +2215,7 @@ static PetscErrorCode __jacobian_variational_smoothing(const double * Lumped_Mas
 
       //! Get the mass of the GP
       double m_p = MPM_Mesh.Phi.mass.nV[p];      
-      double J_n1_p = MPM_Mesh.Phi.J_n1.nV[p];
+      double J_n1_p = MPM_Mesh.Phi.J_n1[p];
 
       for (unsigned A = 0; A < NumberNodes_p; A++) {
 
@@ -2236,7 +2251,7 @@ static PetscErrorCode __jacobian_variational_smoothing(const double * Lumped_Mas
 #pragma omp for private(p)
     for (p = 0; p < Np; p++) {
 
-      MPM_Mesh.Phi.J_n1.nV[p] = 0.0;
+      MPM_Mesh.Phi.J_n1[p] = 0.0;
 
       //  Define nodal connectivity for each particle
       //  and compute the shape function
@@ -2255,7 +2270,7 @@ static PetscErrorCode __jacobian_variational_smoothing(const double * Lumped_Mas
         int Ap = Nodes_p.Connectivity[A];
         int A_mask = ActiveNodes.Nodes2Mask[Ap];
 
-        MPM_Mesh.Phi.J_n1.nV[p] += ShapeFunction_pI * jacobian_I[A_mask];
+        MPM_Mesh.Phi.J_n1[p] += ShapeFunction_pI * jacobian_I[A_mask];
 
       } // for unsigned A
 

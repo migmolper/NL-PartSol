@@ -626,11 +626,11 @@ static PetscErrorCode __local_compatibility_conditions(const PetscScalar *dU,
       update_Deformation_Gradient_n1__Particles__(F_n1_p, F_n_p, DF_p);
 
       //  Compute Jacobian of the deformation gradient
-      MPM_Mesh.Phi.J_n1.nV[p] = I3__TensorLib__(F_n1_p);
-      if (MPM_Mesh.Phi.J_n1.nV[p] <= 0.0) {
+      MPM_Mesh.Phi.J_n1[p] = I3__TensorLib__(F_n1_p);
+      if (MPM_Mesh.Phi.J_n1[p] <= 0.0) {
         fprintf(stderr,
                 "" RED "Negative jacobian in particle %i: %e" RESET " \n", p,
-                MPM_Mesh.Phi.J_n1.nV[p]);
+                MPM_Mesh.Phi.J_n1[p]);
         STATUS = EXIT_FAILURE;
       }
 
@@ -639,9 +639,9 @@ static PetscErrorCode __local_compatibility_conditions(const PetscScalar *dU,
         Idx_Element_p = MPM_Mesh.Element_p[p];
         Idx_Patch_p = FEM_Mesh.Idx_Patch[Idx_Element_p];
         FEM_Mesh.Vol_Patch_n[Idx_Patch_p] +=
-            MPM_Mesh.Phi.J_n.nV[p] * MPM_Mesh.Phi.Vol_0.nV[p];
+            MPM_Mesh.Phi.J_n[p] * MPM_Mesh.Phi.Vol_0.nV[p];
         FEM_Mesh.Vol_Patch_n1[Idx_Patch_p] +=
-            MPM_Mesh.Phi.J_n1.nV[p] * MPM_Mesh.Phi.Vol_0.nV[p];
+            MPM_Mesh.Phi.J_n1[p] * MPM_Mesh.Phi.Vol_0.nV[p];
       }
 
       free(D_Displacement_Ap);
@@ -1401,12 +1401,12 @@ static PetscErrorCode __update_Particles(Vec dU,
     for (p = 0; p < Np; p++) {
 
       // Update the determinant of the deformation gradient
-      MPM_Mesh.Phi.J_n.nV[p] = MPM_Mesh.Phi.J_n1.nV[p];
+      MPM_Mesh.Phi.J_n[p] = MPM_Mesh.Phi.J_n1[p];
 
       //! Update density
       MPM_Mesh.Phi.rho.nV[p] =
           MPM_Mesh.Phi.mass.nV[p] /
-          (MPM_Mesh.Phi.Vol_0.nV[p] * MPM_Mesh.Phi.J_n.nV[p]);
+          (MPM_Mesh.Phi.Vol_0.nV[p] * MPM_Mesh.Phi.J_n[p]);
 
       //! Update hardening
       MPM_Mesh.Phi.Kappa_n[p] = MPM_Mesh.Phi.Kappa_n1[p];

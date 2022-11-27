@@ -10,7 +10,7 @@
 #include "Macros.h"
 #include "Types.h"
 #include "Matlib.h"
-#include "Particles.h"
+#include "Particles/compute-Strains.h"
 // clang-format on
 
 /**

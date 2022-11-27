@@ -34,7 +34,7 @@
 #define NumberDimensions 2
 #elif USE_AXIAL_SYMMETRY
 #define NumberDimensions 2
-#else 
+#elif USE_3D
 #define NumberDimensions 3
 #endif  
 

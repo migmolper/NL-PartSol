@@ -234,9 +234,8 @@ int Generate_One_Phase_Analysis__InOutFun__(Particle *MPM_Mesh, char *Name_File,
     printf(" \t %s \n", "* Start particles initialisation ...");
     initial_position__Particles__((*MPM_Mesh).Phi.x_GC, MPM_GID_Mesh,
                                   Msh_Parms.GPxElement);
-    if (Ndim == 2) {
-      initialise_particles(MPM_GID_Mesh, MPM_Mesh, Msh_Parms.GPxElement);
-    }
+    initialise_particles(MPM_GID_Mesh, MPM_Mesh, Msh_Parms.GPxElement);
+    
     printf(" \t %s \n", "Success !!");
 
     /*
@@ -604,9 +603,19 @@ static void initialise_particles(Mesh MPM_GID_Mesh, Particle *MPM_Mesh,
       MatIdx_p = MPM_Mesh->MatIdx[p];
 
       /* Get material properties */
+#if USE_PLAIN_STRAIN
       V_p = Vol_Element / GPxElement;
       rho_p = MPM_Mesh->Mat[MatIdx_p].rho;
       m_p = V_p * rho_p;
+#elif USE_AXIAL_SYMMETRY
+      V_p = Vol_Element / GPxElement;
+      rho_p = MPM_Mesh->Mat[MatIdx_p].rho;
+      m_p = 2 * PI__MatrixLib__ * V_p * rho_p * MPM_Mesh->Phi.x_GC.nM[p][0];  
+#else
+      V_p = Vol_Element / GPxElement;
+      rho_p = MPM_Mesh->Mat[MatIdx_p].rho;
+      m_p = V_p * rho_p;
+#endif      
 
       /* Set the initial volume */
       MPM_Mesh->Phi.Vol_0.nV[p] = V_p;

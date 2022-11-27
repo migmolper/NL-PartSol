@@ -61,13 +61,13 @@ Fields allocate_upw_vars__Fields__(int NumParticles) {
     Allocate and initialise the Jacobian of the deformation gradient
     ant its rate
   */
-  Phi.J_n = allocZ__MatrixLib__(NumParticles, 1);
-  Phi.J_n1 = allocZ__MatrixLib__(NumParticles, 1);
-  Phi.dJ_dt = allocZ__MatrixLib__(NumParticles, 1);
+  Phi.J_n = (double *)calloc(NumParticles,sizeof(double));
+  Phi.J_n1 = (double *)calloc(NumParticles,sizeof(double));
+  Phi.dJ_dt = (double *)calloc(NumParticles,sizeof(double));
 
   for (int p = 0; p < NumParticles; p++) {
-    Phi.J_n.nV[p] = 1.0;
-    Phi.J_n1.nV[p] = 1.0;
+    Phi.J_n[p] = 1.0;
+    Phi.J_n1[p] = 1.0;
   }
 
   /*!
@@ -219,9 +219,9 @@ void free_upw_vars__Fields__(Fields Phi) {
   free__MatrixLib__(Phi.dt_F_n);
   free__MatrixLib__(Phi.dt_F_n1);
   free__MatrixLib__(Phi.dt_DF);
-  free__MatrixLib__(Phi.J_n);
-  free__MatrixLib__(Phi.J_n1);
-  free__MatrixLib__(Phi.dJ_dt);
+  free(Phi.J_n);
+  free(Phi.J_n1);
+  free(Phi.dJ_dt);
   free__MatrixLib__(Phi.Fbar);
   free__MatrixLib__(Phi.Jbar);
   free(Phi.W);

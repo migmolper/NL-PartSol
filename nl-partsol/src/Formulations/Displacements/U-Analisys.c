@@ -72,14 +72,17 @@ Fields allocate_U_vars__Fields__(int NumParticles) {
 #endif
   }
 
-  Phi.J_n = allocZ__MatrixLib__(NumParticles, 1);
+  Phi.J_n = (double *)calloc(NumParticles, sizeof(double));
 
-  Phi.J_n1 = allocZ__MatrixLib__(NumParticles, 1);
+  Phi.J_n1 = (double *)calloc(NumParticles, sizeof(double));
 
   for (int p = 0; p < NumParticles; p++) {
-    Phi.J_n.nV[p] = 1.0;
-    Phi.J_n1.nV[p] = 1.0;
+    Phi.J_n[p] = 1.0;
+    Phi.J_n1[p] = 1.0;
   }
+
+if(Driver_Fbar == true)
+{
 
 #if NumberDimensions == 2
   Phi.Fbar = allocZ__MatrixLib__(NumParticles, 5);
@@ -105,6 +108,8 @@ Fields allocate_U_vars__Fields__(int NumParticles) {
     Phi.Jbar.nV[p] = 1.0;
   }
 
+}
+
 #if NumberDimensions == 2
   Phi.Stress = allocZ__MatrixLib__(NumParticles, 5);
 #else
@@ -121,6 +126,9 @@ Fields allocate_U_vars__Fields__(int NumParticles) {
   Phi.rho = allocZ__MatrixLib__(NumParticles, 1);
 
   Phi.Vol_0 = allocZ__MatrixLib__(NumParticles, 1);
+
+  Phi.Temperature_n = (double *)calloc(NumParticles, sizeof(double));
+  Phi.Temperature_n1 = (double *)calloc(NumParticles, sizeof(double));  
 
   /*!
     Damage variable
@@ -183,16 +191,21 @@ void free_U_vars__Fields__(Fields Phi) {
   free__MatrixLib__(Phi.b_e_n1);
   free__MatrixLib__(Phi.F_n);
   free__MatrixLib__(Phi.F_n1);
-  free__MatrixLib__(Phi.J_n);
-  free__MatrixLib__(Phi.J_n1);
+  free(Phi.J_n);
+  free(Phi.J_n1);
   free__MatrixLib__(Phi.dt_F_n);
   free__MatrixLib__(Phi.dt_F_n1);
   free__MatrixLib__(Phi.dt_DF);
-  free__MatrixLib__(Phi.Fbar);
-  free__MatrixLib__(Phi.Jbar);
+  if(Driver_Fbar == true)
+  {
+    free__MatrixLib__(Phi.Fbar);
+    free__MatrixLib__(Phi.Jbar);
+  }
   free__MatrixLib__(Phi.DF);
   free(Phi.W);
   free__MatrixLib__(Phi.Vol_0);
+  free(Phi.Temperature_n);
+  free(Phi.Temperature_n1);
   if ((Driver_EigenErosion == true) || (Driver_EigenSoftening == true)) {
     free(Phi.Damage_n);
     free(Phi.Damage_n1);

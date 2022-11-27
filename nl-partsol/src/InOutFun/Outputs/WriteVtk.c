@@ -63,7 +63,7 @@ static void vtk_Out_acc(FILE *, Matrix, int);
 static void vtk_Out_dis(FILE *, Matrix, int);
 static void vtk_Out_Stress(FILE *, Matrix, int);
 static void vtk_Out_Stress_P(FILE *, Matrix, int);
-static void vtk_Out_Pw(FILE *, Matrix, Matrix, int);
+static void vtk_Out_Pw(FILE *, Matrix, const double *, int);
 static void vtk_Out_dPw_dt(FILE *, Matrix, int);
 static void vtk_Out_Strain(FILE *, Matrix, int);
 static void vtk_Out_Deformation_Gradient(FILE *, Matrix, int);
@@ -613,14 +613,14 @@ static void vtk_Out_Stress_P(FILE *Vtk_file, Matrix Stress, int NumParticles) {
 
 /*********************************************************************/
 
-static void vtk_Out_Pw(FILE *Vtk_file, Matrix Pw, Matrix J, int NumParticles) {
+static void vtk_Out_Pw(FILE *Vtk_file, Matrix Pw, const double * J, int NumParticles) {
   int Ndim = NumberDimensions;
   Tensor Stress_p;
   double P_p; /* Trace of the stress tensor (volumetric) */
   fprintf(Vtk_file, "SCALARS Pw double \n");
   fprintf(Vtk_file, "LOOKUP_TABLE default \n");
   for (int i = 0; i < NumParticles; i++) {
-    fprintf(Vtk_file, "%.20g \n", Pw.nV[i] / J.nV[i]);
+    fprintf(Vtk_file, "%.20g \n", Pw.nV[i] / J[i]);
   }
 }
 
