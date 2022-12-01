@@ -834,11 +834,12 @@ static IS __get_dirichlet_list_dofs(Mask ActiveNodes, Mesh FEM_Mesh, int Step,
         */
         for (int k = 0; k < NumDimBound; k++) {
 
+          Id_BCC_mask_k = Id_BCC_mask * Ndim + k;
           /*
             Apply only if the direction is active
           */
-          if (FEM_Mesh.Bounds.BCC_i[i].Dir[k * NumTimeStep + Step] == 1) {
-            Id_BCC_mask_k = Id_BCC_mask * Ndim + k;
+          if ((FEM_Mesh.Bounds.BCC_i[i].Dir[k * NumTimeStep + Step] == 1) && 
+          (List_active_dofs[Id_BCC_mask_k] == 0)) {
             List_active_dofs[Id_BCC_mask_k] = 1;
             Order_dirichlet++;
           }
