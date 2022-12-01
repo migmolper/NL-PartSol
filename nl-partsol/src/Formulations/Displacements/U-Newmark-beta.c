@@ -62,7 +62,7 @@ static PetscErrorCode __get_nodal_field_n(Vec U_n_dt, Vec U_n_dt2,
 
 static PetscErrorCode __form_initial_guess(Vec DU, Vec U_n_dt, Vec U_n_dt2,
                                            Mesh FEM_Mesh, Mask ActiveNodes,
-                                           Newmark_parameters Params);
+                                           Newmark_parameters Params, bool Use_explicit_trial);
 
 static PetscErrorCode __lagrangian_evaluation(SNES snes, Vec D_U, Vec Residual,
                                               void *ctx);
@@ -145,7 +145,7 @@ PetscErrorCode U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
   double epsilon = Parameters_Solver.epsilon_Mass_Matrix;
   double beta = Parameters_Solver.beta_Newmark_beta;
   double gamma = Parameters_Solver.gamma_Newmark_beta;
-  double alpha_blend = 0.95;
+  double alpha_blend = 1.0; //0.95;
   double DeltaTimeStep;
   double DeltaX = FEM_Mesh.DeltaX;
 
@@ -346,13 +346,10 @@ PetscErrorCode U_Newmark_Beta(Mesh FEM_Mesh, Particle MPM_Mesh,
     /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
        Evaluate initial guess; then solve nonlinear system
      - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-    if (Use_explicit_trial == true) {
-      PetscCall(__form_initial_guess(DU, U_n_dt, U_n_dt2, FEM_Mesh, ActiveNodes,
-                                     Time_Integration_Params));
-    } else {
-      PetscCall(VecZeroEntries(DU));
-    }
-
+    PetscCall(VecZeroEntries(DU));
+    PetscCall(__form_initial_guess(DU, U_n_dt, U_n_dt2, FEM_Mesh, ActiveNodes,
+                                     Time_Integration_Params, Use_explicit_trial));
+    
     /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       Run solver
      - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
@@ -759,10 +756,8 @@ static PetscErrorCode __get_nodal_field_n(Vec U_n_dt, Vec U_n_dt2,
 
               D_U_value_It = FEM_Mesh.Bounds.BCC_i[i].Value[k].Fx[t];
               U_value_In1 += D_U_value_It;
-              V_value_In1 = alpha_4 * D_U_value_It +
-                            (alpha_5 - 1) * V_value_In + alpha_6 * A_value_In;
-              A_value_In1 = alpha_1 * D_U_value_It - alpha_2 * V_value_In -
-                            (alpha_3 + 1) * A_value_In;
+              V_value_In1 = 0.0;
+              A_value_In1 = 0.0;
             }
 
             VecSetValues(U_n_dt, 1, &Mask_restricted_dofs_A, &V_value_In1,
@@ -883,7 +878,7 @@ static IS __get_dirichlet_list_dofs(Mask ActiveNodes, Mesh FEM_Mesh, int Step,
 
 static PetscErrorCode __form_initial_guess(Vec DU, Vec U_n_dt, Vec U_n_dt2,
                                            Mesh FEM_Mesh, Mask ActiveNodes,
-                                           Newmark_parameters Params) {
+                                           Newmark_parameters Params, bool Use_explicit_trial) {
 
   unsigned Ndim = NumberDimensions;
   unsigned Nactivenodes = ActiveNodes.Nactivenodes;
@@ -899,6 +894,7 @@ static PetscErrorCode __form_initial_guess(Vec DU, Vec U_n_dt, Vec U_n_dt2,
   PetscCall(VecGetArrayRead(U_n_dt2, &Un_dt2_ptr));
 
 //! Compute trial
+    if (Use_explicit_trial == true) {
 #pragma omp for private(Dof_Ai)
   for (Dof_Ai = 0; Dof_Ai < Ntotaldofs; Dof_Ai++) {
 
@@ -906,6 +902,9 @@ static PetscErrorCode __form_initial_guess(Vec DU, Vec U_n_dt, Vec U_n_dt2,
                      0.5 * DSQR(DeltaTimeStep) * Un_dt2_ptr[Dof_Ai];
 
   } // #pragma omp for private (Dof_Ai)
+    }
+
+
 
   //! Apply boundary condition
   unsigned NumBounds = FEM_Mesh.Bounds.NumBounds;
@@ -1403,7 +1402,7 @@ static void __nodal_traction_forces(PetscScalar *Lagrangian, Mask ActiveNodes,
 #if NumberDimensions == 2
   double T[2] = {0.0, 0.0};
 #else
-  double T[3] = {0.0, 0.0};
+  double T[3] = {0.0, 0.0, 0.0};
 #endif
 
 #if NumberDimensions == 2

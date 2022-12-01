@@ -170,6 +170,10 @@ Time_Int_Params Solver_selector__InOutFun__(char *Name_File) {
             Parameters.MaxIter = atoi(Parse_Temp_Prop[1]);
             printf("\t \t -> %s : %i \n", "Max number of interations",
                    Parameters.MaxIter);
+          } else if (strcmp(Parse_Temp_Prop[0], "Explicit-trial") == 0) {
+            Parameters.Use_explicit_trial = atoi(Parse_Temp_Prop[1]);
+            printf("\t \t -> %s : %i \n", "Explicit-trial",
+                   Parameters.Use_explicit_trial);                   
           } else {
             fprintf(stderr, "%s : %s %s \n", "Error in NLPS-Solver()",
                     "Undefined", Parse_Temp_Prop[0]);
@@ -248,7 +252,7 @@ static Time_Int_Params Initialise_Parameters() {
   Parameters.beta_Newmark_beta = 0.25;
   Parameters.gamma_Newmark_beta = 0.5;
   Parameters.TOL_Newmark_beta = 1E-10;
-  Parameters.Use_explicit_trial = true;
+  Parameters.Use_explicit_trial = false;
   Parameters.MaxIter = 10;
 
   return Parameters;
