@@ -22,8 +22,6 @@ typedef struct {
 } Ctx;
 
 /**************************************************************/
-static double __compute_deltat(Particle MPM_Mesh, double h,
-                               Time_Int_Params Parameters_Solver);
 
 static int *__create_sparsity_pattern(Mask ActiveNodes, Particle MPM_Mesh);
 
@@ -34,6 +32,8 @@ static PetscErrorCode __compute_nodal_lumped_mass(Vec Lumped_MassMatrix,
                                                   Particle MPM_Mesh,
                                                   Mesh FEM_Mesh,
                                                   Mask ActiveNodes);
+
+static PetscErrorCode __form_initial_guess(Vec DU, Mesh FEM_Mesh, Mask ActiveNodes);
 
 static PetscErrorCode __lagrangian_evaluation(SNES snes, Vec D_U, Vec Residual,
                                               void *ctx);
@@ -116,13 +116,6 @@ PetscErrorCode U_Static(Mesh FEM_Mesh, Particle MPM_Mesh,
   double Relative_TOL = Parameters_Solver.TOL_Newmark_beta;
   double Absolute_TOL = 100 * Relative_TOL;
 
-  /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    Time step is defined at the init of the simulation throught the
-    CFL condition. Notice that for this kind of solver, CFL confition is
-    not required to be satisfied. The only purpose of it is to use the existing
-    software interfase.
-     - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-  DeltaTimeStep = __compute_deltat(MPM_Mesh, DeltaX, Parameters_Solver);
 
   if (Driver_EigenErosion) {
     compute_Beps__Constitutive__(MPM_Mesh, FEM_Mesh, true);
@@ -233,8 +226,8 @@ PetscErrorCode U_Static(Mesh FEM_Mesh, Particle MPM_Mesh,
        directly call any KSP and PC routines to set various options.
        Optionally allow user-provided preconditioner
       - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-    Petsc_Direct_solver = true;
-    Petsc_Iterative_solver = false;
+    Petsc_Direct_solver = false;
+    Petsc_Iterative_solver = true;
     if(Petsc_Direct_solver)
     {
       PetscCall(SNESGetKSP(snes, &ksp));
@@ -267,6 +260,7 @@ PetscErrorCode U_Static(Mesh FEM_Mesh, Particle MPM_Mesh,
        Evaluate initial guess; then solve nonlinear system
      - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
     PetscCall(VecZeroEntries(DU));
+     __form_initial_guess(DU, FEM_Mesh, ActiveNodes);    
 
     /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       Run solver
@@ -322,59 +316,6 @@ PetscErrorCode U_Static(Mesh FEM_Mesh, Particle MPM_Mesh,
   }
 
   return EXIT_SUCCESS;
-}
-
-/*********************************************************************/
-
-static double __compute_deltat(Particle MPM_Mesh, double h,
-                               Time_Int_Params Parameters_Solver) {
-
-  double DeltaT;
-  double CEL_MAX = 0;
-  double C[3] = {0, 0, 0};
-  int Ndim = NumberDimensions;
-  bool DynamicTimeStep = false;
-
-  /*
-    Read paramter solver
-  */
-  double CFL = Parameters_Solver.CFL;
-  double CEL_MAT = Parameters_Solver.Cel;
-
-  /*
-    Consider the velocity of the particles for the courant. In
-    some cases, for instance Fr>1 is important.
-   */
-  if (DynamicTimeStep) {
-    /*
-      Get the maximum wave speed in any direction
-    */
-    for (int i = 0; i < MPM_Mesh.NumGP; i++) {
-      for (int j = 0; j < Ndim; j++) {
-        C[j] = DMAX(C[j], CEL_MAT + fabs(MPM_Mesh.Phi.vel.nM[i][j]));
-      }
-    }
-
-    /*
-      Get the absolute maximum value of the celerity
-    */
-    for (int j = 0; j < Ndim; j++) {
-      CEL_MAX = DMAX(CEL_MAX, C[j]);
-    }
-
-  } else {
-    CEL_MAX = CEL_MAT;
-  }
-
-  /*
-    Get the minimum value of the time step
-  */
-  DeltaT = CFL * h / CEL_MAX;
-
-  /*
-    Return new time step
-  */
-  return DeltaT;
 }
 
 /**************************************************************/
@@ -433,11 +374,12 @@ static IS __get_dirichlet_list_dofs(Mask ActiveNodes, Mesh FEM_Mesh, int Step,
         */
         for (int k = 0; k < NumDimBound; k++) {
 
+          Id_BCC_mask_k = Id_BCC_mask * Ndim + k;
           /*
             Apply only if the direction is active
           */
-          if (FEM_Mesh.Bounds.BCC_i[i].Dir[k * NumTimeStep + Step] == 1) {
-            Id_BCC_mask_k = Id_BCC_mask * Ndim + k;
+          if ((FEM_Mesh.Bounds.BCC_i[i].Dir[k * NumTimeStep + Step] == 1) && 
+          (List_active_dofs[Id_BCC_mask_k] == 0)) {
             List_active_dofs[Id_BCC_mask_k] = 1;
             Order_dirichlet++;
           }
@@ -477,6 +419,65 @@ static IS __get_dirichlet_list_dofs(Mask ActiveNodes, Mesh FEM_Mesh, int Step,
   return Dirichlet_dofs;
 }
 
+/**************************************************************/
+
+static PetscErrorCode __form_initial_guess(Vec DU, Mesh FEM_Mesh, Mask ActiveNodes) {
+
+  unsigned Ndim = NumberDimensions;
+  unsigned Nactivenodes = ActiveNodes.Nactivenodes;
+  PetscInt Ntotaldofs = Ndim * Nactivenodes;
+  PetscInt Dof_Ai;
+
+  PetscScalar *DU_ptr;
+  PetscCall(VecGetArray(DU, &DU_ptr));
+
+  //! Apply boundary condition
+  unsigned NumBounds = FEM_Mesh.Bounds.NumBounds;
+
+  for (unsigned i = 0; i < NumBounds; i++) {
+
+    /*
+      Get the number of nodes of this boundarie
+    */
+    unsigned NumNodesBound = FEM_Mesh.Bounds.BCC_i[i].NumNodes;
+
+    for (unsigned j = 0; j < NumNodesBound; j++) {
+      /*
+        Get the index of the node
+      */
+      int Id_BCC = FEM_Mesh.Bounds.BCC_i[i].Nodes[j];
+      int Id_BCC_mask = ActiveNodes.Nodes2Mask[Id_BCC];
+
+      /*
+        The boundary condition is not affecting any active node,
+        continue interating
+      */
+      if (Id_BCC_mask == -1) {
+        continue;
+      }
+
+      /*
+        Loop over the dimensions of the boundary condition
+      */
+      for (unsigned k = 0; k < Ndim; k++) {
+
+        /*
+          Apply only if the direction is active (1)
+        */
+        if (FEM_Mesh.Bounds.BCC_i[i].Dir[k * NumTimeStep + TimeStep] == 1) {
+
+          Dof_Ai = Id_BCC_mask * Ndim + k;
+
+          DU_ptr[Dof_Ai] = FEM_Mesh.Bounds.BCC_i[i].Value[k].Fx[TimeStep];
+        }
+      }
+    }
+  }
+
+  PetscCall(VecRestoreArray(DU, &DU_ptr));
+
+  return EXIT_SUCCESS;
+}
 /**************************************************************/
 
 /**
