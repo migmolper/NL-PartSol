@@ -12,6 +12,8 @@
 
 #include "Constitutive/Plasticity/Elastoplastic-Tangent-Matrix.h"
 #include "Globals.h"
+#include <stdio.h>
+#include <stdlib.h>
 
 #ifdef __linux__
 #include <lapacke.h>
@@ -72,9 +74,11 @@ int compute_stiffness_elastoplastic__Constitutive__(double *Stiffness_density,
 #if NumberDimensions == 2
   double eigval_b_e[2] = {0.0, 0.0};
   double eigvec_b_e[4] = {0.0, 0.0, 0.0, 0.0};
+  double u__o__v[2][2];
 #else
   double eigval_b_e[3] = {0.0, 0.0, 0.0};
   double eigvec_b_e[9] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+  double u__o__v[3][3];
 #endif
 
   STATUS = __spectral_decomposition_b_e(eigval_b_e, eigvec_b_e, IO_State.b_e);
@@ -91,50 +95,6 @@ int compute_stiffness_elastoplastic__Constitutive__(double *Stiffness_density,
     return EXIT_FAILURE;
   }
 
-#if NumberDimensions == 2
-
-  double n1[2] = {0.0, 0.0};
-  double n2[2] = {0.0, 0.0};
-
-  double m[4][4] = {{0.0, 0.0, 0.0, 0.0},
-                    {0.0, 0.0, 0.0, 0.0},
-                    {0.0, 0.0, 0.0, 0.0},
-                    {0.0, 0.0, 0.0, 0.0}};
-
-  double mu[4][2] = {{0.0, 0.0}, {0.0, 0.0}, {0.0, 0.0}, {0.0, 0.0}};
-
-  double mv[4][2] = {{0.0, 0.0}, {0.0, 0.0}, {0.0, 0.0}, {0.0, 0.0}};
-
-  double u__o__v[2][2] = {{0.0, 0.0}, {0.0, 0.0}};
-
-#else
-  No esta implementado
-#endif
-
-  // Generate the matrix with the eigenbases
-  // keeping in mind that LAPACK returns column-wise matrix
-  for (unsigned A = 0; A < Ndim; A++) {
-    for (unsigned B = 0; B < Ndim; B++) {
-      for (unsigned i = 0; i < Ndim; i++) {
-        for (unsigned j = 0; j < Ndim; j++) {
-          m[A * Ndim + B][i * Ndim + j] =
-              eigvec_b_e[A + i * Ndim] * eigvec_b_e[B + j * Ndim];
-        }
-      }
-    }
-  }
-
-  // Do the projection mu and mv
-  for (unsigned A = 0; A < Ndim; A++) {
-    for (unsigned B = 0; B < Ndim; B++) {
-      for (unsigned i = 0; i < Ndim; i++) {
-        for (unsigned j = 0; j < Ndim; j++) {
-          mv[A * Ndim + B][i] += m[A * Ndim + B][i * Ndim + j] * dN_alpha_n1[j];
-          mu[A * Ndim + B][i] += m[A * Ndim + B][i * Ndim + j] * dN_beta_n1[j];
-        }
-      }
-    }
-  }
 
   // Do the diadic product of gradient directions
   for (unsigned i = 0; i < Ndim; i++) {
@@ -143,15 +103,36 @@ int compute_stiffness_elastoplastic__Constitutive__(double *Stiffness_density,
     }
   }
 
-  // Assemble the material contribution to the tanget matrix
+
   for (unsigned A = 0; A < Ndim; A++) {
+
+    double u_A = 0.0;
+    double v_A = 0.0;
+    for (unsigned i = 0; i < Ndim; i++) 
+    {
+      u_A += dN_alpha_n1[i]*eigvec_b_e[A + i * Ndim];
+      v_A += dN_beta_n1[i]*eigvec_b_e[A + i * Ndim];
+    }
+
     for (unsigned B = 0; B < Ndim; B++) {
 
+      double u_B = 0.0;
+      double v_B = 0.0;
+      for (unsigned i = 0; i < Ndim; i++) 
+      {
+        u_B += dN_alpha_n1[i]*eigvec_b_e[B + i * Ndim];        
+        v_B += dN_beta_n1[i]*eigvec_b_e[B + i * Ndim];
+      }
+
+      double C_ep_AB = IO_State.C_ep[A * Ndim + B];
+      double v_A__dot__u_B = u_B*v_A;
+      double u_A__dot__v_B = u_A*v_B;    
+      double u_B__dot__v_B = u_B*v_B;
+      
       for (unsigned i = 0; i < Ndim; i++) {
         for (unsigned j = 0; j < Ndim; j++) {
           Stiffness_density[i * Ndim + j] +=
-              IO_State.C_ep[A * Ndim + B] *
-              (mv[A * Ndim + A][i] * mu[B * Ndim + B][j]);
+              C_ep_AB * u_A__dot__v_B * eigvec_b_e[A + i * Ndim] * eigvec_b_e[B + j * Ndim];
 
           if (A != B) {
             if (fabs(eigval_b_e[B] - eigval_b_e[A]) > 1E-14) {
@@ -159,12 +140,10 @@ int compute_stiffness_elastoplastic__Constitutive__(double *Stiffness_density,
                   0.5 *
                   ((eigval_T[B] - eigval_T[A]) /
                    (eigval_b_e[B] - eigval_b_e[A])) *
-                  (eigval_b_e[B] * (mv[A * Ndim + B][i] * mu[A * Ndim + B][j]) +
-                   eigval_b_e[A] * (mv[A * Ndim + B][i] * mu[B * Ndim + A][j]));
-            } else {
-              Stiffness_density[i * Ndim + j] += 0.0;
-            }
-          }
+                  (eigval_b_e[B] * u_B__dot__v_B*(eigvec_b_e[A + i * Ndim] * eigvec_b_e[A + j * Ndim]) +
+                   eigval_b_e[A] * v_A__dot__u_B*(eigvec_b_e[A + i * Ndim] * eigvec_b_e[B + j * Ndim]));
+            } 
+          }          
         }
       }
     }

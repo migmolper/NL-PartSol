@@ -226,8 +226,8 @@ PetscErrorCode U_Static(Mesh FEM_Mesh, Particle MPM_Mesh,
        directly call any KSP and PC routines to set various options.
        Optionally allow user-provided preconditioner
       - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-    Petsc_Direct_solver = false;
-    Petsc_Iterative_solver = true;
+    Petsc_Direct_solver = true;
+    Petsc_Iterative_solver = false;
     if(Petsc_Direct_solver)
     {
       PetscCall(SNESGetKSP(snes, &ksp));
@@ -1335,7 +1335,6 @@ static PetscErrorCode __jacobian_evaluation(SNES snes, Vec dU, Mat Jacobian,
 
 #pragma omp critical
           {
-
             MatSetValues(Jacobian, Ndim, Mask_dofs_A, Ndim, Mask_dofs_B,
                          Jacobian_p, ADD_VALUES);
 
