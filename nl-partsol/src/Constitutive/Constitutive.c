@@ -34,7 +34,7 @@ int Stress_integration__Constitutive__(int p, Particle MPM_Mesh,
       Input_SP.J = MPM_Mesh.Phi.Jbar.nV[p];
     } else {
       Input_SP.D_phi_n1 = MPM_Mesh.Phi.F_n1.nM[p];
-      Input_SP.J = MPM_Mesh.Phi.J_n1.nV[p];
+      Input_SP.J = MPM_Mesh.Phi.J_n1[p];
     }
 
     Output_SP = compute_Kirchhoff_Stress_Saint_Venant__Constitutive__(
@@ -46,7 +46,7 @@ int Stress_integration__Constitutive__(int p, Particle MPM_Mesh,
     IO_State.Stress = MPM_Mesh.Phi.Stress.nM[p];
     IO_State.W = &(MPM_Mesh.Phi.W[p]);
     IO_State.D_phi_n1 = MPM_Mesh.Phi.F_n1.nM[p];
-    IO_State.J = MPM_Mesh.Phi.J_n1.nV[p];
+    IO_State.J = MPM_Mesh.Phi.J_n1[p];
 
     STATUS =
         compute_Kirchhoff_Stress_Hencky__Constitutive__(IO_State, MatProp_p);
@@ -68,7 +68,7 @@ int Stress_integration__Constitutive__(int p, Particle MPM_Mesh,
       IO_State.J = MPM_Mesh.Phi.Jbar.nV[p];
     } else {
       IO_State.D_phi_n1 = MPM_Mesh.Phi.F_n1.nM[p];
-      IO_State.J = MPM_Mesh.Phi.J_n1.nV[p];
+      IO_State.J = MPM_Mesh.Phi.J_n1[p];
     }
 
     STATUS = compute_Kirchhoff_Stress_Neo_Hookean__Constitutive__(IO_State,
@@ -91,7 +91,7 @@ int Stress_integration__Constitutive__(int p, Particle MPM_Mesh,
       IO_State.J = MPM_Mesh.Phi.Jbar.nV[p];
     } else {
       IO_State.D_phi_n1 = MPM_Mesh.Phi.F_n1.nM[p];
-      IO_State.J = MPM_Mesh.Phi.J_n1.nV[p];
+      IO_State.J = MPM_Mesh.Phi.J_n1[p];
     }
 
     //    IO_State.Pressure = MPM_Mesh.Phi.lambda_pressure_n1.nV[p];
@@ -272,7 +272,7 @@ int stiffness_density__Constitutive__(int p, double *Stiffness_density,
   // Compute local stiffness density
   if (strcmp(MatProp_p.Type, "Neo-Hookean-Wriggers") == 0) {
     IO_State.D_phi_n = MPM_Mesh.Phi.F_n.nM[p];
-    IO_State.J = MPM_Mesh.Phi.J_n1.nV[p];
+    IO_State.J = MPM_Mesh.Phi.J_n1[p];
     STATUS = compute_stiffness_density_Neo_Hookean(
         Stiffness_density, dN_alpha_n1, dN_beta_n1, dN_alpha_n, dN_beta_n,
         IO_State, MatProp_p);
@@ -299,7 +299,7 @@ int stiffness_density__Constitutive__(int p, double *Stiffness_density,
     IO_State.D_phi_n1 = MPM_Mesh.Phi.F_n1.nM[p];
     IO_State.D_phi_n = MPM_Mesh.Phi.F_n.nM[p];
     IO_State.dFdt = MPM_Mesh.Phi.dt_F_n1.nM[p];
-    IO_State.J = MPM_Mesh.Phi.J_n1.nV[p];
+    IO_State.J = MPM_Mesh.Phi.J_n1[p];
     IO_State.alpha_4 = alpha_4;
     STATUS = compute_stiffness_density_Newtonian_Fluid__Constitutive__(
         Stiffness_density, dN_alpha_n1, dN_beta_n1, dN_alpha_n, dN_beta_n,
@@ -395,7 +395,7 @@ int compute_damage__Constitutive__(unsigned p, Particle MPM_Mesh,
     const ChainPtr Beps_p = MPM_Mesh.Beps[p];
     const double *kirchhoff_p = MPM_Mesh.Phi.Stress.nM[p];
     const double *Strain_Energy_field = MPM_Mesh.Phi.W;
-    const double *J_n1 = MPM_Mesh.Phi.J_n1.nV;
+    const double *J_n1 = MPM_Mesh.Phi.J_n1;
     const double *Vol_0 = MPM_Mesh.Phi.Vol_0.nV;
 
     STATUS = Eigenerosion__Constitutive__(

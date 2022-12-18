@@ -706,7 +706,7 @@ Define tributary nodes of the particle
     /*
       Compute Jacobian of the deformation gradient
     */
-//    MPM_Mesh.Phi.J_n1.nV[p] = I3__TensorLib__(F_n1_p);
+//    MPM_Mesh.Phi.J_n1[p] = I3__TensorLib__(F_n1_p);
 
     /*
        Free memory
@@ -1011,7 +1011,7 @@ compute_Volumetric_Constrain_Forces(Matrix Residual, Mask ActiveNodes,
     /*
       Get the Jacobian
     */
-    J_n1_p = MPM_Mesh.Phi.J_n1.nV[p];
+    J_n1_p = MPM_Mesh.Phi.J_n1[p];
 
     /*
       Impose the volumetric constrain
@@ -1690,7 +1690,7 @@ static void update_Particles(Nodal_Field D_up, Particle MPM_Mesh, Mesh FEM_Mesh,
     /*
       Replace the determinant of the deformation gradient
     */
-    MPM_Mesh.Phi.J_n.nV[p] = MPM_Mesh.Phi.J_n1.nV[p];
+    MPM_Mesh.Phi.J_n[p] = MPM_Mesh.Phi.J_n1[p];
 
     /*
       Iterate over the nodes of the particle

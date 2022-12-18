@@ -39,8 +39,8 @@ int compute_Kirchhoff_Stress_Newtonian_Fluid__Constitutive__(
 
   // Define and compute auxiliar tensor
 #if NumberDimensions == 2  
-  double L[4];
-  double E[4];  
+  double L[5];
+  double E[5];  
   double Identity[4] = {1.0,0.0,0.0,1.0};  
 #else
   double L[9];
@@ -55,11 +55,7 @@ int compute_Kirchhoff_Stress_Newtonian_Fluid__Constitutive__(
   }
   symmetrise__TensorLib__(E, L);  
 
-#if NumberDimensions == 2 
-  double trace_E = E[0] + E[2];
-#else 
-  double trace_E = E[0] + E[4] + E[8];
-#endif
+  double trace_E = I1__TensorLib__(E);
 
   // Compute stress
   for (unsigned i = 0; i < Ndim; i++) {
@@ -117,9 +113,9 @@ int compute_stiffness_density_Newtonian_Fluid__Constitutive__(
 
   // Define auxiliar variables
 #if NumberDimensions == 2
-  double L[4];
-  double E[4];
-  double b_n[4];
+  double L[5];
+  double E[5];
+  double b_n[5];
   double E_dN_alpha_n1[2] = {0.0,0.0};
   double E_dN_beta_n1[2] = {0.0,0.0};  
   double Lt_dN_alpha_n1[2] = {0.0,0.0};

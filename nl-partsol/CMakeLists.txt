@@ -18,7 +18,11 @@ ELSE ()
 ENDIF ()
 
 # Plain strain conditions
-option(USE_PLAINSTRAIN "Use Plain-Strain conditions" ON)
+option(USE_PLAIN_STRAIN "Use Plain-Strain conditions" ON)
+
+# Axial symmetry conditions
+option(USE_AXIAL_SYMMETRY "Use Axial-Symmetry conditions" OFF)
+
 
 # Add LAPACK
 option(USE_LAPACK "Use LAPACK solver library" ON)
@@ -50,11 +54,6 @@ link_libraries(m)
 
 # Add PkgConfig
 find_package(PkgConfig REQUIRED)
-
-# Plain strain
-if(USE_PLAINSTRAIN)
-  add_definitions("-DUSE_PLAINSTRAIN")
-endif()
 
 # MPI
 if(USE_MPI)
@@ -214,8 +213,19 @@ file(GLOB_RECURSE NL_PartSol_src
 
 file(GLOB_RECURSE DATA ../build/*)
 
-# Create executables
+# Create executable (plain strain)
+add_definitions(-DUSE_PLAIN_STRAIN=1 -DUSE_AXIAL_SYMMETRY=0 -DUSE_3D=0)
 add_executable(${PROJECT_NAME} driver-nl-partsol.c ${NL_PartSol_src})
 target_include_directories(${PROJECT_NAME}  PUBLIC src)
 
 
+# Create executable (Axial symmetry)
+#add_definitions(-DUSE_PLAIN_STRAIN=0 -DUSE_AXIAL_SYMMETRY=1 -DUSE_3D=0)
+#add_executable(${PROJECT_NAME}-axil driver-nl-partsol.c ${NL_PartSol_src})
+#target_include_directories(${PROJECT_NAME}-axil PUBLIC src)
+
+
+# Create executable (3D conditions)
+#add_definitions(-DUSE_PLAIN_STRAIN=0 -DUSE_AXIAL_SYMMETRY=0 -DUSE_3D=1)
+#add_executable(${PROJECT_NAME} driver-nl-partsol.c ${NL_PartSol_src})
+#target_include_directories(${PROJECT_NAME}  PUBLIC src)

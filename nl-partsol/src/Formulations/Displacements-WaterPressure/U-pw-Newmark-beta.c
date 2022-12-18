@@ -795,8 +795,8 @@ static void update_Local_State(
         MPM_Mesh.Phi.rho_f.nV[p] *
             MPM_Mesh.Phi.phi_f.nV[p]; /* Update density of the mixture */
 
-    MPM_Mesh.Phi.J_n1.nV[p] = J_n1_p; /* Update soil skeleton jacobian */
-    MPM_Mesh.Phi.dJ_dt.nV[p] =
+    MPM_Mesh.Phi.J_n1[p] = J_n1_p; /* Update soil skeleton jacobian */
+    MPM_Mesh.Phi.dJ_dt[p] =
         dJ_dt_n1_p; /* Update soil skeleton rate of jacobian */
 
     /*
@@ -1088,7 +1088,7 @@ static void compute_Rate_Mass_Fluid(Matrix Residual, Mask ActiveNodes,
     /*
       Get the rate of the jacobian for each material point
     */
-    dJ_dt_n1_p = MPM_Mesh.Phi.dJ_dt.nV[p];
+    dJ_dt_n1_p = MPM_Mesh.Phi.dJ_dt[p];
 
     /*
       Load intrinsic properties for the fluid phase to
@@ -1250,7 +1250,7 @@ static void compute_Flow_contribution_Fluid(Nodal_Field upw_n,
     FT_n_p = transpose__TensorLib__(F_n_p);
     Fm1_n1_p = Inverse__TensorLib__(F_n1_p);
     FmT_n1_p = transpose__TensorLib__(Fm1_n1_p);
-    J_n1_p = MPM_Mesh.Phi.J_n1.nV[p];
+    J_n1_p = MPM_Mesh.Phi.J_n1[p];
 
     /*
       Get the reference volume for each material point (mixture)
@@ -1819,7 +1819,7 @@ static Matrix assemble_Tangent_Stiffness(Nodal_Field upw_n, Nodal_Field D_upw,
     /*
       Get the jacobian of the deformation gradient
     */
-    J_p = MPM_Mesh.Phi.J_n1.nV[p];
+    J_p = MPM_Mesh.Phi.J_n1[p];
 
     /*
       Get some usefull intermediate results
@@ -2386,7 +2386,7 @@ static void update_Particles(Nodal_Field D_upw, Particle MPM_Mesh,
     /*
       Replace the determinant of the deformation gradient
     */
-    MPM_Mesh.Phi.J_n.nV[p] = MPM_Mesh.Phi.J_n1.nV[p];
+    MPM_Mesh.Phi.J_n[p] = MPM_Mesh.Phi.J_n1[p];
 
     /*
       Compute the deformation energy (reference volume + material properties

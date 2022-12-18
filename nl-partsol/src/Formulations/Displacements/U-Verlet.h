@@ -13,6 +13,7 @@
 #include "Matlib.h"
 #include "Particles.h"
 #include "Nodes/Nodes-Tools.h"
+#include "Particles/compute-Strains.h"
 #include "Nodes/Shape-Functions.h"
 #include "Formulations/Courant.h"
 #include "Constitutive/Constitutive.h"

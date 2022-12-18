@@ -1,6 +1,9 @@
 #ifndef _TYPES_H_
 #define _TYPES_H_
 
+#include <stdbool.h>
+#include "Macros.h"
+
 /** @brief \file Types.h
  *  \brief File with the definitions of the user-defined variables.
  */
@@ -246,11 +249,13 @@ typedef struct {
 
   Matrix dt_F_n, dt_F_n1, dt_DF; /** @brief Rate deformation gradient */
 
-  Matrix J_n, J_n1, dJ_dt; /** @brief Jacobian of the deformation gradient */
+  double *J_n, *J_n1, *dJ_dt; /** @brief Jacobian of the deformation gradient */
 
   Matrix Fbar; /** @brief Locking-free deformation gradient (F-bar) */
 
   Matrix Jbar; /** @brief Jacobian of the F-bar */
+
+  double *Temperature_n, *Temperature_n1; /** @brief Particle temperature */
 
   double *W; /** @brief Deformation Energy */
 

@@ -13,6 +13,7 @@
 #include "Types.h"
 #include "Matlib.h"
 #include "Particles.h"
+#include "Particles/compute-Strains.h"
 
 // Shape functions and auxilar tools
 #include "Nodes/Nodes-Tools.h"
