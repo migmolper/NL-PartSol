@@ -10,6 +10,7 @@
  */
 
 #include "Constitutive/Plasticity/Drucker-Prager.h"
+#include <stdio.h>
 
 /**************************************************************/
 /*!
@@ -607,6 +608,7 @@ int compute_Kirchhoff_Stress_Drucker_Prager__Constitutive__(
     return EXIT_FAILURE;
   }
 
+
   return EXIT_SUCCESS;
 }
 
@@ -1101,10 +1103,9 @@ static int __tangent_moduli_elastic(double *C_ep, double K, double G) {
 
   for (unsigned i = 0; i < Ndim; i++) {
     for (unsigned j = 0; j < Ndim; j++) {
-      C_ep[i * Ndim + j] = K * R2_Identity[i] * R2_Identity[j] +
-                           2.0 * G *
-                               (R4_Identity[i][j] -
-                                (1.0 / 3.0) * R2_Identity[i] * R2_Identity[j]);
+      C_ep[i * Ndim + j] = 
+      (1.0 / 3.0) * K * R2_Identity[i] * R2_Identity[j] 
+      + 2.0 * G * (R4_Identity[i][j] - (1.0 / 3.0) * R2_Identity[i] * R2_Identity[j]);
     }
   }
 
@@ -1144,7 +1145,7 @@ static int __tangent_moduli_classical(double *C_ep, const double *n,
   for (unsigned i = 0; i < Ndim; i++) {
     for (unsigned j = 0; j < Ndim; j++) {
       C_ep[i * Ndim + j] =
-          c1 * K * R2_Identity[i] * R2_Identity[j] +
+           c1 * K * R2_Identity[i] * R2_Identity[j] +
           2 * G *
               (R4_Identity[i][j] - (1. / 3.) * (1.0 - 2.0 * G * c2) *
                                        R2_Identity[i] * R2_Identity[j]) -

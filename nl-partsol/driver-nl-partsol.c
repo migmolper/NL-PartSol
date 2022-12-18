@@ -371,6 +371,10 @@ int main(int argc, char *argv[]) {
                      "USE_PETSC=true during compilation" RESET " \n");
       STATUS == EXIT_FAILURE;
 #endif
+    } else if(strcmp(Parameters_Solver.TimeIntegrationScheme,
+                      "Static") == 0)
+    {
+      STATUS = U_Static(FEM_Mesh, MPM_Mesh, Parameters_Solver);
     } else {
       sprintf(Error_message, "%s", "Wrong time integration scheme");
       standard_error(Error_message);

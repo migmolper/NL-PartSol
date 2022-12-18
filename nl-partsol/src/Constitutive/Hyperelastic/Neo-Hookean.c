@@ -11,6 +11,7 @@
 
 #include "Constitutive/Hyperelastic/Neo-Hookean.h"
 #include "Globals.h"
+#include <stdlib.h>
 
 /**************************************************************/
 
@@ -136,7 +137,7 @@ int compute_stiffness_density_Neo_Hookean(
     }
   }
 
-  return STATUS;
+  return EXIT_SUCCESS;
 }
 
 /**************************************************************/
