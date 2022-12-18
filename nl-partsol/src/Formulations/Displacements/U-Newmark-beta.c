@@ -67,8 +67,6 @@ static PetscErrorCode __form_initial_guess(Vec DU, Vec U_n_dt, Vec U_n_dt2,
 static PetscErrorCode __lagrangian_evaluation(SNES snes, Vec D_U, Vec Residual,
                                               void *ctx);
 
-static PetscErrorCode __ensure_boundary_conditions(PetscScalar *dU, Mesh FEM_Mesh, Mask ActiveNodes);
-
 static PetscScalar *__compute_nodal_velocity_increments(
     const PetscScalar *dU, const PetscScalar *Un_dt, const PetscScalar *Un_dt2,
     Newmark_parameters Params, PetscInt Ntotaldofs);
@@ -762,10 +760,10 @@ static PetscErrorCode __get_nodal_field_n(Vec U_n_dt, Vec U_n_dt2,
               A_value_In1 = 0.0;
             }
 
-            VecSetValues(U_n_dt, 1, &Mask_restricted_dofs_A, &V_value_In1,
-                         ADD_VALUES);
-            VecSetValues(U_n_dt2, 1, &Mask_restricted_dofs_A, &A_value_In1,
-                         ADD_VALUES);
+//            VecSetValues(U_n_dt, 1, &Mask_restricted_dofs_A, &V_value_In1,
+//                         ADD_VALUES);
+//            VecSetValues(U_n_dt2, 1, &Mask_restricted_dofs_A, &A_value_In1,
+//                         ADD_VALUES);
           }
         }
       }
@@ -995,7 +993,7 @@ static PetscErrorCode __lagrangian_evaluation(SNES snes, Vec dU, Vec Lagrangian,
 
   PetscScalar *Lagrangian_ptr;
   const PetscScalar *Lumped_Mass_ptr;
-  PetscScalar *dU_ptr;
+  const PetscScalar *dU_ptr;
   const PetscScalar *Un_dt_ptr;
   const PetscScalar *Un_dt2_ptr;
 
@@ -1013,11 +1011,9 @@ static PetscErrorCode __lagrangian_evaluation(SNES snes, Vec dU, Vec Lagrangian,
    */
   PetscCall(VecGetArray(Lagrangian, &Lagrangian_ptr));
   PetscCall(VecGetArrayRead(Lumped_Mass, &Lumped_Mass_ptr));
-  PetscCall(VecGetArray(dU, &dU_ptr));
+  PetscCall(VecGetArrayRead(dU, &dU_ptr));
   PetscCall(VecGetArrayRead(Un_dt, &Un_dt_ptr));
   PetscCall(VecGetArrayRead(Un_dt2, &Un_dt2_ptr));
-
-  __ensure_boundary_conditions(dU_ptr, FEM_Mesh, ActiveNodes);
 
   PetscScalar *dU_dt_ptr = __compute_nodal_velocity_increments(
       dU_ptr, Un_dt_ptr, Un_dt2_ptr, Time_Integration_Params, Ntotaldofs);
@@ -1045,7 +1041,7 @@ static PetscErrorCode __lagrangian_evaluation(SNES snes, Vec dU, Vec Lagrangian,
    */
   PetscCall(VecRestoreArray(Lagrangian, &Lagrangian_ptr));
   PetscCall(VecRestoreArrayRead(Lumped_Mass, &Lumped_Mass_ptr));
-  PetscCall(VecRestoreArray(dU, &dU_ptr));
+  PetscCall(VecRestoreArrayRead(dU, &dU_ptr));
   PetscCall(VecRestoreArrayRead(Un_dt, &Un_dt_ptr));
   PetscCall(VecRestoreArrayRead(Un_dt2, &Un_dt2_ptr));
   PetscCall(PetscFree(dU_dt_ptr));
@@ -1830,63 +1826,7 @@ static PetscErrorCode __jacobian_evaluation(SNES snes, Vec dU, Mat Jacobian,
   */
   PetscCall(MatZeroRowsColumnsIS(Jacobian, Dirichlet_dofs, 1.0, NULL, NULL));
 
-
   return STATUS;
-}
-
-/**************************************************************/
-
-static PetscErrorCode __ensure_boundary_conditions(PetscScalar *dU, Mesh FEM_Mesh, Mask ActiveNodes) {
-
-  unsigned Ndim = NumberDimensions;
-  unsigned Nactivenodes = ActiveNodes.Nactivenodes;
-  PetscInt Ntotaldofs = Ndim * Nactivenodes;
-  PetscInt Dof_Ai;
-
-  //! Apply boundary condition
-  unsigned NumBounds = FEM_Mesh.Bounds.NumBounds;
-
-  for (unsigned i = 0; i < NumBounds; i++) {
-
-    /*
-      Get the number of nodes of this boundarie
-    */
-    unsigned NumNodesBound = FEM_Mesh.Bounds.BCC_i[i].NumNodes;
-
-    for (unsigned j = 0; j < NumNodesBound; j++) {
-      /*
-        Get the index of the node
-      */
-      int Id_BCC = FEM_Mesh.Bounds.BCC_i[i].Nodes[j];
-      int Id_BCC_mask = ActiveNodes.Nodes2Mask[Id_BCC];
-
-      /*
-        The boundary condition is not affecting any active node,
-        continue interating
-      */
-      if (Id_BCC_mask == -1) {
-        continue;
-      }
-
-      /*
-        Loop over the dimensions of the boundary condition
-      */
-      for (unsigned k = 0; k < Ndim; k++) {
-
-        /*
-          Apply only if the direction is active (1)
-        */
-        if (FEM_Mesh.Bounds.BCC_i[i].Dir[k * NumTimeStep + TimeStep] == 1) {
-
-          Dof_Ai = Id_BCC_mask * Ndim + k;
-
-          dU[Dof_Ai] = FEM_Mesh.Bounds.BCC_i[i].Value[k].Fx[TimeStep];
-        }
-      }
-    }
-  }
-
-  return EXIT_SUCCESS;
 }
 
 /**************************************************************/
